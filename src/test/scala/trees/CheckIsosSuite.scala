@@ -1,4 +1,4 @@
-package isos
+package trees
 
 import org.scalatest.FunSuite
 
@@ -15,6 +15,7 @@ import org.scalatest.exceptions.TestFailedException
 
 @RunWith(classOf[JUnitRunner])
 class CheckIsosSuite extends FunSuite with Checkers {
+
   def checkBogus(p: Prop) {
     var ok = false
     try {
@@ -49,7 +50,7 @@ class CheckIsosSuite extends FunSuite with Checkers {
 
   test("TreeGraph 1") {
     val p = Ptr[Node[Int]]()
-    val t = Tree(Node(p, List(Node(p, Nil, 2), Node(p, Nil, 3)), 1))
+    val t = RoseTree(Node(p, List(Node(p, Nil, 2), Node(p, Nil, 3)), 1))
     val g = TreeGraph.fromTree(t, 0)
     assert(g.children.hasValidLengths, "lengths")
     assert(g.children.hasValidOffsets, "offsets")

@@ -1,32 +1,24 @@
-package object isos {
+/**
+ * User: Alexander Slesarenko
+ * Date: 11/17/13
+ */
+package trees
 
-  case class Ptr[T](private var obj: T = null) {
-    def get: T = obj
-    def set(t: T): Unit = { obj = t }
-    override def toString = if (obj != null) "Ptr" else "null"
-  }
-  case class Node[A](parent: Ptr[Node[A]], children: List[Node[A]], info: A) {
-    def size: Int = {
-      1 + (0 /: children)(_ + _.size)
-    }
-  }
-
-  case class Tree[A](root: Node[A]) {
-    def size = root.size
-  }
+trait TreeGraphs  {
 
   case class NArray[A](lens: Array[Int], offsets: Array[Int], values: Array[A]) {
     def hasValidLengths = lens.sum == values.length
     def hasValidOffsets = (lens.scan(0)(_ + _).take(lens.length), offsets).zipped.forall { _ == _ }
     override def toString = "NArray(%s,%s,%s)".format(lens.mkString("(",", ",")"), offsets.mkString("(",", ",")"), values.mkString("(",", ",")"))
   }
+
   case class TreeGraph[A](parents: Array[Int], children: NArray[Int], nodeProps: Array[A]) {
     val root: Int = 0
     override def toString = "TreeGraph(%s,%s,%s)".format(parents.mkString("(",", ",")"), children, nodeProps.mkString("(",", ",")"))
   }
 
   object TreeGraph {
-    def fromTree[A:Manifest](t: Tree[A], zero: A) = {
+    def fromTree[A:Manifest](t: RoseTree[A], zero: A) = {
       val sz = t.size
 
       val parents = Array.fill(sz)(0)
@@ -38,7 +30,7 @@ package object isos {
       var nextNodeId = 0
       var currOffset = 0
       def visitNode(node: Node[A], iParent: Int, iChild: Int): Unit = { // side effect on arrays above
-        val i = nextNodeId
+      val i = nextNodeId
         nextNodeId += 1
 
         props(i) = node.info                    // (***)
@@ -65,8 +57,8 @@ package object isos {
 
       visitNode(t.root, -1, 0)
       val actualValues = values.take(currOffset)
-        TreeGraph(parents, NArray(lens, offsets, actualValues), props)
+      new TreeGraph(parents, NArray(lens, offsets, actualValues), props)
     }
   }
-}
 
+}
