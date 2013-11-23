@@ -1,0 +1,37 @@
+package scalan.common
+
+// definitions shamelessly taken from Scalaz library
+/**
+ * A categorical monoid.
+ *
+ * <p>
+ * All monoid instances must satisfy the semigroup law and 2 additional laws:
+ * <ol>
+ * <li><strong>left identity</strong><br/><code>forall a. append(zero, a) == a</code></li>
+ * <li><strong>right identity</strong><br/><code>forall a. append(a, zero) == a</code></li>
+ * </p>
+ */
+trait Monoid[M] extends Zero[M] with Semigroup[M]
+
+abstract class MonoidLow {
+  implicit def monoid[M](implicit s: Semigroup[M], z: Zero[M]): Monoid[M] = new Monoid[M] {
+    def append(s1: M, s2: => M) = s append (s1, s2)
+    val zero = z.zero
+    def opName = s.opName
+    def isInfix = s.isInfix
+  }
+}
+
+object Monoid extends MonoidLow {
+  import Semigroup._
+  import Zero._
+
+  implicit val IntPlusMonoid = monoid(Semigroup.IntSemigroup, Zero.IntZero)
+  val IntMinMonoid = monoid(Semigroup.IntMinSemigroup, Zero.IntMinZero)
+  val IntMaxMonoid = monoid(Semigroup.IntMaxSemigroup, Zero.IntMaxZero)
+
+  implicit val FloatPlusMonoid = monoid(Semigroup.FloatSemigroup, Zero.FloatZero)
+  val FloatMultMonoid = monoid(Semigroup.FloatMultSemigroup, Zero.FloatZero)
+
+  //implicit def EitherLeftMonoid[A, B](implicit bz: Zero[B]): Monoid[Either.LeftProjection[A, B]] = monoid[Either.LeftProjection[A, B]](EitherLeftSemigroup, EitherLeftZero[A, B](bz))
+}

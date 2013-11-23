@@ -2,7 +2,7 @@
  * User: Alexander Slesarenko
  * Date: 11/16/13
  */
-package scalan
+package makro
 
 import org.junit.Test
 import org.junit.Assert._

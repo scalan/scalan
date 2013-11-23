@@ -7,9 +7,9 @@ package scalan.makro
 import scalan.codegen.emit.Formatter
 import scalan.codegen.emit.ast._
 import scalan.codegen.emit.ScalaCodeEmitter
-import scalan.{Scalan}
+import makro.{ScalanParsers, ScalanAst}
 
-trait ScalanCodegen extends Scalan {
+trait ScalanCodegen extends ScalanAst with ScalanParsers {
 
   case class Context(name: String)
   case class EntityModuleDef(packageName: String, name: String, entityDef: TraitDef, selfType: Option[String] = None) {

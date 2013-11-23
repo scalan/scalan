@@ -1,8 +1,8 @@
 /**
- * User: Alexander Slesarenko   
+ * User: Alexander Slesarenko
  * Date: 11/17/13
  */
-package scalan
+package makro
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -40,7 +40,7 @@ trait ScalanAst {
 
 }
 
-trait ScalanParsers extends JavaTokenParsers  { self: Scalan =>
+trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
 
   lazy val tpeArg: Parser[TpeArg] = (ident ~ opt("<:" ~ tpeExpr)) ^^ {
     case name ~ None => TpeArg(name)
@@ -100,15 +100,15 @@ trait ScalanParsers extends JavaTokenParsers  { self: Scalan =>
       TraitDef(n, targs.toList.flatten, ancs.toList.flatten, body.toList.flatten)
   }
 
-}
-
-trait Scalan
-  extends ScalanParsers
-     with ScalanAst
-{
   def parseTrait(s: String) = parseAll(traitDef, s).get
   def parseTpeExpr(s: String) = parseAll(tpeExpr, s).get
   def parseTpeArgs(s: String) = parseAll(tpeArgs, s).get
+
 }
 
-object ScalanImpl extends Scalan
+object ScalanImpl
+  extends ScalanParsers
+     with ScalanAst
+{
+}
+
