@@ -27,7 +27,9 @@ trait ProgramGraphs extends Scheduling with Transforming { self: ScalanStaged =>
         also contains lambda vars with definition = None
      */
     val nodes: Map[Exp[Any], Node] = {
-      var defMap: Map[Exp[Any], Node] = schedule map { case TP(s,d) => (s, Node(List.empty[Exp[Any]], Some(d))) } toMap
+      var defMap: Map[Exp[Any], Node] = (schedule map {
+        case TP(s, d) => (s, Node(List.empty[Exp[Any]], Some(d)))
+      }).toMap
 
       def addUsage(usedSym: Exp[Any], referencingSym: Exp[Any]) = defMap.get(usedSym) match {
         case Some(node) =>
@@ -43,7 +45,9 @@ trait ProgramGraphs extends Scheduling with Transforming { self: ScalanStaged =>
       defMap
     }
 
-    lazy val domain: Set[Exp[Any]] = nodes collect { case (s, Node(_,Some(_))) => s } toSet
+    lazy val domain: Set[Exp[Any]] = (nodes collect {
+      case (s, Node(_, Some(_))) => s
+    }).toSet
     def isDefinedAt(s: Exp[Any]) = domain.contains(s)
     def apply(s: Exp[Any]) = nodes(s)
     def usagesOf(s: Exp[Any]) = nodes.get(s) match {

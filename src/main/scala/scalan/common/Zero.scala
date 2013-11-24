@@ -67,9 +67,9 @@ object Zero {
 
   implicit def ArrayZero[A](implicit m: Manifest[A]): Zero[Array[A]] = zero(new Array[A](0))
 
-  implicit def EitherRightZero[A: Zero, B]: Zero[Either.RightProjection[A, B]] = zero(Left(mzero[A]).right)
+  implicit def EitherRightZero[A: Zero, B]: Zero[Either.RightProjection[A, B]] = Common.zero(Left(Common.mzero[A]).right)
 
-  implicit def EitherLeftZero[A, B](implicit bz: Zero[B]): Zero[Either.LeftProjection[A, B]] = zero(Right(mzero[B]).left)
+  implicit def EitherLeftZero[A, B](implicit bz: Zero[B]): Zero[Either.LeftProjection[A, B]] = Common.zero(Right(Common.mzero[B]).left)
 
   implicit def Tuple2Zero[A, B](implicit az: Zero[A], bz: Zero[B]): Zero[(A, B)] =
     zero((az.zero, bz.zero))

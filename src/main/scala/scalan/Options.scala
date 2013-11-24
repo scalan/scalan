@@ -3,6 +3,7 @@ package scalan
 import scala.{Left => L, Right => R}
 import scalan.common.Zero
 import scalan.common.Common
+import scala.language.{reflectiveCalls, implicitConversions}
 
 trait Options extends Views { self: Scalan =>
 

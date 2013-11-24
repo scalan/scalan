@@ -1,5 +1,7 @@
 package scalan.common
 
+import scala.language.{implicitConversions}
+
 trait PimpedType[X] {
   val value: X
 }

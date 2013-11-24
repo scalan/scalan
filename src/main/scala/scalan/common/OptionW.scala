@@ -81,7 +81,7 @@ sealed trait OptionW[A] extends PimpedType[Option[A]] {
 }
 
 trait Options {
-  implicit def OptionTo[A](o: Option[A]): OptionW[A] = new OptionW[A] {
+  implicit class OptionOps[A](o: Option[A]) extends OptionW[A] {
     val value = o
   }
 

@@ -1,8 +1,8 @@
 package scalan.staged
 
 import annotation.unchecked.uncheckedVariance
-//import reflect.SourceContext
 import scalan.ScalanStaged
+import scala.language.{implicitConversions}
 
 /**
  * The Expressions trait houses common AST nodes. It also manages a list of encountered Definitions which
@@ -43,7 +43,7 @@ trait Expressions extends ExpressionsBase { self: ScalanStaged =>
     def apply[T](sym: Exp[T], rhs: Def[T]) = new TPS(sym, Some(rhs), None)
     def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]) = new TPS(sym, Some(rhs), Some(lam))
     def unapply[T](tp: TP[T]): Option[(Exp[T], Def[T])] = Some((tp.sym, tp.rhs))
-    def unapply[T](s: Exp[T]): Option[TP[T]] = findDefinition(s)
+    //def unapply[T](s: Exp[T]): Option[TP[T]] = findDefinition(s)
   }
 
   var globalDefs: List[TP[_]] = Nil
@@ -238,10 +238,13 @@ trait ExpressionsBase { self: ScalanStaged =>
     def apply[T](sym: Exp[T], rhs: Def[T]): TP[T]
     def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]): TP[T]
     def unapply[T](tp: TP[T]): Option[(Exp[T], Def[T])]
-    def unapply[T](e: Exp[T])(implicit o1: Overloaded1): Option[TP[T]]
   }
 
   val TP: TPCompanion = null
+
+  object DefTP {
+    def unapply[T](e: Exp[T]): Option[TP[T]] = findDefinition(e)
+  }
 
   def decompose[T](d: Def[T]): Exp[_] = d.decompose match {
     case None => null
@@ -266,8 +269,8 @@ trait ExpressionsBase { self: ScalanStaged =>
     case _ => Nil
   }
 
-  implicit def extendExpForSome(s: Exp[_]): ExpForSomeOps = new ExpForSomeOps(s)
-  class ExpForSomeOps(symbol: Exp[_]) {
+  //implicit def extendExpForSome(s: Exp[_]): ExpForSomeOps = new ExpForSomeOps(s)
+  implicit class ExpForSomeOps(symbol: Exp[_]) {
     def inputs: List[Exp[Any]] = dep(symbol)
     def isLambda: Boolean = symbol match {
       case Def(Lambda(_, _, _)) => true
@@ -304,13 +307,13 @@ trait ExpressionsBase { self: ScalanStaged =>
     }
   }
 
-  class DefForSomeOps(d: Def[_]) {
+  implicit class DefForSomeOps(d: Def[_]) {
     def getDeps: List[Exp[_]] = d match {
       case lam: Lambda[_,_] => lam.freeVars.toList
       case _ => syms(d)
     }
   }
-  implicit def extendDefForSome(d: Def[_]) = new DefForSomeOps(d)
+  //implicit def extendDefForSome(d: Def[_]) = new DefForSomeOps(d)
 
   def rewrite[T](d: Def[T])(implicit eT: Elem[T]): Exp[_] = {
     rewriteRules.foreach(r =>

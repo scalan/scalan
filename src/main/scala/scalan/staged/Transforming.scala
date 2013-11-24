@@ -1,8 +1,8 @@
 package scalan.staged
 
-import collection.mutable.HashMap
 import scalan.common.OverloadHack
 import scalan.ScalanStaged
+import scala.language.{implicitConversions}
 
 trait Transforming extends OverloadHack { self: ScalanStaged =>
 
@@ -13,7 +13,7 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
       val args: List[Exp[_]] = dep(d)
       if (newArgs.length != args.length) throw !!!("invalid mirroring of %s: different number of args".format(d))
 
-      val subst = (args, newArgs).zipped toMap
+      val subst = (args, newArgs).zipped.toMap
       val t = new MapTransformer(subst)
       mirror(d, t)
     }
@@ -110,9 +110,7 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
     private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], lam: Lambda[_,_]): Lambda[_,_] = {
       val newVar = t(lam.x)
       val newBody = t(lam.y)
-      val newLambdaDef = new Lambda(None, newVar, newBody)(newVar.Elem, newBody.Elem) {
-        override val thisSymbol = newLambdaSym.asRep[Any=>Any]
-      }
+      val newLambdaDef = new LambdaWrapper(None, newVar, newBody, newLambdaSym.asRep[Any=>Any])(newVar.Elem, newBody.Elem)
       newLambdaDef
     }
 

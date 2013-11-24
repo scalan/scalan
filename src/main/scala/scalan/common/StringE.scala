@@ -5,7 +5,7 @@ trait StringE extends PimpedType[String] {
 }
 
 object Strings {
-  implicit def StringTo(ss: String): StringE = new StringE {
+  implicit class StringToOps(ss: String) extends StringE {
     val value = ss
   }
 }

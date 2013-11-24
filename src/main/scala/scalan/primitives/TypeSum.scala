@@ -2,6 +2,7 @@ package scalan.primitives
 
 import scalan.staged.{ExpressionsBase}
 import scalan.{ScalanStaged, Scalan, ScalanSeq}
+import scala.language.{implicitConversions}
 
 trait TypeSum {  self: Scalan =>
 

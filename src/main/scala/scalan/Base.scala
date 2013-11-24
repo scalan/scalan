@@ -1,5 +1,7 @@
 package scalan
 
+import scala.language.higherKinds
+
 trait Base {
   type |[+A,+B] = Either[A,B]
   type L[A] = (A|Unit)
@@ -32,10 +34,10 @@ trait Base {
 
   val isDebug: Boolean = false
 
-  class RepForSomeExtension(x: Rep[_]) {
+  implicit class RepForSomeExtension(x: Rep[_]) {
     def asRep[T]: Rep[T] = x.asInstanceOf[Rep[T]]
   }
-  implicit def extendRepForSome(x: Rep[_]) = new RepForSomeExtension(x)
+  //implicit def extendRepForSome(x: Rep[_]) = new RepForSomeExtension(x)
 
   trait UnOpBase[TArg,R] {
     def arg: Rep[TArg]

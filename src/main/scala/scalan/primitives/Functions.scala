@@ -7,6 +7,7 @@ package scalan.primitives
 import scalan.staged.{ProgramGraphs, ExpressionsBase}
 import scalan.{ScalanStaged, ScalanSeq, Scalan}
 import collection.mutable
+import scala.language.{implicitConversions}
 
 trait Functions { self: Scalan =>
 
@@ -59,8 +60,8 @@ trait FunctionsExp extends Functions with ExpressionsBase with ProgramGraphs { s
         case false =>
           val g = new PGraph(y)
           val sh = g.scheduleFrom(x)
-          (sh, TP.unapply(y)) match {
-            case (Nil, Some(tp: TP[_])) => List(tp)  // the case when body is const
+          (sh, y) match {
+            case (Nil, DefTP(tp)) => List(tp)  // the case when body is const
             case _ => sh
           }
 
@@ -73,8 +74,8 @@ trait FunctionsExp extends Functions with ExpressionsBase with ProgramGraphs { s
         case false =>
           val g = new PGraph(y)
           val sh = g.schedule
-          (sh, TP.unapply(y)) match {
-            case (Nil, Some(tp: TP[_])) => List(tp)  // the case when body is const
+          (sh, y) match {
+            case (Nil, DefTP(tp)) => List(tp)  // the case when body is const
             case _ => sh
           }
 
@@ -83,8 +84,8 @@ trait FunctionsExp extends Functions with ExpressionsBase with ProgramGraphs { s
     }
     lazy val scheduleSyms = schedule map { _.sym }
 
-    def scheduleAll: List[TP[_]] = schedule flatMap(tp => tp match {
-      case TP(s, lam@Lambda(_,_,_)) => lam.scheduleAll :+ tp
+    def scheduleAll: List[TP[_]] = schedule flatMap(tp => tp.rhs match {
+      case lam@Lambda(_,_,_) => lam.scheduleAll :+ tp
       case _ => List(tp)
     })
 
@@ -93,9 +94,9 @@ trait FunctionsExp extends Functions with ExpressionsBase with ProgramGraphs { s
     def isLocalDef(s: Exp[Any]): Boolean = scheduleSyms contains s
 
     lazy val freeVars: Set[Exp[_]] = {
-      val alldeps = schedule flatMap { case TP(s,d) => d.getDeps }
+      val alldeps = schedule flatMap { tp => tp.rhs.getDeps }
       val external = alldeps filter { s => !(isLocalDef(s) || s == x)  }
-      external toSet
+      external.toSet
     }
 
     def isGlobalLambda: Boolean = {
@@ -115,32 +116,28 @@ trait FunctionsExp extends Functions with ExpressionsBase with ProgramGraphs { s
   {
     override def mirror(t: Transformer) = {
       val newSym = fresh[A=>B]
-      class LambdaLoc(_f: Option[Exp[A] => Exp[B]], _x: Exp[A], _y: Exp[B]) extends Lambda[A,B](_f, _x, _y) {
-        override val thisSymbol = newSym
-      }
-      val newLam = new LambdaLoc(None, t(x), t(y))
+      
+      val newLam = new LambdaWrapper(None, t(x), t(y), newSym)
       toExp(newLam, newSym)
     }
   }
+  class LambdaWrapper[A:Elem,B:Elem](
+       override val f: Option[Exp[A] => Exp[B]], 
+       override val x: Exp[A], 
+       override val y: Exp[B], 
+       override val thisSymbol: Rep[A=>B])  extends Lambda[A,B](f, x, y) 
 
-//  object Lambda {
-//    def unapply(d: Def[_]): Option[(Option[Exp[_] => Exp[_]],Sym[_],Exp[_])] = d match {
-//      case SLambda(f, x, y) => Some((f, x, y))
-//      case LLambda(x, y, _, _) => Some((None, x, y))
-//      case _ => None
-//    }
-//  }
   case class Apply[A,B](f: Exp[A => B], arg: Exp[A])(implicit val eA: Elem[A], val eB: Elem[B]) extends Def[B] {
     override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))
   }
 
-  class FuncOps[A:Elem, B:Elem](s: Exp[A=>B]) {
+  implicit class FuncOps[A:Elem, B:Elem](s: Exp[A=>B]) {
     def getLambda: Lambda[A,B] = s match {
       case Def(lam: Lambda[_,_]) => lam.asInstanceOf[Lambda[A,B]]
       case _ => !!!("Expected symbol of Lambda node but was %s".format(s), s)
     }
   }
-  implicit def extendExpFunc[A:Elem, B:Elem](s: Exp[A=>B]) = new FuncOps(s)
+  //implicit def extendExpFunc[A:Elem, B:Elem](s: Exp[A=>B]) = new FuncOps(s)
 
   //=====================================================================================
   //   Function application
@@ -221,21 +218,18 @@ trait FunctionsExp extends Functions with ExpressionsBase with ProgramGraphs { s
 
   def reifyFunction[A:Elem, B:Elem](fun: Exp[A] => Exp[B], x: Exp[A], res: Exp[A=>B]): Exp[A=>B] = {
     val y = executeFunction(fun, x, res)
-    class LambdaLoc(_f: Option[Exp[A] => Exp[B]], _x: Exp[A], _y: Exp[B]) extends Lambda[A,B](_f, _x, _y) {
-      override val thisSymbol = res
-    }
-    val lam = new  LambdaLoc(Some(fun), x/*.asSymbol*/, y)
+    val lam = new  LambdaWrapper(Some(fun), x, y, res)
     findDefinition(lam) match {
       case Some(TP(sym, Lambda(Some(f), _, _))) => {
         f equals fun match {
-          case true => sym
+          case true => sym.asRep[A=>B]
           case false =>
-            createDefinition(res/*.asSymbol*/, lam)
+            createDefinition(res, lam)
             res
         }
       }
       case None =>
-        createDefinition(res/*.asSymbol*/, lam)
+        createDefinition(res, lam)
         res
     }
   }

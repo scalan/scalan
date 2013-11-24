@@ -4,6 +4,8 @@
  */
 package scalan
 
+import scala.language.{higherKinds, implicitConversions}
+
 trait Reification { self: Scalan =>
 
   trait ReifiableObject[+A] {     // in place of Def[A]
@@ -41,8 +43,7 @@ trait Reification { self: Scalan =>
 //  def resolvePipe[A](s: P[A]): Pipe[A]
 //  def resolveChunks[A](s: Ch[A]): Chunks[A]
 
-  //TODO
   implicit def reifyObject[A:Elem](obj: ReifiableObject[A]): Rep[A]
-  implicit def toRep[A:Elem](x: A): Rep[A] = ??? //element[A].toRep(x)
+  implicit def toRep[A:Elem](x: A): Rep[A] = element[A].toRep(x)
 
 }

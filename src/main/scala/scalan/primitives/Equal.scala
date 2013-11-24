@@ -9,11 +9,11 @@ trait Equal extends OverloadHack { self: Scalan =>
   def equals[A:Elem](a: Rep[A], b: Rep[A]) : Rep[Boolean]
   def notequals[A:Elem](a: Rep[A], b: Rep[A]) : Rep[Boolean]
 
-  class EqualOps[A: Elem](x: Rep[A]) {
+  implicit class EqualOps[A: Elem](x: Rep[A]) {
     def ===(y: Rep[A]): Rep[Boolean] = self.equals(x, y)
     def !==(y: Rep[A]): Rep[Boolean] = self.notequals(x, y)
   }
-  implicit def extendWithEquals[A: Elem](x: Rep[A]): EqualOps[A] = new EqualOps(x)
+  //implicit def extendWithEquals[A: Elem](x: Rep[A]): EqualOps[A] = new EqualOps(x)
 }
 
 trait EqualSeq extends Equal  { self: ScalanSeq =>

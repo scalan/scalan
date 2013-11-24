@@ -145,25 +145,25 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 //    //    }
 //
 //    def empty = ExpViewArray(Some(eA.empty), iso)
-    def toRep(p: B) = iso.toStaged(eA.toRep(iso.from(p)))
+    override def toRep(p: B) = iso.toStaged(eA.toRep(iso.from(p)))
   }
 
-  case class UserTypeDescriptor(manifest: Manifest[_])
-  var userTypes = List.empty[UserTypeDescriptor]
+  case class UserTypeDescriptor[T](manifest: Manifest[T])
+  var userTypes = List.empty[UserTypeDescriptor[_]]
   def addUserType(m: Manifest[_]) {
     userTypes = userTypes :+ UserTypeDescriptor(m)
   }
 
   def isUserTypeConstr[T](d: Def[T]): Boolean = {
-    val clazz = d.getClass()
-    userTypes.find(c => c.manifest.erasure == clazz).isDefined
+    val clazz = d.getClass
+    userTypes.exists(c => c.manifest.runtimeClass == clazz)
   }
   def isUserTypeSym[T](s: Exp[T]): Boolean = {
-    val symClazz = s.Elem.manifest.erasure
+    val symClazz = s.Elem.manifest.runtimeClass
 
     //manifest[UserType[_]].erasure.isAssignableFrom(symClazz)
     //userTypes.find(c => c.manifest.erasure.isAssignableFrom(symClazz)).isDefined
-    userTypes.find(c => symClazz.isAssignableFrom(c.manifest.erasure)).isDefined
+    userTypes.exists(c => symClazz.isAssignableFrom(c.manifest.runtimeClass))
   }
 
   trait UserType[T] extends Def[T] {
@@ -191,11 +191,11 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     }
   }
 
-  class IsoOps[A,B](iso: Iso[A,B]) {
+  implicit class IsoOps[A,B](iso: Iso[A,B]) {
     def toFunTo: Rep[A => B] = fun(iso.toStaged)(iso.eA, iso.eB)
     def toFunFrom: Rep[B => A] = fun(iso.fromStaged)(iso.eB, iso.eA)
   }
-  implicit def isoToOps[A,B](iso: Iso[A,B]) = new IsoOps(iso)
+  //implicit def isoToOps[A,B](iso: Iso[A,B]) = new IsoOps(iso)
 
   def MethodCallFromExp(clazzUT: Class[_], methodName: String) = new {
     def unapply[T](d:Def[T]): Option[(Exp[_], List[Exp[_]])] = {

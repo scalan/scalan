@@ -7,6 +7,7 @@ import scalan.common._
 import Common._
 import annotation.implicitNotFound
 import scalan.staged.ExpressionsBase
+import scala.language.{implicitConversions}
 
 trait TypeDescriptors extends Base { self: Scalan =>
   type Elem[A] = Element[A]    // typeclass of type descriptors
@@ -22,10 +23,10 @@ trait TypeDescriptors extends Base { self: Scalan =>
   implicit def sumElement [A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A|B)]
   implicit def funcElement[A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[A => B]
 
-  implicit def elem2Zero[A](implicit ea: Elem[A]): Zero[Rep[A]] = ea.zero
+  def elem2Zero[A](implicit ea: Elem[A]): Zero[Rep[A]] = ea.zero
 
   @implicitNotFound(msg = "No Element available for ${A}.")
-  trait Element[+A] {
+  trait Element[A] {
     def manifest: Manifest[A]
     def zero: Zero[Rep[A]]
     def name = manifest.toString
@@ -43,11 +44,11 @@ trait TypeDescriptors extends Base { self: Scalan =>
   }
   abstract class SumElem [A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[(A|B)] {
   }
-//  abstract class FuncElem[A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[A => B]
+  abstract class FuncElem[A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[A => B]
 
   implicit def PairElemExtensions[A,B](eAB: Elem[(A,B)]): PairElem[A,B] = eAB.asInstanceOf[PairElem[A,B]]
   implicit def SumElemExtensions[A,B](eAB: Elem[(A|B)]): SumElem[A,B] = eAB.asInstanceOf[SumElem[A,B]]
-//  implicit def FuncElemExtensions[A,B](eAB: Elem[A=>B]): FuncElem[A,B] = eAB.asInstanceOf[FuncElem[A,B]]
+  implicit def FuncElemExtensions[A,B](eAB: Elem[A=>B]): FuncElem[A,B] = eAB.asInstanceOf[FuncElem[A,B]]
   implicit def UnitElemExtensions(eu: Elem[Unit]): UnitElem = eu.asInstanceOf[UnitElem]
 }
 
@@ -103,17 +104,19 @@ trait TypeDescriptorsSeq extends TypeDescriptors with Scalan { self: ScalanSeq =
       def manifest: Manifest[(A|B)] = m
     }
 
-//  implicit def funcElement[A,B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
-//    new FuncElem[A, B](elema, elemb) with SeqElement[A => B] {
-//      private val m = Manifest.classType(classOf[A=>B], ea.manifest, eb.manifest)
-//      private val z = {
-//        implicit val zA = ea.zero; implicit val zB = eb.zero
-//        implicitly[Zero[A=>B]]
-//      }
-//
-//      def manifest: Manifest[A=>B] = m
-//      def zero = z
-//    }
+  implicit def funcElement[A,B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
+    new FuncElem[A, B](elema, elemb) with SeqElement[A => B] {
+      //implicit val elemAB = this
+      private val m = Manifest.classType(classOf[A=>B], ea.manifest, eb.manifest)
+      private val z = {
+        implicit val zA = ea.zero; implicit val zB = eb.zero
+        //implicitly[Zero[Rep[A=>B]]]
+        Zero.Function1ABZero[Rep[A],Rep[B]](zB)
+      }
+
+      def manifest: Manifest[A=>B] = m
+      def zero = z
+    }
 
 }
 
@@ -180,14 +183,14 @@ trait TypeDescriptorsExp extends TypeDescriptors
       override def toRep(x: (A|B)): Rep[(A|B)] = x fold(l => Left[A, B](self.toRep(l)), r => Right[A, B](self.toRep(r)))
     }
 
-//  override implicit def funcElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
-//    new FuncElem[A, B](elema, elemb) with StagedElement[A => B] {
-//      lazy val m: Manifest[A => B] = Manifest.classType(classOf[A => B], ea.manifest, eb.manifest)
-//
-//      def manifest = m
-//
-//      lazy val z: Zero[Rep[A=>B]] = Common.zero[Rep[A=>B]](fun { x => eb.zero.zero })
-//      implicit def zero = z
-//    }
+  override implicit def funcElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
+    new FuncElem[A, B](elema, elemb) with StagedElement[A => B] {
+      lazy val m: Manifest[A => B] = Manifest.classType(classOf[A => B], ea.manifest, eb.manifest)
+
+      def manifest = m
+
+      lazy val z: Zero[Rep[A=>B]] = Common.zero[Rep[A=>B]](fun { x => eb.zero.zero })
+      implicit def zero = z
+    }
 
 }
