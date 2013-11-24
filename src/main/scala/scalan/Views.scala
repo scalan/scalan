@@ -20,17 +20,22 @@ trait Views extends Base with Reification { self: Scalan =>
 
   abstract class IsoBase[A,B](implicit ea: Elem[A]) extends GenIso[A,B] { ///self: Iso[A,B] =>
     lazy val eA = ea
-    lazy val eB: Elem[B] = viewElement(this)
+
+    // eB should be lazy val as it is used recursively in ViewElem
+    // override it in concrete isos to create hierarchy of Elem classes
+    lazy val eB: Elem[B] = defaultViewElem(this)
 //    def from: B => A = (x: B) => ???
 //    def to: A => B = (x: A) => ???
     def fromStaged: Rep[B] => Rep[A] = (x: Rep[B]) => ???("Not implemented ", x)
     def toStaged: Rep[A] => Rep[B] = (x:Rep[A]) => ???("Not implemented ", x)
   }
 
+  protected[scalan] def defaultViewElem[A,B](implicit iso: Iso[A,B]): Elem[B]
 
-  implicit def viewElement[A,B](implicit iso: Iso[A,B]): Elem[B]
+  implicit def viewElement[A,B](implicit iso: Iso[A,B]): Elem[B] = iso.eB  // always ask elem from Iso
 
-  abstract class ViewElem[A,B](val iso: Iso[A,B]) extends Element[B] {
+  trait ViewElem[A,B] extends Element[B] {
+    def iso: Iso[A,B]
   }
 
   trait IdentityIso[A] extends GenIso[A,A] { //self: Iso[A,A] =>
@@ -54,9 +59,9 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
     def to = x => this.toStaged(x)
   }
 
-  override implicit def viewElement[A,B](implicit iso: Iso[A,B]): Elem[B] = new SeqViewElem[A,B]
+  protected[scalan] def defaultViewElem[A,B](implicit i: Iso[A,B]) = new SeqViewElem[A,B] { val iso = i }
 
-  class SeqViewElem[A,B](implicit iso: Iso[A,B]) extends ViewElem[A,B](iso) with SeqElement[B] {
+  trait SeqViewElem[A,B] extends ViewElem[A,B] with SeqElement[B] {
     implicit val elemB = this
     implicit private def eA = iso.eA
     implicit private def eB = iso.eB
@@ -64,44 +69,7 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
     private lazy val z = iso.zero
     def manifest: Manifest[B] = m
     def zero = z
-
-    //    def replicate(count: IntRep, v: Rep[B]) =
-    //      SeqViewArray(Some(eA.replicate(count, iso.fromStaged(v))), iso)
-    //
-    //    def replicateSeg(count: IntRep, v: PA[B]) = {
-    //      val va = v.asInstanceOf[ViewArray[A,B]]
-    //      va.arr match {
-    //        case Some(arr) => SeqViewArray(Some(eA.replicateSeg(count, arr)), iso)
-    //        case None => SeqViewArray(None, iso)
-    //      }
-    //    }
-    //
-    //    def tabulate(len: IntRep)(f:IntRep => B) = {
-    //      val arr = if (len === 0) None else Some(eA.tabulate(len)(iso.fromStaged compose f))
-    //      SeqViewArray(arr, iso)
-    //    }
-    //    def tabulateSeg(len: IntRep)(f:IntRep => PA[B]) = {
-    //      val fa = (i:IntRep) => { val segB = f(i); segB.asInstanceOf[ViewArray[A,B]].arrOrEmpty }
-    //      val arr = eA.tabulateSeg(len)(fa)
-    //      SeqViewArray(Some(arr), iso)
-    //    }
-    //    def empty = SeqViewArray(None, iso)
   }
-
-
-  //  implicit def extendViewArray[A,B](xs: PA[B])(implicit iso: Iso[A,B]): ViewArrayExtensions[A,B] = {
-  //    implicit val eB = xs.elem
-  //    implicit val mB = eB.manifest
-  //    new ViewArrayExtensions[A,B] {
-  //      val elem = eB
-  //      protected def resolved = xs
-  //      def arr = asViewArray(_.arr, !!!)
-  //      def iso = asViewArray(_.iso, !!!)
-  //      def arrOrEmpty = asViewArray(_.arrOrEmpty, !!!)
-  //    }
-  //  }
-
-
 }
 
 trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
@@ -111,9 +79,9 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     def to = x => ???
   }
 
-  override implicit def viewElement[A, B](implicit iso: Iso[A, B]): Elem[B] = new StagedViewElem[A,B]
+  protected[scalan] def defaultViewElem[A,B](implicit i: Iso[A,B]) = new StagedViewElem[A,B] { val iso = i }
 
-  class StagedViewElem[A,B](implicit iso: Iso[A,B]) extends ViewElem[A,B](iso) with StagedElement[B] {
+  trait StagedViewElem[A,B] extends ViewElem[A,B] with StagedElement[B] {
     implicit val elemB = this
     implicit private def eA = iso.eA
     implicit private def eB = iso.eB
@@ -121,33 +89,6 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     private lazy val z = iso.zero
     def manifest: Manifest[B] = m
     def zero = z
-
-//    def replicate(count: IntRep, v: Rep[B]) =
-//      ExpViewArray(Some(eA.replicate(count, iso.fromStaged(v))), iso)
-//
-//    //def replicateSeg(count: IntRep, v: PA[B]) = ???
-//    //    v match {
-//    //      case Def(ExpViewArray(arr, iso1))
-//    //           if iso1 == iso => ExpViewArray(eA.replicateSeg(count, arr.asInstanceOf[PA[A]]), iso)
-//    //      case _ =>
-//    //        ExpViewArray(eA.replicateSeg(count, ArrayFromView(v, iso)), iso)
-//    //    }
-//
-//    def tabulate(len: IntRep)(f: IntRep => Rep[B]) = {
-//      val arr = eA.tabulate(len)(iso.fromStaged compose f)
-//      ExpViewArray(Some(arr), iso)
-//    }
-//
-//    def tabulateSeg(len: IntRep)(f: IntRep => PA[B]) = ???
-//    //    {
-//    //      val fa = (i: IntRep) => {
-//    //        val segB = f(i); segB.asInstanceOf[ViewArray[A, B]].arr
-//    //      }
-//    //      val arr = eA.tabulateSeg(len)(fa)
-//    //      ExpViewArray(arr, iso)
-//    //    }
-//
-//    def empty = ExpViewArray(Some(eA.empty), iso)
     override def toRep(p: B) = iso.toStaged(eA.toRep(iso.from(p)))
   }
 

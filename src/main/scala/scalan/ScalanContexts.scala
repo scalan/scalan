@@ -192,5 +192,5 @@ trait ScalanStagedImplementation
   //implicit def liftElementValue[A:Elem](x: A): Rep[A] = element[A].toRep(x)
 }
 
-class ScalanCtxShallow extends ScalanSeqImplementation {}
-class ScalanCtxStaged extends ScalanStagedImplementation {}
+trait ScalanCtxShallow extends ScalanSeqImplementation {}
+trait ScalanCtxStaged extends ScalanStagedImplementation {}

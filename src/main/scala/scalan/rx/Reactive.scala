@@ -28,6 +28,9 @@ trait Reactive extends ScalanDsl {
     proxyOps[Observable[T], Observable[T]](p)
   }
 
+  // root of elem family
+  trait ObservableElem[A,B] extends ViewElem[A, B]
+
   // One of concrete implementations of domain object along with its state representation.
   // Each implementation requires
   // 1) implementation of methods
@@ -36,6 +39,9 @@ trait Reactive extends ScalanDsl {
     def map[B: Elem](f: Rep[A => B]) = ???
     def zip[B](that: Obs[B]) = ???
   }
+
+  trait ObservableImplElem[T] extends ObservableElem[ObservableImplData[T], ObservableImpl[T]]
+
   // 2) state representation type
   type ObservableImplData[A] = (A, (Int, Boolean))
 
@@ -64,8 +70,13 @@ trait Reactive extends ScalanDsl {
 }
 
 trait ReactiveSeq extends Reactive { self: ScalanSeq =>
+
   implicit def isoObservableImpl[T:Elem]:Iso[ObservableImplData[T], ObservableImpl[T]]
-    = new ObservableImpl.Iso[T] with SeqIso[ObservableImplData[T], ObservableImpl[T]]
+    = new ObservableImpl.Iso[T] with SeqIso[ObservableImplData[T], ObservableImpl[T]] { i =>
+        // should use i as iso reference
+        override lazy val eB = new SeqViewElem[ObservableImplData[T], ObservableImpl[T]]
+                                    with ObservableImplElem[T] { val iso = i }
+      }
 
   def mkObservableImpl[T:Elem](value: Rep[T], index: Rep[Int], completed: Rep[Boolean])
     = new ObservableImpl[T](value, index, completed)
@@ -90,7 +101,10 @@ trait ReactiveExp extends Reactive with ProxyExp with ViewsExp { self: ScalanSta
     = Some((p.value, p.index, p.completed))
 
   implicit def isoObservableImpl[T:Elem]: Iso[ObservableImplData[T], ObservableImpl[T]]
-    = new ObservableImpl.Iso[T] with StagedIso[ObservableImplData[T], ObservableImpl[T]]
+    = new ObservableImpl.Iso[T] with StagedIso[ObservableImplData[T], ObservableImpl[T]] { i =>
+        override lazy val eB = new StagedViewElem[ObservableImplData[T], ObservableImpl[T]]
+                                    with ObservableImplElem[T] { val iso = i }
+      }
 }
 
 

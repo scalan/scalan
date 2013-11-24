@@ -9,8 +9,7 @@ import scalan.{ScalanDsl, ScalanCtxStaged, ScalanCtxShallow}
 
 class PrimitivesTests extends {
 
-   val seq = new ScalanCtxShallow
-   val stag = new ScalanCtxStaged
+   val seq = new ScalanCtxShallow {}
 
   @Test def seqPrimitives() {
     import seq._;
