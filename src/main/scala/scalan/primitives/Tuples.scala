@@ -4,7 +4,7 @@
  */
 package scalan.primitives
 
-import scalan.staged.{ExpressionsBase}
+import scalan.staged.{BaseExp}
 import scalan.{ScalanStaged, Scalan, ScalanSeq}
 import scala.language.{implicitConversions}
 
@@ -87,7 +87,7 @@ trait TuplesSeq extends Tuples  { self: ScalanSeq =>
   def zipPair[A, B](p: (Rep[A], Rep[B])): Rep[(A, B)] = p
 }
 
-trait TuplesExp extends Tuples with ExpressionsBase {  self: ScalanStaged =>
+trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
 
   def unzipPair[A, B](p: Rep[(A, B)]): (Rep[A], Rep[B]) = p match {
     case Def(Tup(a, b)) => (a, b)

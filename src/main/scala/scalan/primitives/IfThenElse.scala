@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.staged.{ExpressionsBase}
+import scalan.staged.{BaseExp}
 import scalan.{ScalanStaged, ScalanSeq, Base, Scalan}
 
 trait IfThenElse extends Base { self: Scalan =>
@@ -19,7 +19,7 @@ trait IfThenElseSeq extends IfThenElse { self: ScalanSeq =>
   def __ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T] = IfThenElseHack.ifThenElse(cond, thenp, elsep)
 }
 
-trait IfThenElseExp extends IfThenElse with ExpressionsBase { self: ScalanStaged =>
+trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanStaged =>
 
   case class IfThenElse[T:Elem](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T]) extends Def[T] {
     override def mirror(t: Transformer) = IfThenElse(t(cond), t(thenp), t(elsep))

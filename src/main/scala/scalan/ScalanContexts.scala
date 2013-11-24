@@ -1,7 +1,8 @@
 package scalan
 
 import scalan.primitives._
-import scalan.staged.{Expressions, ExpressionsBase}
+import scalan.staged.{Expressions, BaseExp}
+import scalan.seq.BaseSeq
 
 //import ext.Options
 //import lms.common._
@@ -12,7 +13,6 @@ trait Scalan
   extends Base
 //     with Pipes
      with TypeDescriptors
-     with Reification
 //     with Arrays
      with Views
 //     with Chunks
@@ -42,6 +42,7 @@ trait ScalanDsl
 
 trait ScalanSeq
   extends Scalan
+  with BaseSeq
   with TypeDescriptorsSeq
 //  with SeqArrays
 //  with SeqChunks
@@ -101,7 +102,7 @@ trait ScalanSeqImplementation
 
 trait ScalanStaged
   extends Scalan
-  with ExpressionsBase
+  with BaseExp
   with TuplesExp
   with TypeSumExp
 //  with StagedImplBase
@@ -190,3 +191,6 @@ trait ScalanStagedImplementation
 {
   //implicit def liftElementValue[A:Elem](x: A): Rep[A] = element[A].toRep(x)
 }
+
+class ScalanCtxShallow extends ScalanSeqImplementation {}
+class ScalanCtxStaged extends ScalanStagedImplementation {}

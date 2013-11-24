@@ -10,7 +10,7 @@ import org.hamcrest.core.Is._
 
 
 class EntityProviderTests extends {
-  import scalan.makro.ScalanCodegen._
+  import makro.ScalanCodegen._
 
   val graphsPackage = "graphs"
 

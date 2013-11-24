@@ -2,12 +2,10 @@
  * User: Alexander Slesarenko
  * Date: 11/16/13
  */
-package scalan.makro
+package makro
 
 import scalan.codegen.emit.Formatter
-import scalan.codegen.emit.ast._
 import scalan.codegen.emit.ScalaCodeEmitter
-import makro.{ScalanParsers, ScalanAst}
 
 trait ScalanCodegen extends ScalanAst with ScalanParsers {
 

@@ -6,7 +6,7 @@ import scalan.common.Monoid._
 import scalan.common._
 import Common._
 import annotation.implicitNotFound
-import scalan.staged.ExpressionsBase
+import scalan.staged.BaseExp
 import scala.language.{implicitConversions}
 
 trait TypeDescriptors extends Base { self: Scalan =>
@@ -121,7 +121,7 @@ trait TypeDescriptorsSeq extends TypeDescriptors with Scalan { self: ScalanSeq =
 }
 
 trait TypeDescriptorsExp extends TypeDescriptors
-                            with ExpressionsBase
+                            with BaseExp
                             with Scalan { self: ScalanStaged =>
 
   override implicit lazy val boolElement: Elem[Boolean] =

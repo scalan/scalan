@@ -5,13 +5,13 @@ package scalan
 
 import java.lang.{reflect => jreflect}
 
-import scalan.staged.{ExpressionsBase}
+import scalan.staged.{BaseExp}
 
 trait ProxyBase { self: Scalan =>
   def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit m: Manifest[Ops]): Ops = x.asInstanceOf[Ops]
 }
 
-trait ProxyExp extends ProxyBase with ExpressionsBase { self: ScalanStaged =>
+trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
   case class MethodCall[T](receiver: Exp[Any], method: jreflect.Method, args: List[AnyRef])(implicit val elem: Elem[T]) extends Def[T] {
     override def mirror(t: Transformer) =

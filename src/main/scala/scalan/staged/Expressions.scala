@@ -10,7 +10,7 @@ import scala.language.{implicitConversions}
  *
  * @since 0.1
  */
-trait Expressions extends ExpressionsBase { self: ScalanStaged =>
+trait Expressions extends BaseExp { self: ScalanStaged =>
   /**
    * A Sym is a symbolic reference used internally to refer to expressions.
    */
@@ -104,7 +104,7 @@ trait Expressions extends ExpressionsBase { self: ScalanStaged =>
 
 }
 
-trait ExpressionsBase { self: ScalanStaged =>
+trait BaseExp { self: ScalanStaged =>
 
   /**
    * constants/symbols (atomic)
@@ -202,6 +202,7 @@ trait ExpressionsBase { self: ScalanStaged =>
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: Elem[T]): Exp[T]
+  implicit def reifyObject[T: Elem](obj: ReifiableObject[T]): Rep[T] = toExp(obj, fresh[T])
 
   object Def {
     def unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)

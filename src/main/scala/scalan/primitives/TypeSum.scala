@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.staged.{ExpressionsBase}
+import scalan.staged.{BaseExp}
 import scalan.{ScalanStaged, Scalan, ScalanSeq}
 import scala.language.{implicitConversions}
 
@@ -14,7 +14,7 @@ trait TypeSum {  self: Scalan =>
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R]
   }
 
-  implicit def pimpSum[A: Elem, B: Elem](p: Rep[(A | B)]): SumOps[A, B]
+  implicit def pimpSum[A: Elem, B: Elem](s: Rep[(A | B)]): SumOps[A, B]
 
   def toLeft[A: Elem](a: Rep[A]): Rep[(A|Unit)]
 
@@ -35,15 +35,17 @@ trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
 
   def toRightSum[A: Elem, B: Elem](a: Rep[B]): Rep[(A | B)] = Right[A,B](a)
 
-  implicit class SeqSumOps[A: Elem, B: Elem](s: Rep[(A | B)]) extends SumOps[A,B] {
+  class SeqSumOps[A: Elem, B: Elem](s: Rep[(A | B)]) extends SumOps[A,B] {
     def eA = element[A]; def eB = element[B]
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = s.fold(l,r)
     def isLeft = s.isLeft
     def isRight = s.isRight
   }
+  implicit def pimpSum[A: Elem, B: Elem](s: Rep[(A | B)]): SumOps[A, B] = new SeqSumOps[A,B](s)
+
 }
 
-trait TypeSumExp extends TypeSum with ExpressionsBase { self: ScalanStaged =>
+trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
 
   case class Left[A:Elem, B:Elem](left: Exp[A]) extends Def[(A | B)] {
     override def mirror(t: Transformer) = Left[A,B](t(left))
@@ -71,12 +73,13 @@ trait TypeSumExp extends TypeSum with ExpressionsBase { self: ScalanStaged =>
     override def mirror(t: Transformer) = SumFold(t(sum), t(left), t(right))
   }
 
-  implicit class StagedSumOps[A:Elem, B:Elem](s: Rep[(A | B)]) extends SumOps[A,B] {
+  class StagedSumOps[A:Elem, B:Elem](s: Rep[(A | B)]) extends SumOps[A,B] {
     def eA = element[A]; def eB = element[B]
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = SumFold(s, fun(l), fun(r))
     def isLeft = IsLeft(s)
     def isRight = IsRight(s)
   }
+  implicit def pimpSum[A: Elem, B: Elem](s: Rep[(A | B)]): SumOps[A, B] = new StagedSumOps[A,B](s)
 
   override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
     case f@SumFold(Def(Left(left)), l, _) => {

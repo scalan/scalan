@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.staged.{ExpressionsBase}
+import scalan.staged.{BaseExp}
 import scalan.{Scalan, ScalanStaged}
 import scalan.ScalanSeq
 import scalan.common.OverloadHack
@@ -21,7 +21,7 @@ trait EqualSeq extends Equal  { self: ScalanSeq =>
   def notequals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = !equals(a,b)
 }
 
-trait EqualExp extends Equal with ExpressionsBase { self: ScalanStaged =>
+trait EqualExp extends Equal with BaseExp { self: ScalanStaged =>
   abstract class EqBinOp[T](val opName: String) extends Def[Boolean] with BinOpBase[T, Boolean] {
     val elem = element[Boolean]
     override def mirror(t: Transformer) = {

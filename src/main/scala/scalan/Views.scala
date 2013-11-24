@@ -42,6 +42,9 @@ trait Views extends Base with Reification { self: Scalan =>
 
   def iso[A,B](implicit i: Iso[A,B]) = i
 
+  //final class uncheckedVariance extends scala.annotation.StaticAnnotation {}
+
+
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>

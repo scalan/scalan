@@ -3,7 +3,7 @@ package scalan.staged
 import scalan.ScalanStaged
 import scalan.common.GraphUtil
 
-trait Scheduling extends ExpressionsBase { self: ScalanStaged =>
+trait Scheduling extends BaseExp { self: ScalanStaged =>
 
   def buildScheduleForResult(start: Exp[_]): List[TP[_]] = buildScheduleForResult(syms(start))
 

@@ -2,11 +2,12 @@
  * User: Alexander Slesarenko
  * Date: 11/16/13
  */
-package makro
+package tests.makro
 
 import org.junit.Test
 import org.junit.Assert._
 import org.hamcrest.core.Is._
+import makro.ScalanImpl
 
 class ScalanParsersTests extends {
   import ScalanImpl._

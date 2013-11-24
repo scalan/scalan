@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.staged.{ExpressionsBase}
+import scalan.staged.{BaseExp}
 import scalan.{ScalanStaged, Scalan, ScalanSeq}
 import scalan.common.OverloadHack
 
@@ -37,93 +37,81 @@ trait NumericOps extends OverloadHack { self: Scalan =>
 }
 
 trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
-//  def numeric_plus[T](lhs: Rep[T], rhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.plus(lhs, rhs)
-//  def numeric_minus[T](lhs: Rep[T], rhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.minus(lhs, rhs)
-//  def numeric_times[T](lhs: Rep[T], rhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.times(lhs, rhs)
-//  def numeric_divInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = lhs / rhs
-//  def numeric_modInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = lhs % rhs
-//  def numeric_negate[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.negate(x)
+  def numeric_plus[T](lhs: Rep[T], rhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.plus(lhs, rhs)
+  def numeric_minus[T](lhs: Rep[T], rhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.minus(lhs, rhs)
+  def numeric_times[T](lhs: Rep[T], rhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.times(lhs, rhs)
+  def numeric_divInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = lhs / rhs
+  def numeric_modInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = lhs % rhs
+  def numeric_negate[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.negate(x)
 ////  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.abs(x)
 //  //def numeric_signum[T](x: T)(implicit n: Numeric[T]): Rep[Int]
-//  def numeric_toFloat[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Float] = n.toFloat(lhs)
-//  def numeric_toDouble[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Double] = n.toDouble(lhs)
+  def numeric_toFloat[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Float] = n.toFloat(lhs)
 }
 
-trait NumericOpsExp extends NumericOps with ExpressionsBase { self: ScalanStaged =>
-//  abstract class NumericBinOp[T](val opName: String)(implicit val elem: Elem[T], val numeric: Numeric[T]) extends BinOp[T] {
-//  }
-//  case class NumericPlus[T:Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("+") {
-//    def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
-//  }
-//  case class NumericMinus[T:Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("-"){
-//    def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
-//  }
-//  case class NumericTimes[T:Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("*") {
-//    def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
-//  }
-//  case class NumericDiv[T:Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("/") {
-//    def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
-//  }
-//  case class NumericDivInt(lhs: Exp[Int], rhs: Exp[Int]) extends BinOp[Int] {
-//    val elem = element[Int]
-//    def copyWith(l: Rep[Int], r: Rep[Int]) = this.copy(lhs = l, rhs = r)
-//    def opName = "/"
-//  }
-//  case class NumericModInt(lhs: Exp[Int], rhs: Exp[Int]) extends BinOp[Int] {
-//    val elem = element[Int]
-//    def copyWith(l: Rep[Int], r: Rep[Int]) = this.copy(lhs = l, rhs = r)
-//    def opName = "%"
-//  }
-//
-//  abstract class NumericUnOp[T](val opName: String)(implicit val elem: Elem[T], val numeric: Numeric[T]) extends UnOp[T] {
-//  }
-//  case class NumericNegate[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends NumericUnOp[T]("-") {
+trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
+  abstract class NumericBinOp[T](val opName: String)(implicit val elem: Elem[T], val numeric: Numeric[T]) extends BinOp[T] {
+  }
+  case class NumericPlus[T:Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("+") {
+    def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
+  }
+  case class NumericMinus[T:Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("-"){
+    def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
+  }
+  case class NumericTimes[T:Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("*") {
+    def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
+  }
+  case class NumericDiv[T:Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("/") {
+    def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
+  }
+  case class NumericDivInt(lhs: Exp[Int], rhs: Exp[Int]) extends BinOp[Int] {
+    val elem = element[Int]
+    def copyWith(l: Rep[Int], r: Rep[Int]) = this.copy(lhs = l, rhs = r)
+    def opName = "/"
+  }
+  case class NumericModInt(lhs: Exp[Int], rhs: Exp[Int]) extends BinOp[Int] {
+    val elem = element[Int]
+    def copyWith(l: Rep[Int], r: Rep[Int]) = this.copy(lhs = l, rhs = r)
+    def opName = "%"
+  }
+
+  abstract class NumericUnOp[T](val opName: String)(implicit val elem: Elem[T], val numeric: Numeric[T]) extends UnOp[T] {
+  }
+  case class NumericNegate[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends NumericUnOp[T]("-") {
+     def copyWith(a: Rep[T]) = this.copy(arg = a)
+  }
+
+//  case class NumericAbs[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends NumericUnOp[T]("Abs") {
 //     def copyWith(a: Rep[T]) = this.copy(arg = a)
 //  }
-////  case class NumericAbs[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends NumericUnOp[T]("Abs") {
-////     def copyWith(a: Rep[T]) = this.copy(arg = a)
-////  }
-//
-//  case class NumericToFloat[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends Def[Float] with UnOpBase[T,Float] {
-//    val elem = element[Float]
-//    def copyWith(a: Rep[T]) = this.copy(arg = a)
-//    override def mirror(t: Transformer)(implicit ctx: SourceContext) = {
-//      implicit val eT = arg.Elem
-//      copyWith(t(arg))
-//    }
-//    def opName = "ToFloat"
-//  }
-//
-//  case class NumericToDouble[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends Def[Double] with UnOpBase[T,Double] {
-//    val elem = element[Double]
-//    def copyWith(a: Rep[T]) = this.copy(arg = a)
-//    override def mirror(t: Transformer)(implicit ctx: SourceContext) = {
-//      implicit val eT = arg.Elem
-//      copyWith(t(arg))
-//    }
-//    def opName = "ToFloat"
-//  }
-//
-//  def numeric_plus[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]) : Rep[T] = NumericPlus(lhs, rhs, n)
-//  def numeric_minus[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]) : Rep[T] = NumericMinus(lhs, rhs, n)
-//  def numeric_times[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]) : Rep[T] = NumericTimes(lhs, rhs, n)
-//  def numeric_divInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = NumericDivInt(lhs, rhs)
-//  def numeric_modInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = NumericModInt(lhs, rhs)
-//  def numeric_toFloat[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Float] = NumericToFloat(lhs,n)
-//  def numeric_toDouble[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Double] = NumericToDouble(lhs,n)
-//  def numeric_negate[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericNegate(x, n)
+
+  case class NumericToFloat[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends Def[Float] with UnOpBase[T,Float] {
+    val elem = element[Float]
+    def copyWith(a: Rep[T]) = this.copy(arg = a)
+    override def mirror(t: Transformer) = {
+      implicit val eT = arg.Elem
+      copyWith(t(arg))
+    }
+    def opName = "ToFloat"
+  }
+
+  def numeric_plus[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]) : Rep[T] = NumericPlus(lhs, rhs, n)
+  def numeric_minus[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]) : Rep[T] = NumericMinus(lhs, rhs, n)
+  def numeric_times[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]) : Rep[T] = NumericTimes(lhs, rhs, n)
+  def numeric_divInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = NumericDivInt(lhs, rhs)
+  def numeric_modInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = NumericModInt(lhs, rhs)
+  def numeric_toFloat[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Float] = NumericToFloat(lhs,n)
+  def numeric_negate[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericNegate(x, n)
 ////  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericAbs(x, n)
 //
-//  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
-//    case d@NumericPlus(Def(Const(x)), Def(Const(y)), n) => d.elem.toRep(n.plus(x, y))
-//    case d@NumericMinus(Def(Const(x)), Def(Const(y)), n) => d.elem.toRep(n.minus(x, y))
-//    case _ => super.rewrite(d)
-//  }
-//
-//  override def formatDef(d: Def[_]) = d match {
-//    case NumericToFloat(lhs, _) => "%s.toFloat".format(lhs)
-//    case NumericToDouble(lhs, _) => "%s.toDouble".format(lhs)
-//    case _ => super.formatDef(d)
-//  }
+  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
+    case d@NumericPlus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => d.elem.toRep(n.plus(x.asInstanceOf[t], y.asInstanceOf[t]))
+    case d@NumericMinus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => d.elem.toRep(n.minus(x.asInstanceOf[t], y.asInstanceOf[t]))
+    case _ => super.rewrite(d)
+  }
+
+  override def formatDef(d: Def[_]) = d match {
+    case NumericToFloat(lhs, _) => "%s.toFloat".format(lhs)
+    case _ => super.formatDef(d)
+  }
 }
 
