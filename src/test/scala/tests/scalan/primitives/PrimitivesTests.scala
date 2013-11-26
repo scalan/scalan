@@ -7,7 +7,7 @@ package tests.scalan.primitives
 import org.junit.Test
 import scalan.{ScalanDsl, ScalanCtxStaged, ScalanCtxShallow}
 
-class PrimitivesTests extends {
+class PrimitivesTests  {
 
    val seq = new ScalanCtxShallow {}
 

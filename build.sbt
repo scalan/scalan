@@ -1,4 +1,4 @@
-scalaVersion := "2.10.0"
+scalaVersion := "2.10.2"
 
 organization := "huawei"
 
@@ -12,6 +12,10 @@ version := "0.1"
 
 libraryDependencies += "junit" % "junit" % "4.10" % "test"
 
+//libraryDependencies ++= Seq(
+//  //"com.chuusai" % "shapeless" % "2.0.0-M1" cross CrossVersion.full
+//  "com.chuusai" % "shapeless_2.10.2" % "2.0.0-M1" // alternatively ...
+//)
 //libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.10.1"
 
 //testOptions in Test += Tests.Argument("-oD")
