@@ -4,12 +4,10 @@
  */
 package tests.makro
 
-import org.junit.Test
-import org.junit.Assert._
-import org.hamcrest.core.Is._
 import makro.ScalanImpl
+import tests.BaseTests
 
-class ScalanParsersTests extends {
+class ScalanParsersTests extends BaseTests {
   import ScalanImpl._
   import ScalanImpl.{
     TpeInt => INT, TpeBoolean => BOOL, TraitCall => TC,
@@ -18,7 +16,7 @@ class ScalanParsersTests extends {
 
   def test[T](p: Parser[T], prog: String, expected: T) {
     parseAll(p, prog) match {
-      case Success(res, _) => assertEquals(expected, res)
+      case Success(res, _) => assertResult(expected)(res)
       case NoSuccess(msg, input) => fail(s"$msg (pos: ${input.pos})")
     }
   }
@@ -34,14 +32,14 @@ class ScalanParsersTests extends {
     test(methodDef, prog, expected)
   }
 
-  @Test def testTpeExpr() {
+  test("TpeExpr") {
     testTpe("Int", INT)
     testTpe("(Int,Boolean)", TpeTuple(L(INT, BOOL)))
     testTpe("Edge", TC("Edge"))
     testTpe("Edge[V,E]", TC("Edge", L(TC("V"), TC("E"))))
   }
 
-  @Test def testMethodDef() {
+  test("MethodDef") {
     testMethod("def f: Int", MD("f", tpeRes = INT))
     testMethod("def f(x: Int): Int", MD("f", Nil, L(MA("x", INT)), INT))
     testMethod(
@@ -49,7 +47,7 @@ class ScalanParsersTests extends {
       MD("f", L(TpeArg("A", Some(TC("T")))), L(MA("x", TC("A"))), INT))
   }
 
-  @Test def testTraitDef() {
+  test("TraitDef") {
     testTrait("trait A", TD("A"))
     testTrait("trait Edge[V,E]", TD("Edge", L(TpeArg("V"), TpeArg("E"))))
     testTrait("trait Edge[V,E]{}", TD("Edge", L(TpeArg("V"), TpeArg("E"))))

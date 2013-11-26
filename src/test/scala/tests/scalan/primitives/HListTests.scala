@@ -4,14 +4,12 @@
  */
 package tests.scalan.primitives
 
-import org.junit.{Assert, Test}
-import Assert._
-import scalan.{ScalanDsl, ScalanCtxStaged, ScalanCtxShallow}
+import scalan.ScalanCtxStaged
 import shapeless._
+import tests.BaseTests
 
-class HListTests extends ScalanCtxStaged {
+class HListTests extends BaseTests with ScalanCtxStaged {
   import poly._
-  import poly.identity
 
   object choose extends (Set ~> Option) {
     def apply[T](s : Set[T]) = s.headOption
@@ -26,15 +24,15 @@ class HListTests extends ScalanCtxStaged {
   }
 
   object addSize extends Poly2 {
-    implicit  def default[T](implicit st: size.Case.Aux[Rep[T], Int]) =
+    implicit def default[T](implicit st: size.Case.Aux[Rep[T], Int]) =
       at[Int, Rep[T]]{ (acc, t) => acc + size(t) }
   }
 
 
-  @Test def stagedTuples {
+  test("stagedTuples") {
     val l = toRep(23) :: toRep("foo") :: HNil //(toRep(13), toRep("wibble")) :: HNil
     val sz = l.foldLeft(0)(addSize)
-    assertEquals(11, sz)
+    assertResult(11)(sz)
 
   }
 

@@ -4,12 +4,9 @@
  */
 package tests.makro
 
-import org.junit.Test
-import org.junit.Assert._
-import org.hamcrest.core.Is._
+import tests.BaseTests
 
-
-class EntityProviderTests extends {
+class EntityProviderTests extends BaseTests {
   import makro.ScalanCodegen._
 
   val graphsPackage = "graphs"
@@ -18,10 +15,10 @@ class EntityProviderTests extends {
     val d = entity(graphsPackage, entityTemplate)
     val p = new EntityFileGenerator(d)
     val code = p.getBaseTrait
-    assertEquals(expected, code)
+    assertResult(expected)(code)
   }
 
-  @Test def test1() {
+  test("test1") {
     testBaseTrait(
       """trait Edge[V, E] {
         |}""".stripMargin,
@@ -33,5 +30,4 @@ class EntityProviderTests extends {
         |}
       """.stripMargin)
   }
-
 }

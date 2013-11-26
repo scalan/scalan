@@ -4,15 +4,15 @@
  */
 package tests.scalan.primitives
 
-import org.junit.Test
-import scalan.{ScalanDsl, ScalanCtxStaged, ScalanCtxShallow}
+import scalan.ScalanCtxShallow
+import tests.BaseTests
 
-class PrimitivesTests  {
+class PrimitivesTests extends BaseTests {
 
    val seq = new ScalanCtxShallow {}
 
-  @Test def seqPrimitives() {
-    import seq._;
+  test("seqPrimitives") {
+
   }
 
  }

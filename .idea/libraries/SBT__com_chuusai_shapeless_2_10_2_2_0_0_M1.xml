@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="SBT: com.chuusai:shapeless_2.10.2:2.0.0-M1">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.chuusai/shapeless_2.10.2/jars/shapeless_2.10.2-2.0.0-M1.jar!/" />
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.chuusai/shapeless_2.10.2/bundles/shapeless_2.10.2-2.0.0-M1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.chuusai/shapeless_2.10.2/docs/shapeless_2.10.2-2.0.0-M1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.chuusai/shapeless_2.10.2/srcs/shapeless_2.10.2-2.0.0-M1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

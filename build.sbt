@@ -8,9 +8,7 @@ version := "0.1"
 
 //libraryDependencies += "com.googlecode.kiama" %% "kiama" % "1.5.1"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "1.9.1" % "test"
-
-libraryDependencies += "junit" % "junit" % "4.10" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "2.0" % "test"
 
 libraryDependencies ++= Seq(
   //"com.chuusai" % "shapeless" % "2.0.0-M1" cross CrossVersion.full
@@ -20,3 +18,7 @@ libraryDependencies ++= Seq(
 libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.10.1" % "test"
 
 //testOptions in Test += Tests.Argument("-oD")
+
+net.virtualvoid.sbt.graph.Plugin.graphSettings
+
+filterScalaLibrary := false

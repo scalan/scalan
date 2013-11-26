@@ -25,10 +25,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="SBT: org.scala-lang:scala-library:2.10.3" level="project" />
-    <orderEntry type="library" scope="TEST" name="SBT: org.scalatest:scalatest_2.10:1.9.1:test" level="project" />
-    <orderEntry type="library" scope="TEST" name="SBT: org.scala-lang:scala-reflect:2.10.0:test" level="project" />
-    <orderEntry type="library" scope="TEST" name="SBT: junit:junit:4.10:test" level="project" />
-    <orderEntry type="library" scope="TEST" name="SBT: org.hamcrest:hamcrest-core:1.1:test" level="project" />
+    <orderEntry type="library" name="SBT: com.chuusai:shapeless_2.10.2:2.0.0-M1" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scala-compiler:2.10.3" level="project" />
+    <orderEntry type="library" name="SBT: org.scala-lang:scala-reflect:2.10.3" level="project" />
+    <orderEntry type="library" scope="TEST" name="SBT: org.scalatest:scalatest_2.10:2.0:test" level="project" />
     <orderEntry type="library" scope="TEST" name="SBT: org.scalacheck:scalacheck_2.10:1.10.1:test" level="project" />
     <orderEntry type="library" scope="TEST" name="SBT: org.scala-tools.testing:test-interface:0.5:test" level="project" />
     <orderEntry type="library" scope="TEST" name="SBT: org.scala-lang:scala-actors:2.10.1:test" level="project" />
