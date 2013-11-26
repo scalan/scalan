@@ -19,7 +19,7 @@ class ReactiveTests extends BaseTests with ScalanCtxStaged with ReactiveExp {
 //  }
   test("element for concrete class should be resolvable") {
     val e = element[ObservableImpl[Int]]
-    assert(e != null)
+    e shouldNot be(null)
 
     // element[Observable[Int]] no such element
   }

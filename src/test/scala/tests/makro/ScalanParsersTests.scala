@@ -16,7 +16,7 @@ class ScalanParsersTests extends BaseTests {
 
   def test[T](p: Parser[T], prog: String, expected: T) {
     parseAll(p, prog) match {
-      case Success(res, _) => assertResult(expected)(res)
+      case Success(res, _) => res shouldBe expected
       case NoSuccess(msg, input) => fail(s"$msg (pos: ${input.pos})")
     }
   }

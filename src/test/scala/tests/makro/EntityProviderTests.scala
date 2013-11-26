@@ -15,7 +15,7 @@ class EntityProviderTests extends BaseTests {
     val d = entity(graphsPackage, entityTemplate)
     val p = new EntityFileGenerator(d)
     val code = p.getBaseTrait
-    assertResult(expected)(code)
+    code shouldBe expected
   }
 
   test("test1") {
