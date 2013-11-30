@@ -5,6 +5,7 @@
 package makro
 
 import scala.util.parsing.combinator.JavaTokenParsers
+import java.text.ParseException
 
 trait ScalanAst {
 
@@ -17,6 +18,8 @@ trait ScalanAst {
   case object TpeFloat extends TpeExpr
   case object TpeString extends TpeExpr
   case class TpeTuple(items: List[TpeExpr]) extends TpeExpr
+  case class TpeFunc(items: List[TpeExpr]) extends TpeExpr
+  case class TpeSum(items: List[TpeExpr]) extends TpeExpr
 
   // Expr universe --------------------------------------------------------------------------
   abstract class Expr
@@ -24,85 +27,175 @@ trait ScalanAst {
 
   // BodyItem universe ----------------------------------------------------------------------
   abstract class BodyItem
-  case class MethodDef(name: String, tpeArgs: TpeArgs = Nil, args: List[MethodArg] = Nil, tpeRes: TpeExpr) extends BodyItem
+  case class ImportStat(names: List[String]) extends BodyItem
+  case class MethodDef(name: String, tpeArgs: TpeArgs = Nil, args: MethodArgs = Nil,
+                       tpeRes: TpeExpr = TraitCall("Any"), isImplicit: Boolean = false) extends BodyItem
+  case class TpeDef(name: String, tpeArgs: TpeArgs = Nil, rhs: TpeExpr) extends BodyItem
 
-  case class TpeArg(name: String, bound: Option[TpeExpr] = None)
+  case class TpeArg(name: String, bound: Option[TpeExpr] = None, contextBound: List[String] = Nil)
   type TpeArgs = List[TpeArg]
 
   case class MethodArg(name: String, tpe: TpeExpr, default: Option[Expr] = None)
   type MethodArgs = List[MethodArg]
 
+  case class ClassArg(impFlag: Boolean, overFlag: Boolean, valFlag: Boolean, name: String, tpe: TpeExpr, default: Option[Expr] = None)
+  type ClassArgs = List[ClassArg]
+
   case class TraitDef(
     name: String,
     tpeArgs: List[TpeArg] = Nil,
     ancestors: List[TraitCall] = Nil,
-    body: List[BodyItem] = Nil)
+    body: List[BodyItem] = Nil) extends BodyItem
+
+  case class ClassDef(
+    name: String,
+    tpeArgs: List[TpeArg] = Nil,
+    args: ClassArgs = Nil,
+    implicitArgs: ClassArgs = Nil,
+    ancestors: List[TraitCall] = Nil,
+    body: List[BodyItem] = Nil) extends BodyItem
+
+  case class EntityModuleDef(
+    packageName: String, name: String,
+    typeSyn: TpeDef,
+    entityOps: TraitDef,
+    concreteClasses: List[ClassDef],
+    selfType: Option[String] = None) {
+  }
+
+  def getConcreteClasses(defs: List[BodyItem]) = defs.collect { case c: ClassDef => c }
+
+  object EntityModuleDef {
+    def fromModuleTrait(packageName: String, moduleTrait: TraitDef): EntityModuleDef = {
+      val moduleName = moduleTrait.name
+      val defs = moduleTrait.body
+
+      val (typeSyn, opsTrait) = defs match {
+        case (ts: TpeDef) :: (ot: TraitDef) :: _ => (ts, ot)
+        case _ => throw new ParseException(s"Invalid syntax of Entity module trait $moduleName", 0)
+      }
+      val classes = getConcreteClasses(defs)
+
+      EntityModuleDef(packageName, moduleName, typeSyn, opsTrait, classes, Some("ScalanDsl"))
+    }
+
+  }
+
+
 
 }
 
+
 trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
 
-  lazy val tpeArg: Parser[TpeArg] = (ident ~ opt("<:" ~ tpeExpr)) ^^ {
-    case name ~ None => TpeArg(name)
-    case name ~ Some(_ ~ bound) => TpeArg(name, Some(bound))
+  implicit class OptionListOps[A](opt: Option[List[A]]) {
+    def flatList: List[A] = opt.toList.flatten
+  }
+
+  def wrapIfMany[A <: TpeExpr,B <: TpeExpr](w: List[A]=>B, xs: List[A]):TpeExpr = {
+    val sz = xs.size
+    assert(sz >= 1)
+    if (sz > 1) w(xs) else xs.head
+  }
+
+  lazy val qualId = rep1sep(ident, ".")
+
+  lazy val tpeArg: Parser[TpeArg] = (ident ~ opt("<:" ~ tpeExpr) ~ rep(":" ~> ident)) ^^ {
+    case name ~ None ~ ctxs => TpeArg(name, None, ctxs)
+    case name ~ Some(_ ~ bound) ~ ctxs => TpeArg(name, Some(bound), ctxs)
   }
 
   lazy val tpeArgs = "[" ~ tpeArg ~ rep( ("," ~ tpeArg) ^^ { case _ ~ x => x }) ~ "]" ^^ {
     case _ ~ x ~ xs ~ _ => x :: xs
   }
 
-  lazy val extendsList = traitCall ~ rep( ("with" ~ traitCall) ^^ { case _ ~ x => x }) ^^ {
+  lazy val extendsList = "extends" ~> traitCall ~ rep( ("with" ~ traitCall) ^^ { case _ ~ x => x }) ^^ {
     case x ~ xs => x :: xs
   }
 
   lazy val tpeBase: Parser[TpeExpr] = "Int" ^^^ { TpeInt } |
                      "Boolean" ^^^ { TpeBoolean } |
-                     "Float" ^^^ { TpeFloat } |
-                     "String" ^^^ { TpeString }
+                     "Float" ^^^ { TpeFloat }     |
+                     "String" ^^^ { TpeString }   |
+                     traitCall
 
-  lazy val tpeTuple = "(" ~ tpeExpr ~ rep(("," ~ tpeExpr) ^^ { case _ ~ x => x }) ~ ")" ^^ {
-    case _ ~ x ~ xs ~ _ => TpeTuple(x :: xs)
+  lazy val tpeFactor = tpeBase | "(" ~> tpeExpr <~ ")"
+
+  lazy val tpeFunc = rep1sep(tpeFactor, "=>") ^^ { wrapIfMany(TpeFunc, _) }
+
+  lazy val tpeTuple = rep1sep(tpeFunc, ",") ^^ { wrapIfMany(TpeTuple, _) }
+
+  lazy val tpeExpr: Parser[TpeExpr] = rep1sep(tpeTuple, "|") ^^ { wrapIfMany(TpeSum, _) }
+
+  lazy val traitCallArgs = "[" ~> rep1sep(tpeExpr, ",") <~ "]" ^^ {
+    case List(t: TpeTuple) => t.items
+    case x => x
   }
 
-  lazy val tpeExprs = "[" ~ tpeExpr ~ rep(("," ~ tpeExpr) ^^ { case _ ~ x => x }) ~ "]" ^^ {
-    case _ ~ x ~ xs ~ _ => x :: xs
-  }
-
-  lazy val traitCall = ident ~ opt(tpeExprs) ^^ {
+  lazy val traitCall = ident ~ opt(traitCallArgs) ^^ {
     case n ~ None => TraitCall(n)
     case n ~ Some(ts) => TraitCall(n, ts)
   }
 
-  lazy val tpeExpr: Parser[TpeExpr] =
-    tpeBase |
-    tpeTuple  |
-    traitCall
+  lazy val methodArg = ident ~ ":" ~ tpeFactor ^^ { case n ~ _ ~ t => MethodArg(n, t, None)}
+  lazy val methodArgs = "(" ~> rep1sep(methodArg, ",") <~ ")"
 
-  lazy val methodArg = ident ~ ":" ~ tpeExpr ^^ { case n ~ _ ~ t => MethodArg(n, t, None)}
 
-  lazy val methodArgs = "(" ~ methodArg ~ rep("," ~ methodArg ^^ { _._2 }) ~ ")" ^^ {
-    case _ ~ x ~ xs ~ _ => x :: xs
+  lazy val classArg = opt("implicit") ~ opt("override") ~ opt("val") ~ ident ~ ":" ~ tpeFactor ^^ {
+    case imp ~ over ~ value ~ n ~ _ ~ t =>
+      ClassArg(imp.isDefined, over.isDefined, value.isDefined, n, t, None)
+  }
+  lazy val classArgs = "(" ~> rep1sep(classArg, ",")  <~ ")"
+
+
+  lazy val methodDef = opt("implicit") ~ "def" ~ ident ~ opt(tpeArgs) ~ opt(methodArgs) ~ ":" ~ tpeExpr ^^ {
+    case implicitModifier ~ _ ~ n ~ targs ~ args ~ _ ~ tres =>
+      MethodDef(n, targs.toList.flatten, args.toList.flatten, tres, implicitModifier.isDefined)
   }
 
-  lazy val methodDef = "def" ~ ident ~ opt(tpeArgs) ~ opt(methodArgs) ~ ":" ~ tpeExpr ^^ {
-    case _ ~ n ~ targs ~ args ~ _ ~ tres =>
-      MethodDef(n, targs.toList.flatten, args.toList.flatten, tres)
+  lazy val importStat = "import" ~ qualId ~ opt(";") ^^ { case _ ~ ns ~ _ => ImportStat(ns) }
+
+  lazy val tpeDef = "type" ~ ident ~ opt(tpeArgs) ~ "=" ~ tpeExpr ~ opt(";") ^^ {
+    case _ ~ n ~ targs ~ _ ~ rhs ~ _ => TpeDef(n, targs.toList.flatten, rhs)
   }
 
-  lazy val bodyItem = methodDef
+  lazy val bodyItem =
+    methodDef |
+    importStat |
+    tpeDef     |
+    traitDef   |
+    classDef
 
   lazy val bodyItems = rep(bodyItem)
 
   lazy val traitBody = "{" ~ opt(bodyItems) ~ "}" ^^ { case _ ~ body ~ _ => body.toList.flatten }
 
-  lazy val traitDef = "trait" ~ ident ~ opt(tpeArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
+  lazy val traitDef: Parser[TraitDef] = "trait" ~ ident ~ opt(tpeArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
     case _ ~ n ~ targs ~ ancs ~ body =>
       TraitDef(n, targs.toList.flatten, ancs.toList.flatten, body.toList.flatten)
   }
 
-  def parseTrait(s: String) = parseAll(traitDef, s).get
+  lazy val classDef: Parser[ClassDef] =
+    "class" ~ ident ~ opt(tpeArgs) ~ opt(classArgs) ~ opt(classArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
+    case _ ~ n ~ targs ~ args ~ impArgs ~ ancs ~ body =>
+      ClassDef(n, targs.flatList, args.flatList, impArgs.flatList, ancs.flatList, body.flatList)
+  }
+
+  lazy val entityModuleDef =
+    "package" ~ qualId ~ opt(";") ~
+    rep1sep(importStat, opt(";")) ~
+    traitDef ^^ {
+      case _ ~ ns ~ _ ~ imports ~ moduleTrait => {
+        val packageName = ns.mkString(".")
+        EntityModuleDef.fromModuleTrait(packageName, moduleTrait)
+      }
+  }
+
   def parseTpeExpr(s: String) = parseAll(tpeExpr, s).get
   def parseTpeArgs(s: String) = parseAll(tpeArgs, s).get
+
+  def parseTrait(s: String) = parseAll(traitDef, s).get
+  def parseEntityModule(s: String) = parseAll(entityModuleDef, s).get
 
 }
 

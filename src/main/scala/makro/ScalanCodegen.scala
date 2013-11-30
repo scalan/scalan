@@ -9,45 +9,44 @@ import scalan.codegen.emit.ScalaCodeEmitter
 
 trait ScalanCodegen extends ScalanAst with ScalanParsers {
 
-  case class Context(name: String)
-  case class EntityModuleDef(packageName: String, name: String, entityDef: TraitDef, selfType: Option[String] = None) {
-  }
-
-  def parseEntity(entityTemplate: String): TraitDef = parseTrait(entityTemplate)
-
-  def entity(packageName: String, entityTemplate: String) = {
-    val entity = parseEntity(entityTemplate)
-    EntityModuleDef(packageName, s"${entity.name}s", entity)
-  }
-  def entity(packageName: String, entityTemplate: String, moduleName: String) = {
-    val entity = parseEntity(entityTemplate)
-    EntityModuleDef(packageName, moduleName, entity)
-  }
-
   class EntityFileGenerator(module: EntityModuleDef) {
 
-//    private def genModuleHeader(implicit f: Formatter): Formatter =
-//      f << "trait " << module.name << " extends ScalanDsl { " <<
-//            module.selfType.map { c => "self: %s =>".format(c) }
+//    def getBaseTrait = {
+//      implicit val f = new Formatter { tabSize = 2 }
+//      val  emitter = new ScalaCodeEmitter
 //
-//    private def genEntityInterface(implicit f: Formatter): Formatter = {
-//      f << "trait " << e.entName
-//      e.tpeArgs.isEmpty match {
-//        case false =>
-//          f << "[" << e.tpeArgs << "]"
-//        case _ =>
-//      }
-//      f << "{\n}"
+//      f.toString
 //    }
-  
-    def getBaseTrait = {
-      implicit val f = new Formatter { tabSize = 2 }
-      val  emitter = new ScalaCodeEmitter
-  
-      f.toString
+//
+    def getSeqTrait: String = {
+      val defs = for { c <- module.concreteClasses } yield {
+        val isoDefs =
+          s"""
+           |  implicit def isoObservableImpl[T:Elem]:Iso[ObservableImplData[T], ObservableImpl[T]]
+           |    = new ObservableImpl.Iso[T] with SeqIso[ObservableImplData[T], ObservableImpl[T]] { i =>
+           |        // should use i as iso reference
+           |        override lazy val eB = new SeqViewElem[ObservableImplData[T], ObservableImpl[T]]
+           |                                    with ObservableImplElem[T] { val iso = i }
+           |      }
+          """.stripMargin
+
+        val constrDefs =
+          s"""
+           |  def mkObservableImpl[T:Elem](value: Rep[T], index: Rep[Int], completed: Rep[Boolean])
+           |    = new ObservableImpl[T](value, index, completed)
+           |  def unmkObservableImpl[T:Elem](p: Rep[ObservableImpl[T]])
+           |    = Some((p.value, p.index, p.completed))
+          """.stripMargin
+
+        s"""$isoDefs \n\n $constrDefs"""
+      }
+
+      s"""trait ${module.name}Seq extends ${module.name} { self: ScalanSeq =>
+         |  ${defs.mkString("\n")}
+         |}
+      """.stripMargin
     }
-  
-    def getSeqTrait: String = ""
+
     def getStagedTrait: String = ""
   
     def getFileHeader = {
@@ -68,7 +67,6 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers {
     def generateCode: String = {
       val topLevel = List(
         getFileHeader,
-        getBaseTrait,
         getSeqTrait,
         getStagedTrait
       )
