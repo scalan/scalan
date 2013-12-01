@@ -6,36 +6,34 @@ import scalan.common.Zero
 
 trait Views extends Base with Reification { self: Scalan =>
 
-  trait GenIso[A,B] {
-    def eA: Elem[A]
-    def eB: Elem[B]
-    def from: B => A
-    def to: A => B
-    def manifest: Manifest[B]
-    def zero: Zero[Rep[B]]
-    def fromStaged: Rep[B] => Rep[A]
-    def toStaged: Rep[A] => Rep[B]
+  trait GenIso[From,To] {
+    def eFrom: Elem[From]
+    def eTo: Elem[To]
+    def from: To => From
+    def to: From => To
+    def manifest: Manifest[To]
+    def zero: Zero[Rep[To]]
+    def fromStaged: Rep[To] => Rep[From]
+    def toStaged: Rep[From] => Rep[To]
   }
-  type Iso[A,B] = GenIso[A,B]
+  type Iso[From,To] = GenIso[From,To]
 
-  abstract class IsoBase[A,B](implicit ea: Elem[A]) extends GenIso[A,B] { ///self: Iso[A,B] =>
-    lazy val eA = ea
+  abstract class IsoBase[From,To](implicit efrom: Elem[From]) extends GenIso[From,To] { ///self: Iso[A,B] =>
+    lazy val eFrom = efrom
 
     // eB should be lazy val as it is used recursively in ViewElem
     // override it in concrete isos to create hierarchy of Elem classes
-    lazy val eB: Elem[B] = defaultViewElem(this)
-//    def from: B => A = (x: B) => ???
-//    def to: A => B = (x: A) => ???
-    def fromStaged: Rep[B] => Rep[A] = (x: Rep[B]) => ???("Not implemented ", x)
-    def toStaged: Rep[A] => Rep[B] = (x:Rep[A]) => ???("Not implemented ", x)
+    lazy val eTo: Elem[To] = defaultViewElem(this)
+    def fromStaged: Rep[To] => Rep[From] = (x: Rep[To]) => ???("Not implemented ", x)
+    def toStaged: Rep[From] => Rep[To] = (x:Rep[From]) => ???("Not implemented ", x)
   }
 
-  protected[scalan] def defaultViewElem[A,B](implicit iso: Iso[A,B]): Elem[B]
+  protected[scalan] def defaultViewElem[From,To](implicit iso: Iso[From,To]): Elem[To]
 
-  implicit def viewElement[A,B](implicit iso: Iso[A,B]): Elem[B] = iso.eB  // always ask elem from Iso
+  implicit def viewElement[From,To](implicit iso: Iso[From,To]): Elem[To] = iso.eTo  // always ask elem from Iso
 
-  trait ViewElem[A,B] extends Element[B] {
-    def iso: Iso[A,B]
+  trait ViewElem[From,To] extends Element[To] {
+    def iso: Iso[From,To]
   }
 
   trait IdentityIso[A] extends GenIso[A,A] { //self: Iso[A,A] =>
@@ -45,51 +43,47 @@ trait Views extends Base with Reification { self: Scalan =>
     override def toStaged = (x: Rep[A]) => x
   }
 
-  def iso[A,B](implicit i: Iso[A,B]) = i
-
-  //final class uncheckedVariance extends scala.annotation.StaticAnnotation {}
-
-
+  def iso[From,To](implicit i: Iso[From,To]) = i
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
 
-  trait SeqIso[A,B] extends GenIso[A,B] {
+  trait SeqIso[From,To] extends GenIso[From,To] {
     def from = x => this.fromStaged(x)
     def to = x => this.toStaged(x)
   }
 
-  protected[scalan] def defaultViewElem[A,B](implicit i: Iso[A,B]) = new SeqViewElem[A,B] { val iso = i }
+  protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new SeqViewElem[From,To] { val iso = i }
 
-  trait SeqViewElem[A,B] extends ViewElem[A,B] with SeqElement[B] {
-    implicit val elemB = this
-    implicit private def eA = iso.eA
-    implicit private def eB = iso.eB
-    private lazy val m: Manifest[B] = iso.manifest
+  trait SeqViewElem[From,To] extends ViewElem[From,To] with SeqElement[To] {
+    implicit val elemTo = this
+    implicit private def eFrom = iso.eFrom
+    implicit private def eTo = iso.eTo
+    private lazy val m: Manifest[To] = iso.manifest
     private lazy val z = iso.zero
-    def manifest: Manifest[B] = m
+    def manifest: Manifest[To] = m
     def zero = z
   }
 }
 
 trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 
-  trait StagedIso[A,B] extends GenIso[A,B] {
+  trait StagedIso[From,To] extends GenIso[From,To] {
     def from = x => ???
     def to = x => ???
   }
 
-  protected[scalan] def defaultViewElem[A,B](implicit i: Iso[A,B]) = new StagedViewElem[A,B] { val iso = i }
+  protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new StagedViewElem[From,To] { val iso = i }
 
-  trait StagedViewElem[A,B] extends ViewElem[A,B] with StagedElement[B] {
-    implicit val elemB = this
-    implicit private def eA = iso.eA
-    implicit private def eB = iso.eB
+  trait StagedViewElem[From,To] extends ViewElem[From,To] with StagedElement[To] {
+    implicit val elemTo = this
+    implicit private def eFrom = iso.eFrom
+    implicit private def eTo = iso.eTo
     implicit private lazy val m = iso.manifest
     private lazy val z = iso.zero
-    def manifest: Manifest[B] = m
+    def manifest: Manifest[To] = m
     def zero = z
-    override def toRep(p: B) = iso.toStaged(eA.toRep(iso.from(p)))
+    override def toRep(p: To) = iso.toStaged(eFrom.toRep(iso.from(p)))
   }
 
   case class UserTypeDescriptor[T](manifest: Manifest[T])
@@ -135,9 +129,9 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     }
   }
 
-  implicit class IsoOps[A,B](iso: Iso[A,B]) {
-    def toFunTo: Rep[A => B] = fun(iso.toStaged)(iso.eA, iso.eB)
-    def toFunFrom: Rep[B => A] = fun(iso.fromStaged)(iso.eB, iso.eA)
+  implicit class IsoOps[From,To](iso: Iso[From,To]) {
+    def toFunTo: Rep[From => To] = fun(iso.toStaged)(iso.eFrom, iso.eTo)
+    def toFunFrom: Rep[To => From] = fun(iso.fromStaged)(iso.eTo, iso.eFrom)
   }
   //implicit def isoToOps[A,B](iso: Iso[A,B]) = new IsoOps(iso)
 

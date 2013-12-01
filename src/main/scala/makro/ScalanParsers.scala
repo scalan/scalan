@@ -10,16 +10,24 @@ import java.text.ParseException
 trait ScalanAst {
 
   // Tpe universe --------------------------------------------------------------------------
-  abstract class TpeExpr
+  sealed abstract class TpeExpr
   type TpeExprs = List[TpeExpr]
-  case class TraitCall(name: String, tpeExprs: List[TpeExpr] = Nil) extends TpeExpr
-  case object TpeInt extends TpeExpr
-  case object TpeBoolean extends TpeExpr
-  case object TpeFloat extends TpeExpr
-  case object TpeString extends TpeExpr
-  case class TpeTuple(items: List[TpeExpr]) extends TpeExpr
-  case class TpeFunc(items: List[TpeExpr]) extends TpeExpr
-  case class TpeSum(items: List[TpeExpr]) extends TpeExpr
+  case class TraitCall(name: String, tpeExprs: List[TpeExpr] = Nil) extends TpeExpr {
+    override def toString = name + (if (tpeExprs.isEmpty) "" else tpeExprs.mkString("[",",","]"))
+  }
+  case object TpeInt extends TpeExpr     { override def toString = "Int" }
+  case object TpeBoolean extends TpeExpr { override def toString = "Boolean" }
+  case object TpeFloat extends TpeExpr   { override def toString = "Float" }
+  case object TpeString extends TpeExpr  { override def toString = "String" }
+  case class TpeTuple(items: List[TpeExpr]) extends TpeExpr {
+    override def toString = items.mkString("(", ",", ")")
+  }
+  case class TpeFunc(items: List[TpeExpr]) extends TpeExpr {
+    override def toString = items.mkString("=>")
+  }
+  case class TpeSum(items: List[TpeExpr]) extends TpeExpr {
+    override def toString = items.mkString("(", "|", ")")
+  }
 
   // Expr universe --------------------------------------------------------------------------
   abstract class Expr
@@ -56,7 +64,9 @@ trait ScalanAst {
     body: List[BodyItem] = Nil) extends BodyItem
 
   case class EntityModuleDef(
-    packageName: String, name: String,
+    packageName: String,
+    imports: List[ImportStat],
+    name: String,
     typeSyn: TpeDef,
     entityOps: TraitDef,
     concreteClasses: List[ClassDef],
@@ -66,17 +76,18 @@ trait ScalanAst {
   def getConcreteClasses(defs: List[BodyItem]) = defs.collect { case c: ClassDef => c }
 
   object EntityModuleDef {
-    def fromModuleTrait(packageName: String, moduleTrait: TraitDef): EntityModuleDef = {
+    def fromModuleTrait(packageName: String, imports: List[ImportStat], moduleTrait: TraitDef): EntityModuleDef = {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
       val (typeSyn, opsTrait) = defs match {
         case (ts: TpeDef) :: (ot: TraitDef) :: _ => (ts, ot)
-        case _ => throw new ParseException(s"Invalid syntax of Entity module trait $moduleName", 0)
+        case _ =>
+          throw new ParseException(s"Invalid syntax of Entity module trait $moduleName", 0)
       }
       val classes = getConcreteClasses(defs)
 
-      EntityModuleDef(packageName, moduleName, typeSyn, opsTrait, classes, Some("ScalanDsl"))
+      EntityModuleDef(packageName, imports, moduleName, typeSyn, opsTrait, classes, Some("ScalanDsl"))
     }
 
   }
@@ -147,9 +158,10 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
   }
   lazy val classArgs = "(" ~> rep1sep(classArg, ",")  <~ ")"
 
+  lazy val methodBody = "???"
 
-  lazy val methodDef = opt("implicit") ~ "def" ~ ident ~ opt(tpeArgs) ~ opt(methodArgs) ~ ":" ~ tpeExpr ^^ {
-    case implicitModifier ~ _ ~ n ~ targs ~ args ~ _ ~ tres =>
+  lazy val methodDef = opt("implicit") ~ "def" ~ ident ~ opt(tpeArgs) ~ opt(methodArgs) ~ ":" ~ tpeExpr ~ opt("=" ~ methodBody) ^^ {
+    case implicitModifier ~ _ ~ n ~ targs ~ args ~ _ ~ tres ~ _ =>
       MethodDef(n, targs.toList.flatten, args.toList.flatten, tres, implicitModifier.isDefined)
   }
 
@@ -187,8 +199,21 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
     traitDef ^^ {
       case _ ~ ns ~ _ ~ imports ~ moduleTrait => {
         val packageName = ns.mkString(".")
-        EntityModuleDef.fromModuleTrait(packageName, moduleTrait)
+        EntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait)
       }
+  }
+
+  //TODO add regex for comments
+  protected val endlineComment = """//\.*\n""".r
+
+  protected override def handleWhiteSpace(source: java.lang.CharSequence, offset: Int): Int = {
+    val ofs = super.handleWhiteSpace(source, offset)
+
+//    (endlineComment findPrefixMatchOf (source.subSequence(ofs, source.length))) match {
+//      case Some(matched) => ofs + matched.end
+//      case None => ofs
+//    }
+    ofs
   }
 
   def parseTpeExpr(s: String) = parseAll(tpeExpr, s).get

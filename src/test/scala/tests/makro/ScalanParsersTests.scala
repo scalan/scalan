@@ -142,7 +142,7 @@ class ScalanParsersTests extends {
   @Test def testEntityModuleDef() {
     testModule(
       reactiveModule,
-      EMD("scalan.rx", "Reactive",
+      EMD("scalan.rx", L(ImportStat(L("scalan","_"))), "Reactive",
         TpeDef("Obs", L(TpeArg("A")), TC("Rep",L(TC("Observable", L(TC("A")))))),
         TD("Observable", L(TpeArg("A")), Nil,
           L(MD("eA",Nil,Nil,TC("Elem",L(TC("A"))),isImplicit = true))),

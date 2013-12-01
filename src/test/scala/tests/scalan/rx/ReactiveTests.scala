@@ -7,10 +7,14 @@ package tests.scalan.rx
 import org.junit.Test
 import org.junit.Assert._
 import scalan.{ScalanCtxStaged, ScalanCtxShallow}
-import scalan.rx.ReactiveExp
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.FunSuite
+import scalan.rx._
+
+trait ReactiveSamples extends ReactiveDsl {
+
+}
 
 //@RunWith(classOf[JUnitRunner])
 class ReactiveTests extends /*FunSuite with*/ ScalanCtxStaged with ReactiveExp {
