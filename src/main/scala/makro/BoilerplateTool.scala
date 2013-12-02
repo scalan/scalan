@@ -12,6 +12,7 @@ object BoilerplateTool extends App with ScalanCodegen {
   val sourcePrefix = "src/main/scala"
   val entityFiles = List(
     "scalan/rx/Reactive.scala"
+    //, "scalan/rx/Trees.scala"
   )
 
   def readFile(name: String): String =
