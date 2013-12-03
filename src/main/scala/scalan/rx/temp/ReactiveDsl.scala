@@ -1,9 +1,9 @@
-package scalan.rx.temp
+package scalan.rx
 
-/**
- * User: Alexander Slesarenko   
- * Date: 12/1/13
- */
+import scalan._
+import scalan.common.Common
+import scala.language.implicitConversions
+
 trait ReactiveDsl extends Reactive {
 
   // single proxy for each type family
