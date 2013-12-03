@@ -19,6 +19,3 @@ libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.10.1" % "test"
 
 //testOptions in Test += Tests.Argument("-oD")
 
-net.virtualvoid.sbt.graph.Plugin.graphSettings
-
-filterScalaLibrary := false
