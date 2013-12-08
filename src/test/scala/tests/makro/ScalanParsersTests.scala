@@ -150,7 +150,7 @@ class ScalanParsersTests extends {
           L(TC("Observable",L(TC("A")))),Nil ),
           ClassDef("ObservableImpl2", L(TpeArg("A")), L(ClassArg(true, false, true, "eA",TC("Elem",L(TC("A"))))),Nil,
             L(TC("Observable",L(TC("A")))),Nil )),
-        Some("ScalanDsl")))
+        None))
   }
 
 }
