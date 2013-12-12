@@ -4,20 +4,15 @@
  */
 package tests.scalan.rx
 
-import org.junit.Test
-import org.junit.Assert._
 import scalan.{ScalanCtxStaged, ScalanCtxShallow}
-import org.junit.runner.RunWith
-import org.scalatest.junit.JUnitRunner
-import org.scalatest.FunSuite
 import scalan.rx._
+import tests.BaseTests
 
 trait ReactiveSamples extends ReactiveDsl {
 
 }
 
-//@RunWith(classOf[JUnitRunner])
-class ReactiveTests extends /*FunSuite with*/ ScalanCtxStaged with ReactiveExp {
+class ReactiveTests extends BaseTests with ScalanCtxStaged with ReactiveExp {
 
 //  test("element for concrete class should be resolvable") {
 //    val e = element[ObservableImpl[Int]]
@@ -25,9 +20,9 @@ class ReactiveTests extends /*FunSuite with*/ ScalanCtxStaged with ReactiveExp {
 //
 //    // element[Observable[Int]] no such element
 //  }
-  @Test def element_for_concrete_class_should_be_resolvable {
+  test("element_for_concrete_class_should_be_resolvable") {
     val e = element[ObservableImpl[Int]]
-    assertNotNull(e)
+    e should not be(null)
 
     // element[Observable[Int]] no such element
   }

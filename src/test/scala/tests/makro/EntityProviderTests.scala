@@ -4,12 +4,10 @@
  */
 package tests.makro
 
-import org.junit.Test
-import org.junit.Assert._
-import org.hamcrest.core.Is._
+import tests.BaseTests
 
 
-class EntityProviderTests extends {
+class EntityProviderTests extends BaseTests {
   import makro.BoilerplateTool._
 
   val graphsPackage = "graphs"
@@ -18,21 +16,21 @@ class EntityProviderTests extends {
     val d = parseEntityModule(entityTemplate)
     val p = new EntityFileGenerator(d)
     val code = p.getTraitAbs
-    assertEquals(expected, code)
+    assertResult(expected)(code)
   }
 
   def testTraitSeq(entityTemplate: String, expected: String) =  {
     val d = parseEntityModule(entityTemplate)
     val p = new EntityFileGenerator(d)
     val code = p.getTraitSeq
-    assertEquals(expected, code)
+    assertResult(expected)(code)
   }
 
   def testTraitExp(entityTemplate: String, expected: String) =  {
     val d = parseEntityModule(entityTemplate)
     val p = new EntityFileGenerator(d)
     val code = p.getTraitExp
-    assertEquals(expected, code)
+    assertResult(expected)(code)
   }
 
   val testEntity: String =
@@ -49,7 +47,7 @@ class EntityProviderTests extends {
      |}
     """.stripMargin
 
-  @Test def testAbs() {
+  test("Abs") {
     testTraitAbs(
       testEntity,
       """
@@ -65,7 +63,7 @@ class EntityProviderTests extends {
         |""".stripMargin)
   }
 
-  @Test def testSeq() {
+  test("Seq") {
     testTraitSeq(
       testEntity,
       """
@@ -88,7 +86,7 @@ class EntityProviderTests extends {
         |""".stripMargin)
   }
 
-  @Test def testExp() {
+  test("Exp") {
     testTraitExp(
       testEntity,
       """

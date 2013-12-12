@@ -4,12 +4,10 @@
  */
 package tests.makro
 
-import org.junit.Test
-import org.junit.Assert._
-import org.hamcrest.core.Is._
 import makro.ScalanImpl
+import tests.BaseTests
 
-class ScalanParsersTests extends {
+class ScalanParsersTests extends BaseTests {
   import ScalanImpl._
   import ScalanImpl.{
     TpeInt => INT, TpeBoolean => BOOL, TpeFloat => FLOAT, TraitCall => TC,
@@ -21,7 +19,7 @@ class ScalanParsersTests extends {
     parseAll(p, prog) match {
       case Success(res, _) => {
         //println(res)
-        assertEquals(expected, res)
+        assertResult(expected)(res)
       }
       case NoSuccess(msg, input) => fail(s"$msg (pos: ${input.pos})")
     }
@@ -45,7 +43,7 @@ class ScalanParsersTests extends {
     test(methodDef, prog, expected)
   }
 
-  @Test def testTpeExpr() {
+  test("TpeExpr") {
     testTpe("Int", INT)
     testTpe("(Int,Boolean)", TpeTuple(L(INT, BOOL)))
     testTpe("Int=>Boolean", TpeFunc(L(INT, BOOL)))
@@ -60,7 +58,7 @@ class ScalanParsersTests extends {
 
   def f[A <: Int : Numeric : Fractional](x: A): Int = ???
 
-  @Test def testMethodDef() {
+  test("MethodDef") {
     testMethod("def f: Int", MD("f", tpeRes = INT))
     testMethod("implicit def f: Int", MD("f", Nil, Nil, INT, true))
     testMethod("def f(x: Int): Int", MD("f", Nil, L(MA("x", INT)), INT))
@@ -75,7 +73,7 @@ class ScalanParsersTests extends {
       MD("f", L(TpeArg("A", Some(INT), L("Numeric","Fractional"))), L(MA("x", TC("A"))), INT))
   }
 
-  @Test def testTraitDef() {
+  test("TraitDef") {
     testTrait("trait A", TD("A"))
     testTrait("trait A extends B", TD("A", Nil, List(TC("B"))))
     testTrait("trait A extends B with C", TD("A", Nil, List(TC("B"), TC("C"))))
@@ -128,7 +126,7 @@ class ScalanParsersTests extends {
       |}
     """.stripMargin
 
-  @Test def testClassDef() {
+  test("ClassDef") {
     testClass("class A", ClassDef("A"))
     testClass("class A extends B", ClassDef("A", Nil,Nil,Nil, L(TC("B"))))
     testClass("class A extends B with C", ClassDef("A", Nil,Nil,Nil, L(TC("B"), TC("C"))))
@@ -139,7 +137,7 @@ class ScalanParsersTests extends {
           L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))), INT))))
   }
 
-  @Test def testEntityModuleDef() {
+  test("EntityModuleDef") {
     testModule(
       reactiveModule,
       EMD("scalan.rx", L(ImportStat(L("scalan","_"))), "Reactive",

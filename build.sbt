@@ -12,12 +12,10 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "2.0" % "test"
 
 libraryDependencies ++= Seq(
   //"com.chuusai" % "shapeless" % "2.0.0-M1" cross CrossVersion.full
-  "com.chuusai" % "shapeless_2.10.2" % "2.0.0-M1", // alternatively ...
-      "junit" % "junit" % "4.10" % "test",
-      "com.novocode" % "junit-interface" % "0.10-M2" % "test"
+  "com.chuusai" % "shapeless_2.10.2" % "2.0.0-M1" // alternatively ...
 )
 
-libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.10.1" % "test"
+libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.1" % "test"
 
 //testOptions in Test += Tests.Argument("-oD")
 
