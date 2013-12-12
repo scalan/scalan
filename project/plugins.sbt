@@ -8,4 +8,4 @@ import sbt.Keys._
 
 //addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.2.0")
 
-addSbtPlugin("com.gu" % "sbt-teamcity-test-reporting-plugin" % "1.3")
+addSbtPlugin("com.gu" % "sbt-teamcity-test-reporting-plugin" % "1.5")
