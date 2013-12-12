@@ -49,11 +49,14 @@ trait ScalanAst {
   case class ClassArg(impFlag: Boolean, overFlag: Boolean, valFlag: Boolean, name: String, tpe: TpeExpr, default: Option[Expr] = None)
   type ClassArgs = List[ClassArg]
 
+  case class SelfTypeDef(name: String, components: List[TpeExpr])
+
   case class TraitDef(
     name: String,
     tpeArgs: List[TpeArg] = Nil,
     ancestors: List[TraitCall] = Nil,
-    body: List[BodyItem] = Nil) extends BodyItem
+    body: List[BodyItem] = Nil,
+    selfType: Option[SelfTypeDef] = None) extends BodyItem
 
   case class ClassDef(
     name: String,
@@ -61,7 +64,9 @@ trait ScalanAst {
     args: ClassArgs = Nil,
     implicitArgs: ClassArgs = Nil,
     ancestors: List[TraitCall] = Nil,
-    body: List[BodyItem] = Nil) extends BodyItem
+    body: List[BodyItem] = Nil,
+    selfType: Option[SelfTypeDef] = None,
+    isAbstract: Boolean = false) extends BodyItem
 
   case class EntityModuleDef(
     packageName: String,
@@ -70,7 +75,7 @@ trait ScalanAst {
     typeSyn: TpeDef,
     entityOps: TraitDef,
     concreteClasses: List[ClassDef],
-    selfType: Option[String] = None) {
+    selfType: Option[SelfTypeDef] = None) {
   }
 
   def getConcreteClasses(defs: List[BodyItem]) = defs.collect { case c: ClassDef => c }
@@ -87,7 +92,7 @@ trait ScalanAst {
       }
       val classes = getConcreteClasses(defs)
 
-      EntityModuleDef(packageName, imports, moduleName, typeSyn, opsTrait, classes, Some("ScalanDsl"))
+      EntityModuleDef(packageName, imports, moduleName, typeSyn, opsTrait, classes, moduleTrait.selfType)
     }
 
   }
@@ -109,9 +114,13 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
     if (sz > 1) w(xs) else xs.head
   }
 
-  lazy val qualId = rep1sep(ident, ".")
+  val keywords = Set("def", "trait", "type", "class", "abstract")
 
-  lazy val tpeArg: Parser[TpeArg] = (ident ~ opt("<:" ~ tpeExpr) ~ rep(":" ~> ident)) ^^ {
+  lazy val scalanIdent = ident ^? ({ case s if !keywords.contains(s) => s }, s => s"Keyword $s cannot be used as identifier")
+
+  lazy val qualId = rep1sep(scalanIdent, ".")
+
+  lazy val tpeArg: Parser[TpeArg] = (scalanIdent ~ opt("<:" ~ tpeExpr) ~ rep(":" ~> scalanIdent)) ^^ {
     case name ~ None ~ ctxs => TpeArg(name, None, ctxs)
     case name ~ Some(_ ~ bound) ~ ctxs => TpeArg(name, Some(bound), ctxs)
   }
@@ -143,16 +152,16 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
     case x => x
   }
 
-  lazy val traitCall = ident ~ opt(traitCallArgs) ^^ {
+  lazy val traitCall = scalanIdent ~ opt(traitCallArgs) ^^ {
     case n ~ None => TraitCall(n)
     case n ~ Some(ts) => TraitCall(n, ts)
   }
 
-  lazy val methodArg = ident ~ ":" ~ tpeFactor ^^ { case n ~ _ ~ t => MethodArg(n, t, None)}
+  lazy val methodArg = scalanIdent ~ ":" ~ tpeFactor ^^ { case n ~ _ ~ t => MethodArg(n, t, None)}
   lazy val methodArgs = "(" ~> rep1sep(methodArg, ",") <~ ")"
 
 
-  lazy val classArg = opt("implicit") ~ opt("override") ~ opt("val") ~ ident ~ ":" ~ tpeFactor ^^ {
+  lazy val classArg = opt("implicit") ~ opt("override") ~ opt("val") ~ scalanIdent ~ ":" ~ tpeFactor ^^ {
     case imp ~ over ~ value ~ n ~ _ ~ t =>
       ClassArg(imp.isDefined, over.isDefined, value.isDefined, n, t, None)
   }
@@ -160,14 +169,14 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
 
   lazy val methodBody = "???"
 
-  lazy val methodDef = opt("implicit") ~ "def" ~ ident ~ opt(tpeArgs) ~ opt(methodArgs) ~ ":" ~ tpeExpr ~ opt("=" ~ methodBody) ^^ {
+  lazy val methodDef = opt("implicit") ~ "def" ~ scalanIdent ~ opt(tpeArgs) ~ opt(methodArgs) ~ ":" ~ tpeExpr ~ opt("=" ~ methodBody) ^^ {
     case implicitModifier ~ _ ~ n ~ targs ~ args ~ _ ~ tres ~ _ =>
       MethodDef(n, targs.toList.flatten, args.toList.flatten, tres, implicitModifier.isDefined)
   }
 
   lazy val importStat = "import" ~ qualId ~ opt(";") ^^ { case _ ~ ns ~ _ => ImportStat(ns) }
 
-  lazy val tpeDef = "type" ~ ident ~ opt(tpeArgs) ~ "=" ~ tpeExpr ~ opt(";") ^^ {
+  lazy val tpeDef = "type" ~ scalanIdent ~ opt(tpeArgs) ~ "=" ~ tpeExpr ~ opt(";") ^^ {
     case _ ~ n ~ targs ~ _ ~ rhs ~ _ => TpeDef(n, targs.toList.flatten, rhs)
   }
 
@@ -180,17 +189,21 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
 
   lazy val bodyItems = rep(bodyItem)
 
-  lazy val traitBody = "{" ~ opt(bodyItems) ~ "}" ^^ { case _ ~ body ~ _ => body.toList.flatten }
+  lazy val selfType = (scalanIdent <~ ":") ~ (tpeExpr <~ "=>") ^^ { case n ~ t => SelfTypeDef(n, List(t)) }
 
-  lazy val traitDef: Parser[TraitDef] = "trait" ~ ident ~ opt(tpeArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
+  lazy val traitBody = "{" ~ opt(selfType) ~ opt(bodyItems) ~ "}" ^^ {
+    case _ ~ self ~ body ~ _ => (self, body.toList.flatten)
+  }
+
+  lazy val traitDef: Parser[TraitDef] = "trait" ~ scalanIdent ~ opt(tpeArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
     case _ ~ n ~ targs ~ ancs ~ body =>
-      TraitDef(n, targs.toList.flatten, ancs.toList.flatten, body.toList.flatten)
+      TraitDef(n, targs.toList.flatten, ancs.toList.flatten, body.map(_._2).flatList, body.map(_._1).flatten)
   }
 
   lazy val classDef: Parser[ClassDef] =
-    "class" ~ ident ~ opt(tpeArgs) ~ opt(classArgs) ~ opt(classArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
-    case _ ~ n ~ targs ~ args ~ impArgs ~ ancs ~ body =>
-      ClassDef(n, targs.flatList, args.flatList, impArgs.flatList, ancs.flatList, body.flatList)
+    opt("abstract") ~ "class" ~ scalanIdent ~ opt(tpeArgs) ~ opt(classArgs) ~ opt(classArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
+    case abs ~ _ ~ n ~ targs ~ args ~ impArgs ~ ancs ~ body =>
+      ClassDef(n, targs.flatList, args.flatList, impArgs.flatList, ancs.flatList, body.map(_._2).flatList, body.map(_._1).flatten, abs.isDefined)
   }
 
   lazy val entityModuleDef =
@@ -220,7 +233,17 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
   def parseTpeArgs(s: String) = parseAll(tpeArgs, s).get
 
   def parseTrait(s: String) = parseAll(traitDef, s).get
-  def parseEntityModule(s: String) = parseAll(entityModuleDef, s).get
+  def parseEntityModule(s: String) = {
+    val res = parseAll(entityModuleDef, s)
+    res match {
+      case Success(r, next) => r
+      case Failure(msg, next) => {
+        val rest = next.rest.source.toString
+        val source = next.source.toString
+        throw new ParseException(s"$msg pos:${next.pos} rest:$rest", next.offset)
+      }
+    }
+  }
 
 }
 

@@ -10,12 +10,24 @@ import scalan.codegen.emit.ScalaCodeEmitter
 object Extensions {
   implicit class IterableExtensions[A](val it: Iterable[A]) extends AnyVal
   {
+    def opt(show: Iterable[A] => String, default: String = ""): String = it match {
+      case Nil => default
+      case xs => show(xs)
+    }
+
     def rep(show: A => String, sep: String = ", "): String = it.map(show).mkString(sep)
 
     def enumTypes(show: Int => String) = (1 to it.size).map(show)
   }
 
   def all[A](a: A): String = a.toString
+
+  implicit class OptionExtensions[A](val opt: Option[A]) extends AnyVal {
+    def opt(show: A => String, default: String = ""): String = opt match {
+      case None => default
+      case Some(a) => show(a)
+    }
+  }
 }
 
 trait ScalanCodegen extends ScalanAst with ScalanParsers {
@@ -72,7 +84,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers {
     }
     
     def getTraitAbs = {
-      val (entityName, tyArgs, types, typesWithElems) = getEntityTemplateData(module.entityOps)
+      val e = module.entityOps
+      val (entityName, tyArgs, types, typesWithElems) = getEntityTemplateData(e)
       val proxy =
         s"""
         |  // single proxy for each type family
@@ -86,6 +99,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers {
 
       val defs = for { c <- module.concreteClasses } yield {
         val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes) = getClassTemplateData(c)
+        val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
+        val useImplicits = c.implicitArgs.opt(args => args.map(_.name).rep(all))
         s"""
         |  // elem for concrete class
         |  trait ${className}Elem[$types] extends ${entityName}Elem[${className}Data[$types], $className[$types]]
@@ -94,8 +109,9 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers {
         |  type ${className}Data[$types] = ${dataType(fieldTypes)}
         |
         |  // 3) companion object with Iso, constructor and deconstructor
-        |  object $className {
-        |    abstract class Iso[$typesWithElems] extends IsoBase[${className}Data[$types], $className[$types]] {
+        |  object $className extends ${className}Companion {
+        |    abstract class Iso[$types]($implicitArgs)
+        |           extends IsoBase[${className}Data[$types], $className[$types]] {
         |      override def fromStaged = { case $className(${fields.rep(all)}) => ${pairify(fields)} }
         |      override def toStaged = (p: Rep[${dataType(fieldTypes)}]) => {
         |        val ${pairify(fields)} = p
@@ -108,21 +124,33 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers {
         |      def zero = Common.zero[Rep[$className[$types]]]($className(${fieldTypes.rep(t => zeroExpr(t))}))
         |    }
         |
-        |    def apply[$typesWithElems](${fieldsWithType.rep(all)}): Rep[$className[$types]]  = mk$className(${fields.rep(all)})
+        |    def apply[$types](p: Rep[${className}Data[$types]])($implicitArgs): Rep[$className[$types]]
+        |        = iso$className($useImplicits).toStaged(p)
+        |    def apply[$types](p: $entityName[$types])($implicitArgs): Rep[$className[$types]]
+        |        = mk$className(${fields.rep(f => s"p.$f")})
+        |    def apply[$types]
+        |          (${fieldsWithType.rep(all)})
+        |          ($implicitArgs): Rep[$className[$types]]
+        |        = mk$className(${fields.rep(all)})
         |    def unapply[$typesWithElems](p: Rep[$className[$types]]) = unmk$className(p)
         |  }
         |
+        |  implicit def extend$className[$types](p: Rep[$className[$types]])($implicitArgs) = new {
+        |    def toData: Rep[${className}Data[$types]] = iso$className($useImplicits).fromStaged(p)
+        |  }
+        |
         |  // 4) implicit resolution of Iso
-        |  implicit def iso$className[$typesWithElems]: Iso[${className}Data[$types], $className[$types]]
+        |  implicit def iso$className[$types]($implicitArgs): Iso[${className}Data[$types], $className[$types]]
         |
         |  // 5) smart constructor and deconstructor
-        |  def mk$className[$typesWithElems](${fieldsWithType.rep(all)}): Rep[$className[$types]]
+        |  def mk$className[$types](${fieldsWithType.rep(all)})($implicitArgs): Rep[$className[$types]]
         |  def unmk$className[$typesWithElems](p: Rep[$className[$types]]): Option[(${fieldTypes.rep(t => s"Rep[$t]")})]
         |""".stripMargin
       }
 
       s"""
-       |trait ${module.name}Dsl extends ${module.name} {
+       |trait ${module.name}Abs extends ${module.name}
+       |{ ${module.selfType.opt(t => s"self: ${t.components.rep(all, " with ")} =>")}
        |$proxy
        |$familyElem
        |${defs.mkString("\n")}
@@ -132,77 +160,95 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers {
 
     def getClassSeq(c: ClassDef) = {
       val (className, types, typesWithElems, fields, fieldsWithType, _) = getClassTemplateData(c)
+      val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
+      val userTypeDefs =
+        s"""
+         |  case class Seq$className[$types]
+         |      (${fieldsWithType.rep(f => s"override val $f")})
+         |      (implicit ${c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")})
+         |    extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} {
+         |  }
+         |""".stripMargin
       val isoDefs =
         s"""
-         |  implicit def iso$className[$typesWithElems]:Iso[${className}Data[$types], $className[$types]]
+         |  implicit def iso$className[$types]($implicitArgs):Iso[${className}Data[$types], $className[$types]]
          |    = new $className.Iso[$types] with SeqIso[${className}Data[$types], $className[$types]] { i =>
          |        // should use i as iso reference
-         |        override lazy val eTo = new SeqViewElem[${className}Data[$types], $className[$types]]
-         |                                    with ${className}Elem[$types] { val iso = i }
+         |        override lazy val eB = new SeqViewElem[${className}Data[$types], $className[$types]]()(i)
+         |                                    with ${className}Elem[$types]
          |      }
          |""".stripMargin
 
       val constrDefs =
         s"""
-         |  def mk$className[$typesWithElems](${fieldsWithType.rep(all)})
-         |    = new $className[$types](${fields.rep(all)})
+         |  def mk$className[$types]
+         |      (${fieldsWithType.rep(all)})
+         |      ($implicitArgs)
+         |      = new $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")}
          |  def unmk$className[$typesWithElems](p: Rep[$className[$types]])
          |    = Some((${fields.rep(f => s"p.$f")}))
          |""".stripMargin
 
-      s"""$isoDefs\n$constrDefs"""
+      s"""$userTypeDefs\n$isoDefs\n$constrDefs"""
     }
 
     def getClassExp(c: ClassDef) = {
       val (className, types, typesWithElems, fields, fieldsWithType, _) = getClassTemplateData(c)
-      val isoDefs =
-        s"""
-         |  implicit def iso$className[$typesWithElems]:Iso[${className}Data[$types], $className[$types]]
-         |    = new $className.Iso[$types] with StagedIso[${className}Data[$types], $className[$types]] { i =>
-         |        // should use i as iso reference
-         |        override lazy val eTo = new StagedViewElem[${className}Data[$types], $className[$types]]
-         |                                    with ${className}Elem[$types] { val iso = i }
-         |      }
-         |""".stripMargin
-
-      val constrDefs =
-        s"""
-         |  def mk$className[$typesWithElems](${fieldsWithType.rep(all)})
-         |    = new Exp$className[$types](${fields.rep(all)})
-         |  def unmk$className[$typesWithElems](p: Rep[$className[$types]])
-         |    = Some((${fields.rep(f => s"p.$f")}))
-         |""".stripMargin
-
+      val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
       val userTypeNodeDefs =
         s"""
          |  case class Exp$className[$types]
          |      (${fieldsWithType.rep(f => s"override val $f")})
          |      (implicit ${c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")})
-         |    extends $className[$types](${fields.rep(all)}) with UserType[$className[$types]] {
+         |    extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} with UserType[$className[$types]] {
          |    def elem = element[$className[$types]]
-         |    override def mirror(t: Transformer): Rep[_] = Exp$className[$types](${fields.rep(f => s"t($f)")})
+         |    override def mirror(t: Transformer)(implicit ctx: SourceContext): Rep[_] = Exp$className[$types](${fields.rep(f => s"t($f)")})
          |  }
          |  addUserType(manifest[Exp$className[Any]])
+         |""".stripMargin
+
+      val constrDefs =
+        s"""
+         |  def mk$className[$types]
+         |      (${fieldsWithType.rep(all)})
+         |      ($implicitArgs)
+         |      = new Exp$className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")}
+         |  def unmk$className[$typesWithElems](p: Rep[$className[$types]])
+         |    = Some((${fields.rep(f => s"p.$f")}))
+         |""".stripMargin
+
+      val isoDefs =
+        s"""
+         |  implicit def iso$className[$types]($implicitArgs):Iso[${className}Data[$types], $className[$types]]
+         |    = new $className.Iso[$types] with StagedIso[${className}Data[$types], $className[$types]] { i =>
+         |        // should use i as iso reference
+         |        override lazy val eB = new StagedViewElem[${className}Data[$types], $className[$types]]()(i)
+         |                                    with ${className}Elem[$types]
+         |      }
          |""".stripMargin
 
       s"""$userTypeNodeDefs\n$constrDefs\n$isoDefs"""
     }
 
     def getTraitSeq = {
+      val e = module.entityOps
       val defs = for { c <- module.concreteClasses } yield getClassSeq(c)
 
       s"""
-       |trait ${module.name}Seq extends ${module.name}Dsl { self: ScalanSeq =>
+       |trait ${module.name}Seq extends ${module.name}Abs
+       |{ self: ScalanSeq ${module.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} =>
        |${defs.mkString("\n")}
        |}
        |""".stripMargin
     }
 
     def getTraitExp = {
+      val e = module.entityOps
       val defs = for { c <- module.concreteClasses } yield getClassExp(c)
 
       s"""
-       |trait ${module.name}Exp extends ${module.name}Dsl with ProxyExp with ViewsExp { self: ScalanStaged =>
+       |trait ${module.name}Exp extends ${module.name}Abs with ProxyExp with StagedViews
+       |{ self: ScalanStaged ${module.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} =>
        |${defs.mkString("\n")}
        |}
        |""".stripMargin
@@ -216,17 +262,18 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers {
       |""".stripMargin
     }
 
-    def getDslFile: String = {
-      val topLevel = List(
-        getFileHeader,
-        getTraitAbs
-      )
-      topLevel.mkString("\n")
-    }
+//    def getDslFile: String = {
+//      val topLevel = List(
+//        getFileHeader,
+//        getTraitAbs
+//      )
+//      topLevel.mkString("\n")
+//    }
 
     def getImplFile: String = {
       val topLevel = List(
         getFileHeader,
+        getTraitAbs,
         getTraitSeq,
         getTraitExp
       )

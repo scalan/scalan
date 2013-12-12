@@ -9,9 +9,11 @@ import java.io.{PrintWriter, File}
  */
 object BoilerplateTool extends App with ScalanCodegen {
 
-  val sourcePrefix = "src/main/scala"
+  val sourcePrefix = "/home/s00747473/Projects/scalan/src"
   val entityFiles = List(
-    "scalan/rx/Reactive.scala"
+    "main/scala/scalan/trees/Trees.scala",
+    "main/scala/scalan/math/Matrices.scala"
+    //"scalan/rx/Reactive.scala"
     //, "scalan/rx/Trees.scala"
   )
 
@@ -36,11 +38,11 @@ object BoilerplateTool extends App with ScalanCodegen {
     val implFolder = folder + "/impl"
     new File(implFolder).mkdirs()
 
-    val dslFile = s"$folder/${fileName}Dsl.scala"
+//    val dslFile = s"$folder/${fileName}Dsl.scala"
     val implFile = s"$implFolder/${fileName}Impl.scala"
 
-    val dslCode = gen.getDslFile
-    writeFile(dslFile, dslCode)
+//    val dslCode = gen.getDslFile
+//    writeFile(dslFile, dslCode)
 
     val implCode = gen.getImplFile
     writeFile(implFile, implCode)
