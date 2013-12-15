@@ -28,10 +28,12 @@ object Extensions {
       case Some(a) => show(a)
     }
   }
+  implicit class BooleanExtensions[A](val opt: Boolean) extends AnyVal {
+    def opt(show: => String, default: => String = ""): String = if(opt) show else default
+  }
 }
 
-trait ScalanCodegen extends ScalanAst with ScalanParsers {
-
+trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement =>
 
   class EntityFileGenerator(module: EntityModuleDef) {
     import Extensions._
@@ -207,7 +209,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers {
          |      (implicit ${c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")})
          |    extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} with UserType[$className[$types]] {
          |    def elem = element[$className[$types]]
-         |    override def mirror(t: Transformer)(implicit ctx: SourceContext): Rep[_] = Exp$className[$types](${fields.rep(f => s"t($f)")})
+         |    override def mirror(t: Transformer)${config.emitSourceContext.opt("(implicit ctx: SourceContext)")}: Rep[_] = Exp$className[$types](${fields.rep(f => s"t($f)")})
          |  }
          |  addUserType(manifest[Exp$className[Any]])
          |""".stripMargin

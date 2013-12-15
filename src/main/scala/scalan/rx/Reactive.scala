@@ -4,7 +4,7 @@ import scalan._
 import scalan.common.Common
 import scala.language.implicitConversions
 
-trait Reactive extends ScalanDsl {
+trait Reactive extends ScalanDsl with ReactiveOps { self: ReactiveDsl =>
 
   type Obs[A] = Rep[Observable[A]]
   trait Observable[A] {
@@ -17,7 +17,8 @@ trait Reactive extends ScalanDsl {
   }
 
   class ObservableImpl[A]
-      (val value: Rep[A], val index: Rep[Int], val completed: Rep[Boolean])(implicit val eA: Elem[A]) extends Observable[A] {
+      (val value: Rep[A], val index: Rep[Int], val completed: Rep[Boolean])(implicit val eA: Elem[A])
+    extends Observable[A] with ObservableImplOps[A] { self: ObservableImplOps[A] =>
     def map[B: Elem](f: Rep[A => B]): Obs[B] = ???
     def zip[B](that: Obs[B]): Obs[(A, B)] = ???
   }
