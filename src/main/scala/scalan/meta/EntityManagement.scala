@@ -11,7 +11,8 @@ case class CodegenConfig(
                           proxyTrait: String,
                           entityFiles: List[String],
                           stagedViewsTrait: String,
-                          emitSourceContext: Boolean
+                          emitSourceContext: Boolean,
+                          isoNames: (String, String)
                         )
 
 object CodegenConfig {
@@ -20,7 +21,8 @@ object CodegenConfig {
     proxyTrait = "",
     entityFiles = Nil,
     stagedViewsTrait = "StagedViews",
-    emitSourceContext = false
+    emitSourceContext = false,
+    isoNames = ("From", "To")
   )
 }
 

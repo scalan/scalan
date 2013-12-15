@@ -178,8 +178,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  implicit def iso$className[$types]($implicitArgs):Iso[${className}Data[$types], $className[$types]]
          |    = new $className.Iso[$types] with SeqIso[${className}Data[$types], $className[$types]] { i =>
          |        // should use i as iso reference
-         |        override lazy val eB = new SeqViewElem[${className}Data[$types], $className[$types]]()(i)
-         |                                    with ${className}Elem[$types]
+         |        override lazy val e${config.isoNames._2} = new SeqViewElem[${className}Data[$types], $className[$types]]
+         |                                    with ${className}Elem[$types] { val iso = i }
          |      }
          |""".stripMargin
 
@@ -226,8 +226,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  implicit def iso$className[$types]($implicitArgs):Iso[${className}Data[$types], $className[$types]]
          |    = new $className.Iso[$types] with StagedIso[${className}Data[$types], $className[$types]] { i =>
          |        // should use i as iso reference
-         |        override lazy val eB = new StagedViewElem[${className}Data[$types], $className[$types]]()(i)
-         |                                    with ${className}Elem[$types]
+         |        override lazy val e${config.isoNames._2} = new StagedViewElem[${className}Data[$types], $className[$types]]
+         |                                    with ${className}Elem[$types] { val iso = i }
          |      }
          |""".stripMargin
 
@@ -251,7 +251,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       val defs = for { c <- module.concreteClasses } yield getClassExp(c)
 
       s"""
-       |trait ${module.name}Exp extends ${module.name}Abs with ProxyExp with StagedViews
+       |trait ${module.name}Exp extends ${module.name}Abs with ProxyExp with ${config.stagedViewsTrait}
        |{ self: ScalanStaged ${module.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} =>
        |${defs.mkString("\n")}
        |}
