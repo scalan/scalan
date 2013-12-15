@@ -135,6 +135,11 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers {
         |    def unapply[$typesWithElems](p: Rep[$className[$types]]) = unmk$className(p)
         |  }
         |
+        |  implicit def proxy$className[$typesWithElems](p: Rep[$className[$types]]): ${className}Ops[$types] = {
+        |${c.tpeArgs.rep(a => s"    implicit val m${a.name} = element[${a.name}].manifest;", "\n")}
+        |    proxyOps[${className}Ops[$types], ${className}Ops[$types]](p)
+        |  }
+        |
         |  implicit def extend$className[$types](p: Rep[$className[$types]])($implicitArgs) = new {
         |    def toData: Rep[${className}Data[$types]] = iso$className($useImplicits).fromStaged(p)
         |  }
@@ -261,14 +266,6 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers {
       |${module.imports.rep(i => s"import ${i.names.rep(all, ".")}", "\n")}
       |""".stripMargin
     }
-
-//    def getDslFile: String = {
-//      val topLevel = List(
-//        getFileHeader,
-//        getTraitAbs
-//      )
-//      topLevel.mkString("\n")
-//    }
 
     def getImplFile: String = {
       val topLevel = List(

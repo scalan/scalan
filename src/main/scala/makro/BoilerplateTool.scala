@@ -48,12 +48,7 @@ object BoilerplateTool extends App with ScalanCodegen {
     writeFile(implFile, implCode)
   }
 
-  override def main(args: Array[String]) = {
-    super.main(args)
-
-    entityFiles foreach {f =>
-      genEntity(sourcePrefix + "/" + f)
-    }
-
+  entityFiles foreach {f =>
+    genEntity(sourcePrefix + "/" + f)
   }
 }

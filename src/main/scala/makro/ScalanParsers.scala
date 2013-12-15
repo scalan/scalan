@@ -114,11 +114,13 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
     if (sz > 1) w(xs) else xs.head
   }
 
-  val keywords = Set("def", "trait", "type", "class", "abstract")
+  val keywords = Set("def", "trait", "type", "class", "abstract", "with")
 
   lazy val scalanIdent = ident ^? ({ case s if !keywords.contains(s) => s }, s => s"Keyword $s cannot be used as identifier")
 
-  lazy val qualId = rep1sep(scalanIdent, ".")
+  lazy val bracedIdentList = "{" ~ rep1sep(scalanIdent, ",") ~ "}" ^^ { case _ ~ xs ~ _ => xs.mkString("{", ",", "}")}
+
+  lazy val qualId = rep1sep(scalanIdent | bracedIdentList, ".")
 
   lazy val tpeArg: Parser[TpeArg] = (scalanIdent ~ opt("<:" ~ tpeExpr) ~ rep(":" ~> scalanIdent)) ^^ {
     case name ~ None ~ ctxs => TpeArg(name, None, ctxs)
