@@ -164,6 +164,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
     def getClassSeq(c: ClassDef) = {
       val (className, types, typesWithElems, fields, fieldsWithType, _) = getClassTemplateData(c)
+      val isLite = !config.emitSourceContext
       val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
       val userTypeDefs =
         s"""
@@ -178,8 +179,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  implicit def iso$className[$types]($implicitArgs):Iso[${className}Data[$types], $className[$types]]
          |    = new $className.Iso[$types] with SeqIso[${className}Data[$types], $className[$types]] { i =>
          |        // should use i as iso reference
-         |        override lazy val e${config.isoNames._2} = new SeqViewElem[${className}Data[$types], $className[$types]]
-         |                                    with ${className}Elem[$types] { val iso = i }
+         |        override lazy val e${config.isoNames._2} = new SeqViewElem[${className}Data[$types], $className[$types]]${(!isLite).opt("()(i)")}
+         |                                    with ${className}Elem[$types] ${isLite.opt("{ val iso = i }")}
          |      }
          |""".stripMargin
 
@@ -198,13 +199,14 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
     def getClassExp(c: ClassDef) = {
       val (className, types, typesWithElems, fields, fieldsWithType, _) = getClassTemplateData(c)
+      val isLite = !config.emitSourceContext
       val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
       val userTypeNodeDefs =
         s"""
          |  case class Exp$className[$types]
          |      (${fieldsWithType.rep(f => s"override val $f")})
          |      (implicit ${c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")})
-         |    extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} with UserType[$className[$types]] {
+         |    extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} with UserTypeDef[$className[$types]] {
          |    def elem = element[$className[$types]]
          |    override def mirror(t: Transformer)${config.emitSourceContext.opt("(implicit ctx: SourceContext)")}: Rep[_] = Exp$className[$types](${fields.rep(f => s"t($f)")})
          |  }
@@ -226,8 +228,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  implicit def iso$className[$types]($implicitArgs):Iso[${className}Data[$types], $className[$types]]
          |    = new $className.Iso[$types] with StagedIso[${className}Data[$types], $className[$types]] { i =>
          |        // should use i as iso reference
-         |        override lazy val e${config.isoNames._2} = new StagedViewElem[${className}Data[$types], $className[$types]]
-         |                                    with ${className}Elem[$types] { val iso = i }
+         |        override lazy val e${config.isoNames._2} = new StagedViewElem[${className}Data[$types], $className[$types]]${(!isLite).opt("()(i)")}
+         |                                    with ${className}Elem[$types] ${isLite.opt("{ val iso = i }")}
          |      }
          |""".stripMargin
 

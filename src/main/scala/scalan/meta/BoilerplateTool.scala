@@ -26,6 +26,6 @@ object BoilerplateTool extends App {
     stagedViewsTrait = "ViewsExp"
   )
 
-  val ctx = new EntityManagement(scalanConfig)
+  val ctx = new EntityManagement(liteConfig)
   ctx.generateAll
 }
