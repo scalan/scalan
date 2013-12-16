@@ -103,7 +103,7 @@ trait ReactiveExp extends ReactiveAbs with ProxyExp with ViewsExp
   case class ExpObservableImpl[A]
       (override val value: Rep[A], override val index: Rep[Int], override val completed: Rep[Boolean])
       (implicit override val eA: Elem[A])
-    extends ObservableImpl[A](value, index, completed) with ObservableImplOps[A] with UserType[ObservableImpl[A]] {
+    extends ObservableImpl[A](value, index, completed) with ObservableImplOps[A] with UserTypeDef[ObservableImpl[A]] {
     def elem = element[ObservableImpl[A]]
     override def mirror(t: Transformer): Rep[_] = ExpObservableImpl[A](t(value), t(index), t(completed))
   }
