@@ -15,8 +15,8 @@ trait Functions { self: Scalan =>
     def apply(x: Rep[A]): Rep[B] = mkApply(f,x)
   }
 
-  implicit def mkLambda[A,B](fun: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B]
-  implicit def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C]
+  def mkLambda[A,B](fun: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B]
+  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C]
 
   def mkApply[A:Elem,B:Elem](fun: Rep[A=>B], arg: Rep[A]): Rep[B]
   def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]))(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
@@ -26,8 +26,8 @@ trait Functions { self: Scalan =>
 }
 
 trait FunctionsSeq extends Functions { self: ScalanSeq =>
-  implicit def mkLambda[A,B](fun: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B] = fun
-  implicit def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = fun
+  def mkLambda[A,B](fun: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B] = fun
+  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = fun
   def mkApply[A:Elem,B:Elem](fun: Rep[A => B], arg: Rep[A]): Rep[B] = fun(arg)
 
   //def fix[A,B](f: (A=>B)=>(A=>B)): A=>B = f(fix(f))(_)
@@ -120,6 +120,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       val newLam = new LambdaWrapper(None, t(x), t(y), newSym)
       toExp(newLam, newSym)
     }
+    lazy val objType = element[A => B]
   }
   class LambdaWrapper[A:Elem,B:Elem](
        override val f: Option[Exp[A] => Exp[B]], 
@@ -127,7 +128,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
        override val y: Exp[B], 
        override val thisSymbol: Rep[A=>B])  extends Lambda[A,B](f, x, y) 
 
-  case class Apply[A,B](f: Exp[A => B], arg: Exp[A])(implicit val eA: Elem[A], val eB: Elem[B]) extends Def[B] {
+  case class Apply[A,B](f: Exp[A => B], arg: Exp[A])(implicit val eA: Elem[A], val objType: Elem[B]) extends Def[B] {
     override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))
   }
 

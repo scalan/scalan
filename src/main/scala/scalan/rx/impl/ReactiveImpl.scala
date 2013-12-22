@@ -77,8 +77,8 @@ trait ReactiveSeq extends ReactiveAbs
       (override val value: Rep[A], override val index: Rep[Int], override val completed: Rep[Boolean])
       (implicit override val eA: Elem[A])
     extends ObservableImpl[A](value, index, completed) with ObservableImplOps[A] {
-    type ThisType = ObservableImpl[A]
-    def Elem = element[ObservableImpl[A]]
+    //override type ThisType = ObservableImpl[A]
+    def Elem = element[ObservableImpl[A]].asInstanceOf[Elem[Observable[A]]]
   }
 
 
@@ -106,8 +106,11 @@ trait ReactiveExp extends ReactiveAbs with ProxyExp with ViewsExp
   case class ExpObservableImpl[A]
       (override val value: Rep[A], override val index: Rep[Int], override val completed: Rep[Boolean])
       (implicit override val eA: Elem[A])
-    extends ObservableImpl[A](value, index, completed) with ObservableImplOps[A] with UserTypeDef[ObservableImpl[A]] {
-    def Elem = element[ObservableImpl[A]]
+    extends ObservableImpl[A](value, index, completed)
+       with ObservableImplOps[A]
+       with UserTypeDef[Observable[A], ObservableImpl[A]] {
+    lazy val objType = element[ObservableImpl[A]]
+    implicit def Elem = objType.asInstanceOf[Elem[Observable[A]]]
     override def mirror(t: Transformer): Rep[_] = ExpObservableImpl[A](t(value), t(index), t(completed))
   }
   addUserType(manifest[ExpObservableImpl[Any]])

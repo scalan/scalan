@@ -49,10 +49,12 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
 
   case class Left[A:Elem, B:Elem](left: Exp[A]) extends Def[(A | B)] {
     override def mirror(t: Transformer) = Left[A,B](t(left))
+    lazy val objType = element[(A|B)]
   }
 
   case class Right[A:Elem, B:Elem](right: Exp[B]) extends Def[(A | B)] {
     override def mirror(t: Transformer) = Right[A,B](t(right))
+    lazy val objType = element[(A|B)]
   }
 
   def toLeft[A:Elem](a: Rep[A]): Rep[L[A]] = Left[A,Unit](a)
@@ -62,14 +64,16 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
 
   case class IsLeft[A, B](sum: Exp[(A | B)]) extends Def[Boolean] {
     override def mirror(t: Transformer) = IsLeft(t(sum))
+    def objType = element[Boolean]
   }
 
   case class IsRight[A, B](sum: Exp[(A | B)]) extends Def[Boolean] {
     override def mirror(t: Transformer) = IsRight(t(sum))
+    def objType = element[Boolean]
   }
 
   case class SumFold[A, B, R](sum: Exp[(A | B)], left: Exp[A => R], right: Exp[B => R])
-                             (implicit val eR: Elem[R]) extends Def[R] {
+                             (implicit val objType: Elem[R]) extends Def[R] {
     override def mirror(t: Transformer) = SumFold(t(sum), t(left), t(right))
   }
 
@@ -83,11 +87,11 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
 
   override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
     case f@SumFold(Def(Left(left)), l, _) => {
-      val eR: Elem[T] = f.eR.asInstanceOf[Elem[T]]
+      val eR: Elem[T] = f.objType.asInstanceOf[Elem[T]]
       mkApply(l, left)(left.Elem, eR)
     }
     case f@SumFold(Def(Right(right)), _, r) => {
-      val eR: Elem[T] = f.eR.asInstanceOf[Elem[T]]
+      val eR: Elem[T] = f.objType.asInstanceOf[Elem[T]]
       mkApply(r, right)(right.Elem, eR)
     }
     //TODO case IsLeft, IsRight

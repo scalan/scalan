@@ -30,7 +30,7 @@ trait Views extends Base with Reification { self: Scalan =>
 
   protected[scalan] def defaultViewElem[From,To](implicit iso: Iso[From,To]): Elem[To]
 
-  implicit def viewElement[From,To](implicit iso: Iso[From,To]): Elem[To] = iso.eTo  // always ask elem from Iso
+  implicit def viewElement[From,To](implicit iso: Iso[From,To], ut: To <:< UserType[_]): Elem[To] = iso.eTo  // always ask elem from Iso
 
   trait ViewElem[From,To] extends Element[To] {
     def iso: Iso[From,To]
@@ -45,9 +45,8 @@ trait Views extends Base with Reification { self: Scalan =>
 
   def iso[From,To](implicit i: Iso[From,To]) = i
 
-  trait UserType {
-    type ThisType
-    def Elem: Elem[ThisType]
+  trait UserType[T] {
+    def Elem: Elem[T]
   }
 }
 
@@ -109,9 +108,9 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     userTypes.exists(c => symClazz.isAssignableFrom(c.manifest.runtimeClass))
   }
 
-  trait UserTypeDef[T] extends UserType with ReifiableObject[T] {
-    type ThisType = T
-    override def thisSymbol = reifyObject(this)(Elem)
+  trait UserTypeDef[T, TImpl] extends UserType[T] with ReifiableObject[TImpl] {
+    //type ThisType = T
+    override def thisSymbol = reifyObject(this)(Elem.asInstanceOf[Elem[TImpl]])
   }
   object UserTypeDef {
     def unapply[T](d: Def[T]): Option[Iso[_,T]] = {

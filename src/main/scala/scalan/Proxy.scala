@@ -13,7 +13,7 @@ trait ProxyBase { self: Scalan =>
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
-  case class MethodCall[T](receiver: Exp[Any], method: jreflect.Method, args: List[AnyRef])(implicit val elem: Elem[T]) extends Def[T] {
+  case class MethodCall[T](receiver: Exp[Any], method: jreflect.Method, args: List[AnyRef])(implicit val objType: Elem[T]) extends Def[T] {
     override def mirror(t: Transformer) =
       MethodCall[T](t(receiver), method, args map { case a: Exp[_] => t(a) case a => a })
     override def thisSymbol: Rep[T] = { this }

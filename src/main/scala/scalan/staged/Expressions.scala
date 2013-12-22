@@ -39,7 +39,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
   type Def[+A] = ReifiableObject[A]
   type Def1[+A] = ReifiableObjectAux[A]
 
-  case class Const[T](x: T)(implicit val elem: Elem[T]) extends Def[T] {
+  case class Const[T](x: T)(implicit val objType: Elem[T]) extends Def[T] {
     override def thisSymbol: Rep[T] = this
     override def mirror(t: Transformer): Rep[_] = Const(x)
     override def hashCode: Int = (41 + x.hashCode)
@@ -79,14 +79,14 @@ trait BaseExp extends Base { self: ScalanStaged =>
       implicit val eT = arg.Elem
       copyWith(t(arg))
     }
-    override def thisSymbol: Rep[T] = { implicit val e = elem; this }
+    override def thisSymbol: Rep[T] = { implicit val e = objType; this }
   }
   abstract class BinOp[T] extends Def[T] with BinOpBase[T,T] {
     override def mirror(t: Transformer) = {
       implicit val eT = lhs.Elem
       copyWith(t(lhs), t(rhs))
     }
-    override def thisSymbol: Rep[T] = { implicit val e = elem; this }
+    override def thisSymbol: Rep[T] = { implicit val e = objType; this }
   }
 
   def fresh[T](implicit et: Elem[T]): Exp[T]
@@ -105,6 +105,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: Elem[T]): Exp[T]
   implicit def reifyObject[T: Elem](obj: ReifiableObject[T]): Rep[T] = toExp(obj, fresh[T])
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
+    case `intElement` | `floatElement` | `boolElement` | `stringElement` => Const(x)
     case _ => super.toRep(x)(eA)
   }
   //protected[scalan] def toExp1[T](d: ReifiableObjectAux[T], newSym: => Exp[T])(implicit et: Elem[d.ThisType]): Exp[d.ThisType]
@@ -267,7 +268,10 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
   case class Sym[+T](id: Int = {Sym.currId += 1; Sym.currId})
                     (implicit et: Elem[T]) extends Exp[T]
   {
-    override def Elem: Elem[T @uncheckedVariance] = et
+    override def Elem: Elem[T @uncheckedVariance] = this match {
+      case Def(d) => d.objType.asInstanceOf[Elem[T]]
+      case _ => et
+    }
     def varName = "s" + id
     override def toString = {
       val res = isDebug match {

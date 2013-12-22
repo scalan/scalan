@@ -1,7 +1,7 @@
 package scalan
 
 import scala.language.{higherKinds, implicitConversions}
-
+import scala.annotation.unchecked.uncheckedVariance
 
 
 trait Base { self: Scalan =>
@@ -44,7 +44,7 @@ trait Base { self: Scalan =>
     def arg: Rep[TArg]
     def copyWith(arg: Rep[TArg]): Rep[R]
     def opName: String
-    def elem: Elem[R]
+    def objType: Elem[R]
     override def toString = "%s(%s)".format(this.getClass.getSimpleName, arg)
   }
 
@@ -53,11 +53,12 @@ trait Base { self: Scalan =>
     def rhs: Rep[TArg]
     def copyWith(l: Rep[TArg], r:Rep[TArg]): Rep[R]
     def opName: String
-    def elem: Elem[R]
+    def objType: Elem[R]
     override def toString = this.getClass.getSimpleName + "(" + lhs + ", " + rhs + ")"
   }
 
   trait ReifiableObject[+A] {     // implemented as Def[A] in staged context
+    def objType: Elem[A @uncheckedVariance]
     def thisSymbol: Rep[A] = !!!("should not be called")
     def name = getClass.getSimpleName
     def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)

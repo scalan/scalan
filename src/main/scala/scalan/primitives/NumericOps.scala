@@ -49,7 +49,7 @@ trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
 }
 
 trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
-  abstract class NumericBinOp[T](val opName: String)(implicit val elem: Elem[T], val numeric: Numeric[T]) extends BinOp[T] {
+  abstract class NumericBinOp[T](val opName: String)(implicit val objType: Elem[T], val numeric: Numeric[T]) extends BinOp[T] {
   }
   case class NumericPlus[T:Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("+") {
     def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
@@ -64,17 +64,17 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
     def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
   }
   case class NumericDivInt(lhs: Exp[Int], rhs: Exp[Int]) extends BinOp[Int] {
-    val elem = element[Int]
+    val objType = element[Int]
     def copyWith(l: Rep[Int], r: Rep[Int]) = this.copy(lhs = l, rhs = r)
     def opName = "/"
   }
   case class NumericModInt(lhs: Exp[Int], rhs: Exp[Int]) extends BinOp[Int] {
-    val elem = element[Int]
+    val objType = element[Int]
     def copyWith(l: Rep[Int], r: Rep[Int]) = this.copy(lhs = l, rhs = r)
     def opName = "%"
   }
 
-  abstract class NumericUnOp[T](val opName: String)(implicit val elem: Elem[T], val numeric: Numeric[T]) extends UnOp[T] {
+  abstract class NumericUnOp[T](val opName: String)(implicit val objType: Elem[T], val numeric: Numeric[T]) extends UnOp[T] {
   }
   case class NumericNegate[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends NumericUnOp[T]("-") {
      def copyWith(a: Rep[T]) = this.copy(arg = a)
@@ -85,7 +85,7 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
 //  }
 
   case class NumericToFloat[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends Def[Float] with UnOpBase[T,Float] {
-    val elem = element[Float]
+    val objType = element[Float]
     def copyWith(a: Rep[T]) = this.copy(arg = a)
     override def mirror(t: Transformer) = {
       implicit val eT = arg.Elem
@@ -104,8 +104,8 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
 ////  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericAbs(x, n)
 //
   override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
-    case d@NumericPlus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => toRep(n.plus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.elem)
-    case d@NumericMinus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => toRep(n.minus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.elem)
+    case d@NumericPlus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => toRep(n.plus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.objType)
+    case d@NumericMinus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => toRep(n.minus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.objType)
     case _ => super.rewrite(d)
   }
 

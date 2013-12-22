@@ -23,7 +23,7 @@ trait EqualSeq extends Equal  { self: ScalanSeq =>
 
 trait EqualExp extends Equal with BaseExp { self: ScalanStaged =>
   abstract class EqBinOp[T](val opName: String) extends Def[Boolean] with BinOpBase[T, Boolean] {
-    val elem = element[Boolean]
+    val objType = element[Boolean]
     override def mirror(t: Transformer) = {
       implicit val eT = lhs.Elem
       copyWith(t(lhs), t(rhs))
