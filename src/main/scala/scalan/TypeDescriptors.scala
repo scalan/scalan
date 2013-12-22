@@ -8,6 +8,7 @@ import Common._
 import annotation.implicitNotFound
 import scalan.staged.BaseExp
 import scala.language.{implicitConversions}
+import scala.annotation.unchecked.uncheckedVariance
 
 trait TypeDescriptors extends Base { self: Scalan =>
   type Elem[A] = Element[A]    // typeclass of type descriptors
@@ -22,8 +23,7 @@ trait TypeDescriptors extends Base { self: Scalan =>
   implicit def pairElement[A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A,B)]
   implicit def sumElement [A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A|B)]
   implicit def funcElement[A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[A => B]
-
-  def elem2Zero[A](implicit ea: Elem[A]): Zero[Rep[A]] = ea.zero
+  //implicit def elemElement[A](implicit ea: Elem[A]): Elem[Elem[A]]
 
   @implicitNotFound(msg = "No Element available for ${A}.")
   trait Element[A] {
@@ -45,10 +45,12 @@ trait TypeDescriptors extends Base { self: Scalan =>
   abstract class SumElem [A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[(A|B)] {
   }
   abstract class FuncElem[A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[A => B]
+  //abstract class ElemElem[A](val ea: Elem[A]) extends Element[Elem[A]]
 
   implicit def PairElemExtensions[A,B](eAB: Elem[(A,B)]): PairElem[A,B] = eAB.asInstanceOf[PairElem[A,B]]
   implicit def SumElemExtensions[A,B](eAB: Elem[(A|B)]): SumElem[A,B] = eAB.asInstanceOf[SumElem[A,B]]
   implicit def FuncElemExtensions[A,B](eAB: Elem[A=>B]): FuncElem[A,B] = eAB.asInstanceOf[FuncElem[A,B]]
+  //implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]
   implicit def UnitElemExtensions(eu: Elem[Unit]): UnitElem = eu.asInstanceOf[UnitElem]
 }
 
@@ -106,17 +108,23 @@ trait TypeDescriptorsSeq extends TypeDescriptors with Scalan { self: ScalanSeq =
 
   implicit def funcElement[A,B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
     new FuncElem[A, B](elema, elemb) with SeqElement[A => B] {
-      //implicit val elemAB = this
       private val m = Manifest.classType(classOf[A=>B], ea.manifest, eb.manifest)
       private val z = {
         implicit val zA = ea.zero; implicit val zB = eb.zero
-        //implicitly[Zero[Rep[A=>B]]]
         Zero.Function1ABZero[Rep[A],Rep[B]](zB)
       }
 
       def manifest: Manifest[A=>B] = m
       def zero = z
     }
+
+//  override implicit def elemElement[A](implicit elema: Elem[A]): Elem[Elem[A]] =
+//    new ElemElem[A](elema) with SeqElement[Elem[A]] {
+//      lazy val boolElem = element[Boolean]
+//      lazy val m: Manifest[Elem[A]] = Manifest.classType(classOf[Elem[A]], ea.manifest)
+//      def zero = Common.zero(scala.Left(ea.defaultOf))
+//      def manifest: Manifest[Elem[A]] = m
+//    }
 
 }
 

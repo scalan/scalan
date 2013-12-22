@@ -76,6 +76,8 @@ trait ReactiveSeq extends ReactiveAbs
       (override val value: Rep[A], override val index: Rep[Int], override val completed: Rep[Boolean])
       (implicit override val eA: Elem[A])
     extends ObservableImpl[A](value, index, completed) with ObservableImplOps[A] {
+    type ThisType = ObservableImpl[A]
+    def Elem = element[ObservableImpl[A]]
   }
 
 
@@ -90,7 +92,7 @@ trait ReactiveSeq extends ReactiveAbs
   def mkObservableImpl[A]
       (value: Rep[A], index: Rep[Int], completed: Rep[Boolean])
       (implicit eA: Elem[A])
-      = new ObservableImpl[A](value, index, completed) with ObservableImplOps[A]
+      = new SeqObservableImpl[A](value, index, completed)
   def unmkObservableImpl[A:Elem](p: Rep[ObservableImpl[A]])
     = Some((p.value, p.index, p.completed))
 
@@ -104,7 +106,7 @@ trait ReactiveExp extends ReactiveAbs with ProxyExp with ViewsExp
       (override val value: Rep[A], override val index: Rep[Int], override val completed: Rep[Boolean])
       (implicit override val eA: Elem[A])
     extends ObservableImpl[A](value, index, completed) with ObservableImplOps[A] with UserTypeDef[ObservableImpl[A]] {
-    def elem = element[ObservableImpl[A]]
+    def Elem = element[ObservableImpl[A]]
     override def mirror(t: Transformer): Rep[_] = ExpObservableImpl[A](t(value), t(index), t(completed))
   }
   addUserType(manifest[ExpObservableImpl[Any]])
@@ -113,7 +115,7 @@ trait ReactiveExp extends ReactiveAbs with ProxyExp with ViewsExp
   def mkObservableImpl[A]
       (value: Rep[A], index: Rep[Int], completed: Rep[Boolean])
       (implicit eA: Elem[A])
-      = new ExpObservableImpl[A](value, index, completed) with ObservableImplOps[A]
+      = new ExpObservableImpl[A](value, index, completed)
   def unmkObservableImpl[A:Elem](p: Rep[ObservableImpl[A]])
     = Some((p.value, p.index, p.completed))
 

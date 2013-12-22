@@ -137,6 +137,7 @@ trait BaseExp { self: ScalanStaged =>
   }
 
   type Def[+A] = ReifiableObject[A]
+  type Def1[+A] = ReifiableObjectAux[A]
 
   case class Const[T](x: T)(implicit val elem: Elem[T]) extends Def[T] {
     override def thisSymbol: Rep[T] = this
@@ -203,6 +204,9 @@ trait BaseExp { self: ScalanStaged =>
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: Elem[T]): Exp[T]
   implicit def reifyObject[T: Elem](obj: ReifiableObject[T]): Rep[T] = toExp(obj, fresh[T])
+
+  //protected[scalan] def toExp1[T](d: ReifiableObjectAux[T], newSym: => Exp[T])(implicit et: Elem[d.ThisType]): Exp[d.ThisType]
+  //def reifyObject1[T](obj: ReifiableObjectAux[T])(implicit eT: Elem[obj.ThisType]): Rep[obj.ThisType] = toExp1(obj, fresh[obj.ThisType])
 
   object Def {
     def unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)

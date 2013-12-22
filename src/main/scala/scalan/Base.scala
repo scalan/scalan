@@ -65,6 +65,16 @@ trait Base { self: Scalan =>
     def isScalarOp: Boolean = true
   }
 
+  trait ReifiableObject1 {     // implemented as Def[A] in staged context
+    type ThisType
+    def thisSymbol: Rep[ThisType] = !!!("should not be called")
+    def name = getClass.getSimpleName
+    def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)
+    def decompose: Option[Rep[_]] = None
+    def isScalarOp: Boolean = true
+  }
+  type ReifiableObjectAux[+T] = ReifiableObject1 { type ThisType <: T }
+
   abstract class Transformer { outer =>
     type Self = this.type
     def apply[A](x: Rep[A]): Rep[A]
@@ -85,5 +95,6 @@ trait Base { self: Scalan =>
   }
 
   implicit def reifyObject[A:Elem](obj: ReifiableObject[A]): Rep[A]
+  //def reifyObject1[A:Elem](obj: ReifiableObjectAux[A]): Rep[obj.ThisType]
   implicit def toRep[A:Elem](x: A): Rep[A] = element[A].toRep(x)
 }
