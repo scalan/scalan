@@ -96,5 +96,6 @@ trait Base { self: Scalan =>
 
   implicit def reifyObject[A:Elem](obj: ReifiableObject[A]): Rep[A]
   //def reifyObject1[A:Elem](obj: ReifiableObjectAux[A]): Rep[obj.ThisType]
-  implicit def toRep[A:Elem](x: A): Rep[A] = element[A].toRep(x)
+  def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for: $x") //= element[A].toRep(x)
+  implicit def liftToRep[A:Elem](x: A) = toRep(x)
 }

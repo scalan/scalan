@@ -1,6 +1,7 @@
 package scalan.common
 
-object Common extends Zeros
+object Common extends Defaults
+  with Zeros
   with Semigroups
   with Options {
 

@@ -3,6 +3,7 @@ package scalan.rx
 
 import scalan._
 import scalan.common.Common
+import Common._
 import scala.language.implicitConversions
 
 
@@ -36,7 +37,7 @@ trait ReactiveAbs extends Reactive
         implicit val mA = element[A].manifest
         Predef.manifest[ObservableImpl[A]] 
       }
-      def zero = Common.zero[Rep[ObservableImpl[A]]](ObservableImpl(element[A].zero.zero, 0, false))
+      def defaultOf = defaultVal[Rep[ObservableImpl[A]]](ObservableImpl(element[A].defaultOf.value, 0, false))
     }
 
     def apply[A](p: Rep[ObservableImplData[A]])(implicit eA: Elem[A]): Rep[ObservableImpl[A]]

@@ -2,7 +2,7 @@ package scalan
 
 import scala.text._
 import Document._
-import scalan.common.Zero
+import scalan.common.{DefaultOf, Zero}
 
 trait Views extends Base with Reification { self: Scalan =>
 
@@ -12,7 +12,7 @@ trait Views extends Base with Reification { self: Scalan =>
     def from: To => From
     def to: From => To
     def manifest: Manifest[To]
-    def zero: Zero[Rep[To]]
+    def defaultOf: DefaultOf[Rep[To]]
     def fromStaged: Rep[To] => Rep[From]
     def toStaged: Rep[From] => Rep[To]
   }
@@ -65,9 +65,9 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
     implicit private def eFrom = iso.eFrom
     implicit private def eTo = iso.eTo
     private lazy val m: Manifest[To] = iso.manifest
-    private lazy val z = iso.zero
+    private lazy val z = iso.defaultOf
     def manifest: Manifest[To] = m
-    def zero = z
+    def defaultOf = z
   }
 }
 
@@ -85,10 +85,10 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     implicit private def eFrom = iso.eFrom
     implicit private def eTo = iso.eTo
     implicit private lazy val m = iso.manifest
-    private lazy val z = iso.zero
+    private lazy val z = iso.defaultOf
     def manifest: Manifest[To] = m
-    def zero = z
-    override def toRep(p: To) = iso.toStaged(eFrom.toRep(iso.from(p)))
+    def defaultOf = z
+    //override def toRep(p: To) = iso.toStaged(eFrom.toRep(iso.from(p)))
   }
 
   case class UserTypeDescriptor[T](manifest: Manifest[T])

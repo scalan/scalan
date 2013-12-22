@@ -2,6 +2,7 @@ package scalan.rx
 
 import scalan._
 import scalan.common.Common
+import Common._
 import scala.language.implicitConversions
 
 trait Reactive extends ScalanDsl with ReactiveOps { self: ReactiveDsl =>
