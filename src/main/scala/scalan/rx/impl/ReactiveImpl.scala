@@ -110,7 +110,11 @@ trait ReactiveExp extends ReactiveAbs with ProxyExp with ViewsExp
        with ObservableImplOps[A]
        with UserTypeDef[Observable[A], ObservableImpl[A]] {
     lazy val objType = element[ObservableImpl[A]]
-    implicit def Elem = objType.asInstanceOf[Elem[Observable[A]]]
+//    lazy val objTypeSym = {
+//      implicit val absElem = objType.asInstanceOf[Elem[Observable[A]]]
+//      toRep(absElem)(elemElement(absElem))
+//    }
+    def Elem = objType.asInstanceOf[Elem[Observable[A]]]
     override def mirror(t: Transformer): Rep[_] = ExpObservableImpl[A](t(value), t(index), t(completed))
   }
   addUserType(manifest[ExpObservableImpl[Any]])

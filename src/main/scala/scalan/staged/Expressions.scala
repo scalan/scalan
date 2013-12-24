@@ -128,7 +128,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     }
   }
   object Elem {
-    def unapply[T](s: Exp[T]): Option[(Exp[T],Element[T])] = Some((s, s.Elem))
+    def unapply[T](s: Exp[T]): Option[(Exp[T],Elem[T])] = Some((s, s.Elem))
   }
 
 

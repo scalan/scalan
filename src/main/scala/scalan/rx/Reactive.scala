@@ -9,7 +9,6 @@ trait Reactive extends ScalanDsl with ReactiveOps { self: ReactiveDsl =>
 
   type Obs[A] = Rep[Observable[A]]
   trait Observable[A] extends UserType[Observable[A]] {
-    //type ThisType = Observable[A]
     implicit def eA: Elem[A]
     def value: Rep[A]
     def index: Rep[Int]

@@ -32,7 +32,7 @@ trait Views extends Base with Reification { self: Scalan =>
 
   implicit def viewElement[From,To](implicit iso: Iso[From,To], ut: To <:< UserType[_]): Elem[To] = iso.eTo  // always ask elem from Iso
 
-  trait ViewElem[From,To] extends Element[To] {
+  trait ViewElem[From,To] extends Elem[To] {
     def iso: Iso[From,To]
   }
 

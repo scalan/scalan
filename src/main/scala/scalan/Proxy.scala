@@ -101,7 +101,10 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
       val zero = e.iso.defaultOf.value
       val Def(zeroNode) = zero
       val res = m.invoke(zeroNode, args: _*)
-      res.asInstanceOf[Exp[AnyRef]].Elem
+      res match {
+        case s: Exp[_] => s.asInstanceOf[Exp[AnyRef]].Elem
+        case other => ???(s"not imdon't know how to get result elem for $other")
+      }
     }
 
   }

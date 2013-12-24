@@ -12,6 +12,7 @@ import scala.annotation.unchecked.uncheckedVariance
 
 trait TypeDescriptors extends Base { self: Scalan =>
   type Elem[A] = Element[A]    // typeclass of type descriptors
+  type E[A] = Rep[Elem[A]]
 
   implicit val boolElement:  Elem[Boolean]
   implicit val intElement:   Elem[Int]
@@ -23,7 +24,7 @@ trait TypeDescriptors extends Base { self: Scalan =>
   implicit def pairElement[A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A,B)]
   implicit def sumElement [A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A|B)]
   implicit def funcElement[A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[A => B]
-  //implicit def elemElement[A](implicit ea: Elem[A]): Elem[Elem[A]]
+  implicit def elemElement[A](implicit ea: Elem[A]): Elem[Elem[A]]
 
   @implicitNotFound(msg = "No Element available for ${A}.")
   trait Element[A] {
@@ -43,12 +44,12 @@ trait TypeDescriptors extends Base { self: Scalan =>
   abstract class SumElem [A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[(A|B)] {
   }
   abstract class FuncElem[A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[A => B]
-  //abstract class ElemElem[A](val ea: Elem[A]) extends Element[Elem[A]]
+  abstract class ElemElem[A](val ea: Elem[A]) extends Element[Elem[A]]
 
   implicit def PairElemExtensions[A,B](eAB: Elem[(A,B)]): PairElem[A,B] = eAB.asInstanceOf[PairElem[A,B]]
   implicit def SumElemExtensions[A,B](eAB: Elem[(A|B)]): SumElem[A,B] = eAB.asInstanceOf[SumElem[A,B]]
   implicit def FuncElemExtensions[A,B](eAB: Elem[A=>B]): FuncElem[A,B] = eAB.asInstanceOf[FuncElem[A,B]]
-  //implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]
+  implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]
   implicit def UnitElemExtensions(eu: Elem[Unit]): UnitElem = eu.asInstanceOf[UnitElem]
 
   implicit lazy val IntRepDefaultOf          = defaultVal[Rep[Int]](0)
@@ -122,13 +123,15 @@ trait TypeDescriptorsSeq extends TypeDescriptors with Scalan { self: ScalanSeq =
       def defaultOf = z
     }
 
-//  override implicit def elemElement[A](implicit elema: Elem[A]): Elem[Elem[A]] =
-//    new ElemElem[A](elema) with SeqElement[Elem[A]] {
-//      lazy val boolElem = element[Boolean]
-//      lazy val m: Manifest[Elem[A]] = Manifest.classType(classOf[Elem[A]], ea.manifest)
-//      def zero = Common.zero(scala.Left(ea.defaultOf))
-//      def manifest: Manifest[Elem[A]] = m
-//    }
+  override implicit def elemElement[A](implicit elema: Elem[A]): Elem[Elem[A]] =
+    new ElemElem[A](elema) with SeqElement[Elem[A]] {
+      lazy val m: Manifest[Elem[A]] = Manifest.classType(classOf[Elem[A]], ea.manifest)
+      def defaultOf = Common.defaultVal(element[A])
+      def manifest: Manifest[Elem[A]] = m
+    }
+
+  //-------------- Stagin of elements ---------------
+
 
 }
 
@@ -197,5 +200,17 @@ trait TypeDescriptorsExp extends TypeDescriptors
       lazy val z: DefaultOf[Rep[A=>B]] = defaultVal[Rep[A=>B]](fun { x => eb.defaultOf.value })
       implicit def defaultOf = z
     }
+
+  override implicit def elemElement[A](implicit elema: Elem[A]): Elem[Elem[A]] =
+    new ElemElem[A](elema) with StagedElement[Elem[A]] {
+      lazy val m: Manifest[Elem[A]] = Manifest.classType(classOf[Elem[A]], ea.manifest)
+      def defaultOf = Common.defaultVal(element[A])
+      def manifest: Manifest[Elem[A]] = m
+    }
+
+//  override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
+//    case ee: ElemElem[a] => ElemDef[a](x)
+//    case _ => super.toRep(x)(eA)
+//  }
 
 }
