@@ -1,11 +1,12 @@
 
-package scalan
+package scalan.types
 
 import scala.annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.{DefaultOf,Common}
 import Common._
 import scala.language.implicitConversions
+import scalan._
 
 
 trait TypesAbs extends Types
@@ -110,10 +111,6 @@ trait TypesExp extends TypesAbs with ProxyExp with ViewsExp
     extends TypeImpl[A](typeCode, defaultValue) with TypeImplOps[A]
        with UserTypeDef[Type[A],TypeImpl[A]] {
     lazy val objType = element[TypeImpl[A]]
-//    lazy val objTypeSym = {
-//      implicit val absElem = objType.asInstanceOf[Elem[Type[A]]]
-//      toRep(absElem)
-//    }
     def Elem = objType.asInstanceOf[Elem[Type[A]]]
     def elem = element[TypeImpl[A]]
     override def mirror(t: Transformer): Rep[_] = ExpTypeImpl[A](t(typeCode), t(defaultValue))

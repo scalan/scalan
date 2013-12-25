@@ -6,7 +6,7 @@ import scalan.common.{Common, Zero, Semigroup, Monoid}
 import Common._
 import scalan.primitives.NumericOps
 
-trait Monoids extends Base with NumericOps with TypeDescriptors { self: Scalan =>
+trait Monoids extends Base with NumericOps with Elems { self: Scalan =>
   import Monoid._
 
   implicit lazy val IntRepZero: Zero[Rep[Int]] = zero[Rep[Int]](0)

@@ -6,7 +6,7 @@ package scalan.arrays
 
 import scalan._
 
-trait ArrayDescriptors extends TypeDescriptors { self: Scalan =>
+trait ArrayDescriptors extends Elems { self: Scalan =>
 
 //  abstract class UnitArrayElem extends Element[PArray[Unit]] {
 //    def createPA(len: IntRep): PA[Unit]

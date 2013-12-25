@@ -1,7 +1,8 @@
-package scalan
+package scalan.types
 
 import scala.annotation.implicitNotFound
 import scalan.common.{Common, DefaultOf}
+import scalan._
 
 trait TypesOps { scalan: TypesDsl =>
 

@@ -12,7 +12,7 @@ import scalan.seq.BaseSeq
 trait Scalan
   extends Base
 //     with Pipes
-     with TypeDescriptors
+     with Elems
 //     with Arrays
      with Views
 //     with Chunks
@@ -43,7 +43,7 @@ trait ScalanDsl
 trait ScalanSeq
   extends Scalan
   with BaseSeq
-  with TypeDescriptorsSeq
+  with ElemsSeq
 //  with SeqArrays
 //  with SeqChunks
 //  with SeqPipes
@@ -106,7 +106,7 @@ trait ScalanStaged
   with TuplesExp
   with TypeSumExp
 //  with StagedImplBase
-  with TypeDescriptorsExp
+  with ElemsExp
 //  with StagedArrays
 //  with StagedArrayExtensions
 //  with StagedPipes

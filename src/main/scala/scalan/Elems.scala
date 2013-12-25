@@ -10,7 +10,7 @@ import scalan.staged.BaseExp
 import scala.language.{implicitConversions}
 import scala.annotation.unchecked.uncheckedVariance
 
-trait TypeDescriptors extends Base { self: Scalan =>
+trait Elems extends Base { self: Scalan =>
   type Elem[A] = Element[A]    // typeclass of type descriptors
   type E[A] = Rep[Elem[A]]
 
@@ -60,7 +60,7 @@ trait TypeDescriptors extends Base { self: Scalan =>
 
 }
 
-trait TypeDescriptorsSeq extends TypeDescriptors with Scalan { self: ScalanSeq =>
+trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
 
   override implicit lazy val boolElement: Elem[Boolean] =
     new SeqBaseElement[Boolean]()(Defaults.BooleanDefaultOf, manifest[Boolean])
@@ -135,7 +135,7 @@ trait TypeDescriptorsSeq extends TypeDescriptors with Scalan { self: ScalanSeq =
 
 }
 
-trait TypeDescriptorsExp extends TypeDescriptors
+trait ElemsExp extends Elems
                             with BaseExp
                             with Scalan { self: ScalanStaged =>
 
