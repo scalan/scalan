@@ -29,6 +29,20 @@ trait ScalanAst {
     override def toString = items.mkString("(", "|", ")")
   }
 
+  implicit class TpeExprExtensions(self: TpeExpr) {
+    def applySubst(subst: Map[String, TpeExpr]): TpeExpr = self match {
+      case TraitCall(n, args) => // higher-kind usage of names is not supported  Array[A] - ok, A[Int] - nok
+        subst.get(n) match {
+          case Some(t) => t
+          case None => TraitCall(n, args map { _.applySubst(subst) })
+        }
+      case TpeTuple(items) => TpeTuple(items map { _.applySubst(subst) })
+      case TpeSum(items) => TpeSum(items map { _.applySubst(subst) })
+      case _ => self
+    }
+  }
+
+
   // Expr universe --------------------------------------------------------------------------
   abstract class Expr
   case class MethodCall(obj: Expr, name: String, args: List[Expr] = Nil) extends Expr
@@ -76,6 +90,19 @@ trait ScalanAst {
     entityOps: TraitDef,
     concreteClasses: List[ClassDef],
     selfType: Option[SelfTypeDef] = None) {
+
+    object EntityRepType {
+      def unapply(ty: TpeExpr): Option[TpeExpr] = ty match {
+        case TraitCall(n, args) if n == typeSyn.name =>
+          typeSyn.rhs match {
+            case TraitCall("Rep", List(entityType)) =>
+              val subst = (typeSyn.tpeArgs.map(_.name) zip args).toMap
+              Some(entityType.applySubst(subst))
+            case _ => sys.error(s"Entity type synonym should be Rep type but was $typeSyn")
+          }
+        case _ => None
+      }
+    }
   }
 
   def getConcreteClasses(defs: List[BodyItem]) = defs.collect { case c: ClassDef => c }

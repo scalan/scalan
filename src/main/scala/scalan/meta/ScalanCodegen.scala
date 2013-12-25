@@ -61,10 +61,14 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       )
     }
 
-    def dataType(ts: List[TpeExpr]): String = ts match {
+    def dataType(t: TpeExpr): String = t match {
+      case module.EntityRepType(t) => dataType(t)
+      case _ => t.toString
+    }
+    def dataTypes(ts: List[TpeExpr]): String = ts match {
       case Nil => "Unit"
-      case t :: Nil => t.toString
-      case t :: ts => s"($t, ${dataType(ts)})"
+      case t :: Nil => dataType(t)
+      case t :: ts => s"(${dataType(t)}, ${dataTypes(ts)})"
     }
     
     def pairify(fs: List[String]): String = fs match {
@@ -106,14 +110,14 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  trait ${className}Elem[$types] extends ${entityName}Elem[${className}Data[$types], $className[$types]]
         |
         |  // state representation type
-        |  type ${className}Data[$types] = ${dataType(fieldTypes)}
+        |  type ${className}Data[$types] = ${dataTypes(fieldTypes)}
         |
         |  // 3) companion object with Iso, constructor and deconstructor
         |  object $className extends ${className}Companion {
         |    abstract class Iso[$types]${implicitArgs()}
         |           extends IsoBase[${className}Data[$types], $className[$types]] {
         |      override def fromStaged = { case $className(${fields.rep(all)}) => ${pairify(fields)} }
-        |      override def toStaged = (p: Rep[${dataType(fieldTypes)}]) => {
+        |      override def toStaged = (p: Rep[${dataTypes(fieldTypes)}]) => {
         |        val ${pairify(fields)} = p
         |        $className(${fields.rep(all)})
         |      }
