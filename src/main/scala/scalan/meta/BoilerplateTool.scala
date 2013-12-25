@@ -20,7 +20,8 @@ object BoilerplateTool extends App {
   val liteConfig = defConf.copy(
     srcPath = "/home/s00747473/Projects/scalan-lite/src",
     entityFiles = List(
-      "main/scala/scalan/rx/Reactive.scala"
+      "main/scala/scalan/types/Types.scala"
+      //"main/scala/scalan/rx/Reactive.scala"
       //, "main/scala/scalan/rx/Trees.scala"
     ),
     stagedViewsTrait = "ViewsExp"
