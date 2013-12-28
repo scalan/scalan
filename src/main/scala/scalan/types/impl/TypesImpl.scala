@@ -21,53 +21,53 @@ trait TypesAbs extends Types
   trait TypeElem[From,To] extends ViewElem[From, To]
 
   // elem for concrete class
-  trait TypeImplElem[A] extends TypeElem[TypeImplData[A], TypeImpl[A]]
+  trait BaseTypeElem[A] extends TypeElem[BaseTypeData[A], BaseType[A]]
 
   // state representation type
-  type TypeImplData[A] = (String, A)
+  type BaseTypeData[A] = (String, A)
 
   // 3) companion object with Iso, constructor and deconstructor
-  object TypeImpl extends TypeImplCompanion {
+  object BaseType extends BaseTypeCompanion {
     abstract class Iso[A](implicit  eA: Elem[A])
-           extends IsoBase[TypeImplData[A], TypeImpl[A]] {
-      override def fromStaged = { case TypeImpl(typeCode, defaultValue) => Pair(typeCode, defaultValue) }
-      override def toStaged = (p: Rep[(String, A)]) => {
+           extends IsoBase[BaseTypeData[A], BaseType[A]] {
+      override def from = { case BaseType(typeCode, defaultValue) => Pair(typeCode, defaultValue) }
+      override def to = (p: Rep[(String, A)]) => {
         val Pair(typeCode, defaultValue) = p
-        TypeImpl(typeCode, defaultValue)
+        BaseType(typeCode, defaultValue)
       }
       def manifest = { 
         implicit val mA = element[A].manifest
-        Predef.manifest[TypeImpl[A]] 
+        Predef.manifest[BaseType[A]] 
       }
-      def defaultOf = Common.defaultVal[Rep[TypeImpl[A]]](TypeImpl("", element[A].defaultOf.value))
+      def defaultOf = Common.defaultVal[Rep[BaseType[A]]](BaseType("", element[A].defaultOf.value))
     }
 
-    def apply[A](p: Rep[TypeImplData[A]])(implicit  eA: Elem[A]): Rep[TypeImpl[A]]
-        = isoTypeImpl(eA).toStaged(p)
-    def apply[A](p: Type[A])(implicit  eA: Elem[A]): Rep[TypeImpl[A]]
-        = mkTypeImpl(p.typeCode, p.defaultValue)
+    def apply[A](p: Rep[BaseTypeData[A]])(implicit  eA: Elem[A]): Rep[BaseType[A]]
+        = isoBaseType(eA).to(p)
+    def apply[A](p: Type[A])(implicit  eA: Elem[A]): Rep[BaseType[A]]
+        = mkBaseType(p.typeCode, p.defaultValue)
     def apply[A]
           (typeCode: Rep[String], defaultValue: Rep[A])
-          (implicit  eA: Elem[A]): Rep[TypeImpl[A]]
-        = mkTypeImpl(typeCode, defaultValue)
-    def unapply[A:Elem](p: Rep[TypeImpl[A]]) = unmkTypeImpl(p)
+          (implicit  eA: Elem[A]): Rep[BaseType[A]]
+        = mkBaseType(typeCode, defaultValue)
+    def unapply[A:Elem](p: Rep[BaseType[A]]) = unmkBaseType(p)
   }
 
-  implicit def proxyTypeImpl[A](p: Rep[TypeImpl[A]])(implicit  eA: Elem[A]): TypeImplOps[A] = {
+  implicit def proxyBaseType[A](p: Rep[BaseType[A]])(implicit  eA: Elem[A]): BaseTypeOps[A] = {
     implicit val mA = element[A].manifest;
-    proxyOps[TypeImplOps[A], TypeImplOps[A]](p)
+    proxyOps[BaseTypeOps[A], BaseTypeOps[A]](p)
   }
 
-  implicit def extendTypeImpl[A](p: Rep[TypeImpl[A]])(implicit  eA: Elem[A]) = new {
-    def toData: Rep[TypeImplData[A]] = isoTypeImpl(eA).fromStaged(p)
+  implicit def extendBaseType[A](p: Rep[BaseType[A]])(implicit  eA: Elem[A]) = new {
+    def toData: Rep[BaseTypeData[A]] = isoBaseType(eA).from(p)
   }
 
   // 4) implicit resolution of Iso
-  implicit def isoTypeImpl[A](implicit  eA: Elem[A]): Iso[TypeImplData[A], TypeImpl[A]]
+  implicit def isoBaseType[A](implicit  eA: Elem[A]): Iso[BaseTypeData[A], BaseType[A]]
 
   // 5) smart constructor and deconstructor
-  def mkTypeImpl[A](typeCode: Rep[String], defaultValue: Rep[A])(implicit  eA: Elem[A]): Rep[TypeImpl[A]]
-  def unmkTypeImpl[A](p: Rep[TypeImpl[A]])(implicit  eA: Elem[A]): Option[(Rep[String], Rep[A])]
+  def mkBaseType[A](typeCode: Rep[String], defaultValue: Rep[A])(implicit  eA: Elem[A]): Rep[BaseType[A]]
+  def unmkBaseType[A](p: Rep[BaseType[A]])(implicit  eA: Elem[A]): Option[(Rep[String], Rep[A])]
 
 }
 
@@ -75,27 +75,27 @@ trait TypesAbs extends Types
 trait TypesSeq extends TypesAbs
 { self: ScalanSeq with TypesDsl =>
 
-  case class SeqTypeImpl[A]
+  case class SeqBaseType[A]
       (override val typeCode: Rep[String], override val defaultValue: Rep[A])
       (implicit override val eA: Elem[A])
-      extends TypeImpl[A](typeCode, defaultValue) with TypeImplOps[A] {
-    def Elem = element[TypeImpl[A]].asInstanceOf[Elem[Type[A]]]
+      extends BaseType[A](typeCode, defaultValue) with BaseTypeOps[A] {
+    def Elem = element[BaseType[A]].asInstanceOf[Elem[Type[A]]]
   }
 
 
-  implicit def isoTypeImpl[A](implicit  eA: Elem[A]): Iso[TypeImplData[A], TypeImpl[A]]
-    = new TypeImpl.Iso[A] with SeqIso[TypeImplData[A], TypeImpl[A]] { i =>
+  implicit def isoBaseType[A](implicit  eA: Elem[A]): Iso[BaseTypeData[A], BaseType[A]]
+    = new BaseType.Iso[A] with SeqIso[BaseTypeData[A], BaseType[A]] { i =>
         // should use i as iso reference
-        override lazy val eTo = new SeqViewElem[TypeImplData[A], TypeImpl[A]]
-                                    with TypeImplElem[A] { val iso = i }
+        override lazy val eTo = new SeqViewElem[BaseTypeData[A], BaseType[A]]
+                                    with BaseTypeElem[A] { val iso = i }
       }
 
 
-  def mkTypeImpl[A]
+  def mkBaseType[A]
       (typeCode: Rep[String], defaultValue: Rep[A])
       (implicit  eA: Elem[A])
-      = new SeqTypeImpl[A](typeCode, defaultValue)
-  def unmkTypeImpl[A](p: Rep[TypeImpl[A]])
+      = new SeqBaseType[A](typeCode, defaultValue)
+  def unmkBaseType[A](p: Rep[BaseType[A]])
       (implicit  eA: Elem[A])
     = Some((p.typeCode, p.defaultValue))
 
@@ -105,34 +105,34 @@ trait TypesSeq extends TypesAbs
 trait TypesExp extends TypesAbs with ProxyExp with ViewsExp
 { self: ScalanStaged with TypesDsl =>
 
-  case class ExpTypeImpl[A]
+  case class ExpBaseType[A]
       (override val typeCode: Rep[String], override val defaultValue: Rep[A])
       (implicit override val eA: Elem[A])
-    extends TypeImpl[A](typeCode, defaultValue) with TypeImplOps[A]
-       with UserTypeDef[Type[A],TypeImpl[A]] {
-    lazy val objType = element[TypeImpl[A]]
+    extends BaseType[A](typeCode, defaultValue) with BaseTypeOps[A]
+       with UserTypeDef[Type[A],BaseType[A]] {
+    lazy val objType = element[BaseType[A]]
     def Elem = objType.asInstanceOf[Elem[Type[A]]]
-    def elem = element[TypeImpl[A]]
-    override def mirror(t: Transformer): Rep[_] = ExpTypeImpl[A](t(typeCode), t(defaultValue))
+    def elem = element[BaseType[A]]
+    override def mirror(t: Transformer): Rep[_] = ExpBaseType[A](t(typeCode), t(defaultValue))
   }
-  addUserType(manifest[ExpTypeImpl[Any]])
+  addUserType(manifest[ExpBaseType[Any]])
 
 
-  def mkTypeImpl[A]
+  def mkBaseType[A]
       (typeCode: Rep[String], defaultValue: Rep[A])
       (implicit  eA: Elem[A])
-      = new ExpTypeImpl[A](typeCode, defaultValue)
-  def unmkTypeImpl[A]
-      (p: Rep[TypeImpl[A]])
+      = new ExpBaseType[A](typeCode, defaultValue)
+  def unmkBaseType[A]
+      (p: Rep[BaseType[A]])
       (implicit  eA: Elem[A])
     = Some((p.typeCode, p.defaultValue))
 
 
-  implicit def isoTypeImpl[A](implicit  eA: Elem[A]): Iso[TypeImplData[A], TypeImpl[A]]
-    = new TypeImpl.Iso[A] with StagedIso[TypeImplData[A], TypeImpl[A]] { i =>
+  implicit def isoBaseType[A](implicit  eA: Elem[A]): Iso[BaseTypeData[A], BaseType[A]]
+    = new BaseType.Iso[A] with StagedIso[BaseTypeData[A], BaseType[A]] { i =>
         // should use i as iso reference
-        override lazy val eTo = new StagedViewElem[TypeImplData[A], TypeImpl[A]]
-                                    with TypeImplElem[A] { val iso = i }
+        override lazy val eTo = new StagedViewElem[BaseTypeData[A], BaseType[A]]
+                                    with BaseTypeElem[A] { val iso = i }
       }
 
 }

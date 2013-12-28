@@ -18,11 +18,11 @@ trait Types extends Base with TypesOps { self: TypesDsl =>
     def defaultOf: DefaultOf[Rep[A]]
   }
 
-  abstract class TypeImpl[A](
+  abstract class BaseType[A](
       val typeCode: Rep[String],
       val defaultValue: Rep[A])(implicit eA: Elem[A])
     extends Type[A]
-       with TypeImplOps[A] { self: TypeImplOps[A] =>
+       with BaseTypeOps[A] { self: BaseTypeOps[A] =>
   }
 
 }

@@ -28,8 +28,8 @@ trait ReactiveAbs extends Reactive
   object ObservableImpl extends ObservableImplCompanion {
     abstract class Iso[A](implicit eA: Elem[A])
            extends IsoBase[ObservableImplData[A], ObservableImpl[A]] {
-      override def fromStaged = { case ObservableImpl(value, index, completed) => Pair(value, Pair(index, completed)) }
-      override def toStaged = (p: Rep[(A, (Int, Boolean))]) => {
+      override def from = { case ObservableImpl(value, index, completed) => Pair(value, Pair(index, completed)) }
+      override def to = (p: Rep[(A, (Int, Boolean))]) => {
         val Pair(value, Pair(index, completed)) = p
         ObservableImpl(value, index, completed)
       }
@@ -41,7 +41,7 @@ trait ReactiveAbs extends Reactive
     }
 
     def apply[A](p: Rep[ObservableImplData[A]])(implicit eA: Elem[A]): Rep[ObservableImpl[A]]
-        = isoObservableImpl(eA).toStaged(p)
+        = isoObservableImpl(eA).to(p)
     def apply[A](p: Observable[A])(implicit eA: Elem[A]): Rep[ObservableImpl[A]]
         = mkObservableImpl(p.value, p.index, p.completed)
     def apply[A]
@@ -57,7 +57,7 @@ trait ReactiveAbs extends Reactive
   }
 
   implicit def extendObservableImpl[A](p: Rep[ObservableImpl[A]])(implicit eA: Elem[A]) = new {
-    def toData: Rep[ObservableImplData[A]] = isoObservableImpl(eA).fromStaged(p)
+    def toData: Rep[ObservableImplData[A]] = isoObservableImpl(eA).from(p)
   }
 
   // 4) implicit resolution of Iso

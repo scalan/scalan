@@ -4,28 +4,28 @@ import scala.text._
 import Document._
 import scalan.common.{DefaultOf, Zero}
 
-trait Views extends Base with Reification { self: Scalan =>
+trait Views extends Base { self: Scalan =>
 
   trait GenIso[From,To] {
     def eFrom: Elem[From]
     def eTo: Elem[To]
-    def from: To => From
-    def to: From => To
-    def manifest: Manifest[To]
-    def defaultOf: DefaultOf[Rep[To]]
-    def fromStaged: Rep[To] => Rep[From]
-    def toStaged: Rep[From] => Rep[To]
+    def manifest: Manifest[To]        // constructed in each concrete iso instance
+    def defaultOf: DefaultOf[Rep[To]] // constructed in each concrete iso instance
+    def from: Rep[To] => Rep[From]
+    def to: Rep[From] => Rep[To]
   }
   type Iso[From,To] = GenIso[From,To]
 
   abstract class IsoBase[From,To](implicit efrom: Elem[From]) extends GenIso[From,To] { ///self: Iso[A,B] =>
     lazy val eFrom = efrom
 
+    //------
     // eB should be lazy val as it is used recursively in ViewElem
     // override it in concrete isos to create hierarchy of Elem classes
     lazy val eTo: Elem[To] = defaultViewElem(this)
-    def fromStaged: Rep[To] => Rep[From] = (x: Rep[To]) => ???("Not implemented ", x)
-    def toStaged: Rep[From] => Rep[To] = (x:Rep[From]) => ???("Not implemented ", x)
+
+//    def from: Rep[To] => Rep[From] = (x: Rep[To]) => ???("Not implemented ", x)
+//    def to: Rep[From] => Rep[To] = (x:Rep[From]) => ???("Not implemented ", x)
   }
 
   protected[scalan] def defaultViewElem[From,To](implicit iso: Iso[From,To]): Elem[To]
@@ -37,10 +37,8 @@ trait Views extends Base with Reification { self: Scalan =>
   }
 
   trait IdentityIso[A] extends GenIso[A,A] { //self: Iso[A,A] =>
-    override def from = (x: A) => x
-    override def to = (x: A) => x
-    override def fromStaged = (x: Rep[A]) => x
-    override def toStaged = (x: Rep[A]) => x
+    override def from = (x: Rep[A]) => x
+    override def to = (x: Rep[A]) => x
   }
 
   def iso[From,To](implicit i: Iso[From,To]) = i
@@ -53,8 +51,6 @@ trait Views extends Base with Reification { self: Scalan =>
 trait ViewsSeq extends Views { self: ScalanSeq =>
 
   trait SeqIso[From,To] extends GenIso[From,To] {
-    def from = x => this.fromStaged(x)
-    def to = x => this.toStaged(x)
   }
 
   protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new SeqViewElem[From,To] { val iso = i }
@@ -73,8 +69,6 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
 trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 
   trait StagedIso[From,To] extends GenIso[From,To] {
-    def from = x => ???
-    def to = x => ???
   }
 
   protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new StagedViewElem[From,To] { val iso = i }
@@ -133,8 +127,8 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
   }
 
   implicit class IsoOps[From,To](iso: Iso[From,To]) {
-    def toFunTo: Rep[From => To] = fun(iso.toStaged)(iso.eFrom, iso.eTo)
-    def toFunFrom: Rep[To => From] = fun(iso.fromStaged)(iso.eTo, iso.eFrom)
+    def toFunTo: Rep[From => To] = fun(iso.to)(iso.eFrom, iso.eTo)
+    def toFunFrom: Rep[To => From] = fun(iso.from)(iso.eTo, iso.eFrom)
   }
   //implicit def isoToOps[A,B](iso: Iso[A,B]) = new IsoOps(iso)
 
