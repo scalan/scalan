@@ -10,7 +10,8 @@ trait BaseExp extends Base { self: ScalanStaged =>
    * constants/symbols (atomic)
    */
   abstract class Exp[+T] {
-    def Elem: Elem[T @uncheckedVariance]
+    def elem: Elem[T @uncheckedVariance]
+
     private[scalan] var isRec = false
     def isRecursive: Boolean = isRec
     private[scalan] def isRecursive_=(b: Boolean) = { isRec = b }
@@ -26,7 +27,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     }
     def varName: String
     def toStringWithType = {
-      val fullString = cleanupTypes(Elem.name )
+      val fullString = cleanupTypes(elem.name)
       varName + ":" + fullString.substring(fullString.lastIndexOf("$")+1)
     }
     //def asSymbol = this.asInstanceOf[Sym[T]]
@@ -39,7 +40,8 @@ trait BaseExp extends Base { self: ScalanStaged =>
   type Def[+A] = ReifiableObject[A]
   type Def1[+A] = ReifiableObjectAux[A]
 
-  case class Const[T](x: T)(implicit val objType: Elem[T]) extends Def[T] {
+  case class Const[T](x: T)(implicit leT: LElem[T]) extends Def[T] {
+    def objType = leT()
     override def thisSymbol: Rep[T] = this
     override def mirror(t: Transformer): Rep[_] = Const(x)
     override def hashCode: Int = (41 + x.hashCode)
@@ -76,20 +78,20 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   abstract class UnOp[T] extends Def[T] with UnOpBase[T,T] {
     override def mirror(t: Transformer) = {
-      implicit val eT = arg.Elem
+      implicit val eT = arg.elem
       copyWith(t(arg))
     }
     override def thisSymbol: Rep[T] = { implicit val e = objType; this }
   }
   abstract class BinOp[T] extends Def[T] with BinOpBase[T,T] {
     override def mirror(t: Transformer) = {
-      implicit val eT = lhs.Elem
+      implicit val eT = lhs.elem
       copyWith(t(lhs), t(rhs))
     }
     override def thisSymbol: Rep[T] = { implicit val e = objType; this }
   }
 
-  def fresh[T](implicit et: Elem[T]): Exp[T]
+  def fresh[T](implicit leT: LElem[T]): Exp[T]
   def findDefinition[T](s: Exp[T]): Option[TP[T]]
   def findDefinition[T](d: Def[T]): Option[TP[T]]
   def createDefinition[T](s: Exp[T], d: Def[T]): TP[T]
@@ -102,8 +104,9 @@ trait BaseExp extends Base { self: ScalanStaged =>
    * @tparam T
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
-  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: Elem[T]): Exp[T]
-  implicit def reifyObject[T: Elem](obj: ReifiableObject[T]): Rep[T] = toExp(obj, fresh[T])
+  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: LElem[T]): Exp[T]
+  implicit def reifyObject[T:LElem](obj: ReifiableObject[T]): Rep[T] = toExp(obj, fresh[T])
+
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
     case `intElement` | `floatElement` | `boolElement` | `stringElement` => Const(x)
     case _ => super.toRep(x)(eA)
@@ -128,7 +131,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     }
   }
   object Elem {
-    def unapply[T](s: Exp[T]): Option[(Exp[T],Elem[T])] = Some((s, s.Elem))
+    def unapply[T](s: Exp[T]): Option[(Exp[T],Elem[T])] = Some((s, s.elem))
   }
 
 
@@ -181,37 +184,37 @@ trait BaseExp extends Base { self: ScalanStaged =>
   implicit class ExpForSomeOps(symbol: Exp[_]) {
     def inputs: List[Exp[Any]] = dep(symbol)
     def isLambda: Boolean = symbol match {
-      case Def(Lambda(_, _, _)) => true
+      case Def(Lambda(_,_, _, _)) => true
       case _ => false
     }
     def tp: TP[_] = findDefinition(symbol).get
     def sameScopeAs(other: Exp[_]): Boolean = this.tp.lambda == other.tp.lambda
 
     def asPair[A,B,R](f: Elem[A] => Elem[B] => Rep[(A,B)] => R): R = {
-      val elem = symbol.Elem
+      val elem = symbol.elem
       elem match {
         case _: PairElem[_,_] => {
           val pe = elem.asInstanceOf[PairElem[A,B]]
           f(pe.ea)(pe.eb)(symbol.asRep[(A,B)])
         }
-        case _ => !!!("Symbol %s expected to have PairElem but it's %s".format(symbol, elem.name))
+        case _ => !!!(s"Symbol $symbol expected to have PairElem but it's ${elem.name}")
       }
     }
 
     def asFunc[A,B,R](f: Elem[A] => Elem[B] => Rep[A=>B] => R): R = {
-      val elem = symbol.Elem
+      val elem = symbol.elem
       elem match {
         case _: FuncElem[_,_] => {
-          val pe = elem.asInstanceOf[FuncElem[A,B]]
-          f(pe.ea)(pe.eb)(symbol.asRep[A=>B])
+          val fe = elem.asInstanceOf[FuncElem[A,B]]
+          f(fe.ea)(fe.eb)(symbol.asRep[A=>B])
         }
-        case _ => !!!("Symbol %s expected to have FuncElem but it's %s".format(symbol, elem.name))
+        case _ => !!!(s"Symbol $symbol expected to have FuncElem but it's ${elem.name}")
       }
     }
 
     def mirror(t: Transformer) = symbol match {
       case Def(d) => d.mirror(t)
-      case _ => fresh(symbol.Elem)
+      case _ => fresh(() => symbol.elem.asInstanceOf[Elem[Any]])
     }
   }
 
@@ -223,7 +226,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
   }
   //implicit def extendDefForSome(d: Def[_]) = new DefForSomeOps(d)
 
-  def rewrite[T](d: Def[T])(implicit eT: Elem[T]): Exp[_] = {
+  def rewrite[T](d: Def[T])(implicit eT: LElem[T]): Exp[_] = {
     rewriteRules.foreach(r =>
       r.lift(d) match {
         case Some(e) => return e
@@ -266,11 +269,11 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
    */
   object Sym { private var currId = 0 }
   case class Sym[+T](id: Int = {Sym.currId += 1; Sym.currId})
-                    (implicit et: Elem[T]) extends Exp[T]
+                    (implicit et: LElem[T]) extends Exp[T]
   {
-    override def Elem: Elem[T @uncheckedVariance] = this match {
+    override def elem: Elem[T @uncheckedVariance] = this match {
       case Def(d) => d.objType.asInstanceOf[Elem[T]]
-      case _ => et
+      case _ => et()
     }
     def varName = "s" + id
     override def toString = {
@@ -286,7 +289,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
     lazy val definition = findDefinition(this).map(_.rhs)
   }
 
-  def fresh[T](implicit et: Elem[T]): Exp[T] = new Sym[T]()
+  def fresh[T](implicit et: LElem[T]): Exp[T] = new Sym[T]()
 
   class TPS[T](val sym: Exp[T], val definition: Option[Def[T]], val lambda: Option[Exp[_]]) extends TP[T] {
   }
@@ -334,7 +337,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
    * @tparam T
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
-  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: Elem[T]): Exp[T] = {
+  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: LElem[T]): Exp[T] = {
     var res = findOrCreateDefinition(d, newSym)
     var currSym = res
     var currDef = d

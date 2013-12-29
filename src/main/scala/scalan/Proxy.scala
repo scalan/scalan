@@ -13,7 +13,8 @@ trait ProxyBase { self: Scalan =>
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
-  case class MethodCall[T](receiver: Exp[Any], method: jreflect.Method, args: List[AnyRef])(implicit val objType: Elem[T]) extends Def[T] {
+  case class MethodCall[T](receiver: Exp[Any], method: jreflect.Method, args: List[AnyRef])(implicit leT: LElem[T]) extends Def[T] {
+    lazy val objType = leT()
     override def mirror(t: Transformer) =
       MethodCall[T](t(receiver), method, args map { case a: Exp[_] => t(a) case a => a })
     override def thisSymbol: Rep[T] = { this }
@@ -35,15 +36,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
   var invokeEnabled = false
 
-  private def hasFuncArg(args: Array[AnyRef]):Boolean = {
-    val res = args.foldLeft(0) {
-      case (cnt, arg) => arg match {
-        case af: Function1[_,_] => cnt+1
-        case _ => cnt
-      }
-    }
-    (res > 0)
-  }
+  private def hasFuncArg(args: Array[AnyRef]):Boolean = args.exists(_.isInstanceOf[(_) => _])
 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   var methodCallReceivers = List.empty[Exp[Any]]
@@ -85,12 +78,12 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     }
 
     def createMethodCall(m: jreflect.Method, args: Array[AnyRef]): Exp[Any] = {
-      val resultElem = getResultElem(m, args)
+      val resultElem = () => getResultElem(m, args)
       reifyObject(MethodCall[AnyRef](
               receiver, m, args.toList)(resultElem))(resultElem)
     }
 
-    def getRecieverElem: ViewElem[Any,Any] = receiver.Elem match {
+    def getRecieverElem: ViewElem[Any,Any] = receiver.elem match {
       case e: ViewElem[_,_] => e.asInstanceOf[ViewElem[Any,Any]]
       case _ =>
         !!!("Receiver with ViewElem expected", receiver)
@@ -102,8 +95,8 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
       val Def(zeroNode) = zero
       val res = m.invoke(zeroNode, args: _*)
       res match {
-        case s: Exp[_] => s.asInstanceOf[Exp[AnyRef]].Elem
-        case other => ???(s"not imdon't know how to get result elem for $other")
+        case s: Exp[_] => s.asInstanceOf[Exp[AnyRef]].elem
+        case other => ???(s"don't know how to get result elem for $other")
       }
     }
 

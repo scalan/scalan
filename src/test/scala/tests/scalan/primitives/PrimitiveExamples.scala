@@ -9,7 +9,7 @@ import scalan.ScalanDsl
 trait PrimitiveExamples extends ScalanDsl {
   lazy val id = fun {(x: Rep[Int]) => x}
   lazy val inc = fun {(x: Rep[Int]) => x + 1}
-  lazy val curred = fun {(x: Rep[Int]) => (y: Rep[Int]) => x + y }
+  //lazy val curred = fun {(x: Rep[Int]) => (y: Rep[Int]) => x + y }
   lazy val tupled = fun {(x: Rep[(Int,Int)]) => x._1 + x._2 }
   lazy val highOrder = fun {(x: Rep[Int]) => {
     val x1 = x + 1

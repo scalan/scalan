@@ -44,7 +44,7 @@ trait Views extends Base { self: Scalan =>
   def iso[From,To](implicit i: Iso[From,To]) = i
 
   trait UserType[T] {
-    def Elem: Elem[T]
+    def elem: Elem[T]
   }
 }
 
@@ -95,7 +95,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     userTypes.exists(c => c.manifest.runtimeClass == clazz)
   }
   def isUserTypeSym[T](s: Exp[T]): Boolean = {
-    val symClazz = s.Elem.manifest.runtimeClass
+    val symClazz = s.elem.manifest.runtimeClass
 
     //manifest[UserType[_]].erasure.isAssignableFrom(symClazz)
     //userTypes.find(c => c.manifest.erasure.isAssignableFrom(symClazz)).isDefined
@@ -104,12 +104,12 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 
   trait UserTypeDef[T, TImpl] extends UserType[T] with ReifiableObject[TImpl] {
     //type ThisType = T
-    override def thisSymbol = reifyObject(this)(Elem.asInstanceOf[Elem[TImpl]])
+    override def thisSymbol = reifyObject(this)(() => elem.asInstanceOf[Elem[TImpl]])
   }
   object UserTypeDef {
     def unapply[T](d: Def[T]): Option[Iso[_,T]] = {
       val s = d.thisSymbol
-      val eT = s.Elem
+      val eT = s.elem
       eT match {
         case e: ViewElem[_,_] if isUserTypeConstr(d) => Some(e.asInstanceOf[ViewElem[_,T]].iso)
         case _ => None
@@ -118,7 +118,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
   }
   object UserTypeSym {
     def unapply[T](s: Exp[T]): Option[Iso[_,T]] = {
-      val eT = s.Elem
+      val eT = s.elem
       eT match {
         case e: ViewElem[_,_] if isUserTypeSym(s) => Some(e.asInstanceOf[ViewElem[_,T]].iso)
         case _ => None
@@ -127,8 +127,8 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
   }
 
   implicit class IsoOps[From,To](iso: Iso[From,To]) {
-    def toFunTo: Rep[From => To] = fun(iso.to)(iso.eFrom, iso.eTo)
-    def toFunFrom: Rep[To => From] = fun(iso.from)(iso.eTo, iso.eFrom)
+    def toFunTo: Rep[From => To] = fun(iso.to)(() => iso.eFrom)
+    def toFunFrom: Rep[To => From] = fun(iso.from)(() => iso.eTo)
   }
   //implicit def isoToOps[A,B](iso: Iso[A,B]) = new IsoOps(iso)
 

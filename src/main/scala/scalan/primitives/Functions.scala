@@ -11,29 +11,19 @@ import scala.language.{implicitConversions}
 
 trait Functions { self: Scalan =>
 
-  implicit class LambdaOps[A:Elem,B:Elem](f: Rep[A => B]) {
-    def apply(x: Rep[A]): Rep[B] = mkApply(f,x)
+  implicit class LambdaOps[A,B](f: Rep[A => B]) {
+    def apply(x: Rep[A]): Rep[B] = mkApply(f, x)
   }
 
-  def mkLambda[A,B](fun: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B]
-  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C]
-
-  def mkApply[A:Elem,B:Elem](fun: Rep[A=>B], arg: Rep[A]): Rep[B]
-  def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]))(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
-  def fun[A,B]  (f: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B] = mkLambda(f)
-  def fun[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = mkLambda(f)
-  //def fun[A,B,C](f: (Rep[A],Rep[B])=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[((A,B))=>C] = mkLambda((p: Rep[(A,B)]) => f(p._1, p._2))
+  def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B]
+  def fun[A,B]    (f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B]
+  //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C]
 }
 
 trait FunctionsSeq extends Functions { self: ScalanSeq =>
-  def mkLambda[A,B](fun: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B] = fun
-  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = fun
-  def mkApply[A:Elem,B:Elem](fun: Rep[A => B], arg: Rep[A]): Rep[B] = fun(arg)
-
-  //def fix[A,B](f: (A=>B)=>(A=>B)): A=>B = f(fix(f))(_)
-  def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]))(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = {
-    f(letrec(f))(_)
-  }
+  def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B] = f(x)
+  def fun[A,B]    (f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = f
+  //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C] = f
 }
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanStaged =>
@@ -84,8 +74,8 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
     lazy val scheduleSyms = schedule map { _.sym }
 
-    def scheduleAll: List[TP[_]] = schedule flatMap(tp => tp.rhs match {
-      case lam@Lambda(_,_,_) => lam.scheduleAll :+ tp
+    def scheduleAll: List[TP[_]] = schedule.flatMap(tp => tp.rhs match {
+      case Lambda(lam,_,_,_) => lam.scheduleAll :+ tp
       case _ => List(tp)
     })
 
@@ -110,47 +100,66 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-  case class Lambda[A,B]
-    (f: Option[Exp[A] => Exp[B]], x: Exp[A], y: Exp[B])
-    (implicit val eA: Elem[A], val eB: Elem[B]) extends LambdaBase[A,B]
-  {
+  class Lambda[A,B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B]) extends LambdaBase[A,B] {
+    implicit def eA: Elem[A] = x.elem
+    implicit def eB: Elem[B] = y.elem
     override def mirror(t: Transformer) = {
+      implicit val eAtoB = element[A=>B]
       val newSym = fresh[A=>B]
-      
       val newLam = new LambdaWrapper(None, t(x), t(y), newSym)
       toExp(newLam, newSym)
     }
     lazy val objType = element[A => B]
   }
-  class LambdaWrapper[A:Elem,B:Elem](
+  type LambdaData[A,B] = (Lambda[A,B], Option[Exp[A] => Exp[B]], Exp[A], Exp[B])
+  object Lambda {
+    def unapply[A,B](d: Def[A=>B]): Option[LambdaData[A,B]] = d match {
+      case l: Lambda[_,_] =>
+        val lam = l.asInstanceOf[Lambda[A,B]]
+        Some((lam, lam.f, lam.x, lam.y))
+      case _ => None
+    }
+  }
+
+  class LambdaWrapper[A,B](
        override val f: Option[Exp[A] => Exp[B]], 
        override val x: Exp[A], 
        override val y: Exp[B], 
        override val thisSymbol: Rep[A=>B])  extends Lambda[A,B](f, x, y) 
 
-  case class Apply[A,B](f: Exp[A => B], arg: Exp[A])(implicit val eA: Elem[A], val objType: Elem[B]) extends Def[B] {
-    override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))
+  case class Apply[A,B]
+    (f: Exp[A => B], arg: Exp[A])
+    (implicit eB: () => Elem[B])   // enforce explicit laziness at call sites to tie recursive knot (see executeFunction)
+      extends Def[B]
+  {
+    lazy val objType = eB()
+    override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))(eB)
   }
 
-  implicit class FuncOps[A:Elem, B:Elem](s: Exp[A=>B]) {
-    def getLambda: Lambda[A,B] = s match {
+  implicit class FuncOps[A, B](f: Exp[A=>B]) {
+    implicit def eA = f.elem.ea
+    def getLambda: Lambda[A,B] = f match {
       case Def(lam: Lambda[_,_]) => lam.asInstanceOf[Lambda[A,B]]
-      case _ => !!!("Expected symbol of Lambda node but was %s".format(s), s)
+      case _ => !!!(s"Expected symbol of Lambda node but was $f", f)
     }
+    def zip[C](g: Rep[A=>C]): Rep[A=>(B,C)] =
+      fun { (x: Rep[A]) => Pair(f(x), g(x)) }
   }
-  //implicit def extendExpFunc[A:Elem, B:Elem](s: Exp[A=>B]) = new FuncOps(s)
 
   //=====================================================================================
   //   Function application
 
-  def mkApply[A:Elem,B:Elem](f: Exp[A => B], x: Exp[A]): Exp[B] = {
+  def mkApply[A,B](f: Exp[A => B], x: Exp[A]): Exp[B] = {
+    implicit val leB = () => f.elem.eb
     recursion.find(m => m._3 == f) match {
       case None =>  // not in recursion, so lookup definition
         f match {
-          case Def(lam: Lambda[_,_]) if !f.isRecursive =>  // unfold initial non-recursive function
+          case Def(lam: Lambda[_,_]) if !f.isRecursive => // non-recursive Lambda node
             unfoldLambda(f, lam.asInstanceOf[Lambda[A,B]], x)
-          case Def(Apply(_, _)) =>  // function that is a result of Apply (high order value)
+
+          case Def(Apply(_, _)) =>  // function that is a result of Apply (curried application)
             Apply(f, x)
+
           case _ => // unknown function
             Apply(f, x)
         }
@@ -160,19 +169,20 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-  def unfoldLambda[A:Elem,B:Elem](f: Exp[A=>B], lam: Lambda[A,B], x: Exp[A]): Exp[B] = {
+  def unfoldLambda[A,B](f: Exp[A=>B], lam: Lambda[A,B], x: Exp[A]): Exp[B] = {
     lam match {
-      case Lambda(Some(g),_,_) => g(x) // unfold initial non-recursive function
-      case Lambda(None,_,_) => mirrorApply(f, x)  // f is mirrored, unfold it by mirroring
+      case Lambda(_,Some(g),_,_) => g(x) // unfold initial non-recursive function
+      case Lambda(_,None,_,_) => mirrorApply(f, x)  // f is a result of mirroring, so unfold it by mirroring
     }
   }
-  def unfoldLambda[A:Elem,B:Elem](f: Exp[A=>B], x: Exp[A]): Exp[B] = {
+
+  def unfoldLambda[A,B](f: Exp[A=>B], x: Exp[A]): Exp[B] = {
     val lam = f.getLambda
     unfoldLambda(f, lam, x)
   }
 
-  def mirrorApply[A:Elem,B:Elem](f: Exp[A => B], s: Exp[A], subst: Map[Exp[Any], Exp[Any]] = Map()): Exp[B] = {
-    val Def(lam@Lambda(_,x,y)) = f
+  def mirrorApply[A,B](f: Exp[A => B], s: Exp[A], subst: Map[Exp[Any], Exp[Any]] = Map()): Exp[B] = {
+    val Def(Lambda(lam,_,x,y)) = f
     val body = lam.schedule map { _.sym }
     val (t, _) = DefaultMirror.mirrorSymbols(new MapTransformer(subst ++ Map(x -> s)), NoRewriting, body)
     t(y).asRep[B]
@@ -181,57 +191,44 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   //=====================================================================================
   //   Function reification
 
-  def mkLambda[A,B](fun: Exp[A] => Exp[B])(implicit eA: Elem[A], eb:Elem[B]) : Exp[A=>B] = {
-    letrec[A,B](f => fun)
-  }
-
-  def mkLambda[A,B,C]
-              (fun: Rep[A]=>Rep[B]=>Rep[C])
-              (implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = {
-    val y = fresh[B]
-    mkLambda((a: Rep[A]) => lambda(y)((b:Rep[B]) => fun(a)(b)))
-  }
-
-  def lambda2[A,B,C](x: Rep[A])(fun: Exp[A] => Exp[B] => Exp[C])(implicit eA: Elem[A], eb:Elem[B], ec:Elem[C]): Exp[A=>B=>C] = {
-    val y = fresh[B]
-    lambda(x)((a: Rep[A]) => lambda(y)((b:Rep[B]) => fun(a)(b)))
-  }
-
-  def mkLambda3[A,B,C,D]
-              (f: Rep[A]=>Rep[B]=>Rep[C]=>Rep[D])
-              (implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D]): Rep[A=>B=>C=>D] = {
-    val y = fresh[B]
-    val z = fresh[C]
-    mkLambda((a:Rep[A]) => lambda(y)((b: Rep[B]) => lambda(z)(f(a)(b))))
-  }
-
-  def letrec[A:Elem,B:Elem](f: (Rep[A=>B])=>(Rep[A]=>Rep[B])): Rep[A=>B] = {
+  def fun[A,B](f: Exp[A] => Exp[B])(implicit eA: LElem[A]): Exp[A=>B] = {
     val x = fresh[A]
-    val res = fresh[A => B]
-    val fun = f(res)
+    lambda(x)(f)
+  }
+
+//  def mkLambda[A,B,C]
+//              (fun: Rep[A]=>Rep[B]=>Rep[C])
+//              (implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = {
+//    val y = fresh[B]
+//    mkLambda((a: Rep[A]) => lambda(y)((b:Rep[B]) => fun(a)(b)))
+//  }
+//
+//  def lambda2[A,B,C](x: Rep[A])(fun: Exp[A] => Exp[B] => Exp[C])(implicit eA: Elem[A], eb:Elem[B], ec:Elem[C]): Exp[A=>B=>C] = {
+//    val y = fresh[B]
+//    lambda(x)((a: Rep[A]) => lambda(y)((b:Rep[B]) => fun(a)(b)))
+//  }
+
+  def lambda[A,B](x: Rep[A])(fun: Exp[A] => Exp[B]): Exp[A=>B] = {
+    val res = fresh[A => B](() => 
+      !!!("should not be called: this symbol should have definition and element should be taken from corresponding lambda ") )
     reifyFunction(fun, x, res)
   }
 
-  def lambda[A:Elem,B:Elem](x: Rep[A])(fun: Exp[A] => Exp[B]): Exp[A=>B] = {
-    val res = fresh[A => B]
-    reifyFunction(fun, x, res)
-  }
-
-  def reifyFunction[A:Elem, B:Elem](fun: Exp[A] => Exp[B], x: Exp[A], res: Exp[A=>B]): Exp[A=>B] = {
-    val y = executeFunction(fun, x, res)
-    val lam = new  LambdaWrapper(Some(fun), x, y, res)
+  def reifyFunction[A, B](fun: Exp[A] => Exp[B], x: Exp[A], fSym: Exp[A=>B]): Exp[A=>B] = {
+    val y = executeFunction(fun, x, fSym)
+    val lam = new LambdaWrapper(Some(fun), x, y, fSym)
     findDefinition(lam) match {
-      case Some(TP(sym, Lambda(Some(f), _, _))) => {
+      case Some(TP(sym, Lambda(_, Some(f), _, _))) => {
         f equals fun match {
           case true => sym.asRep[A=>B]
           case false =>
-            createDefinition(res, lam)
-            res
+            createDefinition(fSym, lam)
+            fSym
         }
       }
       case None =>
-        createDefinition(res, lam)
-        res
+        createDefinition(fSym, lam)
+        fSym
     }
   }
 
@@ -244,9 +241,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   var recursion: List[(Function[_,_], Exp[Any], Exp[Any])] = List()
   val lambdaStack = new LambdaStack
 
-  def executeFunction[A:Elem,B:Elem](f: Exp[A]=>Exp[B], x: Exp[A], fSym: Exp[A => B]): Exp[B] = {
+  def executeFunction[A,B](f: Exp[A] => Exp[B], x: Exp[A], fSym: Exp[A => B]): Exp[B] = {
     recursion.find(m => m._1 == f) match {
-      case None =>
+      case None => {
         val saveRecursion = recursion
         recursion = (f, x, fSym)::recursion
         lambdaStack.push(fSym)
@@ -254,17 +251,19 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         lambdaStack.pop
         recursion = saveRecursion
         res
-      case Some((_, _, fs)) => // hit recursion call !
-        fs.isRecursive = true
-        Apply(fs.asInstanceOf[Exp[A=>B]], x)
+      }
+      case Some((_, _, fSym)) => {// hit recursion call !
+        val f = fSym.asInstanceOf[Exp[A=>B]]
+        f.isRecursive = true
+        val leB = () => f.elem.eb
+        reifyObject(Apply(f, x)(leB))(leB) 
+      }
     }
   }
 
-  def mergeFunctions[A:Elem,B:Elem,C:Elem](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] =
-    fun { (x: Rep[A]) => Pair(f(x), g(x))  }
 
   override def formatDef(d: Def[_]) = d match {
-    case Lambda(_, x, y) => "\\\\%s -> %s".format(x,  (y match { case Def(b) => formatDef(b) case _ => y}))
+    case Lambda(_, _, x, y) => "\\\\%s -> %s".format(x,  (y match { case Def(b) => formatDef(b) case _ => y}))
     case Apply(f, x) => "%s(%s)".format(f, x)
     case _ => super.formatDef(d)
   }

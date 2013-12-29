@@ -7,60 +7,62 @@ import scala.language.{implicitConversions}
 trait TypeSum {  self: Scalan =>
 
   trait SumOps[A, B] {
-    def eA: Elem[A]
-    def eB: Elem[B]
+    //def eA: Elem[A]
+    //def eB: Elem[B]
     def isLeft: Rep[Boolean]
     def isRight: Rep[Boolean]
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R]
   }
 
-  implicit def pimpSum[A: Elem, B: Elem](s: Rep[(A | B)]): SumOps[A, B]
+  implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B]
 
-  def toLeft[A: Elem](a: Rep[A]): Rep[(A|Unit)]
+  def toLeft[A](a: Rep[A]): Rep[(A|Unit)]
 
-  def toRight[A: Elem](a: Rep[A]): Rep[R[A]]
+  def toRight[A](a: Rep[A]): Rep[R[A]]
 
-  def toLeftSum[A: Elem, B: Elem](a: Rep[A]): Rep[(A | B)]
+  def toLeftSum[A, B: Elem](a: Rep[A]): Rep[(A | B)]
 
-  def toRightSum[A: Elem, B: Elem](a: Rep[B]): Rep[(A | B)]
+  def toRightSum[A: Elem, B](a: Rep[B]): Rep[(A | B)]
 }
 
 trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
 
-  def toLeft[A: Elem](a: Rep[A]): Rep[(A|Unit)] = Left(a)
+  def toLeft[A](a: Rep[A]): Rep[(A|Unit)] = Left(a)
 
-  def toRight[A: Elem](a: Rep[A]): Rep[R[A]] = Right(a)
+  def toRight[A](a: Rep[A]): Rep[R[A]] = Right(a)
 
-  def toLeftSum[A: Elem, B: Elem](a: Rep[A]): Rep[(A | B)] = Left[A,B](a)
+  def toLeftSum[A, B: Elem](a: Rep[A]): Rep[(A | B)] = Left[A,B](a)
 
-  def toRightSum[A: Elem, B: Elem](a: Rep[B]): Rep[(A | B)] = Right[A,B](a)
+  def toRightSum[A: Elem, B](a: Rep[B]): Rep[(A | B)] = Right[A,B](a)
 
-  class SeqSumOps[A: Elem, B: Elem](s: Rep[(A | B)]) extends SumOps[A,B] {
-    def eA = element[A]; def eB = element[B]
+  class SeqSumOps[A, B](s: Rep[(A | B)]) extends SumOps[A,B] {
+    //def eA = element[A]; def eB = element[B]
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = s.fold(l,r)
     def isLeft = s.isLeft
     def isRight = s.isRight
   }
-  implicit def pimpSum[A: Elem, B: Elem](s: Rep[(A | B)]): SumOps[A, B] = new SeqSumOps[A,B](s)
+  implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B] = new SeqSumOps[A,B](s)
 
 }
 
 trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
 
-  case class Left[A:Elem, B:Elem](left: Exp[A]) extends Def[(A | B)] {
+  case class Left[A, B](left: Exp[A])(implicit val eB: Elem[B]) extends Def[(A | B)] {
+    implicit def eA = left.elem
+    lazy val objType =  element[(A|B)]
     override def mirror(t: Transformer) = Left[A,B](t(left))
-    lazy val objType = element[(A|B)]
   }
 
-  case class Right[A:Elem, B:Elem](right: Exp[B]) extends Def[(A | B)] {
+  case class Right[A, B](right: Exp[B])(implicit val eA: Elem[A]) extends Def[(A | B)] {
+    implicit def eB = right.elem
+    lazy val objType =  element[(A|B)]
     override def mirror(t: Transformer) = Right[A,B](t(right))
-    lazy val objType = element[(A|B)]
   }
 
-  def toLeft[A:Elem](a: Rep[A]): Rep[L[A]] = Left[A,Unit](a)
-  def toRight[A:Elem](a: Rep[A]): Rep[R[A]] = Right[Unit,A](a)
-  def toLeftSum[A:Elem,B:Elem](a: Rep[A]): Rep[(A|B)] = Left[A,B](a)
-  def toRightSum[A:Elem,B:Elem](b: Rep[B]): Rep[(A|B)] = Right[A,B](b)
+  def toLeft[A](a: Rep[A]): Rep[L[A]] = withElemOf(a){ implicit e => Left[A,Unit](a) }
+  def toRight[A](a: Rep[A]): Rep[R[A]] = withElemOf(a){ implicit e => Right[Unit,A](a) }
+  def toLeftSum[A,B:Elem](a: Rep[A]): Rep[(A|B)] = withElemOf(a){ implicit e => Left[A,B](a) }
+  def toRightSum[A:Elem,B](b: Rep[B]): Rep[(A|B)] = withElemOf(b){ implicit e => Right[A,B](b) }
 
   case class IsLeft[A, B](sum: Exp[(A | B)]) extends Def[Boolean] {
     override def mirror(t: Transformer) = IsLeft(t(sum))
@@ -77,22 +79,23 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
     override def mirror(t: Transformer) = SumFold(t(sum), t(left), t(right))
   }
 
-  class StagedSumOps[A:Elem, B:Elem](s: Rep[(A | B)]) extends SumOps[A,B] {
-    def eA = element[A]; def eB = element[B]
+  class StagedSumOps[A, B](s: Rep[(A | B)]) extends SumOps[A,B] {
+    implicit def eA = s.elem.ea
+    implicit def eB = s.elem.eb
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = SumFold(s, fun(l), fun(r))
     def isLeft = IsLeft(s)
     def isRight = IsRight(s)
   }
-  implicit def pimpSum[A: Elem, B: Elem](s: Rep[(A | B)]): SumOps[A, B] = new StagedSumOps[A,B](s)
+  implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B] = new StagedSumOps[A,B](s)
 
-  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
+  override def rewrite[T](d: Def[T])(implicit eT: LElem[T]) = d match {
     case f@SumFold(Def(Left(left)), l, _) => {
       val eR: Elem[T] = f.objType.asInstanceOf[Elem[T]]
-      mkApply(l, left)(left.Elem, eR)
+      mkApply(l, left)
     }
     case f@SumFold(Def(Right(right)), _, r) => {
       val eR: Elem[T] = f.objType.asInstanceOf[Elem[T]]
-      mkApply(r, right)(right.Elem, eR)
+      mkApply(r, right)
     }
     //TODO case IsLeft, IsRight
     case _ => super.rewrite(d)

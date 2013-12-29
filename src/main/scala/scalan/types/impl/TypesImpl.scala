@@ -79,7 +79,7 @@ trait TypesSeq extends TypesAbs
       (override val typeCode: Rep[String], override val defaultValue: Rep[A])
       (implicit override val eA: Elem[A])
       extends BaseType[A](typeCode, defaultValue) with BaseTypeOps[A] {
-    def Elem = element[BaseType[A]].asInstanceOf[Elem[Type[A]]]
+    def elem = element[BaseType[A]].asInstanceOf[Elem[Type[A]]]
   }
 
 
@@ -111,8 +111,7 @@ trait TypesExp extends TypesAbs with ProxyExp with ViewsExp
     extends BaseType[A](typeCode, defaultValue) with BaseTypeOps[A]
        with UserTypeDef[Type[A],BaseType[A]] {
     lazy val objType = element[BaseType[A]]
-    def Elem = objType.asInstanceOf[Elem[Type[A]]]
-    def elem = element[BaseType[A]]
+    def elem = objType.asInstanceOf[Elem[Type[A]]]
     override def mirror(t: Transformer): Rep[_] = ExpBaseType[A](t(typeCode), t(defaultValue))
   }
   addUserType(manifest[ExpBaseType[Any]])

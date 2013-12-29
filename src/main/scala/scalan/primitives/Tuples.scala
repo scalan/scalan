@@ -91,7 +91,7 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
 
   def unzipPair[A, B](p: Rep[(A, B)]): (Rep[A], Rep[B]) = p match {
     case Def(Tup(a, b)) => (a, b)
-    case _ => p.Elem match {
+    case _ => p.elem match {
       case pe: PairElem[_, _] =>
         implicit val eA = pe.ea
         implicit val eB = pe.eb
@@ -102,8 +102,8 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
   }
 
   implicit def zipPair[A, B](p: (Exp[A], Exp[B])): Rep[(A, B)] = {
-    implicit val ea = p._1.Elem.asInstanceOf[Elem[A]]
-    implicit val eb = p._2.Elem.asInstanceOf[Elem[B]]
+    implicit val ea = p._1.elem.asInstanceOf[Elem[A]]
+    implicit val eb = p._2.elem.asInstanceOf[Elem[B]]
     Tup(p._1, p._2)
   }
 
@@ -125,7 +125,7 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
   }
 
 
-  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
+  override def rewrite[T](d: Def[T])(implicit eT: LElem[T]) = d match {
     case First(Def(Tup(a, b))) => a
     case Second(Def(Tup(a, b))) => b
 

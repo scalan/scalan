@@ -26,11 +26,11 @@ trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanStaged =>
   }
 
   override def __ifThenElse[T](cond: Exp[Boolean], thenp: => Exp[T], elsep: => Exp[T]): Exp[T] = {
-    implicit val eT = thenp.Elem
+    implicit val eT = thenp.elem
     IfThenElse(cond, thenp, elsep)
   }
 
-  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
+  override def rewrite[T](d: Def[T])(implicit eT: LElem[T]) = d match {
     case IfThenElse(Def(Const(true)), t, _) => t
     case IfThenElse(Def(Const(false)), _, e) => e
     case _ => super.rewrite(d)

@@ -11,7 +11,7 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
   implicit class DefMirroringExtensions[A](d: Def[A]) {
     def mirrorWith[A](newArgs: Exp[_]*) = {
       val args: List[Exp[_]] = dep(d)
-      if (newArgs.length != args.length) throw !!!("invalid mirroring of %s: different number of args".format(d))
+      if (newArgs.length != args.length) throw !!!(s"invalid mirroring of $d: different number of args")
 
       val subst = (args, newArgs).zipped.toMap
       val t = new MapTransformer(subst)
@@ -88,7 +88,7 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
 
     // every mirrorXXX methos should return a pair (t + (v -> v1), v1)
     protected def mirrorVar(t: Ctx, rewriter: Rewriter, v: Exp[_]): (Ctx, Exp[_]) = {
-      val newVar = fresh(v.Elem)
+      val newVar = fresh(() => v.elem.asElem[Any])
       (t + (v -> newVar), newVar)
     }
 
@@ -104,13 +104,13 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
       (t1 + (node -> res), res)
     }
 
-    protected def getMirroredLambdaSym(node: Exp[_]): Exp[_] = fresh(node.Elem)
+    protected def getMirroredLambdaSym(node: Exp[_]): Exp[_] = fresh(() => node.elem.asElem[Any])
 
     // require: should be called after lam.schedule is mirrored
     private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], lam: Lambda[_,_]): Lambda[_,_] = {
       val newVar = t(lam.x)
       val newBody = t(lam.y)
-      val newLambdaDef = new LambdaWrapper(None, newVar, newBody, newLambdaSym.asRep[Any=>Any])(newVar.Elem, newBody.Elem)
+      val newLambdaDef = new LambdaWrapper(None, newVar, newBody, newLambdaSym.asRep[Any=>Any])
       newLambdaDef
     }
 
@@ -139,7 +139,7 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
             case Var(_) =>
               mirrorVar(t, rewriter, node)
 
-            case Def(lam@Lambda(_, _, _)) =>
+            case Def(Lambda(lam, _, _, _)) =>
               mirrorLambda(t, rewriter, node, lam)
 
             case Def(d) =>

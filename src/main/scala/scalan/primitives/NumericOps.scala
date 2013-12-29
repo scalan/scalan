@@ -88,7 +88,7 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
     val objType = element[Float]
     def copyWith(a: Rep[T]) = this.copy(arg = a)
     override def mirror(t: Transformer) = {
-      implicit val eT = arg.Elem
+      implicit val eT = arg.elem
       copyWith(t(arg))
     }
     def opName = "ToFloat"
@@ -103,7 +103,7 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
   def numeric_negate[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericNegate(x, n)
 ////  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericAbs(x, n)
 //
-  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
+  override def rewrite[T](d: Def[T])(implicit eT: LElem[T]) = d match {
     case d@NumericPlus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => toRep(n.plus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.objType)
     case d@NumericMinus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => toRep(n.minus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.objType)
     case _ => super.rewrite(d)
