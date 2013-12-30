@@ -7,7 +7,7 @@ import scalan.common.{DefaultOf, Zero}
 trait Views extends Base { self: Scalan =>
 
   trait GenIso[From,To] {
-    def eFrom: Elem[From]
+    //def eFrom: Elem[From]
     def eTo: Elem[To]
     def manifest: Manifest[To]        // constructed in each concrete iso instance
     def defaultOf: DefaultOf[Rep[To]] // constructed in each concrete iso instance
@@ -16,16 +16,11 @@ trait Views extends Base { self: Scalan =>
   }
   type Iso[From,To] = GenIso[From,To]
 
-  abstract class IsoBase[From,To](implicit efrom: Elem[From]) extends GenIso[From,To] { ///self: Iso[A,B] =>
-    lazy val eFrom = efrom
-
+  abstract class IsoBase[From,To] extends GenIso[From,To] {
     //------
     // eB should be lazy val as it is used recursively in ViewElem
     // override it in concrete isos to create hierarchy of Elem classes
     lazy val eTo: Elem[To] = defaultViewElem(this)
-
-//    def from: Rep[To] => Rep[From] = (x: Rep[To]) => ???("Not implemented ", x)
-//    def to: Rep[From] => Rep[To] = (x:Rep[From]) => ???("Not implemented ", x)
   }
 
   protected[scalan] def defaultViewElem[From,To](implicit iso: Iso[From,To]): Elem[To]
@@ -36,16 +31,24 @@ trait Views extends Base { self: Scalan =>
     def iso: Iso[From,To]
   }
 
-  trait IdentityIso[A] extends GenIso[A,A] { //self: Iso[A,A] =>
-    override def from = (x: Rep[A]) => x
-    override def to = (x: Rep[A]) => x
-  }
-
-  def iso[From,To](implicit i: Iso[From,To]) = i
-
   trait UserType[T] {
     def elem: Elem[T]
   }
+
+  trait TypeFamily1[F[_]] {
+    def defaultOf[A](implicit ea: Elem[A]): DefaultOf[Rep[F[A]]]
+  }
+  trait TypeFamily2[F[_,_]] {
+    def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]): DefaultOf[Rep[F[A,B]]]
+  }
+
+  trait ConcreteClass1[C[_]] {
+    def defaultOf[A](implicit ea: Elem[A]): DefaultOf[Rep[C[A]]]
+  }
+  trait ConcreteClass2[C[_,_]] {
+    def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]): DefaultOf[Rep[C[A,B]]]
+  }
+
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
@@ -57,7 +60,7 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
 
   trait SeqViewElem[From,To] extends ViewElem[From,To] with SeqElement[To] {
     implicit val elemTo = this
-    implicit private def eFrom = iso.eFrom
+    //implicit private def eFrom = iso.eFrom
     implicit private def eTo = iso.eTo
     private lazy val m: Manifest[To] = iso.manifest
     private lazy val z = iso.defaultOf
@@ -75,13 +78,12 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 
   trait StagedViewElem[From,To] extends ViewElem[From,To] with StagedElement[To] {
     implicit val elemTo = this
-    implicit private def eFrom = iso.eFrom
+    //implicit private def eFrom = iso.eFrom
     implicit private def eTo = iso.eTo
     implicit private lazy val m = iso.manifest
     private lazy val z = iso.defaultOf
     def manifest: Manifest[To] = m
     def defaultOf = z
-    //override def toRep(p: To) = iso.toStaged(eFrom.toRep(iso.from(p)))
   }
 
   case class UserTypeDescriptor[T](manifest: Manifest[T])
@@ -103,7 +105,6 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
   }
 
   trait UserTypeDef[T, TImpl] extends UserType[T] with ReifiableObject[TImpl] {
-    //type ThisType = T
     override def thisSymbol = reifyObject(this)(() => elem.asInstanceOf[Elem[TImpl]])
   }
   object UserTypeDef {
@@ -126,11 +127,10 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     }
   }
 
-  implicit class IsoOps[From,To](iso: Iso[From,To]) {
-    def toFunTo: Rep[From => To] = fun(iso.to)(() => iso.eFrom)
+  implicit class IsoOps[From: LElem,To](iso: Iso[From,To]) {
+    def toFunTo: Rep[From => To] = fun(iso.to)
     def toFunFrom: Rep[To => From] = fun(iso.from)(() => iso.eTo)
   }
-  //implicit def isoToOps[A,B](iso: Iso[A,B]) = new IsoOps(iso)
 
   def MethodCallFromExp(clazzUT: Class[_], methodName: String) = new {
     def unapply[T](d:Def[T]): Option[(Exp[_], List[Exp[_]])] = {

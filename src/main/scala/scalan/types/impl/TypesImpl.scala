@@ -20,9 +20,10 @@ trait TypesAbs extends Types
 
 
   trait TypeElem[From,To] extends ViewElem[From, To]
-  implicit def defaultTypeElement[A:Elem]: Elem[Type[A]] = ???
-
-
+  //implicit def defaultTypeElement[A:Elem]: Elem[Type[A]] = ???
+  object Type extends TypeCompanion {
+  }
+  implicit def defaultOfType[A](implicit da: Elem[A]): DefaultOf[Rep[Type[A]]] = Type.defaultOf[A]
   //------------------------------- BaseType ------------------------------------
   // elem for concrete class
   trait BaseTypeElem[A] extends TypeElem[BaseTypeData[A], BaseType[A]]
@@ -43,7 +44,7 @@ trait TypesAbs extends Types
         implicit val mA = element[A].manifest
         Predef.manifest[BaseType[A]] 
       }
-      def defaultOf = Common.defaultVal[Rep[BaseType[A]]](BaseType("", element[A].defaultOf.value))
+      def defaultOf = Common.defaultVal[Rep[BaseType[A]]](BaseType(getBaseTypeCode(eA), element[A].defaultOf.value))
     }
 
     def apply[A](p: Rep[BaseTypeData[A]])(implicit  eA: Elem[A]): Rep[BaseType[A]]
@@ -95,7 +96,13 @@ trait TypesAbs extends Types
         implicit val mB = element[B].manifest
         Predef.manifest[Tuple2Type[A, B]] 
       }
-      def defaultOf = Common.defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(element[Type[A]].defaultOf.value, element[Type[B]].defaultOf.value))
+      def defaultOf = {
+        implicit val dA = eA.defaultOf
+        implicit val dB = eB.defaultOf
+        val tyA = Common.defaultOf[Rep[Type[A]]]
+        val tyB = Common.defaultOf[Rep[Type[B]]]
+        Common.defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
+      }
     }
 
     def apply[A, B](p: Rep[Tuple2TypeData[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]): Rep[Tuple2Type[A, B]]
