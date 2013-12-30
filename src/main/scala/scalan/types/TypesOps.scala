@@ -14,14 +14,21 @@ trait TypesOps { scalan: TypesDsl =>
   trait BaseTypeOps[A] extends TypeOps[A] { }
   trait BaseTypeCompanion {
   }
-  trait Tuple2TypeOps[A,B] extends TypeOps[(A,B)] { }
+  trait Tuple2TypeOps[A,B] extends TypeOps[(A,B)] {
+    implicit def e1: Elem[A]
+    implicit def e2: Elem[B]
+    def eA = element[(A,B)]
+    def tyA: Ty[A]
+    def tyB: Ty[B]
+
+
+    def typeCode = ???
+
+    def defaultValue = ???
+  }
   trait Tuple2TypeCompanion {
   }
 
-  abstract class Tuple2Type[A,B](val tyA: Ty[A], val tyB: Ty[B])
-    extends Type[(A,B)]
-    with Tuple2TypeOps[A,B] { self: Tuple2TypeOps[A,B] =>
-  }
 
   def manifestFromString(typeCode: Rep[String]): Manifest[_] = ???
 }

@@ -25,6 +25,11 @@ trait Types extends Base with TypesOps { self: TypesDsl =>
        with BaseTypeOps[A] { self: BaseTypeOps[A] =>
   }
 
+  abstract class Tuple2Type[A,B](val tyA: Ty[A], val tyB: Ty[B])(implicit val e1: Elem[A], val e2: Elem[B])
+    extends Type[(A,B)]
+    with Tuple2TypeOps[A,B] { self: Tuple2TypeOps[A,B] =>
+  }
+
 }
 
 
