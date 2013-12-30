@@ -65,10 +65,10 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       case module.EntityRepType(t) => dataType(t)
       case _ => t.toString
     }
-    def dataTypes(ts: List[TpeExpr]): String = ts match {
-      case Nil => "Unit"
-      case t :: Nil => dataType(t)
-      case t :: ts => s"(${dataType(t)}, ${dataTypes(ts)})"
+    def dataTypes(ts: List[TpeExpr]): List[String] = ts match {
+      case Nil => Nil
+      case t :: Nil => List(dataType(t))
+      case t :: ts => dataType(t) :: dataTypes(ts)
     }
     
     def pairify(fs: List[String]): String = fs match {
@@ -76,48 +76,59 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       case f :: Nil => f
       case f :: fs => s"Pair($f, ${pairify(fs)})"
     }
-    
+
+    def tuplify(fs: List[String]): String = fs match {
+      case Nil => "()"
+      case f :: Nil => f
+      case f :: fs => s"($f, ${tuplify(fs)})"
+    }
+
     def zeroExpr(t: TpeExpr): String = t match {
       case TpeInt => 0.toString
       case TpeBoolean => false.toString
       case TpeFloat => 0f.toString
       case TpeString => "\"\""
-      case TraitCall(name, args) => s"element[$t].defaultOf.value"
+      case TraitCall(name, args) => s"element[${dataType(t)}].defaultOf.value"
       case TpeTuple(items) => pairify(items.map(zeroExpr))
       case _ => ???
     }
     
     def getTraitAbs = {
       val e = module.entityOps
-      val (entityName, tyArgs, types, typesWithElems) = getEntityTemplateData(e)
+      val (entityName, tyArgs, entityTyArgs, typesWithElems) = getEntityTemplateData(e)
       val proxy =
         s"""
         |  // single proxy for each type family
-        |  implicit def proxy$entityName[$typesWithElems](p: ${typeSyn.name}[$types]): $entityName[$types] = {
+        |  implicit def proxy$entityName[$typesWithElems](p: ${typeSyn.name}[$entityTyArgs]): $entityName[$entityTyArgs] = {
         |${tyArgs.rep(a => s"    implicit val m${a.name} = element[${a.name}].manifest;", "\n")}
-        |    proxyOps[$entityName[$types], $entityName[$types]](p)
+        |    proxyOps[$entityName[$entityTyArgs], $entityName[$entityTyArgs]](p)
         |  }
         |""".stripMargin
 
-      val familyElem = s"""  trait ${entityName}Elem[From,To] extends ViewElem[From, To]""".stripMargin
+      val familyElem =
+        s"""
+        |  trait ${entityName}Elem[From,To] extends ViewElem[From, To]
+        |  implicit def default${entityName}Element[$typesWithElems]: Elem[$entityName[$entityTyArgs]] = ???
+        |""".stripMargin
 
       val defs = for { c <- module.concreteClasses } yield {
         val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes) = getClassTemplateData(c)
         def implicitArgs(prefix: String = "") = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"$prefix ${a.name}: ${a.tpe}")})")
         val useImplicits = c.implicitArgs.opt(args => s"(${args.map(_.name).rep(all)})")
         s"""
+        |  //------------------------------- $className ------------------------------------
         |  // elem for concrete class
         |  trait ${className}Elem[$types] extends ${entityName}Elem[${className}Data[$types], $className[$types]]
         |
         |  // state representation type
-        |  type ${className}Data[$types] = ${dataTypes(fieldTypes)}
+        |  type ${className}Data[$types] = ${tuplify(dataTypes(fieldTypes))}
         |
         |  // 3) companion object with Iso, constructor and deconstructor
         |  object $className extends ${className}Companion {
         |    abstract class Iso[$types]${implicitArgs()}
         |           extends IsoBase[${className}Data[$types], $className[$types]] {
-        |      override def fromStaged = { case $className(${fields.rep(all)}) => ${pairify(fields)} }
-        |      override def toStaged = (p: Rep[${dataTypes(fieldTypes)}]) => {
+        |      override def from = { case $className(${fields.rep(all)}) => ${pairify(fields)} }
+        |      override def to = (p: Rep[${tuplify(dataTypes(fieldTypes))}]) => {
         |        val ${pairify(fields)} = p
         |        $className(${fields.rep(all)})
         |      }
@@ -129,9 +140,9 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |    }
         |
         |    def apply[$types](p: Rep[${className}Data[$types]])${implicitArgs()}: Rep[$className[$types]]
-        |        = iso$className$useImplicits.toStaged(p)
-        |    def apply[$types](p: $entityName[$types])${implicitArgs()}: Rep[$className[$types]]
-        |        = mk$className(${fields.rep(f => s"p.$f")})
+        |        = iso$className$useImplicits.to(p)
+        |    //def apply[$types](p: $entityName[$entityTyArgs])${implicitArgs()}: Rep[$className[$types]]
+        |    //    = mk$className(${fields.rep(f => s"p.$f")})
         |    def apply[$types]
         |          (${fieldsWithType.rep(all)})\n          ${implicitArgs()}: Rep[$className[$types]]
         |        = mk$className(${fields.rep(all)})
@@ -144,7 +155,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  }
         |
         |  implicit def extend$className[$types](p: Rep[$className[$types]])${implicitArgs()} = new {
-        |    def toData: Rep[${className}Data[$types]] = iso$className$useImplicits.fromStaged(p)
+        |    def toData: Rep[${className}Data[$types]] = iso$className$useImplicits.from(p)
         |  }
         |
         |  // 4) implicit resolution of Iso
@@ -152,7 +163,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |
         |  // 5) smart constructor and deconstructor
         |  def mk$className[$types](${fieldsWithType.rep(all)})${implicitArgs()}: Rep[$className[$types]]
-        |  def unmk$className[$types](p: Rep[$className[$types]])${implicitArgs()}: Option[(${fieldTypes.rep(t => s"Rep[$t]")})]
+        |  def unmk$className[$types](p: Rep[$className[$types]])${implicitArgs()}: Option[(${dataTypes(fieldTypes).rep(t => s"Rep[$t]")})]
         |""".stripMargin
       }
 
@@ -177,7 +188,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  case class Seq$className[$types]
          |      (${fieldsWithType.rep(f => s"override val $f")})\n      ${implicitArgs("override val")}
          |      extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} {
-         |    def Elem = element[$className[$types]].asInstanceOf[Elem[${e.name}[$entityTypes]]]
+         |    def elem = element[$className[$types]].asInstanceOf[Elem[${e.name}[$entityTypes]]]
          |  }
          |""".stripMargin
       val isoDefs =
@@ -216,8 +227,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |    extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")}
          |       with UserTypeDef[${e.name}[$entityTypes],$className[$types]] {
          |    lazy val objType = element[$className[$types]]
-         |    def Elem = objType.asInstanceOf[Elem[${e.name}[$entityTypes]]]
-         |    def elem = element[$className[$types]]
+         |    def elem = objType.asInstanceOf[Elem[${e.name}[$entityTypes]]]
          |    override def mirror(t: Transformer)${config.emitSourceContext.opt("(implicit ctx: SourceContext)")}: Rep[_] = Exp$className[$types](${fields.rep(f => s"t($f)")})
          |  }
          |  addUserType(manifest[Exp$className[Any]])
