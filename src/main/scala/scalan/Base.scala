@@ -27,12 +27,11 @@ trait Base { self: Scalan =>
 
   def ???(): Nothing = ???("not implemented")
   def ???(msg: String): Nothing = sys.error(msg)
-  def ???[A](msg: String, sym: Rep[A]): Nothing = throw new StagingException(msg + " " + sym.toString, List(sym))
-  def ???[A](msg: String, syms: List[Rep[_]]): Nothing = throw new StagingException(msg + " " + syms.toString, syms)
+  def ???(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString, syms.toList)
 
   def !!! = sys.error("should not be called")
   def !!!(msg: String): Nothing = sys.error(msg)
-  def !!![A](msg: String, sym: Rep[A]): Nothing = throw new StagingException(msg + " " + sym.toString, List(sym))
+  def !!!(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString, syms.toList)
 
   val isDebug: Boolean = false
 
@@ -76,19 +75,23 @@ trait Base { self: Scalan =>
   }
   type ReifiableObjectAux[+T] = ReifiableObject1 { type ThisType <: T }
 
-  abstract class Transformer { outer =>
-    type Self = this.type
+  abstract class Transformer {
     def apply[A](x: Rep[A]): Rep[A]
     def isDefinedAt(x: Rep[_]): Boolean
     def domain: Set[Rep[_]]
-    protected def add(self: Self, kv: (Rep[_], Rep[_])): Self
-    def +(kv: (Rep[_], Rep[_])) = add(this, kv)
-    def ++(kvs: Map[Rep[_], Rep[_]]) = kvs.foldLeft(this: Self)((ctx, kv) => add(ctx,kv))
-    def merge(other: Self): Self = other.domain.foldLeft[Self](outer)((t,s) => t + (s, other(s)))
-    def apply[A](xs: List[Rep[A]]): List[Rep[A]] = xs map (e => apply(e))
     def apply[A](xs: Seq[Rep[A]]): Seq[Rep[A]] = xs map (e => apply(e))
     def apply[X,A](f: X=>Rep[A]): X=>Rep[A] = (z:X) => apply(f(z))
     def apply[X,Y,A](f: (X,Y)=>Rep[A]): (X,Y)=>Rep[A] = (z1:X,z2:Y) => apply(f(z1,z2))
+  }
+
+  trait TransformerOps[Ctx <: Transformer] {
+    def add(ctx: Ctx, kv: (Rep[_], Rep[_])): Ctx
+  }
+
+  implicit class TransformerEx[Ctx <: Transformer](self: Ctx)(implicit ops: TransformerOps[Ctx]) {
+    def +(kv: (Rep[_], Rep[_])) = ops.add(self, kv)
+    def ++(kvs: Map[Rep[_], Rep[_]]) = kvs.foldLeft(self)((ctx, kv) => ops.add(ctx,kv))
+    def merge(other: Ctx): Ctx = other.domain.foldLeft(self)((t,s) => t + (s, other(s)))
   }
 
   trait CanBeReified[C[_]] {
