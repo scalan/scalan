@@ -7,12 +7,12 @@ trait ProgramGraphs extends Scheduling with Transforming { self: ScalanStaged =>
   case class Node(usages: List[Exp[Any]], definition: Option[Def[Any]])
 
   class PGraph(roots: List[Exp[Any]],
-               mapping: Transformer = new MapTransformer()) extends ProgramGraph[Transformer](roots, mapping) {
+               mapping: MapTransformer = new MapTransformer()) extends ProgramGraph[MapTransformer](roots, mapping) {
     def this(root: Exp[Any]) = this(List(root))
   }
 
   // immutable program graph
-  class ProgramGraph[Ctx <: Transformer](val roots: List[Exp[Any]], val mapping: Ctx) extends PartialFunction[Exp[Any], Node]
+  class ProgramGraph[Ctx <: Transformer : TransformerOps](val roots: List[Exp[Any]], val mapping: Ctx) extends PartialFunction[Exp[Any], Node]
   {
     val schedule = buildScheduleForResult(roots /*map { _.asSymbol }*/, _.getDeps)
 
@@ -63,7 +63,7 @@ trait ProgramGraphs extends Scheduling with Transforming { self: ScalanStaged =>
 
 
     def transform(m: Mirror[Ctx], rw: Rewriter, t: Ctx): ProgramGraph[Ctx] = {
-      val t0 = t merge (mapping.asInstanceOf[t.Self])
+      val t0 = t merge mapping
       val (t1, _) = m.mirrorSymbols(t0, rw, schedule map { _.sym })
       val newRoots = roots map { t1(_) }
       new ProgramGraph(newRoots, t1)

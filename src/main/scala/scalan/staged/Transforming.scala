@@ -20,15 +20,18 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
   }
 
   class MapTransformer(val subst: Map[Exp[Any], Exp[Any]] = Map()) extends Transformer {
-    override type Self = this.type
     def apply[A](x: Exp[A]): Exp[A] = subst.get(x) match {
       case Some(y) if y != x => apply(y.asRep[A])  // transitive closure
       case _ => x
     }
     def isDefinedAt(x: Rep[_]) = subst.contains(x)
     def domain: Set[Rep[_]] = subst.keySet
-    protected def add(self: Self, kv: (Rep[_], Rep[_])): Self = {
-       new MapTransformer(self.subst + kv).asInstanceOf[Self]
+  }
+
+  object MapTransformer {
+    implicit val ops: TransformerOps[MapTransformer] = new TransformerOps[MapTransformer] {
+      def add(t: MapTransformer, kv: (Rep[_], Rep[_])): MapTransformer =
+        new MapTransformer(t.subst + kv)
     }
   }
 
@@ -83,7 +86,7 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
 
   val NoRewriting: Rewriter = (x: Exp[_]) => x
 
-  trait Mirror[Ctx <: Transformer] {
+  abstract class Mirror[Ctx <: Transformer : TransformerOps] {
     def apply(t: Ctx, rw: Rewriter, x: Exp[_]): (Ctx, Exp[_]) = (t, x.mirror(t))
 
     // every mirrorXXX methos should return a pair (t + (v -> v1), v1)
@@ -160,8 +163,8 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
     }
   }
 
-  object DefaultMirror extends Mirror[Transformer]
-  def mirror[Ctx <: Transformer] = new Mirror[Ctx] {}
+  def mirror[Ctx <: Transformer : TransformerOps] = new Mirror[Ctx] {}
+  val DefaultMirror = mirror[MapTransformer]
 
   object Transformer {
     val Id = new MapTransformer()
