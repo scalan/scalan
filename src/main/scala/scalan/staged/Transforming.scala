@@ -30,6 +30,7 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
 
   object MapTransformer {
     implicit val ops: TransformerOps[MapTransformer] = new TransformerOps[MapTransformer] {
+      def empty = new MapTransformer()
       def add(t: MapTransformer, kv: (Rep[_], Rep[_])): MapTransformer =
         new MapTransformer(t.subst + kv)
     }
