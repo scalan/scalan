@@ -11,7 +11,6 @@ trait TypesOps { scalan: TypesDsl =>
     def defaultOf: DefaultOf[Rep[A]] = Common.defaultVal(defaultValue)
   }
   trait TypeCompanion extends TypeFamily1[Type] {
-    import Common._
     def defaultOf[A](implicit ea: Elem[A]): DefaultOf[Rep[Type[A]]] = ea match {
       case baseE: BaseElem[a] => BaseType.defaultOf[a](baseE)
       case pairE: PairElem[a,b] => Tuple2Type.defaultOf[a,b](pairE.ea, pairE.eb)

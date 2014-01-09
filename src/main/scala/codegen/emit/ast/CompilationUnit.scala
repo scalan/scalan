@@ -1,11 +1,7 @@
-/**
- * Author: Alexander Slesarenko
- * Date: 10/15/12
- */
 package scalan.codegen.emit.ast
+
 import Types._
 import Operator._
-
 import scalan.codegen.emit.{CppCodeEmitter, Formatter}
 import java.io.File
 
@@ -279,80 +275,3 @@ abstract class AbstractCompilationUnit(
   }
 }
 
-object TestCompilationUnit /*extends App*/ {
-  val list = List(
-    FuncDecl(
-      List(),
-      VoidType,
-      "world",
-      Nil,
-      CompoundStat(List(
-        BinExpr(
-          Var("std::cout"),
-          Var("\"Hello, world!\\n\""),
-          lshiftOp
-        )
-      ))
-    ),
-    FuncDecl(
-      List(),
-      VoidType,
-      "hello",
-      Nil,
-      CompoundStat(List(
-        FuncCall(
-          Var("world"), Nil, Nil
-        )
-      ))
-    )
-  )
-
-  val main = FuncDecl(
-    List(),
-    IntType,
-    "main",
-    List(FuncArg(IntType, "argc")),
-    CompoundStat(List(
-      FuncCall(
-        Var("hello"), Nil, Nil
-      ),
-      ReturnStat(
-        IntConst(0)
-      )
-    ))
-  )
-
-  val cu = new CompilationUnit(Nil, Nil, list :+ main, Var("main"))
-  cu.generateExecutable("C:/Tmp", "testCU", "in.txt", "out.txt")
-
-  //val r: Int = "dir" !
-  //println("" + r)
-}
-
-  /*
-E mainFunc(T data) {
-
-}
-
-
-void main(args) {
-  val (in, out) = processArgs(args)
-  T inData = load<T>(in)
-
-  E res = mainFunc(inData)
-
-save<E>(res, out)
-}
-*/
-
-/*
-def main() = {
-val func = fun { () => {
-  val input = load[G]("file.inp")
-  val res = calcPR(input)
-  save(res, "file.out")
-}
-}
-compile(func)
-}
-*/
