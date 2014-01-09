@@ -27,12 +27,11 @@ trait Base { self: Scalan =>
 
   def ???(): Nothing = ???("not implemented")
   def ???(msg: String): Nothing = sys.error(msg)
-  def ???[A](msg: String, sym: Rep[A]): Nothing = throw new StagingException(msg + " " + sym.toString, List(sym))
-  def ???[A](msg: String, syms: List[Rep[_]]): Nothing = throw new StagingException(msg + " " + syms.toString, syms)
+  def ???(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString, syms.toList)
 
   def !!! = sys.error("should not be called")
   def !!!(msg: String): Nothing = sys.error(msg)
-  def !!![A](msg: String, sym: Rep[A]): Nothing = throw new StagingException(msg + " " + sym.toString, List(sym))
+  def !!!(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString, syms.toList)
 
   val isDebug: Boolean = false
 
