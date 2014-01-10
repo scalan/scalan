@@ -11,7 +11,7 @@ import scala.language.{implicitConversions}
 import scala.annotation.unchecked.uncheckedVariance
 
 trait Elems extends Base { self: Scalan =>
-  type Elem[A] = Element[A]      // typeclass vitnessing that family memeber A can be and element of other data type
+  type Elem[A] = Element[A]      // typeclass vitnessing that type A can be an element of other data type (i.e. belongs to Family)
   type LElem[A] = () => Elem[A]  // lazy element
 
   @implicitNotFound(msg = "No Element available for ${A}.")
@@ -73,26 +73,26 @@ trait Elems extends Base { self: Scalan =>
 trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
 
   override implicit lazy val boolElement: Elem[Boolean] =
-    new SeqBaseElement[Boolean]()(Defaults.BooleanDefaultOf, manifest[Boolean], descriptor[Boolean])
+    new SeqBaseElement[Boolean]()(Defaults.BooleanDefaultOf, manifest[Boolean]/*, descriptor[Boolean]*/)
 
   override implicit lazy val intElement: Elem[Int] =
-    new SeqBaseElement[Int]()(Defaults.IntDefaultOf, manifest[Int], descriptor[Int])
+    new SeqBaseElement[Int]()(Defaults.IntDefaultOf, manifest[Int]/*, descriptor[Int]*/)
 
   override implicit lazy val floatElement: Elem[Float] =
-    new SeqBaseElement[Float]()(Defaults.FloatDefaultOf, manifest[Float], descriptor[Float])
+    new SeqBaseElement[Float]()(Defaults.FloatDefaultOf, manifest[Float]/*, descriptor[Float]*/)
 
   override implicit lazy val stringElement: Elem[String] =
-    new SeqBaseElement[String]()(Defaults.StringDefaultOf, manifest[String], descriptor[String])
+    new SeqBaseElement[String]()(Defaults.StringDefaultOf, manifest[String]/*, descriptor[String]*/)
 
   implicit def arrayElement[A](implicit m: Manifest[A]): Elem[Array[A]] =
-    new SeqBaseElement[Array[A]]()(Defaults.ArrayDefaultOf(m), manifest[Array[A]], descriptor[Array[A]])
+    new SeqBaseElement[Array[A]]()(Defaults.ArrayDefaultOf(m), manifest[Array[A]]/*, descriptor[Array[A]]*/)
 
   override implicit lazy val unitElement: Elem[Unit] = new SeqUnitElement
 
   trait SeqElement[A] extends Element[A] {
   }
 
-  class SeqBaseElement[A](implicit override val defaultOf: DefaultOf[A], val manifest: Manifest[A], val desc: Desc[A])
+  class SeqBaseElement[A](implicit override val defaultOf: DefaultOf[A], val manifest: Manifest[A]/*, val desc: Desc[A]*/)
     extends BaseElem[A] with SeqElement[A] {
   }
 
@@ -152,19 +152,19 @@ trait ElemsExp extends Elems
   def withElemOf[A,R](x: Rep[A])(block: Elem[A] => R) = block(x.elem)
 
   override implicit lazy val boolElement: Elem[Boolean] =
-    new StagedBaseElement[Boolean](BooleanRepDefaultOf, manifest[Boolean], descriptor[Boolean])
+    new StagedBaseElement[Boolean](BooleanRepDefaultOf, manifest[Boolean]/*, descriptor[Boolean]*/)
 
   override implicit lazy val intElement: Elem[Int] =
-    new StagedBaseElement[Int](IntRepDefaultOf, manifest[Int], descriptor[Int])
+    new StagedBaseElement[Int](IntRepDefaultOf, manifest[Int]/*, descriptor[Int]*/)
 
   override implicit lazy val floatElement: Elem[Float] =
-    new StagedBaseElement[Float](FloatRepDefaultOf, manifest[Float], descriptor[Float])
+    new StagedBaseElement[Float](FloatRepDefaultOf, manifest[Float]/*, descriptor[Float]*/)
 
   override implicit lazy val stringElement: Elem[String] =
-    new StagedBaseElement[String](StringRepDefaultOf, manifest[String], descriptor[String])
+    new StagedBaseElement[String](StringRepDefaultOf, manifest[String]/*, descriptor[String]*/)
 
   implicit def arrayElement[A](implicit m: Manifest[A]): Elem[Array[A]] =
-    new StagedBaseElement[Array[A]](arrayRepDefaultOf, manifest[Array[A]], descriptor[Array[A]])
+    new StagedBaseElement[Array[A]](arrayRepDefaultOf, manifest[Array[A]]/*, descriptor[Array[A]]*/)
 
   override implicit lazy val unitElement: Elem[Unit] = new StagedUnitElement
 
@@ -172,7 +172,7 @@ trait ElemsExp extends Elems
     //def toRep(x: A): Rep[A] = { implicit val eA = this; Const(x) }
   }
 
-  class StagedBaseElement[A](z: => DefaultOf[Rep[A]], val manifest: Manifest[A], val desc: Desc[A])
+  class StagedBaseElement[A](z: => DefaultOf[Rep[A]], val manifest: Manifest[A]/*, val desc: Desc[A]*/)
     extends BaseElem[A] with StagedElement[A] {
     override lazy val defaultOf = z
     //def manifest: Manifest[A] = m
