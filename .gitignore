@@ -8,3 +8,7 @@ project/boot/
 test_out/
 example_out/
 it_out/
+.cache
+.classpath
+.project
+.settings
