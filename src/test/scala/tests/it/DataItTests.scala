@@ -1,4 +1,4 @@
-package tests.it
+package scalan.ittests
 
 import scalan.{ScalanSeqImplementation, ScalanDsl}
 

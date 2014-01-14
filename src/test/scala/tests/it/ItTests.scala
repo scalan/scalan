@@ -1,4 +1,4 @@
-package tests.it
+package scalan.ittests
 
 import io.Source
 import util.parsing.combinator.JavaTokenParsers

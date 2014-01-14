@@ -22,15 +22,12 @@ trait Semigroup[S] {
   def isInfix: Boolean
 }
 
-trait Semigroups {
+trait SemigroupLow {
   def semigroup[S](name: String,  f: (S, => S) => S, infix: Boolean = true): Semigroup[S] = new Semigroup[S] {
     def append(s1: S, s2: => S) = f(s1, s2)
     def opName = name
     def isInfix = infix
   }
-}
-
-trait SemigroupLow {
 }
 
 object Semigroup extends SemigroupLow {
@@ -41,10 +38,12 @@ object Semigroup extends SemigroupLow {
   implicit def StringSemigroup: Semigroup[String] = semigroup("+", _ + _)
 
   implicit def IntSemigroup: Semigroup[Int] = semigroup("+", _ + _)
+  def IntMultSemigroup: Semigroup[Int] = semigroup("*", _ * _)
   def IntMinSemigroup: Semigroup[Int] = {val o = implicitly[Ordering[Int]];  semigroup("min", o.min(_, _), false)}
   def IntMaxSemigroup: Semigroup[Int] = {val o = implicitly[Ordering[Int]];  semigroup("max", o.max(_, _), false)}
 
-  implicit def BooleanSemigroup: Semigroup[Boolean] = semigroup("||", (a, b) => (a || b))
+  implicit def BooleanOrSemigroup: Semigroup[Boolean] = semigroup("||", _ || _)
+  def BooleanAndSemigroup: Semigroup[Boolean] = semigroup("&&", _ && _)
 
   implicit def CharSemigroup: Semigroup[Char] = semigroup("+", (a, b) => (a + b).toChar)
 //
@@ -60,5 +59,4 @@ object Semigroup extends SemigroupLow {
   def DoubleMultSemigroup: Semigroup[Double] = semigroup("*", (a, b) => (a * b))
 
   implicit def ArraySemigroup[A: Manifest]: Semigroup[Array[A]] = semigroup("concat", Array.concat(_, _), false)
-
 }

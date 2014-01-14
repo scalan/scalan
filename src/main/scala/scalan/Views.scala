@@ -2,7 +2,7 @@ package scalan
 
 import scala.text._
 import Document._
-import scalan.common.{DefaultOf, Zero}
+import scalan.common.DefaultOf
 import scala.language.higherKinds
 
 trait Views extends Base { self: Scalan =>
