@@ -7,17 +7,16 @@ import scala.language.higherKinds
 
 trait Views extends Base { self: Scalan =>
 
-  trait GenIso[From,To] {
+  trait Iso[From,To] {
     //def eFrom: Elem[From]
     def eTo: Elem[To]
     def manifest: Manifest[To]        // constructed in each concrete iso instance
     def defaultOf: DefaultOf[Rep[To]] // constructed in each concrete iso instance
-    def from: Rep[To] => Rep[From]
-    def to: Rep[From] => Rep[To]
+    def from(x: Rep[To]): Rep[From]
+    def to(x: Rep[From]): Rep[To]
   }
-  type Iso[From,To] = GenIso[From,To]
 
-  abstract class IsoBase[From,To] extends GenIso[From,To] {
+  abstract class IsoBase[From,To] extends Iso[From,To] {
     //------
     // eB should be lazy val as it is used recursively in ViewElem
     // override it in concrete isos to create hierarchy of Elem classes
@@ -54,7 +53,7 @@ trait Views extends Base { self: Scalan =>
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
 
-  trait SeqIso[From,To] extends GenIso[From,To] {
+  trait SeqIso[From,To] extends Iso[From,To] {
   }
 
   protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new SeqViewElem[From,To] { val iso = i }
@@ -72,7 +71,7 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
 
 trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 
-  trait StagedIso[From,To] extends GenIso[From,To] {
+  trait StagedIso[From,To] extends Iso[From,To] {
   }
 
   protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new StagedViewElem[From,To] { val iso = i }
