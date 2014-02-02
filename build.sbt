@@ -6,6 +6,8 @@ name := "scalan-lite"
 
 version := "0.1"
 
+scalacOptions += "-feature"
+
 //libraryDependencies += "com.googlecode.kiama" %% "kiama" % "1.5.1"
 
 libraryDependencies ++= Seq(
@@ -16,7 +18,7 @@ libraryDependencies ++= Seq(
 
 libraryDependencies ++= Seq(
   //"com.chuusai" % "shapeless" % "2.0.0-M1" cross CrossVersion.full
-  "com.chuusai" % "shapeless_2.10.2" % "2.0.0-M1" // alternatively ...
+  "com.chuusai" % "shapeless_2.10.3" % "2.0.0-M1" // alternatively ...
 )
 
 //testOptions in Test += Tests.Argument("-oD")

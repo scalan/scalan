@@ -85,13 +85,15 @@ trait Base { self: Scalan =>
   }
 
   trait TransformerOps[Ctx <: Transformer] {
+    def empty: Ctx
     def add(ctx: Ctx, kv: (Rep[_], Rep[_])): Ctx
+    def merge(ctx1: Ctx, ctx2: Ctx): Ctx = ctx2.domain.foldLeft(ctx1)((t,s) => add(t, (s, ctx2(s))))
   }
 
   implicit class TransformerEx[Ctx <: Transformer](self: Ctx)(implicit ops: TransformerOps[Ctx]) {
     def +(kv: (Rep[_], Rep[_])) = ops.add(self, kv)
     def ++(kvs: Map[Rep[_], Rep[_]]) = kvs.foldLeft(self)((ctx, kv) => ops.add(ctx,kv))
-    def merge(other: Ctx): Ctx = other.domain.foldLeft(self)((t,s) => t + (s, other(s)))
+    def merge(other: Ctx): Ctx = ops.merge(self, other)
   }
 
   trait CanBeReified[C[_]] {

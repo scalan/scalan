@@ -62,12 +62,12 @@ trait Elems extends Base { self: Scalan =>
 
   implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = () => eA
 
-  implicit lazy val IntRepDefaultOf          = defaultVal[Rep[Int]](0)
-  implicit lazy val FloatRepDefaultOf        = defaultVal[Rep[Float]](0f)
-  implicit lazy val BooleanRepDefaultOf      = defaultVal[Rep[Boolean]](false)
-  implicit lazy val StringRepDefaultOf       = defaultVal[Rep[String]]("")
-  implicit def arrayRepDefaultOf[A:Manifest] = defaultVal[Rep[Array[A]]](Array.empty[A])
-  implicit def funcRepDefaultOf[A,B:Elem] = {
+  implicit lazy val IntRepDefaultOf: DefaultOf[Rep[Int]]               = defaultVal[Rep[Int]](0)
+  implicit lazy val FloatRepDefaultOf: DefaultOf[Rep[Float]]           = defaultVal[Rep[Float]](0f)
+  implicit lazy val BooleanRepDefaultOf: DefaultOf[Rep[Boolean]]       = defaultVal[Rep[Boolean]](false)
+  implicit lazy val StringRepDefaultOf: DefaultOf[Rep[String]]         = defaultVal[Rep[String]]("")
+  implicit def arrayRepDefaultOf[A:Manifest]: DefaultOf[Rep[Array[A]]] = defaultVal[Rep[Array[A]]](Array.empty[A])
+  implicit def funcRepDefaultOf[A,B:Elem]: DefaultOf[Rep[A] => Rep[B]] = {
     implicit val zB = element[B].defaultOf
     Defaults.Function1ABDefaultOf[Rep[A],Rep[B]](zB)
   }

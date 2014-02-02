@@ -1,4 +1,4 @@
-package tests.it
+package scalan.ittests
 
 import io.Source
 import util.parsing.combinator.JavaTokenParsers
@@ -6,6 +6,7 @@ import java.io.{File, PrintWriter}
 import scalan.ScalanSeq
 import scalan.codegen.LangBackend
 import tests.BaseTests
+import scala.language.postfixOps
 
 trait ItTests extends BaseTests {
 

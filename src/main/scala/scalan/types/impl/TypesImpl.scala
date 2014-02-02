@@ -35,8 +35,8 @@ trait TypesAbs extends Types
   object BaseType extends BaseTypeCompanion {
     abstract class Iso[A](implicit  eA: Elem[A])
            extends IsoBase[BaseTypeData[A], BaseType[A]] {
-      override def from = { case BaseType(typeCode, defaultValue) => Pair(typeCode, defaultValue) }
-      override def to = (p: Rep[(String, A)]) => {
+      override def from(p: Rep[BaseType[A]]) = p match { case BaseType(typeCode, defaultValue) => Pair(typeCode, defaultValue) }
+      override def to(p: Rep[(String, A)]) = {
         val Pair(typeCode, defaultValue) = p
         BaseType(typeCode, defaultValue)
       }
@@ -86,8 +86,8 @@ trait TypesAbs extends Types
   object Tuple2Type extends Tuple2TypeCompanion {
     abstract class Iso[A, B](implicit  eA: Elem[A],  eB: Elem[B])
            extends IsoBase[Tuple2TypeData[A, B], Tuple2Type[A, B]] {
-      override def from = { case Tuple2Type(tyA, tyB) => Pair(tyA, tyB) }
-      override def to = (p: Rep[(Type[A], Type[B])]) => {
+      override def from(p: Rep[Tuple2Type[A, B]]) = p match { case Tuple2Type(tyA, tyB) => Pair(tyA, tyB) }
+      override def to(p: Rep[(Type[A], Type[B])]) = {
         val Pair(tyA, tyB) = p
         Tuple2Type(tyA, tyB)
       }

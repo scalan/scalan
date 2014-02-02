@@ -1,7 +1,6 @@
 package scalan
 
 import scala.{Left => L, Right => R}
-import scalan.common.Zero
 import scalan.common.Common
 import Common._
 import scala.language.{reflectiveCalls, implicitConversions}
@@ -10,12 +9,11 @@ trait Options extends Views { self: Scalan =>
 
 //  object Opt {
 //    class IsoOption[A: Elem] extends IsoBase[(Unit | A), Option[A]] {
-//      implicit lazy val optionRepZero = defaultVal[Rep[Option[A]]](toRep(Option.empty[A])(eTo))
+//      implicit lazy val optionRepDefault = defaultVal[Rep[Option[A]]](toRep(Option.empty[A])(eTo))
 //      def manifest = {
 //        implicit val mA = element[A].manifest
 //        Predef.manifest[Option[A]]
 //      }
-//      def defaultOf = optionRepZero
 //
 //      override def from = (o: Option[A]) => o match {
 //        case Some(a) => R(a)

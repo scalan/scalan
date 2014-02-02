@@ -1,8 +1,6 @@
 package scalan.common
 
 object Common extends Defaults
-  with Zeros
-  with Semigroups
   with Options {
 
   implicit class AnyExtensions[A](x: A) {
