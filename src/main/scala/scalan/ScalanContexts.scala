@@ -21,7 +21,7 @@ trait Scalan
 //     with Zipping
      with Tuples
      with TypeSum
-//     with ArrayOps
+     with ArrayOps
 //     with PArrayOps
      with NumericOps
 //     with MathOps
@@ -56,7 +56,7 @@ trait ScalanSeq
   with TypeSumSeq
   with FunctionsSeq
   with IfThenElseSeq
-//  with ArrayOpsSeq
+  with ArrayOpsSeq
 //  with OrderingOpsSeq
   with NumericOpsSeq
   with EqualSeq
@@ -116,7 +116,7 @@ trait ScalanStaged
 //  with StagedChunks
 //  with StagedSets
   with ViewsExp
-//  with ArrayOpsExp
+  with ArrayOpsExp
 //  with Transforming
   with NumericOpsExp
 //  with MathOpsExp

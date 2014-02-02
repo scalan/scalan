@@ -37,6 +37,8 @@ trait Elems extends Base { self: Scalan =>
   abstract class SumElem [A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[(A|B)] {
   }
   abstract class FuncElem[A,B](val ea: Elem[A], val eb: Elem[B]) extends Element[A => B]
+  abstract class ArrayElem[A](val ea: Elem[A]) extends Element[Array[A]]
+
 //  abstract class ElemElem[A](val ea: Elem[A]) extends Element[Elem[A]]
 
   implicit val boolElement:  Elem[Boolean]
@@ -55,6 +57,7 @@ trait Elems extends Base { self: Scalan =>
   implicit def SumElemExtensions[A,B](eAB: Elem[(A|B)]): SumElem[A,B] = eAB.asInstanceOf[SumElem[A,B]]
   implicit def FuncElemExtensions[A,B](eAB: Elem[A=>B]): FuncElem[A,B] = eAB.asInstanceOf[FuncElem[A,B]]
   implicit def UnitElemExtensions(eu: Elem[Unit]): UnitElem = eu.asInstanceOf[UnitElem]
+  implicit def ArrayElemExtensions[A](eArr: Elem[Array[A]]): ArrayElem[A] = eArr.asInstanceOf[ArrayElem[A]]
   //  implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]
 
   implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = () => eA
@@ -67,6 +70,10 @@ trait Elems extends Base { self: Scalan =>
   implicit def funcRepDefaultOf[A,B:Elem] = {
     implicit val zB = element[B].defaultOf
     Defaults.Function1ABDefaultOf[Rep[A],Rep[B]](zB)
+  }
+
+  object implicitManifests {
+    implicit def elemToManifest[A:Elem] = element[A].manifest
   }
 }
 
@@ -150,6 +157,7 @@ trait ElemsExp extends Elems
                             with Scalan { self: ScalanStaged =>
 
   def withElemOf[A,R](x: Rep[A])(block: Elem[A] => R) = block(x.elem)
+  def withResultElem[A,B,R](f: Rep[A=>B])(block: Elem[B] => R) = block(withElemOf(f){ e => e.eb })
 
   override implicit lazy val boolElement: Elem[Boolean] =
     new StagedBaseElement[Boolean](BooleanRepDefaultOf, manifest[Boolean]/*, descriptor[Boolean]*/)

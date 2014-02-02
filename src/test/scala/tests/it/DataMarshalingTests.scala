@@ -5,7 +5,7 @@ import scalan.{ScalanSeqImplementation, ScalanDsl}
 /**
  * Checks that data serialization/deserialization works correctly
  */
-class DataItTests extends ItTests {
+class DataMarshalingTests extends ItTests {
   val prefix: String = ""
 
   class ProgSeq extends ScalanSeqImplementation {
