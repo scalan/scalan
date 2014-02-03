@@ -39,8 +39,8 @@ trait PArraysAbs extends PArrays
   object BaseArray extends BaseArrayCompanion {
     abstract class Iso[A](implicit  eA: Elem[A])
            extends IsoBase[BaseArrayData[A], BaseArray[A]] {
-      override def from = { case BaseArray(arr) => arr }
-      override def to = (p: Rep[Array[A]]) => {
+      override def from(p: Rep[BaseArray[A]]) = p match { case BaseArray(arr) => arr }
+      override def to(p: Rep[Array[A]]) = {
         val arr = p
         BaseArray(arr)
       }
@@ -90,8 +90,8 @@ trait PArraysAbs extends PArrays
   object PairArray extends PairArrayCompanion {
     abstract class Iso[A, B](implicit  eA: Elem[A],  eB: Elem[B])
            extends IsoBase[PairArrayData[A, B], PairArray[A, B]] {
-      override def from = { case PairArray(as, bs) => Pair(as, bs) }
-      override def to = (p: Rep[(PArray[A], PArray[B])]) => {
+      override def from(p: Rep[PairArray[A,B]]) = p match { case PairArray(as, bs) => Pair(as, bs) }
+      override def to(p: Rep[(PArray[A], PArray[B])]) = {
         val Pair(as, bs) = p
         PairArray(as, bs)
       }
