@@ -12,8 +12,8 @@ trait Views extends Base { self: Scalan =>
     def eTo: Elem[To]
     def manifest: Manifest[To]        // constructed in each concrete iso instance
     def defaultOf: DefaultOf[Rep[To]] // constructed in each concrete iso instance
-    def from(x: Rep[To]): Rep[From]
-    def to(x: Rep[From]): Rep[To]
+    def from(p: Rep[To]  ): Rep[From]
+    def to  (p: Rep[From]): Rep[To]
   }
 
   abstract class IsoBase[From,To] extends Iso[From,To] {

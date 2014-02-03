@@ -109,6 +109,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
     case `intElement` | `floatElement` | `boolElement` | `stringElement` => Const(x)
+    case arrE: ArrayElem[a] => Const(x)
     case _ => super.toRep(x)(eA)
   }
   //protected[scalan] def toExp1[T](d: ReifiableObjectAux[T], newSym: => Exp[T])(implicit et: Elem[d.ThisType]): Exp[d.ThisType]

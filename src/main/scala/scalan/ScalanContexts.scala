@@ -13,7 +13,7 @@ trait Scalan
   extends Base
 //     with Pipes
      with Elems
-     with Descs
+//     with Descs
 //     with Arrays
      with Views
 //     with Chunks
@@ -45,7 +45,7 @@ trait ScalanSeq
   extends Scalan
   with BaseSeq
   with ElemsSeq
-  with DescsSeq
+//  with DescsSeq
 //  with SeqArrays
 //  with SeqChunks
 //  with SeqPipes
@@ -109,7 +109,7 @@ trait ScalanStaged
   with TypeSumExp
 //  with StagedImplBase
   with ElemsExp
-  with DescsExp
+//  with DescsExp
 //  with StagedArrays
 //  with StagedArrayExtensions
 //  with StagedPipes

@@ -20,12 +20,13 @@ trait PArraysAbs extends PArrays
 
 
   trait PArrayElem[From,To] extends ViewElem[From, To]
-  implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = ???
+  //implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = ???
 //  element[A] match {
 //    case baseE: BaseElem[a] =>
 //  }
   object PArray extends PArrayCompanion {
   }
+  implicit def defaultOfPArray[A](implicit da: Elem[A]): DefaultOf[Rep[PArray[A]]] = PArray.defaultOf[A]
 
 
   //------------------------------- BaseArray ------------------------------------
@@ -100,7 +101,20 @@ trait PArraysAbs extends PArrays
         implicit val mB = element[B].manifest
         Predef.manifest[PairArray[A, B]] 
       }
-      def defaultOf = Common.defaultVal[Rep[PairArray[A, B]]](PairArray(element[PArray[A]].defaultOf.value, element[PArray[B]].defaultOf.value))
+//      def defaultOf = {
+//        implicit val dA = eA.defaultOf
+//        implicit val dB = eB.defaultOf
+//        val tyA = Common.defaultOf[Rep[Type[A]]]
+//        val tyB = Common.defaultOf[Rep[Type[B]]]
+//        Common.defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
+//      }
+      def defaultOf = {
+        implicit val dA = eA.defaultOf
+        implicit val dB = eB.defaultOf
+        val as = Common.defaultOf[Rep[PArray[A]]]
+        val bs = Common.defaultOf[Rep[PArray[B]]]
+        Common.defaultVal[Rep[PairArray[A, B]]](PairArray(as, bs))
+      }
     }
 
     

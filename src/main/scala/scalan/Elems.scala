@@ -16,7 +16,6 @@ trait Elems extends Base { self: Scalan =>
 
   @implicitNotFound(msg = "No Element available for ${A}.")
   trait Element[A] {
-    //def desc: Desc[A]
     def manifest: Manifest[A]
     def defaultOf: DefaultOf[Rep[A]]
     def name = manifest.toString
@@ -46,7 +45,7 @@ trait Elems extends Base { self: Scalan =>
   implicit val floatElement: Elem[Float]
   implicit val unitElement:  Elem[Unit]
   implicit val stringElement:  Elem[String]
-  implicit def arrayElement[A: Manifest]: Elem[Array[A]]
+  implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]]
 
   implicit def pairElement[A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A,B)]
   implicit def sumElement [A,B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A|B)]
@@ -66,7 +65,10 @@ trait Elems extends Base { self: Scalan =>
   implicit lazy val FloatRepDefaultOf: DefaultOf[Rep[Float]]           = defaultVal[Rep[Float]](0f)
   implicit lazy val BooleanRepDefaultOf: DefaultOf[Rep[Boolean]]       = defaultVal[Rep[Boolean]](false)
   implicit lazy val StringRepDefaultOf: DefaultOf[Rep[String]]         = defaultVal[Rep[String]]("")
-  implicit def arrayRepDefaultOf[A:Manifest]: DefaultOf[Rep[Array[A]]] = defaultVal[Rep[Array[A]]](Array.empty[A])
+  implicit def arrayRepDefaultOf[A](implicit e: Elem[Array[A]]): DefaultOf[Rep[Array[A]]] = {
+    implicit val mA = e.ea.manifest
+    defaultVal[Rep[Array[A]]](Array.empty[A])
+  }
   implicit def funcRepDefaultOf[A,B:Elem]: DefaultOf[Rep[A] => Rep[B]] = {
     implicit val zB = element[B].defaultOf
     Defaults.Function1ABDefaultOf[Rep[A],Rep[B]](zB)
@@ -91,8 +93,15 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
   override implicit lazy val stringElement: Elem[String] =
     new SeqBaseElement[String]()(Defaults.StringDefaultOf, manifest[String]/*, descriptor[String]*/)
 
-  implicit def arrayElement[A](implicit m: Manifest[A]): Elem[Array[A]] =
-    new SeqBaseElement[Array[A]]()(Defaults.ArrayDefaultOf(m), manifest[Array[A]]/*, descriptor[Array[A]]*/)
+  implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = {
+    implicit val mA = eA.manifest
+    new ArrayElem[A](eA) with SeqElement[Array[A]] {
+      private val m = Predef.manifest[Array[A]]
+      private val z = Defaults.ArrayDefaultOf(mA)
+      def manifest: Manifest[Array[A]] = m
+      def defaultOf = z
+    }
+  }
 
   override implicit lazy val unitElement: Elem[Unit] = new SeqUnitElement
 
@@ -108,26 +117,21 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
     private val z = Defaults.UnitDefaultOf
     implicit def manifest = m
     def defaultOf = z
-    def desc = descriptor[Unit]
   }
 
   override implicit def pairElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A, B)] =
     new PairElem[A, B](elema, elemb) with SeqElement[(A, B)] {
       private val m = Manifest.classType(classOf[(A, B)], ea.manifest, eb.manifest)
       private val z = Common.defaultVal((ea.defaultOf.value, eb.defaultOf.value))
-
       def manifest: Manifest[(A, B)] = m
       def defaultOf = z
-      //def desc = pairTypeDescriptor(elema.desc, elemb.desc)
     }
 
   override implicit def sumElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A | B)] =
     new SumElem[A, B](elema, elemb) with SeqElement[(A | B)] {
-      lazy val boolElem = descriptor[Boolean]
       lazy val m: Manifest[(A|B)] = Manifest.classType(classOf[(A|B)], ea.manifest, eb.manifest)
       def defaultOf = Common.defaultVal(scala.Left(ea.defaultOf.value))
       def manifest: Manifest[(A|B)] = m
-      //def desc = sumTypeDescriptor(elema, elemb)
     }
 
   implicit def funcElement[A,B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
@@ -137,7 +141,6 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
 
       def manifest: Manifest[A=>B] = m
       def defaultOf = z
-      //def desc = funcTypeDescriptor(elema.desc, elemb.desc)
     }
 
 //  override implicit def elemElement[A](implicit elema: Elem[A]): Elem[Elem[A]] =
@@ -171,19 +174,33 @@ trait ElemsExp extends Elems
   override implicit lazy val stringElement: Elem[String] =
     new StagedBaseElement[String](StringRepDefaultOf, manifest[String]/*, descriptor[String]*/)
 
-  implicit def arrayElement[A](implicit m: Manifest[A]): Elem[Array[A]] =
-    new StagedBaseElement[Array[A]](arrayRepDefaultOf, manifest[Array[A]]/*, descriptor[Array[A]]*/)
+  implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = {
+    implicit val mA = eA.manifest
+    //new StagedBaseElement[Array[A]](arrayRepDefaultOf, manifest[Array[A]] /*, descriptor[Array[A]]*/)
+    new ArrayElem[A](eA) with StagedElement[Array[A]] {
+      private val m = Predef.manifest[Array[A]]
+      private val z = arrayRepDefaultOf(this)
+      def manifest = m
+      def defaultOf = z
+    }
+  }
+//  implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] =
+//    new ArrayElem[A](eA) with StagedElement[Array[A]] {
+//      import implicitManifests._
+//      private val m = Predef.manifest[Array[A]]
+//      private val z = arrayRepDefaultOf
+//      def manifest = m
+//      def defaultOf = z
+//    }
 
   override implicit lazy val unitElement: Elem[Unit] = new StagedUnitElement
 
   trait StagedElement[A] extends Element[A] {
-    //def toRep(x: A): Rep[A] = { implicit val eA = this; Const(x) }
   }
 
   class StagedBaseElement[A](z: => DefaultOf[Rep[A]], val manifest: Manifest[A]/*, val desc: Desc[A]*/)
     extends BaseElem[A] with StagedElement[A] {
     override lazy val defaultOf = z
-    //def manifest: Manifest[A] = m
   }
 
   class StagedUnitElement extends UnitElem with StagedElement[Unit] {
@@ -191,7 +208,6 @@ trait ElemsExp extends Elems
     private lazy val z = defaultVal[Rep[Unit]](toRep(()))
     def manifest = m
     def defaultOf = z
-    def desc = descriptor[Unit]
   }
 
   override implicit def pairElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A, B)] =
@@ -200,7 +216,6 @@ trait ElemsExp extends Elems
       private lazy val z = defaultVal(Pair(ea.defaultOf.value, eb.defaultOf.value))
       def manifest: Manifest[(A, B)] = m
       def defaultOf = z
-      //def desc = pairTypeDescriptor(elema.desc, elemb.desc)
     }
 
   override implicit def sumElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A | B)] =
@@ -208,17 +223,14 @@ trait ElemsExp extends Elems
       lazy val m: Manifest[(A | B)] = Manifest.classType(classOf[(A | B)], ea.manifest, eb.manifest)
       def defaultOf = defaultVal(toLeftSum[A,B](ea.defaultOf.value))
       def manifest: Manifest[(A | B)] = m
-      //def desc = sumTypeDescriptor(elema, elemb)
     }
 
   override implicit def funcElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
     new FuncElem[A, B](elema, elemb) with StagedElement[A => B] {
       lazy val m: Manifest[A => B] = Manifest.classType(classOf[A => B], ea.manifest, eb.manifest)
       def manifest = m
-
       lazy val z: DefaultOf[Rep[A=>B]] = defaultVal(fun(funcRepDefaultOf[A,B].value))
       implicit def defaultOf = z
-      //def desc = funcTypeDescriptor(elema.desc, elemb.desc)
     }
 
 //  override implicit def elemElement[A](implicit elema: Elem[A]): Elem[Elem[A]] =
