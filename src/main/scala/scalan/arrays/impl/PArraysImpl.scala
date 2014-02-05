@@ -20,7 +20,8 @@ trait PArraysAbs extends PArrays
 
 
   trait PArrayElem[From,To] extends ViewElem[From, To]
-  //implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = ???
+
+  implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = ???
 //  element[A] match {
 //    case baseE: BaseElem[a] =>
 //  }
@@ -155,8 +156,9 @@ trait PArraysSeq extends PArraysAbs
   case class SeqBaseArray[A]
       (override val arr: Rep[Array[A]])
       (implicit override val eT: Elem[A])
-      extends BaseArray[A](arr) with BaseArrayOps[A] {
-    def elem = element[BaseArray[A]].asInstanceOf[Elem[PArray[A]]]
+      extends BaseArray[A](arr) with BaseArrayOps[A]
+         with UserTypeSeq[PArray[A], BaseArray[A]] {
+    def selfType: Elem[PArray[A]] = element[BaseArray[A]].asInstanceOf[Elem[PArray[A]]]
   }
 
 
@@ -180,8 +182,10 @@ trait PArraysSeq extends PArraysAbs
   case class SeqPairArray[A, B]
       (override val as: PA[A], override val bs: PA[B])
       (implicit override val eA: Elem[A], override val eB: Elem[B])
-      extends PairArray[A, B](as, bs) with PairArrayOps[A,B] {
-    def elem = element[PairArray[A, B]].asInstanceOf[Elem[PArray[(A,B)]]]
+      extends PairArray[A, B](as, bs)
+          with PairArrayOps[A,B]
+          with UserTypeSeq[PArray[(A,B)], PairArray[A,B]] {
+    def selfType = element[PairArray[A, B]].asInstanceOf[Elem[PArray[(A,B)]]]
   }
 
 
@@ -211,9 +215,9 @@ trait PArraysExp extends PArraysAbs with ProxyExp with ViewsExp
       (override val arr: Rep[Array[A]])
       (implicit override val eT: Elem[A])
     extends BaseArray[A](arr) with BaseArrayOps[A]
-       with UserTypeDef[PArray[A],BaseArray[A]] {
-    lazy val objType = element[BaseArray[A]]
-    def elem = objType.asInstanceOf[Elem[PArray[A]]]
+       with UserTypeExp[PArray[A], BaseArray[A]] {
+    lazy val selfType = element[BaseArray[A]].asInstanceOf[Elem[PArray[A]]]
+    //def elem: Elem[BaseArray[A]] = selfType //.asInstanceOf[Elem[PArray[A]]]
     override def mirror(t: Transformer): Rep[_] = ExpBaseArray[A](t(arr))
   }
   addUserType(manifest[ExpBaseArray[Any]])
@@ -241,9 +245,9 @@ trait PArraysExp extends PArraysAbs with ProxyExp with ViewsExp
       (override val as: PA[A], override val bs: PA[B])
       (implicit override val eA: Elem[A], override val eB: Elem[B])
     extends PairArray[A, B](as, bs) with PairArrayOps[A,B]
-       with UserTypeDef[PArray[(A,B)],PairArray[A, B]] {
-    lazy val objType = element[PairArray[A, B]]
-    def elem = objType.asInstanceOf[Elem[PArray[(A,B)]]]
+       with UserTypeExp[PArray[(A,B)],PairArray[A, B]] {
+    lazy val selfType = element[PairArray[A, B]].asInstanceOf[Elem[PArray[(A,B)]]]
+    //def elem: Elem[PairArray[A, B]] = selfType//.asInstanceOf[Elem[PArray[(A,B)]]]
     override def mirror(t: Transformer): Rep[_] = ExpPairArray[A, B](t(as), t(bs))
   }
   addUserType(manifest[ExpPairArray[Any,Any]])

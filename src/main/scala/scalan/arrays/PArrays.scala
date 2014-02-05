@@ -15,6 +15,8 @@ trait PArrays extends Base with PArraysOps { self: PArraysDsl =>
     def length: Rep[Int]
     def arr: Rep[Array[T]]
     def map[R:Elem](f: (Rep[T] => Rep[R])): PA[R]
+    def mapBy[R:Elem](f: (Rep[T=>R])): PA[R]
+    def zip[U:Elem](ys: PA[U]): PA[(T,U)]
   }
 
   abstract class BaseArray[T](val arr: Rep[Array[T]])(implicit val eA: Elem[T])

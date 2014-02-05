@@ -30,7 +30,7 @@ trait LogicalOpsSeq extends LogicalOps { self: ScalanSeq =>
 
 trait LogicalOpsExp extends LogicalOps { self: ScalanStaged =>
   abstract class LogicalBinOp(val opName: String) extends BinOp[Boolean] {
-    val objType = element[Boolean]
+    val selfType = element[Boolean]
   }
   case class And(lhs: Exp[Boolean], rhs: Exp[Boolean]) extends LogicalBinOp("&&") {
     def copyWith(l: Rep[Boolean], r: Rep[Boolean]) = this.copy(lhs = l, rhs = r)
@@ -39,13 +39,13 @@ trait LogicalOpsExp extends LogicalOps { self: ScalanStaged =>
     def copyWith(l: Rep[Boolean], r: Rep[Boolean]) = this.copy(lhs = l, rhs = r)
   }
   abstract class LogicalUnOp(val opName: String) extends UnOp[Boolean] {
-    val objType = element[Boolean]
+    val selfType = element[Boolean]
   }
   case class Not(arg: Exp[Boolean]) extends LogicalUnOp("!") {
     def copyWith(a: Rep[Boolean]) = this.copy(arg = a)
   }
   case class BooleanToInt(arg: Exp[Boolean]) extends Def[Int] with UnOpBase[Boolean,Int] {
-    val objType = element[Int]
+    val selfType = element[Int]
     override def mirror(t: Transformer) = {
       copyWith(t(arg))
     }

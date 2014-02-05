@@ -49,13 +49,13 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
 
   case class Left[A, B](left: Exp[A])(implicit val eB: Elem[B]) extends Def[(A | B)] {
     implicit def eA = left.elem
-    lazy val objType =  element[(A|B)]
+    lazy val selfType =  element[(A|B)]
     override def mirror(t: Transformer) = Left[A,B](t(left))
   }
 
   case class Right[A, B](right: Exp[B])(implicit val eA: Elem[A]) extends Def[(A | B)] {
     implicit def eB = right.elem
-    lazy val objType =  element[(A|B)]
+    lazy val selfType =  element[(A|B)]
     override def mirror(t: Transformer) = Right[A,B](t(right))
   }
 
@@ -66,16 +66,16 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
 
   case class IsLeft[A, B](sum: Exp[(A | B)]) extends Def[Boolean] {
     override def mirror(t: Transformer) = IsLeft(t(sum))
-    def objType = element[Boolean]
+    def selfType = element[Boolean]
   }
 
   case class IsRight[A, B](sum: Exp[(A | B)]) extends Def[Boolean] {
     override def mirror(t: Transformer) = IsRight(t(sum))
-    def objType = element[Boolean]
+    def selfType = element[Boolean]
   }
 
   case class SumFold[A, B, R](sum: Exp[(A | B)], left: Exp[A => R], right: Exp[B => R])
-                             (implicit val objType: Elem[R]) extends Def[R] {
+                             (implicit val selfType: Elem[R]) extends Def[R] {
     override def mirror(t: Transformer) = SumFold(t(sum), t(left), t(right))
   }
 
@@ -90,11 +90,11 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
 
   override def rewrite[T](d: Def[T])(implicit eT: LElem[T]) = d match {
     case f@SumFold(Def(Left(left)), l, _) => {
-      val eR: Elem[T] = f.objType.asInstanceOf[Elem[T]]
+      val eR: Elem[T] = f.selfType.asInstanceOf[Elem[T]]
       mkApply(l, left)
     }
     case f@SumFold(Def(Right(right)), _, r) => {
-      val eR: Elem[T] = f.objType.asInstanceOf[Elem[T]]
+      val eR: Elem[T] = f.selfType.asInstanceOf[Elem[T]]
       mkApply(r, right)
     }
     //TODO case IsLeft, IsRight

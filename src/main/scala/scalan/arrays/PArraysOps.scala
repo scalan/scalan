@@ -9,8 +9,12 @@ trait PArraysOps { scalan: PArraysDsl =>
   trait PArrayOps[T] extends PArray[T] {
     def map[R:Elem](f: Rep[T] => Rep[R]) = {
       val fun_f = fun(f)
-      PArray(arr.map(fun_f))
+      mapBy(fun_f)
     }
+    def mapBy[R:Elem](f: Rep[T=>R]) = {
+      PArray(arr.map(f))
+    }
+    def zip[U:Elem](ys: PA[U]) = PairArray(self, ys)
   }
   trait PArrayCompanion extends TypeFamily1[PArray] {
     def defaultOf[A](implicit ea: Elem[A]): DefaultOf[Rep[PArray[A]]] = ea match {
@@ -20,7 +24,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     }
 
     def apply[T:Elem](arr: Rep[Array[T]]): PA[T] = fromArray(arr)
-    def fromArray[T](arr: Rep[Array[T]])(implicit eT: Elem[T]): PA[T] = eT match {
+    def fromArray[T:Elem](arr: Rep[Array[T]]): PA[T] = element[T] match {
       case baseE: BaseElem[a] =>
         BaseArray[a](arr.asRep[Array[a]])
       case pairE: PairElem[a,b] =>
@@ -31,6 +35,18 @@ trait PArraysOps { scalan: PArraysDsl =>
         val bs = fromArray(ps.map(fun { _._2 }))
         PairArray[a,b](as, bs)
       case _ => ???
+    }
+
+    def replicate[T:Elem](len: Rep[Int], v: Rep[T]): PA[T] = element[T] match {
+      case baseE: BaseElem[a] =>
+        BaseArray[a](array_Replicate(len, v.asRep[a]))
+      case _ => ???
+
+    }
+
+    def singleton[T:Elem](v: Rep[T]): PA[T] = element[T] match {
+      case paE: PArrayElem[tFrom,tTo] => ???
+      case _ => replicate(toRep(1), v)
     }
   }
 

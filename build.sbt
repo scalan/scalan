@@ -14,7 +14,8 @@ libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.0" % "test",
   "org.scalacheck" %% "scalacheck" % "1.11.1" % "test",
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
-  "ch.qos.logback" % "logback-classic" % "1.0.13")
+  "ch.qos.logback" % "logback-classic" % "1.0.13",
+  "EPFL" % "lms_2.10" % "0.3-SNAPSHOT")
 
 libraryDependencies ++= Seq(
   //"com.chuusai" % "shapeless" % "2.0.0-M1" cross CrossVersion.full

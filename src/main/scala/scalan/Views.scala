@@ -32,7 +32,8 @@ trait Views extends Base { self: Scalan =>
   }
 
   trait UserType[T] {
-    def elem: Elem[T]
+    def selfType: Elem[T]
+    def self: Rep[T] = !!!("should not be called")
   }
 
   trait TypeFamily1[F[_]] {
@@ -67,6 +68,11 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
     def manifest: Manifest[To] = m
     def defaultOf = z
   }
+
+  trait UserTypeSeq[T, TImpl <: T] extends UserType[T] { thisType: T =>
+    override def self = this
+  }
+
 }
 
 trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
@@ -104,12 +110,12 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     userTypes.exists(c => symClazz.isAssignableFrom(c.manifest.runtimeClass))
   }
 
-  trait UserTypeDef[T, TImpl] extends UserType[T] with ReifiableObject[TImpl] {
-    override def thisSymbol = reifyObject(this)(() => elem.asInstanceOf[Elem[TImpl]])
+  trait UserTypeExp[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
+    override def self = reifyObject(this)(() => selfType.asInstanceOf[Elem[TImpl]])
   }
-  object UserTypeDef {
+  object UserTypeExp {
     def unapply[T](d: Def[T]): Option[Iso[_,T]] = {
-      val s = d.thisSymbol
+      val s = d.self
       val eT = s.elem
       eT match {
         case e: ViewElem[_,_] if isUserTypeConstr(d) => Some(e.asInstanceOf[ViewElem[_,T]].iso)

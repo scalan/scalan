@@ -25,8 +25,15 @@ class PArrayExamplesSuite extends FlatSpec with Matchers {
 
   "in staged context" should "stage functions" in {
     val ctx = new ScalanCtxStaged with PArraysDslExp with PArrayExamples with GraphVizExport {}
-    val f1 = ctx.fromAndTo
-    ctx.emitDepGraph(f1, prefix + "fromAndTo.dot", false)
+    val f1 = ctx.fromArray
+    ctx.emitDepGraph(f1, prefix + "fromArray.dot", false)
+
+    val f2 = ctx.fromArrayOfPairs
+
+    ctx.emitDepGraph(f2, prefix + "fromArrayOfPairs.dot", false)
+
+    // val f2 = ctx.fromAndTo
+    // ctx.emitDepGraph(f2, prefix + "fromAndTo.dot", false)
     //val f2 = ctx.inc
   }
  }

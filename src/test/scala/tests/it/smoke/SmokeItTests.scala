@@ -1,27 +1,24 @@
 package tests.it.smoke
 
-//import org.junit.{Ignore, Test, Assert}
-//import scalan.codegen.SMPBackend
-//import scalan.ScalanDsl
-//import scalan.staged.ScalanStagedImplementation
-//import scalan.sequential.{ScalanSeq, ScalanSeqImplementation}
-//import tests.TestingSamples
-//import scalan.common.Monoid
-//import tests.it.ItTests
+import scalan.{ScalanCtxSeq, ScalanCtxStaged, ScalanDsl}
+import tests.it.ItTests
+import tests.scalan.arrays.PArrayExamples
+import scalan.codegen.LmsBackend
+import scalan.arrays.{PArraysDslSeq, PArraysDslExp}
 
 /**
  *  Tests that very simple examples are run correctly
  */
-//class SmokeItTests extends ItTests {
-//  val prefix = "01-smoke"
-//  override val emitGraphs = true      // set to true if you want to emit the graphs
-//
-//  trait Prog extends ScalanDsl with TestingSamples {
-//
-//    lazy val simpleConst = fun {x: PA[Int] =>
-//      singleton(1)
-//    }
-//
+class SmokeItTests extends ItTests {
+  val prefix = "01-smoke"
+  override val emitGraphs = true      // set to true if you want to emit the graphs
+
+  trait Prog extends ScalanDsl with PArrayExamples {
+
+    lazy val simpleConst = fun {x: PA[Int] =>
+      PArray.singleton(1)
+    }
+
 //    lazy val simpleMap = fun {x: PA[Int] =>
 //      x.map(y => y + 1)
 //    }
@@ -175,10 +172,10 @@ package tests.it.smoke
 ////      expandScaledRanges(is, scale)
 ////    }
 //
-//  }
-//
-//  class ProgStaged extends Prog with ScalanStagedImplementation with SMPBackend
-//  class ProgSeq extends Prog with ScalanSeqImplementation {
+  }
+
+  class ProgStaged extends Prog with PArraysDslExp with ScalanCtxStaged with LmsBackend
+  class ProgSeq extends Prog with PArraysDslSeq with ScalanCtxSeq {
 //    lazy val intRep: Rep[Int] = 1
 //    lazy val intPair: Rep[(Int, Int)] = (1, 2)
 //    lazy val nestedIntPair: Rep[((Int, Int), (Int, Int))] = ((1, 2), (3, 4))
@@ -209,22 +206,21 @@ package tests.it.smoke
 //
 //    val dv = fromArray(Array(-3.0f, 5.0f, -7.0f, 11.0f, -13.0f))
 //    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
-//  }
-//
-//  val progStaged = new ProgStaged()
-//  val progSeq = new ProgSeq()
-//
-//  import progSeq._
-//
-//
-//
-//  @Test def test00simpleConst {
-//    val (in, out) = Array(0) -> Array(1)
-//
-//    Assert.assertArrayEquals(out, progSeq.simpleConst(progSeq.fromArray(in)).toArray)
-//    checkRun(progSeq, progStaged)(progSeq.simpleConst, progStaged.simpleConst)("00simpleConst", progSeq.fromArray(in), progSeq.fromArray(out))
-//  }
-//
+  }
+
+  val progStaged = new ProgStaged()
+  val progSeq = new ProgSeq()
+
+  import progSeq._
+
+
+
+  test("test00simpleConst") {
+    val (in, out) = Array(0) -> Array(1)
+    progSeq.simpleConst(progSeq.PArray.fromArray(in)).arr should be(out)
+    checkRun(progSeq, progStaged)(progSeq.simpleConst, progStaged.simpleConst)("00simpleConst", progSeq.PArray.fromArray(in), progSeq.PArray.fromArray(out))
+  }
+
 //
 //  @Test def test01simpleMap {
 //    val (in, out) = Array(1, 2, 3, 4, 5) -> Array(2, 3, 4, 5, 6)
@@ -402,5 +398,5 @@ package tests.it.smoke
 ////    Assert.assertArrayEquals(out, progSeq.expandScaledRangesFun(in).toArray)
 ////    checkRun(progSeq, progStaged)(expandScaledRangesFun, progStaged.expandScaledRangesFun)("simple26_expandScaledRanges", in, progSeq.fromArray(out))
 ////  }
-//
-//}
+
+}

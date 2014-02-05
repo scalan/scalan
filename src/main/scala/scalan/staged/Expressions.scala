@@ -37,12 +37,22 @@ trait BaseExp extends Base { self: ScalanStaged =>
         .replace("scala.Tuple2", "Tuple2")
   }
 
-  type Def[+A] = ReifiableObject[A]
-  type Def1[+A] = ReifiableObjectAux[A]
+  // this trait is mixed in Def[A]
+  trait ReifiableObject[+T, +TImpl <: T] extends UserType[T @uncheckedVariance] {
+    def name = getClass.getSimpleName
+    def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)
+    def decompose: Option[Rep[_]] = None
+    def isScalarOp: Boolean = true
+  }
+
+  type Def[+A] = ReifiableObject[A,A]
+  //trait Def[+A] extends UserType[A @uncheckedVariance] with ReifiableObject[A]
+
+  //type Def1[+A] = ReifiableObjectAux[A]
 
   case class Const[T](x: T)(implicit leT: LElem[T]) extends Def[T] {
-    def objType = leT()
-    override def thisSymbol: Rep[T] = this
+    def selfType = leT()
+    override def self: Rep[T] = this
     override def mirror(t: Transformer): Rep[_] = Const(x)
     override def hashCode: Int = (41 + x.hashCode)
 
@@ -81,14 +91,14 @@ trait BaseExp extends Base { self: ScalanStaged =>
       implicit val eT = arg.elem
       copyWith(t(arg))
     }
-    override def thisSymbol: Rep[T] = { implicit val e = objType; this }
+    override def self: Rep[T] = { implicit val e = selfType; this }
   }
   abstract class BinOp[T] extends Def[T] with BinOpBase[T,T] {
     override def mirror(t: Transformer) = {
       implicit val eT = lhs.elem
       copyWith(t(lhs), t(rhs))
     }
-    override def thisSymbol: Rep[T] = { implicit val e = objType; this }
+    override def self: Rep[T] = { implicit val e = selfType; this }
   }
 
   def fresh[T](implicit leT: LElem[T]): Exp[T]
@@ -105,7 +115,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: LElem[T]): Exp[T]
-  implicit def reifyObject[T:LElem](obj: ReifiableObject[T]): Rep[T] = toExp(obj, fresh[T])
+  implicit def reifyObject[T:LElem](obj: ReifiableObject[_,T]): Rep[T] = toExp(obj.asInstanceOf[Def[T]], fresh[T])
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
     case `intElement` | `floatElement` | `boolElement` | `stringElement` => Const(x)
@@ -273,7 +283,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
                     (implicit et: LElem[T]) extends Exp[T]
   {
     override def elem: Elem[T @uncheckedVariance] = this match {
-      case Def(d) => d.objType.asInstanceOf[Elem[T]]
+      case Def(d) => d.selfType.asInstanceOf[Elem[T]]
       case _ => et()
     }
     def varName = "s" + id

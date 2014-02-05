@@ -28,7 +28,7 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanStaged =>
 
-  trait LambdaBase[A,B] extends Def[A => B] {
+  trait LambdaBase[A,B] extends Def[A => B] with Product {
     implicit def eA: Elem[A]
     implicit def eB: Elem[B]
     def f: Option[Exp[A] => Exp[B]]
@@ -45,6 +45,11 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       }
     def canEqual(other: Any) = other.isInstanceOf[Lambda[_,_]]
 
+    val productElements = Array[Any](f, x, y)
+    def productElement(n: Int): Any = productElements(n)
+    def productArity: Int = 3
+    
+    
     lazy val schedule: List[TP[_]] = {
       isIdentity match {
         case false =>
@@ -109,7 +114,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       val newLam = new LambdaWrapper(None, t(x), t(y), newSym)
       toExp(newLam, newSym)
     }
-    lazy val objType = element[A => B]
+    lazy val selfType = element[A => B]
   }
   type LambdaData[A,B] = (Lambda[A,B], Option[Exp[A] => Exp[B]], Exp[A], Exp[B])
   object Lambda {
@@ -125,14 +130,14 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
        override val f: Option[Exp[A] => Exp[B]], 
        override val x: Exp[A], 
        override val y: Exp[B], 
-       override val thisSymbol: Rep[A=>B])  extends Lambda[A,B](f, x, y) 
+       override val self: Rep[A=>B])  extends Lambda[A,B](f, x, y)
 
   case class Apply[A,B]
     (f: Exp[A => B], arg: Exp[A])
     (implicit eB: () => Elem[B])   // enforce explicit laziness at call sites to tie recursive knot (see executeFunction)
       extends Def[B]
   {
-    lazy val objType = eB()
+    lazy val selfType = eB()
     override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))(eB)
   }
 

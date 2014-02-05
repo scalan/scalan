@@ -156,27 +156,26 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
 }
 
 trait ElemsExp extends Elems
-                            with BaseExp
-                            with Scalan { self: ScalanStaged =>
+                  with BaseExp
+                  with Scalan { self: ScalanStaged =>
 
   def withElemOf[A,R](x: Rep[A])(block: Elem[A] => R) = block(x.elem)
   def withResultElem[A,B,R](f: Rep[A=>B])(block: Elem[B] => R) = block(withElemOf(f){ e => e.eb })
 
   override implicit lazy val boolElement: Elem[Boolean] =
-    new StagedBaseElement[Boolean](BooleanRepDefaultOf, manifest[Boolean]/*, descriptor[Boolean]*/)
+    new StagedBaseElement[Boolean](BooleanRepDefaultOf, manifest[Boolean])
 
   override implicit lazy val intElement: Elem[Int] =
-    new StagedBaseElement[Int](IntRepDefaultOf, manifest[Int]/*, descriptor[Int]*/)
+    new StagedBaseElement[Int](IntRepDefaultOf, manifest[Int])
 
   override implicit lazy val floatElement: Elem[Float] =
-    new StagedBaseElement[Float](FloatRepDefaultOf, manifest[Float]/*, descriptor[Float]*/)
+    new StagedBaseElement[Float](FloatRepDefaultOf, manifest[Float])
 
   override implicit lazy val stringElement: Elem[String] =
-    new StagedBaseElement[String](StringRepDefaultOf, manifest[String]/*, descriptor[String]*/)
+    new StagedBaseElement[String](StringRepDefaultOf, manifest[String])
 
   implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = {
     implicit val mA = eA.manifest
-    //new StagedBaseElement[Array[A]](arrayRepDefaultOf, manifest[Array[A]] /*, descriptor[Array[A]]*/)
     new ArrayElem[A](eA) with StagedElement[Array[A]] {
       private val m = Predef.manifest[Array[A]]
       private val z = arrayRepDefaultOf(this)
@@ -184,14 +183,6 @@ trait ElemsExp extends Elems
       def defaultOf = z
     }
   }
-//  implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] =
-//    new ArrayElem[A](eA) with StagedElement[Array[A]] {
-//      import implicitManifests._
-//      private val m = Predef.manifest[Array[A]]
-//      private val z = arrayRepDefaultOf
-//      def manifest = m
-//      def defaultOf = z
-//    }
 
   override implicit lazy val unitElement: Elem[Unit] = new StagedUnitElement
 

@@ -43,7 +43,7 @@ trait Base { self: Scalan =>
     def arg: Rep[TArg]
     def copyWith(arg: Rep[TArg]): Rep[R]
     def opName: String
-    def objType: Elem[R]
+    def selfType: Elem[R]
     override def toString = "%s(%s)".format(this.getClass.getSimpleName, arg)
   }
 
@@ -52,28 +52,20 @@ trait Base { self: Scalan =>
     def rhs: Rep[TArg]
     def copyWith(l: Rep[TArg], r:Rep[TArg]): Rep[R]
     def opName: String
-    def objType: Elem[R]
+    def selfType: Elem[R]
     override def toString = this.getClass.getSimpleName + "(" + lhs + ", " + rhs + ")"
   }
 
-  trait ReifiableObject[+A] {     // implemented as Def[A] in staged context
-    def objType: Elem[A @uncheckedVariance]
-    def thisSymbol: Rep[A] = !!!("should not be called")
-    def name = getClass.getSimpleName
-    def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)
-    def decompose: Option[Rep[_]] = None
-    def isScalarOp: Boolean = true
-  }
 
-  trait ReifiableObject1 {     // implemented as Def[A] in staged context
-    type ThisType
-    def thisSymbol: Rep[ThisType] = !!!("should not be called")
-    def name = getClass.getSimpleName
-    def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)
-    def decompose: Option[Rep[_]] = None
-    def isScalarOp: Boolean = true
-  }
-  type ReifiableObjectAux[+T] = ReifiableObject1 { type ThisType <: T }
+//  trait ReifiableObject1 {     // implemented as Def[A] in staged context
+//    type ThisType
+//    def thisSymbol: Rep[ThisType] = !!!("should not be called")
+//    def name = getClass.getSimpleName
+//    def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)
+//    def decompose: Option[Rep[_]] = None
+//    def isScalarOp: Boolean = true
+//  }
+//  type ReifiableObjectAux[+T] = ReifiableObject1 { type ThisType <: T }
 
   abstract class Transformer {
     def apply[A](x: Rep[A]): Rep[A]
@@ -100,7 +92,7 @@ trait Base { self: Scalan =>
     def resolve[A](sym: Rep[C[A]]): C[A]
   }
 
-  implicit def reifyObject[A:LElem](obj: ReifiableObject[A]): Rep[A]
+  //implicit def reifyObject[A:LElem](obj: ReifiableObject[A]): Rep[A]
   //def reifyObject1[A:Elem](obj: ReifiableObjectAux[A]): Rep[obj.ThisType]
   def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for: $x") //= element[A].toRep(x)
   implicit def liftToRep[A:Elem](x: A) = toRep(x)

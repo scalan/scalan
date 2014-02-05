@@ -142,8 +142,10 @@ trait TypesSeq extends TypesAbs
   case class SeqBaseType[A]
       (override val typeCode: Rep[String], override val defaultValue: Rep[A])
       (implicit override val eA: Elem[A])
-      extends BaseType[A](typeCode, defaultValue) with BaseTypeOps[A] {
-    def elem = element[BaseType[A]].asInstanceOf[Elem[Type[A]]]
+      extends BaseType[A](typeCode, defaultValue) with BaseTypeOps[A]
+         with UserTypeSeq[Type[A], BaseType[A]]
+  {
+    def selfType: Elem[Type[A]] = element[BaseType[A]].asInstanceOf[Elem[Type[A]]]
   }
 
 
@@ -168,7 +170,7 @@ trait TypesSeq extends TypesAbs
       (override val tyA: Ty[A], override val tyB: Ty[B])
       (implicit override val e1: Elem[A], override val e2: Elem[B])
       extends Tuple2Type[A, B](tyA, tyB) with Tuple2TypeOps[A,B] {
-    def elem = element[Tuple2Type[A, B]].asInstanceOf[Elem[Type[(A,B)]]]
+    def selfType = element[Tuple2Type[A, B]].asInstanceOf[Elem[Type[(A,B)]]]
   }
 
 
@@ -198,9 +200,9 @@ trait TypesExp extends TypesAbs with ProxyExp with ViewsExp
       (override val typeCode: Rep[String], override val defaultValue: Rep[A])
       (implicit override val eA: Elem[A])
     extends BaseType[A](typeCode, defaultValue) with BaseTypeOps[A]
-       with UserTypeDef[Type[A],BaseType[A]] {
-    lazy val objType = element[BaseType[A]]
-    def elem = objType.asInstanceOf[Elem[Type[A]]]
+       with UserTypeExp[Type[A],BaseType[A]] {
+    lazy val selfType = element[BaseType[A]].asInstanceOf[Elem[Type[A]]]
+    //def elem: Elem[BaseType[A]] = selfType//.asInstanceOf[Elem[Type[A]]]
     override def mirror(t: Transformer): Rep[_] = ExpBaseType[A](t(typeCode), t(defaultValue))
   }
   addUserType(manifest[ExpBaseType[Any]])
@@ -228,9 +230,9 @@ trait TypesExp extends TypesAbs with ProxyExp with ViewsExp
       (override val tyA: Ty[A], override val tyB: Ty[B])
       (implicit override val e1: Elem[A], override val e2: Elem[B])
     extends Tuple2Type[A, B](tyA, tyB) with Tuple2TypeOps[A,B]
-       with UserTypeDef[Type[(A,B)],Tuple2Type[A, B]] {
-    lazy val objType = element[Tuple2Type[A, B]]
-    def elem = objType.asInstanceOf[Elem[Type[(A,B)]]]
+       with UserTypeExp[Type[(A,B)],Tuple2Type[A, B]] {
+    lazy val selfType = element[Tuple2Type[A, B]].asInstanceOf[Elem[Type[(A,B)]]]
+    //def elem: Elem[Tuple2Type[A,B]] = selfType//.asInstanceOf[Elem[Type[(A,B)]]]
     override def mirror(t: Transformer): Rep[_] = ExpTuple2Type[A, B](t(tyA), t(tyB))
   }
   addUserType(manifest[ExpTuple2Type[Any,Any]])
