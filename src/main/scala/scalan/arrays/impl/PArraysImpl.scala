@@ -21,10 +21,11 @@ trait PArraysAbs extends PArrays
 
   trait PArrayElem[From,To] extends ViewElem[From, To]
 
-  implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = ???
-//  element[A] match {
-//    case baseE: BaseElem[a] =>
-//  }
+  implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = element[A] match {
+    case baseE: BaseElem[a] => element[BaseArray[A]].asElem[PArray[A]]
+    case _ => ???
+  }
+
   object PArray extends PArrayCompanion {
   }
   implicit def defaultOfPArray[A](implicit da: Elem[A]): DefaultOf[Rep[PArray[A]]] = PArray.defaultOf[A]
