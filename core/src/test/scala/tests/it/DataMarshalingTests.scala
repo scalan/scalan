@@ -6,8 +6,6 @@ import scalan.{ScalanSeqImplementation, ScalanDsl}
  * Checks that data serialization/deserialization works correctly
  */
 class DataMarshalingTests extends ItTests {
-  val prefix: String = ""
-
   class ProgSeq extends ScalanSeqImplementation {
     lazy val intRep: Rep[Int] = 1
     lazy val intPair: Rep[(Int, Int)] = (1, 2)

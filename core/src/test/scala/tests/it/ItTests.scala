@@ -10,7 +10,7 @@ import scala.language.postfixOps
 
 trait ItTests extends BaseTests {
 
-  val prefix: String
+  lazy val prefix: String = getClass.getSimpleName
   val emitGraphs: Boolean = false
 
   def readFile(name: String): String =
