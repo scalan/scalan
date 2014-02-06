@@ -3,13 +3,13 @@ package tests.it.smoke
 import scalan.{ScalanCtxSeq, ScalanCtxStaged, ScalanDsl}
 import tests.it.ItTests
 import tests.scalan.arrays.PArrayExamples
-import scalan.codegen.LmsBackend
 import scalan.arrays.{PArraysDslSeq, PArraysDslExp}
+import scalan.codegen.LangBackend
 
 /**
  *  Tests that very simple examples are run correctly
  */
-class SmokeItTests extends ItTests {
+abstract class SmokeItTests extends ItTests {
   val prefix = "01-smoke"
   override val emitGraphs = true      // set to true if you want to emit the graphs
 
@@ -174,7 +174,6 @@ class SmokeItTests extends ItTests {
 //
   }
 
-  class ProgStaged extends Prog with PArraysDslExp with ScalanCtxStaged with LmsBackend
   class ProgSeq extends Prog with PArraysDslSeq with ScalanCtxSeq {
 //    lazy val intRep: Rep[Int] = 1
 //    lazy val intPair: Rep[(Int, Int)] = (1, 2)
@@ -208,18 +207,16 @@ class SmokeItTests extends ItTests {
 //    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
   }
 
-  val progStaged = new ProgStaged()
+  val progStaged: Prog with PArraysDslExp with ScalanCtxStaged with LangBackend
   val progSeq = new ProgSeq()
 
   import progSeq._
 
-
-
-  test("test00simpleConst") {
-    val (in, out) = Array(0) -> Array(1)
-    progSeq.simpleConst(progSeq.PArray.fromArray(in)).arr should be(out)
-    checkRun(progSeq, progStaged)(progSeq.simpleConst, progStaged.simpleConst)("00simpleConst", progSeq.PArray.fromArray(in), progSeq.PArray.fromArray(out))
-  }
+//  test("test00simpleConst") {
+//    val (in, out) = Array(0) -> Array(1)
+//    progSeq.simpleConst(progSeq.PArray.fromArray(in)).arr should be(out)
+//    checkRun(progSeq, progStaged)(progSeq.simpleConst, progStaged.simpleConst)("00simpleConst", progSeq.PArray.fromArray(in), progSeq.PArray.fromArray(out))
+//  }
 
 //
 //  @Test def test01simpleMap {
