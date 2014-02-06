@@ -8,6 +8,7 @@ import scalan.staged.{ProgramGraphs, BaseExp}
 import scalan.{ScalanStaged, ScalanSeq, Scalan}
 import collection.mutable
 import scala.language.{implicitConversions}
+import scalan.common.Lazy
 
 trait Functions { self: Scalan =>
 
@@ -134,10 +135,10 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   case class Apply[A,B]
     (f: Exp[A => B], arg: Exp[A])
-    (implicit eB: () => Elem[B])   // enforce explicit laziness at call sites to tie recursive knot (see executeFunction)
+    (implicit eB: LElem[B])   // enforce explicit laziness at call sites to tie recursive knot (see executeFunction)
       extends Def[B]
   {
-    lazy val selfType = eB()
+    def selfType = eB.value
     override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))(eB)
   }
 
@@ -155,7 +156,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   //   Function application
 
   def mkApply[A,B](f: Exp[A => B], x: Exp[A]): Exp[B] = {
-    implicit val leB = () => f.elem.eb
+    implicit val leB = Lazy(f.elem.eb)
     recursion.find(m => m._3 == f) match {
       case None =>  // not in recursion, so lookup definition
         f match {
@@ -214,8 +215,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 //  }
 
   def lambda[A,B](x: Rep[A])(fun: Exp[A] => Exp[B]): Exp[A=>B] = {
-    val res = fresh[A => B](() => 
-      !!!("should not be called: this symbol should have definition and element should be taken from corresponding lambda ") )
+    val res = fresh[A => B](Lazy(
+      !!!("should not be called: this symbol should have definition and element should be taken from corresponding lambda"))
+    )
     reifyFunction(fun, x, res)
   }
 
@@ -260,7 +262,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       case Some((_, _, fSym)) => {// hit recursion call !
         val f = fSym.asInstanceOf[Exp[A=>B]]
         f.isRecursive = true
-        val leB = () => f.elem.eb
+        val leB = Lazy(f.elem.eb)
         reifyObject(Apply(f, x)(leB))(leB) 
       }
     }

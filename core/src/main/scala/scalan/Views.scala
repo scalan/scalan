@@ -4,6 +4,7 @@ import scala.text._
 import Document._
 import scalan.common.DefaultOf
 import scala.language.higherKinds
+import scalan.common.Lazy
 
 trait Views extends Base { self: Scalan =>
 
@@ -111,7 +112,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
   }
 
   trait UserTypeExp[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
-    override def self = reifyObject(this)(() => selfType.asInstanceOf[Elem[TImpl]])
+    override def self = reifyObject(this)(Lazy(selfType.asInstanceOf[Elem[TImpl]]))
   }
   object UserTypeExp {
     def unapply[T](d: Def[T]): Option[Iso[_,T]] = {
@@ -135,7 +136,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 
   implicit class IsoOps[From: LElem,To](iso: Iso[From,To]) {
     def toFunTo: Rep[From => To] = fun(iso.to)
-    def toFunFrom: Rep[To => From] = fun(iso.from)(() => iso.eTo)
+    def toFunFrom: Rep[To => From] = fun(iso.from)(Lazy(iso.eTo))
   }
 
   def MethodCallFromExp(clazzUT: Class[_], methodName: String) = new {

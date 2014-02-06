@@ -3,6 +3,7 @@ package scalan.staged
 import annotation.unchecked.uncheckedVariance
 import scalan.{Base, ScalanStaged}
 import scala.language.{implicitConversions}
+import scalan.common.Lazy
 
 trait BaseExp extends Base { self: ScalanStaged =>
 
@@ -44,7 +45,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
   //type Def1[+A] = ReifiableObjectAux[A]
 
   case class Const[T](x: T)(implicit val leT: LElem[T]) extends Def[T] {
-    def selfType = leT()
+    def selfType = leT.value
     override def self: Rep[T] = this
     override def mirror(t: Transformer): Rep[_] = Const(x)
     override def hashCode: Int = (41 + x.hashCode)
@@ -207,7 +208,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
     def mirror(t: Transformer) = symbol match {
       case Def(d) => d.mirror(t)
-      case _ => fresh(() => symbol.elem.asInstanceOf[Elem[Any]])
+      case _ => fresh(Lazy(symbol.elem.asInstanceOf[Elem[Any]]))
     }
   }
 
@@ -266,7 +267,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
   {
     override def elem: Elem[T @uncheckedVariance] = this match {
       case Def(d) => d.selfType.asInstanceOf[Elem[T]]
-      case _ => et()
+      case _ => et.value
     }
     def varName = "s" + id
     override def toString = {

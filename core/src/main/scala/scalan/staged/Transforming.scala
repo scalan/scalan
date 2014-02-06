@@ -3,6 +3,7 @@ package scalan.staged
 import scalan.common.OverloadHack
 import scalan.ScalanStaged
 import scala.language.{implicitConversions}
+import scalan.common.Lazy
 
 trait Transforming extends OverloadHack { self: ScalanStaged =>
 
@@ -90,9 +91,9 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
   abstract class Mirror[Ctx <: Transformer : TransformerOps] {
     def apply(t: Ctx, rw: Rewriter, x: Exp[_]): (Ctx, Exp[_]) = (t, x.mirror(t))
 
-    // every mirrorXXX methos should return a pair (t + (v -> v1), v1)
+    // every mirrorXXX method should return a pair (t + (v -> v1), v1)
     protected def mirrorVar(t: Ctx, rewriter: Rewriter, v: Exp[_]): (Ctx, Exp[_]) = {
-      val newVar = fresh(() => v.elem.asElem[Any])
+      val newVar = fresh(Lazy(v.elem.asElem[Any]))
       (t + (v -> newVar), newVar)
     }
 
@@ -108,7 +109,7 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
       (t1 + (node -> res), res)
     }
 
-    protected def getMirroredLambdaSym(node: Exp[_]): Exp[_] = fresh(() => node.elem.asElem[Any])
+    protected def getMirroredLambdaSym(node: Exp[_]): Exp[_] = fresh(Lazy(node.elem.asElem[Any]))
 
     // require: should be called after lam.schedule is mirrored
     private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], lam: Lambda[_,_]): Lambda[_,_] = {

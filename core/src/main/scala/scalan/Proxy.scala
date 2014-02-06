@@ -4,8 +4,8 @@
 package scalan
 
 import java.lang.{reflect => jreflect}
-
 import scalan.staged.{BaseExp}
+import scalan.common.Lazy
 
 trait ProxyBase { self: Scalan =>
   def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit m: Manifest[Ops]): Ops = x.asInstanceOf[Ops]
@@ -14,7 +14,7 @@ trait ProxyBase { self: Scalan =>
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
   case class MethodCall[T](receiver: Exp[Any], method: jreflect.Method, args: List[AnyRef])(implicit leT: LElem[T]) extends Def[T] {
-    lazy val selfType = leT()
+    def selfType = leT.value
     override def mirror(t: Transformer) =
       MethodCall[T](t(receiver), method, args map { case a: Exp[_] => t(a) case a => a })
     override def self: Rep[T] = { this }
@@ -78,7 +78,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     }
 
     def createMethodCall(m: jreflect.Method, args: Array[AnyRef]): Exp[Any] = {
-      val resultElem = () => getResultElem(m, args)
+      val resultElem = Lazy(getResultElem(m, args))
       reifyObject(MethodCall[AnyRef](
               receiver, m, args.toList)(resultElem))(resultElem)
     }

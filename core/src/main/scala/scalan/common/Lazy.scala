@@ -6,17 +6,23 @@ package scalan.common
  */
 
 class Lazy[A] private (expr: => A) {
-  private var _value: A = null.asInstanceOf[A]
-
-  def value: A =
-    if (_value != null) _value
-    else {
-      _value = expr
-      _value
-    }
+  @volatile private[this] var _isSet = false
+  
+  lazy val value: A = {
+    _isSet = true
+    expr
+  }
+  
+  def isSet = _isSet
+  
+  override def toString = {
+    if (!_isSet)
+      "<lazy>"
+    else
+      value.toString
+  }
 }
 
 object Lazy {
   def apply[A](expr: => A): Lazy[A] = new Lazy(expr)
 }
-

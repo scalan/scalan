@@ -12,7 +12,7 @@ import scala.annotation.unchecked.uncheckedVariance
 
 trait Elems extends Base { self: Scalan =>
   type Elem[A] = Element[A]      // typeclass witnessing that type A can be an element of other data type (i.e. belongs to Family)
-  type LElem[A] = () => Elem[A]  // lazy element
+  type LElem[A] = Lazy[Elem[A]]  // lazy element
 
   @implicitNotFound(msg = "No Element available for ${A}.")
   trait Element[A] {
@@ -70,7 +70,7 @@ trait Elems extends Base { self: Scalan =>
   implicit def ArrayElemExtensions[A](eArr: Elem[Array[A]]): ArrayElem[A] = eArr.asInstanceOf[ArrayElem[A]]
   //  implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]
 
-  implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = () => eA
+  implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = Lazy(eA)
 
   implicit lazy val IntRepDefaultOf: DefaultOf[Rep[Int]]               = defaultVal[Rep[Int]](0)
   implicit lazy val FloatRepDefaultOf: DefaultOf[Rep[Float]]           = defaultVal[Rep[Float]](0f)
