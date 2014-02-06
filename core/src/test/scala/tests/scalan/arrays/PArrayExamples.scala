@@ -11,7 +11,10 @@ import tests.scalan.primitives.PrimitiveExamples
 trait PArrayExamples extends ScalanDsl with PArraysDsl with PrimitiveExamples {
   lazy val fromArray = fun { xs: Arr[Int] => PArray(xs) }
   lazy val fromArrayOfPairs = fun { xs: Arr[(Int,Float)] => PArray(xs) }
-  lazy val fromAndTo = fun { xs: Arr[(Int,Float)] => PArray(xs).arr }
+  lazy val fromAndTo = fun { xs: Arr[(Int,Float)] => 
+    val ps = PArray(xs)
+    ps.arr 
+  }
 
   lazy val mapped = fun {(xs: PA[Int]) => xs.mapBy(inc) }
   lazy val zippedMap = fun {(xs: PA[Int]) => (xs zip xs).mapBy(tupled) }

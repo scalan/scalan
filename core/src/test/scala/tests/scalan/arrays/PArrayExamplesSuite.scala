@@ -4,12 +4,16 @@ import scalan.{ScalanCtxStaged, ScalanCtxSeq}
 import org.scalatest.{Matchers, FlatSpec}
 import scalan.arrays.{PArraysDslExp, PArraysDslSeq}
 import tests.GraphVizExport
+import tests.BaseShouldTests
 
-class PArrayExamplesSuite extends FlatSpec with Matchers {
+
+
+class PArrayExamplesSuite extends BaseShouldTests {
 
   "when mixing trait" should "be constructed in Seq context" in {
       val ctx = new ScalanCtxSeq with PArraysDslSeq with PArrayExamples {}
   }
+  
   it should "be constructed in Staged context" in {
     val ctx = new ScalanCtxStaged with PArraysDslExp with PArrayExamples {}
   }
@@ -20,65 +24,70 @@ class PArrayExamplesSuite extends FlatSpec with Matchers {
     val res = ctx.fromAndTo(in)
     res should be(in)
   }
-
+  
   val prefix = "test-out/scalan/arrays/"
-  "in staged context" should "stage functions" in {
-   
-    val ctx = new ScalanCtxStaged with PArraysDslExp with PArrayExamples with GraphVizExport {}
-    import ctx._
-    
-    var f: Exp[_] = fromArray
-    emitDepGraph(f, prefix + "fromArray.dot", false)
-
-    f = ctx.fromArrayOfPairs
-    emitDepGraph(f, prefix + "fromArrayOfPairs.dot", false)
-
-    f = ctx.fromAndTo
-    emitDepGraph(f, prefix + "fromAndTo.dot", false)
-
-    f = ctx.mapped
-    emitDepGraph(f, prefix + "mapped.dot", false)
-
-    f = ctx.zippedMap
-    emitDepGraph(f, prefix + "zippedMap.dot", false)
-
-    f = ctx.mapped2
-    emitDepGraph(f, prefix + "mapped2.dot", false)
-
-    f = ctx.splitMap
-    emitDepGraph(f, prefix + "splitMap.dot", false)
-
-    f = ctx.splitMap2
-    emitDepGraph(f, prefix + "splitMap2.dot", false)
-
-    f = ctx.mapInc3Times
-    emitDepGraph(f, prefix + "mapInc3Times.dot", false)
-
-    f = ctx.splitMap3
-    emitDepGraph(f, prefix + "splitMap3.dot", false)
-
-    f = ctx.splitMapMap
-    emitDepGraph(f, prefix + "splitMapMap.dot", false)
-
-    f = ctx.mapScalar
-    emitDepGraph(f, prefix + "mapScalar.dot", false)
-
-//
-//  lazy val fromAndTo = fun { xs: Arr[(Int,Float)] => PArray(xs).arr }
-//
-//  lazy val mapped = fun {(xs: PA[Int]) => xs.mapBy(inc) }
-//  lazy val zippedMap = fun {(xs: PA[Int]) => (xs zip xs).mapBy(tupled) }
-//  lazy val mapped2 = fun {(xs: PA[Int]) => xs.mapBy(inc2) }
-//
-//  lazy val splitMap = fun {(xs: PA[Int]) => Pair(xs.mapBy(inc), xs.mapBy(inc2)) }
-//  lazy val splitMap2 = fun {(xs: PA[Int]) => Pair(xs.mapBy(inc_times), xs.mapBy(inc2)) }
-//  lazy val mapInc3Times = fun {(xs: PA[Int]) => Pair(xs.mapBy(inc), Pair(xs.mapBy(inc), xs.mapBy(inc))) }
-//  lazy val splitMap3 = fun {(xs: PA[Int]) => Pair(xs.mapBy(inc), Pair(xs.mapBy(inc2), xs.mapBy(inc_times))) }
-//  lazy val splitMapMap = fun {(xs: PA[Int]) => Pair(xs.mapBy(inc), xs.mapBy(inc2).mapBy(inc_times)) }
-//
-//  lazy val mapScalar = fun {(xs: PA[Int]) => xs.mapBy(scalar) }
-    // val f2 = ctx.fromAndTo
-    // ctx.emitDepGraph(f2, prefix + "fromAndTo.dot", false)
-    //val f2 = ctx.inc
+  
+  def testMethod(name: String) = {
+    val ctx = new ScalanCtxStaged with PArraysDslExp with PArrayExamples with GraphVizExport {
+      this.invokeEnabled = true // invoke all domain methods if possible
+    }
+    val f = ctx.getStagedFunc(name)
+    ctx.emitDepGraph(f, s"$prefix$name.dot", false)
   }
- }
+
+  val whenStaged = "when staged"
+  whenStaged should "fromArray" beArgFor { testMethod(_) }
+  whenStaged should "fromArrayOfPairs" beArgFor { testMethod(_) }
+  whenStaged should "fromAndTo" beArgFor { testMethod(_) }
+  whenStaged should "mapped" beArgFor { testMethod(_) }
+  whenStaged should "zippedMap" beArgFor { testMethod(_) }
+  whenStaged should "mapped2" beArgFor { testMethod(_) }
+  whenStaged should "splitMap" beArgFor { testMethod(_) }
+  whenStaged should "splitMap2" beArgFor { testMethod(_) }
+  whenStaged should "mapInc3Times" beArgFor { testMethod(_) }
+  whenStaged should "splitMap3" beArgFor { testMethod(_) }
+  whenStaged should "splitMapMap" beArgFor { testMethod(_) }
+  whenStaged should "mapScalar" beArgFor { testMethod(_) }
+
+  //  
+//  "in staged context" should "stage functions" in {
+//   
+//    
+//    var f: Exp[_] = fromArray
+//    emitDepGraph(f, prefix + "fromArray.dot", false)
+//
+//    f = ctx.fromArrayOfPairs
+//    emitDepGraph(f, prefix + "fromArrayOfPairs.dot", false)
+//
+//    f = ctx.fromAndTo
+//    emitDepGraph(f, prefix + "fromAndTo.dot", false)
+//
+//    f = ctx.mapped
+//    emitDepGraph(f, prefix + "mapped.dot", false)
+//
+//    f = ctx.zippedMap
+//    emitDepGraph(f, prefix + "zippedMap.dot", false)
+//
+//    f = ctx.mapped2
+//    emitDepGraph(f, prefix + "mapped2.dot", false)
+//
+//    f = ctx.splitMap
+//    emitDepGraph(f, prefix + "splitMap.dot", false)
+//
+//    f = ctx.splitMap2
+//    emitDepGraph(f, prefix + "splitMap2.dot", false)
+//
+//    f = ctx.mapInc3Times
+//    emitDepGraph(f, prefix + "mapInc3Times.dot", false)
+//
+//    f = ctx.splitMap3
+//    emitDepGraph(f, prefix + "splitMap3.dot", false)
+//
+//    f = ctx.splitMapMap
+//    emitDepGraph(f, prefix + "splitMapMap.dot", false)
+//
+//    f = ctx.mapScalar
+//    emitDepGraph(f, prefix + "mapScalar.dot", false)
+//
+//  }
+}

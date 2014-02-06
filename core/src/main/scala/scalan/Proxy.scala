@@ -10,6 +10,12 @@ import scala.reflect.ClassTag
 
 trait ProxyBase { self: Scalan =>
   def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit ct: ClassTag[Ops]): Ops
+  
+  def getStagedFunc(name: String): Rep[_] = {
+    val clazz = this.getClass()
+    val f = clazz.getDeclaredMethod(name)
+    f.invoke(this).asInstanceOf[Rep[_]]
+  }
 }
 
 trait ProxySeq extends ProxyBase { self: ScalanSeq =>
