@@ -43,40 +43,29 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   //type Def1[+A] = ReifiableObjectAux[A]
 
-  case class Const[T](x: T)(implicit leT: LElem[T]) extends Def[T] {
+  case class Const[T](x: T)(implicit val leT: LElem[T]) extends Def[T] {
     def selfType = leT()
     override def self: Rep[T] = this
     override def mirror(t: Transformer): Rep[_] = Const(x)
     override def hashCode: Int = (41 + x.hashCode)
 
-    //TODO: this is a hack since direct pattern matching with arrays don't work as expected for some reason
-    def matchArrayConst[A](arr: Def[_])
-                          (ai: Array[Int] => A)
-                          (af: Array[Float] => A)
-                          (ab: Array[Boolean] => A)
-                          (orElse: => A): A =
-      arr match {
-        case Const(x) if x.isInstanceOf[Array[Int]] => ai(x.asInstanceOf[Array[Int]])
-        case Const(x) if x.isInstanceOf[Array[Float]] => af(x.asInstanceOf[Array[Float]])
-        case Const(x) if x.isInstanceOf[Array[Boolean]] => ab(x.asInstanceOf[Array[Boolean]])
-        case _ => orElse
-      }
-
     override def equals(other: Any) =
       other match {
-        case that: Const[_] => matchArrayConst(that)
-        { i => matchArrayConst(this) { y => i sameElements y } { _ => false } { _ => false } { this.x equals that.x }}
-        { f => matchArrayConst(this) { _ => false } { y => f sameElements y } { _ => false } { this.x equals that.x }}
-        { b => matchArrayConst(this) { _ => false } { _ => false } { y => b sameElements y } { this.x equals that.x }}
-        { this.x equals that.x }
+        case c @ Const(otherX) => leT == c.leT && (otherX match {
+          case otherArr: Array[_] => x match {
+            case arr: Array[_] =>
+              arr.sameElements(otherArr)
+            case _ => false
+          }
+          case _ => otherX == x
+        })
         case _ => false
       }
 
-    override def toString = matchArrayConst(this)
-    { _.mkString("(",", ",")") }
-    { _.mkString("(",", ",")") }
-    { _.mkString("(",", ",")") }
-    { getClass.getSimpleName + "(" + x + ")" }
+    override def toString = "Const(" + (x match {
+      case arr: Array[_] => arr.mkString("Array(", ", ", ")")
+      case _ => x
+    }) + ")"
   }
 
   abstract class UnOp[T] extends Def[T] with UnOpBase[T,T] {
