@@ -11,7 +11,7 @@ import scala.language.{implicitConversions}
 import scala.annotation.unchecked.uncheckedVariance
 
 trait Elems extends Base { self: Scalan =>
-  type Elem[A] = Element[A]      // typeclass vitnessing that type A can be an element of other data type (i.e. belongs to Family)
+  type Elem[A] = Element[A]      // typeclass witnessing that type A can be an element of other data type (i.e. belongs to Family)
   type LElem[A] = () => Elem[A]  // lazy element
 
   @implicitNotFound(msg = "No Element available for ${A}.")
@@ -19,6 +19,17 @@ trait Elems extends Base { self: Scalan =>
     def manifest: Manifest[A]
     def defaultOf: DefaultOf[Rep[A]]
     def name = manifest.toString
+    
+    lazy val prettyName = name.
+      replace("scala.math.Numeric$", "").
+      replace("scala.", "").
+      replaceAll("""scalan[^$]*\$""", "")
+
+    override def toString = s"${getClass.getSimpleName}[$name]"
+    override def equals(other: Any) = other match {
+      case e: Element[_] => manifest == e.manifest
+      case _ => false
+    }
   }
 
   def element[A](implicit ea: Elem[A]): Elem[A] = ea

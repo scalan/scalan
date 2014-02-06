@@ -26,15 +26,8 @@ trait BaseExp extends Base { self: ScalanStaged =>
       case _ => false
     }
     def varName: String
-    def toStringWithType = {
-      val fullString = cleanupTypes(elem.name)
-      varName + ":" + fullString.substring(fullString.lastIndexOf("$")+1)
-    }
+    def toStringWithType = varName + ":" + elem.prettyName
     //def asSymbol = this.asInstanceOf[Sym[T]]
-    private def cleanupTypes(s: String) =
-      s .replace("scalan.Arrays$", "")
-        .replace("scala.math.Numeric$", "")
-        .replace("scala.Tuple2", "Tuple2")
   }
 
   // this trait is mixed in Def[A]
