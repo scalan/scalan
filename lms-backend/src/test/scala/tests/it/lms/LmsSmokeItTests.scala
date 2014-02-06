@@ -12,7 +12,7 @@ class LmsSmokeItTests extends SmokeItTests {
   
   import progSeq._
   
-  test("test00simpleConst") {
+  ignore("test00simpleConst") {
     val (in, out) = Array(0) -> Array(1)
     progSeq.simpleConst(progSeq.PArray.fromArray(in)).arr should be(out)
     checkRun(progSeq, progStaged)(progSeq.simpleConst, progStaged.simpleConst)("00simpleConst", progSeq.PArray.fromArray(in), progSeq.PArray.fromArray(out))
