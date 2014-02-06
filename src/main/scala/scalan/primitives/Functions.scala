@@ -80,7 +80,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     lazy val scheduleSyms = schedule map { _.sym }
 
     def scheduleAll: List[TP[_]] = schedule.flatMap(tp => tp.rhs match {
-      case Lambda(lam,_,_,_) => lam.scheduleAll :+ tp
+      case lam: Lambda[_, _] => lam.scheduleAll :+ tp
       case _ => List(tp)
     })
 
@@ -118,7 +118,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   }
   type LambdaData[A,B] = (Lambda[A,B], Option[Exp[A] => Exp[B]], Exp[A], Exp[B])
   object Lambda {
-    def unapply[A,B](d: Def[A=>B]): Option[LambdaData[A,B]] = d match {
+    def unapply[A,B](d: Def[A => B]): Option[LambdaData[A,B]] = d match {
       case l: Lambda[_,_] =>
         val lam = l.asInstanceOf[Lambda[A,B]]
         Some((lam, lam.f, lam.x, lam.y))
@@ -268,8 +268,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
 
   override def formatDef(d: Def[_]) = d match {
-    case Lambda(_, _, x, y) => "\\\\%s -> %s".format(x,  (y match { case Def(b) => formatDef(b) case _ => y}))
-    case Apply(f, x) => "%s(%s)".format(f, x)
+    case l: Lambda[_, _] =>
+      s"\\\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y}}"
+    case Apply(f, x) => s"$f($x)"
     case _ => super.formatDef(d)
   }
 }

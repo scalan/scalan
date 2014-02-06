@@ -6,7 +6,15 @@ name := "scalan-lite"
 
 version := "0.1"
 
-scalacOptions += "-feature"
+scalacOptions ++= Seq(
+  "-unchecked",
+  "-deprecation", 
+  "-Xlint",
+  "-feature", 
+  "-language:higherKinds",
+  "-language:implicitConversions",
+  "-language:existentials",
+  "-language:experimental.macros")
 
 //libraryDependencies += "com.googlecode.kiama" %% "kiama" % "1.5.1"
 
@@ -18,8 +26,7 @@ libraryDependencies ++= Seq(
   "EPFL" % "lms_2.10" % "0.3-SNAPSHOT")
 
 libraryDependencies ++= Seq(
-  //"com.chuusai" % "shapeless" % "2.0.0-M1" cross CrossVersion.full
-  "com.chuusai" % "shapeless_2.10.3" % "2.0.0-M1" // alternatively ...
+  "com.chuusai" % "shapeless_2.10.3" % "2.0.0-M1"
 )
 
 //testOptions in Test += Tests.Argument("-oD")

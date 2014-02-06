@@ -143,7 +143,7 @@ trait Transforming extends OverloadHack { self: ScalanStaged =>
             case Var(_) =>
               mirrorVar(t, rewriter, node)
 
-            case Def(Lambda(lam, _, _, _)) =>
+            case Def(lam: Lambda[_, _]) =>
               mirrorLambda(t, rewriter, node, lam)
 
             case Def(d) =>

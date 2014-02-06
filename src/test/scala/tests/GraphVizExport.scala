@@ -20,7 +20,8 @@ trait GraphVizExport extends Scheduling with FunctionsExp { self: ScalanStaged =
 
   def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
     rhs match {
-      case Lambda(_, _,x,_) =>
+      case l: Lambda[_, _] =>
+        val x = l.x
         stream.println(quote(x) + " [")
         stream.println("label=" + quote(x.toStringWithType))
         stream.println("color=" + nodeColor(x))
@@ -51,8 +52,8 @@ trait GraphVizExport extends Scheduling with FunctionsExp { self: ScalanStaged =
     emitDepGraph(ss, new java.io.PrintWriter(new java.io.FileOutputStream(file)), landscape)
   }
 
-  def lambdaDeps(l: Lambda[_,_]): (List[Exp[_]],List[Exp[_]]) = l.y match {
-    case Def(Lambda(l1,_,_,_)) =>  val (ds, vs) = lambdaDeps(l1); (ds, l.x :: vs)
+  def lambdaDeps(l: Lambda[_,_]): (List[Exp[_]], List[Exp[_]]) = l.y match {
+    case Def(l1: Lambda[_, _]) =>  val (ds, vs) = lambdaDeps(l1); (ds, l.x :: vs)
     case _ => (dep(l.y), List(l.x))
   }
 
@@ -67,15 +68,14 @@ trait GraphVizExport extends Scheduling with FunctionsExp { self: ScalanStaged =
     }
 
     val lambdaBodies: Map[Exp[Any], Exp[Any]] = (deflist collect {
-      case TP(s, Lambda(_, _, _, body)) => (body, s)
+      case TP(s, lam: Lambda[_, _]) => (lam.y, s)
     }).toMap
 
-    for (tp@TP(sym, rhs) <- deflist) {
-
+    for (tp @ TP(sym, rhs) <- deflist) {
       (lambdaBodies.contains(sym)) match {
         case false =>
           val (deps, lambdaVars) = rhs match {
-            case Lambda(l,_,_,_) => lambdaDeps(l)
+            case l: Lambda[_, _] => lambdaDeps(l)
             case _ => (dep(rhs), Nil)
           }
           // emit node

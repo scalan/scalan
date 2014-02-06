@@ -11,7 +11,7 @@ trait LangBackend extends BaseExp { self: ScalanStaged =>
 
   protected def isGlobalConst(d: Def[_]): Boolean = d match {
     case Const(_) => true
-    case Lambda(_, _, _, _) => false
+    case _: Lambda[_, _] => false
     case _ => d.getDeps.forall {
       case Def(d1) => isGlobalConst(d1)
       case _ => false

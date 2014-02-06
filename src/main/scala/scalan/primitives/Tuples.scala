@@ -73,12 +73,12 @@ trait Tuples { self: Scalan =>
   implicit def zipTuple6[A, B, C, D, E, F](p: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E], Rep[F])): Rep[(A, (B, (C, (D,(E,F)))))] = Pair(p._1, Pair(p._2, Pair(p._3, Pair(p._4, Pair(p._5, p._6)))))
   implicit def zipTuple7[A, B, C, D, E, F,G](p: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E], Rep[F], Rep[G])): Rep[(A, (B, (C, (D,(E,(F,G))))))] = Pair(p._1, Pair(p._2, Pair(p._3, Pair(p._4, Pair(p._5, Pair(p._6, p._7))))))
 
-  implicit object Tuple {
-    implicit def unapply[A,B,C](p: Rep[(A,(B,C))]) = Some((p._1, p._2, p._3))
-    implicit def unapply[A,B,C,D](p: Rep[(A, (B, (C, D)))])(implicit o: Overloaded1) = Some((p._1, p._2, p._3, p._4))
-    implicit def unapply[A,B,C,D,E](p: Rep[(A, (B, (C, (D,E))))])(implicit o: Overloaded2) = Some((p._1, p._2, p._3, p._4, p._5))
-    implicit def unapply[A,B,C,D,E,F](p: Rep[(A, (B, (C, (D, (E, F)))))])(implicit o: Overloaded3) = Some((p._1, p._2, p._3, p._4, p._5, p._6))
-    implicit def unapply[A,B,C,D,E,F,G](p: Rep[(A, (B, (C, (D, (E, (F,G))))))])(implicit o: Overloaded4) = Some((p._1, p._2, p._3, p._4, p._5, p._6, p._7))
+  object Tuple {
+    def unapply[A,B,C](p: Rep[(A,(B,C))]) = Some((p._1, p._2, p._3))
+    def unapply[A,B,C,D](p: Rep[(A, (B, (C, D)))])(implicit o: Overloaded1) = Some((p._1, p._2, p._3, p._4))
+    def unapply[A,B,C,D,E](p: Rep[(A, (B, (C, (D,E))))])(implicit o: Overloaded2) = Some((p._1, p._2, p._3, p._4, p._5))
+    def unapply[A,B,C,D,E,F](p: Rep[(A, (B, (C, (D, (E, F)))))])(implicit o: Overloaded3) = Some((p._1, p._2, p._3, p._4, p._5, p._6))
+    def unapply[A,B,C,D,E,F,G](p: Rep[(A, (B, (C, (D, (E, (F,G))))))])(implicit o: Overloaded4) = Some((p._1, p._2, p._3, p._4, p._5, p._6, p._7))
   }
 }
 

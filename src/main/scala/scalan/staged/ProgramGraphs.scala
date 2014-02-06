@@ -18,7 +18,7 @@ trait ProgramGraphs extends Scheduling with Transforming { self: ScalanStaged =>
 
     def scheduleAll = {
       schedule flatMap (tp  => tp match {
-        case TP(s, Lambda(lam,_,_,_)) => lam.scheduleAll :+ tp
+        case TP(s, lam: Lambda[_, _]) => lam.scheduleAll :+ tp
         case _ => List(tp)
       })
     }

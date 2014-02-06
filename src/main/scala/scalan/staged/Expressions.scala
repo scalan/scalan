@@ -195,7 +195,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
   implicit class ExpForSomeOps(symbol: Exp[_]) {
     def inputs: List[Exp[Any]] = dep(symbol)
     def isLambda: Boolean = symbol match {
-      case Def(Lambda(_,_, _, _)) => true
+      case Def(_: Lambda[_, _]) => true
       case _ => false
     }
     def tp: TP[_] = findDefinition(symbol).get

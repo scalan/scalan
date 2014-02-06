@@ -5,10 +5,11 @@ lib_managed/
 project/plugins/lib_managed/
 project/plugins/src_managed/
 project/boot/
-test_out/
-example_out/
-it_out/
+test-out/
+example-out/
+it-out/
 .cache
 .classpath
 .project
 .settings
+.worksheet/
