@@ -6,9 +6,14 @@ package scalan
 import java.lang.{reflect => jreflect}
 import scalan.staged.{BaseExp}
 import scalan.common.Lazy
+import scala.reflect.ClassTag
 
 trait ProxyBase { self: Scalan =>
-  def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit m: Manifest[Ops]): Ops = x.asInstanceOf[Ops]
+  def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit ct: ClassTag[Ops]): Ops
+}
+
+trait ProxySeq extends ProxyBase { self: ScalanSeq =>
+  def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit ct: ClassTag[Ops]): Ops = x.asInstanceOf[Ops]
 }
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
@@ -27,8 +32,8 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 //      MethodCallLifted[T](t(receiver), method, args map { case a: Exp[_] => t(a) case a => a })
 //  }
 
-  override def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit m: Manifest[Ops]): Ops = {
-    val clazz = m.runtimeClass
+  override def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit ct: ClassTag[Ops]): Ops = {
+    val clazz = ct.runtimeClass
     val handler = new InvocationHandler(x)
     val proxy = jreflect.Proxy.newProxyInstance(clazz.getClassLoader(), Array(clazz), handler)
     proxy.asInstanceOf[Ops]

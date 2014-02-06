@@ -4,7 +4,7 @@ import scalan.common.{Common, DefaultOf}
 import scalan._
 
 trait PArraysOps { scalan: PArraysDsl =>
-  import implicitManifests._
+  import TagImplicits._
 
   trait PArrayOps[T] extends PArray[T] {
     def map[R:Elem](f: Rep[T] => Rep[R]) = {

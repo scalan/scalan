@@ -7,6 +7,7 @@ import scalan.ScalanSeq
 import scalan.codegen.LangBackend
 import tests.BaseTests
 import scala.language.postfixOps
+import scala.reflect.runtime.universe._
 
 trait ItTests extends BaseTests {
 
@@ -99,17 +100,16 @@ trait ItTests extends BaseTests {
     }
 
     def baseRepParser[A](front: ScalanSeq)(implicit e: front.BaseElem[A]): Parser[front.Rep[A]] = {
-      import front._
-      e.manifest match {
-        case Manifest.Boolean =>
-          "true" ^^^ {true.asInstanceOf[Rep[A]]} | "false" ^^^ {false.asInstanceOf[Rep[A]]}
-        case Manifest.Int =>
-          wholeNumber ^^ {_.toInt.asInstanceOf[Rep[A]]}
-        case Manifest.Float =>
-          floatingPointNumber ^^ {_.toFloat.asInstanceOf[Rep[A]]}
-        case Manifest.Double =>
-          floatingPointNumber ^^ {_.toDouble.asInstanceOf[Rep[A]]}
-      }
+      (e.tag match {
+        case TypeTag.Boolean =>
+          "true" ^^^ {true} | "false" ^^^ {false}
+        case TypeTag.Int =>
+          wholeNumber ^^ {_.toInt}
+        case TypeTag.Float =>
+          floatingPointNumber ^^ {_.toFloat}
+        case TypeTag.Double =>
+          floatingPointNumber ^^ {_.toDouble}
+      }) ^^ {_.asInstanceOf[front.Rep[A]]}
     }
   }
 }

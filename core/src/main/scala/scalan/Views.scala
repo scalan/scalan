@@ -5,13 +5,14 @@ import Document._
 import scalan.common.DefaultOf
 import scala.language.higherKinds
 import scalan.common.Lazy
+import scala.reflect.runtime.universe._
 
-trait Views extends Base { self: Scalan =>
+trait Views extends Elems { self: Scalan =>
 
   trait Iso[From,To] {
     //def eFrom: Elem[From]
     def eTo: Elem[To]
-    def manifest: Manifest[To]        // constructed in each concrete iso instance
+    def tag: TypeTag[To]        // constructed in each concrete iso instance
     def defaultOf: DefaultOf[Rep[To]] // constructed in each concrete iso instance
     def from(p: Rep[To]  ): Rep[From]
     def to  (p: Rep[From]): Rep[To]
@@ -64,9 +65,8 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
     implicit val elemTo = this
     //implicit private def eFrom = iso.eFrom
     implicit private def eTo = iso.eTo
-    private lazy val m: Manifest[To] = iso.manifest
+    lazy val tag: TypeTag[To] = iso.tag
     private lazy val z = iso.defaultOf
-    def manifest: Manifest[To] = m
     def defaultOf = z
   }
 
@@ -87,28 +87,29 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     implicit val elemTo = this
     //implicit private def eFrom = iso.eFrom
     implicit private def eTo = iso.eTo
-    implicit private lazy val m = iso.manifest
+    implicit lazy val tag = iso.tag
     private lazy val z = iso.defaultOf
-    def manifest: Manifest[To] = m
     def defaultOf = z
   }
 
-  case class UserTypeDescriptor[T](manifest: Manifest[T])
+  case class UserTypeDescriptor[T](tag: TypeTag[T]) {
+    def runtimeClass = TagImplicits.typeTagToClassTag(tag).runtimeClass
+  }
   var userTypes = List.empty[UserTypeDescriptor[_]]
-  def addUserType(m: Manifest[_]) {
-    userTypes = userTypes :+ UserTypeDescriptor(m)
+  def addUserType[T: TypeTag] {
+    userTypes = userTypes :+ UserTypeDescriptor(typeTag[T])
   }
 
   def isUserTypeConstr[T](d: Def[T]): Boolean = {
     val clazz = d.getClass
-    userTypes.exists(c => c.manifest.runtimeClass == clazz)
+    userTypes.exists(c => c.runtimeClass == clazz)
   }
   def isUserTypeSym[T](s: Exp[T]): Boolean = {
-    val symClazz = s.elem.manifest.runtimeClass
+    val symClazz = s.elem.classTag.runtimeClass
 
     //manifest[UserType[_]].erasure.isAssignableFrom(symClazz)
     //userTypes.find(c => c.manifest.erasure.isAssignableFrom(symClazz)).isDefined
-    userTypes.exists(c => symClazz.isAssignableFrom(c.manifest.runtimeClass))
+    userTypes.exists(c => symClazz.isAssignableFrom(c.runtimeClass))
   }
 
   trait UserTypeExp[T, TImpl <: T] extends ReifiableObject[T, TImpl] {

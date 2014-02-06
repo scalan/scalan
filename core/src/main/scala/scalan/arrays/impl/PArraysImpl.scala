@@ -7,14 +7,14 @@ import scalan.common.{DefaultOf,Common}
 import Common._
 import scala.language.implicitConversions
 import scalan._
-
+import scala.reflect.runtime.universe._
 
 trait PArraysAbs extends PArrays
 { self: PArraysDsl =>
 
   // single proxy for each type family
   implicit def proxyPArray[A:Elem](p: PA[A]): PArray[A] = {
-    implicit val mA = element[A].manifest;
+    implicit val ctA = element[A].classTag;
     proxyOps[PArray[A], PArray[A]](p)
   }
 
@@ -47,11 +47,11 @@ trait PArraysAbs extends PArrays
         val arr = p
         BaseArray(arr)
       }
-      def manifest = { 
-        implicit val mA = element[A].manifest
-        Predef.manifest[BaseArray[A]] 
+      lazy val tag = { 
+        implicit val tA = eA.tag
+        typeTag[BaseArray[A]]
       }
-      import implicitManifests._
+      import TagImplicits._
       def defaultOf = Common.defaultVal[Rep[BaseArray[A]]](BaseArray(element[Array[A]].defaultOf.value))
     }
 
@@ -66,7 +66,7 @@ trait PArraysAbs extends PArrays
   }
 
   implicit def proxyBaseArray[A](p: Rep[BaseArray[A]])(implicit  eA: Elem[A]): BaseArrayOps[A] = {
-    implicit val mA = element[A].manifest;
+    implicit val ctA = eA.classTag
     proxyOps[BaseArrayOps[A], BaseArrayOps[A]](p)
   }
 
@@ -98,10 +98,10 @@ trait PArraysAbs extends PArrays
         val Pair(as, bs) = p
         PairArray(as, bs)
       }
-      def manifest = { 
-        implicit val mA = element[A].manifest
-        implicit val mB = element[B].manifest
-        Predef.manifest[PairArray[A, B]] 
+      lazy val tag = { 
+        implicit val tA = eA.tag
+        implicit val tB = eB.tag
+        typeTag[PairArray[A, B]] 
       }
 //      def defaultOf = {
 //        implicit val dA = eA.defaultOf
@@ -132,8 +132,8 @@ def apply[A, B](p: Rep[PairArrayData[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]
   }
 
   implicit def proxyPairArray[A, B](p: Rep[PairArray[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]): PairArrayOps[A, B] = {
-    implicit val mA = element[A].manifest;
-    implicit val mB = element[B].manifest;
+    implicit val ctA = eA.classTag
+    implicit val ctB = eB.classTag
     proxyOps[PairArrayOps[A, B], PairArrayOps[A, B]](p)
   }
 
@@ -221,7 +221,7 @@ trait PArraysExp extends PArraysAbs with ProxyExp with ViewsExp
     //def elem: Elem[BaseArray[A]] = selfType //.asInstanceOf[Elem[PArray[A]]]
     override def mirror(t: Transformer): Rep[_] = ExpBaseArray[A](t(arr))
   }
-  addUserType(manifest[ExpBaseArray[Any]])
+  addUserType[ExpBaseArray[_]]
 
 
   def mkBaseArray[A]
@@ -251,7 +251,7 @@ trait PArraysExp extends PArraysAbs with ProxyExp with ViewsExp
     //def elem: Elem[PairArray[A, B]] = selfType//.asInstanceOf[Elem[PArray[(A,B)]]]
     override def mirror(t: Transformer): Rep[_] = ExpPairArray[A, B](t(as), t(bs))
   }
-  addUserType(manifest[ExpPairArray[Any,Any]])
+  addUserType[ExpPairArray[_,_]]
 
 
   def mkPairArray[A, B]

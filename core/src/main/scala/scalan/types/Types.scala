@@ -6,6 +6,7 @@ import scalan.common.{DefaultOf, Common}
 import Common._
 import scala.language.implicitConversions
 import scalan._
+import scala.reflect.runtime.universe._
 
 trait Types extends Base with TypesOps { self: TypesDsl =>
 
@@ -14,7 +15,7 @@ trait Types extends Base with TypesOps { self: TypesDsl =>
     implicit def eA: Elem[A]
     def typeCode: Rep[String]
     def defaultValue: Rep[A]
-    def manifest: Manifest[A]
+    def tag: TypeTag[A]
     def defaultOf: DefaultOf[Rep[A]]
   }
 

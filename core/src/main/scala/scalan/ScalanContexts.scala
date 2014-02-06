@@ -96,6 +96,7 @@ trait ScalanSeq
 trait ScalanSeqImplementation
   extends ScalanDsl
   with ScalanSeq
+  with ProxySeq
   //with StringOpsSeq
   //     with ExperimentalOpsSeq
 {

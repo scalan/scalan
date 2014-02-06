@@ -3,11 +3,12 @@ package scalan.types
 import scala.annotation.implicitNotFound
 import scalan.common.{Common, DefaultOf}
 import scalan._
+import scala.reflect.runtime.universe._
 
 trait TypesOps { scalan: TypesDsl =>
 
   trait TypeOps[A] extends Type[A] {
-    def manifest: Manifest[A] = manifestFromString(typeCode).asInstanceOf[Manifest[A]]
+    def tag: TypeTag[A] = typeTagFromString(typeCode).asInstanceOf[TypeTag[A]]
     def defaultOf: DefaultOf[Rep[A]] = Common.defaultVal(defaultValue)
   }
   trait TypeCompanion extends TypeFamily1[Type] {
@@ -45,7 +46,7 @@ trait TypesOps { scalan: TypesDsl =>
   }
 
 
-  def manifestFromString(typeCode: Rep[String]): Manifest[_] = ???
+  def typeTagFromString(typeCode: Rep[String]): TypeTag[_] = ???
   def getBaseTypeCode[A](e: Elem[A]): Rep[String] = ???
 }
 

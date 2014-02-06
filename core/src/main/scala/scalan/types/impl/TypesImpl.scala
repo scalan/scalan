@@ -7,6 +7,7 @@ import scalan.common.{DefaultOf,Common}
 import Common._
 import scala.language.implicitConversions
 import scalan._
+import scala.reflect.runtime.universe._
 
 
 trait TypesAbs extends Types
@@ -14,7 +15,7 @@ trait TypesAbs extends Types
 
   // single proxy for each type family
   implicit def proxyType[A:Elem](p: Ty[A]): Type[A] = {
-    implicit val mA = element[A].manifest;
+    implicit val ctA = element[A].classTag;
     proxyOps[Type[A], Type[A]](p)
   }
 
@@ -40,9 +41,9 @@ trait TypesAbs extends Types
         val Pair(typeCode, defaultValue) = p
         BaseType(typeCode, defaultValue)
       }
-      def manifest = { 
-        implicit val mA = element[A].manifest
-        Predef.manifest[BaseType[A]] 
+      lazy val tag = { 
+        implicit val tA = eA.tag
+        typeTag[BaseType[A]] 
       }
       def defaultOf = Common.defaultVal[Rep[BaseType[A]]](BaseType(getBaseTypeCode(eA), element[A].defaultOf.value))
     }
@@ -59,7 +60,7 @@ trait TypesAbs extends Types
   }
 
   implicit def proxyBaseType[A](p: Rep[BaseType[A]])(implicit  eA: Elem[A]): BaseTypeOps[A] = {
-    implicit val mA = element[A].manifest;
+    implicit val ctA = eA.classTag
     proxyOps[BaseTypeOps[A], BaseTypeOps[A]](p)
   }
 
@@ -91,10 +92,10 @@ trait TypesAbs extends Types
         val Pair(tyA, tyB) = p
         Tuple2Type(tyA, tyB)
       }
-      def manifest = { 
-        implicit val mA = element[A].manifest
-        implicit val mB = element[B].manifest
-        Predef.manifest[Tuple2Type[A, B]] 
+      def tag = { 
+        implicit val tA = eA.tag
+        implicit val tB = eB.tag
+        typeTag[Tuple2Type[A, B]] 
       }
       def defaultOf = {
         implicit val dA = eA.defaultOf
@@ -117,8 +118,8 @@ trait TypesAbs extends Types
   }
 
   implicit def proxyTuple2Type[A, B](p: Rep[Tuple2Type[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]): Tuple2TypeOps[A, B] = {
-    implicit val mA = element[A].manifest;
-    implicit val mB = element[B].manifest;
+    implicit val ctA = eA.classTag
+    implicit val ctB = eB.classTag
     proxyOps[Tuple2TypeOps[A, B], Tuple2TypeOps[A, B]](p)
   }
 
@@ -205,7 +206,7 @@ trait TypesExp extends TypesAbs with ProxyExp with ViewsExp
     //def elem: Elem[BaseType[A]] = selfType//.asInstanceOf[Elem[Type[A]]]
     override def mirror(t: Transformer): Rep[_] = ExpBaseType[A](t(typeCode), t(defaultValue))
   }
-  addUserType(manifest[ExpBaseType[Any]])
+  addUserType[ExpBaseType[_]]
 
 
   def mkBaseType[A]
@@ -235,7 +236,7 @@ trait TypesExp extends TypesAbs with ProxyExp with ViewsExp
     //def elem: Elem[Tuple2Type[A,B]] = selfType//.asInstanceOf[Elem[Type[(A,B)]]]
     override def mirror(t: Transformer): Rep[_] = ExpTuple2Type[A, B](t(tyA), t(tyB))
   }
-  addUserType(manifest[ExpTuple2Type[Any,Any]])
+  addUserType[ExpTuple2Type[_,_]]
 
 
   def mkTuple2Type[A, B]

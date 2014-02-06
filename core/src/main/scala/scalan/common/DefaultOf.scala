@@ -1,5 +1,7 @@
 package scalan.common
 
+import scala.reflect.ClassTag
+
 trait DefaultOf[+A] {
   val value: A
 }
@@ -50,7 +52,7 @@ object Defaults {
 
   implicit def OptionDefaultOf[A]: DefaultOf[Option[A]] = defaultVal(None)
 
-  implicit def ArrayDefaultOf[A](implicit m: Manifest[A]): DefaultOf[Array[A]] = defaultVal(new Array[A](0))
+  implicit def ArrayDefaultOf[A: ClassTag]: DefaultOf[Array[A]] = defaultVal(new Array[A](0))
 
   implicit def EitherRightDefaultOf[A: DefaultOf, B]: DefaultOf[Either.RightProjection[A, B]] = defaultVal(Left(defaultOf[A]).right)
 

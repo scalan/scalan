@@ -4,36 +4,37 @@ import java.io.{BufferedReader, FileReader, PrintWriter}
 import scalan.common.Monoid
 import scalan.{ScalanStaged, ScalanSeq, Scalan}
 import scala.collection.generic.CanBuildFrom
+import scala.reflect.ClassTag
 
 trait ArrayOps { self: Scalan  =>
   type Arr[T] = Rep[Array[T]]
   implicit class RepArrayOps[T](xs: Arr[T]) {
     def apply(n: Rep[Int]) = array_apply(xs, n)
     def length = array_length(xs)
-    def map[R:Manifest](f: Rep[T=>R]) = array_map(xs, f)
+    def map[R:ClassTag](f: Rep[T=>R]) = array_map(xs, f)
     def sum(implicit m: Monoid[Rep[T]]) = array_sum(xs)
     def zip[U](ys: Arr[U]): Arr[(T,U)] = array_zip(xs, ys)
   }
 
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
   def array_length[T](xs: Arr[T]) : Rep[Int]
-  def array_map[T,R:Manifest](xs: Arr[T], f: Rep[T=>R]): Arr[R]
+  def array_map[T,R:ClassTag](xs: Arr[T], f: Rep[T=>R]): Arr[R]
   def array_sum[T](xs: Arr[T])(implicit m: Monoid[Rep[T]]) : Rep[T]
   def array_zip[T,U](xs: Arr[T], ys:Arr[U]): Arr[(T,U)]
-  def array_Replicate[T:Manifest](len: Rep[Int], v: Rep[T]): Arr[T]
+  def array_Replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T]
 }
 
 trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   def array_apply[T](x: Arr[T], n: Rep[Int]): Rep[T] = x(n)
   def array_length[T](a: Arr[T]) : Rep[Int] = a.length
-  def array_map[T, R:Manifest](xs: Array[T], f: T => R) = Array.tabulate(xs.length)(i => f(xs(i))) //xs.map(f)
+  def array_map[T, R:ClassTag](xs: Array[T], f: T => R) = Array.tabulate(xs.length)(i => f(xs(i))) //xs.map(f)
   def array_sum[T](xs: Arr[T])(implicit m: Monoid[Rep[T]]) = xs.fold(m.zero)((x,y) => m.append(x,y))
   def array_zip[T,U](xs: Array[T], ys:Array[U]): Array[(T,U)] = (xs, ys).zipped.toArray
-  def array_Replicate[T:Manifest](len: Rep[Int], v: Rep[T]): Arr[T] = Array.fill(len)(v)
+  def array_Replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T] = Array.fill(len)(v)
 }
 
 trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
-  import implicitManifests._
+  import TagImplicits._
 
   def withElemOfArray[T,R](xs: Arr[T])(block: Elem[T] => R): R =
     withElemOf(xs){ eTArr =>
@@ -63,7 +64,7 @@ trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
   def array_apply[T](xs: Exp[Array[T]], n: Exp[Int]): Rep[T] =
     withElemOfArray(xs){ implicit eT => ArrayApply(xs, n) }
   def array_length[T](a: Exp[Array[T]]) : Rep[Int] = ArrayLength(a)
-  def array_map[T, R:Manifest](xs: Exp[Array[T]], f: Exp[T=>R]) =
+  def array_map[T, R:ClassTag](xs: Exp[Array[T]], f: Exp[T=>R]) =
     withResultElem(f) { implicit eR => ArrayMap(xs, f) }
 
   def array_sum[T](xs: Arr[T])(implicit m: Monoid[Rep[T]]) =
@@ -75,7 +76,7 @@ trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
     ArrayZip(xs, ys)
   }
 
-  def array_Replicate[T:Manifest](len: Rep[Int], v: Rep[T]): Arr[T] =
+  def array_Replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T] =
     withElemOf(v){ implicit eT =>
       ArrayReplicate(len, v)
     }
