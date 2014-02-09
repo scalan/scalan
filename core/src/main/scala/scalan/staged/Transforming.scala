@@ -4,6 +4,7 @@ import scalan.common.OverloadHack
 import scalan.ScalanStaged
 import scala.language.{implicitConversions}
 import scalan.common.Lazy
+import scalan.Base
 
 trait Transforming extends OverloadHack { self: ScalanStaged =>
 

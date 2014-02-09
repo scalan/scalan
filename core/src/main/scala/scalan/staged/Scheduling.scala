@@ -21,6 +21,6 @@ trait Scheduling extends BaseExp { self: ScalanStaged =>
       }
     }
 
-    GraphUtil.stronglyConnectedComponents[TP[_]](startNodes, succ).flatten.reverse // inefficient!
+    GraphUtil.stronglyConnectedComponents[TP[_]](startNodes, succ).flatten.reverse //TODO inefficient!
   }
 }

@@ -3,7 +3,6 @@ package scalan
 import scala.language.{higherKinds, implicitConversions}
 import scala.annotation.unchecked.uncheckedVariance
 
-
 trait Base { self: Scalan =>
   type |[+A,+B] = Either[A,B]
   type L[A] = (A|Unit)
@@ -56,44 +55,6 @@ trait Base { self: Scalan =>
     override def toString = this.getClass.getSimpleName + "(" + lhs + ", " + rhs + ")"
   }
 
-
-//  trait ReifiableObject1 {     // implemented as Def[A] in staged context
-//    type ThisType
-//    def thisSymbol: Rep[ThisType] = !!!("should not be called")
-//    def name = getClass.getSimpleName
-//    def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)
-//    def decompose: Option[Rep[_]] = None
-//    def isScalarOp: Boolean = true
-//  }
-//  type ReifiableObjectAux[+T] = ReifiableObject1 { type ThisType <: T }
-
-  abstract class Transformer {
-    def apply[A](x: Rep[A]): Rep[A]
-    def isDefinedAt(x: Rep[_]): Boolean
-    def domain: Set[Rep[_]]
-    def apply[A](xs: Seq[Rep[A]]): Seq[Rep[A]] = xs map (e => apply(e))
-    def apply[X,A](f: X=>Rep[A]): X=>Rep[A] = (z:X) => apply(f(z))
-    def apply[X,Y,A](f: (X,Y)=>Rep[A]): (X,Y)=>Rep[A] = (z1:X,z2:Y) => apply(f(z1,z2))
-  }
-
-  trait TransformerOps[Ctx <: Transformer] {
-    def empty: Ctx
-    def add(ctx: Ctx, kv: (Rep[_], Rep[_])): Ctx
-    def merge(ctx1: Ctx, ctx2: Ctx): Ctx = ctx2.domain.foldLeft(ctx1)((t,s) => add(t, (s, ctx2(s))))
-  }
-
-  implicit class TransformerEx[Ctx <: Transformer](self: Ctx)(implicit ops: TransformerOps[Ctx]) {
-    def +(kv: (Rep[_], Rep[_])) = ops.add(self, kv)
-    def ++(kvs: Map[Rep[_], Rep[_]]) = kvs.foldLeft(self)((ctx, kv) => ops.add(ctx,kv))
-    def merge(other: Ctx): Ctx = ops.merge(self, other)
-  }
-
-  trait CanBeReified[C[_]] {
-    def resolve[A](sym: Rep[C[A]]): C[A]
-  }
-
-  //implicit def reifyObject[A:LElem](obj: ReifiableObject[A]): Rep[A]
-  //def reifyObject1[A:Elem](obj: ReifiableObjectAux[A]): Rep[obj.ThisType]
   def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for: $x") //= element[A].toRep(x)
   implicit def liftToRep[A:Elem](x: A) = toRep(x)
 }

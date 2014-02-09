@@ -58,9 +58,9 @@ object GraphUtil {
       var min: Int = id.value
       for (child <- succ(node)) {
 	      val m = visit(child, succ, id, stack, mark, res)
-
+	
 	      if (m < min) 
-          min = m
+	      min = m
       }
 
       if (min == mark(node)) {
@@ -68,11 +68,11 @@ object GraphUtil {
 	      val scc: Buffer[T] = new ArrayBuffer()
 	      var loop: Boolean = true
 	      do {
-  	      val element = stack.pop()
-//        println("appending " + element)
-  	      scc.append(element)
-  	      mark.put(element, Integer.MAX_VALUE)
-  	      loop = element != node
+	  	      val element = stack.pop()
+	//        println("appending " + element)
+	  	      scc.append(element)
+	  	      mark.put(element, Integer.MAX_VALUE)
+	  	      loop = element != node
 	      } while (loop)
 	      res.append(scc)
       }
@@ -81,5 +81,17 @@ object GraphUtil {
     })
   }
   
-  
+  def depthFirstSetFrom[A](start: A)(neighbours: A =>List[A]): Set[A] = {
+    var visited = Set[A]()
+
+    def visit(s: A): Unit = {
+      if (!(visited contains s)) {
+	    visited += s
+	    neighbours(s) foreach visit
+      }
+    }
+    visit(start)
+    visited
+  }
+
 }

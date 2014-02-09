@@ -1,12 +1,10 @@
 package scalan.codegen
 
-//import scalan.scalan.codegen.emit.ast._
 import scalan.ScalanStaged
 import scalan.staged.BaseExp
 
 trait LangBackend extends BaseExp { self: ScalanStaged =>
 
-  //def buildCompilationUnit[Ctx <: Transformer](g: ProgramGraph[Ctx]) : AbstractCompilationUnit
   def run(dir: String, fileName: String, func: Exp[_], emitGraphs: Boolean = false)
 
   protected def isGlobalConst(d: Def[_]): Boolean = d match {

@@ -1,10 +1,5 @@
 package scalan.common
 
-/**
- * Author: Alexander Slesarenko
- * Date: 7/19/12
- */
-
 class Lazy[A] private (expr: => A) {
   @volatile private[this] var _isSet = false
   

@@ -84,6 +84,27 @@ trait BaseExp extends Base { self: ScalanStaged =>
     override def self: Rep[T] = { implicit val e = selfType; this }
   }
 
+  abstract class Transformer {
+    def apply[A](x: Rep[A]): Rep[A]
+    def isDefinedAt(x: Rep[_]): Boolean
+    def domain: Set[Rep[_]]
+    def apply[A](xs: Seq[Rep[A]]): Seq[Rep[A]] = xs map (e => apply(e))
+    def apply[X,A](f: X=>Rep[A]): X=>Rep[A] = (z:X) => apply(f(z))
+    def apply[X,Y,A](f: (X,Y)=>Rep[A]): (X,Y)=>Rep[A] = (z1:X,z2:Y) => apply(f(z1,z2))
+  }
+
+  trait TransformerOps[Ctx <: Transformer] {
+    def empty: Ctx
+    def add(ctx: Ctx, kv: (Rep[_], Rep[_])): Ctx
+    def merge(ctx1: Ctx, ctx2: Ctx): Ctx = ctx2.domain.foldLeft(ctx1)((t,s) => add(t, (s, ctx2(s))))
+  }
+
+  implicit class TransformerEx[Ctx <: Transformer](self: Ctx)(implicit ops: TransformerOps[Ctx]) {
+    def +(kv: (Rep[_], Rep[_])) = ops.add(self, kv)
+    def ++(kvs: Map[Rep[_], Rep[_]]) = kvs.foldLeft(self)((ctx, kv) => ops.add(ctx,kv))
+    def merge(other: Ctx): Ctx = ops.merge(self, other)
+  }
+
   def fresh[T](implicit leT: LElem[T]): Exp[T]
   def findDefinition[T](s: Exp[T]): Option[TP[T]]
   def findDefinition[T](d: Def[T]): Option[TP[T]]
