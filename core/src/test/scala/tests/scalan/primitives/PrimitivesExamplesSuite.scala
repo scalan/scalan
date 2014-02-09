@@ -1,35 +1,40 @@
-/**
- * User: s00747473
- * Date: 11/16/13
- */
 package tests.scalan.primitives
 
 import scalan.{ScalanCtxStaged, ScalanCtxSeq}
 import org.scalatest.FlatSpec
 import tests.GraphVizExport
 import scalan.staged.ProgramGraphs
+import tests.BaseShouldTests
+import scalan.arrays.PArraysDslExp
+import tests.scalan.arrays.PArrayExamples
 
-class PrimitivesExamplesSuite extends FlatSpec {
+class PrimitivesExamplesSuite extends BaseShouldTests {
 
-  "when mixing trait" should "be constructed in Seq context" in {
+  "Examples trait" should "be mixable in Seq context" in {
       val ctx = new ScalanCtxSeq with PrimitiveExamples {}
   }
-  it should "be constructed in Staged context" in {
+  it should "be mixable in Staged context" in {
     val ctx = new ScalanCtxStaged with PrimitiveExamples {}
   }
   
   val prefix = "test-out/scalan/primitives/"
-  
-    "in staged context" should "stage functions" in {
-    val ctx = new ScalanCtxStaged with PrimitiveExamples with GraphVizExport with ProgramGraphs {}
-    import ctx._
-//    val f1 = ctx.id
-//    ctx.emitDepGraph(f1, prefix + "id.dot", false)
 
-    val f2 = inc
-    val g = new PGraph(List(f2))
-    g.scheduleAll.foreach(tp => println(s"${tp.sym} -> ${tp.rhs}"))
-    
-    emitDepGraph(g.roots, prefix + "inc.dot", false)
+  def testMethod(name: String) = {
+    val ctx = new ScalanCtxStaged with PrimitiveExamples with GraphVizExport {
+      this.invokeEnabled = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
+    }
+    val f = ctx.getStagedFunc(name)
+    ctx.emitDepGraph(f, s"$prefix$name.dot", false)
   }
- }
+
+  val whenStaged = "when staged"
+  whenStaged should "id" beArgFor { testMethod(_) }
+  whenStaged should "inc" beArgFor { testMethod(_) }
+  whenStaged should "curred" beArgFor { testMethod(_) }
+  whenStaged should "tupled" beArgFor { testMethod(_) }
+  whenStaged should "highOrder" beArgFor { testMethod(_) }
+  whenStaged should "inc2" beArgFor { testMethod(_) }
+  whenStaged should "inc_times" beArgFor { testMethod(_) }
+  whenStaged should "scalar" beArgFor { testMethod(_) }
+  
+}
