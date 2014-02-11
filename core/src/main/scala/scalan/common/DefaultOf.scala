@@ -2,14 +2,10 @@ package scalan.common
 
 import scala.reflect.ClassTag
 
-trait DefaultOf[+A] {
-  val value: A
-}
+case class DefaultOf[+A](value: A)
 
 trait Defaults {
-  def defaultVal[A](z: A): DefaultOf[A] = new DefaultOf[A] {
-    val value = z
-  }
+  def defaultVal[A](z: A): DefaultOf[A] = DefaultOf[A](z)
 
   /**
    * Returns the DefaultOf element of type A.
@@ -23,7 +19,7 @@ trait Defaults {
   def defaultOf[A](implicit d: DefaultOf[A]): A = d.value
 }
 
-object Defaults {
+object DefaultOf {
   import Common._
 
   implicit def UnitDefaultOf: DefaultOf[Unit] = defaultVal(())

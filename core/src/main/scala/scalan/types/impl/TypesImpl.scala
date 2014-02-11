@@ -45,7 +45,7 @@ trait TypesAbs extends Types
         implicit val tA = eA.tag
         typeTag[BaseType[A]] 
       }
-      def defaultOf = Common.defaultVal[Rep[BaseType[A]]](BaseType(getBaseTypeCode(eA), element[A].defaultOf.value))
+      lazy val defaultOf = defaultVal[Rep[BaseType[A]]](BaseType(getBaseTypeCode(eA), element[A].defaultOf.value))
     }
 
     def apply[A](p: Rep[BaseTypeData[A]])(implicit  eA: Elem[A]): Rep[BaseType[A]]
@@ -97,12 +97,12 @@ trait TypesAbs extends Types
         implicit val tB = eB.tag
         typeTag[Tuple2Type[A, B]] 
       }
-      def defaultOf = {
+      lazy val defaultOf = {
         implicit val dA = eA.defaultOf
         implicit val dB = eB.defaultOf
         val tyA = Common.defaultOf[Rep[Type[A]]]
         val tyB = Common.defaultOf[Rep[Type[B]]]
-        Common.defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
+        defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
       }
     }
 

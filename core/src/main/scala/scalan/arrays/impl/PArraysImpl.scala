@@ -52,7 +52,7 @@ trait PArraysAbs extends PArrays
         typeTag[BaseArray[A]]
       }
       import TagImplicits._
-      def defaultOf = Common.defaultVal[Rep[BaseArray[A]]](BaseArray(element[Array[A]].defaultOf.value))
+      lazy val defaultOf = defaultVal[Rep[BaseArray[A]]](BaseArray(element[Array[A]].defaultOf.value))
     }
 
     
@@ -103,19 +103,19 @@ trait PArraysAbs extends PArrays
         implicit val tB = eB.tag
         typeTag[PairArray[A, B]] 
       }
-//      def defaultOf = {
+//      lazy val defaultOf = {
 //        implicit val dA = eA.defaultOf
 //        implicit val dB = eB.defaultOf
 //        val tyA = Common.defaultOf[Rep[Type[A]]]
 //        val tyB = Common.defaultOf[Rep[Type[B]]]
-//        Common.defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
+//        defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
 //      }
-      def defaultOf = {
+      lazy val defaultOf = {
         implicit val dA = eA.defaultOf
         implicit val dB = eB.defaultOf
         val as = Common.defaultOf[Rep[PArray[A]]]
         val bs = Common.defaultOf[Rep[PArray[B]]]
-        Common.defaultVal[Rep[PairArray[A, B]]](PairArray(as, bs))
+        defaultVal[Rep[PairArray[A, B]]](PairArray(as, bs))
       }
     }
 

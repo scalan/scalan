@@ -5,7 +5,7 @@ import Document._
 import scalan.common.Monoid._
 import scalan.common._
 import Common._
-import scalan.common.Defaults._
+import scalan.common.DefaultOf
 import annotation.implicitNotFound
 import scalan.staged.BaseExp
 import scala.language.{ implicitConversions }
@@ -108,7 +108,7 @@ trait Elems extends Base { self: Scalan =>
   }
   implicit def funcRepDefaultOf[A, B: Elem]: DefaultOf[Rep[A] => Rep[B]] = {
     implicit val zB = element[B].defaultOf
-    Defaults.Function1ABDefaultOf[Rep[A], Rep[B]](zB)
+    DefaultOf.Function1ABDefaultOf[Rep[A], Rep[B]](zB)
   }
 
   object TagImplicits {
@@ -133,7 +133,7 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
 
   implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = {
     new ArrayElem[A](eA) with SeqElement[Array[A]] {
-      lazy val defaultOf = Defaults.ArrayDefaultOf(eA.classTag)
+      lazy val defaultOf = DefaultOf.ArrayDefaultOf(eA.classTag)
     }
   }
 
@@ -147,7 +147,7 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
   }
 
   class SeqUnitElement extends UnitElem with SeqElement[Unit] {
-    private val z = Defaults.UnitDefaultOf
+    private val z = DefaultOf.UnitDefaultOf
     def defaultOf = z
   }
 
@@ -159,7 +159,7 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
 
   override implicit def sumElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A | B)] =
     new SumElem[A, B](elema, elemb) with SeqElement[(A | B)] {
-      def defaultOf = Common.defaultVal(scala.Left(ea.defaultOf.value))
+      lazy val defaultOf = Common.defaultVal[A | B](scala.Left(ea.defaultOf.value))
     }
 
   implicit def funcElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
@@ -228,7 +228,7 @@ trait ElemsExp extends Elems
 
   override implicit def sumElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A | B)] =
     new SumElem[A, B](elema, elemb) with StagedElement[(A | B)] {
-      def defaultOf = defaultVal(toLeftSum[A, B](ea.defaultOf.value))
+      lazy val defaultOf = defaultVal(toLeftSum[A, B](ea.defaultOf.value))
     }
 
   override implicit def funcElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
