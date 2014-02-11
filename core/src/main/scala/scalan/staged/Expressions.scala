@@ -317,13 +317,12 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
   }
 
   private[this] var expToGlobalDefs: Map[Exp[_], TP[_]] = Map.empty
-  private[this] var defToGlobalDefs: Map[Def[_], TP[_]] = Map.empty
 
   def findDefinition[T](s: Exp[T]): Option[TP[T]] =
     expToGlobalDefs.get(s).asInstanceOf[Option[TP[T]]]
 
   def findDefinition[T](d: Def[T]): Option[TP[T]] =
-    defToGlobalDefs.get(d).asInstanceOf[Option[TP[T]]]
+    expToGlobalDefs.valuesIterator.find(_.rhs == d).asInstanceOf[Option[TP[T]]]
 
   def findOrCreateDefinition[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
     val res = findDefinition(d) match {
@@ -341,7 +340,6 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
       case _ => TP(s, d)
     }
     expToGlobalDefs += tp.sym -> tp
-    defToGlobalDefs += tp.rhs -> tp
     tp
   }
 
