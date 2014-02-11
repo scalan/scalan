@@ -15,7 +15,7 @@ trait PArraysAbs extends PArrays
   // single proxy for each type family
   implicit def proxyPArray[A:Elem](p: PA[A]): PArray[A] = {
     implicit val ctA = element[A].classTag;
-    proxyOps[PArray[A], PArray[A]](p)
+    proxyOps[PArray[A]](p)
   }
 
 
@@ -67,7 +67,7 @@ trait PArraysAbs extends PArrays
 
   implicit def proxyBaseArray[A](p: Rep[BaseArray[A]])(implicit  eA: Elem[A]): BaseArrayOps[A] = {
     implicit val ctA = eA.classTag
-    proxyOps[BaseArrayOps[A], BaseArrayOps[A]](p)
+    proxyOps[BaseArrayOps[A]](p)
   }
 
   implicit def extendBaseArray[A](p: Rep[BaseArray[A]])(implicit  eA: Elem[A]) = new {
@@ -134,7 +134,7 @@ def apply[A, B](p: Rep[PairArrayData[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]
   implicit def proxyPairArray[A, B](p: Rep[PairArray[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]): PairArrayOps[A, B] = {
     implicit val ctA = eA.classTag
     implicit val ctB = eB.classTag
-    proxyOps[PairArrayOps[A, B], PairArrayOps[A, B]](p)
+    proxyOps[PairArrayOps[A, B]](p)
   }
 
   implicit def extendPairArray[A, B](p: Rep[PairArray[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]) = new {

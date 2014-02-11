@@ -16,7 +16,7 @@ trait TypesAbs extends Types
   // single proxy for each type family
   implicit def proxyType[A:Elem](p: Ty[A]): Type[A] = {
     implicit val ctA = element[A].classTag;
-    proxyOps[Type[A], Type[A]](p)
+    proxyOps[Type[A]](p)
   }
 
 
@@ -61,7 +61,7 @@ trait TypesAbs extends Types
 
   implicit def proxyBaseType[A](p: Rep[BaseType[A]])(implicit  eA: Elem[A]): BaseTypeOps[A] = {
     implicit val ctA = eA.classTag
-    proxyOps[BaseTypeOps[A], BaseTypeOps[A]](p)
+    proxyOps[BaseTypeOps[A]](p)
   }
 
   implicit def extendBaseType[A](p: Rep[BaseType[A]])(implicit  eA: Elem[A]) = new {
@@ -120,7 +120,7 @@ trait TypesAbs extends Types
   implicit def proxyTuple2Type[A, B](p: Rep[Tuple2Type[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]): Tuple2TypeOps[A, B] = {
     implicit val ctA = eA.classTag
     implicit val ctB = eB.classTag
-    proxyOps[Tuple2TypeOps[A, B], Tuple2TypeOps[A, B]](p)
+    proxyOps[Tuple2TypeOps[A, B]](p)
   }
 
   implicit def extendTuple2Type[A, B](p: Rep[Tuple2Type[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]) = new {

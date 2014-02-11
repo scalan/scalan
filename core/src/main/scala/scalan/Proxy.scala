@@ -9,7 +9,7 @@ import scalan.common.Lazy
 import scala.reflect.ClassTag
 
 trait ProxyBase { self: Scalan =>
-  def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit ct: ClassTag[Ops]): Ops
+  def proxyOps[Ops<:AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops
   
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass()
@@ -19,7 +19,7 @@ trait ProxyBase { self: Scalan =>
 }
 
 trait ProxySeq extends ProxyBase { self: ScalanSeq =>
-  def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit ct: ClassTag[Ops]): Ops = x.asInstanceOf[Ops]
+  def proxyOps[Ops<:AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = x.asInstanceOf[Ops]
 }
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
@@ -38,7 +38,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 //      MethodCallLifted[T](t(receiver), method, args map { case a: Exp[_] => t(a) case a => a })
 //  }
 
-  override def proxyOps[T,Ops<:AnyRef](x: Rep[T])(implicit ct: ClassTag[Ops]): Ops = {
+  override def proxyOps[Ops<:AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = {
     val clazz = ct.runtimeClass
     val handler = new InvocationHandler(x)
     val proxy = jreflect.Proxy.newProxyInstance(clazz.getClassLoader(), Array(clazz), handler)
