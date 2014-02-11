@@ -2,17 +2,16 @@ import sbt._
 import sbt.Keys._
 
 object ScalanLiteBuild extends Build {
-  scalaVersion in ThisBuild := "2.10.3"
-
-  organization in ThisBuild := "com.huawei"
-
   version in ThisBuild := "0.1-SNAPSHOT"
 
-  scalacOptions in ThisBuild ++= Seq(
+  val opts = scalacOptions ++= Seq(
     "-unchecked",
     "-deprecation",
     "-Xlint",
     "-feature",
+    "-Ywarn-adapted-args",
+    "-Ywarn-inaccessible",
+    "-Ywarn-nullary-override",
     "-language:higherKinds",
     "-language:implicitConversions",
     "-language:existentials",
@@ -32,17 +31,23 @@ object ScalanLiteBuild extends Build {
     parallelExecution in Test := false,
     parallelExecution in ItTest := false)
 
+  val commonSettings = Seq(
+    scalaVersion := "2.10.3",
+    organization := "com.huawei",
+    version := "0.1-SNAPSHOT",
+    opts, commonDeps) ++ testSettings
+
   lazy val ItTest = config("it").extend(Test)
 
   def itFilter(name: String): Boolean = false // name.contains("ItTests")
 
   def unitFilter(name: String): Boolean = !itFilter(name)
 
-  lazy val core = Project("scalan-lite", file("core")).configs(ItTest).settings(testSettings: _*).settings(commonDeps)
+  lazy val core = Project("scalan-lite", file("core")).configs(ItTest).settings(commonSettings: _*)
   
   lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(core % "compile->compile;test->test").configs(ItTest).
-    settings(testSettings: _*).settings(commonDeps).settings(libraryDependencies += "EPFL" % "lms_2.10" % "0.3-SNAPSHOT")
+    settings(commonSettings: _*).settings(libraryDependencies += "EPFL" % "lms_2.10" % "0.3-SNAPSHOT")
   
   // name to make this the default project
-  lazy val root = Project("all", file(".")).aggregate(core, lmsBackend).settings(testSettings: _*)
+  lazy val root = Project("all", file(".")).aggregate(core, lmsBackend).settings(commonSettings: _*)
 }
