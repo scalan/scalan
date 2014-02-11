@@ -2,9 +2,6 @@ package scalan.arrays
 
 import scala.annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.common.{DefaultOf, Common}
-import Common._
-import scala.language.implicitConversions
 import scalan._
 
 trait PArrays extends Base with PArraysOps { self: PArraysDsl =>

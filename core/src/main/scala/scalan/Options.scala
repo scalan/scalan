@@ -1,9 +1,6 @@
 package scalan
 
 import scala.{Left => L, Right => R}
-import scalan.common.Common
-import Common._
-import scala.language.{reflectiveCalls, implicitConversions}
 
 trait Options extends Views { self: Scalan =>
 

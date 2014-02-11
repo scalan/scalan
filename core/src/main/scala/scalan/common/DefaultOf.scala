@@ -19,9 +19,7 @@ trait Defaults {
   def defaultOf[A](implicit d: DefaultOf[A]): A = d.value
 }
 
-object DefaultOf {
-  import Common._
-
+object DefaultOf extends Defaults {
   implicit def UnitDefaultOf: DefaultOf[Unit] = defaultVal(())
 
   implicit def StringDefaultOf: DefaultOf[String] = defaultVal("")

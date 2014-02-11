@@ -3,9 +3,8 @@ package scalan.arrays
 
 import scala.annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.common.{DefaultOf,Common}
-import Common._
-import scala.language.implicitConversions
+import scalan.common.DefaultOf
+import DefaultOf._
 import scalan._
 import scala.reflect.runtime.universe._
 
@@ -113,8 +112,8 @@ trait PArraysAbs extends PArrays
       lazy val defaultOf = {
         implicit val dA = eA.defaultOf
         implicit val dB = eB.defaultOf
-        val as = Common.defaultOf[Rep[PArray[A]]]
-        val bs = Common.defaultOf[Rep[PArray[B]]]
+        val as = DefaultOf.defaultOf[Rep[PArray[A]]]
+        val bs = DefaultOf.defaultOf[Rep[PArray[B]]]
         defaultVal[Rep[PairArray[A, B]]](PairArray(as, bs))
       }
     }

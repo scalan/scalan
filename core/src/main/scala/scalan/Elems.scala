@@ -1,13 +1,10 @@
 package scalan
 
-import scala.text._
-import Document._
-import scalan.common._
-import Common._
 import scalan.common.DefaultOf
-import annotation.implicitNotFound
+import DefaultOf._
+import scalan.common.Lazy
 import scalan.staged.BaseExp
-import scala.language.{ implicitConversions }
+import annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
@@ -152,13 +149,13 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
 
   override implicit def pairElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A, B)] =
     new PairElem[A, B](elema, elemb) with SeqElement[(A, B)] {
-      private val z = Common.defaultVal((ea.defaultOf.value, eb.defaultOf.value))
+      private val z = defaultVal((ea.defaultOf.value, eb.defaultOf.value))
       def defaultOf = z
     }
 
   override implicit def sumElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A | B)] =
     new SumElem[A, B](elema, elemb) with SeqElement[(A | B)] {
-      lazy val defaultOf = Common.defaultVal[A | B](scala.Left(ea.defaultOf.value))
+      lazy val defaultOf = defaultVal[A | B](scala.Left(ea.defaultOf.value))
     }
 
   implicit def funcElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =

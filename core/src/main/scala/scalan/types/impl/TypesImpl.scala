@@ -3,9 +3,7 @@ package scalan.types
 
 import scala.annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.common.{DefaultOf,Common}
-import Common._
-import scala.language.implicitConversions
+import scalan.common.DefaultOf
 import scalan._
 import scala.reflect.runtime.universe._
 
@@ -45,7 +43,7 @@ trait TypesAbs extends Types
         implicit val tA = eA.tag
         typeTag[BaseType[A]] 
       }
-      lazy val defaultOf = defaultVal[Rep[BaseType[A]]](BaseType(getBaseTypeCode(eA), element[A].defaultOf.value))
+      lazy val defaultOf = DefaultOf.defaultVal[Rep[BaseType[A]]](BaseType(getBaseTypeCode(eA), element[A].defaultOf.value))
     }
 
     def apply[A](p: Rep[BaseTypeData[A]])(implicit  eA: Elem[A]): Rep[BaseType[A]]
@@ -100,9 +98,9 @@ trait TypesAbs extends Types
       lazy val defaultOf = {
         implicit val dA = eA.defaultOf
         implicit val dB = eB.defaultOf
-        val tyA = Common.defaultOf[Rep[Type[A]]]
-        val tyB = Common.defaultOf[Rep[Type[B]]]
-        defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
+        val tyA = DefaultOf.defaultOf[Rep[Type[A]]]
+        val tyB = DefaultOf.defaultOf[Rep[Type[B]]]
+        DefaultOf.defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
       }
     }
 

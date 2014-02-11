@@ -1,6 +1,6 @@
 package scalan.arrays
 
-import scalan.common.{Common, DefaultOf}
+import scalan.common.DefaultOf
 import scalan._
 
 trait PArraysOps { scalan: PArraysDsl =>
@@ -55,8 +55,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     def length = arr.length
   }
   trait BaseArrayCompanion extends ConcreteClass1[BaseArray] {
-    import Common._
-    def defaultOf[A](implicit ea: Elem[A]) = defaultVal(BaseArray(Common.defaultOf[Rep[Array[A]]]))
+    def defaultOf[A](implicit ea: Elem[A]) = DefaultOf.defaultVal(BaseArray(DefaultOf.defaultOf[Rep[Array[A]]]))
   }
 
   //-------------------------------  Tuple2Type ----------------------------------
@@ -73,11 +72,10 @@ trait PArraysOps { scalan: PArraysDsl =>
     def length = as.length
   }
   trait PairArrayCompanion extends ConcreteClass2[PairArray] {
-    import Common._
     def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]) = {
       val as = PArray.defaultOf[A].value
       val bs = PArray.defaultOf[B].value
-      defaultVal(PairArray(as, bs))
+      DefaultOf.defaultVal(PairArray(as, bs))
     }
   }
 }
