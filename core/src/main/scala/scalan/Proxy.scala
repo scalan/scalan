@@ -29,6 +29,10 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     override def mirror(t: Transformer) =
       MethodCall[T](t(receiver), method, args map { case a: Exp[_] => t(a) case a => a })
     override def self: Rep[T] = { this }
+    override def format = {
+      val className = method.getDeclaringClass.getName()
+      "%s.%s(%s)".format(receiver, className.substring(className.lastIndexOf("$")+1) + "." + method.getName(), args.mkString("", ",", ""))
+    }
   }
 
 //TODO
@@ -112,13 +116,4 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     }
 
   }
-
-  override def formatDef(d: Def[_]) = d match {
-    case MethodCall(obj, method, args) => {
-      val className = method.getDeclaringClass.getName()
-      "%s.%s(%s)".format(obj, className.substring(className.lastIndexOf("$")+1) + "." + method.getName(), args.mkString("", ",", ""))
-    }
-    case _ => super.formatDef(d)
-  }
-
 }

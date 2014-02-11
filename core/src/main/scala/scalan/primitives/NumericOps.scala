@@ -92,6 +92,7 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
       copyWith(t(arg))
     }
     def opName = "ToFloat"
+    override def format = s"$arg.toFloat"
   }
 
   def numeric_plus[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]) : Rep[T] = NumericPlus(lhs, rhs, n)
@@ -107,11 +108,6 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
     case d@NumericPlus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => toRep(n.plus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.selfType)
     case d@NumericMinus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => toRep(n.minus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.selfType)
     case _ => super.rewrite(d)
-  }
-
-  override def formatDef(d: Def[_]) = d match {
-    case NumericToFloat(lhs, _) => "%s.toFloat".format(lhs)
-    case _ => super.formatDef(d)
   }
 }
 

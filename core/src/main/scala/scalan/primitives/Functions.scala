@@ -116,6 +116,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       toExp(newLam, newSym)
     }
     lazy val selfType = element[A => B]
+    override def format = s"\\\\$x -> ${y match { case Def(b) => b.format case y => y}}"
   }
   type LambdaData[A,B] = (Lambda[A,B], Option[Exp[A] => Exp[B]], Exp[A], Exp[B])
   object Lambda {
@@ -140,6 +141,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   {
     def selfType = eB.value
     override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))(eB)
+    override def format = s"$f($arg)"
   }
 
   implicit class FuncOps[A, B](f: Exp[A=>B]) {
@@ -266,14 +268,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         reifyObject(Apply(f, x)(leB))(leB) 
       }
     }
-  }
-
-
-  override def formatDef(d: Def[_]) = d match {
-    case l: Lambda[_, _] =>
-      s"\\\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y}}"
-    case Apply(f, x) => s"$f($x)"
-    case _ => super.formatDef(d)
   }
 }
 

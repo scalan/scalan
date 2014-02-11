@@ -42,17 +42,13 @@ trait EqualExp extends Equal with BaseExp { self: ScalanStaged =>
   //def infix_!=[A,B](a: Rep[A], b: B)(implicit o: Overloaded2, mA: Elem[A], mB: Elem[B]) : Rep[Boolean] = notequals(a, b)
   //def infix_!=[A,B](a: A, b: Rep[B])(implicit o: Overloaded3, mA: Elem[A], mB: Elem[B]) : Rep[Boolean] = notequals(toRep(a), b)
 
-  override def formatDef(d: Def[_]) = d match {
-    case EqualsClass(a, b) => "%s == %s".format(a, b)
-    case NotEqual(a, b) => "%s != %s".format(a, b)
-    case _ => super.formatDef(d)
-  }
-
   case class EqualsClass[A](lhs: Exp[A], rhs: Exp[A]) extends EqBinOp[A]("===") {
     def copyWith(l: Rep[A], r: Rep[A]) = this.copy(lhs = l, rhs = r)
+    override def format = s"$lhs == $rhs"
   }
   case class NotEqual[A](lhs: Exp[A], rhs: Exp[A]) extends EqBinOp[A]("!=="){
     def copyWith(l: Rep[A], r: Rep[A]) = this.copy(lhs = l, rhs = r)
+    override def format = s"$lhs != $rhs"
   }
 
 }
