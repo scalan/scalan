@@ -106,7 +106,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
     def getResultElem(m: jreflect.Method, args: Array[AnyRef]): Elem[AnyRef] = {
       val e = getRecieverElem
-      val zero = e.iso.defaultOf.value
+      val zero = e.iso.defaultRepTo.value
       val Def(zeroNode) = zero
       val res = m.invoke(zeroNode, args: _*)
       res match {

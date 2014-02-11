@@ -2,7 +2,7 @@ package scalan
 
 import scala.text._
 import Document._
-import scalan.common.DefaultOf
+import scalan.common.Default
 import scala.language.higherKinds
 import scalan.common.Lazy
 import scala.reflect.runtime.universe._
@@ -13,7 +13,7 @@ trait Views extends Elems { self: Scalan =>
     //def eFrom: Elem[From]
     def eTo: Elem[To]
     def tag: TypeTag[To]        // constructed in each concrete iso instance
-    def defaultOf: DefaultOf[Rep[To]] // constructed in each concrete iso instance
+    def defaultRepTo: Default[Rep[To]] // constructed in each concrete iso instance
     def from(p: Rep[To]  ): Rep[From]
     def to  (p: Rep[From]): Rep[To]
   }
@@ -39,17 +39,17 @@ trait Views extends Elems { self: Scalan =>
   }
 
   trait TypeFamily1[F[_]] {
-    def defaultOf[A](implicit ea: Elem[A]): DefaultOf[Rep[F[A]]]
+    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[F[A]]]
   }
   trait TypeFamily2[F[_,_]] {
-    def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]): DefaultOf[Rep[F[A,B]]]
+    def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[F[A,B]]]
   }
 
   trait ConcreteClass1[C[_]] {
-    def defaultOf[A](implicit ea: Elem[A]): DefaultOf[Rep[C[A]]]
+    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[C[A]]]
   }
   trait ConcreteClass2[C[_,_]] {
-    def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]): DefaultOf[Rep[C[A,B]]]
+    def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[C[A,B]]]
   }
 
 }
@@ -66,8 +66,7 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
     //implicit private def eFrom = iso.eFrom
     implicit private def eTo = iso.eTo
     lazy val tag: TypeTag[To] = iso.tag
-    private lazy val z = iso.defaultOf
-    def defaultOf = z
+    lazy val defaultRep = iso.defaultRepTo
   }
 
   trait UserTypeSeq[T, TImpl <: T] extends UserType[T] { thisType: T =>
@@ -88,8 +87,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     //implicit private def eFrom = iso.eFrom
     implicit private def eTo = iso.eTo
     implicit lazy val tag = iso.tag
-    private lazy val z = iso.defaultOf
-    def defaultOf = z
+    lazy val defaultRep = iso.defaultRepTo
   }
 
   case class UserTypeDescriptor[T](tag: TypeTag[T]) {

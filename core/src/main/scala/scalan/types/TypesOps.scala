@@ -1,7 +1,7 @@
 package scalan.types
 
 import scala.annotation.implicitNotFound
-import scalan.common.DefaultOf
+import scalan.common.Default
 import scalan._
 import scala.reflect.runtime.universe._
 
@@ -9,10 +9,10 @@ trait TypesOps { scalan: TypesDsl =>
 
   trait TypeOps[A] extends Type[A] {
     def tag: TypeTag[A] = typeTagFromString(typeCode).asInstanceOf[TypeTag[A]]
-    lazy val defaultOf: DefaultOf[Rep[A]] = DefaultOf.defaultVal(defaultValue)
+    lazy val defaultOf: Default[Rep[A]] = Default.defaultVal(defaultValue)
   }
   trait TypeCompanion extends TypeFamily1[Type] {
-    def defaultOf[A](implicit ea: Elem[A]): DefaultOf[Rep[Type[A]]] = ea match {
+    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[Type[A]]] = ea match {
       case baseE: BaseElem[a] => BaseType.defaultOf[a](baseE)
       case pairE: PairElem[a,b] => Tuple2Type.defaultOf[a,b](pairE.ea, pairE.eb)
       case _ => ???
@@ -22,7 +22,7 @@ trait TypesOps { scalan: TypesDsl =>
   //-------------------------------  BaseType ----------------------------------
   trait BaseTypeOps[A] extends TypeOps[A] { }
   trait BaseTypeCompanion extends ConcreteClass1[BaseType] {
-    def defaultOf[A](implicit ea: Elem[A]) = DefaultOf.defaultVal(BaseType(getBaseTypeCode(ea), ea.defaultOf.value))
+    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(BaseType(getBaseTypeCode(ea), ea.defaultRepValue))
   }
 
   //-------------------------------  Tuple2Type ----------------------------------
@@ -39,7 +39,7 @@ trait TypesOps { scalan: TypesDsl =>
     def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]) = {
       val tyA = Type.defaultOf[A].value
       val tyB = Type.defaultOf[B].value
-      DefaultOf.defaultVal(Tuple2Type(tyA, tyB))
+      Default.defaultVal(Tuple2Type(tyA, tyB))
     }
   }
 

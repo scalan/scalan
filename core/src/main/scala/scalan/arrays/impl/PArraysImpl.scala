@@ -3,8 +3,8 @@ package scalan.arrays
 
 import scala.annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.common.DefaultOf
-import DefaultOf._
+import scalan.common.Default
+import Default._
 import scalan._
 import scala.reflect.runtime.universe._
 
@@ -27,7 +27,7 @@ trait PArraysAbs extends PArrays
 
   object PArray extends PArrayCompanion {
   }
-  implicit def defaultOfPArray[A](implicit da: Elem[A]): DefaultOf[Rep[PArray[A]]] = PArray.defaultOf[A]
+  implicit def defaultOfPArray[A](implicit da: Elem[A]): Default[Rep[PArray[A]]] = PArray.defaultOf[A]
 
 
   //------------------------------- BaseArray ------------------------------------
@@ -51,7 +51,7 @@ trait PArraysAbs extends PArrays
         typeTag[BaseArray[A]]
       }
       import TagImplicits._
-      lazy val defaultOf = defaultVal[Rep[BaseArray[A]]](BaseArray(element[Array[A]].defaultOf.value))
+      lazy val defaultRepTo = defaultVal[Rep[BaseArray[A]]](BaseArray(element[Array[A]].defaultRepValue))
     }
 
     
@@ -109,11 +109,11 @@ trait PArraysAbs extends PArrays
 //        val tyB = Common.defaultOf[Rep[Type[B]]]
 //        defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
 //      }
-      lazy val defaultOf = {
-        implicit val dA = eA.defaultOf
-        implicit val dB = eB.defaultOf
-        val as = DefaultOf.defaultOf[Rep[PArray[A]]]
-        val bs = DefaultOf.defaultOf[Rep[PArray[B]]]
+      lazy val defaultRepTo = {
+        implicit val dA = eA.defaultRep
+        implicit val dB = eB.defaultRep
+        val as = Default.defaultOf[Rep[PArray[A]]]
+        val bs = Default.defaultOf[Rep[PArray[B]]]
         defaultVal[Rep[PairArray[A, B]]](PairArray(as, bs))
       }
     }

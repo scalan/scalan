@@ -1,6 +1,6 @@
 package scalan.arrays
 
-import scalan.common.DefaultOf
+import scalan.common.Default
 import scalan._
 
 trait PArraysOps { scalan: PArraysDsl =>
@@ -17,7 +17,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     def zip[U:Elem](ys: PA[U]) = PairArray(self, ys)
   }
   trait PArrayCompanion extends TypeFamily1[PArray] {
-    def defaultOf[A](implicit ea: Elem[A]): DefaultOf[Rep[PArray[A]]] = ea match {
+    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]] = ea match {
       case baseE: BaseElem[a] => BaseArray.defaultOf[a](baseE)
       case pairE: PairElem[a,b] => PairArray.defaultOf[a,b](pairE.ea, pairE.eb)
       case _ => ???
@@ -55,7 +55,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     def length = arr.length
   }
   trait BaseArrayCompanion extends ConcreteClass1[BaseArray] {
-    def defaultOf[A](implicit ea: Elem[A]) = DefaultOf.defaultVal(BaseArray(DefaultOf.defaultOf[Rep[Array[A]]]))
+    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(BaseArray(Default.defaultOf[Rep[Array[A]]]))
   }
 
   //-------------------------------  Tuple2Type ----------------------------------
@@ -75,7 +75,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]) = {
       val as = PArray.defaultOf[A].value
       val bs = PArray.defaultOf[B].value
-      DefaultOf.defaultVal(PairArray(as, bs))
+      Default.defaultVal(PairArray(as, bs))
     }
   }
 }

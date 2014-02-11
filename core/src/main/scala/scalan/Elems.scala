@@ -1,7 +1,7 @@
 package scalan
 
-import scalan.common.DefaultOf
-import DefaultOf._
+import scalan.common.Default
+import Default._
 import scalan.common.Lazy
 import scalan.staged.BaseExp
 import annotation.implicitNotFound
@@ -17,7 +17,8 @@ trait Elems extends Base { self: Scalan =>
   trait Element[A] {
     def tag: TypeTag[A]
     final def classTag: ClassTag[A] = TagImplicits.typeTagToClassTag(tag)
-    def defaultOf: DefaultOf[Rep[A]]
+    def defaultRep: Default[Rep[A]]
+    def defaultRepValue = defaultRep.value
     def name = tag.toString
 
     lazy val prettyName = name.
@@ -94,17 +95,17 @@ trait Elems extends Base { self: Scalan =>
 
   implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = Lazy(eA)
 
-//  implicit lazy val IntRepDefaultOf: DefaultOf[Rep[Int]] = defaultVal[Rep[Int]](0)
-//  implicit lazy val FloatRepDefaultOf: DefaultOf[Rep[Float]] = defaultVal[Rep[Float]](0f)
-//  implicit lazy val BooleanRepDefaultOf: DefaultOf[Rep[Boolean]] = defaultVal[Rep[Boolean]](false)
-//  implicit lazy val StringRepDefaultOf: DefaultOf[Rep[String]] = defaultVal[Rep[String]]("")
-  implicit def arrayRepDefaultOf[A](implicit e: Elem[Array[A]]): DefaultOf[Rep[Array[A]]] = {
+//  implicit lazy val IntRepDefault: Default[Rep[Int]] = defaultVal[Rep[Int]](0)
+//  implicit lazy val FloatRepDefault: Default[Rep[Float]] = defaultVal[Rep[Float]](0f)
+//  implicit lazy val BooleanRepDefault: Default[Rep[Boolean]] = defaultVal[Rep[Boolean]](false)
+//  implicit lazy val StringRepDefault: Default[Rep[String]] = defaultVal[Rep[String]]("")
+  implicit def arrayRepDefault[A](implicit e: Elem[Array[A]]): Default[Rep[Array[A]]] = {
     implicit val aCT = e.ea.classTag
     defaultVal[Rep[Array[A]]](Array.empty[A])
   }
-  implicit def funcRepDefaultOf[A, B: Elem]: DefaultOf[Rep[A] => Rep[B]] = {
-    implicit val zB = element[B].defaultOf
-    DefaultOf.Function1ABDefaultOf[Rep[A], Rep[B]](zB)
+  implicit def funcRepDefault[A, B: Elem]: Default[Rep[A] => Rep[B]] = {
+    implicit val zB = element[B].defaultRep
+    Default.OfFunction1[Rep[A], Rep[B]](zB)
   }
 
   object TagImplicits {
@@ -129,7 +130,7 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
 
   implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = {
     new ArrayElem[A](eA) with SeqElement[Array[A]] {
-      lazy val defaultOf = DefaultOf.ArrayDefaultOf(eA.classTag)
+      lazy val defaultRep = Default.OfArray(eA.classTag)
     }
   }
 
@@ -138,30 +139,27 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
   trait SeqElement[A] extends Element[A] {
   }
 
-  class SeqBaseElement[A](implicit val defaultOf: DefaultOf[A], tag: TypeTag[A] /*, val desc: Desc[A]*/ )
+  class SeqBaseElement[A](implicit val defaultRep: Default[A], tag: TypeTag[A] /*, val desc: Desc[A]*/ )
     extends BaseElem[A]()(tag) with SeqElement[A] {
   }
 
   class SeqUnitElement extends UnitElem with SeqElement[Unit] {
-    private val z = DefaultOf.UnitDefaultOf
-    def defaultOf = z
+    def defaultRep = Default.OfUnit
   }
 
   override implicit def pairElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A, B)] =
     new PairElem[A, B](elema, elemb) with SeqElement[(A, B)] {
-      private val z = defaultVal((ea.defaultOf.value, eb.defaultOf.value))
-      def defaultOf = z
+      lazy val defaultRep = defaultVal((ea.defaultRepValue, eb.defaultRepValue))
     }
 
   override implicit def sumElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A | B)] =
     new SumElem[A, B](elema, elemb) with SeqElement[(A | B)] {
-      lazy val defaultOf = defaultVal[A | B](scala.Left(ea.defaultOf.value))
+      lazy val defaultRep = defaultVal[A | B](scala.Left(ea.defaultRepValue))
     }
 
   implicit def funcElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
     new FuncElem[A, B](elema, elemb) with SeqElement[A => B] {
-      private val z = funcRepDefaultOf[A, B]
-      def defaultOf = z
+      val defaultRep = Default.OfFunction1[A, B](elemb.defaultRep)
     }
 
   //  override implicit def elemElement[A](implicit elema: Elem[A]): Elem[Elem[A]] =
@@ -196,8 +194,7 @@ trait ElemsExp extends Elems
 
   implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = {
     new ArrayElem[A](eA) with StagedElement[Array[A]] {
-      private val z = arrayRepDefaultOf(this)
-      def defaultOf = z
+      lazy val defaultRep: Default[Rep[Array[A]]] = arrayRepDefault[A]
     }
   }
 
@@ -206,31 +203,28 @@ trait ElemsExp extends Elems
   trait StagedElement[A] extends Element[A] {
   }
 
-  class StagedBaseElement[A]( /*, val desc: Desc[A]*/ )(implicit z: DefaultOf[A], tag: TypeTag[A])
+  class StagedBaseElement[A]( /*, val desc: Desc[A]*/ )(implicit z: Default[A], tag: TypeTag[A])
     extends BaseElem[A]()(tag) with StagedElement[A] {
-    override lazy val defaultOf = defaultVal(toRep(z.value)(this))
+    override lazy val defaultRep = defaultVal(toRep(z.value)(this))
   }
 
   class StagedUnitElement extends UnitElem with StagedElement[Unit] {
-    private lazy val z = defaultVal[Rep[Unit]](toRep(()))
-    def defaultOf = z
+    lazy val defaultRep = defaultVal[Rep[Unit]](toRep(())(this))
   }
 
   override implicit def pairElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A, B)] =
     new PairElem[A, B](elema, elemb) with StagedElement[(A, B)] {
-      private lazy val z = defaultVal(Pair(ea.defaultOf.value, eb.defaultOf.value))
-      def defaultOf = z
+      lazy val defaultRep = defaultVal(Pair(ea.defaultRepValue, eb.defaultRepValue))
     }
 
   override implicit def sumElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[(A | B)] =
     new SumElem[A, B](elema, elemb) with StagedElement[(A | B)] {
-      lazy val defaultOf = defaultVal(toLeftSum[A, B](ea.defaultOf.value))
+      lazy val defaultRep = defaultVal(toLeftSum[A, B](ea.defaultRepValue))
     }
 
   override implicit def funcElement[A, B](implicit elema: Elem[A], elemb: Elem[B]): Elem[A => B] =
     new FuncElem[A, B](elema, elemb) with StagedElement[A => B] {
-      lazy val z: DefaultOf[Rep[A => B]] = defaultVal(fun(funcRepDefaultOf[A, B].value))
-      implicit def defaultOf = z
+      lazy val defaultRep = defaultVal(fun(funcRepDefault[A, B].value))
     }
 
   //  override implicit def elemElement[A](implicit elema: Elem[A]): Elem[Elem[A]] =

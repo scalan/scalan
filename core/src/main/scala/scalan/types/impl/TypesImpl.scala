@@ -3,7 +3,7 @@ package scalan.types
 
 import scala.annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.common.DefaultOf
+import scalan.common.Default
 import scalan._
 import scala.reflect.runtime.universe._
 
@@ -22,7 +22,7 @@ trait TypesAbs extends Types
   //implicit def defaultTypeElement[A:Elem]: Elem[Type[A]] = ???
   object Type extends TypeCompanion {
   }
-  implicit def defaultOfType[A](implicit da: Elem[A]): DefaultOf[Rep[Type[A]]] = Type.defaultOf[A]
+  implicit def defaultOfType[A](implicit da: Elem[A]): Default[Rep[Type[A]]] = Type.defaultOf[A]
   //------------------------------- BaseType ------------------------------------
   // elem for concrete class
   trait BaseTypeElem[A] extends TypeElem[BaseTypeData[A], BaseType[A]]
@@ -43,7 +43,7 @@ trait TypesAbs extends Types
         implicit val tA = eA.tag
         typeTag[BaseType[A]] 
       }
-      lazy val defaultOf = DefaultOf.defaultVal[Rep[BaseType[A]]](BaseType(getBaseTypeCode(eA), element[A].defaultOf.value))
+      lazy val defaultRepTo = Default.defaultVal[Rep[BaseType[A]]](BaseType(getBaseTypeCode(eA), element[A].defaultRep.value))
     }
 
     def apply[A](p: Rep[BaseTypeData[A]])(implicit  eA: Elem[A]): Rep[BaseType[A]]
@@ -90,17 +90,17 @@ trait TypesAbs extends Types
         val Pair(tyA, tyB) = p
         Tuple2Type(tyA, tyB)
       }
-      def tag = { 
+      lazy val tag = { 
         implicit val tA = eA.tag
         implicit val tB = eB.tag
         typeTag[Tuple2Type[A, B]] 
       }
-      lazy val defaultOf = {
-        implicit val dA = eA.defaultOf
-        implicit val dB = eB.defaultOf
-        val tyA = DefaultOf.defaultOf[Rep[Type[A]]]
-        val tyB = DefaultOf.defaultOf[Rep[Type[B]]]
-        DefaultOf.defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
+      lazy val defaultRepTo = {
+        implicit val dA = eA.defaultRep
+        implicit val dB = eB.defaultRep
+        val tyA = Default.defaultOf[Rep[Type[A]]]
+        val tyB = Default.defaultOf[Rep[Type[B]]]
+        Default.defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
       }
     }
 

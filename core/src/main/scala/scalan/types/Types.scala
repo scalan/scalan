@@ -2,7 +2,7 @@ package scalan.types
 
 import scala.annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.common.DefaultOf
+import scalan.common.Default
 import scalan._
 import scala.reflect.runtime.universe._
 
@@ -14,7 +14,7 @@ trait Types extends Base with TypesOps { self: TypesDsl =>
     def typeCode: Rep[String]
     def defaultValue: Rep[A]
     def tag: TypeTag[A]
-    def defaultOf: DefaultOf[Rep[A]]
+    def defaultOf: Default[Rep[A]]
   }
 
   abstract class BaseType[A](
