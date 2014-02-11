@@ -37,6 +37,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)
     def decompose: Option[Rep[_]] = None
     def isScalarOp: Boolean = true
+    def format: String = toString
   }
 
   type Def[+A] = ReifiableObject[A,A]
@@ -177,8 +178,6 @@ trait BaseExp extends Base { self: ScalanStaged =>
     case Some(sym) => sym.asInstanceOf[Exp[_]]
   }
 
-  def formatDef(d: Def[_]): String = d.toString
-
   // dependencies
   def syms(e: Any): List[Exp[Any]] = e match {
     case s: Exp[_] => List(s)
@@ -317,13 +316,14 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
     //def unapply[T](s: Exp[T]): Option[TP[T]] = findDefinition(s)
   }
 
-  var globalDefs: List[TP[_]] = Nil
+  private[this] var expToGlobalDefs: Map[Exp[_], TP[_]] = Map.empty
+  private[this] var defToGlobalDefs: Map[Def[_], TP[_]] = Map.empty
 
   def findDefinition[T](s: Exp[T]): Option[TP[T]] =
-    globalDefs.find(_.sym == s).asInstanceOf[Option[TP[T]]]
+    expToGlobalDefs.get(s).asInstanceOf[Option[TP[T]]]
 
   def findDefinition[T](d: Def[T]): Option[TP[T]] =
-    globalDefs.find(_.rhs == d).asInstanceOf[Option[TP[T]]]
+    defToGlobalDefs.get(d).asInstanceOf[Option[TP[T]]]
 
   def findOrCreateDefinition[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
     val res = findDefinition(d) match {
@@ -340,7 +340,8 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
       case Some(fSym) => TP(s, d, fSym)
       case _ => TP(s, d)
     }
-    globalDefs = globalDefs:::List(tp)
+    expToGlobalDefs += tp.sym -> tp
+    defToGlobalDefs += tp.rhs -> tp
     tp
   }
 
