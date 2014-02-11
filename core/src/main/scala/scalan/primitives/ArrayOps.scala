@@ -1,7 +1,6 @@
 package scalan.primitives
 
 import java.io.{BufferedReader, FileReader, PrintWriter}
-import scalan.common.Monoid
 import scalan.{ScalanStaged, ScalanSeq, Scalan}
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
@@ -12,14 +11,14 @@ trait ArrayOps { self: Scalan  =>
     def apply(n: Rep[Int]) = array_apply(xs, n)
     def length = array_length(xs)
     def map[R:ClassTag](f: Rep[T=>R]) = array_map(xs, f)
-    def sum(implicit m: Monoid[Rep[T]]) = array_sum(xs)
+    def sum(implicit m: RepMonoid[T]) = array_sum(xs)
     def zip[U](ys: Arr[U]): Arr[(T,U)] = array_zip(xs, ys)
   }
 
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
   def array_length[T](xs: Arr[T]) : Rep[Int]
   def array_map[T,R:ClassTag](xs: Arr[T], f: Rep[T=>R]): Arr[R]
-  def array_sum[T](xs: Arr[T])(implicit m: Monoid[Rep[T]]) : Rep[T]
+  def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) : Rep[T]
   def array_zip[T,U](xs: Arr[T], ys:Arr[U]): Arr[(T,U)]
   def array_Replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T]
 }
@@ -28,7 +27,7 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   def array_apply[T](x: Arr[T], n: Rep[Int]): Rep[T] = x(n)
   def array_length[T](a: Arr[T]) : Rep[Int] = a.length
   def array_map[T, R:ClassTag](xs: Array[T], f: T => R) = Array.tabulate(xs.length)(i => f(xs(i))) //xs.map(f)
-  def array_sum[T](xs: Arr[T])(implicit m: Monoid[Rep[T]]) = xs.fold(m.zero)((x,y) => m.append(x,y))
+  def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x,y) => m.append(x,y))
   def array_zip[T,U](xs: Array[T], ys:Array[U]): Array[(T,U)] = (xs, ys).zipped.toArray
   def array_Replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T] = Array.fill(len)(v)
 }
@@ -51,7 +50,7 @@ trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
   case class ArrayMap[T,R](xs: Exp[Array[T]], f: Exp[T=>R]) extends ArrayDef[R] {
     def selfType = withResultElem(f){implicit eR => element[Array[R]]}
   }
-  case class ArraySum[T](xs: Exp[Array[T]], implicit val m: Monoid[Rep[T]]) extends Def[T] {
+  case class ArraySum[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T]) extends Def[T] {
     def selfType = withElemOf(xs){ _.ea }
   }
   case class ArrayZip[T:Elem,U:Elem](xs: Exp[Array[T]], ys: Exp[Array[U]]) extends ArrayDef[(T,U)] {
@@ -67,7 +66,7 @@ trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
   def array_map[T, R:ClassTag](xs: Exp[Array[T]], f: Exp[T=>R]) =
     withResultElem(f) { implicit eR => ArrayMap(xs, f) }
 
-  def array_sum[T](xs: Arr[T])(implicit m: Monoid[Rep[T]]) =
+  def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) =
     withElemOfArray(xs){ implicit eT => ArraySum(xs, m) }
 
   def array_zip[T,U](xs: Arr[T], ys:Arr[U]): Arr[(T,U)] = {

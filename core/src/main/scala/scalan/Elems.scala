@@ -2,7 +2,6 @@ package scalan
 
 import scala.text._
 import Document._
-import scalan.common.Monoid._
 import scalan.common._
 import Common._
 import scalan.common.DefaultOf
