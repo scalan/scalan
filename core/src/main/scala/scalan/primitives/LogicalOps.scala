@@ -5,9 +5,8 @@
 package scalan.primitives
 
 import scalan.{ScalanStaged, ScalanSeq, Scalan}
-import scalan.common.OverloadHack
 
-trait LogicalOps extends OverloadHack { self: Scalan =>
+trait LogicalOps { self: Scalan =>
   def logical_and(x: Rep[Boolean], y: Rep[Boolean]): Rep[Boolean]
   def logical_or(x: Rep[Boolean], y: Rep[Boolean]): Rep[Boolean]
   def logical_not(x: Rep[Boolean]): Rep[Boolean]

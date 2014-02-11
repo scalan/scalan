@@ -1,12 +1,10 @@
 package scalan.staged
 
-import scalan.common.OverloadHack
 import scalan.ScalanStaged
-import scala.language.{implicitConversions}
 import scalan.common.Lazy
 import scalan.Base
 
-trait Transforming extends OverloadHack { self: ScalanStaged =>
+trait Transforming { self: ScalanStaged =>
 
   def mirror[A](d: Def[A], f: Transformer): Exp[_] = d.mirror(f)
 

@@ -5,7 +5,7 @@ import scalan.{Scalan, ScalanStaged}
 import scalan.ScalanSeq
 import scalan.common.OverloadHack
 
-trait Equal extends OverloadHack { self: Scalan =>
+trait Equal { self: Scalan =>
   def equals[A:Elem](a: Rep[A], b: Rep[A]) : Rep[Boolean]
   def notequals[A:Elem](a: Rep[A], b: Rep[A]) : Rep[Boolean]
 
@@ -32,15 +32,6 @@ trait EqualExp extends Equal with BaseExp { self: ScalanStaged =>
 
   def equals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = EqualsClass(a,b)
   def notequals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = NotEqual(a,b)
-
-  //FIXME: these methods bacame ambiguous in Seq implementation when declared in Equal
-  //def __equal[A,B](a: Rep[A], b: Rep[B])(implicit o: Overloaded1, mA: Elem[A], mB: Elem[B]) : Rep[Boolean] = ??? //equals(a,b)
-  //def __equal[A,B](a: Rep[A], b: B)(implicit o: Overloaded2, mA: Elem[A], mB: Elem[B]): Rep[Boolean] = equals(a, b)
-  //def __equal[A,B](a: A, b: Rep[B])(implicit o: Overloaded3, mA: Elem[A], mB: Elem[B]): Rep[Boolean] = equals(toRep(a), b)
-
-  //def infix_!=[A,B](a: Rep[A], b: Rep[B])(implicit o: Overloaded1, mA: Elem[A], mB: Elem[B]) : Rep[Boolean] = notequals(a,b)
-  //def infix_!=[A,B](a: Rep[A], b: B)(implicit o: Overloaded2, mA: Elem[A], mB: Elem[B]) : Rep[Boolean] = notequals(a, b)
-  //def infix_!=[A,B](a: A, b: Rep[B])(implicit o: Overloaded3, mA: Elem[A], mB: Elem[B]) : Rep[Boolean] = notequals(toRep(a), b)
 
   case class EqualsClass[A](lhs: Exp[A], rhs: Exp[A]) extends EqBinOp[A]("===") {
     def copyWith(l: Rep[A], r: Rep[A]) = this.copy(lhs = l, rhs = r)

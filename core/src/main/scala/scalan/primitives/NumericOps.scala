@@ -2,10 +2,9 @@ package scalan.primitives
 
 import scalan.staged.{BaseExp}
 import scalan.{ScalanStaged, Scalan, ScalanSeq}
-import scalan.common.OverloadHack
 
 
-trait NumericOps extends OverloadHack { self: Scalan =>
+trait NumericOps { self: Scalan =>
 //  implicit def repNumericToNumericOps[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]) = new NumericOpsCls(x)
 //  implicit def repNumericIntOps(x: Rep[Int]) = new NumericIntOpsCls(x)
 //  //implicit def numericToNumericOps[T](x: T)(implicit n: Numeric[T], et: Elem[T]) = new NumericOpsCls(x)

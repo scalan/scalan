@@ -4,9 +4,9 @@
  */
 package scalan.primitives
 
-import scalan.staged.{BaseExp}
+import scalan.common.OverloadHack._
+import scalan.staged.BaseExp
 import scalan.{ScalanStaged, Scalan, ScalanSeq}
-import scala.language.{implicitConversions}
 
 trait Tuples { self: Scalan =>
   implicit object Pair {

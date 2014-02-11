@@ -2,7 +2,7 @@ package scalan.common
 
 // hack to appease erasure
 
-trait OverloadHack {
+object OverloadHack {
   class Overloaded1 { override def toString = "O1"}
   class Overloaded2 { override def toString = "O2"}
   class Overloaded3 { override def toString = "O3"}
