@@ -3,103 +3,103 @@ package tests
 import _root_.scalan.primitives.FunctionsExp
 import _root_.scalan.ScalanStaged
 import _root_.scalan.staged.Scheduling
-import java.io.{File, PrintWriter, FileOutputStream}
+import java.io.{ File, PrintWriter, FileOutputStream }
 
 trait GraphVizExport extends Scheduling with FunctionsExp { self: ScalanStaged =>
 
-  def quote(x: Any) = "\""+x+"\""
+  private def quote(x: Any) = "\"" + x + "\""
 
-  def nodeColor(sym: Exp[_]): String = sym.elem match {
+  private def nodeColor(sym: Exp[_]): String = "color=" + (sym.elem match {
     //case _: PArrayElem[_] => "blue"
-    case _: ViewElem[_,_] => "green"
+    case _: ViewElem[_, _] => "green"
     //case _: PipeElem[_] => "brown"
-    case _: FuncElem[_,_] => "magenta"
+    case _: FuncElem[_, _] => "magenta"
     //case _: ChunksElem[_] => "black"
     case _ => "grey"
-  }
+  })
 
-  def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
+  private def nodeLabel(str: String) = s"label=${quote(str)}"
+
+  private def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
     rhs match {
       case l: Lambda[_, _] =>
         val x = l.x
         stream.println(quote(x) + " [")
-        stream.println("label=" + quote(x.toStringWithType))
-        stream.println("color=" + nodeColor(x))
+        stream.println(nodeLabel(x.toStringWithType))
+        stream.println(nodeColor(x))
         stream.println("]")
       case _ =>
     }
     stream.println(quote(sym) + " [")
-    stream.println("label=" + quote(sym + " = " + rhs.format))
-    stream.println("shape=box,color=" + nodeColor(sym))
+    stream.println(nodeLabel(sym + " = " + rhs.format))
+    stream.println("shape=box," + nodeColor(sym))
     stream.println("]")
   }
 
-  def emitDeps(sym: Exp[_], deps: List[Exp[Any]], dotted: Boolean)(implicit stream: PrintWriter) = {
+  private def emitDeps(sym: Exp[_], deps: List[Exp[_]], dotted: Boolean)(implicit stream: PrintWriter) = {
     for (dep <- deps) {
-      val depLabel = dep.toString  //dep.isVar match { case true => dep.toStringWithType case _ => dep.toString }
-      val params = dotted match { case true => " [style=dotted]" case _ => ""}
-      stream.println("\"" + depLabel + "\" -> \"" + sym + "\"" + params)
+      val depLabel = dep.toString //dep.isVar match { case true => dep.toStringWithType case _ => dep.toString }
+      val params = if (dotted) " [style=dotted]" else ""
+      stream.println(s"${quote(depLabel)} -> ${quote(sym)}$params")
     }
   }
 
-  def emitDepGraph(d: Def[Any], file: String, landscape: Boolean): Unit =
+  def emitDepGraph(d: Def[_], file: String, landscape: Boolean): Unit =
     emitDepGraph(dep(d), file, landscape)
-  def emitDepGraph(start: Exp[Any], file: String, landscape: Boolean = false): Unit =
+  def emitDepGraph(start: Exp[_], file: String, landscape: Boolean = false): Unit =
     emitDepGraph(List(start), file, landscape)
-  def emitDepGraph(ss: List[Exp[Any]], file: String, landscape: Boolean): Unit = {
+  def emitDepGraph(ss: List[Exp[_]], file: String, landscape: Boolean): Unit = {
     val f = new File(file)
     f.getParentFile.mkdirs()
     emitDepGraph(ss, new java.io.PrintWriter(new java.io.FileOutputStream(file)), landscape)
   }
 
-  def lambdaDeps(l: Lambda[_,_]): (List[Exp[_]], List[Exp[_]]) = l.y match {
-    case Def(l1: Lambda[_, _]) =>  val (ds, vs) = lambdaDeps(l1); (ds, l.x :: vs)
+  private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
+    case Def(l1: Lambda[_, _]) =>
+      val (ds, vs) = lambdaDeps(l1)
+      (ds, l.x :: vs)
     case _ => (dep(l.y), List(l.x))
   }
 
-  def emitDepGraph(ss: List[Exp[Any]], stream: PrintWriter, landscape: Boolean): Unit = {
+  private def emitDepGraph(ss: List[Exp[_]], stream: PrintWriter, landscape: Boolean): Unit = {
     stream.println("digraph G {")
 
-    val deflist = buildScheduleForResult(ss/* map { (_.asSymbol) }*/)
+    val deflist = buildScheduleForResult(ss /* map { (_.asSymbol) }*/ )
 
-    landscape match {
-      case true => stream.println("rankdir=LR")
-      case _ =>
+    if (landscape) {
+      stream.println("rankdir=LR")
     }
 
-    val lambdaBodies: Map[Exp[Any], Exp[Any]] = (deflist collect {
+    val lambdaBodies: Map[Exp[_], Exp[_]] = (deflist collect {
       case TP(s, lam: Lambda[_, _]) => (lam.y, s)
     }).toMap
 
     for (tp @ TP(sym, rhs) <- deflist) {
-      (lambdaBodies.contains(sym)) match {
-        case false =>
-          val (deps, lambdaVars) = rhs match {
-            case l: Lambda[_, _] => lambdaDeps(l)
-            case _ => (dep(rhs), Nil)
-          }
-          // emit node
-          emitNode(sym, rhs)(stream)
+      if (!lambdaBodies.contains(sym)) {
+        val (deps, lambdaVars) = rhs match {
+          case l: Lambda[_, _] => lambdaDeps(l)
+          case _ => (dep(rhs), Nil)
+        }
+        // emit node
+        emitNode(sym, rhs)(stream)
 
-          emitDeps(sym, deps, false)(stream)
-          emitDeps(sym, lambdaVars, true)(stream)
+        emitDeps(sym, deps, false)(stream)
+        emitDeps(sym, lambdaVars, true)(stream)
 
-          // emit lambda refs
-          tp.lambda match {
-            case Some(lam) =>
-              stream.println("\"%s\" -> \"%s\" [style=dotted,color=grey]".format(tp.sym, lam))
-            case _ =>
-          }
+        // emit lambda refs
+        tp.lambda match {
+          case Some(lam) =>
+            stream.println(s"${quote(tp.sym)} -> ${quote(lam)} [style=dotted,color=grey]")
+          case _ =>
+        }
 
-        case _ =>
-          // skip lambda bodies
+      } else {
+        // skip lambda bodies
       }
     }
 
     stream.println("}")
     stream.close()
   }
- 
-  
-  
+
 }
