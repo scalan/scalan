@@ -8,6 +8,8 @@ project/boot/
 test-out/
 example-out/
 it-out/
+perf-out/
+tmp/
 .cache
 .classpath
 .project

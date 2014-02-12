@@ -1,21 +1,23 @@
 package tests.performance
 
+import org.scalameter.Aggregator
 import org.scalameter.api._
+
 import scalan.ScalanDsl
 
 trait BaseBenchmark extends PerformanceTest with ScalanDsl {
-  lazy val warmer = new Executor.Warmer.Default
+  lazy val warmer: Executor.Warmer = new Executor.Warmer.Default
   
-  lazy val aggregator = Aggregator.min
+  lazy val aggregator: Aggregator = Aggregator.min
   
-  lazy val measurer = new Measurer.Default
+  lazy val measurer: Executor.Measurer = new Measurer.Default
   
-  lazy val executor = SeparateJvmsExecutor(
+  lazy val executor: Executor = LocalExecutor(
     warmer,
     aggregator,
     measurer)
   
-  lazy val reporter = new LoggingReporter
+  lazy val reporter: Reporter = new LoggingReporter
   
-  lazy val persistor = Persistor.None
+  lazy val persistor: Persistor = Persistor.None
 }
