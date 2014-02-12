@@ -27,7 +27,7 @@ object ScalanLiteBuild extends Build {
   val testSettings = Seq(
     testOptions in Test := Seq(Tests.Filter(x => !itFilter(x))),
     testOptions in ItTest := Seq(Tests.Filter(x => itFilter(x))),
-    testFrameworks in Test := Seq(new TestFramework("org.scalameter.ScalaMeterFramework")),
+    testFrameworks in PerfTest := Seq(new TestFramework("org.scalameter.ScalaMeterFramework")),
     logBuffered in PerfTest := false,
     // testOptions in PerfTest := Seq(Tests.Filter(perfFilter)),
     // needed thanks to http://stackoverflow.com/questions/7898273/how-to-get-logging-working-in-scala-unit-tests-with-testng-slf4s-and-logback
