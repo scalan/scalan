@@ -24,6 +24,7 @@ trait InductiveGraphs[Node] {
 	  def value: A
 	
 	  def suc = out.map(_.node).toSet
+      def clearEdgesWith(node: Node): NodeContext[A,B]
 	}
 	
 	object NodeContext {
@@ -34,7 +35,9 @@ trait InductiveGraphs[Node] {
 	
 	case class Context[+A, +B](in: Edges[B], node: Node, value: A, out: Edges[B]) extends NodeContext[A, B] {
 	  override def toString = s"([${in.map(e ⇒ (e.value, e.node)) mkString " "}]→ $node($value) →[${out.map(e ⇒ (e.value, e.node)) mkString " "}])"
-	}
+
+      def clearEdgesWith(n: Node): Context[A,B] = Context(in.filterNot(_.node == n), this.node, this.value, out filterNot (_.node == n))
+    }
 	
 	object Graph {
 	
@@ -44,11 +47,17 @@ trait InductiveGraphs[Node] {
 	    def findValue(node: Node) = SearchNode(graph, node) match {
 	      case FoundNode(NodeContext(_, _, value, _), _) ⇒ value
 	    }
-	    val edges = graph.ufold(Set.empty[Any]) { (memo, context) ⇒
-	      memo ++
-	        context.in.map(i ⇒ (findValue(i.node), context.value)) ++
-	        context.out.map(o ⇒ (context.value, findValue(o.node)))
-	    }.map { case (from, to) ⇒ s""""$from" -> "$to";\n""" }.mkString
+	    val edges = {
+          val pairs = graph.ufold(Set.empty[Any]) {
+            (memo, context) ⇒
+            memo ++
+              context.in.map(i ⇒ (findValue(i.node), context.value)) ++
+              context.out.map(o ⇒ (context.value, findValue(o.node)))
+          }
+          (pairs map {
+            case (from, to) ⇒ s""""$from" -> "$to";\n"""
+          }).mkString
+        }
 	
 	    s"digraph g {\n$edges}"
 	  }
@@ -61,7 +70,9 @@ trait InductiveGraphs[Node] {
 	  def &:[C >: A, D >: B](context: NodeContext[C, D]): Graph[C, D] =
 	    pair.PairGraph(context, this)
 	
-	  def &+:[C >: A, D >: B](context: NodeContext[C, D]): Graph[C, D] =
+	  //TODO remove. This operation doesn't preserve inductive property of the graphs.
+      // Bacause it updates contexts of this graph to point to a new node.
+      def &+:[C >: A, D >: B](context: NodeContext[C, D]): Graph[C, D] =
 	    pair.PairGraph(context, this)
 	
 	  def context[C >: A, D >: B](in: Edges[D], node: Node, value: C, out: Edges[D]): NodeContext[C, D] =
@@ -123,7 +134,23 @@ trait InductiveGraphs[Node] {
 	    case FoundNode(context, _) ⇒ Some(context)
 	    case _                     ⇒ None
 	  }
-	
+
+// this iterator implementations hangs up the compiler 2.10.2 and 2.10.3 for some reason
+//	  def nodeContext(node: Node): Option[NodeContext[A,B]] = {
+//      for (c <- contextIterator) {
+//        if (c.node == node) return Some(c)
+//      }
+//      None
+//    }
+
+//    def contextIterator: Iterator[NodeContext[A,B]] = new Iterator[NodeContext[A,B]] {
+//      var graph = this
+//      def hasNext = !graph.isEmpty
+//      def next() = graph match {
+//        case (left: NodeContext[A, B]) &: _ ⇒ left
+//      }
+//    }
+
 	  private def findIncoming(toVisit: List[Node]): List[NodeContext[A, B]] =
 	    if (toVisit.isEmpty || this.isEmpty) Nil
 	    else SearchNode(this, toVisit.head) match {
@@ -143,29 +170,40 @@ trait InductiveGraphs[Node] {
 
   implicit class GraphOps[A,B](g: Graph[A,B]) {
     def search(node: Node) = SearchNode(g, node)
+
+    def dfs(ns: List[Node])(suc: NodeContext[A,B] => List[Node]): List[Node] = ns match {
+      case Nil => Nil
+      case n :: ns =>
+        search(n) match {
+          case FoundNode(c, g) => n :: g.dfs(suc(c) ::: ns)(suc)
+          case _ => this.dfs(ns)(suc)
+        }
+    }
   }
 
 	// Extractor that's &v-like
 	case class SearchNode[A, B](graph: Graph[A, B], node: Node)
 	object FoundNode {
 	  def unapply[A, B](query: SearchNode[A, B]): Option[(NodeContext[A, B], Graph[A, B])] = {
-	    query.graph.ufold((Option.empty[NodeContext[A, B]], Graph.empty[A, B])) { (memo, context) ⇒
-	      memo match {
-	        case (found, graph) if found.isEmpty && context.node == query.node ⇒ (Some(context), graph)
-	        case (maybeFound, graph) ⇒ (maybeFound, context &: graph)
+      val res: (Option[NodeContext[A, B]], Graph[A, B]) =
+        query.graph.ufold((Option.empty[NodeContext[A, B]], Graph.empty[A, B])) {
+          (memo, context) ⇒ memo match {
+            case (found, graph) if found.isEmpty && context.node == query.node ⇒ (Some(context), graph)
+            case (maybeFound, graph) ⇒ (maybeFound, context.clearEdgesWith(query.node) &: graph)
+          }
 	      }
-	    } match {
+      res match {
 	      case (None, _)                       ⇒ None
-	      case (Some(foundContext), restGraph) ⇒ Some((foundContext, restGraph))
+	      case (Some(foundContext), restGraph) ⇒ Some(foundContext, restGraph)
 	    }
 	  }
 	}
 
-  object IsEmpty {
-    def unapply[A, B](query: SearchNode[A, B]): Option[Unit] = {
-      if (query.graph.isEmpty) Some(()) else None
-    }
-  }
+//  object IsEmpty {
+//    def unapply[A, B](query: SearchNode[A, B]): Option[Unit] = {
+//      if (query.graph.isEmpty) Some(()) else None
+//    }
+//  }
 
 	trait &:[+A, +B] {
 	  def left: NodeContext[A, B]

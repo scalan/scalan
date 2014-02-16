@@ -9,8 +9,9 @@ package test.scalan.common
 
 import org.scalatest.{Matchers, FunSpec}
 import scalan.common.InductiveGraphs
+import tests.scalan.common.InductiveGraphTesting
 
-class InductiveGraphsSuite extends FunSpec with Matchers {
+class InductiveGraphsSuite extends FunSpec with Matchers with InductiveGraphTesting {
 
   val graphs = new InductiveGraphs[Int] {}
   import graphs._
@@ -22,6 +23,23 @@ class InductiveGraphsSuite extends FunSpec with Matchers {
       Context(Seq(), 1, 1, Seq()).suc should be(Set())
     }
   }
+
+  val names = (0 to 13).map(num ⇒ num → num).toMap
+  val bigGraph =
+      node(0, Seq(1)) &+:
+      node(1, Seq(2)) &+:
+      node(2, Seq(10, 3)) &+:
+      Context(Seq(Edge((), 5), Edge((), 4)), 3, names(3), Seq()) &+:
+      Context(Seq(Edge((), 5)), 4, names(4), Seq()) &+:
+      Context(Seq(Edge((), 8), Edge((), 6)), 5, names(5), Seq()) &+:
+      Context(Seq(Edge((), 11)), 6, names(6), Seq()) &+:
+      Context(Seq(Edge((), 8)), 7, names(7), Seq()) &+:
+      Context(Seq(Edge((), 11)), 8, names(8), Seq()) &+:
+      Context(Seq(Edge((), 13), Edge((), 10)), 9, names(9), Seq()) &+:
+      Context(Seq(Edge((), 11)), 10, names(10), Seq()) &+:
+      Context(Seq(Edge((), 13)), 11, names(11), Seq()) &+:
+      Context(Seq(Edge((), 13)), 12, names(12), Seq()) &+:
+      Context(Seq(), 13, names(13), Seq()) &+: Empty
 
   describe("Graphs") {
 
@@ -89,12 +107,12 @@ class InductiveGraphsSuite extends FunSpec with Matchers {
     }
 
     it("can delete a node") {
-      val testGraph = (Context(Seq(Edge("left", 2)), 1, 23, Seq()) &+:
-        Context(Seq(), 2, 46, Seq()) &+:
+      val testGraph = (Context(Seq(Edge("left", 1)), 2, 23, Seq()) &:
+        Context(Seq(), 1, 46, Seq()) &:
         Empty)
 
-      testGraph.delete(1) should be(Context(Seq(), 2, 46, Seq(Edge("left", 1))) &+: Empty)
-      testGraph.delete(2) should be(Context(Seq(Edge("left", 2)), 1, 23, Seq()) &+: Empty)
+      testGraph.delete(2) should be(Context(Seq(), 1, 46, Seq()) &: Empty)
+      testGraph.delete(1) should be(Context(Seq(), 2, 23, Seq()) &: Empty)
       testGraph.delete(0) should be(testGraph)
     }
 
@@ -189,22 +207,7 @@ class InductiveGraphsSuite extends FunSpec with Matchers {
     }
 
     it("more children tests") {
-      val names = (0 to 13).map(num ⇒ num → num).toMap
-      val g =
-        Context(Seq(Edge((), 1)), 0, names(0), Seq()) &+:
-          Context(Seq(Edge((), 2)), 1, names(1), Seq()) &+:
-          Context(Seq(Edge((), 10), Edge((), 3)), 2, names(2), Seq()) &+:
-          Context(Seq(Edge((), 5), Edge((), 4)), 3, names(3), Seq()) &+:
-          Context(Seq(Edge((), 5)), 4, names(4), Seq()) &+:
-          Context(Seq(Edge((), 8), Edge((), 6)), 5, names(5), Seq()) &+:
-          Context(Seq(Edge((), 11)), 6, names(6), Seq()) &+:
-          Context(Seq(Edge((), 8)), 7, names(7), Seq()) &+:
-          Context(Seq(Edge((), 11)), 8, names(8), Seq()) &+:
-          Context(Seq(Edge((), 13), Edge((), 10)), 9, names(9), Seq()) &+:
-          Context(Seq(Edge((), 11)), 10, names(10), Seq()) &+:
-          Context(Seq(Edge((), 13)), 11, names(11), Seq()) &+:
-          Context(Seq(Edge((), 13)), 12, names(12), Seq()) &+:
-          Context(Seq(), 13, names(13), Seq()) &+: Empty
+      val g = bigGraph
       println(Graph.asDot(g))
       g.children(13).map(_.node) should be(List())
       g.children(12).map(_.node) should be(List(13))
@@ -248,5 +251,12 @@ class InductiveGraphsSuite extends FunSpec with Matchers {
 
   }
 
+  describe("GraphOps") {
+    it("dfs") {
+      val dfsList = bigGraph.dfs(List(0))(c => c.in.map(_.node).toSet.toList)
+      dfsList should be(List(0, 1, 2, 10, 11, 13, 3, 5, 8, 6, 4))
+    }
 
+
+  }
 }

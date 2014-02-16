@@ -1,15 +1,15 @@
 package tests.scalan.common
 
 import org.scalatest.{Matchers, FunSpec}
-import scalan.common.GraphOperations
+import scalan.common.{InductiveGraphs, GraphOperations}
 
-class GraphOperationsSuite extends FunSpec with Matchers {
+class GraphOperationsSuite extends FunSpec with Matchers with InductiveGraphTesting {
 
   val graphs = new GraphOperations[Int] {}
   import graphs._
+
   describe("Prefix search") {
 
-    def node(n: Int, ins: Seq[Int]) = Context(ins map (in => Edge(in.toString, in)), n, (), Seq())
     def isVar(n: Int) = n >= 100
     val nodes = Map(
       1 -> "a", 2 -> "b", 3 -> "c", 4 -> "d",
