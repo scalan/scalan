@@ -71,10 +71,10 @@ trait GraphVizExport extends Scheduling with FunctionsExp { self: ScalanStaged =
     }
 
     val lambdaBodies: Map[Exp[_], Exp[_]] = (deflist collect {
-      case TP(s, lam: Lambda[_, _]) => (lam.y, s)
+      case TableEntry(s, lam: Lambda[_, _]) => (lam.y, s)
     }).toMap
 
-    for (tp @ TP(sym, rhs) <- deflist) {
+    for (tp @ TableEntry(sym, rhs) <- deflist) {
       if (!lambdaBodies.contains(sym)) {
         val (deps, lambdaVars) = rhs match {
           case l: Lambda[_, _] => lambdaDeps(l)

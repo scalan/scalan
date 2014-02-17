@@ -107,9 +107,9 @@ trait BaseExp extends Base { self: ScalanStaged =>
   }
 
   def fresh[T](implicit leT: LElem[T]): Exp[T]
-  def findDefinition[T](s: Exp[T]): Option[TP[T]]
-  def findDefinition[T](d: Def[T]): Option[TP[T]]
-  def createDefinition[T](s: Exp[T], d: Def[T]): TP[T]
+  def findDefinition[T](s: Exp[T]): Option[TableEntry[T]]
+  def findDefinition[T](d: Def[T]): Option[TableEntry[T]]
+  def createDefinition[T](s: Exp[T], d: Def[T]): TableEntry[T]
 
   /**
    * Updates the universe of symbols and definitions, then rewrites until fix-point
@@ -151,26 +151,26 @@ trait BaseExp extends Base { self: ScalanStaged =>
   }
 
 
-  trait TP[+T] {
+  trait TableEntry[+T] {
     def sym: Exp[T]
+    // TODO check if needed
     def definition: Option[Def[T]]
     def lambda: Option[Exp[_]]
-    def rhs: Def[T] = definition.getOrElse(evaluate)
-    def evaluate: Def[T] = !!!("invalid definition " + this, sym)
+    def rhs: Def[T]
     def isLambda = rhs match { case l: Lambda[_,_] => true case _ => false }
   }
 
-  trait TPCompanion {
-    def apply[T](sym: Exp[T])(eval: => Def[T]): TP[T]
-    def apply[T](sym: Exp[T], rhs: Def[T]): TP[T]
-    def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]): TP[T]
-    def unapply[T](tp: TP[T]): Option[(Exp[T], Def[T])]
+  trait TableEntryCompanion {
+    def apply[T](sym: Exp[T])(eval: => Def[T]): TableEntry[T]
+    def apply[T](sym: Exp[T], rhs: Def[T]): TableEntry[T]
+    def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]): TableEntry[T]
+    def unapply[T](tp: TableEntry[T]): Option[(Exp[T], Def[T])]
   }
 
-  val TP: TPCompanion = null
+  val TableEntry: TableEntryCompanion = null
 
-  object DefTP {
-    def unapply[T](e: Exp[T]): Option[TP[T]] = findDefinition(e)
+  object DefTableEntry {
+    def unapply[T](e: Exp[T]): Option[TableEntry[T]] = findDefinition(e)
   }
 
   def decompose[T](d: Def[T]): Exp[_] = d.decompose match {
@@ -201,7 +201,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
       case Def(_: Lambda[_, _]) => true
       case _ => false
     }
-    def tp: TP[_] = findDefinition(symbol).get
+    def tp: TableEntry[_] = findDefinition(symbol).get
     def sameScopeAs(other: Exp[_]): Boolean = this.tp.lambda == other.tp.lambda
 
     def asPair[A,B,R](f: Elem[A] => Elem[B] => Rep[(A,B)] => R): R = {
@@ -294,7 +294,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
       val res = isDebug match {
         case false => varName
         case _ =>
-          val rhs = findDefinition(this) match { case Some(TP(_, d)) => "->" + d.toString case _ => "" }
+          val rhs = findDefinition(this) match { case Some(TableEntry(_, d)) => "->" + d.toString case _ => "" }
           "s" + id + rhs
       }
       res
@@ -305,39 +305,46 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
 
   def fresh[T](implicit et: LElem[T]): Exp[T] = new Sym[T]()
 
-  class TPS[T](val sym: Exp[T], val definition: Option[Def[T]], val lambda: Option[Exp[_]]) extends TP[T] {
+  class TableEntrySingle[T](val sym: Exp[T], val rhs: Def[T], val lambda: Option[Exp[_]]) extends TableEntry[T] {
+    def definition = Some(rhs)
   }
 
-  override val TP = new TPCompanion {
-    def apply[T](sym: Exp[T])(eval: => Def[T]) = new TPS(sym, None, None) { override def evaluate = eval }
-    def apply[T](sym: Exp[T], rhs: Def[T]) = new TPS(sym, Some(rhs), None)
-    def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]) = new TPS(sym, Some(rhs), Some(lam))
-    def unapply[T](tp: TP[T]): Option[(Exp[T], Def[T])] = Some((tp.sym, tp.rhs))
-    //def unapply[T](s: Exp[T]): Option[TP[T]] = findDefinition(s)
+  class TableEntryEval[T](val sym: Exp[T], eval: => Def[T]) extends TableEntry[T] {
+    def definition = None
+    def lambda = None
+    lazy val rhs = eval
   }
 
-  private[this] var expToGlobalDefs: Map[Exp[_], TP[_]] = Map.empty
+  override val TableEntry = new TableEntryCompanion {
+    def apply[T](sym: Exp[T])(eval: => Def[T]) = new TableEntryEval(sym, eval)
+    def apply[T](sym: Exp[T], rhs: Def[T]) = new TableEntrySingle(sym, rhs, None)
+    def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]) = new TableEntrySingle(sym, rhs, Some(lam))
+    def unapply[T](tp: TableEntry[T]): Option[(Exp[T], Def[T])] = Some((tp.sym, tp.rhs))
+    //def unapply[T](s: Exp[T]): Option[TableEntry[T]] = findDefinition(s)
+  }
 
-  def findDefinition[T](s: Exp[T]): Option[TP[T]] =
-    expToGlobalDefs.get(s).asInstanceOf[Option[TP[T]]]
+  private[this] var expToGlobalDefs: Map[Exp[_], TableEntry[_]] = Map.empty
 
-  def findDefinition[T](d: Def[T]): Option[TP[T]] =
-    expToGlobalDefs.valuesIterator.find(_.rhs == d).asInstanceOf[Option[TP[T]]]
+  def findDefinition[T](s: Exp[T]): Option[TableEntry[T]] =
+    expToGlobalDefs.get(s).asInstanceOf[Option[TableEntry[T]]]
+
+  def findDefinition[T](d: Def[T]): Option[TableEntry[T]] =
+    expToGlobalDefs.valuesIterator.find(_.rhs == d).asInstanceOf[Option[TableEntry[T]]]
 
   def findOrCreateDefinition[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
     val res = findDefinition(d) match {
-      case Some(TP(s, _)) => s
+      case Some(TableEntry(s, _)) => s
       case None =>
-        val TP(s, _) = createDefinition(newSym, d)
+        val TableEntry(s, _) = createDefinition(newSym, d)
         s
     }
     res
   }
 
-  def createDefinition[T](s: Exp[T], d: Def[T]): TP[T] = {
+  def createDefinition[T](s: Exp[T], d: Def[T]): TableEntry[T] = {
     val tp = lambdaStack.top match {
-      case Some(fSym) => TP(s, d, fSym)
-      case _ => TP(s, d)
+      case Some(fSym) => TableEntry(s, d, fSym)
+      case _ => TableEntry(s, d)
     }
     expToGlobalDefs += tp.sym -> tp
     tp

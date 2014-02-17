@@ -123,7 +123,7 @@ trait Transforming { self: ScalanStaged =>
       val newLambdaSym = getMirroredLambdaSym(node)
 
       lambdaStack.push(newLambdaSym)
-      val schedule = lam.schedule map { case TP(sym, d) => sym }
+      val schedule = lam.schedule map { case TableEntry(sym, d) => sym }
       val (t2, _) = mirrorSymbols(t1, rewriter, schedule)
       lambdaStack.pop
 

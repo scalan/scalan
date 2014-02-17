@@ -28,7 +28,7 @@ trait ProgramGraphs extends Scheduling with Transforming with AstGraphs { self: 
 
     def scheduleAll = {
       schedule flatMap (tp  => tp match {
-        case TP(s, lam: Lambda[_, _]) => lam.scheduleAll :+ tp
+        case TableEntry(s, lam: Lambda[_, _]) => lam.scheduleAll :+ tp
         case _ => List(tp)
       })
     }
@@ -38,7 +38,7 @@ trait ProgramGraphs extends Scheduling with Transforming with AstGraphs { self: 
      */
     val nodes: Map[Exp[Any], ProgramGraphNode] = {
       var defMap: Map[Exp[Any], ProgramGraphNode] = (schedule map {
-        case TP(s, d) => (s, ProgramGraphNode(this, s, Some(d), List.empty[Exp[Any]]))
+        case TableEntry(s, d) => (s, ProgramGraphNode(this, s, Some(d), List.empty[Exp[Any]]))
       }).toMap
 
       def addUsage(usedSym: Exp[Any], referencingSym: Exp[Any]) = defMap.get(usedSym) match {
@@ -48,7 +48,7 @@ trait ProgramGraphs extends Scheduling with Transforming with AstGraphs { self: 
           defMap += usedSym -> ProgramGraphNode(this, usedSym, None, List(referencingSym))
       }
 
-      for (TP(s,d) <- schedule) {
+      for (TableEntry(s,d) <- schedule) {
         val usedSymbols = d.getDeps
         usedSymbols.foreach(us => addUsage(us, s))
       }
@@ -66,7 +66,7 @@ trait ProgramGraphs extends Scheduling with Transforming with AstGraphs { self: 
     }
     def hasManyUsages(s: Exp[Any]): Boolean = usagesOf(s).length > 1
 
-    def scheduleFrom(x: Exp[Any]): List[TP[_]] = {
+    def scheduleFrom(x: Exp[Any]): List[TableEntry[_]] = {
       val locals = GraphUtil.depthFirstSetFrom(x)(sym => usagesOf(sym).filter(domain contains _))
       schedule filter ( locals contains _.sym )
     }

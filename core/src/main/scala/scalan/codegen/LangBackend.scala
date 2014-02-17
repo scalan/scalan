@@ -23,10 +23,10 @@ trait LangBackend extends BaseExp { self: ScalanStaged =>
 
   class LangCodegen[Ctx <: Transformer](g: ProgramGraph[Ctx]) {
 
-    lazy val globalConsts = g.scheduleAll.collect {case tp@TP(_, d) if isGlobalConst(d) => tp}
+    lazy val globalConsts = g.scheduleAll.collect {case tp@TableEntry(_, d) if isGlobalConst(d) => tp}
 
     lazy val forceSymbols = {
-      val res = g.scheduleAll collect { case TP(s, d) => argsToForce(d) }
+      val res = g.scheduleAll collect { case TableEntry(s, d) => argsToForce(d) }
       res.flatten.toSet ++ globalConsts.map({ _.sym }).toSet
     }
   }

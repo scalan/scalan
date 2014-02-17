@@ -51,13 +51,13 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     def productArity: Int = 3
     
     
-    lazy val schedule: List[TP[_]] = {
+    lazy val schedule: List[TableEntry[_]] = {
       isIdentity match {
         case false =>
           val g = new PGraph(y)
           val sh = g.scheduleFrom(x)
           (sh, y) match {
-            case (Nil, DefTP(tp)) => List(tp)  // the case when body is const
+            case (Nil, DefTableEntry(tp)) => List(tp)  // the case when body is const
             case _ => sh
           }
 
@@ -65,13 +65,13 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       }
     }
 
-    lazy val scheduleWithConsts: List[TP[_]] = {
+    lazy val scheduleWithConsts: List[TableEntry[_]] = {
       isIdentity match {
         case false =>
           val g = new PGraph(y)
           val sh = g.schedule
           (sh, y) match {
-            case (Nil, DefTP(tp)) => List(tp)  // the case when body is const
+            case (Nil, DefTableEntry(tp)) => List(tp)  // the case when body is const
             case _ => sh
           }
 
@@ -80,13 +80,13 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
     lazy val scheduleSyms = schedule map { _.sym }
 
-    def scheduleAll: List[TP[_]] = schedule.flatMap(tp => tp.rhs match {
+    def scheduleAll: List[TableEntry[_]] = schedule.flatMap(tp => tp.rhs match {
       case lam: Lambda[_, _] => lam.scheduleAll :+ tp
       case _ => List(tp)
     })
 
     def isIdentity: Boolean = y == x
-    def isLocalDef[T](tp: TP[T]): Boolean = isLocalDef(tp.sym)
+    def isLocalDef[T](tp: TableEntry[T]): Boolean = isLocalDef(tp.sym)
     def isLocalDef(s: Exp[Any]): Boolean = scheduleSyms contains s
 
     lazy val freeVars: Set[Exp[_]] = {
@@ -227,7 +227,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     val y = executeFunction(fun, x, fSym)
     val lam = new LambdaWrapper(Some(fun), x, y, fSym)
     findDefinition(lam) match {
-      case Some(TP(sym, Lambda(_, Some(f), _, _))) => {
+      case Some(TableEntry(sym, Lambda(_, Some(f), _, _))) => {
         f equals fun match {
           case true => sym.asRep[A=>B]
           case false =>
