@@ -24,7 +24,7 @@ trait InductiveGraphs[Node] {
 	  def value: A
 	
 	  def suc = out.map(_.node).toSet
-      def clearEdgesWith(node: Node): NodeContext[A,B]
+    def clearEdgesWith(node: Node): (NodeContext[A,B], Edges[B], Edges[B])
 	}
 	
 	object NodeContext {
@@ -36,8 +36,13 @@ trait InductiveGraphs[Node] {
 	case class Context[+A, +B](in: Edges[B], node: Node, value: A, out: Edges[B]) extends NodeContext[A, B] {
 	  override def toString = s"([${in.map(e ⇒ (e.value, e.node)) mkString " "}]→ $node($value) →[${out.map(e ⇒ (e.value, e.node)) mkString " "}])"
 
-      def clearEdgesWith(n: Node): Context[A,B] = Context(in.filterNot(_.node == n), this.node, this.value, out filterNot (_.node == n))
+    def clearEdgesWith(n: Node): (Context[A,B], Edges[B], Edges[B]) = {
+      val related = (_: HalfEdge[B]).node == n
+      val inf = in filterNot related
+      val outf = out filterNot related
+      (Context(inf, this.node, this.value, outf), in filter related, out filter related)
     }
+  }
 	
 	object Graph {
 	
@@ -168,6 +173,14 @@ trait InductiveGraphs[Node] {
 	
 	}
 
+  implicit class EdgesOps[B](edges: Edges[B]) {
+    def nodesList: List[Node] = edges.map(_.node).toList
+    def mergeEdges(others: Edges[B]) = {
+      val newEdges = others filterNot (o => edges.exists(_.node == o.node))
+      edges ++ newEdges
+    }
+  }
+
   implicit class GraphOps[A,B](g: Graph[A,B]) {
     def search(node: Node) = SearchNode(g, node)
 
@@ -184,17 +197,26 @@ trait InductiveGraphs[Node] {
 	// Extractor that's &v-like
 	case class SearchNode[A, B](graph: Graph[A, B], node: Node)
 	object FoundNode {
-	  def unapply[A, B](query: SearchNode[A, B]): Option[(NodeContext[A, B], Graph[A, B])] = {
-      val res: (Option[NodeContext[A, B]], Graph[A, B]) =
-        query.graph.ufold((Option.empty[NodeContext[A, B]], Graph.empty[A, B])) {
+	  case class State[A,B](ctx: Option[NodeContext[A, B]], graph: Graph[A, B], ins: Edges[B], outs: Edges[B])
+    def unapply[A, B](query: SearchNode[A, B]): Option[(NodeContext[A, B], Graph[A, B])] = {
+      val res: State[A,B] =
+        query.graph.ufold(State(Option.empty[NodeContext[A, B]], Graph.empty[A, B], Nil, Nil)) {
           (memo, context) ⇒ memo match {
-            case (found, graph) if found.isEmpty && context.node == query.node ⇒ (Some(context), graph)
-            case (maybeFound, graph) ⇒ (maybeFound, context.clearEdgesWith(query.node) &: graph)
+            case State(found, g, _,_) if found.isEmpty && context.node == query.node ⇒ memo.copy(ctx = Some(context), graph = g)
+            case State(maybeFound, g, ins, outs) ⇒ {
+              val (ctx1, is, os) = context.clearEdgesWith(query.node)
+              val outsEx = is.map(i => Edge(i.value, context.node))
+              val insEx = os.map(o => Edge(o.value, context.node))
+              State(maybeFound, ctx1 &: g, ins ++ insEx, outs ++ outsEx)
+            }
           }
 	      }
       res match {
-	      case (None, _)                       ⇒ None
-	      case (Some(foundContext), restGraph) ⇒ Some(foundContext, restGraph)
+	      case State(None, _,_,_) ⇒ None
+	      case State(Some(found), restGraph, ins, outs) ⇒ {
+          val ctx = Context(found.in.mergeEdges(ins), found.node, found.value, found.out.mergeEdges(outs))
+          Some(ctx, restGraph)
+        }
 	    }
 	  }
 	}
@@ -219,7 +241,7 @@ trait InductiveGraphs[Node] {
 	
 	  case class PairGraph[A, B](left: NodeContext[A, B], right: Graph[A, B]) extends Graph[A, B] with &:[A, B] {
 	    override def &:[C >: A, D >: B](context: NodeContext[C, D]) = PairGraph(context, this)
-	    override def &+:[C >: A, D >: B](context: NodeContext[C, D]) = PairGraph(context, updateNodes(context))
+	    //override def &+:[C >: A, D >: B](context: NodeContext[C, D]) = PairGraph(context, updateNodes(context))
 	    override def toString = left + " &: " + right
 	
 	    private def updateEdges[D >: B](newNode: Node, newEdges: Edges[D], oldNode: Node, oldEdges: Edges[D]) =

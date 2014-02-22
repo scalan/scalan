@@ -3,6 +3,7 @@ package scalan.common
 trait GraphOperations[Node] extends InductiveGraphs[Node] {
   type Subst = Map[Node, Node]
   type NodeCompare = (Node, Node) => Boolean
+  type LeafPredicate = Node => Boolean
   /**
    *  Search subgraph in a Graph considered as DAG along input Edges (as defined by Context)
    *  @param graph Graph where to search
@@ -18,7 +19,7 @@ trait GraphOperations[Node] extends InductiveGraphs[Node] {
       var fromSubst = Map[Node, Node]()
       def bind(n1: Node, n2: Node) = {
         toSubst += (n1 -> n2)
-        fromSubst += (n1 -> n2)
+        fromSubst += (n2 -> n1)
       }
       def extractPrefixRec[A,B](p: Graph[A,B], pn: Node, g: Graph[A,B], gn: Node): Boolean = {
         (p.search(pn), g.search(gn)) match {
@@ -63,5 +64,81 @@ trait GraphOperations[Node] extends InductiveGraphs[Node] {
     }
 
   }
+  trait SimilarityResult
+  case object SimilarityEqual extends SimilarityResult
+  case object SimilarityEmbeded extends SimilarityResult
+  case object SimilarityFailed extends SimilarityResult
 
+  type ContextCompare[A,B] = (NodeContext[A,B], NodeContext[A,B]) => SimilarityResult
+
+  case class BisimulatorState[A, B](
+       leftGraph: Graph[A, B],
+       leftStack: List[Node],
+       rightGraph: Graph[A,B],
+       rightStack: List[Node],
+       toSubst: Subst,
+       fromSubst: Subst,
+       kind: SimilarityResult) {
+    def isFailed = kind == SimilarityFailed || leftStack.size != rightStack.size
+  }
+
+  def defaultContextCompare[A,B](compare: NodeCompare, isLeaf: LeafPredicate)(lctx: NodeContext[A,B], rctx: NodeContext[A,B]): SimilarityResult = {
+    val ln = lctx.node
+    val rn = rctx.node
+    val leftIns = lctx.in
+    val rightIns = rctx.in
+    if (compare(ln, rn))
+      SimilarityEqual
+    else if (isLeaf(ln) || isLeaf(rn))
+      SimilarityEmbeded
+    else
+      SimilarityFailed
+  }
+
+  class Bisimulator[A,B](lg: Graph[A,B], rg: Graph[A,B], compare: ContextCompare[A,B]) {
+
+    def genStates(leftStart: List[Node], rightStart: List[Node]) = {
+      val initialState = BisimulatorState(lg, leftStart, rg, rightStart, Map(), Map(), SimilarityEqual)
+
+      new Iterator[BisimulatorState[A,B]] {
+        private var currState = initialState
+        private def isBisimilar(ln: Node, rn: Node) = currState.toSubst.get(ln).exists(_ == rn)
+
+        def hasNext = !currState.leftStack.isEmpty && !currState.rightStack.isEmpty && !currState.isFailed
+
+        def next() = {
+          val current = currState; import current._
+          val lnode :: ls = leftStack
+          val rnode :: rs = rightStack
+          if (isBisimilar(lnode, rnode))
+            currState = currState.copy(leftStack = ls, rightStack = rs)
+          else
+            (leftGraph.search(lnode), rightGraph.search(rnode)) match {
+              case (FoundNode(lc@Context(leftIns, _, _, _), restGraph1), FoundNode(rc@Context(rightIns, _, _, _), restGraph2)) =>
+                compare(lc, rc) match {
+                  case SimilarityEqual =>
+                    currState = BisimulatorState(
+                      restGraph1, leftIns.nodesList ::: ls,
+                      restGraph2, rightIns.nodesList ::: rs,
+                      toSubst + (lnode -> rnode), fromSubst + (rnode -> lnode),
+                      SimilarityEqual
+                    )
+                  case SimilarityEmbeded =>
+                    currState = BisimulatorState(
+                      restGraph1, ls,
+                      restGraph2, rs,
+                      toSubst + (lnode -> rnode), fromSubst + (rnode -> lnode),
+                      SimilarityEmbeded
+                    )
+                  case SimilarityFailed =>
+                    currState = currState.copy(kind = SimilarityFailed)
+                }
+              case (_,_) =>
+                currState = currState.copy(kind = SimilarityFailed)
+            }
+          currState
+        }
+      }
+    }
+  }
 }

@@ -218,7 +218,7 @@ class InductiveGraphsSuite extends FunSpec with Matchers with InductiveGraphTest
 
     it("finds a node context for a node") {
       val contextOne = Context(Seq(), 1, (), Seq())
-      val contextTwo = Context(Seq(), 2, (), Seq())
+      val contextTwo =  Context(Seq(), 2, (), Seq())
       val testGraph = contextTwo &+: contextOne &+: Empty
 
       testGraph.nodeContext(1) should be(Some(contextOne))
@@ -252,6 +252,7 @@ class InductiveGraphsSuite extends FunSpec with Matchers with InductiveGraphTest
   }
 
   describe("GraphOps") {
+
     it("dfs") {
       val dfsList = bigGraph.dfs(List(0))(c => c.in.map(_.node).toSet.toList)
       dfsList should be(List(0, 1, 2, 10, 11, 13, 3, 5, 8, 6, 4))
