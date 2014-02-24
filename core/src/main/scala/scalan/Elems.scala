@@ -19,7 +19,7 @@ trait Elems extends Base { self: Scalan =>
     final def classTag: ClassTag[A] = TagImplicits.typeTagToClassTag(tag)
     def defaultRep: Default[Rep[A]]
     def defaultRepValue = defaultRep.value
-    def name = tag.toString
+    def name = tag.tpe.toString
 
     lazy val prettyName = name.
       replace("scala.math.Numeric$", "").
