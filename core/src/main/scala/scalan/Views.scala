@@ -102,11 +102,9 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     val clazz = d.getClass
     userTypes.exists(c => c.runtimeClass == clazz)
   }
+
   def isUserTypeSym[T](s: Exp[T]): Boolean = {
     val symClazz = s.elem.classTag.runtimeClass
-
-    //manifest[UserType[_]].erasure.isAssignableFrom(symClazz)
-    //userTypes.find(c => c.manifest.erasure.isAssignableFrom(symClazz)).isDefined
     userTypes.exists(c => symClazz.isAssignableFrom(c.runtimeClass))
   }
 
@@ -131,6 +129,12 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
         case _ => None
       }
     }
+  }
+
+  def symbolHasViews(s: Exp[Any]): Boolean = s match {
+    case Def(UserTypeExp(_)) => true
+    case UserTypeSym(_) => true
+    case _ => false
   }
 
   implicit class IsoOps[From: LElem,To](iso: Iso[From,To]) {
