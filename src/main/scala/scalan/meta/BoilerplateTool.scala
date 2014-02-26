@@ -8,7 +8,8 @@ object BoilerplateTool extends App {
   val scalanConfig = CodegenConfig(
     isLite = false,
     srcPath = "../scalan/src",
-    stagedViewsTrait = "StagedViews",
+    proxyTrait = "scalan.lms.common.ProxyExp",
+    stagedViewsTrait = "scalan.staged.StagedViews",
     entityFiles = List(
       "main/scala/scalan/trees/Trees.scala",
       "main/scala/scalan/math/Matrices.scala",
@@ -24,7 +25,8 @@ object BoilerplateTool extends App {
       "main/scala/scalan/rx/Reactive.scala"
       //, "main/scala/scalan/rx/Trees.scala"
     ),
-    stagedViewsTrait = "ViewsExp",
+    proxyTrait = "scalan.ProxyExp",
+    stagedViewsTrait = "scalan.ViewsExp",
     isoNames = ("From", "To")
   )
 

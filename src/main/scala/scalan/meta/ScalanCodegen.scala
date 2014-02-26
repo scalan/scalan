@@ -116,7 +116,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |        val ${pairify(fields)} = p
         |        $className(${fields.rep(all)})
         |      }
-        |      lazy val manifest = { 
+        |      lazy val manifest = {
         |${c.tpeArgs.rep(a => s"        implicit val m${a.name} = element[${a.name}].manifest", "\n")}
         |        Predef.manifest[$className[$types]] 
         |      }
@@ -139,7 +139,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |    proxyOps[${className}Ops[$types]](p)
         |  }
         |
-        |  implicit def extend$className[$types](p: Rep[$className[$types]])($implicitArgs) = new {
+        |  implicit class Extended$className[$types](val p: Rep[$className[$types]])($implicitArgs) {
         |    def toData: Rep[${className}Data[$types]] = iso$className($useImplicits).fromStaged(p)
         |  }
         |
@@ -208,7 +208,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |      (implicit ${c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")})
          |    extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} with UserTypeDef[$className[$types]] {
          |    def elem = element[$className[$types]]
-         |    override def mirror(t: Transformer): Rep[_] = Exp$className[$types](${fields.rep(f => s"t($f)")})
+         |    override def mirror(t: Transformer) = Exp$className[$types](${fields.rep(f => s"t($f)")})
          |  }
          |  addUserType(manifest[Exp$className[Any]])
          |""".stripMargin
@@ -253,7 +253,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       val defs = for { c <- module.concreteClasses } yield getClassExp(c)
 
       s"""
-       |trait ${module.name}Exp extends ${module.name}Abs with ProxyExp with ${config.stagedViewsTrait}
+       |trait ${module.name}Exp extends ${module.name}Abs with ${config.proxyTrait} with ${config.stagedViewsTrait}
        |{ self: ScalanStaged ${module.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} =>
        |${defs.mkString("\n")}
        |}

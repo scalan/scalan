@@ -8,7 +8,7 @@ import java.io.File
 
 case class CodegenConfig(
                           srcPath: String,
-                          proxyTrait: String = "",
+                          proxyTrait: String,
                           entityFiles: List[String],
                           stagedViewsTrait: String,
                           isLite: Boolean,
