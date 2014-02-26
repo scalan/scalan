@@ -13,12 +13,12 @@ trait ScalanAst {
   sealed abstract class TpeExpr
   type TpeExprs = List[TpeExpr]
   case class TraitCall(name: String, tpeExprs: List[TpeExpr] = Nil) extends TpeExpr {
-    override def toString = name + (if (tpeExprs.isEmpty) "" else tpeExprs.mkString("[",",","]"))
+    override def toString = name + (if (tpeExprs.isEmpty) "" else tpeExprs.mkString("[", ",", "]"))
   }
-  case object TpeInt extends TpeExpr     { override def toString = "Int" }
+  case object TpeInt extends TpeExpr { override def toString = "Int" }
   case object TpeBoolean extends TpeExpr { override def toString = "Boolean" }
-  case object TpeFloat extends TpeExpr   { override def toString = "Float" }
-  case object TpeString extends TpeExpr  { override def toString = "String" }
+  case object TpeFloat extends TpeExpr { override def toString = "Float" }
+  case object TpeString extends TpeExpr { override def toString = "String" }
   case class TpeTuple(items: List[TpeExpr]) extends TpeExpr {
     override def toString = items.mkString("(", ",", ")")
   }
@@ -37,7 +37,7 @@ trait ScalanAst {
   abstract class BodyItem
   case class ImportStat(names: List[String]) extends BodyItem
   case class MethodDef(name: String, tpeArgs: TpeArgs = Nil, args: MethodArgs = Nil,
-                       tpeRes: TpeExpr = TraitCall("Any"), isImplicit: Boolean = false) extends BodyItem
+    tpeRes: TpeExpr = TraitCall("Any"), isImplicit: Boolean = false) extends BodyItem
   case class TpeDef(name: String, tpeArgs: TpeArgs = Nil, rhs: TpeExpr) extends BodyItem
 
   case class TpeArg(name: String, bound: Option[TpeExpr] = None, contextBound: List[String] = Nil)
@@ -97,18 +97,15 @@ trait ScalanAst {
 
   }
 
-
-
 }
 
-
-trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
+trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
 
   implicit class OptionListOps[A](opt: Option[List[A]]) {
     def flatList: List[A] = opt.toList.flatten
   }
 
-  def wrapIfMany[A <: TpeExpr,B <: TpeExpr](w: List[A]=>B, xs: List[A]):TpeExpr = {
+  def wrapIfMany[A <: TpeExpr, B <: TpeExpr](w: List[A] => B, xs: List[A]): TpeExpr = {
     val sz = xs.size
     assert(sz >= 1)
     if (sz > 1) w(xs) else xs.head
@@ -118,7 +115,7 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
 
   lazy val scalanIdent = ident ^? ({ case s if !keywords.contains(s) => s }, s => s"Keyword $s cannot be used as identifier")
 
-  lazy val bracedIdentList = "{" ~ rep1sep(scalanIdent, ",") ~ "}" ^^ { case _ ~ xs ~ _ => xs.mkString("{", ",", "}")}
+  lazy val bracedIdentList = "{" ~ rep1sep(scalanIdent, ",") ~ "}" ^^ { case _ ~ xs ~ _ => xs.mkString("{", ",", "}") }
 
   lazy val qualId = rep1sep(scalanIdent | bracedIdentList, ".")
 
@@ -127,19 +124,19 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
     case name ~ Some(_ ~ bound) ~ ctxs => TpeArg(name, Some(bound), ctxs)
   }
 
-  lazy val tpeArgs = "[" ~ tpeArg ~ rep( ("," ~ tpeArg) ^^ { case _ ~ x => x }) ~ "]" ^^ {
+  lazy val tpeArgs = "[" ~ tpeArg ~ rep(("," ~ tpeArg) ^^ { case _ ~ x => x }) ~ "]" ^^ {
     case _ ~ x ~ xs ~ _ => x :: xs
   }
 
-  lazy val extendsList = "extends" ~> traitCall ~ rep( ("with" ~ traitCall) ^^ { case _ ~ x => x }) ^^ {
+  lazy val extendsList = "extends" ~> traitCall ~ rep(("with" ~ traitCall) ^^ { case _ ~ x => x }) ^^ {
     case x ~ xs => x :: xs
   }
 
   lazy val tpeBase: Parser[TpeExpr] = "Int" ^^^ { TpeInt } |
-                     "Boolean" ^^^ { TpeBoolean } |
-                     "Float" ^^^ { TpeFloat }     |
-                     "String" ^^^ { TpeString }   |
-                     traitCall
+    "Boolean" ^^^ { TpeBoolean } |
+    "Float" ^^^ { TpeFloat } |
+    "String" ^^^ { TpeString } |
+    traitCall
 
   lazy val tpeFactor = tpeBase | "(" ~> tpeExpr <~ ")"
 
@@ -159,15 +156,14 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
     case n ~ Some(ts) => TraitCall(n, ts)
   }
 
-  lazy val methodArg = scalanIdent ~ ":" ~ tpeFactor ^^ { case n ~ _ ~ t => MethodArg(n, t, None)}
+  lazy val methodArg = scalanIdent ~ ":" ~ tpeFactor ^^ { case n ~ _ ~ t => MethodArg(n, t, None) }
   lazy val methodArgs = "(" ~> rep1sep(methodArg, ",") <~ ")"
-
 
   lazy val classArg = opt("implicit") ~ opt("override") ~ opt("val") ~ scalanIdent ~ ":" ~ tpeFactor ^^ {
     case imp ~ over ~ value ~ n ~ _ ~ t =>
       ClassArg(imp.isDefined, over.isDefined, value.isDefined, n, t, None)
   }
-  lazy val classArgs = "(" ~> rep1sep(classArg, ",")  <~ ")"
+  lazy val classArgs = "(" ~> rep1sep(classArg, ",") <~ ")"
 
   lazy val methodBody = "???"
 
@@ -184,10 +180,10 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
 
   lazy val bodyItem =
     methodDef |
-    importStat |
-    tpeDef     |
-    traitDef   |
-    classDef
+      importStat |
+      tpeDef |
+      traitDef |
+      classDef
 
   lazy val bodyItems = rep(bodyItem)
 
@@ -204,19 +200,19 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
 
   lazy val classDef: Parser[ClassDef] =
     opt("abstract") ~ "class" ~ scalanIdent ~ opt(tpeArgs) ~ opt(classArgs) ~ opt(classArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
-    case abs ~ _ ~ n ~ targs ~ args ~ impArgs ~ ancs ~ body =>
-      ClassDef(n, targs.flatList, args.flatList, impArgs.flatList, ancs.flatList, body.map(_._2).flatList, body.map(_._1).flatten, abs.isDefined)
-  }
+      case abs ~ _ ~ n ~ targs ~ args ~ impArgs ~ ancs ~ body =>
+        ClassDef(n, targs.flatList, args.flatList, impArgs.flatList, ancs.flatList, body.map(_._2).flatList, body.map(_._1).flatten, abs.isDefined)
+    }
 
   lazy val entityModuleDef =
     "package" ~ qualId ~ opt(";") ~
-    rep1sep(importStat, opt(";")) ~
-    traitDef ^^ {
-      case _ ~ ns ~ _ ~ imports ~ moduleTrait => {
-        val packageName = ns.mkString(".")
-        EntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait)
+      rep1sep(importStat, opt(";")) ~
+      traitDef ^^ {
+        case _ ~ ns ~ _ ~ imports ~ moduleTrait => {
+          val packageName = ns.mkString(".")
+          EntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait)
+        }
       }
-  }
 
   //TODO add regex for comments
   protected val endlineComment = """//\.*\n""".r
@@ -224,10 +220,10 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
   protected override def handleWhiteSpace(source: java.lang.CharSequence, offset: Int): Int = {
     val ofs = super.handleWhiteSpace(source, offset)
 
-//    (endlineComment findPrefixMatchOf (source.subSequence(ofs, source.length))) match {
-//      case Some(matched) => ofs + matched.end
-//      case None => ofs
-//    }
+    //    (endlineComment findPrefixMatchOf (source.subSequence(ofs, source.length))) match {
+    //      case Some(matched) => ofs + matched.end
+    //      case None => ofs
+    //    }
     ofs
   }
 
@@ -236,14 +232,17 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
 
   def parseTrait(s: String) = parseAll(traitDef, s).get
   def parseEntityModule(s: String) = {
+    def handleError(msg: String, next: Input) = {
+      val rest = next.rest.source.toString
+      val source = next.source.toString
+      throw new ParseException(s"$msg pos:${next.pos} rest:$rest", next.offset)
+    }
+
     val res = parseAll(entityModuleDef, s)
     res match {
       case Success(r, next) => r
-      case Failure(msg, next) => {
-        val rest = next.rest.source.toString
-        val source = next.source.toString
-        throw new ParseException(s"$msg pos:${next.pos} rest:$rest", next.offset)
-      }
+      case Failure(msg, next) => handleError(msg, next)
+      case Error(msg, next) => handleError(msg, next)
     }
   }
 
@@ -251,7 +250,6 @@ trait ScalanParsers extends JavaTokenParsers  { self: ScalanAst =>
 
 object ScalanImpl
   extends ScalanParsers
-     with ScalanAst
-{
+  with ScalanAst {
 }
 
