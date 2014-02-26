@@ -189,7 +189,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  def mk$className[$types]
          |      (${fieldsWithType.rep(all)})
          |      ($implicitArgs)
-         |      = new $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")}
+         |      = new Seq$className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")}
          |  def unmk$className[$typesWithElems](p: Rep[$className[$types]])
          |    = Some((${fields.rep(f => s"p.$f")}))
          |""".stripMargin
