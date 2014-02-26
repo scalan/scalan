@@ -14,7 +14,6 @@ object BoilerplateTool extends App {
       "main/scala/scalan/math/Matrices.scala",
       "main/scala/scalan/collections/Sets.scala"
     ),
-    emitSourceContext = true,
     isoNames = ("A","B")
   )
 
