@@ -8,25 +8,14 @@ import java.io.File
 
 case class CodegenConfig(
                           srcPath: String,
-                          proxyTrait: String,
+                          proxyTrait: String = "",
                           entityFiles: List[String],
                           stagedViewsTrait: String,
-                          emitSourceContext: Boolean,
+                          isLite: Boolean,
                           isoNames: (String, String)
                         )
 
-object CodegenConfig {
-  val default = CodegenConfig(
-    srcPath = "",
-    proxyTrait = "",
-    entityFiles = Nil,
-    stagedViewsTrait = "StagedViews",
-    emitSourceContext = false,
-    isoNames = ("From", "To")
-  )
-}
-
-class EntityManagement(val config: CodegenConfig = CodegenConfig.default) extends ScalanCodegen { ctx =>
+class EntityManagement(val config: CodegenConfig) extends ScalanCodegen { ctx =>
 
   case class EntityManager(name: String, filePath: String, entityDef: EntityModuleDef)
 

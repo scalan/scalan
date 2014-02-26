@@ -5,10 +5,10 @@
 package scalan.meta
 
 object BoilerplateTool extends App {
-  val defConf = CodegenConfig.default
-
-  val scalanConfig = defConf.copy(
+  val scalanConfig = CodegenConfig(
+    isLite = false,
     srcPath = "../scalan/src",
+    stagedViewsTrait = "StagedViews",
     entityFiles = List(
       "main/scala/scalan/trees/Trees.scala",
       "main/scala/scalan/math/Matrices.scala",
@@ -17,13 +17,15 @@ object BoilerplateTool extends App {
     isoNames = ("A","B")
   )
 
-  val liteConfig = defConf.copy(
-    srcPath = "/home/s00747473/Projects/scalan-lite/src",
+  val liteConfig = CodegenConfig(
+    isLite = true,
+    srcPath = "../scalan-lite/src",
     entityFiles = List(
       "main/scala/scalan/rx/Reactive.scala"
       //, "main/scala/scalan/rx/Trees.scala"
     ),
-    stagedViewsTrait = "ViewsExp"
+    stagedViewsTrait = "ViewsExp",
+    isoNames = ("From", "To")
   )
 
   val ctx = new EntityManagement(scalanConfig)

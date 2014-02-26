@@ -164,7 +164,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
     def getClassSeq(c: ClassDef) = {
       val (className, types, typesWithElems, fields, fieldsWithType, _) = getClassTemplateData(c)
-      val isLite = !config.emitSourceContext
+      val isLite = config.isLite
       val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
       val userTypeDefs =
         s"""
@@ -199,7 +199,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
     def getClassExp(c: ClassDef) = {
       val (className, types, typesWithElems, fields, fieldsWithType, _) = getClassTemplateData(c)
-      val isLite = !config.emitSourceContext
+      val isLite = config.isLite
       val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
       val userTypeNodeDefs =
         s"""
@@ -208,7 +208,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |      (implicit ${c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")})
          |    extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} with UserTypeDef[$className[$types]] {
          |    def elem = element[$className[$types]]
-         |    override def mirror(t: Transformer)${config.emitSourceContext.opt("(implicit ctx: SourceContext)")}: Rep[_] = Exp$className[$types](${fields.rep(f => s"t($f)")})
+         |    override def mirror(t: Transformer): Rep[_] = Exp$className[$types](${fields.rep(f => s"t($f)")})
          |  }
          |  addUserType(manifest[Exp$className[Any]])
          |""".stripMargin
