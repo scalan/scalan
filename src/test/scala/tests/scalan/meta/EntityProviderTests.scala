@@ -57,7 +57,7 @@ class EntityProviderTests extends BaseTests {
         |  // single proxy for each type family
         |  implicit def proxyObservable[A:Elem](p: Obs[A]): Observable[A] = {
         |    implicit val mA = element[A].manifest;
-        |    proxyOps[Observable[A], Observable[A]](p)
+        |    proxyOps[Observable[A]](p)
         |  }
         |
         |}

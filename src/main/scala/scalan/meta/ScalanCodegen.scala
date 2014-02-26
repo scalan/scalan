@@ -90,7 +90,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  // single proxy for each type family
         |  implicit def proxy$entityName[$typesWithElems](p: ${typeSyn.name}[$types]): $entityName[$types] = {
         |${tyArgs.rep(a => s"    implicit val m${a.name} = element[${a.name}].manifest;", "\n")}
-        |    proxyOps[$entityName[$types], $entityName[$types]](p)
+        |    proxyOps[$entityName[$types]](p)
         |  }
         |""".stripMargin
 
@@ -136,7 +136,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |
         |  implicit def proxy$className[$typesWithElems](p: Rep[$className[$types]]): ${className}Ops[$types] = {
         |${c.tpeArgs.rep(a => s"    implicit val m${a.name} = element[${a.name}].manifest;", "\n")}
-        |    proxyOps[${className}Ops[$types], ${className}Ops[$types]](p)
+        |    proxyOps[${className}Ops[$types]](p)
         |  }
         |
         |  implicit def extend$className[$types](p: Rep[$className[$types]])($implicitArgs) = new {
