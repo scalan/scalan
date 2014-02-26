@@ -77,7 +77,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       case TpeBoolean => false.toString
       case TpeFloat => 0f.toString
       case TpeString => ""
-      case TraitCall(name, args) => s"element[$t].zero.zero"
+      case TraitCall(name, args) => s"element[$t].zero.value"
       case TpeTuple(items) => pairify(items.map(zeroExpr))
       case _ => ???
     }
@@ -116,11 +116,11 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |        val ${pairify(fields)} = p
         |        $className(${fields.rep(all)})
         |      }
-        |      def manifest = { 
+        |      lazy val manifest = { 
         |${c.tpeArgs.rep(a => s"        implicit val m${a.name} = element[${a.name}].manifest", "\n")}
         |        Predef.manifest[$className[$types]] 
         |      }
-        |      def zero = Common.zero[Rep[$className[$types]]]($className(${fieldTypes.rep(t => zeroExpr(t))}))
+        |      lazy val zero = Common.zero[Rep[$className[$types]]]($className(${fieldTypes.rep(t => zeroExpr(t))}))
         |    }
         |
         |    def apply[$types](p: Rep[${className}Data[$types]])($implicitArgs): Rep[$className[$types]]
