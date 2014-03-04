@@ -9,7 +9,7 @@ import scalan.common.Lazy
 import scala.reflect.ClassTag
 
 trait ProxyBase { self: Scalan =>
-  def proxyOps[Ops<:AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops
+  def proxyOps[Ops<:AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops
   
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass()
@@ -19,7 +19,7 @@ trait ProxyBase { self: Scalan =>
 }
 
 trait ProxySeq extends ProxyBase { self: ScalanSeq =>
-  def proxyOps[Ops<:AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = x.asInstanceOf[Ops]
+  def proxyOps[Ops<:AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = x.asInstanceOf[Ops]
 }
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
@@ -39,9 +39,9 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 //      MethodCallLifted[T](t(receiver), method, args map { case a: Exp[_] => t(a) case a => a })
 //  }
 
-  override def proxyOps[Ops<:AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = {
+  override def proxyOps[Ops<:AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = {
     val clazz = ct.runtimeClass
-    val handler = new InvocationHandler(x)
+    val handler = new InvocationHandler(x, forceInvoke)
     val proxy = jreflect.Proxy.newProxyInstance(clazz.getClassLoader(), Array(clazz), handler)
     proxy.asInstanceOf[Ops]
   }
@@ -53,14 +53,14 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   var methodCallReceivers = List.empty[Exp[Any]]
 
-  class InvocationHandler(receiver: Exp[Any]) extends jreflect.InvocationHandler {
+  class InvocationHandler(receiver: Exp[Any], forceInvoke: Option[Boolean]) extends jreflect.InvocationHandler {
 
     def invoke(proxy: AnyRef, m: jreflect.Method, _args: Array[AnyRef]) = {
       val args = _args == null match { case true => Array.empty[AnyRef] case _ => _args }
       receiver match {
         case Def(d) => {  // call method of the node
           val nodeClazz = d.getClass
-          m.getDeclaringClass.isAssignableFrom(nodeClazz) && invokeEnabled && (!hasFuncArg(args)) match {
+          m.getDeclaringClass.isAssignableFrom(nodeClazz) && (invokeEnabled || forceInvoke.getOrElse(false)) && (!hasFuncArg(args)) match {
             case true =>
               val res = m.invoke(d, args: _*)
               res
@@ -74,18 +74,22 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
     def invokeMethodOfVar(m: jreflect.Method, args: Array[AnyRef]) = {
       /* If invoke is enabled or current method has arg of type <function> - do not create methodCall */
-      methodCallReceivers.contains(receiver) || (!(invokeEnabled || hasFuncArg(args))) match {
+      methodCallReceivers.contains(receiver) || (!((invokeEnabled || forceInvoke.getOrElse(false)) || hasFuncArg(args))) match {
         case true =>
           createMethodCall(m, args)
-        case _ =>
-          val e = getRecieverElem
-          val iso = e.iso
-          methodCallReceivers = methodCallReceivers :+ receiver
-          val wrapper = iso.to(iso.from(receiver))
-          methodCallReceivers = methodCallReceivers.tail
-          val Def(d) = wrapper
-          val res = m.invoke(d, args: _*)
-          res
+        case _ => receiver.elem match {
+          case ve: ViewElem[_,_] =>
+            //val e = getRecieverElem
+            val iso = ve.iso
+            methodCallReceivers = methodCallReceivers :+ receiver
+            val wrapper = iso.to(iso.from(receiver))
+            methodCallReceivers = methodCallReceivers.tail
+            val Def(d) = wrapper
+            val res = m.invoke(d, args: _*)
+            res
+          case _ =>
+            createMethodCall(m, args)
+        }
       }
     }
 
@@ -95,15 +99,18 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
               receiver, m, args.toList)(resultElem))(resultElem)
     }
 
-    def getRecieverElem: ViewElem[Any,Any] = receiver.elem match {
-      case e: ViewElem[_,_] => e.asInstanceOf[ViewElem[Any,Any]]
-      case _ =>
-        !!!("Receiver with ViewElem expected", receiver)
-    }
+//    def getRecieverElem: ViewElem[Any,Any] = receiver.elem match {
+//      case e: ViewElem[_,_] => e.asInstanceOf[ViewElem[Any,Any]]
+//      case _ =>
+//        !!!("Receiver with ViewElem expected", receiver)
+//    }
 
     def getResultElem(m: jreflect.Method, args: Array[AnyRef]): Elem[AnyRef] = {
-      val e = getRecieverElem
-      val zero = e.iso.defaultRepTo.value
+      val e = receiver.elem //getRecieverElem
+      val zero = e match {
+        case ve: ViewElem[_,_] => ve.iso.defaultRepTo.value
+        case _ => e.defaultRepValue
+      }
       val Def(zeroNode) = zero
       val res = m.invoke(zeroNode, args: _*)
       res match {

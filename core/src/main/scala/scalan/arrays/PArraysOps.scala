@@ -16,7 +16,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     }
     def zip[U:Elem](ys: PA[U]) = PairArray(self, ys)
   }
-  trait PArrayCompanion extends TypeFamily1[PArray] {
+  trait PArrayCompanionOps extends PArrayCompanion {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]] = ea match {
       case baseE: BaseElem[a] => BaseArray.defaultOf[a](baseE)
       case pairE: PairElem[a,b] => PairArray.defaultOf[a,b](pairE.ea, pairE.eb)
@@ -54,7 +54,7 @@ trait PArraysOps { scalan: PArraysDsl =>
   trait BaseArrayOps[T] extends PArrayOps[T] {
     def length = arr.length
   }
-  trait BaseArrayCompanion extends ConcreteClass1[BaseArray] {
+  trait BaseArrayCompanionOps extends BaseArrayCompanion {
     def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(BaseArray(Default.defaultOf[Rep[Array[A]]]))
   }
 
@@ -71,7 +71,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     def arr = as.arr zip bs.arr
     def length = as.length
   }
-  trait PairArrayCompanion extends ConcreteClass2[PairArray] {
+  trait PairArrayCompanionOps extends PairArrayCompanion {
     def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]) = {
       val as = PArray.defaultOf[A].value
       val bs = PArray.defaultOf[B].value

@@ -32,6 +32,8 @@ trait Views extends Elems { self: Scalan =>
   trait ViewElem[From,To] extends Elem[To] {
     def iso: Iso[From,To]
   }
+  trait CompanionElem[T] extends Elem[T] {
+  }
 
   trait UserType[T] {
     def selfType: Elem[T]

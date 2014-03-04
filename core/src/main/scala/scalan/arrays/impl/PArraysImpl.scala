@@ -19,42 +19,52 @@ trait PArraysAbs extends PArrays
 
 
   trait PArrayElem[From,To] extends ViewElem[From, To]
+  trait PArrayCompanionElem extends CompanionElem[PArrayCompanionAbs]
 
   implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = element[A] match {
     case baseE: BaseElem[a] => element[BaseArray[A]].asElem[PArray[A]]
     case _ => ???
   }
-
-  object PArray extends PArrayCompanion {
+  implicit lazy val PArrayCompanionElem: PArrayCompanionElem = new PArrayCompanionElem {
+    def tag = typeTag[PArrayCompanionAbs]
+    def defaultRep = defaultVal(PArray)
   }
+
+  trait PArrayCompanionAbs extends PArrayCompanionOps {}
+  def PArray: Rep[PArrayCompanionAbs]  // singleton for PArray class methods
   implicit def defaultOfPArray[A](implicit da: Elem[A]): Default[Rep[PArray[A]]] = PArray.defaultOf[A]
+
+  implicit def proxyPArrayCompanion(p: Rep[PArrayCompanionOps]): PArrayCompanionOps = {
+    proxyOps[PArrayCompanionOps](p, Some(true))
+  }
 
 
   //------------------------------- BaseArray ------------------------------------
   // elem for concrete class
   trait BaseArrayElem[A] extends PArrayElem[BaseArrayData[A], BaseArray[A]]
+  trait BaseArrayCompanionElem extends CompanionElem[BaseArrayCompanionAbs]
 
   // state representation type
   type BaseArrayData[A] = Array[A]
 
-  // 3) companion object with Iso, constructor and deconstructor
-  object BaseArray extends BaseArrayCompanion {
-    abstract class Iso[A](implicit  eA: Elem[A])
-           extends IsoBase[BaseArrayData[A], BaseArray[A]] {
-      override def from(p: Rep[BaseArray[A]]) = p match { case BaseArray(arr) => arr }
-      override def to(p: Rep[Array[A]]) = {
-        val arr = p
-        BaseArray(arr)
-      }
-      lazy val tag = { 
-        implicit val tA = eA.tag
-        typeTag[BaseArray[A]]
-      }
-      import TagImplicits._
-      lazy val defaultRepTo = defaultVal[Rep[BaseArray[A]]](BaseArray(element[Array[A]].defaultRepValue))
+  // 3) Iso for concrete class
+  abstract class BaseArrayIso[A](implicit  eA: Elem[A])
+    extends IsoBase[BaseArrayData[A], BaseArray[A]] {
+    override def from(p: Rep[BaseArray[A]]) = unmkBaseArray(p) match { case Some(arr) => arr }
+    override def to(p: Rep[Array[A]]) = {
+      val arr = p
+      mkBaseArray(arr)
     }
+    lazy val tag = {
+      implicit val tA = eA.tag
+      typeTag[BaseArray[A]]
+    }
+    import TagImplicits._
+    lazy val defaultRepTo = defaultVal[Rep[BaseArray[A]]](mkBaseArray(element[Array[A]].defaultRepValue))
+  }
 
-    
+  // 4) constructor and deconstructor
+  trait BaseArrayCompanionAbs extends BaseArrayCompanionOps {
     //def apply[A](p: PArray[A])(implicit  eA: Elem[A]): Rep[BaseArray[A]]
     //    = mkBaseArray(p.arr)
     def apply[A]
@@ -62,6 +72,14 @@ trait PArraysAbs extends PArrays
           (implicit  eA: Elem[A]): Rep[BaseArray[A]]
         = mkBaseArray(arr)
     def unapply[A:Elem](p: Rep[BaseArray[A]]) = unmkBaseArray(p)
+  }
+  def BaseArray: Rep[BaseArrayCompanionAbs]
+  implicit def proxyBaseArrayCompanion(p: Rep[BaseArrayCompanionAbs]): BaseArrayCompanionAbs = {
+    proxyOps[BaseArrayCompanionAbs](p, Some(true))
+  }
+  implicit lazy val BaseArrayCompanionElem: BaseArrayCompanionElem = new BaseArrayCompanionElem {
+    def tag = typeTag[BaseArrayCompanionAbs]
+    def defaultRep = defaultVal(BaseArray)
   }
 
   implicit def proxyBaseArray[A](p: Rep[BaseArray[A]])(implicit  eA: Elem[A]): BaseArrayOps[A] = {
@@ -73,10 +91,10 @@ trait PArraysAbs extends PArrays
     def toData: Rep[BaseArrayData[A]] = isoBaseArray(eA).from(p)
   }
 
-  // 4) implicit resolution of Iso
+  // 5) implicit resolution of Iso
   implicit def isoBaseArray[A](implicit  eA: Elem[A]): Iso[BaseArrayData[A], BaseArray[A]]
 
-  // 5) smart constructor and deconstructor
+  // 6) smart constructor and deconstructor
   def mkBaseArray[A](arr: Rep[Array[A]])(implicit  eA: Elem[A]): Rep[BaseArray[A]]
   def unmkBaseArray[A](p: Rep[BaseArray[A]])(implicit  eA: Elem[A]): Option[(Rep[Array[A]])]
 
@@ -84,50 +102,50 @@ trait PArraysAbs extends PArrays
   //------------------------------- PairArray ------------------------------------
   // elem for concrete class
   trait PairArrayElem[A, B] extends PArrayElem[PairArrayData[A, B], PairArray[A, B]]
+  trait PairArrayCompanionElem extends CompanionElem[PairArrayCompanionAbs]
 
   // state representation type
   type PairArrayData[A, B] = (PArray[A], PArray[B])
 
-  // 3) companion object with Iso, constructor and deconstructor
-  object PairArray extends PairArrayCompanion {
-    abstract class Iso[A, B](implicit  eA: Elem[A],  eB: Elem[B])
-           extends IsoBase[PairArrayData[A, B], PairArray[A, B]] {
-      override def from(p: Rep[PairArray[A,B]]) = p match { case PairArray(as, bs) => Pair(as, bs) }
-      override def to(p: Rep[(PArray[A], PArray[B])]) = {
-        val Pair(as, bs) = p
-        PairArray(as, bs)
-      }
-      lazy val tag = { 
-        implicit val tA = eA.tag
-        implicit val tB = eB.tag
-        typeTag[PairArray[A, B]] 
-      }
-//      lazy val defaultOf = {
-//        implicit val dA = eA.defaultOf
-//        implicit val dB = eB.defaultOf
-//        val tyA = Common.defaultOf[Rep[Type[A]]]
-//        val tyB = Common.defaultOf[Rep[Type[B]]]
-//        defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(tyA, tyB))
-//      }
-      lazy val defaultRepTo = {
-        implicit val dA = eA.defaultRep
-        implicit val dB = eB.defaultRep
-        val as = Default.defaultOf[Rep[PArray[A]]]
-        val bs = Default.defaultOf[Rep[PArray[B]]]
-        defaultVal[Rep[PairArray[A, B]]](PairArray(as, bs))
-      }
+  // 3) Iso for concrete class
+  abstract class PairArrayIso[A, B](implicit  eA: Elem[A],  eB: Elem[B])
+    extends IsoBase[PairArrayData[A, B], PairArray[A, B]] {
+    override def from(p: Rep[PairArray[A,B]]) = unmkPairArray(p) match { case Some((as, bs)) => Pair(as, bs) }
+    override def to(p: Rep[(PArray[A], PArray[B])]) = {
+      val Pair(as, bs) = p
+      mkPairArray(as, bs)
     }
+    lazy val tag = {
+      implicit val tA = eA.tag
+      implicit val tB = eB.tag
+      typeTag[PairArray[A, B]]
+    }
+    lazy val defaultRepTo = {
+      implicit val dA = eA.defaultRep
+      implicit val dB = eB.defaultRep
+      val as = Default.defaultOf[Rep[PArray[A]]]
+      val bs = Default.defaultOf[Rep[PArray[B]]]
+      defaultVal[Rep[PairArray[A, B]]](mkPairArray(as, bs))
+    }
+  }
 
-    
-def apply[A, B](p: Rep[PairArrayData[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]): Rep[PairArray[A, B]]
+  // 4) constructor and deconstructor
+  trait PairArrayCompanionAbs extends PairArrayCompanionOps {
+    def apply[A, B](p: Rep[PairArrayData[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]): Rep[PairArray[A, B]]
         = isoPairArray(eA, eB).to(p)
-    //def apply[A, B](p: PArray[A])(implicit  eA: Elem[A],  eB: Elem[B]): Rep[PairArray[A, B]]
-    //    = mkPairArray(p.as, p.bs)
     def apply[A, B]
           (as: PA[A], bs: PA[B])
           (implicit  eA: Elem[A],  eB: Elem[B]): Rep[PairArray[A, B]]
         = mkPairArray(as, bs)
     def unapply[A:Elem, B:Elem](p: Rep[PairArray[A, B]]) = unmkPairArray(p)
+  }
+  def PairArray: Rep[PairArrayCompanionAbs]
+  implicit def proxyPairArrayCompanion(p: Rep[PairArrayCompanionAbs]): PairArrayCompanionAbs = {
+    proxyOps[PairArrayCompanionAbs](p, Some(true))
+  }
+  implicit lazy val PairArrayCompanionElem: PairArrayCompanionElem = new PairArrayCompanionElem {
+    def tag = typeTag[PairArrayCompanionAbs]
+    def defaultRep = defaultVal(PairArray)
   }
 
   implicit def proxyPairArray[A, B](p: Rep[PairArray[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]): PairArrayOps[A, B] = {
@@ -153,6 +171,11 @@ def apply[A, B](p: Rep[PairArrayData[A, B]])(implicit  eA: Elem[A],  eB: Elem[B]
 trait PArraysSeq extends PArraysAbs
 { self: ScalanSeq with PArraysDsl =>
 
+
+  lazy val PArray = new PArrayCompanionAbs with UserTypeSeq[PArrayCompanionAbs, PArrayCompanionAbs] {
+    def selfType: Elem[PArrayCompanionAbs] = element[PArrayCompanionAbs]
+  }
+
   case class SeqBaseArray[A]
       (override val arr: Rep[Array[A]])
       (implicit override val eT: Elem[A])
@@ -161,9 +184,12 @@ trait PArraysSeq extends PArraysAbs
     def selfType: Elem[PArray[A]] = element[BaseArray[A]].asInstanceOf[Elem[PArray[A]]]
   }
 
+  lazy val BaseArray = new BaseArrayCompanionAbs with UserTypeSeq[BaseArrayCompanionAbs, BaseArrayCompanionAbs] {
+    def selfType: Elem[BaseArrayCompanionAbs] = element[BaseArrayCompanionAbs]
+  }
 
   implicit def isoBaseArray[A](implicit  eA: Elem[A]): Iso[BaseArrayData[A], BaseArray[A]]
-    = new BaseArray.Iso[A] with SeqIso[BaseArrayData[A], BaseArray[A]] { i =>
+    = new BaseArrayIso[A] with SeqIso[BaseArrayData[A], BaseArray[A]] { i =>
         // should use i as iso reference
         override lazy val eTo = new SeqViewElem[BaseArrayData[A], BaseArray[A]]
                                     with BaseArrayElem[A] { val iso = i }
@@ -188,9 +214,12 @@ trait PArraysSeq extends PArraysAbs
     def selfType = element[PairArray[A, B]].asInstanceOf[Elem[PArray[(A,B)]]]
   }
 
+  lazy val PairArray = new PairArrayCompanionAbs with UserTypeSeq[PairArrayCompanionAbs, PairArrayCompanionAbs] {
+    def selfType: Elem[PairArrayCompanionAbs] = element[PairArrayCompanionAbs]
+  }
 
   implicit def isoPairArray[A, B](implicit  eA: Elem[A],  eB: Elem[B]): Iso[PairArrayData[A, B], PairArray[A, B]]
-    = new PairArray.Iso[A, B] with SeqIso[PairArrayData[A, B], PairArray[A, B]] { i =>
+    = new PairArrayIso[A, B] with SeqIso[PairArrayData[A, B], PairArray[A, B]] { i =>
         // should use i as iso reference
         override lazy val eTo = new SeqViewElem[PairArrayData[A, B], PairArray[A, B]]
                                     with PairArrayElem[A, B] { val iso = i }
@@ -211,6 +240,16 @@ trait PArraysSeq extends PArraysAbs
 trait PArraysExp extends PArraysAbs with ProxyExp with ViewsExp
 { self: ScalanStaged with PArraysDsl =>
 
+  object ExpPArrayCompanion extends Def[PArrayCompanionAbs] with PArrayCompanionAbs {
+    def uniqueOpId = this.getClass.getSimpleName
+    def selfType = ???
+  }
+
+  lazy val PArray: Exp[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeExp[PArrayCompanionAbs, PArrayCompanionAbs] {
+    lazy val selfType = element[PArrayCompanionAbs]
+    override def mirror(t: Transformer): Rep[_] = this
+  }
+
   case class ExpBaseArray[A]
       (override val arr: Rep[Array[A]])
       (implicit override val eT: Elem[A])
@@ -219,6 +258,10 @@ trait PArraysExp extends PArraysAbs with ProxyExp with ViewsExp
     lazy val selfType = element[BaseArray[A]].asInstanceOf[Elem[PArray[A]]]
     //def elem: Elem[BaseArray[A]] = selfType //.asInstanceOf[Elem[PArray[A]]]
     override def mirror(t: Transformer): Rep[_] = ExpBaseArray[A](t(arr))
+  }
+  lazy val BaseArray: Exp[BaseArrayCompanionAbs] = new BaseArrayCompanionAbs with UserTypeExp[BaseArrayCompanionAbs, BaseArrayCompanionAbs] {
+    lazy val selfType = element[BaseArrayCompanionAbs]
+    override def mirror(t: Transformer): Rep[_] = this
   }
   addUserType[ExpBaseArray[_]]
 
@@ -234,7 +277,7 @@ trait PArraysExp extends PArraysAbs with ProxyExp with ViewsExp
 
 
   implicit def isoBaseArray[A](implicit  eA: Elem[A]): Iso[BaseArrayData[A], BaseArray[A]]
-    = new BaseArray.Iso[A] with StagedIso[BaseArrayData[A], BaseArray[A]] { i =>
+    = new BaseArrayIso[A] with StagedIso[BaseArrayData[A], BaseArray[A]] { i =>
         // should use i as iso reference
         override lazy val eTo = new StagedViewElem[BaseArrayData[A], BaseArray[A]]
                                     with BaseArrayElem[A] { val iso = i }
@@ -250,6 +293,10 @@ trait PArraysExp extends PArraysAbs with ProxyExp with ViewsExp
     //def elem: Elem[PairArray[A, B]] = selfType//.asInstanceOf[Elem[PArray[(A,B)]]]
     override def mirror(t: Transformer): Rep[_] = ExpPairArray[A, B](t(as), t(bs))
   }
+  lazy val PairArray: Exp[PairArrayCompanionAbs] = new PairArrayCompanionAbs with UserTypeExp[PairArrayCompanionAbs, PairArrayCompanionAbs] {
+    lazy val selfType = element[PairArrayCompanionAbs]
+    override def mirror(t: Transformer): Rep[_] = this
+  }
   addUserType[ExpPairArray[_,_]]
 
 
@@ -264,7 +311,7 @@ trait PArraysExp extends PArraysAbs with ProxyExp with ViewsExp
 
 
   implicit def isoPairArray[A, B](implicit  eA: Elem[A],  eB: Elem[B]): Iso[PairArrayData[A, B], PairArray[A, B]]
-    = new PairArray.Iso[A, B] with StagedIso[PairArrayData[A, B], PairArray[A, B]] { i =>
+    = new PairArrayIso[A, B] with StagedIso[PairArrayData[A, B], PairArray[A, B]] { i =>
         // should use i as iso reference
         override lazy val eTo = new StagedViewElem[PairArrayData[A, B], PairArray[A, B]]
                                     with PairArrayElem[A, B] { val iso = i }
