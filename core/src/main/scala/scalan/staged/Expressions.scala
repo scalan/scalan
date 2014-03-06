@@ -154,15 +154,12 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   trait TableEntry[+T] {
     def sym: Exp[T]
-    // TODO check if needed
-    def definition: Option[Def[T]]
     def lambda: Option[Exp[_]]
     def rhs: Def[T]
-    def isLambda = rhs match { case l: Lambda[_,_] => true case _ => false }
+    def isLambda = rhs.isInstanceOf[Lambda[_, _]]
   }
 
   trait TableEntryCompanion {
-    def apply[T](sym: Exp[T])(eval: => Def[T]): TableEntry[T]
     def apply[T](sym: Exp[T], rhs: Def[T]): TableEntry[T]
     def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]): TableEntry[T]
     def unapply[T](tp: TableEntry[T]): Option[(Exp[T], Def[T])]
@@ -282,18 +279,9 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
 
   def fresh[T](implicit et: LElem[T]): Exp[T] = new Sym[T]()
 
-  class TableEntrySingle[T](val sym: Exp[T], val rhs: Def[T], val lambda: Option[Exp[_]]) extends TableEntry[T] {
-    def definition = Some(rhs)
-  }
-
-  class TableEntryEval[T](val sym: Exp[T], eval: => Def[T]) extends TableEntry[T] {
-    def definition = None
-    def lambda = None
-    lazy val rhs = eval
-  }
+  case class TableEntrySingle[T](sym: Exp[T], rhs: Def[T], lambda: Option[Exp[_]]) extends TableEntry[T]
 
   override val TableEntry = new TableEntryCompanion {
-    def apply[T](sym: Exp[T])(eval: => Def[T]) = new TableEntryEval(sym, eval)
     def apply[T](sym: Exp[T], rhs: Def[T]) = new TableEntrySingle(sym, rhs, None)
     def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]) = new TableEntrySingle(sym, rhs, Some(lam))
     def unapply[T](tp: TableEntry[T]): Option[(Exp[T], Def[T])] = Some((tp.sym, tp.rhs))
@@ -301,12 +289,13 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
   }
 
   private[this] var expToGlobalDefs: Map[Exp[_], TableEntry[_]] = Map.empty
+  private[this] var defToGlobalDefs: Map[Def[_], TableEntry[_]] = Map.empty
 
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]] =
     expToGlobalDefs.get(s).asInstanceOf[Option[TableEntry[T]]]
 
   def findDefinition[T](d: Def[T]): Option[TableEntry[T]] =
-    expToGlobalDefs.valuesIterator.find(_.rhs == d).asInstanceOf[Option[TableEntry[T]]]
+    defToGlobalDefs.get(d).asInstanceOf[Option[TableEntry[T]]]
 
   def findOrCreateDefinition[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
     val res = findDefinition(d) match {
@@ -324,6 +313,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
       case _ => TableEntry(s, d)
     }
     expToGlobalDefs += tp.sym -> tp
+    defToGlobalDefs += tp.rhs -> tp
     tp
   }
 
