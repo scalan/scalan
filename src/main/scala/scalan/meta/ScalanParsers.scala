@@ -139,14 +139,11 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
 
   lazy val tpeFunc = rep1sep(tpeFactor, "=>") ^^ { wrapIfMany(TpeFunc, _) }
 
-  lazy val tpeTuple = rep1sep(tpeFunc, ",") ^^ { wrapIfMany(TpeTuple, _) }
+  lazy val tpeTuple = "(" ~> rep1sep(tpeFunc, ",") <~ ")" ^^ { wrapIfMany(TpeTuple, _) }
 
-  lazy val tpeExpr: Parser[TpeExpr] = rep1sep(tpeTuple, "|") ^^ { wrapIfMany(TpeSum, _) }
+  lazy val tpeExpr: Parser[TpeExpr] = rep1sep(tpeTuple | tpeFunc, "|") ^^ { wrapIfMany(TpeSum, _) }
 
-  lazy val traitCallArgs = "[" ~> rep1sep(tpeExpr, ",") <~ "]" ^^ {
-    case List(t: TpeTuple) => t.items
-    case x => x
-  }
+  lazy val traitCallArgs = "[" ~> rep1sep(tpeExpr, ",") <~ "]"
 
   lazy val traitCall = scalanIdent ~ opt(traitCallArgs) ^^ {
     case n ~ None => TraitCall(n)
