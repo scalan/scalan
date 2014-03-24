@@ -91,8 +91,10 @@ trait ScalanAst {
           throw new ParseException(s"Invalid syntax of Entity module trait $moduleName", 0)
       }
       val classes = getConcreteClasses(defs)
+      
+      val extraImports = List(ImportStat(List("scalan.common.Common")))
 
-      EntityModuleDef(packageName, imports, moduleName, typeSyn, opsTrait, classes, moduleTrait.selfType)
+      EntityModuleDef(packageName, imports ++ extraImports, moduleName, typeSyn, opsTrait, classes, moduleTrait.selfType)
     }
 
   }
@@ -115,20 +117,19 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
 
   lazy val scalanIdent = ident ^? ({ case s if !keywords.contains(s) => s }, s => s"Keyword $s cannot be used as identifier")
 
-  lazy val bracedIdentList = "{" ~ rep1sep(scalanIdent, ",") ~ "}" ^^ { case _ ~ xs ~ _ => xs.mkString("{", ",", "}") }
+  lazy val bracedIdentList = "{" ~> rep1sep(scalanIdent, ",") <~ "}" ^^ { case xs => xs.mkString("{", ",", "}") }
 
   lazy val qualId = rep1sep(scalanIdent | bracedIdentList, ".")
 
-  lazy val tpeArg: Parser[TpeArg] = (scalanIdent ~ opt("<:" ~ tpeExpr) ~ rep(":" ~> scalanIdent)) ^^ {
-    case name ~ None ~ ctxs => TpeArg(name, None, ctxs)
-    case name ~ Some(_ ~ bound) ~ ctxs => TpeArg(name, Some(bound), ctxs)
+  lazy val tpeArg: Parser[TpeArg] = (scalanIdent ~ opt("<:" ~> tpeExpr) ~ rep(":" ~> scalanIdent)) ^^ {
+    case name ~ bound ~ ctxs => TpeArg(name, bound, ctxs)
   }
 
-  lazy val tpeArgs = "[" ~ tpeArg ~ rep(("," ~ tpeArg) ^^ { case _ ~ x => x }) ~ "]" ^^ {
-    case _ ~ x ~ xs ~ _ => x :: xs
+  lazy val tpeArgs = "[" ~> tpeArg ~ rep("," ~> tpeArg) <~ "]" ^^ {
+    case x ~ xs => x :: xs
   }
 
-  lazy val extendsList = "extends" ~> traitCall ~ rep(("with" ~ traitCall) ^^ { case _ ~ x => x }) ^^ {
+  lazy val extendsList = "extends" ~> traitCall ~ rep("with" ~> traitCall) ^^ {
     case x ~ xs => x :: xs
   }
 
@@ -156,26 +157,26 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
     case n ~ Some(ts) => TraitCall(n, ts)
   }
 
-  lazy val methodArg = scalanIdent ~ ":" ~ tpeFactor ^^ { case n ~ _ ~ t => MethodArg(n, t, None) }
+  lazy val methodArg = (scalanIdent <~ ":") ~ tpeFactor ^^ { case n ~ t => MethodArg(n, t, None) }
   lazy val methodArgs = "(" ~> rep1sep(methodArg, ",") <~ ")"
 
-  lazy val classArg = opt("implicit") ~ opt("override") ~ opt("val") ~ scalanIdent ~ ":" ~ tpeFactor ^^ {
-    case imp ~ over ~ value ~ n ~ _ ~ t =>
+  lazy val classArg = opt("implicit") ~ opt("override") ~ opt("val") ~ scalanIdent ~ (":" ~> tpeFactor) ^^ {
+    case imp ~ over ~ value ~ n ~ t =>
       ClassArg(imp.isDefined, over.isDefined, value.isDefined, n, t, None)
   }
   lazy val classArgs = "(" ~> rep1sep(classArg, ",") <~ ")"
 
   lazy val methodBody = "???"
 
-  lazy val methodDef = opt("implicit") ~ "def" ~ scalanIdent ~ opt(tpeArgs) ~ opt(methodArgs) ~ ":" ~ tpeExpr ~ opt("=" ~ methodBody) ^^ {
-    case implicitModifier ~ _ ~ n ~ targs ~ args ~ _ ~ tres ~ _ =>
+  lazy val methodDef = (opt("implicit") <~ "def") ~ scalanIdent ~ opt(tpeArgs) ~ (opt(methodArgs) <~ ":") ~ tpeExpr ~ opt("=" ~> methodBody) ^^ {
+    case implicitModifier ~ n ~ targs ~ args ~ tres ~ _ =>
       MethodDef(n, targs.toList.flatten, args.toList.flatten, tres, implicitModifier.isDefined)
   }
 
-  lazy val importStat = "import" ~ qualId ~ opt(";") ^^ { case _ ~ ns ~ _ => ImportStat(ns) }
+  lazy val importStat = "import" ~> qualId <~ opt(";") ^^ { case ns => ImportStat(ns) }
 
-  lazy val tpeDef = "type" ~ scalanIdent ~ opt(tpeArgs) ~ "=" ~ tpeExpr ~ opt(";") ^^ {
-    case _ ~ n ~ targs ~ _ ~ rhs ~ _ => TpeDef(n, targs.toList.flatten, rhs)
+  lazy val tpeDef = "type" ~> scalanIdent ~ opt(tpeArgs) ~ ("=" ~> tpeExpr <~ opt(";")) ^^ {
+    case n ~ targs ~ rhs => TpeDef(n, targs.toList.flatten, rhs)
   }
 
   lazy val bodyItem =
@@ -189,26 +190,26 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
 
   lazy val selfType = (scalanIdent <~ ":") ~ (tpeExpr <~ "=>") ^^ { case n ~ t => SelfTypeDef(n, List(t)) }
 
-  lazy val traitBody = "{" ~ opt(selfType) ~ opt(bodyItems) ~ "}" ^^ {
-    case _ ~ self ~ body ~ _ => (self, body.toList.flatten)
+  lazy val traitBody = "{" ~> opt(selfType) ~ opt(bodyItems) <~ "}" ^^ {
+    case self ~ body => (self, body.toList.flatten)
   }
 
-  lazy val traitDef: Parser[TraitDef] = "trait" ~ scalanIdent ~ opt(tpeArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
-    case _ ~ n ~ targs ~ ancs ~ body =>
+  lazy val traitDef: Parser[TraitDef] = ("trait" ~> scalanIdent) ~ opt(tpeArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
+    case n ~ targs ~ ancs ~ body =>
       TraitDef(n, targs.toList.flatten, ancs.toList.flatten, body.map(_._2).flatList, body.map(_._1).flatten)
   }
 
   lazy val classDef: Parser[ClassDef] =
-    opt("abstract") ~ "class" ~ scalanIdent ~ opt(tpeArgs) ~ opt(classArgs) ~ opt(classArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
-      case abs ~ _ ~ n ~ targs ~ args ~ impArgs ~ ancs ~ body =>
+    opt("abstract") ~ ("class" ~> scalanIdent) ~ opt(tpeArgs) ~ opt(classArgs) ~ opt(classArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
+      case abs ~ n ~ targs ~ args ~ impArgs ~ ancs ~ body =>
         ClassDef(n, targs.flatList, args.flatList, impArgs.flatList, ancs.flatList, body.map(_._2).flatList, body.map(_._1).flatten, abs.isDefined)
     }
 
   lazy val entityModuleDef =
-    "package" ~ qualId ~ opt(";") ~
+    ("package" ~> qualId <~ opt(";")) ~
       rep1sep(importStat, opt(";")) ~
       traitDef ^^ {
-        case _ ~ ns ~ _ ~ imports ~ moduleTrait => {
+        case ns ~ imports ~ moduleTrait => {
           val packageName = ns.mkString(".")
           EntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait)
         }
@@ -252,4 +253,3 @@ object ScalanImpl
   extends ScalanParsers
   with ScalanAst {
 }
-
