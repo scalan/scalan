@@ -123,8 +123,13 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |      lazy val zero = Common.zero[Rep[$className[$types]]]($className(${fieldTypes.rep(t => zeroExpr(t))}))
         |    }
         |
+        |${if (fields.length != 1)
+          s"""
         |    def apply[$types](p: Rep[${className}Data[$types]])($implicitArgs): Rep[$className[$types]]
-        |        = iso$className($useImplicits).toStaged(p)
+        |        = iso$className($useImplicits).toStaged(p)""".stripMargin
+          else
+            ""
+        }
         |    def apply[$types](p: $entityName[$types])($implicitArgs): Rep[$className[$types]]
         |        = mk$className(${fields.rep(f => s"p.$f")})
         |    def apply[$types]
