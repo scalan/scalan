@@ -125,13 +125,9 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
     case name ~ bound ~ ctxs => TpeArg(name, bound, ctxs)
   }
 
-  lazy val tpeArgs = "[" ~> tpeArg ~ rep("," ~> tpeArg) <~ "]" ^^ {
-    case x ~ xs => x :: xs
-  }
+  lazy val tpeArgs = "[" ~> rep1sep(tpeArg, ",") <~ "]"
 
-  lazy val extendsList = "extends" ~> traitCall ~ rep("with" ~> traitCall) ^^ {
-    case x ~ xs => x :: xs
-  }
+  lazy val extendsList = "extends" ~> rep1sep(traitCall, "with")
 
   lazy val tpeBase: Parser[TpeExpr] = "Int" ^^^ { TpeInt } |
     "Boolean" ^^^ { TpeBoolean } |
