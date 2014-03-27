@@ -49,11 +49,10 @@ trait InductiveGraphs[Node] {
 	  def empty[A, B]: Graph[A, B] = Empty
 	
 	  def asDot(graph: Graph[_, _]) = {
-	    def findValue(g: Graph[_,_], node: Node):Any = g match {
-	      case c &: g if c.node == node ⇒ c.node
-        case c &: g => findValue(g, node)
-        case _ => throw new NoSuchElementException(s"$node")
-	    }
+//	    def findValue(g: Graph[_,_], node: Node): Node = g match {
+//	      case c &: g ⇒ if (c.node == node) node else findValue(g, node)
+//          case _ => throw new NoSuchElementException(s"$node")
+//	    }
 	    val edges = {
           val pairs = graph.ufold(Set.empty[Any]) {
             (memo, context) ⇒
@@ -90,9 +89,9 @@ trait InductiveGraphs[Node] {
 	    case _     ⇒ false
 	  }
 	
-	  def gmap[A, B](f: NodeContext[A, B] ⇒ NodeContext[A, B]): Graph[A, B] = this match {
+	  def gmap[C >: A, D >: B](f: NodeContext[C, D] ⇒ NodeContext[C, D]): Graph[C, D] = this match {
 	    case Empty                              ⇒ Empty
-	    case &:(left: NodeContext[A, B], right) ⇒ f(left) &: right.gmap(f)
+	    case &:(left: NodeContext[A, B], right: Graph[A, B]) ⇒ f(left) &: right.gmap(f)
 	  }
 	
 	  def grev: Graph[A, B] = gmap { left: NodeContext[A, B] ⇒
@@ -217,7 +216,7 @@ trait InductiveGraphs[Node] {
 	      case State(None, _,_,_) ⇒ None
 	      case State(Some(found), restGraph, ins, outs) ⇒ {
           val ctx = Context(found.in.mergeEdges(ins), found.node, found.value, found.out.mergeEdges(outs))
-          Some(ctx, restGraph)
+          Some((ctx, restGraph))
         }
 	    }
 	  }

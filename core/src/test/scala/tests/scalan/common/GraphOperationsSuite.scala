@@ -24,7 +24,7 @@ class GraphOperationsSuite extends FunSpec with Matchers with InductiveGraphTest
   def printState[A,B](s: BisimulatorState[A,B]) = {
     def printContext(c: NodeContext[A,B]) = s"([${c.in.map(e ⇒ e.node) mkString ","}]→ ${c.node} →[${c.out.map(e ⇒ e.node) mkString ","}])"
     def printGraph(g: Graph[A,B]):String = g match {
-      case (c: NodeContext[A,B]) &: (g: Graph[A,B]) => s"${printContext(c)} &: ${printGraph(g)}"
+      case (c: NodeContext[A,B] @unchecked) &: (g: Graph[A,B] @unchecked) => s"${printContext(c)} &: ${printGraph(g)}"
       case Empty => "Empty"
     }
     s"State(${printGraph(s.leftGraph)}, ${s.leftStack}, ${printGraph(s.rightGraph)}, ${s.rightStack}, ${s.fromSubst}, ${s.kind})"

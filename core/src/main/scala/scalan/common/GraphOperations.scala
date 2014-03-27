@@ -21,7 +21,7 @@ trait GraphOperations[Node] extends InductiveGraphs[Node] {
         toSubst += (n1 -> n2)
         fromSubst += (n2 -> n1)
       }
-      def extractPrefixRec[A,B](p: Graph[A,B], pn: Node, g: Graph[A,B], gn: Node): Boolean = {
+      def extractPrefixRec(p: Graph[A,B], pn: Node, g: Graph[A,B], gn: Node): Boolean = {
         (p.search(pn), g.search(gn)) match {
           case (FoundNode(Context(inEdges1, n1, v1, _), g1), FoundNode(Context(inEdges2, n2, v2, _), g2)) =>
             if (q.compare(n1, n2) && (inEdges1.length == inEdges2.length || inEdges1.isEmpty || inEdges2.isEmpty))

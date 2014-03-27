@@ -98,7 +98,7 @@ trait ReflEqualityExp extends ReflEquality with BaseExp with ExpInductiveGraphs 
       resState.kind match {
         case SimilarityFailed => None
         case SimilarityEqual | SimilarityEmbeded =>
-          Some(resState.kind, resState.fromSubst) // mapping between graphs  ig <- patternGraph
+          Some((resState.kind, resState.fromSubst)) // mapping between graphs  ig <- patternGraph
       }
     }
 
@@ -122,7 +122,7 @@ trait ReflEqualityExp extends ReflEquality with BaseExp with ExpInductiveGraphs 
   }
   
   def rewriteRuleFromEqLemma[A,B](lemma: EqLemma[A,B]): LemmaRule[A,B] = {
-    val Def(lam: Lambda[A,Refl[B]]) = lemma
+    val Def(lam: Lambda[A @unchecked,Refl[B] @unchecked]) = lemma
     lam.y match {
       case Def(ApplyBinOp(_: ReflOp[_], lhs, rhs)) =>
         implicit val eA = lam.x.elem
