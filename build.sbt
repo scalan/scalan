@@ -17,5 +17,7 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += "org.scalacheck" %% "scalacheck" % "1.11.1" % "test"
 
+libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value 
+
 //testOptions in Test += Tests.Argument("-oD")
 

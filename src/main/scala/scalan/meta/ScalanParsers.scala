@@ -6,6 +6,10 @@ package scalan.meta
 
 import scala.util.parsing.combinator.JavaTokenParsers
 import java.text.ParseException
+import scala.tools.nsc.interactive.Global
+import scala.tools.nsc.Settings
+import scala.tools.nsc.reporters.StoreReporter
+import scala.tools.nsc.interactive.Response
 
 trait ScalanAst {
 
@@ -135,6 +139,17 @@ trait ScalanAst {
 }
 
 trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
+  val settings = new Settings
+  val reporter = new StoreReporter
+  val compiler = new Global(settings, reporter)
+  
+  import compiler.Tree
+  
+  def parse[T](entityFile: String)(f: PartialFunction[Tree, T]) = {
+    val source = compiler.getSourceFile(entityFile)
+    val tree = compiler.parseTree(source)
+    f(tree)
+  }
 
   implicit class OptionListOps[A](opt: Option[List[A]]) {
     def flatList: List[A] = opt.toList.flatten
