@@ -111,8 +111,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  object $className extends ${className}Companion {
         |    abstract class Iso[$types]($implicitArgs)
         |           extends IsoBase[${className}Data[$types], $className[$types]] {
-        |      override def fromStaged = { case $className(${fields.rep(all)}) => ${pairify(fields)} }
-        |      override def toStaged = (p: Rep[${dataType(fieldTypes)}]) => {
+        |      override def fromStaged(p: Rep[$className[$types]]) = p match { case $className(${fields.rep(all)}) => ${pairify(fields)} }
+        |      override def toStaged(p: Rep[${dataType(fieldTypes)}]) = {
         |        val ${pairify(fields)} = p
         |        $className(${fields.rep(all)})
         |      }
