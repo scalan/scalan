@@ -13,6 +13,7 @@ object BoilerplateTool extends App {
     entityFiles = List(
       "main/scala/scalan/trees/Trees.scala",
       "main/scala/scalan/math/Matrices.scala",
+      // "main/scala/scalan/math/Vectors.scala",
       "main/scala/scalan/collections/Sets.scala"
     ),
     isoNames = ("A","B")

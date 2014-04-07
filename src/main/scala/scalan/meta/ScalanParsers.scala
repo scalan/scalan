@@ -88,7 +88,7 @@ trait ScalanAst {
       val (typeSyn, opsTrait) = defs match {
         case (ts: TpeDef) :: (ot: TraitDef) :: _ => (ts, ot)
         case _ =>
-          throw new ParseException(s"Invalid syntax of Entity module trait $moduleName", 0)
+          throw new ParseException(s"Invalid syntax of Entity module trait $moduleName:\n${defs.mkString("\n")}", 0)
       }
       val classes = getConcreteClasses(defs)
       
@@ -172,7 +172,7 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
     case n ~ targs ~ rhs => TpeDef(n, targs.toList.flatten, rhs)
   }
 
-  lazy val bodyItem =
+  lazy val bodyItem: Parser[BodyItem] =
     methodDef |
       importStat |
       tpeDef |
@@ -187,9 +187,9 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
     case self ~ body => (self, body.toList.flatten)
   }
 
-  lazy val traitDef: Parser[TraitDef] = ("trait" ~> scalanIdent) ~ opt(tpeArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
+  lazy val traitDef: Parser[TraitDef] = ("trait" ~> scalanIdent) ~ opt(tpeArgs) ~ opt(extendsList) ~ traitBody ^^ {
     case n ~ targs ~ ancs ~ body =>
-      TraitDef(n, targs.toList.flatten, ancs.toList.flatten, body.map(_._2).flatList, body.map(_._1).flatten)
+      TraitDef(n, targs.toList.flatten, ancs.toList.flatten, body._2, body._1)
   }
 
   lazy val classDef: Parser[ClassDef] =
