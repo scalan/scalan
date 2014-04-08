@@ -67,6 +67,11 @@ trait ScalanAst {
     body: List[BodyItem] = Nil,
     selfType: Option[SelfTypeDef] = None,
     isAbstract: Boolean = false) extends BodyItem
+    
+  case class ObjectDef(
+    name: String,
+    ancestors: List[TraitCall] = Nil,
+    body: List[BodyItem] = Nil) extends BodyItem
 
   case class EntityModuleDef(
     packageName: String,
@@ -152,10 +157,10 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
     case n ~ Some(ts) => TraitCall(n, ts)
   }
 
-  lazy val methodArg = (scalanIdent <~ ":") ~ tpeFactor ^^ { case n ~ t => MethodArg(n, t, None) }
+  lazy val methodArg = (scalanIdent <~ ":") ~ tpeExpr ^^ { case n ~ t => MethodArg(n, t, None) }
   lazy val methodArgs = rep("(" ~> opt("implicit") ~ rep1sep(methodArg, ",") <~ ")")
 
-  lazy val classArg = opt("implicit") ~ opt("override") ~ opt("val") ~ scalanIdent ~ (":" ~> tpeFactor) ^^ {
+  lazy val classArg = opt("implicit") ~ opt("override") ~ opt("val") ~ scalanIdent ~ (":" ~> tpeExpr) ^^ {
     case imp ~ over ~ value ~ n ~ t =>
       ClassArg(imp.isDefined, over.isDefined, value.isDefined, n, t, None)
   }
@@ -179,7 +184,8 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
       importStat |
       tpeDef |
       traitDef |
-      classDef
+      classDef |
+      objectDef
 
   lazy val bodyItems = rep(bodyItem)
 
@@ -198,6 +204,12 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
     opt("abstract") ~ ("class" ~> scalanIdent) ~ opt(tpeArgs) ~ opt(classArgs) ~ opt(classArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
       case abs ~ n ~ targs ~ args ~ impArgs ~ ancs ~ body =>
         ClassDef(n, targs.flatList, args.flatList, impArgs.flatList, ancs.flatList, body.map(_._2).flatList, body.map(_._1).flatten, abs.isDefined)
+    }
+  
+  lazy val objectDef: Parser[ObjectDef] =
+    ("object" ~> scalanIdent) ~ opt(extendsList) ~ opt("{" ~> opt(bodyItems) <~ "}") ^^ {
+      case n ~ ancs ~ body =>
+        ObjectDef(n, ancs.flatList, body.flatten.flatList)
     }
 
   lazy val entityModuleDef =
