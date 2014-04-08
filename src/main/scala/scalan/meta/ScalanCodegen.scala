@@ -176,7 +176,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  case class Seq$className[$types]
          |      (${fieldsWithType.rep(f => s"override val $f")})
          |      (implicit ${c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")})
-         |    extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} {
+         |    extends $className[$types](${fields.rep(all)})${c.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")} {
          |  }
          |""".stripMargin
       val isoDefs =
@@ -194,7 +194,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  def mk$className[$types]
          |      (${fieldsWithType.rep(all)})
          |      ($implicitArgs)
-         |      = new Seq$className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")}
+         |      = new Seq$className[$types](${fields.rep(all)})${c.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")}
          |  def unmk$className[$typesWithElems](p: Rep[$className[$types]])
          |    = Some((${fields.rep(f => s"p.$f")}))
          |""".stripMargin
@@ -211,7 +211,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  case class Exp$className[$types]
          |      (${fieldsWithType.rep(f => s"override val $f")})
          |      (implicit ${c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")})
-         |    extends $className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} with UserTypeDef[$className[$types]] {
+         |    extends $className[$types](${fields.rep(all)})${c.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")} with UserTypeDef[$className[$types]] {
          |    def elem = element[$className[$types]]
          |    override def mirror(t: Transformer) = Exp$className[$types](${fields.rep(f => s"t($f)")})
          |  }
@@ -223,7 +223,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  def mk$className[$types]
          |      (${fieldsWithType.rep(all)})
          |      ($implicitArgs)
-         |      = new Exp$className[$types](${fields.rep(all)}) ${c.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")}
+         |      = new Exp$className[$types](${fields.rep(all)})${c.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")}
          |  def unmk$className[$typesWithElems](p: Rep[$className[$types]])
          |    = Some((${fields.rep(f => s"p.$f")}))
          |""".stripMargin
@@ -247,7 +247,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
       s"""
        |trait ${module.name}Seq extends ${module.name}Abs
-       |{ self: ScalanSeq ${module.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} =>
+       |{ self: ScalanSeq${module.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")} =>
        |${defs.mkString("\n")}
        |}
        |""".stripMargin
@@ -259,7 +259,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
       s"""
        |trait ${module.name}Exp extends ${module.name}Abs with ${config.proxyTrait} with ${config.stagedViewsTrait}
-       |{ self: ScalanStaged ${module.selfType.opt(t => s"with ${t.components.rep(all, " with ")}")} =>
+       |{ self: ScalanStaged${module.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")} =>
        |${defs.mkString("\n")}
        |}
        |""".stripMargin
