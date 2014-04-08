@@ -36,7 +36,7 @@ trait ScalanAst {
   // BodyItem universe ----------------------------------------------------------------------
   abstract class BodyItem
   case class ImportStat(names: List[String]) extends BodyItem
-  case class MethodDef(name: String, tpeArgs: TpeArgs = Nil, args: MethodArgs = Nil,
+  case class MethodDef(name: String, tpeArgs: TpeArgs = Nil, args: List[MethodArgs] = Nil,
     tpeRes: TpeExpr = TraitCall("Any"), isImplicit: Boolean = false) extends BodyItem
   case class TpeDef(name: String, tpeArgs: TpeArgs = Nil, rhs: TpeExpr) extends BodyItem
 
@@ -44,7 +44,7 @@ trait ScalanAst {
   type TpeArgs = List[TpeArg]
 
   case class MethodArg(name: String, tpe: TpeExpr, default: Option[Expr] = None)
-  type MethodArgs = List[MethodArg]
+  case class MethodArgs(impFlag: Boolean, args: List[MethodArg])
 
   case class ClassArg(impFlag: Boolean, overFlag: Boolean, valFlag: Boolean, name: String, tpe: TpeExpr, default: Option[Expr] = None)
   type ClassArgs = List[ClassArg]
@@ -114,8 +114,10 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
   }
 
   val keywords = Set("def", "trait", "type", "class", "abstract", "with")
+  
+  val op = """[!#%&*+-/:<=>?@\^|~]*""".r
 
-  lazy val scalanIdent = ident ^? ({ case s if !keywords.contains(s) => s }, s => s"Keyword $s cannot be used as identifier")
+  lazy val scalanIdent = (ident | op) ^? ({ case s if !keywords.contains(s) => s }, s => s"Keyword $s cannot be used as identifier")
 
   lazy val bracedIdentList = "{" ~> rep1sep(scalanIdent, ",") <~ "}" ^^ { case xs => xs.mkString("{", ",", "}") }
 
@@ -151,7 +153,7 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
   }
 
   lazy val methodArg = (scalanIdent <~ ":") ~ tpeFactor ^^ { case n ~ t => MethodArg(n, t, None) }
-  lazy val methodArgs = "(" ~> rep1sep(methodArg, ",") <~ ")"
+  lazy val methodArgs = rep("(" ~> opt("implicit") ~ rep1sep(methodArg, ",") <~ ")")
 
   lazy val classArg = opt("implicit") ~ opt("override") ~ opt("val") ~ scalanIdent ~ (":" ~> tpeFactor) ^^ {
     case imp ~ over ~ value ~ n ~ t =>
@@ -161,9 +163,9 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
 
   lazy val methodBody = "???"
 
-  lazy val methodDef = (opt("implicit") <~ "def") ~ scalanIdent ~ opt(tpeArgs) ~ (opt(methodArgs) <~ ":") ~ tpeExpr ~ opt("=" ~> methodBody) ^^ {
+  lazy val methodDef = (opt("implicit") <~ "def") ~ scalanIdent ~ opt(tpeArgs) ~ (methodArgs <~ ":") ~ tpeExpr ~ opt("=" ~> methodBody) ^^ {
     case implicitModifier ~ n ~ targs ~ args ~ tres ~ _ =>
-      MethodDef(n, targs.toList.flatten, args.toList.flatten, tres, implicitModifier.isDefined)
+      MethodDef(n, targs.toList.flatten, args.map { case i ~ args => MethodArgs(i.isDefined, args) }, tres, implicitModifier.isDefined)
   }
 
   lazy val importStat = "import" ~> qualId <~ opt(";") ^^ { case ns => ImportStat(ns) }
