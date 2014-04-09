@@ -89,7 +89,6 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         s"""
         |  // single proxy for each type family
         |  implicit def proxy$entityName[$typesWithElems](p: ${typeSyn.name}[$types]): $entityName[$types] = {
-        |${tyArgs.rep(a => s"    implicit val m${a.name} = element[${a.name}].manifest;", "\n")}
         |    proxyOps[$entityName[$types]](p)
         |  }
         |""".stripMargin
@@ -116,9 +115,9 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |        val ${pairify(fields)} = p
         |        $className(${fields.rep(all)})
         |      }
-        |      lazy val manifest = {
-        |${c.tpeArgs.rep(a => s"        implicit val m${a.name} = element[${a.name}].manifest", "\n")}
-        |        Predef.manifest[$className[$types]] 
+        |      lazy val tag = {
+        |${c.tpeArgs.rep(a => s"        implicit val tag${a.name} = element[${a.name}].tag", "\n")}
+        |        scala.reflect.runtime.universe.typeTag[$className[$types]] 
         |      }
         |      lazy val zero = Common.zero[Rep[$className[$types]]]($className(${fieldTypes.rep(t => zeroExpr(t))}))
         |    }
@@ -215,7 +214,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |    def elem = element[$className[$types]]
          |    override def mirror(t: Transformer) = Exp$className[$types](${fields.rep(f => s"t($f)")})
          |  }
-         |  addUserType(manifest[Exp$className[Any]])
+         |  addUserType[Exp$className${c.tpeArgs.opt(_.map(_ => "_").mkString(", ", "[", "]"))}]
          |""".stripMargin
 
       val constrDefs =
