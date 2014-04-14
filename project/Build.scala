@@ -23,7 +23,7 @@ object ScalanLiteBuild extends Build {
     "com.github.axel22" %% "scalameter" % "0.4" % "test",
     "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
     "ch.qos.logback" % "logback-classic" % "1.0.13",
-    "com.chuusai" % "shapeless_2.10.3" % "2.0.0-M1")
+    "com.chuusai" % "shapeless_2.10.4" % "2.0.0")
 
   val testSettings = Seq(
     testOptions in Test := Seq(Tests.Filter(x => !itFilter(x))),
@@ -37,7 +37,7 @@ object ScalanLiteBuild extends Build {
 
   val commonSettings = inConfig(ItTest)(Defaults.testTasks) ++ 
     inConfig(PerfTest)(Defaults.testTasks ++ baseAssemblySettings) ++ Seq(
-      scalaVersion := "2.10.3",
+      scalaVersion := "2.10.4",
       organization := "com.huawei",
       version := "0.1-SNAPSHOT",
       opts, commonDeps) ++ 
