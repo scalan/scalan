@@ -5,6 +5,15 @@ import scalan._
 
 trait PArraysOps { scalan: PArraysDsl =>
   import TagImplicits._
+  
+  implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = element[A] match {
+    case _: BaseElem[_] => element[BaseArray[A]].asElem[PArray[A]]
+    case pe: PairElem[a, b] =>
+      implicit val ea = pe.ea
+      implicit val eb = pe.eb
+      element[PairArray[a, b]].asElem[PArray[A]]
+    case _ => ???
+  }
 
   trait PArrayOps[T] extends PArray[T] {
     def map[R:Elem](f: Rep[T] => Rep[R]) = {
@@ -51,8 +60,10 @@ trait PArraysOps { scalan: PArraysDsl =>
   }
 
   //-------------------------------  BaseType ----------------------------------
-  trait BaseArrayOps[T] extends PArrayOps[T] {
+  trait BaseArrayOps[A] extends PArrayOps[A] {
+    implicit def eA: Elem[A]
     def length = arr.length
+    def elem = eA
   }
   trait BaseArrayCompanionOps extends BaseArrayCompanion {
     def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(BaseArray(Default.defaultOf[Rep[Array[A]]]))
@@ -62,7 +73,7 @@ trait PArraysOps { scalan: PArraysDsl =>
   trait PairArrayOps[A,B] extends PArrayOps[(A,B)] {
     implicit def eA: Elem[A]
     implicit def eB: Elem[B]
-    def eT = element[(A,B)]
+    lazy val elem = element[(A,B)]
     def as: PA[A]
     def bs: PA[B]
     def mapPairs[R:Elem](f: (Rep[A],Rep[B]) => Rep[R]): PA[R] = {

@@ -11,17 +11,25 @@ trait TypesOps { scalan: TypesDsl =>
     def tag: TypeTag[A] = typeTagFromString(typeCode).asInstanceOf[TypeTag[A]]
     lazy val defaultOf: Default[Rep[A]] = Default.defaultVal(defaultValue)
   }
-  trait TypeCompanion extends TypeFamily1[Type] {
+  trait TypeCompanionOps extends TypeCompanion {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[Type[A]]] = ea match {
       case baseE: BaseElem[a] => BaseType.defaultOf[a](baseE)
       case pairE: PairElem[a,b] => Tuple2Type.defaultOf[a,b](pairE.ea, pairE.eb)
       case _ => ???
     }
   }
+  implicit def defaultTypeElement[A:Elem]: Elem[Type[A]] = element[A] match {
+    case _: BaseElem[_] => element[BaseType[A]].asElem[Type[A]]
+    case pe: PairElem[a, b] =>
+      implicit val ea = pe.ea
+      implicit val eb = pe.eb
+      element[Tuple2Type[a, b]].asElem[Type[A]]
+    case _ => ???
+  }
 
   //-------------------------------  BaseType ----------------------------------
   trait BaseTypeOps[A] extends TypeOps[A] { }
-  trait BaseTypeCompanion extends ConcreteClass1[BaseType] {
+  trait BaseTypeCompanionOps extends BaseTypeCompanion {
     def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(BaseType(getBaseTypeCode(ea), ea.defaultRepValue))
   }
 
@@ -35,7 +43,7 @@ trait TypesOps { scalan: TypesDsl =>
     def typeCode = ???
     def defaultValue = Pair(tyA.defaultValue, tyB.defaultValue)
   }
-  trait Tuple2TypeCompanion extends ConcreteClass2[Tuple2Type] {
+  trait Tuple2TypeCompanionOps extends Tuple2TypeCompanion {
     def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]) = {
       val tyA = Type.defaultOf[A].value
       val tyB = Type.defaultOf[B].value

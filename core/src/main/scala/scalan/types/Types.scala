@@ -16,19 +16,18 @@ trait Types extends Base with TypesOps { self: TypesDsl =>
     def tag: TypeTag[A]
     def defaultOf: Default[Rep[A]]
   }
+  trait TypeCompanion extends TypeFamily1[Type] {}
 
   abstract class BaseType[A](
       val typeCode: Rep[String],
       val defaultValue: Rep[A])(implicit eA: Elem[A])
     extends Type[A]
-       with BaseTypeOps[A] { self: BaseTypeOps[A] =>
-  }
+       with BaseTypeOps[A]
+  trait BaseTypeCompanion extends ConcreteClass1[BaseType] {}
 
-  abstract class Tuple2Type[A,B](val tyA: Ty[A], val tyB: Ty[B])(implicit val e1: Elem[A], val e2: Elem[B])
+  abstract class Tuple2Type[A,B](val tyA: Rep[Type[A]], val tyB: Rep[Type[B]])(implicit val e1: Elem[A], val e2: Elem[B])
     extends Type[(A,B)]
-    with Tuple2TypeOps[A,B] { self: Tuple2TypeOps[A,B] =>
-  }
+    with Tuple2TypeOps[A,B]
+  trait Tuple2TypeCompanion extends ConcreteClass2[Tuple2Type] {}
 
 }
-
-

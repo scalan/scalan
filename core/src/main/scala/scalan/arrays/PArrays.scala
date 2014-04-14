@@ -5,34 +5,34 @@ import scalan.common.Default
 
 trait PArrays extends Base with PArraysOps { self: PArraysDsl =>
 
-  type PA[T] = Rep[PArray[T]]
-  trait PArray[T] extends UserType[PArray[T]] {
-    implicit def eT: Elem[T]
+  type PA[A] = Rep[PArray[A]]
+  trait PArray[A] extends UserType[PArray[A]] {
+    implicit def elem: Elem[A]
     def length: Rep[Int]
-    def arr: Rep[Array[T]]
-    def map[R:Elem](f: (Rep[T] => Rep[R])): PA[R]
-    def mapBy[R:Elem](f: (Rep[T=>R])): PA[R]
-    def zip[U:Elem](ys: PA[U]): PA[(T,U)]
+    def arr: Rep[Array[A]]
+    def map[B:Elem](f: (Rep[A] => Rep[B])): PA[B]
+    def mapBy[B:Elem](f: (Rep[A=>B])): PA[B]
+    def zip[B:Elem](ys: PA[B]): PA[(A,B)]
   }
   trait PArrayCompanion extends TypeFamily1[PArray]{
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]]
-    def apply[T:Elem](arr: Rep[Array[T]]): PA[T]
-    def fromArray[T:Elem](arr: Rep[Array[T]]): PA[T]
-    def replicate[T:Elem](len: Rep[Int], v: Rep[T]): PA[T]
-    def singleton[T:Elem](v: Rep[T]): PA[T]
+    def apply[A:Elem](arr: Rep[Array[A]]): PA[A]
+    def fromArray[A:Elem](arr: Rep[Array[A]]): PA[A]
+    def replicate[A:Elem](len: Rep[Int], v: Rep[A]): PA[A]
+    def singleton[A:Elem](v: Rep[A]): PA[A]
   }
 
-  abstract class BaseArray[T](val arr: Rep[Array[T]])(implicit val eA: Elem[T])
-    extends PArray[T]
-    with BaseArrayOps[T] { self: BaseArrayOps[T] =>
+  abstract class BaseArray[A](val arr: Rep[Array[A]])(implicit val eA: Elem[A])
+    extends PArray[A]
+    with BaseArrayOps[A] {
   }
   trait BaseArrayCompanion extends ConcreteClass1[BaseArray] {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[BaseArray[A]]]
   }
 
-  abstract class PairArray[A, B](val as: PA[A], val bs: PA[B])(implicit val eA: Elem[A], val eB: Elem[B])
+  abstract class PairArray[A, B](val as: Rep[PArray[A]], val bs: Rep[PArray[B]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends PArray[(A, B)]
-    with PairArrayOps[A,B] { self: PairArrayOps[A,B] =>
+    with PairArrayOps[A,B] {
   }
   trait PairArrayCompanion extends ConcreteClass2[PairArray] {
     def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[PairArray[A,B]]]
