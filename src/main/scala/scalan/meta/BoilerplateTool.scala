@@ -7,17 +7,21 @@ package scalan.meta
 object BoilerplateTool extends App {
   val scalanConfig = CodegenConfig(
     isLite = false,
-    srcPath = "../scalan/src",
+    srcPath = "../scalan/src/main/scala",
     proxyTrait = "scalan.lms.common.ProxyExp",
     stagedViewsTrait = "scalan.staged.StagedViews",
     entityFiles = List(
-      "main/scala/scalan/trees/Trees.scala",
-      "main/scala/scalan/math/Matrices.scala",
-      "main/scala/scalan/math/Vectors.scala",
-      "main/scala/scalan/collections/Sets.scala"
+      "scalan/trees/Trees.scala",
+      "scalan/math/Matrices.scala",
+      "scalan/math/Vectors.scala",
+      "scalan/collections/Sets.scala"
     ),
     isoNames = ("A","B"),
-    extraImports = List("scalan.common.Common")
+    extraImports = List(
+      "scala.reflect.runtime.universe._", 
+      "scalan.common.Common",
+      "scalan.staged.ScalanStaged",
+      "scalan.sequential.ScalanSeq")
   )
 
   val liteConfig = CodegenConfig(
@@ -36,6 +40,6 @@ object BoilerplateTool extends App {
       "scalan.common.Default.defaultVal")
   )
 
-  val ctx = new EntityManagement(liteConfig)
+  val ctx = new EntityManagement(scalanConfig)
   ctx.generateAll
 }

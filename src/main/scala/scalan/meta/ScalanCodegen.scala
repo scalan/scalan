@@ -154,7 +154,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |${if (isLite)
         s"  trait ${className}CompanionAbs extends ${className}CompanionOps {"
         else
-        s"  object ${className}Companion extends ${className}CompanionOps {"}
+        s"  object ${className} extends ${className}Companion {"}
         |${(fields.length != 1).opt(s"""
         |    def apply[$types](p: Rep[${className}Data[$types]])($implicitArgs): Rep[$className[$types]]
         |        = iso$className($useImplicits).$isoTo(p)""".stripMargin)
