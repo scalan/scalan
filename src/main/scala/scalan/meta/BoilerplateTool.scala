@@ -5,28 +5,41 @@
 package scalan.meta
 
 object BoilerplateTool extends App {
-  val defConf = CodegenConfig.default
-
-  val scalanConfig = defConf.copy(
-    srcPath = "/home/s00747473/Projects/scalan/src",
+  val scalanConfig = CodegenConfig(
+    isLite = false,
+    srcPath = "../scalan/src/main/scala",
+    proxyTrait = "scalan.lms.common.ProxyExp",
+    stagedViewsTrait = "scalan.staged.StagedViews",
     entityFiles = List(
-      "main/scala/scalan/trees/Trees.scala"
-      , "main/scala/scalan/math/Matrices.scala"
+      "scalan/trees/Trees.scala",
+      "scalan/math/Matrices.scala",
+      "scalan/math/Vectors.scala",
+      "scalan/collections/Sets.scala"
     ),
-    emitSourceContext = true,
-    isoNames = ("A","B")
+    isoNames = ("A","B"),
+    extraImports = List(
+      "scala.reflect.runtime.universe._", 
+      "scalan.common.Common",
+      "scalan.staged.ScalanStaged",
+      "scalan.sequential.ScalanSeq")
   )
 
-  val liteConfig = defConf.copy(
-    srcPath = "/home/s00747473/Projects/scalan-lite/src",
+  val liteConfig = CodegenConfig(
+    isLite = true,
+    srcPath = "../scalan-lite/core/src/main/scala",
     entityFiles = List(
-      "main/scala/scalan/types/Types.scala"
-      //"main/scala/scalan/rx/Reactive.scala"
+      "scalan/arrays/PArrays.scala",
+      "scalan/types/Types.scala"
       //, "main/scala/scalan/rx/Trees.scala"
     ),
-    stagedViewsTrait = "ViewsExp"
+    proxyTrait = "scalan.ProxyExp",
+    stagedViewsTrait = "scalan.ViewsExp",
+    isoNames = ("From", "To"),
+    extraImports = List(
+      "scala.reflect.runtime.universe._", 
+      "scalan.common.Default.defaultVal")
   )
 
-  val ctx = new EntityManagement(liteConfig)
+  val ctx = new EntityManagement(scalanConfig)
   ctx.generateAll
 }

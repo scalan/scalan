@@ -11,7 +11,7 @@ class ScalanParsersTests extends BaseTests {
   import ScalanImpl._
   import ScalanImpl.{
     TpeInt => INT, TpeBoolean => BOOL, TpeFloat => FLOAT, TraitCall => TC,
-    TraitDef => TD, MethodDef => MD, MethodArg => MA, TpeTuple => T,
+    TraitDef => TD, MethodDef => MD, MethodArgs => MAs, MethodArg => MA, TpeTuple => T,
     EntityModuleDef => EMD, ImportStat => IS}
   import scala.{List => L}
 
@@ -61,16 +61,16 @@ class ScalanParsersTests extends BaseTests {
   test("MethodDef") {
     testMethod("def f: Int", MD("f", tpeRes = INT))
     testMethod("implicit def f: Int", MD("f", Nil, Nil, INT, true))
-    testMethod("def f(x: Int): Int", MD("f", Nil, L(MA("x", INT)), INT))
+    testMethod("def f(x: Int): Int", MD("f", Nil, L(MAs(false, List(MA("x", INT)))), INT))
     testMethod(
       "def f[A <: T](x: A): Int",
-      MD("f", L(TpeArg("A", Some(TC("T")))), L(MA("x", TC("A"))), INT))
+      MD("f", L(TpeArg("A", Some(TC("T")))), L(MAs(false, L(MA("x", TC("A"))))), INT))
     testMethod(
-      "def f[A : Numeric](x: A): Int",
-      MD("f", L(TpeArg("A", None, L("Numeric"))), L(MA("x", TC("A"))), INT))
+      "def f[A : Numeric]: Int",
+      MD("f", L(TpeArg("A", None, L("Numeric"))), Nil, INT))
     testMethod(
-      "def f[A <: Int : Numeric : Fractional](x: A): Int",
-      MD("f", L(TpeArg("A", Some(INT), L("Numeric","Fractional"))), L(MA("x", TC("A"))), INT))
+      "def f[A <: Int : Numeric : Fractional](x: A)(implicit y: A): Int",
+      MD("f", L(TpeArg("A", Some(INT), L("Numeric","Fractional"))), L(MAs(false, L(MA("x", TC("A")))), MAs(true, L(MA("y", TC("A"))))), INT))
   }
 
   test("TraitDef") {
@@ -83,7 +83,7 @@ class ScalanParsersTests extends BaseTests {
     testTrait("trait Edge[V,E]{ def f[A <: T](x: A, y: (A,T)): Int }",
       TD("Edge", L(TpeArg("V"), TpeArg("E")), Nil,
         body = L(MD("f", L(TpeArg("A", Some(TC("T")))),
-                      L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))), INT))))
+                      L(MAs(false, L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))))), INT))))
     testTrait(
       """trait A {
         |  import scalan._
@@ -96,7 +96,7 @@ class ScalanParsersTests extends BaseTests {
             IS(L("scalan","_")),
             TpeDef("Rep", L(TpeArg("A")),TC("A")),
             MD("f", Nil, Nil, T(L(INT,TC("A")))),
-            MD("g", Nil, L(MA("x", BOOL)), TC("A")))))
+            MD("g", Nil, L(MAs(false, L(MA("x", BOOL)))), TC("A")))))
 
   }
 
@@ -134,7 +134,7 @@ class ScalanParsersTests extends BaseTests {
     testClass("class Edge[V,E](val x: V){ def f[A <: T](x: A, y: (A,T)): Int }",
       ClassDef("Edge", L(TpeArg("V"), TpeArg("E")), L(ClassArg(false, false, true, "x",TC("V"))),Nil,Nil,
         L(MD("f", L(TpeArg("A", Some(TC("T")))),
-          L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))), INT))))
+          L(MAs(false, L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))))), INT))))
   }
 
   test("EntityModuleDef") {
