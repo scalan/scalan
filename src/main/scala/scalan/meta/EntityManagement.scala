@@ -12,7 +12,8 @@ case class CodegenConfig(
                           entityFiles: List[String],
                           stagedViewsTrait: String,
                           isLite: Boolean,
-                          isoNames: (String, String)
+                          isoNames: (String, String),
+                          extraImports: List[String]
                         )
 
 class EntityManagement(val config: CodegenConfig) extends ScalanCodegen { ctx =>

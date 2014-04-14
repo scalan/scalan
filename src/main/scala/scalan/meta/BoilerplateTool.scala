@@ -16,21 +16,26 @@ object BoilerplateTool extends App {
       "main/scala/scalan/math/Vectors.scala",
       "main/scala/scalan/collections/Sets.scala"
     ),
-    isoNames = ("A","B")
+    isoNames = ("A","B"),
+    extraImports = List("scalan.common.Common")
   )
 
   val liteConfig = CodegenConfig(
     isLite = true,
-    srcPath = "../scalan-lite/src",
+    srcPath = "../scalan-lite/core/src/main/scala",
     entityFiles = List(
-      "main/scala/scalan/rx/Reactive.scala"
+      "scalan/arrays/PArrays.scala",
+      "scalan/types/Types.scala"
       //, "main/scala/scalan/rx/Trees.scala"
     ),
     proxyTrait = "scalan.ProxyExp",
     stagedViewsTrait = "scalan.ViewsExp",
-    isoNames = ("From", "To")
+    isoNames = ("From", "To"),
+    extraImports = List(
+      "scala.reflect.runtime.universe._", 
+      "scalan.common.Default.defaultVal")
   )
 
-  val ctx = new EntityManagement(scalanConfig)
+  val ctx = new EntityManagement(liteConfig)
   ctx.generateAll
 }

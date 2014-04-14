@@ -86,7 +86,7 @@ trait ScalanAst {
   def getConcreteClasses(defs: List[BodyItem]) = defs.collect { case c: ClassDef => c }
 
   object EntityModuleDef {
-    def fromModuleTrait(packageName: String, imports: List[ImportStat], moduleTrait: TraitDef): EntityModuleDef = {
+    def fromModuleTrait(packageName: String, imports: List[ImportStat], moduleTrait: TraitDef, config: CodegenConfig): EntityModuleDef = {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
@@ -97,7 +97,7 @@ trait ScalanAst {
       }
       val classes = getConcreteClasses(defs)
       
-      val extraImports = List(ImportStat(List("scalan.common.Common")))
+      val extraImports = config.extraImports.map(i => ImportStat(List(i)))
 
       EntityModuleDef(packageName, imports ++ extraImports, moduleName, typeSyn, opsTrait, classes, moduleTrait.selfType)
     }
@@ -211,6 +211,8 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
       case n ~ ancs ~ body =>
         ObjectDef(n, ancs.flatList, body.flatten.flatList)
     }
+  
+  def config: CodegenConfig
 
   lazy val entityModuleDef =
     ("package" ~> qualId <~ opt(";")) ~
@@ -218,7 +220,7 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
       traitDef ^^ {
         case ns ~ imports ~ moduleTrait => {
           val packageName = ns.mkString(".")
-          EntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait)
+          EntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait, config)
         }
       }
 
@@ -259,4 +261,5 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
 object ScalanImpl
   extends ScalanParsers
   with ScalanAst {
+  val config = BoilerplateTool.liteConfig
 }
