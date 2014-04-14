@@ -1,0 +1,77 @@
+package scalan.math
+
+import scalan.sequential.ScalanSeq
+import scalan.staged.ScalanStaged
+
+trait VectorsOps { scalan: VectorsDsl =>
+
+  trait VectorOps[A] extends Vector[A] {
+    def zeroA = eA.defaultOf
+    def indexes: PA[Int] = indexRange(length)
+    def +^(y: Rep[A])(implicit num: Numeric[A], o: Overloaded1): Vec[A] = map(x => x + y)
+    def -^(y: Rep[A])(implicit num: Numeric[A], o: Overloaded1): Vec[A] = map(x => x - y)
+    def *^(y: Rep[A])(implicit num: Numeric[A], o: Overloaded1): Vec[A] = map(x => x * y)
+    def +^(ys: PA[A])(implicit num: Numeric[A], o: Overloaded2): Vec[A] = +^(DenseVector(ys))
+    def -^(ys: PA[A])(implicit num: Numeric[A], o: Overloaded2): Vec[A] = -^(DenseVector(ys))
+    def *^(ys: PA[A])(implicit num: Numeric[A], o: Overloaded2): Vec[A] = *^(DenseVector(ys))
+  }
+
+  trait DenseVectorOps[A] extends VectorOps[A] {
+    def ->>(is: PA[Int]): Rep[PArray[A]] = items ->> is
+    def length = items.length
+    def nonZeroItems = indexes.zip(items).filter(_._2 !== zeroA)
+    def +^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] = DenseVector(items +^ other.items)
+    def -^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] = DenseVector(items -^ other.items)
+    def *^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] = DenseVector(items *^ other.items)
+    def apply(i: Rep[Int]): Rep[A] = items(i)
+    def reduce(implicit m: RepMonoid[A]): Rep[A] = items.reduce
+    def <<-(is: PA[Int], vs: PA[A]): Rep[DenseVector[A]] = DenseVector(items <<- (is, vs))
+    def <<-(i: Rep[Int], v: Rep[A])(implicit o: Overloaded1): Rep[DenseVector[A]] = <<-(singleton(i), singleton(v))
+    def map[B: Elem](f: Rep[A] => Rep[B]): Vec[B] = DenseVector(items.map(f))
+  }
+  
+  trait DenseVectorCompanion {
+    implicit def paToVec[A](xs: PA[A]) = DenseVector(xs)(xs.elem)
+    implicit def vecToPa[A](xs: DenseVector[A]) = xs.items
+  }
+  
+  trait SparseVectorOps[A] extends VectorOps[A] {
+    private def nonZeroIndices = nonZeroItems.as
+    private def nonZeroValues = nonZeroItems.bs
+    def items = replicate(length, zeroA) <<- (nonZeroIndices, nonZeroValues)
+    def +^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] = 
+      SparseVector((nonZeroItems, other.nonZeroItems).outerJoin { (x: Rep[A], y: Rep[A]) => x + y} { (x: Rep[A]) => x } { (x: Rep[A]) => x }, 
+          length)
+    def *^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] = 
+      SparseVector((nonZeroItems, other.nonZeroItems).innerJoin { (x: Rep[A], y: Rep[A]) => x * y}, length)
+    def -^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] = 
+      SparseVector((nonZeroItems, other.nonZeroItems).outerJoin { (x: Rep[A], y: Rep[A]) => x - y} { (x: Rep[A]) => x } { (x: Rep[A]) => -x }, 
+          length)
+    def apply(i: Rep[Int]): Rep[A] = ???
+    def reduce(implicit m: RepMonoid[A]): Rep[A] = nonZeroValues.reduce
+    def <<-(is: PA[Int], vs: PA[A]): Rep[DenseVector[A]] = ???
+    def map[B](f: Rep[A] => Rep[B])(implicit eB: Elem[B]): Vec[B] = {
+      val fZero = f(zeroA)
+      IF(fZero === eB.defaultOf) THEN {
+        SparseVector(nonZeroItems.map {
+          case Pair(i, x) => (i, f(x))
+        }, length).asRep[Vector[B]]
+      } ELSE {
+        val arr = replicate(length, fZero)
+        DenseVector(arr <<- (nonZeroIndices, nonZeroValues.map(f)))
+      }
+    }
+  }
+  
+  trait SparseVectorCompanion {
+
+  }
+
+  def dot[A: Numeric: Elem: RepMonoid](xs: Vec[A], ys: Vec[A]) = (xs *^ ys).reduce
+}
+
+trait VectorsDsl extends VectorsAbs with VectorsOps
+
+trait VectorsDslSeq extends VectorsDsl with VectorsSeq with ScalanSeq
+
+trait VectorsDslExp extends VectorsDsl with VectorsExp with ScalanStaged

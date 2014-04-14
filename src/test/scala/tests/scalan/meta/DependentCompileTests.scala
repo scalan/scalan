@@ -8,34 +8,57 @@ import java.nio.file.Files
 class DependentCompileTests extends FunSuite {
 
   test("Scalan-lite") {
-    compile(Base.config.getProperty("scalan-lite.assembly"))
+    val liteConfig = CodegenConfig(
+      isLite = true,
+      srcPath = "",
+      entityFiles = List(
+        "PArrays.scala",
+        "Types.scala"
+      ),
+      proxyTrait = "scalan.ProxyExp",
+      stagedViewsTrait = "scalan.ViewsExp",
+      isoNames = ("From", "To"),
+      extraImports = List(
+        "scala.reflect.runtime.universe._",
+        "scalan.common.Default.defaultVal")
+    )
+
+    compile(Base.config.getProperty("scalan-lite.assembly"), liteConfig, "src/test/scala/tests/scalan/meta/files/scalan-lite", List("PArrays.scala", "PArraysOps.scala", "Types.scala", "TypesOps.scala"))
   }
 
-  def compile(jarPath : String) = {
+  test("Scalan") {
+    val scalanConfig = CodegenConfig(
+      isLite = false,
+      srcPath = "../scalan/src/main/scala",
+      proxyTrait = "scalan.lms.common.ProxyExp",
+      stagedViewsTrait = "scalan.staged.StagedViews",
+      entityFiles = List(
+        "Trees.scala",
+        "Matrices.scala",
+//        "Vectors.scala",
+        "Sets.scala"
+      ),
+      isoNames = ("A","B"),
+      extraImports = List(
+        "scala.reflect.runtime.universe._",
+        "scalan.common.Common",
+        "scalan.staged.ScalanStaged",
+        "scalan.sequential.ScalanSeq")
+    )
+
+    compile(Base.config.getProperty("scalan.assembly"), scalanConfig, "src/test/scala/tests/scalan/meta/files/scalan",
+      List("Matrices.scala", "MatricesOps.scala", "Sets.scala", "SetsOps.scala", /*"Vectors.scala", "VectorsOps.scala", */"Trees.scala", "TreesOps.scala"))
+  }
+
+  def compile(jarPath : String, config : CodegenConfig, prefixPath : String, files : List[String]) = {
     val dir = Files.createTempDirectory("sbtTest")
     try {
-      copy("src/test/scala/tests/scalan/meta/files/PArrays.scala.tmplt", dir + "/PArrays.scala")
-      copy("src/test/scala/tests/scalan/meta/files/PArraysOps.scala.tmplt", dir + "/PArraysOps.scala")
-      copy("src/test/scala/tests/scalan/meta/files/Types.scala.tmplt", dir + "/Types.scala")
-      copy("src/test/scala/tests/scalan/meta/files/TypesOps.scala.tmplt", dir + "/TypesOps.scala")
+      for (fileName <- files) {
+        copy(s"$prefixPath/$fileName.tmplt", dir + s"/$fileName")
+      }
 
-      val liteConfig = CodegenConfig(
-        isLite = true,
-        srcPath = dir.toString,
-        entityFiles = List(
-          "PArrays.scala",
-          "Types.scala"
-        ),
-        proxyTrait = "scalan.ProxyExp",
-        stagedViewsTrait = "scalan.ViewsExp",
-        isoNames = ("From", "To"),
-        extraImports = List(
-          "scala.reflect.runtime.universe._",
-          "scalan.common.Default.defaultVal")
-      )
-
-      val ctx = new EntityManagement(liteConfig)
-      ctx.generateAll()
+      val ctx = new EntityManagement(config)
+      ctx.generateAll(dir.toString)
 
       writeToFile(dir + "/Makefile", s"main:\n\t\tscalac -classpath $jarPath/* *.scala impl/*.scala")
 

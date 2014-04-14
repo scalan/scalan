@@ -1,0 +1,23 @@
+package scalan.collections
+
+import scalan._
+
+trait Sets extends Maps { self: SetsDsl =>
+
+  type PS[A] = Rep[PSet[A]]
+
+  trait PSet[A] {
+    implicit def eA: Elem[A]
+    def union(that: PS[A]): PS[A]
+    def difference(that: Rep[PSet[A]]): PS[A]
+    def isEmpty: Rep[Boolean]
+    def contains(elem: Rep[A]): Rep[Boolean]
+    def toArray: PA[A]
+    def toMap: PM[A, Unit]
+    def size: Rep[Int]
+  }
+
+  abstract class PSetImpl[A](val toMap: Rep[PMap[A, Unit]])(implicit val eA: Elem[A])
+    extends PSet[A] with PSetOps[A] with PSetImplOps[A] {
+  }
+}

@@ -1,7 +1,3 @@
-/**
- * User: Alexander Slesarenko
- * Date: 12/1/13
- */
 package scalan.meta
 
 object BoilerplateTool extends App {
@@ -30,7 +26,6 @@ object BoilerplateTool extends App {
     entityFiles = List(
       "scalan/arrays/PArrays.scala",
       "scalan/types/Types.scala"
-      //, "main/scala/scalan/rx/Trees.scala"
     ),
     proxyTrait = "scalan.ProxyExp",
     stagedViewsTrait = "scalan.ViewsExp",
@@ -41,5 +36,5 @@ object BoilerplateTool extends App {
   )
 
   val ctx = new EntityManagement(scalanConfig)
-  ctx.generateAll
+  ctx.generateAll()
 }

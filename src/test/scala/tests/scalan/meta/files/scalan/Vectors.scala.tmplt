@@ -1,0 +1,44 @@
+package scalan.math
+
+import scalan.Scalan
+import scalan.ScalanDsl
+import scalan.sequential.ScalanSeq
+import scalan.lms.common.ProxyExp
+import scalan.staged._
+
+trait Vectors extends Scalan with VectorsOps { self: VectorsDsl =>
+
+  type Vec[A] = Rep[Vector[A]]
+  trait Vector[A] {
+    implicit def eA: Elem[A]
+    def items: PA[A]
+    def nonZeroItems: PA[(Int, A)]
+    def length: Rep[Int]
+    def +^(other: Vec[A])(implicit num: Numeric[A]): Vec[A]
+    def -^(other: Vec[A])(implicit num: Numeric[A]): Vec[A]
+    def *^(other: Vec[A])(implicit num: Numeric[A]): Vec[A]
+    def apply(i: Rep[Int]): Rep[A]
+    def reduce(implicit m: RepMonoid[A]): Rep[A]
+    def map[B: Elem](f: Rep[A] => Rep[B]): Vec[B]
+    def indexes: PA[Int]
+    def <<-(is: PA[Int], vs: PA[A]): Vec[A]
+    def +^(y: Rep[A])(implicit num: Numeric[A], o: Overloaded1): Vec[A]
+    def -^(y: Rep[A])(implicit num: Numeric[A], o: Overloaded1): Vec[A]
+    def *^(y: Rep[A])(implicit num: Numeric[A], o: Overloaded1): Vec[A]
+    def +^(ys: PA[A])(implicit num: Numeric[A], o: Overloaded2): Vec[A]
+    def -^(ys: PA[A])(implicit num: Numeric[A], o: Overloaded2): Vec[A]
+    def *^(ys: PA[A])(implicit num: Numeric[A], o: Overloaded2): Vec[A]
+  }
+  
+  abstract class DenseVector[A]
+    (val items: Rep[PArray[A]])
+    (implicit val eA: Elem[A])
+      extends Vector[A] with DenseVectorOps[A] {
+  }
+
+  abstract class SparseVector[A]
+    (val nonZeroItems: Rep[PArray[(Int, A)]], val length: Rep[Int])
+    (implicit val eA: Elem[A])
+      extends Vector[A] with SparseVectorOps[A] {
+  }
+}

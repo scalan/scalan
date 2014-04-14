@@ -1,0 +1,36 @@
+package scalan.math
+
+import scalan.Scalan
+import scalan.ScalanDsl
+import scalan.sequential.ScalanSeq
+import scalan.lms.common.ProxyExp
+import scalan.staged._
+
+trait Matrices extends Scalan with Vectors with MatricesOps { self: MatricesDsl =>
+
+  type PMr[A] = Rep[Matrix[A]]
+  trait Matrix[A] {
+    implicit def eA: Elem[A]
+    def items: PA[A]
+    def numColumns: Rep[Int]
+    def numRows: Rep[Int]
+    def apply(row: Rep[Int]): Rep[DenseVector[A]]
+    def apply(row: Rep[Int], column: Rep[Int]): Rep[A]
+    def rows: PA[DenseVector[A]]
+    def sparseRows: PA[SparseVector[A]]
+    def invert: Rep[Matrix[A]]
+  }
+
+  abstract class DenseMatrix[A]
+    (val items: Rep[PArray[A]], val numColumns: Rep[Int])
+    (implicit val eA: Elem[A])
+      extends Matrix[A] with DenseMatrixOps[A] { 
+  }
+
+  abstract class ColumnSparseMatrix[A]
+    (val sparseRows: Rep[PArray[SparseVector[A]]], val numColumns: Rep[Int])
+    (implicit val eA: Elem[A])
+    extends Matrix[A] with ColumnSparseMatrixOps[A] { 
+  }
+}
+

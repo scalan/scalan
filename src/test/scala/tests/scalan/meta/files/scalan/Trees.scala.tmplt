@@ -1,0 +1,41 @@
+package scalan.trees
+
+import scalan.Scalan
+import scalan.ScalanDsl
+import scalan.common.Common
+import scalan.sequential.ScalanSeq
+import scalan.lms.common.ProxyExp
+import scalan.staged._
+
+trait Trees extends ScalanDsl with TreesOps { self: TreesDsl =>
+
+  type PT[A] = Rep[Tree[A]]
+  trait Tree[A] {
+    implicit def eA: Elem[A]
+    def parents: PA[Int]
+    def children: NA[Int]
+    def nodeProps: PA[A]
+    def levels: Rep[NArray[Int]]
+    def levelSegs: Rep[NArray[Int]]
+    def getTreeLevels: Rep[TreeLevels[A]]
+    def isLeaf(n: Rep[Int]): Rep[Boolean]
+    def nodesNum: Rep[Int]
+    def nodesIndices: PA[Int]
+    def roots: PA[Int]
+    def childrenOf(nodes: PA[Int]): NA[Int]
+  }
+
+  abstract class TreeGraph[A]
+      (val parents: Rep[PArray[Int]],  val children: Rep[NArray[Int]],  val nodeProps: Rep[PArray[A]])
+      (implicit val eA: Elem[A]) extends Tree[A] with TreeGraphOps[A]
+  {
+  }
+
+  abstract class TreeLevels[A]
+      (val levels: Rep[NArray[Int]],
+       val levelSegs: Rep[NArray[Int]],
+       val nodeProps: Rep[PArray[A]])(implicit val eA: Elem[A])  extends Tree[A] with TreeLevelsOps[A]
+  {
+  }
+
+}
