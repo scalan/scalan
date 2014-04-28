@@ -64,6 +64,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     implicit def eA: Elem[A]
     def length = arr.length
     def elem = eA
+    def apply(i: Rep[Int]) = arr(i)
   }
   trait BaseArrayCompanionOps extends BaseArrayCompanion {
     def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(BaseArray(Default.defaultOf[Rep[Array[A]]]))
@@ -80,6 +81,7 @@ trait PArraysOps { scalan: PArraysDsl =>
       map({ (p: Rep[(A,B)]) => { val Pair(a,b) = p; f(a,b)}})
     }
     def arr = as.arr zip bs.arr
+    def apply(i: Rep[Int]) = (as(i), bs(i))
     def length = as.length
   }
   trait PairArrayCompanionOps extends PairArrayCompanion {

@@ -10,6 +10,7 @@ trait PArrays extends Base with PArraysOps { self: PArraysDsl =>
     implicit def elem: Elem[A]
     def length: Rep[Int]
     def arr: Rep[Array[A]]
+    def apply(i: Rep[Int]): Rep[A]
     def map[B:Elem](f: (Rep[A] => Rep[B])): PA[B]
     def mapBy[B:Elem](f: (Rep[A=>B])): PA[B]
     def zip[B:Elem](ys: PA[B]): PA[(A,B)]
