@@ -240,27 +240,5 @@ trait ElemsExp extends Elems
   //    case ee: ElemElem[a] => ElemDef[a](x)
   //    case _ => super.toRep(x)(eA)
   //  }
-  def createManifest[T](eA: Elem[T]) : Manifest[_] = {
-    val manifest = eA match {
-      case el: BaseElem[_] =>
-        el.tag.tpe.toString()  match {
-          case "Double" => Manifest.Double
-          case "Int" => Manifest.Int
-          case _ => Manifest.Int
-        }
-      case el: UnitElem =>
-        Manifest.Unit
-      case el: PairElem[_, _] =>
-        Manifest.classType(classOf[(_, _)], createManifest(el.ea), createManifest(el.eb) )
-      case el: ArrayElem[_] => {
-        Manifest.arrayType(createManifest(el.ea) )
-      }
-      case el: FuncElem[_,_] => {
-        Manifest.classType(classOf[_ => _], createManifest(el.ea), createManifest(el.eb) )
-      }
-      case _ => ??? //("Unknown element")
-    }
-    manifest
-  }
 
 }

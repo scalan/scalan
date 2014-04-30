@@ -9,7 +9,7 @@ import scalan.codegen.GraphVizExport
 import java.io.{InputStreamReader, BufferedReader, File}
 
 trait LMSBridge[A,B] {
-  val scalan: ScalanStaged
+  val scalan: ScalanStaged with LmsBackend
 
   trait LMSFacadeBase {
     val lFunc: LMSFunction[A,B]
@@ -238,4 +238,26 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport =>
     launchProcess(outDir, "scalac", outputSource.getAbsolutePath())
   }
 
+  def createManifest[T](eA: Elem[T]) : Manifest[_] = {
+    val manifest = eA match {
+      case el: BaseElem[_] =>
+        el.tag.tpe.toString()  match {
+          case "Double" => Manifest.Double
+          case "Int" => Manifest.Int
+          case tpe => ???(s"Don't know how to create manifest for base type $tpe")
+        }
+      case el: UnitElem =>
+        Manifest.Unit
+      case el: PairElem[_, _] =>
+        Manifest.classType(classOf[(_, _)], createManifest(el.ea), createManifest(el.eb) )
+      case el: ArrayElem[_] => {
+        Manifest.arrayType(createManifest(el.ea) )
+      }
+      case el: FuncElem[_,_] => {
+        Manifest.classType(classOf[_ => _], createManifest(el.ea), createManifest(el.eb) )
+      }
+      case el => ???(s"Don't know how to create manifest for $el")
+    }
+    manifest
+  }
 }
