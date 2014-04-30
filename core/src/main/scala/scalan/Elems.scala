@@ -24,11 +24,12 @@ trait Elems extends Base { self: Scalan =>
     def name = tag.tpe.toString
 
     lazy val prettyName = name.
+      replaceAll("[A-Za-z0-9_.]*this.", "").
       replace("scala.math.Numeric$", "").
       replace("scala.", "").
-      replaceAll("""scalan[^$]*\$""", "")
+      replaceAll("""[^# \[\],>]*[#$]""", "")
 
-    override def toString = s"${getClass.getSimpleName}[$name]"
+    override def toString = s"${getClass.getSimpleName}[$prettyName]"
     override def equals(other: Any) = other match {
       case e: Element[_] => tag == e.tag
       case _ => false
