@@ -53,6 +53,13 @@ abstract class SmokeItTests extends ItTests {
         })
       res
     }
+    lazy val expBaseArrays = fun { xss:Arr[Array[Int]] =>
+      val pss1:Arr[PArray[Int]] = xss.map (fun { xs: Rep[Array[Int]] => PArray(xs)})
+      val res = pss1.map(fun { ps: PA[Int] =>
+        ps.arr
+      })
+      res
+    }
 
 //    lazy val simpleMap = fun {x: PA[Int] =>
 //      x.map(y => y + 1)

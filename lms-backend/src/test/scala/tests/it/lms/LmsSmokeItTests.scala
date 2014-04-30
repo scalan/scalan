@@ -50,4 +50,9 @@ class LmsSmokeItTests extends SmokeItTests {
     progSeq.mvMul(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.mvMul, progStaged.mvMul)("mvMul", in)
   }
+  ignore test("test7expBaseArrays") {
+    val (in, out) = Array(Array(2,3), Array(4,5)) ->  Array(Array(2,3), Array(4,5))
+    progSeq.expBaseArrays(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.expBaseArrays, progStaged.expBaseArrays)("expBaseArrays", in)
+  }
 }
