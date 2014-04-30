@@ -14,6 +14,7 @@ trait PArrays extends Base with PArraysOps { self: PArraysDsl =>
     def map[B:Elem](f: (Rep[A] => Rep[B])): PA[B]
     def mapBy[B:Elem](f: (Rep[A=>B])): PA[B]
     def zip[B:Elem](ys: PA[B]): PA[(A,B)]
+    def slice(offset: Rep[Int], length: Rep[Int]): Rep[PArray[A]]
   }
   trait PArrayCompanion extends TypeFamily1[PArray]{
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]]
@@ -37,6 +38,13 @@ trait PArrays extends Base with PArraysOps { self: PArraysDsl =>
   }
   trait PairArrayCompanion extends ConcreteClass2[PairArray] {
     def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[PairArray[A,B]]]
+  }
+
+  abstract class FlatNestedArray[A](val values: Rep[PArray[A]], val segments: Rep[PArray[(Int, Int)]])(implicit val eA: Elem[A])
+    extends PArray[PArray[A]]
+    with FlatNestedArrayOps[A] {
+  }
+  trait FlatNestedArrayCompanion extends ConcreteClass1[FlatNestedArray] {
   }
 
 }

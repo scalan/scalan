@@ -10,6 +10,7 @@ trait MatricesOps { scalan: MatricesDsl =>
     def numColumns: Rep[Int]
     def numRows: Rep[Int]
     implicit def elem: Elem[T]
+    // def *(vector: Vec[T])(implicit n: Numeric[T])
   }
 
   trait MatrixCompanionOps extends TypeFamily1[Matrix] {
@@ -19,6 +20,8 @@ trait MatricesOps { scalan: MatricesDsl =>
   trait RowMajorMatrixOps[T] extends MatrixOps[T] {
     def rmValues: Rep[PArray[T]]
     def numRows: Rep[Int] = rmValues.length / numColumns
+    
+    // def *(vector: Vec[T])(implicit n: Numeric[T]) = rows
   }
 
   trait RowMajorMatrixCompanionOps extends ConcreteClass1[RowMajorMatrix] {

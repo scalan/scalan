@@ -48,7 +48,7 @@ trait PArraysOps { scalan: PArraysDsl =>
 
     def replicate[T:Elem](len: Rep[Int], v: Rep[T]): PA[T] = element[T] match {
       case baseE: BaseElem[a] =>
-        BaseArray[a](array_Replicate(len, v.asRep[a]))
+        BaseArray[a](array_replicate(len, v.asRep[a]))
       case _ => ???
 
     }
@@ -65,6 +65,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     def length = arr.length
     def elem = eA
     def apply(i: Rep[Int]) = arr(i)
+    def slice(offset: Rep[Int], length: Rep[Int]) = BaseArray(arr.slice(offset, length))
   }
   trait BaseArrayCompanionOps extends BaseArrayCompanion {
     def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(BaseArray(Default.defaultOf[Rep[Array[A]]]))
@@ -83,6 +84,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     def arr = as.arr zip bs.arr
     def apply(i: Rep[Int]) = (as(i), bs(i))
     def length = as.length
+    def slice(offset: Rep[Int], length: Rep[Int]) = PairArray(as.slice(offset, length), bs.slice(offset, length))
   }
   trait PairArrayCompanionOps extends PairArrayCompanion {
     def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]) = {
@@ -90,6 +92,27 @@ trait PArraysOps { scalan: PArraysDsl =>
       val bs = PArray.defaultOf[B].value
       Default.defaultVal(PairArray(as, bs))
     }
+  }
+  
+  type Segments = PArray[(Int, Int)]
+  
+  trait FlatNestedArrayOps[A] extends PArrayOps[PArray[A]] {
+    implicit def eA: Elem[A]
+    lazy val elem = defaultPArrayElement(eA)
+    def values: Rep[PArray[A]]
+    def segments: Rep[PArray[(Int, Int)]]
+    def length = segments.length
+    def apply(i: Rep[Int]) = {
+      val Pair(offset, length) = segments(i)
+      values.slice(offset, length)
+    }// arr(i)
+    def arr: Rep[Array[PArray[A]]] = {
+      ??? // TODO
+    }
+    def slice(offset: Rep[Int], length: Rep[Int]) = ??? // TODO
+  }
+  trait FlatNestedArrayCompanionOps extends FlatNestedArrayCompanion {
+    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(FlatNestedArray(element[PArray[A]].defaultRepValue, element[Segments].defaultRepValue))
   }
 }
 

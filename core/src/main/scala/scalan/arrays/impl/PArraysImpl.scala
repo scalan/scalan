@@ -1,8 +1,6 @@
 
 package scalan.arrays
 
-import scala.annotation.implicitNotFound
-import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
@@ -157,6 +155,69 @@ trait PArraysAbs extends PArrays
   def mkPairArray[A, B](as: Rep[PArray[A]], bs: Rep[PArray[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]]
   def unmkPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]): Option[(Rep[PArray[A]], Rep[PArray[B]])]
 
+
+  // elem for concrete class
+  trait FlatNestedArrayElem[A] extends PArrayElem[FlatNestedArrayData[A], FlatNestedArray[A]]
+
+  // state representation type
+  type FlatNestedArrayData[A] = (PArray[A], PArray[(Int,Int)])
+
+  // 3) Iso for concrete class
+  abstract class FlatNestedArrayIso[A](implicit eA: Elem[A])
+    extends IsoBase[FlatNestedArrayData[A], FlatNestedArray[A]] {
+    override def from(p: Rep[FlatNestedArray[A]]) =
+      unmkFlatNestedArray(p) match {
+        case Some((values, segments)) => Pair(values, segments)
+        case None => !!!
+      }
+    override def to(p: Rep[(PArray[A], PArray[(Int,Int)])]) = {
+      val Pair(values, segments) = p
+      FlatNestedArray(values, segments)
+    }
+    lazy val tag = {
+      implicit val tagA = element[A].tag
+      typeTag[FlatNestedArray[A]]
+    }
+    lazy val defaultRepTo = defaultVal[Rep[FlatNestedArray[A]]](FlatNestedArray(element[PArray[A]].defaultRepValue, element[PArray[(Int,Int)]].defaultRepValue))
+  }
+  // 4) constructor and deconstructor
+  trait FlatNestedArrayCompanionAbs extends FlatNestedArrayCompanionOps {
+
+    def apply[A](p: Rep[FlatNestedArrayData[A]])(implicit eA: Elem[A]): Rep[FlatNestedArray[A]]
+        = isoFlatNestedArray(eA).to(p)
+    def apply[A]
+          (values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])
+          (implicit eA: Elem[A]): Rep[FlatNestedArray[A]]
+        = mkFlatNestedArray(values, segments)
+    def unapply[A:Elem](p: Rep[FlatNestedArray[A]]) = unmkFlatNestedArray(p)
+  }
+
+  def FlatNestedArray: Rep[FlatNestedArrayCompanionAbs]
+  implicit def proxyFlatNestedArrayCompanion(p: Rep[FlatNestedArrayCompanionAbs]): FlatNestedArrayCompanionAbs = {
+    proxyOps[FlatNestedArrayCompanionAbs](p, Some(true))
+  }
+
+  trait FlatNestedArrayCompanionElem extends CompanionElem[FlatNestedArrayCompanionAbs]
+  implicit lazy val FlatNestedArrayCompanionElem: FlatNestedArrayCompanionElem = new FlatNestedArrayCompanionElem {
+    lazy val tag = typeTag[FlatNestedArrayCompanionAbs]
+    lazy val defaultRep = defaultVal(FlatNestedArray)
+  }
+
+  implicit def proxyFlatNestedArray[A:Elem](p: Rep[FlatNestedArray[A]]): FlatNestedArrayOps[A] = {
+    proxyOps[FlatNestedArrayOps[A]](p)
+  }
+
+  implicit class ExtendedFlatNestedArray[A](p: Rep[FlatNestedArray[A]])(implicit eA: Elem[A]) {
+    def toData: Rep[FlatNestedArrayData[A]] = isoFlatNestedArray(eA).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoFlatNestedArray[A](implicit eA: Elem[A]): Iso[FlatNestedArrayData[A], FlatNestedArray[A]]
+
+  // 6) smart constructor and deconstructor
+  def mkFlatNestedArray[A](values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])(implicit eA: Elem[A]): Rep[FlatNestedArray[A]]
+  def unmkFlatNestedArray[A:Elem](p: Rep[FlatNestedArray[A]]): Option[(Rep[PArray[A]], Rep[PArray[(Int,Int)]])]
+
 }
 
 
@@ -223,6 +284,35 @@ trait PArraysSeq extends PArraysAbs
       = new SeqPairArray[A, B](as, bs)
   def unmkPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]])
     = Some((p.as, p.bs))
+
+
+  case class SeqFlatNestedArray[A]
+      (override val values: Rep[PArray[A]], override val segments: Rep[PArray[(Int,Int)]])
+      (implicit override val eA: Elem[A])
+    extends FlatNestedArray[A](values, segments) with UserTypeSeq[PArray[PArray[A]], FlatNestedArray[A]] {
+    lazy val selfType = element[FlatNestedArray[A]].asInstanceOf[Elem[PArray[PArray[A]]]]
+  }
+
+  lazy val FlatNestedArray = new FlatNestedArrayCompanionAbs with UserTypeSeq[FlatNestedArrayCompanionAbs, FlatNestedArrayCompanionAbs] {
+    lazy val selfType = element[FlatNestedArrayCompanionAbs]
+  }
+
+
+
+  implicit def isoFlatNestedArray[A](implicit eA: Elem[A]):Iso[FlatNestedArrayData[A], FlatNestedArray[A]]
+    = new FlatNestedArrayIso[A] with SeqIso[FlatNestedArrayData[A], FlatNestedArray[A]] { i =>
+        // should use i as iso reference
+        override lazy val eTo = new SeqViewElem[FlatNestedArrayData[A], FlatNestedArray[A]]
+                                    with FlatNestedArrayElem[A] { val iso = i }
+      }
+
+
+  def mkFlatNestedArray[A]
+      (values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])
+      (implicit eA: Elem[A])
+      = new SeqFlatNestedArray[A](values, segments)
+  def unmkFlatNestedArray[A:Elem](p: Rep[FlatNestedArray[A]])
+    = Some((p.values, p.segments))
 
 }
 
@@ -296,6 +386,38 @@ trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp
         // should use i as iso reference
         override lazy val eTo = new StagedViewElem[PairArrayData[A, B], PairArray[A, B]]
                                     with PairArrayElem[A, B] { val iso = i }
+      }
+
+
+  case class ExpFlatNestedArray[A]
+      (override val values: Rep[PArray[A]], override val segments: Rep[PArray[(Int,Int)]])
+      (implicit override val eA: Elem[A])
+    extends FlatNestedArray[A](values, segments) with UserTypeExp[PArray[PArray[A]], FlatNestedArray[A]] {
+    lazy val selfType = element[FlatNestedArray[A]].asInstanceOf[Elem[PArray[PArray[A]]]]
+    override def mirror(t: Transformer) = ExpFlatNestedArray[A](t(values), t(segments))
+  }
+
+  lazy val FlatNestedArray: Rep[FlatNestedArrayCompanionAbs] = new FlatNestedArrayCompanionAbs with UserTypeExp[FlatNestedArrayCompanionAbs, FlatNestedArrayCompanionAbs] {
+    lazy val selfType = element[FlatNestedArrayCompanionAbs]
+    override def mirror(t: Transformer) = this
+  }
+
+  addUserType[ExpFlatNestedArray[_]]
+
+
+  def mkFlatNestedArray[A]
+      (values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])
+      (implicit eA: Elem[A])
+      = new ExpFlatNestedArray[A](values, segments)
+  def unmkFlatNestedArray[A:Elem](p: Rep[FlatNestedArray[A]])
+    = Some((p.values, p.segments))
+
+
+  implicit def isoFlatNestedArray[A](implicit eA: Elem[A]):Iso[FlatNestedArrayData[A], FlatNestedArray[A]]
+    = new FlatNestedArrayIso[A] with StagedIso[FlatNestedArrayData[A], FlatNestedArray[A]] { i =>
+        // should use i as iso reference
+        override lazy val eTo = new StagedViewElem[FlatNestedArrayData[A], FlatNestedArray[A]]
+                                    with FlatNestedArrayElem[A] { val iso = i }
       }
 
 }

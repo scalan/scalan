@@ -13,6 +13,7 @@ trait ArrayOps { self: Scalan  =>
     def map[R:ClassTag](f: Rep[T=>R]) = array_map(xs, f)
     def sum(implicit m: RepMonoid[T]) = array_sum(xs)
     def zip[U](ys: Arr[U]): Arr[(T,U)] = array_zip(xs, ys)
+    def slice(offset: Rep[Int], length: Rep[Int]): Arr[T] = array_slice(xs, offset, length)
   }
 
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
@@ -20,7 +21,8 @@ trait ArrayOps { self: Scalan  =>
   def array_map[T,R:ClassTag](xs: Arr[T], f: Rep[T=>R]): Arr[R]
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) : Rep[T]
   def array_zip[T,U](xs: Arr[T], ys:Arr[U]): Arr[(T,U)]
-  def array_Replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T]
+  def array_replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T]
+  def array_slice[T](xs: Arr[T], offset: Rep[Int], length: Rep[Int]): Arr[T]
 }
 
 trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
@@ -29,7 +31,9 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   def array_map[T, R:ClassTag](xs: Array[T], f: T => R) = Array.tabulate(xs.length)(i => f(xs(i))) //xs.map(f)
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x,y) => m.append(x,y))
   def array_zip[T,U](xs: Array[T], ys:Array[U]): Array[(T,U)] = (xs, ys).zipped.toArray
-  def array_Replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T] = Array.fill(len)(v)
+  def array_replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T] = Array.fill(len)(v)
+  def array_slice[T](xs: Arr[T], offset: Rep[Int], length: Rep[Int]): Arr[T] = 
+    genericArrayOps(xs).slice(offset, length)
 }
 
 trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
@@ -76,6 +80,11 @@ trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
     def selfType = element[Array[T]]
     override def mirror(t: Transformer) = ArrayReplicate(t(len), t(v))
   }
+  case class ArraySlice[T: Elem](xs: Exp[Array[T]], offset: Exp[Int], length: Exp[Int]) extends ArrayDef[T] {
+    lazy val uniqueOpId = name(element[T])
+    def selfType = element[Array[T]]
+    override def mirror(t: Transformer) = ArraySlice(t(xs), t(offset), t(length))
+  }
 
   def array_apply[T](xs: Exp[Array[T]], n: Exp[Int]): Rep[T] =
     withElemOfArray(xs){ implicit eT => ArrayApply(xs, n) }
@@ -92,9 +101,12 @@ trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
     ArrayZip(xs, ys)
   }
 
-  def array_Replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T] =
+  def array_replicate[T:ClassTag](len: Rep[Int], v: Rep[T]): Arr[T] =
     withElemOf(v){ implicit eT =>
       ArrayReplicate(len, v)
     }
+  
+  def array_slice[T](xs: Arr[T], offset: Rep[Int], length: Rep[Int]): Arr[T] = 
+    withElemOfArray(xs) { implicit eT => ArraySlice(xs, offset, length) }
 }
 
