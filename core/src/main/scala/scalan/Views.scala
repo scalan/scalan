@@ -92,10 +92,6 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     lazy val defaultRep = iso.defaultRepTo
   }
 
-  case class UserTypeDescriptor[T](tag: TypeTag[T]) {
-    def runtimeClass = TagImplicits.typeTagToClassTag(tag).runtimeClass
-  }
-  
   trait UserTypeExp[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
     override def self = reifyObject(this)(Lazy(selfType.asInstanceOf[Elem[TImpl]]))
     def uniqueOpId = selfType.prettyName
