@@ -239,6 +239,10 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport =>
   }
 
   def createManifest[T](eA: Elem[T]) : Manifest[_] = {
+    // Doesn't work for some reason, produces int instead of Int
+    //    implicit val typeTag = eA.tag
+    //    implicit val classTag = eA.classTag
+    //    manifest[T]
     val manifest = eA match {
       case el: BaseElem[_] =>
         el.tag.tpe.toString()  match {

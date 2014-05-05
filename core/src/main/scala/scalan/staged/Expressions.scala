@@ -333,14 +333,14 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
       currSym = res
       val ns = rewrite(currSym).asRep[T]
       ns match {
-        case null => {}
-        case Var(_) => {
-          res = ns; currDef = null
-        }
-        case Def(someOtherD) => {
+        case null =>
+          currDef = null
+        case Def(someOtherD) =>
           res = ns
           currDef = someOtherD
-        }
+        case _ =>
+          res = ns
+          currDef = null
       }
     } while (res != currSym && currDef != null)
     res

@@ -3,6 +3,7 @@ package scalan
 import scalan.primitives._
 import scalan.staged.{Expressions, BaseExp}
 import scalan.seq.BaseSeq
+import scalan.arrays.{ArrayViewsSeq, ArrayViews, ArrayViewsExp}
 
 //import ext.Options
 //import lms.common._
@@ -22,6 +23,7 @@ trait Scalan
      with Tuples
      with TypeSum
      with ArrayOps
+     with ArrayViews
 //     with PArrayOps
      with NumericOps
 //     with MathOps
@@ -57,6 +59,7 @@ trait ScalanSeq
   with FunctionsSeq
   with IfThenElseSeq
   with ArrayOpsSeq
+  with ArrayViewsSeq
 //  with OrderingOpsSeq
   with NumericOpsSeq
   with EqualSeq
@@ -118,6 +121,7 @@ trait ScalanStaged
 //  with StagedSets
   with ViewsExp
   with ArrayOpsExp
+  with ArrayViewsExp
 //  with Transforming
   with NumericOpsExp
 //  with MathOpsExp
