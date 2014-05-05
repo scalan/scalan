@@ -18,14 +18,26 @@ trait MatricesOps { scalan: MatricesDsl =>
   }
 
   trait RowMajorMatrixOps[T] extends MatrixOps[T] {
+    def rows: Rep[PArray[PArray[T]]]
+    def numRows: Rep[Int] = rows.length
+    def numColumns = rows(0).length
+    
+    // def *(vector: Vec[T])(implicit n: Numeric[T]) = rows
+  }
+
+  trait RowMajorMatrixCompanionOps extends ConcreteClass1[RowMajorMatrix] {
+    def defaultOf[T: Elem] = Default.defaultVal(RowMajorMatrix(element[PArray[PArray[T]]].defaultRepValue))
+  }
+
+  trait RowMajorFlatMatrixOps[T] extends MatrixOps[T] {
     def rmValues: Rep[PArray[T]]
     def numRows: Rep[Int] = rmValues.length / numColumns
     
     // def *(vector: Vec[T])(implicit n: Numeric[T]) = rows
   }
 
-  trait RowMajorMatrixCompanionOps extends ConcreteClass1[RowMajorMatrix] {
-    def defaultOf[T: Elem] = Default.defaultVal(RowMajorMatrix(element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
+  trait RowMajorFlatMatrixCompanionOps extends ConcreteClass1[RowMajorFlatMatrix] {
+    def defaultOf[T: Elem] = Default.defaultVal(RowMajorFlatMatrix(element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
   }
 
   trait ColumnMajorMatrixOps[T] extends MatrixOps[T] {

@@ -11,5 +11,5 @@ trait Vectors extends VectorsOps with PArrays { scalan: VectorsDsl =>
   
   abstract class DenseVector[T](val coords: Rep[PArray[T]])(implicit val elem: Elem[T]) extends Vector[T] with DenseVectorOps[T]
   
-  abstract class SparseVector[T](val sparseCoords: Rep[PArray[(Int, T)]], val length: Rep[Int])(implicit val elem: Elem[T]) extends Vector[T] with SparseVectorOps[T]
+  abstract class SparseVector[T](val nonZeroIndices: Rep[Array[Int]], val nonZeroValues: Rep[PArray[T]], val length: Rep[Int])(implicit val elem: Elem[T]) extends Vector[T] with SparseVectorOps[T]
 }

@@ -2,6 +2,7 @@ package scalan.arrays
 
 import scalan.common.Default
 import scalan._
+import scalan.common.OverloadHack.Overloaded1
 
 trait PArraysOps { scalan: PArraysDsl =>
   import TagImplicits._
@@ -24,6 +25,8 @@ trait PArraysOps { scalan: PArraysDsl =>
       PArray(arr.map(f))
     }
     def zip[U:Elem](ys: PA[U]) = PairArray(self, ys)
+    def reduce(implicit m: RepMonoid[T]) = arr.sum
+    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[T] = ???
   }
   trait PArrayCompanionOps extends PArrayCompanion {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]] = ea match {

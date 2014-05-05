@@ -97,25 +97,25 @@ trait VectorsAbs extends Vectors
   trait SparseVectorElem[T] extends VectorElem[SparseVectorData[T], SparseVector[T]]
 
   // state representation type
-  type SparseVectorData[T] = (PArray[(Int,T)], Int)
+  type SparseVectorData[T] = (Array[Int], (PArray[T], Int))
 
   // 3) Iso for concrete class
   abstract class SparseVectorIso[T](implicit elem: Elem[T])
     extends IsoBase[SparseVectorData[T], SparseVector[T]] {
     override def from(p: Rep[SparseVector[T]]) =
       unmkSparseVector(p) match {
-        case Some((sparseCoords, length)) => Pair(sparseCoords, length)
+        case Some((nonZeroIndices, nonZeroValues, length)) => Pair(nonZeroIndices, Pair(nonZeroValues, length))
         case None => !!!
       }
-    override def to(p: Rep[(PArray[(Int,T)], Int)]) = {
-      val Pair(sparseCoords, length) = p
-      SparseVector(sparseCoords, length)
+    override def to(p: Rep[(Array[Int], (PArray[T], Int))]) = {
+      val Pair(nonZeroIndices, Pair(nonZeroValues, length)) = p
+      SparseVector(nonZeroIndices, nonZeroValues, length)
     }
     lazy val tag = {
       implicit val tagT = element[T].tag
       typeTag[SparseVector[T]]
     }
-    lazy val defaultRepTo = defaultVal[Rep[SparseVector[T]]](SparseVector(element[PArray[(Int,T)]].defaultRepValue, 0))
+    lazy val defaultRepTo = defaultVal[Rep[SparseVector[T]]](SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, 0))
   }
   // 4) constructor and deconstructor
   trait SparseVectorCompanionAbs extends SparseVectorCompanionOps {
@@ -123,9 +123,9 @@ trait VectorsAbs extends Vectors
     def apply[T](p: Rep[SparseVectorData[T]])(implicit elem: Elem[T]): Rep[SparseVector[T]]
         = isoSparseVector(elem).to(p)
     def apply[T]
-          (sparseCoords: Rep[PArray[(Int,T)]], length: Rep[Int])
+          (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])
           (implicit elem: Elem[T]): Rep[SparseVector[T]]
-        = mkSparseVector(sparseCoords, length)
+        = mkSparseVector(nonZeroIndices, nonZeroValues, length)
     def unapply[T:Elem](p: Rep[SparseVector[T]]) = unmkSparseVector(p)
   }
 
@@ -152,8 +152,8 @@ trait VectorsAbs extends Vectors
   implicit def isoSparseVector[T](implicit elem: Elem[T]): Iso[SparseVectorData[T], SparseVector[T]]
 
   // 6) smart constructor and deconstructor
-  def mkSparseVector[T](sparseCoords: Rep[PArray[(Int,T)]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]]
-  def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]): Option[(Rep[PArray[(Int,T)]], Rep[Int])]
+  def mkSparseVector[T](nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]]
+  def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]): Option[(Rep[Array[Int]], Rep[PArray[T]], Rep[Int])]
 
 }
 
@@ -195,9 +195,9 @@ trait VectorsSeq extends VectorsAbs
 
 
   case class SeqSparseVector[T]
-      (override val sparseCoords: Rep[PArray[(Int,T)]], override val length: Rep[Int])
+      (override val nonZeroIndices: Rep[Array[Int]], override val nonZeroValues: Rep[PArray[T]], override val length: Rep[Int])
       (implicit override val elem: Elem[T])
-    extends SparseVector[T](sparseCoords, length) with UserTypeSeq[Vector[T], SparseVector[T]] {
+    extends SparseVector[T](nonZeroIndices, nonZeroValues, length) with UserTypeSeq[Vector[T], SparseVector[T]] {
     lazy val selfType = element[SparseVector[T]].asInstanceOf[Elem[Vector[T]]]
   }
 
@@ -216,11 +216,11 @@ trait VectorsSeq extends VectorsAbs
 
 
   def mkSparseVector[T]
-      (sparseCoords: Rep[PArray[(Int,T)]], length: Rep[Int])
+      (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])
       (implicit elem: Elem[T])
-      = new SeqSparseVector[T](sparseCoords, length)
+      = new SeqSparseVector[T](nonZeroIndices, nonZeroValues, length)
   def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]])
-    = Some((p.sparseCoords, p.length))
+    = Some((p.nonZeroIndices, p.nonZeroValues, p.length))
 
 }
 
@@ -247,6 +247,7 @@ trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp
   }
 
 
+
   def mkDenseVector[T]
       (coords: Rep[PArray[T]])
       (implicit elem: Elem[T])
@@ -264,11 +265,11 @@ trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp
 
 
   case class ExpSparseVector[T]
-      (override val sparseCoords: Rep[PArray[(Int,T)]], override val length: Rep[Int])
+      (override val nonZeroIndices: Rep[Array[Int]], override val nonZeroValues: Rep[PArray[T]], override val length: Rep[Int])
       (implicit override val elem: Elem[T])
-    extends SparseVector[T](sparseCoords, length) with UserTypeExp[Vector[T], SparseVector[T]] {
+    extends SparseVector[T](nonZeroIndices, nonZeroValues, length) with UserTypeExp[Vector[T], SparseVector[T]] {
     lazy val selfType = element[SparseVector[T]].asInstanceOf[Elem[Vector[T]]]
-    override def mirror(t: Transformer) = ExpSparseVector[T](t(sparseCoords), t(length))
+    override def mirror(t: Transformer) = ExpSparseVector[T](t(nonZeroIndices), t(nonZeroValues), t(length))
   }
 
   lazy val SparseVector: Rep[SparseVectorCompanionAbs] = new SparseVectorCompanionAbs with UserTypeExp[SparseVectorCompanionAbs, SparseVectorCompanionAbs] {
@@ -277,12 +278,13 @@ trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp
   }
 
 
+
   def mkSparseVector[T]
-      (sparseCoords: Rep[PArray[(Int,T)]], length: Rep[Int])
+      (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])
       (implicit elem: Elem[T])
-      = new ExpSparseVector[T](sparseCoords, length)
+      = new ExpSparseVector[T](nonZeroIndices, nonZeroValues, length)
   def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]])
-    = Some((p.sparseCoords, p.length))
+    = Some((p.nonZeroIndices, p.nonZeroValues, p.length))
 
 
   implicit def isoSparseVector[T](implicit elem: Elem[T]):Iso[SparseVectorData[T], SparseVector[T]]
