@@ -4,6 +4,7 @@ import java.io.{BufferedReader, FileReader, PrintWriter}
 import scalan.{ScalanStaged, ScalanSeq, Scalan}
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
+import scalan.staged.BaseExp
 
 trait ArrayOps { self: Scalan  =>
   type Arr[T] = Rep[Array[T]]
@@ -37,7 +38,7 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
     genericArrayOps(xs).slice(offset, length)
 }
 
-trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
+trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
   def withElemOfArray[T,R](xs: Arr[T])(block: Elem[T] => R): R =
     withElemOf(xs){ eTArr =>
       block(eTArr.ea)
@@ -104,5 +105,13 @@ trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
   
   def array_slice[T](xs: Arr[T], offset: Rep[Int], length: Rep[Int]): Arr[T] = 
     withElemOfArray(xs) { implicit eT => ArraySlice(xs, offset, length) }
+
+  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
+    case Def(d1) => d1 match {
+      case ArrayMap(xs, Def(l: Lambda[_,_])) if l.isIdentity => xs
+      case _ => super.rewrite(d)
+    }
+    case _ => super.rewrite(d)
+  }
 }
 
