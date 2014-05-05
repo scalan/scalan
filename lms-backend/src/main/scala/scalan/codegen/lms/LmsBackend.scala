@@ -47,7 +47,8 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
       val f = { x: lFunc.Exp[I] =>
         val sched = lam.schedule
         val (lamExps, _, _) = mirrorDefs(sched, symMirror + ((lamX, x)), funcMirror )
-        (lamExps.last).asInstanceOf[lFunc.Exp[R]]
+        val res = if (lamExps.isEmpty) x else (lamExps.last)
+        res.asInstanceOf[lFunc.Exp[R]]
       }
       f
     }
