@@ -5,6 +5,7 @@ import scalan.{ScalanStaged, ScalanSeq, Scalan}
 import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 import scalan.staged.BaseExp
+import scalan.common.OverloadHack.Overloaded1
 
 trait ArrayOps { self: Scalan  =>
   type Arr[T] = Rep[Array[T]]
@@ -12,9 +13,12 @@ trait ArrayOps { self: Scalan  =>
     def apply(n: Rep[Int]) = array_apply(xs, n)
     def length = array_length(xs)
     def map[R:Elem](f: Rep[T=>R]) = array_map(xs, f)
+    // def map[R:Elem](f: Rep[T] => Rep[R])(implicit o: Overloaded1) = array_map(xs, fun(f))
     def sum(implicit m: RepMonoid[T]) = array_sum(xs)
     def zip[U](ys: Arr[U]): Arr[(T,U)] = array_zip(xs, ys)
     def slice(offset: Rep[Int], length: Rep[Int]): Arr[T] = array_slice(xs, offset, length)
+    def filter(f: Rep[T=>Boolean]) = array_filter(xs, f)
+    // def filter(f: Rep[T] => Rep[Boolean])(implicit o: Overloaded1) = array_filter(xs, fun(f))    
   }
 
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
@@ -24,6 +28,8 @@ trait ArrayOps { self: Scalan  =>
   def array_zip[T,U](xs: Arr[T], ys:Arr[U]): Arr[(T,U)]
   def array_replicate[T:Elem](len: Rep[Int], v: Rep[T]): Arr[T]
   def array_slice[T](xs: Arr[T], offset: Rep[Int], length: Rep[Int]): Arr[T]
+  def array_rangeFrom0(n: Rep[Int]): Arr[Int]
+  def array_filter[T](xs: Arr[T], f: Rep[T => Boolean]): Arr[T]
 }
 
 trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
@@ -36,6 +42,9 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   def array_replicate[T:Elem](len: Rep[Int], v: Rep[T]): Arr[T] = Array.fill(len)(v)
   def array_slice[T](xs: Arr[T], offset: Rep[Int], length: Rep[Int]): Arr[T] = 
     genericArrayOps(xs).slice(offset, length)
+  def array_rangeFrom0(n: Rep[Int]): Arr[Int] = 0.until(n).toArray
+  def array_filter[T](xs: Array[T], f: T => Boolean): Array[T] = 
+    genericArrayOps(xs).filter(f)
 }
 
 trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
@@ -85,6 +94,15 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
     def selfType = element[Array[T]]
     override def mirror(t: Transformer) = ArraySlice(t(xs), t(offset), t(length))
   }
+  case class ArrayRangeFrom0(n: Exp[Int]) extends ArrayDef[Int] {
+    lazy val uniqueOpId = name
+    val selfType = element[Array[Int]]
+    override def mirror(t: Transformer) = ArrayRangeFrom0(t(n))
+  }
+  case class ArrayFilter[T: Elem](xs: Exp[Array[T]], f: Exp[T=>Boolean]) extends ArrayDef[T] with ArrayMethod[T] {
+    val selfType = element[Array[T]]
+    override def mirror(t: Transformer) = ArrayFilter(t(xs), t(f))
+  }
 
   def array_apply[T](xs: Exp[Array[T]], n: Exp[Int]): Rep[T] =
     withElemOfArray(xs){ implicit eT => ArrayApply(xs, n) }
@@ -106,6 +124,12 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
   def array_slice[T](xs: Arr[T], offset: Rep[Int], length: Rep[Int]): Arr[T] = 
     withElemOfArray(xs) { implicit eT => ArraySlice(xs, offset, length) }
 
+  def array_rangeFrom0(n: Rep[Int]): Arr[Int] = 
+    ArrayRangeFrom0(n)
+    
+  def array_filter[T](xs: Arr[T], f: Rep[T => Boolean]): Arr[T] =
+    withElemOfArray(xs) { implicit eT => ArrayFilter(xs, f) }
+    
   override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
     case Def(d1) => d1 match {
       case ArrayMap(xs, Def(l: Lambda[_,_])) if l.isIdentity => xs

@@ -17,7 +17,7 @@ trait Functions { self: Scalan =>
   }
 
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B]
-  def fun[A,B]    (f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B]
+  implicit def fun[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B]
   //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C]
 }
 

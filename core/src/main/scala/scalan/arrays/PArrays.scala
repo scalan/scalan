@@ -3,21 +3,22 @@ package scalan.arrays
 import scalan._
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
+import scala.annotation.unchecked.uncheckedVariance
 
 trait PArrays extends Base with PArraysOps { self: PArraysDsl =>
 
-  type PA[A] = Rep[PArray[A]]
-  trait PArray[A] extends UserType[PArray[A]] {
-    implicit def elem: Elem[A]
+  type PA[+A] = Rep[PArray[A]]
+  trait PArray[@uncheckedVariance +A] extends UserType[PArray[A @uncheckedVariance]] {
+    implicit def elem: Elem[A @uncheckedVariance]
     def length: Rep[Int]
-    def arr: Rep[Array[A]]
+    def arr: Rep[Array[A @uncheckedVariance]]
     def apply(i: Rep[Int]): Rep[A]
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A]
-    def map[B:Elem](f: (Rep[A] => Rep[B])): PA[B]
-    def mapBy[B:Elem](f: (Rep[A=>B])): PA[B]
+    def map[B:Elem](f: Rep[A @uncheckedVariance] => Rep[B]): PA[B]
+    def mapBy[B:Elem](f: Rep[A @uncheckedVariance=>B]): PA[B]
     def zip[B:Elem](ys: PA[B]): PA[(A,B)]
     def slice(offset: Rep[Int], length: Rep[Int]): Rep[PArray[A]]
-    def reduce(implicit m: RepMonoid[A]): Rep[A]
+    def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A]
   }
   trait PArrayCompanion extends TypeFamily1[PArray]{
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]]

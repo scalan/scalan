@@ -5,6 +5,9 @@ import scalan.ScalanSeqImplementation
 import scalan.ScalanStaged
 import scalan.arrays.PArraysDsl
 import scalan.common.Default
+import scalan.common.OverloadHack.Overloaded1
+import scalan.arrays.PArraysDslExp
+import scalan.arrays.PArraysDslSeq
 
 trait VectorsOps { scalan: VectorsDsl =>
   trait VectorOps[T] {
@@ -45,36 +48,50 @@ trait VectorsOps { scalan: VectorsDsl =>
     def dot(other: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = matchVec[T, T](other) {
       dv => dv.dot(this.asInstanceOf[SparseVector[T]])
     } {
-      sv => dotSparse(this.asInstanceOf[SparseVector[T]], sv)
+      sv => dotSparse(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues)
     }
   }
 
   trait SparseVectorCompanionOps extends ConcreteClass1[SparseVector] {
-    def defaultOf[T: Elem] = Default.defaultVal(SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
+    def defaultOf[T: Elem] = 
+      Default.defaultVal(SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
+    def apply[T: Elem](coords: PA[T])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
+      val indices: Arr[Int] = coords.arr.zip(array_rangeFrom0(coords.length)).
+        filter(fun {x => x._1 !== n.zero }).map(fun {x => x._2})
+      SparseVector(indices, coords(indices), coords.length)
+    }
   }
 
-  def dotSparse[T](xs: Rep[SparseVector[T]], ys: Rep[SparseVector[T]])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T] =
-    !!!("Must implement dotSparse")
+  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T]
 }
 
 trait VectorsDsl extends ScalanDsl with VectorsAbs with VectorsOps with PArraysDsl {
   def matchVec[T, R](vec: Vec[T])(dense: Rep[DenseVector[T]] => Rep[R])(sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R]
 }
 
-trait VectorsDslSeq extends VectorsDsl with VectorsSeq with ScalanSeqImplementation {
+trait VectorsDslSeq extends VectorsDsl with VectorsSeq with PArraysDslSeq with ScalanSeqImplementation {
   def matchVec[T, R](vec: Vec[T])(dense: Rep[DenseVector[T]] => Rep[R])(sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R] =
     vec match {
       case dv: DenseVector[_] => dense(dv)
       case sv: SparseVector[_] => sparse(sv)
     }
 
-//  override def dotSparse[T](xs: Rep[SparseVector[T]], ys: Rep[SparseVector[T]])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T] =
+  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T] =
+    ???
 }
 
-trait VectorsDslExp extends VectorsDsl with VectorsExp with ScalanStaged {
+trait VectorsDslExp extends VectorsDsl with VectorsExp with PArraysDslExp with ScalanStaged {
   def matchVec[T, R](vec: Vec[T])(dense: Rep[DenseVector[T]] => Rep[R])(sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R] =
     vec.elem.asInstanceOf[Elem[_]] match {
       case _: DenseVectorElem[_] => dense(vec.asRep[DenseVector[T]])
       case _: SparseVectorElem[_] => sparse(vec.asRep[SparseVector[T]])
     }
+  
+  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T] =
+    DotSparse(xIndices, xValues, yIndices, yValues)
+
+  case class DotSparse[T](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit val n: Numeric[T], val m: RepMonoid[T], val selfType: Elem[T]) extends Def[T] {
+    override def mirror(f: Transformer) = DotSparse(f(xIndices), f(xValues), f(yIndices), f(yValues))
+    def uniqueOpId = name(selfType)
+  }
 }
