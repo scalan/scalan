@@ -125,12 +125,15 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
               }
             }
             case scalan.ArrayZip(arg1, arg2) => {
-              (scalan.createManifest(arg1.elem), scalan.createManifest(arg2.elem)) match {
-                case (mA:Manifest[a], mB:Manifest[b]) =>
-                  val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[Array[a]]]
-                  val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[Array[b]]]
-                  val exp = lFunc.opZip[a,b](arg1_, arg2_)(mA, mB)
-                  (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
+              (arg1.elem,arg2.elem) match {
+                case (el1: scalan.ArrayElem[_], el2: scalan.ArrayElem[_]) =>
+                  (scalan.createManifest(el1.ea), scalan.createManifest(el2.ea)) match {
+                    case (mA:Manifest[a], mB:Manifest[b]) =>
+                      val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[Array[a]]]
+                      val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[Array[b]]]
+                      val exp = lFunc.opZip[a,b](arg1_, arg2_)(mA, mB)
+                      (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
+                  }
               }
             }
             case map@scalan.ArrayMap(source, lambdaSym@scalan.Def(lam:scalan.Lambda[_,_]) ) => {
@@ -159,6 +162,21 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                 case _ => scalan.!!!("ScalanLMSBrindge: Unfortunatelly, only Plus monoid is supported by lms ")
               }
             }
+            /* This is dotSparse. Uncomment when ready!  */
+            /*case scalan.dotSparse(i1,v1, i2, v2) => {
+              (v1.elem) match {
+                case (el: scalan.ArrayElem[_]) =>
+                  (scalan.createManifest(el.ea)) match {
+                    case (mA:Manifest[a]) =>
+                      val i1_ = symMirr(i1).asInstanceOf[lFunc.Exp[Array[Int]]]
+                      val i2_ = symMirr(i2).asInstanceOf[lFunc.Exp[Array[Int]]]
+                      val v1_ = symMirr(v1).asInstanceOf[lFunc.Exp[Array[a]]]
+                      val v2_ = symMirr(v2).asInstanceOf[lFunc.Exp[Array[a]]]
+                      val exp = lFunc.opDotProductSV[a](i1_, v1_, i2_, v2_)(mA)
+                      (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
+                  }
+              }
+            }*/
 
             case _ => scalan.!!!("ScalanLMSBridge: Don't know how to mirror symbol ", s)
           }

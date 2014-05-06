@@ -48,11 +48,14 @@ with OrderingOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfThenElseFatExp
   def newArray[A:Manifest](length: Rep[Int]): Rep[Array[A]] = NewArray[A](length)
 
   def opZipWith[A:Manifest, B:Manifest, R:Manifest]( f:(Rep[A], Rep[B]) => Rep[R], a:Exp[Array[A]], b:Exp[Array[B]]) : Exp[Array[R]] = {
-    a zip b map (x => f(tuple2_get1(x), tuple2_get2(x)))
+    array(a.length)(i => f(a(i), b(i)) )
   }
 
   def opZip[A:Manifest, B:Manifest]( a:Exp[Array[A]], b:Exp[Array[B]]) : Exp[Array[(A,B)]] = {
-    a zip b
+    array[(A,B)](a.length)(i => (a(i),b(i)) )
+  }
+  def opDotProductSV[A:Manifest](i1: Exp[Array[Int]], v1: Exp[Array[A]], i2: Exp[Array[Int]], v2: Exp[Array[A]]) : Exp[A] = {
+    array_dotProductSparse(i1,v1, i2, v2)
   }
   //def printlnD(s: Exp[Any])  = println(s)
   def unitD[T:Manifest](x: T) = unit[T](x)
