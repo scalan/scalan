@@ -78,7 +78,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                 case pe: scalan.PairElem[_, _] =>
                   (scalan.createManifest(pe.ea), scalan.createManifest(pe.eb))  match {
                     case (mA:Manifest[a], mB: Manifest[b]) =>
-                      val tup = symMirror(tuple).asInstanceOf[lFunc.Exp[(a,b)]]
+                      val tup = symMirr(tuple).asInstanceOf[lFunc.Exp[(a,b)]]
                       val exp = lFunc.first[a,b](tup)(mA, mB)
                       (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
                   }
@@ -89,7 +89,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                 case pe: scalan.PairElem[_, _] =>
                   (scalan.createManifest(pe.ea), scalan.createManifest(pe.eb))  match {
                     case (mA:Manifest[a], mB: Manifest[b]) =>
-                      val tup = symMirror(tuple).asInstanceOf[lFunc.Exp[(a,b)]]
+                      val tup = symMirr(tuple).asInstanceOf[lFunc.Exp[(a,b)]]
                       val exp = lFunc.second[a,b](tup)(mA, mB)
                       (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
                   }
