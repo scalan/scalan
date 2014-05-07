@@ -124,6 +124,7 @@ trait ScalanStaged
   with ArrayViewsExp
 //  with Transforming
   with NumericOpsExp
+  with EqualExp
 //  with MathOpsExp
   with LogicalOpsExp
 //  with OrderingOpsExp
