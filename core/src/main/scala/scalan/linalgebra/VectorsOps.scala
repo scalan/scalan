@@ -78,8 +78,17 @@ trait VectorsDslSeq extends VectorsDsl with VectorsSeq with PArraysDslSeq with S
       case sv: SparseVector[_] => sparse(sv)
     }
 
-  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T] =
-    ???
+  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T] = {
+    var result = n.zero
+    val yMap = yIndices.zip(yValues.arr).toMap
+    xIndices.zip(xValues.arr).foldLeft(n.zero) { 
+      case (acc, (i, x)) =>
+      yMap.get(i) match {
+        case Some(y) => acc + x * y
+        case None => acc
+      }
+    }
+  }
 }
 
 trait VectorsDslExp extends VectorsDsl with VectorsExp with PArraysDslExp with ScalanStaged {
