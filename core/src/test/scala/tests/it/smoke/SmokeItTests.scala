@@ -10,8 +10,6 @@ import scalan.codegen.LangBackend
  *  Tests that very simple examples are run correctly
  */
 abstract class SmokeItTests extends ItTests {
-  override val emitGraphs = true      // set to true if you want to emit the graphs
-
   trait Prog extends ScalanDsl with PArrayExamples {
 
     lazy val simpleConst = fun {x: PA[Int] =>

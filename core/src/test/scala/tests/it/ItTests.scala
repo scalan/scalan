@@ -12,7 +12,7 @@ import scala.reflect.runtime.universe._
 trait ItTests extends BaseTests {
 
   lazy val prefix: String = getClass.getSimpleName
-  val emitGraphs: Boolean = false
+  def emitGraphs: Boolean = true
 
   def readFile(name: String): String =
     Source.fromFile(name).getLines().toIterator.mkString("\n")
