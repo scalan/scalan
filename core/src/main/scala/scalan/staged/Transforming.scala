@@ -170,6 +170,9 @@ trait Transforming { self: ScalanStaged =>
     val Id = new MapTransformer()
   }
 
+  //  sealed abstract class TupleStep(val name: String)
+  //  case object GoLeft extends TupleStep("L")
+  //  case object GoRight extends TupleStep("R")
   type TuplePath = List[Int]
 
   def projectPath(x:Exp[Any], path: TuplePath) = {
