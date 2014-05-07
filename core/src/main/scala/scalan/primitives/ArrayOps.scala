@@ -10,7 +10,8 @@ import scalan.common.OverloadHack.Overloaded1
 trait ArrayOps { self: Scalan  =>
   type Arr[T] = Rep[Array[T]]
   implicit class RepArrayOps[T](xs: Arr[T]) {
-    def apply(n: Rep[Int]) = array_apply(xs, n)
+    def apply(n: Rep[Int]): Rep[T] = array_apply(xs, n)
+    def apply(ns: Arr[Int])(implicit eT: Elem[T]): Arr[T] = array_apply(xs, ns)
     def length = array_length(xs)
     def map[R:Elem](f: Rep[T=>R]) = array_map(xs, f)
     // def map[R:Elem](f: Rep[T] => Rep[R])(implicit o: Overloaded1) = array_map(xs, fun(f))
@@ -22,6 +23,7 @@ trait ArrayOps { self: Scalan  =>
   }
 
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
+  def array_apply[T: Elem](xs: Arr[T], is: Arr[Int])(implicit o: Overloaded1): Arr[T]
   def array_length[T](xs: Arr[T]) : Rep[Int]
   def array_map[T,R:Elem](xs: Arr[T], f: Rep[T=>R]): Arr[R]
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) : Rep[T]
@@ -35,8 +37,10 @@ trait ArrayOps { self: Scalan  =>
 trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   import TagImplicits.elemToClassTag
   def array_apply[T](x: Arr[T], n: Rep[Int]): Rep[T] = x(n)
+  def array_apply[T: Elem](x: Arr[T], is: Arr[Int])(implicit o: Overloaded1): Arr[T] = 
+    Array.tabulate(is.length)(i => x(is(i)))
   def array_length[T](a: Arr[T]) : Rep[Int] = a.length
-  def array_map[T, R:Elem](xs: Array[T], f: T => R) = Array.tabulate(xs.length)(i => f(xs(i))) //xs.map(f)
+  def array_map[T, R:Elem](xs: Array[T], f: T => R) = genericArrayOps(xs).map(f)
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x,y) => m.append(x,y))
   def array_zip[T,U](xs: Array[T], ys:Array[U]): Array[(T,U)] = (xs, ys).zipped.toArray
   def array_replicate[T:Elem](len: Rep[Int], v: Rep[T]): Arr[T] = Array.fill(len)(v)
@@ -68,6 +72,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
     implicit lazy val eT = withElemOfArray(xs){e => e}
     def selfType = eT
     override def mirror(t: Transformer) = ArrayApply(t(xs), t(index))
+  }
+  case class ArrayApplyMany[T](xs: Exp[Array[T]], indices: Exp[Array[Int]]) extends ArrayDef[T] with ArrayMethod[T] {
+    implicit lazy val eT = withElemOfArray(xs){e => e}
+    def selfType = element[Array[T]]
+    override def mirror(t: Transformer) = ArrayApplyMany(t(xs), t(indices))
   }
   case class ArrayMap[T,R](xs: Exp[Array[T]], f: Exp[T=>R]) extends ArrayDef[R] with ArrayMethod[T] {
     implicit lazy val eR = withResultElem(f){e => e}
@@ -106,6 +115,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
 
   def array_apply[T](xs: Exp[Array[T]], n: Exp[Int]): Rep[T] =
     withElemOfArray(xs){ implicit eT => ArrayApply(xs, n) }
+  def array_apply[T: Elem](xs: Exp[Array[T]], is: Exp[Array[Int]])(implicit o: Overloaded1): Arr[T] =
+    ArrayApplyMany(xs, is)
   def array_length[T](a: Exp[Array[T]]) : Rep[Int] = ArrayLength(a)
   def array_map[T, R:Elem](xs: Exp[Array[T]], f: Exp[T=>R]) = ArrayMap(xs, f)
 

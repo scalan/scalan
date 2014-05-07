@@ -26,7 +26,6 @@ trait PArraysOps { scalan: PArraysDsl =>
     }
     def zip[U:Elem](ys: PA[U]) = PairArray(self, ys)
     def reduce(implicit m: RepMonoid[T]) = arr.sum
-    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[T] = ???
   }
   trait PArrayCompanionOps extends PArrayCompanion {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]] = ea match {
@@ -71,6 +70,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     def elem = eA
     def apply(i: Rep[Int]) = arr(i)
     def slice(offset: Rep[Int], length: Rep[Int]) = BaseArray(arr.slice(offset, length))
+    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A] = BaseArray(arr(indices))
   }
   trait BaseArrayCompanionOps extends BaseArrayCompanion {
     def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(BaseArray(Default.defaultOf[Rep[Array[A]]]))
@@ -90,6 +90,8 @@ trait PArraysOps { scalan: PArraysDsl =>
     def apply(i: Rep[Int]) = (as(i), bs(i))
     def length = as.length
     def slice(offset: Rep[Int], length: Rep[Int]) = PairArray(as.slice(offset, length), bs.slice(offset, length))
+    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[(A, B)] = 
+      PairArray(as(indices), bs(indices))
   }
   trait PairArrayCompanionOps extends PairArrayCompanion {
     def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]) = {
@@ -115,6 +117,7 @@ trait PArraysOps { scalan: PArraysDsl =>
       ??? // TODO
     }
     def slice(offset: Rep[Int], length: Rep[Int]) = ??? // TODO
+    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[PArray[A]] = ???
   }
   trait FlatNestedArrayCompanionOps extends FlatNestedArrayCompanion {
     def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(FlatNestedArray(element[PArray[A]].defaultRepValue, element[Segments].defaultRepValue))
