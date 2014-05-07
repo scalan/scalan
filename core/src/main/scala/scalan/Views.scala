@@ -18,11 +18,7 @@ trait Views extends Elems { self: Scalan =>
     def to(p: Rep[From]): Rep[To]
   }
   
-  abstract class IsoBase[From, To](implicit val eFrom: Elem[From]) extends Iso[From, To] {
-    // eB should be lazy val as it is used recursively in ViewElem
-    // override it in concrete isos to create hierarchy of Elem classes
-    lazy val eTo: Elem[To] = defaultViewElem(this)    
-  }
+  abstract class IsoBase[From, To](implicit val eFrom: Elem[From]) extends Iso[From, To]
 
   protected[scalan] def defaultViewElem[From,To](implicit iso: Iso[From,To]): Elem[To]
 
@@ -52,6 +48,57 @@ trait Views extends Elems { self: Scalan =>
     def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[C[A,B]]]
   }
 
+  def identityIso[A](implicit elem: Elem[A]): Iso[A, A] =
+    new IsoBase[A,A] {
+      def eTo = elem
+      def tag = elem.tag
+      def defaultRepTo = elem.defaultRep
+      def from(x: Rep[A]) = x
+      def to(x: Rep[A]) = x
+    }
+
+  def pairIso[A1,B1,A2,B2](iso1: Iso[A1,B1], iso2: Iso[A2,B2]): Iso[(A1, A2), (B1,B2)] = {
+    implicit val eA1 = iso1.eFrom
+    implicit val eA2 = iso2.eFrom
+    implicit val eB1 = iso1.eTo
+    implicit val eB2 = iso2.eTo
+    val eBB = element[(B1,B2)]
+    new IsoBase[(A1, A2), (B1,B2)] {
+      def eTo = eBB
+      def from(b: Rep[(B1,B2)]) = (iso1.from(b._1), iso2.from(b._2))
+      def to(a: Rep[(A1, A2)]) = (iso1.to(a._1), iso2.to(a._2))
+      def tag = eBB.tag
+      def defaultRepTo = eBB.defaultRep
+    }
+  }
+
+  def composeIso[A,B,C](iso2: Iso[B,C], iso1: Iso[A,B]): Iso[A,C] = {
+    new IsoBase[A,C]()(iso1.eFrom) {
+      def eTo = iso2.eTo
+      def from(c: Rep[C]) = iso1.from(iso2.from(c))
+      def to(a: Rep[A]) = iso2.to(iso1.to(a))
+      def tag = iso2.tag
+      def defaultRepTo = iso2.defaultRepTo
+    }
+  }
+  
+  def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[B => C, A => D] = {
+    implicit val eA = iso1.eFrom
+    implicit val eB = iso1.eTo
+    implicit val eC = iso2.eFrom
+    implicit val eD = iso2.eTo
+    new IsoBase[B => C, A => D] {
+      lazy val eTo = funcElement(eA, eD)
+      def from(f: Rep[A => D]): Rep[B => C] = {
+        fun { b => iso2.from(f(iso1.from(b))) }
+      }
+      def to(f: Rep[B => C]): Rep[A => D] = {
+        fun { a => iso2.to(f(iso1.to(a))) }
+      }
+      def tag = eTo.tag
+      def defaultRepTo = eTo.defaultRep
+    }
+  }
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
@@ -111,13 +158,13 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
   }
 
   def symbolHasViews(s: Exp[Any]): Boolean = s match {
-    case Def(UserTypeExp(_)) => true
     case UserTypeSym(_) => true
+    case Def(UserTypeExp(_)) => true
     case _ => false
   }
 
-  implicit class IsoOps[From: LElem,To](iso: Iso[From,To]) {
-    def toFunTo: Rep[From => To] = fun(iso.to)
+  implicit class IsoOps[From,To](iso: Iso[From,To]) {
+    def toFunTo: Rep[From => To] = fun(iso.to)(Lazy(iso.eFrom))
     def toFunFrom: Rep[To => From] = fun(iso.from)(Lazy(iso.eTo))
   }
 

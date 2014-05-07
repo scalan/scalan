@@ -270,7 +270,7 @@ trait Transforming { self: ScalanStaged =>
 
 
     def fromViewSubst[A](s: Exp[A]) = s match {
-      //case Def(View(view,_,_)) => view.arrOrEmpty  //TODO it looks like don't need View anymore?
+      case Def(view: ViewArray[_, _]) => view.arr  //TODO it looks like don't need View anymore?
       case Def(UserTypeExp(iso)) =>
         val repr = iso.from(s)
         repr
@@ -281,10 +281,9 @@ trait Transforming { self: ScalanStaged =>
     }
 
     def toViewSubst[A, B](s_v: Exp[B], s: Exp[A]): Exp[_] = s_v match {
-//      case Def(View(view, _, _)) => {             //TODO it looks like don't need View anymore?
-//        implicit val eB = view.iso.eB
-//        ExpViewArray(Some(s.asRep[PArray[Any]]), view.iso): Exp[_]
-//      }
+      case Def(view: ViewArray[a, b]) =>             //TODO it looks like don't need View anymore?
+        implicit val eB = view.iso.eTo
+        ViewArray(s.asRep[Array[a]])(view.iso)
       case Def(UserTypeExp(iso: Iso[A, B] @unchecked)) => iso.to(s)
       case UserTypeSym(iso: Iso[A, B] @unchecked) => iso.to(s)
       case _ => s
@@ -339,6 +338,4 @@ trait Transforming { self: ScalanStaged =>
       }
     }
   }
-
-
 }

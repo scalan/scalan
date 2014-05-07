@@ -6,7 +6,8 @@ package scalan.arrays
 
 import scalan._
 import scalan.staged.BaseExp
-
+import scala.reflect.runtime.universe._
+import scalan.common.Default
 
 trait ArrayViews extends Views { self: Scalan =>
 
@@ -30,13 +31,13 @@ trait ArrayViewsSeq extends ArrayViews { self: ScalanSeq =>
 //    def arrOrEmpty: PA[A] = arr match { case Some(arr) => arr case None => iso.eA.empty }
 //
 //    def length = arr match { case Some(arr) => arr.length case None => 0 }
-//    def apply(i: IntRep) = iso.toStaged(arr.get(i))
+//    def apply(i: IntRep) = iso.to(arr.get(i))
 //    def force = this
 //    def toPipe = !!!
 //
 //    def mapBy[R:Elem](f: Rep[B => R]): PA[R] = {
 //      val len = length
-//      element[R].tabulate(len)(i => f(iso.toStaged(arr.get(i))))
+//      element[R].tabulate(len)(i => f(iso.to(arr.get(i))))
 //    }
 //
 //    def slice(start: IntRep, len: IntRep) = SeqViewArray(Some(arrOrEmpty.slice(start, len)), iso)
@@ -103,16 +104,16 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
   //
   //    def arrOrEmpty: PA[A] = arr.isEmpty match { case true => iso.eA.empty case _ => arr.get }
   //
-  //    override def apply(i: IntRep) = iso.toStaged(arrOrEmpty(i))
+  //    override def apply(i: IntRep) = iso.to(arrOrEmpty(i))
   //    override def toArray = ???
   //    //     {
   //    //      val _a = arr.toArray
-  //    //      val f = (i: IntRep) => iso.toStaged(_a(i))
+  //    //      val f = (i: IntRep) => iso.to(_a(i))
   //    //      toExp(ArrayTabulate(length, mkLambda(f)))
   //    //    }
   //    //    def map[R: Elem](f: Rep[B] => Rep[R]): PA[R] = {
   //    //      val len = length
-  //    //      element[R].tabulate(len)(i => f(iso.toStaged(arr(i))))
+  //    //      element[R].tabulate(len)(i => f(iso.to(arr(i))))
   //    //    }
   //
   //    override def slice(start: IntRep, len: IntRep) = ExpViewArray(Some(arrOrEmpty.slice(start, len)), iso)
@@ -188,10 +189,10 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
   //    def fromViewSubst(s: Exp[_]) = s match {
   //      case Def(View(view,_,_)) => view.arrOrEmpty
   //      case Def(UserType(iso)) =>
-  //        val repr = iso.asInstanceOf[Iso[Any, Any]].fromStaged(s)
+  //        val repr = iso.asInstanceOf[Iso[Any, Any]].from(s)
   //        repr
   //      case UserTypeSym(iso) =>
-  //        val repr = iso.asInstanceOf[Iso[Any, Any]].fromStaged(s)
+  //        val repr = iso.asInstanceOf[Iso[Any, Any]].from(s)
   //        repr
   //      case _ => s
   //    }
@@ -201,8 +202,8 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
   //        implicit val eB = view.iso.eB
   //        ExpViewArray(Some(s.asRep[PArray[Any]]), view.iso): Exp[_]
   //      }
-  //      case Def(UserType(iso)) => iso.asInstanceOf[Iso[Any,Any]].toStaged(s)
-  //      case UserTypeSym(iso) => iso.asInstanceOf[Iso[Any,Any]].toStaged(s)
+  //      case Def(UserType(iso)) => iso.asInstanceOf[Iso[Any,Any]].to(s)
+  //      case UserTypeSym(iso) => iso.asInstanceOf[Iso[Any,Any]].to(s)
   //      case _ => s
   //    }
   //
@@ -246,55 +247,21 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
   //    }
   //  }
   //
-  //  //
-  //  //  //TODO: implement equality for Isos
-  //  //  def identityIso[A](implicit eA: Elem[A]): Iso[A, A] =
-  //  //    new StagedIso[A,A] with IdentityIso[A] {
-  //  //      override def manifest = eA.manifest
-  //  //      override def zero = eA.zero
-  //  //    }
-  //  //
-  //  case class NestedIso[A,B](innerIso: Iso[A,B]) extends StagedIso[PArray[A], PArray[B]] {
-  //    implicit val eInnerA = innerIso.eA
-  //    implicit val eInnerB = innerIso.eB
-  //    override lazy val eA = element[PArray[A]]
-  //    override lazy val eB = element[PArray[B]]
-  //    override def fromStaged = (bs: PA[B]) => bs map innerIso.fromStaged
-  //    override def toStaged = (as: PA[A]) => as map innerIso.toStaged
-  //    override def manifest = eB.manifest
-  //    override def zero = eB.zero
-  //  }
-  //
-  //  def nestIso[A,B](iso: Iso[A,B]): Iso[PArray[A], PArray[B]] = NestedIso(iso)
-  //  //
-  //  //  def pairIso[A1,B1,A2,B2](iso1: Iso[A1,B1], iso2: Iso[A2,B2]): Iso[(A1, A2), (B1,B2)] = {
-  //  //    implicit val eA1 = iso1.eA
-  //  //    implicit val eA2 = iso2.eA
-  //  //    implicit val eB1 = iso1.eB
-  //  //    implicit val eB2 = iso2.eB
-  //  //    val eBB = element[(B1,B2)]
-  //  //    new StagedIso[(A1, A2), (B1,B2)] {
-  //  //      override def from = (b: (B1,B2)) => (iso1.from(b._1), iso2.from(b._2))
-  //  //      override def to = (a: (A1, A2)) => (iso1.to(a._1), iso2.to(a._2))
-  //  //      override def fromStaged = (b: Rep[(B1,B2)]) => (iso1.fromStaged(b._1), iso2.fromStaged(b._2))
-  //  //      override def toStaged = (a: Rep[(A1, A2)]) => (iso1.toStaged(a._1), iso2.toStaged(a._2))
-  //  //      def manifest = eBB.manifest
-  //  //      def zero = eBB.zero
-  //  //    }
-  //  //  }
-  //  //
-  //  //  def composeIso[A,B,C](iso2: Iso[B,C], iso1: Iso[A,B]): Iso[A,C] = {
-  //  //    implicit val eA = iso1.eA
-  //  //    new StagedIso[A,C] {
-  //  //      override def from = (c: C) => iso1.from(iso2.from(c))
-  //  //      override def to = (a: A) => iso2.to(iso1.to(a))
-  //  //      override def fromStaged = (c: Rep[C]) => iso1.fromStaged(iso2.fromStaged(c))
-  //  //      override def toStaged = (a: Rep[A]) => iso2.toStaged(iso1.toStaged(a))
-  //  //      def manifest = iso2.manifest
-  //  //      def zero = iso2.zero
-  //  //    }
-  //  //  }
-  //
+  def arrayIso[A, B](iso: Iso[A, B]): Iso[Array[A], Array[B]] = {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    new IsoBase[Array[A], Array[B]] with StagedIso[Array[A], Array[B]] {
+      lazy val eTo = element[Array[B]]
+      override def from(x: Arr[B]) = x.map(fun(iso.from _))
+      override def to(x: Arr[A]) = x.map(fun(iso.to _))
+      lazy val tag = {
+        implicit val tB = iso.tag
+        typeTag[Array[B]]
+      }
+      lazy val defaultRepTo = Default.defaultVal(toRep(Array.empty[B](eB.classTag)))
+    }
+  }
+  
   case class HasArg(predicate: Exp[_] => Boolean) {
     def unapply[T](d: Def[T]): Option[Def[T]] = {
       val args = dep(d)
@@ -352,7 +319,7 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
   }
   //  def filterUnderlyingArray[A,B](view: ExpViewArray[A,B], f: Rep[B=>Boolean]): PA[B] = {
   //    implicit val eB = view.iso.eB
-  //    val filtered = view.arrOrEmpty.filter { (x: Exp[A]) => f(view.iso.toStaged(x)) }
+  //    val filtered = view.arrOrEmpty.filter { (x: Exp[A]) => f(view.iso.to(x)) }
   //    mkView(filtered)(view.iso)
   //  }
   //
@@ -442,19 +409,20 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
         })
         val res = ViewArray(s)(iso)
         res
-//      case ArrayMap(xs: Arr[a], f@Def(lam@Lambda(_, _, _, Def(view: ViewArray[c, b])))) => {
-//        val f1 = f.asRep[a => Array[b]]
-//        val view1 = view.asInstanceOf[ViewArray[c, b]]
-//        val iso = view1.iso
-//        val xs1 = xs.asRep[Array[a]]
-//        implicit val eA = xs1.elem.ea
-//        implicit val eC = view1.arr.elem.ea
-//        val s = xs1.map(fun { x =>
-//          unmkArrayView(f1(x))(iso)
-//        })
-//        val res = ViewArray(s.values)(iso).nestBy(s.segments)
-//        res
-//      }
+      case ArrayMap(xs: Arr[a], f@Def(lam@Lambda(_, _, _, Def(view: ViewArray[c, b])))) =>
+        val f1 = f.asRep[a => Array[b]]
+        val view1 = view.asInstanceOf[ViewArray[c, b]]
+        val iso = view1.iso
+        val xs1 = xs.asRep[Array[a]]
+        implicit val eA = xs1.elem.ea
+        implicit val eB = iso.eTo
+        implicit val eC = iso.eFrom
+        val s = xs1.map(fun { x =>
+          unmkArrayView(f1(x))(iso)
+        })
+        val res = ViewArray(s)(arrayIso(iso))
+        // val res = ViewArray(s.values)(iso).nestBy(s.segments)
+        res
       //
       //    case LoopUntil(start@TupleTree(tree), step, isMatch) if tree.hasViews => {
       //      tree.eliminateViews.root match {
