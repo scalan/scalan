@@ -317,17 +317,19 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
     implicit val eC: Elem[C] = f.elem.eb
     view.arr.map(fun { (x: Exp[A]) => f(iso.to(x)) })
   }
-  //  def filterUnderlyingArray[A,B](view: ExpViewArray[A,B], f: Rep[B=>Boolean]): PA[B] = {
-  //    implicit val eB = view.iso.eB
-  //    val filtered = view.arrOrEmpty.filter { (x: Exp[A]) => f(view.iso.to(x)) }
-  //    mkView(filtered)(view.iso)
-  //  }
-  //
+  def filterUnderlyingArray[A, B](view: ViewArray[A, B], f: Rep[B => Boolean]): Arr[B] = {
+    val iso = view.iso
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    val filtered = view.arr.filter(fun { (x: Exp[A]) => f(iso.to(x)) })
+    ViewArray(filtered)(iso)
+  }
+  
   def liftViewFromArgs[T](d: Def[T])/*(implicit eT: Elem[T])*/: Option[Exp[_]] = d match {
     case ArrayMap(Def(view: ViewArray[_, _]), f) =>
       Some(mapUnderlyingArray(view, f))
-  //    case FilterPA(Def(view@ExpViewArray(_, _)), f) =>
-  //      Some(filterUnderlyingArray(view, f))
+    case ArrayFilter(Def(view: ViewArray[_, _]), f) =>
+      Some(filterUnderlyingArray(view, f))
   //    case PackPA(arr, flags) =>
   //      val res = liftViewFromArgsDefault(d) { (t,iso) =>
   //        implicit val eAny: Elem[Any] = iso.eA
