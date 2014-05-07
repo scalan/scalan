@@ -73,12 +73,6 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       case f :: fs => s"Pair($f, ${pairify(fs)})"
     }
     
-    def tuplify(fs: List[String]): String = fs match {
-      case Nil => "()"
-      case f :: Nil => f
-      case f :: fs => s"($f, ${tuplify(fs)})"
-    }
-    
     def zeroExpr(t: TpeExpr): String = t match {
       case TpeInt => 0.toString
       case TpeBoolean => false.toString
@@ -122,6 +116,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  }
         |""".stripMargin
         
+      val isoFrom = if (isLite) "from" else "fromStaged"
+      val isoTo = if (isLite) "to" else "toStaged"
       val isoZero = if (isLite) "defaultRepTo" else "zero"
       val defaultVal = if (isLite) "defaultVal" else "Common.zero"
 
@@ -139,12 +135,12 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  // 3) Iso for concrete class
         |  abstract class ${className}Iso[$types]($implicitArgs)
         |    extends IsoBase[${className}Data[$types], $className[$types]] {
-        |    override def fromStaged(p: Rep[$className[$types]]) =
+        |    override def $isoFrom(p: Rep[$className[$types]]) =
         |      unmk${className}(p) match {
         |        case Some((${fields.rep(all)})) => ${pairify(fields)}
         |        case None => !!!
         |      }
-        |    override def toStaged(p: Rep[${dataType(fieldTypes)}]) = {
+        |    override def $isoTo(p: Rep[${dataType(fieldTypes)}]) = {
         |      val ${pairify(fields)} = p
         |      $className(${fields.rep(all)})
         |    }
@@ -161,7 +157,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         s"  object ${className} extends ${className}Companion {"}
         |${(fields.length != 1).opt(s"""
         |    def apply[$types](p: Rep[${className}Data[$types]])($implicitArgs): Rep[$className[$types]]
-        |        = iso$className($useImplicits).toStaged(p)""".stripMargin)
+        |        = iso$className($useImplicits).$isoTo(p)""".stripMargin)
         }${(!isLite).opt(s"""
         |    def apply[$types](p: $traitWithTypes)($implicitArgs): Rep[$className[$types]]
         |        = mk$className(${fields.rep(f => s"p.$f")})
@@ -189,7 +185,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  }
         |
         |  implicit class Extended$className[$types](p: Rep[$className[$types]])($implicitArgs) {
-        |    def toData: Rep[${className}Data[$types]] = iso$className($useImplicits).fromStaged(p)
+        |    def toData: Rep[${className}Data[$types]] = iso$className($useImplicits).$isoFrom(p)
         |  }
         |
         |  // 5) implicit resolution of Iso
@@ -287,12 +283,6 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         s"""
          |  implicit def iso$className[$types]($implicitArgs):Iso[${className}Data[$types], $className[$types]]
          |    = new ${className}Iso[$types] with StagedIso[${className}Data[$types], $className[$types]] { i =>
-         |      def from(p: $className[$types]) = p match {
-         |        case Exp${className}(${fields.rep(x => s"Def(Const($x))")}) => ${tuplify(fields)}
-         |      }
-         |      def to(p: ${dataType(fieldTypes)}) = p match {
-         |        case ${tuplify(fields)} => Exp$className(${fields.rep(all)})
-         |      }
          |      // should use i as iso reference
          |      override lazy val e${config.isoNames._2} = 
          |        new StagedViewElem[${className}Data[$types], $className[$types]]()(i) with ${className}Elem[$types]
