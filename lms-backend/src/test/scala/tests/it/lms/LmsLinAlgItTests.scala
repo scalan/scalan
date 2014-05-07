@@ -21,12 +21,38 @@ class LmsLinAlgItTests extends ItTests {
   import progSeq._
 
   test("ddmvm") {
-//    val (in, out) = 2 -> 6
     val inM = Array(Array(1, 1), Array(0, 1))
     val inV = Array(2, 3)
     val in = Pair(inM, inV)
     val out = Array(5, 3)
     progSeq.ddmvm(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.ddmvm, progStaged.ddmvm)("ddmvm", in)
+  }
+
+  test("dsmvm") {
+    val inM = Array(Array(1, 1), Array(0, 1))
+    val inV = Array(2, 3)
+    val in = Pair(inM, inV)
+    val out = Array(5, 3)
+    progSeq.dsmvm(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.dsmvm, progStaged.dsmvm)("dsmvm", in)
+  }
+
+  test("sdmvm") {
+    val inM = Array(Array(1, 1), Array(0, 1))
+    val inV = Array(2, 3)
+    val in = Pair(inM, inV)
+    val out = Array(5, 3)
+    progSeq.sdmvm(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.sdmvm, progStaged.sdmvm)("sdmvm", in)
+  }
+
+  test("ssmvm") {
+    val inM = Array(Array(1, 1), Array(0, 1))
+    val inV = Array(2, 3)
+    val in = Pair(inM, inV)
+    val out = Array(5, 3)
+    progSeq.ssmvm(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.ssmvm, progStaged.ssmvm)("ssmvm", in)
   }
 }

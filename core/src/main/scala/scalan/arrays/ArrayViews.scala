@@ -16,9 +16,8 @@ trait ArrayViews extends Views { self: Scalan =>
 //    def arrOrEmpty: PA[A]
 //  }
 //
-//  implicit def mkArrayView[A,B](view: PA[A])(implicit iso: Iso[A,B]): PA[B]
-//  implicit def unmkArrayView[A,B](view: PA[B])(implicit iso: Iso[A,B]): PA[A]
-
+//  def mkArrayView[A,B](view: Arr[A])(implicit iso: Iso[A,B]): Arr[B]
+//  def unmkArrayView[A,B](view: Arr[B])(implicit iso: Iso[A,B]): Arr[A]
 }
 
 trait ArrayViewsSeq extends ArrayViews { self: ScalanSeq =>

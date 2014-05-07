@@ -32,7 +32,7 @@ trait PArraysOps { scalan: PArraysDsl =>
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]] = ea match {
       case baseE: BaseElem[a] => BaseArray.defaultOf[a](baseE)
       case pairE: PairElem[a,b] => PairArray.defaultOf[a,b](pairE.ea, pairE.eb)
-      case _ => ???
+      case e => ???(s"Element is $e")
     }
 
     def apply[T:Elem](arr: Rep[Array[T]]): PA[T] = fromArray(arr)
@@ -46,14 +46,16 @@ trait PArraysOps { scalan: PArraysDsl =>
         val as = fromArray(ps.map(fun { _._1 }))
         val bs = fromArray(ps.map(fun { _._2 }))
         as zip bs //PairArray[a,b](as, bs)
-      case _ => ???
+      case viewE: ViewElem[a, b] =>
+        // TODO
+        BaseArray[b](arr.asRep[Array[b]])
+      case e => ???(s"Element is $e")
     }
 
     def replicate[T:Elem](len: Rep[Int], v: Rep[T]): PA[T] = element[T] match {
       case baseE: BaseElem[a] =>
         BaseArray[a](array_replicate(len, v.asRep[a]))
-      case _ => ???
-
+      case e => ???(s"Element is $e")
     }
 
     def singleton[T:Elem](v: Rep[T]): PA[T] = element[T] match {
