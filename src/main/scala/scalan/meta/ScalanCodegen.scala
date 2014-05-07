@@ -73,6 +73,12 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       case f :: fs => s"Pair($f, ${pairify(fs)})"
     }
     
+    def tuplify(fs: List[String]): String = fs match {
+      case Nil => "()"
+      case f :: Nil => f
+      case f :: fs => s"($f, ${tuplify(fs)})"
+    }
+    
     def zeroExpr(t: TpeExpr): String = t match {
       case TpeInt => 0.toString
       case TpeBoolean => false.toString
@@ -247,7 +253,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
     }
 
     def getClassExp(c: ClassDef) = {
-      val (className, types, typesWithElems, fields, fieldsWithType, _, traitWithTypes) = getClassTemplateData(c)
+      val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes, traitWithTypes) = getClassTemplateData(c)
       val isLite = config.isLite
       val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
       val userTypeNodeDefs =
@@ -281,10 +287,16 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         s"""
          |  implicit def iso$className[$types]($implicitArgs):Iso[${className}Data[$types], $className[$types]]
          |    = new ${className}Iso[$types] with StagedIso[${className}Data[$types], $className[$types]] { i =>
-         |        // should use i as iso reference
-         |        override lazy val e${config.isoNames._2} = new StagedViewElem[${className}Data[$types], $className[$types]]()(i)"
-         |                                    with ${className}Elem[$types]
+         |      def from(p: $className[$types]) = p match {
+         |        case Exp${className}(${fields.rep(x => s"Def(Const($x))")}) => ${tuplify(fields)}
          |      }
+         |      def to(p: ${dataType(fieldTypes)}) = p match {
+         |        case ${tuplify(fields)} => Exp$className(${fields.rep(all)})
+         |      }
+         |      // should use i as iso reference
+         |      override lazy val e${config.isoNames._2} = 
+         |        new StagedViewElem[${className}Data[$types], $className[$types]]()(i) with ${className}Elem[$types]
+         |    }
          |""".stripMargin
 
       s"""$userTypeNodeDefs\n$constrDefs\n$isoDefs"""

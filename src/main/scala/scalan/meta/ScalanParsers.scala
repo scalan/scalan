@@ -155,7 +155,7 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
 
   lazy val qualId = rep1sep(scalanIdent | bracedIdentList, ".")
 
-  lazy val tpeArg: Parser[TpeArg] = (scalanIdent ~ opt("<:" ~> tpeExpr) ~ rep(":" ~> scalanIdent)) ^^ {
+  lazy val tpeArg: Parser[TpeArg] = (opt("@uncheckedVariance") ~> "[+-]?".r ~> (scalanIdent <~ opt("@uncheckedVariance")) ~ opt("<:" ~> tpeExpr) ~ rep(":" ~> scalanIdent)) ^^ {
     case name ~ bound ~ ctxs => TpeArg(name, bound, ctxs)
   }
 
@@ -175,7 +175,7 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
 
   lazy val tpeTuple = "(" ~> rep1sep(tpeFunc, ",") <~ ")" ^^ { wrapIfMany(TpeTuple, _) }
 
-  lazy val tpeExpr: Parser[TpeExpr] = rep1sep(tpeTuple | tpeFunc, "|") ^^ { wrapIfMany(TpeSum, _) }
+  lazy val tpeExpr: Parser[TpeExpr] = opt("@uncheckedVariance") ~> rep1sep(tpeTuple | tpeFunc, "|") <~ opt("@uncheckedVariance") ^^ { wrapIfMany(TpeSum, _) }
 
   lazy val traitCallArgs = "[" ~> rep1sep(tpeExpr, ",") <~ "]"
 
