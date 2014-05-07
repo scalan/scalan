@@ -15,7 +15,7 @@ trait PArrays extends Base with PArraysOps { self: PArraysDsl =>
     def apply(i: Rep[Int]): Rep[A]
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A]
     def map[B:Elem](f: Rep[A @uncheckedVariance] => Rep[B]): PA[B]
-    def mapBy[B:Elem](f: Rep[A @uncheckedVariance=>B]): PA[B]
+    def mapBy[B:Elem](f: Rep[A=>B @uncheckedVariance]): PA[B]
     def zip[B:Elem](ys: PA[B]): PA[(A,B)]
     def slice(offset: Rep[Int], length: Rep[Int]): Rep[PArray[A]]
     def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A]

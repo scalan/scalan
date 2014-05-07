@@ -46,7 +46,9 @@ trait VectorsOps { scalan: VectorsDsl =>
     def nonZeroIndices: Arr[Int]
     def nonZeroValues: PA[T]
     def dot(other: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = matchVec[T, T](other) {
-      dv => dv.dot(this.asInstanceOf[SparseVector[T]])
+      dv => dotPA(dv.coords(nonZeroIndices), nonZeroValues)(n, m, elem)
+      // TODO currently doesn't work because there are problems defining toRep for ViewElem
+      // dv => dv.dot(this.asInstanceOf[SparseVector[T]])
     } {
       sv => dotSparse(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues)
     }

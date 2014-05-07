@@ -13,7 +13,8 @@ trait PArraysOps { scalan: PArraysDsl =>
       implicit val ea = pe.ea
       implicit val eb = pe.eb
       element[PairArray[a, b]].asElem[PArray[A]]
-    case _ => ???
+    case viewE: ViewElem[_, _] => element[BaseArray[A]].asElem[PArray[A]]
+    case e => ???(s"Element is $e")
   }
 
   trait PArrayOps[T] extends PArray[T] {
