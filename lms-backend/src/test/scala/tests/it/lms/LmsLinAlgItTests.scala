@@ -19,6 +19,8 @@ class LmsLinAlgItTests extends ItTests {
   val progSeq = new ProgSeq
   
   import progSeq._
+  
+  private def sparseVectorData(arr: Array[Int]) = ((0.until(arr.length)).toArray, (arr, arr.length))
 
   test("ddmvm") {
     val inM = Array(Array(1, 1), Array(0, 1))
@@ -31,7 +33,7 @@ class LmsLinAlgItTests extends ItTests {
 
   test("dsmvm") {
     val inM = Array(Array(1, 1), Array(0, 1))
-    val inV = Array(2, 3)
+    val inV = sparseVectorData(Array(2, 3))
     val in = Pair(inM, inV)
     val out = Array(5, 3)
     progSeq.dsmvm(in) should be(out)
@@ -39,7 +41,7 @@ class LmsLinAlgItTests extends ItTests {
   }
 
   test("sdmvm") {
-    val inM = Array(Array(1, 1), Array(0, 1))
+    val inM = Array(Array(1, 1), Array(0, 1)).map(sparseVectorData)
     val inV = Array(2, 3)
     val in = Pair(inM, inV)
     val out = Array(5, 3)
@@ -48,8 +50,8 @@ class LmsLinAlgItTests extends ItTests {
   }
 
   test("ssmvm") {
-    val inM = Array(Array(1, 1), Array(0, 1))
-    val inV = Array(2, 3)
+    val inM = Array(Array(1, 1), Array(0, 1)).map(sparseVectorData)
+    val inV = sparseVectorData(Array(2, 3))
     val in = Pair(inM, inV)
     val out = Array(5, 3)
     progSeq.ssmvm(in) should be(out)
