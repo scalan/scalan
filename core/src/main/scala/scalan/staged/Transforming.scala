@@ -192,13 +192,6 @@ trait Transforming { self: ScalanStaged =>
     ProjectionTree(root, newChildren)
   }
 
-  //TODO remove by replacing all usages with pairMany
-  def mkTuple(xs: List[Rep[_]]): Rep[_] = xs.reverse match {
-    case x1 :: (tail@(x2 :: _)) => (x1 /: tail) ((s, x) => Pair(x, s))
-    case x :: _ => x
-    case _ => ()
-  }
-
   def pairMany(env: List[Exp[Any]]): Exp[Any] =
     env.reduceRight(Pair(_, _))
 
