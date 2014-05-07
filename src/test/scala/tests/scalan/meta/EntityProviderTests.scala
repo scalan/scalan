@@ -100,7 +100,6 @@ class EntityProviderTests extends BaseTests {
         |    def elem = element[ObservableImpl[A]]
         |    override def mirror(t: Transformer): Rep[_] = ExpObservableImpl[A](t(value))
         |  }
-        |  addUserType(manifest[ExpObservableImpl[Any]])
         |
         |
         |  def mkObservableImpl[A:Elem](value: Rep[A])

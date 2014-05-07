@@ -1,3 +1,7 @@
+/**
+ * User: Alexander Slesarenko
+ * Date: 12/1/13
+ */
 package scalan.meta
 
 object BoilerplateTool extends App {
@@ -25,7 +29,11 @@ object BoilerplateTool extends App {
     srcPath = "../scalan-lite/core/src/main/scala",
     entityFiles = List(
       "scalan/arrays/PArrays.scala",
-      "scalan/types/Types.scala"
+      "scalan/types/Types.scala",
+      "scalan/linalgebra/Vectors.scala",
+      "scalan/linalgebra/Matrices.scala",
+      "scalan/iterators/Iterators.scala"
+      //, "main/scala/scalan/rx/Trees.scala"
     ),
     proxyTrait = "scalan.ProxyExp",
     stagedViewsTrait = "scalan.ViewsExp",
@@ -35,6 +43,6 @@ object BoilerplateTool extends App {
       "scalan.common.Default.defaultVal")
   )
 
-  val ctx = new EntityManagement(scalanConfig)
+  val ctx = new EntityManagement(liteConfig)
   ctx.generateAll()
 }

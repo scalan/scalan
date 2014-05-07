@@ -243,7 +243,7 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
 
   lazy val entityModuleDef =
     ("package" ~> qualId <~ opt(";")) ~
-      rep1sep(importStat, opt(";")) ~
+      repsep(importStat, opt(";")) ~
       traitDef ^^ {
         case ns ~ imports ~ moduleTrait => {
           val packageName = ns.mkString(".")
