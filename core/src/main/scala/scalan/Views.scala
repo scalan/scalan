@@ -10,6 +10,7 @@ import scala.reflect.runtime.universe._
 trait Views extends Elems { self: Scalan =>
 
   // eFrom0 is used to avoid making eFrom implicit in subtypes
+  // and support recursive types
   abstract class Iso[From,To](implicit eFrom0: Elem[From]) {
     def eFrom: Elem[From] = eFrom0
     def eTo: Elem[To]
