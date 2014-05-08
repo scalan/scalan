@@ -235,12 +235,12 @@ trait Transforming { self: ScalanStaged =>
       ProjectionTree(root, unfoldChildren(root) map (apply(_, unfoldChildren)))
   }
 
-  class TupleTree(val root: Exp[_], val children: List[SymbolTree]) extends SymbolTree {
+  class TupleTree(val root: Exp[_], val children: List[TupleTree]) extends SymbolTree {
     override def toString =
       if (isLeaf) root.toString
       else "Tup(%s)".format(children.mkString(","))
 
-    lazy val paths = children match {
+    lazy val paths: List[(TuplePath, Exp[_])] = children match {
       case Nil => List((Nil, root))
       case _ =>
         for {
@@ -249,19 +249,17 @@ trait Transforming { self: ScalanStaged =>
         } yield (i + 1 :: p, s)
     }
 
-    def mkNewTree(r: Exp[_], cs: List[SymbolTree]) = TupleTree(r, cs)
-
     def hasViews: Boolean = {
       paths exists { case (_, s) => symbolHasViews(s) }
     }
 
     def mirror(leafSubst: Exp[_] => Exp[_]): TupleTree =
       if (isLeaf)
-        mkNewTree(leafSubst(root), Nil)
+        TupleTree(leafSubst(root), Nil)
       else {
         val newChildren = children map (_.mirror(leafSubst))
         val newRoot = pairMany(newChildren map (_.root))
-        mkNewTree(newRoot, newChildren)
+        TupleTree(newRoot, newChildren)
       }
 
 
@@ -313,7 +311,7 @@ trait Transforming { self: ScalanStaged =>
   }
 
   object TupleTree {
-    def apply(root: Exp[_], children: List[SymbolTree]) = new TupleTree(root, children)
+    def apply(root: Exp[_], children: List[TupleTree]) = new TupleTree(root, children)
 
     // require ptree to be sorted by projectionIndex
     def fromProjectionTree(ptree: ProjectionTree, subst: ExpSubst): TupleTree =
@@ -326,7 +324,6 @@ trait Transforming { self: ScalanStaged =>
       }
 
     def unapply[T](s: Exp[T]): Option[TupleTree] = {
-      val eT = s.elem
       s match {
         case Def(Tup(TupleTree(l),TupleTree(r))) =>
           Some(TupleTree(s, List(l, r)))
