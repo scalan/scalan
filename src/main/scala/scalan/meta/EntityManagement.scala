@@ -1,29 +1,33 @@
+/**
+ * User: Alexander Slesarenko
+ * Date: 12/15/13
+ */
 package scalan.meta
 
 import java.io.File
 
-case class CodegenConfig(srcPath: String,
-                         proxyTrait: String,
-                         entityFiles: List[String],
-                         stagedViewsTrait: String,
-                         isLite: Boolean,
-                         isoNames: (String, String),
-                         extraImports: List[String]
+case class CodegenConfig(
+                          srcPath: String,
+                          proxyTrait: String,
+                          entityFiles: List[String],
+                          stagedViewsTrait: String,
+                          isLite: Boolean,
+                          extraImports: List[String]
                         )
 
 class EntityManagement(val config: CodegenConfig) extends ScalanCodegen { ctx =>
 
   case class EntityManager(name: String, filePath: String, entityDef: EntityModuleDef)
 
-  private def entities(srcPath : String) = (config.entityFiles map {
+  private val entities = (config.entityFiles map {
     f =>
-      val path = srcPath + "/" + f
+      val path = config.srcPath + "/" + f
       val d = parseEntity(path)
       (d.name, new EntityManager(d.name, path, d))
   }).toMap
 
-  def generateAll(srcPath : String = config.srcPath) = {
-    entities(srcPath).foreach { case (name, m) =>
+  def generateAll() = {
+    entities.foreach { case (name, m) =>
       val g = new EntityFileGenerator(m.entityDef)
       val implCode = g.getImplFile
       saveEntity(m.filePath, implCode)
@@ -46,4 +50,5 @@ class EntityManagement(val config: CodegenConfig) extends ScalanCodegen { ctx =>
 
     writeFile(implFile, implCode)
   }
+
 }

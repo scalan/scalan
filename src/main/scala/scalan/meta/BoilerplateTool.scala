@@ -16,7 +16,6 @@ object BoilerplateTool extends App {
       "scalan/math/Vectors.scala",
       "scalan/collections/Sets.scala"
     ),
-    isoNames = ("A","B"),
     extraImports = List(
       "scala.reflect.runtime.universe._", 
       "scalan.common.Common",
@@ -28,21 +27,20 @@ object BoilerplateTool extends App {
     isLite = true,
     srcPath = "../scalan-lite/core/src/main/scala",
     entityFiles = List(
-      "scalan/arrays/PArrays.scala",
-      "scalan/types/Types.scala",
-      "scalan/linalgebra/Vectors.scala",
-      "scalan/linalgebra/Matrices.scala",
-      "scalan/iterators/Iterators.scala"
+      "scalan/arrays/PArrays.scala"
+      ,"scalan/types/Types.scala"
+      ,"scalan/linalgebra/Vectors.scala"
+      ,"scalan/linalgebra/Matrices.scala"
+      ,"scalan/iterators/Iterators.scala"
       //, "main/scala/scalan/rx/Trees.scala"
     ),
     proxyTrait = "scalan.ProxyExp",
     stagedViewsTrait = "scalan.ViewsExp",
-    isoNames = ("From", "To"),
     extraImports = List(
       "scala.reflect.runtime.universe._", 
       "scalan.common.Default.defaultVal")
   )
 
-  val ctx = new EntityManagement(liteConfig)
-  ctx.generateAll()
+  val ctx = new EntityManagement(scalanConfig)
+  ctx.generateAll
 }

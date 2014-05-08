@@ -17,7 +17,6 @@ class DependentCompileTests extends FunSuite {
       ),
       proxyTrait = "scalan.ProxyExp",
       stagedViewsTrait = "scalan.ViewsExp",
-      isoNames = ("From", "To"),
       extraImports = List(
         "scala.reflect.runtime.universe._",
         "scalan.common.Default.defaultVal")
@@ -38,7 +37,6 @@ class DependentCompileTests extends FunSuite {
 //        "Vectors.scala",
         "Sets.scala"
       ),
-      isoNames = ("A","B"),
       extraImports = List(
         "scala.reflect.runtime.universe._",
         "scalan.common.Common",
@@ -58,7 +56,7 @@ class DependentCompileTests extends FunSuite {
       }
 
       val ctx = new EntityManagement(config)
-      ctx.generateAll(dir.toString)
+      ctx.generateAll()
 
       writeToFile(dir + "/Makefile", s"main:\n\t\tscalac -classpath $jarPath/* *.scala impl/*.scala")
 
