@@ -130,8 +130,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
   }
   object UserTypeDef {
     def unapply[T](d: Def[T]): Option[Iso[_,T]] = {
-      val s = d.self
-      val eT = s.elem
+      val eT = d.selfType
       eT match {
         case e: ViewElem[_,_] => Some(e.iso)
         case _ => None
@@ -172,37 +171,68 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     }
   }
   
-  abstract class View1[A, B, C[_]](implicit val innerIso: Iso[A, B]) extends Def[C[B]] {
-    def source: Rep[C[A]]
-    def iso: Iso[C[A], C[B]]
+  object View {
+    def unapply[T](d: Def[T]): Option[(Rep[Source], Iso[Source,T]) forSome { type Source }] =
+      d match {
+        case view: View[a, T] => Some((view.source, view.iso))
+        // TODO make UserTypeDef extend View with lazy iso/source?
+        case UserTypeDef(iso: Iso[a, T]) => Some((iso.from(d.self), iso))
+        case _ => None
+      }
+  }
+  
+  abstract class View[From, To] extends Def[To] {
+    def source: Rep[From]
+    def iso: Iso[From, To]
     implicit def selfType = iso.eTo
-    lazy val self: Rep[C[B]] = this
-    def copy(source: Rep[C[A]]): View1[A, B, C]
+    lazy val self: Rep[To] = this
+    def copy(source: Rep[From]): View[From, To]
     def mirror(t: Transformer) = reifyObject(copy(t(source)))(Lazy(selfType))
     lazy val uniqueOpId = name(iso.eFrom, iso.eTo)
   }
   
-  abstract class View2[A1, A2, B1, B2, C[_, _]](implicit val innerIso1: Iso[A1, B1], val innerIso2: Iso[A2, B2]) extends Def[C[B1, B2]] {
-    def source: Rep[C[A1, A2]]
-    def iso: Iso[C[A1, A2], C[B1, B2]]
-    implicit def selfType = iso.eTo
-    lazy val self: Rep[C[B1, B2]] = this
-    def copy(source: Rep[C[A1, A2]]): View2[A1, A2, B1, B2, C]
-    def mirror(t: Transformer) = reifyObject(copy(t(source)))(Lazy(selfType))
+  case class UnpackView[A,B](view: Rep[B])(implicit val iso: Iso[A,B]) extends Def[A] {
+    implicit def selfType = iso.eFrom
+    lazy val self: Rep[A] = this
+    override def mirror(f: Transformer) = UnpackView[A, B](f(view))
     lazy val uniqueOpId = name(iso.eFrom, iso.eTo)
   }
   
-  type Identity[T] = T
+  abstract class View1[A, B, C[_]](implicit val innerIso: Iso[A, B]) extends View[C[A], C[B]]
   
-  case class ViewVar[A, B](source: Rep[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Identity] {
-    def iso = innerIso
-    def copy(source: Rep[A]) = ViewVar(source)
-  }
+  abstract class View2[A1, A2, B1, B2, C[_, _]](implicit val iso1: Iso[A1, B1], val iso2: Iso[A2, B2]) extends View[C[A1, A2], C[B1, B2]]
+  
+//  type Identity[T] = T
+//
+//  case class ViewVar[A, B](source: Rep[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Identity] {
+//    def iso = innerIso
+//    def copy(source: Rep[A]) = ViewVar(source)
+//  }
   
   case class ViewPair[A1, A2, B1, B2](source: Rep[(A1, A2)])
-    (implicit innerIso1: Iso[A1, B1] = identityIso[A1](source.elem.ea),
-     innerIso2: Iso[A2, B2] = identityIso[A2](source.elem.eb)) extends View2[A1, A2, B1, B2, Tuple2] {
-    lazy val iso = pairIso(innerIso1, innerIso2)
+    (implicit iso1: Iso[A1, B1], iso2: Iso[A2, B2]) extends View2[A1, A2, B1, B2, Tuple2] {
+    lazy val iso = pairIso(iso1, iso2)
     def copy(source: Rep[(A1, A2)]) = ViewPair(source)
+  }
+  
+  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
+    case Def(d1) => d1 match {
+      case Tup(Def(View(a, iso1: Iso[a, c])), Def(View(b, iso2: Iso[b, d]))) => 
+        ViewPair((a.asRep[a], b.asRep[b]))(iso1, iso2)
+      case Tup(Def(View(a, iso1: Iso[a, c])), b: Rep[b]) => 
+        ViewPair((a.asRep[a], b))(iso1, identityIso(b.elem)).self
+      case Tup(a: Rep[a], Def(View(b, iso2: Iso[b, d]))) => 
+        ViewPair((a, b.asRep[b]))(identityIso(a.elem), iso2).self
+      case First(Def(view @ ViewPair(source))) =>
+        view.iso1.to(source._1)
+      case Second(Def(view @ ViewPair(source))) =>
+        view.iso2.to(source._2)
+//      case View(Def(uv @ UnpackView(view)), iso) if iso == uv.iso => view
+//      case uv @ UnpackView(Def(View(source, iso))) if iso == uv.iso => source
+      case _ => super.rewrite(d)
+    }
+    case Var(UserTypeSym(iso: Iso[a, _])) =>
+      iso.to(fresh[a](Lazy(iso.eFrom)))
+    case _ => super.rewrite(d)
   }
 }
