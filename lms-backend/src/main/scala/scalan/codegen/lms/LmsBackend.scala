@@ -2,14 +2,12 @@ package scalan.codegen.lms
 
 import scalan.{ScalanCtxStaged, ScalanStaged}
 import scalan.codegen.LangBackend
-//import virtualization.lms.common._
-//import virtualization.lms.epfl.test7._
-//import virtualization.lms.util._
 import scalan.codegen.GraphVizExport
 import java.io.{InputStreamReader, BufferedReader, File}
+import scalan.linalgebra.VectorsDslExp
 
 trait LMSBridge[A,B] {
-  val scalan: ScalanStaged with LmsBackend
+  val scalan: ScalanStaged with LmsBackend with VectorsDslExp // TODO remove this!
 
   trait LMSFacadeBase {
     val lFunc: LMSFunction[A,B]
@@ -38,11 +36,13 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
 
     val definitions = g.schedule
 
-
+    type SymMirror = Map[scalan.Exp[_], lFunc.Exp[A] forSome {type A}]
+    
+    type FuncMirror = Map[scalan.Exp[_],( lFunc.Exp[A] => lFunc.Exp[B]) forSome { type A; type B } ]
 
     def mirrorLambdaToLmsFunc[I, R](lam:scalan.Lambda[_,_],
-                                    symMirror: Map[scalan.Exp[_], lFunc.Exp[Z] forSome {type Z}],
-                                    funcMirror: Map[scalan.Exp[_],( lFunc.Exp[X] => lFunc.Exp[Y]) forSome {type X; type Y}] ) : ( lFunc.Exp[I] => lFunc.Exp[R]) = {
+                                    symMirror: SymMirror,
+                                    funcMirror: FuncMirror) : (lFunc.Exp[I] => lFunc.Exp[R]) = {
       val lamX = lam.x
       val f = { x: lFunc.Exp[I] =>
         val sched = lam.schedule
@@ -53,13 +53,9 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
       f
     }
 
-
     /* Mirror block */
-    def mirrorDefs(defs: List[scalan.TableEntry[_]],
-                   symMirror: Map[scalan.Exp[_], lFunc.Exp[A] forSome {type A}],
-                   funcMirror: Map[scalan.Exp[_],( lFunc.Exp[A] => lFunc.Exp[B]) forSome { type A; type B } ] ) : (List[lFunc.Exp[_]],
-                   Map[scalan.Exp[_], lFunc.Exp[Z] forSome {type Z}],
-                    Map[scalan.Exp[_],( lFunc.Exp[X] => lFunc.Exp[Y]) forSome {type X; type Y} ] ) =
+    def mirrorDefs(defs: List[scalan.TableEntry[_]], symMirror: SymMirror, funcMirror: FuncMirror):
+      (List[lFunc.Exp[_]], SymMirror, FuncMirror) =
     {
       val (lmsExps, finalSymMirr, finalFuncMirr) = defs.foldLeft(List.empty[lFunc.Exp[_]], symMirror, funcMirror) {
         case ((exps, symMirr, funcMirr),tp) => {
@@ -205,11 +201,11 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                       (exps ++ List(exp), symMirr + ((s, exp)), funcMirr)
                   }
                 }
-                case _ => scalan.!!!("ScalanLMSBrindge: Unfortunatelly, only Plus monoid is supported by lms ")
+                case _ => scalan.!!!("ScalanLMSBridge: Unfortunately, only Plus monoid is supported by lms ")
               }
             }
             /* This is dotSparse. Uncomment when ready!  */
-            /*case scalan.dotSparse(i1,v1, i2, v2) => {
+            case scalan.DotSparse(i1, v1, i2, v2) => {
               (v1.elem) match {
                 case (el: scalan.ArrayElem[_]) =>
                   (scalan.createManifest(el.ea)) match {
@@ -222,9 +218,9 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                       (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
                   }
               }
-            }*/
+            }
 
-            case _ => scalan.!!!("ScalanLMSBridge: Don't know how to mirror symbol ", s)
+            case _ => scalan.!!!(s"ScalanLMSBridge: Don't know how to mirror symbol ${s.toStringWithDefinition}")
           }
         }
       }
@@ -238,7 +234,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
   }
 }
 
-trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport =>
+trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport with VectorsDslExp =>
 
   protected def launchProcess(launchDir: File, commandArgs: String*) {
     val builder = new ProcessBuilder(commandArgs: _*)
@@ -265,6 +261,11 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport =>
         }
     }
   }
+  
+  def makeBridge[A, B]: MyBridge[A, B] = 
+    new MyBridge[A, B] {
+      val scalan: LmsBackend.this.type = self
+    }
 
   def run(dir: String, fileName: String, func: Exp[_], emitGraphs: Boolean) = {
     val outDir = new File(dir)
@@ -288,10 +289,8 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport =>
       case el:FuncElem[_,_] =>
         (createManifest(el.ea), createManifest(el.eb)) match {
           case (mA:Manifest[a], mB:Manifest[b]) =>
-            val bridge = new MyBridge[a, b] {
-              val scalan: LmsBackend.this.type = self
-            }
-            val facade = bridge.getFacade(g0)
+            val bridge = makeBridge[a, b]
+            val facade = bridge.getFacade(g0.asInstanceOf[bridge.scalan.PGraph])
             val codegen = facade.lFunc.codegen
 
             codegen.emitSource[a,b](facade.lFunc.test, fileName, new PrintWriter(new FileOutputStream(outputSource.getAbsolutePath())))(mA, mB)

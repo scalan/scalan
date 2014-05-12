@@ -5,9 +5,11 @@ import scalan.codegen.lms.LmsBackend
 import scalan.arrays.PArraysDslExp
 import scalan.ScalanCtxStaged
 import scalan.codegen.GraphVizExport
+import scalan.linalgebra.VectorsDslExp
 
 class LmsSmokeItTests extends SmokeItTests {
-  class ProgStaged extends Prog with PArraysDslExp with ScalanCtxStaged with GraphVizExport with LmsBackend
+  // TODO remove VectorsDslExp!
+  class ProgStaged extends Prog with PArraysDslExp with ScalanCtxStaged with GraphVizExport with LmsBackend with VectorsDslExp
   
   val progStaged = new ProgStaged() {
     this.invokeEnabled = true

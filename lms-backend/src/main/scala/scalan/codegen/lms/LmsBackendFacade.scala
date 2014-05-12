@@ -79,6 +79,8 @@ trait LMSFunction[A,B] extends LMSBackendFacade { self =>
   def test(x: Rep[A]): Rep[B]
   val codegen = new ScalaGenEffect with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
     with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenBooleanOps with ScalaGenStruct
-    with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt { val IR: self.type = self;
-                                                                               override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true}
+    with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt { 
+      val IR: self.type = self
+      override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
+  }
 }

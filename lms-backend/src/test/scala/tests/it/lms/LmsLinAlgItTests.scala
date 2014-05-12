@@ -8,9 +8,17 @@ import scalan.codegen.GraphVizExport
 import scalan.linalgebra.MatricesDslExp
 import scalan.ScalanCtxSeq
 import scalan.linalgebra.MatricesDslSeq
+import scalan.codegen.lms.MyBridge
 
 class LmsLinAlgItTests extends ItTests {
-  class ProgStaged extends LinearAlgebraExamples with MatricesDslExp with ScalanCtxStaged with GraphVizExport with LmsBackend
+  class ProgStaged extends LinearAlgebraExamples with MatricesDslExp with ScalanCtxStaged with GraphVizExport with LmsBackend { self =>
+//    override def makeBridge[A, B] = new MyBridge[A, B] {
+//      override val scalan = self
+//      
+//      override def 
+//    }
+  }
+  
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCtxSeq
   
   val progStaged = new ProgStaged() {

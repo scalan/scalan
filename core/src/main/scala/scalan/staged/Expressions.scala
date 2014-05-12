@@ -28,6 +28,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     }
     def varName: String
     def toStringWithType = varName + ":" + elem.prettyName
+    def toStringWithDefinition: String
   }
   type AnyExp = Exp[Any]
   type ExpSubst = AnyExp => AnyExp
@@ -286,16 +287,11 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
     }
     def varName = "s" + id
     override def toString = {
-      val res = isDebug match {
-        case false => varName
-        case _ =>
-          val rhs = findDefinition(this) match { case Some(TableEntry(_, d)) => "->" + d.toString case _ => "" }
-          "s" + id + rhs
-      }
-      res
+      if (isDebug) toStringWithDefinition else varName
     }
 
     lazy val definition = findDefinition(this).map(_.rhs)
+    def toStringWithDefinition = toStringWithType + definition.map(d => s" = $d").getOrElse("")
   }
 
   def fresh[T](implicit et: LElem[T]): Exp[T] = new Sym[T]()

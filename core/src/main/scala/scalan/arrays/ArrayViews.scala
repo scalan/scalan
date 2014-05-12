@@ -71,19 +71,9 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
     def copy(source: Arr[A]) = ViewArray(source)
   }
 
-  //  case class UnpackViewArray[A,B](view: Arr[B])(implicit val iso: Iso[A,B]) extends ArrayDef[A] {
-  //    implicit lazy val eT = iso.eFrom
-  //    override def mirror(f: Transformer) = UnpackViewArray(f(view))
-  //  }
-  //
   //  implicit def mkArrayView[A,B](arr: PA[A])(implicit iso: Iso[A,B]): PA[B] = {
   //    ExpViewArray(Some(arr), iso)
   //  }
-  //  def unmkArrayView[A,B](view: Arr[B])(implicit iso: Iso[A,B]): Arr[A] = {
-  //    implicit val eA = iso.eFrom
-  //    UnpackViewArray[A,B](view)
-  //  }
-  //
   //  case class ExpViewArray[A, B](arr: Option[PA[A]], iso: Iso[A, B])
   //    extends ViewArray[A,B] with StagedArrayBase[B]
   //  {
@@ -159,7 +149,7 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
     case Def(_: ViewArray[_, _]) => true
     case _ => false
   }
-  //
+
   //  object View {
   //    def unapply[T](e: Def[T]): Option[(ExpViewArray[Any,Any], Elem[Any], Elem[Any])] =
   //      e match {
@@ -292,7 +282,7 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
         })
         val res = ViewArray(s)(iso)
         res
-      case ArrayMap(xs: Arr[a], f@Def(lam@Lambda(_, _, _, Def(View(_, iso: Iso[c, b]))))) =>
+      case ArrayMap(xs: Arr[a], f@Def(lam@Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
         val f1 = f.asRep[a => b]
         val xs1 = xs.asRep[Array[a]]
         implicit val eA = xs1.elem.ea
@@ -300,7 +290,9 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
         implicit val eC = iso.eFrom
         implicit val leA = Lazy(eA)
         val s = xs1.map(fun { x =>
-          UnpackView(f1(x))(iso)
+          val tmp = f1(x)
+          iso.from(tmp)
+          // UnpackView(f1(x))(iso)
         })
         val res = ViewArray(s)(iso)
         // val res = ViewArray(s.values)(iso).nestBy(s.segments)
