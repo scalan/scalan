@@ -204,7 +204,15 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                 case _ => scalan.!!!("ScalanLMSBridge: Unfortunately, only Plus monoid is supported by lms ")
               }
             }
-            /* This is dotSparse. Uncomment when ready!  */
+            case scalan.ArrayGrouped(xs, size) =>
+              xs.elem match {
+                case el: scalan.ArrayElem[a] =>
+                  val mA = scalan.createManifest(el.ea).asInstanceOf[Manifest[a]]
+                  val lmsXs = symMirr(xs).asInstanceOf[lFunc.Exp[Array[a]]]
+                  val lmsSize = symMirr(size).asInstanceOf[lFunc.Exp[Int]]
+                  val exp = lFunc.groupedArray(lmsXs, lmsSize)(mA)
+                  (exps ++ List(exp), symMirr + ((s, exp)), funcMirr)
+              }
             case scalan.DotSparse(i1, v1, i2, v2) => {
               (v1.elem) match {
                 case (el: scalan.ArrayElem[_]) =>

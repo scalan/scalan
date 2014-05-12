@@ -67,6 +67,14 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
   def opDotProductSV[A:Manifest](i1: Exp[Array[Int]], v1: Exp[Array[A]], i2: Exp[Array[Int]], v2: Exp[Array[A]]) : Exp[A] = {
     array_dotProductSparse(i1,v1, i2, v2)
   }
+  
+  // TODO this implemenation assumes xs.length % size === 0
+  def groupedArray[A: Manifest](xs: Exp[Array[A]], size: Exp[Int]) = {
+    array(xs.length / size) { i =>
+      val rowStart = i * size
+      array(size) { j => xs.at(rowStart + j) }
+    }
+  }
   //def printlnD(s: Exp[Any])  = println(s)
   def unitD[T:Manifest](x: T) = unit[T](x)
   /*

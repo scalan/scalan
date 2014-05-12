@@ -65,4 +65,22 @@ class LmsLinAlgItTests extends ItTests {
     progSeq.ssmvm(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.ssmvm, progStaged.ssmvm)("ssmvm", in)
   }
+
+  test("fdmvm") {
+    val inM = (Array(1, 1, 0, 1), 2)
+    val inV = Array(2, 3)
+    val in = Pair(inM, inV)
+    val out = Array(5, 3)
+    progSeq.fdmvm(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.fdmvm, progStaged.fdmvm)("fdmvm", in)
+  }
+
+  test("fsmvm") {
+    val inM = (Array(1, 1, 0, 1), 2)
+    val inV = sparseVectorData(Array(2, 3))
+    val in = Pair(inM, inV)
+    val out = Array(5, 3)
+    progSeq.fsmvm(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.fsmvm, progStaged.fsmvm)("fsmvm", in)
+  }
 }

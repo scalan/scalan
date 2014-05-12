@@ -30,4 +30,18 @@ trait LinearAlgebraExamples extends MatricesDsl {
     val vector = SparseVector(vIs, PArray(vVs), vL)
     (matrix * vector).coords.arr
   }
+  
+  lazy val fdmvm = fun { p: Rep[((Array[Int], Int), Array[Int])] => 
+    val Pair(m, v) = p
+    val matrix = RowMajorFlatMatrix(PArray(m._1), m._2)
+    val vector = DenseVector(PArray(v))
+    (matrix * vector).coords.arr
+  }
+  
+  lazy val fsmvm = fun { p: Rep[((Array[Int], Int), (Array[Int], (Array[Int], Int)))] => 
+    val Tuple(m, vIs, vVs, vL) = p
+    val matrix = RowMajorFlatMatrix(PArray(m._1), m._2)
+    val vector = SparseVector(vIs, PArray(vVs), vL)
+    (matrix * vector).coords.arr
+  }
 }

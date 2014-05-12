@@ -35,7 +35,7 @@ trait MatricesOps { scalan: MatricesDsl =>
     def rmValues: Rep[PArray[T]]
     def numRows: Rep[Int] = rmValues.length / numColumns
     
-    def rows: PA[DenseVector[T]] = ???
+    def rows: PA[DenseVector[T]] = PArray(rmValues.arr.grouped(numColumns).map(fun { row => DenseVector(PArray(row)) }))
     def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = DenseVector(rows.map { r => r.dot(vector) })
   }
 

@@ -11,7 +11,7 @@ trait ArrayOps { self: Scalan  =>
   type Arr[T] = Rep[Array[T]]
   implicit class RepArrayOps[T](xs: Arr[T]) {
     def apply(n: Rep[Int]): Rep[T] = array_apply(xs, n)
-    def apply(ns: Arr[Int])(implicit eT: Elem[T]): Arr[T] = array_apply(xs, ns)
+    def apply(ns: Arr[Int])(implicit o: Overloaded1): Arr[T] = array_apply(xs, ns)
     def length = array_length(xs)
     def map[R:Elem](f: Rep[T=>R]) = array_map(xs, f)
     // def map[R:Elem](f: Rep[T] => Rep[R])(implicit o: Overloaded1) = array_map(xs, fun(f))
@@ -19,11 +19,12 @@ trait ArrayOps { self: Scalan  =>
     def zip[U](ys: Arr[U]): Arr[(T,U)] = array_zip(xs, ys)
     def slice(offset: Rep[Int], length: Rep[Int]): Arr[T] = array_slice(xs, offset, length)
     def filter(f: Rep[T=>Boolean]) = array_filter(xs, f)
+    def grouped(size: Rep[Int]) = array_grouped(xs, size)
     // def filter(f: Rep[T] => Rep[Boolean])(implicit o: Overloaded1) = array_filter(xs, fun(f))    
   }
 
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
-  def array_apply[T: Elem](xs: Arr[T], is: Arr[Int])(implicit o: Overloaded1): Arr[T]
+  def array_apply[T](xs: Arr[T], is: Arr[Int])(implicit o: Overloaded1): Arr[T]
   def array_length[T](xs: Arr[T]) : Rep[Int]
   def array_map[T,R:Elem](xs: Arr[T], f: Rep[T=>R]): Arr[R]
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) : Rep[T]
@@ -32,13 +33,16 @@ trait ArrayOps { self: Scalan  =>
   def array_slice[T](xs: Arr[T], offset: Rep[Int], length: Rep[Int]): Arr[T]
   def array_rangeFrom0(n: Rep[Int]): Arr[Int]
   def array_filter[T](xs: Arr[T], f: Rep[T => Boolean]): Arr[T]
+  def array_grouped[T](xs: Arr[T], size: Rep[Int]): Arr[Array[T]]
 }
 
 trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   import TagImplicits.elemToClassTag
   def array_apply[T](x: Arr[T], n: Rep[Int]): Rep[T] = x(n)
-  def array_apply[T: Elem](x: Arr[T], is: Arr[Int])(implicit o: Overloaded1): Arr[T] = 
+  def array_apply[T](x: Arr[T], is: Arr[Int])(implicit o: Overloaded1): Arr[T] = {
+    implicit val ct = arrayToClassTag(x)
     Array.tabulate(is.length)(i => x(is(i)))
+  }
   def array_length[T](a: Arr[T]) : Rep[Int] = a.length
   def array_map[T, R:Elem](xs: Array[T], f: T => R) = genericArrayOps(xs).map(f)
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x,y) => m.append(x,y))
@@ -49,6 +53,12 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   def array_rangeFrom0(n: Rep[Int]): Arr[Int] = 0.until(n).toArray
   def array_filter[T](xs: Array[T], f: T => Boolean): Array[T] = 
     genericArrayOps(xs).filter(f)
+  def array_grouped[T](xs: Arr[T], size: Rep[Int]): Arr[Array[T]] = {
+    implicit val ct = arrayToClassTag(xs)
+    xs.iterator.grouped(size).map(_.toArray).toArray
+  }
+    
+  def arrayToClassTag[T](xs: Array[T]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 }
 
 trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
@@ -110,11 +120,16 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
   case class ArrayFilter[T](xs: Exp[Array[T]], f: Exp[T=>Boolean])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayFilter(t(xs), t(f))
   }
+  case class ArrayGrouped[T: Elem](xs: Exp[Array[T]], chunkLength: Exp[Int]) extends ArrayDef[Array[T]] {
+    override lazy val eT = element[Array[T]]
+    override implicit lazy val selfType = arrayElement(eT)
+    override def mirror(t: Transformer) = ArrayGrouped(t(xs), t(chunkLength))
+  }
 
   def array_apply[T](xs: Exp[Array[T]], n: Exp[Int]): Rep[T] =
-    withElemOfArray(xs){ implicit eT => ArrayApply(xs, n) }
-  def array_apply[T: Elem](xs: Exp[Array[T]], is: Exp[Array[Int]])(implicit o: Overloaded1): Arr[T] =
-    ArrayApplyMany(xs, is)
+    withElemOfArray(xs) { implicit eT => ArrayApply(xs, n) }
+  def array_apply[T](xs: Exp[Array[T]], is: Exp[Array[Int]])(implicit o: Overloaded1): Arr[T] =
+    withElemOfArray(xs) { implicit eT => ArrayApplyMany(xs, is) }
   def array_length[T](a: Exp[Array[T]]) : Rep[Int] = ArrayLength(a)
   def array_map[T, R:Elem](xs: Exp[Array[T]], f: Exp[T=>R]) = ArrayMap(xs, f)
 
@@ -138,6 +153,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
     
   def array_filter[T](xs: Arr[T], f: Rep[T => Boolean]): Arr[T] =
     withElemOfArray(xs) { implicit eT => ArrayFilter(xs, f) }
+  
+  def array_grouped[T](xs: Arr[T], size: Rep[Int]): Arr[Array[T]] =
+    withElemOfArray(xs) { implicit eT => ArrayGrouped(xs, size) }
     
   override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
     case Def(d1) => d1 match {
