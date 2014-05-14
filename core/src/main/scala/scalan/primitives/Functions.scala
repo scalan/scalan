@@ -198,7 +198,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   //=====================================================================================
   //   Function reification
 
-  def fun[A,B](f: Exp[A] => Exp[B])(implicit eA: LElem[A]): Exp[A=>B] = {
+  implicit def fun[A,B](f: Exp[A] => Exp[B])(implicit eA: LElem[A]): Exp[A=>B] = {
     val x = fresh[A]
     lambda(x)(f)
   }

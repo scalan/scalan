@@ -18,6 +18,8 @@ trait Monoids { self: Scalan =>
     RepMonoid("+", (a, b) => a + b, 0, isInfix = true, isCommutative = true)
   implicit lazy val FloatRepPlusMonoid: RepMonoid[Float] = 
     RepMonoid("+", (a, b) => a + b, 0f, isInfix = true, isCommutative = true)
+  implicit lazy val DoubleRepPlusMonoid: RepMonoid[Double] = 
+    RepMonoid("+", (a, b) => a + b, 0f, isInfix = true, isCommutative = true)
   implicit lazy val BooleanRepOrMonoid: RepMonoid[Boolean] = 
     RepMonoid("||", (a, b) => a || b, false, isInfix = true, isCommutative = true)
 

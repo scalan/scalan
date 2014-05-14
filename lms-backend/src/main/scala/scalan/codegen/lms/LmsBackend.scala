@@ -111,6 +111,22 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                   (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
               }
             }
+            case scalan.NumericDivInt(arg1, arg2) => {
+              val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[Int]]
+              val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[Int]]
+              val exp = lFunc.opDiv(arg1_, arg2_)(implicitly[Numeric[Int]], manifest[Int])
+	          (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
+            }
+            case scalan.NumericDiv(arg1, arg2, n) => {
+              scalan.createManifest(arg1.elem) match {
+                case (mA:Manifest[a]) =>
+                  val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[a]]
+                  val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[a]]
+                  val n1 = n.asInstanceOf[Numeric[a]]
+                  val exp = lFunc.opDiv(arg1_, arg2_)(n1, mA)
+                  (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
+              }
+            }
             case scalan.NotEqual(arg1, arg2) => {
               scalan.createManifest(arg1.elem) match {
                 case (mA:Manifest[a]) =>
@@ -193,7 +209,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
             /* This is reduce */
             case scalan.ArraySum(source, monoid) => {
               (monoid, source.elem) match {
-                case (scalan.IntRepPlusMonoid, el: scalan.ArrayElem[_]) => {
+                case (monoid, el: scalan.ArrayElem[_]) if monoid.opName == "+" => {
                   scalan.createManifest(el.ea) match {
                     case (mA: Manifest[a]) =>
                       val lmsSource = symMirr(source).asInstanceOf[lFunc.Exp[Array[a]]]
@@ -201,9 +217,19 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                       (exps ++ List(exp), symMirr + ((s, exp)), funcMirr)
                   }
                 }
-                case _ => scalan.!!!("ScalanLMSBridge: Unfortunately, only Plus monoid is supported by lms ")
+                case _ => scalan.!!!("ScalanLMSBridge: Unfortunately, only Plus monoid is supported by lms")
               }
             }
+            case scalan.ArraySlice(xs, start, length) =>
+              xs.elem match {
+                case el: scalan.ArrayElem[a] =>
+                  val mA = scalan.createManifest(el.ea).asInstanceOf[Manifest[a]]
+                  val lmsXs = symMirr(xs).asInstanceOf[lFunc.Exp[Array[a]]]
+                  val lmsStart = symMirr(start).asInstanceOf[lFunc.Exp[Int]]
+                  val lmsLength = symMirr(length).asInstanceOf[lFunc.Exp[Int]]
+                  val exp = lFunc.sliceArray(lmsXs, lmsStart, lmsLength)(mA)
+                  (exps ++ List(exp), symMirr + ((s, exp)), funcMirr)
+              }
             case scalan.ArrayGrouped(xs, size) =>
               xs.elem match {
                 case el: scalan.ArrayElem[a] =>

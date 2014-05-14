@@ -148,8 +148,8 @@ trait BaseExp extends Base { self: ScalanStaged =>
   implicit def reifyObject[T:LElem](obj: ReifiableObject[_,T]): Rep[T] = toExp(obj.asInstanceOf[Def[T]], fresh[T])
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
-    case `intElement` | `floatElement` | `boolElement` | `stringElement` => Const(x)
-    case arrE: ArrayElem[a] => Const(x)
+    case _: StagedBaseElement[_] => Const(x)
+    case _: ArrayElem[_] => Const(x)
     case _ => super.toRep(x)(eA)
   }
 

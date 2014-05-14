@@ -34,6 +34,7 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
   def opPlus[A:Numeric:Manifest](a: Exp[A], b: Exp[A]): Exp[A] = { a + b }
   def opMinus[A:Numeric:Manifest](a: Exp[A], b: Exp[A]): Exp[A] = { a - b }
   def opMult[A:Numeric:Manifest](a:Exp[A], b:Exp[A]): Exp[A] = { a*b }
+  def opDiv[A:Numeric:Manifest](a:Exp[A], b:Exp[A]): Exp[A] = { a/b }
   def opEq[A:Manifest](a:Exp[A], b:Exp[A]): Exp[Boolean] = { equals(a,b)}
   def opNeq[A:Manifest](a:Exp[A], b:Exp[A]): Exp[Boolean] = { notequals(a,b)}
 
@@ -68,13 +69,20 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
     array_dotProductSparse(i1,v1, i2, v2)
   }
   
-  // TODO this implemenation assumes xs.length % size === 0
+  // TODO this implementation assumes xs.length % size === 0
   def groupedArray[A: Manifest](xs: Exp[Array[A]], size: Exp[Int]) = {
     array(xs.length / size) { i =>
       val rowStart = i * size
-      array(size) { j => xs.at(rowStart + j) }
+      sliceArray(xs, rowStart, size)
     }
   }
+
+  def sliceArray[A: Manifest](xs: Exp[Array[A]], start: Exp[Int], length: Exp[Int]) = {
+    array(length) { i =>
+      xs.at(start + i)
+    }
+  }
+  
   //def printlnD(s: Exp[Any])  = println(s)
   def unitD[T:Manifest](x: T) = unit[T](x)
   /*

@@ -80,6 +80,7 @@ trait Elems extends Base { self: Scalan =>
   implicit val boolElement: Elem[Boolean]
   implicit val intElement: Elem[Int]
   implicit val floatElement: Elem[Float]
+  implicit val doubleElement: Elem[Double]
   implicit val unitElement: Elem[Unit]
   implicit val stringElement: Elem[String]
   implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]]
@@ -127,6 +128,9 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
 
   override implicit lazy val floatElement: Elem[Float] =
     new SeqBaseElement[Float]()
+
+  override implicit lazy val doubleElement: Elem[Double] =
+    new SeqBaseElement[Double]()
 
   override implicit lazy val stringElement: Elem[String] =
     new SeqBaseElement[String]()
@@ -191,6 +195,9 @@ trait ElemsExp extends Elems
 
   override implicit lazy val floatElement: Elem[Float] =
     new StagedBaseElement[Float]()
+
+  override implicit lazy val doubleElement: Elem[Double] =
+    new StagedBaseElement[Double]()
 
   override implicit lazy val stringElement: Elem[String] =
     new StagedBaseElement[String]()
