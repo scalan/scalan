@@ -11,6 +11,8 @@ import scalan.linalgebra.MatricesDslSeq
 import scalan.codegen.lms.MyBridge
 
 class LmsLinAlgItTests extends ItTests {
+  import scala.Array
+  
   class ProgStaged extends LinearAlgebraExamples with MatricesDslExp with ScalanCtxStaged with GraphVizExport with LmsBackend { self =>
 //    override def makeBridge[A, B] = new MyBridge[A, B] {
 //      override val scalan = self
@@ -90,6 +92,24 @@ class LmsLinAlgItTests extends ItTests {
     val in = Pair(inM1, inM2)
     val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
     progSeq.ddmmm(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.ddmmm, progStaged.ddmvm)("ddmmm", in)
+    lmsTestRun(progSeq, progStaged)(progSeq.ddmmm, progStaged.ddmmm)("ddmmm", in)
+  }
+
+//  test("ssmmm") {
+//    val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
+//    val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
+//    val in = Pair(inM1, inM2)
+//    val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
+//    progSeq.ssmmm(in) should be(out)
+//    lmsTestRun(progSeq, progStaged)(progSeq.ssmmm, progStaged.ssmmm)("ssmmm", in)
+//  }
+
+  test("ffmmm") {
+    val inM1 = (Array(1.0, 1.0, 0.0, 1.0), 2)
+    val inM2 = (Array(1.0, 1.0, 0.0, 1.0), 2)
+    val in = Pair(inM1, inM2)
+    val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
+    // FIXME progSeq.ffmmm(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.ffmmm, progStaged.ffmmm)("ffmmm", in)
   }
 }

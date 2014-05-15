@@ -134,7 +134,7 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
         implicit val tB = iso.tag
         typeTag[Array[B]]
       }
-      lazy val defaultRepTo = Default.defaultVal(toRep(Array.empty[B](eB.classTag)))
+      lazy val defaultRepTo = Default.defaultVal(toRep(scala.Array.empty[B](eB.classTag)))
     }
   }
   

@@ -220,23 +220,15 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                 case _ => scalan.!!!("ScalanLMSBridge: Unfortunately, only Plus monoid is supported by lms")
               }
             }
-            case scalan.ArraySlice(xs, start, length) =>
+            case scalan.ArrayStride(xs, start, length, stride) =>
               xs.elem match {
                 case el: scalan.ArrayElem[a] =>
                   val mA = scalan.createManifest(el.ea).asInstanceOf[Manifest[a]]
                   val lmsXs = symMirr(xs).asInstanceOf[lFunc.Exp[Array[a]]]
                   val lmsStart = symMirr(start).asInstanceOf[lFunc.Exp[Int]]
                   val lmsLength = symMirr(length).asInstanceOf[lFunc.Exp[Int]]
-                  val exp = lFunc.sliceArray(lmsXs, lmsStart, lmsLength)(mA)
-                  (exps ++ List(exp), symMirr + ((s, exp)), funcMirr)
-              }
-            case scalan.ArrayGrouped(xs, size) =>
-              xs.elem match {
-                case el: scalan.ArrayElem[a] =>
-                  val mA = scalan.createManifest(el.ea).asInstanceOf[Manifest[a]]
-                  val lmsXs = symMirr(xs).asInstanceOf[lFunc.Exp[Array[a]]]
-                  val lmsSize = symMirr(size).asInstanceOf[lFunc.Exp[Int]]
-                  val exp = lFunc.groupedArray(lmsXs, lmsSize)(mA)
+                  val lmsStride = symMirr(stride).asInstanceOf[lFunc.Exp[Int]]
+                  val exp = lFunc.strideArray(lmsXs, lmsStart, lmsLength, lmsStride)(mA)
                   (exps ++ List(exp), symMirr + ((s, exp)), funcMirr)
               }
             case scalan.DotSparse(i1, v1, i2, v2) => {

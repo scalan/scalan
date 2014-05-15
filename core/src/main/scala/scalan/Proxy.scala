@@ -42,7 +42,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
   override def proxyOps[Ops<:AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = {
     val clazz = ct.runtimeClass
     val handler = new InvocationHandler(x, forceInvoke)
-    val proxy = jreflect.Proxy.newProxyInstance(clazz.getClassLoader(), Array(clazz), handler)
+    val proxy = jreflect.Proxy.newProxyInstance(clazz.getClassLoader(), scala.Array(clazz), handler)
     proxy.asInstanceOf[Ops]
   }
 
@@ -56,7 +56,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
   class InvocationHandler(receiver: Exp[Any], forceInvoke: Option[Boolean]) extends jreflect.InvocationHandler {
 
     def invoke(proxy: AnyRef, m: jreflect.Method, _args: Array[AnyRef]) = {
-      val args = _args == null match { case true => Array.empty[AnyRef] case _ => _args }
+      val args = if (_args == null) scala.Array.empty[AnyRef] else _args
       receiver match {
         case Def(d) => {  // call method of the node
           val nodeClazz = d.getClass

@@ -106,7 +106,7 @@ trait Elems extends Base { self: Scalan =>
 //  implicit lazy val StringRepDefault: Default[Rep[String]] = defaultVal[Rep[String]]("")
   implicit def arrayRepDefault[A](implicit e: Elem[Array[A]]): Default[Rep[Array[A]]] = {
     implicit val aCT = e.ea.classTag
-    defaultVal[Rep[Array[A]]](Array.empty[A])
+    defaultVal[Rep[Array[A]]](scala.Array.empty[A])
   }
   implicit def funcRepDefault[A, B: Elem]: Default[Rep[A] => Rep[B]] = {
     implicit val zB = element[B].defaultRep

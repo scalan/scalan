@@ -37,7 +37,7 @@ trait MatricesOps { scalan: MatricesDsl =>
     def numRows: Rep[Int] = rows.length
     def numColumns = rows(0).length
     def columns =
-      PArray(array_rangeFrom0(numColumns).map { j => DenseVector(rows.map(_(j))) })
+      PArray(Array.tabulate(numColumns) { j => DenseVector(rows.map(_(j))) })
     
     def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = DenseVector(rows.map { r => r.dot(vector) })
   }
@@ -45,14 +45,17 @@ trait MatricesOps { scalan: MatricesDsl =>
   trait RowMajorMatrixCompanionOps extends ConcreteClass1[RowMajorMatrix] with MatrixCompanionOps {
     override def defaultOf[T: Elem] = Default.defaultVal(RowMajorMatrix(element[PArray[DenseVector[T]]].defaultRepValue))
     override def fromColumns[T: Elem](cols: PA[Vector[T]]): Matr[T] =
-      RowMajorMatrix(PArray(array_rangeFrom0(cols(0).length)).map { i => DenseVector(cols.map(_(i))) })
+      RowMajorMatrix(PArray(Array.tabulate(cols(0).length) { i => DenseVector(cols.map(_(i))) }))
   }
 
   trait RowMajorFlatMatrixOps[T] extends MatrixOps[T] {
     def companion = RowMajorFlatMatrix
     def rmValues: Rep[PArray[T]]
     def numRows: Rep[Int] = rmValues.length / numColumns
-    def columns = ???
+    def columns =
+      PArray(Array.tabulate(numColumns) { i =>
+        DenseVector(PArray(rmValues.arr.stride(0, numRows, numColumns)))
+      })
     
     def rows: PA[DenseVector[T]] = PArray(rmValues.arr.grouped(numColumns).map { row => DenseVector(PArray(row)) })
     def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = DenseVector(rows.map { r => r.dot(vector) })
@@ -60,7 +63,17 @@ trait MatricesOps { scalan: MatricesDsl =>
 
   trait RowMajorFlatMatrixCompanionOps extends ConcreteClass1[RowMajorFlatMatrix] with MatrixCompanionOps {
     override def defaultOf[T: Elem] = Default.defaultVal(RowMajorFlatMatrix(element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
-    override def fromColumns[T: Elem](cols: PA[Vector[T]]): Matr[T] = ???
+    override def fromColumns[T: Elem](cols: PA[Vector[T]]): Matr[T] = {
+      val numColumns = cols.length
+      val numRows = cols(0).length
+      // TODO make work with both dense and sparse
+      val columnsArr: Arr[Array[T]] = cols.arr.map(col => col.asRep[DenseVector[T]].coords.arr)
+      val rmValues = Array.tabulate(numRows * numColumns) { i =>
+        val row = i / numColumns
+        columnsArr(i / numColumns)(i % numColumns)
+      }
+      RowMajorFlatMatrix(PArray(rmValues), numColumns)
+    }
   }
 
 //  trait ColumnMajorMatrixOps[T] extends MatrixOps[T] {

@@ -69,19 +69,10 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
     array_dotProductSparse(i1,v1, i2, v2)
   }
   
-  // TODO this implementation assumes xs.length % size === 0
-  def groupedArray[A: Manifest](xs: Exp[Array[A]], size: Exp[Int]) = {
-    array(xs.length / size) { i =>
-      val rowStart = i * size
-      sliceArray(xs, rowStart, size)
-    }
-  }
-
-  def sliceArray[A: Manifest](xs: Exp[Array[A]], start: Exp[Int], length: Exp[Int]) = {
+  def strideArray[A: Manifest](xs: Exp[Array[A]], start: Exp[Int], length: Exp[Int], stride: Exp[Int]) =
     array(length) { i =>
-      xs.at(start + i)
+      xs.at(start + i * stride)
     }
-  }
   
   //def printlnD(s: Exp[Any])  = println(s)
   def unitD[T:Manifest](x: T) = unit[T](x)

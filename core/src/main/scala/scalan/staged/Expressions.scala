@@ -52,7 +52,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
-    override def mirror(t: Transformer): Rep[_] = Const(x)
+    override def mirror(t: Transformer): Rep[_] = self
     override def hashCode: Int = (41 + x.hashCode)
 
     override def equals(other: Any) =
