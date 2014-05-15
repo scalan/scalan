@@ -23,6 +23,8 @@ trait ArrayOps { self: Scalan =>
     def grouped(size: Rep[Int]) = array_grouped(xs, size)
     def stride[T](start: Rep[Int], length: Rep[Int], stride: Rep[Int]) =
       array_stride(xs, start, length, stride)
+    def update(index: Rep[Int], value: Rep[T]) = array_update(xs, index, value)
+    def updateMany(indexes: Arr[Int], values: Arr[T]) = array_updateMany(xs, indexes, values)
   }
   
   object Array {
@@ -44,6 +46,8 @@ trait ArrayOps { self: Scalan =>
   def array_filter[T](xs: Arr[T], f: Rep[T => Boolean]): Arr[T]
   def array_grouped[T](xs: Arr[T], size: Rep[Int]): Arr[Array[T]]
   def array_stride[T](xs: Arr[T], start: Rep[Int], length: Rep[Int], stride: Rep[Int]): Arr[T]
+  def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = ???
+  def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = ???
 }
 
 trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>

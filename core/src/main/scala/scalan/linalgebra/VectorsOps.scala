@@ -13,6 +13,7 @@ import scalan.common.Lazy
 trait VectorsOps { scalan: VectorsDsl =>
   trait VectorOps[T] {
     def length: Rep[Int]
+    def coords: PA[T]
     implicit def elem: Elem[T]
     def dot(other: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T]
     def apply(i: Rep[Int]): Rep[T]
@@ -23,7 +24,6 @@ trait VectorsOps { scalan: VectorsDsl =>
   }
   
   trait DenseVectorOps[T] extends VectorOps[T] {
-    def coords: PA[T]
     def length = coords.length
     def dot(other: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = matchVec[T, T](other) {
       dv => dotPA(coords, dv.coords)(n, m, elem)
@@ -46,8 +46,17 @@ trait VectorsOps { scalan: VectorsDsl =>
   }
   
   trait SparseVectorOps[T] extends VectorOps[T] {
+    implicit lazy val n: Numeric[T] = (elem match {
+        case `intElement` => implicitly[Numeric[Int]]
+        case `doubleElement` => implicitly[Numeric[Double]]
+      }).asInstanceOf[Numeric[T]]
+
     def nonZeroIndices: Arr[Int]
     def nonZeroValues: PA[T]
+    def coords: PA[T] = {
+      val coords0 = Array.replicate(length, n.zero)
+      PArray(coords0.updateMany(nonZeroIndices, nonZeroValues.arr))
+    }
     def dot(other: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = matchVec[T, T](other) {
       dv => dotPA(dv.coords(nonZeroIndices), nonZeroValues)(n, m, elem)
       // TODO currently doesn't work because there are problems defining toRep for ViewElem
@@ -55,12 +64,13 @@ trait VectorsOps { scalan: VectorsDsl =>
     } {
       sv => dotSparse(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues)
     }
-    def apply(i: Rep[Int]): Rep[T] = ??? // TODO
+    def apply(i: Rep[Int]): Rep[T] = coords(i) // TODO better impl
   }
 
   trait SparseVectorCompanionOps extends ConcreteClass1[SparseVector] {
-    def defaultOf[T: Elem] = 
+    def defaultOf[T: Elem] = {
       Default.defaultVal(SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
+    }
     def apply[T: Elem](coords: PA[T])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
       val indices: Arr[Int] = coords.arr.zip(array_rangeFrom0(coords.length)).
         filter {x => x._1 !== n.zero }.map {x => x._2}

@@ -16,7 +16,8 @@ trait MatricesOps { scalan: MatricesDsl =>
     implicit def elem: Elem[T]
     def rows: PA[Vector[T]]
     def columns: PA[Vector[T]]
-    def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]): Vec[T]
+    def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]): Vec[T] =
+      DenseVector(rows.map { r => r.dot(vector) })
     def *(mat: Matr[T])(implicit n: Numeric[T], m: RepMonoid[T], d: DummyImplicit): Matr[T] = {
       val resColumns = mat.columns.map { col: Rep[Vector[T]] => this * col }
       companion.fromColumns(resColumns)
@@ -38,8 +39,6 @@ trait MatricesOps { scalan: MatricesDsl =>
     def numColumns = rows(0).length
     def columns =
       PArray(Array.tabulate(numColumns) { j => DenseVector(rows.map(_(j))) })
-    
-    def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = DenseVector(rows.map { r => r.dot(vector) })
   }
 
   trait RowMajorMatrixCompanionOps extends ConcreteClass1[RowMajorMatrix] with MatrixCompanionOps {
@@ -58,7 +57,6 @@ trait MatricesOps { scalan: MatricesDsl =>
       })
     
     def rows: PA[DenseVector[T]] = PArray(rmValues.arr.grouped(numColumns).map { row => DenseVector(PArray(row)) })
-    def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = DenseVector(rows.map { r => r.dot(vector) })
   }
 
   trait RowMajorFlatMatrixCompanionOps extends ConcreteClass1[RowMajorFlatMatrix] with MatrixCompanionOps {
@@ -91,7 +89,6 @@ trait MatricesOps { scalan: MatricesDsl =>
     def columns = ???
     def numRows = rows.length
     def numColumns = rows(0).length
-    def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = DenseVector(rows.map { r => r.dot(vector) })
   }
 
   trait RowMajorSparseMatrixCompanionOps extends ConcreteClass1[RowMajorSparseMatrix] with MatrixCompanionOps {

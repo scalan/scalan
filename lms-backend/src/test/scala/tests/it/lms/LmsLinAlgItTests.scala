@@ -86,6 +86,60 @@ class LmsLinAlgItTests extends ItTests {
     lmsTestRun(progSeq, progStaged)(progSeq.fsmvm, progStaged.fsmvm)("fsmvm", in)
   }
 
+  test("ddmvm0") {
+    val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
+    val inV = Array(2.0, 3.0)
+    val in = Pair(inM, inV)
+    val out = Array(5.0, 3.0)
+    progSeq.ddmvm0(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.ddmvm0, progStaged.ddmvm0)("ddmvm0", in)
+  }
+
+  test("dsmvm0") {
+    val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
+    val inV = sparseVectorData(Array(2.0, 3.0))
+    val in = Pair(inM, inV)
+    val out = Array(5.0, 3.0)
+    progSeq.dsmvm0(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.dsmvm0, progStaged.dsmvm0)("dsmvm0", in)
+  }
+
+  test("sdmvm0") {
+    val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
+    val inV = Array(2.0, 3.0)
+    val in = Pair(inM, inV)
+    val out = Array(5.0, 3.0)
+    progSeq.sdmvm0(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.sdmvm0, progStaged.sdmvm0)("sdmvm0", in)
+  }
+
+  test("ssmvm0") {
+    val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
+    val inV = sparseVectorData(Array(2.0, 3.0))
+    val in = Pair(inM, inV)
+    val out = Array(5.0, 3.0)
+    progSeq.ssmvm0(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.ssmvm0, progStaged.ssmvm0)("ssmvm0", in)
+  }
+
+  test("fdmvm0") {
+    val inM = (Array(1.0, 1.0, 0.0, 1.0), 2)
+    val inV = Array(2.0, 3.0)
+    val in = Pair(inM, inV)
+    val out = Array(5.0, 3.0)
+    progSeq.fdmvm0(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.fdmvm0, progStaged.fdmvm0)("fdmvm0", in)
+  }
+
+  test("fsmvm0") {
+    val inM = (Array(1.0, 1.0, 0.0, 1.0), 2)
+    val inV = sparseVectorData(Array(2.0, 3.0))
+    val in = Pair(inM, inV)
+    val out = Array(5.0, 3.0)
+    progSeq.fsmvm0(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.fsmvm0, progStaged.fsmvm0)("fsmvm0", in)
+  }
+
   test("ddmmm") {
     pending
     val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
