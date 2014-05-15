@@ -16,7 +16,7 @@ trait Elems extends Base { self: Scalan =>
   type LElem[A] = Lazy[Elem[A]] // lazy element
 
   @implicitNotFound(msg = "No Element available for ${A}.")
-  trait Element[A] {
+  abstract class Element[A] {
     def tag: TypeTag[A]
     final def classTag: ClassTag[A] = TagImplicits.typeTagToClassTag(tag)
     def defaultRep: Default[Rep[A]]
@@ -34,6 +34,7 @@ trait Elems extends Base { self: Scalan =>
       case e: Element[_] => tag == e.tag
       case _ => false
     }
+    override def hashCode = tag.hashCode
   }
 
   def element[A](implicit ea: Elem[A]): Elem[A] = ea
