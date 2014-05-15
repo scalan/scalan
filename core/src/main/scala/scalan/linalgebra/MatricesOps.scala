@@ -7,52 +7,60 @@ import scalan.common.Default
 import scalan.ScalanSeq
 
 trait MatricesOps { scalan: MatricesDsl =>
+  // FIXME probably won't work correctly, need a proper general solution
+  implicit def eVec[T: Elem]: Elem[Vector[T]] = element[DenseVector[T]].asElem[Vector[T]]
+      
   trait MatrixOps[T] {
     def numColumns: Rep[Int]
     def numRows: Rep[Int]
     implicit def elem: Elem[T]
     def rows: PA[Vector[T]]
-    def columns: PA[Vector[T]] = ???
+    def columns: PA[Vector[T]]
     def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]): Vec[T]
     def *(mat: Matr[T])(implicit n: Numeric[T], m: RepMonoid[T], d: DummyImplicit): Matr[T] = {
-      // FIXME probably won't work correctly, need a proper general solution
-      implicit val eVec = element[DenseVector[T]].asElem[Vector[T]]
       val resColumns = mat.columns.map { col: Rep[Vector[T]] => this * col }
       companion.fromColumns(resColumns)
     }
-    def companion: Rep[MatrixCompanionOps] = ???
+    def companion: Rep[MatrixCompanionOps]
   }
 
   trait MatrixCompanionOps extends TypeFamily1[Matrix] {
-    def defaultOf[T: Elem] = RowMajorMatrix.defaultOf[T]
-    def fromColumns[T](cols: PA[Vector[T]]): Matr[T] = ???
+    def defaultOf[T: Elem]: Default[Rep[Matrix[T]]] =
+      RowMajorMatrix.defaultOf[T]
+    def fromColumns[T: Elem](cols: PA[Vector[T]]): Matr[T] =
+      RowMajorMatrix.fromColumns(cols)
   }
 
   trait RowMajorMatrixOps[T] extends MatrixOps[T] {
+    def companion = RowMajorMatrix
     def rows: PA[DenseVector[T]]
     def numRows: Rep[Int] = rows.length
     def numColumns = rows(0).length
-    // def companion = RowMajorMatrix
+    def columns =
+      PArray(array_rangeFrom0(numColumns).map { j => DenseVector(rows.map(_(j))) })
     
     def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = DenseVector(rows.map { r => r.dot(vector) })
   }
 
-  trait RowMajorMatrixCompanionOps extends ConcreteClass1[RowMajorMatrix] {
-    def defaultOf[T: Elem] = Default.defaultVal(RowMajorMatrix(element[PArray[DenseVector[T]]].defaultRepValue))
-    def fromColumns[T](cols: PA[Vector[T]]): Matr[T] = ???
+  trait RowMajorMatrixCompanionOps extends ConcreteClass1[RowMajorMatrix] with MatrixCompanionOps {
+    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorMatrix(element[PArray[DenseVector[T]]].defaultRepValue))
+    override def fromColumns[T: Elem](cols: PA[Vector[T]]): Matr[T] =
+      RowMajorMatrix(PArray(array_rangeFrom0(cols(0).length)).map { i => DenseVector(cols.map(_(i))) })
   }
 
   trait RowMajorFlatMatrixOps[T] extends MatrixOps[T] {
+    def companion = RowMajorFlatMatrix
     def rmValues: Rep[PArray[T]]
     def numRows: Rep[Int] = rmValues.length / numColumns
+    def columns = ???
     
     def rows: PA[DenseVector[T]] = PArray(rmValues.arr.grouped(numColumns).map { row => DenseVector(PArray(row)) })
     def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = DenseVector(rows.map { r => r.dot(vector) })
   }
 
-  trait RowMajorFlatMatrixCompanionOps extends ConcreteClass1[RowMajorFlatMatrix] {
-    def defaultOf[T: Elem] = Default.defaultVal(RowMajorFlatMatrix(element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
-    def fromColumns[T](cols: PA[Vector[T]]): Matr[T] = ???
+  trait RowMajorFlatMatrixCompanionOps extends ConcreteClass1[RowMajorFlatMatrix] with MatrixCompanionOps {
+    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorFlatMatrix(element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
+    override def fromColumns[T: Elem](cols: PA[Vector[T]]): Matr[T] = ???
   }
 
 //  trait ColumnMajorMatrixOps[T] extends MatrixOps[T] {
@@ -65,15 +73,17 @@ trait MatricesOps { scalan: MatricesDsl =>
 //  }
 
   trait RowMajorSparseMatrixOps[T] extends MatrixOps[T] {
+    def companion = RowMajorSparseMatrix
     def rows: Rep[PArray[SparseVector[T]]]
+    def columns = ???
     def numRows = rows.length
     def numColumns = rows(0).length
     def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = DenseVector(rows.map { r => r.dot(vector) })
   }
 
-  trait RowMajorSparseMatrixCompanionOps extends ConcreteClass1[RowMajorSparseMatrix] {
-    def defaultOf[T: Elem] = Default.defaultVal(RowMajorSparseMatrix(element[PArray[SparseVector[T]]].defaultRepValue))
-    def fromColumns[T](cols: PA[Vector[T]]): Matr[T] = ???
+  trait RowMajorSparseMatrixCompanionOps extends ConcreteClass1[RowMajorSparseMatrix] with MatrixCompanionOps {
+    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorSparseMatrix(element[PArray[SparseVector[T]]].defaultRepValue))
+    override def fromColumns[T: Elem](cols: PA[Vector[T]]): Matr[T] = ???
   }
 
 //  trait ColumnMajorSparseMatrixOps[T] extends MatrixOps[T] {

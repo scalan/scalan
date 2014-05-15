@@ -44,4 +44,13 @@ trait LinearAlgebraExamples extends MatricesDsl {
     val vector = SparseVector(vIs, PArray(vVs), vL)
     (matrix * vector).coords.arr
   }
+  
+  lazy val ddmmm = fun { p: Rep[(Array[Array[Double]], Array[Array[Double]])] => 
+    val Pair(m1, m2) = p
+    val matrix1 = RowMajorMatrix(PArray(m1.map { r: Arr[Double] => DenseVector(PArray(r)) }))
+    val matrix2 = RowMajorMatrix(PArray(m2.map { r: Arr[Double] => DenseVector(PArray(r)) }))
+    // FIXME probably won't work correctly, need a proper general solution
+    implicit val eVec = element[DenseVector[Double]].asElem[Vector[Double]]
+    (matrix1 * matrix2).rows.arr.map(_.asRep[DenseVector[Double]].coords.arr)
+  }
 }

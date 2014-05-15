@@ -83,4 +83,13 @@ class LmsLinAlgItTests extends ItTests {
     progSeq.fsmvm(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.fsmvm, progStaged.fsmvm)("fsmvm", in)
   }
+
+  test("ddmmm") {
+    val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
+    val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
+    val in = Pair(inM1, inM2)
+    val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
+    progSeq.ddmmm(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.ddmmm, progStaged.ddmvm)("ddmmm", in)
+  }
 }

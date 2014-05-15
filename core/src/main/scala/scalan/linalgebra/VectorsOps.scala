@@ -15,6 +15,7 @@ trait VectorsOps { scalan: VectorsDsl =>
     def length: Rep[Int]
     implicit def elem: Elem[T]
     def dot(other: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T]
+    def apply(i: Rep[Int]): Rep[T]
   }
   
   trait VectorCompanionOps extends TypeFamily1[Vector] {
@@ -30,6 +31,7 @@ trait VectorsOps { scalan: VectorsDsl =>
       sv =>
         dotPA(coords(sv.nonZeroIndices), sv.nonZeroValues)(n, m, elem)
     }
+    def apply(i: Rep[Int]) = coords(i)
   }
 
   def dotPA[T](xs: PA[T], ys: PA[T])(implicit n: Numeric[T], m: RepMonoid[T], e: Elem[T]) = {
@@ -53,6 +55,7 @@ trait VectorsOps { scalan: VectorsDsl =>
     } {
       sv => dotSparse(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues)
     }
+    def apply(i: Rep[Int]): Rep[T] = ??? // TODO
   }
 
   trait SparseVectorCompanionOps extends ConcreteClass1[SparseVector] {
