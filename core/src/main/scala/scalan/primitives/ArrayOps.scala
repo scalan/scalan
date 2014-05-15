@@ -11,7 +11,7 @@ trait ArrayOps { self: Scalan =>
   type Arr[T] = Rep[Array[T]]
   implicit class RepArrayOps[T: Elem](xs: Arr[T]) {
     def apply(n: Rep[Int]): Rep[T] = array_apply(xs, n)
-    def apply(ns: Arr[Int])(implicit o: Overloaded1): Arr[T] = array_apply(xs, ns)
+    def apply(ns: Arr[Int])(implicit o: Overloaded1): Arr[T] = array_applyMany(xs, ns)
     def length = array_length(xs)
     def mapBy[R: Elem](f: Rep[T => R]) = array_map(xs, f)
     def map[R: Elem](f: Rep[T] => Rep[R])(implicit o: Overloaded1) = array_map(xs, fun(f))
@@ -33,7 +33,7 @@ trait ArrayOps { self: Scalan =>
   }
 
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
-  def array_apply[T](xs: Arr[T], is: Arr[Int])(implicit o: Overloaded1): Arr[T]
+  def array_applyMany[T](xs: Arr[T], is: Arr[Int]): Arr[T]
   def array_length[T](xs: Arr[T]): Rep[Int]
   def array_map[T, R: Elem](xs: Arr[T], f: Rep[T => R]): Arr[R]
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]): Rep[T]
@@ -49,7 +49,7 @@ trait ArrayOps { self: Scalan =>
 trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   import TagImplicits.elemToClassTag
   def array_apply[T](x: Arr[T], n: Rep[Int]): Rep[T] = x(n)
-  def array_apply[T](x: Arr[T], is: Arr[Int])(implicit o: Overloaded1): Arr[T] = {
+  def array_applyMany[T](x: Arr[T], is: Arr[Int]): Arr[T] = {
     implicit val ct = arrayToClassTag(x)
     scala.Array.tabulate(is.length)(i => x(is(i)))
   }
@@ -144,7 +144,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
 
   def array_apply[T](xs: Exp[Array[T]], n: Exp[Int]): Rep[T] =
     withElemOfArray(xs) { implicit eT => ArrayApply(xs, n) }
-  def array_apply[T](xs: Exp[Array[T]], is: Exp[Array[Int]])(implicit o: Overloaded1): Arr[T] =
+  def array_applyMany[T](xs: Exp[Array[T]], is: Exp[Array[Int]]): Arr[T] =
     withElemOfArray(xs) { implicit eT => ArrayApplyMany(xs, is) }
   def array_length[T](a: Exp[Array[T]]): Rep[Int] = ArrayLength(a)
   def array_map[T, R: Elem](xs: Exp[Array[T]], f: Exp[T => R]) = ArrayMap(xs, f)
@@ -183,18 +183,26 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
 
   override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
     case Def(d1) => d1 match {
+      case ArrayApply(Def(ArrayRangeFrom0(_)), i) => i
       case ArrayApply(Def(ArrayStride(xs, start, _, stride)), i) =>
         implicit val eT = xs.elem.ea
         xs(start + i * stride)
-      case ArrayApplyMany(Def(ArrayStride(xs, start, _, stride)), is) =>
-        implicit val eT = xs.elem.ea
-        xs(is.map { i => start + i * stride })
       case ArrayApply(Def(ArrayMap(xs, f)), i) =>
         implicit val eT = xs.elem.ea
         f(xs(i))
+      // TODO doesn't compile
+      // case ArrayApplyMany(Def(ArrayRangeFrom0(_)), is) => is
+      case ArrayApplyMany(Def(ArrayStride(xs, start, _, stride)), is) =>
+        implicit val eT = xs.elem.ea
+        xs(is.map { i => start + i * stride })
       case ArrayApplyMany(Def(ArrayMap(xs, f)), is) =>
         implicit val eT = xs.elem.ea
         xs(is).mapBy(f)
+      // TODO doesn't compile
+      // case ArrayLength(Def(ArrayRangeFrom0(n))) => n
+      case ArrayLength(Def(ArrayMap(xs, _))) =>
+        implicit val eT = xs.elem.ea
+        xs.length
       case ArrayMap(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
       case ArrayMap(Def(ArrayMap(xs, f)), g) =>
         implicit val eT = xs.elem.ea

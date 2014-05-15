@@ -87,6 +87,7 @@ class LmsLinAlgItTests extends ItTests {
   }
 
   test("ddmmm") {
+    pending
     val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val in = Pair(inM1, inM2)
@@ -95,14 +96,15 @@ class LmsLinAlgItTests extends ItTests {
     lmsTestRun(progSeq, progStaged)(progSeq.ddmmm, progStaged.ddmmm)("ddmmm", in)
   }
 
-//  test("ssmmm") {
-//    val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
-//    val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
-//    val in = Pair(inM1, inM2)
-//    val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
-//    progSeq.ssmmm(in) should be(out)
-//    lmsTestRun(progSeq, progStaged)(progSeq.ssmmm, progStaged.ssmmm)("ssmmm", in)
-//  }
+  test("ssmmm") {
+    pending
+    val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
+    val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
+    val in = Pair(inM1, inM2)
+    val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
+    progSeq.ssmmm(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.ssmmm, progStaged.ssmmm)("ssmmm", in)
+  }
 
   test("ffmmm") {
     val inM1 = (Array(1.0, 1.0, 0.0, 1.0), 2)

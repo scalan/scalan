@@ -69,6 +69,10 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
   case class ViewArray[A, B](source: Arr[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Array] {
     lazy val iso = arrayIso(innerIso)
     def copy(source: Arr[A]) = ViewArray(source)
+    override def toString = s"ViewArray[${innerIso.eTo.prettyName}]($source)"
+    override def equals(other: Any) = other match {
+      case v: ViewArray[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
+    }
   }
 
   //  implicit def mkArrayView[A,B](arr: PA[A])(implicit iso: Iso[A,B]): PA[B] = {
@@ -202,6 +206,16 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
   }
   
   def liftViewFromArgs[T](d: Def[T])/*(implicit eT: Elem[T])*/: Option[Exp[_]] = d match {
+    case ArrayApply(Def(view: ViewArray[a, b]), i) =>
+      implicit val eA = view.innerIso.eFrom
+      implicit val eB = view.innerIso.eTo
+      val res = view.innerIso.to(view.source(i))
+      Some(res)
+    case ArrayApplyMany(Def(view: ViewArray[a, b]), is) =>
+      implicit val eA = view.innerIso.eFrom
+      implicit val eB = view.innerIso.eTo
+      val res = ViewArray(view.source(is))(view.innerIso)
+      Some(res)
     case ArrayMap(Def(view: ViewArray[_, _]), f) =>
       Some(mapUnderlyingArray(view, f))
     case ArrayFilter(Def(view: ViewArray[_, _]), f) =>

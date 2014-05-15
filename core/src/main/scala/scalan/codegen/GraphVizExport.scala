@@ -39,7 +39,7 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
       case _ =>
     }
     stream.println(quote(sym) + " [")
-    stream.println(nodeLabel(sym + " = " + formatDef(rhs)))
+    stream.println(nodeLabel(sym.toStringWithType + " = " + formatDef(rhs)))
     stream.println("shape=box," + nodeColor(sym))
     stream.println("]")
   }

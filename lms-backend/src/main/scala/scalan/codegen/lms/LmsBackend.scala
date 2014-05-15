@@ -40,7 +40,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
     
     type FuncMirror = Map[scalan.Exp[_],( lFunc.Exp[A] => lFunc.Exp[B]) forSome { type A; type B } ]
 
-    def mirrorLambdaToLmsFunc[I, R](lam:scalan.Lambda[_,_],
+    def mirrorLambdaToLmsFunc[I, R](lam:scalan.Lambda[I,R],
                                     symMirror: SymMirror,
                                     funcMirror: FuncMirror) : (lFunc.Exp[I] => lFunc.Exp[R]) = {
       val lamX = lam.x
@@ -111,12 +111,16 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                   (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
               }
             }
-            case scalan.NumericDivInt(arg1, arg2) => {
+            case scalan.NumericDivInt(arg1, arg2) =>
               val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[Int]]
               val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[Int]]
               val exp = lFunc.opDiv(arg1_, arg2_)(implicitly[Numeric[Int]], manifest[Int])
-	          (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
-            }
+	          (exps ++ List(exp), symMirr + ((s,exp)), funcMirr)
+            case scalan.NumericModInt(arg1, arg2) =>
+              val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[Int]]
+              val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[Int]]
+              val exp = lFunc.opMod(arg1_, arg2_)
+	          (exps ++ List(exp), symMirr + ((s,exp)), funcMirr)
             case scalan.NumericDiv(arg1, arg2, n) => {
               scalan.createManifest(arg1.elem) match {
                 case (mA:Manifest[a]) =>
@@ -187,7 +191,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                 case (el: scalan.ArrayElem[_], el1: scalan.ArrayElem[_]) =>
                   (scalan.createManifest(el.ea), scalan.createManifest(el1.ea)) match {
                     case (mA:Manifest[a], mB: Manifest[b]) =>
-                      val f = mirrorLambdaToLmsFunc[a,b](lam, symMirr, funcMirr)//(mA, mB)
+                      val f = mirrorLambdaToLmsFunc[a,b](lam.asInstanceOf[scalan.Lambda[a, b]], symMirr, funcMirr)//(mA, mB)
                       val lmsSource = symMirr(source).asInstanceOf[lFunc.Exp[Array[a]]]
                       val exp = lFunc.mapArray[a,b](lmsSource, f)(mA, mB)
                       (exps ++ List(exp), symMirr + ((s,exp)), funcMirr + ((lambdaSym,f)))
@@ -199,7 +203,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                 case (el: scalan.ArrayElem[_]) =>
                   (scalan.createManifest(el.ea)) match {
                     case (mA:Manifest[a]) =>
-                      val f = mirrorLambdaToLmsFunc[a,Boolean](lam, symMirr, funcMirr)//(mA, mB)
+                      val f = mirrorLambdaToLmsFunc[a,Boolean](lam.asInstanceOf[scalan.Lambda[a, Boolean]], symMirr, funcMirr)//(mA, mB)
                       val lmsSource = symMirr(source).asInstanceOf[lFunc.Exp[Array[a]]]
                       val exp = lFunc.filterArray[a](lmsSource, f)(mA)
                       (exps ++ List(exp), symMirr + ((s,exp)), funcMirr + ((lambdaSym,f)))

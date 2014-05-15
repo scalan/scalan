@@ -35,6 +35,7 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
   def opMinus[A:Numeric:Manifest](a: Exp[A], b: Exp[A]): Exp[A] = { a - b }
   def opMult[A:Numeric:Manifest](a:Exp[A], b:Exp[A]): Exp[A] = { a*b }
   def opDiv[A:Numeric:Manifest](a:Exp[A], b:Exp[A]): Exp[A] = { a/b }
+  def opMod(a: Exp[Int], b: Exp[Int]): Exp[Int] = a % b
   def opEq[A:Manifest](a:Exp[A], b:Exp[A]): Exp[Boolean] = { equals(a,b)}
   def opNeq[A:Manifest](a:Exp[A], b:Exp[A]): Exp[Boolean] = { notequals(a,b)}
 
