@@ -171,7 +171,7 @@ class LmsMmmItTests extends LmsLinAlgItTests {
     val inM2 = (Array(1.0, 1.0, 0.0, 1.0), 2)
     val in = Pair(inM1, inM2)
     val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
-    // FIXME progSeq.ffmmm(in) should be(out)
+    progSeq.ffmmm(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.ffmmm, progStaged.ffmmm)("ffmmm", in)
   }
 }

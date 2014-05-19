@@ -53,7 +53,7 @@ trait MatricesOps { scalan: MatricesDsl =>
     def numRows: Rep[Int] = rmValues.length / numColumns
     def columns =
       PArray(Array.tabulate(numColumns) { i =>
-        DenseVector(PArray(rmValues.arr.stride(0, numRows, numColumns)))
+        DenseVector(PArray(rmValues.arr.stride(i, numRows, numColumns)))
       })
     
     def rows: PA[DenseVector[T]] = PArray(rmValues.arr.grouped(numColumns).map { row => DenseVector(PArray(row)) })
@@ -66,7 +66,7 @@ trait MatricesOps { scalan: MatricesDsl =>
       val numRows = cols(0).length
       val columnsArr: Arr[Array[T]] = cols.arr.map(col => col.coords.arr)
       val rmValues = Array.tabulate(numRows * numColumns) { i =>
-        columnsArr(i / numColumns)(i % numColumns)
+        columnsArr(i % numColumns)(i / numColumns)
       }
       RowMajorFlatMatrix(PArray(rmValues), numColumns)
     }
