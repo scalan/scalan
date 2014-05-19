@@ -64,10 +64,8 @@ trait MatricesOps { scalan: MatricesDsl =>
     override def fromColumns[T: Elem](cols: PA[Vector[T]]): Matr[T] = {
       val numColumns = cols.length
       val numRows = cols(0).length
-      // TODO make work with both dense and sparse
-      val columnsArr: Arr[Array[T]] = cols.arr.map(col => col.asRep[DenseVector[T]].coords.arr)
+      val columnsArr: Arr[Array[T]] = cols.arr.map(col => col.coords.arr)
       val rmValues = Array.tabulate(numRows * numColumns) { i =>
-        val row = i / numColumns
         columnsArr(i / numColumns)(i % numColumns)
       }
       RowMajorFlatMatrix(PArray(rmValues), numColumns)

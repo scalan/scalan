@@ -94,22 +94,20 @@ trait LinearAlgebraExamples extends MatricesDsl {
     val Pair(m1, m2) = p
     val matrix1 = RowMajorMatrix(PArray(m1.map { r: Arr[Double] => DenseVector(PArray(r)) }))
     val matrix2 = RowMajorMatrix(PArray(m2.map { r: Arr[Double] => DenseVector(PArray(r)) }))
-    (matrix1 * matrix2).rows.arr.map(_.asRep[DenseVector[Double]].coords.arr)
+    (matrix1 * matrix2).rows.arr.map(_.coords.arr)
   }
   
   lazy val ssmmm = fun { p: Rep[(Array[(Array[Int], (Array[Double], Int))], Array[(Array[Int], (Array[Double], Int))])] => 
     val Pair(m1, m2) = p
     val matrix1 = RowMajorSparseMatrix(PArray(m1.map { r => SparseVector(r._1, PArray(r._2), r._3) }))
     val matrix2 = RowMajorSparseMatrix(PArray(m2.map { r => SparseVector(r._1, PArray(r._2), r._3) }))
-    ??? : Rep[Array[Array[Double]]]
-    // FIXME add coords to Vector?
-    // (matrix1 * matrix2).rows.arr.map(_.asRep[SparseVector[Double]].coords.arr)
+    (matrix1 * matrix2).rows.arr.map(_.coords.arr)
   }
   
   lazy val ffmmm = fun { p: Rep[((Array[Double], Int), (Array[Double], Int))] => 
     val Pair(m1, m2) = p
     val matrix1 = RowMajorFlatMatrix(PArray(m1._1), m1._2)
     val matrix2 = RowMajorFlatMatrix(PArray(m2._1), m2._2)
-    (matrix1 * matrix2).rows.arr.map(_.asRep[DenseVector[Double]].coords.arr)
+    (matrix1 * matrix2).rows.arr.map(_.coords.arr)
   }
 }
