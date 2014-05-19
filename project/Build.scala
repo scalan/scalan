@@ -18,11 +18,11 @@ object ScalanLiteBuild extends Build {
     "-language:experimental.macros")
 
   val commonDeps = libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "2.0" % "test",
-    "org.scalacheck" %% "scalacheck" % "1.11.3" % "test",
-    "com.github.axel22" %% "scalameter" % "0.4" % "test",
-    "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
-    "ch.qos.logback" % "logback-classic" % "1.0.13",
+    "org.scalatest" %% "scalatest" % "2.1.6" % "test",
+    "org.scalacheck" %% "scalacheck" % "1.11.4" % "test",
+    "com.github.axel22" %% "scalameter" % "0.5-M2" % "test",
+    "com.typesafe" %% "scalalogging-slf4j" % "1.1.0",
+    "ch.qos.logback" % "logback-classic" % "1.1.2",
     "com.chuusai" % "shapeless_2.10.4" % "2.0.0")
 
   val testSettings = Seq(
@@ -52,19 +52,15 @@ object ScalanLiteBuild extends Build {
   lazy val core = Project("scalan-lite", file("core")).configs(ItTest, PerfTest).
     settings(commonSettings: _*)
 
-  val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2-RC1")
+  val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2")
 
   lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(core % "compile->compile;test->test").configs(ItTest, PerfTest).
     settings(commonSettings: _*).settings(
      libraryDependencies ++= Seq("EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT",
                                  "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT" classifier "test",
-                                 "org.scalatest" %% "scalatest" % "2.0" % "test",
                                  "org.scala-lang.virtualized" % "scala-library" % virtScala,
                                  "org.scala-lang.virtualized" % "scala-compiler" % virtScala),
      scalaOrganization := "org.scala-lang.virtualized",
-
-      //scalaBinaryVersion := virtScala
-
      scalaVersion := virtScala
   )
   

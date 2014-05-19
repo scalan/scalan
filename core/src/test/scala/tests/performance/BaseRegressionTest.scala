@@ -5,9 +5,9 @@ import scalan.ScalanDsl
 import org.scalameter.reporting.RegressionReporter
 import java.io.File
 
-trait BaseRegressionTest extends PerformanceTest.Regression {
+trait BaseRegressionTest extends PerformanceTest.OnlineRegressionReport {
   lazy val persistFile = new File(s"perf-out${File.separator}history", this.getClass.getSimpleName)
-  lazy val persistor = {
+  override lazy val persistor = {
     persistFile.mkdirs()
     new SerializationPersistor(persistFile)
   }
