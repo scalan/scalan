@@ -46,15 +46,10 @@ trait VectorsOps { scalan: VectorsDsl =>
   }
   
   trait SparseVectorOps[T] extends VectorOps[T] {
-    implicit lazy val n: Numeric[T] = (elem match {
-        case `intElement` => implicitly[Numeric[Int]]
-        case `doubleElement` => implicitly[Numeric[Double]]
-      }).asInstanceOf[Numeric[T]]
-
     def nonZeroIndices: Arr[Int]
     def nonZeroValues: PA[T]
     def coords: PA[T] = {
-      val coords0 = Array.replicate(length, n.zero)
+      val coords0 = Array.replicate(length, elem.defaultRepValue)
       PArray(coords0.updateMany(nonZeroIndices, nonZeroValues.arr))
     }
     def dot(other: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = matchVec[T, T](other) {
