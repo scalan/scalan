@@ -11,8 +11,6 @@ import scalan.linalgebra.MatricesDslSeq
 import scalan.codegen.lms.MyBridge
 
 class LmsLinAlgItTests extends ItTests {
-  import scala.Array
-  
   class ProgStaged extends LinearAlgebraExamples with MatricesDslExp with ScalanCtxStaged with GraphVizExport with LmsBackend { self =>
 //    override def makeBridge[A, B] = new MyBridge[A, B] {
 //      override val scalan = self
@@ -28,9 +26,12 @@ class LmsLinAlgItTests extends ItTests {
   }
   val progSeq = new ProgSeq
   
+  def sparseVectorData(arr: Array[Double]) = ((0.until(arr.length)).toArray, (arr, arr.length))
+}
+
+class LmsMvmItTests extends LmsLinAlgItTests {
   import progSeq._
-  
-  private def sparseVectorData(arr: Array[Double]) = ((0.until(arr.length)).toArray, (arr, arr.length))
+  import scala.Array
 
   test("ddmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
@@ -138,7 +139,12 @@ class LmsLinAlgItTests extends ItTests {
     val out = Array(5.0, 3.0)
     progSeq.fsmvm0(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.fsmvm0, progStaged.fsmvm0)("fsmvm0", in)
-  }
+  }  
+}
+
+class LmsMmmItTests extends LmsLinAlgItTests {
+  import progSeq._
+  import scala.Array
 
   test("ddmmm") {
     pending
