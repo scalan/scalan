@@ -182,45 +182,86 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
   override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
     case Def(d1) => d1 match {
       case ArrayApply(Def(d2), i) => d2 match {
-        case ArrayRangeFrom0(_) => i
-        case ArrayStride(xs, start, _, stride) =>
+        case ArrayApplyMany(xs, is) =>
           implicit val eT = xs.elem.ea
-          xs(start + i * stride)
+          xs(is(i))
         case ArrayMap(xs, f) =>
           implicit val eT = xs.elem.ea
           f(xs(i))
+        case ArrayZip(xs: Arr[a], ys: Arr[b]) =>
+          val xs1 = xs.asRep[Array[a]]
+          val ys1 = ys.asRep[Array[b]]
+          implicit val e1 = xs1.elem.ea
+          implicit val e2 = ys1.elem.ea
+          (RepArrayOps(xs1)(e1)(i), RepArrayOps(ys1)(e2)(i))
+        case ArrayReplicate(_, x) => x
+        case ArrayStride(xs, start, _, stride) =>
+          implicit val eT = xs.elem.ea
+          xs(start + i * stride)
+        case ArrayRangeFrom0(_) => i
         case _ =>
           super.rewrite(d)
       }
       case ArrayApplyMany(Def(d2: Def[Array[a]] @unchecked), is) =>
         d2.asInstanceOf[Def[Array[a]]] match {
-          case ArrayRangeFrom0(_) => is
-          case ArrayStride(xs, start, _, stride) =>
+          case ArrayApplyMany(xs, is1) =>
             implicit val eT = xs.elem.ea
-            xs(is.map { i => start + i * stride })
+            xs(is1(is))
           case ArrayMap(xs, f) =>
             implicit val eT = xs.elem.ea
             xs(is).mapBy(f)
+          case ArrayZip(xs: Arr[a], ys: Arr[b]) =>
+            val xs1 = xs.asRep[Array[a]]
+            val ys1 = ys.asRep[Array[b]]
+            implicit val e1 = xs1.elem.ea
+            implicit val e2 = ys1.elem.ea
+            (RepArrayOps(xs1)(e1)(is), RepArrayOps(ys1)(e2)(is))
+          case ArrayReplicate(_, x) =>
+            implicit val eT = x.elem
+            Array.replicate(is.length, x)
+          case ArrayStride(xs, start, _, stride) =>
+            implicit val eT = xs.elem.ea
+            xs(is.map { i => start + i * stride })
+          case ArrayRangeFrom0(_) => is
           case _ =>
             super.rewrite(d)
         }
       case ArrayLength(Def(d2: Def[Array[a]] @unchecked)) =>
         d2.asInstanceOf[Def[Array[a]]] match {
-          case ArrayRangeFrom0(n) => n
-          case ArrayStride(_, _, length, _) => length
+          case ArrayApplyMany(_, is) => is.length
           case ArrayMap(xs, _) =>
             implicit val eT = xs.elem.ea
             xs.length
+          case ArrayZip(xs, _) =>
+            implicit val eT = xs.elem.ea
+            xs.length
+          case ArrayReplicate(length, _) => length
+          case ArrayStride(_, _, length, _) => length
+          case ArrayRangeFrom0(n) => n
           case _ =>
             super.rewrite(d)
         }
       case ArrayMap(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
-      case ArrayMap(Def(ArrayMap(xs, f)), g) =>
-        implicit val eT = xs.elem.ea
-        xs.map { x => g(f(x)) }
-      case ArrayFilter(Def(ArrayMap(xs, f)), g) =>
-        implicit val eT = xs.elem.ea
-        xs.filter { x => g(f(x)) }
+      case ArrayMap(Def(d2), f: Rep[Function1[a, b]] @unchecked) =>
+        val f1 = f.asRep[a => b]
+        implicit val eA = f1.elem.ea
+        implicit val eB = f1.elem.eb
+        d2.asInstanceOf[Def[Array[a]]] match {
+          case ArrayMap(xs, g) =>
+            xs.map { x => f1(g(x)) }
+          case ArrayReplicate(length, x) =>
+            Array.replicate(length, f1(x))
+          case _ =>
+            super.rewrite(d)
+        }
+      case ArrayFilter(Def(d2: Def[Array[a]] @unchecked), f) =>
+        d2.asInstanceOf[Def[Array[a]]] match {
+          case ArrayFilter(xs, g) =>
+            implicit val eT = xs.elem.ea
+            xs.filter { x => f(x) && g(x) }
+          case _ =>
+            super.rewrite(d)
+        }
       case _ => super.rewrite(d)
     }
     case _ => super.rewrite(d)
