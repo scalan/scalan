@@ -342,10 +342,9 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport wi
         el.tag.tpe.toString()  match {
           case "Double" => Manifest.Double
           case "Int" => Manifest.Int
+          case "Unit" => Manifest.Unit
           case tpe => ???(s"Don't know how to create manifest for base type $tpe")
         }
-      case el: UnitElem =>
-        Manifest.Unit
       case el: PairElem[_, _] =>
         Manifest.classType(classOf[(_, _)], createManifest(el.ea), createManifest(el.eb) )
       case el: ArrayElem[_] => {
