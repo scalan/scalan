@@ -6,7 +6,7 @@ import scalan.primitives.NumericOps
 
 trait Monoids { self: Scalan =>
   class RepMonoid[A](val opName: String, val append: (Rep[A], => Rep[A]) => Rep[A], val zero: Rep[A], val isInfix: Boolean, val isCommutative: Boolean)(implicit eA: Elem[A]) {
-    override def toString = s"Monoid[${eA.prettyName}]($opName, $zero)"
+    override def toString = s"Monoid[${eA.name}]($opName, $zero)"
   }
   
   object RepMonoid {

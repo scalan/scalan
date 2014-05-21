@@ -30,7 +30,7 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanStaged =>
 
   class Lambda[A, B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B])(implicit val eA: Elem[A] = x.elem, val eB: Elem[B] = y.elem) extends BaseDef[A => B] with AstGraph with Product {
-    lazy val uniqueOpId = s"Lambda[${eA.prettyName},${eB.prettyName}]"
+    lazy val uniqueOpId = s"Lambda[${eA.name},${eB.name}]"
     
     override def mirror(t: Transformer) = {
       val newSym = fresh[A=>B]

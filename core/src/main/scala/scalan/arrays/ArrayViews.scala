@@ -69,7 +69,7 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
   case class ViewArray[A, B](source: Arr[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Array] {
     lazy val iso = arrayIso(innerIso)
     def copy(source: Arr[A]) = ViewArray(source)
-    override def toString = s"ViewArray[${innerIso.eTo.prettyName}]($source)"
+    override def toString = s"ViewArray[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewArray[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
     }

@@ -27,7 +27,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
       case _ => false
     }
     def varName: String
-    def toStringWithType = varName + ":" + elem.prettyName
+    def toStringWithType = varName + ":" + elem.name
     def toStringWithDefinition: String
   }
   type AnyExp = Exp[Any]
@@ -36,8 +36,8 @@ trait BaseExp extends Base { self: ScalanStaged =>
   // this trait is mixed in Def[A]
   trait ReifiableObject[+T, +TImpl <: T] extends UserType[T @uncheckedVariance] {
     def name: String = getClass.getSimpleName
-    def name[A](eA: Elem[A]): String = s"$name[${eA.prettyName}]"
-    def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.prettyName},${eB.prettyName}]"
+    def name[A](eA: Elem[A]): String = s"$name[${eA.name}]"
+    def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.name},${eB.name}]"
     def uniqueOpId: String
     def mirror(f: Transformer): Rep[_]
     def decompose: Option[Rep[_]] = None
