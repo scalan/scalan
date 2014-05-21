@@ -3,6 +3,7 @@
 .cache
 .classpath
 .project
+.settings
 target/
 lib_managed/
 project/plugins/lib_managed/
