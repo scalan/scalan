@@ -253,12 +253,12 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  case class Exp$className[$types]
          |      (${fieldsWithType.rep(f => s"override val $f")})
          |      (implicit ${c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")})
-         |    extends $className[$types](${fields.rep(all)})${c.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")} with ${if (isLite) s"UserTypeExp[$traitWithTypes, $className[$types]]" else s"UserTypeDef[$className[$types]]"} {
+         |    extends $className[$types](${fields.rep(all)})${c.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")} with ${if (isLite) s"UserTypeDef[$traitWithTypes, $className[$types]]" else s"UserTypeDef[$className[$types]]"} {
          |    ${if (isLite) s"lazy val selfType = element[$className[$types]].asInstanceOf[Elem[$traitWithTypes]]" else s"lazy val elem = element[$className[$types]]"}
          |    override def mirror(t: Transformer) = Exp$className[$types](${fields.rep(f => s"t($f)")})
          |  }
          |${isLite.opt(s"""
-         |  lazy val $className: Rep[${className}CompanionAbs] = new ${className}CompanionAbs with UserTypeExp[${className}CompanionAbs, ${className}CompanionAbs] {
+         |  lazy val $className: Rep[${className}CompanionAbs] = new ${className}CompanionAbs with UserTypeDef[${className}CompanionAbs, ${className}CompanionAbs] {
          |    lazy val selfType = element[${className}CompanionAbs]
          |    override def mirror(t: Transformer) = this
          |  }
@@ -311,7 +311,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       s"""
        |trait ${module.name}Exp extends ${module.name}Abs with ${config.proxyTrait} with ${config.stagedViewsTrait} { self: ScalanStaged${module.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")} =>
        |${isLite.opt(s"""
-       |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeExp[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
+       |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this
        |  }""".stripMargin)}

@@ -51,7 +51,8 @@ trait ScalanAst {
   abstract class BodyItem
   case class ImportStat(names: List[String]) extends BodyItem
   case class MethodDef(name: String, tpeArgs: TpeArgs = Nil, args: List[MethodArgs] = Nil,
-    tpeRes: TpeExpr = TraitCall("Any"), isImplicit: Boolean = false) extends BodyItem
+    tpeRes: Option[TpeExpr], isImplicit: Boolean = false) extends BodyItem
+  case class ValDef(name: String, tpe: Option[TpeExpr], isLazy: Boolean, isImplicit: Boolean) extends BodyItem
   case class TpeDef(name: String, tpeArgs: TpeArgs = Nil, rhs: TpeExpr) extends BodyItem
 
   case class TpeArg(name: String, bound: Option[TpeExpr] = None, contextBound: List[String] = Nil)
@@ -193,11 +194,18 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
   }
   lazy val classArgs = "(" ~> rep1sep(classArg, ",") <~ ")"
 
-  lazy val methodBody = "???"
+  lazy val noBraces = "[^{}]+".r
+  lazy val balancedBraces: Parser[Unit] = "{" ~> rep(noBraces | balancedBraces) <~ "}" ^^^ { () }
+  lazy val methodBody = "???" | balancedBraces
 
-  lazy val methodDef = (opt("implicit") <~ "def") ~ scalanIdent ~ opt(tpeArgs) ~ (methodArgs <~ ":") ~ tpeExpr ~ opt("=" ~> methodBody) ^^ {
+  lazy val methodDef = (opt("implicit") <~ "def") ~ scalanIdent ~ opt(tpeArgs) ~ methodArgs ~ opt(":" ~> tpeExpr) ~ opt("=" ~> methodBody) ^^ {
     case implicitModifier ~ n ~ targs ~ args ~ tres ~ _ =>
       MethodDef(n, targs.toList.flatten, args.map { case i ~ args => MethodArgs(i.isDefined, args) }, tres, implicitModifier.isDefined)
+  }
+  
+  lazy val valDef = opt("implicit") ~ (opt("lazy") <~ "val") ~ scalanIdent ~ opt(":" ~> tpeExpr) ~ opt("=" ~> methodBody) ^^ {
+    case implicitMod ~ lazyMod ~ name ~ tpe ~ _ =>
+      ValDef(name, tpe, lazyMod.isDefined, implicitMod.isDefined)
   }
 
   lazy val importStat = "import" ~> qualId <~ opt(";") ^^ { case ns => ImportStat(ns) }
@@ -208,11 +216,12 @@ trait ScalanParsers extends JavaTokenParsers { self: ScalanAst =>
 
   lazy val bodyItem: Parser[BodyItem] =
     methodDef |
-      importStat |
-      tpeDef |
-      traitDef |
-      classDef |
-      objectDef
+    valDef |
+    importStat |
+    tpeDef |
+    traitDef |
+    classDef |
+    objectDef
 
   lazy val bodyItems = rep(bodyItem)
 

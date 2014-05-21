@@ -59,18 +59,18 @@ class ScalanParsersTests extends BaseTests {
   def f[A <: Int : Numeric : Fractional](x: A): Int = ???
 
   test("MethodDef") {
-    testMethod("def f: Int", MD("f", tpeRes = INT))
-    testMethod("implicit def f: Int", MD("f", Nil, Nil, INT, true))
-    testMethod("def f(x: Int): Int", MD("f", Nil, L(MAs(false, List(MA("x", INT)))), INT))
+    testMethod("def f: Int", MD("f", tpeRes = Some(INT)))
+    testMethod("implicit def f: Int", MD("f", Nil, Nil, Some(INT), true))
+    testMethod("def f(x: Int): Int", MD("f", Nil, L(MAs(false, List(MA("x", INT)))), Some(INT)))
     testMethod(
       "def f[A <: T](x: A): Int",
-      MD("f", L(TpeArg("A", Some(TC("T")))), L(MAs(false, L(MA("x", TC("A"))))), INT))
+      MD("f", L(TpeArg("A", Some(TC("T")))), L(MAs(false, L(MA("x", TC("A"))))), Some(INT)))
     testMethod(
       "def f[A : Numeric]: Int",
-      MD("f", L(TpeArg("A", None, L("Numeric"))), Nil, INT))
+      MD("f", L(TpeArg("A", None, L("Numeric"))), Nil, Some(INT)))
     testMethod(
       "def f[A <: Int : Numeric : Fractional](x: A)(implicit y: A): Int",
-      MD("f", L(TpeArg("A", Some(INT), L("Numeric","Fractional"))), L(MAs(false, L(MA("x", TC("A")))), MAs(true, L(MA("y", TC("A"))))), INT))
+      MD("f", L(TpeArg("A", Some(INT), L("Numeric","Fractional"))), L(MAs(false, L(MA("x", TC("A")))), MAs(true, L(MA("y", TC("A"))))), Some(INT)))
   }
 
   test("TraitDef") {
@@ -83,7 +83,7 @@ class ScalanParsersTests extends BaseTests {
     testTrait("trait Edge[V,E]{ def f[A <: T](x: A, y: (A,T)): Int }",
       TD("Edge", L(TpeArg("V"), TpeArg("E")), Nil,
         body = L(MD("f", L(TpeArg("A", Some(TC("T")))),
-                      L(MAs(false, L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))))), INT))))
+                      L(MAs(false, L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))))), Some(INT)))))
     testTrait(
       """trait A {
         |  import scalan._
@@ -95,8 +95,8 @@ class ScalanParsersTests extends BaseTests {
           body = L(
             IS(L("scalan","_")),
             TpeDef("Rep", L(TpeArg("A")),TC("A")),
-            MD("f", Nil, Nil, T(L(INT,TC("A")))),
-            MD("g", Nil, L(MAs(false, L(MA("x", BOOL)))), TC("A")))))
+            MD("f", Nil, Nil, Some(T(L(INT,TC("A"))))),
+            MD("g", Nil, L(MAs(false, L(MA("x", BOOL)))), Some(TC("A"))))))
 
   }
 
@@ -134,7 +134,7 @@ class ScalanParsersTests extends BaseTests {
     testClass("class Edge[V,E](val x: V){ def f[A <: T](x: A, y: (A,T)): Int }",
       ClassDef("Edge", L(TpeArg("V"), TpeArg("E")), L(ClassArg(false, false, true, "x",TC("V"))),Nil,Nil,
         L(MD("f", L(TpeArg("A", Some(TC("T")))),
-          L(MAs(false, L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))))), INT))))
+          L(MAs(false, L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))))), Some(INT)))))
   }
 
   test("EntityModuleDef") {
@@ -143,7 +143,7 @@ class ScalanParsersTests extends BaseTests {
       EMD("scalan.rx", L(ImportStat(L("scalan","_"))), "Reactive",
         TpeDef("Obs", L(TpeArg("A")), TC("Rep",L(TC("Observable", L(TC("A")))))),
         TD("Observable", L(TpeArg("A")), Nil,
-          L(MD("eA",Nil,Nil,TC("Elem",L(TC("A"))),isImplicit = true))),
+          L(MD("eA",Nil,Nil,Some(TC("Elem",L(TC("A")))),isImplicit = true))),
         L(ClassDef("ObservableImpl1", L(TpeArg("A")), L(ClassArg(true, false, true, "eA",TC("Elem",L(TC("A"))))),Nil,
           L(TC("Observable",L(TC("A")))),Nil ),
           ClassDef("ObservableImpl2", L(TpeArg("A")), L(ClassArg(true, false, true, "eA",TC("Elem",L(TC("A"))))),Nil,
