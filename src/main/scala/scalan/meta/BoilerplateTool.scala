@@ -4,7 +4,7 @@
  */
 package scalan.meta
 
-object BoilerplateTool extends App {
+object BoilerplateTool {
   val scalanConfig = CodegenConfig(
     isLite = false,
     srcPath = "../scalan/src/main/scala",
@@ -41,6 +41,9 @@ object BoilerplateTool extends App {
       "scalan.common.Default.defaultVal")
   )
 
-  val ctx = new EntityManagement(scalanConfig)
-  ctx.generateAll
+  val ctx = new EntityManagement(liteConfig)
+
+  def main(args: Array[String]) {
+    ctx.generateAll
+  }
 }
