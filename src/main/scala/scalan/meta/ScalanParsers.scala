@@ -26,8 +26,8 @@ trait ScalanAst {
   case class STpeTuple(items: List[STpeExpr]) extends STpeExpr {
     override def toString = items.mkString("(", ",", ")")
   }
-  case class STpeFunc(items: List[STpeExpr]) extends STpeExpr {
-    override def toString = items.mkString("=>")
+  case class STpeFunc(domain: STpeExpr, range: STpeExpr) extends STpeExpr {
+    override def toString = s"$domain => $range"
   }
   case class STpeSum(items: List[STpeExpr]) extends STpeExpr {
     override def toString = items.mkString("(", "|", ")")
@@ -388,11 +388,28 @@ trait ScalanParsers { self: ScalanAst =>
 
   def tpeExpr(tree: Tree): STpeExpr = tree match {
     case ident: Ident =>
-      STraitCall(ident.name, List())
+      ident.name.toString match {
+        case "Int" => STpeInt
+        case "Boolean" => STpeBoolean
+        case "Float" => STpeFloat
+        case "String" => STpeString
+        case name => STraitCall(name, List())
+      }
     case select: Select =>
       STraitCall(select.name, List())
     case AppliedTypeTree(tpt, args) =>
-      STraitCall(tpt.toString, args.map(tpeExpr))
+      val argTpeExprs = args.map(tpeExpr)
+      val genericTypeString = tpt.toString
+      if (genericTypeString.contains("scala.Tuple"))
+        STpeTuple(argTpeExprs)
+      else if (genericTypeString.contains("scala.Function")) {
+        val domainTpeExpr = argTpeExprs.length match {
+          case 2 => argTpeExprs(0)
+          case n => STpeTuple(argTpeExprs.init)
+        }
+        STpeFunc(domainTpeExpr, argTpeExprs.last)
+      } else
+        STraitCall(tpt.toString, argTpeExprs)
     case Annotated(_, arg) =>
       tpeExpr(arg)
     case tree => ???(tree)

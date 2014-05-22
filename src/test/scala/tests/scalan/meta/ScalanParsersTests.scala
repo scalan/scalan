@@ -75,14 +75,14 @@ class ScalanParsersTests extends BaseTests {
   test("STpeExpr") {
     testSTpe("Int", INT)
     testSTpe("(Int,Boolean)", STpeTuple(L(INT, BOOL)))
-    testSTpe("Int=>Boolean", STpeFunc(L(INT, BOOL)))
-    testSTpe("Int=>Boolean=>Float", STpeFunc(L(INT, BOOL, FLOAT)))
-    testSTpe("(Int,Boolean=>Float)", STpeTuple(L(INT, STpeFunc(L(BOOL, FLOAT)))))
-    testSTpe("(Int,(Boolean=>Float))", STpeTuple(L(INT, STpeFunc(L(BOOL, FLOAT)))))
-    testSTpe("(Int,Boolean)=>Float", STpeFunc(L(STpeTuple(L(INT, BOOL)), FLOAT)))
+    testSTpe("Int=>Boolean", STpeFunc(INT, BOOL))
+    testSTpe("Int=>Boolean=>Float", STpeFunc(INT, STpeFunc(BOOL, FLOAT)))
+    testSTpe("(Int,Boolean=>Float)", STpeTuple(L(INT, STpeFunc(BOOL, FLOAT))))
+    testSTpe("(Int,(Boolean=>Float))", STpeTuple(L(INT, STpeFunc(BOOL, FLOAT))))
+    testSTpe("(Int,Boolean)=>Float", STpeFunc(STpeTuple(L(INT, BOOL)), FLOAT))
     testSTpe("Edge", TC("Edge", Nil))
     testSTpe("Edge[V,E]", TC("Edge", L(TC("V", Nil), TC("E", Nil))))
-    testSTpe("Rep[A=>B]", TC("Rep", L(STpeFunc(L(TC("A", Nil), TC("B", Nil))))))
+    testSTpe("Rep[A=>B]", TC("Rep", L(STpeFunc(TC("A", Nil), TC("B", Nil)))))
   }
 
   test("SMethodDef") {
