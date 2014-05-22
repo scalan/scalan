@@ -185,7 +185,7 @@ trait ScalanParsers { self: ScalanAst =>
       case i: Import => importStat(i)
     }
     val moduleTraitTree = statements.collect {
-      case cd: ClassDef if cd.mods.isTrait => cd
+      case cd: ClassDef if cd.mods.isTrait && !cd.name.contains("Dsl") => cd
     } match {
       case Seq(only) => only
       case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
