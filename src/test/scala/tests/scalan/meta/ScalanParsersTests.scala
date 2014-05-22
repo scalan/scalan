@@ -27,7 +27,7 @@ class ScalanParsersTests extends BaseTests {
   case object TopLevel extends TreeKind
   case object Type extends TreeKind
   case object Member extends TreeKind
-  
+
   def parseString(kind: TreeKind, prog: String): Tree = {
     // wrap the string into a complete file
     val prog1 = kind match {
@@ -49,9 +49,11 @@ class ScalanParsersTests extends BaseTests {
   }
 
   def test[T](kind: TreeKind, prog: String, expected: T)(f: Tree => T) {
-    val tree = parseString(kind, prog)
-    val res = f(tree)
-    assertResult(expected)(res)
+    it(prog) {
+      val tree = parseString(kind, prog)
+      val res = f(tree)
+      assertResult(expected)(res)
+    }
   }
 
   def testModule(prog: String, expected: SEntityModuleDef) {
@@ -72,7 +74,7 @@ class ScalanParsersTests extends BaseTests {
     test(Member, prog, expected) { case tree: DefDef => methodDef(tree) }
   }
 
-  test("STpeExpr") {
+  describe("STpeExpr") {
     testSTpe("Int", INT)
     testSTpe("(Int,Boolean)", STpeTuple(L(INT, BOOL)))
     testSTpe("Int=>Boolean", STpeFunc(INT, BOOL))
@@ -85,7 +87,7 @@ class ScalanParsersTests extends BaseTests {
     testSTpe("Rep[A=>B]", TC("Rep", L(STpeFunc(TC("A", Nil), TC("B", Nil)))))
   }
 
-  test("SMethodDef") {
+  describe("SMethodDef") {
     testSMethod("def f: Int", MD("f", Nil, Nil, Some(INT), false))
     testSMethod("implicit def f: Int", MD("f", Nil, Nil, Some(INT), true))
     testSMethod(
@@ -106,7 +108,7 @@ class ScalanParsersTests extends BaseTests {
         Some(INT), false))
   }
 
-  test("TraitDef") {
+  describe("TraitDef") {
     val traitA = TD("A", Nil, Nil, Nil, None)
     val traitEdgeVE = TD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), Nil, Nil, None)
 
@@ -163,7 +165,7 @@ class ScalanParsersTests extends BaseTests {
       |}
     """.stripMargin
 
-  test("SClassDef") {
+  describe("SClassDef") {
     val classA =
       CD("A", Nil, Nil, Nil, Nil, Nil, None, false)
     val classEdgeVE =
@@ -182,7 +184,7 @@ class ScalanParsersTests extends BaseTests {
           Some(INT), false))))
   }
 
-  test("SEntityModuleDef") {
+  describe("SEntityModuleDef") {
     val tpeArgA = L(STpeArg("A", None, Nil))
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))

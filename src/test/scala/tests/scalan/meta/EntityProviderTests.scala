@@ -48,7 +48,7 @@ class EntityProviderTests extends BaseTests {
      |}
     """.stripMargin
 
-  test("Abs") {
+  describe("Abs") {
     testTraitAbs(
       testEntity,
       """
@@ -64,7 +64,7 @@ class EntityProviderTests extends BaseTests {
         |""".stripMargin)
   }
 
-  test("Seq") {
+  describe("Seq") {
     testTraitSeq(
       testEntity,
       """
@@ -87,7 +87,7 @@ class EntityProviderTests extends BaseTests {
         |""".stripMargin)
   }
 
-  test("Exp") {
+  describe("Exp") {
     testTraitExp(
       testEntity,
       """

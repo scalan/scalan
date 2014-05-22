@@ -6,7 +6,7 @@ class LazyImplicitTests extends BaseTests {
 
   implicit def toLazy[A](implicit i: A): () => A = () => i
 
-  test("Abs") {
+  describe("Abs") {
     implicit val i = 10
     f[Int]
   }

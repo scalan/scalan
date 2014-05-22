@@ -1,5 +1,5 @@
 package tests
 
-import org.scalatest.{Matchers, FunSuite}
+import org.scalatest.{Matchers, FunSpec}
 
-class BaseTests extends FunSuite with Matchers
+class BaseTests extends FunSpec with Matchers
