@@ -17,12 +17,12 @@ case class CodegenConfig(
 
 class EntityManagement(val config: CodegenConfig) extends ScalanCodegen { ctx =>
 
-  case class EntityManager(name: String, filePath: String, entityDef: EntityModuleDef)
+  case class EntityManager(name: String, filePath: String, entityDef: SEntityModuleDef)
 
   private val entities = (config.entityFiles map {
     f =>
       val path = config.srcPath + "/" + f
-      val d = parseEntity(path)
+      val d = parseEntityModule(path)
       (d.name, new EntityManager(d.name, path, d))
   }).toMap
 
@@ -32,11 +32,6 @@ class EntityManagement(val config: CodegenConfig) extends ScalanCodegen { ctx =>
       val implCode = g.getImplFile
       saveEntity(m.filePath, implCode)
     }
-  }
-
-  def parseEntity(filePath: String) = {
-    val entityTemplate = readFile(filePath)
-    parseEntityModule(entityTemplate)
   }
 
   def saveEntity(filePath: String, implCode: String) = {

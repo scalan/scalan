@@ -32,12 +32,12 @@ object Extensions {
 
 trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement =>
 
-  class EntityFileGenerator(module: EntityModuleDef) {
+  class EntityFileGenerator(module: SEntityModuleDef) {
     import Extensions._
 
     val typeSyn = module.typeSyn
 
-    def getEntityTemplateData(e: TraitDef) = {
+    def getEntityTemplateData(e: STraitDef) = {
       val tyArgs = e.tpeArgs.map(_.name)
       (e.name,
         e.tpeArgs,
@@ -46,7 +46,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         )
     }
 
-    def getClassTemplateData(c: ClassDef) = {
+    def getSClassTemplateData(c: SClassDef) = {
       val tyArgs = c.tpeArgs.map(_.name)
       (c.name,
       tyArgs.rep(t => t),
@@ -54,14 +54,14 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       c.args.map(a => a.name),
       c.args.map(a => s"${a.name}: ${a.tpe}"),
       c.args.map(a => a.tpe match {
-        case TraitCall("Rep", List(t)) => t
+        case STraitCall("Rep", List(t)) => t
         case _ => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
       }),
       c.ancestors.head
       )
     }
 
-    def dataType(ts: List[TpeExpr]): String = ts match {
+    def dataType(ts: List[STpeExpr]): String = ts match {
       case Nil => "Unit"
       case t :: Nil => t.toString
       case t :: ts => s"($t, ${dataType(ts)})"
@@ -73,14 +73,14 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       case f :: fs => s"Pair($f, ${pairify(fs)})"
     }
     
-    def zeroExpr(t: TpeExpr): String = t match {
-      case TpeInt => 0.toString
-      case TpeBoolean => false.toString
-      case TpeFloat => 0f.toString
-      case TpeString => "\"\""
-      case TraitCall(name, args) => s"element[$t].${if (isLite) "defaultRepValue" else "zero.value"}"
-      case TpeTuple(items) => pairify(items.map(zeroExpr))
-      case _ => ???
+    def zeroSExpr(t: STpeExpr): String = t match {
+      case STpeInt => 0.toString
+      case STpeBoolean => false.toString
+      case STpeFloat => 0f.toString
+      case STpeString => "\"\""
+      case STraitCall(name, args) => s"element[$t].${if (isLite) "defaultRepValue" else "zero.value"}"
+      case STpeTuple(items) => pairify(items.map(zeroSExpr))
+      case t => throw new IllegalArgumentException(s"Can't generate zero value for $t")
     }
     
     lazy val isLite = config.isLite
@@ -119,8 +119,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       val isoZero = if (isLite) "defaultRepTo" else "zero"
       val defaultVal = if (isLite) "defaultVal" else "Common.zero"
 
-      val defs = for { c <- module.concreteClasses } yield {
-        val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes, traitWithTypes) = getClassTemplateData(c)
+      val defs = for { c <- module.concreteSClasses } yield {
+        val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes, traitWithTypes) = getSClassTemplateData(c)
         val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
         val useImplicits = c.implicitArgs.opt(args => args.map(_.name).rep(all))
         s"""
@@ -146,7 +146,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |${c.tpeArgs.rep(a => s"      implicit val tag${a.name} = element[${a.name}].tag", "\n")}
         |      typeTag[$className[$types]]
         |    }
-        |    lazy val ${isoZero} = $defaultVal[Rep[$className[$types]]]($className(${fieldTypes.rep(zeroExpr(_))}))
+        |    lazy val ${isoZero} = $defaultVal[Rep[$className[$types]]]($className(${fieldTypes.rep(zeroSExpr(_))}))
         |  }
         |  // 4) constructor and deconstructor
         |${if (isLite)
@@ -205,8 +205,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
        |""".stripMargin
     }
 
-    def getClassSeq(c: ClassDef) = {
-      val (className, types, typesWithElems, fields, fieldsWithType, _, traitWithTypes) = getClassTemplateData(c)
+    def getSClassSeq(c: SClassDef) = {
+      val (className, types, typesWithElems, fields, fieldsWithType, _, traitWithTypes) = getSClassTemplateData(c)
       val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
       val userTypeDefs =
         s"""
@@ -244,8 +244,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       s"""$userTypeDefs\n$isoDefs\n$constrDefs"""
     }
 
-    def getClassExp(c: ClassDef) = {
-      val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes, traitWithTypes) = getClassTemplateData(c)
+    def getSClassExp(c: SClassDef) = {
+      val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes, traitWithTypes) = getSClassTemplateData(c)
       val isLite = config.isLite
       val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
       val userTypeNodeDefs =
@@ -290,7 +290,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
     def getTraitSeq = {
       val e = module.entityOps
       val (entityName, _, _, _) = getEntityTemplateData(e)
-      val defs = for { c <- module.concreteClasses } yield getClassSeq(c)
+      val defs = for { c <- module.concreteSClasses } yield getSClassSeq(c)
 
       s"""
        |trait ${module.name}Seq extends ${module.name}Abs { self: ScalanSeq${module.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")} =>
@@ -306,7 +306,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
     def getTraitExp = {
       val e = module.entityOps
       val (entityName, _, _, _) = getEntityTemplateData(e)
-      val defs = for { c <- module.concreteClasses } yield getClassExp(c)
+      val defs = for { c <- module.concreteSClasses } yield getSClassExp(c)
 
       s"""
        |trait ${module.name}Exp extends ${module.name}Abs with ${config.proxyTrait} with ${config.stagedViewsTrait} { self: ScalanStaged${module.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")} =>
@@ -325,7 +325,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       |package ${module.packageName}
       |package impl
       |
-      |${module.imports.rep(i => s"import ${i.names.rep(all, ".")}", "\n")}
+      |${module.imports.rep(i => s"import ${i.name}", "\n")}
       |""".stripMargin
     }
 

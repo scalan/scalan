@@ -1,89 +1,127 @@
-/**
- * User: Alexander Slesarenko
- * Date: 11/16/13
- */
 package tests.scalan.meta
 
 import tests.BaseTests
 import scalan.meta.ScalanImpl
+import scala.reflect.internal.util.BatchSourceFile
 
 class ScalanParsersTests extends BaseTests {
   import ScalanImpl._
   import ScalanImpl.{
-    TpeInt => INT, TpeBoolean => BOOL, TpeFloat => FLOAT, TraitCall => TC,
-    TraitDef => TD, MethodDef => MD, MethodArgs => MAs, MethodArg => MA, TpeTuple => T,
-    EntityModuleDef => EMD, ImportStat => IS}
-  import scala.{List => L}
+    STpeInt => INT,
+    STpeBoolean => BOOL,
+    STpeFloat => FLOAT,
+    STraitCall => TC,
+    STraitDef => TD,
+    SClassDef => CD,
+    SMethodDef => MD,
+    SMethodArgs => MAs,
+    SMethodArg => MA,
+    STpeTuple => T,
+    SEntityModuleDef => EMD,
+    SImportStat => IS
+  }
+  import scala.{ List => L }
+  import compiler._
 
-  def test[T](p: Parser[T], prog: String, expected: T) {
-    parseAll(p, prog) match {
-      case Success(res, _) => {
-        //println(res)
-        assertResult(expected)(res)
-      }
-      case NoSuccess(msg, input) => fail(s"$msg (pos: ${input.pos})")
+  sealed trait TreeKind
+  case object TopLevel extends TreeKind
+  case object Type extends TreeKind
+  case object Member extends TreeKind
+  
+  def parseString(kind: TreeKind, prog: String): Tree = {
+    // wrap the string into a complete file
+    val prog1 = kind match {
+      case TopLevel => prog
+      case Type => s"object o { val x: $prog }"
+      case Member => s"object o { $prog }"
+    }
+    val fakeSourceFile = new BatchSourceFile("<no file>", prog1.toCharArray)
+    // extract the part corresponding to original prog
+    (kind, compiler.parseTree(fakeSourceFile)) match {
+      case (TopLevel, tree) => tree
+      case (Member, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, tree)))))) =>
+        tree
+      case (Type, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(_, _, tree, _))))))) =>
+        tree
+      case (kind, tree) =>
+        ???(tree)
     }
   }
 
-  def testModule(prog: String, expected: EntityModuleDef) {
-    test(entityModuleDef, prog, expected)
+  def test[T](kind: TreeKind, prog: String, expected: T)(f: Tree => T) {
+    val tree = parseString(kind, prog)
+    val res = f(tree)
+    assertResult(expected)(res)
   }
 
-  def testTrait(prog: String, expected: TraitDef) {
-    test(traitDef, prog, expected)
-  }
-  def testClass(prog: String, expected: ClassDef) {
-    test(classDef, prog, expected)
+  def testModule(prog: String, expected: SEntityModuleDef) {
+    test(TopLevel, prog, expected) { case tree: PackageDef => entityModule(tree) }
   }
 
-  def testTpe(prog: String, expected: TpeExpr) {
-    test(tpeExpr, prog, expected)
+  def testTrait(prog: String, expected: STraitDef) {
+    test(Member, prog, expected) { case tree: ClassDef => traitDef(tree) }
   }
-  def testMethod(prog: String, expected: MethodDef) {
-    test(methodDef, prog, expected)
-  }
-
-  test("TpeExpr") {
-    testTpe("Int", INT)
-    testTpe("(Int,Boolean)", TpeTuple(L(INT, BOOL)))
-    testTpe("Int=>Boolean", TpeFunc(L(INT, BOOL)))
-    testTpe("Int=>Boolean=>Float", TpeFunc(L(INT, BOOL, FLOAT)))
-    testTpe("(Int,Boolean=>Float)", TpeTuple(L(INT, TpeFunc(L(BOOL, FLOAT)))))
-    testTpe("(Int,(Boolean=>Float))", TpeTuple(L(INT, TpeFunc(L(BOOL, FLOAT)))))
-    testTpe("(Int,Boolean)=>Float", TpeFunc(L(TpeTuple(L(INT,BOOL)), FLOAT)))
-    testTpe("Edge", TC("Edge"))
-    testTpe("Edge[V,E]", TC("Edge", L(TC("V"), TC("E"))))
-    testTpe("Rep[A=>B]", TC("Rep", L(TpeFunc(L(TC("A"), TC("B"))))))
+  def testSClass(prog: String, expected: SClassDef) {
+    test(Member, prog, expected) { case tree: ClassDef => classDef(tree) }
   }
 
-  def f[A <: Int : Numeric : Fractional](x: A): Int = ???
+  def testSTpe(prog: String, expected: STpeExpr) {
+    test(Type, prog, expected)(tpeExpr)
+  }
+  def testSMethod(prog: String, expected: SMethodDef) {
+    test(Member, prog, expected) { case tree: DefDef => methodDef(tree) }
+  }
 
-  test("MethodDef") {
-    testMethod("def f: Int", MD("f", tpeRes = Some(INT)))
-    testMethod("implicit def f: Int", MD("f", Nil, Nil, Some(INT), true))
-    testMethod("def f(x: Int): Int", MD("f", Nil, L(MAs(false, List(MA("x", INT)))), Some(INT)))
-    testMethod(
+  test("STpeExpr") {
+    testSTpe("Int", INT)
+    testSTpe("(Int,Boolean)", STpeTuple(L(INT, BOOL)))
+    testSTpe("Int=>Boolean", STpeFunc(L(INT, BOOL)))
+    testSTpe("Int=>Boolean=>Float", STpeFunc(L(INT, BOOL, FLOAT)))
+    testSTpe("(Int,Boolean=>Float)", STpeTuple(L(INT, STpeFunc(L(BOOL, FLOAT)))))
+    testSTpe("(Int,(Boolean=>Float))", STpeTuple(L(INT, STpeFunc(L(BOOL, FLOAT)))))
+    testSTpe("(Int,Boolean)=>Float", STpeFunc(L(STpeTuple(L(INT, BOOL)), FLOAT)))
+    testSTpe("Edge", TC("Edge", Nil))
+    testSTpe("Edge[V,E]", TC("Edge", L(TC("V", Nil), TC("E", Nil))))
+    testSTpe("Rep[A=>B]", TC("Rep", L(STpeFunc(L(TC("A", Nil), TC("B", Nil))))))
+  }
+
+  test("SMethodDef") {
+    testSMethod("def f: Int", MD("f", Nil, Nil, Some(INT), false))
+    testSMethod("implicit def f: Int", MD("f", Nil, Nil, Some(INT), true))
+    testSMethod(
+      "def f(x: Int): Int",
+      MD("f", Nil, L(MAs(false, List(MA("x", INT, None)))), Some(INT), false))
+    testSMethod(
       "def f[A <: T](x: A): Int",
-      MD("f", L(TpeArg("A", Some(TC("T")))), L(MAs(false, L(MA("x", TC("A"))))), Some(INT)))
-    testMethod(
+      MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)), L(MAs(false, L(MA("x", TC("A", Nil), None)))), Some(INT), false))
+    testSMethod(
       "def f[A : Numeric]: Int",
-      MD("f", L(TpeArg("A", None, L("Numeric"))), Nil, Some(INT)))
-    testMethod(
+      MD("f", L(STpeArg("A", None, L("Numeric"))), Nil, Some(INT), false))
+    testSMethod(
       "def f[A <: Int : Numeric : Fractional](x: A)(implicit y: A): Int",
-      MD("f", L(TpeArg("A", Some(INT), L("Numeric","Fractional"))), L(MAs(false, L(MA("x", TC("A")))), MAs(true, L(MA("y", TC("A"))))), Some(INT)))
+      MD(
+        "f",
+        L(STpeArg("A", Some(INT), L("Numeric", "Fractional"))),
+        L(MAs(false, L(MA("x", TC("A", Nil), None))), MAs(true, L(MA("y", TC("A", Nil), None)))),
+        Some(INT), false))
   }
 
   test("TraitDef") {
-    testTrait("trait A", TD("A"))
-    testTrait("trait A extends B", TD("A", Nil, List(TC("B"))))
-    testTrait("trait A extends B with C", TD("A", Nil, List(TC("B"), TC("C"))))
-    testTrait("trait Edge[V,E]", TD("Edge", L(TpeArg("V"), TpeArg("E"))))
-    testTrait("trait Edge[V,E]{}", TD("Edge", L(TpeArg("V"), TpeArg("E"))))
-    testTrait("trait Edge[V,E]{}", TD("Edge", L(TpeArg("V"), TpeArg("E"))))
+    val traitA = TD("A", Nil, Nil, Nil, None)
+    val traitEdgeVE = TD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), Nil, Nil, None)
+
+    testTrait("trait A", traitA)
+    testTrait("trait A extends B",
+      traitA.copy(ancestors = L(TC("B", Nil))))
+    testTrait("trait A extends B with C",
+      traitA.copy(ancestors = L(TC("B", Nil), TC("C", Nil))))
+    testTrait("trait Edge[V,E]", traitEdgeVE)
+    testTrait("trait Edge[V,E]{}", traitEdgeVE)
     testTrait("trait Edge[V,E]{ def f[A <: T](x: A, y: (A,T)): Int }",
-      TD("Edge", L(TpeArg("V"), TpeArg("E")), Nil,
-        body = L(MD("f", L(TpeArg("A", Some(TC("T")))),
-                      L(MAs(false, L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))))), Some(INT)))))
+      traitEdgeVE.copy(
+        body = L(MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)),
+          L(MAs(false, L(MA("x", TC("A", Nil), None), MA("y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
+          Some(INT), false))))
     testTrait(
       """trait A {
         |  import scalan._
@@ -91,12 +129,11 @@ class ScalanParsersTests extends BaseTests {
         |  def f: (Int,A)
         |  def g(x: Boolean): A
         |}""".stripMargin,
-      TD("A", Nil, Nil,
-          body = L(
-            IS(L("scalan","_")),
-            TpeDef("Rep", L(TpeArg("A")),TC("A")),
-            MD("f", Nil, Nil, Some(T(L(INT,TC("A"))))),
-            MD("g", Nil, L(MAs(false, L(MA("x", BOOL)))), Some(TC("A"))))))
+      TD("A", Nil, Nil, L(
+        IS("scalan._"),
+        STpeDef("Rep", L(STpeArg("A", None, Nil)), TC("A", Nil)),
+        MD("f", Nil, Nil, Some(T(L(INT, TC("A", Nil)))), false),
+        MD("g", Nil, L(MAs(false, L(MA("x", BOOL, None)))), Some(TC("A", Nil)), false)), None))
 
   }
 
@@ -126,29 +163,39 @@ class ScalanParsersTests extends BaseTests {
       |}
     """.stripMargin
 
-  test("ClassDef") {
-    testClass("class A", ClassDef("A"))
-    testClass("class A extends B", ClassDef("A", Nil,Nil,Nil, L(TC("B"))))
-    testClass("class A extends B with C", ClassDef("A", Nil,Nil,Nil, L(TC("B"), TC("C"))))
-    testClass("class Edge[V,E]", ClassDef("Edge", L(TpeArg("V"), TpeArg("E"))))
-    testClass("class Edge[V,E](val x: V){ def f[A <: T](x: A, y: (A,T)): Int }",
-      ClassDef("Edge", L(TpeArg("V"), TpeArg("E")), L(ClassArg(false, false, true, "x",TC("V"))),Nil,Nil,
-        L(MD("f", L(TpeArg("A", Some(TC("T")))),
-          L(MAs(false, L(MA("x", TC("A")),MA("y", T(L(TC("A"),TC("T"))))))), Some(INT)))))
+  test("SClassDef") {
+    val classA =
+      CD("A", Nil, Nil, Nil, Nil, Nil, None, false)
+    val classEdgeVE =
+      CD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), Nil, Nil, Nil, Nil, None, false)
+    testSClass("class A", classA)
+    testSClass("class A extends B",
+      classA.copy(ancestors = L(TC("B", Nil))))
+    testSClass("class A extends B with C",
+      classA.copy(ancestors = L(TC("B", Nil), TC("C", Nil))))
+    testSClass("class Edge[V,E]", classEdgeVE)
+    testSClass("class Edge[V,E](val x: V){ def f[A <: T](x: A, y: (A,T)): Int }",
+      classEdgeVE.copy(
+        args = L(SClassArg(false, false, true, "x", TC("V", Nil), None)),
+        body = L(MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)),
+          L(MAs(false, L(MA("x", TC("A", Nil), None), MA("y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
+          Some(INT), false))))
   }
 
-  test("EntityModuleDef") {
+  test("SEntityModuleDef") {
+    val tpeArgA = L(STpeArg("A", None, Nil))
+    val ancObsA = L(TC("Observable", L(TC("A", Nil))))
+    val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
+    val obsImpl1 = CD("ObservableImpl1", tpeArgA, Nil, argEA, ancObsA, Nil, None, false)
+    val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
+
     testModule(
       reactiveModule,
-      EMD("scalan.rx", L(ImportStat(L("scalan","_"))), "Reactive",
-        TpeDef("Obs", L(TpeArg("A")), TC("Rep",L(TC("Observable", L(TC("A")))))),
-        TD("Observable", L(TpeArg("A")), Nil,
-          L(MD("eA",Nil,Nil,Some(TC("Elem",L(TC("A")))),isImplicit = true))),
-        L(ClassDef("ObservableImpl1", L(TpeArg("A")), L(ClassArg(true, false, true, "eA",TC("Elem",L(TC("A"))))),Nil,
-          L(TC("Observable",L(TC("A")))),Nil ),
-          ClassDef("ObservableImpl2", L(TpeArg("A")), L(ClassArg(true, false, true, "eA",TC("Elem",L(TC("A"))))),Nil,
-            L(TC("Observable",L(TC("A")))),Nil )),
+      EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
+        STpeDef("Obs", tpeArgA, TC("Rep", L(TC("Observable", L(TC("A", Nil)))))),
+        TD("Observable", tpeArgA, Nil,
+          L(MD("eA", Nil, Nil, Some(TC("Elem", L(TC("A", Nil)))), isImplicit = true)), None),
+        L(obsImpl1, obsImpl2),
         None))
   }
-
 }

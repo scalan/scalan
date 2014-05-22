@@ -31,7 +31,7 @@ object BoilerplateTool {
       ,"scalan/types/Types.scala"
       ,"scalan/linalgebra/Vectors.scala"
       ,"scalan/linalgebra/Matrices.scala"
-      ,"scalan/iterators/Iterators.scala"
+      ,"scalan/iterators/Iters.scala"
       //, "main/scala/scalan/rx/Trees.scala"
     ),
     proxyTrait = "scalan.ProxyExp",
