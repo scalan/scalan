@@ -16,3 +16,4 @@ libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value
 
 //testOptions in Test += Tests.Argument("-oD")
 
+fork in Test := true

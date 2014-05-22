@@ -139,6 +139,7 @@ trait ScalanAst {
 
 trait ScalanParsers { self: ScalanAst =>
   val settings = new Settings
+  settings.usejavacp.value = true
   val reporter = new StoreReporter
   val compiler: Global = new Global(settings, reporter)
 
