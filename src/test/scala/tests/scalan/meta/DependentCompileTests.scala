@@ -1,73 +1,44 @@
 package tests.scalan.meta
 
 import org.scalatest.FunSuite
-import scalan.meta.{Base, EntityManagement, CodegenConfig}
+import scalan.meta.{ Base, EntityManagement, CodegenConfig }
 import java.io._
 import java.nio.file.Files
+import tests.BaseTests
+import scalan.meta.BoilerplateTool
 
-class DependentCompileTests extends FunSuite {
-
-  test("Scalan-lite") {
-    val liteConfig = CodegenConfig(
-      isLite = true,
-      srcPath = "",
-      entityFiles = List(
-        "PArrays.scala",
-        "Types.scala"
-      ),
-      proxyTrait = "scalan.ProxyExp",
-      stagedViewsTrait = "scalan.ViewsExp",
-      extraImports = List(
-        "scala.reflect.runtime.universe._",
-        "scalan.common.Default.defaultVal")
-    )
-
-    compile(Base.config.getProperty("scalan-lite.assembly"), liteConfig, "src/test/scala/tests/scalan/meta/files/scalan-lite", List("PArrays.scala", "PArraysOps.scala", "Types.scala", "TypesOps.scala"))
+class DependentCompileTests extends BaseTests {
+  it("Scalan-lite") {
+    compile(Base.config.getProperty("scalan-lite.assembly"), BoilerplateTool.liteConfig,
+      new File("src/test/resources/scalan-lite"))
   }
 
-  test("Scalan") {
-    val scalanConfig = CodegenConfig(
-      isLite = false,
-      srcPath = "../scalan/src/main/scala",
-      proxyTrait = "scalan.lms.common.ProxyExp",
-      stagedViewsTrait = "scalan.staged.StagedViews",
-      entityFiles = List(
-        "Trees.scala",
-        "Matrices.scala",
-//        "Vectors.scala",
-        "Sets.scala"
-      ),
-      extraImports = List(
-        "scala.reflect.runtime.universe._",
-        "scalan.common.Common",
-        "scalan.staged.ScalanStaged",
-        "scalan.sequential.ScalanSeq")
-    )
-
-    compile(Base.config.getProperty("scalan.assembly"), scalanConfig, "src/test/scala/tests/scalan/meta/files/scalan",
-      List("Matrices.scala", "MatricesOps.scala", "Sets.scala", "SetsOps.scala", /*"Vectors.scala", "VectorsOps.scala", */"Trees.scala", "TreesOps.scala"))
+  it("Scalan") {
+    compile(Base.config.getProperty("scalan.assembly"), BoilerplateTool.scalanConfig,
+      new File("src/test/resources/scalan"))
   }
 
-  def compile(jarPath : String, config : CodegenConfig, prefixPath : String, files : List[String]) = {
-    val dir = Files.createTempDirectory("sbtTest")
+  def compile(jarPath: String, config: CodegenConfig, dir: File) = {
+    val testDir = Files.createTempDirectory("sbtTest")
+    val fileNames = dir.list.map(_.stripSuffix(".tmplt"))
     try {
-      for (fileName <- files) {
-        copy(s"$prefixPath/$fileName.tmplt", dir + s"/$fileName")
+      for (fileName <- fileNames) {
+        copy(s"$dir/$fileName.tmplt", s"$testDir/$fileName")
       }
 
-      val ctx = new EntityManagement(config)
+      val ctx = new EntityManagement(config.copy(srcPath = testDir.toString, entityFiles = fileNames.toList.filter(!_.endsWith("Ops.scala"))))
       ctx.generateAll()
 
-      writeToFile(dir + "/Makefile", s"main:\n\t\tscalac -classpath $jarPath/* *.scala impl/*.scala")
+      writeToFile(testDir + "/Makefile", s"main:\n\t\tscalac -classpath $jarPath/* *.scala impl/*.scala")
 
-      launchProcess(new File(dir.toString), "make")
-    }
-    finally {
-      launchProcess(new File(dir.toString), "rm", "-rf", dir.toString)
+      launchProcess(new File(testDir.toString), "make")
+    } finally {
+      launchProcess(new File(testDir.toString), "rm", "-rf", testDir.toString)
     }
   }
 
-  def copy(src : String, dest : String) = new FileOutputStream(dest) getChannel() transferFrom(new FileInputStream(src).getChannel, 0, Long.MaxValue)
+  def copy(src: String, dest: String) = 
+    new FileOutputStream(dest) getChannel () transferFrom (new FileInputStream(src).getChannel, 0, Long.MaxValue)
 
   protected def launchProcess(launchDir: File, commandArgs: String*) {
     val builder = new ProcessBuilder(commandArgs: _*)
