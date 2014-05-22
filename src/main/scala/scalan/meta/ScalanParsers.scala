@@ -130,9 +130,7 @@ trait ScalanAst {
       }
       val classes = getConcreteClasses(defs)
 
-      val extraImports = config.extraImports.map(i => SImportStat(i))
-
-      SEntityModuleDef(packageName, imports ++ extraImports, moduleName, typeSyn, opsTrait, classes, moduleTrait.selfType)
+      SEntityModuleDef(packageName, imports, moduleName, typeSyn, opsTrait, classes, moduleTrait.selfType)
     }
   }
 }
@@ -167,101 +165,6 @@ trait ScalanParsers { self: ScalanAst =>
     throw new ParseException(msg, offset)
   }
 
-  //  def wrapIfMany[A <: STpeExpr, B <: STpeExpr](w: List[A] => B, xs: List[A]): STpeExpr = {
-  //    val sz = xs.size
-  //    assert(sz >= 1)
-  //    if (sz > 1) w(xs) else xs.head
-  //  }
-  //
-  //  val keywords = Set("def", "trait", "type", "class", "abstract", "with")
-  //  
-  //  val op = """[!#%&*+-/:<=>?@\^|~]*""".r
-  //
-  //  lazy val scalanIdent = (ident | op) ^? ({ case s if !keywords.contains(s) => s }, s => s"Keyword $s cannot be used as identifier")
-  //
-  //  lazy val bracedIdentList = "{" ~> rep1sep(scalanIdent, ",") <~ "}" ^^ { case xs => xs.mkString("{", ",", "}") }
-  //
-  //  lazy val qualId = rep1sep(scalanIdent | bracedIdentList, ".")
-  //
-  //  lazy val extendsList = "extends" ~> rep1sep(traitCall, "with")
-  //
-  //  lazy val tpeBase: Parser[STpeExpr] = "Int" ^^^ { STpeInt } |
-  //    "Boolean" ^^^ { STpeBoolean } |
-  //    "Float" ^^^ { STpeFloat } |
-  //    "String" ^^^ { STpeString } |
-  //    traitCall
-  //
-  //  lazy val tpeFactor = tpeBase | "(" ~> tpeSExpr <~ ")"
-  //
-  //  lazy val tpeFunc = rep1sep(tpeFactor, "=>") ^^ { wrapIfMany(STpeFunc, _) }
-  //
-  //  lazy val tpeTuple = "(" ~> rep1sep(tpeFunc, ",") <~ ")" ^^ { wrapIfMany(STpeTuple, _) }
-  //
-  //  lazy val tpeSExpr: Parser[STpeExpr] = opt("@uncheckedVariance") ~> rep1sep(tpeTuple | tpeFunc, "|") <~ opt("@uncheckedVariance") ^^ { wrapIfMany(STpeSum, _) }
-  //
-  //  lazy val traitCallArgs = "[" ~> rep1sep(tpeSExpr, ",") <~ "]"
-  //
-  //  lazy val traitCall = scalanIdent ~ opt(traitCallArgs) ^^ {
-  //    case n ~ None => STraitCall(n)
-  //    case n ~ Some(ts) => STraitCall(n, ts)
-  //  }
-  //
-  //  lazy val methodArg = (scalanIdent <~ ":") ~ tpeSExpr ^^ { case n ~ t => SMethodArg(n, t, None) }
-  //  lazy val methodArgs = rep("(" ~> opt("implicit") ~ rep1sep(methodArg, ",") <~ ")")
-  //
-  //  lazy val classArg = opt("implicit") ~ opt("override") ~ opt("val") ~ scalanIdent ~ (":" ~> tpeSExpr) ^^ {
-  //    case imp ~ over ~ value ~ n ~ t =>
-  //      SClassArg(imp.isDefined, over.isDefined, value.isDefined, n, t, None)
-  //  }
-  //  lazy val classArgs = "(" ~> rep1sep(classArg, ",") <~ ")"
-  //
-  //  lazy val noBraces = "[^{}]+".r
-  //  lazy val balancedBraces: Parser[Unit] = "{" ~> rep(noBraces | balancedBraces) <~ "}" ^^^ { () }
-  //  lazy val methodBody = "???" | balancedBraces
-  //
-  //  lazy val methodDef = (opt("implicit") <~ "def") ~ scalanIdent ~ opt(tpeArgs) ~ methodArgs ~ opt(":" ~> tpeSExpr) ~ opt("=" ~> methodBody) ^^ {
-  //    case implicitModifier ~ n ~ targs ~ args ~ tres ~ _ =>
-  //      SMethodDef(n, targs.toList.flatten, args.map { case i ~ args => SMethodArgs(i.isDefined, args) }, tres, implicitModifier.isDefined)
-  //  }
-  //  
-  //  lazy val valDef = opt("implicit") ~ (opt("lazy") <~ "val") ~ scalanIdent ~ opt(":" ~> tpeSExpr) ~ opt("=" ~> methodBody) ^^ {
-  //    case implicitMod ~ lazyMod ~ name ~ tpe ~ _ =>
-  //      SValDef(name, tpe, lazyMod.isDefined, implicitMod.isDefined)
-  //  }
-  //
-  //  lazy val importStat = "import" ~> qualId <~ opt(";") ^^ { case ns => SImportStat(ns) }
-  //
-  //  lazy val tpeDef = "type" ~> scalanIdent ~ opt(tpeArgs) ~ ("=" ~> tpeSExpr <~ opt(";")) ^^ {
-  //    case n ~ targs ~ rhs => STpeDef(n, targs.toList.flatten, rhs)
-  //  }
-  //
-  //  lazy val bodyItem: Parser[SBodyItem] =
-  //    methodDef |
-  //    valDef |
-  //    importStat |
-  //    tpeDef |
-  //    traitDef |
-  //    classDef |
-  //    objectDef
-  //
-  //  lazy val bodyItems = rep(bodyItem)
-  //
-  //  lazy val selfType = (scalanIdent <~ ":") ~ (tpeSExpr <~ "=>") ^^ { case n ~ t => SSelfTypeDef(n, List(t)) }
-  //
-  //  lazy val traitBody = "{" ~> opt(selfType) ~ opt(bodyItems) <~ "}" ^^ {
-  //    case self ~ body => (self, body.toList.flatten)
-  //  }
-  //
-  //  lazy val classDef: Parser[SClassDef] =
-  //    opt("abstract") ~ ("class" ~> scalanIdent) ~ opt(tpeArgs) ~ opt(classArgs) ~ opt(classArgs) ~ opt(extendsList) ~ opt(traitBody) ^^ {
-  //      case abs ~ n ~ targs ~ args ~ impArgs ~ ancs ~ body =>
-  //        SClassDef(n, targs.flatList, args.flatList, impArgs.flatList, ancs.flatList, body.map(_._2).flatList, body.map(_._1).flatten, abs.isDefined)
-  //    }
-  //  
-  //  lazy val objectDef: Parser[SObjectDef] =
-  //    ("object" ~> scalanIdent) ~ opt(extendsList) ~ opt("{" ~> opt(bodyItems) <~ "}") ^^ {
-  //      case n ~ ancs ~ body =>
-  //        SObjectDef(n, ancs.flatList, body.flatten.flatList)
   def config: CodegenConfig
 
   def parseEntityModule(filePath: String) = {
@@ -276,10 +179,10 @@ trait ScalanParsers { self: ScalanAst =>
   }
 
   def entityModule(pdTree: PackageDef) = {
-    val packageName = pdTree.name.toString
+    val packageName = pdTree.pid.toString
     val statements = pdTree.stats
     val imports = statements.collect {
-      case i: Import => SImportStat(i.toString)
+      case i: Import => importStat(i)
     }
     val moduleTraitTree = statements.collect {
       case cd: ClassDef if cd.mods.isTrait => cd
@@ -291,18 +194,49 @@ trait ScalanParsers { self: ScalanAst =>
     SEntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait, config)
   }
 
+  def importStat(i: Import): SImportStat = {
+    SImportStat(i.toString.stripPrefix("import "))
+  }
+
+  def isEvidenceParam(vd: ValDef) = vd.name.toString.startsWith("evidence$")
+
+  def tpeArgs(typeParams: List[TypeDef], possibleImplicits: List[ValDef]): List[STpeArg] = {
+    val evidenceTypes = possibleImplicits.filter(isEvidenceParam(_)).map(_.tpt)
+
+    def tpeArg(tdTree: TypeDef): STpeArg = {
+      val bound = tdTree.rhs match {
+        case TypeBoundsTree(low, high) =>
+          if (high.toString == "_root_.scala.Any")
+            None
+          else
+            optTpeExpr(high)
+        case _ => ???(tdTree)
+      }
+      val contextBounds = evidenceTypes.collect {
+        case AppliedTypeTree(tpt, List(arg)) if arg.toString == tdTree.name.toString =>
+          tpt.toString
+        case _ => ???(tdTree)
+      }
+      STpeArg(tdTree.name, bound, contextBounds)
+    }
+
+    typeParams.map(tpeArg)
+  }
+
+  // exclude default parent
+  def ancestors(trees: List[Tree]) = trees.map(traitCall).filter(_.name != "AnyRef")
+
   def traitDef(td: ClassDef): STraitDef = {
-    val tpeArgs = td.tparams.map(tpeArg)
-    val ancestors = td.impl.parents.map(traitCall)
+    val tpeArgs = this.tpeArgs(td.tparams, Nil)
+    val ancestors = this.ancestors(td.impl.parents)
     val body = td.impl.body.flatMap(optBodyItem)
     val selfType = this.selfType(td.impl.self)
     STraitDef(td.name, tpeArgs, ancestors, body, selfType)
   }
 
   def classDef(cd: ClassDef): SClassDef = {
-    val tpeArgs = cd.tparams.map(tpeArg)
-    val ancestors = cd.impl.parents.map(traitCall)
-    val constructor = (cd.impl.children.collect {
+    val ancestors = this.ancestors(cd.impl.parents)
+    val constructor = (cd.impl.body.collect {
       case dd: DefDef if dd.name == nme.CONSTRUCTOR => dd
     }) match {
       case Seq(only) => only
@@ -318,13 +252,14 @@ trait ScalanParsers { self: ScalanAst =>
         (classArgs(nonImplConArgs), classArgs(implConArgs))
       case seq => !!!(s"Constructor of class ${cd.name} has more than 2 parameter lists, not supported")
     }
-    val body = cd.impl.body.flatMap(optBodyItem)
+    val tpeArgs = this.tpeArgs(cd.tparams, constructor.vparamss.lastOption.getOrElse(Nil))
+    val body = cd.impl.body.filter(member => member != constructor).flatMap(optBodyItem)
     val selfType = this.selfType(cd.impl.self)
     val isAbstract = cd.mods.hasAbstractFlag
     SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, isAbstract)
   }
 
-  def classArgs(vds: List[ValDef]): SClassArgs = vds.map(classArg)
+  def classArgs(vds: List[ValDef]): SClassArgs = vds.filter(!isEvidenceParam(_)).map(classArg)
 
   def classArg(vd: ValDef): SClassArg = {
     val tpe = tpeExpr(vd.tpt)
@@ -345,10 +280,12 @@ trait ScalanParsers { self: ScalanAst =>
   }
 
   def optBodyItem(tree: Tree): Option[SBodyItem] = tree match {
+    case i: Import =>
+      Some(importStat(i))
     case md: DefDef =>
       Some(methodDef(md))
     case td: TypeDef =>
-      val tpeArgs = td.tparams.map(tpeArg)
+      val tpeArgs = this.tpeArgs(td.tparams, Nil)
       val rhs = tpeExpr(td.rhs)
       Some(STpeDef(td.name, tpeArgs, rhs))
     case td: ClassDef if td.mods.isTrait =>
@@ -356,18 +293,22 @@ trait ScalanParsers { self: ScalanAst =>
     case cd: ClassDef if !cd.mods.isTrait => // isClass doesn't exist
       Some(classDef(cd))
     case vd: ValDef =>
-      val tpeRes = optTpeExpr(vd.tpt)
-      val isImplicit = vd.mods.isImplicit
-      val isLazy = vd.mods.isLazy
-      Some(SValDef(vd.name, tpeRes, isImplicit, isLazy))
+      if (!vd.mods.isParamAccessor) {
+        val tpeRes = optTpeExpr(vd.tpt)
+        val isImplicit = vd.mods.isImplicit
+        val isLazy = vd.mods.isLazy
+        Some(SValDef(vd.name, tpeRes, isImplicit, isLazy))
+      } else
+        None
     case EmptyTree =>
       None
     case tree => ???(tree)
   }
 
   def methodDef(md: DefDef) = {
-    val tpeArgs = md.tparams.map(tpeArg)
-    val args = md.vparamss.map(methodArgs)
+    val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
+    val args0 = md.vparamss.map(methodArgs)
+    val args = if (!args0.isEmpty && args0.last.args.isEmpty) args0.init else args0
     val tpeRes = optTpeExpr(md.tpt)
     val isImplicit = md.mods.isImplicit
     SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit)
@@ -377,7 +318,7 @@ trait ScalanParsers { self: ScalanAst =>
     case Nil => SMethodArgs(false, List.empty)
     case vd :: _ =>
       val isImplicit = vd.mods.isImplicit
-      SMethodArgs(isImplicit, vds.map(methodArg))
+      SMethodArgs(isImplicit, vds.filter(!isEvidenceParam(_)).map(methodArg))
   }
 
   def optTpeExpr(tree: Tree): Option[STpeExpr] = {
@@ -439,21 +380,6 @@ trait ScalanParsers { self: ScalanAst =>
     else
       // TODO doesn't handle "with" correctly
       Some(SSelfTypeDef(vd.name, List(tpeExpr(vd.tpt))))
-  }
-
-  def tpeArg(tdTree: TypeDef): STpeArg = {
-    val bound = tdTree.rhs match {
-      case TypeBoundsTree(low, high) =>
-        // TODO lower bound currently ignored
-        optTpeExpr(high)
-      case _ => ???(tdTree)
-    }
-    val contextBound = tdTree.rhs match {
-      case TypeBoundsTree(_, _) =>
-        List.empty
-      case _ => ???(tdTree)
-    }
-    STpeArg(tdTree.name, bound, contextBound)
   }
 }
 

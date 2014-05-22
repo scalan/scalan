@@ -325,7 +325,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       |package ${module.packageName}
       |package impl
       |
-      |${module.imports.rep(i => s"import ${i.name}", "\n")}
+      |${(module.imports ++ config.extraImports.map(SImportStat(_))).rep(i => s"import ${i.name}", "\n")}
       |""".stripMargin
     }
 

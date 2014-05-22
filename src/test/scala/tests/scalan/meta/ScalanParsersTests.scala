@@ -150,21 +150,6 @@ class ScalanParsersTests extends BaseTests {
       |}
     """.stripMargin
 
-  val reactiveModule =
-    """package scalan.rx
-      |import scalan._
-      |trait Reactive extends ScalanDsl {
-      |  type Obs[A] = Rep[Observable[A]]
-      |  trait Observable[A] {
-      |    implicit def eA: Elem[A]
-      |  }
-      |  class ObservableImpl1[A](implicit val eA: Elem[A]) extends Observable[A] {
-      |  }
-      |  class ObservableImpl2[A](implicit val eA: Elem[A]) extends Observable[A] {
-      |  }
-      |}
-    """.stripMargin
-
   describe("SClassDef") {
     val classA =
       CD("A", Nil, Nil, Nil, Nil, Nil, None, false)
@@ -185,6 +170,21 @@ class ScalanParsersTests extends BaseTests {
   }
 
   describe("SEntityModuleDef") {
+    val reactiveModule =
+      """package scalan.rx
+      |import scalan._
+      |trait Reactive extends ScalanDsl {
+      |  type Obs[A] = Rep[Observable[A]]
+      |  trait Observable[A] {
+      |    implicit def eA: Elem[A]
+      |  }
+      |  class ObservableImpl1[A](implicit val eA: Elem[A]) extends Observable[A] {
+      |  }
+      |  class ObservableImpl2[A](implicit val eA: Elem[A]) extends Observable[A] {
+      |  }
+      |}
+    """.stripMargin
+
     val tpeArgA = L(STpeArg("A", None, Nil))
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
