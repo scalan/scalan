@@ -108,11 +108,11 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |    lazy val defaultRep = defaultVal($entityName)
         |  }
         |
-        |  trait ${companionName}Abs extends ${companionName}Ops
+        |  trait ${companionName}Abs extends ${companionName}
         |  def $entityName: Rep[${companionName}Abs]
         |  implicit def defaultOf$entityName[$typesWithElems]: Default[Rep[$entityName[$types]]] = $entityName.defaultOf[$types]
-        |  implicit def proxy$companionName(p: Rep[${companionName}Ops]): ${companionName}Ops = {
-        |    proxyOps[${companionName}Ops](p, Some(true))
+        |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} = {
+        |    proxyOps[${companionName}](p, Some(true))
         |  }
         |""".stripMargin
         
@@ -177,8 +177,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |    lazy val defaultRep = defaultVal($className)
         |  }""".stripMargin)}
         |
-        |  implicit def proxy$className[$typesWithElems](p: Rep[$className[$types]]): ${className}Ops[$types] = {
-        |    proxyOps[${className}Ops[$types]](p)
+        |  implicit def proxy$className[$typesWithElems](p: Rep[$className[$types]]): ${className}[$types] = {
+        |    proxyOps[${className}[$types]](p)
         |  }
         |
         |  implicit class Extended$className[$types](p: Rep[$className[$types]])($implicitArgs) {
