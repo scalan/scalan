@@ -3,14 +3,17 @@
  */
 package scalan
 
-import java.lang.{ reflect => jreflect }
-import scalan.staged.{ BaseExp }
-import scalan.common.Lazy
+import java.lang.reflect.Method
+
 import scala.reflect.ClassTag
-import net.sf.cglib.proxy.Enhancer
+
 import org.objenesis.ObjenesisStd
-import net.sf.cglib.proxy.InvocationHandler
+
+import net.sf.cglib.proxy.Enhancer
 import net.sf.cglib.proxy.Factory
+import net.sf.cglib.proxy.InvocationHandler
+import scalan.common.Lazy
+import scalan.staged.BaseExp
 
 trait ProxyBase { self: Scalan =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops
@@ -28,7 +31,7 @@ trait ProxySeq extends ProxyBase { self: ScalanSeq =>
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
-  case class MethodCall[T](receiver: Exp[Any], method: jreflect.Method, args: List[AnyRef])(implicit leT: LElem[T]) extends Def[T] {
+  case class MethodCall[T](receiver: Exp[Any], method: Method, args: List[AnyRef])(implicit leT: LElem[T]) extends Def[T] {
     def selfType = leT.value
     def uniqueOpId = s"$name:${method.getName}"
     override def mirror(t: Transformer) =
@@ -70,7 +73,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
   class ExpInvocationHandler(receiver: Exp[Any], forceInvoke: Option[Boolean]) extends InvocationHandler {
 
-    def invoke(proxy: AnyRef, m: jreflect.Method, _args: Array[AnyRef]) = {
+    def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) scala.Array.empty[AnyRef] else _args
       receiver match {
         case Def(d) => { // call method of the node
@@ -86,7 +89,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
       }
     }
 
-    def invokeMethodOfVar(m: jreflect.Method, args: Array[AnyRef]) = {
+    def invokeMethodOfVar(m: Method, args: Array[AnyRef]) = {
       /* If invoke is enabled or current method has arg of type <function> - do not create methodCall */
       methodCallReceivers.contains(receiver) || (!((invokeEnabled || forceInvoke.getOrElse(false)) || hasFuncArg(args))) match {
         case true =>
@@ -107,28 +110,22 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
       }
     }
 
-    def createMethodCall(m: jreflect.Method, args: Array[AnyRef]): Exp[Any] = {
-      val resultElem = Lazy(getResultElem(m, args))
-      reifyObject(MethodCall[AnyRef](
-        receiver, m, args.toList)(resultElem))(resultElem)
+    def createMethodCall(m: Method, args: Array[AnyRef]): Exp[_] = {
+      getResultElem(m, args) match {
+        case e: Elem[a] =>
+          val resultElem = Lazy(e)
+          reifyObject(MethodCall[a](
+            receiver, m, args.toList)(resultElem))(resultElem)
+      }
     }
 
-    //    def getRecieverElem: ViewElem[Any,Any] = receiver.elem match {
-    //      case e: ViewElem[_,_] => e.asInstanceOf[ViewElem[Any,Any]]
-    //      case _ =>
-    //        !!!("Receiver with ViewElem expected", receiver)
-    //    }
-
-    def getResultElem(m: jreflect.Method, args: Array[AnyRef]): Elem[AnyRef] = {
-      val e = receiver.elem //getRecieverElem
-      val zero = e match {
-        case ve: ViewElem[_, _] => ve.iso.defaultRepTo.value
-        case _ => e.defaultRepValue
-      }
+    def getResultElem(m: Method, args: Array[AnyRef]): Elem[_] = {
+      val e = receiver.elem
+      val zero = e.defaultRepValue
       val Def(zeroNode) = zero
       val res = m.invoke(zeroNode, args: _*)
       res match {
-        case s: Exp[_] => s.asInstanceOf[Exp[AnyRef]].elem
+        case s: Exp[_] => s.elem
         case other => ???(s"don't know how to get result elem for $other")
       }
     }
