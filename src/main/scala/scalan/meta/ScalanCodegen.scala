@@ -150,7 +150,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  }
         |  // 4) constructor and deconstructor
         |${if (isLite)
-        s"  trait ${className}CompanionAbs extends ${className}CompanionOps {"
+        s"  trait ${className}CompanionAbs extends ${className}Companion {"
         else
         s"  object ${className} extends ${className}Companion {"}
         |${(fields.length != 1).opt(s"""

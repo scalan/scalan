@@ -4,12 +4,13 @@
  */
 package scalan.meta
 
-import java.text.ParseException
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
 import scala.tools.nsc.interactive.Response
 import scala.language.implicitConversions
+import scala.reflect.internal.util.RangePosition
+import scala.reflect.internal.util.OffsetPosition
 
 trait ScalanAst {
 
@@ -47,8 +48,7 @@ trait ScalanAst {
   }
 
   // SExpr universe --------------------------------------------------------------------------
-  abstract class SExpr
-  case class SMethodCall(obj: SExpr, name: String, args: List[SExpr]) extends SExpr
+  case class SExpr(expr: String)
 
   // SBodyItem universe ----------------------------------------------------------------------
   abstract class SBodyItem
@@ -126,7 +126,7 @@ trait ScalanAst {
         // constructor
         case (_: SMethodDef) :: (ts: STpeDef) :: (ot: STraitDef) :: _ => (ts, ot)
         case _ =>
-          throw new ParseException(s"Invalid syntax of Entity module trait $moduleName:\n${defs.mkString("\n")}", 0)
+          throw new IllegalStateException(s"Invalid syntax of Entity module trait $moduleName:\n${defs.mkString("\n")}")
       }
       val classes = getConcreteClasses(defs)
 
@@ -148,21 +148,31 @@ trait ScalanParsers { self: ScalanAst =>
     def flatList: List[A] = opt.toList.flatten
   }
 
+  private def positionString(tree: Tree) = {
+    tree.pos match {
+      case pos: RangePosition =>
+        val path = pos.source.file.canonicalPath
+        s"file $path at ${pos.line}:${pos.column} (start ${pos.point - pos.start} before, end ${pos.end - pos.point} after)"
+      case pos: OffsetPosition =>
+        val path = pos.source.file.canonicalPath
+        s"file $path at ${pos.line}:${pos.column}"
+      case pos => pos.toString
+    }
+  }
+
   def !!!(msg: String, tree: Tree) = {
-    // TODO better position reporting
-    throw new ParseException(msg, tree.pos.startOrPoint)
+    val fullMsg = s"$msg at ${positionString(tree)}"
+    throw new IllegalStateException(fullMsg)
   }
 
   def !!!(msg: String) = {
-    // TODO better position reporting
-    throw new ParseException(msg, -1)
+    throw new IllegalStateException(msg)
   }
 
   def ???(tree: Tree) = {
     val pos = tree.pos
-    val msg = s"Unhandled case at $pos:\n${showRaw(tree)}\n\nIn code: $tree"
-    val offset = if (pos.isDefined) pos.startOrPoint else -1
-    throw new ParseException(msg, offset)
+    val msg = s"Unhandled case in ${positionString(tree)}:\nAST: ${showRaw(tree)}\n\nCode for AST: $tree"
+    throw new IllegalStateException(msg)
   }
 
   def config: CodegenConfig
@@ -214,9 +224,9 @@ trait ScalanParsers { self: ScalanAst =>
       }
       val contextBounds = evidenceTypes.collect {
         case AppliedTypeTree(tpt, List(arg)) if arg.toString == tdTree.name.toString =>
-          tpt.toString
-        case _ => ???(tdTree)
-      }
+          Some(tpt.toString)
+        case _ => None
+      }.flatten
       STpeArg(tdTree.name, bound, contextBounds)
     }
 
@@ -253,10 +263,16 @@ trait ScalanParsers { self: ScalanAst =>
       case seq => !!!(s"Constructor of class ${cd.name} has more than 2 parameter lists, not supported")
     }
     val tpeArgs = this.tpeArgs(cd.tparams, constructor.vparamss.lastOption.getOrElse(Nil))
-    val body = cd.impl.body.filter(member => member != constructor).flatMap(optBodyItem)
+    val body = cd.impl.body.flatMap(optBodyItem)
     val selfType = this.selfType(cd.impl.self)
     val isAbstract = cd.mods.hasAbstractFlag
     SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, isAbstract)
+  }
+
+  def objectDef(od: ModuleDef): SObjectDef = {
+    val ancestors = this.ancestors(od.impl.parents)
+    val body = od.impl.body.flatMap(optBodyItem)
+    SObjectDef(od.name, ancestors, body)
   }
 
   def classArgs(vds: List[ValDef]): SClassArgs = vds.filter(!isEvidenceParam(_)).map(classArg)
@@ -283,7 +299,10 @@ trait ScalanParsers { self: ScalanAst =>
     case i: Import =>
       Some(importStat(i))
     case md: DefDef =>
-      Some(methodDef(md))
+      if (md.name != nme.CONSTRUCTOR)
+        Some(methodDef(md))
+      else
+        None
     case td: TypeDef =>
       val tpeArgs = this.tpeArgs(td.tparams, Nil)
       val rhs = tpeExpr(td.rhs)
@@ -292,6 +311,8 @@ trait ScalanParsers { self: ScalanAst =>
       Some(traitDef(td))
     case cd: ClassDef if !cd.mods.isTrait => // isClass doesn't exist
       Some(classDef(cd))
+    case od: ModuleDef =>
+      Some(objectDef(od))
     case vd: ValDef =>
       if (!vd.mods.isParamAccessor) {
         val tpeRes = optTpeExpr(vd.tpt)
@@ -322,10 +343,11 @@ trait ScalanParsers { self: ScalanAst =>
   }
 
   def optTpeExpr(tree: Tree): Option[STpeExpr] = {
-    if (tree.isEmpty)
-      None
-    else
-      Some(tpeExpr(tree))
+    tree match {
+      case _ if tree.isEmpty => None
+      case _: ExistentialTypeTree => None
+      case tree => Some(tpeExpr(tree))
+    }
   }
 
   def tpeExpr(tree: Tree): STpeExpr = tree match {
@@ -365,7 +387,7 @@ trait ScalanParsers { self: ScalanAst =>
   }
 
   def expr(tree: Tree): SExpr = tree match {
-    case tree => ???(tree)
+    case tree => SExpr(tree.toString)
   }
 
   def methodArg(vd: ValDef): SMethodArg = {
