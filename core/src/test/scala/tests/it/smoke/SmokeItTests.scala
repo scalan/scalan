@@ -25,6 +25,10 @@ abstract class SmokeItTests extends ItTests {
       val x1 = x.map {y:Rep[Int] => y+1}
       x1
     }
+    lazy val simpleMapNested = fun {x: Rep[(Array[Array[Double]], Int)] =>
+      val x1 = x._1.map {y:Rep[Array[Double]] => y(x._2)}
+      x1
+    }
     lazy val simpleZip = fun {x: Rep[Array[Int]] =>
       val x1 = x.map {y:Rep[Int] => y+2}
       x1 zip x

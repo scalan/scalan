@@ -140,8 +140,8 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
                   (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
               }
             }
-            case scalan.ArrayApply(xs, ind) => {
-              scalan.createManifest(xs.elem) match {
+            case apply@scalan.ArrayApply(xs, ind) => {
+              scalan.createManifest(apply.eT) match {
                 case (mA:Manifest[a]) =>
                   val xs_ = symMirr(xs).asInstanceOf[lFunc.Exp[Array[a]]]
                   val ind_ = symMirr(ind).asInstanceOf[lFunc.Exp[Int]]

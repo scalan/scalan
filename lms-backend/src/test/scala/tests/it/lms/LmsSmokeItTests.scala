@@ -33,27 +33,32 @@ class LmsSmokeItTests extends SmokeItTests {
     progSeq.simpleMap(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.simpleMap, progStaged.simpleMap)("simpleMap", in)
   }
-  test("test3simpleZip") {
+  test("test3simpleMapNested") {
+    val (in, out) = (Array(Array(2.0,3.0), Array(3.0,4.0)), 1) -> Array(3.0,4.0)
+    progSeq.simpleMapNested(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.simpleMapNested, progStaged.simpleMapNested)("simpleMapNested", in)
+  }
+  test("test4simpleZip") {
     val (in, out) = Array(2,3) -> Array((4,2), (5,3))
     progSeq.simpleZip(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.simpleZip, progStaged.simpleZip)("simpleZip", in)
   }
-  test("test4simpleZipWith") {
+  test("test5simpleZipWith") {
     val (in, out) = Array(2,3) -> Array(10,18)
     progSeq.simpleZipWith(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.simpleZipWith, progStaged.simpleZipWith)("simpleZipWith", in)
   }
-  test("test5simpleReduce") {
+  test("test6simpleReduce") {
     val (in, out) = Array(2,3) -> 5
     progSeq.simpleReduce(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.simpleReduce, progStaged.simpleReduce)("simpleReduce", in)
   }
-  test("test6mvMul") {
+  test("test7mvMul") {
     val (in, out) = (Array(Array(2,3), Array(4,5)), Array(6,7))  -> Array(33,59)
     progSeq.mvMul(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.mvMul, progStaged.mvMul)("mvMul", in)
   }
-  test("test7expBaseArrays") {
+  test("test8expBaseArrays") {
     val (in, out) = Array(Array(2,3), Array(4,5)) ->  Array(Array(2,3), Array(4,5))
     progSeq.expBaseArrays(in) should be(out)
     lmsTestRun(progSeq, progStaged)(progSeq.expBaseArrays, progStaged.expBaseArrays)("expBaseArrays", in)

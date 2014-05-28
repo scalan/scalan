@@ -147,7 +147,6 @@ class LmsMmmItTests extends LmsLinAlgItTests {
   import scala.Array
 
   test("ddmmm") {
-    pending
     val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val in = Pair(inM1, inM2)
