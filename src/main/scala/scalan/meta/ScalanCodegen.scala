@@ -80,6 +80,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       case STpeString => "\"\""
       case STraitCall(name, args) => s"element[$t].${if (isLite) "defaultRepValue" else "zero.value"}"
       case STpeTuple(items) => pairify(items.map(zeroSExpr))
+      case STpeFunc(domain, range) => s"""fun { (x: Rep[${domain}]) => ${zeroSExpr(range)} }"""
       case t => throw new IllegalArgumentException(s"Can't generate zero value for $t")
     }
     
