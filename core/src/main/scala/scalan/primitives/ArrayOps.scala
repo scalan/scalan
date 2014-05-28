@@ -243,14 +243,16 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
         }
       case ArrayMap(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
       case ArrayMap(Def(d2), f: Rep[Function1[a, b]] @unchecked) =>
-        val f1 = f.asRep[a => b]
-        implicit val eA = f1.elem.ea
-        implicit val eB = f1.elem.eb
         d2.asInstanceOf[Def[Array[a]]] match {
-          case ArrayMap(xs, g) =>
-            xs.map { x => f1(g(x)) }
+          case ArrayMap(xs: Rep[Array[c]] @unchecked, g) =>
+            val xs1 = xs.asRep[Array[c]]
+            val g1 = g.asRep[c => a]
+            implicit val eB = f.elem.eb
+            implicit val eC = xs.elem.ea
+            xs1.map { x => f(g1(x)) }
           case ArrayReplicate(length, x) =>
-            Array.replicate(length, f1(x))
+            implicit val eB = f.elem.eb
+            Array.replicate(length, f(x))
           case _ =>
             super.rewrite(d)
         }
