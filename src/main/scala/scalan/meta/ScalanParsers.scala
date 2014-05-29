@@ -67,7 +67,9 @@ trait ScalanAst {
   case class SClassArg(impFlag: Boolean, overFlag: Boolean, valFlag: Boolean, name: String, tpe: STpeExpr, default: Option[SExpr])
   type SClassArgs = List[SClassArg]
 
-  case class SSelfTypeDef(name: String, components: List[STpeExpr])
+  case class SSelfTypeDef(name: String, components: List[STpeExpr]) {
+    def tpe = components.mkString(" with ")
+  }
 
   case class STraitDef(
     name: String,
