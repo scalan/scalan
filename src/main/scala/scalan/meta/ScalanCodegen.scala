@@ -122,9 +122,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
       val defs = for { c <- module.concreteSClasses } yield {
         val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes, traitWithTypes) = getSClassTemplateData(c)
-        val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
+        val implicitArgs = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
         val useImplicits = c.implicitArgs.opt(args => args.map(_.name).rep(all))
-        val wrappedImplicitArgs = if (implicitArgs.length > 0) s"(${implicitArgs})" else ""
         val wrappedTypes = if (types.length > 0) s"[${types}]" else ""
         val wrappedUseImplicits = if (useImplicits.length > 0) s"(${useImplicits})" else ""
         val wrappedTypesWithElems = if (typesWithElems.length > 0) s"[${typesWithElems}]" else ""
@@ -136,7 +135,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  type ${className}Data${wrappedTypes} = ${dataType(fieldTypes)}
         |
         |  // 3) Iso for concrete class
-        |  abstract class ${className}Iso${wrappedTypes}${wrappedImplicitArgs}
+        |  abstract class ${className}Iso${wrappedTypes}${implicitArgs}
         |    extends Iso[${className}Data${wrappedTypes}, $className${wrappedTypes}] {
         |    override def from(p: Rep[$className${wrappedTypes}]) =
         |      unmk${className}(p) match {
@@ -159,14 +158,14 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         else
         s"  object ${className} extends ${className}Companion {"}
         |${(fields.length != 1).opt(s"""
-        |    def apply${wrappedTypes}(p: Rep[${className}Data${wrappedTypes}])${wrappedImplicitArgs}: Rep[$className${wrappedTypes}] =
+        |    def apply${wrappedTypes}(p: Rep[${className}Data${wrappedTypes}])${implicitArgs}: Rep[$className${wrappedTypes}] =
         |      iso$className${wrappedUseImplicits}.to(p)""".stripMargin)
         }${(!isLite).opt(s"""
-        |    def apply${wrappedTypes}(p: $traitWithTypes)${wrappedImplicitArgs}: Rep[$className${wrappedTypes}]] =
+        |    def apply${wrappedTypes}(p: $traitWithTypes)${implicitArgs}: Rep[$className${wrappedTypes}]] =
         |      mk$className(${fields.rep(f => s"p.$f")})
         |""".stripMargin)}
         |    def apply${wrappedTypes}
-        |          (${fieldsWithType.rep(all)})${wrappedImplicitArgs}: Rep[$className${wrappedTypes}] =
+        |          (${fieldsWithType.rep(all)})${implicitArgs}: Rep[$className${wrappedTypes}] =
         |      mk$className(${fields.rep(all)})
         |    def unapply${wrappedTypesWithElems}(p: Rep[$className${wrappedTypes}]) = unmk$className(p)
         |  }
@@ -186,15 +185,15 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |    proxyOps[${className}${wrappedTypes}](p)
         |  }
         |
-        |  implicit class Extended$className${wrappedTypes}(p: Rep[$className${wrappedTypes}])${wrappedImplicitArgs} {
+        |  implicit class Extended$className${wrappedTypes}(p: Rep[$className${wrappedTypes}])${implicitArgs} {
         |    def toData: Rep[${className}Data${wrappedTypes}] = iso$className${wrappedUseImplicits}.from(p)
         |  }
         |
         |  // 5) implicit resolution of Iso
-        |  implicit def iso$className${wrappedTypes}${wrappedImplicitArgs}: Iso[${className}Data${wrappedTypes}, $className${wrappedTypes}]
+        |  implicit def iso$className${wrappedTypes}${implicitArgs}: Iso[${className}Data${wrappedTypes}, $className${wrappedTypes}]
         |
         |  // 6) smart constructor and deconstructor
-        |  def mk$className${wrappedTypes}(${fieldsWithType.rep(all)})${wrappedImplicitArgs}: Rep[$className${wrappedTypes}]
+        |  def mk$className${wrappedTypes}(${fieldsWithType.rep(all)})${implicitArgs}: Rep[$className${wrappedTypes}]
         |  def unmk$className${wrappedTypesWithElems}(p: Rep[$className${wrappedTypes}]): Option[(${fieldTypes.rep(t => s"Rep[$t]")})]
         |""".stripMargin
       }
@@ -213,7 +212,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
     def getSClassSeq(c: SClassDef) = {
       val (className, types, typesWithElems, fields, fieldsWithType, _, traitWithTypes) = getSClassTemplateData(c)
       val wrappedTypes = if (types.length > 0) s"[${types}]" else ""
-      val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
+      val implicitArgs = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
       val implicitSignature = c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")
       val wrappedImplicitSignature = if (implicitSignature.length > 0) s"(implicit ${implicitSignature})" else ""
       val wrappedTypesWithElems = if (typesWithElems.length > 0) s"[${typesWithElems}]" else ""
@@ -233,7 +232,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |""".stripMargin
       val isoDefs =
         s"""
-         |  implicit def iso$className${wrappedTypes}($implicitArgs):Iso[${className}Data${wrappedTypes}, $className${wrappedTypes}] =
+         |  implicit def iso$className${wrappedTypes}$implicitArgs:Iso[${className}Data${wrappedTypes}, $className${wrappedTypes}] =
          |    new ${className}Iso${wrappedTypes} { i =>
          |      // should use i as iso reference
          |      lazy val eTo =
@@ -244,7 +243,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       val constrDefs =
         s"""
          |  def mk$className${wrappedTypes}
-         |      (${fieldsWithType.rep(all)})($implicitArgs) =
+         |      (${fieldsWithType.rep(all)})$implicitArgs =
          |      new Seq$className${wrappedTypes}(${fields.rep(all)})${c.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")}
          |  def unmk$className${wrappedTypesWithElems}(p: Rep[$className${wrappedTypes}]) =
          |    Some((${fields.rep(f => s"p.$f")}))
@@ -257,7 +256,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes, traitWithTypes) = getSClassTemplateData(c)
       val wrappedTypes = if (types.length > 0) s"[${types}]" else ""
       val isLite = config.isLite
-      val implicitArgs = c.implicitArgs.opt(args => s"implicit ${args.rep(a => s"${a.name}: ${a.tpe}")}")
+      val implicitArgs = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
       val implicitSignature = c.implicitArgs.rep(a => s"override val ${a.name}: ${a.tpe}")
       val wrappedImplicitSignature = if (implicitSignature.length > 0) s"(implicit ${implicitSignature})" else ""
       val wrappedTypesWithElems = if (typesWithElems.length > 0) s"[${typesWithElems}]" else ""
@@ -281,7 +280,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       val constrDefs =
         s"""
          |  def mk$className${wrappedTypes}
-         |    (${fieldsWithType.rep(all)})($implicitArgs) =
+         |    (${fieldsWithType.rep(all)})$implicitArgs =
          |    new Exp$className${wrappedTypes}(${fields.rep(all)})${c.selfType.opt(t => s" with ${t.components.rep(all, " with ")}")}
          |  def unmk$className${wrappedTypesWithElems}(p: Rep[$className${wrappedTypes}]) =
          |    Some((${fields.rep(f => s"p.$f")}))
@@ -289,7 +288,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
       val isoDefs =
         s"""
-         |  implicit def iso$className${wrappedTypes}($implicitArgs):Iso[${className}Data${wrappedTypes}, $className${wrappedTypes}] =
+         |  implicit def iso$className${wrappedTypes}$implicitArgs:Iso[${className}Data${wrappedTypes}, $className${wrappedTypes}] =
          |    new ${className}Iso${wrappedTypes} { i =>
          |      // should use i as iso reference
          |      lazy val eTo =
