@@ -1,6 +1,8 @@
 package scalan.collections
 
 import scalan._
+import scalan.sequential.ScalanSeq
+import scalan.staged.ScalanStaged
 
 trait Sets extends Maps { self: SetsDsl =>
 
@@ -12,12 +14,41 @@ trait Sets extends Maps { self: SetsDsl =>
     def difference(that: Rep[PSet[A]]): PS[A]
     def isEmpty: Rep[Boolean]
     def contains(elem: Rep[A]): Rep[Boolean]
+    def apply(elem: Rep[A]): Rep[Boolean] = this.contains(elem)
     def toArray: PA[A]
     def toMap: PM[A, Unit]
     def size: Rep[Int]
   }
+  
+  trait PSetCompanion {
+  }
 
   abstract class PSetImpl[A](val toMap: Rep[PMap[A, Unit]])(implicit val eA: Elem[A])
-    extends PSet[A] with PSetOps[A] with PSetImplOps[A] {
+    extends PSet[A] {
+    def union(that: PS[A]) = setFromMap(toMap.union(that.toMap))
+    def difference(that: PS[A]) = setFromMap(toMap.difference(that.toMap))
+    def isEmpty = toMap.isEmpty
+    def contains(elem: Rep[A]) = toMap.contains(elem)
+    def toArray = toMap.toArray.map(_._1)
+    def size = toMap.size    
   }
+  
+  trait PSetImplCompanion extends PSetCompanion {
+    def empty[A: Elem] = setFromMap(PMap.empty[A, Unit])
+    def fromArray[A: Elem](arr: PArray[A]) = setFromArray(arr)
+    def singleton[A: Elem](x: Rep[A]) = fromArray(self.singleton(x))    
+  }
+  
+  def setFromMap[A: Elem](map: PM[A, Unit]): Rep[PSet[A]] = PSetImpl(map)
+  def emptySet[A: Elem] = setFromMap(PMap.empty[A, Unit])
+  def setFromArray[A: Elem](arr: PArray[A]) = setFromMap(PMap.fromArray(arr.map(x => (x, toRep(())))))
+  def singletonSet[A: Elem](x: Rep[A]) = setFromArray(singleton(x))
+
+  implicit def psetElement[A: Elem]: Elem[PSet[A]] = element[PSetImpl[A]].asInstanceOf[Elem[PSet[A]]]
 }
+
+trait SetsDsl extends impl.SetsAbs with Sets with Scalan
+
+trait SetsDslSeq extends SetsDsl with impl.SetsSeq with SeqMaps { self: ScalanSeq => }
+
+trait SetsDslExp extends SetsDsl with impl.SetsExp with StagedMaps { self: ScalanStaged => }

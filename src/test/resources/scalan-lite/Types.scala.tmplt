@@ -1,33 +1,65 @@
 package scalan.types
 
-import scala.annotation.implicitNotFound
-import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
 import scalan._
 import scala.reflect.runtime.universe._
 
-trait Types extends Base with TypesOps { self: TypesDsl =>
+trait Types extends Base { self: TypesDsl =>
 
   type Ty[A] = Rep[Type[A]]
   trait Type[A] extends UserType[Type[A]] {
     implicit def eA: Elem[A]
     def typeCode: Rep[String]
     def defaultValue: Rep[A]
-    def tag: TypeTag[A]
-    def defaultOf: Default[Rep[A]]
+    def tag: TypeTag[A] = typeTagFromString(typeCode).asInstanceOf[TypeTag[A]]
+    lazy val defaultOf: Default[Rep[A]] = Default.defaultVal(defaultValue)
   }
-  trait TypeCompanion extends TypeFamily1[Type] {}
+
+  trait TypeCompanion extends TypeFamily1[Type] {
+    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[Type[A]]] = ea match {
+      case baseE: BaseElem[a] => BaseType.defaultOf[a](baseE)
+      case pairE: PairElem[a, b] => Tuple2Type.defaultOf[a, b](pairE.ea, pairE.eb)
+      case _ => ???
+    }
+  }
 
   abstract class BaseType[A](
-      val typeCode: Rep[String],
-      val defaultValue: Rep[A])(implicit eA: Elem[A])
-    extends Type[A]
-       with BaseTypeOps[A]
-  trait BaseTypeCompanion extends ConcreteClass1[BaseType] {}
+    val typeCode: Rep[String],
+    val defaultValue: Rep[A])(implicit eA: Elem[A]) extends Type[A]
 
-  abstract class Tuple2Type[A,B](val tyA: Rep[Type[A]], val tyB: Rep[Type[B]])(implicit val e1: Elem[A], val e2: Elem[B])
-    extends Type[(A,B)]
-    with Tuple2TypeOps[A,B]
-  trait Tuple2TypeCompanion extends ConcreteClass2[Tuple2Type] {}
+  trait BaseTypeCompanion extends ConcreteClass1[BaseType] with TypeCompanion {
+    override def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(BaseType(getBaseTypeCode(ea), ea.defaultRepValue))
+  }
 
+  abstract class Tuple2Type[A, B](val tyA: Rep[Type[A]], val tyB: Rep[Type[B]])(implicit val e1: Elem[A], val e2: Elem[B]) extends Type[(A, B)] {
+    def eA = element[(A,B)]
+    def typeCode = ???
+    def defaultValue = Pair(tyA.defaultValue, tyB.defaultValue)  }
+
+  trait Tuple2TypeCompanion extends ConcreteClass2[Tuple2Type] with TypeCompanion {
+    def defaultOf[A,B](implicit ea: Elem[A], eb: Elem[B]) = {
+      val tyA = Type.defaultOf[A].value
+      val tyB = Type.defaultOf[B].value
+      Default.defaultVal(Tuple2Type(tyA, tyB))
+    }
+  }
+
+  implicit def defaultTypeElement[A: Elem]: Elem[Type[A]] = element[A] match {
+    case _: BaseElem[_] => element[BaseType[A]].asElem[Type[A]]
+    case pe: PairElem[a, b] =>
+      implicit val ea = pe.ea
+      implicit val eb = pe.eb
+      element[Tuple2Type[a, b]].asElem[Type[A]]
+    case _ => ???
+  }
+  
+  def typeTagFromString(typeCode: Rep[String]): TypeTag[_] = ???
+  def getBaseTypeCode[A](e: Elem[A]): Rep[String] = ???
 }
+
+
+trait TypesDsl extends ScalanDsl with impl.TypesAbs with Types
+
+trait TypesDslSeq extends TypesDsl with impl.TypesSeq with ScalanSeqImplementation
+
+trait TypesDslExp extends TypesDsl with impl.TypesExp with ScalanStaged

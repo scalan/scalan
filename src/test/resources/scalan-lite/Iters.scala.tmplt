@@ -1,0 +1,128 @@
+package scalan.iterators
+
+import scalan._
+import scalan.common.Default
+
+trait Iters extends Base { self: IteratorsDsl =>
+
+  type RIter[A] = Rep[Iter[A]]
+  trait Iter[A] extends UserType[Iter[A]] {
+    implicit def eA: Elem[A]
+    def arr: Rep[Array[A]]
+    def iterable: RI[A]
+
+    def mapBy[B](f: Rep[A => B])(implicit eb: Elem[B]): RIter[B] = {
+      ArrayIter(arr.mapBy(f))
+    }
+
+    def filterBy(f: Rep[A => Boolean]): RIter[A] = {
+      ArrayIter(arr.filterBy(f))
+    }
+
+    def take(len: Rep[Int]): RIter[A] = {
+      def next(s: Rep[(Int, A)]) = Pair(s._1 + 1, toRightSum[Unit, A](s._2))
+      def isComplete(s: Rep[(Int, A)]) = s._1 == len
+      val it = createIter[A, A, Int](0, self.iterable, next, isComplete)
+
+      Iter.fromIterable(it)
+    }
+
+    def zip[B](other: Rep[Iter[B]])(implicit eb: Elem[B]): RIter[(A, B)] = {
+      Iter.fromIterable(zipIter(self.iterable, other.iterable))
+    }
+  }
+
+  trait IterCompanion extends TypeFamily1[Iter] {
+    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[Iter[A]]] = ???
+
+    def singleton[A](value: Rep[A])(implicit arg: Elem[A]): RIter[A] = {
+      val next: Rep[(Boolean, Unit)] => Rep[Pair[Boolean, |[Unit, A]]] = (x => Pair[Boolean, |[Unit, A]](toRep(true), toRightSum[Unit, A](value)))
+      val it = createIter[Unit, A, Boolean](toRep(false), unitIter, next, (rep: Rep[(Boolean, Unit)]) => rep._1)
+
+      fromIterable[A](it)
+    }
+
+    def empty[A](unit: Rep[Unit])(implicit arg: Elem[A]): RIter[A] = {
+      val next: Rep[(Unit, Unit)] => Rep[Pair[Unit, |[Unit, A]]] = (x => Pair[Unit, |[Unit, A]](toRep(()), toLeftSum[Unit, A](())))
+      val it = createIter[Unit, A, Unit](toRep(()), unitIter, next, (rep: Rep[(Unit, Unit)]) => toRep(true))
+
+      fromIterable[A](it)
+    }
+
+    def iterate[A](elem: Rep[A], f: Rep[A => A])(implicit arg: Elem[A]): RIter[A] = {
+      val next: Rep[(A, Unit)] => Rep[Pair[A, |[Unit, A]]] = (x => Pair[A, |[Unit, A]](x._1, toRightSum[Unit, A](f(x._1))))
+      val it = createIter[Unit, A, A](elem, unitIter, next, (rep: Rep[(A, Unit)]) => toRep(false))
+
+      fromIterable[A](it)
+    }
+
+    def continually[A](elem: Rep[A])(implicit arg: Elem[A]): RIter[A] = {
+      val next: Rep[(Unit, Unit)] => Rep[Pair[Unit, |[Unit, A]]] = (x => Pair[Unit, |[Unit, A]](toRep(()), toRightSum[Unit, A](elem)))
+      val it = createIter[Unit, A, Unit](toRep(()), unitIter, next, (rep: Rep[(Unit, Unit)]) => toRep(false))
+
+      fromIterable[A](it)
+    }
+
+    def range(len: Rep[Int]): RIter[Int] = {
+      def next(s: Rep[(Int, Unit)]) = Pair(s._1 + 1, toRightSum[Unit, Int](s._1))
+      def isComplete(s: Rep[(Int, Unit)]) = s._1 == len
+      val it = createIter[Unit, Int, Int](0, unitIter, next, isComplete)
+
+      fromIterable[Int](it)
+    }
+
+    def fromIterable[A](iter: Rep[Iterable[A]])(implicit arg: Elem[A]): RIter[A] = BaseIter(iter)
+
+    def fromArray[A](arr: Rep[Array[A]])(implicit arg: Elem[A]): RIter[A] = ArrayIter(arr)
+  }
+
+  abstract class SingleIter[A](val value: Rep[A])(implicit eA: Elem[A]) extends Iter[A] {
+    def arr: Rep[Array[A]] = array_replicate(1, value)
+    def iterable: RI[A] = {
+      val next: Rep[(Boolean, Unit)] => Rep[Pair[Boolean, |[Unit, A]]] = (x => Pair[Boolean, |[Unit, A]](toRep(true), toRightSum[Unit, A](value)))
+      createIter[Unit, A, Boolean](toRep(false), unitIter, next, (rep: Rep[(Boolean, Unit)]) => rep._1)
+    }
+  }
+
+  trait SingleIterCompanion extends ConcreteClass1[SingleIter] {
+    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[SingleIter[A]]] = ???
+  }
+
+  abstract class EmptyIter[A](val unit: Rep[Unit])(implicit eA: Elem[A]) extends Iter[A] {
+    def arr: Rep[Array[A]] = array_replicate(0, eA.defaultRepValue)
+    def iterable: RI[A] = {
+      val next: Rep[(Unit, Unit)] => Rep[Pair[Unit, |[Unit, A]]] = (x => Pair[Unit, |[Unit, A]](toRep(()), toLeftSum[Unit, A](())))
+      createIter[Unit, A, Unit](toRep(()), unitIter, next, (rep: Rep[(Unit, Unit)]) => toRep(true))
+    }
+  }
+
+  trait EmptyIterCompanion extends ConcreteClass1[EmptyIter] {
+    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[EmptyIter[A]]] = ???
+  }
+
+  abstract class ArrayIter[A](val arr: Rep[Array[A]])(implicit val eA: Elem[A]) extends Iter[A] {
+    override def iterable: RI[A] = {
+      def next(s: Rep[(Int, Unit)]) = Pair(s._1 + 1, toRightSum[Unit, A](arr(s._1)))
+      def isComplete(s: Rep[(Int, Unit)]) = s._1 == arr.length
+      createIter[Unit, A, Int](0, unitIter, next, isComplete)
+    }
+  }
+
+  trait ArrayIterCompanion extends ConcreteClass1[ArrayIter] {
+    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[ArrayIter[A]]] = ???
+  }
+
+  abstract class BaseIter[A](val iterable: Rep[Iterable[A]])(implicit val eA: Elem[A]) extends Iter[A] {
+    def arr: Rep[Array[A]] = ???
+  }
+
+  trait BaseIterCompanion extends ConcreteClass1[BaseIter] {
+    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[BaseIter[A]]] = ???
+  }
+}
+
+trait IteratorsDsl extends ScalanDsl with impl.ItersAbs with Iters
+
+trait IteratorsDslSeq extends IteratorsDsl with impl.ItersSeq with ScalanSeqImplementation
+
+trait IteratorsDslExp extends IteratorsDsl with impl.ItersExp with ScalanStaged

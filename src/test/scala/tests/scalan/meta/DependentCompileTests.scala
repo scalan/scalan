@@ -1,6 +1,5 @@
 package tests.scalan.meta
 
-import org.scalatest.FunSuite
 import scalan.meta.{ Base, EntityManagement, CodegenConfig }
 import java.io._
 import java.nio.file.Files

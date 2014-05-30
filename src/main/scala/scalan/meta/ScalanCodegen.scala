@@ -156,7 +156,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |    def apply${types}(p: Rep[${className}Data${types}])${implicitArgs}: Rep[$className${types}] =
         |      iso$className${useImplicits}.to(p)""".stripMargin)
         }${(!isLite).opt(s"""
-        |    def apply${types}(p: $traitWithTypes)${implicitArgs}: Rep[$className${types}]] =
+        |    def apply${types}(p: $traitWithTypes)${implicitArgs}: Rep[$className${types}] =
         |      mk$className(${fields.rep(f => s"p.$f")})
         |""".stripMargin)}
         |    def apply${types}

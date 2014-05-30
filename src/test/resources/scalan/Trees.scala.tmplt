@@ -6,8 +6,11 @@ import scalan.common.Common
 import scalan.sequential.ScalanSeq
 import scalan.lms.common.ProxyExp
 import scalan.staged._
+import scalan.math.MatricesDslSeq
+import scalan.sequential.ScalanSeqImplementation
+import scalan.math.MatricesDslExp
 
-trait Trees extends ScalanDsl with TreesOps { self: TreesDsl =>
+trait Trees extends ScalanDsl { self: TreesDsl =>
 
   type PT[A] = Rep[Tree[A]]
   trait Tree[A] {
@@ -18,24 +21,206 @@ trait Trees extends ScalanDsl with TreesOps { self: TreesDsl =>
     def levels: Rep[NArray[Int]]
     def levelSegs: Rep[NArray[Int]]
     def getTreeLevels: Rep[TreeLevels[A]]
-    def isLeaf(n: Rep[Int]): Rep[Boolean]
-    def nodesNum: Rep[Int]
-    def nodesIndices: PA[Int]
-    def roots: PA[Int]
-    def childrenOf(nodes: PA[Int]): NA[Int]
+    def isLeaf(n: Rep[Int]): Rep[Boolean] = children(n).isEmpty
+    def nodesNum: Rep[Int] = parents.length
+    def nodesIndices: PA[Int] = indexRange(nodesNum)
+    def roots: PA[Int] = nodesIndices.filter(i => parents(i) === -1)
+    def childrenOf(nodes: PA[Int]): NA[Int] = children ->> nodes
   }
 
-  abstract class TreeGraph[A]
-      (val parents: Rep[PArray[Int]],  val children: Rep[NArray[Int]],  val nodeProps: Rep[PArray[A]])
-      (implicit val eA: Elem[A]) extends Tree[A] with TreeGraphOps[A]
-  {
+  abstract class TreeGraph[A](val parents: Rep[PArray[Int]], val children: Rep[NArray[Int]], val nodeProps: Rep[PArray[A]])(implicit val eA: Elem[A]) extends Tree[A] {
+    def getTreeLevels: Rep[TreeLevels[A]] = TreeLevels.fromTreeGraph(TreeGraph(this))
+    def levels: Rep[NArray[Int]] = getTreeLevels.levels
+    def levelSegs: Rep[NArray[Int]] = getTreeLevels.levelSegs
   }
 
-  abstract class TreeLevels[A]
-      (val levels: Rep[NArray[Int]],
-       val levelSegs: Rep[NArray[Int]],
-       val nodeProps: Rep[PArray[A]])(implicit val eA: Elem[A])  extends Tree[A] with TreeLevelsOps[A]
-  {
+  trait TreeGraphCompanion
+
+  abstract class TreeLevels[A](val levels: Rep[NArray[Int]],
+    val levelSegs: Rep[NArray[Int]],
+    val nodeProps: Rep[PArray[A]])(implicit val eA: Elem[A]) extends Tree[A] {
+    def getTreeLevels: Rep[TreeLevels[A]] = TreeLevels(this)
+    def parents: PA[Int] = ???
+    def children: NA[Int] = ???
+  }
+
+  trait TreeLevelsCompanion {
+
+    def fromTreeGraph[A: Elem](tree: Rep[TreeGraph[A]]) = {
+      val zeros = replicate(tree.nodesNum, 0)
+      val rootSegs = replicate(tree.nodesNum + 1, 0) <<- (0, tree.roots.length) // root level is considered as one segment so add one additional item
+
+      val Tuple(_, nLevels, levelLensBuf, levelNodesBuf, _, childrenSegsBuf, childrenSegsOfs) =
+        from(tree.roots, 0, zeros, zeros, 0, rootSegs, 1).until((front, _, _, _, _, _, _) => front.isEmpty) {
+          (currLevel: PA[Int], // nodes of current level
+          iLevel: Rep[Int], // index of current level (0 for tree.root)
+          levelLensBuf: PA[Int], // levelLensBuf(i) == length of level i
+          levelNodesBuf: PA[Int], // each segment in levelNodesBuf is a tree level
+          ofs: Rep[Int], // offset in levelNodesBuf where to place currLevel
+          childrenSegsBuf: PA[Int], // each segment in childrenSegsBuf is a segmentation of children (next level)
+          childrenSegsOfs: Rep[Int] // offset in childrenSegsBuf where to place currLevel
+          ) =>
+            {
+              val levelSize = currLevel.length // how many nodes in current level
+              val levelLensBuf2 = levelLensBuf <<- (iLevel, levelSize) // remember the size of current level
+
+              val childrenNA = tree.childrenOf(currLevel)
+              val childrenSegs = childrenNA.segLengths // segmentation of children
+
+              val newFront = childrenNA.values // next level
+
+              val levelNodesBuf2 = updateSegmentInplace(levelNodesBuf, ofs, currLevel) // save current level nodes
+
+              val childrenSegsBuf2 = updateSegmentInplace(childrenSegsBuf, childrenSegsOfs, childrenSegs)
+
+              (newFront, iLevel + 1, levelLensBuf2, levelNodesBuf2, ofs + currLevel.length, childrenSegsBuf2, childrenSegsOfs + childrenSegs.length)
+            }
+        }
+
+      // nLevel is a number of levels in the tree
+      val lens = levelLensBuf.slice(0, nLevels) // lens(i) == number of nodes on level i
+
+      val nodes = levelNodesBuf.nestBy(createSegmentsFromLens(lens)) // tree nodes as nested array of levels
+
+      val lastLevelSize = lens(nLevels - 1)
+
+      // last segment in childrenSegsBuf is zeros, we don't need it
+      val lengthOfChildrenSegsBuf = childrenSegsOfs - lastLevelSize
+      val childrenSegsValues = childrenSegsBuf.slice(0, lengthOfChildrenSegsBuf)
+
+      // segmentation for each tree level where segs(i) is a segments to group nodes(i) by parent
+      val childrenSegsLens = rightShift(lens, 1, 1)
+      val segs = childrenSegsValues.nestBy(createSegmentsFromLens(childrenSegsLens))
+
+      TreeLevels(nodes, segs, tree.nodeProps)
+    }
+
+    /* Suboptimal version! Here we nest input Dense matrix and use nested primitives
+   * TODO: use flat primitives by computing appropriate indices
+   * */
+    //    def foldTree[A:Elem,Coord:Elem](levels: Rep[TreeLevels[A]], inVecs: Rep[DenseMatrix[Coord]], cvSize: Rep[Int]) : (Rep[DenseMatrix[Coord]])= {
+    //      /* Define monoid */
+    //      type IVecPlusMask = PArray[Coord]
+    //
+    //      val IVecPlusIdentity = zero[Rep[IVecPlusMask]](replicate(cvSize,0.asInstanceOf[Coord]))
+    //      val IVecPlusSemigroup = semigroup[Rep[IVecPlusMask]]("IVecPlus",
+    //        (t1, t2) => t1 +^ t2, false)
+    //      val IVecPlusMonoid = monoid(IVecPlusSemigroup, IVecPlusIdentity)
+    //
+    //
+    //      val levelNodes = levels.nodes
+    //      val levelSegs = levels.segs
+    //      val numLevels = levelNodes.length
+    //      val items = inVecs.items
+    //      val rowLen = inVecs.rowLen
+    //      val numNodes = items.length / rowLen
+    //      val itemsNested = items.nestBy(createSegmentsFromLens(replicate(numNodes, rowLen)))
+    //
+    //      val res = from(numLevels-1, itemsNested).until((i,_) => i < 1) {
+    //        (lNum: Rep[Int], iNested: NA[Coord]) => {
+    //          val curNodes = levelNodes(lNum)
+    //          val curSegs = levelSegs(lNum)
+    //          val curVecs =  iNested ->> curNodes
+    //          val lSegs = createSegmentsFromLens(curSegs)
+    //          val nestedVecs = curVecs.nestBy(lSegs)
+    //
+    //          /* Reduce all children in corresponding segment */
+    //          val reduced = for(p <- nestedVecs)  yield p.reduce(IVecPlusMonoid) // TODO: use reduce_seg
+    //
+    //          /* Update initial items */
+    //          val prevLevelNodes = levelNodes(lNum-1)
+    //          val oldValues = iNested ->> prevLevelNodes                                           // TODO: use permute_reduce_seg instead of this 3 operations
+    //          val forUpdate = (oldValues.values +^ reduced.values).nestBy(oldValues.segments)     // TODO:
+    //          val updated = iNested <<- (prevLevelNodes, forUpdate)                                // TODO:
+    //
+    //          // Debug print
+    //          /* println("Level:" + lNum)
+    //        println("Nodes:" + curNodes)
+    //        println("Segs:" + curSegs)
+    //        println("Vecs:" + curVecs)
+    //        println("lSegs:" + lSegs)
+    //        println("nestedVecs:" + nestedVecs)
+    //        println("reduced:" + reduced)
+    //        println("prevLevelNodes:" + prevLevelNodes)
+    //        println("oldValues:" + oldValues)
+    //        println("forUpdate:" + forUpdate)
+    //        println("updated:" + updated)*/
+    //
+    //          (lNum-1, updated)
+    //        }
+    //      }
+    //      val outItemsNested = res._2
+    //      DenseMatrix(outItemsNested.values, rowLen)
+    //    }
+
+    def foldTreeTransposedFlat[A: Elem, Coord: Elem: Numeric](treeLevels: Rep[TreeLevels[A]], inVecs: Rep[DenseMatrix[Coord]])(implicit mCoord: RepMonoid[Coord]): (Rep[DenseMatrix[Coord]]) =
+      {
+        val levelNodes = treeLevels.levels
+        val levelSegs = treeLevels.levelSegs
+        val numLevels = levelNodes.length
+        val inVecsT = inVecs.transpose(10)
+
+        val Pair(_, vecs) = from(numLevels - 1, inVecsT).until((iLevel, _) => iLevel < 1) {
+          (iLevel: Rep[Int], curVecs: Rep[DenseMatrix[Coord]]) =>
+            {
+              val curNodes = levelNodes(iLevel)
+              val prevLevelNodes = levelNodes(iLevel - 1)
+              val curLens = levelSegs(iLevel)
+              val newVecs = curVecs.permuteReduceTransposedRowsByNested(prevLevelNodes, curNodes.nestByLengths(curLens))
+              (iLevel - 1, newVecs)
+            }
+        }
+
+        vecs.transpose(10)
+      }
+
+    def foldTreeFlat2[A, Coord](treeLevels: Rep[TreeLevels[A]], inVecs: Rep[DenseMatrix[Coord]])(implicit elemA: Elem[A], elemCoord: Elem[Coord], nCoord: Numeric[Coord], mCoord: RepMonoid[Coord]): (Rep[DenseMatrix[Coord]]) =
+      {
+        val levelNodes = treeLevels.levels
+        val levelSegs = treeLevels.levelSegs
+        val numLevels = levelNodes.length
+
+        val Pair(_, vecs) = from(numLevels - 1, inVecs).until((iLevel, _) => iLevel < 1) {
+          (iLevel: Rep[Int], currVecs: Rep[DenseMatrix[Coord]]) =>
+            {
+              val curNodes = levelNodes(iLevel)
+              val prevLevelNodes = levelNodes(iLevel - 1)
+              val curLens = levelSegs(iLevel)
+              val subMatrix = currVecs ->> curNodes
+              val transposed = subMatrix.transpose(10)
+              val sumsMatr = transposed.reduceRowsBy(curLens)
+              val newVecs = currVecs <<- (prevLevelNodes, sumsMatr.transpose(10))
+              (iLevel - 1, newVecs)
+            }
+        }
+        vecs
+      }
+    def foldTreeFlat[A: Elem, Coord: Elem: Numeric](treeLevels: Rep[TreeLevels[A]], inVecs: Rep[DenseMatrix[Coord]])(implicit mCoord: RepMonoid[Coord]): (Rep[DenseMatrix[Coord]]) =
+      {
+        val levelNodes = treeLevels.levels
+        val levelSegs = treeLevels.levelSegs
+        val numLevels = levelNodes.length
+
+        val Pair(_, vecs) = from(numLevels - 1, inVecs).until((iLevel, _) => iLevel < 1) {
+          (iLevel: Rep[Int], currVecs: Rep[DenseMatrix[Coord]]) =>
+            {
+              val curNodes = levelNodes(iLevel)
+              val prevLevelNodes = levelNodes(iLevel - 1)
+              val curLens = levelSegs(iLevel)
+              val subMatrix = currVecs ->> curNodes
+              val newVecs = currVecs.permuteReduceRows(prevLevelNodes, subMatrix, curLens)
+              (iLevel - 1, newVecs)
+            }
+        }
+        vecs
+      }
+
   }
 
 }
+
+trait TreesDsl extends impl.TreesAbs with Trees
+
+trait TreesDslSeq extends TreesDsl with impl.TreesSeq with MatricesDslSeq with ScalanSeqImplementation
+
+trait TreesDslExp extends TreesDsl with impl.TreesExp with MatricesDslExp with ScalanStagedImplementation
