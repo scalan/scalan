@@ -66,7 +66,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
     }
     
     def pairify(fs: List[String]): String = fs match {
-      case Nil => "()"
+      case Nil => "unit"
       case f :: Nil => f
       case f :: fs => s"Pair($f, ${pairify(fs)})"
     }
@@ -134,7 +134,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |    extends Iso[${className}Data${types}, $className${types}] {
         |    override def from(p: Rep[$className${types}]) =
         |      unmk${className}(p) match {
-        |        case Some((${fields.rep()})) => ${pairify(fields)}
+        |        case Some((${fields.opt(fields => fields.rep(), "unit")})) => ${pairify(fields)}
         |        case None => !!!
         |      }
         |    override def to(p: Rep[${dataType(fieldTypes)}]) = {
@@ -189,7 +189,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |
         |  // 6) smart constructor and deconstructor
         |  def mk$className${types}(${fieldsWithType.rep()})${implicitArgs}: Rep[$className${types}]
-        |  def unmk$className${typesWithElems}(p: Rep[$className${types}]): Option[(${fieldTypes.rep(t => s"Rep[$t]")})]
+        |  def unmk$className${typesWithElems}(p: Rep[$className${types}]): Option[(${fieldTypes.opt(fieldTypes => fieldTypes.rep(t => s"Rep[$t]"), "Rep[Unit]")})]
         |""".stripMargin
       }
 
