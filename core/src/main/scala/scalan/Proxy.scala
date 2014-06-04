@@ -90,24 +90,25 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     }
 
     def invokeMethodOfVar(m: Method, args: Array[AnyRef]) = {
-      /* If invoke is enabled or current method has arg of type <function> - do not create methodCall */
-      methodCallReceivers.contains(receiver) || (!((invokeEnabled || forceInvoke.getOrElse(false)) || hasFuncArg(args))) match {
-        case true =>
-          createMethodCall(m, args)
-        case _ => receiver.elem match {
-          case ve: ViewElem[_, _] =>
-            //val e = getRecieverElem
-            val iso = ve.iso
-            methodCallReceivers = methodCallReceivers :+ receiver
-            val wrapper = iso.to(iso.from(receiver))
-            methodCallReceivers = methodCallReceivers.tail
-            val Def(d) = wrapper
-            val res = m.invoke(d, args: _*)
-            res
-          case _ =>
-            createMethodCall(m, args)
-        }
-      }
+      createMethodCall(m, args)
+//      /* If invoke is enabled or current method has arg of type <function> - do not create methodCall */
+//      methodCallReceivers.contains(receiver) || (!((invokeEnabled || forceInvoke.getOrElse(false)) || hasFuncArg(args))) match {
+//        case true =>
+//          createMethodCall(m, args)
+//        case _ => receiver.elem match {
+//          case ve: ViewElem[_, _] =>
+//            //val e = getRecieverElem
+//            val iso = ve.iso
+//            methodCallReceivers = methodCallReceivers :+ receiver
+//            val wrapper = iso.to(iso.from(receiver))
+//            methodCallReceivers = methodCallReceivers.tail
+//            val Def(d) = wrapper
+//            val res = m.invoke(d, args: _*)
+//            res
+//          case _ =>
+//            createMethodCall(m, args)
+//        }
+//      }
     }
 
     def createMethodCall(m: Method, args: Array[AnyRef]): Exp[_] = {
