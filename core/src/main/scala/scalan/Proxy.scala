@@ -66,7 +66,13 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
   var invokeEnabled = false
 
-  private def hasFuncArg(args: Array[AnyRef]): Boolean = args.exists(_.isInstanceOf[(_) => _])
+  private def hasFuncArg(args: Array[AnyRef]): Boolean = 
+    args.exists {
+      case f: Function0[_] => true
+      case f: Function1[_, _] => true
+      case f: Function2[_, _, _] => true
+      case _ => false
+    }
 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   var methodCallReceivers = List.empty[Exp[Any]]
