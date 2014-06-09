@@ -141,10 +141,26 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     }
   }
 
-  def symbolHasViews(s: Exp[Any]): Boolean = s match {
+  def hasViews(s: Exp[_]): Boolean = s match {
+    case Def(Tup(s1, s2)) => hasViews(s1) || hasViews(s2)
     case UserTypeSym(_) => true
     case Def(UserTypeDef(_)) => true
     case _ => false
+  }
+
+  def eliminateViews(s: Exp[_]): (Exp[_], Iso[_, _]) = s match {
+    case Def(Tup(s1, s2)) =>
+      val (sv1, iso1) = eliminateViews(s1)
+      val (sv2, iso2) = eliminateViews(s2)
+      ((sv1, sv2), pairIso(iso1, iso2))
+    case Def(UserTypeDef(iso: Iso[a, b])) =>
+      val repr = iso.from(s.asRep[b])
+      (repr, iso)
+    case UserTypeSym(iso: Iso[a, b]) =>
+      val repr = iso.from(s.asRep[b])
+      (repr, iso)
+    case s =>
+      (s, identityIso(s.elem))
   }
 
   implicit class IsoOps[From, To](iso: Iso[From, To]) {
@@ -240,6 +256,27 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
       // case UnpackableDef(Def(uv @ UnpackView(view)), iso) if iso.eTo == view.iso.eTo => view
       case UnpackView(Def(UnpackableDef(source, iso))) => source
       // case UnpackView(view @ UnpackableExp(iso)) => iso.from(view)
+      //      case LoopUntil(start, step, isMatch) if hasViews(start) => {
+      //        eliminateViews(start) match {
+      //          case (startWithoutViews, iso: Iso[a, b]) =>
+      //            val start1 = startWithoutViews.asRep[a]
+      //            implicit val eA = iso.eFrom
+      //            implicit val eB = iso.eTo
+      //            val step1 = fun { (x: Rep[a]) =>
+      //              val x_viewed = iso.to(x)
+      //              val res_viewed = mirrorApply(step.asRep[b => b], x_viewed)
+      //              val res = iso.from(res_viewed)
+      //              res
+      //            }(eA, eA)
+      //            val isMatch1 = fun { (x: Rep[a]) =>
+      //              val x_viewed = iso.to(x)
+      //              val res = mirrorApply(isMatch.asRep[b => Boolean], x_viewed)
+      //              res
+      //            }(eA, element[Boolean])
+      //            val loopRes = LoopUntil(start1, step1, isMatch1)
+      //            iso.to(loopRes)
+      //        }
+      //      }
       case _ => super.rewrite(d)
     }
     case Var(UserTypeSym(iso: Iso[a, _])) =>

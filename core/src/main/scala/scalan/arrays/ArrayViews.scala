@@ -22,7 +22,7 @@ trait ArrayViews extends Views { self: Scalan =>
 //  def unmkArrayView[A,B](view: Arr[B])(implicit iso: Iso[A,B]): Arr[A]
 }
 
-trait ArrayViewsSeq extends ArrayViews { self: ScalanSeq =>
+trait ArrayViewsSeq extends ArrayViews with ViewsSeq { self: ScalanSeq =>
 
 //  case class SeqViewArray[A, B](arr: Option[PA[A]], iso: Iso[A,B])
 //    extends ViewArray[A,B] with SeqPArray[B]
@@ -65,7 +65,7 @@ trait ArrayViewsSeq extends ArrayViews { self: ScalanSeq =>
 
 }
 
-trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
+trait ArrayViewsExp extends ArrayViews with ViewsExp with BaseExp { self: ScalanStaged =>
   case class ViewArray[A, B](source: Arr[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Array] {
     lazy val iso = arrayIso(innerIso)
     def copy(source: Arr[A]) = ViewArray(source)
@@ -74,6 +74,38 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
       case v: ViewArray[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
     }
   }
+
+  object UserTypeArray {
+    def unapply(s: Exp[_]): Option[Iso[_, _]] = {
+      s.elem match {
+        case pae: ArrayElem[_] =>
+          pae.ea match {
+            case e: ViewElem[_, _] => Some(e.iso)
+            case _ => None
+          }
+        case _ => None
+      }
+    }
+  }
+
+  override def hasViews(s: Exp[_]): Boolean = s match {
+    case Def(ViewArray(_)) => true
+    case UserTypeArray(_) => true
+    case s => super.hasViews(s)
+  }
+
+  override def eliminateViews(s: Exp[_]): (Exp[_], Iso[_, _]) =
+    s match {
+      case Def(view: ViewArray[_, _]) =>
+        (view.source, arrayIso(view.iso))
+      case UserTypeArray(iso: Iso[a, b]) =>
+        val newIso = arrayIso(iso)
+        val repr = UnpackView(s.asRep[Array[b]])(newIso)
+        implicit val eArrayA = newIso.eFrom
+        (repr, newIso)
+      case s =>
+        super.eliminateViews(s)
+    }
 
   //  implicit def mkArrayView[A,B](arr: PA[A])(implicit iso: Iso[A,B]): PA[B] = {
   //    ExpViewArray(Some(arr), iso)
@@ -315,33 +347,6 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
         val res = ViewArray(s)(iso)
         // val res = ViewArray(s.values)(iso).nestBy(s.segments)
         res
-      //
-      //    case LoopUntil(start@TupleTree(tree), step, isMatch) if tree.hasViews => {
-      //      tree.eliminateViews.root match {
-      //        case startTreeRoot: Rep[a] =>
-      //          implicit val stateElem = startTreeRoot.Elem
-      //          val loopRes = LoopUntil(
-      //            startTreeRoot,
-      //            fun { (x: Rep[a]) =>
-      //              tree.toView(x) match {
-      //                case x_viewed: Rep[a1] =>
-      //                  implicit val eA1 = x_viewed.Elem
-      //                  val res_viewed = mirrorApply(step.asRep[a1 => a1], x_viewed)
-      //                  val res = tree.fromView(res_viewed)
-      //                  res.asRep[a]
-      //              }
-      //            }(stateElem, stateElem),
-      //            fun { (x: Rep[a]) =>
-      //              tree.toView(x) match {
-      //                case x_viewed: Rep[a1] =>
-      //                  implicit val eA1 = x_viewed.Elem
-      //                  val res = mirrorApply(isMatch.asRep[a1 => Boolean], x_viewed)
-      //                  res
-      //              }
-      //            }(stateElem, element[Boolean]))
-      //          tree.toView(loopRes)
-      //      }
-      //    }
       case view1 @ ViewArray(Def(view2 @ ViewArray(arr))) =>
         val compIso = composeIso(view2.innerIso, view1.innerIso)
         implicit val eAB = compIso.eTo

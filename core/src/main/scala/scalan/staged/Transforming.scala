@@ -249,10 +249,6 @@ trait Transforming { self: ScalanStaged =>
         } yield (i + 1 :: p, s)
     }
 
-    def hasViews: Boolean = {
-      paths exists { case (_, s) => symbolHasViews(s) }
-    }
-
     def mirror(leafSubst: Exp[_] => Exp[_]): TupleTree =
       if (isLeaf)
         TupleTree(leafSubst(root), Nil)
@@ -261,53 +257,6 @@ trait Transforming { self: ScalanStaged =>
         val newRoot = pairMany(newChildren map (_.root))
         TupleTree(newRoot, newChildren)
       }
-
-
-    def fromViewSubst[A](s: Exp[A]) = s match {
-      case Def(view: ViewArray[_, _]) => view.source  //TODO it looks like don't need View anymore?
-      case Def(UserTypeDef(iso)) =>
-        val repr = iso.from(s)
-        repr
-      case UserTypeSym(iso) =>
-        val repr = iso.from(s)
-        repr
-      case _ => s
-    }
-
-    def toViewSubst[A, B](s_v: Exp[B], s: Exp[A]): Exp[_] = s_v match {
-      case Def(view: ViewArray[a, b]) =>             //TODO it looks like don't need View anymore?
-        implicit val eB = view.iso.eTo
-        ViewArray(s.asRep[Array[a]])(view.innerIso)
-      case Def(UserTypeDef(iso: Iso[A, B] @unchecked)) => iso.to(s)
-      case UserTypeSym(iso: Iso[A, B] @unchecked) => iso.to(s)
-      case _ => s
-    }
-
-    def eliminateViews: TupleTree = {
-      mirror(x => fromViewSubst(x))
-    }
-
-    def toView(x: Exp[_]) = {
-      val subst = (paths map {
-        case (p, s_v) =>
-          val s = projectPath(x, p)
-          val s_iso = toViewSubst(s_v, s)
-          s_v -> s_iso
-      }).toMap
-      val x_iso = mirror(x => subst.getOrElse(x, x))
-      x_iso.root
-    }
-
-    def fromView(x_iso: Exp[_]): Exp[_] = {
-      val subst = (paths map {
-        case (p, s_v) =>
-          val s_iso = projectPath(x_iso, p)
-          val s = fromViewSubst(s_iso)
-          s_v -> s
-      }).toMap
-      val x = mirror(x => subst.getOrElse(x, x))
-      x.root
-    }
   }
 
   object TupleTree {
