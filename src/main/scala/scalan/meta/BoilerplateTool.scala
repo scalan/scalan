@@ -1,11 +1,7 @@
-/**
- * User: Alexander Slesarenko
- * Date: 12/1/13
- */
 package scalan.meta
 
 object BoilerplateTool {
-  val scalanConfig = CodegenConfig(
+  lazy val scalanConfig = CodegenConfig(
     isLite = false,
     srcPath = "../scalan/src/main/scala",
     proxyTrait = "scalan.lms.common.ProxyExp",
@@ -23,7 +19,7 @@ object BoilerplateTool {
       "scalan.sequential.ScalanSeq")
   )
 
-  val liteConfig = CodegenConfig(
+  lazy val liteConfig = CodegenConfig(
     isLite = true,
     srcPath = "../scalan-lite/core/src/main/scala",
     entityFiles = List(
@@ -41,9 +37,10 @@ object BoilerplateTool {
       "scalan.common.Default.defaultVal")
   )
 
-  val ctx = new EntityManagement(liteConfig)
 
   def main(args: Array[String]) {
+    lazy val ctx = new EntityManagement(liteConfig)
+
     ctx.generateAll
   }
 }
