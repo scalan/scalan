@@ -35,7 +35,9 @@ object ScalanLiteBuild extends Build {
     // needed thanks to http://stackoverflow.com/questions/7898273/how-to-get-logging-working-in-scala-unit-tests-with-testng-slf4s-and-logback
     parallelExecution in Test := false,
     parallelExecution in ItTest := false,
-    parallelExecution in PerfTest := false)
+    parallelExecution in PerfTest := false,
+    fork in PerfTest := true,
+    javaOptions in PerfTest ++= Seq("-Xmx30G", "-Xms15G"))
 
   val commonSettings = inConfig(ItTest)(Defaults.testTasks) ++ 
     inConfig(PerfTest)(Defaults.testTasks ++ baseAssemblySettings) ++ Seq(
