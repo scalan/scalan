@@ -5,36 +5,37 @@ import scalan.primitives._
 import scalan.primitives.NumericOps
 
 trait Monoids { self: Scalan =>
-  class RepMonoid[A](val opName: String, val append: (Rep[A], => Rep[A]) => Rep[A], val zero: Rep[A], val isInfix: Boolean, val isCommutative: Boolean)(implicit eA: Elem[A]) {
+  case class RepMonoid[A](opName: String, append: Rep[((A, A)) => A], zero: Rep[A], isInfix: Boolean, isCommutative: Boolean)(implicit val eA: Elem[A]) {
     override def toString = s"Monoid[${eA.name}]($opName, $zero)"
   }
-  
-  object RepMonoid {
-    def apply[A](opName: String, append: (Rep[A], => Rep[A]) => Rep[A], zero: A, isInfix: Boolean, isCommutative: Boolean)(implicit eA: Elem[A]): RepMonoid[A] =
-      new RepMonoid(opName, append, toRep(zero), isInfix, isCommutative)
-  }
-  
-  implicit lazy val IntRepPlusMonoid: RepMonoid[Int] = 
-    RepMonoid("+", (a, b) => a + b, 0, isInfix = true, isCommutative = true)
-  implicit lazy val FloatRepPlusMonoid: RepMonoid[Float] = 
-    RepMonoid("+", (a, b) => a + b, 0f, isInfix = true, isCommutative = true)
-  implicit lazy val DoubleRepPlusMonoid: RepMonoid[Double] = 
-    RepMonoid("+", (a, b) => a + b, 0f, isInfix = true, isCommutative = true)
-  implicit lazy val BooleanRepOrMonoid: RepMonoid[Boolean] = 
-    RepMonoid("||", (a, b) => a || b, false, isInfix = true, isCommutative = true)
 
-  lazy val IntRepMultMonoid = 
-    RepMonoid[Int]("*", (a, b) => a * b, 1, isInfix = true, isCommutative = true)
-  lazy val FloatRepMultMonoid = 
-    RepMonoid[Float]("*", (a, b) => a * b, 1f, isInfix = true, isCommutative = true)
-  lazy val BooleanRepAndMonoid = 
-    RepMonoid[Boolean]("&&", (a, b) => a && b, true, isInfix = true, isCommutative = true)
-  
+  object RepMonoid {
+    def apply[A](opName: String, zero: A, isInfix: Boolean, isCommutative: Boolean)(append: (Rep[A], Rep[A]) => Rep[A])(implicit eA: Elem[A], d: DummyImplicit): RepMonoid[A] =
+      new RepMonoid(opName, fun { p: Rep[(A, A)] => append(p._1, p._2) }, toRep(zero), isInfix, isCommutative)
+  }
+
+  implicit lazy val IntRepPlusMonoid: RepMonoid[Int] =
+    RepMonoid("+", 0, isInfix = true, isCommutative = true) { (a, b) => a + b }
+  implicit lazy val FloatRepPlusMonoid: RepMonoid[Float] =
+    RepMonoid("+", 0.0f, isInfix = true, isCommutative = true) { (a, b) => a + b }
+  implicit lazy val DoubleRepPlusMonoid: RepMonoid[Double] =
+    RepMonoid("+", 0.0, isInfix = true, isCommutative = true) { (a, b) => a + b }
+  implicit lazy val BooleanRepOrMonoid: RepMonoid[Boolean] =
+    RepMonoid("||", false, isInfix = true, isCommutative = true) { (a, b) => a || b }
+
+  lazy val IntRepMultMonoid =
+    RepMonoid[Int]("*", 1, isInfix = true, isCommutative = true) { (a, b) => a * b }
+  lazy val FloatRepMultMonoid =
+    RepMonoid[Float]("*", 1f, isInfix = true, isCommutative = true) { (a, b) => a * b }
+  lazy val BooleanRepAndMonoid =
+    RepMonoid[Boolean]("&&", true, isInfix = true, isCommutative = true) { (a, b) => a && b }
+
   def isPredefined(m: RepMonoid[_]): Boolean = {
     Set[RepMonoid[_]](IntRepMultMonoid,
       IntRepPlusMonoid,
       FloatRepMultMonoid,
       FloatRepPlusMonoid,
       BooleanRepAndMonoid,
-      BooleanRepOrMonoid).contains(m)}
+      BooleanRepOrMonoid).contains(m)
+  }
 }
