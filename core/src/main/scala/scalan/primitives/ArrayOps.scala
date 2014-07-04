@@ -160,10 +160,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
     lazy val self: Rep[T] = this
     override def mirror(t: Transformer) = ArraySum[T](t(xs), m)
   }
-  case class ArrayScan[T](xs: Exp[Array[T]])(implicit val m: RepMonoid[T], val eT : Elem[(Array[T], T)]) extends Def[(Array[T], T)] with ArrayMethod[T] {
+  case class ArrayScan[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T])(implicit val eT : Elem[(Array[T], T)]) extends Def[(Array[T], T)] with ArrayMethod[T] {
     def selfType = eT
     lazy val self: Rep[(Array[T], T)] = this
-    override def mirror(t: Transformer) = ArrayScan[T](t(xs))
+    override def mirror(t: Transformer) = ArrayScan[T](t(xs), m)
   }
   case class ArrayZip[T: Elem, U: Elem](xs: Exp[Array[T]], ys: Exp[Array[U]]) extends ArrayDef[(T, U)] {
     lazy val eT = element[(T, U)]
@@ -194,7 +194,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
     withElemOfArray(xs) { implicit eT => ArraySum(xs, m) }
 
   def array_scan[T](xs: Arr[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)] = {
-    ArrayScan(xs)
+    ArrayScan(xs, m)
   }
 
   def array_zip[T, U](xs: Arr[T], ys: Arr[U]): Arr[(T, U)] = {
