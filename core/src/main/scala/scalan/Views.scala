@@ -87,6 +87,8 @@ trait Views extends Elems { self: Scalan =>
     }
   }
 
+  //TODO ICFP implement sumIso
+
   def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = {
     new Iso[A, C]()(iso1.eFrom) {
       def eTo = iso2.eTo
@@ -247,6 +249,8 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     lazy val iso = pairIso(iso1, iso2)
     def copy(source: Rep[(A1, A2)]) = ViewPair(source)
   }
+
+  //TODO ICFP implement ViewSum and corresponding rewrite rules
 
   override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
     case Def(d1) => d1 match {

@@ -3,6 +3,15 @@ package scalan
 import scala.{Left => L, Right => R}
 
 trait Options extends Views { self: Scalan =>
+  // TODO ICFP implement Option[T]
+  /** I see two alternatives:
+    * 1) implement Option[T] is UserType with isomorphic representation (Unit | T)
+    * 2) add Option[T] to the basis (primitives package) similar to Array[T] and Iterable[T] and
+    *    then define primitives toOption: (Unit | T) => Option[T]  and  fromOption in the basis.
+    *
+    * It looks like 2) is better as it follows the same pattern as with Array and Iterable.
+   */
+
 
 //  object Opt {
 //    class IsoOption[A: Elem] extends IsoBase[(Unit | A), Option[A]] {
