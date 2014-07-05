@@ -28,8 +28,8 @@ class mvm extends BaseBenchmark {
   //def main(args:Array[String]) {
     val height = 10000
     val width = 10000
-    val matSparse = 0.0
-    val vecSparse = 0.5
+    val matSparse = 0.9
+    val vecSparse = 0.1
     val max = 10
 
     def genRandVec(len: Int, sp: Double) = {
@@ -120,16 +120,16 @@ class mvm extends BaseBenchmark {
           a => ctx.ssmvm(a)
         }
       }
-      measure method "seqfmdv" in {
-        using(inFD) in {
-          a => ctx.fdmvm((a._1, a._2))
-        }
-      }
-      measure method "seqfmsv" in {
-        using(inFS) in {
-          a => ctx.fsmvm(a)
-        }
-      }
+//      measure method "seqfmdv" in {
+//        using(inFD) in {
+//          a => ctx.fdmvm((a._1, a._2))
+//        }
+//      }
+//      measure method "seqfmsv" in {
+//        using(inFS) in {
+//          a => ctx.fsmvm(a)
+//        }
+//      }
 //      measure method "dmdv" in {
 //        using(inDD) in {
 //          a => (new ddmvm())(a._1, a._2)
