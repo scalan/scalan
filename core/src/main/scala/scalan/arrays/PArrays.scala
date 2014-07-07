@@ -18,8 +18,11 @@ trait PArrays extends Base { self: PArraysDsl =>
     def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): PA[B] = PArray(arr.mapBy(f))
     def zip[B: Elem](ys: PA[B]): PA[(A, B)] = PairArray(self, ys)
     def slice(offset: Rep[Int], length: Rep[Int]): Rep[PArray[A]]
-    def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] = arr.sum
-    def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(PArray[A], A)] = (PArray(arr.scan._1), arr.scan._2)
+    def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] = arr.reduce(m)
+    def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(PArray[A], A)] = {
+      val arrScan = arr.scan(m)
+      (PArray(arrScan._1), arrScan._2)
+    }
   }
   
   implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = element[A] match {

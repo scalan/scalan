@@ -211,7 +211,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
               }
             }
             /* This is reduce */
-            case scalan.ArraySum(source, monoid) => {
+            case scalan.ArrayReduce(source, monoid) => {
               (monoid, source.elem) match {
                 case (monoid, el: scalan.ArrayElem[_]) if monoid.opName == "+" => {
                   scalan.createManifest(el.ea) match {
