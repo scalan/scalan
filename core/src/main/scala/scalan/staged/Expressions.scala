@@ -312,7 +312,7 @@ trait BaseExp extends Base { self: ScalanExp =>
     }
   }
 
-  final def rewrite[T](s: Exp[T]): Exp[_] = s match {
+  def rewrite[T](s: Exp[T]): Exp[_] = s match {
     case Def(d) => rewriteDef(d)
     case _ => rewriteVar(s)
   }

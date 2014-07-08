@@ -40,23 +40,62 @@ trait ReflEqualitySeq extends ReflEquality  { self: ScalanSeq =>
 }
 
 trait ReflEqualityExp extends ReflEquality with BaseExp { self: ScalanExp =>
-  var rewriteRules = List[RewriteRule[Any,Any]]()
 
-  def addRewriteRules(rules: RewriteRule[Any,Any]*) {
+  override def rewrite[T](s: Exp[T]): Exp[_] = {
+    for (rule <- rewriteRules) {
+      rule(s) match {
+        case Some(s1) => return s1
+        case None =>
+      }
+    }
+
+    super.rewrite(s)
+  }
+
+  var rewriteRules = List[RewriteRule[Any]]()
+
+  def addRewriteRules(rules: RewriteRule[Any]*) {
     rewriteRules ++= rules
   }
 
-  trait RewriteRule[A,B] {
-    def apply(x: Exp[B]): Option[Exp[B]]
+  trait RewriteRule[T] {
+    def apply(x: Exp[T]): Option[Exp[T]]
   }
 
-  case class LemmaRule[A,B](lemma: Lambda[A,Refl[B]], pattern: Exp[A=>B], rhs: Exp[A=>B]) extends RewriteRule[A,B] {
-    lazy val patternGraph: ExpGraph = {
-      val Def(lam: Lambda[A,B]) = pattern
-      lam.indGraph
+  case class LemmaRule[A,B](lemma: Lambda[A,Refl[B]], pattern: Exp[A=>B], rhs: Exp[A=>B]) extends RewriteRule[B] {
+    import graphs._
+
+    val patternLam = pattern.getLambda
+    lazy val patternGraph: ExpGraph = patternLam.indGraph
+
+    def nodeCompare(x: Exp[_], y: Exp[_]): Boolean = {
+      ???
     }
 
-    def apply(x: Exp[B]) = ???
+    def isVar(x: Exp[_]): Boolean = {
+      ???
+    }
+
+    def apply(x: Exp[B]) = {
+      val g = new PGraph(x)
+      val ig = g.indGraph
+
+      val b = new Bisimulator[Unit, Unit](ig, patternGraph, defaultContextCompare(nodeCompare, isVar))
+
+      val resState = b.genStates(g.roots, patternLam.roots).toSeq.last
+
+      resState.kind match {
+        case SimilarityFailed => None
+        case SimilarityEqual | SimilarityEmbeded => {
+          val subst = resState.fromSubst  // mapping between graphs  ig <- patternGraph
+          val tree = patternLam.projectionTreeFrom(patternLam.x)
+          val argTup = TupleTree.fromProjectionTree(tree, s => subst(s))
+          val arg = argTup.root.asRep[A]
+          val x1 = rhs(arg)
+          Some(x1)
+        }
+      }
+    }
   }
 
   def rewriteRuleFromEqLemma[A,B](lemma: EqLemma[A,B]): LemmaRule[A,B] = {
