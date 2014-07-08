@@ -52,16 +52,14 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     
     
     lazy val schedule: List[TableEntry[_]] = {
-      isIdentity match {
-        case false =>
-          val g = new PGraph(y)
-          val sh = g.scheduleFrom(x)
-          (sh, y) match {
-            case (Nil, DefTableEntry(tp)) => List(tp)  // the case when body is const
-            case _ => sh
-          }
-
-        case _ => Nil
+      if (isIdentity) Nil
+      else {
+        val g = new PGraph(y)
+        val sh = g.scheduleFrom(x)
+        (sh, y) match {
+          case (Nil, DefTableEntry(tp)) => List(tp)  // the case when body is const
+          case _ => sh
+        }
       }
     }
 

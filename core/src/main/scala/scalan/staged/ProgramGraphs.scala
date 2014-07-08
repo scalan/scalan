@@ -24,7 +24,8 @@ trait ProgramGraphs extends Scheduling with Transforming with AstGraphs { self: 
   class ProgramGraph[Ctx <: Transformer : TransformerOps](override val roots: List[Exp[Any]], val mapping: Ctx) 
   	  extends AstGraph(roots) 
   {
-    val schedule = buildScheduleForResult(roots /*map { _.asSymbol }*/, _.getDeps)
+    lazy val schedule = buildScheduleForResult(roots /*map { _.asSymbol }*/, _.getDeps)
+    lazy val scheduleSyms = schedule map { _.sym }
 
     def scheduleAll = {
       schedule flatMap (tp  => tp match {

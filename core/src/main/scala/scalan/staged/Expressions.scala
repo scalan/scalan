@@ -189,6 +189,10 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   implicit class ExpForSomeOps(symbol: Exp[_]) {
     def inputs: List[Exp[Any]] = dep(symbol)
+    def getDeps: List[Exp[_]] = symbol match {
+      case Def(lam: Lambda[_,_]) => lam.freeVars.toList
+      case _ => this.inputs
+    }
     def isLambda: Boolean = symbol match {
       case Def(_: Lambda[_, _]) => true
       case _ => false
