@@ -7,6 +7,14 @@ import java.io.{ File, PrintWriter, FileOutputStream }
 
 trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
 
+  def emitDot(dotContent: String, file: String): Unit = {
+    val f = new File(file)
+    f.getParentFile.mkdirs()
+    val stream = new java.io.PrintWriter(new java.io.FileOutputStream(file))
+    stream.println(dotContent)
+    stream.close()
+  }
+
   private def quote(x: Any) = "\"" + x + "\""
 
   private def nodeColor(sym: Exp[_]): String = "color=" + (sym.elem match {
