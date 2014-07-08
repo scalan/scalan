@@ -7,7 +7,6 @@ import tests.GraphVizExport
 import tests.BaseShouldTests
 
 
-
 class PArrayExamplesSuite extends BaseShouldTests {
 
   "when mixing trait" should "be constructed in Seq context" in {

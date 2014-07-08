@@ -33,7 +33,7 @@ trait PArraysOps { scalan: PArraysDsl =>
         val ps = arr.asRep[Array[(a,b)]]
         val as = fromArray(ps.map(fun { _._1 }))
         val bs = fromArray(ps.map(fun { _._2 }))
-        PairArray[a,b](as, bs)
+        as zip bs //PairArray[a,b](as, bs)
       case _ => ???
     }
 
