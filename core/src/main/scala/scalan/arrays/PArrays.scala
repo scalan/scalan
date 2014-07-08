@@ -1,7 +1,5 @@
 package scalan.arrays
 
-import scala.annotation.implicitNotFound
-import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.common.Default
 

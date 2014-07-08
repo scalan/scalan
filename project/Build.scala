@@ -1,5 +1,7 @@
 import sbt._
 import sbt.Keys._
+import sbtassembly.Plugin._
+import AssemblyKeys._
 
 object ScalanLiteBuild extends Build {
   val opts = scalacOptions ++= Seq(
@@ -34,12 +36,12 @@ object ScalanLiteBuild extends Build {
     parallelExecution in PerfTest := false)
 
   val commonSettings = inConfig(ItTest)(Defaults.testTasks) ++ 
-    inConfig(PerfTest)(Defaults.testTasks) ++ Seq(
+    inConfig(PerfTest)(Defaults.testTasks ++ baseAssemblySettings) ++ Seq(
       scalaVersion := "2.10.3",
       organization := "com.huawei",
       version := "0.1-SNAPSHOT",
       opts, commonDeps) ++ 
-    testSettings
+    testSettings ++ assemblySettings
 
   lazy val ItTest = config("it").extend(Test)
 
@@ -50,9 +52,9 @@ object ScalanLiteBuild extends Build {
   lazy val core = Project("scalan-lite", file("core")).configs(ItTest, PerfTest).
     settings(commonSettings: _*)
   
-  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(core % "compile->compile;test->test").configs(ItTest, PerfTest).
-    settings(commonSettings: _*).settings(libraryDependencies += "EPFL" % "lms_2.10" % "0.3-SNAPSHOT")
+//  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(core % "compile->compile;test->test").configs(ItTest, PerfTest).
+//    settings(commonSettings: _*).settings(libraryDependencies += "EPFL" % "lms_2.10" % "0.3-SNAPSHOT")
   
   // name to make this the default project
-  lazy val root = Project("all", file(".")).aggregate(core, lmsBackend).configs(ItTest, PerfTest).settings(commonSettings: _*)
+  lazy val root = Project("all", file(".")).aggregate(core/*, lmsBackend*/).configs(ItTest, PerfTest).settings(commonSettings: _*)
 }
