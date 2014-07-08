@@ -49,15 +49,17 @@ trait InductiveGraphs[Node] {
 	  def empty[A, B]: Graph[A, B] = Empty
 	
 	  def asDot(graph: Graph[_, _]) = {
-	    def findValue(node: Node) = SearchNode(graph, node) match {
-	      case FoundNode(NodeContext(_, _, value, _), _) ⇒ value
+	    def findValue(g: Graph[_,_], node: Node):Any = g match {
+	      case c &: g if c.node == node ⇒ c.node
+        case c &: g => findValue(g, node)
+        case _ => throw new NoSuchElementException(s"$node")
 	    }
 	    val edges = {
           val pairs = graph.ufold(Set.empty[Any]) {
             (memo, context) ⇒
             memo ++
-              context.in.map(i ⇒ (findValue(i.node), context.value)) ++
-              context.out.map(o ⇒ (context.value, findValue(o.node)))
+              context.in.map(i ⇒ (i.node, context.node)) ++
+              context.out.map(o ⇒ (context.node, o.node))
           }
           (pairs map {
             case (from, to) ⇒ s""""$from" -> "$to";\n"""
