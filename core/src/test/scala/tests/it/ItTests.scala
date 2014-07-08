@@ -21,10 +21,32 @@ trait ItTests extends BaseTests {
     readFile(name + ".check") should be (readFile(name))
   }
 
+  def lmsTestRun[A,B](front: ScalanSeq, back: LangBackend)
+                  (fseq: front.Rep[A=>B], f: back.Exp[_])
+                  (name: String, input: front.Rep[A])
+                  (implicit eA: front.Elem[A], eB: front.Elem[B]) /*: front.Rep[B]*/ =
+  {
+    val dir = "it-out/" + prefix + "/" + name
+    val outFile = dir + "/out.txt"
+    val inFile = dir + "/in.txt"
+
+    new File(dir).mkdirs()
+
+    back.run(dir, name, f, emitGraphs)
+  }
+
+  def lmsCheckRun[A,B](front: ScalanSeq, back: LangBackend)
+                   (fseq: front.Rep[A=>B], f: back.Exp[_])
+                   (name: String, input: front.Rep[A], expOutput: front.Rep[B])
+                   (implicit eA: front.Elem[A], eB: front.Elem[B]) {
+    val output = lmsTestRun(front, back)(fseq, f)(name, input)
+    //output.toString should be (expOutput.toString)
+  }
+
   def testRun[A,B](front: ScalanSeq, back: LangBackend)
                   (fseq: front.Rep[A=>B], f: back.Exp[_])
                   (name: String, input: front.Rep[A])
-                  (implicit eA: front.Elem[A], eB: front.Elem[B]): front.Rep[B] =
+                  (implicit eA: front.Elem[A], eB: front.Elem[B]) /*: front.Rep[B]*/ =
   {
     val dir = "it-out/" + prefix + "/" + name
     val outFile = dir + "/out.txt"

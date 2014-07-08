@@ -2,7 +2,7 @@ package tests.scalan.primitives
 
 import scalan.{ScalanCtxStaged, ScalanCtxSeq}
 import org.scalatest.FlatSpec
-import tests.GraphVizExport
+import scalan.codegen.GraphVizExport
 import scalan.staged.ProgramGraphs
 import tests.BaseShouldTests
 import scalan.arrays.PArraysDslExp

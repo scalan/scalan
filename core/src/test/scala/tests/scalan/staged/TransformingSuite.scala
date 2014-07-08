@@ -1,6 +1,8 @@
 package tests.scalan.staged
 
-import tests.{GraphVizExport, BaseShouldTests}
+import scalan.codegen.GraphVizExport
+import tests.BaseShouldTests
+
 import scalan.ScalanCtxStaged
 
 class TransformingSuite extends BaseShouldTests {

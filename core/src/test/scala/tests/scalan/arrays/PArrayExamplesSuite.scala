@@ -3,7 +3,7 @@ package tests.scalan.arrays
 import scalan.{ScalanCtxStaged, ScalanCtxSeq}
 import org.scalatest.{Matchers, FlatSpec}
 import scalan.arrays.{PArraysDslExp, PArraysDslSeq}
-import tests.GraphVizExport
+import scalan.codegen.GraphVizExport
 import tests.BaseShouldTests
 
 

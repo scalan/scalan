@@ -1,4 +1,4 @@
-package tests
+package scalan.codegen
 
 import _root_.scalan.primitives.FunctionsExp
 import _root_.scalan.ScalanStagedImplementation
@@ -43,7 +43,7 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
     stream.println("shape=box," + nodeColor(sym))
     stream.println("]")
   }
-  
+
   private def formatDef(d: Def[_]): String = d match {
     case l: Lambda[_, _] => s"\\\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y.toString}}"
     case Apply(f, arg) => s"$f($arg)"
