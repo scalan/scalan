@@ -3,7 +3,7 @@ import sbt.Keys._
 
 object ScalanLiteBuild extends Build {
   val opts = scalacOptions ++= Seq(
-    "-unchecked",
+    // "-unchecked",
     "-deprecation",
     "-Xlint",
     "-feature",
@@ -36,7 +36,7 @@ object ScalanLiteBuild extends Build {
     parallelExecution in PerfTest := false)
 
   val commonSettings = Seq(
-    scalaVersion := "2.10.3",
+    // scalaVersion := "2.10.3",
     organization := "com.huawei",
     version := "0.1-SNAPSHOT",
     opts, commonDeps) ++ testSettings
@@ -56,4 +56,6 @@ object ScalanLiteBuild extends Build {
   
   // name to make this the default project
   lazy val root = Project("all", file(".")).aggregate(core, lmsBackend).settings(commonSettings: _*)
+
+  scalaVersion in Global := "2.10.3"
 }
