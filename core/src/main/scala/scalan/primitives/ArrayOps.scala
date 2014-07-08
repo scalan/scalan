@@ -40,23 +40,31 @@ trait ArrayOpsExp extends ArrayOps { self: ScalanStaged =>
       block(eTArr.ea)
     }
 
-  trait ArrayDef[T] extends Def[Array[T]]
-  case class ArrayLength[T](xs: Exp[Array[T]]) extends Def[Int] {
+  trait ArrayDef[T] extends Def[Array[T]] {
+  }
+  trait ArrayMethod[T] {
+    def name[A](e: Elem[A]): String
+    def xs: Exp[Array[T]]
+    lazy val uniqueOpId = withElemOfArray(xs){ name(_) }
+  }
+  case class ArrayLength[T](xs: Exp[Array[T]]) extends Def[Int] with ArrayMethod[T] {
     def selfType = element[Int]
   }
-  case class ArrayApply[T](xs: Exp[Array[T]], index: Exp[Int]) extends Def[T] {
+  case class ArrayApply[T](xs: Exp[Array[T]], index: Exp[Int]) extends Def[T] with ArrayMethod[T] {
     def selfType = withElemOf(xs){ _.ea }
   }
-  case class ArrayMap[T,R](xs: Exp[Array[T]], f: Exp[T=>R]) extends ArrayDef[R] {
+  case class ArrayMap[T,R](xs: Exp[Array[T]], f: Exp[T=>R]) extends ArrayDef[R] with ArrayMethod[T] {
     def selfType = withResultElem(f){implicit eR => element[Array[R]]}
   }
-  case class ArraySum[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T]) extends Def[T] {
+  case class ArraySum[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T]) extends Def[T] with ArrayMethod[T] {
     def selfType = withElemOf(xs){ _.ea }
   }
   case class ArrayZip[T:Elem,U:Elem](xs: Exp[Array[T]], ys: Exp[Array[U]]) extends ArrayDef[(T,U)] {
+    lazy val uniqueOpId = name(element[T], element[U])
     def selfType = element[Array[(T,U)]]
   }
   case class ArrayReplicate[T:Elem](len: Exp[Int], v: Exp[T]) extends ArrayDef[T] {
+    lazy val uniqueOpId = name(element[T])
     def selfType = element[Array[T]]
   }
 

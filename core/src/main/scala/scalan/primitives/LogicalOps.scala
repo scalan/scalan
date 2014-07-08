@@ -44,6 +44,7 @@ trait LogicalOpsExp extends LogicalOps { self: ScalanStaged =>
     def copyWith(a: Rep[Boolean]) = this.copy(arg = a)
   }
   case class BooleanToInt(arg: Exp[Boolean]) extends Def[Int] with UnOpBase[Boolean,Int] {
+    lazy val uniqueOpId = name(arg.elem)
     val selfType = element[Int]
     override def mirror(t: Transformer) = {
       copyWith(t(arg))

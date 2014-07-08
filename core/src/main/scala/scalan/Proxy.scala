@@ -26,6 +26,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
   case class MethodCall[T](receiver: Exp[Any], method: jreflect.Method, args: List[AnyRef])(implicit leT: LElem[T]) extends Def[T] {
     def selfType = leT.value
+    def uniqueOpId = s"$name:${method.getName}"
     override def mirror(t: Transformer) =
       MethodCall[T](t(receiver), method, args map { case a: Exp[_] => t(a) case a => a })
     override def self: Rep[T] = { this }

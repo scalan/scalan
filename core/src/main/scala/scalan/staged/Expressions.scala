@@ -34,7 +34,10 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   // this trait is mixed in Def[A]
   trait ReifiableObject[+T, +TImpl <: T] extends UserType[T @uncheckedVariance] {
-    def name = getClass.getSimpleName
+    def name: String = getClass.getSimpleName
+    def name[A](eA: Elem[A]): String = s"$name[${eA.prettyName}]"
+    def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.prettyName},${eB.prettyName}]"
+    def uniqueOpId: String
     def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)
     def decompose: Option[Rep[_]] = None
     def isScalarOp: Boolean = true
@@ -44,6 +47,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   case class Const[T](x: T)(implicit val leT: LElem[T]) extends Def[T] {
     def selfType = leT.value
+    def uniqueOpId = toString
     override def self: Rep[T] = this
     override def mirror(t: Transformer): Rep[_] = Const(x)
     override def hashCode: Int = (41 + x.hashCode)
@@ -68,6 +72,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
   }
 
   abstract class UnOp[T] extends Def[T] with UnOpBase[T,T] {
+    lazy val uniqueOpId = name(arg.elem)
     override def mirror(t: Transformer) = {
       implicit val eT = arg.elem
       copyWith(t(arg))
@@ -75,6 +80,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     override def self: Rep[T] = { implicit val e = selfType; this }
   }
   abstract class BinOp[T] extends Def[T] with BinOpBase[T,T] {
+    lazy val uniqueOpId = name(lhs.elem)
     override def mirror(t: Transformer) = {
       implicit val eT = lhs.elem
       copyWith(t(lhs), t(rhs))

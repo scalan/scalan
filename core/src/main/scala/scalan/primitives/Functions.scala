@@ -35,6 +35,10 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     def f: Option[Exp[A] => Exp[B]]
     def x: Exp[A]
     def y: Exp[B]
+
+    lazy val uniqueOpId = s"Lambda[${eA.prettyName},${eB.prettyName}]"
+
+    // structural equality pattern implementation
     override def hashCode: Int = (41 * (41 + x.hashCode) + y.hashCode)
     override def equals(other: Any) =
       other match {
@@ -139,6 +143,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       extends Def[B]
   {
     def selfType = eB.value
+    lazy val uniqueOpId = name(arg.elem, selfType)
     override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))(eB)
   }
 

@@ -110,6 +110,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 
   trait UserTypeExp[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
     override def self = reifyObject(this)(Lazy(selfType.asInstanceOf[Elem[TImpl]]))
+    def uniqueOpId = selfType.prettyName
   }
   object UserTypeExp {
     def unapply[T](d: Def[T]): Option[Iso[_,T]] = {

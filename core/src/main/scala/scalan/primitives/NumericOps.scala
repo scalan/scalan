@@ -84,6 +84,7 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
 //  }
 
   case class NumericToFloat[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends Def[Float] with UnOpBase[T,Float] {
+    lazy val uniqueOpId = name(arg.elem)
     val selfType = element[Float]
     def copyWith(a: Rep[T]) = this.copy(arg = a)
     override def mirror(t: Transformer) = {

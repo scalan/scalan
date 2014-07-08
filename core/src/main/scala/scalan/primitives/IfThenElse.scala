@@ -39,6 +39,7 @@ trait IfThenElseSeq extends IfThenElse { self: ScalanSeq =>
 trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanStaged =>
 
   case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit val selfType: Elem[T]) extends Def[T] {
+    def uniqueOpId = name
     override def mirror(t: Transformer) = IfThenElse(t(cond), t(thenp), t(elsep))
   }
 
