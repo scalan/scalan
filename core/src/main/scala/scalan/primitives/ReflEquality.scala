@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.common.Lazy
-import scalan.staged.BaseExp
+import scalan.staged.{ExpInductiveGraphs, BaseExp}
 import scalan.{Scalan, ScalanSeq, ScalanExp}
 import scala.reflect.runtime.universe._
 
@@ -39,7 +39,7 @@ trait ReflEquality { self: Scalan =>
 trait ReflEqualitySeq extends ReflEquality  { self: ScalanSeq =>
 }
 
-trait ReflEqualityExp extends ReflEquality with BaseExp { self: ScalanExp =>
+trait ReflEqualityExp extends ReflEquality with BaseExp with ExpInductiveGraphs { self: ScalanExp =>
 
   override def rewrite[T](s: Exp[T]): Exp[_] = {
     for (rule <- rewriteRules) {
@@ -57,47 +57,71 @@ trait ReflEqualityExp extends ReflEquality with BaseExp { self: ScalanExp =>
   def addRewriteRules(rules: RewriteRule[Any]*) {
     rewriteRules ++= rules
   }
-
-  trait RewriteRule[T] {
-    def apply(x: Exp[T]): Option[Exp[T]]
+  def removeRewriteRules(rules: RewriteRule[Any]*) {
+    rewriteRules = rewriteRules.diff(rules)
   }
 
-  case class LemmaRule[A,B](lemma: Lambda[A,Refl[B]], pattern: Exp[A=>B], rhs: Exp[A=>B]) extends RewriteRule[B] {
+  trait RewriteRule[+T] {
+    def apply[U >: T](x: Exp[U]): Option[Exp[T]]
+  }
+
+  class PatternMatcher[A,B](val pattern: Exp[A=>B]) {
     import graphs._
 
     val patternLam = pattern.getLambda
     lazy val patternGraph: ExpGraph = patternLam.indGraph
 
-    def nodeCompare(x: Exp[_], y: Exp[_]): Boolean = {
-      ???
+    def nodeCompare(x: Exp[_], y: Exp[_]): Boolean = (x, y) match {
+      case (Def(dx), Def(dy)) =>
+        val idx = dx.uniqueOpId
+        val idy = dy.uniqueOpId
+        //println(s"$idx == $idy")
+        idx == idy
+      case _ => false
     }
 
-    def isVar(x: Exp[_]): Boolean = {
-      ???
+    def isVar(s: Exp[_]): Boolean = {
+      patternLam.isLambdaBoundProjection(s)
     }
 
-    def apply(x: Exp[B]) = {
-      val g = new PGraph(x)
+    def getBisimulatorFor[U](s: Exp[U]) = {
+      val g = new PGraph(s)
       val ig = g.indGraph
-
       val b = new Bisimulator[Unit, Unit](ig, patternGraph, defaultContextCompare(nodeCompare, isVar))
+      b
+    }
 
-      val resState = b.genStates(g.roots, patternLam.roots).toSeq.last
+    def matchWith[U](s: Exp[U]): Option[(SimilarityResult, Subst)] = {
+      val b = getBisimulatorFor(s)
+      val resState = b.genStates(List(s), patternLam.roots).toSeq.last
 
       resState.kind match {
         case SimilarityFailed => None
-        case SimilarityEqual | SimilarityEmbeded => {
-          val subst = resState.fromSubst  // mapping between graphs  ig <- patternGraph
-          val tree = patternLam.projectionTreeFrom(patternLam.x)
-          val argTup = TupleTree.fromProjectionTree(tree, s => subst(s))
-          val arg = argTup.root.asRep[A]
-          val x1 = rhs(arg)
-          Some(x1)
-        }
+        case SimilarityEqual | SimilarityEmbeded =>
+          Some(resState.kind, resState.fromSubst) // mapping between graphs  ig <- patternGraph
       }
     }
+
   }
 
+  class FuncMatcher[A,B](pattern: Exp[A=>B]) extends PatternMatcher(pattern) {
+    import graphs._
+    def unapply(f: Exp[A => B]): Option[(SimilarityResult, Subst)] = matchWith(f.getLambda.y)
+  }
+
+  case class LemmaRule[A,B](lemma: Lambda[A,Refl[B]], override val pattern: Exp[A=>B], rhs: Exp[A=>B])
+      extends PatternMatcher[A,B](pattern)
+         with RewriteRule[B]
+  {
+    def apply[U >: B](s: Exp[U]) = matchWith(s).map { case (res, subst) =>
+      val tree = patternLam.projectionTreeFrom(patternLam.x)
+      val argTup = TupleTree.fromProjectionTree(tree, s => subst(s))
+      val arg = argTup.root.asRep[A]
+      val x1 = rhs(arg)
+      x1
+    }
+  }
+  
   def rewriteRuleFromEqLemma[A,B](lemma: EqLemma[A,B]): LemmaRule[A,B] = {
     val Def(lam: Lambda[A,Refl[B]]) = lemma
     lam.y match {
@@ -111,7 +135,7 @@ trait ReflEqualityExp extends ReflEquality with BaseExp { self: ScalanExp =>
         val lLam: Exp[A => B] = new Lambda(None, lam.x, lhs, lLamSym, false)
         val rLam: Exp[A => B] = new Lambda(None, lam.x, rhs, rLamSym, false)
 
-        LemmaRule(lam, lLam, rLam /*fun { (a: Rep[A]) =>  rLam(a) }*/)
+        LemmaRule(lam, lLam, rLam)
     }
   }
 }

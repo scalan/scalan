@@ -114,19 +114,19 @@ trait GraphOperations[Node] extends InductiveGraphs[Node] {
             currState = currState.copy(leftStack = ls, rightStack = rs)
           else
             (leftGraph.search(lnode), rightGraph.search(rnode)) match {
-              case (FoundNode(lc@Context(leftIns, _, _, _), restGraph1), FoundNode(rc@Context(rightIns, _, _, _), restGraph2)) =>
+              case (FoundNode(lc@Context(leftIns, _, _, _), leftRest), FoundNode(rc@Context(rightIns, _, _, _), rightRest)) =>
                 compare(lc, rc) match {
                   case SimilarityEqual =>
                     currState = BisimulatorState(
-                      restGraph1, leftIns.nodesList ::: ls,
-                      restGraph2, rightIns.nodesList ::: rs,
+                      leftRest, leftIns.nodesList ::: ls,
+                      rightRest, rightIns.nodesList ::: rs,
                       toSubst + (lnode -> rnode), fromSubst + (rnode -> lnode),
                       SimilarityEqual
                     )
                   case SimilarityEmbeded =>
                     currState = BisimulatorState(
-                      restGraph1, ls,
-                      restGraph2, rs,
+                      leftRest, ls,
+                      rightRest, rs,
                       toSubst + (lnode -> rnode), fromSubst + (rnode -> lnode),
                       SimilarityEmbeded
                     )
