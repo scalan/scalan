@@ -18,6 +18,7 @@
     - remove Refl and rewriting rules
     - add Option[T] to primitives
     - add SumIso, ViewSum and corresponding rewriting rules
+    - finish View/UserTypeDef/UserTypeSym structure
 
 
 4. Implement Iters using Options[T]
@@ -28,3 +29,7 @@
     - even after Shapeless will be used, nested tuples may arise during transformations
     - flattening of tuples
     - arity raising of functions (lambdas), methods are not transformed (at least currently)
+
+6. Consider use of LElem: where is it actually needed?
+
+7. Rename Elem to Type
