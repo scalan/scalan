@@ -183,7 +183,7 @@ trait Interpreter {
               }
             }
             /* This is reduce */
-            case ArraySum(source, monoid) => {
+            case ArrayReduce(source, monoid) => {
               (monoid.append, source.elem) match {
                 case (lambdaSym@Def(lam:Lambda[_,_]), el: ArrayElem[a]) =>
                   val seqSource = symMirr(source).asInstanceOf[seq.Rep[Array[a]]]
@@ -191,7 +191,7 @@ trait Interpreter {
                   val seqAppend = mirrorLambdaToFunc[(a,a),a](lam.asInstanceOf[Lambda[(a,a), a]], symMirr, funcMirr)
                   implicit val eA = createSeqElem(el.ea);
                   val seqMonoid = seq.RepMonoid[a](monoid.opName, seqAppend, seqZero, monoid.isInfix, monoid.isCommutative)
-                  val exp = seq.array_sum[a](seqSource)(seqMonoid)
+                  val exp = seq.array_reduce[a](seqSource)(seqMonoid)
                   (exps ++ List(exp), symMirr + ((s, exp)), funcMirr + ((lambdaSym, seqAppend)))
               }
             }

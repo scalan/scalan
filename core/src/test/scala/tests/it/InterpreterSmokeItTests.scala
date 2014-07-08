@@ -48,7 +48,7 @@ class InterpreterSmokeItTests extends  ItTests{
 
     lazy val simpleReduce = fun {x: Rep[Array[Int]] =>
       val curMonoid: RepMonoid[Int] = IntRepPlusMonoid
-      val x1 = x sum(curMonoid)
+      val x1 = x reduce(curMonoid)
       x1
     }
     lazy val mvMul = fun { in:Rep[(Array[Array[Int]], Array[Int])] =>
@@ -57,7 +57,7 @@ class InterpreterSmokeItTests extends  ItTests{
       val res = mat map {row: Rep[Array[Int]] =>
         val x1 = row zip vec
         val x2 = x1.map {y:Rep[(Int,Int)] => y._1 * y._2}
-        x2 sum (IntRepPlusMonoid)
+        x2 reduce (IntRepPlusMonoid)
       }
       res
     }
