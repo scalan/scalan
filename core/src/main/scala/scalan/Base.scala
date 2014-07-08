@@ -38,23 +38,6 @@ trait Base { self: Scalan =>
     def asRep[T]: Rep[T] = x.asInstanceOf[Rep[T]]
   }
 
-  trait UnOpBase[TArg,R] {
-    def arg: Rep[TArg]
-    def copyWith(arg: Rep[TArg]): Rep[R]
-    def opName: String
-    def selfType: Elem[R]
-    override def toString = "%s(%s)".format(this.getClass.getSimpleName, arg)
-  }
-
-  trait BinOpBase[TArg,R] {
-    def lhs: Rep[TArg]
-    def rhs: Rep[TArg]
-    def copyWith(l: Rep[TArg], r:Rep[TArg]): Rep[R]
-    def opName: String
-    def selfType: Elem[R]
-    override def toString = this.getClass.getSimpleName + "(" + lhs + ", " + rhs + ")"
-  }
-
   def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for $x with element $eA")
   implicit def liftToRep[A:Elem](x: A) = toRep(x)
 }

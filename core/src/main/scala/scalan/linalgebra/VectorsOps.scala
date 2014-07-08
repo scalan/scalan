@@ -8,6 +8,7 @@ import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scalan.arrays.PArraysDslExp
 import scalan.arrays.PArraysDslSeq
+import scalan.common.Lazy
 
 trait VectorsOps { scalan: VectorsDsl =>
   trait VectorOps[T] {
@@ -102,6 +103,7 @@ trait VectorsDslExp extends VectorsDsl with VectorsExp with PArraysDslExp with S
     DotSparse(xIndices, xValues, yIndices, yValues)
 
   case class DotSparse[T](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit val n: Numeric[T], val m: RepMonoid[T], val selfType: Elem[T]) extends Def[T] {
+    lazy val self = reifyObject(this)(Lazy(selfType))
     override def mirror(f: Transformer) = DotSparse(f(xIndices), f(xValues), f(yIndices), f(yValues))
     def uniqueOpId = name(selfType)
   }

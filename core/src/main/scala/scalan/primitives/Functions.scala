@@ -29,14 +29,14 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanStaged =>
 
-  trait LambdaBase[A,B] extends Def[A => B] with AstGraph with Product {
-    implicit def eA: Elem[A]
-    implicit def eB: Elem[B]
-    def f: Option[Exp[A] => Exp[B]]
-    def x: Exp[A]
-    def y: Exp[B]
-
+  class Lambda[A, B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B])(implicit val eA: Elem[A] = x.elem, val eB: Elem[B] = y.elem) extends BaseDef[A => B] with AstGraph with Product {
     lazy val uniqueOpId = s"Lambda[${eA.prettyName},${eB.prettyName}]"
+    
+    override def mirror(t: Transformer) = {
+      val newSym = fresh[A=>B]
+      val newLam = new LambdaWrapper(None, t(x), t(y), newSym)
+      toExp(newLam, newSym)
+    }
 
     // structural equality pattern implementation
     override def hashCode: Int = (41 * (41 + x.hashCode) + y.hashCode)
@@ -110,17 +110,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-  class Lambda[A,B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B]) extends LambdaBase[A,B] {
-    implicit def eA: Elem[A] = x.elem
-    implicit def eB: Elem[B] = y.elem
-    override def mirror(t: Transformer) = {
-      implicit val eAtoB = element[A=>B]
-      val newSym = fresh[A=>B]
-      val newLam = new LambdaWrapper(None, t(x), t(y), newSym)
-      toExp(newLam, newSym)
-    }
-    lazy val selfType = element[A => B]
-  }
   type LambdaData[A,B] = (Lambda[A,B], Option[Exp[A] => Exp[B]], Exp[A], Exp[B])
   object Lambda {
     def unapply[A,B](d: Def[A => B]): Option[LambdaData[A,B]] = d match {
@@ -132,10 +121,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   }
 
   class LambdaWrapper[A,B](
-       override val f: Option[Exp[A] => Exp[B]], 
-       override val x: Exp[A], 
-       override val y: Exp[B], 
-       override val self: Rep[A=>B])  extends Lambda[A,B](f, x, y)
+    f: Option[Exp[A] => Exp[B]], x: Exp[A], y: Exp[B], self0: Rep[A=>B]) extends Lambda[A,B](f, x, y) {
+    override lazy val self = self0
+  }
 
   case class Apply[A,B]
     (f: Exp[A => B], arg: Exp[A])
@@ -143,6 +131,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       extends Def[B]
   {
     def selfType = eB.value
+    lazy val self: Rep[B] = this
     lazy val uniqueOpId = name(arg.elem, selfType)
     override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))(eB)
   }

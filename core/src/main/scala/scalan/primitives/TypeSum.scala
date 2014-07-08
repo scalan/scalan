@@ -47,18 +47,14 @@ trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
 
 trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
 
-  case class Left[A, B](left: Exp[A])(implicit val eB: Elem[B]) extends Def[(A | B)] {
-    implicit def eA = left.elem
-    lazy val selfType =  element[(A|B)]
+  case class Left[A, B](left: Exp[A])(implicit val eB: Elem[B]) extends BaseDef[(A | B)]()(sumElement(left.elem, eB)) {
     override def mirror(t: Transformer) = Left[A,B](t(left))
-    lazy val uniqueOpId = name(eA, eB)
+    lazy val uniqueOpId = name(selfType) 
   }
 
-  case class Right[A, B](right: Exp[B])(implicit val eA: Elem[A]) extends Def[(A | B)] {
-    implicit def eB = right.elem
-    lazy val selfType =  element[(A|B)]
+  case class Right[A, B](right: Exp[B])(implicit val eA: Elem[A]) extends BaseDef[(A | B)]()(sumElement(eA, right.elem)) {
     override def mirror(t: Transformer) = Right[A,B](t(right))
-    lazy val uniqueOpId = name(eA, eB)
+    lazy val uniqueOpId = name(selfType) 
   }
 
   def toLeft[A](a: Rep[A]): Rep[L[A]] = withElemOf(a){ implicit e => Left[A,Unit](a) }
@@ -66,20 +62,22 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
   def toLeftSum[A,B:Elem](a: Rep[A]): Rep[(A|B)] = withElemOf(a){ implicit e => Left[A,B](a) }
   def toRightSum[A:Elem,B](b: Rep[B]): Rep[(A|B)] = withElemOf(b){ implicit e => Right[A,B](b) }
 
-  case class IsLeft[A, B](sum: Exp[(A | B)]) extends Def[Boolean] {
+  case class IsLeft[A, B](sum: Exp[(A | B)]) extends BaseDef[Boolean] {
     override def mirror(t: Transformer) = IsLeft(t(sum))
-    def selfType = element[Boolean]
+    // removing leads to compilation error
+    override val selfType = boolElement
     lazy val uniqueOpId = name(sum.elem.ea, sum.elem.eb)
   }
 
-  case class IsRight[A, B](sum: Exp[(A | B)]) extends Def[Boolean] {
+  case class IsRight[A, B](sum: Exp[(A | B)]) extends BaseDef[Boolean] {
     override def mirror(t: Transformer) = IsRight(t(sum))
-    def selfType = element[Boolean]
+    // removing leads to compilation error
+    override val selfType = boolElement
     lazy val uniqueOpId = name(sum.elem.ea, sum.elem.eb)
   }
 
   case class SumFold[A, B, R](sum: Exp[(A | B)], left: Exp[A => R], right: Exp[B => R])
-                             (implicit val selfType: Elem[R]) extends Def[R] {
+                             (implicit selfType: Elem[R]) extends BaseDef[R] {
     override def mirror(t: Transformer) = SumFold(t(sum), t(left), t(right))
     lazy val uniqueOpId = name(sum.elem.ea, sum.elem.eb)
   }

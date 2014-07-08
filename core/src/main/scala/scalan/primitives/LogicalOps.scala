@@ -5,6 +5,7 @@
 package scalan.primitives
 
 import scalan.{ScalanStaged, ScalanSeq, Scalan}
+import scalan.common.Lazy
 
 trait LogicalOps { self: Scalan =>
   def logical_and(x: Rep[Boolean], y: Rep[Boolean]): Rep[Boolean]
@@ -29,26 +30,27 @@ trait LogicalOpsSeq extends LogicalOps { self: ScalanSeq =>
 
 trait LogicalOpsExp extends LogicalOps { self: ScalanStaged =>
   abstract class LogicalBinOp(val opName: String) extends BinOp[Boolean] {
-    val selfType = element[Boolean]
+    def selfType = boolElement
+    implicit val lSelfType = Lazy(boolElement)
   }
+  
   case class And(lhs: Exp[Boolean], rhs: Exp[Boolean]) extends LogicalBinOp("&&") {
     def copyWith(l: Rep[Boolean], r: Rep[Boolean]) = this.copy(lhs = l, rhs = r)
   }
-  case class Or (lhs: Exp[Boolean], rhs: Exp[Boolean]) extends LogicalBinOp("||") {
+  case class Or(lhs: Exp[Boolean], rhs: Exp[Boolean]) extends LogicalBinOp("||") {
     def copyWith(l: Rep[Boolean], r: Rep[Boolean]) = this.copy(lhs = l, rhs = r)
   }
+
   abstract class LogicalUnOp(val opName: String) extends UnOp[Boolean] {
-    val selfType = element[Boolean]
+    def selfType = boolElement
+    implicit val lSelfType = Lazy(boolElement)
   }
+
   case class Not(arg: Exp[Boolean]) extends LogicalUnOp("!") {
     def copyWith(a: Rep[Boolean]) = this.copy(arg = a)
   }
   case class BooleanToInt(arg: Exp[Boolean]) extends Def[Int] with UnOpBase[Boolean,Int] {
-    lazy val uniqueOpId = name(arg.elem)
-    val selfType = element[Int]
-    override def mirror(t: Transformer) = {
-      copyWith(t(arg))
-    }
+    override def selfType = element[Int]
     def copyWith(a: Rep[Boolean]) = this.copy(arg = a)
     def opName = "ToInt"
   }

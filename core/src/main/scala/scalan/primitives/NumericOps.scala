@@ -42,14 +42,14 @@ trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
   def numeric_divInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = lhs / rhs
   def numeric_modInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = lhs % rhs
   def numeric_negate[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.negate(x)
-////  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.abs(x)
+//  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.abs(x)
 //  //def numeric_signum[T](x: T)(implicit n: Numeric[T]): Rep[Int]
   def numeric_toFloat[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Float] = n.toFloat(lhs)
 }
 
 trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
-  abstract class NumericBinOp[T](val opName: String)(implicit val selfType: Elem[T], val numeric: Numeric[T]) extends BinOp[T] {
-  }
+  abstract class NumericBinOp[T](val opName: String)(implicit val selfType: Elem[T], val numeric: Numeric[T]) extends BinOp[T]
+  
   case class NumericPlus[T:Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("+") {
     def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
   }
@@ -84,7 +84,6 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
 //  }
 
   case class NumericToFloat[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends Def[Float] with UnOpBase[T,Float] {
-    lazy val uniqueOpId = name(arg.elem)
     val selfType = element[Float]
     def copyWith(a: Rep[T]) = this.copy(arg = a)
     override def mirror(t: Transformer) = {

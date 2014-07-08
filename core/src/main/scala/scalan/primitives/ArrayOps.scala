@@ -58,6 +58,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
     }
 
   trait ArrayDef[T] extends Def[Array[T]] {
+    implicit def eT: Elem[T]
+    lazy val self: Rep[Array[T]] = this
+    lazy val selfType = element[Array[T]]
+    lazy val uniqueOpId = name(eT)
   }
   trait ArrayMethod[T] {
     def name[A](e: Elem[A]): String
@@ -65,51 +69,45 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
     lazy val uniqueOpId = withElemOfArray(xs){ name(_) }
   }
   case class ArrayLength[T](xs: Exp[Array[T]]) extends Def[Int] with ArrayMethod[T] {
+    lazy val self: Rep[Int] = this
     def selfType = element[Int]
     override def mirror(t: Transformer) = ArrayLength(t(xs))
   }
   case class ArrayApply[T](xs: Exp[Array[T]], index: Exp[Int]) extends Def[T] with ArrayMethod[T] {
     implicit lazy val eT = withElemOfArray(xs){e => e}
     def selfType = eT
+    lazy val self: Rep[T] = this
     override def mirror(t: Transformer) = ArrayApply(t(xs), t(index))
   }
-  case class ArrayApplyMany[T](xs: Exp[Array[T]], indices: Exp[Array[Int]]) extends ArrayDef[T] with ArrayMethod[T] {
+  case class ArrayApplyMany[T](xs: Exp[Array[T]], indices: Exp[Array[Int]]) extends ArrayDef[T] {
     implicit lazy val eT = withElemOfArray(xs){e => e}
-    def selfType = element[Array[T]]
     override def mirror(t: Transformer) = ArrayApplyMany(t(xs), t(indices))
   }
-  case class ArrayMap[T,R](xs: Exp[Array[T]], f: Exp[T=>R]) extends ArrayDef[R] with ArrayMethod[T] {
-    implicit lazy val eR = withResultElem(f){e => e}
-    def selfType = element[Array[R]]
+  case class ArrayMap[T,R](xs: Exp[Array[T]], f: Exp[T=>R]) extends ArrayDef[R] {
+    implicit lazy val eT = withResultElem(f){e => e}
     override def mirror(t: Transformer) = ArrayMap(t(xs), t(f))
   }
   case class ArraySum[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T]) extends Def[T] with ArrayMethod[T] {
     implicit lazy val eT = withElemOfArray(xs){e => e}
     def selfType = eT
+    lazy val self: Rep[T] = this
     override def mirror(t: Transformer) = ArraySum[T](t(xs), m)
   }
   case class ArrayZip[T:Elem,U:Elem](xs: Exp[Array[T]], ys: Exp[Array[U]]) extends ArrayDef[(T,U)] {
-    lazy val uniqueOpId = name(element[T], element[U])
-    def selfType = element[Array[(T,U)]]
+    lazy val eT = element[(T, U)]
     override def mirror(t: Transformer) = ArrayZip(t(xs), t(ys))
   }
-  case class ArrayReplicate[T:Elem](len: Exp[Int], v: Exp[T]) extends ArrayDef[T] {
-    lazy val uniqueOpId = name(element[T])
-    def selfType = element[Array[T]]
+  case class ArrayReplicate[T](len: Exp[Int], v: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayReplicate(t(len), t(v))
   }
-  case class ArraySlice[T: Elem](xs: Exp[Array[T]], offset: Exp[Int], length: Exp[Int]) extends ArrayDef[T] {
-    lazy val uniqueOpId = name(element[T])
-    def selfType = element[Array[T]]
+  case class ArraySlice[T](xs: Exp[Array[T]], offset: Exp[Int], length: Exp[Int])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArraySlice(t(xs), t(offset), t(length))
   }
   case class ArrayRangeFrom0(n: Exp[Int]) extends ArrayDef[Int] {
-    lazy val uniqueOpId = name
-    val selfType = element[Array[Int]]
+    def eT = element[Int]
     override def mirror(t: Transformer) = ArrayRangeFrom0(t(n))
   }
-  case class ArrayFilter[T: Elem](xs: Exp[Array[T]], f: Exp[T=>Boolean]) extends ArrayDef[T] with ArrayMethod[T] {
-    val selfType = element[Array[T]]
+  case class ArrayFilter[T](xs: Exp[Array[T]], f: Exp[T=>Boolean])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayFilter(t(xs), t(f))
   }
 

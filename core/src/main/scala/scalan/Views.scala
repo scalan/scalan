@@ -33,7 +33,7 @@ trait Views extends Elems { self: Scalan =>
 
   trait UserType[T] {
     def selfType: Elem[T]
-    def self: Rep[T] = !!!("should not be called")
+    def self: Rep[T]
   }
 
   trait TypeFamily1[F[_]] {

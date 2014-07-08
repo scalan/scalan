@@ -38,23 +38,25 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def name[A](eA: Elem[A]): String = s"$name[${eA.prettyName}]"
     def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.prettyName},${eB.prettyName}]"
     def uniqueOpId: String
-    def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)
+    def mirror(f: Transformer): Rep[_]
     def decompose: Option[Rep[_]] = None
     def isScalarOp: Boolean = true
   }
 
   type Def[+A] = ReifiableObject[A,A]
+  
+  abstract class BaseDef[T](implicit val selfType: Elem[T]) extends Def[T] {
+    lazy val self: Rep[T] = this
+  }
 
-  case class Const[T](x: T)(implicit val leT: LElem[T]) extends Def[T] {
-    def selfType = leT.value
+  case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
-    override def self: Rep[T] = this
     override def mirror(t: Transformer): Rep[_] = Const(x)
     override def hashCode: Int = (41 + x.hashCode)
 
     override def equals(other: Any) =
       other match {
-        case c @ Const(otherX) => leT.value == c.leT.value && (otherX match {
+        case c @ Const(otherX) => selfType == c.selfType && (otherX match {
           case otherArr: Array[_] => x match {
             case arr: Array[_] =>
               arr.sameElements(otherArr)
@@ -71,22 +73,41 @@ trait BaseExp extends Base { self: ScalanStaged =>
     }) + ")"
   }
 
-  abstract class UnOp[T] extends Def[T] with UnOpBase[T,T] {
+  trait UnOpBase[TArg,R] extends Def[R] {
+    def arg: Rep[TArg]
+    def copyWith(arg: Rep[TArg]): Rep[R]
+    def opName: String
+    override def toString = s"${this.getClass.getSimpleName}($arg)"
     lazy val uniqueOpId = name(arg.elem)
+    lazy val self: Rep[R] = { 
+      implicit val e = selfType
+      this
+    }
     override def mirror(t: Transformer) = {
-      implicit val eT = arg.elem
+      implicit val e = selfType
       copyWith(t(arg))
     }
-    override def self: Rep[T] = { implicit val e = selfType; this }
   }
-  abstract class BinOp[T] extends Def[T] with BinOpBase[T,T] {
+
+  trait BinOpBase[TArg,R] extends Def[R] {
+    def lhs: Rep[TArg]
+    def rhs: Rep[TArg]
+    def copyWith(l: Rep[TArg], r: Rep[TArg]): Rep[R]
+    def opName: String
+    override def toString = s"${this.getClass.getSimpleName}($lhs, $rhs)"
     lazy val uniqueOpId = name(lhs.elem)
     override def mirror(t: Transformer) = {
-      implicit val eT = lhs.elem
+      implicit val eT = selfType
       copyWith(t(lhs), t(rhs))
     }
-    override def self: Rep[T] = { implicit val e = selfType; this }
+    lazy val self: Rep[R] = {
+      implicit val e = selfType
+      this
+    }
   }
+
+  trait UnOp[T] extends UnOpBase[T,T]
+  trait BinOp[T] extends BinOpBase[T,T]
 
   abstract class Transformer {
     def apply[A](x: Rep[A]): Rep[A]
