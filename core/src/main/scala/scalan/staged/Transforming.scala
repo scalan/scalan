@@ -36,21 +36,20 @@ trait Transforming { self: ScalanStaged =>
     }
   }
 
-  case class RuleRewriter[A](rule: RewriteRule[A]) extends Rewriter {
-    def apply(x: Exp[_]): Exp[_] = rule.unapply(x) match {
-      case Some(args) => rule(args)
-      case _ => x
-    }
-  }
-  implicit def toRuleRewriter[A](rule: RewriteRule[A]): Rewriter = new RuleRewriter(rule)
+//  case class RuleRewriter[A](rule: RewriteRule[A]) extends Rewriter {
+//    def apply(x: Exp[_]): Exp[_] = rule.unapply(x) match {
+//      case Some(args) => rule(args)
+//      case _ => x
+//    }
+//  }
+//  implicit def toRuleRewriter[A](rule: RewriteRule[A]): Rewriter = new RuleRewriter(rule)
 
-  class PartialRewriter(val pf: PartialFunction[Exp[_], Exp[_]]) extends Rewriter {
+  implicit class PartialRewriter(val pf: PartialFunction[Exp[_], Exp[_]]) extends Rewriter {
     def apply(x: Exp[_]): Exp[_] = pf.isDefinedAt(x) match {
       case true => pf(x)
       case _ => x
     }
   }
-  implicit def toPartialRewriter(pf: Exp[_] :=> Exp[_]): Rewriter = new PartialRewriter(pf)
 
   object DecomposeRewriter extends Rewriter {
     def apply(x: Exp[_]): Exp[_] = x match {

@@ -103,9 +103,9 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
   def numeric_negate[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericNegate(x, n)
 ////  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericAbs(x, n)
 //
-  override def rewrite[T](d: Def[T])(implicit eT: LElem[T]) = d match {
-    case d@NumericPlus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => toRep(n.plus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.selfType)
-    case d@NumericMinus(Def(Const(x)), Def(Const(y)), n: Numeric[t]) => toRep(n.minus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.selfType)
+  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
+    case Def(d@NumericPlus(Def(Const(x)), Def(Const(y)), n: Numeric[t])) => toRep(n.plus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.selfType)
+    case Def(d@NumericMinus(Def(Const(x)), Def(Const(y)), n: Numeric[t])) => toRep(n.minus(x.asInstanceOf[t], y.asInstanceOf[t]))(d.selfType)
     case _ => super.rewrite(d)
   }
 }

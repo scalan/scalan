@@ -28,7 +28,6 @@ trait BaseExp extends Base { self: ScalanStaged =>
     }
     def varName: String
     def toStringWithType = varName + ":" + elem.prettyName
-    //def asSymbol = this.asInstanceOf[Sym[T]]
   }
 
   // this trait is mixed in Def[A]
@@ -41,9 +40,6 @@ trait BaseExp extends Base { self: ScalanStaged =>
   }
 
   type Def[+A] = ReifiableObject[A,A]
-  //trait Def[+A] extends UserType[A @uncheckedVariance] with ReifiableObject[A]
-
-  //type Def1[+A] = ReifiableObjectAux[A]
 
   case class Const[T](x: T)(implicit val leT: LElem[T]) extends Def[T] {
     def selfType = leT.value
@@ -127,8 +123,6 @@ trait BaseExp extends Base { self: ScalanStaged =>
     case arrE: ArrayElem[a] => Const(x)
     case _ => super.toRep(x)(eA)
   }
-  //protected[scalan] def toExp1[T](d: ReifiableObjectAux[T], newSym: => Exp[T])(implicit et: Elem[d.ThisType]): Exp[d.ThisType]
-  //def reifyObject1[T](obj: ReifiableObjectAux[T])(implicit eT: Elem[obj.ThisType]): Rep[obj.ThisType] = toExp1(obj, fresh[obj.ThisType])
 
   object Def {
     def unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
@@ -194,7 +188,6 @@ trait BaseExp extends Base { self: ScalanStaged =>
     case _ => Nil
   }
 
-  //implicit def extendExpForSome(s: Exp[_]): ExpForSomeOps = new ExpForSomeOps(s)
   implicit class ExpForSomeOps(symbol: Exp[_]) {
     def inputs: List[Exp[Any]] = dep(symbol)
     def isLambda: Boolean = symbol match {
@@ -238,37 +231,17 @@ trait BaseExp extends Base { self: ScalanStaged =>
       case _ => syms(d)
     }
   }
-  //implicit def extendDefForSome(d: Def[_]) = new DefForSomeOps(d)
 
-  def rewrite[T](d: Def[T])(implicit eT: LElem[T]): Exp[_] = {
-    rewriteRules.foreach(r =>
-      r.lift(d) match {
+  def rewrite[T](d: Exp[T])(implicit eT: LElem[T]): Exp[_] = {
+    for (rule <- rewriteRules) {
+      rule(d) match {
         case Some(e) => return e
-        case _ =>
-      })
+        case None =>
+      }
+    }
+
     null
   }
-
-  var rewriteRules = List[PartialFunction[Def[_], Exp[_]]]()
-
-  def addRewriteRules(rules: PartialFunction[Def[_], Exp[_]]*) {
-    rewriteRules ++= rules
-  }
-
-  trait RewriteRule[A] {
-    def unapply(d: Exp[_]): Option[A]
-    def apply(x: A): Exp[_]
-  }
-  implicit def rewriteRuleToPartialFunction[A](rule: RewriteRule[A]) = new PartialFunction[Exp[_], Exp[_]] {
-    def isDefinedAt(s: Exp[_]) = rule.unapply(s).isDefined
-    def apply(s: Exp[_]) = rule.unapply(s) match {
-      case Some(args) => rule(args)
-      case None =>
-        println("rewriting error in %s".format(s))
-        s
-    }
-  }
-
 }
 
 /**
@@ -364,7 +337,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
     var currDef = d
     do {
       currSym = res
-      val ns = rewrite(currDef).asRep[T]
+      val ns = rewrite(currSym).asRep[T]
       ns match {
         case null => {}
         case Var(_) => {

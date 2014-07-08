@@ -128,9 +128,9 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
   }
 
 
-  override def rewrite[T](d: Def[T])(implicit eT: LElem[T]) = d match {
-    case First(Def(Tup(a, b))) => a
-    case Second(Def(Tup(a, b))) => b
+  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
+    case Def(First(Def(Tup(a, b)))) => a
+    case Def(Second(Def(Tup(a, b)))) => b
 
     case _ => super.rewrite(d)
   }
