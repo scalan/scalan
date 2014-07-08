@@ -169,6 +169,15 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
 
     def argsTree = getLambda.argsTree
+    
+    def alphaEqual(g: Exp[A=>B]): Boolean = {
+      import graphs._
+      val F = new FuncMatcher(f)
+      g match {
+        case F(res, subst) => res == SimilarityEmbeded || res == SimilarityEqual
+        case _ => false
+      }
+    }
   }
 
   //=====================================================================================
