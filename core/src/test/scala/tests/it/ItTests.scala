@@ -1,8 +1,8 @@
 package tests.it
 
 import java.io.{File, PrintWriter}
-import scalan.ScalanSeq
-import scalan.codegen.LangBackend
+import scalan.{ScalanCtxStaged, ScalanCtxSeq, ScalanStaged, ScalanSeq}
+import scalan.codegen.{GraphVizExport, LangBackend}
 import tests.BaseTests
 import scala.language.postfixOps
 import scala.reflect.runtime.universe._
@@ -22,7 +22,7 @@ trait ItTests extends BaseTests {
   }
 
   def lmsTestRun[A,B](front: ScalanSeq, back: LangBackend)
-                  (fseq: front.Rep[A=>B], f: back.Exp[_])
+                  (fseq: front.Rep[A=>B], f: back.Exp[A=>B])
                   (name: String, input: front.Rep[A])
                   (implicit eA: front.Elem[A], eB: front.Elem[B]) /*: front.Rep[B]*/ =
   {
@@ -36,15 +36,41 @@ trait ItTests extends BaseTests {
   }
 
   def lmsCheckRun[A,B](front: ScalanSeq, back: LangBackend)
-                   (fseq: front.Rep[A=>B], f: back.Exp[_])
+                   (fseq: front.Rep[A=>B], f: back.Exp[A=>B])
                    (name: String, input: front.Rep[A], expOutput: front.Rep[B])
                    (implicit eA: front.Elem[A], eB: front.Elem[B]) {
     val output = lmsTestRun(front, back)(fseq, f)(name, input)
     //output.toString should be (expOutput.toString)
   }
 
+  def interpreterTestRun[A,B](front: ScalanCtxSeq /*with VectorsDslSeq*/, back: ScalanCtxStaged with GraphVizExport /*with VectorsDslExp*/)
+                     (fseq: front.Rep[A=>B], f: back.Exp[A=>B])
+                     (name: String, input: front.Rep[A])
+                     (implicit eA: front.Elem[A], eB: front.Elem[B]) : front.Rep[B] =
+  {
+    val dir = "it-out/" + prefix + "/" + name
+
+    import scalan.Interpreter
+
+    new File(dir).mkdirs()
+
+    val interp = new Interpreter {
+      val seq = front
+      val staged = back
+    }
+    interp.run[A,B](f.asInstanceOf[interp.staged.Exp[A=>B]])(dir, name, input, emitGraphs)(eA.asInstanceOf[interp.seq.Elem[A]], eB.asInstanceOf[interp.seq.Elem[B]])
+  }
+
+  /*def intepreterCheckRun[A,B](front: ScalanSeq, back: LangBackend)
+                      (fseq: front.Rep[A=>B], f: back.Exp[A=>B])
+                      (name: String, input: front.Rep[A], expOutput: front.Rep[B])
+                      (implicit eA: front.Elem[A], eB: front.Elem[B]) {
+    val output = interpreterTestRun(front, back)(fseq, f)(name, input)
+    //output.toString should be (expOutput.toString)
+  } */
+
   def testRun[A,B](front: ScalanSeq, back: LangBackend)
-                  (fseq: front.Rep[A=>B], f: back.Exp[_])
+                  (fseq: front.Rep[A=>B], f: back.Exp[A=>B])
                   (name: String, input: front.Rep[A])
                   (implicit eA: front.Elem[A], eB: front.Elem[B]) /*: front.Rep[B]*/ =
   {
@@ -71,7 +97,7 @@ trait ItTests extends BaseTests {
   }
 
   def checkRun[A,B](front: ScalanSeq, back: LangBackend)
-                   (fseq: front.Rep[A=>B], f: back.Exp[_])
+                   (fseq: front.Rep[A=>B], f: back.Exp[A=>B])
                    (name: String, input: front.Rep[A], expOutput: front.Rep[B])
                    (implicit eA: front.Elem[A], eB: front.Elem[B]) {
     val output = testRun(front, back)(fseq, f)(name, input)

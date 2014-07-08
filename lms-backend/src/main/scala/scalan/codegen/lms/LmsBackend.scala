@@ -297,7 +297,7 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport wi
       val scalan: LmsBackend.this.type = self
     }
 
-  def run(dir: String, fileName: String, func: Exp[_], emitGraphs: Boolean) = {
+  def run[A,B](dir: String, fileName: String, func: Exp[A=>B], emitGraphs: Boolean) = {
     val outDir = new File(dir)
     (emitGraphs) match {
       case true =>
@@ -326,7 +326,6 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport wi
             codegen.emitSource[a,b](facade.lFunc.test, fileName, new PrintWriter(new FileOutputStream(outputSource.getAbsolutePath())))(mA, mB)
         }
     }
-
 
     /* Launch scalac */
     launchProcess(outDir, "scalac", outputSource.getAbsolutePath())

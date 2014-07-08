@@ -5,7 +5,7 @@ import scalan.staged.BaseExp
 
 trait LangBackend extends BaseExp { self: ScalanStaged =>
 
-  def run(dir: String, fileName: String, func: Exp[_], emitGraphs: Boolean = false)
+  def run[A,B](dir: String, fileName: String, func: Exp[A=>B], emitGraphs: Boolean = false)
 
   protected def isGlobalConst(d: Def[_]): Boolean = d match {
     case Const(_) => true
