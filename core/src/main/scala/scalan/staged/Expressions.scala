@@ -54,7 +54,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
     override def equals(other: Any) =
       other match {
-        case c @ Const(otherX) => leT == c.leT && (otherX match {
+        case c @ Const(otherX) => leT.value == c.leT.value && (otherX match {
           case otherArr: Array[_] => x match {
             case arr: Array[_] =>
               arr.sameElements(otherArr)

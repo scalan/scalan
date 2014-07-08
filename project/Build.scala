@@ -51,10 +51,23 @@ object ScalanLiteBuild extends Build {
 
   lazy val core = Project("scalan-lite", file("core")).configs(ItTest, PerfTest).
     settings(commonSettings: _*)
-  
-//  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(core % "compile->compile;test->test").configs(ItTest, PerfTest).
-//    settings(commonSettings: _*).settings(libraryDependencies += "EPFL" % "lms_2.10" % "0.3-SNAPSHOT")
+
+  val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2-RC1")
+
+  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(core % "compile->compile;test->test").configs(ItTest, PerfTest).
+    settings(commonSettings: _*).settings(
+     libraryDependencies ++= Seq( //"EPFL" % "lms_2.10" % "0.3-SNAPSHOT",
+                                 "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT" classifier "test",
+                                 "org.scalatest" %% "scalatest" % "2.0" % "test",
+                                 "org.scala-lang.virtualized" % "scala-library" % virtScala,
+                                 "org.scala-lang.virtualized" % "scala-compiler" % virtScala),
+     scalaOrganization := "org.scala-lang.virtualized",
+
+      //scalaBinaryVersion := virtScala
+
+     scalaVersion := virtScala
+  )
   
   // name to make this the default project
-  lazy val root = Project("all", file(".")).aggregate(core/*, lmsBackend*/).configs(ItTest, PerfTest).settings(commonSettings: _*)
+  lazy val root = Project("all", file(".")).aggregate(core, lmsBackend).configs(ItTest, PerfTest).settings(commonSettings: _*)
 }

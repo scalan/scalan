@@ -1,20 +1,53 @@
 package tests.it.lms
 
-import tests.it.smoke.SmokeItTests
+import _root_.tests.it.smoke.SmokeItTests
 import scalan.codegen.lms.LmsBackend
 import scalan.arrays.PArraysDslExp
 import scalan.ScalanCtxStaged
+import scalan.codegen.GraphVizExport
 
 class LmsSmokeItTests extends SmokeItTests {
-  class ProgStaged extends Prog with PArraysDslExp with ScalanCtxStaged with LmsBackend
+  class ProgStaged extends Prog with PArraysDslExp with ScalanCtxStaged with GraphVizExport with LmsBackend
   
-  val progStaged = new ProgStaged()
+  val progStaged = new ProgStaged() {
+    this.invokeEnabled = true
+  }
   
   import progSeq._
-  
-  ignore("test00simpleConst") {
-    val (in, out) = Array(0) -> Array(1)
-    progSeq.simpleConst(progSeq.PArray.fromArray(in)).arr should be(out)
-    checkRun(progSeq, progStaged)(progSeq.simpleConst, progStaged.simpleConst)("00simpleConst", progSeq.PArray.fromArray(in), progSeq.PArray.fromArray(out))
+
+  test("test0simpleArith") {
+    val (in, out) = 2 -> 6
+    progSeq.simpleArith(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.simpleArith, progStaged.simpleArith)("simpleArith", in)
+  }
+  test("test1simpleArrGet") {
+    val (in, out) = (Array(2,3),1) -> 3
+    progSeq.simpleArrGet(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.simpleArrGet, progStaged.simpleArrGet)("simpleArrGet", in)
+  }
+  test("test2simpleMap") {
+    val (in, out) = Array(2,3) -> Array(3,4)
+    progSeq.simpleMap(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.simpleMap, progStaged.simpleMap)("simpleMap", in)
+  }
+  test("test3simpleZip") {
+    val (in, out) = Array(2,3) -> Array((4,2), (5,3))
+    progSeq.simpleZip(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.simpleZip, progStaged.simpleZip)("simpleZip", in)
+  }
+  test("test4simpleZipWith") {
+    val (in, out) = Array(2,3) -> Array(10,18)
+    progSeq.simpleZipWith(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.simpleZipWith, progStaged.simpleZipWith)("simpleZipWith", in)
+  }
+  test("test5simpleReduce") {
+    val (in, out) = Array(2,3) -> 5
+    progSeq.simpleReduce(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.simpleReduce, progStaged.simpleReduce)("simpleReduce", in)
+  }
+  test("test6mvMul") {
+    val (in, out) = (Array(Array(2,3), Array(4,5)), Array(6,7))  -> Array(33,59)
+    progSeq.mvMul(in) should be(out)
+    lmsTestRun(progSeq, progStaged)(progSeq.mvMul, progStaged.mvMul)("mvMul", in)
   }
 }
