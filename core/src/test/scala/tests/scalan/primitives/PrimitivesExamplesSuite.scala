@@ -36,5 +36,4 @@ class PrimitivesExamplesSuite extends BaseShouldTests {
   whenStaged should "inc2" beArgFor { testMethod(_) }
   whenStaged should "inc_times" beArgFor { testMethod(_) }
   whenStaged should "scalar" beArgFor { testMethod(_) }
-  
 }
