@@ -29,6 +29,8 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def varName: String
     def toStringWithType = varName + ":" + elem.prettyName
   }
+  type AnyExp = Exp[Any]
+  type ExpSubst = AnyExp => AnyExp
 
   // this trait is mixed in Def[A]
   trait ReifiableObject[+T, +TImpl <: T] extends UserType[T @uncheckedVariance] {
@@ -235,14 +237,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     }
   }
 
-  def rewrite[T](d: Exp[T])(implicit eT: LElem[T]): Exp[_] = {
-    for (rule <- rewriteRules) {
-      rule(d) match {
-        case Some(e) => return e
-        case None =>
-      }
-    }
-
+  def rewrite[T](s: Exp[T])(implicit eT: LElem[T]): Exp[_] = {
     null
   }
 }

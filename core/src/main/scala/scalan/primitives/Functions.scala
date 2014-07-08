@@ -29,7 +29,7 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanStaged =>
 
-  trait LambdaBase[A,B] extends Def[A => B] with Product {
+  trait LambdaBase[A,B] extends Def[A => B] with AstGraph with Product {
     implicit def eA: Elem[A]
     implicit def eB: Elem[B]
     def f: Option[Exp[A] => Exp[B]]
@@ -46,12 +46,14 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       }
     def canEqual(other: Any) = other.isInstanceOf[Lambda[_,_]]
 
+    // Product implementation
     val productElements = Array[Any](f, x, y)
     def productElement(n: Int): Any = productElements(n)
     def productArity: Int = 3
-    
-    
-    lazy val schedule: List[TableEntry[_]] = {
+
+    // AstGraph implementation
+    def roots = List(y)
+    lazy val bodySchedule: List[TableEntry[_]] = {
       if (isIdentity) Nil
       else {
         val g = new PGraph(y)
@@ -63,32 +65,32 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       }
     }
 
-    lazy val scheduleWithConsts: List[TableEntry[_]] = {
-      isIdentity match {
-        case false =>
-          val g = new PGraph(y)
-          val sh = g.schedule
-          (sh, y) match {
-            case (Nil, DefTableEntry(tp)) => List(tp)  // the case when body is const
-            case _ => sh
-          }
+    lazy val bodyScheduleSyms = bodySchedule map { _.sym }
 
-        case _ => Nil
-      }
+    def bodyScheduleAll: List[TableEntry[_]] = {
+      bodySchedule flatMap (tp  => tp match {
+        case TableEntry(s, lam: Lambda[_, _]) => lam.bodyScheduleAll :+ tp
+        case _ => List(tp)
+      })
     }
-    lazy val scheduleSyms = schedule map { _.sym }
 
-    def scheduleAll: List[TableEntry[_]] = schedule.flatMap(tp => tp.rhs match {
-      case lam: Lambda[_, _] => lam.scheduleAll :+ tp
-      case _ => List(tp)
-    })
+    lazy val scheduleWithConsts: List[TableEntry[_]] =
+      if (isIdentity) Nil
+      else {
+        val g = new PGraph(y)
+        val sh = g.schedule
+        (sh, y) match {
+          case (Nil, DefTableEntry(tp)) => List(tp)  // the case when body is const
+          case _ => sh
+        }
+      }
 
     def isIdentity: Boolean = y == x
     def isLocalDef[T](tp: TableEntry[T]): Boolean = isLocalDef(tp.sym)
-    def isLocalDef(s: Exp[Any]): Boolean = scheduleSyms contains s
+    def isLocalDef(s: Exp[Any]): Boolean = bodyScheduleSyms contains s
 
     lazy val freeVars: Set[Exp[_]] = {
-      val alldeps = schedule flatMap { tp => tp.rhs.getDeps }
+      val alldeps = bodySchedule flatMap { tp => tp.rhs.getDeps }
       val external = alldeps filter { s => !(isLocalDef(s) || s == x)  }
       external.toSet
     }
@@ -99,7 +101,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
 
     override def isScalarOp: Boolean = {
-      val allScalars = !(schedule exists { tp => !tp.rhs.isScalarOp })
+      val allScalars = !(bodySchedule exists { tp => !tp.rhs.isScalarOp })
       allScalars
     }
   }
@@ -140,14 +142,21 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))(eB)
   }
 
-  implicit class FuncOps[A, B](f: Exp[A=>B]) {
+  implicit class LambdaExtensions[A, B](lam: Lambda[A,B]) {
+    def argsTree: ProjectionTree = lam.projectionTreeFrom(lam.x)
+  }
+
+  implicit class FuncExtensions[A, B](f: Exp[A=>B]) {
     implicit def eA = f.elem.ea
     def getLambda: Lambda[A,B] = f match {
       case Def(lam: Lambda[_,_]) => lam.asInstanceOf[Lambda[A,B]]
       case _ => !!!(s"Expected symbol of Lambda node but was $f", f)
     }
+
     def zip[C](g: Rep[A=>C]): Rep[A=>(B,C)] =
       fun { (x: Rep[A]) => Pair(f(x), g(x)) }
+
+    def argsTree = getLambda.argsTree
   }
 
   //=====================================================================================
@@ -187,7 +196,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def mirrorApply[A,B](f: Exp[A => B], s: Exp[A], subst: Map[Exp[Any], Exp[Any]] = Map()): Exp[B] = {
     val Def(Lambda(lam,_,x,y)) = f
-    val body = lam.schedule map { _.sym }
+    val body = lam.bodySchedule map { _.sym }
     val (t, _) = DefaultMirror.mirrorSymbols(new MapTransformer(subst ++ Map(x -> s)), NoRewriting, body)
     t(y).asRep[B]
   }
