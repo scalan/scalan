@@ -206,7 +206,8 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     lazy val uniqueOpId = name(iso.eFrom, iso.eTo)
   }
 
-  case class UnpackView[A, B](view: Rep[B])(implicit val selfType: Elem[A]) extends Def[A] {
+  case class UnpackView[A, B](view: Rep[B])(implicit iso: Iso[A, B]) extends Def[A] {
+    implicit def selfType = iso.eFrom
     lazy val self: Rep[A] = this
     override def mirror(f: Transformer) = UnpackView[A, B](f(view))
     lazy val uniqueOpId = name(selfType, view.elem)

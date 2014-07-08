@@ -19,7 +19,7 @@ trait ProxyBase { self: Scalan =>
 }
 
 trait ProxySeq extends ProxyBase { self: ScalanSeq =>
-  def proxyOps[Ops<:AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = x.asInstanceOf[Ops]
+  def proxyOps[Ops<:AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = x
 }
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>

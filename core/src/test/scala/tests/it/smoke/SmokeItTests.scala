@@ -22,17 +22,17 @@ abstract class SmokeItTests extends ItTests {
       arr(ind)
     }
     lazy val simpleMap = fun {x: Rep[Array[Int]] =>
-      val x1 = x.map(fun{y:Rep[Int] => y+1})
+      val x1 = x.map {y:Rep[Int] => y+1}
       x1
     }
     lazy val simpleZip = fun {x: Rep[Array[Int]] =>
-      val x1 = x.map(fun{y:Rep[Int] => y+2})
+      val x1 = x.map {y:Rep[Int] => y+2}
       x1 zip x
     }
     lazy val simpleZipWith = fun {x: Rep[Array[Int]] =>
-      val x1 = x.map(fun{y:Rep[Int] => y+3})
+      val x1 = x.map {y:Rep[Int] => y+3}
       val x2 = x1 zip x
-      val x3 = x2.map(fun{y:Rep[(Int,Int)] => y._1 * y._2})
+      val x3 = x2.map {y:Rep[(Int,Int)] => y._1 * y._2}
       x3
     }
 
@@ -44,18 +44,18 @@ abstract class SmokeItTests extends ItTests {
     lazy val mvMul = fun { in:Rep[(Array[Array[Int]], Array[Int])] =>
       val mat = in._1
       val vec = in._2
-      val res = mat map(fun {row: Rep[Array[Int]] =>
+      val res = mat map {row: Rep[Array[Int]] =>
         val x1 = row zip vec
-        val x2 = x1.map(fun{y:Rep[(Int,Int)] => y._1 * y._2})
+        val x2 = x1.map {y:Rep[(Int,Int)] => y._1 * y._2}
         x2 sum (IntRepPlusMonoid)
-        })
+      }
       res
     }
     lazy val expBaseArrays = fun { xss:Arr[Array[Int]] =>
-      val pss1:Arr[PArray[Int]] = xss.map (fun { xs: Rep[Array[Int]] => PArray(xs)})
-      val res = pss1.map(fun { ps: PA[Int] =>
+      val pss1:Arr[PArray[Int]] = xss.map { xs: Rep[Array[Int]] => PArray(xs)}
+      val res = pss1.map { ps: PA[Int] =>
         ps.arr
-      })
+      }
       res
     }
 

@@ -9,18 +9,18 @@ import scalan.common.OverloadHack.Overloaded1
 
 trait ArrayOps { self: Scalan =>
   type Arr[T] = Rep[Array[T]]
-  implicit class RepArrayOps[T](xs: Arr[T]) {
+  implicit class RepArrayOps[T: Elem](xs: Arr[T]) {
     def apply(n: Rep[Int]): Rep[T] = array_apply(xs, n)
     def apply(ns: Arr[Int])(implicit o: Overloaded1): Arr[T] = array_apply(xs, ns)
     def length = array_length(xs)
-    def map[R: Elem](f: Rep[T => R]) = array_map(xs, f)
-    // def map[R:Elem](f: Rep[T] => Rep[R])(implicit o: Overloaded1) = array_map(xs, fun(f))
+    def mapBy[R: Elem](f: Rep[T => R]) = array_map(xs, f)
+    def map[R: Elem](f: Rep[T] => Rep[R])(implicit o: Overloaded1) = array_map(xs, fun(f))
     def sum(implicit m: RepMonoid[T]) = array_sum(xs)
     def zip[U](ys: Arr[U]): Arr[(T, U)] = array_zip(xs, ys)
     def slice(offset: Rep[Int], length: Rep[Int]): Arr[T] = array_slice(xs, offset, length)
-    def filter(f: Rep[T => Boolean]) = array_filter(xs, f)
+    def filterBy(f: Rep[T => Boolean]) = array_filter(xs, f)
+    def filter(f: Rep[T] => Rep[Boolean])(implicit o: Overloaded1) = array_filter(xs, fun(f))    
     def grouped(size: Rep[Int]) = array_grouped(xs, size)
-    // def filter(f: Rep[T] => Rep[Boolean])(implicit o: Overloaded1) = array_filter(xs, fun(f))    
   }
 
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
@@ -58,7 +58,7 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
     xs.iterator.grouped(size).map(_.toArray).toArray
   }
 
-  def arrayToClassTag[T](xs: Array[T]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
+  def arrayToClassTag[T](xs: Rep[Array[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 }
 
 trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
@@ -160,9 +160,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
   override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
     case Def(d1) => d1 match {
       case ArrayApply(Def(ArraySlice(xs, start, _)), i) =>
+        implicit val eT = xs.elem.ea
         xs(start + i)
       case ArrayApplyMany(Def(ArraySlice(xs, start, _)), is) =>
-        xs(is.map(fun { i => start + i }))
+        implicit val eT = xs.elem.ea
+        xs(is.map { i => start + i })
       case ArrayMap(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
       // must be last ArrayMap rule
       // really ugly, but seems to be necessary
@@ -171,9 +173,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
           implicit val eA = e2.elem.asInstanceOf[Elem[Array[Array[Any]]]].ea.ea.asInstanceOf[Elem[a]]
           val f1 = f.asRep[Array[a] => b]
           implicit val eB = f1.elem.eb
-          array_rangeFrom0(xs.length / n).map(fun { i =>
+          array_rangeFrom0(xs.length / n).map { i =>
             f1(xs.slice(i * n, n))
-          })
+          }
         case _ => super.rewrite(d)
       }
       case _ => super.rewrite(d)

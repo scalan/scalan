@@ -128,8 +128,8 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
     implicit val eB = iso.eTo
     new Iso[Array[A], Array[B]] {
       lazy val eTo = element[Array[B]]
-      def from(x: Arr[B]) = x.map(fun(iso.from _))
-      def to(x: Arr[A]) = x.map(fun(iso.to _))
+      def from(x: Arr[B]) = x.map(iso.from _)
+      def to(x: Arr[A]) = x.map(iso.to _)
       lazy val tag = {
         implicit val tB = iso.tag
         typeTag[Array[B]]
@@ -191,13 +191,13 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
     implicit val eC: Elem[C] = f.elem.eb
-    view.source.map(fun { (x: Exp[A]) => f(iso.to(x)) })
+    view.source.map { x => f(iso.to(x)) }
   }
   def filterUnderlyingArray[A, B](view: ViewArray[A, B], f: Rep[B => Boolean]): Arr[B] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
-    val filtered = view.source.filter(fun { (x: Exp[A]) => f(iso.to(x)) })
+    val filtered = view.source.filter { x => f(iso.to(x)) }
     ViewArray(filtered)(iso)
   }
   
@@ -267,7 +267,11 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
         } else {
           super.rewrite(d)
         }
-      case ArrayLength(Def(ViewArray(arr))) => arr.length
+      case ArrayLength(Def(view @ ViewArray(arr: Arr[a]))) =>
+        // TODO doesn't compile
+        // implicit val eA = view.asInstanceOf[ViewArray[a, _]].iso.eFrom
+        // arr.asInstanceOf[Arr[a]].length
+        array_length(arr)
       case HasViewArg(_) => liftViewFromArgs(d1) match {
         case Some(s) => s
         case _ => super.rewrite(d)
@@ -276,24 +280,24 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
         val f1 = f.asInstanceOf[Rep[a => b]]
         val xs1 = xs.asRep[Array[a]]
         implicit val eA = xs1.elem.ea
-        val s = xs1.map(fun { x =>
+        val s = xs1.map { x =>
           val tmp = f1(x)
           iso.from(tmp)
-        })
+        }
         val res = ViewArray(s)(iso)
         res
       case ArrayMap(xs: Arr[a], f@Def(lam@Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
         val f1 = f.asRep[a => b]
         val xs1 = xs.asRep[Array[a]]
         implicit val eA = xs1.elem.ea
-        implicit val eB = iso.eTo
+        // implicit val eB = iso.eTo
         implicit val eC = iso.eFrom
-        implicit val leA = Lazy(eA)
-        val s = xs1.map(fun { x =>
+        // implicit val leA = Lazy(eA)
+        val s = xs1.map { x =>
           val tmp = f1(x)
           iso.from(tmp)
           // UnpackView(f1(x))(iso)
-        })
+        }
         val res = ViewArray(s)(iso)
         // val res = ViewArray(s.values)(iso).nestBy(s.segments)
         res

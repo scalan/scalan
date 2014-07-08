@@ -21,7 +21,7 @@ trait Base { self: Scalan =>
   type FoldStep[A,B,Acc] = ((A,Acc)) => (L[B], Acc)
   type FS[A,B,Acc] = Rep[FoldStep[A,B,Acc]]
   type :=>[-A,+B] = PartialFunction[A,B]
-
+  
   class StagingException[A](message: String, val syms: List[Rep[_]]) extends RuntimeException(message)
 
   def ???(): Nothing = ???("not implemented")

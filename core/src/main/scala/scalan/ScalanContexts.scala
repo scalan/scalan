@@ -4,6 +4,7 @@ import scalan.primitives._
 import scalan.staged.{Expressions, BaseExp}
 import scalan.seq.BaseSeq
 import scalan.arrays.{ArrayViewsSeq, ArrayViews, ArrayViewsExp}
+import scala.annotation.unchecked.uncheckedVariance
 
 //import ext.Options
 //import lms.common._
@@ -68,6 +69,8 @@ trait ScalanSeq
 //  with FractionalOpsSeq
 {
   type Rep[+A] = A
+  
+//  case class Value[+A](value: A)(implicit val elem: Elem[A @uncheckedVariance]) extends HasElem[A]
 
 //  lazy val parrayCanBeReified: CanBeReified[PArray] = new CanBeReified[PArray] {
 //    def resolve[A](sym: PA[A]): PArray[A] = sym

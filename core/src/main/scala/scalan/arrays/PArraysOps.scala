@@ -18,13 +18,8 @@ trait PArraysOps { scalan: PArraysDsl =>
   }
 
   trait PArrayOps[T] extends PArray[T] {
-    def map[R:Elem](f: Rep[T] => Rep[R]) = {
-      val fun_f = fun(f)
-      mapBy(fun_f)
-    }
-    def mapBy[R:Elem](f: Rep[T=>R]) = {
-      PArray(arr.map(f))
-    }
+    def map[R:Elem](f: Rep[T] => Rep[R]) = PArray(arr.map(f))
+    def mapBy[R:Elem](f: Rep[T=>R]) = PArray(arr.mapBy(f))
     def zip[U:Elem](ys: PA[U]) = PairArray(self, ys)
     def reduce(implicit m: RepMonoid[T]) = arr.sum
   }
@@ -43,8 +38,8 @@ trait PArraysOps { scalan: PArraysDsl =>
         implicit val ea = pairE.ea
         implicit val eb = pairE.eb
         val ps = arr.asRep[Array[(a,b)]]
-        val as = fromArray(ps.map(fun { _._1 }))
-        val bs = fromArray(ps.map(fun { _._2 }))
+        val as = fromArray(ps.map { _._1 })
+        val bs = fromArray(ps.map { _._2 })
         as zip bs //PairArray[a,b](as, bs)
       case viewE: ViewElem[a, b] =>
         // TODO

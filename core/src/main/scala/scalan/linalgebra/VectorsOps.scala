@@ -60,7 +60,7 @@ trait VectorsOps { scalan: VectorsDsl =>
       Default.defaultVal(SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
     def apply[T: Elem](coords: PA[T])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
       val indices: Arr[Int] = coords.arr.zip(array_rangeFrom0(coords.length)).
-        filter(fun {x => x._1 !== n.zero }).map(fun {x => x._2})
+        filter {x => x._1 !== n.zero }.map {x => x._2}
       SparseVector(indices, coords(indices), coords.length)
     }
   }

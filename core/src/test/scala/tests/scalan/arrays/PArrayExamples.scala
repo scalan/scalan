@@ -27,7 +27,7 @@ trait PArrayExamples extends ScalanDsl with PArraysDsl with PrimitiveExamples {
   lazy val splitMapMap = fun {(xs: PA[Int]) => Pair(xs.mapBy(inc), xs.mapBy(inc2).mapBy(inc_times)) }
 
   lazy val mapScalar = fun {(xs: PA[Int]) => xs.mapBy(scalar) }
-  lazy val mapArrays = fun { xs: Arr[Int] => xs.map(inc) }
+  lazy val mapArrays = fun { xs: Arr[Int] => xs.mapBy(inc) }
   //lazy val mapScalarNested = fun {(xs: NA[Int]) => xs.mapBy(mapScalar) }
 
   //lazy val filterScalar = fun {(xs: PA[Int]) => xs.filter(x => x > 0) }
