@@ -35,11 +35,9 @@ trait EqualExp extends Equal with BaseExp { self: ScalanStaged =>
 
   case class EqualsClass[A](lhs: Exp[A], rhs: Exp[A]) extends EqBinOp[A]("===") {
     def copyWith(l: Rep[A], r: Rep[A]) = this.copy(lhs = l, rhs = r)
-    override def format = s"$lhs == $rhs"
   }
   case class NotEqual[A](lhs: Exp[A], rhs: Exp[A]) extends EqBinOp[A]("!=="){
     def copyWith(l: Rep[A], r: Rep[A]) = this.copy(lhs = l, rhs = r)
-    override def format = s"$lhs != $rhs"
   }
 
 }

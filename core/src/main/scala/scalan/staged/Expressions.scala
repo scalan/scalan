@@ -36,7 +36,6 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def mirror(f: Transformer): Rep[_] = !!!("don't know how to mirror " + this)
     def decompose: Option[Rep[_]] = None
     def isScalarOp: Boolean = true
-    def format: String = toString
   }
 
   type Def[+A] = ReifiableObject[A,A]

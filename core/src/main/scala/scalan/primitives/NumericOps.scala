@@ -91,7 +91,6 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
       copyWith(t(arg))
     }
     def opName = "ToFloat"
-    override def format = s"$arg.toFloat"
   }
 
   def numeric_plus[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]) : Rep[T] = NumericPlus(lhs, rhs, n)

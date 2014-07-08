@@ -1,11 +1,11 @@
 package tests
 
 import _root_.scalan.primitives.FunctionsExp
-import _root_.scalan.ScalanStaged
+import _root_.scalan.ScalanStagedImplementation
 import _root_.scalan.staged.Scheduling
 import java.io.{ File, PrintWriter, FileOutputStream }
 
-trait GraphVizExport extends Scheduling with FunctionsExp { self: ScalanStaged =>
+trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
 
   private def quote(x: Any) = "\"" + x + "\""
 
@@ -31,9 +31,25 @@ trait GraphVizExport extends Scheduling with FunctionsExp { self: ScalanStaged =
       case _ =>
     }
     stream.println(quote(sym) + " [")
-    stream.println(nodeLabel(sym + " = " + rhs.format))
+    stream.println(nodeLabel(sym + " = " + formatDef(rhs)))
     stream.println("shape=box," + nodeColor(sym))
     stream.println("]")
+  }
+  
+  private def formatDef(d: Def[_]): String = d match {
+    case l: Lambda[_, _] => s"\\\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y.toString}}"
+    case Apply(f, arg) => s"$f($arg)"
+    case MethodCall(receiver, method, args) => {
+      val className = method.getDeclaringClass.getName()
+      "%s.%s(%s)".format(receiver, className.substring(className.lastIndexOf("$")+1) + "." + method.getName(), args.mkString("", ",", ""))
+    }
+    case Tup(a, b) => s"($a, $b)"
+    case First(pair) => s"$pair._1"
+    case Second(pair) => s"$pair._2"
+    case EqualsClass(lhs, rhs) => s"$lhs == $rhs"
+    case NotEqual(lhs, rhs) => s"$lhs != $rhs"
+    case NumericToFloat(arg, _) => s"$arg.toFloat"
+    case _ => d.toString
   }
 
   private def emitDeps(sym: Exp[_], deps: List[Exp[_]], dotted: Boolean)(implicit stream: PrintWriter) = {

@@ -112,19 +112,16 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
     override def mirror(t: Transformer) = Tup(t(a), t(b))
     override def self = this
     lazy val selfType = element[(A,B)]
-    override def format = s"($a, $b)"
   }
 
   case class First[A, B](pair: Exp[(A, B)])(implicit val selfType: Elem[A]) extends Def[A] {
     override def mirror(t: Transformer) = First(t(pair))
     override def self = this
-    override def format = s"$pair._1"
   }
 
   case class Second[A, B](pair: Exp[(A, B)])(implicit val selfType: Elem[B]) extends Def[B] {
     override def mirror(t: Transformer) = Second(t(pair))
     override def self = this
-    override def format = s"$pair._2"
   }
 
 
