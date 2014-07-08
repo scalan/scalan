@@ -3,6 +3,9 @@ package tests.scalan.primitives
 import java.io.File
 import java.lang.reflect.Method
 
+import scalan.compilation.GraphVizExport
+import scalan.{BaseShouldTests, ScalanCtxExp}
+
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.{BaseShouldTests, ScalanCtxExp}
 
@@ -12,7 +15,7 @@ class ReflEqualitySuite extends BaseShouldTests {
     override def isInvokeEnabled(d: Def[_], m: Method) = true
     lazy val testLemma = postulate[Int, Int, Int, Int]((x, y, z) => x * y + x * z <=> x * (y + z))
     lazy val rule = rewriteRuleFromEqLemma(testLemma)
-    lazy val patGraph = rule.patternGraph
+    lazy val patGraph = rule.patternGraph 
 
     lazy val test = {(x: IntRep) => x * 10 + x * 20}
     lazy val testFunc = fun(test)
@@ -44,7 +47,7 @@ class ReflEqualitySuite extends BaseShouldTests {
     import ctx._
     import ctx.graphs.Graph
     ctx.emitDepGraph(ctx.rule.pattern, new File(prefix, "testPattern.dot"))(GraphVizConfig.default)
-    ctx.emitDepGraph(Graph.asDot(patGraph), new File(prefix, "patternGraph.dot"))(GraphVizConfig.default)
+    ctx.emitDot(Graph.asDot(patGraph), new File(prefix, "patternGraph.dot"))(GraphVizConfig.default)
   }
 
   it should "recognize pattern" in {
@@ -52,7 +55,7 @@ class ReflEqualitySuite extends BaseShouldTests {
     import ctx._
     import ctx.graphs._
     val lam = testFunc.getLambda
-    ctx.emitDepGraph(List(rule.pattern, testFunc), s"${prefix}LemmaRule/patternAndTestFunc.dot", false)
+    ctx.emitDepGraph(List(rule.pattern, testFunc), new File(prefix, "LemmaRule/patternAndTestFunc.dot"))(GraphVizConfig.default)
     rule.matchWith(lam.y) match {
       case Some((res, subst)) => 
         res should be(SimilarityEmbeded)
@@ -72,7 +75,7 @@ class ReflEqualitySuite extends BaseShouldTests {
     val rewritten = rule(lam.y)
     rewritten match {
       case Some(res) => 
-        ctx.emitDepGraph(List(Pair(lam.y, res)), s"${prefix}LemmaRule/originalAndRewritten.dot", false)
+        ctx.emitDepGraph(List(Pair(lam.y, res)), new File(prefix, "LemmaRule/originalAndRewritten.dot"))(GraphVizConfig.default)
       case _ => 
         fail("should apply pattern")
     }
@@ -86,14 +89,14 @@ class ReflEqualitySuite extends BaseShouldTests {
     addRewriteRules(rule)
     val withRule = fun(test)
     removeRewriteRules(rule)
-    ctx.emitDepGraph(List(withoutRule, withRule), s"${prefix}LemmaRule/ruleRewriting.dot", false)
+    ctx.emitDepGraph(List(withoutRule, withRule), new File(prefix, "LemmaRule/ruleRewriting.dot"))(GraphVizConfig.default)
     
     val expected = fun[Int,Int] {x => x * 30}
     withRule.alphaEqual(expected) should be(true)
     withoutRule.alphaEqual(expected) should be(false)
 
     val afterRemoval = fun(test)
-    ctx.emitDepGraph(List(withoutRule, withRule, afterRemoval), s"${prefix}LemmaRule/ruleRewriting.dot", false)
+    ctx.emitDepGraph(List(withoutRule, withRule, afterRemoval), new File(prefix, "LemmaRule/ruleRewriting.dot"))(GraphVizConfig.default)
     afterRemoval.alphaEqual(withoutRule) should be(true)
   }
 }

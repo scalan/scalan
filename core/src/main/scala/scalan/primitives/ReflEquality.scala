@@ -110,8 +110,7 @@ trait ReflEqualityExp extends ReflEquality with BaseExp with ExpInductiveGraphs 
   }
 
   case class LemmaRule[A,B](lemma: Lambda[A,Refl[B]], override val pattern: Exp[A=>B], rhs: Exp[A=>B])
-      extends PatternMatcher[A,B](pattern)
-         with RewriteRule[B]
+      extends PatternMatcher[A,B](pattern) with RewriteRule[B]
   {
     def apply[U >: B](s: Exp[U]) = matchWith(s).map { case (res, subst) =>
       val tree = patternLam.projectionTreeFrom(patternLam.x)
