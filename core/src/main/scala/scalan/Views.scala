@@ -9,19 +9,21 @@ import scala.reflect.runtime.universe._
 
 trait Views extends Elems { self: Scalan =>
 
-  trait Iso[From,To] {
-    def eFrom: Elem[From]
+  // eFrom0 is used to avoid making eFrom implicit in subtypes
+  abstract class Iso[From,To](implicit eFrom0: Elem[From]) {
+    def eFrom: Elem[From] = eFrom0
     def eTo: Elem[To]
-    def tag: TypeTag[To]        // constructed in each concrete iso instance
-    def defaultRepTo: Default[Rep[To]] // constructed in each concrete iso instance
+    def tag: TypeTag[To]
+    def defaultRepTo: Default[Rep[To]]
     def from(p: Rep[To]): Rep[From]
     def to(p: Rep[From]): Rep[To]
+    override def toString = s"${eFrom.name} <-> ${eTo.name}"
+    override def equals(other: Any) = other match {
+      case i: Iso[_, _] => eFrom == i.eFrom && eTo == i.eTo
+      case _ => false
+    }
   }
   
-  abstract class IsoBase[From, To](implicit val eFrom: Elem[From]) extends Iso[From, To]
-
-  protected[scalan] def defaultViewElem[From,To](implicit iso: Iso[From,To]): Elem[To]
-
   implicit def viewElement[From, To <: UserType[_]](implicit iso: Iso[From,To]): Elem[To] = iso.eTo  // always ask elem from Iso
 
   abstract class ViewElem[From,To](val iso: Iso[From, To]) extends Elem[To]
@@ -49,7 +51,7 @@ trait Views extends Elems { self: Scalan =>
   }
 
   def identityIso[A](implicit elem: Elem[A]): Iso[A, A] =
-    new IsoBase[A,A] {
+    new Iso[A,A] {
       def eTo = elem
       def tag = elem.tag
       def defaultRepTo = elem.defaultRep
@@ -63,7 +65,7 @@ trait Views extends Elems { self: Scalan =>
     implicit val eB1 = iso1.eTo
     implicit val eB2 = iso2.eTo
     val eBB = element[(B1,B2)]
-    new IsoBase[(A1, A2), (B1,B2)] {
+    new Iso[(A1, A2), (B1,B2)] {
       def eTo = eBB
       def from(b: Rep[(B1,B2)]) = (iso1.from(b._1), iso2.from(b._2))
       def to(a: Rep[(A1, A2)]) = (iso1.to(a._1), iso2.to(a._2))
@@ -73,7 +75,7 @@ trait Views extends Elems { self: Scalan =>
   }
 
   def composeIso[A,B,C](iso2: Iso[B,C], iso1: Iso[A,B]): Iso[A,C] = {
-    new IsoBase[A,C]()(iso1.eFrom) {
+    new Iso[A,C]()(iso1.eFrom) {
       def eTo = iso2.eTo
       def from(c: Rep[C]) = iso1.from(iso2.from(c))
       def to(a: Rep[A]) = iso2.to(iso1.to(a))
@@ -87,7 +89,7 @@ trait Views extends Elems { self: Scalan =>
     implicit val eB = iso1.eTo
     implicit val eC = iso2.eFrom
     implicit val eD = iso2.eTo
-    new IsoBase[B => C, A => D] {
+    new Iso[B => C, A => D] {
       lazy val eTo = funcElement(eA, eD)
       def from(f: Rep[A => D]): Rep[B => C] = {
         fun { b => iso2.from(f(iso1.from(b))) }
@@ -102,12 +104,6 @@ trait Views extends Elems { self: Scalan =>
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
-
-  trait SeqIso[From,To] extends Iso[From,To] {
-  }
-
-  protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new SeqViewElem[From,To]
-
   class SeqViewElem[From,To](implicit iso: Iso[From, To]) extends ViewElem[From,To](iso) with SeqElement[To] {
     implicit val elemTo = this
     //implicit private def eFrom = iso.eFrom
@@ -119,15 +115,9 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
   trait UserTypeSeq[T, TImpl <: T] extends UserType[T] { thisType: T =>
     override def self = this
   }
-
 }
 
 trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
-
-  trait StagedIso[From,To] extends Iso[From,To]
-
-  protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new StagedViewElem[From,To]
-
   class StagedViewElem[From,To](implicit iso: Iso[From, To]) extends ViewElem[From,To](iso) with StagedElement[To] {
     implicit lazy val tag = iso.tag
     lazy val defaultRep = iso.defaultRepTo

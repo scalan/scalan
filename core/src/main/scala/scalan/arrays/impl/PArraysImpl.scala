@@ -41,7 +41,7 @@ trait PArraysAbs extends PArrays
 
   // 3) Iso for concrete class
   abstract class BaseArrayIso[A](implicit eA: Elem[A])
-    extends IsoBase[BaseArrayData[A], BaseArray[A]] {
+    extends Iso[BaseArrayData[A], BaseArray[A]] {
     override def from(p: Rep[BaseArray[A]]) =
       unmkBaseArray(p) match {
         case Some((arr)) => arr
@@ -61,9 +61,8 @@ trait PArraysAbs extends PArrays
   trait BaseArrayCompanionAbs extends BaseArrayCompanionOps {
 
     def apply[A]
-          (arr: Rep[Array[A]])
-          (implicit eA: Elem[A]): Rep[BaseArray[A]]
-        = mkBaseArray(arr)
+          (arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[BaseArray[A]] =
+      mkBaseArray(arr)
     def unapply[A:Elem](p: Rep[BaseArray[A]]) = unmkBaseArray(p)
   }
 
@@ -102,7 +101,7 @@ trait PArraysAbs extends PArrays
 
   // 3) Iso for concrete class
   abstract class PairArrayIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends IsoBase[PairArrayData[A, B], PairArray[A, B]] {
+    extends Iso[PairArrayData[A, B], PairArray[A, B]] {
     override def from(p: Rep[PairArray[A, B]]) =
       unmkPairArray(p) match {
         case Some((as, bs)) => Pair(as, bs)
@@ -122,12 +121,11 @@ trait PArraysAbs extends PArrays
   // 4) constructor and deconstructor
   trait PairArrayCompanionAbs extends PairArrayCompanionOps {
 
-    def apply[A, B](p: Rep[PairArrayData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]]
-        = isoPairArray(eA, eB).to(p)
+    def apply[A, B](p: Rep[PairArrayData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]] =
+      isoPairArray(eA, eB).to(p)
     def apply[A, B]
-          (as: Rep[PArray[A]], bs: Rep[PArray[B]])
-          (implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]]
-        = mkPairArray(as, bs)
+          (as: Rep[PArray[A]], bs: Rep[PArray[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]] =
+      mkPairArray(as, bs)
     def unapply[A:Elem, B:Elem](p: Rep[PairArray[A, B]]) = unmkPairArray(p)
   }
 
@@ -166,7 +164,7 @@ trait PArraysAbs extends PArrays
 
   // 3) Iso for concrete class
   abstract class FlatNestedArrayIso[A](implicit eA: Elem[A])
-    extends IsoBase[FlatNestedArrayData[A], FlatNestedArray[A]] {
+    extends Iso[FlatNestedArrayData[A], FlatNestedArray[A]] {
     override def from(p: Rep[FlatNestedArray[A]]) =
       unmkFlatNestedArray(p) match {
         case Some((values, segments)) => Pair(values, segments)
@@ -185,12 +183,11 @@ trait PArraysAbs extends PArrays
   // 4) constructor and deconstructor
   trait FlatNestedArrayCompanionAbs extends FlatNestedArrayCompanionOps {
 
-    def apply[A](p: Rep[FlatNestedArrayData[A]])(implicit eA: Elem[A]): Rep[FlatNestedArray[A]]
-        = isoFlatNestedArray(eA).to(p)
+    def apply[A](p: Rep[FlatNestedArrayData[A]])(implicit eA: Elem[A]): Rep[FlatNestedArray[A]] =
+      isoFlatNestedArray(eA).to(p)
     def apply[A]
-          (values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])
-          (implicit eA: Elem[A]): Rep[FlatNestedArray[A]]
-        = mkFlatNestedArray(values, segments)
+          (values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])(implicit eA: Elem[A]): Rep[FlatNestedArray[A]] =
+      mkFlatNestedArray(values, segments)
     def unapply[A:Elem](p: Rep[FlatNestedArray[A]]) = unmkFlatNestedArray(p)
   }
 
@@ -243,20 +240,19 @@ trait PArraysSeq extends PArraysAbs
 
 
 
-  implicit def isoBaseArray[A](implicit eA: Elem[A]):Iso[BaseArrayData[A], BaseArray[A]]
-    = new BaseArrayIso[A] with SeqIso[BaseArrayData[A], BaseArray[A]] { i =>
-        // should use i as iso reference
-        override lazy val eTo = new SeqViewElem[BaseArrayData[A], BaseArray[A]]()(i)
-                                    with BaseArrayElem[A]
-      }
+  implicit def isoBaseArray[A](implicit eA: Elem[A]):Iso[BaseArrayData[A], BaseArray[A]] =
+    new BaseArrayIso[A] { i =>
+      // should use i as iso reference
+      lazy val eTo = 
+        new SeqViewElem[BaseArrayData[A], BaseArray[A]]()(i) with BaseArrayElem[A]
+    }
 
 
   def mkBaseArray[A]
-      (arr: Rep[Array[A]])
-      (implicit eA: Elem[A])
-      = new SeqBaseArray[A](arr)
-  def unmkBaseArray[A:Elem](p: Rep[BaseArray[A]])
-    = Some((p.arr))
+      (arr: Rep[Array[A]])(implicit eA: Elem[A]) =
+      new SeqBaseArray[A](arr)
+  def unmkBaseArray[A:Elem](p: Rep[BaseArray[A]]) =
+    Some((p.arr))
 
 
   case class SeqPairArray[A, B]
@@ -272,20 +268,19 @@ trait PArraysSeq extends PArraysAbs
 
 
 
-  implicit def isoPairArray[A, B](implicit eA: Elem[A], eB: Elem[B]):Iso[PairArrayData[A, B], PairArray[A, B]]
-    = new PairArrayIso[A, B] with SeqIso[PairArrayData[A, B], PairArray[A, B]] { i =>
-        // should use i as iso reference
-        override lazy val eTo = new SeqViewElem[PairArrayData[A, B], PairArray[A, B]]()(i)
-                                    with PairArrayElem[A, B]
-      }
+  implicit def isoPairArray[A, B](implicit eA: Elem[A], eB: Elem[B]):Iso[PairArrayData[A, B], PairArray[A, B]] =
+    new PairArrayIso[A, B] { i =>
+      // should use i as iso reference
+      lazy val eTo = 
+        new SeqViewElem[PairArrayData[A, B], PairArray[A, B]]()(i) with PairArrayElem[A, B]
+    }
 
 
   def mkPairArray[A, B]
-      (as: Rep[PArray[A]], bs: Rep[PArray[B]])
-      (implicit eA: Elem[A], eB: Elem[B])
-      = new SeqPairArray[A, B](as, bs)
-  def unmkPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]])
-    = Some((p.as, p.bs))
+      (as: Rep[PArray[A]], bs: Rep[PArray[B]])(implicit eA: Elem[A], eB: Elem[B]) =
+      new SeqPairArray[A, B](as, bs)
+  def unmkPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]) =
+    Some((p.as, p.bs))
 
 
   case class SeqFlatNestedArray[A]
@@ -301,20 +296,19 @@ trait PArraysSeq extends PArraysAbs
 
 
 
-  implicit def isoFlatNestedArray[A](implicit eA: Elem[A]):Iso[FlatNestedArrayData[A], FlatNestedArray[A]]
-    = new FlatNestedArrayIso[A] with SeqIso[FlatNestedArrayData[A], FlatNestedArray[A]] { i =>
-        // should use i as iso reference
-        override lazy val eTo = new SeqViewElem[FlatNestedArrayData[A], FlatNestedArray[A]]()(i)
-                                    with FlatNestedArrayElem[A]
-      }
+  implicit def isoFlatNestedArray[A](implicit eA: Elem[A]):Iso[FlatNestedArrayData[A], FlatNestedArray[A]] =
+    new FlatNestedArrayIso[A] { i =>
+      // should use i as iso reference
+      lazy val eTo = 
+        new SeqViewElem[FlatNestedArrayData[A], FlatNestedArray[A]]()(i) with FlatNestedArrayElem[A]
+    }
 
 
   def mkFlatNestedArray[A]
-      (values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])
-      (implicit eA: Elem[A])
-      = new SeqFlatNestedArray[A](values, segments)
-  def unmkFlatNestedArray[A:Elem](p: Rep[FlatNestedArray[A]])
-    = Some((p.values, p.segments))
+      (values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])(implicit eA: Elem[A]) =
+      new SeqFlatNestedArray[A](values, segments)
+  def unmkFlatNestedArray[A:Elem](p: Rep[FlatNestedArray[A]]) =
+    Some((p.values, p.segments))
 
 }
 
@@ -351,9 +345,9 @@ trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp
 
 
   implicit def isoBaseArray[A](implicit eA: Elem[A]):Iso[BaseArrayData[A], BaseArray[A]]
-    = new BaseArrayIso[A] with StagedIso[BaseArrayData[A], BaseArray[A]] { i =>
+    = new BaseArrayIso[A] { i =>
       // should use i as iso reference
-      override lazy val eTo = 
+      lazy val eTo = 
         new StagedViewElem[BaseArrayData[A], BaseArray[A]]()(i) with BaseArrayElem[A]
     }
 
@@ -382,9 +376,9 @@ trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp
 
 
   implicit def isoPairArray[A, B](implicit eA: Elem[A], eB: Elem[B]):Iso[PairArrayData[A, B], PairArray[A, B]]
-    = new PairArrayIso[A, B] with StagedIso[PairArrayData[A, B], PairArray[A, B]] { i =>
+    = new PairArrayIso[A, B] { i =>
       // should use i as iso reference
-      override lazy val eTo = 
+      lazy val eTo = 
         new StagedViewElem[PairArrayData[A, B], PairArray[A, B]]()(i) with PairArrayElem[A, B]
     }
 
@@ -413,9 +407,9 @@ trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp
 
 
   implicit def isoFlatNestedArray[A](implicit eA: Elem[A]):Iso[FlatNestedArrayData[A], FlatNestedArray[A]]
-    = new FlatNestedArrayIso[A] with StagedIso[FlatNestedArrayData[A], FlatNestedArray[A]] { i =>
+    = new FlatNestedArrayIso[A] { i =>
       // should use i as iso reference
-      override lazy val eTo = 
+      lazy val eTo = 
         new StagedViewElem[FlatNestedArrayData[A], FlatNestedArray[A]]()(i) with FlatNestedArrayElem[A]
     }
 

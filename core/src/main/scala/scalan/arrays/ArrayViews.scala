@@ -145,10 +145,10 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
   def arrayIso[A, B](iso: Iso[A, B]): Iso[Array[A], Array[B]] = {
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
-    new IsoBase[Array[A], Array[B]] with StagedIso[Array[A], Array[B]] {
+    new Iso[Array[A], Array[B]] {
       lazy val eTo = element[Array[B]]
-      override def from(x: Arr[B]) = x.map(fun(iso.from _))
-      override def to(x: Arr[A]) = x.map(fun(iso.to _))
+      def from(x: Arr[B]) = x.map(fun(iso.from _))
+      def to(x: Arr[A]) = x.map(fun(iso.to _))
       lazy val tag = {
         implicit val tB = iso.tag
         typeTag[Array[B]]
