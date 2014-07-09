@@ -28,7 +28,7 @@ trait Scalan
      with NumericOps
 //     with MathOps
      with LogicalOps
-//     with OrderingOps
+     with OrderingOps
 //     with FractionalOps
      with Functions
      with IfThenElse
@@ -60,7 +60,7 @@ trait ScalanSeq
   with IfThenElseSeq
   with ArrayOpsSeq
   with ArrayViewsSeq
-//  with OrderingOpsSeq
+  with OrderingOpsSeq
   with NumericOpsSeq
   with EqualSeq
 //  with MathOpsSeq
@@ -127,7 +127,7 @@ trait ScalanStaged
   with EqualExp
 //  with MathOpsExp
   with LogicalOpsExp
-//  with OrderingOpsExp
+  with OrderingOpsExp
 //  with FractionalOpsExp
   with FunctionsExp
   with IfThenElseExp
