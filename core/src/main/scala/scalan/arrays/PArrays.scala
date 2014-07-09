@@ -19,6 +19,7 @@ trait PArrays extends Base { self: PArraysDsl =>
     def zip[B: Elem](ys: PA[B]): PA[(A, B)] = PairArray(self, ys)
     def slice(offset: Rep[Int], length: Rep[Int]): Rep[PArray[A]]
     def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] = arr.sum
+    def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(PArray[A], A)] = (PArray(arr.scan._1), arr.scan._2)
   }
   
   implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = element[A] match {
@@ -63,6 +64,16 @@ trait PArrays extends Base { self: PArraysDsl =>
       element[T] match {
         case baseE: BaseElem[a] =>
           BaseArray[a](array_replicate(len, v.asRep[a]))
+        case pairElem: PairElem[a ,b] => {
+          implicit val ea = pairElem.ea
+          implicit val eb = pairElem.eb
+          val ps = v.asRep[(a, b)]
+          val as = replicate(len, ps._1)
+          val bs = replicate(len, ps._2)
+          as zip bs
+        }
+        case viewElem: ViewElem[a, b] =>
+          BaseArray(Array.replicate(len, v))
         case e => ???(s"Element is $e")
       }
     }

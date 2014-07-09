@@ -47,11 +47,20 @@ trait Views extends Elems { self: Scalan =>
     def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[F[A, B]]]
   }
 
+  trait ConcreteClass0[C] {
+    def defaultOf: Default[Rep[C]]
+  }
   trait ConcreteClass1[C[_]] {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[C[A]]]
   }
   trait ConcreteClass2[C[_, _]] {
     def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[C[A, B]]]
+  }
+  trait ConcreteClass3[T[_, _, _]] {
+    def defaultOf[A, B, C](implicit ea: Elem[A], eb: Elem[B], ec: Elem[C]): Default[Rep[T[A, B, C]]]
+  }
+  trait ConcreteClass4[T[_, _, _, _]] {
+    def defaultOf[A, B, C, D](implicit ea: Elem[A], eb: Elem[B], ec: Elem[C], ed : Elem[D]): Default[Rep[T[A, B, C, D]]]
   }
 
   def identityIso[A](implicit elem: Elem[A]): Iso[A, A] =

@@ -16,6 +16,7 @@ trait ArrayOps { self: Scalan =>
     def mapBy[R: Elem](f: Rep[T => R]) = array_map(xs, f)
     def map[R: Elem](f: Rep[T] => Rep[R])(implicit o: Overloaded1) = array_map(xs, fun(f))
     def sum(implicit m: RepMonoid[T]) = array_sum(xs)
+    def scan(implicit m: RepMonoid[T]) = array_scan(xs)
     def zip[U](ys: Arr[U]): Arr[(T, U)] = array_zip(xs, ys)
     def slice(start: Rep[Int], length: Rep[Int]): Arr[T] = array_slice(xs, start, length)
     def filterBy(f: Rep[T => Boolean]) = array_filter(xs, f)
@@ -39,6 +40,7 @@ trait ArrayOps { self: Scalan =>
   def array_length[T](xs: Arr[T]): Rep[Int]
   def array_map[T, R: Elem](xs: Arr[T], f: Rep[T => R]): Arr[R]
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]): Rep[T]
+  def array_scan[T](xs: Arr[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)]
   def array_zip[T, U](xs: Arr[T], ys: Arr[U]): Arr[(T, U)]
   def array_replicate[T: Elem](len: Rep[Int], v: Rep[T]): Arr[T]
   def array_slice[T](xs: Arr[T], start: Rep[Int], length: Rep[Int]): Arr[T]
@@ -61,6 +63,11 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   def array_map[T, R: Elem](xs: Array[T], f: T => R) = genericArrayOps(xs).map(f)
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x, y) => m.append(x, y))
   def array_zip[T, U](xs: Array[T], ys: Array[U]): Array[(T, U)] = (xs, ys).zipped.toArray
+  def array_scan[T](xs: Array[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)] = {
+    val scan = xs.scan(m.zero)((x, y) => m.append(x, y))
+    val sum = scan.last
+    (scan.dropRight(1).toArray, sum)
+  }
   def array_replicate[T: Elem](len: Rep[Int], v: Rep[T]): Arr[T] = scala.Array.fill(len)(v)
   def array_slice[T](xs: Arr[T], start: Rep[Int], length: Rep[Int]): Arr[T] =
     genericArrayOps(xs).slice(start, length)
@@ -123,6 +130,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
     lazy val self: Rep[T] = this
     override def mirror(t: Transformer) = ArraySum[T](t(xs), m)
   }
+  case class ArrayScan[T](xs: Exp[Array[T]])(implicit val m: RepMonoid[T], val eT : Elem[(Array[T], T)]) extends Def[(Array[T], T)] with ArrayMethod[T] {
+    def selfType = eT
+    lazy val self: Rep[(Array[T], T)] = this
+    override def mirror(t: Transformer) = ArrayScan[T](t(xs))
+  }
   case class ArrayZip[T: Elem, U: Elem](xs: Exp[Array[T]], ys: Exp[Array[U]]) extends ArrayDef[(T, U)] {
     lazy val eT = element[(T, U)]
     override def mirror(t: Transformer) = ArrayZip(t(xs), t(ys))
@@ -150,6 +162,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
 
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]) =
     withElemOfArray(xs) { implicit eT => ArraySum(xs, m) }
+
+  def array_scan[T](xs: Arr[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)] = {
+    ArrayScan(xs)
+  }
 
   def array_zip[T, U](xs: Arr[T], ys: Arr[U]): Arr[(T, U)] = {
     implicit val eT = xs.elem.ea

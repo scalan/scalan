@@ -9,14 +9,15 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 import scala.Predef._
-import scala.Predef.Pair
 
 trait Elems extends Base { self: Scalan =>
+
+
   type Elem[A] = Element[A] // typeclass witnessing that type A can be an element of other data type (i.e. belongs to Family)
   type LElem[A] = Lazy[Elem[A]] // lazy element
 
   @implicitNotFound(msg = "No Element available for ${A}.")
-  abstract class Element[A] {
+  abstract class Element[A] extends Serializable {
     def tag: TypeTag[A]
     final def classTag: ClassTag[A] = TagImplicits.typeTagToClassTag(tag)
     def defaultRep: Default[Rep[A]]
@@ -41,10 +42,10 @@ trait Elems extends Base { self: Scalan =>
     def asElem[T]: Elem[T] = e.asInstanceOf[Elem[T]]
   }
 
-  class BaseElem[A](implicit val tag: TypeTag[A], z: Default[A]) extends Element[A] {
+  class BaseElem[A](implicit val tag: TypeTag[A], z: Default[A]) extends Element[A] with Serializable {
     lazy val defaultRep = defaultVal(toRep(z.value)(this))
   }
-  
+
   class PairElem[A, B](implicit val ea: Elem[A], val eb: Elem[B]) extends Element[(A, B)] {
     lazy val tag = {
       implicit val tA = ea.tag
@@ -53,7 +54,7 @@ trait Elems extends Base { self: Scalan =>
     }
     lazy val defaultRep = defaultVal(Pair(ea.defaultRepValue, eb.defaultRepValue))
   }
-  
+
   class SumElem[A, B](implicit val ea: Elem[A], val eb: Elem[B]) extends Element[(A | B)] {
     lazy val tag = {
       implicit val tA = ea.tag
@@ -62,7 +63,7 @@ trait Elems extends Base { self: Scalan =>
     }
     lazy val defaultRep = defaultVal(toLeftSum[A, B](ea.defaultRepValue)(eb))
   }
-  
+
   class FuncElem[A, B](implicit val ea: Elem[A], val eb: Elem[B]) extends Element[A => B] {
     lazy val tag = {
       implicit val tA = ea.tag
@@ -71,7 +72,7 @@ trait Elems extends Base { self: Scalan =>
     }
     lazy val defaultRep = defaultVal(fun(funcRepDefault[A, B].value))
   }
-  
+
   class ArrayElem[A](implicit val ea: Elem[A]) extends Element[Array[A]] {
     lazy val tag = {
       implicit val tag1 = ea.tag
