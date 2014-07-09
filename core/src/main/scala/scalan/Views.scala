@@ -27,7 +27,10 @@ trait Views extends Elems { self: Scalan =>
 
   implicit def viewElement[From, To <: UserType[_]](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
 
-  abstract class ViewElem[From, To](val iso: Iso[From, To]) extends Elem[To]
+  abstract class ViewElem[From, To](implicit val iso: Iso[From, To]) extends Elem[To] {
+    lazy val tag: TypeTag[To] = iso.tag
+    lazy val defaultRep = iso.defaultRepTo    
+  }
 
   trait CompanionElem[T] extends Elem[T] {
   }
@@ -105,13 +108,7 @@ trait Views extends Elems { self: Scalan =>
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
-  class SeqViewElem[From, To](implicit iso: Iso[From, To]) extends ViewElem[From, To](iso) with SeqElement[To] {
-    implicit val elemTo = this
-    //implicit private def eFrom = iso.eFrom
-    implicit private def eTo = iso.eTo
-    lazy val tag: TypeTag[To] = iso.tag
-    lazy val defaultRep = iso.defaultRepTo
-  }
+  class SeqViewElem[From, To](implicit iso: Iso[From, To]) extends ViewElem[From, To]
 
   trait UserTypeSeq[T, TImpl <: T] extends UserType[T] { thisType: T =>
     override def self = this
@@ -119,10 +116,7 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
 }
 
 trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
-  class StagedViewElem[From, To](implicit iso: Iso[From, To]) extends ViewElem[From, To](iso) with StagedElement[To] {
-    implicit lazy val tag = iso.tag
-    lazy val defaultRep = iso.defaultRepTo
-  }
+  class StagedViewElem[From, To](implicit iso: Iso[From, To]) extends ViewElem[From, To]
 
   trait UserTypeDef[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
     override def self = reifyObject(this)(Lazy(selfType.asInstanceOf[Elem[TImpl]]))
