@@ -427,8 +427,6 @@ trait MatricesExp extends MatricesAbs with scalan.ProxyExp with scalan.ViewsExp
     override def mirror(t: Transformer) = this
   }
 
-  addUserType[ExpRowMajorMatrix[_]]
-
 
   def mkRowMajorMatrix[T]
       (rmValues: Rep[PArray[T]], numColumns: Rep[Int])
@@ -458,8 +456,6 @@ trait MatricesExp extends MatricesAbs with scalan.ProxyExp with scalan.ViewsExp
     lazy val selfType = element[ColumnMajorMatrixCompanionAbs]
     override def mirror(t: Transformer) = this
   }
-
-  addUserType[ExpColumnMajorMatrix[_]]
 
 
   def mkColumnMajorMatrix[T]
@@ -491,8 +487,6 @@ trait MatricesExp extends MatricesAbs with scalan.ProxyExp with scalan.ViewsExp
     override def mirror(t: Transformer) = this
   }
 
-  addUserType[ExpRowMajorSparseMatrix[_]]
-
 
   def mkRowMajorSparseMatrix[T]
       (sparseRows: Rep[PArray[SparseVector[T]]])
@@ -522,8 +516,6 @@ trait MatricesExp extends MatricesAbs with scalan.ProxyExp with scalan.ViewsExp
     lazy val selfType = element[ColumnMajorSparseMatrixCompanionAbs]
     override def mirror(t: Transformer) = this
   }
-
-  addUserType[ExpColumnMajorSparseMatrix[_]]
 
 
   def mkColumnMajorSparseMatrix[T]

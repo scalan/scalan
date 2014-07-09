@@ -246,8 +246,6 @@ trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp
     override def mirror(t: Transformer) = this
   }
 
-  addUserType[ExpDenseVector[_]]
-
 
   def mkDenseVector[T]
       (coords: Rep[PArray[T]])
@@ -277,8 +275,6 @@ trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp
     lazy val selfType = element[SparseVectorCompanionAbs]
     override def mirror(t: Transformer) = this
   }
-
-  addUserType[ExpSparseVector[_]]
 
 
   def mkSparseVector[T]

@@ -251,8 +251,6 @@ trait TypesExp extends TypesAbs with scalan.ProxyExp with scalan.ViewsExp
     override def mirror(t: Transformer) = this
   }
 
-  addUserType[ExpBaseType[_]]
-
 
   def mkBaseType[A]
       (typeCode: Rep[String], defaultValue: Rep[A])
@@ -282,8 +280,6 @@ trait TypesExp extends TypesAbs with scalan.ProxyExp with scalan.ViewsExp
     lazy val selfType = element[Tuple2TypeCompanionAbs]
     override def mirror(t: Transformer) = this
   }
-
-  addUserType[ExpTuple2Type[_, _]]
 
 
   def mkTuple2Type[A, B]

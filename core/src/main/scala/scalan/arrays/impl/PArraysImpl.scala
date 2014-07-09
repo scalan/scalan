@@ -338,8 +338,6 @@ trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp
     override def mirror(t: Transformer) = this
   }
 
-  addUserType[ExpBaseArray[_]]
-
 
   def mkBaseArray[A]
       (arr: Rep[Array[A]])
@@ -370,8 +368,6 @@ trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp
     override def mirror(t: Transformer) = this
   }
 
-  addUserType[ExpPairArray[_, _]]
-
 
   def mkPairArray[A, B]
       (as: Rep[PArray[A]], bs: Rep[PArray[B]])
@@ -401,8 +397,6 @@ trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp
     lazy val selfType = element[FlatNestedArrayCompanionAbs]
     override def mirror(t: Transformer) = this
   }
-
-  addUserType[ExpFlatNestedArray[_]]
 
 
   def mkFlatNestedArray[A]

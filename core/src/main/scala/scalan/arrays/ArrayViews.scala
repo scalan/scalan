@@ -67,6 +67,11 @@ trait ArrayViewsSeq extends ArrayViews { self: ScalanSeq =>
 
 trait ArrayViewsExp extends ArrayViews { self: ScalanStaged =>
 
+  case class ViewArray[From, To](arr: Arr[From])(implicit val iso: Iso[From, To]) extends ArrayDef[To] {
+    implicit def eTo = iso.eTo
+    val selfType = element[Array[To]]
+    val uniqueOpId = name(arr.elem.ea, eTo)
+  }
 //  case class UnpackView[A,B](view: PA[B])(implicit val iso: Iso[A,B]) extends StagedArrayBase[A] {
 //    implicit lazy val elem = iso.eA
 //    override def mirror(f: Transformer) = UnpackView[A,B](f(view))

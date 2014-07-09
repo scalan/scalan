@@ -95,21 +95,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
   case class UserTypeDescriptor[T](tag: TypeTag[T]) {
     def runtimeClass = TagImplicits.typeTagToClassTag(tag).runtimeClass
   }
-  var userTypes = List.empty[UserTypeDescriptor[_]]
-  def addUserType[T: TypeTag] {
-    userTypes = userTypes :+ UserTypeDescriptor(typeTag[T])
-  }
-
-  def isUserTypeConstr[T](d: Def[T]): Boolean = {
-    val clazz = d.getClass
-    userTypes.exists(c => c.runtimeClass == clazz)
-  }
-
-  def isUserTypeSym[T](s: Exp[T]): Boolean = {
-    val symClazz = s.elem.classTag.runtimeClass
-    userTypes.exists(c => symClazz.isAssignableFrom(c.runtimeClass))
-  }
-
+  
   trait UserTypeExp[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
     override def self = reifyObject(this)(Lazy(selfType.asInstanceOf[Elem[TImpl]]))
     def uniqueOpId = selfType.prettyName
@@ -119,7 +105,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
       val s = d.self
       val eT = s.elem
       eT match {
-        case e: ViewElem[_,_] if isUserTypeConstr(d) => Some(e.asInstanceOf[ViewElem[_,T]].iso)
+        case e: ViewElem[_,_] => Some(e.iso)
         case _ => None
       }
     }
@@ -128,7 +114,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     def unapply[T](s: Exp[T]): Option[Iso[_,T]] = {
       val eT = s.elem
       eT match {
-        case e: ViewElem[_,_] if isUserTypeSym(s) => Some(e.asInstanceOf[ViewElem[_,T]].iso)
+        case e: ViewElem[_,_] => Some(e.iso)
         case _ => None
       }
     }
@@ -157,7 +143,4 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
       }
     }
   }
-
-
-
 }
