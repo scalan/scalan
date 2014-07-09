@@ -10,28 +10,26 @@ import scala.reflect.runtime.universe._
 trait Views extends Elems { self: Scalan =>
 
   trait Iso[From,To] {
-    //def eFrom: Elem[From]
+    def eFrom: Elem[From]
     def eTo: Elem[To]
     def tag: TypeTag[To]        // constructed in each concrete iso instance
     def defaultRepTo: Default[Rep[To]] // constructed in each concrete iso instance
-    def from(p: Rep[To]  ): Rep[From]
-    def to  (p: Rep[From]): Rep[To]
+    def from(p: Rep[To]): Rep[From]
+    def to(p: Rep[From]): Rep[To]
   }
-
-  abstract class IsoBase[From,To] extends Iso[From,To] {
-    //------
+  
+  abstract class IsoBase[From, To](implicit val eFrom: Elem[From]) extends Iso[From, To] {
     // eB should be lazy val as it is used recursively in ViewElem
     // override it in concrete isos to create hierarchy of Elem classes
-    lazy val eTo: Elem[To] = defaultViewElem(this)
+    lazy val eTo: Elem[To] = defaultViewElem(this)    
   }
 
   protected[scalan] def defaultViewElem[From,To](implicit iso: Iso[From,To]): Elem[To]
 
-  implicit def viewElement[From,To](implicit iso: Iso[From,To], ut: To <:< UserType[_]): Elem[To] = iso.eTo  // always ask elem from Iso
+  implicit def viewElement[From, To <: UserType[_]](implicit iso: Iso[From,To]): Elem[To] = iso.eTo  // always ask elem from Iso
 
-  trait ViewElem[From,To] extends Elem[To] {
-    def iso: Iso[From,To]
-  }
+  abstract class ViewElem[From,To](val iso: Iso[From, To]) extends Elem[To]
+
   trait CompanionElem[T] extends Elem[T] {
   }
 
@@ -61,9 +59,9 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
   trait SeqIso[From,To] extends Iso[From,To] {
   }
 
-  protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new SeqViewElem[From,To] { val iso = i }
+  protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new SeqViewElem[From,To]
 
-  trait SeqViewElem[From,To] extends ViewElem[From,To] with SeqElement[To] {
+  class SeqViewElem[From,To](implicit iso: Iso[From, To]) extends ViewElem[From,To](iso) with SeqElement[To] {
     implicit val elemTo = this
     //implicit private def eFrom = iso.eFrom
     implicit private def eTo = iso.eTo
@@ -79,15 +77,11 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
 
 trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 
-  trait StagedIso[From,To] extends Iso[From,To] {
-  }
+  trait StagedIso[From,To] extends Iso[From,To]
 
-  protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new StagedViewElem[From,To] { val iso = i }
+  protected[scalan] def defaultViewElem[From,To](implicit i: Iso[From,To]) = new StagedViewElem[From,To]
 
-  trait StagedViewElem[From,To] extends ViewElem[From,To] with StagedElement[To] {
-    implicit val elemTo = this
-    //implicit private def eFrom = iso.eFrom
-    implicit private def eTo = iso.eTo
+  class StagedViewElem[From,To](implicit iso: Iso[From, To]) extends ViewElem[From,To](iso) with StagedElement[To] {
     implicit lazy val tag = iso.tag
     lazy val defaultRep = iso.defaultRepTo
   }

@@ -269,29 +269,29 @@ trait Transforming { self: ScalanStaged =>
       }
 
 
-    def fromViewSubst(s: Exp[_]) = s match {
+    def fromViewSubst[A](s: Exp[A]) = s match {
       //case Def(View(view,_,_)) => view.arrOrEmpty  //TODO it looks like don't need View anymore?
       case Def(UserTypeExp(iso)) =>
-        val repr = iso.asInstanceOf[Iso[Any, Any]].from(s)
+        val repr = iso.from(s)
         repr
       case UserTypeSym(iso) =>
-        val repr = iso.asInstanceOf[Iso[Any, Any]].from(s)
+        val repr = iso.from(s)
         repr
       case _ => s
     }
 
-    def toViewSubst(s_v: Exp[_], s: Exp[_]) = s_v match {
+    def toViewSubst[A, B](s_v: Exp[B], s: Exp[A]): Exp[_] = s_v match {
 //      case Def(View(view, _, _)) => {             //TODO it looks like don't need View anymore?
 //        implicit val eB = view.iso.eB
 //        ExpViewArray(Some(s.asRep[PArray[Any]]), view.iso): Exp[_]
 //      }
-      case Def(UserTypeExp(iso)) => iso.asInstanceOf[Iso[Any,Any]].to(s)
-      case UserTypeSym(iso) => iso.asInstanceOf[Iso[Any,Any]].to(s)
+      case Def(UserTypeExp(iso: Iso[A, B] @unchecked)) => iso.to(s)
+      case UserTypeSym(iso: Iso[A, B] @unchecked) => iso.to(s)
       case _ => s
     }
 
     def eliminateViews: TupleTree = {
-      mirror(fromViewSubst)
+      mirror(x => fromViewSubst(x))
     }
 
     def toView(x: Exp[_]) = {

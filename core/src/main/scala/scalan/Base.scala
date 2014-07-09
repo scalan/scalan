@@ -55,6 +55,6 @@ trait Base { self: Scalan =>
     override def toString = this.getClass.getSimpleName + "(" + lhs + ", " + rhs + ")"
   }
 
-  def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for: $x") //= element[A].toRep(x)
+  def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for $x with element $eA")
   implicit def liftToRep[A:Elem](x: A) = toRep(x)
 }

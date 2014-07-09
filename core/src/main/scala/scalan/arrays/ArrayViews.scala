@@ -436,10 +436,9 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
         val f1 = f.asInstanceOf[Rep[a => b]]
         val xs1 = xs.asRep[Array[a]]
         implicit val eA = xs1.elem.ea
-        val s = xs1.map(fun {
-          x =>
-            val tmp = f1(x)
-            iso.from(tmp)
+        val s = xs1.map(fun { x =>
+          val tmp = f1(x)
+          iso.from(tmp)
         })
         val res = ViewArray(s)(iso)
         res

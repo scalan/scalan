@@ -181,8 +181,8 @@ trait VectorsSeq extends VectorsAbs
   implicit def isoDenseVector[T](implicit elem: Elem[T]):Iso[DenseVectorData[T], DenseVector[T]]
     = new DenseVectorIso[T] with SeqIso[DenseVectorData[T], DenseVector[T]] { i =>
         // should use i as iso reference
-        override lazy val eTo = new SeqViewElem[DenseVectorData[T], DenseVector[T]]
-                                    with DenseVectorElem[T] { val iso = i }
+        override lazy val eTo = new SeqViewElem[DenseVectorData[T], DenseVector[T]]()(i)
+                                    with DenseVectorElem[T]
       }
 
 
@@ -210,8 +210,8 @@ trait VectorsSeq extends VectorsAbs
   implicit def isoSparseVector[T](implicit elem: Elem[T]):Iso[SparseVectorData[T], SparseVector[T]]
     = new SparseVectorIso[T] with SeqIso[SparseVectorData[T], SparseVector[T]] { i =>
         // should use i as iso reference
-        override lazy val eTo = new SeqViewElem[SparseVectorData[T], SparseVector[T]]
-                                    with SparseVectorElem[T] { val iso = i }
+        override lazy val eTo = new SeqViewElem[SparseVectorData[T], SparseVector[T]]()(i)
+                                    with SparseVectorElem[T]
       }
 
 
@@ -258,10 +258,10 @@ trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp
 
   implicit def isoDenseVector[T](implicit elem: Elem[T]):Iso[DenseVectorData[T], DenseVector[T]]
     = new DenseVectorIso[T] with StagedIso[DenseVectorData[T], DenseVector[T]] { i =>
-        // should use i as iso reference
-        override lazy val eTo = new StagedViewElem[DenseVectorData[T], DenseVector[T]]
-                                    with DenseVectorElem[T] { val iso = i }
-      }
+      // should use i as iso reference
+      override lazy val eTo = 
+        new StagedViewElem[DenseVectorData[T], DenseVector[T]]()(i) with DenseVectorElem[T]
+    }
 
 
   case class ExpSparseVector[T]
@@ -289,9 +289,9 @@ trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp
 
   implicit def isoSparseVector[T](implicit elem: Elem[T]):Iso[SparseVectorData[T], SparseVector[T]]
     = new SparseVectorIso[T] with StagedIso[SparseVectorData[T], SparseVector[T]] { i =>
-        // should use i as iso reference
-        override lazy val eTo = new StagedViewElem[SparseVectorData[T], SparseVector[T]]
-                                    with SparseVectorElem[T] { val iso = i }
-      }
+      // should use i as iso reference
+      override lazy val eTo = 
+        new StagedViewElem[SparseVectorData[T], SparseVector[T]]()(i) with SparseVectorElem[T]
+    }
 
 }
