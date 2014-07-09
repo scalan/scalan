@@ -17,7 +17,7 @@ import scalan.common.Lazy
 import scalan.staged.BaseExp
 
 trait ProxyBase { self: Scalan =>
-  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops
 
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass()
@@ -27,7 +27,7 @@ trait ProxyBase { self: Scalan =>
 }
 
 trait ProxySeq extends ProxyBase { self: ScalanSeq =>
-  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = x
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean)(implicit ct: ClassTag[Ops]): Ops = x
 }
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
@@ -55,7 +55,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
   private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
 
-  override def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = {
+  override def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean)(implicit ct: ClassTag[Ops]): Ops = {
     val proxy = proxies.getOrElseUpdate((x, ct), {
       val clazz = ct.runtimeClass
       val e = new Enhancer
@@ -83,14 +83,15 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   var methodCallReceivers = Set.empty[Exp[_]]
 
-  class ExpInvocationHandler(receiver: Exp[_], forceInvoke: Option[Boolean]) extends InvocationHandler {
+  class ExpInvocationHandler(receiver: Exp[_], forceInvoke: Boolean) extends InvocationHandler {
     def canInvoke(m: Method, d: Def[_]) = m.getDeclaringClass.isAssignableFrom(d.getClass)
+    def shouldInvoke(args: Array[AnyRef]) = invokeEnabled || forceInvoke || hasFuncArg(args)
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) scala.Array.empty[AnyRef] else _args
       receiver match {
         // call method of the node when it's allowed
-        case Def(d) if (canInvoke(m, d) && (invokeEnabled || forceInvoke.getOrElse(false) || hasFuncArg(args))) =>
+        case Def(d) if (canInvoke(m, d) && shouldInvoke(args)) =>
           val res = m.invoke(d, args: _*)
           res
         case _ => invokeMethodOfVar(m, args)
@@ -100,7 +101,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     def invokeMethodOfVar(m: Method, args: Array[AnyRef]) = {
       createMethodCall(m, args)
       //      /* If invoke is enabled or current method has arg of type <function> - do not create methodCall */
-      //      if (methodCallReceivers.contains(receiver) || !(invokeEnabled || forceInvoke.getOrElse(false) || hasFuncArg(args))) {
+      //      if (methodCallReceivers.contains(receiver) || !shouldInvoke(args)) {
       //        createMethodCall(m, args)
       //      } else {
       //        receiver.elem match {
@@ -115,7 +116,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
       //                val res = m.invoke(d, args: _*)
       //                res
       //              case _ =>
-      //                (new ExpInvocationHandler(wrapper)).createMethodCall(m, args)
+      //                (new ExpInvocationHandler(wrapper, forceInvoke)).createMethodCall(m, args)
       //            }
       //          case e => !!!(s"Receiver ${receiver.toStringWithType} must be a user type, but its elem is ${e}")
       //        }

@@ -29,7 +29,7 @@ trait TypesAbs extends Types
   def Type: Rep[TypeCompanionAbs]
   implicit def defaultOfType[A:Elem]: Default[Rep[Type[A]]] = Type.defaultOf[A]
   implicit def proxyTypeCompanion(p: Rep[TypeCompanion]): TypeCompanion = {
-    proxyOps[TypeCompanion](p, Some(true))
+    proxyOps[TypeCompanion](p, true)
   }
 
 
@@ -70,7 +70,7 @@ trait TypesAbs extends Types
 
   def BaseType: Rep[BaseTypeCompanionAbs]
   implicit def proxyBaseTypeCompanion(p: Rep[BaseTypeCompanionAbs]): BaseTypeCompanionAbs = {
-    proxyOps[BaseTypeCompanionAbs](p, Some(true))
+    proxyOps[BaseTypeCompanionAbs](p, true)
   }
 
   trait BaseTypeCompanionElem extends CompanionElem[BaseTypeCompanionAbs]
@@ -133,7 +133,7 @@ trait TypesAbs extends Types
 
   def Tuple2Type: Rep[Tuple2TypeCompanionAbs]
   implicit def proxyTuple2TypeCompanion(p: Rep[Tuple2TypeCompanionAbs]): Tuple2TypeCompanionAbs = {
-    proxyOps[Tuple2TypeCompanionAbs](p, Some(true))
+    proxyOps[Tuple2TypeCompanionAbs](p, true)
   }
 
   trait Tuple2TypeCompanionElem extends CompanionElem[Tuple2TypeCompanionAbs]

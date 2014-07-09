@@ -30,7 +30,7 @@ trait PArraysAbs extends PArrays
   def PArray: Rep[PArrayCompanionAbs]
   implicit def defaultOfPArray[A:Elem]: Default[Rep[PArray[A]]] = PArray.defaultOf[A]
   implicit def proxyPArrayCompanion(p: Rep[PArrayCompanion]): PArrayCompanion = {
-    proxyOps[PArrayCompanion](p, Some(true))
+    proxyOps[PArrayCompanion](p, true)
   }
 
 
@@ -69,7 +69,7 @@ trait PArraysAbs extends PArrays
 
   def BaseArray: Rep[BaseArrayCompanionAbs]
   implicit def proxyBaseArrayCompanion(p: Rep[BaseArrayCompanionAbs]): BaseArrayCompanionAbs = {
-    proxyOps[BaseArrayCompanionAbs](p, Some(true))
+    proxyOps[BaseArrayCompanionAbs](p, true)
   }
 
   trait BaseArrayCompanionElem extends CompanionElem[BaseArrayCompanionAbs]
@@ -132,7 +132,7 @@ trait PArraysAbs extends PArrays
 
   def PairArray: Rep[PairArrayCompanionAbs]
   implicit def proxyPairArrayCompanion(p: Rep[PairArrayCompanionAbs]): PairArrayCompanionAbs = {
-    proxyOps[PairArrayCompanionAbs](p, Some(true))
+    proxyOps[PairArrayCompanionAbs](p, true)
   }
 
   trait PairArrayCompanionElem extends CompanionElem[PairArrayCompanionAbs]
@@ -194,7 +194,7 @@ trait PArraysAbs extends PArrays
 
   def FlatNestedArray: Rep[FlatNestedArrayCompanionAbs]
   implicit def proxyFlatNestedArrayCompanion(p: Rep[FlatNestedArrayCompanionAbs]): FlatNestedArrayCompanionAbs = {
-    proxyOps[FlatNestedArrayCompanionAbs](p, Some(true))
+    proxyOps[FlatNestedArrayCompanionAbs](p, true)
   }
 
   trait FlatNestedArrayCompanionElem extends CompanionElem[FlatNestedArrayCompanionAbs]

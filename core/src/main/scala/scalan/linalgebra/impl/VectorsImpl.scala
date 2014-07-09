@@ -34,7 +34,7 @@ trait VectorsAbs extends Vectors
   def Vector: Rep[VectorCompanionAbs]
   implicit def defaultOfVector[T:Elem]: Default[Rep[Vector[T]]] = Vector.defaultOf[T]
   implicit def proxyVectorCompanion(p: Rep[VectorCompanion]): VectorCompanion = {
-    proxyOps[VectorCompanion](p, Some(true))
+    proxyOps[VectorCompanion](p, true)
   }
 
 
@@ -73,7 +73,7 @@ trait VectorsAbs extends Vectors
 
   def DenseVector: Rep[DenseVectorCompanionAbs]
   implicit def proxyDenseVectorCompanion(p: Rep[DenseVectorCompanionAbs]): DenseVectorCompanionAbs = {
-    proxyOps[DenseVectorCompanionAbs](p, Some(true))
+    proxyOps[DenseVectorCompanionAbs](p, true)
   }
 
   trait DenseVectorCompanionElem extends CompanionElem[DenseVectorCompanionAbs]
@@ -135,7 +135,7 @@ trait VectorsAbs extends Vectors
 
   def SparseVector: Rep[SparseVectorCompanionAbs]
   implicit def proxySparseVectorCompanion(p: Rep[SparseVectorCompanionAbs]): SparseVectorCompanionAbs = {
-    proxyOps[SparseVectorCompanionAbs](p, Some(true))
+    proxyOps[SparseVectorCompanionAbs](p, true)
   }
 
   trait SparseVectorCompanionElem extends CompanionElem[SparseVectorCompanionAbs]
