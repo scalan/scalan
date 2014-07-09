@@ -1,13 +1,13 @@
 package tests.it
 
-import io.Source
-import util.parsing.combinator.JavaTokenParsers
 import java.io.{File, PrintWriter}
 import scalan.ScalanSeq
 import scalan.codegen.LangBackend
 import tests.BaseTests
 import scala.language.postfixOps
 import scala.reflect.runtime.universe._
+import scala.io.Source
+import scala.util.parsing.combinator.JavaTokenParsers
 
 trait ItTests extends BaseTests {
 
