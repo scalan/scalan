@@ -35,20 +35,50 @@ trait ArrayOps { self: Scalan =>
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = array_replicate(len, v)
   }
 
+  // require: n in xs.indices
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
+
+  // require: forall i -> is(i) in xs.indices
+  // provide: res.length == is.length
   def array_applyMany[T](xs: Arr[T], is: Arr[Int]): Arr[T]
+
   def array_length[T](xs: Arr[T]): Rep[Int]
+
+  // provide: xs.length == res.length
   def array_map[T, R: Elem](xs: Arr[T], f: Rep[T => R]): Arr[R]
+  
   def array_sum[T](xs: Arr[T])(implicit m: RepMonoid[T]): Rep[T]
+  
+  // provide: res._1.length == xs.length && res._2 = array_sum(xs)
   def array_scan[T](xs: Arr[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)]
+
+  // require: xs.length == ys.length
+  // provide: res.length == xs.length
   def array_zip[T, U](xs: Arr[T], ys: Arr[U]): Arr[(T, U)]
+  
+  // provide: res.length == len
   def array_replicate[T: Elem](len: Rep[Int], v: Rep[T]): Arr[T]
+  
+  // require: start in xs.indices && start + length in xs.indices
+  // provide: res.length == length
   def array_slice[T](xs: Arr[T], start: Rep[Int], length: Rep[Int]): Arr[T]
+  
+  // provide: res.length = n
   def array_rangeFrom0(n: Rep[Int]): Arr[Int]
+  
   def array_filter[T](xs: Arr[T], f: Rep[T => Boolean]): Arr[T]
   def array_grouped[T](xs: Arr[T], size: Rep[Int]): Arr[Array[T]]
+  
+  // require: start in xs.indices && start + length * stride in xs.indices
+  // provide: res.length == length
   def array_stride[T](xs: Arr[T], start: Rep[Int], length: Rep[Int], stride: Rep[Int]): Arr[T]
+  
+  // require: index in xs.indices
+  // provide: res.length == xs.length 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = ???
+  
+  // require: forall i -> indexes(i) in xs.indices && indexes.length == values.length
+  // provide: res.length == xs.length 
   def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = ???
 }
 
