@@ -1,12 +1,8 @@
 package tests.scalan.primitives
 
 import scalan.{ScalanCtxStaged, ScalanCtxSeq}
-import org.scalatest.FlatSpec
-import scalan.codegen.GraphVizExport
-import scalan.staged.ProgramGraphs
 import tests.BaseShouldTests
-import scalan.arrays.PArraysDslExp
-import tests.scalan.arrays.PArrayExamples
+import scalan.codegen.GraphVizExport
 
 class PrimitivesExamplesSuite extends BaseShouldTests {
 

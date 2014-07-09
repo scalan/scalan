@@ -1,7 +1,3 @@
-/**
- * User: Alexander Slesarenko
- * Date: 11/24/13
- */
 package tests.scalan.primitives
 
 import scalan.ScalanDsl
