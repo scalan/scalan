@@ -124,11 +124,11 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     lazy val defaultRep = iso.defaultRepTo
   }
 
-  trait UserTypeExp[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
+  trait UserTypeDef[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
     override def self = reifyObject(this)(Lazy(selfType.asInstanceOf[Elem[TImpl]]))
     def uniqueOpId = selfType.prettyName
   }
-  object UserTypeExp {
+  object UserTypeDef {
     def unapply[T](d: Def[T]): Option[Iso[_,T]] = {
       val s = d.self
       val eT = s.elem
@@ -150,7 +150,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 
   def symbolHasViews(s: Exp[Any]): Boolean = s match {
     case UserTypeSym(_) => true
-    case Def(UserTypeExp(_)) => true
+    case Def(UserTypeDef(_)) => true
     case _ => false
   }
 
@@ -170,5 +170,39 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
         case _ => None
       }
     }
+  }
+  
+  abstract class View1[A, B, C[_]](implicit val innerIso: Iso[A, B]) extends Def[C[B]] {
+    def source: Rep[C[A]]
+    def iso: Iso[C[A], C[B]]
+    implicit def selfType = iso.eTo
+    lazy val self: Rep[C[B]] = this
+    def copy(source: Rep[C[A]]): View1[A, B, C]
+    def mirror(t: Transformer) = reifyObject(copy(t(source)))(Lazy(selfType))
+    lazy val uniqueOpId = name(iso.eFrom, iso.eTo)
+  }
+  
+  abstract class View2[A1, A2, B1, B2, C[_, _]](implicit val innerIso1: Iso[A1, B1], val innerIso2: Iso[A2, B2]) extends Def[C[B1, B2]] {
+    def source: Rep[C[A1, A2]]
+    def iso: Iso[C[A1, A2], C[B1, B2]]
+    implicit def selfType = iso.eTo
+    lazy val self: Rep[C[B1, B2]] = this
+    def copy(source: Rep[C[A1, A2]]): View2[A1, A2, B1, B2, C]
+    def mirror(t: Transformer) = reifyObject(copy(t(source)))(Lazy(selfType))
+    lazy val uniqueOpId = name(iso.eFrom, iso.eTo)
+  }
+  
+  type Identity[T] = T
+  
+  case class ViewVar[A, B](source: Rep[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Identity] {
+    def iso = innerIso
+    def copy(source: Rep[A]) = ViewVar(source)
+  }
+  
+  case class ViewPair[A1, A2, B1, B2](source: Rep[(A1, A2)])
+    (implicit innerIso1: Iso[A1, B1] = identityIso[A1](source.elem.ea),
+     innerIso2: Iso[A2, B2] = identityIso[A2](source.elem.eb)) extends View2[A1, A2, B1, B2, Tuple2] {
+    lazy val iso = pairIso(innerIso1, innerIso2)
+    def copy(source: Rep[(A1, A2)]) = ViewPair(source)
   }
 }

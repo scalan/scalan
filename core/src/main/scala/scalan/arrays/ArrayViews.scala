@@ -65,30 +65,22 @@ trait ArrayViewsSeq extends ArrayViews { self: ScalanSeq =>
 }
 
 trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
-
-  case class ViewArray[From, To](arr: Arr[From])(implicit val iso: Iso[From, To]) extends ArrayDef[To] {
-    implicit def eT = iso.eTo
-    override def mirror(f: Transformer) = ViewArray(f(arr))
+  case class ViewArray[A, B](source: Arr[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Array] {
+    lazy val iso = arrayIso(innerIso)
+    def copy(source: Arr[A]) = ViewArray(source)
   }
 
-//  case class UnpackView[A,B](view: Arr[B])(implicit val iso: Iso[A,B]) extends ArrayDef[A] {
-//    implicit lazy val elem = iso.eFrom
-//    val selfType = element[Array[A]]
-//    val uniqueOpId = name(elem, view.elem)
-//    override def mirror(f: Transformer) = UnpackView[A,B](f(view))
-//  }
+  case class UnpackView[A,B](view: Arr[B])(implicit val iso: Iso[A,B]) extends ArrayDef[A] {
+    implicit lazy val eT = iso.eFrom
+    override def mirror(f: Transformer) = UnpackView(f(view))
+  }
   //
   //  implicit def mkArrayView[A,B](arr: PA[A])(implicit iso: Iso[A,B]): PA[B] = {
   //    ExpViewArray(Some(arr), iso)
   //  }
   def unmkArrayView[A,B](view: Arr[B])(implicit iso: Iso[A,B]): Arr[A] = {
-    view match {
-      case Def(ViewArray(arr)) => arr.asRep[Array[A]]
-      case _ =>
-//        implicit val eA = iso.eFrom
-//        UnpackView[A,B](view)
-        !!!("UnpackView not defined yet")
-    }
+    implicit val eA = iso.eFrom
+    UnpackView[A,B](view)
   }
   //
   //  case class ExpViewArray[A, B](arr: Option[PA[A]], iso: Iso[A, B])
@@ -204,17 +196,17 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
   //  }
   //
   def mapUnderlyingArray[A,B,C](view: ViewArray[A,B], f: Rep[B=>C]): Arr[C] = {
-    val iso = view.iso
-    implicit val eA = view.arr.elem.ea
-    implicit val eB = iso.eTo
-    implicit val eC: Elem[C] = f.elem.eb
-    view.arr.map(fun { (x: Exp[A]) => f(iso.to(x)) })
-  }
-  def filterUnderlyingArray[A, B](view: ViewArray[A, B], f: Rep[B => Boolean]): Arr[B] = {
-    val iso = view.iso
+    val iso = view.innerIso
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
-    val filtered = view.arr.filter(fun { (x: Exp[A]) => f(iso.to(x)) })
+    implicit val eC: Elem[C] = f.elem.eb
+    view.source.map(fun { (x: Exp[A]) => f(iso.to(x)) })
+  }
+  def filterUnderlyingArray[A, B](view: ViewArray[A, B], f: Rep[B => Boolean]): Arr[B] = {
+    val iso = view.innerIso
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    val filtered = view.source.filter(fun { (x: Exp[A]) => f(iso.to(x)) })
     ViewArray(filtered)(iso)
   }
   
@@ -277,19 +269,16 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
 
   override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
     case Def(d1) => d1 match {
-      //    case MethodCall(Def(obj@UserTypeDef(_)), m, args) => {
-      //      (m.getDeclaringClass.isAssignableFrom(obj.getClass) && invokeEnabled) match {
-      //        case true =>
-      //          val res = m.invoke(obj, args: _*)
-      //          res.asInstanceOf[Exp[_]]
-      //        case _ => super.rewrite(d)
-      //      }
-      //    }
-      //    case LengthPA(Def(View(view, _, _))) => view.arrOrEmpty.length
-      //    case UnpackView(Def(ExpViewArray(Some(arr), _))) => arr
-      //    case d1@ExpViewArray(Some(Def(d2@UnpackView(view))), _) if d1.iso.getClass == d2.iso.getClass => view
-      //
-      //
+      case MethodCall(Def(obj @ UserTypeDef(_)), m, args) =>
+        if (m.getDeclaringClass.isAssignableFrom(obj.getClass) && invokeEnabled) {
+          val res = m.invoke(obj, args: _*)
+          res.asInstanceOf[Exp[_]]
+        } else {
+          super.rewrite(d)
+        }
+      case ArrayLength(Def(ViewArray(arr))) => arr.length
+      case UnpackView(Def(ViewArray(arr))) => arr
+      case d1@ViewArray(Def(d2@UnpackView(view))) if d1.iso == d2.iso => view
       case HasViewArg(_) => liftViewFromArgs(d1) match {
         case Some(s) => s
         case _ => super.rewrite(d)
@@ -307,7 +296,7 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
       case ArrayMap(xs: Arr[a], f@Def(lam@Lambda(_, _, _, Def(view: ViewArray[c, b])))) =>
         val f1 = f.asRep[a => Array[b]]
         val view1 = view.asInstanceOf[ViewArray[c, b]]
-        val iso = view1.iso
+        val iso = view1.innerIso
         val xs1 = xs.asRep[Array[a]]
         implicit val eA = xs1.elem.ea
         implicit val eB = iso.eTo
@@ -345,30 +334,14 @@ trait ArrayViewsExp extends ArrayViews with BaseExp { self: ScalanStaged =>
       //          tree.toView(loopRes)
       //      }
       //    }
-      //
-      ////    case ExpViewArray(Def(ExpViewArray(arr, iso1)), iso2) => {
-      ////      val compIso = composeIso(iso2, iso1)
-      ////      implicit val eAB = compIso.eB
-      ////      ExpViewArray(arr, compIso)
-      ////    }
+      case view1 @ ViewArray(Def(view2 @ ViewArray(arr))) =>
+        val compIso = composeIso(view2.innerIso, view1.innerIso)
+        implicit val eAB = compIso.eTo
+        ViewArray(arr)(compIso)
       case _ =>
         super.rewrite(d)
     }
     case _ =>
       super.rewrite(d)
   }
-//
-//  //  val isoLifting = new PartialRewriter({
-//  //    //case Def(ExpViewArray(Def(UnpackView(view, iso2)), iso1)) /*if iso1 == iso2*/ => view
-//  //    //case ArrayFromView(Def(ExpViewArray(arr, iso1)), iso2) /*if iso1 == iso2*/ => arr
-//  //
-//  //    //    case ExpViewArray(Def(ExpViewArray(arr, iso1)), iso2) => {
-//  //    //      val compIso = composeIso(iso2, iso1)
-//  //    //      implicit val eAB = compIso.eB
-//  //    //      ExpViewArray(arr, compIso)
-//  //    //    }
-//  //    //
-//  //  })
-//
-
 }

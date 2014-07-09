@@ -228,7 +228,7 @@ trait TypesSeq extends TypesAbs { self: ScalanSeq with TypesDsl =>
 
 trait TypesExp extends TypesAbs with scalan.ProxyExp with scalan.ViewsExp { self: ScalanStaged with TypesDsl =>
 
-  lazy val Type: Rep[TypeCompanionAbs] = new TypeCompanionAbs with UserTypeExp[TypeCompanionAbs, TypeCompanionAbs] {
+  lazy val Type: Rep[TypeCompanionAbs] = new TypeCompanionAbs with UserTypeDef[TypeCompanionAbs, TypeCompanionAbs] {
     lazy val selfType = element[TypeCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -236,12 +236,12 @@ trait TypesExp extends TypesAbs with scalan.ProxyExp with scalan.ViewsExp { self
   case class ExpBaseType[A]
       (override val typeCode: Rep[String], override val defaultValue: Rep[A])
       (implicit override val eA: Elem[A])
-    extends BaseType[A](typeCode, defaultValue) with UserTypeExp[Type[A], BaseType[A]] {
+    extends BaseType[A](typeCode, defaultValue) with UserTypeDef[Type[A], BaseType[A]] {
     lazy val selfType = element[BaseType[A]].asInstanceOf[Elem[Type[A]]]
     override def mirror(t: Transformer) = ExpBaseType[A](t(typeCode), t(defaultValue))
   }
 
-  lazy val BaseType: Rep[BaseTypeCompanionAbs] = new BaseTypeCompanionAbs with UserTypeExp[BaseTypeCompanionAbs, BaseTypeCompanionAbs] {
+  lazy val BaseType: Rep[BaseTypeCompanionAbs] = new BaseTypeCompanionAbs with UserTypeDef[BaseTypeCompanionAbs, BaseTypeCompanionAbs] {
     lazy val selfType = element[BaseTypeCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -266,12 +266,12 @@ trait TypesExp extends TypesAbs with scalan.ProxyExp with scalan.ViewsExp { self
   case class ExpTuple2Type[A, B]
       (override val tyA: Rep[Type[A]], override val tyB: Rep[Type[B]])
       (implicit override val e1: Elem[A], override val e2: Elem[B])
-    extends Tuple2Type[A, B](tyA, tyB) with UserTypeExp[Type[(A,B)], Tuple2Type[A, B]] {
+    extends Tuple2Type[A, B](tyA, tyB) with UserTypeDef[Type[(A,B)], Tuple2Type[A, B]] {
     lazy val selfType = element[Tuple2Type[A, B]].asInstanceOf[Elem[Type[(A,B)]]]
     override def mirror(t: Transformer) = ExpTuple2Type[A, B](t(tyA), t(tyB))
   }
 
-  lazy val Tuple2Type: Rep[Tuple2TypeCompanionAbs] = new Tuple2TypeCompanionAbs with UserTypeExp[Tuple2TypeCompanionAbs, Tuple2TypeCompanionAbs] {
+  lazy val Tuple2Type: Rep[Tuple2TypeCompanionAbs] = new Tuple2TypeCompanionAbs with UserTypeDef[Tuple2TypeCompanionAbs, Tuple2TypeCompanionAbs] {
     lazy val selfType = element[Tuple2TypeCompanionAbs]
     override def mirror(t: Transformer) = this
   }

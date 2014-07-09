@@ -315,7 +315,7 @@ trait PArraysSeq extends PArraysAbs { self: ScalanSeq with PArraysDsl =>
 
 trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp { self: ScalanStaged with PArraysDsl =>
 
-  lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeExp[PArrayCompanionAbs, PArrayCompanionAbs] {
+  lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeDef[PArrayCompanionAbs, PArrayCompanionAbs] {
     lazy val selfType = element[PArrayCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -323,12 +323,12 @@ trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp { 
   case class ExpBaseArray[A]
       (override val arr: Rep[Array[A]])
       (implicit override val eA: Elem[A])
-    extends BaseArray[A](arr) with UserTypeExp[PArray[A], BaseArray[A]] {
+    extends BaseArray[A](arr) with UserTypeDef[PArray[A], BaseArray[A]] {
     lazy val selfType = element[BaseArray[A]].asInstanceOf[Elem[PArray[A]]]
     override def mirror(t: Transformer) = ExpBaseArray[A](t(arr))
   }
 
-  lazy val BaseArray: Rep[BaseArrayCompanionAbs] = new BaseArrayCompanionAbs with UserTypeExp[BaseArrayCompanionAbs, BaseArrayCompanionAbs] {
+  lazy val BaseArray: Rep[BaseArrayCompanionAbs] = new BaseArrayCompanionAbs with UserTypeDef[BaseArrayCompanionAbs, BaseArrayCompanionAbs] {
     lazy val selfType = element[BaseArrayCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -353,12 +353,12 @@ trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp { 
   case class ExpPairArray[A, B]
       (override val as: Rep[PArray[A]], override val bs: Rep[PArray[B]])
       (implicit override val eA: Elem[A], override val eB: Elem[B])
-    extends PairArray[A, B](as, bs) with UserTypeExp[PArray[(A,B)], PairArray[A, B]] {
+    extends PairArray[A, B](as, bs) with UserTypeDef[PArray[(A,B)], PairArray[A, B]] {
     lazy val selfType = element[PairArray[A, B]].asInstanceOf[Elem[PArray[(A,B)]]]
     override def mirror(t: Transformer) = ExpPairArray[A, B](t(as), t(bs))
   }
 
-  lazy val PairArray: Rep[PairArrayCompanionAbs] = new PairArrayCompanionAbs with UserTypeExp[PairArrayCompanionAbs, PairArrayCompanionAbs] {
+  lazy val PairArray: Rep[PairArrayCompanionAbs] = new PairArrayCompanionAbs with UserTypeDef[PairArrayCompanionAbs, PairArrayCompanionAbs] {
     lazy val selfType = element[PairArrayCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -383,12 +383,12 @@ trait PArraysExp extends PArraysAbs with scalan.ProxyExp with scalan.ViewsExp { 
   case class ExpFlatNestedArray[A]
       (override val values: Rep[PArray[A]], override val segments: Rep[PArray[(Int,Int)]])
       (implicit override val eA: Elem[A])
-    extends FlatNestedArray[A](values, segments) with UserTypeExp[PArray[PArray[A]], FlatNestedArray[A]] {
+    extends FlatNestedArray[A](values, segments) with UserTypeDef[PArray[PArray[A]], FlatNestedArray[A]] {
     lazy val selfType = element[FlatNestedArray[A]].asInstanceOf[Elem[PArray[PArray[A]]]]
     override def mirror(t: Transformer) = ExpFlatNestedArray[A](t(values), t(segments))
   }
 
-  lazy val FlatNestedArray: Rep[FlatNestedArrayCompanionAbs] = new FlatNestedArrayCompanionAbs with UserTypeExp[FlatNestedArrayCompanionAbs, FlatNestedArrayCompanionAbs] {
+  lazy val FlatNestedArray: Rep[FlatNestedArrayCompanionAbs] = new FlatNestedArrayCompanionAbs with UserTypeDef[FlatNestedArrayCompanionAbs, FlatNestedArrayCompanionAbs] {
     lazy val selfType = element[FlatNestedArrayCompanionAbs]
     override def mirror(t: Transformer) = this
   }
