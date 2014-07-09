@@ -1,5 +1,6 @@
 
 package scalan.arrays
+package impl
 
 import scalan._
 import scalan.common.Default

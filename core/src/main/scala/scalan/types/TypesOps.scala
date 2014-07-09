@@ -56,8 +56,8 @@ trait TypesOps { scalan: TypesDsl =>
   def getBaseTypeCode[A](e: Elem[A]): Rep[String] = ???
 }
 
-trait TypesDsl extends ScalanDsl with TypesAbs with TypesOps { }
+trait TypesDsl extends ScalanDsl with impl.TypesAbs with TypesOps
 
-trait TypesDslSeq extends TypesDsl with TypesSeq with ScalanSeqImplementation
+trait TypesDslSeq extends TypesDsl with impl.TypesSeq with ScalanSeqImplementation
 
-trait TypesDslExp extends TypesDsl with TypesExp with ScalanStaged
+trait TypesDslExp extends TypesDsl with impl.TypesExp with ScalanStaged

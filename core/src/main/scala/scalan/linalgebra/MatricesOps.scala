@@ -78,8 +78,8 @@ trait MatricesOps { scalan: MatricesDsl =>
 //  }
 }
 
-trait MatricesDsl extends ScalanDsl with MatricesAbs with MatricesOps with VectorsDsl {}
+trait MatricesDsl extends ScalanDsl with impl.MatricesAbs with MatricesOps with VectorsDsl {}
 
-trait MatricesDslSeq extends MatricesDsl with MatricesSeq with VectorsDslSeq with ScalanSeq
+trait MatricesDslSeq extends MatricesDsl with impl.MatricesSeq with VectorsDslSeq with ScalanSeq
 
-trait MatricesDslExp extends MatricesDsl with MatricesExp with VectorsDslExp with ScalanStaged
+trait MatricesDslExp extends MatricesDsl with impl.MatricesExp with VectorsDslExp with ScalanStaged

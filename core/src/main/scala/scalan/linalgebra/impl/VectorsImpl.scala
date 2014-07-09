@@ -1,5 +1,6 @@
 
 package scalan.linalgebra
+package impl
 
 import scalan._
 import scalan.common.Default

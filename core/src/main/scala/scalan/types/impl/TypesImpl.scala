@@ -1,5 +1,6 @@
 
 package scalan.types
+package impl
 
 import scala.annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance

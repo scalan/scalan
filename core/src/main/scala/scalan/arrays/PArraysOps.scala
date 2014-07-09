@@ -125,8 +125,8 @@ trait PArraysOps { scalan: PArraysDsl =>
   }
 }
 
-trait PArraysDsl extends ScalanDsl with PArraysAbs with PArraysOps { }
+trait PArraysDsl extends ScalanDsl with impl.PArraysAbs with PArraysOps { }
 
-trait PArraysDslSeq extends PArraysDsl with PArraysSeq with ScalanSeqImplementation
+trait PArraysDslSeq extends PArraysDsl with impl.PArraysSeq with ScalanSeqImplementation
 
-trait PArraysDslExp extends PArraysDsl with PArraysExp with ScalanStaged
+trait PArraysDslExp extends PArraysDsl with impl.PArraysExp with ScalanStaged

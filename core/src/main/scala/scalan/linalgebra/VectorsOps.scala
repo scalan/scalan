@@ -68,11 +68,11 @@ trait VectorsOps { scalan: VectorsDsl =>
   def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T]
 }
 
-trait VectorsDsl extends ScalanDsl with VectorsAbs with VectorsOps with PArraysDsl {
+trait VectorsDsl extends ScalanDsl with impl.VectorsAbs with VectorsOps with PArraysDsl {
   def matchVec[T, R](vec: Vec[T])(dense: Rep[DenseVector[T]] => Rep[R])(sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R]
 }
 
-trait VectorsDslSeq extends VectorsDsl with VectorsSeq with PArraysDslSeq with ScalanSeqImplementation {
+trait VectorsDslSeq extends VectorsDsl with impl.VectorsSeq with PArraysDslSeq with ScalanSeqImplementation {
   def matchVec[T, R](vec: Vec[T])(dense: Rep[DenseVector[T]] => Rep[R])(sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R] =
     vec match {
       case dv: DenseVector[_] => dense(dv)
@@ -92,7 +92,7 @@ trait VectorsDslSeq extends VectorsDsl with VectorsSeq with PArraysDslSeq with S
   }
 }
 
-trait VectorsDslExp extends VectorsDsl with VectorsExp with PArraysDslExp with ScalanStaged {
+trait VectorsDslExp extends VectorsDsl with impl.VectorsExp with PArraysDslExp with ScalanStaged {
   def matchVec[T, R](vec: Vec[T])(dense: Rep[DenseVector[T]] => Rep[R])(sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R] =
     vec.elem.asInstanceOf[Elem[_]] match {
       case _: DenseVectorElem[_] => dense(vec.asRep[DenseVector[T]])
