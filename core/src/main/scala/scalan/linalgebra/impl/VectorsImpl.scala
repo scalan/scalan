@@ -157,8 +157,7 @@ trait VectorsAbs extends Vectors
 }
 
 
-trait VectorsSeq extends VectorsAbs
-{ self: ScalanSeq with VectorsDsl =>
+trait VectorsSeq extends VectorsAbs { self: ScalanSeq with VectorsDsl =>
 
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeSeq[VectorCompanionAbs, VectorCompanionAbs] {
     lazy val selfType = element[VectorCompanionAbs]
@@ -180,7 +179,7 @@ trait VectorsSeq extends VectorsAbs
   implicit def isoDenseVector[T](implicit elem: Elem[T]):Iso[DenseVectorData[T], DenseVector[T]] =
     new DenseVectorIso[T] { i =>
       // should use i as iso reference
-      lazy val eTo = 
+      lazy val eTo =
         new SeqViewElem[DenseVectorData[T], DenseVector[T]]()(i) with DenseVectorElem[T]
     }
 
@@ -208,7 +207,7 @@ trait VectorsSeq extends VectorsAbs
   implicit def isoSparseVector[T](implicit elem: Elem[T]):Iso[SparseVectorData[T], SparseVector[T]] =
     new SparseVectorIso[T] { i =>
       // should use i as iso reference
-      lazy val eTo = 
+      lazy val eTo =
         new SeqViewElem[SparseVectorData[T], SparseVector[T]]()(i) with SparseVectorElem[T]
     }
 
@@ -222,8 +221,7 @@ trait VectorsSeq extends VectorsAbs
 }
 
 
-trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp
-{ self: ScalanStaged with VectorsDsl =>
+trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp { self: ScalanStaged with VectorsDsl =>
 
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeExp[VectorCompanionAbs, VectorCompanionAbs] {
     lazy val selfType = element[VectorCompanionAbs]
@@ -246,17 +244,16 @@ trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp
 
 
   def mkDenseVector[T]
-      (coords: Rep[PArray[T]])
-      (implicit elem: Elem[T])
-      = new ExpDenseVector[T](coords)
-  def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]])
-    = Some((p.coords))
+    (coords: Rep[PArray[T]])(implicit elem: Elem[T]) =
+    new ExpDenseVector[T](coords)
+  def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]) =
+    Some((p.coords))
 
 
-  implicit def isoDenseVector[T](implicit elem: Elem[T]):Iso[DenseVectorData[T], DenseVector[T]]
-    = new DenseVectorIso[T] { i =>
+  implicit def isoDenseVector[T](implicit elem: Elem[T]):Iso[DenseVectorData[T], DenseVector[T]] =
+    new DenseVectorIso[T] { i =>
       // should use i as iso reference
-      lazy val eTo = 
+      lazy val eTo =
         new StagedViewElem[DenseVectorData[T], DenseVector[T]]()(i) with DenseVectorElem[T]
     }
 
@@ -277,17 +274,16 @@ trait VectorsExp extends VectorsAbs with scalan.ProxyExp with scalan.ViewsExp
 
 
   def mkSparseVector[T]
-      (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])
-      (implicit elem: Elem[T])
-      = new ExpSparseVector[T](nonZeroIndices, nonZeroValues, length)
-  def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]])
-    = Some((p.nonZeroIndices, p.nonZeroValues, p.length))
+    (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]) =
+    new ExpSparseVector[T](nonZeroIndices, nonZeroValues, length)
+  def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]) =
+    Some((p.nonZeroIndices, p.nonZeroValues, p.length))
 
 
-  implicit def isoSparseVector[T](implicit elem: Elem[T]):Iso[SparseVectorData[T], SparseVector[T]]
-    = new SparseVectorIso[T] { i =>
+  implicit def isoSparseVector[T](implicit elem: Elem[T]):Iso[SparseVectorData[T], SparseVector[T]] =
+    new SparseVectorIso[T] { i =>
       // should use i as iso reference
-      lazy val eTo = 
+      lazy val eTo =
         new StagedViewElem[SparseVectorData[T], SparseVector[T]]()(i) with SparseVectorElem[T]
     }
 
