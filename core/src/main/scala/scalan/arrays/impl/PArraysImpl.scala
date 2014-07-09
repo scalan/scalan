@@ -26,11 +26,11 @@ trait PArraysAbs extends PArrays
     lazy val defaultRep = defaultVal(PArray)
   }
 
-  trait PArrayCompanionAbs extends PArrayCompanionOps
+  trait PArrayCompanionAbs extends PArrayCompanion
   def PArray: Rep[PArrayCompanionAbs]
   implicit def defaultOfPArray[A:Elem]: Default[Rep[PArray[A]]] = PArray.defaultOf[A]
-  implicit def proxyPArrayCompanion(p: Rep[PArrayCompanionOps]): PArrayCompanionOps = {
-    proxyOps[PArrayCompanionOps](p, Some(true))
+  implicit def proxyPArrayCompanion(p: Rep[PArrayCompanion]): PArrayCompanion = {
+    proxyOps[PArrayCompanion](p, Some(true))
   }
 
 
@@ -59,7 +59,7 @@ trait PArraysAbs extends PArrays
     lazy val defaultRepTo = defaultVal[Rep[BaseArray[A]]](BaseArray(element[Array[A]].defaultRepValue))
   }
   // 4) constructor and deconstructor
-  trait BaseArrayCompanionAbs extends BaseArrayCompanionOps {
+  trait BaseArrayCompanionAbs extends BaseArrayCompanion {
 
     def apply[A]
           (arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[BaseArray[A]] =
@@ -78,8 +78,8 @@ trait PArraysAbs extends PArrays
     lazy val defaultRep = defaultVal(BaseArray)
   }
 
-  implicit def proxyBaseArray[A:Elem](p: Rep[BaseArray[A]]): BaseArrayOps[A] = {
-    proxyOps[BaseArrayOps[A]](p)
+  implicit def proxyBaseArray[A:Elem](p: Rep[BaseArray[A]]): BaseArray[A] = {
+    proxyOps[BaseArray[A]](p)
   }
 
   implicit class ExtendedBaseArray[A](p: Rep[BaseArray[A]])(implicit eA: Elem[A]) {
@@ -120,7 +120,7 @@ trait PArraysAbs extends PArrays
     lazy val defaultRepTo = defaultVal[Rep[PairArray[A, B]]](PairArray(element[PArray[A]].defaultRepValue, element[PArray[B]].defaultRepValue))
   }
   // 4) constructor and deconstructor
-  trait PairArrayCompanionAbs extends PairArrayCompanionOps {
+  trait PairArrayCompanionAbs extends PairArrayCompanion {
 
     def apply[A, B](p: Rep[PairArrayData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]] =
       isoPairArray(eA, eB).to(p)
@@ -141,8 +141,8 @@ trait PArraysAbs extends PArrays
     lazy val defaultRep = defaultVal(PairArray)
   }
 
-  implicit def proxyPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]): PairArrayOps[A, B] = {
-    proxyOps[PairArrayOps[A, B]](p)
+  implicit def proxyPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]): PairArray[A, B] = {
+    proxyOps[PairArray[A, B]](p)
   }
 
   implicit class ExtendedPairArray[A, B](p: Rep[PairArray[A, B]])(implicit eA: Elem[A], eB: Elem[B]) {
@@ -182,7 +182,7 @@ trait PArraysAbs extends PArrays
     lazy val defaultRepTo = defaultVal[Rep[FlatNestedArray[A]]](FlatNestedArray(element[PArray[A]].defaultRepValue, element[PArray[(Int,Int)]].defaultRepValue))
   }
   // 4) constructor and deconstructor
-  trait FlatNestedArrayCompanionAbs extends FlatNestedArrayCompanionOps {
+  trait FlatNestedArrayCompanionAbs extends FlatNestedArrayCompanion {
 
     def apply[A](p: Rep[FlatNestedArrayData[A]])(implicit eA: Elem[A]): Rep[FlatNestedArray[A]] =
       isoFlatNestedArray(eA).to(p)
@@ -203,8 +203,8 @@ trait PArraysAbs extends PArrays
     lazy val defaultRep = defaultVal(FlatNestedArray)
   }
 
-  implicit def proxyFlatNestedArray[A:Elem](p: Rep[FlatNestedArray[A]]): FlatNestedArrayOps[A] = {
-    proxyOps[FlatNestedArrayOps[A]](p)
+  implicit def proxyFlatNestedArray[A:Elem](p: Rep[FlatNestedArray[A]]): FlatNestedArray[A] = {
+    proxyOps[FlatNestedArray[A]](p)
   }
 
   implicit class ExtendedFlatNestedArray[A](p: Rep[FlatNestedArray[A]])(implicit eA: Elem[A]) {

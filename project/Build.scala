@@ -23,7 +23,9 @@ object ScalanLiteBuild extends Build {
     "com.github.axel22" %% "scalameter" % "0.5-M2" % "test",
     "com.typesafe" %% "scalalogging-slf4j" % "1.1.0",
     "ch.qos.logback" % "logback-classic" % "1.1.2",
-    "com.chuusai" % "shapeless_2.10.4" % "2.0.0")
+    "com.chuusai" % "shapeless_2.10.4" % "2.0.0",
+    "cglib" % "cglib" % "3.1",
+    "org.objenesis" % "objenesis" % "2.1")
 
   val testSettings = Seq(
     testOptions in Test := Seq(Tests.Filter(x => !itFilter(x))),

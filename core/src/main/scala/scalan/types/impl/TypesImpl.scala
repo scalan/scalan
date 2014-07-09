@@ -2,8 +2,6 @@
 package scalan.types
 package impl
 
-import scala.annotation.implicitNotFound
-import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
 import scalan._
 import scala.reflect.runtime.universe._
@@ -27,11 +25,11 @@ trait TypesAbs extends Types
     lazy val defaultRep = defaultVal(Type)
   }
 
-  trait TypeCompanionAbs extends TypeCompanionOps
+  trait TypeCompanionAbs extends TypeCompanion
   def Type: Rep[TypeCompanionAbs]
   implicit def defaultOfType[A:Elem]: Default[Rep[Type[A]]] = Type.defaultOf[A]
-  implicit def proxyTypeCompanion(p: Rep[TypeCompanionOps]): TypeCompanionOps = {
-    proxyOps[TypeCompanionOps](p, Some(true))
+  implicit def proxyTypeCompanion(p: Rep[TypeCompanion]): TypeCompanion = {
+    proxyOps[TypeCompanion](p, Some(true))
   }
 
 
@@ -60,7 +58,7 @@ trait TypesAbs extends Types
     lazy val defaultRepTo = defaultVal[Rep[BaseType[A]]](BaseType("", element[A].defaultRepValue))
   }
   // 4) constructor and deconstructor
-  trait BaseTypeCompanionAbs extends BaseTypeCompanionOps {
+  trait BaseTypeCompanionAbs extends BaseTypeCompanion {
 
     def apply[A](p: Rep[BaseTypeData[A]])(implicit eA: Elem[A]): Rep[BaseType[A]] =
       isoBaseType(eA).to(p)
@@ -81,8 +79,8 @@ trait TypesAbs extends Types
     lazy val defaultRep = defaultVal(BaseType)
   }
 
-  implicit def proxyBaseType[A:Elem](p: Rep[BaseType[A]]): BaseTypeOps[A] = {
-    proxyOps[BaseTypeOps[A]](p)
+  implicit def proxyBaseType[A:Elem](p: Rep[BaseType[A]]): BaseType[A] = {
+    proxyOps[BaseType[A]](p)
   }
 
   implicit class ExtendedBaseType[A](p: Rep[BaseType[A]])(implicit eA: Elem[A]) {
@@ -123,7 +121,7 @@ trait TypesAbs extends Types
     lazy val defaultRepTo = defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(element[Type[A]].defaultRepValue, element[Type[B]].defaultRepValue))
   }
   // 4) constructor and deconstructor
-  trait Tuple2TypeCompanionAbs extends Tuple2TypeCompanionOps {
+  trait Tuple2TypeCompanionAbs extends Tuple2TypeCompanion {
 
     def apply[A, B](p: Rep[Tuple2TypeData[A, B]])(implicit e1: Elem[A], e2: Elem[B]): Rep[Tuple2Type[A, B]] =
       isoTuple2Type(e1, e2).to(p)
@@ -144,8 +142,8 @@ trait TypesAbs extends Types
     lazy val defaultRep = defaultVal(Tuple2Type)
   }
 
-  implicit def proxyTuple2Type[A:Elem, B:Elem](p: Rep[Tuple2Type[A, B]]): Tuple2TypeOps[A, B] = {
-    proxyOps[Tuple2TypeOps[A, B]](p)
+  implicit def proxyTuple2Type[A:Elem, B:Elem](p: Rep[Tuple2Type[A, B]]): Tuple2Type[A, B] = {
+    proxyOps[Tuple2Type[A, B]](p)
   }
 
   implicit class ExtendedTuple2Type[A, B](p: Rep[Tuple2Type[A, B]])(implicit e1: Elem[A], e2: Elem[B]) {

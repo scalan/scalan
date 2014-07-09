@@ -3,14 +3,18 @@
  */
 package scalan
 
-import java.lang.{reflect => jreflect}
-import scalan.staged.{BaseExp}
+import java.lang.{ reflect => jreflect }
+import scalan.staged.{ BaseExp }
 import scalan.common.Lazy
 import scala.reflect.ClassTag
+import net.sf.cglib.proxy.Enhancer
+import org.objenesis.ObjenesisStd
+import net.sf.cglib.proxy.InvocationHandler
+import net.sf.cglib.proxy.Factory
 
 trait ProxyBase { self: Scalan =>
-  def proxyOps[Ops<:AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops
-  
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops
+
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass()
     val f = clazz.getDeclaredMethod(name)
@@ -19,7 +23,7 @@ trait ProxyBase { self: Scalan =>
 }
 
 trait ProxySeq extends ProxyBase { self: ScalanSeq =>
-  def proxyOps[Ops<:AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = x
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = x
 }
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
@@ -32,33 +36,44 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     override def self: Rep[T] = { this }
   }
 
-//TODO
-//  case class MethodCallLifted[T](receiver: PA[Any], method: jreflect.Method, args: List[AnyRef])
-//                                (implicit val elem: Elem[T]) extends StagedArrayBase[T] {
-//    override def mirror(t: Transformer) =
-//      MethodCallLifted[T](t(receiver), method, args map { case a: Exp[_] => t(a) case a => a })
-//  }
+  //TODO
+  //  case class MethodCallLifted[T](receiver: PA[Any], method: jreflect.Method, args: List[AnyRef])
+  //                                (implicit val elem: Elem[T]) extends StagedArrayBase[T] {
+  //    override def mirror(t: Transformer) =
+  //      MethodCallLifted[T](t(receiver), method, args map { case a: Exp[_] => t(a) case a => a })
+  //  }
 
-  override def proxyOps[Ops<:AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = {
-    val clazz = ct.runtimeClass
-    val handler = new InvocationHandler(x, forceInvoke)
-    val proxy = jreflect.Proxy.newProxyInstance(clazz.getClassLoader(), scala.Array(clazz), handler)
+  private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
+  private val objenesis = new ObjenesisStd
+
+  override def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Option[Boolean] = None)(implicit ct: ClassTag[Ops]): Ops = {
+    val proxy = proxies.getOrElseUpdate((x, ct), {
+      val clazz = ct.runtimeClass
+      val e = new Enhancer
+      e.setClassLoader(clazz.getClassLoader)
+      e.setSuperclass(clazz)
+      e.setCallbackType(classOf[ExpInvocationHandler])
+      val proxyClass = e.createClass().asSubclass(classOf[AnyRef])
+      val proxyInstance = objenesis.newInstance(proxyClass).asInstanceOf[Factory]
+      proxyInstance.setCallback(0, new ExpInvocationHandler(x, forceInvoke))
+      proxyInstance
+    })
     proxy.asInstanceOf[Ops]
   }
 
   var invokeEnabled = false
 
-  private def hasFuncArg(args: Array[AnyRef]):Boolean = args.exists(_.isInstanceOf[(_) => _])
+  private def hasFuncArg(args: Array[AnyRef]): Boolean = args.exists(_.isInstanceOf[(_) => _])
 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   var methodCallReceivers = List.empty[Exp[Any]]
 
-  class InvocationHandler(receiver: Exp[Any], forceInvoke: Option[Boolean]) extends jreflect.InvocationHandler {
+  class ExpInvocationHandler(receiver: Exp[Any], forceInvoke: Option[Boolean]) extends InvocationHandler {
 
     def invoke(proxy: AnyRef, m: jreflect.Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) scala.Array.empty[AnyRef] else _args
       receiver match {
-        case Def(d) => {  // call method of the node
+        case Def(d) => { // call method of the node
           val nodeClazz = d.getClass
           m.getDeclaringClass.isAssignableFrom(nodeClazz) && (invokeEnabled || forceInvoke.getOrElse(false)) && (!hasFuncArg(args)) match {
             case true =>
@@ -71,14 +86,13 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
       }
     }
 
-
     def invokeMethodOfVar(m: jreflect.Method, args: Array[AnyRef]) = {
       /* If invoke is enabled or current method has arg of type <function> - do not create methodCall */
       methodCallReceivers.contains(receiver) || (!((invokeEnabled || forceInvoke.getOrElse(false)) || hasFuncArg(args))) match {
         case true =>
           createMethodCall(m, args)
         case _ => receiver.elem match {
-          case ve: ViewElem[_,_] =>
+          case ve: ViewElem[_, _] =>
             //val e = getRecieverElem
             val iso = ve.iso
             methodCallReceivers = methodCallReceivers :+ receiver
@@ -96,19 +110,19 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     def createMethodCall(m: jreflect.Method, args: Array[AnyRef]): Exp[Any] = {
       val resultElem = Lazy(getResultElem(m, args))
       reifyObject(MethodCall[AnyRef](
-              receiver, m, args.toList)(resultElem))(resultElem)
+        receiver, m, args.toList)(resultElem))(resultElem)
     }
 
-//    def getRecieverElem: ViewElem[Any,Any] = receiver.elem match {
-//      case e: ViewElem[_,_] => e.asInstanceOf[ViewElem[Any,Any]]
-//      case _ =>
-//        !!!("Receiver with ViewElem expected", receiver)
-//    }
+    //    def getRecieverElem: ViewElem[Any,Any] = receiver.elem match {
+    //      case e: ViewElem[_,_] => e.asInstanceOf[ViewElem[Any,Any]]
+    //      case _ =>
+    //        !!!("Receiver with ViewElem expected", receiver)
+    //    }
 
     def getResultElem(m: jreflect.Method, args: Array[AnyRef]): Elem[AnyRef] = {
       val e = receiver.elem //getRecieverElem
       val zero = e match {
-        case ve: ViewElem[_,_] => ve.iso.defaultRepTo.value
+        case ve: ViewElem[_, _] => ve.iso.defaultRepTo.value
         case _ => e.defaultRepValue
       }
       val Def(zeroNode) = zero

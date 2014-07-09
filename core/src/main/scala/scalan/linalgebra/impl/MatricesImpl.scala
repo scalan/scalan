@@ -24,11 +24,11 @@ trait MatricesAbs extends Matrices
     lazy val defaultRep = defaultVal(Matrix)
   }
 
-  trait MatrixCompanionAbs extends MatrixCompanionOps
+  trait MatrixCompanionAbs extends MatrixCompanion
   def Matrix: Rep[MatrixCompanionAbs]
   implicit def defaultOfMatrix[T:Elem]: Default[Rep[Matrix[T]]] = Matrix.defaultOf[T]
-  implicit def proxyMatrixCompanion(p: Rep[MatrixCompanionOps]): MatrixCompanionOps = {
-    proxyOps[MatrixCompanionOps](p, Some(true))
+  implicit def proxyMatrixCompanion(p: Rep[MatrixCompanion]): MatrixCompanion = {
+    proxyOps[MatrixCompanion](p, Some(true))
   }
 
 
@@ -57,7 +57,7 @@ trait MatricesAbs extends Matrices
     lazy val defaultRepTo = defaultVal[Rep[RowMajorMatrix[T]]](RowMajorMatrix(element[PArray[DenseVector[T]]].defaultRepValue))
   }
   // 4) constructor and deconstructor
-  trait RowMajorMatrixCompanionAbs extends RowMajorMatrixCompanionOps {
+  trait RowMajorMatrixCompanionAbs extends RowMajorMatrixCompanion {
 
     def apply[T]
           (rows: Rep[PArray[DenseVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorMatrix[T]] =
@@ -76,8 +76,8 @@ trait MatricesAbs extends Matrices
     lazy val defaultRep = defaultVal(RowMajorMatrix)
   }
 
-  implicit def proxyRowMajorMatrix[T:Elem](p: Rep[RowMajorMatrix[T]]): RowMajorMatrixOps[T] = {
-    proxyOps[RowMajorMatrixOps[T]](p)
+  implicit def proxyRowMajorMatrix[T:Elem](p: Rep[RowMajorMatrix[T]]): RowMajorMatrix[T] = {
+    proxyOps[RowMajorMatrix[T]](p)
   }
 
   implicit class ExtendedRowMajorMatrix[T](p: Rep[RowMajorMatrix[T]])(implicit elem: Elem[T]) {
@@ -117,7 +117,7 @@ trait MatricesAbs extends Matrices
     lazy val defaultRepTo = defaultVal[Rep[RowMajorFlatMatrix[T]]](RowMajorFlatMatrix(element[PArray[T]].defaultRepValue, 0))
   }
   // 4) constructor and deconstructor
-  trait RowMajorFlatMatrixCompanionAbs extends RowMajorFlatMatrixCompanionOps {
+  trait RowMajorFlatMatrixCompanionAbs extends RowMajorFlatMatrixCompanion {
 
     def apply[T](p: Rep[RowMajorFlatMatrixData[T]])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
       isoRowMajorFlatMatrix(elem).to(p)
@@ -138,8 +138,8 @@ trait MatricesAbs extends Matrices
     lazy val defaultRep = defaultVal(RowMajorFlatMatrix)
   }
 
-  implicit def proxyRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]): RowMajorFlatMatrixOps[T] = {
-    proxyOps[RowMajorFlatMatrixOps[T]](p)
+  implicit def proxyRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]): RowMajorFlatMatrix[T] = {
+    proxyOps[RowMajorFlatMatrix[T]](p)
   }
 
   implicit class ExtendedRowMajorFlatMatrix[T](p: Rep[RowMajorFlatMatrix[T]])(implicit elem: Elem[T]) {
@@ -179,7 +179,7 @@ trait MatricesAbs extends Matrices
     lazy val defaultRepTo = defaultVal[Rep[RowMajorSparseMatrix[T]]](RowMajorSparseMatrix(element[PArray[SparseVector[T]]].defaultRepValue))
   }
   // 4) constructor and deconstructor
-  trait RowMajorSparseMatrixCompanionAbs extends RowMajorSparseMatrixCompanionOps {
+  trait RowMajorSparseMatrixCompanionAbs extends RowMajorSparseMatrixCompanion {
 
     def apply[T]
           (rows: Rep[PArray[SparseVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]] =
@@ -198,8 +198,8 @@ trait MatricesAbs extends Matrices
     lazy val defaultRep = defaultVal(RowMajorSparseMatrix)
   }
 
-  implicit def proxyRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]): RowMajorSparseMatrixOps[T] = {
-    proxyOps[RowMajorSparseMatrixOps[T]](p)
+  implicit def proxyRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]): RowMajorSparseMatrix[T] = {
+    proxyOps[RowMajorSparseMatrix[T]](p)
   }
 
   implicit class ExtendedRowMajorSparseMatrix[T](p: Rep[RowMajorSparseMatrix[T]])(implicit elem: Elem[T]) {

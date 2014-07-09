@@ -4,7 +4,12 @@ package impl
 
 import scalan._
 import scalan.common.Default
+import scalan.common.Lazy
+import scalan.common.OverloadHack.Overloaded1
 import scalan.arrays.PArrays
+import scalan.arrays.PArraysDsl
+import scalan.arrays.PArraysDslExp
+import scalan.arrays.PArraysDslSeq
 import scala.reflect.runtime.universe._
 import scalan.common.Default.defaultVal
 
@@ -25,11 +30,11 @@ trait VectorsAbs extends Vectors
     lazy val defaultRep = defaultVal(Vector)
   }
 
-  trait VectorCompanionAbs extends VectorCompanionOps
+  trait VectorCompanionAbs extends VectorCompanion
   def Vector: Rep[VectorCompanionAbs]
   implicit def defaultOfVector[T:Elem]: Default[Rep[Vector[T]]] = Vector.defaultOf[T]
-  implicit def proxyVectorCompanion(p: Rep[VectorCompanionOps]): VectorCompanionOps = {
-    proxyOps[VectorCompanionOps](p, Some(true))
+  implicit def proxyVectorCompanion(p: Rep[VectorCompanion]): VectorCompanion = {
+    proxyOps[VectorCompanion](p, Some(true))
   }
 
 
@@ -58,7 +63,7 @@ trait VectorsAbs extends Vectors
     lazy val defaultRepTo = defaultVal[Rep[DenseVector[T]]](DenseVector(element[PArray[T]].defaultRepValue))
   }
   // 4) constructor and deconstructor
-  trait DenseVectorCompanionAbs extends DenseVectorCompanionOps {
+  trait DenseVectorCompanionAbs extends DenseVectorCompanion {
 
     def apply[T]
           (coords: Rep[PArray[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
@@ -77,8 +82,8 @@ trait VectorsAbs extends Vectors
     lazy val defaultRep = defaultVal(DenseVector)
   }
 
-  implicit def proxyDenseVector[T:Elem](p: Rep[DenseVector[T]]): DenseVectorOps[T] = {
-    proxyOps[DenseVectorOps[T]](p)
+  implicit def proxyDenseVector[T:Elem](p: Rep[DenseVector[T]]): DenseVector[T] = {
+    proxyOps[DenseVector[T]](p)
   }
 
   implicit class ExtendedDenseVector[T](p: Rep[DenseVector[T]])(implicit elem: Elem[T]) {
@@ -118,7 +123,7 @@ trait VectorsAbs extends Vectors
     lazy val defaultRepTo = defaultVal[Rep[SparseVector[T]]](SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, 0))
   }
   // 4) constructor and deconstructor
-  trait SparseVectorCompanionAbs extends SparseVectorCompanionOps {
+  trait SparseVectorCompanionAbs extends SparseVectorCompanion {
 
     def apply[T](p: Rep[SparseVectorData[T]])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
       isoSparseVector(elem).to(p)
@@ -139,8 +144,8 @@ trait VectorsAbs extends Vectors
     lazy val defaultRep = defaultVal(SparseVector)
   }
 
-  implicit def proxySparseVector[T:Elem](p: Rep[SparseVector[T]]): SparseVectorOps[T] = {
-    proxyOps[SparseVectorOps[T]](p)
+  implicit def proxySparseVector[T:Elem](p: Rep[SparseVector[T]]): SparseVector[T] = {
+    proxyOps[SparseVector[T]](p)
   }
 
   implicit class ExtendedSparseVector[T](p: Rep[SparseVector[T]])(implicit elem: Elem[T]) {
