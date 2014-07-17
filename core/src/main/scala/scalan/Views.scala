@@ -99,18 +99,18 @@ trait Views extends Elems { self: Scalan =>
     }
   }
 
-  def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[B => C, A => D] = {
+  def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] = {
     implicit val eA = iso1.eFrom
     implicit val eB = iso1.eTo
     implicit val eC = iso2.eFrom
     implicit val eD = iso2.eTo
-    new Iso[B => C, A => D] {
-      lazy val eTo = funcElement(eA, eD)
-      def from(f: Rep[A => D]): Rep[B => C] = {
-        fun { b => iso2.from(f(iso1.from(b))) }
+    new Iso[A => C, B => D] {
+      lazy val eTo = funcElement(eB, eD)
+      def from(f: Rep[B => D]): Rep[A => C] = {
+        fun { b => iso2.from(f(iso1.to(b))) }
       }
-      def to(f: Rep[B => C]): Rep[A => D] = {
-        fun { a => iso2.to(f(iso1.to(a))) }
+      def to(f: Rep[A => C]): Rep[B => D] = {
+        fun { a => iso2.to(f(iso1.from(a))) }
       }
       def tag = eTo.tag
       def defaultRepTo = eTo.defaultRep
