@@ -1,28 +1,9 @@
-//package mvm
+package tests.performance
 
 import org.scalameter.api._
-import org.scalameter.Aggregator
-import org.scalameter.reporting.LoggingReporter
-import scalan.ScalanCtxSeq
 import tests.scalan.linalgebra.LinearAlgebraExamples
+import scalan.community.ScalanCommunitySeq
 import scalan.linalgebra.MatricesDslSeq
-
-trait BaseBenchmark extends PerformanceTest {
-  lazy val warmer: Executor.Warmer = new Executor.Warmer.Default
-
-  lazy val aggregator: Aggregator = Aggregator.average
-
-  lazy val measurer: Executor.Measurer = new Measurer.Default with Measurer.OutlierElimination
-
-  lazy val executor: Executor = LocalExecutor(
-    warmer,
-    aggregator,
-    measurer)
-
-  lazy val reporter: Reporter = new LoggingReporter
-
-  lazy val persistor: Persistor = Persistor.None
-}
 
 class mvm extends BaseBenchmark {
   //def main(args:Array[String]) {
@@ -91,8 +72,8 @@ class mvm extends BaseBenchmark {
     val inSS = Gen.single("smsv")((smat,svec))
     val inFD = Gen.single("fmdv")((fmat,dvec))
     val inFS = Gen.single("fmsv")((fmat,svec))
-    
-    val ctx = new ScalanCtxSeq with LinearAlgebraExamples with MatricesDslSeq
+
+    val ctx = new ScalanCommunitySeq with LinearAlgebraExamples with MatricesDslSeq
 
     performance of "mvm" config (
       exec.minWarmupRuns -> 5,

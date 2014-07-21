@@ -5,7 +5,7 @@ import org.scalameter.api._
 
 import scalan.ScalanDsl
 
-trait BaseBenchmark extends PerformanceTest with ScalanDsl {
+trait BaseBenchmark extends PerformanceTest {
   lazy val warmer: Executor.Warmer = new Executor.Warmer.Default
   
   lazy val aggregator: Aggregator = Aggregator.min

@@ -9,9 +9,10 @@ import scalan.linalgebra.MatricesDslExp
 import scalan.ScalanCtxSeq
 import scalan.linalgebra.MatricesDslSeq
 import scalan.codegen.lms.MyBridge
+import scalan.community.{ScalanCommunitySeq, ScalanCommunityStaged}
 
 class LmsLinAlgItTests extends ItTests {
-  class ProgStaged extends LinearAlgebraExamples with MatricesDslExp with ScalanCtxStaged with GraphVizExport with LmsBackend { self =>
+  class ProgStaged extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityStaged with GraphVizExport with LmsBackend { self =>
 //    override def makeBridge[A, B] = new MyBridge[A, B] {
 //      override val scalan = self
 //      
@@ -19,7 +20,7 @@ class LmsLinAlgItTests extends ItTests {
 //    }
   }
   
-  class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCtxSeq
+  class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunitySeq
   
   val progStaged = new ProgStaged() {
     this.invokeEnabled = true

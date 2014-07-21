@@ -3,29 +3,18 @@ package scalan
 import scalan.primitives._
 import scalan.staged.{Expressions, BaseExp}
 import scalan.seq.BaseSeq
-import scalan.arrays.{ArrayViewsSeq, ArrayViews, ArrayViewsExp}
-import scala.annotation.unchecked.uncheckedVariance
-
-//import ext.Options
-//import lms.common._
-//import lms.ppl._
-//import sets.Sets
+import scalan.codegen.GraphVizExport
 
 trait Scalan
   extends Base
-//     with Pipes
      with Elems
 //     with Descs
-//     with Arrays
      with Views
 //     with Chunks
 //     with Sets
 //     with Zipping
      with Tuples
      with TypeSum
-     with ArrayOps
-     with ArrayViews
-//     with PArrayOps
      with NumericOps
 //     with MathOps
      with LogicalOps
@@ -49,18 +38,12 @@ trait ScalanSeq
   with BaseSeq
   with ElemsSeq
 //  with DescsSeq
-//  with SeqArrays
-//  with SeqChunks
-//  with SeqPipes
 //  with SeqSets
   with ViewsSeq
-//  with SeqArrayExtensions
   with TuplesSeq
   with TypeSumSeq
   with FunctionsSeq
   with IfThenElseSeq
-  with ArrayOpsSeq
-  with ArrayViewsSeq
   with OrderingOpsSeq
   with NumericOpsSeq
   with EqualSeq
@@ -117,14 +100,8 @@ trait ScalanStaged
 //  with StagedImplBase
   with ElemsExp
 //  with DescsExp
-//  with StagedArrays
-//  with StagedArrayExtensions
-//  with StagedPipes
-//  with StagedChunks
 //  with StagedSets
   with ViewsExp
-  with ArrayOpsExp
-  with ArrayViewsExp
 //  with Transforming
   with NumericOpsExp
   with EqualExp
@@ -200,6 +177,7 @@ trait ScalanStagedImplementation
   with ScalanStaged
   with EqualExp
   with Expressions
+  with GraphVizExport
 {
   //implicit def liftElementValue[A:Elem](x: A): Rep[A] = element[A].toRep(x)
 }

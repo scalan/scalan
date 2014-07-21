@@ -8,9 +8,8 @@ import scalan._
 import scalan.staged.BaseExp
 import scala.reflect.runtime.universe._
 import scalan.common.Default
-import scalan.common.Lazy
 
-trait ArrayViews extends Views { self: Scalan =>
+trait ArrayViews extends ArrayOps with Views { self: Scalan =>
 
 //  trait ArrayView[A, B] extends PArray[B] {
 //    def arr: Option[PA[A]]
@@ -22,7 +21,7 @@ trait ArrayViews extends Views { self: Scalan =>
 //  def unmkArrayView[A,B](view: Arr[B])(implicit iso: Iso[A,B]): Arr[A]
 }
 
-trait ArrayViewsSeq extends ArrayViews with ViewsSeq { self: ScalanSeq =>
+trait ArrayViewsSeq extends ArrayViews with ArrayOpsSeq with ViewsSeq { self: ScalanSeq =>
 
 //  case class SeqViewArray[A, B](arr: Option[PA[A]], iso: Iso[A,B])
 //    extends ViewArray[A,B] with SeqPArray[B]
@@ -65,7 +64,7 @@ trait ArrayViewsSeq extends ArrayViews with ViewsSeq { self: ScalanSeq =>
 
 }
 
-trait ArrayViewsExp extends ArrayViews with ViewsExp with BaseExp { self: ScalanStaged =>
+trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseExp { self: ScalanStaged =>
   case class ViewArray[A, B](source: Arr[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Array] {
     lazy val iso = arrayIso(innerIso)
     def copy(source: Arr[A]) = ViewArray(source)

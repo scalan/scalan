@@ -4,8 +4,9 @@ import scalan._
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.annotation.unchecked.uncheckedVariance
+import scalan.community.{ScalanCommunity, ScalanCommunityStaged, ScalanCommunitySeq}
 
-trait PArrays extends Base { self: PArraysDsl =>
+trait PArrays extends ArrayOps { self: PArraysDsl =>
 
   type PA[+A] = Rep[PArray[A]]
   trait PArray[@uncheckedVariance +A] extends UserType[PArray[A @uncheckedVariance]] {
@@ -144,8 +145,8 @@ trait PArrays extends Base { self: PArraysDsl =>
 
 }
 
-trait PArraysDsl extends ScalanDsl with impl.PArraysAbs with PArrays { }
+trait PArraysDsl extends ScalanCommunity with impl.PArraysAbs with PArrays { }
 
-trait PArraysDslSeq extends PArraysDsl with impl.PArraysSeq with ScalanSeqImplementation
+trait PArraysDslSeq extends PArraysDsl with impl.PArraysSeq with ScalanCommunitySeq
 
-trait PArraysDslExp extends PArraysDsl with impl.PArraysExp with ScalanStaged
+trait PArraysDslExp extends PArraysDsl with impl.PArraysExp with ScalanCommunityStaged
