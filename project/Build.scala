@@ -3,7 +3,7 @@ import sbt.Keys._
 import sbtassembly.Plugin._
 import AssemblyKeys._
 
-object ScalanLiteBuild extends Build {
+object ScalanBuild extends Build {
   val opts = scalacOptions ++= Seq(
     // "-unchecked",
     "-deprecation",
@@ -42,7 +42,7 @@ object ScalanLiteBuild extends Build {
   val commonSettings = inConfig(ItTest)(Defaults.testTasks) ++ 
     inConfig(PerfTest)(Defaults.testTasks ++ baseAssemblySettings) ++ Seq(
       scalaVersion := "2.10.4",
-      organization := "com.huawei",
+      organization := "com.huawei.scalan",
       version := "0.1-SNAPSHOT",
       opts, commonDeps) ++ 
     testSettings ++ assemblySettings
@@ -53,12 +53,17 @@ object ScalanLiteBuild extends Build {
 
   def itFilter(name: String): Boolean = name.contains("ItTests")
 
-  lazy val core = Project("scalan-lite", file("core")).configs(ItTest, PerfTest).
+  lazy val core = project.in(file("core")).configs(ItTest, PerfTest).
+    settings(commonSettings: _*)
+
+  lazy val coreDep = core % "compile->compile;test->test"
+
+  lazy val ce = Project("community-edition", file("community-edition")).dependsOn(coreDep).configs(ItTest, PerfTest).
     settings(commonSettings: _*)
 
   val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2")
 
-  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(core % "compile->compile;test->test").configs(ItTest, PerfTest).
+  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(coreDep, ce).configs(ItTest, PerfTest).
     settings(commonSettings: _*).settings(
      libraryDependencies ++= Seq("EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT",
                                  "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT" classifier "test",
@@ -69,5 +74,6 @@ object ScalanLiteBuild extends Build {
   )
   
   // name to make this the default project
-  lazy val root = Project("all", file(".")).aggregate(core, lmsBackend).configs(ItTest, PerfTest).settings(commonSettings: _*)
+  lazy val root = Project("all", file(".")).aggregate(core, ce, lmsBackend).
+    configs(ItTest, PerfTest).settings(commonSettings: _*)
 }
