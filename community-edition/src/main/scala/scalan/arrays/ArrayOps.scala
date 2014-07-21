@@ -1,8 +1,7 @@
-package scalan.primitives
+package scalan.arrays
 
-import java.io.{ BufferedReader, FileReader, PrintWriter }
+import java.io.PrintWriter
 import scalan.{ ScalanStaged, ScalanSeq, Scalan }
-import scala.collection.generic.CanBuildFrom
 import scala.reflect.ClassTag
 import scalan.staged.BaseExp
 import scalan.common.OverloadHack.Overloaded1

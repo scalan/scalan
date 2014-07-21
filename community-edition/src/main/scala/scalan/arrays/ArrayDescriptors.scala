@@ -1,10 +1,6 @@
-/**
- * User: Alexander Slesarenko
- * Date: 11/23/13
- */
 package scalan.arrays
 
-import scalan._
+import scalan.{Scalan, Elems}
 
 trait ArrayDescriptors extends Elems { self: Scalan =>
 

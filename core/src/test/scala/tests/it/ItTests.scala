@@ -43,32 +43,6 @@ trait ItTests extends BaseTests {
     //output.toString should be (expOutput.toString)
   }
 
-  def interpreterTestRun[A,B](front: ScalanCtxSeq /*with VectorsDslSeq*/, back: ScalanCtxStaged with GraphVizExport /*with VectorsDslExp*/)
-                     (fseq: front.Rep[A=>B], f: back.Exp[A=>B])
-                     (name: String, input: front.Rep[A])
-                     (implicit eA: front.Elem[A], eB: front.Elem[B]) : front.Rep[B] =
-  {
-    val dir = "it-out/" + prefix + "/" + name
-
-    import scalan.Interpreter
-
-    new File(dir).mkdirs()
-
-    val interp = new Interpreter {
-      val seq = front
-      val staged = back
-    }
-    interp.run[A,B](f.asInstanceOf[interp.staged.Exp[A=>B]])(dir, name, input, emitGraphs)(eA.asInstanceOf[interp.seq.Elem[A]], eB.asInstanceOf[interp.seq.Elem[B]])
-  }
-
-  /*def intepreterCheckRun[A,B](front: ScalanSeq, back: LangBackend)
-                      (fseq: front.Rep[A=>B], f: back.Exp[A=>B])
-                      (name: String, input: front.Rep[A], expOutput: front.Rep[B])
-                      (implicit eA: front.Elem[A], eB: front.Elem[B]) {
-    val output = interpreterTestRun(front, back)(fseq, f)(name, input)
-    //output.toString should be (expOutput.toString)
-  } */
-
   def testRun[A,B](front: ScalanSeq, back: LangBackend)
                   (fseq: front.Rep[A=>B], f: back.Exp[A=>B])
                   (name: String, input: front.Rep[A])

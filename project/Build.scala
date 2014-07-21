@@ -53,17 +53,21 @@ object ScalanBuild extends Build {
 
   def itFilter(name: String): Boolean = name.contains("ItTests")
 
+  implicit class ProjectExt(p: Project) {
+    def allConfigs = p % "compile->compile;test->test"
+  }
+
   lazy val core = project.in(file("core")).configs(ItTest, PerfTest).
     settings(commonSettings: _*)
 
-  lazy val coreDep = core % "compile->compile;test->test"
+  lazy val coreDep = core.allConfigs
 
   lazy val ce = Project("community-edition", file("community-edition")).dependsOn(coreDep).configs(ItTest, PerfTest).
     settings(commonSettings: _*)
 
   val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2")
 
-  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(coreDep, ce).configs(ItTest, PerfTest).
+  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(coreDep, ce.allConfigs).configs(ItTest, PerfTest).
     settings(commonSettings: _*).settings(
      libraryDependencies ++= Seq("EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT",
                                  "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT" classifier "test",

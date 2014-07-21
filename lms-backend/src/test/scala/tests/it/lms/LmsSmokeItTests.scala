@@ -1,21 +1,21 @@
 package tests.it.lms
 
-import _root_.tests.it.smoke.SmokeItTests
 import scalan.codegen.lms.LmsBackend
 import scalan.arrays.PArraysDslExp
-import scalan.ScalanCtxStaged
 import scalan.codegen.GraphVizExport
 import scalan.linalgebra.VectorsDslExp
+import scalan.community.{ScalanCommunitySeq, ScalanCommunityStaged}
+import tests.scalan.CommunitySmokeItTests
 
-class LmsSmokeItTests extends SmokeItTests {
+class LmsSmokeItTests extends CommunitySmokeItTests {
   import scala.Array
-  // TODO remove VectorsDslExp!
-  class ProgStaged extends Prog with PArraysDslExp with ScalanCtxStaged with GraphVizExport with LmsBackend with VectorsDslExp
+
+  class ProgStaged extends ProgCommunity with PArraysDslExp with ScalanCommunityStaged with GraphVizExport with LmsBackend with VectorsDslExp
   
-  val progStaged = new ProgStaged() {
+  override val progStaged = new ProgStaged() {
     this.invokeEnabled = true
   }
-  
+
   import progSeq._
 
   test("test0simpleArith") {
