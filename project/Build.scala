@@ -70,7 +70,7 @@ object ScalanBuild extends Build {
   lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(coreDep, ce.allConfigs).configs(ItTest, PerfTest).
     settings(commonSettings: _*).settings(
      libraryDependencies ++= Seq("EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT",
-                                 "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT" classifier "test",
+                                 "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT" classifier "tests",
                                  "org.scala-lang.virtualized" % "scala-library" % virtScala,
                                  "org.scala-lang.virtualized" % "scala-compiler" % virtScala),
      scalaOrganization := "org.scala-lang.virtualized",

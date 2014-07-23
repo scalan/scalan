@@ -1,6 +1,7 @@
 package scalan.codegen.lms
 //package util
 
+import scala.reflect.SourceContext
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
 //import virtualization.lms.epfl.test7.ArrayLoopsFatExp
@@ -9,8 +10,8 @@ import virtualization.lms.epfl.test7._
 //{ScalaGenArrayLoopsFat, ArrayLoopsExp}
 import scala.Tuple2
 
-trait LMSBackendFacade extends ArrayOpsExp with ListOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp
-with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfThenElseFatExp {
+trait LMSBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp
+with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfThenElseFatExp with CastingOpsExp {
   /*type RepD[T] = Rep[T]
   */
   def arrayGet[A:Manifest](a: Exp[Array[A]], i: Exp[Int]):Exp[A] = {
@@ -54,7 +55,7 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
   }
   /* Reduce only for summation! */
   def reduce[A:Manifest] (a: Exp[Array[A]]) : Exp[A] = {
-    sum(a.length){i => a.at(i)}
+    sum(a.length){i => a.at(i).AsInstanceOf[Double]}.AsInstanceOf[A]
   }
 
   def newArray[A:Manifest](length: Rep[Int]): Rep[Array[A]] = NewArray[A](length)
@@ -81,14 +82,70 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
   def mkStringD[A:Manifest](a: Exp[DeliteArray[A]]) : Exp[String] = {
     a mkString unitD(" ")
   }  */
+
+  def array_dotProductSparse[A:Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]) = {
+    ArrayDotProdSparse(idxs1, vals1, idxs2, vals2)
+  }
+
+  case class ArrayDotProdSparse[A:Manifest](idxs1: Exp[Array[Int]], vals1: Exp[Array[A]], idxs2: Exp[Array[Int]], vals2: Exp[Array[A]]) extends Def[A] {
+    val m = manifest[A]
+  }
+
+  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
+    case ArrayDotProdSparse(i1, v1,i2, v2) => array_dotProductSparse(f(i1), f(v1), f(i2), f(v2))(mtype(manifest[A]))
+    case _ => super.mirror(e,f)
+  }).asInstanceOf[Exp[A]] // why??
+
 }
 
 trait LMSFunction[A,B] extends LMSBackendFacade { self =>
   def test(x: Rep[A]): Rep[B]
   val codegen = new ScalaGenEffect with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
     with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenBooleanOps with ScalaGenStruct
-    with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt { 
+    with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
+    with ScalaGenCastingOps {
       val IR: self.type = self
       override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
+
+      private def isTuple(name: String) =
+        name.startsWith("Tuple2") || name.startsWith("Tuple3") || name.startsWith("Tuple4") || name.startsWith("Tuple5")
+
+      override def remap[A](m: Manifest[A]) = if (isTuple(m.runtimeClass.getSimpleName)) {
+        m.toString
+      } else {
+        super.remap(m)
+      }
+
+      override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+        case Struct(ClassTag(name), elems) if isTuple(name) =>
+          emitValDef(sym, "(" + elems.map(e => quote(e._2)).mkString(",") + ")")
+        case ds @ ArrayDotProdSparse(idxs1, vals1, idxs2, vals2) =>
+          // TODO use proper source quasiquoter
+          stream.println("// generating dot product")
+          stream.println("val " + quote(sym) + " ={")
+          stream.println("\tval idxs1 = " + quote(idxs1))
+          stream.println("\tval idxs2 = " + quote(idxs2))
+          stream.println("\tval vals1 = " + quote(vals1))
+          stream.println("\tval vals2 = " + quote(vals2))
+          stream.println("\tvar i1 = 0")
+          stream.println("\tvar i2 = 0")
+          stream.println("\tvar out:" + remap(ds.m) + " = 0")
+          stream.println("\twhile (i1 < idxs1.length && i2 < idxs2.length) {")
+          stream.println("\t\tval ind1 = idxs1(i1)")
+          stream.println("\t\tval ind2 = idxs2(i2)")
+          stream.println("\t\tif (ind1 == ind2) { ")
+          stream.println("\t\t\tout += vals1(i1) * vals2(i2)")
+          stream.println("\t\t\ti1+=1")
+          stream.println("\t\t\ti2+=1")
+          stream.println("\t\t} else if (ind1 < ind2 ) {")
+          stream.println("\t\t\ti1+=1")
+          stream.println("\t\t} else {")
+          stream.println("\t\t\ti2+=1")
+          stream.println("\t\t}")
+          stream.println("\t}")
+          stream.println("\tout")
+          stream.println("}")
+        case _ => super.emitNode(sym, rhs)
+      }
   }
 }
