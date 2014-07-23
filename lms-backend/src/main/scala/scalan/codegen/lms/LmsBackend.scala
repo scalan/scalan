@@ -323,7 +323,13 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport wi
             val facade = bridge.getFacade(g0.asInstanceOf[bridge.scalan.PGraph])
             val codegen = facade.lFunc.codegen
 
-            codegen.emitSource[a,b](facade.lFunc.test, fileName, new PrintWriter(new FileOutputStream(outputSource.getAbsolutePath())))(mA, mB)
+            val writer = new PrintWriter(new FileOutputStream(outputSource.getAbsolutePath))
+            try {
+              codegen.emitSource[a, b](facade.lFunc.test, fileName, writer)(mA, mB)
+              codegen.emitDataStructures(writer)
+            } finally {
+              writer.close()
+            }
         }
     }
 
