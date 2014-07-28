@@ -26,16 +26,20 @@ trait Monoids { self: Scalan =>
   lazy val IntRepMultMonoid =
     RepMonoid[Int]("*", 1, isInfix = true, isCommutative = true) { (a, b) => a * b }
   lazy val FloatRepMultMonoid =
-    RepMonoid[Float]("*", 1f, isInfix = true, isCommutative = true) { (a, b) => a * b }
+    RepMonoid[Float]("*", 1.0f, isInfix = true, isCommutative = true) { (a, b) => a * b }
+  lazy val DoubleRepMultMonoid =
+    RepMonoid[Double]("*", 1.0, isInfix = true, isCommutative = true) { (a, b) => a * b }
   lazy val BooleanRepAndMonoid =
     RepMonoid[Boolean]("&&", true, isInfix = true, isCommutative = true) { (a, b) => a && b }
 
-  def isPredefined(m: RepMonoid[_]): Boolean = {
-    Set[RepMonoid[_]](IntRepMultMonoid,
-      IntRepPlusMonoid,
-      FloatRepMultMonoid,
-      FloatRepPlusMonoid,
-      BooleanRepAndMonoid,
-      BooleanRepOrMonoid).contains(m)
-  }
+  lazy val predefinedMonoids = Set[RepMonoid[_]](IntRepMultMonoid,
+    IntRepPlusMonoid,
+    FloatRepMultMonoid,
+    FloatRepPlusMonoid,
+    DoubleRepPlusMonoid,
+    DoubleRepMultMonoid,
+    BooleanRepAndMonoid,
+    BooleanRepOrMonoid)
+
+  def isPredefined(m: RepMonoid[_]): Boolean = predefinedMonoids.contains(m)
 }
