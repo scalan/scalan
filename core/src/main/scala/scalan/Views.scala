@@ -1,11 +1,10 @@
 package scalan
 
-import scala.text._
-import Document._
 import scalan.common.Default
 import scala.language.higherKinds
 import scalan.common.Lazy
 import scala.reflect.runtime.universe._
+import scalan.staged.BaseExp
 
 trait Views extends Elems { self: Scalan =>
 
@@ -126,7 +125,7 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
   }
 }
 
-trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
+trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
   class StagedViewElem[From, To](implicit iso: Iso[From, To]) extends ViewElem[From, To]
 
   trait UserTypeDef[T, TImpl <: T] extends ReifiableObject[T, TImpl] {

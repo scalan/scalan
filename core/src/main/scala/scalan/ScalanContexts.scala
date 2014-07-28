@@ -101,6 +101,7 @@ trait ScalanStaged
   with ElemsExp
 //  with DescsExp
 //  with StagedSets
+  with ProxyExp
   with ViewsExp
 //  with Transforming
   with NumericOpsExp
