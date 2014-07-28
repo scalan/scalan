@@ -122,7 +122,7 @@ trait ScalanStaged
 //    def resolve[A](sym: PA[A]): PArray[A] = sym match {
 //      case Def(d: PADef[_]) => d.asInstanceOf[PArray[A]]
 //      case s: Exp[_] => {
-//        val paElem = s.Elem.asInstanceOf[PArrayElem[A]]
+//        val paElem = s.elem.asInstanceOf[PArrayElem[A]]
 //        implicit val ea = paElem.ea
 //        VarPA(sym)
 //      }
@@ -135,7 +135,7 @@ trait ScalanStaged
 //    def resolve[A](sym: P[A]): Pipe[A] = sym match {
 //      case Def(d: PipeDef[_]) => d.asInstanceOf[Pipe[A]]
 //      case s: Exp[_] => {
-//        val pipeElem = s.Elem.asInstanceOf[PipeElem[A]]
+//        val pipeElem = s.elem.asInstanceOf[PipeElem[A]]
 //        implicit val ea = pipeElem.ea
 //        VarPipe(sym)
 //      }
@@ -148,7 +148,7 @@ trait ScalanStaged
 //    def resolve[A](sym: Ch[A]): Chunks[A] = sym match {
 //      case Def(d: ChunksDef[_]) => d.asInstanceOf[Chunks[A]]
 //      case s: Exp[_] => {
-//        val chunksElem = s.Elem.asInstanceOf[ChunksElem[A]]
+//        val chunksElem = s.elem.asInstanceOf[ChunksElem[A]]
 //        implicit val ea = chunksElem.ea
 //        VarChunks(sym)
 //      }
