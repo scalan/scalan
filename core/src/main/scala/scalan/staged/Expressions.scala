@@ -198,17 +198,17 @@ trait BaseExp extends Base { self: ScalanStaged =>
   }
 
   // dependencies
-  def syms(e: Any): List[Exp[Any]] = e match {
+  def syms(e: Any): List[Exp[_]] = e match {
     case s: Exp[_] => List(s)
     case p: Product => p.productIterator.toList.flatMap(syms(_))
     case _ => Nil
   }
 
-  def dep(e: Exp[Any]): List[Exp[Any]] = e match {
+  def dep(e: Exp[_]): List[Exp[_]] = e match {
     case Def(d: Product) => syms(d)
     case _ => Nil
   }
-  def dep(e: Def[Any]): List[Exp[Any]] = e match {
+  def dep(e: Def[_]): List[Exp[_]] = e match {
     case d: Product => syms(d)
     case _ => Nil
   }
