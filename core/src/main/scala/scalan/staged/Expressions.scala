@@ -149,7 +149,6 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
     case _: BaseElem[_] => Const(x)
-    case _: ArrayElem[_] => Const(x)
     case _ => super.toRep(x)(eA)
   }
 

@@ -8,9 +8,11 @@ trait ScalanCommunity extends ScalanDsl
   with ArrayViews
 
 trait ScalanCommunitySeq extends ScalanCtxSeq
+  with ScalanCommunity
   with ArrayOpsSeq
   with ArrayViewsSeq
 
 trait ScalanCommunityStaged extends ScalanCtxStaged
+  with ScalanCommunity
   with ArrayOpsExp
   with ArrayViewsExp
