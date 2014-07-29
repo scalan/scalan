@@ -110,7 +110,7 @@ trait VectorsDslExp extends VectorsDsl with impl.VectorsExp with PArraysDslExp w
   def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T] =
     DotSparse(xIndices, xValues.arr, yIndices, yValues.arr)
 
-  case class DotSparse[T](xIndices: Arr[Int], xValues: Arr[T], yIndices: Arr[Int], yValues: Arr[T])(implicit val n: Numeric[T], val m: RepMonoid[T], val selfType: Elem[T]) extends BaseDef[T] {
+  case class DotSparse[T](xIndices: Arr[Int], xValues: Arr[T], yIndices: Arr[Int], yValues: Arr[T])(implicit val n: Numeric[T], val m: RepMonoid[T], selfType: Elem[T]) extends BaseDef[T] {
     override def mirror(f: Transformer) = DotSparse(f(xIndices), f(xValues), f(yIndices), f(yValues))
     def uniqueOpId = name(selfType)
   }
