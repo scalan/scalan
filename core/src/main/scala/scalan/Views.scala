@@ -18,10 +18,10 @@ trait Views extends Elems { self: Scalan =>
     def from(p: Rep[To]): Rep[From]
     def to(p: Rep[From]): Rep[To]
     override def toString = s"${eFrom.name} <-> ${eTo.name}"
-//    override def equals(other: Any) = other match {
-//      case i: Iso[_, _] => eFrom == i.eFrom && eTo == i.eTo
-//      case _ => false
-//    }
+    override def equals(other: Any) = other match {
+      case i: Iso[_, _] => eFrom == i.eFrom && eTo == i.eTo
+      case _ => false
+    }
   }
 
   implicit def viewElement[From, To <: UserType[_]](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
