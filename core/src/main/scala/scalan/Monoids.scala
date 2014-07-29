@@ -14,6 +14,8 @@ trait Monoids { self: Scalan =>
       new RepMonoid(opName, fun { p: Rep[(A, A)] => append(p._1, p._2) }, toRep(zero), isInfix, isCommutative)
   }
 
+  implicit lazy val ByteRepPlusMonoid: RepMonoid[Byte] =
+    RepMonoid("+", 0.asInstanceOf[Byte], isInfix = true, isCommutative = true) { (a, b) => a + b }
   implicit lazy val IntRepPlusMonoid: RepMonoid[Int] =
     RepMonoid("+", 0, isInfix = true, isCommutative = true) { (a, b) => a + b }
   implicit lazy val FloatRepPlusMonoid: RepMonoid[Float] =
@@ -32,8 +34,10 @@ trait Monoids { self: Scalan =>
   lazy val BooleanRepAndMonoid =
     RepMonoid[Boolean]("&&", true, isInfix = true, isCommutative = true) { (a, b) => a && b }
 
-  lazy val predefinedMonoids = Set[RepMonoid[_]](IntRepMultMonoid,
+  lazy val predefinedMonoids = Set[RepMonoid[_]](
+    ByteRepPlusMonoid,
     IntRepPlusMonoid,
+    IntRepMultMonoid,
     FloatRepMultMonoid,
     FloatRepPlusMonoid,
     DoubleRepPlusMonoid,

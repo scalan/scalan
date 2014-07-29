@@ -8,7 +8,6 @@ import annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
-import scala.Predef._
 
 trait Elems extends Base { self: Scalan =>
 
@@ -74,6 +73,7 @@ trait Elems extends Base { self: Scalan =>
   }
 
   implicit val boolElement: Elem[Boolean] = new BaseElem[Boolean]
+  implicit val byteElem: Elem[Byte] = new BaseElem[Byte]
   implicit val intElement: Elem[Int] = new BaseElem[Int]
   implicit val floatElement: Elem[Float] = new BaseElem[Float]
   implicit val doubleElement: Elem[Double] = new BaseElem[Double]
