@@ -30,8 +30,8 @@ trait LogicalOpsSeq extends LogicalOps { self: ScalanSeq =>
 
 trait LogicalOpsExp extends LogicalOps { self: ScalanStaged =>
   abstract class LogicalBinOp(val opName: String) extends BinOp[Boolean] {
-    def selfType = boolElement
-    implicit val lSelfType = Lazy(boolElement)
+    def selfType = BoolElement
+    implicit val lSelfType = Lazy(BoolElement)
   }
   
   case class And(lhs: Exp[Boolean], rhs: Exp[Boolean]) extends LogicalBinOp("&&") {
@@ -42,8 +42,8 @@ trait LogicalOpsExp extends LogicalOps { self: ScalanStaged =>
   }
 
   abstract class LogicalUnOp(val opName: String) extends UnOp[Boolean] {
-    def selfType = boolElement
-    implicit val lSelfType = Lazy(boolElement)
+    def selfType = BoolElement
+    implicit val lSelfType = Lazy(BoolElement)
   }
 
   case class Not(arg: Exp[Boolean]) extends LogicalUnOp("!") {

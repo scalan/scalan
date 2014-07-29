@@ -72,13 +72,13 @@ trait Elems extends Base { self: Scalan =>
     lazy val defaultRep = defaultVal(fun(funcRepDefault[A, B].value))
   }
 
-  implicit val boolElement: Elem[Boolean] = new BaseElem[Boolean]
-  implicit val byteElem: Elem[Byte] = new BaseElem[Byte]
-  implicit val intElement: Elem[Int] = new BaseElem[Int]
-  implicit val floatElement: Elem[Float] = new BaseElem[Float]
-  implicit val doubleElement: Elem[Double] = new BaseElem[Double]
-  implicit val unitElement: Elem[Unit] = new BaseElem[Unit]
-  implicit val stringElement: Elem[String] = new BaseElem[String]
+  implicit val BoolElement: Elem[Boolean] = new BaseElem[Boolean]
+  implicit val ByteElement: Elem[Byte] = new BaseElem[Byte]
+  implicit val IntElement: Elem[Int] = new BaseElem[Int]
+  implicit val FloatElement: Elem[Float] = new BaseElem[Float]
+  implicit val DoubleElement: Elem[Double] = new BaseElem[Double]
+  implicit val UnitElement: Elem[Unit] = new BaseElem[Unit]
+  implicit val StringElement: Elem[String] = new BaseElem[String]
 
   implicit def pairElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A, B)] = new PairElem[A, B]
   implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A | B)] = new SumElem[A, B]

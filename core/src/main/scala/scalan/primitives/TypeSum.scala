@@ -1,5 +1,6 @@
 package scalan.primitives
 
+import scalan.common.Lazy
 import scalan.staged.{ BaseExp }
 import scalan.{ ScalanStaged, Scalan, ScalanSeq }
 import scala.language.{ implicitConversions }
@@ -65,14 +66,14 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
   case class IsLeft[A, B](sum: Exp[(A | B)]) extends BaseDef[Boolean] {
     override def mirror(t: Transformer) = IsLeft(t(sum))
     // removing leads to compilation error
-    override val selfType = boolElement
+    override val selfType = BoolElement
     lazy val uniqueOpId = name(sum.elem.ea, sum.elem.eb)
   }
 
   case class IsRight[A, B](sum: Exp[(A | B)]) extends BaseDef[Boolean] {
     override def mirror(t: Transformer) = IsRight(t(sum))
     // removing leads to compilation error
-    override val selfType = boolElement
+    override val selfType = BoolElement
     lazy val uniqueOpId = name(sum.elem.ea, sum.elem.eb)
   }
 

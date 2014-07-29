@@ -61,7 +61,7 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
   
   trait SparseVectorCompanion extends ConcreteClass1[SparseVector] {
     def defaultOf[T: Elem] = {
-      Default.defaultVal(SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
+      Default.defaultVal(SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, IntElement.defaultRepValue))
     }
     def apply[T: Elem](coords: PA[T])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
       val indices: Arr[Int] = coords.arr.zip(array_rangeFrom0(coords.length)).

@@ -161,9 +161,9 @@ trait Interpreter {
     val elem = eA match {
       case el: BaseElem[_] =>
         el.tag.tpe.toString()  match {
-          case "Double" => seq.doubleElement
-          case "Int" => seq.intElement
-          case "Unit" => seq.unitElement
+          case "Double" => seq.DoubleElement
+          case "Int" => seq.IntElement
+          case "Unit" => seq.UnitElement
           case tpe => ???(s"Don't know how to create seq element for base type $tpe")
         }
       case el: PairElem[_, _] =>
