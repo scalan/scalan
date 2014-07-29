@@ -149,6 +149,17 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
     case _: BaseElem[_] => Const(x)
+    case _: FuncElem[_, _] => Const(x)
+    case pe: PairElem[a, b] =>
+      val x1 = x.asInstanceOf[(a, b)]
+      implicit val eA = pe.ea
+      implicit val eB = pe.eb
+      Pair(toRep(x1._1), toRep(x1._2))
+    case se: SumElem[a, b] =>
+      val x1 = x.asInstanceOf[a | b]
+      implicit val eA = se.ea
+      implicit val eB = se.eb
+      x1.fold(l => Left[a, b](l), r => Right[a, b](r))
     case _ => super.toRep(x)(eA)
   }
 
