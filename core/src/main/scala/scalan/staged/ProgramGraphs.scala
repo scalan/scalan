@@ -5,10 +5,6 @@ import scalan.common.GraphUtil
 
 trait ProgramGraphs extends Scheduling with Transforming with AstGraphs { self: ScalanStaged =>
 
-  case class Node(usages: List[Exp[_]], definition: Option[Def[_]]) {
-    def addUsage(usage: Exp[_]) = copy(usages = usage :: this.usages)
-  }
-  
   type PGraph = ProgramGraph[MapTransformer]
 
   // immutable program graph

@@ -23,9 +23,10 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
   {
     def inputSyms: List[Exp[_]] = definition.toList.flatMap(_.getDeps)
     def outSyms = usages
+    def addUsage(usage: Exp[_]) = copy(usages = usage :: this.usages)
   }
 
-  trait AstGraph extends PartialFunction[Exp[_], AstNode] {
+  trait AstGraph {
     def roots: List[Exp[_]]
     lazy val schedule = buildScheduleForResult(roots, _.getDeps)
     lazy val scheduleSyms = schedule map { _.sym }
@@ -77,11 +78,7 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
       case (s, GraphNode(_, _, Some(_), _)) => s
     }).toSet
 
-    // TODO don't extend PartialFunction
-    def isDefinedAt(s: Exp[_]) = domain.contains(s)
-
-    def apply(s: Exp[_]) = nodes(s)
-    //    def node(s: Exp[_]) = nodes.get(s)
+    def node(s: Exp[_]): Option[AstNode] = nodes.get(s)
 
     def usagesOf(s: Exp[_]) = nodes.get(s) match {
       case Some(GraphNode(_,_,_,usages)) => usages
