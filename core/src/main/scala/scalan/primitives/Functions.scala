@@ -416,7 +416,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         val f = fSym.asInstanceOf[Exp[A=>B]]
         f.isRecursive = true
         val leB = Lazy(f.elem.eb)
-        reifyObject(Apply(f, x)(leB))(leB) 
+        reifyObject(Apply(f, x)(leB))
       }
     }
   }

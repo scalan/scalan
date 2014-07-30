@@ -42,7 +42,6 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def mirror(f: Transformer): Rep[_]
     def decompose: Option[Rep[_]] = None
     def isScalarOp: Boolean = true
-    def reifyWithSelfType(d: ReifiableObject[_, T @uncheckedVariance]): Exp[T] = reifyObject(d)(Lazy(selfType))
   }
 
   type Def[+A] = ReifiableObject[A,A]
@@ -146,7 +145,12 @@ trait BaseExp extends Base { self: ScalanStaged =>
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: LElem[T]): Exp[T]
-  implicit def reifyObject[T:LElem](obj: ReifiableObject[_,T]): Rep[T] = toExp(obj.asInstanceOf[Def[T]], fresh[T])
+  implicit def reifyObject[T](obj: ReifiableObject[_,T]): Rep[T] = {
+    // TODO bad cast
+    val obj1 = obj.asInstanceOf[Def[T]]
+    implicit val leT = Lazy(obj1.selfType)
+    toExp(obj1, fresh[T])
+  }
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
     case _: BaseElem[_] => Const(x)

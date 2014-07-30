@@ -126,9 +126,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     def createMethodCall(m: Method, args: Array[AnyRef]): Exp[_] = {
       getResultElem(m, args) match {
         case e: Elem[a] =>
-          val resultElem = Lazy(e)
-          reifyObject(MethodCall[a](
-            receiver, m, args.toList)(resultElem))(resultElem)
+          MethodCall[a](receiver, m, args.toList)(Lazy(e))
       }
     }
 
