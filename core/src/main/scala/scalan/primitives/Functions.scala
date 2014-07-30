@@ -285,7 +285,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     def selfType = eB.value
     lazy val self: Rep[B] = this
     lazy val uniqueOpId = name(arg.elem, selfType)
-    override def mirror(t: Transformer): Rep[_] = Apply(t(f), t(arg))(eB)
+    override def mirror(t: Transformer) = Apply(t(f), t(arg))(eB)
   }
 
   implicit class LambdaExtensions[A, B](lam: Lambda[A,B]) {

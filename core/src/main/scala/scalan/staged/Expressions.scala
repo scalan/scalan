@@ -39,8 +39,8 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def name[A](eA: Elem[A]): String = s"$name[${eA.name}]"
     def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.name},${eB.name}]"
     def uniqueOpId: String
-    def mirror(f: Transformer): Rep[_]
-    def decompose: Option[Rep[_]] = None
+    def mirror(f: Transformer): Rep[T]
+    def decompose: Option[Rep[T]] = None
     def isScalarOp: Boolean = true
   }
 
@@ -52,7 +52,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
-    override def mirror(t: Transformer): Rep[_] = self
+    override def mirror(t: Transformer) = self
     override def hashCode: Int = (41 + x.hashCode)
 
     override def equals(other: Any) =
@@ -208,9 +208,9 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def unapply[T](e: Exp[T]): Option[TableEntry[T]] = findDefinition(e)
   }
 
-  def decompose[T](d: Def[T]): Exp[_] = d.decompose match {
+  def decompose[T](d: Def[T]): Exp[T] = d.decompose match {
     case None => null
-    case Some(sym) => sym.asInstanceOf[Exp[_]]
+    case Some(sym) => sym
   }
 
   // dependencies
