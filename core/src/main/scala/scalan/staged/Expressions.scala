@@ -118,6 +118,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def apply[X,A](f: X=>Rep[A]): X=>Rep[A] = (z:X) => apply(f(z))
     def apply[X,Y,A](f: (X,Y)=>Rep[A]): (X,Y)=>Rep[A] = (z1:X,z2:Y) => apply(f(z1,z2))
   }
+  def IdTransformer = MapTransformer.Empty
 
   trait TransformerOps[Ctx <: Transformer] {
     def empty: Ctx
@@ -377,6 +378,5 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
     } while (res != currSym && currDef != null)
     res
   }
-
 }
 

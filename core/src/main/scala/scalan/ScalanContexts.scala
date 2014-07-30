@@ -1,7 +1,7 @@
 package scalan
 
 import scalan.primitives._
-import scalan.staged.{Expressions, BaseExp}
+import scalan.staged.{Transforming, Expressions, BaseExp}
 import scalan.seq.BaseSeq
 import scalan.codegen.GraphVizExport
 
@@ -103,7 +103,7 @@ trait ScalanStaged
 //  with StagedSets
   with ProxyExp
   with ViewsExp
-//  with Transforming
+  with Transforming
   with NumericOpsExp
   with EqualExp
   with MathOpsExp

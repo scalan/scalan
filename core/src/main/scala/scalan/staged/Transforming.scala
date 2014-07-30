@@ -2,7 +2,6 @@ package scalan.staged
 
 import scalan.ScalanStaged
 import scalan.common.Lazy
-import scalan.Base
 
 trait Transforming { self: ScalanStaged =>
 
@@ -19,40 +18,52 @@ trait Transforming { self: ScalanStaged =>
     }
   }
 
-  class MapTransformer(val subst: Map[Exp[Any], Exp[Any]] = Map()) extends Transformer {
+  //  class SubstTransformer extends Transformer {
+  //    private val subst = new HashMap[Exp[Any], Exp[Any]]
+  //
+  //    def apply[A](x: Exp[A]): Exp[A] = subst.get(x) match {
+  //      case Some(y) if y != x => apply(y.asRep[A])  // transitive closure
+  //      case _ => x
+  //    }
+  //    def isDefinedAt(x: Rep[_]) = subst.contains(x)
+  //
+  //    def +=(kv: (Exp[Any], Exp[Any])) = subst += kv
+  //  }
+
+  class MapTransformer(private val subst: Map[Exp[_], Exp[_]]) extends Transformer {
+    def this(substPairs: (Exp[_], Exp[_])*) {
+      this(substPairs.toMap)
+    }
     def apply[A](x: Exp[A]): Exp[A] = subst.get(x) match {
-      case Some(y) if y != x => apply(y.asRep[A])  // transitive closure
+      case Some(y) if y != x => apply(y.asRep[A]) // transitive closure
       case _ => x
     }
     def isDefinedAt(x: Rep[_]) = subst.contains(x)
     def domain: Set[Rep[_]] = subst.keySet
+
+    override def toString = if (subst.isEmpty) "MapTransformer.Empty" else s"MapTransformer($subst)"
   }
 
   object MapTransformer {
+    val Empty = new MapTransformer(Map.empty[Exp[_], Exp[_]])
+
     implicit val ops: TransformerOps[MapTransformer] = new TransformerOps[MapTransformer] {
-      def empty = new MapTransformer()
+      def empty = Empty//new MapTransformer(Map.empty)
       def add(t: MapTransformer, kv: (Rep[_], Rep[_])): MapTransformer =
         new MapTransformer(t.subst + kv)
     }
   }
 
-//  case class RuleRewriter[A](rule: RewriteRule[A]) extends Rewriter {
-//    def apply(x: Exp[_]): Exp[_] = rule.unapply(x) match {
-//      case Some(args) => rule(args)
-//      case _ => x
-//    }
-//  }
-//  implicit def toRuleRewriter[A](rule: RewriteRule[A]): Rewriter = new RuleRewriter(rule)
-
-  implicit class PartialRewriter(val pf: PartialFunction[Exp[_], Exp[_]]) extends Rewriter {
-    def apply(x: Exp[_]): Exp[_] = pf.isDefinedAt(x) match {
-      case true => pf(x)
-      case _ => x
-    }
+  implicit class PartialRewriter(pf: PartialFunction[Exp[_], Exp[_]]) extends Rewriter {
+    def apply[T](x: Exp[T]): Exp[T] =
+      if (pf.isDefinedAt(x))
+        pf(x).asInstanceOf[Exp[T]]
+      else
+        x
   }
 
   object DecomposeRewriter extends Rewriter {
-    def apply(x: Exp[_]): Exp[_] = x match {
+    def apply[T](x: Exp[T]): Exp[T] = x match {
       case Def(d) => d.decompose match {
         case None => x
         case Some(y) => y
@@ -61,41 +72,41 @@ trait Transforming { self: ScalanStaged =>
     }
   }
 
+  abstract class Rewriter { self =>
+    def apply[T](x: Exp[T]): Exp[T]
 
-
-  trait Rewriter extends (Exp[_] => Exp[_]) { self =>
-
-    def orElse(other: Rewriter): Rewriter = (x: Exp[_]) => {
+    def orElse(other: Rewriter): Rewriter = new Rewriter {
+      def apply[T](x: Exp[T]) = {
         val y = self(x)
         (x == y) match { case true => other(x) case _ => y }
+      }
     }
-    def andThen(other: Rewriter): Rewriter = (x: Exp[_]) => {
-      val y = self(x)
-      val res = other(y)
-      res
+    def andThen(other: Rewriter): Rewriter = new Rewriter {
+      def apply[T](x: Exp[T]) = {
+        val y = self(x)
+        val res = other(y)
+        res
+      }
     }
 
     def |(other: Rewriter) = orElse(other)
     def ~(other: Rewriter) = andThen(other)
-
-    //def ??(x: Exp[_] => Boolean): Rewriter = (x: Exp[_]) => other(self(x))
-  }
-  object Rewriter {
-    implicit def functionToRewriter(f: Exp[_] => Exp[_]): Rewriter = new Rewriter { def apply(x: Exp[_]) = f(x) }
   }
 
-  val NoRewriting: Rewriter = (x: Exp[_]) => x
+  val NoRewriting: Rewriter = new Rewriter {
+    def apply[T](x: Exp[T]) = x
+  }
 
   abstract class Mirror[Ctx <: Transformer : TransformerOps] {
-    def apply(t: Ctx, rw: Rewriter, x: Exp[_]): (Ctx, Exp[_]) = (t, x.mirror(t))
+    def apply[A](t: Ctx, rw: Rewriter, x: Exp[A]): (Ctx, Exp[_]) = (t, x.mirror(t))
 
     // every mirrorXXX method should return a pair (t + (v -> v1), v1)
-    protected def mirrorVar(t: Ctx, rewriter: Rewriter, v: Exp[_]): (Ctx, Exp[_]) = {
-      val newVar = fresh(Lazy(v.elem.asElem[Any]))
+    protected def mirrorVar[A](t: Ctx, rewriter: Rewriter, v: Exp[A]): (Ctx, Exp[_]) = {
+      val newVar = fresh(Lazy(v.elem))
       (t + (v -> newVar), newVar)
     }
 
-    protected def mirrorDef(t: Ctx, rewriter: Rewriter, node: Exp[_], d: Def[_]): (Ctx, Exp[_]) = {
+    protected def mirrorDef[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = {
       val (t1, mirrored) = apply(t, rewriter, node)
       var res = mirrored
       var curr = res
@@ -107,17 +118,22 @@ trait Transforming { self: ScalanStaged =>
       (t1 + (node -> res), res)
     }
 
-    protected def getMirroredLambdaSym(node: Exp[_]): Exp[_] = fresh(Lazy(node.elem.asElem[Any]))
+    protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Exp[_] = fresh(Lazy(node.elem))
 
     // require: should be called after lam.schedule is mirrored
     private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], lam: Lambda[_,_]): Lambda[_,_] = {
       val newVar = t(lam.x)
       val newBody = t(lam.y)
-      val newLambdaDef = new LambdaWrapper(None, newVar, newBody, newLambdaSym.asRep[Any=>Any])
+      val newLambdaDef = new LambdaWrapper(None, newVar, newBody, newLambdaSym.asRep[Any=>Any], lam.mayInline)
+      // from Scalan
+//      val newLambdaDef = new Lambda(None, newVar, newBody)(newVar.elem, newBody.elem) {
+//        // TODO problem with types?
+//        override val self = newLambdaSym.asRep[A => B]
+//      }
       newLambdaDef
     }
 
-    protected def mirrorLambda(t: Ctx, rewriter: Rewriter, node: Exp[_], lam: Lambda[_,_]): (Ctx, Exp[_]) = {
+    protected def mirrorLambda[A, B](t: Ctx, rewriter: Rewriter, node: Exp[A => B], lam: Lambda[A, B]): (Ctx, Exp[_]) = {
       val (t1, newVar) = mirrorNode(t, rewriter, lam.x)
       val newLambdaSym = getMirroredLambdaSym(node)
 
@@ -134,19 +150,18 @@ trait Transforming { self: ScalanStaged =>
 
     protected def isMirrored(t: Ctx, node: Exp[_]): Boolean = t.isDefinedAt(node)
 
-    protected def mirrorNode(t: Ctx, rewriter: Rewriter, node: Exp[_]): (Ctx, Exp[_]) = {
+    // TODO make protected
+    def mirrorNode[A](t: Ctx, rewriter: Rewriter, node: Exp[A]): (Ctx, Exp[_]) = {
       isMirrored(t, node) match {         // cannot use 'if' because it becomes staged
         case true => (t, t(node))
         case _ =>
           node match {
-            case Var(_) =>
-              mirrorVar(t, rewriter, node)
-
-            case Def(lam: Lambda[_, _]) =>
-              mirrorLambda(t, rewriter, node, lam)
-
+            case Def(lam: Lambda[a, b]) =>
+              mirrorLambda(t, rewriter, node.asRep[a => b], lam)
             case Def(d) =>
               mirrorDef(t, rewriter, node, d)
+            case _ =>
+              mirrorVar(t, rewriter, node)
           }
       }
     }
@@ -157,6 +172,7 @@ trait Transforming { self: ScalanStaged =>
         (t2, nodes ++ List(n1))
       }}
 
+    // TODO simplify to mirrorNode if possible
     def mirrorSymbol(startNode: Exp[_], rewriter: Rewriter, t: Ctx): (Ctx, Exp[_]) = {
       val (t1, ss) = mirrorSymbols(t, rewriter, List(startNode))
       (t1, ss.head)
@@ -165,10 +181,6 @@ trait Transforming { self: ScalanStaged =>
 
   def mirror[Ctx <: Transformer : TransformerOps] = new Mirror[Ctx] {}
   val DefaultMirror = mirror[MapTransformer]
-
-  object Transformer {
-    val Id = new MapTransformer()
-  }
 
   //  sealed abstract class TupleStep(val name: String)
   //  case object GoLeft extends TupleStep("L")
@@ -192,13 +204,8 @@ trait Transforming { self: ScalanStaged =>
     ProjectionTree(root, newChildren)
   }
 
-  def pairMany(env: List[Exp[Any]]): Exp[Any] =
+  def pairMany(env: List[Exp[_]]): Exp[_] =
     env.reduceRight(Pair(_, _))
-
-  def unpairMany(s: Exp[Any]): List[Exp[Any]] = s match {
-    case Def(Tup(x,y)) => unpairMany(x) ::: unpairMany(y)
-    case _ => List(s)
-  }
 
   abstract class SymbolTree {
     def root: Exp[_]

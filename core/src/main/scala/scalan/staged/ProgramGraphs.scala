@@ -6,7 +6,7 @@ import scalan.common.GraphUtil
 trait ProgramGraphs extends Scheduling with Transforming with AstGraphs { self: ScalanStaged =>
 
   class PGraph(roots: List[Exp[Any]],
-               mapping: MapTransformer = new MapTransformer()) extends ProgramGraph[MapTransformer](roots, mapping) {
+               mapping: MapTransformer = MapTransformer.Empty) extends ProgramGraph[MapTransformer](roots, mapping) {
     def this(root: Exp[Any]) = this(List(root))
   }
 
