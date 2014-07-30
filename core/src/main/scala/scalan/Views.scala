@@ -174,8 +174,8 @@ trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
   }
 
   implicit class IsoOps[From, To](iso: Iso[From, To]) {
-    def toFunTo: Rep[From => To] = fun(iso.to)(Lazy(iso.eFrom))
-    def toFunFrom: Rep[To => From] = fun(iso.from)(Lazy(iso.eTo))
+    def toFunTo: Rep[From => To] = fun(iso.to _)(Lazy(iso.eFrom))
+    def toFunFrom: Rep[To => From] = fun(iso.from _)(Lazy(iso.eTo))
   }
 
   def MethodCallFromExp(clazzUT: Class[_], methodName: String) = new {
