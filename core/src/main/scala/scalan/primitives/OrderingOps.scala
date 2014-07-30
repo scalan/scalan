@@ -68,14 +68,14 @@ trait OrderingOpsExp extends OrderingOps with BaseExp { self: ScalanStaged =>
   def ordering_max[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Ordering[T], et: Elem[T]): Rep[T] = OrderingMax(lhs,rhs)
   def ordering_min[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Ordering[T], et: Elem[T]): Rep[T] = OrderingMin(lhs,rhs)
 
-/*
-  override def rewrite[T](d: Def[T])(implicit eT: Elem[T]) = d match {
-    case OrderingLT(Def(Const(x)), Def(Const(y)), n) => Const(n.lt(x,y))
-//    case OrderingGT(Def(Const(x)), Def(Const(y)), n) => Const(n.gt(x,y))
-//    case OrderingLTEQ(Def(Const(x)), Def(Const(y)), n) => Const(n.lteq(x,y))
-//    case OrderingGTEQ(Def(Const(x)), Def(Const(y)), n) => Const(n.gteq(x,y))
-    case _ => super.rewrite(d)
+  override def rewrite[T](s: Exp[T])(implicit leT: LElem[T]) = s match {
+    case Def(d) => d match {
+      case OrderingLT(Def(Const(x)), Def(Const(y)), n) => Const(n.lt(x, y))
+      case OrderingGT(Def(Const(x)), Def(Const(y)), n) => Const(n.gt(x,y))
+      case OrderingLTEQ(Def(Const(x)), Def(Const(y)), n) => Const(n.lteq(x,y))
+      case OrderingGTEQ(Def(Const(x)), Def(Const(y)), n) => Const(n.gteq(x,y))
+      case _ => super.rewrite(s)
+    }
+    case _ => super.rewrite(s)
   }
-*/
 }
-

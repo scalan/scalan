@@ -13,8 +13,12 @@ trait NumericOps { self: Scalan =>
     def -(rhs: Rep[T]) = numeric_minus(lhs, rhs)
     def *(rhs: Rep[T]) = numeric_times(lhs, rhs)
     def unary_- = numeric_negate(lhs)
+    def abs = Math.abs(lhs)
     def toFloat = numeric_toFloat(lhs)
-    //TODO def abs = Math.abs(lhs)
+    def toDouble = numeric_toDouble(lhs)
+    def toInt = numeric_toInt(lhs)
+    def ceil = Math.ceil(toDouble)
+    def floor = Math.floor(toDouble)
   }
 
   implicit class NumericIntOpsCls[T](lhs: Rep[Int]) {
@@ -28,10 +32,14 @@ trait NumericOps { self: Scalan =>
   def numeric_divInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int]
   def numeric_modInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int]
   def numeric_negate[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T]
-  ////  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T]
-  //
-  //  //def numeric_signum[T](x: T)(implicit n: Numeric[T]): Rep[Int]
+  def random[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = numeric_rand[T](bound)
+//  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T]
+
+  //def numeric_signum[T](x: T)(implicit n: Numeric[T]): Rep[Int]
   def numeric_toFloat[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Float]
+  def numeric_toDouble[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Double]
+  def numeric_toInt[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Int]
+  def numeric_rand[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T]
 }
 
 trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
@@ -44,6 +52,15 @@ trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
   //  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = n.abs(x)
   //  //def numeric_signum[T](x: T)(implicit n: Numeric[T]): Rep[Int]
   def numeric_toFloat[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Float] = n.toFloat(lhs)
+  def numeric_toDouble[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Double] = n.toDouble(lhs)
+  def numeric_toInt[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Int] = n.toInt(lhs)
+  def numeric_rand[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = {
+    et.name match {
+      case  "Int" => scala.util.Random.nextInt(bound.asInstanceOf[Int]).asInstanceOf[Rep[T]]
+      case  "Double" => (scala.util.Random.nextDouble()*bound.asInstanceOf[Double]).asInstanceOf[Rep[T]]
+      case _ => ???
+    }
+  }
 }
 
 trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
@@ -78,9 +95,11 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
     def copyWith(a: Rep[T]) = this.copy(arg = a)
   }
 
-  //  case class NumericAbs[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends NumericUnOp[T]("Abs") {
-  //     def copyWith(a: Rep[T]) = this.copy(arg = a)
-  //  }
+  case class NumericToDouble[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends UnOpBase[T,Double] {
+    def selfType = DoubleElement
+    def copyWith(a: Rep[T]) = this.copy(arg = a)
+    def opName = "ToDouble"
+  }
 
   case class NumericToFloat[T: Elem](arg: Exp[T], implicit val n: Numeric[T]) extends Def[Float] with UnOpBase[T, Float] {
     val selfType = element[Float]
@@ -92,15 +111,31 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
     def opName = "ToFloat"
   }
 
+  case class NumericToInt[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends UnOpBase[T,Int] {
+    def selfType = IntElement
+    def copyWith(a: Rep[T]) = this.copy(arg = a)
+    def opName = "ToInt"
+  }
+
+  case class NumericRand[T](bound: Exp[T])(implicit eT: Elem[T]) extends BaseDef[T] {
+    def elem = eT
+    def uniqueOpId = name(eT)
+    override def mirror(t: Transformer) = NumericRand(t(bound))(eT)
+    override def equals(other: Any) = false
+  }
+
   def numeric_plus[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericPlus(lhs, rhs, n)
   def numeric_minus[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericMinus(lhs, rhs, n)
   def numeric_times[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericTimes(lhs, rhs, n)
   def numeric_divInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = NumericDivInt(lhs, rhs)
   def numeric_modInt(lhs: Rep[Int], rhs: Rep[Int]): Rep[Int] = NumericModInt(lhs, rhs)
-  def numeric_toFloat[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Float] = NumericToFloat(lhs, n)
+  def numeric_toFloat[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Float] = NumericToFloat(lhs,n)
+  def numeric_toDouble[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Double] = NumericToDouble(lhs,n)
   def numeric_negate[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericNegate(x, n)
-  //  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericAbs(x, n)
-  
+  def numeric_toInt[T](lhs: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[Int] = NumericToInt(lhs, n)
+  def numeric_rand[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericRand(bound)(et)
+
+//  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericAbs(x, n)
   private def isZero[T](x: T, n: Numeric[T]) = x == n.zero
   private def isOne[T](x: T, n: Numeric[T]) = x == n.fromInt(1)
   
@@ -127,6 +162,7 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
       case NumericDiv(x, Def(Const(one)), n: Numeric[T] @unchecked) if isOne(one, n) => x
       case NumericDivInt(x @ Def(Const(0)), _) => x
       case NumericDivInt(x, Def(Const(1))) => x
+      case NumericNegate(Def(NumericNegate(x, _)), _) => x
       case _ => super.rewrite(d)
     }
     case _ => super.rewrite(d)

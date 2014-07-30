@@ -16,7 +16,7 @@ trait Scalan
      with Tuples
      with TypeSum
      with NumericOps
-//     with MathOps
+     with MathOps
      with LogicalOps
      with OrderingOps
 //     with FractionalOps
@@ -47,7 +47,7 @@ trait ScalanSeq
   with OrderingOpsSeq
   with NumericOpsSeq
   with EqualSeq
-//  with MathOpsSeq
+  with MathOpsSeq
   with LogicalOpsSeq
 //  with FractionalOpsSeq
 {
@@ -106,7 +106,7 @@ trait ScalanStaged
 //  with Transforming
   with NumericOpsExp
   with EqualExp
-//  with MathOpsExp
+  with MathOpsExp
   with LogicalOpsExp
   with OrderingOpsExp
 //  with FractionalOpsExp
