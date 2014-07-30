@@ -64,7 +64,7 @@ trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
 }
 
 trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
-  abstract class NumericBinOp[T](val opName: String)(implicit val selfType: Elem[T], val numeric: Numeric[T]) extends BinOp[T]
+  abstract class NumericBinOp[T](val opName: String)(implicit selfType: Elem[T], val numeric: Numeric[T]) extends EndoBinOp[T]
 
   case class NumericPlus[T: Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("+") {
     def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
@@ -78,41 +78,32 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
   case class NumericDiv[T: Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Fractional[T]) extends NumericBinOp[T]("/") {
     def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
   }
-  case class NumericDivInt(lhs: Exp[Int], rhs: Exp[Int]) extends BinOp[Int] {
-    val selfType = element[Int]
+  case class NumericDivInt(lhs: Exp[Int], rhs: Exp[Int]) extends EndoBinOp[Int] {
     def copyWith(l: Rep[Int], r: Rep[Int]) = this.copy(lhs = l, rhs = r)
     def opName = "/"
   }
-  case class NumericModInt(lhs: Exp[Int], rhs: Exp[Int]) extends BinOp[Int] {
-    val selfType = element[Int]
+  case class NumericModInt(lhs: Exp[Int], rhs: Exp[Int]) extends EndoBinOp[Int] {
     def copyWith(l: Rep[Int], r: Rep[Int]) = this.copy(lhs = l, rhs = r)
     def opName = "%"
   }
 
-  abstract class NumericUnOp[T](val opName: String)(implicit val selfType: Elem[T], val numeric: Numeric[T]) extends UnOp[T] {
-  }
+  abstract class NumericUnOp[T](val opName: String)(implicit selfType: Elem[T], val numeric: Numeric[T]) extends EndoUnOp[T]
+
   case class NumericNegate[T: Elem](arg: Exp[T], implicit val n: Numeric[T]) extends NumericUnOp[T]("-") {
     def copyWith(a: Rep[T]) = this.copy(arg = a)
   }
 
-  case class NumericToDouble[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends UnOpBase[T,Double] {
-    def selfType = DoubleElement
+  case class NumericToDouble[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends UnOp[T,Double] {
     def copyWith(a: Rep[T]) = this.copy(arg = a)
     def opName = "ToDouble"
   }
 
-  case class NumericToFloat[T: Elem](arg: Exp[T], implicit val n: Numeric[T]) extends Def[Float] with UnOpBase[T, Float] {
-    val selfType = element[Float]
+  case class NumericToFloat[T: Elem](arg: Exp[T], implicit val n: Numeric[T]) extends UnOp[T, Float] {
     def copyWith(a: Rep[T]) = this.copy(arg = a)
-    override def mirror(t: Transformer) = {
-      implicit val eT = arg.elem
-      copyWith(t(arg))
-    }
     def opName = "ToFloat"
   }
 
-  case class NumericToInt[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends UnOpBase[T,Int] {
-    def selfType = IntElement
+  case class NumericToInt[T:Elem](arg: Exp[T], implicit val n: Numeric[T]) extends UnOp[T,Int] {
     def copyWith(a: Rep[T]) = this.copy(arg = a)
     def opName = "ToInt"
   }

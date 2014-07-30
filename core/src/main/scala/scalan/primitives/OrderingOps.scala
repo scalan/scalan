@@ -34,9 +34,7 @@ trait OrderingOpsSeq extends OrderingOps { self: ScalanSeq =>
 }
 
 trait OrderingOpsExp extends OrderingOps with BaseExp { self: ScalanStaged =>
-  abstract class OrderingBinOp[T](ordering: Ordering[T], val opName: String) extends BinOpBase[T, Boolean] {
-    override def selfType: Elem[Boolean] = element[Boolean]
-  }
+  abstract class OrderingBinOp[T](ordering: Ordering[T], val opName: String) extends BinOp[T, Boolean]
 
   case class OrderingLT[T](lhs: Exp[T], rhs: Exp[T], implicit val n: Ordering[T]) extends OrderingBinOp[T](n, "<") {
     def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
@@ -50,15 +48,13 @@ trait OrderingOpsExp extends OrderingOps with BaseExp { self: ScalanStaged =>
   case class OrderingGTEQ[T](lhs: Exp[T], rhs: Exp[T], implicit val n: Ordering[T]) extends OrderingBinOp[T](n, ">=") {
     def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
   }
-  case class OrderingMax[T](lhs: Exp[T], rhs: Exp[T])(implicit val n: Ordering[T], elem: Elem[T]) extends BinOp[T] {
+  case class OrderingMax[T](lhs: Exp[T], rhs: Exp[T])(implicit val n: Ordering[T], elem: Elem[T]) extends EndoBinOp[T] {
     def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
     def opName = "max"
-    override def selfType: Elem[T] = element[T]
   }
-  case class OrderingMin[T](lhs: Exp[T], rhs: Exp[T])(implicit val n: Ordering[T], elem: Elem[T]) extends BinOp[T] {
+  case class OrderingMin[T](lhs: Exp[T], rhs: Exp[T])(implicit val n: Ordering[T], elem: Elem[T]) extends EndoBinOp[T] {
     def copyWith(l: Rep[T], r: Rep[T]) = this.copy(lhs = l, rhs = r)
     def opName = "min"
-    override def selfType: Elem[T] = element[T]
   }
 
   def ordering_lt[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Ordering[T]): Rep[Boolean] = OrderingLT(lhs,rhs,n)

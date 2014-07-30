@@ -59,13 +59,9 @@ trait MathOpsSeq extends MathOps { self: ScalanSeq =>
 }
 
 trait MathOpsExp extends MathOps with BaseExp { self: ScalanStaged =>
-  abstract class UnDoubleOp(val opName: String) extends UnOp[Double] {
-    override def selfType = DoubleElement
-  }
+  abstract class UnDoubleOp(val opName: String) extends EndoUnOp[Double]
 
-  abstract class BinDoubleOp(val opName: String) extends BinOp[Double] {
-    override def selfType = DoubleElement
-  }
+  abstract class BinDoubleOp(val opName: String) extends EndoBinOp[Double]
 
   case class MathCeil(arg: Rep[Double]) extends UnDoubleOp("Ceil") {
     def copyWith(a: Rep[Double]) = this.copy(arg = a)

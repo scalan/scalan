@@ -22,13 +22,7 @@ trait EqualSeq extends Equal  { self: ScalanSeq =>
 }
 
 trait EqualExp extends Equal with BaseExp { self: ScalanStaged =>
-  abstract class EqBinOp[T](val opName: String) extends Def[Boolean] with BinOpBase[T, Boolean] {
-    val selfType = element[Boolean]
-    override def mirror(t: Transformer) = {
-      implicit val eT = lhs.elem
-      copyWith(t(lhs), t(rhs))
-    }
-  }
+  abstract class EqBinOp[T](val opName: String) extends BinOp[T, Boolean]
 
   def equals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = EqualsClass(a,b)
   def notequals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = NotEqual(a,b)

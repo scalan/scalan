@@ -29,10 +29,7 @@ trait LogicalOpsSeq extends LogicalOps { self: ScalanSeq =>
 }
 
 trait LogicalOpsExp extends LogicalOps { self: ScalanStaged =>
-  abstract class LogicalBinOp(val opName: String) extends BinOp[Boolean] {
-    def selfType = BoolElement
-    implicit val lSelfType = Lazy(BoolElement)
-  }
+  abstract class LogicalBinOp(val opName: String) extends EndoBinOp[Boolean]
   
   case class And(lhs: Exp[Boolean], rhs: Exp[Boolean]) extends LogicalBinOp("&&") {
     def copyWith(l: Rep[Boolean], r: Rep[Boolean]) = this.copy(lhs = l, rhs = r)
@@ -41,16 +38,12 @@ trait LogicalOpsExp extends LogicalOps { self: ScalanStaged =>
     def copyWith(l: Rep[Boolean], r: Rep[Boolean]) = this.copy(lhs = l, rhs = r)
   }
 
-  abstract class LogicalUnOp(val opName: String) extends UnOp[Boolean] {
-    def selfType = BoolElement
-    implicit val lSelfType = Lazy(BoolElement)
-  }
+  abstract class LogicalUnOp(val opName: String) extends EndoUnOp[Boolean]
 
   case class Not(arg: Exp[Boolean]) extends LogicalUnOp("!") {
     def copyWith(a: Rep[Boolean]) = this.copy(arg = a)
   }
-  case class BooleanToInt(arg: Exp[Boolean]) extends Def[Int] with UnOpBase[Boolean,Int] {
-    override def selfType = element[Int]
+  case class BooleanToInt(arg: Exp[Boolean]) extends UnOp[Boolean,Int] {
     def copyWith(a: Rep[Boolean]) = this.copy(arg = a)
     def opName = "ToInt"
   }

@@ -56,8 +56,8 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
     case NumericToFloat(arg, _) => s"$arg.toFloat"
     case NumericToDouble(lhs, _) => s"$lhs.toDouble"
     case NumericToInt(lhs, _) => s"$lhs.toInt"
-    case op: UnOpBase[_, _] => s"${op.name}(${op.arg})"
-    case op: BinOpBase[_, _] => s"${op.lhs} ${op.name} ${op.rhs}"
+    case op: UnOp[_, _] => s"${op.name}(${op.arg})"
+    case op: BinOp[_, _] => s"${op.lhs} ${op.name} ${op.rhs}"
     case _ => d.toString
   }
 
