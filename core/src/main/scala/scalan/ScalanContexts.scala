@@ -20,7 +20,7 @@ trait Scalan
      with MathOps
      with LogicalOps
      with OrderingOps
-//     with FractionalOps
+     with FractionalOps
      with Functions
      with IfThenElse
      with Equal
@@ -50,7 +50,7 @@ trait ScalanSeq
   with EqualSeq
   with MathOpsSeq
   with LogicalOpsSeq
-//  with FractionalOpsSeq
+  with FractionalOpsSeq
 {
   type Rep[+A] = A
   
@@ -109,7 +109,7 @@ trait ScalanStaged
   with MathOpsExp
   with LogicalOpsExp
   with OrderingOpsExp
-//  with FractionalOpsExp
+  with FractionalOpsExp
   with FunctionsExp
   with IfThenElseExp
 //  with Graphs
