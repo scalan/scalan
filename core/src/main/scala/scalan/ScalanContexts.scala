@@ -10,6 +10,7 @@ trait Scalan
      with Elems
 //     with Descs
      with Views
+     with ProxyBase
 //     with Chunks
 //     with Sets
 //     with Zipping
@@ -29,7 +30,6 @@ trait Scalan
 
 trait ScalanDsl
   extends Scalan
-     with ProxyBase
 {
 }
 
@@ -40,6 +40,7 @@ trait ScalanSeq
 //  with DescsSeq
 //  with SeqSets
   with ViewsSeq
+  with ProxySeq
   with TuplesSeq
   with TypeSumSeq
   with FunctionsSeq
@@ -85,7 +86,6 @@ trait ScalanSeq
 trait ScalanSeqImplementation
   extends ScalanDsl
   with ScalanSeq
-  with ProxySeq
   //with StringOpsSeq
   //     with ExperimentalOpsSeq
 {
@@ -101,8 +101,8 @@ trait ScalanStaged
   with ElemsExp
 //  with DescsExp
 //  with StagedSets
-  with ProxyExp
   with ViewsExp
+  with ProxyExp
   with Transforming
   with NumericOpsExp
   with EqualExp
