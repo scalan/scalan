@@ -261,7 +261,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
     def mirror(t: Transformer) = symbol match {
       case Def(d) => d.mirror(t)
-      case _ => fresh(Lazy(symbol.elem.asInstanceOf[Elem[Any]]))
+      case _ => fresh(Lazy(symbol.elem))
     }
   }
 
@@ -292,7 +292,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
                     (implicit et: LElem[T]) extends Exp[T]
   {
     override def elem: Elem[T @uncheckedVariance] = this match {
-      case Def(d) => d.selfType.asInstanceOf[Elem[T]]
+      case Def(d) => d.selfType
       case _ => et.value
     }
     def varName = "s" + id
