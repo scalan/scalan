@@ -24,7 +24,7 @@ trait Views extends Elems { self: Scalan =>
     }
   }
 
-  implicit def viewElement[From, To <: UserType[_]](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
+  implicit def viewElement[From, To /*<: UserType[_]*/](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
 
   abstract class ViewElem[From, To](implicit val iso: Iso[From, To]) extends Elem[To] {
     lazy val tag: TypeTag[To] = iso.tag
@@ -222,7 +222,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
     implicit def selfType = iso.eTo
     lazy val self: Rep[To] = this
     def copy(source: Rep[From]): View[From, To]
-    def mirror(t: Transformer) = reifyObject(copy(t(source)))(Lazy(selfType))
+    def mirror(t: Transformer) = reifyWithSelfType(copy(t(source)))
     lazy val uniqueOpId = name(iso.eFrom, iso.eTo)
   }
 

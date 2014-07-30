@@ -42,6 +42,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def mirror(f: Transformer): Rep[_]
     def decompose: Option[Rep[_]] = None
     def isScalarOp: Boolean = true
+    def reifyWithSelfType(d: ReifiableObject[_, T @uncheckedVariance]): Exp[T] = reifyObject(d)(Lazy(selfType))
   }
 
   type Def[+A] = ReifiableObject[A,A]

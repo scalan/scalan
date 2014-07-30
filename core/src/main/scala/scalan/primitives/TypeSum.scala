@@ -49,12 +49,12 @@ trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
 trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
 
   case class Left[A, B](left: Exp[A])(implicit val eB: Elem[B]) extends BaseDef[(A | B)]()(sumElement(left.elem, eB)) {
-    override def mirror(t: Transformer) = Left[A, B](t(left))
+    override def mirror(t: Transformer) = reifyWithSelfType(Left[A, B](t(left)))
     lazy val uniqueOpId = name(selfType)
   }
 
   case class Right[A, B](right: Exp[B])(implicit val eA: Elem[A]) extends BaseDef[(A | B)]()(sumElement(eA, right.elem)) {
-    override def mirror(t: Transformer) = Right[A, B](t(right))
+    override def mirror(t: Transformer) = reifyWithSelfType(Right[A, B](t(right)))
     lazy val uniqueOpId = name(selfType)
   }
 
