@@ -11,22 +11,22 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
    */
   abstract class AstNode(val graph: AstGraph) 
   {
-    def sym: Exp[Any]
-    def inputSyms: List[Exp[Any]]
-    def outSyms: List[Exp[Any]]
+    def sym: Exp[_]
+    def inputSyms: List[Exp[_]]
+    def outSyms: List[Exp[_]]
   }
   case class GraphNode(
         override val graph: AstGraph,
-        sym: Exp[Any],                 // this symbol
-        definition: Option[Def[Any]],  // definition
-        usages: List[Exp[Any]]) extends AstNode(graph)
+        sym: Exp[_],                 // this symbol
+        definition: Option[Def[_]],  // definition
+        usages: List[Exp[_]]) extends AstNode(graph)
   {
-    def inputSyms: List[Exp[Any]] = definition.toList.flatMap(_.getDeps)
+    def inputSyms: List[Exp[_]] = definition.toList.flatMap(_.getDeps)
     def outSyms = usages
   }
 
-  trait AstGraph extends PartialFunction[Exp[Any], AstNode] {
-    def roots: List[Exp[Any]]
+  trait AstGraph extends PartialFunction[Exp[_], AstNode] {
+    def roots: List[Exp[_]]
     lazy val schedule = buildScheduleForResult(roots, _.getDeps)
     lazy val scheduleSyms = schedule map { _.sym }
 
@@ -36,7 +36,7 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
         s.getDeps
     })
 
-    def scheduleAll: List[TableEntry[_]] = {
+    lazy val scheduleAll: List[TableEntry[_]] = {
       schedule flatMap (tp  => tp match {
         case TableEntry(s, lam: Lambda[_, _]) => lam.scheduleAll :+ tp
         case _ => List(tp)
@@ -54,12 +54,12 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
     /** Symbol Usage information for this graph
         also contains lambda vars with definition = None
       */
-    lazy val nodes: Map[Exp[Any], GraphNode] = {
-      var defMap: Map[Exp[Any], GraphNode] = (schedule map {
-        case TableEntry(s, d) => (s, GraphNode(this, s, Some(d), List.empty[Exp[Any]]))
+    lazy val nodes: Map[Exp[_], GraphNode] = {
+      var defMap: Map[Exp[_], GraphNode] = (schedule map {
+        case TableEntry(s, d) => (s, GraphNode(this, s, Some(d), List.empty[Exp[_]]))
       }).toMap
 
-      def addUsage(usedSym: Exp[Any], referencingSym: Exp[Any]) = defMap.get(usedSym) match {
+      def addUsage(usedSym: Exp[_], referencingSym: Exp[_]) = defMap.get(usedSym) match {
         case Some(node) =>
           defMap += usedSym -> node.copy(usages = referencingSym :: node.usages)
         case None =>
@@ -73,27 +73,29 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
       defMap
     }
 
-    lazy val domain: Set[Exp[Any]] = (nodes collect {
+    lazy val domain: Set[Exp[_]] = (nodes collect {
       case (s, GraphNode(_, _, Some(_), _)) => s
     }).toSet
 
-    def isDefinedAt(s: AnyExp) = domain.contains(s)
+    // TODO don't extend PartialFunction
+    def isDefinedAt(s: Exp[_]) = domain.contains(s)
 
-    def apply(s: AnyExp) = nodes(s)
+    def apply(s: Exp[_]) = nodes(s)
+    //    def node(s: Exp[_]) = nodes.get(s)
 
-    def usagesOf(s: AnyExp) = nodes.get(s) match {
+    def usagesOf(s: Exp[_]) = nodes.get(s) match {
       case Some(GraphNode(_,_,_,usages)) => usages
       case None => List()
     }
 
-    def hasManyUsages(s: AnyExp): Boolean = usagesOf(s).length > 1
+    def hasManyUsages(s: Exp[_]): Boolean = usagesOf(s).lengthCompare(1) > 0
 
-    def scheduleFrom(x: AnyExp): List[TableEntry[_]] = {
-      val locals = GraphUtil.depthFirstSetFrom(x)(sym => usagesOf(sym).filter(domain contains _))
+    def scheduleFrom(x: Exp[_]): List[TableEntry[_]] = {
+      val locals = GraphUtil.depthFirstSetFrom[Exp[_]](x)(sym => usagesOf(sym).filter(domain.contains))
       schedule filter ( locals contains _.sym )
     }
 
-    def projectionTreeFrom(root: AnyExp): ProjectionTree = {
+    def projectionTreeFrom(root: Exp[_]): ProjectionTree = {
       ProjectionTree(root, s => {
         val usages = usagesOf(s).collect { case u@TupleProjection(i) => (i,u) }
         usages.sortBy(_._1).map(_._2)

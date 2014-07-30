@@ -5,15 +5,18 @@ import scalan.common.GraphUtil
 
 trait ProgramGraphs extends Scheduling with Transforming with AstGraphs { self: ScalanStaged =>
 
-  class PGraph(roots: List[Exp[Any]],
-               mapping: MapTransformer = MapTransformer.Empty) extends ProgramGraph[MapTransformer](roots, mapping) {
-    def this(root: Exp[Any]) = this(List(root))
+  case class Node(usages: List[Exp[_]], definition: Option[Def[_]]) {
+    def addUsage(usage: Exp[_]) = copy(usages = usage :: this.usages)
   }
+  
+  type PGraph = ProgramGraph[MapTransformer]
 
   // immutable program graph
-  class ProgramGraph[Ctx <: Transformer : TransformerOps](val roots: List[Exp[Any]], val mapping: Ctx)
-  	  extends AstGraph
-  {
+  class ProgramGraph[Ctx <: Transformer : TransformerOps](val roots: List[Exp[_]], val mapping: Ctx)
+  	  extends AstGraph {
+    def this(roots: List[Exp[_]]) { this(roots, implicitly[TransformerOps[Ctx]].empty) }
+    def this(root: Exp[_]) { this(List(root)) }
+
     def transform(m: Mirror[Ctx], rw: Rewriter, t: Ctx): ProgramGraph[Ctx] = {
       val t0 = t merge mapping
       val (t1, _) = m.mirrorSymbols(t0, rw, schedule map { _.sym })
