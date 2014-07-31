@@ -16,6 +16,7 @@ trait Functions { self: Scalan =>
   def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[A=>B=>C]
   def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C]
   implicit def fun[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = mkLambda(f, true)
+  implicit def fun2[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = mkLambda(fun)
   def funGlob[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = mkLambda(f, false)
   //def fun[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = mkLambda(f)
   //def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
