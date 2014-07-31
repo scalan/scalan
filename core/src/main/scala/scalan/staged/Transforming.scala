@@ -49,7 +49,7 @@ trait Transforming { self: ScalanStaged =>
 
     implicit val ops: TransformerOps[MapTransformer] = new TransformerOps[MapTransformer] {
       def empty = Empty//new MapTransformer(Map.empty)
-      def add(t: MapTransformer, kv: (Rep[_], Rep[_])): MapTransformer =
+      def add[A](t: MapTransformer, kv: (Rep[A], Rep[A])): MapTransformer =
         new MapTransformer(t.subst + kv)
     }
   }

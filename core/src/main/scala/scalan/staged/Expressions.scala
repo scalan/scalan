@@ -108,13 +108,13 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   trait TransformerOps[Ctx <: Transformer] {
     def empty: Ctx
-    def add(ctx: Ctx, kv: (Rep[_], Rep[_])): Ctx
+    def add[A](ctx: Ctx, kv: (Rep[A], Rep[A])): Ctx
     def merge(ctx1: Ctx, ctx2: Ctx): Ctx = ctx2.domain.foldLeft(ctx1)((t,s) => add(t, (s, ctx2(s))))
   }
 
   implicit class TransformerEx[Ctx <: Transformer](self: Ctx)(implicit ops: TransformerOps[Ctx]) {
-    def +(kv: (Rep[_], Rep[_])) = ops.add(self, kv)
-    def ++(kvs: Map[Rep[_], Rep[_]]) = kvs.foldLeft(self)((ctx, kv) => ops.add(ctx,kv))
+    def +[A](kv: (Rep[A], Rep[A])) = ops.add(self, kv)
+    def ++(kvs: Map[Rep[A], Rep[A]] forSome {type A}) = kvs.foldLeft(self)((ctx, kv) => ops.add(ctx, kv))
     def merge(other: Ctx): Ctx = ops.merge(self, other)
   }
 
