@@ -27,7 +27,7 @@ trait ProxyBase { self: Scalan =>
 }
 
 trait ProxySeq extends ProxyBase { self: ScalanSeq =>
-  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean)(implicit ct: ClassTag[Ops]): Ops = x
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops = x
 }
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
@@ -55,7 +55,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
   private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
 
-  override def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean)(implicit ct: ClassTag[Ops]): Ops = {
+  override def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops = {
     val proxy = proxies.getOrElseUpdate((x, ct), {
       val clazz = ct.runtimeClass
       val e = new Enhancer
@@ -72,7 +72,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
   var invokeEnabled = false
 
-  private def hasFuncArg(args: Array[AnyRef]): Boolean =
+  protected def hasFuncArg(args: Array[AnyRef]): Boolean =
     args.exists {
       case f: Function0[_] => true
       case f: Function1[_, _] => true
@@ -81,7 +81,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     }
 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
-  var methodCallReceivers = Set.empty[Exp[_]]
+  protected var methodCallReceivers = Set.empty[Exp[_]]
 
   class ExpInvocationHandler(receiver: Exp[_], forceInvoke: Boolean) extends InvocationHandler {
     def canInvoke(m: Method, d: Def[_]) = m.getDeclaringClass.isAssignableFrom(d.getClass)
