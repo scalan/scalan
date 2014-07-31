@@ -166,8 +166,8 @@ trait Transforming { self: ScalanStaged =>
       }
     }
 
-    def mirrorSymbols(t0: Ctx, rewriter: Rewriter, nodes: List[Exp[_]]) =
-      nodes.foldLeft((t0, Nil: List[Exp[_]])) { case ((t1, nodes), n) => {
+    def mirrorSymbols(t0: Ctx, rewriter: Rewriter, nodes: Seq[Exp[_]]) =
+      nodes.foldLeft((t0, List.empty[Exp[_]])) { case ((t1, nodes), n) => {
         val (t2, n1) = mirrorNode(t1, rewriter, n)
         (t2, nodes ++ List(n1))
       }}

@@ -69,7 +69,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
     // AstGraph implementation
     def roots = List(y)
-    lazy val bodySchedule: List[TableEntry[_]] = {
+    lazy val bodySchedule: Seq[TableEntry[_]] = {
       if (isIdentity) Nil
       else {
         val g = new PGraph(y)
@@ -83,14 +83,14 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
     lazy val bodyScheduleSyms = bodySchedule map { _.sym }
 
-    def bodyScheduleAll: List[TableEntry[_]] = {
+    def bodyScheduleAll: Seq[TableEntry[_]] = {
       bodySchedule flatMap (tp  => tp match {
         case TableEntry(s, lam: Lambda[_, _]) => lam.bodyScheduleAll :+ tp
         case _ => List(tp)
       })
     }
 
-    lazy val scheduleWithConsts: List[TableEntry[_]] =
+    lazy val scheduleWithConsts: Seq[TableEntry[_]] =
       if (isIdentity) Nil
       else {
         val g = new PGraph(y)

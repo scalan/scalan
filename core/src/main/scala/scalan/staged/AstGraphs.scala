@@ -37,15 +37,15 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
         s.getDeps
     })
 
-    lazy val scheduleAll: List[TableEntry[_]] = {
+    lazy val scheduleAll: Seq[TableEntry[_]] = {
       schedule flatMap (tp  => tp match {
         case TableEntry(s, lam: Lambda[_, _]) => lam.scheduleAll :+ tp
         case _ => List(tp)
       })
     }
 
-    lazy val lambdaBoundSyms: Set[AnyExp] = {
-      schedule.foldLeft(Set[AnyExp]()) { (acc, tp) =>
+    lazy val lambdaBoundSyms: Set[Exp[_]] = {
+      schedule.foldLeft(Set.empty[Exp[_]]) { (acc, tp) =>
         val deps = nodes(tp.sym).inputSyms
         val bound = deps.filter(_.isVar)
         acc ++ bound
@@ -87,9 +87,9 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
 
     def hasManyUsages(s: Exp[_]): Boolean = usagesOf(s).lengthCompare(1) > 0
 
-    def scheduleFrom(x: Exp[_]): List[TableEntry[_]] = {
+    def scheduleFrom(x: Exp[_]): Seq[TableEntry[_]] = {
       val locals = GraphUtil.depthFirstSetFrom[Exp[_]](x)(sym => usagesOf(sym).filter(domain.contains))
-      schedule filter ( locals contains _.sym )
+      schedule.filter(locals contains _.sym)
     }
 
     def projectionTreeFrom(root: Exp[_]): ProjectionTree = {
