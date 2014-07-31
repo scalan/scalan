@@ -138,7 +138,7 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
       case NumericTimes(Def(Const(x)), Def(Const(y)), n: Numeric[T] @unchecked) => Const(n.times(x, y))(d1.selfType)
       // TODO better fix?
       case NumericDiv(Def(Const(x)), Def(Const(y)), n: Fractional[T] @unchecked) if !isZero(y, n) => Const(n.div(x, y))(d1.selfType)
-      case NumericDivInt(Def(Const(x)), Def(Const(y))) => Const(x / y)
+      case NumericDivInt(Def(Const(x)), Def(Const(y))) if y != 0 => Const(x / y)
       // single constant propagation
       case NumericPlus(x, Def(Const(zero)), n: Numeric[T] @unchecked) if isZero(zero, n) => x
       case NumericPlus(Def(Const(zero)), x, n: Numeric[T] @unchecked) if isZero(zero, n) => x
