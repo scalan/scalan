@@ -34,13 +34,13 @@ trait TypesAbs extends Types
 
 
   // elem for concrete class
-  trait BaseTypeElem[A] extends TypeElem[BaseTypeData[A], BaseType[A]]
+  class BaseTypeElem[A](implicit iso: Iso[BaseTypeData[A], BaseType[A]]) extends TypeElem[BaseTypeData[A], BaseType[A]]
 
   // state representation type
   type BaseTypeData[A] = (String, A)
 
   // 3) Iso for concrete class
-  abstract class BaseTypeIso[A](implicit eA: Elem[A])
+  class BaseTypeIso[A](implicit eA: Elem[A])
     extends Iso[BaseTypeData[A], BaseType[A]] {
     override def from(p: Rep[BaseType[A]]) =
       unmkBaseType(p) match {
@@ -56,6 +56,7 @@ trait TypesAbs extends Types
       typeTag[BaseType[A]]
     }
     lazy val defaultRepTo = defaultVal[Rep[BaseType[A]]](BaseType("", element[A].defaultRepValue))
+    lazy val eTo = new BaseTypeElem[A]()(this)
   }
   // 4) constructor and deconstructor
   trait BaseTypeCompanionAbs extends BaseTypeCompanion {
@@ -88,7 +89,8 @@ trait TypesAbs extends Types
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoBaseType[A](implicit eA: Elem[A]): Iso[BaseTypeData[A], BaseType[A]]
+  implicit def isoBaseType[A](implicit eA: Elem[A]): Iso[BaseTypeData[A], BaseType[A]] =
+    new BaseTypeIso[A]
 
   // 6) smart constructor and deconstructor
   def mkBaseType[A](typeCode: Rep[String], defaultValue: Rep[A])(implicit eA: Elem[A]): Rep[BaseType[A]]
@@ -96,13 +98,13 @@ trait TypesAbs extends Types
 
 
   // elem for concrete class
-  trait Tuple2TypeElem[A, B] extends TypeElem[Tuple2TypeData[A, B], Tuple2Type[A, B]]
+  class Tuple2TypeElem[A, B](implicit iso: Iso[Tuple2TypeData[A, B], Tuple2Type[A, B]]) extends TypeElem[Tuple2TypeData[A, B], Tuple2Type[A, B]]
 
   // state representation type
   type Tuple2TypeData[A, B] = (Type[A], Type[B])
 
   // 3) Iso for concrete class
-  abstract class Tuple2TypeIso[A, B](implicit e1: Elem[A], e2: Elem[B])
+  class Tuple2TypeIso[A, B](implicit e1: Elem[A], e2: Elem[B])
     extends Iso[Tuple2TypeData[A, B], Tuple2Type[A, B]] {
     override def from(p: Rep[Tuple2Type[A, B]]) =
       unmkTuple2Type(p) match {
@@ -119,6 +121,7 @@ trait TypesAbs extends Types
       typeTag[Tuple2Type[A, B]]
     }
     lazy val defaultRepTo = defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(element[Type[A]].defaultRepValue, element[Type[B]].defaultRepValue))
+    lazy val eTo = new Tuple2TypeElem[A, B]()(this)
   }
   // 4) constructor and deconstructor
   trait Tuple2TypeCompanionAbs extends Tuple2TypeCompanion {
@@ -151,7 +154,8 @@ trait TypesAbs extends Types
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoTuple2Type[A, B](implicit e1: Elem[A], e2: Elem[B]): Iso[Tuple2TypeData[A, B], Tuple2Type[A, B]]
+  implicit def isoTuple2Type[A, B](implicit e1: Elem[A], e2: Elem[B]): Iso[Tuple2TypeData[A, B], Tuple2Type[A, B]] =
+    new Tuple2TypeIso[A, B]
 
   // 6) smart constructor and deconstructor
   def mkTuple2Type[A, B](tyA: Rep[Type[A]], tyB: Rep[Type[B]])(implicit e1: Elem[A], e2: Elem[B]): Rep[Tuple2Type[A, B]]
@@ -179,14 +183,6 @@ trait TypesSeq extends TypesAbs { self: ScalanSeq with TypesDsl =>
 
 
 
-  implicit def isoBaseType[A](implicit eA: Elem[A]):Iso[BaseTypeData[A], BaseType[A]] =
-    new BaseTypeIso[A] { i =>
-      // should use i as iso reference
-      lazy val eTo =
-        new SeqViewElem[BaseTypeData[A], BaseType[A]]()(i) with BaseTypeElem[A]
-    }
-
-
   def mkBaseType[A]
       (typeCode: Rep[String], defaultValue: Rep[A])(implicit eA: Elem[A]) =
       new SeqBaseType[A](typeCode, defaultValue)
@@ -205,14 +201,6 @@ trait TypesSeq extends TypesAbs { self: ScalanSeq with TypesDsl =>
     lazy val selfType = element[Tuple2TypeCompanionAbs]
   }
 
-
-
-  implicit def isoTuple2Type[A, B](implicit e1: Elem[A], e2: Elem[B]):Iso[Tuple2TypeData[A, B], Tuple2Type[A, B]] =
-    new Tuple2TypeIso[A, B] { i =>
-      // should use i as iso reference
-      lazy val eTo =
-        new SeqViewElem[Tuple2TypeData[A, B], Tuple2Type[A, B]]()(i) with Tuple2TypeElem[A, B]
-    }
 
 
   def mkTuple2Type[A, B]
@@ -253,14 +241,6 @@ trait TypesExp extends TypesAbs with scalan.ProxyExp with scalan.ViewsExp { self
     Some((p.typeCode, p.defaultValue))
 
 
-  implicit def isoBaseType[A](implicit eA: Elem[A]):Iso[BaseTypeData[A], BaseType[A]] =
-    new BaseTypeIso[A] { i =>
-      // should use i as iso reference
-      lazy val eTo =
-        new StagedViewElem[BaseTypeData[A], BaseType[A]]()(i) with BaseTypeElem[A]
-    }
-
-
   case class ExpTuple2Type[A, B]
       (override val tyA: Rep[Type[A]], override val tyB: Rep[Type[B]])
       (implicit override val e1: Elem[A], override val e2: Elem[B])
@@ -281,13 +261,5 @@ trait TypesExp extends TypesAbs with scalan.ProxyExp with scalan.ViewsExp { self
     new ExpTuple2Type[A, B](tyA, tyB)
   def unmkTuple2Type[A:Elem, B:Elem](p: Rep[Tuple2Type[A, B]]) =
     Some((p.tyA, p.tyB))
-
-
-  implicit def isoTuple2Type[A, B](implicit e1: Elem[A], e2: Elem[B]):Iso[Tuple2TypeData[A, B], Tuple2Type[A, B]] =
-    new Tuple2TypeIso[A, B] { i =>
-      // should use i as iso reference
-      lazy val eTo =
-        new StagedViewElem[Tuple2TypeData[A, B], Tuple2Type[A, B]]()(i) with Tuple2TypeElem[A, B]
-    }
 
 }

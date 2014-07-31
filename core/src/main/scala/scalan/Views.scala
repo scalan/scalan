@@ -118,16 +118,12 @@ trait Views extends Elems { self: Scalan =>
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
-  class SeqViewElem[From, To](implicit iso: Iso[From, To]) extends ViewElem[From, To]
-
   trait UserTypeSeq[T, TImpl <: T] extends UserType[T] { thisType: T =>
     override def self = this
   }
 }
 
 trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
-  class StagedViewElem[From, To](implicit iso: Iso[From, To]) extends ViewElem[From, To]
-
   trait UserTypeDef[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
     override def self = reifyObject(this)
     def uniqueOpId = selfType.name
