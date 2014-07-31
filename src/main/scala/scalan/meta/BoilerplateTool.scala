@@ -2,10 +2,10 @@ package scalan.meta
 
 object BoilerplateTool {
   lazy val scalanConfig = CodegenConfig(
-    isLite = false,
+    isLite = true,
     srcPath = "../scalan/src/main/scala",
-    proxyTrait = "scalan.lms.common.ProxyExp",
-    stagedViewsTrait = "scalan.staged.StagedViews",
+    proxyTrait = "scalan.ProxyExp",
+    stagedViewsTrait = "scalan.ViewsExp",
     entityFiles = List(
       "scalan/trees/Trees.scala",
       "scalan/math/Matrices.scala",
@@ -23,11 +23,11 @@ object BoilerplateTool {
     isLite = true,
     srcPath = "../scalan-lite/core/src/main/scala",
     entityFiles = List(
-      "scalan/arrays/PArrays.scala"
+      "../../../../community-edition/src/main/scala/scalan/arrays/PArrays.scala"
       ,"scalan/types/Types.scala"
-      ,"scalan/linalgebra/Vectors.scala"
-      ,"scalan/linalgebra/Matrices.scala"
-      ,"scalan/iterators/Iters.scala"
+      ,"../../../../community-edition/src/main/scala/scalan/linalgebra/Vectors.scala"
+      ,"../../../../community-edition/src/main/scala/scalan/linalgebra/Matrices.scala"
+      //,"scalan/iterators/Iters.scala"
       //, "main/scala/scalan/rx/Trees.scala"
     ),
     proxyTrait = "scalan.ProxyExp",

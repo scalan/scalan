@@ -124,13 +124,13 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         val useImplicits = c.implicitArgs.opt(args => s"(${args.map(_.name).rep()})")
         s"""
         |  // elem for concrete class
-        |  trait ${className}Elem${types} extends ${entityName}Elem[${className}Data${types}, $className${types}]
+        |  class ${className}Elem${types}(implicit iso: Iso[${className}Data${types}, $className${types}]) extends ${entityName}Elem[${className}Data${types}, $className${types}]
         |
         |  // state representation type
         |  type ${className}Data${types} = ${dataType(fieldTypes)}
         |
         |  // 3) Iso for concrete class
-        |  abstract class ${className}Iso${types}${implicitArgs}
+        |  class ${className}Iso${types}${implicitArgs}
         |    extends Iso[${className}Data${types}, $className${types}] {
         |    override def from(p: Rep[$className${types}]) =
         |      unmk${className}(p) match {
@@ -146,6 +146,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |      typeTag[$className${types}]
         |    }
         |    lazy val ${isoZero} = $defaultVal[Rep[$className${types}]]($className(${fieldTypes.rep(zeroSExpr(_))}))
+        |    lazy val eTo = new ${className}Elem${types}()(this)
         |  }
         |  // 4) constructor and deconstructor
         |${if (isLite)
@@ -185,7 +186,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  }
         |
         |  // 5) implicit resolution of Iso
-        |  implicit def iso$className${types}${implicitArgs}: Iso[${className}Data${types}, $className${types}]
+        |  implicit def iso$className${types}${implicitArgs}: Iso[${className}Data${types}, $className${types}] =
+        |    new ${className}Iso${types}
         |
         |  // 6) smart constructor and deconstructor
         |  def mk$className${types}(${fieldsWithType.rep()})${implicitArgs}: Rep[$className${types}]
@@ -222,15 +224,6 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  }
          |""".stripMargin)}
          |""".stripMargin
-      val isoDefs =
-        s"""
-         |  implicit def iso$className${types}$implicitArgs:Iso[${className}Data${types}, $className${types}] =
-         |    new ${className}Iso${types} { i =>
-         |      // should use i as iso reference
-         |      lazy val eTo =
-         |        new SeqViewElem[${className}Data${types}, $className${types}]()(i) with ${className}Elem${types}
-         |    }
-         |""".stripMargin
 
       val constrDefs =
         s"""
@@ -241,7 +234,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |    Some((${fields.rep(f => s"p.$f")}))
          |""".stripMargin
 
-      s"""$userTypeDefs\n$isoDefs\n$constrDefs"""
+      s"""$userTypeDefs\n$constrDefs"""
     }
 
     def getSClassExp(c: SClassDef) = {
@@ -275,17 +268,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |    Some((${fields.rep(f => s"p.$f")}))
          |""".stripMargin
 
-      val isoDefs =
-        s"""
-         |  implicit def iso$className${types}$implicitArgs:Iso[${className}Data${types}, $className${types}] =
-         |    new ${className}Iso${types} { i =>
-         |      // should use i as iso reference
-         |      lazy val eTo =
-         |        new StagedViewElem[${className}Data${types}, $className${types}]()(i) with ${className}Elem${types}
-         |    }
-         |""".stripMargin
-
-      s"""$userTypeNodeDefs\n$constrDefs\n$isoDefs"""
+      s"""$userTypeNodeDefs\n$constrDefs"""
     }
 
     def getTraitSeq = {
