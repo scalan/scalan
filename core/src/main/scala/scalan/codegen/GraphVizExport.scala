@@ -131,43 +131,4 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
     stream.println("}")
     stream.close()
   }
-
-  // from Scalan
-//  def emitDepGraph(ss: List[Exp[_]], stream: PrintWriter, landscape: Boolean): Unit = {
-//    stream.println("digraph G {")
-//
-//    val deflist = buildScheduleForResult(ss /* map { (_.asSymbol) }*/ )
-//
-//    if (landscape) {
-//      stream.println("rankdir=LR")
-//    }
-//
-//    val lambdaBodies = deflist collect { case TP(_, Lambda(_, _, body, _)) => body } toSet
-//
-//    for (tp @ TP(sym, rhs) <- deflist) {
-//      // skip lambda bodies
-//      if (!lambdaBodies.contains(sym)) {
-//        val (deps, lambdaVars) = rhs match {
-//          case l: Lambda[_, _] => lambdaDeps(l)
-//          case _ => (dep(rhs), Nil)
-//        }
-//        // emit node
-//        emitNode(sym, rhs)(stream)
-//
-//        emitDeps(sym, deps, false)(stream)
-//        emitDeps(sym, lambdaVars, true)(stream)
-//
-//        // emit lambda refs
-//        tp.lambda match {
-//          case Some(lam) =>
-//            stream.println(s"${quote(tp.sym)} -> ${quote(lam)} [style=dotted,color=grey]")
-//          case _ =>
-//        }
-//      }
-//    }
-//
-//    stream.println("}")
-//    stream.close()
-//  }
-
 }
