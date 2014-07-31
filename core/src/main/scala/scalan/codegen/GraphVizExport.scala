@@ -1,9 +1,9 @@
 package scalan.codegen
 
-import _root_.scalan.primitives.FunctionsExp
+import java.io.{File, PrintWriter}
+
 import _root_.scalan.ScalanStagedImplementation
 import _root_.scalan.staged.Scheduling
-import java.io.{ File, PrintWriter, FileOutputStream }
 
 trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
 
@@ -17,11 +17,11 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
 
   protected def quote(x: Any) = "\"" + x + "\""
 
-  protected def nodeColor(sym: Exp[_]): String = "color=" + (sym.elem match {
+  protected def nodeColor(sym: Exp[_]): String = sym.elem match {
     case _: ViewElem[_, _] => "green"
     case _: FuncElem[_, _] => "magenta"
     case _ => "grey"
-  })
+  }
 
   protected def nodeLabel(str: String) = s"label=${quote(str)}"
 
@@ -31,21 +31,21 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
         val x = l.x
         stream.println(quote(x) + " [")
         stream.println(nodeLabel(x.toStringWithType))
-        stream.println(nodeColor(x))
+        stream.println(s"color=${nodeColor(x)}")
         stream.println("]")
       case _ =>
     }
     stream.println(quote(sym) + " [")
     stream.println(nodeLabel(sym.toString + " = " + formatDef(rhs)))
-    stream.println("shape=box," + nodeColor(sym) + ",tooltip=" + quote(sym.toStringWithType))
+    stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${quote(sym.toStringWithType)}")
     stream.println("]")
   }
 
   protected def formatDef(d: Def[_]): String = d match {
-    case l: Lambda[_, _] => s"\\\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y.toString}}"
+    case l: Lambda[_, _] => s"\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y.toString}}"
     case Apply(f, arg) => s"$f($arg)"
     case MethodCall(obj, method, args) =>
-      val className0 = method.getDeclaringClass.getName()
+      val className0 = method.getDeclaringClass.getName
       val className = className0.substring(className0.lastIndexOf("$") + 1)
       s"$obj.$className.${method.getName}(${args.mkString("", ",", "")})"
     case Tup(a, b) => s"($a, $b)"
