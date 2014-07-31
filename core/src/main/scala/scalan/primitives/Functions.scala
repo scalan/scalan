@@ -60,6 +60,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
           (this.y equals that.y)
         case _ => false
       }
+    override def toString = s"Lambda(${if (f.isDefined) "f is Some" else "f is None"}, $x => $y})"
     def canEqual(other: Any) = other.isInstanceOf[Lambda[_,_]]
 
     // Product implementation
@@ -140,13 +141,13 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     //      *  @param deps  dependence relation between a definition and symbols
     //      *  @return      a `Seq` of local definitions on which `sym` depends or empty if `sym` is itself non-local
     //      */
-    //    def buildLocalScheduleFrom(sym: Exp[_], deps: Def[_] => Seq[Exp[_]]): Seq[TP[_]] =
+    //    def buildLocalScheduleFrom(sym: Exp[_], deps: Def[_] => Seq[Exp[_]]): Seq[TableEntry[_]] =
     //      if (isLocalDef(sym))
     //        buildScheduleForResult(List(sym), deps(_).filter(isLocalDef(_)))
     //      else
     //        Seq.empty
     //
-    //    def buildLocalScheduleFrom(sym: Exp[_]): Seq[TP[_]] = buildLocalScheduleFrom(sym, _.getDeps)
+    //    def buildLocalScheduleFrom(sym: Exp[_]): Seq[TableEntry[_]] = buildLocalScheduleFrom(sym, _.getDeps)
 
     /** Keeps immutable maps describing branching structure of this lambda
       */
@@ -438,7 +439,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 //    val y = executeFunction(fun, x, res)
 //    val lam = new Lambda(Some(fun), x/*.asSymbol*/, y, mayInline) { override val self = res }
 //    findDefinition(lam) match {
-//      case Some(TP(sym, Lambda(Some(f), _, _, _))) if f == fun =>
+//      case Some(TableEntry(sym, Lambda(Some(f), _, _, _))) if f == fun =>
 //        sym
 //      case _ =>
 //        createDefinition(res/*.asSymbol*/, lam)
