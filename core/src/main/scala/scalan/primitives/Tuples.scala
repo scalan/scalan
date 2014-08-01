@@ -65,13 +65,24 @@ trait Tuples { self: Scalan =>
     def _6: Rep[F] = { val Pair(_, Pair(_, Pair(_, Pair(_, Pair(_, Pair(x, _)))))) = t; x }
     def _7: Rep[G] = { val Pair(_, Pair(_, Pair(_, Pair(_, Pair(_, Pair(_, x)))))) = t; x }
   }
-  //implicit def pimpPair7[A,B,C,D,E,F,G](p: Rep[(A,(B,(C,(D,(E,(F,G))))))]) = new PairOps7(p)
+
+  implicit class PairOps8[A,B,C,D,E,F,G,H](t: Rep[(A,(B,(C,(D,(E,(F,(G,H)))))))]) {
+    def _1: Rep[A] = { val Pair(x, _) = t; x }
+    def _2: Rep[B] = { val Pair(_, Pair(x, _)) = t; x }
+    def _3: Rep[C] = { val Pair(_, Pair(_, Pair(x, _))) = t; x }
+    def _4: Rep[D] = { val Pair(_, Pair(_, Pair(_, Pair(x, _)))) = t; x }
+    def _5: Rep[E] = { val Pair(_, Pair(_, Pair(_, Pair(_, Pair(x, _))))) = t; x }
+    def _6: Rep[F] = { val Pair(_, Pair(_, Pair(_, Pair(_, Pair(_, Pair(x, _)))))) = t; x }
+    def _7: Rep[G] = { val Pair(_, Pair(_, Pair(_, Pair(_, Pair(_, Pair(_, Pair(x, _))))))) = t; x }
+    def _8: Rep[H] = { val Pair(_, Pair(_, Pair(_, Pair(_, Pair(_, Pair(_, Pair(_, x))))))) = t; x }
+  }
 
   implicit def zipTuple3[A, B, C](p: (Rep[A], Rep[B], Rep[C])): Rep[(A,(B,C))] = Pair(p._1, Pair(p._2, p._3))
   implicit def zipTuple4[A, B, C, D](p: (Rep[A], Rep[B], Rep[C], Rep[D])): Rep[(A, (B, (C, D)))] = Pair(p._1, Pair(p._2, Pair(p._3, p._4)))
   implicit def zipTuple5[A, B, C, D, E](p: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E])): Rep[(A, (B, (C, (D,E))))] = Pair(p._1, Pair(p._2, Pair(p._3, Pair(p._4, p._5))))
   implicit def zipTuple6[A, B, C, D, E, F](p: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E], Rep[F])): Rep[(A, (B, (C, (D,(E,F)))))] = Pair(p._1, Pair(p._2, Pair(p._3, Pair(p._4, Pair(p._5, p._6)))))
   implicit def zipTuple7[A, B, C, D, E, F,G](p: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E], Rep[F], Rep[G])): Rep[(A, (B, (C, (D,(E,(F,G))))))] = Pair(p._1, Pair(p._2, Pair(p._3, Pair(p._4, Pair(p._5, Pair(p._6, p._7))))))
+  implicit def zipTuple8[A, B, C, D, E, F, G, H](p: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E], Rep[F], Rep[G], Rep[H])): Rep[(A, (B, (C, (D,(E,(F,(G,H)))))))] = Pair(p._1, Pair(p._2, Pair(p._3, Pair(p._4, Pair(p._5, Pair(p._6, Pair(p._7, p._8)))))))
 
   object Tuple {
     def unapply[A,B,C](p: Rep[(A,(B,C))]) = Some((p._1, p._2, p._3))
@@ -79,6 +90,7 @@ trait Tuples { self: Scalan =>
     def unapply[A,B,C,D,E](p: Rep[(A, (B, (C, (D,E))))])(implicit o: Overloaded2) = Some((p._1, p._2, p._3, p._4, p._5))
     def unapply[A,B,C,D,E,F](p: Rep[(A, (B, (C, (D, (E, F)))))])(implicit o: Overloaded3) = Some((p._1, p._2, p._3, p._4, p._5, p._6))
     def unapply[A,B,C,D,E,F,G](p: Rep[(A, (B, (C, (D, (E, (F,G))))))])(implicit o: Overloaded4) = Some((p._1, p._2, p._3, p._4, p._5, p._6, p._7))
+    def unapply[A,B,C,D,E,F,G,H](p: Rep[(A, (B, (C, (D, (E, (F, (G, H)))))))])(implicit o: Overloaded5) = Some((p._1, p._2, p._3, p._4, p._5, p._6, p._7, p._8))
   }
 }
 

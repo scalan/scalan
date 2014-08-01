@@ -27,7 +27,7 @@ trait ProxyBase { self: Scalan =>
 }
 
 trait ProxySeq extends ProxyBase { self: ScalanSeq =>
-  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean)(implicit ct: ClassTag[Ops]): Ops = x
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops = x
 }
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
@@ -55,13 +55,26 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
   private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
 
-  override def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean)(implicit ct: ClassTag[Ops]): Ops = {
+  override def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops =
+    x match {
+      case Def(d) => d match {
+        case Const(c) => c
+        case _ if invokeEnabled && ct.runtimeClass.isInstance(d) =>
+          d.asInstanceOf[Ops]
+        case _ =>
+          getProxy(x, ct, forceInvoke)
+      }
+      case _ =>
+        getProxy(x, ct, forceInvoke)
+    }
+
+  private def getProxy[Ops](x: Rep[Ops], ct: ClassTag[Ops], forceInvoke: Boolean) = {
     val proxy = proxies.getOrElseUpdate((x, ct), {
       val clazz = ct.runtimeClass
       val e = new Enhancer
       e.setClassLoader(clazz.getClassLoader)
       e.setSuperclass(clazz)
-      e.setCallbackType(classOf[ExpInvocationHandler])
+      e.setCallbackType(classOf[ExpInvocationHandler[_]])
       val proxyClass = e.createClass().asSubclass(classOf[AnyRef])
       val proxyInstance = objenesis.newInstance(proxyClass).asInstanceOf[Factory]
       proxyInstance.setCallback(0, new ExpInvocationHandler(x, forceInvoke))
@@ -72,7 +85,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
   var invokeEnabled = false
 
-  private def hasFuncArg(args: Array[AnyRef]): Boolean =
+  protected def hasFuncArg(args: Array[AnyRef]): Boolean =
     args.exists {
       case f: Function0[_] => true
       case f: Function1[_, _] => true
@@ -81,9 +94,11 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
     }
 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
-  var methodCallReceivers = Set.empty[Exp[_]]
+  protected var methodCallReceivers = Set.empty[Exp[_]]
 
-  class ExpInvocationHandler(receiver: Exp[_], forceInvoke: Boolean) extends InvocationHandler {
+  class ExpInvocationHandler[T](receiver: Exp[T], forceInvoke: Boolean) extends InvocationHandler {
+    override def toString = s"ExpInvocationHandler(${receiver.toStringWithDefinition})"
+
     def canInvoke(m: Method, d: Def[_]) = m.getDeclaringClass.isAssignableFrom(d.getClass)
     def shouldInvoke(args: Array[AnyRef]) = invokeEnabled || forceInvoke || hasFuncArg(args)
 
@@ -125,16 +140,9 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
     def createMethodCall(m: Method, args: Array[AnyRef]): Exp[_] = {
       getResultElem(m, args) match {
-        case e: Elem[a] =>
-          val resultElem = Lazy(e)
-          reifyObject(MethodCall[a](
-            receiver, m, args.toList)(resultElem))(resultElem)
+        case e: Elem[a] => MethodCall[a](receiver, m, args.toList)(Lazy(e))
       }
     }
-
-    // used when a method isn't defined for zero node to determine the type
-    // see e.g. OptionOps.get
-    class ElemException[A](message: String)(implicit val element: Elem[A]) extends StagingException(message, List.empty)
 
     def getResultElem(m: Method, args: Array[AnyRef]): Elem[_] = {
       val e = receiver.elem
@@ -154,5 +162,65 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
           }
       }
     }
+
+    // code from Scalan
+//    def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
+//      val args = if (_args == null) Array.empty[AnyRef] else _args
+//      receiver match {
+//        case Def(d) if (canInvoke(m, d) && (invokeEnabled || hasFuncArg(args))) => {
+//          // call method of the node
+//          val res = m.invoke(d, args: _*)
+//          res
+//        }
+//        case _ =>
+//          invokeMethodOfVar(m, args)
+//      }
+//    }
+//
+//    def invokeMethodOfVar(m: Method, args: Array[AnyRef]) = {
+//      /* If invoke is enabled or current method has arg of type <function> - do not create methodCall */
+//      if (methodCallReceivers.contains(receiver) || !(invokeEnabled || hasFuncArg(args))) {
+//        createMethodCall(m, args)
+//      } else {
+//        getIso match {
+//          case iso =>
+//            methodCallReceivers += receiver
+//            // adds receiver to the program graph
+//            val wrapper = iso.to(iso.from(receiver))
+//            methodCallReceivers -= receiver
+//            wrapper match {
+//              case Def(d) if canInvoke(m, d) =>
+//                val res = m.invoke(d, args: _*)
+//                res
+//              case _ =>
+//                (new ExpInvocationHandler(wrapper)).createMethodCall(m, args)
+//            }
+//        }
+//      }
+//    }
+//
+//    def getIso: Iso[_, T] = receiver.elem match {
+//      case e: ViewElem[_, T] @unchecked => e.iso
+//      case _ =>
+//        !!!(s"Receiver ${receiver.toStringWithType} should have ViewElem, but has ${receiver.elem} instead")
+//    }
+//
+//    // TODO cache result elements
+//    def getResultElem(m: Method, args: Array[AnyRef]): Elem[_] = {
+//      val iso = getIso
+//      val zero = iso.defaultRepTo.value
+//      val Def(zeroNode) = zero
+//      try {
+//        val res = m.invoke(zeroNode, args: _*)
+//        res.asInstanceOf[Exp[_]].elem
+//      } catch {
+//        case e: InvocationTargetException =>
+//          e.getCause match {
+//            case e1: ElemException[_] => e1.element
+//            case _ => throw e
+//          }
+//      }
+//    }
+
   }
 }

@@ -1,10 +1,30 @@
 package scalan.arrays
 
-import scalan.{Scalan, Elems}
 
-trait ArrayDescriptors extends Elems { self: Scalan =>
+import scala.reflect.runtime.universe._
+import scalan.common.Default
+import scalan.common.Default._
+import scalan.staged.BaseExp
+import scalan.{ScalanStaged, Scalan, Elems}
 
-//  abstract class UnitArrayElem extends Element[PArray[Unit]] {
+trait ArrayElems extends Elems { self: Scalan =>
+  implicit def ArrayElemExtensions[A](eArr: Elem[Array[A]]): ArrayElem[A] = eArr.asInstanceOf[ArrayElem[A]]
+
+  implicit def arrayRepDefault[A](implicit e: Elem[A]): Default[Rep[Array[A]]] = {
+    implicit val aCT = e.classTag
+    defaultVal[Rep[Array[A]]](scala.Array.empty[A])
+  }
+
+  class ArrayElem[A](implicit val ea: Elem[A]) extends Element[Array[A]] {
+    lazy val tag = {
+      implicit val tag1 = ea.tag
+      implicitly[TypeTag[Array[A]]]
+    }
+    lazy val defaultRep: Default[Rep[Array[A]]] = arrayRepDefault[A]
+  }
+
+  implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = new ArrayElem[A]
+  //  abstract class UnitArrayElem extends Element[PArray[Unit]] {
 //    def createPA(len: IntRep): PA[Unit]
 //  }
 //  abstract class PArrayElem[A](val ea: Elem[A]) extends Element[PArray[A]] {
@@ -53,4 +73,11 @@ trait ArrayDescriptors extends Elems { self: Scalan =>
 //    case ve: ViewElem[_,_] => ve.iso.eB.asInstanceOf[PArrayElem[A]]
 //  }
 
+}
+
+trait ArrayElemsExp extends ArrayElems with BaseExp { self: ScalanStaged =>
+  override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
+    case _: ArrayElem[_] => Const(x)
+    case _ => super.toRep(x)(eA)
+  }
 }

@@ -1,9 +1,9 @@
 package scalan.codegen
 
-import _root_.scalan.primitives.FunctionsExp
+import java.io.{File, PrintWriter}
+
 import _root_.scalan.ScalanStagedImplementation
 import _root_.scalan.staged.Scheduling
-import java.io.{ File, PrintWriter, FileOutputStream }
 
 trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
 
@@ -15,48 +15,52 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
     stream.close()
   }
 
-  private def quote(x: Any) = "\"" + x + "\""
+  protected def quote(x: Any) = "\"" + x + "\""
 
-  private def nodeColor(sym: Exp[_]): String = "color=" + (sym.elem match {
-    //case _: PArrayElem[_] => "blue"
+  protected def nodeColor(sym: Exp[_]): String = sym.elem match {
     case _: ViewElem[_, _] => "green"
-    //case _: PipeElem[_] => "brown"
     case _: FuncElem[_, _] => "magenta"
-    //case _: ChunksElem[_] => "black"
     case _ => "grey"
-  })
+  }
 
-  private def nodeLabel(str: String) = s"label=${quote(str)}"
+  protected def nodeLabel(str: String) = s"label=${quote(str)}"
 
-  private def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
+  protected def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
     rhs match {
       case l: Lambda[_, _] =>
         val x = l.x
         stream.println(quote(x) + " [")
         stream.println(nodeLabel(x.toStringWithType))
-        stream.println(nodeColor(x))
+        stream.println(s"color=${nodeColor(x)}")
         stream.println("]")
       case _ =>
     }
     stream.println(quote(sym) + " [")
     stream.println(nodeLabel(sym.toString + " = " + formatDef(rhs)))
-    stream.println("shape=box," + nodeColor(sym) + ",tooltip=" + quote(sym.toStringWithType))
+    stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${quote(sym.toStringWithType)}")
     stream.println("]")
   }
 
-  private def formatDef(d: Def[_]): String = d match {
-    case l: Lambda[_, _] => s"\\\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y.toString}}"
+  protected def formatDef(d: Def[_]): String = d match {
+    case l: Lambda[_, _] => s"\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y.toString}}"
     case Apply(f, arg) => s"$f($arg)"
-    case MethodCall(receiver, method, args) => {
-      val className = method.getDeclaringClass.getName()
-      "%s.%s(%s)".format(receiver, className.substring(className.lastIndexOf("$")+1) + "." + method.getName(), args.mkString("", ",", ""))
-    }
+    case MethodCall(obj, method, args) =>
+      val className0 = method.getDeclaringClass.getName
+      val className = className0.substring(className0.lastIndexOf("$") + 1)
+      val methodName = method.getName.replaceAll("\\$plus", "+").
+        replaceAll("\\$minus", "-").replaceAll("\\$colon", ":").
+        replaceAll("\\$greater", ">").replaceAll("\\$less", "<").replaceAll("\\$equal", "=")
+      s"$obj.$className.$methodName(${args.mkString(", ")})"
     case Tup(a, b) => s"($a, $b)"
     case First(pair) => s"$pair._1"
     case Second(pair) => s"$pair._2"
     case EqualsClass(lhs, rhs) => s"$lhs == $rhs"
     case NotEqual(lhs, rhs) => s"$lhs != $rhs"
     case NumericToFloat(arg, _) => s"$arg.toFloat"
+    case NumericToDouble(lhs, _) => s"$lhs.toDouble"
+    case NumericToInt(lhs, _) => s"$lhs.toInt"
+    case op: UnOp[_, _] => s"${op.opName}(${op.arg})"
+    case op: BinOp[_, _] => s"${op.lhs} ${op.opName} ${op.rhs}"
     case _ => d.toString
   }
 
@@ -75,7 +79,12 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
   def emitDepGraph(ss: List[Exp[_]], file: String, landscape: Boolean): Unit = {
     val f = new File(file)
     f.getParentFile.mkdirs()
-    emitDepGraph(ss, new java.io.PrintWriter(new java.io.FileOutputStream(file)), landscape)
+    val writer = new java.io.PrintWriter(new java.io.FileOutputStream(file))
+    try {
+      emitDepGraph(ss, writer, landscape)
+    } finally {
+      writer.close()
+    }
   }
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
@@ -125,5 +134,4 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
     stream.println("}")
     stream.close()
   }
-
 }

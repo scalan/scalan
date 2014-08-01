@@ -2,17 +2,17 @@ package scalan
 
 import scala.{Left => L, Right => R}
 
-trait Options extends Views { self: Scalan =>
-  // TODO ICFP implement Option[T]
-  /** I see two alternatives:
-    * 1) implement Option[T] is UserType with isomorphic representation (Unit | T)
-    * 2) add Option[T] to the basis (primitives package) similar to Array[T] and Iterable[T] and
-    *    then define primitives toOption: (Unit | T) => Option[T]  and  fromOption in the basis.
-    *
-    * It looks like 2) is better as it follows the same pattern as with Array and Iterable.
-   */
-
-
+//trait Options extends Views { self: Scalan =>
+//  // TODO ICFP implement Option[T]
+//  /** I see two alternatives:
+//    * 1) implement Option[T] is UserType with isomorphic representation (Unit | T)
+//    * 2) add Option[T] to the basis (primitives package) similar to Array[T] and Iterable[T] and
+//    *    then define primitives toOption: (Unit | T) => Option[T]  and  fromOption in the basis.
+//    *
+//    * It looks like 2) is better as it follows the same pattern as with Array and Iterable.
+//   */
+//
+//
 //  object Opt {
 //    class IsoOption[A: Elem] extends IsoBase[(Unit | A), Option[A]] {
 //      implicit lazy val optionRepDefault = defaultVal[Rep[Option[A]]](toRep(Option.empty[A])(eTo))
@@ -35,18 +35,18 @@ trait Options extends Views { self: Scalan =>
 //
 //  implicit def isoOption[A: Elem]: Iso[(Unit | A), Option[A]]
 //  def some[A:Elem](x: Rep[A]): Rep[Option[A]]
-}
-
-trait OptionsSeq extends Options with ViewsSeq { self: ScalanSeq =>
+//}
+//
+//trait OptionsSeq extends Options with ViewsSeq { self: ScalanSeq =>
 //  implicit def isoOption[A:Elem]: Iso[(Unit|A), Option[A]] = new Opt.IsoOption[A] {
 //    override def fromStaged = x => this.from(x)
 //    override def toStaged = x => this.to(x)
 //  }
 //  def some[A:Elem](x: Rep[A]): Rep[Option[A]] = Option(x)
-}
-
-trait OptionsExp extends Options with ProxyExp { self: ScalanStaged =>
-
+//}
+//
+//trait OptionsExp extends Options with ProxyExp { self: ScalanStaged =>
+//
 //  abstract class ExpOption[A:Elem] extends Def[Option[A]]
 //  case class ExpSome[A:Elem](x: Rep[A]) extends ExpOption[A]
 //  case class ExpNone[A:Elem]() extends ExpOption[A]
@@ -80,4 +80,4 @@ trait OptionsExp extends Options with ProxyExp { self: ScalanStaged =>
 //
 //  implicit def isoOption[A:Elem]: Iso[(Unit|A), Option[A]] = new ExpOption.IsoExpOption[A]
 //  def some[A:Elem](x: Rep[A]): Rep[Option[A]] = ExpSome(x)
-}
+//}

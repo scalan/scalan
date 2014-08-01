@@ -74,8 +74,8 @@ trait InterpreterCommunity extends Interpreter {
           val seqSource = symMirr(source).asInstanceOf[seq.Rep[Array[a]]]
           val seqZero = symMirr(monoid.zero).asInstanceOf[seq.Rep[a]]
           val seqAppend = mirrorLambdaToFunc[(a,a),a](lam.asInstanceOf[Lambda[(a,a), a]], symMirr, funcMirr)
-          implicit val eA = createSeqElem(el.ea);
-          val seqMonoid = seq.RepMonoid[a](monoid.opName, seqAppend, seqZero, monoid.isInfix, monoid.isCommutative)
+          implicit val eA = createSeqElem(el.ea)
+          val seqMonoid = seq.RepMonoid[a](monoid.opName, seqAppend, seqZero, monoid.isCommutative)
           val exp = seq.array_reduce[a](seqSource)(seqMonoid)
           (exps ++ List(exp), symMirr + ((s, exp)), funcMirr + ((lambdaSym, seqAppend)))
       }

@@ -54,7 +54,7 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
   }
 
   trait RowMajorFlatMatrixCompanion extends ConcreteClass1[RowMajorFlatMatrix] with MatrixCompanion {
-    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorFlatMatrix(element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
+    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorFlatMatrix(element[PArray[T]].defaultRepValue, IntElement.defaultRepValue))
     override def fromColumns[T: Elem](cols: PA[Vector[T]]): Matr[T] = {
       val numColumns = cols.length
       val numRows = cols(0).length
@@ -84,7 +84,7 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
   //  }
   //
   //  trait ColumnMajorMatrixCompanion extends ConcreteClass1[ColumnMajorMatrix] {
-  //    def defaultOf[T: Elem] = Default.defaultVal(ColumnMajorMatrix(element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
+  //    def defaultOf[T: Elem] = Default.defaultVal(ColumnMajorMatrix(element[PArray[T]].defaultRepValue, IntElement.defaultRepValue))
   //  }
 
   //  trait ColumnMajorSparseMatrixOps[T] extends MatrixOps[T] {

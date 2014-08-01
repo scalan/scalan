@@ -25,8 +25,8 @@ class DataMarshalingTests extends ItTests {
   }
 
   test("readPrimitives") {
-    deserialize(progSeq)("1")(intElement) should be (1)
-    deserialize(progSeq)("1.0")(floatElement) should be (1.0)
+    deserialize(progSeq)("1")(IntElement) should be (1)
+    deserialize(progSeq)("1.0")(FloatElement) should be (1.0)
     deserialize(progSeq)("(1, 2)")(intPairElem) should be ((1,2))
     deserialize(progSeq)("((1, 2), (3, 4))")(nestedIntPairElem) should be (((1,2),(3,4)))
   }
