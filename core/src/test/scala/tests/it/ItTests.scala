@@ -90,7 +90,7 @@ trait ItTests extends BaseTests {
         a.toString
       case el: front.PairElem[pa, pb] =>
         val (x1, x2) = a
-        "(" + serialize(front)(x1)(el.ea) + ", " + serialize(front)(x2)(el.eb) + ")"
+        "(" + serialize(front)(x1)(el.eFst) + ", " + serialize(front)(x2)(el.eSnd) + ")"
     }
   }
 
@@ -116,7 +116,7 @@ trait ItTests extends BaseTests {
         case eb: BaseElem[pa] =>
           baseRepParser(front)(eb)
         case ep: PairElem[pa, pb] =>
-          "(" ~ repParser(front)(ep.ea) ~ "," ~ repParser(front)(ep.eb) ~ ")" ^^
+          "(" ~ repParser(front)(ep.eFst) ~ "," ~ repParser(front)(ep.eSnd) ~ ")" ^^
             {case _ ~ p1 ~ _ ~ p2 ~ _ => Pair(p1, p2)}
       }
     }

@@ -67,24 +67,24 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
     override def mirror(t: Transformer) = IsLeft(t(sum))
     // removing leads to compilation error
     override val selfType = BoolElement
-    lazy val uniqueOpId = name(sum.elem.ea, sum.elem.eb)
+    lazy val uniqueOpId = name(sum.elem.eLeft, sum.elem.eRight)
   }
 
   case class IsRight[A, B](sum: Exp[(A | B)]) extends BaseDef[Boolean] {
     override def mirror(t: Transformer) = IsRight(t(sum))
     // removing leads to compilation error
     override val selfType = BoolElement
-    lazy val uniqueOpId = name(sum.elem.ea, sum.elem.eb)
+    lazy val uniqueOpId = name(sum.elem.eLeft, sum.elem.eRight)
   }
 
   case class SumFold[A, B, R](sum: Exp[(A | B)], left: Exp[A => R], right: Exp[B => R])(implicit selfType: Elem[R]) extends BaseDef[R] {
     override def mirror(t: Transformer) = SumFold(t(sum), t(left), t(right))
-    lazy val uniqueOpId = name(sum.elem.ea, sum.elem.eb)
+    lazy val uniqueOpId = name(sum.elem.eLeft, sum.elem.eRight)
   }
 
   class StagedSumOps[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
-    implicit def eA = s.elem.ea
-    implicit def eB = s.elem.eb
+    implicit def eA = s.elem.eLeft
+    implicit def eB = s.elem.eRight
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = SumFold(s, fun(l), fun(r))
     def isLeft = IsLeft(s)
     def isRight = IsRight(s)

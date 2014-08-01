@@ -316,7 +316,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   }
 
   implicit class FuncExtensions[A, B](f: Exp[A=>B]) {
-    implicit def eA = f.elem.ea
+    implicit def eA = f.elem.eDom
     def getLambda: Lambda[A,B] = f match {
       case Def(lam: Lambda[_,_]) => lam.asInstanceOf[Lambda[A,B]]
       case _ => !!!(s"Expected symbol of Lambda node but was $f", f)
@@ -332,7 +332,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   //   Function application
 
   def mkApply[A,B](f: Exp[A => B], x: Exp[A]): Exp[B] = {
-    implicit val leB = Lazy(f.elem.eb)
+    implicit val leB = Lazy(f.elem.eRange)
     if (recursion.valuesIterator.contains(f)) {
       // f is not in Defs table at this time, thus a special case here
       f.isRecursive = true
@@ -423,7 +423,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         res
       case Some(fs) => // hit recursion call !
         fs.isRecursive = true
-        Apply(fs.asInstanceOf[Exp[A=>B]], x)(Lazy(fSym.elem.eb))
+        Apply(fs.asInstanceOf[Exp[A=>B]], x)(Lazy(fSym.elem.eRange))
     }
   }
 

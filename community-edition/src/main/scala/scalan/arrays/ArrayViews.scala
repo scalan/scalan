@@ -78,7 +78,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     def unapply(s: Exp[_]): Option[Iso[_, _]] = {
       s.elem match {
         case pae: ArrayElem[_] =>
-          pae.ea match {
+          pae.eItem match {
             case e: ViewElem[_, _] => Some(e.iso)
             case _ => None
           }
@@ -225,9 +225,10 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     val iso = view.innerIso
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
-    implicit val eC: Elem[C] = f.elem.eb
+    implicit val eC: Elem[C] = f.elem.eRange
     view.source.map { x => f(iso.to(x)) }
   }
+
   def filterUnderlyingArray[A, B](view: ViewArray[A, B], f: Rep[B => Boolean]): Arr[B] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
@@ -324,7 +325,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       case ArrayMap(xs, f @ Def(Lambda(_, _, _, UserTypeSym(iso: Iso[a, b])))) =>
         val f1 = f.asInstanceOf[Rep[a => b]]
         val xs1 = xs.asRep[Array[a]]
-        implicit val eA = xs1.elem.ea
+        implicit val eA = xs1.elem.eItem
         val s = xs1.map { x =>
           val tmp = f1(x)
           iso.from(tmp)
@@ -334,7 +335,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       case ArrayMap(xs: Arr[a], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
         val f1 = f.asRep[a => b]
         val xs1 = xs.asRep[Array[a]]
-        implicit val eA = xs1.elem.ea
+        implicit val eA = xs1.elem.eItem
         // implicit val eB = iso.eTo
         implicit val eC = iso.eFrom
         // implicit val leA = Lazy(eA)

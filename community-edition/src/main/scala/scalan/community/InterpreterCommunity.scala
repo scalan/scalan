@@ -53,7 +53,7 @@ trait InterpreterCommunity extends Interpreter {
           val f : (a => b) = mirrorLambdaToFunc[a,b](lam.asInstanceOf[Lambda[a, b]], symMirr, funcMirr)
           val seqSource = symMirr(source).asInstanceOf[seq.Rep[Array[a]]]
 
-          implicit val eB = createSeqElem(el1.ea);
+          implicit val eB = createSeqElem(el1.eItem);
           val exp = seqSource.map(f).toArray(eB.classTag)
           (exps ++ List(exp), symMirr + ((s,exp)), funcMirr + ((lambdaSym,f)))
       }
@@ -74,7 +74,7 @@ trait InterpreterCommunity extends Interpreter {
           val seqSource = symMirr(source).asInstanceOf[seq.Rep[Array[a]]]
           val seqZero = symMirr(monoid.zero).asInstanceOf[seq.Rep[a]]
           val seqAppend = mirrorLambdaToFunc[(a,a),a](lam.asInstanceOf[Lambda[(a,a), a]], symMirr, funcMirr)
-          implicit val eA = createSeqElem(el.ea)
+          implicit val eA = createSeqElem(el.eItem)
           val seqMonoid = seq.RepMonoid[a](monoid.opName, seqAppend, seqZero, monoid.isCommutative)
           val exp = seq.array_reduce[a](seqSource)(seqMonoid)
           (exps ++ List(exp), symMirr + ((s, exp)), funcMirr + ((lambdaSym, seqAppend)))
@@ -125,7 +125,7 @@ trait InterpreterCommunity extends Interpreter {
     //    manifest[T]
     eA match {
       case el: ArrayElem[_] => {
-        val elem = seq.arrayElement(createSeqElem(el.ea))
+        val elem = seq.arrayElement(createSeqElem(el.eItem))
         elem.asInstanceOf[seq.Elem[T]]
       }
       case _ => super.createSeqElem(eA)

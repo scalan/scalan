@@ -144,13 +144,13 @@ trait BaseExp extends Base { self: ScalanStaged =>
     case _: FuncElem[_, _] => Const(x)
     case pe: PairElem[a, b] =>
       val x1 = x.asInstanceOf[(a, b)]
-      implicit val eA = pe.ea
-      implicit val eB = pe.eb
+      implicit val eA = pe.eFst
+      implicit val eB = pe.eSnd
       Pair(toRep(x1._1), toRep(x1._2))
     case se: SumElem[a, b] =>
       val x1 = x.asInstanceOf[a | b]
-      implicit val eA = se.ea
-      implicit val eB = se.eb
+      implicit val eA = se.eLeft
+      implicit val eB = se.eRight
       x1.fold(l => Left[a, b](l), r => Right[a, b](r))
     case _ => super.toRep(x)(eA)
   }
@@ -228,28 +228,6 @@ trait BaseExp extends Base { self: ScalanStaged =>
     }
     def tp: TableEntry[_] = findDefinition(symbol).get
     def sameScopeAs(other: Exp[_]): Boolean = this.tp.lambda == other.tp.lambda
-
-    def asPair[A,B,R](f: Elem[A] => Elem[B] => Rep[(A,B)] => R): R = {
-      val elem = symbol.elem
-      elem match {
-        case _: PairElem[_,_] => {
-          val pe = elem.asInstanceOf[PairElem[A,B]]
-          f(pe.ea)(pe.eb)(symbol.asRep[(A,B)])
-        }
-        case _ => !!!(s"Symbol $symbol expected to have PairElem but it's ${elem.name}")
-      }
-    }
-
-    def asFunc[A,B,R](f: Elem[A] => Elem[B] => Rep[A=>B] => R): R = {
-      val elem = symbol.elem
-      elem match {
-        case _: FuncElem[_,_] => {
-          val fe = elem.asInstanceOf[FuncElem[A,B]]
-          f(fe.ea)(fe.eb)(symbol.asRep[A=>B])
-        }
-        case _ => !!!(s"Symbol $symbol expected to have FuncElem but it's ${elem.name}")
-      }
-    }
 
     def mirror(t: Transformer) = symbol match {
       case Def(d) => d.mirror(t)

@@ -119,7 +119,7 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
 trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: ScalanStaged =>
   def withElemOfArray[T, R](xs: Arr[T])(block: Elem[T] => R): R =
     withElemOf(xs) { eTArr =>
-      block(eTArr.ea)
+      block(eTArr.eItem)
     }
 
   trait ArrayDef[T] extends Def[Array[T]] {
@@ -137,11 +137,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
     override def mirror(t: Transformer) = ArrayLength(t(xs))
   }
   case class ArrayApply[T](xs: Exp[Array[T]], index: Exp[Int]) extends Def[T] with ArrayMethod[T] {
-    lazy val selfType = xs.elem.ea
+    lazy val selfType = xs.elem.eItem
     override def mirror(t: Transformer) = ArrayApply(t(xs), t(index))
   }
   case class ArrayApplyMany[T](xs: Exp[Array[T]], indices: Exp[Array[Int]]) extends ArrayDef[T] {
-    lazy val eT = xs.elem.ea
+    lazy val eT = xs.elem.eItem
     override def mirror(t: Transformer) = ArrayApplyMany(t(xs), t(indices))
   }
   case class ArrayMap[T, R](xs: Exp[Array[T]], f: Exp[T => R]) extends ArrayDef[R] {
@@ -149,7 +149,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
     override def mirror(t: Transformer) = ArrayMap(t(xs), t(f))
   }
   case class ArrayReduce[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T]) extends Def[T] with ArrayMethod[T] {
-    def selfType = xs.elem.ea
+    def selfType = xs.elem.eItem
     override def mirror(t: Transformer) = ArrayReduce[T](t(xs), m)
   }
   case class ArrayScan[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T])(implicit val selfType: Elem[(Array[T], T)]) extends Def[(Array[T], T)] with ArrayMethod[T] {
@@ -187,8 +187,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
     ArrayScan(xs, m)
 
   def array_zip[T, U](xs: Arr[T], ys: Arr[U]): Arr[(T, U)] = {
-    implicit val eT = xs.elem.ea
-    implicit val eU = ys.elem.ea
+    implicit val eT = xs.elem.eItem
+    implicit val eU = ys.elem.eItem
     ArrayZip(xs, ys)
   }
 
@@ -205,12 +205,12 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
     withElemOfArray(xs) { implicit eT => ArrayFilter(xs, f) }
 
   def array_grouped[T](xs: Arr[T], size: Rep[Int]): Arr[Array[T]] = {
-    implicit val eT = xs.elem.ea
+    implicit val eT = xs.elem.eItem
     Array.tabulate(xs.length / size) { i => xs.slice(i * size, size) }
   }
 
   def array_stride[T](xs: Arr[T], start: Rep[Int], length: Rep[Int], stride: Rep[Int]): Arr[T] = {
-    implicit val eT = xs.elem.ea
+    implicit val eT = xs.elem.eItem
     ArrayStride(xs, start, length, stride)
   }
 
@@ -218,20 +218,20 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
     case Def(d1) => d1 match {
       case ArrayApply(Def(d2), i) => d2 match {
         case ArrayApplyMany(xs, is) =>
-          implicit val eT = xs.elem.ea
+          implicit val eT = xs.elem.eItem
           xs(is(i))
         case ArrayMap(xs, f) =>
-          implicit val eT = xs.elem.ea
+          implicit val eT = xs.elem.eItem
           f(xs(i))
         case ArrayZip(xs: Arr[a], ys: Arr[b]) =>
           val xs1 = xs.asRep[Array[a]]
           val ys1 = ys.asRep[Array[b]]
-          implicit val e1 = xs1.elem.ea
-          implicit val e2 = ys1.elem.ea
+          implicit val e1 = xs1.elem.eItem
+          implicit val e2 = ys1.elem.eItem
           (RepArrayOps(xs1)(e1)(i), RepArrayOps(ys1)(e2)(i))
         case ArrayReplicate(_, x) => x
         case ArrayStride(xs, start, _, stride) =>
-          implicit val eT = xs.elem.ea
+          implicit val eT = xs.elem.eItem
           xs(start + i * stride)
         case ArrayRangeFrom0(_) => i
         case _ =>
@@ -240,22 +240,22 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
       case ArrayApplyMany(Def(d2: Def[Array[a]] @unchecked), is) =>
         d2.asDef[Array[a]] match {
           case ArrayApplyMany(xs, is1) =>
-            implicit val eT = xs.elem.ea
+            implicit val eT = xs.elem.eItem
             xs(is1(is))
           case ArrayMap(xs, f) =>
-            implicit val eT = xs.elem.ea
+            implicit val eT = xs.elem.eItem
             xs(is).mapBy(f)
           case ArrayZip(xs: Arr[a], ys: Arr[b]) =>
             val xs1 = xs.asRep[Array[a]]
             val ys1 = ys.asRep[Array[b]]
-            implicit val e1 = xs1.elem.ea
-            implicit val e2 = ys1.elem.ea
+            implicit val e1 = xs1.elem.eItem
+            implicit val e2 = ys1.elem.eItem
             (RepArrayOps(xs1)(e1)(is), RepArrayOps(ys1)(e2)(is))
           case ArrayReplicate(_, x) =>
             implicit val eT = x.elem
             Array.replicate(is.length, x)
           case ArrayStride(xs, start, _, stride) =>
-            implicit val eT = xs.elem.ea
+            implicit val eT = xs.elem.eItem
             xs(is.map { i => start + i * stride })
           case ArrayRangeFrom0(_) => is
           case _ =>
@@ -265,10 +265,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
         d2.asDef[Array[a]] match {
           case ArrayApplyMany(_, is) => is.length
           case ArrayMap(xs, _) =>
-            implicit val eT = xs.elem.ea
+            implicit val eT = xs.elem.eItem
             xs.length
           case ArrayZip(xs, _) =>
-            implicit val eT = xs.elem.ea
+            implicit val eT = xs.elem.eItem
             xs.length
           case ArrayReplicate(length, _) => length
           case ArrayStride(_, _, length, _) => length
@@ -282,11 +282,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
           case ArrayMap(xs: Rep[Array[c]] @unchecked, g) =>
             val xs1 = xs.asRep[Array[c]]
             val g1 = g.asRep[c => a]
-            implicit val eB = f.elem.eb
-            implicit val eC = xs.elem.ea
+            implicit val eB = f.elem.eRange
+            implicit val eC = xs.elem.eItem
             xs1.map { x => f(g1(x)) }
           case ArrayReplicate(length, x) =>
-            implicit val eB = f.elem.eb
+            implicit val eB = f.elem.eRange
             Array.replicate(length, f(x))
           case _ =>
             super.rewrite(d)
@@ -294,7 +294,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
       case ArrayFilter(Def(d2: Def[Array[a]] @unchecked), f) =>
         d2.asDef[Array[a]] match {
           case ArrayFilter(xs, g) =>
-            implicit val eT = xs.elem.ea
+            implicit val eT = xs.elem.eItem
             xs.filter { x => f(x) && g(x) }
           case _ =>
             super.rewrite(d)

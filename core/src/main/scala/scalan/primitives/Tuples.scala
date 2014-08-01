@@ -105,8 +105,8 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
     case Def(Tup(a, b)) => (a, b)
     case _ => p.elem match {
       case pe: PairElem[_, _] =>
-        implicit val eA = pe.ea
-        implicit val eB = pe.eb
+        implicit val eA = pe.eFst
+        implicit val eB = pe.eSnd
         (First(p), Second(p))
       case _ =>
         !!!("expected Tup[A,B] or Sym with type (A,B) but was " + p.toString, p)
@@ -114,8 +114,8 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
   }
 
   implicit def zipPair[A, B](p: (Exp[A], Exp[B])): Rep[(A, B)] = {
-    implicit val ea = p._1.elem.asInstanceOf[Elem[A]]
-    implicit val eb = p._2.elem.asInstanceOf[Elem[B]]
+    implicit val ea = p._1.elem
+    implicit val eb = p._2.elem
     Tup(p._1, p._2)
   }
 
@@ -128,12 +128,12 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
 
   case class First[A, B](pair: Exp[(A, B)])(implicit val selfType: Elem[A]) extends Def[A] {
     override def mirror(t: Transformer) = First(t(pair))
-    lazy val uniqueOpId = name(selfType, pair.elem.eb)
+    lazy val uniqueOpId = name(selfType, pair.elem.eSnd)
   }
 
   case class Second[A, B](pair: Exp[(A, B)])(implicit val selfType: Elem[B]) extends Def[B] {
     override def mirror(t: Transformer) = Second(t(pair))
-    lazy val uniqueOpId = name(pair.elem.ea, selfType)
+    lazy val uniqueOpId = name(pair.elem.eFst, selfType)
   }
 
   object TupleProjection {
