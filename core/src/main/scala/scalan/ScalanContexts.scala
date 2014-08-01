@@ -15,6 +15,7 @@ trait Scalan
 //     with Sets
 //     with Zipping
      with Tuples
+     with Loops
      with TypeSum
      with NumericOps
      with MathOps
@@ -42,6 +43,7 @@ trait ScalanSeq
   with ViewsSeq
   with ProxySeq
   with TuplesSeq
+  with LoopsSeq
   with TypeSumSeq
   with FunctionsSeq
   with IfThenElseSeq
@@ -96,6 +98,7 @@ trait ScalanStaged
   extends Scalan
   with BaseExp
   with TuplesExp
+  with LoopsExp
   with TypeSumExp
 //  with StagedImplBase
   with ElemsExp
