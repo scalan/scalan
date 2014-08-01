@@ -44,8 +44,16 @@ object ScalanBuild extends Build {
       scalaVersion := "2.10.4",
       organization := "com.huawei.scalan",
       version := "0.1-SNAPSHOT",
-      opts, commonDeps) ++ 
-    testSettings ++ assemblySettings
+      publishArtifact in Test := true,
+      publishArtifact in (Test, packageDoc) := false,
+      publishTo := {
+        val nexus = "http://10.122.85.37:9081/nexus/"
+        if (version.value.trim.endsWith("SNAPSHOT"))
+          Some("snapshots" at (nexus + "content/repositories/snapshots"))
+        else
+          Some("releases" at (nexus + "content/repositories/releases"))
+      },
+      opts, commonDeps) ++ testSettings ++ assemblySettings
 
   lazy val ItTest = config("it").extend(Test)
 
@@ -79,5 +87,7 @@ object ScalanBuild extends Build {
   
   // name to make this the default project
   lazy val root = Project("all", file(".")).aggregate(core, ce, lmsBackend).
-    configs(ItTest, PerfTest).settings(commonSettings: _*)
+    configs(ItTest, PerfTest).settings(publishArtifact := false, publish := {}, publishLocal := {})
+
+
 }
