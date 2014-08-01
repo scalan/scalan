@@ -18,19 +18,17 @@ trait Base {
   type LongRep = Rep[Long]
   type FloatRep = Rep[Float]
   type DoubleRep = Rep[Double]
-  type FoldStep[A, B, Acc] = ((A, Acc)) => (L[B], Acc)
-  type FS[A, B, Acc] = Rep[FoldStep[A, B, Acc]]
   type :=>[-A, +B] = PartialFunction[A, B]
 
   class StagingException[A](message: String, val syms: Seq[Rep[_]]) extends RuntimeException(message)
 
   class ElemException[A](message: String)(implicit val element: Elem[A]) extends StagingException(message, Seq())
 
-  def ???(): Nothing = ???("not implemented")
+  def ??? : Nothing = ???("not implemented")
   def ???(msg: String): Nothing = sys.error(msg)
   def ???(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString, syms)
 
-  def !!! = sys.error("should not be called")
+  def !!! : Nothing = !!!("should not be called")
   def !!!(msg: String): Nothing = sys.error(msg)
   def !!!(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString, syms)
 

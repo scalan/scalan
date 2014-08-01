@@ -6,6 +6,7 @@ import scala.language.{implicitConversions}
 import scalan.common.Lazy
 
 trait BaseExp extends Base { self: ScalanStaged =>
+  type Rep[+A] = Exp[A]
 
   /**
    * constants/symbols (atomic)

@@ -1,10 +1,10 @@
 package scalan.seq
 
-import scalan.{ScalanSeq, Base}
-import scala.language.{implicitConversions}
+import scala.language.implicitConversions
+import scalan.{Base, ScalanSeq}
 
-trait BaseSeq extends Base { self: ScalanSeq =>
+trait BaseSeq extends Base {
+  type Rep[+A] = A
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = x
-
 }
