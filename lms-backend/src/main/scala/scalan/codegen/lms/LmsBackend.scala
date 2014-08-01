@@ -54,8 +54,8 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
     }
 
     /* Mirror block */
-    def mirrorDefs(defs: List[scalan.TableEntry[_]], symMirror: SymMirror, funcMirror: FuncMirror):
-      (List[lFunc.Exp[_]], SymMirror, FuncMirror) =
+    def mirrorDefs(defs: Seq[scalan.TableEntry[_]], symMirror: SymMirror, funcMirror: FuncMirror):
+      (Seq[lFunc.Exp[_]], SymMirror, FuncMirror) =
     {
       val (lmsExps, finalSymMirr, finalFuncMirr) = defs.foldLeft(List.empty[lFunc.Exp[_]], symMirror, funcMirror) {
         case ((exps, symMirr, funcMirr),tp) => {

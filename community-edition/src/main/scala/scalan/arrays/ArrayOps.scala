@@ -6,7 +6,7 @@ import scala.reflect.ClassTag
 import scalan.staged.BaseExp
 import scalan.common.OverloadHack.Overloaded1
 
-trait ArrayOps { self: Scalan =>
+trait ArrayOps extends ArrayElems { self: Scalan =>
   type Arr[T] = Rep[Array[T]]
   implicit class RepArrayOps[T: Elem](xs: Arr[T]) {
     def apply(n: Rep[Int]): Rep[T] = array_apply(xs, n)
@@ -117,7 +117,7 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   def arrayToClassTag[T](xs: Rep[Array[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 }
 
-trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
+trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: ScalanStaged =>
   def withElemOfArray[T, R](xs: Arr[T])(block: Elem[T] => R): R =
     withElemOf(xs) { eTArr =>
       block(eTArr.ea)
@@ -248,7 +248,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
           super.rewrite(d)
       }
       case ArrayApplyMany(Def(d2: Def[Array[a]] @unchecked), is) =>
-        d2.asInstanceOf[Def[Array[a]]] match {
+        d2.asDef[Array[a]] match {
           case ArrayApplyMany(xs, is1) =>
             implicit val eT = xs.elem.ea
             xs(is1(is))
@@ -272,7 +272,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
             super.rewrite(d)
         }
       case ArrayLength(Def(d2: Def[Array[a]] @unchecked)) =>
-        d2.asInstanceOf[Def[Array[a]]] match {
+        d2.asDef[Array[a]] match {
           case ArrayApplyMany(_, is) => is.length
           case ArrayMap(xs, _) =>
             implicit val eT = xs.elem.ea
@@ -288,7 +288,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
         }
       case ArrayMap(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
       case ArrayMap(Def(d2), f: Rep[Function1[a, b]] @unchecked) =>
-        d2.asInstanceOf[Def[Array[a]]] match {
+        d2.asDef[Array[a]] match {
           case ArrayMap(xs: Rep[Array[c]] @unchecked, g) =>
             val xs1 = xs.asRep[Array[c]]
             val g1 = g.asRep[c => a]
@@ -302,7 +302,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanStaged =>
             super.rewrite(d)
         }
       case ArrayFilter(Def(d2: Def[Array[a]] @unchecked), f) =>
-        d2.asInstanceOf[Def[Array[a]]] match {
+        d2.asDef[Array[a]] match {
           case ArrayFilter(xs, g) =>
             implicit val eT = xs.elem.ea
             xs.filter { x => f(x) && g(x) }

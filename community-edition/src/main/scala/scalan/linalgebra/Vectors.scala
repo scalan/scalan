@@ -61,7 +61,7 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
   
   trait SparseVectorCompanion extends ConcreteClass1[SparseVector] {
     def defaultOf[T: Elem] = {
-      Default.defaultVal(SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, intElement.defaultRepValue))
+      Default.defaultVal(SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, IntElement.defaultRepValue))
     }
     def apply[T: Elem](coords: PA[T])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
       val indices: Arr[Int] = coords.arr.zip(array_rangeFrom0(coords.length)).
@@ -111,8 +111,7 @@ trait VectorsDslExp extends VectorsDsl with impl.VectorsExp with PArraysDslExp w
   def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T] =
     DotSparse(xIndices, xValues.arr, yIndices, yValues.arr)
 
-  case class DotSparse[T](xIndices: Arr[Int], xValues: Arr[T], yIndices: Arr[Int], yValues: Arr[T])(implicit val n: Numeric[T], val m: RepMonoid[T], val selfType: Elem[T]) extends Def[T] {
-    lazy val self = reifyObject(this)(Lazy(selfType))
+  case class DotSparse[T](xIndices: Arr[Int], xValues: Arr[T], yIndices: Arr[Int], yValues: Arr[T])(implicit val n: Numeric[T], val m: RepMonoid[T], selfType: Elem[T]) extends BaseDef[T] {
     override def mirror(f: Transformer) = DotSparse(f(xIndices), f(xValues), f(yIndices), f(yValues))
     def uniqueOpId = name(selfType)
   }

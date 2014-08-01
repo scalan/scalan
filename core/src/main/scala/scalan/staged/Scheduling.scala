@@ -5,14 +5,14 @@ import scalan.common.GraphUtil
 
 trait Scheduling extends BaseExp { self: ScalanStaged =>
 
-  def buildScheduleForResult(start: Exp[_]): List[TableEntry[_]] = buildScheduleForResult(syms(start))
+  def buildScheduleForResult(start: Exp[_]): Seq[TableEntry[_]] = buildScheduleForResult(syms(start))
 
-  def buildScheduleForResult(st: List[Exp[Any]]): List[TableEntry[_]] = buildScheduleForResult(st, dep)
+  def buildScheduleForResult(st: Seq[Exp[_]]): Seq[TableEntry[_]] = buildScheduleForResult(st, dep)
 
-  def buildScheduleForResult(st: List[Exp[Any]], neighbours: AnyExp => List[AnyExp]): List[TableEntry[_]] = {
+  def buildScheduleForResult(st: Seq[Exp[_]], neighbours: Exp[_] => Seq[Exp[_]]): Seq[TableEntry[_]] = {
     val startNodes = st.flatMap(e => findDefinition(e).toList)
 
-    def succ(tp: TableEntry[_]): List[TableEntry[_]] = {
+    def succ(tp: TableEntry[_]): Seq[TableEntry[_]] = {
       //println("dep"+d +"="+dep(d.rhs))
       val ns = neighbours(tp.sym)
       ns.flatMap { e =>
@@ -21,6 +21,6 @@ trait Scheduling extends BaseExp { self: ScalanStaged =>
       }
     }
 
-    GraphUtil.stronglyConnectedComponents[TableEntry[_]](startNodes, succ).flatten.reverse //TODO inefficient!
+    GraphUtil.stronglyConnectedComponents[TableEntry[_]](startNodes)(succ).flatten
   }
 }

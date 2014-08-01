@@ -331,7 +331,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
         }
         val res = ViewArray(s)(iso)
         res
-      case ArrayMap(xs: Arr[a], f@Def(lam@Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
+      case ArrayMap(xs: Arr[a], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
         val f1 = f.asRep[a => b]
         val xs1 = xs.asRep[Array[a]]
         implicit val eA = xs1.elem.ea

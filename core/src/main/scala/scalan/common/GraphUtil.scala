@@ -8,90 +8,80 @@ import scala.collection.mutable.ArrayBuffer
 
 
 object GraphUtil {
-  
-  class Ref[T](init: T) {
-    var value: T = init
-  }
-  
-  /* test cases
+   def depthFirstSetFrom[A](start: A)(neighbours: A => Seq[A]): Set[A] = {
+     var visited = Set[A]()
 
-     stronglyConnectedComponents[String](List("A"), { case "A" => List("B") case "B" => List("C") case "C" => List("A","D") case "D" => Nil})
-     List(List(A, B, C), List(D))
+     def visit(s: A): Unit = {
+       if (!(visited contains s)) {
+         visited += s
+         neighbours(s) foreach visit
+       }
+     }
 
-     stronglyConnectedComponents[String](List("A","B","C"), { case "A" => List("B") case "B" => List("C") case "C" => List("A","D") case "D" => Nil})
-  */
+     visit(start)
+     visited
+   }
 
-  /** 
-      Returns the strongly connected components
-      of the graph rooted at the first argument,
-      whose edges are given by the function argument.
-
-      The scc are returned in topological order.
-      Tarjan's algorithm (linear).
+  /**
+   * Returns the strongly connected components
+   * of the graph rooted at the first argument,
+   * whose edges are given by the function argument.
+   *
+   * The scc are returned in _reverse_ topological order.
+   * Tarjan's algorithm (linear).
    */
-  def stronglyConnectedComponents[T](start: List[T], succ: T=>List[T]): List[List[T]] = {
+  def stronglyConnectedComponents[T](start: Seq[T])(succ: T => Seq[T]): Seq[Seq[T]] = {
+    val tarjan = new Tarjan(succ)
 
-    val id: Ref[Int] = new Ref(0)
-    val stack: Stack[T] = new Stack()
-    val mark: Map[T,Int] = new HashMap()
-
-    val res: Buffer[Buffer[T]] = new ArrayBuffer()
     for (node <- start)
-      visit(node,succ,id,stack,mark,res)
+      tarjan.visit(node)
 
-    // TODO: get rid of reverse
-
-    (for (scc <- res) yield scc.toList.reverse).toList.reverse
+    tarjan.res
   }
 
-  def visit[T](node: T, succ: T=>List[T], id: Ref[Int], stack: Stack[T], 
-  		      mark: Map[T,Int], res: Buffer[Buffer[T]]): Int = {
-
-    mark.getOrElse(node, {
-
-      id.value = id.value + 1
-
-      mark.put(node, id.value)
-      stack.push(node)
-//    println("push " + node)
-
-      var min: Int = id.value
-      for (child <- succ(node)) {
-	      val m = visit(child, succ, id, stack, mark, res)
-	
-	      if (m < min) 
-	      min = m
-      }
-
-      if (min == mark(node)) {
-
-	      val scc: Buffer[T] = new ArrayBuffer()
-	      var loop: Boolean = true
-	      do {
-	  	      val element = stack.pop()
-	//        println("appending " + element)
-	  	      scc.append(element)
-	  	      mark.put(element, Integer.MAX_VALUE)
-	  	      loop = element != node
-	      } while (loop)
-	      res.append(scc)
-      }
-      min
-      
-    })
+  private final class IntRef(init: Int) {
+    var value: Int = init
   }
-  
-  def depthFirstSetFrom[A](start: A)(neighbours: A =>List[A]): Set[A] = {
-    var visited = Set[A]()
 
-    def visit(s: A): Unit = {
-      if (!(visited contains s)) {
-	    visited += s
-	    neighbours(s) foreach visit
-      }
+  private final class Tarjan[T](succ: T => Seq[T]) {
+    private var id = 0
+    private val stack: Stack[T] = new Stack()
+    private val mark: Map[T, Int] = new HashMap()
+
+    val res: Buffer[Seq[T]] = new ArrayBuffer()
+
+    def visit(node: T): Int = {
+      mark.getOrElse(node, {
+        id += 1
+
+        mark.put(node, id)
+        stack.push(node)
+        //    println("push " + node)
+
+        var min: Int = id
+        for (child <- succ(node)) {
+          val m = visit(child)
+
+          if (m < min)
+            min = m
+        }
+
+        if (min == mark(node)) {
+          val scc: Buffer[T] = new ArrayBuffer()
+
+          var loop: Boolean = true
+          do {
+            val element = stack.pop()
+            //        println("appending " + element)
+            scc.append(element)
+            mark.put(element, Integer.MAX_VALUE)
+            loop = element != node
+          } while (loop)
+
+          res.append(scc.toSeq)
+        }
+        min
+      })
     }
-    visit(start)
-    visited
   }
-
 }

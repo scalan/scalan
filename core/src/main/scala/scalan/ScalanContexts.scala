@@ -1,7 +1,7 @@
 package scalan
 
 import scalan.primitives._
-import scalan.staged.{Expressions, BaseExp}
+import scalan.staged.{Transforming, Expressions, BaseExp}
 import scalan.seq.BaseSeq
 import scalan.codegen.GraphVizExport
 
@@ -10,16 +10,18 @@ trait Scalan
      with Elems
 //     with Descs
      with Views
+     with ProxyBase
 //     with Chunks
 //     with Sets
 //     with Zipping
      with Tuples
+     with Loops
      with TypeSum
      with NumericOps
-//     with MathOps
+     with MathOps
      with LogicalOps
      with OrderingOps
-//     with FractionalOps
+     with FractionalOps
      with Functions
      with IfThenElse
      with Equal
@@ -29,7 +31,6 @@ trait Scalan
 
 trait ScalanDsl
   extends Scalan
-     with ProxyBase
 {
 }
 
@@ -40,16 +41,18 @@ trait ScalanSeq
 //  with DescsSeq
 //  with SeqSets
   with ViewsSeq
+  with ProxySeq
   with TuplesSeq
+  with LoopsSeq
   with TypeSumSeq
   with FunctionsSeq
   with IfThenElseSeq
   with OrderingOpsSeq
   with NumericOpsSeq
   with EqualSeq
-//  with MathOpsSeq
+  with MathOpsSeq
   with LogicalOpsSeq
-//  with FractionalOpsSeq
+  with FractionalOpsSeq
 {
   type Rep[+A] = A
   
@@ -85,7 +88,6 @@ trait ScalanSeq
 trait ScalanSeqImplementation
   extends ScalanDsl
   with ScalanSeq
-  with ProxySeq
   //with StringOpsSeq
   //     with ExperimentalOpsSeq
 {
@@ -96,19 +98,21 @@ trait ScalanStaged
   extends Scalan
   with BaseExp
   with TuplesExp
+  with LoopsExp
   with TypeSumExp
 //  with StagedImplBase
   with ElemsExp
 //  with DescsExp
 //  with StagedSets
   with ViewsExp
-//  with Transforming
+  with ProxyExp
+  with Transforming
   with NumericOpsExp
   with EqualExp
-//  with MathOpsExp
+  with MathOpsExp
   with LogicalOpsExp
   with OrderingOpsExp
-//  with FractionalOpsExp
+  with FractionalOpsExp
   with FunctionsExp
   with IfThenElseExp
 //  with Graphs
@@ -121,7 +125,7 @@ trait ScalanStaged
 //    def resolve[A](sym: PA[A]): PArray[A] = sym match {
 //      case Def(d: PADef[_]) => d.asInstanceOf[PArray[A]]
 //      case s: Exp[_] => {
-//        val paElem = s.Elem.asInstanceOf[PArrayElem[A]]
+//        val paElem = s.elem.asInstanceOf[PArrayElem[A]]
 //        implicit val ea = paElem.ea
 //        VarPA(sym)
 //      }
@@ -134,7 +138,7 @@ trait ScalanStaged
 //    def resolve[A](sym: P[A]): Pipe[A] = sym match {
 //      case Def(d: PipeDef[_]) => d.asInstanceOf[Pipe[A]]
 //      case s: Exp[_] => {
-//        val pipeElem = s.Elem.asInstanceOf[PipeElem[A]]
+//        val pipeElem = s.elem.asInstanceOf[PipeElem[A]]
 //        implicit val ea = pipeElem.ea
 //        VarPipe(sym)
 //      }
@@ -147,7 +151,7 @@ trait ScalanStaged
 //    def resolve[A](sym: Ch[A]): Chunks[A] = sym match {
 //      case Def(d: ChunksDef[_]) => d.asInstanceOf[Chunks[A]]
 //      case s: Exp[_] => {
-//        val chunksElem = s.Elem.asInstanceOf[ChunksElem[A]]
+//        val chunksElem = s.elem.asInstanceOf[ChunksElem[A]]
 //        implicit val ea = chunksElem.ea
 //        VarChunks(sym)
 //      }

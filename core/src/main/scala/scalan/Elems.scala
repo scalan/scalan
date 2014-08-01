@@ -8,7 +8,6 @@ import annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
-import scala.Predef._
 
 trait Elems extends Base { self: Scalan =>
 
@@ -73,21 +72,13 @@ trait Elems extends Base { self: Scalan =>
     lazy val defaultRep = defaultVal(fun(funcRepDefault[A, B].value))
   }
 
-  class ArrayElem[A](implicit val ea: Elem[A]) extends Element[Array[A]] {
-    lazy val tag = {
-      implicit val tag1 = ea.tag
-      implicitly[TypeTag[Array[A]]]
-    }
-    lazy val defaultRep: Default[Rep[Array[A]]] = arrayRepDefault[A]
-  }
-
-  implicit val boolElement: Elem[Boolean] = new BaseElem[Boolean]
-  implicit val intElement: Elem[Int] = new BaseElem[Int]
-  implicit val floatElement: Elem[Float] = new BaseElem[Float]
-  implicit val doubleElement: Elem[Double] = new BaseElem[Double]
-  implicit val unitElement: Elem[Unit] = new BaseElem[Unit]
-  implicit val stringElement: Elem[String] = new BaseElem[String]
-  implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = new ArrayElem[A]
+  implicit val BoolElement: Elem[Boolean] = new BaseElem[Boolean]
+  implicit val ByteElement: Elem[Byte] = new BaseElem[Byte]
+  implicit val IntElement: Elem[Int] = new BaseElem[Int]
+  implicit val FloatElement: Elem[Float] = new BaseElem[Float]
+  implicit val DoubleElement: Elem[Double] = new BaseElem[Double]
+  implicit val UnitElement: Elem[Unit] = new BaseElem[Unit]
+  implicit val StringElement: Elem[String] = new BaseElem[String]
 
   implicit def pairElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A, B)] = new PairElem[A, B]
   implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A | B)] = new SumElem[A, B]
@@ -97,15 +88,10 @@ trait Elems extends Base { self: Scalan =>
   implicit def PairElemExtensions[A, B](eAB: Elem[(A, B)]): PairElem[A, B] = eAB.asInstanceOf[PairElem[A, B]]
   implicit def SumElemExtensions[A, B](eAB: Elem[(A | B)]): SumElem[A, B] = eAB.asInstanceOf[SumElem[A, B]]
   implicit def FuncElemExtensions[A, B](eAB: Elem[A => B]): FuncElem[A, B] = eAB.asInstanceOf[FuncElem[A, B]]
-  implicit def ArrayElemExtensions[A](eArr: Elem[Array[A]]): ArrayElem[A] = eArr.asInstanceOf[ArrayElem[A]]
   //  implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]
 
   implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = Lazy(eA)
 
-  implicit def arrayRepDefault[A](implicit e: Elem[A]): Default[Rep[Array[A]]] = {
-    implicit val aCT = e.classTag
-    defaultVal[Rep[Array[A]]](scala.Array.empty[A])
-  }
   implicit def funcRepDefault[A, B: Elem]: Default[Rep[A] => Rep[B]] = {
     implicit val zB = element[B].defaultRep
     Default.OfFunction1[Rep[A], Rep[B]](zB)

@@ -33,13 +33,13 @@ trait MatricesAbs extends Matrices
 
 
   // elem for concrete class
-  trait RowMajorMatrixElem[T] extends MatrixElem[RowMajorMatrixData[T], RowMajorMatrix[T]]
+  class RowMajorMatrixElem[T](implicit iso: Iso[RowMajorMatrixData[T], RowMajorMatrix[T]]) extends MatrixElem[RowMajorMatrixData[T], RowMajorMatrix[T]]
 
   // state representation type
   type RowMajorMatrixData[T] = PArray[DenseVector[T]]
 
   // 3) Iso for concrete class
-  abstract class RowMajorMatrixIso[T](implicit elem: Elem[T])
+  class RowMajorMatrixIso[T](implicit elem: Elem[T])
     extends Iso[RowMajorMatrixData[T], RowMajorMatrix[T]] {
     override def from(p: Rep[RowMajorMatrix[T]]) =
       unmkRowMajorMatrix(p) match {
@@ -55,6 +55,7 @@ trait MatricesAbs extends Matrices
       typeTag[RowMajorMatrix[T]]
     }
     lazy val defaultRepTo = defaultVal[Rep[RowMajorMatrix[T]]](RowMajorMatrix(element[PArray[DenseVector[T]]].defaultRepValue))
+    lazy val eTo = new RowMajorMatrixElem[T]()(this)
   }
   // 4) constructor and deconstructor
   trait RowMajorMatrixCompanionAbs extends RowMajorMatrixCompanion {
@@ -85,7 +86,8 @@ trait MatricesAbs extends Matrices
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoRowMajorMatrix[T](implicit elem: Elem[T]): Iso[RowMajorMatrixData[T], RowMajorMatrix[T]]
+  implicit def isoRowMajorMatrix[T](implicit elem: Elem[T]): Iso[RowMajorMatrixData[T], RowMajorMatrix[T]] =
+    new RowMajorMatrixIso[T]
 
   // 6) smart constructor and deconstructor
   def mkRowMajorMatrix[T](rows: Rep[PArray[DenseVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorMatrix[T]]
@@ -93,13 +95,13 @@ trait MatricesAbs extends Matrices
 
 
   // elem for concrete class
-  trait RowMajorFlatMatrixElem[T] extends MatrixElem[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]]
+  class RowMajorFlatMatrixElem[T](implicit iso: Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]]) extends MatrixElem[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]]
 
   // state representation type
   type RowMajorFlatMatrixData[T] = (PArray[T], Int)
 
   // 3) Iso for concrete class
-  abstract class RowMajorFlatMatrixIso[T](implicit elem: Elem[T])
+  class RowMajorFlatMatrixIso[T](implicit elem: Elem[T])
     extends Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]] {
     override def from(p: Rep[RowMajorFlatMatrix[T]]) =
       unmkRowMajorFlatMatrix(p) match {
@@ -115,6 +117,7 @@ trait MatricesAbs extends Matrices
       typeTag[RowMajorFlatMatrix[T]]
     }
     lazy val defaultRepTo = defaultVal[Rep[RowMajorFlatMatrix[T]]](RowMajorFlatMatrix(element[PArray[T]].defaultRepValue, 0))
+    lazy val eTo = new RowMajorFlatMatrixElem[T]()(this)
   }
   // 4) constructor and deconstructor
   trait RowMajorFlatMatrixCompanionAbs extends RowMajorFlatMatrixCompanion {
@@ -147,7 +150,8 @@ trait MatricesAbs extends Matrices
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoRowMajorFlatMatrix[T](implicit elem: Elem[T]): Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]]
+  implicit def isoRowMajorFlatMatrix[T](implicit elem: Elem[T]): Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]] =
+    new RowMajorFlatMatrixIso[T]
 
   // 6) smart constructor and deconstructor
   def mkRowMajorFlatMatrix[T](rmValues: Rep[PArray[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]]
@@ -155,13 +159,13 @@ trait MatricesAbs extends Matrices
 
 
   // elem for concrete class
-  trait RowMajorSparseMatrixElem[T] extends MatrixElem[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]]
+  class RowMajorSparseMatrixElem[T](implicit iso: Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]]) extends MatrixElem[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]]
 
   // state representation type
   type RowMajorSparseMatrixData[T] = PArray[SparseVector[T]]
 
   // 3) Iso for concrete class
-  abstract class RowMajorSparseMatrixIso[T](implicit elem: Elem[T])
+  class RowMajorSparseMatrixIso[T](implicit elem: Elem[T])
     extends Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]] {
     override def from(p: Rep[RowMajorSparseMatrix[T]]) =
       unmkRowMajorSparseMatrix(p) match {
@@ -177,6 +181,7 @@ trait MatricesAbs extends Matrices
       typeTag[RowMajorSparseMatrix[T]]
     }
     lazy val defaultRepTo = defaultVal[Rep[RowMajorSparseMatrix[T]]](RowMajorSparseMatrix(element[PArray[SparseVector[T]]].defaultRepValue))
+    lazy val eTo = new RowMajorSparseMatrixElem[T]()(this)
   }
   // 4) constructor and deconstructor
   trait RowMajorSparseMatrixCompanionAbs extends RowMajorSparseMatrixCompanion {
@@ -207,7 +212,8 @@ trait MatricesAbs extends Matrices
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoRowMajorSparseMatrix[T](implicit elem: Elem[T]): Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]]
+  implicit def isoRowMajorSparseMatrix[T](implicit elem: Elem[T]): Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]] =
+    new RowMajorSparseMatrixIso[T]
 
   // 6) smart constructor and deconstructor
   def mkRowMajorSparseMatrix[T](rows: Rep[PArray[SparseVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]]
@@ -235,14 +241,6 @@ trait MatricesSeq extends MatricesAbs { self: ScalanSeq with MatricesDsl =>
 
 
 
-  implicit def isoRowMajorMatrix[T](implicit elem: Elem[T]):Iso[RowMajorMatrixData[T], RowMajorMatrix[T]] =
-    new RowMajorMatrixIso[T] { i =>
-      // should use i as iso reference
-      lazy val eTo =
-        new SeqViewElem[RowMajorMatrixData[T], RowMajorMatrix[T]]()(i) with RowMajorMatrixElem[T]
-    }
-
-
   def mkRowMajorMatrix[T]
       (rows: Rep[PArray[DenseVector[T]]])(implicit elem: Elem[T]) =
       new SeqRowMajorMatrix[T](rows)
@@ -263,14 +261,6 @@ trait MatricesSeq extends MatricesAbs { self: ScalanSeq with MatricesDsl =>
 
 
 
-  implicit def isoRowMajorFlatMatrix[T](implicit elem: Elem[T]):Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]] =
-    new RowMajorFlatMatrixIso[T] { i =>
-      // should use i as iso reference
-      lazy val eTo =
-        new SeqViewElem[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]]()(i) with RowMajorFlatMatrixElem[T]
-    }
-
-
   def mkRowMajorFlatMatrix[T]
       (rmValues: Rep[PArray[T]], numColumns: Rep[Int])(implicit elem: Elem[T]) =
       new SeqRowMajorFlatMatrix[T](rmValues, numColumns)
@@ -289,14 +279,6 @@ trait MatricesSeq extends MatricesAbs { self: ScalanSeq with MatricesDsl =>
     lazy val selfType = element[RowMajorSparseMatrixCompanionAbs]
   }
 
-
-
-  implicit def isoRowMajorSparseMatrix[T](implicit elem: Elem[T]):Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]] =
-    new RowMajorSparseMatrixIso[T] { i =>
-      // should use i as iso reference
-      lazy val eTo =
-        new SeqViewElem[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]]()(i) with RowMajorSparseMatrixElem[T]
-    }
 
 
   def mkRowMajorSparseMatrix[T]
@@ -337,14 +319,6 @@ trait MatricesExp extends MatricesAbs with scalan.ProxyExp with scalan.ViewsExp 
     Some((p.rows))
 
 
-  implicit def isoRowMajorMatrix[T](implicit elem: Elem[T]):Iso[RowMajorMatrixData[T], RowMajorMatrix[T]] =
-    new RowMajorMatrixIso[T] { i =>
-      // should use i as iso reference
-      lazy val eTo =
-        new StagedViewElem[RowMajorMatrixData[T], RowMajorMatrix[T]]()(i) with RowMajorMatrixElem[T]
-    }
-
-
   case class ExpRowMajorFlatMatrix[T]
       (override val rmValues: Rep[PArray[T]], override val numColumns: Rep[Int])
       (implicit override val elem: Elem[T])
@@ -367,14 +341,6 @@ trait MatricesExp extends MatricesAbs with scalan.ProxyExp with scalan.ViewsExp 
     Some((p.rmValues, p.numColumns))
 
 
-  implicit def isoRowMajorFlatMatrix[T](implicit elem: Elem[T]):Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]] =
-    new RowMajorFlatMatrixIso[T] { i =>
-      // should use i as iso reference
-      lazy val eTo =
-        new StagedViewElem[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]]()(i) with RowMajorFlatMatrixElem[T]
-    }
-
-
   case class ExpRowMajorSparseMatrix[T]
       (override val rows: Rep[PArray[SparseVector[T]]])
       (implicit override val elem: Elem[T])
@@ -395,13 +361,5 @@ trait MatricesExp extends MatricesAbs with scalan.ProxyExp with scalan.ViewsExp 
     new ExpRowMajorSparseMatrix[T](rows)
   def unmkRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]) =
     Some((p.rows))
-
-
-  implicit def isoRowMajorSparseMatrix[T](implicit elem: Elem[T]):Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]] =
-    new RowMajorSparseMatrixIso[T] { i =>
-      // should use i as iso reference
-      lazy val eTo =
-        new StagedViewElem[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]]()(i) with RowMajorSparseMatrixElem[T]
-    }
 
 }

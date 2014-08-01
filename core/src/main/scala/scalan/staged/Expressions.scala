@@ -39,8 +39,8 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def name[A](eA: Elem[A]): String = s"$name[${eA.name}]"
     def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.name},${eB.name}]"
     def uniqueOpId: String
-    def mirror(f: Transformer): Rep[_]
-    def decompose: Option[Rep[_]] = None
+    def mirror(f: Transformer): Rep[T]
+    def decompose: Option[Rep[T]] = None
     def isScalarOp: Boolean = true
   }
 
@@ -52,7 +52,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
-    override def mirror(t: Transformer): Rep[_] = self
+    override def mirror(t: Transformer) = self
     override def hashCode: Int = (41 + x.hashCode)
 
     override def equals(other: Any) =
@@ -74,41 +74,27 @@ trait BaseExp extends Base { self: ScalanStaged =>
     }) + ")"
   }
 
-  trait UnOpBase[TArg,R] extends Def[R] {
+  abstract class UnOp[TArg,R](implicit selfType: Elem[R]) extends BaseDef[R] {
     def arg: Rep[TArg]
     def copyWith(arg: Rep[TArg]): Rep[R]
     def opName: String
     override def toString = s"${this.getClass.getSimpleName}($arg)"
     lazy val uniqueOpId = name(arg.elem)
-    lazy val self: Rep[R] = { 
-      implicit val e = selfType
-      this
-    }
-    override def mirror(t: Transformer) = {
-      implicit val e = selfType
-      copyWith(t(arg))
-    }
+    override def mirror(t: Transformer) = copyWith(t(arg))
   }
 
-  trait BinOpBase[TArg,R] extends Def[R] {
+  abstract class BinOp[TArg,R](implicit selfType: Elem[R]) extends BaseDef[R] {
     def lhs: Rep[TArg]
     def rhs: Rep[TArg]
     def copyWith(l: Rep[TArg], r: Rep[TArg]): Rep[R]
     def opName: String
     override def toString = s"${this.getClass.getSimpleName}($lhs, $rhs)"
     lazy val uniqueOpId = name(lhs.elem)
-    override def mirror(t: Transformer) = {
-      implicit val eT = selfType
-      copyWith(t(lhs), t(rhs))
-    }
-    lazy val self: Rep[R] = {
-      implicit val e = selfType
-      this
-    }
+    override def mirror(t: Transformer) = copyWith(t(lhs), t(rhs))
   }
 
-  trait UnOp[T] extends UnOpBase[T,T]
-  trait BinOp[T] extends BinOpBase[T,T]
+  trait EndoUnOp[T] extends UnOp[T,T]
+  trait EndoBinOp[T] extends BinOp[T,T]
 
   abstract class Transformer {
     def apply[A](x: Rep[A]): Rep[A]
@@ -118,16 +104,17 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def apply[X,A](f: X=>Rep[A]): X=>Rep[A] = (z:X) => apply(f(z))
     def apply[X,Y,A](f: (X,Y)=>Rep[A]): (X,Y)=>Rep[A] = (z1:X,z2:Y) => apply(f(z1,z2))
   }
+  def IdTransformer = MapTransformer.Empty
 
   trait TransformerOps[Ctx <: Transformer] {
     def empty: Ctx
-    def add(ctx: Ctx, kv: (Rep[_], Rep[_])): Ctx
+    def add[A](ctx: Ctx, kv: (Rep[A], Rep[A])): Ctx
     def merge(ctx1: Ctx, ctx2: Ctx): Ctx = ctx2.domain.foldLeft(ctx1)((t,s) => add(t, (s, ctx2(s))))
   }
 
   implicit class TransformerEx[Ctx <: Transformer](self: Ctx)(implicit ops: TransformerOps[Ctx]) {
-    def +(kv: (Rep[_], Rep[_])) = ops.add(self, kv)
-    def ++(kvs: Map[Rep[_], Rep[_]]) = kvs.foldLeft(self)((ctx, kv) => ops.add(ctx,kv))
+    def +[A](kv: (Rep[A], Rep[A])) = ops.add(self, kv)
+    def ++(kvs: Map[Rep[A], Rep[A]] forSome {type A}) = kvs.foldLeft(self)((ctx, kv) => ops.add(ctx, kv))
     def merge(other: Ctx): Ctx = ops.merge(self, other)
   }
 
@@ -145,11 +132,26 @@ trait BaseExp extends Base { self: ScalanStaged =>
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: LElem[T]): Exp[T]
-  implicit def reifyObject[T:LElem](obj: ReifiableObject[_,T]): Rep[T] = toExp(obj.asInstanceOf[Def[T]], fresh[T])
+  implicit def reifyObject[T](obj: ReifiableObject[_,T]): Rep[T] = {
+    // TODO bad cast
+    val obj1 = obj.asInstanceOf[Def[T]]
+    implicit val leT = Lazy(obj1.selfType)
+    toExp(obj1, fresh[T])
+  }
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
     case _: BaseElem[_] => Const(x)
-    case _: ArrayElem[_] => Const(x)
+    case _: FuncElem[_, _] => Const(x)
+    case pe: PairElem[a, b] =>
+      val x1 = x.asInstanceOf[(a, b)]
+      implicit val eA = pe.ea
+      implicit val eB = pe.eb
+      Pair(toRep(x1._1), toRep(x1._2))
+    case se: SumElem[a, b] =>
+      val x1 = x.asInstanceOf[a | b]
+      implicit val eA = se.ea
+      implicit val eB = se.eb
+      x1.fold(l => Left[a, b](l), r => Right[a, b](r))
     case _ => super.toRep(x)(eA)
   }
 
@@ -193,23 +195,23 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def unapply[T](e: Exp[T]): Option[TableEntry[T]] = findDefinition(e)
   }
 
-  def decompose[T](d: Def[T]): Exp[_] = d.decompose match {
+  def decompose[T](d: Def[T]): Exp[T] = d.decompose match {
     case None => null
-    case Some(sym) => sym.asInstanceOf[Exp[_]]
+    case Some(sym) => sym
   }
 
   // dependencies
-  def syms(e: Any): List[Exp[Any]] = e match {
+  def syms(e: Any): List[Exp[_]] = e match {
     case s: Exp[_] => List(s)
     case p: Product => p.productIterator.toList.flatMap(syms(_))
     case _ => Nil
   }
 
-  def dep(e: Exp[Any]): List[Exp[Any]] = e match {
+  def dep(e: Exp[_]): List[Exp[_]] = e match {
     case Def(d: Product) => syms(d)
     case _ => Nil
   }
-  def dep(e: Def[Any]): List[Exp[Any]] = e match {
+  def dep(e: Def[_]): List[Exp[_]] = e match {
     case d: Product => syms(d)
     case _ => Nil
   }
@@ -251,7 +253,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
     def mirror(t: Transformer) = symbol match {
       case Def(d) => d.mirror(t)
-      case _ => fresh(Lazy(symbol.elem.asInstanceOf[Elem[Any]]))
+      case _ => fresh(Lazy(symbol.elem))
     }
   }
 
@@ -260,6 +262,8 @@ trait BaseExp extends Base { self: ScalanStaged =>
       case lam: Lambda[_,_] => lam.freeVars.toList
       case _ => syms(d)
     }
+
+    def asDef[T] = d.asInstanceOf[Def[T]]
   }
 
   def rewrite[T](s: Exp[T])(implicit eT: LElem[T]): Exp[_] = {
@@ -282,7 +286,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
                     (implicit et: LElem[T]) extends Exp[T]
   {
     override def elem: Elem[T @uncheckedVariance] = this match {
-      case Def(d) => d.selfType.asInstanceOf[Elem[T]]
+      case Def(d) => d.selfType
       case _ => et.value
     }
     def varName = "s" + id
@@ -362,6 +366,5 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
     } while (res != currSym && currDef != null)
     res
   }
-
 }
 

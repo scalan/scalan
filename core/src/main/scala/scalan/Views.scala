@@ -1,11 +1,10 @@
 package scalan
 
-import scala.text._
-import Document._
 import scalan.common.Default
 import scala.language.higherKinds
 import scalan.common.Lazy
 import scala.reflect.runtime.universe._
+import scalan.staged.BaseExp
 
 trait Views extends Elems { self: Scalan =>
 
@@ -19,13 +18,13 @@ trait Views extends Elems { self: Scalan =>
     def from(p: Rep[To]): Rep[From]
     def to(p: Rep[From]): Rep[To]
     override def toString = s"${eFrom.name} <-> ${eTo.name}"
-//    override def equals(other: Any) = other match {
-//      case i: Iso[_, _] => eFrom == i.eFrom && eTo == i.eTo
-//      case _ => false
-//    }
+    override def equals(other: Any) = other match {
+      case i: Iso[_, _] => eFrom == i.eFrom && eTo == i.eTo
+      case _ => false
+    }
   }
 
-  implicit def viewElement[From, To <: UserType[_]](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
+  implicit def viewElement[From, To /*<: UserType[_]*/](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
 
   abstract class ViewElem[From, To](implicit val iso: Iso[From, To]) extends Elem[To] {
     lazy val tag: TypeTag[To] = iso.tag
@@ -119,18 +118,14 @@ trait Views extends Elems { self: Scalan =>
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
-  class SeqViewElem[From, To](implicit iso: Iso[From, To]) extends ViewElem[From, To]
-
   trait UserTypeSeq[T, TImpl <: T] extends UserType[T] { thisType: T =>
     override def self = this
   }
 }
 
-trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
-  class StagedViewElem[From, To](implicit iso: Iso[From, To]) extends ViewElem[From, To]
-
+trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
   trait UserTypeDef[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
-    override def self = reifyObject(this)(Lazy(selfType.asInstanceOf[Elem[TImpl]]))
+    override def self = reifyObject(this)
     def uniqueOpId = selfType.name
   }
   object UserTypeDef {
@@ -154,8 +149,8 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
 
   def hasViews(s: Exp[_]): Boolean = s match {
     case Def(Tup(s1, s2)) => hasViews(s1) || hasViews(s2)
-    case UserTypeSym(_) => true
-    case Def(UserTypeDef(_)) => true
+    case Def(UnpackableDef(_, _)) => true
+    case UnpackableExp(_, _) => true
     case _ => false
   }
 
@@ -164,19 +159,17 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
       val (sv1, iso1) = eliminateViews(s1)
       val (sv2, iso2) = eliminateViews(s2)
       ((sv1, sv2), pairIso(iso1, iso2))
-    case Def(UserTypeDef(iso: Iso[a, b])) =>
-      val repr = iso.from(s.asRep[b])
-      (repr, iso)
-    case UserTypeSym(iso: Iso[a, b]) =>
-      val repr = iso.from(s.asRep[b])
-      (repr, iso)
+    case Def(UnpackableDef(src, iso: Iso[_, _])) =>
+      (src, iso)
+    case UnpackableExp(src, iso: Iso[_, _]) =>
+      (src, iso)
     case s =>
       (s, identityIso(s.elem))
   }
 
   implicit class IsoOps[From, To](iso: Iso[From, To]) {
-    def toFunTo: Rep[From => To] = fun(iso.to)(Lazy(iso.eFrom))
-    def toFunFrom: Rep[To => From] = fun(iso.from)(Lazy(iso.eTo))
+    def toFunTo: Rep[From => To] = fun(iso.to _)(Lazy(iso.eFrom))
+    def toFunFrom: Rep[To => From] = fun(iso.from _)(Lazy(iso.eTo))
   }
 
   def MethodCallFromExp(clazzUT: Class[_], methodName: String) = new {
@@ -223,7 +216,7 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
     implicit def selfType = iso.eTo
     lazy val self: Rep[To] = this
     def copy(source: Rep[From]): View[From, To]
-    def mirror(t: Transformer) = reifyObject(copy(t(source)))(Lazy(selfType))
+    def mirror(t: Transformer) = copy(t(source))
     lazy val uniqueOpId = name(iso.eFrom, iso.eTo)
   }
 
@@ -269,27 +262,27 @@ trait ViewsExp extends Views with OptionsExp { self: ScalanStaged =>
       // case UnpackableDef(Def(uv @ UnpackView(view)), iso) if iso.eTo == view.iso.eTo => view
       case UnpackView(Def(UnpackableDef(source, iso))) => source
       // case UnpackView(view @ UnpackableExp(iso)) => iso.from(view)
-      //      case LoopUntil(start, step, isMatch) if hasViews(start) => {
-      //        eliminateViews(start) match {
-      //          case (startWithoutViews, iso: Iso[a, b]) =>
-      //            val start1 = startWithoutViews.asRep[a]
-      //            implicit val eA = iso.eFrom
-      //            implicit val eB = iso.eTo
-      //            val step1 = fun { (x: Rep[a]) =>
-      //              val x_viewed = iso.to(x)
-      //              val res_viewed = mirrorApply(step.asRep[b => b], x_viewed)
-      //              val res = iso.from(res_viewed)
-      //              res
-      //            }(eA, eA)
-      //            val isMatch1 = fun { (x: Rep[a]) =>
-      //              val x_viewed = iso.to(x)
-      //              val res = mirrorApply(isMatch.asRep[b => Boolean], x_viewed)
-      //              res
-      //            }(eA, element[Boolean])
-      //            val loopRes = LoopUntil(start1, step1, isMatch1)
-      //            iso.to(loopRes)
-      //        }
-      //      }
+
+      case LoopUntil(start, step, isMatch) if hasViews(start) =>
+        eliminateViews(start) match {
+          case (startWithoutViews, iso: Iso[a, b]) =>
+            val start1 = startWithoutViews.asRep[a]
+            implicit val eA = iso.eFrom
+            implicit val eB = iso.eTo
+            val step1 = fun { (x: Rep[a]) =>
+              val x_viewed = iso.to(x)
+              val res_viewed = mirrorApply(step.asRep[b => b], x_viewed)
+              val res = iso.from(res_viewed)
+              res
+            }
+            val isMatch1 = fun { (x: Rep[a]) =>
+              val x_viewed = iso.to(x)
+              val res = mirrorApply(isMatch.asRep[b => Boolean], x_viewed)
+              res
+            }
+            val loopRes = LoopUntil(start1, step1, isMatch1)
+            iso.to(loopRes)
+        }
       case _ => super.rewrite(d)
     }
     case Var(UserTypeSym(iso: Iso[a, _])) =>
