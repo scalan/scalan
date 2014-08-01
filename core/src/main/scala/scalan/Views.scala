@@ -149,8 +149,8 @@ trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
 
   def hasViews(s: Exp[_]): Boolean = s match {
     case Def(Tup(s1, s2)) => hasViews(s1) || hasViews(s2)
-    case UserTypeSym(_) => true
-    case Def(UserTypeDef(_)) => true
+    case Def(UnpackableDef(_, _)) => true
+    case UnpackableExp(_, _) => true
     case _ => false
   }
 
@@ -159,12 +159,10 @@ trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
       val (sv1, iso1) = eliminateViews(s1)
       val (sv2, iso2) = eliminateViews(s2)
       ((sv1, sv2), pairIso(iso1, iso2))
-    case Def(UserTypeDef(iso: Iso[a, b])) =>
-      val repr = iso.from(s.asRep[b])
-      (repr, iso)
-    case UserTypeSym(iso: Iso[a, b]) =>
-      val repr = iso.from(s.asRep[b])
-      (repr, iso)
+    case Def(UnpackableDef(src, iso: Iso[_, _])) =>
+      (src, iso)
+    case UnpackableExp(src, iso: Iso[_, _]) =>
+      (src, iso)
     case s =>
       (s, identityIso(s.elem))
   }
