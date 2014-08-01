@@ -47,7 +47,10 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
     case MethodCall(obj, method, args) =>
       val className0 = method.getDeclaringClass.getName
       val className = className0.substring(className0.lastIndexOf("$") + 1)
-      s"$obj.$className.${method.getName}(${args.mkString("", ",", "")})"
+      val methodName = method.getName.replaceAll("$plus", "+").
+        replaceAll("$minus", "-").replaceAll("$colon", ":").
+        replaceAll("$gt", ">").replaceAll("$lt", "<").replaceAll("$eq", "=")
+      s"$obj.$className.$methodName(${args.mkString(", ")})"
     case Tup(a, b) => s"($a, $b)"
     case First(pair) => s"$pair._1"
     case Second(pair) => s"$pair._2"
@@ -56,8 +59,8 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
     case NumericToFloat(arg, _) => s"$arg.toFloat"
     case NumericToDouble(lhs, _) => s"$lhs.toDouble"
     case NumericToInt(lhs, _) => s"$lhs.toInt"
-    case op: UnOp[_, _] => s"${op.name}(${op.arg})"
-    case op: BinOp[_, _] => s"${op.lhs} ${op.name} ${op.rhs}"
+    case op: UnOp[_, _] => s"${op.opName}(${op.arg})"
+    case op: BinOp[_, _] => s"${op.lhs} ${op.opName} ${op.rhs}"
     case _ => d.toString
   }
 
