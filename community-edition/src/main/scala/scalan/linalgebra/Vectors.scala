@@ -78,6 +78,7 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
 
 trait VectorsDsl extends ScalanDsl with impl.VectorsAbs with Vectors with PArraysDsl {
   def matchVec[T, R](vec: Vec[T])(dense: Rep[DenseVector[T]] => Rep[R])(sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R]
+  implicit def parrayToVec[T:Elem](arr: PA[T]): Vec[T] = DenseVector(arr)
 }
 
 trait VectorsDslSeq extends VectorsDsl with impl.VectorsSeq with PArraysDslSeq with ScalanSeqImplementation {

@@ -334,7 +334,7 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport wi
     }
 
     /* Launch scalac */
-    launchProcess(outDir, "scalac", outputSource.getAbsolutePath())
+    launchProcess(outDir, "scalac", outputSource.getAbsolutePath)
   }
 
   def createManifest[T](eA: Elem[T]) : Manifest[_] = {

@@ -4,7 +4,7 @@ import scalan.linalgebra.MatricesDsl
 
 trait LinearAlgebraExamples extends MatricesDsl {
   def mvm[T](matrix: Matr[T], vector: Vec[T])(implicit eT: Elem[T], n: Numeric[T], m: RepMonoid[T]): Vec[T] =
-    DenseVector(matrix.rows.map { r => r.dot(vector) })
+    matrix.rows.map { r => r.dot(vector) }
 
   lazy val ddmvm = fun { p: Rep[(Array[Array[Double]], Array[Double])] => 
     val Pair(m, v) = p
