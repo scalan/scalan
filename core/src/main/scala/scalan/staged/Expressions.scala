@@ -262,6 +262,8 @@ trait BaseExp extends Base { self: ScalanStaged =>
       case lam: Lambda[_,_] => lam.freeVars.toList
       case _ => syms(d)
     }
+
+    def asDef[T] = d.asInstanceOf[Def[T]]
   }
 
   def rewrite[T](s: Exp[T])(implicit eT: LElem[T]): Exp[_] = {
