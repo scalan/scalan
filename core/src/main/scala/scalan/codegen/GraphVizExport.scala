@@ -47,9 +47,9 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
     case MethodCall(obj, method, args) =>
       val className0 = method.getDeclaringClass.getName
       val className = className0.substring(className0.lastIndexOf("$") + 1)
-      val methodName = method.getName.replaceAll("$plus", "+").
-        replaceAll("$minus", "-").replaceAll("$colon", ":").
-        replaceAll("$gt", ">").replaceAll("$lt", "<").replaceAll("$eq", "=")
+      val methodName = method.getName.replaceAll("\\$plus", "+").
+        replaceAll("\\$minus", "-").replaceAll("\\$colon", ":").
+        replaceAll("\\$greater", ">").replaceAll("\\$less", "<").replaceAll("\\$equal", "=")
       s"$obj.$className.$methodName(${args.mkString(", ")})"
     case Tup(a, b) => s"($a, $b)"
     case First(pair) => s"$pair._1"
