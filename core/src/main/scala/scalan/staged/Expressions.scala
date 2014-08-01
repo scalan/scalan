@@ -31,8 +31,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def toStringWithType = varName + ":" + elem.name
     def toStringWithDefinition: String
   }
-  type AnyExp = Exp[Any]
-  type ExpSubst = AnyExp => AnyExp
+  type ExpAny = Exp[_]
 
   // this trait is mixed in Def[A]
   trait ReifiableObject[+T, +TImpl <: T] extends UserType[T @uncheckedVariance] {

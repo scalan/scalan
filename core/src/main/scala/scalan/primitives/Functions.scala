@@ -127,13 +127,13 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       *  @param deps  dependence relation between a definition and symbols
       *  @return      a `Seq` of local definitions on which `sym` depends or empty if `sym` is itself non-local
       */
-    def buildLocalScheduleFrom(sym: AnyExp, deps: AnyExp => List[AnyExp]): Seq[TableEntry[_]] =
+    def buildLocalScheduleFrom(sym: ExpAny, deps: ExpAny => List[ExpAny]): Seq[TableEntry[_]] =
       if (isLocalDef(sym))
         buildScheduleForResult(List(sym), deps(_).filter(isLocalDef(_)))
       else
         Seq.empty
 
-    def buildLocalScheduleFrom(sym: AnyExp): Seq[TableEntry[_]] = buildLocalScheduleFrom(sym, _.getDeps)
+    def buildLocalScheduleFrom(sym: ExpAny): Seq[TableEntry[_]] = buildLocalScheduleFrom(sym, _.getDeps)
 
     // from Scalan
     //    /** Builds a schedule starting from symbol `sym` which which consists only of local definitions.
@@ -165,7 +165,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
       /** Shallow dependencies don't look into branches of IfThenElse
         */
-      def getShallowDeps(d: AnyExp): List[AnyExp] = d match {
+      def getShallowDeps(d: ExpAny): List[ExpAny] = d match {
         case Def(IfThenElse(c, _, _)) => List(c)
         case _ => d.getDeps
       }
@@ -177,7 +177,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
           * @param s starting symbol
           * @return sequence of symbols that 1) local 2) in shallow dependence relation 3) not yet marked
           */
-        def getLocalUnusedShallowSchedule(s: AnyExp): Seq[TableEntry[_]] = {
+        def getLocalUnusedShallowSchedule(s: ExpAny): Seq[TableEntry[_]] = {
           val sch = buildLocalScheduleFrom(s, getShallowDeps(_).filter(!usedSet.contains(_)))
           sch
         }

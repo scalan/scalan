@@ -241,7 +241,7 @@ trait Transforming { self: ScalanStaged =>
   }
   object ProjectionTree {
     def apply(root: Exp[_], children: List[ProjectionTree]) = new ProjectionTree(root, children)
-    def apply(root: Exp[_], unfoldChildren: AnyExp => List[AnyExp]): ProjectionTree =
+    def apply(root: Exp[_], unfoldChildren: ExpAny => List[ExpAny]): ProjectionTree =
       ProjectionTree(root, unfoldChildren(root) map (apply(_, unfoldChildren)))
   }
 
@@ -273,7 +273,7 @@ trait Transforming { self: ScalanStaged =>
     def apply(root: Exp[_], children: List[TupleTree]) = new TupleTree(root, children)
 
     // require ptree to be sorted by projectionIndex
-    def fromProjectionTree(ptree: ProjectionTree, subst: ExpSubst): TupleTree =
+    def fromProjectionTree(ptree: ProjectionTree, subst: ExpAny => ExpAny): TupleTree =
       if (ptree.isLeaf)
         TupleTree(subst(ptree.root), Nil)
       else {
