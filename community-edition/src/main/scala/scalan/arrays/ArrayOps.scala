@@ -1,6 +1,5 @@
 package scalan.arrays
 
-import java.io.PrintWriter
 import scalan.{ ScalanStaged, ScalanSeq, Scalan }
 import scala.reflect.ClassTag
 import scalan.staged.BaseExp
@@ -125,7 +124,6 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
 
   trait ArrayDef[T] extends Def[Array[T]] {
     implicit def eT: Elem[T]
-    lazy val self: Rep[Array[T]] = this
     lazy val selfType = element[Array[T]]
     lazy val uniqueOpId = name(eT)
   }
@@ -135,18 +133,15 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
     lazy val uniqueOpId = withElemOfArray(xs) { name(_) }
   }
   case class ArrayLength[T](xs: Exp[Array[T]]) extends Def[Int] with ArrayMethod[T] {
-    lazy val self: Rep[Int] = this
     def selfType = element[Int]
     override def mirror(t: Transformer) = ArrayLength(t(xs))
   }
   case class ArrayApply[T](xs: Exp[Array[T]], index: Exp[Int]) extends Def[T] with ArrayMethod[T] {
-    implicit lazy val eT = withElemOfArray(xs) { e => e }
-    def selfType = eT
-    lazy val self: Rep[T] = this
+    lazy val selfType = xs.elem.ea
     override def mirror(t: Transformer) = ArrayApply(t(xs), t(index))
   }
   case class ArrayApplyMany[T](xs: Exp[Array[T]], indices: Exp[Array[Int]]) extends ArrayDef[T] {
-    implicit lazy val eT = withElemOfArray(xs) { e => e }
+    lazy val eT = xs.elem.ea
     override def mirror(t: Transformer) = ArrayApplyMany(t(xs), t(indices))
   }
   case class ArrayMap[T, R](xs: Exp[Array[T]], f: Exp[T => R]) extends ArrayDef[R] {
@@ -154,14 +149,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
     override def mirror(t: Transformer) = ArrayMap(t(xs), t(f))
   }
   case class ArrayReduce[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T]) extends Def[T] with ArrayMethod[T] {
-    implicit lazy val eT = withElemOfArray(xs) { e => e }
-    def selfType = eT
-    lazy val self: Rep[T] = this
+    def selfType = xs.elem.ea
     override def mirror(t: Transformer) = ArrayReduce[T](t(xs), m)
   }
-  case class ArrayScan[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T])(implicit val eT : Elem[(Array[T], T)]) extends Def[(Array[T], T)] with ArrayMethod[T] {
-    def selfType = eT
-    lazy val self: Rep[(Array[T], T)] = this
+  case class ArrayScan[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T])(implicit val selfType: Elem[(Array[T], T)]) extends Def[(Array[T], T)] with ArrayMethod[T] {
     override def mirror(t: Transformer) = ArrayScan[T](t(xs), m)
   }
   case class ArrayZip[T: Elem, U: Elem](xs: Exp[Array[T]], ys: Exp[Array[U]]) extends ArrayDef[(T, U)] {
@@ -192,9 +183,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
   def array_reduce[T](xs: Arr[T])(implicit m: RepMonoid[T]) =
     withElemOfArray(xs) { implicit eT => ArrayReduce(xs, m) }
 
-  def array_scan[T](xs: Arr[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)] = {
+  def array_scan[T](xs: Arr[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)] =
     ArrayScan(xs, m)
-  }
 
   def array_zip[T, U](xs: Arr[T], ys: Arr[U]): Arr[(T, U)] = {
     implicit val eT = xs.elem.ea

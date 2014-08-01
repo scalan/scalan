@@ -31,26 +31,14 @@ trait ProxySeq extends ProxyBase { self: ScalanSeq =>
 }
 
 trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
-  case class MethodCall[T](receiver: Exp[_], method: Method, args: List[AnyRef])(implicit leT: LElem[T]) extends Def[T] {
-    def selfType = leT.value
+  case class MethodCall[T](receiver: Exp[_], method: Method, args: List[AnyRef])(implicit selfType: Elem[T]) extends BaseDef[T] {
     def uniqueOpId = s"$name:${method.getName}"
     override def mirror(t: Transformer) =
       MethodCall[T](t(receiver), method, args map {
         case a: Exp[_] => t(a)
         case a => a
       })
-    override def self: Rep[T] = this
   }
-
-  //  case class MethodCallLifted[T](receiver: Arr[_], method: Method, args: List[AnyRef])(implicit leT: LElem[T]) extends ArrayDef[T] {
-  //    def selfType = leT.value
-  //    def uniqueOpId = s"$name:{Lifted}${method.getName}"
-  //    override def mirror(t: Transformer) =
-  //      MethodCallLifted[T](t(receiver), method, args map {
-  //        case a: Exp[_] => t(a)
-  //        case a => a
-  //      })
-  //  }
 
   private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
@@ -140,7 +128,7 @@ trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
 
     def createMethodCall(m: Method, args: Array[AnyRef]): Exp[_] = {
       getResultElem(m, args) match {
-        case e: Elem[a] => MethodCall[a](receiver, m, args.toList)(Lazy(e))
+        case e: Elem[a] => MethodCall[a](receiver, m, args.toList)(e)
       }
     }
 

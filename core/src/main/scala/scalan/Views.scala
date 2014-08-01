@@ -118,14 +118,14 @@ trait Views extends Elems { self: Scalan =>
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
+  // TODO check if this is actually useful
   trait UserTypeSeq[T, TImpl <: T] extends UserType[T] { thisType: T =>
-    override def self = this
+    def self = this
   }
 }
 
 trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
   trait UserTypeDef[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
-    override def self = reifyObject(this)
     def uniqueOpId = selfType.name
   }
   object UserTypeDef {
@@ -214,7 +214,6 @@ trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
     def source: Rep[From]
     def iso: Iso[From, To]
     implicit def selfType = iso.eTo
-    lazy val self: Rep[To] = this
     def copy(source: Rep[From]): View[From, To]
     def mirror(t: Transformer) = copy(t(source))
     lazy val uniqueOpId = name(iso.eFrom, iso.eTo)
@@ -222,7 +221,6 @@ trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
 
   case class UnpackView[A, B](view: Rep[B])(implicit iso: Iso[A, B]) extends Def[A] {
     implicit def selfType = iso.eFrom
-    lazy val self: Rep[A] = this
     override def mirror(f: Transformer) = UnpackView[A, B](f(view))
     lazy val uniqueOpId = name(selfType, view.elem)
   }

@@ -10,8 +10,8 @@ trait InterpreterCommunity extends Interpreter {
 
   override def mirrorDef(d: Def[_], s: Exp[_], exps: List[seq.Rep[_]], symMirr: SymMirror, funcMirr: FuncMirror): (List[seq.Rep[_]], SymMirror, FuncMirror) = d match {
     case apply@ArrayApply(xs, ind) => {
-      apply.eT match {
-        case (elem:Elem[a]) =>
+      apply.selfType match {
+        case elem: Elem[a] =>
           val xs_ = symMirr(xs).asInstanceOf[seq.Rep[Array[a]]]
           val ind_ = symMirr(ind).asInstanceOf[seq.Rep[Int]]
           val exp = xs_(ind_)

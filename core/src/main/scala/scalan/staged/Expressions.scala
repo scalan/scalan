@@ -34,7 +34,9 @@ trait BaseExp extends Base { self: ScalanStaged =>
   type ExpAny = Exp[_]
 
   // this trait is mixed in Def[A]
+  // TODO extending UserType isn't correct
   trait ReifiableObject[+T, +TImpl <: T] extends UserType[T @uncheckedVariance] {
+    lazy val self: Rep[T] = reifyObject(this)
     def name: String = getClass.getSimpleName
     def name[A](eA: Elem[A]): String = s"$name[${eA.name}]"
     def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.name},${eB.name}]"
@@ -46,9 +48,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   type Def[+A] = ReifiableObject[A,A]
   
-  abstract class BaseDef[T](implicit val selfType: Elem[T]) extends Def[T] {
-    lazy val self: Rep[T] = this
-  }
+  abstract class BaseDef[T](implicit val selfType: Elem[T]) extends Def[T]
 
   case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
