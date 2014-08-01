@@ -243,7 +243,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
 
   //TODO ICFP implement ViewSum and corresponding rewrite rules
 
-  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
+  override def rewrite[T](d: Exp[T]) = d match {
     case Def(d1) => d1 match {
       //      case ViewPair(Def(ViewPair(a, iso1)), iso2) =>
       //        ViewPair(a, composeIso(iso2, iso1))

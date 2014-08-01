@@ -244,7 +244,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def asDef[T] = d.asInstanceOf[Def[T]]
   }
 
-  def rewrite[T](s: Exp[T])(implicit eT: LElem[T]): Exp[_] = {
+  def rewrite[T](s: Exp[T]): Exp[_] = {
     null
   }
 }

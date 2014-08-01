@@ -214,7 +214,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: Scala
     ArrayStride(xs, start, length, stride)
   }
 
-  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
+  override def rewrite[T](d: Exp[T]) = d match {
     case Def(d1) => d1 match {
       case ArrayApply(Def(d2), i) => d2 match {
         case ArrayApplyMany(xs, is) =>

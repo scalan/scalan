@@ -91,7 +91,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
   }
   implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B] = new StagedSumOps[A, B](s)
 
-  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
+  override def rewrite[T](d: Exp[T]) = d match {
     case Def(d1) => d1 match {
       case SumFold(Def(Left(left: Rep[a])), l, _) =>
         implicit val eLeft = left.elem

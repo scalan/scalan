@@ -42,7 +42,7 @@ trait FractionalOpsExp extends FractionalOps with BaseExp { self: ScalanStaged =
 
   def fractional_mod[T](lhs: Rep[T], rhs: Rep[T])(implicit i: scala.Integral[T], et: Elem[T]): Rep[T] = FractionalMod(lhs, rhs, i)
 
-  override def rewrite[T](s: Exp[T])(implicit eT: LElem[T]): Rep[_] = s match {
+  override def rewrite[T](s: Exp[T]): Rep[_] = s match {
     case Def(d) => d match {
       case FractionalDivide(Def(Const(x)), Def(Const(y)), f) => {
         val f1: Fractional[T] = f.asInstanceOf[Fractional[T]]

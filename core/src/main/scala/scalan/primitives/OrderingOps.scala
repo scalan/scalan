@@ -64,7 +64,7 @@ trait OrderingOpsExp extends OrderingOps with BaseExp { self: ScalanStaged =>
   def ordering_max[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Ordering[T], et: Elem[T]): Rep[T] = OrderingMax(lhs,rhs)
   def ordering_min[T](lhs: Exp[T], rhs: Exp[T])(implicit n: Ordering[T], et: Elem[T]): Rep[T] = OrderingMin(lhs,rhs)
 
-  override def rewrite[T](s: Exp[T])(implicit leT: LElem[T]) = s match {
+  override def rewrite[T](s: Exp[T]) = s match {
     case Def(d) => d match {
       case OrderingLT(Def(Const(x)), Def(Const(y)), n) => Const(n.lt(x, y))
       case OrderingGT(Def(Const(x)), Def(Const(y)), n) => Const(n.gt(x,y))

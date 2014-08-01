@@ -130,7 +130,7 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
   private def isZero[T](x: T, n: Numeric[T]) = x == n.zero
   private def isOne[T](x: T, n: Numeric[T]) = x == n.fromInt(1)
   
-  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
+  override def rewrite[T](d: Exp[T]) = d match {
     case Def(d1) => d1 match {
       // constant propagation
       case NumericPlus(Def(Const(x)), Def(Const(y)), n: Numeric[T] @unchecked) => Const(n.plus(x, y))(d1.selfType)

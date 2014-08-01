@@ -304,7 +304,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     case _ => None
   }
 
-  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
+  override def rewrite[T](d: Exp[T]) = d match {
     case Def(d1) => d1 match {
       case MethodCall(Def(obj @ UserTypeDef(_)), m, args) =>
         if (m.getDeclaringClass.isAssignableFrom(obj.getClass) && invokeEnabled) {
