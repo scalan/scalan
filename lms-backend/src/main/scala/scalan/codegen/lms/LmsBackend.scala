@@ -264,7 +264,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
   }
 }
 
-trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport with VectorsDslExp =>
+trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport /*with VectorsDslExp*/ =>
 
   protected def launchProcess(launchDir: File, commandArgs: String*) {
     val builder = new ProcessBuilder(commandArgs: _*)

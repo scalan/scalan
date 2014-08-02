@@ -159,7 +159,7 @@ class IfThenElseItTests extends ItTests {
 
   }
 
-  class ProgStaged extends Prog with ScalanCtxStaged with GraphVizExport
+  class ProgStaged extends Prog with ScalanCtxStaged
   class ProgSeq extends Prog with ScalanCtxSeq
   val progStaged = new ProgStaged()
   val progSeq = new ProgSeq()
