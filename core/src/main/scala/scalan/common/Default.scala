@@ -14,7 +14,6 @@ trait Defaults {
    * <pre>
    *   (defaultOf[Int], defaultOf: List[Int]) == (0, List.empty[Int])
    * </pre>
-   * @usecase def default[A]: A
    */
   def defaultOf[A](implicit d: Default[A]): A = d.value
 }
