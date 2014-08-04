@@ -48,9 +48,9 @@ trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanStaged =>
     IfThenElse(cond, thenp, elsep)
   }
 
-  override def rewrite[T](d: Exp[T]) = d match {
-    case Def(IfThenElse(Def(Const(true)), t, _)) => t
-    case Def(IfThenElse(Def(Const(false)), _, e)) => e
-    case _ => super.rewrite(d)
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case IfThenElse(Def(Const(true)), t, _) => t
+    case IfThenElse(Def(Const(false)), _, e) => e
+    case _ => super.rewriteDef(d)
   }
 }

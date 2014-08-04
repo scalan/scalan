@@ -243,48 +243,49 @@ trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
 
   //TODO ICFP implement ViewSum and corresponding rewrite rules
 
-  override def rewrite[T](d: Exp[T]) = d match {
-    case Def(d1) => d1 match {
-      //      case ViewPair(Def(ViewPair(a, iso1)), iso2) =>
-      //        ViewPair(a, composeIso(iso2, iso1))
-      case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
-        ViewPair((a.asRep[a], b.asRep[b]))(iso1, iso2)
-      case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
-        ViewPair((a.asRep[a], b))(iso1, identityIso(b.elem)).self
-      case Tup(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
-        ViewPair((a, b.asRep[b]))(identityIso(a.elem), iso2).self
-      case First(Def(view @ ViewPair(source))) =>
-        view.iso1.to(source._1)
-      case Second(Def(view @ ViewPair(source))) =>
-        view.iso2.to(source._2)
-      // case UnpackableDef(Def(uv @ UnpackView(view)), iso) if iso.eTo == view.iso.eTo => view
-      case UnpackView(Def(UnpackableDef(source, iso))) => source
-      // case UnpackView(view @ UnpackableExp(iso)) => iso.from(view)
+  override def rewriteDef[T](d: Def[T]) = d match {
+    //      case ViewPair(Def(ViewPair(a, iso1)), iso2) =>
+    //        ViewPair(a, composeIso(iso2, iso1))
+    case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+      ViewPair((a.asRep[a], b.asRep[b]))(iso1, iso2)
+    case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
+      ViewPair((a.asRep[a], b))(iso1, identityIso(b.elem)).self
+    case Tup(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+      ViewPair((a, b.asRep[b]))(identityIso(a.elem), iso2).self
+    case First(Def(view@ViewPair(source))) =>
+      view.iso1.to(source._1)
+    case Second(Def(view@ViewPair(source))) =>
+      view.iso2.to(source._2)
+    // case UnpackableDef(Def(uv @ UnpackView(view)), iso) if iso.eTo == view.iso.eTo => view
+    case UnpackView(Def(UnpackableDef(source, iso))) => source
+    // case UnpackView(view @ UnpackableExp(iso)) => iso.from(view)
 
-      case LoopUntil(start, step, isMatch) if hasViews(start) =>
-        eliminateViews(start) match {
-          case (startWithoutViews, iso: Iso[a, b]) =>
-            val start1 = startWithoutViews.asRep[a]
-            implicit val eA = iso.eFrom
-            implicit val eB = iso.eTo
-            val step1 = fun { (x: Rep[a]) =>
-              val x_viewed = iso.to(x)
-              val res_viewed = mirrorApply(step.asRep[b => b], x_viewed)
-              val res = iso.from(res_viewed)
-              res
-            }
-            val isMatch1 = fun { (x: Rep[a]) =>
-              val x_viewed = iso.to(x)
-              val res = mirrorApply(isMatch.asRep[b => Boolean], x_viewed)
-              res
-            }
-            val loopRes = LoopUntil(start1, step1, isMatch1)
-            iso.to(loopRes)
-        }
-      case _ => super.rewrite(d)
-    }
+    case LoopUntil(start, step, isMatch) if hasViews(start) =>
+      eliminateViews(start) match {
+        case (startWithoutViews, iso: Iso[a, b]) =>
+          val start1 = startWithoutViews.asRep[a]
+          implicit val eA = iso.eFrom
+          implicit val eB = iso.eTo
+          val step1 = fun { (x: Rep[a]) =>
+            val x_viewed = iso.to(x)
+            val res_viewed = mirrorApply(step.asRep[b => b], x_viewed)
+            val res = iso.from(res_viewed)
+            res
+          }
+          val isMatch1 = fun { (x: Rep[a]) =>
+            val x_viewed = iso.to(x)
+            val res = mirrorApply(isMatch.asRep[b => Boolean], x_viewed)
+            res
+          }
+          val loopRes = LoopUntil(start1, step1, isMatch1)
+          iso.to(loopRes)
+      }
+    case _ => super.rewriteDef(d)
+  }
+
+  override def rewriteVar[T](v: Exp[T]) = v match {
     case Var(UserTypeSym(iso: Iso[a, _])) =>
       iso.to(fresh[a](Lazy(iso.eFrom)))
-    case _ => super.rewrite(d)
+    case _ => super.rewriteVar(v)
   }
 }

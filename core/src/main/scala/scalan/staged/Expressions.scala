@@ -244,9 +244,14 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def asDef[T] = d.asInstanceOf[Def[T]]
   }
 
-  def rewrite[T](s: Exp[T]): Exp[_] = {
-    null
+  final def rewrite[T](s: Exp[T]): Exp[_] = s match {
+    case Def(d) => rewriteDef(d)
+    case _ => rewriteVar(s)
   }
+
+  def rewriteDef[T](d: Def[T]): Exp[_] = null
+
+  def rewriteVar[T](s: Exp[T]): Exp[_] = null
 }
 
 /**

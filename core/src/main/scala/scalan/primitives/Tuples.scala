@@ -153,10 +153,10 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
     case _ => !!!("tuple projection expected", p)
   }
 
-  override def rewrite[T](d: Exp[T]) = d match {
-    case Def(First(Def(Tup(a, b)))) => a
-    case Def(Second(Def(Tup(a, b)))) => b
-    case Def(Tup(Def(First(a)), Def(Second(b)))) if a == b => a
-    case _ => super.rewrite(d)
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case First(Def(Tup(a, b))) => a
+    case Second(Def(Tup(a, b))) => b
+    case Tup(Def(First(a)), Def(Second(b))) if a == b => a
+    case _ => super.rewriteDef(d)
   }
 }
