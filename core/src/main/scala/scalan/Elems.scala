@@ -72,6 +72,7 @@ trait Elems extends Base { self: Scalan =>
     lazy val defaultRep = defaultVal(fun(funcRepDefault[A, B].value))
   }
 
+  val AnyRefElement: Elem[AnyRef] = new BaseElem[AnyRef]()(typeTag[AnyRef], Default.OfAnyRef)
   implicit val BoolElement: Elem[Boolean] = new BaseElem[Boolean]
   implicit val ByteElement: Elem[Byte] = new BaseElem[Byte]
   implicit val IntElement: Elem[Int] = new BaseElem[Int]

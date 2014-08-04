@@ -20,6 +20,8 @@ trait Defaults {
 }
 
 object Default extends Defaults {
+  val OfAnyRef: Default[AnyRef] = defaultVal(null)
+
   implicit val OfUnit: Default[Unit] = defaultVal(())
 
   implicit val OfString: Default[String] = defaultVal("")
