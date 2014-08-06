@@ -18,10 +18,10 @@ object ScalanBuild extends Build {
     "-language:experimental.macros")
 
   val commonDeps = libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "2.1.6" % "test",
-    "org.scalacheck" %% "scalacheck" % "1.11.4" % "test",
+    "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+    "org.scalacheck" %% "scalacheck" % "1.11.5" % "test",
     "com.github.axel22" %% "scalameter" % "0.5-M2" % "test",
-    "com.typesafe" %% "scalalogging-slf4j" % "1.1.0",
+    "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
     "ch.qos.logback" % "logback-classic" % "1.1.2",
     "com.chuusai" % "shapeless_2.10.4" % "2.0.0",
     "cglib" % "cglib" % "3.1",
