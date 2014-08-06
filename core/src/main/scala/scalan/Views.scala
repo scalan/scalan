@@ -113,7 +113,6 @@ trait Views extends Elems { self: Scalan =>
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
-  // TODO check if this is actually useful
   trait UserTypeSeq[T, TImpl <: T] extends ReifiableObject[T] { thisType: T =>
     def self = this
   }
