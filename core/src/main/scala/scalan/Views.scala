@@ -34,11 +34,6 @@ trait Views extends Elems { self: Scalan =>
   trait CompanionElem[T] extends Elem[T] {
   }
 
-  trait UserType[T] {
-    def selfType: Elem[T]
-    def self: Rep[T]
-  }
-
   trait TypeFamily1[F[_]] {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[F[A]]]
   }
@@ -119,13 +114,13 @@ trait Views extends Elems { self: Scalan =>
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
   // TODO check if this is actually useful
-  trait UserTypeSeq[T, TImpl <: T] extends UserType[T] { thisType: T =>
+  trait UserTypeSeq[T, TImpl <: T] extends ReifiableObject[T] { thisType: T =>
     def self = this
   }
 }
 
 trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
-  trait UserTypeDef[T, TImpl <: T] extends ReifiableObject[T, TImpl] {
+  trait UserTypeDef[T, TImpl <: T] extends ReifiableObjectExp[T, TImpl] {
     def uniqueOpId = selfType.name
   }
   object UserTypeDef {

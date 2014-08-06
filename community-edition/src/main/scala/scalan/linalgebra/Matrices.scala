@@ -6,7 +6,7 @@ import scalan.common.Default
 trait Matrices extends Vectors { scalan: MatricesDsl =>
   type Matr[T] = Rep[Matrix[T]]
 
-  trait Matrix[T] extends UserType[Matrix[T]] {
+  trait Matrix[T] extends ReifiableObject[Matrix[T]] {
     def numColumns: Rep[Int]
     def numRows: Rep[Int]
     implicit def elem: Elem[T]

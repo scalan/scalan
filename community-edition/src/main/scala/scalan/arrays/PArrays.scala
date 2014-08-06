@@ -9,7 +9,7 @@ import scalan.community.{ScalanCommunity, ScalanCommunityStaged, ScalanCommunity
 trait PArrays extends ArrayOps { self: PArraysDsl =>
 
   type PA[+A] = Rep[PArray[A]]
-  trait PArray[@uncheckedVariance +A] extends UserType[PArray[A @uncheckedVariance]] {
+  trait PArray[@uncheckedVariance +A] extends ReifiableObject[PArray[A @uncheckedVariance]] {
     implicit def elem: Elem[A @uncheckedVariance]
     def length: Rep[Int]
     def arr: Rep[Array[A @uncheckedVariance]]

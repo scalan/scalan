@@ -7,7 +7,7 @@ import scala.reflect.runtime.universe._
 trait Types extends Base { self: TypesDsl =>
 
   type Ty[A] = Rep[Type[A]]
-  trait Type[A] extends UserType[Type[A]] {
+  trait Type[A] extends ReifiableObject[Type[A]] {
     implicit def eA: Elem[A]
     def typeCode: Rep[String]
     def defaultValue: Rep[A]
