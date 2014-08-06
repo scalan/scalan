@@ -48,18 +48,27 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
       val className0 = method.getDeclaringClass.getName
       val className = className0.substring(className0.lastIndexOf("$") + 1)
       val methodName = method.getName.replaceAll("\\$plus", "+").
-        replaceAll("\\$minus", "-").replaceAll("\\$colon", ":").
-        replaceAll("\\$greater", ">").replaceAll("\\$less", "<").replaceAll("\\$equal", "=")
+        replaceAll("\\$minus", "-").replaceAll("\\$times", "*").
+        replaceAll("\\$div", "/").replaceAll("\\$colon", ":").
+        replaceAll("\\$greater", ">").replaceAll("\\$less", "<").
+        replaceAll("\\$eq", "=").replaceAll("\\$bang", "!").
+        replaceAll("\\$at", "@").replaceAll("\\$hash", "#").
+        replaceAll("\\$percent", "%").replaceAll("\\$amp", "&").
+        replaceAll("\\$tilde", "~").replaceAll("\\$qmark", "?").
+        replaceAll("\\$bar", "|").replaceAll("\\$bslash", "\\").
+        replaceAll("\\$up", "^")
       s"$obj.$className.$methodName(${args.mkString(", ")})"
     case Tup(a, b) => s"($a, $b)"
     case First(pair) => s"$pair._1"
     case Second(pair) => s"$pair._2"
+    case IfThenElse(c, t, e) => s"if ($c) $t else $e"
     case EqualsClass(lhs, rhs) => s"$lhs == $rhs"
     case NotEqual(lhs, rhs) => s"$lhs != $rhs"
     case NumericToFloat(arg, _) => s"$arg.toFloat"
     case NumericToDouble(lhs, _) => s"$lhs.toDouble"
     case NumericToInt(lhs, _) => s"$lhs.toInt"
-    case op: UnOp[_, _] => s"${op.opName}(${op.arg})"
+    case LoopUntil(start, step, isMatch) => s"from $start do $step until $isMatch"
+    case op: UnOp[_, _] => s"${op.opName} ${op.arg}"
     case op: BinOp[_, _] => s"${op.lhs} ${op.opName} ${op.rhs}"
     case _ => d.toString
   }
@@ -120,11 +129,12 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
         emitDeps(sym, lambdaVars, true)(stream)
 
         // emit lambda refs
-        tp.lambda match {
-          case Some(lam) =>
-            stream.println(s"${quote(tp.sym)} -> ${quote(lam)} [style=dotted,color=grey]")
-          case _ =>
-        }
+        // bad on large graphs!
+//        tp.lambda match {
+//          case Some(lam) =>
+//            stream.println(s"${quote(tp.sym)} -> ${quote(lam)} [style=dotted,color=grey]")
+//          case _ =>
+//        }
 
       } else {
         // skip lambda bodies
