@@ -32,7 +32,7 @@ trait Base {
   def !!!(msg: String): Nothing = sys.error(msg)
   def !!!(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString, syms)
 
-  val isDebug: Boolean = Base.config.getProperty("scalan.debug") != null
+  var isDebug: Boolean = Base.config.getProperty("scalan.debug") != null
 
   implicit class RepForSomeExtension(x: Rep[_]) {
     def asRep[T]: Rep[T] = x.asInstanceOf[Rep[T]]
