@@ -171,7 +171,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       }
 
       // traverse the lambda body from the results to the arguments
-      for (TableEntry(s, d) <- schedule.reverseIterator) {
+      for (TableEntry(s, d) <- bodySchedule.reverseIterator) {
 
         /** Builds a schedule according to the current usedSet
           * @param s starting symbol
@@ -365,7 +365,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def mirrorApply[A,B](f: Exp[A => B], s: Exp[A], subst: MapTransformer = MapTransformer.Empty): Exp[B] = {
     val Def(lam: Lambda[A, B]) = f
-    val body = lam.schedule map { _.sym }
+    val body = lam.bodySchedule map { _.sym }
     val (t, _) = DefaultMirror.mirrorSymbols(subst + (lam.x -> s), NoRewriting, body)
     t(lam.y).asRep[B]
   }

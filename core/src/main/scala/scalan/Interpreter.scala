@@ -26,7 +26,7 @@ trait Interpreter {
                                funcMirror: FuncMirror) : (seq.Rep[I] => seq.Rep[R]) = {
     val lamX = lam.x
     val f = { x: seq.Rep[I] =>
-      val sched = lam.schedule
+      val sched = lam.bodySchedule
       val (lamExps, _, _) = mirrorDefs(sched, symMirror + ((lamX, x)), funcMirror)
       val res = if (lamExps.isEmpty) x else (lamExps.last)
       res.asInstanceOf[seq.Rep[R]]
