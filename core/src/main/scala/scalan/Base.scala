@@ -3,7 +3,9 @@ package scalan
 import java.util.Properties
 import java.io.FileReader
 
-trait Base {
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
+trait Base extends LazyLogging {
   type |[+A, +B] = Either[A, B]
   type L[A] = (A | Unit)
   type R[A] = (Unit | A)
