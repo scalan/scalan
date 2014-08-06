@@ -4,6 +4,7 @@ import annotation.unchecked.uncheckedVariance
 import scalan.{Base, ScalanStaged}
 import scala.language.{implicitConversions}
 import scalan.common.Lazy
+import scala.collection.immutable.ListMap
 
 trait BaseExp extends Base { self: ScalanStaged =>
   type Rep[+A] = Exp[A]
@@ -273,9 +274,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
       case _ => et.value
     }
     def varName = "s" + id
-    override def toString = {
-      if (isDebug) toStringWithDefinition else varName
-    }
+    override def toString = varName
 
     lazy val definition = findDefinition(this).map(_.rhs)
     def toStringWithDefinition = toStringWithType + definition.map(d => s" = $d").getOrElse("")
@@ -292,8 +291,8 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
     //def unapply[T](s: Exp[T]): Option[TableEntry[T]] = findDefinition(s)
   }
 
-  private[this] var expToGlobalDefs: Map[Exp[_], TableEntry[_]] = Map.empty
-  private[this] var defToGlobalDefs: Map[Def[_], TableEntry[_]] = Map.empty
+  private[this] var expToGlobalDefs: Map[Exp[_], TableEntry[_]] = ListMap.empty
+  private[this] var defToGlobalDefs: Map[Def[_], TableEntry[_]] = ListMap.empty
 
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]] =
     expToGlobalDefs.get(s).asInstanceOf[Option[TableEntry[T]]]
