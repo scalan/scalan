@@ -5,6 +5,7 @@ import tests.BaseTests
 import scalan.{ScalanCtxStaged, ScalanCtxSeq}
 import scalan.codegen.GraphVizExport
 import scalan.monads.{MonadsDslExp, MonadsDslSeq, ApplicativeExp, ApplicativeSeq}
+import scala.language.reflectiveCalls
 
 /**
  * User: Alexander Slesarenko   
@@ -19,6 +20,7 @@ class FreeTests extends BaseTests {
   }
 
   test("testStaged") {
+    pending
     val ctx = new ApplicativeExp {}
     ctx.runApp
   }

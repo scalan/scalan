@@ -194,7 +194,7 @@ trait Algebraic {
 
   val app: Free[App, Unit] = prg[App]
 
-  def runApp = app.foldMap(TestAuth or Console)
+  def runApp() = app.foldMap(TestAuth or Console)
 }
 
 //trait MonadsDsl extends ScalanDsl with impl.MonadsAbs with Monads

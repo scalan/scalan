@@ -15,6 +15,8 @@ trait Monads { self: MonadsDsl =>
     def flatMap[B:Elem](f: Rep[A] => Rep[Monad[B]]): Rep[Monad[B]]
     def map[B:Elem](f: Rep[A] => Rep[B]): Rep[Monad[B]] = flatMap(x => companion.point(f(x)))
     def filter(p: Rep[A] => Rep[Boolean]): Rep[Monad[A]] = self
+    // to avoid warnings
+    def withFilter(p: Rep[A] => Rep[Boolean]): Rep[Monad[A]] = filter(p)
     def run: Rep[A]
     def companion: Rep[MonadCompanion]
   }
