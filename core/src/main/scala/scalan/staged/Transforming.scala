@@ -120,7 +120,7 @@ trait Transforming { self: ScalanStaged =>
 
     protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Exp[_] = fresh(Lazy(node.elem))
 
-    // require: should be called after lam.schedule is mirrored
+    // require: should be called after lam.bodySchedule is mirrored
     private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], lam: Lambda[_,_]): Lambda[_,_] = {
       val newVar = t(lam.x)
       val newBody = t(lam.y)
@@ -241,7 +241,7 @@ trait Transforming { self: ScalanStaged =>
   }
   object ProjectionTree {
     def apply(root: Exp[_], children: List[ProjectionTree]) = new ProjectionTree(root, children)
-    def apply(root: Exp[_], unfoldChildren: AnyExp => List[AnyExp]): ProjectionTree =
+    def apply(root: Exp[_], unfoldChildren: ExpAny => List[ExpAny]): ProjectionTree =
       ProjectionTree(root, unfoldChildren(root) map (apply(_, unfoldChildren)))
   }
 
@@ -273,7 +273,7 @@ trait Transforming { self: ScalanStaged =>
     def apply(root: Exp[_], children: List[TupleTree]) = new TupleTree(root, children)
 
     // require ptree to be sorted by projectionIndex
-    def fromProjectionTree(ptree: ProjectionTree, subst: ExpSubst): TupleTree =
+    def fromProjectionTree(ptree: ProjectionTree, subst: ExpAny => ExpAny): TupleTree =
       if (ptree.isLeaf)
         TupleTree(subst(ptree.root), Nil)
       else {

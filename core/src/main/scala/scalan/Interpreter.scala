@@ -26,7 +26,7 @@ trait Interpreter {
                                funcMirror: FuncMirror) : (seq.Rep[I] => seq.Rep[R]) = {
     val lamX = lam.x
     val f = { x: seq.Rep[I] =>
-      val sched = lam.schedule
+      val sched = lam.bodySchedule
       val (lamExps, _, _) = mirrorDefs(sched, symMirror + ((lamX, x)), funcMirror)
       val res = if (lamExps.isEmpty) x else (lamExps.last)
       res.asInstanceOf[seq.Rep[R]]
@@ -159,18 +159,13 @@ trait Interpreter {
     //    implicit val classTag = eA.classTag
     //    manifest[T]
     val elem = eA match {
-      case el: BaseElem[_] =>
-        el.tag.tpe.toString()  match {
-          case "Double" => seq.DoubleElement
-          case "Int" => seq.IntElement
-          case "Unit" => seq.UnitElement
-          case tpe => ???(s"Don't know how to create seq element for base type $tpe")
-        }
+      case UnitElement => seq.UnitElement
+      case IntElement => seq.IntElement
+      case DoubleElement => seq.DoubleElement
       case el: PairElem[_, _] =>
-        seq.pairElement(createSeqElem(el.ea), createSeqElem(el.eb))
-      case el: FuncElem[_,_] => {
-        seq.funcElement(createSeqElem(el.ea), createSeqElem(el.eb) )
-      }
+        seq.pairElement(createSeqElem(el.eFst), createSeqElem(el.eSnd))
+      case el: FuncElem[_,_] =>
+        seq.funcElement(createSeqElem(el.eDom), createSeqElem(el.eRange))
       case el => ???(s"Don't know how to create seq element for $el")
     }
     elem.asInstanceOf[seq.Elem[T]]

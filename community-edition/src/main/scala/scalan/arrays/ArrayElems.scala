@@ -15,9 +15,9 @@ trait ArrayElems extends Elems { self: Scalan =>
     defaultVal[Rep[Array[A]]](scala.Array.empty[A])
   }
 
-  class ArrayElem[A](implicit val ea: Elem[A]) extends Element[Array[A]] {
+  case class ArrayElem[A](implicit eItem: Elem[A]) extends Element[Array[A]] {
     lazy val tag = {
-      implicit val tag1 = ea.tag
+      implicit val tag1 = eItem.tag
       implicitly[TypeTag[Array[A]]]
     }
     lazy val defaultRep: Default[Rep[Array[A]]] = arrayRepDefault[A]

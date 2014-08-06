@@ -19,9 +19,9 @@ class PolymorphicRewriteRuleSuite extends BaseShouldTests {
     }
 
     // We do _not_ want to use rewrite
-    //    override def rewrite[T](d: Exp[T])(implicit e: LElem[T]) = d match {
-    //      case Def(Id(x)) => x
-    //      case _ => super.rewrite(d)
+    //    override def rewriteDef[T](d: Def[T]) = d match {
+    //      case Id(x) => x
+    //      case _ => super.rewriteDef(d)
     //    }
   }
 

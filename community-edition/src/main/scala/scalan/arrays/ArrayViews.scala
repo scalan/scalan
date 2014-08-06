@@ -71,6 +71,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     override def toString = s"ViewArray[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewArray[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
+      case _ => false
     }
   }
 
@@ -78,7 +79,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     def unapply(s: Exp[_]): Option[Iso[_, _]] = {
       s.elem match {
         case pae: ArrayElem[_] =>
-          pae.ea match {
+          pae.eItem match {
             case e: ViewElem[_, _] => Some(e.iso)
             case _ => None
           }
@@ -225,9 +226,10 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     val iso = view.innerIso
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
-    implicit val eC: Elem[C] = f.elem.eb
+    implicit val eC: Elem[C] = f.elem.eRange
     view.source.map { x => f(iso.to(x)) }
   }
+
   def filterUnderlyingArray[A, B](view: ViewArray[A, B], f: Rep[B => Boolean]): Arr[B] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
@@ -303,57 +305,53 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     case _ => None
   }
 
-  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
-    case Def(d1) => d1 match {
-      case MethodCall(Def(obj @ UserTypeDef(_)), m, args) =>
-        if (m.getDeclaringClass.isAssignableFrom(obj.getClass) && invokeEnabled) {
-          val res = m.invoke(obj, args: _*)
-          res.asInstanceOf[Exp[_]]
-        } else {
-          super.rewrite(d)
-        }
-      case ArrayLength(Def(view @ ViewArray(arr: Arr[a]))) =>
-        // TODO doesn't compile
-        // implicit val eA = view.asInstanceOf[ViewArray[a, _]].iso.eFrom
-        // arr.asInstanceOf[Arr[a]].length
-        array_length(arr)
-      case HasViewArg(_) => liftViewFromArgs(d1) match {
-        case Some(s) => s
-        case _ => super.rewrite(d)
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case MethodCall(Def(obj@UserTypeDef(_)), m, args) =>
+      if (m.getDeclaringClass.isAssignableFrom(obj.getClass) && invokeEnabled) {
+        val res = m.invoke(obj, args: _*)
+        res.asInstanceOf[Exp[_]]
+      } else {
+        super.rewriteDef(d)
       }
-      case ArrayMap(xs, f @ Def(Lambda(_, _, _, UserTypeSym(iso: Iso[a, b])))) =>
-        val f1 = f.asInstanceOf[Rep[a => b]]
-        val xs1 = xs.asRep[Array[a]]
-        implicit val eA = xs1.elem.ea
-        val s = xs1.map { x =>
-          val tmp = f1(x)
-          iso.from(tmp)
-        }
-        val res = ViewArray(s)(iso)
-        res
-      case ArrayMap(xs: Arr[a], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
-        val f1 = f.asRep[a => b]
-        val xs1 = xs.asRep[Array[a]]
-        implicit val eA = xs1.elem.ea
-        // implicit val eB = iso.eTo
-        implicit val eC = iso.eFrom
-        // implicit val leA = Lazy(eA)
-        val s = xs1.map { x =>
-          val tmp = f1(x)
-          iso.from(tmp)
-          // UnpackView(f1(x))(iso)
-        }
-        val res = ViewArray(s)(iso)
-        // val res = ViewArray(s.values)(iso).nestBy(s.segments)
-        res
-      case view1 @ ViewArray(Def(view2 @ ViewArray(arr))) =>
-        val compIso = composeIso(view2.innerIso, view1.innerIso)
-        implicit val eAB = compIso.eTo
-        ViewArray(arr)(compIso)
-      case _ =>
-        super.rewrite(d)
+    case ArrayLength(Def(view@ViewArray(arr: Arr[a]))) =>
+      // TODO doesn't compile
+      // implicit val eA = view.asInstanceOf[ViewArray[a, _]].iso.eFrom
+      // arr.asInstanceOf[Arr[a]].length
+      array_length(arr)
+    case HasViewArg(_) => liftViewFromArgs(d) match {
+      case Some(s) => s
+      case _ => super.rewriteDef(d)
     }
+    case ArrayMap(xs, f@Def(Lambda(_, _, _, UserTypeSym(iso: Iso[a, b])))) =>
+      val f1 = f.asInstanceOf[Rep[a => b]]
+      val xs1 = xs.asRep[Array[a]]
+      implicit val eA = xs1.elem.eItem
+      val s = xs1.map { x =>
+        val tmp = f1(x)
+        iso.from(tmp)
+      }
+      val res = ViewArray(s)(iso)
+      res
+    case ArrayMap(xs: Arr[a], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
+      val f1 = f.asRep[a => b]
+      val xs1 = xs.asRep[Array[a]]
+      implicit val eA = xs1.elem.eItem
+      // implicit val eB = iso.eTo
+      implicit val eC = iso.eFrom
+      // implicit val leA = Lazy(eA)
+      val s = xs1.map { x =>
+        val tmp = f1(x)
+        iso.from(tmp)
+        // UnpackView(f1(x))(iso)
+      }
+      val res = ViewArray(s)(iso)
+      // val res = ViewArray(s.values)(iso).nestBy(s.segments)
+      res
+    case view1@ViewArray(Def(view2@ViewArray(arr))) =>
+      val compIso = composeIso(view2.innerIso, view1.innerIso)
+      implicit val eAB = compIso.eTo
+      ViewArray(arr)(compIso)
     case _ =>
-      super.rewrite(d)
+      super.rewriteDef(d)
   }
 }

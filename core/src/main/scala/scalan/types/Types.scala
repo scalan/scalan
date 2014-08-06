@@ -18,7 +18,7 @@ trait Types extends Base { self: TypesDsl =>
   trait TypeCompanion extends TypeFamily1[Type] {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[Type[A]]] = ea match {
       case baseE: BaseElem[a] => BaseType.defaultOf[a](baseE)
-      case pairE: PairElem[a, b] => Tuple2Type.defaultOf[a, b](pairE.ea, pairE.eb)
+      case pairE: PairElem[a, b] => Tuple2Type.defaultOf[a, b](pairE.eFst, pairE.eSnd)
       case _ => ???
     }
   }
@@ -47,8 +47,8 @@ trait Types extends Base { self: TypesDsl =>
   implicit def defaultTypeElement[A: Elem]: Elem[Type[A]] = element[A] match {
     case _: BaseElem[_] => element[BaseType[A]].asElem[Type[A]]
     case pe: PairElem[a, b] =>
-      implicit val ea = pe.ea
-      implicit val eb = pe.eb
+      implicit val ea = pe.eFst
+      implicit val eb = pe.eSnd
       element[Tuple2Type[a, b]].asElem[Type[A]]
     case _ => ???
   }

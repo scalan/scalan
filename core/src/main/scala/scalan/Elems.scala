@@ -45,28 +45,28 @@ trait Elems extends Base { self: Scalan =>
     lazy val defaultRep = defaultVal(toRep(z.value)(this))
   }
 
-  class PairElem[A, B](implicit val ea: Elem[A], val eb: Elem[B]) extends Element[(A, B)] {
+  case class PairElem[A, B](implicit eFst: Elem[A], eSnd: Elem[B]) extends Element[(A, B)] {
     lazy val tag = {
-      implicit val tA = ea.tag
-      implicit val tB = eb.tag
+      implicit val tA = eFst.tag
+      implicit val tB = eSnd.tag
       typeTag[(A, B)]
     }
-    lazy val defaultRep = defaultVal(Pair(ea.defaultRepValue, eb.defaultRepValue))
+    lazy val defaultRep = defaultVal(Pair(eFst.defaultRepValue, eSnd.defaultRepValue))
   }
 
-  class SumElem[A, B](implicit val ea: Elem[A], val eb: Elem[B]) extends Element[(A | B)] {
+  case class SumElem[A, B](implicit eLeft: Elem[A], eRight: Elem[B]) extends Element[(A | B)] {
     lazy val tag = {
-      implicit val tA = ea.tag
-      implicit val tB = eb.tag
+      implicit val tA = eLeft.tag
+      implicit val tB = eRight.tag
       typeTag[A | B]
     }
-    lazy val defaultRep = defaultVal(toLeftSum[A, B](ea.defaultRepValue)(eb))
+    lazy val defaultRep = defaultVal(toLeftSum[A, B](eLeft.defaultRepValue)(eRight))
   }
 
-  class FuncElem[A, B](implicit val ea: Elem[A], val eb: Elem[B]) extends Element[A => B] {
+  case class FuncElem[A, B](implicit eDom: Elem[A], eRange: Elem[B]) extends Element[A => B] {
     lazy val tag = {
-      implicit val tA = ea.tag
-      implicit val tB = eb.tag
+      implicit val tA = eDom.tag
+      implicit val tB = eRange.tag
       typeTag[A => B]
     }
     lazy val defaultRep = defaultVal(fun(funcRepDefault[A, B].value))
@@ -116,7 +116,7 @@ trait ElemsExp extends Elems
   with Scalan { self: ScalanStaged =>
 
   def withElemOf[A, R](x: Rep[A])(block: Elem[A] => R) = block(x.elem)
-  def withResultElem[A, B, R](f: Rep[A => B])(block: Elem[B] => R) = block(withElemOf(f) { e => e.eb })
+  def withResultElem[A, B, R](f: Rep[A => B])(block: Elem[B] => R) = block(withElemOf(f) { e => e.eRange })
 
   //  override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
   //    case ee: ElemElem[a] => ElemDef[a](x)

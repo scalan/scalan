@@ -72,7 +72,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
             case scalan.First(tuple) => {
               tuple.elem match {
                 case pe: scalan.PairElem[_, _] =>
-                  (scalan.createManifest(pe.ea), scalan.createManifest(pe.eb))  match {
+                  (scalan.createManifest(pe.eFst), scalan.createManifest(pe.eSnd))  match {
                     case (mA:Manifest[a], mB: Manifest[b]) =>
                       val tup = symMirr(tuple).asInstanceOf[lFunc.Exp[(a,b)]]
                       val exp = lFunc.first[a,b](tup)(mA, mB)
@@ -83,7 +83,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
             case scalan.Second(tuple) => {
               tuple.elem match {
                 case pe: scalan.PairElem[_, _] =>
-                  (scalan.createManifest(pe.ea), scalan.createManifest(pe.eb))  match {
+                  (scalan.createManifest(pe.eFst), scalan.createManifest(pe.eSnd))  match {
                     case (mA:Manifest[a], mB: Manifest[b]) =>
                       val tup = symMirr(tuple).asInstanceOf[lFunc.Exp[(a,b)]]
                       val exp = lFunc.second[a,b](tup)(mA, mB)
@@ -141,7 +141,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
               }
             }
             case apply@scalan.ArrayApply(xs, ind) => {
-              scalan.createManifest(apply.eT) match {
+              scalan.createManifest(apply.selfType) match {
                 case (mA:Manifest[a]) =>
                   val xs_ = symMirr(xs).asInstanceOf[lFunc.Exp[Array[a]]]
                   val ind_ = symMirr(ind).asInstanceOf[lFunc.Exp[Int]]
@@ -152,7 +152,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
             case scalan.ArrayApplyMany(xs, idxs) => {
               (xs.elem) match {
                 case (el: scalan.ArrayElem[_]) =>
-                  scalan.createManifest(el.ea) match {
+                  scalan.createManifest(el.eItem) match {
                   case (mA:Manifest[a]) =>
                     val xs_ = symMirr(xs).asInstanceOf[lFunc.Exp[Array[a]]]
                     val idxs_ = symMirr(idxs).asInstanceOf[lFunc.Exp[Array[Int]]]
@@ -177,7 +177,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
             case scalan.ArrayZip(arg1, arg2) => {
               (arg1.elem,arg2.elem) match {
                 case (el1: scalan.ArrayElem[_], el2: scalan.ArrayElem[_]) =>
-                  (scalan.createManifest(el1.ea), scalan.createManifest(el2.ea)) match {
+                  (scalan.createManifest(el1.eItem), scalan.createManifest(el2.eItem)) match {
                     case (mA:Manifest[a], mB:Manifest[b]) =>
                       val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[Array[a]]]
                       val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[Array[b]]]
@@ -189,7 +189,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
             case map@scalan.ArrayMap(source, lambdaSym@scalan.Def(lam:scalan.Lambda[_,_]) ) => {
               (source.elem,map.selfType) match {
                 case (el: scalan.ArrayElem[_], el1: scalan.ArrayElem[_]) =>
-                  (scalan.createManifest(el.ea), scalan.createManifest(el1.ea)) match {
+                  (scalan.createManifest(el.eItem), scalan.createManifest(el1.eItem)) match {
                     case (mA:Manifest[a], mB: Manifest[b]) =>
                       val f = mirrorLambdaToLmsFunc[a,b](lam.asInstanceOf[scalan.Lambda[a, b]], symMirr, funcMirr)//(mA, mB)
                       val lmsSource = symMirr(source).asInstanceOf[lFunc.Exp[Array[a]]]
@@ -201,7 +201,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
             case filter@scalan.ArrayFilter(source, lambdaSym@scalan.Def(lam:scalan.Lambda[_,_]) ) => {
               (filter.selfType) match {
                 case (el: scalan.ArrayElem[_]) =>
-                  (scalan.createManifest(el.ea)) match {
+                  (scalan.createManifest(el.eItem)) match {
                     case (mA:Manifest[a]) =>
                       val f = mirrorLambdaToLmsFunc[a,Boolean](lam.asInstanceOf[scalan.Lambda[a, Boolean]], symMirr, funcMirr)//(mA, mB)
                       val lmsSource = symMirr(source).asInstanceOf[lFunc.Exp[Array[a]]]
@@ -214,7 +214,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
             case scalan.ArrayReduce(source, monoid) => {
               (monoid, source.elem) match {
                 case (monoid, el: scalan.ArrayElem[_]) if monoid.opName == "+" => {
-                  scalan.createManifest(el.ea) match {
+                  scalan.createManifest(el.eItem) match {
                     case (mA: Manifest[a]) =>
                       val lmsSource = symMirr(source).asInstanceOf[lFunc.Exp[Array[a]]]
                       val exp = lFunc.reduce[a](lmsSource)(mA)
@@ -227,7 +227,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
             case scalan.ArrayStride(xs, start, length, stride) =>
               xs.elem match {
                 case el: scalan.ArrayElem[a] =>
-                  val mA = scalan.createManifest(el.ea).asInstanceOf[Manifest[a]]
+                  val mA = scalan.createManifest(el.eItem).asInstanceOf[Manifest[a]]
                   val lmsXs = symMirr(xs).asInstanceOf[lFunc.Exp[Array[a]]]
                   val lmsStart = symMirr(start).asInstanceOf[lFunc.Exp[Int]]
                   val lmsLength = symMirr(length).asInstanceOf[lFunc.Exp[Int]]
@@ -238,7 +238,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
             case scalan.DotSparse(i1, v1, i2, v2) => {
               (v1.elem) match {
                 case (el: scalan.ArrayElem[_]) =>
-                  (scalan.createManifest(el.ea)) match {
+                  (scalan.createManifest(el.eItem)) match {
                     case (mA:Manifest[a]) =>
                       val i1_ = symMirr(i1).asInstanceOf[lFunc.Exp[Array[Int]]]
                       val i2_ = symMirr(i2).asInstanceOf[lFunc.Exp[Array[Int]]]
@@ -317,7 +317,7 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport /*
 
     func.elem match {
       case el:FuncElem[_,_] =>
-        (createManifest(el.ea), createManifest(el.eb)) match {
+        (createManifest(el.eDom), createManifest(el.eRange)) match {
           case (mA:Manifest[a], mB:Manifest[b]) =>
             val bridge = makeBridge[a, b]
             val facade = bridge.getFacade(g0.asInstanceOf[bridge.scalan.PGraph])
@@ -351,12 +351,12 @@ trait LmsBackend extends LangBackend { self: ScalanStaged with GraphVizExport /*
           case tpe => ???(s"Don't know how to create manifest for base type $tpe")
         }
       case el: PairElem[_, _] =>
-        Manifest.classType(classOf[(_, _)], createManifest(el.ea), createManifest(el.eb) )
+        Manifest.classType(classOf[(_, _)], createManifest(el.eFst), createManifest(el.eSnd))
       case el: ArrayElem[_] => {
-        Manifest.arrayType(createManifest(el.ea) )
+        Manifest.arrayType(createManifest(el.eItem))
       }
       case el: FuncElem[_,_] => {
-        Manifest.classType(classOf[_ => _], createManifest(el.ea), createManifest(el.eb) )
+        Manifest.classType(classOf[_ => _], createManifest(el.eDom), createManifest(el.eRange))
       }
       case el => ???(s"Don't know how to create manifest for $el")
     }

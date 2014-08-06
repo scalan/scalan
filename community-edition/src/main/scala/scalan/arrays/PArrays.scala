@@ -29,8 +29,8 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
   implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = element[A] match {
     case _: BaseElem[_] => element[BaseArray[A]].asElem[PArray[A]]
     case pe: PairElem[a, b] =>
-      implicit val ea = pe.ea
-      implicit val eb = pe.eb
+      implicit val ea = pe.eFst
+      implicit val eb = pe.eSnd
       element[PairArray[a, b]].asElem[PArray[A]]
     case viewE: ViewElem[_, _] => element[BaseArray[A]].asElem[PArray[A]]
     case e => ???(s"Element is $e")
@@ -41,7 +41,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
   trait PArrayCompanion extends TypeFamily1[PArray] {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]] = ea match {
       case baseE: BaseElem[a] => BaseArray.defaultOf[a](baseE)
-      case pairE: PairElem[a, b] => PairArray.defaultOf[a, b](pairE.ea, pairE.eb)
+      case pairE: PairElem[a, b] => PairArray.defaultOf[a, b](pairE.eFst, pairE.eSnd)
       case e => ???(s"Element is $e")
     }
 
@@ -51,8 +51,8 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
         case baseE: BaseElem[a] =>
           BaseArray[a](arr.asRep[Array[a]])
         case pairE: PairElem[a, b] =>
-          implicit val ea = pairE.ea
-          implicit val eb = pairE.eb
+          implicit val ea = pairE.eFst
+          implicit val eb = pairE.eSnd
           val ps = arr.asRep[Array[(a, b)]]
           val as = fromArray(ps.map { _._1 })
           val bs = fromArray(ps.map { _._2 })
@@ -69,8 +69,8 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
         case baseE: BaseElem[a] =>
           BaseArray[a](array_replicate(len, v.asRep[a]))
         case pairElem: PairElem[a ,b] => {
-          implicit val ea = pairElem.ea
-          implicit val eb = pairElem.eb
+          implicit val ea = pairElem.eFst
+          implicit val eb = pairElem.eSnd
           val ps = v.asRep[(a, b)]
           val as = replicate(len, ps._1)
           val bs = replicate(len, ps._2)

@@ -105,8 +105,8 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
     case Def(Tup(a, b)) => (a, b)
     case _ => p.elem match {
       case pe: PairElem[_, _] =>
-        implicit val eA = pe.ea
-        implicit val eB = pe.eb
+        implicit val eA = pe.eFst
+        implicit val eB = pe.eSnd
         (First(p), Second(p))
       case _ =>
         !!!("expected Tup[A,B] or Sym with type (A,B) but was " + p.toString, p)
@@ -114,52 +114,49 @@ trait TuplesExp extends Tuples with BaseExp {  self: ScalanStaged =>
   }
 
   implicit def zipPair[A, B](p: (Exp[A], Exp[B])): Rep[(A, B)] = {
-    implicit val ea = p._1.elem.asInstanceOf[Elem[A]]
-    implicit val eb = p._2.elem.asInstanceOf[Elem[B]]
+    implicit val ea = p._1.elem
+    implicit val eb = p._2.elem
     Tup(p._1, p._2)
   }
 
 
   case class Tup[A:Elem, B:Elem](a: Exp[A], b: Exp[B]) extends Def[(A, B)] {
     override def mirror(t: Transformer) = Tup(t(a), t(b))
-    override def self = this
     lazy val selfType = element[(A,B)]
     lazy val uniqueOpId = name(element[A], element[B])
   }
 
   case class First[A, B](pair: Exp[(A, B)])(implicit val selfType: Elem[A]) extends Def[A] {
     override def mirror(t: Transformer) = First(t(pair))
-    override def self = this
-    lazy val uniqueOpId = name(selfType, pair.elem.eb)
+    lazy val uniqueOpId = name(selfType, pair.elem.eSnd)
   }
 
   case class Second[A, B](pair: Exp[(A, B)])(implicit val selfType: Elem[B]) extends Def[B] {
     override def mirror(t: Transformer) = Second(t(pair))
-    override def self = this
-    lazy val uniqueOpId = name(pair.elem.ea, selfType)
+    lazy val uniqueOpId = name(pair.elem.eFst, selfType)
   }
 
   object TupleProjection {
-    def apply[A,B](t: Exp[(A,B)], i: Int): AnyExp = i match {
+    def apply[A,B](t: Exp[(A,B)], i: Int): ExpAny = i match {
       case 1 => t._1
       case 2 => t._2
     }
-    def unapply(p: AnyExp): Option[Int] = p match {
+    def unapply(p: ExpAny): Option[Int] = p match {
       case Def(First(_)) => Some(1)
       case Def(Second(_)) => Some(2)
       case _ => None
     }
   }
 
-  def projectionIndex(p: AnyExp): Int = p match {
+  def projectionIndex(p: ExpAny): Int = p match {
     case TupleProjection(i) => i
     case _ => !!!("tuple projection expected", p)
   }
 
-  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
-    case Def(First(Def(Tup(a, b)))) => a
-    case Def(Second(Def(Tup(a, b)))) => b
-    case Def(Tup(Def(First(a)), Def(Second(b)))) if a == b => a
-    case _ => super.rewrite(d)
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case First(Def(Tup(a, b))) => a
+    case Second(Def(Tup(a, b))) => b
+    case Tup(Def(First(a)), Def(Second(b))) if a == b => a
+    case _ => super.rewriteDef(d)
   }
 }

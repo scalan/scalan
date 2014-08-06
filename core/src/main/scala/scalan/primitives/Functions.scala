@@ -127,13 +127,13 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       *  @param deps  dependence relation between a definition and symbols
       *  @return      a `Seq` of local definitions on which `sym` depends or empty if `sym` is itself non-local
       */
-    def buildLocalScheduleFrom(sym: AnyExp, deps: AnyExp => List[AnyExp]): Seq[TableEntry[_]] =
+    def buildLocalScheduleFrom(sym: ExpAny, deps: ExpAny => List[ExpAny]): Seq[TableEntry[_]] =
       if (isLocalDef(sym))
         buildScheduleForResult(List(sym), deps(_).filter(isLocalDef(_)))
       else
         Seq.empty
 
-    def buildLocalScheduleFrom(sym: AnyExp): Seq[TableEntry[_]] = buildLocalScheduleFrom(sym, _.getDeps)
+    def buildLocalScheduleFrom(sym: ExpAny): Seq[TableEntry[_]] = buildLocalScheduleFrom(sym, _.getDeps)
 
     // from Scalan
     //    /** Builds a schedule starting from symbol `sym` which which consists only of local definitions.
@@ -165,19 +165,19 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
       /** Shallow dependencies don't look into branches of IfThenElse
         */
-      def getShallowDeps(d: AnyExp): List[AnyExp] = d match {
+      def getShallowDeps(d: ExpAny): List[ExpAny] = d match {
         case Def(IfThenElse(c, _, _)) => List(c)
         case _ => d.getDeps
       }
 
       // traverse the lambda body from the results to the arguments
-      for (TableEntry(s, d) <- schedule.reverseIterator) {
+      for (TableEntry(s, d) <- bodySchedule.reverseIterator) {
 
         /** Builds a schedule according to the current usedSet
           * @param s starting symbol
           * @return sequence of symbols that 1) local 2) in shallow dependence relation 3) not yet marked
           */
-        def getLocalUnusedShallowSchedule(s: AnyExp): Seq[TableEntry[_]] = {
+        def getLocalUnusedShallowSchedule(s: ExpAny): Seq[TableEntry[_]] = {
           val sch = buildLocalScheduleFrom(s, getShallowDeps(_).filter(!usedSet.contains(_)))
           sch
         }
@@ -307,7 +307,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       extends Def[B]
   {
     def selfType = eB.value
-    lazy val self: Rep[B] = this
     lazy val uniqueOpId = name(arg.elem, selfType)
     override def mirror(t: Transformer) = Apply(t(f), t(arg))(eB)
   }
@@ -317,7 +316,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   }
 
   implicit class FuncExtensions[A, B](f: Exp[A=>B]) {
-    implicit def eA = f.elem.ea
+    implicit def eA = f.elem.eDom
     def getLambda: Lambda[A,B] = f match {
       case Def(lam: Lambda[_,_]) => lam.asInstanceOf[Lambda[A,B]]
       case _ => !!!(s"Expected symbol of Lambda node but was $f", f)
@@ -333,7 +332,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   //   Function application
 
   def mkApply[A,B](f: Exp[A => B], x: Exp[A]): Exp[B] = {
-    implicit val leB = Lazy(f.elem.eb)
+    implicit val leB = Lazy(f.elem.eRange)
     if (recursion.valuesIterator.contains(f)) {
       // f is not in Defs table at this time, thus a special case here
       f.isRecursive = true
@@ -366,7 +365,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def mirrorApply[A,B](f: Exp[A => B], s: Exp[A], subst: MapTransformer = MapTransformer.Empty): Exp[B] = {
     val Def(lam: Lambda[A, B]) = f
-    val body = lam.schedule map { _.sym }
+    val body = lam.bodySchedule map { _.sym }
     val (t, _) = DefaultMirror.mirrorSymbols(subst + (lam.x -> s), NoRewriting, body)
     t(lam.y).asRep[B]
   }
@@ -424,7 +423,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         res
       case Some(fs) => // hit recursion call !
         fs.isRecursive = true
-        Apply(fs.asInstanceOf[Exp[A=>B]], x)(Lazy(fSym.elem.eb))
+        Apply(fs.asInstanceOf[Exp[A=>B]], x)(Lazy(fSym.elem.eRange))
     }
   }
 

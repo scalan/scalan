@@ -99,7 +99,7 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
       })
     }
 
-    lazy val lambdaBoundProjections: Set[AnyExp] = {
+    lazy val lambdaBoundProjections: Set[ExpAny] = {
       val leaves = for {
             v <- lambdaBoundSyms
             t = projectionTreeFrom(v)
@@ -108,7 +108,7 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
       leaves
     }
 
-    def isLambdaBoundProjection(s: AnyExp): Boolean = lambdaBoundProjections contains s
+    def isLambdaBoundProjection(s: ExpAny): Boolean = lambdaBoundProjections contains s
   }
   
   implicit class AstGraphOps(graph: AstGraph) {

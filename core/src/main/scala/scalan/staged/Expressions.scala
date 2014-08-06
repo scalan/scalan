@@ -4,8 +4,10 @@ import annotation.unchecked.uncheckedVariance
 import scalan.{Base, ScalanStaged}
 import scala.language.{implicitConversions}
 import scalan.common.Lazy
+import scala.collection.immutable.ListMap
 
 trait BaseExp extends Base { self: ScalanStaged =>
+  type Rep[+A] = Exp[A]
 
   /**
    * constants/symbols (atomic)
@@ -30,11 +32,12 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def toStringWithType = varName + ":" + elem.name
     def toStringWithDefinition: String
   }
-  type AnyExp = Exp[Any]
-  type ExpSubst = AnyExp => AnyExp
+  type ExpAny = Exp[_]
 
   // this trait is mixed in Def[A]
+  // TODO extending UserType isn't correct
   trait ReifiableObject[+T, +TImpl <: T] extends UserType[T @uncheckedVariance] {
+    lazy val self: Rep[T] = reifyObject(this)
     def name: String = getClass.getSimpleName
     def name[A](eA: Elem[A]): String = s"$name[${eA.name}]"
     def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.name},${eB.name}]"
@@ -46,9 +49,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
 
   type Def[+A] = ReifiableObject[A,A]
   
-  abstract class BaseDef[T](implicit val selfType: Elem[T]) extends Def[T] {
-    lazy val self: Rep[T] = this
-  }
+  abstract class BaseDef[T](implicit val selfType: Elem[T]) extends Def[T]
 
   case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
@@ -144,13 +145,13 @@ trait BaseExp extends Base { self: ScalanStaged =>
     case _: FuncElem[_, _] => Const(x)
     case pe: PairElem[a, b] =>
       val x1 = x.asInstanceOf[(a, b)]
-      implicit val eA = pe.ea
-      implicit val eB = pe.eb
+      implicit val eA = pe.eFst
+      implicit val eB = pe.eSnd
       Pair(toRep(x1._1), toRep(x1._2))
     case se: SumElem[a, b] =>
       val x1 = x.asInstanceOf[a | b]
-      implicit val eA = se.ea
-      implicit val eB = se.eb
+      implicit val eA = se.eLeft
+      implicit val eB = se.eRight
       x1.fold(l => Left[a, b](l), r => Right[a, b](r))
     case _ => super.toRep(x)(eA)
   }
@@ -229,28 +230,6 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def tp: TableEntry[_] = findDefinition(symbol).get
     def sameScopeAs(other: Exp[_]): Boolean = this.tp.lambda == other.tp.lambda
 
-    def asPair[A,B,R](f: Elem[A] => Elem[B] => Rep[(A,B)] => R): R = {
-      val elem = symbol.elem
-      elem match {
-        case _: PairElem[_,_] => {
-          val pe = elem.asInstanceOf[PairElem[A,B]]
-          f(pe.ea)(pe.eb)(symbol.asRep[(A,B)])
-        }
-        case _ => !!!(s"Symbol $symbol expected to have PairElem but it's ${elem.name}")
-      }
-    }
-
-    def asFunc[A,B,R](f: Elem[A] => Elem[B] => Rep[A=>B] => R): R = {
-      val elem = symbol.elem
-      elem match {
-        case _: FuncElem[_,_] => {
-          val fe = elem.asInstanceOf[FuncElem[A,B]]
-          f(fe.ea)(fe.eb)(symbol.asRep[A=>B])
-        }
-        case _ => !!!(s"Symbol $symbol expected to have FuncElem but it's ${elem.name}")
-      }
-    }
-
     def mirror(t: Transformer) = symbol match {
       case Def(d) => d.mirror(t)
       case _ => fresh(Lazy(symbol.elem))
@@ -266,9 +245,14 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def asDef[T] = d.asInstanceOf[Def[T]]
   }
 
-  def rewrite[T](s: Exp[T])(implicit eT: LElem[T]): Exp[_] = {
-    null
+  final def rewrite[T](s: Exp[T]): Exp[_] = s match {
+    case Def(d) => rewriteDef(d)
+    case _ => rewriteVar(s)
   }
+
+  def rewriteDef[T](d: Def[T]): Exp[_] = null
+
+  def rewriteVar[T](s: Exp[T]): Exp[_] = null
 }
 
 /**
@@ -290,9 +274,7 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
       case _ => et.value
     }
     def varName = "s" + id
-    override def toString = {
-      if (isDebug) toStringWithDefinition else varName
-    }
+    override def toString = varName
 
     lazy val definition = findDefinition(this).map(_.rhs)
     def toStringWithDefinition = toStringWithType + definition.map(d => s" = $d").getOrElse("")
@@ -309,8 +291,8 @@ trait Expressions extends BaseExp { self: ScalanStaged =>
     //def unapply[T](s: Exp[T]): Option[TableEntry[T]] = findDefinition(s)
   }
 
-  private[this] var expToGlobalDefs: Map[Exp[_], TableEntry[_]] = Map.empty
-  private[this] var defToGlobalDefs: Map[Def[_], TableEntry[_]] = Map.empty
+  private[this] var expToGlobalDefs: Map[Exp[_], TableEntry[_]] = ListMap.empty
+  private[this] var defToGlobalDefs: Map[Def[_], TableEntry[_]] = ListMap.empty
 
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]] =
     expToGlobalDefs.get(s).asInstanceOf[Option[TableEntry[T]]]

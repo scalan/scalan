@@ -130,33 +130,30 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
   private def isZero[T](x: T, n: Numeric[T]) = x == n.zero
   private def isOne[T](x: T, n: Numeric[T]) = x == n.fromInt(1)
   
-  override def rewrite[T](d: Exp[T])(implicit eT: LElem[T]) = d match {
-    case Def(d1) => d1 match {
-      // constant propagation
-      case NumericPlus(Def(Const(x)), Def(Const(y)), n: Numeric[T] @unchecked) => Const(n.plus(x, y))(d1.selfType)
-      case NumericMinus(Def(Const(x)), Def(Const(y)), n: Numeric[T] @unchecked) => Const(n.minus(x, y))(d1.selfType)
-      case NumericTimes(Def(Const(x)), Def(Const(y)), n: Numeric[T] @unchecked) => Const(n.times(x, y))(d1.selfType)
-      // TODO better fix?
-      case NumericDiv(Def(Const(x)), Def(Const(y)), n: Fractional[T] @unchecked) if !isZero(y, n) => Const(n.div(x, y))(d1.selfType)
-      case NumericDivInt(Def(Const(x)), Def(Const(y))) if y != 0 => Const(x / y)
-      // single constant propagation
-      case NumericPlus(x, Def(Const(zero)), n: Numeric[T] @unchecked) if isZero(zero, n) => x
-      case NumericPlus(Def(Const(zero)), x, n: Numeric[T] @unchecked) if isZero(zero, n) => x
-      case NumericMinus(x, Def(Const(zero)), n: Numeric[T] @unchecked) if isZero(zero, n) => x
-      case NumericMinus(Def(Const(zero)), x, n: Numeric[T] @unchecked) if isZero(zero, n) =>
-        numeric_negate(x)(n, d1.selfType)
-      case NumericTimes(_, y @ Def(Const(zero)), n: Numeric[T] @unchecked) if isZero(zero, n) => y
-      case NumericTimes(y @ Def(Const(zero)), _, n: Numeric[T] @unchecked) if isZero(zero, n) => y
-      case NumericTimes(x, Def(Const(one)), n: Numeric[T] @unchecked) if isOne(one, n) => x
-      case NumericTimes(Def(Const(one)), x, n: Numeric[T] @unchecked) if isOne(one, n) => x
-      case NumericDiv(x @ Def(Const(zero)), _, n: Numeric[T] @unchecked) if isZero(zero, n) => x
-      case NumericDiv(x, Def(Const(one)), n: Numeric[T] @unchecked) if isOne(one, n) => x
-      case NumericDivInt(x @ Def(Const(0)), _) => x
-      case NumericDivInt(x, Def(Const(1))) => x
-      case NumericNegate(Def(NumericNegate(x, _)), _) => x
-      case _ => super.rewrite(d)
-    }
-    case _ => super.rewrite(d)
+  override def rewriteDef[T](d: Def[T]) = d match {
+    // constant propagation
+    case NumericPlus(Def(Const(x)), Def(Const(y)), n: Numeric[T]@unchecked) => Const(n.plus(x, y))(d.selfType)
+    case NumericMinus(Def(Const(x)), Def(Const(y)), n: Numeric[T]@unchecked) => Const(n.minus(x, y))(d.selfType)
+    case NumericTimes(Def(Const(x)), Def(Const(y)), n: Numeric[T]@unchecked) => Const(n.times(x, y))(d.selfType)
+    // TODO better fix?
+    case NumericDiv(Def(Const(x)), Def(Const(y)), n: Fractional[T]@unchecked) if !isZero(y, n) => Const(n.div(x, y))(d.selfType)
+    case NumericDivInt(Def(Const(x)), Def(Const(y))) if y != 0 => Const(x / y)
+    // single constant propagation
+    case NumericPlus(x, Def(Const(zero)), n: Numeric[T]@unchecked) if isZero(zero, n) => x
+    case NumericPlus(Def(Const(zero)), x, n: Numeric[T]@unchecked) if isZero(zero, n) => x
+    case NumericMinus(x, Def(Const(zero)), n: Numeric[T]@unchecked) if isZero(zero, n) => x
+    case NumericMinus(Def(Const(zero)), x, n: Numeric[T]@unchecked) if isZero(zero, n) =>
+      numeric_negate(x)(n, d.selfType)
+    case NumericTimes(_, y@Def(Const(zero)), n: Numeric[T]@unchecked) if isZero(zero, n) => y
+    case NumericTimes(y@Def(Const(zero)), _, n: Numeric[T]@unchecked) if isZero(zero, n) => y
+    case NumericTimes(x, Def(Const(one)), n: Numeric[T]@unchecked) if isOne(one, n) => x
+    case NumericTimes(Def(Const(one)), x, n: Numeric[T]@unchecked) if isOne(one, n) => x
+    case NumericDiv(x@Def(Const(zero)), _, n: Numeric[T]@unchecked) if isZero(zero, n) => x
+    case NumericDiv(x, Def(Const(one)), n: Numeric[T]@unchecked) if isOne(one, n) => x
+    case NumericDivInt(x@Def(Const(0)), _) => x
+    case NumericDivInt(x, Def(Const(1))) => x
+    case NumericNegate(Def(NumericNegate(x, _)), _) => x
+    case _ => super.rewriteDef(d)
   }
 }
 
