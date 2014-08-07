@@ -113,13 +113,13 @@ trait Views extends Elems { self: Scalan =>
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
-  trait UserTypeSeq[T, TImpl <: T] extends ReifiableObject[T] { thisType: T =>
+  trait UserTypeSeq[T, TImpl <: T] extends Reifiable[T] { thisType: T =>
     def self = this
   }
 }
 
 trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
-  trait UserTypeDef[T, TImpl <: T] extends ReifiableObjectExp[T, TImpl] {
+  trait UserTypeDef[T, TImpl <: T] extends ReifiableExp[T, TImpl] {
     def uniqueOpId = selfType.name
   }
   object UserTypeDef {

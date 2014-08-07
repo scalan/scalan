@@ -10,7 +10,7 @@ import scalan._
 trait Monads { self: MonadsDsl =>
 
   type MonadRep[A] = Rep[Monad[A]]
-  sealed trait Monad[A] extends ReifiableObject[Monad[A]] {
+  sealed trait Monad[A] extends Reifiable[Monad[A]] {
     implicit def elem: Elem[A]
     def flatMap[B:Elem](f: Rep[A] => Rep[Monad[B]]): Rep[Monad[B]]
     def map[B:Elem](f: Rep[A] => Rep[B]): Rep[Monad[B]] = flatMap(x => companion.point(f(x)))

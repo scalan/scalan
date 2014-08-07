@@ -35,7 +35,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
   type ExpAny = Exp[_]
 
   // this trait is mixed in Def[A]
-  trait ReifiableObjectExp[+T, +TImpl <: T] extends ReifiableObject[T @uncheckedVariance] {
+  trait ReifiableExp[+T, +TImpl <: T] extends Reifiable[T @uncheckedVariance] {
     lazy val self: Rep[T] = reifyObject(this)
     def name: String = getClass.getSimpleName
     def name[A](eA: Elem[A]): String = s"$name[${eA.name}]"
@@ -46,7 +46,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
     def isScalarOp: Boolean = true
   }
 
-  type Def[+A] = ReifiableObjectExp[A,A]
+  type Def[+A] = ReifiableExp[A,A]
   
   abstract class BaseDef[T](implicit val selfType: Elem[T]) extends Def[T]
 
@@ -132,7 +132,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: LElem[T]): Exp[T]
-  implicit def reifyObject[T](obj: ReifiableObjectExp[_,T]): Rep[T] = {
+  implicit def reifyObject[T](obj: ReifiableExp[_,T]): Rep[T] = {
     // TODO bad cast
     val obj1 = obj.asInstanceOf[Def[T]]
     implicit val leT = Lazy(obj1.selfType)

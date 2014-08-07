@@ -12,7 +12,7 @@ import scalan.arrays.PArraysDslSeq
 trait Vectors extends PArrays { scalan: VectorsDsl =>
   type Vec[T] = Rep[Vector[T]]
   
-  trait Vector[T] extends ReifiableObject[Vector[T]] {
+  trait Vector[T] extends Reifiable[Vector[T]] {
     def length: Rep[Int]
     def coords: PA[T]
     implicit def elem: Elem[T]
