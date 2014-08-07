@@ -35,7 +35,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
   type ExpAny = Exp[_]
 
   // this trait is mixed in Def[A]
-  trait ReifiableExp[+T, +TImpl <: T] extends Reifiable[T @uncheckedVariance] {
+  trait ReifiableExp[+T, +TImpl <: T] extends Reifiable[T] {
     lazy val self: Rep[T] = reifyObject(this)
     def name: String = getClass.getSimpleName
     def name[A](eA: Elem[A]): String = s"$name[${eA.name}]"

@@ -5,6 +5,8 @@ import java.io.FileReader
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
+import scala.annotation.unchecked.uncheckedVariance
+
 trait Base extends LazyLogging {
   type |[+A, +B] = Either[A, B]
   type L[A] = (A | Unit)
@@ -43,8 +45,8 @@ trait Base extends LazyLogging {
   def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for $x with element $eA")
   implicit def liftToRep[A:Elem](x: A) = toRep(x)
 
-  trait Reifiable[T] {
-    def selfType: Elem[T]
+  trait Reifiable[+T] {
+    def selfType: Elem[T @uncheckedVariance]
     def self: Rep[T]
   }
 }
