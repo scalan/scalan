@@ -70,6 +70,9 @@ trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanStaged =>
     case IfThenElse(cond, Def(UnpackableDef(a, iso1: Iso[a, c])), b) =>
       liftFromIfThenElse(cond, a.asRep[a], b, iso1, identityIso(b.elem))
 
+    case Tup(Def(IfThenElse(c1, t1, e1)), Def(IfThenElse(c2, t2, e2))) if c1 == c2 =>
+      IF (c1) THEN { Pair(t1, t2) } ELSE { Pair(e1, e2) }
+
     case _ => super.rewriteDef(d)
   }
 }

@@ -65,5 +65,43 @@ trait PArrayExamples extends ScalanDsl with PArraysDsl with PrimitiveExamples {
     expPairArraysInIfDiffTypes(xs).arr
   }
 
+  lazy val sumFold = fun { in: Rep[Array[(Int,Int)] | Array[Int]] =>
+    in.fold(xs => {
+      val ys = xs.map { x => x._1 + x._2}
+      val pairs1: PA[(Int, Int)] = PairArray(BaseArray(ys), BaseArray(ys))
+      val pairs2: PA[(Int, Int)] = BaseArray(xs)
+      val res = IF(xs.length > 10) THEN {
+        pairs1
+      } ELSE {
+        pairs2
+      }
+      res
+    },
+    ys => PairArray(BaseArray(ys), BaseArray(ys)))
+  }
+  lazy val sumFoldSpec = fun { in: Rep[Array[(Int,Int)] | Array[Int]] =>
+    sumFold(in).arr
+  }
+
+  lazy val pairInIf = fun { in: Arr[Int] =>
+    val xs = BaseArray(in)
+    val ys = xs.map { x => x + 1 }
+    val res = IF (xs.length > 10) THEN { Pair(ys, xs) } ELSE { Pair(xs,xs) }
+    res._1
+  }
+  lazy val pairInIfSpec = fun { xs: Arr[Int] =>
+    pairInIf(xs).arr
+  }
+
+  lazy val nestedPairInIf = fun { in: Arr[Int] =>
+    val xs = BaseArray(in)
+    val ys = xs.map { x => x + 1 }
+    val res = IF (xs.length > 10) THEN { Pair(Pair(xs, ys), xs) } ELSE { Pair(Pair(xs,xs),xs) }
+    Pair(res._1._2, res._2)
+  }
+  lazy val nestedPairInIfSpec = fun { xs: Arr[Int] =>
+    val res = nestedPairInIf(xs)
+    (res._1.arr, res._2.arr)
+  }
 
 }

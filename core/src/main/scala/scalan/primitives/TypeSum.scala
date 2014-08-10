@@ -103,6 +103,12 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
+    case First(Def(foldD: SumFold[a,b,(T,r2)]@unchecked)) => {
+      foldD.sum.fold(a => foldD.left(a)._1, b => foldD.right(b)._1)(d.selfType)
+    }
+    case Second(Def(foldD: SumFold[a,b,(r1,T)]@unchecked)) => {
+      foldD.sum.fold(a => foldD.left(a)._2, b => foldD.right(b)._2)(d.selfType)
+    }
     case foldD: SumFold[a,b,T] => foldD.sum match {
       case Def(IfThenElse(cond, Def(Left(left: Rep[a])), Def(Right(right: Rep[b])))) if !d.selfType.isEntityType => {
         // this rule is only applied when result of fold is base type.

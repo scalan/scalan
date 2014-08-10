@@ -53,5 +53,11 @@ class PArrayExamplesSuite extends BaseShouldTests {
   whenStaged should "expPairArraysInIfSpec" beArgFor { testMethod(_) }
   whenStaged should "expPairArraysInIfDiffTypes" beArgFor { testMethod(_) }
   whenStaged should "expPairArraysInIfDiffTypesSpec" beArgFor { testMethod(_) }
+  whenStaged should "sumFold" beArgFor { testMethod(_) }
+  whenStaged should "sumFoldSpec" beArgFor { testMethod(_) }
+  whenStaged should "pairInIf" beArgFor { testMethod(_) }
+  whenStaged should "pairInIfSpec" beArgFor { testMethod(_) }
+  whenStaged should "nestedPairInIf" beArgFor { testMethod(_) }
+  whenStaged should "nestedPairInIfSpec" beArgFor { testMethod(_) }
 
 }
