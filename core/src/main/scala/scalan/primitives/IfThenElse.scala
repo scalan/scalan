@@ -48,9 +48,28 @@ trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanStaged =>
     IfThenElse(cond, thenp, elsep)
   }
 
+  def liftFromIfThenElse[A,B,C](cond: Rep[Boolean], a: Rep[A], b: Rep[B], iso1: Iso[A,C], iso2: Iso[B,C]): Rep[C] = {
+    val ea = iso1.eFrom
+    val eb = iso2.eFrom
+    implicit val ec = iso1.eTo
+    val source = IF (cond) THEN { toLeftSum(a)(eb) } ELSE { toRightSum(b)(ea) }
+    val res = SumView(source)(iso1, iso2).self.joinSum
+    res
+  }
+
   override def rewriteDef[T](d: Def[T]) = d match {
     case IfThenElse(Def(Const(true)), t, _) => t
     case IfThenElse(Def(Const(false)), _, e) => e
+
+    case IfThenElse(cond, Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, _]))) =>
+      liftFromIfThenElse(cond, a.asRep[a], b.asRep[b], iso1, iso2)
+
+    case IfThenElse(cond, a, Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+      liftFromIfThenElse(cond, a, b.asRep[b], identityIso(a.elem), iso2)
+
+    case IfThenElse(cond, Def(UnpackableDef(a, iso1: Iso[a, c])), b) =>
+      liftFromIfThenElse(cond, a.asRep[a], b, iso1, identityIso(b.elem))
+
     case _ => super.rewriteDef(d)
   }
 }

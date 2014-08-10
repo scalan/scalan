@@ -47,5 +47,11 @@ class PArrayExamplesSuite extends BaseShouldTests {
   whenStaged should "splitMap3" beArgFor { testMethod(_) }
   whenStaged should "splitMapMap" beArgFor { testMethod(_) }
   whenStaged should "mapScalar" beArgFor { testMethod(_) }
+  whenStaged should "expBaseArraysInIf" beArgFor { testMethod(_) }
+  whenStaged should "expBaseArraysInIfSpec" beArgFor { testMethod(_) }
+  whenStaged should "expPairArraysInIf" beArgFor { testMethod(_) }
+  whenStaged should "expPairArraysInIfSpec" beArgFor { testMethod(_) }
+  whenStaged should "expPairArraysInIfDiffTypes" beArgFor { testMethod(_) }
+  whenStaged should "expPairArraysInIfDiffTypesSpec" beArgFor { testMethod(_) }
 
 }

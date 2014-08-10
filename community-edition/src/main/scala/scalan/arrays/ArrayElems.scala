@@ -16,6 +16,7 @@ trait ArrayElems extends Elems { self: Scalan =>
   }
 
   case class ArrayElem[A](implicit eItem: Elem[A]) extends Element[Array[A]] {
+    override def isEntityType = eItem.isEntityType
     lazy val tag = {
       implicit val tag1 = eItem.tag
       implicitly[TypeTag[Array[A]]]

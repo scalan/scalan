@@ -33,4 +33,37 @@ trait PArrayExamples extends ScalanDsl with PArraysDsl with PrimitiveExamples {
   //lazy val filterScalar = fun {(xs: PA[Int]) => xs.filter(x => x > 0) }
   //lazy val filterScalarNested = fun {(xss: NA[Int]) => xss.mapBy(filterScalar) }
 
+  lazy val expBaseArraysInIf = fun { xs: Arr[Int] =>
+    val ys = BaseArray(xs)
+    val zs = BaseArray(xs.map { x => x + 1 })
+    val res = IF (xs.length > 10) THEN { ys } ELSE { zs }
+    res
+  }
+  lazy val expBaseArraysInIfSpec = fun { xs: Arr[Int] =>
+    expBaseArraysInIf(xs).arr
+  }
+
+  lazy val expPairArraysInIf = fun { xs: Arr[Int] =>
+    val pairs1 = PairArray(BaseArray(xs), BaseArray(xs))
+    val ys = xs.map { x => x + 1 }
+    val pairs2 = PairArray(BaseArray(ys), BaseArray(xs))
+    val res = IF (xs.length > 10) THEN { pairs1 } ELSE { pairs2 }
+    res
+  }
+  lazy val expPairArraysInIfSpec = fun { xs: Arr[Int] =>
+    expPairArraysInIf(xs).arr
+  }
+
+  lazy val expPairArraysInIfDiffTypes = fun { xs: Arr[(Int,Int)] =>
+    val ys = xs.map { x => x._1 + x._2 }
+    val pairs1: PA[(Int,Int)] = PairArray(BaseArray(ys), BaseArray(ys))
+    val pairs2: PA[(Int,Int)] = BaseArray(xs)
+    val res = IF (xs.length > 10) THEN { pairs1 } ELSE { pairs2 }
+    res
+  }
+  lazy val expPairArraysInIfDiffTypesSpec = fun { xs: Arr[(Int,Int)] =>
+    expPairArraysInIfDiffTypes(xs).arr
+  }
+
+
 }

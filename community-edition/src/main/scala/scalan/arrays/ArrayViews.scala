@@ -306,13 +306,6 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case MethodCall(Def(obj@UserTypeDef(_)), m, args) =>
-      if (m.getDeclaringClass.isAssignableFrom(obj.getClass) && invokeEnabled) {
-        val res = m.invoke(obj, args: _*)
-        res.asInstanceOf[Exp[_]]
-      } else {
-        super.rewriteDef(d)
-      }
     case ArrayLength(Def(view@ViewArray(arr: Arr[a]))) =>
       // TODO doesn't compile
       // implicit val eA = view.asInstanceOf[ViewArray[a, _]].iso.eFrom

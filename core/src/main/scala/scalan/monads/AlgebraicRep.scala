@@ -18,6 +18,7 @@ trait AlgebraicRep { self: Scalan =>
   }
   object ElemLifter {
     class CoproductElem[F[_],G[_], A](eF: Elem[F[A]], eG: Elem[G[A]], eA: Elem[A]) extends Element[Coproduct[F,G,A]] {
+      override def isEntityType = eF.isEntityType || eG.isEntityType || eA.isEntityType
       lazy val tag = {
 //        implicit val tA = eA.tag
 //        implicit val tF = eF.tag
@@ -128,6 +129,7 @@ trait AlgebraicRep { self: Scalan =>
   def doTell(msg: Rep[String]): Rep[Unit]
   val Console: RInteract ~> Rep
   case class InteractElem[A](eA: Elem[A]) extends Element[Interact[A]] {
+    override def isEntityType = eA.isEntityType
     override def tag = ???
     override def defaultRep = ???
   }
@@ -159,6 +161,7 @@ trait AlgebraicRep { self: Scalan =>
   def doHasPermission(u: Rep[User], p: Rep[Permission]): Rep[Boolean]
   val TestAuth: RAuth ~> Rep
   case class AuthElem[A](eA: Elem[A]) extends Element[Auth[A]] {
+    override def isEntityType = eA.isEntityType
     override def tag = ???
     override def defaultRep = ???
   }

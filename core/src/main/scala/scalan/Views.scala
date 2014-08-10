@@ -27,11 +27,13 @@ trait Views extends Elems { self: Scalan =>
   implicit def viewElement[From, To /*<: UserType[_]*/](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
 
   abstract class ViewElem[From, To](implicit val iso: Iso[From, To]) extends Elem[To] {
+    override def isEntityType = true
     lazy val tag: TypeTag[To] = iso.tag
     lazy val defaultRep = iso.defaultRepTo    
   }
 
   trait CompanionElem[T] extends Elem[T] {
+    override def isEntityType = true
   }
 
   trait TypeFamily1[F[_]] {
@@ -81,7 +83,24 @@ trait Views extends Elems { self: Scalan =>
     }
   }
 
-  //TODO ICFP implement sumIso
+  def sumIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[A1 | A2, B1 | B2] = {
+    implicit val eA1 = iso1.eFrom
+    implicit val eA2 = iso2.eFrom
+    implicit val eB1 = iso1.eTo
+    implicit val eB2 = iso2.eTo
+    val eBB = element[B1 | B2]
+    new Iso[A1 | A2, B1 | B2] {
+      def eTo = eBB
+      def from(b: Rep[B1 | B2]) =
+        b.fold(b1 => toLeftSum(iso1.from(b1))(eA2),
+               b2 => toRightSum(iso2.from(b2))(eA1))
+      def to(a: Rep[A1 | A2]) =
+        a.fold(a1 => toLeftSum(iso1.to(a1))(eB2),
+               a2 => toRightSum(iso2.to(a2))(eB1))
+      def tag = eBB.tag
+      def defaultRepTo = eBB.defaultRep
+    }
+  }
 
   def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = {
     new Iso[A, C]()(iso1.eFrom) {
@@ -230,26 +249,36 @@ trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
   //    def copy(source: Rep[A]) = ViewVar(source)
   //  }
 
-  case class ViewPair[A1, A2, B1, B2](source: Rep[(A1, A2)])(implicit iso1: Iso[A1, B1], iso2: Iso[A2, B2]) extends View2[A1, A2, B1, B2, Tuple2] {
+  case class PairView[A1, A2, B1, B2](source: Rep[(A1, A2)])(implicit iso1: Iso[A1, B1], iso2: Iso[A2, B2]) extends View2[A1, A2, B1, B2, Tuple2] {
     lazy val iso = pairIso(iso1, iso2)
-    def copy(source: Rep[(A1, A2)]) = ViewPair(source)
+    def copy(source: Rep[(A1, A2)]) = PairView(source)
   }
 
-  //TODO ICFP implement ViewSum and corresponding rewrite rules
+  case class SumView[A1, A2, B1, B2](source: Rep[A1|A2])(implicit iso1: Iso[A1, B1], iso2: Iso[A2, B2]) extends View2[A1, A2, B1, B2, | ] {
+    lazy val iso = sumIso(iso1, iso2)
+    def copy(source: Rep[A1|A2]) = SumView(source)
+  }
 
   override def rewriteDef[T](d: Def[T]) = d match {
     //      case ViewPair(Def(ViewPair(a, iso1)), iso2) =>
     //        ViewPair(a, composeIso(iso2, iso1))
     case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
-      ViewPair((a.asRep[a], b.asRep[b]))(iso1, iso2)
+      PairView((a.asRep[a], b.asRep[b]))(iso1, iso2)
     case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
-      ViewPair((a.asRep[a], b))(iso1, identityIso(b.elem)).self
+      PairView((a.asRep[a], b))(iso1, identityIso(b.elem)).self
     case Tup(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
-      ViewPair((a, b.asRep[b]))(identityIso(a.elem), iso2).self
-    case First(Def(view@ViewPair(source))) =>
+      PairView((a, b.asRep[b]))(identityIso(a.elem), iso2).self
+
+    case First(Def(view@PairView(source))) =>
       view.iso1.to(source._1)
-    case Second(Def(view@ViewPair(source))) =>
+    case Second(Def(view@PairView(source))) =>
       view.iso2.to(source._2)
+
+    case l @ Left(Def(UnpackableDef(a, iso: Iso[a1, a2]))) =>
+      SumView(toLeftSum(a.asRep[a1])(l.eB))(iso, identityIso(l.eB)).self
+    case r @ Right(Def(UnpackableDef(a, iso: Iso[a1, a2]))) =>
+      SumView(toRightSum(a.asRep[a1])(r.eA))(identityIso(r.eA), iso).self
+
     // case UnpackableDef(Def(uv @ UnpackView(view)), iso) if iso.eTo == view.iso.eTo => view
     case UnpackView(Def(UnpackableDef(source, iso))) => source
     // case UnpackView(view @ UnpackableExp(iso)) => iso.from(view)
@@ -274,6 +303,21 @@ trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
           val loopRes = LoopUntil(start1, step1, isMatch1)
           iso.to(loopRes)
       }
+    case mcall @ MethodCall(Def(obj@UserTypeDef(_)), m, args) =>
+      if (m.getDeclaringClass.isAssignableFrom(obj.getClass) && invokeEnabled) {
+        val res = m.invoke(obj, args: _*)
+        res.asInstanceOf[Exp[_]]
+      } else {
+        obj match {
+          case foldD: SumFold[a,b,r] =>
+            val res = foldD.sum.fold(a => MethodCall(foldD.left(a), m, args)(mcall.selfType),
+                               b => MethodCall(foldD.right(b), m, args)(mcall.selfType))(mcall.selfType)
+            res.asInstanceOf[Exp[_]]
+          case _ =>
+            super.rewriteDef(d)
+        }
+      }
+
     case _ => super.rewriteDef(d)
   }
 

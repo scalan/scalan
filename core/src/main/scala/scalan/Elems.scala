@@ -17,6 +17,7 @@ trait Elems extends Base { self: Scalan =>
 
   @implicitNotFound(msg = "No Element available for ${A}.")
   abstract class Element[A] extends Serializable {
+    def isEntityType: Boolean
     def tag: TypeTag[A]
     final def classTag: ClassTag[A] = TagImplicits.typeTagToClassTag(tag)
     def defaultRep: Default[Rep[A]]
@@ -43,9 +44,11 @@ trait Elems extends Base { self: Scalan =>
 
   class BaseElem[A](implicit val tag: TypeTag[A], z: Default[A]) extends Element[A] with Serializable {
     lazy val defaultRep = defaultVal(toRep(z.value)(this))
+    override def isEntityType = false
   }
 
   case class PairElem[A, B](implicit eFst: Elem[A], eSnd: Elem[B]) extends Element[(A, B)] {
+    override def isEntityType = eFst.isEntityType || eSnd.isEntityType
     lazy val tag = {
       implicit val tA = eFst.tag
       implicit val tB = eSnd.tag
@@ -55,6 +58,7 @@ trait Elems extends Base { self: Scalan =>
   }
 
   case class SumElem[A, B](implicit eLeft: Elem[A], eRight: Elem[B]) extends Element[(A | B)] {
+    override def isEntityType = eLeft.isEntityType || eRight.isEntityType
     lazy val tag = {
       implicit val tA = eLeft.tag
       implicit val tB = eRight.tag
@@ -64,6 +68,7 @@ trait Elems extends Base { self: Scalan =>
   }
 
   case class FuncElem[A, B](implicit eDom: Elem[A], eRange: Elem[B]) extends Element[A => B] {
+    override def isEntityType = eDom.isEntityType || eRange.isEntityType
     lazy val tag = {
       implicit val tA = eDom.tag
       implicit val tB = eRange.tag
