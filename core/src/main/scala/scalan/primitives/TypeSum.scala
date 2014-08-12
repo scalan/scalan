@@ -119,13 +119,6 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
             foldD.right(right)
           }
       }
-//      case view @ SumView(source @ Def(IfThenElse(cond, t, e))) => {
-//        IF(cond) THEN {
-//          view.iso.to(t)
-//        } ELSE {
-//          view.iso.to(e)
-//        }
-//      }
       case Def(view: SumView[a1,a2,b1,b2]) if !d.selfType.isEntityType => {
         view.source.fold(x => foldD.left.asRep[b1 => T](view.iso1.to(x)), y => foldD.right.asRep[b2 => T](view.iso2.to(y)))(d.selfType)
       }

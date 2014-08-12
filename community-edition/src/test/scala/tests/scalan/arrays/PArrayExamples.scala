@@ -94,9 +94,9 @@ trait PArrayExamples extends ScalanDsl with PArraysDsl with PrimitiveExamples {
   }
 
   lazy val nestedPairInIf = fun { in: Arr[Int] =>
-    val xs = BaseArray(in)
+    val xs: PA[Int] = BaseArray(in)
     val ys = xs.map { x => x + 1 }
-    val res = IF (xs.length > 10) THEN { Pair(Pair(xs, ys), xs) } ELSE { Pair(Pair(xs,xs),xs) }
+    val res = IF (xs.length > 10) THEN { Pair(Pair(xs, ys), xs) } ELSE { Pair(Pair(xs,xs),ys) }
     Pair(res._1._2, res._2)
   }
   lazy val nestedPairInIfSpec = fun { xs: Arr[Int] =>
