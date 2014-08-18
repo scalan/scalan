@@ -117,6 +117,19 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
     }
   }
 
-  
+  def buildScheduleForResult(st: Seq[Exp[_]], neighbours: Exp[_] => Seq[Exp[_]]): Seq[TableEntry[_]] = {
+    val startNodes = st.flatMap(e => findDefinition(e).toList)
+
+    def succ(tp: TableEntry[_]): Seq[TableEntry[_]] = {
+      //println("dep"+d +"="+dep(d.rhs))
+      val ns = neighbours(tp.sym)
+      ns.flatMap { e =>
+        //println(d + "->" + e)
+        findDefinition(e).toList
+      }
+    }
+
+    GraphUtil.stronglyConnectedComponents[TableEntry[_]](startNodes)(succ).flatten
+  }
 }
 

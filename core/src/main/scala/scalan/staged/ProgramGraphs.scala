@@ -3,7 +3,7 @@ package scalan.staged
 import scalan.ScalanStaged
 import scalan.common.GraphUtil
 
-trait ProgramGraphs extends Scheduling with Transforming with AstGraphs { self: ScalanStaged =>
+trait ProgramGraphs extends AstGraphs { self: ScalanStaged =>
 
   type PGraph = ProgramGraph[MapTransformer]
 

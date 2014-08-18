@@ -3,9 +3,8 @@ package scalan.codegen
 import java.io.{File, PrintWriter}
 
 import _root_.scalan.ScalanStagedImplementation
-import _root_.scalan.staged.Scheduling
 
-trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
+trait GraphVizExport { self: ScalanStagedImplementation =>
 
   def emitDot(dotContent: String, file: String): Unit = {
     val f = new File(file)
@@ -106,7 +105,7 @@ trait GraphVizExport extends Scheduling { self: ScalanStagedImplementation =>
   private def emitDepGraph(ss: List[Exp[_]], stream: PrintWriter, landscape: Boolean): Unit = {
     stream.println("digraph G {")
 
-    val deflist = buildScheduleForResult(ss /* map { (_.asSymbol) }*/ )
+    val deflist = buildScheduleForResult(ss, dep)
 
     if (landscape) {
       stream.println("rankdir=LR")
