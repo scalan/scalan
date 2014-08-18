@@ -70,7 +70,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
     // AstGraph implementation
     def roots = List(y)
-    lazy val bodySchedule: Seq[TableEntry[_]] = {
+    override lazy val schedule: Seq[TableEntry[_]] = {
       if (isIdentity) Nil
       else {
         val g = new PGraph(y)
@@ -80,15 +80,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
           case _ => sh
         }
       }
-    }
-
-    lazy val bodyScheduleSyms = bodySchedule map { _.sym }
-
-    def bodyScheduleAll: Seq[TableEntry[_]] = {
-      bodySchedule flatMap (tp  => tp match {
-        case TableEntry(s, lam: Lambda[_, _]) => lam.bodyScheduleAll :+ tp
-        case _ => List(tp)
-      })
     }
 
     lazy val scheduleWithConsts: Seq[TableEntry[_]] =
@@ -104,10 +95,10 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
     def isIdentity: Boolean = y == x
     def isLocalDef[T](tp: TableEntry[T]): Boolean = isLocalDef(tp.sym)
-    def isLocalDef(s: Exp[_]): Boolean = bodyScheduleSyms contains s
+    def isLocalDef(s: Exp[_]): Boolean = scheduleSyms contains s
 
     lazy val freeVars: Set[Exp[_]] = {
-      val alldeps = bodySchedule flatMap { tp => tp.rhs.getDeps }
+      val alldeps = schedule flatMap { tp => tp.rhs.getDeps }
       val external = alldeps filter { s => !(isLocalDef(s) || s == x)  }
       external.toSet
     }
@@ -118,7 +109,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
 
     override def isScalarOp: Boolean = {
-      val allScalars = !(bodySchedule exists { tp => !tp.rhs.isScalarOp })
+      val allScalars = !(schedule exists { tp => !tp.rhs.isScalarOp })
       allScalars
     }
 
@@ -171,7 +162,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       }
 
       // traverse the lambda body from the results to the arguments
-      for (TableEntry(s, d) <- bodySchedule.reverseIterator) {
+      for (TableEntry(s, d) <- schedule.reverseIterator) {
 
         /** Builds a schedule according to the current usedSet
           * @param s starting symbol
@@ -365,7 +356,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def mirrorApply[A,B](f: Exp[A => B], s: Exp[A], subst: MapTransformer = MapTransformer.Empty): Exp[B] = {
     val Def(lam: Lambda[A, B]) = f
-    val body = lam.bodySchedule map { _.sym }
+    val body = lam.scheduleSyms
     val (t, _) = DefaultMirror.mirrorSymbols(subst + (lam.x -> s), NoRewriting, body)
     t(lam.y).asRep[B]
   }

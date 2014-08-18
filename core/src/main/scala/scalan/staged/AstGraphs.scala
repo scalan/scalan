@@ -35,7 +35,7 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
 
     lazy val scheduleAll: Seq[TableEntry[_]] = {
       schedule.flatMap(tp => tp match {
-        case TableEntry(s, lam: Lambda[_, _]) => lam.bodyScheduleAll :+ tp
+        case TableEntry(s, lam: Lambda[_, _]) => lam.scheduleAll :+ tp
         case _ => List(tp)
       })
     }
