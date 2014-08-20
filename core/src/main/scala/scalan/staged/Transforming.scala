@@ -120,7 +120,7 @@ trait Transforming { self: ScalanStaged =>
 
     protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Exp[_] = fresh(Lazy(node.elem))
 
-    // require: should be called after lam.bodySchedule is mirrored
+    // require: should be called after lam.schedule is mirrored
     private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], lam: Lambda[_,_]): Lambda[_,_] = {
       val newVar = t(lam.x)
       val newBody = t(lam.y)
@@ -138,7 +138,7 @@ trait Transforming { self: ScalanStaged =>
       val newLambdaSym = getMirroredLambdaSym(node)
 
       lambdaStack.push(newLambdaSym)
-      val schedule = lam.bodySchedule map { case TableEntry(sym, d) => sym }
+      val schedule = lam.scheduleSyms
       val (t2, _) = mirrorSymbols(t1, rewriter, schedule)
       lambdaStack.pop
 
