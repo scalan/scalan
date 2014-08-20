@@ -48,6 +48,10 @@ trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanStaged =>
     IfThenElse(cond, thenp, elsep)
   }
 
+  implicit class IfThenElseOps[T](tableEntry: TableEntry[T]) {
+    def isIfThenElse = tableEntry.rhs match { case IfThenElse(_,_,_) => true case _ => false }
+  }
+
   def liftFromIfThenElse[A,B,C](cond: Rep[Boolean], a: Rep[A], b: Rep[B], iso1: Iso[A,C], iso2: Iso[B,C]): Rep[C] = {
     val ea = iso1.eFrom
     val eb = iso2.eFrom

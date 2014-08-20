@@ -14,4 +14,13 @@ trait PrimitiveExamples extends ScalanDsl {
   lazy val inc2 = fun {(x: Rep[Int]) => x + ((1:Rep[Int]) + 1)}
   lazy val inc_times = fun {(x: Rep[Int]) => x + ((1:Rep[Int]) + 1) * 2 }
   lazy val scalar = fun {(x: Rep[Int]) => (x + 1) * (x + 2) }
+
+  lazy val ifsWithCommonCond = fun { a: Rep[Int] =>
+    val c = a * 2
+    val if1 = IF (a < 10) THEN { c } ELSE {a - 1}
+    val if2 = IF (a < 10) THEN {c + 1} ELSE {a - 1}
+
+    if1 + if2
+  }
+
 }

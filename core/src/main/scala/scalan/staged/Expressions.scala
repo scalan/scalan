@@ -222,6 +222,13 @@ trait BaseExp extends Base { self: ScalanStaged =>
       case Def(lam: Lambda[_,_]) => lam.freeVars.toList
       case _ => this.inputs
     }
+
+    /** Shallow dependencies don't look into branches of IfThenElse  */
+    def getShallowDeps: List[ExpAny] = symbol match {
+      case Def(IfThenElse(c, _, _)) => List(c)
+      case _ => getDeps
+    }
+
     def isLambda: Boolean = symbol match {
       case Def(_: Lambda[_, _]) => true
       case _ => false

@@ -6,11 +6,13 @@ import scalan.codegen.GraphVizExport
 
 class PrimitivesExamplesSuite extends BaseShouldTests {
 
+  def seq = new ScalanCtxSeq with PrimitiveExamples {}
+  def staged = new ScalanCtxStaged with PrimitiveExamples {}
   "Examples trait" should "be mixable in Seq context" in {
-      val ctx = new ScalanCtxSeq with PrimitiveExamples {}
+      val ctx = seq
   }
   it should "be mixable in Staged context" in {
-    val ctx = new ScalanCtxStaged with PrimitiveExamples {}
+    val ctx = staged
   }
   
   val prefix = "test-out/scalan/primitives/"
@@ -32,4 +34,13 @@ class PrimitivesExamplesSuite extends BaseShouldTests {
   whenStaged should "inc2" beArgFor { testMethod(_) }
   whenStaged should "inc_times" beArgFor { testMethod(_) }
   whenStaged should "scalar" beArgFor { testMethod(_) }
+  whenStaged should "ifsWithCommonCond" beArgFor { testMethod(_) }
+
+  "If with common condition" should "have correct branches" in {
+    val ctx = staged
+    import ctx._
+    val lam = ifsWithCommonCond.getLambda
+    lam.branches.ifBranches.foreach { println(_) }
+    lam.bodySchedule.foreach { tp => println(s"${tp.sym} -> ${tp.rhs}") }
+  }
 }

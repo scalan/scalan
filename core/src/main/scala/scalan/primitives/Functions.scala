@@ -102,6 +102,15 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         }
       }
 
+    def filterBranch(resAssignments: Map[Exp[_], BranchPath], ifSym: Exp[_], thenOrElse: Boolean): Seq[TableEntry[_]] = {
+      bodySchedule.filter(tp => {
+        val pathOpt = resAssignments.get(tp.sym)
+        pathOpt.map(p => p.ifSym == ifSym && thenOrElse == p.thenOrElse).getOrElse(false)
+      })
+    }
+
+    def iterateIfs = bodySchedule.iterator.filter(_.isIfThenElse)
+
     def isIdentity: Boolean = y == x
     def isLocalDef[T](tp: TableEntry[T]): Boolean = isLocalDef(tp.sym)
     def isLocalDef(s: Exp[_]): Boolean = bodyScheduleSyms contains s
@@ -135,84 +144,103 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
     def buildLocalScheduleFrom(sym: ExpAny): Seq[TableEntry[_]] = buildLocalScheduleFrom(sym, _.getDeps)
 
-    // from Scalan
-    //    /** Builds a schedule starting from symbol `sym` which which consists only of local definitions.
-    //      *  @param sym   the root of the schedule, it can be non-local itself
-    //      *  @param deps  dependence relation between a definition and symbols
-    //      *  @return      a `Seq` of local definitions on which `sym` depends or empty if `sym` is itself non-local
-    //      */
-    //    def buildLocalScheduleFrom(sym: Exp[_], deps: Def[_] => Seq[Exp[_]]): Seq[TableEntry[_]] =
-    //      if (isLocalDef(sym))
-    //        buildScheduleForResult(List(sym), deps(_).filter(isLocalDef(_)))
-    //      else
-    //        Seq.empty
-    //
-    //    def buildLocalScheduleFrom(sym: Exp[_]): Seq[TableEntry[_]] = buildLocalScheduleFrom(sym, _.getDeps)
+    /** Keep the assignments of symbols to the branches of IfThenElse
+        if a definition is assigned to IF statement then it will be in either THEN or ELSE branch, according to flag
+      */
+    private[FunctionsExp] val assignments = scala.collection.mutable.Map.empty[Exp[_], BranchPath]
+    private[FunctionsExp] def isAssigned(sym: Exp[_]) = assignments.contains(sym)
 
     /** Keeps immutable maps describing branching structure of this lambda
       */
     lazy val branches = {
-      //Accumulates branches for each IfThenElse definition of this `Lambda` (at the end transformed to immutable)
-      val ifBranches = scala.collection.mutable.Map.empty[Exp[_], IfBranches]
-
-      // Keep the assignments of symbols to the branches of IfThenElse
-      // if a definition is assigned to IF statement then it will be in either THEN or ELSE branch, according to flag
-      val assignments = scala.collection.mutable.Map.empty[Exp[_], BranchPath]
-
+      // traverse the lambda body from the results to the arguments
       // during the loop below, keep track of all the defs that `are used` below the current position in the `schedule`
       // `are used` relation is transitive closure of getShallowDeps
       val usedSet = scala.collection.mutable.Set.empty[Exp[_]]
 
-      /** Shallow dependencies don't look into branches of IfThenElse
+      /** Builds a schedule according to the current usedSet
+        * @param s starting symbol
+        * @return sequence of symbols that 1) local 2) in shallow dependence relation 3) not yet marked
         */
-      def getShallowDeps(d: ExpAny): List[ExpAny] = d match {
-        case Def(IfThenElse(c, _, _)) => List(c)
-        case _ => d.getDeps
-      }
-
-      // traverse the lambda body from the results to the arguments
-      for (TableEntry(s, d) <- bodySchedule.reverseIterator) {
-
-        /** Builds a schedule according to the current usedSet
-          * @param s starting symbol
-          * @return sequence of symbols that 1) local 2) in shallow dependence relation 3) not yet marked
-          */
-        def getLocalUnusedShallowSchedule(s: ExpAny): Seq[TableEntry[_]] = {
-          val sch = buildLocalScheduleFrom(s, getShallowDeps(_).filter(!usedSet.contains(_)))
+      def getLocalUnusedShallowSchedule(s: ExpAny): Seq[TableEntry[_]] = {
+        if (usedSet.contains(s)) Seq()
+        else {
+          val sch = buildLocalScheduleFrom(s, _.getShallowDeps.filter(!usedSet.contains(_)))
           sch
         }
+      }
 
-        // should return definitions that are not in usedSet
-        def getLocalUnusedSchedule(s: Exp[_]): Seq[TableEntry[_]] = {
-          if (usedSet.contains(s)) Seq()
-          else {
-            val sch = buildLocalScheduleFrom(s, _.getDeps.filter(!usedSet.contains(_)))
-            sch
+      // should return definitions that are not in usedSet
+      def getLocalUnusedSchedule(s: Exp[_]): Seq[TableEntry[_]] = {
+        if (usedSet.contains(s)) Seq()
+        else {
+          val sch = buildLocalScheduleFrom(s, _.getDeps.filter(!usedSet.contains(_)))
+          sch
+        }
+      }
+
+      // builds potential branches for the `cte`
+      def getPotentialIfBranches(ifSym: Exp[_], cte: IfThenElse[_]) = {
+        val IfThenElse(_, t, e) = cte
+        val ts = buildLocalScheduleFrom(t)   // NOTE: this is LOCAL and DEEP dependencies
+        val es = buildLocalScheduleFrom(e)
+
+        val tSet = ts.map(_.sym).toSet
+        val eSet = es.map(_.sym).toSet
+
+        // a symbol can be in a branch if 1) the branch root depends on it and 2) the other branch doesn't depends on it
+        // Lemma: a symbol is excluded from a branch together with all its local dependencies
+        val tbody = ts.filter(tp => !eSet.contains(tp.sym))
+        val ebody = es.filter(tp => !tSet.contains(tp.sym))
+
+        IfBranches(thisLambda, ifSym, tbody, ebody)
+      }
+
+      def assignBranch(sym: Exp[_], ifSym: Exp[_], thenOrElse: Boolean) = {
+        assignments(sym) = BranchPath(thisLambda, ifSym, thenOrElse)
+      }
+
+      def isUsed(sym: Exp[_]) = usedSet.contains(sym)
+
+      /** Find nearest IF statement which is a common parent of the branches, if exists */
+      def getCommonPath(p1: BranchPath, p2: BranchPath) = {
+        val path = p1.pathToRoot.toSet
+        p2.pathToRoot.find(n => path.contains(n))
+      }
+
+      def moveToLambdaLevel(symToLift: Exp[_]) = {
+        val deps = buildLocalScheduleFrom(symToLift)
+        deps.foreach { tp => assignments.remove(tp.sym) }
+      }
+
+      def moveToPath(symToLift: Exp[_], path: BranchPath) = {
+        val deps = buildLocalScheduleFrom(symToLift)
+        deps.foreach { tp => assignments(tp.sym) = path }
+      }
+
+      /**
+       * symToLift may had been assigned to some branch, but it should be lifted (symToLift is used inside ifSym)
+       * @param ifSym the IF statement that evidences that lifting is required
+       */
+      def liftToCommonParent(ifSym: Exp[_], symToLift: Exp[_]): Unit = {
+        if (!assignments.contains(ifSym))
+          moveToLambdaLevel(symToLift)
+        else {
+          val ifPath = assignments(ifSym)
+          if (assignments.contains(symToLift)) {
+            val symPath = assignments(symToLift)
+            val commonPathOpt = getCommonPath(ifPath, symPath)
+            commonPathOpt match {
+              case Some(path) =>
+                moveToPath(symToLift, path)
+              case None =>
+                moveToLambdaLevel(symToLift)
+            }
           }
         }
+      }
 
-        // builds branches for the `cte` with respect to usedSet
-        def getIfBranches(ifSym: Exp[_], cte: IfThenElse[_]) = {
-          val IfThenElse(_, t, e) = cte
-          // current usedSet should be filtered out from the contents of the branches
-          val ts = getLocalUnusedSchedule(t)   // NOTE: this is local, unused BUT DEEP dependencies
-          val es = getLocalUnusedSchedule(e)
-
-          val tSet = ts.map(_.sym).toSet
-          val eSet = es.map(_.sym).toSet
-
-          // a symbol can be in a branch if 1) the branch root depends on it and 2) the other branch doesn't depends on it
-          // Lemma: a symbol is excluded from a branch together with all its local dependencies
-          val tbody = ts.filter(tp => !eSet.contains(tp.sym))
-          val ebody = es.filter(tp => !tSet.contains(tp.sym))
-
-          IfBranches(thisLambda, ifSym, tbody, ebody)
-        }
-
-        def assignBranch(sym: Exp[_], ifSym: Exp[_], thenOrElse: Boolean) = {
-          assignments(sym) = BranchPath(ifSym, thenOrElse)
-        }
-
+      for (TableEntry(s, d) <- bodySchedule.reverseIterator) {
         // process current definition
         d match {
           case cte@IfThenElse(c, t, e) =>
@@ -224,18 +252,26 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
               usedSet ++= deps
             }
 
-            // compute and store branches
-            val bs = getIfBranches(ifSym, cte)
-            ifBranches += ifSym -> bs
+            val bs = getPotentialIfBranches(ifSym, cte)
 
             // assign symbols to this IF
-            // put symbol to the current IF (it can later be reassigned to nested IF)
-            for (tp <- bs.thenBody) {
+            // put symbol to the current IF (it can later be reassigned to nested IF or lifted on upper levels)
+            for (tp <- bs.thenBody if !isUsed(tp.sym)) {
               assignBranch(tp.sym, ifSym, thenOrElse = true)
             }
-            for (tp <- bs.elseBody) {
+            for (tp <- bs.elseBody if !isUsed(tp.sym)) {
               assignBranch(tp.sym, ifSym, thenOrElse = false)
             }
+
+            for (tp <- bs.thenBody) {
+              if (isUsed(tp.sym))
+                liftToCommonParent(ifSym, tp.sym)
+            }
+            for (tp <- bs.elseBody) {
+              if (isUsed(tp.sym))
+                liftToCommonParent(ifSym, tp.sym)
+            }
+
 
             // mark shallow scope for each branch
             val tUsed = getLocalUnusedShallowSchedule(t).map(_.sym)
@@ -245,6 +281,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
           case _ =>
             if (!usedSet.contains(s)) {
+              // found unused Def, this is either lambda root or branch root
               // mark all the symbols from the shallow schedule of the lambda scope
               val deps = getLocalUnusedShallowSchedule(s).map(_.sym)
               usedSet ++= deps
@@ -252,9 +289,18 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         }
       }
 
+
       // create resulting immutable structures
       val resAssignments = assignments.toMap
-      val resBranches = ifBranches.map { case (ifSym, bs) => (ifSym, bs.cleanBranches(resAssignments)) }.toMap
+
+      val resBranches = iterateIfs.map { tp => {
+        val ifSym = tp.sym
+        val thenBody = filterBranch(resAssignments, ifSym, true)
+        val elseBody = filterBranch(resAssignments, ifSym, false)
+        val bs = IfBranches(thisLambda, ifSym, thenBody, elseBody)
+        (ifSym, bs)
+      } }.toMap
+
       LambdaBranches(resBranches, resAssignments)
     }
 
@@ -264,7 +310,11 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
    * @param ifSym      symbol of the related IfThenElse definition
    * @param thenOrElse true if the symbol is assigned to then branch, false if to the else branch
    */
-  case class BranchPath(ifSym: Exp[_], thenOrElse: Boolean)
+  case class BranchPath(lam: Lambda[_,_], ifSym: Exp[_], thenOrElse: Boolean) {
+    def parent: Option[BranchPath] = lam.assignments.get(ifSym)
+    def pathToRoot: Iterator[BranchPath] =
+      Iterator.iterate(Option(this))(p => p.flatMap { _.parent}).takeWhile(_.isDefined).map(_.get)
+  }
 
   /** When stored in a Map, keeps for each IfThenElse schedule of the branches
    * @param lam       owning lambda
@@ -279,6 +329,17 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       val thenClean = thenBody.filter(tp => assignments(tp.sym).ifSym == ifSym)
       val elseClean = elseBody.filter(tp => assignments(tp.sym).ifSym == ifSym)
       IfBranches(lam, ifSym, thenClean, elseClean)
+    }
+    override def toString = {
+      val Def(IfThenElse(cond,_,_)) = ifSym
+      val msg =
+        s"""
+           |${ifSym} = if (${cond}) then
+           |  ${thenBody.map(tp => s"${tp.sym} -> ${tp.rhs}" ).mkString("\n")}
+           |else
+           |  ${elseBody.map(tp => s"${tp.sym} -> ${tp.rhs}" ).mkString("\n")}
+         """.stripMargin
+      msg
     }
   }
 
