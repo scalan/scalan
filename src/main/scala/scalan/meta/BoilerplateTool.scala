@@ -2,10 +2,9 @@ package scalan.meta
 
 object BoilerplateTool {
   lazy val scalanConfig = CodegenConfig(
-    isLite = true,
     srcPath = "../scalan/src/main/scala",
-    proxyTrait = "scalan.ProxyExp",
-    stagedViewsTrait = "scalan.ViewsExp",
+    seqContextTrait = "ScalanEnterpriseSeq",
+    stagedContextTrait = "ScalanEnterpriseStaged",
     entityFiles = List(
       "scalan/trees/Trees.scala",
       "scalan/math/Matrices.scala",
@@ -13,14 +12,11 @@ object BoilerplateTool {
       "scalan/collections/Sets.scala"
     ),
     extraImports = List(
-      "scala.reflect.runtime.universe._", 
-      "scalan.common.Common",
-      "scalan.staged.ScalanStaged",
-      "scalan.sequential.ScalanSeq")
+      "scala.reflect.runtime.universe._",
+      "scalan.common.Default")
   )
 
   lazy val liteConfig = CodegenConfig(
-    isLite = true,
     srcPath = "../scalan-lite/core/src/main/scala",
     entityFiles = List(
       "../../../../community-edition/src/main/scala/scalan/arrays/PArrays.scala"
@@ -30,16 +26,16 @@ object BoilerplateTool {
       //,"scalan/iterators/Iters.scala"
       //, "main/scala/scalan/rx/Trees.scala"
     ),
-    proxyTrait = "scalan.ProxyExp",
-    stagedViewsTrait = "scalan.ViewsExp",
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanStaged",
     extraImports = List(
       "scala.reflect.runtime.universe._", 
-      "scalan.common.Default.defaultVal")
+      "scalan.common.Default")
   )
 
 
   def main(args: Array[String]) {
-    lazy val ctx = new EntityManagement(liteConfig)
+    lazy val ctx = new EntityManagement(scalanConfig)
 
     ctx.generateAll
   }
