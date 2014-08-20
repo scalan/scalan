@@ -94,9 +94,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       }
 
     def filterBranch(resAssignments: Map[Exp[_], BranchPath], ifSym: Exp[_], thenOrElse: Boolean): Seq[TableEntry[_]] = {
-      bodySchedule.filter(tp => {
+      schedule.filter(tp => {
         val pathOpt = resAssignments.get(tp.sym)
-        pathOpt.map(p => p.ifSym == ifSym && thenOrElse == p.thenOrElse).getOrElse(false)
+        pathOpt.exists(p => p.ifSym == ifSym && thenOrElse == p.thenOrElse)
       })
     }
 
@@ -129,7 +129,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       */
     def buildLocalScheduleFrom(sym: ExpAny, deps: ExpAny => List[ExpAny]): Seq[TableEntry[_]] =
       if (isLocalDef(sym))
-        buildScheduleForResult(List(sym), deps(_).filter(isLocalDef(_)))
+        buildScheduleForResult(List(sym), deps(_).filter(isLocalDef))
       else
         Seq.empty
 
@@ -169,9 +169,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
           sch
         }
       }
-
-      // traverse the lambda body from the results to the arguments
-      for (TableEntry(s, d) <- schedule.reverseIterator) {
 
       // builds potential branches for the `cte`
       def getPotentialIfBranches(ifSym: Exp[_], cte: IfThenElse[_]) = {
@@ -234,7 +231,8 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         }
       }
 
-      for (TableEntry(s, d) <- bodySchedule.reverseIterator) {
+      // traverse the lambda body from the results to the arguments
+      for (TableEntry(s, d) <- schedule.reverseIterator) {
         // process current definition
         d match {
           case cte@IfThenElse(c, t, e) =>
