@@ -123,12 +123,11 @@ trait ScalanAst {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
-      val (typeSyn, opsTrait) = defs match {
+      val (typeSyn, opsTrait) = defs.dropWhile(d => !(d.isInstanceOf[STpeDef] || d.isInstanceOf[STraitDef])) match {
         case (ts: STpeDef) :: (ot: STraitDef) :: _ => (ts, ot)
-        // constructor
-        case (_: SMethodDef) :: (ts: STpeDef) :: (ot: STraitDef) :: _ => (ts, ot)
+        case (ot: STraitDef) :: (ts: STpeDef) :: _ => (ts, ot)
         case _ =>
-          throw new IllegalStateException(s"Invalid syntax of Entity module trait $moduleName:\n${defs.mkString("\n")}")
+          throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName:\n${defs.mkString("\n")}. Must include trait defining the entity and a type synonim for its Rep")
       }
       val classes = getConcreteClasses(defs)
 

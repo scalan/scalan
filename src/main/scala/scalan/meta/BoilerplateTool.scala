@@ -35,7 +35,7 @@ object BoilerplateTool {
 
 
   def main(args: Array[String]) {
-    lazy val ctx = new EntityManagement(scalanConfig)
+    lazy val ctx = new EntityManagement(liteConfig)
 
     ctx.generateAll
   }
