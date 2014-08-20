@@ -194,7 +194,6 @@ class ScalanParsersTests extends BaseTests {
     testModule(
       reactiveModule,
       EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
-        STpeDef("Obs", tpeArgA, TC("Rep", L(TC("Observable", L(TC("A", Nil)))))),
         TD("Observable", tpeArgA, Nil,
           L(MD("eA", Nil, Nil, Some(TC("Elem", L(TC("A", Nil)))), isImplicit = true)), None),
         L(obsImpl1, obsImpl2),

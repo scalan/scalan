@@ -97,24 +97,9 @@ trait ScalanAst {
     packageName: String,
     imports: List[SImportStat],
     name: String,
-    typeSyn: STpeDef,
     entityOps: STraitDef,
     concreteSClasses: List[SClassDef],
-    selfType: Option[SSelfTypeDef]) {
-
-    object EntityRepType {
-      def unapply(ty: STpeExpr): Option[STpeExpr] = ty match {
-        case STraitCall(n, args) if n == typeSyn.name =>
-          typeSyn.rhs match {
-            case STraitCall("Rep", List(entityType)) =>
-              val subst = (typeSyn.tpeArgs.map(_.name) zip args).toMap
-              Some(entityType.applySubst(subst))
-            case _ => sys.error(s"Entity type synonym should be Rep type but was $typeSyn")
-          }
-        case _ => None
-      }
-    }
-  }
+    selfType: Option[SSelfTypeDef])
 
   def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
 
@@ -123,15 +108,12 @@ trait ScalanAst {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
-      val (typeSyn, opsTrait) = defs.dropWhile(d => !(d.isInstanceOf[STpeDef] || d.isInstanceOf[STraitDef])) match {
-        case (ts: STpeDef) :: (ot: STraitDef) :: _ => (ts, ot)
-        case (ot: STraitDef) :: (ts: STpeDef) :: _ => (ts, ot)
-        case _ =>
-          throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName:\n${defs.mkString("\n")}. Must include trait defining the entity and a type synonim for its Rep")
+      val opsTrait = defs.collectFirst { case t: STraitDef => t }.getOrElse {
+        throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
       }
       val classes = getConcreteClasses(defs)
 
-      SEntityModuleDef(packageName, imports, moduleName, typeSyn, opsTrait, classes, moduleTrait.selfType)
+      SEntityModuleDef(packageName, imports, moduleName, opsTrait, classes, moduleTrait.selfType)
     }
   }
 }

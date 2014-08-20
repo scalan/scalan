@@ -33,8 +33,6 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
   class EntityFileGenerator(module: SEntityModuleDef) {
     import Extensions._
 
-    val typeSyn = module.typeSyn
-
     def getEntityTemplateData(e: STraitDef) = {
       val tyArgs = e.tpeArgs.map(_.name)
       (e.name,
@@ -89,9 +87,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       val proxy =
         s"""
         |  // single proxy for each type family
-        |  implicit def proxy$entityName[$typesWithElems](p: ${typeSyn.name}[$types]): $entityName[$types] = {
+        |  implicit def proxy$entityName[$typesWithElems](p: Rep[$entityName[$types]]): $entityName[$types] =
         |    proxyOps[$entityName[$types]](p)
-        |  }
         |""".stripMargin
 
       val familyElem = s"""  trait ${entityName}Elem[From,To] extends ViewElem[From, To]""".stripMargin
