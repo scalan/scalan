@@ -15,32 +15,32 @@ trait Loops { self: Scalan =>
   def loopUntil3[A:Elem, B:Elem, C:Elem](s1: Rep[A], s2: Rep[B], s3: Rep[C])
                                         (isMatch: (Rep[A],Rep[B],Rep[C]) => Rep[Boolean],
                                          step: (Rep[A], Rep[B], Rep[C]) => (Rep[A], Rep[B], Rep[C])): Rep[(A,(B,C))]
-  = loopUntil(Pair(s1, Pair(s2,s3)))(fun {case Pair(a,Pair(b,c)) => isMatch(a,b,c) }, fun {case Pair(a,Pair(b,c)) => step(a,b,c)})
+  = loopUntil(Tuple(s1, s2, s3))(fun {case Tuple(a,b,c) => isMatch(a,b,c) }, fun {case Tuple(a,b,c) => step(a,b,c)})
 
   def loopUntil4[A:Elem, B:Elem, C:Elem, D:Elem](s1: Rep[A], s2: Rep[B], s3: Rep[C], s4: Rep[D])
                                                 (isMatch: (Rep[A],Rep[B],Rep[C],Rep[D]) => Rep[Boolean],
                                                  step: (Rep[A], Rep[B], Rep[C], Rep[D]) => (Rep[A], Rep[B], Rep[C], Rep[D])): Rep[(A,(B,(C,D)))]
-  = loopUntil(Pair(s1, Pair(s2, Pair(s3,s4))))(fun {case Pair(a,Pair(b,Pair(c,d))) => isMatch(a,b,c,d) }, fun {case Pair(a,Pair(b,Pair(c,d))) => step(a,b,c,d)})
+  = loopUntil(Tuple(s1, s2, s3,s4))(fun {case Tuple(a,b,c,d) => isMatch(a,b,c,d) }, fun {case Tuple(a,b,c,d) => step(a,b,c,d)})
 
   def loopUntil5[A:Elem, B:Elem, C:Elem, D:Elem, E:Elem](s1: Rep[A], s2: Rep[B], s3: Rep[C], s4: Rep[D], s5: Rep[E])
                                                         (isMatch: (Rep[A],Rep[B],Rep[C],Rep[D],Rep[E]) => Rep[Boolean],
                                                          step: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E]) => (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E])): Rep[(A,(B,(C,(D,E))))]
-  = loopUntil(Pair(s1, Pair(s2, Pair(s3,Pair(s4, s5)))))(fun {case Pair(a,Pair(b,Pair(c,Pair(d,e)))) => isMatch(a,b,c,d,e) }, fun {case Pair(a,Pair(b,Pair(c,Pair(d,e)))) => step(a,b,c,d,e)})
+  = loopUntil(Tuple(s1, s2, s3,s4, s5))(fun {case Tuple(a,b,c,d,e) => isMatch(a,b,c,d,e) }, fun {case Tuple(a,b,c,d,e) => step(a,b,c,d,e)})
 
   def loopUntil6[A:Elem, B:Elem, C:Elem, D:Elem, E:Elem, F:Elem](s1: Rep[A], s2: Rep[B], s3: Rep[C], s4: Rep[D], s5: Rep[E], s6: Rep[F])
                                                                 (isMatch: (Rep[A],Rep[B],Rep[C],Rep[D],Rep[E],Rep[F]) => Rep[Boolean],
                                                                  step: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F]) => (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F])): Rep[(A,(B,(C,(D,(E,F)))))]
-  = loopUntil(Pair(s1, Pair(s2, Pair(s3,Pair(s4, Pair(s5,s6))))))(fun {case Pair(a,Pair(b,Pair(c,Pair(d,Pair(e,f))))) => isMatch(a,b,c,d,e,f) }, fun {case Pair(a,Pair(b,Pair(c,Pair(d,Pair(e,f))))) => step(a,b,c,d,e,f)})
+  = loopUntil(Tuple(s1, s2, s3,s4, s5,s6))(fun {case Tuple(a,b,c,d,e,f) => isMatch(a,b,c,d,e,f) }, fun {case Tuple(a,b,c,d,e,f) => step(a,b,c,d,e,f)})
 
   def loopUntil7[A:Elem, B:Elem, C:Elem, D:Elem, E:Elem, F:Elem, G:Elem](s1: Rep[A], s2: Rep[B], s3: Rep[C], s4: Rep[D], s5: Rep[E], s6: Rep[F], s7: Rep[G])
                                                                         (isMatch: (Rep[A],Rep[B],Rep[C],Rep[D],Rep[E],Rep[F],Rep[G]) => Rep[Boolean],
                                                                          step: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F],Rep[G]) => (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F],Rep[G])): Rep[(A,(B,(C,(D,(E,(F,G))))))]
-  = loopUntil(Pair(s1, Pair(s2, Pair(s3,Pair(s4, Pair(s5,Pair(s6,s7)))))))(fun {case Pair(a,Pair(b,Pair(c,Pair(d,Pair(e,Pair(f,g)))))) => isMatch(a,b,c,d,e,f,g) }, fun {case Pair(a,Pair(b,Pair(c,Pair(d,Pair(e,Pair(f,g)))))) => step(a,b,c,d,e,f,g)})
+  = loopUntil(Tuple(s1, s2, s3,s4, s5,s6,s7))(fun {case Tuple(a,b,c,d,e,f,g) => isMatch(a,b,c,d,e,f,g) }, fun {case Tuple(a,b,c,d,e,f,g) => step(a,b,c,d,e,f,g)})
 
   def loopUntil8[A:Elem, B:Elem, C:Elem, D:Elem, E:Elem, F:Elem, G:Elem, H:Elem](s1: Rep[A], s2: Rep[B], s3: Rep[C], s4: Rep[D], s5: Rep[E], s6: Rep[F], s7: Rep[G], s8: Rep[H])
                                                                                 (isMatch: (Rep[A],Rep[B],Rep[C],Rep[D],Rep[E],Rep[F],Rep[G],Rep[H]) => Rep[Boolean],
                                                                                  step: (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F],Rep[G],Rep[H]) => (Rep[A], Rep[B], Rep[C], Rep[D], Rep[E],Rep[F],Rep[G],Rep[H])): Rep[(A,(B,(C,(D,(E,(F,(G,H)))))))]
-  = loopUntil(Pair(s1, Pair(s2, Pair(s3,Pair(s4, Pair(s5, Pair(s6, Pair(s7, s8))))))))(fun {case Pair(a,Pair(b,Pair(c,Pair(d,Pair(e,Pair(f,Pair(g,h))))))) => isMatch(a,b,c,d,e,f,g,h) }, fun {case Pair(a,Pair(b,Pair(c,Pair(d,Pair(e,Pair(f,Pair(g,h))))))) => step(a,b,c,d,e,f,g,h)})
+  = loopUntil(Tuple(s1, s2, s3,s4, s5, s6, s7, s8))(fun {case Tuple(a,b,c,d,e,f,g,h) => isMatch(a,b,c,d,e,f,g,h) }, fun {case Tuple(a,b,c,d,e,f,g,h) => step(a,b,c,d,e,f,g,h)})
 
   def from[A:Elem](s1: Rep[A]) = new From1(s1)
   def from[A:Elem, B:Elem](s1: Rep[A], s2: Rep[B]) = new From2(s1, s2)
