@@ -13,6 +13,10 @@ trait ProgramGraphs extends AstGraphs { self: ScalanStaged =>
     def this(roots: List[Exp[_]]) { this(roots, implicitly[TransformerOps[Ctx]].empty) }
     def this(root: Exp[_]) { this(List(root)) }
 
+    override def boundVars = Nil
+    override def freeVars = Set()
+    override lazy val schedule = super.schedule
+
     def transform(m: Mirror[Ctx], rw: Rewriter, t: Ctx): ProgramGraph[Ctx] = {
       val t0 = t merge mapping
       val (t1, _) = m.mirrorSymbols(t0, rw, schedule map { _.sym })

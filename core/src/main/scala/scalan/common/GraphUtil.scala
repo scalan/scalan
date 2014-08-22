@@ -8,7 +8,7 @@ import scala.collection.mutable.ArrayBuffer
 
 
 object GraphUtil {
-   def depthFirstSetFrom[A](start: A)(neighbours: A => Seq[A]): Set[A] = {
+   def depthFirstSetFrom[A](starts: List[A])(neighbours: A => Seq[A]): Set[A] = {
      var visited = Set[A]()
 
      def visit(s: A): Unit = {
@@ -18,7 +18,7 @@ object GraphUtil {
        }
      }
 
-     visit(start)
+     starts foreach visit
      visited
    }
 
