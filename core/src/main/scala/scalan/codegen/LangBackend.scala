@@ -1,9 +1,9 @@
 package scalan.codegen
 
-import scalan.ScalanStaged
+import scalan.ScalanExp
 import scalan.staged.BaseExp
 
-trait LangBackend extends BaseExp { self: ScalanStaged =>
+trait LangBackend extends BaseExp { self: ScalanExp =>
 
   def run[A,B](dir: String, fileName: String, func: Exp[A=>B], emitGraphs: Boolean = false)
 

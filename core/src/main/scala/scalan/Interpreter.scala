@@ -12,7 +12,7 @@ import java.io.File
  */
 trait Interpreter {
   val seq: ScalanSeq //with VectorsDslSeq
-  val staged: ScalanStaged with GraphVizExport //with VectorsDslExp
+  val staged: ScalanExp with GraphVizExport //with VectorsDslExp
 
   import staged._
 

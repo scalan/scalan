@@ -2,9 +2,9 @@ package scalan.codegen
 
 import java.io.{File, PrintWriter}
 
-import _root_.scalan.ScalanStagedImplementation
+import _root_.scalan.ScalanExp
 
-trait GraphVizExport { self: ScalanStagedImplementation =>
+trait GraphVizExport { self: ScalanExp =>
 
   def emitDot(dotContent: String, file: String): Unit = {
     val f = new File(file)

@@ -1,6 +1,6 @@
 package tests.it.smoke
 
-import scalan.{ScalanCtxSeq, ScalanCtxStaged, ScalanDsl}
+import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
 import tests.it.ItTests
 import scalan.codegen.LangBackend
 
@@ -199,7 +199,7 @@ abstract class SmokeItTests extends ItTests {
 //    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
   }
 
-  val progStaged: Prog with ScalanCtxStaged with LangBackend
+  val progStaged: Prog with ScalanCtxExp with LangBackend
   val progSeq: Prog with ScalanCtxSeq = new ProgSeq()
 
   import progSeq._

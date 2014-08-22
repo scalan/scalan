@@ -1,9 +1,9 @@
 package scalan.staged
 
-import scalan.ScalanStaged
+import scalan.ScalanExp
 import scalan.common.GraphUtil
 
-trait ProgramGraphs extends AstGraphs { self: ScalanStaged =>
+trait ProgramGraphs extends AstGraphs { self: ScalanExp =>
 
   type PGraph = ProgramGraph[MapTransformer]
 

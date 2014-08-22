@@ -16,21 +16,21 @@ import net.sf.cglib.proxy.InvocationHandler
 import scalan.common.Lazy
 import scalan.staged.BaseExp
 
-trait ProxyBase { self: Scalan =>
+trait Proxy { self: Scalan =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops
 
   def getStagedFunc(name: String): Rep[_] = {
-    val clazz = this.getClass()
+    val clazz = this.getClass
     val f = clazz.getDeclaredMethod(name)
     f.invoke(this).asInstanceOf[Rep[_]]
   }
 }
 
-trait ProxySeq extends ProxyBase { self: ScalanSeq =>
+trait ProxySeq extends Proxy { self: ScalanSeq =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops = x
 }
 
-trait ProxyExp extends ProxyBase with BaseExp { self: ScalanStaged =>
+trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
   case class MethodCall[T](receiver: Exp[_], method: Method, args: List[AnyRef])(implicit selfType: Elem[T]) extends BaseDef[T] {
     def uniqueOpId = s"$name:${method.getName}"
     override def mirror(t: Transformer) =

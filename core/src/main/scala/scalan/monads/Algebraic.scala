@@ -199,6 +199,6 @@ trait Algebraic {
 
 //trait MonadsDsl extends ScalanDsl with impl.MonadsAbs with Monads
 //
-//trait MonadsDslSeq extends MonadsDsl with impl.MonadsSeq with ScalanSeqImplementation
+//trait MonadsDslSeq extends MonadsDsl with impl.MonadsSeq with ScalanCtxSeq
 //
 //trait MonadsDslExp extends MonadsDsl with impl.MonadsExp with ScalanStaged

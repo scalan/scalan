@@ -4,15 +4,15 @@ import scalan.codegen.lms.LmsBackend
 import scalan.arrays.PArraysDslExp
 import scalan.codegen.GraphVizExport
 import scalan.linalgebra.VectorsDslExp
-import scalan.community.{ScalanCommunitySeq, ScalanCommunityStaged}
+import scalan.community.{ScalanCommunitySeq, ScalanCommunityExp}
 import tests.scalan.CommunitySmokeItTests
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
   import scala.Array
 
-  class ProgStaged extends ProgCommunity with PArraysDslExp with ScalanCommunityStaged with GraphVizExport with LmsBackend with VectorsDslExp
+  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsBackend with VectorsDslExp
   
-  override val progStaged = new ProgStaged() {
+  override val progStaged = new ProgExp() {
     this.invokeEnabled = true
   }
 

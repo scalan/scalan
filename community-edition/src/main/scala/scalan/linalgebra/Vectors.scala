@@ -81,7 +81,7 @@ trait VectorsDsl extends ScalanDsl with impl.VectorsAbs with Vectors with PArray
   implicit def parrayToVec[T:Elem](arr: PA[T]): Vec[T] = DenseVector(arr)
 }
 
-trait VectorsDslSeq extends VectorsDsl with impl.VectorsSeq with PArraysDslSeq with ScalanSeqImplementation {
+trait VectorsDslSeq extends VectorsDsl with impl.VectorsSeq with PArraysDslSeq with ScalanCtxSeq {
   def matchVec[T, R](vec: Vec[T])(dense: Rep[DenseVector[T]] => Rep[R])(sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R] =
     vec match {
       case dv: DenseVector[_] => dense(dv)
@@ -101,7 +101,7 @@ trait VectorsDslSeq extends VectorsDsl with impl.VectorsSeq with PArraysDslSeq w
   }
 }
 
-trait VectorsDslExp extends VectorsDsl with impl.VectorsExp with PArraysDslExp with ScalanStaged {
+trait VectorsDslExp extends VectorsDsl with impl.VectorsExp with PArraysDslExp with ScalanExp {
   def matchVec[T, R](vec: Vec[T])(dense: Rep[DenseVector[T]] => Rep[R])(sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R] =
     vec.elem.asInstanceOf[Elem[_]] match {
       case _: DenseVectorElem[_] => dense(vec.asRep[DenseVector[T]])

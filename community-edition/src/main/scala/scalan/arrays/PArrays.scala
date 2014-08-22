@@ -4,7 +4,7 @@ import scalan._
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.community.{ScalanCommunity, ScalanCommunityStaged, ScalanCommunitySeq}
+import scalan.community.{ScalanCommunity, ScalanCommunityExp, ScalanCommunitySeq}
 
 trait PArrays extends ArrayOps { self: PArraysDsl =>
 
@@ -149,4 +149,4 @@ trait PArraysDsl extends ScalanCommunity with impl.PArraysAbs with PArrays { }
 
 trait PArraysDslSeq extends PArraysDsl with impl.PArraysSeq with ScalanCommunitySeq
 
-trait PArraysDslExp extends PArraysDsl with impl.PArraysExp with ScalanCommunityStaged
+trait PArraysDslExp extends PArraysDsl with impl.PArraysExp with ScalanCommunityExp

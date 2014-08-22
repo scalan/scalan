@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{Scalan, ScalanSeq, ScalanStaged}
+import scalan.{Scalan, ScalanSeq, ScalanExp}
 
 
 trait FractionalOps {
@@ -26,7 +26,7 @@ trait FractionalOpsSeq extends FractionalOps { self: ScalanSeq =>
   def fractional_mod[T](lhs: Rep[T], rhs: Rep[T])(implicit i: scala.Integral[T], et: Elem[T]): Rep[T] = i.rem(lhs, rhs)
 }
 
-trait FractionalOpsExp extends FractionalOps with BaseExp { self: ScalanStaged =>
+trait FractionalOpsExp extends FractionalOps with BaseExp { self: ScalanExp =>
   abstract class FractionalBinOp[T](val opName: String)(implicit elem: Elem[T], val fractional: Fractional[T]) extends EndoBinOp[T]
 
   case class FractionalDivide[T](lhs: Exp[T], rhs: Exp[T], implicit override val fractional: Fractional[T])(implicit elem: Elem[T]) extends FractionalBinOp[T]("/") {

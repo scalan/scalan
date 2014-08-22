@@ -2,7 +2,7 @@ package tests.scalan.primitives
 
 import tests.BaseTests
 
-import scalan.{Scalan, ScalanCtxStaged, ScalanCtxSeq}
+import scalan.{Scalan, ScalanCtxExp, ScalanCtxSeq}
 
 trait IfThenElseTests extends BaseTests with Scalan {
   test("simpleIf") {
@@ -27,4 +27,4 @@ trait IfThenElseTests extends BaseTests with Scalan {
 class IfThenElseTestsSeq extends IfThenElseTests with ScalanCtxSeq
 
 // Note: these tests pass thanks to rewriting of
-class IfThenElseTestsStaged extends IfThenElseTests with ScalanCtxStaged /*with StagedTesting*/
+class IfThenElseTestsExp extends IfThenElseTests with ScalanCtxExp /*with StagedTesting*/

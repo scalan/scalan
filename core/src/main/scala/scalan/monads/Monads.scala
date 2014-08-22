@@ -86,11 +86,11 @@ trait MonadsDsl extends ScalanDsl with impl.MonadsAbs with Monads {
   def doPrintln(i: Rep[Int], s: Rep[String]): Rep[(Int,Unit)]
 }
 
-trait MonadsDslSeq extends MonadsDsl with impl.MonadsSeq with ScalanSeqImplementation {
+trait MonadsDslSeq extends MonadsDsl with impl.MonadsSeq with ScalanCtxSeq {
   override def doPrintln(i: Rep[Int], s: Rep[String]) = (i + 1, println(s))
 }
 
-trait MonadsDslExp extends MonadsDsl with impl.MonadsExp with ScalanStaged {
+trait MonadsDslExp extends MonadsDsl with impl.MonadsExp with ScalanExp {
 
   case class Println(i: Rep[Int], s: Rep[String]) extends BaseDef[(Int, Unit)]  {
     override def uniqueOpId = name(selfType)

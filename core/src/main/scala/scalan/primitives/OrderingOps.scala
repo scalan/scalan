@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.{ScalanStaged, ScalanSeq, Scalan}
+import scalan.{ScalanExp, ScalanSeq, Scalan}
 import scalan.staged.{BaseExp}
 
 trait OrderingOps { self: Scalan =>
@@ -33,7 +33,7 @@ trait OrderingOpsSeq extends OrderingOps { self: ScalanSeq =>
   def ordering_min[T](lhs: Rep[T], rhs: Rep[T])(implicit n: Ordering[T], et: Elem[T]): Rep[T] = n.min(lhs, rhs)
 }
 
-trait OrderingOpsExp extends OrderingOps with BaseExp { self: ScalanStaged =>
+trait OrderingOpsExp extends OrderingOps with BaseExp { self: ScalanExp =>
   abstract class OrderingBinOp[T](ordering: Ordering[T], val opName: String) extends BinOp[T, Boolean]
 
   case class OrderingLT[T](lhs: Exp[T], rhs: Exp[T], implicit val n: Ordering[T]) extends OrderingBinOp[T](n, "<") {

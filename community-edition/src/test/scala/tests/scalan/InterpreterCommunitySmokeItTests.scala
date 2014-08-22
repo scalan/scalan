@@ -1,12 +1,12 @@
 package tests.scalan
 
 import scalan.arrays.{PArraysDslSeq, PArraysDslExp}
-import scalan.{Interpreter, ScalanCtxSeq, ScalanCtxStaged}
+import scalan.{Interpreter, ScalanCtxSeq, ScalanCtxExp}
 import scalan.codegen.{GraphVizExport}
 import scalan.linalgebra.{VectorsDslSeq, VectorsDslExp}
 import tests.scalan.arrays.PArrayExamples
 import tests.it.{InterpreterSmokeItTests, ItTests}
-import scalan.community.{InterpreterCommunity, ScalanCommunitySeq, ScalanCommunityStaged, ScalanCommunity}
+import scalan.community.{InterpreterCommunity, ScalanCommunitySeq, ScalanCommunityExp, ScalanCommunity}
 
 class InterpreterCommunitySmokeItTests extends InterpreterSmokeItTests {
   import scala.Array
@@ -76,9 +76,9 @@ class InterpreterCommunitySmokeItTests extends InterpreterSmokeItTests {
   }
 
   // FIXME make front/back parameter types into type members to avoid cast
-  override def createInterpreter(front: ScalanCtxSeq, back: ScalanCtxStaged with GraphVizExport): Interpreter = new InterpreterCommunity {
+  override def createInterpreter(front: ScalanCtxSeq, back: ScalanCtxExp with GraphVizExport): Interpreter = new InterpreterCommunity {
     val seq = front.asInstanceOf[ScalanCommunitySeq]
-    val staged = back.asInstanceOf[ScalanCommunityStaged]
+    val staged = back.asInstanceOf[ScalanCommunityExp]
   }
 
   class ProgSeq extends ProgCommunity with PArraysDslSeq with ScalanCommunitySeq with VectorsDslSeq
@@ -86,9 +86,9 @@ class InterpreterCommunitySmokeItTests extends InterpreterSmokeItTests {
   import progSeq._
 
   // TODO remove VectorsDslExp!
-  class ProgStaged extends ProgCommunity with PArraysDslExp with ScalanCommunityStaged with GraphVizExport with VectorsDslExp
+  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with VectorsDslExp
 
-  override val progStaged = new ProgStaged() {
+  override val progStaged = new ProgExp() {
     this.invokeEnabled = true
   }
 

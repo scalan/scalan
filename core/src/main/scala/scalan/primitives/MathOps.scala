@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{ScalanStaged, ScalanSeq, Scalan}
+import scalan.{ScalanExp, ScalanSeq, Scalan}
 
 trait MathOps { self: Scalan =>
   object Math {
@@ -58,7 +58,7 @@ trait MathOpsSeq extends MathOps { self: ScalanSeq =>
   override def math_e: Rep[Double] = math.E
 }
 
-trait MathOpsExp extends MathOps with BaseExp { self: ScalanStaged =>
+trait MathOpsExp extends MathOps with BaseExp { self: ScalanExp =>
   abstract class UnDoubleOp(val opName: String) extends EndoUnOp[Double]
 
   abstract class BinDoubleOp(val opName: String) extends EndoBinOp[Double]

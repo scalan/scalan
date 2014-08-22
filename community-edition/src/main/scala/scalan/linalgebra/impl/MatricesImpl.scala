@@ -272,7 +272,7 @@ trait MatricesSeq extends MatricesAbs { self: ScalanSeq with MatricesDsl =>
 }
 
 
-trait MatricesExp extends MatricesAbs { self: ScalanStaged with MatricesDsl =>
+trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs with UserTypeDef[MatrixCompanionAbs, MatrixCompanionAbs] {
     lazy val selfType = element[MatrixCompanionAbs]
     override def mirror(t: Transformer) = this

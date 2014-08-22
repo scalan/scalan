@@ -199,7 +199,7 @@ trait TypesSeq extends TypesAbs { self: ScalanSeq with TypesDsl =>
 }
 
 
-trait TypesExp extends TypesAbs { self: ScalanStaged with TypesDsl =>
+trait TypesExp extends TypesAbs { self: ScalanExp with TypesDsl =>
   lazy val Type: Rep[TypeCompanionAbs] = new TypeCompanionAbs with UserTypeDef[TypeCompanionAbs, TypeCompanionAbs] {
     lazy val selfType = element[TypeCompanionAbs]
     override def mirror(t: Transformer) = this

@@ -1,9 +1,9 @@
 package scalan.staged
 
-import scalan.ScalanStaged
+import scalan.ScalanExp
 import scalan.common.Lazy
 
-trait Transforming { self: ScalanStaged =>
+trait Transforming { self: ScalanExp =>
 
   def mirror[A](d: Def[A], f: Transformer): Exp[_] = d.mirror(f)
 

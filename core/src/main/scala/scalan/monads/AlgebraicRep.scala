@@ -234,7 +234,7 @@ trait ApplicativeSeq extends AlgebraicRep with ScalanCtxSeq {
 
 }
 
-trait ApplicativeExp extends AlgebraicRep with ScalanCtxStaged {
+trait ApplicativeExp extends AlgebraicRep with ScalanCtxExp {
 
   override def doLogin(uid: Rep[UserID], pwd: Rep[Password]) = ???
 
@@ -272,6 +272,6 @@ trait ApplicativeExp extends AlgebraicRep with ScalanCtxStaged {
 
 //trait MonadsDsl extends ScalanDsl with impl.MonadsAbs with Monads
 //
-//trait MonadsDslSeq extends MonadsDsl with impl.MonadsSeq with ScalanSeqImplementation
+//trait MonadsDslSeq extends MonadsDsl with impl.MonadsSeq with ScalanCtxSeq
 //
 //trait MonadsDslExp extends MonadsDsl with impl.MonadsExp with ScalanStaged

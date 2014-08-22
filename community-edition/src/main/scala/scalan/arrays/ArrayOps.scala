@@ -1,6 +1,6 @@
 package scalan.arrays
 
-import scalan.{ ScalanStaged, ScalanSeq, Scalan }
+import scalan.{ ScalanExp, ScalanSeq, Scalan }
 import scala.reflect.ClassTag
 import scalan.staged.BaseExp
 import scalan.common.OverloadHack.Overloaded1
@@ -116,7 +116,7 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   def arrayToClassTag[T](xs: Rep[Array[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 }
 
-trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: ScalanStaged =>
+trait ArrayOpsExp extends ArrayOps with BaseExp with ArrayElemsExp { self: ScalanExp =>
   def withElemOfArray[T, R](xs: Arr[T])(block: Elem[T] => R): R =
     withElemOf(xs) { eTArr =>
       block(eTArr.eItem)

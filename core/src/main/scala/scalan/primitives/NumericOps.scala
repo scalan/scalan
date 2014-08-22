@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.{ BaseExp }
-import scalan.{ ScalanStaged, Scalan, ScalanSeq }
+import scalan.{ ScalanExp, Scalan, ScalanSeq }
 
 trait NumericOps { self: Scalan =>
   //  implicit def repNumericToNumericOps[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]) = new NumericOpsCls(x)
@@ -63,7 +63,7 @@ trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
   }
 }
 
-trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanStaged =>
+trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>
   abstract class NumericBinOp[T](val opName: String)(implicit selfType: Elem[T], val numeric: Numeric[T]) extends EndoBinOp[T]
 
   case class NumericPlus[T: Elem](lhs: Exp[T], rhs: Exp[T], implicit val n: Numeric[T]) extends NumericBinOp[T]("+") {

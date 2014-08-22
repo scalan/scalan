@@ -106,4 +106,4 @@ trait MatricesDsl extends ScalanDsl with impl.MatricesAbs with Matrices with Vec
 
 trait MatricesDslSeq extends MatricesDsl with impl.MatricesSeq with VectorsDslSeq with ScalanSeq
 
-trait MatricesDslExp extends MatricesDsl with impl.MatricesExp with VectorsDslExp with ScalanStaged
+trait MatricesDslExp extends MatricesDsl with impl.MatricesExp with VectorsDslExp with ScalanExp

@@ -1,6 +1,6 @@
 package tests.scalan.arrays
 
-import scalan.{ScalanCtxStaged, ScalanCtxSeq}
+import scalan.{ScalanCtxExp, ScalanCtxSeq}
 import org.scalatest.{Matchers, FlatSpec}
 import scalan.arrays.{PArraysDslExp, PArraysDslSeq}
 import scalan.codegen.GraphVizExport
@@ -14,7 +14,7 @@ class PArrayExamplesSuite extends BaseShouldTests {
   }
   
   it should "be constructed in Staged context" in {
-    val ctx = new ScalanCtxStaged with PArraysDslExp with PArrayExamples {}
+    val ctx = new ScalanCtxExp with PArraysDslExp with PArrayExamples {}
   }
 
   "in seq context" should "execute functions" in {
@@ -27,7 +27,7 @@ class PArrayExamplesSuite extends BaseShouldTests {
   val prefix = "test-out/scalan/arrays/"
   
   def testMethod(name: String) = {
-    val ctx = new ScalanCtxStaged with PArraysDslExp with PArrayExamples with GraphVizExport {
+    val ctx = new ScalanCtxExp with PArraysDslExp with PArrayExamples with GraphVizExport {
       this.invokeEnabled = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     val f = ctx.getStagedFunc(name)

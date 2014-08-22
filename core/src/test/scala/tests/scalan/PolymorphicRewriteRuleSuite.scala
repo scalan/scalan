@@ -1,12 +1,12 @@
 package tests.scalan
 
 import tests.BaseShouldTests
-import scalan.ScalanCtxStaged
+import scalan.ScalanCtxExp
 import scalan.codegen.GraphVizExport
 
 class PolymorphicRewriteRuleSuite extends BaseShouldTests {
 
-  class Ctx extends ScalanCtxStaged with GraphVizExport {
+  class Ctx extends ScalanCtxExp with GraphVizExport {
     //    lazy val testLemma = postulate[Int, Int, Int, Int]((x, y, z) => x * y + x * z <=> x * (y + z))
     //    lazy val rule = rewriteRuleFromEqLemma(testLemma)
     //    lazy val patGraph = rule.patternGraph

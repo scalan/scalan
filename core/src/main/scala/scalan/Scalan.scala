@@ -8,23 +8,19 @@ import scalan.staged.{BaseExp, Expressions, Transforming}
 trait Scalan
   extends Base
   with Elems
-  //     with Descs
   with Views
-  with ProxyBase
-  //     with Chunks
-  //     with Sets
-  //     with Zipping
+  with Proxy
   with Tuples
   with Loops
   with TypeSum
+  with OrderingOps
   with NumericOps
+  with Equal
   with MathOps
   with LogicalOps
-  with OrderingOps
   with FractionalOps
   with Functions
   with IfThenElse
-  with Equal
   with Monoids
 
 trait ScalanDsl
@@ -34,56 +30,45 @@ trait ScalanSeq
   extends Scalan
   with BaseSeq
   with ElemsSeq
-  //  with DescsSeq
-  //  with SeqSets
   with ViewsSeq
   with ProxySeq
   with TuplesSeq
   with LoopsSeq
   with TypeSumSeq
-  with FunctionsSeq
-  with IfThenElseSeq
   with OrderingOpsSeq
   with NumericOpsSeq
   with EqualSeq
   with MathOpsSeq
   with LogicalOpsSeq
   with FractionalOpsSeq
+  with FunctionsSeq
+  with IfThenElseSeq
 
-trait ScalanSeqImplementation
+trait ScalanCtxSeq
   extends ScalanDsl
   with ScalanSeq
 
-// with StringOpsSeqx
-
-trait ScalanStaged
+trait ScalanExp
   extends Scalan
   with BaseExp
+  with ElemsExp
+  with ViewsExp
+  with ProxyExp
   with TuplesExp
   with LoopsExp
   with TypeSumExp
-  with ElemsExp
-  //  with DescsExp
-  //  with StagedSets
-  with ViewsExp
-  with ProxyExp
-  with Transforming
+  with OrderingOpsExp
   with NumericOpsExp
   with EqualExp
   with MathOpsExp
   with LogicalOpsExp
-  with OrderingOpsExp
   with FractionalOpsExp
   with FunctionsExp
   with IfThenElseExp
+  with Transforming
 
-trait ScalanStagedImplementation
+trait ScalanCtxExp
   extends ScalanDsl
-  with ScalanStaged
-  with EqualExp
+  with ScalanExp
   with Expressions
   with GraphVizExport
-
-trait ScalanCtxSeq extends ScalanSeqImplementation {}
-
-trait ScalanCtxStaged extends ScalanStagedImplementation {}

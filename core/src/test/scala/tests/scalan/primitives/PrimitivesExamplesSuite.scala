@@ -1,13 +1,13 @@
 package tests.scalan.primitives
 
-import scalan.{ScalanCtxStaged, ScalanCtxSeq}
+import scalan.{ScalanCtxExp, ScalanCtxSeq}
 import tests.BaseShouldTests
 import scalan.codegen.GraphVizExport
 
 class PrimitivesExamplesSuite extends BaseShouldTests {
 
   def seq = new ScalanCtxSeq with PrimitiveExamples {}
-  def staged = new ScalanCtxStaged with PrimitiveExamples {}
+  def staged = new ScalanCtxExp with PrimitiveExamples {}
   "Examples trait" should "be mixable in Seq context" in {
       val ctx = seq
   }
@@ -18,7 +18,7 @@ class PrimitivesExamplesSuite extends BaseShouldTests {
   val prefix = "test-out/scalan/primitives/"
 
   def testMethod(name: String) = {
-    val ctx = new ScalanCtxStaged with PrimitiveExamples with GraphVizExport {
+    val ctx = new ScalanCtxExp with PrimitiveExamples with GraphVizExport {
       this.invokeEnabled = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     val f = ctx.getStagedFunc(name)

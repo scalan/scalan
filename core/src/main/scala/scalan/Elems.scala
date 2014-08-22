@@ -118,7 +118,7 @@ trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
 
 trait ElemsExp extends Elems
   with BaseExp
-  with Scalan { self: ScalanStaged =>
+  with Scalan { self: ScalanExp =>
 
   def withElemOf[A, R](x: Rep[A])(block: Elem[A] => R) = block(x.elem)
   def withResultElem[A, B, R](f: Rep[A => B])(block: Elem[B] => R) = block(withElemOf(f) { e => e.eRange })

@@ -137,7 +137,7 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
   }
 }
 
-trait ViewsExp extends Views with BaseExp { self: ScalanStaged =>
+trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   trait UserTypeDef[T, TImpl <: T] extends ReifiableExp[T, TImpl] {
     def uniqueOpId = selfType.name
   }

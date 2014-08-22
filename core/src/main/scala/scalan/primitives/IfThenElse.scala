@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.{BaseExp}
-import scalan.{ScalanStaged, ScalanSeq, Base, Scalan}
+import scalan.{ScalanExp, ScalanSeq, Base, Scalan}
 
 trait IfThenElse extends Base { self: Scalan =>
   def __ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T]
@@ -36,7 +36,7 @@ trait IfThenElseSeq extends IfThenElse { self: ScalanSeq =>
   def __ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T] = if(cond) thenp else elsep
 }
 
-trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanStaged =>
+trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanExp =>
 
   case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit selfType: Elem[T]) extends BaseDef[T] {
     def uniqueOpId = name(selfType)

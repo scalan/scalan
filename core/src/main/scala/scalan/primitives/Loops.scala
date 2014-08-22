@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.BaseExp
-import scalan.{ ScalanStaged, Scalan, ScalanSeq }
+import scalan.{ ScalanExp, Scalan, ScalanSeq }
 
 trait Loops { self: Scalan =>
 
@@ -103,7 +103,7 @@ trait LoopsSeq extends Loops { self: ScalanSeq =>
   }
 }
 
-trait LoopsExp extends Loops with BaseExp { self: ScalanStaged =>
+trait LoopsExp extends Loops with BaseExp { self: ScalanExp =>
   def loopUntil[A:Elem](s1: Rep[A])(isMatch: Rep[A => Boolean], step: Rep[A => A]): Rep[A] = LoopUntil(s1, step, isMatch)
 
   case class LoopUntil[A:Elem](s1: Rep[A], step: Rep[A => A], isMatch: Rep[A => Boolean]) extends BaseDef[A] {

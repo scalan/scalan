@@ -6,7 +6,7 @@ import scalan._
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.community.{ScalanCommunity, ScalanCommunityStaged, ScalanCommunitySeq}
+import scalan.community.{ScalanCommunity, ScalanCommunityExp, ScalanCommunitySeq}
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
@@ -278,7 +278,7 @@ trait PArraysSeq extends PArraysAbs { self: ScalanSeq with PArraysDsl =>
 }
 
 
-trait PArraysExp extends PArraysAbs { self: ScalanStaged with PArraysDsl =>
+trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
   lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeDef[PArrayCompanionAbs, PArrayCompanionAbs] {
     lazy val selfType = element[PArrayCompanionAbs]
     override def mirror(t: Transformer) = this

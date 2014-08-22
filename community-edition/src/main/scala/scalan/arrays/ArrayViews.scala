@@ -64,7 +64,7 @@ trait ArrayViewsSeq extends ArrayViews with ArrayOpsSeq with ViewsSeq { self: Sc
 
 }
 
-trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseExp { self: ScalanStaged =>
+trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseExp { self: ScalanExp =>
   case class ViewArray[A, B](source: Arr[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Array] {
     lazy val iso = arrayIso(innerIso)
     def copy(source: Arr[A]) = ViewArray(source)

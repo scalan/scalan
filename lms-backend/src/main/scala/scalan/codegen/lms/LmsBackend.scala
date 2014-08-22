@@ -1,14 +1,14 @@
 package scalan.codegen.lms
 
-import scalan.{ScalanCtxStaged, ScalanStaged}
+import scalan.{ScalanCtxExp, ScalanExp}
 import scalan.codegen.LangBackend
 import scalan.codegen.GraphVizExport
 import java.io.{InputStreamReader, BufferedReader, File}
 import scalan.linalgebra.VectorsDslExp
-import scalan.community.ScalanCommunityStaged
+import scalan.community.ScalanCommunityExp
 
 trait LMSBridge[A,B] {
-  val scalan: ScalanCommunityStaged with LmsBackend with VectorsDslExp // TODO remove this!
+  val scalan: ScalanCommunityExp with LmsBackend with VectorsDslExp // TODO remove this!
 
   trait LMSFacadeBase {
     val lFunc: LMSFunction[A,B]
@@ -265,7 +265,7 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
   }
 }
 
-trait LmsBackend extends LangBackend { self: ScalanCommunityStaged with GraphVizExport with VectorsDslExp =>
+trait LmsBackend extends LangBackend { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
 
   protected def launchProcess(launchDir: File, commandArgs: String*) {
     val builder = new ProcessBuilder(commandArgs: _*)

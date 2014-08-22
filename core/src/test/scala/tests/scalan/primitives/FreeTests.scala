@@ -2,7 +2,7 @@ package tests.scalan.primitives
 
 import tests.BaseTests
 
-import scalan.{ScalanCtxStaged, ScalanCtxSeq}
+import scalan.{ScalanCtxExp, ScalanCtxSeq}
 import scalan.codegen.GraphVizExport
 import scalan.monads.{MonadsDslExp, MonadsDslSeq, ApplicativeExp, ApplicativeSeq}
 import scala.language.reflectiveCalls
@@ -35,7 +35,7 @@ class FreeTests extends BaseTests {
   }
 
   test("monadsStaged") {
-    val ctx = new ScalanCtxStaged with MonadsDslExp with GraphVizExport {
+    val ctx = new ScalanCtxExp with MonadsDslExp with GraphVizExport {
       invokeEnabled = true
       def computation = {
         val res = for {
@@ -50,7 +50,7 @@ class FreeTests extends BaseTests {
 
 
   test("stateStaged") {
-    val ctx = new ScalanCtxStaged with MonadsDslExp with GraphVizExport {
+    val ctx = new ScalanCtxExp with MonadsDslExp with GraphVizExport {
       invokeEnabled = true
       val S = proxyStateMonadCompanion(StateMonad);
       import S._
@@ -70,7 +70,7 @@ class FreeTests extends BaseTests {
 
 
   test("ioStaged") {
-    val ctx = new ScalanCtxStaged with MonadsDslExp with GraphVizExport {
+    val ctx = new ScalanCtxExp with MonadsDslExp with GraphVizExport {
       invokeEnabled = true
       val IO = proxyIOMonadCompanion(IOMonad);
       import IO._

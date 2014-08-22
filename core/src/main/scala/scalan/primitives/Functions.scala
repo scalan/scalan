@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.{ProgramGraphs, BaseExp}
-import scalan.{ScalanStaged, ScalanSeq, Scalan}
+import scalan.{ScalanExp, ScalanSeq, Scalan}
 import collection.mutable
 import scala.language.{implicitConversions}
 import scalan.common.Lazy
@@ -36,7 +36,7 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
 //  }
 }
 
-trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanStaged =>
+trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanExp =>
 
   class Lambda[A, B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B], val mayInline: Boolean)
                     (implicit val eA: Elem[A] = x.elem, val eB: Elem[B] = y.elem)

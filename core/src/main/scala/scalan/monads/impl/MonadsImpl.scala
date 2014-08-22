@@ -289,7 +289,7 @@ trait MonadsSeq extends MonadsAbs { self: ScalanSeq with MonadsDsl =>
 }
 
 
-trait MonadsExp extends MonadsAbs with scalan.ProxyExp with scalan.ViewsExp { self: ScalanStaged with MonadsDsl =>
+trait MonadsExp extends MonadsAbs with scalan.ProxyExp with scalan.ViewsExp { self: ScalanExp with MonadsDsl =>
 
   lazy val Monad: Rep[MonadCompanionAbs] = new MonadCompanionAbs with UserTypeDef[MonadCompanionAbs, MonadCompanionAbs] {
     lazy val selfType = element[MonadCompanionAbs]

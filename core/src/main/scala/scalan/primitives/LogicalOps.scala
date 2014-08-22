@@ -4,7 +4,7 @@
  */
 package scalan.primitives
 
-import scalan.{ScalanStaged, ScalanSeq, Scalan}
+import scalan.{ScalanExp, ScalanSeq, Scalan}
 import scalan.common.Lazy
 
 trait LogicalOps { self: Scalan =>
@@ -28,7 +28,7 @@ trait LogicalOpsSeq extends LogicalOps { self: ScalanSeq =>
   def boolean_toInt(lhs: Rep[Boolean]): Rep[Int] = if (lhs) 1 else 0
 }
 
-trait LogicalOpsExp extends LogicalOps { self: ScalanStaged =>
+trait LogicalOpsExp extends LogicalOps { self: ScalanExp =>
   abstract class LogicalBinOp(val opName: String) extends EndoBinOp[Boolean]
   
   case class And(lhs: Exp[Boolean], rhs: Exp[Boolean]) extends LogicalBinOp("&&") {

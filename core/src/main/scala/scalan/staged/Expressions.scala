@@ -1,12 +1,12 @@
 package scalan.staged
 
 import annotation.unchecked.uncheckedVariance
-import scalan.{Base, ScalanStaged}
+import scalan.{Base, ScalanExp}
 import scala.language.{implicitConversions}
 import scalan.common.Lazy
 import scala.collection.immutable.ListMap
 
-trait BaseExp extends Base { self: ScalanStaged =>
+trait BaseExp extends Base { self: ScalanExp =>
   type Rep[+A] = Exp[A]
 
   /**
@@ -267,7 +267,7 @@ trait BaseExp extends Base { self: ScalanStaged =>
  *
  * @since 0.1
  */
-trait Expressions extends BaseExp { self: ScalanStaged =>
+trait Expressions extends BaseExp { self: ScalanExp =>
   /**
    * A Sym is a symbolic reference used internally to refer to expressions.
    */

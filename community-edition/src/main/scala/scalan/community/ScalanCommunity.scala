@@ -1,7 +1,7 @@
 package scalan.community
 
 import scalan.linalgebra.{MatricesDslExp, MatricesDslSeq, MatricesDsl}
-import scalan.{Scalan, ScalanCtxStaged, ScalanCtxSeq}
+import scalan.{Scalan, ScalanCtxExp, ScalanCtxSeq}
 import scalan.arrays._
 
 trait ScalanCommunity extends Scalan
@@ -13,7 +13,7 @@ trait ScalanCommunitySeq extends ScalanCtxSeq
   with ArrayOpsSeq
   with ArrayViewsSeq
 
-trait ScalanCommunityStaged extends ScalanCtxStaged
+trait ScalanCommunityExp extends ScalanCtxExp
   with ScalanCommunity
   with ArrayOpsExp
   with ArrayViewsExp
@@ -22,4 +22,4 @@ trait ScalanCommunityDsl extends ScalanCommunity with PArraysDsl with MatricesDs
 
 trait ScalanCommunityDslSeq extends ScalanCommunityDsl with PArraysDslSeq with MatricesDslSeq
 
-trait ScalanCommunityDslStaged extends ScalanCommunityDsl with PArraysDslExp with MatricesDslExp
+trait ScalanCommunityDslExp extends ScalanCommunityDsl with PArraysDslExp with MatricesDslExp

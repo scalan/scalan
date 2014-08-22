@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scalan.common.Lazy
 import scalan.staged.{ BaseExp }
-import scalan.{ ScalanStaged, Scalan, ScalanSeq }
+import scalan.{ ScalanExp, Scalan, ScalanSeq }
 import scala.language.{ implicitConversions }
 
 trait TypeSum { self: Scalan =>
@@ -50,7 +50,7 @@ trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
 
 }
 
-trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
+trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
   case class Left[A, B](left: Exp[A])(implicit val eB: Elem[B]) extends BaseDef[(A | B)]()(sumElement(left.elem, eB)) {
     override def mirror(t: Transformer) = Left[A, B](t(left))
@@ -86,14 +86,14 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanStaged =>
     lazy val uniqueOpId = name(sum.elem.eLeft, sum.elem.eRight)
   }
 
-  class StagedSumOps[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
+  class SumOpsExp[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
     implicit def eA = s.elem.eLeft
     implicit def eB = s.elem.eRight
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = SumFold(s, fun(l), fun(r))
     def isLeft = IsLeft(s)
     def isRight = IsRight(s)
   }
-  implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B] = new StagedSumOps[A, B](s)
+  implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B] = new SumOpsExp[A, B](s)
 
   object IsJoinSum {
     def unapply[T](d: Def[T]): Option[Rep[Source] forSome { type Source }] = d match {

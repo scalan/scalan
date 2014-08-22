@@ -3,13 +3,13 @@ package tests.scalan.staged
 import scalan.codegen.GraphVizExport
 import tests.BaseShouldTests
 
-import scalan.ScalanCtxStaged
+import scalan.ScalanCtxExp
 
 class TransformingSuite extends BaseShouldTests {
 
   val prefix = "test-out/scalan/staged/Transforming/"
 
-  def getCtx = new ScalanCtxStaged with GraphVizExport {
+  def getCtx = new ScalanCtxExp with GraphVizExport {
     this.invokeEnabled = true
     lazy val test = fun { xyz: Rep[(Int, (Int, Int))] =>
       val x = xyz._1

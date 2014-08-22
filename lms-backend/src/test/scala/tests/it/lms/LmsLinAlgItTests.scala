@@ -3,16 +3,16 @@ package tests.it.lms
 import _root_.tests.it.ItTests
 import _root_.tests.scalan.linalgebra.LinearAlgebraExamples
 import scalan.codegen.lms.LmsBackend
-import scalan.ScalanCtxStaged
+import scalan.ScalanCtxExp
 import scalan.codegen.GraphVizExport
 import scalan.linalgebra.MatricesDslExp
 import scalan.ScalanCtxSeq
 import scalan.linalgebra.MatricesDslSeq
 import scalan.codegen.lms.MyBridge
-import scalan.community.{ScalanCommunitySeq, ScalanCommunityStaged}
+import scalan.community.{ScalanCommunitySeq, ScalanCommunityExp}
 
 class LmsLinAlgItTests extends ItTests {
-  class ProgStaged extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityStaged with GraphVizExport with LmsBackend { self =>
+  class ProgExp extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityExp with GraphVizExport with LmsBackend { self =>
 //    override def makeBridge[A, B] = new MyBridge[A, B] {
 //      override val scalan = self
 //      
@@ -22,7 +22,7 @@ class LmsLinAlgItTests extends ItTests {
   
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunitySeq
   
-  val progStaged = new ProgStaged() {
+  val progStaged = new ProgExp() {
     this.invokeEnabled = true
   }
   val progSeq = new ProgSeq

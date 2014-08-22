@@ -1,6 +1,6 @@
 package tests.it
 
-import scalan.{ScalanDsl, ScalanCtxSeq, ScalanCtxStaged, Interpreter}
+import scalan.{ScalanDsl, ScalanCtxSeq, ScalanCtxExp, Interpreter}
 import scalan.codegen.{GraphVizExport}
 import java.io.File
 
@@ -12,12 +12,12 @@ import java.io.File
  * To change this template use File | Settings | File Templates.
  */
 class InterpreterSmokeItTests extends ItTests {
-  def createInterpreter(front: ScalanCtxSeq, back: ScalanCtxStaged with GraphVizExport): Interpreter = new Interpreter {
+  def createInterpreter(front: ScalanCtxSeq, back: ScalanCtxExp with GraphVizExport): Interpreter = new Interpreter {
     val seq = front
     val staged = back
   }
 
-  def interpreterTestRun[A,B](front: ScalanCtxSeq /*with VectorsDslSeq*/, back: ScalanCtxStaged with GraphVizExport /*with VectorsDslExp*/)
+  def interpreterTestRun[A,B](front: ScalanCtxSeq /*with VectorsDslSeq*/, back: ScalanCtxExp with GraphVizExport /*with VectorsDslExp*/)
                              (fseq: front.Rep[A=>B], f: back.Exp[A=>B])
                              (name: String, input: front.Rep[A])
                              (implicit eA: front.Elem[A], eB: front.Elem[B]) : front.Rep[B] =
@@ -50,9 +50,9 @@ class InterpreterSmokeItTests extends ItTests {
   val progSeq: Prog with ScalanCtxSeq = new ProgSeq()
 
   // TODO remove VectorsDslExp!
-  class ProgStaged extends Prog with ScalanCtxStaged with GraphVizExport
+  class ProgExp extends Prog with ScalanCtxExp with GraphVizExport
 
-  val progStaged: Prog with ScalanCtxStaged = new ProgStaged() {
+  val progStaged: Prog with ScalanCtxExp = new ProgExp() {
     this.invokeEnabled = true
   }
 

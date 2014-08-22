@@ -5,7 +5,7 @@ import scala.reflect.runtime.universe._
 import scalan.common.Default
 import scalan.common.Default._
 import scalan.staged.BaseExp
-import scalan.{ScalanStaged, Scalan, Elems}
+import scalan.{ScalanExp, Scalan, Elems}
 
 trait ArrayElems extends Elems { self: Scalan =>
   implicit def ArrayElemExtensions[A](eArr: Elem[Array[A]]): ArrayElem[A] = eArr.asInstanceOf[ArrayElem[A]]
@@ -76,7 +76,7 @@ trait ArrayElems extends Elems { self: Scalan =>
 
 }
 
-trait ArrayElemsExp extends ArrayElems with BaseExp { self: ScalanStaged =>
+trait ArrayElemsExp extends ArrayElems with BaseExp { self: ScalanExp =>
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
     case _: ArrayElem[_] => Const(x)
     case _ => super.toRep(x)(eA)

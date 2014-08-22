@@ -1,7 +1,7 @@
 package tests.it
 
 import java.io.{File, PrintWriter}
-import scalan.{ScalanCtxStaged, ScalanCtxSeq, ScalanStaged, ScalanSeq}
+import scalan.{ScalanCtxExp, ScalanCtxSeq, ScalanExp, ScalanSeq}
 import scalan.codegen.{GraphVizExport, LangBackend}
 import tests.BaseTests
 import scala.language.postfixOps

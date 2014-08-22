@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.staged.{BaseExp}
-import scalan.{Scalan, ScalanStaged}
+import scalan.{Scalan, ScalanExp}
 import scalan.ScalanSeq
 import scalan.common.OverloadHack
 
@@ -21,7 +21,7 @@ trait EqualSeq extends Equal  { self: ScalanSeq =>
   def notequals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = !equals(a,b)
 }
 
-trait EqualExp extends Equal with BaseExp { self: ScalanStaged =>
+trait EqualExp extends Equal with BaseExp { self: ScalanExp =>
   abstract class EqBinOp[T](val opName: String) extends BinOp[T, Boolean]
 
   def equals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = EqualsClass(a,b)

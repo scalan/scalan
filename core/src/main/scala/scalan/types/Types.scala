@@ -60,6 +60,6 @@ trait Types extends Base { self: TypesDsl =>
 
 trait TypesDsl extends ScalanDsl with impl.TypesAbs with Types
 
-trait TypesDslSeq extends TypesDsl with impl.TypesSeq with ScalanSeqImplementation
+trait TypesDslSeq extends TypesDsl with impl.TypesSeq with ScalanCtxSeq
 
-trait TypesDslExp extends TypesDsl with impl.TypesExp with ScalanStaged
+trait TypesDslExp extends TypesDsl with impl.TypesExp with ScalanExp

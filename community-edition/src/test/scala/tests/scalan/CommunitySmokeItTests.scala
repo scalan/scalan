@@ -1,12 +1,12 @@
 package tests.scalan
 
-import scalan.{ScalanCtxSeq, ScalanCtxStaged, ScalanDsl}
+import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
 import tests.it.ItTests
 import tests.scalan.arrays.PArrayExamples
 import scalan.arrays.{PArraysDslSeq, PArraysDslExp}
 import scalan.codegen.LangBackend
 import tests.it.smoke.SmokeItTests
-import scalan.community.{ScalanCommunity, ScalanCommunitySeq, ScalanCommunityStaged}
+import scalan.community.{ScalanCommunity, ScalanCommunitySeq, ScalanCommunityExp}
 
 /**
  *  Tests that very simple examples are run correctly
@@ -252,7 +252,7 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
 //    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
   }
 
-  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityStaged with LangBackend
+  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with LangBackend
   override val progSeq = new ProgCommunitySeq()
 
   //  test("test00simpleConst") {
