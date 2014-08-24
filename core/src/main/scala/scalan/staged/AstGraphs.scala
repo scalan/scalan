@@ -1,6 +1,6 @@
 package scalan.staged
 
-import scalan.Base
+import scala.collection._
 import scalan.ScalanStaged
 import scalan.common.GraphUtil
 
@@ -25,6 +25,12 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
     def addUsage(usage: Exp[_]) = copy(usages = usage :: this.usages)
   }
 
+  type Schedule = Seq[TableEntry[_]]
+
+  implicit class ScheduleOps(sch: Schedule) {
+    def symbols = sch.map(_.sym)
+  }
+
   trait AstGraph { thisGraph =>
     def boundVars: List[Exp[_]]
     def roots: List[Exp[_]]
@@ -35,7 +41,7 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
       external.toSet
     }
 
-    def schedule: Seq[TableEntry[_]] = {
+    def schedule: Schedule = {
       if (boundVars.isEmpty)
         buildScheduleForResult(roots, _.getDeps)
       else
@@ -52,7 +58,7 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
       }
     }
 
-    def scheduleFrom(x: List[Exp[_]]): Seq[TableEntry[_]] = {
+    def scheduleFrom(x: List[Exp[_]]): Schedule = {
       val locals = GraphUtil.depthFirstSetFrom[Exp[_]](x)(sym => usagesOf(sym).filter(domain.contains))
       schedule.filter(locals contains _.sym)
     }
@@ -68,7 +74,7 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
     lazy val scheduleFromProjections =
       buildScheduleForResult(roots, s => if (isLambdaBoundProjection(s)) Nil else s.getDeps)
 
-    lazy val scheduleAll: Seq[TableEntry[_]] = {
+    lazy val scheduleAll: Schedule = {
       schedule.flatMap(tp => tp match {
         case TableEntry(s, lam: Lambda[_, _]) => lam.scheduleAll :+ tp
         case _ => List(tp)
@@ -121,17 +127,22 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
     def hasManyUsages(s: Exp[_]): Boolean = usagesOf(s).lengthCompare(1) > 0
 
     /** Builds a schedule starting from symbol `sym`  which consists only of local definitions.
-      *  @param sym   the root of the schedule, it can be non-local itself
+      *  @param syms   the roots of the schedule, it can be non-local itself
       *  @param deps  dependence relation between a definition and symbols
       *  @return      a `Seq` of local definitions on which `sym` depends or empty if `sym` is itself non-local
       */
-    def buildLocalScheduleFrom(sym: ExpAny, deps: ExpAny => List[ExpAny]): Seq[TableEntry[_]] =
-      if (isLocalDef(sym))
-        buildScheduleForResult(List(sym), deps(_).filter(isLocalDef))
-      else
-        Seq.empty
+    def buildLocalScheduleFrom(syms: Seq[ExpAny], deps: ExpAny => List[ExpAny]): Schedule =
+      for {
+        s <- syms if isLocalDef(s)
+        tp <- buildScheduleForResult(List(s), deps(_).filter(isLocalDef))
+      }
+      yield tp
 
-    def buildLocalScheduleFrom(sym: ExpAny): Seq[TableEntry[_]] = buildLocalScheduleFrom(sym, _.getDeps)
+    def buildLocalScheduleFrom(sym: ExpAny, deps: ExpAny => List[ExpAny]): Schedule =
+      buildLocalScheduleFrom(List(sym), deps)
+
+    def buildLocalScheduleFrom(sym: ExpAny): Schedule = buildLocalScheduleFrom(sym, (_: ExpAny).getDeps)
+
 
     def projectionTreeFrom(root: Exp[_]): ProjectionTree = {
       ProjectionTree(root, s => {
@@ -151,57 +162,76 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
 
     def isLambdaBoundProjection(s: ExpAny): Boolean = lambdaBoundProjections contains s
 
-//    def filterBranch(resAssignments: Map[Exp[_], BranchPath], ifSym: Exp[_], thenOrElse: Boolean): Seq[TableEntry[_]] = {
-//      schedule.filter(tp => {
-//        val pathOpt = resAssignments.get(tp.sym)
-//        pathOpt.exists(p => p.ifSym == ifSym && thenOrElse == p.thenOrElse)
-//      })
-//    }
-
     /** Keeps immutable maps describing branching structure of this lambda
       */
     lazy val branches = {
       // traverse the lambda body from the results to the arguments
       // during the loop below, keep track of all the defs that `are used` below the current position in the `schedule`
-      val usedSet = scala.collection.mutable.Set.empty[Exp[_]]
+      val usedSet = mutable.Set.empty[Exp[_]]
 
       def isUsed(sym: Exp[_]) = usedSet.contains(sym)
 
       /** Keep the assignments of symbols to the branches of IfThenElse
         if a definition is assigned to IF statement then it will be in either THEN or ELSE branch, according to flag
         */
-      val assignments = scala.collection.mutable.Map.empty[Exp[_], BranchPath]
+      val assignments = mutable.Map.empty[Exp[_], BranchPath]
       def isAssigned(sym: Exp[_]) = assignments.contains(sym)
 
-      val ifBranches = scala.collection.mutable.Map.empty[Exp[_], IfBranches]
+      val ifBranches = mutable.Map.empty[Exp[_], IfBranches]
 
       // should return definitions that are not in usedSet
-      def getLocalUnusedSchedule(s: Exp[_]): Seq[TableEntry[_]] = {
+      def getLocalUnusedSchedule(s: Exp[_]): Schedule = {
         if (usedSet.contains(s)) Seq()
         else {
-          val sch = buildLocalScheduleFrom(s, _.getDeps.filter(!usedSet.contains(_)))
+          val sch = buildLocalScheduleFrom(s, (_: ExpAny).getDeps.filterNot(usedSet.contains))
           sch
         }
       }
 
-      // builds branches for the `cte`
-      def getIfBranches(ifSym: Exp[_], cte: IfThenElse[_]) = {
-        val IfThenElse(c, t, e) = cte
-        val cs = buildLocalScheduleFrom(c)
-        val ts = getLocalUnusedSchedule(t)
-        val es = getLocalUnusedSchedule(e)
+      /** Builds a schedule according to the current usedSet
+        * @param syms starting symbols
+        * @return sequence of symbols that 1) local 2) in shallow dependence relation 3) not yet marked
+        */
+      def getLocalUnusedShallowSchedule(syms: Seq[ExpAny]): Schedule = {
+        val sch = buildLocalScheduleFrom(syms, (_: ExpAny).getShallowDeps.filterNot(usedSet.contains))
+        sch
+      }
 
-        val cSet = cs.map(_.sym).toSet
-        val tSet = ts.map(_.sym).toSet
-        val eSet = es.map(_.sym).toSet
+
+      def getTransitiveUsageInRevSchedule(revSchedule: List[TableEntry[_]]): mutable.Set[Exp[_]] = {
+        val used = mutable.Set.empty[Exp[_]]
+        for (TableEntry(s, _) <- revSchedule) {
+          if (isUsed(s))
+            used += s
+
+          if (used.contains(s))
+            used ++= s.getDeps
+        }
+        used
+      }
+
+      // builds branches for the `cte`
+      def getIfBranches(ifSym: Exp[_], cte: IfThenElse[_], defsBeforeIfReversed: List[TableEntry[_]]) = {
+        val IfThenElse(c, t, e) = cte
+
+        val cs = buildLocalScheduleFrom(c)
+        val ts = buildLocalScheduleFrom(t)
+        val es = buildLocalScheduleFrom(e)
+
+        val usedAfterIf = getTransitiveUsageInRevSchedule(defsBeforeIfReversed)
+        def isUsedBeforeIf(s: Exp[_]) = usedAfterIf.contains(s)
+
+        val cSet = cs.symbols.toSet
+        val tSet = ts.symbols.toSet
+        val eSet = es.symbols.toSet
 
         // a symbol can be in a branch if all is true:
         // 1) the branch root depends on it
         // 2) the other branch doesn't depends on it
         // 3) the condition doesn't depend on it
-        // 4) it is not used below the If statement
-        val tbody = ts.filter(tp => !(eSet.contains(tp.sym) || cSet.contains(tp.sym)))
-        val ebody = es.filter(tp => !(tSet.contains(tp.sym) || cSet.contains(tp.sym)))
+        // 4) it is not marked as used after the If statement (transitively)
+        val tbody = ts.filter(tp => !(eSet.contains(tp.sym) || cSet.contains(tp.sym) || isUsedBeforeIf(tp.sym)))
+        val ebody = es.filter(tp => !(tSet.contains(tp.sym) || cSet.contains(tp.sym) || isUsedBeforeIf(tp.sym)))
 
         IfBranches(thisGraph, ifSym, DefBlock(List(t), tbody), DefBlock(List(e), ebody))
       }
@@ -211,13 +241,15 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
       }
 
       // traverse the lambda body from the results to the arguments
-      for (TableEntry(s, d) <- schedule.reverseIterator) {
+      var reversed = schedule.reverse.toList
+      while (reversed.nonEmpty) {
+        val TableEntry(s, d) = reversed.head
         if (!isAssigned(s)) {
           // process current definition
           d match {
             case cte@IfThenElse(c, t, e) => {
               val ifSym = s
-              val bs = getIfBranches(ifSym, cte)
+              val bs = getIfBranches(ifSym, cte, reversed.tail)
               ifBranches(ifSym) = bs
 
               // assign symbols to this IF
@@ -229,17 +261,18 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
                 assignBranch(tp.sym, ifSym, thenOrElse = false)
               }
 
-              // mark shallow scope for each branch
-              val tUsed = bs.thenBody.freeVars
-              val eUsed = bs.elseBody.freeVars
-              usedSet ++= tUsed
-              usedSet ++= eUsed
+              val tUsed = getLocalUnusedShallowSchedule(bs.thenBody.freeVars.toSeq)
+              val eUsed = getLocalUnusedShallowSchedule(bs.elseBody.freeVars.toSeq)
+              usedSet ++= tUsed.symbols
+              usedSet ++= eUsed.symbols
             }
             case _ =>
           }
           val deps = s.getDeps       // for IfThenElse is gets the roots of each branch and condition
-          usedSet ++= deps
+          val shallowDeps = getLocalUnusedShallowSchedule(deps)
+          usedSet ++= shallowDeps.symbols
         }
+        reversed = reversed.tail
       }
 
 
@@ -252,7 +285,7 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
     def isAssignedToIfBranch(sym: Exp[_]) = branches.assignments.contains(sym)
   }
 
-  case class DefBlock(val roots: List[Exp[_]], override val schedule: Seq[TableEntry[_]]) extends AstGraph {
+  case class DefBlock(val roots: List[Exp[_]], override val schedule: Schedule) extends AstGraph {
     override def boundVars = Nil
     override lazy val freeVars = super.freeVars
   }
@@ -304,10 +337,10 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
     }
   }
 
-  def buildScheduleForResult(st: Seq[Exp[_]], neighbours: Exp[_] => Seq[Exp[_]]): Seq[TableEntry[_]] = {
+  def buildScheduleForResult(st: Seq[Exp[_]], neighbours: Exp[_] => Seq[Exp[_]]): Schedule = {
     val startNodes = st.flatMap(e => findDefinition(e).toList)
 
-    def succ(tp: TableEntry[_]): Seq[TableEntry[_]] = {
+    def succ(tp: TableEntry[_]): Schedule = {
       //println("dep"+d +"="+dep(d.rhs))
       val ns = neighbours(tp.sym)
       ns.flatMap { e =>
@@ -318,4 +351,6 @@ trait AstGraphs extends Transforming { self: ScalanStaged =>
 
     GraphUtil.stronglyConnectedComponents[TableEntry[_]](startNodes)(succ).flatten
   }
+
+  def buildScheduleForResult(s: Exp[_]): Schedule = buildScheduleForResult(Seq(s), _.getDeps)
 }

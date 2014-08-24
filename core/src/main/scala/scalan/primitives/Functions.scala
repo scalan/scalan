@@ -79,18 +79,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       allScalars
     }
 
-//    lazy val scheduleWithConsts: Seq[TableEntry[_]] =
-//      if (isIdentity) Nil
-//      else {
-//        val g = new PGraph(y)
-//        val sh = g.schedule
-//        (sh, y) match {
-//          case (Nil, DefTableEntry(tp)) => List(tp)  // the case when body is const
-//          case _ => sh
-//        }
-//      }
-
-
     def isGlobalLambda: Boolean = {
       val free = freeVars filterNot (_.isConst)
       free.isEmpty

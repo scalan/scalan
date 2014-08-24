@@ -114,7 +114,7 @@ trait Interpreter {
   }
 
   /* Mirror block */
-  def mirrorDefs(defs: Seq[TableEntry[_]], symMirror: SymMirror, funcMirror: FuncMirror): (Seq[seq.Rep[_]], SymMirror, FuncMirror) =
+  def mirrorDefs(defs: Schedule, symMirror: SymMirror, funcMirror: FuncMirror): (Seq[seq.Rep[_]], SymMirror, FuncMirror) =
   {
     val (seqExps, finalSymMirr, finalFuncMirr) = defs.foldLeft(List.empty[seq.Rep[_]], symMirror, funcMirror) {
       case ((exps, symMirr, funcMirr),tp) => mirrorDef(tp.rhs, tp.sym, exps, symMirr, funcMirr)
