@@ -1,16 +1,11 @@
 package scalan.trees
 
-import scalan.Scalan
-import scalan.ScalanDsl
-import scalan.common.Common
-import scalan.sequential.ScalanSeq
-import scalan.lms.common.ProxyExp
+import scalan._
 import scalan.staged._
 import scalan.math.MatricesDslSeq
-import scalan.sequential.ScalanSeqImplementation
 import scalan.math.MatricesDslExp
 
-trait Trees extends ScalanDsl { self: TreesDsl =>
+trait Trees extends ScalanEnterpriseDsl { self: TreesDsl =>
 
   type PT[A] = Rep[Tree[A]]
   trait Tree[A] {
@@ -27,9 +22,11 @@ trait Trees extends ScalanDsl { self: TreesDsl =>
     def roots: PA[Int] = nodesIndices.filter(i => parents(i) === -1)
     def childrenOf(nodes: PA[Int]): NA[Int] = children ->> nodes
   }
+  
+  trait TreeCompanion
 
   abstract class TreeGraph[A](val parents: Rep[PArray[Int]], val children: Rep[NArray[Int]], val nodeProps: Rep[PArray[A]])(implicit val eA: Elem[A]) extends Tree[A] {
-    def getTreeLevels: Rep[TreeLevels[A]] = TreeLevels.fromTreeGraph(TreeGraph(this))
+    def getTreeLevels: Rep[TreeLevels[A]] = TreeLevels.fromTreeGraph(TreeGraph((parents, children, nodeProps)))
     def levels: Rep[NArray[Int]] = getTreeLevels.levels
     def levelSegs: Rep[NArray[Int]] = getTreeLevels.levelSegs
   }
@@ -39,7 +36,7 @@ trait Trees extends ScalanDsl { self: TreesDsl =>
   abstract class TreeLevels[A](val levels: Rep[NArray[Int]],
     val levelSegs: Rep[NArray[Int]],
     val nodeProps: Rep[PArray[A]])(implicit val eA: Elem[A]) extends Tree[A] {
-    def getTreeLevels: Rep[TreeLevels[A]] = TreeLevels(this)
+    def getTreeLevels: Rep[TreeLevels[A]] = TreeLevels((levels, levelSegs, nodeProps))
     def parents: PA[Int] = ???
     def children: NA[Int] = ???
   }
@@ -105,7 +102,7 @@ trait Trees extends ScalanDsl { self: TreesDsl =>
     //      val IVecPlusIdentity = zero[Rep[IVecPlusMask]](replicate(cvSize,0.asInstanceOf[Coord]))
     //      val IVecPlusSemigroup = semigroup[Rep[IVecPlusMask]]("IVecPlus",
     //        (t1, t2) => t1 +^ t2, false)
-    //      val IVecPlusMonoid = monoid(IVecPlusSemigroup, IVecPlusIdentity)
+    //      val IVecPlusMonoid = RepMonoid(IVecPlusSemigroup, IVecPlusIdentity)
     //
     //
     //      val levelNodes = levels.nodes
@@ -221,6 +218,6 @@ trait Trees extends ScalanDsl { self: TreesDsl =>
 
 trait TreesDsl extends impl.TreesAbs with Trees
 
-trait TreesDslSeq extends TreesDsl with impl.TreesSeq with MatricesDslSeq with ScalanSeqImplementation
+trait TreesDslSeq extends TreesDsl with impl.TreesSeq with MatricesDslSeq with ScalanEnterpriseDslSeq
 
-trait TreesDslExp extends TreesDsl with impl.TreesExp with MatricesDslExp with ScalanStagedImplementation
+trait TreesDslExp extends TreesDsl with impl.TreesExp with MatricesDslExp with ScalanEnterpriseDslExp

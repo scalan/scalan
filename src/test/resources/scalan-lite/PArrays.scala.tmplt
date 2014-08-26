@@ -4,11 +4,12 @@ import scalan._
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.annotation.unchecked.uncheckedVariance
+import scalan.community.{ScalanCommunity, ScalanCommunityExp, ScalanCommunitySeq}
 
-trait PArrays extends Base { self: PArraysDsl =>
+trait PArrays extends ArrayOps { self: PArraysDsl =>
 
   type PA[+A] = Rep[PArray[A]]
-  trait PArray[@uncheckedVariance +A] extends UserType[PArray[A @uncheckedVariance]] {
+  trait PArray[@uncheckedVariance +A] extends Reifiable[PArray[A @uncheckedVariance]] {
     implicit def elem: Elem[A @uncheckedVariance]
     def length: Rep[Int]
     def arr: Rep[Array[A @uncheckedVariance]]
@@ -18,14 +19,18 @@ trait PArrays extends Base { self: PArraysDsl =>
     def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): PA[B] = PArray(arr.mapBy(f))
     def zip[B: Elem](ys: PA[B]): PA[(A, B)] = PairArray(self, ys)
     def slice(offset: Rep[Int], length: Rep[Int]): Rep[PArray[A]]
-    def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] = arr.sum
+    def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] = arr.reduce(m)
+    def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(PArray[A], A)] = {
+      val arrScan = arr.scan(m)
+      (PArray(arrScan._1), arrScan._2)
+    }
   }
   
   implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = element[A] match {
     case _: BaseElem[_] => element[BaseArray[A]].asElem[PArray[A]]
     case pe: PairElem[a, b] =>
-      implicit val ea = pe.ea
-      implicit val eb = pe.eb
+      implicit val ea = pe.eFst
+      implicit val eb = pe.eSnd
       element[PairArray[a, b]].asElem[PArray[A]]
     case viewE: ViewElem[_, _] => element[BaseArray[A]].asElem[PArray[A]]
     case e => ???(s"Element is $e")
@@ -36,7 +41,7 @@ trait PArrays extends Base { self: PArraysDsl =>
   trait PArrayCompanion extends TypeFamily1[PArray] {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]] = ea match {
       case baseE: BaseElem[a] => BaseArray.defaultOf[a](baseE)
-      case pairE: PairElem[a, b] => PairArray.defaultOf[a, b](pairE.ea, pairE.eb)
+      case pairE: PairElem[a, b] => PairArray.defaultOf[a, b](pairE.eFst, pairE.eSnd)
       case e => ???(s"Element is $e")
     }
 
@@ -46,8 +51,8 @@ trait PArrays extends Base { self: PArraysDsl =>
         case baseE: BaseElem[a] =>
           BaseArray[a](arr.asRep[Array[a]])
         case pairE: PairElem[a, b] =>
-          implicit val ea = pairE.ea
-          implicit val eb = pairE.eb
+          implicit val ea = pairE.eFst
+          implicit val eb = pairE.eSnd
           val ps = arr.asRep[Array[(a, b)]]
           val as = fromArray(ps.map { _._1 })
           val bs = fromArray(ps.map { _._2 })
@@ -63,6 +68,16 @@ trait PArrays extends Base { self: PArraysDsl =>
       element[T] match {
         case baseE: BaseElem[a] =>
           BaseArray[a](array_replicate(len, v.asRep[a]))
+        case pairElem: PairElem[a ,b] => {
+          implicit val ea = pairElem.eFst
+          implicit val eb = pairElem.eSnd
+          val ps = v.asRep[(a, b)]
+          val as = replicate(len, ps._1)
+          val bs = replicate(len, ps._2)
+          as zip bs
+        }
+        case viewElem: ViewElem[a, b] =>
+          BaseArray(Array.replicate(len, v))
         case e => ???(s"Element is $e")
       }
     }
@@ -130,8 +145,8 @@ trait PArrays extends Base { self: PArraysDsl =>
 
 }
 
-trait PArraysDsl extends ScalanDsl with impl.PArraysAbs with PArrays { }
+trait PArraysDsl extends ScalanCommunity with impl.PArraysAbs with PArrays { }
 
-trait PArraysDslSeq extends PArraysDsl with impl.PArraysSeq with ScalanSeqImplementation
+trait PArraysDslSeq extends PArraysDsl with impl.PArraysSeq with ScalanCommunitySeq
 
-trait PArraysDslExp extends PArraysDsl with impl.PArraysExp with ScalanStaged
+trait PArraysDslExp extends PArraysDsl with impl.PArraysExp with ScalanCommunityExp

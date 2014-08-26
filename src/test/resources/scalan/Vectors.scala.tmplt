@@ -1,13 +1,10 @@
 package scalan.math
 
-import scalan.Scalan
-import scalan.ScalanDsl
-import scalan.sequential.ScalanSeq
-import scalan.lms.common.ProxyExp
+import scalan._
+import scalan.common.OverloadHack.{Overloaded1, Overloaded2}
 import scalan.staged._
 
-trait Vectors extends Scalan { self: VectorsDsl =>
-
+trait Vectors extends ScalanEnterprise { self: VectorsDsl =>
   type Vec[A] = Rep[Vector[A]]
   trait Vector[A] {
     implicit def eA: Elem[A]
@@ -28,8 +25,12 @@ trait Vectors extends Scalan { self: VectorsDsl =>
     def +^(ys: PA[A])(implicit num: Numeric[A], o: Overloaded2): Vec[A] = +^(DenseVector(ys))
     def -^(ys: PA[A])(implicit num: Numeric[A], o: Overloaded2): Vec[A] = -^(DenseVector(ys))
     def *^(ys: PA[A])(implicit num: Numeric[A], o: Overloaded2): Vec[A] = *^(DenseVector(ys))
-    def zeroA = eA.defaultOf
+    def zeroA = eA.defaultRepValue
+    def euclideanNorm(inc: Rep[Int])(implicit num: Numeric[A], monoid: RepMonoid[A]): Rep[Double]
+    def concat(other: Vec[A]): Vec[A]
   }
+  
+  trait VectorCompanion
 
   abstract class DenseVector[A](val items: Rep[PArray[A]])(implicit val eA: Elem[A])
     extends Vector[A] {
@@ -44,11 +45,16 @@ trait Vectors extends Scalan { self: VectorsDsl =>
     def <<-(is: PA[Int], vs: PA[A]): Rep[DenseVector[A]] = DenseVector(items <<- (is, vs))
     def <<-(i: Rep[Int], v: Rep[A])(implicit o: Overloaded1): Rep[DenseVector[A]] = <<-(singleton(i), singleton(v))
     def map[B: Elem](f: Rep[A] => Rep[B]): Vec[B] = DenseVector(items.map(f))
+    def euclideanNorm(inc: Rep[Int])(implicit num: Numeric[A], monoid: RepMonoid[A]): Rep[Double] = DenseVector.euclideanNorm(items, inc)
+    def concat(other: Vec[A]): Vec[A] = ???
   }
+
+  def eNorm[A: Elem: Numeric: RepMonoid](values: PA[A], inc: Rep[Int]): Rep[Double]
 
   trait DenseVectorCompanion {
     implicit def paToVec[A](xs: PA[A]) = DenseVector(xs)(xs.elem)
     implicit def vecToPa[A](xs: DenseVector[A]) = xs.items
+    def euclideanNorm[A: Elem: Numeric: RepMonoid](values: PA[A], inc: Rep[Int] = toRep(1)): Rep[Double] = eNorm(values, inc)
   }
 
   abstract class SparseVector[A](val nonZeroItems: Rep[PArray[(Int, A)]], val length: Rep[Int])(implicit val eA: Elem[A])
@@ -56,20 +62,25 @@ trait Vectors extends Scalan { self: VectorsDsl =>
     private def nonZeroIndices = nonZeroItems.as
     private def nonZeroValues = nonZeroItems.bs
     def items = replicate(length, zeroA) <<- (nonZeroIndices, nonZeroValues)
-    def +^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] =
-      SparseVector((nonZeroItems, other.nonZeroItems).outerJoin { (x: Rep[A], y: Rep[A]) => x + y } { (x: Rep[A]) => x } { (x: Rep[A]) => x },
-        length)
-    def *^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] =
-      SparseVector((nonZeroItems, other.nonZeroItems).innerJoin { (x: Rep[A], y: Rep[A]) => x * y }, length)
-    def -^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] =
-      SparseVector((nonZeroItems, other.nonZeroItems).outerJoin { (x: Rep[A], y: Rep[A]) => x - y } { (x: Rep[A]) => x } { (x: Rep[A]) => -x },
-        length)
+    def +^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] = ???
+      // SparseVector((nonZeroItems, other.nonZeroItems).outerJoin { (x: Rep[A], y: Rep[A]) => x + y } { (x: Rep[A]) => x } { (x: Rep[A]) => x },
+      //  length)
+    def *^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] = ???
+      // SparseVector((nonZeroItems, other.nonZeroItems).innerJoin { (x: Rep[A], y: Rep[A]) => x * y }, length)
+
+    override def *^(other: PA[A])(implicit num: Numeric[A], o: Overloaded2): Rep[SparseVector[A]] = {
+      val newVals = nonZeroValues *^ (other ->> nonZeroIndices)
+      SparseVector( (nonZeroIndices zip newVals), length)
+    }
+    def -^(other: Vec[A])(implicit num: Numeric[A]): Vec[A] = ???
+      // SparseVector((nonZeroItems, other.nonZeroItems).outerJoin { (x: Rep[A], y: Rep[A]) => x - y } { (x: Rep[A]) => x } { (x: Rep[A]) => -x },
+      //  length)
     def apply(i: Rep[Int]): Rep[A] = ???
     def reduce(implicit m: RepMonoid[A]): Rep[A] = nonZeroValues.reduce
     def <<-(is: PA[Int], vs: PA[A]): Rep[DenseVector[A]] = ???
     def map[B](f: Rep[A] => Rep[B])(implicit eB: Elem[B]): Vec[B] = {
       val fZero = f(zeroA)
-      IF(fZero === eB.defaultOf) THEN {
+      IF(fZero === eB.defaultRepValue) THEN {
         SparseVector(nonZeroItems.map {
           case Pair(i, x) => (i, f(x))
         }, length).asRep[Vector[B]]
@@ -78,18 +89,31 @@ trait Vectors extends Scalan { self: VectorsDsl =>
         DenseVector(arr <<- (nonZeroIndices, nonZeroValues.map(f)))
       }
     }
+    def euclideanNorm(inc: Rep[Int])(implicit num: Numeric[A], monoid: RepMonoid[A]): Rep[Double] = eNorm(nonZeroValues, inc)
+    def concat(other: Vec[A]): Vec[A] = ???
   }
 
   trait SparseVectorCompanion
 
   def dot[A: Numeric: Elem: RepMonoid](xs: Vec[A], ys: Vec[A]) = (xs *^ ys).reduce
+
+  // TODO try if it actually works when we have sparse vectors/matrices
+  implicit def vectorElem[T](implicit e: Elem[T]): Elem[Vector[T]] = element[DenseVector[T]].asInstanceOf[Elem[Vector[T]]]
 }
 
 trait VectorsDsl extends impl.VectorsAbs with Vectors {
   implicit def sparseVectorDataElem[A](implicit eA: Elem[A]) =
-    pairElement(parrayElement(pairElement(intElement, eA)), intElement)
+    pairElement(parrayElement(pairElement(IntElement, eA)), IntElement)
 }
 
-trait VectorsDslSeq extends VectorsDsl with impl.VectorsSeq with ScalanSeq
+trait VectorsDslSeq extends VectorsDsl with impl.VectorsSeq with ScalanEnterpriseSeq {
+  def eNorm[A: Elem: Numeric: RepMonoid](values: PA[A], inc: Rep[Int]): Rep[Double] = Math.sqrt(values.map(v => (v * v).toDouble).reduce)
+}
 
-trait VectorsDslExp extends VectorsDsl with impl.VectorsExp with ScalanStaged
+trait VectorsDslExp extends VectorsDsl with impl.VectorsExp with ScalanEnterpriseExp {
+  def eNorm[A: Elem: Numeric: RepMonoid](values: PA[A], inc: Rep[Int]): Rep[Double] = ExternalEuclideanNorm(values, inc)
+
+  case class ExternalEuclideanNorm[A: Elem](values: PA[A], inc: Rep[Int]) extends BaseDef[Double] {
+    override def mirror(f: Transformer) = ExternalEuclideanNorm(f(values), f(inc))
+  }
+}

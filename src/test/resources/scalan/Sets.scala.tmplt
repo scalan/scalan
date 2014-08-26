@@ -1,8 +1,6 @@
 package scalan.collections
 
 import scalan._
-import scalan.sequential.ScalanSeq
-import scalan.staged.ScalanStaged
 
 trait Sets extends Maps { self: SetsDsl =>
 
@@ -20,8 +18,7 @@ trait Sets extends Maps { self: SetsDsl =>
     def size: Rep[Int]
   }
   
-  trait PSetCompanion {
-  }
+  trait PSetCompanion
 
   abstract class PSetImpl[A](val toMap: Rep[PMap[A, Unit]])(implicit val eA: Elem[A])
     extends PSet[A] {
@@ -47,8 +44,8 @@ trait Sets extends Maps { self: SetsDsl =>
   implicit def psetElement[A: Elem]: Elem[PSet[A]] = element[PSetImpl[A]].asInstanceOf[Elem[PSet[A]]]
 }
 
-trait SetsDsl extends impl.SetsAbs with Sets with Scalan
+trait SetsDsl extends impl.SetsAbs with Sets with ScalanEnterprise
 
-trait SetsDslSeq extends SetsDsl with impl.SetsSeq with SeqMaps { self: ScalanSeq => }
+trait SetsDslSeq extends SetsDsl with impl.SetsSeq with MapsSeq { self: ScalanEnterpriseSeq => }
 
-trait SetsDslExp extends SetsDsl with impl.SetsExp with StagedMaps { self: ScalanStaged => }
+trait SetsDslExp extends SetsDsl with impl.SetsExp with MapsExp { self: ScalanEnterpriseExp => }

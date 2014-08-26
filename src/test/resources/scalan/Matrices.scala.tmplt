@@ -1,12 +1,10 @@
 package scalan.math
 
-import scalan.Scalan
-import scalan.ScalanDsl
-import scalan.sequential.ScalanSeq
-import scalan.lms.common.ProxyExp
+import scalan._
+import scalan.common.OverloadHack.Overloaded1
 import scalan.staged._
 
-trait Matrices extends Scalan with Vectors { self: MatricesDsl =>
+trait Matrices extends ScalanEnterprise with Vectors { self: MatricesDsl =>
 
   type PMr[A] = Rep[Matrix[A]]
   trait Matrix[A] {
@@ -22,10 +20,15 @@ trait Matrices extends Scalan with Vectors { self: MatricesDsl =>
     def fromCellIndex(iCell: Rep[Int]): Rep[(Int, Int)] = Pair(iCell / numColumns, iCell % numColumns)
     def toCellIndex(iRow: Rep[Int], iCol: Rep[Int]): Rep[Int] = numColumns * iRow + iCol
     def row(iRow: Rep[Int]): Rep[DenseVector[A]] = apply(iRow)
+    def map[B:Elem](f: Vec[A] => Vec[B]): PMr[B]
   }
+  
+  trait MatrixCompanion
 
+  // require: numColumns > 0  
   abstract class DenseMatrix[A](val items: Rep[PArray[A]], val numColumns: Rep[Int])(implicit val eA: Elem[A]) extends Matrix[A] {
-    def numRows = IF(numColumns !== 0) { items.length / numColumns } ELSE 0
+    def numRows = items.length / numColumns //IF(numColumns !== 0) { items.length / numColumns } ELSE 0
+    def map[B:Elem](f: Vec[A] => Vec[B]): PMr[B] = DenseMatrix(rows.map(v => f(v).items).values, numColumns) 
 
     //Expands to: ((is *^ scale).expandByLengths(replicate(n, scale))).values +^ replicate(n, indexRange(scale)).values
     def rowsCellIndices(is: PA[Int]): PA[Int] = {
@@ -115,8 +118,8 @@ trait Matrices extends Scalan with Vectors { self: MatricesDsl =>
       DenseMatrix(newRows.values, numColumns)
     }
 
-    def <<-(iRows: PA[Int], xss: Rep[Matrix[A]]): Rep[DenseMatrix[A]] = {
-      val newItems = items <<- (rowsCellIndices(iRows), xss.items)
+    def <<-(iRows: PA[Int], xss: Rep[Matrix[A]], inPlace: Boolean = false): Rep[DenseMatrix[A]] = {
+      val newItems = items <<- (rowsCellIndices(iRows), xss.items, inPlace)
       DenseMatrix(newItems, numColumns)
     }
 
@@ -138,6 +141,7 @@ trait Matrices extends Scalan with Vectors { self: MatricesDsl =>
     def apply(row: Rep[Int]): Rep[DenseVector[A]] = DenseVector(items.slice(numColumns * row, numColumns))
     def apply(row: Rep[Int], column: Rep[Int]) = items(toCellIndex(row, column))
     def rows = items.nestByLengths(replicate(numRows, numColumns)).map(DenseVector(_))
+    //def toNA = items.nestByLengths(replicate(numRows, numColumns)) //TODO; is it needed?
 
     // TODO reuse dense vector/sparse vector
     def sparseRows = rows.map { row =>
@@ -154,11 +158,26 @@ trait Matrices extends Scalan with Vectors { self: MatricesDsl =>
       val newItems = DenseMatrix.invert(items, numColumns)
       DenseMatrix(newItems, numColumns)
     }
+    
+    // TODO may be faster to transpose twice and concat arrays once
+    def horConcat(other: Rep[Matrix[A]]): Rep[Matrix[A]] = {
+      // require(this.numRows === other.numRows)
+      val rows = this.rows.zip(other.rows).map { case Pair(row1, row2) => row1.concat(row2) }
+      DenseMatrix.fromRows(rows)
+    }
+    
+    def vertConcat(other: Rep[Matrix[A]]): Rep[Matrix[A]] = ???
   }
 
   trait DenseMatrixCompanion {
     def fromNA[A: Elem](rows: NA[A])(implicit o: Overloaded1): Rep[DenseMatrix[A]] = DenseMatrix(rows.values, rows(0).length)
+    def fromRows[A: Elem](rows: PA[Vector[A]]): Rep[DenseMatrix[A]] = fromNA(rows.map(_.items))
+    def fromSparseMatrix[A: Elem](spM: Rep[Matrix[A]])(implicit o: Overloaded1): Rep[DenseMatrix[A]] = DenseMatrix(spM.items, spM.numColumns)
     def invert[A: Elem](items: PA[A], numColumns: Rep[Int]): PA[A] = invertDenseMatrix(items, numColumns)
+    def constant[A: Elem](value: Rep[A], numColumns: Rep[Int], numRows: Rep[Int]) =
+      DenseMatrix(replicate(numColumns * numRows, value), numColumns)
+    def identity[A: Elem](n: Rep[Int])(implicit num: Numeric[A]) = 
+      fromNA(indexRange(n).map(i => indexRange(n).map(j => IF (i === j) THEN num.one ELSE num.zero)))
   }
 
   // inplace update of items
@@ -166,14 +185,38 @@ trait Matrices extends Scalan with Vectors { self: MatricesDsl =>
 
   abstract class ColumnSparseMatrix[A](val sparseRows: Rep[PArray[SparseVector[A]]], val numColumns: Rep[Int])(implicit val eA: Elem[A]) extends Matrix[A] {
     def numRows = sparseRows.length
-    def items = ???
+    def map[B:Elem](f: Vec[A] => Vec[B]): PMr[B] = ???
+    def mapSparse[B:Elem](f: Rep[SparseVector[A]] => Rep[SparseVector[B]]): Rep[ColumnSparseMatrix[B]] = ColumnSparseMatrix(sparseRows.map(v => f(v)), numColumns)
+    def items: PA[A] = {
+      (sparseRows map { row => row.items}).values
+    }
     def apply(row: Rep[Int]): Rep[DenseVector[A]] = ???
     def apply(row: Rep[Int], column: Rep[Int]) = ???
     def rows = ???
+    def toNA = sparseRows map (v => v.nonZeroItems)
     def invert: Rep[Matrix[A]] = ???
+    def transpose: Rep[ColumnSparseMatrix[A]] = {
+      val nestedItems = sparseRows map {row => row.nonZeroItems}
+      val newNestedItems = ColumnSparseMatrix.transpose(nestedItems, numColumns)
+      val newSparseRows = newNestedItems map { nonZeroItems => SparseVector(nonZeroItems, numRows)}
+      ColumnSparseMatrix(newSparseRows, numRows)
+    }
+    def appendRow(sparseRow: Rep[SparseVector[A]]) = {
+      val nestedItems = sparseRows map {row => row.nonZeroItems}
+      val newNestedItems = nestedItems ++ singleton(sparseRow.nonZeroItems)
+      ColumnSparseMatrix.fromNA(newNestedItems, numColumns)
+    }
   }
 
-  trait ColumnSparseMatrixCompanion
+
+  trait ColumnSparseMatrixCompanion {
+    def fromNA[A: Elem](rows: NA[(Int, A)], nCols: Rep[Int]  )(implicit o : Overloaded1 ): Rep[ColumnSparseMatrix[A]] = {
+      ColumnSparseMatrix( (rows map (x => SparseVector(x, nCols))) ,nCols)
+    }
+    def transpose[A:Elem](nestedItems: NA[(Int,A)], numColumns: Rep[Int]): NA[(Int, A)] = transposeSparseMatrix(nestedItems, numColumns)
+  }
+
+  def transposeSparseMatrix[A : Elem](nestedItems: NA[(Int, A)], numColumns: Rep[Int]): NA[(Int,A)]
 
   object DenseMatrixFunctions {
     type REAL = Double
@@ -194,7 +237,7 @@ trait Matrices extends Scalan with Vectors { self: MatricesDsl =>
     val P1D = toRep(1.0)
     val TRUE = toRep(true)
     val FALSE = toRep(false)
-    val IndexMaxMonoid = monoid[(Int, REAL)]("IndexMax", (-1, Double.NegativeInfinity), true)((ix1, ix2) => IF(ix2._2 >= ix1._2) THEN ix2 ELSE ix1)
+    val IndexMaxMonoid = RepMonoid[(Int, REAL)]("IndexMax", (-1, Double.NegativeInfinity), true)((ix1, ix2) => IF(ix2._2 >= ix1._2) THEN ix2 ELSE ix1)
 
     def helperSolveParallel(luMatrix: RNA, bM: RNA): RNA = {
       val nLoop = bM(P0).length
@@ -326,7 +369,7 @@ trait Matrices extends Scalan with Vectors { self: MatricesDsl =>
 
 trait MatricesDsl extends impl.MatricesAbs with Matrices with VectorsDsl
 
-trait MatricesDslSeq extends MatricesDsl with VectorsDslSeq with impl.MatricesSeq with ScalanSeq {
+trait MatricesDslSeq extends MatricesDsl with VectorsDslSeq with impl.MatricesSeq with ScalanEnterpriseSeq {
   def invertDenseMatrix[A: Elem](items: PA[A], numColumns: Rep[Int]): PA[A] = {
     //items//???//M.inverse(DenseMatrix(items, numColumns))
     //println(items.elem)
@@ -362,12 +405,31 @@ trait MatricesDslSeq extends MatricesDsl with VectorsDslSeq with impl.MatricesSe
     }
     res.asInstanceOf[PA[A]]*/
   }
+
+  def transposeSparseMatrix[A : Elem](nestedItems: NA[(Int, A)], numColumns: Rep[Int]): NA[(Int,A)] = {
+    val newMatrix = for ( i <- indexRange(numColumns))
+    yield {
+      val newRow:PA[(Int, A)] = for ( j <- indexRange(nestedItems.length) if nestedItems(j).as.containsSorted(i))
+      yield {
+        val k = nestedItems(j).as.binarySearch(i, 0, nestedItems(j).as.length)
+        val newElem:(Int, A) = (j, nestedItems(j).bs(k))
+        newElem
+      }
+      newRow
+    }
+    newMatrix
+    //AdjacencyGraph(vertexValues, edgeValues, newLinks)
+  }
 }
 
-trait MatricesDslExp extends MatricesDsl with VectorsDslExp with impl.MatricesExp with ScalanStaged {
+trait MatricesDslExp extends MatricesDsl with VectorsDslExp with impl.MatricesExp with ScalanEnterpriseExp {
   def invertDenseMatrix[A: Elem](items: PA[A], numColumns: Rep[Int]): PA[A] = DenseMatrixInvert(items, numColumns)
+  def transposeSparseMatrix[A : Elem](nestedItems: NA[(Int, A)], numColumns: Rep[Int]): NA[(Int,A)] = SparseMatrixTranspose(nestedItems, numColumns)
 
   case class DenseMatrixInvert[A: Elem](items: PA[A], numColumns: Rep[Int]) extends StagedArrayBase[A] {
     override def mirror(f: Transformer) = DenseMatrixInvert(f(items), f(numColumns))
+  }
+  case class SparseMatrixTranspose[A: Elem](nestedItems: NA[(Int,A)], numColumns: Rep[Int]) extends StagedNestedArrayBase[(Int,A)] {
+    override def mirror(f: Transformer) = SparseMatrixTranspose(f(nestedItems), f(numColumns))
   }
 }
