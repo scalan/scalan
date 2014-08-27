@@ -3,14 +3,14 @@ package scalan.meta
 object BoilerplateTool {
   lazy val scalanConfig = CodegenConfig(
     srcPath = "../scalan/src/main/scala",
-    seqContextTrait = "ScalanEnterpriseSeq",
-    stagedContextTrait = "ScalanEnterpriseStaged",
     entityFiles = List(
       "scalan/trees/Trees.scala",
       "scalan/math/Matrices.scala",
       "scalan/math/Vectors.scala",
       "scalan/collections/Sets.scala"
     ),
+    seqContextTrait = "ScalanEnterpriseSeq",
+    stagedContextTrait = "ScalanEnterpriseExp",
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default")
@@ -27,7 +27,7 @@ object BoilerplateTool {
       //, "main/scala/scalan/rx/Trees.scala"
     ),
     seqContextTrait = "ScalanSeq",
-    stagedContextTrait = "ScalanStaged",
+    stagedContextTrait = "ScalanExp",
     extraImports = List(
       "scala.reflect.runtime.universe._", 
       "scalan.common.Default")
@@ -35,7 +35,7 @@ object BoilerplateTool {
 
 
   def main(args: Array[String]) {
-    lazy val ctx = new EntityManagement(liteConfig)
+    lazy val ctx = new EntityManagement(scalanConfig)
 
     ctx.generateAll
   }
