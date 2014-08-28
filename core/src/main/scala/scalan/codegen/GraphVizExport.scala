@@ -1,8 +1,10 @@
 package scalan.codegen
 
 import java.io.{File, PrintWriter}
+import java.lang.reflect.Method
 
 import _root_.scalan.ScalanExp
+import scalan.util.ScalaNameUtil
 
 trait GraphVizExport { self: ScalanExp =>
 
@@ -44,18 +46,8 @@ trait GraphVizExport { self: ScalanExp =>
     case l: Lambda[_, _] => s"\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y.toString}}"
     case Apply(f, arg) => s"$f($arg)"
     case MethodCall(obj, method, args) =>
-      val className0 = method.getDeclaringClass.getName
-      val className = className0.substring(className0.lastIndexOf("$") + 1)
-      val methodName = method.getName.replaceAll("\\$plus", "+").
-        replaceAll("\\$minus", "-").replaceAll("\\$times", "*").
-        replaceAll("\\$div", "/").replaceAll("\\$colon", ":").
-        replaceAll("\\$greater", ">").replaceAll("\\$less", "<").
-        replaceAll("\\$eq", "=").replaceAll("\\$bang", "!").
-        replaceAll("\\$at", "@").replaceAll("\\$hash", "#").
-        replaceAll("\\$percent", "%").replaceAll("\\$amp", "&").
-        replaceAll("\\$tilde", "~").replaceAll("\\$qmark", "?").
-        replaceAll("\\$bar", "|").replaceAll("\\$bslash", "\\").
-        replaceAll("\\$up", "^")
+      val className = ScalaNameUtil.cleanNestedClassName(method.getDeclaringClass.getName)
+      val methodName = ScalaNameUtil.cleanScalaName(method.getName)
       s"$obj.$className.$methodName(${args.mkString(", ")})"
     case Tup(a, b) => s"($a, $b)"
     case First(pair) => s"$pair._1"

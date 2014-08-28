@@ -15,6 +15,7 @@ import net.sf.cglib.proxy.Factory
 import net.sf.cglib.proxy.InvocationHandler
 import scalan.common.Lazy
 import scalan.staged.BaseExp
+import scalan.util.ScalaNameUtil
 
 trait Proxy { self: Scalan =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops
@@ -140,7 +141,7 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
         val res = m.invoke(zeroNode, args: _*)
         res match {
           case s: Exp[_] => s.elem
-          case other => !!!(s"Result of staged method call must be an Exp, but got $other")
+          case other => !!!(s"Staged method call ${ScalaNameUtil.cleanScalaName(m.toString)} must return an Exp, but got $other")
         }
       } catch {
         case e: InvocationTargetException =>
