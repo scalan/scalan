@@ -147,7 +147,7 @@ trait TuplesExp extends Tuples with BaseExp { self: ScalanExp =>
         implicit val eB = pe.eSnd
         (First(p), Second(p))
       case _ =>
-        !!!("expected Tup[A,B] or Sym with type (A,B) but was " + p.toString, p)
+        !!!(s"expected Tup[A,B] or Sym with type (A,B) but got ${p.toStringWithDefinition}")
     }
   }
 
