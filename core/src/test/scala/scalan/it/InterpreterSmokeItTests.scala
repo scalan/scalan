@@ -11,7 +11,7 @@ import java.io.File
  * Time: 3:25 PM
  * To change this template use File | Settings | File Templates.
  */
-class InterpreterSmokeItTests extends ItTests {
+class InterpreterSmokeItTests extends BaseItTests {
   def createInterpreter(front: ScalanCtxSeq, back: ScalanCtxExp with GraphVizExport): Interpreter = new Interpreter {
     val seq = front
     val staged = back

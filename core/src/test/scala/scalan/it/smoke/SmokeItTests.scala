@@ -1,13 +1,13 @@
 package scalan.it.smoke
 
 import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
-import scalan.it.ItTests
-import scalan.codegen.LangBackend
+import scalan.it.BaseItTests
+import scalan.codegen.Backend
 
 /**
  *  Tests that very simple examples are run correctly
  */
-abstract class SmokeItTests extends ItTests {
+abstract class SmokeItTests extends BaseItTests {
   trait Prog extends ScalanDsl {
 
     lazy val simpleArith = fun {x: Rep[Int] => x*x + 2}
@@ -199,7 +199,7 @@ abstract class SmokeItTests extends ItTests {
 //    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
   }
 
-  val progStaged: Prog with ScalanCtxExp with LangBackend
+  val progStaged: Prog with ScalanCtxExp with Backend
   val progSeq: Prog with ScalanCtxSeq = new ProgSeq()
 
   import progSeq._

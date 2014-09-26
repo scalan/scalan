@@ -1,6 +1,6 @@
 package scalan.it.lms
 
-import _root_.scalan.it.ItTests
+import _root_.scalan.it.BaseItTests
 import _root_.scalan.scalan.linalgebra.LinearAlgebraExamples
 import scalan.codegen.lms.LmsBackend
 import scalan.ScalanCtxExp
@@ -11,7 +11,7 @@ import scalan.linalgebra.MatricesDslSeq
 import scalan.codegen.lms.MyBridge
 import scalan.community.{ScalanCommunitySeq, ScalanCommunityExp}
 
-class LmsLinAlgItTests extends ItTests {
+class LmsLinAlgItTests extends BaseItTests {
   class ProgExp extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityExp with GraphVizExport with LmsBackend { self =>
 //    override def makeBridge[A, B] = new MyBridge[A, B] {
 //      override val scalan = self
@@ -39,8 +39,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = Array(2.0, 3.0)
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.ddmvm(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.ddmvm, progStaged.ddmvm)("ddmvm", in)
+    compareOutputWithSequential(progStaged)(progSeq.ddmvm, progStaged.ddmvm, "ddmvm", in)
   }
 
   test("dsmvm") {
@@ -48,8 +47,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = sparseVectorData(Array(2.0, 3.0))
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.dsmvm(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.dsmvm, progStaged.dsmvm)("dsmvm", in)
+    compareOutputWithSequential(progStaged)(progSeq.dsmvm, progStaged.dsmvm, "dsmvm", in)
   }
 
   test("sdmvm") {
@@ -57,8 +55,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = Array(2.0, 3.0)
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.sdmvm(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.sdmvm, progStaged.sdmvm)("sdmvm", in)
+    compareOutputWithSequential(progStaged)(progSeq.sdmvm, progStaged.sdmvm, "sdmvm", in)
   }
 
   test("ssmvm") {
@@ -66,8 +63,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = sparseVectorData(Array(2.0, 3.0))
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.ssmvm(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.ssmvm, progStaged.ssmvm)("ssmvm", in)
+    compareOutputWithSequential(progStaged)(progSeq.ssmvm, progStaged.ssmvm, "ssmvm", in)
   }
 
   test("fdmvm") {
@@ -75,8 +71,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = Array(2.0, 3.0)
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.fdmvm(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.fdmvm, progStaged.fdmvm)("fdmvm", in)
+    compareOutputWithSequential(progStaged)(progSeq.fdmvm, progStaged.fdmvm, "fdmvm", in)
   }
 
   test("fsmvm") {
@@ -84,8 +79,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = sparseVectorData(Array(2.0, 3.0))
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.fsmvm(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.fsmvm, progStaged.fsmvm)("fsmvm", in)
+    compareOutputWithSequential(progStaged)(progSeq.fsmvm, progStaged.fsmvm, "fsmvm", in)
   }
 
   test("ddmvm0") {
@@ -93,8 +87,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = Array(2.0, 3.0)
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.ddmvm0(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.ddmvm0, progStaged.ddmvm0)("ddmvm0", in)
+    compareOutputWithSequential(progStaged)(progSeq.ddmvm0, progStaged.ddmvm0, "ddmvm0", in)
   }
 
   test("dsmvm0") {
@@ -102,8 +95,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = sparseVectorData(Array(2.0, 3.0))
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.dsmvm0(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.dsmvm0, progStaged.dsmvm0)("dsmvm0", in)
+    compareOutputWithSequential(progStaged)(progSeq.dsmvm0, progStaged.dsmvm0, "dsmvm0", in)
   }
 
   test("sdmvm0") {
@@ -111,8 +103,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = Array(2.0, 3.0)
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.sdmvm0(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.sdmvm0, progStaged.sdmvm0)("sdmvm0", in)
+    compareOutputWithSequential(progStaged)(progSeq.sdmvm0, progStaged.sdmvm0, "sdmvm0", in)
   }
 
   test("ssmvm0") {
@@ -120,8 +111,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = sparseVectorData(Array(2.0, 3.0))
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.ssmvm0(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.ssmvm0, progStaged.ssmvm0)("ssmvm0", in)
+    compareOutputWithSequential(progStaged)(progSeq.ssmvm0, progStaged.ssmvm0, "ssmvm0", in)
   }
 
   test("fdmvm0") {
@@ -129,8 +119,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = Array(2.0, 3.0)
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.fdmvm0(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.fdmvm0, progStaged.fdmvm0)("fdmvm0", in)
+    compareOutputWithSequential(progStaged)(progSeq.fdmvm0, progStaged.fdmvm0, "fdmvm0", in)
   }
 
   test("fsmvm0") {
@@ -138,8 +127,7 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val inV = sparseVectorData(Array(2.0, 3.0))
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
-    progSeq.fsmvm0(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.fsmvm0, progStaged.fsmvm0)("fsmvm0", in)
+    compareOutputWithSequential(progStaged)(progSeq.fsmvm0, progStaged.fsmvm0, "fsmvm0", in)
   }  
 }
 
@@ -152,8 +140,7 @@ class LmsMmmItTests extends LmsLinAlgItTests {
     val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val in = Pair(inM1, inM2)
     val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
-    progSeq.ddmmm(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.ddmmm, progStaged.ddmmm)("ddmmm", in)
+    compareOutputWithSequential(progStaged)(progSeq.ddmmm, progStaged.ddmmm, "ddmmm", in)
   }
 
   test("ssmmm") {
@@ -162,8 +149,7 @@ class LmsMmmItTests extends LmsLinAlgItTests {
     val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
     val in = Pair(inM1, inM2)
     val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
-    progSeq.ssmmm(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.ssmmm, progStaged.ssmmm)("ssmmm", in)
+    compareOutputWithSequential(progStaged)(progSeq.ssmmm, progStaged.ssmmm, "ssmmm", in)
   }
 
   test("ffmmm") {
@@ -171,7 +157,6 @@ class LmsMmmItTests extends LmsLinAlgItTests {
     val inM2 = (Array(1.0, 1.0, 0.0, 1.0), 2)
     val in = Pair(inM1, inM2)
     val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
-    progSeq.ffmmm(in) should be(out)
-    lmsTestRun(progSeq, progStaged)(progSeq.ffmmm, progStaged.ffmmm)("ffmmm", in)
+    compareOutputWithSequential(progStaged)(progSeq.ffmmm, progStaged.ffmmm, "ffmmm", in)
   }
 }
