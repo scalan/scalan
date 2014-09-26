@@ -47,7 +47,7 @@ trait Elems extends Base { self: Scalan =>
     override def isEntityType = false
   }
 
-  case class PairElem[A, B](implicit eFst: Elem[A], eSnd: Elem[B]) extends Element[(A, B)] {
+  case class PairElem[A, B](eFst: Elem[A], eSnd: Elem[B]) extends Element[(A, B)] {
     override def isEntityType = eFst.isEntityType || eSnd.isEntityType
     lazy val tag = {
       implicit val tA = eFst.tag
@@ -57,7 +57,7 @@ trait Elems extends Base { self: Scalan =>
     lazy val defaultRep = defaultVal(Pair(eFst.defaultRepValue, eSnd.defaultRepValue))
   }
 
-  case class SumElem[A, B](implicit eLeft: Elem[A], eRight: Elem[B]) extends Element[(A | B)] {
+  case class SumElem[A, B](eLeft: Elem[A], eRight: Elem[B]) extends Element[(A | B)] {
     override def isEntityType = eLeft.isEntityType || eRight.isEntityType
     lazy val tag = {
       implicit val tA = eLeft.tag
@@ -67,14 +67,14 @@ trait Elems extends Base { self: Scalan =>
     lazy val defaultRep = defaultVal(toLeftSum[A, B](eLeft.defaultRepValue)(eRight))
   }
 
-  case class FuncElem[A, B](implicit eDom: Elem[A], eRange: Elem[B]) extends Element[A => B] {
+  case class FuncElem[A, B](eDom: Elem[A], eRange: Elem[B]) extends Element[A => B] {
     override def isEntityType = eDom.isEntityType || eRange.isEntityType
     lazy val tag = {
       implicit val tA = eDom.tag
       implicit val tB = eRange.tag
       typeTag[A => B]
     }
-    lazy val defaultRep = defaultVal(fun(funcRepDefault[A, B].value))
+    lazy val defaultRep = defaultVal(fun(funcRepDefault[A, B](eRange).value)(Lazy(eDom)))
   }
 
   val AnyRefElement: Elem[AnyRef] = new BaseElem[AnyRef]()(typeTag[AnyRef], Default.OfAnyRef)
@@ -86,9 +86,9 @@ trait Elems extends Base { self: Scalan =>
   implicit val UnitElement: Elem[Unit] = new BaseElem[Unit]
   implicit val StringElement: Elem[String] = new BaseElem[String]
 
-  implicit def pairElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A, B)] = new PairElem[A, B]
-  implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A | B)] = new SumElem[A, B]
-  implicit def funcElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A => B] = new FuncElem[A, B]
+  implicit def pairElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A, B)] = new PairElem[A, B](ea, eb)
+  implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A | B)] = new SumElem[A, B](ea, eb)
+  implicit def funcElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A => B] = new FuncElem[A, B](ea, eb)
   ///implicit def elemElement[A](implicit ea: Elem[A]): Elem[Elem[A]]
 
   implicit def PairElemExtensions[A, B](eAB: Elem[(A, B)]): PairElem[A, B] = eAB.asInstanceOf[PairElem[A, B]]
