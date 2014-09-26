@@ -1,34 +1,32 @@
 package scalan.codegen.lms
 
-import scalan.{ScalanCtxExp, ScalanExp}
-import scalan.codegen.LangBackend
+import java.io._
+import java.net.URLClassLoader
+
+import scalan.codegen.Backend
 import scalan.codegen.GraphVizExport
-import java.io.{InputStreamReader, BufferedReader, File}
 import scalan.linalgebra.VectorsDslExp
 import scalan.community.ScalanCommunityExp
 
-trait LMSBridge[A,B] {
+trait LmsBridge[A,B] {
   val scalan: ScalanCommunityExp with LmsBackend with VectorsDslExp // TODO remove this!
 
-  trait LMSFacadeBase {
-    val lFunc: LMSFunction[A,B]
-  }
+  def outerApply[Ctx <: scalan.Transformer](app: LmsFunction[A,B])(in: app.Exp[A], g: scalan.ProgramGraph[Ctx]):app.Exp[B]
 
-  def outerTest[Ctx <: scalan.Transformer](app: LMSFunction[A,B])(in: app.Exp[A], g: scalan.ProgramGraph[Ctx]):app.Exp[B]
-
-  class LMSFacade[Ctx <: scalan.Transformer](g: scalan.ProgramGraph[Ctx]) extends LMSFacadeBase {
-    val lFunc = new LMSFunction[A,B] {
-      def test(in: this.Exp[A]): this.Exp[B] = {
-        outerTest(this)(in, g)
+  class LmsFacade[Ctx <: scalan.Transformer](g: scalan.ProgramGraph[Ctx]) {
+    val lFunc = new LmsFunction[A,B] {
+      def apply(in: this.Exp[A]): this.Exp[B] = {
+        outerApply(this)(in, g)
       }
     }
   }
 
-  def getFacade[Ctx <: scalan.Transformer](g: scalan.ProgramGraph[Ctx]) = new LMSFacade[Ctx](g)
+  def getFacade[Ctx <: scalan.Transformer](g: scalan.ProgramGraph[Ctx]) = new LmsFacade[Ctx](g)
 }
-trait MyBridge[A,B] extends LMSBridge[A,B] {
 
-  def outerTest[Ctx <: scalan.Transformer](lFunc: LMSFunction[A,B])(in: lFunc.Exp[A], g: scalan.ProgramGraph[Ctx]): lFunc.Exp[B] = {
+trait MyBridge[A,B] extends LmsBridge[A,B] {
+
+  def outerApply[Ctx <: scalan.Transformer](lFunc: LmsFunction[A,B])(in: lFunc.Exp[A], g: scalan.ProgramGraph[Ctx]): lFunc.Exp[B] = {
 
     import scala.collection.Map
 
@@ -265,56 +263,31 @@ trait MyBridge[A,B] extends LMSBridge[A,B] {
   }
 }
 
-trait LmsBackend extends LangBackend { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
+trait LmsBackend extends Backend { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
 
-  protected def launchProcess(launchDir: File, commandArgs: String*) {
-    val builder = new ProcessBuilder(commandArgs: _*)
-    val absoluteLaunchDir = launchDir.getAbsoluteFile
-    builder.directory(absoluteLaunchDir)
-    builder.redirectErrorStream(true)
-    val proc = builder.start()
-    val exitCode = proc.waitFor()
-    exitCode match{
-      case 0 =>
-      case _ =>
-        val stream = proc.getInputStream
-        try {
-          val sb = new StringBuilder()
-          val reader = new BufferedReader(new InputStreamReader(stream))
-          var line: String = reader.readLine()
-          while (line != null) {
-            sb.append(line).append("\n")
-            line = reader.readLine()
-          }
-          throw new RuntimeException(s"Executing '${commandArgs.mkString(" ")}' in directory $absoluteLaunchDir returned exit code $exitCode with following output:\n$sb")
-        } finally {
-          stream.close()
-        }
-    }
-  }
-  
+  case class Config(extraCompilerOptions: Seq[String])
+
+  implicit val defaultConfig = Config(Seq.empty)
+
   def makeBridge[A, B]: MyBridge[A, B] = 
     new MyBridge[A, B] {
       val scalan: LmsBackend.this.type = self
     }
 
-  def run[A,B](dir: String, fileName: String, func: Exp[A=>B], emitGraphs: Boolean) = {
-    val outDir = new File(dir)
-    (emitGraphs) match {
+  protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
+                                      (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
+    emitGraphs match {
       case true =>
-        val dotFile = new File(outDir, fileName + ".dot")
-        this.emitDepGraph(func, dotFile.getAbsolutePath(), false)
+        val dotFile = new File(sourcesDir, functionName + ".dot")
+        this.emitDepGraph(func, dotFile.getAbsolutePath, false)
       case _ =>
     }
 
     val g0 = new PGraph(List(func))
 
-    import java.io.PrintWriter
-    import java.io.FileOutputStream
-
     /* LMS stuff */
 
-    val outputSource = new File(outDir, fileName + ".scala")
+    val outputSource = new File(sourcesDir, functionName + ".scala")
 
     func.elem match {
       case el:FuncElem[_,_] =>
@@ -326,7 +299,7 @@ trait LmsBackend extends LangBackend { self: ScalanCommunityExp with GraphVizExp
 
             val writer = new PrintWriter(new FileOutputStream(outputSource.getAbsolutePath))
             try {
-              codegen.emitSource[a, b](facade.lFunc.test, fileName, writer)(mA, mB)
+              codegen.emitSource[a, b](facade.lFunc.apply, functionName, writer)(mA, mB)
               codegen.emitDataStructures(writer)
             } finally {
               writer.close()
@@ -334,9 +307,25 @@ trait LmsBackend extends LangBackend { self: ScalanCommunityExp with GraphVizExp
         }
     }
 
-    /* Launch scalac */
-    launchProcess(outDir, "scalac", outputSource.getAbsolutePath)
+    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
+      outputSource.getAbsolutePath
+
+    launchProcess(sourcesDir, command: _*)
   }
+
+  protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
+                               (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
+    val url = new File(jarPath(functionName, executableDir)).toURI.toURL
+    val classLoader = new URLClassLoader(scala.Array(url))
+    val cls = classLoader.loadClass(functionName)
+    val argumentClass = eInput.classTag.runtimeClass
+    val method = cls.getMethod("apply", argumentClass)
+    val result = method.invoke(cls.newInstance(), input.asInstanceOf[AnyRef])
+    result.asInstanceOf[B]
+  }
+
+  private def jarPath(functionName: String, executableDir: File) =
+    s"${executableDir.getAbsolutePath}/$functionName.jar"
 
   def createManifest[T](eA: Elem[T]): Manifest[_] = {
     // Doesn't work for some reason, produces int instead of Int

@@ -1,5 +1,4 @@
 package scalan.codegen.lms
-//package util
 
 import scala.reflect.SourceContext
 import virtualization.lms.common._
@@ -10,7 +9,7 @@ import virtualization.lms.epfl.test7._
 //{ScalaGenArrayLoopsFat, ArrayLoopsExp}
 import scala.Tuple2
 
-trait LMSBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp
+trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp
 with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfThenElseFatExp with CastingOpsExp {
   /*type RepD[T] = Rep[T]
   */
@@ -98,8 +97,9 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
 
 }
 
-trait LMSFunction[A,B] extends LMSBackendFacade { self =>
-  def test(x: Rep[A]): Rep[B]
+trait LmsFunction[A,B] extends LmsBackendFacade { self =>
+  def apply(x: Rep[A]): Rep[B]
+  
   val codegen = new ScalaGenEffect with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
     with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenBooleanOps with ScalaGenStruct
     with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
