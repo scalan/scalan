@@ -276,11 +276,9 @@ trait LmsBackend extends Backend { self: ScalanCommunityExp with GraphVizExport 
 
   protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
-    emitGraphs match {
-      case true =>
-        val dotFile = new File(sourcesDir, functionName + ".dot")
-        this.emitDepGraph(func, dotFile.getAbsolutePath, false)
-      case _ =>
+    if (emitGraphs) {
+      val dotFile = new File(sourcesDir, functionName + ".dot")
+      this.emitDepGraph(func, dotFile, false)
     }
 
     val g0 = new PGraph(List(func))

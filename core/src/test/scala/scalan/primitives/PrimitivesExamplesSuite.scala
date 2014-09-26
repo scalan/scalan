@@ -1,5 +1,7 @@
 package scalan.primitives
 
+import java.io.File
+
 import scalan.{ScalanCtxExp, ScalanCtxSeq}
 import scalan.BaseShouldTests
 import scalan.codegen.GraphVizExport
@@ -15,14 +17,12 @@ class PrimitivesExamplesSuite extends BaseShouldTests {
     val ctx = staged
   }
   
-  val prefix = "test-out/scalan/primitives/"
-
   def testMethod(name: String) = {
     val ctx = new ScalanCtxExp with PrimitiveExamples with GraphVizExport {
       this.invokeEnabled = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     val f = ctx.getStagedFunc(name)
-    ctx.emitDepGraph(f, s"$prefix$name.dot", false)
+    ctx.emitDepGraph(f, new File(s"test-out/scalan/primitives/$name.dot"), false)
   }
 
   val whenStaged = "when staged"

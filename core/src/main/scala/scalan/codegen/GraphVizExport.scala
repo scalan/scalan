@@ -8,14 +8,6 @@ import scalan.util.ScalaNameUtil
 
 trait GraphVizExport { self: ScalanExp =>
 
-  def emitDot(dotContent: String, file: String): Unit = {
-    val f = new File(file)
-    f.getParentFile.mkdirs()
-    val stream = new java.io.PrintWriter(new java.io.FileOutputStream(file))
-    stream.println(dotContent)
-    stream.close()
-  }
-
   protected def quote(x: Any) = "\"" + x + "\""
 
   protected def nodeColor(sym: Exp[_]): String = sym.elem match {
@@ -72,13 +64,15 @@ trait GraphVizExport { self: ScalanExp =>
     }
   }
 
-  def emitDepGraph(d: Def[_], file: String, landscape: Boolean): Unit =
+  def emitDepGraph(d: Def[_], file: File, landscape: Boolean): Unit =
     emitDepGraph(dep(d), file, landscape)
-  def emitDepGraph(start: Exp[_], file: String, landscape: Boolean = false): Unit =
+  def emitDepGraph(start: Exp[_], file: File, landscape: Boolean = false): Unit =
     emitDepGraph(List(start), file, landscape)
-  def emitDepGraph(ss: List[Exp[_]], file: String, landscape: Boolean): Unit = {
-    val f = new File(file)
-    f.getParentFile.mkdirs()
+  def emitDepGraph(ss: List[Exp[_]], file: File, landscape: Boolean): Unit = {
+    if (file.isDirectory && !file.delete()) {
+      throw new RuntimeException(s"Failed to delete directory $file")
+    }
+    file.getParentFile.mkdirs()
     val writer = new java.io.PrintWriter(new java.io.FileOutputStream(file))
     try {
       emitDepGraph(ss, writer, landscape)

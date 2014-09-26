@@ -141,12 +141,9 @@ trait Interpreter {
                 (implicit eA: seq.Elem[A], eB: seq.Elem[B]): seq.Rep[B]  =
   {
     val outDir = new File(dir)
-    (emitGraphs) match {
-      case true =>
-        val dotFile = new File(outDir, name + ".dot")
-        import staged._
-        emitDepGraph(f, dotFile.getAbsolutePath(), false)
-      case _ =>
+    if (emitGraphs) {
+      val dotFile = new File(outDir, name + ".dot")
+      emitDepGraph(f, dotFile, false)
     }
     val g0 = new PGraph(List(f))
 
