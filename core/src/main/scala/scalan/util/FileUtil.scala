@@ -1,17 +1,18 @@
 package scalan.util
 
 import java.io._
-import java.nio.charset.Charset
+import java.nio.charset.{StandardCharsets, Charset}
 import java.nio.file.Files
 import scala.Console
 
 object FileUtil {
-  implicit val UTF8: Charset = Charset.forName("UTF-8")
-
-  def read(file: File)(implicit charset: Charset): String =
+  def read(file: File, charset: Charset = StandardCharsets.UTF_8): String =
     new String(Files.readAllBytes(file.toPath), charset)
 
-  def read(path: String)(implicit charset: Charset): String = read(new File(path))(charset)
+  // default arguments can't be used when another overload has them
+  def read(path: String, charset: Charset): String = read(new File(path), charset)
+
+  def read(path: String): String = read(new File(path), StandardCharsets.UTF_8)
 
   def withFile(file: File)(f: PrintWriter => Unit): Unit = {
     if (file.isDirectory && !file.delete()) {

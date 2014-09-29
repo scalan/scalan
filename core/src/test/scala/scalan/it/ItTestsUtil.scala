@@ -15,9 +15,8 @@ trait ItTestsUtil { self: Suite with Matchers =>
 
   def emitGraphs: Boolean = true
 
-  def assertFileContentCheck(name: String): Unit = {
-    FileUtil.read(name) should be(FileUtil.read(name + ".check"))
-  }
+  def assertFileContentCheck(name: String): Unit =
+    FileUtil.read(new File(prefix, name)) should be(FileUtil.read(new File(prefix, name + ".check")))
 
   def getStagedOutput[A, B](back: Backend)(f: back.Exp[A => B], functionName: String, input: A): B = {
     val dir = new File(new File("it-out", prefix), functionName)
