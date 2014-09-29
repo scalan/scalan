@@ -4,7 +4,7 @@ import java.io.{File, PrintWriter}
 import java.lang.reflect.Method
 
 import _root_.scalan.ScalanExp
-import scalan.util.ScalaNameUtil
+import scalan.util.{FileUtil, ScalaNameUtil}
 
 trait GraphVizExport { self: ScalanExp =>
 
@@ -68,18 +68,10 @@ trait GraphVizExport { self: ScalanExp =>
     emitDepGraph(dep(d), file, landscape)
   def emitDepGraph(start: Exp[_], file: File, landscape: Boolean = false): Unit =
     emitDepGraph(List(start), file, landscape)
-  def emitDepGraph(ss: List[Exp[_]], file: File, landscape: Boolean): Unit = {
-    if (file.isDirectory && !file.delete()) {
-      throw new RuntimeException(s"Failed to delete directory $file")
+  def emitDepGraph(ss: List[Exp[_]], file: File, landscape: Boolean): Unit =
+    FileUtil.withFile(file) {
+      emitDepGraph(ss, _, landscape)
     }
-    file.getParentFile.mkdirs()
-    val writer = new java.io.PrintWriter(new java.io.FileOutputStream(file))
-    try {
-      emitDepGraph(ss, writer, landscape)
-    } finally {
-      writer.close()
-    }
-  }
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
     case Def(l1: Lambda[_, _]) =>

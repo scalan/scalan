@@ -1,6 +1,6 @@
 package scalan.codegen
 
-import java.io.{BufferedReader, File, InputStreamReader}
+import java.io.File
 
 import scalan.ScalanExp
 import scalan.staged.BaseExp
@@ -36,30 +36,4 @@ trait Backend extends BaseExp {
 
   protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
                                (config: Config, eInput: Elem[A], eOutput: Elem[B]): B
-
-  protected def launchProcess(workingDir: File, commandArgs: String*) {
-    val builder = new ProcessBuilder(commandArgs: _*)
-    val absoluteWorkingDir = workingDir.getAbsoluteFile
-    builder.directory(absoluteWorkingDir)
-    builder.redirectErrorStream(true)
-    val proc = builder.start()
-    val exitCode = proc.waitFor()
-    if (exitCode != 0) {
-      val stream = proc.getInputStream
-      try {
-        val sb = new StringBuilder()
-        val reader = new BufferedReader(new InputStreamReader(stream))
-        var line: String = reader.readLine()
-        while (line != null) {
-          sb.append(line).append("\n")
-          line = reader.readLine()
-        }
-        throw new RuntimeException(s"Executing '${commandArgs.mkString(" ")}' in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n$sb")
-      } finally {
-        stream.close()
-      }
-    } else {
-      // program executed successfully
-    }
-  }
 }

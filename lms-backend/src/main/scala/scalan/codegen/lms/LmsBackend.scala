@@ -7,6 +7,7 @@ import scalan.codegen.Backend
 import scalan.codegen.GraphVizExport
 import scalan.linalgebra.VectorsDslExp
 import scalan.community.ScalanCommunityExp
+import scalan.util.{FileUtil, ProcessUtil}
 
 trait LmsBridge[A,B] {
   val scalan: ScalanCommunityExp with LmsBackend with VectorsDslExp // TODO remove this!
@@ -295,12 +296,9 @@ trait LmsBackend extends Backend { self: ScalanCommunityExp with GraphVizExport 
             val facade = bridge.getFacade(g0.asInstanceOf[bridge.scalan.PGraph])
             val codegen = facade.lFunc.codegen
 
-            val writer = new PrintWriter(new FileOutputStream(outputSource.getAbsolutePath))
-            try {
+            FileUtil.withFile(outputSource) { writer =>
               codegen.emitSource[a, b](facade.lFunc.apply, functionName, writer)(mA, mB)
               codegen.emitDataStructures(writer)
-            } finally {
-              writer.close()
             }
         }
     }
@@ -308,7 +306,7 @@ trait LmsBackend extends Backend { self: ScalanCommunityExp with GraphVizExport 
     val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
       outputSource.getAbsolutePath
 
-    launchProcess(sourcesDir, command: _*)
+    ProcessUtil.launch(sourcesDir, command: _*)
   }
 
   protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
