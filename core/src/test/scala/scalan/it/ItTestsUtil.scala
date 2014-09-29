@@ -18,6 +18,7 @@ trait ItTestsUtil { self: Suite with Matchers =>
   def assertFileContentCheck(name: String): Unit =
     FileUtil.read(new File(prefix, name)) should be(FileUtil.read(new File(prefix, name + ".check")))
 
+  // TODO add overloads which take config (tried to add default arguments, there are some strange errors)
   def getStagedOutput[A, B](back: Backend)(f: back.Exp[A => B], functionName: String, input: A): B = {
     val dir = new File(new File("it-out", prefix), functionName)
 
