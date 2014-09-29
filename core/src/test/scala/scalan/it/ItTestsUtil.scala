@@ -4,8 +4,8 @@ import java.io.File
 
 import org.scalatest.{Matchers, Suite}
 
-import scala.io.Source
 import scalan.codegen.Backend
+import scalan.util.FileUtil
 
 // extracted so it can be used with different suite styles
 trait ItTestsUtil { self: Suite with Matchers =>
@@ -15,11 +15,8 @@ trait ItTestsUtil { self: Suite with Matchers =>
 
   def emitGraphs: Boolean = true
 
-  def readFile(name: String): String =
-    Source.fromFile(name).getLines().toIterator.mkString("\n")
-
   def assertFileContentCheck(name: String): Unit = {
-    readFile(name + ".check") should be(readFile(name))
+    FileUtil.read(name) should be(FileUtil.read(name + ".check"))
   }
 
   def getStagedOutput[A, B](back: Backend)(f: back.Exp[A => B], functionName: String, input: A): B = {
