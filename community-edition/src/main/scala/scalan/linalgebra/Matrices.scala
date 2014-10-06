@@ -12,9 +12,9 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
     implicit def elem: Elem[T]
     def rows: PA[Vector[T]]
     def columns: PA[Vector[T]]
-    def *(vector: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]): Vec[T] =
+    def *(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] =
       DenseVector(rows.map { r => r.dot(vector) })
-    def *(mat: Matr[T])(implicit n: Numeric[T], m: RepMonoid[T], d: DummyImplicit): Matr[T] = {
+    def *(mat: Matr[T])(implicit n: Numeric[T], d: DummyImplicit): Matr[T] = {
       val resColumns = mat.columns.map { col: Rep[Vector[T]] => this * col }
       companion.fromColumns(resColumns)
     }
@@ -97,7 +97,7 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
   //    def defaultOf[T: Elem] = Default.defaultVal(ColumnMajorSparseMatrix(element[PArray[SparseVector[T]]].defaultRepValue))
   //  }
 
-  //  def matrixVectorMult[T: Elem: Numeric: RepMonoid](m: Matr[T], v: Vec[T]) = {
+  //  def matrixVectorMult[T: Elem: Numeric](m: Matr[T], v: Vec[T]) = {
   //    DenseVector(m.rows.map { r => r.dot(v) })
   //  }
 }
