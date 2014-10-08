@@ -312,7 +312,8 @@ trait LmsBackend extends Backend { self: ScalanCommunityExp with GraphVizExport 
   protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
                                (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
     val url = new File(jarPath(functionName, executableDir)).toURI.toURL
-    val classLoader = new URLClassLoader(scala.Array(url))
+    // ensure Scala library is available
+    val classLoader = new URLClassLoader(scala.Array(url), classOf[_ => _].getClassLoader)
     val cls = classLoader.loadClass(functionName)
     val argumentClass = eInput.classTag.runtimeClass
     val method = cls.getMethod("apply", argumentClass)
