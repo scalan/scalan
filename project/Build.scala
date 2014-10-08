@@ -1,11 +1,11 @@
-import sbt._
 import sbt.Keys._
+import sbt._
 import sbtassembly.Plugin._
-import AssemblyKeys._
+import sbtrelease.ReleasePlugin._
 
 object ScalanBuild extends Build {
   val opts = scalacOptions ++= Seq(
-    // "-unchecked",
+    "-unchecked",
     "-deprecation",
     "-Xlint",
     "-feature",
@@ -27,7 +27,8 @@ object ScalanBuild extends Build {
     "cglib" % "cglib" % "3.1",
     "org.objenesis" % "objenesis" % "2.1")
 
-  val testSettings = Seq(
+  val testSettings = inConfig(ItTest)(Defaults.testTasks) ++
+    inConfig(PerfTest)(Defaults.testTasks ++ baseAssemblySettings) ++ Seq(
     testOptions in Test := Seq(Tests.Filter(x => !itFilter(x))),
     testOptions in ItTest := Seq(Tests.Filter(x => itFilter(x))),
     testFrameworks in PerfTest := Seq(new TestFramework("org.scalameter.ScalaMeterFramework")),
@@ -37,23 +38,21 @@ object ScalanBuild extends Build {
     parallelExecution in ItTest := false,
     parallelExecution in PerfTest := false,
     fork in PerfTest := true,
-    javaOptions in PerfTest ++= Seq("-Xmx30G", "-Xms15G"))
+    javaOptions in PerfTest ++= Seq("-Xmx30G", "-Xms15G"),
+    publishArtifact in Test := true,
+    publishArtifact in(Test, packageDoc) := false)
 
-  val commonSettings = inConfig(ItTest)(Defaults.testTasks) ++ 
-    inConfig(PerfTest)(Defaults.testTasks ++ baseAssemblySettings) ++ Seq(
-      scalaVersion := "2.10.4",
-      organization := "com.huawei.scalan",
-      version := "0.1-SNAPSHOT",
-      publishArtifact in Test := true,
-      publishArtifact in (Test, packageDoc) := false,
-      publishTo := {
-        val nexus = "http://10.122.85.37:9081/nexus/"
-        if (version.value.trim.endsWith("SNAPSHOT"))
-          Some("snapshots" at (nexus + "content/repositories/snapshots"))
-        else
-          Some("releases" at (nexus + "content/repositories/releases"))
-      },
-      opts, commonDeps) ++ testSettings ++ assemblySettings
+  val commonSettings = Seq(
+    scalaVersion := "2.10.4",
+    organization := "com.huawei.scalan",
+    publishTo := {
+      val nexus = "http://10.122.85.37:9081/nexus/"
+      if (version.value.trim.endsWith("SNAPSHOT"))
+        Some("snapshots" at (nexus + "content/repositories/snapshots"))
+      else
+        Some("releases" at (nexus + "content/repositories/releases"))
+    },
+    opts, commonDeps) ++ testSettings ++ assemblySettings ++ releaseSettings
 
   lazy val ItTest = config("it").extend(Test)
 
@@ -62,32 +61,37 @@ object ScalanBuild extends Build {
   def itFilter(name: String): Boolean = name.contains("ItTests")
 
   implicit class ProjectExt(p: Project) {
-    def allConfigs = p % "compile->compile;test->test"
+    def allConfigDependency = p % "compile->compile;test->test"
+
+    def addTestConfigsAndCommonSettings =
+      p.configs(ItTest, PerfTest).settings(commonSettings: _*)
   }
 
-  lazy val core = project.in(file("core")).configs(ItTest, PerfTest).
-    settings(commonSettings: _*)
+  lazy val core = project.in(file("core")).addTestConfigsAndCommonSettings
 
-  lazy val coreDep = core.allConfigs
+  lazy val coreDep = core.allConfigDependency
 
-  lazy val ce = Project("community-edition", file("community-edition")).dependsOn(coreDep).configs(ItTest, PerfTest).
-    settings(commonSettings: _*)
+  lazy val ce = Project("community-edition", file("community-edition")).dependsOn(coreDep).
+    addTestConfigsAndCommonSettings
 
   val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2")
 
-  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(coreDep, ce.allConfigs).configs(ItTest, PerfTest).
-    settings(commonSettings: _*).settings(
-     libraryDependencies ++= Seq("EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT",
-                                 "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT" classifier "tests",
-                                 "org.scala-lang.virtualized" % "scala-library" % virtScala,
-                                 "org.scala-lang.virtualized" % "scala-compiler" % virtScala),
-     scalaOrganization := "org.scala-lang.virtualized",
-     scalaVersion := virtScala
-  )
-  
+  val lms = "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT"
+
+  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(coreDep, ce.allConfigDependency).
+    addTestConfigsAndCommonSettings.settings(
+      libraryDependencies ++= Seq(lms,
+        lms classifier "tests",
+        "org.scala-lang.virtualized" % "scala-library" % virtScala,
+        "org.scala-lang.virtualized" % "scala-compiler" % virtScala),
+      scalaOrganization := "org.scala-lang.virtualized",
+      scalaVersion := virtScala,
+      // we know we use LMS snapshot here, ignore it
+      ReleaseKeys.snapshotDependencies := Seq.empty)
+
   // name to make this the default project
-  lazy val root = Project("all", file(".")).aggregate(core, ce, lmsBackend).
-    configs(ItTest, PerfTest).settings(publishArtifact := false, publish := {}, publishLocal := {})
-
-
+  lazy val root = Project("scalan", file(".")).aggregate(core, ce, lmsBackend).
+    configs(ItTest, PerfTest).settings(commonSettings: _*).
+    // don't publish or release the aggregate project itself
+    settings(publishArtifact := false, publish := {}, publishLocal := {})
 }
