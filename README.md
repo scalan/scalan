@@ -1,8 +1,8 @@
-# Scalan Community Edition manual
+# Scalan Community Edition
 
 ## Intro
 
-Scalan is a framework for creating staged embedded DSLs in Scala. It allows you to write high-level Scala programs and compile them to efficient parallel C++ (or other languages, depending on the backend) and to develop new abstractions which can be used in such programs.
+Scalan is a framework for creating staged embedded DSLs in Scala. It allows you to write high-level Scala programs and compile them to efficient low-level code (in the language determined by the used backend) and to develop new abstractions which can be used in such programs.
 
 ### Installation
 
@@ -43,7 +43,7 @@ As in Scala, arithmetical operations on `Rep[T]` require an implicit `Numeric[T]
 
 Equality is written `===` and inequality `!==`. Note that accidental use of `==` or `!=` will likely compile (since `Boolean` can be implicitly converted to `Rep[Boolean]`) but produce wrong results!
 
-Conditional expression is `IF (cond) THEN branch1 ELSE branch2`, where `cond: Rep[Boolean`. `THEN` is optional, and `ELSEIF` can be used in place of `ELSE`. Because `IF`, `THEN`, and `ELSE` are methods, they are parsed differently from `if` and `else`. Namely, `THEN` and `ELSE` shouldn't start new lines, e.g.
+Conditional expression is `IF (cond) THEN branch1 ELSE branch2`, where `cond: Rep[Boolean`. `THEN` is optional, and `ELSEIF` can be used in place of `ELSE`. Because `IF`, `THEN` and `ELSE` are methods, they are parsed differently from normal Scala conditionals `if`, `then` and `else`. Namely, `THEN` and `ELSE` shouldn't start new lines, e.g.
 ~~~scala
 IF (true)
   THEN true
@@ -87,7 +87,7 @@ val collatz = from(start).until(_ === 1) { n => IF (n % 2 === 0) THEN (n / 2) EL
 
 Methods can be defined using `def` keyword, as usual. Normally all arguments and return values will have `Rep` types, but this isn't required.
 
-#### User types
+### User types
 
 User types (abstract like `Vector[T]` and concrete like `DenseVector[T]`) are introduced as part of a DSL (`VectorsDsl`). For these types `T` there is an implicit conversion from `Rep[T]` to `T`, so all methods/fields of `T` are available on `Rep[T]`. If you need to add your own types see "Extending Scalan" below. It's possible to create classes with `Rep` fields, but you won't be able to stage these classes directly (i.e. obtain a `Rep[MyClass]`).
 
@@ -96,39 +96,60 @@ User types (abstract like `Vector[T]` and concrete like `DenseVector[T]`) are in
 Your program needs to extends `Scalan` trait (along with any traits describing the DSLs you use) or `ScalanCommunity` if you want to use `community-edition` instead of `core`. Here is a very simple example program:
 ~~~scala
 trait HelloScalan extends ScalanCommunityDsl { // ScalanCommunityDsl includes ScalanCommunity and all DSLs defined in that project
-  def multMatrixVector[A](m: Rep[Matrix[A]], v: Rep[Vector[A]]): Rep[Vector[A]] =
-    DenseVector(m.rows.map(row => (row ^* vector).sum))
-
-  lazy val run = fun { x: Rep[(PArray[PArray[Double]], PArray[Double])] => } // TODO
+  lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] => 
+    val Pair(m, v) = p
+    val matrix: Matr[Double] = RowMajorMatrix(PArray(m.map { r: Arr[Double] => DenseVector(PArray(r)) }))
+    val vector: Vec[Double] = DenseVector(PArray(v))
+    (matrix * vector).coords.arr
+  }
 }
 ~~~
-This can be seen to be very close to a usual Scala program, except for use of `Rep` type constructor and `fun` method.
+This can be seen to be very close to a usual Scala program, except for use of `Rep` type constructor and `fun` method. Note that `run` takes core types as argument and returns core types, not matrices and vectors themselves.
 
 Now, there are two ways in which Scalan can work with this program:
 
-### Sequential mode
+#### Sequential mode
 
 Run it without optimizations in order to ensure it works as desired and debug if necessary. This is done by mixing in `ScalanCommunityDslSeq` (and `Seq` versions of any additional DSLs used by your program):
 ~~~scala
 object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
-  def main(args: Array[String]) = run(...)
+  def main(args: Array[String]) = {
+    // example input
+    val matrix = Array(Array(1.0, 2.0), Array(3.0, 5.0))
+    val vector = Array(2.0, 3.0)
+    val multResult = run(matrix, vector)
+    println(multResult.mkString)
+  }
 }
 ~~~
 In this mode, Scalan's behavior is very simple: `Rep[A]` is the same type as `A`, and `fun` returns its argument, so you can mentally erase all `Rep` and `fun`. However, the structure of Scalan programs inhibits some of Scala's own optimization opportunities, so it should be expected to run somewhat slower than an equivalent Scala program.
 
-### Staged mode
+#### Staged mode
 
 Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a backend trait. Currently Scalan Community edition contains only one backend `LmsBackend`.
 ~~~scala
 object HelloScalanStaged extends HelloScalan with ScalanCommunityDslExp with LmsBackend {
-  def main(args: Array[String]) = // TODO
+  def main(args: Array[String]) = {
+    // output directory
+    val dir = new File("path/to/directory")
+    generateExecutable(
+      dir,
+      // generated class name
+      "HelloScalan",
+      // function to compile
+      run,
+      // should .dot file showing program IR be generated
+      false)
+  }
 }
 ~~~
-Running this program will generate Scala code in directory TODO, which still needs to be compiled or added to your own program (in the future the generated code will be automatically compiled and a .jar file created). Note that generated code does _not_ depend on Scalan or any other external libraries.
+Running this program will generate `HelloScalan.scala` and `HelloScalan.jar` in the given directory. `HelloScalan` class will have a `apply((Array[Array[Double]], Array[Double])): Array[Double]` method which corresponds to the `run` function. You can add either the source code or the jar to your own programs and call the `apply` method from them.
 
-In this mode `Rep[A]` should be understood as representing a value of type `A` in the generated code. Any values of non-`Rep` Scala types which appear in the Scalan program aren't directly represented.
+Note that generated code depends only on the Scala standard library, not on Scalan. If it's acceptable for your program to depend on Scalan, it can also call `Backend.execute` method which loads the generated class and invokes the `apply` method.
 
-Scalan aggressively applies optimizations such as dead code elimination, common sub-expression elimination, and function inlining independently of backend. The backend can, of course, include its own optimizations as well (a major one in LMS is loop fusion).
+In this mode `Rep[A]` represents a value of type `A` in the generated code. Any values of non-`Rep` Scala types which appear in the Scalan program aren't represented directly.
+
+Scalan aggressively applies optimizations such as dead code elimination, common sub-expression elimination, and function inlining independently of backend. The backend can, of course, include its own optimizations as well (a major one in `LmsBackend` is loop fusion).
 
 ## Understanding Scalan code
 
