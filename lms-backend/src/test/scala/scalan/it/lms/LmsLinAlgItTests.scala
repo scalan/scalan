@@ -3,23 +3,13 @@ package scalan.it.lms
 import _root_.scalan.it.BaseItTests
 import _root_.scalan.scalan.linalgebra.LinearAlgebraExamples
 import scalan.codegen.lms.LmsBackend
-import scalan.ScalanCtxExp
 import scalan.codegen.GraphVizExport
 import scalan.linalgebra.MatricesDslExp
-import scalan.ScalanCtxSeq
 import scalan.linalgebra.MatricesDslSeq
-import scalan.codegen.lms.MyBridge
 import scalan.community.{ScalanCommunitySeq, ScalanCommunityExp}
 
 class LmsLinAlgItTests extends BaseItTests {
-  class ProgExp extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityExp with GraphVizExport with LmsBackend { self =>
-//    override def makeBridge[A, B] = new MyBridge[A, B] {
-//      override val scalan = self
-//      
-//      override def 
-//    }
-  }
-  
+  class ProgExp extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityExp with GraphVizExport with LmsBackend
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunitySeq
   
   val progStaged = new ProgExp() {
