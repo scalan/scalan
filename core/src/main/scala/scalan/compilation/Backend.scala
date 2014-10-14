@@ -1,4 +1,4 @@
-package scalan.codegen
+package scalan.compilation
 
 import java.io.File
 

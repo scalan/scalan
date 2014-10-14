@@ -4,7 +4,7 @@ import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
 import scalan.it.BaseItTests
 import scalan.scalan.arrays.PArrayExamples
 import scalan.arrays.{PArraysDslSeq, PArraysDslExp}
-import scalan.codegen.Backend
+import scalan.compilation.Backend
 import scalan.it.smoke.SmokeItTests
 import scalan.community.{ScalanCommunity, ScalanCommunitySeq, ScalanCommunityExp}
 

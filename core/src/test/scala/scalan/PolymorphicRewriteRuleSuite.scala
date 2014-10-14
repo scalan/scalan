@@ -1,6 +1,6 @@
 package scalan
 
-import _root_.scalan.codegen.GraphVizExport
+import _root_.scalan.compilation.GraphVizExport
 
 class PolymorphicRewriteRuleSuite extends BaseShouldTests {
 

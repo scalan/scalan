@@ -2,8 +2,8 @@ package scalan.it.lms
 
 import _root_.scalan.it.BaseItTests
 import _root_.scalan.scalan.linalgebra.LinearAlgebraExamples
-import scalan.codegen.lms.LmsBackend
-import scalan.codegen.GraphVizExport
+import scalan.compilation.lms.LmsBackend
+import scalan.compilation.GraphVizExport
 import scalan.linalgebra.MatricesDslExp
 import scalan.linalgebra.MatricesDslSeq
 import scalan.community.{ScalanCommunitySeq, ScalanCommunityExp}

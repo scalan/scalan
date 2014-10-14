@@ -1,4 +1,4 @@
-package scalan.codegen.lms
+package scalan.compilation.lms
 
 import scalan.community.ScalanCommunityExp
 import scalan.linalgebra.VectorsDslExp

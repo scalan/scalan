@@ -2,7 +2,7 @@ package scalan.it.smoke
 
 import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
 import scalan.it.BaseItTests
-import scalan.codegen.Backend
+import scalan.compilation.Backend
 
 /**
  *  Tests that very simple examples are run correctly

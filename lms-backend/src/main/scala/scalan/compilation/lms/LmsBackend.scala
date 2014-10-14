@@ -1,10 +1,10 @@
-package scalan.codegen.lms
+package scalan.compilation.lms
 
 import java.io._
 import java.net.URLClassLoader
 
-import scalan.codegen.Backend
-import scalan.codegen.GraphVizExport
+import scalan.compilation.Backend
+import scalan.compilation.GraphVizExport
 import scalan.linalgebra.VectorsDslExp
 import scalan.community.ScalanCommunityExp
 import scalan.util.{FileUtil, ProcessUtil}

@@ -1,8 +1,8 @@
 package scalan.it.lms
 
-import scalan.codegen.lms.LmsBackend
+import scalan.compilation.lms.LmsBackend
 import scalan.arrays.PArraysDslExp
-import scalan.codegen.GraphVizExport
+import scalan.compilation.GraphVizExport
 import scalan.linalgebra.VectorsDslExp
 import scalan.community.ScalanCommunityExp
 import scalan.scalan.CommunitySmokeItTests

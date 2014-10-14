@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.codegen.GraphVizExport
+import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.seq.BaseSeq
 import scalan.staged.{BaseExp, Expressions, Transforming}

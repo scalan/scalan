@@ -1,6 +1,6 @@
 package scalan
 
-import codegen.GraphVizExport
+import compilation.GraphVizExport
 import java.io.File
 
 /**

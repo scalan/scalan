@@ -5,7 +5,7 @@ import java.io.File
 import scalan.{ScalanCtxExp, ScalanCtxSeq}
 import org.scalatest.{Matchers, FlatSpec}
 import scalan.arrays.{PArraysDslExp, PArraysDslSeq}
-import scalan.codegen.GraphVizExport
+import scalan.compilation.GraphVizExport
 import scalan.BaseShouldTests
 
 

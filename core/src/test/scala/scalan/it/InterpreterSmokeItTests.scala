@@ -1,7 +1,7 @@
 package scalan.it
 
 import scalan.{ScalanDsl, ScalanCtxSeq, ScalanCtxExp, Interpreter}
-import scalan.codegen.{GraphVizExport}
+import scalan.compilation.{GraphVizExport}
 import java.io.File
 
 /**

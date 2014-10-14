@@ -4,7 +4,7 @@ import java.io.File
 
 import org.scalatest.{Matchers, Suite}
 
-import scalan.codegen.Backend
+import scalan.compilation.Backend
 import scalan.util.FileUtil
 
 // extracted so it can be used with different suite styles

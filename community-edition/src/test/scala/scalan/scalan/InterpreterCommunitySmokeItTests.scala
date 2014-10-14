@@ -2,7 +2,7 @@ package scalan.scalan
 
 import scalan.arrays.{PArraysDslSeq, PArraysDslExp}
 import scalan.{Interpreter, ScalanCtxSeq, ScalanCtxExp}
-import scalan.codegen.{GraphVizExport}
+import scalan.compilation.{GraphVizExport}
 import scalan.linalgebra.{VectorsDslSeq, VectorsDslExp}
 import scalan.scalan.arrays.PArrayExamples
 import scalan.it.{InterpreterSmokeItTests, BaseItTests}

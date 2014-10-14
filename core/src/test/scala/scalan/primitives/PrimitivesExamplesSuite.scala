@@ -4,7 +4,7 @@ import java.io.File
 
 import scalan.{ScalanCtxExp, ScalanCtxSeq}
 import scalan.BaseShouldTests
-import scalan.codegen.GraphVizExport
+import scalan.compilation.GraphVizExport
 
 class PrimitivesExamplesSuite extends BaseShouldTests {
 

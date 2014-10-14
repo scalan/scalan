@@ -3,7 +3,7 @@ package scalan.primitives
 import java.io.File
 
 import scala.language.reflectiveCalls
-import scalan.codegen.GraphVizExport
+import scalan.compilation.GraphVizExport
 import scalan.monads.{ApplicativeExp, ApplicativeSeq, MonadsDslExp, MonadsDslSeq}
 import scalan.{BaseTests, ScalanCtxExp, ScalanCtxSeq}
 

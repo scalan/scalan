@@ -2,7 +2,7 @@ package scalan.staged
 
 import java.io.File
 
-import scalan.codegen.GraphVizExport
+import scalan.compilation.GraphVizExport
 import scalan.BaseShouldTests
 
 import scalan.ScalanCtxExp
