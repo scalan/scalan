@@ -12,9 +12,7 @@ class LmsLinAlgItTests extends BaseItTests {
   class ProgExp extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunitySeq
   
-  val progStaged = new ProgExp() {
-    this.invokeEnabled = true
-  }
+  val progStaged = new ProgExp
   val progSeq = new ProgSeq
   
   def sparseVectorData(arr: Array[Double]) = ((0.until(arr.length)).toArray, (arr, arr.length))

@@ -1,6 +1,7 @@
 package scalan.staged
 
 import java.io.File
+import java.lang.reflect.Method
 
 import scalan.compilation.GraphVizExport
 import scalan.BaseShouldTests
@@ -10,7 +11,8 @@ import scalan.ScalanCtxExp
 class TransformingSuite extends BaseShouldTests {
 
   def getCtx = new ScalanCtxExp with GraphVizExport {
-    this.invokeEnabled = true
+    override def isInvokeEnabled(d: Def[_], m: Method) = true
+
     lazy val test = fun { xyz: Rep[(Int, (Int, Int))] =>
       val x = xyz._1
       val y = xyz._2

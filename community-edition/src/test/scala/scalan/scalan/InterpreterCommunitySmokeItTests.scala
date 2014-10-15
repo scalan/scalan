@@ -1,5 +1,7 @@
 package scalan.scalan
 
+import java.lang.reflect.Method
+
 import scalan.arrays.{PArraysDslSeq, PArraysDslExp}
 import scalan.{Interpreter, ScalanCtxSeq, ScalanCtxExp}
 import scalan.compilation.{GraphVizExport}
@@ -88,7 +90,8 @@ class InterpreterCommunitySmokeItTests extends InterpreterSmokeItTests {
   class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with VectorsDslExp
 
   override val progStaged = new ProgExp() {
-    this.invokeEnabled = true
+    // FIXME should be handled in the interpreter
+    override def isInvokeEnabled(d: Def[_], m: Method) = true
   }
 
   test("test2simpleArrGet") {

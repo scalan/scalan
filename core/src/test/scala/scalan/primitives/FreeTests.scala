@@ -1,6 +1,7 @@
 package scalan.primitives
 
 import java.io.File
+import java.lang.reflect.Method
 
 import scala.language.reflectiveCalls
 import scalan.compilation.GraphVizExport
@@ -36,7 +37,7 @@ class FreeTests extends BaseTests {
 
   test("monadsStaged") {
     val ctx = new ScalanCtxExp with MonadsDslExp with GraphVizExport {
-      invokeEnabled = true
+      override def isInvokeEnabled(d: Def[_], m: Method) = true
 
       def computation = {
         val res = for {
@@ -52,7 +53,8 @@ class FreeTests extends BaseTests {
 
   test("stateStaged") {
     val ctx = new ScalanCtxExp with MonadsDslExp with GraphVizExport {
-      invokeEnabled = true
+      override def isInvokeEnabled(d: Def[_], m: Method) = true
+
       val S = proxyStateMonadCompanion(StateMonad);
 
       import S._
@@ -73,7 +75,8 @@ class FreeTests extends BaseTests {
 
   test("ioStaged") {
     val ctx = new ScalanCtxExp with MonadsDslExp with GraphVizExport {
-      invokeEnabled = true
+      override def isInvokeEnabled(d: Def[_], m: Method) = true
+
       val IO = proxyIOMonadCompanion(IOMonad)
 
       import IO._

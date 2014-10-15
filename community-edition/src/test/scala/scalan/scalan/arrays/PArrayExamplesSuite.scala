@@ -1,6 +1,7 @@
 package scalan.scalan.arrays
 
 import java.io.File
+import java.lang.reflect.Method
 
 import scalan.{ScalanCtxExp, ScalanCtxSeq}
 import org.scalatest.{Matchers, FlatSpec}
@@ -28,7 +29,7 @@ class PArrayExamplesSuite extends BaseShouldTests {
 
   def testMethod(name: String) = {
     val ctx = new ScalanCtxExp with PArraysDslExp with PArrayExamples with GraphVizExport {
-      this.invokeEnabled = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
+      override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     val f = ctx.getStagedFunc(name)
     ctx.emitDepGraph(f, new File(s"test-out/scalan/arrays/$name.dot"), false)

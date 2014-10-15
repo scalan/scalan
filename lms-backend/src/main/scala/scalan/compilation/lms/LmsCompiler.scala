@@ -15,7 +15,7 @@ trait LmsCompiler extends Compiler { self: ScalanCommunityExp with GraphVizExpor
 
   implicit val defaultConfig = Config(Seq.empty)
 
-  def graphPasses(config: Config) = Seq.empty
+  def graphPasses(config: Config) = Seq(AllInvokeEnabler)
 
   def makeBridge[A, B]: LmsBridge[A, B] = new LmsBridge[A, B] {
     val scalan = self
