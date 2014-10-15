@@ -1,6 +1,6 @@
 package scalan.it.lms
 
-import scalan.compilation.lms.LmsBackend
+import scalan.compilation.lms.LmsCompiler
 import scalan.arrays.PArraysDslExp
 import scalan.compilation.GraphVizExport
 import scalan.linalgebra.VectorsDslExp
@@ -8,7 +8,7 @@ import scalan.community.ScalanCommunityExp
 import scalan.scalan.CommunitySmokeItTests
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
-  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsBackend with VectorsDslExp
+  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler with VectorsDslExp
   
   override val progStaged = new ProgExp() {
     this.invokeEnabled = true

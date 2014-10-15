@@ -2,14 +2,14 @@ package scalan.it.lms
 
 import _root_.scalan.it.BaseItTests
 import _root_.scalan.scalan.linalgebra.LinearAlgebraExamples
-import scalan.compilation.lms.LmsBackend
+import scalan.compilation.lms.LmsCompiler
 import scalan.compilation.GraphVizExport
 import scalan.linalgebra.MatricesDslExp
 import scalan.linalgebra.MatricesDslSeq
 import scalan.community.{ScalanCommunitySeq, ScalanCommunityExp}
 
 class LmsLinAlgItTests extends BaseItTests {
-  class ProgExp extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityExp with GraphVizExport with LmsBackend
+  class ProgExp extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunitySeq
   
   val progStaged = new ProgExp() {

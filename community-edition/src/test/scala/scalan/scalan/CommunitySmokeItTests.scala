@@ -4,7 +4,7 @@ import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
 import scalan.it.BaseItTests
 import scalan.scalan.arrays.PArrayExamples
 import scalan.arrays.{PArraysDslSeq, PArraysDslExp}
-import scalan.compilation.Backend
+import scalan.compilation.Compiler
 import scalan.it.smoke.SmokeItTests
 import scalan.community.{ScalanCommunity, ScalanCommunitySeq, ScalanCommunityExp}
 
@@ -251,7 +251,7 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
 //    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
   }
 
-  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with Backend
+  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with Compiler
   override val progSeq = new ProgCommunitySeq()
 
   //  test("test00simpleConst") {

@@ -3,47 +3,39 @@ package scalan.compilation.lms
 import java.io._
 import java.net.URLClassLoader
 
-import scalan.compilation.Backend
+import scalan.compilation.Compiler
 import scalan.compilation.GraphVizExport
 import scalan.linalgebra.VectorsDslExp
 import scalan.community.ScalanCommunityExp
 import scalan.util.{FileUtil, ProcessUtil}
 
-trait LmsBackend extends Backend { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
+trait LmsCompiler extends Compiler { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
 
   case class Config(extraCompilerOptions: Seq[String])
 
   implicit val defaultConfig = Config(Seq.empty)
 
+  def graphPasses(config: Config) = Seq.empty
+
   def makeBridge[A, B]: LmsBridge[A, B] = new LmsBridge[A, B] {
     val scalan = self
   }
 
-  protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
+  protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
-    if (emitGraphs) {
-      val dotFile = new File(sourcesDir, functionName + ".dot")
-      this.emitDepGraph(func, dotFile, false)
-    }
-
-    val g0 = new PGraph(List(func))
-
     /* LMS stuff */
 
     val outputSource = new File(sourcesDir, functionName + ".scala")
 
-    func.elem match {
-      case el:FuncElem[_,_] =>
-        (createManifest(el.eDom), createManifest(el.eRange)) match {
-          case (mA:Manifest[a], mB:Manifest[b]) =>
-            val bridge = makeBridge[a, b]
-            val facade = bridge.getFacade(g0.asInstanceOf[bridge.scalan.PGraph])
-            val codegen = facade.codegen
+    (createManifest(eInput), createManifest(eOutput)) match {
+      case (mA: Manifest[a], mB: Manifest[b]) =>
+        val bridge = makeBridge[a, b]
+        val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
+        val codegen = facade.codegen
 
-            FileUtil.withFile(outputSource) { writer =>
-              codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
-              codegen.emitDataStructures(writer)
-            }
+        FileUtil.withFile(outputSource) { writer =>
+          codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
+          codegen.emitDataStructures(writer)
         }
     }
 
