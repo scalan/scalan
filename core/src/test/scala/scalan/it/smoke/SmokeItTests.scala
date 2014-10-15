@@ -2,7 +2,7 @@ package scalan.it.smoke
 
 import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
 import scalan.it.BaseItTests
-import scalan.codegen.Backend
+import scalan.compilation.Compiler
 
 /**
  *  Tests that very simple examples are run correctly
@@ -199,7 +199,7 @@ abstract class SmokeItTests extends BaseItTests {
 //    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
   }
 
-  val progStaged: Prog with ScalanCtxExp with Backend
+  val progStaged: Prog with ScalanCtxExp with Compiler
   val progSeq: Prog with ScalanCtxSeq = new ProgSeq()
 
   import progSeq._

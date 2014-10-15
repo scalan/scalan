@@ -48,8 +48,6 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
     x match {
       case Def(d) => d match {
         case Const(c) => c
-        case _ if invokeEnabled && ct.runtimeClass.isInstance(d) =>
-          d.asInstanceOf[Ops]
         case _ =>
           getProxy(x, ct, forceInvoke)
       }
@@ -72,7 +70,22 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
     proxy.asInstanceOf[Ops]
   }
 
-  var invokeEnabled = false
+  // FIXME this is a hack, this should be handled in Passes
+  // The problem is that rewriting in ProgramGraph.transform is non-recursive
+  // We need some way to make isInvokeEnabled local to graph
+  type InvokeTester = (Def[_], Method) => Boolean
+
+  private var invokeTesters: Set[InvokeTester] = Set.empty
+
+  def isInvokeEnabled(d: Def[_], m: Method) = invokeTesters.exists(_(d, m))
+
+  def addInvokeTester(pred: InvokeTester): Unit = {
+    invokeTesters += pred
+  }
+
+  def removeInvokeTester(pred: InvokeTester): Unit = {
+    invokeTesters -= pred
+  }
 
   protected def hasFuncArg(args: Array[AnyRef]): Boolean =
     args.exists {
@@ -88,14 +101,15 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
   class ExpInvocationHandler[T](receiver: Exp[T], forceInvoke: Boolean) extends InvocationHandler {
     override def toString = s"ExpInvocationHandler(${receiver.toStringWithDefinition})"
 
-    def canInvoke(m: Method, d: Def[_]) = m.getDeclaringClass.isAssignableFrom(d.getClass)
-    def shouldInvoke(args: Array[AnyRef]) = invokeEnabled || forceInvoke || hasFuncArg(args)
+    def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) =
+      m.getDeclaringClass.isAssignableFrom(d.getClass) &&
+        (isInvokeEnabled(d, m) || forceInvoke || hasFuncArg(args))
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) scala.Array.empty[AnyRef] else _args
       receiver match {
         // call method of the node when it's allowed
-        case Def(d) if (canInvoke(m, d) && shouldInvoke(args)) =>
+        case Def(d) if shouldInvoke(d, m, args) =>
           val res = m.invoke(d, args: _*)
           res
         case _ => invokeMethodOfVar(m, args)
@@ -156,7 +170,7 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
 //    def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
 //      val args = if (_args == null) Array.empty[AnyRef] else _args
 //      receiver match {
-//        case Def(d) if (canInvoke(m, d) && (invokeEnabled || hasFuncArg(args))) => {
+//        case Def(d) if (canInvoke(m, d) && (isInvokeEnabled(m) || hasFuncArg(args))) => {
 //          // call method of the node
 //          val res = m.invoke(d, args: _*)
 //          res
@@ -168,7 +182,7 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
 //
 //    def invokeMethodOfVar(m: Method, args: Array[AnyRef]) = {
 //      /* If invoke is enabled or current method has arg of type <function> - do not create methodCall */
-//      if (methodCallReceivers.contains(receiver) || !(invokeEnabled || hasFuncArg(args))) {
+//      if (methodCallReceivers.contains(receiver) || !(isInvokeEnabled(m) || hasFuncArg(args))) {
 //        createMethodCall(m, args)
 //      } else {
 //        getIso match {

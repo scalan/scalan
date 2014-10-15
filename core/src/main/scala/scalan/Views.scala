@@ -304,14 +304,17 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
           iso.to(loopRes)
       }
     case mcall @ MethodCall(Def(obj@UserTypeDef(_)), m, args) =>
-      if (m.getDeclaringClass.isAssignableFrom(obj.getClass) && invokeEnabled) {
+      if (m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
         val res = m.invoke(obj, args: _*)
         res.asInstanceOf[Exp[_]]
       } else {
         obj match {
           case foldD: SumFold[a,b,r] =>
-            val res = foldD.sum.fold(a => MethodCall(foldD.left(a), m, args)(mcall.selfType),
-                               b => MethodCall(foldD.right(b), m, args)(mcall.selfType))(mcall.selfType)
+            val resultElem = mcall.selfType
+            val res = foldD.sum.fold (
+              a => MethodCall(foldD.left(a), m, args)(resultElem),
+              b => MethodCall(foldD.right(b), m, args)(resultElem)
+            )(resultElem)
             res.asInstanceOf[Exp[_]]
           case _ =>
             super.rewriteDef(d)

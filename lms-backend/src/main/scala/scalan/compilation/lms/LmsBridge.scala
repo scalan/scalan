@@ -1,10 +1,10 @@
-package scalan.codegen.lms
+package scalan.compilation.lms
 
 import scalan.community.ScalanCommunityExp
 import scalan.linalgebra.VectorsDslExp
 
 abstract class LmsBridge[A,B] {
-  val scalan: ScalanCommunityExp with LmsBackend with VectorsDslExp // TODO remove this!
+  val scalan: ScalanCommunityExp with LmsCompiler with VectorsDslExp // TODO remove this!
 
   def outerApply[Ctx <: scalan.Transformer](lFunc: LmsFunction[A,B])(in: lFunc.Exp[A], g: scalan.ProgramGraph[Ctx]): lFunc.Exp[B] = {
 

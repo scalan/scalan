@@ -1,10 +1,11 @@
 package scalan.primitives
 
 import java.io.File
+import java.lang.reflect.Method
 
 import scalan.{ScalanCtxExp, ScalanCtxSeq}
 import scalan.BaseShouldTests
-import scalan.codegen.GraphVizExport
+import scalan.compilation.GraphVizExport
 
 class PrimitivesExamplesSuite extends BaseShouldTests {
 
@@ -19,7 +20,7 @@ class PrimitivesExamplesSuite extends BaseShouldTests {
   
   def testMethod(name: String) = {
     val ctx = new ScalanCtxExp with PrimitiveExamples with GraphVizExport {
-      this.invokeEnabled = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
+      override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     val f = ctx.getStagedFunc(name)
     ctx.emitDepGraph(f, new File(s"test-out/scalan/primitives/$name.dot"), false)

@@ -1,4 +1,4 @@
-package scalan.codegen.lms
+package scalan.compilation.lms
 
 import scala.reflect.SourceContext
 import virtualization.lms.common._

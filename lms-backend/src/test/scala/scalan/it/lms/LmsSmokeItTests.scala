@@ -1,18 +1,16 @@
 package scalan.it.lms
 
-import scalan.codegen.lms.LmsBackend
+import scalan.compilation.lms.LmsCompiler
 import scalan.arrays.PArraysDslExp
-import scalan.codegen.GraphVizExport
+import scalan.compilation.GraphVizExport
 import scalan.linalgebra.VectorsDslExp
 import scalan.community.ScalanCommunityExp
 import scalan.scalan.CommunitySmokeItTests
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
-  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsBackend with VectorsDslExp
+  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler with VectorsDslExp
   
-  override val progStaged = new ProgExp() {
-    this.invokeEnabled = true
-  }
+  override val progStaged = new ProgExp
 
   test("test0simpleArith") {
     val in = 2

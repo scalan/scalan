@@ -1,7 +1,9 @@
 package scalan.it
 
+import java.lang.reflect.Method
+
 import scalan.{ScalanDsl, ScalanCtxSeq, ScalanCtxExp, Interpreter}
-import scalan.codegen.{GraphVizExport}
+import scalan.compilation.{GraphVizExport}
 import java.io.File
 
 /**
@@ -49,11 +51,11 @@ class InterpreterSmokeItTests extends BaseItTests {
   class ProgSeq extends Prog with ScalanCtxSeq
   val progSeq: Prog with ScalanCtxSeq = new ProgSeq()
 
-  // TODO remove VectorsDslExp!
   class ProgExp extends Prog with ScalanCtxExp with GraphVizExport
 
   val progStaged: Prog with ScalanCtxExp = new ProgExp() {
-    this.invokeEnabled = true
+    // FIXME should be handled in the interpreter
+    override def isInvokeEnabled(d: Def[_], m: Method) = true
   }
 
   import progSeq._
