@@ -13,7 +13,7 @@ trait Compiler extends BaseExp with Passes {
   def defaultConfig: Config
 
   // see comment for buildInitialGraph
-  def graphPasses(config: Config): Seq[GraphPass[MapTransformer]]
+  def graphPasses(config: Config): Seq[PGraph => GraphPass]
 
   // Can it return ProgramGraph[Ctx] for some other Ctx?
   // If so, may want to add Ctx as type argument or type member
@@ -31,7 +31,8 @@ trait Compiler extends BaseExp with Passes {
 
     val numPassesLength = passes.length.toString.length
 
-    passes.zipWithIndex.foldLeft(g0) { case (graph, (pass, index)) =>
+    passes.zipWithIndex.foldLeft(g0) { case (graph, (passFunc, index)) =>
+      val pass = passFunc(graph)
       val graph1 = pass(graph)
 
       if (emitGraphs) {

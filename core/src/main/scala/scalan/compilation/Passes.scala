@@ -1,7 +1,5 @@
 package scalan.compilation
 
-import java.lang.reflect.Method
-
 import scalan.ScalanExp
 
 trait Passes { self: ScalanExp =>
@@ -12,24 +10,24 @@ trait Passes { self: ScalanExp =>
     def doFinalization(): Unit = {}
   }
 
-  abstract class GraphPass[Ctx <: Transformer : TransformerOps] extends Pass {
-    def apply(graph: ProgramGraph[Ctx]): ProgramGraph[Ctx]
+  abstract class GraphPass extends Pass {
+    def apply(graph: PGraph): PGraph
   }
 
   trait ExpPass extends Pass {
     def apply[A](s: Exp[A]): Exp[_]
   }
 
-  case class GraphTransformPass[Ctx <: Transformer : TransformerOps](name: String, mirror: Mirror[Ctx], rewriter: Rewriter, t: Ctx) extends GraphPass[Ctx] {
-    def apply(graph: ProgramGraph[Ctx]): ProgramGraph[Ctx] = graph.transform(mirror, rewriter, t)
+  case class GraphTransformPass(name: String, mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
+    def apply(graph: PGraph): PGraph = graph.transform(mirror, rewriter, MapTransformer.Empty)
   }
 
-  class EnableInvokePass[Ctx <: Transformer : TransformerOps](methodsDescription: String, pred: InvokeTester) extends GraphPass {
+  class EnableInvokePass(methodsDescription: String, pred: InvokeTester) extends GraphPass {
     def name = s"enable_invoke_$methodsDescription"
 
-    def apply(graph: ProgramGraph[Ctx]) = {
+    def apply(graph: PGraph) = {
       addInvokeTester(pred)
-      graph.transform(mirror[Ctx], NoRewriting, implicitly[TransformerOps[Ctx]].empty)
+      graph.transform(DefaultMirror, NoRewriting, MapTransformer.Empty)
     }
 
     override def doFinalization(): Unit = {
@@ -37,5 +35,7 @@ trait Passes { self: ScalanExp =>
     }
   }
 
-  val AllInvokeEnabler = new EnableInvokePass[MapTransformer]("all", (_, _) => true)
+  def constantPass(pass: GraphPass) = (_: PGraph) => pass
+
+  val AllInvokeEnabler = constantPass(new EnableInvokePass("all", (_, _) => true))
 }
