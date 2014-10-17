@@ -1,7 +1,7 @@
 package scalan.it.lms
 
-import _root_.scalan.it.BaseItTests
-import _root_.scalan.scalan.linalgebra.LinearAlgebraExamples
+import scalan.it.BaseItTests
+import scalan.linalgebra.LinearAlgebraExamples
 import scalan.compilation.lms.LmsCompiler
 import scalan.compilation.GraphVizExport
 import scalan.linalgebra.MatricesDslExp

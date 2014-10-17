@@ -1,10 +1,10 @@
-package scalan.arrays
+package scalan.parrays
 
 import scalan._
+import scalan.arrays.ArrayOps
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.community.{ScalanCommunity, ScalanCommunityExp, ScalanCommunitySeq}
 
 trait PArrays extends ArrayOps { self: PArraysDsl =>
 
@@ -40,6 +40,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
 
   trait PArrayCompanion extends TypeFamily1[PArray] {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[PArray[A]]] = ea match {
+      case UnitElement => Default.defaultVal(UnitArray(0).asRep[PArray[A]])
       case baseE: BaseElem[a] => BaseArray.defaultOf[a](baseE)
       case pairE: PairElem[a, b] => PairArray.defaultOf[a, b](pairE.eFst, pairE.eSnd)
       case e => ???(s"Element is $e")
@@ -90,9 +91,21 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     }
   }
 
+  abstract class UnitArray(val len: Rep[Int]) extends PArray[Unit] {
+    def elem = UnitElement
+    def arr = Array.replicate(len, ())
+    def length = len
+    def apply(i: Rep[Int]) = ()
+    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[Unit] = UnitArray(indices.length)
+    def slice(offset: Rep[Int], length: Rep[Int]) = UnitArray(length)
+  }
+  trait UnitArrayCompanion extends ConcreteClass0[UnitArray] {
+    def defaultOf = Default.defaultVal(UnitArray(0))
+  }
+
   abstract class BaseArray[A](val arr: Rep[Array[A]])(implicit val eA: Elem[A]) extends PArray[A] {
-    def length = arr.length
     def elem = eA
+    def length = arr.length
     def apply(i: Rep[Int]) = arr(i)
     def slice(offset: Rep[Int], length: Rep[Int]) = BaseArray(arr.slice(offset, length))
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A] = BaseArray(arr(indices))
@@ -101,6 +114,20 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     def defaultOf[A](implicit ea: Elem[A]) =
       Default.defaultVal(BaseArray(Default.defaultOf[Rep[Array[A]]]))
   }
+
+// TODO We shouldn't need this anymore. Check if recursive types like Tree in EE work without it
+// 
+//  abstract class EmptyArray[A](implicit val eA: Elem[A]) extends PArray[A] {
+//    def elem = eA
+//    def length = 0
+//    // TODO should throw an exception? Need support for exceptions first
+//    def apply(i: Rep[Int]) = eA.defaultRepValue
+//    def slice(offset: Rep[Int], length: Rep[Int]) = self
+//    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A] = self
+//  }
+//  trait EmptyArrayCompanion extends ConcreteClass1[EmptyArray] {
+//    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(EmptyArray[A])
+//  }
 
   abstract class PairArray[A, B](val as: Rep[PArray[A]], val bs: Rep[PArray[B]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends PArray[(A, B)] {
@@ -127,7 +154,8 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     }
   }
 
-  abstract class FlatNestedArray[A](val values: Rep[PArray[A]], val segments: Rep[PArray[(Int, Int)]])(implicit val eA: Elem[A])
+  // TODO rename back to FlatNestedArray after unification with Scalan
+  abstract class NestedArray[A](val values: Rep[PArray[A]], val segments: Rep[PArray[(Int, Int)]])(implicit val eA: Elem[A])
     extends PArray[PArray[A]] {
     lazy val elem = defaultPArrayElement(eA)
     def length = segments.length
@@ -139,14 +167,14 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     def slice(offset: Rep[Int], length: Rep[Int]) = ???
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[PArray[A]] = ???
   }
-  trait FlatNestedArrayCompanion extends ConcreteClass1[FlatNestedArray] {
-    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(FlatNestedArray(element[PArray[A]].defaultRepValue, element[Segments].defaultRepValue))
+  trait NestedArrayCompanion extends ConcreteClass1[NestedArray] {
+    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(NestedArray(element[PArray[A]].defaultRepValue, element[Segments].defaultRepValue))
   }
 
 }
 
-trait PArraysDsl extends ScalanCommunity with impl.PArraysAbs with PArrays { }
+trait PArraysDsl extends Scalan with impl.PArraysAbs with PArrays { }
 
-trait PArraysDslSeq extends PArraysDsl with impl.PArraysSeq with ScalanCommunitySeq
+trait PArraysDslSeq extends PArraysDsl with impl.PArraysSeq with ScalanSeq
 
-trait PArraysDslExp extends PArraysDsl with impl.PArraysExp with ScalanCommunityExp
+trait PArraysDslExp extends PArraysDsl with impl.PArraysExp with ScalanExp

@@ -1,19 +1,16 @@
-package scalan.scalan
+package scalan.it.smoke
 
 import java.io.File
 import java.lang.reflect.Method
 
-import scala.io.BytePickle.Def
-import scalan.arrays.{PArraysDslSeq, PArraysDslExp}
-import scalan.{Interpreter, ScalanCtxSeq, ScalanCtxExp}
-import scalan.compilation.{GraphVizExport}
-import scalan.linalgebra.{MatricesDslExp, MatricesDslSeq}
-import scalan.scalan.arrays.PArrayExamples
-import scalan.it.{InterpreterSmokeItTests, BaseItTests}
 import scalan.community._
+import scalan.compilation.GraphVizExport
+import scalan.it.BaseItTests
+import scalan.linalgebra.{MatricesDslExp, MatricesDslSeq}
+import scalan.parrays.{PArrayExamples, PArraysDslExp, PArraysDslSeq}
+import scalan.{Interpreter, ScalanCtxExp, ScalanCtxSeq}
 
 class InterpreterCommunitySmokeItTests extends BaseItTests {
-  import scala.Array
 
   trait ProgCommunity extends ScalanCommunityDsl with PArrayExamples {
     lazy val simpleConst = fun {x: PA[Int] =>
@@ -49,7 +46,6 @@ class InterpreterCommunitySmokeItTests extends BaseItTests {
 
   class ProgSeq extends ProgCommunity with PArraysDslSeq with ScalanCommunitySeq with MatricesDslSeq
   val progSeq = new ProgSeq()
-  import progSeq._
 
   // TODO remove VectorsDslExp!
   class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with MatricesDslExp {
@@ -58,6 +54,9 @@ class InterpreterCommunitySmokeItTests extends BaseItTests {
   }
 
   val progStaged = new ProgExp()
+
+  import progSeq._
+  import scala.Array
 
   test("test9expBaseArrays") {
     val (in, out) = Array(Array(2,3), Array(4,5)) ->  Array(Array(2,3), Array(4,5))

@@ -1,14 +1,14 @@
 package scalan.it.lms
 
 import scalan.compilation.lms.LmsCompiler
-import scalan.arrays.PArraysDslExp
+import scalan.it.smoke.CommunitySmokeItTests
+import scalan.parrays.PArraysDslExp
 import scalan.compilation.GraphVizExport
-import scalan.linalgebra.VectorsDslExp
-import scalan.community.ScalanCommunityExp
-import scalan.scalan.CommunitySmokeItTests
+import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
+import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
-  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler with VectorsDslExp
+  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler with VectorsDslExp with MatricesDslExp
   
   override val progStaged = new ProgExp
 

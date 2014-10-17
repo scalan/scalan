@@ -1,60 +1,17 @@
-package scalan.scalan
+package scalan.it.smoke
 
-import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
-import scalan.it.BaseItTests
-import scalan.scalan.arrays.PArrayExamples
-import scalan.arrays.{PArraysDslSeq, PArraysDslExp}
-import scalan.compilation.Compiler
-import scalan.it.smoke.SmokeItTests
-import scalan.community.{ScalanCommunity, ScalanCommunitySeq, ScalanCommunityExp}
+import scalan.community._
+import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
 
 /**
  *  Tests that very simple examples are run correctly
  */
 abstract class CommunitySmokeItTests extends SmokeItTests {
-  trait ProgCommunity extends Prog with ScalanCommunity with PArrayExamples {
-
+  trait ProgCommunity extends Prog with ScalanCommunityDsl with PArrayExamples {
     lazy val simpleConst = fun {x: PA[Int] =>
       PArray.singleton(1)
     }
-    lazy val simpleArrGet = fun {in: Rep[(Array[Int], Int)] =>
-      val arr = in._1
-      val ind = in._2
-      arr(ind)
-    }
-    lazy val simpleMap = fun {x: Rep[Array[Int]] =>
-      val x1 = x.map {y:Rep[Int] => y+1}
-      x1
-    }
-    lazy val simpleMapNested = fun {x: Rep[(Array[Array[Double]], Int)] =>
-      val x1 = x._1.map {y:Rep[Array[Double]] => y(x._2)}
-      x1
-    }
-    lazy val simpleZip = fun {x: Rep[Array[Int]] =>
-      val x1 = x.map {y:Rep[Int] => y+2}
-      x1 zip x
-    }
-    lazy val simpleZipWith = fun {x: Rep[Array[Int]] =>
-      val x1 = x.map {y:Rep[Int] => y+3}
-      val x2 = x1 zip x
-      val x3 = x2.map {y:Rep[(Int,Int)] => y._1 * y._2}
-      x3
-    }
 
-    lazy val simpleReduce = fun {x: Rep[Array[Int]] =>
-      val x1 = x.reduce
-      x1
-    }
-    lazy val mvMul = fun { in:Rep[(Array[Array[Int]], Array[Int])] =>
-      val mat = in._1
-      val vec = in._2
-      val res = mat map {row: Rep[Array[Int]] =>
-        val x1 = row zip vec
-        val x2 = x1.map {y:Rep[(Int,Int)] => y._1 * y._2}
-        x2.reduce
-      }
-      res
-    }
     lazy val expBaseArrays = fun { xss:Arr[Array[Int]] =>
       val pss1:Arr[PArray[Int]] = xss.map { xs: Rep[Array[Int]] => PArray(xs)}
       val res = pss1.map { ps: PA[Int] =>
@@ -62,7 +19,6 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       }
       res
     }
-
 //    lazy val simpleMap = fun {x: PA[Int] =>
 //      x.map(y => y + 1)
 //    }
@@ -218,7 +174,7 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
 //
   }
 
-  class ProgCommunitySeq extends ProgCommunity with PArraysDslSeq with ScalanCommunitySeq {
+  class ProgCommunitySeq extends ProgCommunity with PArraysDslSeq with ScalanCommunityDslSeq {
 //    lazy val intRep: Rep[Int] = 1
 //    lazy val intPair: Rep[(Int, Int)] = (1, 2)
 //    lazy val nestedIntPair: Rep[((Int, Int), (Int, Int))] = ((1, 2), (3, 4))
@@ -251,8 +207,9 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
 //    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
   }
 
-  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with Compiler
-  override val progSeq = new ProgCommunitySeq()
+  // TODO
+//  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with Compiler
+//  override val progSeq = new ProgCommunitySeq()
 
   //  test("test00simpleConst") {
 //    val (in, out) = Array(0) -> Array(1)
@@ -438,4 +395,5 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
 ////    checkRun(progSeq, progStaged)(expandScaledRangesFun, progStaged.expandScaledRangesFun)("simple26_expandScaledRanges", in, progSeq.fromArray(out))
 ////  }
 
+  override val progSeq: ProgCommunitySeq = new ProgCommunitySeq
 }

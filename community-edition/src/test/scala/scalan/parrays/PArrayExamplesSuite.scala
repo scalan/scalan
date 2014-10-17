@@ -1,13 +1,11 @@
-package scalan.scalan.arrays
+package scalan.parrays
 
 import java.io.File
 import java.lang.reflect.Method
 
-import scalan.{ScalanCtxExp, ScalanCtxSeq}
-import org.scalatest.{Matchers, FlatSpec}
-import scalan.arrays.{PArraysDslExp, PArraysDslSeq}
+import scala.io.BytePickle.Def
 import scalan.compilation.GraphVizExport
-import scalan.BaseShouldTests
+import scalan.{BaseShouldTests, ScalanCtxExp, ScalanCtxSeq}
 
 
 class PArrayExamplesSuite extends BaseShouldTests {

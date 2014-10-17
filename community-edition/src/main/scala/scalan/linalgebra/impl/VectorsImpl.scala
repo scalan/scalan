@@ -1,4 +1,3 @@
-
 package scalan.linalgebra
 package impl
 
@@ -6,22 +5,20 @@ import scalan._
 import scalan.common.Default
 import scalan.common.Lazy
 import scalan.common.OverloadHack.Overloaded1
-import scalan.arrays.PArrays
-import scalan.arrays.PArraysDsl
-import scalan.arrays.PArraysDslExp
-import scalan.arrays.PArraysDslSeq
+import scalan.parrays.PArrays
+import scalan.parrays.PArraysDsl
+import scalan.parrays.PArraysDslExp
+import scalan.parrays.PArraysDslSeq
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
-
 trait VectorsAbs extends Vectors
 { self: VectorsDsl =>
-
   // single proxy for each type family
   implicit def proxyVector[T:Elem](p: Rep[Vector[T]]): Vector[T] =
     proxyOps[Vector[T]](p)
 
-  trait VectorElem[From,To] extends ViewElem[From, To]
+  abstract class VectorElem[From,To](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
   trait VectorCompanionElem extends CompanionElem[VectorCompanionAbs]
   implicit lazy val VectorCompanionElem: VectorCompanionElem = new VectorCompanionElem {
@@ -35,9 +32,8 @@ trait VectorsAbs extends Vectors
     proxyOps[VectorCompanion](p, true)
   }
 
-
   // elem for concrete class
-  class DenseVectorElem[T](implicit iso: Iso[DenseVectorData[T], DenseVector[T]]) extends VectorElem[DenseVectorData[T], DenseVector[T]]
+  class DenseVectorElem[T](iso: Iso[DenseVectorData[T], DenseVector[T]]) extends VectorElem[DenseVectorData[T], DenseVector[T]](iso)
 
   // state representation type
   type DenseVectorData[T] = PArray[T]
@@ -59,7 +55,7 @@ trait VectorsAbs extends Vectors
       typeTag[DenseVector[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[DenseVector[T]]](DenseVector(element[PArray[T]].defaultRepValue))
-    lazy val eTo = new DenseVectorElem[T]()(this)
+    lazy val eTo = new DenseVectorElem[T](this)
   }
   // 4) constructor and deconstructor
   trait DenseVectorCompanionAbs extends DenseVectorCompanion {
@@ -95,9 +91,8 @@ trait VectorsAbs extends Vectors
   def mkDenseVector[T](coords: Rep[PArray[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]]
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]): Option[(Rep[PArray[T]])]
 
-
   // elem for concrete class
-  class SparseVectorElem[T](implicit iso: Iso[SparseVectorData[T], SparseVector[T]]) extends VectorElem[SparseVectorData[T], SparseVector[T]]
+  class SparseVectorElem[T](iso: Iso[SparseVectorData[T], SparseVector[T]]) extends VectorElem[SparseVectorData[T], SparseVector[T]](iso)
 
   // state representation type
   type SparseVectorData[T] = (Array[Int], (PArray[T], Int))
@@ -119,11 +114,10 @@ trait VectorsAbs extends Vectors
       typeTag[SparseVector[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector[T]]](SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, 0))
-    lazy val eTo = new SparseVectorElem[T]()(this)
+    lazy val eTo = new SparseVectorElem[T](this)
   }
   // 4) constructor and deconstructor
   trait SparseVectorCompanionAbs extends SparseVectorCompanion {
-
     def apply[T](p: Rep[SparseVectorData[T]])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
       isoSparseVector(elem).to(p)
     def apply[T](nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
@@ -156,9 +150,7 @@ trait VectorsAbs extends Vectors
   // 6) smart constructor and deconstructor
   def mkSparseVector[T](nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]]
   def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]): Option[(Rep[Array[Int]], Rep[PArray[T]], Rep[Int])]
-
 }
-
 
 trait VectorsSeq extends VectorsAbs { self: ScalanSeq with VectorsDsl =>
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeSeq[VectorCompanionAbs, VectorCompanionAbs] {
@@ -181,7 +173,6 @@ trait VectorsSeq extends VectorsAbs { self: ScalanSeq with VectorsDsl =>
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]) =
     Some((p.coords))
 
-
   case class SeqSparseVector[T]
       (override val nonZeroIndices: Rep[Array[Int]], override val nonZeroValues: Rep[PArray[T]], override val length: Rep[Int])
       (implicit override val elem: Elem[T])
@@ -197,9 +188,7 @@ trait VectorsSeq extends VectorsAbs { self: ScalanSeq with VectorsDsl =>
       new SeqSparseVector[T](nonZeroIndices, nonZeroValues, length)
   def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]) =
     Some((p.nonZeroIndices, p.nonZeroValues, p.length))
-
 }
-
 
 trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeDef[VectorCompanionAbs, VectorCompanionAbs] {
@@ -220,13 +209,11 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
     override def mirror(t: Transformer) = this
   }
 
-
   def mkDenseVector[T]
     (coords: Rep[PArray[T]])(implicit elem: Elem[T]) =
     new ExpDenseVector[T](coords)
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]) =
     Some((p.coords))
-
 
   case class ExpSparseVector[T]
       (override val nonZeroIndices: Rep[Array[Int]], override val nonZeroValues: Rep[PArray[T]], override val length: Rep[Int])
@@ -241,11 +228,69 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
     override def mirror(t: Transformer) = this
   }
 
-
   def mkSparseVector[T]
     (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]) =
     new ExpSparseVector[T](nonZeroIndices, nonZeroValues, length)
   def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]) =
     Some((p.nonZeroIndices, p.nonZeroValues, p.length))
 
+  object Vector_length {
+    def unapply(d: Def[_]): Option[Vector[T] forSome {type T}] = d match {
+      case MethodCall(receiver, m, Seq()) if m.getName == "length" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
+        Some(receiver).asInstanceOf[Option[Vector[T] forSome {type T}]]
+      case _ => None
+    }
+    def unapply(exp: Exp[_]): Option[Vector[T] forSome {type T}] = exp match {
+      case Def(d) => unapply(d)
+      case _ => None
+    }
+  }
+
+  object Vector_coords {
+    def unapply(d: Def[_]): Option[Vector[T] forSome {type T}] = d match {
+      case MethodCall(receiver, m, Seq()) if m.getName == "coords" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
+        Some(receiver).asInstanceOf[Option[Vector[T] forSome {type T}]]
+      case _ => None
+    }
+    def unapply(exp: Exp[_]): Option[Vector[T] forSome {type T}] = exp match {
+      case Def(d) => unapply(d)
+      case _ => None
+    }
+  }
+
+  object Vector_elem {
+    def unapply(d: Def[_]): Option[Vector[T] forSome {type T}] = d match {
+      case MethodCall(receiver, m, Seq()) if m.getName == "elem" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
+        Some(receiver).asInstanceOf[Option[Vector[T] forSome {type T}]]
+      case _ => None
+    }
+    def unapply(exp: Exp[_]): Option[Vector[T] forSome {type T}] = exp match {
+      case Def(d) => unapply(d)
+      case _ => None
+    }
+  }
+
+  object Vector_dot {
+    def unapply(d: Def[_]): Option[(Vector[T], Vec[T]) forSome {type T}] = d match {
+      case MethodCall(receiver, m, Seq(other)) if m.getName == "dot" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
+        Some((receiver, other)).asInstanceOf[Option[(Vector[T], Vec[T]) forSome {type T}]]
+      case _ => None
+    }
+    def unapply(exp: Exp[_]): Option[(Vector[T], Vec[T]) forSome {type T}] = exp match {
+      case Def(d) => unapply(d)
+      case _ => None
+    }
+  }
+
+  object Vector_apply {
+    def unapply(d: Def[_]): Option[(Vector[T], Rep[Int]) forSome {type T}] = d match {
+      case MethodCall(receiver, m, Seq(i)) if m.getName == "apply" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
+        Some((receiver, i)).asInstanceOf[Option[(Vector[T], Rep[Int]) forSome {type T}]]
+      case _ => None
+    }
+    def unapply(exp: Exp[_]): Option[(Vector[T], Rep[Int]) forSome {type T}] = exp match {
+      case Def(d) => unapply(d)
+      case _ => None
+    }
+  }
 }

@@ -4,10 +4,10 @@ import scalan._
 import scalan.common.Default
 import scalan.common.Lazy
 import scalan.common.OverloadHack.Overloaded1
-import scalan.arrays.PArrays
-import scalan.arrays.PArraysDsl
-import scalan.arrays.PArraysDslExp
-import scalan.arrays.PArraysDslSeq
+import scalan.parrays.PArrays
+import scalan.parrays.PArraysDsl
+import scalan.parrays.PArraysDslExp
+import scalan.parrays.PArraysDslSeq
 
 trait Vectors extends PArrays { scalan: VectorsDsl =>
   type Vec[T] = Rep[Vector[T]]

@@ -1,19 +1,14 @@
-/**
- * User: Alexander Slesarenko
- * Date: 11/24/13
- */
-package scalan.scalan.arrays
+package scalan.parrays
 
 import scalan.ScalanDsl
-import scalan.arrays.PArraysDsl
 import scalan.primitives.PrimitiveExamples
 
 trait PArrayExamples extends ScalanDsl with PArraysDsl with PrimitiveExamples {
   lazy val fromArray = fun { xs: Arr[Int] => PArray(xs) }
   lazy val fromArrayOfPairs = fun { xs: Arr[(Int,Float)] => PArray(xs) }
-  lazy val fromAndTo = fun { xs: Arr[(Int,Float)] => 
+  lazy val fromAndTo = fun { xs: Arr[(Int,Float)] =>
     val ps = PArray(xs)
-    ps.arr 
+    ps.arr
   }
 
   lazy val mapped = fun {(xs: PA[Int]) => xs.mapBy(inc) }

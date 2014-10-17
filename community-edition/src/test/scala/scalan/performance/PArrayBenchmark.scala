@@ -1,9 +1,9 @@
 package scalan.performance
 
 import org.scalameter.api._
-import scalan.scalan.arrays.PArrayExamples
+import scalan.parrays.PArrayExamples
 import scalan.ScalanCtxExp
-import scalan.arrays.PArraysDslExp
+import scalan.parrays.PArraysDslExp
 
 class PArrayBenchmarkExp extends BaseBenchmark with ScalanCtxExp with PArrayExamples with PArraysDslExp {
   val sizes = Gen.range("size")(100, 1000, 100)

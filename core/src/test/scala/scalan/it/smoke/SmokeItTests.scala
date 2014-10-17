@@ -11,6 +11,45 @@ abstract class SmokeItTests extends BaseItTests {
   trait Prog extends ScalanDsl {
 
     lazy val simpleArith = fun {x: Rep[Int] => x*x + 2}
+
+    lazy val simpleArrGet = fun {in: Rep[(Array[Int], Int)] =>
+      val arr = in._1
+      val ind = in._2
+      arr(ind)
+    }
+    lazy val simpleMap = fun {x: Rep[Array[Int]] =>
+      val x1 = x.map {y:Rep[Int] => y+1}
+      x1
+    }
+    lazy val simpleMapNested = fun {x: Rep[(Array[Array[Double]], Int)] =>
+      val x1 = x._1.map {y:Rep[Array[Double]] => y(x._2)}
+      x1
+    }
+    lazy val simpleZip = fun {x: Rep[Array[Int]] =>
+      val x1 = x.map {y:Rep[Int] => y+2}
+      x1 zip x
+    }
+    lazy val simpleZipWith = fun {x: Rep[Array[Int]] =>
+      val x1 = x.map {y:Rep[Int] => y+3}
+      val x2 = x1 zip x
+      val x3 = x2.map {y:Rep[(Int,Int)] => y._1 * y._2}
+      x3
+    }
+
+    lazy val simpleReduce = fun {x: Rep[Array[Int]] =>
+      val x1 = x.reduce
+      x1
+    }
+    lazy val mvMul = fun { in:Rep[(Array[Array[Int]], Array[Int])] =>
+      val mat = in._1
+      val vec = in._2
+      val res = mat map {row: Rep[Array[Int]] =>
+        val x1 = row zip vec
+        val x2 = x1.map {y:Rep[(Int,Int)] => y._1 * y._2}
+        x2.reduce
+      }
+      res
+    }
 //    lazy val simpleMap = fun {x: PA[Int] =>
 //      x.map(y => y + 1)
 //    }
