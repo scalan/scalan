@@ -4,10 +4,10 @@
  */
 package scalan.arrays
 
-import scalan._
-import scalan.staged.BaseExp
 import scala.reflect.runtime.universe._
+import scalan._
 import scalan.common.Default
+import scalan.staged.BaseExp
 
 trait ArrayViews extends ArrayOps with Views { self: Scalan =>
 

@@ -142,6 +142,7 @@ trait BaseExp extends Base { self: ScalanExp =>
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
     case _: BaseElem[_] => Const(x)
     case _: FuncElem[_, _] => Const(x)
+    case _: ArrayElem[_] => Const(x)
     case pe: PairElem[a, b] =>
       val x1 = x.asInstanceOf[(a, b)]
       implicit val eA = pe.eFst

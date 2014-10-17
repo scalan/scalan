@@ -2,6 +2,7 @@ package scalan
 
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
+import scalan.arrays._
 import scalan.seq.BaseSeq
 import scalan.staged.{BaseExp, Expressions, Transforming}
 
@@ -22,6 +23,8 @@ trait Scalan
   with Functions
   with IfThenElse
   with Monoids
+  with ArrayOps
+  with ArrayViews
 
 trait ScalanDsl
   extends Scalan
@@ -43,6 +46,8 @@ trait ScalanSeq
   with FractionalOpsSeq
   with FunctionsSeq
   with IfThenElseSeq
+  with ArrayOpsSeq
+  with ArrayViewsSeq
 
 trait ScalanCtxSeq
   extends ScalanDsl
@@ -66,6 +71,8 @@ trait ScalanExp
   with FunctionsExp
   with IfThenElseExp
   with Transforming
+  with ArrayOpsExp
+  with ArrayViewsExp
 
 trait ScalanCtxExp
   extends ScalanDsl
