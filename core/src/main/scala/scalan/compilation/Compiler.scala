@@ -13,6 +13,7 @@ trait Compiler extends BaseExp with Passes {
   def defaultConfig: Config
 
   // see comment for buildInitialGraph
+  // TODO sequence may depend on input or intermediate graphs, use a state monad instead
   def graphPasses(config: Config): Seq[PGraph => GraphPass]
 
   // Can it return ProgramGraph[Ctx] for some other Ctx?
