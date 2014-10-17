@@ -1,18 +1,23 @@
 package scalan.util
 
 import java.io._
-import java.nio.charset.{StandardCharsets, Charset}
-import java.nio.file.Files
 import scala.Console
+import scala.io.{Source, Codec}
 
 object FileUtil {
-  def read(file: File, charset: Charset = StandardCharsets.UTF_8): String =
-    new String(Files.readAllBytes(file.toPath), charset)
+  def read(file: File, codec: Codec = Codec.UTF8): String = {
+    val source = Source.fromFile(file)(codec)
+    try {
+      source.mkString
+    } finally {
+      source.close()
+    }
+  }
 
   // default arguments can't be used when another overload has them
-  def read(path: String, charset: Charset): String = read(new File(path), charset)
+  def read(path: String, codec: Codec): String = read(new File(path), codec)
 
-  def read(path: String): String = read(new File(path), StandardCharsets.UTF_8)
+  def read(path: String): String = read(new File(path), Codec.UTF8)
 
   def withFile(file: File)(f: PrintWriter => Unit): Unit = {
     if (file.isDirectory && !file.delete()) {
