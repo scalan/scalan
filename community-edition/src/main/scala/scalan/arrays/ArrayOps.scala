@@ -20,7 +20,7 @@ trait ArrayOps extends ArrayElems { self: Scalan =>
     def filterBy(f: Rep[T => Boolean]) = array_filter(xs, f)
     def filter(f: Rep[T] => Rep[Boolean])(implicit o: Overloaded1) = array_filter(xs, fun(f))
     def grouped(size: Rep[Int]) = array_grouped(xs, size)
-    def stride[T](start: Rep[Int], length: Rep[Int], stride: Rep[Int]) =
+    def stride(start: Rep[Int], length: Rep[Int], stride: Rep[Int]) =
       array_stride(xs, start, length, stride)
     def update(index: Rep[Int], value: Rep[T]) = array_update(xs, index, value)
     def updateMany(indexes: Arr[Int], values: Arr[T]) = array_updateMany(xs, indexes, values)
