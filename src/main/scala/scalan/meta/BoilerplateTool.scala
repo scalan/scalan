@@ -19,7 +19,7 @@ object BoilerplateTool {
   lazy val liteConfig = CodegenConfig(
     srcPath = "../scalan-lite/core/src/main/scala",
     entityFiles = List(
-      "../../../../community-edition/src/main/scala/scalan/arrays/PArrays.scala"
+      "scalan/parrays/PArrays.scala"
       ,"scalan/types/Types.scala"
       ,"../../../../community-edition/src/main/scala/scalan/linalgebra/Vectors.scala"
       ,"../../../../community-edition/src/main/scala/scalan/linalgebra/Matrices.scala"
@@ -35,7 +35,7 @@ object BoilerplateTool {
 
 
   def main(args: Array[String]) {
-    lazy val ctx = new EntityManagement(scalanConfig)
+    lazy val ctx = new EntityManagement(liteConfig)
 
     ctx.generateAll
   }
