@@ -32,29 +32,33 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
   class EntityFileGenerator(module: SEntityModuleDef) {
     import Extensions._
-
-    def getEntityTemplateData(e: STraitDef) = {
-      val tyArgs = e.tpeArgs.map(_.name)
-      (e.name,
-        e.tpeArgs,
-        tyArgs.rep(t => t),
-        tyArgs.rep(t =>s"$t:Elem")
-        )
+    
+    abstract class TemplateData(val name: String, val tpeArgs: List[STpeArg]) {
+      val tpeArgNames = tpeArgs.map(_.name)
+      val tpeArgString = tpeArgNames.opt(tyArgs => s"[${tyArgs.rep(t => t)}]")
+      val boundedTpeArgString = tpeArgNames.opt(tyArgs => s"[${tyArgs.rep(t =>s"$t:Elem")}]")
     }
-
-    def getSClassTemplateData(c: SClassDef) = {
-      val tyArgs = c.tpeArgs.map(_.name)
-      (c.name,
-      tyArgs.opt(tyArgs => s"[${tyArgs.rep(t => t)}]"),
-      tyArgs.opt(tyArgs => s"[${tyArgs.rep(t =>s"$t:Elem")}]"),
-      c.args.map(a => a.name),
-      c.args.map(a => s"${a.name}: ${a.tpe}"),
-      c.args.map(a => a.tpe match {
+    
+    class EntityTemplateData(name: String, tpeArgs: List[STpeArg]) extends TemplateData(name, tpeArgs)
+    
+    object EntityTemplateData {
+      def apply(t: STraitDef) = new EntityTemplateData(t.name, t.tpeArgs)
+    }
+    
+    class ConcreteClassTemplateData(name: String, val args: List[SClassArg], implArgs: List[SClassArg], tpeArgs: List[STpeArg], val baseType: STraitCall) extends TemplateData(name, tpeArgs) {
+      val argNames = args.map(a => a.name)
+      val argNamesAndTypes = args.map(a => s"${a.name}: ${a.tpe}")
+      val argUnrepTypes = args.map(a => a.tpe match {
         case STraitCall("Rep", List(t)) => t
         case _ => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
-      }),
-      c.ancestors.head
-      )
+      })
+      val implicitArgs = implArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
+      val useImplicits = implArgs.opt(args => s"(${args.map(_.name).rep(a => a)})")
+      val implicitSignature = implArgs.opt(args => s"(implicit ${args.rep(a => s"override val ${a.name}: ${a.tpe}")})")
+    }
+    
+    object ConcreteClassTemplateData {
+      def apply(c: SClassDef) = new ConcreteClassTemplateData(c.name, c.args, c.implicitArgs, c.tpeArgs, c.ancestors.head)
     }
 
     def dataType(ts: List[STpeExpr]): String = ts match {
@@ -79,21 +83,25 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       case STpeFunc(domain, range) => s"""fun { (x: Rep[${domain}]) => ${zeroSExpr(range)} }"""
       case t => throw new IllegalArgumentException(s"Can't generate zero value for $t")
     }
-    
-    lazy val (entityName, tyArgs, types, typesWithElems) = getEntityTemplateData(module.entityOps)
+
+    val templateData = EntityTemplateData(module.entityOps)
+    val entityName = templateData.name
+    val tyArgs = templateData.tpeArgNames
+    val types = templateData.tpeArgString
+    val typesWithElems = templateData.boundedTpeArgString
     
     def getTraitAbs = {
       val companionName = s"${entityName}Companion"
       val proxy =
         s"""
         |  // single proxy for each type family
-        |  implicit def proxy$entityName[$typesWithElems](p: Rep[$entityName[$types]]): $entityName[$types] =
-        |    proxyOps[$entityName[$types]](p)
+        |  implicit def proxy$entityName${typesWithElems}(p: Rep[$entityName${types}]): $entityName$types =
+        |    proxyOps[$entityName${types}](p)
         |""".stripMargin
 
       val familyElem = s"""  abstract class ${entityName}Elem[From,To](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)""".stripMargin
       val defaultElem = s"""
-        |  // implicit def default${entityName}Elem[$typesWithElems]: Elem[$entityName[$types]] = ???
+        |  // implicit def default${entityName}Elem${typesWithElems}: Elem[$entityName${types}] = ???
         |""".stripMargin
       val companionElem = s"""
         |  trait ${companionName}Elem extends CompanionElem[${companionName}Abs]
@@ -113,9 +121,16 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       val defaultVal = "Default.defaultVal"
 
       val defs = for { c <- module.concreteSClasses } yield {
-        val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes, traitWithTypes) = getSClassTemplateData(c)
-        val implicitArgs = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
-        val useImplicits = c.implicitArgs.opt(args => s"(${args.map(_.name).rep()})")
+        val className = c.name
+        val templateData = ConcreteClassTemplateData(c)
+        val types = templateData.tpeArgString
+        val typesWithElems = templateData.boundedTpeArgString
+        val fields = templateData.argNames
+        val fieldsWithType = templateData.argNamesAndTypes
+        val fieldTypes = templateData.argUnrepTypes
+        val traitWithTypes = templateData.baseType
+        val implicitArgs = templateData.implicitArgs
+        val useImplicits = templateData.useImplicits
         s"""
         |  // elem for concrete class
         |  class ${className}Elem${types}(iso: Iso[${className}Data${types}, $className${types}]) extends ${entityName}Elem[${className}Data${types}, $className${types}](iso)
@@ -192,9 +207,15 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
     }
 
     def getSClassSeq(c: SClassDef) = {
-      val (className, types, typesWithElems, fields, fieldsWithType, _, traitWithTypes) = getSClassTemplateData(c)
-      val implicitArgs = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
-      val implicitSignature = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"override val ${a.name}: ${a.tpe}")})")
+      val className = c.name
+      val templateData = ConcreteClassTemplateData(c)
+      val types = templateData.tpeArgString
+      val typesWithElems = templateData.boundedTpeArgString
+      val fields = templateData.argNames
+      val fieldsWithType = templateData.argNamesAndTypes
+      val traitWithTypes = templateData.baseType
+      val implicitArgs = templateData.implicitArgs
+      val implicitSignature = templateData.implicitSignature
       val userTypeDefs =
         s"""
          |  case class Seq$className${types}
@@ -220,9 +241,16 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
     }
 
     def getSClassExp(c: SClassDef) = {
-      val (className, types, typesWithElems, fields, fieldsWithType, fieldTypes, traitWithTypes) = getSClassTemplateData(c)
-      val implicitArgs = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
-      val implicitSignature = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"override val ${a.name}: ${a.tpe}")})")
+      val className = c.name
+      val templateData = ConcreteClassTemplateData(c)
+      val types = templateData.tpeArgString
+      val typesWithElems = templateData.boundedTpeArgString
+      val fields = templateData.argNames
+      val fieldsWithType = templateData.argNamesAndTypes
+      val fieldTypes = templateData.argUnrepTypes
+      val traitWithTypes = templateData.baseType
+      val implicitArgs = templateData.implicitArgs
+      val implicitSignature = templateData.implicitSignature
       val userTypeNodeDefs =
         s"""
          |  case class Exp$className${types}
@@ -253,7 +281,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
     def getTraitSeq = {
       val e = module.entityOps
-      val (entityName, _, _, _) = getEntityTemplateData(e)
+      val entityName = e.name
       val defs = for { c <- module.concreteSClasses } yield getSClassSeq(c)
 
       s"""
@@ -268,7 +296,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
     def getTraitExp = {
       val e = module.entityOps
-      val (entityName, _, _, _) = getEntityTemplateData(e)
+      val entityName = e.name
       val defs = for { c <- module.concreteSClasses } yield getSClassExp(c)
 
       s"""
