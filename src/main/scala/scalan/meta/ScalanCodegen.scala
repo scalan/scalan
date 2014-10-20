@@ -23,8 +23,13 @@ object Extensions {
       case Some(a) => show(a)
     }
   }
-  implicit class BooleanExtensions[A](val opt: Boolean) extends AnyVal {
+  
+  implicit class BooleanExtensions(val opt: Boolean) extends AnyVal {
     def opt(show: => String, default: => String = ""): String = if(opt) show else default
+  }
+  
+  implicit class StringExtensions(val str: String) extends AnyVal {
+    def stripAndTrim = str.stripMargin.stripPrefix("\n").stripLineEnd
   }
 }
 
@@ -97,12 +102,12 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  // single proxy for each type family
         |  implicit def proxy$entityName${typesWithElems}(p: Rep[$entityName${types}]): $entityName$types =
         |    proxyOps[$entityName${types}](p)
-        |""".stripMargin
+        |""".stripAndTrim
 
-      val familyElem = s"""  abstract class ${entityName}Elem[From,To](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)""".stripMargin
+      val familyElem = s"""  abstract class ${entityName}Elem[From,To](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)""".stripAndTrim
       val defaultElem = s"""
         |  // implicit def default${entityName}Elem${typesWithElems}: Elem[$entityName${types}] = ???
-        |""".stripMargin
+        |""".stripAndTrim
       val companionElem = s"""
         |  trait ${companionName}Elem extends CompanionElem[${companionName}Abs]
         |  implicit lazy val ${companionName}Elem: ${companionName}Elem = new ${companionName}Elem {
@@ -115,7 +120,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} = {
         |    proxyOps[${companionName}](p, true)
         |  }
-        |""".stripMargin
+        |""".stripAndTrim
         
       val isoZero = "defaultRepTo"
       val defaultVal = "Default.defaultVal"
@@ -161,7 +166,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  trait ${className}CompanionAbs extends ${className}Companion {
         |${(fields.length != 1).opt(s"""
         |    def apply${types}(p: Rep[${className}Data${types}])${implicitArgs}: Rep[$className${types}] =
-        |      iso$className${useImplicits}.to(p)""".stripMargin)}
+        |      iso$className${useImplicits}.to(p)""".stripAndTrim)}
         |    def apply${types}(${fieldsWithType.rep()})${implicitArgs}: Rep[$className${types}] =
         |      mk$className(${fields.rep()})
         |    def unapply${typesWithElems}(p: Rep[$className${types}]) = unmk$className(p)
@@ -192,18 +197,21 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  // 6) smart constructor and deconstructor
         |  def mk$className${types}(${fieldsWithType.rep()})${implicitArgs}: Rep[$className${types}]
         |  def unmk$className${typesWithElems}(p: Rep[$className${types}]): Option[(${fieldTypes.opt(fieldTypes => fieldTypes.rep(t => s"Rep[$t]"), "Rep[Unit]")})]
-        |""".stripMargin
+        |""".stripAndTrim
       }
 
       s"""
        |trait ${module.name}Abs extends ${module.name}
        |{ ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
        |$proxy
+       |
        |$familyElem
+       |
        |$companionElem
-       |${defs.mkString("\n")}
+       |
+       |${defs.mkString("\n\n")}
        |}
-       |""".stripMargin
+       |""".stripAndTrim
     }
 
     def getSClassSeq(c: SClassDef) = {
@@ -226,7 +234,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |  }
          |  lazy val $className = new ${className}CompanionAbs with UserTypeSeq[${className}CompanionAbs, ${className}CompanionAbs] {
          |    lazy val selfType = element[${className}CompanionAbs]
-         |  }""".stripMargin
+         |  }""".stripAndTrim
 
       val constrDefs =
         s"""
@@ -235,9 +243,9 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |      new Seq$className${types}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
          |  def unmk$className${typesWithElems}(p: Rep[$className${types}]) =
          |    Some((${fields.rep(f => s"p.$f")}))
-         |""".stripMargin
+         |""".stripAndTrim
 
-      s"""$userTypeDefs\n$constrDefs"""
+      s"""$userTypeDefs\n\n$constrDefs"""
     }
 
     def getSClassExp(c: SClassDef) = {
@@ -265,7 +273,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |    lazy val selfType = element[${className}CompanionAbs]
          |    override def mirror(t: Transformer) = this
          |  }
-         |""".stripMargin
+         |""".stripAndTrim
 
       val constrDefs =
         s"""
@@ -274,9 +282,9 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |    new Exp$className${types}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
          |  def unmk$className${typesWithElems}(p: Rep[$className${types}]) =
          |    Some((${fields.rep(f => s"p.$f")}))
-         |""".stripMargin
+         |""".stripAndTrim
 
-      s"""$userTypeNodeDefs\n$constrDefs"""
+      s"""$userTypeNodeDefs\n\n$constrDefs"""
     }
 
     def getTraitSeq = {
@@ -289,9 +297,10 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |  }
-       |${defs.mkString("\n")}
+       |
+       |${defs.mkString("\n\n")}
        |}
-       |""".stripMargin
+       |""".stripAndTrim
     }
 
     def getTraitExp = {
@@ -305,9 +314,10 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this
        |  }
-       |${defs.mkString("\n")}
+       |
+       |${defs.mkString("\n\n")}
        |}
-       |""".stripMargin
+       |""".stripAndTrim
     }
 
     def getFileHeader = {
@@ -316,7 +326,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       |package impl
       |
       |${(module.imports ++ config.extraImports.map(SImportStat(_))).rep(i => s"import ${i.name}", "\n")}
-      |""".stripMargin
+      |""".stripAndTrim
     }
 
     def getImplFile: String = {
@@ -326,7 +336,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         getTraitSeq,
         getTraitExp
       )
-      topLevel.mkString("\n")
+      topLevel.mkString("", "\n\n", "\n")
     }
   }
 }
