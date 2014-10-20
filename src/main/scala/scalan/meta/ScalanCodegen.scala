@@ -91,7 +91,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |    proxyOps[$entityName[$types]](p)
         |""".stripMargin
 
-      val familyElem = s"""  trait ${entityName}Elem[From,To] extends ViewElem[From, To]""".stripMargin
+      val familyElem = s"""  abstract class ${entityName}Elem[From,To](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)""".stripMargin
       val defaultElem = s"""
         |  // implicit def default${entityName}Elem[$typesWithElems]: Elem[$entityName[$types]] = ???
         |""".stripMargin
@@ -118,7 +118,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         val useImplicits = c.implicitArgs.opt(args => s"(${args.map(_.name).rep()})")
         s"""
         |  // elem for concrete class
-        |  class ${className}Elem${types}(implicit iso: Iso[${className}Data${types}, $className${types}]) extends ${entityName}Elem[${className}Data${types}, $className${types}]
+        |  class ${className}Elem${types}(iso: Iso[${className}Data${types}, $className${types}]) extends ${entityName}Elem[${className}Data${types}, $className${types}](iso)
         |
         |  // state representation type
         |  type ${className}Data${types} = ${dataType(fieldTypes)}
@@ -140,7 +140,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |      typeTag[$className${types}]
         |    }
         |    lazy val ${isoZero} = $defaultVal[Rep[$className${types}]]($className(${fieldTypes.rep(zeroSExpr(_))}))
-        |    lazy val eTo = new ${className}Elem${types}()(this)
+        |    lazy val eTo = new ${className}Elem${types}(this)
         |  }
         |  // 4) constructor and deconstructor
         |  trait ${className}CompanionAbs extends ${className}Companion {
