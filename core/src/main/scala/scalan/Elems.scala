@@ -34,6 +34,9 @@ trait Elems extends Base { self: Scalan =>
       case _ => false
     }
     override def hashCode = tag.hashCode
+
+    def <:<(e: Element[_]) = tag.tpe <:< e.tag.tpe
+    def >:>(e: Element[_]) = e <:< this
   }
 
   def element[A](implicit ea: Elem[A]): Elem[A] = ea
