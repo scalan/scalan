@@ -236,7 +236,7 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
 
   object Vector_length {
     def unapply(d: Def[_]): Option[Vector[T] forSome {type T}] = d match {
-      case MethodCall(receiver, m, Seq()) if m.getName == "length" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
+      case MethodCall(receiver, method, _) if method.getName == "length" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
         Some(receiver).asInstanceOf[Option[Vector[T] forSome {type T}]]
       case _ => None
     }
@@ -248,7 +248,7 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
 
   object Vector_coords {
     def unapply(d: Def[_]): Option[Vector[T] forSome {type T}] = d match {
-      case MethodCall(receiver, m, Seq()) if m.getName == "coords" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
+      case MethodCall(receiver, method, _) if method.getName == "coords" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
         Some(receiver).asInstanceOf[Option[Vector[T] forSome {type T}]]
       case _ => None
     }
@@ -260,7 +260,7 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
 
   object Vector_elem {
     def unapply(d: Def[_]): Option[Vector[T] forSome {type T}] = d match {
-      case MethodCall(receiver, m, Seq()) if m.getName == "elem" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
+      case MethodCall(receiver, method, _) if method.getName == "elem" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
         Some(receiver).asInstanceOf[Option[Vector[T] forSome {type T}]]
       case _ => None
     }
@@ -272,7 +272,7 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
 
   object Vector_dot {
     def unapply(d: Def[_]): Option[(Vector[T], Vec[T]) forSome {type T}] = d match {
-      case MethodCall(receiver, m, Seq(other)) if m.getName == "dot" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
+      case MethodCall(receiver, method, Seq(other, _*)) if method.getName == "dot" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
         Some((receiver, other)).asInstanceOf[Option[(Vector[T], Vec[T]) forSome {type T}]]
       case _ => None
     }
@@ -284,7 +284,7 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
 
   object Vector_apply {
     def unapply(d: Def[_]): Option[(Vector[T], Rep[Int]) forSome {type T}] = d match {
-      case MethodCall(receiver, m, Seq(i)) if m.getName == "apply" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
+      case MethodCall(receiver, method, Seq(i, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[VectorElem[_, _]] =>
         Some((receiver, i)).asInstanceOf[Option[(Vector[T], Rep[Int]) forSome {type T}]]
       case _ => None
     }

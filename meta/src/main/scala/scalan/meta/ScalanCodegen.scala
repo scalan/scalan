@@ -4,6 +4,8 @@
  */
 package scalan.meta
 
+import scalan.util.ScalaNameUtil
+
 object Extensions {
   implicit class IterableExtensions[A](val it: Iterable[A]) extends AnyVal
   {
@@ -326,17 +328,28 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         }
         val explicitArgsStr = explicitArgs.rep(_.name, ", ")
         val overloadNum = counter(m.name)
-        val suffix = if (overloadNum > 0) overloadNum.toString else ""
         counter += m.name -> (overloadNum + 1)
+        val matcherName = {
+          val cleanedName = ScalaNameUtil.cleanScalaName(m.name)
+          val suffix =
+            if (ScalaNameUtil.isOpName(cleanedName))
+              "!" * overloadNum
+            else if (overloadNum > 0)
+              overloadNum.toString
+            else
+              ""
+          cleanedName + suffix
+        }
 
         // TODO we can use name-based extractor to improve performance when we switch to Scala 2.11
         // See http://hseeberger.github.io/blog/2013/10/04/name-based-extractors-in-scala-2-dot-11/
         
-        // FIXME overloads and implicit arguments may not be handled correctly 
+        // FIXME overloads and implicit arguments may not be handled correctly
+        // _* is for implicit arguments
         s"""
-        |  object ${entityName}_${m.name}$suffix {
+        |  object ${entityName}_$matcherName {
         |    def unapply(d: Def[_]): $returnType = d match {
-        |      case MethodCall(receiver, m, Seq($explicitArgsStr)) if m.getName == "${m.name}" && receiver.elem.isInstanceOf[$traitElem] =>
+        |      case MethodCall(receiver, method, ${if (explicitArgs.isEmpty) "_" else s"Seq($explicitArgsStr, _*)"}) if method.getName == "${m.name}" && receiver.elem.isInstanceOf[$traitElem] =>
         |        Some(${if (explicitArgs.isEmpty) "receiver" else s"(receiver, $explicitArgsStr)"}).asInstanceOf[$returnType]
         |      case _ => None
         |    }

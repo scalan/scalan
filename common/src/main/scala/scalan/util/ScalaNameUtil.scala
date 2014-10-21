@@ -1,6 +1,9 @@
 package scalan.util
 
 object ScalaNameUtil {
+  val opChars = Set('+', '-', '*', '/', ':', '>', '<', '=', '!', '@', '#', '%',
+    '&', '~', '?', '|', '\\', '^')
+  
   def cleanNestedClassName(className: String): String =
     cleanScalaName(className.substring(className.lastIndexOf("$") + 1))
 
@@ -15,4 +18,6 @@ object ScalaNameUtil {
       replaceAll("\\$qmark", "?").replaceAll("\\$bar", "|").
       replaceAll("\\$bslash", "\\").replaceAll("\\$up", "^")
   }
+  
+  def isOpName(name: String) = !name.isEmpty && opChars.contains(name.last)
 }
