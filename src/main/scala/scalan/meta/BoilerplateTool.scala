@@ -17,12 +17,11 @@ object BoilerplateTool {
   )
 
   lazy val liteConfig = CodegenConfig(
-    srcPath = "../scalan-lite/core/src/main/scala",
+    srcPath = "../scalan-lite/community-edition/src/main/scala",
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
-      ,"scalan/types/Types.scala"
-      ,"../../../../community-edition/src/main/scala/scalan/linalgebra/Vectors.scala"
-      ,"../../../../community-edition/src/main/scala/scalan/linalgebra/Matrices.scala"
+      ,"scalan/linalgebra/Vectors.scala"
+      ,"scalan/linalgebra/Matrices.scala"
       //,"scalan/iterators/Iters.scala"
       //, "main/scala/scalan/rx/Trees.scala"
     ),

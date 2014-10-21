@@ -42,6 +42,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       val tpeArgNames = tpeArgs.map(_.name)
       val tpeArgString = tpeArgNames.opt(tyArgs => s"[${tyArgs.rep(t => t)}]")
       val boundedTpeArgString = tpeArgNames.opt(tyArgs => s"[${tyArgs.rep(t =>s"$t:Elem")}]")
+      def nameWithArgs = name + tpeArgString
     }
     
     class EntityTemplateData(name: String, tpeArgs: List[STpeArg]) extends TemplateData(name, tpeArgs)
@@ -306,8 +307,51 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
     def getTraitExp = {
       val e = module.entityOps
       val entityName = e.name
-      val defs = for { c <- module.concreteSClasses } yield getSClassExp(c)
+      val td = EntityTemplateData(e)
+      var counter = Map.empty[String, Int].withDefaultValue(0)
 
+      def methodExtractor(m: SMethodDef) = {
+        val traitElem = s"${entityName}Elem[_, _]"
+        val explicitArgs = m.args.filter(!_.impFlag).flatMap(_.args)
+        val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.name).toSet
+        val returnType = {
+          val receiverType = td.nameWithArgs
+          val argTypes = explicitArgs.map(_.tpe)
+          val receiverAndArgTypes = 
+            if (argTypes.isEmpty)
+              receiverType
+            else
+              s"($receiverType, ${argTypes.mkString(", ")})"
+          s"Option[$receiverAndArgTypes${typeVars.opt(typeVars => s" forSome {${typeVars.map("type " + _).mkString("; ")}}")}]"
+        }
+        val explicitArgsStr = explicitArgs.rep(_.name, ", ")
+        val overloadNum = counter(m.name)
+        val suffix = if (overloadNum > 0) overloadNum.toString else ""
+        counter += m.name -> (overloadNum + 1)
+
+        // TODO we can use name-based extractor to improve performance when we switch to Scala 2.11
+        // See http://hseeberger.github.io/blog/2013/10/04/name-based-extractors-in-scala-2-dot-11/
+        
+        // FIXME overloads and implicit arguments may not be handled correctly 
+        s"""
+        |  object ${entityName}_${m.name}$suffix {
+        |    def unapply(d: Def[_]): $returnType = d match {
+        |      case MethodCall(receiver, m, Seq($explicitArgsStr)) if m.getName == "${m.name}" && receiver.elem.isInstanceOf[$traitElem] =>
+        |        Some(${if (explicitArgs.isEmpty) "receiver" else s"(receiver, $explicitArgsStr)"}).asInstanceOf[$returnType]
+        |      case _ => None
+        |    }
+        |    def unapply(exp: Exp[_]): $returnType = exp match {
+        |      case Def(d) => unapply(d)
+        |      case _ => None
+        |    }
+        |  }
+        |""".stripAndTrim
+      }
+
+      val defs = for { c <- module.concreteSClasses } yield getSClassExp(c)
+      val methods = e.body.collect { case m: SMethodDef => m }
+      val methodExtractors = e.body.collect { case m: SMethodDef => methodExtractor(m) }
+      
       s"""
        |trait ${module.name}Exp extends ${module.name}Abs { self: ${config.stagedContextTrait}${module.selfType.opt(t => s" with ${t.tpe}")} =>
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
@@ -316,6 +360,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
        |  }
        |
        |${defs.mkString("\n\n")}
+       |
+       |${methodExtractors.mkString("\n\n")}
        |}
        |""".stripAndTrim
     }
