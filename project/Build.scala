@@ -22,10 +22,7 @@ object ScalanBuild extends Build {
     "org.scalacheck" %% "scalacheck" % "1.11.5" % "test",
     "com.github.axel22" %% "scalameter" % "0.5-M2" % "test",
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
-    "ch.qos.logback" % "logback-classic" % "1.1.2",
-    "com.chuusai" % "shapeless_2.10.4" % "2.0.0",
-    "cglib" % "cglib" % "3.1",
-    "org.objenesis" % "objenesis" % "2.1")
+    "ch.qos.logback" % "logback-classic" % "1.1.2")
 
   val testSettings = inConfig(ItTest)(Defaults.testTasks) ++
     inConfig(PerfTest)(Defaults.testTasks ++ baseAssemblySettings) ++ Seq(
@@ -67,7 +64,13 @@ object ScalanBuild extends Build {
       p.configs(ItTest, PerfTest).settings(commonSettings: _*)
   }
 
-  lazy val core = project.in(file("core")).addTestConfigsAndCommonSettings
+  lazy val common = project.addTestConfigsAndCommonSettings
+
+  lazy val core = project.dependsOn(common).addTestConfigsAndCommonSettings.settings(
+    libraryDependencies ++= Seq(
+      "com.chuusai" % "shapeless_2.10.4" % "2.0.0",
+      "cglib" % "cglib" % "3.1",
+      "org.objenesis" % "objenesis" % "2.1"))
 
   lazy val coreDep = core.allConfigDependency
 
@@ -90,7 +93,7 @@ object ScalanBuild extends Build {
       ReleaseKeys.snapshotDependencies := Seq.empty)
 
   // name to make this the default project
-  lazy val root = Project("scalan", file(".")).aggregate(core, ce, lmsBackend).
+  lazy val root = Project("scalan", file(".")).aggregate(common, core, ce, lmsBackend).
     configs(ItTest, PerfTest).settings(commonSettings: _*).
     // don't publish or release the aggregate project itself
     settings(publishArtifact := false, publish := {}, publishLocal := {})
