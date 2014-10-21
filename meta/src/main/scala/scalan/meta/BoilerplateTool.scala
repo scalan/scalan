@@ -2,7 +2,7 @@ package scalan.meta
 
 object BoilerplateTool {
   lazy val scalanConfig = CodegenConfig(
-    srcPath = "../scalan/src/main/scala",
+    srcPath = "../../scalan/src/main/scala",
     entityFiles = List(
       "scalan/trees/Trees.scala",
       "scalan/math/Matrices.scala",
@@ -17,7 +17,7 @@ object BoilerplateTool {
   )
 
   lazy val liteConfig = CodegenConfig(
-    srcPath = "../scalan-lite/community-edition/src/main/scala",
+    srcPath = "../../scalan-lite/community-edition/src/main/scala",
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
       ,"scalan/linalgebra/Vectors.scala"
