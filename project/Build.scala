@@ -66,6 +66,8 @@ object ScalanBuild extends Build {
 
   lazy val common = project.addTestConfigsAndCommonSettings
 
+  lazy val meta = project.dependsOn(common).addTestConfigsAndCommonSettings
+
   lazy val core = project.dependsOn(common).addTestConfigsAndCommonSettings.settings(
     libraryDependencies ++= Seq(
       "com.chuusai" % "shapeless_2.10.4" % "2.0.0",
@@ -93,7 +95,7 @@ object ScalanBuild extends Build {
       ReleaseKeys.snapshotDependencies := Seq.empty)
 
   // name to make this the default project
-  lazy val root = Project("scalan", file(".")).aggregate(common, core, ce, lmsBackend).
+  lazy val root = Project("scalan", file(".")).aggregate(common, meta, core, ce, lmsBackend).
     configs(ItTest, PerfTest).settings(commonSettings: _*).
     // don't publish or release the aggregate project itself
     settings(publishArtifact := false, publish := {}, publishLocal := {})
