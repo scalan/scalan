@@ -121,7 +121,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  trait ${companionName}Abs extends ${companionName}
         |  def $entityName: Rep[${companionName}Abs]
         |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} = {
-        |    proxyOps[${companionName}](p, true)
+        |    proxyOps[${companionName}](p)
         |  }
         |""".stripAndTrim
         
@@ -176,7 +176,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  }
         |  def $className: Rep[${className}CompanionAbs]
         |  implicit def proxy${className}Companion(p: Rep[${className}CompanionAbs]): ${className}CompanionAbs = {
-        |    proxyOps[${className}CompanionAbs](p, true)
+        |    proxyOps[${className}CompanionAbs](p)
         |  }
         |
         |  trait ${className}CompanionElem extends CompanionElem[${className}CompanionAbs]

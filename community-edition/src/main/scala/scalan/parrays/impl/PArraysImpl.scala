@@ -26,7 +26,7 @@ trait PArraysAbs extends PArrays
   trait PArrayCompanionAbs extends PArrayCompanion
   def PArray: Rep[PArrayCompanionAbs]
   implicit def proxyPArrayCompanion(p: Rep[PArrayCompanion]): PArrayCompanion = {
-    proxyOps[PArrayCompanion](p, true)
+    proxyOps[PArrayCompanion](p)
   }
 
   // elem for concrete class
@@ -63,7 +63,7 @@ trait PArraysAbs extends PArrays
   }
   def UnitArray: Rep[UnitArrayCompanionAbs]
   implicit def proxyUnitArrayCompanion(p: Rep[UnitArrayCompanionAbs]): UnitArrayCompanionAbs = {
-    proxyOps[UnitArrayCompanionAbs](p, true)
+    proxyOps[UnitArrayCompanionAbs](p)
   }
 
   trait UnitArrayCompanionElem extends CompanionElem[UnitArrayCompanionAbs]
@@ -122,7 +122,7 @@ trait PArraysAbs extends PArrays
   }
   def BaseArray: Rep[BaseArrayCompanionAbs]
   implicit def proxyBaseArrayCompanion(p: Rep[BaseArrayCompanionAbs]): BaseArrayCompanionAbs = {
-    proxyOps[BaseArrayCompanionAbs](p, true)
+    proxyOps[BaseArrayCompanionAbs](p)
   }
 
   trait BaseArrayCompanionElem extends CompanionElem[BaseArrayCompanionAbs]
@@ -183,7 +183,7 @@ trait PArraysAbs extends PArrays
   }
   def PairArray: Rep[PairArrayCompanionAbs]
   implicit def proxyPairArrayCompanion(p: Rep[PairArrayCompanionAbs]): PairArrayCompanionAbs = {
-    proxyOps[PairArrayCompanionAbs](p, true)
+    proxyOps[PairArrayCompanionAbs](p)
   }
 
   trait PairArrayCompanionElem extends CompanionElem[PairArrayCompanionAbs]
@@ -243,7 +243,7 @@ trait PArraysAbs extends PArrays
   }
   def NestedArray: Rep[NestedArrayCompanionAbs]
   implicit def proxyNestedArrayCompanion(p: Rep[NestedArrayCompanionAbs]): NestedArrayCompanionAbs = {
-    proxyOps[NestedArrayCompanionAbs](p, true)
+    proxyOps[NestedArrayCompanionAbs](p)
   }
 
   trait NestedArrayCompanionElem extends CompanionElem[NestedArrayCompanionAbs]

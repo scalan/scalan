@@ -29,7 +29,7 @@ trait VectorsAbs extends Vectors
   trait VectorCompanionAbs extends VectorCompanion
   def Vector: Rep[VectorCompanionAbs]
   implicit def proxyVectorCompanion(p: Rep[VectorCompanion]): VectorCompanion = {
-    proxyOps[VectorCompanion](p, true)
+    proxyOps[VectorCompanion](p)
   }
 
   // elem for concrete class
@@ -66,7 +66,7 @@ trait VectorsAbs extends Vectors
   }
   def DenseVector: Rep[DenseVectorCompanionAbs]
   implicit def proxyDenseVectorCompanion(p: Rep[DenseVectorCompanionAbs]): DenseVectorCompanionAbs = {
-    proxyOps[DenseVectorCompanionAbs](p, true)
+    proxyOps[DenseVectorCompanionAbs](p)
   }
 
   trait DenseVectorCompanionElem extends CompanionElem[DenseVectorCompanionAbs]
@@ -126,7 +126,7 @@ trait VectorsAbs extends Vectors
   }
   def SparseVector: Rep[SparseVectorCompanionAbs]
   implicit def proxySparseVectorCompanion(p: Rep[SparseVectorCompanionAbs]): SparseVectorCompanionAbs = {
-    proxyOps[SparseVectorCompanionAbs](p, true)
+    proxyOps[SparseVectorCompanionAbs](p)
   }
 
   trait SparseVectorCompanionElem extends CompanionElem[SparseVectorCompanionAbs]

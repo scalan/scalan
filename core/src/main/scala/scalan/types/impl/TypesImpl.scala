@@ -24,7 +24,7 @@ trait TypesAbs extends Types
   trait TypeCompanionAbs extends TypeCompanion
   def Type: Rep[TypeCompanionAbs]
   implicit def proxyTypeCompanion(p: Rep[TypeCompanion]): TypeCompanion = {
-    proxyOps[TypeCompanion](p, true)
+    proxyOps[TypeCompanion](p)
   }
 
   // elem for concrete class
@@ -62,7 +62,7 @@ trait TypesAbs extends Types
   }
   def BaseType: Rep[BaseTypeCompanionAbs]
   implicit def proxyBaseTypeCompanion(p: Rep[BaseTypeCompanionAbs]): BaseTypeCompanionAbs = {
-    proxyOps[BaseTypeCompanionAbs](p, true)
+    proxyOps[BaseTypeCompanionAbs](p)
   }
 
   trait BaseTypeCompanionElem extends CompanionElem[BaseTypeCompanionAbs]
@@ -123,7 +123,7 @@ trait TypesAbs extends Types
   }
   def Tuple2Type: Rep[Tuple2TypeCompanionAbs]
   implicit def proxyTuple2TypeCompanion(p: Rep[Tuple2TypeCompanionAbs]): Tuple2TypeCompanionAbs = {
-    proxyOps[Tuple2TypeCompanionAbs](p, true)
+    proxyOps[Tuple2TypeCompanionAbs](p)
   }
 
   trait Tuple2TypeCompanionElem extends CompanionElem[Tuple2TypeCompanionAbs]

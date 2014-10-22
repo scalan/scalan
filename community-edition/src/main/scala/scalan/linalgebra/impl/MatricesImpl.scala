@@ -23,7 +23,7 @@ trait MatricesAbs extends Matrices
   trait MatrixCompanionAbs extends MatrixCompanion
   def Matrix: Rep[MatrixCompanionAbs]
   implicit def proxyMatrixCompanion(p: Rep[MatrixCompanion]): MatrixCompanion = {
-    proxyOps[MatrixCompanion](p, true)
+    proxyOps[MatrixCompanion](p)
   }
 
   // elem for concrete class
@@ -60,7 +60,7 @@ trait MatricesAbs extends Matrices
   }
   def RowMajorMatrix: Rep[RowMajorMatrixCompanionAbs]
   implicit def proxyRowMajorMatrixCompanion(p: Rep[RowMajorMatrixCompanionAbs]): RowMajorMatrixCompanionAbs = {
-    proxyOps[RowMajorMatrixCompanionAbs](p, true)
+    proxyOps[RowMajorMatrixCompanionAbs](p)
   }
 
   trait RowMajorMatrixCompanionElem extends CompanionElem[RowMajorMatrixCompanionAbs]
@@ -120,7 +120,7 @@ trait MatricesAbs extends Matrices
   }
   def RowMajorFlatMatrix: Rep[RowMajorFlatMatrixCompanionAbs]
   implicit def proxyRowMajorFlatMatrixCompanion(p: Rep[RowMajorFlatMatrixCompanionAbs]): RowMajorFlatMatrixCompanionAbs = {
-    proxyOps[RowMajorFlatMatrixCompanionAbs](p, true)
+    proxyOps[RowMajorFlatMatrixCompanionAbs](p)
   }
 
   trait RowMajorFlatMatrixCompanionElem extends CompanionElem[RowMajorFlatMatrixCompanionAbs]
@@ -179,7 +179,7 @@ trait MatricesAbs extends Matrices
   }
   def RowMajorSparseMatrix: Rep[RowMajorSparseMatrixCompanionAbs]
   implicit def proxyRowMajorSparseMatrixCompanion(p: Rep[RowMajorSparseMatrixCompanionAbs]): RowMajorSparseMatrixCompanionAbs = {
-    proxyOps[RowMajorSparseMatrixCompanionAbs](p, true)
+    proxyOps[RowMajorSparseMatrixCompanionAbs](p)
   }
 
   trait RowMajorSparseMatrixCompanionElem extends CompanionElem[RowMajorSparseMatrixCompanionAbs]

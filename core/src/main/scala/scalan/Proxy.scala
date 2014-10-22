@@ -18,7 +18,7 @@ import scalan.staged.BaseExp
 import scalan.util.ScalaNameUtil
 
 trait Proxy { self: Scalan =>
-  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops
 
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass
@@ -28,7 +28,7 @@ trait Proxy { self: Scalan =>
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
-  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops = x
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = x
 }
 
 trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
@@ -44,18 +44,18 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
   private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
 
-  override def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops =
+  override def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops =
     x match {
       case Def(d) => d match {
         case Const(c) => c
         case _ =>
-          getProxy(x, ct, forceInvoke)
+          getProxy(x, ct)
       }
       case _ =>
-        getProxy(x, ct, forceInvoke)
+        getProxy(x, ct)
     }
 
-  private def getProxy[Ops](x: Rep[Ops], ct: ClassTag[Ops], forceInvoke: Boolean) = {
+  private def getProxy[Ops](x: Rep[Ops], ct: ClassTag[Ops]) = {
     val proxy = proxies.getOrElseUpdate((x, ct), {
       val clazz = ct.runtimeClass
       val e = new Enhancer
@@ -64,7 +64,7 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
       e.setCallbackType(classOf[ExpInvocationHandler[_]])
       val proxyClass = e.createClass().asSubclass(classOf[AnyRef])
       val proxyInstance = objenesis.newInstance(proxyClass).asInstanceOf[Factory]
-      proxyInstance.setCallback(0, new ExpInvocationHandler(x, forceInvoke))
+      proxyInstance.setCallback(0, new ExpInvocationHandler(x))
       proxyInstance
     })
     proxy.asInstanceOf[Ops]
@@ -98,12 +98,12 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   protected var methodCallReceivers = Set.empty[Exp[_]]
 
-  class ExpInvocationHandler[T](receiver: Exp[T], forceInvoke: Boolean) extends InvocationHandler {
+  class ExpInvocationHandler[T](receiver: Exp[T]) extends InvocationHandler {
     override def toString = s"ExpInvocationHandler(${receiver.toStringWithDefinition})"
 
     def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) =
       m.getDeclaringClass.isAssignableFrom(d.getClass) &&
-        (isInvokeEnabled(d, m) || forceInvoke || hasFuncArg(args))
+        (isInvokeEnabled(d, m) || hasFuncArg(args))
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) scala.Array.empty[AnyRef] else _args
