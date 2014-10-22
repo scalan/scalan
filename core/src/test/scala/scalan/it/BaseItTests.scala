@@ -3,7 +3,7 @@ package scalan.it
 import scalan.BaseTests
 
 abstract class BaseItTests extends BaseTests with ItTestsUtil {
-
+/*
   var currentTestName = ""
 
   override def withFixture(test: NoArgTest) = {
@@ -21,5 +21,5 @@ abstract class BaseItTests extends BaseTests with ItTestsUtil {
     super.compareOutputWithSequential(back)(fSeq, f, testName, input)
   }
 
-
+*/
 }
