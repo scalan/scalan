@@ -80,7 +80,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       case f :: Nil => f
       case f :: fs => s"Pair($f, ${pairify(fs)})"
     }
-    
+  
     def zeroSExpr(t: STpeExpr): String = t match {
       case STpeInt => 0.toString
       case STpeBoolean => false.toString
@@ -91,6 +91,9 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       case STpeFunc(domain, range) => s"""fun { (x: Rep[${domain}]) => ${zeroSExpr(range)} }"""
       case t => throw new IllegalArgumentException(s"Can't generate zero value for $t")
     }
+
+    def typeArgString(typeArgs: Seq[String]) =
+      if (typeArgs.isEmpty) "" else typeArgs.mkString("[", ", ", "]")
 
     val templateData = EntityTemplateData(module.entityOps)
     val entityName = templateData.name
@@ -179,18 +182,14 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |    proxyOps[${className}CompanionAbs](p)
         |  }
         |
-        |  trait ${className}CompanionElem extends CompanionElem[${className}CompanionAbs]
-        |  implicit lazy val ${className}CompanionElem: ${className}CompanionElem = new ${className}CompanionElem {
+        |  class ${className}CompanionElem extends CompanionElem[${className}CompanionAbs] {
         |    lazy val tag = typeTag[${className}CompanionAbs]
         |    lazy val defaultRep = Default.defaultVal($className)
         |  }
+        |  implicit lazy val ${className}CompanionElem: ${className}CompanionElem = new ${className}CompanionElem
         |
         |  implicit def proxy$className${typesWithElems}(p: Rep[$className${types}]): ${className}${types} = {
         |    proxyOps[${className}${types}](p)
-        |  }
-        |
-        |  implicit class Extended$className${types}(p: Rep[$className${types}])${implicitArgs} {
-        |    def toData: Rep[${className}Data${types}] = iso$className${useImplicits}.from(p)
         |  }
         |
         |  // 5) implicit resolution of Iso
@@ -253,15 +252,14 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
 
     def getSClassExp(c: SClassDef) = {
       val className = c.name
-      val templateData = ConcreteClassTemplateData(c)
-      val types = templateData.tpeArgString
-      val typesWithElems = templateData.boundedTpeArgString
-      val fields = templateData.argNames
-      val fieldsWithType = templateData.argNamesAndTypes
-      val fieldTypes = templateData.argUnrepTypes
-      val traitWithTypes = templateData.baseType
-      val implicitArgs = templateData.implicitArgs
-      val implicitSignature = templateData.implicitSignature
+      val td = ConcreteClassTemplateData(c)
+      val types = td.tpeArgString
+      val typesWithElems = td.boundedTpeArgString
+      val fields = td.argNames
+      val fieldsWithType = td.argNamesAndTypes
+      val traitWithTypes = td.baseType
+      val implicitArgs = td.implicitArgs
+      val implicitSignature = td.implicitSignature
       val userTypeNodeDefs =
         s"""
          |  case class Exp$className${types}
@@ -276,6 +274,8 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
          |    lazy val selfType = element[${className}CompanionAbs]
          |    override def mirror(t: Transformer) = this
          |  }
+         |
+         |${methodExtractorsString(c, td)}
          |""".stripAndTrim
 
       val constrDefs =
@@ -310,25 +310,50 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
       val e = module.entityOps
       val entityName = e.name
       val td = EntityTemplateData(e)
-      var counter = Map.empty[String, Int].withDefaultValue(0)
+
+      val concreteClassesString = module.concreteSClasses.map(getSClassExp)
+      
+      s"""
+       |trait ${module.name}Exp extends ${module.name}Abs { self: ${config.stagedContextTrait}${module.selfType.opt(t => s" with ${t.tpe}")} =>
+       |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
+       |    lazy val selfType = element[${entityName}CompanionAbs]
+       |    override def mirror(t: Transformer) = this
+       |  }
+       |
+       |${concreteClassesString.mkString("\n\n")}
+       |
+       |${methodExtractorsString(e, td)}
+       |}
+       |""".stripAndTrim
+    }
+
+    def methodExtractorsString1(e: STraitOrClassDef, isCompanion: Boolean) = {
+      val counter = collection.mutable.Map.empty[String, Int].withDefaultValue(0)
 
       def methodExtractor(m: SMethodDef) = {
-        val traitElem = s"${entityName}Elem[_, _]"
+        val numElemTypeParams =
+          if (isCompanion)
+            0
+          else if (e.isInstanceOf[STraitDef])
+            2
+          else
+            e.tpeArgs.length
+        val traitElem = s"${e.name}Elem${typeArgString(Seq.fill(numElemTypeParams)("_"))}"
         val explicitArgs = m.args.filter(!_.impFlag).flatMap(_.args)
         val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.name).toSet
         val returnType = {
-          val receiverType = td.nameWithArgs
-          val argTypes = explicitArgs.map(_.tpe)
-          val receiverAndArgTypes = 
-            if (argTypes.isEmpty)
-              receiverType
-            else
-              s"($receiverType, ${argTypes.mkString(", ")})"
+          val receiverType = s"Rep[${e.name + typeArgString(e.tpeArgs.map(_.name))}]"
+          val argTypes = explicitArgs.map(_.tpe.toString)
+          val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
+            case Seq() => "Unit"
+            case Seq(single) => single
+            case many => many.mkString("(", ", ", ")")
+          }
           s"Option[$receiverAndArgTypes${typeVars.opt(typeVars => s" forSome {${typeVars.map("type " + _).mkString("; ")}}")}]"
         }
         val explicitArgsStr = explicitArgs.rep(_.name, ", ")
         val overloadNum = counter(m.name)
-        counter += m.name -> (overloadNum + 1)
+        counter(m.name) = overloadNum + 1
         val matcherName = {
           val cleanedName = ScalaNameUtil.cleanScalaName(m.name)
           val suffix =
@@ -341,43 +366,36 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
           cleanedName + suffix
         }
 
+        val matchResult = ((if (isCompanion) Nil else List("receiver")) ++ explicitArgs.map(_.name)) match {
+          case Seq() => "()"
+          case Seq(single) => single
+          case many => many.mkString("(", ", ", ")")
+        }
+
         // TODO we can use name-based extractor to improve performance when we switch to Scala 2.11
         // See http://hseeberger.github.io/blog/2013/10/04/name-based-extractors-in-scala-2-dot-11/
-        
-        // FIXME overloads and implicit arguments may not be handled correctly
+
         // _* is for implicit arguments
-        s"""
-        |  object ${entityName}_$matcherName {
-        |    def unapply(d: Def[_]): $returnType = d match {
-        |      case MethodCall(receiver, method, ${if (explicitArgs.isEmpty) "_" else s"Seq($explicitArgsStr, _*)"}) if method.getName == "${m.name}" && receiver.elem.isInstanceOf[$traitElem] =>
-        |        Some(${if (explicitArgs.isEmpty) "receiver" else s"(receiver, $explicitArgsStr)"}).asInstanceOf[$returnType]
-        |      case _ => None
-        |    }
-        |    def unapply(exp: Exp[_]): $returnType = exp match {
-        |      case Def(d) => unapply(d)
-        |      case _ => None
-        |    }
-        |  }
-        |""".stripAndTrim
+        s"""    object $matcherName {
+           |      def unapply(d: Def[_]): $returnType = d match {
+           |        case MethodCall(receiver, method, ${if (explicitArgs.isEmpty) "_" else s"Seq($explicitArgsStr, _*)"}) if method.getName == "${m.name}" && receiver.elem.isInstanceOf[$traitElem] =>
+           |          Some($matchResult).asInstanceOf[$returnType]
+           |        case _ => None
+           |      }
+           |      def unapply(exp: Exp[_]): $returnType = exp match {
+           |        case Def(d) => unapply(d)
+           |        case _ => None
+           |      }
+           |    }""".stripAndTrim
       }
 
-      val defs = for { c <- module.concreteSClasses } yield getSClassExp(c)
-      val methods = e.body.collect { case m: SMethodDef => m }
-      val methodExtractors = e.body.collect { case m: SMethodDef => methodExtractor(m) }
-      
-      s"""
-       |trait ${module.name}Exp extends ${module.name}Abs { self: ${config.stagedContextTrait}${module.selfType.opt(t => s" with ${t.tpe}")} =>
-       |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
-       |    lazy val selfType = element[${entityName}CompanionAbs]
-       |    override def mirror(t: Transformer) = this
-       |  }
-       |
-       |${defs.mkString("\n\n")}
-       |
-       |${methodExtractors.mkString("\n\n")}
-       |}
-       |""".stripAndTrim
+      s"""  object ${e.name}Methods {
+         |${e.body.collect { case m: SMethodDef => methodExtractor(m) }.mkString("\n\n")}
+         |  }""".stripMargin
     }
+
+    def methodExtractorsString(e: STraitOrClassDef, td: TemplateData) =
+      methodExtractorsString1(e, false) + "\n\n" + e.companion.opt(methodExtractorsString1(_, true))
 
     def getFileHeader = {
       s"""

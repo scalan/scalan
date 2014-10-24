@@ -66,18 +66,14 @@ trait PArraysAbs extends PArrays
     proxyOps[UnitArrayCompanionAbs](p)
   }
 
-  trait UnitArrayCompanionElem extends CompanionElem[UnitArrayCompanionAbs]
-  implicit lazy val UnitArrayCompanionElem: UnitArrayCompanionElem = new UnitArrayCompanionElem {
+  class UnitArrayCompanionElem extends CompanionElem[UnitArrayCompanionAbs] {
     lazy val tag = typeTag[UnitArrayCompanionAbs]
     lazy val defaultRep = Default.defaultVal(UnitArray)
   }
+  implicit lazy val UnitArrayCompanionElem: UnitArrayCompanionElem = new UnitArrayCompanionElem
 
   implicit def proxyUnitArray(p: Rep[UnitArray]): UnitArray = {
     proxyOps[UnitArray](p)
-  }
-
-  implicit class ExtendedUnitArray(p: Rep[UnitArray]) {
-    def toData: Rep[UnitArrayData] = isoUnitArray.from(p)
   }
 
   // 5) implicit resolution of Iso
@@ -125,18 +121,14 @@ trait PArraysAbs extends PArrays
     proxyOps[BaseArrayCompanionAbs](p)
   }
 
-  trait BaseArrayCompanionElem extends CompanionElem[BaseArrayCompanionAbs]
-  implicit lazy val BaseArrayCompanionElem: BaseArrayCompanionElem = new BaseArrayCompanionElem {
+  class BaseArrayCompanionElem extends CompanionElem[BaseArrayCompanionAbs] {
     lazy val tag = typeTag[BaseArrayCompanionAbs]
     lazy val defaultRep = Default.defaultVal(BaseArray)
   }
+  implicit lazy val BaseArrayCompanionElem: BaseArrayCompanionElem = new BaseArrayCompanionElem
 
   implicit def proxyBaseArray[A:Elem](p: Rep[BaseArray[A]]): BaseArray[A] = {
     proxyOps[BaseArray[A]](p)
-  }
-
-  implicit class ExtendedBaseArray[A](p: Rep[BaseArray[A]])(implicit eA: Elem[A]) {
-    def toData: Rep[BaseArrayData[A]] = isoBaseArray(eA).from(p)
   }
 
   // 5) implicit resolution of Iso
@@ -186,18 +178,14 @@ trait PArraysAbs extends PArrays
     proxyOps[PairArrayCompanionAbs](p)
   }
 
-  trait PairArrayCompanionElem extends CompanionElem[PairArrayCompanionAbs]
-  implicit lazy val PairArrayCompanionElem: PairArrayCompanionElem = new PairArrayCompanionElem {
+  class PairArrayCompanionElem extends CompanionElem[PairArrayCompanionAbs] {
     lazy val tag = typeTag[PairArrayCompanionAbs]
     lazy val defaultRep = Default.defaultVal(PairArray)
   }
+  implicit lazy val PairArrayCompanionElem: PairArrayCompanionElem = new PairArrayCompanionElem
 
   implicit def proxyPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]): PairArray[A, B] = {
     proxyOps[PairArray[A, B]](p)
-  }
-
-  implicit class ExtendedPairArray[A, B](p: Rep[PairArray[A, B]])(implicit eA: Elem[A], eB: Elem[B]) {
-    def toData: Rep[PairArrayData[A, B]] = isoPairArray(eA, eB).from(p)
   }
 
   // 5) implicit resolution of Iso
@@ -246,18 +234,14 @@ trait PArraysAbs extends PArrays
     proxyOps[NestedArrayCompanionAbs](p)
   }
 
-  trait NestedArrayCompanionElem extends CompanionElem[NestedArrayCompanionAbs]
-  implicit lazy val NestedArrayCompanionElem: NestedArrayCompanionElem = new NestedArrayCompanionElem {
+  class NestedArrayCompanionElem extends CompanionElem[NestedArrayCompanionAbs] {
     lazy val tag = typeTag[NestedArrayCompanionAbs]
     lazy val defaultRep = Default.defaultVal(NestedArray)
   }
+  implicit lazy val NestedArrayCompanionElem: NestedArrayCompanionElem = new NestedArrayCompanionElem
 
   implicit def proxyNestedArray[A:Elem](p: Rep[NestedArray[A]]): NestedArray[A] = {
     proxyOps[NestedArray[A]](p)
-  }
-
-  implicit class ExtendedNestedArray[A](p: Rep[NestedArray[A]])(implicit eA: Elem[A]) {
-    def toData: Rep[NestedArrayData[A]] = isoNestedArray(eA).from(p)
   }
 
   // 5) implicit resolution of Iso
@@ -358,6 +342,94 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
     override def mirror(t: Transformer) = this
   }
 
+  object UnitArrayMethods {
+    object elem {
+      def unapply(d: Def[_]): Option[Rep[UnitArray]] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "elem" && receiver.elem.isInstanceOf[UnitArrayElem] =>
+          Some(receiver).asInstanceOf[Option[Rep[UnitArray]]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[UnitArray]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object arr {
+      def unapply(d: Def[_]): Option[Rep[UnitArray]] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "arr" && receiver.elem.isInstanceOf[UnitArrayElem] =>
+          Some(receiver).asInstanceOf[Option[Rep[UnitArray]]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[UnitArray]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[UnitArray]] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "length" && receiver.elem.isInstanceOf[UnitArrayElem] =>
+          Some(receiver).asInstanceOf[Option[Rep[UnitArray]]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[UnitArray]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[UnitArray], Rep[Int])] = d match {
+        case MethodCall(receiver, method, Seq(i, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[UnitArrayElem] =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[UnitArray], Rep[Int])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[UnitArray], Rep[Int])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply1 {
+      def unapply(d: Def[_]): Option[(Rep[UnitArray], Arr[Int])] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[UnitArrayElem] =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[UnitArray], Arr[Int])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[UnitArray], Arr[Int])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[UnitArray], Rep[Int], Rep[Int])] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*)) if method.getName == "slice" && receiver.elem.isInstanceOf[UnitArrayElem] =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[UnitArray], Rep[Int], Rep[Int])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[UnitArray], Rep[Int], Rep[Int])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object UnitArrayCompanionMethods {
+    object defaultOf {
+      def unapply(d: Def[_]): Option[Unit] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[UnitArrayCompanionElem] =>
+          Some(()).asInstanceOf[Option[Unit]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Unit] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
   def mkUnitArray
     (len: Rep[Int]) =
     new ExpUnitArray(len)
@@ -375,6 +447,82 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
   lazy val BaseArray: Rep[BaseArrayCompanionAbs] = new BaseArrayCompanionAbs with UserTypeDef[BaseArrayCompanionAbs, BaseArrayCompanionAbs] {
     lazy val selfType = element[BaseArrayCompanionAbs]
     override def mirror(t: Transformer) = this
+  }
+
+  object BaseArrayMethods {
+    object elem {
+      def unapply(d: Def[_]): Option[Rep[BaseArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "elem" && receiver.elem.isInstanceOf[BaseArrayElem[_]] =>
+          Some(receiver).asInstanceOf[Option[Rep[BaseArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[BaseArray[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[BaseArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "length" && receiver.elem.isInstanceOf[BaseArrayElem[_]] =>
+          Some(receiver).asInstanceOf[Option[Rep[BaseArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[BaseArray[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[BaseArray[A]], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[BaseArrayElem[_]] =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[BaseArray[A]], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[BaseArray[A]], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[BaseArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*)) if method.getName == "slice" && receiver.elem.isInstanceOf[BaseArrayElem[_]] =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[BaseArray[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[BaseArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply1 {
+      def unapply(d: Def[_]): Option[(Rep[BaseArray[A]], Arr[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[BaseArrayElem[_]] =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[BaseArray[A]], Arr[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[BaseArray[A]], Arr[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object BaseArrayCompanionMethods {
+    object defaultOf {
+      def unapply(d: Def[_]): Option[Unit forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[BaseArrayCompanionElem] =>
+          Some(()).asInstanceOf[Option[Unit forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Unit forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   def mkBaseArray[A]
@@ -396,6 +544,94 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
     override def mirror(t: Transformer) = this
   }
 
+  object PairArrayMethods {
+    object mapPairs {
+      def unapply(d: Def[_]): Option[(Rep[PairArray[A, B]], (Rep[A],Rep[B]) => Rep[R]) forSome {type A; type B; type R}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*)) if method.getName == "mapPairs" && receiver.elem.isInstanceOf[PairArrayElem[_, _]] =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[PairArray[A, B]], (Rep[A],Rep[B]) => Rep[R]) forSome {type A; type B; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairArray[A, B]], (Rep[A],Rep[B]) => Rep[R]) forSome {type A; type B; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object arr {
+      def unapply(d: Def[_]): Option[Rep[PairArray[A, B]] forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "arr" && receiver.elem.isInstanceOf[PairArrayElem[_, _]] =>
+          Some(receiver).asInstanceOf[Option[Rep[PairArray[A, B]] forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PairArray[A, B]] forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[PairArray[A, B]], Rep[Int]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[PairArrayElem[_, _]] =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[PairArray[A, B]], Rep[Int]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairArray[A, B]], Rep[Int]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[PairArray[A, B]] forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "length" && receiver.elem.isInstanceOf[PairArrayElem[_, _]] =>
+          Some(receiver).asInstanceOf[Option[Rep[PairArray[A, B]] forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PairArray[A, B]] forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[PairArray[A, B]], Rep[Int], Rep[Int]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*)) if method.getName == "slice" && receiver.elem.isInstanceOf[PairArrayElem[_, _]] =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[PairArray[A, B]], Rep[Int], Rep[Int]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairArray[A, B]], Rep[Int], Rep[Int]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply1 {
+      def unapply(d: Def[_]): Option[(Rep[PairArray[A, B]], Arr[Int]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[PairArrayElem[_, _]] =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[PairArray[A, B]], Arr[Int]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairArray[A, B]], Arr[Int]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object PairArrayCompanionMethods {
+    object defaultOf {
+      def unapply(d: Def[_]): Option[Unit forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[PairArrayCompanionElem] =>
+          Some(()).asInstanceOf[Option[Unit forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Unit forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
   def mkPairArray[A, B]
     (as: Rep[PArray[A]], bs: Rep[PArray[B]])(implicit eA: Elem[A], eB: Elem[B]) =
     new ExpPairArray[A, B](as, bs)
@@ -415,153 +651,269 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
     override def mirror(t: Transformer) = this
   }
 
+  object NestedArrayMethods {
+    object length {
+      def unapply(d: Def[_]): Option[Rep[NestedArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "length" && receiver.elem.isInstanceOf[NestedArrayElem[_]] =>
+          Some(receiver).asInstanceOf[Option[Rep[NestedArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[NestedArray[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[NestedArray[A]], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[NestedArrayElem[_]] =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[NestedArray[A]], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[NestedArray[A]], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object arr {
+      def unapply(d: Def[_]): Option[Rep[NestedArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "arr" && receiver.elem.isInstanceOf[NestedArrayElem[_]] =>
+          Some(receiver).asInstanceOf[Option[Rep[NestedArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[NestedArray[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[NestedArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*)) if method.getName == "slice" && receiver.elem.isInstanceOf[NestedArrayElem[_]] =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[NestedArray[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[NestedArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply1 {
+      def unapply(d: Def[_]): Option[(Rep[NestedArray[A]], Arr[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[NestedArrayElem[_]] =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[NestedArray[A]], Arr[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[NestedArray[A]], Arr[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object NestedArrayCompanionMethods {
+    object defaultOf {
+      def unapply(d: Def[_]): Option[Unit forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[NestedArrayCompanionElem] =>
+          Some(()).asInstanceOf[Option[Unit forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Unit forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
   def mkNestedArray[A]
     (values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])(implicit eA: Elem[A]) =
     new ExpNestedArray[A](values, segments)
   def unmkNestedArray[A:Elem](p: Rep[NestedArray[A]]) =
     Some((p.values, p.segments))
 
-  object PArray_$init$ {
-    def unapply(d: Def[_]): Option[PArray[A] forSome {type A}] = d match {
-      case MethodCall(receiver, method, _) if method.getName == "$init$" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some(receiver).asInstanceOf[Option[PArray[A] forSome {type A}]]
-      case _ => None
+  object PArrayMethods {
+    object length {
+      def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "length" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
+          Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PArray[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
     }
-    def unapply(exp: Exp[_]): Option[PArray[A] forSome {type A}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
+
+    object arr {
+      def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "arr" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
+          Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PArray[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[PArray[A]], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[PArray[A]], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PArray[A]], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply1 {
+      def unapply(d: Def[_]): Option[(Rep[PArray[A]], Arr[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[PArray[A]], Arr[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PArray[A]], Arr[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object map {
+      def unapply(d: Def[_]): Option[(Rep[PArray[A]], Rep[A] => Rep[B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*)) if method.getName == "map" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[PArray[A]], Rep[A] => Rep[B]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PArray[A]], Rep[A] => Rep[B]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object mapBy {
+      def unapply(d: Def[_]): Option[(Rep[PArray[A]], Rep[A => B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*)) if method.getName == "mapBy" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[PArray[A]], Rep[A => B]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PArray[A]], Rep[A => B]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object zip {
+      def unapply(d: Def[_]): Option[(Rep[PArray[A]], PA[B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ys, _*)) if method.getName == "zip" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
+          Some((receiver, ys)).asInstanceOf[Option[(Rep[PArray[A]], PA[B]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PArray[A]], PA[B]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[PArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*)) if method.getName == "slice" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[PArray[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object reduce {
+      def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "reduce" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
+          Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PArray[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object scan {
+      def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "scan" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
+          Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PArray[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
     }
   }
 
-  object PArray_elem {
-    def unapply(d: Def[_]): Option[PArray[A] forSome {type A}] = d match {
-      case MethodCall(receiver, method, _) if method.getName == "elem" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some(receiver).asInstanceOf[Option[PArray[A] forSome {type A}]]
-      case _ => None
+  object PArrayCompanionMethods {
+    object defaultOf {
+      def unapply(d: Def[_]): Option[Unit forSome {type A}] = d match {
+        case MethodCall(receiver, method, _) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[PArrayCompanionElem] =>
+          Some(()).asInstanceOf[Option[Unit forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Unit forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
     }
-    def unapply(exp: Exp[_]): Option[PArray[A] forSome {type A}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
-    }
-  }
 
-  object PArray_length {
-    def unapply(d: Def[_]): Option[PArray[A] forSome {type A}] = d match {
-      case MethodCall(receiver, method, _) if method.getName == "length" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some(receiver).asInstanceOf[Option[PArray[A] forSome {type A}]]
-      case _ => None
+    object apply {
+      def unapply(d: Def[_]): Option[Rep[Array[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(arr, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[PArrayCompanionElem] =>
+          Some(arr).asInstanceOf[Option[Rep[Array[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Array[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
     }
-    def unapply(exp: Exp[_]): Option[PArray[A] forSome {type A}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
-    }
-  }
 
-  object PArray_arr {
-    def unapply(d: Def[_]): Option[PArray[A] forSome {type A}] = d match {
-      case MethodCall(receiver, method, _) if method.getName == "arr" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some(receiver).asInstanceOf[Option[PArray[A] forSome {type A}]]
-      case _ => None
+    object fromArray {
+      def unapply(d: Def[_]): Option[Rep[Array[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(arr, _*)) if method.getName == "fromArray" && receiver.elem.isInstanceOf[PArrayCompanionElem] =>
+          Some(arr).asInstanceOf[Option[Rep[Array[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Array[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
     }
-    def unapply(exp: Exp[_]): Option[PArray[A] forSome {type A}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
-    }
-  }
 
-  object PArray_apply {
-    def unapply(d: Def[_]): Option[(PArray[A], Rep[Int]) forSome {type A}] = d match {
-      case MethodCall(receiver, method, Seq(i, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some((receiver, i)).asInstanceOf[Option[(PArray[A], Rep[Int]) forSome {type A}]]
-      case _ => None
+    object replicate {
+      def unapply(d: Def[_]): Option[(Rep[Int], Rep[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(len, v, _*)) if method.getName == "replicate" && receiver.elem.isInstanceOf[PArrayCompanionElem] =>
+          Some((len, v)).asInstanceOf[Option[(Rep[Int], Rep[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Int], Rep[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
     }
-    def unapply(exp: Exp[_]): Option[(PArray[A], Rep[Int]) forSome {type A}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
-    }
-  }
 
-  object PArray_apply1 {
-    def unapply(d: Def[_]): Option[(PArray[A], Arr[Int]) forSome {type A}] = d match {
-      case MethodCall(receiver, method, Seq(indices, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some((receiver, indices)).asInstanceOf[Option[(PArray[A], Arr[Int]) forSome {type A}]]
-      case _ => None
-    }
-    def unapply(exp: Exp[_]): Option[(PArray[A], Arr[Int]) forSome {type A}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
-    }
-  }
-
-  object PArray_map {
-    def unapply(d: Def[_]): Option[(PArray[A], Rep[A] => Rep[B]) forSome {type A; type B}] = d match {
-      case MethodCall(receiver, method, Seq(f, _*)) if method.getName == "map" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some((receiver, f)).asInstanceOf[Option[(PArray[A], Rep[A] => Rep[B]) forSome {type A; type B}]]
-      case _ => None
-    }
-    def unapply(exp: Exp[_]): Option[(PArray[A], Rep[A] => Rep[B]) forSome {type A; type B}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
-    }
-  }
-
-  object PArray_mapBy {
-    def unapply(d: Def[_]): Option[(PArray[A], Rep[A => B]) forSome {type A; type B}] = d match {
-      case MethodCall(receiver, method, Seq(f, _*)) if method.getName == "mapBy" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some((receiver, f)).asInstanceOf[Option[(PArray[A], Rep[A => B]) forSome {type A; type B}]]
-      case _ => None
-    }
-    def unapply(exp: Exp[_]): Option[(PArray[A], Rep[A => B]) forSome {type A; type B}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
-    }
-  }
-
-  object PArray_zip {
-    def unapply(d: Def[_]): Option[(PArray[A], PA[B]) forSome {type A; type B}] = d match {
-      case MethodCall(receiver, method, Seq(ys, _*)) if method.getName == "zip" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some((receiver, ys)).asInstanceOf[Option[(PArray[A], PA[B]) forSome {type A; type B}]]
-      case _ => None
-    }
-    def unapply(exp: Exp[_]): Option[(PArray[A], PA[B]) forSome {type A; type B}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
-    }
-  }
-
-  object PArray_slice {
-    def unapply(d: Def[_]): Option[(PArray[A], Rep[Int], Rep[Int]) forSome {type A}] = d match {
-      case MethodCall(receiver, method, Seq(offset, length, _*)) if method.getName == "slice" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some((receiver, offset, length)).asInstanceOf[Option[(PArray[A], Rep[Int], Rep[Int]) forSome {type A}]]
-      case _ => None
-    }
-    def unapply(exp: Exp[_]): Option[(PArray[A], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
-    }
-  }
-
-  object PArray_reduce {
-    def unapply(d: Def[_]): Option[PArray[A] forSome {type A}] = d match {
-      case MethodCall(receiver, method, _) if method.getName == "reduce" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some(receiver).asInstanceOf[Option[PArray[A] forSome {type A}]]
-      case _ => None
-    }
-    def unapply(exp: Exp[_]): Option[PArray[A] forSome {type A}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
-    }
-  }
-
-  object PArray_scan {
-    def unapply(d: Def[_]): Option[PArray[A] forSome {type A}] = d match {
-      case MethodCall(receiver, method, _) if method.getName == "scan" && receiver.elem.isInstanceOf[PArrayElem[_, _]] =>
-        Some(receiver).asInstanceOf[Option[PArray[A] forSome {type A}]]
-      case _ => None
-    }
-    def unapply(exp: Exp[_]): Option[PArray[A] forSome {type A}] = exp match {
-      case Def(d) => unapply(d)
-      case _ => None
+    object singleton {
+      def unapply(d: Def[_]): Option[Rep[T] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(v, _*)) if method.getName == "singleton" && receiver.elem.isInstanceOf[PArrayCompanionElem] =>
+          Some(v).asInstanceOf[Option[Rep[T] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[T] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
     }
   }
 }

@@ -71,12 +71,22 @@ trait ScalanAst {
     def tpe = components.mkString(" with ")
   }
 
+  abstract class STraitOrClassDef extends SBodyItem {
+    def name: String
+    def tpeArgs: List[STpeArg]
+    def ancestors: List[STraitCall]
+    def body: List[SBodyItem]
+    def selfType: Option[SSelfTypeDef]
+    def companion: Option[STraitOrClassDef]
+  }
+
   case class STraitDef(
     name: String,
     tpeArgs: List[STpeArg],
     ancestors: List[STraitCall],
     body: List[SBodyItem],
-    selfType: Option[SSelfTypeDef]) extends SBodyItem
+    selfType: Option[SSelfTypeDef],
+    companion: Option[STraitOrClassDef]) extends STraitOrClassDef
 
   case class SClassDef(
     name: String,
@@ -86,7 +96,8 @@ trait ScalanAst {
     ancestors: List[STraitCall],
     body: List[SBodyItem],
     selfType: Option[SSelfTypeDef],
-    isAbstract: Boolean) extends SBodyItem
+    companion: Option[STraitOrClassDef],
+    isAbstract: Boolean) extends STraitOrClassDef
 
   case class SObjectDef(
     name: String,
@@ -183,7 +194,7 @@ trait ScalanParsers { self: ScalanAst =>
       case Seq(only) => only
       case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
     }
-    val moduleTrait = traitDef(moduleTraitTree)
+    val moduleTrait = traitDef(moduleTraitTree, moduleTraitTree)
     SEntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait, config)
   }
 
@@ -219,15 +230,20 @@ trait ScalanParsers { self: ScalanAst =>
   // exclude default parent
   def ancestors(trees: List[Tree]) = trees.map(traitCall).filter(_.name != "AnyRef")
 
-  def traitDef(td: ClassDef): STraitDef = {
+  def traitDef(td: ClassDef, parentScope: ImplDef): STraitDef = {
     val tpeArgs = this.tpeArgs(td.tparams, Nil)
     val ancestors = this.ancestors(td.impl.parents)
-    val body = td.impl.body.flatMap(optBodyItem)
+    val body = td.impl.body.flatMap(optBodyItem(_, td))
     val selfType = this.selfType(td.impl.self)
-    STraitDef(td.name, tpeArgs, ancestors, body, selfType)
+    val name = td.name.toString
+    val companion = parentScope.impl.body.collect {
+      case c: ClassDef if c.name.toString == name + "Companion" =>
+        if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
+    }.headOption
+    STraitDef(name, tpeArgs, ancestors, body, selfType, companion)
   }
 
-  def classDef(cd: ClassDef): SClassDef = {
+  def classDef(cd: ClassDef, parentScope: ImplDef): SClassDef = {
     val ancestors = this.ancestors(cd.impl.parents)
     val constructor = (cd.impl.body.collect {
       case dd: DefDef if dd.name == nme.CONSTRUCTOR => dd
@@ -246,15 +262,20 @@ trait ScalanParsers { self: ScalanAst =>
       case seq => !!!(s"Constructor of class ${cd.name} has more than 2 parameter lists, not supported")
     }
     val tpeArgs = this.tpeArgs(cd.tparams, constructor.vparamss.lastOption.getOrElse(Nil))
-    val body = cd.impl.body.flatMap(optBodyItem)
+    val body = cd.impl.body.flatMap(optBodyItem(_, cd))
     val selfType = this.selfType(cd.impl.self)
     val isAbstract = cd.mods.hasAbstractFlag
-    SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, isAbstract)
+    val name = cd.name.toString
+    val companion = parentScope.impl.body.collect {
+      case c: ClassDef if c.name.toString == name + "Companion" =>
+        if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
+    }.headOption
+    SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, companion, isAbstract)
   }
 
   def objectDef(od: ModuleDef): SObjectDef = {
     val ancestors = this.ancestors(od.impl.parents)
-    val body = od.impl.body.flatMap(optBodyItem)
+    val body = od.impl.body.flatMap(optBodyItem(_, od))
     SObjectDef(od.name, ancestors, body)
   }
 
@@ -278,12 +299,17 @@ trait ScalanParsers { self: ScalanAst =>
     case tree => ???(tree)
   }
 
-  def optBodyItem(tree: Tree): Option[SBodyItem] = tree match {
+  def optBodyItem(tree: Tree, parentScope: ImplDef): Option[SBodyItem] = tree match {
     case i: Import =>
       Some(importStat(i))
     case md: DefDef =>
-      if (md.name != nme.CONSTRUCTOR)
-        Some(methodDef(md))
+      if (!nme.isConstructorName(md.name))
+        md.tpt match {
+          case AppliedTypeTree(tpt, _) if tpt.toString == "Elem" || tpt.toString == "Element" =>
+            None
+          case _ =>
+            Some(methodDef(md))
+        }
       else
         None
     case td: TypeDef =>
@@ -291,9 +317,9 @@ trait ScalanParsers { self: ScalanAst =>
       val rhs = tpeExpr(td.rhs)
       Some(STpeDef(td.name, tpeArgs, rhs))
     case td: ClassDef if td.mods.isTrait =>
-      Some(traitDef(td))
+      Some(traitDef(td, parentScope))
     case cd: ClassDef if !cd.mods.isTrait => // isClass doesn't exist
-      Some(classDef(cd))
+      Some(classDef(cd, parentScope))
     case od: ModuleDef =>
       Some(objectDef(od))
     case vd: ValDef =>

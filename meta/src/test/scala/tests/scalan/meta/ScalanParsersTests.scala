@@ -61,10 +61,10 @@ class ScalanParsersTests extends BaseTests {
   }
 
   def testTrait(prog: String, expected: STraitDef) {
-    test(Member, prog, expected) { case tree: ClassDef => traitDef(tree) }
+    test(Member, prog, expected) { case tree: ClassDef => traitDef(tree, tree) }
   }
   def testSClass(prog: String, expected: SClassDef) {
-    test(Member, prog, expected) { case tree: ClassDef => classDef(tree) }
+    test(Member, prog, expected) { case tree: ClassDef => classDef(tree, tree) }
   }
 
   def testSTpe(prog: String, expected: STpeExpr) {
@@ -109,8 +109,8 @@ class ScalanParsersTests extends BaseTests {
   }
 
   describe("TraitDef") {
-    val traitA = TD("A", Nil, Nil, Nil, None)
-    val traitEdgeVE = TD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), Nil, Nil, None)
+    val traitA = TD("A", Nil, Nil, Nil, None, None)
+    val traitEdgeVE = TD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), Nil, Nil, None, None)
 
     testTrait("trait A", traitA)
     testTrait("trait A extends B",
@@ -135,7 +135,7 @@ class ScalanParsersTests extends BaseTests {
         IS("scalan._"),
         STpeDef("Rep", L(STpeArg("A", None, Nil)), TC("A", Nil)),
         MD("f", Nil, Nil, Some(T(L(INT, TC("A", Nil)))), false),
-        MD("g", Nil, L(MAs(false, L(MA("x", BOOL, None)))), Some(TC("A", Nil)), false)), None))
+        MD("g", Nil, L(MAs(false, L(MA("x", BOOL, None)))), Some(TC("A", Nil)), false)), None, None))
 
   }
 
@@ -152,9 +152,9 @@ class ScalanParsersTests extends BaseTests {
 
   describe("SClassDef") {
     val classA =
-      CD("A", Nil, Nil, Nil, Nil, Nil, None, false)
+      CD("A", Nil, Nil, Nil, Nil, Nil, None, None, false)
     val classEdgeVE =
-      CD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), Nil, Nil, Nil, Nil, None, false)
+      CD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), Nil, Nil, Nil, Nil, None, None, false)
     testSClass("class A", classA)
     testSClass("class A extends B",
       classA.copy(ancestors = L(TC("B", Nil))))
@@ -188,14 +188,14 @@ class ScalanParsersTests extends BaseTests {
     val tpeArgA = L(STpeArg("A", None, Nil))
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
-    val obsImpl1 = CD("ObservableImpl1", tpeArgA, Nil, argEA, ancObsA, Nil, None, false)
+    val obsImpl1 = CD("ObservableImpl1", tpeArgA, Nil, argEA, ancObsA, Nil, None, None, false)
     val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
 
     testModule(
       reactiveModule,
       EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
         TD("Observable", tpeArgA, Nil,
-          L(MD("eA", Nil, Nil, Some(TC("Elem", L(TC("A", Nil)))), isImplicit = true)), None),
+          L(MD("eA", Nil, Nil, Some(TC("Elem", L(TC("A", Nil)))), isImplicit = true)), None, None),
         L(obsImpl1, obsImpl2),
         None))
   }
