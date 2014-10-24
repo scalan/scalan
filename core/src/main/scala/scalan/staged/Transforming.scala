@@ -18,18 +18,6 @@ trait Transforming { self: ScalanExp =>
     }
   }
 
-  //  class SubstTransformer extends Transformer {
-  //    private val subst = new HashMap[Exp[Any], Exp[Any]]
-  //
-  //    def apply[A](x: Exp[A]): Exp[A] = subst.get(x) match {
-  //      case Some(y) if y != x => apply(y.asRep[A])  // transitive closure
-  //      case _ => x
-  //    }
-  //    def isDefinedAt(x: Rep[_]) = subst.contains(x)
-  //
-  //    def +=(kv: (Exp[Any], Exp[Any])) = subst += kv
-  //  }
-
   class MapTransformer(private val subst: Map[Exp[_], Exp[_]]) extends Transformer {
     def this(substPairs: (Exp[_], Exp[_])*) {
       this(substPairs.toMap)
@@ -182,12 +170,6 @@ trait Transforming { self: ScalanExp =>
       }
       (t, revMirrored.reverse)
     }
-
-    // TODO simplify to mirrorNode if possible
-    def mirrorSymbol(startNode: Exp[_], rewriter: Rewriter, t: Ctx): (Ctx, Exp[_]) = {
-      val (t1, ss) = mirrorSymbols(t, rewriter, List(startNode))
-      (t1, ss.head)
-    }
   }
 
   def mirror[Ctx <: Transformer : TransformerOps] = new Mirror[Ctx] {}
@@ -233,7 +215,7 @@ trait Transforming { self: ScalanExp =>
       if (isLeaf) List((Nil, root))
       else{
         for {
-            ch <- children;
+            ch <- children
             (p, s) <- ch.paths
           } yield {
             val i = projectionIndex(ch.root)
