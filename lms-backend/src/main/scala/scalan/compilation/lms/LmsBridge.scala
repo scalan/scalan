@@ -26,7 +26,7 @@ abstract class LmsBridge[A,B] {
       val f = { x: lFunc.Exp[I] =>
         val sched = lam.schedule
         val (lamExps, _, _) = mirrorDefs(sched, symMirror + ((lamX, x)), funcMirror )
-        val res = if (lamExps.isEmpty) x else (lamExps.last)
+        val res = lamExps.lastOption.getOrElse(x)
         res.asInstanceOf[lFunc.Exp[R]]
       }
       f
@@ -192,7 +192,7 @@ abstract class LmsBridge[A,B] {
             /* This is reduce */
             case scalan.ArrayReduce(source, monoid) => {
               (monoid, source.elem) match {
-                case (monoid, el: scalan.ArrayElem[_]) if monoid.opName == "+" => {
+                case (monoid, el: scalan.ArrayElem[_]) if monoid.opName.equals("+") => {
                   scalan.createManifest(el.eItem) match {
                     case (mA: Manifest[a]) =>
                       val lmsSource = symMirr(source).asInstanceOf[lFunc.Exp[Array[a]]]
