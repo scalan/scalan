@@ -27,7 +27,7 @@ trait Passes { self: ScalanExp =>
 
     def apply(graph: PGraph) = {
       addInvokeTester(pred)
-      graph.transform(DefaultMirror, NoRewriting, MapTransformer.Empty)
+      graph.transform(DefaultMirror, InvokeRewriter, MapTransformer.Empty)
     }
 
     override def doFinalization(): Unit = {

@@ -75,9 +75,16 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
   // We need some way to make isInvokeEnabled local to graph
   type InvokeTester = (Def[_], Method) => Boolean
 
-  private var invokeTesters: Set[InvokeTester] = Set.empty
+  // we need to always invoke these for creating default values
+  private val companionApply: InvokeTester =
+    (_, m) => m.getName == "apply" && m.getDeclaringClass.getName.endsWith("CompanionAbs")
+  private var invokeTesters: Set[InvokeTester] = Set(companionApply)
 
   def isInvokeEnabled(d: Def[_], m: Method) = invokeTesters.exists(_(d, m))
+
+  def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) =
+    m.getDeclaringClass.isAssignableFrom(d.getClass) &&
+      (isInvokeEnabled(d, m) || hasFuncArg(args))
 
   def addInvokeTester(pred: InvokeTester): Unit = {
     invokeTesters += pred
@@ -100,10 +107,6 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
 
   class ExpInvocationHandler[T](receiver: Exp[T]) extends InvocationHandler {
     override def toString = s"ExpInvocationHandler(${receiver.toStringWithDefinition})"
-
-    def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) =
-      m.getDeclaringClass.isAssignableFrom(d.getClass) &&
-        (isInvokeEnabled(d, m) || hasFuncArg(args))
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) scala.Array.empty[AnyRef] else _args
@@ -158,6 +161,9 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
           case other => !!!(s"Staged method call ${ScalaNameUtil.cleanScalaName(m.toString)} must return an Exp, but got $other")
         }
       } catch {
+        case e: IllegalArgumentException =>
+          logger.error(s"Method call to get result element failed. Object: $zeroNode, method: $m", e)
+          throw e
         case e: InvocationTargetException =>
           e.getCause match {
             case e1: ElemException[_] => e1.element
