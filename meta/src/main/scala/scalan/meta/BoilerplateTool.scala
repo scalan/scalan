@@ -7,7 +7,8 @@ object BoilerplateTool {
       "scalan/trees/Trees.scala",
       "scalan/math/Matrices.scala",
       "scalan/math/Vectors.scala",
-      "scalan/collections/Sets.scala"
+      "scalan/collections/Sets.scala",
+      "scalan/dists/Dists.scala"
     ),
     seqContextTrait = "ScalanEnterpriseSeq",
     stagedContextTrait = "ScalanEnterpriseExp",
@@ -17,7 +18,7 @@ object BoilerplateTool {
   )
 
   lazy val liteConfig = CodegenConfig(
-    srcPath = "../../scalan-lite/community-edition/src/main/scala",
+    srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
       ,"scalan/linalgebra/Vectors.scala"
@@ -32,10 +33,13 @@ object BoilerplateTool {
       "scalan.common.Default")
   )
 
-
   def main(args: Array[String]) {
-    lazy val ctx = new EntityManagement(liteConfig)
+    val configs = args.toSeq match {
+      case Seq("ee") => List(scalanConfig)
+      case Seq("all") => List(liteConfig, scalanConfig)
+      case _ => List(liteConfig)
+    }
 
-    ctx.generateAll
+    configs.foreach { new EntityManagement(_).generateAll() }
   }
 }
