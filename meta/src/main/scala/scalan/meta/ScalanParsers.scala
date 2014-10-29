@@ -406,11 +406,19 @@ trait ScalanParsers { self: ScalanAst =>
   }
 
   def selfType(vd: ValDef): Option[SSelfTypeDef] = {
-    if (vd.tpt.isEmpty)
+    val components = vd.tpt match {
+      case t if t.isEmpty =>
+        Nil
+      case CompoundTypeTree(Template(ancestors, _, _)) =>
+        ancestors.map(tpeExpr)
+      case t =>
+        List(tpeExpr(t))
+    }
+
+    if (components.isEmpty)
       None
     else
-      // TODO doesn't handle "with" correctly
-      Some(SSelfTypeDef(vd.name, List(tpeExpr(vd.tpt))))
+      Some(SSelfTypeDef(vd.name.toString, components))
   }
 }
 

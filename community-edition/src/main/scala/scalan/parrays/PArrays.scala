@@ -85,7 +85,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
 
     def singleton[T: Elem](v: Rep[T]): PA[T] = {
       element[T] match {
-        case paE: PArrayElem[tFrom, tTo] => ???
+        case paE: PArrayElem[_, _, _] => ???
         case _ => replicate(toRep(1), v)
       }
     }

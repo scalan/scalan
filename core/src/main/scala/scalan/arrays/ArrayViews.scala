@@ -181,7 +181,9 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     }
   }
 
-  val HasViewArg = HasArg {
+  val HasViewArg = HasArg(hasViewArg)
+
+  protected def hasViewArg(s: Exp[_]): Boolean = s match {
     case Def(_: ViewArray[_, _]) => true
     case _ => false
   }
