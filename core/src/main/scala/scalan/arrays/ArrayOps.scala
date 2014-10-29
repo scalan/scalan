@@ -26,12 +26,13 @@ trait ArrayOps { self: Scalan =>
     def updateMany(indexes: Arr[Int], values: Arr[T]) = array_updateMany(xs, indexes, values)
   }
 
-  object Array {
+  class ArrayCompanion {
     def rangeFrom0(n: Rep[Int]) = array_rangeFrom0(n)
     def tabulate[T: Elem](n: Rep[Int])(f: Rep[Int] => Rep[T]): Arr[T] =
       rangeFrom0(n).map(f)
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = array_replicate(len, v)
   }
+  val Array: ArrayCompanion
 
   // require: n in xs.indices
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
@@ -82,6 +83,13 @@ trait ArrayOps { self: Scalan =>
 
 trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   import TagImplicits.elemToClassTag
+
+  class ArrayCompanion1 extends ArrayCompanion {
+    @inline
+    def apply[T: ClassTag](xs: T*) = scala.Array(xs: _*)
+  }
+  val Array: ArrayCompanion1 = new ArrayCompanion1
+
   def array_apply[T](x: Arr[T], n: Rep[Int]): Rep[T] = x(n)
   def array_applyMany[T](x: Arr[T], is: Arr[Int]): Arr[T] = {
     implicit val ct = arrayToClassTag(x)
@@ -173,6 +181,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     override def mirror(t: Transformer) = ArrayFilter(t(xs), t(f))
   }
 
+  val Array: ArrayCompanion = new ArrayCompanion
   def array_apply[T](xs: Exp[Array[T]], n: Exp[Int]): Rep[T] =
     withElemOfArray(xs) { implicit eT => ArrayApply(xs, n) }
   def array_applyMany[T](xs: Exp[Array[T]], is: Exp[Array[Int]]): Arr[T] =
