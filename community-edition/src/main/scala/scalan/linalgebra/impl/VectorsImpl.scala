@@ -26,7 +26,9 @@ trait VectorsAbs extends Vectors
     lazy val defaultRep = Default.defaultVal(Vector)
   }
 
-  trait VectorCompanionAbs extends VectorCompanion
+  trait VectorCompanionAbs extends VectorCompanion {
+    override def toString = "Vector"
+  }
   def Vector: Rep[VectorCompanionAbs]
   implicit def proxyVectorCompanion(p: Rep[VectorCompanion]): VectorCompanion = {
     proxyOps[VectorCompanion](p)
@@ -59,6 +61,7 @@ trait VectorsAbs extends Vectors
   }
   // 4) constructor and deconstructor
   trait DenseVectorCompanionAbs extends DenseVectorCompanion {
+    override def toString = "DenseVector"
 
     def apply[T](coords: Rep[PArray[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
       mkDenseVector(coords)
@@ -117,6 +120,7 @@ trait VectorsAbs extends Vectors
   }
   // 4) constructor and deconstructor
   trait SparseVectorCompanionAbs extends SparseVectorCompanion {
+    override def toString = "SparseVector"
     def apply[T](p: Rep[SparseVectorData[T]])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
       isoSparseVector(elem).to(p)
     def apply[T](nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =

@@ -23,7 +23,9 @@ trait PArraysAbs extends PArrays
     lazy val defaultRep = Default.defaultVal(PArray)
   }
 
-  trait PArrayCompanionAbs extends PArrayCompanion
+  trait PArrayCompanionAbs extends PArrayCompanion {
+    override def toString = "PArray"
+  }
   def PArray: Rep[PArrayCompanionAbs]
   implicit def proxyPArrayCompanion(p: Rep[PArrayCompanion]): PArrayCompanion = {
     proxyOps[PArrayCompanion](p)
@@ -56,6 +58,7 @@ trait PArraysAbs extends PArrays
   }
   // 4) constructor and deconstructor
   trait UnitArrayCompanionAbs extends UnitArrayCompanion {
+    override def toString = "UnitArray"
 
     def apply(len: Rep[Int]): Rep[UnitArray] =
       mkUnitArray(len)
@@ -114,6 +117,7 @@ trait PArraysAbs extends PArrays
   }
   // 4) constructor and deconstructor
   trait BaseArrayCompanionAbs extends BaseArrayCompanion {
+    override def toString = "BaseArray"
 
     def apply[A](arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[BaseArray[A]] =
       mkBaseArray(arr)
@@ -173,6 +177,7 @@ trait PArraysAbs extends PArrays
   }
   // 4) constructor and deconstructor
   trait PairArrayCompanionAbs extends PairArrayCompanion {
+    override def toString = "PairArray"
     def apply[A, B](p: Rep[PairArrayData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]] =
       isoPairArray(eA, eB).to(p)
     def apply[A, B](as: Rep[PArray[A]], bs: Rep[PArray[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]] =
@@ -232,6 +237,7 @@ trait PArraysAbs extends PArrays
   }
   // 4) constructor and deconstructor
   trait NestedArrayCompanionAbs extends NestedArrayCompanion {
+    override def toString = "NestedArray"
     def apply[A](p: Rep[NestedArrayData[A]])(implicit eA: Elem[A]): Rep[NestedArray[A]] =
       isoNestedArray(eA).to(p)
     def apply[A](values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])(implicit eA: Elem[A]): Rep[NestedArray[A]] =

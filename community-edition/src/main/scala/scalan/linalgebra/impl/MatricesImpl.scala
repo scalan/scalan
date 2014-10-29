@@ -20,7 +20,9 @@ trait MatricesAbs extends Matrices
     lazy val defaultRep = Default.defaultVal(Matrix)
   }
 
-  trait MatrixCompanionAbs extends MatrixCompanion
+  trait MatrixCompanionAbs extends MatrixCompanion {
+    override def toString = "Matrix"
+  }
   def Matrix: Rep[MatrixCompanionAbs]
   implicit def proxyMatrixCompanion(p: Rep[MatrixCompanion]): MatrixCompanion = {
     proxyOps[MatrixCompanion](p)
@@ -53,6 +55,7 @@ trait MatricesAbs extends Matrices
   }
   // 4) constructor and deconstructor
   trait RowMajorMatrixCompanionAbs extends RowMajorMatrixCompanion {
+    override def toString = "RowMajorMatrix"
 
     def apply[T](rows: Rep[PArray[DenseVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorMatrix[T]] =
       mkRowMajorMatrix(rows)
@@ -111,6 +114,7 @@ trait MatricesAbs extends Matrices
   }
   // 4) constructor and deconstructor
   trait RowMajorFlatMatrixCompanionAbs extends RowMajorFlatMatrixCompanion {
+    override def toString = "RowMajorFlatMatrix"
     def apply[T](p: Rep[RowMajorFlatMatrixData[T]])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
       isoRowMajorFlatMatrix(elem).to(p)
     def apply[T](rmValues: Rep[PArray[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
@@ -170,6 +174,7 @@ trait MatricesAbs extends Matrices
   }
   // 4) constructor and deconstructor
   trait RowMajorSparseMatrixCompanionAbs extends RowMajorSparseMatrixCompanion {
+    override def toString = "RowMajorSparseMatrix"
 
     def apply[T](rows: Rep[PArray[SparseVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]] =
       mkRowMajorSparseMatrix(rows)

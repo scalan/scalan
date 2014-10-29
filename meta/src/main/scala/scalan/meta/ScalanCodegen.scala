@@ -118,7 +118,9 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |    lazy val defaultRep = Default.defaultVal($entityName)
         |  }
         |
-        |  trait ${companionName}Abs extends ${companionName}
+        |  trait ${companionName}Abs extends ${companionName} {
+        |    override def toString = "$entityName"
+        |  }
         |  def $entityName: Rep[${companionName}Abs]
         |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} = {
         |    proxyOps[${companionName}](p)
@@ -164,6 +166,7 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
         |  }
         |  // 4) constructor and deconstructor
         |  trait ${className}CompanionAbs extends ${className}Companion {
+        |    override def toString = "$className"
         |${(fields.length != 1).opt(s"""
         |    def apply${types}(p: Rep[${className}Data${types}])${implicitArgs}: Rep[$className${types}] =
         |      iso$className${useImplicits}.to(p)""".stripAndTrim)}
