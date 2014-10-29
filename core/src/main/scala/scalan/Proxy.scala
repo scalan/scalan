@@ -84,7 +84,9 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
 
   def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) =
     m.getDeclaringClass.isAssignableFrom(d.getClass) &&
-      (isInvokeEnabled(d, m) || hasFuncArg(args))
+      (isInvokeEnabled(d, m) || hasFuncArg(args) ||
+        // e.g. for methods returning Elem
+        (m.getReturnType != classOf[AnyRef] && m.getReturnType != classOf[Exp[_]]))
 
   def addInvokeTester(pred: InvokeTester): Unit = {
     invokeTesters += pred

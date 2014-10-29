@@ -153,7 +153,12 @@ trait BaseExp extends Base { self: ScalanExp =>
       implicit val eA = se.eLeft
       implicit val eB = se.eRight
       x1.fold(l => Left[a, b](l), r => Right[a, b](r))
-    case _ => super.toRep(x)(eA)
+    case _ =>
+      x match {
+        // this may be called instead of reifyObject implicit in some cases
+        case d: ReifiableExp[_, A @unchecked] => reifyObject(d)
+        case _ => super.toRep(x)(eA)
+      }
   }
 
   object Def {
