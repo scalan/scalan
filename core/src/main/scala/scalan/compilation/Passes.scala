@@ -22,7 +22,7 @@ trait Passes { self: ScalanExp =>
     def apply(graph: PGraph): PGraph = graph.transform(mirror, rewriter, MapTransformer.Empty)
   }
 
-  class EnableInvokePass(methodsDescription: String, pred: InvokeTester) extends GraphPass {
+  class EnableInvokePass(methodsDescription: String)(pred: InvokeTester) extends GraphPass {
     def name = s"enable_invoke_$methodsDescription"
 
     def apply(graph: PGraph) = {
@@ -37,5 +37,7 @@ trait Passes { self: ScalanExp =>
 
   def constantPass(pass: GraphPass) = (_: PGraph) => pass
 
-  val AllInvokeEnabler = constantPass(new EnableInvokePass("all", (_, _) => true))
+  def invokeEnabler(name: String)(pred: InvokeTester) = constantPass(new EnableInvokePass(name)(pred))
+
+  val AllInvokeEnabler = invokeEnabler("all") { (_, _) => true }
 }
