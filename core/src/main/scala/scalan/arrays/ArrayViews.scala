@@ -88,25 +88,16 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     }
   }
 
-  override def hasViews(s: Exp[_]): Boolean = s match {
-    case Def(ViewArray(_)) => true
-    case UserTypeArray(_) => true
-    case s => super.hasViews(s)
-  }
-
-  override def eliminateViews(s: Exp[_]): (Exp[_], Iso[_, _]) =
-    s match {
-      case Def(view: ViewArray[_, _]) =>
-        (view.source, arrayIso(view.iso))
-      case UserTypeArray(iso: Iso[a, b]) =>
-        val newIso = arrayIso(iso)
-        val repr = UnpackView(s.asRep[Array[b]])(newIso)
-        implicit val eArrayA = newIso.eFrom
-        (repr, newIso)
-      case s =>
-        super.eliminateViews(s)
-    }
-
+  override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
+    case Def(view: ViewArray[_, _]) =>
+      Some((view.source, arrayIso(view.iso)))
+    case UserTypeArray(iso: Iso[a, b]) =>
+      val newIso = arrayIso(iso)
+      val repr = reifyObject(UnpackView(s.asRep[Array[b]])(newIso))
+      Some((repr, newIso))
+    case _ =>
+      super.unapplyViews(s)
+  }).asInstanceOf[Option[Unpacked[T]]]
   //  implicit def mkArrayView[A,B](arr: PA[A])(implicit iso: Iso[A,B]): PA[B] = {
   //    ExpViewArray(Some(arr), iso)
   //  }
@@ -308,25 +299,12 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case ArrayLength(Def(view@ViewArray(arr: Arr[a]))) =>
-      // TODO doesn't compile
-      // implicit val eA = view.asInstanceOf[ViewArray[a, _]].iso.eFrom
-      // arr.asInstanceOf[Arr[a]].length
+    case ArrayLength(Def(ViewArray(arr: Arr[a]))) =>
       array_length(arr)
     case HasViewArg(_) => liftViewFromArgs(d) match {
       case Some(s) => s
       case _ => super.rewriteDef(d)
     }
-    case ArrayMap(xs, f@Def(Lambda(_, _, _, UserTypeSym(iso: Iso[a, b])))) =>
-      val f1 = f.asInstanceOf[Rep[a => b]]
-      val xs1 = xs.asRep[Array[a]]
-      implicit val eA = xs1.elem.eItem
-      val s = xs1.map { x =>
-        val tmp = f1(x)
-        iso.from(tmp)
-      }
-      val res = ViewArray(s)(iso)
-      res
     case ArrayMap(xs: Arr[a], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
       val f1 = f.asRep[a => b]
       val xs1 = xs.asRep[Array[a]]

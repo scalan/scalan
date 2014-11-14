@@ -22,16 +22,29 @@ trait Passes { self: ScalanExp =>
     def apply(graph: PGraph): PGraph = graph.transform(mirror, rewriter, MapTransformer.Empty)
   }
 
-  class EnableInvokePass(methodsDescription: String)(pred: InvokeTester) extends GraphPass {
+  class EnableInvokePass(methodsDescription: String)(invokePred: InvokeTester) extends GraphPass {
     def name = s"enable_invoke_$methodsDescription"
 
     def apply(graph: PGraph) = {
-      addInvokeTester(pred)
+      addInvokeTester(invokePred)
       graph.transform(DefaultMirror, InvokeRewriter, MapTransformer.Empty)
     }
 
     override def doFinalization(): Unit = {
-      removeInvokeTester(pred)
+      removeInvokeTester(invokePred)
+    }
+  }
+
+  class EnableUnpackPass(methodsDescription: String)(unpackPred: UnpackTester) extends GraphPass {
+    def name = s"enable_unpack_$methodsDescription"
+
+    def apply(graph: PGraph) = {
+      addUnpackTester(unpackPred)
+      graph.transform(DefaultMirror, NoRewriting, MapTransformer.Empty)
+    }
+
+    override def doFinalization(): Unit = {
+      removeUnpackTester(unpackPred)
     }
   }
 
@@ -40,4 +53,8 @@ trait Passes { self: ScalanExp =>
   def invokeEnabler(name: String)(pred: InvokeTester) = constantPass(new EnableInvokePass(name)(pred))
 
   val AllInvokeEnabler = invokeEnabler("all") { (_, _) => true }
+
+  def unpackEnabler(name: String)(pred: UnpackTester) = constantPass(new EnableUnpackPass(name)(pred))
+
+  val AllUnpackEnabler = unpackEnabler("all") { _ => true }
 }

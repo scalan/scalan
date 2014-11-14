@@ -171,16 +171,10 @@ trait BaseExp extends Base { self: ScalanExp =>
       case _ => Some(e)
     }
   }
-  object Exps {
-    def unapply(xs: List[Any]): Option[List[Exp[_]]] = {
-      val exps = xs map { a => a.asInstanceOf[Exp[_]] }
-      Some(exps)
-    }
-  }
-  object Elem {
+
+  object ExpWithElem {
     def unapply[T](s: Exp[T]): Option[(Exp[T],Elem[T])] = Some((s, s.elem))
   }
-
 
   trait TableEntry[+T] {
     def sym: Exp[T]

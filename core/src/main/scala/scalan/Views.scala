@@ -138,68 +138,71 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
 }
 
 trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
+  case class MethodCallFromExp(clazzUT: Class[_], methodName: String) {
+    def unapply[T](d: Def[T]): Option[(Exp[_], List[Exp[_]])] = d match {
+      case MethodCall(obj, m, args) if m.getName == methodName =>
+        Some((obj, args.asInstanceOf[List[Exp[_]]]))
+      case _ => None
+    }
+  }
+
+  type Unpacked[T] = (Rep[Source], Iso[Source, T]) forSome { type Source }
+
+  type UnpackTester = Element[_] => Boolean
+
+  private var unpackTesters: Set[UnpackTester] = Set.empty
+
+  def addUnpackTester(tester: UnpackTester): Unit =
+    unpackTesters += tester
+  def removeUnpackTester(tester: UnpackTester): Unit =
+    unpackTesters -= tester
+
   trait UserTypeDef[T, TImpl <: T] extends ReifiableExp[T, TImpl] {
     def uniqueOpId = selfType.name
   }
+
   object UserTypeDef {
     def unapply[T](d: Def[T]): Option[Iso[_, T]] = {
       val eT = d.selfType
       eT match {
-        case e: ViewElem[_, _] => Some(e.iso)
+        case e: ViewElem[_, _] if unpackTesters.exists(_(e)) => Some(e.iso)
         case _ => None
       }
     }
   }
+
   object UserTypeSym {
     def unapply[T](s: Exp[T]): Option[Iso[_, T]] = {
       val eT = s.elem
       eT match {
-        case e: ViewElem[_, _] => Some(e.iso)
+        case e: ViewElem[_, _] if unpackTesters.exists(_(e)) => Some(e.iso)
         case _ => None
       }
     }
   }
 
-  def hasViews(s: Exp[_]): Boolean = s match {
-    case Def(Tup(s1, s2)) => hasViews(s1) || hasViews(s2)
-    case Def(UnpackableDef(_, _)) => true
-    case UnpackableExp(_, _) => true
-    case _ => false
+  object HasViews {
+    def unapply[T](s: Exp[T]): Option[Unpacked[T]] = unapplyViews(s)
   }
 
-  def eliminateViews(s: Exp[_]): (Exp[_], Iso[_, _]) = s match {
+  // for simplifying unapplyViews
+  protected def trivialView[T](s: Exp[T]) = (s, identityIso(s.elem))
+
+  def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
     case Def(Tup(s1, s2)) =>
-      val (sv1, iso1) = eliminateViews(s1)
-      val (sv2, iso2) = eliminateViews(s2)
-      ((sv1, sv2), pairIso(iso1, iso2))
-    case Def(UnpackableDef(src, iso: Iso[_, _])) =>
-      (src, iso)
-    case UnpackableExp(src, iso: Iso[_, _]) =>
-      (src, iso)
-    case s =>
-      (s, identityIso(s.elem))
-  }
-
-  implicit class IsoOps[From, To](iso: Iso[From, To]) {
-    def toFunTo: Rep[From => To] = fun(iso.to _)(Lazy(iso.eFrom))
-    def toFunFrom: Rep[To => From] = fun(iso.from _)(Lazy(iso.eTo))
-  }
-
-  def MethodCallFromExp(clazzUT: Class[_], methodName: String) = new {
-    def unapply[T](d: Def[T]): Option[(Exp[_], List[Exp[_]])] = {
-      d match {
-        case MethodCall(obj, m, Exps(args)) =>
-          m.getName == methodName match {
-            case true => Some((obj, args))
-            case _ => None
-          }
-        case _ => None
+      (unapplyViews(s1), unapplyViews(s2)) match {
+        case (None, None) => None
+        case (opt1, opt2) =>
+          val (sv1, iso1) = opt1.getOrElse(trivialView(s1))
+          val (sv2, iso2) = opt2.getOrElse(trivialView(s2))
+          Some((Pair(sv1, sv2), pairIso(iso1, iso2)))
       }
-    }
-  }
+    case _ =>
+      UnpackableExp.unapply(s)
+  }).asInstanceOf[Option[Unpacked[T]]]
 
   object UnpackableDef {
-    def unapply[T](d: Def[T]): Option[(Rep[Source], Iso[Source, T]) forSome { type Source }] =
+    def unapply[T](d: Def[T]): Option[Unpacked[T]] =
       d match {
         case view: View[a, T] => Some((view.source, view.iso))
         // TODO make UserTypeDef extend View with lazy iso/source?
@@ -208,18 +211,22 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       }
   }
 
+  object UnpackableVar {
+    // only called when we know e is a Var
+    def unapply[T](e: Exp[T]): Option[Unpacked[T]] =
+      e.elem match {
+        case viewElem: ViewElem[a, T] @unchecked =>
+          val iso = viewElem.iso
+          Some((iso.from(e), iso))
+        case _ => None
+      }
+  }
+
   object UnpackableExp {
-    def unapply[T](e: Exp[T]): Option[(Rep[Source], Iso[Source, T]) forSome { type Source }] =
+    def unapply[T](e: Exp[T]): Option[Unpacked[T]] =
       e match {
-        case Def(d) => d match {
-          case view: View[a, T] => Some((view.source, view.iso))
-          case UserTypeDef(iso: Iso[a, T]) => Some((iso.from(e), iso))
-          case _ => None
-        }
-        case _ => e.elem match {
-          case v: ViewElem[a, T] @unchecked => Some((v.iso.from(e), v.iso))
-          case _ => None
-        }
+        case Def(d) => UnpackableDef.unapply(d)
+        case _ => UnpackableVar.unapply(e)
       }
   }
 
@@ -283,34 +290,31 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     case UnpackView(Def(UnpackableDef(source, iso))) => source
     // case UnpackView(view @ UnpackableExp(iso)) => iso.from(view)
 
-    case LoopUntil(start, step, isMatch) if hasViews(start) =>
-      eliminateViews(start) match {
-        case (startWithoutViews, iso: Iso[a, b]) =>
-          val start1 = startWithoutViews.asRep[a]
-          implicit val eA = iso.eFrom
-          implicit val eB = iso.eTo
-          val step1 = fun { (x: Rep[a]) =>
-            val x_viewed = iso.to(x)
-            val res_viewed = mirrorApply(step.asRep[b => b], x_viewed)
-            val res = iso.from(res_viewed)
-            res
-          }
-          val isMatch1 = fun { (x: Rep[a]) =>
-            val x_viewed = iso.to(x)
-            val res = mirrorApply(isMatch.asRep[b => Boolean], x_viewed)
-            res
-          }
-          val loopRes = LoopUntil(start1, step1, isMatch1)
-          iso.to(loopRes)
+    case LoopUntil(HasViews(startWithoutViews, iso: Iso[a, b]), step, isMatch) =>
+      val start1 = startWithoutViews.asRep[a]
+      implicit val eA = iso.eFrom
+      implicit val eB = iso.eTo
+      val step1 = fun { (x: Rep[a]) =>
+        val x_viewed = iso.to(x)
+        val res_viewed = mirrorApply(step.asRep[b => b], x_viewed)
+        val res = iso.from(res_viewed)
+        res
       }
-    case mcall @ MethodCall(Def(obj@UserTypeDef(_)), m, args) =>
+      val isMatch1 = fun { (x: Rep[a]) =>
+        val x_viewed = iso.to(x)
+        val res = mirrorApply(isMatch.asRep[b => Boolean], x_viewed)
+        res
+      }
+      val loopRes = LoopUntil(start1, step1, isMatch1)
+      iso.to(loopRes)
+    case call @ MethodCall(Def(obj), m, args) =>
       if (m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
         val res = m.invoke(obj, args: _*)
         res.asInstanceOf[Exp[_]]
       } else {
         obj match {
           case foldD: SumFold[a,b,r] =>
-            val resultElem = mcall.selfType
+            val resultElem = call.selfType
             val res = foldD.sum.fold (
               a => MethodCall(foldD.left(a), m, args)(resultElem),
               b => MethodCall(foldD.right(b), m, args)(resultElem)
