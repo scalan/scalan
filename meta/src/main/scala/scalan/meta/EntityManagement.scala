@@ -6,6 +6,8 @@ package scalan.meta
 
 import java.io.File
 
+import com.typesafe.scalalogging.slf4j.LazyLogging
+
 case class CodegenConfig(
                           srcPath: String,
                           entityFiles: List[String],
@@ -14,16 +16,21 @@ case class CodegenConfig(
                           extraImports: List[String]
                         )
 
-class EntityManagement(val config: CodegenConfig) extends ScalanCodegen { ctx =>
+class EntityManagement(val config: CodegenConfig) extends ScalanCodegen with LazyLogging { ctx =>
 
   case class EntityManager(name: String, filePath: String, entityDef: SEntityModuleDef)
 
-  private val entities = (config.entityFiles map {
-    f =>
-      val path = config.srcPath + "/" + f
+  private val entities = config.entityFiles.flatMap { f =>
+    val path = config.srcPath + "/" + f
+    try {
       val d = parseEntityModule(path)
-      (d.name, new EntityManager(d.name, path, d))
-  }).toMap
+      Some((d.name, new EntityManager(d.name, path, d)))
+    } catch {
+      case e: Exception =>
+        logger.error(s"Failed to parse file at $path (relative to ${new File(".").getAbsolutePath})", e)
+        None
+    }
+  }.toMap
 
   def generateAll() = {
     entities.foreach { case (name, m) =>
