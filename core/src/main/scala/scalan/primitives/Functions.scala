@@ -79,11 +79,8 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       allScalars
     }
 
-    def isGlobalLambda: Boolean = {
-      val free = freeVars filterNot (_.isConst)
-      free.isEmpty
-    }
-
+    def isGlobalLambda: Boolean =
+      freeVars.forall { x => x.isConst || x.isLambda }
   }
 
   type LambdaData[A,B] = (Lambda[A,B], Option[Exp[A] => Exp[B]], Exp[A], Exp[B])
