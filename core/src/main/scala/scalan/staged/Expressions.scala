@@ -74,28 +74,6 @@ trait BaseExp extends Base { self: ScalanExp =>
     }) + ")"
   }
 
-  abstract class UnOp[TArg,R](implicit selfType: Elem[R]) extends BaseDef[R] {
-    def arg: Rep[TArg]
-    def copyWith(arg: Rep[TArg]): Rep[R]
-    def opName: String
-    override def toString = s"${this.getClass.getSimpleName}($arg)"
-    lazy val uniqueOpId = name(arg.elem)
-    override def mirror(t: Transformer) = copyWith(t(arg))
-  }
-
-  abstract class BinOp[TArg,R](implicit selfType: Elem[R]) extends BaseDef[R] {
-    def lhs: Rep[TArg]
-    def rhs: Rep[TArg]
-    def copyWith(l: Rep[TArg], r: Rep[TArg]): Rep[R]
-    def opName: String
-    override def toString = s"${this.getClass.getSimpleName}($lhs, $rhs)"
-    lazy val uniqueOpId = name(lhs.elem)
-    override def mirror(t: Transformer) = copyWith(t(lhs), t(rhs))
-  }
-
-  trait EndoUnOp[T] extends UnOp[T,T]
-  trait EndoBinOp[T] extends BinOp[T,T]
-
   abstract class Transformer {
     def apply[A](x: Rep[A]): Rep[A]
     def isDefinedAt(x: Rep[_]): Boolean

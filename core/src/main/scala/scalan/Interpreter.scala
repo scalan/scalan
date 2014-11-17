@@ -59,53 +59,20 @@ trait Interpreter {
           (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
       }
     }
-    case NumericTimes(arg1, arg2, n) => {
-      arg1.elem match {
-        case (elem:Elem[a]) =>
-          val arg1_ = symMirr(arg1).asInstanceOf[seq.Rep[a]]
-          val arg2_ = symMirr(arg2).asInstanceOf[seq.Rep[a]]
-          implicit val n1 = n.asInstanceOf[Numeric[a]]
-          val exp = seq.numeric_times[a](arg1_,arg2_)(n1, createSeqElem(elem))
+    case ApplyUnOp(op, arg) => {
+      arg.elem match {
+        case (elem: Elem[a]) =>
+          val arg_ = symMirr(arg).asInstanceOf[seq.Rep[a]]
+          val exp = op.asInstanceOf[UnOp[a, _]].applySeq(arg_)
           (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
       }
     }
-    case NumericPlus(arg1, arg2, n) => {
+    case ApplyBinOp(op, arg1, arg2) => {
       arg1.elem match {
-        case (elem:Elem[a]) =>
+        case (elem: Elem[a]) =>
           val arg1_ = symMirr(arg1).asInstanceOf[seq.Rep[a]]
           val arg2_ = symMirr(arg2).asInstanceOf[seq.Rep[a]]
-          implicit val n1 = n.asInstanceOf[Numeric[a]]
-          val exp = seq.numeric_plus[a](arg1_,arg2_)(n1, createSeqElem(elem))
-          (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
-      }
-    }
-    /*
-    case NumericDivInt(arg1, arg2) =>
-      val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[Int]]
-      val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[Int]]
-      val exp = lFunc.opDiv(arg1_, arg2_)(implicitly[Numeric[Int]], manifest[Int])
-      (exps ++ List(exp), symMirr + ((s,exp)), funcMirr)
-    case NumericModInt(arg1, arg2) =>
-      val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[Int]]
-      val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[Int]]
-      val exp = lFunc.opMod(arg1_, arg2_)
-      (exps ++ List(exp), symMirr + ((s,exp)), funcMirr)
-    case NumericDiv(arg1, arg2, n) => {
-      createManifest(arg1.elem) match {
-        case (mA:Manifest[a]) =>
-          val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[a]]
-          val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[a]]
-          val n1 = n.asInstanceOf[Numeric[a]]
-          val exp = lFunc.opDiv(arg1_, arg2_)(n1, mA)
-          (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
-      }
-    }  */
-    case NotEqual(arg1, arg2) => {
-      createSeqElem(arg1.elem) match {
-        case (elem:seq.Elem[a]) =>
-          val arg1_ = symMirr(arg1).asInstanceOf[seq.Rep[a]]
-          val arg2_ = symMirr(arg2).asInstanceOf[seq.Rep[a]]
-          val exp = arg1_ != arg2_
+          val exp = op.asInstanceOf[BinOp[a, _]].applySeq(arg1_, arg2_)
           (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
       }
     }

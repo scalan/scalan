@@ -11,9 +11,9 @@ trait Monoids { self: Scalan =>
   }
 
   implicit def numericPlusMonoid[A](implicit n: Numeric[A], e: Elem[A]): RepMonoid[A] =
-    RepMonoid("+", n.zero, isCommutative = true) { numeric_plus[A] }
+    RepMonoid("+", n.zero, isCommutative = true) { _ + _ }
   def numericMultMonoid[A](implicit n: Numeric[A], e: Elem[A]): RepMonoid[A] =
-    RepMonoid("*", n.one, isCommutative = true) { numeric_times[A] }
+    RepMonoid("*", n.one, isCommutative = true) { _ * _ }
 
   implicit lazy val BooleanRepOrMonoid: RepMonoid[Boolean] =
     RepMonoid("||", false, isCommutative = true) { (a, b) => a || b }

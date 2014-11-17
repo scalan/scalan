@@ -70,52 +70,28 @@ abstract class LmsBridge[A,B] {
                   }
               }
             }
-            case scalan.NumericTimes(arg1, arg2, n) => {
+            case scalan.ApplyBinOp(op, arg1, arg2) => {
               scalan.createManifest(arg1.elem) match {
                 case (mA:Manifest[a]) =>
                   val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[a]]
                   val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[a]]
-                  val n1 = n.asInstanceOf[Numeric[a]]
-                  val exp = lFunc.opMult(arg1_, arg2_)(n1, mA)
-                  (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
-              }
-            }
-            case scalan.NumericPlus(arg1, arg2, n) => {
-              scalan.createManifest(arg1.elem) match {
-                case (mA:Manifest[a]) =>
-                  val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[a]]
-                  val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[a]]
-                  val n1 = n.asInstanceOf[Numeric[a]]
-                  val exp = lFunc.opPlus(arg1_, arg2_)(n1, mA)
-                  (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
-              }
-            }
-            case scalan.NumericDivInt(arg1, arg2) =>
-              val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[Int]]
-              val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[Int]]
-              val exp = lFunc.opDiv(arg1_, arg2_)(implicitly[Numeric[Int]], manifest[Int])
-              (exps ++ List(exp), symMirr + ((s,exp)), funcMirr)
-            case scalan.NumericModInt(arg1, arg2) =>
-              val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[Int]]
-              val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[Int]]
-              val exp = lFunc.opMod(arg1_, arg2_)
-              (exps ++ List(exp), symMirr + ((s,exp)), funcMirr)
-            case scalan.NumericDiv(arg1, arg2, n) => {
-              scalan.createManifest(arg1.elem) match {
-                case (mA:Manifest[a]) =>
-                  val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[a]]
-                  val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[a]]
-                  val n1 = n.asInstanceOf[Numeric[a]]
-                  val exp = lFunc.opDiv(arg1_, arg2_)(n1, mA)
-                  (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
-              }
-            }
-            case scalan.NotEqual(arg1, arg2) => {
-              scalan.createManifest(arg1.elem) match {
-                case (mA:Manifest[a]) =>
-                  val arg1_ = symMirr(arg1).asInstanceOf[lFunc.Exp[a]]
-                  val arg2_ = symMirr(arg2).asInstanceOf[lFunc.Exp[a]]
-                  val exp = lFunc.opNeq[a](arg1_, arg2_)(mA)
+                  val exp = op.asInstanceOf[scalan.BinOp[a, _]] match {
+                    case scalan.NumericTimes(n) =>
+                      lFunc.opMult(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
+                    case scalan.NumericPlus(n) =>
+                      lFunc.opPlus(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
+                    case scalan.IntegralDivide(n) =>
+                      lFunc.opDiv(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
+                    case scalan.IntegralMod(n) =>
+                      if (mA == Manifest.Int)
+                        lFunc.opMod(arg1_.asInstanceOf[lFunc.Exp[Int]], arg2_.asInstanceOf[lFunc.Exp[Int]])
+                      else
+                        throw new IllegalStateException(s"LMS only supports mod operation for Int, got $mA instead")
+                    case scalan.FractionalDivide(n) =>
+                      lFunc.opDiv(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
+                    case scalan.Equals() =>
+                      lFunc.opEq[a](arg1_, arg2_)(mA)
+                  }
                   (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
               }
             }

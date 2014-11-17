@@ -45,14 +45,14 @@ trait GraphVizExport { self: ScalanExp =>
     case First(pair) => s"$pair._1"
     case Second(pair) => s"$pair._2"
     case IfThenElse(c, t, e) => s"if ($c) $t else $e"
-    case EqualsClass(lhs, rhs) => s"$lhs == $rhs"
-    case NotEqual(lhs, rhs) => s"$lhs != $rhs"
-    case NumericToFloat(arg, _) => s"$arg.toFloat"
-    case NumericToDouble(lhs, _) => s"$lhs.toDouble"
-    case NumericToInt(lhs, _) => s"$lhs.toInt"
     case LoopUntil(start, step, isMatch) => s"from $start do $step until $isMatch"
-    case op: UnOp[_, _] => s"${op.opName} ${op.arg}"
-    case op: BinOp[_, _] => s"${op.lhs} ${op.opName} ${op.rhs}"
+    case ApplyBinOp(op, lhs, rhs) => s"$lhs ${op.opName} $rhs"
+    case ApplyUnOp(op, arg) => op match {
+      case NumericToFloat(_) => s"$arg.toFloat"
+      case NumericToDouble(_) => s"$arg.toDouble"
+      case NumericToInt(_) => s"$arg.toInt"
+      case _ => s"${op.opName} $arg"
+    }
     case _ => d.toString
   }
 

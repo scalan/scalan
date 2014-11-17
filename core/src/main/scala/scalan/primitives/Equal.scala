@@ -1,38 +1,21 @@
 package scalan.primitives
 
-import scalan.staged.{BaseExp}
+import scalan.staged.BaseExp
 import scalan.{Scalan, ScalanExp}
-import scalan.ScalanSeq
-import scalan.common.OverloadHack
 
-trait Equal { self: Scalan =>
-  def equals[A:Elem](a: Rep[A], b: Rep[A]) : Rep[Boolean]
-  def notequals[A:Elem](a: Rep[A], b: Rep[A]) : Rep[Boolean]
+trait Equal extends UnBinOps { self: Scalan =>
+  case class Equals[A]() extends BinOp[A, Boolean]("==", _ == _)
 
-  implicit class EqualOps[A: Elem](x: Rep[A]) {
-    def ===(y: Rep[A]): Rep[Boolean] = self.equals(x, y)
-    def !==(y: Rep[A]): Rep[Boolean] = self.notequals(x, y)
+  implicit class EqualOps[A](x: Rep[A]) {
+    def ===(y: Rep[A]): Rep[Boolean] = Equals[A].apply(x, y)
+    def !==(y: Rep[A]): Rep[Boolean] = !Equals[A].apply(x, y)
   }
-  //implicit def extendWithEquals[A: Elem](x: Rep[A]): EqualOps[A] = new EqualOps(x)
 }
 
-trait EqualSeq extends Equal  { self: ScalanSeq =>
-  def equals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = a equals b
-  def notequals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = !equals(a,b)
-}
-
+// Note: not currently true because Random exists. Consider a way to check when it _is_ true?
 trait EqualExp extends Equal with BaseExp { self: ScalanExp =>
-  abstract class EqBinOp[T](val opName: String) extends BinOp[T, Boolean]
-
-  def equals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = EqualsClass(a,b)
-  def notequals[A:Elem](a: Rep[A], b: Rep[A]): Rep[Boolean] = NotEqual(a,b)
-
-  case class EqualsClass[A](lhs: Exp[A], rhs: Exp[A]) extends EqBinOp[A]("===") {
-    def copyWith(l: Rep[A], r: Rep[A]) = this.copy(lhs = l, rhs = r)
-  }
-  case class NotEqual[A](lhs: Exp[A], rhs: Exp[A]) extends EqBinOp[A]("!=="){
-    def copyWith(l: Rep[A], r: Rep[A]) = this.copy(lhs = l, rhs = r)
-  }
-
+//  override def rewriteDef[T](d: Def[T]) = d match {
+//    case ApplyBinOp(Equals(), x, y) if x == y => Const(true)
+//    case _ => super.rewriteDef(d)
+//  }
 }
-
