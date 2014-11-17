@@ -120,12 +120,7 @@ trait Transforming { self: ScalanExp =>
     private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], lam: Lambda[_,_]): Lambda[_,_] = {
       val newVar = t(lam.x)
       val newBody = t(lam.y)
-      val newLambdaDef = new LambdaWrapper(None, newVar, newBody, newLambdaSym.asRep[Any=>Any], lam.mayInline)
-      // from Scalan
-//      val newLambdaDef = new Lambda(None, newVar, newBody)(newVar.elem, newBody.elem) {
-//        // TODO problem with types?
-//        override val self = newLambdaSym.asRep[A => B]
-//      }
+      val newLambdaDef = new Lambda(None, newVar, newBody, newLambdaSym.asRep[Any=>Any], lam.mayInline)
       newLambdaDef
     }
 

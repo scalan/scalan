@@ -38,15 +38,15 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanExp =>
 
-  class Lambda[A, B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B], val mayInline: Boolean)
+  class Lambda[A, B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B], self0: Rep[A=>B], val mayInline: Boolean)
                     (implicit val eA: Elem[A] = x.elem, val eB: Elem[B] = y.elem)
-    extends BaseDef[A => B] with AstGraph with Product
-  { thisLambda =>
+    extends BaseDef[A => B] with AstGraph with Product { thisLambda =>
     lazy val uniqueOpId = s"Lambda[${eA.name},${eB.name}]"
-    
+
+    override lazy val self = self0
     override def mirror(t: Transformer) = {
       val newSym = fresh[A=>B]
-      val newLam = new LambdaWrapper(None, t(x), t(y), newSym, mayInline)
+      val newLam = new Lambda(None, t(x), t(y), newSym, mayInline)
       toExp(newLam, newSym)
     }
 
@@ -91,11 +91,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         Some((lam, lam.f, lam.x, lam.y))
       case _ => None
     }
-  }
-
-  class LambdaWrapper[A,B](
-    f: Option[Exp[A] => Exp[B]], x: Exp[A], y: Exp[B], self0: Rep[A=>B], mayInline: Boolean) extends Lambda[A,B](f, x, y, mayInline) {
-    override lazy val self = self0
   }
 
   case class Apply[A,B]
@@ -245,7 +240,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def reifyFunction[A, B](fun: Exp[A] => Exp[B], x: Exp[A], fSym: Exp[A=>B], mayInline: Boolean): Exp[A=>B] = {
     val y = executeFunction(fun, x, fSym)
-    val lam = new LambdaWrapper(Some(fun), x, y, fSym, mayInline)
+    val lam = new Lambda(Some(fun), x, y, fSym, mayInline)
     findDefinition(lam) match {
       case Some(TableEntry(sym, Lambda(_, Some(f), _, _))) => {
         f equals fun match {
