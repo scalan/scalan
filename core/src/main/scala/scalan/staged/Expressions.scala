@@ -131,12 +131,11 @@ trait BaseExp extends Base { self: ScalanExp =>
    * @tparam T
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
-  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: LElem[T]): Exp[T]
+  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T]
   implicit def reifyObject[T](obj: ReifiableExp[_,T]): Rep[T] = {
     // TODO bad cast
     val obj1 = obj.asInstanceOf[Def[T]]
-    implicit val leT = Lazy(obj1.selfType)
-    toExp(obj1, fresh[T])
+    toExp(obj1, fresh[T](Lazy(obj1.selfType)))
   }
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
@@ -330,11 +329,10 @@ trait Expressions extends BaseExp { self: ScalanExp =>
    * Updates the universe of symbols and definitions, then rewrites until fix-point
    * @param d A new graph node to add to the universe
    * @param newSym A symbol that will be used if d doesn't exist in the universe
-   * @param et Type descriptor of the resulting type of node d
    * @tparam T
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
-  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: LElem[T]): Exp[T] = {
+  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
     var res = findOrCreateDefinition(d, newSym)
     var currSym = res
     var currDef = d
