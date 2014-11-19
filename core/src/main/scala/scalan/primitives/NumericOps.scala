@@ -25,15 +25,10 @@ trait NumericOps { self: Scalan =>
   implicit class IntegralOpsCls[T](x: Rep[T])(implicit i: Integral[T], eT: Elem[T]) {
     def div(y: Rep[T]): Rep[T] = IntegralDivide(i).apply(x, y)
     def mod(y: Rep[T]): Rep[T] = IntegralMod(i).apply(x, y)
-    def /(y: Rep[T]): Rep[T] = div(y)
+    // avoid / due to conflicts
+    def /!(y: Rep[T]): Rep[T] = div(y)
     def %(y: Rep[T]): Rep[T] = mod(y)
   }
-
-  // these are required to avoid conflicts
-  implicit class IntOpsCls(x: Rep[Int]) extends IntegralOpsCls[Int](x)
-  implicit class LongOpsCls(x: Rep[Long]) extends IntegralOpsCls[Long](x)
-  implicit class ByteOpsCls(x: Rep[Byte]) extends IntegralOpsCls[Byte](x)
-  implicit class ShortOpsCls(x: Rep[Short]) extends IntegralOpsCls[Short](x)
 
   case class NumericPlus[T: Elem](n: Numeric[T]) extends EndoBinOp[T]("+", n.plus)
 

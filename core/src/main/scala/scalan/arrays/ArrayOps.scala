@@ -215,7 +215,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
 
   def array_grouped[T](xs: Arr[T], size: Rep[Int]): Arr[Array[T]] = {
     implicit val eT = xs.elem.eItem
-    Array.tabulate(xs.length / size) { i => xs.slice(i * size, size) }
+    Array.tabulate(xs.length div size) { i => xs.slice(i * size, size) }
   }
 
   def array_stride[T](xs: Arr[T], start: Rep[Int], length: Rep[Int], stride: Rep[Int]): Arr[T] = {
