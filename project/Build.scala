@@ -1,6 +1,6 @@
 import sbt.Keys._
 import sbt._
-import sbtassembly.Plugin._
+import sbtassembly.AssemblyPlugin.autoImport._
 import sbtrelease.ReleasePlugin._
 
 object ScalanBuild extends Build {
@@ -27,7 +27,7 @@ object ScalanBuild extends Build {
     "ch.qos.logback" % "logback-classic" % "1.1.2")
 
   val testSettings = inConfig(ItTest)(Defaults.testTasks) ++
-    inConfig(PerfTest)(Defaults.testTasks ++ baseAssemblySettings) ++ Seq(
+    inConfig(PerfTest)(Defaults.testTasks) ++ Seq(
     testOptions in Test := Seq(Tests.Filter(x => !itFilter(x))),
     testOptions in ItTest := Seq(Tests.Filter(x => itFilter(x))),
     testFrameworks in PerfTest := Seq(new TestFramework("org.scalameter.ScalaMeterFramework")),
@@ -39,7 +39,8 @@ object ScalanBuild extends Build {
     fork in PerfTest := true,
     javaOptions in PerfTest ++= Seq("-Xmx30G", "-Xms15G"),
     publishArtifact in Test := true,
-    publishArtifact in(Test, packageDoc) := false)
+    publishArtifact in(Test, packageDoc) := false,
+    test in assembly := {})
 
   val crossCompilation =
     crossScalaVersions := Seq("2.10.4", "2.11.4")
@@ -54,7 +55,7 @@ object ScalanBuild extends Build {
       else
         Some("releases" at (nexus + "content/repositories/releases"))
     },
-    opts, commonDeps) ++ testSettings ++ assemblySettings ++ releaseSettings
+    opts, commonDeps) ++ testSettings ++ releaseSettings
 
   lazy val noPublishingSettings = Seq(
     publishArtifact := false,
@@ -78,9 +79,7 @@ object ScalanBuild extends Build {
 
   lazy val meta = project.dependsOn(common).withTestConfigsAndCommonSettings
     .settings(
-      libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      fork in Test := true,
-      fork in run := true)
+      libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value)
 
   lazy val core = project.dependsOn(common).withTestConfigsAndCommonSettings
     .settings(crossCompilation)
