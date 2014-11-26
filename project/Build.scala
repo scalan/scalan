@@ -4,7 +4,9 @@ import sbtassembly.Plugin._
 import sbtrelease.ReleasePlugin._
 
 object ScalanBuild extends Build {
+
   val opts = scalacOptions ++= Seq(
+    "-encoding", "UTF-8",
     "-unchecked",
     "-deprecation",
     "-Xlint",
@@ -39,6 +41,9 @@ object ScalanBuild extends Build {
     publishArtifact in Test := true,
     publishArtifact in(Test, packageDoc) := false)
 
+  val crossCompilation =
+    crossScalaVersions := Seq("2.10.4", "2.11.4")
+
   val commonSettings = Seq(
     scalaVersion := "2.10.4",
     organization := "com.huawei.scalan",
@@ -51,40 +56,60 @@ object ScalanBuild extends Build {
     },
     opts, commonDeps) ++ testSettings ++ assemblySettings ++ releaseSettings
 
+  lazy val noPublishingSettings = Seq(
+    publishArtifact := false,
+    publishTo := None)
+
   lazy val ItTest = config("it").extend(Test)
 
   lazy val PerfTest = config("perf").extend(Test)
 
   def itFilter(name: String): Boolean = name.contains("ItTests")
 
-  implicit class ProjectExt(p: Project) {
-    def allConfigDependency = p % "compile->compile;test->test"
+  lazy val `compile->compile;test->test` = "compile->compile;test->test"
 
-    def addTestConfigsAndCommonSettings =
+  implicit class ProjectExt(p: Project) {
+    def withTestConfigsAndCommonSettings =
       p.configs(ItTest, PerfTest).settings(commonSettings: _*)
   }
 
-  lazy val common = project.addTestConfigsAndCommonSettings
+  lazy val common = project.withTestConfigsAndCommonSettings
+    .settings(crossCompilation)
 
-  lazy val meta = project.dependsOn(common).addTestConfigsAndCommonSettings
+  lazy val meta = project.dependsOn(common).withTestConfigsAndCommonSettings
+    .settings(
+      libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      fork in Test := true,
+      fork in run := true)
 
-  lazy val core = project.dependsOn(common).addTestConfigsAndCommonSettings.settings(
-    libraryDependencies ++= Seq(
-      "com.chuusai" % "shapeless_2.10.4" % "2.0.0",
-      "cglib" % "cglib" % "3.1",
-      "org.objenesis" % "objenesis" % "2.1"))
+  lazy val core = project.dependsOn(common).withTestConfigsAndCommonSettings
+    .settings(crossCompilation)
+    .settings(
+      libraryDependencies ++= Seq(
+        "com.chuusai" % "shapeless" % "2.0.0" cross CrossVersion.binaryMapped {
+          case "2.10" => scalaVersion.value
+          case v => v
+        },
+        "cglib" % "cglib" % "3.1",
+        "org.objenesis" % "objenesis" % "2.1"))
 
-  lazy val coreDep = core.allConfigDependency
+  lazy val frontend = project.dependsOn(core, common).withTestConfigsAndCommonSettings
+    .settings(scalaVersion := "2.11.4")
+    .settings(
+      libraryDependencies += "ch.epfl.lamp" %% "yinyang-core" % "0.1.0")
 
-  lazy val ce = Project("community-edition", file("community-edition")).dependsOn(coreDep).
-    addTestConfigsAndCommonSettings
+  lazy val ce = Project("community-edition", file("community-edition"))
+    .dependsOn(core % `compile->compile;test->test`)
+    .withTestConfigsAndCommonSettings
 
   val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2")
 
   val lms = "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT"
 
-  lazy val lmsBackend = Project("lms-backend", file("lms-backend")).dependsOn(coreDep, ce.allConfigDependency).
-    addTestConfigsAndCommonSettings.settings(
+  lazy val lmsBackend = Project("lms-backend", file("lms-backend"))
+    .dependsOn(core % `compile->compile;test->test`, ce % `compile->compile;test->test`)
+    .withTestConfigsAndCommonSettings
+    .settings(
       libraryDependencies ++= Seq(lms,
         lms classifier "tests",
         "org.scala-lang.virtualized" % "scala-library" % virtScala,
@@ -95,8 +120,7 @@ object ScalanBuild extends Build {
       ReleaseKeys.snapshotDependencies := Seq.empty)
 
   // name to make this the default project
-  lazy val root = Project("scalan", file(".")).aggregate(common, meta, core, ce, lmsBackend).
-    configs(ItTest, PerfTest).settings(commonSettings: _*).
-    // don't publish or release the aggregate project itself
-    settings(publishArtifact := false, publish := {}, publishLocal := {})
+  lazy val root = Project("scalan", file("."))
+    .aggregate(common, meta, core, ce, lmsBackend)
+    .settings(noPublishingSettings: _*)
 }
