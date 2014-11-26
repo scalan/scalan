@@ -1,5 +1,6 @@
 package scalan.compilation.lms
 
+import java.io.PrintWriter
 import scala.reflect.SourceContext
 import scalan.compilation.lms.common.{ScalaGenEitherOps, EitherOpsExp}
 import virtualization.lms.common._
@@ -173,5 +174,78 @@ class LmsBackend extends LmsBackendFacade { self =>
           stream.println("}")
         case _ => super.emitNode(sym, rhs)
       }
-  }
+  } // codegen
+
+
+
+
+
+
+  val codegenCXX = new CLikeGenNumericOps
+    with CLikeGenEqual
+    with CLikeGenArrayOps
+    with CLikeGenPrimitiveOps
+    with CXXGenFatArrayLoopsFusionOpt
+    with LoopFusionOpt {
+
+    override val IR: self.type = self
+
+    override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
+
+    override def emitValDef(sym: Sym[Any], rhs: String): Unit = emitValDef(quote(sym), sym.tp, rhs)
+
+    override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
+      if (remap(tpe) != "void") stream.println(remap(tpe) + " " + sym + " = " + rhs + ";")
+    }
+
+    override def remap[A](m: Manifest[A]): String = {
+      m.runtimeClass match {
+        case c if c.isArray =>
+          s"std::vector<${remap(m.typeArguments(0))}>"
+        case c if c == classOf[size_t] =>
+          "size_t"
+        case _ =>
+          super.remap(m)
+      }
+    }
+
+    override def emitNode(sym: Sym[Any], rhs: Def[Any]): Unit = {
+      rhs match {
+        case RepAsInstanceOf(sy, t1, t2) if t1 != t2 =>
+          emitValDef(sym, s"static_cast<${remap(t2)}>(${quote(sy)})")
+        case RepAsInstanceOf(sy, _, _) =>
+          emitValDef(sym, quote(sy))
+        case _ => super.emitNode(sym, rhs)
+      }
+    }
+
+    override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
+      val sA = remap(manifest[A])
+
+      //      val staticData = getFreeDataBlock(body)
+
+      withStream(out) {
+        stream.println("/*****************************************\n" +
+          "  Emitting Generated Code                  \n" +
+          "*******************************************/")
+        emitFileHeader()
+
+        // TODO: separate concerns, should not hard code "pxX" name scheme for static data here
+        //        stream.println("class "+className+(if (staticData.isEmpty) "" else "("+staticData.map(p=>"p"+quote(p._1)+":"+p._1.tp).mkString(",")+")")+" extends (("+args.map(a => remap(a.tp)).mkString(", ")+")=>("+sA+")) {")
+        stream.println(s"${sA} apply(${args.map(a => s"${remap(a.tp)} ${quote(a)}").mkString(", ")} ) {")
+
+        emitBlock(body)
+        stream.println(s"return ${quote(getBlockResult(body))};")
+
+        stream.println("}")
+
+        //        stream.println("}")
+        stream.println("/*****************************************\n" +
+          "  End of Generated Code                  \n" +
+          "*******************************************/")
+      }
+
+      Nil
+    }
+  } // codegenCXX
 }
