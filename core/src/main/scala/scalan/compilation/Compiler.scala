@@ -10,7 +10,7 @@ trait Compiler extends BaseExp with Passes {
 
   type Config
 
-  def defaultConfig: Config
+  implicit def defaultConfig: Config
 
   // see comment for buildInitialGraph
   // TODO sequence may depend on input or intermediate graphs, use a state monad instead
@@ -47,7 +47,7 @@ trait Compiler extends BaseExp with Passes {
   }
 
   def buildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
-                           (implicit config: Config = defaultConfig) {
+                           (implicit config: Config) {
     sourcesDir.mkdirs()
     executableDir.mkdirs()
     val eFunc = func.elem
@@ -56,7 +56,7 @@ trait Compiler extends BaseExp with Passes {
   }
 
   def buildExecutable[A, B](sourcesAndExecutableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
-                           (implicit config: Config = defaultConfig): Unit =
+                           (implicit config: Config): Unit =
     buildExecutable(sourcesAndExecutableDir, sourcesAndExecutableDir, functionName, func, emitGraphs)(config)
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
@@ -64,7 +64,7 @@ trait Compiler extends BaseExp with Passes {
 
   // func is passed to enable inference of B and to get types if needed
   def execute[A, B](executableDir: File, functionName: String, input: A, func: Exp[A => B])
-                   (implicit config: Config = defaultConfig): B = {
+                   (implicit config: Config): B = {
     val eFunc = func.elem
     doExecute(executableDir, functionName, input)(config, eFunc.eDom, eFunc.eRange)
   }
