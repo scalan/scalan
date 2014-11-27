@@ -12,6 +12,10 @@ class RepMacroTest extends FunSuite with TypeCheckedTripleEquals {
   test("constant") {
     assert(rep(1) === 1)
   }
+
+  test("constant YY") {
+    assert(repYY(1) === 1)
+  }
 }
 
 trait Examples extends ScalanDsl {

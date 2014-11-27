@@ -96,6 +96,7 @@ object ScalanBuild extends Build {
   lazy val frontend = project.dependsOn(core % `compile->compile;test->test`, common).withTestConfigsAndCommonSettings
     .settings(
       scalaVersion := "2.11.4",
+      crossScalaVersions := Seq("2.11.4"),
       libraryDependencies += "ch.epfl.lamp" %% "scala-yinyang" % "0.1.0")
 
   lazy val ce = Project("community-edition", file("community-edition"))
