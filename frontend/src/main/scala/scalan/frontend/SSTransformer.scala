@@ -20,7 +20,7 @@ trait SSTransformer[C <: blackbox.Context] extends TypeTreeTransformation {
   //def debugLevel: Int = ???
 
   // Utils
-  override val className = "generated$transformer"
+  override val className = "RepMacroTest"
 
   def transform(block: Tree): Tree =
     TypeTreeTransformer(block)
@@ -28,7 +28,7 @@ trait SSTransformer[C <: blackbox.Context] extends TypeTreeTransformation {
   def apply[T](block: c.Expr[T]): c.Expr[T] = {
 
     val t = transform(block.tree)
-    c.Expr[T](t)
+    c.Expr[T](c.untypecheck(t))
   }
 }
 
