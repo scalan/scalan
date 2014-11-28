@@ -55,4 +55,31 @@ object FileUtil {
       System.setErr(oldStdErr)
     }
   }
+
+  def copy(source: File, target: File): Unit = {
+    target.getParentFile.mkdirs()
+    new FileOutputStream(target).getChannel.transferFrom(new FileInputStream(source).getChannel, 0, Long.MaxValue)
+  }
+
+  /**
+   * Copy file source to targetDir, keeping the original file name
+   */
+  def copyToDir(source: File, targetDir: File): Unit =
+    copy(source, new File(targetDir, source.getName))
+
+  /**
+   * Like fileOrDirectory.delete() but works for non-empty directories
+   * and throws exceptions instead of returning false on failure
+   */
+  def delete(fileOrDirectory: File): Unit = {
+    if (fileOrDirectory.isDirectory) {
+      fileOrDirectory.listFiles.foreach(delete)
+    }
+
+    if (fileOrDirectory.exists()) {
+      if (!fileOrDirectory.delete()) throw new IOException(s"Failed to delete file $fileOrDirectory")
+    } else {
+      throw new FileNotFoundException(s"$fileOrDirectory doesn't exist")
+    }
+  }
 }

@@ -24,16 +24,16 @@ class EntityManagement(val config: CodegenConfig) extends ScalanCodegen with Laz
     val path = config.srcPath + "/" + f
     try {
       val d = parseEntityModule(path)
-      Some((d.name, new EntityManager(d.name, path, d)))
+      Some(new EntityManager(d.name, path, d))
     } catch {
       case e: Exception =>
         logger.error(s"Failed to parse file at $path (relative to ${new File(".").getAbsolutePath})", e)
         None
     }
-  }.toMap
+  }
 
   def generateAll() = {
-    entities.foreach { case (name, m) =>
+    entities.foreach { m =>
       val g = new EntityFileGenerator(m.entityDef)
       val implCode = g.getImplFile
       saveEntity(m.filePath, implCode)
