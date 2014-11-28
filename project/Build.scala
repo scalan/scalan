@@ -81,7 +81,8 @@ object ScalanBuild extends Build {
     .settings(
       libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       fork in Test := true,
-      fork in ItTest := true)
+      fork in ItTest := true,
+      fork in run := true)
 
   lazy val core = project.dependsOn(common).withTestConfigsAndCommonSettings
     .settings(crossCompilation)
