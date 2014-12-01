@@ -10,7 +10,7 @@ import virtualization.lms.epfl.test7._
 import scala.Tuple2
 
 trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp
-with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfThenElseFatExp with CastingOpsExp {
+with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp with CastingOpsExp {
   /*type RepD[T] = Rep[T]
   */
   def arrayGet[A:Manifest](a: Exp[Array[A]], i: Exp[Int]):Exp[A] = {
@@ -37,6 +37,25 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
   def opDiv[A:Numeric:Manifest](a:Exp[A], b:Exp[A]): Exp[A] = { a/b }
   def opMod(a: Exp[Int], b: Exp[Int]): Exp[Int] = a % b
   def opEq[A:Manifest](a:Exp[A], b:Exp[A]): Exp[Boolean] = { equals(a,b)}
+
+  def LT[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left < right
+  }
+  def LTEQ[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left <= right
+  }
+  def GT[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left > right
+  }
+  def GTEQ[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left >= right
+  }
+  def Max[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left.max(right)
+  }
+  def Min[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left.min(right)
+  }
 
   def mapArray[A:Manifest, B:Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[B]) : Exp[Array[B]] = {
     array(a.length)(i => f(a.at(i)))
@@ -73,7 +92,11 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
     array(length) { i =>
       xs.at(start + i * stride)
     }
-  
+
+  def ifThenElse[A:Manifest](cond: Exp[Boolean], iftrue: () => Exp[A], iffalse: () => Exp[A]) = {
+    if (cond) iftrue() else iffalse()
+  }
+
   //def printlnD(s: Exp[Any])  = println(s)
   def unitD[T:Manifest](x: T) = unit[T](x)
   /*
@@ -100,7 +123,7 @@ trait LmsFunction[A,B] extends LmsBackendFacade { self =>
   def apply(x: Rep[A]): Rep[B]
   
   val codegen = new ScalaGenEffect with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
-    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenBooleanOps with ScalaGenStruct
+    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps with ScalaGenStruct
     with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
     with ScalaGenCastingOps {
       val IR: self.type = self

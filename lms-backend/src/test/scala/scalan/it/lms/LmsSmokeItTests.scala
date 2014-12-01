@@ -48,4 +48,9 @@ class LmsSmokeItTests extends CommunitySmokeItTests {
     val in = Array(Array(2,3), Array(4,5))
     compareOutputWithSequential(progStaged)(progSeq.expBaseArrays, progStaged.expBaseArrays, "expBaseArrays", in)
   }
+  test("test9simpleIf") {
+    val in = (Array(2.0,3.0), 4.0)
+    compareOutputWithSequential(progStaged)(progSeq.simpleIf, progStaged.simpleIf, "simpleIf", in)
+  }
+
 }
