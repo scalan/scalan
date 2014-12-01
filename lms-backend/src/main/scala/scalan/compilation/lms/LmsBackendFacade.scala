@@ -41,6 +41,21 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with Or
   def LT[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
     left < right
   }
+  def LTEQ[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left <= right
+  }
+  def GT[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left > right
+  }
+  def GTEQ[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left >= right
+  }
+  def Max[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left.max(right)
+  }
+  def Min[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+    left.min(right)
+  }
 
   def mapArray[A:Manifest, B:Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[B]) : Exp[Array[B]] = {
     array(a.length)(i => f(a.at(i)))
@@ -78,8 +93,8 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with Or
       xs.at(start + i * stride)
     }
 
-  def ifThenElse[A:Manifest](cond: Exp[Boolean], iftrue: => Exp[A], iffalse: => Exp[A]) = {
-    if (cond) iftrue else iffalse
+  def ifThenElse[A:Manifest](cond: Exp[Boolean], iftrue: () => Exp[A], iffalse: () => Exp[A]) = {
+    if (cond) iftrue() else iffalse()
   }
 
   //def printlnD(s: Exp[Any])  = println(s)

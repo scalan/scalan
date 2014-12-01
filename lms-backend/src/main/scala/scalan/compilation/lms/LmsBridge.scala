@@ -36,16 +36,12 @@ abstract class LmsBridge[A,B] {
     def mirrorBlockToLms[R](block:scalan.DefBlock,
                             symMirror: SymMirror,
                             funcMirror: FuncMirror,
-                            dflt: scalan.Rep[_]) = {
-      def f() : lFunc.Exp[R] = {
-        val sched = block.scheduleSingleLevel
-        val (blockExps, _, _) = mirrorDefs(block, sched, symMirror, funcMirror )
-        val res = blockExps.lastOption.getOrElse(symMirror(dflt))
-         res.asInstanceOf[lFunc.Exp[R]]
-      }
-      f
+                            dflt: scalan.Rep[_]) = () => {
+      val sched = block.scheduleSingleLevel
+      val (blockExps, _, _) = mirrorDefs(block, sched, symMirror, funcMirror )
+      val res = blockExps.lastOption.getOrElse(symMirror(dflt))
+      res.asInstanceOf[lFunc.Exp[R]]
     }
-
 
     def mirrorDefs(fromGraph: scalan.AstGraph, defs: Seq[scalan.TableEntry[_]], symMirror: SymMirror, funcMirror: FuncMirror):
     (Seq[lFunc.Exp[_]], SymMirror, FuncMirror) =
@@ -109,6 +105,16 @@ abstract class LmsBridge[A,B] {
                       lFunc.opEq[a](arg1_, arg2_)(mA)
                     case scalan.OrderingLT(ord) =>
                       lFunc.LT[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
+                    case scalan.OrderingLTEQ(ord) =>
+                      lFunc.LTEQ[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
+                    case scalan.OrderingGT(ord) =>
+                      lFunc.GT[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
+                    case scalan.OrderingGTEQ(ord) =>
+                      lFunc.GTEQ[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
+                    case scalan.OrderingMax(ord) =>
+                      lFunc.Max[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
+                    case scalan.OrderingMin(ord) =>
+                      lFunc.Min[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
                   }
                   (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
               }
@@ -129,7 +135,7 @@ abstract class LmsBridge[A,B] {
                     case _ => {
                       val then_ = symMirr(iftrue).asInstanceOf[lFunc.Exp[a]]
                       val else_ = symMirr(iffalse).asInstanceOf[lFunc.Exp[a]]
-                      val exp = lFunc.ifThenElse(cond_, then_ , else_)(mA)
+                      val exp = lFunc.ifThenElse(cond_, () => then_ , () => else_)(mA)
                       (exps ++ List(exp), symMirr + ((s, exp)), funcMirr)
                     }
                   }
