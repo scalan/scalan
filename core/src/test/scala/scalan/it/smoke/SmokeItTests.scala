@@ -52,7 +52,7 @@ abstract class SmokeItTests extends BaseItTests {
     }
 
     lazy val simpleIf = fun { in: Rep[(Array[Double], Double)] =>
-      val res = IF (in._2 !==  0.0 ) THEN { in._1 map (x => x/in._2) } ELSE { in._1 map (x => x -1.0)}
+      val res = IF (in._2 === 0.0) THEN { in._1 map (x => x/2.0) } ELSE { IF ( in._2 < 0.0) THEN { in._1 map (x => (x*(-1.0))/in._2) } ELSE {in._1 map (x => x/in._2) } }
       res.reduce
     }
 //    lazy val simpleMap = fun {x: PA[Int] =>

@@ -94,6 +94,8 @@ abstract class LmsBridge[A,B] {
                       lFunc.opMult(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
                     case scalan.NumericPlus(n) =>
                       lFunc.opPlus(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
+                    case scalan.NumericMinus(n) =>
+                      lFunc.opMinus(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
                     case scalan.IntegralDivide(n) =>
                       lFunc.opDiv(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
                     case scalan.IntegralMod(n) =>
@@ -105,6 +107,8 @@ abstract class LmsBridge[A,B] {
                       lFunc.opDiv(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
                     case scalan.Equals() =>
                       lFunc.opEq[a](arg1_, arg2_)(mA)
+                    case scalan.OrderingLT(ord) =>
+                      lFunc.LT[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
                   }
                   (exps ++ List(exp), symMirr + ((s,exp)), funcMirr )
               }
