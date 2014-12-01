@@ -73,7 +73,11 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfT
     array(length) { i =>
       xs.at(start + i * stride)
     }
-  
+
+  def ifThenElse[A:Manifest](cond: Exp[Boolean], iftrue: => Exp[A], iffalse: => Exp[A]) = {
+    if (cond) iftrue else iffalse
+  }
+
   //def printlnD(s: Exp[Any])  = println(s)
   def unitD[T:Manifest](x: T) = unit[T](x)
   /*

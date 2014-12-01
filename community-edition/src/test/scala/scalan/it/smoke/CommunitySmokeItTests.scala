@@ -19,6 +19,7 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       }
       res
     }
+
 //    lazy val simpleMap = fun {x: PA[Int] =>
 //      x.map(y => y + 1)
 //    }
