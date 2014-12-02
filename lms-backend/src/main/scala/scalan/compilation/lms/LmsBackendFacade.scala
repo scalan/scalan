@@ -3,12 +3,14 @@ package scalan.compilation.lms
 import java.io.PrintWriter
 import scala.reflect.SourceContext
 import scalan.compilation.lms.common.{ScalaGenEitherOps, EitherOpsExp}
+import scala.reflect.{RefinedManifest, SourceContext}
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
 //import virtualization.lms.epfl.test7.ArrayLoopsFatExp
 //import virtualization.lms.epfl.test7.ScalaGenArrayLoopsFat
 
 //{ScalaGenArrayLoopsFat, ArrayLoopsExp}
+import scala.Tuple2
 
 trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp
@@ -39,6 +41,7 @@ trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp wi
   def opDiv[A:Numeric:Manifest](a:Exp[A], b:Exp[A]): Exp[A] = { a/b }
   def opMod(a: Exp[Int], b: Exp[Int]): Exp[Int] = a % b
   def opEq[A:Manifest](a:Exp[A], b:Exp[A]): Exp[Boolean] = { equals(a,b)}
+  def opNeq[A:Manifest](a:Exp[A], b:Exp[A]): Exp[Boolean] = { notequals(a,b)}
 
   def LT[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
     left < right
@@ -186,6 +189,8 @@ class LmsBackend extends LmsBackendFacade { self =>
     with CLikeGenArrayOps
     with CLikeGenPrimitiveOps
     with CXXGenFatArrayLoopsFusionOpt
+    with CGenTupleOps
+    with CXXGenStruct
     with LoopFusionOpt {
 
     override val IR: self.type = self
@@ -195,8 +200,14 @@ class LmsBackend extends LmsBackendFacade { self =>
     override def emitValDef(sym: Sym[Any], rhs: String): Unit = emitValDef(quote(sym), sym.tp, rhs)
 
     override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
-      if (remap(tpe) != "void") stream.println(remap(tpe) + " " + sym + " = " + rhs + ";")
+      if (remap(tpe) != "void") stream.println(remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
     }
+
+    override def remapWithRef[A](m: Manifest[A]): String = {
+      if( m.runtimeClass == classOf[size_t] ) remap(m)
+      else                                    super.remapWithRef(m)
+    }
+    override def addRef() = "&"
 
     override def remap[A](m: Manifest[A]): String = {
       m.runtimeClass match {
@@ -204,6 +215,8 @@ class LmsBackend extends LmsBackendFacade { self =>
           s"std::vector<${remap(m.typeArguments(0))}>"
         case c if c == classOf[size_t] =>
           "size_t"
+        case c if c == classOf[scala.Tuple2[_,_]] =>
+          s"std::tuple<${remap(m.typeArguments(0))},${remap(m.typeArguments(1))}>"
         case _ =>
           super.remap(m)
       }
@@ -225,14 +238,17 @@ class LmsBackend extends LmsBackendFacade { self =>
       //      val staticData = getFreeDataBlock(body)
 
       withStream(out) {
-        stream.println("/*****************************************\n" +
+        stream.println(
+          "#include <vector>\n" +
+          "#include <tuple>\n" +
+          "#include <cstdlib>\n" +
+          "/*****************************************\n" +
           "  Emitting Generated Code                  \n" +
           "*******************************************/")
         emitFileHeader()
 
-        // TODO: separate concerns, should not hard code "pxX" name scheme for static data here
         //        stream.println("class "+className+(if (staticData.isEmpty) "" else "("+staticData.map(p=>"p"+quote(p._1)+":"+p._1.tp).mkString(",")+")")+" extends (("+args.map(a => remap(a.tp)).mkString(", ")+")=>("+sA+")) {")
-        stream.println(s"${sA} apply(${args.map(a => s"${remap(a.tp)} ${quote(a)}").mkString(", ")} ) {")
+        stream.println(s"${sA} apply(${args.map(a => s"${remap(a.tp)}& ${quote(a)}").mkString(", ")} ) {")
 
         emitBlock(body)
         stream.println(s"return ${quote(getBlockResult(body))};")
