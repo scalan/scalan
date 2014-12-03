@@ -1,2 +1,8 @@
 #!/bin/sh
-git push https://github.com/scalan/scalan-ce.git master-github:master
+set -o errexit
+
+git fetch origin
+git checkout master-github
+git pull
+git push https://github.com/scalan/scalan-ce.git origin/master-github:master
+git checkout master
