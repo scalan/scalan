@@ -87,7 +87,9 @@ trait BaseExp extends Base { self: ScalanExp =>
   trait TransformerOps[Ctx <: Transformer] {
     def empty: Ctx
     def add[A](ctx: Ctx, kv: (Rep[A], Rep[A])): Ctx
-    def merge(ctx1: Ctx, ctx2: Ctx): Ctx = ctx2.domain.foldLeft(ctx1)((t,s) => add(t, (s, ctx2(s))))
+    def merge(ctx1: Ctx, ctx2: Ctx): Ctx = ctx2.domain.foldLeft(ctx1) {
+      case (t, s: Rep[a]) => add(t, (s, ctx2(s)))
+    }
   }
 
   implicit class TransformerEx[Ctx <: Transformer](self: Ctx)(implicit ops: TransformerOps[Ctx]) {
@@ -267,7 +269,7 @@ trait Expressions extends BaseExp { self: ScalanExp =>
 
   case class TableEntrySingle[T](sym: Exp[T], rhs: Def[T], lambda: Option[Exp[_]]) extends TableEntry[T]
 
-  override val TableEntry = new TableEntryCompanion {
+  override val TableEntry: TableEntryCompanion = new TableEntryCompanion {
     def apply[T](sym: Exp[T], rhs: Def[T]) = new TableEntrySingle(sym, rhs, None)
     def apply[T](sym: Exp[T], rhs: Def[T], lam: Exp[_]) = new TableEntrySingle(sym, rhs, Some(lam))
     def unapply[T](tp: TableEntry[T]): Option[(Exp[T], Def[T])] = Some((tp.sym, tp.rhs))

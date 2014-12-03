@@ -75,7 +75,6 @@ object ScalanBuild extends Build {
   }
 
   lazy val common = project.withTestConfigsAndCommonSettings
-    .settings(crossCompilation)
 
   lazy val meta = project.dependsOn(common).withTestConfigsAndCommonSettings
     .settings(
@@ -85,7 +84,6 @@ object ScalanBuild extends Build {
       fork in run := true)
 
   lazy val core = project.dependsOn(common).withTestConfigsAndCommonSettings
-    .settings(crossCompilation)
     .settings(
       libraryDependencies ++= Seq(
         "com.chuusai" % "shapeless" % "2.0.0" cross CrossVersion.binaryMapped {
@@ -95,15 +93,17 @@ object ScalanBuild extends Build {
         "cglib" % "cglib" % "3.1",
         "org.objenesis" % "objenesis" % "2.1"))
 
-  lazy val frontend = project.dependsOn(core % `compile->compile;test->test`, common).withTestConfigsAndCommonSettings
+  lazy val ce = Project("community-edition", file("community-edition"))
+    .dependsOn(core % `compile->compile;test->test`)
+    .withTestConfigsAndCommonSettings
+
+  lazy val frontend = project
+    .dependsOn(core % `compile->compile;test->test`, common)
+    .withTestConfigsAndCommonSettings
     .settings(
       scalaVersion := "2.11.4",
       crossScalaVersions := Seq("2.11.4"),
       libraryDependencies += "ch.epfl.lamp" %% "scala-yinyang" % "0.1.0")
-
-  lazy val ce = Project("community-edition", file("community-edition"))
-    .dependsOn(core % `compile->compile;test->test`)
-    .withTestConfigsAndCommonSettings
 
   val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2")
 
@@ -124,6 +124,8 @@ object ScalanBuild extends Build {
 
   // name to make this the default project
   lazy val root = Project("scalan", file("."))
-    .aggregate(common, meta, core, ce, lmsBackend)
+    .aggregate(common, meta, core, ce)
+    .withTestConfigsAndCommonSettings
+    .settings(crossCompilation)
     .settings(noPublishingSettings: _*)
 }
