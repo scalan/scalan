@@ -110,7 +110,7 @@ trait Algebraic {
     def apply[A](i: Interact[A]): Id[A] = i match {
       case Ask(prompt) =>
         println(prompt)
-        readLine()
+        scala.Console.in.readLine()
       case Tell(msg) =>
         println(msg)
     }

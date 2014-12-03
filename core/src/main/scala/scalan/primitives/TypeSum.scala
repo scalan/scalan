@@ -17,9 +17,9 @@ trait TypeSum { self: Scalan =>
 
   implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B]
 
-  def toLeft[A](a: Rep[A]): Rep[(A | Unit)] = toLeftSum[A, Unit](a)
+  def toLeft[A](a: Rep[A]): Rep[A | Unit] = toLeftSum[A, Unit](a)
 
-  def toRight[A](a: Rep[A]): Rep[R[A]] = toRightSum[Unit, A](a)
+  def toRight[A](a: Rep[A]): Rep[Unit | A] = toRightSum[Unit, A](a)
 
   def toLeftSum[A, B: Elem](a: Rep[A]): Rep[(A | B)]
 
@@ -31,10 +31,6 @@ trait TypeSum { self: Scalan =>
 }
 
 trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
-
-  def toLeft[A](a: Rep[A]): Rep[(A | Unit)]
-
-  def toRight[A](a: Rep[A]): Rep[R[A]]
 
   def toLeftSum[A, B: Elem](a: Rep[A]): Rep[(A | B)] = Left[A, B](a)
 
@@ -62,8 +58,6 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     lazy val uniqueOpId = name(selfType)
   }
 
-  def toLeft[A](a: Rep[A]): Rep[L[A]]
-  def toRight[A](a: Rep[A]): Rep[R[A]]
   def toLeftSum[A, B: Elem](a: Rep[A]): Rep[(A | B)] = withElemOf(a) { implicit e => Left[A, B](a) }
   def toRightSum[A: Elem, B](b: Rep[B]): Rep[(A | B)] = withElemOf(b) { implicit e => Right[A, B](b) }
 

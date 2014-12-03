@@ -3,7 +3,6 @@ package scalan.parrays
 import java.io.File
 import java.lang.reflect.Method
 
-import scala.io.BytePickle.Def
 import scalan.compilation.GraphVizExport
 import scalan.{BaseShouldTests, ScalanCtxExp, ScalanCtxSeq}
 
