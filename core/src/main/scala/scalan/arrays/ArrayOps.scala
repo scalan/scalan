@@ -231,7 +231,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       case ArrayMap(xs, f) =>
         implicit val eT = xs.elem.eItem
         f(xs(i))
-      case ArrayZip(xs: Arr[a], ys: Arr[b]) =>
+      case ArrayZip(xs: Arr[a] @unchecked, ys: Arr[b] @unchecked) =>
         val xs1 = xs.asRep[Array[a]]
         val ys1 = ys.asRep[Array[b]]
         implicit val e1 = xs1.elem.eItem
@@ -245,7 +245,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       case _ =>
         super.rewriteDef(d)
     }
-    case ArrayApplyMany(Def(d2: Def[Array[a]]@unchecked), is) =>
+    case ArrayApplyMany(Def(d2: Def[Array[a]] @unchecked), is) =>
       d2.asDef[Array[a]] match {
         case ArrayApplyMany(xs, is1) =>
           implicit val eT = xs.elem.eItem
@@ -253,7 +253,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
         case ArrayMap(xs, f) =>
           implicit val eT = xs.elem.eItem
           xs(is).mapBy(f)
-        case ArrayZip(xs: Arr[a], ys: Arr[b]) =>
+        case ArrayZip(xs: Arr[a] @unchecked, ys: Arr[b] @unchecked) =>
           val xs1 = xs.asRep[Array[a]]
           val ys1 = ys.asRep[Array[b]]
           implicit val e1 = xs1.elem.eItem

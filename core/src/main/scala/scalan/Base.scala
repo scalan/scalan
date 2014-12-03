@@ -9,8 +9,6 @@ import scala.annotation.unchecked.uncheckedVariance
 
 trait Base extends LazyLogging {
   type |[+A, +B] = Either[A, B]
-  type L[A] = (A | Unit)
-  type R[A] = (Unit | A)
   type Rep[+A]
   type Elem[A]
   type IntRep = Rep[Int]

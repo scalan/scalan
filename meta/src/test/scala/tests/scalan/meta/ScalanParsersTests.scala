@@ -48,7 +48,7 @@ class ScalanParsersTests extends BaseTests {
     }
   }
 
-  def test[T](kind: TreeKind, prog: String, expected: T)(f: Tree => T) {
+  def test[A](kind: TreeKind, prog: String, expected: A)(f: Tree => A) {
     it(prog) {
       val tree = parseString(kind, prog)
       val res = f(tree)

@@ -299,13 +299,13 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case ArrayLength(Def(ViewArray(arr: Arr[a]))) =>
+    case ArrayLength(Def(ViewArray(arr: Arr[a] @unchecked))) =>
       array_length(arr)
     case HasViewArg(_) => liftViewFromArgs(d) match {
       case Some(s) => s
       case _ => super.rewriteDef(d)
     }
-    case ArrayMap(xs: Arr[a], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
+    case ArrayMap(xs: Arr[a] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
       val f1 = f.asRep[a => b]
       val xs1 = xs.asRep[Array[a]]
       implicit val eA = xs1.elem.eItem
