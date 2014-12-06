@@ -28,7 +28,7 @@ trait MonadsAbs extends Monads
   def Monad: Rep[MonadCompanionAbs]
   implicit def defaultOfMonad[A:Elem]: Default[Rep[Monad[A]]] = Monad.defaultOf[A]
   implicit def proxyMonadCompanion(p: Rep[MonadCompanion]): MonadCompanion = {
-    proxyOps[MonadCompanion](p, true)
+    proxyOps[MonadCompanion](p)
   }
 
 
@@ -68,7 +68,7 @@ trait MonadsAbs extends Monads
 
   def IdMonad: Rep[IdMonadCompanionAbs]
   implicit def proxyIdMonadCompanion(p: Rep[IdMonadCompanionAbs]): IdMonadCompanionAbs = {
-    proxyOps[IdMonadCompanionAbs](p, true)
+    proxyOps[IdMonadCompanionAbs](p)
   }
 
   trait IdMonadCompanionElem extends CompanionElem[IdMonadCompanionAbs]
@@ -131,7 +131,7 @@ trait MonadsAbs extends Monads
 
   def StateMonad: Rep[StateMonadCompanionAbs]
   implicit def proxyStateMonadCompanion(p: Rep[StateMonadCompanionAbs]): StateMonadCompanionAbs = {
-    proxyOps[StateMonadCompanionAbs](p, true)
+    proxyOps[StateMonadCompanionAbs](p)
   }
 
   trait StateMonadCompanionElem extends CompanionElem[StateMonadCompanionAbs]
@@ -193,7 +193,7 @@ trait MonadsAbs extends Monads
 
   def IOMonad: Rep[IOMonadCompanionAbs]
   implicit def proxyIOMonadCompanion(p: Rep[IOMonadCompanionAbs]): IOMonadCompanionAbs = {
-    proxyOps[IOMonadCompanionAbs](p, true)
+    proxyOps[IOMonadCompanionAbs](p)
   }
 
   trait IOMonadCompanionElem extends CompanionElem[IOMonadCompanionAbs]

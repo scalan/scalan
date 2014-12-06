@@ -1,16 +1,18 @@
 package scalan.staged
 
-import scalan.codegen.GraphVizExport
+import java.io.File
+import java.lang.reflect.Method
+
+import scalan.compilation.GraphVizExport
 import scalan.BaseShouldTests
 
 import scalan.ScalanCtxExp
 
 class TransformingSuite extends BaseShouldTests {
 
-  val prefix = "test-out/scalan/staged/Transforming/"
-
   def getCtx = new ScalanCtxExp with GraphVizExport {
-    this.invokeEnabled = true
+    override def isInvokeEnabled(d: Def[_], m: Method) = true
+
     lazy val test = fun { xyz: Rep[(Int, (Int, Int))] =>
       val x = xyz._1
       val y = xyz._2
@@ -22,7 +24,7 @@ class TransformingSuite extends BaseShouldTests {
   "Transforming" should "created ProjectionTree" in {
     val ctx = getCtx
     import ctx._
-    emitDepGraph(test, s"${prefix}testFunc.dot", false)
+    emitDepGraph(test, new File("test-out/scalan/staged/Transforming/testFunc.dot"), false)
     val lam = test.getLambda
     val t = lam.projectionTreeFrom(lam.x)
     println(t)

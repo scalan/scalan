@@ -1,16 +1,61 @@
 package scalan.it.smoke
 
 import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
-import scalan.it.ItTests
-import scalan.codegen.LangBackend
+import scalan.it.BaseItTests
+import scalan.compilation.Compiler
 
 /**
  *  Tests that very simple examples are run correctly
  */
-abstract class SmokeItTests extends ItTests {
+abstract class SmokeItTests extends BaseItTests {
   trait Prog extends ScalanDsl {
 
     lazy val simpleArith = fun {x: Rep[Int] => x*x + 2}
+
+    lazy val simpleArrGet = fun {in: Rep[(Array[Int], Int)] =>
+      val arr = in._1
+      val ind = in._2
+      arr(ind)
+    }
+    lazy val simpleMap = fun {x: Rep[Array[Int]] =>
+      val x1 = x.map {y:Rep[Int] => y+1}
+      x1
+    }
+    lazy val simpleMapNested = fun {x: Rep[(Array[Array[Double]], Int)] =>
+      val x1 = x._1.map {y:Rep[Array[Double]] => y(x._2)}
+      x1
+    }
+    lazy val simpleZip = fun {x: Rep[Array[Int]] =>
+      val x1 = x.map {y:Rep[Int] => y+2}
+      x1 zip x
+    }
+    lazy val simpleZipWith = fun {x: Rep[Array[Int]] =>
+      val x1 = x.map {y:Rep[Int] => y+3}
+      val x2 = x1 zip x
+      val x3 = x2.map {y:Rep[(Int,Int)] => y._1 * y._2}
+      x3
+    }
+
+    lazy val simpleReduce = fun {x: Rep[Array[Int]] =>
+      val x1 = x.reduce
+      x1
+    }
+    lazy val mvMul = fun { in:Rep[(Array[Array[Int]], Array[Int])] =>
+      val mat = in._1
+      val vec = in._2
+      val res = mat map {row: Rep[Array[Int]] =>
+        val x1 = row zip vec
+        val x2 = x1.map {y:Rep[(Int,Int)] => y._1 * y._2}
+        x2.reduce
+      }
+      res
+    }
+
+    lazy val simpleIf = fun { in: Rep[(Array[Double], Double)] =>
+      val res = IF (in._2 === 0.0) THEN { in._1 map (x => x/2.0) } ELSE { IF ( in._2 < 0.0) THEN { in._1 map (x => (x*(-1.0))/in._2) } ELSE {in._1 map (x => x/in._2) } }
+      res.reduce
+    }
+
 //    lazy val simpleMap = fun {x: PA[Int] =>
 //      x.map(y => y + 1)
 //    }
@@ -199,7 +244,7 @@ abstract class SmokeItTests extends ItTests {
 //    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
   }
 
-  val progStaged: Prog with ScalanCtxExp with LangBackend
+  val progStaged: Prog with ScalanCtxExp with Compiler
   val progSeq: Prog with ScalanCtxSeq = new ProgSeq()
 
   import progSeq._

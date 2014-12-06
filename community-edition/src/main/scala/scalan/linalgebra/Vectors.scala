@@ -4,10 +4,10 @@ import scalan._
 import scalan.common.Default
 import scalan.common.Lazy
 import scalan.common.OverloadHack.Overloaded1
-import scalan.arrays.PArrays
-import scalan.arrays.PArraysDsl
-import scalan.arrays.PArraysDslExp
-import scalan.arrays.PArraysDslSeq
+import scalan.parrays.PArrays
+import scalan.parrays.PArraysDsl
+import scalan.parrays.PArraysDslExp
+import scalan.parrays.PArraysDslSeq
 
 trait Vectors extends PArrays { scalan: VectorsDsl =>
   type Vec[T] = Rep[Vector[T]]
@@ -16,7 +16,7 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
     def length: Rep[Int]
     def coords: PA[T]
     implicit def elem: Elem[T]
-    def dot(other: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T]
+    def dot(other: Vec[T])(implicit n: Numeric[T]): Rep[T]
     def apply(i: Rep[Int]): Rep[T]
   }
   trait VectorCompanion extends TypeFamily1[Vector] {
@@ -25,11 +25,10 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
 
   abstract class DenseVector[T](val coords: Rep[PArray[T]])(implicit val elem: Elem[T]) extends Vector[T] {
     def length = coords.length
-    def dot(other: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = matchVec[T, T](other) {
-      dv => dotPA(coords, dv.coords)(n, m, elem)
+    def dot(other: Vec[T])(implicit n: Numeric[T]) = matchVec[T, T](other) {
+      dv => dotPA(coords, dv.coords)(n, elem)
     } {
-      sv =>
-        dotPA(coords(sv.nonZeroIndices), sv.nonZeroValues)(n, m, elem)
+      sv => dotPA(coords(sv.nonZeroIndices), sv.nonZeroValues)(n, elem)
     }
     def apply(i: Rep[Int]) = coords(i)
   }
@@ -37,11 +36,8 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
     def defaultOf[T: Elem] = Default.defaultVal(DenseVector(element[PArray[T]].defaultRepValue))
   }
 
-  def dotPA[T](xs: PA[T], ys: PA[T])(implicit n: Numeric[T], m: RepMonoid[T], e: Elem[T]) = {
-    xs.zip(ys).map {
-      case Pair(x, y) =>
-        x * y
-    }.reduce
+  def dotPA[T](xs: PA[T], ys: PA[T])(implicit n: Numeric[T], e: Elem[T]) = {
+    xs.zip(ys).map { case Pair(x, y) => x * y }.reduce
   }
 
   abstract class SparseVector[T](val nonZeroIndices: Rep[Array[Int]], val nonZeroValues: Rep[PArray[T]], val length: Rep[Int])(implicit val elem: Elem[T]) extends Vector[T] {
@@ -49,8 +45,8 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
       val coords0 = Array.replicate(length, elem.defaultRepValue)
       PArray(coords0.updateMany(nonZeroIndices, nonZeroValues.arr))
     }
-    def dot(other: Vec[T])(implicit n: Numeric[T], m: RepMonoid[T]) = matchVec[T, T](other) {
-      dv => dotPA(dv.coords(nonZeroIndices), nonZeroValues)(n, m, elem)
+    def dot(other: Vec[T])(implicit n: Numeric[T]) = matchVec[T, T](other) {
+      dv => dotPA(dv.coords(nonZeroIndices), nonZeroValues)(n, elem)
       // TODO currently doesn't work because there are problems defining toRep for ViewElem
       // dv => dv.dot(this.asInstanceOf[SparseVector[T]])
     } {
@@ -70,7 +66,7 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
     }
   }
 
-  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T]
+  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T]): Rep[T]
   
   // FIXME probably won't work correctly, need a proper general solution
   implicit def eVec[T: Elem]: Elem[Vector[T]] = element[DenseVector[T]].asElem[Vector[T]]
@@ -88,7 +84,7 @@ trait VectorsDslSeq extends VectorsDsl with impl.VectorsSeq with PArraysDslSeq w
       case sv: SparseVector[_] => sparse(sv)
     }
 
-  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T] = {
+  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T]): Rep[T] = {
     var result = n.zero
     val yMap = yIndices.zip(yValues.arr).toMap
     xIndices.zip(xValues.arr).foldLeft(n.zero) { 
@@ -108,10 +104,10 @@ trait VectorsDslExp extends VectorsDsl with impl.VectorsExp with PArraysDslExp w
       case _: SparseVectorElem[_] => sparse(vec.asRep[SparseVector[T]])
     }
   
-  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T], m: RepMonoid[T]): Rep[T] =
+  def dotSparse[T: Elem](xIndices: Arr[Int], xValues: PA[T], yIndices: Arr[Int], yValues: PA[T])(implicit n: Numeric[T]): Rep[T] =
     DotSparse(xIndices, xValues.arr, yIndices, yValues.arr)
 
-  case class DotSparse[T](xIndices: Arr[Int], xValues: Arr[T], yIndices: Arr[Int], yValues: Arr[T])(implicit val n: Numeric[T], val m: RepMonoid[T], selfType: Elem[T]) extends BaseDef[T] {
+  case class DotSparse[T](xIndices: Arr[Int], xValues: Arr[T], yIndices: Arr[Int], yValues: Arr[T])(implicit val n: Numeric[T], selfType: Elem[T]) extends BaseDef[T] {
     override def mirror(f: Transformer) = DotSparse(f(xIndices), f(xValues), f(yIndices), f(yValues))
     def uniqueOpId = name(selfType)
   }

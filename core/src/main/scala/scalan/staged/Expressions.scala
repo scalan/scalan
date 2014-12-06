@@ -74,28 +74,6 @@ trait BaseExp extends Base { self: ScalanExp =>
     }) + ")"
   }
 
-  abstract class UnOp[TArg,R](implicit selfType: Elem[R]) extends BaseDef[R] {
-    def arg: Rep[TArg]
-    def copyWith(arg: Rep[TArg]): Rep[R]
-    def opName: String
-    override def toString = s"${this.getClass.getSimpleName}($arg)"
-    lazy val uniqueOpId = name(arg.elem)
-    override def mirror(t: Transformer) = copyWith(t(arg))
-  }
-
-  abstract class BinOp[TArg,R](implicit selfType: Elem[R]) extends BaseDef[R] {
-    def lhs: Rep[TArg]
-    def rhs: Rep[TArg]
-    def copyWith(l: Rep[TArg], r: Rep[TArg]): Rep[R]
-    def opName: String
-    override def toString = s"${this.getClass.getSimpleName}($lhs, $rhs)"
-    lazy val uniqueOpId = name(lhs.elem)
-    override def mirror(t: Transformer) = copyWith(t(lhs), t(rhs))
-  }
-
-  trait EndoUnOp[T] extends UnOp[T,T]
-  trait EndoBinOp[T] extends BinOp[T,T]
-
   abstract class Transformer {
     def apply[A](x: Rep[A]): Rep[A]
     def isDefinedAt(x: Rep[_]): Boolean
@@ -131,17 +109,17 @@ trait BaseExp extends Base { self: ScalanExp =>
    * @tparam T
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
-  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: LElem[T]): Exp[T]
+  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T]
   implicit def reifyObject[T](obj: ReifiableExp[_,T]): Rep[T] = {
     // TODO bad cast
     val obj1 = obj.asInstanceOf[Def[T]]
-    implicit val leT = Lazy(obj1.selfType)
-    toExp(obj1, fresh[T])
+    toExp(obj1, fresh[T](Lazy(obj1.selfType)))
   }
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
     case _: BaseElem[_] => Const(x)
     case _: FuncElem[_, _] => Const(x)
+    case _: ArrayElem[_] => Const(x)
     case pe: PairElem[a, b] =>
       val x1 = x.asInstanceOf[(a, b)]
       implicit val eA = pe.eFst
@@ -152,7 +130,12 @@ trait BaseExp extends Base { self: ScalanExp =>
       implicit val eA = se.eLeft
       implicit val eB = se.eRight
       x1.fold(l => Left[a, b](l), r => Right[a, b](r))
-    case _ => super.toRep(x)(eA)
+    case _ =>
+      x match {
+        // this may be called instead of reifyObject implicit in some cases
+        case d: ReifiableExp[_, A @unchecked] => reifyObject(d)
+        case _ => super.toRep(x)(eA)
+      }
   }
 
   object Def {
@@ -165,16 +148,10 @@ trait BaseExp extends Base { self: ScalanExp =>
       case _ => Some(e)
     }
   }
-  object Exps {
-    def unapply(xs: List[Any]): Option[List[Exp[_]]] = {
-      val exps = xs map { a => a.asInstanceOf[Exp[_]] }
-      Some(exps)
-    }
-  }
-  object Elem {
+
+  object ExpWithElem {
     def unapply[T](s: Exp[T]): Option[(Exp[T],Elem[T])] = Some((s, s.elem))
   }
-
 
   trait TableEntry[+T] {
     def sym: Exp[T]
@@ -330,11 +307,10 @@ trait Expressions extends BaseExp { self: ScalanExp =>
    * Updates the universe of symbols and definitions, then rewrites until fix-point
    * @param d A new graph node to add to the universe
    * @param newSym A symbol that will be used if d doesn't exist in the universe
-   * @param et Type descriptor of the resulting type of node d
    * @tparam T
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
-  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T])(implicit et: LElem[T]): Exp[T] = {
+  protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
     var res = findOrCreateDefinition(d, newSym)
     var currSym = res
     var currDef = d

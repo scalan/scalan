@@ -18,18 +18,6 @@ trait Transforming { self: ScalanExp =>
     }
   }
 
-  //  class SubstTransformer extends Transformer {
-  //    private val subst = new HashMap[Exp[Any], Exp[Any]]
-  //
-  //    def apply[A](x: Exp[A]): Exp[A] = subst.get(x) match {
-  //      case Some(y) if y != x => apply(y.asRep[A])  // transitive closure
-  //      case _ => x
-  //    }
-  //    def isDefinedAt(x: Rep[_]) = subst.contains(x)
-  //
-  //    def +=(kv: (Exp[Any], Exp[Any])) = subst += kv
-  //  }
-
   class MapTransformer(private val subst: Map[Exp[_], Exp[_]]) extends Transformer {
     def this(substPairs: (Exp[_], Exp[_])*) {
       this(substPairs.toMap)
@@ -68,6 +56,14 @@ trait Transforming { self: ScalanExp =>
         case None => x
         case Some(y) => y
       }
+      case _ => x
+    }
+  }
+
+  object InvokeRewriter extends Rewriter {
+    def apply[T](x: Exp[T]): Exp[T] = x match {
+      case Def(MethodCall(Def(d), m, args)) if shouldInvoke(d, m, args.toArray) =>
+        m.invoke(d, args: _*).asInstanceOf[Exp[T]]
       case _ => x
     }
   }
@@ -124,12 +120,7 @@ trait Transforming { self: ScalanExp =>
     private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], lam: Lambda[_,_]): Lambda[_,_] = {
       val newVar = t(lam.x)
       val newBody = t(lam.y)
-      val newLambdaDef = new LambdaWrapper(None, newVar, newBody, newLambdaSym.asRep[Any=>Any], lam.mayInline)
-      // from Scalan
-//      val newLambdaDef = new Lambda(None, newVar, newBody)(newVar.elem, newBody.elem) {
-//        // TODO problem with types?
-//        override val self = newLambdaSym.asRep[A => B]
-//      }
+      val newLambdaDef = new Lambda(None, newVar, newBody, newLambdaSym.asRep[Any=>Any], lam.mayInline)
       newLambdaDef
     }
 
@@ -173,12 +164,6 @@ trait Transforming { self: ScalanExp =>
           (t2, n1 :: nodes)
       }
       (t, revMirrored.reverse)
-    }
-
-    // TODO simplify to mirrorNode if possible
-    def mirrorSymbol(startNode: Exp[_], rewriter: Rewriter, t: Ctx): (Ctx, Exp[_]) = {
-      val (t1, ss) = mirrorSymbols(t, rewriter, List(startNode))
-      (t1, ss.head)
     }
   }
 
@@ -225,7 +210,7 @@ trait Transforming { self: ScalanExp =>
       if (isLeaf) List((Nil, root))
       else{
         for {
-            ch <- children;
+            ch <- children
             (p, s) <- ch.paths
           } yield {
             val i = projectionIndex(ch.root)

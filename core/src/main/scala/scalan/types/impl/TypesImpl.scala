@@ -1,4 +1,3 @@
-
 package scalan.types
 package impl
 
@@ -8,15 +7,13 @@ import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
-
 trait TypesAbs extends Types
 { self: TypesDsl =>
-
   // single proxy for each type family
   implicit def proxyType[A:Elem](p: Rep[Type[A]]): Type[A] =
     proxyOps[Type[A]](p)
 
-  trait TypeElem[From,To] extends ViewElem[From, To]
+  abstract class TypeElem[From,To](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
   trait TypeCompanionElem extends CompanionElem[TypeCompanionAbs]
   implicit lazy val TypeCompanionElem: TypeCompanionElem = new TypeCompanionElem {
@@ -27,12 +24,11 @@ trait TypesAbs extends Types
   trait TypeCompanionAbs extends TypeCompanion
   def Type: Rep[TypeCompanionAbs]
   implicit def proxyTypeCompanion(p: Rep[TypeCompanion]): TypeCompanion = {
-    proxyOps[TypeCompanion](p, true)
+    proxyOps[TypeCompanion](p)
   }
 
-
   // elem for concrete class
-  class BaseTypeElem[A](implicit iso: Iso[BaseTypeData[A], BaseType[A]]) extends TypeElem[BaseTypeData[A], BaseType[A]]
+  class BaseTypeElem[A](iso: Iso[BaseTypeData[A], BaseType[A]]) extends TypeElem[BaseTypeData[A], BaseType[A]](iso)
 
   // state representation type
   type BaseTypeData[A] = (String, A)
@@ -54,11 +50,10 @@ trait TypesAbs extends Types
       typeTag[BaseType[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[BaseType[A]]](BaseType("", element[A].defaultRepValue))
-    lazy val eTo = new BaseTypeElem[A]()(this)
+    lazy val eTo = new BaseTypeElem[A](this)
   }
   // 4) constructor and deconstructor
   trait BaseTypeCompanionAbs extends BaseTypeCompanion {
-
     def apply[A](p: Rep[BaseTypeData[A]])(implicit eA: Elem[A]): Rep[BaseType[A]] =
       isoBaseType(eA).to(p)
     def apply[A](typeCode: Rep[String], defaultValue: Rep[A])(implicit eA: Elem[A]): Rep[BaseType[A]] =
@@ -67,7 +62,7 @@ trait TypesAbs extends Types
   }
   def BaseType: Rep[BaseTypeCompanionAbs]
   implicit def proxyBaseTypeCompanion(p: Rep[BaseTypeCompanionAbs]): BaseTypeCompanionAbs = {
-    proxyOps[BaseTypeCompanionAbs](p, true)
+    proxyOps[BaseTypeCompanionAbs](p)
   }
 
   trait BaseTypeCompanionElem extends CompanionElem[BaseTypeCompanionAbs]
@@ -92,9 +87,8 @@ trait TypesAbs extends Types
   def mkBaseType[A](typeCode: Rep[String], defaultValue: Rep[A])(implicit eA: Elem[A]): Rep[BaseType[A]]
   def unmkBaseType[A:Elem](p: Rep[BaseType[A]]): Option[(Rep[String], Rep[A])]
 
-
   // elem for concrete class
-  class Tuple2TypeElem[A, B](implicit iso: Iso[Tuple2TypeData[A, B], Tuple2Type[A, B]]) extends TypeElem[Tuple2TypeData[A, B], Tuple2Type[A, B]]
+  class Tuple2TypeElem[A, B](iso: Iso[Tuple2TypeData[A, B], Tuple2Type[A, B]]) extends TypeElem[Tuple2TypeData[A, B], Tuple2Type[A, B]](iso)
 
   // state representation type
   type Tuple2TypeData[A, B] = (Type[A], Type[B])
@@ -117,11 +111,10 @@ trait TypesAbs extends Types
       typeTag[Tuple2Type[A, B]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(element[Type[A]].defaultRepValue, element[Type[B]].defaultRepValue))
-    lazy val eTo = new Tuple2TypeElem[A, B]()(this)
+    lazy val eTo = new Tuple2TypeElem[A, B](this)
   }
   // 4) constructor and deconstructor
   trait Tuple2TypeCompanionAbs extends Tuple2TypeCompanion {
-
     def apply[A, B](p: Rep[Tuple2TypeData[A, B]])(implicit e1: Elem[A], e2: Elem[B]): Rep[Tuple2Type[A, B]] =
       isoTuple2Type(e1, e2).to(p)
     def apply[A, B](tyA: Rep[Type[A]], tyB: Rep[Type[B]])(implicit e1: Elem[A], e2: Elem[B]): Rep[Tuple2Type[A, B]] =
@@ -130,7 +123,7 @@ trait TypesAbs extends Types
   }
   def Tuple2Type: Rep[Tuple2TypeCompanionAbs]
   implicit def proxyTuple2TypeCompanion(p: Rep[Tuple2TypeCompanionAbs]): Tuple2TypeCompanionAbs = {
-    proxyOps[Tuple2TypeCompanionAbs](p, true)
+    proxyOps[Tuple2TypeCompanionAbs](p)
   }
 
   trait Tuple2TypeCompanionElem extends CompanionElem[Tuple2TypeCompanionAbs]
@@ -154,9 +147,7 @@ trait TypesAbs extends Types
   // 6) smart constructor and deconstructor
   def mkTuple2Type[A, B](tyA: Rep[Type[A]], tyB: Rep[Type[B]])(implicit e1: Elem[A], e2: Elem[B]): Rep[Tuple2Type[A, B]]
   def unmkTuple2Type[A:Elem, B:Elem](p: Rep[Tuple2Type[A, B]]): Option[(Rep[Type[A]], Rep[Type[B]])]
-
 }
-
 
 trait TypesSeq extends TypesAbs { self: ScalanSeq with TypesDsl =>
   lazy val Type: Rep[TypeCompanionAbs] = new TypeCompanionAbs with UserTypeSeq[TypeCompanionAbs, TypeCompanionAbs] {
@@ -179,7 +170,6 @@ trait TypesSeq extends TypesAbs { self: ScalanSeq with TypesDsl =>
   def unmkBaseType[A:Elem](p: Rep[BaseType[A]]) =
     Some((p.typeCode, p.defaultValue))
 
-
   case class SeqTuple2Type[A, B]
       (override val tyA: Rep[Type[A]], override val tyB: Rep[Type[B]])
       (implicit override val e1: Elem[A], override val e2: Elem[B])
@@ -195,9 +185,7 @@ trait TypesSeq extends TypesAbs { self: ScalanSeq with TypesDsl =>
       new SeqTuple2Type[A, B](tyA, tyB)
   def unmkTuple2Type[A:Elem, B:Elem](p: Rep[Tuple2Type[A, B]]) =
     Some((p.tyA, p.tyB))
-
 }
-
 
 trait TypesExp extends TypesAbs { self: ScalanExp with TypesDsl =>
   lazy val Type: Rep[TypeCompanionAbs] = new TypeCompanionAbs with UserTypeDef[TypeCompanionAbs, TypeCompanionAbs] {
@@ -218,13 +206,11 @@ trait TypesExp extends TypesAbs { self: ScalanExp with TypesDsl =>
     override def mirror(t: Transformer) = this
   }
 
-
   def mkBaseType[A]
     (typeCode: Rep[String], defaultValue: Rep[A])(implicit eA: Elem[A]) =
     new ExpBaseType[A](typeCode, defaultValue)
   def unmkBaseType[A:Elem](p: Rep[BaseType[A]]) =
     Some((p.typeCode, p.defaultValue))
-
 
   case class ExpTuple2Type[A, B]
       (override val tyA: Rep[Type[A]], override val tyB: Rep[Type[B]])
@@ -239,11 +225,49 @@ trait TypesExp extends TypesAbs { self: ScalanExp with TypesDsl =>
     override def mirror(t: Transformer) = this
   }
 
-
   def mkTuple2Type[A, B]
     (tyA: Rep[Type[A]], tyB: Rep[Type[B]])(implicit e1: Elem[A], e2: Elem[B]) =
     new ExpTuple2Type[A, B](tyA, tyB)
   def unmkTuple2Type[A:Elem, B:Elem](p: Rep[Tuple2Type[A, B]]) =
     Some((p.tyA, p.tyB))
 
+  object Type_$init$ {
+    def unapply(exp: Exp[_]): Option[Type[A] forSome {type A}] = exp match {
+      case Def(MethodCall(receiver, m, Seq())) if m.getName == "$init$" && receiver.elem.isInstanceOf[TypeElem[_, _]] =>
+        Some(receiver).asInstanceOf[Option[Type[A] forSome {type A}]]
+      case _ => None
+    }
+  }
+
+  object Type_eA {
+    def unapply(exp: Exp[_]): Option[Type[A] forSome {type A}] = exp match {
+      case Def(MethodCall(receiver, m, Seq())) if m.getName == "eA" && receiver.elem.isInstanceOf[TypeElem[_, _]] =>
+        Some(receiver).asInstanceOf[Option[Type[A] forSome {type A}]]
+      case _ => None
+    }
+  }
+
+  object Type_typeCode {
+    def unapply(exp: Exp[_]): Option[Type[A] forSome {type A}] = exp match {
+      case Def(MethodCall(receiver, m, Seq())) if m.getName == "typeCode" && receiver.elem.isInstanceOf[TypeElem[_, _]] =>
+        Some(receiver).asInstanceOf[Option[Type[A] forSome {type A}]]
+      case _ => None
+    }
+  }
+
+  object Type_defaultValue {
+    def unapply(exp: Exp[_]): Option[Type[A] forSome {type A}] = exp match {
+      case Def(MethodCall(receiver, m, Seq())) if m.getName == "defaultValue" && receiver.elem.isInstanceOf[TypeElem[_, _]] =>
+        Some(receiver).asInstanceOf[Option[Type[A] forSome {type A}]]
+      case _ => None
+    }
+  }
+
+  object Type_tag {
+    def unapply(exp: Exp[_]): Option[Type[A] forSome {type A}] = exp match {
+      case Def(MethodCall(receiver, m, Seq())) if m.getName == "tag" && receiver.elem.isInstanceOf[TypeElem[_, _]] =>
+        Some(receiver).asInstanceOf[Option[Type[A] forSome {type A}]]
+      case _ => None
+    }
+  }
 }

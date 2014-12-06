@@ -1,7 +1,8 @@
 package scalan
 
-import scalan.codegen.GraphVizExport
+import scalan.compilation.GraphVizExport
 import scalan.primitives._
+import scalan.arrays._
 import scalan.seq.BaseSeq
 import scalan.staged.{BaseExp, Expressions, Transforming}
 
@@ -13,15 +14,17 @@ trait Scalan
   with Tuples
   with Loops
   with TypeSum
-  with OrderingOps
-  with NumericOps
-  with Equal
-  with MathOps
+  with UnBinOps
   with LogicalOps
-  with FractionalOps
+  with OrderingOps
+  with Equal
+  with NumericOps
+  with MathOps
   with Functions
   with IfThenElse
   with Monoids
+  with ArrayOps
+  with ArrayViews
 
 trait ScalanDsl
   extends Scalan
@@ -35,14 +38,12 @@ trait ScalanSeq
   with TuplesSeq
   with LoopsSeq
   with TypeSumSeq
-  with OrderingOpsSeq
+  with UnBinOpsSeq
   with NumericOpsSeq
-  with EqualSeq
-  with MathOpsSeq
-  with LogicalOpsSeq
-  with FractionalOpsSeq
   with FunctionsSeq
   with IfThenElseSeq
+  with ArrayOpsSeq
+  with ArrayViewsSeq
 
 trait ScalanCtxSeq
   extends ScalanDsl
@@ -57,15 +58,14 @@ trait ScalanExp
   with TuplesExp
   with LoopsExp
   with TypeSumExp
-  with OrderingOpsExp
-  with NumericOpsExp
+  with UnBinOpsExp
   with EqualExp
-  with MathOpsExp
-  with LogicalOpsExp
-  with FractionalOpsExp
+  with NumericOpsExp
   with FunctionsExp
   with IfThenElseExp
   with Transforming
+  with ArrayOpsExp
+  with ArrayViewsExp
 
 trait ScalanCtxExp
   extends ScalanDsl

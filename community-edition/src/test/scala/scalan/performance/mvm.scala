@@ -1,7 +1,7 @@
 package scalan.performance
 
 import org.scalameter.api._
-import scalan.scalan.linalgebra.LinearAlgebraExamples
+import scalan.linalgebra.LinearAlgebraExamples
 import scalan.community.ScalanCommunitySeq
 import scalan.linalgebra.MatricesDslSeq
 

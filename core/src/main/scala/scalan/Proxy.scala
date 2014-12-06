@@ -18,7 +18,7 @@ import scalan.staged.BaseExp
 import scalan.util.ScalaNameUtil
 
 trait Proxy { self: Scalan =>
-  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops
 
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass
@@ -28,7 +28,7 @@ trait Proxy { self: Scalan =>
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
-  def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops = x
+  def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = x
 }
 
 trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
@@ -44,20 +44,18 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
   private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
 
-  override def proxyOps[Ops <: AnyRef](x: Rep[Ops], forceInvoke: Boolean = false)(implicit ct: ClassTag[Ops]): Ops =
+  override def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops =
     x match {
       case Def(d) => d match {
         case Const(c) => c
-        case _ if invokeEnabled && ct.runtimeClass.isInstance(d) =>
-          d.asInstanceOf[Ops]
         case _ =>
-          getProxy(x, ct, forceInvoke)
+          getProxy(x, ct)
       }
       case _ =>
-        getProxy(x, ct, forceInvoke)
+        getProxy(x, ct)
     }
 
-  private def getProxy[Ops](x: Rep[Ops], ct: ClassTag[Ops], forceInvoke: Boolean) = {
+  private def getProxy[Ops](x: Rep[Ops], ct: ClassTag[Ops]) = {
     val proxy = proxies.getOrElseUpdate((x, ct), {
       val clazz = ct.runtimeClass
       val e = new Enhancer
@@ -66,13 +64,37 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
       e.setCallbackType(classOf[ExpInvocationHandler[_]])
       val proxyClass = e.createClass().asSubclass(classOf[AnyRef])
       val proxyInstance = objenesis.newInstance(proxyClass).asInstanceOf[Factory]
-      proxyInstance.setCallback(0, new ExpInvocationHandler(x, forceInvoke))
+      proxyInstance.setCallback(0, new ExpInvocationHandler(x))
       proxyInstance
     })
     proxy.asInstanceOf[Ops]
   }
 
-  var invokeEnabled = false
+  // FIXME this is a hack, this should be handled in Passes
+  // The problem is that rewriting in ProgramGraph.transform is non-recursive
+  // We need some way to make isInvokeEnabled local to graph
+  type InvokeTester = (Def[_], Method) => Boolean
+
+  // we need to always invoke these for creating default values
+  private val companionApply: InvokeTester =
+    (_, m) => m.getName == "apply" && m.getDeclaringClass.getName.endsWith("CompanionAbs")
+  private var invokeTesters: Set[InvokeTester] = Set(companionApply)
+
+  def isInvokeEnabled(d: Def[_], m: Method) = invokeTesters.exists(_(d, m))
+
+  def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) =
+    m.getDeclaringClass.isAssignableFrom(d.getClass) &&
+      (isInvokeEnabled(d, m) || hasFuncArg(args) ||
+        // e.g. for methods returning Elem
+        (m.getReturnType != classOf[AnyRef] && m.getReturnType != classOf[Exp[_]]))
+
+  def addInvokeTester(pred: InvokeTester): Unit = {
+    invokeTesters += pred
+  }
+
+  def removeInvokeTester(pred: InvokeTester): Unit = {
+    invokeTesters -= pred
+  }
 
   protected def hasFuncArg(args: Array[AnyRef]): Boolean =
     args.exists {
@@ -85,17 +107,14 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   protected var methodCallReceivers = Set.empty[Exp[_]]
 
-  class ExpInvocationHandler[T](receiver: Exp[T], forceInvoke: Boolean) extends InvocationHandler {
+  class ExpInvocationHandler[T](receiver: Exp[T]) extends InvocationHandler {
     override def toString = s"ExpInvocationHandler(${receiver.toStringWithDefinition})"
-
-    def canInvoke(m: Method, d: Def[_]) = m.getDeclaringClass.isAssignableFrom(d.getClass)
-    def shouldInvoke(args: Array[AnyRef]) = invokeEnabled || forceInvoke || hasFuncArg(args)
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) scala.Array.empty[AnyRef] else _args
       receiver match {
         // call method of the node when it's allowed
-        case Def(d) if (canInvoke(m, d) && shouldInvoke(args)) =>
+        case Def(d) if shouldInvoke(d, m, args) =>
           val res = m.invoke(d, args: _*)
           res
         case _ => invokeMethodOfVar(m, args)
@@ -144,6 +163,9 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
           case other => !!!(s"Staged method call ${ScalaNameUtil.cleanScalaName(m.toString)} must return an Exp, but got $other")
         }
       } catch {
+        case e: IllegalArgumentException =>
+          logger.error(s"Method call to get result element failed. Object: $zeroNode, method: $m", e)
+          throw e
         case e: InvocationTargetException =>
           e.getCause match {
             case e1: ElemException[_] => e1.element
@@ -156,7 +178,7 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
 //    def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
 //      val args = if (_args == null) Array.empty[AnyRef] else _args
 //      receiver match {
-//        case Def(d) if (canInvoke(m, d) && (invokeEnabled || hasFuncArg(args))) => {
+//        case Def(d) if (canInvoke(m, d) && (isInvokeEnabled(m) || hasFuncArg(args))) => {
 //          // call method of the node
 //          val res = m.invoke(d, args: _*)
 //          res
@@ -168,7 +190,7 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
 //
 //    def invokeMethodOfVar(m: Method, args: Array[AnyRef]) = {
 //      /* If invoke is enabled or current method has arg of type <function> - do not create methodCall */
-//      if (methodCallReceivers.contains(receiver) || !(invokeEnabled || hasFuncArg(args))) {
+//      if (methodCallReceivers.contains(receiver) || !(isInvokeEnabled(m) || hasFuncArg(args))) {
 //        createMethodCall(m, args)
 //      } else {
 //        getIso match {
