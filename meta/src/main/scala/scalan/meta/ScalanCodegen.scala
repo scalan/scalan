@@ -37,7 +37,7 @@ object Extensions {
 
 trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement =>
 
-  class EntityFileGenerator(module: SEntityModuleDef) {
+  class EntityFileGenerator(module: SEntityModuleDef, entityTypeSynonims: Set[String]) {
     import Extensions._
     
     abstract class TemplateData(val name: String, val tpeArgs: List[STpeArg]) {
@@ -327,66 +327,86 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
        |""".stripAndTrim
     }
 
+
+    def skipMethod(m: SMethodDef): Option[String] = {
+      val nonRepArg = m.explicitArgs.filter(a => {
+        val isSynonimTpe = a.tpe match {
+          case STraitCall(name, _) if entityTypeSynonims.contains(name) => true
+          case _ => false
+        }
+        !(a.tpe.isRepType || isSynonimTpe)
+      })
+      if (nonRepArg.isEmpty)
+        None
+      else
+        Some(nonRepArg.rep(a => s"method has Non-Rep argument ${a.name}: ${a.tpe}", "\n"))
+    }
+
     def methodExtractorsString1(e: STraitOrClassDef, isCompanion: Boolean) = {
       val counter = collection.mutable.Map.empty[String, Int].withDefaultValue(0)
 
       def methodExtractor(m: SMethodDef) = {
-        val numElemTypeParams =
-          if (isCompanion)
-            0
-          else if (e.isInstanceOf[STraitDef])
-            e.tpeArgs.length + 2
-          else
-            e.tpeArgs.length
-        val traitElem = s"${e.name}Elem${typeArgString(Seq.fill(numElemTypeParams)("_"))}"
-        val explicitArgs = m.args.filter(!_.impFlag).flatMap(_.args)
-        val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.name).toSet
-        val returnType = {
-          val receiverType = s"Rep[${e.name + typeArgString(e.tpeArgs.map(_.name))}]"
-          val argTypes = explicitArgs.map(_.tpe.toString)
-          val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
-            case Seq() => "Unit"
-            case Seq(single) => single
-            case many => many.mkString("(", ", ", ")")
-          }
-          s"Option[$receiverAndArgTypes${typeVars.opt(typeVars => s" forSome {${typeVars.map("type " + _).mkString("; ")}}")}]"
-        }
-        val explicitArgsStr = explicitArgs.rep(_.name, ", ")
-        val overloadNum = counter(m.name)
-        counter(m.name) = overloadNum + 1
-        val matcherName = {
-          val cleanedName = ScalaNameUtil.cleanScalaName(m.name)
-          val suffix =
-            if (ScalaNameUtil.isOpName(cleanedName))
-              "!" * overloadNum
-            else if (overloadNum > 0)
-              overloadNum.toString
-            else
-              ""
-          cleanedName + suffix
-        }
+        skipMethod(m) match {
+          case Some(reason) =>
+            s"    // WARNING: Cannot generate matcher for method `${m.name}` : $reason "
+          case _ =>
+            val numElemTypeParams =
+              if (isCompanion)
+                0
+              else if (e.isInstanceOf[STraitDef])
+                e.tpeArgs.length + 2
+              else
+                e.tpeArgs.length
+            val traitElem = s"${e.name}Elem${typeArgString(Seq.fill(numElemTypeParams)("_"))}"
+            val explicitArgs = m.explicitArgs
+            val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.name).toSet
+            val returnType = {
+              val receiverType = s"Rep[${e.name + typeArgString(e.tpeArgs.map(_.name))}]"
+              val argTypes = explicitArgs.map(_.tpe.toString)
+              val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
+                case Seq() => "Unit"
+                case Seq(single) => single
+                case many => many.mkString("(", ", ", ")")
+              }
+              s"Option[$receiverAndArgTypes${typeVars.opt(typeVars => s" forSome {${typeVars.map("type " + _).mkString("; ")}}")}]"
+            }
+            val explicitArgsStr = explicitArgs.rep(_.name, ", ")
+            val overloadNum = counter(m.name)
+            counter(m.name) = overloadNum + 1
+            val matcherName = {
+              val cleanedName = ScalaNameUtil.cleanScalaName(m.name)
+              val suffix =
+                if (ScalaNameUtil.isOpName(cleanedName))
+                  "!" * overloadNum
+                else if (overloadNum > 0)
+                  overloadNum.toString
+                else
+                  ""
+              cleanedName + suffix
+            }
 
-        val matchResult = ((if (isCompanion) Nil else List("receiver")) ++ explicitArgs.map(_.name)) match {
-          case Seq() => "()"
-          case Seq(single) => single
-          case many => many.mkString("(", ", ", ")")
+            val matchResult = ((if (isCompanion) Nil else List("receiver")) ++ explicitArgs.map(_.name)) match {
+              case Seq() => "()"
+              case Seq(single) => single
+              case many => many.mkString("(", ", ", ")")
+            }
+
+            // TODO we can use name-based extractor to improve performance when we switch to Scala 2.11
+            // See http://hseeberger.github.io/blog/2013/10/04/name-based-extractors-in-scala-2-dot-11/
+
+            // _* is for implicit arguments
+            s"""    object $matcherName {
+             |      def unapply(d: Def[_]): $returnType = d match {
+             |        case MethodCall(receiver, method, ${if (explicitArgs.isEmpty) "_" else s"Seq($explicitArgsStr, _*)"}) if method.getName == "${m.name}" && receiver.elem.isInstanceOf[$traitElem] =>
+             |          Some($matchResult).asInstanceOf[$returnType]
+             |        case _ => None
+             |      }
+             |      def unapply(exp: Exp[_]): $returnType = exp match {
+             |        case Def(d) => unapply(d)
+             |        case _ => None
+             |      }
+             |    }""".stripAndTrim
         }
-
-        // TODO we can use name-based extractor to improve performance when we switch to Scala 2.11
-        // See http://hseeberger.github.io/blog/2013/10/04/name-based-extractors-in-scala-2-dot-11/
-
-        // _* is for implicit arguments
-        s"""    object $matcherName {
-           |      def unapply(d: Def[_]): $returnType = d match {
-           |        case MethodCall(receiver, method, ${if (explicitArgs.isEmpty) "_" else s"Seq($explicitArgsStr, _*)"}) if method.getName == "${m.name}" && receiver.elem.isInstanceOf[$traitElem] =>
-           |          Some($matchResult).asInstanceOf[$returnType]
-           |        case _ => None
-           |      }
-           |      def unapply(exp: Exp[_]): $returnType = exp match {
-           |        case Def(d) => unapply(d)
-           |        case _ => None
-           |      }
-           |    }""".stripAndTrim
       }
 
       s"""  object ${e.name}Methods {
