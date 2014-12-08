@@ -45,6 +45,10 @@ trait ScalanAst {
       case STpeSum(items) => STpeSum(items map { _.applySubst(subst) })
       case _ => self
     }
+    def isRepType = self match {
+      case STraitCall("Rep", List(_)) => true
+      case _ => false
+    }
   }
 
   // SExpr universe --------------------------------------------------------------------------
@@ -54,7 +58,9 @@ trait ScalanAst {
   abstract class SBodyItem
   case class SImportStat(name: String) extends SBodyItem
   case class SMethodDef(name: String, tpeArgs: STpeArgs, args: List[SMethodArgs],
-    tpeRes: Option[STpeExpr], isImplicit: Boolean) extends SBodyItem
+    tpeRes: Option[STpeExpr], isImplicit: Boolean) extends SBodyItem {
+    def explicitArgs = args.filter(!_.impFlag).flatMap(_.args)
+  }
   case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
   case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
 
@@ -108,6 +114,7 @@ trait ScalanAst {
     packageName: String,
     imports: List[SImportStat],
     name: String,
+    entityRepSynonim: Option[STpeDef],
     entityOps: STraitDef,
     concreteSClasses: List[SClassDef],
     selfType: Option[SSelfTypeDef])
@@ -119,12 +126,14 @@ trait ScalanAst {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
+      val entityRepSynonim = defs.collectFirst { case t: STpeDef => t }
+
       val opsTrait = defs.collectFirst { case t: STraitDef => t }.getOrElse {
         throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
       }
       val classes = getConcreteClasses(defs)
 
-      SEntityModuleDef(packageName, imports, moduleName, opsTrait, classes, moduleTrait.selfType)
+      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonim, opsTrait, classes, moduleTrait.selfType)
     }
   }
 }
@@ -425,5 +434,5 @@ trait ScalanParsers { self: ScalanAst =>
 object ScalanImpl
   extends ScalanParsers
   with ScalanAst {
-  val config = BoilerplateTool.liteConfig
+  val config = BoilerplateToolRun.liteConfig
 }

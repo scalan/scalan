@@ -563,17 +563,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
   }
 
   object PairArrayMethods {
-    object mapPairs {
-      def unapply(d: Def[_]): Option[(Rep[PairArray[A, B]], (Rep[A],Rep[B]) => Rep[R]) forSome {type A; type B; type R}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*)) if method.getName == "mapPairs" && receiver.elem.isInstanceOf[PairArrayElem[_, _]] =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[PairArray[A, B]], (Rep[A],Rep[B]) => Rep[R]) forSome {type A; type B; type R}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Rep[PairArray[A, B]], (Rep[A],Rep[B]) => Rep[R]) forSome {type A; type B; type R}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
+    // WARNING: Cannot generate matcher for method `mapPairs` : method has Non-Rep argument f: (Rep[A],Rep[B]) => Rep[R] 
 
     object arr {
       def unapply(d: Def[_]): Option[Rep[PairArray[A, B]] forSome {type A; type B}] = d match {
@@ -800,17 +790,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
       }
     }
 
-    object map {
-      def unapply(d: Def[_]): Option[(Rep[PArray[A]], Rep[A] => Rep[B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*)) if method.getName == "map" && receiver.elem.isInstanceOf[PArrayElem[_, _, _]] =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[PArray[A]], Rep[A] => Rep[B]) forSome {type A; type B}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Rep[PArray[A]], Rep[A] => Rep[B]) forSome {type A; type B}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
+    // WARNING: Cannot generate matcher for method `map` : method has Non-Rep argument f: Rep[A] => Rep[B] 
 
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[PArray[A]], Rep[A => B]) forSome {type A; type B}] = d match {

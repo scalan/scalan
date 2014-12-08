@@ -202,6 +202,21 @@ See `scalan.linalgebra.Vectors` for a larger example.
 
 Adding new primitive operations, core types, or backends to Scalan is possible, but not supported at the moment.
 
+# Contributions
+
+We are very pleased to see contributions from new members.
+
+You can help out by sending an unsolicited pull request with a new feature.
+
+<!--* [Triaging our open tickets](TODO)
+
+* [Pick up some low hanging fruit](TODO)
+* [Fixing a bug](TODO)
+* [Helping with the current Milestone](TODO)
+* Sending an unsolicited pull request with a new feature
+* Having a conversation on the [Scalan Google Group](https://groups.google.com/forum/#!forum/Scalan)
+* Telling your co-workers!
+-->
 ## See also
 
 * [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) is a source of many ideas in Scalan and is used as one of the backends.
