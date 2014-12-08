@@ -434,5 +434,5 @@ trait ScalanParsers { self: ScalanAst =>
 object ScalanImpl
   extends ScalanParsers
   with ScalanAst {
-  val config = BoilerplateTool.liteConfig
+  val config = BoilerplateToolRun.liteConfig
 }

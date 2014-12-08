@@ -1,13 +1,12 @@
 package scalan.meta
 
-object BoilerplateTool {
+class BoilerplateTool {
   val coreTypeSynonims = Set(
-    "RepMonad", "Arr"
+    "Arr"
   )
   lazy val coreConfig = CodegenConfig(
     srcPath = "core/src/main/scala",
     entityFiles = List(
-      "scalan/monads/Monads.scala"
     ),
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
@@ -24,10 +23,8 @@ object BoilerplateTool {
     srcPath = "community-edition/src/main/scala",
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
-      ,"scalan/linalgebra/Vectors.scala"
-      ,"scalan/linalgebra/Matrices.scala"
-      //,"scalan/iterators/Iters.scala"
-      //, "main/scala/scalan/rx/Trees.scala"
+      , "scalan/linalgebra/Vectors.scala"
+      , "scalan/linalgebra/Matrices.scala"
     ),
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
@@ -71,4 +68,7 @@ object BoilerplateTool {
     configs.foreach { new EntityManagement(_).generateAll() }
     println("Ok.")
   }
+}
+
+object BoilerplateToolRun extends BoilerplateTool {
 }
