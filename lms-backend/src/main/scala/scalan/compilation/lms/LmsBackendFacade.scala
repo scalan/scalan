@@ -251,14 +251,13 @@ class LmsBackend extends LmsBackendFacade { self =>
 
         //        stream.println("class "+className+(if (staticData.isEmpty) "" else "("+staticData.map(p=>"p"+quote(p._1)+":"+p._1.tp).mkString(",")+")")+" extends (("+args.map(a => remap(a.tp)).mkString(", ")+")=>("+sA+")) {")
         val indargs = (0 until args.length) zip args;
-        val InputTypes = indargs.map( p => s"InputType${p._1.toString}" )
-
-        stream.println( s"template<${InputTypes.map( t => "class " + t).mkString(", ")}>" )
-        stream.println(s"${sA} apply(${indargs.map( p => s"InputType${p._1.toString}& ${quote(p._2)}").mkString(", ")} ) {")
-        for( (t, (i, arg)) <- InputTypes zip indargs ) {
-          stream.println(s"// ${t}: ${remap(arg.tp)}")
-        }
-//        stream.println(s"${sA} apply(${indargs.map( p => s"${remap(p._2.tp)}& ${quote(p._2)}").mkString(", ")} ) {")
+//        val InputTypes = indargs.map( p => s"InputType${p._1.toString}" )
+//        stream.println( s"template<${InputTypes.map( t => "class " + t).mkString(", ")}>" )
+//        stream.println(s"${sA} apply(${indargs.map( p => s"InputType${p._1.toString}& ${quote(p._2)}").mkString(", ")} ) {")
+//        for( (t, (i, arg)) <- InputTypes zip indargs ) {
+//          stream.println(s"// ${t}: ${remap(arg.tp)}")
+//        }
+        stream.println(s"${sA} apply(${indargs.map( p => s"${remap(p._2.tp)}& ${quote(p._2)}").mkString(", ")} ) {")
 
         emitBlock(body)
         stream.println(s"return ${quote(getBlockResult(body))};")

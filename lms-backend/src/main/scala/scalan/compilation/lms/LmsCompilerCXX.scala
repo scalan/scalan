@@ -15,7 +15,7 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
-    val outputSource = new File(sourcesDir, functionName + ".h")
+    val outputSource = new File(sourcesDir, functionName + ".cxx")
 
     (createManifest(eInput), createManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
