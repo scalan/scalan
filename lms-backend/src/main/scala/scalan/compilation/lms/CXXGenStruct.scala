@@ -8,7 +8,7 @@ import scala.virtualization.lms.common._
  * Created by zotov on 12/2/14.
  */
 //TODO: there are many modifications and thinking required
-trait CXXGenStruct extends CLikeGenBase with BaseGenStruct {
+trait CXXGenStruct extends CLikeGenBase with BaseGenStruct with CXXCodegen {
   val IR: StructExp
   import IR._
 
@@ -28,7 +28,7 @@ trait CXXGenStruct extends CLikeGenBase with BaseGenStruct {
     case FieldApply(struct, index) =>
       struct.tp match {
         case m if m.runtimeClass == classOf[scala.Tuple2[_,_]] =>
-          emitValDef(sym, s"std::get<${index.substring(1)}-1>(${quote(struct)})")
+          emitValDef(quote(sym), manifest[auto_t], s"std::get<${(index.substring(1).toInt - 1).toString}>(${quote(struct)})")
         case _ =>
           emitValDef(sym, quote(struct) + "." + index)
       }

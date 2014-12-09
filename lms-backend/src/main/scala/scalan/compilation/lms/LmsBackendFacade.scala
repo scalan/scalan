@@ -215,6 +215,8 @@ class LmsBackend extends LmsBackendFacade { self =>
           s"std::vector<${remap(m.typeArguments(0))}>"
         case c if c == classOf[size_t] =>
           "size_t"
+        case c if c == classOf[auto_t] =>
+          "auto"
         case c if c == classOf[scala.Tuple2[_,_]] =>
           s"std::tuple<${remap(m.typeArguments(0))},${remap(m.typeArguments(1))}>"
         case _ =>
@@ -248,7 +250,15 @@ class LmsBackend extends LmsBackendFacade { self =>
         emitFileHeader()
 
         //        stream.println("class "+className+(if (staticData.isEmpty) "" else "("+staticData.map(p=>"p"+quote(p._1)+":"+p._1.tp).mkString(",")+")")+" extends (("+args.map(a => remap(a.tp)).mkString(", ")+")=>("+sA+")) {")
-        stream.println(s"${sA} apply(${args.map(a => s"${remap(a.tp)}& ${quote(a)}").mkString(", ")} ) {")
+        val indargs = (0 until args.length) zip args;
+        val InputTypes = indargs.map( p => s"InputType${p._1.toString}" )
+
+        stream.println( s"template<${InputTypes.map( t => "class " + t).mkString(", ")}>" )
+        stream.println(s"${sA} apply(${indargs.map( p => s"InputType${p._1.toString}& ${quote(p._2)}").mkString(", ")} ) {")
+        for( (t, (i, arg)) <- InputTypes zip indargs ) {
+          stream.println(s"// ${t}: ${remap(arg.tp)}")
+        }
+//        stream.println(s"${sA} apply(${indargs.map( p => s"${remap(p._2.tp)}& ${quote(p._2)}").mkString(", ")} ) {")
 
         emitBlock(body)
         stream.println(s"return ${quote(getBlockResult(body))};")

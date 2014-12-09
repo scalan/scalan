@@ -36,11 +36,9 @@ trait CXXGenFatArrayLoopsFusionOpt extends CXXGenArrayLoopsFat with CGenIfThenEl
   }
 }
 
-trait CXXGenArrayLoops extends CLikeGenLoops {
+trait CXXGenArrayLoops extends CLikeGenLoops with CXXCodegen {
   val IR: ArrayLoopsExp
   import IR._
-
-  trait size_t
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case SimpleLoop(s,x,ArrayElem(y)) =>
@@ -60,7 +58,7 @@ trait CXXGenArrayLoops extends CLikeGenLoops {
       stream.println(quote(getBlockResult(y)))
       stream.println("}")
     case ArrayIndex(a,i) =>
-      emitValDef(sym, quote(a) + "[" + quote(i) + "]")
+      emitValDef(quote(sym), manifest[auto_t], quote(a) + "[" + quote(i) + "]")
     case ArrayLength(a) =>
       emitValDef(quote(sym), manifest[size_t], quote(a) + ".size()")
     case _ => super.emitNode(sym, rhs)
@@ -78,11 +76,11 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
           case ArrayElem(y) =>
             stream.println(s"std::vector<${remap(getBlockResult(y).tp)}> ${quote(l)}(${quote(s)});")
           case ReduceElem(y) =>
-            stream.println(s"${remap(getBlockResult(y).tp)} ${quote(l)} = 0;")
+            stream.println(s"auto ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
           case ArrayIfElem(c,y) =>
             stream.println(s"std::vector<${remap(getBlockResult(y).tp)}> ${quote(l)};")
           case ReduceIfElem(c,y) =>
-            stream.println(s"${remap(getBlockResult(y).tp)} ${quote(l)} = 0;")
+            stream.println(s"auto ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
 //          case FlattenElem(y) =>
 //            stream.println("var " + quote(l) + " = new ArrayBuilder[" + remap(getBlockResult(y).tp) + "]")
         }
