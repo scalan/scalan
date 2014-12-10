@@ -1,8 +1,10 @@
 package scalan.meta
 
+import scalan.meta.ScalanAst.STraitCall
+
 class BoilerplateTool {
-  val coreTypeSynonims = Set(
-    "Arr"
+  val coreTypeSynonyms = Map(
+    "Arr" -> "Array"
   )
   lazy val coreConfig = CodegenConfig(
     srcPath = "core/src/main/scala",
@@ -13,11 +15,11 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonims
+    coreTypeSynonyms
   )
 
-  val liteTypeSynonims = Set(
-    "PA", "Vec", "Matr"
+  val liteTypeSynonyms = Map(
+    "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
   lazy val liteConfig = CodegenConfig(
     srcPath = "community-edition/src/main/scala",
@@ -31,11 +33,11 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonims ++ liteTypeSynonims
+    coreTypeSynonyms ++ liteTypeSynonyms
   )
 
-  val eeTypeSynonims = Set(
-    "Vec", "Matr", "PS", "Dist"
+  val eeTypeSynonyms = Set(
+    "PS" -> "PSet", "PM" -> "PMap", "Dist" -> "Distributed"
   )
   lazy val scalanConfig = CodegenConfig(
     srcPath = "../../scalan/src/main/scala",
@@ -44,14 +46,15 @@ class BoilerplateTool {
       "scalan/math/Matrices.scala",
       "scalan/math/Vectors.scala",
       "scalan/collections/Sets.scala",
-      "scalan/dists/Dists.scala"
+      "scalan/dists/Dists.scala",
+      "scalan/parrays/PArrays.scala"
     ),
     seqContextTrait = "ScalanEnterpriseSeq",
     stagedContextTrait = "ScalanEnterpriseExp",
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonims ++ liteTypeSynonims ++ eeTypeSynonims
+    coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
   )
 
   def getConfigs(args: Array[String]) = args.flatMap(_ match {

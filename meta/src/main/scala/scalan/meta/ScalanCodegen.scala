@@ -5,6 +5,7 @@
 package scalan.meta
 
 import scalan.util.ScalaNameUtil
+import ScalanAst._
 
 object Extensions {
   implicit class IterableExtensions[A](val it: Iterable[A]) extends AnyVal
@@ -35,9 +36,9 @@ object Extensions {
   }
 }
 
-trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement =>
+trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
 
-  class EntityFileGenerator(module: SEntityModuleDef, entityTypeSynonims: Set[String]) {
+  class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) {
     import Extensions._
     
     abstract class TemplateData(val name: String, val tpeArgs: List[STpeArg]) {
@@ -56,9 +57,9 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
     class ConcreteClassTemplateData(name: String, val args: List[SClassArg], implArgs: List[SClassArg], tpeArgs: List[STpeArg], val baseType: STraitCall) extends TemplateData(name, tpeArgs) {
       val argNames = args.map(a => a.name)
       val argNamesAndTypes = args.map(a => s"${a.name}: ${a.tpe}")
-      val argUnrepTypes = args.map(a => a.tpe match {
-        case STraitCall("Rep", List(t)) => t
-        case _ => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
+      val argUnrepTypes = args.map(a => a.tpe.unRep(module, config) match {
+        case Some(t) => t
+        case None => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
       })
       val implicitArgs = implArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
       val useImplicits = implArgs.opt(args => s"(${args.map(_.name).rep(a => a)})")
@@ -327,28 +328,24 @@ trait ScalanCodegen extends ScalanAst with ScalanParsers { ctx: EntityManagement
        |""".stripAndTrim
     }
 
-
-    def skipMethod(m: SMethodDef): Option[String] = {
-      val nonRepArg = m.explicitArgs.filter(a => {
-        val isSynonimTpe = a.tpe match {
-          case STraitCall(name, _) if entityTypeSynonims.contains(name) => true
-          case _ => false
-        }
-        !(a.tpe.isRepType || isSynonimTpe)
-      })
-      if (nonRepArg.isEmpty)
-        None
-      else
-        Some(nonRepArg.rep(a => s"method has Non-Rep argument ${a.name}: ${a.tpe}", "\n"))
-    }
-
     def methodExtractorsString1(e: STraitOrClassDef, isCompanion: Boolean) = {
       val counter = collection.mutable.Map.empty[String, Int].withDefaultValue(0)
 
+      def reasonToSkipMethod(m: SMethodDef): Option[String] = {
+        (m.explicitArgs.collect { case SMethodArg(name, STpeFunc(_, _), _) => name } match {
+          case Seq() => None
+          case nonEmpty => Some(s"Method has function arguments ${nonEmpty.mkString(", ")}")
+        }).orElse {
+          m.tpeRes.filter(!_.isRep(module, config)).map {
+            returnTpe => s"Method's return type $returnTpe is not a Rep"
+          }
+        }
+      }
+
       def methodExtractor(m: SMethodDef) = {
-        skipMethod(m) match {
+        reasonToSkipMethod(m) match {
           case Some(reason) =>
-            s"    // WARNING: Cannot generate matcher for method `${m.name}` : $reason "
+            s"    // WARNING: Cannot generate matcher for method `${m.name}`: $reason"
           case _ =>
             val numElemTypeParams =
               if (isCompanion)
