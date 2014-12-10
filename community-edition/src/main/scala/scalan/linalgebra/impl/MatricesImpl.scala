@@ -48,7 +48,7 @@ trait MatricesAbs extends Matrices
     }
     lazy val tag = {
       implicit val tagT = element[T].tag
-      typeTag[RowMajorMatrix[T]]
+      weakTypeTag[RowMajorMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorMatrix[T]]](RowMajorMatrix(element[PArray[DenseVector[T]]].defaultRepValue))
     lazy val eTo = new RowMajorMatrixElem[T](this)
@@ -107,7 +107,7 @@ trait MatricesAbs extends Matrices
     }
     lazy val tag = {
       implicit val tagT = element[T].tag
-      typeTag[RowMajorFlatMatrix[T]]
+      weakTypeTag[RowMajorFlatMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorFlatMatrix[T]]](RowMajorFlatMatrix(element[PArray[T]].defaultRepValue, 0))
     lazy val eTo = new RowMajorFlatMatrixElem[T](this)
@@ -167,7 +167,7 @@ trait MatricesAbs extends Matrices
     }
     lazy val tag = {
       implicit val tagT = element[T].tag
-      typeTag[RowMajorSparseMatrix[T]]
+      weakTypeTag[RowMajorSparseMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorSparseMatrix[T]]](RowMajorSparseMatrix(element[PArray[SparseVector[T]]].defaultRepValue))
     lazy val eTo = new RowMajorSparseMatrixElem[T](this)

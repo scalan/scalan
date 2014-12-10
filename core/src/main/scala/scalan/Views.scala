@@ -13,7 +13,7 @@ trait Views extends Elems { self: Scalan =>
   abstract class Iso[From, To](implicit eFrom0: Elem[From]) {
     def eFrom: Elem[From] = eFrom0
     def eTo: Elem[To]
-    def tag: TypeTag[To]
+    def tag: WeakTypeTag[To]
     def defaultRepTo: Default[Rep[To]]
     def from(p: Rep[To]): Rep[From]
     def to(p: Rep[From]): Rep[To]
@@ -28,7 +28,7 @@ trait Views extends Elems { self: Scalan =>
 
   abstract class ViewElem[From, To](implicit val iso: Iso[From, To]) extends Elem[To] {
     override def isEntityType = true
-    lazy val tag: TypeTag[To] = iso.tag
+    lazy val tag: WeakTypeTag[To] = iso.tag
     lazy val defaultRep = iso.defaultRepTo    
   }
 

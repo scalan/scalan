@@ -47,7 +47,7 @@ trait TypesAbs extends Types
     }
     lazy val tag = {
       implicit val tagA = element[A].tag
-      typeTag[BaseType[A]]
+      weakTypeTag[BaseType[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[BaseType[A]]](BaseType("", element[A].defaultRepValue))
     lazy val eTo = new BaseTypeElem[A](this)
@@ -108,7 +108,7 @@ trait TypesAbs extends Types
     lazy val tag = {
       implicit val tagA = element[A].tag
       implicit val tagB = element[B].tag
-      typeTag[Tuple2Type[A, B]]
+      weakTypeTag[Tuple2Type[A, B]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[Tuple2Type[A, B]]](Tuple2Type(element[Type[A]].defaultRepValue, element[Type[B]].defaultRepValue))
     lazy val eTo = new Tuple2TypeElem[A, B](this)

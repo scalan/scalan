@@ -159,7 +159,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       def to(x: Arr[A]) = x.map(iso.to _)
       lazy val tag = {
         implicit val tB = iso.tag
-        typeTag[Array[B]]
+        weakTypeTag[Array[B]]
       }
       lazy val defaultRepTo = Default.defaultVal(toRep(scala.Array.empty[B](eB.classTag)))
     }
