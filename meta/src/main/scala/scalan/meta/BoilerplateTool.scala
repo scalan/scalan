@@ -1,8 +1,10 @@
 package scalan.meta
 
+import scalan.meta.ScalanAst.STraitCall
+
 class BoilerplateTool {
-  val coreTypeSynonims = Set(
-    "Arr"
+  val coreTypeSynonims = Map(
+    "Arr" -> "Array"
   )
   lazy val coreConfig = CodegenConfig(
     srcPath = "core/src/main/scala",
@@ -13,11 +15,12 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonims
+    coreTypeSynonims,
+    PartialFunction.empty
   )
 
-  val liteTypeSynonims = Set(
-    "PA", "Vec", "Matr"
+  val liteTypeSynonims = Map(
+    "PA" -> "PArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
   lazy val liteConfig = CodegenConfig(
     srcPath = "community-edition/src/main/scala",
@@ -31,11 +34,12 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonims ++ liteTypeSynonims
+    coreTypeSynonims ++ liteTypeSynonims,
+    PartialFunction.empty
   )
 
   val eeTypeSynonims = Set(
-    "Vec", "Matr", "PS", "Dist"
+    "PS" -> "PSet", "PM" -> "PMap", "Dist" -> "Distributed"
   )
   lazy val scalanConfig = CodegenConfig(
     srcPath = "../../scalan/src/main/scala",
@@ -52,7 +56,8 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonims ++ liteTypeSynonims ++ eeTypeSynonims
+    coreTypeSynonims ++ liteTypeSynonims ++ eeTypeSynonims,
+    { case STraitCall("NA", Seq(t)) => STraitCall("PArray", List(STraitCall("PArray", List(t)))) }
   )
 
   def getConfigs(args: Array[String]) = args.flatMap(_ match {

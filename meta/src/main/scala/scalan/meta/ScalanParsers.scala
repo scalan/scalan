@@ -11,7 +11,7 @@ import scala.language.implicitConversions
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
 
-trait ScalanAst {
+object ScalanAst {
 
   // STpe universe --------------------------------------------------------------------------
   sealed abstract class STpeExpr
@@ -44,9 +44,20 @@ trait ScalanAst {
       case STpeSum(items) => STpeSum(items map { _.applySubst(subst) })
       case _ => self
     }
-    def isRepType = self match {
-      case STraitCall("Rep", _) => true
-      case _ => false
+
+    def unRep(module: SEntityModuleDef, config: CodegenConfig) = self match {
+      case STraitCall("Rep", Seq(t)) => Some(t)
+      case STraitCall(name, args) =>
+        val typeSynonims = config.entityTypeSynonims ++
+          module.entityRepSynonim.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
+        typeSynonims.get(name).map(unReppedName => STraitCall(unReppedName, args)).
+          orElse(config.specialCaseUnRep.lift(self))
+      case _ => config.specialCaseUnRep.lift(self)
+    }
+
+    def isRep(module: SEntityModuleDef, config: CodegenConfig) = unRep(module, config) match {
+      case Some(_) => true
+      case None => false
     }
   }
 
@@ -137,7 +148,8 @@ trait ScalanAst {
   }
 }
 
-trait ScalanParsers { self: ScalanAst =>
+trait ScalanParsers {
+  import ScalanAst._
   val settings = new Settings
   settings.usejavacp.value = true
   val reporter = new StoreReporter
@@ -428,10 +440,4 @@ trait ScalanParsers { self: ScalanAst =>
     else
       Some(SSelfTypeDef(vd.name.toString, components))
   }
-}
-
-object ScalanImpl
-  extends ScalanParsers
-  with ScalanAst {
-  val config = BoilerplateToolRun.liteConfig
 }

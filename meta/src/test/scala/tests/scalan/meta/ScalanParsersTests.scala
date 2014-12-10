@@ -1,12 +1,12 @@
 package tests.scalan.meta
 
 import tests.BaseTests
-import scalan.meta.ScalanImpl
+import scalan.meta.{ScalanParsers, BoilerplateToolRun, ScalanAst}
 import scala.reflect.internal.util.BatchSourceFile
 
-class ScalanParsersTests extends BaseTests {
-  import ScalanImpl._
-  import ScalanImpl.{
+class ScalanParsersTests extends BaseTests with ScalanParsers {
+  import ScalanAst._
+  import ScalanAst.{
     STpeInt => INT,
     STpeBoolean => BOOL,
     STpeFloat => FLOAT,
@@ -22,6 +22,8 @@ class ScalanParsersTests extends BaseTests {
   }
   import scala.{ List => L }
   import compiler._
+
+  val config = BoilerplateToolRun.liteConfig
 
   sealed trait TreeKind
   case object TopLevel extends TreeKind
