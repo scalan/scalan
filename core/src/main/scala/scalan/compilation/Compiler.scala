@@ -10,7 +10,7 @@ trait Compiler extends BaseExp with Passes {
 
   type Config
 
-  implicit def defaultConfig: Config
+  def defaultConfig: Config
 
   // see comment for buildInitialGraph
   // TODO sequence may depend on input or intermediate graphs, use a state monad instead

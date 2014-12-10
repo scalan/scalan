@@ -8,7 +8,7 @@ trait Transforming { self: ScalanExp =>
   def mirror[A](d: Def[A], f: Transformer): Exp[_] = d.mirror(f)
 
   implicit class DefMirroringExtensions[A](d: Def[A]) {
-    def mirrorWith[A](newArgs: Exp[_]*) = {
+    def mirrorWith(newArgs: Exp[_]*) = {
       val args: List[Exp[_]] = dep(d)
       if (newArgs.length != args.length) throw !!!(s"invalid mirroring of $d: different number of args")
 

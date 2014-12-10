@@ -7,12 +7,11 @@ package scalan.meta
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
-import scala.tools.nsc.interactive.Response
 import scala.language.implicitConversions
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
 
-trait ScalanAst {
+object ScalanAst {
 
   // STpe universe --------------------------------------------------------------------------
   sealed abstract class STpeExpr
@@ -45,9 +44,19 @@ trait ScalanAst {
       case STpeSum(items) => STpeSum(items map { _.applySubst(subst) })
       case _ => self
     }
-    def isRepType = self match {
-      case STraitCall("Rep", List(_)) => true
-      case _ => false
+
+    def unRep(module: SEntityModuleDef, config: CodegenConfig) = self match {
+      case STraitCall("Rep", Seq(t)) => Some(t)
+      case STraitCall(name, args) =>
+        val typeSynonyms = config.entityTypeSynonyms ++
+          module.entityRepSynonym.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
+        typeSynonyms.get(name).map(unReppedName => STraitCall(unReppedName, args))
+      case _ => None
+    }
+
+    def isRep(module: SEntityModuleDef, config: CodegenConfig) = unRep(module, config) match {
+      case Some(_) => true
+      case None => false
     }
   }
 
@@ -114,7 +123,7 @@ trait ScalanAst {
     packageName: String,
     imports: List[SImportStat],
     name: String,
-    entityRepSynonim: Option[STpeDef],
+    entityRepSynonym: Option[STpeDef],
     entityOps: STraitDef,
     concreteSClasses: List[SClassDef],
     selfType: Option[SSelfTypeDef])
@@ -126,19 +135,20 @@ trait ScalanAst {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
-      val entityRepSynonim = defs.collectFirst { case t: STpeDef => t }
+      val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
 
       val opsTrait = defs.collectFirst { case t: STraitDef => t }.getOrElse {
         throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
       }
       val classes = getConcreteClasses(defs)
 
-      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonim, opsTrait, classes, moduleTrait.selfType)
+      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, opsTrait, classes, moduleTrait.selfType)
     }
   }
 }
 
-trait ScalanParsers { self: ScalanAst =>
+trait ScalanParsers {
+  import ScalanAst._
   val settings = new Settings
   settings.usejavacp.value = true
   val reporter = new StoreReporter
@@ -429,10 +439,4 @@ trait ScalanParsers { self: ScalanAst =>
     else
       Some(SSelfTypeDef(vd.name.toString, components))
   }
-}
-
-object ScalanImpl
-  extends ScalanParsers
-  with ScalanAst {
-  val config = BoilerplateToolRun.liteConfig
 }
