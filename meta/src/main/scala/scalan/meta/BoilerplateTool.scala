@@ -3,7 +3,7 @@ package scalan.meta
 import scalan.meta.ScalanAst.STraitCall
 
 class BoilerplateTool {
-  val coreTypeSynonims = Map(
+  val coreTypeSynonyms = Map(
     "Arr" -> "Array"
   )
   lazy val coreConfig = CodegenConfig(
@@ -15,12 +15,11 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonims,
-    PartialFunction.empty
+    coreTypeSynonyms
   )
 
-  val liteTypeSynonims = Map(
-    "PA" -> "PArray", "Vec" -> "Vector", "Matr" -> "Matrix"
+  val liteTypeSynonyms = Map(
+    "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
   lazy val liteConfig = CodegenConfig(
     srcPath = "community-edition/src/main/scala",
@@ -34,11 +33,10 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonims ++ liteTypeSynonims,
-    PartialFunction.empty
+    coreTypeSynonyms ++ liteTypeSynonyms
   )
 
-  val eeTypeSynonims = Set(
+  val eeTypeSynonyms = Set(
     "PS" -> "PSet", "PM" -> "PMap", "Dist" -> "Distributed"
   )
   lazy val scalanConfig = CodegenConfig(
@@ -56,8 +54,7 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonims ++ liteTypeSynonims ++ eeTypeSynonims,
-    { case STraitCall("NA", Seq(t)) => STraitCall("PArray", List(STraitCall("PArray", List(t)))) }
+    coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
   )
 
   def getConfigs(args: Array[String]) = args.flatMap(_ match {

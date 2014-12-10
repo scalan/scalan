@@ -48,11 +48,10 @@ object ScalanAst {
     def unRep(module: SEntityModuleDef, config: CodegenConfig) = self match {
       case STraitCall("Rep", Seq(t)) => Some(t)
       case STraitCall(name, args) =>
-        val typeSynonims = config.entityTypeSynonims ++
-          module.entityRepSynonim.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
-        typeSynonims.get(name).map(unReppedName => STraitCall(unReppedName, args)).
-          orElse(config.specialCaseUnRep.lift(self))
-      case _ => config.specialCaseUnRep.lift(self)
+        val typeSynonyms = config.entityTypeSynonyms ++
+          module.entityRepSynonym.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
+        typeSynonyms.get(name).map(unReppedName => STraitCall(unReppedName, args))
+      case _ => None
     }
 
     def isRep(module: SEntityModuleDef, config: CodegenConfig) = unRep(module, config) match {
@@ -124,7 +123,7 @@ object ScalanAst {
     packageName: String,
     imports: List[SImportStat],
     name: String,
-    entityRepSynonim: Option[STpeDef],
+    entityRepSynonym: Option[STpeDef],
     entityOps: STraitDef,
     concreteSClasses: List[SClassDef],
     selfType: Option[SSelfTypeDef])
@@ -136,14 +135,14 @@ object ScalanAst {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
-      val entityRepSynonim = defs.collectFirst { case t: STpeDef => t }
+      val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
 
       val opsTrait = defs.collectFirst { case t: STraitDef => t }.getOrElse {
         throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
       }
       val classes = getConcreteClasses(defs)
 
-      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonim, opsTrait, classes, moduleTrait.selfType)
+      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, opsTrait, classes, moduleTrait.selfType)
     }
   }
 }

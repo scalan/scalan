@@ -15,8 +15,7 @@ case class CodegenConfig(
   seqContextTrait: String,
   stagedContextTrait: String,
   extraImports: List[String],
-  entityTypeSynonims: Map[String, String],
-  specialCaseUnRep: PartialFunction[STpeExpr, STpeExpr]
+  entityTypeSynonyms: Map[String, String]
 )
 
 class EntityManagement(val config: CodegenConfig) extends ScalanCodegen with LazyLogging { ctx =>
