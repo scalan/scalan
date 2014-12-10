@@ -44,7 +44,8 @@ class BoilerplateTool {
       "scalan/math/Matrices.scala",
       "scalan/math/Vectors.scala",
       "scalan/collections/Sets.scala",
-      "scalan/dists/Dists.scala"
+      "scalan/dists/Dists.scala",
+      "scalan/parrays/PArrays.scala"
     ),
     seqContextTrait = "ScalanEnterpriseSeq",
     stagedContextTrait = "ScalanEnterpriseExp",

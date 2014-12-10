@@ -7,7 +7,6 @@ package scalan.meta
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
-import scala.tools.nsc.interactive.Response
 import scala.language.implicitConversions
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
@@ -46,7 +45,7 @@ trait ScalanAst {
       case _ => self
     }
     def isRepType = self match {
-      case STraitCall("Rep", List(_)) => true
+      case STraitCall("Rep", _) => true
       case _ => false
     }
   }
