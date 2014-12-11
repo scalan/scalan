@@ -9,7 +9,7 @@ import scalan.linalgebra.VectorsDslExp
 import scalan.community.ScalanCommunityExp
 import scalan.util.{FileUtil, ProcessUtil}
 
-trait LmsCompiler extends Compiler { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
+trait LmsCompiler extends Compiler { self: ScalanCommunityExp with VectorsDslExp with GraphVizExport =>
 
   case class Config(extraCompilerOptions: Seq[String])
 
@@ -17,9 +17,11 @@ trait LmsCompiler extends Compiler { self: ScalanCommunityExp with GraphVizExpor
 
   def graphPasses(config: Config) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
-  def makeBridge[A, B]: LmsBridge[A, B] = new LmsBridge[A, B] {
-    val scalan = self
-  }
+  def makeBridge[A, B]: LmsBridge[A, B] =
+    new LmsBridge[A, B] with CommunityBridge[A, B] with LinalgBridge[A, B] {
+      val scalan = self
+      val lms = new LmsBackend
+    }
 
   protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
@@ -31,7 +33,7 @@ trait LmsCompiler extends Compiler { self: ScalanCommunityExp with GraphVizExpor
       case (mA: Manifest[a], mB: Manifest[b]) =>
         val bridge = makeBridge[a, b]
         val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
-        val codegen = facade.codegen
+        val codegen = bridge.lms.codegen
 
         FileUtil.withFile(outputSource) { writer =>
           codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)

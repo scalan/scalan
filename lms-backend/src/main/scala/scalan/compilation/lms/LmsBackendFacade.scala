@@ -119,9 +119,8 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with Or
 
 }
 
-trait LmsFunction[A,B] extends LmsBackendFacade { self =>
-  def apply(x: Rep[A]): Rep[B]
-  
+class LmsBackend extends LmsBackendFacade { self =>
+
   val codegen = new ScalaGenEffect with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
     with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps with ScalaGenStruct
     with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
