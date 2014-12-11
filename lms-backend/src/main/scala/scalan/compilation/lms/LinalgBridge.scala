@@ -5,7 +5,8 @@ import scalan.linalgebra.VectorsDslExp
 
 trait LinalgBridge[A, B] extends LmsBridge[A, B] { self: LmsBridge[A, B] =>
 
-  val scalan: ScalanExp with LmsCompiler with VectorsDslExp
+  // `LmsCompiler` mixed just to provide `createManifest` function
+  val scalan: ScalanExp with VectorsDslExp with LmsCompiler
 
   abstract override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) =
     linalgDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)

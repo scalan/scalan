@@ -2,10 +2,10 @@ package scalan.compilation.lms
 
 import scalan.ScalanExp
 
-abstract class LmsBridge[A, B] {
+trait LmsBridge[A, B] {
 
   val scalan: ScalanExp
-  val lms: LmsBackend
+  val lms: LmsBackend = new LmsBackend
 
   type SymMirror = Map[scalan.Exp[_], lms.Exp[A] forSome {type A}]
   type FuncMirror = Map[scalan.Exp[_], (lms.Exp[A] => lms.Exp[B]) forSome {type A; type B}]
@@ -13,8 +13,8 @@ abstract class LmsBridge[A, B] {
 
   type Mirror = (ExpMirror, SymMirror, FuncMirror)
 
-  type EntryTransformer = PartialFunction[scalan.TableEntry[Any], Mirror]
-  type DefTransformer = PartialFunction[scalan.Def[Any], Mirror]
+  type EntryTransformer = PartialFunction[scalan.TableEntry[_], Mirror]
+  type DefTransformer = PartialFunction[scalan.Def[_], Mirror]
 
   def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]): DefTransformer = {
     case x => scalan.!!!(s"ScalanLMSBridge: Don't know how to mirror symbol ${x.self.toStringWithDefinition}")

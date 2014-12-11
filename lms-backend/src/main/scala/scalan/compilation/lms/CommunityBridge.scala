@@ -4,6 +4,7 @@ import scalan.community.ScalanCommunityExp
 
 trait CommunityBridge[A, B] extends LmsBridge[A, B] { self: LmsBridge[A, B] =>
 
+  // `LmsCompiler` mixed just to provide `createManifest` function
   val scalan: ScalanCommunityExp with LmsCompiler
 
   override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) =

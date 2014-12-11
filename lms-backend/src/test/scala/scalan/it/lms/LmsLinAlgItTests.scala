@@ -2,14 +2,18 @@ package scalan.it.lms
 
 import scalan.it.BaseItTests
 import scalan.linalgebra.LinearAlgebraExamples
-import scalan.compilation.lms.LmsCompiler
+import scalan.compilation.lms.{CommunityBridge, LinalgBridge, LmsBridge, LmsCompiler}
 import scalan.compilation.GraphVizExport
 import scalan.linalgebra.MatricesDslExp
 import scalan.linalgebra.MatricesDslSeq
 import scalan.community.{ScalanCommunitySeq, ScalanCommunityExp}
 
 class LmsLinAlgItTests extends BaseItTests {
-  class ProgExp extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler
+  class ProgExp extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler { self =>
+    def makeBridge[A, B] = new LmsBridge[A, B] with CommunityBridge[A, B] with LinalgBridge[A, B] {
+      val scalan = self
+    }
+  }
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunitySeq
   
   val progStaged = new ProgExp

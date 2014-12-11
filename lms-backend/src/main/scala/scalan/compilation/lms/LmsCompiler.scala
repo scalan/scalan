@@ -1,30 +1,24 @@
-package scalan.compilation.lms
+package scalan
+package compilation
+package lms
 
 import java.io._
 import java.net.URLClassLoader
 
-import scalan.compilation.Compiler
-import scalan.compilation.GraphVizExport
-import scalan.linalgebra.VectorsDslExp
-import scalan.community.ScalanCommunityExp
 import scalan.util.{FileUtil, ProcessUtil}
 
-trait LmsCompiler extends Compiler { self: ScalanCommunityExp with VectorsDslExp with GraphVizExport =>
+trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
 
   case class Config(extraCompilerOptions: Seq[String])
 
   implicit val defaultConfig = Config(Seq.empty)
 
+  def makeBridge[A, B]: LmsBridge[A, B]
+
   def graphPasses(config: Config) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
-  def makeBridge[A, B]: LmsBridge[A, B] =
-    new LmsBridge[A, B] with CommunityBridge[A, B] with LinalgBridge[A, B] {
-      val scalan = self
-      val lms = new LmsBackend
-    }
-
-  protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                      (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
+  protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
+                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
     val outputSource = new File(sourcesDir, functionName + ".scala")
@@ -78,7 +72,7 @@ trait LmsCompiler extends Compiler { self: ScalanCommunityExp with VectorsDslExp
         Manifest.classType(classOf[(_, _)], createManifest(eFst), createManifest(eSnd))
       case SumElem(eLeft, eRight) =>
         Manifest.classType(classOf[Either[_, _]], createManifest(eLeft), createManifest(eRight))
-      case el: FuncElem[_,_] =>
+      case el: FuncElem[_, _] =>
         Manifest.classType(classOf[_ => _], createManifest(el.eDom), createManifest(el.eRange))
       case el: ArrayElem[_] =>
         Manifest.arrayType(createManifest(el.eItem))
@@ -86,4 +80,5 @@ trait LmsCompiler extends Compiler { self: ScalanCommunityExp with VectorsDslExp
     }
     m
   }
+
 }

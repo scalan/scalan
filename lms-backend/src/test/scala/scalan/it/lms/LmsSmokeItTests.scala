@@ -1,6 +1,6 @@
 package scalan.it.lms
 
-import scalan.compilation.lms.LmsCompiler
+import scalan.compilation.lms.{LinalgBridge, CommunityBridge, LmsBridge, LmsCompiler}
 import scalan.it.smoke.CommunitySmokeItTests
 import scalan.parrays.PArraysDslExp
 import scalan.compilation.GraphVizExport
@@ -8,7 +8,11 @@ import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
-  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler with VectorsDslExp with MatricesDslExp
+  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler with VectorsDslExp with MatricesDslExp { self =>
+    def makeBridge[A, B] = new LmsBridge[A, B] with CommunityBridge[A, B] with LinalgBridge[A, B] {
+      val scalan = self
+    }
+  }
   
   override val progStaged = new ProgExp
 
