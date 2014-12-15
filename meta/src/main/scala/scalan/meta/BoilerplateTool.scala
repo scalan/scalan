@@ -47,7 +47,9 @@ class BoilerplateTool {
       "scalan/math/Vectors.scala",
       "scalan/collections/Sets.scala",
       "scalan/dists/Dists.scala",
-      "scalan/parrays/PArrays.scala",
+    // don't regenerate by default because this will break
+    // FuncArray. See comments there.
+//      "scalan/parrays/PArrays.scala",
       "scalan/iterators/Iterators.scala"
     ),
     seqContextTrait = "ScalanEnterpriseSeq",
@@ -57,6 +59,7 @@ class BoilerplateTool {
       "scalan.common.Default"),
     coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
   )
+  lazy val scalanFullConfig = scalanConfig.copy(entityFiles = scalanConfig.entityFiles :+ "scalan/parrays/PArrays.scala")
 
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
     args.flatMap { arg => configsMap.getOrElse(arg,
@@ -65,8 +68,9 @@ class BoilerplateTool {
 
   val configsMap = Map(
     "core" -> List(coreConfig),
-    "lite" -> List(liteConfig),
+    "ce" -> List(liteConfig),
     "ee" -> List(scalanConfig),
+    "ee-full" -> List(scalanFullConfig),
     "all" -> List(coreConfig, liteConfig, scalanConfig)
   )
 
