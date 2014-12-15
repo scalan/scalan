@@ -53,25 +53,6 @@ trait BaseExp extends Base { self: ScalanExp =>
   case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
     override def mirror(t: Transformer) = self
-    override def hashCode: Int = (41 + x.hashCode)
-
-    override def equals(other: Any) =
-      other match {
-        case c @ Const(otherX) => selfType == c.selfType && (otherX match {
-          case otherArr: Array[_] => x match {
-            case arr: Array[_] =>
-              arr.sameElements(otherArr)
-            case _ => false
-          }
-          case _ => otherX == x
-        })
-        case _ => false
-      }
-
-    override def toString = "Const(" + (x match {
-      case arr: Array[_] => arr.mkString("Array(", ", ", ")")
-      case _ => x
-    }) + ")"
   }
 
   abstract class Transformer {

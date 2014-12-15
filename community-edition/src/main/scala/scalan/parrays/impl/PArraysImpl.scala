@@ -23,7 +23,7 @@ trait PArraysAbs extends PArrays
     lazy val defaultRep = Default.defaultVal(PArray)
   }
 
-  trait PArrayCompanionAbs extends PArrayCompanion {
+  abstract class PArrayCompanionAbs extends CompanionBase[PArrayCompanionAbs] with PArrayCompanion {
     override def toString = "PArray"
   }
   def PArray: Rep[PArrayCompanionAbs]
@@ -57,7 +57,7 @@ trait PArraysAbs extends PArrays
     lazy val eTo = new UnitArrayElem(this)
   }
   // 4) constructor and deconstructor
-  trait UnitArrayCompanionAbs extends UnitArrayCompanion {
+  abstract class UnitArrayCompanionAbs extends CompanionBase[UnitArrayCompanionAbs] with UnitArrayCompanion {
     override def toString = "UnitArray"
 
     def apply(len: Rep[Int]): Rep[UnitArray] =
@@ -116,7 +116,7 @@ trait PArraysAbs extends PArrays
     lazy val eTo = new BaseArrayElem[A](this)
   }
   // 4) constructor and deconstructor
-  trait BaseArrayCompanionAbs extends BaseArrayCompanion {
+  abstract class BaseArrayCompanionAbs extends CompanionBase[BaseArrayCompanionAbs] with BaseArrayCompanion {
     override def toString = "BaseArray"
 
     def apply[A](arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[BaseArray[A]] =
@@ -134,7 +134,7 @@ trait PArraysAbs extends PArrays
   }
   implicit lazy val BaseArrayCompanionElem: BaseArrayCompanionElem = new BaseArrayCompanionElem
 
-  implicit def proxyBaseArray[A:Elem](p: Rep[BaseArray[A]]): BaseArray[A] =
+  implicit def proxyBaseArray[A](p: Rep[BaseArray[A]]): BaseArray[A] =
     proxyOps[BaseArray[A]](p)
 
   implicit class ExtendedBaseArray[A](p: Rep[BaseArray[A]])(implicit eA: Elem[A]) {
@@ -176,7 +176,7 @@ trait PArraysAbs extends PArrays
     lazy val eTo = new PairArrayElem[A, B](this)
   }
   // 4) constructor and deconstructor
-  trait PairArrayCompanionAbs extends PairArrayCompanion {
+  abstract class PairArrayCompanionAbs extends CompanionBase[PairArrayCompanionAbs] with PairArrayCompanion {
     override def toString = "PairArray"
     def apply[A, B](p: Rep[PairArrayData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]] =
       isoPairArray(eA, eB).to(p)
@@ -195,7 +195,7 @@ trait PArraysAbs extends PArrays
   }
   implicit lazy val PairArrayCompanionElem: PairArrayCompanionElem = new PairArrayCompanionElem
 
-  implicit def proxyPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]): PairArray[A, B] =
+  implicit def proxyPairArray[A, B](p: Rep[PairArray[A, B]]): PairArray[A, B] =
     proxyOps[PairArray[A, B]](p)
 
   implicit class ExtendedPairArray[A, B](p: Rep[PairArray[A, B]])(implicit eA: Elem[A], eB: Elem[B]) {
@@ -236,7 +236,7 @@ trait PArraysAbs extends PArrays
     lazy val eTo = new NestedArrayElem[A](this)
   }
   // 4) constructor and deconstructor
-  trait NestedArrayCompanionAbs extends NestedArrayCompanion {
+  abstract class NestedArrayCompanionAbs extends CompanionBase[NestedArrayCompanionAbs] with NestedArrayCompanion {
     override def toString = "NestedArray"
     def apply[A](p: Rep[NestedArrayData[A]])(implicit eA: Elem[A]): Rep[NestedArray[A]] =
       isoNestedArray(eA).to(p)
@@ -255,7 +255,7 @@ trait PArraysAbs extends PArrays
   }
   implicit lazy val NestedArrayCompanionElem: NestedArrayCompanionElem = new NestedArrayCompanionElem
 
-  implicit def proxyNestedArray[A:Elem](p: Rep[NestedArray[A]]): NestedArray[A] =
+  implicit def proxyNestedArray[A](p: Rep[NestedArray[A]]): NestedArray[A] =
     proxyOps[NestedArray[A]](p)
 
   implicit class ExtendedNestedArray[A](p: Rep[NestedArray[A]])(implicit eA: Elem[A]) {
@@ -563,7 +563,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
   }
 
   object PairArrayMethods {
-    // WARNING: Cannot generate matcher for method `mapPairs` : method has Non-Rep argument f: (Rep[A],Rep[B]) => Rep[R] 
+    // WARNING: Cannot generate matcher for method `mapPairs`: Method has function arguments f
 
     object arr {
       def unapply(d: Def[_]): Option[Rep[PairArray[A, B]] forSome {type A; type B}] = d match {
@@ -790,7 +790,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map` : method has Non-Rep argument f: Rep[A] => Rep[B] 
+    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
 
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[PArray[A]], Rep[A => B]) forSome {type A; type B}] = d match {
@@ -854,17 +854,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
   }
 
   object PArrayCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[PArrayCompanionElem] =>
-          Some(()).asInstanceOf[Option[Unit forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
+    // WARNING: Cannot generate matcher for method `defaultOf`: Method's return type Default[Rep[PArray[A]]] is not a Rep
 
     object apply {
       def unapply(d: Def[_]): Option[Rep[Array[T]] forSome {type T}] = d match {

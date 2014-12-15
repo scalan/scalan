@@ -20,7 +20,7 @@ trait MatricesAbs extends Matrices
     lazy val defaultRep = Default.defaultVal(Matrix)
   }
 
-  trait MatrixCompanionAbs extends MatrixCompanion {
+  abstract class MatrixCompanionAbs extends CompanionBase[MatrixCompanionAbs] with MatrixCompanion {
     override def toString = "Matrix"
   }
   def Matrix: Rep[MatrixCompanionAbs]
@@ -54,7 +54,7 @@ trait MatricesAbs extends Matrices
     lazy val eTo = new RowMajorMatrixElem[T](this)
   }
   // 4) constructor and deconstructor
-  trait RowMajorMatrixCompanionAbs extends RowMajorMatrixCompanion {
+  abstract class RowMajorMatrixCompanionAbs extends CompanionBase[RowMajorMatrixCompanionAbs] with RowMajorMatrixCompanion {
     override def toString = "RowMajorMatrix"
 
     def apply[T](rows: Rep[PArray[DenseVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorMatrix[T]] =
@@ -72,7 +72,7 @@ trait MatricesAbs extends Matrices
   }
   implicit lazy val RowMajorMatrixCompanionElem: RowMajorMatrixCompanionElem = new RowMajorMatrixCompanionElem
 
-  implicit def proxyRowMajorMatrix[T:Elem](p: Rep[RowMajorMatrix[T]]): RowMajorMatrix[T] =
+  implicit def proxyRowMajorMatrix[T](p: Rep[RowMajorMatrix[T]]): RowMajorMatrix[T] =
     proxyOps[RowMajorMatrix[T]](p)
 
   implicit class ExtendedRowMajorMatrix[T](p: Rep[RowMajorMatrix[T]])(implicit elem: Elem[T]) {
@@ -113,7 +113,7 @@ trait MatricesAbs extends Matrices
     lazy val eTo = new RowMajorFlatMatrixElem[T](this)
   }
   // 4) constructor and deconstructor
-  trait RowMajorFlatMatrixCompanionAbs extends RowMajorFlatMatrixCompanion {
+  abstract class RowMajorFlatMatrixCompanionAbs extends CompanionBase[RowMajorFlatMatrixCompanionAbs] with RowMajorFlatMatrixCompanion {
     override def toString = "RowMajorFlatMatrix"
     def apply[T](p: Rep[RowMajorFlatMatrixData[T]])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
       isoRowMajorFlatMatrix(elem).to(p)
@@ -132,7 +132,7 @@ trait MatricesAbs extends Matrices
   }
   implicit lazy val RowMajorFlatMatrixCompanionElem: RowMajorFlatMatrixCompanionElem = new RowMajorFlatMatrixCompanionElem
 
-  implicit def proxyRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]): RowMajorFlatMatrix[T] =
+  implicit def proxyRowMajorFlatMatrix[T](p: Rep[RowMajorFlatMatrix[T]]): RowMajorFlatMatrix[T] =
     proxyOps[RowMajorFlatMatrix[T]](p)
 
   implicit class ExtendedRowMajorFlatMatrix[T](p: Rep[RowMajorFlatMatrix[T]])(implicit elem: Elem[T]) {
@@ -173,7 +173,7 @@ trait MatricesAbs extends Matrices
     lazy val eTo = new RowMajorSparseMatrixElem[T](this)
   }
   // 4) constructor and deconstructor
-  trait RowMajorSparseMatrixCompanionAbs extends RowMajorSparseMatrixCompanion {
+  abstract class RowMajorSparseMatrixCompanionAbs extends CompanionBase[RowMajorSparseMatrixCompanionAbs] with RowMajorSparseMatrixCompanion {
     override def toString = "RowMajorSparseMatrix"
 
     def apply[T](rows: Rep[PArray[SparseVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]] =
@@ -191,7 +191,7 @@ trait MatricesAbs extends Matrices
   }
   implicit lazy val RowMajorSparseMatrixCompanionElem: RowMajorSparseMatrixCompanionElem = new RowMajorSparseMatrixCompanionElem
 
-  implicit def proxyRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]): RowMajorSparseMatrix[T] =
+  implicit def proxyRowMajorSparseMatrix[T](p: Rep[RowMajorSparseMatrix[T]]): RowMajorSparseMatrix[T] =
     proxyOps[RowMajorSparseMatrix[T]](p)
 
   implicit class ExtendedRowMajorSparseMatrix[T](p: Rep[RowMajorSparseMatrix[T]])(implicit elem: Elem[T]) {
@@ -639,17 +639,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
   }
 
   object MatrixCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[MatrixCompanionElem] =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
+    // WARNING: Cannot generate matcher for method `defaultOf`: Method's return type Default[Rep[Matrix[T]]] is not a Rep
 
     object fromColumns {
       def unapply(d: Def[_]): Option[PA[Vector[T]] forSome {type T}] = d match {

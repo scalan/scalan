@@ -119,7 +119,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |    lazy val defaultRep = Default.defaultVal($entityName)
         |  }
         |
-        |  trait ${companionName}Abs extends ${companionName} {
+        |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs] with ${companionName} {
         |    override def toString = "$entityName"
         |  }
         |  def $entityName: Rep[${companionName}Abs]
@@ -166,7 +166,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |    lazy val eTo = new ${className}Elem${types}(this)
         |  }
         |  // 4) constructor and deconstructor
-        |  trait ${className}CompanionAbs extends ${className}Companion {
+        |  abstract class ${className}CompanionAbs extends CompanionBase[${className}CompanionAbs] with ${className}Companion {
         |    override def toString = "$className"
         |${(fields.length != 1).opt(s"""
         |    def apply${types}(p: Rep[${className}Data${types}])${implicitArgs}: Rep[$className${types}] =
@@ -186,7 +186,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |  }
         |  implicit lazy val ${className}CompanionElem: ${className}CompanionElem = new ${className}CompanionElem
         |
-        |  implicit def proxy$className${typesWithElems}(p: Rep[$className${types}]): ${className}${types} =
+        |  implicit def proxy$className${types}(p: Rep[$className${types}]): ${className}${types} =
         |    proxyOps[${className}${types}](p)
         |
         |  implicit class Extended$className${types}(p: Rep[$className${types}])$implicitArgs {

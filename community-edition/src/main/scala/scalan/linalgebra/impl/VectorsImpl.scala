@@ -26,7 +26,7 @@ trait VectorsAbs extends Vectors
     lazy val defaultRep = Default.defaultVal(Vector)
   }
 
-  trait VectorCompanionAbs extends VectorCompanion {
+  abstract class VectorCompanionAbs extends CompanionBase[VectorCompanionAbs] with VectorCompanion {
     override def toString = "Vector"
   }
   def Vector: Rep[VectorCompanionAbs]
@@ -60,7 +60,7 @@ trait VectorsAbs extends Vectors
     lazy val eTo = new DenseVectorElem[T](this)
   }
   // 4) constructor and deconstructor
-  trait DenseVectorCompanionAbs extends DenseVectorCompanion {
+  abstract class DenseVectorCompanionAbs extends CompanionBase[DenseVectorCompanionAbs] with DenseVectorCompanion {
     override def toString = "DenseVector"
 
     def apply[T](coords: Rep[PArray[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
@@ -78,7 +78,7 @@ trait VectorsAbs extends Vectors
   }
   implicit lazy val DenseVectorCompanionElem: DenseVectorCompanionElem = new DenseVectorCompanionElem
 
-  implicit def proxyDenseVector[T:Elem](p: Rep[DenseVector[T]]): DenseVector[T] =
+  implicit def proxyDenseVector[T](p: Rep[DenseVector[T]]): DenseVector[T] =
     proxyOps[DenseVector[T]](p)
 
   implicit class ExtendedDenseVector[T](p: Rep[DenseVector[T]])(implicit elem: Elem[T]) {
@@ -119,7 +119,7 @@ trait VectorsAbs extends Vectors
     lazy val eTo = new SparseVectorElem[T](this)
   }
   // 4) constructor and deconstructor
-  trait SparseVectorCompanionAbs extends SparseVectorCompanion {
+  abstract class SparseVectorCompanionAbs extends CompanionBase[SparseVectorCompanionAbs] with SparseVectorCompanion {
     override def toString = "SparseVector"
     def apply[T](p: Rep[SparseVectorData[T]])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
       isoSparseVector(elem).to(p)
@@ -138,7 +138,7 @@ trait VectorsAbs extends Vectors
   }
   implicit lazy val SparseVectorCompanionElem: SparseVectorCompanionElem = new SparseVectorCompanionElem
 
-  implicit def proxySparseVector[T:Elem](p: Rep[SparseVector[T]]): SparseVector[T] =
+  implicit def proxySparseVector[T](p: Rep[SparseVector[T]]): SparseVector[T] =
     proxyOps[SparseVector[T]](p)
 
   implicit class ExtendedSparseVector[T](p: Rep[SparseVector[T]])(implicit elem: Elem[T]) {
