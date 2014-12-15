@@ -83,10 +83,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
     }
   
     def zeroSExpr(t: STpeExpr): String = t match {
-      case STpeInt => 0.toString
-      case STpeBoolean => false.toString
-      case STpeFloat => 0f.toString
-      case STpeString => "\"\""
+      case STpePrimitive(_, defaultValueString) => defaultValueString
       case STraitCall(name, args) => s"element[$t].defaultRepValue"
       case STpeTuple(items) => pairify(items.map(zeroSExpr))
       case STpeFunc(domain, range) => s"""fun { (x: Rep[${domain}]) => ${zeroSExpr(range)} }"""

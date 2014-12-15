@@ -19,15 +19,29 @@ object ScalanAst {
   case class STraitCall(name: String, tpeSExprs: List[STpeExpr]) extends STpeExpr {
     override def toString = name + (if (tpeSExprs.isEmpty) "" else tpeSExprs.mkString("[", ",", "]"))
   }
-  case object STpeInt extends STpeExpr { override def toString = "Int" }
-  case object STpeBoolean extends STpeExpr { override def toString = "Boolean" }
-  case object STpeFloat extends STpeExpr { override def toString = "Float" }
-  case object STpeString extends STpeExpr { override def toString = "String" }
+  case class STpePrimitive(typeName: String, defaultValueString: String) extends STpeExpr {
+    override def toString = typeName
+  }
+  val STpePrimitives = Map(
+    "Int" -> STpePrimitive("Int", "0"),
+    "Long" -> STpePrimitive("Long", "0l"),
+    "Byte" -> STpePrimitive("Byte", "0.toByte"),
+    "Boolean" -> STpePrimitive("Boolean", "false"),
+    "Float" -> STpePrimitive("Float", "0.0f"),
+    "Double" -> STpePrimitive("Double", "0.0"),
+    "String" -> STpePrimitive("String", "\"\"")
+  )
   case class STpeTuple(items: List[STpeExpr]) extends STpeExpr {
     override def toString = items.mkString("(", ",", ")")
   }
   case class STpeFunc(domain: STpeExpr, range: STpeExpr) extends STpeExpr {
-    override def toString = s"$domain => $range"
+    override def toString = {
+      val domainStr = domain match {
+        case tuple: STpeTuple => s"($tuple)"
+        case _ => domain.toString
+      }
+      s"$domainStr => $range"
+    }
   }
   case class STpeSum(items: List[STpeExpr]) extends STpeExpr {
     override def toString = items.mkString("(", "|", ")")
@@ -380,13 +394,8 @@ trait ScalanParsers {
 
   def tpeExpr(tree: Tree): STpeExpr = tree match {
     case ident: Ident =>
-      ident.name.toString match {
-        case "Int" => STpeInt
-        case "Boolean" => STpeBoolean
-        case "Float" => STpeFloat
-        case "String" => STpeString
-        case name => STraitCall(name, List())
-      }
+      val name = ident.name.toString
+      STpePrimitives.getOrElse(name, STraitCall(name, List()))
     case select: Select =>
       STraitCall(select.name, List())
     case AppliedTypeTree(tpt, args) =>

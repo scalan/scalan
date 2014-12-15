@@ -7,9 +7,6 @@ import scala.reflect.internal.util.BatchSourceFile
 class ScalanParsersTests extends BaseTests with ScalanParsers {
   import ScalanAst._
   import ScalanAst.{
-    STpeInt => INT,
-    STpeBoolean => BOOL,
-    STpeFloat => FLOAT,
     STraitCall => TC,
     STraitDef => TD,
     SClassDef => CD,
@@ -23,7 +20,11 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
   import scala.{ List => L }
   import compiler._
 
-  val config = BoilerplateToolRun.liteConfig
+  val INT = STpePrimitives("Int")
+  val BOOL = STpePrimitives("Boolean")
+  val FLOAT = STpePrimitives("Float")
+
+  val config = BoilerplateToolRun.coreConfig
 
   sealed trait TreeKind
   case object TopLevel extends TreeKind
