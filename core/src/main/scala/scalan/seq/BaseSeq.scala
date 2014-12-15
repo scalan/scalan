@@ -5,6 +5,9 @@ import scalan.{Base, ScalanSeq}
 
 trait BaseSeq extends Base {
   type Rep[+A] = A
+  type Def[+A] = A
 
   override def toRep[A](x: A)(implicit eA: Elem[A]) = x
+
+  override def def_unapply[T](e: Rep[T]): Option[Def[T]] = Some(e)
 }

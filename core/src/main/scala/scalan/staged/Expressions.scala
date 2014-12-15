@@ -121,9 +121,7 @@ trait BaseExp extends Base { self: ScalanExp =>
       }
   }
 
-  object Def {
-    def unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
-  }
+  def def_unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
 
   object Var {
     def unapply[T](e: Exp[T]): Option[Exp[T]] = e match {

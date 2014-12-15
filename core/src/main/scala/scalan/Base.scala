@@ -10,6 +10,7 @@ import scala.annotation.unchecked.uncheckedVariance
 trait Base extends LazyLogging {
   type |[+A, +B] = Either[A, B]
   type Rep[+A]
+  type Def[+A]
   type Elem[A]
   type IntRep = Rep[Int]
   type BoolRep = Rep[Boolean]
@@ -103,6 +104,12 @@ trait Base extends LazyLogging {
     override def productElement(n: Int) = ???
     override def canEqual(other: Any) = other.isInstanceOf[CompanionBase[_]]
   }
+
+  object Def {
+    def unapply[T](e: Rep[T]): Option[Def[T]] = def_unapply(e)
+  }
+
+  def def_unapply[T](e: Rep[T]): Option[Def[T]]
 }
 
 object Base {
