@@ -152,7 +152,11 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
       val zero = e.defaultRepValue
       val Def(zeroNode) = zero
       try {
-        val res = m.invoke(zeroNode, args: _*)
+        val args1 = args.map {
+          case e: Exp[_] => e.elem.defaultRepValue
+          case nonExp => nonExp
+        }
+        val res = m.invoke(zeroNode, args1: _*)
         res match {
           case s: Exp[_] => s.elem
           case other => !!!(s"Staged method call ${ScalaNameUtil.cleanScalaName(m.toString)} must return an Exp, but got $other")
