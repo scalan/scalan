@@ -31,6 +31,7 @@ trait ArrayOps { self: Scalan =>
     def tabulate[T: Elem](n: Rep[Int])(f: Rep[Int] => Rep[T]): Arr[T] =
       rangeFrom0(n).map(f)
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = array_replicate(len, v)
+    def empty[T: Elem] = replicate(0, element[T].defaultRepValue)
   }
   val Array: ArrayCompanion
 
