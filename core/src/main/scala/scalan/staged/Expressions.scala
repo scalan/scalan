@@ -123,6 +123,8 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   def def_unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
 
+  override def repReifiable_getElem[T <: Reifiable[T]](x: Rep[T]): Elem[T] = x.elem
+
   object Var {
     def unapply[T](e: Exp[T]): Option[Exp[T]] = e match {
       case Def(_) => None

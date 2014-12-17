@@ -46,13 +46,8 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
 
   override def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops =
     x match {
-      case Def(d) => d match {
-        case Const(c) => c
-        case _ =>
-          getProxy(x, ct)
-      }
-      case _ =>
-        getProxy(x, ct)
+      case Def(Const(c)) => c
+      case _ => getProxy(x, ct)
     }
 
   private def getProxy[Ops](x: Rep[Ops], ct: ClassTag[Ops]) = {

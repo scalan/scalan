@@ -272,6 +272,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       }
     case ArrayLength(Def(d2: Def[Array[a]]@unchecked)) =>
       d2.asDef[Array[a]] match {
+        case Const(scalaArray) => toRep(scalaArray.length)
         case ArrayApplyMany(_, is) => is.length
         case ArrayMap(xs, _) =>
           implicit val eT = xs.elem.eItem
