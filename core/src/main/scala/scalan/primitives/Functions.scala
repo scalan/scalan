@@ -256,7 +256,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-  def mergeFunctions[A:Elem,B:Elem,C:Elem](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] =
-    fun { (x: Rep[A]) => Pair(f(x), g(x))  }
+  def functionSplit[A, B, C](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] =
+    fun { (x: Rep[A]) => Pair(f(x), g(x)) }(Lazy(f.elem.eDom))
 }
 
