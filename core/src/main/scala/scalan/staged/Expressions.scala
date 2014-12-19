@@ -42,7 +42,6 @@ trait BaseExp extends Base { self: ScalanExp =>
     def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.name},${eB.name}]"
     def uniqueOpId: String
     def mirror(f: Transformer): Rep[T]
-    def decompose: Option[Rep[T]] = None
   }
 
   type Def[+A] = ReifiableExp[A,A]
@@ -153,10 +152,7 @@ trait BaseExp extends Base { self: ScalanExp =>
     def unapply[T](e: Exp[T]): Option[TableEntry[T]] = findDefinition(e)
   }
 
-  def decompose[T](d: Def[T]): Exp[T] = d.decompose match {
-    case None => null
-    case Some(sym) => sym
-  }
+  def decompose[T](d: Def[T]): Option[Exp[T]] = None
 
   // dependencies
   def syms(e: Any): List[Exp[_]] = e match {
