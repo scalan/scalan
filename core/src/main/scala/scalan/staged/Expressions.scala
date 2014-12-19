@@ -161,6 +161,7 @@ trait BaseExp extends Base { self: ScalanExp =>
   // dependencies
   def syms(e: Any): List[Exp[_]] = e match {
     case s: Exp[_] => List(s)
+    case s: Seq[_] => s.toList.flatMap(syms(_))
     case p: Product => p.productIterator.toList.flatMap(syms(_))
     case _ => Nil
   }
