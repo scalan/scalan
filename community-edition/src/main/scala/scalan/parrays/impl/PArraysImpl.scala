@@ -531,12 +531,12 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
   object BaseArrayCompanionMethods {
     object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[BaseArrayCompanionElem] =>
-          Some(()).asInstanceOf[Option[Unit forSome {type A}]]
+      def unapply(d: Def[_]): Option[Elem[A] forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(ea, _*)) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[BaseArrayCompanionElem] =>
+          Some(ea).asInstanceOf[Option[Elem[A] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Elem[A] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -628,12 +628,12 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
   object PairArrayCompanionMethods {
     object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, _) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[PairArrayCompanionElem] =>
-          Some(()).asInstanceOf[Option[Unit forSome {type A; type B}]]
+      def unapply(d: Def[_]): Option[(Elem[A], Elem[B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ea, eb, _*)) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[PairArrayCompanionElem] =>
+          Some((ea, eb)).asInstanceOf[Option[(Elem[A], Elem[B]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Elem[A], Elem[B]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -723,12 +723,12 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
   object NestedArrayCompanionMethods {
     object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[NestedArrayCompanionElem] =>
-          Some(()).asInstanceOf[Option[Unit forSome {type A}]]
+      def unapply(d: Def[_]): Option[Elem[A] forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(ea, _*)) if method.getName == "defaultOf" && receiver.elem.isInstanceOf[NestedArrayCompanionElem] =>
+          Some(ea).asInstanceOf[Option[Elem[A] forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Elem[A] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -829,24 +829,24 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
     }
 
     object reduce {
-      def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if method.getName == "reduce" && receiver.elem.isInstanceOf[PArrayElem[_, _, _]] =>
-          Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
+      def unapply(d: Def[_]): Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(m, _*)) if method.getName == "reduce" && receiver.elem.isInstanceOf[PArrayElem[_, _, _]] =>
+          Some((receiver, m)).asInstanceOf[Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[PArray[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object scan {
-      def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if method.getName == "scan" && receiver.elem.isInstanceOf[PArrayElem[_, _, _]] =>
-          Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
+      def unapply(d: Def[_]): Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(m, _*)) if method.getName == "scan" && receiver.elem.isInstanceOf[PArrayElem[_, _, _]] =>
+          Some((receiver, m)).asInstanceOf[Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[PArray[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

@@ -352,11 +352,18 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
               else
                 e.tpeArgs.length
             val traitElem = s"${e.name}Elem${typeArgString(Seq.fill(numElemTypeParams)("_"))}"
-            val explicitArgs = m.explicitArgs
+            // DummyImplicit and Overloaded* are ignored, since
+            // their values are never useful
+            val methodArgs = m.args.flatMap(_.args).takeWhile { arg =>
+              arg.tpe match {
+                case STraitCall(name, List()) if name == "DummyImplicit" || name.startsWith("Overloaded") => false
+                case _ => true
+              }
+            }
             val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.name).toSet
             val returnType = {
               val receiverType = s"Rep[${e.name + typeArgString(e.tpeArgs.map(_.name))}]"
-              val argTypes = explicitArgs.map(_.tpe.toString)
+              val argTypes = methodArgs.map(_.tpe.toString)
               val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
                 case Seq() => "Unit"
                 case Seq(single) => single
@@ -364,7 +371,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
               }
               s"Option[$receiverAndArgTypes${typeVars.opt(typeVars => s" forSome {${typeVars.map("type " + _).mkString("; ")}}")}]"
             }
-            val explicitArgsStr = explicitArgs.rep(_.name, ", ")
+            // _* is for implicit arguments
+            val methodArgsPattern = if (methodArgs.isEmpty) "_" else s"Seq(${methodArgs.rep(_.name, ", ")}, _*)"
             val overloadNum = counter(m.name)
             counter(m.name) = overloadNum + 1
             val matcherName = {
@@ -379,19 +387,20 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
               cleanedName + suffix
             }
 
-            val matchResult = ((if (isCompanion) Nil else List("receiver")) ++ explicitArgs.map(_.name)) match {
+            val matchResult = ((if (isCompanion) Nil else List("receiver")) ++ methodArgs.map(_.name)) match {
               case Seq() => "()"
               case Seq(single) => single
               case many => many.mkString("(", ", ", ")")
             }
 
+            val methodPattern =
+              s"""MethodCall(receiver, method, $methodArgsPattern) if method.getName == "${m.name}" && receiver.elem.isInstanceOf[$traitElem]"""
             // TODO we can use name-based extractor to improve performance when we switch to Scala 2.11
             // See http://hseeberger.github.io/blog/2013/10/04/name-based-extractors-in-scala-2-dot-11/
 
-            // _* is for implicit arguments
             s"""    object $matcherName {
              |      def unapply(d: Def[_]): $returnType = d match {
-             |        case MethodCall(receiver, method, ${if (explicitArgs.isEmpty) "_" else s"Seq($explicitArgsStr, _*)"}) if method.getName == "${m.name}" && receiver.elem.isInstanceOf[$traitElem] =>
+             |        case $methodPattern =>
              |          Some($matchResult).asInstanceOf[$returnType]
              |        case _ => None
              |      }

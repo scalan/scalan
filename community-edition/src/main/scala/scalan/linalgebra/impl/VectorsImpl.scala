@@ -225,12 +225,12 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
     }
 
     object dot {
-      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Vec[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, _*)) if method.getName == "dot" && receiver.elem.isInstanceOf[DenseVectorElem[_]] =>
-          Some((receiver, other)).asInstanceOf[Option[(Rep[DenseVector[T]], Vec[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*)) if method.getName == "dot" && receiver.elem.isInstanceOf[DenseVectorElem[_]] =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Vec[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -296,12 +296,12 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
     }
 
     object dot {
-      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Vec[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, _*)) if method.getName == "dot" && receiver.elem.isInstanceOf[SparseVectorElem[_]] =>
-          Some((receiver, other)).asInstanceOf[Option[(Rep[SparseVector[T]], Vec[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*)) if method.getName == "dot" && receiver.elem.isInstanceOf[SparseVectorElem[_]] =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Vec[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -334,12 +334,12 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
     }
 
     object apply {
-      def unapply(d: Def[_]): Option[PA[T] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(coords, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[SparseVectorCompanionElem] =>
-          Some(coords).asInstanceOf[Option[PA[T] forSome {type T}]]
+      def unapply(d: Def[_]): Option[(PA[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(coords, n, _*)) if method.getName == "apply" && receiver.elem.isInstanceOf[SparseVectorCompanionElem] =>
+          Some((coords, n)).asInstanceOf[Option[(PA[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[PA[T] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(PA[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -378,12 +378,12 @@ trait VectorsExp extends VectorsAbs { self: ScalanExp with VectorsDsl =>
     }
 
     object dot {
-      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Vec[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, _*)) if method.getName == "dot" && receiver.elem.isInstanceOf[VectorElem[_, _, _]] =>
-          Some((receiver, other)).asInstanceOf[Option[(Rep[Vector[T]], Vec[T]) forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*)) if method.getName == "dot" && receiver.elem.isInstanceOf[VectorElem[_, _, _]] =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Vec[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
