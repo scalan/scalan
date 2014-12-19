@@ -12,8 +12,10 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
     implicit def elem: Elem[T]
     def rows: PA[Vector[T]]
     def columns: PA[Vector[T]]
+    @OverloadId("vector")
     def *(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] =
       DenseVector(rows.map { r => r.dot(vector) })
+    @OverloadId("matrix")
     def *(mat: Matr[T])(implicit n: Numeric[T], d: DummyImplicit): Matr[T] = {
       val resColumns = mat.columns.map { col: Rep[Vector[T]] => this * col }
       companion.fromColumns(resColumns)

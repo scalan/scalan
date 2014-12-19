@@ -10,6 +10,7 @@ import scala.tools.nsc.reporters.StoreReporter
 import scala.language.implicitConversions
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
+import scalan.util.ScalaNameUtil
 
 object ScalanAst {
 
@@ -81,7 +82,7 @@ object ScalanAst {
   abstract class SBodyItem
   case class SImportStat(name: String) extends SBodyItem
   case class SMethodDef(name: String, tpeArgs: STpeArgs, args: List[SMethodArgs],
-    tpeRes: Option[STpeExpr], isImplicit: Boolean) extends SBodyItem {
+    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String]) extends SBodyItem {
     def explicitArgs = args.filter(!_.impFlag).flatMap(_.args)
   }
   case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
@@ -374,7 +375,18 @@ trait ScalanParsers {
     val args = if (!args0.isEmpty && args0.last.args.isEmpty) args0.init else args0
     val tpeRes = optTpeExpr(md.tpt)
     val isImplicit = md.mods.isImplicit
-    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit)
+    val overloadId = md.mods.annotations.flatMap {
+      case Apply(
+      Select(New(Ident(ident)), nme.CONSTRUCTOR),
+      List(Literal(Constant(overloadId)))) if ident.toString == "OverloadId" =>
+        Seq(overloadId.toString)
+      case _ => Seq()
+    } match {
+      case Seq() => None
+      case Seq(x) => Some(x)
+      case many => !!!(s"Found multiple OverloadId values: ${many.mkString(", ")}", md)
+    }
+    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, overloadId)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {

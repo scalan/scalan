@@ -87,8 +87,7 @@ trait BaseExp extends Base { self: ScalanExp =>
    * Updates the universe of symbols and definitions, then rewrites until fix-point
    * @param d A new graph node to add to the universe
    * @param newSym A symbol that will be used if d doesn't exist in the universe
-   * @param et Type descriptor of the resulting type of node d
-   * @tparam T
+   * @tparam T Type of the result
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T]
