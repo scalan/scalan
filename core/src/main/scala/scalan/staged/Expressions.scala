@@ -43,7 +43,6 @@ trait BaseExp extends Base { self: ScalanExp =>
     def uniqueOpId: String
     def mirror(f: Transformer): Rep[T]
     def decompose: Option[Rep[T]] = None
-    def isScalarOp: Boolean = true
   }
 
   type Def[+A] = ReifiableExp[A,A]
