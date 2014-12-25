@@ -96,7 +96,7 @@ trait GraphVizExport { self: ScalanExp =>
     emitDepGraph(List(start), file, landscape)
   def emitDepGraph(ss: List[Exp[_]], file: File, landscape: Boolean): Unit =
     FileUtil.withFile(file) {
-      emitDepGraph(ss, _, landscape)
+      emitDepGraph(file.getName, ss, _, landscape)
     }
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
@@ -124,8 +124,8 @@ trait GraphVizExport { self: ScalanExp =>
     }
   }
 
-  private def emitDepGraph(ss: List[Exp[_]], stream: PrintWriter, landscape: Boolean): Unit = {
-    stream.println("digraph G {")
+  private def emitDepGraph(name: String, ss: List[Exp[_]], stream: PrintWriter, landscape: Boolean): Unit = {
+    stream.println(s"""digraph \"${name}\" {""")
 
     val deflist = buildScheduleForResult(ss, dep)
 
