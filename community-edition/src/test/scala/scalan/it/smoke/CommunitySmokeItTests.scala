@@ -1,5 +1,6 @@
 package scalan.it.smoke
 
+import scalan.JNIExtractorOps
 import scalan.ScalanCtxSeq
 import scalan.community._
 import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
@@ -8,7 +9,7 @@ import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
  *  Tests that very simple examples are run correctly
  */
 abstract class CommunitySmokeItTests extends SmokeItTests {
-  trait ProgCommunity extends Prog with ScalanCommunityDsl with PArrayExamples {
+  trait ProgCommunity extends Prog with ScalanCommunityDsl with PArrayExamples with JNIExtractorOps {
     lazy val simpleConst = fun {x: PA[Int] =>
       PArray.singleton(1)
     }
@@ -21,6 +22,17 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       res
     }
 
+    implicit val eA = AnyRefElement
+    lazy val jniExtractor = fun {in: Rep[(AnyRef, JNIType[AnyRef])] =>
+      JNI_ExtractObject[ ( Array[( Array[Int]
+                           , (Array[Double],Int))]
+                         , Array[Int] ) ]( in._1, in._2 )
+
+//      JNI_ExtractObject[(Double,Int)]( in._1, in._2 )
+//      JNI_ExtractPrimitive( in._1, in._2 )
+
+//      JNI_Extract[ Array[Array[Double]] ]( in._1, in._2 )
+    }
 //    lazy val simpleMap = fun {x: PA[Int] =>
 //      x.map(y => y + 1)
 //    }

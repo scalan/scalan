@@ -1,5 +1,9 @@
 package scalan.it.lms
 
+import java.io.File
+
+import scalan.JNIExtractorOpsExp
+import scalan.compilation.lms._
 import scalan.community.ScalanCommunityExp
 import scalan.compilation.lms.{LmsCompilerScala, LmsCompiler}
 import scalan.it.smoke.CommunitySmokeItTests
@@ -11,13 +15,20 @@ import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
-  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompilerScala with VectorsDslExp with MatricesDslExp { self =>
+  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompilerScala with VectorsDslExp with MatricesDslExp with JNIExtractorOpsExp { self =>
     def makeBridge[A, B] = new LmsBridge[A, B] with CommunityBridge[A, B] with LinalgBridge[A, B] {
       val scalan = self
     }
   }
   
   override val progStaged = new ProgExp
+
+  test("jniExtractor") {
+    val functionName = "jniExtractor"
+    val dir = new File(new File("it-out", prefix), functionName)
+    progStaged.buildGraph(dir, functionName, progStaged.jniExtractor, true)(progStaged.defaultConfig)
+  }
+
 
   test("test0simpleArith") {
     val in = 2
