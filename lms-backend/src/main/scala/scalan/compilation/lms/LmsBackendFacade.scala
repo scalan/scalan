@@ -223,7 +223,7 @@ class LmsBackend extends LmsBackendFacade { self =>
         case c if c == classOf[auto_t] =>
           "auto"
         case c if c == classOf[scala.Tuple2[_,_]] =>
-          s"std::tuple<${remap(m.typeArguments(0))},${remap(m.typeArguments(1))}>"
+          s"std::pair<${remap(m.typeArguments(0))},${remap(m.typeArguments(1))}>"
         case _ =>
           super.remap(m)
       }

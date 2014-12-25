@@ -28,7 +28,8 @@ trait CXXGenStruct extends CLikeGenBase with BaseGenStruct with CXXCodegen {
     case FieldApply(struct, index) =>
       struct.tp match {
         case m if m.runtimeClass == classOf[scala.Tuple2[_,_]] =>
-          emitValDef(quote(sym), manifest[auto_t], s"std::get<${(index.substring(1).toInt - 1).toString}>(${quote(struct)})")
+          val fn = index match { case "_1" => "first"; case "_2" => "second" }
+          emitValDef(quote(sym), manifest[auto_t], s"${quote(struct)}.${fn}")
         case _ =>
           emitValDef(sym, quote(struct) + "." + index)
       }
