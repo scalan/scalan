@@ -212,7 +212,12 @@ class LmsBackend extends LmsBackendFacade { self =>
     override def remap[A](m: Manifest[A]): String = {
       m.runtimeClass match {
         case c if c.isArray =>
-          s"std::vector<${remap(m.typeArguments(0))}>"
+          val itemType = m.typeArguments(0)
+          val ts = remap(itemType)
+          if( isPrimitiveType(itemType) )
+            s"jni_array<${ts}>"
+          else
+            s"std::vector<${ts}>"
         case c if c == classOf[size_t] =>
           "size_t"
         case c if c == classOf[auto_t] =>
@@ -221,6 +226,17 @@ class LmsBackend extends LmsBackendFacade { self =>
           s"std::tuple<${remap(m.typeArguments(0))},${remap(m.typeArguments(1))}>"
         case _ =>
           super.remap(m)
+      }
+    }
+
+    def remapResult[A](m: Manifest[A]): String = {
+      m.runtimeClass match {
+        case c if c.isArray =>
+          val itemType = m.typeArguments(0)
+          val ts = remap  (itemType)
+          s"std::vector<${ts}>"
+        case _ =>
+          remap(m)
       }
     }
 
@@ -235,7 +251,7 @@ class LmsBackend extends LmsBackendFacade { self =>
     }
 
     override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
-      val sA = remap(manifest[A])
+      val sA = remapResult(manifest[A])
 
       //      val staticData = getFreeDataBlock(body)
 
@@ -244,6 +260,7 @@ class LmsBackend extends LmsBackendFacade { self =>
           "#include <vector>\n" +
           "#include <tuple>\n" +
           "#include <cstdlib>\n" +
+          "#include <jni-array-wrapper.hpp>\n" +
           "/*****************************************\n" +
           "  Emitting Generated Code                  \n" +
           "*******************************************/")
