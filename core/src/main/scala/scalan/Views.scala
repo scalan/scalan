@@ -211,22 +211,12 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       }
   }
 
-  object UnpackableVar {
-    // only called when we know e is a Var
-    def unapply[T](e: Exp[T]): Option[Unpacked[T]] =
-      e.elem match {
-        case viewElem: ViewElem[a, T] @unchecked =>
-          val iso = viewElem.iso
-          Some((iso.from(e), iso))
-        case _ => None
-      }
-  }
-
   object UnpackableExp {
     def unapply[T](e: Exp[T]): Option[Unpacked[T]] =
       e match {
         case Def(d) => UnpackableDef.unapply(d)
-        case _ => UnpackableVar.unapply(e)
+        case UserTypeSym(iso: Iso[a, T]) => Some((iso.from(e), iso))
+        case _ => None
       }
   }
 
