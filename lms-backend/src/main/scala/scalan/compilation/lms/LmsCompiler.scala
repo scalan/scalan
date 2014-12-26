@@ -56,11 +56,11 @@ trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
   private def jarPath(functionName: String, executableDir: File) =
     s"${executableDir.getAbsolutePath}/$functionName.jar"
 
-  // Doesn't work for some reason, produces int instead of Int
-  //    implicit val typeTag = eA.tag
-  //    implicit val classTag = eA.classTag
-  //    manifest[T]
   def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
+    // Doesn't work for some reason, produces int instead of Int
+    //    implicit val typeTag = eA.tag
+    //    implicit val classTag = eA.classTag
+    //    manifest[T]
     case UnitElement => Manifest.Unit
     case ByteElement => Manifest.Byte
     case IntElement => Manifest.Int
