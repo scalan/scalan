@@ -133,6 +133,12 @@ trait BaseExp extends Base { self: ScalanExp =>
     def unapply[T](s: Exp[T]): Option[(Exp[T],Elem[T])] = Some((s, s.elem))
   }
 
+  /**
+   * Used for staged methods which can't be implemented based on other methods.
+   * This just returns a value of the desired type.
+   */
+  def defaultImpl[T](implicit elem: Elem[T]): Exp[T] = elem.defaultRepValue
+
   trait TableEntry[+T] {
     def sym: Exp[T]
     def lambda: Option[Exp[_]]
