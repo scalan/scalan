@@ -107,7 +107,7 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   }
   def array_replicate[T: Elem](len: Rep[Int], v: Rep[T]): Arr[T] = scala.Array.fill(len)(v)
   def array_slice[T](xs: Arr[T], start: Rep[Int], length: Rep[Int]): Arr[T] =
-    genericArrayOps(xs).slice(start, length)
+    genericArrayOps(xs).slice(start, start + length)
   def array_rangeFrom0(n: Rep[Int]): Arr[Int] = 0.until(n).toArray
   def array_filter[T](xs: Array[T], f: T => Boolean): Array[T] =
     genericArrayOps(xs).filter(f)
