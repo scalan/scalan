@@ -19,7 +19,7 @@ trait Passes { self: ScalanExp =>
   }
 
   case class GraphTransformPass(name: String, mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
-    def apply(graph: PGraph): PGraph = graph.transform(mirror, rewriter, MapTransformer.Empty)
+    def apply(graph: PGraph): PGraph = graph.transform(mirror, rewriter, MapTransformer.Empty).withoutContext
   }
 
   class EnableInvokePass(methodsDescription: String)(invokePred: InvokeTester) extends GraphPass {
