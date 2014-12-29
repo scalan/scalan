@@ -105,10 +105,10 @@ trait Base extends LazyLogging { self: Scalan =>
   }
 
   // this is a bit hackish. Better would be to make Elem part of Rep in sequential context
-  implicit class RepReifiable[T <: Reifiable[T]](x: Rep[T]) {
+  implicit class RepReifiable[T <: Reifiable[_]](x: Rep[T]) {
     def selfType1: Elem[T] = repReifiable_getElem(x)
   }
-  def repReifiable_getElem[T <: Reifiable[T]](x: Rep[T]): Elem[T]
+  def repReifiable_getElem[T <: Reifiable[_]](x: Rep[T]): Elem[T]
 
   object Def {
     def unapply[T](e: Rep[T]): Option[Def[T]] = def_unapply(e)
