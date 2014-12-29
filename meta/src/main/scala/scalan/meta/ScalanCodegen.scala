@@ -83,10 +83,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
     }
   
     def zeroSExpr(t: STpeExpr): String = t match {
-      case STpeInt => 0.toString
-      case STpeBoolean => false.toString
-      case STpeFloat => 0f.toString
-      case STpeString => "\"\""
+      case STpePrimitive(_, defaultValueString) => defaultValueString
       case STraitCall(name, args) => s"element[$t].defaultRepValue"
       case STpeTuple(items) => pairify(items.map(zeroSExpr))
       case STpeFunc(domain, range) => s"""fun { (x: Rep[${domain}]) => ${zeroSExpr(range)} }"""
@@ -119,7 +116,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |    lazy val defaultRep = Default.defaultVal($entityName)
         |  }
         |
-        |  trait ${companionName}Abs extends ${companionName} {
+        |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs] with ${companionName} {
         |    override def toString = "$entityName"
         |  }
         |  def $entityName: Rep[${companionName}Abs]
@@ -166,7 +163,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |    lazy val eTo = new ${className}Elem${types}(this)
         |  }
         |  // 4) constructor and deconstructor
-        |  trait ${className}CompanionAbs extends ${className}Companion {
+        |  abstract class ${className}CompanionAbs extends CompanionBase[${className}CompanionAbs] with ${className}Companion {
         |    override def toString = "$className"
         |${(fields.length != 1).opt(s"""
         |    def apply${types}(p: Rep[${className}Data${types}])${implicitArgs}: Rep[$className${types}] =
@@ -186,7 +183,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |  }
         |  implicit lazy val ${className}CompanionElem: ${className}CompanionElem = new ${className}CompanionElem
         |
-        |  implicit def proxy$className${typesWithElems}(p: Rep[$className${types}]): ${className}${types} =
+        |  implicit def proxy$className${types}(p: Rep[$className${types}]): ${className}${types} =
         |    proxyOps[${className}${types}](p)
         |
         |  implicit class Extended$className${types}(p: Rep[$className${types}])$implicitArgs {
@@ -276,7 +273,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
          |    override def mirror(t: Transformer) = this
          |  }
          |
-         |${methodExtractorsString(c, td)}
+         |${methodExtractorsString(c)}
          |""".stripAndTrim
 
       val constrDefs =
@@ -323,96 +320,132 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
        |
        |${concreteClassesString.mkString("\n\n")}
        |
-       |${methodExtractorsString(e, td)}
+       |${methodExtractorsString(e)}
        |}
        |""".stripAndTrim
     }
 
-    def methodExtractorsString1(e: STraitOrClassDef, isCompanion: Boolean) = {
-      val counter = collection.mutable.Map.empty[String, Int].withDefaultValue(0)
-
-      def reasonToSkipMethod(m: SMethodDef): Option[String] = {
-        (m.explicitArgs.collect { case SMethodArg(name, STpeFunc(_, _), _) => name } match {
-          case Seq() => None
-          case nonEmpty => Some(s"Method has function arguments ${nonEmpty.mkString(", ")}")
-        }).orElse {
-          m.tpeRes.filter(!_.isRep(module, config)).map {
-            returnTpe => s"Method's return type $returnTpe is not a Rep"
+    def methodExtractorsString(e: STraitOrClassDef) = {
+      def methodExtractorsString1(e: STraitOrClassDef, isCompanion: Boolean) = {
+        val methods = e.body.collect { case m: SMethodDef => m}
+        val overloadIdsByName = collection.mutable.Map.empty[String, Set[Option[String]]].withDefaultValue(Set())
+        methods.foreach { m =>
+          val methodName = m.name
+          val overloadId = m.overloadId
+          val overloadIds = overloadIdsByName(methodName)
+          if (overloadIds.contains(overloadId)) {
+            sys.error(s"Duplicate overload id for method ${e.name}.$methodName: ${overloadId}. Use scalan.OverloadId annotation with different values for each overload (one overload can be unannotated).")
+          } else {
+            overloadIdsByName(methodName) = overloadIds + overloadId
           }
         }
-      }
 
-      def methodExtractor(m: SMethodDef) = {
-        reasonToSkipMethod(m) match {
-          case Some(reason) =>
-            s"    // WARNING: Cannot generate matcher for method `${m.name}`: $reason"
-          case _ =>
-            val numElemTypeParams =
-              if (isCompanion)
-                0
-              else if (e.isInstanceOf[STraitDef])
-                e.tpeArgs.length + 2
-              else
-                e.tpeArgs.length
-            val traitElem = s"${e.name}Elem${typeArgString(Seq.fill(numElemTypeParams)("_"))}"
-            val explicitArgs = m.explicitArgs
-            val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.name).toSet
-            val returnType = {
-              val receiverType = s"Rep[${e.name + typeArgString(e.tpeArgs.map(_.name))}]"
-              val argTypes = explicitArgs.map(_.tpe.toString)
-              val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
-                case Seq() => "Unit"
+        def reasonToSkipMethod(m: SMethodDef): Option[String] = {
+          (m.explicitArgs.collect { case SMethodArg(name, STpeFunc(_, _), _) => name} match {
+            case Seq() => None
+            case nonEmpty => Some(s"Method has function arguments ${nonEmpty.mkString(", ")}")
+          }).orElse {
+            m.tpeRes.filter(!_.isRep(module, config)).map {
+              returnTpe => s"Method's return type $returnTpe is not a Rep"
+            }
+          }
+        }
+
+        def methodExtractor(m: SMethodDef) = {
+          reasonToSkipMethod(m) match {
+            case Some(reason) =>
+              s"    // WARNING: Cannot generate matcher for method `${m.name}`: $reason"
+            case _ =>
+              val numElemTypeParams =
+                if (isCompanion) {
+                  0
+                } else if (e.isInstanceOf[STraitDef]) {
+                  e.tpeArgs.length + 2
+                } else {
+                  e.tpeArgs.length
+                }
+              val traitElem = s"${e.name}Elem${typeArgString(Seq.fill(numElemTypeParams)("_"))}"
+              // DummyImplicit and Overloaded* are ignored, since
+              // their values are never useful
+              val methodArgs = m.args.flatMap(_.args).takeWhile { arg =>
+                arg.tpe match {
+                  case STraitCall(name, _) =>
+                    !(name == "DummyImplicit" || name.startsWith("Overloaded"))
+                  case _ => true
+                }
+              }
+              val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.name).toSet
+              val returnType = {
+                val receiverType = s"Rep[${e.name + typeArgString(e.tpeArgs.map(_.name))}]"
+                val argTypes = methodArgs.map(_.tpe.toString)
+                val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
+                  case Seq() => "Unit"
+                  case Seq(single) => single
+                  case many => many.mkString("(", ", ", ")")
+                }
+                s"Option[$receiverAndArgTypes${typeVars.opt(typeVars => s" forSome {${typeVars.map("type " + _).mkString("; ")}}")}]"
+              }
+              // _* is for dummy implicit arguments
+              val methodArgsPattern = if (methodArgs.isEmpty) "_" else s"Seq(${methodArgs.rep(_.name, ", ")}, _*)"
+              val overloadId = m.overloadId
+              val cleanedMethodName = ScalaNameUtil.cleanScalaName(m.name)
+              val matcherName = {
+                overloadId match {
+                  case None => cleanedMethodName
+                  case Some(id) =>
+                    // make a legal identifier containing overload id
+                    if (ScalaNameUtil.isOpName(cleanedMethodName)) {
+                      id + "_" + cleanedMethodName
+                    } else {
+                      cleanedMethodName + "_" + id
+                    }
+                }
+              }
+
+              val matchResult = ((if (isCompanion) Nil else List("receiver")) ++ methodArgs.map(_.name)) match {
+                case Seq() => "()"
                 case Seq(single) => single
                 case many => many.mkString("(", ", ", ")")
               }
-              s"Option[$receiverAndArgTypes${typeVars.opt(typeVars => s" forSome {${typeVars.map("type " + _).mkString("; ")}}")}]"
-            }
-            val explicitArgsStr = explicitArgs.rep(_.name, ", ")
-            val overloadNum = counter(m.name)
-            counter(m.name) = overloadNum + 1
-            val matcherName = {
-              val cleanedName = ScalaNameUtil.cleanScalaName(m.name)
-              val suffix =
-                if (ScalaNameUtil.isOpName(cleanedName))
-                  "!" * overloadNum
-                else if (overloadNum > 0)
-                  overloadNum.toString
-                else
+              val annotationCheck =
+                if (overloadIdsByName(m.name).size == 1)
                   ""
-              cleanedName + suffix
-            }
+                else
+                  overloadId match {
+                    case None =>
+                      "&& method.getAnnotation(classOf[scalan.OverloadId]) == null"
+                    case Some(id) =>
+                      s""" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "$id" }"""
+                  }
 
-            val matchResult = ((if (isCompanion) Nil else List("receiver")) ++ explicitArgs.map(_.name)) match {
-              case Seq() => "()"
-              case Seq(single) => single
-              case many => many.mkString("(", ", ", ")")
-            }
+              val methodPattern =
+                s"""MethodCall(receiver, method, $methodArgsPattern) if receiver.elem.isInstanceOf[$traitElem] && method.getName == "${m.name}"$annotationCheck"""
+              // TODO we can use name-based extractor to improve performance when we switch to Scala 2.11
+              // See http://hseeberger.github.io/blog/2013/10/04/name-based-extractors-in-scala-2-dot-11/
 
-            // TODO we can use name-based extractor to improve performance when we switch to Scala 2.11
-            // See http://hseeberger.github.io/blog/2013/10/04/name-based-extractors-in-scala-2-dot-11/
-
-            // _* is for implicit arguments
-            s"""    object $matcherName {
-             |      def unapply(d: Def[_]): $returnType = d match {
-             |        case MethodCall(receiver, method, ${if (explicitArgs.isEmpty) "_" else s"Seq($explicitArgsStr, _*)"}) if method.getName == "${m.name}" && receiver.elem.isInstanceOf[$traitElem] =>
-             |          Some($matchResult).asInstanceOf[$returnType]
-             |        case _ => None
-             |      }
-             |      def unapply(exp: Exp[_]): $returnType = exp match {
-             |        case Def(d) => unapply(d)
-             |        case _ => None
-             |      }
-             |    }""".stripAndTrim
+              s"""    object $matcherName {
+               |      def unapply(d: Def[_]): $returnType = d match {
+               |        case $methodPattern =>
+               |          Some($matchResult).asInstanceOf[$returnType]
+               |        case _ => None
+               |      }
+               |      def unapply(exp: Exp[_]): $returnType = exp match {
+               |        case Def(d) => unapply(d)
+               |        case _ => None
+               |      }
+               |    }""".stripAndTrim
+          }
         }
+
+        s"""  object ${e.name}Methods {
+           |${methods.map(methodExtractor).mkString("\n\n")}
+           |  }""".stripMargin
       }
 
-      s"""  object ${e.name}Methods {
-         |${e.body.collect { case m: SMethodDef => methodExtractor(m) }.mkString("\n\n")}
-         |  }""".stripMargin
+      s"""${methodExtractorsString1(e, false)}
+         |
+         |${e.companion.opt(methodExtractorsString1(_, true))}""".stripMargin
     }
-
-    def methodExtractorsString(e: STraitOrClassDef, td: TemplateData) =
-      methodExtractorsString1(e, false) + "\n\n" + e.companion.opt(methodExtractorsString1(_, true))
 
     def getFileHeader = {
       s"""

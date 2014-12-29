@@ -78,11 +78,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
   object UserTypeArray {
     def unapply(s: Exp[_]): Option[Iso[_, _]] = {
       s.elem match {
-        case pae: ArrayElem[_] =>
-          pae.eItem match {
-            case e: ViewElem[_, _] => Some(e.iso)
-            case _ => None
-          }
+        case ArrayElem(UnpackableElem(iso)) => Some(iso)
         case _ => None
       }
     }

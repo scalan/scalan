@@ -32,6 +32,17 @@ trait Views extends Elems { self: Scalan =>
     lazy val defaultRep = iso.defaultRepTo    
   }
 
+  object ViewElem {
+    def unapply[From, To](ve: ViewElem[From, To]): Option[Iso[From, To]] = Some(ve.iso)
+  }
+
+  object UnpackableElem {
+    def unapply(e: ViewElem[_, _]) =
+      if (shouldUnpack(e)) Some(e.iso) else None
+  }
+
+  def shouldUnpack(e: ViewElem[_, _]): Boolean
+
   trait CompanionElem[T] extends Elem[T] {
     override def isEntityType = true
   }
@@ -135,6 +146,8 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
   trait UserTypeSeq[T, TImpl <: T] extends Reifiable[T] { thisType: T =>
     def self = this
   }
+
+  def shouldUnpack(e: ViewElem[_, _]) = true
 }
 
 trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
@@ -157,28 +170,10 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   def removeUnpackTester(tester: UnpackTester): Unit =
     unpackTesters -= tester
 
+  def shouldUnpack(e: ViewElem[_, _]) = unpackTesters.exists(_(e))
+
   trait UserTypeDef[T, TImpl <: T] extends ReifiableExp[T, TImpl] {
     def uniqueOpId = selfType.name
-  }
-
-  object UserTypeDef {
-    def unapply[T](d: Def[T]): Option[Iso[_, T]] = {
-      val eT = d.selfType
-      eT match {
-        case e: ViewElem[_, _] if unpackTesters.exists(_(e)) => Some(e.iso)
-        case _ => None
-      }
-    }
-  }
-
-  object UserTypeSym {
-    def unapply[T](s: Exp[T]): Option[Iso[_, T]] = {
-      val eT = s.elem
-      eT match {
-        case e: ViewElem[_, _] if unpackTesters.exists(_(e)) => Some(e.iso)
-        case _ => None
-      }
-    }
   }
 
   object HasViews {
@@ -206,19 +201,13 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       d match {
         case view: View[a, T] => Some((view.source, view.iso))
         // TODO make UserTypeDef extend View with lazy iso/source?
-        case UserTypeDef(iso: Iso[a, T]) => Some((iso.from(d.self), iso))
-        case _ => None
-      }
-  }
-
-  object UnpackableVar {
-    // only called when we know e is a Var
-    def unapply[T](e: Exp[T]): Option[Unpacked[T]] =
-      e.elem match {
-        case viewElem: ViewElem[a, T] @unchecked =>
-          val iso = viewElem.iso
-          Some((iso.from(e), iso))
-        case _ => None
+        case _ =>
+          val eT = d.selfType
+          eT match {
+            case UnpackableElem(iso: Iso[a, T]) =>
+              Some((iso.from(d.self), iso))
+            case _ => None
+          }
       }
   }
 
@@ -226,7 +215,13 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     def unapply[T](e: Exp[T]): Option[Unpacked[T]] =
       e match {
         case Def(d) => UnpackableDef.unapply(d)
-        case _ => UnpackableVar.unapply(e)
+        case _ =>
+          val eT = e.elem
+          eT match {
+            case UnpackableElem(iso: Iso[a, T]) =>
+              Some((iso.from(e), iso))
+            case _ => None
+          }
       }
   }
 
@@ -328,8 +323,8 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     case _ => super.rewriteDef(d)
   }
 
-  override def rewriteVar[T](v: Exp[T]) = v match {
-    case Var(UserTypeSym(iso: Iso[a, _])) =>
+  override def rewriteVar[T](v: Exp[T]) = v.elem match {
+    case UnpackableElem(iso: Iso[a, T]) =>
       iso.to(fresh[a](Lazy(iso.eFrom)))
     case _ => super.rewriteVar(v)
   }

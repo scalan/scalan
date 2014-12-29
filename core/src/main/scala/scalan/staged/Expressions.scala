@@ -42,8 +42,6 @@ trait BaseExp extends Base { self: ScalanExp =>
     def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.name},${eB.name}]"
     def uniqueOpId: String
     def mirror(f: Transformer): Rep[T]
-    def decompose: Option[Rep[T]] = None
-    def isScalarOp: Boolean = true
   }
 
   type Def[+A] = ReifiableExp[A,A]
@@ -53,25 +51,6 @@ trait BaseExp extends Base { self: ScalanExp =>
   case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
     override def mirror(t: Transformer) = self
-    override def hashCode: Int = (41 + x.hashCode)
-
-    override def equals(other: Any) =
-      other match {
-        case c @ Const(otherX) => selfType == c.selfType && (otherX match {
-          case otherArr: Array[_] => x match {
-            case arr: Array[_] =>
-              arr.sameElements(otherArr)
-            case _ => false
-          }
-          case _ => otherX == x
-        })
-        case _ => false
-      }
-
-    override def toString = "Const(" + (x match {
-      case arr: Array[_] => arr.mkString("Array(", ", ", ")")
-      case _ => x
-    }) + ")"
   }
 
   abstract class Transformer {
@@ -107,8 +86,7 @@ trait BaseExp extends Base { self: ScalanExp =>
    * Updates the universe of symbols and definitions, then rewrites until fix-point
    * @param d A new graph node to add to the universe
    * @param newSym A symbol that will be used if d doesn't exist in the universe
-   * @param et Type descriptor of the resulting type of node d
-   * @tparam T
+   * @tparam T Type of the result
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T]
@@ -140,9 +118,9 @@ trait BaseExp extends Base { self: ScalanExp =>
       }
   }
 
-  object Def {
-    def unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
-  }
+  def def_unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
+
+  override def repReifiable_getElem[T <: Reifiable[T]](x: Rep[T]): Elem[T] = x.elem
 
   object Var {
     def unapply[T](e: Exp[T]): Option[Exp[T]] = e match {
@@ -154,6 +132,12 @@ trait BaseExp extends Base { self: ScalanExp =>
   object ExpWithElem {
     def unapply[T](s: Exp[T]): Option[(Exp[T],Elem[T])] = Some((s, s.elem))
   }
+
+  /**
+   * Used for staged methods which can't be implemented based on other methods.
+   * This just returns a value of the desired type.
+   */
+  def defaultImpl[T](implicit elem: Elem[T]): Exp[T] = elem.defaultRepValue
 
   trait TableEntry[+T] {
     def sym: Exp[T]
@@ -174,14 +158,12 @@ trait BaseExp extends Base { self: ScalanExp =>
     def unapply[T](e: Exp[T]): Option[TableEntry[T]] = findDefinition(e)
   }
 
-  def decompose[T](d: Def[T]): Exp[T] = d.decompose match {
-    case None => null
-    case Some(sym) => sym
-  }
+  def decompose[T](d: Def[T]): Option[Exp[T]] = None
 
   // dependencies
   def syms(e: Any): List[Exp[_]] = e match {
     case s: Exp[_] => List(s)
+    case s: Seq[_] => s.toList.flatMap(syms(_))
     case p: Product => p.productIterator.toList.flatMap(syms(_))
     case _ => Nil
   }

@@ -46,13 +46,8 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
 
   override def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops =
     x match {
-      case Def(d) => d match {
-        case Const(c) => c
-        case _ =>
-          getProxy(x, ct)
-      }
-      case _ =>
-        getProxy(x, ct)
+      case Def(Const(c)) => c
+      case _ => getProxy(x, ct)
     }
 
   private def getProxy[Ops](x: Rep[Ops], ct: ClassTag[Ops]) = {
@@ -157,7 +152,11 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
       val zero = e.defaultRepValue
       val Def(zeroNode) = zero
       try {
-        val res = m.invoke(zeroNode, args: _*)
+        val args1 = args.map {
+          case e: Exp[_] => e.elem.defaultRepValue
+          case nonExp => nonExp
+        }
+        val res = m.invoke(zeroNode, args1: _*)
         res match {
           case s: Exp[_] => s.elem
           case other => !!!(s"Staged method call ${ScalaNameUtil.cleanScalaName(m.toString)} must return an Exp, but got $other")

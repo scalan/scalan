@@ -42,6 +42,7 @@ trait ScalanSeq
   with NumericOpsSeq
   with FunctionsSeq
   with IfThenElseSeq
+  with MonoidsSeq
   with ArrayOpsSeq
   with ArrayViewsSeq
 
