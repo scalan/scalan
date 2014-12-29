@@ -14,6 +14,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     def length: Rep[Int]
     def arr: Rep[Array[A @uncheckedVariance]]
     def apply(i: Rep[Int]): Rep[A]
+    @OverloadId("many")
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A]
     def map[B: Elem](f: Rep[A @uncheckedVariance] => Rep[B]): PA[B] = PArray(arr.map(f))
     def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): PA[B] = PArray(arr.mapBy(f))
@@ -96,6 +97,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     def arr = Array.replicate(len, ())
     def length = len
     def apply(i: Rep[Int]) = ()
+    @OverloadId("many")
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[Unit] = UnitArray(indices.length)
     def slice(offset: Rep[Int], length: Rep[Int]) = UnitArray(length)
   }
@@ -108,6 +110,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     def length = arr.length
     def apply(i: Rep[Int]) = arr(i)
     def slice(offset: Rep[Int], length: Rep[Int]) = BaseArray(arr.slice(offset, length))
+    @OverloadId("many")
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A] = BaseArray(arr(indices))
   }
   trait BaseArrayCompanion extends ConcreteClass1[BaseArray] {
@@ -143,6 +146,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     def length = as.length
     def slice(offset: Rep[Int], length: Rep[Int]) =
       PairArray(as.slice(offset, length), bs.slice(offset, length))
+    @OverloadId("many")
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[(A, B)] =
       PairArray(as(indices), bs(indices))
   }
@@ -165,6 +169,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     }
     def arr: Rep[Array[PArray[A]]] = ???
     def slice(offset: Rep[Int], length: Rep[Int]) = ???
+    @OverloadId("many")
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[PArray[A]] = ???
   }
   trait NestedArrayCompanion extends ConcreteClass1[NestedArray] {

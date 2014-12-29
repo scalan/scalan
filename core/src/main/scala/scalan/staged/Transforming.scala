@@ -52,7 +52,7 @@ trait Transforming { self: ScalanExp =>
 
   object DecomposeRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = x match {
-      case Def(d) => d.decompose match {
+      case Def(d) => decompose(d) match {
         case None => x
         case Some(y) => y
       }

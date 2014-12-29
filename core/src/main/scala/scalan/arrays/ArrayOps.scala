@@ -12,13 +12,13 @@ trait ArrayOps { self: Scalan =>
     def apply(ns: Arr[Int])(implicit o: Overloaded1): Arr[T] = array_applyMany(xs, ns)
     def length = array_length(xs)
     def mapBy[R: Elem](f: Rep[T => R]) = array_map(xs, f)
-    def map[R: Elem](f: Rep[T] => Rep[R])(implicit o: Overloaded1) = array_map(xs, fun(f))
+    def map[R: Elem](f: Rep[T] => Rep[R]) = array_map(xs, fun(f))
     def reduce(implicit m: RepMonoid[T]) = array_reduce(xs)
     def scan(implicit m: RepMonoid[T]) = array_scan(xs)
     def zip[U](ys: Arr[U]): Arr[(T, U)] = array_zip(xs, ys)
     def slice(start: Rep[Int], length: Rep[Int]): Arr[T] = array_slice(xs, start, length)
     def filterBy(f: Rep[T => Boolean]) = array_filter(xs, f)
-    def filter(f: Rep[T] => Rep[Boolean])(implicit o: Overloaded1) = array_filter(xs, fun(f))
+    def filter(f: Rep[T] => Rep[Boolean]) = array_filter(xs, fun(f))
     def grouped(size: Rep[Int]) = array_grouped(xs, size)
     def stride(start: Rep[Int], length: Rep[Int], stride: Rep[Int]) =
       array_stride(xs, start, length, stride)
@@ -31,6 +31,7 @@ trait ArrayOps { self: Scalan =>
     def tabulate[T: Elem](n: Rep[Int])(f: Rep[Int] => Rep[T]): Arr[T] =
       rangeFrom0(n).map(f)
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = array_replicate(len, v)
+    def empty[T: Elem] = replicate(0, element[T].defaultRepValue)
   }
   val Array: ArrayCompanion
 
@@ -106,7 +107,7 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   }
   def array_replicate[T: Elem](len: Rep[Int], v: Rep[T]): Arr[T] = scala.Array.fill(len)(v)
   def array_slice[T](xs: Arr[T], start: Rep[Int], length: Rep[Int]): Arr[T] =
-    genericArrayOps(xs).slice(start, length)
+    genericArrayOps(xs).slice(start, start + length)
   def array_rangeFrom0(n: Rep[Int]): Arr[Int] = 0.until(n).toArray
   def array_filter[T](xs: Array[T], f: T => Boolean): Array[T] =
     genericArrayOps(xs).filter(f)
@@ -271,6 +272,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       }
     case ArrayLength(Def(d2: Def[Array[a]]@unchecked)) =>
       d2.asDef[Array[a]] match {
+        case Const(scalaArray) => toRep(scalaArray.length)
         case ArrayApplyMany(_, is) => is.length
         case ArrayMap(xs, _) =>
           implicit val eT = xs.elem.eItem

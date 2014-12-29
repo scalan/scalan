@@ -74,11 +74,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     override lazy val freeVars = super.freeVars
     override lazy val schedule = super.schedule
 
-    override def isScalarOp: Boolean = {
-      val allScalars = !(schedule exists { tp => !tp.rhs.isScalarOp })
-      allScalars
-    }
-
     def isGlobalLambda: Boolean =
       freeVars.forall { x => x.isConst || x.isLambda }
   }
@@ -256,7 +251,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-  def mergeFunctions[A:Elem,B:Elem,C:Elem](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] =
-    fun { (x: Rep[A]) => Pair(f(x), g(x))  }
+  def functionSplit[A, B, C](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] =
+    fun { (x: Rep[A]) => Pair(f(x), g(x)) }(Lazy(f.elem.eDom))
 }
 

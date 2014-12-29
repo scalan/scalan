@@ -57,10 +57,6 @@ object ScalanBuild extends Build {
     },
     opts, commonDeps) ++ testSettings ++ releaseSettings
 
-  lazy val noPublishingSettings = Seq(
-    publishArtifact := false,
-    publishTo := None)
-
   lazy val ItTest = config("it").extend(Test)
 
   lazy val PerfTest = config("perf").extend(Test)
@@ -119,5 +115,5 @@ object ScalanBuild extends Build {
     .aggregate(common, meta, core, ce)
     .withTestConfigsAndCommonSettings
     .settings(crossCompilation)
-    .settings(noPublishingSettings: _*)
+    .settings(publishArtifact := false)
 }

@@ -7,7 +7,7 @@ class BoilerplateTool {
     "Arr" -> "Array"
   )
   lazy val coreConfig = CodegenConfig(
-    srcPath = "core/src/main/scala",
+    srcPath = "../core/src/main/scala",
     entityFiles = List(
     ),
     seqContextTrait = "ScalanSeq",
@@ -22,7 +22,7 @@ class BoilerplateTool {
     "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
   lazy val liteConfig = CodegenConfig(
-    srcPath = "community-edition/src/main/scala",
+    srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
       , "scalan/linalgebra/Vectors.scala"
@@ -47,7 +47,10 @@ class BoilerplateTool {
       "scalan/math/Vectors.scala",
       "scalan/collections/Sets.scala",
       "scalan/dists/Dists.scala",
-      "scalan/parrays/PArrays.scala"
+    // don't regenerate by default because this will break
+    // FuncArray. See comments there.
+//      "scalan/parrays/PArrays.scala",
+      "scalan/iterators/Iterators.scala"
     ),
     seqContextTrait = "ScalanEnterpriseSeq",
     stagedContextTrait = "ScalanEnterpriseExp",
@@ -56,20 +59,25 @@ class BoilerplateTool {
       "scalan.common.Default"),
     coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
   )
+  lazy val scalanFullConfig = scalanConfig.copy(entityFiles = scalanConfig.entityFiles :+ "scalan/parrays/PArrays.scala")
 
-  def getConfigs(args: Array[String]) = args.flatMap(_ match {
-    case "core" => List(coreConfig)
-    case "lite" => List(liteConfig)
-    case "ee" => List(scalanConfig)
-    case "all" => List(coreConfig, liteConfig, scalanConfig)
-    case _ => List(coreConfig)
-  }).toSet.toSeq
+  def getConfigs(args: Array[String]): Seq[CodegenConfig] =
+    args.flatMap { arg => configsMap.getOrElse(arg,
+      sys.error(s"Unknown codegen config $arg. Allowed values: ${configsMap.keySet.mkString(", ")}"))
+    }.distinct
+
+  val configsMap = Map(
+    "core" -> List(coreConfig),
+    "ce" -> List(liteConfig),
+    "ee" -> List(scalanConfig),
+    "ee-full" -> List(scalanFullConfig),
+    "all" -> List(coreConfig, liteConfig, scalanConfig)
+  )
 
   def main(args: Array[String]) {
     val configs = getConfigs(args)
 
     configs.foreach { new EntityManagement(_).generateAll() }
-    println("Ok.")
   }
 }
 
