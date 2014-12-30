@@ -271,6 +271,10 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     case Tup(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
       PairView((a, b.asRep[b]))(identityIso(a.elem), iso2).self
 
+    case block@Block(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) => iso2.to(Block(a.asRep[a], b.asRep[b])(iso2.eFrom))
+    case block@Block(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) => iso2.to(Block(a, b.asRep[b])(iso2.eFrom))
+    case block@Block(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) => Block(a.asRep[a], b)(block.selfType.asElem[b])
+
     case First(Def(view@PairView(source))) =>
       view.iso1.to(source._1)
     case Second(Def(view@PairView(source))) =>

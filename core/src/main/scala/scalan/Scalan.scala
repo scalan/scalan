@@ -22,6 +22,7 @@ trait Scalan
   with MathOps
   with Functions
   with IfThenElse
+  with Blocks
   with Monoids
   with ArrayOps
   with ArrayViews
@@ -42,6 +43,7 @@ trait ScalanSeq
   with NumericOpsSeq
   with FunctionsSeq
   with IfThenElseSeq
+  with BlocksSeq
   with MonoidsSeq
   with ArrayOpsSeq
   with ArrayViewsSeq
@@ -64,6 +66,7 @@ trait ScalanExp
   with NumericOpsExp
   with FunctionsExp
   with IfThenElseExp
+  with BlocksExp
   with Transforming
   with ArrayOpsExp
   with ArrayViewsExp
