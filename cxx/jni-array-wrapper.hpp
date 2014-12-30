@@ -27,10 +27,24 @@ struct jni_type_traits<jint>
 };
 
 template<>
+struct jni_type_traits<jbyte>
+{
+    static constexpr bool isPrimitive = true;
+    static const char* className() { return "B"; }
+};
+
+template<>
 struct jni_type_traits<jdoubleArray>
 {
     static constexpr bool isPrimitive = false;
     static const char* className() { return "[D"; }
+};
+
+template<>
+struct jni_type_traits<jbyteArray>
+{
+    static constexpr bool isPrimitive = false;
+    static const char* className() { return "[B"; }
 };
 
 template<class T> 
@@ -38,6 +52,13 @@ struct jni_type
 {
     typedef jobject type;
     typedef jobjectArray array_type;
+};
+
+template<>
+struct jni_type<int8_t>
+{
+    typedef jbyte type;
+    typedef jbyteArray array_type;
 };
 
 template<>
