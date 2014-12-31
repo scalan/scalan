@@ -36,9 +36,9 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     def roots: List[Exp[_]]
 
     def freeVars: Set[Exp[_]] = {
-      val alldeps = schedule flatMap { tp => tp.rhs.getDeps }
-      val external = alldeps filter { s => !(isLocalDef(s) || boundVars.contains(s))  }
-      external.toSet
+      val alldeps = schedule.flatMap { tp => tp.rhs.getDeps }.toSet
+      val free = alldeps filter { s => !(isLocalDef(s) || boundVars.contains(s)) }
+      free
     }
 
     def schedule: Schedule = {
