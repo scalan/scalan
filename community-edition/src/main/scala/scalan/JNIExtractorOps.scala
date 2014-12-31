@@ -61,14 +61,26 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
 
   private def unbox[A: Elem](x: Rep[JNIType[A]]): Rep[A] = {
     val clazz = JNI_GetObjectClass(x)
-    val fid = JNI_GetFieldID[A,A](clazz, "value")
+
+    val fn = "value"
+    val sig = x.elem match {
+      case (jnie: JNITypeElem[_]) =>
+        org.objectweb.asm.Type.getType(jnie.tElem.classTag.runtimeClass).getDescriptor
+    }
+    val fid = JNI_GetFieldID[A,A](clazz, Const(fn), Const(sig))
 
     JNI_GetPrimitiveFieldValue(fid, x)
   }
 
-  private def get_field[A: Elem, T: Elem](fn: Rep[String], x: Rep[JNIType[T]]): Rep[A] = {
+  private def get_field[A: Elem, T: Elem](fn: String, x: Rep[JNIType[T]]): Rep[A] = {
     val clazz = JNI_GetObjectClass(x)
-    val fid = JNI_GetFieldID[A,T](clazz, fn)
+
+    val sig = x.elem match {
+      case (jnie: JNITypeElem[_]) =>
+        org.objectweb.asm.Type.getType(jnie.tElem.classTag.runtimeClass.getField(fn).getType).getDescriptor
+    }
+
+    val fid = JNI_GetFieldID[A,T](clazz, Const(fn), Const(sig))
 
     element[A] match {
       case elem if !(elem <:< AnyRefElement) =>
@@ -115,12 +127,12 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
     override def mirror(t: Transformer) = JNI_GetObjectClass(t(x))
   }
 
-  case class JNI_GetFieldID[A: Elem, T: Elem](clazz: Rep[JNIClass[T]], fname: Rep[String]) extends Def[JNIFieldID[A]] {
+  case class JNI_GetFieldID[A: Elem, T: Elem](clazz: Rep[JNIClass[T]], fname: Rep[String], sig: Rep[String]) extends Def[JNIFieldID[A]] {
     def fieldType = element[A]
     def classType = element[T]
     override def selfType = element[JNIFieldID[A]]
     override def uniqueOpId = "JNI_GetFieldID"
-    override def mirror(t: Transformer) = JNI_GetFieldID[A,T](t(clazz), t(fname))
+    override def mirror(t: Transformer) = JNI_GetFieldID[A,T](t(clazz), t(fname), t(sig))
   }
 
   case class JNI_GetObjectFieldValue[A: Elem, T: Elem](fid: Rep[JNIFieldID[A]], x: Rep[JNIType[T]]) extends Def[JNIType[A]] {
