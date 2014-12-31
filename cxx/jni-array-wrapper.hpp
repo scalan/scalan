@@ -47,8 +47,8 @@ struct jni_type_traits<jbyteArray>
     static const char* className() { return "[B"; }
 };
 
-template<class T> 
-struct jni_type 
+template<class T>
+struct jni_type
 {
     typedef jobject type;
     typedef jobjectArray array_type;
@@ -84,7 +84,7 @@ struct __JNIArray
 
     static ElemType get( const JNIEnv *env, const type anArray, int32_t index )
     {
-	return const_cast<JNIEnv*>(env)->GetObjectArrayElement(anArray, index);
+        return const_cast<JNIEnv*>(env)->GetObjectArrayElement(anArray, index);
     }
 };
 
@@ -98,12 +98,12 @@ struct __JNIArray<ElemType, true>
 
     static ElemType *getElements(const JNIEnv *env, const type anArray, jboolean *isCopy)
     {
-	return reinterpret_cast<ElemType*>( const_cast<JNIEnv*>(env)->GetPrimitiveArrayCritical( anArray, isCopy ) );
+        return reinterpret_cast<ElemType*>( const_cast<JNIEnv*>(env)->GetPrimitiveArrayCritical( anArray, isCopy ) );
     }
 
     static void release(const JNIEnv *env, const type anArray, const elem_type* anElems, jint aMode )
     {
-	const_cast<JNIEnv*>(env)->ReleasePrimitiveArrayCritical(anArray, const_cast<elem_type*>(anElems), aMode );
+        const_cast<JNIEnv*>(env)->ReleasePrimitiveArrayCritical(anArray, const_cast<elem_type*>(anElems), aMode );
     }
 };
 
@@ -121,44 +121,44 @@ public:
     {}
 
 
-    explicit 
+    explicit
     jni_array( const JNIEnv *anEnv, const jni_array_t& aJNIArray ) : env(anEnv) , jniArray(aJNIArray) , sz(const_cast<JNIEnv*>(this->env)->GetArrayLength( this->jniArray ))
     {
-	raw_array = JNIArray<T>::getElements( this->env, this->jniArray, nullptr );
-//	std::cout << "jni_array( const JNIEnv *anEnv, const jni_array_t& aJNIArray ): " << raw_array << " " << sizeof(T) << std::endl;
+        raw_array = JNIArray<T>::getElements( this->env, this->jniArray, nullptr );
+        //	std::cout << "jni_array( const JNIEnv *anEnv, const jni_array_t& aJNIArray ): " << raw_array << " " << sizeof(T) << std::endl;
     }
 
     jni_array( const jni_array& anArray ) = delete;
-   
+
     jni_array( jni_array&& anArray ) : env(anArray.env), jniArray(anArray.jniArray), sz(anArray.sz)
     {
-	this->raw_array = anArray.raw_array;
-	anArray.reset();
-//	std::cout << "jni_array( jni_array&& anArray ): " << raw_array << std::endl;
+        this->raw_array = anArray.raw_array;
+        anArray.reset();
+        //	std::cout << "jni_array( jni_array&& anArray ): " << raw_array << std::endl;
     }
 
     ~jni_array()
     {
-//	std::cout << "~jni_array(): " << raw_array << std::endl;
-  	if( this->env != nullptr && this->raw_array != nullptr )
-  	{
- 	    JNIArray<T>::release( this->env, this->jniArray, this->raw_array, 0 );
- 	}
+        //	std::cout << "~jni_array(): " << raw_array << std::endl;
+        if( this->env != nullptr && this->raw_array != nullptr )
+        {
+            JNIArray<T>::release( this->env, this->jniArray, this->raw_array, 0 );
+        }
     }
 
     int32_t size() const { return this->sz; }
 
     const T& operator[]( size_t idx ) const
     {
-	return this->raw_array[idx];
+        return this->raw_array[idx];
     }
 
     const jni_array<T>& operator=( jni_array&& anArray )
     {
-//	std::cout << "jni_array<T>& operator=( jni_array&& anArray )" << std::endl;
-	this->reset( anArray.env, anArray.jniArray, anArray.sz, anArray.raw_array );
-	anArray.reset();
-	return *this;
+        //	std::cout << "jni_array<T>& operator=( jni_array&& anArray )" << std::endl;
+        this->reset( anArray.env, anArray.jniArray, anArray.sz, anArray.raw_array );
+        anArray.reset();
+        return *this;
     }
 
 private:
@@ -170,10 +170,10 @@ private:
 
     void reset( const JNIEnv* e0 = nullptr, const jni_array_t a0 = nullptr, int32_t sz0 = 0, const T* raw_array0 = nullptr )
     {
-	const_cast<JNIEnv*&>(env) = const_cast<JNIEnv*>(e0);
-	const_cast<jni_array_t&>(jniArray) = const_cast<jni_array_t>(a0);
-	const_cast<int32_t&>(sz) = sz0;
-	const_cast<T*&>(raw_array) = const_cast<T*>(raw_array0);
+        const_cast<JNIEnv*&>(env) = const_cast<JNIEnv*>(e0);
+        const_cast<jni_array_t&>(jniArray) = const_cast<jni_array_t>(a0);
+        const_cast<int32_t&>(sz) = sz0;
+        const_cast<T*&>(raw_array) = const_cast<T*>(raw_array0);
     }
 };
 
