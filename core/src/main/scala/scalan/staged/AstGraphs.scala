@@ -313,14 +313,12 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     }
     override def toString = {
       val Def(IfThenElse(cond,_,_)) = ifSym
-      val msg =
-        s"""
-           |${ifSym} = if (${cond}) then
-           |  ${thenBody.schedule.map(tp => s"${tp.sym} -> ${tp.rhs}" ).mkString("\n")}
-           |else
-           |  ${elseBody.schedule.map(tp => s"${tp.sym} -> ${tp.rhs}" ).mkString("\n")}
-         """.stripMargin
-      msg
+      s"""
+         |${ifSym} = if (${cond}) then
+         |  ${thenBody.schedule.map(tp => s"${tp.sym} -> ${tp.rhs}").mkString("\n")}
+         |else
+         |  ${elseBody.schedule.map(tp => s"${tp.sym} -> ${tp.rhs}").mkString("\n")}
+       """.stripMargin
     }
   }
 
@@ -338,16 +336,13 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     val startNodes = st.flatMap(e => findDefinition(e).toList)
 
     def succ(tp: TableEntry[_]): Schedule = {
-      //println("dep"+d +"="+dep(d.rhs))
       val ns = neighbours(tp.sym)
       ns.flatMap { e =>
-        //println(d + "->" + e)
         findDefinition(e).toList
       }
     }
 
-    GraphUtil.stronglyConnectedComponents[TableEntry[_]](startNodes)(succ).flatten
+    val components = GraphUtil.stronglyConnectedComponents[TableEntry[_]](startNodes)(succ)
+    components.flatten
   }
-
-  def buildScheduleForResult(s: Exp[_]): Schedule = buildScheduleForResult(Seq(s), _.getDeps)
 }

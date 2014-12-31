@@ -170,13 +170,10 @@ trait BaseExp extends Base { self: ScalanExp =>
   }
 
   def dep(e: Exp[_]): List[Exp[_]] = e match {
-    case Def(d: Product) => syms(d)
+    case Def(d) => syms(d)
     case _ => Nil
   }
-  def dep(e: Def[_]): List[Exp[_]] = e match {
-    case d: Product => syms(d)
-    case _ => Nil
-  }
+  def dep(d: Def[_]): List[Exp[_]] = syms(d)
 
   implicit class ExpForSomeOps(symbol: Exp[_]) {
     def inputs: List[Exp[Any]] = dep(symbol)
