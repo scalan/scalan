@@ -319,6 +319,10 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
               b => MethodCall(foldD.right(b), m, args)(resultElem)
             )(resultElem)
             res.asInstanceOf[Exp[_]]
+          case IfThenElse(cond, t, e) => {
+            implicit val elem = call.selfType
+            IF (cond) { MethodCall(t, m, args)(elem) } ELSE { MethodCall(e, m, args)(elem) }
+          }
           case _ =>
             super.rewriteDef(d)
         }
