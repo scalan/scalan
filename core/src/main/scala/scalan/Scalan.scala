@@ -19,6 +19,7 @@ trait Scalan
   with OrderingOps
   with Equal
   with NumericOps
+  with StringOps
   with MathOps
   with Functions
   with IfThenElse
