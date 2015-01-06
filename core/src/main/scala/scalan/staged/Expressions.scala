@@ -212,6 +212,13 @@ trait BaseExp extends Base { self: ScalanExp =>
     def asDef[T] = d.asInstanceOf[Def[T]]
   }
 
+  case class HasArg(predicate: Exp[_] => Boolean) {
+    def unapply[T](d: Def[T]): Option[Def[T]] = {
+      val args = dep(d)
+      if (args.exists(predicate)) Some(d) else None
+    }
+  }
+
   final def rewrite[T](s: Exp[T]): Exp[_] = s match {
     case Def(d) => rewriteDef(d)
     case _ => rewriteVar(s)

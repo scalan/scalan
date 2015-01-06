@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.collections.{ListOpsExp, ListOpsSeq, ListOps}
+import scalan.collections._
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.arrays._
@@ -32,6 +32,7 @@ trait Scalan
 trait ScalanDsl
   extends Scalan
   with ListOps
+  with ListViews
 
 trait ScalanSeq
   extends Scalan
@@ -55,6 +56,7 @@ trait ScalanCtxSeq
   extends ScalanDsl
   with ScalanSeq
   with ListOpsSeq
+  with ListViewsSeq
 
 trait ScalanExp
   extends Scalan
@@ -81,3 +83,4 @@ trait ScalanCtxExp
   with Expressions
   with GraphVizExport
   with ListOpsExp
+  with ListViewsExp

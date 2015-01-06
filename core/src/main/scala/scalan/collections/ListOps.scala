@@ -38,7 +38,7 @@ trait ListOps { self: Scalan =>
   }
   val List: ListCompanion
 
-  class ListElem[T](val eItem: Elem[T]) extends Element[List[T]] {
+  case class ListElem[T](val eItem: Elem[T]) extends Element[List[T]] {
     override def isEntityType = eItem.isEntityType
 
     lazy val tag = {
