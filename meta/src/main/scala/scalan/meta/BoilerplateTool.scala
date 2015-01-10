@@ -61,6 +61,34 @@ class BoilerplateTool {
   )
   lazy val scalanFullConfig = scalanConfig.copy(entityFiles = scalanConfig.entityFiles :+ "scalan/parrays/PArrays.scala")
 
+  val effectsTypeSynonims = Map(
+    "MonadRep"    -> "Monad",
+    "RFree"       -> "Free",
+    "RCoproduct"  -> "Coproduct",
+    "RepReader" -> "Reader",
+    "RepInteract" -> "Interact",
+    "RepAuth" -> "Auth"
+    // declare your type synonims for User Defined types here (see type PA[A] = Rep[PArray[A]])
+  )
+  lazy val effectsConfig = CodegenConfig(
+    srcPath = "../scalan-effects/src/main/scala",
+    entityFiles = List(
+      //"scalan/monads/Monads.scala"
+      //, "scalan/monads/Functors.scala"
+      "scalan/monads/Frees.scala"
+      //"scalan/monads/Coproducts.scala"
+      //"scalan/monads/Interactions.scala"
+      //"scalan/monads/Auths.scala"
+      //"scalan/monads/Readers.scala"
+    ),
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._",
+      "scalan.common.Default"),
+    effectsTypeSynonims
+  )
+
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
     args.flatMap { arg => configsMap.getOrElse(arg,
       sys.error(s"Unknown codegen config $arg. Allowed values: ${configsMap.keySet.mkString(", ")}"))
@@ -71,6 +99,7 @@ class BoilerplateTool {
     "ce" -> List(liteConfig),
     "ee" -> List(scalanConfig),
     "ee-full" -> List(scalanFullConfig),
+    "effects" -> List(effectsConfig),
     "all" -> List(coreConfig, liteConfig, scalanConfig)
   )
 

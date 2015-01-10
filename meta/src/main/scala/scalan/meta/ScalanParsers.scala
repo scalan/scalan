@@ -88,7 +88,15 @@ object ScalanAst {
   case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
   case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
 
-  case class STpeArg(name: String, bound: Option[STpeExpr], contextBound: List[String])
+  case class STpeArg(name: String, bound: Option[STpeExpr], contextBound: List[String], tparams: List[STpeArg] = Nil) {
+    def isHighKind = !tparams.isEmpty
+    def declaration: String =
+      if (isHighKind) {
+        val params = tparams.map(_.declaration).mkString(",")
+        s"$name[$params]"
+      }
+      else name
+  }
   type STpeArgs = List[STpeArg]
 
   case class SMethodArg(name: String, tpe: STpeExpr, default: Option[SExpr])
@@ -255,7 +263,8 @@ trait ScalanParsers {
           Some(tpt.toString)
         case _ => None
       }.flatten
-      STpeArg(tdTree.name, bound, contextBounds)
+      val tparams = tdTree.tparams.map(tpeArg)
+      STpeArg(tdTree.name, bound, contextBounds, tparams)
     }
 
     typeParams.map(tpeArg)
