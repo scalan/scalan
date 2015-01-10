@@ -243,6 +243,10 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
         case _ =>
           super.rewriteDef(d)
       }
+    case ListReplicate(Def(Const(len)), Def(c : Const[a] @unchecked)) => {
+      implicit val eA = c.selfType
+      Const(scala.List.fill(len)(c.x))
+    }
     case ListMap(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
     case ListMap(Def(d2), f: Rep[Function1[a, b]]@unchecked) =>
       d2.asDef[List[a]] match {
