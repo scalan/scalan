@@ -50,7 +50,6 @@ trait PArraysAbs extends PArrays
       UnitArray(len)
     }
     lazy val tag = {
-
       weakTypeTag[UnitArray]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[UnitArray]](UnitArray(0))
@@ -109,7 +108,6 @@ trait PArraysAbs extends PArrays
       BaseArray(arr)
     }
     lazy val tag = {
-      implicit val tagA = element[A].tag
       weakTypeTag[BaseArray[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[BaseArray[A]]](BaseArray(element[Array[A]].defaultRepValue))
@@ -168,8 +166,6 @@ trait PArraysAbs extends PArrays
       PairArray(as, bs)
     }
     lazy val tag = {
-      implicit val tagA = element[A].tag
-      implicit val tagB = element[B].tag
       weakTypeTag[PairArray[A, B]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[PairArray[A, B]]](PairArray(element[PArray[A]].defaultRepValue, element[PArray[B]].defaultRepValue))
@@ -229,7 +225,6 @@ trait PArraysAbs extends PArrays
       NestedArray(values, segments)
     }
     lazy val tag = {
-      implicit val tagA = element[A].tag
       weakTypeTag[NestedArray[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[NestedArray[A]]](NestedArray(element[PArray[A]].defaultRepValue, element[PArray[(Int,Int)]].defaultRepValue))

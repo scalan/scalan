@@ -166,7 +166,6 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |      $className(${fields.rep()})
         |    }
         |    lazy val tag = {
-        |${c.tpeArgs.rep(a => s"      implicit val tag${a.name} = ${if (a.isHighKind) "container" else "element"}[${a.name}].tag", "\n")}
         |      weakTypeTag[$className${typesUse}]
         |    }
         |    lazy val defaultRepTo = Default.defaultVal[Rep[$className${typesUse}]]($className(${fieldTypes.rep(zeroSExpr(_))}))

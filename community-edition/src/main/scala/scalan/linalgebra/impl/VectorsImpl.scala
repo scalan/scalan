@@ -53,7 +53,6 @@ trait VectorsAbs extends Vectors
       DenseVector(coords)
     }
     lazy val tag = {
-      implicit val tagT = element[T].tag
       weakTypeTag[DenseVector[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[DenseVector[T]]](DenseVector(element[PArray[T]].defaultRepValue))
@@ -112,7 +111,6 @@ trait VectorsAbs extends Vectors
       SparseVector(nonZeroIndices, nonZeroValues, length)
     }
     lazy val tag = {
-      implicit val tagT = element[T].tag
       weakTypeTag[SparseVector[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector[T]]](SparseVector(element[Array[Int]].defaultRepValue, element[PArray[T]].defaultRepValue, 0))

@@ -71,11 +71,12 @@ class BoilerplateTool {
     // declare your type synonims for User Defined types here (see type PA[A] = Rep[PArray[A]])
   )
   lazy val effectsConfig = CodegenConfig(
-    srcPath = "../scalan-effects/src/main/scala",
+    srcPath = "../../scalan-effects/src/main/scala",
     entityFiles = List(
       //"scalan/monads/Monads.scala"
       //, "scalan/monads/Functors.scala"
-      "scalan/monads/Frees.scala"
+      "scalan/monads/FreeMs.scala"
+      //"scalan/io/Frees.scala"
       //"scalan/monads/Coproducts.scala"
       //"scalan/monads/Interactions.scala"
       //"scalan/monads/Auths.scala"
