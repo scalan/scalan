@@ -28,6 +28,7 @@ trait Scalan
   with Monoids
   with ArrayOps
   with ArrayViews
+  with Exceptions
 
 trait ScalanDsl
   extends Scalan
@@ -51,6 +52,7 @@ trait ScalanSeq
   with MonoidsSeq
   with ArrayOpsSeq
   with ArrayViewsSeq
+  with ExceptionsSeq
 
 trait ScalanCtxSeq
   extends ScalanDsl
@@ -76,6 +78,7 @@ trait ScalanExp
   with Transforming
   with ArrayOpsExp
   with ArrayViewsExp
+  with ExceptionsExp
 
 trait ScalanCtxExp
   extends ScalanDsl
