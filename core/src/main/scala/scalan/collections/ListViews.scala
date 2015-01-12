@@ -132,6 +132,13 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       val compIso = composeIso(view2.innerIso, view1.innerIso)
       implicit val eAB = compIso.eTo
       ViewList(arr)(compIso)
+    case ListFoldLeft(Def(view: ViewList[a, b]@unchecked), init: Rep[s] @unchecked, step) => {
+      val iso = view.innerIso
+      implicit val eA = iso.eFrom
+      implicit val eB = iso.eTo
+      implicit val eS = init.elem
+      view.source.foldLeft(init)(fun { (p: Rep[(s, a)]) => step.asRep[((s, b)) => s](Pair(p._1, iso.to(p._2)))})
+    }
     case ListFoldRight(Def(view: ViewList[a, b]@unchecked), init: Rep[s] @unchecked, step) => {
       val iso = view.innerIso
       implicit val eA = iso.eFrom
@@ -139,8 +146,19 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       implicit val eS = init.elem
       view.source.foldRight(init)(fun { (p: Rep[(a, s)]) => step.asRep[((b, s)) => s](Pair(iso.to(p._1), p._2))})
     }
+    case ListFoldLeft(xs: Rep[List[a]] @unchecked,
+                      HasViews(initWithoutView, iso: Iso[s1, s2] @unchecked), f) => {
+      val init = initWithoutView.asRep[s1]
+      val step = f.asRep[((s2,a))=>s2]
+      implicit val eA = xs.elem.eItem
+      implicit val eS1 = iso.eFrom
+      implicit val eS2 = iso.eTo
+      val res = xs.foldLeft(init)(fun {(p: Rep[(s1,a)]) =>
+        iso.from(step(Pair(iso.to(p._1), p._2)))})
+      iso.to(res)
+    }
     case ListFoldRight(xs: Rep[List[a]] @unchecked,
-    HasViews(initWithoutView, iso: Iso[s1, s2] @unchecked), f) => {
+                       HasViews(initWithoutView, iso: Iso[s1, s2] @unchecked), f) => {
       val init = initWithoutView.asRep[s1]
       val step = f.asRep[((a,s2))=>s2]
       implicit val eA = xs.elem.eItem
