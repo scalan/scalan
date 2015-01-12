@@ -22,6 +22,7 @@ trait ListOps { self: Scalan =>
     def filterBy(f: Rep[T => Boolean]) = list_filter(xs, f)
     def filter(f: Rep[T] => Rep[Boolean]) = list_filter(xs, fun(f))
     def ::(x: Rep[T]) = list_cons(x, xs)
+    def reverse = list_reverse(xs)
     //def grouped(size: Rep[Int]) = list_grouped(xs, size)
     //def stride(start: Rep[Int], length: Rep[Int], stride: Rep[Int]) =
     //  list_stride(xs, start, length, stride)
@@ -79,6 +80,7 @@ trait ListOps { self: Scalan =>
   
   def list_filter[T](xs: Lst[T], f: Rep[T => Boolean]): Lst[T]
   def list_cons[T](x: Rep[T], xs: Lst[T]): Lst[T]
+  def list_reverse[T](xs: Lst[T]): Lst[T]
 //  def list_grouped[T](xs: Lst[T], size: Rep[Int]): Lst[List[T]]
 //
 //  // require: start in xs.indices && start + length * stride in xs.indices
@@ -126,6 +128,7 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
   def list_rangeFrom0(n: Rep[Int]): Lst[Int] = 0.until(n).toList
   def list_filter[T](xs: List[T], f: T => Boolean): List[T] =xs.filter(f)
   def list_cons[T](x: Rep[T], xs: Lst[T]): Lst[T] = x :: xs
+  def list_reverse[T](xs: Lst[T]): Lst[T] = xs.reverse
 
 //  def list_grouped[T](xs: Lst[T], size: Rep[Int]): Lst[List[T]] = {
 //    implicit val ct = listToClassTag(xs)
@@ -194,6 +197,9 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
   case class ListCons[T](x: Exp[T], xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
     override def mirror(t: Transformer) = ListCons(t(x), t(xs))
   }
+  case class ListReverse[T](xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
+    override def mirror(t: Transformer) = ListReverse(t(xs))
+  }
 
   val List: ListCompanion = new ListCompanion
 
@@ -227,6 +233,8 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
 
   def list_cons[T](x: Rep[T], xs: Lst[T]): Lst[T] =
     withElemOf(x) { implicit eT => ListCons(x, xs) }
+  def list_reverse[T](xs: Lst[T]): Lst[T] =
+    withElemOfList(xs) { implicit eT => ListReverse(xs) }
 
   override def rewriteDef[T](d: Def[T]) = d match {
     case ListLength(Def(d2: Def[List[a]]@unchecked)) =>
