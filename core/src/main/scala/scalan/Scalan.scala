@@ -29,6 +29,7 @@ trait Scalan
   with ArrayOps
   with ArrayViews
   with Exceptions
+  with Thunks
 
 trait ScalanDsl
   extends Scalan
@@ -53,6 +54,7 @@ trait ScalanSeq
   with ArrayOpsSeq
   with ArrayViewsSeq
   with ExceptionsSeq
+  with ThunksSeq
 
 trait ScalanCtxSeq
   extends ScalanDsl
@@ -79,6 +81,7 @@ trait ScalanExp
   with ArrayOpsExp
   with ArrayViewsExp
   with ExceptionsExp
+  with ThunksExp
 
 trait ScalanCtxExp
   extends ScalanDsl

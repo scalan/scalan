@@ -37,7 +37,7 @@ trait LmsBridge[A, B] {
   }
 
   /* Mirror block */
-  def mirrorBlockToLms[R](m: Mirror)(block: scalan.DefBlock, dflt: scalan.Rep[_]): () => lms.Exp[R] = { () =>
+  def mirrorBlockToLms[R](m: Mirror)(block: scalan.DefBlock[_], dflt: scalan.Rep[_]): () => lms.Exp[R] = { () =>
     val (_, symMirror, _) = m
     val sched = block.scheduleSingleLevel
     val (blockExps, _, _) = mirrorDefs(m)(block, sched)

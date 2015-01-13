@@ -233,7 +233,7 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
         val tbody = ts.filter(tp => !(eSet.contains(tp.sym) || cSet.contains(tp.sym) || isUsedBeforeIf(tp.sym)))
         val ebody = es.filter(tp => !(tSet.contains(tp.sym) || cSet.contains(tp.sym) || isUsedBeforeIf(tp.sym)))
 
-        IfBranches(thisGraph, ifSym, DefBlock(List(t), tbody), DefBlock(List(e), ebody))
+        IfBranches(thisGraph, ifSym, DefBlock(t, tbody), DefBlock(e, ebody))
       }
 
       def assignBranch(sym: Exp[_], ifSym: Exp[_], thenOrElse: Boolean) = {
@@ -285,11 +285,6 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     def isAssignedToIfBranch(sym: Exp[_]) = branches.assignments.contains(sym)
   }
 
-  case class DefBlock(val roots: List[Exp[_]], override val schedule: Schedule) extends AstGraph {
-    override def boundVars = Nil
-    override lazy val freeVars = super.freeVars
-  }
-
   /** When stored in Map, describes for each key the branch of the symbol
     * @param ifSym      symbol of the related IfThenElse definition
     * @param thenOrElse true if the symbol is assigned to then branch, false if to the else branch
@@ -306,13 +301,15 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     * @param thenBody  schedule of `then` branch
     * @param elseBody  schedule of `else` branch
     */
-  case class IfBranches(graph: AstGraph, ifSym: Exp[_], thenBody: DefBlock, elseBody: DefBlock)
+  case class IfBranches(graph: AstGraph, ifSym: Exp[_], thenBody: DefBlock[_], elseBody: DefBlock[_])
   {
     // filter out definitions from this branches that were reassigned to the deeper levels
     def cleanBranches(assignments: Map[Exp[_], BranchPath]) = {
       val thenClean = thenBody.schedule.filter(tp => assignments(tp.sym).ifSym == ifSym)
       val elseClean = elseBody.schedule.filter(tp => assignments(tp.sym).ifSym == ifSym)
-      IfBranches(graph, ifSym, thenBody.copy(schedule = thenClean), elseBody.copy(schedule = elseClean))
+      IfBranches(graph, ifSym,
+        DefBlock(thenBody.root, thenClean),
+        DefBlock(elseBody.root, elseClean))
     }
     override def toString = {
       val Def(IfThenElse(cond,_,_)) = ifSym
