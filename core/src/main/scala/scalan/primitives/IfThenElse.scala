@@ -77,6 +77,13 @@ trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanExp =>
     case Tup(Def(IfThenElse(c1, t1, e1)), Def(IfThenElse(c2, t2, e2))) if c1 == c2 =>
       IF (c1) THEN { Pair(t1, t2) } ELSE { Pair(e1, e2) }
 
+    case apply: Apply[a, b] => apply.f match {
+      case Def(IfThenElse(c, t, e)) => {
+        IF (c) { t.asRep[a=>b](apply.arg) } ELSE { e.asRep[a=>b](apply.arg) }
+      }
+      case _ => super.rewriteDef(d)
+    }
+
     case _ => super.rewriteDef(d)
   }
 }

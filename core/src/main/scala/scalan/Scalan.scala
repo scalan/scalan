@@ -1,5 +1,6 @@
 package scalan
 
+import scalan.collections._
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.arrays._
@@ -19,15 +20,21 @@ trait Scalan
   with OrderingOps
   with Equal
   with NumericOps
+  with StringOps
   with MathOps
   with Functions
   with IfThenElse
+  with Blocks
   with Monoids
   with ArrayOps
   with ArrayViews
+  with Exceptions
+  with Thunks
 
 trait ScalanDsl
   extends Scalan
+  with ListOps
+  with ListViews
 
 trait ScalanSeq
   extends Scalan
@@ -42,13 +49,18 @@ trait ScalanSeq
   with NumericOpsSeq
   with FunctionsSeq
   with IfThenElseSeq
+  with BlocksSeq
   with MonoidsSeq
   with ArrayOpsSeq
   with ArrayViewsSeq
+  with ExceptionsSeq
+  with ThunksSeq
 
 trait ScalanCtxSeq
   extends ScalanDsl
   with ScalanSeq
+  with ListOpsSeq
+  with ListViewsSeq
 
 trait ScalanExp
   extends Scalan
@@ -64,12 +76,17 @@ trait ScalanExp
   with NumericOpsExp
   with FunctionsExp
   with IfThenElseExp
+  with BlocksExp
   with Transforming
   with ArrayOpsExp
   with ArrayViewsExp
+  with ExceptionsExp
+  with ThunksExp
 
 trait ScalanCtxExp
   extends ScalanDsl
   with ScalanExp
   with Expressions
   with GraphVizExport
+  with ListOpsExp
+  with ListViewsExp

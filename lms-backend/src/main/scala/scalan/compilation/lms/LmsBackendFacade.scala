@@ -44,6 +44,10 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with Or
   def LTEQ[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
     left <= right
   }
+  def block[A: Manifest, B: Manifest](left: Exp[A], right: Exp[B]) = {
+    val l = left
+    right
+  }
   def GT[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
     left > right
   }

@@ -14,6 +14,9 @@ trait ArrayOps { self: Scalan =>
     def mapBy[R: Elem](f: Rep[T => R]) = array_map(xs, f)
     def map[R: Elem](f: Rep[T] => Rep[R]) = array_map(xs, fun(f))
     def reduce(implicit m: RepMonoid[T]) = array_reduce(xs)
+
+    def fold[S: Elem](init: Rep[S], f: Rep[((S, T)) => S]): Rep[S] = array_fold[T, S](xs, init, f)
+
     def scan(implicit m: RepMonoid[T]) = array_scan(xs)
     def zip[U](ys: Arr[U]): Arr[(T, U)] = array_zip(xs, ys)
     def slice(start: Rep[Int], length: Rep[Int]): Arr[T] = array_slice(xs, start, length)
@@ -48,7 +51,8 @@ trait ArrayOps { self: Scalan =>
   def array_map[T, R: Elem](xs: Arr[T], f: Rep[T => R]): Arr[R]
   
   def array_reduce[T](xs: Arr[T])(implicit m: RepMonoid[T]): Rep[T]
-  
+  def array_fold[T,S:Elem](xs: Arr[T], init:Rep[S], f:Rep[((S,T))=>S]): Rep[S]
+
   // provide: res._1.length == xs.length && res._2 = array_reduce(xs)
   def array_scan[T](xs: Arr[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)]
 
@@ -99,6 +103,13 @@ trait ArrayOpsSeq extends ArrayOps { self: ScalanSeq =>
   def array_length[T](a: Arr[T]): Rep[Int] = a.length
   def array_map[T, R: Elem](xs: Array[T], f: T => R) = genericArrayOps(xs).map(f)
   def array_reduce[T](xs: Arr[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x, y) => m.append((x, y)))
+  def array_fold[T, S: Elem](xs: Arr[T], init: Rep[S], f: Rep[((S, T)) => S]): Rep[S] = {
+    var state = init
+    for (x <- xs) {
+      state = f((state, x))
+    }
+    state
+  }
   def array_zip[T, U](xs: Array[T], ys: Array[U]): Array[(T, U)] = (xs, ys).zipped.toArray
   def array_scan[T](xs: Array[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)] = {
     val scan = xs.scan(m.zero)((x, y) => m.append((x, y)))
@@ -161,6 +172,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     def selfType = xs.elem.eItem
     override def mirror(t: Transformer) = ArrayReduce[T](t(xs), m)
   }
+  case class ArrayFold[T,S:Elem](xs: Exp[Array[T]], init:Exp[S], f:Exp[((S,T))=>S]) extends BaseDef[S] with ArrayMethod[T] {
+    override def mirror(t: Transformer) = ArrayFold(t(xs), t(init), t(f))
+  }
   case class ArrayScan[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T])(implicit val selfType: Elem[(Array[T], T)]) extends Def[(Array[T], T)] with ArrayMethod[T] {
     override def mirror(t: Transformer) = ArrayScan[T](t(xs), m)
   }
@@ -192,6 +206,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
 
   def array_reduce[T](xs: Arr[T])(implicit m: RepMonoid[T]) =
     withElemOfArray(xs) { implicit eT => ArrayReduce(xs, m) }
+  def array_fold[T,S:Elem](xs: Arr[T], init:Rep[S], f:Rep[((S,T))=>S]): Rep[S] =
+    withElemOfArray(xs) { implicit eT => ArrayFold(xs, init, f) }
 
   def array_scan[T](xs: Arr[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)] =
     ArrayScan(xs, m)

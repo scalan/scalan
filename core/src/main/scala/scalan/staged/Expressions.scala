@@ -120,7 +120,7 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   def def_unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
 
-  override def repReifiable_getElem[T <: Reifiable[T]](x: Rep[T]): Elem[T] = x.elem
+  override def repReifiable_getElem[T <: Reifiable[_]](x: Rep[T]): Elem[T] = x.elem
 
   object Var {
     def unapply[T](e: Exp[T]): Option[Exp[T]] = e match {
@@ -210,6 +210,13 @@ trait BaseExp extends Base { self: ScalanExp =>
     }
 
     def asDef[T] = d.asInstanceOf[Def[T]]
+  }
+
+  case class HasArg(predicate: Exp[_] => Boolean) {
+    def unapply[T](d: Def[T]): Option[Def[T]] = {
+      val args = dep(d)
+      if (args.exists(predicate)) Some(d) else None
+    }
   }
 
   final def rewrite[T](s: Exp[T]): Exp[_] = s match {

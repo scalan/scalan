@@ -50,8 +50,7 @@ trait PArraysAbs extends PArrays
       UnitArray(len)
     }
     lazy val tag = {
-
-      typeTag[UnitArray]
+      weakTypeTag[UnitArray]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[UnitArray]](UnitArray(0))
     lazy val eTo = new UnitArrayElem(this)
@@ -109,8 +108,7 @@ trait PArraysAbs extends PArrays
       BaseArray(arr)
     }
     lazy val tag = {
-      implicit val tagA = element[A].tag
-      typeTag[BaseArray[A]]
+      weakTypeTag[BaseArray[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[BaseArray[A]]](BaseArray(element[Array[A]].defaultRepValue))
     lazy val eTo = new BaseArrayElem[A](this)
@@ -168,9 +166,7 @@ trait PArraysAbs extends PArrays
       PairArray(as, bs)
     }
     lazy val tag = {
-      implicit val tagA = element[A].tag
-      implicit val tagB = element[B].tag
-      typeTag[PairArray[A, B]]
+      weakTypeTag[PairArray[A, B]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[PairArray[A, B]]](PairArray(element[PArray[A]].defaultRepValue, element[PArray[B]].defaultRepValue))
     lazy val eTo = new PairArrayElem[A, B](this)
@@ -229,8 +225,7 @@ trait PArraysAbs extends PArrays
       NestedArray(values, segments)
     }
     lazy val tag = {
-      implicit val tagA = element[A].tag
-      typeTag[NestedArray[A]]
+      weakTypeTag[NestedArray[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[NestedArray[A]]](NestedArray(element[PArray[A]].defaultRepValue, element[PArray[(Int,Int)]].defaultRepValue))
     lazy val eTo = new NestedArrayElem[A](this)
@@ -470,7 +465,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
   object BaseArrayMethods {
     object elem {
       def unapply(d: Def[_]): Option[Rep[BaseArray[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[BaseArrayElem[_]] && method.getName == "elem" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[BaseArrayElem[A] forSome {type A}] && method.getName == "elem" =>
           Some(receiver).asInstanceOf[Option[Rep[BaseArray[A]] forSome {type A}]]
         case _ => None
       }
@@ -482,7 +477,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object length {
       def unapply(d: Def[_]): Option[Rep[BaseArray[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[BaseArrayElem[_]] && method.getName == "length" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[BaseArrayElem[A] forSome {type A}] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[BaseArray[A]] forSome {type A}]]
         case _ => None
       }
@@ -494,7 +489,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[BaseArray[A]], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[BaseArrayElem[_]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[BaseArrayElem[A] forSome {type A}] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, i)).asInstanceOf[Option[(Rep[BaseArray[A]], Rep[Int]) forSome {type A}]]
         case _ => None
       }
@@ -506,7 +501,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object slice {
       def unapply(d: Def[_]): Option[(Rep[BaseArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(offset, length, _*)) if receiver.elem.isInstanceOf[BaseArrayElem[_]] && method.getName == "slice" =>
+        case MethodCall(receiver, method, Seq(offset, length, _*)) if receiver.elem.isInstanceOf[BaseArrayElem[A] forSome {type A}] && method.getName == "slice" =>
           Some((receiver, offset, length)).asInstanceOf[Option[(Rep[BaseArray[A]], Rep[Int], Rep[Int]) forSome {type A}]]
         case _ => None
       }
@@ -518,7 +513,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object apply_many {
       def unapply(d: Def[_]): Option[(Rep[BaseArray[A]], Arr[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(indices, _*)) if receiver.elem.isInstanceOf[BaseArrayElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+        case MethodCall(receiver, method, Seq(indices, _*)) if receiver.elem.isInstanceOf[BaseArrayElem[A] forSome {type A}] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
           Some((receiver, indices)).asInstanceOf[Option[(Rep[BaseArray[A]], Arr[Int]) forSome {type A}]]
         case _ => None
       }
@@ -567,7 +562,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object arr {
       def unapply(d: Def[_]): Option[Rep[PairArray[A, B]] forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[PairArrayElem[_, _]] && method.getName == "arr" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[PairArrayElem[A, B] forSome {type A; type B}] && method.getName == "arr" =>
           Some(receiver).asInstanceOf[Option[Rep[PairArray[A, B]] forSome {type A; type B}]]
         case _ => None
       }
@@ -579,7 +574,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[PairArray[A, B]], Rep[Int]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[PairArrayElem[_, _]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[PairArrayElem[A, B] forSome {type A; type B}] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, i)).asInstanceOf[Option[(Rep[PairArray[A, B]], Rep[Int]) forSome {type A; type B}]]
         case _ => None
       }
@@ -591,7 +586,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object length {
       def unapply(d: Def[_]): Option[Rep[PairArray[A, B]] forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[PairArrayElem[_, _]] && method.getName == "length" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[PairArrayElem[A, B] forSome {type A; type B}] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[PairArray[A, B]] forSome {type A; type B}]]
         case _ => None
       }
@@ -603,7 +598,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object slice {
       def unapply(d: Def[_]): Option[(Rep[PairArray[A, B]], Rep[Int], Rep[Int]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(offset, length, _*)) if receiver.elem.isInstanceOf[PairArrayElem[_, _]] && method.getName == "slice" =>
+        case MethodCall(receiver, method, Seq(offset, length, _*)) if receiver.elem.isInstanceOf[PairArrayElem[A, B] forSome {type A; type B}] && method.getName == "slice" =>
           Some((receiver, offset, length)).asInstanceOf[Option[(Rep[PairArray[A, B]], Rep[Int], Rep[Int]) forSome {type A; type B}]]
         case _ => None
       }
@@ -615,7 +610,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object apply_many {
       def unapply(d: Def[_]): Option[(Rep[PairArray[A, B]], Arr[Int]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(indices, _*)) if receiver.elem.isInstanceOf[PairArrayElem[_, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+        case MethodCall(receiver, method, Seq(indices, _*)) if receiver.elem.isInstanceOf[PairArrayElem[A, B] forSome {type A; type B}] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
           Some((receiver, indices)).asInstanceOf[Option[(Rep[PairArray[A, B]], Arr[Int]) forSome {type A; type B}]]
         case _ => None
       }
@@ -662,7 +657,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
   object NestedArrayMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[NestedArray[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[NestedArrayElem[_]] && method.getName == "length" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[NestedArrayElem[A] forSome {type A}] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[NestedArray[A]] forSome {type A}]]
         case _ => None
       }
@@ -674,7 +669,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[NestedArray[A]], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[NestedArrayElem[_]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[NestedArrayElem[A] forSome {type A}] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, i)).asInstanceOf[Option[(Rep[NestedArray[A]], Rep[Int]) forSome {type A}]]
         case _ => None
       }
@@ -686,7 +681,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object arr {
       def unapply(d: Def[_]): Option[Rep[NestedArray[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[NestedArrayElem[_]] && method.getName == "arr" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[NestedArrayElem[A] forSome {type A}] && method.getName == "arr" =>
           Some(receiver).asInstanceOf[Option[Rep[NestedArray[A]] forSome {type A}]]
         case _ => None
       }
@@ -698,7 +693,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object slice {
       def unapply(d: Def[_]): Option[(Rep[NestedArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(offset, length, _*)) if receiver.elem.isInstanceOf[NestedArrayElem[_]] && method.getName == "slice" =>
+        case MethodCall(receiver, method, Seq(offset, length, _*)) if receiver.elem.isInstanceOf[NestedArrayElem[A] forSome {type A}] && method.getName == "slice" =>
           Some((receiver, offset, length)).asInstanceOf[Option[(Rep[NestedArray[A]], Rep[Int], Rep[Int]) forSome {type A}]]
         case _ => None
       }
@@ -710,7 +705,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object apply_many {
       def unapply(d: Def[_]): Option[(Rep[NestedArray[A]], Arr[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(indices, _*)) if receiver.elem.isInstanceOf[NestedArrayElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+        case MethodCall(receiver, method, Seq(indices, _*)) if receiver.elem.isInstanceOf[NestedArrayElem[A] forSome {type A}] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
           Some((receiver, indices)).asInstanceOf[Option[(Rep[NestedArray[A]], Arr[Int]) forSome {type A}]]
         case _ => None
       }
@@ -744,7 +739,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
   object PArrayMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "length" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[PArrayElem[A, _, _] forSome {type A}] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
         case _ => None
       }
@@ -756,7 +751,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object arr {
       def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "arr" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[PArrayElem[A, _, _] forSome {type A}] && method.getName == "arr" =>
           Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
         case _ => None
       }
@@ -768,7 +763,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[PArray[A]], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[PArrayElem[A, _, _] forSome {type A}] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, i)).asInstanceOf[Option[(Rep[PArray[A]], Rep[Int]) forSome {type A}]]
         case _ => None
       }
@@ -780,7 +775,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object apply_many {
       def unapply(d: Def[_]): Option[(Rep[PArray[A]], Arr[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(indices, _*)) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+        case MethodCall(receiver, method, Seq(indices, _*)) if receiver.elem.isInstanceOf[PArrayElem[A, _, _] forSome {type A}] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
           Some((receiver, indices)).asInstanceOf[Option[(Rep[PArray[A]], Arr[Int]) forSome {type A}]]
         case _ => None
       }
@@ -794,7 +789,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[PArray[A]], Rep[A => B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*)) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "mapBy" =>
+        case MethodCall(receiver, method, Seq(f, _*)) if receiver.elem.isInstanceOf[PArrayElem[A, _, _] forSome {type A}] && method.getName == "mapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[PArray[A]], Rep[A => B]) forSome {type A; type B}]]
         case _ => None
       }
@@ -806,7 +801,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object zip {
       def unapply(d: Def[_]): Option[(Rep[PArray[A]], PA[B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(ys, _*)) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "zip" =>
+        case MethodCall(receiver, method, Seq(ys, _*)) if receiver.elem.isInstanceOf[PArrayElem[A, _, _] forSome {type A}] && method.getName == "zip" =>
           Some((receiver, ys)).asInstanceOf[Option[(Rep[PArray[A]], PA[B]) forSome {type A; type B}]]
         case _ => None
       }
@@ -818,7 +813,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object slice {
       def unapply(d: Def[_]): Option[(Rep[PArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(offset, length, _*)) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "slice" =>
+        case MethodCall(receiver, method, Seq(offset, length, _*)) if receiver.elem.isInstanceOf[PArrayElem[A, _, _] forSome {type A}] && method.getName == "slice" =>
           Some((receiver, offset, length)).asInstanceOf[Option[(Rep[PArray[A]], Rep[Int], Rep[Int]) forSome {type A}]]
         case _ => None
       }
@@ -830,7 +825,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object reduce {
       def unapply(d: Def[_]): Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(m, _*)) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "reduce" =>
+        case MethodCall(receiver, method, Seq(m, _*)) if receiver.elem.isInstanceOf[PArrayElem[A, _, _] forSome {type A}] && method.getName == "reduce" =>
           Some((receiver, m)).asInstanceOf[Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}]]
         case _ => None
       }
@@ -842,7 +837,7 @@ trait PArraysExp extends PArraysAbs { self: ScalanExp with PArraysDsl =>
 
     object scan {
       def unapply(d: Def[_]): Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(m, _*)) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "scan" =>
+        case MethodCall(receiver, method, Seq(m, _*)) if receiver.elem.isInstanceOf[PArrayElem[A, _, _] forSome {type A}] && method.getName == "scan" =>
           Some((receiver, m)).asInstanceOf[Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}]]
         case _ => None
       }

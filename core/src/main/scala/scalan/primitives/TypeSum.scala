@@ -13,6 +13,8 @@ trait TypeSum { self: Scalan =>
     def isLeft: Rep[Boolean]
     def isRight: Rep[Boolean]
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R]
+    def mapSum[C:Elem,D:Elem](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) =
+      fold(l => toLeftSum[C,D](fl(l)), r => toRightSum[C,D](fr(r)))
   }
 
   implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B]
@@ -27,6 +29,12 @@ trait TypeSum { self: Scalan =>
 
   implicit class JoinSumOps[A:Elem](sum: Rep[A|A]) {
     def joinSum: Rep[A] = sum.fold(a => a, a => a)
+  }
+  implicit class OptionOps[A:Elem](opt: Rep[Unit|A]) {
+    def map[B:Elem](f: Rep[A] => Rep[B]) =
+      opt.mapSum(l => l, r => f(r))
+    def getOrElse[B >: A : Elem](default: Rep[B]): Rep[B] =
+      opt.fold(l => default, r => r)
   }
 }
 
@@ -112,6 +120,15 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
           } ELSE {
             foldD.right(right)
           }
+      }
+      case Def(IfThenElse(cond, Def(Right(right: Rep[b])), Def(Left(left: Rep[a])))) /*if !d.selfType.isEntityType*/ => {
+        // this rule is only applied when result of fold is base type.
+        // Otherwise it yields stack overflow as this rule is mutually recursive with lifting Views over IfThenElse
+        IF(cond) THEN {
+          foldD.right(right)
+        } ELSE {
+          foldD.left(left)
+        }
       }
       case Def(view: SumView[a1,a2,b1,b2]) if !d.selfType.isEntityType => {
         view.source.fold(x => foldD.left.asRep[b1 => T](view.iso1.to(x)), y => foldD.right.asRep[b2 => T](view.iso2.to(y)))(d.selfType)

@@ -47,8 +47,7 @@ trait MatricesAbs extends Matrices
       RowMajorMatrix(rows)
     }
     lazy val tag = {
-      implicit val tagT = element[T].tag
-      typeTag[RowMajorMatrix[T]]
+      weakTypeTag[RowMajorMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorMatrix[T]]](RowMajorMatrix(element[PArray[DenseVector[T]]].defaultRepValue))
     lazy val eTo = new RowMajorMatrixElem[T](this)
@@ -106,8 +105,7 @@ trait MatricesAbs extends Matrices
       RowMajorFlatMatrix(rmValues, numColumns)
     }
     lazy val tag = {
-      implicit val tagT = element[T].tag
-      typeTag[RowMajorFlatMatrix[T]]
+      weakTypeTag[RowMajorFlatMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorFlatMatrix[T]]](RowMajorFlatMatrix(element[PArray[T]].defaultRepValue, 0))
     lazy val eTo = new RowMajorFlatMatrixElem[T](this)
@@ -166,8 +164,7 @@ trait MatricesAbs extends Matrices
       RowMajorSparseMatrix(rows)
     }
     lazy val tag = {
-      implicit val tagT = element[T].tag
-      typeTag[RowMajorSparseMatrix[T]]
+      weakTypeTag[RowMajorSparseMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorSparseMatrix[T]]](RowMajorSparseMatrix(element[PArray[SparseVector[T]]].defaultRepValue))
     lazy val eTo = new RowMajorSparseMatrixElem[T](this)
@@ -283,7 +280,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
   object RowMajorMatrixMethods {
     object companion {
       def unapply(d: Def[_]): Option[Rep[RowMajorMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[_]] && method.getName == "companion" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[T] forSome {type T}] && method.getName == "companion" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -295,7 +292,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object numRows {
       def unapply(d: Def[_]): Option[Rep[RowMajorMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[_]] && method.getName == "numRows" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[T] forSome {type T}] && method.getName == "numRows" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -307,7 +304,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object numColumns {
       def unapply(d: Def[_]): Option[Rep[RowMajorMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[_]] && method.getName == "numColumns" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[T] forSome {type T}] && method.getName == "numColumns" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -319,7 +316,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object columns {
       def unapply(d: Def[_]): Option[Rep[RowMajorMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[_]] && method.getName == "columns" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[T] forSome {type T}] && method.getName == "columns" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -378,7 +375,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
   object RowMajorFlatMatrixMethods {
     object companion {
       def unapply(d: Def[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "companion" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[T] forSome {type T}] && method.getName == "companion" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -390,7 +387,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object numRows {
       def unapply(d: Def[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "numRows" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[T] forSome {type T}] && method.getName == "numRows" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -402,7 +399,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object columns {
       def unapply(d: Def[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "columns" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[T] forSome {type T}] && method.getName == "columns" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -414,7 +411,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object rows {
       def unapply(d: Def[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "rows" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[T] forSome {type T}] && method.getName == "rows" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -473,7 +470,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
   object RowMajorSparseMatrixMethods {
     object companion {
       def unapply(d: Def[_]): Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[_]] && method.getName == "companion" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[T] forSome {type T}] && method.getName == "companion" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -485,7 +482,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object columns {
       def unapply(d: Def[_]): Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[_]] && method.getName == "columns" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[T] forSome {type T}] && method.getName == "columns" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -497,7 +494,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object numRows {
       def unapply(d: Def[_]): Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[_]] && method.getName == "numRows" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[T] forSome {type T}] && method.getName == "numRows" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -509,7 +506,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object numColumns {
       def unapply(d: Def[_]): Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[_]] && method.getName == "numColumns" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[T] forSome {type T}] && method.getName == "numColumns" =>
           Some(receiver).asInstanceOf[Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -555,7 +552,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
   object MatrixMethods {
     object numColumns {
       def unapply(d: Def[_]): Option[Rep[Matrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MatrixElem[_, _, _]] && method.getName == "numColumns" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MatrixElem[T, _, _] forSome {type T}] && method.getName == "numColumns" =>
           Some(receiver).asInstanceOf[Option[Rep[Matrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -567,7 +564,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object numRows {
       def unapply(d: Def[_]): Option[Rep[Matrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MatrixElem[_, _, _]] && method.getName == "numRows" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MatrixElem[T, _, _] forSome {type T}] && method.getName == "numRows" =>
           Some(receiver).asInstanceOf[Option[Rep[Matrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -579,7 +576,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object rows {
       def unapply(d: Def[_]): Option[Rep[Matrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MatrixElem[_, _, _]] && method.getName == "rows" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MatrixElem[T, _, _] forSome {type T}] && method.getName == "rows" =>
           Some(receiver).asInstanceOf[Option[Rep[Matrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -591,7 +588,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object columns {
       def unapply(d: Def[_]): Option[Rep[Matrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MatrixElem[_, _, _]] && method.getName == "columns" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MatrixElem[T, _, _] forSome {type T}] && method.getName == "columns" =>
           Some(receiver).asInstanceOf[Option[Rep[Matrix[T]] forSome {type T}]]
         case _ => None
       }
@@ -603,7 +600,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object vector_* {
       def unapply(d: Def[_]): Option[(Rep[Matrix[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(vector, n, _*)) if receiver.elem.isInstanceOf[MatrixElem[_, _, _]] && method.getName == "$times" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "vector" } =>
+        case MethodCall(receiver, method, Seq(vector, n, _*)) if receiver.elem.isInstanceOf[MatrixElem[T, _, _] forSome {type T}] && method.getName == "$times" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "vector" } =>
           Some((receiver, vector, n)).asInstanceOf[Option[(Rep[Matrix[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -615,7 +612,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object matrix_* {
       def unapply(d: Def[_]): Option[(Rep[Matrix[T]], Matr[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(mat, n, _*)) if receiver.elem.isInstanceOf[MatrixElem[_, _, _]] && method.getName == "$times" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "matrix" } =>
+        case MethodCall(receiver, method, Seq(mat, n, _*)) if receiver.elem.isInstanceOf[MatrixElem[T, _, _] forSome {type T}] && method.getName == "$times" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "matrix" } =>
           Some((receiver, mat, n)).asInstanceOf[Option[(Rep[Matrix[T]], Matr[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -627,7 +624,7 @@ trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
 
     object companion {
       def unapply(d: Def[_]): Option[Rep[Matrix[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MatrixElem[_, _, _]] && method.getName == "companion" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MatrixElem[T, _, _] forSome {type T}] && method.getName == "companion" =>
           Some(receiver).asInstanceOf[Option[Rep[Matrix[T]] forSome {type T}]]
         case _ => None
       }

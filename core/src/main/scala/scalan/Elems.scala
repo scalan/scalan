@@ -18,7 +18,7 @@ trait Elems extends Base { self: Scalan =>
   @implicitNotFound(msg = "No Element available for ${A}.")
   abstract class Element[A] extends Serializable {
     def isEntityType: Boolean
-    def tag: TypeTag[A]
+    def tag: WeakTypeTag[A]
     final def classTag: ClassTag[A] = TagImplicits.typeTagToClassTag(tag)
     def defaultRep: Default[Rep[A]]
     def defaultRepValue = defaultRep.value
@@ -55,7 +55,7 @@ trait Elems extends Base { self: Scalan =>
     lazy val tag = {
       implicit val tA = eFst.tag
       implicit val tB = eSnd.tag
-      typeTag[(A, B)]
+      weakTypeTag[(A, B)]
     }
     lazy val defaultRep = defaultVal(Pair(eFst.defaultRepValue, eSnd.defaultRepValue))
   }
@@ -65,7 +65,7 @@ trait Elems extends Base { self: Scalan =>
     lazy val tag = {
       implicit val tA = eLeft.tag
       implicit val tB = eRight.tag
-      typeTag[A | B]
+      weakTypeTag[A | B]
     }
     lazy val defaultRep = defaultVal(toLeftSum[A, B](eLeft.defaultRepValue)(eRight))
   }
@@ -75,7 +75,7 @@ trait Elems extends Base { self: Scalan =>
     lazy val tag = {
       implicit val tA = eDom.tag
       implicit val tB = eRange.tag
-      typeTag[A => B]
+      weakTypeTag[A => B]
     }
     lazy val defaultRep = defaultVal(fun(funcRepDefault[A, B](eRange).value)(Lazy(eDom)))
   }
@@ -84,7 +84,7 @@ trait Elems extends Base { self: Scalan =>
     override def isEntityType = eItem.isEntityType
     lazy val tag = {
       implicit val tag1 = eItem.tag
-      implicitly[TypeTag[Array[A]]]
+      weakTypeTag[Array[A]]
     }
     lazy val defaultRep: Default[Rep[Array[A]]] = arrayRepDefault(eItem)
   }
@@ -126,7 +126,7 @@ trait Elems extends Base { self: Scalan =>
 
   object TagImplicits {
     implicit def elemToClassTag[A](implicit elem: Element[A]): ClassTag[A] = elem.classTag
-    implicit def typeTagToClassTag[A](implicit tag: TypeTag[A]): ClassTag[A] = ClassTag(tag.mirror.runtimeClass(tag.tpe))    
+    implicit def typeTagToClassTag[A](implicit tag: WeakTypeTag[A]): ClassTag[A] = ClassTag(tag.mirror.runtimeClass(tag.tpe))
   }
 
   //  implicit def elemElement[A](implicit elema: Elem[A]): Elem[Elem[A]] =
