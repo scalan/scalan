@@ -134,9 +134,38 @@ trait Transforming { self: ScalanExp =>
       lambdaStack.pop
 
       val newLambda = getMirroredLambdaDef(t2, newLambdaSym, lam)
-      createDefinition(newLambdaSym, newLambda)
+      thunkStack.top match {
+        case Some(scope) =>
+          val te = createDefinition(scope.thunkSym, newLambdaSym, newLambda)
+          scope += te
+        case None =>
+          createDefinition(globalThunkSym, newLambdaSym, newLambda)
+      }
 
       (t2 + (node -> newLambdaSym), newLambdaSym)
+    }
+
+    protected def mirrorThunk[A](t: Ctx, rewriter: Rewriter, node: Exp[Thunk[A]], thunk: DefBlock[A]): (Ctx, Exp[_]) = {
+      val newThunkSym = fresh(Lazy(node.elem))
+      val newScope = new ThunkScope(newThunkSym)
+
+      thunkStack.push(newScope)
+      val schedule = thunk.scheduleSyms
+      val (t1, newSchedule) = mirrorSymbols(t, rewriter, schedule)
+      thunkStack.pop
+
+      val newRoot = t1(thunk.root)
+      val newThunk = DefBlock(newRoot, newSchedule.map { case DefTableEntry(te) => te })
+
+      thunkStack.top match {
+        case Some(scope) =>
+          val te = createDefinition(scope.thunkSym, newThunkSym, newThunk)
+          scope += te
+        case None =>
+          createDefinition(globalThunkSym, newThunkSym, newThunk)
+      }
+
+      (t1 + (node -> newThunkSym), newThunkSym)
     }
 
     protected def isMirrored(t: Ctx, node: Exp[_]): Boolean = t.isDefinedAt(node)
@@ -149,6 +178,8 @@ trait Transforming { self: ScalanExp =>
           node match {
             case Def(lam: Lambda[a, b]) =>
               mirrorLambda(t, rewriter, node.asRep[a => b], lam)
+            case Def(th: DefBlock[a]) =>
+              mirrorThunk(t, rewriter, node.asRep[Thunk[a]], th)
             case Def(d) =>
               mirrorDef(t, rewriter, node, d)
             case _ =>
