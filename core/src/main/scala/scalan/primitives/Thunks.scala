@@ -1,5 +1,7 @@
 package scalan.primitives
 
+import scala.collection.mutable
+import scalan.compilation.GraphVizExport
 import scalan.{ScalanExp, ScalanSeq, Scalan}
 import scalan.common.{Default, Lazy}
 import scala.reflect.runtime.universe._
@@ -13,7 +15,7 @@ trait Thunks { self: Scalan =>
   val Thunk: ThunkCompanion = new ThunkCompanion
 
   implicit class RepThunkOps[T: Elem](t: Th[T]) {
-    def apply() = thunk_force(t)
+    def force() = thunk_force(t)
   }
   case class ThunkElem[A](val eItem: Elem[A]) extends Element[Thunk[A]] {
     override def isEntityType = eItem.isEntityType
@@ -39,7 +41,7 @@ trait ThunksSeq extends Thunks { self: ScalanSeq =>
   def thunk_force[A](t: Th[A]): Rep[A] = t.value
 }
 
-trait ThunksExp extends Thunks { self: ScalanExp =>
+trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
 
   case class DefBlock[A](val root: Exp[A], override val schedule: Schedule)
                         (implicit val eA: Elem[A] = root.elem)
@@ -48,9 +50,13 @@ trait ThunksExp extends Thunks { self: ScalanExp =>
 
     override def mirror(t: Transformer) = {
       val newSym = fresh[Thunk[A]]
-      val newSchedule = schedule.collect(tp => t(tp.sym) match {
-        case te@ TableEntry(_, _) => te
-      })
+      val newSchedule = for {
+        tp <- schedule
+        res <- t(tp.sym) match {
+          case te@TableEntry(_, _) => List(te)
+          case _ => Nil
+        }
+      } yield res
       val newThunk = DefBlock(t(root), newSchedule)
       toExp(newThunk, newSym)
     }
@@ -60,8 +66,55 @@ trait ThunksExp extends Thunks { self: ScalanExp =>
     val roots = List(root)
   }
 
-  def thunk_create[A](block: => Rep[A]): Rep[Thunk[A]] = {
-    ???
+  class ThunkScope(val body: mutable.Set[Exp[Any]] = mutable.Set()) {
+    def +=(s: Exp[Any]) =
+      body += s
+
+    def scheduleForResult(root: Exp[Any]): Schedule = {
+      buildScheduleForResult(Seq(root), _.getDeps.filter(body.contains(_)))
+    }
   }
-  def thunk_force[A](t: Th[A]): Rep[A] = ???
+
+  class ThunkStack {
+    var stack = new mutable.Stack[ThunkScope]()
+    def top: Option[ThunkScope] = stack.headOption
+    def push(e: ThunkScope): this.type = { stack.push(e); this }
+    def pop: ThunkScope = stack.pop
+  }
+  protected val thunkStack = new ThunkStack
+
+  def thunk_create[A](block: => Rep[A]): Rep[Thunk[A]] = {
+    val newScope = new ThunkScope
+
+    thunkStack.push(newScope)
+    val res = block  // execute block and add all new definitions to the top scope (see createDefinition)
+    thunkStack.pop
+
+    val schedule = newScope.scheduleForResult(res)
+    val scheduleSyms = schedule.map(_.sym)
+    val remaining = newScope.body -- scheduleSyms
+
+    thunkStack.top match {
+      case Some(parentScope) =>
+        parentScope.body ++= remaining
+      case None =>
+    }
+
+    implicit val eA = res.elem
+    DefBlock(res, schedule)
+  }
+
+  def thunk_force[A](t: Th[A]): Rep[A] = ThunkForce(t)
+
+  case class ThunkForce[A](thunk: Exp[Thunk[A]]) extends Def[A]
+  {
+    implicit def selfType = thunk.elem.eItem
+    lazy val uniqueOpId = name(selfType)
+    override def mirror(t: Transformer) = ThunkForce(t(thunk))
+  }
+
+  override protected def formatDef(d: Def[_]): String = d match {
+    case DefBlock(r, sch) => s"Thunk($r, [${sch.map(_.sym).mkString(",")}])"
+    case _ => super.formatDef(d)
+  }
 }

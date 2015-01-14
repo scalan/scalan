@@ -289,8 +289,15 @@ trait Expressions extends BaseExp { self: ScalanExp =>
       case Some(fSym) => TableEntry(s, d, fSym)
       case _ => TableEntry(s, d)
     }
+
     expToGlobalDefs += tp.sym -> tp
     defToGlobalDefs += tp.rhs -> tp
+
+    thunkStack.top match {
+      case Some(scope) =>
+        scope += tp.sym
+      case None =>
+    }
     tp
   }
 
