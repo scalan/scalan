@@ -1,6 +1,8 @@
 package scalan
 
 import scala.reflect.runtime.universe._
+import scalan.common.Default
+
 /**
  * Created by zotov on 12/9/14.
  */
@@ -59,6 +61,12 @@ trait JNIExtractorOpsSeq extends JNIExtractorOps { self: ScalanSeq =>
 
 trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
 
+  case class JNIStringConst(str: String) extends BaseDef[String] {
+    def uniqueOpId = toString
+    override def mirror(t: Transformer) = self
+  }
+
+
   private def unbox[A: Elem](x: Rep[JNIType[A]]): Rep[A] = {
     val clazz = JNI_GetObjectClass(x)
 
@@ -67,7 +75,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
       case (jnie: JNITypeElem[_]) =>
         org.objectweb.asm.Type.getType(jnie.tElem.classTag.runtimeClass).getDescriptor
     }
-    val fid = JNI_GetFieldID[A,A](clazz, Const(fn), Const(sig))
+    val fid = JNI_GetFieldID[A,A](clazz, JNIStringConst(fn), JNIStringConst(sig))
 
     JNI_GetPrimitiveFieldValue(fid, x)
   }
@@ -80,7 +88,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
         org.objectweb.asm.Type.getType(jnie.tElem.classTag.runtimeClass.getField(fn).getType).getDescriptor
     }
 
-    val fid = JNI_GetFieldID[A,T](clazz, Const(fn), Const(sig))
+    val fid = JNI_GetFieldID[A,T](clazz, JNIStringConst(fn), JNIStringConst(sig))
 
     element[A] match {
       case elem if !(elem <:< AnyRefElement) =>
@@ -103,7 +111,6 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
             var f2 = get_field("_2", x)(be, pe)
 
             Pair(f1, f2)
-
           case (earr: ArrayElem[a]) =>
             implicit val ea = earr.eItem
             ea match {
