@@ -62,8 +62,11 @@ trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
     //    implicit val classTag = eA.classTag
     //    manifest[T]
     case UnitElement => Manifest.Unit
+    case BoolElement => Manifest.Boolean
     case ByteElement => Manifest.Byte
+    case ShortElement => Manifest.Short
     case IntElement => Manifest.Int
+    case LongElement => Manifest.Long
     case FloatElement => Manifest.Float
     case DoubleElement => Manifest.Double
     case StringElement => manifest[String]
