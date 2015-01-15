@@ -4,13 +4,22 @@ import java.io.File
 import java.lang.reflect.Method
 import scala.language.reflectiveCalls
 import scalan.BaseTests
+import scalan.common.{SegmentsDslExp, SegmentsDsl}
 
 import scalan.{Scalan, ScalanCtxExp, ScalanCtxSeq}
 
 class ThunkTests extends BaseTests {
   val prefix = new File("test-out/scalan/primitives/thunk/")
 
+  trait TestContext extends ScalanCtxExp {
+    val subfolder: String
+    def emit(name: String, ss: Exp[_]*) =
+      emitDepGraph(ss.toList, new File(prefix + subfolder, s"/$name.dot"), false)
+  }
+
   trait MyProg extends Scalan {
+    val subfolder = "/myprog"
+
     lazy val t1 = fun { (in: Rep[Int]) =>
       Thunk { in }
     }
@@ -52,10 +61,8 @@ class ThunkTests extends BaseTests {
   }
 
   test("thunksWithoutInlining") {
-    val ctx = new ScalanCtxExp with  MyProg {
+    val ctx = new TestContext with  MyProg {
       override def isInvokeEnabled(d: Def[_], m: Method) = true
-      def emit(name: String, ss: Exp[_]*) =
-        emitDepGraph(ss.toList, new File(prefix, s"$name.dot"), false)
 
       def test() = {
         assert(!isInlineThunksOnForce, "precondition for tests")
@@ -101,40 +108,12 @@ class ThunkTests extends BaseTests {
   }
 
   test("thunksWithInlining") {
-    val ctx = new ScalanCtxExp with  MyProg {
+    val ctx = new TestContext with  MyProg {
       override def isInvokeEnabled(d: Def[_], m: Method) = true
       isInlineThunksOnForce = true
 
-      def emit(name: String, ss: Exp[_]*) =
-        emitDepGraph(ss.toList, new File(prefix, s"$name.dot"), false)
-
       def test() = {
         assert(isInlineThunksOnForce, "precondition for tests")
-
-//        {
-//          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t1
-//          assert(x == res && sch.isEmpty && th.freeVars.isEmpty)
-//        }
-//        {
-//          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t2
-//          assert(sch.size == 2 && th.freeVars.contains(x))
-//        }
-//        {
-//          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t3
-//          assert(sch.size == 3 && th.freeVars.contains(x))
-//        }
-//        {
-//          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t4
-//          assert(sch.size == 3 && th.freeVars.contains(x) && th.freeVars.size == 2)
-//        }
-//        {
-//          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t7
-//          assert(sch.size == 2 && th.freeVars.contains(x))
-//        }
-//        {
-//          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t8
-//          assert(sch.size == 1 && th.freeVars.contains(x) && th.freeVars.size == 2)
-//        }
       }
     }
     ctx.test
@@ -150,4 +129,30 @@ class ThunkTests extends BaseTests {
     ctx.emit("t9_inl", ctx.t9)
     ctx.emit("t10_inl", ctx.t10)
   }
+
+  trait MyDomainProg extends Scalan with SegmentsDsl {
+    val subfolder = "/mydomainprog"
+
+    lazy val t1 = fun { (in: Rep[Int]) =>
+      Thunk { Interval(in, in) }.force.length
+    }
+  }
+
+  test("thunksOfDomainTypes") {
+    val ctx = new TestContext with SegmentsDslExp with MyDomainProg {
+      override def isInvokeEnabled(d: Def[_], m: Method) = true
+      isInlineThunksOnForce = false
+//      override def rewriteDef[T](d: Def[T]) = d match {
+//        case DefBlock(res, )
+//      }
+
+      def test() = {
+        assert(!isInlineThunksOnForce, ": precondition for tests")
+
+      }
+    }
+    ctx.test
+    ctx.emit("t1", ctx.t1)
+  }
+
 }
