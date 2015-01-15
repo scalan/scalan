@@ -44,7 +44,7 @@ trait ThunksSeq extends Thunks { self: ScalanSeq =>
 
 trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
 
-  case class DefBlock[A](val root: Exp[A], override val schedule: Schedule)
+  case class ThunkDef[A](val root: Exp[A], override val schedule: Schedule)
                         (implicit val eA: Elem[A] = root.elem)
     extends BaseDef[Thunk[A]] with AstGraph with Product {
     lazy val uniqueOpId = s"Thunk[${eA.name}]"
@@ -58,7 +58,7 @@ trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
           case _ => Nil
         }
       } yield res
-      val newThunk = DefBlock(t(root), newSchedule)
+      val newThunk = ThunkDef(t(root), newSchedule)
       toExp(newThunk, newSym)
     }
 
@@ -66,14 +66,14 @@ trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
     override def hashCode: Int = (41 * (41 + root.hashCode) + schedule.hashCode)
     override def equals(other: Any) =
       other match {
-        case that: DefBlock[_] =>
+        case that: ThunkDef[_] =>
           (that canEqual this) &&
             (this.root equals that.root) &&
             (this.schedule equals that.schedule)
         case _ => false
       }
     override def toString = s"Th($root, [${schedule.map(_.sym).mkString(",")}])"
-    def canEqual(other: Any) = other.isInstanceOf[DefBlock[_]]
+    def canEqual(other: Any) = other.isInstanceOf[ThunkDef[_]]
 
     // Product implementation
     val productElements = scala.Array[Any](root)
@@ -125,14 +125,14 @@ trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
 //      case None =>
 //    }
 
-    val newThunk = DefBlock(res, scheduled)
+    val newThunk = ThunkDef(res, scheduled)
     toExp(newThunk, newThunkSym)
   }
 
   var isInlineThunksOnForce = false
 
   def mirrorThunk[A](thunk: Th[A], subst: MapTransformer = MapTransformer.Empty): Exp[A] = {
-    val Def(th: DefBlock[A]) = thunk
+    val Def(th: ThunkDef[A]) = thunk
     val body = th.scheduleSyms
     val (t, _) = DefaultMirror.mirrorSymbols(subst, NoRewriting, body)
     t(th.root).asRep[A]
@@ -141,7 +141,7 @@ trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
   def thunk_force[A](t: Th[A]): Rep[A] =
     if (isInlineThunksOnForce)
       t match {
-        case Def(th@DefBlock(_, _)) =>
+        case Def(th@ThunkDef(_, _)) =>
           mirrorThunk(t)
         case _ => ThunkForce(t)
       }
@@ -156,7 +156,7 @@ trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
   }
 
   override protected def formatDef(d: Def[_]): String = d match {
-    case DefBlock(r, sch) => s"Thunk($r, [${sch.map(_.sym).mkString(",")}])"
+    case ThunkDef(r, sch) => s"Thunk($r, [${sch.map(_.sym).mkString(",")}])"
     case _ => super.formatDef(d)
   }
 }

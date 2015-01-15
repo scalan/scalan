@@ -68,27 +68,27 @@ class ThunkTests extends BaseTests {
         assert(!isInlineThunksOnForce, "precondition for tests")
 
         {
-          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t1
+          val Def(Lambda(_, _, x, Def(th@ThunkDef(res, sch)))) = t1
           assert(x == res && sch.isEmpty && th.freeVars.isEmpty)
         }
         {
-          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t2
+          val Def(Lambda(_, _, x, Def(th@ThunkDef(res, sch)))) = t2
           assert(sch.size == 2 && th.freeVars.contains(x))
         }
         {
-          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t3
+          val Def(Lambda(_, _, x, Def(th@ThunkDef(res, sch)))) = t3
           assert(sch.size == 3 && th.freeVars.contains(x))
         }
         {
-          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t4
+          val Def(Lambda(_, _, x, Def(th@ThunkDef(res, sch)))) = t4
           assert(sch.size == 3 && th.freeVars.contains(x) && th.freeVars.size == 2)
         }
         {
-          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t7
+          val Def(Lambda(_, _, x, Def(th@ThunkDef(res, sch)))) = t7
           assert(sch.size == 2 && th.freeVars.contains(x))
         }
         {
-          val Def(Lambda(_, _, x, Def(th@DefBlock(res, sch)))) = t8
+          val Def(Lambda(_, _, x, Def(th@ThunkDef(res, sch)))) = t8
           assert(sch.size == 1 && th.freeVars.contains(x) && th.freeVars.size == 2)
         }
       }
