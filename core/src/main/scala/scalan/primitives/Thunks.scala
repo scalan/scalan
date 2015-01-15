@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.GraphVizExport
-import scalan.{ScalanExp, ScalanSeq, Scalan}
+import scalan.{ViewsExp, ScalanExp, ScalanSeq, Scalan}
 import scalan.common.{Default, Lazy}
 import scala.reflect.runtime.universe._
 
@@ -42,7 +42,7 @@ trait ThunksSeq extends Thunks { self: ScalanSeq =>
   def thunk_force[A](t: Th[A]): Rep[A] = t.value
 }
 
-trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
+trait ThunksExp extends ViewsExp with Thunks with GraphVizExport { self: ScalanExp =>
 
   case class ThunkDef[A](val root: Exp[A], override val schedule: Schedule)
                         (implicit val eA: Elem[A] = root.elem)
@@ -83,6 +83,35 @@ trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
     override def boundVars = Nil
     override lazy val freeVars = super.freeVars
     val roots = List(root)
+  }
+
+  case class ThunkView[A, B](source: Rep[Thunk[A]])(implicit i: Iso[A, B]) extends View1[A, B, Thunk] {
+    lazy val iso = thunkIso(i)
+    def copy(source: Rep[Thunk[A]]) = ThunkView(source)
+  }
+
+  override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
+    case Def(view: ThunkView[_,_]) =>
+      Some((view.source, view.iso))
+    case _ =>
+      super.unapplyViews(s)
+  }).asInstanceOf[Option[Unpacked[T]]]
+
+  case class ThunkIso[A:Elem,B:Elem](iso: Iso[A,B]) extends Iso[Thunk[A], Thunk[B]] {
+    lazy val eTo = element[Thunk[B]]
+    def from(x: Th[B]) = Thunk { iso.from(x.force) }
+    def to(x: Th[A]) = Thunk { iso.to(x.force) }
+    lazy val tag = {
+      implicit val tB = iso.tag
+      weakTypeTag[Thunk[B]]
+    }
+    lazy val defaultRepTo = DefaultOfThunk[B]
+  }
+
+  def thunkIso[A, B](iso: Iso[A, B]): Iso[Thunk[A], Thunk[B]] = {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    ThunkIso(iso)
   }
 
   class ThunkScope(val thunkSym: Exp[Any], val body: ListBuffer[TableEntry[Any]] = ListBuffer.empty) {
@@ -131,8 +160,11 @@ trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
 
   var isInlineThunksOnForce = false
 
-  def mirrorThunk[A](thunk: Th[A], subst: MapTransformer = MapTransformer.Empty): Exp[A] = {
+  def forceThunkByMirror[A](thunk: Th[A], subst: MapTransformer = MapTransformer.Empty): Exp[A] = {
     val Def(th: ThunkDef[A]) = thunk
+    forceThunkDefByMirror(th, subst)
+  }
+  def forceThunkDefByMirror[A](th: ThunkDef[A], subst: MapTransformer = MapTransformer.Empty): Exp[A] = {
     val body = th.scheduleSyms
     val (t, _) = DefaultMirror.mirrorSymbols(subst, NoRewriting, body)
     t(th.root).asRep[A]
@@ -142,7 +174,7 @@ trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
     if (isInlineThunksOnForce)
       t match {
         case Def(th@ThunkDef(_, _)) =>
-          mirrorThunk(t)
+          forceThunkByMirror(t)
         case _ => ThunkForce(t)
       }
     else
@@ -153,6 +185,20 @@ trait ThunksExp extends Thunks with GraphVizExport { self: ScalanExp =>
     implicit def selfType = thunk.elem.eItem
     lazy val uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = ThunkForce(t(thunk))
+  }
+
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case th @ ThunkDef(HasViews(srcRes, iso: Iso[a,b]), _) => {
+      implicit val eA = iso.eFrom
+      implicit val eB = iso.eTo
+      val newTh = Thunk { iso.from(forceThunkDefByMirror(th)) }   // execute original th as part of new thunk
+      ThunkView(newTh)(iso)
+    }
+    case ThunkForce(HasViews(srcTh, iso: ThunkIso[a,b])) => {
+      implicit val eA = iso.iso.eFrom
+      iso.iso.to(srcTh.asRep[Thunk[a]].force)
+    }
+    case _ => super.rewriteDef(d)
   }
 
   override protected def formatDef(d: Def[_]): String = d match {
