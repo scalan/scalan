@@ -78,7 +78,6 @@ trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>
   def random[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] =
     NumericRand(bound)(et)
 
-//  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericAbs(x, n)
   private def isZero[T](x: T, n: Numeric[T]) = x == n.zero
   private def isOne[T](x: T, n: Numeric[T]) = x == n.fromInt(1)
   
