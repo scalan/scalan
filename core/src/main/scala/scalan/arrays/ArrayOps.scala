@@ -325,6 +325,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
         case _ =>
           super.rewriteDef(d)
       }
+    case ArrayZip(Def(ArrayReplicate(len, v1: Rep[a])), Def(ArrayReplicate(_, v2: Rep[b]))) =>
+      implicit val eA = v1.elem
+      implicit val eB = v2.elem
+      Array.replicate(len, (v1, v2))
     case _ => super.rewriteDef(d)
   }
 }
