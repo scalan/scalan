@@ -40,10 +40,10 @@ struct Extractor<double>
 
     Extractor( JNIEnv* anEnv, input_type anObj ) : env(anEnv), obj(anObj) {}
 
-    operator double() 
+    operator double()
     {
-//	cout << "extracting primitive double value" << endl;
-	return static_cast<double>(obj);
+        //	cout << "extracting primitive double value" << endl;
+        return static_cast<double>(obj);
     }
 };
 
@@ -61,8 +61,8 @@ struct Extractor<int32_t>
 
     operator int32_t()
     {
-//	cout << "extracting primitive int32_t value" << endl;
-	return static_cast<int32_t>(obj);
+        //	cout << "extracting primitive int32_t value" << endl;
+        return static_cast<int32_t>(obj);
     }
 
     tuple<int32_t> get_pieces() { return forward_as_tuple( static_cast<int32_t>(*this) ); }
@@ -82,18 +82,18 @@ struct Extractor<jni_array<T>>
 
     operator jni_array<T>()
     {
-	return jni_array<T>(env, obj);
+        return jni_array<T>(env, obj);
     }
 
-    tuple<JNIEnv*, input_type> get_pieces() 
+    tuple<JNIEnv*, input_type> get_pieces()
     {
-	return std::forward_as_tuple( env, obj );
+        return std::forward_as_tuple( env, obj );
     }
-//    static jni_array<T> extract( JNIEnv* env, input_type anObj )
-//    {
-////	cout << "extracting jni_array<T>" << endl;
-//	return jni_array<T>(env, anObj);
-//    }
+    //    static jni_array<T> extract( JNIEnv* env, input_type anObj )
+    //    {
+        ////	cout << "extracting jni_array<T>" << endl;
+        //	return jni_array<T>(env, anObj);
+        //    }
 };
 
 template<class T, class ET>
@@ -102,9 +102,9 @@ struct Emplacer
     template<class ... ATs>
     static void emplace_back( std::vector<T>& aV, ATs ... args )
     {
-//	cout << "emplace_back<T,ET>-s" << endl;
-	aV.emplace_back( ET( args... ) );
-//	cout << "emplace_back<T,ET>-e" << endl;
+        //	cout << "emplace_back<T,ET>-s" << endl;
+        aV.emplace_back( ET( args... ) );
+        //	cout << "emplace_back<T,ET>-e" << endl;
     }
 };
 
@@ -114,9 +114,9 @@ struct Emplacer<T,T>
     template<class ... ATs>
     static void emplace_back( std::vector<T>& aV, ATs ... args )
     {
-//	cout << "QQ" << endl;
-	aV.emplace_back( args... );
-    }    
+        //	cout << "QQ" << endl;
+        aV.emplace_back( args... );
+    }
 };
 
 template<class T>
@@ -133,24 +133,24 @@ struct Extractor<std::vector<T>>
 
     operator std::vector<T>()
     {
-//	cout << "extracting std::vector<T>" << endl;
-	int32_t len1 = env->GetArrayLength(obj);
-	
-	std::vector<T> res;
-	res.reserve( len1 );
+        //	cout << "extracting std::vector<T>" << endl;
+        int32_t len1 = env->GetArrayLength(obj);
 
-	for(int32_t i = 0; i < len1; ++i )
-	{
-	    auto o = static_cast<typename Extractor<T>::input_type>( JNIArray<jobject>::get(env, obj, i) );
-//	    cout << "emplace_back-s: " << i << endl;
-	    //res.emplace_back( typename Extractor<T>::extract_type (env, o ) );
-	    Emplacer<T, typename Extractor<T>::emplace_type>::emplace_back( res, env, o );
-	    //Emplacer<T, T>::emplace_back( res, env, o );
-//	    cout << "emplace_back-e: " << i << endl;
-	    env->DeleteLocalRef(o);
-	}
+        std::vector<T> res;
+        res.reserve( len1 );
 
-	return res;
+        for(int32_t i = 0; i < len1; ++i )
+        {
+            auto o = static_cast<typename Extractor<T>::input_type>( JNIArray<jobject>::get(env, obj, i) );
+            //	    cout << "emplace_back-s: " << i << endl;
+            //res.emplace_back( typename Extractor<T>::extract_type (env, o ) );
+            Emplacer<T, typename Extractor<T>::emplace_type>::emplace_back( res, env, o );
+            //Emplacer<T, T>::emplace_back( res, env, o );
+            //	    cout << "emplace_back-e: " << i << endl;
+            env->DeleteLocalRef(o);
+        }
+
+        return res;
     }
 
     tuple<std::vector<T>> get_pieces() { return std::forward_as_tuple( this->operator std::vector<T>() ); }
@@ -162,26 +162,26 @@ struct Extractor<pair<A,B>>
     typedef jobject input_type;
     typedef Extractor extract_type;
     typedef Extractor emplace_type;
-    
+
     JNIEnv* env;
     input_type obj;
 
     Extractor( JNIEnv* anEnv, input_type anObj ) : env(anEnv), obj(anObj) {}
 
-    operator pair<A,B>() 
-    { 
-//	cout << "extracting tuple2: " << anObj << endl;
-	// jclass scalaTuple2 = env->FindClass("scala/Tuple2");
-	// jboolean yes = env->IsInstanceOf( anObj, scalaTuple2 );
-	// if( !yes )
-	//     throw(std::runtime_error("anObj isn't scala.Tuple2") );
-	
-	//cout << "make-tuple-s" << endl;
-	return  std::pair<A,B>( std::piecewise_construct
-				    , typename Extractor<A>::extract_type (env, GetField<A>::get(env, obj, "_1") ).get_pieces()
-				    , typename Extractor<B>::extract_type (env, GetField<B>::get(env, obj, "_2") ).get_pieces() );
-	//cout << "make-tuple-e" << endl;
-//	return res;
+    operator pair<A,B>()
+    {
+        //	cout << "extracting tuple2: " << anObj << endl;
+        // jclass scalaTuple2 = env->FindClass("scala/Tuple2");
+        // jboolean yes = env->IsInstanceOf( anObj, scalaTuple2 );
+        // if( !yes )
+        //     throw(std::runtime_error("anObj isn't scala.Tuple2") );
+
+        //cout << "make-tuple-s" << endl;
+        return  std::pair<A,B>( std::piecewise_construct
+        , typename Extractor<A>::extract_type (env, GetField<A>::get(env, obj, "_1") ).get_pieces()
+        , typename Extractor<B>::extract_type (env, GetField<B>::get(env, obj, "_2") ).get_pieces() );
+        //cout << "make-tuple-e" << endl;
+        //	return res;
     }
 };
 
@@ -191,30 +191,30 @@ struct Extractor<pair<A,pair<B1,B2>>>
     typedef jobject input_type;
     typedef Extractor extract_type;
     typedef Extractor emplace_type;
-   
+
     JNIEnv* env;
     input_type obj;
 
     Extractor( JNIEnv* anEnv, input_type anObj ) : env(anEnv), obj(anObj) {}
 
-    operator pair<A,pair<B1,B2>>() 
-    { 
-//	cout << "extracting tuple2: " << anObj << endl;
-	// jclass scalaTuple2 = env->FindClass("scala/Tuple2");
-	// jboolean yes = env->IsInstanceOf( anObj, scalaTuple2 );
-	// if( !yes )
-	//     throw(std::runtime_error("anObj isn't scala.Tuple2") );
-	
-//	cout << "make-tuple-s" << endl;
-	typedef pair<B1,B2> B;
-	return  std::pair<A,pair<B1,B2>>( std::piecewise_construct
-				    , typename Extractor<A>::extract_type (env, GetField<A>::get(env, obj, "_1") ).get_pieces()
-//				    , typename Extractor<B>::extract_type (env, GetField<B>::get(env, obj, "_2") ).get_pieces()
-				      , std::forward_as_tuple( static_cast<B1>( typename Extractor<B1>::extract_type (env, GetField<B1>::get(env, GetField<B>::get(env, obj, "_2"), "_1") ) )
-							    , static_cast<B2>( typename Extractor<B2>::extract_type (env, GetField<B2>::get(env, GetField<B>::get(env, obj, "_2"), "_2") ) ) )
-	    );
-//	cout << "make-tuple-e" << endl;
-//	return res;
+    operator pair<A,pair<B1,B2>>()
+    {
+        //	cout << "extracting tuple2: " << anObj << endl;
+        // jclass scalaTuple2 = env->FindClass("scala/Tuple2");
+        // jboolean yes = env->IsInstanceOf( anObj, scalaTuple2 );
+        // if( !yes )
+        //     throw(std::runtime_error("anObj isn't scala.Tuple2") );
+
+        //	cout << "make-tuple-s" << endl;
+        typedef pair<B1,B2> B;
+        return  std::pair<A,pair<B1,B2>>( std::piecewise_construct
+        , typename Extractor<A>::extract_type (env, GetField<A>::get(env, obj, "_1") ).get_pieces()
+        //				    , typename Extractor<B>::extract_type (env, GetField<B>::get(env, obj, "_2") ).get_pieces()
+        , std::forward_as_tuple( static_cast<B1>( typename Extractor<B1>::extract_type (env, GetField<B1>::get(env, GetField<B>::get(env, obj, "_2"), "_1") ) )
+        , static_cast<B2>( typename Extractor<B2>::extract_type (env, GetField<B2>::get(env, GetField<B>::get(env, obj, "_2"), "_2") ) ) )
+        );
+        //	cout << "make-tuple-e" << endl;
+        //	return res;
     }
 };
 
@@ -225,29 +225,29 @@ struct Extractor<pair<pair<B1,B2>,A>>
     typedef jobject input_type;
     typedef Extractor extract_type;
     typedef Extractor emplace_type;
-   
+
     JNIEnv* env;
     input_type obj;
 
     Extractor( JNIEnv* anEnv, input_type anObj ) : env(anEnv), obj(anObj) {}
 
-    operator pair<B,A>() 
-    { 
-//	cout << "extracting tuple2: " << anObj << endl;
-	// jclass scalaTuple2 = env->FindClass("scala/Tuple2");
-	// jboolean yes = env->IsInstanceOf( anObj, scalaTuple2 );
-	// if( !yes )
-	//     throw(std::runtime_error("anObj isn't scala.Tuple2") );
-	
-//	cout << "make-tuple-s" << endl;
-	return  std::pair<B,A>( std::piecewise_construct
-//				    , typename Extractor<B>::extract_type (env, GetField<B>::get(env, obj, "_2") ).get_pieces()
-				      , std::forward_as_tuple( static_cast<B1>( typename Extractor<B1>::extract_type (env, GetField<B1>::get(env, GetField<B>::get(env, obj, "_1"), "_1") ) )
-							    , static_cast<B2>( typename Extractor<B2>::extract_type (env, GetField<B2>::get(env, GetField<B>::get(env, obj, "_1"), "_2") ) ) )
-				    , typename Extractor<A>::extract_type (env, GetField<A>::get(env, obj, "_2") ).get_pieces()
-	    );
-//	cout << "make-tuple-e" << endl;
-//	return res;
+    operator pair<B,A>()
+    {
+        //	cout << "extracting tuple2: " << anObj << endl;
+        // jclass scalaTuple2 = env->FindClass("scala/Tuple2");
+        // jboolean yes = env->IsInstanceOf( anObj, scalaTuple2 );
+        // if( !yes )
+        //     throw(std::runtime_error("anObj isn't scala.Tuple2") );
+
+        //	cout << "make-tuple-s" << endl;
+        return  std::pair<B,A>( std::piecewise_construct
+        //				    , typename Extractor<B>::extract_type (env, GetField<B>::get(env, obj, "_2") ).get_pieces()
+        , std::forward_as_tuple( static_cast<B1>( typename Extractor<B1>::extract_type (env, GetField<B1>::get(env, GetField<B>::get(env, obj, "_1"), "_1") ) )
+        , static_cast<B2>( typename Extractor<B2>::extract_type (env, GetField<B2>::get(env, GetField<B>::get(env, obj, "_1"), "_2") ) ) )
+        , typename Extractor<A>::extract_type (env, GetField<A>::get(env, obj, "_2") ).get_pieces()
+        );
+        //	cout << "make-tuple-e" << endl;
+        //	return res;
     }
 };
 
@@ -259,31 +259,31 @@ struct Extractor<pair<pair<A1,A2>,pair<B1,B2>>>
     typedef jobject input_type;
     typedef Extractor extract_type;
     typedef Extractor emplace_type;
-   
+
     JNIEnv* env;
     input_type obj;
 
     Extractor( JNIEnv* anEnv, input_type anObj ) : env(anEnv), obj(anObj) {}
 
-    operator pair<A,B>() 
-    { 
-//	cout << "extracting tuple2: " << anObj << endl;
-	// jclass scalaTuple2 = env->FindClass("scala/Tuple2");
-	// jboolean yes = env->IsInstanceOf( anObj, scalaTuple2 );
-	// if( !yes )
-	//     throw(std::runtime_error("anObj isn't scala.Tuple2") );
-	
-//	cout << "make-tuple-s" << endl;
-	return  std::pair<A,B>( std::piecewise_construct
-//				    , typename Extractor<A>::extract_type (env, GetField<A>::get(env, obj, "_1") ).get_pieces()
-//				    , typename Extractor<B>::extract_type (env, GetField<B>::get(env, obj, "_2") ).get_pieces()
-				      , std::forward_as_tuple( static_cast<A1>( typename Extractor<A1>::extract_type (env, GetField<A1>::get(env, GetField<A>::get(env, obj, "_1"), "_1") ) )
-							    , static_cast<A2>( typename Extractor<A2>::extract_type (env, GetField<A2>::get(env, GetField<A>::get(env, obj, "_1"), "_2") ) ) )
-				      , std::forward_as_tuple( static_cast<B1>( typename Extractor<B1>::extract_type (env, GetField<B1>::get(env, GetField<B>::get(env, obj, "_2"), "_1") ) )
-							    , static_cast<B2>( typename Extractor<B2>::extract_type (env, GetField<B2>::get(env, GetField<B>::get(env, obj, "_2"), "_2") ) ) )
-	    );
-//	cout << "make-tuple-e" << endl;
-//	return res;
+    operator pair<A,B>()
+    {
+        //	cout << "extracting tuple2: " << anObj << endl;
+        // jclass scalaTuple2 = env->FindClass("scala/Tuple2");
+        // jboolean yes = env->IsInstanceOf( anObj, scalaTuple2 );
+        // if( !yes )
+        //     throw(std::runtime_error("anObj isn't scala.Tuple2") );
+
+        //	cout << "make-tuple-s" << endl;
+        return  std::pair<A,B>( std::piecewise_construct
+        //				    , typename Extractor<A>::extract_type (env, GetField<A>::get(env, obj, "_1") ).get_pieces()
+        //				    , typename Extractor<B>::extract_type (env, GetField<B>::get(env, obj, "_2") ).get_pieces()
+        , std::forward_as_tuple( static_cast<A1>( typename Extractor<A1>::extract_type (env, GetField<A1>::get(env, GetField<A>::get(env, obj, "_1"), "_1") ) )
+        , static_cast<A2>( typename Extractor<A2>::extract_type (env, GetField<A2>::get(env, GetField<A>::get(env, obj, "_1"), "_2") ) ) )
+        , std::forward_as_tuple( static_cast<B1>( typename Extractor<B1>::extract_type (env, GetField<B1>::get(env, GetField<B>::get(env, obj, "_2"), "_1") ) )
+        , static_cast<B2>( typename Extractor<B2>::extract_type (env, GetField<B2>::get(env, GetField<B>::get(env, obj, "_2"), "_2") ) ) )
+        );
+        //	cout << "make-tuple-e" << endl;
+        //	return res;
     }
 };
 
@@ -291,40 +291,40 @@ template<class T>
 struct GetField
 {
     static const typename Extractor<T>::input_type get( JNIEnv* env, jobject anObj, const char* aFN )
-    {       
-	jclass objClass = env->GetObjectClass(anObj);
-	jfieldID fid = env->GetFieldID( objClass, aFN, "Ljava/lang/Object;");
-	// if( fid == nullptr )
-	//     throw( std::runtime_error( "fid == nullptr" ) );
+    {
+        jclass objClass = env->GetObjectClass(anObj);
+        jfieldID fid = env->GetFieldID( objClass, aFN, "Ljava/lang/Object;");
+        // if( fid == nullptr )
+        //     throw( std::runtime_error( "fid == nullptr" ) );
 
-	jobject vecO = env->GetObjectField( anObj, fid );
-	
-	return static_cast<typename Extractor<T>::input_type>(vecO);
-    }    
+        jobject vecO = env->GetObjectField( anObj, fid );
+
+        return static_cast<typename Extractor<T>::input_type>(vecO);
+    }
 };
 
 template<>
 struct GetField<double>
 {
     static const typename Extractor<double>::input_type get( JNIEnv* env, jobject anObj, const char* aFN )
-    {       
-	jobject vecO = GetField<jobject>::get( env, anObj, aFN );
-	jclass clazz = env->GetObjectClass( vecO );
-	jfieldID fid = env->GetFieldID( clazz, "value", "D" );
-	jdouble vec1 = env->GetDoubleField( vecO, fid );
-	return vec1;
-    }    
+    {
+        jobject vecO = GetField<jobject>::get( env, anObj, aFN );
+        jclass clazz = env->GetObjectClass( vecO );
+        jfieldID fid = env->GetFieldID( clazz, "value", "D" );
+        jdouble vec1 = env->GetDoubleField( vecO, fid );
+        return vec1;
+    }
 };
 
 template<>
 struct GetField<int32_t>
 {
     static const typename Extractor<int32_t>::input_type get( JNIEnv* env, jobject anObj, const char* aFN )
-    {       
-	jobject vecO = GetField<jobject>::get( env, anObj, aFN );
-	jclass clazz = env->GetObjectClass( vecO );
-	jfieldID fid = env->GetFieldID( clazz, "value", "I" );
-	jint vec1 = env->GetIntField( vecO, fid );
-	return vec1;
-    }    
+    {
+        jobject vecO = GetField<jobject>::get( env, anObj, aFN );
+        jclass clazz = env->GetObjectClass( vecO );
+        jfieldID fid = env->GetFieldID( clazz, "value", "I" );
+        jint vec1 = env->GetIntField( vecO, fid );
+        return vec1;
+    }
 };
