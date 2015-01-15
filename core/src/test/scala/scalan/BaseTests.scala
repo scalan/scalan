@@ -4,6 +4,7 @@ import org.scalatest.{Matchers, FunSuite}
 import org.scalatest.FlatSpec
 import org.scalatest.words.ResultOfStringPassedToVerb
 
+// TODO switch to FunSpec and eliminate duplication in test names (e.g. RewriteSuite)
 class BaseTests extends FunSuite with Matchers
 
 class BaseShouldTests extends FlatSpec with Matchers {

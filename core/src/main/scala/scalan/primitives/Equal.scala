@@ -12,10 +12,9 @@ trait Equal extends UnBinOps { self: Scalan =>
   }
 }
 
-// Note: not currently true because Random exists. Consider a way to check when it _is_ true?
 trait EqualExp extends Equal with BaseExp { self: ScalanExp =>
-//  override def rewriteDef[T](d: Def[T]) = d match {
-//    case ApplyBinOp(Equals(), x, y) if x == y => Const(true)
-//    case _ => super.rewriteDef(d)
-//  }
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case ApplyBinOp(_: Equals[_], x, y) if x == y => true
+    case _ => super.rewriteDef(d)
+  }
 }
