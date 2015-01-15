@@ -26,8 +26,11 @@ trait BaseExp extends Base { self: ScalanExp =>
 
     def isConst: Boolean = this match {
       case Def(Const(_)) => true
-      case _ => elem.isInstanceOf[CompanionElem[_]]
+      case _ => isCompanion
     }
+
+    def isCompanion: Boolean = elem.isInstanceOf[CompanionElem[_]]
+
     def varName: String
     def toStringWithType = varName + ":" + elem.name
     def toStringWithDefinition: String

@@ -13,10 +13,32 @@ trait GraphVizExport { self: ScalanExp =>
   protected def nodeColor(sym: Exp[_]): String = sym.elem match {
     case _: ViewElem[_, _] => "green"
     case _: FuncElem[_, _] => "magenta"
-    case _ => "grey"
+    case _: CompanionElem[_] => "gray"
+    case _ => "black"
   }
 
-  protected def nodeLabel(str: String) = s"label=${quote(str)}"
+  protected def maxLabelLineLength = 40
+
+  // ensures nice line wrapping
+  final protected def nodeLabel(parts: String*) = {
+    var lineLength = 0
+    val sb = new StringBuilder()
+    var isFirst = true
+    parts.foreach { part =>
+      if (isFirst) {
+        isFirst = false
+      } else if (lineLength + part.length + 1 <= maxLabelLineLength) {
+        sb.append(" ")
+        lineLength += 1
+      } else {
+        sb.append("\\l")
+        lineLength = 0
+      }
+      sb.append(part)
+      lineLength += part.length
+    }
+    s"label=${quote(sb.result)}"
+  }
 
   protected def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
     rhs match {
@@ -29,7 +51,7 @@ trait GraphVizExport { self: ScalanExp =>
       case _ =>
     }
     stream.println(quote(sym) + " [")
-    stream.println(nodeLabel(sym.toString + " = " + formatDef(rhs)))
+    stream.println(nodeLabel(sym.toStringWithType + " =", formatDef(rhs)))
     stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${quote(sym.toStringWithType)}")
     stream.println("]")
   }
@@ -52,10 +74,15 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => d.toString
   }
 
-  private def emitDeps(sym: Exp[_], deps: List[Exp[_]], dotted: Boolean)(implicit stream: PrintWriter) = {
+  private def emitDeps(sym: Exp[_], deps: List[Exp[_]], areDepsLambdaVars: Boolean)(implicit stream: PrintWriter) = {
     for (dep <- deps) {
       val depLabel = dep.toString //dep.isVar match { case true => dep.toStringWithType case _ => dep.toString }
-      val params = if (dotted) " [style=dotted]" else ""
+      val params =
+        if (areDepsLambdaVars) {
+          " [style=dashed, color=lightgray, weight=0]"
+        } else if (dep.isCompanion) {
+          " [style=dashed, color=gray, weight=0]"
+        } else " [style=solid]"
       stream.println(s"${quote(depLabel)} -> ${quote(sym)}$params")
     }
   }
@@ -81,6 +108,7 @@ trait GraphVizExport { self: ScalanExp =>
 
     val deflist = buildScheduleForResult(ss, dep)
 
+    stream.println("concentrate=true")
     if (landscape) {
       stream.println("rankdir=LR")
     }
