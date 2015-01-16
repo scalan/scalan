@@ -4,15 +4,12 @@ import java.io.PrintWriter
 import scala.reflect.SourceContext
 import scalan.compilation.lms.common.{ScalaGenEitherOps, EitherOpsExp}
 import scala.reflect.{RefinedManifest, SourceContext}
+import scala.virtualization.lms.internal.{GraphTraversal, NestedBlockTraversal, GenericCodegen, Expressions}
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
-//import virtualization.lms.epfl.test7.ArrayLoopsFatExp
-//import virtualization.lms.epfl.test7.ScalaGenArrayLoopsFat
-
-//{ScalaGenArrayLoopsFat, ArrayLoopsExp}
-import scala.Tuple2
 
 trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp
+with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp with CastingOpsExp with JNILmsOpsExp {
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp
   with CastingOpsExp with EitherOpsExp {
   /*type RepD[T] = Rep[T]
@@ -26,6 +23,10 @@ trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp wi
   def arrayLength[A:Manifest](a: Exp[Array[A]]): Exp[Int] = {
     a.length
   }
+  def tuple[A:Manifest,B:Manifest](a:Exp[A], b: Exp[B]): Exp[(A,B)] = {
+    Tuple2(a,b)
+  }
+
   def sumLeft[A: Manifest, B: Manifest](a: Exp[A]): Exp[Either[A, B]] = make_left[A, B](a)
   def sumRight[A: Manifest, B: Manifest](b: Exp[B]): Exp[Either[A, B]] = make_right[A, B](b)
   def tuple[A:Manifest, B:Manifest](a:Exp[A], b: Exp[B]): Exp[(A,B)] = (a, b)
@@ -181,53 +182,55 @@ class LmsBackend extends LmsBackendFacade { self =>
 
 
 
-
-
-
   val codegenCXX = new CLikeGenNumericOps
     with CLikeGenEqual
     with CLikeGenArrayOps
     with CLikeGenPrimitiveOps
-    with CXXGenFatArrayLoopsFusionOpt
-    with CGenTupleOps
     with CXXGenStruct
-    with LoopFusionOpt {
+    with CXXGenJNIExtractor
+    with CXXGenFatArrayLoopsFusionOpt
+    with LoopFusionOpt
+    with CXXFatCodegen
+    with CXXCodegen
+//    with ExportLMSGraph
+  {
 
     override val IR: self.type = self
 
     override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
 
-    override def emitValDef(sym: Sym[Any], rhs: String): Unit = emitValDef(quote(sym), sym.tp, rhs)
+    override def emitValDef(sym: Sym[Any], rhs: String): Unit = {
+      if( moveableSyms.contains(sym) )
+        emitValDef(quote(sym), norefManifest(sym.tp), rhs)
+      else
+        emitValDef(quote(sym), sym.tp, rhs)
+    }
+
+    override def quote(x: Exp[Any]) = x match {
+      case sym: Sym[_] =>
+        if( moveableSyms.contains(sym) && rightSyms.contains(sym) )
+          s"std::move(${super.quote(sym)})"
+        else super.quote(sym)
+      case _ =>
+        super.quote(x)
+    }
 
     override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
-      if (remap(tpe) != "void") stream.println(remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
+      if (remap(tpe) != "void")
+        stream.println(remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
     }
 
     override def remapWithRef[A](m: Manifest[A]): String = {
-      if( m.runtimeClass == classOf[size_t] ) remap(m)
-      else                                    super.remapWithRef(m)
-    }
-    override def addRef() = "&"
-
-    override def remap[A](m: Manifest[A]): String = {
       m.runtimeClass match {
-        case c if c.isArray =>
-          val itemType = m.typeArguments(0)
-          val ts = remap(itemType)
-          if( isPrimitiveType(itemType) )
-            s"jni_array<${ts}>"
-          else
-            s"std::vector<${ts}>"
+        case c if c == classOf[Noref[_]] =>
+          remap(m.typeArguments(0))
         case c if c == classOf[size_t] =>
-          "size_t"
-        case c if c == classOf[auto_t] =>
-          "auto"
-        case c if c == classOf[scala.Tuple2[_,_]] =>
-          s"std::pair<${remap(m.typeArguments(0))},${remap(m.typeArguments(1))}>"
+          remap(m)
         case _ =>
-          super.remap(m)
+          super.remapWithRef(m)
       }
     }
+    override def addRef() = "&"
 
     def remapResult[A](m: Manifest[A]): String = {
       m.runtimeClass match {
@@ -250,6 +253,10 @@ class LmsBackend extends LmsBackendFacade { self =>
       }
     }
 
+    override def emitFatNode(sym: List[Sym[Any]], rhs: FatDef) = {
+      super.emitFatNode(sym, rhs)
+    }
+
     override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
       val sA = remapResult(manifest[A])
 
@@ -266,7 +273,6 @@ class LmsBackend extends LmsBackendFacade { self =>
           "*******************************************/")
         emitFileHeader()
 
-        //        stream.println("class "+className+(if (staticData.isEmpty) "" else "("+staticData.map(p=>"p"+quote(p._1)+":"+p._1.tp).mkString(",")+")")+" extends (("+args.map(a => remap(a.tp)).mkString(", ")+")=>("+sA+")) {")
         val indargs = (0 until args.length) zip args;
 //        val InputTypes = indargs.map( p => s"InputType${p._1.toString}" )
 //        stream.println( s"template<${InputTypes.map( t => "class " + t).mkString(", ")}>" )
@@ -274,17 +280,18 @@ class LmsBackend extends LmsBackendFacade { self =>
 //        for( (t, (i, arg)) <- InputTypes zip indargs ) {
 //          stream.println(s"// ${t}: ${remap(arg.tp)}")
 //        }
-        stream.println(s"${sA} apply(${indargs.map( p => s"${remap(p._2.tp)}& ${quote(p._2)}").mkString(", ")} ) {")
+        val has = indargs.map(p => p._2.tp.runtimeClass)
+                         .contains( classOf[JNIType[_]] )
+        val jniEnv = if(has) "JNIEnv* env, " else ""
+        stream.println(s"${sA} apply(${jniEnv}${indargs.map( p => s"${remap(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
         emitBlock(body)
         stream.println(s"return ${quote(getBlockResult(body))};")
 
         stream.println("}")
-
-        //        stream.println("}")
         stream.println("/*****************************************\n" +
-          "  End of Generated Code                  \n" +
-          "*******************************************/")
+                       "  End of Generated Code                  \n" +
+                       "*******************************************/")
       }
 
       Nil

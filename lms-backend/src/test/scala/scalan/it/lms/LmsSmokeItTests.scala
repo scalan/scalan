@@ -2,7 +2,6 @@ package scalan.it.lms
 
 import java.io.File
 
-import scalan.JNIExtractorOpsExp
 import scalan.compilation.lms._
 import scalan.community.ScalanCommunityExp
 import scalan.compilation.lms.{LmsCompilerScala, LmsCompiler}
@@ -13,10 +12,11 @@ import scalan.compilation.lms.{CommunityBridge, LinalgBridge, LmsBridge, LmsComp
 import scalan.it.smoke.CommunitySmokeItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
+import scalan.performance.MVMs
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
-  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompilerScala with VectorsDslExp with MatricesDslExp with JNIExtractorOpsExp { self =>
-    def makeBridge[A, B] = new LmsBridge[A, B] with CommunityBridge[A, B] with LinalgBridge[A, B] {
+  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX with VectorsDslExp with MatricesDslExp { self =>
+    def makeBridge[A, B] = new LmsBridge[A, B] with CommunityBridge[A, B] with LinalgBridge[A, B] with JNIBridge[A,B] {
       val scalan = self
     }
   }
@@ -26,7 +26,18 @@ class LmsSmokeItTests extends CommunitySmokeItTests {
   test("jniExtractor") {
     val functionName = "jniExtractor"
     val dir = new File(new File("it-out", prefix), functionName)
-    progStaged.buildGraph(dir, functionName, progStaged.jniExtractor, true)(progStaged.defaultConfig)
+//    progStaged.buildGraph(dir, functionName, progStaged.jniExtractor, true)(progStaged.defaultConfig)
+    progStaged.buildExecutable(dir, dir, functionName, progStaged.jniExtractor, true)(progStaged.defaultConfig)
+
+    System.setProperty("java.library.path", new File(dir,"release").getAbsolutePath)
+    println(System.getProperty("java.library.path"))
+    System.loadLibrary("jniExtractor")
+
+    val v = Array(34.0)
+    val k = 77.0
+     val res = (new MVMs).extractorTest( (v,k) )
+//    println(res.mkString("[",",","]"))
+    assert(res sameElements (v map {a => k*a}) )
   }
 
 

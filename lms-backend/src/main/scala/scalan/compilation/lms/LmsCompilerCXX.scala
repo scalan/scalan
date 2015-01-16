@@ -3,13 +3,21 @@ package scalan.compilation.lms
 import java.io._
 import java.net.URLClassLoader
 
+import scalan.JNIExtractorOpsExp
 import scalan.compilation.Compiler
 import scalan.compilation.GraphVizExport
 import scalan.linalgebra.VectorsDslExp
 import scalan.community.ScalanCommunityExp
 import scalan.util.{FileUtil, ProcessUtil}
 
-trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
+trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
+
+  override def createManifest[T](eA: Elem[T]): Manifest[_] = eA match {
+    case el: JNITypeElem[_] =>
+      Manifest.classType(classOf[scalan.compilation.lms.JNILmsOps#JNIType[_]], createManifest(el.tElem))
+    case _ =>
+      super.createManifest(eA)
+  }
 
   protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
@@ -25,6 +33,11 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
 
         FileUtil.withFile(outputSource) { writer =>
           codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
+//          val s = bridge.lms.fresh[a](mA)
+//          val body = codegen.reifyBlock(facade.apply(s))(mB)
+//          codegen.emitSource(List(s), body, functionName, writer)(mB)
+//          val bridge.lms.TP(sym,_) = bridge.lms.globalDefs.last
+//          codegen.emitDepGraph( sym, new File( sourcesDir, functionName + "-LMS.dot" ).getAbsolutePath )
           codegen.emitDataStructures(writer)
         }
     }
@@ -32,7 +45,8 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
 //    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
 //      outputSource.getAbsolutePath
 //
-//    ProcessUtil.launch(sourcesDir, command: _*)
+    val command = Seq("make")
+    ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
   }
 
   protected def doExecute[A, B](executableDir: File, functionName: String, input: A)

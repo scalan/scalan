@@ -22,10 +22,15 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       res
     }
 
-//    lazy val jniExtractor = fun {in: Rep[JNIType[Double]] =>
+//    lazy val jniExtractor = fun {in: Rep[JNIType[Array[Double]]] =>
 //    lazy val jniExtractor = fun {in: Rep[JNIType[( Array[( Array[Int], (Array[Double],Int))], Array[Int])]] =>
-    lazy val jniExtractor = fun {in: Rep[JNIType[Array[Byte]] ] =>
-      JNI_Extract( in )
+    lazy val jniExtractor = fun {in: Rep[JNIType[(Array[Double],Double)]] =>
+//    lazy val jniExtractor = fun {in: Rep[(Array[Double],Double)] =>
+//    lazy val jniExtractor = fun {in: Rep[JNIType[Byte]] =>
+//    lazy val jniExtractor = fun {in: Rep[JNIType[(Array[Double],Byte)]] =>
+      val Pair(v,k) = JNI_Extract(in)
+      val r = v map {a => k*a}
+      r
     }
 
 //    lazy val simpleMap = fun {x: PA[Int] =>

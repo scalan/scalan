@@ -97,7 +97,11 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
       for ((l,r) <- sym zip rhs) {
         r match {
           case ArrayElem(y) =>
-            stream.println(quote(l) + "["+quote(ii)+"] = " + quote(getBlockResult(y)) + ";")
+            val q = getBlockResult(y)
+            if(moveableSyms.contains(q))
+              moveableSyms += l
+
+            stream.println(quote(l) + "["+quote(ii)+"] = " + quote(q) + ";")
           case ReduceElem(y) =>
             stream.println(quote(l) + " += " + quote(getBlockResult(y)) + ";")
           case ArrayIfElem(c,y) =>

@@ -23,8 +23,13 @@ trait CXXGenStruct extends CLikeGenBase with BaseGenStruct with CXXCodegen {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case Struct(tag, elems) =>
-      registerStruct(structName(sym.tp), elems)
-      emitValDef(sym, "new " + structName(sym.tp) + "(" + elems.map(e => quote(e._2)).mkString(",") + ")")
+      sym.tp match {
+        case tup2m if tup2m.runtimeClass == classOf[Tuple2[_,_]] =>
+          emitValDef( quote(sym), norefManifest(sym.tp), s"${remap(sym.tp)}(${elems.map(e => quote(e._2)).mkString(",")})" )
+        case _ =>
+          registerStruct(structName(sym.tp), elems)
+          emitValDef(sym, "new " + structName(sym.tp) + "(" + elems.map(e => quote(e._2)).mkString(",") + ")")
+      }
     case FieldApply(struct, index) =>
       struct.tp match {
         case m if m.runtimeClass == classOf[scala.Tuple2[_,_]] =>
