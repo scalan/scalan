@@ -50,7 +50,7 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
-    override def mirror(t: Transformer) = self
+    override def mirror(t: Transformer) = self   //TODO this leads to duplication of constants when mirroring
   }
 
   abstract class Transformer {
@@ -79,8 +79,8 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   def fresh[T](implicit leT: LElem[T]): Exp[T]
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]]
-  def findDefinition[T](d: Def[T]): Option[TableEntry[T]]
-  def createDefinition[T](s: Exp[T], d: Def[T]): TableEntry[T]
+  def findDefinition[T](thunk: Exp[_], d: Def[T]): Option[TableEntry[T]]
+  def createDefinition[T](thunk: Exp[_], s: Exp[T], d: Def[T]): TableEntry[T]
 
   /**
    * Updates the universe of symbols and definitions, then rewrites until fix-point
@@ -153,6 +153,7 @@ trait BaseExp extends Base { self: ScalanExp =>
   }
 
   val TableEntry: TableEntryCompanion = null
+  protected val globalThunkSym: Exp[_]
 
   object DefTableEntry {
     def unapply[T](e: Exp[T]): Option[TableEntry[T]] = findDefinition(e)
@@ -264,33 +265,47 @@ trait Expressions extends BaseExp { self: ScalanExp =>
     def unapply[T](tp: TableEntry[T]): Option[(Exp[T], Def[T])] = Some((tp.sym, tp.rhs))
     //def unapply[T](s: Exp[T]): Option[TableEntry[T]] = findDefinition(s)
   }
-
+  protected val globalThunkSym: Exp[_] = fresh[Int] // we could use any type here
   private[this] var expToGlobalDefs: Map[Exp[_], TableEntry[_]] = ListMap.empty
-  private[this] var defToGlobalDefs: Map[Def[_], TableEntry[_]] = ListMap.empty
+  private[this] var defToGlobalDefs: Map[(Exp[_], Def[_]), TableEntry[_]] = ListMap.empty
 
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]] =
     expToGlobalDefs.get(s).asInstanceOf[Option[TableEntry[T]]]
 
-  def findDefinition[T](d: Def[T]): Option[TableEntry[T]] =
-    defToGlobalDefs.get(d).asInstanceOf[Option[TableEntry[T]]]
+  def findDefinition[T](thunk: Exp[_], d: Def[T]): Option[TableEntry[T]] =
+    defToGlobalDefs.get((thunk,d)).asInstanceOf[Option[TableEntry[T]]]
 
   def findOrCreateDefinition[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
-    val res = findDefinition(d) match {
-      case Some(TableEntry(s, _)) => s
-      case None =>
-        val TableEntry(s, _) = createDefinition(newSym, d)
-        s
+    thunkStack.top match {
+      case Some(scope) =>
+        scope.findDef(d) match {
+          case Some(TableEntry(s, _)) => s
+          case None =>
+            val te = createDefinition(scope.thunkSym, newSym, d)
+            scope += te
+            te.sym
+        }
+      case None => {
+        val res = findDefinition(globalThunkSym, d) match {
+          case Some(TableEntry(s, _)) => s
+          case None =>
+            val TableEntry(s, _) = createDefinition(globalThunkSym, newSym, d)
+            s
+        }
+        res
+      }
     }
-    res
   }
 
-  def createDefinition[T](s: Exp[T], d: Def[T]): TableEntry[T] = {
+  def createDefinition[T](thunk: Exp[_], s: Exp[T], d: Def[T]): TableEntry[T] = {
     val tp = lambdaStack.top match {
       case Some(fSym) => TableEntry(s, d, fSym)
       case _ => TableEntry(s, d)
     }
+
     expToGlobalDefs += tp.sym -> tp
-    defToGlobalDefs += tp.rhs -> tp
+    defToGlobalDefs += (thunk, tp.rhs) -> tp
+
     tp
   }
 

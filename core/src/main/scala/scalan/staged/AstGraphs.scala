@@ -233,7 +233,7 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
         val tbody = ts.filter(tp => !(eSet.contains(tp.sym) || cSet.contains(tp.sym) || isUsedBeforeIf(tp.sym)))
         val ebody = es.filter(tp => !(tSet.contains(tp.sym) || cSet.contains(tp.sym) || isUsedBeforeIf(tp.sym)))
 
-        IfBranches(thisGraph, ifSym, DefBlock(t, tbody), DefBlock(e, ebody))
+        IfBranches(thisGraph, ifSym, ThunkDef(t, tbody), ThunkDef(e, ebody))
       }
 
       def assignBranch(sym: Exp[_], ifSym: Exp[_], thenOrElse: Boolean) = {
@@ -301,15 +301,15 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     * @param thenBody  schedule of `then` branch
     * @param elseBody  schedule of `else` branch
     */
-  case class IfBranches(graph: AstGraph, ifSym: Exp[_], thenBody: DefBlock[_], elseBody: DefBlock[_])
+  case class IfBranches(graph: AstGraph, ifSym: Exp[_], thenBody: ThunkDef[_], elseBody: ThunkDef[_])
   {
     // filter out definitions from this branches that were reassigned to the deeper levels
     def cleanBranches(assignments: Map[Exp[_], BranchPath]) = {
       val thenClean = thenBody.schedule.filter(tp => assignments(tp.sym).ifSym == ifSym)
       val elseClean = elseBody.schedule.filter(tp => assignments(tp.sym).ifSym == ifSym)
       IfBranches(graph, ifSym,
-        DefBlock(thenBody.root, thenClean),
-        DefBlock(elseBody.root, elseClean))
+        ThunkDef(thenBody.root, thenClean),
+        ThunkDef(elseBody.root, elseClean))
     }
     override def toString = {
       val Def(IfThenElse(cond,_,_)) = ifSym

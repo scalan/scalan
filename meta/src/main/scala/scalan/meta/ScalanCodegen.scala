@@ -372,7 +372,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
                 if (isCompanion) {
                   ""
                 } else if (e.isInstanceOf[STraitDef]) {
-                  if (e.tpeArgs.length == 0) ""
+                  if (e.tpeArgs.length == 0) s"${typeArgString(Seq.fill(2)("_"))}"
                   else {
                     s"${typeArgString(e.tpeArgs.map(a => a.name) ++ Seq.fill(2)("_"))} forSome {${e.tpeArgs.map("type " + _.declaration).mkString("; ")}}"
                   }

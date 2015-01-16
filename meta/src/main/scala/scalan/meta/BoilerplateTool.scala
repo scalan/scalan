@@ -4,11 +4,12 @@ import scalan.meta.ScalanAst.STraitCall
 
 class BoilerplateTool {
   val coreTypeSynonyms = Map(
-    "Arr" -> "Array"
+    "RSeg" -> "Segment"
   )
   lazy val coreConfig = CodegenConfig(
-    srcPath = "../core/src/main/scala",
+    srcPath = "../core/src/test/scala",
     entityFiles = List(
+      "scalan/common/Segments.scala"
     ),
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
