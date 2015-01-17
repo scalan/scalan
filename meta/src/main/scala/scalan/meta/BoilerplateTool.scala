@@ -4,12 +4,12 @@ import scalan.meta.ScalanAst.STraitCall
 
 class BoilerplateTool {
   val coreTypeSynonyms = Map(
-    "RSeg" -> "Segment"
+    "RThrow" -> "Throwable"
   )
   lazy val coreConfig = CodegenConfig(
-    srcPath = "../core/src/test/scala",
+    srcPath = "../core/src/main/scala",
     entityFiles = List(
-      "scalan/common/Segments.scala"
+      "scalan/util/Exceptions.scala"
     ),
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
@@ -17,6 +17,23 @@ class BoilerplateTool {
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
     coreTypeSynonyms
+  )
+
+  val coreTestsTypeSynonyms = Map(
+    "RSeg" -> "Segment"
+  )
+  lazy val coreTestsConfig = CodegenConfig(
+    srcPath = "../core/src/test/scala",
+    entityFiles = List(
+      "scalan/common/Segments.scala"
+      //"scalan/primitives/Exceptions.scala"
+    ),
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._",
+      "scalan.common.Default"),
+    coreTestsTypeSynonyms
   )
 
   val liteTypeSynonyms = Map(
@@ -34,7 +51,7 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonyms ++ liteTypeSynonyms
+    coreTestsTypeSynonyms ++ liteTypeSynonyms
   )
 
   val eeTypeSynonyms = Set(
@@ -58,7 +75,7 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
+    coreTestsTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
   )
   lazy val scalanFullConfig = scalanConfig.copy(entityFiles = scalanConfig.entityFiles :+ "scalan/parrays/PArrays.scala")
 
@@ -97,12 +114,13 @@ class BoilerplateTool {
     }.distinct
 
   val configsMap = Map(
+    "coretests" -> List(coreTestsConfig),
     "core" -> List(coreConfig),
     "ce" -> List(liteConfig),
     "ee" -> List(scalanConfig),
     "ee-full" -> List(scalanFullConfig),
     "effects" -> List(effectsConfig),
-    "all" -> List(coreConfig, liteConfig, scalanConfig)
+    "all" -> List(coreTestsConfig, liteConfig, scalanConfig)
   )
 
   def main(args: Array[String]) {

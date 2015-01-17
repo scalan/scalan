@@ -6,6 +6,7 @@ import scalan.primitives._
 import scalan.arrays._
 import scalan.seq.BaseSeq
 import scalan.staged.{BaseExp, Expressions, Transforming}
+import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl, Exceptions}
 
 trait Scalan
   extends Base
@@ -28,8 +29,9 @@ trait Scalan
   with Monoids
   with ArrayOps
   with ArrayViews
-  with Exceptions
-  with Thunks
+  with Thunks {
+
+}
 
 trait ScalanDsl
   extends Scalan
@@ -53,7 +55,6 @@ trait ScalanSeq
   with MonoidsSeq
   with ArrayOpsSeq
   with ArrayViewsSeq
-  with ExceptionsSeq
   with ThunksSeq
 
 trait ScalanCtxSeq
@@ -80,7 +81,6 @@ trait ScalanExp
   with Transforming
   with ArrayOpsExp
   with ArrayViewsExp
-  with ExceptionsExp
   with ThunksExp
 
 trait ScalanCtxExp
