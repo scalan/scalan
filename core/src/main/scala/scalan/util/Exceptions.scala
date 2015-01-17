@@ -1,6 +1,7 @@
 package scalan.util
 
 import scalan._
+import scalan.common.Default
 
 trait Exceptions extends Base with BaseTypes { self: ExceptionsDsl =>
 
@@ -8,13 +9,13 @@ trait Exceptions extends Base with BaseTypes { self: ExceptionsDsl =>
   trait SThrowable extends BaseTypeEx[Throwable, SThrowable] { self =>
    // @External def getMessage: Rep[String]
   }
-  trait SThrowableCompanion
+  trait SThrowableCompanion  {
+    def defaultVal = Default.defaultVal(new Exception("default exception"))
+  }
 
   abstract class SException(val value: Rep[Throwable]) extends SThrowable {
   }
   trait SExceptionCompanion
-
-  implicit val ThrowableElement: Elem[Throwable] = new BaseElem[Throwable]
 
 }
 

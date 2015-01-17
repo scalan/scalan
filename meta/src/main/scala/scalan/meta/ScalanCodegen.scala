@@ -37,6 +37,14 @@ object Extensions {
 }
 
 trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
+  final val BaseTypeTraitName = "BaseTypeEx"
+
+  implicit class STraitDefOps(td: STraitDef) {
+    def optBaseType: Option[STraitCall] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
+      case Some(STraitCall(_, (h: STraitCall) :: _)) => Some(h)
+      case _ => None
+    }
+  }
 
   class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) {
     import Extensions._
@@ -107,7 +115,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
     val typesDecl = templateData.tpeArgDeclString
     val typesUse = templateData.tpeArgUseString
     val typesWithElems = templateData.boundedTpeArgString
-    
+    val optBT = module.entityOps.optBaseType
+
     def getTraitAbs = {
       val companionName = s"${entityName}Companion"
       val proxy =
@@ -116,6 +125,16 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |  implicit def proxy$entityName${typesDecl}(p: Rep[$entityName${typesUse}]): $entityName$typesUse =
         |    proxyOps[$entityName${typesUse}](p)
         |""".stripAndTrim
+
+      val baseTypeElem = optBT.opt(bt =>
+        s"""
+        |  implicit lazy val ${bt.name}Element: Elem[${bt.name}] = new BaseElem[${bt.name}]
+        |""".stripAndTrim)
+
+      val baseTypeDefault = optBT.opt(bt =>
+        s"""
+        |  implicit lazy val DefaultOf${bt.name}: Default[${bt.name}] = $entityName.defaultVal
+        |""".stripAndTrim)
 
       val familyElem = s"""  abstract class ${entityName}Elem[${tyArgsDecl.opt(tyArgs => s"${tyArgsDecl.rep(t => t)}, ")}From, To <: $entityName${typesUse}](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)""".stripAndTrim
       val companionElem = s"""
@@ -210,9 +229,11 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       }
 
       s"""
-       |trait ${module.name}Abs extends ScalanDsl with ${module.name}
+       |trait ${module.name}Abs extends Scalan with ${module.name}
        |{ ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
        |$proxy
+       |$baseTypeElem
+       |$baseTypeDefault
        |
        |$familyElem
        |

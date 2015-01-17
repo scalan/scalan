@@ -37,6 +37,7 @@ trait ScalanDsl
   extends Scalan
   with ListOps
   with ListViews
+  with ExceptionsDsl
 
 trait ScalanSeq
   extends Scalan
@@ -62,6 +63,7 @@ trait ScalanCtxSeq
   with ScalanSeq
   with ListOpsSeq
   with ListViewsSeq
+  with ExceptionsDslSeq
 
 trait ScalanExp
   extends Scalan
@@ -90,3 +92,4 @@ trait ScalanCtxExp
   with GraphVizExport
   with ListOpsExp
   with ListViewsExp
+  with ExceptionsDslExp

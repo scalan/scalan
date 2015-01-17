@@ -45,8 +45,6 @@ object Default extends Defaults {
 
   implicit val OfBigInt: Default[BigInt] = defaultVal(BigInt(0))
 
-  implicit val OfThrowable: Default[Throwable] = defaultVal(new Exception("default exception"))
-
   implicit def OfOption[A]: Default[Option[A]] = defaultVal(None)
 
   implicit def OfArray[A: ClassTag]: Default[Array[A]] = defaultVal(new Array[A](0))

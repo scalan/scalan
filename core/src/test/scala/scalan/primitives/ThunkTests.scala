@@ -3,23 +3,14 @@ package scalan.primitives
 import java.io.File
 import java.lang.reflect.Method
 import scala.language.reflectiveCalls
-import scalan.BaseTests
+import scalan._
 import scalan.common.{SegmentsDslExp, SegmentsDsl}
 
-import scalan.{Scalan, ScalanCtxExp, ScalanCtxSeq}
-
-class ThunkTests extends BaseTests {
+class ThunkTests extends BaseTests { suite =>
   val prefix = new File("test-out/scalan/primitives/thunk/")
 
-  trait TestContext extends ScalanCtxExp {
-    override def isInvokeEnabled(d: Def[_], m: Method) = true
-    override def shouldUnpack(e: ViewElem[_, _]) = true
-    val subfolder: String
-    def emit(name: String, ss: Exp[_]*) =
-      emitDepGraph(ss.toList, new File(prefix + subfolder, s"/$name.dot"), false)
-  }
-
   trait MyProg extends Scalan {
+    val prefix = suite.prefix
     val subfolder = "/myprog"
 
     lazy val t1 = fun { (in: Rep[Int]) =>
@@ -146,6 +137,7 @@ class ThunkTests extends BaseTests {
   }
 
   trait MyDomainProg extends Scalan with SegmentsDsl {
+    val prefix = suite.prefix
     val subfolder = "/mydomainprog"
 
     lazy val t1 = fun { (in: Rep[Int]) =>

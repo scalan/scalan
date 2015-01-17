@@ -2,14 +2,17 @@ package scalan.util
 package impl
 
 import scalan._
+import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
-trait ExceptionsAbs extends ScalanDsl with Exceptions
+trait ExceptionsAbs extends Scalan with Exceptions
 { self: ExceptionsDsl =>
   // single proxy for each type family
   implicit def proxySThrowable(p: Rep[SThrowable]): SThrowable =
     proxyOps[SThrowable](p)
+  implicit lazy val ThrowableElement: Elem[Throwable] = new BaseElem[Throwable]
+  implicit lazy val DefaultOfThrowable: Default[Throwable] = SThrowable.defaultVal
 
   abstract class SThrowableElem[From, To <: SThrowable](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
@@ -146,6 +149,16 @@ trait ExceptionsExp extends ExceptionsAbs with ExceptionsDsl with ScalanExp {
   }
 
   object SThrowableCompanionMethods {
-
+    object defaultVal {
+      def unapply(d: Def[_]): Option[Unit] = d match {
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SThrowableCompanionElem] && method.getName == "defaultVal" =>
+          Some(()).asInstanceOf[Option[Unit]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Unit] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 }
