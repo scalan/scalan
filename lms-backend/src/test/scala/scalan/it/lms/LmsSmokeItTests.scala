@@ -24,6 +24,7 @@ class LmsSmokeItTests extends CommunitySmokeItTests {
   override val progStaged = new ProgExp
 
   test("jniExtractor") {
+    //FIXME: it fails on the first run and works on next runs
     val functionName = "jniExtractor"
     val dir = new File(new File("it-out", prefix), functionName)
 //    progStaged.buildGraph(dir, functionName, progStaged.jniExtractor, true)(progStaged.defaultConfig)

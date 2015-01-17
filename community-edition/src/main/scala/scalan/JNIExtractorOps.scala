@@ -16,7 +16,7 @@ trait JNIExtractorOps { self: Scalan =>
     val tElem = element[T]
     override val tag = {
       implicit val ttag = element[T].tag
-      typeTag[JNIType[T]]
+      weakTypeTag[JNIType[T]]
     }
 
     override def isEntityType: Boolean = element[T].isEntityType
@@ -28,7 +28,7 @@ trait JNIExtractorOps { self: Scalan =>
     val tElem = element[T]
     override val tag = {
       implicit val ttag = element[T].tag
-      typeTag[JNIClass[T]]
+      weakTypeTag[JNIClass[T]]
     }
 
     override def isEntityType: Boolean = element[T].isEntityType
@@ -40,7 +40,7 @@ trait JNIExtractorOps { self: Scalan =>
     val tElem = element[T]
     override val tag = {
       implicit val ttag = element[T].tag
-      typeTag[JNIFieldID[T]]
+      weakTypeTag[JNIFieldID[T]]
     }
 
     override def isEntityType: Boolean = element[T].isEntityType

@@ -12,11 +12,11 @@ import scalan.util.{FileUtil, ProcessUtil}
 
 trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
 
-  override def createManifest[T](eA: Elem[T]): Manifest[_] = eA match {
+  override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     case el: JNITypeElem[_] =>
       Manifest.classType(classOf[scalan.compilation.lms.JNILmsOps#JNIType[_]], createManifest(el.tElem))
-    case _ =>
-      super.createManifest(eA)
+    case el =>
+      super.createManifest(el)
   }
 
   protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
