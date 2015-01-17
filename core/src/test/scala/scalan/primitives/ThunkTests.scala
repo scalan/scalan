@@ -177,4 +177,20 @@ class ThunkTests extends BaseTests {
     ctx.emit("t2", ctx.t2)
   }
 
+  test("thunksOfDomainTypesWithoutIsoLifting") {
+    val ctx = new TestContext with SegmentsDslExp with MyDomainProg {
+      isInlineThunksOnForce = false
+      override def isInvokeEnabled(d: Def[_], m: Method) = true
+      override def shouldUnpack(e: ViewElem[_, _]) = false
+
+      def test() = {
+        assert(!isInlineThunksOnForce, ": precondition for tests");
+
+      }
+    }
+    ctx.test
+    ctx.emit("t1_iso", ctx.t1)
+    ctx.emit("t2_iso", ctx.t2)
+  }
+
 }
