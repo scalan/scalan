@@ -108,7 +108,11 @@ class BoilerplateTool {
   def main(args: Array[String]) {
     val configs = getConfigs(args)
 
-    configs.foreach { new EntityManagement(_).generateAll() }
+    for (c <- configs) {
+      println(s"Processing ${c.srcPath}")
+      new EntityManagement(c).generateAll()
+      println(s"Ok\n")
+    }
   }
 }
 

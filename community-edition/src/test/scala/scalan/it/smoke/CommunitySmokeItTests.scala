@@ -1,5 +1,6 @@
 package scalan.it.smoke
 
+import scalan.ScalanCtxSeq
 import scalan.community._
 import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
 
@@ -175,7 +176,7 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
 //
   }
 
-  class ProgCommunitySeq extends ProgCommunity with PArraysDslSeq with ScalanCommunityDslSeq {
+  class ProgCommunitySeq extends ProgCommunity with PArraysDslSeq with ScalanCommunityDslSeq with ScalanCtxSeq {
 //    lazy val intRep: Rep[Int] = 1
 //    lazy val intPair: Rep[(Int, Int)] = (1, 2)
 //    lazy val nestedIntPair: Rep[((Int, Int), (Int, Int))] = ((1, 2), (3, 4))

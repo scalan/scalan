@@ -178,8 +178,8 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
 
 }
 
-trait PArraysDsl extends Scalan with impl.PArraysAbs with PArrays { }
+trait PArraysDsl extends impl.PArraysAbs
 
-trait PArraysDslSeq extends PArraysDsl with impl.PArraysSeq with ScalanSeq
+trait PArraysDslSeq extends impl.PArraysSeq
 
-trait PArraysDslExp extends PArraysDsl with impl.PArraysExp with ScalanExp
+trait PArraysDslExp extends impl.PArraysExp

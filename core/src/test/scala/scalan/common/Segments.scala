@@ -25,11 +25,11 @@ trait Segments { self: SegmentsDsl =>
 }
 
 
-trait SegmentsDsl extends ScalanDsl with impl.SegmentsAbs with Segments {
+trait SegmentsDsl extends impl.SegmentsAbs {
 }
 
-trait SegmentsDslSeq extends SegmentsDsl with impl.SegmentsSeq with ScalanCtxSeq {
+trait SegmentsDslSeq extends impl.SegmentsSeq {
 }
 
-trait SegmentsDslExp extends SegmentsDsl with impl.SegmentsExp with ScalanExp {
+trait SegmentsDslExp extends impl.SegmentsExp {
 }
