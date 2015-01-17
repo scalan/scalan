@@ -253,10 +253,6 @@ class LmsBackend extends LmsBackendFacade { self =>
       }
     }
 
-    override def emitFatNode(sym: List[Sym[Any]], rhs: FatDef) = {
-      super.emitFatNode(sym, rhs)
-    }
-
     override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
       val sA = remapResult(manifest[A])
 

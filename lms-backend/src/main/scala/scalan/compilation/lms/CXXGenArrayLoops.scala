@@ -85,14 +85,10 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
 //            stream.println("var " + quote(l) + " = new ArrayBuilder[" + remap(getBlockResult(y).tp) + "]")
         }
       }
+
       val ii = x // was: x(i)
-      //      stream.println("var " + quote(ii) + " = 0")
-      //      stream.println("while ("+quote(ii)+" < "+quote(s)+") {")
-//      stream.println("for ("+quote(ii)+" <- 0 until "+quote(s)+") {")
-      stream.println(s"for( size_t ${quote(ii)} = 0; ${quote(ii)} < ${quote(s)}; ++${quote(ii)} ) {")
-      //      for (jj <- x.drop(1)) {
-      //        stream.println(quote(jj)+" = "+quote(ii))
-      //      }
+      stream.println(s"for( ${remap(ii.tp)} ${quote(ii)} = 0; ${quote(ii)} < ${quote(s)}; ++${quote(ii)} ) {")
+
       emitFatBlock(syms(rhs).map(Block(_))) // TODO: check this
       for ((l,r) <- sym zip rhs) {
         r match {

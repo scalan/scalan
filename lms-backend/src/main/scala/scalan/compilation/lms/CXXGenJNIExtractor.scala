@@ -1,6 +1,6 @@
 package scalan.compilation.lms
 
-import scala.virtualization.lms.internal.FatExpressions
+import scala.virtualization.lms.internal.{GenerationFailedException, FatExpressions}
 
 /**
  * Created by zotov on 12/27/14.
@@ -15,23 +15,10 @@ trait CXXGenJNIExtractor extends CXXCodegen {
   override def traverseStm(stm: Stm): Unit = {
     stm match {
       case TP(sym,rhs) =>
-        sym.tp.runtimeClass match {
-          case c if c.isArray =>
-            sym.tp.typeArguments(0) match {
-              case m if m <:< Manifest.AnyVal =>
-                moveableSyms += sym
-              case _ =>
-                ()
-            }
-          case _ =>
-            val ss = syms(rhs)
-            ss.find( moveableSyms.contains ) match {
-              case Some(s) =>
-                moveableSyms += sym
-              case None =>
-                ()
-            }
-          }
+        if (sym.tp.runtimeClass.isArray && sym.tp.typeArguments(0) <:< Manifest.AnyVal) // array of primitives should be moved
+          moveableSyms += sym
+        else if (syms(rhs).find(moveableSyms.contains) != None) // derived from moveable
+          moveableSyms += sym
       case _ =>
         ()
     }
@@ -72,75 +59,46 @@ trait CXXGenJNIExtractor extends CXXCodegen {
   }
 
   override def remap[A](m: Manifest[A]): String = {
-//    println("CXXGenJNIExtractor.remap: " + m)
     m.runtimeClass match {
-      case c if c == classOf[JObject[_]] =>
-        remapObject(m.typeArguments(0))
+      case c if c == classOf[JNIClass[_]] => "jclass"
+      case c if c == classOf[JNIFieldID[_]] => "jfieldID"
+      case c if c == classOf[JObject[_]] => remapObject(m.typeArguments(0))
       case c if c.isArray =>
-        val mItem = m.typeArguments(0)
-        mItem.runtimeClass match {
-          case cItem if cItem == classOf[JNIType[_]] =>
-            remapJNIArray( mItem.typeArguments(0) )
-          case c =>
-            super.remap(m)
+        m.typeArguments(0) match {
+          case mItem if mItem.runtimeClass == classOf[JNIType[_]] => remapSimpleType( mItem.typeArguments(0) ) + "Array"
+          case _ => super.remap(m)
         }
       case c if c == classOf[JNIType[_]] =>
-        val mT = m.typeArguments(0)
-        mT match {
-          case Manifest.Byte =>
-            "jbyte"
-          case Manifest.Int =>
-            "jint"
-          case Manifest.Double =>
-            "jdouble"
-          case _ if mT.runtimeClass .isArray =>
-            remapJNIArray( mT.typeArguments(0) )
-          case _ if mT <:< Manifest.AnyRef =>
-            "jobject"
+        m.typeArguments(0) match {
+          case mT if mT.runtimeClass.isArray => remapSimpleType( mT.typeArguments(0) ) + "Array"
+          case mT => remapSimpleType(mT)
         }
-      case c if c == classOf[JNIClass[_]] =>
-        "jclass"
-      case c if c == classOf[JNIFieldID[_]] =>
-        "jfieldID"
-      case c =>
+      case _ =>
         super.remap(m)
     }
   }
 
-  private def remapJNIArray[A](m: Manifest[A]): String = {
-    m match {
-      case Manifest.Byte =>
-        "jbyteArray"
-      case Manifest.Int =>
-        "jintArray"
-      case Manifest.Double =>
-        "jdoubleArray"
-      case _ if m <:< Manifest.AnyRef =>
-        "jobjectArray"
-    }
+  private def remapSimpleType[A](m: Manifest[A]): String = m match {
+    case Manifest.Byte => "jbyte"
+    case Manifest.Int => "jint"
+    case Manifest.Double => "jdouble"
+    case _ if m <:< Manifest.AnyRef => "jobject"
+    case _ =>
+      throw new GenerationFailedException(s"CXXGenJNIExtractor.remapSimpleType(m) : Type ${m} cannot be remapped.")
   }
 
-
-  private def remapObject[A](m: Manifest[A]): String = {
-    m.runtimeClass match {
-      case c if c.isArray =>
-        val mItem = m.typeArguments(0)
-        mItem.runtimeClass match {
-          case cItem if cItem == classOf[JNIType[_]] =>
-            remapJNIArray( mItem.typeArguments(0) )
-        }
-      case c if c == classOf[JNIType[_]] =>
-        val mT = m.typeArguments(0)
-        mT match {
-          case _ if mT.runtimeClass .isArray =>
-            remapJNIArray( mT.typeArguments(0) )
-          case _ =>
-            "jobject"
-        }
-      case c if c == classOf[JNIClass[_]] =>
-        "jclass"
-      case c if c == classOf[JNIFieldID[_]] =>
-        "jfieldID"
+  private def remapObject[A](m: Manifest[A]): String = m match {
+    case _ if m.runtimeClass == classOf[JNIType[_]] => m.typeArguments(0) match {
+      case mT if mT <:< Manifest.AnyVal => "jobject"
+      case _ => remap(m)
     }
+    case _ if m.runtimeClass.isArray => m.typeArguments(0) match {
+      case mItem if mItem.runtimeClass == classOf[JNIType[_]] =>
+        remap(m)
+      case _ =>
+        throw new GenerationFailedException(s"CXXGenJNIExtractor.remapObject(m) : Type ${m} cannot be remapped to jobject.")
+    }
+    case _ =>
+      throw new GenerationFailedException(s"CXXGenJNIExtractor.remapObject(m) : Type ${m} cannot be remapped to jobject.")
   }
 }

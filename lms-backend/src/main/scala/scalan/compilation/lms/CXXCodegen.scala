@@ -38,15 +38,13 @@ trait CXXCodegen extends CLikeCodegen {
   }
 
   override def remap[A](m: Manifest[A]): String = {
-//    println(s"CXXCodegen.remap(): ${m}")
     m.runtimeClass match {
       case c if c == classOf[Noref[_]] =>
-//        println("Noref: " + m.typeArguments(0))
         remap(m.typeArguments(0))
       case c if c.isArray =>
         val itemType = m.typeArguments(0)
         val ts = remap(itemType)
-        if( isPrimitiveType(itemType) )
+        if( isPrimitiveType(itemType) ) //TODO: invent correct way map vector types
           s"jni_array<${ts}>"
         else
           s"std::vector<${ts}>"
@@ -63,7 +61,7 @@ trait CXXCodegen extends CLikeCodegen {
 }
 
 trait CXXFatCodegen extends CXXCodegen with CLikeFatCodegen {
-  val IR: Expressions with FatExpressions with Effects with ArrayLoopsFatExp
+  val IR: Expressions with FatExpressions with Effects
   import IR._
 
   override def emitFatNode(sym: List[Sym[Any]], rhs: FatDef): Unit = {
@@ -73,8 +71,7 @@ trait CXXFatCodegen extends CXXCodegen with CLikeFatCodegen {
   override def traverseStm(stm: Stm): Unit = {
     stm match {
       case TTP(lhs,mhs,rhs) =>
-        val ss = syms(rhs)
-        if( ss.contains(moveableSyms.contains _) )
+        if( syms(rhs).contains(moveableSyms.contains _) )
           moveableSyms ++= lhs
       case _ =>
         ()
