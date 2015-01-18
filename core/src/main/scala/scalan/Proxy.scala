@@ -31,6 +31,38 @@ trait Proxy { self: Scalan =>
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = x
+  def proxyOpsEx[OpsBase <: AnyRef, Ops <: AnyRef](x: Rep[OpsBase])(implicit ctBase: ClassTag[OpsBase], ct: ClassTag[Ops]): Ops =  {
+    getProxy(x, ctBase, ct)
+  }
+
+  private val proxies = collection.mutable.Map.empty[(AnyRef, ClassTag[_]), AnyRef]
+  private val objenesis = new ObjenesisStd
+
+  private def getProxy[OpsBase <: AnyRef, Ops <: AnyRef](x: OpsBase, ctBase: ClassTag[OpsBase], ct: ClassTag[Ops]) = {
+    val proxy = proxies.getOrElseUpdate((x, ct), {
+      val clazz = ct.runtimeClass
+      val e = new Enhancer
+      e.setClassLoader(clazz.getClassLoader)
+      e.setSuperclass(clazz)
+      e.setCallbackType(classOf[SeqInvocationHandler[_]])
+      val proxyClass = e.createClass().asSubclass(classOf[AnyRef])
+      val proxyInstance = objenesis.newInstance(proxyClass).asInstanceOf[Factory]
+      proxyInstance.setCallback(0, new SeqInvocationHandler(x)(ctBase))
+      proxyInstance
+    })
+    proxy.asInstanceOf[Ops]
+  }
+
+  class SeqInvocationHandler[TBase <: AnyRef](receiver: TBase)(implicit ctBase: ClassTag[TBase]) extends InvocationHandler {
+    override def toString = s"SeqInvocationHandler(${receiver.toString})"
+
+    def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
+      val clazzBase = ctBase.runtimeClass
+      val mBase = clazzBase.getMethod(m.getName, m.getParameterTypes: _*)
+      mBase.invoke(receiver, _args: _*)
+    }
+  }
+
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
     m.invoke(receiver, args: _*).asInstanceOf[A]
 }

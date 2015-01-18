@@ -23,6 +23,11 @@ class ExceptionTests extends BaseTests { suite =>
     val ctx = new TestContext with  ThrowableExamples {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
+        {
+//TODO make this work (recognizer should deal with BaseElemEx)
+//          val Def(Lambda(_, _, x, SThrowableMethods.getMessage(obj))) = t1
+//          assert(x == obj)
+        }
 
       }
     }
@@ -41,5 +46,6 @@ class ExceptionTests extends BaseTests { suite =>
     ctx.test
     val d = ctx.defaultRep
     val res = ctx.t1(new Throwable("test"))
+    assertResult("test")(res)
   }
 }

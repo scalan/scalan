@@ -273,6 +273,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val traitWithTypes = templateData.baseType
       val implicitArgs = templateData.implicitArgs
       val implicitSignature = templateData.implicitSignature
+
       val userTypeDefs =
         s"""
          |  case class Seq$className${typesDecl}
@@ -294,7 +295,15 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
          |    Some((${fields.rep(f => s"p.$f")}))
          |""".stripAndTrim
 
-      s"""$userTypeDefs\n\n$constrDefs"""
+      val proxyBT = optBT.opt(bt =>
+        s"""
+         |  // override proxy if we deal with BaseTypeEx
+         |  override def proxy$entityNameBT${typesDecl}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
+         |    proxyOpsEx[$entityNameBT${typesUse},$entityName${typesUse}](p)
+         |""".stripAndTrim
+      )
+
+      s"""$proxyBT\n\n$userTypeDefs\n\n$constrDefs"""
     }
 
     def getSClassExp(c: SClassDef) = {

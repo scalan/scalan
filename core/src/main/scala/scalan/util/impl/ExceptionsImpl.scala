@@ -94,6 +94,10 @@ trait ExceptionsSeq extends ExceptionsAbs with ExceptionsDsl with ScalanSeq {
     lazy val selfType = element[SThrowableCompanionAbs]
   }
 
+  // override proxy if we deal with BaseTypeEx
+  override def proxyThrowable(p: Rep[Throwable]): SThrowable =
+    proxyOpsEx[Throwable,SThrowable](p)
+
   case class SeqSException
       (override val value: Rep[Throwable])
       
