@@ -307,7 +307,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       val loopRes = LoopUntil(start1, step1, isMatch1)
       iso.to(loopRes)
     case call @ MethodCall(Def(obj), m, args) =>
-      if (m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
+      if (!call.neverInvoke && m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
         val res = m.invoke(obj, args: _*)
         res.asInstanceOf[Exp[_]]
       } else {

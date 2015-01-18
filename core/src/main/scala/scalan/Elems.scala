@@ -26,6 +26,7 @@ trait Elems extends Base { self: Scalan =>
       replaceAll("[A-Za-z0-9_.]*this.", "").
       replace("scala.math.Numeric$", "").
       replace("scala.", "").
+      replace("java.lang.", "").
       replaceAll("""[^# \[\],>]*[#$]""", "")
 
     override def toString = s"${getClass.getSimpleName}[$name]"

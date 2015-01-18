@@ -9,9 +9,9 @@ import scalan.common.Default
 trait ExceptionsAbs extends Scalan with Exceptions
 { self: ExceptionsDsl =>
   // single proxy for each type family
-  implicit def proxySThrowable(p: Rep[SThrowable]): SThrowable =
-    proxyOps[SThrowable](p)
-  implicit lazy val ThrowableElement: Elem[Throwable] = new BaseElem[Throwable]
+  implicit def proxyThrowable(p: Rep[Throwable]): SThrowable =
+    proxyOps[SThrowable](p.asRep[SThrowable])
+  implicit lazy val ThrowableElement: Elem[Throwable] = new BaseElemEx[Throwable, SThrowable](element[SThrowable])
   implicit lazy val DefaultOfThrowable: Default[Throwable] = SThrowable.defaultVal
 
   abstract class SThrowableElem[From, To <: SThrowable](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
@@ -131,7 +131,17 @@ trait ExceptionsExp extends ExceptionsAbs with ExceptionsDsl with ScalanExp {
   }
 
   object SExceptionMethods {
-
+    object getMessage {
+      def unapply(d: Def[_]): Option[Rep[SException]] = d match {
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SExceptionElem] && method.getName == "getMessage" =>
+          Some(receiver).asInstanceOf[Option[Rep[SException]]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SException]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object SExceptionCompanionMethods {
@@ -145,7 +155,17 @@ trait ExceptionsExp extends ExceptionsAbs with ExceptionsDsl with ScalanExp {
     Some((p.value))
 
   object SThrowableMethods {
-
+    object getMessage {
+      def unapply(d: Def[_]): Option[Rep[SThrowable]] = d match {
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SThrowableElem[_, _]] && method.getName == "getMessage" =>
+          Some(receiver).asInstanceOf[Option[Rep[SThrowable]]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SThrowable]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object SThrowableCompanionMethods {

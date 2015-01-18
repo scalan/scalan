@@ -7,13 +7,16 @@ trait Exceptions extends Base with BaseTypes { self: ExceptionsDsl =>
 
   type RThrow = Rep[Throwable]
   trait SThrowable extends BaseTypeEx[Throwable, SThrowable] { self =>
-   // @External def getMessage: Rep[String]
+   @External def getMessage: Rep[String]
   }
-  trait SThrowableCompanion  {
-    def defaultVal = Default.defaultVal(new Exception("default exception"))
+  trait SThrowableCompanion extends ExCompanion0[Throwable]  {
+    def defaultVal = Default.defaultVal(new Throwable("default exception"))
   }
+  implicit def defaultSThrowableElem: Elem[SThrowable] = element[SException].asElem[SThrowable]
 
   abstract class SException(val value: Rep[Throwable]) extends SThrowable {
+    def getMessage: Rep[String] =
+      methodCallEx[String](self, this.getClass.getMethod("getMessage"), List())
   }
   trait SExceptionCompanion
 

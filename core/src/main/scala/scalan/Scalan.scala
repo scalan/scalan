@@ -11,6 +11,7 @@ import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl, Exception
 trait Scalan
   extends Base
   with Elems
+  with BaseTypes
   with Views
   with Proxy
   with Tuples

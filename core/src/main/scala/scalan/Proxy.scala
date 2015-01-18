@@ -25,21 +25,28 @@ trait Proxy { self: Scalan =>
     val f = clazz.getDeclaredMethod(name)
     f.invoke(this).asInstanceOf[Rep[_]]
   }
+
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = x
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
+    m.invoke(receiver, args: _*).asInstanceOf[A]
 }
 
 trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
   case class MethodCall[T](receiver: Exp[_], method: Method, args: List[AnyRef])(implicit selfType: Elem[T]) extends BaseDef[T] {
     def uniqueOpId = s"$name:${method.getName}"
+    def neverInvoke: Boolean = false
     override def mirror(t: Transformer) =
       MethodCall[T](t(receiver), method, args map {
         case a: Exp[_] => t(a)
         case a => a
       })
   }
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
+    new MethodCall[A](receiver, m, args) { override def neverInvoke = true }
 
   private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
@@ -149,7 +156,10 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
 
     def getResultElem(m: Method, args: Array[AnyRef]): Elem[_] = {
       val e = receiver.elem
-      val zero = e.defaultRepValue
+      val zero = e match {
+        case extE: BaseElemEx[_,_] => extE.extElem.defaultRepValue
+        case _ => e.defaultRepValue
+      }
       val Def(zeroNode) = zero
       try {
         val args1 = args.map {

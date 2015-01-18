@@ -5,26 +5,41 @@ import java.lang.reflect.Method
 
 import scala.language.reflectiveCalls
 import scalan.common.{SegmentsDsl, SegmentsDslExp}
-import scalan.{TestContext, BaseTests, Scalan, ScalanCtxExp}
+import scalan._
 
 class ExceptionTests extends BaseTests { suite =>
-  val prefix = new File("test-out/scalan/util/exception/")
+  val prefix = new File("test-out/scalan/util/exceptions/")
 
-  trait MyProg extends Scalan {
+  trait ThrowableExamples extends ScalanDsl {
     val prefix = suite.prefix
-    val subfolder = "/myprog"
+    val subfolder = "/throwables"
+    lazy val tElem = element[Throwable]
+    lazy val defaultRep = tElem.defaultRepValue
 
+    lazy val t1 = fun { (t: Rep[Throwable]) => t.getMessage }
   }
 
-  test("exceptions") {
-    val ctx = new TestContext with  MyProg {
+  test("throwablesStaged") {
+    val ctx = new TestContext with  ThrowableExamples {
       def test() = {
-        assert(!isInlineThunksOnForce, "precondition for tests")
+        //assert(!isInlineThunksOnForce, "precondition for tests")
 
       }
     }
     ctx.test
-    //ctx.emit("t1", ctx.t1)
+    ctx.emit("defaultRep", ctx.defaultRep)
+    ctx.emit("t1", ctx.t1)
   }
 
+  test("throwablesSeq") {
+    val ctx = new ScalanCtxSeq with  ThrowableExamples {
+      def test() = {
+        //assert(!isInlineThunksOnForce, "precondition for tests")
+
+      }
+    }
+    ctx.test
+    val d = ctx.defaultRep
+    val res = ctx.t1(new Throwable("test"))
+  }
 }

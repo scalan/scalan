@@ -109,31 +109,49 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       if (typeArgs.isEmpty) "" else typeArgs.mkString("[", ", ", "]")
 
     val templateData = EntityTemplateData(module.entityOps)
+    val optBT = module.entityOps.optBaseType
     val entityName = templateData.name
+    val entityNameBT = optBT.map(_.name).getOrElse(templateData.name)
     val tyArgsDecl = templateData.tpeArgDecls
     val tyArgsUse = templateData.tpeArgUses
     val typesDecl = templateData.tpeArgDeclString
     val typesUse = templateData.tpeArgUseString
     val typesWithElems = templateData.boundedTpeArgString
-    val optBT = module.entityOps.optBaseType
 
     def getTraitAbs = {
       val companionName = s"${entityName}Companion"
       val proxy =
         s"""
         |  // single proxy for each type family
-        |  implicit def proxy$entityName${typesDecl}(p: Rep[$entityName${typesUse}]): $entityName$typesUse =
-        |    proxyOps[$entityName${typesUse}](p)
+        |  implicit def proxy$entityNameBT${typesDecl}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
+        |    proxyOps[$entityName${typesUse}](p.asRep[$entityName${typesUse}])
         |""".stripAndTrim
 
       val baseTypeElem = optBT.opt(bt =>
-        s"""
-        |  implicit lazy val ${bt.name}Element: Elem[${bt.name}] = new BaseElem[${bt.name}]
-        |""".stripAndTrim)
+        if (tyArgsDecl.isEmpty) {
+          s"""
+          |  implicit lazy val ${bt.name}Element: Elem[${bt.name}] = new BaseElemEx[${bt.name}, $entityName](element[$entityName])
+          |""".stripAndTrim
+        }
+        else {
+          s"""
+          |  implicit def ${bt.name}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] = new BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])
+          |""".stripAndTrim
+        })
 
       val baseTypeDefault = optBT.opt(bt =>
+        if (tyArgsDecl.isEmpty) {
+          s"""
+          |  implicit lazy val DefaultOf${bt.name}: Default[${bt.name}] = $entityName.defaultVal
+          |""".stripAndTrim
+        } else {
+          s"""
+          |  implicit lazy val DefaultOf${bt.name}${typesWithElems}: Default[$entityNameBT${typesUse}] = $entityName.defaultVal
+          |""".stripAndTrim
+        })
+      val ExToBaseType = optBT.opt(bt =>
         s"""
-        |  implicit lazy val DefaultOf${bt.name}: Default[${bt.name}] = $entityName.defaultVal
+        |  //implicit def ${entityName}To${bt.name}(st: Rep[$entityName]): Rep[${bt.name}]
         |""".stripAndTrim)
 
       val familyElem = s"""  abstract class ${entityName}Elem[${tyArgsDecl.opt(tyArgs => s"${tyArgsDecl.rep(t => t)}, ")}From, To <: $entityName${typesUse}](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)""".stripAndTrim
