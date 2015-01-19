@@ -11,8 +11,7 @@ import scalan.compilation.GraphVizExport
 import scalan.compilation.lms.{CommunityBridge, LinalgBridge, LmsBridge, LmsCompiler}
 import scalan.it.smoke.CommunitySmokeItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
-import scalan.performance.MVMs
+import scalan.community.ScalanCommunityExp
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
   class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX with VectorsDslExp with MatricesDslExp { self =>
@@ -22,25 +21,6 @@ class LmsSmokeItTests extends CommunitySmokeItTests {
   }
   
   override val progStaged = new ProgExp
-
-  test("jniExtractor") {
-    //FIXME: it fails on the first run and works on next runs
-    val functionName = "jniExtractor"
-    val dir = new File(new File("it-out", prefix), functionName)
-//    progStaged.buildGraph(dir, functionName, progStaged.jniExtractor, true)(progStaged.defaultConfig)
-    progStaged.buildExecutable(dir, dir, functionName, progStaged.jniExtractor, true)(progStaged.defaultConfig)
-
-    System.setProperty("java.library.path", new File(dir,"release").getAbsolutePath)
-    println(System.getProperty("java.library.path"))
-    System.loadLibrary("jniExtractor")
-
-    val v = Array(34.0)
-    val k = 77.0
-     val res = (new MVMs).extractorTest( (v,k) )
-//    println(res.mkString("[",",","]"))
-    assert(res sameElements (v map {a => k*a}) )
-  }
-
 
   test("test0simpleArith") {
     val in = 2

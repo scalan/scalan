@@ -19,6 +19,38 @@ trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanC
       super.createManifest(el)
   }
 
+  def generate[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
+                           (implicit config: Config): Unit = {
+    sourcesDir.mkdirs()
+    executableDir.mkdirs()
+    val eFunc = func.elem
+    val graph = buildGraph(sourcesDir, functionName, func, emitGraphs)(config)
+    doGenerate(sourcesDir, executableDir, functionName, graph, emitGraphs)(config, eFunc.eDom, eFunc.eRange)
+  }
+
+  protected def doGenerate[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
+                                      (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
+
+    val outputSource = new File(sourcesDir, functionName + ".cxx")
+
+    (createManifest(eInput), createManifest(eOutput)) match {
+      case (mA: Manifest[a], mB: Manifest[b]) =>
+        val bridge = makeBridge[a, b]
+        val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
+        val codegen = bridge.lms.codegenCXX
+
+        FileUtil.withFile(outputSource) { writer =>
+          codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
+          //          val s = bridge.lms.fresh[a](mA)
+          //          val body = codegen.reifyBlock(facade.apply(s))(mB)
+          //          codegen.emitSource(List(s), body, functionName, writer)(mB)
+          //          val bridge.lms.TP(sym,_) = bridge.lms.globalDefs.last
+          //          codegen.emitDepGraph( sym, new File( sourcesDir, functionName + "-LMS.dot" ).getAbsolutePath )
+          codegen.emitDataStructures(writer)
+        }
+    }
+  }
+
   protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
