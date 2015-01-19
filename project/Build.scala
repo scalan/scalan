@@ -55,7 +55,7 @@ object ScalanBuild extends Build {
       else
         Some("releases" at (nexus + "content/repositories/releases"))
     },
-    opts, commonDeps) ++ testSettings ++ releaseSettings
+    opts, commonDeps) ++ testSettings ++ releaseSettings :+ (ReleaseKeys.crossBuild := true)
 
   lazy val ItTest = config("it").extend(Test)
 
