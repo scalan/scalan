@@ -11,6 +11,7 @@ trait Exceptions extends Base with BaseTypes { self: ExceptionsDsl =>
   }
   trait SThrowableCompanion extends ExCompanion0[Throwable]  {
     def defaultVal = Default.defaultVal(new Throwable("default exception"))
+    def apply(msg: Rep[String]): Rep[Throwable] = newObjEx(classOf[Throwable], List(msg.asRep[AnyRef]))
   }
   implicit def defaultSThrowableElem: Elem[SThrowable] = element[SException].asElem[SThrowable]
 

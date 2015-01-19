@@ -123,9 +123,17 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val proxy =
         s"""
         |  // single proxy for each type family
+        |  implicit def proxy$entityName${typesDecl}(p: Rep[$entityName${typesUse}]): $entityName$typesUse =
+        |    proxyOps[$entityName${typesUse}](p)
+        |""".stripAndTrim
+
+      val proxyBT = optBT.opt(bt =>
+        s"""
+        |  // BaseTypeEx proxy
         |  implicit def proxy$entityNameBT${typesDecl}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
         |    proxyOps[$entityName${typesUse}](p.asRep[$entityName${typesUse}])
         |""".stripAndTrim
+      )
 
       val baseTypeElem = optBT.opt(bt =>
         if (tyArgsDecl.isEmpty) {
@@ -250,6 +258,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
        |trait ${module.name}Abs extends Scalan with ${module.name}
        |{ ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
        |$proxy
+       |$proxyBT
        |$baseTypeElem
        |$baseTypeDefault
        |

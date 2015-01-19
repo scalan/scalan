@@ -17,9 +17,36 @@ class ExceptionTests extends BaseTests { suite =>
     lazy val defaultRep = tElem.defaultRepValue
 
     lazy val t1 = fun { (t: Rep[Throwable]) => t.getMessage }
+    lazy val t2 = fun { (t: Rep[SThrowable]) => t.getMessage }
+    lazy val t3 = fun { (t: Rep[SThrowable]) => SException(t.value)}
+    lazy val t4 = fun { (t: Rep[SThrowable]) => SException(t.value).value}
+
+    lazy val t5 = fun { (msg: Rep[String]) => SThrowable(msg)}
+    lazy val t6 = fun { (msg: Rep[String]) => SThrowable(msg).getMessage }
+
+
   }
 
   test("throwablesStaged") {
+    val ctx = new TestContext with  ThrowableExamples {
+      def test() = {
+        //assert(!isInlineThunksOnForce, "precondition for tests")
+        {
+//TODO make this work (recognizer should deal with BaseElemEx)
+//          val Def(Lambda(_, _, x, SThrowableMethods.getMessage(obj))) = t1
+//          assert(x == obj)
+        }
+      }
+    }
+    ctx.test
+    ctx.emit("defaultRep", ctx.defaultRep)
+    ctx.emit("t1", ctx.t1)
+    ctx.emit("t2", ctx.t2)
+    ctx.emit("t3", ctx.t3)
+    ctx.emit("t4", ctx.t4)
+  }
+
+  test("createThrowableStaged") {
     val ctx = new TestContext with  ThrowableExamples {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
@@ -32,8 +59,8 @@ class ExceptionTests extends BaseTests { suite =>
       }
     }
     ctx.test
-    ctx.emit("defaultRep", ctx.defaultRep)
-    ctx.emit("t1", ctx.t1)
+    ctx.emit("t5", ctx.t5)
+    ctx.emit("t6", ctx.t6)
   }
 
   test("throwablesSeq") {

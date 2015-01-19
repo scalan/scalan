@@ -9,6 +9,9 @@ import scalan.common.Default
 trait ExceptionsAbs extends Scalan with Exceptions
 { self: ExceptionsDsl =>
   // single proxy for each type family
+  implicit def proxySThrowable(p: Rep[SThrowable]): SThrowable =
+    proxyOps[SThrowable](p)
+  // BaseTypeEx proxy
   implicit def proxyThrowable(p: Rep[Throwable]): SThrowable =
     proxyOps[SThrowable](p.asRep[SThrowable])
   implicit lazy val ThrowableElement: Elem[Throwable] = new BaseElemEx[Throwable, SThrowable](element[SThrowable])
