@@ -1,0 +1,78 @@
+package scalan.util
+
+import java.io.File
+import java.lang.reflect.Method
+
+import scala.language.reflectiveCalls
+import scalan.common.{SegmentsDsl, SegmentsDslExp}
+import scalan._
+
+class ExceptionTests extends BaseTests { suite =>
+  val prefix = new File("test-out/scalan/util/exceptions/")
+
+  trait ThrowableExamples extends ScalanDsl {
+    val prefix = suite.prefix
+    val subfolder = "/throwables"
+    lazy val tElem = element[Throwable]
+    lazy val defaultRep = tElem.defaultRepValue
+
+    lazy val t1 = fun { (t: Rep[Throwable]) => t.getMessage }
+    lazy val t2 = fun { (t: Rep[SThrowable]) => t.getMessage }
+    lazy val t3 = fun { (t: Rep[SThrowable]) => SException(t.value)}
+    lazy val t4 = fun { (t: Rep[SThrowable]) => SException(t.value).value}
+
+    lazy val t5 = fun { (msg: Rep[String]) => SThrowable(msg)}
+    lazy val t6 = fun { (msg: Rep[String]) => SThrowable(msg).getMessage }
+
+
+  }
+
+  test("throwablesStaged") {
+    val ctx = new TestContext with  ThrowableExamples {
+      def test() = {
+        //assert(!isInlineThunksOnForce, "precondition for tests")
+        {
+//TODO make this work (recognizer should deal with BaseElemEx)
+//          val Def(Lambda(_, _, x, SThrowableMethods.getMessage(obj))) = t1
+//          assert(x == obj)
+        }
+      }
+    }
+    ctx.test
+    ctx.emit("defaultRep", ctx.defaultRep)
+    ctx.emit("t1", ctx.t1)
+    ctx.emit("t2", ctx.t2)
+    ctx.emit("t3", ctx.t3)
+    ctx.emit("t4", ctx.t4)
+  }
+
+  test("createThrowableStaged") {
+    val ctx = new TestContext with  ThrowableExamples {
+      def test() = {
+        //assert(!isInlineThunksOnForce, "precondition for tests")
+        {
+//TODO make this work (recognizer should deal with BaseElemEx)
+//          val Def(Lambda(_, _, x, SThrowableMethods.getMessage(obj))) = t1
+//          assert(x == obj)
+        }
+
+      }
+    }
+    ctx.test
+    ctx.emit("t5", ctx.t5)
+    ctx.emit("t6", ctx.t6)
+  }
+
+  test("throwablesSeq") {
+    val ctx = new ScalanCtxSeq with  ThrowableExamples {
+      def test() = {
+        //assert(!isInlineThunksOnForce, "precondition for tests")
+
+      }
+    }
+    ctx.test
+    val d = ctx.defaultRep
+    val res = ctx.t1(new Throwable("test"))
+    assertResult("test")(res)
+  }
+}

@@ -12,6 +12,7 @@ trait Segments { self: SegmentsDsl =>
     def end: Rep[Int]
   }
   trait SegmentCompanion
+  implicit def defaultSegmentElem: Elem[Segment] = element[Interval].asElem[Segment]
 
   abstract class Interval(val start: Rep[Int], val end: Rep[Int]) extends Segment {
     def length = end - start
@@ -25,11 +26,11 @@ trait Segments { self: SegmentsDsl =>
 }
 
 
-trait SegmentsDsl extends ScalanDsl with impl.SegmentsAbs with Segments {
+trait SegmentsDsl extends impl.SegmentsAbs {
 }
 
-trait SegmentsDslSeq extends SegmentsDsl with impl.SegmentsSeq with ScalanCtxSeq {
+trait SegmentsDslSeq extends impl.SegmentsSeq {
 }
 
-trait SegmentsDslExp extends SegmentsDsl with impl.SegmentsExp with ScalanExp {
+trait SegmentsDslExp extends impl.SegmentsExp {
 }

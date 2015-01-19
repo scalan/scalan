@@ -14,6 +14,7 @@ import net.sf.cglib.proxy.Enhancer
 import net.sf.cglib.proxy.Factory
 import net.sf.cglib.proxy.InvocationHandler
 import scalan.common.Lazy
+import scalan.compilation.GraphVizExport
 import scalan.staged.BaseExp
 import scalan.util.ScalaNameUtil
 
@@ -25,20 +26,91 @@ trait Proxy { self: Scalan =>
     val f = clazz.getDeclaredMethod(name)
     f.invoke(this).asInstanceOf[Rep[_]]
   }
+
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
+  def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = x
+  def proxyOpsEx[OpsBase <: AnyRef, Ops <: AnyRef](x: Rep[OpsBase])(implicit ctBase: ClassTag[OpsBase], ct: ClassTag[Ops]): Ops =  {
+    getProxy(x, ctBase, ct)
+  }
+
+  private val proxies = collection.mutable.Map.empty[(AnyRef, ClassTag[_]), AnyRef]
+  private val objenesis = new ObjenesisStd
+
+  private def getProxy[OpsBase <: AnyRef, Ops <: AnyRef](x: OpsBase, ctBase: ClassTag[OpsBase], ct: ClassTag[Ops]) = {
+    val proxy = proxies.getOrElseUpdate((x, ct), {
+      val clazz = ct.runtimeClass
+      val e = new Enhancer
+      e.setClassLoader(clazz.getClassLoader)
+      e.setSuperclass(clazz)
+      e.setCallbackType(classOf[SeqInvocationHandler[_]])
+      val proxyClass = e.createClass().asSubclass(classOf[AnyRef])
+      val proxyInstance = objenesis.newInstance(proxyClass).asInstanceOf[Factory]
+      proxyInstance.setCallback(0, new SeqInvocationHandler(x)(ctBase))
+      proxyInstance
+    })
+    proxy.asInstanceOf[Ops]
+  }
+
+  class SeqInvocationHandler[TBase <: AnyRef](receiver: TBase)(implicit ctBase: ClassTag[TBase]) extends InvocationHandler {
+    override def toString = s"SeqInvocationHandler(${receiver.toString})"
+
+    def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
+      val clazzBase = ctBase.runtimeClass
+      val mBase = clazzBase.getMethod(m.getName, m.getParameterTypes: _*)
+      mBase.invoke(receiver, _args: _*)
+    }
+  }
+
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] =
+    m.invoke(receiver, args.map(_.asInstanceOf[AnyRef]): _*).asInstanceOf[A]
+
+  def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
+    val types = args.map(a => a.getClass)
+    val constr = c.getConstructor(types: _*)
+    constr.newInstance(args.map(_.asInstanceOf[AnyRef]): _*) //.asInstanceOf[Rep[A]]
+  }
 }
 
-trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
+trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp =>
   case class MethodCall[T](receiver: Exp[_], method: Method, args: List[AnyRef])(implicit selfType: Elem[T]) extends BaseDef[T] {
     def uniqueOpId = s"$name:${method.getName}"
+    def neverInvoke: Boolean = false
     override def mirror(t: Transformer) =
       MethodCall[T](t(receiver), method, args map {
         case a: Exp[_] => t(a)
         case a => a
       })
+  }
+  case class NewObject[T](clazz: Class[T] , args: List[AnyRef])(implicit selfType: Elem[T]) extends BaseDef[T] {
+    def uniqueOpId = s"new $name"
+    def neverInvoke: Boolean = false
+    override def mirror(t: Transformer) =
+      NewObject[T](clazz, args map {
+        case a: Exp[_] => t(a)
+        case a => a
+      })
+  }
+
+  override protected def formatDef(d: Def[_]): String = d match {
+    case MethodCall(obj, method, args) =>
+      val className = ScalaNameUtil.cleanNestedClassName(method.getDeclaringClass.getName)
+      val methodName = ScalaNameUtil.cleanScalaName(method.getName)
+      s"$obj.$className.$methodName(${args.mkString(", ")})"
+    case NewObject(c, args) =>
+      val className = ScalaNameUtil.cleanNestedClassName(c.getName)
+      s"new $className(${args.mkString(", ")})"
+    case _ => super.formatDef(d)
+  }
+
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] =
+    new MethodCall[A](receiver, m, args) { override def neverInvoke = true }
+
+  def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
+    new NewObject[A](c, args) { override def neverInvoke = true }
   }
 
   private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
@@ -149,7 +221,10 @@ trait ProxyExp extends Proxy with BaseExp { self: ScalanExp =>
 
     def getResultElem(m: Method, args: Array[AnyRef]): Elem[_] = {
       val e = receiver.elem
-      val zero = e.defaultRepValue
+      val zero = e match {
+        case extE: BaseElemEx[_,_] => extE.extElem.defaultRepValue
+        case _ => e.defaultRepValue
+      }
       val Def(zeroNode) = zero
       try {
         val args1 = args.map {

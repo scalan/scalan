@@ -104,8 +104,8 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
   //  }
 }
 
-trait MatricesDsl extends ScalanDsl with impl.MatricesAbs with Matrices with VectorsDsl {}
+trait MatricesDsl extends impl.MatricesAbs with VectorsDsl {}
 
-trait MatricesDslSeq extends MatricesDsl with impl.MatricesSeq with VectorsDslSeq with ScalanSeq
+trait MatricesDslSeq extends impl.MatricesSeq with VectorsDslSeq
 
-trait MatricesDslExp extends MatricesDsl with impl.MatricesExp with VectorsDslExp with ScalanExp
+trait MatricesDslExp extends impl.MatricesExp with VectorsDslExp

@@ -37,10 +37,6 @@ trait GraphVizExport { self: ScalanExp =>
   protected def formatDef(d: Def[_]): String = d match {
     case l: Lambda[_, _] => s"\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y.toString}}"
     case Apply(f, arg) => s"$f($arg)"
-    case MethodCall(obj, method, args) =>
-      val className = ScalaNameUtil.cleanNestedClassName(method.getDeclaringClass.getName)
-      val methodName = ScalaNameUtil.cleanScalaName(method.getName)
-      s"$obj.$className.$methodName(${args.mkString(", ")})"
     case Tup(a, b) => s"($a, $b)"
     case First(pair) => s"$pair._1"
     case Second(pair) => s"$pair._2"

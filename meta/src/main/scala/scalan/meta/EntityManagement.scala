@@ -36,6 +36,7 @@ class EntityManagement(val config: CodegenConfig) extends ScalanCodegen with Laz
 
   def generateAll() = {
     entities.foreach { m =>
+      println(s"  generating ${m.filePath}")
       val g = new EntityFileGenerator(m.entityDef, m.config)
       val implCode = g.getImplFile
       saveEntity(m.filePath, implCode)

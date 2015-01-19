@@ -24,7 +24,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
   val BOOL = STpePrimitives("Boolean")
   val FLOAT = STpePrimitives("Float")
 
-  val config = BoilerplateToolRun.coreConfig
+  val config = BoilerplateToolRun.coreTestsConfig
 
   sealed trait TreeKind
   case object TopLevel extends TreeKind

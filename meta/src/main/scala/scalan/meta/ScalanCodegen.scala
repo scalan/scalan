@@ -37,6 +37,14 @@ object Extensions {
 }
 
 trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
+  final val BaseTypeTraitName = "BaseTypeEx"
+
+  implicit class STraitDefOps(td: STraitDef) {
+    def optBaseType: Option[STraitCall] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
+      case Some(STraitCall(_, (h: STraitCall) :: _)) => Some(h)
+      case _ => None
+    }
+  }
 
   class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) {
     import Extensions._
@@ -101,13 +109,15 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       if (typeArgs.isEmpty) "" else typeArgs.mkString("[", ", ", "]")
 
     val templateData = EntityTemplateData(module.entityOps)
+    val optBT = module.entityOps.optBaseType
     val entityName = templateData.name
+    val entityNameBT = optBT.map(_.name).getOrElse(templateData.name)
     val tyArgsDecl = templateData.tpeArgDecls
     val tyArgsUse = templateData.tpeArgUses
     val typesDecl = templateData.tpeArgDeclString
     val typesUse = templateData.tpeArgUseString
     val typesWithElems = templateData.boundedTpeArgString
-    
+
     def getTraitAbs = {
       val companionName = s"${entityName}Companion"
       val proxy =
@@ -116,6 +126,41 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |  implicit def proxy$entityName${typesDecl}(p: Rep[$entityName${typesUse}]): $entityName$typesUse =
         |    proxyOps[$entityName${typesUse}](p)
         |""".stripAndTrim
+
+      val proxyBT = optBT.opt(bt =>
+        s"""
+        |  // BaseTypeEx proxy
+        |  implicit def proxy$entityNameBT${typesDecl}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
+        |    proxyOps[$entityName${typesUse}](p.asRep[$entityName${typesUse}])
+        |""".stripAndTrim
+      )
+
+      val baseTypeElem = optBT.opt(bt =>
+        if (tyArgsDecl.isEmpty) {
+          s"""
+          |  implicit lazy val ${bt.name}Element: Elem[${bt.name}] = new BaseElemEx[${bt.name}, $entityName](element[$entityName])
+          |""".stripAndTrim
+        }
+        else {
+          s"""
+          |  implicit def ${bt.name}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] = new BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])
+          |""".stripAndTrim
+        })
+
+      val baseTypeDefault = optBT.opt(bt =>
+        if (tyArgsDecl.isEmpty) {
+          s"""
+          |  implicit lazy val DefaultOf${bt.name}: Default[${bt.name}] = $entityName.defaultVal
+          |""".stripAndTrim
+        } else {
+          s"""
+          |  implicit lazy val DefaultOf${bt.name}${typesWithElems}: Default[$entityNameBT${typesUse}] = $entityName.defaultVal
+          |""".stripAndTrim
+        })
+      val ExToBaseType = optBT.opt(bt =>
+        s"""
+        |  //implicit def ${entityName}To${bt.name}(st: Rep[$entityName]): Rep[${bt.name}]
+        |""".stripAndTrim)
 
       val familyElem = s"""  abstract class ${entityName}Elem[${tyArgsDecl.opt(tyArgs => s"${tyArgsDecl.rep(t => t)}, ")}From, To <: $entityName${typesUse}](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)""".stripAndTrim
       val companionElem = s"""
@@ -210,9 +255,12 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       }
 
       s"""
-       |trait ${module.name}Abs extends ${module.name}
+       |trait ${module.name}Abs extends Scalan with ${module.name}
        |{ ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
        |$proxy
+       |$proxyBT
+       |$baseTypeElem
+       |$baseTypeDefault
        |
        |$familyElem
        |
@@ -234,6 +282,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val traitWithTypes = templateData.baseType
       val implicitArgs = templateData.implicitArgs
       val implicitSignature = templateData.implicitSignature
+
       val userTypeDefs =
         s"""
          |  case class Seq$className${typesDecl}
@@ -255,7 +304,15 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
          |    Some((${fields.rep(f => s"p.$f")}))
          |""".stripAndTrim
 
-      s"""$userTypeDefs\n\n$constrDefs"""
+      val proxyBT = optBT.opt(bt =>
+        s"""
+         |  // override proxy if we deal with BaseTypeEx
+         |  override def proxy$entityNameBT${typesDecl}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
+         |    proxyOpsEx[$entityNameBT${typesUse},$entityName${typesUse}](p)
+         |""".stripAndTrim
+      )
+
+      s"""$proxyBT\n\n$userTypeDefs\n\n$constrDefs"""
     }
 
     def getSClassExp(c: SClassDef) = {
@@ -305,7 +362,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val defs = for { c <- module.concreteSClasses } yield getSClassSeq(c)
 
       s"""
-       |trait ${module.name}Seq extends ${module.name}Abs { self: ${config.seqContextTrait}${module.selfType.opt(t => s" with ${t.tpe}")} =>
+       |trait ${module.name}Seq extends ${module.name}Abs with ${module.name}Dsl with ${config.seqContextTrait} {
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |  }
@@ -323,7 +380,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val concreteClassesString = module.concreteSClasses.map(getSClassExp)
       
       s"""
-       |trait ${module.name}Exp extends ${module.name}Abs { self: ${config.stagedContextTrait}${module.selfType.opt(t => s" with ${t.tpe}")} =>
+       |trait ${module.name}Exp extends ${module.name}Abs with ${module.name}Dsl with ${config.stagedContextTrait} {
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this

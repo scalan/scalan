@@ -6,7 +6,7 @@ import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
-trait MatricesAbs extends Matrices
+trait MatricesAbs extends ScalanDsl with Matrices
 { self: MatricesDsl =>
   // single proxy for each type family
   implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] =
@@ -204,7 +204,7 @@ trait MatricesAbs extends Matrices
   def unmkRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]): Option[(Rep[PArray[SparseVector[T]]])]
 }
 
-trait MatricesSeq extends MatricesAbs { self: ScalanSeq with MatricesDsl =>
+trait MatricesSeq extends MatricesAbs with MatricesDsl with ScalanSeq {
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs with UserTypeSeq[MatrixCompanionAbs, MatrixCompanionAbs] {
     lazy val selfType = element[MatrixCompanionAbs]
   }
@@ -258,7 +258,7 @@ trait MatricesSeq extends MatricesAbs { self: ScalanSeq with MatricesDsl =>
     Some((p.rows))
 }
 
-trait MatricesExp extends MatricesAbs { self: ScalanExp with MatricesDsl =>
+trait MatricesExp extends MatricesAbs with MatricesDsl with ScalanExp {
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs with UserTypeDef[MatrixCompanionAbs, MatrixCompanionAbs] {
     lazy val selfType = element[MatrixCompanionAbs]
     override def mirror(t: Transformer) = this
