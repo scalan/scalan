@@ -146,6 +146,13 @@ class ThunkTests extends BaseTests { suite =>
     lazy val t2 = fun { (in: Rep[Int]) =>
       Thunk { Slice(in, in + in) }.force.length
     }
+    lazy val t3 = fun { (in: Rep[Segment]) =>
+      Thunk { in }.force.length
+    }
+    lazy val t4 = fun { (in: Rep[Int]) =>
+      t3(Interval(in,in))
+    }
+
   }
 
   test("thunksOfDomainTypes") {
@@ -167,6 +174,8 @@ class ThunkTests extends BaseTests { suite =>
     ctx.test
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
+    ctx.emit("t3", ctx.t3)
+    ctx.emit("t4", ctx.t4)
   }
 
   test("thunksOfDomainTypesWithoutIsoLifting") {
