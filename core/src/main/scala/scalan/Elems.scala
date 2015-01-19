@@ -22,12 +22,13 @@ trait Elems extends Base { self: Scalan =>
     final def classTag: ClassTag[A] = TagImplicits.typeTagToClassTag(tag)
     def defaultRep: Default[Rep[A]]
     def defaultRepValue = defaultRep.value
-    lazy val name = tag.tpe.toString.
+    protected def getName = tag.tpe.toString.
       replaceAll("[A-Za-z0-9_.]*this.", "").
       replace("scala.math.Numeric$", "").
       replace("scala.", "").
       replace("java.lang.", "").
       replaceAll("""[^# \[\],>]*[#$]""", "")
+    lazy val name = getName
 
     override def toString = s"${getClass.getSimpleName}[$name]"
     override def equals(other: Any) = other match {

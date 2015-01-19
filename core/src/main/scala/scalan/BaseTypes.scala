@@ -15,8 +15,9 @@ trait BaseTypes extends Base { self: Scalan =>
 
   class BaseElemEx[TBase, TExt](extE: =>Elem[TExt])
                                (implicit override val tag: TypeTag[TBase], z: Default[TBase])
-    extends BaseElem[TBase] {
+    extends BaseElem[TBase] { self =>
     def extElem = extE
+    override def getName = s"BT[${super.getName},${extElem.name}]"
   }
 
   trait ExCompanion0[TBase] {
