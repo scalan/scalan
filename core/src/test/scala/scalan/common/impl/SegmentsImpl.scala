@@ -6,11 +6,14 @@ import scalan._
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
-trait SegmentsAbs extends ScalanDsl with Segments
+trait SegmentsAbs extends Scalan with Segments
 { self: SegmentsDsl =>
   // single proxy for each type family
   implicit def proxySegment(p: Rep[Segment]): Segment =
     proxyOps[Segment](p)
+
+
+
 
   abstract class SegmentElem[From, To <: Segment](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
@@ -22,6 +25,7 @@ trait SegmentsAbs extends ScalanDsl with Segments
 
   abstract class SegmentCompanionAbs extends CompanionBase[SegmentCompanionAbs] with SegmentCompanion {
     override def toString = "Segment"
+    
   }
   def Segment: Rep[SegmentCompanionAbs]
   implicit def proxySegmentCompanion(p: Rep[SegmentCompanion]): SegmentCompanion = {
@@ -151,6 +155,8 @@ trait SegmentsSeq extends SegmentsAbs with SegmentsDsl with ScalanSeq {
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeSeq[SegmentCompanionAbs, SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]
   }
+
+  
 
   case class SeqInterval
       (override val start: Rep[Int], override val end: Rep[Int])

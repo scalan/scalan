@@ -6,11 +6,14 @@ import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
-trait MatricesAbs extends ScalanDsl with Matrices
+trait MatricesAbs extends Scalan with Matrices
 { self: MatricesDsl =>
   // single proxy for each type family
   implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] =
     proxyOps[Matrix[T]](p)
+
+
+
 
   abstract class MatrixElem[T, From, To <: Matrix[T]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
@@ -22,6 +25,7 @@ trait MatricesAbs extends ScalanDsl with Matrices
 
   abstract class MatrixCompanionAbs extends CompanionBase[MatrixCompanionAbs] with MatrixCompanion {
     override def toString = "Matrix"
+    
   }
   def Matrix: Rep[MatrixCompanionAbs]
   implicit def proxyMatrixCompanion(p: Rep[MatrixCompanion]): MatrixCompanion = {
@@ -208,6 +212,8 @@ trait MatricesSeq extends MatricesAbs with MatricesDsl with ScalanSeq {
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs with UserTypeSeq[MatrixCompanionAbs, MatrixCompanionAbs] {
     lazy val selfType = element[MatrixCompanionAbs]
   }
+
+  
 
   case class SeqRowMajorMatrix[T]
       (override val rows: Rep[PArray[DenseVector[T]]])

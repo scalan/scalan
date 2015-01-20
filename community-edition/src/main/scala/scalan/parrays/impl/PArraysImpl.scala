@@ -9,11 +9,14 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
-trait PArraysAbs extends ScalanDsl with PArrays
+trait PArraysAbs extends Scalan with PArrays
 { self: PArraysDsl =>
   // single proxy for each type family
   implicit def proxyPArray[A](p: Rep[PArray[A]]): PArray[A] =
     proxyOps[PArray[A]](p)
+
+
+
 
   abstract class PArrayElem[A, From, To <: PArray[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
@@ -25,6 +28,7 @@ trait PArraysAbs extends ScalanDsl with PArrays
 
   abstract class PArrayCompanionAbs extends CompanionBase[PArrayCompanionAbs] with PArrayCompanion {
     override def toString = "PArray"
+    
   }
   def PArray: Rep[PArrayCompanionAbs]
   implicit def proxyPArrayCompanion(p: Rep[PArrayCompanion]): PArrayCompanion = {
@@ -270,6 +274,8 @@ trait PArraysSeq extends PArraysAbs with PArraysDsl with ScalanSeq {
   lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeSeq[PArrayCompanionAbs, PArrayCompanionAbs] {
     lazy val selfType = element[PArrayCompanionAbs]
   }
+
+  
 
   case class SeqUnitArray
       (override val len: Rep[Int])

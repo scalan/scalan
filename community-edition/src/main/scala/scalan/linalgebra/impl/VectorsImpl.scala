@@ -12,11 +12,14 @@ import scalan.parrays.PArraysDslSeq
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
-trait VectorsAbs extends ScalanDsl with Vectors
+trait VectorsAbs extends Scalan with Vectors
 { self: VectorsDsl =>
   // single proxy for each type family
   implicit def proxyVector[T](p: Rep[Vector[T]]): Vector[T] =
     proxyOps[Vector[T]](p)
+
+
+
 
   abstract class VectorElem[T, From, To <: Vector[T]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
@@ -28,6 +31,7 @@ trait VectorsAbs extends ScalanDsl with Vectors
 
   abstract class VectorCompanionAbs extends CompanionBase[VectorCompanionAbs] with VectorCompanion {
     override def toString = "Vector"
+    
   }
   def Vector: Rep[VectorCompanionAbs]
   implicit def proxyVectorCompanion(p: Rep[VectorCompanion]): VectorCompanion = {
@@ -156,6 +160,8 @@ trait VectorsSeq extends VectorsAbs with VectorsDsl with ScalanSeq {
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeSeq[VectorCompanionAbs, VectorCompanionAbs] {
     lazy val selfType = element[VectorCompanionAbs]
   }
+
+  
 
   case class SeqDenseVector[T]
       (override val coords: Rep[PArray[T]])
