@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.collections._
+import scalan.collection._
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.arrays._

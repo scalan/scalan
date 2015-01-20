@@ -1,4 +1,4 @@
-package scalan.collections
+package scalan.collection
 
 import scala.reflect.ClassTag
 import scalan.common.Default
