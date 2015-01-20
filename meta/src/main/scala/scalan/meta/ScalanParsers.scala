@@ -82,8 +82,13 @@ object ScalanAst {
   // SBodyItem universe ----------------------------------------------------------------------
   abstract class SBodyItem
   case class SImportStat(name: String) extends SBodyItem
+
+  trait ExternalDef
+  case object ExternalMethod extends ExternalDef
+  case object ExternalConstructor extends ExternalDef
+
   case class SMethodDef(name: String, tpeArgs: STpeArgs, argSections: List[SMethodArgs],
-    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[Unit]) extends SBodyItem {
+    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[ExternalDef]) extends SBodyItem {
     def explicitArgs = argSections.filter(!_.impFlag).flatMap(_.args)
   }
   case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
@@ -429,6 +434,7 @@ trait ScalanParsers {
       }
   }
   val HasExternalAnnotation = MethodAnnotation("External")
+  val HasConstructorAnnotation = MethodAnnotation("Constructor")
 
   def methodDef(md: DefDef) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
@@ -448,7 +454,8 @@ trait ScalanParsers {
       case many => !!!(s"Found multiple OverloadId values: ${many.mkString(", ")}", md)
     }
     val optExternal = md match {
-      case HasExternalAnnotation(_) => Some(())
+      case HasExternalAnnotation(_) => Some(ExternalMethod)
+      case HasConstructorAnnotation(_) => Some(ExternalConstructor)
       case _ => None
     }
     SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, overloadId, optExternal)

@@ -111,6 +111,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
     val typesWithElems = templateData.boundedTpeArgString
 
     def getTraitAbs = {
+      val entityCompOpt = module.entityOps.companion
       val companionName = s"${entityName}Companion"
       val proxy =
         s"""
@@ -132,6 +133,17 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |      methodCallEx[${tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))}](self, this.getClass.getMethod("${md.name}"), List(${allArgs.rep(a => s"${a.name}.asRep[Any]")}))
         |""".stripMargin
       }
+      def externalConstructor(md: SMethodDef) = {
+        val msgExplicitRetType = "External constructors should be declared with explicit type of returning value (result type)"
+        lazy val msgRepRetType = s"Invalid constructor declaration $md. External constructors should have return type of type Rep[T] for some T."
+        val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
+        val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))
+        val allArgs = md.argSections.flatMap(_.args)
+        s"""
+        |    def ${md.name}${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
+        |      newObjEx(classOf[$entityNameBT${typesUse}], List(${allArgs.rep(a => s"${a.name}.asRep[Any]")}))
+        |""".stripMargin
+      }
 
       val proxyBT = optBT.opt(bt => {
         val externalMethods = module.entityOps.body.collect {case md: SMethodDef if md.external.isDefined => md }
@@ -141,7 +153,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |    proxyOps[$entityName${typesUse}](p.asRep[$entityName${typesUse}])
         |
         |  abstract class ${entityName}Impl${typesDecl}(val value: Rep[${entityNameBT}${typesUse}]) extends ${entityName}${typesUse} {
-        |    ${externalMethods.rep(md => externalMethod(md))}
+        |    ${externalMethods.rep(md => externalMethod(md), "\n    ")}
         |  }
         |  trait ${entityName}ImplCompanion
         |
@@ -178,6 +190,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |""".stripAndTrim)
 
       val familyElem = s"""  abstract class ${entityName}Elem[${tyArgsDecl.opt(tyArgs => s"${tyArgsDecl.rep(t => t)}, ")}From, To <: $entityName${typesUse}](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)""".stripAndTrim
+
       val companionElem = s"""
         |  trait ${companionName}Elem extends CompanionElem[${companionName}Abs]
         |  implicit lazy val ${companionName}Elem: ${companionName}Elem = new ${companionName}Elem {
@@ -187,6 +200,12 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |
         |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs] with ${companionName} {
         |    override def toString = "$entityName"
+        |    ${optBT.opt(bt => entityCompOpt.opt(comp => {
+               val externalConstrs = comp.body.collect {
+                 case md: SMethodDef if md.external.fold(false)(_ == ExternalConstructor)  => md
+               }
+               externalConstrs.rep(md => externalConstructor(md), "\n    ")
+             }))}
         |  }
         |  def $entityName: Rep[${companionName}Abs]
         |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} = {

@@ -38,6 +38,10 @@ trait ExceptionsAbs extends Scalan with Exceptions
 
   abstract class SThrowableCompanionAbs extends CompanionBase[SThrowableCompanionAbs] with SThrowableCompanion {
     override def toString = "SThrowable"
+    
+    def apply(msg: Rep[String]): Rep[Throwable] =
+      newObjEx(classOf[Throwable], List(msg.asRep[Any]))
+
   }
   def SThrowable: Rep[SThrowableCompanionAbs]
   implicit def proxySThrowableCompanion(p: Rep[SThrowableCompanion]): SThrowableCompanion = {
