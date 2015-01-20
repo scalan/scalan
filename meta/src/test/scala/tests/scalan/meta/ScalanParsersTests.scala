@@ -91,24 +91,24 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
   }
 
   describe("SMethodDef") {
-    testSMethod("def f: Int", MD("f", Nil, Nil, Some(INT), false, None))
-    testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, Some("a")))
+    testSMethod("def f: Int", MD("f", Nil, Nil, Some(INT), false, None, None))
+    testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, Some("a"), None))
     testSMethod(
       "def f(x: Int): Int",
-      MD("f", Nil, L(MAs(false, List(MA("x", INT, None)))), Some(INT), false, None))
+      MD("f", Nil, L(MAs(false, List(MA("x", INT, None)))), Some(INT), false, None, None))
     testSMethod(
       "def f[A <: T](x: A): Int",
-      MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)), L(MAs(false, L(MA("x", TC("A", Nil), None)))), Some(INT), false, None))
+      MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)), L(MAs(false, L(MA("x", TC("A", Nil), None)))), Some(INT), false, None, None))
     testSMethod(
       "def f[A : Numeric]: Int",
-      MD("f", L(STpeArg("A", None, L("Numeric"))), Nil, Some(INT), false, None))
+      MD("f", L(STpeArg("A", None, L("Numeric"))), Nil, Some(INT), false, None, None))
     testSMethod(
       "def f[A <: Int : Numeric : Fractional](x: A)(implicit y: A): Int",
       MD(
         "f",
         L(STpeArg("A", Some(INT), L("Numeric", "Fractional"))),
         L(MAs(false, L(MA("x", TC("A", Nil), None))), MAs(true, L(MA("y", TC("A", Nil), None)))),
-        Some(INT), false, None))
+        Some(INT), false, None, None))
   }
 
   describe("TraitDef") {
@@ -126,7 +126,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
       traitEdgeVE.copy(
         body = L(MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)),
           L(MAs(false, L(MA("x", TC("A", Nil), None), MA("y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
-          Some(INT), false, None))))
+          Some(INT), false, None, None))))
     testTrait(
       """trait A {
         |  import scalan._
@@ -138,8 +138,8 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
       TD("A", Nil, Nil, L(
         IS("scalan._"),
         STpeDef("Rep", L(STpeArg("A", None, Nil)), TC("A", Nil)),
-        MD("f", Nil, Nil, Some(T(L(INT, TC("A", Nil)))), false, None),
-        MD("g", Nil, L(MAs(false, L(MA("x", BOOL, None)))), Some(TC("A", Nil)), false, Some("b"))), None, None))
+        MD("f", Nil, Nil, Some(T(L(INT, TC("A", Nil)))), false, None, None),
+        MD("g", Nil, L(MAs(false, L(MA("x", BOOL, None)))), Some(TC("A", Nil)), false, Some("b"), None)), None, None))
 
   }
 
@@ -170,7 +170,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
         args = L(SClassArg(false, false, true, "x", TC("V", Nil), None)),
         body = L(MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)),
           L(MAs(false, L(MA("x", TC("A", Nil), None), MA("y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
-          Some(INT), false, None))))
+          Some(INT), false, None, None))))
   }
 
   describe("SEntityModuleDef") {

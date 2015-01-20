@@ -8,6 +8,7 @@ import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
 import scala.language.implicitConversions
+import scala.language.reflectiveCalls
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
 import scalan.util.ScalaNameUtil
@@ -81,9 +82,9 @@ object ScalanAst {
   // SBodyItem universe ----------------------------------------------------------------------
   abstract class SBodyItem
   case class SImportStat(name: String) extends SBodyItem
-  case class SMethodDef(name: String, tpeArgs: STpeArgs, args: List[SMethodArgs],
-    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String]) extends SBodyItem {
-    def explicitArgs = args.filter(!_.impFlag).flatMap(_.args)
+  case class SMethodDef(name: String, tpeArgs: STpeArgs, argSections: List[SMethodArgs],
+    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[Unit]) extends SBodyItem {
+    def explicitArgs = argSections.filter(!_.impFlag).flatMap(_.args)
   }
   case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
   case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
@@ -116,6 +117,7 @@ object ScalanAst {
     def body: List[SBodyItem]
     def selfType: Option[SSelfTypeDef]
     def companion: Option[STraitOrClassDef]
+    def isTrait: Boolean
   }
 
   case class STraitDef(
@@ -124,7 +126,18 @@ object ScalanAst {
     ancestors: List[STraitCall],
     body: List[SBodyItem],
     selfType: Option[SSelfTypeDef],
-    companion: Option[STraitOrClassDef]) extends STraitOrClassDef
+    companion: Option[STraitOrClassDef]) extends STraitOrClassDef {
+    def isTrait = true
+  }
+
+  final val BaseTypeTraitName = "BaseTypeEx"
+
+  implicit class STraitDefOps(td: STraitDef) {
+    def optBaseType: Option[STraitCall] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
+      case Some(STraitCall(_, (h: STraitCall) :: _)) => Some(h)
+      case _ => None
+    }
+  }
 
   case class SClassDef(
     name: String,
@@ -135,7 +148,9 @@ object ScalanAst {
     body: List[SBodyItem],
     selfType: Option[SSelfTypeDef],
     companion: Option[STraitOrClassDef],
-    isAbstract: Boolean) extends STraitOrClassDef
+    isAbstract: Boolean) extends STraitOrClassDef {
+    def isTrait = false
+  }
 
   case class SObjectDef(
     name: String,
@@ -154,18 +169,44 @@ object ScalanAst {
   def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
 
   object SEntityModuleDef {
+    def getImplicitArgs(entity: STraitDef): SClassArgs = List()
+    def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
+
     def fromModuleTrait(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
       val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
 
-      val opsTrait = defs.collectFirst { case t: STraitDef => t }.getOrElse {
+      val entity = defs.collectFirst { case t: STraitDef => t }.getOrElse {
         throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
       }
-      val classes = getConcreteClasses(defs)
 
-      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, opsTrait, classes, moduleTrait.selfType)
+      val classes = entity.optBaseType match {
+        case Some(bt) =>
+          val entityName = entity.name
+          val entityImplName = entityName + "Impl"
+          val typeUseExprs = entity.tpeArgs.map(tpeUseExpr(_))
+          val defaultBTImpl = SClassDef(
+            name = entityImplName,
+            tpeArgs = entity.tpeArgs,
+            args = List(SClassArg(false, false, true, "value", STraitCall("Rep", List(bt)), None)),
+            implicitArgs = getImplicitArgs(entity),
+            ancestors = List(STraitCall(entity.name, typeUseExprs)),
+            body = List(
+
+            ),
+            selfType = None,
+            companion = None,
+//            companion = defs.collectFirst {
+//              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
+//            },
+            true
+          )
+          defaultBTImpl :: getConcreteClasses(defs)
+        case None => getConcreteClasses(defs)
+      }
+      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, classes, moduleTrait.selfType)
     }
   }
 }
@@ -378,6 +419,17 @@ trait ScalanParsers {
     case tree => ???(tree)
   }
 
+  case class SAnnotation(name: String, args: List[Tree])
+
+  def MethodAnnotation(anClass: String) = new {
+    def unapply(md: DefDef): Option[List[Tree]] =
+      md.mods.annotations.collectFirst {
+        case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args)
+          if ident.toString == anClass => args
+      }
+  }
+  val HasExternalAnnotation = MethodAnnotation("External")
+
   def methodDef(md: DefDef) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
     val args0 = md.vparamss.map(methodArgs)
@@ -395,7 +447,11 @@ trait ScalanParsers {
       case Seq(x) => Some(x)
       case many => !!!(s"Found multiple OverloadId values: ${many.mkString(", ")}", md)
     }
-    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, overloadId)
+    val optExternal = md match {
+      case HasExternalAnnotation(_) => Some(())
+      case _ => None
+    }
+    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, overloadId, optExternal)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {

@@ -37,14 +37,6 @@ object Extensions {
 }
 
 trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
-  final val BaseTypeTraitName = "BaseTypeEx"
-
-  implicit class STraitDefOps(td: STraitDef) {
-    def optBaseType: Option[STraitCall] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
-      case Some(STraitCall(_, (h: STraitCall) :: _)) => Some(h)
-      case _ => None
-    }
-  }
 
   class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) {
     import Extensions._
@@ -127,13 +119,36 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |    proxyOps[$entityName${typesUse}](p)
         |""".stripAndTrim
 
-      val proxyBT = optBT.opt(bt =>
+      def methodArgSection(sec: SMethodArgs) = {
+        s"(${sec.args.rep(a => s"${a.name}: ${a.tpe}")})"
+      }
+      def externalMethod(md: SMethodDef) = {
+        val msgExplicitRetType = "External methods should be declared with explicit type of returning value (result type)"
+        lazy val msgRepRetType = s"Invalid method $md. External methods should have return type of type Rep[T] for some T."
+        val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
+        val allArgs = md.argSections.flatMap(_.args)
+        s"""
+        |    def ${md.name}${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
+        |      methodCallEx[${tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))}](self, this.getClass.getMethod("${md.name}"), List(${allArgs.rep(a => s"${a.name}.asRep[Any]")}))
+        |""".stripMargin
+      }
+
+      val proxyBT = optBT.opt(bt => {
+        val externalMethods = module.entityOps.body.collect {case md: SMethodDef if md.external.isDefined => md }
         s"""
         |  // BaseTypeEx proxy
         |  implicit def proxy$entityNameBT${typesDecl}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
         |    proxyOps[$entityName${typesUse}](p.asRep[$entityName${typesUse}])
+        |
+        |  abstract class ${entityName}Impl${typesDecl}(val value: Rep[${entityNameBT}${typesUse}]) extends ${entityName}${typesUse} {
+        |    ${externalMethods.rep(md => externalMethod(md))}
+        |  }
+        |  trait ${entityName}ImplCompanion
+        |
+        |  implicit def default${entityName}Elem${typesDecl}: Elem[$entityName${typesUse}] = element[${entityName}Impl${typesUse}].asElem[$entityName${typesUse}]
+        |
         |""".stripAndTrim
-      )
+      })
 
       val baseTypeElem = optBT.opt(bt =>
         if (tyArgsDecl.isEmpty) {
@@ -304,15 +319,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
          |    Some((${fields.rep(f => s"p.$f")}))
          |""".stripAndTrim
 
-      val proxyBT = optBT.opt(bt =>
-        s"""
-         |  // override proxy if we deal with BaseTypeEx
-         |  override def proxy$entityNameBT${typesDecl}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
-         |    proxyOpsEx[$entityNameBT${typesUse},$entityName${typesUse}](p)
-         |""".stripAndTrim
-      )
-
-      s"""$proxyBT\n\n$userTypeDefs\n\n$constrDefs"""
+      s"""$userTypeDefs\n\n$constrDefs"""
     }
 
     def getSClassExp(c: SClassDef) = {
@@ -360,12 +367,21 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val e = module.entityOps
       val entityName = e.name
       val defs = for { c <- module.concreteSClasses } yield getSClassSeq(c)
+      val proxyBT = optBT.opt(bt =>
+        s"""
+         |  // override proxy if we deal with BaseTypeEx
+         |  override def proxy$entityNameBT${typesDecl}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
+         |    proxyOpsEx[$entityNameBT${typesUse},$entityName${typesUse}](p)
+         |""".stripAndTrim
+      )
 
       s"""
        |trait ${module.name}Seq extends ${module.name}Abs with ${module.name}Dsl with ${config.seqContextTrait} {
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |  }
+       |
+       |  $proxyBT
        |
        |${defs.mkString("\n\n")}
        |}
@@ -442,7 +458,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
               val traitElem = s"${e.name}Elem$typeArgs"
               // DummyImplicit and Overloaded* are ignored, since
               // their values are never useful
-              val methodArgs = m.args.flatMap(_.args).takeWhile { arg =>
+              val methodArgs = m.argSections.flatMap(_.args).takeWhile { arg =>
                 arg.tpe match {
                   case STraitCall(name, _) =>
                     !(name == "DummyImplicit" || name.startsWith("Overloaded"))

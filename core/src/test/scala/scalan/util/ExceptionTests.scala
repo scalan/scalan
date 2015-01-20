@@ -20,9 +20,11 @@ class ExceptionTests extends BaseTests { suite =>
     lazy val t2 = fun { (t: Rep[SThrowable]) => t.getMessage }
     lazy val t3 = fun { (t: Rep[SThrowable]) => SException(t.value)}
     lazy val t4 = fun { (t: Rep[SThrowable]) => SException(t.value).value}
+    lazy val t5 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.value)}
+    lazy val t6 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.value).value}
 
-    lazy val t5 = fun { (msg: Rep[String]) => SThrowable(msg)}
-    lazy val t6 = fun { (msg: Rep[String]) => SThrowable(msg).getMessage }
+    lazy val t7 = fun { (msg: Rep[String]) => SThrowable(msg)}
+    lazy val t8 = fun { (msg: Rep[String]) => SThrowable(msg).getMessage }
 
 
   }
@@ -44,6 +46,8 @@ class ExceptionTests extends BaseTests { suite =>
     ctx.emit("t2", ctx.t2)
     ctx.emit("t3", ctx.t3)
     ctx.emit("t4", ctx.t4)
+    ctx.emit("t5", ctx.t5)
+    ctx.emit("t6", ctx.t6)
   }
 
   test("createThrowableStaged") {
@@ -59,8 +63,8 @@ class ExceptionTests extends BaseTests { suite =>
       }
     }
     ctx.test
-    ctx.emit("t5", ctx.t5)
-    ctx.emit("t6", ctx.t6)
+    ctx.emit("t7", ctx.t7)
+    ctx.emit("t8", ctx.t8)
   }
 
   test("throwablesSeq") {
