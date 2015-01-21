@@ -20,8 +20,8 @@ object ScalanBuild extends Build {
     "-language:experimental.macros")
 
   val commonDeps = libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "2.2.2" % "test",
-    "org.scalacheck" %% "scalacheck" % "1.11.6" % "test",
+    "org.scalatest" %% "scalatest" % "2.2.3" % "test",
+    "org.scalacheck" %% "scalacheck" % "1.12.1" % "test",
     "com.github.axel22" %% "scalameter" % "0.5-M2" % "test",
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
     "ch.qos.logback" % "logback-classic" % "1.1.2")
@@ -43,7 +43,7 @@ object ScalanBuild extends Build {
     test in assembly := {})
 
   val crossCompilation =
-    crossScalaVersions := Seq("2.10.4", "2.11.4")
+    crossScalaVersions := Seq("2.10.4", "2.11.5")
 
   val commonSettings = Seq(
     scalaVersion := "2.10.4",
@@ -55,7 +55,7 @@ object ScalanBuild extends Build {
       else
         Some("releases" at (nexus + "content/repositories/releases"))
     },
-    opts, commonDeps) ++ testSettings ++ releaseSettings
+    opts, commonDeps) ++ testSettings ++ releaseSettings :+ (ReleaseKeys.crossBuild := true)
 
   lazy val ItTest = config("it").extend(Test)
 
