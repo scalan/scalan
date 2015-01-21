@@ -1,6 +1,7 @@
 package scalan.primitives
 
 import scala.util.Random
+import scalan.common.IdSupply
 import scalan.staged.BaseExp
 import scalan.{ ScalanExp, Scalan, ScalanSeq }
 
@@ -68,17 +69,15 @@ trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
 }
 
 trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>
-  case class NumericRand[T](bound: Exp[T])(implicit eT: Elem[T]) extends BaseDef[T] {
+  case class NumericRand[T](bound: Exp[T], id: Int = IdSupply.nextId)(implicit eT: Elem[T]) extends BaseDef[T] {
     def elem = eT
     def uniqueOpId = name(eT)
     override def mirror(t: Transformer) = NumericRand(t(bound))(eT)
-    override def equals(other: Any) = false
   }
 
   def random[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] =
     NumericRand(bound)(et)
 
-//  def numeric_abs[T](x: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] = NumericAbs(x, n)
   private def isZero[T](x: T, n: Numeric[T]) = x == n.zero
   private def isOne[T](x: T, n: Numeric[T]) = x == n.fromInt(1)
   

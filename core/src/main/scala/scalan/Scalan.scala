@@ -76,6 +76,7 @@ trait ScalanExp
   with LoopsExp
   with TypeSumExp
   with UnBinOpsExp
+  with LogicalOpsExp
   with EqualExp
   with NumericOpsExp
   with FunctionsExp

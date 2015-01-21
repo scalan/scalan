@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.{  Scalan, ScalanSeq }
+import scalan.Scalan
 
 trait StringOps extends UnBinOps { self: Scalan =>
   implicit class StringOpsCls(lhs: Rep[String]) {
@@ -11,11 +11,9 @@ trait StringOps extends UnBinOps { self: Scalan =>
     def matches(rhs: Rep[String]) = StringMatches(lhs, rhs)
   }
 
-
   val StringConcat = new EndoBinOp[String]("+", _ + _)
   val StringContains = new BinOp[String, Boolean]("contains", _.contains(_))
   val StringStartsWith = new BinOp[String, Boolean]("startsWith", _.startsWith(_))
   val StringEndsWith = new BinOp[String, Boolean]("endsWith", _.endsWith(_))
   val StringMatches = new BinOp[String, Boolean]("matches", _.matches(_))
 }
-
