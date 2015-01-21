@@ -27,7 +27,7 @@ trait Views extends Elems { self: Scalan =>
   implicit def viewElement[From, To /*<: UserType[_]*/](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
 
   abstract class ViewElem[From, To](implicit val iso: Iso[From, To]) extends Elem[To] {
-    override def isEntityType = true
+    override def isEntityType = shouldUnpack(this)
     lazy val tag: WeakTypeTag[To] = iso.tag
     lazy val defaultRep = iso.defaultRepTo    
   }
@@ -44,7 +44,7 @@ trait Views extends Elems { self: Scalan =>
   def shouldUnpack(e: ViewElem[_, _]): Boolean
 
   trait CompanionElem[T] extends Elem[T] {
-    override def isEntityType = true
+    override def isEntityType = false
   }
 
   trait TypeFamily1[F[_]] {
