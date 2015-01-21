@@ -63,7 +63,7 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport { self: ScalanE
     }
 
     // structural equality pattern implementation
-    override def hashCode: Int = (41 * (41 + root.hashCode) + schedule.hashCode)
+    override lazy val hashCode: Int = 41 * (41 + root.hashCode) + schedule.hashCode
     override def equals(other: Any) =
       other match {
         case that: ThunkDef[_] =>

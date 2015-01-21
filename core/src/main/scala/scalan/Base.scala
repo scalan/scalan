@@ -1,6 +1,6 @@
 package scalan
 
-import java.util.{Objects, Properties}
+import java.util.{Arrays, Objects, Properties}
 import java.io.FileReader
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -46,6 +46,7 @@ trait Base extends LazyLogging { self: Scalan =>
   trait Reifiable[+T] extends Product {
     def selfType: Elem[T @uncheckedVariance]
     def self: Rep[T]
+
     override def equals(other: Any) = other match {
       // check that nodes correspond to same operation, have the same type, and the same arguments
       // alternative would be to include Elem fields into case class
@@ -63,6 +64,32 @@ trait Base extends LazyLogging { self: Scalan =>
         }
       case _ => false
     }
+
+    override lazy val hashCode = {
+      val len = productArity
+      var i = 0
+      var result = 1
+      while (i < len) {
+        val element = productElement(i)
+        val elementHashCode = element match {
+          case null => 0
+          case arr: Array[Object] => Arrays.deepHashCode(arr)
+          case arr: Array[Int] => Arrays.hashCode(arr)
+          case arr: Array[Long] => Arrays.hashCode(arr)
+          case arr: Array[Float] => Arrays.hashCode(arr)
+          case arr: Array[Double] => Arrays.hashCode(arr)
+          case arr: Array[Boolean] => Arrays.hashCode(arr)
+          case arr: Array[Byte] => Arrays.hashCode(arr)
+          case arr: Array[Short] => Arrays.hashCode(arr)
+          case arr: Array[Char] => Arrays.hashCode(arr)
+          case _ => element.hashCode
+        }
+        result = 41 * result + elementHashCode
+        i += 1
+      }
+      result
+    }
+
     override def toString = {
       val sb = new StringBuilder
       sb.append(productPrefix)

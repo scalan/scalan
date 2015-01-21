@@ -1,10 +1,10 @@
 package scalan.staged
 
-import annotation.unchecked.uncheckedVariance
+import scala.annotation.unchecked.uncheckedVariance
+import scala.collection.mutable
+import scala.language.implicitConversions
 import scalan.{Base, ScalanExp}
-import scala.language.{implicitConversions}
 import scalan.common.Lazy
-import scala.collection.immutable.ListMap
 
 trait BaseExp extends Base { self: ScalanExp =>
   type Rep[+A] = Exp[A]
@@ -266,8 +266,8 @@ trait Expressions extends BaseExp { self: ScalanExp =>
     //def unapply[T](s: Exp[T]): Option[TableEntry[T]] = findDefinition(s)
   }
   protected val globalThunkSym: Exp[_] = fresh[Int] // we could use any type here
-  private[this] var expToGlobalDefs: Map[Exp[_], TableEntry[_]] = ListMap.empty
-  private[this] var defToGlobalDefs: Map[(Exp[_], Def[_]), TableEntry[_]] = ListMap.empty
+  private[this] val expToGlobalDefs: mutable.Map[Exp[_], TableEntry[_]] = mutable.HashMap.empty
+  private[this] val defToGlobalDefs: mutable.Map[(Exp[_], Def[_]), TableEntry[_]] = mutable.HashMap.empty
 
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]] =
     expToGlobalDefs.get(s).asInstanceOf[Option[TableEntry[T]]]
