@@ -25,6 +25,10 @@ trait FirstProg { self: Scalan with JNIExtractorOps with ArrayOps =>
     JNI_Extract(in)
   }
 
+  lazy val extractSM = fun { (in: Rep[JNIType[( Array[( Array[Int], (Array[Double],Int))], Array[Int])]]) =>
+    JNI_Extract(in)
+  }
+
   lazy val extractPair = fun { (in: Rep[JNIType[(Array[Double],Double)]]) =>
     JNI_Extract(in)
   }
@@ -71,6 +75,7 @@ class JNIExtractorTests extends BaseTests {
     ctx.emit("extractPair", ctx.extractPair)
     ctx.emit("extractPairUse1", ctx.extractPairUse1)
     ctx.emit("extractPairUse2", ctx.extractPairUse2)
+    ctx.emit("extractSM", ctx.extractSM)
     ctx.emit("ddmvm", ctx.ddmvm)
   }
 }

@@ -42,6 +42,7 @@ class LmsJNIExtractorItTests extends BaseTests {
     ctx.generate("extractPair", ctx.extractPair)
     ctx.generate("extractPairUse1", ctx.extractPairUse1)
     ctx.generate("extractPairUse2", ctx.extractPairUse2)
+    ctx.generate("extractSM", ctx.extractSM)
     ctx.generate("ddmvm", ctx.ddmvm)
   }
 
