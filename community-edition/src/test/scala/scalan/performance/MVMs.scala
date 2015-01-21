@@ -5,7 +5,8 @@ package scalan.performance
  */
 class MVMs {
 //  @native def extractorTest( p: (Array[(Array[Int],(Array[Double], Int))], Array[Double]) ): Unit
-  @native def extractorTest( p: (Array[Double], Double) ): Array[Double]
+//  @native def extractorTest( p: (Array[Double], Double) ): Array[Double]
+  @native def extractorTest( p: (Array[Array[Double]], Array[Double]) ): Array[Double]
   @native def sdmvm( p: (Array[(Array[Int],(Array[Double], Int))], Array[Double]) ): Array[Double]
 //  @native def extractorTest( on: Array[Array[Double]]): Unit
 
@@ -34,8 +35,8 @@ object MVMs {
 //    val inV = (0 until 10000).map({i => Math.random()}).toArray
 //    val in = (inM, inV)
 
-      val in = (Array(3.142), 0.618)
-    val res = new MVMs().extractorTest(in)
+//      val in = (Array(3.142), 0.618)
+//    val res = new MVMs().extractorTest(in)
 
 //    println( res.mkString("[", ",", "]") )
   }

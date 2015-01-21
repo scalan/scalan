@@ -3,6 +3,7 @@ package scalan.it.lms
 import java.io.File
 
 import scala.language.reflectiveCalls
+import scalan.performance.MVMs
 import scalan.{ScalanCtxExp, FirstProg, BaseTests}
 import scalan.community.ScalanCommunityExp
 import scalan.compilation.GraphVizExport
@@ -61,14 +62,27 @@ class LmsJNIExtractorItTests extends BaseTests {
   }
 
   test("simpleExecute") {
-    //    System.setProperty("java.library.path", new File(dir,"release").getAbsolutePath)
-    //    println(System.getProperty("java.library.path"))
-    //    System.loadLibrary("jniExtractor")
-    //
-    //    val v = Array(34.0)
-    //    val k = 77.0
-    //     val res = (new MVMs).extractorTest( (v,k) )
-    ////    println(res.mkString("[",",","]"))
-    //    assert(res sameElements (v map {a => k*a}) )
+    val ctx = new ScalanCtxExp with ProgExp with FirstProg {
+      override def subfolder: String = "release"
+
+      def test() = {
+      }
+
+      def execute(): Unit = {
+        val dir = new File(prefix, subfolder)
+//        System.setProperty("java.library.path", dir.getAbsolutePath) //TODO: is there a way to set path dynamically?
+        println(s"java.library.path=${System.getProperty("java.library.path")}")
+        System.loadLibrary("jniExtractor")
+
+        val m = scala.Array(scala.Array(34.0, 89.0),scala.Array(12.0, 43.0))
+        val v = scala.Array(77.0, 12.0)
+
+        val res = (new MVMs).extractorTest( (m,v) )
+        println(res.mkString("[",", ","]"))
+        //assert(res sameElements (v map {a => k*a}) )
+      }
+    }
+
+    ctx.execute
   }
 }
