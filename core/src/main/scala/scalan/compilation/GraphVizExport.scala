@@ -12,11 +12,33 @@ trait GraphVizExport { self: ScalanExp =>
 
   protected def nodeColor(sym: Exp[_]): String = sym.elem match {
     case _: ViewElem[_, _] => "green"
-    case _: FuncElem[_, _] => "magenta"
-    case _ => "grey"
+    case _: FuncElem[_, _] => "blue"
+    case _: CompanionElem[_] => "gray"
+    case _ => "black"
   }
 
-  protected def nodeLabel(str: String) = s"label=${quote(str)}"
+  protected def maxLabelLineLength = 40
+
+  // ensures nice line wrapping
+  final protected def nodeLabel(parts: String*) = {
+    var lineLength = 0
+    val sb = new StringBuilder()
+    var isFirst = true
+    parts.foreach { part =>
+      if (isFirst) {
+        isFirst = false
+      } else if (lineLength + part.length + 1 <= maxLabelLineLength) {
+        sb.append(" ")
+        lineLength += 1
+      } else {
+        sb.append("\\l")
+        lineLength = 0
+      }
+      sb.append(part)
+      lineLength += part.length
+    }
+    s"label=${quote(sb.result)}"
+  }
 
   protected def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
     rhs match {
@@ -29,13 +51,19 @@ trait GraphVizExport { self: ScalanExp =>
       case _ =>
     }
     stream.println(quote(sym) + " [")
-    stream.println(nodeLabel(sym.toString + " = " + formatDef(rhs)))
+    stream.println(nodeLabel(sym.toStringWithType + " =", formatDef(rhs)))
     stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${quote(sym.toStringWithType)}")
     stream.println("]")
   }
 
   protected def formatDef(d: Def[_]): String = d match {
-    case l: Lambda[_, _] => s"\\${l.x} -> ${l.y match { case Def(b) => formatDef(b) case y => y.toString}}"
+    case l: Lambda[_, _] =>
+      val y = l.y
+      val bodyStr = y match {
+        case Def(b) => s"$y = ${formatDef(b)}"
+        case _ => y.toString
+      }
+      s"${l.x} => $bodyStr"
     case Apply(f, arg) => s"$f($arg)"
     case Tup(a, b) => s"($a, $b)"
     case First(pair) => s"$pair._1"
@@ -52,12 +80,14 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => d.toString
   }
 
-  private def emitDeps(sym: Exp[_], deps: List[Exp[_]], dotted: Boolean)(implicit stream: PrintWriter) = {
-    for (dep <- deps) {
-      val depLabel = dep.toString //dep.isVar match { case true => dep.toStringWithType case _ => dep.toString }
-      val params = if (dotted) " [style=dotted]" else ""
-      stream.println(s"${quote(depLabel)} -> ${quote(sym)}$params")
-    }
+  private def emitDeps(sym: Exp[_], deps: List[Exp[_]], lambdaVars: List[Exp[_]])(implicit stream: PrintWriter) = {
+    def emitDepList(deps: List[Exp[_]], params: String) =
+      deps.foreach { dep => stream.println(s"${quote(dep)} -> ${quote(sym)} $params") }
+
+    val (companionDeps, otherDeps) = deps.partition(_.isCompanion)
+    emitDepList(otherDeps, "[style=solid]")
+    emitDepList(companionDeps, "[color=gray, weight=0]")
+    // emitDepList(lambdaVars, "[style=dashed, color=lightgray, weight=0]")
   }
 
   def emitDepGraph(d: Def[_], file: File, landscape: Boolean): Unit =
@@ -76,11 +106,30 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => (dep(l.y), List(l.x))
   }
 
+  private def emitClusters(schedule: Schedule, listNodes: Boolean, stream: PrintWriter): Unit = {
+    schedule.reverse.foreach {
+      case TableEntry(s, d) =>
+        d match {
+          case lam: Lambda[_, _] =>
+            stream.println(s"subgraph cluster_$s {")
+            stream.println("style=dashed; color=lightgray")
+            stream.println(s"{rank=min; ${lam.x}}")
+            val schedule1 = lam.schedule.filter(_.sym != lam.y)
+            emitClusters(schedule1, true, stream)
+            stream.println(s"{rank=max; $s}")
+            stream.println("}")
+          case _ =>
+            if (listNodes) stream.println(s) else {}
+        }
+    }
+  }
+
   private def emitDepGraph(ss: List[Exp[_]], stream: PrintWriter, landscape: Boolean): Unit = {
     stream.println("digraph G {")
 
     val deflist = buildScheduleForResult(ss, dep)
 
+    stream.println("concentrate=true")
     if (landscape) {
       stream.println("rankdir=LR")
     }
@@ -98,21 +147,13 @@ trait GraphVizExport { self: ScalanExp =>
         // emit node
         emitNode(sym, rhs)(stream)
 
-        emitDeps(sym, deps, false)(stream)
-        emitDeps(sym, lambdaVars, true)(stream)
-
-        // emit lambda refs
-        // bad on large graphs!
-//        tp.lambda match {
-//          case Some(lam) =>
-//            stream.println(s"${quote(tp.sym)} -> ${quote(lam)} [style=dotted,color=grey]")
-//          case _ =>
-//        }
-
+        emitDeps(sym, deps, lambdaVars)(stream)
       } else {
         // skip lambda bodies
       }
     }
+
+    emitClusters(deflist, false, stream)
 
     stream.println("}")
     stream.close()

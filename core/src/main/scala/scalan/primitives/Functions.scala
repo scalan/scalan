@@ -51,7 +51,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
 
     // structural equality pattern implementation
-    override def hashCode: Int = (41 * (41 + x.hashCode) + y.hashCode)
+    override lazy val hashCode: Int = 41 * (41 + x.hashCode) + y.hashCode
     override def equals(other: Any) =
       other match {
         case that: Lambda[_,_] =>

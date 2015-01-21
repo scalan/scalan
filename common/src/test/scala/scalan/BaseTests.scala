@@ -1,17 +1,15 @@
 package scalan
 
-import org.scalatest.{Matchers, FunSuite}
-import org.scalatest.FlatSpec
 import org.scalatest.words.ResultOfStringPassedToVerb
+import org.scalatest.{FlatSpec, FunSuite, Matchers}
 
 // TODO switch to FunSpec and eliminate duplication in test names (e.g. RewriteSuite)
-class BaseTests extends FunSuite with Matchers
+abstract class BaseTests extends FunSuite with Matchers
 
-class BaseShouldTests extends FlatSpec with Matchers {
+abstract class BaseShouldTests extends FlatSpec with Matchers {
 
   protected final class InAndIgnoreMethods2(resultOfStringPassedToVerb: ResultOfStringPassedToVerb) {
 
-    import resultOfStringPassedToVerb.verb
     import resultOfStringPassedToVerb.rest
     val _inner = new InAndIgnoreMethods(resultOfStringPassedToVerb)
     /**

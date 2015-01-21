@@ -84,6 +84,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         case a: Exp[_] => t(a)
         case a => a
       })
+
+    override def toString = {
+      val methodStr = method.toString.replace("java.lang.", "").
+        replace("public ", "").replace("abstract ", "")
+      s"MethodCall($receiver, $methodStr, [${args.mkString(", ")}])"
+    }
   }
   case class NewObject[T](clazz: Class[T] , args: List[AnyRef])(implicit selfType: Elem[T]) extends BaseDef[T] {
     def uniqueOpId = s"new $name"

@@ -63,23 +63,23 @@ object ScalanBuild extends Build {
 
   def itFilter(name: String): Boolean = name.contains("ItTests")
 
-  lazy val `compile->compile;test->test` = "compile->compile;test->test"
-
   implicit class ProjectExt(p: Project) {
+    def allConfigDependency = p % "compile->compile;test->test"
+
     def withTestConfigsAndCommonSettings =
       p.configs(ItTest, PerfTest).settings(commonSettings: _*)
   }
 
   lazy val common = project.withTestConfigsAndCommonSettings
 
-  lazy val meta = project.dependsOn(common).withTestConfigsAndCommonSettings
+  lazy val meta = project.dependsOn(common.allConfigDependency).withTestConfigsAndCommonSettings
     .settings(
       libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       fork in Test := true,
       fork in ItTest := true,
       fork in run := true)
 
-  lazy val core = project.dependsOn(common).withTestConfigsAndCommonSettings
+  lazy val core = project.dependsOn(common.allConfigDependency).withTestConfigsAndCommonSettings
     .settings(
       libraryDependencies ++= Seq(
         "com.chuusai" % "shapeless" % "2.0.0" cross CrossVersion.binaryMapped {
@@ -90,7 +90,7 @@ object ScalanBuild extends Build {
         "org.objenesis" % "objenesis" % "2.1"))
 
   lazy val ce = Project("community-edition", file("community-edition"))
-    .dependsOn(core % `compile->compile;test->test`)
+    .dependsOn(core.allConfigDependency)
     .withTestConfigsAndCommonSettings
 
   val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2")
@@ -98,7 +98,7 @@ object ScalanBuild extends Build {
   val lms = "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT"
 
   lazy val lmsBackend = Project("lms-backend", file("lms-backend"))
-    .dependsOn(core % `compile->compile;test->test`, ce % `compile->compile;test->test`)
+    .dependsOn(core.allConfigDependency, ce.allConfigDependency)
     .withTestConfigsAndCommonSettings
     .settings(
       libraryDependencies ++= Seq(lms,

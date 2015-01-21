@@ -8,7 +8,7 @@ trait ProgramGraphs extends AstGraphs { self: ScalanExp =>
   type PGraph = ProgramGraph[MapTransformer]
 
   // immutable program graph
-  class ProgramGraph[Ctx <: Transformer : TransformerOps](val roots: List[Exp[_]], val mapping: Ctx)
+  case class ProgramGraph[Ctx <: Transformer : TransformerOps](roots: List[Exp[_]], mapping: Ctx)
   	  extends AstGraph {
     def this(roots: List[Exp[_]]) { this(roots, implicitly[TransformerOps[Ctx]].empty) }
     def this(root: Exp[_]) { this(List(root)) }
@@ -23,5 +23,7 @@ trait ProgramGraphs extends AstGraphs { self: ScalanExp =>
       val newRoots = roots map { t1(_) }
       new ProgramGraph(newRoots, t1)
     }
+
+    def withoutContext = ProgramGraph(roots, implicitly[TransformerOps[Ctx]].empty)
   }
 }
