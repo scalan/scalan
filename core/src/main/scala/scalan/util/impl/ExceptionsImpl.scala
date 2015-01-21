@@ -15,16 +15,7 @@ trait ExceptionsAbs extends Scalan with Exceptions
   implicit def proxyThrowable(p: Rep[Throwable]): SThrowable =
     proxyOps[SThrowable](p.asRep[SThrowable])
 
-  abstract class SThrowableImpl(val value: Rep[Throwable]) extends SThrowable {
-    
-    def getMessage: Rep[String] =
-      methodCallEx[String](self, this.getClass.getMethod("getMessage"), List())
-
-  }
-  trait SThrowableImplCompanion
-
   implicit def defaultSThrowableElem: Elem[SThrowable] = element[SThrowableImpl].asElem[SThrowable]
-
   implicit lazy val ThrowableElement: Elem[Throwable] = new BaseElemEx[Throwable, SThrowable](element[SThrowable])
   implicit lazy val DefaultOfThrowable: Default[Throwable] = SThrowable.defaultVal
 
@@ -33,7 +24,8 @@ trait ExceptionsAbs extends Scalan with Exceptions
   trait SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs]
   implicit lazy val SThrowableCompanionElem: SThrowableCompanionElem = new SThrowableCompanionElem {
     lazy val tag = typeTag[SThrowableCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(SThrowable)
+    lazy val getDefaultRep = Default.defaultVal(SThrowable)
+    //def getDefaultRep = defaultRep
   }
 
   abstract class SThrowableCompanionAbs extends CompanionBase[SThrowableCompanionAbs] with SThrowableCompanion {
@@ -48,6 +40,14 @@ trait ExceptionsAbs extends Scalan with Exceptions
     proxyOps[SThrowableCompanion](p)
   }
 
+  //default wrapper implementation
+    abstract class SThrowableImpl(val value: Rep[Throwable]) extends SThrowable {
+    
+    def getMessage: Rep[String] =
+      methodCallEx[String](self, this.getClass.getMethod("getMessage"), List())
+
+  }
+  trait SThrowableImplCompanion
   // elem for concrete class
   class SThrowableImplElem(iso: Iso[SThrowableImplData, SThrowableImpl]) extends SThrowableElem[SThrowableImplData, SThrowableImpl](iso)
 
@@ -87,7 +87,8 @@ trait ExceptionsAbs extends Scalan with Exceptions
 
   class SThrowableImplCompanionElem extends CompanionElem[SThrowableImplCompanionAbs] {
     lazy val tag = typeTag[SThrowableImplCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(SThrowableImpl)
+    lazy val getDefaultRep = Default.defaultVal(SThrowableImpl)
+    //def getDefaultRep = defaultRep
   }
   implicit lazy val SThrowableImplCompanionElem: SThrowableImplCompanionElem = new SThrowableImplCompanionElem
 
@@ -106,6 +107,8 @@ trait ExceptionsAbs extends Scalan with Exceptions
   def mkSThrowableImpl(value: Rep[Throwable]): Rep[SThrowableImpl]
   def unmkSThrowableImpl(p: Rep[SThrowableImpl]): Option[(Rep[Throwable])]
 
+  //default wrapper implementation
+  
   // elem for concrete class
   class SExceptionElem(iso: Iso[SExceptionData, SException]) extends SThrowableElem[SExceptionData, SException](iso)
 
@@ -145,7 +148,8 @@ trait ExceptionsAbs extends Scalan with Exceptions
 
   class SExceptionCompanionElem extends CompanionElem[SExceptionCompanionAbs] {
     lazy val tag = typeTag[SExceptionCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(SException)
+    lazy val getDefaultRep = Default.defaultVal(SException)
+    //def getDefaultRep = defaultRep
   }
   implicit lazy val SExceptionCompanionElem: SExceptionCompanionElem = new SExceptionCompanionElem
 

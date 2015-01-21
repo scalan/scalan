@@ -88,7 +88,7 @@ object ScalanAst {
   case object ExternalConstructor extends ExternalDef
 
   case class SMethodDef(name: String, tpeArgs: STpeArgs, argSections: List[SMethodArgs],
-    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[ExternalDef]) extends SBodyItem {
+    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[ExternalDef], elem: Option[Unit] = None) extends SBodyItem {
     def explicitArgs = argSections.filter(!_.impFlag).flatMap(_.args)
   }
   case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
@@ -174,7 +174,26 @@ object ScalanAst {
   def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
 
   object SEntityModuleDef {
-    def getImplicitArgs(entity: STraitDef): SClassArgs = List()
+    def getImplicitArgs(entity: STraitDef): SClassArgs = {
+      val implicitElems = entity.body.collect {
+        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_)) => (name, elem)
+      }
+      val args = entity.tpeArgs.map(a => {
+        val optDef = implicitElems.collectFirst {
+          case (methName, elem @ STraitCall("Elem", List(STraitCall(name, _)))) if name == a.name =>
+            (methName, elem)
+        }
+
+        optDef.map { case (name, tyElem) => {
+          SClassArg(true, false, true, name, tyElem, None)
+        }}
+      })
+      val missingElems = args.filterNot(_.isDefined)
+      if (missingElems.length > 0)
+        sys.error(s"implicit def eA: Elem[A] should be declared for all type parameters: missing ${missingElems}")
+      args.flatMap(a => a)
+    }
+
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
 
     def fromModuleTrait(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
@@ -395,7 +414,7 @@ trait ScalanParsers {
       if (!nme.isConstructorName(md.name))
         md.tpt match {
           case AppliedTypeTree(tpt, _) if tpt.toString == "Elem" || tpt.toString == "Element" =>
-            None
+            Some(methodDef(md, true))
           case _ =>
             Some(methodDef(md))
         }
@@ -436,7 +455,7 @@ trait ScalanParsers {
   val HasExternalAnnotation = MethodAnnotation("External")
   val HasConstructorAnnotation = MethodAnnotation("Constructor")
 
-  def methodDef(md: DefDef) = {
+  def methodDef(md: DefDef, isElem: Boolean = false) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
     val args0 = md.vparamss.map(methodArgs)
     val args = if (!args0.isEmpty && args0.last.args.isEmpty) args0.init else args0
@@ -458,7 +477,7 @@ trait ScalanParsers {
       case HasConstructorAnnotation(_) => Some(ExternalConstructor)
       case _ => None
     }
-    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, overloadId, optExternal)
+    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, overloadId, optExternal, if (isElem) Some(()) else None)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {

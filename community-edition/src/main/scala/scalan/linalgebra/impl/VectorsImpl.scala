@@ -19,14 +19,15 @@ trait VectorsAbs extends Scalan with Vectors
     proxyOps[Vector[T]](p)
 
 
-
+// 
 
   abstract class VectorElem[T, From, To <: Vector[T]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
   trait VectorCompanionElem extends CompanionElem[VectorCompanionAbs]
   implicit lazy val VectorCompanionElem: VectorCompanionElem = new VectorCompanionElem {
     lazy val tag = typeTag[VectorCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(Vector)
+    lazy val getDefaultRep = Default.defaultVal(Vector)
+    //def getDefaultRep = defaultRep
   }
 
   abstract class VectorCompanionAbs extends CompanionBase[VectorCompanionAbs] with VectorCompanion {
@@ -38,6 +39,8 @@ trait VectorsAbs extends Scalan with Vectors
     proxyOps[VectorCompanion](p)
   }
 
+  //default wrapper implementation
+  
   // elem for concrete class
   class DenseVectorElem[T](iso: Iso[DenseVectorData[T], DenseVector[T]]) extends VectorElem[T, DenseVectorData[T], DenseVector[T]](iso)
 
@@ -77,7 +80,8 @@ trait VectorsAbs extends Scalan with Vectors
 
   class DenseVectorCompanionElem extends CompanionElem[DenseVectorCompanionAbs] {
     lazy val tag = typeTag[DenseVectorCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(DenseVector)
+    lazy val getDefaultRep = Default.defaultVal(DenseVector)
+    //def getDefaultRep = defaultRep
   }
   implicit lazy val DenseVectorCompanionElem: DenseVectorCompanionElem = new DenseVectorCompanionElem
 
@@ -96,6 +100,8 @@ trait VectorsAbs extends Scalan with Vectors
   def mkDenseVector[T](coords: Rep[PArray[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]]
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]): Option[(Rep[PArray[T]])]
 
+  //default wrapper implementation
+  
   // elem for concrete class
   class SparseVectorElem[T](iso: Iso[SparseVectorData[T], SparseVector[T]]) extends VectorElem[T, SparseVectorData[T], SparseVector[T]](iso)
 
@@ -136,7 +142,8 @@ trait VectorsAbs extends Scalan with Vectors
 
   class SparseVectorCompanionElem extends CompanionElem[SparseVectorCompanionAbs] {
     lazy val tag = typeTag[SparseVectorCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(SparseVector)
+    lazy val getDefaultRep = Default.defaultVal(SparseVector)
+    //def getDefaultRep = defaultRep
   }
   implicit lazy val SparseVectorCompanionElem: SparseVectorCompanionElem = new SparseVectorCompanionElem
 

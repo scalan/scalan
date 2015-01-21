@@ -20,7 +20,8 @@ trait SegmentsAbs extends Scalan with Segments
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
   implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
     lazy val tag = typeTag[SegmentCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(Segment)
+    lazy val getDefaultRep = Default.defaultVal(Segment)
+    //def getDefaultRep = defaultRep
   }
 
   abstract class SegmentCompanionAbs extends CompanionBase[SegmentCompanionAbs] with SegmentCompanion {
@@ -32,6 +33,8 @@ trait SegmentsAbs extends Scalan with Segments
     proxyOps[SegmentCompanion](p)
   }
 
+  //default wrapper implementation
+  
   // elem for concrete class
   class IntervalElem(iso: Iso[IntervalData, Interval]) extends SegmentElem[IntervalData, Interval](iso)
 
@@ -72,7 +75,8 @@ trait SegmentsAbs extends Scalan with Segments
 
   class IntervalCompanionElem extends CompanionElem[IntervalCompanionAbs] {
     lazy val tag = typeTag[IntervalCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(Interval)
+    lazy val getDefaultRep = Default.defaultVal(Interval)
+    //def getDefaultRep = defaultRep
   }
   implicit lazy val IntervalCompanionElem: IntervalCompanionElem = new IntervalCompanionElem
 
@@ -91,6 +95,8 @@ trait SegmentsAbs extends Scalan with Segments
   def mkInterval(start: Rep[Int], end: Rep[Int]): Rep[Interval]
   def unmkInterval(p: Rep[Interval]): Option[(Rep[Int], Rep[Int])]
 
+  //default wrapper implementation
+  
   // elem for concrete class
   class SliceElem(iso: Iso[SliceData, Slice]) extends SegmentElem[SliceData, Slice](iso)
 
@@ -131,7 +137,8 @@ trait SegmentsAbs extends Scalan with Segments
 
   class SliceCompanionElem extends CompanionElem[SliceCompanionAbs] {
     lazy val tag = typeTag[SliceCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(Slice)
+    lazy val getDefaultRep = Default.defaultVal(Slice)
+    //def getDefaultRep = defaultRep
   }
   implicit lazy val SliceCompanionElem: SliceCompanionElem = new SliceCompanionElem
 

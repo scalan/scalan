@@ -37,7 +37,7 @@ trait ProxySeq extends Proxy { self: ScalanSeq =>
     getProxy(x, ctBase, ct)
   }
 
-  private val proxies = collection.mutable.Map.empty[(AnyRef, ClassTag[_]), AnyRef]
+  private val proxies = scala.collection.mutable.Map.empty[(AnyRef, ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
 
   private def getProxy[OpsBase <: AnyRef, Ops <: AnyRef](x: OpsBase, ctBase: ClassTag[OpsBase], ct: ClassTag[Ops]) = {
@@ -119,7 +119,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     new NewObject[A](c, args) { override def neverInvoke = true }
   }
 
-  private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
+  private val proxies = scala.collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
 
   override def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops =
@@ -228,7 +228,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     def getResultElem(m: Method, args: Array[AnyRef]): Elem[_] = {
       val e = receiver.elem
       val zero = e match {
-        case extE: BaseElemEx[_,_] => extE.extElem.defaultRepValue
+        case extE: BaseElemEx[_,_] => extE.getWrapperElem.defaultRepValue
         case _ => e.defaultRepValue
       }
       val Def(zeroNode) = zero

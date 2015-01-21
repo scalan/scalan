@@ -14,13 +14,18 @@ trait BaseTypes extends Base { self: Scalan =>
   }
 
   class BaseElemEx[TBase, TExt](extE: =>Elem[TExt])
-                               (implicit override val tag: TypeTag[TBase], z: Default[TBase])
+                               (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
     extends BaseElem[TBase] { self =>
-    def extElem = extE
-    override def getName = s"BT[${super.getName},${extElem.name}]"
+    def getWrapperElem = extE
+    override def getName = s"BT[${super.getName},${getWrapperElem.name}]"
+    override def getDefaultRep = getWrapperElem.getDefaultRep.asInstanceOf[Default[Rep[TBase]]]
   }
 
   trait ExCompanion0[TBase] {
-    def defaultVal: Default[TBase]
+    //def defaultVal: Default[TBase]
+  }
+
+  trait ExCompanion1[TBase[_]] {
+    //def defaultVal[A]: Default[TBase[A]]
   }
 }
