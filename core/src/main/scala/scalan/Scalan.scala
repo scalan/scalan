@@ -44,6 +44,7 @@ trait ScalanSeq
   extends Scalan
   with BaseSeq
   with ElemsSeq
+  with BaseTypesSeq
   with ViewsSeq
   with ProxySeq
   with TuplesSeq
@@ -70,6 +71,7 @@ trait ScalanExp
   extends Scalan
   with BaseExp
   with ElemsExp
+  with BaseTypesExp
   with ViewsExp
   with ProxyExp
   with TuplesExp

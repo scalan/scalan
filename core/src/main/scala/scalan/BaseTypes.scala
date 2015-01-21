@@ -29,3 +29,22 @@ trait BaseTypes extends Base { self: Scalan =>
     //def defaultVal[A]: Default[TBase[A]]
   }
 }
+ trait BaseTypesSeq extends BaseTypes { scalan: ScalanSeq =>
+   class SeqBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
+                                (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
+     extends BaseElemEx[TBase, TExt](extE) {
+     override def getDefaultRep = {
+       val defaultOfWrapper = getWrapperElem.getDefaultRep.asInstanceOf[Default[BaseTypeEx[TBase, TExt]]]
+       Default.defaultVal(defaultOfWrapper.value.value)
+     }
+   }
+ }
+
+trait BaseTypesExp extends BaseTypes { scalan: ScalanExp =>
+  class ExpBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
+                                  (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
+    extends BaseElemEx[TBase, TExt](extE)
+  {
+
+  }
+}

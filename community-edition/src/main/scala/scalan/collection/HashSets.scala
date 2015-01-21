@@ -21,5 +21,9 @@ trait HashSets extends Base with BaseTypes { self: HashSetsDsl =>
 }
 
 trait HashSetsDsl extends impl.HashSetsAbs
-trait HashSetsDslSeq extends impl.HashSetsSeq
+trait HashSetsDslSeq extends impl.HashSetsSeq {
+  trait SeqSHashSet[A] extends SHashSetImpl[A] {
+    override def map[B:Elem](f: Rep[A => B]): Rep[HashSet[B]] = value.map(f)
+  }
+}
 trait HashSetsDslExp extends impl.HashSetsExp

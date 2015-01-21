@@ -176,7 +176,7 @@ trait ExceptionsSeq extends ExceptionsAbs with ExceptionsDsl with ScalanSeq {
 
     // override proxy if we deal with BaseTypeEx
   override def proxyThrowable(p: Rep[Throwable]): SThrowable =
-    proxyOpsEx[Throwable,SThrowable](p)
+    proxyOpsEx[Throwable,SThrowable,SeqSThrowableImpl](p, t => SeqSThrowableImpl(t))
 
   case class SeqSThrowableImpl
       (override val value: Rep[Throwable])

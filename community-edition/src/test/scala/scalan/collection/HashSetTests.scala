@@ -17,9 +17,10 @@ class HashSetTests extends BaseTests { suite =>
     lazy val empty = SHashSet.empty[Int]
 
     lazy val t1 = fun { (t: Rep[HashSet[Int]]) => t }
-    lazy val t2 = fun { (in: Rep[(SHashSet[Int],Int)]) => val Pair(t, i) = in; t + i }
+    lazy val t2 = fun { (in: Rep[(HashSet[Int],Int)]) => val Pair(t, i) = in; t + i }
     lazy val t3 = fun { (e: Rep[Int]) => SHashSet.empty[Int] + e }
     lazy val t4 = fun { (t: Rep[HashSet[Int]]) => t.map(fun { x => x + 1 }) }
+    lazy val t5 = fun { (in: Rep[(SHashSet[Int],Int)]) => val Pair(t, i) = in; t + i }
 
   }
 
@@ -41,23 +42,10 @@ class HashSetTests extends BaseTests { suite =>
     ctx.emit("t2", ctx.t2)
     ctx.emit("t3", ctx.t3)
     ctx.emit("t4", ctx.t4)
+    ctx.emit("t5", ctx.t5)
   }
 
-//  test("createThrowableStaged") {
-//    val ctx = new TestContext with  HashSetExamples {
-//      def test() = {
-//        //assert(!isInlineThunksOnForce, "precondition for tests")
-//        {
-//        }
-//
-//      }
-//    }
-//    ctx.test
-//    ctx.emit("t7", ctx.t7)
-//    ctx.emit("t8", ctx.t8)
-//  }
-
-  test("throwablesSeq") {
+  test("simpleHashsetSeq") {
     val ctx = new ScalanCtxSeq with  HashSetSimple with HashSetsDslSeq {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
@@ -66,7 +54,18 @@ class HashSetTests extends BaseTests { suite =>
     }
     ctx.test
     val d = ctx.defaultRep
-    val res = ctx.t3(10)
-    assertResult(HashSet(10))(res)
+
+    {
+      val res = ctx.t2((HashSet.empty[Int], 10))
+      assertResult(HashSet(10))(res)
+    }
+    {
+      val res = ctx.t3(10)
+      assertResult(HashSet(10))(res)
+    }
+    {
+      val res = ctx.t4(HashSet(10, 20, 30))
+      assertResult(HashSet(11, 21, 31))(res)
+    }
   }
 }
