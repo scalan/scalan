@@ -1,9 +1,9 @@
 package scalan.primitives
 
 import scalan.common.Lazy
-import scalan.staged.{ BaseExp }
+import scalan.staged.BaseExp
 import scalan.{ ScalanExp, Scalan, ScalanSeq }
-import scala.language.{ implicitConversions }
+import scala.language.implicitConversions
 
 trait TypeSum { self: Scalan =>
 
@@ -31,8 +31,10 @@ trait TypeSum { self: Scalan =>
     def joinSum: Rep[A] = sum.fold(a => a, a => a)
   }
   implicit class OptionOps[A:Elem](opt: Rep[Unit|A]) {
-    def map[B:Elem](f: Rep[A] => Rep[B]) =
-      opt.mapSum(l => l, r => f(r))
+    def map[B:Elem](f: Rep[A] => Rep[B]): Rep[Unit | B] =
+      opt.mapSum(identity, f)
+    def flatMap[B: Elem](f: Rep[A] => Rep[Unit | B]): Rep[Unit | B] =
+      opt.fold(_ => toLeftSum[Unit, B](()), f)
     def getOrElse[B >: A : Elem](default: Rep[B]): Rep[B] =
       opt.fold(l => default, r => r)
   }
