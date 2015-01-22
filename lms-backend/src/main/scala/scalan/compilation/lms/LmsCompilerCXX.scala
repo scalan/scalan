@@ -15,6 +15,12 @@ trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanC
   override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     case el: JNITypeElem[_] =>
       Manifest.classType(classOf[scalan.compilation.lms.JNILmsOps#JNIType[_]], createManifest(el.tElem))
+    case el: JNIArrayElem[arr_t] =>
+      el.eItem match {
+        case ei: Elem[a_t] =>
+          val mItem = createManifest(ei)
+          Manifest.classType(classOf[scalan.compilation.lms.JNILmsOps#JNIArray[a_t]], mItem)
+      }
     case el =>
       super.createManifest(el)
   }

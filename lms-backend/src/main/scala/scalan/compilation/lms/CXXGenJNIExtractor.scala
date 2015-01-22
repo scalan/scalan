@@ -17,6 +17,8 @@ trait CXXGenJNIExtractor extends CXXCodegen {
       case TP(sym,rhs) =>
         if (sym.tp.runtimeClass.isArray && sym.tp.typeArguments(0) <:< Manifest.AnyVal) // array of primitives should be moved
           moveableSyms += sym
+        else if (sym.tp.runtimeClass == classOf[JNIArray[_]])
+            moveableSyms += sym
         else if (syms(rhs).find(moveableSyms.contains) != None) // derived from moveable
           moveableSyms += sym
       case _ =>
@@ -26,27 +28,29 @@ trait CXXGenJNIExtractor extends CXXCodegen {
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-      case ExtractPrimitive(x) =>
-        emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remap(norefManifest(sym.tp))}>(${quote(x)})")
-      case ExtractPrimitiveArray(x) =>
-        emitValDef(quote(sym), norefManifest(sym.tp), s"${remap(sym.tp)}(env, ${quote(x)})")
-      case GetArrayLength(x) =>
-        emitValDef(quote(sym), sym.tp, s"env->GetArrayLength(${quote(x)})")
-      case ExtractObjectArray(x) =>
-        emitValDef(quote(sym), norefManifest(sym.tp), s"${quote(x)} /*ExtractObjectArray: sym.tp=${sym.tp}*/")
-      case GetObjectArrayItem(x, i) =>
-        emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remapObject(sym.tp)}>(env->GetObjectArrayElement(${quote(x)}, ${quote(i)}))")
-      case GetObjectClass(x) =>
-        emitValDef(quote(sym), norefManifest(sym.tp), s"env->GetObjectClass(${quote(x)})")
-      case GetFieldID(clazz, fn, sig) =>
-        emitValDef(quote(sym), norefManifest(sym.tp), s"env->GetFieldID(${quote(clazz)}, ${quote(fn)}, ${quote(sig)})")
-      case GetObjectFieldValue(fid, x) =>
-        emitValDef(quote(sym), norefManifest(jObjectManifest(sym.tp)), s"static_cast<${remap(jObjectManifest(sym.tp))}>(env->GetObjectField(${quote(x)}, ${quote(fid)})) /*GetObjectField: sym.tp=${sym.tp}*/")
-      case GetPrimitiveFieldValue(fid, x) =>
-        val funName = s"Get${fid.tp.typeArguments(0).toString}Field"
-        emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remap(norefManifest(sym.tp))}>(env->${funName}(${quote(x)}, ${quote(fid)}))")
-      case _ =>
-        super.emitNode(sym, rhs)
+    case FindClass(className) =>
+      emitValDef(quote(sym), norefManifest(sym.tp), s"env->FindClass(${quote(className)})")
+    case ExtractPrimitive(x) =>
+      emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remap(norefManifest(sym.tp))}>(${quote(x)})")
+    case ExtractPrimitiveArray(x) =>
+      emitValDef(quote(sym), norefManifest(sym.tp), s"${remap(sym.tp)}(env, ${quote(x)})")
+    case GetArrayLength(x) =>
+      emitValDef(quote(sym), sym.tp, s"env->GetArrayLength(${quote(x)})")
+    case ExtractObjectArray(x) =>
+      emitValDef(quote(sym), norefManifest(sym.tp), s"${quote(x)} /*ExtractObjectArray: sym.tp=${sym.tp}*/")
+    case GetObjectArrayItem(x, i) =>
+      emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remapObject(sym.tp)}>(env->GetObjectArrayElement(${quote(x)}, ${quote(i)}))")
+    case GetObjectClass(x) =>
+      emitValDef(quote(sym), norefManifest(sym.tp), s"env->GetObjectClass(${quote(x)})")
+    case GetFieldID(clazz, fn, sig) =>
+      emitValDef(quote(sym), norefManifest(sym.tp), s"env->GetFieldID(${quote(clazz)}, ${quote(fn)}, ${quote(sig)})")
+    case GetObjectFieldValue(fid, x) =>
+      emitValDef(quote(sym), norefManifest(jObjectManifest(sym.tp)), s"static_cast<${remap(jObjectManifest(sym.tp))}>(env->GetObjectField(${quote(x)}, ${quote(fid)})) /*GetObjectField: sym.tp=${sym.tp}*/")
+    case res@GetPrimitiveFieldValue(fid, x) =>
+      val funName = s"Get${res.tp.toString}Field"
+      emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remap(norefManifest(sym.tp))}>(env->${funName}(${quote(x)}, ${quote(fid)}))")
+    case _ =>
+      super.emitNode(sym, rhs)
   }
 
   override def quote(x: Exp[Any]) = {
@@ -60,8 +64,11 @@ trait CXXGenJNIExtractor extends CXXCodegen {
 
   override def remap[A](m: Manifest[A]): String = {
     m.runtimeClass match {
-      case c if c == classOf[JNIClass[_]] => "jclass"
-      case c if c == classOf[JNIFieldID[_]] => "jfieldID"
+      case c if c == classOf[JNIArray[_]] =>
+        val ts = remap(m.typeArguments(0))
+        s"jni_array<${ts}>"
+      case c if c == classOf[JNIClass] => "jclass"
+      case c if c == classOf[JNIFieldID] => "jfieldID"
       case c if c == classOf[JObject[_]] => remapObject(m.typeArguments(0))
       case c if c.isArray =>
         m.typeArguments(0) match {

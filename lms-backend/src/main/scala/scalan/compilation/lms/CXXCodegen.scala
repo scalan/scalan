@@ -44,9 +44,9 @@ trait CXXCodegen extends CLikeCodegen {
       case c if c.isArray =>
         val itemType = m.typeArguments(0)
         val ts = remap(itemType)
-        if( isPrimitiveType(itemType) ) //TODO: invent correct way map vector types
-          s"jni_array<${ts}>"
-        else
+//        if( isPrimitiveType(itemType) ) //TODO: invent correct way map vector types
+//          s"jni_array<${ts}>"
+//        else
           s"std::vector<${ts}>"
       case c if c == classOf[size_t] =>
         "size_t"

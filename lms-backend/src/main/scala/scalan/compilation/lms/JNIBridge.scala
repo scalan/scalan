@@ -105,43 +105,39 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] { self: LmsBridge[A, B] =>
                 (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
             }
         }
+      case res@scalan.JNI_FindClass(x) =>
+        val _x = symMirr(x).asInstanceOf[lms.Exp[String]]
+        val exp = lms.jni_find_class(_x)
+        (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
       case res@scalan.JNI_GetFieldID(clazz, fn, sig) =>
-        (res.fieldType, res.classType) match {
-          case (fe: scalan.Element[a_t], e: scalan.Element[t_t]) =>
-            val mA = scalan.createManifest(fe)
-            val mT = scalan.createManifest(e)
-            (mA,mT) match {
-              case (ma: Manifest[a_t], mt: Manifest[t_t]) =>
-                val _clazz = symMirr(clazz).asInstanceOf[lms.Exp[ lms.JNIClass[t_t]] ]
-                val _fn = symMirr(fn).asInstanceOf[lms.Exp[String]]
-                val _sig = symMirr(sig).asInstanceOf[lms.Exp[String]]
-                val exp = lms.jni_get_field_id[a_t,t_t](_clazz, _fn, _sig)(ma,mt)
-                (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-            }
-        }
+        val _clazz = symMirr(clazz).asInstanceOf[lms.Exp[ lms.JNIClass] ]
+        val _fn = symMirr(fn).asInstanceOf[lms.Exp[String]]
+        val _sig = symMirr(sig).asInstanceOf[lms.Exp[String]]
+        val exp = lms.jni_get_field_id(_clazz, _fn, _sig)
+        (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
       case res@scalan.JNI_GetObjectFieldValue(fid, x) =>
-        (fid.elem, x.elem) match {
-          case (jnife: scalan.JNIFieldIDElem[jnifid_A_t], jnie: scalan.JNITypeElem[jni_T_t]) =>
+        (res.selfType, x.elem) match {
+          case (jnife: scalan.JNITypeElem[jni_A_t], jnie: scalan.JNITypeElem[jni_T_t]) =>
             val mA = scalan.createManifest(jnife.tElem)
             val mT = scalan.createManifest(jnie.tElem)
             (mA,mT) match {
               case (ma: Manifest[a_t], mt: Manifest[t_t]) =>
                 val _x = symMirr(x).asInstanceOf[lms.Exp[lms.JNIType[t_t]]]
-                val _fid = symMirr(fid).asInstanceOf[lms.Exp[lms.JNIFieldID[a_t]]]
-                val exp = lms.jni_get_object_field_value(_fid, _x)(ma,mt)
+                val _fid = symMirr(fid).asInstanceOf[lms.Exp[lms.JNIFieldID]]
+                val exp = lms.jni_get_object_field_value[a_t,t_t](_fid, _x)(ma,mt)
                 (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
             }
         }
       case res@scalan.JNI_GetPrimitiveFieldValue(fid, x) =>
-        (fid.elem, x.elem) match {
-          case (jnife: scalan.JNIFieldIDElem[jnifid_A_t], jnie: scalan.JNITypeElem[jni_T_t]) =>
-            val mA = scalan.createManifest(jnife.tElem)
+        (res.selfType, x.elem) match {
+          case (rese: scalan.Element[jnifid_A_t], jnie: scalan.JNITypeElem[jni_T_t]) =>
+            val mA = scalan.createManifest(rese)
             val mT = scalan.createManifest(jnie.tElem)
             (mA,mT) match {
               case (ma: Manifest[a_t], mt: Manifest[t_t]) =>
                 val _x = symMirr(x).asInstanceOf[lms.Exp[lms.JNIType[t_t]]]
-                val _fid = symMirr(fid).asInstanceOf[lms.Exp[lms.JNIFieldID[a_t]]]
-                val exp = lms.jni_get_primitive_field_value(_fid, _x)(ma,mt)
+                val _fid = symMirr(fid).asInstanceOf[lms.Exp[lms.JNIFieldID]]
+                val exp = lms.jni_get_primitive_field_value[a_t,t_t](_fid, _x)(ma,mt)
                 (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
             }
         }
