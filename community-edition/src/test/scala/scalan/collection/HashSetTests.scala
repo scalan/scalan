@@ -21,6 +21,9 @@ class HashSetTests extends BaseTests { suite =>
     lazy val t3 = fun { (e: Rep[Int]) => SHashSet.empty[Int] + e }
     lazy val t4 = fun { (t: Rep[HashSet[Int]]) => t.map(fun { x => x + 1 }) }
     lazy val t5 = fun { (in: Rep[(SHashSet[Int],Int)]) => val Pair(t, i) = in; t + i }
+    lazy val t6 = fun { (t: Rep[(HashSet[Int],Int)]) => {
+      t._1.map(fun { x => x + t._2 })
+    }}
 
   }
 
@@ -35,6 +38,7 @@ class HashSetTests extends BaseTests { suite =>
         }
       }
     }
+
     ctx.test
     ctx.emit("defaultRep", ctx.defaultRep)
     ctx.emit("empty", ctx.empty)
@@ -43,6 +47,7 @@ class HashSetTests extends BaseTests { suite =>
     ctx.emit("t3", ctx.t3)
     ctx.emit("t4", ctx.t4)
     ctx.emit("t5", ctx.t5)
+    ctx.emit("t6", ctx.t6)
   }
 
   test("simpleHashsetSeq") {
