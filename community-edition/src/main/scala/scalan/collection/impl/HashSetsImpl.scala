@@ -18,8 +18,7 @@ trait HashSetsAbs extends Scalan with HashSets
     proxyOps[SHashSet[A]](p.asRep[SHashSet[A]])
 
   implicit def defaultSHashSetElem[A:Elem]: Elem[SHashSet[A]] = element[SHashSetImpl[A]].asElem[SHashSet[A]]
-  implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]]// = new BaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])
-//   implicit def DefaultOfHashSet[A:Elem]: Default[HashSet[A]] = SHashSet.defaultVal
+  implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]]
 
   abstract class SHashSetElem[A, From, To <: SHashSet[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
@@ -33,11 +32,10 @@ trait HashSetsAbs extends Scalan with HashSets
   abstract class SHashSetCompanionAbs extends CompanionBase[SHashSetCompanionAbs] with SHashSetCompanion {
     override def toString = "SHashSet"
     
-    def empty[A:Elem]: Rep[HashSet[A]] = {
+    def empty[A:Elem]: Rep[HashSet[A]] =
       methodCallEx[HashSet[A]](self,
         this.getClass.getMethod("empty", classOf[Elem[A]]),
         List(element[A]))
-    }
 
   }
   def SHashSet: Rep[SHashSetCompanionAbs]
@@ -57,7 +55,7 @@ trait HashSetsAbs extends Scalan with HashSets
     def map[B:Elem](f: Rep[A => B]): Rep[HashSet[B]] =
       methodCallEx[HashSet[B]](self,
         this.getClass.getMethod("map", classOf[AnyRef], classOf[Elem[B]]),
-        List(f.asInstanceOf[AnyRef]))
+        List(f.asInstanceOf[AnyRef], element[B]))
 
   }
   trait SHashSetImplCompanion
@@ -124,26 +122,27 @@ trait HashSetsAbs extends Scalan with HashSets
 trait HashSetsSeq extends HashSetsAbs with HashSetsDsl with ScalanSeq { self: HashSetsDslSeq =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs with UserTypeSeq[SHashSetCompanionAbs, SHashSetCompanionAbs] {
     lazy val selfType = element[SHashSetCompanionAbs]
-
+    
     override def empty[A:Elem]: Rep[HashSet[A]] =
       HashSet.empty[A]
+
   }
 
     // override proxy if we deal with BaseTypeEx
   override def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
-    proxyOpsEx[HashSet[A],SHashSet[A], SeqSHashSetImpl[A]](p, hs => SeqSHashSetImpl(hs))
+    proxyOpsEx[HashSet[A],SHashSet[A], SeqSHashSetImpl[A]](p, bt => SeqSHashSetImpl(bt))
 
-  def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new SeqBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])
+    implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new SeqBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])
 
   case class SeqSHashSetImpl[A]
       (override val value: Rep[HashSet[A]])
       (implicit eA: Elem[A])
-    extends SHashSetImpl[A](value) with SeqSHashSet[A] with UserTypeSeq[SHashSet[A], SHashSetImpl[A]] {
+    extends SHashSetImpl[A](value)
+       with SeqSHashSet[A] with UserTypeSeq[SHashSet[A], SHashSetImpl[A]] {
     lazy val selfType = element[SHashSetImpl[A]].asInstanceOf[Elem[SHashSet[A]]]
-
-    override def $plus(elem: Rep[A]): Rep[HashSet[A]] = value.$plus(elem)
-
-//    override def map[B:Elem](f: Rep[A => B]): Rep[HashSet[B]] = value.map(f)
+    
+    override def $plus(elem: Rep[A]): Rep[HashSet[A]] =
+      value.$plus(elem)
 
   }
   lazy val SHashSetImpl = new SHashSetImplCompanionAbs with UserTypeSeq[SHashSetImplCompanionAbs, SHashSetImplCompanionAbs] {
@@ -163,7 +162,7 @@ trait HashSetsExp extends HashSetsAbs with HashSetsDsl with ScalanExp {
     override def mirror(t: Transformer) = this
   }
 
-  def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])
+  implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])
 
   case class ExpSHashSetImpl[A]
       (override val value: Rep[HashSet[A]])

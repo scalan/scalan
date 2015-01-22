@@ -83,13 +83,14 @@ object ScalanAst {
   abstract class SBodyItem
   case class SImportStat(name: String) extends SBodyItem
 
-  trait ExternalDef
-  case object ExternalMethod extends ExternalDef
-  case object ExternalConstructor extends ExternalDef
+  trait MethodAnnotation
+  case object ExternalMethod extends MethodAnnotation
+  case object ExternalConstructor extends MethodAnnotation
 
   case class SMethodDef(name: String, tpeArgs: STpeArgs, argSections: List[SMethodArgs],
-    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[ExternalDef], elem: Option[Unit] = None) extends SBodyItem {
+    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[MethodAnnotation], elem: Option[Unit] = None) extends SBodyItem {
     def explicitArgs = argSections.filter(!_.impFlag).flatMap(_.args)
+    def allArgs = argSections.flatMap(_.args)
   }
   case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
   case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
@@ -123,6 +124,11 @@ object ScalanAst {
     def selfType: Option[SSelfTypeDef]
     def companion: Option[STraitOrClassDef]
     def isTrait: Boolean
+
+    def getMethodsWithAnnotation(a: MethodAnnotation) = body.collect {
+      case md: SMethodDef if md.external.fold(false)(_ == a)  => md
+    }
+
   }
 
   case class STraitDef(
@@ -162,6 +168,16 @@ object ScalanAst {
     ancestors: List[STraitCall],
     body: List[SBodyItem]) extends SBodyItem
 
+  case class SSeqImplementation(explicitMethods: List[SMethodDef]) {
+    def containsMethodDef(m: SMethodDef) = {
+      val equalSignature = for {
+        eq <- explicitMethods.filter(em => em.name == m.name)
+              if eq.allArgs == m.allArgs && eq.tpeArgs == m.tpeArgs
+      } yield eq
+      equalSignature.length > 0
+    }
+  }
+
   case class SEntityModuleDef(
     packageName: String,
     imports: List[SImportStat],
@@ -169,7 +185,8 @@ object ScalanAst {
     entityRepSynonym: Option[STpeDef],
     entityOps: STraitDef,
     concreteSClasses: List[SClassDef],
-    selfType: Option[SSelfTypeDef])
+    selfType: Option[SSelfTypeDef],
+    seqDslImpl: Option[SSeqImplementation] = None)
 
   def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
 
@@ -289,6 +306,10 @@ trait ScalanParsers {
     }
   }
 
+  def seqImplementation(methods: List[DefDef], parent: Tree): List[SMethodDef] = {
+    methods.map(methodDef(_))
+  }
+
   def entityModule(pdTree: PackageDef) = {
     val packageName = pdTree.pid.toString
     val statements = pdTree.stats
@@ -302,7 +323,22 @@ trait ScalanParsers {
       case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
     }
     val moduleTrait = traitDef(moduleTraitTree, moduleTraitTree)
-    SEntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait, config)
+    val md = SEntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait, config)
+
+    val dslSeq = pdTree.stats.collectFirst {
+      case cd @ ClassDef(_,name,_,_) if name.toString == (moduleTrait.name + "DslSeq") => cd
+    }
+    val seqExplicitOps = for {
+      seqImpl <- dslSeq
+      seqOpsTrait <- seqImpl.impl.body.collectFirst {
+        case cd @ ClassDef(_,name,_,_) if name.toString == ("Seq" + md.entityOps.name) => cd
+      }
+    } yield {
+      val cd = seqOpsTrait.impl.body.collect { case item: DefDef => item }
+      seqImplementation(cd, seqOpsTrait)
+    }
+
+    md.copy(seqDslImpl = seqExplicitOps.map(SSeqImplementation(_)))
   }
 
   def importStat(i: Import): SImportStat = {
