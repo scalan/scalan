@@ -44,6 +44,7 @@ class LmsJNIExtractorItTests extends BaseTests {
     ctx.generate("extractPairUse2", ctx.extractPairUse2)
     ctx.generate("extractSM", ctx.extractSM)
     ctx.generate("ddmvm", ctx.ddmvm)
+    ctx.generate("sdmvm", ctx.sdmvm)
   }
 
   test("simpleBuildExecutable") {
@@ -75,7 +76,9 @@ class LmsJNIExtractorItTests extends BaseTests {
         println(s"java.library.path=${System.getProperty("java.library.path")}")
         System.loadLibrary("jniExtractor")
 
-        val m = scala.Array(scala.Array(34.0, 89.0),scala.Array(12.0, 43.0))
+//        val m = scala.Array(scala.Array(34.0, 89.0),scala.Array(12.0, 43.0))
+        val m = scala.Array( (scala.Array(0,1), (scala.Array(34.0, 88.0), 2))
+                           , (scala.Array(0,1), (scala.Array(12.0, 43.0), 2)) )
         val v = scala.Array(77.0, 12.0)
 
         val res = (new MVMs).extractorTest( (m,v) )

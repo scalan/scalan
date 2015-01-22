@@ -4,9 +4,9 @@ package scalan.performance
  * Created by zotov on 12/8/14.
  */
 class MVMs {
-//  @native def extractorTest( p: (Array[(Array[Int],(Array[Double], Int))], Array[Double]) ): Unit
+  @native def extractorTest( p: (Array[(Array[Int],(Array[Double], Int))], Array[Double]) ): Array[Double]
 //  @native def extractorTest( p: (Array[Double], Double) ): Array[Double]
-  @native def extractorTest( p: (Array[Array[Double]], Array[Double]) ): Array[Double]
+//  @native def extractorTest( p: (Array[Array[Double]], Array[Double]) ): Array[Double]
   @native def sdmvm( p: (Array[(Array[Int],(Array[Double], Int))], Array[Double]) ): Array[Double]
 //  @native def extractorTest( on: Array[Array[Double]]): Unit
 

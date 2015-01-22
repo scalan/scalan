@@ -48,6 +48,14 @@ trait FirstProg { self: Scalan with JNIExtractorOps with ArrayOps =>
     ((m map {row => row zip v }) map { row2 => row2 map { p => p._1 * p._2} }) map { r => r.reduce(numericPlusMonoid[Double]) }
   }
 
+  lazy val sdmvm = fun { (in: Rep[JNIType[( Array[( Array[Int], (Array[Double],Int))], Array[Double])]]) =>
+    val pin = JNI_Extract(in)
+    val sm: Rep[Array[(Array[Int],(Array[Double],Int))]] = pin._1
+    val v: Rep[Array[Double]] = pin._2
+    val srs:Rep[Array[Array[(Int,Double)]]] = (sm map {srow => (srow._1).zip((srow._2))})
+    (srs map {zsrow => zsrow map {p => v(p._1) * p._2} } ).map {r => r.reduce(numericPlusMonoid[Double])}
+  }
+
 }
 
 class JNIExtractorTests extends BaseTests {
@@ -77,5 +85,6 @@ class JNIExtractorTests extends BaseTests {
     ctx.emit("extractPairUse2", ctx.extractPairUse2)
     ctx.emit("extractSM", ctx.extractSM)
     ctx.emit("ddmvm", ctx.ddmvm)
+    ctx.emit("sdmvm", ctx.ddmvm)
   }
 }
