@@ -20,6 +20,9 @@ import scalan.util.ScalaNameUtil
 
 trait Proxy { self: Scalan =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops
+//  def proxyOpsEx[OpsBase <: AnyRef, Ops <: AnyRef, Wrapper <: Ops]
+//        (x: Rep[OpsBase])
+//        (implicit ctBase: ClassTag[OpsBase], ct: ClassTag[Ops], ctWrapper: ClassTag[Wrapper]): Ops
 
   def getStagedFunc(name: String): Rep[_] = {
     val clazz = this.getClass
@@ -27,45 +30,54 @@ trait Proxy { self: Scalan =>
     f.invoke(this).asInstanceOf[Rep[_]]
   }
 
-  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops = x
-  def proxyOpsEx[OpsBase <: AnyRef, Ops <: AnyRef](x: Rep[OpsBase])(implicit ctBase: ClassTag[OpsBase], ct: ClassTag[Ops]): Ops =  {
-    getProxy(x, ctBase, ct)
+  def proxyOpsEx[OpsBase <: AnyRef, Ops <: AnyRef, Wrapper <: Ops]
+                (x: Rep[OpsBase], wrapper: OpsBase => Wrapper)
+                (implicit ctBase: ClassTag[OpsBase], ct: ClassTag[Ops], ctWrapper: ClassTag[Wrapper]): Ops =  {
+    getProxy[OpsBase, Ops, Wrapper](x, wrapper)(ctBase, ct, ctWrapper)
   }
 
-  private val proxies = collection.mutable.Map.empty[(AnyRef, ClassTag[_]), AnyRef]
+  private val proxies = scala.collection.mutable.Map.empty[(AnyRef, ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
 
-  private def getProxy[OpsBase <: AnyRef, Ops <: AnyRef](x: OpsBase, ctBase: ClassTag[OpsBase], ct: ClassTag[Ops]) = {
+  private def getProxy[OpsBase <: AnyRef, Ops <: AnyRef, Wrapper <: Ops]
+                      (x: OpsBase, wrapper: OpsBase => Wrapper)(ctBase: ClassTag[OpsBase], ct: ClassTag[Ops], ctWrapper: ClassTag[Wrapper]) = {
     val proxy = proxies.getOrElseUpdate((x, ct), {
       val clazz = ct.runtimeClass
       val e = new Enhancer
       e.setClassLoader(clazz.getClassLoader)
       e.setSuperclass(clazz)
-      e.setCallbackType(classOf[SeqInvocationHandler[_]])
+      e.setCallbackType(classOf[SeqInvocationHandler[_,_,_]])
       val proxyClass = e.createClass().asSubclass(classOf[AnyRef])
       val proxyInstance = objenesis.newInstance(proxyClass).asInstanceOf[Factory]
-      proxyInstance.setCallback(0, new SeqInvocationHandler(x)(ctBase))
+      proxyInstance.setCallback(0, new SeqInvocationHandler[OpsBase, Ops, Wrapper](x, wrapper)(ctBase, ct, ctWrapper))
       proxyInstance
     })
     proxy.asInstanceOf[Ops]
   }
 
-  class SeqInvocationHandler[TBase <: AnyRef](receiver: TBase)(implicit ctBase: ClassTag[TBase]) extends InvocationHandler {
+  class SeqInvocationHandler[TBase <: AnyRef, Ops <: AnyRef, Wrapper <: Ops]
+                            (receiver: TBase, wrapper: TBase => Wrapper)
+                            (implicit ctBase: ClassTag[TBase], ct: ClassTag[Ops], ctWrapper: ClassTag[Wrapper]) extends InvocationHandler {
     override def toString = s"SeqInvocationHandler(${receiver.toString})"
 
+    //val clazzElem = classOf[Elem[_]]
+    val wrapped = wrapper(receiver)
+
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
-      val clazzBase = ctBase.runtimeClass
-      val mBase = clazzBase.getMethod(m.getName, m.getParameterTypes: _*)
-      mBase.invoke(receiver, _args: _*)
+      m.invoke(wrapped, _args: _*)
+//      val clazzBase = ctBase.runtimeClass
+//      val mBase = clazzBase.getMethod(m.getName, m.getParameterTypes.filterNot(c => clazzElem.isAssignableFrom(c)): _*)
+//      mBase.invoke(receiver, _args: _*)
     }
   }
 
-  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] =
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
     m.invoke(receiver, args.map(_.asInstanceOf[AnyRef]): _*).asInstanceOf[A]
 
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
@@ -112,14 +124,14 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     case _ => super.formatDef(d)
   }
 
-  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] =
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
     new MethodCall[A](receiver, m, args) { override def neverInvoke = true }
 
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
     new NewObject[A](c, args) { override def neverInvoke = true }
   }
 
-  private val proxies = collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
+  private val proxies = scala.collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
 
   override def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops =
@@ -228,7 +240,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     def getResultElem(m: Method, args: Array[AnyRef]): Elem[_] = {
       val e = receiver.elem
       val zero = e match {
-        case extE: BaseElemEx[_,_] => extE.extElem.defaultRepValue
+        case extE: BaseElemEx[_,_] => extE.getWrapperElem.defaultRepValue
         case _ => e.defaultRepValue
       }
       val Def(zeroNode) = zero

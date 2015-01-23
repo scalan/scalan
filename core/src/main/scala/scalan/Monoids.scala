@@ -13,8 +13,8 @@ trait Monoids { self: Scalan =>
   def repMonoid_toString[A](m: RepMonoid[A]) = s"Monoid[${m.eA.name}](${m.opName}, ${m.zero}, ${m.append})"
 
   // avoid monoids duplication (since duplicate functions aren't eliminated for now
-  private val numericPlusMonoids = collection.mutable.Map.empty[Elem[_], RepMonoid[_]]
-  private val numericMultMonoids = collection.mutable.Map.empty[Elem[_], RepMonoid[_]]
+  private val numericPlusMonoids = scala.collection.mutable.Map.empty[Elem[_], RepMonoid[_]]
+  private val numericMultMonoids = scala.collection.mutable.Map.empty[Elem[_], RepMonoid[_]]
 
   implicit def numericPlusMonoid[A](implicit n: Numeric[A], e: Elem[A]): RepMonoid[A] =
     numericPlusMonoids.getOrElseUpdate(e, RepMonoid("+", n.zero, isCommutative = true) { _ + _ }).

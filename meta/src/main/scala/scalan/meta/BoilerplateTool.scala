@@ -26,7 +26,6 @@ class BoilerplateTool {
     srcPath = "../core/src/test/scala",
     entityFiles = List(
       "scalan/common/Segments.scala"
-      //"scalan/primitives/Exceptions.scala"
     ),
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
@@ -43,6 +42,7 @@ class BoilerplateTool {
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
+      , "scalan/collection/HashSets.scala"
       , "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
     ),

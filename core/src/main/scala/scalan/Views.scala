@@ -29,7 +29,7 @@ trait Views extends Elems { self: Scalan =>
   abstract class ViewElem[From, To](implicit val iso: Iso[From, To]) extends Elem[To] {
     override def isEntityType = shouldUnpack(this)
     lazy val tag: WeakTypeTag[To] = iso.tag
-    lazy val defaultRep = iso.defaultRepTo    
+    lazy val getDefaultRep = iso.defaultRepTo
   }
 
   object ViewElem {
@@ -74,7 +74,7 @@ trait Views extends Elems { self: Scalan =>
     new Iso[A, A] {
       def eTo = elem
       def tag = elem.tag
-      def defaultRepTo = elem.defaultRep
+      def defaultRepTo = elem.getDefaultRep
       def from(x: Rep[A]) = x
       def to(x: Rep[A]) = x
     }
@@ -90,7 +90,7 @@ trait Views extends Elems { self: Scalan =>
       def from(b: Rep[(B1, B2)]) = (iso1.from(b._1), iso2.from(b._2))
       def to(a: Rep[(A1, A2)]) = (iso1.to(a._1), iso2.to(a._2))
       def tag = eBB.tag
-      def defaultRepTo = eBB.defaultRep
+      def defaultRepTo = eBB.getDefaultRep
     }
   }
 
@@ -109,7 +109,7 @@ trait Views extends Elems { self: Scalan =>
         a.fold(a1 => toLeftSum(iso1.to(a1))(eB2),
                a2 => toRightSum(iso2.to(a2))(eB1))
       def tag = eBB.tag
-      def defaultRepTo = eBB.defaultRep
+      def defaultRepTo = eBB.getDefaultRep
     }
   }
 
@@ -137,7 +137,7 @@ trait Views extends Elems { self: Scalan =>
         fun { a => iso2.to(f(iso1.from(a))) }
       }
       def tag = eTo.tag
-      def defaultRepTo = eTo.defaultRep
+      def defaultRepTo = eTo.getDefaultRep
     }
   }
 }

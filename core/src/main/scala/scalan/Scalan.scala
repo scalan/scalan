@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.collections._
+import scalan.collection._
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.arrays._
@@ -44,6 +44,7 @@ trait ScalanSeq
   extends Scalan
   with BaseSeq
   with ElemsSeq
+  with BaseTypesSeq
   with ViewsSeq
   with ProxySeq
   with TuplesSeq
@@ -70,6 +71,7 @@ trait ScalanExp
   extends Scalan
   with BaseExp
   with ElemsExp
+  with BaseTypesExp
   with ViewsExp
   with ProxyExp
   with TuplesExp

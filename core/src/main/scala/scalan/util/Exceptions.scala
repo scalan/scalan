@@ -10,10 +10,9 @@ trait Exceptions extends Base with BaseTypes { self: ExceptionsDsl =>
    @External def getMessage: Rep[String]
   }
   trait SThrowableCompanion extends ExCompanion0[Throwable]  {
-    def defaultVal = Default.defaultVal(new Throwable("default exception"))
-    def apply(msg: Rep[String]): Rep[Throwable] = newObjEx(classOf[Throwable], List(msg.asRep[AnyRef]))
+    @Constructor def apply(msg: Rep[String]): Rep[Throwable]
   }
-  implicit def defaultSThrowableElem: Elem[SThrowable] = element[SException].asElem[SThrowable]
+  implicit def defaultExceptionValue = Default.defaultVal(new Throwable("default exception"))
 
   abstract class SException(val value: Rep[Throwable]) extends SThrowable {
     def getMessage: Rep[String] =
@@ -27,6 +26,7 @@ trait ExceptionsDsl extends impl.ExceptionsAbs {
 }
 
 trait ExceptionsDslSeq extends impl.ExceptionsSeq {
+  trait SeqSThrowable
 }
 
 trait ExceptionsDslExp extends impl.ExceptionsExp {

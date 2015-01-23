@@ -9,28 +9,34 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
-trait PArraysAbs extends ScalanDsl with PArrays
+trait PArraysAbs extends Scalan with PArrays
 { self: PArraysDsl =>
   // single proxy for each type family
   implicit def proxyPArray[A](p: Rep[PArray[A]]): PArray[A] =
     proxyOps[PArray[A]](p)
+
+
 
   abstract class PArrayElem[A, From, To <: PArray[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
   trait PArrayCompanionElem extends CompanionElem[PArrayCompanionAbs]
   implicit lazy val PArrayCompanionElem: PArrayCompanionElem = new PArrayCompanionElem {
     lazy val tag = typeTag[PArrayCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(PArray)
+    lazy val getDefaultRep = Default.defaultVal(PArray)
+    //def getDefaultRep = defaultRep
   }
 
   abstract class PArrayCompanionAbs extends CompanionBase[PArrayCompanionAbs] with PArrayCompanion {
     override def toString = "PArray"
+    
   }
   def PArray: Rep[PArrayCompanionAbs]
   implicit def proxyPArrayCompanion(p: Rep[PArrayCompanion]): PArrayCompanion = {
     proxyOps[PArrayCompanion](p)
   }
 
+  //default wrapper implementation
+  
   // elem for concrete class
   class UnitArrayElem(iso: Iso[UnitArrayData, UnitArray]) extends PArrayElem[Unit, UnitArrayData, UnitArray](iso)
 
@@ -70,7 +76,8 @@ trait PArraysAbs extends ScalanDsl with PArrays
 
   class UnitArrayCompanionElem extends CompanionElem[UnitArrayCompanionAbs] {
     lazy val tag = typeTag[UnitArrayCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(UnitArray)
+    lazy val getDefaultRep = Default.defaultVal(UnitArray)
+    //def getDefaultRep = defaultRep
   }
   implicit lazy val UnitArrayCompanionElem: UnitArrayCompanionElem = new UnitArrayCompanionElem
 
@@ -89,6 +96,8 @@ trait PArraysAbs extends ScalanDsl with PArrays
   def mkUnitArray(len: Rep[Int]): Rep[UnitArray]
   def unmkUnitArray(p: Rep[UnitArray]): Option[(Rep[Int])]
 
+  //default wrapper implementation
+  
   // elem for concrete class
   class BaseArrayElem[A](iso: Iso[BaseArrayData[A], BaseArray[A]]) extends PArrayElem[A, BaseArrayData[A], BaseArray[A]](iso)
 
@@ -128,7 +137,8 @@ trait PArraysAbs extends ScalanDsl with PArrays
 
   class BaseArrayCompanionElem extends CompanionElem[BaseArrayCompanionAbs] {
     lazy val tag = typeTag[BaseArrayCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(BaseArray)
+    lazy val getDefaultRep = Default.defaultVal(BaseArray)
+    //def getDefaultRep = defaultRep
   }
   implicit lazy val BaseArrayCompanionElem: BaseArrayCompanionElem = new BaseArrayCompanionElem
 
@@ -147,6 +157,8 @@ trait PArraysAbs extends ScalanDsl with PArrays
   def mkBaseArray[A](arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[BaseArray[A]]
   def unmkBaseArray[A:Elem](p: Rep[BaseArray[A]]): Option[(Rep[Array[A]])]
 
+  //default wrapper implementation
+  
   // elem for concrete class
   class PairArrayElem[A, B](iso: Iso[PairArrayData[A, B], PairArray[A, B]]) extends PArrayElem[(A,B), PairArrayData[A, B], PairArray[A, B]](iso)
 
@@ -187,7 +199,8 @@ trait PArraysAbs extends ScalanDsl with PArrays
 
   class PairArrayCompanionElem extends CompanionElem[PairArrayCompanionAbs] {
     lazy val tag = typeTag[PairArrayCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(PairArray)
+    lazy val getDefaultRep = Default.defaultVal(PairArray)
+    //def getDefaultRep = defaultRep
   }
   implicit lazy val PairArrayCompanionElem: PairArrayCompanionElem = new PairArrayCompanionElem
 
@@ -206,6 +219,8 @@ trait PArraysAbs extends ScalanDsl with PArrays
   def mkPairArray[A, B](as: Rep[PArray[A]], bs: Rep[PArray[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]]
   def unmkPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]): Option[(Rep[PArray[A]], Rep[PArray[B]])]
 
+  //default wrapper implementation
+  
   // elem for concrete class
   class NestedArrayElem[A](iso: Iso[NestedArrayData[A], NestedArray[A]]) extends PArrayElem[PArray[A], NestedArrayData[A], NestedArray[A]](iso)
 
@@ -246,7 +261,8 @@ trait PArraysAbs extends ScalanDsl with PArrays
 
   class NestedArrayCompanionElem extends CompanionElem[NestedArrayCompanionAbs] {
     lazy val tag = typeTag[NestedArrayCompanionAbs]
-    lazy val defaultRep = Default.defaultVal(NestedArray)
+    lazy val getDefaultRep = Default.defaultVal(NestedArray)
+    //def getDefaultRep = defaultRep
   }
   implicit lazy val NestedArrayCompanionElem: NestedArrayCompanionElem = new NestedArrayCompanionElem
 
@@ -266,16 +282,23 @@ trait PArraysAbs extends ScalanDsl with PArrays
   def unmkNestedArray[A:Elem](p: Rep[NestedArray[A]]): Option[(Rep[PArray[A]], Rep[PArray[(Int,Int)]])]
 }
 
-trait PArraysSeq extends PArraysAbs with PArraysDsl with ScalanSeq {
+trait PArraysSeq extends PArraysAbs with PArraysDsl with ScalanSeq { self: PArraysDslSeq =>
   lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeSeq[PArrayCompanionAbs, PArrayCompanionAbs] {
     lazy val selfType = element[PArrayCompanionAbs]
+    
   }
+
+  
+
+  
 
   case class SeqUnitArray
       (override val len: Rep[Int])
       
-    extends UnitArray(len) with UserTypeSeq[PArray[Unit], UnitArray] {
+    extends UnitArray(len)
+        with UserTypeSeq[PArray[Unit], UnitArray] {
     lazy val selfType = element[UnitArray].asInstanceOf[Elem[PArray[Unit]]]
+    
   }
   lazy val UnitArray = new UnitArrayCompanionAbs with UserTypeSeq[UnitArrayCompanionAbs, UnitArrayCompanionAbs] {
     lazy val selfType = element[UnitArrayCompanionAbs]
@@ -290,8 +313,10 @@ trait PArraysSeq extends PArraysAbs with PArraysDsl with ScalanSeq {
   case class SeqBaseArray[A]
       (override val arr: Rep[Array[A]])
       (implicit eA: Elem[A])
-    extends BaseArray[A](arr) with UserTypeSeq[PArray[A], BaseArray[A]] {
+    extends BaseArray[A](arr)
+        with UserTypeSeq[PArray[A], BaseArray[A]] {
     lazy val selfType = element[BaseArray[A]].asInstanceOf[Elem[PArray[A]]]
+    
   }
   lazy val BaseArray = new BaseArrayCompanionAbs with UserTypeSeq[BaseArrayCompanionAbs, BaseArrayCompanionAbs] {
     lazy val selfType = element[BaseArrayCompanionAbs]
@@ -306,8 +331,10 @@ trait PArraysSeq extends PArraysAbs with PArraysDsl with ScalanSeq {
   case class SeqPairArray[A, B]
       (override val as: Rep[PArray[A]], override val bs: Rep[PArray[B]])
       (implicit eA: Elem[A], eB: Elem[B])
-    extends PairArray[A, B](as, bs) with UserTypeSeq[PArray[(A,B)], PairArray[A, B]] {
+    extends PairArray[A, B](as, bs)
+        with UserTypeSeq[PArray[(A,B)], PairArray[A, B]] {
     lazy val selfType = element[PairArray[A, B]].asInstanceOf[Elem[PArray[(A,B)]]]
+    
   }
   lazy val PairArray = new PairArrayCompanionAbs with UserTypeSeq[PairArrayCompanionAbs, PairArrayCompanionAbs] {
     lazy val selfType = element[PairArrayCompanionAbs]
@@ -322,8 +349,10 @@ trait PArraysSeq extends PArraysAbs with PArraysDsl with ScalanSeq {
   case class SeqNestedArray[A]
       (override val values: Rep[PArray[A]], override val segments: Rep[PArray[(Int,Int)]])
       (implicit eA: Elem[A])
-    extends NestedArray[A](values, segments) with UserTypeSeq[PArray[PArray[A]], NestedArray[A]] {
+    extends NestedArray[A](values, segments)
+        with UserTypeSeq[PArray[PArray[A]], NestedArray[A]] {
     lazy val selfType = element[NestedArray[A]].asInstanceOf[Elem[PArray[PArray[A]]]]
+    
   }
   lazy val NestedArray = new NestedArrayCompanionAbs with UserTypeSeq[NestedArrayCompanionAbs, NestedArrayCompanionAbs] {
     lazy val selfType = element[NestedArrayCompanionAbs]
@@ -341,6 +370,8 @@ trait PArraysExp extends PArraysAbs with PArraysDsl with ScalanExp {
     lazy val selfType = element[PArrayCompanionAbs]
     override def mirror(t: Transformer) = this
   }
+
+
 
   case class ExpUnitArray
       (override val len: Rep[Int])
