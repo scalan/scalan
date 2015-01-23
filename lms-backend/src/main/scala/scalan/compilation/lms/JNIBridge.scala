@@ -1,12 +1,13 @@
 package scalan.compilation.lms
 
+import scalan.primitives.AbstractStringsDslExp
 import scalan.{JNIExtractorOpsExp, ScalanExp}
 import scalan.linalgebra.VectorsDslExp
 
 trait JNIBridge[A, B] extends LmsBridge[A, B] { self: LmsBridge[A, B] =>
 
   // `LmsCompiler` mixed just to provide `createManifest` function
-  val scalan: ScalanExp with JNIExtractorOpsExp with LmsCompiler
+  val scalan: ScalanExp with JNIExtractorOpsExp with LmsCompiler with AbstractStringsDslExp
 
   abstract override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) = {
     jniDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)
@@ -26,8 +27,8 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] { self: LmsBridge[A, B] =>
             val exp = lms.tuple(_a, _b)(ma,mb)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
-      case res@scalan.JNIStringConst(_) =>
-        val exp = lms.JNIStringConst(res.str)
+      case res@scalan.ExpCString(scalan.Def(s: scalan.Const[_])) =>
+        val exp = lms.JNIStringConst(s.x)
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
       case res@scalan.JNI_ExtractPrimitive(x) =>
         x.elem match {

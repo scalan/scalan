@@ -3,6 +3,7 @@ package scalan.community
 import scalan.linalgebra.{MatricesDslExp, MatricesDslSeq, MatricesDsl}
 import scalan._
 import scalan.parrays._
+import scalan.primitives.{AbstractStringsDslExp, AbstractStringsDslSeq}
 
 trait ScalanCommunity extends Scalan
 
@@ -14,6 +15,6 @@ trait ScalanCommunityExp extends ScalanCtxExp
 
 trait ScalanCommunityDsl extends ScalanCommunity with PArraysDsl with MatricesDsl with JNIExtractorOps
 
-trait ScalanCommunityDslSeq extends ScalanCommunityDsl with PArraysDslSeq with MatricesDslSeq with JNIExtractorOpsSeq
+trait ScalanCommunityDslSeq extends ScalanCommunityDsl with PArraysDslSeq with MatricesDslSeq with JNIExtractorOpsSeq with AbstractStringsDslSeq
 
-trait ScalanCommunityDslExp extends ScalanCommunityDsl with PArraysDslExp with MatricesDslExp with JNIExtractorOpsExp
+trait ScalanCommunityDslExp extends ScalanCommunityDsl with PArraysDslExp with MatricesDslExp with JNIExtractorOpsExp with AbstractStringsDslExp

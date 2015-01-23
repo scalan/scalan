@@ -54,6 +54,20 @@ class BoilerplateTool {
     coreTestsTypeSynonyms ++ liteTypeSynonyms
   )
 
+  lazy val abstractArraysConfig = CodegenConfig(
+    srcPath = "../core/src/main/scala",
+    entityFiles = List(
+      "scalan/arrays/AbstractArrays.scala",
+      "scalan/primitives/AbstractStrings.scala"
+    ),
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._",
+      "scalan.common.Default"),
+    coreTestsTypeSynonyms ++ liteTypeSynonyms
+  )
+
   val eeTypeSynonyms = Set(
     "PS" -> "PSet", "PM" -> "PMap", "Dist" -> "Distributed"
   )
@@ -120,6 +134,7 @@ class BoilerplateTool {
     "ee" -> List(scalanConfig),
     "ee-full" -> List(scalanFullConfig),
     "effects" -> List(effectsConfig),
+    "absarr" -> List(abstractArraysConfig),
     "all" -> List(coreTestsConfig, liteConfig, scalanConfig)
   )
 

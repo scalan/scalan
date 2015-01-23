@@ -2,11 +2,12 @@ package scalan
 
 import scala.reflect.runtime.universe._
 import scalan.common.Default
+import scalan.primitives.{AbstractStringsDslExp, AbstractStringsDslSeq, AbstractStringsDsl}
 
 /**
  * Created by zotov on 12/9/14.
  */
-trait JNIExtractorOps { self: Scalan =>
+trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
 
   class JNIType[T: Elem]
   class JNIClass
@@ -58,21 +59,16 @@ trait JNIExtractorOps { self: Scalan =>
   def JNI_Extract[I: Elem](x: Rep[JNIType[I]]): Rep[I]
 }
 
-trait JNIExtractorOpsSeq extends JNIExtractorOps { self: ScalanSeq =>
+trait JNIExtractorOpsSeq extends JNIExtractorOps { self: ScalanSeq with AbstractStringsDslSeq =>
   def JNI_Extract[I: Elem](x: Rep[JNIType[I]]): Rep[I] = ???
 }
 
-trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
-
-  case class JNIStringConst(str: String) extends BaseDef[String] {
-    def uniqueOpId = toString
-    override def mirror(t: Transformer) = self
-  }
+trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with AbstractStringsDslExp =>
 
   private def find_class_of_obj[T: Elem](x: Rep[JNIType[T]]): Rep[JNIClass] = x.elem match {
       case jnie: JNITypeElem[_] =>
         val className = jnie.tElem.classTag.runtimeClass.getCanonicalName.replaceAllLiterally(".","/")
-        JNI_FindClass(JNIStringConst(className))
+        JNI_FindClass(CString(className))
     }
 
   private def unbox[A: Elem](x: Rep[JNIType[A]]): Rep[A] = {
@@ -83,7 +79,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
       case (jnie: JNITypeElem[_]) =>
         org.objectweb.asm.Type.getType(jnie.tElem.classTag.runtimeClass).getDescriptor
     }
-    val fid = JNI_GetFieldID(clazz, JNIStringConst(fn), JNIStringConst(sig))
+    val fid = JNI_GetFieldID(clazz, CString(fn), CString(sig))
 
     JNI_GetPrimitiveFieldValue[A,A](fid, x)
   }
@@ -96,7 +92,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
         org.objectweb.asm.Type.getType(jnie.tElem.classTag.runtimeClass.getField(fn).getType).getDescriptor
     }
 
-    val fid = JNI_GetFieldID(clazz, JNIStringConst(fn), JNIStringConst(sig))
+    val fid = JNI_GetFieldID(clazz, CString(fn), CString(sig))
 
     element[A] match {
       case elem if !(elem <:< AnyRefElement) =>
@@ -136,7 +132,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
     }
   }
 
-  case class JNI_FindClass(className: Rep[String]) extends Def[JNIClass] {
+  case class JNI_FindClass(className: Rep[CString]) extends Def[JNIClass] {
     override def selfType = element[JNIClass]
     override def uniqueOpId = "JNI_FindClass"
     override def mirror(t: Transformer) = JNI_FindClass(t(className))
@@ -148,7 +144,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp =>
     override def mirror(t: Transformer) = JNI_GetObjectClass(t(x))
   }
 
-  case class JNI_GetFieldID(clazz: Rep[JNIClass], fname: Rep[String], sig: Rep[String]) extends Def[JNIFieldID] {
+  case class JNI_GetFieldID(clazz: Rep[JNIClass], fname: Rep[CString], sig: Rep[CString]) extends Def[JNIFieldID] {
     override def selfType = element[JNIFieldID]
     override def uniqueOpId = "JNI_GetFieldID"
     override def mirror(t: Transformer) = JNI_GetFieldID(t(clazz), t(fname), t(sig))
