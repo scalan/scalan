@@ -202,14 +202,11 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
 
     def externalSeqConstructor(md: SMethodDef) = {
       val msgExplicitRetType = "External constructors should be declared with explicit type of returning value (result type)"
-      lazy val msgRepRetType = s"Invalid constructor declaration $md. External constructors should have return type of type Rep[T] for some T."
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
-      val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))
-      val allArgs = md.argSections.flatMap(_.args)
       val typesDecl = getBoundedTpeArgString(md.tpeArgs)
       s"""
-        |    def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
-        |      newObjEx(classOf[$entityNameBT${typesUse}], List(${allArgs.rep(a => s"${a.name}.asRep[Any]")}))
+        |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
+        |      new $entityNameBT${typesUse}${md.argSections.rep(methodArgsUse(_), "")}
         |""".stripMargin
     }
 
