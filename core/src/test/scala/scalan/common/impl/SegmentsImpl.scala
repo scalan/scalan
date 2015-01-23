@@ -14,7 +14,6 @@ trait SegmentsAbs extends Scalan with Segments
 
 
 
-
   abstract class SegmentElem[From, To <: Segment](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
@@ -158,18 +157,23 @@ trait SegmentsAbs extends Scalan with Segments
   def unmkSlice(p: Rep[Slice]): Option[(Rep[Int], Rep[Int])]
 }
 
-trait SegmentsSeq extends SegmentsAbs with SegmentsDsl with ScalanSeq {
+trait SegmentsSeq extends SegmentsAbs with SegmentsDsl with ScalanSeq { self: SegmentsDslSeq =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeSeq[SegmentCompanionAbs, SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]
+    
   }
+
+  
 
   
 
   case class SeqInterval
       (override val start: Rep[Int], override val end: Rep[Int])
       
-    extends Interval(start, end) with UserTypeSeq[Segment, Interval] {
+    extends Interval(start, end)
+        with UserTypeSeq[Segment, Interval] {
     lazy val selfType = element[Interval].asInstanceOf[Elem[Segment]]
+    
   }
   lazy val Interval = new IntervalCompanionAbs with UserTypeSeq[IntervalCompanionAbs, IntervalCompanionAbs] {
     lazy val selfType = element[IntervalCompanionAbs]
@@ -184,8 +188,10 @@ trait SegmentsSeq extends SegmentsAbs with SegmentsDsl with ScalanSeq {
   case class SeqSlice
       (override val start: Rep[Int], override val length: Rep[Int])
       
-    extends Slice(start, length) with UserTypeSeq[Segment, Slice] {
+    extends Slice(start, length)
+        with UserTypeSeq[Segment, Slice] {
     lazy val selfType = element[Slice].asInstanceOf[Elem[Segment]]
+    
   }
   lazy val Slice = new SliceCompanionAbs with UserTypeSeq[SliceCompanionAbs, SliceCompanionAbs] {
     lazy val selfType = element[SliceCompanionAbs]
@@ -203,6 +209,8 @@ trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp {
     lazy val selfType = element[SegmentCompanionAbs]
     override def mirror(t: Transformer) = this
   }
+
+
 
   case class ExpInterval
       (override val start: Rep[Int], override val end: Rep[Int])

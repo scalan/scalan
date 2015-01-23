@@ -400,7 +400,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
          |      (${fieldsWithType.rep(f => s"override val $f")})
          |      ${implicitSignature}
          |    extends $className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
-         |       with Seq$entityName${typesUse} with UserTypeSeq[$traitWithTypes, $className${typesUse}] {
+         |       ${module.seqDslImpl.opt(_ => s"with Seq$entityName${typesUse}")} with UserTypeSeq[$traitWithTypes, $className${typesUse}] {
          |    lazy val selfType = element[${className}${typesUse}].asInstanceOf[Elem[$traitWithTypes]]
          |    $externalMethodsStr
          |  }

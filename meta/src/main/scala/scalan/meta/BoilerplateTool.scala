@@ -41,10 +41,10 @@ class BoilerplateTool {
   lazy val liteConfig = CodegenConfig(
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
-      //"scalan/parrays/PArrays.scala"
-      "scalan/collection/HashSets.scala"
-      //, "scalan/linalgebra/Vectors.scala"
-      //, "scalan/linalgebra/Matrices.scala"
+      "scalan/parrays/PArrays.scala"
+      , "scalan/collection/HashSets.scala"
+      , "scalan/linalgebra/Vectors.scala"
+      , "scalan/linalgebra/Matrices.scala"
     ),
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
