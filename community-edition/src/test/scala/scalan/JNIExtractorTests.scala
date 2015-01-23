@@ -85,6 +85,6 @@ class JNIExtractorTests extends BaseTests {
     ctx.emit("extractPairUse2", ctx.extractPairUse2)
     ctx.emit("extractSM", ctx.extractSM)
     ctx.emit("ddmvm", ctx.ddmvm)
-    ctx.emit("sdmvm", ctx.ddmvm)
+    ctx.emit("sdmvm", ctx.sdmvm)
   }
 }
