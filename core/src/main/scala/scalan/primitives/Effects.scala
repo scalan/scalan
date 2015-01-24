@@ -11,10 +11,13 @@ import scalan.common.{Utils, Lazy}
  Their usage in Scalan is limited to be consistent with functional semantics of Scalan.
  Don't expect everything possible in LMS to be also possible in Scalan in the same way.
  There are changes in the code:
- Exp -> Exp
- Elem -> Elem
+ Sym -> Exp
+ Manifest -> Elem
  infix -> implicit class
- no SourceContext, withPos,
+ no SourceContext, withPos
+ mirroring implemented in Scalan way (though consistent with LMS)
+ Reflect contains symbol of effectfull operations (which is added to global defs, which means
+ that two Reflect nodes may share the same operation due to Def unification)
  */
 
 trait Effects { self: Scalan =>
@@ -529,7 +532,7 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
         printerr("at " + s + "=" + x)
       case _ => //ok
     }
-    createDefinition(globalThunkSym, s, x)
+    createDefinition(currentThunkSym, s, x)
     context :+= s
     s
   }

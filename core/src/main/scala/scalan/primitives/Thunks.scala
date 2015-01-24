@@ -136,23 +136,24 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport { self: ScalanE
   }
   protected val thunkStack = new ThunkStack
 
+  protected def currentThunkSym = thunkStack.top match {
+    case Some(scope) => scope.thunkSym
+    case None => globalThunkSym
+  }
+
   def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]] = {
     val newThunkSym = fresh[Thunk[A]]
     val newScope = new ThunkScope(newThunkSym)
 
     thunkStack.push(newScope)
-    val res = block  // execute block and add all new definitions to the top scope (see createDefinition)
+    // execute block and add all new definitions to the top scope (see createDefinition)
+    // reify all the effects during block execution
+    val Block(res) = reifyEffects(block)
     thunkStack.pop
 
     val scheduled = newScope.scheduleForResult(res)
     val scheduledSyms = scheduled.map(_.sym).toSet
     val remaining = newScope.body.filterNot(te => scheduledSyms.contains(te.sym))
-
-//    thunkStack.top match {
-//      case Some(parentScope) =>
-//        parentScope.mergeFromChild(remaining)
-//      case None =>
-//    }
 
     val newThunk = ThunkDef(res, scheduled)
     toExp(newThunk, newThunkSym)
