@@ -2,6 +2,7 @@ package scalan.staged
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import scalan.{Base, ScalanExp}
 import scalan.common.Lazy
@@ -49,7 +50,7 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   type Def[+A] = ReifiableExp[A,A]
   
-  abstract class BaseDef[T](implicit val selfType: Elem[T]) extends Def[T]
+  abstract class BaseDef[+T](implicit val selfType: Elem[T @uncheckedVariance]) extends Def[T]
 
   case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
@@ -63,6 +64,7 @@ trait BaseExp extends Base { self: ScalanExp =>
     def apply[A](xs: Seq[Rep[A]]): Seq[Rep[A]] = xs map (e => apply(e))
     def apply[X,A](f: X=>Rep[A]): X=>Rep[A] = (z:X) => apply(f(z))
     def apply[X,Y,A](f: (X,Y)=>Rep[A]): (X,Y)=>Rep[A] = (z1:X,z2:Y) => apply(f(z1,z2))
+    def onlySyms[A](xs: List[Rep[A]]): List[Rep[A]] = xs map (e => apply(e)) collect { case e: Exp[A] => e }
   }
   def IdTransformer = MapTransformer.Empty
 
@@ -142,7 +144,25 @@ trait BaseExp extends Base { self: ScalanExp =>
    */
   def defaultImpl[T](implicit elem: Elem[T]): Exp[T] = elem.defaultRepValue
 
-  trait TableEntry[+T] {
+  abstract class Stm // statement (links syms and definitions)
+
+  implicit class StmOps(stm: Stm) {
+    def lhs: List[Exp[Any]] = stm match {
+      case TableEntry(sym, rhs) => sym :: Nil
+    }
+
+    def defines[A](sym: Exp[A]): Option[Def[A]] = stm match {
+      case TableEntry(`sym`, rhs: Def[A]) => Some(rhs)
+      case _ => None
+    }
+
+    def defines[A](rhs: Def[A]): Option[Exp[A]] = stm match {
+      case TableEntry(sym: Exp[A], `rhs`) => Some(sym)
+      case _ => None
+    }
+  }
+  
+  trait TableEntry[+T] extends Stm {
     def sym: Exp[T]
     def lambda: Option[Exp[_]]
     def rhs: Def[T]
@@ -164,19 +184,90 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   def decompose[T](d: Def[T]): Option[Exp[T]] = None
 
-  // dependencies
-  def syms(e: Any): List[Exp[_]] = e match {
-    case s: Exp[_] => List(s)
-    case s: Seq[_] => s.toList.flatMap(syms(_))
-    case p: Product => p.productIterator.toList.flatMap(syms(_))
-    case _ => Nil
+  def flatMapWithBuffer(iter: Iterator[Any], f: Any => List[Exp[Any]]): List[Exp[Any]] = {
+    // performance hotspot: this is the same as
+    // p.productIterator.toList.flatMap(f(_)) but faster
+    val out = new ListBuffer[Exp[Any]]
+    while (iter.hasNext) {
+      val e = iter.next()
+      out ++= f(e)
+    }
+    out.result
   }
 
+  def flatMapProduct(p: Product, f: Any => List[Exp[Any]]): List[Exp[Any]] = {
+    val iter = p.productIterator
+    flatMapWithBuffer(iter, f)
+  }
+
+  // regular data (and effect) dependencies
+  def syms(e: Any): List[Exp[_]] = e match {
+    case s: Exp[_] => List(s)
+    case s: Iterable[_] =>
+      flatMapWithBuffer(s.iterator, syms(_))
+    // All case classes extend Product!
+    case p: Product =>
+      flatMapProduct(p, syms(_))
+    case _ => Nil
+  }
   def dep(e: Exp[_]): List[Exp[_]] = e match {
     case Def(d) => syms(d)
     case _ => Nil
   }
   def dep(d: Def[_]): List[Exp[_]] = syms(d)
+
+  // symbols which are bound in a definition
+  def boundSyms(e: Any): List[Exp[Any]] = e match {
+    case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, boundSyms(_))
+    case p: Product => flatMapProduct(p, boundSyms(_))
+    case _ => Nil
+  }
+
+  // symbols which are bound in a definition, but also defined elsewhere
+  def tunnelSyms(e: Any): List[Exp[Any]] = e match {
+    case ss: Iterable[Any] => ss.toList.flatMap(tunnelSyms(_))
+    case p: Product => p.productIterator.toList.flatMap(tunnelSyms(_))
+    case _ => Nil
+  }
+
+  // symbols of effectful components of a definition
+  def effectSyms(x: Any): List[Exp[Any]] = x match {
+    case ss: Iterable[Any] => ss.toList.flatMap(effectSyms(_))
+    case p: Product => p.productIterator.toList.flatMap(effectSyms(_))
+    case _ => Nil
+  }
+
+  // soft dependencies: they are not required but if they occur, 
+  // they must be scheduled before
+  def softSyms(e: Any): List[Exp[Any]] = e match {
+    // empty by default
+    //case s: Exp[Any] => List(s)
+    case ss: Iterable[Any] => ss.toList.flatMap(softSyms(_))
+    case p: Product => p.productIterator.toList.flatMap(softSyms(_))
+    case _ => Nil
+  }
+
+  // generic symbol traversal: f is expected to call rsyms again
+  def rsyms[T](e: Any)(f: Any=>List[T]): List[T] = e match {
+    case s: Exp[Any] => f(s)
+    case ss: Iterable[Any] => ss.toList.flatMap(f)
+    case p: Product => p.productIterator.toList.flatMap(f)
+    case _ => Nil
+  }
+
+  // frequency information for dependencies: used/computed
+  // often (hot) or not often (cold). used to drive code motion.
+  def symsFreq(e: Any): List[(Exp[Any], Double)] = e match {
+    case s: Exp[Any] => List((s,1.0))
+    case ss: Iterable[Any] => ss.toList.flatMap(symsFreq(_))
+    case p: Product => p.productIterator.toList.flatMap(symsFreq(_))
+    //case _ => rsyms(e)(symsFreq)
+    case _ => Nil
+  }
+
+  def freqNormal(e: Any) = symsFreq(e)
+  def freqHot(e: Any) = symsFreq(e).map(p=>(p._1,p._2*1000.0))
+  def freqCold(e: Any) = symsFreq(e).map(p=>(p._1,p._2*0.5))
 
   implicit class ExpForSomeOps(symbol: Exp[_]) {
     def inputs: List[Exp[Any]] = dep(symbol)
@@ -268,6 +359,39 @@ trait Expressions extends BaseExp { self: ScalanExp =>
   protected val globalThunkSym: Exp[_] = fresh[Int] // we could use any type here
   private[this] val expToGlobalDefs: mutable.Map[Exp[_], TableEntry[_]] = mutable.HashMap.empty
   private[this] val defToGlobalDefs: mutable.Map[(Exp[_], Def[_]), TableEntry[_]] = mutable.HashMap.empty
+
+  var globalDefs: List[Stm] = Nil
+  var localDefs: List[Stm] = Nil
+  var globalDefsCache: Map[Exp[Any],Stm] = Map.empty
+
+  def reifySubGraph[T](b: =>T): (T, List[Stm]) = {
+    val saveLocal = localDefs
+    val saveGlobal = globalDefs
+    val saveGlobalCache = globalDefsCache
+    localDefs = Nil
+    val r = b
+    val defs = localDefs
+    localDefs = saveLocal
+    globalDefs = saveGlobal
+    globalDefsCache = saveGlobalCache
+    (r, defs)
+  }
+
+  def reflectSubGraph(ds: List[Stm]): Unit = {
+    val lhs = ds.flatMap(_.lhs)
+    assert(lhs.length == lhs.distinct.length, "multiple defs: " + ds)
+    // equivalent to: globalDefs filter (_.lhs exists (lhs contains _))
+
+    val existing = lhs flatMap (globalDefsCache get _)
+    assert(existing.isEmpty, "already defined: " + existing + " for " + ds)
+
+    localDefs = localDefs ::: ds
+    globalDefs = globalDefs ::: ds
+    for (stm <- ds; s <- stm.lhs) {
+      globalDefsCache += (s->stm)
+    }
+  }
+
 
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]] =
     expToGlobalDefs.get(s).asInstanceOf[Option[TableEntry[T]]]

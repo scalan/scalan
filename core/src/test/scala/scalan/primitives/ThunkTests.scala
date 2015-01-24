@@ -78,7 +78,7 @@ class ThunkTests extends BaseTests { suite =>
         }
         {
           val Def(Lambda(_, _, x, Def(th@ThunkDef(res, sch)))) = t4
-          assert(sch.size == 3 && th.freeVars.contains(x) && th.freeVars.size == 2)
+          assert(sch.size == 3 && th.freeVars.contains(x) && th.freeVars.size == 1)
         }
         {
           val Def(Lambda(_, _, x, Def(th@ThunkDef(res, sch)))) = t7

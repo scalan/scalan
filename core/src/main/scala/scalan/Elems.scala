@@ -18,6 +18,7 @@ trait Elems extends Base { self: Scalan =>
   @implicitNotFound(msg = "No Element available for ${A}.")
   abstract class Element[A] extends Serializable {
     def isEntityType: Boolean
+    def isBaseType: Boolean = this.isInstanceOf[BaseElem[_]]
     def tag: WeakTypeTag[A]
     final def classTag: ClassTag[A] = TagImplicits.typeTagToClassTag(tag)
     def getDefaultRep: Default[Rep[A]]
