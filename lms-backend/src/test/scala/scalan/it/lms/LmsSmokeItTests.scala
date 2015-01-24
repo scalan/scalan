@@ -1,11 +1,11 @@
 package scalan.it.lms
 
-import scalan.compilation.lms.{LinalgBridge, CommunityBridge, LmsBridge, LmsCompiler}
-import scalan.it.smoke.CommunitySmokeItTests
-import scalan.parrays.PArraysDslExp
+import scalan.community.ScalanCommunityExp
 import scalan.compilation.GraphVizExport
+import scalan.compilation.lms.{CommunityBridge, LinalgBridge, LmsBridge, LmsCompiler}
+import scalan.it.smoke.CommunitySmokeItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
+import scalan.parrays.PArraysDslExp
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
   class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompiler with VectorsDslExp with MatricesDslExp { self =>
@@ -55,6 +55,14 @@ class LmsSmokeItTests extends CommunitySmokeItTests {
   test("test9simpleIf") {
     val in = (Array(2.0,3.0), 4.0)
     compareOutputWithSequential(progStaged)(progSeq.simpleIf, progStaged.simpleIf, "simpleIf", in)
+  }
+  test("test10simpleSum") {
+    val in = 7
+    compareOutputWithSequential(progStaged)(progSeq.simpleSum, progStaged.simpleSum, "simpleSum", in)
+  }
+  test("test11simpleOptionOps") {
+    val in = 7
+    compareOutputWithSequential(progStaged)(progSeq.simpleOptionOps, progStaged.simpleOptionOps, "simpleOptionOps", in)
   }
 
 }

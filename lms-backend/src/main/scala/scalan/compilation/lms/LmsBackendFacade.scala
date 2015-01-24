@@ -1,16 +1,17 @@
 package scalan.compilation.lms
 
 import scala.reflect.SourceContext
+import scalan.compilation.lms.common.{ScalaGenEitherOps, EitherOpsExp}
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
 //import virtualization.lms.epfl.test7.ArrayLoopsFatExp
 //import virtualization.lms.epfl.test7.ScalaGenArrayLoopsFat
 
 //{ScalaGenArrayLoopsFat, ArrayLoopsExp}
-import scala.Tuple2
 
 trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp
-with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp with CastingOpsExp {
+  with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp
+  with CastingOpsExp with EitherOpsExp {
   /*type RepD[T] = Rep[T]
   */
   def arrayGet[A:Manifest](a: Exp[Array[A]], i: Exp[Int]):Exp[A] = {
@@ -22,9 +23,9 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with Or
   def arrayLength[A:Manifest](a: Exp[Array[A]]): Exp[Int] = {
     a.length
   }
-  def tuple[A:Manifest,B:Manifest](a:Exp[A], b: Exp[B]): Exp[(A,B)] = {
-    Tuple2(a,b)
-  }
+  def sumLeft[A: Manifest, B: Manifest](a: Exp[A]): Exp[Either[A, B]] = make_left[A, B](a)
+  def sumRight[A: Manifest, B: Manifest](b: Exp[B]): Exp[Either[A, B]] = make_right[A, B](b)
+  def tuple[A:Manifest, B:Manifest](a:Exp[A], b: Exp[B]): Exp[(A,B)] = (a, b)
   def first[A:Manifest, B:Manifest](tup: Exp[(A,B)]): Exp[A] = {
     tup._1
   }
@@ -126,7 +127,7 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with Or
 class LmsBackend extends LmsBackendFacade { self =>
 
   val codegen = new ScalaGenEffect with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
-    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps with ScalaGenStruct
+    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenEitherOps with ScalaGenOrderingOps with ScalaGenBooleanOps with ScalaGenStruct
     with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
     with ScalaGenCastingOps {
       val IR: self.type = self

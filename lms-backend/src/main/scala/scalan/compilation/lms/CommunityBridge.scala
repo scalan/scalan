@@ -23,6 +23,33 @@ trait CommunityBridge[A, B] extends LmsBridge[A, B] { self: LmsBridge[A, B] =>
         val exp = lms.unitD(c.x)
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
 
+      case d @ scalan.Left(l) =>
+        import scalan.SumElemExtensions
+        (scalan.createManifest(d.selfType.eLeft), scalan.createManifest(d.selfType.eRight)) match {
+          case (mA: Manifest[a], mB: Manifest[b]) =>
+            val left = symMirr(l).asInstanceOf[lms.Exp[a]]
+            val exp = lms.sumLeft[a, b](left)(mA, mB)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case d @ scalan.Right(r) =>
+        import scalan.SumElemExtensions
+        (scalan.createManifest(d.selfType.eLeft), scalan.createManifest(d.selfType.eRight)) match {
+          case (mA: Manifest[a], mB: Manifest[b]) =>
+            val right = symMirr(r).asInstanceOf[lms.Exp[b]]
+            val exp = lms.sumRight[a, b](right)(mA, mB)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case scalan.Tup(fst, snd) =>
+        (scalan.createManifest(fst.elem), scalan.createManifest(snd.elem)) match {
+          case (mA: Manifest[a], mB: Manifest[b]) =>
+            val first = symMirr(fst).asInstanceOf[lms.Exp[a]]
+            val second = symMirr(snd).asInstanceOf[lms.Exp[b]]
+            val exp = lms.tuple[a, b](first, second)(mA, mB)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
       case scalan.First(tuple) =>
         tuple.elem match {
           case pe: scalan.PairElem[_, _] =>
