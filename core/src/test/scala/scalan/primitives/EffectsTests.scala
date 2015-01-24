@@ -19,11 +19,13 @@ class EffectsTests extends BaseTests { suite =>
     val prefix = suite.prefix
     val subfolder = ""
 
-    lazy val t1 = fun { (in: Rep[String]) =>
-      Thunk {
+    lazy val t1 = fun { (in: Rep[String]) => Thunk {
         print(in)
-      }
-    }
+    }}
+    lazy val t2 = fun { (in: Rep[String]) => Thunk {
+      print(in)
+      print(in + in)
+    }}
 
   }
 
@@ -50,6 +52,7 @@ class EffectsTests extends BaseTests { suite =>
     }
     ctx.test
     ctx.emit("t1", ctx.t1)
+    ctx.emit("t2", ctx.t2)
   }
 
   trait MyDomainProg extends Scalan with SegmentsDsl {

@@ -44,6 +44,38 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
 
   var conditionalScope = false // used to construct Control nodes
 
+  var globalDefs: List[Stm] = Nil
+  var localDefs: List[Stm] = Nil
+  var globalDefsCache: Map[Exp[Any],Stm] = Map.empty
+
+  def reifySubGraph[T](b: =>T): (T, List[Stm]) = {
+    val saveLocal = localDefs
+    val saveGlobal = globalDefs
+    val saveGlobalCache = globalDefsCache
+    localDefs = Nil
+    val r = b
+    val defs = localDefs
+    localDefs = saveLocal
+    globalDefs = saveGlobal
+    globalDefsCache = saveGlobalCache
+    (r, defs)
+  }
+
+  def reflectSubGraph(ds: List[Stm]): Unit = {
+    val lhs = ds.flatMap(_.lhs)
+    assert(lhs.length == lhs.distinct.length, "multiple defs: " + ds)
+    // equivalent to: globalDefs filter (_.lhs exists (lhs contains _))
+
+    val existing = lhs flatMap (globalDefsCache get _)
+    assert(existing.isEmpty, "already defined: " + existing + " for " + ds)
+
+    localDefs = localDefs ::: ds
+    globalDefs = globalDefs ::: ds
+    for (stm <- ds; s <- stm.lhs) {
+      globalDefsCache += (s->stm)
+    }
+  }
+
   // --- class defs
 
   case class Reflect[+A:Elem](x: Exp[A], summary: Summary, deps: List[Exp[Any]]) extends BaseDef[A] {
