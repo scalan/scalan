@@ -84,7 +84,7 @@ trait CommunityBridge[A, B] extends LmsBridge[A, B] { self: LmsBridge[A, B] =>
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
 
-      case scalan.Block(left, right) => {
+      case scalan.Semicolon(left, right) => {
         (scalan.createManifest(left.elem), scalan.createManifest(right.elem)) match {
           case (mA: Manifest[a], mB: Manifest[b]) => {
             val left_ = symMirr(left).asInstanceOf[lms.Exp[a]]

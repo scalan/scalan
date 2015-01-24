@@ -181,7 +181,7 @@ trait BaseExp extends Base { self: ScalanExp =>
   implicit class ExpForSomeOps(symbol: Exp[_]) {
     def inputs: List[Exp[Any]] = dep(symbol)
     def getDeps: List[Exp[_]] = symbol match {
-      case Def(lam: Lambda[_,_]) => lam.freeVars.toList
+      case Def(lam: AstGraph) => lam.freeVars.toList
       case _ => this.inputs
     }
 
@@ -206,7 +206,7 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   implicit class DefForSomeOps(d: Def[_]) {
     def getDeps: List[Exp[_]] = d match {
-      case lam: Lambda[_,_] => lam.freeVars.toList
+      case lam: AstGraph => lam.freeVars.toList
       case _ => syms(d)
     }
 
