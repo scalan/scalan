@@ -26,33 +26,49 @@ class EffectsTests extends BaseTests { suite =>
       print(in)
       print(in + in)
     }}
+    lazy val t3 = fun { (in: Rep[String]) => Thunk {
+      Thunk { print(in) }
+      print(in + in)
+      print(in + in)
+      print(in + in)
+      print(in + in)
+    }}
 
   }
 
+  trait MyProgStaged extends TestContext with  MyProg  with ConsoleDsl {
+
+    def print(s: Rep[String]): Rep[Unit] =
+      reflectEffect(Print(s))
+    def read: Rep[String] =
+      reflectEffect(Read())
+
+    case class Print(s: Rep[String]) extends BaseDef[Unit]  {
+      override def uniqueOpId = name(selfType)
+      override def mirror(t: Transformer) = Print(t(s))
+    }
+
+    case class Read() extends BaseDef[String]  {
+      override def uniqueOpId = name(selfType)
+      override def mirror(t: Transformer) = Read()
+    }
+  }
+
   test("simpleEffectsStaged") {
-    val ctx = new TestContext with  MyProg  with ConsoleDsl {
-
-      def print(s: Rep[String]): Rep[Unit] =
-        reflectEffect(Print(s))
-      def read: Rep[String] =
-        reflectEffect(Read())
-
-      case class Print(s: Rep[String]) extends BaseDef[Unit]  {
-        override def uniqueOpId = name(selfType)
-        override def mirror(t: Transformer) = Print(t(s))
-      }
-
-      case class Read() extends BaseDef[String]  {
-        override def uniqueOpId = name(selfType)
-        override def mirror(t: Transformer) = Read()
-      }
-
-      def test() = {
-      }
+    val ctx = new MyProgStaged {
+      def test() = { }
     }
     ctx.test
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
+  }
+
+  test("nestedThunksStaged") {
+    val ctx = new MyProgStaged {
+      def test() = { }
+    }
+    ctx.test
+    ctx.emit("t3", ctx.t3)
   }
 
   trait MyDomainProg extends Scalan with SegmentsDsl {

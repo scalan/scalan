@@ -1,6 +1,7 @@
 package scalan.primitives
 
 import scala.annotation.unchecked.uncheckedVariance
+import scalan.compilation.GraphVizExport
 import scalan.staged.Expressions
 import scalan.{ScalanExp, ScalanSeq, Scalan}
 import scalan.common.{Utils, Lazy}
@@ -28,7 +29,7 @@ trait Effects { self: Scalan =>
 trait EffectsSeq extends Effects { self: ScalanSeq =>
 }
 
-trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =>
+trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport { self: ScalanExp =>
 
   case class Block[+T](val res: Exp[T]) { def elem: Elem[T @uncheckedVariance] = res.elem } // variance ...
 
@@ -78,15 +79,23 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
 
   // --- class defs
 
-  case class Reflect[+A:Elem](x: Exp[A], summary: Summary, deps: List[Exp[Any]]) extends BaseDef[A] {
+  case class Reflect[+A:Elem](x: Def[A], summary: Summary, deps: List[Exp[Any]]) extends BaseDef[A] {
     def uniqueOpId = name(selfType)
-    override def mirror(t: Transformer) =
-      reflectMirrored(Reflect(x.mirror(t).asRep[A], mapOver(t, summary), t(deps).toList))
+    override def mirror(t: Transformer) = {
+      val Def(mx) = x.mirror(t).asRep[A]
+      reflectMirrored(Reflect(mx, mapOver(t, summary), t(deps).toList))
+    }
   }
 
   case class Reify[A:Elem](x: Exp[A], summary: Summary, effects: List[Exp[Any]]) extends BaseDef[A] {
     def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = Reify(t(x), mapOver(t,summary), t(effects).toList)
+  }
+
+  override protected def formatDef(d: Def[_]): String = d match {
+    case Reify(x, _, es) => s"Reify($x, [${es.mkString(",")}])"
+    case Reflect(x, _, ds) => s"Reflect($x, [${ds.mkString(",")}])"
+    case _ => super.formatDef(d)
   }
 
   def mapOver(t: Transformer, u: Summary) = { // TODO: move to effects class?
@@ -301,6 +310,8 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
 
   def isPrimitiveType[T](e: Elem[T]) = e.isBaseType
 
+  def noPrim(sm: List[Exp[Any]]): List[Exp[Any]] = sm.filterNot(_.elem.isBaseType)
+
   /*
     def allTransitiveAliases(start: Any): List[TableEntry[Any]] = {
       def deps(st: List[Exp[Any]]): List[TableEntry[Any]] = {
@@ -311,8 +322,6 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
     }
   */
 
-  def noPrim(sm: List[Exp[Any]]): List[Exp[Any]] = sm.filterNot(_.elem.isBaseType)
-
   /*
    TODO: switch back to graph based formulation -- this will not work for circular deps
   */
@@ -321,7 +330,11 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
   val deepAliasCache = new scala.collection.mutable.HashMap[Exp[Any], List[Exp[Any]]]
   val allAliasCache = new scala.collection.mutable.HashMap[Exp[Any], List[Exp[Any]]]
 
-  def utilLoadStm[T](s: Exp[T]) = if (!isPrimitiveType(s.elem)) /*globalDefs.filter{e => e.lhs contains s}*/ findDefinition(s).toList else Nil
+  def utilLoadStm[T](s: Exp[T]) =
+    if (!isPrimitiveType(s.elem)) /*globalDefs.filter{e => e.lhs contains s}*/
+      findDefinition(s).toList
+    else Nil
+
   def utilLoadStms(s: List[Exp[Any]]) = s.flatMap(utilLoadStm)
   def utilLoadSym[T](s: Exp[T]) = utilLoadStm(s).map(_.rhs)
 
@@ -365,18 +378,22 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
 
   def getActuallyReadSyms[A](d: Def[A]) = {
     val bound = boundSyms(d)
-    val r = readSyms(d).map{case Def(Reify(x,_,_)) => x case x => x} filterNot (bound contains _)
+    val r = readSyms(d).map {
+      case Def(Reify(x,_,_)) => x
+      case x => x
+    }
+    val notBound = r.filterNot(bound contains _)
     //if (d.isInstanceOf[Reify[Any]] && r.nonEmpty) {
     //  println("** actually read: "+readSyms(d)+"\\"+bound+"="+r)
     //  println("** transitive shallow: " + shallowAliases(r))
     //  println("** transitive deep: " + deepAliases(r))
     //}
-    r
+    notBound
   }
 
   def readMutableData[A](d: Def[A]) = {
     val bound = boundSyms(d)
-    mutableTransitiveAliases(getActuallyReadSyms(d)) filterNot (bound contains _)
+    mutableTransitiveAliases(getActuallyReadSyms(d)).filterNot(bound contains _)
   }
 
   protected[scalan] override def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
@@ -444,7 +461,7 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
   }
 
   def reflectMutable[A:Elem](d: Def[A]): Exp[A] = {
-    val z = reflectEffect(d, Alloc())
+    val z = reflectEffect(d, Alloc(), fresh[A])
 
     val mutableAliases = mutableTransitiveAliases(d)
     checkIllegalSharing(z, mutableAliases)
@@ -454,23 +471,33 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
   def reflectWrite[A:Elem](write0: Exp[Any]*)(d: Def[A]): Exp[A] = {
     val write = write0.toList.asInstanceOf[List[Exp[Any]]] // should check...
 
-    val z = reflectEffect(d, Write(write))
+    val z = reflectEffect(d, Write(write), fresh[A])
 
     val mutableAliases = mutableTransitiveAliases(d) filterNot (write contains _)
     checkIllegalSharing(z, mutableAliases)
     z
   }
 
-  def reflectEffect[A:Elem](x: Def[A]): Exp[A] = reflectEffect(x, Simple()) // simple effect (serialized with respect to other simples)
-
-  def reflectEffect[A:Elem](d: Def[A], u: Summary): Exp[A] = {
-    // are we depending on a variable? then we need to be serialized -> effect
-    val mutableInputs = readMutableData(d)
-    reflectEffectInternal(d, u andAlso Read(mutableInputs)) // will call super.toAtom if mutableInput.isEmpty
+  def createReflectDefinition[A](s: Exp[A], x: Reflect[A]): Exp[A] = {
+    checkReflect(s, x)
+    createDefinition(thunkStack.top, s, x)
+    context :+= s
+    s
   }
 
-  def reflectEffectInternal[A:Elem](x: Def[A], u: Summary): Exp[A] = {
-    if (mustPure(u)) super.reifyObject(x) else {
+  def reflectEffect[A:Elem](x: Def[A]): Exp[A] =
+    reflectEffect(x, Simple(), fresh[A]) // simple effect (serialized with respect to other simples)
+
+  def reflectEffect[A:Elem](d: Def[A], u: Summary, newSym: => Exp[A]): Exp[A] = {
+    // are we depending on a variable? then we need to be serialized -> effect
+    //val mutableInputs = readMutableData(d)
+    reflectEffectInternal(d, u /*andAlso Read(mutableInputs)*/, newSym) // will call super.toAtom if mutableInput.isEmpty
+  }
+
+  def reflectEffectInternal[A:Elem](x: Def[A], u: Summary, newSym: => Exp[A]): Exp[A] = {
+    if (mustPure(u))
+      super.toExp(x, newSym)
+    else {
       checkContext()
       // NOTE: reflecting mutable stuff *during mirroring* doesn't work right now.
 
@@ -482,7 +509,7 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
       if (mustIdempotent(u)) {
         context find { case Def(d) => d == zd } map { _.asInstanceOf[Exp[A]] } getOrElse {
           //        findDefinition(zd) map (_.sym) filter (context contains _) getOrElse { // local cse TODO: turn around and look at context first??
-          val z = fresh[A]
+          val z = newSym
           if (!x.toString.startsWith("ReadVar")) { // supress output for ReadVar
             printlog("promoting to effect: " + z + "=" + zd)
             for (w <- u.mayRead)
@@ -491,7 +518,7 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
           createReflectDefinition(z, zd)
         }
       } else {
-        val z = fresh[A]
+        val z = newSym
         // make sure all writes go to allocs
         for (w <- u.mayWrite if !isWritableSym(w)) {
           printerr("error: write to non-mutable " + w + " -> " + findDefinition(w))
@@ -557,16 +584,11 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
     }
   }
 
-  def createReflectDefinition[A](s: Exp[A], x: Reflect[A]): Exp[A] = {
-    x match {
-      case Reflect(Def(Reify(_,_,_)),_,_) =>
-        printerr("error: reflecting a reify node.")
-        printerr("at " + s + "=" + x)
-      case _ => //ok
-    }
-    createDefinition(currentThunkSym, s, x)
-    context :+= s
-    s
+  def checkReflect[A](s: Exp[A], x: Reflect[A]) = x match {
+    case Reflect(Reify(_,_,_),_,_) =>
+      printerr("error: reflecting a reify node.")
+      printerr("at " + s + "=" + x)
+    case _ => //ok
   }
 
   def checkContext() {
@@ -598,7 +620,7 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
 
   // reify the effects of an isolated block.
   // no assumptions about the current context remain valid.
-  def reifyEffects[A:Elem](block: => Exp[A], controlScope: Boolean = false): Block[A] = {
+  def reifyEffects[A](block: => Exp[A], controlScope: Boolean = false): Block[A] = {
     val save = context
     context = Nil
 
@@ -608,7 +630,7 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
 
     val (result, defs) = reifySubGraph(block)
     reflectSubGraph(defs)
-
+    implicit val eA = result.elem
     conditionalScope = saveControl
 
     val deps = context
@@ -621,7 +643,7 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
 
   // reify the effects of a block that is executed 'here' (if it is executed at all).
   // all assumptions about the current context carry over unchanged.
-  def reifyEffectsHere[A:Elem](block: => Exp[A], controlScope: Boolean = false): Block[A] = {
+  def reifyEffectsHere[A](block: => Exp[A], controlScope: Boolean = false): Block[A] = {
     val save = context
     if (save eq null)
       context = Nil
@@ -631,6 +653,7 @@ trait EffectsExp extends Expressions with Effects with Utils { self: ScalanExp =
 
     val (result, defs) = reifySubGraph(block)
     reflectSubGraph(defs)
+    implicit val eA = result.elem
 
     conditionalScope = saveControl
 

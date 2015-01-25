@@ -134,13 +134,15 @@ trait Transforming { self: ScalanExp =>
       lambdaStack.pop
 
       val newLambda = getMirroredLambdaDef(t2, newLambdaSym, lam)
-      thunkStack.top match {
-        case Some(scope) =>
-          val te = createDefinition(scope.thunkSym, newLambdaSym, newLambda)
-          scope += te
-        case None =>
-          createDefinition(globalThunkSym, newLambdaSym, newLambda)
-      }
+
+      createDefinition(thunkStack.top, newLambdaSym, newLambda)
+//      val optScope = thunkStack.top
+//      optScope match {
+//        case Some(scope) =>
+//          val te = createDefinition(optScope, newLambdaSym, newLambda)
+//        case None =>
+//          createDefinition(None, newLambdaSym, newLambda)
+//      }
 
       (t2 + (node -> newLambdaSym), newLambdaSym)
     }
@@ -157,13 +159,14 @@ trait Transforming { self: ScalanExp =>
       val newRoot = t1(thunk.root)
       val newThunk = ThunkDef(newRoot, newSchedule.map { case DefTableEntry(te) => te })
 
-      thunkStack.top match {
-        case Some(scope) =>
-          val te = createDefinition(scope.thunkSym, newThunkSym, newThunk)
-          scope += te
-        case None =>
-          createDefinition(globalThunkSym, newThunkSym, newThunk)
-      }
+      createDefinition(thunkStack.top, newThunkSym, newThunk)
+//      val optScope = thunkStack.top
+//      optScope match {
+//        case Some(scope) =>
+//          createDefinition(optScope, newThunkSym, newThunk)
+//        case None =>
+//          createDefinition(None, newThunkSym, newThunk)
+//      }
 
       (t1 + (node -> newThunkSym), newThunkSym)
     }

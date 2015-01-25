@@ -42,7 +42,7 @@ trait ThunksSeq extends Thunks { self: ScalanSeq =>
   def thunk_force[A](t: Th[A]): Rep[A] = t.value
 }
 
-trait ThunksExp extends ViewsExp with Thunks with GraphVizExport { self: ScalanExp =>
+trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
 
   case class ThunkDef[A](val root: Exp[A], override val schedule: Schedule)
                         (implicit val eA: Elem[A] = root.elem)
@@ -148,7 +148,7 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport { self: ScalanE
     thunkStack.push(newScope)
     // execute block and add all new definitions to the top scope (see createDefinition)
     // reify all the effects during block execution
-    val Block(res) = reifyEffects(block)
+    val b @ Block(res) = reifyEffects(block)
     thunkStack.pop
 
     val scheduled = newScope.scheduleForResult(res)
@@ -156,7 +156,9 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport { self: ScalanE
     val remaining = newScope.body.filterNot(te => scheduledSyms.contains(te.sym))
 
     val newThunk = ThunkDef(res, scheduled)
-    toExp(newThunk, newThunkSym)
+    val u = summarizeEffects(b)
+    reflectEffect(newThunk, u, newThunkSym)
+    //toExp(newThunk, newThunkSym)
   }
 
   var isInlineThunksOnForce = false
@@ -186,6 +188,13 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport { self: ScalanE
     implicit def selfType = thunk.elem.eItem
     lazy val uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = ThunkForce(t(thunk))
+  }
+
+
+  override def effectSyms(x: Any): List[Exp[Any]] = x match {
+    case ThunkDef(_, sch) =>
+      sch.map(_.sym).toList.flatMap(effectSyms)
+    case _ => super.effectSyms(x)
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {

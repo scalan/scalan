@@ -85,7 +85,7 @@ trait BaseExp extends Base { self: ScalanExp =>
   def fresh[T](implicit leT: LElem[T]): Exp[T]
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]]
   def findDefinition[T](thunk: Exp[_], d: Def[T]): Option[TableEntry[T]]
-  def createDefinition[T](thunk: Exp[_], s: Exp[T], d: Def[T]): TableEntry[T]
+  def createDefinition[T](optScope: Option[ThunkScope], s: Exp[T], d: Def[T]): TableEntry[T]
 
   /**
    * Updates the universe of symbols and definitions, then rewrites until fix-point
@@ -272,7 +272,7 @@ trait BaseExp extends Base { self: ScalanExp =>
   implicit class ExpForSomeOps(symbol: Exp[_]) {
     def inputs: List[Exp[Any]] = dep(symbol)
     def getDeps: List[Exp[_]] = symbol match {
-      case Def(lam: AstGraph) => lam.freeVars.toList
+      case Def(g: AstGraph) => g.freeVars.toList
       case _ => this.inputs
     }
 
@@ -297,7 +297,7 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   implicit class DefForSomeOps(d: Def[_]) {
     def getDeps: List[Exp[_]] = d match {
-      case lam: AstGraph => lam.freeVars.toList
+      case g: AstGraph => g.freeVars.toList
       case _ => syms(d)
     }
 
@@ -367,37 +367,41 @@ trait Expressions extends BaseExp { self: ScalanExp =>
     defToGlobalDefs.get((thunk,d)).asInstanceOf[Option[TableEntry[T]]]
 
   def findOrCreateDefinition[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
-    thunkStack.top match {
+    val optScope = thunkStack.top
+    optScope match {
       case Some(scope) =>
         scope.findDef(d) match {
           case Some(TableEntry(s, _)) => s
           case None =>
-            val te = createDefinition(scope.thunkSym, newSym, d)
-            scope += te
+            val te = createDefinition(optScope, newSym, d)
             te.sym
         }
-      case None => {
+      case None =>
         val res = findDefinition(globalThunkSym, d) match {
           case Some(TableEntry(s, _)) => s
           case None =>
-            val TableEntry(s, _) = createDefinition(globalThunkSym, newSym, d)
+            val TableEntry(s, _) = createDefinition(None, newSym, d)
             s
         }
         res
-      }
     }
   }
 
-  def createDefinition[T](thunk: Exp[_], s: Exp[T], d: Def[T]): TableEntry[T] = {
-    val tp = lambdaStack.top match {
+  def createDefinition[T](optScope: Option[ThunkScope], s: Exp[T], d: Def[T]): TableEntry[T] = {
+    val te = lambdaStack.top match {
       case Some(fSym) => TableEntry(s, d, fSym)
       case _ => TableEntry(s, d)
     }
+    optScope match {
+      case Some(scope) =>
+        defToGlobalDefs += (scope.thunkSym, te.rhs) -> te
+        scope += te
+      case None =>
+        defToGlobalDefs += (globalThunkSym, te.rhs) -> te
+    }
 
-    expToGlobalDefs += tp.sym -> tp
-    defToGlobalDefs += (thunk, tp.rhs) -> tp
-
-    tp
+    expToGlobalDefs += te.sym -> te
+    te
   }
 
   /**
