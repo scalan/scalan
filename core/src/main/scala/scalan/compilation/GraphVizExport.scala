@@ -113,7 +113,7 @@ trait GraphVizExport { self: ScalanExp =>
     schedule.reverse.foreach {
       case TableEntry(s, d) =>
         d match {
-          case lam: Lambda[_, _] =>
+          case lam: Lambda[_, _] if !lam.isIdentity =>
             stream.println(s"subgraph cluster_$s {")
             stream.println("style=dashed; color=lightgray")
             stream.println(s"{rank=min; ${lam.x}}")
