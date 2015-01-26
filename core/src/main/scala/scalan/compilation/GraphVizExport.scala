@@ -10,11 +10,15 @@ trait GraphVizExport { self: ScalanExp =>
 
   protected def quote(x: Any) = "\"" + x + "\""
 
-  protected def nodeColor(sym: Exp[_]): String = sym.elem match {
-    case _: ViewElem[_, _] => "green"
-    case _: FuncElem[_, _] => "blue"
-    case _: CompanionElem[_] => "gray"
-    case _ => "black"
+  protected def nodeColor(elem: Elem[_], optDef: Option[Def[_]]): String = optDef match {
+    case Some(_: View[_, _]) => "darkgreen"
+    // TODO add lightblue for external ops, once there is a way to distinguish them
+    case _ => elem match {
+      case _: ViewElem[_, _] => "green"
+      case _: FuncElem[_, _] => "magenta"
+      case _: CompanionElem[_] => "lightgray"
+      case _ => "gray"
+    }
   }
 
   protected def maxLabelLineLength = 40
@@ -46,13 +50,13 @@ trait GraphVizExport { self: ScalanExp =>
         val x = l.x
         stream.println(quote(x) + " [")
         stream.println(nodeLabel(x.toStringWithType))
-        stream.println(s"color=${nodeColor(x)}")
+        stream.println(s"color=${nodeColor(x.elem, None)}")
         stream.println("]")
       case _ =>
     }
     stream.println(quote(sym) + " [")
     stream.println(nodeLabel(sym.toStringWithType + " =", formatDef(rhs)))
-    stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${quote(sym.toStringWithType)}")
+    stream.println(s"shape=box,color=${nodeColor(sym.elem, Some(rhs))},tooltip=${quote(sym.toStringWithType)}")
     stream.println("]")
   }
 
