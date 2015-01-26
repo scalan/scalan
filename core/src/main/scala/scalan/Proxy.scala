@@ -113,6 +113,17 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       })
   }
 
+  override protected def nodeColor(sym: Exp[_]) = sym match {
+    case Def(d) => d match {
+      // FIXME a bit hackish, neverInvoke should become isExternal field of MethodCall and NewObject
+      // instead of being overridden
+      case mc: MethodCall[_] if mc.neverInvoke => "darkblue"
+      case no: NewObject[_] if no.neverInvoke => "darkblue"
+      case _ => super.nodeColor(sym)
+    }
+    case _ => super.nodeColor(sym)
+  }
+
   override protected def formatDef(d: Def[_]): String = d match {
     case MethodCall(obj, method, args) =>
       val className = ScalaNameUtil.cleanNestedClassName(method.getDeclaringClass.getName)

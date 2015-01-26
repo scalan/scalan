@@ -10,11 +10,16 @@ trait GraphVizExport { self: ScalanExp =>
 
   protected def quote(x: Any) = "\"" + x + "\""
 
-  protected def nodeColor(sym: Exp[_]): String = sym.elem match {
-    case _: ViewElem[_, _] => "green"
-    case _: FuncElem[_, _] => "blue"
-    case _: CompanionElem[_] => "gray"
-    case _ => "black"
+  // TODO it would be better to have nodeColor(elem: Elem[_], optDef: Option[Def[_]]) to
+  // avoid looking up definition, but this leads to ClassFormatError (likely Scala bug)
+  protected def nodeColor(sym: Exp[_]): String = sym match {
+    case Def(_: View[_, _]) => "darkgreen"
+    case _ => sym.elem match {
+      case _: ViewElem[_, _] => "green"
+      case _: FuncElem[_, _] => "magenta"
+      case _: CompanionElem[_] => "lightgray"
+      case _ => "gray"
+    }
   }
 
   protected def maxLabelLineLength = 40
