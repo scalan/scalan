@@ -126,9 +126,14 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   override protected def formatDef(d: Def[_]): String = d match {
     case MethodCall(obj, method, args) =>
-      val className = ScalaNameUtil.cleanNestedClassName(method.getDeclaringClass.getName)
-      val methodName = ScalaNameUtil.cleanScalaName(method.getName)
-      s"$obj.$className.$methodName(${args.mkString(", ")})"
+      val methodCallStr =
+        s"${ScalaNameUtil.cleanScalaName(method.getName)}(${args.mkString(", ")})"
+      if (obj.isCompanion) {
+        s"$obj.$methodCallStr"
+      } else {
+        val className = ScalaNameUtil.cleanNestedClassName(method.getDeclaringClass.getName)
+        s"$obj.$className.$methodCallStr"
+      }
     case NewObject(c, args) =>
       val className = ScalaNameUtil.cleanNestedClassName(c.getName)
       s"new $className(${args.mkString(", ")})"
