@@ -28,7 +28,7 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
 
     override def isEntityType: Boolean = element[T].isEntityType
 
-    lazy val defaultRep = scalan.common.Default.defaultVal[Rep[JNIType[T]]](null.asInstanceOf[JNIType[T]])
+    lazy val getDefaultRep = scalan.common.Default.defaultVal[Rep[JNIType[T]]](null.asInstanceOf[JNIType[T]])
   }
 
 //  case class JNIFieldIDElem[T: Elem]() extends Elem[JNIFieldID[T]] {
@@ -49,7 +49,7 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
       implicit val tag1 = eItem.tag
       weakTypeTag[Array[A]]
     }
-    lazy val defaultRep: Default[Rep[Array[A]]] = arrayRepDefault(eItem)
+    lazy val getDefaultRep: Default[Rep[Array[A]]] = arrayRepDefault(eItem)
   }
 
   implicit def JNITypeElement[T: Elem]: Elem[JNIType[T]] = new JNITypeElem[T]
