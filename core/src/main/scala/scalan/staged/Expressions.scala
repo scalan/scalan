@@ -2,6 +2,7 @@ package scalan.staged
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import scalan.{Base, ScalanExp}
 import scalan.common.Lazy
@@ -49,7 +50,7 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   type Def[+A] = ReifiableExp[A,A]
   
-  abstract class BaseDef[T](implicit val selfType: Elem[T]) extends Def[T]
+  abstract class BaseDef[+T](implicit val selfType: Elem[T @uncheckedVariance]) extends Def[T]
 
   case class Const[T: Elem](x: T) extends BaseDef[T] {
     def uniqueOpId = toString
@@ -63,6 +64,7 @@ trait BaseExp extends Base { self: ScalanExp =>
     def apply[A](xs: Seq[Rep[A]]): Seq[Rep[A]] = xs map (e => apply(e))
     def apply[X,A](f: X=>Rep[A]): X=>Rep[A] = (z:X) => apply(f(z))
     def apply[X,Y,A](f: (X,Y)=>Rep[A]): (X,Y)=>Rep[A] = (z1:X,z2:Y) => apply(f(z1,z2))
+    def onlySyms[A](xs: List[Rep[A]]): List[Rep[A]] = xs map (e => apply(e)) collect { case e: Exp[A] => e }
   }
   def IdTransformer = MapTransformer.Empty
 
@@ -83,7 +85,7 @@ trait BaseExp extends Base { self: ScalanExp =>
   def fresh[T](implicit leT: LElem[T]): Exp[T]
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]]
   def findDefinition[T](thunk: Exp[_], d: Def[T]): Option[TableEntry[T]]
-  def createDefinition[T](thunk: Exp[_], s: Exp[T], d: Def[T]): TableEntry[T]
+  def createDefinition[T](optScope: Option[ThunkScope], s: Exp[T], d: Def[T]): TableEntry[T]
 
   /**
    * Updates the universe of symbols and definitions, then rewrites until fix-point
@@ -142,7 +144,25 @@ trait BaseExp extends Base { self: ScalanExp =>
    */
   def defaultImpl[T](implicit elem: Elem[T]): Exp[T] = elem.defaultRepValue
 
-  trait TableEntry[+T] {
+  abstract class Stm // statement (links syms and definitions)
+
+  implicit class StmOps(stm: Stm) {
+    def lhs: List[Exp[Any]] = stm match {
+      case TableEntry(sym, rhs) => sym :: Nil
+    }
+
+    def defines[A](sym: Exp[A]): Option[Def[A]] = stm match {
+      case TableEntry(`sym`, rhs: Def[A]) => Some(rhs)
+      case _ => None
+    }
+
+    def defines[A](rhs: Def[A]): Option[Exp[A]] = stm match {
+      case TableEntry(sym: Exp[A], `rhs`) => Some(sym)
+      case _ => None
+    }
+  }
+  
+  trait TableEntry[+T] extends Stm {
     def sym: Exp[T]
     def lambda: Option[Exp[_]]
     def rhs: Def[T]
@@ -164,24 +184,95 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   def decompose[T](d: Def[T]): Option[Exp[T]] = None
 
-  // dependencies
-  def syms(e: Any): List[Exp[_]] = e match {
-    case s: Exp[_] => List(s)
-    case s: Seq[_] => s.toList.flatMap(syms(_))
-    case p: Product => p.productIterator.toList.flatMap(syms(_))
-    case _ => Nil
+  def flatMapWithBuffer[T](iter: Iterator[Any], f: Any => List[T]): List[T] = {
+    // performance hotspot: this is the same as
+    // p.productIterator.toList.flatMap(f(_)) but faster
+    val out = new ListBuffer[T]
+    while (iter.hasNext) {
+      val e = iter.next()
+      out ++= f(e)
+    }
+    out.result()
   }
 
+  def flatMapProduct[T](p: Product, f: Any => List[T]): List[T] = {
+    val iter = p.productIterator
+    flatMapWithBuffer(iter, f)
+  }
+
+  // regular data (and effect) dependencies
+  def syms(e: Any): List[Exp[_]] = e match {
+    case s: Exp[_] => List(s)
+    case s: Iterable[_] =>
+      flatMapWithBuffer(s.iterator, syms)
+    // All case classes extend Product!
+    case p: Product =>
+      flatMapProduct(p, syms)
+    case _ => Nil
+  }
   def dep(e: Exp[_]): List[Exp[_]] = e match {
     case Def(d) => syms(d)
     case _ => Nil
   }
   def dep(d: Def[_]): List[Exp[_]] = syms(d)
 
+  // symbols which are bound in a definition
+  def boundSyms(e: Any): List[Exp[Any]] = e match {
+    case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, boundSyms)
+    case p: Product => flatMapProduct(p, boundSyms)
+    case _ => Nil
+  }
+
+  // symbols which are bound in a definition, but also defined elsewhere
+  def tunnelSyms(e: Any): List[Exp[Any]] = e match {
+    case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, tunnelSyms)
+    case p: Product => flatMapProduct(p, tunnelSyms)
+    case _ => Nil
+  }
+
+  // symbols of effectful components of a definition
+  def effectSyms(x: Any): List[Exp[Any]] = x match {
+    case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, effectSyms)
+    case p: Product => flatMapProduct(p, effectSyms)
+    case _ => Nil
+  }
+
+  // soft dependencies: they are not required but if they occur, 
+  // they must be scheduled before
+  def softSyms(e: Any): List[Exp[Any]] = e match {
+    // empty by default
+    //case s: Exp[Any] => List(s)
+    case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, softSyms)
+    case p: Product => flatMapProduct(p, softSyms)
+    case _ => Nil
+  }
+
+  // generic symbol traversal: f is expected to call rsyms again
+  def rsyms[T](e: Any)(f: Any=>List[T]): List[T] = e match {
+    case s: Exp[Any] => f(s)
+    case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, f)
+    case p: Product => flatMapProduct(p, f)
+    case _ => Nil
+  }
+
+  // frequency information for dependencies: used/computed
+  // often (hot) or not often (cold). used to drive code motion.
+  def symsFreq(e: Any): List[(Exp[Any], Double)] = e match {
+    case s: Exp[Any] => List((s,1.0))
+    case ss: Iterable[Any] => flatMapWithBuffer(ss.iterator, symsFreq)
+    case p: Product => flatMapProduct(p, symsFreq)
+    //case _ => rsyms(e)(symsFreq)
+    case _ => Nil
+  }
+
+  def freqNormal(e: Any) = symsFreq(e)
+  def freqHot(e: Any) = symsFreq(e).map(p=>(p._1,p._2*1000.0))
+  def freqCold(e: Any) = symsFreq(e).map(p=>(p._1,p._2*0.5))
+
   implicit class ExpForSomeOps(symbol: Exp[_]) {
     def inputs: List[Exp[Any]] = dep(symbol)
     def getDeps: List[Exp[_]] = symbol match {
-      case Def(lam: Lambda[_,_]) => lam.freeVars.toList
+      case Def(g: AstGraph) => g.freeVars.toList
       case _ => this.inputs
     }
 
@@ -206,7 +297,7 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   implicit class DefForSomeOps(d: Def[_]) {
     def getDeps: List[Exp[_]] = d match {
-      case lam: Lambda[_,_] => lam.freeVars.toList
+      case g: AstGraph => g.freeVars.toList
       case _ => syms(d)
     }
 
@@ -276,37 +367,41 @@ trait Expressions extends BaseExp { self: ScalanExp =>
     defToGlobalDefs.get((thunk,d)).asInstanceOf[Option[TableEntry[T]]]
 
   def findOrCreateDefinition[T](d: Def[T], newSym: => Exp[T]): Exp[T] = {
-    thunkStack.top match {
+    val optScope = thunkStack.top
+    optScope match {
       case Some(scope) =>
         scope.findDef(d) match {
           case Some(TableEntry(s, _)) => s
           case None =>
-            val te = createDefinition(scope.thunkSym, newSym, d)
-            scope += te
+            val te = createDefinition(optScope, newSym, d)
             te.sym
         }
-      case None => {
+      case None =>
         val res = findDefinition(globalThunkSym, d) match {
           case Some(TableEntry(s, _)) => s
           case None =>
-            val TableEntry(s, _) = createDefinition(globalThunkSym, newSym, d)
+            val TableEntry(s, _) = createDefinition(None, newSym, d)
             s
         }
         res
-      }
     }
   }
 
-  def createDefinition[T](thunk: Exp[_], s: Exp[T], d: Def[T]): TableEntry[T] = {
-    val tp = lambdaStack.top match {
+  def createDefinition[T](optScope: Option[ThunkScope], s: Exp[T], d: Def[T]): TableEntry[T] = {
+    val te = lambdaStack.top match {
       case Some(fSym) => TableEntry(s, d, fSym)
       case _ => TableEntry(s, d)
     }
+    optScope match {
+      case Some(scope) =>
+        defToGlobalDefs += (scope.thunkSym, te.rhs) -> te
+        scope += te
+      case None =>
+        defToGlobalDefs += (globalThunkSym, te.rhs) -> te
+    }
 
-    expToGlobalDefs += tp.sym -> tp
-    defToGlobalDefs += (thunk, tp.rhs) -> tp
-
-    tp
+    expToGlobalDefs += te.sym -> te
+    te
   }
 
   /**

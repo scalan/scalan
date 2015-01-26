@@ -30,7 +30,8 @@ trait Scalan
   with Monoids
   with ArrayOps
   with ArrayViews
-  with Thunks {
+  with Thunks
+  with Effects {
 
 }
 
@@ -59,6 +60,7 @@ trait ScalanSeq
   with ArrayOpsSeq
   with ArrayViewsSeq
   with ThunksSeq
+  with EffectsSeq
 
 trait ScalanCtxSeq
   extends ScalanDsl
@@ -88,6 +90,7 @@ trait ScalanExp
   with ArrayOpsExp
   with ArrayViewsExp
   with ThunksExp
+  with EffectsExp
 
 trait ScalanCtxExp
   extends ScalanDsl

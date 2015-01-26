@@ -16,13 +16,13 @@ trait BlocksSeq extends Blocks { self: ScalanSeq =>
 }
 
 trait BlocksExp extends Blocks { self: ScalanExp =>
-  case class Block[A,B](left: Exp[A], right: Exp[B])(implicit selfType: Elem[B]) extends BaseDef[B] { 
+  case class Semicolon[A,B](left: Exp[A], right: Exp[B])(implicit selfType: Elem[B]) extends BaseDef[B] {
     def uniqueOpId = name(selfType)
-    override def mirror(t: Transformer) = Block(t(left), t(right))
+    override def mirror(t: Transformer) = Semicolon(t(left), t(right))
   }
 
   def semicolon[A,B](left: Rep[A], right: Rep[B]): Rep[B] = { 
     implicit val eR = right.elem
-    Block(left, right)    
+    Semicolon(left, right)
   }
 }

@@ -234,22 +234,21 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 //  }
 
   def reifyFunction[A, B](fun: Exp[A] => Exp[B], x: Exp[A], fSym: Exp[A=>B], mayInline: Boolean): Exp[A=>B] = {
-    val y = executeFunction(fun, x, fSym)
+    val Block(y) = reifyEffects(executeFunction(fun, x, fSym))
     val lam = new Lambda(Some(fun), x, y, fSym, mayInline)
 
-    thunkStack.top match {
+    val optScope = thunkStack.top
+    optScope match {
       case Some(scope) =>
         scope.findDef(lam) match {
           case Some(TableEntry(sym, Lambda(_, Some(f), _, _))) =>
             if (f equals fun) sym.asRep[A=>B]
             else {
-              val te = createDefinition(scope.thunkSym, fSym, lam)
-              scope += te
+              val te = createDefinition(optScope, fSym, lam)
               fSym
             }
           case None =>
-            val te = createDefinition(scope.thunkSym, fSym, lam)
-            scope += te
+            val te = createDefinition(optScope, fSym, lam)
             te.sym
         }
       case None =>
@@ -258,12 +257,12 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
             f equals fun match {
               case true => sym.asRep[A=>B]
               case false =>
-                createDefinition(globalThunkSym, fSym, lam)
+                createDefinition(None, fSym, lam)
                 fSym
             }
           }
           case None =>
-            createDefinition(globalThunkSym, fSym, lam)
+            createDefinition(None, fSym, lam)
             fSym
         }
     }
