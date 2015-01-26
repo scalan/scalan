@@ -5,7 +5,7 @@ import scalan.ScalanExp
 trait LmsBridge[A, B] {
 
   val scalan: ScalanExp
-  val lms: LmsBackend = new LmsBackend
+  val lms: LmsBackend
 
   type SymMirror = Map[scalan.Exp[_], lms.Exp[A] forSome {type A}]
   type FuncMirror = Map[scalan.Exp[_], (lms.Exp[A] => lms.Exp[B]) forSome {type A; type B}]
