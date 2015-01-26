@@ -89,10 +89,8 @@ trait GraphVizExport { self: ScalanExp =>
     def emitDepList(deps: List[Exp[_]], params: String) =
       deps.foreach { dep => stream.println(s"${quote(dep)} -> ${quote(sym)} $params") }
 
-    val (companionDeps, otherDeps) = deps.partition(_.isCompanion)
-    emitDepList(otherDeps, "[style=solid]")
-    emitDepList(companionDeps, "[color=gray, weight=0]")
-    // emitDepList(lambdaVars, "[style=dashed, color=lightgray, weight=0]")
+    emitDepList(lambdaVars, "[style=dashed, color=lightgray, weight=0]")
+    emitDepList(deps, "[style=solid]")
   }
 
   def emitDepGraph(d: Def[_], file: File, landscape: Boolean): Unit =
