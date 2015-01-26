@@ -116,10 +116,10 @@ trait GraphVizExport { self: ScalanExp =>
           case lam: Lambda[_, _] if !lam.isIdentity =>
             stream.println(s"subgraph cluster_$s {")
             stream.println("style=dashed; color=lightgray")
-            stream.println(s"{rank=min; ${lam.x}}")
+            stream.println(s"{rank=source; ${lam.x}}")
             val schedule1 = lam.schedule.filter(_.sym != lam.y)
             emitClusters(schedule1, true, stream)
-            stream.println(s"{rank=max; $s}")
+            stream.println(s"{rank=sink; $s}")
             stream.println("}")
           case _ =>
             if (listNodes) stream.println(s) else {}
