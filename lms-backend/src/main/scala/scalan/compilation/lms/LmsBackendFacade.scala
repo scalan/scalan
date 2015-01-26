@@ -9,9 +9,8 @@ import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
 
 trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp
-with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp with CastingOpsExp with JNILmsOpsExp {
-  with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp
-  with CastingOpsExp with EitherOpsExp {
+with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp with CastingOpsExp with JNILmsOpsExp
+  with EitherOpsExp {
   /*type RepD[T] = Rep[T]
   */
   def arrayGet[A:Manifest](a: Exp[Array[A]], i: Exp[Int]):Exp[A] = {
@@ -22,9 +21,6 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with Or
   }
   def arrayLength[A:Manifest](a: Exp[Array[A]]): Exp[Int] = {
     a.length
-  }
-  def tuple[A:Manifest,B:Manifest](a:Exp[A], b: Exp[B]): Exp[(A,B)] = {
-    Tuple2(a,b)
   }
 
   def sumLeft[A: Manifest, B: Manifest](a: Exp[A]): Exp[Either[A, B]] = make_left[A, B](a)
