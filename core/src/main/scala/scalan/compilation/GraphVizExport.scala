@@ -109,27 +109,34 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => (dep(l.y), List(l.x))
   }
 
-  private def emitClusters(schedule: Schedule, listNodes: Boolean, stream: PrintWriter): Unit = {
-    schedule.reverse.foreach {
-      case TableEntry(s, d) =>
-        d match {
-          case lam: Lambda[_, _] if !lam.isIdentity =>
-            stream.println(s"subgraph cluster_$s {")
-            stream.println("style=dashed; color=\"#FFCCFF\"")
-            stream.println(s"{rank=source; ${lam.x}}")
-            val schedule1 = lam.schedule.filter(_.sym != lam.y)
-            emitClusters(schedule1, true, stream)
-            stream.println(s"{rank=sink; $s}")
-            stream.println("}")
-          case thunk: ThunkDef[_] =>
-            stream.println(s"subgraph cluster_$s {")
-            stream.println("style=dashed; color=\"#FFCCCC\"")
-            val schedule1 = thunk.schedule
-            emitClusters(schedule1, true, stream)
-            stream.println(s"{rank=sink; $s}")
-            stream.println("}")
-          case _ =>
-            if (listNodes) stream.println(s) else {}
+  private def emitClusters(schedule: Schedule, listNodes: Boolean, stream: PrintWriter, emitted: Set[Exp[_]]): Set[Exp[_]] = {
+    schedule.reverse.foldLeft(emitted) {
+      case (emitted1, TableEntry(s, d)) =>
+        if (!emitted1.contains(s)) {
+          d match {
+            case lam: Lambda[_, _] if !lam.isIdentity =>
+              stream.println(s"subgraph cluster_$s {")
+              stream.println("style=dashed; color=\"#FFCCFF\"")
+              stream.println(s"{rank=source; ${lam.x}}")
+              val schedule1 = lam.schedule.filter(_.sym != lam.y)
+              val emitted2 = emitClusters(schedule1, true, stream, emitted1 + s)
+              stream.println(s"{rank=sink; $s}")
+              stream.println("}")
+              emitted2
+            case thunk: ThunkDef[_] =>
+              stream.println(s"subgraph cluster_$s {")
+              stream.println("style=dashed; color=\"#FFCCCC\"")
+              val schedule1 = thunk.schedule
+              val emitted2 = emitClusters(schedule1, true, stream, emitted1 + s)
+              stream.println(s"{rank=sink; $s}")
+              stream.println("}")
+              emitted2
+            case _ =>
+              if (listNodes) stream.println(s) else {}
+              emitted1
+          }
+        } else {
+          emitted1
         }
     }
   }
@@ -161,7 +168,7 @@ trait GraphVizExport { self: ScalanExp =>
       emitDeps(sym, deps, lambdaVars)(stream)
     }
 
-    emitClusters(deflist1, false, stream)
+    emitClusters(deflist1, false, stream, Set.empty)
 
     stream.println("}")
     stream.close()
