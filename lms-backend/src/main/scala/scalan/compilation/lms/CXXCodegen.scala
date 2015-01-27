@@ -1,6 +1,5 @@
 package scalan.compilation.lms
 
-import scala.virtualization.lms.epfl.test7.ArrayLoopsFatExp
 import scala.virtualization.lms.internal._
 
 /**
@@ -55,6 +54,40 @@ trait CXXCodegen extends CLikeCodegen {
         super.remap(m)
     }
   }
+
+  override def emitValDef(sym: Sym[Any], rhs: String): Unit = {
+    if( moveableSyms.contains(sym) )
+      emitValDef(quote(sym), norefManifest(sym.tp), rhs)
+    else
+      emitValDef(quote(sym), sym.tp, rhs)
+  }
+
+  override def quote(x: Exp[Any]) = x match {
+    case sym: Sym[_] =>
+      if( moveableSyms.contains(sym) && rightSyms.contains(sym) )
+        s"std::move(${super.quote(sym)})"
+      else super.quote(sym)
+    case _ =>
+      super.quote(x)
+  }
+
+  override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
+    if (remap(tpe) != "void")
+      stream.println(remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
+  }
+
+  override def remapWithRef[A](m: Manifest[A]): String = {
+    m.runtimeClass match {
+      case c if c == classOf[Noref[_]] =>
+        remap(m.typeArguments(0))
+      case c if c == classOf[size_t] =>
+        remap(m)
+      case _ =>
+        super.remapWithRef(m)
+    }
+  }
+
+  override def addRef() = "&"
 }
 
 trait CXXFatCodegen extends CXXCodegen with CLikeFatCodegen {

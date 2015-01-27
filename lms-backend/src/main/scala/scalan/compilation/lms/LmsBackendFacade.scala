@@ -187,70 +187,16 @@ class LmsBackend extends LmsBackendFacade { self =>
     with CXXGenFatArrayLoopsFusionOpt
     with LoopFusionOpt
     with CXXFatCodegen
+    with CXXGenCastingOps
     with CXXCodegen
-//    with ExportLMSGraph
   {
 
     override val IR: self.type = self
 
     override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
 
-    override def emitValDef(sym: Sym[Any], rhs: String): Unit = {
-      if( moveableSyms.contains(sym) )
-        emitValDef(quote(sym), norefManifest(sym.tp), rhs)
-      else
-        emitValDef(quote(sym), sym.tp, rhs)
-    }
-
-    override def quote(x: Exp[Any]) = x match {
-      case sym: Sym[_] =>
-        if( moveableSyms.contains(sym) && rightSyms.contains(sym) )
-          s"std::move(${super.quote(sym)})"
-        else super.quote(sym)
-      case _ =>
-        super.quote(x)
-    }
-
-    override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
-      if (remap(tpe) != "void")
-        stream.println(remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
-    }
-
-    override def remapWithRef[A](m: Manifest[A]): String = {
-      m.runtimeClass match {
-        case c if c == classOf[Noref[_]] =>
-          remap(m.typeArguments(0))
-        case c if c == classOf[size_t] =>
-          remap(m)
-        case _ =>
-          super.remapWithRef(m)
-      }
-    }
-    override def addRef() = "&"
-
-    def remapResult[A](m: Manifest[A]): String = {
-      m.runtimeClass match {
-        case c if c.isArray =>
-          val itemType = m.typeArguments(0)
-          val ts = remap  (itemType)
-          s"std::vector<${ts}>"
-        case _ =>
-          remap(m)
-      }
-    }
-
-    override def emitNode(sym: Sym[Any], rhs: Def[Any]): Unit = {
-      rhs match {
-        case RepAsInstanceOf(sy, t1, t2) if t1 != t2 =>
-          emitValDef(sym, s"static_cast<${remap(t2)}>(${quote(sy)})")
-        case RepAsInstanceOf(sy, _, _) =>
-          emitValDef(sym, quote(sy))
-        case _ => super.emitNode(sym, rhs)
-      }
-    }
-
     override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
-      val sA = remapResult(manifest[A])
+      val sA = remap(manifest[A])
 
       //      val staticData = getFreeDataBlock(body)
 
