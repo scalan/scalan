@@ -12,15 +12,6 @@ trait CXXGenStruct extends CLikeGenBase with BaseGenStruct with CXXCodegen {
   val IR: StructExp
   import IR._
 
-//  def structName[T](m: Manifest[T]): String = m match {
-//    case rm: RefinedManifest[_] => "Anon" + math.abs(rm.fields.map(f => f._1.## + f._2.toString.##).sum)
-//    case _ if (m <:< manifest[AnyVal]) => m.toString
-//    case _ if m.erasure.isArray => "ArrayOf" + structName(m.typeArguments.head)
-//    case _ if m.runtimeClass == classOf[scala.Tuple2[_,_]] =>
-//      s"std::tuple<${remap(m.typeArguments(0))},${remap(m.typeArguments(1))}>"
-//    case _ => m.erasure.getSimpleName + m.typeArguments.map(a => structName(a)).mkString("")
-//  }
-
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case Struct(tag, elems) =>
       sym.tp match {

@@ -17,16 +17,6 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] { self: LmsBridge[A, B] =>
     val (exps, symMirr, funcMirr) = m
     val sym = e.sym
     val tt: DefTransformer = {
-      case p@scalan.Tup(a,b) =>
-        val mA = scalan.createManifest(a.elem)
-        val mB = scalan.createManifest(b.elem)
-        (mA,mB) match {
-          case (ma: Manifest[a_t], mb: Manifest[b_t]) =>
-            val _a = symMirr(a).asInstanceOf[lms.Exp[a_t]]
-            val _b = symMirr(b).asInstanceOf[lms.Exp[b_t]]
-            val exp = lms.tuple(_a, _b)(ma,mb)
-            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-        }
       case res@scalan.ExpCString(scalan.Def(s: scalan.Const[_])) =>
         val exp = lms.JNIStringConst(s.x)
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)

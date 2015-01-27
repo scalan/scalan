@@ -108,7 +108,6 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
 //            stream.println(quote(l) + " ++= " + quote(getBlockResult(y)))
         }
       }
-      //      stream.println(quote(ii)+" += 1")
       stream.println("}")
     case _ => super.emitFatNode(sym, rhs)
   }
