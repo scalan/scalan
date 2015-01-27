@@ -491,7 +491,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       }
 
       s"""
-       |trait ${module.name}Seq extends ${module.name}Abs with ${module.name}Dsl with ${config.seqContextTrait} { self: ${module.name}DslSeq =>
+       |trait ${module.name}Seq extends ${module.name}Abs with ${module.name}Dsl with ${config.seqContextTrait}
+       |{ ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    $companionMethods
@@ -514,7 +515,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val concreteClassesString = module.concreteSClasses.map(getSClassExp)
       
       s"""
-       |trait ${module.name}Exp extends ${module.name}Abs with ${module.name}Dsl with ${config.stagedContextTrait} {
+       |trait ${module.name}Exp extends ${module.name}Abs with ${module.name}Dsl with ${config.stagedContextTrait}
+       |{ ${module.selfType.opt(t => s"self: ${t.tpe}Exp =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this
