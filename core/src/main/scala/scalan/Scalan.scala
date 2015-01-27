@@ -1,102 +1,21 @@
 package scalan
 
-import scalan.collection._
-import scalan.compilation.GraphVizExport
-import scalan.primitives._
-import scalan.arrays._
-import scalan.seq.BaseSeq
-import scalan.staged.{BaseExp, Expressions, Transforming}
-import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl, Exceptions}
-
-trait Scalan
-  extends Base
-  with Elems
-  with BaseTypes
-  with Views
-  with Proxy
-  with Tuples
-  with Loops
-  with TypeSum
-  with UnBinOps
-  with LogicalOps
-  with OrderingOps
-  with Equal
-  with NumericOps
-  with StringOps
-  with MathOps
-  with Functions
-  with IfThenElse
-  with Blocks
-  with Monoids
-  with ArrayOps
-  with ArrayViews
-  with Thunks
-  with Effects {
+trait Base {
+  protected def nodeColor(optDef: Option[Option[_]]): String = ""
 
 }
+trait Child1 extends Base {
+  override protected def nodeColor(optDef: Option[Option[_]]): String = super.nodeColor(optDef)
 
-trait ScalanDsl
-  extends Scalan
-  with ListOps
-  with ListViews
-  with ExceptionsDsl
+}
+/**
+ * Created by slesarenko on 17/01/15.
+ */
 
-trait ScalanSeq
-  extends Scalan
-  with BaseSeq
-  with ElemsSeq
-  with BaseTypesSeq
-  with ViewsSeq
-  with ProxySeq
-  with TuplesSeq
-  with LoopsSeq
-  with TypeSumSeq
-  with UnBinOpsSeq
-  with NumericOpsSeq
-  with FunctionsSeq
-  with IfThenElseSeq
-  with BlocksSeq
-  with MonoidsSeq
-  with ArrayOpsSeq
-  with ArrayViewsSeq
-  with ThunksSeq
-  with EffectsSeq
-
-trait ScalanCtxSeq
-  extends ScalanDsl
-  with ScalanSeq
-  with ListOpsSeq
-  with ListViewsSeq
-  with ExceptionsDslSeq
-
+trait Child2 extends Base {
+  override protected def nodeColor(optDef: Option[Option[_]]): String = super.nodeColor(optDef)
+}
 trait ScalanExp
-  extends Scalan
-  with BaseExp
-  with ElemsExp
-  with BaseTypesExp
-  with ViewsExp
-  with ProxyExp
-  with TuplesExp
-  with LoopsExp
-  with TypeSumExp
-  with UnBinOpsExp
-  with LogicalOpsExp
-  with EqualExp
-  with NumericOpsExp
-  with FunctionsExp
-  with IfThenElseExp
-  with BlocksExp
-  with Transforming
-  with ArrayOpsExp
-  with ArrayViewsExp
-  with ThunksExp
-  with EffectsExp
-
-trait ScalanCtxExp
-  extends ScalanDsl
-  with ScalanExp
-  with Expressions
-  with GraphVizExport
-  with ListOpsExp
-  with ListViewsExp
-  with ExceptionsDslExp
+  extends Base
+          with Child1
+          with Child2
