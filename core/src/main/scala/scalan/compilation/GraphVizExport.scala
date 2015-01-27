@@ -115,9 +115,16 @@ trait GraphVizExport { self: ScalanExp =>
         d match {
           case lam: Lambda[_, _] if !lam.isIdentity =>
             stream.println(s"subgraph cluster_$s {")
-            stream.println("style=dashed; color=lightgray")
+            stream.println("style=dashed; color=\"#FFCCFF\"")
             stream.println(s"{rank=source; ${lam.x}}")
             val schedule1 = lam.schedule.filter(_.sym != lam.y)
+            emitClusters(schedule1, true, stream)
+            stream.println(s"{rank=sink; $s}")
+            stream.println("}")
+          case thunk: ThunkDef[_] =>
+            stream.println(s"subgraph cluster_$s {")
+            stream.println("style=dashed; color=\"#FFCCCC\"")
+            val schedule1 = thunk.schedule
             emitClusters(schedule1, true, stream)
             stream.println(s"{rank=sink; $s}")
             stream.println("}")
@@ -137,26 +144,24 @@ trait GraphVizExport { self: ScalanExp =>
       stream.println("rankdir=LR")
     }
 
-    val lambdaBodies: Map[Exp[_], Exp[_]] = (deflist collect {
-      case TableEntry(s, lam: Lambda[_, _]) => (lam.y, s)
-    }).toMap
+    val lambdaBodies: Set[Exp[_]] = deflist.collect {
+      case TableEntry(_, lam: Lambda[_, _]) => lam.y
+    }.toSet
 
-    for (tp @ TableEntry(sym, rhs) <- deflist) {
-      if (!lambdaBodies.contains(sym)) {
-        val (deps, lambdaVars) = rhs match {
-          case l: Lambda[_, _] => lambdaDeps(l)
-          case _ => (dep(rhs), Nil)
-        }
-        // emit node
-        emitNode(sym, rhs)(stream)
+    val deflist1 = deflist.filterNot(tp => lambdaBodies.contains(tp.sym))
 
-        emitDeps(sym, deps, lambdaVars)(stream)
-      } else {
-        // skip lambda bodies
+    for (TableEntry(sym, rhs) <- deflist1) {
+      val (deps, lambdaVars) = rhs match {
+        case l: Lambda[_, _] => lambdaDeps(l)
+        case _ => (dep(rhs), Nil)
       }
+      // emit node
+      emitNode(sym, rhs)(stream)
+
+      emitDeps(sym, deps, lambdaVars)(stream)
     }
 
-    emitClusters(deflist, false, stream)
+    emitClusters(deflist1, false, stream)
 
     stream.println("}")
     stream.close()
