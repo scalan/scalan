@@ -14,49 +14,53 @@ class LmsSmokeItTests extends SmokeItTests {
   
   override val progStaged = new ProgExp
 
-  test("test0simpleArith") {
+  test("simpleArith") {
     val in = 2
     compareOutputWithSequential(progStaged)(progSeq.simpleArith, progStaged.simpleArith, "simpleArith", in)
   }
-  test("test1simpleArrGet") {
+  test("simpleArrGet") {
     val in = (Array(2,3), 1)
     compareOutputWithSequential(progStaged)(progSeq.simpleArrGet, progStaged.simpleArrGet, "simpleArrGet", in)
   }
-  test("test2simpleMap") {
+  test("simpleMap") {
     val in = Array(2,3)
     compareOutputWithSequential(progStaged)(progSeq.simpleMap, progStaged.simpleMap, "simpleMap", in)
   }
-  test("test3simpleMapNested") {
+  test("simpleMapNested") {
     val in = (Array(Array(2.0,3.0), Array(3.0,4.0)), 1)
     compareOutputWithSequential(progStaged)(progSeq.simpleMapNested, progStaged.simpleMapNested, "simpleMapNested", in)
   }
-  test("test4simpleZip") {
+  test("simpleZip") {
     val in = Array(2,3)
     compareOutputWithSequential(progStaged)(progSeq.simpleZip, progStaged.simpleZip, "simpleZip", in)
   }
-  test("test5simpleZipWith") {
+  test("simpleZipWith") {
     val in = Array(2,3)
     compareOutputWithSequential(progStaged)(progSeq.simpleZipWith, progStaged.simpleZipWith, "simpleZipWith", in)
   }
-  test("test6simpleReduce") {
+  test("simpleReduce") {
     val in = Array(2,3)
     compareOutputWithSequential(progStaged)(progSeq.simpleReduce, progStaged.simpleReduce, "simpleArith", in)
   }
-  test("test7mvMul") {
+  test("mvMul") {
     val in = (Array(Array(2,3), Array(4,5)), Array(6,7))
     compareOutputWithSequential(progStaged)(progSeq.mvMul, progStaged.mvMul, "mvMul", in)
   }
-  test("test9simpleIf") {
+  test("simpleIf") {
     val in = (Array(2.0,3.0), 4.0)
     compareOutputWithSequential(progStaged)(progSeq.simpleIf, progStaged.simpleIf, "simpleIf", in)
   }
-  test("test10simpleSum") {
+  test("simpleSum") {
     val in = 7
     compareOutputWithSequential(progStaged)(progSeq.simpleSum, progStaged.simpleSum, "simpleSum", in)
   }
-  test("test11simpleOptionOps") {
+  test("simpleOptionOps") {
     val in = 7
     compareOutputWithSequential(progStaged)(progSeq.simpleOptionOps, progStaged.simpleOptionOps, "simpleOptionOps", in)
   }
-
+  test("lambdaApply") {
+    val x = 7
+    val f = (_: Int) * 2
+    compareOutputWithSequential(progStaged)(progSeq.functionApply, progStaged.functionApply, "lambdaApply", (x, f))
+  }
 }
