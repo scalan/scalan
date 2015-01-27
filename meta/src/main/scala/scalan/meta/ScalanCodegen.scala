@@ -196,7 +196,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val typesUse = getTpeArgUseString(md.tpeArgs)
       s"""
         |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
-        |      ${if (isInstance) "value" else entityNameBT}.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")}
+        |      ${if (isInstance) "wrappedValueOfBaseType" else entityNameBT}.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")}
         |""".stripMargin
     }
 
@@ -289,7 +289,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
           if (className != s"${entityName}Impl") ""
           else {
             s"""
-            |  abstract class ${entityName}Impl${typesDecl}(val value: Rep[${entityNameBT}${typesUse}])${implicitArgsWithVals} extends ${entityName}${typesUse} {
+            |  abstract class ${entityName}Impl${typesDecl}(val wrappedValueOfBaseType: Rep[${entityNameBT}${typesUse}])${implicitArgsWithVals} extends ${entityName}${typesUse} {
             |    $externalMethodsStr
             |  }
             |  trait ${entityName}ImplCompanion

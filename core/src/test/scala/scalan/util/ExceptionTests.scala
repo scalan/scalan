@@ -18,10 +18,10 @@ class ExceptionTests extends BaseTests { suite =>
 
     lazy val t1 = fun { (t: Rep[Throwable]) => t.getMessage }
     lazy val t2 = fun { (t: Rep[SThrowable]) => t.getMessage }
-    lazy val t3 = fun { (t: Rep[SThrowable]) => SException(t.value)}
-    lazy val t4 = fun { (t: Rep[SThrowable]) => SException(t.value).value}
-    lazy val t5 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.value)}
-    lazy val t6 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.value).value}
+    lazy val t3 = fun { (t: Rep[SThrowable]) => SException(t.wrappedValueOfBaseType)}
+    lazy val t4 = fun { (t: Rep[SThrowable]) => SException(t.wrappedValueOfBaseType).wrappedValueOfBaseType}
+    lazy val t5 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.wrappedValueOfBaseType)}
+    lazy val t6 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.wrappedValueOfBaseType).wrappedValueOfBaseType}
 
     lazy val t7 = fun { (msg: Rep[String]) => SThrowable(msg)}
     lazy val t8 = fun { (msg: Rep[String]) => SThrowable(msg).getMessage }
