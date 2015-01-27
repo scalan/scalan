@@ -1,22 +1,14 @@
-package scalan.it.lms
-
-import java.io.File
+package scalan
+package it.lms
 
 import scalan.compilation.lms._
-import scalan.community.ScalanCommunityExp
-import scalan.compilation.lms.{LmsCompilerScala, LmsCompiler}
-import scalan.it.smoke.CommunitySmokeItTests
-import scalan.parrays.PArraysDslExp
-import scalan.compilation.GraphVizExport
-import scalan.compilation.lms.{CommunityBridge, LinalgBridge, LmsBridge, LmsCompiler}
-import scalan.it.smoke.CommunitySmokeItTests
-import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
-import scalan.community.ScalanCommunityExp
+import scalan.it.smoke.SmokeItTests
 
-class LmsSmokeItTests extends CommunitySmokeItTests {
-  class ProgExp extends ProgCommunity with PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX with VectorsDslExp with MatricesDslExp { self =>
-    def makeBridge[A, B] = new LmsBridge[A, B] with CommunityBridge[A, B] with LinalgBridge[A, B] with JNIBridge[A,B] {
+class LmsSmokeItTests extends SmokeItTests {
+  class ProgExp extends Prog with ScalanCtxExp with LmsCompiler { self =>
+    def makeBridge[A, B] = new CoreBridge[A, B] {
       val scalan = self
+      val lms = new CoreLmsBackend
     }
   }
   

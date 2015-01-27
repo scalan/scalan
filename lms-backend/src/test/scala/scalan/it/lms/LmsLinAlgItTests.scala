@@ -1,25 +1,23 @@
 package scalan.it.lms
 
-import scalan.it.BaseItTests
-import scalan.linalgebra.LinearAlgebraExamples
+import scalan.community.{ScalanCommunityDslExp, ScalanCommunityDslSeq}
 import scalan.compilation.lms._
-import scalan.compilation.GraphVizExport
-import scalan.linalgebra.MatricesDslExp
-import scalan.linalgebra.MatricesDslSeq
-import scalan.community.{ScalanCommunitySeq, ScalanCommunityExp}
+import scalan.it.BaseItTests
+import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
 
 class LmsLinAlgItTests extends BaseItTests {
-  class ProgExp extends LinearAlgebraExamples with MatricesDslExp with ScalanCommunityExp with GraphVizExport with LmsCompilerScala { self =>
-    def makeBridge[A, B] = new LmsBridge[A, B] with CommunityBridge[A, B] with LinalgBridge[A, B] {
+  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with LmsCompiler { self =>
+    def makeBridge[A, B] = new CommunityBridge[A, B] {
       val scalan = self
+      val lms = new CommunityLmsBackend
     }
   }
-  class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunitySeq
+  class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunityDslSeq
   
   val progStaged = new ProgExp
   val progSeq = new ProgSeq
   
-  def sparseVectorData(arr: Array[Double]) = ((0.until(arr.length)).toArray, (arr, arr.length))
+  def sparseVectorData(arr: Array[Double]) = (0.until(arr.length).toArray, (arr, arr.length))
 }
 
 class LmsMvmItTests extends LmsLinAlgItTests {

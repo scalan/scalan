@@ -1,16 +1,22 @@
 package scalan.compilation.lms
 
-import java.io.PrintWriter
-import scala.reflect.SourceContext
-import scalan.compilation.lms.common.{ScalaGenEitherOps, EitherOpsExp}
-import scala.reflect.{RefinedManifest, SourceContext}
-import scala.virtualization.lms.internal.{GraphTraversal, NestedBlockTraversal, GenericCodegen, Expressions}
+import scala.virtualization.lms.internal.GenericCodegen
+import scalan.compilation.lms.common.{VectorOpsExp, ScalaGenVectorOps, ScalaGenEitherOps, EitherOpsExp}
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
 
+trait LmsBackend extends BaseExp { self =>
+
+  type Codegen <: GenericCodegen {
+    val IR: self.type
+  }
+
+  def codegen: Codegen
+}
+
 trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp
-with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp with CastingOpsExp with JNILmsOpsExp
-  with EitherOpsExp {
+  with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with OrderingOpsExp with IfThenElseFatExp
+  with CastingOpsExp with EitherOpsExp {
   /*type RepD[T] = Rep[T]
   */
   def arrayGet[A:Manifest](a: Exp[Array[A]], i: Exp[Int]):Exp[A] = {
@@ -90,9 +96,6 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with Or
   def opZip[A:Manifest, B:Manifest]( a:Exp[Array[A]], b:Exp[Array[B]]) : Exp[Array[(A,B)]] = {
     array[(A,B)](a.length)(i => (a.at(i),b.at(i)) )
   }
-  def opDotProductSV[A:Manifest](i1: Exp[Array[Int]], v1: Exp[Array[A]], i2: Exp[Array[Int]], v2: Exp[Array[A]]) : Exp[A] = {
-    array_dotProductSparse(i1,v1, i2, v2)
-  }
   
   def strideArray[A: Manifest](xs: Exp[Array[A]], start: Exp[Int], length: Exp[Int], stride: Exp[Int]) =
     array(length) { i =>
@@ -109,74 +112,44 @@ with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp  with Or
   def mkStringD[A:Manifest](a: Exp[DeliteArray[A]]) : Exp[String] = {
     a mkString unitD(" ")
   }  */
-
-  def array_dotProductSparse[A:Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]) = {
-    ArrayDotProdSparse(idxs1, vals1, idxs2, vals2)
-  }
-
-  case class ArrayDotProdSparse[A:Manifest](idxs1: Exp[Array[Int]], vals1: Exp[Array[A]], idxs2: Exp[Array[Int]], vals2: Exp[Array[A]]) extends Def[A] {
-    val m = manifest[A]
-  }
-
-  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case ArrayDotProdSparse(i1, v1,i2, v2) => array_dotProductSparse(f(i1), f(v1), f(i2), f(v2))(mtype(manifest[A]))
-    case _ => super.mirror(e,f)
-  }).asInstanceOf[Exp[A]] // why??
-
 }
 
-class LmsBackend extends LmsBackendFacade { self =>
+class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
 
-  val codegen = new ScalaGenEffect with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
-    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenEitherOps with ScalaGenOrderingOps with ScalaGenBooleanOps with ScalaGenStruct
+  trait Codegen extends ScalaGenEffect with ScalaGenStruct with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
+    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenEitherOps with ScalaGenOrderingOps with ScalaGenBooleanOps
     with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
     with ScalaGenCastingOps {
-      val IR: self.type = self
-      override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
 
-      private def isTuple(name: String) =
-        name.startsWith("Tuple2") || name.startsWith("Tuple3") || name.startsWith("Tuple4") || name.startsWith("Tuple5")
+    val IR: self.type = self
+    override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
 
-      override def remap[A](m: Manifest[A]) = if (isTuple(m.runtimeClass.getSimpleName)) {
-        m.toString
-      } else {
-        super.remap(m)
-      }
+    private def isTuple(name: String) =
+      name.startsWith("Tuple2") || name.startsWith("Tuple3") || name.startsWith("Tuple4") || name.startsWith("Tuple5")
 
-      override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-        case Struct(ClassTag(name), elems) if isTuple(name) =>
-          emitValDef(sym, "(" + elems.map(e => quote(e._2)).mkString(",") + ")")
-        case ds @ ArrayDotProdSparse(idxs1, vals1, idxs2, vals2) =>
-          // TODO use proper source quasiquoter
-          stream.println("// generating dot product")
-          stream.println("val " + quote(sym) + " ={")
-          stream.println("\tval idxs1 = " + quote(idxs1))
-          stream.println("\tval idxs2 = " + quote(idxs2))
-          stream.println("\tval vals1 = " + quote(vals1))
-          stream.println("\tval vals2 = " + quote(vals2))
-          stream.println("\tvar i1 = 0")
-          stream.println("\tvar i2 = 0")
-          stream.println("\tvar out:" + remap(ds.m) + " = 0")
-          stream.println("\twhile (i1 < idxs1.length && i2 < idxs2.length) {")
-          stream.println("\t\tval ind1 = idxs1(i1)")
-          stream.println("\t\tval ind2 = idxs2(i2)")
-          stream.println("\t\tif (ind1 == ind2) { ")
-          stream.println("\t\t\tout += vals1(i1) * vals2(i2)")
-          stream.println("\t\t\ti1+=1")
-          stream.println("\t\t\ti2+=1")
-          stream.println("\t\t} else if (ind1 < ind2 ) {")
-          stream.println("\t\t\ti1+=1")
-          stream.println("\t\t} else {")
-          stream.println("\t\t\ti2+=1")
-          stream.println("\t\t}")
-          stream.println("\t}")
-          stream.println("\tout")
-          stream.println("}")
-        case _ => super.emitNode(sym, rhs)
-      }
-  } // codegen
+    override def remap[A](m: Manifest[A]) =
+      if (isTuple(m.runtimeClass.getSimpleName)) m.toString
+      else super.remap(m)
 
+    override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+      case Struct(ClassTag(name), elems) if isTuple(name) =>
+        emitValDef(sym, "(" + elems.map(e => quote(e._2)).mkString(",") + ")")
+      case _ => super.emitNode(sym, rhs)
+    }
+  }
 
+  val codegen = new Codegen {}
+}
+
+class CommunityLmsBackend extends CoreLmsBackend with VectorOpsExp { self =>
+
+  override val codegen = new Codegen with ScalaGenVectorOps {
+    override val IR: self.type = self
+  }
+}
+
+class CommunityCXXLmsBackend extends LmsBackend with LmsBackendFacade {
+  self =>
 
   val codegenCXX = new CLikeGenNumericOps
     with CLikeGenEqual
@@ -203,23 +176,23 @@ class LmsBackend extends LmsBackendFacade { self =>
       withStream(out) {
         stream.println(
           "#include <vector>\n" +
-          "#include <tuple>\n" +
-          "#include <cstdlib>\n" +
-          "#include <jni-array-wrapper.hpp>\n" +
-          "/*****************************************\n" +
-          "  Emitting Generated Code                  \n" +
-          "*******************************************/")
+            "#include <tuple>\n" +
+            "#include <cstdlib>\n" +
+            "#include <jni-array-wrapper.hpp>\n" +
+            "/*****************************************\n" +
+            "  Emitting Generated Code                  \n" +
+            "*******************************************/")
         emitFileHeader()
 
         val indargs = (0 until args.length) zip args;
-//        val InputTypes = indargs.map( p => s"InputType${p._1.toString}" )
-//        stream.println( s"template<${InputTypes.map( t => "class " + t).mkString(", ")}>" )
-//        stream.println(s"${sA} apply(${indargs.map( p => s"InputType${p._1.toString}& ${quote(p._2)}").mkString(", ")} ) {")
-//        for( (t, (i, arg)) <- InputTypes zip indargs ) {
-//          stream.println(s"// ${t}: ${remap(arg.tp)}")
-//        }
+        //        val InputTypes = indargs.map( p => s"InputType${p._1.toString}" )
+        //        stream.println( s"template<${InputTypes.map( t => "class " + t).mkString(", ")}>" )
+        //        stream.println(s"${sA} apply(${indargs.map( p => s"InputType${p._1.toString}& ${quote(p._2)}").mkString(", ")} ) {")
+        //        for( (t, (i, arg)) <- InputTypes zip indargs ) {
+        //          stream.println(s"// ${t}: ${remap(arg.tp)}")
+        //        }
         val has = indargs.map(p => p._2.tp.runtimeClass)
-                         .contains( classOf[JNIType[_]] )
+          .contains( classOf[JNIType[_]] )
         val jniEnv = if(has) "JNIEnv* env, " else ""
         stream.println(s"${sA} apply(${jniEnv}${indargs.map( p => s"${remap(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
@@ -228,11 +201,12 @@ class LmsBackend extends LmsBackendFacade { self =>
 
         stream.println("}")
         stream.println("/*****************************************\n" +
-                       "  End of Generated Code                  \n" +
-                       "*******************************************/")
+          "  End of Generated Code                  \n" +
+          "*******************************************/")
       }
 
       Nil
     }
   } // codegenCXX
+  
 }
