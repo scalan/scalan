@@ -148,7 +148,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       s"(${sec.args.rep(a => s"${a.name}: ${a.tpe}")})"
     }
     def methodArgsUse(sec: SMethodArgs) = {
-      s"(${sec.args.rep(a => s"${a.name}")})"
+      s"(${sec.args.rep(a => if (a.tpe.isTupledFunc) s"scala.Function.untupled(${a.name})" else s"${a.name}")})"
     }
 
     def externalMethod(md: SMethodDef) = {
@@ -364,6 +364,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       }
 
       s"""
+       |// Abs -----------------------------------
        |trait ${module.name}Abs extends Scalan with ${module.name}
        |{ ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
        |$proxy
@@ -491,6 +492,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       }
 
       s"""
+       |// Seq -----------------------------------
        |trait ${module.name}Seq extends ${module.name}Abs with ${module.name}Dsl with ${config.seqContextTrait}
        |{ ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
@@ -515,6 +517,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val concreteClassesString = module.concreteSClasses.map(getSClassExp)
       
       s"""
+       |// Exp -----------------------------------
        |trait ${module.name}Exp extends ${module.name}Abs with ${module.name}Dsl with ${config.stagedContextTrait}
        |{ ${module.selfType.opt(t => s"self: ${t.tpe}Exp =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs, ${entityName}CompanionAbs] {

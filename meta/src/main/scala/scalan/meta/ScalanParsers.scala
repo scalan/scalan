@@ -74,6 +74,12 @@ object ScalanAst {
       case Some(_) => true
       case None => false
     }
+
+    def isTupledFunc = self match {
+      case STraitCall("Rep", List(STpeFunc(STpeTuple(a1 :: a2 :: tail), _))) => true
+      case STpeFunc(STpeTuple(a1 :: a2 :: tail), _) => true
+      case _ => false
+    }
   }
 
   // SExpr universe --------------------------------------------------------------------------

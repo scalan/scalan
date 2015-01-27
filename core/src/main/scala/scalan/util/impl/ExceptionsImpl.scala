@@ -6,6 +6,7 @@ import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
+// Abs -----------------------------------
 trait ExceptionsAbs extends Scalan with Exceptions
 { self: ExceptionsDsl =>
   // single proxy for each type family
@@ -170,7 +171,9 @@ trait ExceptionsAbs extends Scalan with Exceptions
   def unmkSException(p: Rep[SException]): Option[(Rep[Throwable])]
 }
 
-trait ExceptionsSeq extends ExceptionsAbs with ExceptionsDsl with ScalanSeq { self: ExceptionsDslSeq =>
+// Seq -----------------------------------
+trait ExceptionsSeq extends ExceptionsAbs with ExceptionsDsl with ScalanSeq
+{ self: ExceptionsDslSeq =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs with UserTypeSeq[SThrowableCompanionAbs, SThrowableCompanionAbs] {
     lazy val selfType = element[SThrowableCompanionAbs]
     
@@ -228,7 +231,9 @@ trait ExceptionsSeq extends ExceptionsAbs with ExceptionsDsl with ScalanSeq { se
     Some((p.wrappedValueOfBaseType))
 }
 
-trait ExceptionsExp extends ExceptionsAbs with ExceptionsDsl with ScalanExp {
+// Exp -----------------------------------
+trait ExceptionsExp extends ExceptionsAbs with ExceptionsDsl with ScalanExp
+{ self: ExceptionsDslExp =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs with UserTypeDef[SThrowableCompanionAbs, SThrowableCompanionAbs] {
     lazy val selfType = element[SThrowableCompanionAbs]
     override def mirror(t: Transformer) = this

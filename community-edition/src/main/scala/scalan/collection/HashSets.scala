@@ -12,6 +12,7 @@ trait HashSets extends Base with BaseTypes { self: HashSetsDsl =>
     implicit def eA: Elem[A]
     @External def +(elem: Rep[A]): Rep[HashSet[A]]
     @External def map[B:Elem](f: Rep[A => B]): Rep[HashSet[B]]
+    @External def fold(z: Rep[A])(f : Rep[((A,A)) => A]): Rep[A]
   }
   trait SHashSetCompanion extends ExCompanion1[HashSet]  {
     @External def empty[A:Elem]: Rep[HashSet[A]]
