@@ -4,12 +4,13 @@ import java.io.File
 
 import scala.language.reflectiveCalls
 import scalan.performance.MVMs
-import scalan.{ScalanCtxExp, FirstProg, BaseTests}
-import scalan.community.ScalanCommunityExp
+import scalan._
+import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.GraphVizExport
 import scalan.compilation.lms._
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.parrays.PArraysDslExp
+import scalan.primitives.AbstractStringsDslExp
 
 /**
  * Created by zotov on 1/19/15.
@@ -17,9 +18,10 @@ import scalan.parrays.PArraysDslExp
 class LmsJNIExtractorItTests extends BaseTests {
   val prefix = new File("it-out/LmsJNI/")
 
-  trait ProgExp extends PArraysDslExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX with VectorsDslExp with MatricesDslExp { self =>
-    def makeBridge[A, B] = new LmsBridge[A, B] with CommunityBridge[A, B] with LinalgBridge[A, B] with JNIBridge[A,B] {
+  trait ProgExp extends PArraysDslExp with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with VectorsDslExp with MatricesDslExp with JNIExtractorOpsExp with AbstractStringsDslExp { self =>
+    def makeBridge[A, B] = new CommunityBridge[A, B] with JNIBridge[A,B] {
       val scalan = self
+      val lms = new CommunityCXXLmsBackend
     }
   }
 

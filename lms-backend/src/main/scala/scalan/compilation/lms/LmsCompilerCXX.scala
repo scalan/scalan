@@ -43,7 +43,7 @@ trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanC
       case (mA: Manifest[a], mB: Manifest[b]) =>
         val bridge = makeBridge[a, b]
         val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
-        val codegen = bridge.lms.codegenCXX
+        val codegen = bridge.lms.codegen
 
         FileUtil.withFile(outputSource) { writer =>
           codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
@@ -67,7 +67,7 @@ trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanC
       case (mA: Manifest[a], mB: Manifest[b]) =>
         val bridge = makeBridge[a, b]
         val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
-        val codegen = bridge.lms.codegenCXX
+        val codegen = bridge.lms.codegen
 
         FileUtil.withFile(outputSource) { writer =>
           codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)

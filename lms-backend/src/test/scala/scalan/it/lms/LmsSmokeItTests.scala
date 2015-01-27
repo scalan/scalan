@@ -1,14 +1,16 @@
 package scalan
 package it.lms
 
+import scalan.community.ScalanCommunityExp
+import scalan.compilation.GraphVizExport
 import scalan.compilation.lms._
 import scalan.it.smoke.SmokeItTests
 
 class LmsSmokeItTests extends SmokeItTests {
-  class ProgExp extends Prog with ScalanCtxExp with LmsCompiler { self =>
+  class ProgExp extends Prog with ScalanCtxExp with ScalanCommunityExp with GraphVizExport with LmsCompilerScala { self =>
     def makeBridge[A, B] = new CoreBridge[A, B] {
       val scalan = self
-      val lms = new CoreLmsBackend
+      val lms = new CoreScalaLmsBackend
     }
   }
   
@@ -45,10 +47,6 @@ class LmsSmokeItTests extends SmokeItTests {
   test("test7mvMul") {
     val in = (Array(Array(2,3), Array(4,5)), Array(6,7))
     compareOutputWithSequential(progStaged)(progSeq.mvMul, progStaged.mvMul, "mvMul", in)
-  }
-  test("test8expBaseArrays") {
-    val in = Array(Array(2,3), Array(4,5))
-    compareOutputWithSequential(progStaged)(progSeq.expBaseArrays, progStaged.expBaseArrays, "expBaseArrays", in)
   }
   test("test9simpleIf") {
     val in = (Array(2.0,3.0), 4.0)

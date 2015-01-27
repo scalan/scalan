@@ -1,5 +1,7 @@
 package scalan.compilation.lms
 
+import java.io.PrintWriter
+
 import scala.virtualization.lms.internal.GenericCodegen
 import scalan.compilation.lms.common.{VectorOpsExp, ScalaGenVectorOps, ScalaGenEitherOps, EitherOpsExp}
 import virtualization.lms.common._
@@ -114,7 +116,9 @@ trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp wi
   }  */
 }
 
-class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
+trait CoreLmsBackend extends LmsBackend with LmsBackendFacade
+
+class CoreScalaLmsBackend extends CoreLmsBackend { self =>
 
   trait Codegen extends ScalaGenEffect with ScalaGenStruct with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
     with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenEitherOps with ScalaGenOrderingOps with ScalaGenBooleanOps
@@ -141,17 +145,18 @@ class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
   val codegen = new Codegen {}
 }
 
-class CommunityLmsBackend extends CoreLmsBackend with VectorOpsExp { self =>
+trait CommunityLmsBackend extends CoreLmsBackend with VectorOpsExp
+
+class CommunityScalaLmsBackend extends CoreScalaLmsBackend with CommunityLmsBackend { self  =>
 
   override val codegen = new Codegen with ScalaGenVectorOps {
     override val IR: self.type = self
   }
 }
 
-class CommunityCXXLmsBackend extends LmsBackend with LmsBackendFacade {
-  self =>
+class CommunityCXXLmsBackend extends CommunityLmsBackend with LmsBackendFacade with JNILmsOpsExp { self =>
 
-  val codegenCXX = new CLikeGenNumericOps
+  trait Codegen extends CLikeGenNumericOps
     with CLikeGenEqual
     with CLikeGenArrayOps
     with CLikeGenPrimitiveOps
@@ -192,7 +197,7 @@ class CommunityCXXLmsBackend extends LmsBackend with LmsBackendFacade {
         //          stream.println(s"// ${t}: ${remap(arg.tp)}")
         //        }
         val has = indargs.map(p => p._2.tp.runtimeClass)
-          .contains( classOf[JNIType[_]] )
+          .contains( classOf[scalan.compilation.lms.JNILmsOps#JNIType[_]] )
         val jniEnv = if(has) "JNIEnv* env, " else ""
         stream.println(s"${sA} apply(${jniEnv}${indargs.map( p => s"${remap(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
@@ -207,6 +212,9 @@ class CommunityCXXLmsBackend extends LmsBackend with LmsBackendFacade {
 
       Nil
     }
-  } // codegenCXX
-  
+  }
+
+  override val codegen = new Codegen {
+    override val IR: self.type = self
+  }
 }

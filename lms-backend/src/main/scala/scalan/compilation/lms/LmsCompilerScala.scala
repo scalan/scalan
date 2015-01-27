@@ -6,10 +6,10 @@ import java.net.URLClassLoader
 import scalan.compilation.Compiler
 import scalan.compilation.GraphVizExport
 import scalan.linalgebra.VectorsDslExp
-import scalan.community.ScalanCommunityExp
+import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.util.{FileUtil, ProcessUtil}
 
-trait LmsCompilerScala extends LmsCompiler { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
+trait LmsCompilerScala extends LmsCompiler { self: ScalanCommunityExp with GraphVizExport =>
 
   protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
