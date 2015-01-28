@@ -1,9 +1,7 @@
 package scalan.compilation.lms
 
-import java.io.PrintWriter
-
 import scala.virtualization.lms.internal.GenericCodegen
-import scalan.compilation.lms.common.{VectorOpsExp, ScalaGenVectorOps, ScalaGenEitherOps, EitherOpsExp}
+import scalan.compilation.lms.common.{VectorOpsExp, EitherOpsExp}
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
 
@@ -117,104 +115,4 @@ trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp wi
 }
 
 trait CoreLmsBackend extends LmsBackend with LmsBackendFacade
-
-class CoreScalaLmsBackend extends CoreLmsBackend { self =>
-
-  trait Codegen extends ScalaGenEffect with ScalaGenStruct with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
-    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenEitherOps with ScalaGenOrderingOps with ScalaGenBooleanOps
-    with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
-    with ScalaGenCastingOps {
-
-    val IR: self.type = self
-    override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
-
-    private def isTuple(name: String) =
-      name.startsWith("Tuple2") || name.startsWith("Tuple3") || name.startsWith("Tuple4") || name.startsWith("Tuple5")
-
-    override def remap[A](m: Manifest[A]) =
-      if (isTuple(m.runtimeClass.getSimpleName)) m.toString
-      else super.remap(m)
-
-    override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-      case Struct(ClassTag(name), elems) if isTuple(name) =>
-        emitValDef(sym, "(" + elems.map(e => quote(e._2)).mkString(",") + ")")
-      case _ => super.emitNode(sym, rhs)
-    }
-  }
-
-  val codegen = new Codegen {}
-}
-
 trait CommunityLmsBackend extends CoreLmsBackend with VectorOpsExp
-
-class CommunityScalaLmsBackend extends CoreScalaLmsBackend with CommunityLmsBackend { self  =>
-
-  override val codegen = new Codegen with ScalaGenVectorOps {
-    override val IR: self.type = self
-  }
-}
-
-class CommunityCXXLmsBackend extends CommunityLmsBackend with LmsBackendFacade with JNILmsOpsExp { self =>
-
-  trait Codegen extends CLikeGenNumericOps
-    with CLikeGenEqual
-    with CLikeGenArrayOps
-    with CLikeGenPrimitiveOps
-    with CXXGenStruct
-    with CXXGenJNIExtractor
-    with CXXGenFatArrayLoopsFusionOpt
-    with LoopFusionOpt
-    with CXXFatCodegen
-    with CXXGenCastingOps
-    with CXXCodegen
-  {
-
-    override val IR: self.type = self
-
-    override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
-
-    override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
-      val sA = remap(manifest[A])
-
-      //      val staticData = getFreeDataBlock(body)
-
-      withStream(out) {
-        stream.println(
-          "#include <vector>\n" +
-            "#include <tuple>\n" +
-            "#include <cstdlib>\n" +
-            "#include <jni-array-wrapper.hpp>\n" +
-            "/*****************************************\n" +
-            "  Emitting Generated Code                  \n" +
-            "*******************************************/")
-        emitFileHeader()
-
-        val indargs = (0 until args.length) zip args;
-        //        val InputTypes = indargs.map( p => s"InputType${p._1.toString}" )
-        //        stream.println( s"template<${InputTypes.map( t => "class " + t).mkString(", ")}>" )
-        //        stream.println(s"${sA} apply(${indargs.map( p => s"InputType${p._1.toString}& ${quote(p._2)}").mkString(", ")} ) {")
-        //        for( (t, (i, arg)) <- InputTypes zip indargs ) {
-        //          stream.println(s"// ${t}: ${remap(arg.tp)}")
-        //        }
-        val has = indargs.map(p => p._2.tp.runtimeClass)
-          .contains( classOf[scalan.compilation.lms.JNILmsOps#JNIType[_]] )
-        val jniEnv = if(has) "JNIEnv* env, " else ""
-        stream.println(s"${sA} apply(${jniEnv}${indargs.map( p => s"${remap(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
-
-        emitBlock(body)
-        stream.println(s"return ${quote(getBlockResult(body))};")
-
-        stream.println("}")
-        stream.println("/*****************************************\n" +
-          "  End of Generated Code                  \n" +
-          "*******************************************/")
-      }
-
-      Nil
-    }
-  }
-
-  override val codegen = new Codegen {
-    override val IR: self.type = self
-  }
-}

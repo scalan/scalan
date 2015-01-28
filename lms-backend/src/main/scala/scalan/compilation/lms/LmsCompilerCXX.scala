@@ -10,7 +10,7 @@ import scalan.linalgebra.VectorsDslExp
 import scalan.community.ScalanCommunityExp
 import scalan.util.{FileUtil, ProcessUtil}
 
-trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with GraphVizExport with VectorsDslExp =>
+trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with GraphVizExport =>
 
   override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     case el: JNITypeElem[_] =>
