@@ -29,7 +29,7 @@ class PArrayExamplesSuite extends BaseShouldTests {
       override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     val f = ctx.getStagedFunc(name)
-    ctx.emitDepGraph(f, new File(s"test-out/scalan/arrays/$name.dot"), false)
+    ctx.emitDepGraph(f, new File(s"test-out/scalan/arrays/$name.dot"))(ctx.defaultOrientation)
   }
 
   val whenStaged = "when staged"

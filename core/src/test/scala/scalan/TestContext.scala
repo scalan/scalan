@@ -12,5 +12,5 @@ trait TestContext extends ScalanCtxExp {
   val prefix: File
   val subfolder: String
   def emit(name: String, ss: Exp[_]*) =
-    emitDepGraph(ss.toList, new File(prefix + subfolder, s"/$name.dot"), false)
+    emitDepGraph(ss, new File(prefix + subfolder, s"/$name.dot"))
 }

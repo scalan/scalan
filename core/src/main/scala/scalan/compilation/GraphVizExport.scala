@@ -99,19 +99,24 @@ trait GraphVizExport { self: ScalanExp =>
     emitDepList(deps, "[style=solid]")
   }
 
-  def emitDepGraph(d: Def[_], file: File, landscape: Boolean): Unit =
-    emitDepGraph(dep(d), file, landscape)
-  def emitDepGraph(start: Exp[_], file: File, landscape: Boolean = false): Unit =
-    emitDepGraph(List(start), file, landscape)
-  def emitDepGraph(ss: Seq[Exp[_]], file: File, landscape: Boolean): Unit =
+  sealed trait Orientation
+  object Portrait extends Orientation
+  object Landscape extends Orientation
+  implicit def defaultOrientation: Orientation = Portrait
+
+  def emitDepGraph(d: Def[_], file: File)(implicit orientation: Orientation): Unit =
+    emitDepGraph(dep(d), file)(orientation)
+  def emitDepGraph(start: Exp[_], file: File)(implicit orientation: Orientation): Unit =
+    emitDepGraph(List(start), file)(orientation)
+  def emitDepGraph(ss: Seq[Exp[_]], file: File)(implicit orientation: Orientation): Unit =
     FileUtil.withFile(file) {
-      emitDepGraph(ss, _, landscape)
+      emitDepGraph(ss, _)(orientation)
     }
   // this can be made the main method in the future
   // to avoid potential inconsistencies in schedules
   // or to add information accessible from the graph
-  def emitDepGraph(graph: AstGraph, file: File, landscape: Boolean): Unit =
-    emitDepGraph(graph.roots, file, landscape)
+  def emitDepGraph(graph: AstGraph, file: File)(implicit orientation: Orientation): Unit =
+    emitDepGraph(graph.roots, file)(orientation)
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
     case Def(l1: Lambda[_, _]) =>
@@ -165,13 +170,13 @@ trait GraphVizExport { self: ScalanExp =>
     }
   }
 
-  private def emitDepGraph(ss: Seq[Exp[_]], stream: PrintWriter, landscape: Boolean): Unit = {
+  private def emitDepGraph(ss: Seq[Exp[_]], stream: PrintWriter)(implicit orientation: Orientation): Unit = {
     stream.println("digraph G {")
 
     val deflist = buildScheduleForResult(ss, dep)
 
     stream.println("concentrate=true")
-    if (landscape) {
+    if (orientation == Landscape) {
       stream.println("rankdir=LR")
     }
 
