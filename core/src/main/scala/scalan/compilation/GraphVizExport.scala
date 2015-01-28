@@ -59,6 +59,8 @@ trait GraphVizExport { self: ScalanExp =>
     stream.println(nodeLabel(sym.toStringWithType + " =", formatDef(rhs)))
     stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${quote(sym.toStringWithType)}")
     stream.println("]")
+
+    emitDeps(sym, rhs)
   }
 
   protected def formatDef(d: Def[_]): String = d match {
@@ -85,10 +87,14 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => d.toString
   }
 
-  private def emitDeps(sym: Exp[_], deps: List[Exp[_]], lambdaVars: List[Exp[_]])(implicit stream: PrintWriter) = {
-    def emitDepList(deps: List[Exp[_]], params: String) =
-      deps.foreach { dep => stream.println(s"${quote(dep)} -> ${quote(sym)} $params") }
+  private def emitDeps(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
+    def emitDepList(list: List[Exp[_]], params: String) =
+      list.foreach { dep => stream.println(s"${quote(dep)} -> ${quote(sym)} $params") }
 
+    val (deps, lambdaVars) = rhs match {
+      case l: Lambda[_, _] => lambdaDeps(l)
+      case _ => (dep(rhs), Nil)
+    }
     emitDepList(lambdaVars, "[style=dashed, color=lightgray, weight=0]")
     emitDepList(deps, "[style=solid]")
   }
@@ -125,7 +131,7 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => true
   }
 
-  private def emitClusters(schedule: Schedule, listNodes: Boolean, stream: PrintWriter, emitted: Set[Exp[_]]): Set[Exp[_]] = {
+  private def emitClusters(schedule: Schedule, emitted: Set[Exp[_]])(implicit stream: PrintWriter): Set[Exp[_]] = {
     schedule.reverse.foldLeft(emitted) {
       case (emitted1, TableEntry(s, d)) =>
         if (!emitted1.contains(s)) {
@@ -133,18 +139,20 @@ trait GraphVizExport { self: ScalanExp =>
             case g: AstGraph if shouldEmitCluster(g) =>
               stream.println(s"subgraph cluster_$s {")
               stream.println(s"style=dashed; color=${quote(clusterColor(g))}")
+              emitNode(s, d)
+              // for lambdas, do we want lambdaDeps instead?
               val sources = g.boundVars
               if (sources.nonEmpty) {
                 stream.println(s"{rank=source; ${sources.mkString("; ")}}")
               }
               val schedule1 = clusterSchedule(g)
-              val emitted2 = emitClusters(schedule1, true, stream, emitted1 + s)
+              val emitted2 = emitClusters(schedule1, emitted1 + s)
               stream.println(s"{rank=sink; $s}")
               stream.println("}")
               emitted2
             case _ =>
-              if (listNodes) stream.println(s) else {}
-              emitted1
+              emitNode(s, d)
+              emitted1 + s
           }
         } else {
           emitted1
@@ -168,18 +176,7 @@ trait GraphVizExport { self: ScalanExp =>
 
     val deflist1 = deflist.filterNot(tp => lambdaBodies.contains(tp.sym))
 
-    for (TableEntry(sym, rhs) <- deflist1) {
-      val (deps, lambdaVars) = rhs match {
-        case l: Lambda[_, _] => lambdaDeps(l)
-        case _ => (dep(rhs), Nil)
-      }
-      // emit node
-      emitNode(sym, rhs)(stream)
-
-      emitDeps(sym, deps, lambdaVars)(stream)
-    }
-
-    emitClusters(deflist1, false, stream, Set.empty)
+    emitClusters(deflist1, Set.empty)(stream)
 
     stream.println("}")
     stream.close()
