@@ -54,9 +54,13 @@ class LmsSmokeItTests extends SmokeItTests {
     val in = 7
     compareOutputWithSequential(progStaged)(progSeq.simpleSum, progStaged.simpleSum, "simpleSum", in)
   }
-  test("simpleOptionOps") {
+  test("sumOps") {
+    val sum = Right[Unit, Int](7)
+    compareOutputWithSequential(progStaged)(progSeq.sumOps, progStaged.sumOps, "sumOps", sum)
+  }
+  test("optionOps") {
     val in = 7
-    compareOutputWithSequential(progStaged)(progSeq.simpleOptionOps, progStaged.simpleOptionOps, "simpleOptionOps", in)
+    compareOutputWithSequential(progStaged)(progSeq.optionOps, progStaged.optionOps, "optionOps", in)
   }
   test("lambdaApply") {
     val x = 7

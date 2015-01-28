@@ -62,7 +62,11 @@ abstract class SmokeItTests extends BaseItTests {
       (l, r)
     }
 
-    lazy val simpleOptionOps = fun { x: Rep[Int] =>
+    lazy val sumOps = fun { x: Rep[Either[Unit, Int]] =>
+      x.fold(_ => x.isLeft, _ => x.isRight)
+    }
+
+    lazy val optionOps = fun { x: Rep[Int] =>
       val d = 19
       val l = toLeftSum[Unit, Int](()).map(_ + 3)
       val r = toRightSum[Unit, Int](x).map(_ + 7).flatMap(x => toRight(x * 2))
