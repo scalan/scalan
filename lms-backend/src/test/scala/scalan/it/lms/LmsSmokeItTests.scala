@@ -3,7 +3,8 @@ package it.lms
 
 import scalan.community.ScalanCommunityExp
 import scalan.compilation.GraphVizExport
-import scalan.compilation.lms._
+import scalan.compilation.lms.CoreBridge
+import scalan.compilation.lms.scala.{CoreScalaLmsBackend, LmsCompilerScala}
 import scalan.it.smoke.SmokeItTests
 
 class LmsSmokeItTests extends SmokeItTests {

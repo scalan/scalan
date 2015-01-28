@@ -1,8 +1,9 @@
-package scalan.compilation.lms
+package scalan.compilation.lms.cxx
 
 import java.io.PrintWriter
 
 import scala.virtualization.lms.common._
+import scalan.compilation.lms.{JNILmsOpsExp, CXXGenJNIExtractor, CommunityLmsBackend, CoreLmsBackend}
 
 class CoreCXXLmsBackend extends CoreLmsBackend { self =>
 

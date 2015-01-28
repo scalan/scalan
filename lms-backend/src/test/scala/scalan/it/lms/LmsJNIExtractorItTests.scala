@@ -3,11 +3,12 @@ package scalan.it.lms
 import java.io.File
 
 import scala.language.reflectiveCalls
+import scalan.compilation.lms.{JNIBridge, CommunityBridge}
+import scalan.compilation.lms.cxx.{CommunityCXXLmsBackend, LmsCompilerCXX}
 import scalan.performance.MVMs
 import scalan._
 import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.GraphVizExport
-import scalan.compilation.lms._
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.parrays.PArraysDslExp
 import scalan.primitives.AbstractStringsDslExp

@@ -2,7 +2,8 @@ package scalan.it.lms
 
 import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunityDslSeq}
 import scalan.compilation.GraphVizExport
-import scalan.compilation.lms._
+import scalan.compilation.lms.CommunityBridge
+import scalan.compilation.lms.scala.{CommunityScalaLmsBackend, LmsCompilerScala}
 import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
 

@@ -5,7 +5,8 @@ import java.io.File
 import scalan.ScalanCtxExp
 import scalan.community.ScalanCommunityExp
 import scalan.compilation.GraphVizExport
-import scalan.compilation.lms._
+import scalan.compilation.lms.CoreBridge
+import scalan.compilation.lms.cxx.{LmsCompilerCXX, CoreCXXLmsBackend}
 import scalan.it.smoke.SmokeItTests
 
 class CXXLmsSmokeItTests extends SmokeItTests {

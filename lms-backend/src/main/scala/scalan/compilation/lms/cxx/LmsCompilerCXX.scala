@@ -1,13 +1,11 @@
-package scalan.compilation.lms
+package scalan.compilation.lms.cxx
 
 import java.io._
-import java.net.URLClassLoader
 
 import scalan.JNIExtractorOpsExp
-import scalan.compilation.Compiler
-import scalan.compilation.GraphVizExport
-import scalan.linalgebra.VectorsDslExp
 import scalan.community.ScalanCommunityExp
+import scalan.compilation.GraphVizExport
+import scalan.compilation.lms.LmsCompiler
 import scalan.util.{FileUtil, ProcessUtil}
 
 trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with GraphVizExport =>

@@ -1,12 +1,11 @@
-package scalan.compilation.lms
+package scalan.compilation.lms.scala
 
 import java.io._
 import java.net.URLClassLoader
 
-import scalan.compilation.Compiler
+import scalan.community.ScalanCommunityExp
 import scalan.compilation.GraphVizExport
-import scalan.linalgebra.VectorsDslExp
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
+import scalan.compilation.lms.LmsCompiler
 import scalan.util.{FileUtil, ProcessUtil}
 
 trait LmsCompilerScala extends LmsCompiler { self: ScalanCommunityExp with GraphVizExport =>

@@ -2,6 +2,7 @@ package scalan.it.lms
 
 import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp}
 import scalan.compilation.lms._
+import scalan.compilation.lms.scala.{CommunityScalaLmsBackend, LmsCompilerScala}
 import scalan.it.smoke.CommunitySmokeItTests
 
 class LmsCommunityItTests extends CommunitySmokeItTests {

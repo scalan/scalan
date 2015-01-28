@@ -1,4 +1,4 @@
-package scalan.compilation.lms
+package scalan.compilation.lms.cxx
 
 import scala.virtualization.lms.common._
 import scala.virtualization.lms.epfl.test7.{ArrayLoopsExp, ArrayLoopsFatExp}

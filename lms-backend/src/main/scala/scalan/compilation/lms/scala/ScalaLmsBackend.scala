@@ -1,8 +1,9 @@
-package scalan.compilation.lms
+package scalan.compilation.lms.scala
 
 import scala.virtualization.lms.common._
 import scala.virtualization.lms.epfl.test7.ScalaGenFatArrayLoopsFusionOpt
-import scalan.compilation.lms.common.{ScalaGenVectorOps, ScalaGenEitherOps}
+import scalan.compilation.lms.{CommunityLmsBackend, CoreLmsBackend}
+import scalan.compilation.lms.common.{ScalaGenEitherOps, ScalaGenVectorOps}
 
 class CoreScalaLmsBackend extends CoreLmsBackend { self =>
 
