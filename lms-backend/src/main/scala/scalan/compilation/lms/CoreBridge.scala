@@ -16,8 +16,11 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
 
     val tt: DefTransformer = {
       case lam: scalan.Lambda[a, b] =>
+        val mA = scalan.createManifest(lam.x.elem).asInstanceOf[Manifest[a]]
+        val mB = scalan.createManifest(lam.y.elem).asInstanceOf[Manifest[b]]
         val f = mirrorLambdaToLmsFunc[a, b](m)(lam)
-        (exps, symMirr, funcMirr + ((sym, f)))
+        val fun = lms.fun(f)(mA, mB)
+        (exps, symMirr + ((sym, fun)), funcMirr + ((sym, f)))
 
       case scalan.Apply(f, x) =>
         import scalan.FuncElemExtensions
@@ -31,8 +34,12 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
         }
 
       case c @ scalan.Const(_) =>
-        val exp = lms.unitD(c.x)
-        (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        scalan.createManifest(c.selfType) match {
+          case mA: Manifest[a] =>
+            val x = c.x.asInstanceOf[a]
+            val exp = lms.unitD(x)(mA)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
 
       case d @ scalan.Left(l) =>
         import scalan.SumElemExtensions
