@@ -19,6 +19,17 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
         val f = mirrorLambdaToLmsFunc[a, b](m)(lam)
         (exps, symMirr, funcMirr + ((sym, f)))
 
+      case scalan.Apply(f, x) =>
+        import scalan.FuncElemExtensions
+        (scalan.createManifest(f.elem.eDom), scalan.createManifest(f.elem.eRange)) match {
+          case (mA: Manifest[a], mB: Manifest[b]) =>
+            implicit val (imA, imB) = (mA, mB)
+            val fun = symMirr(f).asInstanceOf[lms.Exp[a => b]]
+            val arg = symMirr(x).asInstanceOf[lms.Exp[a]]
+            val exp = lms.doApply[a, b](fun, arg)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
       case c @ scalan.Const(_) =>
         val exp = lms.unitD(c.x)
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)

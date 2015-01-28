@@ -69,6 +69,10 @@ abstract class SmokeItTests extends BaseItTests {
       (l.getOrElse(d), r.getOrElse(d))
     }
 
+    lazy val functionApply = fun2 { (x: Rep[Int], f: Rep[Int => Int]) =>
+      f(x)
+    }
+
 //    lazy val simpleMap = fun {x: PA[Int] =>
 //      x.map(y => y + 1)
 //    }
