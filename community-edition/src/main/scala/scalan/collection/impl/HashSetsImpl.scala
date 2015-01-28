@@ -8,6 +8,7 @@ import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
+// Abs -----------------------------------
 trait HashSetsAbs extends Scalan with HashSets
 { self: HashSetsDsl =>
   // single proxy for each type family
@@ -44,7 +45,7 @@ trait HashSetsAbs extends Scalan with HashSets
   }
 
   //default wrapper implementation
-    abstract class SHashSetImpl[A](val value: Rep[HashSet[A]])(implicit val eA: Elem[A]) extends SHashSet[A] {
+    abstract class SHashSetImpl[A](val wrappedValueOfBaseType: Rep[HashSet[A]])(implicit val eA: Elem[A]) extends SHashSet[A] {
     
     def $plus(elem: Rep[A]): Rep[HashSet[A]] =
       methodCallEx[HashSet[A]](self,
@@ -56,6 +57,12 @@ trait HashSetsAbs extends Scalan with HashSets
       methodCallEx[HashSet[B]](self,
         this.getClass.getMethod("map", classOf[AnyRef], classOf[Elem[B]]),
         List(f.asInstanceOf[AnyRef], element[B]))
+
+    
+    def fold(z: Rep[A])(f: Rep[((A,A)) => A]): Rep[A] =
+      methodCallEx[A](self,
+        this.getClass.getMethod("fold", classOf[AnyRef], classOf[AnyRef]),
+        List(z.asInstanceOf[AnyRef], f.asInstanceOf[AnyRef]))
 
   }
   trait SHashSetImplCompanion
@@ -70,12 +77,12 @@ trait HashSetsAbs extends Scalan with HashSets
     extends Iso[SHashSetImplData[A], SHashSetImpl[A]] {
     override def from(p: Rep[SHashSetImpl[A]]) =
       unmkSHashSetImpl(p) match {
-        case Some((value)) => value
+        case Some((wrappedValueOfBaseType)) => wrappedValueOfBaseType
         case None => !!!
       }
     override def to(p: Rep[HashSet[A]]) = {
-      val value = p
-      SHashSetImpl(value)
+      val wrappedValueOfBaseType = p
+      SHashSetImpl(wrappedValueOfBaseType)
     }
     lazy val tag = {
       weakTypeTag[SHashSetImpl[A]]
@@ -87,8 +94,8 @@ trait HashSetsAbs extends Scalan with HashSets
   abstract class SHashSetImplCompanionAbs extends CompanionBase[SHashSetImplCompanionAbs] with SHashSetImplCompanion {
     override def toString = "SHashSetImpl"
 
-    def apply[A](value: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
-      mkSHashSetImpl(value)
+    def apply[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
+      mkSHashSetImpl(wrappedValueOfBaseType)
     def unapply[A:Elem](p: Rep[SHashSetImpl[A]]) = unmkSHashSetImpl(p)
   }
   def SHashSetImpl: Rep[SHashSetImplCompanionAbs]
@@ -115,11 +122,13 @@ trait HashSetsAbs extends Scalan with HashSets
     new SHashSetImplIso[A]
 
   // 6) smart constructor and deconstructor
-  def mkSHashSetImpl[A](value: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]]
+  def mkSHashSetImpl[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]]
   def unmkSHashSetImpl[A:Elem](p: Rep[SHashSetImpl[A]]): Option[(Rep[HashSet[A]])]
 }
 
-trait HashSetsSeq extends HashSetsAbs with HashSetsDsl with ScalanSeq { self: HashSetsDslSeq =>
+// Seq -----------------------------------
+trait HashSetsSeq extends HashSetsAbs with HashSetsDsl with ScalanSeq
+{ self: HashSetsDslSeq =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs with UserTypeSeq[SHashSetCompanionAbs, SHashSetCompanionAbs] {
     lazy val selfType = element[SHashSetCompanionAbs]
     
@@ -135,14 +144,18 @@ trait HashSetsSeq extends HashSetsAbs with HashSetsDsl with ScalanSeq { self: Ha
     implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new SeqBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])
 
   case class SeqSHashSetImpl[A]
-      (override val value: Rep[HashSet[A]])
+      (override val wrappedValueOfBaseType: Rep[HashSet[A]])
       (implicit eA: Elem[A])
-    extends SHashSetImpl[A](value)
+    extends SHashSetImpl[A](wrappedValueOfBaseType)
        with SeqSHashSet[A] with UserTypeSeq[SHashSet[A], SHashSetImpl[A]] {
     lazy val selfType = element[SHashSetImpl[A]].asInstanceOf[Elem[SHashSet[A]]]
     
     override def $plus(elem: Rep[A]): Rep[HashSet[A]] =
-      value.$plus(elem)
+      wrappedValueOfBaseType.$plus(elem)
+
+    
+    override def fold(z: Rep[A])(f: Rep[((A,A)) => A]): Rep[A] =
+      wrappedValueOfBaseType.fold(z)(scala.Function.untupled(f))
 
   }
   lazy val SHashSetImpl = new SHashSetImplCompanionAbs with UserTypeSeq[SHashSetImplCompanionAbs, SHashSetImplCompanionAbs] {
@@ -150,13 +163,15 @@ trait HashSetsSeq extends HashSetsAbs with HashSetsDsl with ScalanSeq { self: Ha
   }
 
   def mkSHashSetImpl[A]
-      (value: Rep[HashSet[A]])(implicit eA: Elem[A]) =
-      new SeqSHashSetImpl[A](value)
+      (wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]) =
+      new SeqSHashSetImpl[A](wrappedValueOfBaseType)
   def unmkSHashSetImpl[A:Elem](p: Rep[SHashSetImpl[A]]) =
-    Some((p.value))
+    Some((p.wrappedValueOfBaseType))
 }
 
-trait HashSetsExp extends HashSetsAbs with HashSetsDsl with ScalanExp {
+// Exp -----------------------------------
+trait HashSetsExp extends HashSetsAbs with HashSetsDsl with ScalanExp
+{ self: HashSetsDslExp =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs with UserTypeDef[SHashSetCompanionAbs, SHashSetCompanionAbs] {
     lazy val selfType = element[SHashSetCompanionAbs]
     override def mirror(t: Transformer) = this
@@ -165,11 +180,11 @@ trait HashSetsExp extends HashSetsAbs with HashSetsDsl with ScalanExp {
   implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])
 
   case class ExpSHashSetImpl[A]
-      (override val value: Rep[HashSet[A]])
+      (override val wrappedValueOfBaseType: Rep[HashSet[A]])
       (implicit eA: Elem[A])
-    extends SHashSetImpl[A](value) with UserTypeDef[SHashSet[A], SHashSetImpl[A]] {
+    extends SHashSetImpl[A](wrappedValueOfBaseType) with UserTypeDef[SHashSet[A], SHashSetImpl[A]] {
     lazy val selfType = element[SHashSetImpl[A]].asInstanceOf[Elem[SHashSet[A]]]
-    override def mirror(t: Transformer) = ExpSHashSetImpl[A](t(value))
+    override def mirror(t: Transformer) = ExpSHashSetImpl[A](t(wrappedValueOfBaseType))
   }
 
   lazy val SHashSetImpl: Rep[SHashSetImplCompanionAbs] = new SHashSetImplCompanionAbs with UserTypeDef[SHashSetImplCompanionAbs, SHashSetImplCompanionAbs] {
@@ -184,10 +199,10 @@ trait HashSetsExp extends HashSetsAbs with HashSetsDsl with ScalanExp {
 
 
   def mkSHashSetImpl[A]
-    (value: Rep[HashSet[A]])(implicit eA: Elem[A]) =
-    new ExpSHashSetImpl[A](value)
+    (wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]) =
+    new ExpSHashSetImpl[A](wrappedValueOfBaseType)
   def unmkSHashSetImpl[A:Elem](p: Rep[SHashSetImpl[A]]) =
-    Some((p.value))
+    Some((p.wrappedValueOfBaseType))
 
   object SHashSetMethods {
     object + {
@@ -209,6 +224,18 @@ trait HashSetsExp extends HashSetsAbs with HashSetsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[SHashSet[A]], Rep[A => B]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fold {
+      def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A], Rep[((A,A)) => A]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(z, f, _*)) if receiver.elem.isInstanceOf[SHashSetElem[A, _, _] forSome {type A}] && method.getName == "fold" =>
+          Some((receiver, z, f)).asInstanceOf[Option[(Rep[SHashSet[A]], Rep[A], Rep[((A,A)) => A]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SHashSet[A]], Rep[A], Rep[((A,A)) => A]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

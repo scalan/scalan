@@ -6,6 +6,7 @@ import scalan._
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
+// Abs -----------------------------------
 trait SegmentsAbs extends Scalan with Segments
 { self: SegmentsDsl =>
   // single proxy for each type family
@@ -157,7 +158,9 @@ trait SegmentsAbs extends Scalan with Segments
   def unmkSlice(p: Rep[Slice]): Option[(Rep[Int], Rep[Int])]
 }
 
-trait SegmentsSeq extends SegmentsAbs with SegmentsDsl with ScalanSeq { self: SegmentsDslSeq =>
+// Seq -----------------------------------
+trait SegmentsSeq extends SegmentsAbs with SegmentsDsl with ScalanSeq
+{ self: SegmentsDslSeq =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeSeq[SegmentCompanionAbs, SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]
     
@@ -204,7 +207,9 @@ trait SegmentsSeq extends SegmentsAbs with SegmentsDsl with ScalanSeq { self: Se
     Some((p.start, p.length))
 }
 
-trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp {
+// Exp -----------------------------------
+trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
+{ self: SegmentsDslExp =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeDef[SegmentCompanionAbs, SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]
     override def mirror(t: Transformer) = this

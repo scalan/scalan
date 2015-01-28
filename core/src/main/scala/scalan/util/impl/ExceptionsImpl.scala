@@ -6,6 +6,7 @@ import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
+// Abs -----------------------------------
 trait ExceptionsAbs extends Scalan with Exceptions
 { self: ExceptionsDsl =>
   // single proxy for each type family
@@ -40,7 +41,7 @@ trait ExceptionsAbs extends Scalan with Exceptions
   }
 
   //default wrapper implementation
-    abstract class SThrowableImpl(val value: Rep[Throwable]) extends SThrowable {
+    abstract class SThrowableImpl(val wrappedValueOfBaseType: Rep[Throwable]) extends SThrowable {
     
     def getMessage: Rep[String] =
       methodCallEx[String](self,
@@ -60,12 +61,12 @@ trait ExceptionsAbs extends Scalan with Exceptions
     extends Iso[SThrowableImplData, SThrowableImpl] {
     override def from(p: Rep[SThrowableImpl]) =
       unmkSThrowableImpl(p) match {
-        case Some((value)) => value
+        case Some((wrappedValueOfBaseType)) => wrappedValueOfBaseType
         case None => !!!
       }
     override def to(p: Rep[Throwable]) = {
-      val value = p
-      SThrowableImpl(value)
+      val wrappedValueOfBaseType = p
+      SThrowableImpl(wrappedValueOfBaseType)
     }
     lazy val tag = {
       weakTypeTag[SThrowableImpl]
@@ -77,8 +78,8 @@ trait ExceptionsAbs extends Scalan with Exceptions
   abstract class SThrowableImplCompanionAbs extends CompanionBase[SThrowableImplCompanionAbs] with SThrowableImplCompanion {
     override def toString = "SThrowableImpl"
 
-    def apply(value: Rep[Throwable]): Rep[SThrowableImpl] =
-      mkSThrowableImpl(value)
+    def apply(wrappedValueOfBaseType: Rep[Throwable]): Rep[SThrowableImpl] =
+      mkSThrowableImpl(wrappedValueOfBaseType)
     def unapply(p: Rep[SThrowableImpl]) = unmkSThrowableImpl(p)
   }
   def SThrowableImpl: Rep[SThrowableImplCompanionAbs]
@@ -105,7 +106,7 @@ trait ExceptionsAbs extends Scalan with Exceptions
     new SThrowableImplIso
 
   // 6) smart constructor and deconstructor
-  def mkSThrowableImpl(value: Rep[Throwable]): Rep[SThrowableImpl]
+  def mkSThrowableImpl(wrappedValueOfBaseType: Rep[Throwable]): Rep[SThrowableImpl]
   def unmkSThrowableImpl(p: Rep[SThrowableImpl]): Option[(Rep[Throwable])]
 
   //default wrapper implementation
@@ -121,12 +122,12 @@ trait ExceptionsAbs extends Scalan with Exceptions
     extends Iso[SExceptionData, SException] {
     override def from(p: Rep[SException]) =
       unmkSException(p) match {
-        case Some((value)) => value
+        case Some((wrappedValueOfBaseType)) => wrappedValueOfBaseType
         case None => !!!
       }
     override def to(p: Rep[Throwable]) = {
-      val value = p
-      SException(value)
+      val wrappedValueOfBaseType = p
+      SException(wrappedValueOfBaseType)
     }
     lazy val tag = {
       weakTypeTag[SException]
@@ -138,8 +139,8 @@ trait ExceptionsAbs extends Scalan with Exceptions
   abstract class SExceptionCompanionAbs extends CompanionBase[SExceptionCompanionAbs] with SExceptionCompanion {
     override def toString = "SException"
 
-    def apply(value: Rep[Throwable]): Rep[SException] =
-      mkSException(value)
+    def apply(wrappedValueOfBaseType: Rep[Throwable]): Rep[SException] =
+      mkSException(wrappedValueOfBaseType)
     def unapply(p: Rep[SException]) = unmkSException(p)
   }
   def SException: Rep[SExceptionCompanionAbs]
@@ -166,11 +167,13 @@ trait ExceptionsAbs extends Scalan with Exceptions
     new SExceptionIso
 
   // 6) smart constructor and deconstructor
-  def mkSException(value: Rep[Throwable]): Rep[SException]
+  def mkSException(wrappedValueOfBaseType: Rep[Throwable]): Rep[SException]
   def unmkSException(p: Rep[SException]): Option[(Rep[Throwable])]
 }
 
-trait ExceptionsSeq extends ExceptionsAbs with ExceptionsDsl with ScalanSeq { self: ExceptionsDslSeq =>
+// Seq -----------------------------------
+trait ExceptionsSeq extends ExceptionsAbs with ExceptionsDsl with ScalanSeq
+{ self: ExceptionsDslSeq =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs with UserTypeSeq[SThrowableCompanionAbs, SThrowableCompanionAbs] {
     lazy val selfType = element[SThrowableCompanionAbs]
     
@@ -186,14 +189,14 @@ trait ExceptionsSeq extends ExceptionsAbs with ExceptionsDsl with ScalanSeq { se
     implicit lazy val ThrowableElement: Elem[Throwable] = new SeqBaseElemEx[Throwable, SThrowable](element[SThrowable])
 
   case class SeqSThrowableImpl
-      (override val value: Rep[Throwable])
+      (override val wrappedValueOfBaseType: Rep[Throwable])
       
-    extends SThrowableImpl(value)
+    extends SThrowableImpl(wrappedValueOfBaseType)
        with SeqSThrowable with UserTypeSeq[SThrowable, SThrowableImpl] {
     lazy val selfType = element[SThrowableImpl].asInstanceOf[Elem[SThrowable]]
     
     override def getMessage: Rep[String] =
-      value.getMessage
+      wrappedValueOfBaseType.getMessage
 
   }
   lazy val SThrowableImpl = new SThrowableImplCompanionAbs with UserTypeSeq[SThrowableImplCompanionAbs, SThrowableImplCompanionAbs] {
@@ -201,20 +204,20 @@ trait ExceptionsSeq extends ExceptionsAbs with ExceptionsDsl with ScalanSeq { se
   }
 
   def mkSThrowableImpl
-      (value: Rep[Throwable]) =
-      new SeqSThrowableImpl(value)
+      (wrappedValueOfBaseType: Rep[Throwable]) =
+      new SeqSThrowableImpl(wrappedValueOfBaseType)
   def unmkSThrowableImpl(p: Rep[SThrowableImpl]) =
-    Some((p.value))
+    Some((p.wrappedValueOfBaseType))
 
   case class SeqSException
-      (override val value: Rep[Throwable])
+      (override val wrappedValueOfBaseType: Rep[Throwable])
       
-    extends SException(value)
+    extends SException(wrappedValueOfBaseType)
        with SeqSThrowable with UserTypeSeq[SThrowable, SException] {
     lazy val selfType = element[SException].asInstanceOf[Elem[SThrowable]]
     
     override def getMessage: Rep[String] =
-      value.getMessage
+      wrappedValueOfBaseType.getMessage
 
   }
   lazy val SException = new SExceptionCompanionAbs with UserTypeSeq[SExceptionCompanionAbs, SExceptionCompanionAbs] {
@@ -222,13 +225,15 @@ trait ExceptionsSeq extends ExceptionsAbs with ExceptionsDsl with ScalanSeq { se
   }
 
   def mkSException
-      (value: Rep[Throwable]) =
-      new SeqSException(value)
+      (wrappedValueOfBaseType: Rep[Throwable]) =
+      new SeqSException(wrappedValueOfBaseType)
   def unmkSException(p: Rep[SException]) =
-    Some((p.value))
+    Some((p.wrappedValueOfBaseType))
 }
 
-trait ExceptionsExp extends ExceptionsAbs with ExceptionsDsl with ScalanExp {
+// Exp -----------------------------------
+trait ExceptionsExp extends ExceptionsAbs with ExceptionsDsl with ScalanExp
+{ self: ExceptionsDslExp =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs with UserTypeDef[SThrowableCompanionAbs, SThrowableCompanionAbs] {
     lazy val selfType = element[SThrowableCompanionAbs]
     override def mirror(t: Transformer) = this
@@ -237,11 +242,11 @@ trait ExceptionsExp extends ExceptionsAbs with ExceptionsDsl with ScalanExp {
   implicit lazy val ThrowableElement: Elem[Throwable] = new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])
 
   case class ExpSThrowableImpl
-      (override val value: Rep[Throwable])
+      (override val wrappedValueOfBaseType: Rep[Throwable])
       
-    extends SThrowableImpl(value) with UserTypeDef[SThrowable, SThrowableImpl] {
+    extends SThrowableImpl(wrappedValueOfBaseType) with UserTypeDef[SThrowable, SThrowableImpl] {
     lazy val selfType = element[SThrowableImpl].asInstanceOf[Elem[SThrowable]]
-    override def mirror(t: Transformer) = ExpSThrowableImpl(t(value))
+    override def mirror(t: Transformer) = ExpSThrowableImpl(t(wrappedValueOfBaseType))
   }
 
   lazy val SThrowableImpl: Rep[SThrowableImplCompanionAbs] = new SThrowableImplCompanionAbs with UserTypeDef[SThrowableImplCompanionAbs, SThrowableImplCompanionAbs] {
@@ -256,17 +261,17 @@ trait ExceptionsExp extends ExceptionsAbs with ExceptionsDsl with ScalanExp {
 
 
   def mkSThrowableImpl
-    (value: Rep[Throwable]) =
-    new ExpSThrowableImpl(value)
+    (wrappedValueOfBaseType: Rep[Throwable]) =
+    new ExpSThrowableImpl(wrappedValueOfBaseType)
   def unmkSThrowableImpl(p: Rep[SThrowableImpl]) =
-    Some((p.value))
+    Some((p.wrappedValueOfBaseType))
 
   case class ExpSException
-      (override val value: Rep[Throwable])
+      (override val wrappedValueOfBaseType: Rep[Throwable])
       
-    extends SException(value) with UserTypeDef[SThrowable, SException] {
+    extends SException(wrappedValueOfBaseType) with UserTypeDef[SThrowable, SException] {
     lazy val selfType = element[SException].asInstanceOf[Elem[SThrowable]]
-    override def mirror(t: Transformer) = ExpSException(t(value))
+    override def mirror(t: Transformer) = ExpSException(t(wrappedValueOfBaseType))
   }
 
   lazy val SException: Rep[SExceptionCompanionAbs] = new SExceptionCompanionAbs with UserTypeDef[SExceptionCompanionAbs, SExceptionCompanionAbs] {
@@ -293,10 +298,10 @@ trait ExceptionsExp extends ExceptionsAbs with ExceptionsDsl with ScalanExp {
   }
 
   def mkSException
-    (value: Rep[Throwable]) =
-    new ExpSException(value)
+    (wrappedValueOfBaseType: Rep[Throwable]) =
+    new ExpSException(wrappedValueOfBaseType)
   def unmkSException(p: Rep[SException]) =
-    Some((p.value))
+    Some((p.wrappedValueOfBaseType))
 
   object SThrowableMethods {
     object getMessage {

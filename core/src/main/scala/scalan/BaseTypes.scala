@@ -10,7 +10,7 @@ import scala.reflect.runtime.universe._
 trait BaseTypes extends Base { self: Scalan =>
 
   trait BaseTypeEx[TBase, TExt] extends Reifiable[TExt] {
-    def value: Rep[TBase]
+    def wrappedValueOfBaseType: Rep[TBase]
   }
 
   class BaseElemEx[TBase, TExt](extE: =>Elem[TExt])
@@ -35,7 +35,7 @@ trait BaseTypes extends Base { self: Scalan =>
      extends BaseElemEx[TBase, TExt](extE) {
      override def getDefaultRep = {
        val defaultOfWrapper = getWrapperElem.getDefaultRep.asInstanceOf[Default[BaseTypeEx[TBase, TExt]]]
-       Default.defaultVal(defaultOfWrapper.value.value)
+       Default.defaultVal(defaultOfWrapper.value.wrappedValueOfBaseType)
      }
    }
  }

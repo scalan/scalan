@@ -12,6 +12,7 @@ import scalan.parrays.PArraysDslSeq
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
+// Abs -----------------------------------
 trait VectorsAbs extends Scalan with Vectors
 { self: VectorsDsl =>
   // single proxy for each type family
@@ -162,7 +163,9 @@ trait VectorsAbs extends Scalan with Vectors
   def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]): Option[(Rep[Array[Int]], Rep[PArray[T]], Rep[Int])]
 }
 
-trait VectorsSeq extends VectorsAbs with VectorsDsl with ScalanSeq { self: VectorsDslSeq =>
+// Seq -----------------------------------
+trait VectorsSeq extends VectorsAbs with VectorsDsl with ScalanSeq
+{ self: VectorsDslSeq =>
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeSeq[VectorCompanionAbs, VectorCompanionAbs] {
     lazy val selfType = element[VectorCompanionAbs]
     
@@ -209,7 +212,9 @@ trait VectorsSeq extends VectorsAbs with VectorsDsl with ScalanSeq { self: Vecto
     Some((p.nonZeroIndices, p.nonZeroValues, p.length))
 }
 
-trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp {
+// Exp -----------------------------------
+trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
+{ self: VectorsDslExp =>
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeDef[VectorCompanionAbs, VectorCompanionAbs] {
     lazy val selfType = element[VectorCompanionAbs]
     override def mirror(t: Transformer) = this

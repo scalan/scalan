@@ -74,6 +74,12 @@ object ScalanAst {
       case Some(_) => true
       case None => false
     }
+
+    def isTupledFunc = self match {
+      case STraitCall("Rep", List(STpeFunc(STpeTuple(a1 :: a2 :: tail), _))) => true
+      case STpeFunc(STpeTuple(a1 :: a2 :: tail), _) => true
+      case _ => false
+    }
   }
 
   // SExpr universe --------------------------------------------------------------------------
@@ -231,7 +237,7 @@ object ScalanAst {
           val defaultBTImpl = SClassDef(
             name = entityImplName,
             tpeArgs = entity.tpeArgs,
-            args = List(SClassArg(false, false, true, "value", STraitCall("Rep", List(bt)), None)),
+            args = List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None)),
             implicitArgs = getImplicitArgs(entity),
             ancestors = List(STraitCall(entity.name, typeUseExprs)),
             body = List(

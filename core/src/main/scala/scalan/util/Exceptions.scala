@@ -14,7 +14,7 @@ trait Exceptions extends Base with BaseTypes { self: ExceptionsDsl =>
   }
   implicit def defaultExceptionValue = Default.defaultVal(new Throwable("default exception"))
 
-  abstract class SException(val value: Rep[Throwable]) extends SThrowable {
+  abstract class SException(val wrappedValueOfBaseType: Rep[Throwable]) extends SThrowable {
     def getMessage: Rep[String] =
       methodCallEx[String](self, this.getClass.getMethod("getMessage"), List())
   }

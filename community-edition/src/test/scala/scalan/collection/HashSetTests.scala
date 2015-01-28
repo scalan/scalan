@@ -24,6 +24,9 @@ class HashSetTests extends BaseTests { suite =>
     lazy val t6 = fun { (t: Rep[(HashSet[Int],Int)]) => {
       t._1.map(fun { x => x + t._2 })
     }}
+    lazy val t7 = fun { (t: Rep[(HashSet[Int],Int)]) => {
+      t._1.fold(t._2)(fun { x => x._1 + x._2 })
+    }}
 
   }
 
@@ -48,6 +51,7 @@ class HashSetTests extends BaseTests { suite =>
     ctx.emit("t4", ctx.t4)
     ctx.emit("t5", ctx.t5)
     ctx.emit("t6", ctx.t6)
+    ctx.emit("t7", ctx.t7)
   }
 
   test("simpleHashsetSeq") {
@@ -71,6 +75,10 @@ class HashSetTests extends BaseTests { suite =>
     {
       val res = ctx.t4(HashSet(10, 20, 30))
       assertResult(HashSet(11, 21, 31))(res)
+    }
+    {
+      val res = ctx.t7((HashSet(10, 20, 30),0))
+      assertResult(60)(res)
     }
   }
 }
