@@ -2,6 +2,7 @@ package scalan
 
 import scalan.common.Default
 import scala.reflect.runtime.universe._
+import scalan.compilation.GraphVizExport
 
 /**
  * Created by slesarenko on 17/01/15.
@@ -40,11 +41,16 @@ trait BaseTypes extends Base { self: Scalan =>
    }
  }
 
-trait BaseTypesExp extends BaseTypes { scalan: ScalanExp =>
+trait BaseTypesExp extends BaseTypes with GraphVizExport { scalan: ScalanExp =>
   class ExpBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
                                   (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
     extends BaseElemEx[TBase, TExt](extE)
   {
 
+  }
+
+  override protected def nodeColor(sym: Exp[_]) = sym.elem match {
+    case _: BaseElemEx[_, _] => "blue"
+    case _ => super.nodeColor(sym)
   }
 }

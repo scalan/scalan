@@ -215,4 +215,9 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
     case ThunkDef(r, sch) => s"Thunk($r, [${sch.map(_.sym).mkString(",")}])"
     case _ => super.formatDef(d)
   }
+
+  override protected def nodeColor(sym: Exp[_]) = sym.elem match {
+    case _: ThunkElem[_] => "red"
+    case _ => super.nodeColor(sym)
+  }
 }
