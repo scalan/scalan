@@ -132,9 +132,10 @@ object ScalanAst {
     def selfType: Option[SSelfTypeDef]
     def companion: Option[STraitOrClassDef]
     def isTrait: Boolean
+    def isHighKind = tpeArgs.exists(_.isHighKind)
 
     def getMethodsWithAnnotation(a: MethodAnnotation) = body.collect {
-      case md: SMethodDef if md.external.fold(false)(_ == a)  => md
+      case md: SMethodDef if md.external.fold(false)(_ == a) => md
     }
 
   }
