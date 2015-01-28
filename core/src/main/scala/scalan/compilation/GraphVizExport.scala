@@ -59,8 +59,6 @@ trait GraphVizExport { self: ScalanExp =>
     stream.println(nodeLabel(sym.toStringWithType + " =", formatDef(rhs)))
     stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${quote(sym.toStringWithType)}")
     stream.println("]")
-
-    emitDeps(sym, rhs)
   }
 
   protected def formatDef(d: Def[_]): String = d match {
@@ -110,7 +108,7 @@ trait GraphVizExport { self: ScalanExp =>
     emitDepGraph(List(start), file)(orientation)
   def emitDepGraph(ss: Seq[Exp[_]], file: File)(implicit orientation: Orientation): Unit =
     FileUtil.withFile(file) {
-      emitDepGraph(ss, _)(orientation)
+      emitDepGraph(ss)(_, orientation)
     }
   // this can be made the main method in the future
   // to avoid potential inconsistencies in schedules
@@ -170,7 +168,7 @@ trait GraphVizExport { self: ScalanExp =>
     }
   }
 
-  private def emitDepGraph(ss: Seq[Exp[_]], stream: PrintWriter)(implicit orientation: Orientation): Unit = {
+  private def emitDepGraph(ss: Seq[Exp[_]])(implicit stream: PrintWriter, orientation: Orientation): Unit = {
     stream.println("digraph G {")
 
     val deflist = buildScheduleForResult(ss, dep)
@@ -187,6 +185,10 @@ trait GraphVizExport { self: ScalanExp =>
     val deflist1 = deflist.filterNot(tp => lambdaBodies.contains(tp.sym))
 
     emitClusters(deflist1, Set.empty)(stream)
+
+    deflist1.foreach {
+      case TableEntry(sym, rhs) => emitDeps(sym, rhs)
+    }
 
     stream.println("}")
     stream.close()
