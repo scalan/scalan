@@ -22,8 +22,9 @@ class PrimitivesExamplesSuite extends BaseShouldTests {
     val ctx = new ScalanCtxExp with PrimitiveExamples with GraphVizExport {
       override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
-    val f = ctx.getStagedFunc(name)
-    ctx.emitDepGraph(f, new File(s"test-out/scalan/primitives/$name.dot"), false)
+    import ctx._
+    val f = getStagedFunc(name)
+    emitDepGraph(f, new File(s"test-out/scalan/primitives/$name.dot"))
   }
 
   val whenStaged = "when staged"
