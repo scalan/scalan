@@ -74,12 +74,11 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     lazy val scheduleFromProjections =
       buildScheduleForResult(roots, s => if (isLambdaBoundProjection(s)) Nil else s.getDeps)
 
-    lazy val scheduleAll: Schedule = {
-      schedule.flatMap(tp => tp match {
-        case TableEntry(s, lam: Lambda[_, _]) => lam.scheduleAll :+ tp
-        case _ => List(tp)
-      })
-    }
+    lazy val scheduleAll: Schedule =
+      schedule.flatMap {
+        case tp @ TableEntry(_, subgraph: AstGraph) => subgraph.scheduleAll :+ tp
+        case tp => List(tp)
+      }
 
     /**
      * Returns definitions which are not assigned to sub-branches

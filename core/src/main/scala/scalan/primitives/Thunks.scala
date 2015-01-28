@@ -72,7 +72,7 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
             (this.schedule equals that.schedule)
         case _ => false
       }
-    override def toString = s"Th($root, [${schedule.map(_.sym).mkString(",")}])"
+    override def toString = s"Th($root, [${scheduleSyms.mkString(",")}])"
     def canEqual(other: Any) = other.isInstanceOf[ThunkDef[_]]
 
     // Product implementation
