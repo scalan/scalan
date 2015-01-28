@@ -13,10 +13,10 @@ trait AbstractStrings extends Base with BaseTypes { self: AbstractStringsDsl =>
   }
   implicit def defaultAStringElem: Elem[AString] = element[SString].asElem[AString]
 
-  abstract class SString(val value: Rep[String]) extends AString
+  abstract class SString(val wrappedValueOfBaseType: Rep[String]) extends AString
   trait SStringCompanion
 
-  abstract class CString(val value: Rep[String]) extends AString
+  abstract class CString(val wrappedValueOfBaseType: Rep[String]) extends AString
   trait CStringCompanion
 }
 

@@ -9,6 +9,7 @@ class BoilerplateTool {
   lazy val coreConfig = CodegenConfig(
     srcPath = "../core/src/main/scala",
     entityFiles = List(
+      "scalan/primitives/AbstractStrings.scala",
       "scalan/util/Exceptions.scala"
     ),
     seqContextTrait = "ScalanSeq",
@@ -45,20 +46,6 @@ class BoilerplateTool {
       , "scalan/collection/HashSets.scala"
       , "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
-    ),
-    seqContextTrait = "ScalanSeq",
-    stagedContextTrait = "ScalanExp",
-    extraImports = List(
-      "scala.reflect.runtime.universe._",
-      "scalan.common.Default"),
-    coreTestsTypeSynonyms ++ liteTypeSynonyms
-  )
-
-  lazy val abstractArraysConfig = CodegenConfig(
-    srcPath = "../core/src/main/scala",
-    entityFiles = List(
-      "scalan/arrays/AbstractArrays.scala",
-      "scalan/primitives/AbstractStrings.scala"
     ),
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
@@ -135,7 +122,6 @@ class BoilerplateTool {
     "ee-full" -> List(scalanFullConfig),
     "effects" -> List(effectsConfig),
     "ce-all" -> List(coreTestsConfig, coreConfig, liteConfig),
-    "absarr" -> List(abstractArraysConfig),
     "all" -> List(coreTestsConfig, liteConfig, scalanConfig)
   )
 
