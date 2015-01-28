@@ -132,8 +132,8 @@ trait GraphVizExport { self: ScalanExp =>
   }
 
   private def emitClusters(schedule: Schedule, emitted: Set[Exp[_]])(implicit stream: PrintWriter): Set[Exp[_]] = {
-    schedule.reverse.foldLeft(emitted) {
-      case (emitted1, TableEntry(s, d)) =>
+    schedule.foldRight(emitted) {
+      case (TableEntry(s, d), emitted1) =>
         if (!emitted1.contains(s)) {
           d match {
             case g: AstGraph if shouldEmitCluster(g) =>
