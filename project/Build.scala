@@ -47,6 +47,7 @@ object ScalanBuild extends Build {
 
   val commonSettings = Seq(
     scalaVersion := "2.10.4",
+    crossCompilation,
     organization := "com.huawei.scalan",
     publishTo := {
       val nexus = "http://10.122.85.37:9081/nexus/"
@@ -70,7 +71,8 @@ object ScalanBuild extends Build {
       p.configs(ItTest, PerfTest).settings(commonSettings: _*)
   }
 
-  lazy val common = project.withTestConfigsAndCommonSettings
+  lazy val common = project.withTestConfigsAndCommonSettings.settings(crossCompilation)
+
 
   lazy val meta = project.dependsOn(common.allConfigDependency).withTestConfigsAndCommonSettings
     .settings(
@@ -107,13 +109,13 @@ object ScalanBuild extends Build {
         "org.scala-lang.virtualized" % "scala-compiler" % virtScala),
       scalaOrganization := "org.scala-lang.virtualized",
       scalaVersion := virtScala,
+      crossScalaVersions := Seq(virtScala),
       // we know we use LMS snapshot here, ignore it
       ReleaseKeys.snapshotDependencies := Seq.empty)
 
   // name to make this the default project
   lazy val root = Project("scalan", file("."))
-    .aggregate(common, meta, core, ce)
+    .aggregate(common, meta, core, ce, lmsBackend)
     .withTestConfigsAndCommonSettings
-    .settings(crossCompilation)
     .settings(publishArtifact := false)
 }
