@@ -66,7 +66,7 @@ class JNIExtractorTests extends BaseTests {
     override def shouldUnpack(e: ViewElem[_, _]) = true
     def subfolder: String
     def emit(name: String, ss: Exp[_]*) =
-      emitDepGraph(ss.toList, new File(prefix + subfolder, s"/$name.dot"), false)
+      emitDepGraph(ss.toList, new File(prefix + subfolder, s"/$name.dot"))
   }
 
   test("simple") {
