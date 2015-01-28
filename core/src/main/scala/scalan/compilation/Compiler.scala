@@ -25,7 +25,7 @@ trait Compiler extends BaseExp with Passes {
     val g0 = buildInitialGraph(func)(config)
     if (emitGraphs) {
       val dotFile = new File(sourcesDir, s"$functionName.dot")
-      emitDepGraph(func, dotFile, false)
+      emitDepGraph(g0, dotFile, false)
     }
 
     val passes = graphPasses(config)
@@ -39,7 +39,7 @@ trait Compiler extends BaseExp with Passes {
       if (emitGraphs) {
         val indexStr = (index + 1).toString
         val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"
-        emitDepGraph(graph1.roots, new File(sourcesDir, dotFileName), false)
+        emitDepGraph(graph1, new File(sourcesDir, dotFileName), false)
       }
 
       graph1

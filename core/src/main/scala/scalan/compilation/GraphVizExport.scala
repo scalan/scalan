@@ -103,10 +103,15 @@ trait GraphVizExport { self: ScalanExp =>
     emitDepGraph(dep(d), file, landscape)
   def emitDepGraph(start: Exp[_], file: File, landscape: Boolean = false): Unit =
     emitDepGraph(List(start), file, landscape)
-  def emitDepGraph(ss: List[Exp[_]], file: File, landscape: Boolean): Unit =
+  def emitDepGraph(ss: Seq[Exp[_]], file: File, landscape: Boolean): Unit =
     FileUtil.withFile(file) {
       emitDepGraph(ss, _, landscape)
     }
+  // this can be made the main method in the future
+  // to avoid potential inconsistencies in schedules
+  // or to add information accessible from the graph
+  def emitDepGraph(graph: AstGraph, file: File, landscape: Boolean): Unit =
+    emitDepGraph(graph.roots, file, landscape)
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
     case Def(l1: Lambda[_, _]) =>
@@ -160,7 +165,7 @@ trait GraphVizExport { self: ScalanExp =>
     }
   }
 
-  private def emitDepGraph(ss: List[Exp[_]], stream: PrintWriter, landscape: Boolean): Unit = {
+  private def emitDepGraph(ss: Seq[Exp[_]], stream: PrintWriter, landscape: Boolean): Unit = {
     stream.println("digraph G {")
 
     val deflist = buildScheduleForResult(ss, dep)
