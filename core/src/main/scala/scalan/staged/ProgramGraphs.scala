@@ -19,7 +19,7 @@ trait ProgramGraphs extends AstGraphs { self: ScalanExp =>
 
     def transform(m: Mirror[Ctx], rw: Rewriter, t: Ctx): ProgramGraph[Ctx] = {
       val t0 = t merge mapping
-      val (t1, _) = m.mirrorSymbols(t0, rw, schedule map { _.sym })
+      val (t1, _) = m.mirrorSymbols(t0, rw, scheduleSyms)
       val newRoots = roots map { t1(_) }
       new ProgramGraph(newRoots, t1)
     }
