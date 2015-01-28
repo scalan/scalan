@@ -109,24 +109,35 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => (dep(l.y), List(l.x))
   }
 
+  protected def clusterColor(g: AstGraph) = g match {
+    case _: Lambda[_, _] => "#FFCCFF"
+    case _: ThunkDef[_] => "#FFCCCC"
+    case _ => "lightgray"
+  }
+
+  protected def clusterSchedule(g: AstGraph) = g match {
+    case lam: Lambda[_, _] => lam.schedule.filter(_.sym != lam.y)
+    case _ => g.schedule
+  }
+
+  protected def shouldEmitCluster(g: AstGraph) = g match {
+    case lam: Lambda[_, _] => !lam.isIdentity
+    case _ => true
+  }
+
   private def emitClusters(schedule: Schedule, listNodes: Boolean, stream: PrintWriter, emitted: Set[Exp[_]]): Set[Exp[_]] = {
     schedule.reverse.foldLeft(emitted) {
       case (emitted1, TableEntry(s, d)) =>
         if (!emitted1.contains(s)) {
           d match {
-            case lam: Lambda[_, _] if !lam.isIdentity =>
+            case g: AstGraph if shouldEmitCluster(g) =>
               stream.println(s"subgraph cluster_$s {")
-              stream.println("style=dashed; color=\"#FFCCFF\"")
-              stream.println(s"{rank=source; ${lam.x}}")
-              val schedule1 = lam.schedule.filter(_.sym != lam.y)
-              val emitted2 = emitClusters(schedule1, true, stream, emitted1 + s)
-              stream.println(s"{rank=sink; $s}")
-              stream.println("}")
-              emitted2
-            case thunk: ThunkDef[_] =>
-              stream.println(s"subgraph cluster_$s {")
-              stream.println("style=dashed; color=\"#FFCCCC\"")
-              val schedule1 = thunk.schedule
+              stream.println(s"style=dashed; color=${quote(clusterColor(g))}")
+              val sources = g.boundVars
+              if (sources.nonEmpty) {
+                stream.println(s"{rank=source; ${sources.mkString("; ")}}")
+              }
+              val schedule1 = clusterSchedule(g)
               val emitted2 = emitClusters(schedule1, true, stream, emitted1 + s)
               stream.println(s"{rank=sink; $s}")
               stream.println("}")
