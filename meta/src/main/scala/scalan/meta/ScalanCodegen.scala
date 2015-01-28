@@ -148,7 +148,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       s"(${sec.args.rep(a => s"${a.name}: ${a.tpe}")})"
     }
     def methodArgsUse(sec: SMethodArgs) = {
-      s"(${sec.args.rep(a => s"${a.name}")})"
+      s"(${sec.args.rep(a => if (a.tpe.isTupledFunc) s"scala.Function.untupled(${a.name})" else s"${a.name}")})"
     }
 
     def externalMethod(md: SMethodDef) = {
@@ -196,7 +196,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val typesUse = getTpeArgUseString(md.tpeArgs)
       s"""
         |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
-        |      ${if (isInstance) "value" else entityNameBT}.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")}
+        |      ${if (isInstance) "wrappedValueOfBaseType" else entityNameBT}.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")}
         |""".stripMargin
     }
 
@@ -289,7 +289,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
           if (className != s"${entityName}Impl") ""
           else {
             s"""
-            |  abstract class ${entityName}Impl${typesDecl}(val value: Rep[${entityNameBT}${typesUse}])${implicitArgsWithVals} extends ${entityName}${typesUse} {
+            |  abstract class ${entityName}Impl${typesDecl}(val wrappedValueOfBaseType: Rep[${entityNameBT}${typesUse}])${implicitArgsWithVals} extends ${entityName}${typesUse} {
             |    $externalMethodsStr
             |  }
             |  trait ${entityName}ImplCompanion
@@ -364,6 +364,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       }
 
       s"""
+       |// Abs -----------------------------------
        |trait ${module.name}Abs extends Scalan with ${module.name}
        |{ ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
        |$proxy
@@ -491,7 +492,9 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       }
 
       s"""
-       |trait ${module.name}Seq extends ${module.name}Abs with ${module.name}Dsl with ${config.seqContextTrait} { self: ${module.name}DslSeq =>
+       |// Seq -----------------------------------
+       |trait ${module.name}Seq extends ${module.name}Abs with ${module.name}Dsl with ${config.seqContextTrait}
+       |{ ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    $companionMethods
@@ -514,7 +517,9 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val concreteClassesString = module.concreteSClasses.map(getSClassExp)
       
       s"""
-       |trait ${module.name}Exp extends ${module.name}Abs with ${module.name}Dsl with ${config.stagedContextTrait} {
+       |// Exp -----------------------------------
+       |trait ${module.name}Exp extends ${module.name}Abs with ${module.name}Dsl with ${config.stagedContextTrait}
+       |{ ${module.selfType.opt(t => s"self: ${t.tpe}Exp =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this

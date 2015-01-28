@@ -120,6 +120,7 @@ class BoilerplateTool {
     "ee" -> List(scalanConfig),
     "ee-full" -> List(scalanFullConfig),
     "effects" -> List(effectsConfig),
+    "ce-all" -> List(coreTestsConfig, coreConfig, liteConfig),
     "all" -> List(coreTestsConfig, liteConfig, scalanConfig)
   )
 

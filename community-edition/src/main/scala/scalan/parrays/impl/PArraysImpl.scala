@@ -9,6 +9,7 @@ import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
+// Abs -----------------------------------
 trait PArraysAbs extends Scalan with PArrays
 { self: PArraysDsl =>
   // single proxy for each type family
@@ -282,7 +283,9 @@ trait PArraysAbs extends Scalan with PArrays
   def unmkNestedArray[A:Elem](p: Rep[NestedArray[A]]): Option[(Rep[PArray[A]], Rep[PArray[(Int,Int)]])]
 }
 
-trait PArraysSeq extends PArraysAbs with PArraysDsl with ScalanSeq { self: PArraysDslSeq =>
+// Seq -----------------------------------
+trait PArraysSeq extends PArraysAbs with PArraysDsl with ScalanSeq
+{ self: PArraysDslSeq =>
   lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeSeq[PArrayCompanionAbs, PArrayCompanionAbs] {
     lazy val selfType = element[PArrayCompanionAbs]
     
@@ -365,7 +368,9 @@ trait PArraysSeq extends PArraysAbs with PArraysDsl with ScalanSeq { self: PArra
     Some((p.values, p.segments))
 }
 
-trait PArraysExp extends PArraysAbs with PArraysDsl with ScalanExp {
+// Exp -----------------------------------
+trait PArraysExp extends PArraysAbs with PArraysDsl with ScalanExp
+{ self: PArraysDslExp =>
   lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeDef[PArrayCompanionAbs, PArrayCompanionAbs] {
     lazy val selfType = element[PArrayCompanionAbs]
     override def mirror(t: Transformer) = this
