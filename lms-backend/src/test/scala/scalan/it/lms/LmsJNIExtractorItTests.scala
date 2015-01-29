@@ -50,7 +50,7 @@ class LmsJNIExtractorItTests extends BaseTests {
     ctx.generate("sdmvm", ctx.sdmvm)
   }
 
-  test("simpleBuildExecutable") {
+  ignore("simpleBuildExecutable") { //TODO: automate executable building
     val ctx = new ScalanCtxExp with ProgExp with FirstProg {
       override def subfolder: String = super.subfolder + "-build"
 
@@ -66,7 +66,7 @@ class LmsJNIExtractorItTests extends BaseTests {
     ctx.buildExecutable("extractDouble", ctx.extractDouble)
   }
 
-  test("simpleExecute") {
+  ignore("simpleExecute") { //TODO: automate execution
     val ctx = new ScalanCtxExp with ProgExp with FirstProg {
       override def subfolder: String = "release"
 
