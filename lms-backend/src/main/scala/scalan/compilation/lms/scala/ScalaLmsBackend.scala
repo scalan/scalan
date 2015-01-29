@@ -7,7 +7,7 @@ import scalan.compilation.lms.common.{ScalaGenEitherOps, ScalaGenVectorOps}
 
 class CoreScalaLmsBackend extends CoreLmsBackend { self =>
 
-  trait Codegen extends ScalaGenEffect with ScalaGenStruct with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
+  trait Codegen extends ScalaGenFunctions with ScalaGenStruct with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
   with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenEitherOps with ScalaGenOrderingOps with ScalaGenBooleanOps
   with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
   with ScalaGenCastingOps {
