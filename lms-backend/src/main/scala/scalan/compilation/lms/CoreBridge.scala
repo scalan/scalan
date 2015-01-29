@@ -45,8 +45,9 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
         import scalan.SumElemExtensions
         (scalan.createManifest(d.selfType.eLeft), scalan.createManifest(d.selfType.eRight)) match {
           case (mA: Manifest[a], mB: Manifest[b]) =>
+            implicit val (imA, imB) = (mA, mB)
             val left = symMirr(l).asInstanceOf[lms.Exp[a]]
-            val exp = lms.sumLeft[a, b](left)(mA, mB)
+            val exp = lms.make_left[a, b](left)
             (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
         }
 
@@ -54,8 +55,42 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
         import scalan.SumElemExtensions
         (scalan.createManifest(d.selfType.eLeft), scalan.createManifest(d.selfType.eRight)) match {
           case (mA: Manifest[a], mB: Manifest[b]) =>
+            implicit val (imA, imB) = (mA, mB)
             val right = symMirr(r).asInstanceOf[lms.Exp[b]]
-            val exp = lms.sumRight[a, b](right)(mA, mB)
+            val exp = lms.make_right[a, b](right)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case scalan.IsLeft(s) =>
+        import scalan.SumElemExtensions
+        (scalan.createManifest(s.elem.eLeft), scalan.createManifest(s.elem.eRight)) match {
+          case (mA: Manifest[a], mB: Manifest[b]) =>
+            implicit val (imA, imB) = (mA, mB)
+            val sum = symMirr(s).asInstanceOf[lms.Exp[Either[a, b]]]
+            val exp = lms.make_isLeft(sum)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case scalan.IsRight(s) =>
+        import scalan.SumElemExtensions
+        (scalan.createManifest(s.elem.eLeft), scalan.createManifest(s.elem.eRight)) match {
+          case (mA: Manifest[a], mB: Manifest[b]) =>
+            implicit val (imA, imB) = (mA, mB)
+            val sum = symMirr(s).asInstanceOf[lms.Exp[Either[a, b]]]
+            val exp = lms.make_isRight(sum)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case scalan.SumFold(s, l, r) =>
+        import scalan.SumElemExtensions
+        import scalan.FuncElemExtensions
+        (scalan.createManifest(s.elem.eLeft), scalan.createManifest(s.elem.eRight), scalan.createManifest(l.elem.eRange)) match {
+          case (mA: Manifest[a], mB: Manifest[b], mR: Manifest[r]) =>
+            implicit val (imA, imB, imR) = (mA, mB, mR)
+            val sum = symMirr(s).asInstanceOf[lms.Exp[Either[a, b]]]
+            val left = symMirr(l).asInstanceOf[lms.Exp[a => r]]
+            val right = symMirr(r).asInstanceOf[lms.Exp[b => r]]
+            val exp = lms.make_fold(sum, left, right)
             (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
         }
 
