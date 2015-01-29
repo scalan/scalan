@@ -160,8 +160,22 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
                 lms.Max[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
               case scalan.OrderingMin(ord) =>
                 lms.Min[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
+              case scalan.And =>
+                lms.infix_&&(arg1_.asInstanceOf[lms.Exp[Boolean]], arg2_.asInstanceOf[lms.Exp[Boolean]])
+              case scalan.Or =>
+                lms.infix_||(arg1_.asInstanceOf[lms.Exp[Boolean]], arg2_.asInstanceOf[lms.Exp[Boolean]])
             }
-            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case scalan.ApplyUnOp(op, arg) =>
+        scalan.createManifest(arg.elem) match {
+          case mA: Manifest[a] =>
+            val x = symMirr(arg).asInstanceOf[lms.Exp[a]]
+            val exp = op.asInstanceOf[scalan.UnOp[a, _]] match {
+              case scalan.Not => lms.infix_unary_!(x.asInstanceOf[lms.Exp[Boolean]])
+            }
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
         }
 
       case scalan.Semicolon(left, right) => {

@@ -82,6 +82,12 @@ abstract class SmokeItTests extends BaseItTests {
       toRightSum[Unit, Int => Boolean](f)
     }
 
+    lazy val logicalOps = fun2 { (x: Rep[Boolean], y: Rep[Boolean]) =>
+      val a = !x && y
+      val b = x || !y
+      (a, b)
+    }
+
 //    lazy val simpleMap = fun {x: PA[Int] =>
 //      x.map(y => y + 1)
 //    }

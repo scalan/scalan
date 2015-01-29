@@ -71,4 +71,8 @@ class LmsSmokeItTests extends SmokeItTests {
     val in = 7
     getStagedOutput(progStaged)(progStaged.lambdaConst, "lambdaConst", in).isInstanceOf[Right[_, _]]
   }
+  test("logicalOps") {
+    val in = (true, false)
+    compareOutputWithSequential(progStaged)(progSeq.logicalOps, progStaged.logicalOps, "logicalOps", in)
+  }
 }
