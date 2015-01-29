@@ -239,7 +239,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
       // TODO the globalMutableSyms part was added later (June 2012) -- make sure it does the right thing
       if ((es contains x) || (globalMutableSyms contains x)) Nil
       else readSyms(x)
-    case s: Exp[Any] => List(s)
+    case s: Exp[_] => List(s)
     case p: Product => p.productIterator.toList.flatMap(readSyms(_))
     case _ => Nil
   }
@@ -278,7 +278,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
   def aliasSyms(e: Any): List[Exp[Any]] = e match {
     case Reflect(x, u, es) => aliasSyms(x)
     case Reify(x, u, es) => syms(x)
-    case s: Exp[Any] => List(s)
+    case s: Exp[_] => List(s)
     case p: Product => p.productIterator.toList.flatMap(aliasSyms(_))
     case _ => Nil
   }
@@ -286,7 +286,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
   def containSyms(e: Any): List[Exp[Any]] = e match {
     case Reflect(x, u, es) => containSyms(x)
     case Reify(x, u, es) => Nil
-    case s: Exp[Any] => Nil
+    case s: Exp[_] => Nil
     case p: Product => p.productIterator.toList.flatMap(containSyms(_))
     case _ => Nil
   }
@@ -294,7 +294,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
   def extractSyms(e: Any): List[Exp[Any]] = e match {
     case Reflect(x, u, es) => extractSyms(x)
     case Reify(x, u, es) => Nil
-    case s: Exp[Any] => Nil
+    case s: Exp[_] => Nil
     case p: Product => p.productIterator.toList.flatMap(extractSyms(_))
     case _ => Nil
   }
@@ -302,7 +302,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
   def copySyms(e: Any): List[Exp[Any]] = e match {
     case Reflect(x, u, es) => copySyms(x)
     case Reify(x, u, es) => Nil
-    case s: Exp[Any] => Nil
+    case s: Exp[_] => Nil
     case p: Product => p.productIterator.toList.flatMap(copySyms(_))
     case _ => Nil
   }

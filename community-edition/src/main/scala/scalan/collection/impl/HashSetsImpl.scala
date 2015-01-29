@@ -207,7 +207,7 @@ trait HashSetsExp extends HashSetsAbs with HashSetsDsl with ScalanExp
   object SHashSetMethods {
     object + {
       def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(elem, _*)) if receiver.elem.isInstanceOf[SHashSetElem[A, _, _] forSome {type A}] && method.getName == "$plus" =>
+        case MethodCall(receiver, method, Seq(elem, _*)) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "$plus" =>
           Some((receiver, elem)).asInstanceOf[Option[(Rep[SHashSet[A]], Rep[A]) forSome {type A}]]
         case _ => None
       }
@@ -219,7 +219,7 @@ trait HashSetsExp extends HashSetsAbs with HashSetsDsl with ScalanExp
 
     object map {
       def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A => B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*)) if receiver.elem.isInstanceOf[SHashSetElem[A, _, _] forSome {type A}] && method.getName == "map" =>
+        case MethodCall(receiver, method, Seq(f, _*)) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "map" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[SHashSet[A]], Rep[A => B]) forSome {type A; type B}]]
         case _ => None
       }
@@ -231,7 +231,7 @@ trait HashSetsExp extends HashSetsAbs with HashSetsDsl with ScalanExp
 
     object fold {
       def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A], Rep[((A,A)) => A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(z, f, _*)) if receiver.elem.isInstanceOf[SHashSetElem[A, _, _] forSome {type A}] && method.getName == "fold" =>
+        case MethodCall(receiver, method, Seq(z, f, _*)) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "fold" =>
           Some((receiver, z, f)).asInstanceOf[Option[(Rep[SHashSet[A]], Rep[A], Rep[((A,A)) => A]) forSome {type A}]]
         case _ => None
       }
