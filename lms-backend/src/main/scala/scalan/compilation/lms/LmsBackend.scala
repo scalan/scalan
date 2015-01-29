@@ -1,6 +1,6 @@
 package scalan.compilation.lms
 
-import scala.virtualization.lms.internal.GenericCodegen
+import virtualization.lms.internal.GenericCodegen
 import scalan.compilation.lms.common.{VectorOpsExp, ScalaGenVectorOps, ScalaGenEitherOps, EitherOpsExp}
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._

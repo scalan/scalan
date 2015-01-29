@@ -91,9 +91,9 @@ class CXXLmsSmokeItTests extends SmokeItTests {
   }
   test("test11simpleOptionOps") {
     val in = 7
-    val functionName = "simpleOptionOps"
+    val functionName = "optionOps"
     val dir = new File(new File("it-out", prefix), functionName)
-    progStaged.generate(dir, dir, functionName, progStaged.simpleOptionOps, true)(progStaged.defaultConfig)
+    progStaged.generate(dir, dir, functionName, progStaged.optionOps, true)(progStaged.defaultConfig)
 //    compareOutputWithSequential(progStaged)(progSeq.simpleOptionOps, progStaged.simpleOptionOps, "simpleOptionOps", in)
   }
 
