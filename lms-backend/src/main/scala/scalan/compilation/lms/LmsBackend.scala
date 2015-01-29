@@ -1,7 +1,7 @@
 package scalan.compilation.lms
 
-import scalan.compilation.lms.common.{VectorOpsExp, EitherOpsExp}
-import virtualization.lms.internal.GenericCodegen
+import scala.virtualization.lms.internal.GenericCodegen
+import scalan.compilation.lms.common.{VectorOpsExp, ScalaGenVectorOps, ScalaGenEitherOps, EitherOpsExp}
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
 
@@ -28,9 +28,6 @@ trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp wi
   def arrayLength[A:Manifest](a: Exp[Array[A]]): Exp[Int] = {
     a.length
   }
-
-  def sumLeft[A: Manifest, B: Manifest](a: Exp[A]): Exp[Either[A, B]] = make_left[A, B](a)
-  def sumRight[A: Manifest, B: Manifest](b: Exp[B]): Exp[Either[A, B]] = make_right[A, B](b)
   def tuple[A:Manifest, B:Manifest](a:Exp[A], b: Exp[B]): Exp[(A,B)] = (a, b)
   def first[A:Manifest, B:Manifest](tup: Exp[(A,B)]): Exp[A] = {
     tup._1
