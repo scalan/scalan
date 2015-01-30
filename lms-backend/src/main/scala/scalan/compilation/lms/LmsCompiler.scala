@@ -7,7 +7,7 @@ import java.net.URLClassLoader
 
 import scalan.util.{FileUtil, ProcessUtil}
 
-trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
+trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
 
   case class Config(extraCompilerOptions: Seq[String])
 
@@ -78,6 +78,8 @@ trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
       Manifest.classType(classOf[_ => _], createManifest(el.eDom), createManifest(el.eRange))
     case el: ArrayElem[_] =>
       Manifest.arrayType(createManifest(el.eItem))
+    case el: ListElem[_] ⇒
+      Manifest.classType(classOf[List[_]], createManifest(el.eItem))
     case el => ???(s"Don't know how to create manifest for $el")
   }
 
