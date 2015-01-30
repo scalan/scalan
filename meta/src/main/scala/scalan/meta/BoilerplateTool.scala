@@ -46,8 +46,6 @@ class BoilerplateTool {
       , "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
       , "scalan/collections/MultiMap.scala"
-      , "scalan/sql/Sql.scala"
-      , "scalan/sql/Tables.scala"
     ),
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
