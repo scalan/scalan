@@ -23,11 +23,11 @@ trait StringOps extends UnBinOps { self: Scalan =>
   case class StringToInt() extends UnOp[String, Int]("toInt", _.toInt)
   case class StringToDouble() extends UnOp[String, Double]("toDouble", _.toDouble)
 
-  case class StringConcat extends EndoBinOp[String]("+", _ + _)
-  case class StringContains extends BinOp[String, Boolean]("contains", _.contains(_))
-  case class StringStartsWith extends BinOp[String, Boolean]("startsWith", _.startsWith(_))
-  case class StringEndsWith extends BinOp[String, Boolean]("endsWith", _.endsWith(_))
-  case class StringMatches extends BinOp[String, Boolean]("matches", _.matches(_))
+  case class StringConcat() extends EndoBinOp[String]("+", _ + _)
+  case class StringContains() extends BinOp[String, Boolean]("contains", _.contains(_))
+  case class StringStartsWith() extends BinOp[String, Boolean]("startsWith", _.startsWith(_))
+  case class StringEndsWith() extends BinOp[String, Boolean]("endsWith", _.endsWith(_))
+  case class StringMatches() extends BinOp[String, Boolean]("matches", _.matches(_))
 }
 
 
