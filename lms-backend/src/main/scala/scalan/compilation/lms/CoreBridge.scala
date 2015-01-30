@@ -1,10 +1,12 @@
 package scalan
 package compilation.lms
 
+import scalan.collection.ListOpsExp
+
 trait CoreBridge[A, B] extends LmsBridge[A, B] {
 
   // `LmsCompiler` mixed just to provide `createManifest` function
-  val scalan: ScalanExp with LmsCompiler
+  val scalan: ScalanExp with ListOpsExp with LmsCompiler
   val lms: CoreLmsBackend
 
   override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) =
@@ -300,6 +302,48 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
             val lmsStride = symMirr(stride).asInstanceOf[lms.Exp[Int]]
             val exp = lms.strideArray(lmsXs, lmsStart, lmsLength, lmsStride)(mA)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case scalan.ListHead(xs) =>
+        import scalan.extendListElement
+        scalan.createManifest(xs.elem.eItem) match {
+          case mA: Manifest[a] =>
+            implicit val imA = mA
+            val ls = symMirr(xs).asInstanceOf[lms.Exp[List[a]]]
+            val exp = lms.list_head[a](ls)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case scalan.ListTail(xs) =>
+        import scalan.extendListElement
+        scalan.createManifest(xs.elem.eItem) match {
+          case mA: Manifest[a] =>
+            implicit val imA = mA
+            val ls = symMirr(xs).asInstanceOf[lms.Exp[List[a]]]
+            val exp = lms.list_tail[a](ls)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case scalan.ListCons(x, xs) ⇒
+        import scalan.extendListElement
+        scalan.createManifest(xs.elem.eItem) match {
+          case mA: Manifest[a] ⇒
+            implicit val imA = mA
+            val l = symMirr(x).asInstanceOf[lms.Exp[a]]
+            val ls = symMirr(xs).asInstanceOf[lms.Exp[List[a]]]
+            val exp = lms.list_prepend[a](ls, l)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case scalan.ListConcat(xs, ys) =>
+        import scalan.extendListElement
+        scalan.createManifest(xs.elem.eItem) match {
+          case mA: Manifest[a] =>
+            implicit val imA = mA
+            val ls = symMirr(xs).asInstanceOf[lms.Exp[List[a]]]
+            val ks = symMirr(ys).asInstanceOf[lms.Exp[List[a]]]
+            val exp = lms.list_concat[a](ls, ks)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
         }
     }
 
