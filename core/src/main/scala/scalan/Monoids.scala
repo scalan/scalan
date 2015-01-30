@@ -8,6 +8,8 @@ trait Monoids { self: Scalan =>
   object RepMonoid {
     def apply[A](opName: String, zero: A, isCommutative: Boolean)(append: (Rep[A], Rep[A]) => Rep[A])(implicit eA: Elem[A], d: DummyImplicit): RepMonoid[A] =
       new RepMonoid(opName, toRep(zero), fun { p: Rep[(A, A)] => append(p._1, p._2) }, isCommutative)
+    def apply[A](append: (Rep[A], Rep[A]) => Rep[A])(implicit eA: Elem[A], d: DummyImplicit): RepMonoid[A] =
+      new RepMonoid("anonymous", eA.defaultRepValue, fun { p: Rep[(A, A)] => append(p._1, p._2) }, true)
   }
 
   def repMonoid_toString[A](m: RepMonoid[A]) = s"Monoid[${m.eA.name}](${m.opName}, ${m.zero}, ${m.append})"

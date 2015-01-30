@@ -101,7 +101,7 @@ trait BaseExp extends Base { self: ScalanExp =>
     toExp(obj1, fresh[T](Lazy(obj1.selfType)))
   }
 
-  override def toRep[A](x: A)(implicit eA: Elem[A]) = eA match {
+  override def toRep[A](x: A)(implicit eA: Elem[A]):Rep[A] = eA match {
     case _: BaseElem[_] => Const(x)
     case _: FuncElem[_, _] => Const(x)
     case _: ArrayElem[_] => Const(x)

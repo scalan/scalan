@@ -14,6 +14,7 @@ trait Base extends LazyLogging { self: Scalan =>
   type IntRep = Rep[Int]
   type BoolRep = Rep[Boolean]
   type UnitRep = Rep[Unit]
+  type NothingRep = Rep[Nothing]
   type ByteRep = Rep[Byte]
   type ShortRep = Rep[Short]
   type CharRep = Rep[Char]
@@ -51,7 +52,7 @@ trait Base extends LazyLogging { self: Scalan =>
       // check that nodes correspond to same operation, have the same type, and the same arguments
       // alternative would be to include Elem fields into case class
       case other: Reifiable[_] =>
-        getClass == other.getClass && selfType == other.selfType &&
+        getClass == other.getClass && selfType.name == other.selfType.name &&
           productArity == other.productArity && {
           val len = productArity
           var i = 0

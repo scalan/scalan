@@ -4,6 +4,7 @@ package lms
 
 import java.io._
 import java.net.URLClassLoader
+import scalan.collections._
 
 import scalan.util.{FileUtil, ProcessUtil}
 
@@ -66,6 +67,7 @@ trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
     case ByteElement => Manifest.Byte
     case ShortElement => Manifest.Short
     case IntElement => Manifest.Int
+    case CharElement => Manifest.Char
     case LongElement => Manifest.Long
     case FloatElement => Manifest.Float
     case DoubleElement => Manifest.Double
@@ -78,6 +80,10 @@ trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
       Manifest.classType(classOf[_ => _], createManifest(el.eDom), createManifest(el.eRange))
     case el: ArrayElem[_] =>
       Manifest.arrayType(createManifest(el.eItem))
+    case el: ArrayBufferElem[_] =>
+      Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
+    case el: PMapElem[_,_] =>
+      Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
     case el => ???(s"Don't know how to create manifest for $el")
   }
 

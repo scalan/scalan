@@ -33,7 +33,9 @@ object FileUtil {
     }
   }
 
-  def write(file: File, text: String) = withFile(file) { _.print(text) }
+  def write(file: File, text: String):Unit = withFile(file) { _.print(text) }
+
+  def write(path: String, text: String):Unit = write(new File(path), text)
 
   def captureStdOutAndErr(func: => Unit): String = {
     val out = new ByteArrayOutputStream
