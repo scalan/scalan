@@ -316,7 +316,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     }
 
 
-    case ArrayFold(xs : Rep[Array[t]], HasViews(init, iso: Iso[a, b]), step) =>
+    case ArrayFold(xs: Rep[Array[t]] @unchecked, HasViews(init, iso: Iso[a, b]), step) =>
       val init1 = init.asRep[a]
       implicit val eT = xs.elem.asElem[Array[t]].eItem
       implicit val eA = iso.eFrom

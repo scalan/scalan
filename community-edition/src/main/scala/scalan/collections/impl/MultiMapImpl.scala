@@ -20,8 +20,7 @@ trait MultiMapsAbs extends Scalan with MultiMaps
   trait MultiMapCompanionElem extends CompanionElem[MultiMapCompanionAbs]
   implicit lazy val MultiMapCompanionElem: MultiMapCompanionElem = new MultiMapCompanionElem {
     lazy val tag = typeTag[MultiMapCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(MultiMap)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = MultiMap
   }
 
   abstract class MultiMapCompanionAbs extends CompanionBase[MultiMapCompanionAbs] with MultiMapCompanion {
@@ -74,8 +73,7 @@ trait MultiMapsAbs extends Scalan with MultiMaps
 
   class HashMultiMapCompanionElem extends CompanionElem[HashMultiMapCompanionAbs] {
     lazy val tag = typeTag[HashMultiMapCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(HashMultiMap)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = HashMultiMap
   }
   implicit lazy val HashMultiMapCompanionElem: HashMultiMapCompanionElem = new HashMultiMapCompanionElem
 
@@ -152,7 +150,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
   object HashMultiMapMethods {
     object union {
       def unapply(d: Def[_]): Option[(Rep[HashMultiMap[K, V]], Rep[MultiMap[K,V]]) forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, Seq(that, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[K, V] forSome {type K; type V}] && method.getName == "union" =>
+        case MethodCall(receiver, method, Seq(that, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "union" =>
           Some((receiver, that)).asInstanceOf[Option[(Rep[HashMultiMap[K, V]], Rep[MultiMap[K,V]]) forSome {type K; type V}]]
         case _ => None
       }
@@ -164,7 +162,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object toMap {
       def unapply(d: Def[_]): Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[HashMultiMapElem[K, V] forSome {type K; type V}] && method.getName == "toMap" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "toMap" =>
           Some(receiver).asInstanceOf[Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}]]
         case _ => None
       }
@@ -176,7 +174,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object contains {
       def unapply(d: Def[_]): Option[(Rep[HashMultiMap[K, V]], Rep[K]) forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, Seq(key, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[K, V] forSome {type K; type V}] && method.getName == "contains" =>
+        case MethodCall(receiver, method, Seq(key, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "contains" =>
           Some((receiver, key)).asInstanceOf[Option[(Rep[HashMultiMap[K, V]], Rep[K]) forSome {type K; type V}]]
         case _ => None
       }
@@ -188,7 +186,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[HashMultiMap[K, V]], Rep[K]) forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, Seq(key, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[K, V] forSome {type K; type V}] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(key, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "apply" =>
           Some((receiver, key)).asInstanceOf[Option[(Rep[HashMultiMap[K, V]], Rep[K]) forSome {type K; type V}]]
         case _ => None
       }
@@ -202,7 +200,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object add {
       def unapply(d: Def[_]): Option[(Rep[HashMultiMap[K, V]], Rep[K], Rep[V]) forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, Seq(key, value, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[K, V] forSome {type K; type V}] && method.getName == "add" =>
+        case MethodCall(receiver, method, Seq(key, value, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "add" =>
           Some((receiver, key, value)).asInstanceOf[Option[(Rep[HashMultiMap[K, V]], Rep[K], Rep[V]) forSome {type K; type V}]]
         case _ => None
       }
@@ -214,7 +212,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object addAll {
       def unapply(d: Def[_]): Option[(Rep[HashMultiMap[K, V]], Rep[K], Rep[ArrayBuffer[V]]) forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, Seq(key, value, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[K, V] forSome {type K; type V}] && method.getName == "addAll" =>
+        case MethodCall(receiver, method, Seq(key, value, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "addAll" =>
           Some((receiver, key, value)).asInstanceOf[Option[(Rep[HashMultiMap[K, V]], Rep[K], Rep[ArrayBuffer[V]]) forSome {type K; type V}]]
         case _ => None
       }
@@ -234,7 +232,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object size {
       def unapply(d: Def[_]): Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[HashMultiMapElem[K, V] forSome {type K; type V}] && method.getName == "size" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "size" =>
           Some(receiver).asInstanceOf[Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}]]
         case _ => None
       }
@@ -304,7 +302,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
   object MultiMapMethods {
     object union {
       def unapply(d: Def[_]): Option[(Rep[MultiMap[K, V]], Rep[MultiMap[K,V]]) forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, Seq(that, _*)) if receiver.elem.isInstanceOf[MultiMapElem[K, V, _, _] forSome {type K; type V}] && method.getName == "union" =>
+        case MethodCall(receiver, method, Seq(that, _*)) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "union" =>
           Some((receiver, that)).asInstanceOf[Option[(Rep[MultiMap[K, V]], Rep[MultiMap[K,V]]) forSome {type K; type V}]]
         case _ => None
       }
@@ -316,7 +314,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object isEmpty {
       def unapply(d: Def[_]): Option[Rep[MultiMap[K, V]] forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MultiMapElem[K, V, _, _] forSome {type K; type V}] && method.getName == "isEmpty" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "isEmpty" =>
           Some(receiver).asInstanceOf[Option[Rep[MultiMap[K, V]] forSome {type K; type V}]]
         case _ => None
       }
@@ -328,7 +326,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object contains {
       def unapply(d: Def[_]): Option[(Rep[MultiMap[K, V]], Rep[K]) forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, Seq(key, _*)) if receiver.elem.isInstanceOf[MultiMapElem[K, V, _, _] forSome {type K; type V}] && method.getName == "contains" =>
+        case MethodCall(receiver, method, Seq(key, _*)) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "contains" =>
           Some((receiver, key)).asInstanceOf[Option[(Rep[MultiMap[K, V]], Rep[K]) forSome {type K; type V}]]
         case _ => None
       }
@@ -340,7 +338,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[MultiMap[K, V]], Rep[K]) forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, Seq(key, _*)) if receiver.elem.isInstanceOf[MultiMapElem[K, V, _, _] forSome {type K; type V}] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(key, _*)) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "apply" =>
           Some((receiver, key)).asInstanceOf[Option[(Rep[MultiMap[K, V]], Rep[K]) forSome {type K; type V}]]
         case _ => None
       }
@@ -354,7 +352,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object add {
       def unapply(d: Def[_]): Option[(Rep[MultiMap[K, V]], Rep[K], Rep[V]) forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, Seq(key, value, _*)) if receiver.elem.isInstanceOf[MultiMapElem[K, V, _, _] forSome {type K; type V}] && method.getName == "add" =>
+        case MethodCall(receiver, method, Seq(key, value, _*)) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "add" =>
           Some((receiver, key, value)).asInstanceOf[Option[(Rep[MultiMap[K, V]], Rep[K], Rep[V]) forSome {type K; type V}]]
         case _ => None
       }
@@ -366,7 +364,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object addAll {
       def unapply(d: Def[_]): Option[(Rep[MultiMap[K, V]], Rep[K], Rep[ArrayBuffer[V]]) forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, Seq(key, value, _*)) if receiver.elem.isInstanceOf[MultiMapElem[K, V, _, _] forSome {type K; type V}] && method.getName == "addAll" =>
+        case MethodCall(receiver, method, Seq(key, value, _*)) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "addAll" =>
           Some((receiver, key, value)).asInstanceOf[Option[(Rep[MultiMap[K, V]], Rep[K], Rep[ArrayBuffer[V]]) forSome {type K; type V}]]
         case _ => None
       }
@@ -386,7 +384,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object size {
       def unapply(d: Def[_]): Option[Rep[MultiMap[K, V]] forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MultiMapElem[K, V, _, _] forSome {type K; type V}] && method.getName == "size" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "size" =>
           Some(receiver).asInstanceOf[Option[Rep[MultiMap[K, V]] forSome {type K; type V}]]
         case _ => None
       }
@@ -398,7 +396,7 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
 
     object toMap {
       def unapply(d: Def[_]): Option[Rep[MultiMap[K, V]] forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MultiMapElem[K, V, _, _] forSome {type K; type V}] && method.getName == "toMap" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "toMap" =>
           Some(receiver).asInstanceOf[Option[Rep[MultiMap[K, V]] forSome {type K; type V}]]
         case _ => None
       }
