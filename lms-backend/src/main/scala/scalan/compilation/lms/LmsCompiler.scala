@@ -6,9 +6,10 @@ import java.io._
 import java.net.URLClassLoader
 import scalan.collections._
 
+import scala.util.Properties
 import scalan.util.{FileUtil, ProcessUtil}
 
-trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
+trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
 
   case class Config(extraCompilerOptions: Seq[String])
 
@@ -23,6 +24,7 @@ trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
     /* LMS stuff */
 
     val outputSource = new File(sourcesDir, functionName + ".scala")
+    val buildSbtFile = new File(sourcesDir, "build.sbt")
 
     (createManifest(eInput), createManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
@@ -34,17 +36,34 @@ trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
           codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
           codegen.emitDataStructures(writer)
         }
+
+        // we want a normal Scala version which is binary-compatible to the
+        // current scala-library.jar
+        // e.g. 2.10.2 for Scala-Virtualized 2.10.2
+        val scalaVersion = Properties.versionNumberString.split('-')(0)
+
+        val buildSbtText =
+          s"""name := "$functionName"
+             |
+             |scalaVersion := "$scalaVersion"
+             |
+             |artifactPath in Compile in packageBin :=
+             |  baseDirectory.value / "$functionName.jar"
+             |
+             |scalacOptions ++= Seq(${config.extraCompilerOptions.mkString(", ")})
+           """.stripMargin
+
+        FileUtil.write(buildSbtFile, buildSbtText)
     }
 
-    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
-      outputSource.getAbsolutePath
+    val command = Seq("sbt", "package")
 
     ProcessUtil.launch(sourcesDir, command: _*)
   }
 
   protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
                                (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
-    val url = new File(jarPath(functionName, executableDir)).toURI.toURL
+    val url = jarFile(functionName, executableDir).toURI.toURL
     // ensure Scala library is available
     val classLoader = new URLClassLoader(scala.Array(url), classOf[_ => _].getClassLoader)
     val cls = classLoader.loadClass(functionName)
@@ -54,8 +73,8 @@ trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
     result.asInstanceOf[B]
   }
 
-  private def jarPath(functionName: String, executableDir: File) =
-    s"${executableDir.getAbsolutePath}/$functionName.jar"
+  private def jarFile(functionName: String, executableDir: File) =
+    FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
 
   def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     // Doesn't work for some reason, produces int instead of Int
@@ -82,6 +101,8 @@ trait LmsCompiler extends Compiler { self: ScalanExp with GraphVizExport =>
       Manifest.arrayType(createManifest(el.eItem))
     case el: ArrayBufferElem[_] =>
       Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
+    case el: ListElem[_] ⇒
+      Manifest.classType(classOf[List[_]], createManifest(el.eItem))
     case el: PMapElem[_,_] =>
       Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
     case el => ???(s"Don't know how to create manifest for $el")

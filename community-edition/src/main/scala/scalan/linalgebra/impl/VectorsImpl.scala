@@ -26,8 +26,7 @@ trait VectorsAbs extends Scalan with Vectors
   trait VectorCompanionElem extends CompanionElem[VectorCompanionAbs]
   implicit lazy val VectorCompanionElem: VectorCompanionElem = new VectorCompanionElem {
     lazy val tag = typeTag[VectorCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(Vector)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = Vector
   }
 
   abstract class VectorCompanionAbs extends CompanionBase[VectorCompanionAbs] with VectorCompanion {
@@ -80,8 +79,7 @@ trait VectorsAbs extends Scalan with Vectors
 
   class DenseVectorCompanionElem extends CompanionElem[DenseVectorCompanionAbs] {
     lazy val tag = typeTag[DenseVectorCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(DenseVector)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = DenseVector
   }
   implicit lazy val DenseVectorCompanionElem: DenseVectorCompanionElem = new DenseVectorCompanionElem
 
@@ -142,8 +140,7 @@ trait VectorsAbs extends Scalan with Vectors
 
   class SparseVectorCompanionElem extends CompanionElem[SparseVectorCompanionAbs] {
     lazy val tag = typeTag[SparseVectorCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(SparseVector)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = SparseVector
   }
   implicit lazy val SparseVectorCompanionElem: SparseVectorCompanionElem = new SparseVectorCompanionElem
 
@@ -238,7 +235,7 @@ trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
   object DenseVectorMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[DenseVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[DenseVectorElem[T] forSome {type T}] && method.getName == "length" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[DenseVector[T]] forSome {type T}]]
         case _ => None
       }
@@ -250,7 +247,7 @@ trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
 
     object dot {
       def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*)) if receiver.elem.isInstanceOf[DenseVectorElem[T] forSome {type T}] && method.getName == "dot" =>
+        case MethodCall(receiver, method, Seq(other, n, _*)) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "dot" =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -262,7 +259,7 @@ trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[DenseVectorElem[T] forSome {type T}] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "apply" =>
           Some((receiver, i)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[Int]) forSome {type T}]]
         case _ => None
       }
@@ -309,7 +306,7 @@ trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
   object SparseVectorMethods {
     object coords {
       def unapply(d: Def[_]): Option[Rep[SparseVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SparseVectorElem[T] forSome {type T}] && method.getName == "coords" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "coords" =>
           Some(receiver).asInstanceOf[Option[Rep[SparseVector[T]] forSome {type T}]]
         case _ => None
       }
@@ -321,7 +318,7 @@ trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
 
     object dot {
       def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*)) if receiver.elem.isInstanceOf[SparseVectorElem[T] forSome {type T}] && method.getName == "dot" =>
+        case MethodCall(receiver, method, Seq(other, n, _*)) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "dot" =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -333,7 +330,7 @@ trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[SparseVectorElem[T] forSome {type T}] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "apply" =>
           Some((receiver, i)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[Int]) forSome {type T}]]
         case _ => None
       }
@@ -379,7 +376,7 @@ trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
   object VectorMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[VectorElem[T, _, _] forSome {type T}] && method.getName == "length" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[VectorElem[_, _, _]] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
         case _ => None
       }
@@ -391,7 +388,7 @@ trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
 
     object coords {
       def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[VectorElem[T, _, _] forSome {type T}] && method.getName == "coords" =>
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[VectorElem[_, _, _]] && method.getName == "coords" =>
           Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
         case _ => None
       }
@@ -403,7 +400,7 @@ trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
 
     object dot {
       def unapply(d: Def[_]): Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*)) if receiver.elem.isInstanceOf[VectorElem[T, _, _] forSome {type T}] && method.getName == "dot" =>
+        case MethodCall(receiver, method, Seq(other, n, _*)) if receiver.elem.isInstanceOf[VectorElem[_, _, _]] && method.getName == "dot" =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[Vector[T]], Vec[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -415,7 +412,7 @@ trait VectorsExp extends VectorsAbs with VectorsDsl with ScalanExp
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[Vector[T]], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[VectorElem[T, _, _] forSome {type T}] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(i, _*)) if receiver.elem.isInstanceOf[VectorElem[_, _, _]] && method.getName == "apply" =>
           Some((receiver, i)).asInstanceOf[Option[(Rep[Vector[T]], Rep[Int]) forSome {type T}]]
         case _ => None
       }

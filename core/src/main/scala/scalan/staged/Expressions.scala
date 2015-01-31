@@ -152,12 +152,12 @@ trait BaseExp extends Base { self: ScalanExp =>
     }
 
     def defines[A](sym: Exp[A]): Option[Def[A]] = stm match {
-      case TableEntry(`sym`, rhs: Def[A]) => Some(rhs)
+      case TableEntry(`sym`, rhs: Def[A] @unchecked) => Some(rhs)
       case _ => None
     }
 
     def defines[A](rhs: Def[A]): Option[Exp[A]] = stm match {
-      case TableEntry(sym: Exp[A], `rhs`) => Some(sym)
+      case TableEntry(sym: Exp[A] @unchecked, `rhs`) => Some(sym)
       case _ => None
     }
   }

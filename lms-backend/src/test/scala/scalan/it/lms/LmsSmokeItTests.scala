@@ -73,6 +73,10 @@ class LmsSmokeItTests extends CommunitySmokeItTests {
     val in = 7
     getStagedOutput(progStaged)(progStaged.lambdaConst, "lambdaConst", in).isInstanceOf[Right[_, _]]
   }
+  test("logicalOps") {
+    val in = (true, false)
+    compareOutputWithSequential(progStaged)(progSeq.logicalOps, progStaged.logicalOps, "logicalOps", in)
+  }
   test("test9unionMaps") {
     val in = (Array((1, 1.1), (2, 2.2), (3, 3.3), (4, 4.4), (5, 5.5)), Array((0, 0.0), (2, 2.0), (4, 4.0), (6, 6.0)))
     compareOutputWithSequential(progStaged)(progSeq.unionMaps, progStaged.unionMaps, "unionMaps", in)

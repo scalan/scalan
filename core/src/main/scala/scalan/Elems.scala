@@ -21,8 +21,9 @@ trait Elems extends Base { self: Scalan =>
     def isBaseType: Boolean = this.isInstanceOf[BaseElem[_]]
     def tag: WeakTypeTag[A]
     final def classTag: ClassTag[A] = TagImplicits.typeTagToClassTag(tag)
-    def getDefaultRep: Default[Rep[A]]
-    def defaultRepValue = getDefaultRep.value
+    // should only be called by defaultRepValue
+    protected def getDefaultRep: Rep[A]
+    lazy val defaultRepValue = getDefaultRep
     protected def getName = tag.tpe.toString.
       replaceAll("[A-Za-z0-9_.]*this.", "").
       replace("scala.math.Numeric$", "").
@@ -49,8 +50,7 @@ trait Elems extends Base { self: Scalan =>
   }
 
   class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Element[A] with Serializable {
-    protected lazy val defaultRep = defaultVal(toRep(z.value)(this))
-    def getDefaultRep = defaultRep
+    protected def getDefaultRep = toRep(z.value)(this)
     override def isEntityType = false
   }
 
@@ -61,7 +61,7 @@ trait Elems extends Base { self: Scalan =>
       implicit val tB = eSnd.tag
       weakTypeTag[(A, B)]
     }
-    lazy val getDefaultRep = defaultVal(Pair(eFst.defaultRepValue, eSnd.defaultRepValue))
+    protected def getDefaultRep = Pair(eFst.defaultRepValue, eSnd.defaultRepValue)
   }
 
   case class SumElem[A, B](eLeft: Elem[A], eRight: Elem[B]) extends Element[(A | B)] {
@@ -71,7 +71,7 @@ trait Elems extends Base { self: Scalan =>
       implicit val tB = eRight.tag
       weakTypeTag[A | B]
     }
-    lazy val getDefaultRep = defaultVal(toLeftSum[A, B](eLeft.defaultRepValue)(eRight))
+    protected def getDefaultRep = toLeftSum[A, B](eLeft.defaultRepValue)(eRight)
   }
 
   case class FuncElem[A, B](eDom: Elem[A], eRange: Elem[B]) extends Element[A => B] {
@@ -81,7 +81,10 @@ trait Elems extends Base { self: Scalan =>
       implicit val tB = eRange.tag
       weakTypeTag[A => B]
     }
-    lazy val getDefaultRep = defaultVal(fun(funcRepDefault[A, B](eRange).value)(Lazy(eDom)))
+    protected def getDefaultRep = {
+      val defaultB = eRange.defaultRepValue
+      fun[A, B](_ => defaultB)(Lazy(eDom))
+    }
   }
 
   case class ArrayElem[A](eItem: Elem[A]) extends Element[Array[A]] {
@@ -90,7 +93,8 @@ trait Elems extends Base { self: Scalan =>
       implicit val tag1 = eItem.tag
       weakTypeTag[Array[A]]
     }
-    lazy val getDefaultRep: Default[Rep[Array[A]]] = arrayRepDefault(eItem)
+    protected def getDefaultRep =
+      Array.empty(eItem)
   }
 
   val AnyRefElement: Elem[AnyRef] = new BaseElem[AnyRef]()(typeTag[AnyRef], Default.OfAnyRef)
@@ -118,16 +122,6 @@ trait Elems extends Base { self: Scalan =>
   //  implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]
 
   implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = Lazy(eA)
-
-  implicit def funcRepDefault[A, B: Elem]: Default[Rep[A] => Rep[B]] = {
-    implicit val zB = element[B].getDefaultRep
-    Default.OfFunction1[Rep[A], Rep[B]](zB)
-  }
-
-  implicit def arrayRepDefault[A](implicit e: Elem[A]): Default[Rep[Array[A]]] = {
-    implicit val aCT = e.classTag
-    Default.defaultVal[Rep[Array[A]]](scala.Array.empty[A])
-  }
 
   object TagImplicits {
     implicit def elemToClassTag[A](implicit elem: Element[A]): ClassTag[A] = elem.classTag

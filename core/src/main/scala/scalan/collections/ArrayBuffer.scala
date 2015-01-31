@@ -39,8 +39,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
       implicit val tag1 = eItem.tag
       weakTypeTag[ArrayBuffer[T]]
     }
-    lazy val getDefaultRep = Default.defaultVal(emptyArrayBuffer[T](eItem))
-//    lazy val defaultRep: Default[Rep[Array[A]]] = arrayRepDefault(eItem)
+    protected def getDefaultRep = emptyArrayBuffer[T](eItem)
   }
 
   implicit def arrayBufferElement[A](implicit eA: Elem[A]): Elem[ArrayBuffer[A]] = new ArrayBufferElem[A]

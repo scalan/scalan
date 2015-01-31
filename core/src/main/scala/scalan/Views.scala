@@ -29,7 +29,7 @@ trait Views extends Elems { self: Scalan =>
   abstract class ViewElem[From, To](implicit val iso: Iso[From, To]) extends Elem[To] {
     override def isEntityType = shouldUnpack(this)
     lazy val tag: WeakTypeTag[To] = iso.tag
-    lazy val getDefaultRep = iso.defaultRepTo
+    protected def getDefaultRep = iso.defaultRepTo.value
   }
 
   object ViewElem {
@@ -77,7 +77,7 @@ trait Views extends Elems { self: Scalan =>
     new Iso[A, A] {
       def eTo = elem
       def tag = elem.tag
-      def defaultRepTo = elem.getDefaultRep
+      lazy val defaultRepTo = Default.defaultVal(elem.defaultRepValue)
       def from(x: Rep[A]) = x
       def to(x: Rep[A]) = x
     }
@@ -110,7 +110,7 @@ trait Views extends Elems { self: Scalan =>
         toCacheValue.get
       }
       def tag = eBB.tag
-      def defaultRepTo = eBB.getDefaultRep
+      lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
     }
   }
 
@@ -129,7 +129,7 @@ trait Views extends Elems { self: Scalan =>
         a.fold(a1 => toLeftSum(iso1.to(a1))(eB2),
                a2 => toRightSum(iso2.to(a2))(eB1))
       def tag = eBB.tag
-      def defaultRepTo = eBB.getDefaultRep
+      lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
     }
   }
 
@@ -157,7 +157,7 @@ trait Views extends Elems { self: Scalan =>
         fun { a => iso2.to(f(iso1.from(a))) }
       }
       def tag = eTo.tag
-      def defaultRepTo = eTo.getDefaultRep
+      lazy val defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
     }
   }
 }
@@ -224,7 +224,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
         case _ =>
           val eT = d.selfType
           eT match {
-            case UnpackableElem(iso: Iso[a, T]) =>
+            case UnpackableElem(iso: Iso[a, T @unchecked]) =>
               Some((iso.from(d.self), iso))
             case _ => None
           }
@@ -238,7 +238,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
         case _ =>
           val eT = e.elem
           eT match {
-            case UnpackableElem(iso: Iso[a, T]) =>
+            case UnpackableElem(iso: Iso[a, T @unchecked]) =>
               Some((iso.from(e), iso))
             case _ => None
           }
@@ -372,7 +372,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   }
 
   override def rewriteVar[T](v: Exp[T]) = v.elem match {
-    case UnpackableElem(iso: Iso[a, T]) =>
+    case UnpackableElem(iso: Iso[a, T @unchecked]) =>
       iso.to(fresh[a](Lazy(iso.eFrom)))
     case _ => super.rewriteVar(v)
   }

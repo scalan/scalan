@@ -24,7 +24,7 @@ trait Thunks { self: Scalan =>
       implicit val rt = eItem.tag
       weakTypeTag[Thunk[A]]
     }
-    lazy val getDefaultRep = Default.defaultVal(Thunk(eItem.defaultRepValue)(eItem))
+    protected def getDefaultRep = Thunk(eItem.defaultRepValue)(eItem)
   }
 
   implicit def thunkElement[T](implicit eItem: Elem[T]): Elem[Thunk[T]] = new ThunkElem[T](eItem)

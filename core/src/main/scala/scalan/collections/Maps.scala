@@ -44,7 +44,7 @@ trait Maps extends  Base  { self: Scalan =>
       weakTypeTag[PMap[K, V]]
     }
 
-    lazy val getDefaultRep = Default.defaultVal(emptyMap[K, V](eKey, eValue))
+    protected def getDefaultRep = emptyMap[K, V](eKey, eValue)
   }
 
   implicit def mapElement[K, V](implicit eKey: Elem[K], eValue: Elem[V]): PMapElem[K, V] = new PMapElem(eKey, eValue)
