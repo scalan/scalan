@@ -27,7 +27,7 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
   def par[B](nJobs: Rep[Int], f: Rep[Int=>B])(implicit elem:Elem[B]): Arr[B] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     implicit val tag = elem.classTag
-    val tasks = for (i <- 0 until nJobs) yield scala.concurrent.future {
+    val tasks = for (i <- 0 until nJobs) yield scala.concurrent.Future {
       f(i)
     }
     scala.concurrent.Await.result(scala.concurrent.Future.sequence(tasks), scala.concurrent.duration.Duration.Inf).toArray

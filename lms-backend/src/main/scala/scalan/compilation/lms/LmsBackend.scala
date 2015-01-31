@@ -242,7 +242,7 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
   }
 
   def mapApplyIf[K: Manifest, V: Manifest, T: Manifest](map: Exp[HashMap[K, V]], key: Exp[K], exists: Exp[V] => Exp[T], otherwise: Exp[Unit] => Exp[T]): Exp[T] = {
-    if (map.contains(key)) exists(map(key)) else otherwise()
+    if (map.contains(key)) exists(map(key)) else otherwise(())
   }
 
   def mapUpdate[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]], key: Exp[K], value: Exp[V]): Exp[HashMap[K, V]] = {

@@ -739,34 +739,6 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
         }
       }
 
-      case scalan.Semicolon(left, right) => {
-        (scalan.createManifest(left.elem), scalan.createManifest(right.elem)) match {
-          case (mA: Manifest[a], mB: Manifest[b]) => {
-            val left_ = symMirr(left).asInstanceOf[lms.Exp[a]]
-            val right_ = symMirr(right).asInstanceOf[lms.Exp[b]]
-            val exp = lms.block(left_, right_)(mA, mB)
-            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-          }
-        }
-      }
-      case i@scalan.IfThenElse(cond, iftrue, iffalse) =>
-        scalan.createManifest(i.selfType) match {
-          case (mA: Manifest[a]) =>
-            val cond_ = symMirr(cond).asInstanceOf[lms.Exp[Boolean]]
-
-            fromGraph.branches.ifBranches.get(sym) match {
-              case Some(branches) =>
-                def thenBody = mirrorBlockToLms(m)(branches.thenBody, iftrue)
-                def elseBody = mirrorBlockToLms(m)(branches.elseBody, iffalse)
-                val exp = lms.ifThenElse(cond_, thenBody, elseBody)(mA)
-                (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-              case _ =>
-                val then_ = symMirr(iftrue).asInstanceOf[lms.Exp[a]]
-                val else_ = symMirr(iffalse).asInstanceOf[lms.Exp[a]]
-                val exp = lms.ifThenElse(cond_, () => then_, () => else_)(mA)
-                (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-            }
-        }
 
       case apply@scalan.ArrayApply(xs, ind) =>
         scalan.createManifest(apply.selfType) match {
@@ -967,7 +939,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
           }
         }
       }
-      case mr@scalan.ArrayMapReduce(scalan.Def(scalan.ArrayFilter(scalan.Def(scalan.ArrayMap(scalan.Def(range: scalan.ArrayRangeFrom0), map1Sym@scalan.Def(map1: scalan.Lambda[_, _]))), filterSym@scalan.Def(filter: scalan.Lambda[_, Boolean]))),
+      case mr@scalan.ArrayMapReduce(scalan.Def(scalan.ArrayFilter(scalan.Def(scalan.ArrayMap(scalan.Def(range: scalan.ArrayRangeFrom0), map1Sym@scalan.Def(map1: scalan.Lambda[_, _]))), filterSym@scalan.Def(filter: scalan.Lambda[_, _]))),
       map2Sym@scalan.Def(map2: scalan.Lambda[_, _]), reduceSym@scalan.Def(reduce: scalan.Lambda[_, _])) => {
         (map1.eB, mr.selfType) match {
           case (ma: scalan.Elem[a], me: scalan.PMapElem[k, v]) => {
@@ -985,7 +957,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
           }
         }
       }
-      case mr@scalan.ArrayMapReduce(scalan.Def(scalan.ArrayFilter(source, filterSym@scalan.Def(filter: scalan.Lambda[_, Boolean]))), mapSym@scalan.Def(map: scalan.Lambda[_, _]), reduceSym@scalan.Def(reduce: scalan.Lambda[_, _])) => {
+      case mr@scalan.ArrayMapReduce(scalan.Def(scalan.ArrayFilter(source, filterSym@scalan.Def(filter: scalan.Lambda[_, _]))), mapSym@scalan.Def(map: scalan.Lambda[_, _]), reduceSym@scalan.Def(reduce: scalan.Lambda[_, _])) => {
         (source.elem, mr.selfType) match {
           case (ae: scalan.ArrayElem[a], me: scalan.PMapElem[k, v]) => {
             (scalan.createManifest(ae.eItem), scalan.createManifest(me.eKey), scalan.createManifest(me.eValue)) match {

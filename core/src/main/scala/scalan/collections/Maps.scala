@@ -91,7 +91,7 @@ trait MapsSeq extends Maps { self: ScalanSeq =>
     def contains(key: Rep[K]): Rep[Boolean] = impl.contains(key)
     def apply(key: Rep[K]): Rep[V] = impl(key)
     def applyIf[T:Elem](key: Rep[K], exists:(Rep[V]=>Rep[T]), otherwise: UnitRep=>Rep[T]): Rep[T] = {
-      if (impl.contains(key)) exists(impl(key)) else otherwise()
+      if (impl.contains(key)) exists(impl(key)) else otherwise(())
     }
     def update(key: Rep[K], value: Rep[V]): Rep[Unit] = { impl.update(key, value) ; () }
     def keys: Arr[K] = impl.keys.toArray(elemKey.classTag)

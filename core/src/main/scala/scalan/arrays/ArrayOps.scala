@@ -678,7 +678,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       implicit val eY = ys1.elem.eItem
       implicit val eB = l.eB
       ArraySumBy(ys1, secondOnly[y,b](l), n.asInstanceOf[Numeric[b]])
-    case ArraySumBy(Def(ArrayApplyMany(xs, Def(find: ArrayFind[c]))), by:Rep[Function1[a, b]], n) =>
+    case ArraySumBy(Def(ArrayApplyMany(xs, Def(find: ArrayFind[c]))), by: Rep[Function1[a, b]] @unchecked, n) =>
       val a1 = xs.asRep[Array[a]]
       val a2 = find.xs
       implicit val eA = a1.elem.eItem
@@ -687,14 +687,14 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       implicit val num = n.asInstanceOf[Numeric[b]]
       val len = a2.length
       loopUntil2(0, num.zero)({ (i, sum) => i === len }, { (i, sum) => (i + 1, IF (find.f(a2(i))) THEN sum + by(a1(i)) ELSE sum) })._2
-    case ArraySumBy(Def(many: ArrayApplyMany[_]), by:Rep[Function1[a, b]], n) =>
+    case ArraySumBy(Def(many: ArrayApplyMany[_]), by:Rep[Function1[a, b]] @unchecked, n) =>
       val xs = many.xs.asRep[Array[a]]
       val indices = many.indices
       implicit val eA = xs.elem.eItem
       implicit val eB = by.elem.eRange
       implicit val num = n.asInstanceOf[Numeric[b]]
       indices.fold[b](num.zero, fun { p => p._1 + by(xs(p._2))})
-    case ArraySumBy(Def(filter: ArrayFilter[_]), by:Rep[Function1[a, b]], n) =>
+    case ArraySumBy(Def(filter: ArrayFilter[_]), by:Rep[Function1[a, b]] @unchecked, n) =>
       val xs = filter.xs.asRep[Array[a]]
       implicit val eA = xs.elem.eItem
       implicit val eB = by.elem.eRange
