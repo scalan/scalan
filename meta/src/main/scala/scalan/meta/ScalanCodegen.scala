@@ -101,12 +101,12 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
            s"c$name.lift(${args.rep(a => s"e${a}")}).defaultRepValue"
       case STraitCall(name, args) => {
         val optBT = module.entityOps.optBaseType
-        val isBT = optBT.map(bt => bt.name == name).getOrElse(false)
+        val isBT = optBT.exists(bt => bt.name == name)
         if (isBT) {
           s"Default.defaultOf[$t]"
-        }
-        else
+        } else {
           s"element[$t].defaultRepValue"
+        }
       }
       case STpeTuple(items) => pairify(items.map(zeroSExpr))
       case STpeFunc(domain, range) => s"""fun { (x: Rep[${domain}]) => ${zeroSExpr(range)} }"""
@@ -129,11 +129,11 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
 
     def getCompanionOpt = for { bt <- optBT; comp <- module.entityOps.companion } yield comp
 
-    def getCompanionMethods = getCompanionOpt.map(comp => {
+    def getCompanionMethods = getCompanionOpt.map { comp =>
       val externalConstrs = comp.getMethodsWithAnnotation(ExternalConstructor)
       val externalMethods = comp.getMethodsWithAnnotation(ExternalMethod)
       (externalConstrs, externalMethods)
-    })
+    }
 
     def filterByExplicitDeclaration(ms: List[SMethodDef]) = {
       val filtered = module.seqDslImpl match {
@@ -565,22 +565,6 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
             case Some(reason) =>
               s"    // WARNING: Cannot generate matcher for method `${m.name}`: $reason"
             case _ =>
-
-              val typeArgs =
-                if (isCompanion) {
-                  ""
-                } else if (e.isInstanceOf[STraitDef]) {
-                  if (e.tpeArgs.length == 0) s"${typeArgString(Seq.fill(2)("_"))}"
-                  else {
-                    s"${typeArgString(e.tpeArgs.map(a => a.name) ++ Seq.fill(2)("_"))} forSome {${e.tpeArgs.map("type " + _.declaration).mkString("; ")}}"
-                  }
-                } else {
-                  if (e.tpeArgs.length == 0) ""
-                  else {
-                    s"${typeArgString(e.tpeArgs.map(a => a.name))} forSome {${e.tpeArgs.map("type " + _.declaration).mkString("; ")}}"
-                  }
-                }
-              val traitElem = s"${e.name}Elem$typeArgs"
               // DummyImplicit and Overloaded* are ignored, since
               // their values are never useful
               val methodArgs = m.argSections.flatMap(_.args).takeWhile { arg =>
@@ -601,8 +585,6 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
                 }
                 s"Option[$receiverAndArgTypes${typeVars.opt(typeVars => s" forSome {${typeVars.map("type " + _).mkString("; ")}}")}]"
               }
-              // _* is for dummy implicit arguments
-              val methodArgsPattern = if (methodArgs.isEmpty) "_" else s"Seq(${methodArgs.rep(_.name, ", ")}, _*)"
               val overloadId = m.overloadId
               val cleanedMethodName = ScalaNameUtil.cleanScalaName(m.name)
               val matcherName = {
@@ -623,19 +605,38 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
                 case Seq(single) => single
                 case many => many.mkString("(", ", ", ")")
               }
-              val annotationCheck =
-                if (overloadIdsByName(m.name).size == 1)
-                  ""
-                else
-                  overloadId match {
-                    case None =>
-                      "&& method.getAnnotation(classOf[scalan.OverloadId]) == null"
-                    case Some(id) =>
-                      s""" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "$id" }"""
+
+              val methodPattern = {
+                // _* is for dummy implicit arguments
+                val methodArgsPattern = if (methodArgs.isEmpty) "_" else s"Seq(${methodArgs.rep(_.name, ", ")}, _*)"
+                val typeArgsNum =
+                  if (isCompanion) {
+                    0
+                  } else if (e.isInstanceOf[STraitDef]) {
+                    e.tpeArgs.length + 2
+                  } else {
+                    e.tpeArgs.length
+                  }
+                val traitElem = s"${e.name}Elem${typeArgString(Seq.fill(typeArgsNum)("_"))}"
+                val annotationCheck =
+                  if (overloadIdsByName(m.name).size == 1) {
+                    // nothing to check if method isn't overloaded
+                    ""
+                  } else {
+                    overloadId match {
+                      case None =>
+                        "&& method.getAnnotation(classOf[scalan.OverloadId]) == null"
+                      case Some(id) =>
+                        s""" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "$id" }"""
+                    }
                   }
 
-              val methodPattern =
-                s"""MethodCall(receiver, method, $methodArgsPattern) if receiver.elem.isInstanceOf[$traitElem] && method.getName == "${m.name}"$annotationCheck"""
+                s"MethodCall(receiver, method, $methodArgsPattern) if " + (if (e.isHighKind) {
+                  s"""receiver.elem match { }"""
+                } else {
+                  s"receiver.elem.isInstanceOf[$traitElem]"
+                }) + s""" && method.getName == "${m.name}"$annotationCheck"""
+              }
               // TODO we can use name-based extractor to improve performance when we switch to Scala 2.11
               // See http://hseeberger.github.io/blog/2013/10/04/name-based-extractors-in-scala-2-dot-11/
 

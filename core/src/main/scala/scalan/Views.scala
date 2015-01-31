@@ -204,7 +204,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
         case _ =>
           val eT = d.selfType
           eT match {
-            case UnpackableElem(iso: Iso[a, T]) =>
+            case UnpackableElem(iso: Iso[a, T @unchecked]) =>
               Some((iso.from(d.self), iso))
             case _ => None
           }
@@ -218,7 +218,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
         case _ =>
           val eT = e.elem
           eT match {
-            case UnpackableElem(iso: Iso[a, T]) =>
+            case UnpackableElem(iso: Iso[a, T @unchecked]) =>
               Some((iso.from(e), iso))
             case _ => None
           }
@@ -332,7 +332,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   }
 
   override def rewriteVar[T](v: Exp[T]) = v.elem match {
-    case UnpackableElem(iso: Iso[a, T]) =>
+    case UnpackableElem(iso: Iso[a, T @unchecked]) =>
       iso.to(fresh[a](Lazy(iso.eFrom)))
     case _ => super.rewriteVar(v)
   }
