@@ -5,6 +5,7 @@ package lms
 import java.io._
 import java.net.URLClassLoader
 
+import scala.util.Properties
 import scalan.util.{FileUtil, ProcessUtil}
 
 trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
@@ -22,6 +23,7 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
     /* LMS stuff */
 
     val outputSource = new File(sourcesDir, functionName + ".scala")
+    val buildSbtFile = new File(sourcesDir, "build.sbt")
 
     (createManifest(eInput), createManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
@@ -33,10 +35,27 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
           codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
           codegen.emitDataStructures(writer)
         }
+
+        // we want a normal Scala version which is binary-compatible to the
+        // current scala-library.jar
+        // e.g. 2.10.2 for Scala-Virtualized 2.10.2
+        val scalaVersion = Properties.versionNumberString.split('-')(0)
+
+        val buildSbtText =
+          s"""name := "$functionName"
+             |
+             |scalaVersion := "$scalaVersion"
+             |
+             |artifactPath in Compile in packageBin :=
+             |  baseDirectory.value / "$functionName.jar"
+             |
+             |scalacOptions ++= Seq(${config.extraCompilerOptions.mkString(", ")})
+           """.stripMargin
+
+        FileUtil.write(buildSbtFile, buildSbtText)
     }
 
-    val command = Seq("scalac", "-d", jarFile(functionName, executableDir).getAbsolutePath) ++ config.extraCompilerOptions :+
-      outputSource.getAbsolutePath
+    val command = Seq("sbt", "package")
 
     ProcessUtil.launch(sourcesDir, command: _*)
   }
