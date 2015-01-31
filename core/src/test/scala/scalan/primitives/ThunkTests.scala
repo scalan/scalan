@@ -11,7 +11,7 @@ class ThunkTests extends BaseTests { suite =>
 
   trait MyProg extends Scalan {
     val prefix = suite.prefix
-    val subfolder = "/myprog"
+    val subfolder = "myprog"
 
     lazy val t1 = fun { (in: Rep[Int]) =>
       Thunk { in }
@@ -138,7 +138,7 @@ class ThunkTests extends BaseTests { suite =>
 
   trait MyDomainProg extends Scalan with SegmentsDsl {
     val prefix = suite.prefix
-    val subfolder = "/mydomainprog"
+    val subfolder = "mydomainprog"
 
     lazy val t1 = fun { (in: Rep[Int]) =>
       Thunk { Interval(in, in) }.force.length

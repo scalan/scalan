@@ -73,7 +73,7 @@ class EffectsTests extends BaseTests { suite =>
 
   trait MyDomainProg extends Scalan with SegmentsDsl {
     val prefix = suite.prefix
-    val subfolder = "/isolifting"
+    val subfolder = "isolifting"
 
 //    lazy val t1 = fun { (in: Rep[Int]) =>
 //      Thunk { Interval(in, in) }.force.length

@@ -35,7 +35,7 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
         }
     }
 
-    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
+    val command = Seq("scalac", "-d", jarFile(functionName, executableDir).getAbsolutePath) ++ config.extraCompilerOptions :+
       outputSource.getAbsolutePath
 
     ProcessUtil.launch(sourcesDir, command: _*)
@@ -43,7 +43,7 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
 
   protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
                                (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
-    val url = new File(jarPath(functionName, executableDir)).toURI.toURL
+    val url = jarFile(functionName, executableDir).toURI.toURL
     // ensure Scala library is available
     val classLoader = new URLClassLoader(scala.Array(url), classOf[_ => _].getClassLoader)
     val cls = classLoader.loadClass(functionName)
@@ -53,8 +53,8 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
     result.asInstanceOf[B]
   }
 
-  private def jarPath(functionName: String, executableDir: File) =
-    s"${executableDir.getAbsolutePath}/$functionName.jar"
+  private def jarFile(functionName: String, executableDir: File) =
+    FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
 
   def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     // Doesn't work for some reason, produces int instead of Int

@@ -12,7 +12,7 @@ class ExceptionTests extends BaseTests { suite =>
 
   trait ThrowableExamples extends ScalanDsl {
     val prefix = suite.prefix
-    val subfolder = "/throwables"
+    val subfolder = "throwables"
     lazy val tElem = element[Throwable]
     lazy val defaultRep = tElem.defaultRepValue
 
