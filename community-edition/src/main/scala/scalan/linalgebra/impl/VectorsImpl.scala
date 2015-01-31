@@ -26,8 +26,7 @@ trait VectorsAbs extends Scalan with Vectors
   trait VectorCompanionElem extends CompanionElem[VectorCompanionAbs]
   implicit lazy val VectorCompanionElem: VectorCompanionElem = new VectorCompanionElem {
     lazy val tag = typeTag[VectorCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(Vector)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = Vector
   }
 
   abstract class VectorCompanionAbs extends CompanionBase[VectorCompanionAbs] with VectorCompanion {
@@ -80,8 +79,7 @@ trait VectorsAbs extends Scalan with Vectors
 
   class DenseVectorCompanionElem extends CompanionElem[DenseVectorCompanionAbs] {
     lazy val tag = typeTag[DenseVectorCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(DenseVector)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = DenseVector
   }
   implicit lazy val DenseVectorCompanionElem: DenseVectorCompanionElem = new DenseVectorCompanionElem
 
@@ -142,8 +140,7 @@ trait VectorsAbs extends Scalan with Vectors
 
   class SparseVectorCompanionElem extends CompanionElem[SparseVectorCompanionAbs] {
     lazy val tag = typeTag[SparseVectorCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(SparseVector)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = SparseVector
   }
   implicit lazy val SparseVectorCompanionElem: SparseVectorCompanionElem = new SparseVectorCompanionElem
 

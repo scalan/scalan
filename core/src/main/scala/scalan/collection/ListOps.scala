@@ -51,7 +51,7 @@ trait ListOps { self: Scalan =>
       weakTypeTag[List[T]]
     }
 
-    lazy val getDefaultRep = Default.defaultVal(List.empty(eItem))
+    protected def getDefaultRep = List.empty(eItem)
   }
 
 

@@ -24,8 +24,7 @@ trait ExceptionsAbs extends Scalan with Exceptions
   trait SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs]
   implicit lazy val SThrowableCompanionElem: SThrowableCompanionElem = new SThrowableCompanionElem {
     lazy val tag = typeTag[SThrowableCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(SThrowable)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = SThrowable
   }
 
   abstract class SThrowableCompanionAbs extends CompanionBase[SThrowableCompanionAbs] with SThrowableCompanion {
@@ -89,8 +88,7 @@ trait ExceptionsAbs extends Scalan with Exceptions
 
   class SThrowableImplCompanionElem extends CompanionElem[SThrowableImplCompanionAbs] {
     lazy val tag = typeTag[SThrowableImplCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(SThrowableImpl)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = SThrowableImpl
   }
   implicit lazy val SThrowableImplCompanionElem: SThrowableImplCompanionElem = new SThrowableImplCompanionElem
 
@@ -150,8 +148,7 @@ trait ExceptionsAbs extends Scalan with Exceptions
 
   class SExceptionCompanionElem extends CompanionElem[SExceptionCompanionAbs] {
     lazy val tag = typeTag[SExceptionCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(SException)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = SException
   }
   implicit lazy val SExceptionCompanionElem: SExceptionCompanionElem = new SExceptionCompanionElem
 

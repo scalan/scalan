@@ -26,8 +26,7 @@ trait HashSetsAbs extends Scalan with HashSets
   trait SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs]
   implicit lazy val SHashSetCompanionElem: SHashSetCompanionElem = new SHashSetCompanionElem {
     lazy val tag = typeTag[SHashSetCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(SHashSet)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = SHashSet
   }
 
   abstract class SHashSetCompanionAbs extends CompanionBase[SHashSetCompanionAbs] with SHashSetCompanion {
@@ -105,8 +104,7 @@ trait HashSetsAbs extends Scalan with HashSets
 
   class SHashSetImplCompanionElem extends CompanionElem[SHashSetImplCompanionAbs] {
     lazy val tag = typeTag[SHashSetImplCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(SHashSetImpl)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = SHashSetImpl
   }
   implicit lazy val SHashSetImplCompanionElem: SHashSetImplCompanionElem = new SHashSetImplCompanionElem
 

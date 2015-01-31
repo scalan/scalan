@@ -23,8 +23,7 @@ trait PArraysAbs extends Scalan with PArrays
   trait PArrayCompanionElem extends CompanionElem[PArrayCompanionAbs]
   implicit lazy val PArrayCompanionElem: PArrayCompanionElem = new PArrayCompanionElem {
     lazy val tag = typeTag[PArrayCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(PArray)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = PArray
   }
 
   abstract class PArrayCompanionAbs extends CompanionBase[PArrayCompanionAbs] with PArrayCompanion {
@@ -77,8 +76,7 @@ trait PArraysAbs extends Scalan with PArrays
 
   class UnitArrayCompanionElem extends CompanionElem[UnitArrayCompanionAbs] {
     lazy val tag = typeTag[UnitArrayCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(UnitArray)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = UnitArray
   }
   implicit lazy val UnitArrayCompanionElem: UnitArrayCompanionElem = new UnitArrayCompanionElem
 
@@ -138,8 +136,7 @@ trait PArraysAbs extends Scalan with PArrays
 
   class BaseArrayCompanionElem extends CompanionElem[BaseArrayCompanionAbs] {
     lazy val tag = typeTag[BaseArrayCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(BaseArray)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = BaseArray
   }
   implicit lazy val BaseArrayCompanionElem: BaseArrayCompanionElem = new BaseArrayCompanionElem
 
@@ -200,8 +197,7 @@ trait PArraysAbs extends Scalan with PArrays
 
   class PairArrayCompanionElem extends CompanionElem[PairArrayCompanionAbs] {
     lazy val tag = typeTag[PairArrayCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(PairArray)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = PairArray
   }
   implicit lazy val PairArrayCompanionElem: PairArrayCompanionElem = new PairArrayCompanionElem
 
@@ -262,8 +258,7 @@ trait PArraysAbs extends Scalan with PArrays
 
   class NestedArrayCompanionElem extends CompanionElem[NestedArrayCompanionAbs] {
     lazy val tag = typeTag[NestedArrayCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(NestedArray)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = NestedArray
   }
   implicit lazy val NestedArrayCompanionElem: NestedArrayCompanionElem = new NestedArrayCompanionElem
 
