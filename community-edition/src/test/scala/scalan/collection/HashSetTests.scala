@@ -7,11 +7,7 @@ import scala.language.reflectiveCalls
 import scalan._
 
 class HashSetTests extends BaseTests { suite =>
-  val prefix = new File("test-out/scalan/collection/hashset/")
-
   trait HashSetSimple extends ScalanDsl with HashSetsDsl {
-    val prefix = suite.prefix
-    val subfolder = "simple"
     lazy val tElem = element[HashSet[Int]]
     lazy val defaultRep = tElem.defaultRepValue
     lazy val empty = SHashSet.empty[Int]
@@ -31,7 +27,7 @@ class HashSetTests extends BaseTests { suite =>
   }
 
   test("simpleHashsetStaged") {
-    val ctx = new TestContext with  HashSetSimple with HashSetsDslExp {
+    val ctx = new TestContext(this, "simpleHashsetStaged") with HashSetSimple with HashSetsDslExp {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {

@@ -24,7 +24,7 @@ class PrimitivesExamplesSuite extends BaseShouldTests {
     }
     import ctx._
     val f = getStagedFunc(name)
-    emitDepGraph(f, new File(s"test-out/scalan/primitives/$name.dot"))
+    emitDepGraph(f, new File(prefix, s"$name.dot"))
   }
 
   val whenStaged = "when staged"

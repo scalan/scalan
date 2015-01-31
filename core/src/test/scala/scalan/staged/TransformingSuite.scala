@@ -24,7 +24,7 @@ class TransformingSuite extends BaseShouldTests {
   "Transforming" should "created ProjectionTree" in {
     val ctx = getCtx
     import ctx._
-    emitDepGraph(test, new File("test-out/scalan/staged/Transforming/testFunc.dot"))
+    emitDepGraph(test, new File(prefix, "testFunc.dot"))
     val lam = test.getLambda
     val t = lam.projectionTreeFrom(lam.x)
     println(t)

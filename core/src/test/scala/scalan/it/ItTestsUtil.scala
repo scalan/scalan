@@ -4,19 +4,18 @@ import java.io.File
 
 import org.scalatest.{Matchers, Suite}
 
+import scalan.TestsUtil
 import scalan.compilation.Compiler
 import scalan.util.FileUtil
 
 // extracted so it can be used with different suite styles
-trait ItTestsUtil { self: Suite with Matchers =>
-
-  lazy val prefix: String =
-    getClass.getSimpleName.stripSuffix("Tests").stripSuffix("It").stripSuffix("_")
+trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
+  override def testOutDir = "it-out"
 
   def emitGraphs: Boolean = true
 
   def assertFileContentCheck(name: String): Unit =
-    FileUtil.read(new File(prefix, name)) should be(FileUtil.read(new File(prefix, name + ".check")))
+    FileUtil.read(FileUtil.file(prefix, name)) should be(FileUtil.read(FileUtil.file(prefix, name + ".check")))
 
   // there are bad interactions between path-dependent types and default parameters, so
   // we can't simply make config a default parameter
@@ -24,7 +23,7 @@ trait ItTestsUtil { self: Suite with Matchers =>
     getStagedOutputConfig(back)(f, functionName, input, back.defaultConfig)
 
   def getStagedOutputConfig[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, input: A, config: back.Config): B = {
-    val dir = new File(new File("it-out", prefix), functionName)
+    val dir = FileUtil.file(prefix, functionName)
 
     back.buildExecutable(dir, functionName, f, emitGraphs)(config)
     back.execute(dir, functionName, input, f)(config)
