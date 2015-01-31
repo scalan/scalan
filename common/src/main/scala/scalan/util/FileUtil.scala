@@ -1,6 +1,7 @@
 package scalan.util
 
 import java.io._
+import java.nio.file.Paths
 import scala.Console
 import scala.io.{Source, Codec}
 
@@ -82,4 +83,12 @@ object FileUtil {
       throw new FileNotFoundException(s"$fileOrDirectory doesn't exist")
     }
   }
+
+  def currentWorkingDir = Paths.get("").toAbsolutePath.toFile
+
+  def file(first: String, rest: String*): File =
+    file(new File(first), rest: _*)
+
+  def file(first: File, rest: String*): File =
+    rest.foldLeft(first) { (file, child) => new File(file, child) }
 }

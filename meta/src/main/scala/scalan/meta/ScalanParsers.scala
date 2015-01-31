@@ -4,6 +4,8 @@
  */
 package scalan.meta
 
+import java.io.File
+
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
@@ -301,14 +303,14 @@ trait ScalanParsers {
 
   def config: CodegenConfig
 
-  def parseEntityModule(filePath: String) = {
-    val source = compiler.getSourceFile(filePath)
+  def parseEntityModule(file: File) = {
+    val source = compiler.getSourceFile(file.getPath)
     val tree = compiler.parseTree(source)
     tree match {
       case pd: PackageDef =>
         entityModule(pd)
       case tree =>
-        throw new Exception(s"Unexpected tree in file $filePath:\n\n$tree")
+        throw new Exception(s"Unexpected tree in file $file:\n\n$tree")
     }
   }
 
