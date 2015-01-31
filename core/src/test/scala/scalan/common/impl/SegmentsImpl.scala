@@ -20,8 +20,7 @@ trait SegmentsAbs extends Scalan with Segments
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
   implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
     lazy val tag = typeTag[SegmentCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(Segment)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = Segment
   }
 
   abstract class SegmentCompanionAbs extends CompanionBase[SegmentCompanionAbs] with SegmentCompanion {
@@ -75,8 +74,7 @@ trait SegmentsAbs extends Scalan with Segments
 
   class IntervalCompanionElem extends CompanionElem[IntervalCompanionAbs] {
     lazy val tag = typeTag[IntervalCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(Interval)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = Interval
   }
   implicit lazy val IntervalCompanionElem: IntervalCompanionElem = new IntervalCompanionElem
 
@@ -137,8 +135,7 @@ trait SegmentsAbs extends Scalan with Segments
 
   class SliceCompanionElem extends CompanionElem[SliceCompanionAbs] {
     lazy val tag = typeTag[SliceCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(Slice)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = Slice
   }
   implicit lazy val SliceCompanionElem: SliceCompanionElem = new SliceCompanionElem
 

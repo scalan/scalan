@@ -256,8 +256,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |  trait ${companionName}Elem extends CompanionElem[${companionName}Abs]
         |  implicit lazy val ${companionName}Elem: ${companionName}Elem = new ${companionName}Elem {
         |    lazy val tag = typeTag[${companionName}Abs]
-        |    lazy val getDefaultRep = Default.defaultVal($entityName)
-        |    //def getDefaultRep = defaultRep
+        |    protected def getDefaultRep = $entityName
         |  }
         |
         |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs] with ${companionName} {
@@ -341,8 +340,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |
         |  class ${className}CompanionElem extends CompanionElem[${className}CompanionAbs] {
         |    lazy val tag = typeTag[${className}CompanionAbs]
-        |    lazy val getDefaultRep = Default.defaultVal($className)
-        |    //def getDefaultRep = defaultRep
+        |    protected def getDefaultRep = $className
         |  }
         |  implicit lazy val ${className}CompanionElem: ${className}CompanionElem = new ${className}CompanionElem
         |

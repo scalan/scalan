@@ -20,8 +20,7 @@ trait MatricesAbs extends Scalan with Matrices
   trait MatrixCompanionElem extends CompanionElem[MatrixCompanionAbs]
   implicit lazy val MatrixCompanionElem: MatrixCompanionElem = new MatrixCompanionElem {
     lazy val tag = typeTag[MatrixCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(Matrix)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = Matrix
   }
 
   abstract class MatrixCompanionAbs extends CompanionBase[MatrixCompanionAbs] with MatrixCompanion {
@@ -74,8 +73,7 @@ trait MatricesAbs extends Scalan with Matrices
 
   class RowMajorMatrixCompanionElem extends CompanionElem[RowMajorMatrixCompanionAbs] {
     lazy val tag = typeTag[RowMajorMatrixCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(RowMajorMatrix)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = RowMajorMatrix
   }
   implicit lazy val RowMajorMatrixCompanionElem: RowMajorMatrixCompanionElem = new RowMajorMatrixCompanionElem
 
@@ -136,8 +134,7 @@ trait MatricesAbs extends Scalan with Matrices
 
   class RowMajorFlatMatrixCompanionElem extends CompanionElem[RowMajorFlatMatrixCompanionAbs] {
     lazy val tag = typeTag[RowMajorFlatMatrixCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(RowMajorFlatMatrix)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = RowMajorFlatMatrix
   }
   implicit lazy val RowMajorFlatMatrixCompanionElem: RowMajorFlatMatrixCompanionElem = new RowMajorFlatMatrixCompanionElem
 
@@ -197,8 +194,7 @@ trait MatricesAbs extends Scalan with Matrices
 
   class RowMajorSparseMatrixCompanionElem extends CompanionElem[RowMajorSparseMatrixCompanionAbs] {
     lazy val tag = typeTag[RowMajorSparseMatrixCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(RowMajorSparseMatrix)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = RowMajorSparseMatrix
   }
   implicit lazy val RowMajorSparseMatrixCompanionElem: RowMajorSparseMatrixCompanionElem = new RowMajorSparseMatrixCompanionElem
 
