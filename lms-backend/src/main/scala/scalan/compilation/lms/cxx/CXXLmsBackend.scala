@@ -38,7 +38,7 @@ class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
             "*******************************************/")
         emitFileHeader()
 
-        val indargs = (0 until args.length) zip args;
+        val indargs = (0 until args.length).asInstanceOf[Range].zip(args);
         stream.println(s"${sA} apply(${indargs.map( p => s"${remap(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
         emitBlock(body)
