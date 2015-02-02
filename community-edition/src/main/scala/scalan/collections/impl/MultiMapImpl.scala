@@ -196,7 +196,17 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
       }
     }
 
-    // WARNING: Cannot generate matcher for method `applyIf`: Method has function arguments exists, otherwise
+    object applyIfBy {
+      def unapply(d: Def[_]): Option[(Rep[HashMultiMap[K, V]], Rep[K], Rep[ArrayBuffer[V] => T], Rep[Unit => T]) forSome {type K; type V; type T}] = d match {
+        case MethodCall(receiver, method, Seq(key, exists, otherwise, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "applyIfBy" =>
+          Some((receiver, key, exists, otherwise)).asInstanceOf[Option[(Rep[HashMultiMap[K, V]], Rep[K], Rep[ArrayBuffer[V] => T], Rep[Unit => T]) forSome {type K; type V; type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[HashMultiMap[K, V]], Rep[K], Rep[ArrayBuffer[V] => T], Rep[Unit => T]) forSome {type K; type V; type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object add {
       def unapply(d: Def[_]): Option[(Rep[HashMultiMap[K, V]], Rep[K], Rep[V]) forSome {type K; type V}] = d match {
@@ -348,7 +358,17 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
       }
     }
 
-    // WARNING: Cannot generate matcher for method `applyIf`: Method has function arguments exists, otherwise
+    object applyIfBy {
+      def unapply(d: Def[_]): Option[(Rep[MultiMap[K, V]], Rep[K], Rep[ArrayBuffer[V] => T], Rep[Unit => T]) forSome {type K; type V; type T}] = d match {
+        case MethodCall(receiver, method, Seq(key, exists, otherwise, _*)) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "applyIfBy" =>
+          Some((receiver, key, exists, otherwise)).asInstanceOf[Option[(Rep[MultiMap[K, V]], Rep[K], Rep[ArrayBuffer[V] => T], Rep[Unit => T]) forSome {type K; type V; type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[MultiMap[K, V]], Rep[K], Rep[ArrayBuffer[V] => T], Rep[Unit => T]) forSome {type K; type V; type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object add {
       def unapply(d: Def[_]): Option[(Rep[MultiMap[K, V]], Rep[K], Rep[V]) forSome {type K; type V}] = d match {

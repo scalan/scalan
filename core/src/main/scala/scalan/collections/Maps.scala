@@ -19,9 +19,12 @@ trait Maps extends  Base  { self: Scalan =>
     def isEmpty: Rep[Boolean] = (size === 0)
     def contains(k: Rep[K]): Rep[Boolean]
     def apply(key: Rep[K]): Rep[V]
-    def applyIf[T:Elem](key: Rep[K], exists: Rep[V]=>Rep[T], otherwise: UnitRep=>Rep[T]): Rep[T]
+    def applyIf[T](key: Rep[K], exists: Rep[V] => Rep[T], otherwise: () => Rep[T]): Rep[T] =
+      applyIfBy(key, fun(exists), fun { _: Rep[Unit] => otherwise() })
+    def applyIfBy[T](key: Rep[K], exists: Rep[V => T], otherwise: Rep[Unit => T]): Rep[T]
     def update(key: Rep[K], value: Rep[V]): Rep[Unit]
-    def mapValues[T:Elem](f: Rep[V] => Rep[T]): PM[K, T]
+    def mapValues[T:Elem](f: Rep[V] => Rep[T]): PM[K, T] = mapValuesBy(fun(f))
+    def mapValuesBy[T:Elem](f: Rep[V => T]): PM[K, T]
     def keys: Arr[K]
     def values: Arr[V]
     def toArray: Arr[(K,V)]
@@ -90,7 +93,7 @@ trait MapsSeq extends Maps { self: ScalanSeq =>
     }      
     def contains(key: Rep[K]): Rep[Boolean] = impl.contains(key)
     def apply(key: Rep[K]): Rep[V] = impl(key)
-    def applyIf[T:Elem](key: Rep[K], exists:(Rep[V]=>Rep[T]), otherwise: UnitRep=>Rep[T]): Rep[T] = {
+    def applyIfBy[T](key: Rep[K], exists: Rep[V => T], otherwise: Rep[Unit => T]): Rep[T] = {
       if (impl.contains(key)) exists(impl(key)) else otherwise(())
     }
     def update(key: Rep[K], value: Rep[V]): Rep[Unit] = { impl.update(key, value) ; () }
@@ -98,7 +101,7 @@ trait MapsSeq extends Maps { self: ScalanSeq =>
     def values: Arr[V] = impl.values.toArray(elemValue.classTag)
     def toArray: Arr[(K, V)] = impl.toArray
     def size: Rep[Int] = impl.size
-    def mapValues[T:Elem](f: Rep[V] => Rep[T]): PM[K, T] = {
+    def mapValuesBy[T:Elem](f: Rep[V => T]): PM[K, T] = {
       val res = Map.empty[K, T]
       for ((k,v) <- impl) {
          res.update(k, f(v))
@@ -136,13 +139,16 @@ trait MapsExp extends Maps { self: ScalanExp =>
     def reduce(that: PM[K, V], f:Rep[((V,V))=>V]): PM[K, V] = MapReduce(this, that, f)
     def contains(key: Rep[K]): Rep[Boolean] = MapContains(this, key)
     def apply(key: Rep[K]): Rep[V] = MapApply(this, key)
-    def applyIf[T:Elem](key: Rep[K], exists:Rep[V]=>Rep[T], otherwise: UnitRep=>Rep[T]): Rep[T] = MapApplyIf(this, key, exists, otherwise)
+    def applyIfBy[T](key: Rep[K], exists:Rep[V => T], otherwise: Rep[Unit => T]): Rep[T] = {
+      implicit val eT: Elem[T] = otherwise.elem.eRange
+      MapApplyIf(this, key, exists, otherwise)
+    }
     def update(key: Rep[K], value: Rep[V]): Rep[Unit] = MapUpdate(this, key, value)
     def size: Rep[Int] = MapSize(this)
     def keys: Arr[K] = MapKeys(this)
     def values: Arr[V] = MapValues(this)
     def toArray: Arr[(K, V)] = MapToArray(this)
-    def mapValues[T:Elem](f: Rep[V] => Rep[T]): PM[K, T] = MapTransformValues[K,V,T](this, f)
+    def mapValuesBy[T:Elem](f: Rep[V => T]): PM[K, T] = MapTransformValues[K,V,T](this, f)
   }
 
 //  def emptyMap[K: Elem, V: Elem]: PM[K, V] = EmptyMap[K, V]()

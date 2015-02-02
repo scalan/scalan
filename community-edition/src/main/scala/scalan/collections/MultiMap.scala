@@ -13,7 +13,7 @@ trait MultiMaps extends Base { self: MultiMapsDsl =>
     def isEmpty: Rep[Boolean] = (size === 0)
     def contains(key: Rep[K]): Rep[Boolean]
     def apply(key: Rep[K]): Rep[ArrayBuffer[V]]
-    def applyIf[T:Elem](key: Rep[K], exists:Rep[ArrayBuffer[V]] => Rep[T], otherwise: UnitRep=>Rep[T]): Rep[T]
+    def applyIfBy[T](key: Rep[K], exists: Rep[ArrayBuffer[V] => T], otherwise: Rep[Unit => T]): Rep[T]
     def add(key: Rep[K], value: Rep[V]): Rep[MultiMap[K, V]]
     def addAll(key: Rep[K], value: Rep[ArrayBuffer[V]]): Rep[MultiMap[K, V]]
     def reduceBy[T:Elem](f: Rep[Array[V] => T]): PM[K, T]
@@ -47,8 +47,8 @@ trait MultiMaps extends Base { self: MultiMapsDsl =>
 
     def apply(key: Rep[K]): Rep[ArrayBuffer[V]] = IF (map.contains(key)) THEN map(key) ELSE ArrayBuffer.empty[V]
 
-    def applyIf[T:Elem](key: Rep[K], exists:Rep[ArrayBuffer[V]] => Rep[T], otherwise: UnitRep=>Rep[T]): Rep[T] =
-      map.applyIf[T](key, exists, otherwise)
+    def applyIfBy[T](key: Rep[K], exists: Rep[ArrayBuffer[V] => T], otherwise: Rep[Unit => T]): Rep[T] =
+      map.applyIfBy[T](key, exists, otherwise)
 
     def add(key: Rep[K], value: Rep[V]): Rep[MultiMap[K, V]] = {
       (appendMultiMap(map, key, value) | self)
@@ -85,6 +85,8 @@ trait MultiMaps extends Base { self: MultiMapsDsl =>
 trait MultiMapsDsl extends ScalanDsl with impl.MultiMapsAbs with MultiMaps {
   implicit class MultiMapExt[K:Elem,V:Elem](map: Rep[MultiMap[K,V]]) {
     def reduce[T:Elem](f: Arr[V] => Rep[T]): PM[K, T] = map.reduceBy[T](f)
+    def applyIf[T](key: Rep[K], exists: Rep[ArrayBuffer[V]] => Rep[T], otherwise: () => Rep[T]): Rep[T] =
+      map.applyIfBy(key, fun(exists), fun { _: Rep[Unit] => otherwise() })
   }
 }
 
