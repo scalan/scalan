@@ -110,7 +110,7 @@ trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp wi
   }  */
 }
 
-class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
+class CoreLmsBackend extends CoreLmsBackendBase { self =>
 
   trait Codegen extends ScalaGenFunctions with ScalaGenStruct with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
     with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenEitherOps with ScalaGenOrderingOps with ScalaGenBooleanOps
@@ -137,7 +137,7 @@ class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
   val codegen = new Codegen {}
 }
 
-class CommunityLmsBackend extends CoreLmsBackend with VectorOpsExp { self =>
+class CommunityLmsBackend extends CoreLmsBackend with CommunityLmsBackendBase { self =>
 
   override val codegen = new Codegen with ScalaGenVectorOps {
     override val IR: self.type = self

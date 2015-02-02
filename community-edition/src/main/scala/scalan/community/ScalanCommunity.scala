@@ -1,7 +1,7 @@
 package scalan.community
 
 import scalan.linalgebra.{MatricesDslExp, MatricesDslSeq, MatricesDsl}
-import scalan._
+import scalan.{Scalan, ScalanCtxExp, ScalanCtxSeq}
 import scalan.parrays._
 
 trait ScalanCommunity extends Scalan

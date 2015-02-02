@@ -1,13 +1,11 @@
 package scalan
 package it.lms
 
-import scalan.community.ScalanCommunityExp
-import scalan.compilation.GraphVizExport
-import scalan.compilation.lms.{CoreLmsBackend, LmsCompiler, CoreBridge}
+import scalan.compilation.lms._
 import scalan.it.smoke.SmokeItTests
 
 class LmsSmokeItTests extends SmokeItTests {
-  class ProgExp extends Prog with ScalanCtxExp with ScalanCommunityExp with GraphVizExport with LmsCompiler { self =>
+  class ProgExp extends Prog with ScalanCtxExp with LmsCompiler { self =>
     def makeBridge[A, B] = new CoreBridge[A, B] {
       val scalan = self
       val lms = new CoreLmsBackend
