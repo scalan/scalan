@@ -5,6 +5,7 @@ import java.lang.reflect.Method
 import scala.language.reflectiveCalls
 
 import scalan.arrays.ArrayOps
+import scalan.util.FileUtil
 
 /**
  * Created by zotov on 1/17/15.
@@ -59,14 +60,13 @@ trait FirstProg { self: Scalan with JNIExtractorOps with ArrayOps =>
 }
 
 class JNIExtractorTests extends BaseTests {
-  val prefix = new File("test-out/scalan/community/jni/")
 
   trait TestContext extends ScalanCtxExp with JNIExtractorOpsExp {
     override def isInvokeEnabled(d: Def[_], m: Method) = true
     override def shouldUnpack(e: ViewElem[_, _]) = true
     def subfolder: String
     def emit(name: String, ss: Exp[_]*) =
-      emitDepGraph(ss.toList, new File(prefix + subfolder, s"/$name.dot"))
+      emitDepGraph(ss.toList, FileUtil.file(prefix, subfolder, s"/$name.dot") )
   }
 
   test("simple") {
