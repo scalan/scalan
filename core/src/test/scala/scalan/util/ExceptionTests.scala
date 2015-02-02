@@ -8,11 +8,7 @@ import scalan.common.{SegmentsDsl, SegmentsDslExp}
 import scalan._
 
 class ExceptionTests extends BaseTests { suite =>
-  val prefix = new File("test-out/scalan/util/exceptions/")
-
   trait ThrowableExamples extends ScalanDsl {
-    val prefix = suite.prefix
-    val subfolder = "/throwables"
     lazy val tElem = element[Throwable]
     lazy val defaultRep = tElem.defaultRepValue
 
@@ -30,7 +26,7 @@ class ExceptionTests extends BaseTests { suite =>
   }
 
   test("throwablesStaged") {
-    val ctx = new TestContext with  ThrowableExamples {
+    val ctx = new TestContext(this, "throwablesStaged") with  ThrowableExamples {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {
@@ -51,7 +47,7 @@ class ExceptionTests extends BaseTests { suite =>
   }
 
   test("createThrowableStaged") {
-    val ctx = new TestContext with  ThrowableExamples {
+    val ctx = new TestContext(this, "createThrowableStaged") with  ThrowableExamples {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {

@@ -4,6 +4,8 @@
  */
 package scalan.meta
 
+import java.io.File
+
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
@@ -130,9 +132,10 @@ object ScalanAst {
     def selfType: Option[SSelfTypeDef]
     def companion: Option[STraitOrClassDef]
     def isTrait: Boolean
+    def isHighKind = tpeArgs.exists(_.isHighKind)
 
     def getMethodsWithAnnotation(a: MethodAnnotation) = body.collect {
-      case md: SMethodDef if md.external.fold(false)(_ == a)  => md
+      case md: SMethodDef if md.external.fold(false)(_ == a) => md
     }
 
   }
@@ -301,14 +304,14 @@ trait ScalanParsers {
 
   def config: CodegenConfig
 
-  def parseEntityModule(filePath: String) = {
-    val source = compiler.getSourceFile(filePath)
+  def parseEntityModule(file: File) = {
+    val source = compiler.getSourceFile(file.getPath)
     val tree = compiler.parseTree(source)
     tree match {
       case pd: PackageDef =>
         entityModule(pd)
       case tree =>
-        throw new Exception(s"Unexpected tree in file $filePath:\n\n$tree")
+        throw new Exception(s"Unexpected tree in file $file:\n\n$tree")
     }
   }
 

@@ -36,6 +36,8 @@ trait LmsCompiler extends Compiler { self: ScalanCommunityExp =>
       Manifest.classType(classOf[_ => _], createManifest(el.eDom), createManifest(el.eRange))
     case el: ArrayElem[_] =>
       Manifest.arrayType(createManifest(el.eItem))
+    case el: ListElem[_] ⇒
+      Manifest.classType(classOf[List[_]], createManifest(el.eItem))
     case el => ???(s"Don't know how to create manifest for $el")
   }
 }

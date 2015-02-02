@@ -8,17 +8,12 @@ import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp}
 
 class EffectsTests extends BaseTests { suite =>
-  val prefix = new File("test-out/scalan/primitives/effects/")
-
   trait ConsoleDsl extends Scalan {
     def print(s: Rep[String]): Rep[Unit]
     def read: Rep[String]
   }
 
   trait MyProg extends Scalan with ConsoleDsl {
-    val prefix = suite.prefix
-    val subfolder = ""
-
     lazy val t1 = fun { (in: Rep[String]) => Thunk {
         print(in)
     }}
@@ -36,7 +31,7 @@ class EffectsTests extends BaseTests { suite =>
 
   }
 
-  trait MyProgStaged extends TestContext with  MyProg  with ConsoleDsl {
+  abstract class MyProgStaged(testName: String) extends TestContext(this, testName) with  MyProg  with ConsoleDsl {
 
     def print(s: Rep[String]): Rep[Unit] =
       reflectEffect(Print(s))
@@ -55,7 +50,7 @@ class EffectsTests extends BaseTests { suite =>
   }
 
   test("simpleEffectsStaged") {
-    val ctx = new MyProgStaged {
+    val ctx = new MyProgStaged("simpleEffectsStaged") {
       def test() = { }
     }
     ctx.test
@@ -64,7 +59,7 @@ class EffectsTests extends BaseTests { suite =>
   }
 
   test("nestedThunksStaged") {
-    val ctx = new MyProgStaged {
+    val ctx = new MyProgStaged("nestedThunksStaged") {
       def test() = { }
     }
     ctx.test
@@ -72,9 +67,6 @@ class EffectsTests extends BaseTests { suite =>
   }
 
   trait MyDomainProg extends Scalan with SegmentsDsl {
-    val prefix = suite.prefix
-    val subfolder = "/isolifting"
-
 //    lazy val t1 = fun { (in: Rep[Int]) =>
 //      Thunk { Interval(in, in) }.force.length
 //    }
@@ -82,7 +74,7 @@ class EffectsTests extends BaseTests { suite =>
   }
 
   test("simpleEffectsWithIsoLiftingStaged") {
-    val ctx = new TestContext with SegmentsDslExp with MyDomainProg {
+    val ctx = new TestContext(this, "simpleEffectsWithIsoLiftingStaged") with SegmentsDslExp with MyDomainProg {
       isInlineThunksOnForce = false
 
       def test() = {

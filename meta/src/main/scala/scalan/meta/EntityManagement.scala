@@ -8,6 +8,7 @@ import java.io.File
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import ScalanAst._
+import scalan.util.FileUtil
 
 case class CodegenConfig(
   srcPath: String,
@@ -20,39 +21,37 @@ case class CodegenConfig(
 
 class EntityManagement(val config: CodegenConfig) extends ScalanCodegen with LazyLogging { ctx =>
 
-  case class EntityManager(name: String, filePath: String, entityDef: SEntityModuleDef, config: CodegenConfig)
+  case class EntityManager(name: String, file: File, entityDef: SEntityModuleDef, config: CodegenConfig)
 
   private val entities = config.entityFiles.flatMap { f =>
-    val path = config.srcPath + "/" + f
+    val file = FileUtil.file(config.srcPath, f)
     try {
-      val d = parseEntityModule(path)
-      Some(new EntityManager(d.name, path, d, config))
+      val d = parseEntityModule(file)
+      Some(new EntityManager(d.name, file, d, config))
     } catch {
       case e: Exception =>
-        logger.error(s"Failed to parse file at $path (relative to ${new File(".").getAbsolutePath})", e)
+        logger.error(s"Failed to parse file at $file (relative to ${FileUtil.currentWorkingDir})", e)
         None
     }
   }
 
   def generateAll() = {
     entities.foreach { m =>
-      println(s"  generating ${m.filePath}")
+      println(s"  generating ${m.file}")
       val g = new EntityFileGenerator(m.entityDef, m.config)
       val implCode = g.getImplFile
-      saveEntity(m.filePath, implCode)
+      saveEntity(m.file, implCode)
     }
   }
 
-  def saveEntity(filePath: String, implCode: String) = {
-    val file = new File(filePath)
+  def saveEntity(file: File, implCode: String) = {
     val fileName = file.getName.split('.')(0)
-    val folder = file.getParentFile.getPath
-    val implFolder = folder + "/impl"
+    val folder = file.getParentFile
+    val implFile = FileUtil.file(folder, "impl", s"${fileName}Impl.scala")
 
-    new File(implFolder).mkdirs()
-    val implFile = s"$implFolder/${fileName}Impl.scala"
+    implFile.mkdirs()
 
-    writeFile(implFile, implCode)
+    FileUtil.write(implFile, implCode)
   }
 
 }

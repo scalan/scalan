@@ -9,6 +9,9 @@ import scala.reflect.runtime.universe._
 trait ListOps { self: Scalan =>
   type Lst[T] = Rep[List[T]]
   implicit class RepListOps[T: Elem](xs: Lst[T]) {
+    def head = list_head(xs)
+    def tail = list_tail(xs)
+
     def length = list_length(xs)
     def mapBy[R: Elem](f: Rep[T => R]) = list_map(xs, f)
     def map[R: Elem](f: Rep[T] => Rep[R]) = list_map(xs, fun(f))
@@ -22,6 +25,7 @@ trait ListOps { self: Scalan =>
     def filterBy(f: Rep[T => Boolean]) = list_filter(xs, f)
     def filter(f: Rep[T] => Rep[Boolean]) = list_filter(xs, fun(f))
     def ::(x: Rep[T]) = list_cons(x, xs)
+    def :::(ys: Lst[T]) = list_concat(ys, xs)
     def reverse = list_reverse(xs)
     //def grouped(size: Rep[Int]) = list_grouped(xs, size)
     //def stride(start: Rep[Int], length: Rep[Int], stride: Rep[Int]) =
@@ -47,7 +51,7 @@ trait ListOps { self: Scalan =>
       weakTypeTag[List[T]]
     }
 
-    lazy val getDefaultRep = Default.defaultVal(List.empty(eItem))
+    protected def getDefaultRep = List.empty(eItem)
   }
 
 
@@ -56,6 +60,9 @@ trait ListOps { self: Scalan =>
 
   //-----------------------------------------------------
   // Primitives
+  def list_head[T](xs: Lst[T]): Rep[T]
+  def list_tail[T: Elem](xs: Lst[T]): Lst[T]
+
   def list_length[T](xs: Lst[T]): Rep[Int]
 
   // provide: xs.length == res.length
@@ -79,7 +86,11 @@ trait ListOps { self: Scalan =>
   def list_rangeFrom0(n: Rep[Int]): Lst[Int]
   
   def list_filter[T](xs: Lst[T], f: Rep[T => Boolean]): Lst[T]
+
   def list_cons[T](x: Rep[T], xs: Lst[T]): Lst[T]
+
+  def list_concat[T: Elem](xs: Lst[T], ys: Lst[T]): Lst[T]
+
   def list_reverse[T](xs: Lst[T]): Lst[T]
 //  def list_grouped[T](xs: Lst[T], size: Rep[Int]): Lst[List[T]]
 //
@@ -105,6 +116,9 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
   }
   val List: ListCompanion1 = new ListCompanion1
 
+  def list_head[T](xs: Lst[T]): Rep[T] = xs.head
+  def list_tail[T: Elem](xs: Lst[T]): Lst[T] = xs.tail
+
   def list_length[T](a: Lst[T]): Rep[Int] = a.length
   def list_map[T, R: Elem](xs: List[T], f: T => R) = xs.map(f)
   def list_reduce[T](xs: Lst[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x, y) => m.append((x, y)))
@@ -128,6 +142,7 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
   def list_rangeFrom0(n: Rep[Int]): Lst[Int] = 0.until(n).toList
   def list_filter[T](xs: List[T], f: T => Boolean): List[T] =xs.filter(f)
   def list_cons[T](x: Rep[T], xs: Lst[T]): Lst[T] = x :: xs
+  def list_concat[T: Elem](xs: List[T], ys: List[T]) = xs ::: ys
   def list_reverse[T](xs: Lst[T]): Lst[T] = xs.reverse
 
 //  def list_grouped[T](xs: Lst[T], size: Rep[Int]): Lst[List[T]] = {
@@ -158,6 +173,14 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
     def name[A](e: Elem[A]): String
     def xs: Exp[List[T]]
     lazy val uniqueOpId = withElemOfList(xs) { name(_) }
+  }
+  case class ListHead[T](xs: Exp[List[T]]) extends Def[T] {
+    def uniqueOpId = name(xs.elem.eItem)
+    def selfType = xs.elem.eItem
+    override def mirror(t: Transformer) = ListHead(t(xs))
+  }
+  case class ListTail[T](xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
+    override def mirror(t: Transformer) = ListTail(t(xs))
   }
   case class ListLength[T](xs: Exp[List[T]]) extends Def[Int] with ListMethod[T] {
     def selfType = element[Int]
@@ -197,11 +220,17 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
   case class ListCons[T](x: Exp[T], xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
     override def mirror(t: Transformer) = ListCons(t(x), t(xs))
   }
+  case class ListConcat[T](xs: Exp[List[T]], ys: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
+    override def mirror(t: Transformer) = ListConcat(t(xs), t(ys))
+  }
   case class ListReverse[T](xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
     override def mirror(t: Transformer) = ListReverse(t(xs))
   }
 
   val List: ListCompanion = new ListCompanion
+
+  def list_head[T](xs: Lst[T]): Rep[T] = ListHead(xs)
+  def list_tail[T: Elem](xs: Lst[T]): Lst[T] = ListTail(xs)
 
   def list_length[T](a: Exp[List[T]]): Rep[Int] = ListLength(a)
   def list_map[T, R: Elem](xs: Exp[List[T]], f: Exp[T => R]) = ListMap(xs, f)
@@ -233,6 +262,10 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
 
   def list_cons[T](x: Rep[T], xs: Lst[T]): Lst[T] =
     withElemOf(x) { implicit eT => ListCons(x, xs) }
+
+  def list_concat[T: Elem](xs: Lst[T], ys: Lst[T]): Lst[T] =
+    ListConcat(xs, ys)
+
   def list_reverse[T](xs: Lst[T]): Lst[T] =
     withElemOfList(xs) { implicit eT => ListReverse(xs) }
 

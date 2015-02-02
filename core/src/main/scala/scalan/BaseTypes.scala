@@ -18,8 +18,7 @@ trait BaseTypes extends Base { self: Scalan =>
                                (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
     extends BaseElem[TBase] { self =>
     def getWrapperElem = extE
-    override def getName = s"BT[${super.getName},${getWrapperElem.name}]"
-    override def getDefaultRep = getWrapperElem.getDefaultRep.asInstanceOf[Default[Rep[TBase]]]
+    override protected def getName = s"BT[${super.getName},${getWrapperElem.name}]"
   }
 
   trait ExCompanion0[TBase] {
@@ -34,9 +33,9 @@ trait BaseTypes extends Base { self: Scalan =>
    class SeqBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
                                 (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
      extends BaseElemEx[TBase, TExt](extE) {
-     override def getDefaultRep = {
-       val defaultOfWrapper = getWrapperElem.getDefaultRep.asInstanceOf[Default[BaseTypeEx[TBase, TExt]]]
-       Default.defaultVal(defaultOfWrapper.value.wrappedValueOfBaseType)
+     override protected def getDefaultRep = {
+       val defaultOfWrapper = getWrapperElem.defaultRepValue.asInstanceOf[BaseTypeEx[TBase, TExt]]
+       defaultOfWrapper.wrappedValueOfBaseType
      }
    }
  }
@@ -44,9 +43,8 @@ trait BaseTypes extends Base { self: Scalan =>
 trait BaseTypesExp extends BaseTypes with GraphVizExport { scalan: ScalanExp =>
   class ExpBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
                                   (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
-    extends BaseElemEx[TBase, TExt](extE)
-  {
-
+    extends BaseElemEx[TBase, TExt](extE) {
+    override protected def getDefaultRep = getWrapperElem.defaultRepValue.asInstanceOf[Rep[TBase]]
   }
 
   override protected def nodeColor(sym: Exp[_]) = sym.elem match {

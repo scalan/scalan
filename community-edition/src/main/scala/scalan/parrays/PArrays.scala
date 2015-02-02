@@ -115,7 +115,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
   }
   trait BaseArrayCompanion extends ConcreteClass1[BaseArray] {
     def defaultOf[A](implicit ea: Elem[A]) =
-      Default.defaultVal(BaseArray(Default.defaultOf[Rep[Array[A]]]))
+      Default.defaultVal(BaseArray(Array.empty[A]))
   }
 
 // TODO We shouldn't need this anymore. Check if recursive types like Tree in EE work without it
