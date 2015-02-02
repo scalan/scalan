@@ -22,6 +22,7 @@ trait Compiler extends BaseExp with Passes {
     new PGraph(func)
 
   def buildGraph[A, B](sourcesDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)(config: Config): PGraph = {
+    addInvokeTester((_,_) => true)
     val g0 = buildInitialGraph(func)(config)
     if (emitGraphs) {
       val dotFile = new File(sourcesDir, s"$functionName.dot")

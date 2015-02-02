@@ -3,7 +3,7 @@ package scalan.primitives
 import scalan.staged.BaseExp
 import scalan.{ScalanExp, Scalan}
 
-trait LogicalOps { self: Scalan =>
+trait LogicalOps extends UnBinOps { self: Scalan =>
   val And = new EndoBinOp[Boolean]("&&", _ && _)
 
   val Or = new EndoBinOp[Boolean]("||", _ || _)

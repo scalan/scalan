@@ -4,15 +4,23 @@ package lms
 
 import java.io._
 import java.net.URLClassLoader
+import scalan.collections._
 
-import scala.util.Properties
-import scalan.util.{FileUtil, ProcessUtil}
+import scalan.util.{StringUtil, FileUtil, ProcessUtil}
+import scala.tools.nsc.Global
+import scala.tools.nsc.Settings
+import scala.tools.nsc.reporters.StoreReporter
 
 trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
 
-  case class Config(extraCompilerOptions: Seq[String])
+  /**
+   * If scalaVersion is None, uses scala-compiler.jar
+   *
+   * Otherwise uses SBT to compile with the desired version
+   */
+  case class Config(scalaVersion: Option[String], extraCompilerOptions: Seq[String])
 
-  implicit val defaultConfig = Config(Seq.empty)
+  implicit val defaultConfig = Config(None, Seq.empty)
 
   def makeBridge[A, B]: LmsBridge[A, B]
 
@@ -36,28 +44,40 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
           codegen.emitDataStructures(writer)
         }
 
-        // we want a normal Scala version which is binary-compatible to the
-        // current scala-library.jar
-        // e.g. 2.10.2 for Scala-Virtualized 2.10.2
-        val scalaVersion = Properties.versionNumberString.split('-')(0)
+        val jarPath = jarFile(functionName, executableDir).getAbsolutePath
 
-        val buildSbtText =
-          s"""name := "$functionName"
-             |
-             |scalaVersion := "$scalaVersion"
-             |
-             |artifactPath in Compile in packageBin :=
-             |  baseDirectory.value / "$functionName.jar"
-             |
-             |scalacOptions ++= Seq(${config.extraCompilerOptions.mkString(", ")})
-           """.stripMargin
+        config.scalaVersion match {
+          case Some(scalaVersion) =>
+            val buildSbtText =
+              s"""name := "$functionName"
+                 |
+                 |scalaVersion := "$scalaVersion"
+                 |
+                 |artifactPath in Compile in packageBin := "$jarPath"
+                 |
+                 |scalacOptions ++= Seq(${config.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
+                 |""".stripMargin
 
-        FileUtil.write(buildSbtFile, buildSbtText)
+            FileUtil.write(buildSbtFile, buildSbtText)
+
+            val command = Seq("sbt", "package")
+
+            ProcessUtil.launch(sourcesDir, command: _*)
+          case None =>
+            val settings = new Settings
+            settings.usejavacp.value = true
+            // necessary to lauch compiler
+            // see http://stackoverflow.com/questions/27934282/object-scala-in-compiler-mirror-not-found-running-scala-compiler-programatical
+            settings.embeddedDefaults[LmsCompiler]
+            val compilerOptions = "-d" :: jarPath :: config.extraCompilerOptions.toList
+            settings.processArguments(compilerOptions, false)
+            val reporter = new StoreReporter
+            val compiler: Global = new Global(settings, reporter)
+            val run = new compiler.Run
+            run.compile(scala.List(outputSource.getAbsolutePath))
+        }
+
     }
-
-    val command = Seq("sbt", "package")
-
-    ProcessUtil.launch(sourcesDir, command: _*)
   }
 
   protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
@@ -85,6 +105,7 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
     case ByteElement => Manifest.Byte
     case ShortElement => Manifest.Short
     case IntElement => Manifest.Int
+    case CharElement => Manifest.Char
     case LongElement => Manifest.Long
     case FloatElement => Manifest.Float
     case DoubleElement => Manifest.Double
@@ -97,8 +118,12 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
       Manifest.classType(classOf[_ => _], createManifest(el.eDom), createManifest(el.eRange))
     case el: ArrayElem[_] =>
       Manifest.arrayType(createManifest(el.eItem))
+    case el: ArrayBufferElem[_] =>
+      Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
     case el: ListElem[_] ⇒
       Manifest.classType(classOf[List[_]], createManifest(el.eItem))
+    case el: PMapElem[_,_] =>
+      Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
     case el => ???(s"Don't know how to create manifest for $el")
   }
 
