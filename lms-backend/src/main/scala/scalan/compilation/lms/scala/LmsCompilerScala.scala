@@ -3,6 +3,7 @@ package scalan.compilation.lms.scala
 import java.io._
 import java.net.URLClassLoader
 
+import scala.util.Properties
 import scalan.community.ScalanCommunityExp
 import scalan.compilation.GraphVizExport
 import scalan.compilation.lms.LmsCompiler
@@ -10,11 +11,12 @@ import scalan.util.{FileUtil, ProcessUtil}
 
 trait LmsCompilerScala extends LmsCompiler { self: ScalanCommunityExp with GraphVizExport =>
 
-  protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                      (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
+  protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
+                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
     val outputSource = new File(sourcesDir, functionName + ".scala")
+    val buildSbtFile = new File(sourcesDir, "build.sbt")
 
     (createManifest(eInput), createManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
@@ -26,10 +28,27 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCommunityExp with Graph
           codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
           codegen.emitDataStructures(writer)
         }
+
+        // we want a normal Scala version which is binary-compatible to the
+        // current scala-library.jar
+        // e.g. 2.10.2 for Scala-Virtualized 2.10.2
+        val scalaVersion = Properties.versionNumberString.split('-')(0)
+
+        val buildSbtText =
+          s"""name := "$functionName"
+             |
+             |scalaVersion := "$scalaVersion"
+             |
+             |artifactPath in Compile in packageBin :=
+             |  baseDirectory.value / "$functionName.jar"
+             |
+             |scalacOptions ++= Seq(${config.extraCompilerOptions.mkString(", ")})
+           """.stripMargin
+
+        FileUtil.write(buildSbtFile, buildSbtText)
     }
 
-    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
-      outputSource.getAbsolutePath
+    val command = Seq("sbt", "package")
 
     ProcessUtil.launch(sourcesDir, command: _*)
   }
