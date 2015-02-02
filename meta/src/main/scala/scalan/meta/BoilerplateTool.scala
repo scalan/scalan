@@ -1,10 +1,12 @@
 package scalan.meta
 
-import scalan.meta.ScalanAst.STraitCall
+import com.typesafe.scalalogging.slf4j.StrictLogging
 
-class BoilerplateTool {
+class BoilerplateTool extends StrictLogging {
   val coreTypeSynonyms = Map(
-    "RThrow" -> "Throwable"
+    "RThrow" -> "Throwable",
+    "Arr" -> "Array",
+    "PM" -> "PMap"
   )
   lazy val coreConfig = CodegenConfig(
     srcPath = "../core/src/main/scala",
@@ -52,11 +54,11 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTestsTypeSynonyms ++ liteTypeSynonyms
+    coreTypeSynonyms ++ liteTypeSynonyms
   )
 
   val eeTypeSynonyms = Set(
-    "PS" -> "PSet", "PM" -> "PMap", "Dist" -> "Distributed"
+    "PS" -> "PSet", "Dist" -> "Distributed"
   )
   lazy val scalanConfig = CodegenConfig(
     srcPath = "../../scalan/src/main/scala",
@@ -76,7 +78,7 @@ class BoilerplateTool {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTestsTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
+    coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
   )
   lazy val scalanFullConfig = scalanConfig.copy(entityFiles = scalanConfig.entityFiles :+ "scalan/parrays/PArrays.scala")
 
@@ -128,10 +130,14 @@ class BoilerplateTool {
   def main(args: Array[String]) {
     val configs = getConfigs(args)
 
-    for (c <- configs) {
-      println(s"Processing ${c.srcPath}")
-      new EntityManagement(c).generateAll()
-      println(s"Ok\n")
+    if (configs.isEmpty) {
+      logger.warn("BoilerplateTool run without configs")
+    } else {
+      for (c <- configs) {
+        println(s"Processing ${c.srcPath}")
+        new EntityManagement(c).generateAll()
+        println(s"Ok\n")
+      }
     }
   }
 }
