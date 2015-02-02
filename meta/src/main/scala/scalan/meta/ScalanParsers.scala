@@ -264,6 +264,7 @@ object ScalanAst {
 trait ScalanParsers {
   import ScalanAst._
   val settings = new Settings
+  settings.embeddedDefaults(getClass.getClassLoader)
   settings.usejavacp.value = true
   val reporter = new StoreReporter
   val compiler: Global = new Global(settings, reporter)
