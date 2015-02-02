@@ -3,10 +3,10 @@ package scalan.compilation.lms
 import scalan.primitives.AbstractStringsDslExp
 import scalan.{JNIExtractorOpsExp, ScalanExp}
 
-trait JNIBridge[A, B] extends CoreBridge[A, B] {
+trait JNIBridge[A, B] extends LmsBridge[A, B] {
 
   // `LmsCompiler` mixed just to provide `createManifest` function
-  val scalan: ScalanExp with JNIExtractorOpsExp with LmsCompiler with AbstractStringsDslExp
+  val scalan: ScalanExp with JNIExtractorOpsExp with AbstractStringsDslExp with LmsCompiler
   val lms: CommunityLmsBackend with JNILmsOpsExp
 
   abstract override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) = {
