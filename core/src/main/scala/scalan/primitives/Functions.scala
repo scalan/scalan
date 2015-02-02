@@ -10,7 +10,7 @@ trait Functions { self: Scalan =>
   implicit class LambdaOps[A,B](f: Rep[A => B]) {
     def apply(x: Rep[A]): Rep[B] = mkApply(f, x)
   }
-
+  def par[B:Elem](nJobs: Rep[Int], f: Rep[Int=>B]): Arr[B]
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B]
   def mkLambda[A,B](fun: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A]): Rep[A => B]
   def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[A=>B=>C]
@@ -24,6 +24,14 @@ trait Functions { self: Scalan =>
 }
 
 trait FunctionsSeq extends Functions { self: ScalanSeq =>
+  def par[B](nJobs: Rep[Int], f: Rep[Int=>B])(implicit elem:Elem[B]): Arr[B] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    implicit val tag = elem.classTag
+    val tasks = for (i <- 0 until nJobs) yield scala.concurrent.Future {
+      f(i)
+    }
+    scala.concurrent.Await.result(scala.concurrent.Future.sequence(tasks), scala.concurrent.duration.Duration.Inf).toArray
+  }
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B] = f(x)
   def mkLambda[A,B](f: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A]): Rep[A => B] = f
   def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]) = fun
@@ -88,6 +96,23 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
+  case class ParallelExecute[B:Elem](nJobs: Exp[Int], f: Exp[Int => B])  extends Def[Array[B]] {
+    def selfType = element[Array[B]]
+    def uniqueOpId = name(selfType)
+    override def mirror(t: Transformer) = ParallelExecute(t(nJobs), t(f))
+    /* Added only for debugging
+    override def equals(other: Any) = {
+      other match {
+        case that: ParallelExecute[_] =>
+          val eqJobs = nJobs == that.nJobs
+          val eqFuncs = f.equals(that.f)
+          eqJobs && eqFuncs
+        case _ => false
+      }
+    }
+    */
+  }
+
   case class Apply[A,B]
     (f: Exp[A => B], arg: Exp[A])
     (implicit eB: LElem[B])   // enforce explicit laziness at call sites to tie recursive knot (see executeFunction)
@@ -117,6 +142,8 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   //=====================================================================================
   //   Function application
+
+  def par[B:Elem](nJobs: Rep[Int], f: Rep[Int=>B]): Arr[B] = ParallelExecute(nJobs, f)
 
   def mkApply[A,B](f: Exp[A => B], x: Exp[A]): Exp[B] = {
     implicit val leB = Lazy(f.elem.eRange)
