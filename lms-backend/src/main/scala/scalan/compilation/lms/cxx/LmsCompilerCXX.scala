@@ -2,12 +2,26 @@ package scalan.compilation.lms.cxx
 
 import java.io._
 
+import scalan.JNIExtractorOpsExp
 import scalan.community.ScalanCommunityExp
 import scalan.compilation.GraphVizExport
 import scalan.compilation.lms.LmsCompiler
 import scalan.util.{FileUtil, ProcessUtil}
 
-trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVizExport =>
+trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with GraphVizExport =>
+
+  override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
+    case el: JNITypeElem[_] =>
+      Manifest.classType(classOf[scalan.compilation.lms.JNILmsOps#JNIType[_]], createManifest(el.tElem))
+    case el: JNIArrayElem[arr_t] =>
+      el.eItem match {
+        case ei: Elem[a_t] =>
+          val mItem = createManifest(ei)
+          Manifest.classType(classOf[scalan.compilation.lms.JNILmsOps#JNIArray[a_t]], mItem)
+      }
+    case el =>
+      super.createManifest(el)
+  }
 
   def generate[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
                            (implicit config: Config): Unit = {

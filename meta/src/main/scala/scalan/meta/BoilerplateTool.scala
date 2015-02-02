@@ -9,6 +9,7 @@ class BoilerplateTool {
   lazy val coreConfig = CodegenConfig(
     srcPath = "../core/src/main/scala",
     entityFiles = List(
+      "scalan/primitives/AbstractStrings.scala",
       "scalan/util/Exceptions.scala"
     ),
     seqContextTrait = "ScalanSeq",
