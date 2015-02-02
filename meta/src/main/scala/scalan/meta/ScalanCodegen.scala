@@ -561,8 +561,9 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         def methodExtractor(m: SMethodDef) = {
           reasonToSkipMethod(m) match {
             case Some(reason) =>
-              val warning = s"Cannot generate matcher for method `${e.name}.${m.name}`: $reason"
-              logger.warn(warning)
+              // TODO consider if we really want a warning here. Might depend on severity of reason.
+              // val warning = s"Cannot generate matcher for method `${e.name}.${m.name}`: $reason"
+              // logger.warn(warning)
               s"    // WARNING: Cannot generate matcher for method `${m.name}`: $reason"
             case _ =>
               // DummyImplicit and Overloaded* are ignored, since

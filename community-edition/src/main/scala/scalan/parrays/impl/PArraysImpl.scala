@@ -589,8 +589,6 @@ trait PArraysExp extends PArraysAbs with PArraysDsl with ScalanExp
   }
 
   object PairArrayMethods {
-    // WARNING: Cannot generate matcher for method `mapPairs`: Method has function arguments f
-
     object arr {
       def unapply(d: Def[_]): Option[Rep[PairArray[A, B]] forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[PairArrayElem[_, _]] && method.getName == "arr" =>

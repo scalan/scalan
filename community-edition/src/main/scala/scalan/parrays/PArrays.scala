@@ -135,12 +135,6 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
   abstract class PairArray[A, B](val as: Rep[PArray[A]], val bs: Rep[PArray[B]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends PArray[(A, B)] {
     lazy val elem = element[(A, B)]
-    def mapPairs[R: Elem](f: (Rep[A], Rep[B]) => Rep[R]): PA[R] = {
-      map { (p: Rep[(A, B)]) =>
-        val Pair(a, b) = p
-        f(a, b)
-      }
-    }
     def arr = as.arr zip bs.arr
     def apply(i: Rep[Int]) = (as(i), bs(i))
     def length = as.length
