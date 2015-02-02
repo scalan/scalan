@@ -5,7 +5,7 @@ package lms
 import java.io._
 import java.net.URLClassLoader
 
-import scalan.util.{FileUtil, ProcessUtil}
+import scalan.util.{StringUtil, FileUtil, ProcessUtil}
 import scala.tools.nsc.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
@@ -54,8 +54,8 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
                  |
                  |artifactPath in Compile in packageBin := "$jarPath"
                  |
-                 |scalacOptions ++= Seq(${config.extraCompilerOptions.mkString(", ")})
-              """.stripMargin
+                 |scalacOptions ++= Seq(${config.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
+                 |""".stripMargin
 
             FileUtil.write(buildSbtFile, buildSbtText)
 
