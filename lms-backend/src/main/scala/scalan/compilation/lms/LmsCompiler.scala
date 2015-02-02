@@ -2,9 +2,7 @@ package scalan
 package compilation
 package lms
 
-import scalan.community.ScalanCommunityExp
-
-trait LmsCompiler extends Compiler { self: ScalanCommunityExp =>
+trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
 
   case class Config(extraCompilerOptions: Seq[String])
 
@@ -14,7 +12,7 @@ trait LmsCompiler extends Compiler { self: ScalanCommunityExp =>
 
   def graphPasses(config: Config) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
-  def createManifest[T]: PartialFunction[Elem[T],Manifest[_]] = {
+  def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     // Doesn't work for some reason, produces int instead of Int
     //    implicit val typeTag = eA.tag
     //    implicit val classTag = eA.classTag
@@ -40,4 +38,5 @@ trait LmsCompiler extends Compiler { self: ScalanCommunityExp =>
       Manifest.classType(classOf[List[_]], createManifest(el.eItem))
     case el => ???(s"Don't know how to create manifest for $el")
   }
+
 }
