@@ -1,14 +1,11 @@
 package scalan.compilation
 
 import java.io.{File, PrintWriter}
-import java.lang.reflect.Method
 
 import _root_.scalan.ScalanExp
-import scalan.util.{FileUtil, ScalaNameUtil}
+import scalan.util.{StringUtil, FileUtil}
 
 trait GraphVizExport { self: ScalanExp =>
-
-  protected def quote(x: Any) = "\"" + x + "\""
 
   // TODO it would be better to have nodeColor(elem: Elem[_], optDef: Option[Def[_]]) to
   // avoid looking up definition, but this leads to ClassFormatError (likely Scala bug)
@@ -42,22 +39,22 @@ trait GraphVizExport { self: ScalanExp =>
       sb.append(part)
       lineLength += part.length
     }
-    s"label=${quote(sb.result)}"
+    s"label=${StringUtil.quote(sb.result)}"
   }
 
   protected def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
     rhs match {
       case l: Lambda[_, _] =>
         val x = l.x
-        stream.println(quote(x) + " [")
+        stream.println(StringUtil.quote(x) + " [")
         stream.println(nodeLabel(x.toStringWithType))
         stream.println(s"color=${nodeColor(x)}")
         stream.println("]")
       case _ =>
     }
-    stream.println(quote(sym) + " [")
+    stream.println(StringUtil.quote(sym) + " [")
     stream.println(nodeLabel(sym.toStringWithType + " =", formatDef(rhs)))
-    stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${quote(sym.toStringWithType)}")
+    stream.println(s"shape=box,color=${nodeColor(sym)},tooltip=${StringUtil.quote(sym.toStringWithType)}")
     stream.println("]")
   }
 
@@ -87,7 +84,7 @@ trait GraphVizExport { self: ScalanExp =>
 
   private def emitDeps(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
     def emitDepList(list: List[Exp[_]], params: String) =
-      list.foreach { dep => stream.println(s"${quote(dep)} -> ${quote(sym)} $params") }
+      list.foreach { dep => stream.println(s"${StringUtil.quote(dep)} -> ${StringUtil.quote(sym)} $params") }
 
     val (deps, lambdaVars) = rhs match {
       case l: Lambda[_, _] => lambdaDeps(l)
@@ -146,7 +143,7 @@ trait GraphVizExport { self: ScalanExp =>
           d match {
             case g: AstGraph if shouldEmitCluster(g) =>
               stream.println(s"subgraph cluster_$s {")
-              stream.println(s"style=dashed; color=${quote(clusterColor(g))}")
+              stream.println(s"style=dashed; color=${StringUtil.quote(clusterColor(g))}")
               emitNode(s, d)
               // for lambdas, do we want lambdaDeps instead?
               val sources = g.boundVars
