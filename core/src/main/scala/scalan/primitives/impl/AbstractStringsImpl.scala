@@ -20,8 +20,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings
   trait AStringCompanionElem extends CompanionElem[AStringCompanionAbs]
   implicit lazy val AStringCompanionElem: AStringCompanionElem = new AStringCompanionElem {
     lazy val tag = typeTag[AStringCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(AString)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = AString
   }
 
   abstract class AStringCompanionAbs extends CompanionBase[AStringCompanionAbs] with AStringCompanion {
@@ -74,8 +73,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings
 
   class SStringCompanionElem extends CompanionElem[SStringCompanionAbs] {
     lazy val tag = typeTag[SStringCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(SString)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = SString
   }
   implicit lazy val SStringCompanionElem: SStringCompanionElem = new SStringCompanionElem
 
@@ -135,8 +133,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings
 
   class CStringCompanionElem extends CompanionElem[CStringCompanionAbs] {
     lazy val tag = typeTag[CStringCompanionAbs]
-    lazy val getDefaultRep = Default.defaultVal(CString)
-    //def getDefaultRep = defaultRep
+    protected def getDefaultRep = CString
   }
   implicit lazy val CStringCompanionElem: CStringCompanionElem = new CStringCompanionElem
 
