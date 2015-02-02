@@ -38,7 +38,7 @@ class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
             "*******************************************/")
         emitFileHeader()
 
-        val indargs = (0 until args.length).asInstanceOf[Range].zip(args);
+        val indargs = scala.Range(0, args.length).zip(args);
         stream.println(s"${sA} apply(${indargs.map( p => s"${remap(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
         emitBlock(body)
@@ -57,7 +57,7 @@ class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
   override val codegen = new Codegen {}
 }
 
-class CommunityCXXLmsBackend extends CoreCXXLmsBackend with CommunityLmsBackendBase { self =>
+class CommunityCXXLmsBackend extends CoreCXXLmsBackend with CommunityLmsBackendBase with JNILmsOpsExp{ self =>
 
   override val codegen = new Codegen with CXXGenJNIExtractor {
     override val IR: self.type = self
@@ -77,7 +77,7 @@ class CommunityCXXLmsBackend extends CoreCXXLmsBackend with CommunityLmsBackendB
             "*******************************************/")
         emitFileHeader()
 
-        val indargs = (0 until args.length) zip args;
+        val indargs = scala.Range(0, args.length).zip(args);
         val has = indargs.map(p => p._2.tp.runtimeClass)
           .contains(classOf[scalan.compilation.lms.JNILmsOps#JNIType[_]])
         val jniEnv = if (has) "JNIEnv* env, " else ""

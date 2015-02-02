@@ -7,7 +7,7 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] {
 
   // `LmsCompiler` mixed just to provide `createManifest` function
   val scalan: ScalanExp with JNIExtractorOpsExp with AbstractStringsDslExp with LmsCompiler
-  val lms: CommunityLmsBackend with JNILmsOpsExp
+  val lms: CommunityLmsBackendBase with JNILmsOpsExp
 
   abstract override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) = {
     jniDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)
