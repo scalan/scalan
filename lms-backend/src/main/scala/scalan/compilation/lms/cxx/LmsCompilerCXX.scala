@@ -41,7 +41,7 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
     }
   }
 
-  protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
+  override protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
@@ -71,7 +71,7 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
     ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
   }
 
-  protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
+  override protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
                                (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
 //    val url = new File(jarPath(functionName, executableDir)).toURI.toURL
 //    // ensure Scala library is available

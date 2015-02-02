@@ -3,9 +3,9 @@ package scalan.compilation.lms.cxx
 import java.io.PrintWriter
 
 import scala.virtualization.lms.common._
-import scalan.compilation.lms.{CommunityLmsBackend, CoreLmsBackend}
+import scalan.compilation.lms.{LmsBackend, LmsBackendFacade}
 
-class CoreCXXLmsBackend extends CoreLmsBackend { self =>
+class CoreCXXLmsBackend extends LmsBackend with LmsBackendFacade { self =>
 
   trait Codegen extends CLikeGenNumericOps
   with CLikeGenEqual
