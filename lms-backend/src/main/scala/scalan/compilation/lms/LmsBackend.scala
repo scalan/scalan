@@ -1,6 +1,6 @@
 package scalan.compilation.lms
 
-import virtualization.lms.internal.GenericCodegen
+import scala.virtualization.lms.internal.GenericCodegen
 import scalan.compilation.lms.common.{VectorOpsExp, ScalaGenVectorOps, ScalaGenEitherOps, EitherOpsExp}
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
@@ -41,7 +41,6 @@ trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp wi
   def opDiv[A:Numeric:Manifest](a:Exp[A], b:Exp[A]): Exp[A] = { a/b }
   def opMod(a: Exp[Int], b: Exp[Int]): Exp[Int] = a % b
   def opEq[A:Manifest](a:Exp[A], b:Exp[A]): Exp[Boolean] = { equals(a,b)}
-  def opNeq[A:Manifest](a:Exp[A], b:Exp[A]): Exp[Boolean] = { notequals(a,b)}
 
   def LT[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
     left < right
@@ -111,5 +110,36 @@ trait LmsBackendFacade extends ListOpsExp with NumericOpsExp with RangeOpsExp wi
   }  */
 }
 
-trait CoreLmsBackend extends LmsBackend with LmsBackendFacade
-trait CommunityLmsBackend extends CoreLmsBackend with VectorOpsExp
+class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
+
+  trait Codegen extends ScalaGenFunctions with ScalaGenStruct with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
+    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenEitherOps with ScalaGenOrderingOps with ScalaGenBooleanOps
+    with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
+    with ScalaGenCastingOps {
+
+    val IR: self.type = self
+    override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
+
+    private def isTuple(name: String) =
+      name.startsWith("Tuple2") || name.startsWith("Tuple3") || name.startsWith("Tuple4") || name.startsWith("Tuple5")
+
+    override def remap[A](m: Manifest[A]) =
+      if (isTuple(m.runtimeClass.getSimpleName)) m.toString
+      else super.remap(m)
+
+    override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+      case Struct(ClassTag(name), elems) if isTuple(name) =>
+        emitValDef(sym, "(" + elems.map(e => quote(e._2)).mkString(",") + ")")
+      case _ => super.emitNode(sym, rhs)
+    }
+  }
+
+  val codegen = new Codegen {}
+}
+
+class CommunityLmsBackend extends CoreLmsBackend with VectorOpsExp { self =>
+
+  override val codegen = new Codegen with ScalaGenVectorOps {
+    override val IR: self.type = self
+  }
+}

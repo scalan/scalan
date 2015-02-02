@@ -2,6 +2,12 @@ package scalan
 package compilation
 package lms
 
+import java.io._
+import java.net.URLClassLoader
+
+import scala.util.Properties
+import scalan.util.{FileUtil, ProcessUtil}
+
 trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
 
   case class Config(extraCompilerOptions: Seq[String])
@@ -11,6 +17,63 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
   def makeBridge[A, B]: LmsBridge[A, B]
 
   def graphPasses(config: Config) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+
+  protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
+                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
+    /* LMS stuff */
+
+    val outputSource = new File(sourcesDir, functionName + ".scala")
+    val buildSbtFile = new File(sourcesDir, "build.sbt")
+
+    (createManifest(eInput), createManifest(eOutput)) match {
+      case (mA: Manifest[a], mB: Manifest[b]) =>
+        val bridge = makeBridge[a, b]
+        val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
+        val codegen = bridge.lms.codegen
+
+        FileUtil.withFile(outputSource) { writer =>
+          codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
+          codegen.emitDataStructures(writer)
+        }
+
+        // we want a normal Scala version which is binary-compatible to the
+        // current scala-library.jar
+        // e.g. 2.10.2 for Scala-Virtualized 2.10.2
+        val scalaVersion = Properties.versionNumberString.split('-')(0)
+
+        val buildSbtText =
+          s"""name := "$functionName"
+             |
+             |scalaVersion := "$scalaVersion"
+             |
+             |artifactPath in Compile in packageBin :=
+             |  baseDirectory.value / "$functionName.jar"
+             |
+             |scalacOptions ++= Seq(${config.extraCompilerOptions.mkString(", ")})
+           """.stripMargin
+
+        FileUtil.write(buildSbtFile, buildSbtText)
+    }
+
+    val command = Seq("sbt", "package")
+
+    ProcessUtil.launch(sourcesDir, command: _*)
+  }
+
+  protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
+                               (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
+    val url = jarFile(functionName, executableDir).toURI.toURL
+    // ensure Scala library is available
+    val classLoader = new URLClassLoader(scala.Array(url), classOf[_ => _].getClassLoader)
+    val cls = classLoader.loadClass(functionName)
+    val argumentClass = eInput.classTag.runtimeClass
+    val method = cls.getMethod("apply", argumentClass)
+    val result = method.invoke(cls.newInstance(), input.asInstanceOf[AnyRef])
+    result.asInstanceOf[B]
+  }
+
+  private def jarFile(functionName: String, executableDir: File) =
+    FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
 
   def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     // Doesn't work for some reason, produces int instead of Int
