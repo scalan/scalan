@@ -80,18 +80,11 @@ class mvm extends BaseBenchmark {
       exec.maxWarmupRuns -> 20,
       exec.warmupCovThreshold -> 0.1
     ) in {
-//      measure method "seqdmdv" in {
-//        using(inDD) in {
-//          a => ctx.ddmvm((a._1, a._2))
-//        }
-//      }
-//
-      measure method "seqdmdvCXX" in {
+      measure method "seqdmdv" in {
         using(inDD) in {
-          a => new MVM().ddmvm( a._1, a._2 )
+          a => ctx.ddmvm((a._1, a._2))
         }
       }
-    }
 //      measure method "seqdmsv" in {
 //        using(inDS) in {
 //          a => ctx.dsmvm(a)
@@ -102,22 +95,16 @@ class mvm extends BaseBenchmark {
 //          a => ctx.sdmvm(a)
 //        }
 //      }
-
-      measure method "seqsmdvCXX" in {
-        using(inSD) in {
-          a => MVMs().sdmvm(a)
-        }
-      }
 //      measure method "seqsmsv" in {
 //        using(inSS) in {
 //          a => ctx.ssmvm(a)
 //        }
 //      }
-      measure method "seqfmdv" in {
-        using(inFD) in {
-          a => ctx.fdmvm((a._1, a._2))
-        }
-      }
+//      measure method "seqfmdv" in {
+//        using(inFD) in {
+//          a => ctx.fdmvm((a._1, a._2))
+//        }
+//      }
 //      measure method "seqfmsv" in {
 //        using(inFS) in {
 //          a => ctx.fsmvm(a)
@@ -153,7 +140,5 @@ class mvm extends BaseBenchmark {
 //          a => (new fsmvm())(a)
 //        }
 //      }
-//    }
-
-  //}
+    }
 }
