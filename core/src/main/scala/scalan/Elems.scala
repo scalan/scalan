@@ -111,6 +111,7 @@ trait Elems extends Base { self: Scalan =>
   implicit val DoubleElement: Elem[Double] = new BaseElem[Double]
   implicit val UnitElement: Elem[Unit] = new BaseElem[Unit]
   implicit val StringElement: Elem[String] = new BaseElem[String]
+  implicit val CharElement: Elem[Char] = new BaseElem[Char]
 
   implicit def pairElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A, B)] = new PairElem[A, B](ea, eb)
   implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A | B)] = new SumElem[A, B](ea, eb)

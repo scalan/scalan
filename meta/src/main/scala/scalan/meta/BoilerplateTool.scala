@@ -46,6 +46,7 @@ class BoilerplateTool {
       , "scalan/collection/HashSets.scala"
       , "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
+      , "scalan/collections/MultiMap.scala"
     ),
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
@@ -99,7 +100,7 @@ class BoilerplateTool {
       //"scalan/monads/Coproducts.scala"
       //"scalan/monads/Interactions.scala"
       //"scalan/monads/Auths.scala"
-      //"scalan/monads/Readers.scala"
+      //"scalan/monads/Readers.scala"     
     ),
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",

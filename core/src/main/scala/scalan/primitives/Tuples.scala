@@ -17,6 +17,11 @@ trait Tuples { self: Scalan =>
   def unzipPair[A, B](p: Rep[(A, B)]): (Rep[A], Rep[B])
   implicit def zipPair[A, B](p: (Rep[A], Rep[B])): Rep[(A, B)]
 
+  implicit class ListOps[A, B](t: Rep[(A, B)]) {
+    def head: Rep[A] = { val Pair(x, _) = t; x }
+    def tail: Rep[B] = { val Pair(_, x) = t; x }
+  }
+
   implicit class TupleOps2[A, B](t: Rep[(A, B)]) {
     def _1: Rep[A] = { val Pair(x, _) = t; x }
     def _2: Rep[B] = { val Pair(_, x) = t; x }
@@ -94,7 +99,8 @@ trait Tuples { self: Scalan =>
   object Tuple {
     def apply[A, B](a: Rep[A], b: Rep[B]) = Pair(a, b)
 
-    def apply[A, B, C](a: Rep[A], b: Rep[B], c: Rep[C]): Rep[(A, (B, C))] = Pair(a, Pair(b, c))
+    def apply[A, B, C](a: Rep[A], b: Rep[B], c: Rep[C]): Rep[(A, (B, C))] =
+      Pair(a, Pair(b, c))
 
     def apply[A, B, C, D](a: Rep[A], b: Rep[B], c: Rep[C], d: Rep[D]): Rep[(A, (B, (C, D)))] =
       Pair(a, Pair(b, Pair(c, d)))
@@ -113,7 +119,8 @@ trait Tuples { self: Scalan =>
 
     def unapply[A, B](p: Rep[(A, B)]) = Some((p._1, p._2))
 
-    def unapply[A, B, C](p: Rep[(A, (B, C))])(implicit o: Overloaded1) = Some((p._1, p._2, p._3))
+    def unapply[A, B, C](p: Rep[(A, (B, C))])(implicit o: Overloaded1) =
+      Some((p._1, p._2, p._3))
 
     def unapply[A, B, C, D](p: Rep[(A, (B, (C, D)))])(implicit o: Overloaded2) =
       Some((p._1, p._2, p._3, p._4))
@@ -138,14 +145,18 @@ trait TuplesSeq extends Tuples  { self: ScalanSeq =>
 }
 
 trait TuplesExp extends Tuples with BaseExp { self: ScalanExp =>
+  val tuplesCache = scala.collection.mutable.HashMap.empty[Rep[_], (Rep[_], Rep[_])]
 
   def unzipPair[A, B](p: Rep[(A, B)]): (Rep[A], Rep[B]) = p match {
     case Def(Tup(a, b)) => (a, b)
     case _ => p.elem match {
       case pe: PairElem[_, _] =>
-        implicit val eA = pe.eFst
-        implicit val eB = pe.eSnd
-        (First(p), Second(p))
+        if (!tuplesCache.contains(p)) {
+          implicit val eA = pe.eFst
+          implicit val eB = pe.eSnd
+          tuplesCache.update(p, (First(p), Second(p)))
+        }
+        tuplesCache(p).asInstanceOf[(Rep[A], Rep[B])]
       case _ =>
         !!!(s"expected Tup[A,B] or Sym with type (A,B) but got ${p.toStringWithDefinition}")
     }

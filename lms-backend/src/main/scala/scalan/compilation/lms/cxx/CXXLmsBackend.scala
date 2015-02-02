@@ -3,9 +3,9 @@ package scalan.compilation.lms.cxx
 import java.io.PrintWriter
 
 import scala.virtualization.lms.common._
-import scalan.compilation.lms.{JNILmsOpsExp, CXXGenJNIExtractor, CommunityLmsBackend, CoreLmsBackend}
+import scalan.compilation.lms._
 
-class CoreCXXLmsBackend extends CoreLmsBackend { self =>
+class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
 
   trait Codegen extends CLikeGenNumericOps
   with CLikeGenEqual
@@ -38,7 +38,7 @@ class CoreCXXLmsBackend extends CoreLmsBackend { self =>
             "*******************************************/")
         emitFileHeader()
 
-        val indargs = (0 until args.length) zip args;
+        val indargs = (0 until args.length).asInstanceOf[Range].zip(args);
         stream.println(s"${sA} apply(${indargs.map( p => s"${remap(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
         emitBlock(body)
@@ -57,7 +57,7 @@ class CoreCXXLmsBackend extends CoreLmsBackend { self =>
   override val codegen = new Codegen {}
 }
 
-class CommunityCXXLmsBackend extends CoreCXXLmsBackend with CommunityLmsBackend with JNILmsOpsExp { self =>
+class CommunityCXXLmsBackend extends CoreCXXLmsBackend with CommunityLmsBackendBase { self =>
 
   override val codegen = new Codegen with CXXGenJNIExtractor {
     override val IR: self.type = self

@@ -96,9 +96,9 @@ trait LoopsSeq extends Loops { self: ScalanSeq =>
   def loopUntil[A:Elem](s1: Rep[A])( isMatch: Rep[A => Boolean], step: Rep[A => A]): Rep[A] = {
     if (isMatch(s1)) return s1
     var state = s1
-    do {
+    while (!isMatch(state)) {
       state = step(state)
-    } while (!isMatch(state))
+    }
     state
   }
 }
