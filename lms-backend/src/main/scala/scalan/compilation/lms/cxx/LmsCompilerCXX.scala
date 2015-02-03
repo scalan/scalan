@@ -6,18 +6,19 @@ import scalan.JNIExtractorOpsExp
 import scalan.community.ScalanCommunityExp
 import scalan.compilation.GraphVizExport
 import scalan.compilation.lms.LmsCompiler
+import scalan.compilation.lms.common.JNILmsOps
 import scalan.util.{FileUtil, ProcessUtil}
 
 trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with GraphVizExport =>
 
   override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     case el: JNITypeElem[_] =>
-      Manifest.classType(classOf[scalan.compilation.lms.JNILmsOps#JNIType[_]], createManifest(el.tElem))
+      Manifest.classType(classOf[JNILmsOps#JNIType[_]], createManifest(el.tElem))
     case el: JNIArrayElem[arr_t] =>
       el.eItem match {
         case ei: Elem[a_t] =>
           val mItem = createManifest(ei)
-          Manifest.classType(classOf[scalan.compilation.lms.JNILmsOps#JNIArray[a_t]], mItem)
+          Manifest.classType(classOf[JNILmsOps#JNIArray[a_t]], mItem)
       }
     case el =>
       super.createManifest(el)

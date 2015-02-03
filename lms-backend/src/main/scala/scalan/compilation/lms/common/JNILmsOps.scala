@@ -1,9 +1,9 @@
-package scalan.compilation.lms
+package scalan.compilation.lms.common
 
-import reflect.SourceContext
+import scala.reflect.SourceContext
+import scala.virtualization.lms.common._
+import scala.virtualization.lms.internal.GenerationFailedException
 import scalan.compilation.lms.cxx.CXXCodegen
-import virtualization.lms.common._
-import virtualization.lms.internal.GenerationFailedException
 
 
 /**

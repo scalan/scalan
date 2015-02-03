@@ -4,6 +4,7 @@ import java.io.PrintWriter
 
 import scala.virtualization.lms.common._
 import scalan.compilation.lms._
+import scalan.compilation.lms.common.{CXXGenJNIExtractor, JNILmsOpsExp, JNILmsOps}
 
 class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
 
@@ -79,7 +80,7 @@ class CommunityCXXLmsBackend extends CoreCXXLmsBackend with CommunityLmsBackendB
 
         val indargs = scala.Range(0, args.length).zip(args);
         val has = indargs.map(p => p._2.tp.runtimeClass)
-          .contains(classOf[scalan.compilation.lms.JNILmsOps#JNIType[_]])
+          .contains(classOf[JNILmsOps#JNIType[_]])
         val jniEnv = if (has) "JNIEnv* env, " else ""
         stream.println(s"${sA} apply(${jniEnv}${indargs.map(p => s"${remap(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 

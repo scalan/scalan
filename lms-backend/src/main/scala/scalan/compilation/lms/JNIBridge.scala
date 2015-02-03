@@ -1,5 +1,6 @@
 package scalan.compilation.lms
 
+import scalan.compilation.lms.common.JNILmsOpsExp
 import scalan.primitives.AbstractStringsDslExp
 import scalan.{JNIExtractorOpsExp, ScalanExp}
 
