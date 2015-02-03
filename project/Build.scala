@@ -94,10 +94,6 @@ object ScalanBuild extends Build {
     .dependsOn(core.allConfigDependency)
     .withTestConfigsAndCommonSettings
 
-lazy val benchmark = project.withTestConfigsAndCommonSettings
-  .dependsOn(core.allConfigDependency, ce.allConfigDependency, lmsBackend.allConfigDependency)
-  .settings(jmhSettings: _*)
-
   val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2")
 
   val lms = "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT"
@@ -116,6 +112,16 @@ lazy val benchmark = project.withTestConfigsAndCommonSettings
       ReleaseKeys.snapshotDependencies := Seq.empty,
       fork in Test := true,
       fork in ItTest := true)
+
+  lazy val benchmark = project.withTestConfigsAndCommonSettings
+    .dependsOn(core, ce, lmsBackend)
+    .settings(jmhSettings: _*)
+    .settings(
+      scalaOrganization := "org.scala-lang.virtualized",
+      scalaVersion := virtScala,
+      publishArtifact := false
+//      fork in run := true
+    )
 
   // name to make this the default project
   lazy val root = Project("scalan", file("."))
