@@ -166,7 +166,7 @@ trait GraphVizExport { self: ScalanExp =>
   }
 
   private def emitDepGraph(name: String, ss: Seq[Exp[_]])(implicit stream: PrintWriter, orientation: Orientation): Unit = {
-    stream.println(s"""digraph \"${name}\" {""")
+    stream.println(s"""digraph "${name}" {""")
 
     val deflist = buildScheduleForResult(ss, dep)
 
