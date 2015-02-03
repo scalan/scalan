@@ -4,7 +4,7 @@
  */
 package scalan.meta
 
-import scalan.util.ScalaNameUtil
+import scalan.util.{StringUtil, ScalaNameUtil}
 import ScalanAst._
 
 object Extensions {
@@ -255,7 +255,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val companionAbs = s"""
         |  trait ${companionName}Elem extends CompanionElem[${companionName}Abs]
         |  implicit lazy val ${companionName}Elem: ${companionName}Elem = new ${companionName}Elem {
-        |    lazy val tag = typeTag[${companionName}Abs]
+        |    lazy val tag = weakTypeTag[${companionName}Abs]
         |    protected def getDefaultRep = $entityName
         |  }
         |
@@ -288,6 +288,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
           if (className != s"${entityName}Impl") ""
           else {
             s"""
+            |  // default wrapper implementation
             |  abstract class ${entityName}Impl${typesDecl}(val wrappedValueOfBaseType: Rep[${entityNameBT}${typesUse}])${implicitArgsWithVals} extends ${entityName}${typesUse} {
             |    $externalMethodsStr
             |  }
@@ -296,9 +297,17 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
           }
         })
 
+        // necessary in cases Scala type inference fails
+        val maybeElemHack = {
+          val elemMethodName = StringUtil.lowerCaseFirst(className + "DataElem")
+          if (module.methods.exists(_.name == elemMethodName))
+            s"()($elemMethodName)"
+          else
+            ""
+        }
+
         s"""
-        |  //default wrapper implementation
-        |  $defaultImpl
+        |$defaultImpl
         |  // elem for concrete class
         |  class ${className}Elem${typesDecl}(iso: Iso[${className}Data${typesUse}, $className${typesUse}]) extends ${entityName}Elem[${parentArgs}${className}Data${typesUse}, $className${typesUse}](iso)
         |
@@ -307,7 +316,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |
         |  // 3) Iso for concrete class
         |  class ${className}Iso${typesDecl}${implicitArgs}
-        |    extends Iso[${className}Data${typesUse}, $className${typesUse}] {
+        |    extends Iso[${className}Data${typesUse}, $className${typesUse}]$maybeElemHack {
         |    override def from(p: Rep[$className${typesUse}]) =
         |      unmk${className}(p) match {
         |        case Some((${fields.opt(fields => fields.rep(), "unit")})) => ${pairify(fields)}
@@ -339,7 +348,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |  }
         |
         |  class ${className}CompanionElem extends CompanionElem[${className}CompanionAbs] {
-        |    lazy val tag = typeTag[${className}CompanionAbs]
+        |    lazy val tag = weakTypeTag[${className}CompanionAbs]
         |    protected def getDefaultRep = $className
         |  }
         |  implicit lazy val ${className}CompanionElem: ${className}CompanionElem = new ${className}CompanionElem
@@ -363,8 +372,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
 
       s"""
        |// Abs -----------------------------------
-       |trait ${module.name}Abs extends Scalan with ${module.name}
-       |{ ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
+       |trait ${module.name}Abs extends ${config.baseContextTrait} with ${module.name} {
+       |  ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
        |$proxy
        |$proxyBT
        |$baseTypeElem
@@ -491,8 +500,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
 
       s"""
        |// Seq -----------------------------------
-       |trait ${module.name}Seq extends ${module.name}Abs with ${module.name}Dsl with ${config.seqContextTrait}
-       |{ ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
+       |trait ${module.name}Seq extends ${module.name}Dsl with ${config.seqContextTrait} {
+       |  ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    $companionMethods
@@ -516,8 +525,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       
       s"""
        |// Exp -----------------------------------
-       |trait ${module.name}Exp extends ${module.name}Abs with ${module.name}Dsl with ${config.stagedContextTrait}
-       |{ ${module.selfType.opt(t => s"self: ${t.tpe}Exp =>")}
+       |trait ${module.name}Exp extends ${module.name}Dsl with ${config.stagedContextTrait} {
+       |  ${module.selfType.opt(t => s"self: ${t.tpe}Exp =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this
@@ -681,7 +690,14 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         getTraitSeq,
         getTraitExp
       )
-      topLevel.mkString("", "\n\n", "\n")
+      topLevel.mkString("", "\n\n", "\n").
+        // clean empty lines
+        replaceAll(""" +\r?\n""", "\n").
+        // remove 3 or more consecutive linebreaks
+        replaceAll("""(\r?\n){3,}""", "\n\n").
+        // remove empty lines before and after braces
+        replaceAll("""\r?\n\r?\n( *\})""", "\n$1").
+        replaceAll("""( *\{)\r?\n\r?\n""", "$1\n")
     }
   }
 }

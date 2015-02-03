@@ -192,6 +192,7 @@ object ScalanAst {
     entityRepSynonym: Option[STpeDef],
     entityOps: STraitDef,
     concreteSClasses: List[SClassDef],
+    methods: List[SMethodDef],
     selfType: Option[SSelfTypeDef],
     seqDslImpl: Option[SSeqImplementation] = None)
 
@@ -254,7 +255,10 @@ object ScalanAst {
           defaultBTImpl :: getConcreteClasses(defs)
         case None => getConcreteClasses(defs)
       }
-      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, classes, moduleTrait.selfType)
+
+      val methods = defs.collect { case md: SMethodDef => md }
+
+      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, classes, methods, moduleTrait.selfType)
     }
   }
 }

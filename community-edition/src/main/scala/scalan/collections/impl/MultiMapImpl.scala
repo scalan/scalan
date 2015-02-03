@@ -7,33 +7,28 @@ import scala.reflect.runtime.universe._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait MultiMapsAbs extends Scalan with MultiMaps
-{ self: MultiMapsDsl =>
+trait MultiMapsAbs extends Scalan with MultiMaps {
+  self: MultiMapsDsl =>
   // single proxy for each type family
   implicit def proxyMultiMap[K, V](p: Rep[MultiMap[K, V]]): MultiMap[K, V] =
     proxyOps[MultiMap[K, V]](p)
-
-
 
   abstract class MultiMapElem[K, V, From, To <: MultiMap[K, V]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
   trait MultiMapCompanionElem extends CompanionElem[MultiMapCompanionAbs]
   implicit lazy val MultiMapCompanionElem: MultiMapCompanionElem = new MultiMapCompanionElem {
-    lazy val tag = typeTag[MultiMapCompanionAbs]
+    lazy val tag = weakTypeTag[MultiMapCompanionAbs]
     protected def getDefaultRep = MultiMap
   }
 
   abstract class MultiMapCompanionAbs extends CompanionBase[MultiMapCompanionAbs] with MultiMapCompanion {
     override def toString = "MultiMap"
-    
   }
   def MultiMap: Rep[MultiMapCompanionAbs]
   implicit def proxyMultiMapCompanion(p: Rep[MultiMapCompanion]): MultiMapCompanion = {
     proxyOps[MultiMapCompanion](p)
   }
 
-  //default wrapper implementation
-  
   // elem for concrete class
   class HashMultiMapElem[K, V](iso: Iso[HashMultiMapData[K, V], HashMultiMap[K, V]]) extends MultiMapElem[K, V, HashMultiMapData[K, V], HashMultiMap[K, V]](iso)
 
@@ -72,7 +67,7 @@ trait MultiMapsAbs extends Scalan with MultiMaps
   }
 
   class HashMultiMapCompanionElem extends CompanionElem[HashMultiMapCompanionAbs] {
-    lazy val tag = typeTag[HashMultiMapCompanionAbs]
+    lazy val tag = weakTypeTag[HashMultiMapCompanionAbs]
     protected def getDefaultRep = HashMultiMap
   }
   implicit lazy val HashMultiMapCompanionElem: HashMultiMapCompanionElem = new HashMultiMapCompanionElem
@@ -94,16 +89,11 @@ trait MultiMapsAbs extends Scalan with MultiMaps
 }
 
 // Seq -----------------------------------
-trait MultiMapsSeq extends MultiMapsAbs with MultiMapsDsl with ScalanSeq
-{ self: MultiMapsDslSeq =>
+trait MultiMapsSeq extends MultiMapsDsl with ScalanSeq {
+  self: MultiMapsDslSeq =>
   lazy val MultiMap: Rep[MultiMapCompanionAbs] = new MultiMapCompanionAbs with UserTypeSeq[MultiMapCompanionAbs, MultiMapCompanionAbs] {
     lazy val selfType = element[MultiMapCompanionAbs]
-    
   }
-
-  
-
-  
 
   case class SeqHashMultiMap[K, V]
       (override val map: Rep[PMap[K,ArrayBuffer[V]]])
@@ -111,7 +101,6 @@ trait MultiMapsSeq extends MultiMapsAbs with MultiMapsDsl with ScalanSeq
     extends HashMultiMap[K, V](map)
         with UserTypeSeq[MultiMap[K,V], HashMultiMap[K, V]] {
     lazy val selfType = element[HashMultiMap[K, V]].asInstanceOf[Elem[MultiMap[K,V]]]
-    
   }
   lazy val HashMultiMap = new HashMultiMapCompanionAbs with UserTypeSeq[HashMultiMapCompanionAbs, HashMultiMapCompanionAbs] {
     lazy val selfType = element[HashMultiMapCompanionAbs]
@@ -125,14 +114,12 @@ trait MultiMapsSeq extends MultiMapsAbs with MultiMapsDsl with ScalanSeq
 }
 
 // Exp -----------------------------------
-trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
-{ self: MultiMapsDslExp =>
+trait MultiMapsExp extends MultiMapsDsl with ScalanExp {
+  self: MultiMapsDslExp =>
   lazy val MultiMap: Rep[MultiMapCompanionAbs] = new MultiMapCompanionAbs with UserTypeDef[MultiMapCompanionAbs, MultiMapCompanionAbs] {
     lazy val selfType = element[MultiMapCompanionAbs]
     override def mirror(t: Transformer) = this
   }
-
-
 
   case class ExpHashMultiMap[K, V]
       (override val map: Rep[PMap[K,ArrayBuffer[V]]])

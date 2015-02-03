@@ -13,6 +13,7 @@ class BoilerplateTool extends StrictLogging {
     entityFiles = List(
       "scalan/util/Exceptions.scala"
     ),
+    baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
@@ -29,6 +30,7 @@ class BoilerplateTool extends StrictLogging {
     entityFiles = List(
       "scalan/common/Segments.scala"
     ),
+    baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
@@ -49,6 +51,7 @@ class BoilerplateTool extends StrictLogging {
       , "scalan/linalgebra/Matrices.scala"
       , "scalan/collections/MultiMap.scala"
     ),
+    baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
@@ -68,11 +71,9 @@ class BoilerplateTool extends StrictLogging {
       "scalan/math/Vectors.scala",
       "scalan/collections/Sets.scala",
       "scalan/dists/Dists.scala",
-    // don't regenerate by default because this will break
-    // FuncArray. See comments there.
-//      "scalan/parrays/PArrays.scala",
-      "scalan/iterators/Iterators.scala"
+      "scalan/parrays/PArrays.scala"
     ),
+    baseContextTrait = "ScalanEnterprise",
     seqContextTrait = "ScalanEnterpriseSeq",
     stagedContextTrait = "ScalanEnterpriseExp",
     extraImports = List(
@@ -80,7 +81,6 @@ class BoilerplateTool extends StrictLogging {
       "scalan.common.Default"),
     coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
   )
-  lazy val scalanFullConfig = scalanConfig.copy(entityFiles = scalanConfig.entityFiles :+ "scalan/parrays/PArrays.scala")
 
   val effectsTypeSynonims = Map(
     "MonadRep"    -> "Monad",
@@ -103,6 +103,7 @@ class BoilerplateTool extends StrictLogging {
       //"scalan/monads/Auths.scala"
       //"scalan/monads/Readers.scala"     
     ),
+    baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
@@ -121,7 +122,6 @@ class BoilerplateTool extends StrictLogging {
     "core" -> List(coreConfig),
     "ce" -> List(liteConfig),
     "ee" -> List(scalanConfig),
-    "ee-full" -> List(scalanFullConfig),
     "effects" -> List(effectsConfig),
     "ce-all" -> List(coreTestsConfig, coreConfig, liteConfig),
     "all" -> List(coreTestsConfig, liteConfig, scalanConfig)
