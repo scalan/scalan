@@ -2,6 +2,7 @@ import sbt.Keys._
 import sbt._
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtrelease.ReleasePlugin._
+import pl.project13.scala.sbt.SbtJmh._
 
 object ScalanBuild extends Build {
 
@@ -92,6 +93,10 @@ object ScalanBuild extends Build {
   lazy val ce = Project("community-edition", file("community-edition"))
     .dependsOn(core.allConfigDependency)
     .withTestConfigsAndCommonSettings
+
+lazy val benchmark = project.withTestConfigsAndCommonSettings
+  .dependsOn(core.allConfigDependency, ce.allConfigDependency, lmsBackend.allConfigDependency)
+  .settings(jmhSettings: _*)
 
   val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2")
 
