@@ -1122,6 +1122,16 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
             val exp = lms.list_concat[a](ls, ks)
             (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
         }
+
+      case scalan.ListReplicate(l, x) =>
+        scalan.createManifest(x.elem) match {
+          case mA: Manifest[a] =>
+            implicit val imA = mA
+            val len = symMirr(l).asInstanceOf[lms.Exp[Int]]
+            val el = symMirr(x).asInstanceOf[lms.Exp[a]]
+            val exp = lms.list_replicate(len, el)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
     }
 
     tt
