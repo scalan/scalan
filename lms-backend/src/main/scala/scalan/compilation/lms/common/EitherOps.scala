@@ -14,18 +14,14 @@ trait EitherOps extends Base {
 
 trait EitherOpsExp extends EitherOps with BaseExp {
 
-  abstract class EitherDef[A: Manifest, B: Manifest, R: Manifest] extends Def[R] {
-    val mA = manifest[A]
-    val mB = manifest[B]
-    val mR = manifest[R]
-  }
+  abstract class EitherDef[A, B, R](implicit val mA: Manifest[A], val mB: Manifest[B], val mR: Manifest[R]) extends Def[R]
 
   /**
    * Class should have Manifest in argument list because otherwise `EitherLeft[Unit, Int](()) == EitherLeft[Unit, Double](())`
    * which will cause caching of the first one in `globalDefsCache`.
    */
-  case class EitherLeft[A: Manifest, B: Manifest](a: Exp[A], mA: Manifest[A], mB: Manifest[B]) extends Def[Either[A, B]]
-  case class EitherRight[A: Manifest, B: Manifest](b: Exp[B], mA: Manifest[A], mB: Manifest[B]) extends Def[Either[A, B]]
+  case class EitherLeft[A: Manifest, B: Manifest](a: Exp[A], override val mA: Manifest[A], override val mB: Manifest[B]) extends EitherDef[A, B, Either[A, B]]
+  case class EitherRight[A: Manifest, B: Manifest](b: Exp[B], override val mA: Manifest[A], override val mB: Manifest[B]) extends EitherDef[A, B, Either[A, B]]
   case class EitherIsLeft[A: Manifest, B: Manifest](sum: Rep[Either[A, B]]) extends EitherDef[A, B, Boolean]
   case class EitherIsRight[A: Manifest, B: Manifest](sum: Rep[Either[A, B]]) extends EitherDef[A, B, Boolean]
   case class EitherFold[A: Manifest, B: Manifest, R: Manifest](sum: Rep[Either[A, B]], left: Rep[A => R], right: Rep[B => R]) extends EitherDef[A, B, R]
