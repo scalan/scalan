@@ -1,7 +1,7 @@
 package scalan.compilation.lms
 
 import scala.virtualization.lms.internal.GenericCodegen
-import scalan.compilation.lms.common.{VectorOpsExp, ScalaGenVectorOps, ScalaGenEitherOps, EitherOpsExp, SystemOpsExp, ScalaGenSystemOps}
+import scalan.compilation.lms.common._
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
 import java.util.HashMap
@@ -15,8 +15,9 @@ trait LmsBackend extends BaseExp { self =>
   def codegen: Codegen
 }
 
-trait LmsBackendFacade extends LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp with NumericOpsExp with StringOpsExp with RangeOpsExp with PrimitiveOpsExp
-with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with IfThenElseFatExp with CastingOpsExp with FunctionsExp
+trait LmsBackendFacade extends LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp with LstOpsExp
+with NumericOpsExp with StringOpsExp with RangeOpsExp with PrimitiveOpsExp with EqualExp with BooleanOpsExp
+with TupleOpsExp with ArrayLoopsFatExp with IfThenElseFatExp with CastingOpsExp with FunctionsExp
 with HashMapOpsExp with ArrayOpsExp with IterableOpsExp with WhileExp with OrderingOpsExp with ArrayBuilderOpsExp
 with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
   /*type RepD[T] = Rep[T]
@@ -561,7 +562,8 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
 }
 
 class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
-  trait Codegen extends ScalaGenEffect with ScalaGenArrayOps with ScalaGenListOps with ScalaGenNumericOps
+
+  trait Codegen extends ScalaGenArrayOps with ScalaGenListOps with ScalaGenLstOps with ScalaGenNumericOps
     with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenBooleanOps with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
     with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
     with ScalaGenCastingOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenOrderingOps with ScalaGenWhile
