@@ -120,7 +120,6 @@ object ScalanBuild extends Build {
       scalaOrganization := "org.scala-lang.virtualized",
       scalaVersion := virtScala,
       publishArtifact := false
-//      fork in run := true
     )
 
   // name to make this the default project
