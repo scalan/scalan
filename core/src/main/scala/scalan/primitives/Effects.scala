@@ -1,6 +1,7 @@
 package scalan.primitives
 
 import scala.annotation.unchecked.uncheckedVariance
+import scala.collection.mutable
 import scalan.compilation.GraphVizExport
 import scalan.staged.Expressions
 import scalan.{ScalanExp, ScalanSeq, Scalan}
@@ -62,9 +63,15 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     (r, defs)
   }
 
+  private def allDistinct[A](xs: Iterable[A]): Boolean = {
+    val seen = mutable.HashSet[A]()
+    xs.foreach { x => if (!seen.add(x)) { return false } }
+    true
+  }
+
   def reflectSubGraph(ds: List[Stm]): Unit = {
     val lhs = ds.flatMap(_.lhs)
-    assert(lhs.length == lhs.distinct.length, "multiple defs: " + ds)
+    assert(allDistinct(lhs), "multiple defs: " + ds)
     // equivalent to: globalDefs filter (_.lhs exists (lhs contains _))
 
     val existing = lhs flatMap (globalDefsCache get _)
