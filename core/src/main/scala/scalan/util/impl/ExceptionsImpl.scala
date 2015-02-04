@@ -268,7 +268,7 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   object SExceptionMethods {
     object getMessage {
       def unapply(d: Def[_]): Option[Rep[SException]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SExceptionElem] && method.getName == "getMessage" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SExceptionElem] && method.getName == "getMessage" =>
           Some(receiver).asInstanceOf[Option[Rep[SException]]]
         case _ => None
       }
@@ -291,7 +291,7 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   object SThrowableMethods {
     object getMessage {
       def unapply(d: Def[_]): Option[Rep[SThrowable]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SThrowableElem[_, _]] && method.getName == "getMessage" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SThrowableElem[_, _]] && method.getName == "getMessage" =>
           Some(receiver).asInstanceOf[Option[Rep[SThrowable]]]
         case _ => None
       }
@@ -305,7 +305,7 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   object SThrowableCompanionMethods {
     object apply {
       def unapply(d: Def[_]): Option[Rep[String]] = d match {
-        case MethodCall(receiver, method, Seq(msg, _*)) if receiver.elem.isInstanceOf[SThrowableCompanionElem] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(msg, _*), _) if receiver.elem.isInstanceOf[SThrowableCompanionElem] && method.getName == "apply" =>
           Some(msg).asInstanceOf[Option[Rep[String]]]
         case _ => None
       }
