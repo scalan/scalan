@@ -1,7 +1,7 @@
 package scalan.staged
 
 import scala.annotation.unchecked.uncheckedVariance
-import scala.collection.mutable
+import scala.collection.{TraversableOnce, mutable}
 import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import scalan.{Base, ScalanExp}
@@ -184,9 +184,9 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   def decompose[T](d: Def[T]): Option[Exp[T]] = None
 
-  def flatMapWithBuffer[T](iter: Iterator[Any], f: Any => List[T]): List[T] = {
+  def flatMapWithBuffer[A, T](iter: Iterator[A], f: A => TraversableOnce[T]): List[T] = {
     // performance hotspot: this is the same as
-    // p.productIterator.toList.flatMap(f(_)) but faster
+    // iter.toList.flatMap(f(_)) but faster
     val out = new ListBuffer[T]
     while (iter.hasNext) {
       val e = iter.next()
@@ -195,7 +195,10 @@ trait BaseExp extends Base { self: ScalanExp =>
     out.result()
   }
 
-  def flatMapProduct[T](p: Product, f: Any => List[T]): List[T] = {
+  def flatMapIterable[A, T](iterable: Iterable[A], f: A => TraversableOnce[T]) =
+    flatMapWithBuffer(iterable.iterator, f)
+
+  def flatMapProduct[T](p: Product, f: Any => TraversableOnce[T]): List[T] = {
     val iter = p.productIterator
     flatMapWithBuffer(iter, f)
   }

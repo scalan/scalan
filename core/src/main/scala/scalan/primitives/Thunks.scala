@@ -193,7 +193,7 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
 
   override def effectSyms(x: Any): List[Exp[Any]] = x match {
     case ThunkDef(_, sch) =>
-      sch.map(_.sym).toList.flatMap(effectSyms)
+      flatMapIterable(sch.map(_.sym), effectSyms)
     case _ => super.effectSyms(x)
   }
 
