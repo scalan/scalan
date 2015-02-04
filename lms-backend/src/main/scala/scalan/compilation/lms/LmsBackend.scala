@@ -561,7 +561,7 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
   }  */
 }
 
-class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
+class CoreLmsBackend extends CoreLmsBackendBase { self =>
 
   trait Codegen extends ScalaGenArrayOps with ScalaGenListOps with ScalaGenLstOps with ScalaGenNumericOps
     with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenBooleanOps with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
