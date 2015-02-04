@@ -179,12 +179,14 @@ trait Transforming { self: ScalanExp =>
         case true => (t, t(node))
         case _ =>
           node match {
-            case Def(lam: Lambda[a, b]) =>
-              mirrorLambda(t, rewriter, node.asRep[a => b], lam)
-            case Def(th: ThunkDef[a]) =>
-              mirrorThunk(t, rewriter, node.asRep[Thunk[a]], th)
-            case Def(d) =>
-              mirrorDef(t, rewriter, node, d)
+            case Def(d) => d match {
+              case lam: Lambda[a, b] =>
+                mirrorLambda(t, rewriter, node.asRep[a => b], lam)
+              case th: ThunkDef[a] =>
+                mirrorThunk(t, rewriter, node.asRep[Thunk[a]], th)
+              case _ =>
+                mirrorDef(t, rewriter, node, d)
+            }
             case _ =>
               mirrorVar(t, rewriter, node)
           }

@@ -7,33 +7,28 @@ import scala.reflect.runtime.universe._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait MatricesAbs extends Scalan with Matrices
-{ self: MatricesDsl =>
+trait MatricesAbs extends Scalan with Matrices {
+  self: MatricesDsl =>
   // single proxy for each type family
   implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] =
     proxyOps[Matrix[T]](p)
-
-
 
   abstract class MatrixElem[T, From, To <: Matrix[T]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
   trait MatrixCompanionElem extends CompanionElem[MatrixCompanionAbs]
   implicit lazy val MatrixCompanionElem: MatrixCompanionElem = new MatrixCompanionElem {
-    lazy val tag = typeTag[MatrixCompanionAbs]
+    lazy val tag = weakTypeTag[MatrixCompanionAbs]
     protected def getDefaultRep = Matrix
   }
 
   abstract class MatrixCompanionAbs extends CompanionBase[MatrixCompanionAbs] with MatrixCompanion {
     override def toString = "Matrix"
-    
   }
   def Matrix: Rep[MatrixCompanionAbs]
   implicit def proxyMatrixCompanion(p: Rep[MatrixCompanion]): MatrixCompanion = {
     proxyOps[MatrixCompanion](p)
   }
 
-  //default wrapper implementation
-  
   // elem for concrete class
   class RowMajorMatrixElem[T](iso: Iso[RowMajorMatrixData[T], RowMajorMatrix[T]]) extends MatrixElem[T, RowMajorMatrixData[T], RowMajorMatrix[T]](iso)
 
@@ -72,7 +67,7 @@ trait MatricesAbs extends Scalan with Matrices
   }
 
   class RowMajorMatrixCompanionElem extends CompanionElem[RowMajorMatrixCompanionAbs] {
-    lazy val tag = typeTag[RowMajorMatrixCompanionAbs]
+    lazy val tag = weakTypeTag[RowMajorMatrixCompanionAbs]
     protected def getDefaultRep = RowMajorMatrix
   }
   implicit lazy val RowMajorMatrixCompanionElem: RowMajorMatrixCompanionElem = new RowMajorMatrixCompanionElem
@@ -92,8 +87,6 @@ trait MatricesAbs extends Scalan with Matrices
   def mkRowMajorMatrix[T](rows: Rep[PArray[DenseVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorMatrix[T]]
   def unmkRowMajorMatrix[T:Elem](p: Rep[RowMajorMatrix[T]]): Option[(Rep[PArray[DenseVector[T]]])]
 
-  //default wrapper implementation
-  
   // elem for concrete class
   class RowMajorFlatMatrixElem[T](iso: Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]]) extends MatrixElem[T, RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]](iso)
 
@@ -133,7 +126,7 @@ trait MatricesAbs extends Scalan with Matrices
   }
 
   class RowMajorFlatMatrixCompanionElem extends CompanionElem[RowMajorFlatMatrixCompanionAbs] {
-    lazy val tag = typeTag[RowMajorFlatMatrixCompanionAbs]
+    lazy val tag = weakTypeTag[RowMajorFlatMatrixCompanionAbs]
     protected def getDefaultRep = RowMajorFlatMatrix
   }
   implicit lazy val RowMajorFlatMatrixCompanionElem: RowMajorFlatMatrixCompanionElem = new RowMajorFlatMatrixCompanionElem
@@ -153,8 +146,6 @@ trait MatricesAbs extends Scalan with Matrices
   def mkRowMajorFlatMatrix[T](rmValues: Rep[PArray[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]]
   def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]): Option[(Rep[PArray[T]], Rep[Int])]
 
-  //default wrapper implementation
-  
   // elem for concrete class
   class RowMajorSparseMatrixElem[T](iso: Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]]) extends MatrixElem[T, RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]](iso)
 
@@ -193,7 +184,7 @@ trait MatricesAbs extends Scalan with Matrices
   }
 
   class RowMajorSparseMatrixCompanionElem extends CompanionElem[RowMajorSparseMatrixCompanionAbs] {
-    lazy val tag = typeTag[RowMajorSparseMatrixCompanionAbs]
+    lazy val tag = weakTypeTag[RowMajorSparseMatrixCompanionAbs]
     protected def getDefaultRep = RowMajorSparseMatrix
   }
   implicit lazy val RowMajorSparseMatrixCompanionElem: RowMajorSparseMatrixCompanionElem = new RowMajorSparseMatrixCompanionElem
@@ -215,16 +206,11 @@ trait MatricesAbs extends Scalan with Matrices
 }
 
 // Seq -----------------------------------
-trait MatricesSeq extends MatricesAbs with MatricesDsl with ScalanSeq
-{ self: MatricesDslSeq =>
+trait MatricesSeq extends MatricesDsl with ScalanSeq {
+  self: MatricesDslSeq =>
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs with UserTypeSeq[MatrixCompanionAbs, MatrixCompanionAbs] {
     lazy val selfType = element[MatrixCompanionAbs]
-    
   }
-
-  
-
-  
 
   case class SeqRowMajorMatrix[T]
       (override val rows: Rep[PArray[DenseVector[T]]])
@@ -232,7 +218,6 @@ trait MatricesSeq extends MatricesAbs with MatricesDsl with ScalanSeq
     extends RowMajorMatrix[T](rows)
         with UserTypeSeq[Matrix[T], RowMajorMatrix[T]] {
     lazy val selfType = element[RowMajorMatrix[T]].asInstanceOf[Elem[Matrix[T]]]
-    
   }
   lazy val RowMajorMatrix = new RowMajorMatrixCompanionAbs with UserTypeSeq[RowMajorMatrixCompanionAbs, RowMajorMatrixCompanionAbs] {
     lazy val selfType = element[RowMajorMatrixCompanionAbs]
@@ -250,7 +235,6 @@ trait MatricesSeq extends MatricesAbs with MatricesDsl with ScalanSeq
     extends RowMajorFlatMatrix[T](rmValues, numColumns)
         with UserTypeSeq[Matrix[T], RowMajorFlatMatrix[T]] {
     lazy val selfType = element[RowMajorFlatMatrix[T]].asInstanceOf[Elem[Matrix[T]]]
-    
   }
   lazy val RowMajorFlatMatrix = new RowMajorFlatMatrixCompanionAbs with UserTypeSeq[RowMajorFlatMatrixCompanionAbs, RowMajorFlatMatrixCompanionAbs] {
     lazy val selfType = element[RowMajorFlatMatrixCompanionAbs]
@@ -268,7 +252,6 @@ trait MatricesSeq extends MatricesAbs with MatricesDsl with ScalanSeq
     extends RowMajorSparseMatrix[T](rows)
         with UserTypeSeq[Matrix[T], RowMajorSparseMatrix[T]] {
     lazy val selfType = element[RowMajorSparseMatrix[T]].asInstanceOf[Elem[Matrix[T]]]
-    
   }
   lazy val RowMajorSparseMatrix = new RowMajorSparseMatrixCompanionAbs with UserTypeSeq[RowMajorSparseMatrixCompanionAbs, RowMajorSparseMatrixCompanionAbs] {
     lazy val selfType = element[RowMajorSparseMatrixCompanionAbs]
@@ -282,14 +265,12 @@ trait MatricesSeq extends MatricesAbs with MatricesDsl with ScalanSeq
 }
 
 // Exp -----------------------------------
-trait MatricesExp extends MatricesAbs with MatricesDsl with ScalanExp
-{ self: MatricesDslExp =>
+trait MatricesExp extends MatricesDsl with ScalanExp {
+  self: MatricesDslExp =>
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs with UserTypeDef[MatrixCompanionAbs, MatrixCompanionAbs] {
     lazy val selfType = element[MatrixCompanionAbs]
     override def mirror(t: Transformer) = this
   }
-
-
 
   case class ExpRowMajorMatrix[T]
       (override val rows: Rep[PArray[DenseVector[T]]])
