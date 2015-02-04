@@ -86,7 +86,6 @@ object MvmBenchmark {
     val ctx = new ScalanCommunitySeq with LinearAlgebraExamples with MatricesDslSeq
   }
 
-//  @State(Scope.Benchmark)
   @volatile
   abstract class MvmStateStagedAbs extends MvmStateBase {
 
