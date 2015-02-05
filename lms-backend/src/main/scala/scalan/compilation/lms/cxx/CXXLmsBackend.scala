@@ -16,6 +16,9 @@ class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
   with LoopFusionOpt
   with CXXFatCodegen
   with CXXGenCastingOps
+  with CXXGenIfThenElseFat
+  with CLikeGenOrderingOps
+  with CLikeGenBooleanOps
   with CXXCodegen
   {
     override val IR: self.type = self

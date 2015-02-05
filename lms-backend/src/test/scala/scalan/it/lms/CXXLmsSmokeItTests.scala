@@ -75,7 +75,7 @@ class CXXLmsSmokeItTests extends SmokeItTests {
     progStaged.generate(dir, dir, functionName, progStaged.mvMul, true)(progStaged.defaultConfig)
 //    compareOutputWithSequential(progStaged)(progSeq.mvMul, progStaged.mvMul, "mvMul", in)
   }
-  ignore("test9simpleIf") { //TODO: implement fat if C codegen
+  test("test9simpleIf") {
     val in = (Array(2.0,3.0), 4.0)
     val functionName = "simpleIf"
     val dir = new File(prefix, functionName)
