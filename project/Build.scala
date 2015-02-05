@@ -43,11 +43,15 @@ object ScalanBuild extends Build {
     publishArtifact in(Test, packageDoc) := false,
     test in assembly := {})
 
+  val scala210 = "2.10.4"
+
+  val scala211 = "2.11.5"
+
   val crossCompilation =
-    crossScalaVersions := Seq("2.10.4", "2.11.5")
+    crossScalaVersions := Seq(scala210, scala211)
 
   val commonSettings = Seq(
-    scalaVersion := "2.10.4",
+    scalaVersion := scala210,
     organization := "com.huawei.scalan",
     publishTo := {
       val nexus = "http://10.122.85.37:9081/nexus/"
@@ -56,7 +60,8 @@ object ScalanBuild extends Build {
       else
         Some("releases" at (nexus + "content/repositories/releases"))
     },
-    opts, commonDeps) ++ testSettings ++ releaseSettings :+ (ReleaseKeys.crossBuild := true)
+    opts, commonDeps) ++ testSettings ++
+    releaseSettings /*:+ (ReleaseKeys.crossBuild := true) doesn't handle lms-backend correctly */
 
   lazy val ItTest = config("it").extend(Test)
 
@@ -124,8 +129,14 @@ object ScalanBuild extends Build {
 
   // name to make this the default project
   lazy val root = Project("scalan", file("."))
+    .aggregate(common, meta, core, ce, lmsBackend)
+    .withTestConfigsAndCommonSettings
+    .settings(publishArtifact := false)
+
+  // required to include lms-backend into root
+  // and not worry about cross-compilation
+  lazy val root211 = Project("scalan211", file("scalan211"))
+    .settings(scalaVersion := scala211, publishArtifact := false)
     .aggregate(common, meta, core, ce)
     .withTestConfigsAndCommonSettings
-    .settings(crossCompilation)
-    .settings(publishArtifact := false)
 }
