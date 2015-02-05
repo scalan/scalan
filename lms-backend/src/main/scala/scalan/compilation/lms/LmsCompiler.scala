@@ -22,6 +22,8 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
 
   implicit val defaultConfig = Config(None, Seq.empty)
 
+  case class CompilationOutput(jar: File)
+
   def makeBridge[A, B]: LmsBridge[A, B]
 
   def graphPasses(config: Config) = Seq(AllUnpackEnabler, AllInvokeEnabler)
@@ -44,7 +46,8 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
           codegen.emitDataStructures(writer)
         }
 
-        val jarPath = jarFile(functionName, executableDir).getAbsolutePath
+        val jarFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
+        val jarPath = jarFile.getAbsolutePath
 
         config.scalaVersion match {
           case Some(scalaVersion) =>
@@ -76,24 +79,26 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
             val run = new compiler.Run
             run.compile(List(outputSource.getAbsolutePath))
         }
-
+        CompilationOutput(jarFile)
     }
   }
 
-  protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
-                               (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
-    val url = jarFile(functionName, executableDir).toURI.toURL
+  def loadMethod(compilationOutput: CompilationOutput, functionName: String, eArg: Elem[_]) = {
+    val url = compilationOutput.jar.toURI.toURL
     // ensure Scala library is available
     val classLoader = new URLClassLoader(Array(url), classOf[_ => _].getClassLoader)
     val cls = classLoader.loadClass(functionName)
-    val argumentClass = eInput.classTag.runtimeClass
-    val method = cls.getMethod("apply", argumentClass)
-    val result = method.invoke(cls.newInstance(), input.asInstanceOf[AnyRef])
-    result.asInstanceOf[B]
+    val argumentClass = eArg.classTag.runtimeClass
+    (cls, cls.getMethod("apply", argumentClass))
   }
 
-  private def jarFile(functionName: String, executableDir: File) =
-    FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
+  protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
+                               (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
+    val (cls, method) = loadMethod(compilationOutput, functionName, eInput)
+    val instance = cls.newInstance()
+    val result = method.invoke(instance, input.asInstanceOf[AnyRef])
+    result.asInstanceOf[B]
+  }
 
   def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     // Doesn't work for some reason, produces int instead of Int
