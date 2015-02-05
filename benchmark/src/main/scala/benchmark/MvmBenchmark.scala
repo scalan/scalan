@@ -104,25 +104,18 @@ object MvmBenchmark {
 
     protected implicit val cfg = ctx.defaultConfig.copy(scalaVersion = Some("2.10.2"))
 
-    private def jarFile(functionName: String, executableDir: File) =
-      FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
-
     protected def loadMethod[A, B](prog: ProgExp)(baseDir: File, functionName: String, f: prog.Exp[A => B] )
                                 (implicit config: prog.Config) =
     {
-      val funcDir = FileUtil.file(baseDir, functionName )
+      val funcDir = FileUtil.file(baseDir, functionName)
 
-      prog.buildExecutable(funcDir, functionName, f, true)
-      val url = jarFile(functionName, funcDir).toURI.toURL
-      // ensure Scala library is available
-      val classLoader = new URLClassLoader(scala.Array(url), classOf[_ => _].getClassLoader)
-      val cls = classLoader.loadClass(functionName)
-      val argClass = f.elem match {
-        case fe: prog.FuncElem[a,b] =>
-          fe.eDom.classTag.runtimeClass
+      val compilationOutput = prog.buildExecutable(funcDir, functionName, f, true)
+      val argElem = f.elem match {
+        case fe: prog.FuncElem[a,b] => fe.eDom
       }
-      val method = cls.getMethod("apply", argClass)
-      (method.invoke( cls.newInstance(), _ :AnyRef )).asInstanceOf[A => B]
+      val (cls, method) = prog.loadMethod(compilationOutput, functionName, argElem)
+      val instance = cls.newInstance()
+      (method.invoke(instance, _: AnyRef)).asInstanceOf[A => B]
     }
   }
 

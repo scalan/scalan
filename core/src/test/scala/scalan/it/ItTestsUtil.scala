@@ -25,8 +25,8 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
   def getStagedOutputConfig[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, input: A, config: back.Config): B = {
     val dir = FileUtil.file(prefix, functionName)
 
-    back.buildExecutable(dir, functionName, f, emitGraphs)(config)
-    back.execute(dir, functionName, input, f)(config)
+    val compiled = back.buildExecutable(dir, functionName, f, emitGraphs)(config)
+    back.execute(compiled, functionName, input, f)(config)
   }
 
   implicit def defaultComparator[A](expected: A, actual: A) {
