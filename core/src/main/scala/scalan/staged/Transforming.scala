@@ -62,7 +62,7 @@ trait Transforming { self: ScalanExp =>
 
   object InvokeRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = x match {
-      case Def(mc @ MethodCall(Def(d), m, args)) if !mc.neverInvoke && shouldInvoke(d, m, args.toArray) =>
+      case Def(MethodCall(Def(d), m, args, neverInvoke)) if !neverInvoke && shouldInvoke(d, m, args.toArray) =>
         m.invoke(d, args: _*).asInstanceOf[Exp[T]]
       case _ => x
     }
