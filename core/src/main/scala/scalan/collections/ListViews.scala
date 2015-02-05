@@ -2,7 +2,7 @@
  * User: Alexander Slesarenko
  * Date: 11/23/13
  */
-package scalan.collection
+package scalan.collections
 
 import scala.reflect.runtime.universe._
 import scalan._
@@ -54,7 +54,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       implicit val tB = iso.tag
       weakTypeTag[List[B]]
     }
-    lazy val defaultRepTo = Default.defaultVal(List.empty[B]/*toRep(scala.List.empty[B](eB.classTag))*/)
+    lazy val defaultRepTo = Default.defaultVal(SList.empty[B]/*toRep(scala.List.empty[B](eB.classTag))*/)
   }
 
   def listIso[A, B](iso: Iso[A, B]): Iso[List[A], List[B]] = {
@@ -175,7 +175,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       val v = valueWithoutView.asRep[a]
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
-      ViewList(List.replicate(len, v))(iso)
+      ViewList(SList.replicate(len, v))(iso)
     }
     case _ =>
       super.rewriteDef(d)

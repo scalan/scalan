@@ -2,7 +2,7 @@ package scalan
 package compilation.lms
 
 import java.util.HashMap
-import scalan.collection.ListOpsExp
+import scalan.collections.ListOpsExp
 
 trait CoreBridge[A, B] extends LmsBridge[A, B] {
 
@@ -496,10 +496,10 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
           }
         }
       }
-      case pm@scalan.VarPM(map) => {
+      case pm@scalan.VarMM(map) => {
         pm.selfType match {
-          case elem: scalan.PMapElem[k, v] => {
-            val exp = symMirr(map).asInstanceOf[lms.Exp[scalan.PMap[k, v]]]
+          case elem: scalan.MMapElem[k, v] => {
+            val exp = symMirr(map).asInstanceOf[lms.Exp[scalan.MMap[k, v]]]
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
           }
         }
@@ -507,7 +507,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
 
       case map@scalan.MapFromArray(arr) => {
         map.selfType match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val arr_ = symMirr(arr).asInstanceOf[lms.Exp[Array[(k, v)]]]
@@ -520,7 +520,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case map@scalan.MapUsingFunc(count, lambdaSym@scalan.Def(lambda: scalan.Lambda[_, _])) => {
         map.selfType match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val n = symMirr(count).asInstanceOf[lms.Exp[Int]]
@@ -534,7 +534,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case map@scalan.EmptyMap() => {
         map.selfType match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val exp = lms.emptyMap[k, v]()(mK, mV)
@@ -546,7 +546,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case map@scalan.MakeMap(ctx) => {
         map.selfType match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val exp = lms.emptyMap[k, v]()(mK, mV)
@@ -558,7 +558,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapUnion(left, right) => {
         left.elem match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val left_ = symMirr(left).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -572,7 +572,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapDifference(left, right) => {
         left.elem match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val left_ = symMirr(left).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -586,7 +586,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case tk@scalan.MapTransformValues(map, lamSym@scalan.Def(lambda: scalan.Lambda[_, _])) => {
         (map.elem, tk.selfType) match {
-          case (in: scalan.PMapElem[k, v], out: scalan.PMapElem[_, t]) => {
+          case (in: scalan.MMapElem[k, v], out: scalan.MMapElem[_, t]) => {
             (scalan.createManifest(in.eKey), scalan.createManifest(in.eValue), scalan.createManifest(out.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v], mT: Manifest[t]) => {
                 val map_ = symMirr(map).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -600,7 +600,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapReduce(left, right, reduceSym@scalan.Def(reduce: scalan.Lambda[_, _])) => {
         left.elem match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val left_ = symMirr(left).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -615,7 +615,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapJoin(left, right) => {
         (left.elem, right.elem) match {
-          case (e1: scalan.PMapElem[k1, v1], e2: scalan.PMapElem[k2, v2]) => {
+          case (e1: scalan.MMapElem[k1, v1], e2: scalan.MMapElem[k2, v2]) => {
             (scalan.createManifest(e1.eKey), scalan.createManifest(e1.eValue), scalan.createManifest(e2.eValue)) match {
               case (mK: Manifest[k1], mV1: Manifest[v1], mV2: Manifest[v2]) => {
                 val left_ = symMirr(left).asInstanceOf[lms.Exp[HashMap[k1, v1]]]
@@ -629,7 +629,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapContains(map, key) => {
         map.elem match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val map_ = symMirr(map).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -643,7 +643,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapApply(map, key) => {
         map.elem match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val map_ = symMirr(map).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -657,7 +657,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case maf@scalan.MapApplyIf(map, key, s1@scalan.Def(exists: scalan.Lambda[_, _]), s2@scalan.Def(otherwise: scalan.Lambda[_, _])) => {
         (maf.selfType, map.elem) match {
-          case (eT: scalan.Elem[t], eM: scalan.PMapElem[k, v]) => {
+          case (eT: scalan.Elem[t], eM: scalan.MMapElem[k, v]) => {
             (scalan.createManifest(eT), scalan.createManifest(eM.eKey), scalan.createManifest(eM.eValue)) match {
               case (mT: Manifest[t], mK: Manifest[k], mV: Manifest[v]) => {
                 val map_ = symMirr(map).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -673,7 +673,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapUpdate(map, key, value) => {
         map.elem match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val map_ = symMirr(map).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -688,7 +688,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapSize(map) => {
         map.elem match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val map_ = symMirr(map).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -701,7 +701,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapToArray(map) => {
         map.elem match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val map_ = symMirr(map).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -714,7 +714,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapKeys(map) => {
         map.elem match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val map_ = symMirr(map).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -727,7 +727,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case scalan.MapValues(map) => {
         map.elem match {
-          case elem: scalan.PMapElem[k, v] => {
+          case elem: scalan.MMapElem[k, v] => {
             (scalan.createManifest(elem.eKey), scalan.createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val map_ = symMirr(map).asInstanceOf[lms.Exp[HashMap[k, v]]]
@@ -800,7 +800,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case gby@scalan.ArrayGroupBy(arg, lambdaSym@scalan.Def(by: scalan.Lambda[_, _])) => {
         (arg.elem, gby.selfType) match {
-          case (ae: scalan.ArrayElem[a], me: scalan.PMapElem[k, v]) => {
+          case (ae: scalan.ArrayElem[a], me: scalan.MMapElem[k, v]) => {
             (scalan.createManifest(ae.eItem), scalan.createManifest(me.eKey)) match {
               case (mA: Manifest[a], mK: Manifest[k]) => {
                 val by_ = mirrorLambdaToLmsFunc[a, k](m)(by.asInstanceOf[scalan.Lambda[a, k]])
@@ -926,7 +926,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case mr@scalan.ArrayMapReduce(scalan.Def(range: scalan.ArrayRangeFrom0), mapSym@scalan.Def(map: scalan.Lambda[_, _]), reduceSym@scalan.Def(reduce: scalan.Lambda[_, _])) => {
         (mr.selfType) match {
-          case (me: scalan.PMapElem[k, v]) => {
+          case (me: scalan.MMapElem[k, v]) => {
             (scalan.createManifest(me.eKey), scalan.createManifest(me.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val n_ = symMirr(range.n).asInstanceOf[lms.Exp[Int]]
@@ -942,7 +942,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       case mr@scalan.ArrayMapReduce(scalan.Def(scalan.ArrayFilter(scalan.Def(scalan.ArrayMap(scalan.Def(range: scalan.ArrayRangeFrom0), map1Sym@scalan.Def(map1: scalan.Lambda[_, _]))), filterSym@scalan.Def(filter: scalan.Lambda[_, _]))),
       map2Sym@scalan.Def(map2: scalan.Lambda[_, _]), reduceSym@scalan.Def(reduce: scalan.Lambda[_, _])) => {
         (map1.eB, mr.selfType) match {
-          case (ma: scalan.Elem[a], me: scalan.PMapElem[k, v]) => {
+          case (ma: scalan.Elem[a], me: scalan.MMapElem[k, v]) => {
             (scalan.createManifest(ma), scalan.createManifest(me.eKey), scalan.createManifest(me.eValue)) match {
               case (mA: Manifest[a], mK: Manifest[k], mV: Manifest[v]) => {
                 val n_ = symMirr(range.n).asInstanceOf[lms.Exp[Int]]
@@ -959,7 +959,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case mr@scalan.ArrayMapReduce(scalan.Def(scalan.ArrayFilter(source, filterSym@scalan.Def(filter: scalan.Lambda[_, _]))), mapSym@scalan.Def(map: scalan.Lambda[_, _]), reduceSym@scalan.Def(reduce: scalan.Lambda[_, _])) => {
         (source.elem, mr.selfType) match {
-          case (ae: scalan.ArrayElem[a], me: scalan.PMapElem[k, v]) => {
+          case (ae: scalan.ArrayElem[a], me: scalan.MMapElem[k, v]) => {
             (scalan.createManifest(ae.eItem), scalan.createManifest(me.eKey), scalan.createManifest(me.eValue)) match {
               case (mA: Manifest[a], mK: Manifest[k], mV: Manifest[v]) => {
                 val source_ = symMirr(source).asInstanceOf[lms.Exp[Array[a]]]
@@ -975,7 +975,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
       }
       case mr@scalan.ArrayMapReduce(source, mapSym@scalan.Def(map: scalan.Lambda[_, _]), reduceSym@scalan.Def(reduce: scalan.Lambda[_, _])) => {
         (source.elem, mr.selfType) match {
-          case (ae: scalan.ArrayElem[a], me: scalan.PMapElem[k, v]) => {
+          case (ae: scalan.ArrayElem[a], me: scalan.MMapElem[k, v]) => {
             (scalan.createManifest(ae.eItem), scalan.createManifest(me.eKey), scalan.createManifest(me.eValue)) match {
               case (mA: Manifest[a], mK: Manifest[k], mV: Manifest[v]) => {
                 val source_ = symMirr(source).asInstanceOf[lms.Exp[Array[a]]]

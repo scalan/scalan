@@ -214,7 +214,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   object IntervalMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[Interval]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[IntervalElem] && method.getName == "length" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IntervalElem] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[Interval]]]
         case _ => None
       }
@@ -250,7 +250,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   object SliceMethods {
     object end {
       def unapply(d: Def[_]): Option[Rep[Slice]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SliceElem] && method.getName == "end" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SliceElem] && method.getName == "end" =>
           Some(receiver).asInstanceOf[Option[Rep[Slice]]]
         case _ => None
       }
@@ -273,7 +273,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   object SegmentMethods {
     object start {
       def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "start" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "start" =>
           Some(receiver).asInstanceOf[Option[Rep[Segment]]]
         case _ => None
       }
@@ -285,7 +285,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
 
     object length {
       def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "length" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[Segment]]]
         case _ => None
       }
@@ -297,7 +297,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
 
     object end {
       def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "end" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "end" =>
           Some(receiver).asInstanceOf[Option[Rep[Segment]]]
         case _ => None
       }

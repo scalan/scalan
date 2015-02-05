@@ -94,7 +94,7 @@ trait Elems extends Base { self: Scalan =>
       weakTypeTag[Array[A]]
     }
     protected def getDefaultRep =
-      Array.empty(eItem)
+      SArray.empty(eItem)
   }
 
   val AnyRefElement: Elem[AnyRef] = new BaseElem[AnyRef]()(typeTag[AnyRef], Default.OfAnyRef)

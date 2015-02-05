@@ -1,4 +1,4 @@
-package scalan.collection
+package scalan.collections
 package impl
 
 import scala.collection.immutable.HashSet
@@ -194,7 +194,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   object SHashSetMethods {
     object + {
       def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(elem, _*)) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "$plus" =>
+        case MethodCall(receiver, method, Seq(elem, _*), _) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "$plus" =>
           Some((receiver, elem)).asInstanceOf[Option[(Rep[SHashSet[A]], Rep[A]) forSome {type A}]]
         case _ => None
       }
@@ -206,7 +206,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
 
     object map {
       def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A => B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*)) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "map" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "map" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[SHashSet[A]], Rep[A => B]) forSome {type A; type B}]]
         case _ => None
       }
@@ -218,7 +218,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
 
     object fold {
       def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A], Rep[((A,A)) => A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(z, f, _*)) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "fold" =>
+        case MethodCall(receiver, method, Seq(z, f, _*), _) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "fold" =>
           Some((receiver, z, f)).asInstanceOf[Option[(Rep[SHashSet[A]], Rep[A], Rep[((A,A)) => A]) forSome {type A}]]
         case _ => None
       }
@@ -232,7 +232,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   object SHashSetCompanionMethods {
     object empty {
       def unapply(d: Def[_]): Option[Unit forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SHashSetCompanionElem] && method.getName == "empty" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SHashSetCompanionElem] && method.getName == "empty" =>
           Some(()).asInstanceOf[Option[Unit forSome {type A}]]
         case _ => None
       }

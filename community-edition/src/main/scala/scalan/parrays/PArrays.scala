@@ -79,7 +79,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
           as zip bs
         }
         case viewElem: ViewElem[a, b] =>
-          BaseArray(Array.replicate(len, v))
+          BaseArray(SArray.replicate(len, v))
         case e => ???(s"Element is $e")
       }
     }
@@ -94,7 +94,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
 
   abstract class UnitArray(val len: Rep[Int]) extends PArray[Unit] {
     def elem = UnitElement
-    def arr = Array.replicate(len, ())
+    def arr = SArray.replicate(len, ())
     def length = len
     def apply(i: Rep[Int]) = ()
     @OverloadId("many")
@@ -115,7 +115,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
   }
   trait BaseArrayCompanion extends ConcreteClass1[BaseArray] {
     def defaultOf[A](implicit ea: Elem[A]) =
-      Default.defaultVal(BaseArray(Array.empty[A]))
+      Default.defaultVal(BaseArray(SArray.empty[A]))
   }
 
 // TODO We shouldn't need this anymore. Check if recursive types like Tree in EE work without it
