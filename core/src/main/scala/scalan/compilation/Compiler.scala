@@ -12,6 +12,8 @@ trait Compiler extends BaseExp with Passes {
 
   def defaultConfig: Config
 
+  type CompilationOutput
+
   // see comment for buildInitialGraph
   // TODO sequence may depend on input or intermediate graphs, use a state monad instead
   def graphPasses(config: Config): Seq[PGraph => GraphPass]
@@ -22,7 +24,6 @@ trait Compiler extends BaseExp with Passes {
     new PGraph(func)
 
   def buildGraph[A, B](sourcesDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)(config: Config): PGraph = {
-    addInvokeTester((_,_) => true)
     val g0 = buildInitialGraph(func)(config)
     if (emitGraphs) {
       val dotFile = new File(sourcesDir, s"$functionName.dot")
@@ -48,7 +49,7 @@ trait Compiler extends BaseExp with Passes {
   }
 
   def buildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
-                           (implicit config: Config) {
+                           (implicit config: Config): CompilationOutput = {
     sourcesDir.mkdirs()
     executableDir.mkdirs()
     val eFunc = func.elem
@@ -57,19 +58,19 @@ trait Compiler extends BaseExp with Passes {
   }
 
   def buildExecutable[A, B](sourcesAndExecutableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
-                           (implicit config: Config): Unit =
+                           (implicit config: Config): CompilationOutput =
     buildExecutable(sourcesAndExecutableDir, sourcesAndExecutableDir, functionName, func, emitGraphs)(config)
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                       (config: Config, eInput: Elem[A], eOutput: Elem[B])
+                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]): CompilationOutput
 
   // func is passed to enable inference of B and to get types if needed
-  def execute[A, B](executableDir: File, functionName: String, input: A, func: Exp[A => B])
+  def execute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A, func: Exp[A => B])
                    (implicit config: Config): B = {
     val eFunc = func.elem
-    doExecute(executableDir, functionName, input)(config, eFunc.eDom, eFunc.eRange)
+    doExecute(compilationOutput, functionName, input)(config, eFunc.eDom, eFunc.eRange)
   }
 
-  protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
+  protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
                                (config: Config, eInput: Elem[A], eOutput: Elem[B]): B
 }

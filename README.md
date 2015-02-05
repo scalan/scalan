@@ -4,13 +4,23 @@
 
 Scalan is a framework for creating staged embedded DSLs in Scala. It allows you to write high-level Scala programs and compile them to efficient low-level code (in the language determined by the used backend) and to develop new abstractions which can be used in such programs.
 
-### Installation
+[Scalan Google Group](https://groups.google.com/forum/#!forum/scalan) is used for Scalan-related discussions. See also [Contributions](#contributions) below.
+
+### Building the project and running tests
 
 [SBT](http://www.scala-sbt.org/) is required to build Scalan. See linked documentation for installing and using SBT itself. There is also [an improved runner](https://github.com/paulp/sbt-extras) which takes care of downloading correct SBT version and adds some extra features.
 
-The project consists of three subprojects: `core`, `community-edition`, and `lms-backend`, as well as the aggregate project `all`. `lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`.
+The project consists of several [subprojects](http://www.scala-sbt.org/release/tutorial/Multi-Project.html), including the aggregate project `scalan`.
 
-The tests are split into unit tests (which can be run with `test` SBT command) and integration tests (`it:test`).
+One of the subprojects, `lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`. If you want to use it, you need to clone and build this dependency first, since it isn't published in a public repository. It also requires a different version of Scala from the one used by the other projects, which is why it isn't a part of the aggregate project. SBT commands such as `test`, `compile`, etc. will not run on it by default; you need to use `lms-backend/whatever-command` or `project lms-backend` and then the commands you want.
+
+The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backend included is `lms-backend` and so you need to use `lms-backend/it:test` to run integration tests.
+
+If you want to create your own project depending on Scalan, you have two options:
+
+* use `publishLocal` (and `lms-backend/publishLocal`, if necessary) SBT command to deploy Scalan to your local Ivy repository;
+
+* use a [project reference](http://www.scala-sbt.org/0.12.4/docs/Dormant/Full-Configuration.html#project-references) to Scalan in your build instead of `libraryDependencies`.
 
 ## Writing programs
 
@@ -126,9 +136,9 @@ In this mode, Scalan's behavior is very simple: `Rep[A]` is the same type as `A`
 
 #### Staged mode
 
-Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a backend trait. Currently Scalan Community edition contains only one backend `LmsBackend`.
+Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a compiler trait. Currently Scalan Community edition contains only one compiler `LmsCompiler`.
 ~~~scala
-object HelloScalanStaged extends HelloScalan with ScalanCommunityDslExp with LmsBackend {
+object HelloScalanStaged extends HelloScalan with ScalanCommunityDslExp with LmsCompiler {
   def main(args: Array[String]) = {
     // output directory
     val dir = new File("path/to/directory")
@@ -202,19 +212,18 @@ See `scalan.linalgebra.Vectors` for a larger example.
 
 Adding new primitive operations, core types, or backends to Scalan is possible, but not supported at the moment.
 
-# Contributions
+## Contributions
 
-We are very pleased to see contributions from new members.
+Please feel free to open an issue if you notice a bug, have an idea for a feature, or have a question about the code. Minor pull requests (typos, bug fixes and so on) are gladly accepted; for anything larger please raise an issue first.
 
-You can help out by sending an unsolicited pull request with a new feature.
+Issues with the `low-hanging fruit` label should be easy to fix if you want something to get started with.
+
+If you want to start working on an issue (existing or one you just raised), please leave a comment to avoid effort duplication. Issues that someone is already working on are labelled `in progress`.
 
 <!--* [Triaging our open tickets](TODO)
 
-* [Pick up some low hanging fruit](TODO)
-* [Fixing a bug](TODO)
 * [Helping with the current Milestone](TODO)
 * Sending an unsolicited pull request with a new feature
-* Having a conversation on the [Scalan Google Group](https://groups.google.com/forum/#!forum/Scalan)
 * Telling your co-workers!
 -->
 ## See also

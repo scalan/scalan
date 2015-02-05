@@ -173,7 +173,7 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
 trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   case class MethodCallFromExp(clazzUT: Class[_], methodName: String) {
     def unapply[T](d: Def[T]): Option[(Exp[_], List[Exp[_]])] = d match {
-      case MethodCall(obj, m, args) if m.getName == methodName =>
+      case MethodCall(obj, m, args, _) if m.getName == methodName =>
         Some((obj, args.asInstanceOf[List[Exp[_]]]))
       case _ => None
     }
@@ -346,8 +346,8 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       }
       val loopRes = LoopUntil(start1, step1, isMatch1)
       iso.to(loopRes)
-    case call @ MethodCall(Def(obj), m, args) =>
-      if (!call.neverInvoke && m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
+    case call @ MethodCall(Def(obj), m, args, neverInvoke) =>
+      if (!neverInvoke && m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
         val res = m.invoke(obj, args: _*)
         res.asInstanceOf[Exp[_]]
       } else {
@@ -355,14 +355,13 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
           case foldD: SumFold[a,b,r] =>
             val resultElem = call.selfType
             val res = foldD.sum.fold (
-              a => MethodCall(foldD.left(a), m, args)(resultElem),
-              b => MethodCall(foldD.right(b), m, args)(resultElem)
+              a => MethodCall(foldD.left(a), m, args, neverInvoke)(resultElem),
+              b => MethodCall(foldD.right(b), m, args, neverInvoke)(resultElem)
             )(resultElem)
             res.asInstanceOf[Exp[_]]
-          case IfThenElse(cond, t, e) => {
+          case IfThenElse(cond, t, e) =>
             implicit val elem = call.selfType
-            IF (cond) { MethodCall(t, m, args)(elem) } ELSE { MethodCall(e, m, args)(elem) }
-          }
+            IF (cond) { MethodCall(t, m, args, neverInvoke)(elem) } ELSE { MethodCall(e, m, args, neverInvoke)(elem) }
           case _ =>
             super.rewriteDef(d)
         }

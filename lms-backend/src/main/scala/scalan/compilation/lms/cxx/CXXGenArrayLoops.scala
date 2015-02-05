@@ -6,7 +6,7 @@ import scala.virtualization.lms.epfl.test7.{ArrayLoopsExp, ArrayLoopsFatExp}
 /**
  * Created by zotov on 11/25/14.
  */
-trait CXXGenFatArrayLoopsFusionOpt extends CXXGenArrayLoopsFat with CGenIfThenElseFat with LoopFusionOpt {
+trait CXXGenFatArrayLoopsFusionOpt extends CXXGenArrayLoopsFat with LoopFusionOpt {
   val IR: ArrayLoopsFatExp with IfThenElseFatExp
   import IR._
 

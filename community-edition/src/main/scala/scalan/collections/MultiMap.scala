@@ -5,40 +5,40 @@ import scalan.common.Default
 
 trait MultiMaps extends Base { self: MultiMapsDsl =>
 
-  trait MultiMap[K, V] extends Reifiable[MultiMap[K, V]] {
+  trait MMultiMap[K, V] extends Reifiable[MMultiMap[K, V]] {
     implicit def elemKey: Elem[K]
     implicit def elemValue: Elem[V]
 
-    def union(that: Rep[MultiMap[K, V]]): Rep[MultiMap[K, V]]
+    def union(that: Rep[MMultiMap[K, V]]): Rep[MMultiMap[K, V]]
     def isEmpty: Rep[Boolean] = (size === 0)
     def contains(key: Rep[K]): Rep[Boolean]
     def apply(key: Rep[K]): Rep[ArrayBuffer[V]]
     def applyIfBy[T](key: Rep[K], exists: Rep[ArrayBuffer[V] => T], otherwise: Rep[Unit => T]): Rep[T]
-    def add(key: Rep[K], value: Rep[V]): Rep[MultiMap[K, V]]
-    def addAll(key: Rep[K], value: Rep[ArrayBuffer[V]]): Rep[MultiMap[K, V]]
-    def reduceBy[T:Elem](f: Rep[Array[V] => T]): PM[K, T]
+    def add(key: Rep[K], value: Rep[V]): Rep[MMultiMap[K, V]]
+    def addAll(key: Rep[K], value: Rep[ArrayBuffer[V]]): Rep[MMultiMap[K, V]]
+    def reduceBy[T:Elem](f: Rep[Array[V] => T]): MM[K, T]
     def keys: Arr[K]
     def values: Arr[ArrayBuffer[V]]
     def toArray: Arr[(K,ArrayBuffer[V])]
     def size: Rep[Int]
-    def toMap: Rep[PMap[K, ArrayBuffer[V]]]
+    def toMap: Rep[MMap[K, ArrayBuffer[V]]]
   }
 
-  def appendMultiMap[K:Elem,V:Elem](map: Rep[PMap[K,ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[PMap[K,ArrayBuffer[V]]];
+  def appendMultiMap[K:Elem,V:Elem](map: Rep[MMap[K,ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[MMap[K,ArrayBuffer[V]]];
 
-  implicit def defaultMultiMapElement[K:Elem,V:Elem]: Elem[MultiMap[K,V]] = element[HashMultiMap[K,V]].asElem[MultiMap[K,V]]
+  implicit def defaultMultiMapElement[K:Elem,V:Elem]: Elem[MMultiMap[K,V]] = element[HashMMultiMap[K,V]].asElem[MMultiMap[K,V]]
 
-  trait MultiMapCompanion extends TypeFamily2[MultiMap] {
-    def defaultOf[K:Elem,V:Elem]: Default[Rep[MultiMap[K, V]]] = HashMultiMap.defaultOf[K,V]
-    def empty[K:Elem,V:Elem]: Rep[MultiMap[K, V]] = HashMultiMap.empty[K,V]
-    def make[K:Elem,V:Elem](name: Rep[String]): Rep[MultiMap[K, V]] = HashMultiMap.make[K,V](name)
-    def fromArray[K:Elem,V:Elem](a: Arr[(K,V)]): Rep[MultiMap[K, V]] = HashMultiMap.fromArray[K,V](a)
-    def fromMap[K:Elem,V:Elem](map: Rep[PMap[K, ArrayBuffer[V]]]): Rep[MultiMap[K, V]] = HashMultiMap(map)
+  trait MMultiMapCompanion extends TypeFamily2[MMultiMap] {
+    def defaultOf[K:Elem,V:Elem]: Default[Rep[MMultiMap[K, V]]] = HashMMultiMap.defaultOf[K,V]
+    def empty[K:Elem,V:Elem]: Rep[MMultiMap[K, V]] = HashMMultiMap.empty[K,V]
+    def make[K:Elem,V:Elem](name: Rep[String]): Rep[MMultiMap[K, V]] = HashMMultiMap.make[K,V](name)
+    def fromArray[K:Elem,V:Elem](a: Arr[(K,V)]): Rep[MMultiMap[K, V]] = HashMMultiMap.fromArray[K,V](a)
+    def fromMap[K:Elem,V:Elem](map: Rep[MMap[K, ArrayBuffer[V]]]): Rep[MMultiMap[K, V]] = HashMMultiMap(map)
   }
 
-  abstract class HashMultiMap[K,V](val map: Rep[PMap[K, ArrayBuffer[V]]])(implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MultiMap[K,V] { 
-    def union(that: Rep[MultiMap[K, V]]): Rep[MultiMap[K, V]] = {      
-      HashMultiMap(map.reduce(that.toMap, (b1:Rep[ArrayBuffer[V]], b2:Rep[ArrayBuffer[V]]) => b1 ++= b2.toArray))
+  abstract class HashMMultiMap[K,V](val map: Rep[MMap[K, ArrayBuffer[V]]])(implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMultiMap[K,V] {
+    def union(that: Rep[MMultiMap[K, V]]): Rep[MMultiMap[K, V]] = {      
+      HashMMultiMap(map.reduce(that.toMap, (b1:Rep[ArrayBuffer[V]], b2:Rep[ArrayBuffer[V]]) => b1 ++= b2.toArray))
     }
 
     def toMap = map
@@ -50,16 +50,16 @@ trait MultiMaps extends Base { self: MultiMapsDsl =>
     def applyIfBy[T](key: Rep[K], exists: Rep[ArrayBuffer[V] => T], otherwise: Rep[Unit => T]): Rep[T] =
       map.applyIfBy[T](key, exists, otherwise)
 
-    def add(key: Rep[K], value: Rep[V]): Rep[MultiMap[K, V]] = {
+    def add(key: Rep[K], value: Rep[V]): Rep[MMultiMap[K, V]] = {
       (appendMultiMap(map, key, value) | self)
 //      IF (map.contains(key)) THEN ((map(key) += value) | self) ELSE (map.update(key, ArrayBuffer(value)) | self)
     }
       
-    def addAll(key: Rep[K], value: Rep[ArrayBuffer[V]]): Rep[MultiMap[K, V]] = {
+    def addAll(key: Rep[K], value: Rep[ArrayBuffer[V]]): Rep[MMultiMap[K, V]] = {
       IF (map.contains(key)) THEN ((map(key) ++= value.toArray) | self) ELSE (map.update(key, value) | self)
     }
       
-    def reduceBy[T:Elem](f: Rep[Array[V] => T]): PM[K, T] = {
+    def reduceBy[T:Elem](f: Rep[Array[V] => T]): MM[K, T] = {
       map.mapValues(v => f(v))
     }
 
@@ -69,29 +69,29 @@ trait MultiMaps extends Base { self: MultiMapsDsl =>
     def size: Rep[Int] = map.size
   }    
 
-  trait HashMultiMapCompanion extends ConcreteClass2[HashMultiMap] with MultiMapCompanion {
-    override def defaultOf[K:Elem,V:Elem] = Default.defaultVal(HashMultiMap(element[PMap[K, ArrayBuffer[V]]].defaultRepValue))
-    override def empty[K:Elem,V:Elem]: Rep[MultiMap[K, V]] = HashMultiMap(PMap.empty[K, ArrayBuffer[V]])
-//    override def empty[K:Elem,V:Elem]: Rep[MultiMap[K, V]] = HashMultiMap(PMap.create[K, ArrayBuffer[V]](0, fun { i => (element[K].defaultRepValue, ArrayBuffer.empty[V])}))
-   override def make[K:Elem,V:Elem](name: Rep[String]): Rep[MultiMap[K, V]] = HashMultiMap[K,V](PMap.make[K, ArrayBuffer[V]](name))
-   override def fromArray[K:Elem,V:Elem](arr: Arr[(K,V)]): Rep[MultiMap[K, V]] = {
+  trait HashMMultiMapCompanion extends ConcreteClass2[HashMMultiMap] with MMultiMapCompanion {
+    override def defaultOf[K:Elem,V:Elem] = Default.defaultVal(HashMMultiMap(element[MMap[K, ArrayBuffer[V]]].defaultRepValue))
+    override def empty[K:Elem,V:Elem]: Rep[MMultiMap[K, V]] = HashMMultiMap(MMap.empty[K, ArrayBuffer[V]])
+//    override def empty[K:Elem,V:Elem]: Rep[MultiMap[K, V]] = HashMMultiMap(MMap.create[K, ArrayBuffer[V]](0, fun { i => (element[K].defaultRepValue, ArrayBuffer.empty[V])}))
+   override def make[K:Elem,V:Elem](name: Rep[String]): Rep[MMultiMap[K, V]] = HashMMultiMap[K,V](MMap.make[K, ArrayBuffer[V]](name))
+   override def fromArray[K:Elem,V:Elem](arr: Arr[(K,V)]): Rep[MMultiMap[K, V]] = {
       // Why this doesn't work?
       //arr.fold(MultiMap.empty[K,V], (map:Rep[MultiMap[K,V]], pair:Rep[(K,V)]) => map.add(pair._1, pair._2))
-      HashMultiMap(arr.mapReduce(p => (p._1, ArrayBuffer(p._2)), (a, b) => a ++= b.toArray))
+      HashMMultiMap(arr.mapReduce(p => (p._1, ArrayBuffer(p._2)), (a, b) => a ++= b.toArray))
     }
   }
 }
 
 trait MultiMapsDsl extends ScalanDsl with impl.MultiMapsAbs with MultiMaps {
-  implicit class MultiMapExt[K:Elem,V:Elem](map: Rep[MultiMap[K,V]]) {
-    def reduce[T:Elem](f: Arr[V] => Rep[T]): PM[K, T] = map.reduceBy[T](f)
+  implicit class MultiMapExt[K:Elem,V:Elem](map: Rep[MMultiMap[K,V]]) {
+    def reduce[T:Elem](f: Arr[V] => Rep[T]): MM[K, T] = map.reduceBy[T](f)
     def applyIf[T](key: Rep[K], exists: Rep[ArrayBuffer[V]] => Rep[T], otherwise: () => Rep[T]): Rep[T] =
       map.applyIfBy(key, fun(exists), fun { _: Rep[Unit] => otherwise() })
   }
 }
 
 trait MultiMapsDslSeq extends MultiMapsDsl with impl.MultiMapsSeq with ScalanSeq {
-  def appendMultiMap[K: Elem, V: Elem](map: Rep[PMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[PMap[K, ArrayBuffer[V]]] = {
+  def appendMultiMap[K: Elem, V: Elem](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[MMap[K, ArrayBuffer[V]]] = {
     if (map.contains(key)) {
       map(key) += value
       map
@@ -103,7 +103,7 @@ trait MultiMapsDslSeq extends MultiMapsDsl with impl.MultiMapsSeq with ScalanSeq
 }
 
 trait MultiMapsDslExp extends MultiMapsDsl with impl.MultiMapsExp with ScalanExp {
-  def appendMultiMap[K: Elem, V: Elem](map: Rep[PMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[PMap[K, ArrayBuffer[V]]] =
+  def appendMultiMap[K: Elem, V: Elem](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[MMap[K, ArrayBuffer[V]]] =
     AppendMultiMap(map, key, value)
 
 }

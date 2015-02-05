@@ -88,35 +88,35 @@ trait ProxySeq extends Proxy { self: ScalanSeq =>
 }
 
 trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp =>
-  case class MethodCall[T](receiver: Exp[_], method: Method, args: List[AnyRef])(implicit selfType: Elem[T]) extends BaseDef[T] {
+  case class MethodCall[T](receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean)(implicit selfType: Elem[T]) extends BaseDef[T] {
     def uniqueOpId = s"$name:${method.getName}"
-    def neverInvoke: Boolean = false
-    override def mirror(t: Transformer) =
-      MethodCall[T](t(receiver), method, args map {
+    override def mirror(t: Transformer) = {
+      val args1 = args.map {
         case a: Exp[_] => t(a)
         case a => a
-      })
+      }
+      MethodCall[T](t(receiver), method, args1, neverInvoke)
+    }
 
     override def toString = {
       val methodStr = method.toString.replace("java.lang.", "").
         replace("public ", "").replace("abstract ", "")
-      s"MethodCall($receiver, $methodStr, [${args.mkString(", ")}])"
+      s"MethodCall($receiver, $methodStr, [${args.mkString(", ")}], $neverInvoke)"
     }
   }
-  case class NewObject[T](clazz: Class[T] , args: List[AnyRef])(implicit selfType: Elem[T]) extends BaseDef[T] {
+  case class NewObject[T](clazz: Class[T] , args: List[AnyRef], neverInvoke: Boolean)(implicit selfType: Elem[T]) extends BaseDef[T] {
     def uniqueOpId = s"new $name"
-    def neverInvoke: Boolean = false
-    override def mirror(t: Transformer) =
-      NewObject[T](clazz, args map {
+    override def mirror(t: Transformer) = {
+      val args1 = args.map {
         case a: Exp[_] => t(a)
         case a => a
-      })
+      }
+      NewObject[T](clazz, args1, neverInvoke)
+    }
   }
 
   override protected def nodeColor(sym: Exp[_]) = sym match {
     case Def(d) => d match {
-      // FIXME a bit hackish, neverInvoke should become isExternal field of MethodCall and NewObject
-      // instead of being overridden
       case mc: MethodCall[_] if mc.neverInvoke => "darkblue"
       case no: NewObject[_] if no.neverInvoke => "darkblue"
       case _ => super.nodeColor(sym)
@@ -125,7 +125,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   override protected def formatDef(d: Def[_]): String = d match {
-    case MethodCall(obj, method, args) =>
+    case MethodCall(obj, method, args, _) =>
       val methodCallStr =
         s"${ScalaNameUtil.cleanScalaName(method.getName)}(${args.mkString(", ")})"
       if (obj.isCompanion) {
@@ -134,17 +134,17 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         val className = ScalaNameUtil.cleanNestedClassName(method.getDeclaringClass.getName)
         s"$obj.$className.$methodCallStr"
       }
-    case NewObject(c, args) =>
+    case NewObject(c, args, _) =>
       val className = ScalaNameUtil.cleanNestedClassName(c.getName)
       s"new $className(${args.mkString(", ")})"
     case _ => super.formatDef(d)
   }
 
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
-    new MethodCall[A](receiver, m, args) { override def neverInvoke = true }
+    new MethodCall[A](receiver, m, args, true)
 
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
-    new NewObject[A](c, args) { override def neverInvoke = true }
+    new NewObject[A](c, args, true)
   }
 
   private val proxies = scala.collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
@@ -212,7 +212,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     override def toString = s"ExpInvocationHandler(${receiver.toStringWithDefinition})"
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
-      val args = if (_args == null) scala.Array.empty[AnyRef] else _args
+      val args = if (_args == null) Array.empty[AnyRef] else _args
       receiver match {
         // call method of the node when it's allowed
         case Def(d) if shouldInvoke(d, m, args) =>
@@ -249,7 +249,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
     def createMethodCall(m: Method, args: Array[AnyRef]): Exp[_] = {
       getResultElem(m, args) match {
-        case e: Elem[a] => MethodCall[a](receiver, m, args.toList)(e)
+        case e: Elem[a] => MethodCall[a](receiver, m, args.toList, false)(e)
       }
     }
 

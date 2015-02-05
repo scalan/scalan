@@ -75,7 +75,7 @@ class CXXLmsSmokeItTests extends SmokeItTests {
     progStaged.generate(dir, dir, functionName, progStaged.mvMul, true)(progStaged.defaultConfig)
 //    compareOutputWithSequential(progStaged)(progSeq.mvMul, progStaged.mvMul, "mvMul", in)
   }
-  ignore("test9simpleIf") { //TODO: implement fat if C codegen
+  test("test9simpleIf") {
     val in = (Array(2.0,3.0), 4.0)
     val functionName = "simpleIf"
     val dir = new File(prefix, functionName)
@@ -95,6 +95,21 @@ class CXXLmsSmokeItTests extends SmokeItTests {
     val dir = new File(prefix, functionName)
     progStaged.generate(dir, dir, functionName, progStaged.optionOps, true)(progStaged.defaultConfig)
 //    compareOutputWithSequential(progStaged)(progSeq.simpleOptionOps, progStaged.simpleOptionOps, "simpleOptionOps", in)
+  }
+  test("lambdaApply") {
+    val x = 7
+    val f = (_: Int) * 2
+    val functionName = "lambdaApply"
+    val dir = new File(prefix, functionName)
+    progStaged.generate(dir, dir, functionName, progStaged.lambdaApply, true)(progStaged.defaultConfig)
+//    compareOutputWithSequential(progStaged)(progSeq.lambdaApply, progStaged.lambdaApply, "lambdaApply", (x, f))
+  }
+  ignore("lambdaConst") {
+    val in = 7
+    val functionName = "lambdaConst"
+    val dir = new File(prefix, functionName)
+    progStaged.generate(dir, dir, functionName, progStaged.lambdaConst, true)(progStaged.defaultConfig)
+//    getStagedOutput(progStaged)(progStaged.lambdaConst, "lambdaConst", in).isInstanceOf[Right[_, _]]
   }
 
 }

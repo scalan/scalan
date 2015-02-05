@@ -103,7 +103,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       implicit val tB = iso.tag
       weakTypeTag[Array[B]]
     }
-    lazy val defaultRepTo = Default.defaultVal(Array.empty[B]/*toRep(scala.Array.empty[B](eB.classTag))*/)
+    lazy val defaultRepTo = Default.defaultVal(SArray.empty[B])
   }
 
   def arrayIso[A, B](iso: Iso[A, B]): Iso[Array[A], Array[B]] = {
@@ -127,7 +127,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     view.source.map { x => f(iso.to(x)) }
   }
 
-  def mapReduceUnderlyingArray[A,B,K,V](view: ViewArray[A,B], map: Rep[B=>(K,V)], reduce: Rep[((V,V))=>V]): PM[K,V] = {
+  def mapReduceUnderlyingArray[A,B,K,V](view: ViewArray[A,B], map: Rep[B=>(K,V)], reduce: Rep[((V,V))=>V]): MM[K,V] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo

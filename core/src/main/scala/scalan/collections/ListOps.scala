@@ -1,4 +1,4 @@
-package scalan.collection
+package scalan.collections
 
 import scala.reflect.ClassTag
 import scalan.common.Default
@@ -34,14 +34,13 @@ trait ListOps { self: Scalan =>
     //def updateMany(indexes: Lst[Int], values: Lst[T]) = list_updateMany(xs, indexes, values)
   }
 
-  class ListCompanion {
+  object SList {
     def rangeFrom0(n: Rep[Int]): Lst[Int] = list_rangeFrom0(n)
     def tabulate[T: Elem](n: Rep[Int])(f: Rep[Int] => Rep[T]): Lst[T] =
       rangeFrom0(n).map(f)
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = list_replicate(len, v)
     def empty[T: Elem] = replicate(0, element[T].defaultRepValue)
   }
-  val List: ListCompanion
 
   case class ListElem[T](val eItem: Elem[T]) extends Element[List[T]] {
     override def isEntityType = eItem.isEntityType
@@ -51,7 +50,7 @@ trait ListOps { self: Scalan =>
       weakTypeTag[List[T]]
     }
 
-    protected def getDefaultRep = List.empty(eItem)
+    protected def getDefaultRep = SList.empty(eItem)
   }
 
 
@@ -108,13 +107,6 @@ trait ListOps { self: Scalan =>
 }
 
 trait ListOpsSeq extends ListOps { self: ScalanSeq =>
-  import TagImplicits.elemToClassTag
-
-  class ListCompanion1 extends ListCompanion {
-    @inline
-    def apply[T: ClassTag](xs: T*) = scala.List(xs: _*)
-  }
-  val List: ListCompanion1 = new ListCompanion1
 
   def list_head[T](xs: Lst[T]): Rep[T] = xs.head
   def list_tail[T: Elem](xs: Lst[T]): Lst[T] = xs.tail
@@ -138,7 +130,7 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
     val sum = scan.last
     (scan.dropRight(1).toList, sum)
   }
-  def list_replicate[T: Elem](len: Rep[Int], v: Rep[T]): Lst[T] = scala.List.fill(len)(v)
+  def list_replicate[T: Elem](len: Rep[Int], v: Rep[T]): Lst[T] = List.fill(len)(v)
   def list_rangeFrom0(n: Rep[Int]): Lst[Int] = 0.until(n).toList
   def list_filter[T](xs: List[T], f: T => Boolean): List[T] =xs.filter(f)
   def list_cons[T](x: Rep[T], xs: Lst[T]): Lst[T] = x :: xs
@@ -146,16 +138,13 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
   def list_reverse[T](xs: Lst[T]): Lst[T] = xs.reverse
 
 //  def list_grouped[T](xs: Lst[T], size: Rep[Int]): Lst[List[T]] = {
-//    implicit val ct = listToClassTag(xs)
 //    xs.iterator.grouped(size).map(_.toList).toList
 //  }
 //  def list_stride[T](xs: Lst[T], start: Rep[Int], length: Rep[Int], stride: Rep[Int]): Lst[T] = {
-//    implicit val ct = listToClassTag(xs)
-//    scala.List.tabulate(length) { i =>
+//    List.tabulate(length) { i =>
 //      xs(start + i * stride)
 //    }
 //  }
-//  def listToClassTag[T](xs: Rep[List[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 }
 
 trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
@@ -227,8 +216,6 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
     override def mirror(t: Transformer) = ListReverse(t(xs))
   }
 
-  val List: ListCompanion = new ListCompanion
-
   def list_head[T](xs: Lst[T]): Rep[T] = ListHead(xs)
   def list_tail[T: Elem](xs: Lst[T]): Lst[T] = ListTail(xs)
 
@@ -286,7 +273,7 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
       }
     case ListReplicate(Def(Const(len)), Def(c : Const[a] @unchecked)) => {
       implicit val eA = c.selfType
-      Const(scala.List.fill(len)(c.x))
+      Const(List.fill(len)(c.x))
     }
     case ListMap(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
     case ListMap(Def(d2), f: Rep[Function1[a, b]]@unchecked) =>
@@ -299,7 +286,7 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
           xs1.map { x => f(g1(x))}
         case ListReplicate(length, x) =>
           implicit val eB = f.elem.eRange
-          List.replicate(length, f(x))
+          SList.replicate(length, f(x))
         case _ =>
           super.rewriteDef(d)
       }
