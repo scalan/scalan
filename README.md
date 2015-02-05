@@ -128,9 +128,9 @@ In this mode, Scalan's behavior is very simple: `Rep[A]` is the same type as `A`
 
 #### Staged mode
 
-Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a backend trait. Currently Scalan Community edition contains only one backend `LmsBackend`.
+Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a compiler trait. Currently Scalan Community edition contains only one compiler `LmsCompiler`.
 ~~~scala
-object HelloScalanStaged extends HelloScalan with ScalanCommunityDslExp with LmsBackend {
+object HelloScalanStaged extends HelloScalan with ScalanCommunityDslExp with LmsCompiler {
   def main(args: Array[String]) = {
     // output directory
     val dir = new File("path/to/directory")
