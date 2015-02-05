@@ -1,5 +1,7 @@
 package scalan.compilation.lms.cxx
 
+import java.io.PrintWriter
+
 import scala.virtualization.lms.internal._
 
 /**
@@ -88,6 +90,36 @@ trait CXXCodegen extends CLikeCodegen {
   }
 
   override def addRef() = "&"
+
+  override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
+    val sA = remap(manifest[A])
+
+    //      val staticData = getFreeDataBlock(body)
+
+    withStream(out) {
+      stream.println(
+        "#include <vector>\n" +
+          "#include <cstdlib>\n" +
+          "#include <pair>\n" +
+          "/*****************************************\n" +
+          "  Emitting Generated Code                  \n" +
+          "*******************************************/")
+      emitFileHeader()
+
+      val indargs = scala.Range(0, args.length).zip(args);
+      stream.println(s"${sA} apply(${indargs.map( p => s"${remap(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
+
+      emitBlock(body)
+      stream.println(s"return ${quote(getBlockResult(body))};")
+
+      stream.println("}")
+      stream.println("/*****************************************\n" +
+        "  End of Generated Code                  \n" +
+        "*******************************************/")
+    }
+
+    Nil
+  }
 }
 
 trait CXXFatCodegen extends CXXCodegen with CLikeFatCodegen {
