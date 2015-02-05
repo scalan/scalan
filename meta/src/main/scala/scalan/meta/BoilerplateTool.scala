@@ -6,7 +6,7 @@ class BoilerplateTool extends StrictLogging {
   val coreTypeSynonyms = Map(
     "RThrow" -> "Throwable",
     "Arr" -> "Array",
-    "PM" -> "PMap"
+    "MM" -> "MMap"
   )
   lazy val coreConfig = CodegenConfig(
     srcPath = "../core/src/main/scala",

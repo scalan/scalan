@@ -97,7 +97,7 @@ trait ArrayOps { self: Scalan =>
   def array_reduce[T](xs: Arr[T])(implicit m: RepMonoid[T]): Rep[T]
   def array_fold[T,S:Elem](xs: Arr[T], init:Rep[S], f:Rep[((S,T))=>S]): Rep[S]
 
-  def array_map_reduce[T,K:Elem,V:Elem](xs: Arr[T], map:Rep[T=>(K,V)], reduce:Rep[((V,V))=>V]): PM[K,V]
+  def array_map_reduce[T,K:Elem,V:Elem](xs: Arr[T], map:Rep[T=>(K,V)], reduce:Rep[((V,V))=>V]): MM[K,V]
 
   // provide: res._1.length == xs.length && res._2 = array_reduce(xs)
   def array_scan[T](xs: Arr[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(Array[T], T)]
@@ -139,7 +139,7 @@ trait ArrayOps { self: Scalan =>
   def array_min[T:Elem](xs: Arr[T])(implicit o: Ordering[T]): Rep[T]
   def array_avg[T:Elem](xs: Arr[T])(implicit n: Numeric[T]): Rep[Double]
   def array_sort_by[T:Elem, O:Elem](xs: Arr[T], by: Rep[T => O])(implicit o:Ordering[O]): Arr[T]
-  def array_group_by[T:Elem, G:Elem](xs: Arr[T], by: Rep[T => G]): PM[G, ArrayBuffer[T]]
+  def array_group_by[T:Elem, G:Elem](xs: Arr[T], by: Rep[T => G]): MM[G, ArrayBuffer[T]]
   def array_count[T:Elem](xs: Arr[T], f: Rep[T => Boolean]): Rep[Int]
   def array_sum_by[T:Elem, S:Elem](xs: Arr[T], f: Rep[T => S])(implicit n: Numeric[S]): Rep[S]
 }
@@ -245,7 +245,7 @@ trait ArrayOpsSeq extends ArrayOps {
   def array_min[T:Elem](xs: Arr[T])(implicit o: Ordering[T]): Rep[T]  = genericArrayOps(xs).min
   def array_avg[T:Elem](xs: Arr[T])(implicit n: Numeric[T]): Rep[Double] = genericArrayOps(xs).sum.toDouble / xs.length
   def array_sort_by[T:Elem, O:Elem](xs: Arr[T], by: Rep[T => O])(implicit o:Ordering[O]): Arr[T] = genericArrayOps(xs).sortBy[O](by)
-  def array_group_by[T:Elem, G:Elem](xs: Arr[T], by: Rep[T => G]): PM[G, ArrayBuffer[T]] = {
+  def array_group_by[T:Elem, G:Elem](xs: Arr[T], by: Rep[T => G]): MM[G, ArrayBuffer[T]] = {
     val result = scala.collection.mutable.Map.empty[G, ArrayBuffer[T]]
     for (x <- xs) {
       val key = by(x)
@@ -316,7 +316,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     lazy val eT = element[(T, U)]
     override def mirror(t: Transformer) = ArrayZip(t(xs), t(ys))
   }
-  case class ArrayMapReduce[T,K:Elem,V:Elem](in: Exp[Array[T]], map:Exp[T=>(K,V)], reduce:Exp[((V,V))=>V]) extends PMapDef[K,V] {
+  case class ArrayMapReduce[T,K:Elem,V:Elem](in: Exp[Array[T]], map:Exp[T=>(K,V)], reduce:Exp[((V,V))=>V]) extends MMapDef[K,V] {
     override def mirror(t: Transformer) = ArrayMapReduce(t(in), t(map), t(reduce))
   }
 
@@ -343,7 +343,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArraySortBy[T, O:Elem](xs: Exp[Array[T]], f: Exp[T => O], o: Ordering[O])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArraySortBy(t(xs), t(f), o)
   }
-  case class ArrayGroupBy[T, G:Elem](xs: Exp[Array[T]], by: Exp[T => G])(implicit val eT: Elem[T]) extends PMapDef[G, ArrayBuffer[T]] {
+  case class ArrayGroupBy[T, G:Elem](xs: Exp[Array[T]], by: Exp[T => G])(implicit val eT: Elem[T]) extends MMapDef[G, ArrayBuffer[T]] {
     override def mirror(t: Transformer) = ArrayGroupBy(t(xs), t(by))
   }
   case class ArraySum[T: Elem](xs: Exp[Array[T]], n: Numeric[T]) extends Def[T] with ArrayMethod[T] {

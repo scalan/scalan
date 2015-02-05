@@ -122,7 +122,7 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
       Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
     case el: ListElem[_] ⇒
       Manifest.classType(classOf[List[_]], createManifest(el.eItem))
-    case el: PMapElem[_,_] =>
+    case el: MMapElem[_,_] =>
       Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
     case el => ???(s"Don't know how to create manifest for $el")
   }

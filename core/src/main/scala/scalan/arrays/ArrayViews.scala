@@ -127,7 +127,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     view.source.map { x => f(iso.to(x)) }
   }
 
-  def mapReduceUnderlyingArray[A,B,K,V](view: ViewArray[A,B], map: Rep[B=>(K,V)], reduce: Rep[((V,V))=>V]): PM[K,V] = {
+  def mapReduceUnderlyingArray[A,B,K,V](view: ViewArray[A,B], map: Rep[B=>(K,V)], reduce: Rep[((V,V))=>V]): MM[K,V] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
