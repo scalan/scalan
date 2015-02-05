@@ -53,7 +53,7 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
                  |
                  |scalaVersion := "$scalaVersion"
                  |
-                 |artifactPath in Compile in packageBin := "$jarPath"
+                 |artifactPath in Compile in packageBin := file("$jarPath")
                  |
                  |scalacOptions ++= Seq(${config.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
                  |""".stripMargin

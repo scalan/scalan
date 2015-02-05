@@ -2,6 +2,7 @@ import sbt.Keys._
 import sbt._
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtrelease.ReleasePlugin._
+import pl.project13.scala.sbt.SbtJmh._
 
 object ScalanBuild extends Build {
 
@@ -111,6 +112,15 @@ object ScalanBuild extends Build {
       ReleaseKeys.snapshotDependencies := Seq.empty,
       fork in Test := true,
       fork in ItTest := true)
+
+  lazy val benchmark = project.withTestConfigsAndCommonSettings
+    .dependsOn(core, ce, lmsBackend)
+    .settings(jmhSettings: _*)
+    .settings(
+      scalaOrganization := "org.scala-lang.virtualized",
+      scalaVersion := virtScala,
+      publishArtifact := false
+    )
 
   // name to make this the default project
   lazy val root = Project("scalan", file("."))
