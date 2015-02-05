@@ -100,7 +100,6 @@ trait CXXCodegen extends CLikeCodegen {
       stream.println(
         "#include <vector>\n" +
           "#include <cstdlib>\n" +
-          "#include <pair>\n" +
           "/*****************************************\n" +
           "  Emitting Generated Code                  \n" +
           "*******************************************/")
