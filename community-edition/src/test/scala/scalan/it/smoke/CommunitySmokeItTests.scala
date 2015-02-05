@@ -27,12 +27,12 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
    //def componentAccess(t: Rep[((Int,Double),(String,Long))]): Rep[String] = t._2._1
 
     lazy val reuseTest = fun { len: Rep[Int] =>
-      val matrix: Rep[Array[Array[Int]]] = Array.tabulate[Array[Int]](len) { n => Array.tabulate[Int](n) { i => i}}
+      val matrix: Rep[Array[Array[Int]]] = SArray.tabulate[Array[Int]](len) { n => SArray.tabulate[Int](n) { i => i}}
       matrix.map(row => row.reduce) zip matrix.map(row => row.reduce * 2)
     }
 
     lazy val ifTest = fun { in: Rep[(Int, Double)] =>
-      val map = PMap.empty[Int, Double]
+      val map = MMap.empty[Int, Double]
       IF(map.contains(in._1)) THEN {
         THROW("Key already exists")
       } ELSE {
@@ -41,27 +41,27 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
     }
 
     lazy val unionMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
-      val map1 = PMap.fromArray[Int, Double](in._1)
-      val map2 = PMap.fromArray[Int, Double](in._2)
+      val map1 = MMap.fromArray[Int, Double](in._1)
+      val map2 = MMap.fromArray[Int, Double](in._2)
       map1.union(map2).toArray.sort
     }
     lazy val differenceMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
-      val map1 = PMap.fromArray[Int, Double](in._1)
-      val map2 = PMap.fromArray[Int, Double](in._2)
+      val map1 = MMap.fromArray[Int, Double](in._1)
+      val map2 = MMap.fromArray[Int, Double](in._2)
       map1.difference(map2).toArray.sort
     }
     lazy val joinMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
-      val map1 = PMap.fromArray[Int, Double](in._1)
-      val map2 = PMap.fromArray[Int, Double](in._2)
+      val map1 = MMap.fromArray[Int, Double](in._1)
+      val map2 = MMap.fromArray[Int, Double](in._2)
       map1.join(map2).toArray.sort
     }
     lazy val reduceMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
-      val map1 = PMap.fromArray[Int, Double](in._1)
-      val map2 = PMap.fromArray[Int, Double](in._2)
+      val map1 = MMap.fromArray[Int, Double](in._1)
+      val map2 = MMap.fromArray[Int, Double](in._2)
       map1.reduce(map2, fun2 { (a, b) => a + b}).toArray.sort
     }
     lazy val iterateMap = fun { in: Rep[Array[(Int, Double)]] =>
-      val map = PMap.fromArray[Int, Double](in)
+      val map = MMap.fromArray[Int, Double](in)
       loopUntil2(1, 0.0)(
       { (i, sum) => (!map.contains(i) && i > map.size)}, { (i, sum) => (i + 1, sum + map(i))}
       )
@@ -91,21 +91,21 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       in.groupBy(fun { p => p._1}).mapValues(g => g.toArray.map(p => p._2).sum).toArray.sortBy(fun { p => p._1})
     }
     lazy val compoundMapKey = fun { in: Rep[(Array[(Int, Double)], Array[Int])] =>
-      val map = PMap.fromArray[(Int, Double), Int](in._1 zip in._2)
+      val map = MMap.fromArray[(Int, Double), Int](in._1 zip in._2)
       loopUntil2(0, 0)(
       { (i, sum) => (i >= map.size)}, { (i, sum) => (i + 1, sum + map(in._1(i)))}
       )
     }
     lazy val compoundMapValue = fun { in: Rep[(Array[String], Array[(Int, Double)])] =>
-      val map = PMap.fromArray[String, (Int, Double)](in._1 zip in._2)
+      val map = MMap.fromArray[String, (Int, Double)](in._1 zip in._2)
       map("two")._2
     }
     lazy val fillArrayBuffer = fun { in: Rep[Array[Int]] =>
       in.fold(ArrayBuffer.empty[Int], (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
     }
     lazy val unionMultiMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
-      val map1 = MultiMap.fromArray[Int, Double](in._1)
-      val map2 = MultiMap.fromArray[Int, Double](in._2)
+      val map1 = MMultiMap.fromArray[Int, Double](in._1)
+      val map2 = MMultiMap.fromArray[Int, Double](in._2)
       map1.union(map2).toArray.map(p => (p._1, p._2.toArray.sum)).sortBy(fun { p => p._1})
     }
 

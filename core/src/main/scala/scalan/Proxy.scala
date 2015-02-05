@@ -212,7 +212,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     override def toString = s"ExpInvocationHandler(${receiver.toStringWithDefinition})"
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
-      val args = if (_args == null) scala.Array.empty[AnyRef] else _args
+      val args = if (_args == null) Array.empty[AnyRef] else _args
       receiver match {
         // call method of the node when it's allowed
         case Def(d) if shouldInvoke(d, m, args) =>

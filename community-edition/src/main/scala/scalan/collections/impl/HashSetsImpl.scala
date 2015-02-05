@@ -1,4 +1,4 @@
-package scalan.collection
+package scalan.collections
 package impl
 
 import scala.collection.immutable.HashSet
