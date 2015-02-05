@@ -2,7 +2,7 @@ package scalan
 package compilation.lms
 
 import java.util.HashMap
-import scalan.collection.ListOpsExp
+import scalan.collections.ListOpsExp
 
 trait CoreBridge[A, B] extends LmsBridge[A, B] {
 

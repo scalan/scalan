@@ -2,7 +2,7 @@
  * User: Alexander Slesarenko
  * Date: 11/23/13
  */
-package scalan.collection
+package scalan.collections
 
 import scala.reflect.runtime.universe._
 import scalan._

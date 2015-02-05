@@ -46,7 +46,7 @@ class BoilerplateTool extends StrictLogging {
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
-      , "scalan/collection/HashSets.scala"
+      , "scalan/collections/HashSets.scala"
       , "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
       , "scalan/collections/MultiMap.scala"
