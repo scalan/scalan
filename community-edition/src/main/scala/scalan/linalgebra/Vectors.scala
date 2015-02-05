@@ -42,7 +42,7 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
 
   abstract class SparseVector[T](val nonZeroIndices: Rep[Array[Int]], val nonZeroValues: Rep[PArray[T]], val length: Rep[Int])(implicit val elem: Elem[T]) extends Vector[T] {
     def coords: PA[T] = {
-      val coords0 = Array.replicate(length, elem.defaultRepValue)
+      val coords0 = SArray.replicate(length, elem.defaultRepValue)
       PArray(coords0.updateMany(nonZeroIndices, nonZeroValues.arr))
     }
     def dot(other: Vec[T])(implicit n: Numeric[T]) = matchVec[T, T](other) {

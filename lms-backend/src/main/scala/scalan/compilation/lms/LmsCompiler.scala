@@ -74,7 +74,7 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
             val reporter = new StoreReporter
             val compiler: Global = new Global(settings, reporter)
             val run = new compiler.Run
-            run.compile(scala.List(outputSource.getAbsolutePath))
+            run.compile(List(outputSource.getAbsolutePath))
         }
 
     }
@@ -84,7 +84,7 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
                                (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
     val url = jarFile(functionName, executableDir).toURI.toURL
     // ensure Scala library is available
-    val classLoader = new URLClassLoader(scala.Array(url), classOf[_ => _].getClassLoader)
+    val classLoader = new URLClassLoader(Array(url), classOf[_ => _].getClassLoader)
     val cls = classLoader.loadClass(functionName)
     val argumentClass = eInput.classTag.runtimeClass
     val method = cls.getMethod("apply", argumentClass)

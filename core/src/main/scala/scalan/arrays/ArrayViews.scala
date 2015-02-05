@@ -103,7 +103,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       implicit val tB = iso.tag
       weakTypeTag[Array[B]]
     }
-    lazy val defaultRepTo = Default.defaultVal(Array.empty[B]/*toRep(scala.Array.empty[B](eB.classTag))*/)
+    lazy val defaultRepTo = Default.defaultVal(SArray.empty[B])
   }
 
   def arrayIso[A, B](iso: Iso[A, B]): Iso[Array[A], Array[B]] = {

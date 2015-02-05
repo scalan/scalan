@@ -35,20 +35,20 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
     def numRows: Rep[Int] = rows.length
     def numColumns = rows(0).length
     def columns =
-      PArray(Array.tabulate(numColumns) { j => DenseVector(rows.map(_(j))) })
+      PArray(SArray.tabulate(numColumns) { j => DenseVector(rows.map(_(j))) })
   }
 
   trait RowMajorMatrixCompanion extends ConcreteClass1[RowMajorMatrix] with MatrixCompanion {
     override def defaultOf[T: Elem] = Default.defaultVal(RowMajorMatrix(element[PArray[DenseVector[T]]].defaultRepValue))
     override def fromColumns[T: Elem](cols: PA[Vector[T]]): Matr[T] =
-      RowMajorMatrix(PArray(Array.tabulate(cols(0).length) { i => DenseVector(cols.map(_(i))) }))
+      RowMajorMatrix(PArray(SArray.tabulate(cols(0).length) { i => DenseVector(cols.map(_(i))) }))
   }
 
   abstract class RowMajorFlatMatrix[T](val rmValues: Rep[PArray[T]], val numColumns: Rep[Int])(implicit val elem: Elem[T]) extends Matrix[T] {
     def companion = RowMajorFlatMatrix
     def numRows: Rep[Int] = rmValues.length /! numColumns
     def columns =
-      PArray(Array.tabulate(numColumns) { i =>
+      PArray(SArray.tabulate(numColumns) { i =>
         DenseVector(PArray(rmValues.arr.stride(i, numRows, numColumns)))
       })
 
@@ -61,7 +61,7 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
       val numColumns = cols.length
       val numRows = cols(0).length
       val columnsArr: Arr[Array[T]] = cols.arr.map(col => col.coords.arr)
-      val rmValues = Array.tabulate(numRows * numColumns) { i =>
+      val rmValues = SArray.tabulate(numRows * numColumns) { i =>
         columnsArr(i % numColumns)(i /! numColumns)
       }
       RowMajorFlatMatrix(PArray(rmValues), numColumns)

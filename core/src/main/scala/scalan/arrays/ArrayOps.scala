@@ -71,7 +71,8 @@ trait ArrayOps { self: Scalan =>
     def sumBy[S: Elem](f: Rep[T => S])(implicit n: Numeric[S]): Rep[S] = array_sum_by(xs, f)
   }
 
-  class ArrayCompanion {
+  // name to avoid conflict with scala.Array
+  object SArray {
     def rangeFrom0(n: Rep[Int]) = array_rangeFrom0(n)
     def tabulate[T: Elem](n: Rep[Int])(f: Rep[Int] => Rep[T]): Arr[T] =
       rangeFrom0(n).map(f)
@@ -79,7 +80,6 @@ trait ArrayOps { self: Scalan =>
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = array_replicate(len, v)
     def empty[T: Elem] = replicate(0, element[T].defaultRepValue)
   }
-  val Array: ArrayCompanion
 
   // require: n in xs.indices
   def array_apply[T](xs: Arr[T], n: Rep[Int]): Rep[T]
@@ -148,13 +148,6 @@ trait ArrayOpsSeq extends ArrayOps {
   self: ScalanSeq =>
 
   import TagImplicits.elemToClassTag
-
-  class ArrayCompanion1 extends ArrayCompanion {
-    @inline
-    def apply[T: ClassTag](xs: T*) = scala.Array(xs: _*)
-  }
-
-  val Array: ArrayCompanion1 = new ArrayCompanion1
 
   def array_apply[T](x: Arr[T], n: Rep[Int]): Rep[T] = x(n)
 
@@ -392,7 +385,6 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   def array_count[T:Elem](xs: Arr[T], f: Rep[T => Boolean]): Rep[Int] = ArrayCount(xs, f)
   def array_sum_by[T:Elem,S:Elem](xs: Arr[T], f: Rep[T=>S])(implicit n: Numeric[S]): Rep[S] = ArraySumBy(xs, f, n)
 
-  val Array: ArrayCompanion = new ArrayCompanion
   def array_apply[T](xs: Exp[Array[T]], n: Exp[Int]): Rep[T] =
     withElemOfArray(xs) { implicit eT => ArrayApply(xs, n) }
   def array_applyMany[T](xs: Exp[Array[T]], is: Exp[Array[Int]]): Arr[T] =
@@ -439,7 +431,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
 
   def array_grouped[T](xs: Arr[T], size: Rep[Int]): Arr[Array[T]] = {
     implicit val eT = xs.elem.eItem
-    Array.tabulate(xs.length div size) { i => xs.slice(i * size, size) }
+    SArray.tabulate(xs.length div size) { i => xs.slice(i * size, size) }
   }
 
   def array_stride[T](xs: Arr[T], start: Rep[Int], length: Rep[Int], stride: Rep[Int]): Arr[T] = {
@@ -586,7 +578,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
           ArrayZip(RepArrayOps(xs1)(e1)(is), RepArrayOps(ys1)(e2)(is))(e1, e2)
         case ArrayReplicate(_, x) =>
           implicit val eT = x.elem
-          Array.replicate(is.length, x)
+          SArray.replicate(is.length, x)
         case ArrayStride(xs, start, _, stride) =>
           implicit val eT = xs.elem.eItem
           xs(is.map { i => start + i * stride})
@@ -664,7 +656,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
           xs1.map { x => f(g1(x))}
         case ArrayReplicate(length, x) =>
           implicit val eB = f.elem.eRange
-          Array.replicate(length, f(x))
+          SArray.replicate(length, f(x))
         case _ =>
           super.rewriteDef(d)
       }
@@ -717,13 +709,13 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       implicit val e1 = l.elem.eItem
       implicit val e2 = r.selfType.eItem.eFst
       implicit val e3 = r.selfType.eItem.eSnd
-      Array.tabulate(l.length)(i => Pair(l(i), Pair(r.xs(i), r.ys(i))))
+      SArray.tabulate(l.length)(i => Pair(l(i), Pair(r.xs(i), r.ys(i))))
     case ArrayZip(l, Def(map: ArrayMap[x, y]@unchecked)) =>
       map.xs match {
         case Def(range: ArrayRangeFrom0) =>
           implicit val eL = l.elem.eItem
           val f = map.f.asInstanceOf[Rep[Function1[Int,y]]]
-          Array.tabulate(range.n)(i => Pair(l(i), f(i)))
+          SArray.tabulate(range.n)(i => Pair(l(i), f(i)))
         case _ =>
           super.rewriteDef(d)
       }
@@ -736,7 +728,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     case ArrayZip(Def(ArrayReplicate(len, v1: Rep[a])), Def(ArrayReplicate(_, v2: Rep[b]))) =>
       implicit val eA = v1.elem
       implicit val eB = v2.elem
-      Array.replicate(len, (v1, v2))
+      SArray.replicate(len, (v1, v2))
     case _ => super.rewriteDef(d)
   }
 }
