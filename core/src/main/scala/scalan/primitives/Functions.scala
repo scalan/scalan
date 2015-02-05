@@ -72,9 +72,12 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     def canEqual(other: Any) = other.isInstanceOf[Lambda[_,_]]
 
     // Product implementation
-    val productElements = scala.Array[Any](f, x, y)
-    def productElement(n: Int): Any = productElements(n)
-    def productArity: Int = 3
+    def productElement(n: Int): Any = n match {
+      case 0 => x
+      case 1 => y
+      case _ => throw new NoSuchElementException(s"Lambda.productElement($n) is undefined")
+    }
+    def productArity: Int = 2
 
     // AstGraph implementation
     val boundVars = List(x)

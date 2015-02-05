@@ -7,33 +7,28 @@ import scala.reflect.runtime.universe._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait MultiMapsAbs extends Scalan with MultiMaps
-{ self: MultiMapsDsl =>
+trait MultiMapsAbs extends Scalan with MultiMaps {
+  self: MultiMapsDsl =>
   // single proxy for each type family
   implicit def proxyMultiMap[K, V](p: Rep[MultiMap[K, V]]): MultiMap[K, V] =
     proxyOps[MultiMap[K, V]](p)
-
-
 
   abstract class MultiMapElem[K, V, From, To <: MultiMap[K, V]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
   trait MultiMapCompanionElem extends CompanionElem[MultiMapCompanionAbs]
   implicit lazy val MultiMapCompanionElem: MultiMapCompanionElem = new MultiMapCompanionElem {
-    lazy val tag = typeTag[MultiMapCompanionAbs]
+    lazy val tag = weakTypeTag[MultiMapCompanionAbs]
     protected def getDefaultRep = MultiMap
   }
 
   abstract class MultiMapCompanionAbs extends CompanionBase[MultiMapCompanionAbs] with MultiMapCompanion {
     override def toString = "MultiMap"
-    
   }
   def MultiMap: Rep[MultiMapCompanionAbs]
   implicit def proxyMultiMapCompanion(p: Rep[MultiMapCompanion]): MultiMapCompanion = {
     proxyOps[MultiMapCompanion](p)
   }
 
-  //default wrapper implementation
-  
   // elem for concrete class
   class HashMultiMapElem[K, V](iso: Iso[HashMultiMapData[K, V], HashMultiMap[K, V]]) extends MultiMapElem[K, V, HashMultiMapData[K, V], HashMultiMap[K, V]](iso)
 
@@ -72,7 +67,7 @@ trait MultiMapsAbs extends Scalan with MultiMaps
   }
 
   class HashMultiMapCompanionElem extends CompanionElem[HashMultiMapCompanionAbs] {
-    lazy val tag = typeTag[HashMultiMapCompanionAbs]
+    lazy val tag = weakTypeTag[HashMultiMapCompanionAbs]
     protected def getDefaultRep = HashMultiMap
   }
   implicit lazy val HashMultiMapCompanionElem: HashMultiMapCompanionElem = new HashMultiMapCompanionElem
@@ -94,16 +89,11 @@ trait MultiMapsAbs extends Scalan with MultiMaps
 }
 
 // Seq -----------------------------------
-trait MultiMapsSeq extends MultiMapsAbs with MultiMapsDsl with ScalanSeq
-{ self: MultiMapsDslSeq =>
+trait MultiMapsSeq extends MultiMapsDsl with ScalanSeq {
+  self: MultiMapsDslSeq =>
   lazy val MultiMap: Rep[MultiMapCompanionAbs] = new MultiMapCompanionAbs with UserTypeSeq[MultiMapCompanionAbs, MultiMapCompanionAbs] {
     lazy val selfType = element[MultiMapCompanionAbs]
-    
   }
-
-  
-
-  
 
   case class SeqHashMultiMap[K, V]
       (override val map: Rep[PMap[K,ArrayBuffer[V]]])
@@ -111,7 +101,6 @@ trait MultiMapsSeq extends MultiMapsAbs with MultiMapsDsl with ScalanSeq
     extends HashMultiMap[K, V](map)
         with UserTypeSeq[MultiMap[K,V], HashMultiMap[K, V]] {
     lazy val selfType = element[HashMultiMap[K, V]].asInstanceOf[Elem[MultiMap[K,V]]]
-    
   }
   lazy val HashMultiMap = new HashMultiMapCompanionAbs with UserTypeSeq[HashMultiMapCompanionAbs, HashMultiMapCompanionAbs] {
     lazy val selfType = element[HashMultiMapCompanionAbs]
@@ -125,14 +114,12 @@ trait MultiMapsSeq extends MultiMapsAbs with MultiMapsDsl with ScalanSeq
 }
 
 // Exp -----------------------------------
-trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
-{ self: MultiMapsDslExp =>
+trait MultiMapsExp extends MultiMapsDsl with ScalanExp {
+  self: MultiMapsDslExp =>
   lazy val MultiMap: Rep[MultiMapCompanionAbs] = new MultiMapCompanionAbs with UserTypeDef[MultiMapCompanionAbs, MultiMapCompanionAbs] {
     lazy val selfType = element[MultiMapCompanionAbs]
     override def mirror(t: Transformer) = this
   }
-
-
 
   case class ExpHashMultiMap[K, V]
       (override val map: Rep[PMap[K,ArrayBuffer[V]]])
@@ -232,13 +219,53 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
       }
     }
 
-    // WARNING: Cannot generate matcher for method `reduceBy`: Method's return type PM[K,T] is not a Rep
+    object reduceBy {
+      def unapply(d: Def[_]): Option[(Rep[HashMultiMap[K, V]], Rep[Array[V] => T]) forSome {type K; type V; type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*)) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "reduceBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[HashMultiMap[K, V]], Rep[Array[V] => T]) forSome {type K; type V; type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[HashMultiMap[K, V]], Rep[Array[V] => T]) forSome {type K; type V; type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `keys`: Method's return type Arr[K] is not a Rep
+    object keys {
+      def unapply(d: Def[_]): Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}] = d match {
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "keys" =>
+          Some(receiver).asInstanceOf[Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `values`: Method's return type Arr[ArrayBuffer[V]] is not a Rep
+    object values {
+      def unapply(d: Def[_]): Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}] = d match {
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "values" =>
+          Some(receiver).asInstanceOf[Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `toArray`: Method's return type Arr[(K,ArrayBuffer[V])] is not a Rep
+    object toArray {
+      def unapply(d: Def[_]): Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}] = d match {
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[HashMultiMapElem[_, _]] && method.getName == "toArray" =>
+          Some(receiver).asInstanceOf[Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object size {
       def unapply(d: Def[_]): Option[Rep[HashMultiMap[K, V]] forSome {type K; type V}] = d match {
@@ -394,13 +421,53 @@ trait MultiMapsExp extends MultiMapsAbs with MultiMapsDsl with ScalanExp
       }
     }
 
-    // WARNING: Cannot generate matcher for method `reduceBy`: Method's return type PM[K,T] is not a Rep
+    object reduceBy {
+      def unapply(d: Def[_]): Option[(Rep[MultiMap[K, V]], Rep[Array[V] => T]) forSome {type K; type V; type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*)) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "reduceBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[MultiMap[K, V]], Rep[Array[V] => T]) forSome {type K; type V; type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[MultiMap[K, V]], Rep[Array[V] => T]) forSome {type K; type V; type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `keys`: Method's return type Arr[K] is not a Rep
+    object keys {
+      def unapply(d: Def[_]): Option[Rep[MultiMap[K, V]] forSome {type K; type V}] = d match {
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "keys" =>
+          Some(receiver).asInstanceOf[Option[Rep[MultiMap[K, V]] forSome {type K; type V}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[MultiMap[K, V]] forSome {type K; type V}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `values`: Method's return type Arr[ArrayBuffer[V]] is not a Rep
+    object values {
+      def unapply(d: Def[_]): Option[Rep[MultiMap[K, V]] forSome {type K; type V}] = d match {
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "values" =>
+          Some(receiver).asInstanceOf[Option[Rep[MultiMap[K, V]] forSome {type K; type V}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[MultiMap[K, V]] forSome {type K; type V}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `toArray`: Method's return type Arr[(K,ArrayBuffer[V])] is not a Rep
+    object toArray {
+      def unapply(d: Def[_]): Option[Rep[MultiMap[K, V]] forSome {type K; type V}] = d match {
+        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[MultiMapElem[_, _, _, _]] && method.getName == "toArray" =>
+          Some(receiver).asInstanceOf[Option[Rep[MultiMap[K, V]] forSome {type K; type V}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[MultiMap[K, V]] forSome {type K; type V}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object size {
       def unapply(d: Def[_]): Option[Rep[MultiMap[K, V]] forSome {type K; type V}] = d match {
