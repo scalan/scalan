@@ -4,6 +4,8 @@
 
 Scalan is a framework for creating staged embedded DSLs in Scala. It allows you to write high-level Scala programs and compile them to efficient low-level code (in the language determined by the used backend) and to develop new abstractions which can be used in such programs.
 
+[Scalan Google Group](https://groups.google.com/forum/#!forum/scalan) is used for Scalan-related discussions. See also [Contributions](#contributions) below.
+
 ### Installation
 
 [SBT](http://www.scala-sbt.org/) is required to build Scalan. See linked documentation for installing and using SBT itself. There is also [an improved runner](https://github.com/paulp/sbt-extras) which takes care of downloading correct SBT version and adds some extra features.
@@ -126,9 +128,9 @@ In this mode, Scalan's behavior is very simple: `Rep[A]` is the same type as `A`
 
 #### Staged mode
 
-Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a backend trait. Currently Scalan Community edition contains only one backend `LmsBackend`.
+Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a compiler trait. Currently Scalan Community edition contains only one compiler `LmsCompiler`.
 ~~~scala
-object HelloScalanStaged extends HelloScalan with ScalanCommunityDslExp with LmsBackend {
+object HelloScalanStaged extends HelloScalan with ScalanCommunityDslExp with LmsCompiler {
   def main(args: Array[String]) = {
     // output directory
     val dir = new File("path/to/directory")
@@ -202,19 +204,18 @@ See `scalan.linalgebra.Vectors` for a larger example.
 
 Adding new primitive operations, core types, or backends to Scalan is possible, but not supported at the moment.
 
-# Contributions
+## Contributions
 
-We are very pleased to see contributions from new members.
+Please feel free to open an issue if you notice a bug, have an idea for a feature, or have a question about the code. Minor pull requests (typos, bug fixes and so on) are gladly accepted; for anything larger please raise an issue first.
 
-You can help out by sending an unsolicited pull request with a new feature.
+Issues with the `low-hanging fruit` label should be easy to fix if you want something to get started with.
+
+If you want to start working on an issue (existing or one you just raised), please leave a comment to avoid effort duplication. Issues that someone is already working on are labelled `in progress`.
 
 <!--* [Triaging our open tickets](TODO)
 
-* [Pick up some low hanging fruit](TODO)
-* [Fixing a bug](TODO)
 * [Helping with the current Milestone](TODO)
 * Sending an unsolicited pull request with a new feature
-* Having a conversation on the [Scalan Google Group](https://groups.google.com/forum/#!forum/Scalan)
 * Telling your co-workers!
 -->
 ## See also
