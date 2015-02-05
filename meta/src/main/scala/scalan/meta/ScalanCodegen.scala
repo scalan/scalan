@@ -642,7 +642,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
                   }
 
                 s"MethodCall(receiver, method, $methodArgsPattern) if " + (if (e.isHighKind) {
-                  s"""receiver.elem match { }"""
+                  s"""receiver.elem match { case _: $traitElem => true; case _ => false }"""
                 } else {
                   s"receiver.elem.isInstanceOf[$traitElem]"
                 }) + s""" && method.getName == "${m.name}"$annotationCheck"""

@@ -76,8 +76,10 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
     def canEqual(other: Any) = other.isInstanceOf[ThunkDef[_]]
 
     // Product implementation
-    val productElements = scala.Array[Any](root)
-    def productElement(n: Int): Any = productElements(n)
+    def productElement(n: Int): Any = n match {
+      case 0 => root
+      case _ => throw new NoSuchElementException(s"ThunkDef.productElement($n) is undefined")
+    }
     def productArity: Int = 1
 
     override def boundVars = Nil
@@ -193,7 +195,7 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
 
   override def effectSyms(x: Any): List[Exp[Any]] = x match {
     case ThunkDef(_, sch) =>
-      sch.map(_.sym).toList.flatMap(effectSyms)
+      flatMapIterable(sch.map(_.sym), effectSyms)
     case _ => super.effectSyms(x)
   }
 
