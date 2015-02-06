@@ -118,4 +118,9 @@ trait CollectionExamples extends ScalanDsl with CollectionsDsl with PrimitiveExa
     (res._1.arr, res._2.arr)
   }
 
+  lazy val listCollectionPairZipWith = fun { in: Lst[Int] =>
+    val xs: Coll[Int] = Collection.fromList(in)
+    (xs zip xs).map(x => x._1 + x._2).arr
+  }
+
 }

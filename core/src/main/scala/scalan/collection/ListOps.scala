@@ -106,7 +106,7 @@ trait ListOps { self: Scalan =>
   // provide: res.length == is.length
   def list_applyMany[T](xs: Lst[T], is: Arr[Int]): Lst[T]
 
-  def list_toArray[T](xs: Lst[T]): Arr[T]
+  def list_toArray[T:Elem](xs: Lst[T]): Arr[T]
 //  def list_grouped[T](xs: Lst[T], size: Rep[Int]): Lst[List[T]]
 //
 //  // require: start in xs.indices && start + length * stride in xs.indices
@@ -167,8 +167,8 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
   // provide: res.length == is.length
   def list_applyMany[T](xs: Lst[T], is: Arr[Int]): Lst[T] = scala.List((is.map(xs(_))): _*)
 
-  def list_toArray[T](xs: Lst[T]): Arr[T] = {
-    implicit val ct: ClassTag[T] = ClassTag(xs.getClass.getComponentType)
+  def list_toArray[T:Elem](xs: Lst[T]): Arr[T] = {
+    //implicit val ct: ClassTag[T] = ClassTag(xs.getClass.getComponentType)
     xs.asInstanceOf[scala.List[T]].toArray
   }
 
@@ -319,8 +319,8 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
   def list_apply[T](xs: Lst[T], n: Rep[Int]): Rep[T] =
     withElemOfList(xs) { implicit eT => ListApply(xs, n) }
 
-  def list_toArray[T](xs: Lst[T]): Arr[T] =
-    withElemOfList(xs) { implicit eT => ListToArray(xs) }
+  def list_toArray[T:Elem](xs: Lst[T]): Arr[T] =
+    ListToArray(xs)
 
 
   // require: forall i -> is(i) in xs.indices

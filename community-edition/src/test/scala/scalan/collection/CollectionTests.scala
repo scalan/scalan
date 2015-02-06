@@ -23,6 +23,13 @@ class CollectionExamplesSuite extends BaseShouldTests {
     res should be(in)
   }
 
+  "in seq context 1" should "execute functions" in {
+    val ctx = new ScalanCtxSeq with CollectionsDslSeq with CollectionExamples {}
+    val in = List(1,2,3,4,5,6)
+    val res = ctx.listCollectionPairZipWith(in)
+    res should be(Array(2,4,6,8,10,12))
+  }
+
   def testMethod(name: String) = {
     val ctx = new ScalanCtxExp with CollectionsDslExp with CollectionExamples with GraphVizExport {
       override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
@@ -59,5 +66,5 @@ class CollectionExamplesSuite extends BaseShouldTests {
   whenStaged should "nestedPairInIfSpec" beArgFor { testMethod(_) }
   whenStaged should "nestedListPairInIf" beArgFor { testMethod(_) }
   whenStaged should "nestedListPairInIfSpec" beArgFor { testMethod(_) }
-
+  whenStaged should "listCollectionPairZipWith" beArgFor { testMethod(_) }
 }
