@@ -105,16 +105,23 @@ User types (abstract like `Vector[T]` and concrete like `DenseVector[T]`) are in
 
 Your program needs to extends `Scalan` trait (along with any traits describing the DSLs you use) or `ScalanCommunity` if you want to use `community-edition` instead of `core`. Here is a very simple example program:
 ~~~scala
-trait HelloScalan extends ScalanCommunityDsl { // ScalanCommunityDsl includes ScalanCommunity and all DSLs defined in that project
-  lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] => 
+// ScalanCommunityDsl includes ScalanCommunity and all DSLs defined in that project
+trait HelloScalan extends ScalanCommunityDsl {
+  lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matr[Double] = RowMajorMatrix(PArray(m.map { r: Arr[Double] => DenseVector(PArray(r)) }))
+    val matrix: Matr[Double] = RowMajorMatrix(PArray(m.map { r: Arr[Double] => DenseVector(PArray(r))}))
     val vector: Vec[Double] = DenseVector(PArray(v))
     (matrix * vector).coords.arr
   }
+  // example input
+  val matrix = Array(Array(1.0, 2.0), Array(3.0, 5.0))
+  val vector = Array(2.0, 3.0)
+  val input = (matrix, vector)
 }
 ~~~
-This can be seen to be very close to a usual Scala program, except for use of `Rep` type constructor and `fun` method. Note that `run` takes core types as argument and returns core types, not matrices and vectors themselves.
+It can be seen to be very close to a usual Scala program, except for use of `Rep` type constructor and `fun` method. Note that `run` takes core types as argument and returns core types, not matrices and vectors themselves.
+
+This example is available [in the repository](lms-backend/src/test/scala/HelloScalan.scala). Please raise an issue if you find it isn't up-to-date!
 
 Now, there are two ways in which Scalan can work with this program:
 
@@ -122,13 +129,12 @@ Now, there are two ways in which Scalan can work with this program:
 
 Run it without optimizations in order to ensure it works as desired and debug if necessary. This is done by mixing in `ScalanCommunityDslSeq` (and `Seq` versions of any additional DSLs used by your program):
 ~~~scala
+// to run: lms-backend/test:runMain HelloScalanSeq
 object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
+  def result = run(input)
+
   def main(args: Array[String]) = {
-    // example input
-    val matrix = Array(Array(1.0, 2.0), Array(3.0, 5.0))
-    val vector = Array(2.0, 3.0)
-    val multResult = run(matrix, vector)
-    println(multResult.mkString)
+    println(result.mkString(","))
   }
 }
 ~~~
@@ -136,20 +142,33 @@ In this mode, Scalan's behavior is very simple: `Rep[A]` is the same type as `A`
 
 #### Staged mode
 
-Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a compiler trait. Currently Scalan Community edition contains only one compiler `LmsCompiler`.
+Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a compiler trait.
 ~~~scala
-object HelloScalanStaged extends HelloScalan with ScalanCommunityDslExp with LmsCompiler {
-  def main(args: Array[String]) = {
+// to run: lms-backend/test:runMain HelloScalanExp
+object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCompilerScala {
+  def makeBridge[A, B] = new CommunityBridge[A, B] {
+    val scalan = HelloScalanExp
+    val lms = new CommunityLmsBackend
+  }
+
+  def result = {
     // output directory
-    val dir = new File("path/to/directory")
-    generateExecutable(
+    val dir = new File("it-out")
+    val compiled = buildExecutable(
       dir,
       // generated class name
-      "HelloScalan",
+      "HelloScalan1",
       // function to compile
       run,
       // should .dot file showing program IR be generated
       false)
+    // not necessary if you just want to generate
+    // and compile the program
+    execute(compiled, "HelloScalan1", input, run)
+  }
+
+  def main(args: Array[String]): Unit = {
+    println(result.mkString(","))
   }
 }
 ~~~
@@ -159,7 +178,7 @@ Note that generated code depends only on the Scala standard library, not on Scal
 
 In this mode `Rep[A]` represents a value of type `A` in the generated code. Any values of non-`Rep` Scala types which appear in the Scalan program aren't represented directly.
 
-Scalan aggressively applies optimizations such as dead code elimination, common sub-expression elimination, and function inlining independently of backend. The backend can, of course, include its own optimizations as well (a major one in `LmsBackend` is loop fusion).
+Scalan aggressively applies optimizations such as dead code elimination, common sub-expression elimination, and function inlining independently of backend. The backend can, of course, include its own optimizations as well (a major one in the LMS backend is loop fusion).
 
 ## Understanding Scalan code
 
