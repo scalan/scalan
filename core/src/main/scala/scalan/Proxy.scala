@@ -14,7 +14,7 @@ import net.sf.cglib.proxy.Enhancer
 import net.sf.cglib.proxy.Factory
 import net.sf.cglib.proxy.InvocationHandler
 import scalan.common.Lazy
-import scalan.compilation.GraphVizExport
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.BaseExp
 import scalan.util.ScalaNameUtil
 
@@ -115,7 +115,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     }
   }
 
-  override protected def nodeColor(sym: Exp[_]) = sym match {
+  override protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig) = sym match {
     case Def(d) => d match {
       case mc: MethodCall[_] if mc.neverInvoke => "darkblue"
       case no: NewObject[_] if no.neverInvoke => "darkblue"
@@ -124,7 +124,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     case _ => super.nodeColor(sym)
   }
 
-  override protected def formatDef(d: Def[_]): String = d match {
+  override protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
     case MethodCall(obj, method, args, _) =>
       val methodCallStr =
         s"${ScalaNameUtil.cleanScalaName(method.getName)}(${args.mkString(", ")})"

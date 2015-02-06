@@ -23,10 +23,10 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
 
   case class CompilationOutput(jar: File)
 
-  def graphPasses(config: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+  def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
-  protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                       (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
+  protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
+                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
     val outputSource = new File(sourcesDir, functionName + ".scala")
@@ -46,7 +46,7 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
         val jarFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
         val jarPath = jarFile.getAbsolutePath
 
-        config.scalaVersion match {
+        compilerConfig.scalaVersion match {
           case Some(scalaVersion) =>
             val buildSbtText =
               s"""name := "$functionName"
@@ -55,7 +55,7 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
                  |
                  |artifactPath in Compile in packageBin := file("$jarPath")
                  |
-                 |scalacOptions ++= Seq(${config.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
+                 |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
                  |""".stripMargin
 
             FileUtil.write(buildSbtFile, buildSbtText)
@@ -69,7 +69,7 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
             // necessary to lauch compiler
             // see http://stackoverflow.com/questions/27934282/object-scala-in-compiler-mirror-not-found-running-scala-compiler-programatical
             settings.embeddedDefaults[LmsCompilerScala]
-            val compilerOptions = "-d" :: jarPath :: config.extraCompilerOptions.toList
+            val compilerOptions = "-d" :: jarPath :: compilerConfig.extraCompilerOptions.toList
             settings.processArguments(compilerOptions, false)
             val reporter = new StoreReporter
             val compiler: Global = new Global(settings, reporter)
@@ -90,7 +90,7 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
   }
 
   protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
-                               (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): B = {
+                               (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): B = {
     val (cls, method) = loadMethod(compilationOutput, functionName, eInput)
     val instance = cls.newInstance()
     val result = method.invoke(instance, input.asInstanceOf[AnyRef])

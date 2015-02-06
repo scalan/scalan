@@ -5,14 +5,15 @@ import java.io.File
 import org.scalatest.{Matchers, Suite}
 
 import scalan.TestsUtil
-import scalan.compilation.Compiler
+import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
 
 // extracted so it can be used with different suite styles
 trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
   override def testOutDir = "it-out"
 
-  def emitGraphs: Boolean = true
+  // can be overridden
+  def graphVizConfig = GraphVizConfig.default
 
   def assertFileContentCheck(name: String): Unit =
     FileUtil.read(FileUtil.file(prefix, name)) should be(FileUtil.read(FileUtil.file(prefix, name + ".check")))
@@ -22,11 +23,11 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
   def getStagedOutput[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, input: A): B =
     getStagedOutputConfig(back)(f, functionName, input, back.defaultCompilerConfig)
 
-  def getStagedOutputConfig[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, input: A, config: back.CompilerConfig): B = {
+  def getStagedOutputConfig[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig): B = {
     val dir = FileUtil.file(prefix, functionName)
 
-    val compiled = back.buildExecutable(dir, functionName, f, emitGraphs)(config)
-    back.execute(compiled, functionName, input, f)(config)
+    val compiled = back.buildExecutable(dir, functionName, f, graphVizConfig)(compilerConfig)
+    back.execute(compiled, functionName, input, f)(compilerConfig)
   }
 
   implicit def defaultComparator[A](expected: A, actual: A) {

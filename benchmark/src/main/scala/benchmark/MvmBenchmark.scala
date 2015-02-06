@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 
 import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunitySeq}
+import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.scala_.LmsCompilerScala
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
 import scalan.linalgebra.{MatricesDslSeq, LinearAlgebraExamples}
@@ -106,11 +107,11 @@ object MvmBenchmark {
     protected implicit val cfg = ctx.defaultCompilerConfig.copy(scalaVersion = Some("2.10.2"))
 
     protected def loadMethod[A, B](prog: ProgExp)(baseDir: File, functionName: String, f: prog.Exp[A => B] )
-                                (implicit config: prog.CompilerConfig) =
+                                (implicit compilerConfig: prog.CompilerConfig) =
     {
       val funcDir = FileUtil.file(baseDir, functionName)
 
-      val compilationOutput = prog.buildExecutable(funcDir, functionName, f, true)
+      val compilationOutput = prog.buildExecutable(funcDir, functionName, f, GraphVizConfig.none)
       val argElem = f.elem match {
         case fe: prog.FuncElem[a,b] => fe.eDom
       }

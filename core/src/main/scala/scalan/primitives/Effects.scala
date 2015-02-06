@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.mutable
-import scalan.compilation.GraphVizExport
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
 import scalan.{ScalanExp, ScalanSeq, Scalan}
 import scalan.common.{Utils, Lazy}
@@ -99,7 +99,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     override def mirror(t: Transformer) = Reify(t(x), mapOver(t,summary), t(effects).toList)
   }
 
-  override protected def formatDef(d: Def[_]): String = d match {
+  override protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
     case Reify(x, _, es) => s"Reify($x, [${es.mkString(",")}])"
     case Reflect(x, _, ds) => s"Reflect($x, [${ds.mkString(",")}])"
     case _ => super.formatDef(d)

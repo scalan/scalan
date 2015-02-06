@@ -3,6 +3,7 @@
 import java.io.File
 
 import scalan.community.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
+import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
 import scalan.compilation.lms.scala_.LmsCompilerScala
 import scalan.it.BaseItTests
@@ -46,8 +47,8 @@ object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCom
       "HelloScalan1",
       // function to compile
       run,
-      // should .dot file showing program IR be generated
-      false)
+      // write .dot files containing graph IR with default settings
+      GraphVizConfig.default)
     // not necessary if you just want to generate
     // and compile the program
     execute(compiled, "HelloScalan1", input, run)

@@ -3,7 +3,7 @@ package scalan.compilation.lms.cxx
 import java.io._
 
 import scalan.community.ScalanCommunityExp
-import scalan.compilation.GraphVizExport
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.compilation.lms.LmsCompiler
 import scalan.util.{FileUtil, ProcessUtil}
 
@@ -14,19 +14,19 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
   type CompilerConfig = Unit
   implicit val defaultCompilerConfig = ()
 
-  def graphPasses(config: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+  def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
-  def generate[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
-                           (implicit config: CompilerConfig): Unit = {
+  def generate[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)
+                           (implicit compilerConfig: CompilerConfig): Unit = {
     sourcesDir.mkdirs()
     executableDir.mkdirs()
     val eFunc = func.elem
-    val graph = buildGraph(sourcesDir, functionName, func, emitGraphs)(config)
-    doGenerate(sourcesDir, executableDir, functionName, graph, emitGraphs)(config, eFunc.eDom, eFunc.eRange)
+    val graph = buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
+    doGenerate(sourcesDir, executableDir, functionName, graph)(compilerConfig, eFunc.eDom, eFunc.eRange)
   }
 
-  protected def doGenerate[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                      (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
+  protected def doGenerate[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph)
+                                      (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
 
     val outputSource = new File(sourcesDir, functionName + ".cxx")
 
@@ -48,8 +48,8 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
     }
   }
 
-  override protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                      (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
+  override protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
+                                      (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
     val outputSource = new File(sourcesDir, functionName + ".cxx")
@@ -79,7 +79,7 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
   }
 
   override protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
-                               (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): B = {
+                               (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): B = {
 //    val url = new File(jarPath(functionName, executableDir)).toURI.toURL
 //    // ensure Scala library is available
 //    val classLoader = new URLClassLoader(scala.Array(url), classOf[_ => _].getClassLoader)
