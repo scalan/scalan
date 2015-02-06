@@ -69,9 +69,12 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
 //
     val command = Seq("make")
     ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
+
+    //FIXME: derive LmsCompierCXX from Compiler, instead of LmsCompiler
+    CompilationOutput( FileUtil.file("/dev/zero") )
   }
 
-  override protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
+  override protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
                                (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
 //    val url = new File(jarPath(functionName, executableDir)).toURI.toURL
 //    // ensure Scala library is available
