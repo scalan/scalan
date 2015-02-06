@@ -3,11 +3,12 @@ package it.lms
 
 import scalan.community.ScalanCommunityDslExp
 import scalan.compilation.lms._
+import scalan.compilation.lms.scala_.LmsCompilerScala
 import scalan.it.smoke.CommunitySmokeItTests
 import scalan.collections._
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
-  class ProgExp extends ProgCommunity with ScalanCommunityDslExp with LmsCompiler { self =>
+  class ProgExp extends ProgCommunity with ScalanCommunityDslExp with LmsCompilerScala { self =>
     def makeBridge[A, B] = new CoreBridge[A, B] {
       val scalan = self
       val lms = new CommunityLmsBackend
