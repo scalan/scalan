@@ -111,11 +111,8 @@ object MvmBenchmark {
     {
       val funcDir = FileUtil.file(baseDir, functionName)
 
-      val compilationOutput = prog.buildExecutable(funcDir, functionName, f, GraphVizConfig.none)
-      val argElem = f.elem match {
-        case fe: prog.FuncElem[a,b] => fe.eDom
-      }
-      val (cls, method) = prog.loadMethod(compilationOutput, functionName, argElem)
+      val compilerOutput = prog.buildExecutable(funcDir, functionName, f, GraphVizConfig.none)
+      val (cls, method) = prog.loadMethod(compilerOutput)
       val instance = cls.newInstance()
       (method.invoke(instance, _: AnyRef)).asInstanceOf[A => B]
     }

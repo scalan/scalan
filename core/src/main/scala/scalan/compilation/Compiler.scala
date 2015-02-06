@@ -12,7 +12,12 @@ trait Compiler extends BaseExp with Passes {
 
   def defaultCompilerConfig: CompilerConfig
 
-  type CompilationOutput
+  type CustomCompilerOutput
+
+  case class CommonCompilerOutput[A, B]
+    (executableDir: File, name: String, eInput: Elem[A], eOutput: Elem[B])
+
+  case class CompilerOutput[A, B](common: CommonCompilerOutput[A, B], custom: CustomCompilerOutput, config: CompilerConfig)
 
   // see comment for buildInitialGraph
   // TODO sequence may depend on input or intermediate graphs, use a state monad instead
@@ -45,28 +50,29 @@ trait Compiler extends BaseExp with Passes {
   }
 
   def buildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)
-                           (implicit compilerConfig: CompilerConfig): CompilationOutput = {
+                           (implicit compilerConfig: CompilerConfig): CompilerOutput[A, B] = {
     sourcesDir.mkdirs()
     executableDir.mkdirs()
-    val eFunc = func.elem
     val graph = buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
-    doBuildExecutable(sourcesDir, executableDir, functionName, graph, graphVizConfig)(compilerConfig, eFunc.eDom, eFunc.eRange)
+    val eFunc = func.elem
+    val eInput = eFunc.eDom
+    val eOutput = eFunc.eRange
+    val customOutput = doBuildExecutable(sourcesDir, executableDir, functionName, graph, graphVizConfig)(compilerConfig, eInput, eOutput)
+    val commonOutput = CommonCompilerOutput(executableDir, functionName, eInput, eOutput)
+    CompilerOutput(commonOutput, customOutput, compilerConfig)
   }
 
   def buildExecutable[A, B](sourcesAndExecutableDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)
-                           (implicit compilerConfig: CompilerConfig): CompilationOutput =
+                           (implicit compilerConfig: CompilerConfig): CompilerOutput[A, B] =
     buildExecutable(sourcesAndExecutableDir, sourcesAndExecutableDir, functionName, func, graphVizConfig)(compilerConfig)
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
-                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): CompilationOutput
+                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): CustomCompilerOutput
 
   // func is passed to enable inference of B and to get types if needed
-  def execute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A, func: Exp[A => B])
-                   (implicit compilerConfig: CompilerConfig): B = {
-    val eFunc = func.elem
-    doExecute(compilationOutput, functionName, input)(compilerConfig, eFunc.eDom, eFunc.eRange)
+  def execute[A, B](compilationOutput: CompilerOutput[A, B], input: A): B = {
+    doExecute(compilationOutput, input)
   }
 
-  protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
-                               (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): B
+  protected def doExecute[A, B](compilationOutput: CompilerOutput[A, B], input: A): B
 }

@@ -27,7 +27,7 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
     val dir = FileUtil.file(prefix, functionName)
 
     val compiled = back.buildExecutable(dir, functionName, f, graphVizConfig)(compilerConfig)
-    back.execute(compiled, functionName, input, f)(compilerConfig)
+    back.execute(compiled, input)
   }
 
   implicit def defaultComparator[A](expected: A, actual: A) {

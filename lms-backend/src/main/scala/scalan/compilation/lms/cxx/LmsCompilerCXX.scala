@@ -9,7 +9,7 @@ import scalan.util.{FileUtil, ProcessUtil}
 
 trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVizExport =>
 
-  type CompilationOutput = Unit
+  type CustomCompilerOutput = Unit
 
   type CompilerConfig = Unit
   implicit val defaultCompilerConfig = ()
@@ -78,8 +78,7 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
     ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
   }
 
-  override protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
-                               (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): B = {
+  override protected def doExecute[A, B](compilationOutput: CompilerOutput[A, B], input: A): B = {
 //    val url = new File(jarPath(functionName, executableDir)).toURI.toURL
 //    // ensure Scala library is available
 //    val classLoader = new URLClassLoader(scala.Array(url), classOf[_ => _].getClassLoader)

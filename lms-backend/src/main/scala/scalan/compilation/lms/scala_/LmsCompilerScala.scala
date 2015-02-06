@@ -21,7 +21,7 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
 
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
-  case class CompilationOutput(jar: File)
+  case class CustomCompilerOutput(jar: File)
 
   def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
@@ -76,22 +76,21 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
             val run = new compiler.Run
             run.compile(List(outputSource.getAbsolutePath))
         }
-        CompilationOutput(jarFile)
+        CustomCompilerOutput(jarFile)
     }
   }
 
-  def loadMethod(compilationOutput: CompilationOutput, functionName: String, eArg: Elem[_]) = {
-    val url = compilationOutput.jar.toURI.toURL
+  def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
+    val url = compilerOutput.custom.jar.toURI.toURL
     // ensure Scala library is available
     val classLoader = new URLClassLoader(Array(url), classOf[_ => _].getClassLoader)
-    val cls = classLoader.loadClass(functionName)
-    val argumentClass = eArg.classTag.runtimeClass
+    val cls = classLoader.loadClass(compilerOutput.common.name)
+    val argumentClass = compilerOutput.common.eInput.classTag.runtimeClass
     (cls, cls.getMethod("apply", argumentClass))
   }
 
-  protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
-                               (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): B = {
-    val (cls, method) = loadMethod(compilationOutput, functionName, eInput)
+  protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
+    val (cls, method) = loadMethod(compilerOutput)
     val instance = cls.newInstance()
     val result = method.invoke(instance, input.asInstanceOf[AnyRef])
     result.asInstanceOf[B]

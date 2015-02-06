@@ -33,6 +33,9 @@ object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
 
 // to run: lms-backend/test:runMain HelloScalanExp
 object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCompilerScala {
+  // allows use of standard Scala library, commented out to make tests faster
+  // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
+
   def makeBridge[A, B] = new CommunityBridge[A, B] {
     val scalan = HelloScalanExp
     val lms = new CommunityLmsBackend
@@ -51,7 +54,7 @@ object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCom
       GraphVizConfig.default)
     // not necessary if you just want to generate
     // and compile the program
-    execute(compiled, "HelloScalan1", input, run)
+    execute(compiled, input)
   }
 
   def main(args: Array[String]): Unit = {
