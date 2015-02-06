@@ -9,6 +9,13 @@ import scalan.util.{FileUtil, ProcessUtil}
 
 trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVizExport =>
 
+  type CompilationOutput = Unit
+
+  type Config = Unit
+  implicit val defaultConfig = ()
+
+  def graphPasses(config: Config) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+
   def generate[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
                            (implicit config: Config): Unit = {
     sourcesDir.mkdirs()
@@ -69,9 +76,6 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
 //
     val command = Seq("make")
     ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
-
-    //FIXME: derive LmsCompierCXX from Compiler, instead of LmsCompiler
-    CompilationOutput( FileUtil.file("/dev/zero") )
   }
 
   override protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
@@ -86,7 +90,4 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
 //    result.asInstanceOf[B]
     null.asInstanceOf[B]
   }
-
-  private def jarPath(functionName: String, executableDir: File) =
-    s"${executableDir.getAbsolutePath}/$functionName.jar"
 }
