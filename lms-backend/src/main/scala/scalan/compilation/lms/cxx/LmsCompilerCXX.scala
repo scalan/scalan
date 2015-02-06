@@ -24,6 +24,13 @@ trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanC
       super.createManifest(el)
   }
 
+  type CompilationOutput = Unit
+
+  type Config = Unit
+  implicit val defaultConfig = ()
+
+  def graphPasses(config: Config) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+
   def generate[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
                            (implicit config: Config): Unit = {
     sourcesDir.mkdirs()
@@ -86,7 +93,7 @@ trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanC
     ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
   }
 
-  override protected def doExecute[A, B](executableDir: File, functionName: String, input: A)
+  override protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
                                (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
 //    val url = new File(jarPath(functionName, executableDir)).toURI.toURL
 //    // ensure Scala library is available
@@ -98,7 +105,4 @@ trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanC
 //    result.asInstanceOf[B]
     null.asInstanceOf[B]
   }
-
-  private def jarPath(functionName: String, executableDir: File) =
-    s"${executableDir.getAbsolutePath}/$functionName.jar"
 }

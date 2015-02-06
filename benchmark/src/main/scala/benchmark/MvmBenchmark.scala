@@ -7,7 +7,8 @@ import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 
 import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunitySeq}
-import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge, LmsCompiler}
+import scalan.compilation.lms.scala_.LmsCompilerScala
+import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
 import scalan.linalgebra.{MatricesDslSeq, LinearAlgebraExamples}
 import scalan.util.FileUtil
 
@@ -89,7 +90,7 @@ object MvmBenchmark {
   @volatile
   abstract class MvmStateStagedAbs extends MvmStateBase {
 
-    class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompiler {
+    class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerScala {
       self =>
       def makeBridge[A, B] = new CommunityBridge[A, B] {
         val scalan = self
