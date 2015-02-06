@@ -8,22 +8,22 @@ import scalan.staged.BaseExp
 trait Compiler extends BaseExp with Passes {
   self: ScalanExp with GraphVizExport =>
 
-  type Config
+  type CompilerConfig
 
-  def defaultConfig: Config
+  def defaultCompilerConfig: CompilerConfig
 
   type CompilationOutput
 
   // see comment for buildInitialGraph
   // TODO sequence may depend on input or intermediate graphs, use a state monad instead
-  def graphPasses(config: Config): Seq[PGraph => GraphPass]
+  def graphPasses(config: CompilerConfig): Seq[PGraph => GraphPass]
 
   // Can it return ProgramGraph[Ctx] for some other Ctx?
   // If so, may want to add Ctx as type argument or type member
-  def buildInitialGraph[A, B](func: Exp[A => B])(config: Config): PGraph =
+  def buildInitialGraph[A, B](func: Exp[A => B])(config: CompilerConfig): PGraph =
     new PGraph(func)
 
-  def buildGraph[A, B](sourcesDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)(config: Config): PGraph = {
+  def buildGraph[A, B](sourcesDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)(config: CompilerConfig): PGraph = {
     val g0 = buildInitialGraph(func)(config)
     if (emitGraphs) {
       val dotFile = new File(sourcesDir, s"$functionName.dot")
@@ -49,7 +49,7 @@ trait Compiler extends BaseExp with Passes {
   }
 
   def buildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
-                           (implicit config: Config): CompilationOutput = {
+                           (implicit config: CompilerConfig): CompilationOutput = {
     sourcesDir.mkdirs()
     executableDir.mkdirs()
     val eFunc = func.elem
@@ -58,19 +58,19 @@ trait Compiler extends BaseExp with Passes {
   }
 
   def buildExecutable[A, B](sourcesAndExecutableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
-                           (implicit config: Config): CompilationOutput =
+                           (implicit config: CompilerConfig): CompilationOutput =
     buildExecutable(sourcesAndExecutableDir, sourcesAndExecutableDir, functionName, func, emitGraphs)(config)
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]): CompilationOutput
+                                       (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): CompilationOutput
 
   // func is passed to enable inference of B and to get types if needed
   def execute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A, func: Exp[A => B])
-                   (implicit config: Config): B = {
+                   (implicit config: CompilerConfig): B = {
     val eFunc = func.elem
     doExecute(compilationOutput, functionName, input)(config, eFunc.eDom, eFunc.eRange)
   }
 
   protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
-                               (config: Config, eInput: Elem[A], eOutput: Elem[B]): B
+                               (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): B
 }

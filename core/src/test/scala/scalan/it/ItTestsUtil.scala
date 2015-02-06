@@ -20,9 +20,9 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
   // there are bad interactions between path-dependent types and default parameters, so
   // we can't simply make config a default parameter
   def getStagedOutput[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, input: A): B =
-    getStagedOutputConfig(back)(f, functionName, input, back.defaultConfig)
+    getStagedOutputConfig(back)(f, functionName, input, back.defaultCompilerConfig)
 
-  def getStagedOutputConfig[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, input: A, config: back.Config): B = {
+  def getStagedOutputConfig[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, input: A, config: back.CompilerConfig): B = {
     val dir = FileUtil.file(prefix, functionName)
 
     val compiled = back.buildExecutable(dir, functionName, f, emitGraphs)(config)
@@ -36,11 +36,11 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
   def compareOutputWithSequential[A, B](back: Compiler)
                                        (fSeq: A => B, f: back.Exp[A => B], functionName: String, input: A)
                                        (implicit comparator: (B, B) => Unit) {
-    compareOutputWithSequentialConfig(back)(fSeq, f, functionName, input, back.defaultConfig)
+    compareOutputWithSequentialConfig(back)(fSeq, f, functionName, input, back.defaultCompilerConfig)
   }
 
   def compareOutputWithSequentialConfig[A, B](back: Compiler)
-                                       (fSeq: A => B, f: back.Exp[A => B], functionName: String, input: A, config: back.Config)
+                                       (fSeq: A => B, f: back.Exp[A => B], functionName: String, input: A, config: back.CompilerConfig)
                                        (implicit comparator: (B, B) => Unit) {
     compareOutputWithExpectedConfig(back)(fSeq(input), f, functionName, input, config)
   }
@@ -48,11 +48,11 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
   def compareOutputWithExpected[A, B](back: Compiler)
                                      (expected: B, f: back.Exp[A => B], functionName: String, input: A)
                                      (implicit comparator: (B, B) => Unit) {
-    compareOutputWithExpectedConfig(back)(expected, f, functionName, input, back.defaultConfig)
+    compareOutputWithExpectedConfig(back)(expected, f, functionName, input, back.defaultCompilerConfig)
   }
 
   def compareOutputWithExpectedConfig[A, B](back: Compiler)
-                                     (expected: B, f: back.Exp[A => B], functionName: String, input: A, config: back.Config)
+                                     (expected: B, f: back.Exp[A => B], functionName: String, input: A, config: back.CompilerConfig)
                                      (implicit comparator: (B, B) => Unit) {
     val actual = getStagedOutputConfig(back)(f, functionName, input, config)
     comparator(expected, actual)

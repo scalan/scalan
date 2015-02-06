@@ -103,10 +103,10 @@ object MvmBenchmark {
 
     protected val baseDir = FileUtil.file("mvm-staged")
 
-    protected implicit val cfg = ctx.defaultConfig.copy(scalaVersion = Some("2.10.2"))
+    protected implicit val cfg = ctx.defaultCompilerConfig.copy(scalaVersion = Some("2.10.2"))
 
     protected def loadMethod[A, B](prog: ProgExp)(baseDir: File, functionName: String, f: prog.Exp[A => B] )
-                                (implicit config: prog.Config) =
+                                (implicit config: prog.CompilerConfig) =
     {
       val funcDir = FileUtil.file(baseDir, functionName)
 

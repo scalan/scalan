@@ -17,16 +17,16 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
    *
    * Otherwise uses SBT to compile with the desired version
    */
-  case class Config(scalaVersion: Option[String], extraCompilerOptions: Seq[String])
+  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String])
 
-  implicit val defaultConfig = Config(None, Seq.empty)
+  implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
   case class CompilationOutput(jar: File)
 
-  def graphPasses(config: Config) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+  def graphPasses(config: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
+                                       (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
     val outputSource = new File(sourcesDir, functionName + ".scala")
@@ -90,7 +90,7 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
   }
 
   protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
-                               (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
+                               (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): B = {
     val (cls, method) = loadMethod(compilationOutput, functionName, eInput)
     val instance = cls.newInstance()
     val result = method.invoke(instance, input.asInstanceOf[AnyRef])

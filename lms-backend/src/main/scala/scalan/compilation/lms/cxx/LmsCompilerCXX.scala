@@ -11,13 +11,13 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
 
   type CompilationOutput = Unit
 
-  type Config = Unit
-  implicit val defaultConfig = ()
+  type CompilerConfig = Unit
+  implicit val defaultCompilerConfig = ()
 
-  def graphPasses(config: Config) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+  def graphPasses(config: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
   def generate[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], emitGraphs: Boolean)
-                           (implicit config: Config): Unit = {
+                           (implicit config: CompilerConfig): Unit = {
     sourcesDir.mkdirs()
     executableDir.mkdirs()
     val eFunc = func.elem
@@ -26,7 +26,7 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
   }
 
   protected def doGenerate[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                      (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
+                                      (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
 
     val outputSource = new File(sourcesDir, functionName + ".cxx")
 
@@ -49,7 +49,7 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
   }
 
   override protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                      (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
+                                      (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
     val outputSource = new File(sourcesDir, functionName + ".cxx")
@@ -79,7 +79,7 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
   }
 
   override protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
-                               (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
+                               (config: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): B = {
 //    val url = new File(jarPath(functionName, executableDir)).toURI.toURL
 //    // ensure Scala library is available
 //    val classLoader = new URLClassLoader(scala.Array(url), classOf[_ => _].getClassLoader)
