@@ -7,33 +7,28 @@ import scala.reflect.runtime.universe._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait AbstractStringsAbs extends Scalan with AbstractStrings
-{ self: AbstractStringsDsl =>
+trait AbstractStringsAbs extends Scalan with AbstractStrings {
+  self: AbstractStringsDsl =>
   // single proxy for each type family
   implicit def proxyAString(p: Rep[AString]): AString =
     proxyOps[AString](p)
-
-
 
   abstract class AStringElem[From, To <: AString](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
   trait AStringCompanionElem extends CompanionElem[AStringCompanionAbs]
   implicit lazy val AStringCompanionElem: AStringCompanionElem = new AStringCompanionElem {
-    lazy val tag = typeTag[AStringCompanionAbs]
+    lazy val tag = weakTypeTag[AStringCompanionAbs]
     protected def getDefaultRep = AString
   }
 
   abstract class AStringCompanionAbs extends CompanionBase[AStringCompanionAbs] with AStringCompanion {
     override def toString = "AString"
-    
   }
   def AString: Rep[AStringCompanionAbs]
   implicit def proxyAStringCompanion(p: Rep[AStringCompanion]): AStringCompanion = {
     proxyOps[AStringCompanion](p)
   }
 
-  //default wrapper implementation
-  
   // elem for concrete class
   class SStringElem(iso: Iso[SStringData, SString]) extends AStringElem[SStringData, SString](iso)
 
@@ -72,7 +67,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings
   }
 
   class SStringCompanionElem extends CompanionElem[SStringCompanionAbs] {
-    lazy val tag = typeTag[SStringCompanionAbs]
+    lazy val tag = weakTypeTag[SStringCompanionAbs]
     protected def getDefaultRep = SString
   }
   implicit lazy val SStringCompanionElem: SStringCompanionElem = new SStringCompanionElem
@@ -92,8 +87,6 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings
   def mkSString(wrappedValueOfBaseType: Rep[String]): Rep[SString]
   def unmkSString(p: Rep[SString]): Option[(Rep[String])]
 
-  //default wrapper implementation
-  
   // elem for concrete class
   class CStringElem(iso: Iso[CStringData, CString]) extends AStringElem[CStringData, CString](iso)
 
@@ -132,7 +125,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings
   }
 
   class CStringCompanionElem extends CompanionElem[CStringCompanionAbs] {
-    lazy val tag = typeTag[CStringCompanionAbs]
+    lazy val tag = weakTypeTag[CStringCompanionAbs]
     protected def getDefaultRep = CString
   }
   implicit lazy val CStringCompanionElem: CStringCompanionElem = new CStringCompanionElem
@@ -154,24 +147,18 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings
 }
 
 // Seq -----------------------------------
-trait AbstractStringsSeq extends AbstractStringsAbs with AbstractStringsDsl with ScalanSeq
-{ self: AbstractStringsDslSeq =>
+trait AbstractStringsSeq extends AbstractStringsDsl with ScalanSeq {
+  self: AbstractStringsDslSeq =>
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeSeq[AStringCompanionAbs, AStringCompanionAbs] {
     lazy val selfType = element[AStringCompanionAbs]
-    
   }
-
-  
-
-  
 
   case class SeqSString
       (override val wrappedValueOfBaseType: Rep[String])
-      
+
     extends SString(wrappedValueOfBaseType)
         with UserTypeSeq[AString, SString] {
     lazy val selfType = element[SString].asInstanceOf[Elem[AString]]
-    
   }
   lazy val SString = new SStringCompanionAbs with UserTypeSeq[SStringCompanionAbs, SStringCompanionAbs] {
     lazy val selfType = element[SStringCompanionAbs]
@@ -185,11 +172,10 @@ trait AbstractStringsSeq extends AbstractStringsAbs with AbstractStringsDsl with
 
   case class SeqCString
       (override val wrappedValueOfBaseType: Rep[String])
-      
+
     extends CString(wrappedValueOfBaseType)
         with UserTypeSeq[AString, CString] {
     lazy val selfType = element[CString].asInstanceOf[Elem[AString]]
-    
   }
   lazy val CString = new CStringCompanionAbs with UserTypeSeq[CStringCompanionAbs, CStringCompanionAbs] {
     lazy val selfType = element[CStringCompanionAbs]
@@ -203,18 +189,16 @@ trait AbstractStringsSeq extends AbstractStringsAbs with AbstractStringsDsl with
 }
 
 // Exp -----------------------------------
-trait AbstractStringsExp extends AbstractStringsAbs with AbstractStringsDsl with ScalanExp
-{ self: AbstractStringsDslExp =>
+trait AbstractStringsExp extends AbstractStringsDsl with ScalanExp {
+  self: AbstractStringsDslExp =>
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeDef[AStringCompanionAbs, AStringCompanionAbs] {
     lazy val selfType = element[AStringCompanionAbs]
     override def mirror(t: Transformer) = this
   }
 
-
-
   case class ExpSString
       (override val wrappedValueOfBaseType: Rep[String])
-      
+
     extends SString(wrappedValueOfBaseType) with UserTypeDef[AString, SString] {
     lazy val selfType = element[SString].asInstanceOf[Elem[AString]]
     override def mirror(t: Transformer) = ExpSString(t(wrappedValueOfBaseType))
@@ -226,11 +210,9 @@ trait AbstractStringsExp extends AbstractStringsAbs with AbstractStringsDsl with
   }
 
   object SStringMethods {
-
   }
 
   object SStringCompanionMethods {
-
   }
 
   def mkSString
@@ -241,7 +223,7 @@ trait AbstractStringsExp extends AbstractStringsAbs with AbstractStringsDsl with
 
   case class ExpCString
       (override val wrappedValueOfBaseType: Rep[String])
-      
+
     extends CString(wrappedValueOfBaseType) with UserTypeDef[AString, CString] {
     lazy val selfType = element[CString].asInstanceOf[Elem[AString]]
     override def mirror(t: Transformer) = ExpCString(t(wrappedValueOfBaseType))
@@ -253,11 +235,9 @@ trait AbstractStringsExp extends AbstractStringsAbs with AbstractStringsDsl with
   }
 
   object CStringMethods {
-
   }
 
   object CStringCompanionMethods {
-
   }
 
   def mkCString
@@ -267,13 +247,12 @@ trait AbstractStringsExp extends AbstractStringsAbs with AbstractStringsDsl with
     Some((p.wrappedValueOfBaseType))
 
   object AStringMethods {
-
   }
 
   object AStringCompanionMethods {
     object defaultVal {
       def unapply(d: Def[_]): Option[Unit] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[AStringCompanionElem] && method.getName == "defaultVal" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AStringCompanionElem] && method.getName == "defaultVal" =>
           Some(()).asInstanceOf[Option[Unit]]
         case _ => None
       }
@@ -285,7 +264,7 @@ trait AbstractStringsExp extends AbstractStringsAbs with AbstractStringsDsl with
 
     object apply {
       def unapply(d: Def[_]): Option[Rep[String]] = d match {
-        case MethodCall(receiver, method, Seq(msg, _*)) if receiver.elem.isInstanceOf[AStringCompanionElem] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(msg, _*), _) if receiver.elem.isInstanceOf[AStringCompanionElem] && method.getName == "apply" =>
           Some(msg).asInstanceOf[Option[Rep[String]]]
         case _ => None
       }
