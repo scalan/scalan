@@ -2,6 +2,7 @@ package scalan.collection
 
 import scala.reflect.ClassTag
 import scalan.common.Default
+import scalan.common.OverloadHack.Overloaded1
 import scalan.staged.BaseExp
 import scalan.{Scalan, ScalanExp, ScalanSeq}
 import scala.reflect.runtime.universe._
@@ -11,6 +12,8 @@ trait ListOps { self: Scalan =>
   implicit class RepListOps[T: Elem](xs: Lst[T]) {
     def head = list_head(xs)
     def tail = list_tail(xs)
+    def apply(n: Rep[Int]): Rep[T] = list_apply(xs, n)
+    def apply(ns: Arr[Int])(implicit o: Overloaded1): Lst[T] = list_applyMany(xs, ns)
 
     def length = list_length(xs)
     def mapBy[R: Elem](f: Rep[T => R]) = list_map(xs, f)
@@ -27,6 +30,8 @@ trait ListOps { self: Scalan =>
     def ::(x: Rep[T]) = list_cons(x, xs)
     def :::(ys: Lst[T]) = list_concat(ys, xs)
     def reverse = list_reverse(xs)
+    def slice(start: Rep[Int], length: Rep[Int]) = list_slice(xs,start, start + length)
+    def toArray = list_toArray(xs)
     //def grouped(size: Rep[Int]) = list_grouped(xs, size)
     //def stride(start: Rep[Int], length: Rep[Int], stride: Rep[Int]) =
     //  list_stride(xs, start, length, stride)
@@ -92,6 +97,16 @@ trait ListOps { self: Scalan =>
   def list_concat[T: Elem](xs: Lst[T], ys: Lst[T]): Lst[T]
 
   def list_reverse[T](xs: Lst[T]): Lst[T]
+
+  def list_slice[T](xs: Lst[T], start: Rep[Int], len: Rep[Int]) : Lst[T]
+  // require: n in xs.indices
+  def list_apply[T](xs: Lst[T], n: Rep[Int]): Rep[T]
+
+  // require: forall i -> is(i) in xs.indices
+  // provide: res.length == is.length
+  def list_applyMany[T](xs: Lst[T], is: Arr[Int]): Lst[T]
+
+  def list_toArray[T](xs: Lst[T]): Arr[T]
 //  def list_grouped[T](xs: Lst[T], size: Rep[Int]): Lst[List[T]]
 //
 //  // require: start in xs.indices && start + length * stride in xs.indices
@@ -144,6 +159,18 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
   def list_cons[T](x: Rep[T], xs: Lst[T]): Lst[T] = x :: xs
   def list_concat[T: Elem](xs: List[T], ys: List[T]) = xs ::: ys
   def list_reverse[T](xs: Lst[T]): Lst[T] = xs.reverse
+  def list_slice[T](xs: Lst[T], start: Rep[Int], end: Rep[Int]) : Lst[T] = xs.slice(start, end)
+  // require: n in xs.indices
+  def list_apply[T](xs: Lst[T], n: Rep[Int]): Rep[T] = xs(n)
+
+  // require: forall i -> is(i) in xs.indices
+  // provide: res.length == is.length
+  def list_applyMany[T](xs: Lst[T], is: Arr[Int]): Lst[T] = scala.List((is.map(xs(_))): _*)
+
+  def list_toArray[T](xs: Lst[T]): Arr[T] = {
+    implicit val ct: ClassTag[T] = ClassTag(xs.getClass.getComponentType)
+    xs.asInstanceOf[scala.List[T]].toArray
+  }
 
 //  def list_grouped[T](xs: Lst[T], size: Rep[Int]): Lst[List[T]] = {
 //    implicit val ct = listToClassTag(xs)
@@ -226,6 +253,23 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
   case class ListReverse[T](xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
     override def mirror(t: Transformer) = ListReverse(t(xs))
   }
+  case class ListSlice[T](xs: Exp[List[T]], start: Exp[Int], end: Exp[Int])(implicit val eT: Elem[T]) extends ListDef[T] {
+    override def mirror(t: Transformer) = ListSlice(t(xs), t(start), t(end))
+  }
+
+  case class ListApply[T](xs: Exp[List[T]], n: Exp[Int])(implicit val eT: Elem[T]) extends Def[T] {
+    def uniqueOpId = name(xs.elem.eItem)
+    def selfType = xs.elem.eItem
+    override def mirror(t: Transformer) = ListApply(t(xs), t(n))
+  }
+
+  case class ListApplyMany[T](xs: Exp[List[T]], is: Exp[Array[Int]])(implicit val eT: Elem[T]) extends ListDef[T] {
+    override def mirror(t: Transformer) = ListApplyMany(t(xs), t(is))
+  }
+
+  case class ListToArray[T](xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ListToArray(t(xs))
+  }
 
   val List: ListCompanion = new ListCompanion
 
@@ -268,6 +312,21 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
 
   def list_reverse[T](xs: Lst[T]): Lst[T] =
     withElemOfList(xs) { implicit eT => ListReverse(xs) }
+
+  def list_slice[T](xs: Lst[T], start: Rep[Int], end: Rep[Int]): Lst[T] =
+    withElemOfList(xs) { implicit eT => ListSlice(xs, start, end) }
+
+  def list_apply[T](xs: Lst[T], n: Rep[Int]): Rep[T] =
+    withElemOfList(xs) { implicit eT => ListApply(xs, n) }
+
+  def list_toArray[T](xs: Lst[T]): Arr[T] =
+    withElemOfList(xs) { implicit eT => ListToArray(xs) }
+
+
+  // require: forall i -> is(i) in xs.indices
+  // provide: res.length == is.length
+  def list_applyMany[T](xs: Lst[T], is: Arr[Int]): Lst[T] =
+    withElemOfList(xs) { implicit eT => ListApplyMany(xs, is) }
 
   override def rewriteDef[T](d: Def[T]) = d match {
     case ListLength(Def(d2: Def[List[a]]@unchecked)) =>
