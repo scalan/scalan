@@ -19,7 +19,7 @@ trait CXXGenFunctions extends CLikeGenEffect with BaseGenFunctions with CXXCodeg
 
   def emitLambdaDef(sym: Sym[Any], x: Exp[_], y: Block[Any]): Unit = {
     val z = getBlockResult(y)
-    stream.println( s"${remap(norefManifest(sym.tp))} ${quote(sym)} = [&](${remap(x.tp)} ${quote(x)}) -> ${remap(z.tp)} {" )
+    stream.println( s"${remap(norefManifest(sym.tp))} ${quote(sym)} = [${freeInScope(scala.List(x), scala.List(z)).map(quote).mkString(",")}](${remap(x.tp)} ${quote(x)}) -> ${remap(z.tp)} {" )
     emitBlock(y)
     if (remap(z.tp) != "void")
       stream.println("return " + quote(z) + ";")
@@ -27,7 +27,7 @@ trait CXXGenFunctions extends CLikeGenEffect with BaseGenFunctions with CXXCodeg
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case e@Lambda(fun, x, y) =>
+    case Lambda(fun, x, y) =>
       emitLambdaDef(sym, x, y)
     case Apply(fun, arg) =>
       emitValDef(sym, quote(fun) + "(" + quote(arg) + ")")
