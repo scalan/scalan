@@ -105,7 +105,7 @@ trait GraphVizExport { self: ScalanExp =>
     emitDepGraph(List(start), file)(orientation)
   def emitDepGraph(ss: Seq[Exp[_]], file: File)(implicit orientation: Orientation): Unit =
     FileUtil.withFile(file) {
-      emitDepGraph(ss)(_, orientation)
+      emitDepGraph(file.getName, ss)(_, orientation)
     }
   // this can be made the main method in the future
   // to avoid potential inconsistencies in schedules
@@ -165,8 +165,8 @@ trait GraphVizExport { self: ScalanExp =>
     }
   }
 
-  private def emitDepGraph(ss: Seq[Exp[_]])(implicit stream: PrintWriter, orientation: Orientation): Unit = {
-    stream.println("digraph G {")
+  private def emitDepGraph(name: String, ss: Seq[Exp[_]])(implicit stream: PrintWriter, orientation: Orientation): Unit = {
+    stream.println(s"""digraph "${name}" {""")
 
     val deflist = buildScheduleForResult(ss, dep)
 
