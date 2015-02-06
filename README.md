@@ -205,7 +205,7 @@ x.norm
 ~~~
 Normal Scala rules apply.
 
-It's alse possible to add new user types to Scalan. As a simple example, we consider 2d points. We have a trait describing the interface, and a class describing an implementation (though in this case there is only one implementation, the split is still required). They are contained in the trait `Points` which serves as a DSL component.
+It's also possible to add new user types to Scalan. As a simple example, we consider points on a plane. We have a trait describing the interface, and a class describing an implementation (though in this case there is only one implementation, the split is still required). They are contained in the trait `Points` which serves as a DSL component.
 ~~~scala
 trait Points { self: PointsDsl =>
   trait Point {
@@ -219,17 +219,17 @@ trait Points { self: PointsDsl =>
   trait PointImplCompanion
 }
 
-trait PointsDsl extends Scalan with impl.PointsAbs
-trait PointsDslSeq extends PointsDsl with impl.PointsSeq
-trait PointsDslExp extends PointsDsl with impl.PointsExp
+trait PointsDsl extends impl.PointsAbs
+trait PointsDslSeq extends impl.PointsSeq
+trait PointsDslExp extends impl.PointsExp
 ~~~
-This obviously doesn't compile yet, because of references to non-existent classes in the `impl` package. They are boilerplate code which must be generated using the `scalan-meta` tool available at <http://github.com/scalan/scalan-meta> (see its documentation). It will have to be regenerated if `Point` or `PointImpl` are renamed or deleted, or if new implementations of `Point` are added.
+This obviously doesn't compile yet, because of references to non-existent classes in the `impl` package. They are boilerplate code which must be generated using the `meta` subproject (see [its documentation](meta/README.md)). It will have to be regenerated if `Point` or `PointImpl` are renamed or deleted, or if new implementations of `Point` are added.
 
 Note that methods in `Point` must have `Rep` in argument types and return value type. If `Point` had a type parameter, it would also have methods asserting existence of `Element` instances. It may seem some of these empty traits are unnecessary, but they serve as extension points. E.g. any methods added to `PointCompanion` will be available on `Point` companion objects.
 
 See `scalan.linalgebra.Vectors` for a larger example.
 
-Adding new primitive operations, core types, or backends to Scalan is possible, but not supported at the moment.
+Adding new primitive operations, core types, or backends to Scalan is possible, but the API is currently not stable.
 
 ## Contributions
 
