@@ -17,16 +17,16 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
    *
    * Otherwise uses SBT to compile with the desired version
    */
-  case class Config(scalaVersion: Option[String], extraCompilerOptions: Seq[String])
+  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String])
 
-  implicit val defaultConfig = Config(None, Seq.empty)
+  implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
-  case class CompilationOutput(jar: File)
+  case class CustomCompilerOutput(jar: File)
 
-  def graphPasses(config: Config) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+  def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
-  protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, emitGraphs: Boolean)
-                                       (config: Config, eInput: Elem[A], eOutput: Elem[B]) = {
+  protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
+                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
     val outputSource = new File(sourcesDir, functionName + ".scala")
@@ -46,7 +46,7 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
         val jarFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
         val jarPath = jarFile.getAbsolutePath
 
-        config.scalaVersion match {
+        compilerConfig.scalaVersion match {
           case Some(scalaVersion) =>
             val buildSbtText =
               s"""name := "$functionName"
@@ -55,7 +55,7 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
                  |
                  |artifactPath in Compile in packageBin := file("$jarPath")
                  |
-                 |scalacOptions ++= Seq(${config.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
+                 |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
                  |""".stripMargin
 
             FileUtil.write(buildSbtFile, buildSbtText)
@@ -69,29 +69,28 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
             // necessary to lauch compiler
             // see http://stackoverflow.com/questions/27934282/object-scala-in-compiler-mirror-not-found-running-scala-compiler-programatical
             settings.embeddedDefaults[LmsCompilerScala]
-            val compilerOptions = "-d" :: jarPath :: config.extraCompilerOptions.toList
+            val compilerOptions = "-d" :: jarPath :: compilerConfig.extraCompilerOptions.toList
             settings.processArguments(compilerOptions, false)
             val reporter = new StoreReporter
             val compiler: Global = new Global(settings, reporter)
             val run = new compiler.Run
             run.compile(List(outputSource.getAbsolutePath))
         }
-        CompilationOutput(jarFile)
+        CustomCompilerOutput(jarFile)
     }
   }
 
-  def loadMethod(compilationOutput: CompilationOutput, functionName: String, eArg: Elem[_]) = {
-    val url = compilationOutput.jar.toURI.toURL
+  def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
+    val url = compilerOutput.custom.jar.toURI.toURL
     // ensure Scala library is available
     val classLoader = new URLClassLoader(Array(url), classOf[_ => _].getClassLoader)
-    val cls = classLoader.loadClass(functionName)
-    val argumentClass = eArg.classTag.runtimeClass
+    val cls = classLoader.loadClass(compilerOutput.common.name)
+    val argumentClass = compilerOutput.common.eInput.classTag.runtimeClass
     (cls, cls.getMethod("apply", argumentClass))
   }
 
-  protected def doExecute[A, B](compilationOutput: CompilationOutput, functionName: String, input: A)
-                               (config: Config, eInput: Elem[A], eOutput: Elem[B]): B = {
-    val (cls, method) = loadMethod(compilationOutput, functionName, eInput)
+  protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
+    val (cls, method) = loadMethod(compilerOutput)
     val instance = cls.newInstance()
     val result = method.invoke(instance, input.asInstanceOf[AnyRef])
     result.asInstanceOf[B]

@@ -9,7 +9,7 @@ trait GraphVizExport { self: ScalanExp =>
 
   // TODO it would be better to have nodeColor(elem: Elem[_], optDef: Option[Def[_]]) to
   // avoid looking up definition, but this leads to ClassFormatError (likely Scala bug)
-  protected def nodeColor(sym: Exp[_]): String = sym match {
+  protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig): String = sym match {
     case Def(_: View[_, _]) => "darkgreen"
     case _ => sym.elem match {
       case _: ViewElem[_, _] => "green"
@@ -19,17 +19,15 @@ trait GraphVizExport { self: ScalanExp =>
     }
   }
 
-  protected def maxLabelLineLength = 40
-
   // ensures nice line wrapping
-  final protected def nodeLabel(parts: String*) = {
+  final protected def nodeLabel(parts: String*)(implicit config: GraphVizConfig) = {
     var lineLength = 0
     val sb = new StringBuilder()
     var isFirst = true
     parts.foreach { part =>
       if (isFirst) {
         isFirst = false
-      } else if (lineLength + part.length + 1 <= maxLabelLineLength) {
+      } else if (lineLength + part.length + 1 <= config.maxLabelLineLength) {
         sb.append(" ")
         lineLength += 1
       } else {
@@ -42,7 +40,7 @@ trait GraphVizExport { self: ScalanExp =>
     s"label=${StringUtil.quote(sb.result)}"
   }
 
-  protected def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
+  protected def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
     rhs match {
       case l: Lambda[_, _] =>
         val x = l.x
@@ -58,7 +56,7 @@ trait GraphVizExport { self: ScalanExp =>
     stream.println("]")
   }
 
-  protected def formatDef(d: Def[_]): String = d match {
+  protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
     case l: Lambda[_, _] =>
       val y = l.y
       val bodyStr = y match {
@@ -82,7 +80,7 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => d.toString
   }
 
-  private def emitDeps(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter) = {
+  private def emitDeps(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
     def emitDepList(list: List[Exp[_]], params: String) =
       list.foreach { dep => stream.println(s"${StringUtil.quote(dep)} -> ${StringUtil.quote(sym)} $params") }
 
@@ -94,24 +92,25 @@ trait GraphVizExport { self: ScalanExp =>
     emitDepList(deps, "[style=solid]")
   }
 
-  sealed trait Orientation
-  object Portrait extends Orientation
-  object Landscape extends Orientation
-  implicit def defaultOrientation: Orientation = Portrait
+  // can be overridden if desired
+  def defaultGraphVizConfig: GraphVizConfig =
+    GraphVizConfig.default
 
-  def emitDepGraph(d: Def[_], file: File)(implicit orientation: Orientation): Unit =
-    emitDepGraph(dep(d), file)(orientation)
-  def emitDepGraph(start: Exp[_], file: File)(implicit orientation: Orientation): Unit =
-    emitDepGraph(List(start), file)(orientation)
-  def emitDepGraph(ss: Seq[Exp[_]], file: File)(implicit orientation: Orientation): Unit =
-    FileUtil.withFile(file) {
-      emitDepGraph(file.getName, ss)(_, orientation)
+  def emitDepGraph(d: Def[_], file: File)(implicit config: GraphVizConfig): Unit =
+    emitDepGraph(dep(d), file)(config)
+  def emitDepGraph(start: Exp[_], file: File)(implicit config: GraphVizConfig): Unit =
+    emitDepGraph(List(start), file)(config)
+  def emitDepGraph(ss: Seq[Exp[_]], file: File)(implicit config: GraphVizConfig): Unit =
+    if (config.emitGraphs) {
+      FileUtil.withFile(file) {
+        emitDepGraph(file.getName, ss)(_, config)
+      }
     }
   // this can be made the main method in the future
   // to avoid potential inconsistencies in schedules
   // or to add information accessible from the graph
-  def emitDepGraph(graph: AstGraph, file: File)(implicit orientation: Orientation): Unit =
-    emitDepGraph(graph.roots, file)(orientation)
+  def emitDepGraph(graph: AstGraph, file: File)(implicit config: GraphVizConfig): Unit =
+    emitDepGraph(graph.roots, file)(config)
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
     case Def(l1: Lambda[_, _]) =>
@@ -136,7 +135,7 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => true
   }
 
-  private def emitClusters(schedule: Schedule, emitted: Set[Exp[_]])(implicit stream: PrintWriter): Set[Exp[_]] = {
+  private def emitClusters(schedule: Schedule, emitted: Set[Exp[_]])(implicit stream: PrintWriter, config: GraphVizConfig): Set[Exp[_]] = {
     schedule.foldRight(emitted) {
       case (TableEntry(s, d), emitted1) =>
         if (!emitted1.contains(s)) {
@@ -165,13 +164,13 @@ trait GraphVizExport { self: ScalanExp =>
     }
   }
 
-  private def emitDepGraph(name: String, ss: Seq[Exp[_]])(implicit stream: PrintWriter, orientation: Orientation): Unit = {
+  private def emitDepGraph(name: String, ss: Seq[Exp[_]])(implicit stream: PrintWriter, config: GraphVizConfig): Unit = {
     stream.println(s"""digraph "${name}" {""")
 
     val deflist = buildScheduleForResult(ss, dep)
 
     stream.println("concentrate=true")
-    if (orientation == Landscape) {
+    if (config.orientation == Landscape) {
       stream.println("rankdir=LR")
     }
 
@@ -181,7 +180,7 @@ trait GraphVizExport { self: ScalanExp =>
 
     val deflist1 = deflist.filterNot(tp => lambdaBodies.contains(tp.sym))
 
-    emitClusters(deflist1, Set.empty)(stream)
+    emitClusters(deflist1, Set.empty)
 
     deflist1.foreach {
       case TableEntry(sym, rhs) => emitDeps(sym, rhs)
@@ -190,4 +189,23 @@ trait GraphVizExport { self: ScalanExp =>
     stream.println("}")
     stream.close()
   }
+}
+
+sealed trait Orientation
+object Portrait extends Orientation
+object Landscape extends Orientation
+
+// outside the cake to be usable from ItTestsUtil
+case class GraphVizConfig(emitGraphs: Boolean,
+                          orientation: Orientation,
+                          maxLabelLineLength: Int)
+object GraphVizConfig {
+  // not made implicit because it would be too easy to use
+  // it accidentally instead of passing up
+  def default = GraphVizConfig(
+    emitGraphs = true,
+    orientation = Portrait,
+    maxLabelLineLength = 40)
+
+  def none = default.copy(emitGraphs = false)
 }
