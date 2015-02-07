@@ -13,7 +13,10 @@ trait SegmentsAbs extends Scalan with Segments {
   implicit def proxySegment(p: Rep[Segment]): Segment =
     proxyOps[Segment](p)
 
-  abstract class SegmentElem[From, To <: Segment](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
+  abstract class SegmentElem[From, To <: Segment](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+    override def convert(x: Rep[Reifiable[_]]) = convertSegment(x.asRep[Segment])
+    def convertSegment(x : Rep[Segment]): Rep[To]
+  }
 
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
   implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
@@ -30,7 +33,9 @@ trait SegmentsAbs extends Scalan with Segments {
   }
 
   // elem for concrete class
-  class IntervalElem(iso: Iso[IntervalData, Interval]) extends SegmentElem[IntervalData, Interval](iso)
+  class IntervalElem(iso: Iso[IntervalData, Interval]) extends SegmentElem[IntervalData, Interval](iso) {
+    def convertSegment(x: Rep[Segment]) = Interval(x.start, x.end)
+  }
 
   // state representation type
   type IntervalData = (Int, Int)
@@ -89,7 +94,9 @@ trait SegmentsAbs extends Scalan with Segments {
   def unmkInterval(p: Rep[Interval]): Option[(Rep[Int], Rep[Int])]
 
   // elem for concrete class
-  class SliceElem(iso: Iso[SliceData, Slice]) extends SegmentElem[SliceData, Slice](iso)
+  class SliceElem(iso: Iso[SliceData, Slice]) extends SegmentElem[SliceData, Slice](iso) {
+    def convertSegment(x: Rep[Segment]) = Slice(x.start, x.length)
+  }
 
   // state representation type
   type SliceData = (Int, Int)

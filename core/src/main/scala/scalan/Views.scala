@@ -30,6 +30,7 @@ trait Views extends Elems { self: Scalan =>
     override def isEntityType = shouldUnpack(this)
     lazy val tag: WeakTypeTag[To] = iso.tag
     protected def getDefaultRep = iso.defaultRepTo.value
+    def convert(x: Rep[Reifiable[_]]): Rep[To] = !!!("should not be called")
   }
 
   object ViewElem {
@@ -164,8 +165,14 @@ trait Views extends Elems { self: Scalan =>
   implicit class RepReifiableViewOps[T <: Reifiable[_]](x: Rep[T]) {
     def convertTo[R <: Reifiable[_]: Elem]: Rep[R] = repReifiable_convertTo[T,R](x)
   }
+
   def repReifiable_convertTo[T <: Reifiable[_], R <: Reifiable[_]]
-                            (x: Rep[T])(implicit eR: Elem[R]): Rep[R]
+                            (x: Rep[T])(implicit eR: Elem[R]): Rep[R] = {
+    eR match {
+      case viewE: ViewElem[_,R] @unchecked => viewE.convert(x)
+      case _ => !!!(s"Cannot convert $x to a value of type ${eR.name}: ViewElem expected but ${eR.tag} found")
+    }
+  }
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
@@ -174,12 +181,6 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
   }
 
   def shouldUnpack(e: ViewElem[_, _]) = true
-
-  def repReifiable_convertTo[T <: Reifiable[_], R <: Reifiable[_]]
-                            (x: Rep[T])(implicit eR: Elem[R]): Rep[R] = {
-    implicit val eT = x.selfType.asElem[T]
-    ???
-  }
 }
 
 trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
@@ -386,9 +387,5 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     case UnpackableElem(iso: Iso[a, T @unchecked]) =>
       iso.to(fresh[a](Lazy(iso.eFrom)))
     case _ => super.rewriteVar(v)
-  }
-  def repReifiable_convertTo[T <: Reifiable[_], R <: Reifiable[_]]
-                            (x: Rep[T])(implicit eR: Elem[R]): Rep[R] = {
-    ???
   }
 }
