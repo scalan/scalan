@@ -2,7 +2,7 @@ package scalan.it.lms
 
 import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunityDslSeq}
 import scalan.compilation.lms._
-import scalan.compilation.lms.scala_.LmsCompilerScala
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
 

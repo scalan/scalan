@@ -5,7 +5,7 @@ import java.io.File
 import scalan.community.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
-import scalan.compilation.lms.scala_.LmsCompilerScala
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.BaseItTests
 
 // ScalanCommunityDsl includes ScalanCommunity and all DSLs defined in that project
