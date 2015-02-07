@@ -70,9 +70,9 @@ trait Compiler extends BaseExp with Passes {
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): CustomCompilerOutput
 
   // func is passed to enable inference of B and to get types if needed
-  def execute[A, B](compilationOutput: CompilerOutput[A, B], input: A): B = {
-    doExecute(compilationOutput, input)
+  def execute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
+    doExecute(compilerOutput, input)
   }
 
-  protected def doExecute[A, B](compilationOutput: CompilerOutput[A, B], input: A): B
+  protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B
 }

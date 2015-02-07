@@ -8,7 +8,7 @@ import org.openjdk.jmh.annotations._
 
 import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunitySeq}
 import scalan.compilation.GraphVizConfig
-import scalan.compilation.lms.scala_.LmsCompilerScala
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
 import scalan.linalgebra.{MatricesDslSeq, LinearAlgebraExamples}
 import scalan.util.FileUtil

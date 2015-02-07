@@ -1,7 +1,7 @@
 package scalan
 package compilation
 package lms
-package scala_ //Underscore is added intentionally to avoid name clash with root scala package
+package scalac //Underscore is added intentionally to avoid name clash with root scala package
 
 import java.io._
 import java.net.URLClassLoader
