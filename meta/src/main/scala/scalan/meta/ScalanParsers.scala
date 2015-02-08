@@ -139,6 +139,9 @@ object ScalanAst {
       case md: SMethodDef if md.external.fold(false)(_ == a) => md
     }
 
+    def getFieldDefs: List[SMethodDef] = body.collect {
+      case md: SMethodDef if md.allArgs.isEmpty => md
+    }
   }
 
   case class STraitDef(
