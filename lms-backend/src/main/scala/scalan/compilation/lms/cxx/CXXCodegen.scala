@@ -27,11 +27,20 @@ trait CXXCodegen extends CLikeCodegen {
     res
   }
 
+  def isMoveable( sym: Exp[Any]): Boolean = {
+    if (sym.tp <:< Manifest.AnyRef)
+      true
+    else
+      false
+  }
+
   override def traverseStm(stm: Stm): Unit = {
     stm match {
       case TP(sym,rhs) =>
         rightSyms.clear
         rightSyms ++= syms(rhs)
+        if (isMoveable(sym) && syms(rhs).find(moveableSyms.contains) != None) // derived from moveable
+          moveableSyms += sym
       case _ =>
         ()
     }
@@ -135,6 +144,14 @@ trait CXXFatCodegen extends CXXCodegen with CLikeFatCodegen {
       case TTP(lhs,mhs,rhs) =>
         if( syms(rhs).contains(moveableSyms.contains _) )
           moveableSyms ++= lhs
+      case TP(sym, rhs) =>
+        rhs match {
+          case Forward(x) =>
+            if( isMoveable(sym) )
+              moveableSyms += sym
+          case _ =>
+            ()
+        }
       case _ =>
         ()
     }

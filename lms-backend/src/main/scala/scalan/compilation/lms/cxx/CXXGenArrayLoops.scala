@@ -58,7 +58,7 @@ trait CXXGenArrayLoops extends CLikeGenLoops with CXXCodegen {
       stream.println(quote(getBlockResult(y)))
       stream.println("}")
     case ArrayIndex(a,i) =>
-      emitValDef(quote(sym), manifest[auto_t], quote(a) + "[" + quote(i) + "]")
+      emitValDef(sym, quote(a) + "[" + quote(i) + "]")
     case ArrayLength(a) =>
       emitValDef(quote(sym), manifest[size_t], quote(a) + ".size()")
     case _ => super.emitNode(sym, rhs)
@@ -69,6 +69,36 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
   val IR: ArrayLoopsFatExp
   import IR._
 
+  override def traverseStm(stm: Stm): Unit = {
+    stm match {
+      case TTP(lhs,mhs,rhs) =>
+        rhs match {
+          case SimpleFatLoop(s, x, rhs) =>
+            for ((l, r) <- lhs zip rhs) {
+              r match {
+                case ArrayElem(_) =>
+                  moveableSyms += l
+                case ReduceElem(_) =>
+                  if(isMoveable(l))
+                    moveableSyms += l
+                case ArrayIfElem(_,_) =>
+                  moveableSyms += l
+                case ReduceIfElem(_,_) =>
+                  if(isMoveable(l))
+                    moveableSyms += l
+                case _ =>
+                  ()
+              }
+            }
+          case _ =>
+            ()
+        }
+      case _ =>
+        ()
+    }
+    super.traverseStm(stm)
+  }
+
   override def emitFatNode(sym: List[Sym[Any]], rhs: FatDef) = rhs match {
     case SimpleFatLoop(s,x,rhs) =>
       for ((l,r) <- sym zip rhs) {
@@ -76,11 +106,11 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
           case ArrayElem(y) =>
             stream.println(s"std::vector<${remap(getBlockResult(y).tp)}> ${quote(l)}(${quote(s)});")
           case ReduceElem(y) =>
-            stream.println(s"auto ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
+            stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
           case ArrayIfElem(c,y) =>
             stream.println(s"std::vector<${remap(getBlockResult(y).tp)}> ${quote(l)};")
           case ReduceIfElem(c,y) =>
-            stream.println(s"auto ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
+            stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
 //          case FlattenElem(y) =>
 //            stream.println("var " + quote(l) + " = new ArrayBuilder[" + remap(getBlockResult(y).tp) + "]")
         }
@@ -93,11 +123,7 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
       for ((l,r) <- sym zip rhs) {
         r match {
           case ArrayElem(y) =>
-            val q = getBlockResult(y)
-            if(moveableSyms.contains(q))
-              moveableSyms += l
-
-            stream.println(quote(l) + "["+quote(ii)+"] = " + quote(q) + ";")
+            stream.println(quote(l) + "["+quote(ii)+"] = " + quote(getBlockResult(y)) + ";")
           case ReduceElem(y) =>
             stream.println(quote(l) + " += " + quote(getBlockResult(y)) + ";")
           case ArrayIfElem(c,y) =>

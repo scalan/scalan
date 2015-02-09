@@ -12,11 +12,31 @@ trait CXXGenStruct extends CLikeGenBase with BaseGenStruct with CXXCodegen {
   val IR: StructExp
   import IR._
 
+  override def traverseStm(stm: Stm): Unit = {
+    stm match {
+      case TP(sym,rhs) =>
+        rhs match {
+          case Struct(tag, elems) =>
+            sym.tp match {
+              case tup2m if tup2m.runtimeClass == classOf[Tuple2[_,_]] =>
+                moveableSyms += sym
+              case _ =>
+                ()
+            }
+          case _ =>
+            ()
+        }
+      case _ =>
+        ()
+    }
+    super.traverseStm(stm)
+  }
+
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case Struct(tag, elems) =>
       sym.tp match {
         case tup2m if tup2m.runtimeClass == classOf[Tuple2[_,_]] =>
-          emitValDef( quote(sym), norefManifest(sym.tp), s"${remap(sym.tp)}(${elems.map(e => quote(e._2)).mkString(",")})" )
+          emitValDef( sym, s"${remap(sym.tp)}(${elems.map(e => quote(e._2)).mkString(",")})" )
         case _ =>
           registerStruct(structName(sym.tp), elems)
           emitValDef(sym, "new " + structName(sym.tp) + "(" + elems.map(e => quote(e._2)).mkString(",") + ")")
@@ -25,7 +45,7 @@ trait CXXGenStruct extends CLikeGenBase with BaseGenStruct with CXXCodegen {
       struct.tp match {
         case m if m.runtimeClass == classOf[scala.Tuple2[_,_]] =>
           val fn = index match { case "_1" => "first"; case "_2" => "second" }
-          emitValDef(quote(sym), manifest[auto_t], s"${quote(struct)}.${fn}")
+          emitValDef(sym, s"${quote(struct)}.${fn}")
         case _ =>
           emitValDef(sym, quote(struct) + "." + index)
       }
