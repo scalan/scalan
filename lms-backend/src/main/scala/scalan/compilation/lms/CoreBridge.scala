@@ -18,6 +18,10 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
     val sym = tp.sym
 
     val tt: DefTransformer = {
+      case _: scalan.CompanionBase[_] =>
+        // ignore companion objects
+        m
+
       case lam: scalan.Lambda[a, b] =>
         val mA = scalan.createManifest(lam.x.elem).asInstanceOf[Manifest[a]]
         val mB = scalan.createManifest(lam.y.elem).asInstanceOf[Manifest[b]]
