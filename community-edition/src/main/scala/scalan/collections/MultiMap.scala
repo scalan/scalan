@@ -8,7 +8,7 @@ trait MultiMaps extends Base { self: MultiMapsDsl =>
   trait MMultiMap[K, V] extends Reifiable[MMultiMap[K, V]] {
     implicit def elemKey: Elem[K]
     implicit def elemValue: Elem[V]
-
+    def map: Rep[MMap[K, ArrayBuffer[V]]]
     def union(that: Rep[MMultiMap[K, V]]): Rep[MMultiMap[K, V]]
     def isEmpty: Rep[Boolean] = (size === 0)
     def contains(key: Rep[K]): Rep[Boolean]

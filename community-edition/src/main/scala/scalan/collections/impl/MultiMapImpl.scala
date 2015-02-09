@@ -13,7 +13,10 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
   implicit def proxyMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): MMultiMap[K, V] =
     proxyOps[MMultiMap[K, V]](p)
 
-  abstract class MMultiMapElem[K, V, From, To <: MMultiMap[K, V]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
+  abstract class MMultiMapElem[K, V, From, To <: MMultiMap[K, V]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+    override def convert(x: Rep[Reifiable[_]]) = convertMMultiMap(x.asRep[MMultiMap[K, V]])
+    def convertMMultiMap(x : Rep[MMultiMap[K, V]]): Rep[To]
+  }
 
   trait MMultiMapCompanionElem extends CompanionElem[MMultiMapCompanionAbs]
   implicit lazy val MMultiMapCompanionElem: MMultiMapCompanionElem = new MMultiMapCompanionElem {
@@ -30,7 +33,9 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
   }
 
   // elem for concrete class
-  class HashMMultiMapElem[K, V](iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]]) extends MMultiMapElem[K, V, HashMMultiMapData[K, V], HashMMultiMap[K, V]](iso)
+  class HashMMultiMapElem[K:Elem, V:Elem](iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]]) extends MMultiMapElem[K, V, HashMMultiMapData[K, V], HashMMultiMap[K, V]](iso) {
+    def convertMMultiMap(x: Rep[MMultiMap[K, V]]) = HashMMultiMap(x.map)
+  }
 
   // state representation type
   type HashMMultiMapData[K, V] = MMap[K,ArrayBuffer[V]]
@@ -337,6 +342,18 @@ trait MultiMapsExp extends MultiMapsDsl with ScalanExp {
     Some((p.map))
 
   object MMultiMapMethods {
+    object map {
+      def unapply(d: Def[_]): Option[Rep[MMultiMap[K, V]] forSome {type K; type V}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MMultiMapElem[_, _, _, _]] && method.getName == "map" =>
+          Some(receiver).asInstanceOf[Option[Rep[MMultiMap[K, V]] forSome {type K; type V}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[MMultiMap[K, V]] forSome {type K; type V}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object union {
       def unapply(d: Def[_]): Option[(Rep[MMultiMap[K, V]], Rep[MMultiMap[K,V]]) forSome {type K; type V}] = d match {
         case MethodCall(receiver, method, Seq(that, _*), _) if receiver.elem.isInstanceOf[MMultiMapElem[_, _, _, _]] && method.getName == "union" =>

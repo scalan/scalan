@@ -30,7 +30,7 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
       RowMajorMatrix.fromColumns(cols)
   }
 
-  abstract class RowMajorMatrix[T](val rows: Rep[PArray[DenseVector[T]]])(implicit val elem: Elem[T]) extends Matrix[T] {
+  abstract class RowMajorMatrix[T](val rows: Rep[PArray[Vector[T]]])(implicit val elem: Elem[T]) extends Matrix[T] {
     def companion = RowMajorMatrix
     def numRows: Rep[Int] = rows.length
     def numColumns = rows(0).length
@@ -68,7 +68,7 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
     }
   }
 
-  abstract class RowMajorSparseMatrix[T](val rows: Rep[PArray[SparseVector[T]]])(implicit val elem: Elem[T]) extends Matrix[T] {
+  abstract class RowMajorSparseMatrix[T](val rows: Rep[PArray[Vector[T]]])(implicit val elem: Elem[T]) extends Matrix[T] {
     def companion = RowMajorSparseMatrix
     def columns = ???
     def numRows = rows.length
