@@ -113,6 +113,7 @@ object ScalanBuild extends Build {
         "org.scala-lang.virtualized" % "scala-compiler" % virtScala),
       scalaOrganization := "org.scala-lang.virtualized",
       scalaVersion := virtScala,
+      crossScalaVersions := Seq(virtScala),
       // we know we use LMS snapshot here, ignore it
       ReleaseKeys.snapshotDependencies := Seq.empty,
       fork in Test := true,
