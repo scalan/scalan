@@ -3,7 +3,7 @@ package it.lms
 
 import scalan.community.ScalanCommunityDslExp
 import scalan.compilation.lms._
-import scalan.compilation.lms.scala_.LmsCompilerScala
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.smoke.CommunitySmokeItTests
 import scalan.collections._
 

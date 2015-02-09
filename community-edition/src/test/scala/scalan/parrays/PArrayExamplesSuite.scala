@@ -3,7 +3,7 @@ package scalan.parrays
 import java.io.File
 import java.lang.reflect.Method
 
-import scalan.compilation.GraphVizExport
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.{BaseShouldTests, ScalanCtxExp, ScalanCtxSeq}
 
 
@@ -29,7 +29,7 @@ class PArrayExamplesSuite extends BaseShouldTests {
       override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     val f = ctx.getStagedFunc(name)
-    ctx.emitDepGraph(f, new File(prefix, s"$name.dot"))(ctx.defaultOrientation)
+    ctx.emitDepGraph(f, new File(prefix, s"$name.dot"))(GraphVizConfig.default)
   }
 
   val whenStaged = "when staged"

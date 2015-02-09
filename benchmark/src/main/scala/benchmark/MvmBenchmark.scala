@@ -7,7 +7,8 @@ import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations._
 
 import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunitySeq}
-import scalan.compilation.lms.scala_.LmsCompilerScala
+import scalan.compilation.GraphVizConfig
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
 import scalan.linalgebra.{MatricesDslSeq, LinearAlgebraExamples}
 import scalan.util.FileUtil
@@ -103,18 +104,15 @@ object MvmBenchmark {
 
     protected val baseDir = FileUtil.file("mvm-staged")
 
-    protected implicit val cfg = ctx.defaultConfig.copy(scalaVersion = Some("2.10.2"))
+    protected implicit val cfg = ctx.defaultCompilerConfig.copy(scalaVersion = Some("2.10.2"))
 
     protected def loadMethod[A, B](prog: ProgExp)(baseDir: File, functionName: String, f: prog.Exp[A => B] )
-                                (implicit config: prog.Config) =
+                                (implicit compilerConfig: prog.CompilerConfig) =
     {
       val funcDir = FileUtil.file(baseDir, functionName)
 
-      val compilationOutput = prog.buildExecutable(funcDir, functionName, f, true)
-      val argElem = f.elem match {
-        case fe: prog.FuncElem[a,b] => fe.eDom
-      }
-      val (cls, method) = prog.loadMethod(compilationOutput, functionName, argElem)
+      val compilerOutput = prog.buildExecutable(funcDir, functionName, f, GraphVizConfig.none)
+      val (cls, method) = prog.loadMethod(compilerOutput)
       val instance = cls.newInstance()
       (method.invoke(instance, _: AnyRef)).asInstanceOf[A => B]
     }

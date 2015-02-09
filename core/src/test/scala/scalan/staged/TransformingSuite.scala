@@ -3,7 +3,7 @@ package scalan.staged
 import java.io.File
 import java.lang.reflect.Method
 
-import scalan.compilation.GraphVizExport
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.BaseShouldTests
 
 import scalan.ScalanCtxExp
@@ -24,7 +24,7 @@ class TransformingSuite extends BaseShouldTests {
   "Transforming" should "created ProjectionTree" in {
     val ctx = getCtx
     import ctx._
-    emitDepGraph(test, new File(prefix, "testFunc.dot"))
+    emitDepGraph(test, new File(prefix, "testFunc.dot"))(GraphVizConfig.default)
     val lam = test.getLambda
     val t = lam.projectionTreeFrom(lam.x)
     println(t)

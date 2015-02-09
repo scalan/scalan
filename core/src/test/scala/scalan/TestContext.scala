@@ -13,5 +13,5 @@ abstract class TestContext(suite: TestsUtil, testName: String) extends ScalanCtx
   override def isInvokeEnabled(d: Def[_], m: Method) = true
   override def shouldUnpack(e: ViewElem[_, _]) = true
   def emit(name: String, ss: Exp[_]*) =
-    emitDepGraph(ss, FileUtil.file(suite.prefix, testName, s"$name.dot"))
+    emitDepGraph(ss, FileUtil.file(suite.prefix, testName, s"$name.dot"))(defaultGraphVizConfig)
 }
