@@ -1,16 +1,19 @@
 package scalan.meta
 
-import scalan.meta.ScalanAst.STraitCall
+import com.typesafe.scalalogging.slf4j.StrictLogging
 
-class BoilerplateTool {
+class BoilerplateTool extends StrictLogging {
   val coreTypeSynonyms = Map(
-    "RThrow" -> "Throwable"
+    "RThrow" -> "Throwable",
+    "Arr" -> "Array",
+    "MM" -> "MMap"
   )
   lazy val coreConfig = CodegenConfig(
     srcPath = "../core/src/main/scala",
     entityFiles = List(
       "scalan/util/Exceptions.scala"
     ),
+    baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
@@ -27,6 +30,7 @@ class BoilerplateTool {
     entityFiles = List(
       "scalan/common/Segments.scala"
     ),
+    baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
@@ -42,20 +46,22 @@ class BoilerplateTool {
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
-      , "scalan/collection/HashSets.scala"
+      , "scalan/collections/HashSets.scala"
       , "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
+      , "scalan/collections/MultiMap.scala"
     ),
+    baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTestsTypeSynonyms ++ liteTypeSynonyms
+    coreTypeSynonyms ++ liteTypeSynonyms
   )
 
   val eeTypeSynonyms = Set(
-    "PS" -> "PSet", "PM" -> "PMap", "Dist" -> "Distributed"
+    "PS" -> "PSet", "Dist" -> "Distributed"
   )
   lazy val scalanConfig = CodegenConfig(
     srcPath = "../../scalan/src/main/scala",
@@ -65,19 +71,16 @@ class BoilerplateTool {
       "scalan/math/Vectors.scala",
       "scalan/collections/Sets.scala",
       "scalan/dists/Dists.scala",
-    // don't regenerate by default because this will break
-    // FuncArray. See comments there.
-//      "scalan/parrays/PArrays.scala",
-      "scalan/iterators/Iterators.scala"
+      "scalan/parrays/PArrays.scala"
     ),
+    baseContextTrait = "ScalanEnterprise",
     seqContextTrait = "ScalanEnterpriseSeq",
     stagedContextTrait = "ScalanEnterpriseExp",
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    coreTestsTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
+    coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
   )
-  lazy val scalanFullConfig = scalanConfig.copy(entityFiles = scalanConfig.entityFiles :+ "scalan/parrays/PArrays.scala")
 
   val effectsTypeSynonims = Map(
     "MonadRep"    -> "Monad",
@@ -98,8 +101,9 @@ class BoilerplateTool {
       //"scalan/monads/Coproducts.scala"
       //"scalan/monads/Interactions.scala"
       //"scalan/monads/Auths.scala"
-      //"scalan/monads/Readers.scala"
+      //"scalan/monads/Readers.scala"     
     ),
+    baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
@@ -118,7 +122,6 @@ class BoilerplateTool {
     "core" -> List(coreConfig),
     "ce" -> List(liteConfig),
     "ee" -> List(scalanConfig),
-    "ee-full" -> List(scalanFullConfig),
     "effects" -> List(effectsConfig),
     "ce-all" -> List(coreTestsConfig, coreConfig, liteConfig),
     "all" -> List(coreTestsConfig, liteConfig, scalanConfig)
@@ -127,10 +130,14 @@ class BoilerplateTool {
   def main(args: Array[String]) {
     val configs = getConfigs(args)
 
-    for (c <- configs) {
-      println(s"Processing ${c.srcPath}")
-      new EntityManagement(c).generateAll()
-      println(s"Ok\n")
+    if (configs.isEmpty) {
+      logger.warn("BoilerplateTool run without configs")
+    } else {
+      for (c <- configs) {
+        println(s"Processing ${c.srcPath}")
+        new EntityManagement(c).generateAll()
+        println(s"Ok\n")
+      }
     }
   }
 }

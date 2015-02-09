@@ -2,7 +2,7 @@ package scalan
 
 import scalan.common.Default
 import scala.reflect.runtime.universe._
-import scalan.compilation.GraphVizExport
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 
 /**
  * Created by slesarenko on 17/01/15.
@@ -47,7 +47,7 @@ trait BaseTypesExp extends BaseTypes with GraphVizExport { scalan: ScalanExp =>
     override protected def getDefaultRep = getWrapperElem.defaultRepValue.asInstanceOf[Rep[TBase]]
   }
 
-  override protected def nodeColor(sym: Exp[_]) = sym.elem match {
+  override protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig) = sym.elem match {
     case _: BaseElemEx[_, _] => "blue"
     case _ => super.nodeColor(sym)
   }

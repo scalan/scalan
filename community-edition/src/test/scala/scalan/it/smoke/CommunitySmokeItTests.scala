@@ -2,214 +2,119 @@ package scalan.it.smoke
 
 import scalan.ScalanCtxSeq
 import scalan.community._
+import scalan.collections._
 import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
 
 /**
  *  Tests that very simple examples are run correctly
  */
 abstract class CommunitySmokeItTests extends SmokeItTests {
-  trait ProgCommunity extends Prog with ScalanCommunityDsl with PArrayExamples {
-    lazy val simpleConst = fun {x: PA[Int] =>
+
+  trait ProgCommunity extends Prog with ScalanCommunity with PArrayExamples with MultiMapsDsl  {
+
+    lazy val simpleConst = fun { x: PA[Int] =>
       PArray.singleton(1)
     }
 
-    lazy val expBaseArrays = fun { xss:Arr[Array[Int]] =>
-      val pss1:Arr[PArray[Int]] = xss.map { xs: Rep[Array[Int]] => PArray(xs)}
+    lazy val expBaseArrays = fun { xss: Arr[Array[Int]] =>
+      val pss1: Arr[PArray[Int]] = xss.map { xs: Rep[Array[Int]] => PArray(xs)}
       val res = pss1.map { ps: PA[Int] =>
         ps.arr
       }
       res
     }
 
-//    lazy val simpleMap = fun {x: PA[Int] =>
-//      x.map(y => y + 1)
-//    }
-//
-//    lazy val absTest = fun {x: Rep[Float] =>
-//      x.abs
-//    }
-//
-//    lazy val logTest = fun {x: Rep[(Double, Double)] =>
-//      Pair(Math.log(x._1), Math.log(x._2))
-//    }
-//
-//    // sums elements of an array in imperative way
-//    lazy val simpleLoop = fun {x: PA[Int] =>
-//      val s = loopUntil((0, 0)) (
-//      {s: Rep[(Int, Int)] => s._2 >= x.length},
-//      {s: Rep[(Int, Int)] => (s._1 + x(s._2), s._2 + 1): Rep[(Int, Int)]}
-//      )
-//      singleton(s._1)
-//    }
-//
-//    lazy val simpleFirstElement = fun {x: PA[Int] =>
-//      singleton(x(0))
-//    }
-//
-//    lazy val simpleLoop2 = fun {x: PA[Int] =>
-//      val res = loopUntil(0) (
-//        {s: Rep[Int] => s >= x.length},
-//        {s: Rep[Int] => s + 1}
-//      )
-//      singleton(res)
-//    }
-//
-//    // appends two arrays
-//    def appendPA[A:Elem](xs: PA[A], ys: PA[A]): PA[A] =
-//      tabulate(xs.length + ys.length) { i => IF (i < xs.length) {xs(i)} ELSE ys(i - xs.length)}
-//
-//    def appendPA2[A:Elem](xs: PA[A], ys: PA[A]): PA[A] = {
-//      val tmp = replicate(2, xs)
-//      val z: NA[A] = (tmp <<- (1, ys))
-//      z.values
-//    }
-//
-//
-//    lazy val simpleAppend = fun { x: PA[Int] =>
-//      appendPA(x, x)
-//    }
-//
-//    lazy val simpleAppend2 = fun { x: PA[Int] =>
-//      appendPA2(x, x)
-//    }
-//
-//    lazy val idPA = fun { x: PA[Int] => x}
-//
-//    lazy val curredPlusMap = fun { xs: PA[Int] => xs.map { x => curred(x)(x) }}
-//
-//    lazy val isEven = fun { x: Rep[Int] => (x % 2) === 0 }
-//
-//    lazy val filterEven = fun {xs: PA[Int] => xs.filter(x => isEven(x)) }
-//
-//    lazy val filterPositive = fun {xs: PA[Int] => xs.filter(x => x > 0)}
-//
-//    lazy val div2Reduce = fun {xs: PA[Int] =>
-//      implicit val DivBy2Monoid: Monoid[Rep[Int]] = new Monoid[Rep[Int]] {
-//        val zero: Rep[Int] = 0
-//        def append(x: Rep[Int], y: =>Rep[Int]): Rep[Int] = (x + y) % 2
-//        def opName = "myMonoid"
-//        def isInfix = true
-//      }
-//      val res = xs.reduce(DivBy2Monoid)
-//      singleton(res)
-//    }
-//
-//    lazy val simpleFor = fun {xs: PA[Int] =>
-//      for {x <- xs if x > 2} yield x
-//    }
-//
-//    lazy val reverse = fun { xs: PA[Int] =>
-//      loopUntil2(0, xs)(
-//        {(i, ys)  => i >= xs.length},
-//        { (i, ys) => (i + 1, ys <<- (i, xs(xs.length - 1 - i)))  }
-//      )._2
-//    }
-//
-//    lazy val toFromArray = fun { xs: PA[Int] =>
-//      fromArray(xs.toArray)
-//    }
-//
-//    lazy val flatMap1 = fun { xs: PA[Int] =>
-//      xs.flatMap{x: Rep[Int] => replicate(x, x)}
-//    }
-//
-//    lazy val flatMap2 = fun { xs: PA[Int] =>
-//      xs.flatMap{x: Rep[Int] => replicate(x, x).flatMap{x: Rep[Int] => replicate(x, x)}}
-//    }
-//
-//    lazy val pairToArray = fun { p: Rep[(Int, Int)] =>
-//      val a: PA[Int] = replicate(2, p._1)
-//      a <<- (1, p._2)
-//    }
-//
-//    lazy val doubleSwap = fun { p: Rep[(Double, Double)] =>
-//      Pair(p._2, p._1)
-//    }
-//
-//    lazy val doubleFloatArray = fun { p: PA[Float] =>
-//      p |+| p
-//    }
-//
-//    lazy val doubleArray = fun { p: PA[Double] =>
-//      p |+| p
-//    }
-//
-//    lazy val valuesOfNA = fun { p: NA[Int] => p.values}
-//    lazy val valuesOfNA2 = fun { p: Rep[PArray[PArray[PArray[Int]]]] => p.values.values}
-//
-//    def sVecDVecDot(sv: PA[(Int, Float)], dv: PA[Float]): Rep[Float] = {
-//      val p = unzip(sv)
-//      val v2 =p._2 |*| dv.backPermute(p._1)
-//      sum(v2)
-//    }
-//
-//    lazy val sMatDVecMul = fun {p : Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] =>
-//      val m = p._1
-//      val v = p._2
-//      m.map {row => sVecDVecDot(row, v)}
-//    }
-//
-//
-//    lazy val fusion = fun {r: Rep[(PArray[Int], PArray[Int])] =>
-//      val a1 = r._1
-//      val a2 = a1.map{x => x * 2}
-//      val a3 = a2.map{x => x * 2}
-//      val a4 = a2.map{x => x + 3}
-//      val a5 = a1.zip(a3)
-//
-//      val a6 = a5.zip(a4)
-//      val a7 = a6.map{p => (p._1, p._2 + 13)}
-//
-//      a3.zip(a7)
-//    }
-//
-//    lazy val fusion1 = fun {a1: Rep[PArray[Int]] =>
-//      val a2 = a1.map{x => x * 2}
-//      val a3 = a2.map{x => x * 2}
-//      a3
-//    }
-//
-////    lazy val expandScaledRangesFun = fun {in: Rep[(PArray[Int],Int)] =>
-////      val Pair(is, scale) = in
-////      expandScaledRanges(is, scale)
-////    }
-//
+   //def componentAccess(t: Rep[((Int,Double),(String,Long))]): Rep[String] = t._2._1
+
+    lazy val reuseTest = fun { len: Rep[Int] =>
+      val matrix: Rep[Array[Array[Int]]] = SArray.tabulate[Array[Int]](len) { n => SArray.tabulate[Int](n) { i => i}}
+      matrix.map(row => row.reduce) zip matrix.map(row => row.reduce * 2)
+    }
+
+    lazy val ifTest = fun { in: Rep[(Int, Double)] =>
+      val map = MMap.empty[Int, Double]
+      IF(map.contains(in._1)) THEN {
+        THROW("Key already exists")
+      } ELSE {
+        map.update(in._1, in._2)
+      }
+    }
+
+    lazy val unionMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
+      val map1 = MMap.fromArray[Int, Double](in._1)
+      val map2 = MMap.fromArray[Int, Double](in._2)
+      map1.union(map2).toArray.sort
+    }
+    lazy val differenceMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
+      val map1 = MMap.fromArray[Int, Double](in._1)
+      val map2 = MMap.fromArray[Int, Double](in._2)
+      map1.difference(map2).toArray.sort
+    }
+    lazy val joinMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
+      val map1 = MMap.fromArray[Int, Double](in._1)
+      val map2 = MMap.fromArray[Int, Double](in._2)
+      map1.join(map2).toArray.sort
+    }
+    lazy val reduceMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
+      val map1 = MMap.fromArray[Int, Double](in._1)
+      val map2 = MMap.fromArray[Int, Double](in._2)
+      map1.reduce(map2, fun2 { (a, b) => a + b}).toArray.sort
+    }
+    lazy val iterateMap = fun { in: Rep[Array[(Int, Double)]] =>
+      val map = MMap.fromArray[Int, Double](in)
+      loopUntil2(1, 0.0)(
+      { (i, sum) => (!map.contains(i) && i > map.size)}, { (i, sum) => (i + 1, sum + map(i))}
+      )
+    }
+    lazy val mapReduceByKey = fun { in: Rep[Array[Int]] =>
+      in.mapReduce[Int, Int](a => (a, toRep(1)), (s1, s2) => s1 + s2).toArray.sort
+    }
+    lazy val filterCompound = fun { in: Rep[Array[(Int, (Int, Int))]] =>
+      in.filter(x => x._1 >= 20 && x._2 >= x._1 && x._3 < 30)
+    }
+    /*
+    lazy val filterCompoundPArray = fun {in: Rep[Array[(Int, (Int, Int))]] =>
+      val pa = PArray(in)
+      pa.filter(x => x._1 >= 20 && x._2 >= x._1 && x._3 < 30)
+    }
+    */
+    lazy val aggregates = fun { in: Rep[Array[Int]] =>
+      (in.min, in.max, in.sum, in.avg)
+    }
+    lazy val sortBy = fun { in: Rep[Array[(Int, Int)]] =>
+      in.sortBy(fun { p => p._1})
+    }
+    lazy val groupByCount = fun { in: Rep[Array[(Int, Int)]] =>
+      in.groupBy(fun { p => p._1}).mapValues(g => g.length).toArray.sortBy(fun { p => p._1})
+    }
+    lazy val groupBySum = fun { in: Rep[Array[(Int, Int)]] =>
+      in.groupBy(fun { p => p._1}).mapValues(g => g.toArray.map(p => p._2).sum).toArray.sortBy(fun { p => p._1})
+    }
+    lazy val compoundMapKey = fun { in: Rep[(Array[(Int, Double)], Array[Int])] =>
+      val map = MMap.fromArray[(Int, Double), Int](in._1 zip in._2)
+      loopUntil2(0, 0)(
+      { (i, sum) => (i >= map.size)}, { (i, sum) => (i + 1, sum + map(in._1(i)))}
+      )
+    }
+    lazy val compoundMapValue = fun { in: Rep[(Array[String], Array[(Int, Double)])] =>
+      val map = MMap.fromArray[String, (Int, Double)](in._1 zip in._2)
+      map("two")._2
+    }
+    lazy val fillArrayBuffer = fun { in: Rep[Array[Int]] =>
+      in.fold(ArrayBuffer.empty[Int], (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
+    }
+    lazy val unionMultiMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
+      val map1 = MMultiMap.fromArray[Int, Double](in._1)
+      val map2 = MMultiMap.fromArray[Int, Double](in._2)
+      map1.union(map2).toArray.map(p => (p._1, p._2.toArray.sum)).sortBy(fun { p => p._1})
+    }
+
   }
 
-  class ProgCommunitySeq extends ProgCommunity with PArraysDslSeq with ScalanCommunityDslSeq with ScalanCtxSeq {
-//    lazy val intRep: Rep[Int] = 1
-//    lazy val intPair: Rep[(Int, Int)] = (1, 2)
-//    lazy val nestedIntPair: Rep[((Int, Int), (Int, Int))] = ((1, 2), (3, 4))
-//    lazy val intArray: PA[Int] = fromArray(Array(1,2,3,4))
-//    lazy val pairsOfArrays: Rep[(PA[Int], PA[Int])] = (fromArray(Array(1,2)), fromArray(Array(3,4)))
-//    lazy val arraysOfPairs: PA[(Int, Int)] = fromArray(Array((1, 3), (2, 4)))
-//    lazy val nestedArray1: NA[Int] = fromJuggedArray(Array(Array(1), Array(2,3), Array(4, 5, 6)))
-//    lazy val nestedArray2: NA[Int] = fromJuggedArray(Array(Array(7), Array(8,9), Array(10, 11, 12)))
-//
-//    lazy val nestedArray3 = {
-//      val z = replicate(2, nestedArray1)
-//      z <<- (1, nestedArray2)
-//    }
-//
-//    lazy val in1: Rep[(Double, Double)] = (1, 2)
-//    lazy val out1: Rep[(Double, Double)] = (0, 0.693147f)
-//
-//    lazy val in2: Rep[(Double, Double)] = (1.5, 2.5)
-//    lazy val out2: Rep[(Double, Double)] = (2.5, 1.5)
-//
-//    val sm = fromJuggedArray(Array[Array[(Int, Float)]](
-//      Array((0, 3.0f), (2, 7.0f), (4, 5.0f)),
-//      Array((1, 11.0f), (2, 13.0f)),
-//      Array((0, 17.0f), (1, 19.0f)),
-//      Array((0, 23.0f), (3, 29.0f), (4, 31.0f)),
-//      Array((2, 37.0f))
-//    ))
-//
-//    val dv = fromArray(Array(-3.0f, 5.0f, -7.0f, 11.0f, -13.0f))
-//    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
-  }
+class ProgCommunitySeq extends ProgCommunity with PArraysDslSeq with ScalanCommunitySeq with ScalanCommunityDslSeq with MultiMapsDslSeq {
+}
 
-  // TODO
+// TODO
 //  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with Compiler
 //  override val progSeq = new ProgCommunitySeq()
 

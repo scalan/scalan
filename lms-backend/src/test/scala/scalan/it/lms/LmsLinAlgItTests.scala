@@ -2,11 +2,12 @@ package scalan.it.lms
 
 import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunityDslSeq}
 import scalan.compilation.lms._
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
 
-class LmsLinAlgItTests extends BaseItTests {
-  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompiler { self =>
+abstract class LmsLinAlgItTests extends BaseItTests {
+  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerScala { self =>
     def makeBridge[A, B] = new CommunityBridge[A, B] {
       val scalan = self
       val lms = new CommunityLmsBackend
@@ -22,7 +23,6 @@ class LmsLinAlgItTests extends BaseItTests {
 
 class LmsMvmItTests extends LmsLinAlgItTests {
   import progSeq._
-  import scala.Array
 
   test("ddmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
@@ -123,7 +123,6 @@ class LmsMvmItTests extends LmsLinAlgItTests {
 
 class LmsMmmItTests extends LmsLinAlgItTests {
   import progSeq._
-  import scala.Array
 
   test("ddmmm") {
     val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0))

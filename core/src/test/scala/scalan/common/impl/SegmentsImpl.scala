@@ -7,33 +7,28 @@ import scala.reflect.runtime.universe._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait SegmentsAbs extends Scalan with Segments
-{ self: SegmentsDsl =>
+trait SegmentsAbs extends Scalan with Segments {
+  self: SegmentsDsl =>
   // single proxy for each type family
   implicit def proxySegment(p: Rep[Segment]): Segment =
     proxyOps[Segment](p)
-
-
 
   abstract class SegmentElem[From, To <: Segment](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
 
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
   implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
-    lazy val tag = typeTag[SegmentCompanionAbs]
+    lazy val tag = weakTypeTag[SegmentCompanionAbs]
     protected def getDefaultRep = Segment
   }
 
   abstract class SegmentCompanionAbs extends CompanionBase[SegmentCompanionAbs] with SegmentCompanion {
     override def toString = "Segment"
-    
   }
   def Segment: Rep[SegmentCompanionAbs]
   implicit def proxySegmentCompanion(p: Rep[SegmentCompanion]): SegmentCompanion = {
     proxyOps[SegmentCompanion](p)
   }
 
-  //default wrapper implementation
-  
   // elem for concrete class
   class IntervalElem(iso: Iso[IntervalData, Interval]) extends SegmentElem[IntervalData, Interval](iso)
 
@@ -73,7 +68,7 @@ trait SegmentsAbs extends Scalan with Segments
   }
 
   class IntervalCompanionElem extends CompanionElem[IntervalCompanionAbs] {
-    lazy val tag = typeTag[IntervalCompanionAbs]
+    lazy val tag = weakTypeTag[IntervalCompanionAbs]
     protected def getDefaultRep = Interval
   }
   implicit lazy val IntervalCompanionElem: IntervalCompanionElem = new IntervalCompanionElem
@@ -93,8 +88,6 @@ trait SegmentsAbs extends Scalan with Segments
   def mkInterval(start: Rep[Int], end: Rep[Int]): Rep[Interval]
   def unmkInterval(p: Rep[Interval]): Option[(Rep[Int], Rep[Int])]
 
-  //default wrapper implementation
-  
   // elem for concrete class
   class SliceElem(iso: Iso[SliceData, Slice]) extends SegmentElem[SliceData, Slice](iso)
 
@@ -134,7 +127,7 @@ trait SegmentsAbs extends Scalan with Segments
   }
 
   class SliceCompanionElem extends CompanionElem[SliceCompanionAbs] {
-    lazy val tag = typeTag[SliceCompanionAbs]
+    lazy val tag = weakTypeTag[SliceCompanionAbs]
     protected def getDefaultRep = Slice
   }
   implicit lazy val SliceCompanionElem: SliceCompanionElem = new SliceCompanionElem
@@ -156,24 +149,18 @@ trait SegmentsAbs extends Scalan with Segments
 }
 
 // Seq -----------------------------------
-trait SegmentsSeq extends SegmentsAbs with SegmentsDsl with ScalanSeq
-{ self: SegmentsDslSeq =>
+trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
+  self: SegmentsDslSeq =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeSeq[SegmentCompanionAbs, SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]
-    
   }
-
-  
-
-  
 
   case class SeqInterval
       (override val start: Rep[Int], override val end: Rep[Int])
-      
+
     extends Interval(start, end)
         with UserTypeSeq[Segment, Interval] {
     lazy val selfType = element[Interval].asInstanceOf[Elem[Segment]]
-    
   }
   lazy val Interval = new IntervalCompanionAbs with UserTypeSeq[IntervalCompanionAbs, IntervalCompanionAbs] {
     lazy val selfType = element[IntervalCompanionAbs]
@@ -187,11 +174,10 @@ trait SegmentsSeq extends SegmentsAbs with SegmentsDsl with ScalanSeq
 
   case class SeqSlice
       (override val start: Rep[Int], override val length: Rep[Int])
-      
+
     extends Slice(start, length)
         with UserTypeSeq[Segment, Slice] {
     lazy val selfType = element[Slice].asInstanceOf[Elem[Segment]]
-    
   }
   lazy val Slice = new SliceCompanionAbs with UserTypeSeq[SliceCompanionAbs, SliceCompanionAbs] {
     lazy val selfType = element[SliceCompanionAbs]
@@ -205,18 +191,16 @@ trait SegmentsSeq extends SegmentsAbs with SegmentsDsl with ScalanSeq
 }
 
 // Exp -----------------------------------
-trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
-{ self: SegmentsDslExp =>
+trait SegmentsExp extends SegmentsDsl with ScalanExp {
+  self: SegmentsDslExp =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeDef[SegmentCompanionAbs, SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]
     override def mirror(t: Transformer) = this
   }
 
-
-
   case class ExpInterval
       (override val start: Rep[Int], override val end: Rep[Int])
-      
+
     extends Interval(start, end) with UserTypeDef[Segment, Interval] {
     lazy val selfType = element[Interval].asInstanceOf[Elem[Segment]]
     override def mirror(t: Transformer) = ExpInterval(t(start), t(end))
@@ -230,7 +214,7 @@ trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
   object IntervalMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[Interval]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[IntervalElem] && method.getName == "length" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IntervalElem] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[Interval]]]
         case _ => None
       }
@@ -242,7 +226,6 @@ trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
   }
 
   object IntervalCompanionMethods {
-
   }
 
   def mkInterval
@@ -253,7 +236,7 @@ trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
 
   case class ExpSlice
       (override val start: Rep[Int], override val length: Rep[Int])
-      
+
     extends Slice(start, length) with UserTypeDef[Segment, Slice] {
     lazy val selfType = element[Slice].asInstanceOf[Elem[Segment]]
     override def mirror(t: Transformer) = ExpSlice(t(start), t(length))
@@ -267,7 +250,7 @@ trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
   object SliceMethods {
     object end {
       def unapply(d: Def[_]): Option[Rep[Slice]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SliceElem] && method.getName == "end" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SliceElem] && method.getName == "end" =>
           Some(receiver).asInstanceOf[Option[Rep[Slice]]]
         case _ => None
       }
@@ -279,7 +262,6 @@ trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
   }
 
   object SliceCompanionMethods {
-
   }
 
   def mkSlice
@@ -291,7 +273,7 @@ trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
   object SegmentMethods {
     object start {
       def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "start" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "start" =>
           Some(receiver).asInstanceOf[Option[Rep[Segment]]]
         case _ => None
       }
@@ -303,7 +285,7 @@ trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
 
     object length {
       def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "length" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[Segment]]]
         case _ => None
       }
@@ -315,7 +297,7 @@ trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
 
     object end {
       def unapply(d: Def[_]): Option[Rep[Segment]] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "end" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "end" =>
           Some(receiver).asInstanceOf[Option[Rep[Segment]]]
         case _ => None
       }
@@ -327,6 +309,5 @@ trait SegmentsExp extends SegmentsAbs with SegmentsDsl with ScalanExp
   }
 
   object SegmentCompanionMethods {
-
   }
 }

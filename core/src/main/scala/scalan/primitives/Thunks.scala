@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scalan.compilation.GraphVizExport
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.{ViewsExp, ScalanExp, ScalanSeq, Scalan}
 import scalan.common.{Default, Lazy}
 import scala.reflect.runtime.universe._
@@ -76,8 +76,10 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
     def canEqual(other: Any) = other.isInstanceOf[ThunkDef[_]]
 
     // Product implementation
-    val productElements = scala.Array[Any](root)
-    def productElement(n: Int): Any = productElements(n)
+    def productElement(n: Int): Any = n match {
+      case 0 => root
+      case _ => throw new NoSuchElementException(s"ThunkDef.productElement($n) is undefined")
+    }
     def productArity: Int = 1
 
     override def boundVars = Nil
@@ -193,7 +195,7 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
 
   override def effectSyms(x: Any): List[Exp[Any]] = x match {
     case ThunkDef(_, sch) =>
-      sch.map(_.sym).toList.flatMap(effectSyms)
+      flatMapIterable(sch.map(_.sym), effectSyms)
     case _ => super.effectSyms(x)
   }
 
@@ -211,12 +213,12 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
     case _ => super.rewriteDef(d)
   }
 
-  override protected def formatDef(d: Def[_]): String = d match {
+  override protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
     case ThunkDef(r, sch) => s"Thunk($r, [${sch.map(_.sym).mkString(",")}])"
     case _ => super.formatDef(d)
   }
 
-  override protected def nodeColor(sym: Exp[_]) = sym.elem match {
+  override protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig) = sym.elem match {
     case _: ThunkElem[_] => "red"
     case _ => super.nodeColor(sym)
   }

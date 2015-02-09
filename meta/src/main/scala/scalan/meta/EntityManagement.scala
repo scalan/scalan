@@ -13,6 +13,7 @@ import scalan.util.FileUtil
 case class CodegenConfig(
   srcPath: String,
   entityFiles: List[String],
+  baseContextTrait: String,
   seqContextTrait: String,
   stagedContextTrait: String,
   extraImports: List[String],

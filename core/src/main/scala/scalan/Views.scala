@@ -53,6 +53,9 @@ trait Views extends Elems { self: Scalan =>
   trait TypeFamily2[F[_, _]] {
     def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[F[A, B]]]
   }
+  trait TypeFamily3[F[_, _, _]] {
+    def defaultOf[A, B, C](implicit ea: Elem[A], eb: Elem[B], ec: Elem[C]): Default[Rep[F[A, B, C]]]
+  }
 
   trait ConcreteClass0[C] {
     def defaultOf: Default[Rep[C]]
@@ -87,8 +90,25 @@ trait Views extends Elems { self: Scalan =>
     val eBB = element[(B1, B2)]
     new Iso[(A1, A2), (B1, B2)] {
       def eTo = eBB
-      def from(b: Rep[(B1, B2)]) = (iso1.from(b._1), iso2.from(b._2))
-      def to(a: Rep[(A1, A2)]) = (iso1.to(a._1), iso2.to(a._2))
+      var fromCacheKey:Option[Rep[(B1,B2)]] = None
+      var fromCacheValue:Option[Rep[(A1,A2)]] = None
+      var toCacheKey:Option[Rep[(A1,A2)]] = None
+      var toCacheValue:Option[Rep[(B1,B2)]] = None
+
+      def from(b: Rep[(B1, B2)]) = {
+        if (fromCacheKey.isEmpty || b != fromCacheKey.get) {
+          fromCacheKey = Some(b)
+          fromCacheValue = Some((iso1.from(b._1), iso2.from(b._2)))
+        }
+        fromCacheValue.get
+      }
+      def to(a: Rep[(A1, A2)]) = {
+        if (toCacheKey.isEmpty || a != toCacheKey.get) {
+          toCacheKey = Some(a)
+          toCacheValue = Some((iso1.to(a._1), iso2.to(a._2)))
+        }
+        toCacheValue.get
+      }
       def tag = eBB.tag
       lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
     }
@@ -153,7 +173,7 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
 trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   case class MethodCallFromExp(clazzUT: Class[_], methodName: String) {
     def unapply[T](d: Def[T]): Option[(Exp[_], List[Exp[_]])] = d match {
-      case MethodCall(obj, m, args) if m.getName == methodName =>
+      case MethodCall(obj, m, args, _) if m.getName == methodName =>
         Some((obj, args.asInstanceOf[List[Exp[_]]]))
       case _ => None
     }
@@ -289,6 +309,26 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     case UnpackView(Def(UnpackableDef(source, iso))) => source
     // case UnpackView(view @ UnpackableExp(iso)) => iso.from(view)
 
+
+    case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[a, b])))) => {
+      val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
+      ViewArray(parRes)(iso)
+    }
+
+
+    case ArrayFold(xs: Rep[Array[t]] @unchecked, HasViews(init, iso: Iso[a, b]), step) =>
+      val init1 = init.asRep[a]
+      implicit val eT = xs.elem.asElem[Array[t]].eItem
+      implicit val eA = iso.eFrom
+      implicit val eB = iso.eTo
+      val step1 = fun { (p: Rep[(a,t)]) =>
+        val x_viewed = (iso.to(p._1), p._2)
+        val res_viewed = mirrorApply(step.asRep[((b,t)) => b], x_viewed)
+        val res = iso.from(res_viewed)
+        res
+      }
+      val foldRes = ArrayFold(xs, init1, step1)
+      iso.to(foldRes)
     case LoopUntil(HasViews(startWithoutViews, iso: Iso[a, b]), step, isMatch) =>
       val start1 = startWithoutViews.asRep[a]
       implicit val eA = iso.eFrom
@@ -306,8 +346,8 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       }
       val loopRes = LoopUntil(start1, step1, isMatch1)
       iso.to(loopRes)
-    case call @ MethodCall(Def(obj), m, args) =>
-      if (!call.neverInvoke && m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
+    case call @ MethodCall(Def(obj), m, args, neverInvoke) =>
+      if (!neverInvoke && m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
         val res = m.invoke(obj, args: _*)
         res.asInstanceOf[Exp[_]]
       } else {
@@ -315,14 +355,13 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
           case foldD: SumFold[a,b,r] =>
             val resultElem = call.selfType
             val res = foldD.sum.fold (
-              a => MethodCall(foldD.left(a), m, args)(resultElem),
-              b => MethodCall(foldD.right(b), m, args)(resultElem)
+              a => MethodCall(foldD.left(a), m, args, neverInvoke)(resultElem),
+              b => MethodCall(foldD.right(b), m, args, neverInvoke)(resultElem)
             )(resultElem)
             res.asInstanceOf[Exp[_]]
-          case IfThenElse(cond, t, e) => {
+          case IfThenElse(cond, t, e) =>
             implicit val elem = call.selfType
-            IF (cond) { MethodCall(t, m, args)(elem) } ELSE { MethodCall(e, m, args)(elem) }
-          }
+            IF (cond) { MethodCall(t, m, args, neverInvoke)(elem) } ELSE { MethodCall(e, m, args, neverInvoke)(elem) }
           case _ =>
             super.rewriteDef(d)
         }

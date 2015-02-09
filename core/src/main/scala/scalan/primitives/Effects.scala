@@ -1,7 +1,8 @@
 package scalan.primitives
 
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.compilation.GraphVizExport
+import scala.collection.mutable
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
 import scalan.{ScalanExp, ScalanSeq, Scalan}
 import scalan.common.{Utils, Lazy}
@@ -35,7 +36,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
 
   def blocks(e: Any): List[Block[Any]] = e match {
     case b: Block[Any] => List(b)
-    case p: Product => p.productIterator.toList.flatMap(blocks(_))
+    case p: Product => flatMapProduct(p, blocks(_))
     case _ => Nil
   }
 
@@ -62,9 +63,15 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     (r, defs)
   }
 
+  private def allDistinct[A](xs: Iterable[A]): Boolean = {
+    val seen = mutable.HashSet[A]()
+    xs.foreach { x => if (!seen.add(x)) { return false } }
+    true
+  }
+
   def reflectSubGraph(ds: List[Stm]): Unit = {
     val lhs = ds.flatMap(_.lhs)
-    assert(lhs.length == lhs.distinct.length, "multiple defs: " + ds)
+    assert(allDistinct(lhs), "multiple defs: " + ds)
     // equivalent to: globalDefs filter (_.lhs exists (lhs contains _))
 
     val existing = lhs flatMap (globalDefsCache get _)
@@ -92,7 +99,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     override def mirror(t: Transformer) = Reify(t(x), mapOver(t,summary), t(effects).toList)
   }
 
-  override protected def formatDef(d: Def[_]): String = d match {
+  override protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
     case Reify(x, _, es) => s"Reify($x, [${es.mkString(",")}])"
     case Reflect(x, _, ds) => s"Reflect($x, [${ds.mkString(",")}])"
     case _ => super.formatDef(d)
@@ -193,12 +200,12 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
   def nonControlSyms[R](es: List[Exp[Any]], ss: Any => List[R]): List[R] = {
     // es.filterNot(controlDep).flatMap(syms)
     val out = new scala.collection.mutable.ListBuffer[R]
-    var it = es.iterator
+    val it = es.iterator
     while (it.hasNext) {
       val e = it.next()
       if (!controlDep(e)) out ++= ss(e)
     }
-    out.result
+    out.result()
   }
 
   override def syms(e: Any): List[Exp[Any]] = e match {
@@ -240,7 +247,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
       if ((es contains x) || (globalMutableSyms contains x)) Nil
       else readSyms(x)
     case s: Exp[_] => List(s)
-    case p: Product => p.productIterator.toList.flatMap(readSyms(_))
+    case p: Product => flatMapProduct(p, readSyms(_))
     case _ => Nil
   }
 
@@ -279,7 +286,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     case Reflect(x, u, es) => aliasSyms(x)
     case Reify(x, u, es) => syms(x)
     case s: Exp[_] => List(s)
-    case p: Product => p.productIterator.toList.flatMap(aliasSyms(_))
+    case p: Product => flatMapProduct(p, aliasSyms(_))
     case _ => Nil
   }
 
@@ -287,7 +294,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     case Reflect(x, u, es) => containSyms(x)
     case Reify(x, u, es) => Nil
     case s: Exp[_] => Nil
-    case p: Product => p.productIterator.toList.flatMap(containSyms(_))
+    case p: Product => flatMapProduct(p, containSyms(_))
     case _ => Nil
   }
 
@@ -295,7 +302,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     case Reflect(x, u, es) => extractSyms(x)
     case Reify(x, u, es) => Nil
     case s: Exp[_] => Nil
-    case p: Product => p.productIterator.toList.flatMap(extractSyms(_))
+    case p: Product => flatMapProduct(p, extractSyms(_))
     case _ => Nil
   }
 
@@ -303,7 +310,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     case Reflect(x, u, es) => copySyms(x)
     case Reify(x, u, es) => Nil
     case s: Exp[_] => Nil
-    case p: Product => p.productIterator.toList.flatMap(copySyms(_))
+    case p: Product => flatMapProduct(p, copySyms(_))
     case _ => Nil
   }
 

@@ -4,13 +4,23 @@
 
 Scalan is a framework for creating staged embedded DSLs in Scala. It allows you to write high-level Scala programs and compile them to efficient low-level code (in the language determined by the used backend) and to develop new abstractions which can be used in such programs.
 
-### Installation
+[Scalan Google Group](https://groups.google.com/forum/#!forum/scalan) is used for Scalan-related discussions. See also [Contributions](#contributions) below.
+
+### Building the project and running tests
 
 [SBT](http://www.scala-sbt.org/) is required to build Scalan. See linked documentation for installing and using SBT itself. There is also [an improved runner](https://github.com/paulp/sbt-extras) which takes care of downloading correct SBT version and adds some extra features.
 
-The project consists of three subprojects: `core`, `community-edition`, and `lms-backend`, as well as the aggregate project `all`. `lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`.
+The project consists of several [subprojects](http://www.scala-sbt.org/release/tutorial/Multi-Project.html), including the aggregate project `scalan`.
 
-The tests are split into unit tests (which can be run with `test` SBT command) and integration tests (`it:test`).
+One of the subprojects, `lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`. If you want to use it, you need to clone and build this dependency first, since it isn't published in a public repository. It also requires a different version of Scala from the one used by the other projects, which is why it isn't a part of the aggregate project. SBT commands such as `test`, `compile`, etc. will not run on it by default; you need to use `lms-backend/whatever-command` or `project lms-backend` and then the commands you want.
+
+The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backend included is `lms-backend` and so you need to use `lms-backend/it:test` to run integration tests.
+
+If you want to create your own project depending on Scalan, you have two options:
+
+* use `publishLocal` (and `lms-backend/publishLocal`, if necessary) SBT command to deploy Scalan to your local Ivy repository;
+
+* use a [project reference](http://www.scala-sbt.org/0.12.4/docs/Dormant/Full-Configuration.html#project-references) to Scalan in your build instead of `libraryDependencies`.
 
 ## Writing programs
 
@@ -95,16 +105,23 @@ User types (abstract like `Vector[T]` and concrete like `DenseVector[T]`) are in
 
 Your program needs to extends `Scalan` trait (along with any traits describing the DSLs you use) or `ScalanCommunity` if you want to use `community-edition` instead of `core`. Here is a very simple example program:
 ~~~scala
-trait HelloScalan extends ScalanCommunityDsl { // ScalanCommunityDsl includes ScalanCommunity and all DSLs defined in that project
-  lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] => 
+// ScalanCommunityDsl includes ScalanCommunity and all DSLs defined in that project
+trait HelloScalan extends ScalanCommunityDsl {
+  lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matr[Double] = RowMajorMatrix(PArray(m.map { r: Arr[Double] => DenseVector(PArray(r)) }))
+    val matrix: Matr[Double] = RowMajorMatrix(PArray(m.map { r: Arr[Double] => DenseVector(PArray(r))}))
     val vector: Vec[Double] = DenseVector(PArray(v))
     (matrix * vector).coords.arr
   }
+  // example input
+  val matrix = Array(Array(1.0, 2.0), Array(3.0, 5.0))
+  val vector = Array(2.0, 3.0)
+  val input = (matrix, vector)
 }
 ~~~
-This can be seen to be very close to a usual Scala program, except for use of `Rep` type constructor and `fun` method. Note that `run` takes core types as argument and returns core types, not matrices and vectors themselves.
+It can be seen to be very close to a usual Scala program, except for use of `Rep` type constructor and `fun` method. Note that `run` takes core types as argument and returns core types, not matrices and vectors themselves.
+
+This example is available [in the repository](lms-backend/src/test/scala/HelloScalan.scala). Please raise an issue if you find it isn't up-to-date!
 
 Now, there are two ways in which Scalan can work with this program:
 
@@ -112,13 +129,12 @@ Now, there are two ways in which Scalan can work with this program:
 
 Run it without optimizations in order to ensure it works as desired and debug if necessary. This is done by mixing in `ScalanCommunityDslSeq` (and `Seq` versions of any additional DSLs used by your program):
 ~~~scala
+// to run: lms-backend/test:runMain HelloScalanSeq
 object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
+  def result = run(input)
+
   def main(args: Array[String]) = {
-    // example input
-    val matrix = Array(Array(1.0, 2.0), Array(3.0, 5.0))
-    val vector = Array(2.0, 3.0)
-    val multResult = run(matrix, vector)
-    println(multResult.mkString)
+    println(result.mkString(","))
   }
 }
 ~~~
@@ -126,20 +142,36 @@ In this mode, Scalan's behavior is very simple: `Rep[A]` is the same type as `A`
 
 #### Staged mode
 
-Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a backend trait. Currently Scalan Community edition contains only one backend `LmsBackend`.
+Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a compiler trait.
 ~~~scala
-object HelloScalanStaged extends HelloScalan with ScalanCommunityDslExp with LmsBackend {
-  def main(args: Array[String]) = {
+// to run: lms-backend/test:runMain HelloScalanExp
+object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCompilerScala {
+  // allows use of standard Scala library, commented out to make tests faster
+  // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
+
+  def makeBridge[A, B] = new CommunityBridge[A, B] {
+    val scalan = HelloScalanExp
+    val lms = new CommunityLmsBackend
+  }
+
+  def result = {
     // output directory
-    val dir = new File("path/to/directory")
-    generateExecutable(
+    val dir = new File("it-out")
+    val compiled = buildExecutable(
       dir,
       // generated class name
-      "HelloScalan",
+      "HelloScalan1",
       // function to compile
       run,
-      // should .dot file showing program IR be generated
-      false)
+      // write .dot files containing graph IR with default settings
+      GraphVizConfig.default)
+    // not necessary if you just want to generate
+    // and compile the program
+    execute(compiled, input)
+  }
+
+  def main(args: Array[String]): Unit = {
+    println(result.mkString(","))
   }
 }
 ~~~
@@ -149,7 +181,7 @@ Note that generated code depends only on the Scala standard library, not on Scal
 
 In this mode `Rep[A]` represents a value of type `A` in the generated code. Any values of non-`Rep` Scala types which appear in the Scalan program aren't represented directly.
 
-Scalan aggressively applies optimizations such as dead code elimination, common sub-expression elimination, and function inlining independently of backend. The backend can, of course, include its own optimizations as well (a major one in `LmsBackend` is loop fusion).
+Scalan aggressively applies optimizations such as dead code elimination, common sub-expression elimination, and function inlining independently of backend. The backend can, of course, include its own optimizations as well (a major one in the LMS backend is loop fusion).
 
 ## Understanding Scalan code
 
@@ -176,7 +208,7 @@ x.norm
 ~~~
 Normal Scala rules apply.
 
-It's alse possible to add new user types to Scalan. As a simple example, we consider 2d points. We have a trait describing the interface, and a class describing an implementation (though in this case there is only one implementation, the split is still required). They are contained in the trait `Points` which serves as a DSL component.
+It's also possible to add new user types to Scalan. As a simple example, we consider points on a plane. We have a trait describing the interface, and a class describing an implementation (though in this case there is only one implementation, the split is still required). They are contained in the trait `Points` which serves as a DSL component.
 ~~~scala
 trait Points { self: PointsDsl =>
   trait Point {
@@ -190,31 +222,30 @@ trait Points { self: PointsDsl =>
   trait PointImplCompanion
 }
 
-trait PointsDsl extends Scalan with impl.PointsAbs
-trait PointsDslSeq extends PointsDsl with impl.PointsSeq
-trait PointsDslExp extends PointsDsl with impl.PointsExp
+trait PointsDsl extends impl.PointsAbs
+trait PointsDslSeq extends impl.PointsSeq
+trait PointsDslExp extends impl.PointsExp
 ~~~
-This obviously doesn't compile yet, because of references to non-existent classes in the `impl` package. They are boilerplate code which must be generated using the `scalan-meta` tool available at <http://github.com/scalan/scalan-meta> (see its documentation). It will have to be regenerated if `Point` or `PointImpl` are renamed or deleted, or if new implementations of `Point` are added.
+This obviously doesn't compile yet, because of references to non-existent classes in the `impl` package. They are boilerplate code which must be generated using the `meta` subproject (see [its documentation](meta/README.md)). It will have to be regenerated if `Point` or `PointImpl` are renamed or deleted, or if new implementations of `Point` are added.
 
 Note that methods in `Point` must have `Rep` in argument types and return value type. If `Point` had a type parameter, it would also have methods asserting existence of `Element` instances. It may seem some of these empty traits are unnecessary, but they serve as extension points. E.g. any methods added to `PointCompanion` will be available on `Point` companion objects.
 
 See `scalan.linalgebra.Vectors` for a larger example.
 
-Adding new primitive operations, core types, or backends to Scalan is possible, but not supported at the moment.
+Adding new primitive operations, core types, or backends to Scalan is possible, but the API is currently not stable.
 
-# Contributions
+## Contributions
 
-We are very pleased to see contributions from new members.
+Please feel free to open an issue if you notice a bug, have an idea for a feature, or have a question about the code. Minor pull requests (typos, bug fixes and so on) are gladly accepted; for anything larger please raise an issue first.
 
-You can help out by sending an unsolicited pull request with a new feature.
+Issues with the `low-hanging fruit` label should be easy to fix if you want something to get started with.
+
+If you want to start working on an issue (existing or one you just raised), please leave a comment to avoid effort duplication. Issues that someone is already working on are labelled `in progress`.
 
 <!--* [Triaging our open tickets](TODO)
 
-* [Pick up some low hanging fruit](TODO)
-* [Fixing a bug](TODO)
 * [Helping with the current Milestone](TODO)
 * Sending an unsolicited pull request with a new feature
-* Having a conversation on the [Scalan Google Group](https://groups.google.com/forum/#!forum/Scalan)
 * Telling your co-workers!
 -->
 ## See also

@@ -10,10 +10,8 @@ import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
 import scala.language.implicitConversions
-import scala.language.reflectiveCalls
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
-import scalan.util.ScalaNameUtil
 
 object ScalanAst {
 
@@ -194,6 +192,7 @@ object ScalanAst {
     entityRepSynonym: Option[STpeDef],
     entityOps: STraitDef,
     concreteSClasses: List[SClassDef],
+    methods: List[SMethodDef],
     selfType: Option[SSelfTypeDef],
     seqDslImpl: Option[SSeqImplementation] = None)
 
@@ -256,7 +255,10 @@ object ScalanAst {
           defaultBTImpl :: getConcreteClasses(defs)
         case None => getConcreteClasses(defs)
       }
-      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, classes, moduleTrait.selfType)
+
+      val methods = defs.collect { case md: SMethodDef => md }
+
+      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, classes, methods, moduleTrait.selfType)
     }
   }
 }
@@ -264,6 +266,7 @@ object ScalanAst {
 trait ScalanParsers {
   import ScalanAst._
   val settings = new Settings
+  settings.embeddedDefaults(getClass.getClassLoader)
   settings.usejavacp.value = true
   val reporter = new StoreReporter
   val compiler: Global = new Global(settings, reporter)
@@ -490,15 +493,16 @@ trait ScalanParsers {
 
   case class SAnnotation(name: String, args: List[Tree])
 
-  def MethodAnnotation(anClass: String) = new {
+  class MethodAnnotation(anClass: String) {
     def unapply(md: DefDef): Option[List[Tree]] =
       md.mods.annotations.collectFirst {
         case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args)
           if ident.toString == anClass => args
       }
   }
-  val HasExternalAnnotation = MethodAnnotation("External")
-  val HasConstructorAnnotation = MethodAnnotation("Constructor")
+  val HasExternalAnnotation = new MethodAnnotation("External")
+  val HasConstructorAnnotation = new MethodAnnotation("Constructor")
+  val OverloadIdAnnotation = new MethodAnnotation("OverloadId")
 
   def methodDef(md: DefDef, isElem: Boolean = false) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
@@ -506,23 +510,17 @@ trait ScalanParsers {
     val args = if (!args0.isEmpty && args0.last.args.isEmpty) args0.init else args0
     val tpeRes = optTpeExpr(md.tpt)
     val isImplicit = md.mods.isImplicit
-    val overloadId = md.mods.annotations.flatMap {
-      case Apply(
-      Select(New(Ident(ident)), nme.CONSTRUCTOR),
-      List(Literal(Constant(overloadId)))) if ident.toString == "OverloadId" =>
-        Seq(overloadId.toString)
-      case _ => Seq()
-    } match {
-      case Seq() => None
-      case Seq(x) => Some(x)
-      case many => !!!(s"Found multiple OverloadId values: ${many.mkString(", ")}", md)
+    val optOverloadId = md match {
+      case OverloadIdAnnotation(List(Literal(Constant(overloadId)))) =>
+        Some(overloadId.toString)
+      case _ => None
     }
     val optExternal = md match {
       case HasExternalAnnotation(_) => Some(ExternalMethod)
       case HasConstructorAnnotation(_) => Some(ExternalConstructor)
       case _ => None
     }
-    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, overloadId, optExternal, if (isElem) Some(()) else None)
+    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, optExternal, if (isElem) Some(()) else None)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {

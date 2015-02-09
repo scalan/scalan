@@ -1,12 +1,12 @@
 package scalan
 
-import scalan.collection._
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
+import scalan.collections._
 import scalan.arrays._
 import scalan.seq.BaseSeq
 import scalan.staged.{BaseExp, Expressions, Transforming}
-import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl, Exceptions}
+import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl/*, Exceptions*/}
 
 trait Scalan
   extends Base
@@ -20,15 +20,18 @@ trait Scalan
   with UnBinOps
   with LogicalOps
   with OrderingOps
-  with Equal
   with NumericOps
   with StringOps
+  with Equal
   with MathOps
   with Functions
   with IfThenElse
   with Blocks
   with Monoids
+  with Maps
   with ArrayOps
+  with ArrayBuffers
+  with Exceptions
   with ArrayViews
   with Thunks
   with Effects {
@@ -56,9 +59,13 @@ trait ScalanSeq
   with FunctionsSeq
   with IfThenElseSeq
   with BlocksSeq
+  with MapsSeq
   with MonoidsSeq
   with ArrayOpsSeq
+  with ArrayBuffersSeq
+  with ExceptionsSeq
   with ArrayViewsSeq
+  with StringOpsSeq
   with ThunksSeq
   with EffectsSeq
 
@@ -79,16 +86,20 @@ trait ScalanExp
   with TuplesExp
   with LoopsExp
   with TypeSumExp
+  with NumericOpsExp
   with UnBinOpsExp
   with LogicalOpsExp
   with EqualExp
-  with NumericOpsExp
   with FunctionsExp
   with IfThenElseExp
   with BlocksExp
+  with MapsExp
   with Transforming
   with ArrayOpsExp
+  with ArrayBuffersExp
+  with ExceptionsExp
   with ArrayViewsExp
+  with StringOpsExp
   with ThunksExp
   with EffectsExp
 

@@ -6,7 +6,7 @@ trait CommunityBridge[A, B] extends CoreBridge[A, B] {
 
   // `LmsCompiler` mixed just to provide `createManifest` function
   val scalan: ScalanCommunityDslExp with ScalanCommunityExp with LmsCompiler
-  val lms: CommunityLmsBackend
+  val lms: CommunityLmsBackendBase
 
   abstract override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) =
     linalgDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)
