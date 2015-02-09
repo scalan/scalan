@@ -94,7 +94,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       case f :: fs => s"Pair($f, ${pairify(fs)})"
     }
 
-    def getDefaultOfBT(tc: STraitCall) = s"DefaultOf${tc.name}${tc.tpeSExprs.opt(args => s"[${args.rep()}]")}"
+    def getDefaultOfBT(tc: STraitCall) =
+      s"DefaultOf${tc.name}" + tc.tpeSExprs.opt(args => s"[${args.rep()}]")
 
     def zeroSExpr(t: STpeExpr): String = t match {
       case STpePrimitive(_, defaultValueString) => defaultValueString
@@ -151,7 +152,14 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       s"(${sec.args.rep(a => s"${a.name}: ${a.tpe}")})"
     }
     def methodArgsUse(sec: SMethodArgs) = {
-      s"(${sec.args.rep(a => if (a.tpe.isTupledFunc) s"scala.Function.untupled(${a.name})" else s"${a.name}")})"
+      s"(${sec.args.rep(a => {
+        if (a.tpe.isTupledFunc)
+          s"scala.Function.untupled(${a.name})"
+        else if (a.annotations.contains(ArgList))
+          s"${a.name}: _*"
+        else
+          s"${a.name}"
+      })})"
     }
 
     def externalMethod(md: SMethodDef) = {
@@ -560,7 +568,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         }
 
         def reasonToSkipMethod(m: SMethodDef): Option[String] = {
-          (m.explicitArgs.collect { case SMethodArg(name, STpeFunc(_, _), _) => name} match {
+          (m.explicitArgs.collect { case SMethodArg(name, STpeFunc(_, _), _, _) => name} match {
             case Seq() => None
             case nonEmpty => Some(s"Method has function arguments ${nonEmpty.mkString(", ")}")
           }).orElse {

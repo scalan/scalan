@@ -16,7 +16,7 @@ trait Seqs extends Base with BaseTypes { self: SeqsDsl =>
 
   trait SSeqCompanion extends ExCompanion1[Seq] {
     /** Creates a sequence based on an array. */
-    @External def apply[A: Elem](arr: Rep[Array[A]]): Rep[Seq[A]]
+    @External def apply[A: Elem](@ArgList arr: Rep[Array[A]]): Rep[Seq[A]]
 
     @External def empty[A:Elem]: Rep[Seq[A]]
   }

@@ -1,14 +1,15 @@
-package scalan.collections.impl
+package scalan.collections
+package impl
 
 import scala.collection.immutable.Seq
-import scala.reflect.runtime.universe._
 import scalan._
-import scalan.collections.{Seqs, SeqsDsl, SeqsDslExp, SeqsDslSeq}
+import scalan.common.Default
+import scala.reflect.runtime.universe._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait SeqsAbs extends Scalan with Seqs
-{ self: SeqsDsl =>
+trait SeqsAbs extends Scalan with Seqs {
+  self: SeqsDsl =>
   // single proxy for each type family
   implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] =
     proxyOps[SSeq[A]](p)
@@ -23,38 +24,34 @@ trait SeqsAbs extends Scalan with Seqs
 
   trait SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs]
   implicit lazy val SSeqCompanionElem: SSeqCompanionElem = new SSeqCompanionElem {
-    lazy val tag = typeTag[SSeqCompanionAbs]
+    lazy val tag = weakTypeTag[SSeqCompanionAbs]
     protected def getDefaultRep = SSeq
   }
 
   abstract class SSeqCompanionAbs extends CompanionBase[SSeqCompanionAbs] with SSeqCompanion {
     override def toString = "SSeq"
-    
+
     def apply[A:Elem](arr: Rep[Array[A]]): Rep[Seq[A]] =
       methodCallEx[Seq[A]](self,
         this.getClass.getMethod("apply", classOf[AnyRef], classOf[Elem[A]]),
-        scala.collection.immutable.List(arr.asInstanceOf[AnyRef], element[A]))
+        List(arr.asInstanceOf[AnyRef], element[A]))
 
-    
     def empty[A:Elem]: Rep[Seq[A]] =
       methodCallEx[Seq[A]](self,
         this.getClass.getMethod("empty", classOf[Elem[A]]),
-        scala.collection.immutable.List(element[A]))
-
+        List(element[A]))
   }
   def SSeq: Rep[SSeqCompanionAbs]
   implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion = {
     proxyOps[SSeqCompanion](p)
   }
 
-  //default wrapper implementation
-    abstract class SSeqImpl[A](val wrappedValueOfBaseType: Rep[Seq[A]])(implicit val eA: Elem[A]) extends SSeq[A] {
-    
+  // default wrapper implementation
+  abstract class SSeqImpl[A](val wrappedValueOfBaseType: Rep[Seq[A]])(implicit val eA: Elem[A]) extends SSeq[A] {
     def isEmpty: Rep[Boolean] =
       methodCallEx[Boolean](self,
         this.getClass.getMethod("isEmpty"),
-        scala.collection.immutable.List())
-
+        List())
   }
   trait SSeqImplCompanion
   // elem for concrete class
@@ -95,7 +92,7 @@ trait SeqsAbs extends Scalan with Seqs
   }
 
   class SSeqImplCompanionElem extends CompanionElem[SSeqImplCompanionAbs] {
-    lazy val tag = typeTag[SSeqImplCompanionAbs]
+    lazy val tag = weakTypeTag[SSeqImplCompanionAbs]
     protected def getDefaultRep = SSeqImpl
   }
   implicit lazy val SSeqImplCompanionElem: SSeqImplCompanionElem = new SSeqImplCompanionElem
@@ -117,18 +114,16 @@ trait SeqsAbs extends Scalan with Seqs
 }
 
 // Seq -----------------------------------
-trait SeqsSeq extends SeqsAbs with SeqsDsl with ScalanSeq
-{ self: SeqsDslSeq =>
+trait SeqsSeq extends SeqsDsl with ScalanSeq {
+  self: SeqsDslSeq =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeSeq[SSeqCompanionAbs, SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
-    
+
     override def apply[A:Elem](arr: Rep[Array[A]]): Rep[Seq[A]] =
       Seq.apply[A](arr: _*)
 
-    
     override def empty[A:Elem]: Rep[Seq[A]] =
       Seq.empty[A]
-
   }
 
     // override proxy if we deal with BaseTypeEx
@@ -143,10 +138,9 @@ trait SeqsSeq extends SeqsAbs with SeqsDsl with ScalanSeq
     extends SSeqImpl[A](wrappedValueOfBaseType)
         with UserTypeSeq[SSeq[A], SSeqImpl[A]] {
     lazy val selfType = element[SSeqImpl[A]].asInstanceOf[Elem[SSeq[A]]]
-    
+
     override def isEmpty: Rep[Boolean] =
       wrappedValueOfBaseType.isEmpty
-
   }
   lazy val SSeqImpl = new SSeqImplCompanionAbs with UserTypeSeq[SSeqImplCompanionAbs, SSeqImplCompanionAbs] {
     lazy val selfType = element[SSeqImplCompanionAbs]
@@ -160,8 +154,8 @@ trait SeqsSeq extends SeqsAbs with SeqsDsl with ScalanSeq
 }
 
 // Exp -----------------------------------
-trait SeqsExp extends SeqsAbs with SeqsDsl with ScalanExp
-{ self: SeqsDslExp =>
+trait SeqsExp extends SeqsDsl with ScalanExp {
+  self: SeqsDslExp =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeDef[SSeqCompanionAbs, SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
     override def mirror(t: Transformer) = this
@@ -183,10 +177,7 @@ trait SeqsExp extends SeqsAbs with SeqsDsl with ScalanExp
   }
 
   object SSeqImplMethods {
-
   }
-
-
 
   def mkSSeqImpl[A]
     (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]) =
@@ -197,7 +188,7 @@ trait SeqsExp extends SeqsAbs with SeqsDsl with ScalanExp
   object SSeqMethods {
     object isEmpty {
       def unapply(d: Def[_]): Option[Rep[SSeq[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "isEmpty" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "isEmpty" =>
           Some(receiver).asInstanceOf[Option[Rep[SSeq[A]] forSome {type A}]]
         case _ => None
       }
@@ -211,7 +202,7 @@ trait SeqsExp extends SeqsAbs with SeqsDsl with ScalanExp
   object SSeqCompanionMethods {
     object apply {
       def unapply(d: Def[_]): Option[Rep[Array[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(arr, _*)) if receiver.elem.isInstanceOf[SSeqCompanionElem] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem.isInstanceOf[SSeqCompanionElem] && method.getName == "apply" =>
           Some(arr).asInstanceOf[Option[Rep[Array[A]] forSome {type A}]]
         case _ => None
       }
@@ -223,7 +214,7 @@ trait SeqsExp extends SeqsAbs with SeqsDsl with ScalanExp
 
     object empty {
       def unapply(d: Def[_]): Option[Unit forSome {type A}] = d match {
-        case MethodCall(receiver, method, _) if receiver.elem.isInstanceOf[SSeqCompanionElem] && method.getName == "empty" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SSeqCompanionElem] && method.getName == "empty" =>
           Some(()).asInstanceOf[Option[Unit forSome {type A}]]
         case _ => None
       }
