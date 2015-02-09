@@ -1,10 +1,10 @@
 package scalan.collection
 
+import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.arrays.ArrayOps
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
-import scala.annotation.unchecked.uncheckedVariance
 
 trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
 
