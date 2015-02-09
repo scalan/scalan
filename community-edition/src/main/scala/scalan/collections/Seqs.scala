@@ -21,7 +21,7 @@ trait Seqs extends Base with BaseTypes { self: SeqsDsl =>
     @External def empty[A:Elem]: Rep[Seq[A]]
   }
 
-  implicit def DefaultOfSeq[A: Elem]: Default[Seq[A]] = Default.defaultVal(Seq.empty[A])
+  def DefaultOfSeq[A: Elem]: Default[Seq[A]] = Default.defaultVal(Seq.empty[A])
 }
 
 trait SeqsDsl extends impl.SeqsAbs

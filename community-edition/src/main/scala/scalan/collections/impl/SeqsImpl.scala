@@ -78,7 +78,7 @@ trait SeqsAbs extends Scalan with Seqs
     lazy val tag = {
       weakTypeTag[SSeqImpl[A]]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SSeqImpl[A]]](SSeqImpl(DefaultOfSeq[A].value/*.defaultOf[Seq[A]]*/))
+    lazy val defaultRepTo = Default.defaultVal[Rep[SSeqImpl[A]]](SSeqImpl(DefaultOfSeq[A].value))
     lazy val eTo = new SSeqImplElem[A](this)
   }
   // 4) constructor and deconstructor
@@ -135,7 +135,7 @@ trait SeqsSeq extends SeqsAbs with SeqsDsl with ScalanSeq
   override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
     proxyOpsEx[Seq[A],SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
 
-    implicit def SeqElement[A:Elem:WeakTypeTag]: Elem[Seq[A]] = { new SeqBaseElemEx[Seq[A], SSeq[A]](element[SSeq[A]])(weakTypeTag[Seq[A]], DefaultOfSeq[A]) }
+    implicit def SeqElement[A:Elem:WeakTypeTag]: Elem[Seq[A]] = new SeqBaseElemEx[Seq[A], SSeq[A]](element[SSeq[A]])(weakTypeTag[Seq[A]], DefaultOfSeq[A])
 
   case class SeqSSeqImpl[A]
       (override val wrappedValueOfBaseType: Rep[Seq[A]])

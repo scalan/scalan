@@ -86,7 +86,7 @@ trait HashSetsAbs extends Scalan with HashSets
     lazy val tag = {
       weakTypeTag[SHashSetImpl[A]]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SHashSetImpl[A]]](SHashSetImpl(Default.defaultOf[HashSet[A]]))
+    lazy val defaultRepTo = Default.defaultVal[Rep[SHashSetImpl[A]]](SHashSetImpl(DefaultOfHashSet[A].value))
     lazy val eTo = new SHashSetImplElem[A](this)
   }
   // 4) constructor and deconstructor
@@ -139,7 +139,7 @@ trait HashSetsSeq extends HashSetsAbs with HashSetsDsl with ScalanSeq
   override def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
     proxyOpsEx[HashSet[A],SHashSet[A], SeqSHashSetImpl[A]](p, bt => SeqSHashSetImpl(bt))
 
-    implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new SeqBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])
+    implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new SeqBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
 
   case class SeqSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])
@@ -175,7 +175,7 @@ trait HashSetsExp extends HashSetsAbs with HashSetsDsl with ScalanExp
     override def mirror(t: Transformer) = this
   }
 
-  implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])
+  implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
 
   case class ExpSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])
