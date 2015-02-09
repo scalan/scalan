@@ -1,14 +1,15 @@
-package scalan.collections.impl
+package scalan.collections
+package impl
 
 import scala.collection.immutable.Seq
-import scala.reflect.runtime.universe._
 import scalan._
-import scalan.collections.{Seqs, SeqsDsl, SeqsDslExp, SeqsDslSeq}
+import scalan.common.Default
+import scala.reflect.runtime.universe._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait SeqsAbs extends Scalan with Seqs
-{ self: SeqsDsl =>
+trait SeqsAbs extends Scalan with Seqs {
+  self: SeqsDsl =>
   // single proxy for each type family
   implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] =
     proxyOps[SSeq[A]](p)
@@ -33,28 +34,24 @@ trait SeqsAbs extends Scalan with Seqs
     def apply[A:Elem](arr: Rep[Array[A]]): Rep[Seq[A]] =
       methodCallEx[Seq[A]](self,
         this.getClass.getMethod("apply", classOf[AnyRef], classOf[Elem[A]]),
-        scala.collection.immutable.List(arr.asInstanceOf[AnyRef], element[A]))
+        List(arr.asInstanceOf[AnyRef], element[A]))
 
-    
     def empty[A:Elem]: Rep[Seq[A]] =
       methodCallEx[Seq[A]](self,
         this.getClass.getMethod("empty", classOf[Elem[A]]),
-        scala.collection.immutable.List(element[A]))
-
+        List(element[A]))
   }
   def SSeq: Rep[SSeqCompanionAbs]
   implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion = {
     proxyOps[SSeqCompanion](p)
   }
 
-  //default wrapper implementation
-    abstract class SSeqImpl[A](val wrappedValueOfBaseType: Rep[Seq[A]])(implicit val eA: Elem[A]) extends SSeq[A] {
-    
+  // default wrapper implementation
+  abstract class SSeqImpl[A](val wrappedValueOfBaseType: Rep[Seq[A]])(implicit val eA: Elem[A]) extends SSeq[A] {
     def isEmpty: Rep[Boolean] =
       methodCallEx[Boolean](self,
         this.getClass.getMethod("isEmpty"),
-        scala.collection.immutable.List())
-
+        List())
   }
   trait SSeqImplCompanion
   // elem for concrete class
@@ -117,18 +114,16 @@ trait SeqsAbs extends Scalan with Seqs
 }
 
 // Seq -----------------------------------
-trait SeqsSeq extends SeqsAbs with SeqsDsl with ScalanSeq
-{ self: SeqsDslSeq =>
+trait SeqsSeq extends SeqsDsl with ScalanSeq {
+  self: SeqsDslSeq =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeSeq[SSeqCompanionAbs, SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
-    
+
     override def apply[A:Elem](arr: Rep[Array[A]]): Rep[Seq[A]] =
       Seq.apply[A](arr: _*)
 
-    
     override def empty[A:Elem]: Rep[Seq[A]] =
       Seq.empty[A]
-
   }
 
     // override proxy if we deal with BaseTypeEx
@@ -159,8 +154,8 @@ trait SeqsSeq extends SeqsAbs with SeqsDsl with ScalanSeq
 }
 
 // Exp -----------------------------------
-trait SeqsExp extends SeqsAbs with SeqsDsl with ScalanExp
-{ self: SeqsDslExp =>
+trait SeqsExp extends SeqsDsl with ScalanExp {
+  self: SeqsDslExp =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeDef[SSeqCompanionAbs, SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
     override def mirror(t: Transformer) = this
@@ -182,7 +177,6 @@ trait SeqsExp extends SeqsAbs with SeqsDsl with ScalanExp
   }
 
   object SSeqImplMethods {
-
   }
 
   def mkSSeqImpl[A]
