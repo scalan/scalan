@@ -11,9 +11,9 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
   val lms: CoreLmsBackendBase
 
   override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) =
-    communityDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)
+    coreDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)
 
-  def communityDefTransformer[T](m: Mirror, fromGraph: scalan.AstGraph, tp: scalan.TableEntry[T]): DefTransformer = {
+  def coreDefTransformer[T](m: Mirror, fromGraph: scalan.AstGraph, tp: scalan.TableEntry[T]): DefTransformer = {
     val (exps, symMirr, funcMirr) = m
     val sym = tp.sym
 
