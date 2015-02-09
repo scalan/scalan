@@ -160,7 +160,7 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
   def list_applyMany[T](xs: Lst[T], is: Arr[Int]): Lst[T] = scala.List((is.map(xs(_))): _*)
 
   def list_toArray[T:Elem](xs: Lst[T]): Arr[T] = {
-    //implicit val ct: ClassTag[T] = ClassTag(xs.getClass.getComponentType)
+    implicit val ct: ClassTag[T] = element[T].classTag
     xs.asInstanceOf[scala.List[T]].toArray
   }
 

@@ -140,8 +140,10 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
     def zip[B: Elem](ys: Coll[B]): Coll[(A, B)] = PairCollection(self, ys)
   }
   trait BaseCollectionCompanion extends ConcreteClass1[BaseCollection] {
-    def defaultOf[A](implicit ea: Elem[A]) =
+    def defaultOf[A](implicit ea: Elem[A]) = {
+      implicit val ct = ea.classTag
       Default.defaultVal(BaseCollection(Array.empty[A]))
+    }
   }
 
   abstract class ListCollection[A](val lst: Rep[List[A]])(implicit val eA: Elem[A]) extends Collection[A] {
