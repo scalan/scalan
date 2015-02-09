@@ -112,12 +112,34 @@ class BoilerplateTool extends StrictLogging {
     effectsTypeSynonims
   )
 
+  lazy val collConfig = CodegenConfig(
+    srcPath = "core/src/main/scala",
+    entityFiles = List(
+      //"scalan/monads/Monads.scala"
+      //, "scalan/monads/Functors.scala"
+      "scalan/collection/Collections.scala"
+      //"scalan/io/Frees.scala"
+      //"scalan/monads/Coproducts.scala"
+      //"scalan/monads/Interactions.scala"
+      //"scalan/monads/Auths.scala"
+      //"scalan/monads/Readers.scala"
+    ),
+    baseContextTrait = "Scalan",
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._",
+      "scalan.common.Default"),
+    effectsTypeSynonims
+  )
+
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
     args.flatMap { arg => configsMap.getOrElse(arg,
       sys.error(s"Unknown codegen config $arg. Allowed values: ${configsMap.keySet.mkString(", ")}"))
     }.distinct
 
   val configsMap = Map(
+    "collections" -> List(collConfig),
     "coretests" -> List(coreTestsConfig),
     "core" -> List(coreConfig),
     "ce" -> List(liteConfig),

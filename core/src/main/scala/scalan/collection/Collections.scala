@@ -3,6 +3,7 @@ package scalan.collection
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.arrays.ArrayOps
+import scalan.collections._
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 
@@ -96,7 +97,7 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
           as zip bs
         }
         case viewElem: ViewElem[a, b] =>
-          BaseCollection(Array.replicate(len, v))
+          BaseCollection(SArray.replicate(len, v))
         case e => ???(s"Element is $e")
       }
     }
@@ -111,7 +112,7 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
 
   abstract class UnitCollection(val len: Rep[Int]) extends Collection[Unit] {
     def elem = UnitElement
-    def arr = Array.replicate(len, ())
+    def arr = SArray.replicate(len, ())
     def length = len
     def apply(i: Rep[Int]) = ()
     def map[B: Elem](f: Rep[Unit] => Rep[B]): Coll[B] = Collection(arr.map(f))
