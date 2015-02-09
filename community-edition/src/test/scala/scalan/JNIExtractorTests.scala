@@ -5,6 +5,7 @@ import java.lang.reflect.Method
 import scala.language.reflectiveCalls
 
 import scalan.arrays.ArrayOps
+import scalan.compilation.GraphVizConfig
 import scalan.util.FileUtil
 
 /**
@@ -66,7 +67,7 @@ class JNIExtractorTests extends BaseTests {
     override def shouldUnpack(e: ViewElem[_, _]) = true
     def subfolder: String
     def emit(name: String, ss: Exp[_]*) =
-      emitDepGraph(ss.toList, FileUtil.file(prefix, subfolder, s"/$name.dot") )
+      emitDepGraph(ss.toList, FileUtil.file(prefix, subfolder, s"/$name.dot") )(GraphVizConfig.default)
   }
 
   test("simple") {

@@ -124,7 +124,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
               case _ =>
                 val arr = JNI_ExtractObjectArray(x)
                 val len = JNI_GetArrayLength(x)
-                val res = Array.rangeFrom0(len).map( { i => JNI_Extract( JNI_GetObjectArrayItem(arr, i) ) } )
+                val res = SArray.rangeFrom0(len).map( { i => JNI_Extract( JNI_GetObjectArrayItem(arr, i) ) } )
                 res.asRep[I]
             }
           case elem =>

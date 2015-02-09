@@ -9,7 +9,7 @@ import scalan.it.BaseItTests
 import scalan.performance.MVMs
 import scalan._
 import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
-import scalan.compilation.GraphVizExport
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.parrays.PArraysDslExp
 import scalan.primitives.AbstractStringsDslExp
@@ -34,7 +34,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
 
       def generate[A,B](name: String, f: Exp[A => B]): Unit = {
         val dir = new File(prefix, subfolder)
-        generate(dir, dir, name, f, false)
+        generate(dir, dir, name, f, GraphVizConfig.default)
       }
     }
 
@@ -49,7 +49,8 @@ class LmsJNIExtractorItTests extends BaseItTests {
     ctx.generate("sdmvm", ctx.sdmvm)
   }
 
-  ignore("simpleBuildExecutable") { //TODO: automate executable building
+  test("simpleBuildExecutable") { //TODO: automate executable building
+    pending
     val ctx = new ScalanCtxExp with ProgExp with FirstProg {
       override def subfolder: String = super.subfolder + "-build"
 
@@ -58,14 +59,15 @@ class LmsJNIExtractorItTests extends BaseItTests {
 
       def buildExecutable[A,B](name: String, f: Exp[A => B]): Unit = {
         val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, false)
+        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
       }
     }
 
     ctx.buildExecutable("extractDouble", ctx.extractDouble)
   }
 
-  ignore("simpleExecute") { //TODO: automate execution
+  test("simpleExecute") { //TODO: automate execution
+    pending
     val ctx = new ScalanCtxExp with ProgExp with FirstProg {
       override def subfolder: String = "release"
 
