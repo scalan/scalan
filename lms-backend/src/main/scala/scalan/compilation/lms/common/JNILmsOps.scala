@@ -86,13 +86,12 @@ trait CXXGenJNIExtractor extends CXXCodegen {
 
   override def traverseStm(stm: Stm): Unit = {
     stm match {
-      case TP(sym,rhs) =>
-        if (sym.tp.runtimeClass.isArray && sym.tp.typeArguments(0) <:< Manifest.AnyVal) // array of primitives should be moved
+      case TP(sym,rhs) => rhs match {
+        case ExtractPrimitiveArray(_) =>
           moveableSyms += sym
-        else if (sym.tp.runtimeClass == classOf[JNIArray[_]])
-          moveableSyms += sym
-        else if (syms(rhs).find(moveableSyms.contains) != None) // derived from moveable
-          moveableSyms += sym
+        case _ =>
+          ()
+      }
       case _ =>
         ()
     }
