@@ -9,6 +9,7 @@ class BoilerplateTool extends StrictLogging {
     "MM" -> "MMap"
   )
   lazy val coreConfig = CodegenConfig(
+    name = "core",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
       "scalan/util/Exceptions.scala"
@@ -26,6 +27,7 @@ class BoilerplateTool extends StrictLogging {
     "RSeg" -> "Segment"
   )
   lazy val coreTestsConfig = CodegenConfig(
+    name = "coretests",
     srcPath = "../core/src/test/scala",
     entityFiles = List(
       "scalan/common/Segments.scala"
@@ -43,6 +45,7 @@ class BoilerplateTool extends StrictLogging {
     "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
   lazy val liteConfig = CodegenConfig(
+    name = "ce",
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
@@ -64,7 +67,8 @@ class BoilerplateTool extends StrictLogging {
   val eeTypeSynonyms = Set(
     "PS" -> "PSet", "Dist" -> "Distributed"
   )
-  lazy val scalanConfig = CodegenConfig(
+  lazy val eeConfig = CodegenConfig(
+    name = "ee",
     srcPath = "../../scalan/src/main/scala",
     entityFiles = List(
       "scalan/trees/Trees.scala",
@@ -93,6 +97,7 @@ class BoilerplateTool extends StrictLogging {
     // declare your type synonims for User Defined types here (see type PA[A] = Rep[PArray[A]])
   )
   lazy val effectsConfig = CodegenConfig(
+    name = "effects",
     srcPath = "../../scalan-effects/src/main/scala",
     entityFiles = List(
       //"scalan/monads/Monads.scala"
@@ -122,10 +127,10 @@ class BoilerplateTool extends StrictLogging {
     "coretests" -> List(coreTestsConfig),
     "core" -> List(coreConfig),
     "ce" -> List(liteConfig),
-    "ee" -> List(scalanConfig),
+    "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
     "ce-all" -> List(coreTestsConfig, coreConfig, liteConfig),
-    "all" -> List(coreTestsConfig, liteConfig, scalanConfig)
+    "all" -> List(coreTestsConfig, liteConfig, eeConfig)
   )
 
   def main(args: Array[String]) {
