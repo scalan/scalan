@@ -854,6 +854,18 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object zipWithIndex {
+      def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "zipWithIndex" =>
+          Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PArray[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object PArrayCompanionMethods {

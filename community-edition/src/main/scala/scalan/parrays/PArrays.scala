@@ -25,6 +25,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
       val arrScan = arr.scan(m)
       (PArray(arrScan._1), arrScan._2)
     }
+    def zipWithIndex: PA[(A, Int)] = zip(PArray.fromArray(SArray.rangeFrom0(length)))
   }
   
   implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = element[A] match {

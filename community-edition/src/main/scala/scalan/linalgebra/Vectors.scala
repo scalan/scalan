@@ -18,6 +18,8 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
     implicit def elem: Elem[T]
     def dot(other: Vec[T])(implicit n: Numeric[T]): Rep[T]
     def apply(i: Rep[Int]): Rep[T]
+    def nonZeroIndices: Rep[Array[Int]]
+    def nonZeroValues: Rep[PArray[T]]
   }
   trait VectorCompanion extends TypeFamily1[Vector] {
     def defaultOf[T: Elem] = DenseVector.defaultOf[T]
@@ -31,6 +33,11 @@ trait Vectors extends PArrays { scalan: VectorsDsl =>
       sv => dotPA(coords(sv.nonZeroIndices), sv.nonZeroValues)(n, elem)
     }
     def apply(i: Rep[Int]) = coords(i)
+    def nonZeroIndices = {
+      val indexed = coords.zipWithIndex
+      ???("filter should be implemented")  //indexed.filter({ case Pair(c, i) => c !== 0f }).map(_._2)
+    }
+    def nonZeroValues = ???
   }
   trait DenseVectorCompanion extends ConcreteClass1[DenseVector] {
     def defaultOf[T: Elem] = Default.defaultVal(DenseVector(element[PArray[T]].defaultRepValue))

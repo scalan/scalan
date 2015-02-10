@@ -12,6 +12,7 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
     implicit def elem: Elem[T]
     def rows: PA[Vector[T]]
     def columns: PA[Vector[T]]
+    def rmValues: Rep[PArray[T]]
     @OverloadId("vector")
     def *(vector: Vec[T])(implicit n: Numeric[T]): Vec[T] =
       DenseVector(rows.map { r => r.dot(vector) })
@@ -36,6 +37,7 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
     def numColumns = rows(0).length
     def columns =
       PArray(SArray.tabulate(numColumns) { j => DenseVector(rows.map(_(j))) })
+    def rmValues = ???
   }
 
   trait RowMajorMatrixCompanion extends ConcreteClass1[RowMajorMatrix] with MatrixCompanion {
@@ -73,6 +75,7 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
     def columns = ???
     def numRows = rows.length
     def numColumns = rows(0).length
+    def rmValues = ???
   }
 
   trait RowMajorSparseMatrixCompanion extends ConcreteClass1[RowMajorSparseMatrix] with MatrixCompanion {

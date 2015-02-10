@@ -20,7 +20,10 @@ trait SeqsAbs extends Scalan with Seqs {
   implicit def defaultSSeqElem[A:Elem]: Elem[SSeq[A]] = element[SSeqImpl[A]].asElem[SSeq[A]]
   implicit def SeqElement[A:Elem:WeakTypeTag]: Elem[Seq[A]]
 
-  abstract class SSeqElem[A, From, To <: SSeq[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
+  abstract class SSeqElem[A, From, To <: SSeq[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+    override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
+    def convertSSeq(x : Rep[SSeq[A]]): Rep[To]
+  }
 
   trait SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs]
   implicit lazy val SSeqCompanionElem: SSeqCompanionElem = new SSeqCompanionElem {
@@ -55,7 +58,9 @@ trait SeqsAbs extends Scalan with Seqs {
   }
   trait SSeqImplCompanion
   // elem for concrete class
-  class SSeqImplElem[A](iso: Iso[SSeqImplData[A], SSeqImpl[A]]) extends SSeqElem[A, SSeqImplData[A], SSeqImpl[A]](iso)
+  class SSeqImplElem[A:Elem](iso: Iso[SSeqImplData[A], SSeqImpl[A]]) extends SSeqElem[A, SSeqImplData[A], SSeqImpl[A]](iso) {
+    def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
+  }
 
   // state representation type
   type SSeqImplData[A] = Seq[A]
@@ -186,6 +191,18 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
     Some((p.wrappedValueOfBaseType))
 
   object SSeqMethods {
+    object wrappedValueOfBaseType {
+      def unapply(d: Def[_]): Option[Rep[SSeq[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "wrappedValueOfBaseType" =>
+          Some(receiver).asInstanceOf[Option[Rep[SSeq[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SSeq[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object isEmpty {
       def unapply(d: Def[_]): Option[Rep[SSeq[A]] forSome {type A}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "isEmpty" =>
