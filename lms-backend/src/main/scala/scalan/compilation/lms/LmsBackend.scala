@@ -1,5 +1,6 @@
 package scalan.compilation.lms
 
+import scala.collection.mutable
 import scala.virtualization.lms.internal.GenericCodegen
 import scalan.compilation.lms.common._
 import virtualization.lms.common._
@@ -15,11 +16,11 @@ trait LmsBackend extends BaseExp { self =>
   def codegen: Codegen
 }
 
-trait LmsBackendFacade extends LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp with LstOpsExp
-with NumericOpsExp with StringOpsExp with RangeOpsExp with PrimitiveOpsExp with EqualExp with BooleanOpsExp
-with TupleOpsExp with ArrayLoopsFatExp with IfThenElseFatExp with CastingOpsExp with FunctionsExp
-with HashMapOpsExp with ArrayOpsExp with IterableOpsExp with WhileExp with OrderingOpsExp with ArrayBuilderOpsExp
-with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
+trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp with ListOpsExtExp with StringOpsExp
+  with ArrayOpsExtExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
+  with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with LoopOpsExtExp with OrderingOpsExp with IfThenElseFatExp
+  with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp
+  with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp {
   /*type RepD[T] = Rep[T]
   */
 
@@ -107,7 +108,7 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
   //
   // ArrayBuffer
   //
-  def arrayBufferUsingFunc[T: Manifest](count: Rep[Int], f: Exp[Int] => Exp[T]): Exp[scala.collection.mutable.ArrayBuilder[T]] = {
+  def arrayBufferUsingFunc[T: Manifest](count: Rep[Int], f: Exp[Int] => Exp[T]): Exp[mutable.ArrayBuilder[T]] = {
     val buf = ArrayBuilder.make[T]
     for (i <- 0 until count) {
       buf += f(i)
@@ -115,46 +116,46 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
     buf
   }
 
-  def emptyArrayBuffer[T: Manifest](): Exp[scala.collection.mutable.ArrayBuilder[T]] = {
+  def emptyArrayBuffer[T: Manifest](): Exp[mutable.ArrayBuilder[T]] = {
     ArrayBuilder.make[T]
   }
 
-  def arrayBufferFromElem[T: Manifest](elem: Exp[T]): Exp[scala.collection.mutable.ArrayBuilder[T]] = {
+  def arrayBufferFromElem[T: Manifest](elem: Exp[T]): Exp[mutable.ArrayBuilder[T]] = {
     val buf = ArrayBuilder.make[T]
     buf += elem
     buf
   }
 
-  def arrayBufferApply[T: Manifest](buf: Exp[scala.collection.mutable.ArrayBuilder[T]], i: Exp[Int]): Exp[T] = ???
+  def arrayBufferApply[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]], i: Exp[Int]): Exp[T] = ???
 
-  def arrayBufferLength[T: Manifest](buf: Exp[scala.collection.mutable.ArrayBuilder[T]]): Exp[Int] = buf.result.length
+  def arrayBufferLength[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]]): Exp[Int] = buf.result.length
 
-  def arrayBufferMap[A: Manifest, B: Manifest](buf: Exp[scala.collection.mutable.ArrayBuilder[A]], f: Rep[A] => Rep[B]): Exp[scala.collection.mutable.ArrayBuilder[B]] = ???
+  def arrayBufferMap[A: Manifest, B: Manifest](buf: Exp[mutable.ArrayBuilder[A]], f: Rep[A] => Rep[B]): Exp[mutable.ArrayBuilder[B]] = ???
 
-  def arrayBufferUpdate[T: Manifest](buf: Exp[scala.collection.mutable.ArrayBuilder[T]], i: Exp[Int], v: Exp[T]): Exp[scala.collection.mutable.ArrayBuilder[T]] = ???
+  def arrayBufferUpdate[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]], i: Exp[Int], v: Exp[T]): Exp[mutable.ArrayBuilder[T]] = ???
 
-  def arrayBufferInsert[T: Manifest](buf: Exp[scala.collection.mutable.ArrayBuilder[T]], i: Exp[Int], v: Exp[T]): Exp[scala.collection.mutable.ArrayBuilder[T]] = ???
+  def arrayBufferInsert[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]], i: Exp[Int], v: Exp[T]): Exp[mutable.ArrayBuilder[T]] = ???
 
-  def arrayBufferRemove[T: Manifest](buf: Exp[scala.collection.mutable.ArrayBuilder[T]], i: Exp[Int], n: Exp[Int]): Exp[scala.collection.mutable.ArrayBuilder[T]] = ???
+  def arrayBufferRemove[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]], i: Exp[Int], n: Exp[Int]): Exp[mutable.ArrayBuilder[T]] = ???
 
-  def arrayBufferAppend[T: Manifest](buf: Exp[scala.collection.mutable.ArrayBuilder[T]], v: Exp[T]): Exp[scala.collection.mutable.ArrayBuilder[T]] = {
+  def arrayBufferAppend[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]], v: Exp[T]): Exp[mutable.ArrayBuilder[T]] = {
     buf += v
     buf
   }
 
-  def arrayBufferAppendArray[T: Manifest](buf: Exp[scala.collection.mutable.ArrayBuilder[T]], a: Exp[Array[T]]): Exp[scala.collection.mutable.ArrayBuilder[T]] = {
+  def arrayBufferAppendArray[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]], a: Exp[Array[T]]): Exp[mutable.ArrayBuilder[T]] = {
     for (x <- a) {
       buf += x
     }
     buf
   }
 
-  def arrayBufferReset[T: Manifest](buf: Exp[scala.collection.mutable.ArrayBuilder[T]]): Exp[scala.collection.mutable.ArrayBuilder[T]] = {
+  def arrayBufferReset[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]]): Exp[mutable.ArrayBuilder[T]] = {
     buf.clear()
     buf
   }
 
-  def arrayBufferToArray[T: Manifest](buf: Exp[scala.collection.mutable.ArrayBuilder[T]]): Exp[Array[T]] = {
+  def arrayBufferToArray[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]]): Exp[Array[T]] = {
     buf.result
   }
 
@@ -182,7 +183,7 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
     h
   }
 
-  def multiMapAppend[K: Manifest, V: Manifest](map: Exp[HashMap[K, scala.collection.mutable.ArrayBuilder[V]]], key: Exp[K], value: Exp[V]): Exp[HashMap[K, scala.collection.mutable.ArrayBuilder[V]]] = {
+  def multiMapAppend[K: Manifest, V: Manifest](map: Exp[HashMap[K, mutable.ArrayBuilder[V]]], key: Exp[K], value: Exp[V]): Exp[HashMap[K, mutable.ArrayBuilder[V]]] = {
     if (map.contains(key)) {
       map(key) += value
       map
@@ -317,7 +318,19 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
     left.max(right)
   }
 
-  def Min[A: Manifest](left: Exp[A], right: Exp[A])(implicit ord: Ordering[A]) = {
+  def Pow(x: Exp[Double], y: Exp[Double]) : Exp[Double] = {
+    math_pow(x, y)
+  }
+
+  def Sin(v: Exp[Double]) : Exp[Double] = {
+    math_sin(v)
+  }
+
+  def intToDouble(v: Exp[Int]) : Exp[Double] = {
+    int_to_double(v)
+  }
+
+  def Min[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
     left.min(right)
   }
 
@@ -380,7 +393,7 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
     count
   }
 
-  def replicate[A: Manifest](length: Exp[Int], v: Exp[A]): Exp[Array[A]] = {
+  def replicate[A:Manifest](length: Exp[Int], v: Exp[A]) : Exp[Array[A]]= {
     array(length)(i => v)
   }
 
@@ -490,8 +503,8 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
     //array(a.length) { i => a.at(permutation.at(i)._2) }
 
 
-  def arrayGroupBy[A: Manifest, K: Manifest](in: Exp[Array[A]], by: Rep[A] => Rep[K]): Exp[HashMap[K, scala.collection.mutable.ArrayBuilder[A]]] = {
-    val result = HashMap[K, scala.collection.mutable.ArrayBuilder[A]]()
+  def arrayGroupBy[A: Manifest, K: Manifest](in: Exp[Array[A]], by: Rep[A] => Rep[K]): Exp[HashMap[K, mutable.ArrayBuilder[A]]] = {
+    val result = HashMap[K, mutable.ArrayBuilder[A]]()
     for (x <- in) {
       val key = by(x)
       if (result.contains(key)) {
@@ -540,6 +553,10 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
     sum.AsInstanceOf[Double] / xs.length
   }
 
+  def listMap[A: Manifest, B: Manifest](l: Rep[List[A]], f:Rep[A] => Rep[B]) = {
+    list_map[A, B] (l, f)
+  }
+
   def strideArray[A: Manifest](xs: Exp[Array[A]], start: Exp[Int], length: Exp[Int], stride: Exp[Int]) =
     array(length) { i =>
       xs.at(start + i * stride)
@@ -561,14 +578,21 @@ with ExceptionOpsExp with EitherOpsExp with SystemOpsExp with VectorOpsExp {
   }  */
 }
 
-class CoreLmsBackend extends CoreLmsBackendBase { self =>
+object LmsType {
 
-  trait Codegen extends ScalaGenArrayOps with ScalaGenListOps with ScalaGenLstOps with ScalaGenNumericOps
-    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenBooleanOps with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
-    with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
-    with ScalaGenCastingOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenOrderingOps with ScalaGenWhile
+  class WildCard
+
+  val wildCard : Manifest[WildCard] = Manifest.classType(classOf[WildCard])
+}
+
+class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
+
+  trait Codegen extends ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
+  with ScalaGenListOpsExt with ScalaGenArrayOpsExt with ScalaGenNumericOps
+    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
+    with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenLoopOpsExt with ScalaGenIfThenElseFat with LoopFusionOpt
+    with ScalaGenCastingOps with ScalaGenMathOps with ScalaGenMethodCallOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile
     with ScalaGenIfThenElse with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions with ScalaGenRangeOps {
-
     val IR: self.type = self
     override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
 
@@ -577,6 +601,7 @@ class CoreLmsBackend extends CoreLmsBackendBase { self =>
 
     override def remap[A](m: Manifest[A]) =
       if (isTuple(m.runtimeClass.getSimpleName)) m.toString
+      else if (m.equals(LmsType.wildCard)) "_"
       else super.remap(m)
 
     override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {

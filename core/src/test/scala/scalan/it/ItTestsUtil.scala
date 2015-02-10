@@ -30,6 +30,8 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
     back.execute(compiled, input)
   }
 
+  def executableDir[B, A](functionName: String) = new File(new File("it-out", getClass.getSimpleName.stripSuffix("Tests").stripSuffix("It").stripSuffix("_")), functionName)
+
   implicit def defaultComparator[A](expected: A, actual: A) {
     actual should equal(expected)
   }

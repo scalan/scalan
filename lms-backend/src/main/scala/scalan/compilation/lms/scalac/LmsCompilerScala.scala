@@ -9,6 +9,11 @@ import java.net.URLClassLoader
 import scala.tools.nsc.{Global, Settings}
 import scala.tools.nsc.reporters.StoreReporter
 import scalan.util.{FileUtil, ProcessUtil, StringUtil}
+import java.io.File.{separator => s}
+import java.io._
+import java.net.{URL, URLClassLoader}
+import scalan.util.FileUtil.copyToDir
+import scala.collection.mutable
 
 trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
 
@@ -21,20 +26,33 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
 
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
-  case class CustomCompilerOutput(jar: File)
+  case class CustomCompilerOutput(jars: Array[URL])
 
   def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+
+  val extensionsJars = mutable.HashSet.empty[String]
+  var mainJars = Set.empty[String]
+  val libs = "lib"
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
-
     val outputSource = new File(sourcesDir, functionName + ".scala")
     val buildSbtFile = new File(sourcesDir, "build.sbt")
 
     (createManifest(eInput), createManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
         val bridge = makeBridge[a, b]
+        mainJars = bridge.methodReplaceConf.libPaths.map(j => s"${new File("").getAbsolutePath}$s$libs$s$j")
+        val dir = new File(s"${new File("").getAbsolutePath}$s$libs$s").listFiles()
+        dir match {
+          case _: Array[File] => dir.filter(_.getName.toLowerCase.endsWith(".jar")).foreach(f => {
+            mainJars = mainJars + f.getAbsolutePath
+            copyToDir(f, new File(s"${executableDir.getAbsolutePath}$s$libs$s"))
+          })
+          case _ =>
+        }
+
         val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
         val codegen = bridge.lms.codegen
 
@@ -76,14 +94,19 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
             val run = new compiler.Run
             run.compile(List(outputSource.getAbsolutePath))
         }
-        CustomCompilerOutput(jarFile)
+
+        var urls = scala.Array(jarFile.toURI.toURL)
+        new File(s"${executableDir.getAbsolutePath}$s$libs").listFiles() match {
+          case ar: scala.Array[File] => urls = urls ++ ar.filter { case f => f.getName.toLowerCase.endsWith(".jar")}.map(_.toURI.toURL)
+          case _ =>
+        }
+        CustomCompilerOutput(urls)
     }
   }
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
-    val url = compilerOutput.custom.jar.toURI.toURL
     // ensure Scala library is available
-    val classLoader = new URLClassLoader(Array(url), classOf[_ => _].getClassLoader)
+    val classLoader = new URLClassLoader(compilerOutput.custom.jars, classOf[_ => _].getClassLoader)
     val cls = classLoader.loadClass(compilerOutput.common.name)
     val argumentClass = compilerOutput.common.eInput.classTag.runtimeClass
     (cls, cls.getMethod("apply", argumentClass))

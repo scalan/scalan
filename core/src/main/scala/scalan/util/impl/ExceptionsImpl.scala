@@ -44,6 +44,11 @@ trait ExceptionsAbs extends Scalan with Exceptions {
       methodCallEx[String](self,
         this.getClass.getMethod("getMessage"),
         List())
+
+    def initCause(cause: Rep[Throwable]): Rep[Throwable] =
+      methodCallEx[Throwable](self,
+        this.getClass.getMethod("initCause", classOf[AnyRef]),
+        List(cause.asInstanceOf[AnyRef]))
   }
   trait SThrowableImplCompanion
   // elem for concrete class
@@ -188,6 +193,9 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
 
     override def getMessage: Rep[String] =
       wrappedValueOfBaseType.getMessage
+
+    override def initCause(cause: Rep[Throwable]): Rep[Throwable] =
+      wrappedValueOfBaseType.initCause(cause)
   }
   lazy val SThrowableImpl = new SThrowableImplCompanionAbs with UserTypeSeq[SThrowableImplCompanionAbs, SThrowableImplCompanionAbs] {
     lazy val selfType = element[SThrowableImplCompanionAbs]
@@ -208,6 +216,9 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
 
     override def getMessage: Rep[String] =
       wrappedValueOfBaseType.getMessage
+
+    override def initCause(cause: Rep[Throwable]): Rep[Throwable] =
+      wrappedValueOfBaseType.initCause(cause)
   }
   lazy val SException = new SExceptionCompanionAbs with UserTypeSeq[SExceptionCompanionAbs, SExceptionCompanionAbs] {
     lazy val selfType = element[SExceptionCompanionAbs]
@@ -277,13 +288,25 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object initCause {
+      def unapply(d: Def[_]): Option[(Rep[SException], Rep[Throwable])] = d match {
+        case MethodCall(receiver, method, Seq(cause, _*), _) if receiver.elem.isInstanceOf[SExceptionElem] && method.getName == "initCause" =>
+          Some((receiver, cause)).asInstanceOf[Option[(Rep[SException], Rep[Throwable])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SException], Rep[Throwable])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object SExceptionCompanionMethods {
   }
 
   def mkSException
-    (wrappedValueOfBaseType: Rep[Throwable]) =
+  (wrappedValueOfBaseType: Rep[Throwable]) =
     new ExpSException(wrappedValueOfBaseType)
   def unmkSException(p: Rep[SException]) =
     Some((p.wrappedValueOfBaseType))
@@ -296,6 +319,18 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Rep[SThrowable]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object initCause {
+      def unapply(d: Def[_]): Option[(Rep[SThrowable], Rep[Throwable])] = d match {
+        case MethodCall(receiver, method, Seq(cause, _*), _) if receiver.elem.isInstanceOf[SThrowableElem[_, _]] && method.getName == "initCause" =>
+          Some((receiver, cause)).asInstanceOf[Option[(Rep[SThrowable], Rep[Throwable])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SThrowable], Rep[Throwable])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

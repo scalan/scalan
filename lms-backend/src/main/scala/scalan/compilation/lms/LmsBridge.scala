@@ -1,8 +1,9 @@
 package scalan.compilation.lms
 
 import scalan.ScalanExp
+import scalan.compilation.language.MethodMapping
 
-trait LmsBridge[A, B] {
+trait LmsBridge[A, B] extends MethodMapping {
 
   val scalan: ScalanExp
   val lms: LmsBackend

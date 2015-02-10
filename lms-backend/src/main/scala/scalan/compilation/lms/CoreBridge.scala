@@ -2,12 +2,13 @@ package scalan
 package compilation.lms
 
 import java.util.HashMap
-import scalan.collections.ListOpsExp
+import scalan.compilation.language.Interpreter
+import scalan.compilation.lms.scalac.LmsCompilerScala
 
-trait CoreBridge[A, B] extends LmsBridge[A, B] {
+trait CoreBridge[A, B] extends LmsBridge[A, B] with Interpreter with CommunityMethodMapping {
 
   // `LmsCompiler` mixed just to provide `createManifest` function
-  val scalan: ScalanExp with ListOpsExp with LmsCompiler
+  val scalan: ScalanCtxExp with LmsCompiler
   val lms: CoreLmsBackendBase
 
   override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) =
@@ -28,6 +29,40 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
         val f = mirrorLambdaToLmsFunc[a, b](m)(lam)
         val fun = lms.fun(f)(mA, mB)
         (exps, symMirr + ((sym, fun)), funcMirr + ((sym, f)))
+
+      case scalan.MethodCall(receiver, method, args, _) =>
+        import lms.EffectId._
+        val obj = symMirr(receiver.asInstanceOf[scalan.Exp[_]])
+
+        val exp = getFunc(method) match {
+          case Some(conf: LanguageConf#Fun) => conf.lib match {
+            case e: ScalaLanguage#ScalaLib =>
+//              if (!e.jar.isEmpty) scalan.extensionsJars += e.jar
+              Manifest.classType(method.getDeclaringClass) match {
+                case (mA: Manifest[a]) => lms.scalaMethod[a](null, PURE, e.pack + "." + conf.funcName.name, List(obj) ++ args.map(v => symMirr(v.asInstanceOf[scalan.Exp[_]])): _*)(mA)
+              }
+            case e: ScalaLanguage#EmbeddedObject if e.name == "lms" =>
+              val name = conf.funcName.name
+              import scala.reflect.runtime.universe._
+              val m = runtimeMirror(obj.getClass.getClassLoader).reflect(lms)
+              val lmsMethod = m.symbol.typeSignature.member(newTermName(name))
+              m.reflectMethod(lmsMethod.asMethod).apply(obj, scalan.createManifest(receiver.asInstanceOf[scalan.Exp[_]].elem)).asInstanceOf[lms.Exp[_]]
+          }
+          case None =>
+            Manifest.classType(method.getDeclaringClass) match {
+              case (mA: Manifest[a]) => lms.scalaMethod[a](obj, PURE, method.getName, args
+                /* filter out implicit ClassTag params */ .filter(_.isInstanceOf[scalan.Exp[_]])
+                .map(v => symMirr(v.asInstanceOf[scalan.Exp[_]])): _*)(mA)
+            }
+        }
+        (exps ++ scala.List(exp), symMirr + ((sym, exp)), funcMirr)
+
+      case lr@scalan.NewObject(aClass, args, _) =>
+        Manifest.classType(aClass) match {
+          case (mA: Manifest[a]) =>
+            val exp = lms.newObj[a](aClass.getCanonicalName, args.map(v => symMirr(v.asInstanceOf[scalan.Exp[_]])))(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        }
 
       case scalan.Apply(f, x) =>
         import scalan.FuncElemExtensions
@@ -161,6 +196,11 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
               case scalan.HashCode() => lms.hashCode(arg1_)
               case scalan.StringToInt() => lms.stringToInt(arg1_.asInstanceOf[lms.Exp[String]])
               case scalan.StringToDouble() => lms.stringToDouble(arg1_.asInstanceOf[lms.Exp[String]])
+              case _ =>
+                op.opName match {
+                  case "Sin" => lms.Sin(arg1_.asInstanceOf[lms.Exp[Double]])
+                  case "ToDouble" => lms.intToDouble(arg1_.asInstanceOf[lms.Exp[Int]])
+            }
             }
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
           }
@@ -228,6 +268,8 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
                 lms.stringEndsWith(arg1_.asInstanceOf[lms.Exp[String]], arg2_.asInstanceOf[lms.Exp[String]])
               case scalan.StringMatches() =>
                 lms.stringMatches(arg1_.asInstanceOf[lms.Exp[String]], arg2_.asInstanceOf[lms.Exp[String]])
+              case scalan.MathPow =>
+                lms.Pow(arg1_.asInstanceOf[lms.Exp[Double]], arg2_.asInstanceOf[lms.Exp[Double]])
             }
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
@@ -266,17 +308,6 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
             }
         }
 
-      case loop@scalan.LoopUntil(state, stepSym@scalan.Def(step: scalan.Lambda[_, _]), condSym@scalan.Def(cond: scalan.Lambda[_, _])) => {
-        scalan.createManifest(loop.selfType) match {
-          case (mA: Manifest[a]) => {
-            val cond_ = mirrorLambdaToLmsFunc[a, Boolean](m)(cond.asInstanceOf[scalan.Lambda[a, Boolean]])
-            val step_ = mirrorLambdaToLmsFunc[a, a](m)(step.asInstanceOf[scalan.Lambda[a, a]])
-            val state_ = symMirr(state).asInstanceOf[lms.Exp[a]]
-            val exp = lms.loopUntil[a](state_, cond_, step_)(mA)
-            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((condSym, cond_)) + ((stepSym, step_)))
-          }
-        }
-      }
       //
       // Array Buffer
       //
@@ -1073,6 +1104,19 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
         }
       }
 
+      case fun@scalan.ArrayFold(source, init, lambdaSym@scalan.Def(lam: scalan.Lambda[_, _])) =>
+        source.elem match {
+          case el: scalan.ArrayElem[_] =>
+            (scalan.createManifest(el.eItem), scalan.createManifest(fun.selfType)) match {
+              case (mA: Manifest[a], mB: Manifest[b]) =>
+                val lambdaF = mirrorLambdaToLmsFunc[(b, a), b](m)(lam.asInstanceOf[scalan.Lambda[(b, a), b]])
+                val lmsSource = symMirr(source).asInstanceOf[lms.Exp[Array[a]]]
+                val lmsInit = symMirr(init).asInstanceOf[lms.Exp[b]]
+                val exp = lms.foldArray[a, b](lmsSource, lmsInit, lambdaF)(mA, mB)
+                (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lambdaSym, lambdaF)))
+            }
+        }
+
       case scalan.ArrayStride(xs, start, length, stride) =>
         xs.elem match {
           case el: scalan.ArrayElem[a] =>
@@ -1084,6 +1128,33 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
             val exp = lms.strideArray(lmsXs, lmsStart, lmsLength, lmsStride)(mA)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
+
+      case lr@scalan.ListMap(list, lamSym@scalan.Def(lam: scalan.Lambda[_, _])) =>
+        (scalan.createManifest(list.elem), scalan.createManifest(lam.eB)) match {
+        case (mA: Manifest[a], mB: Manifest[b]) =>
+          val lambdaF = mirrorLambdaToLmsFunc[a, b](m)(lam.asInstanceOf[scalan.Lambda[a, b]])
+          val exp = lms.listMap[a, b](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA, mB)
+          (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lamSym, lambdaF)))
+      }
+
+      case lr@scalan.ListRangeFrom0(len) =>
+        scalan.createManifest(lr.eT) match {
+          case mA: Manifest[a] =>
+            val exp = lms.listRangeFrom0[a](symMirr(len).asInstanceOf[lms.Exp[Int]])(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case loop@scalan.LoopUntil(state, stepSym@scalan.Def(step: scalan.Lambda[_, _]), condSym@scalan.Def(cond: scalan.Lambda[_, _])) => {
+        scalan.createManifest(loop.selfType) match {
+          case (mA: Manifest[a]) => {
+            val cond_ = mirrorLambdaToLmsFunc[a, Boolean](m)(cond.asInstanceOf[scalan.Lambda[a, Boolean]])
+            val step_ = mirrorLambdaToLmsFunc[a, a](m)(step.asInstanceOf[scalan.Lambda[a, a]])
+            val state_ = symMirr(state).asInstanceOf[lms.Exp[a]]
+            val exp = lms.loopUntil[a](state_, cond_, step_)(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((condSym, cond_)) + ((stepSym, step_)))
+          }
+        }
+      }
 
       case scalan.ListHead(xs) =>
         import scalan.extendListElement
@@ -1126,19 +1197,8 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] {
             val exp = lms.list_concat[a](ls, ks)
             (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
         }
-
-      case scalan.ListReplicate(l, x) =>
-        scalan.createManifest(x.elem) match {
-          case mA: Manifest[a] =>
-            implicit val imA = mA
-            val len = symMirr(l).asInstanceOf[lms.Exp[Int]]
-            val el = symMirr(x).asInstanceOf[lms.Exp[a]]
-            val exp = lms.list_replicate(len, el)
-            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
-        }
     }
 
     tt
   }
-
 }
