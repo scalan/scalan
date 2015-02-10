@@ -16,21 +16,6 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
 
   def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
-  def generate[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)
-                           (implicit compilerConfig: CompilerConfig): Unit = {
-    sourcesDir.mkdirs()
-    executableDir.mkdirs()
-    val eFunc = func.elem
-    val graph = buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
-    doGenerate(sourcesDir, executableDir, functionName, graph)(compilerConfig, eFunc.eDom, eFunc.eRange)
-  }
-
-  protected def doGenerate[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph)
-                                      (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
-
-    emitSource(sourcesDir, "cxx", functionName, graph, eInput, eOutput)
-  }
-
   override protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
@@ -39,8 +24,8 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
 //    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
 //      sourceFile.getAbsolutePath
 //
-    val command = Seq("make")
-    ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
+//    val command = Seq("make")
+//    ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
   }
 
   override protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
