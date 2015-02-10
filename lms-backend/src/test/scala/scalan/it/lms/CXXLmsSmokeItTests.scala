@@ -11,7 +11,7 @@ import scalan.it.smoke.SmokeItTests
 
 class CXXLmsSmokeItTests extends SmokeItTests {
   class ProgExp extends Prog with ScalanCtxExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX { self =>
-    def makeBridge[A, B] = new CoreBridge[A, B] {
+    def makeBridge = new CoreBridge {
       val scalan = self
       val lms = new CoreCXXLmsBackend
     }

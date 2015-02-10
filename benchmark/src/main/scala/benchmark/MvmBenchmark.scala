@@ -93,7 +93,7 @@ object MvmBenchmark {
 
     class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerScala {
       self =>
-      def makeBridge[A, B] = new CommunityBridge[A, B] {
+      def makeBridge = new CommunityBridge {
         val scalan = self
         val lms = new CommunityLmsBackend
       }

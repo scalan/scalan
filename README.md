@@ -149,7 +149,7 @@ object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCom
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
 
-  def makeBridge[A, B] = new CommunityBridge[A, B] {
+  def makeBridge = new CommunityBridge {
     val scalan = HelloScalanExp
     val lms = new CommunityLmsBackend
   }

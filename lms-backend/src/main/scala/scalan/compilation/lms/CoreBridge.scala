@@ -4,10 +4,10 @@ package compilation.lms
 import java.util.HashMap
 import scalan.collections.ListOpsExp
 
-trait CoreBridge[A, B] extends LmsBridge[A, B] {
+trait CoreBridge extends LmsBridge {
 
   // `LmsCompiler` mixed just to provide `createManifest` function
-  val scalan: ScalanExp with ListOpsExp with LmsCompiler
+  val scalan: ScalanCtxExp with ListOpsExp with LmsCompiler
   val lms: CoreLmsBackendBase
 
   override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) =

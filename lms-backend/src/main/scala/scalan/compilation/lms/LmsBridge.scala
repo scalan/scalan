@@ -1,10 +1,10 @@
 package scalan.compilation.lms
 
-import scalan.ScalanExp
+import scalan.ScalanCtxExp
 
-trait LmsBridge[A, B] {
+trait LmsBridge {
 
-  val scalan: ScalanExp
+  val scalan: ScalanCtxExp
   val lms: LmsBackend
 
   type SymMirror = Map[scalan.Exp[_], lms.Exp[A] forSome {type A}]
@@ -52,15 +52,11 @@ trait LmsBridge[A, B] {
     (lmsExps, finalSymMirr, finalFuncMirr)
   }
 
-  class LmsFacade[Ctx <: scalan.Transformer](g: scalan.ProgramGraph[Ctx]) {
-    def apply(in: lms.Exp[A]): lms.Exp[B] = {
-      val emptyMirror: Mirror = (Seq.empty, Map.empty, Map.empty)
-      val (_, _, finalFuncMirror) = mirrorDefs(emptyMirror)(g, g.schedule)
-      val res = finalFuncMirror(g.roots.last).asInstanceOf[lms.Exp[A] => lms.Exp[B]](in)
-
-      res
-    }
+  // can't just return lmsFunc: lms.Exp[A] => lms.Exp[B], since mirrorDefs needs to be called in LMS context
+  def apply[A, B](g: scalan.PGraph)(x: lms.Exp[A]) = {
+    val emptyMirror: Mirror = (Seq.empty, Map.empty, Map.empty)
+    val (_, _, finalFuncMirror) = mirrorDefs(emptyMirror)(g, g.schedule)
+    val lmsFunc = finalFuncMirror(g.roots.last).asInstanceOf[lms.Exp[A] => lms.Exp[B]]
+    lmsFunc(x)
   }
-
-  def getFacade[Ctx <: scalan.Transformer](g: scalan.ProgramGraph[Ctx]) = new LmsFacade[Ctx](g)
 }

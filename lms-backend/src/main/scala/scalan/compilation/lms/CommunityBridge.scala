@@ -1,11 +1,11 @@
 package scalan.compilation.lms
 
-import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp}
+import scalan.community.ScalanCommunityDslExp
 
-trait CommunityBridge[A, B] extends CoreBridge[A, B] {
+trait CommunityBridge extends CoreBridge {
 
   // `LmsCompiler` mixed just to provide `createManifest` function
-  val scalan: ScalanCommunityDslExp with ScalanCommunityExp with LmsCompiler
+  val scalan: ScalanCommunityDslExp with LmsCompiler
   val lms: CommunityLmsBackendBase
 
   abstract override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) =
