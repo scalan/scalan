@@ -4,8 +4,7 @@ import scalan.community.ScalanCommunityDslExp
 
 trait CommunityBridge extends CoreBridge {
 
-  // `LmsCompiler` mixed just to provide `createManifest` function
-  val scalan: ScalanCommunityDslExp with LmsCompiler
+  val scalan: ScalanCommunityDslExp
   val lms: CommunityLmsBackendBase
 
   abstract override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) =
@@ -18,7 +17,7 @@ trait CommunityBridge extends CoreBridge {
       case scalan.DotSparse(i1, v1, i2, v2) =>
         v1.elem match {
           case el: scalan.ArrayElem[_] =>
-            scalan.createManifest(el.eItem) match {
+            createManifest(el.eItem) match {
               case (mA: Manifest[a]) =>
                 val i1_ = symMirr(i1).asInstanceOf[lms.Exp[Array[Int]]]
                 val i2_ = symMirr(i2).asInstanceOf[lms.Exp[Array[Int]]]

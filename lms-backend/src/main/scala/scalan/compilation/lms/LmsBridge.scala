@@ -1,6 +1,9 @@
 package scalan.compilation.lms
 
+import java.io.File
+
 import scalan.ScalanCtxExp
+import scalan.util.FileUtil
 
 trait LmsBridge {
 
@@ -59,4 +62,56 @@ trait LmsBridge {
     val lmsFunc = finalFuncMirror(g.roots.last).asInstanceOf[lms.Exp[A] => lms.Exp[B]]
     lmsFunc(x)
   }
+
+  def createManifest[T]: PartialFunction[scalan.Elem[T], Manifest[_]] = {
+    // Doesn't work for some reason, produces int instead of Int
+    //    implicit val typeTag = eA.tag
+    //    implicit val classTag = eA.classTag
+    //    manifest[T]
+    case scalan.UnitElement => Manifest.Unit
+    case scalan.BoolElement => Manifest.Boolean
+    case scalan.ByteElement => Manifest.Byte
+    case scalan.ShortElement => Manifest.Short
+    case scalan.IntElement => Manifest.Int
+    case scalan.CharElement => Manifest.Char
+    case scalan.LongElement => Manifest.Long
+    case scalan.FloatElement => Manifest.Float
+    case scalan.DoubleElement => Manifest.Double
+    case scalan.StringElement => manifest[String]
+    case scalan.PairElem(eFst, eSnd) =>
+      Manifest.classType(classOf[(_, _)], createManifest(eFst), createManifest(eSnd))
+    case scalan.SumElem(eLeft, eRight) =>
+      Manifest.classType(classOf[Either[_, _]], createManifest(eLeft), createManifest(eRight))
+    case el: scalan.FuncElem[_, _] =>
+      Manifest.classType(classOf[_ => _], createManifest(el.eDom), createManifest(el.eRange))
+    case el: scalan.ArrayElem[_] =>
+      Manifest.arrayType(createManifest(el.eItem))
+    case el: scalan.ArrayBufferElem[_] =>
+      Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
+    case el: scalan.ListElem[_] ⇒
+      Manifest.classType(classOf[List[_]], createManifest(el.eItem))
+    case el: scalan.MMapElem[_,_] =>
+      Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
+    case el => scalan.???(s"Don't know how to create manifest for $el")
+  }
+
+  def emitSource[A, B](sourcesDir: File, extension: String, functionName: String, graph: scalan.PGraph, eInput: scalan.Elem[A], eOutput: scalan.Elem[B]): File = {
+    (createManifest(eInput), createManifest(eOutput)) match {
+      case (mA: Manifest[a], mB: Manifest[b]) =>
+        val sourceFile = new File(sourcesDir, s"$functionName.$extension")
+        FileUtil.withFile(sourceFile) { writer =>
+          val codegen = lms.codegen
+          val lmsFunc = apply[a, b](graph) _
+          codegen.emitSource[a, b](lmsFunc, functionName, writer)(mA, mB)
+          //          val s = bridge.lms.fresh[a](mA)
+          //          val body = codegen.reifyBlock(facade.apply(s))(mB)
+          //          codegen.emitSource(List(s), body, functionName, writer)(mB)
+          //          val bridge.lms.TP(sym,_) = bridge.lms.globalDefs.last
+          //          codegen.emitDepGraph( sym, new File( sourcesDir, functionName + "-LMS.dot" ).getAbsolutePath )
+          codegen.emitDataStructures(writer)
+        }
+        sourceFile
+    }
+  }
+
 }
