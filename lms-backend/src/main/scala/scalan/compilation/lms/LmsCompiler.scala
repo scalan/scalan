@@ -2,6 +2,10 @@ package scalan
 package compilation
 package lms
 
+import java.io.File
+
+import scalan.util.FileUtil
+
 trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
 
   def makeBridge[A, B]: LmsBridge[A, B]
@@ -36,5 +40,26 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
     case el: MMapElem[_,_] =>
       Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
     case el => ???(s"Don't know how to create manifest for $el")
+  }
+
+  def emitSource[A, B](sourcesDir: File, extension: String, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B]): File = {
+    (createManifest(eInput), createManifest(eOutput)) match {
+      case (mA: Manifest[a], mB: Manifest[b]) =>
+        val bridge = makeBridge[a, b]
+        val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
+        val codegen = bridge.lms.codegen
+
+        val sourceFile = new File(sourcesDir, s"$functionName.$extension")
+        FileUtil.withFile(sourceFile) { writer =>
+          codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
+          //          val s = bridge.lms.fresh[a](mA)
+          //          val body = codegen.reifyBlock(facade.apply(s))(mB)
+          //          codegen.emitSource(List(s), body, functionName, writer)(mB)
+          //          val bridge.lms.TP(sym,_) = bridge.lms.globalDefs.last
+          //          codegen.emitDepGraph( sym, new File( sourcesDir, functionName + "-LMS.dot" ).getAbsolutePath )
+          codegen.emitDataStructures(writer)
+        }
+        sourceFile
+    }
   }
 }

@@ -5,7 +5,7 @@ import java.io._
 import scalan.community.ScalanCommunityExp
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.compilation.lms.LmsCompiler
-import scalan.util.{FileUtil, ProcessUtil}
+import scalan.util.ProcessUtil
 
 trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVizExport =>
 
@@ -28,51 +28,16 @@ trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with GraphVi
   protected def doGenerate[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph)
                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
 
-    val outputSource = new File(sourcesDir, functionName + ".cxx")
-
-    (createManifest(eInput), createManifest(eOutput)) match {
-      case (mA: Manifest[a], mB: Manifest[b]) =>
-        val bridge = makeBridge[a, b]
-        val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
-        val codegen = bridge.lms.codegen
-
-        FileUtil.withFile(outputSource) { writer =>
-          codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
-          //          val s = bridge.lms.fresh[a](mA)
-          //          val body = codegen.reifyBlock(facade.apply(s))(mB)
-          //          codegen.emitSource(List(s), body, functionName, writer)(mB)
-          //          val bridge.lms.TP(sym,_) = bridge.lms.globalDefs.last
-          //          codegen.emitDepGraph( sym, new File( sourcesDir, functionName + "-LMS.dot" ).getAbsolutePath )
-          codegen.emitDataStructures(writer)
-        }
-    }
+    emitSource(sourcesDir, "cxx", functionName, graph, eInput, eOutput)
   }
 
   override protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
-    val outputSource = new File(sourcesDir, functionName + ".cxx")
-
-    (createManifest(eInput), createManifest(eOutput)) match {
-      case (mA: Manifest[a], mB: Manifest[b]) =>
-        val bridge = makeBridge[a, b]
-        val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
-        val codegen = bridge.lms.codegen
-
-        FileUtil.withFile(outputSource) { writer =>
-          codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
-//          val s = bridge.lms.fresh[a](mA)
-//          val body = codegen.reifyBlock(facade.apply(s))(mB)
-//          codegen.emitSource(List(s), body, functionName, writer)(mB)
-//          val bridge.lms.TP(sym,_) = bridge.lms.globalDefs.last
-//          codegen.emitDepGraph( sym, new File( sourcesDir, functionName + "-LMS.dot" ).getAbsolutePath )
-          codegen.emitDataStructures(writer)
-        }
-    }
-
+    emitSource(sourcesDir, "cxx", functionName, graph, eInput, eOutput)
 //    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
-//      outputSource.getAbsolutePath
+//      sourceFile.getAbsolutePath
 //
     val command = Seq("make")
     ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
