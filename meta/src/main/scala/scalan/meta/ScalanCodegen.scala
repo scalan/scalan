@@ -298,7 +298,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         val implicitArgs = concTemplateData.implicitArgs
         val useImplicits = concTemplateData.useImplicits
         val implicitArgsWithVals = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")
-        val parentArgs = c.ancestors.head.tpeSExprs.map(_.toString)
+        val parent     = c.ancestors.head
+        val parentArgs = parent.tpeSExprs.map(_.toString)
         val parentArgsStr = parentArgs.map(_ + ", ").mkString
         lazy val defaultImpl = optBT.opt(bt => {
           val externalMethods = module.entityOps.getMethodsWithAnnotation(ExternalMethod)
@@ -344,7 +345,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |$defaultImpl
         |  // elem for concrete class
         |  class ${className}Elem${typesWithElems}(iso: Iso[${className}Data${typesUse}, $className${typesUse}]) extends ${entityName}Elem[${parentArgsStr}${className}Data${typesUse}, $className${typesUse}](iso) {
-        |    def convert$entityName(x: Rep[$entityName${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.entityOps, c)}
+        |    def convert$entityName(x: Rep[${parent.name}${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.getEntity(parent.name), c)}
         |  }
         |
         |  // state representation type

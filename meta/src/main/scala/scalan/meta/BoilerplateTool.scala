@@ -44,7 +44,7 @@ class BoilerplateTool extends StrictLogging {
   val liteTypeSynonyms = Map(
     "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
-  lazy val liteConfig = CodegenConfig(
+  lazy val ceConfig = CodegenConfig(
     name = "ce",
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
@@ -126,11 +126,11 @@ class BoilerplateTool extends StrictLogging {
   val configsMap = Map(
     "coretests" -> List(coreTestsConfig),
     "core" -> List(coreConfig),
-    "ce" -> List(liteConfig),
+    "ce" -> List(ceConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreTestsConfig, coreConfig, liteConfig),
-    "all" -> List(coreTestsConfig, liteConfig, eeConfig)
+    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig),
+    "all" -> List(coreTestsConfig, ceConfig, eeConfig)
   )
 
   def main(args: Array[String]) {
