@@ -93,17 +93,21 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       case f :: Nil => f
       case f :: fs => s"Pair($f, ${pairify(fs)})"
     }
-  
+
+    def getDefaultOfBT(tc: STraitCall) =
+      s"DefaultOf${tc.name}" + tc.tpeSExprs.opt(args => s"[${args.rep()}]")
+
     def zeroSExpr(t: STpeExpr): String = t match {
       case STpePrimitive(_, defaultValueString) => defaultValueString
       case STraitCall(name, args)
         if module.entityOps.tpeArgs.exists(a => a.name == name && a.isHighKind) =>
            s"c$name.lift(${args.rep(a => s"e${a}")}).defaultRepValue"
-      case STraitCall(name, args) => {
+      case tc @ STraitCall(name, args) => {
         val optBT = module.entityOps.optBaseType
         val isBT = optBT.exists(bt => bt.name == name)
         if (isBT) {
-          s"Default.defaultOf[$t]"
+          getDefaultOfBT(tc) + ".value"
+          //s"Default.defaultOf[$t]"
         } else {
           s"element[$t].defaultRepValue"
         }
@@ -148,7 +152,14 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       s"(${sec.args.rep(a => s"${a.name}: ${a.tpe}")})"
     }
     def methodArgsUse(sec: SMethodArgs) = {
-      s"(${sec.args.rep(a => if (a.tpe.isTupledFunc) s"scala.Function.untupled(${a.name})" else s"${a.name}")})"
+      s"(${sec.args.rep(a => {
+        if (a.tpe.isTupledFunc)
+          s"scala.Function.untupled(${a.name})"
+        else if (a.annotations.contains(ArgList))
+          s"${a.name}: _*"
+        else
+          s"${a.name}"
+      })})"
     }
 
     def externalMethod(md: SMethodDef) = {
@@ -472,12 +483,12 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
     def baseTypeElem(ctx: String) = optBT.opt(bt =>
       if (tyArgsDecl.isEmpty) {
         s"""
-          |  implicit lazy val ${bt.name}Element: Elem[${bt.name}] = new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])
+          |  implicit lazy val ${bt.name}Element: Elem[${bt.name}] = new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])(weakTypeTag[${bt.name}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       }
       else {
         s"""
-          |  implicit def ${bt.name}Element${typesWithElemsAndTags}: Elem[$entityNameBT${typesUse}] = new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])
+          |  implicit def ${bt.name}Element${typesWithElemsAndTags}: Elem[$entityNameBT${typesUse}] = new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       })
 
@@ -557,7 +568,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         }
 
         def reasonToSkipMethod(m: SMethodDef): Option[String] = {
-          (m.explicitArgs.collect { case SMethodArg(name, STpeFunc(_, _), _) => name} match {
+          (m.explicitArgs.collect { case SMethodArg(name, STpeFunc(_, _), _, _) => name} match {
             case Seq() => None
             case nonEmpty => Some(s"Method has function arguments ${nonEmpty.mkString(", ")}")
           }).orElse {

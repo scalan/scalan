@@ -223,6 +223,18 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object shift {
+      def unapply(d: Def[_]): Option[(Rep[Interval], Rep[Int])] = d match {
+        case MethodCall(receiver, method, Seq(ofs, _*), _) if receiver.elem.isInstanceOf[IntervalElem] && method.getName == "shift" =>
+          Some((receiver, ofs)).asInstanceOf[Option[(Rep[Interval], Rep[Int])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Interval], Rep[Int])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object IntervalCompanionMethods {
@@ -255,6 +267,18 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Rep[Slice]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object shift {
+      def unapply(d: Def[_]): Option[(Rep[Slice], Rep[Int])] = d match {
+        case MethodCall(receiver, method, Seq(ofs, _*), _) if receiver.elem.isInstanceOf[SliceElem] && method.getName == "shift" =>
+          Some((receiver, ofs)).asInstanceOf[Option[(Rep[Slice], Rep[Int])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Slice], Rep[Int])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -302,6 +326,18 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Rep[Segment]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object shift {
+      def unapply(d: Def[_]): Option[(Rep[Segment], Rep[Int])] = d match {
+        case MethodCall(receiver, method, Seq(ofs, _*), _) if receiver.elem.isInstanceOf[SegmentElem[_, _]] && method.getName == "shift" =>
+          Some((receiver, ofs)).asInstanceOf[Option[(Rep[Segment], Rep[Int])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Segment], Rep[Int])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

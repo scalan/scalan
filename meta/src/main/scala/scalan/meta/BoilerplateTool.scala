@@ -47,6 +47,7 @@ class BoilerplateTool extends StrictLogging {
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
       , "scalan/collections/HashSets.scala"
+      , "scalan/collections/Seqs.scala"
       , "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
       , "scalan/collections/MultiMap.scala"

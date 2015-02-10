@@ -17,7 +17,8 @@ trait HashSets extends Base with BaseTypes { self: HashSetsDsl =>
   trait SHashSetCompanion extends ExCompanion1[HashSet]  {
     @External def empty[A:Elem]: Rep[HashSet[A]]
   }
-  implicit def DefaultOfHashSet[A:Elem]: Default[HashSet[A]] = Default.defaultVal(HashSet.empty[A]) //SHashSet.defaultVal
+
+  def DefaultOfHashSet[A:Elem]: Default[HashSet[A]] = Default.defaultVal(HashSet.empty[A]) //SHashSet.defaultVal
 }
 
 trait HashSetsDsl extends impl.HashSetsAbs

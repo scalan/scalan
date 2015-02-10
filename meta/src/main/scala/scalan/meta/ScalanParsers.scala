@@ -93,6 +93,9 @@ object ScalanAst {
   case object ExternalMethod extends MethodAnnotation
   case object ExternalConstructor extends MethodAnnotation
 
+  trait ArgAnnotation
+  case object ArgList extends ArgAnnotation
+
   case class SMethodDef(name: String, tpeArgs: STpeArgs, argSections: List[SMethodArgs],
     tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[MethodAnnotation], elem: Option[Unit] = None) extends SBodyItem {
     def explicitArgs = argSections.filter(!_.impFlag).flatMap(_.args)
@@ -112,7 +115,7 @@ object ScalanAst {
   }
   type STpeArgs = List[STpeArg]
 
-  case class SMethodArg(name: String, tpe: STpeExpr, default: Option[SExpr])
+  case class SMethodArg(name: String, tpe: STpeExpr, default: Option[SExpr], annotations: List[ArgAnnotation] = Nil)
   case class SMethodArgs(impFlag: Boolean, args: List[SMethodArg])
 
   case class SClassArg(impFlag: Boolean, overFlag: Boolean, valFlag: Boolean, name: String, tpe: STpeExpr, default: Option[SExpr])
@@ -504,6 +507,15 @@ trait ScalanParsers {
   val HasConstructorAnnotation = new MethodAnnotation("Constructor")
   val OverloadIdAnnotation = new MethodAnnotation("OverloadId")
 
+  def ArgAnnotation(anClass: String) = new {
+    def unapply(md: ValDef): Option[List[Tree]] =
+      md.mods.annotations.collectFirst {
+        case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args)
+          if ident.toString == anClass => args
+      }
+  }
+  val HasArgListAnnotation = ArgAnnotation("ArgList")
+
   def methodDef(md: DefDef, isElem: Boolean = false) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
     val args0 = md.vparamss.map(methodArgs)
@@ -576,7 +588,11 @@ trait ScalanParsers {
   def methodArg(vd: ValDef): SMethodArg = {
     val tpe = tpeExpr(vd.tpt)
     val default = optExpr(vd.rhs)
-    SMethodArg(vd.name, tpe, default)
+    val annotations = vd match {
+      case HasArgListAnnotation(_) => List(ArgList)
+      case _ => Nil
+    }
+    SMethodArg(vd.name, tpe, default, annotations)
   }
 
   def selfType(vd: ValDef): Option[SSelfTypeDef] = {
