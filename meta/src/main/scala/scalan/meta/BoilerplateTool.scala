@@ -74,7 +74,7 @@ class BoilerplateTool extends StrictLogging {
       "scalan/trees/Trees.scala",
       "scalan/math/Matrices.scala",
       "scalan/math/Vectors.scala",
-      "scalan/collections/Sets.scala",
+      "scalan/collections/PSets.scala",
       "scalan/dists/Dists.scala",
       "scalan/parrays/PArrays.scala"
     ),
