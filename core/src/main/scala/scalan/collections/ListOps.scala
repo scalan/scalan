@@ -42,7 +42,7 @@ trait ListOps { self: Scalan =>
     def empty[T: Elem] = replicate(0, element[T].defaultRepValue)
   }
 
-  case class ListElem[T](val eItem: Elem[T]) extends Element[List[T]] {
+  case class ListElem[T](eItem: Elem[T]) extends Element[List[T]] {
     override def isEntityType = eItem.isEntityType
 
     lazy val tag = {
