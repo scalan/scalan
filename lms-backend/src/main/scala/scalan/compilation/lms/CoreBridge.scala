@@ -25,7 +25,7 @@ trait CoreBridge extends LmsBridge { self: ScalanCtxExp =>
         val mB = createManifest(lam.y.elem).asInstanceOf[Manifest[b]]
         val f = mirrorLambdaToLmsFunc[a, b](m)(lam)
         val fun = lms.fun(f)(mA, mB)
-        (exps, symMirr + ((sym, fun)), funcMirr + ((sym, f)))
+        (exps :+ fun, symMirr + ((sym, fun)), funcMirr + ((sym, f)))
 
       case Apply(f, x) =>
         (createManifest(f.elem.eDom), createManifest(f.elem.eRange)) match {
