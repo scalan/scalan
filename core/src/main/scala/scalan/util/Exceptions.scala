@@ -7,7 +7,8 @@ trait Exceptions extends Base with BaseTypes { self: ExceptionsDsl =>
 
   type RThrow = Rep[Throwable]
   trait SThrowable extends BaseTypeEx[Throwable, SThrowable] { self =>
-   @External def getMessage: Rep[String]
+    @External def getMessage: Rep[String]
+    def wrappedValueOfBaseType: Rep[Throwable]
   }
   trait SThrowableCompanion extends ExCompanion0[Throwable]  {
     @Constructor def apply(msg: Rep[String]): Rep[Throwable]

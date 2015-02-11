@@ -10,7 +10,7 @@ trait Seqs extends Base with BaseTypes { self: SeqsDsl =>
   /** Iterable collection that have a defined order of elements. */
   trait SSeq[A] extends BaseTypeEx[Seq[A], SSeq[A]] { self =>
     implicit def eA: Elem[A]
-
+    def wrappedValueOfBaseType: Rep[Seq[A]]
     @External def isEmpty: Rep[Boolean]
   }
 

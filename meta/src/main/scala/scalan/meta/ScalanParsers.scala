@@ -139,6 +139,13 @@ object ScalanAst {
       case md: SMethodDef if md.external.fold(false)(_ == a) => md
     }
 
+    def getFieldDefs: List[SMethodDef] = body.collect {
+      case md: SMethodDef if md.allArgs.isEmpty => md
+    }
+
+    def getAncestorTraits: List[STraitDef] = {
+      ???
+    }
   }
 
   case class STraitDef(
@@ -198,6 +205,15 @@ object ScalanAst {
     methods: List[SMethodDef],
     selfType: Option[SSelfTypeDef],
     seqDslImpl: Option[SSeqImplementation] = None)
+  {
+    def getEntity(name: String) = {
+      val entity = List(entityOps).find(e => e.name == name)
+      entity match {
+        case Some(e) => e
+        case _ => sys.error(s"Cannot find entity with name $name")
+      }
+    }
+  }
 
   def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
 

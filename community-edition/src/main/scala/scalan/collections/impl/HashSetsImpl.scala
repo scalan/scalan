@@ -21,7 +21,10 @@ trait HashSetsAbs extends Scalan with HashSets {
   implicit def defaultSHashSetElem[A:Elem]: Elem[SHashSet[A]] = element[SHashSetImpl[A]].asElem[SHashSet[A]]
   implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]]
 
-  abstract class SHashSetElem[A, From, To <: SHashSet[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
+  abstract class SHashSetElem[A, From, To <: SHashSet[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+    override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
+    def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To]
+  }
 
   trait SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs]
   implicit lazy val SHashSetCompanionElem: SHashSetCompanionElem = new SHashSetCompanionElem {
@@ -61,7 +64,9 @@ trait HashSetsAbs extends Scalan with HashSets {
   }
   trait SHashSetImplCompanion
   // elem for concrete class
-  class SHashSetImplElem[A](iso: Iso[SHashSetImplData[A], SHashSetImpl[A]]) extends SHashSetElem[A, SHashSetImplData[A], SHashSetImpl[A]](iso)
+  class SHashSetImplElem[A:Elem](iso: Iso[SHashSetImplData[A], SHashSetImpl[A]]) extends SHashSetElem[A, SHashSetImplData[A], SHashSetImpl[A]](iso) {
+    def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
+  }
 
   // state representation type
   type SHashSetImplData[A] = HashSet[A]
@@ -192,6 +197,18 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
     Some((p.wrappedValueOfBaseType))
 
   object SHashSetMethods {
+    object wrappedValueOfBaseType {
+      def unapply(d: Def[_]): Option[Rep[SHashSet[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "wrappedValueOfBaseType" =>
+          Some(receiver).asInstanceOf[Option[Rep[SHashSet[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SHashSet[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object + {
       def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A]) forSome {type A}] = d match {
         case MethodCall(receiver, method, Seq(elem, _*), _) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "$plus" =>
