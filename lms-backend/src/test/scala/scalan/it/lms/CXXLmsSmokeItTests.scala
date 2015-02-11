@@ -10,11 +10,8 @@ import scalan.compilation.lms.cxx.{LmsCompilerCXX, CoreCXXLmsBackend}
 import scalan.it.smoke.SmokeItTests
 
 class CXXLmsSmokeItTests extends SmokeItTests {
-  class ProgExp extends Prog with ScalanCtxExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX { self =>
-    def makeBridge = new CoreBridge {
-      val scalan = self
-      val lms = new CoreCXXLmsBackend
-    }
+  class ProgExp extends Prog with ScalanCtxExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX with CoreBridge {
+    val lms = new CoreCXXLmsBackend
   }
   
   override val progStaged = new ProgExp

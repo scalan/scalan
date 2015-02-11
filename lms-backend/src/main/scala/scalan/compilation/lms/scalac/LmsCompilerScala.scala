@@ -10,7 +10,7 @@ import scala.tools.nsc.{Global, Settings}
 import scala.tools.nsc.reporters.StoreReporter
 import scalan.util.{FileUtil, ProcessUtil, StringUtil}
 
-trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
+trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp with LmsBridge =>
 
   /**
    * If scalaVersion is None, uses scala-compiler.jar

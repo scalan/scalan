@@ -7,11 +7,8 @@ import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
 
 abstract class LmsLinAlgItTests extends BaseItTests {
-  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerScala { self =>
-    def makeBridge = new CommunityBridge {
-      val scalan = self
-      val lms = new CommunityLmsBackend
-    }
+  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with LmsCompilerScala with CommunityBridge {
+    val lms = new CommunityLmsBackend
   }
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunityDslSeq
   

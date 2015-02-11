@@ -7,11 +7,8 @@ import scalan.it.smoke.CommunitySmokeItTests
 
 class LmsCommunityItTests extends CommunitySmokeItTests {
 
-  class ProgCommunityExp extends ProgCommunity with ScalanCommunityExp with ScalanCommunityDslExp with LmsCompilerScala { self =>
-    def makeBridge = new CommunityBridge {
-      val scalan = self
-      val lms = new CommunityLmsBackend
-    }
+  class ProgCommunityExp extends ProgCommunity with ScalanCommunityDslExp with LmsCompilerScala with CommunityBridge {
+    val lms = new CommunityLmsBackend
   }
 
   val progStaged = new ProgCommunityExp
