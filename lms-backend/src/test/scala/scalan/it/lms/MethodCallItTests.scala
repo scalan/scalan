@@ -16,7 +16,56 @@ import scalan.{ScalanCtxExp, ScalanExp}
 import scalan.linalgebra.{Matrices, MatricesDslExp}
 import scalan.util.ProcessUtil.launch
 
-class MethodCallItTests extends BaseItTests {
+class MethodCallItTests extends LmsCommunityItTests{
+  trait Prog extends ProgCommunity  {
+
+    lazy val withIfFalse = fun { (p: Rep[(Int, (Throwable, Throwable))]) => {
+      val Pair(n, Pair(t1, t2)) = p
+      IF(n>0) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
+    }
+    }
+
+    lazy val withIfTrue = fun { (p: Rep[(Int, (Throwable, Throwable))]) => {
+      //val Pair(n, Pair(t1, t2)) = p
+      val Pair(n, Pair(t1, t2)) = p
+      IF(n<=0) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
+    }
+    }
+
+    lazy val arrayLengthFun = fun { (v: Rep[Array[Int]] ) =>  {
+      //v.arrayLength
+      v.length
+    }}
+
+  }
+
+  class ProgSeq extends ProgCommunitySeq with Prog  {}
+  class ProgStaged extends ProgCommunityExp with  Prog {}
+
+  override val progSeq = new ProgSeq
+  override val progStaged = new ProgStaged
+
+
+
+  test("withIfTrue") {
+    //val in = Array(Array(2, 3), Array(4, 5))
+    val in = (1, (new Exception("branch true exception"), new Exception("branch false exception") ))
+    compareOutputWithSequential(progStaged)(progSeq.withIfTrue, progStaged.withIfTrue, "withIfTrue", in)
+  }
+
+  test("withIfFalse") {
+    //val in = Array(Array(2, 3), Array(4, 5))
+    val in = (1, (new Exception("branch true exception"), new Exception("branch false exception") ))
+    compareOutputWithSequential(progStaged)(progSeq.withIfFalse, progStaged.withIfFalse, "withIfFalse", in)
+  }
+
+  test("arrayLengthFun") {
+    val in = Array(4, 5, 6)
+    compareOutputWithSequential(progStaged)(progSeq.arrayLengthFun, progStaged.arrayLengthFun, "arrayLengthFun", in)
+  }
+}
+
+class MethodCallItTestsOld extends BaseItTests {
 
   trait TestLmsCompiler extends ScalanCommunityDslExp with ScalanCtxExp with LmsCompilerScala {
     self: ScalanExp with GraphVizExport =>
