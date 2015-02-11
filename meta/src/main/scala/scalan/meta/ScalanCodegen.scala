@@ -224,7 +224,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
     def getTraitAbs = {
       val entityCompOpt = module.entityOps.companion
       val companionName = s"${entityName}Companion"
-      val proxy =
+      def entityProxy(entityName: String, typesDecl: String, typesUse: String) =
         s"""
         |  // single proxy for each type family
         |  implicit def proxy$entityName${typesDecl}(p: Rep[$entityName${typesUse}]): $entityName$typesUse =
@@ -254,7 +254,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
           |""".stripAndTrim
         })
 
-      val familyElem =
+      def familyElem(entityName: String, tyArgsDecl: List[String], typesUse: String) =
         s"""
         |  abstract class ${entityName}Elem[${tyArgsDecl.opt(tyArgs => s"${tyArgsDecl.rep(t => t)}, ")}From, To <: $entityName$typesUse](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
         |    override def convert(x: Rep[Reifiable[_]]) = convert$entityName(x.asRep[$entityName$typesUse])
@@ -285,8 +285,23 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |    proxyOps[${companionName}](p)
         |  }
         |""".stripAndTrim
-        
-      val defs = for { c <- module.concreteSClasses } yield {
+
+      val subEntities = for { entity <- module.entities.drop(1) } yield {
+        val templateData = EntityTemplateData(entity)
+        val entityName = templateData.name
+        val tyArgsDecl = templateData.tpeArgDecls
+        //val tyArgsUse = templateData.tpeArgUses
+        val typesDecl = templateData.tpeArgDeclString
+        val typesUse = templateData.tpeArgUseString
+        //val typesWithElems = templateData.boundedTpeArgString(false)
+        //val typesWithElemsAndTags = templateData.boundedTpeArgString(true)
+        s"""
+        |${entityProxy(entityName, typesDecl, typesUse)}
+        |${familyElem(entityName, tyArgsDecl, typesUse)}
+        |""".stripMargin
+      }
+
+      val concreteClasses = for { c <- module.concreteSClasses } yield {
         val className = c.name
         val concTemplateData = ConcreteClassTemplateData(c)
         val typesDecl = concTemplateData.tpeArgDeclString
@@ -344,8 +359,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         s"""
         |$defaultImpl
         |  // elem for concrete class
-        |  class ${className}Elem${typesWithElems}(iso: Iso[${className}Data${typesUse}, $className${typesUse}]) extends ${entityName}Elem[${parentArgsStr}${className}Data${typesUse}, $className${typesUse}](iso) {
-        |    def convert$entityName(x: Rep[${parent.name}${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.getEntity(parent.name), c)}
+        |  class ${className}Elem${typesWithElems}(iso: Iso[${className}Data${typesUse}, $className${typesUse}]) extends ${parent.name}Elem[${parentArgsStr}${className}Data${typesUse}, $className${typesUse}](iso) {
+        |    def convert${parent.name}(x: Rep[${parent.name}${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.getEntity(parent.name), c)}
         |  }
         |
         |  // state representation type
@@ -411,15 +426,17 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
        |// Abs -----------------------------------
        |trait ${module.name}Abs extends ${config.baseContextTrait} with ${module.name} {
        |  ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
-       |$proxy
+       |${entityProxy(entityName, typesDecl, typesUse)}
        |$proxyBT
        |$baseTypeElem
        |
-       |$familyElem
+       |${familyElem(entityName, tyArgsDecl, typesUse)}
        |
        |$companionAbs
        |
-       |${defs.mkString("\n\n")}
+       |${subEntities.mkString("\n\n")}
+       |
+       |${concreteClasses.mkString("\n\n")}
        |}
        |""".stripAndTrim
     }

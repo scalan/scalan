@@ -131,9 +131,13 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
 //  trait EmptyArrayCompanion extends ConcreteClass1[EmptyArray] {
 //    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(EmptyArray[A])
 //  }
+  trait IPairArray[A,B] extends PArray[(A,B)] {
+    def as: Rep[PArray[A]]
+    def bs: Rep[PArray[B]]
+  }
 
   abstract class PairArray[A, B](val as: Rep[PArray[A]], val bs: Rep[PArray[B]])(implicit val eA: Elem[A], val eB: Elem[B])
-    extends PArray[(A, B)] {
+    extends IPairArray[A,B] {
     lazy val elem = element[(A, B)]
     def arr = as.arr zip bs.arr
     def apply(i: Rep[Int]) = (as(i), bs(i))
@@ -152,9 +156,13 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     }
   }
 
+  trait INestedArray[A] extends PArray[PArray[A]] {
+    def values: Rep[PArray[A]]
+    def segments: Rep[PArray[(Int, Int)]]
+  }
   // TODO rename back to FlatNestedArray after unification with Scalan
   abstract class NestedArray[A](val values: Rep[PArray[A]], val segments: Rep[PArray[(Int, Int)]])(implicit val eA: Elem[A])
-    extends PArray[PArray[A]] {
+    extends INestedArray[A] {
     lazy val elem = defaultPArrayElement(eA)
     def length = segments.length
     def apply(i: Rep[Int]) = {
