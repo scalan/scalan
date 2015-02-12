@@ -44,7 +44,7 @@ class MethodCallItTests extends LmsCommunityItTests{
       in._1.apply(in._2)
     }}
 
-    lazy val emptyMap = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
+    lazy val easyMap = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
       val Pair(m0, Pair(vFrom, vTo)) = in
       val m:Rep[Array[Double]] = m0.map(x => x*x)
       m.reduce
@@ -53,7 +53,29 @@ class MethodCallItTests extends LmsCommunityItTests{
     lazy val mapWithLambda = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
       val Pair(m0, Pair(vFrom, vTo)) = in
       def f(x:Rep[Double],y:Rep[Double], z:Rep[Double]): Rep[Double] =  {
-        IF(x!=y) THEN x ELSE z
+        x*y+z
+      }
+
+      val m:Rep[Array[Double]] = m0.map(x => f(x, vFrom, vTo))
+
+      m.reduce
+    }}
+
+    lazy val mapWithLambdaIf = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
+      val Pair(m0, Pair(vFrom, vTo)) = in
+      def f(x:Rep[Double],y:Rep[Double], z:Rep[Double]): Rep[Double] =  {
+        IF(x===y) THEN z ELSE x
+      }
+
+      val m:Rep[Array[Double]] = m0.map(x => f(x, vFrom, vTo))
+
+      m.reduce
+    }}
+
+    lazy val mapWithLambdaIfGt = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
+      val Pair(m0, Pair(vFrom, vTo)) = in
+      def f(x:Rep[Double],y:Rep[Double], z:Rep[Double]): Rep[Double] =  {
+        IF(x<y) THEN x ELSE z
       }
 
       val m:Rep[Array[Double]] = m0.map(x => f(x, vFrom, vTo))
@@ -102,14 +124,24 @@ class MethodCallItTests extends LmsCommunityItTests{
     compareOutputWithSequential(progStaged)(progSeq.arrayOneArg, progStaged.arrayOneArg, "arrayOneArg", in)
   }
 
-  test("emptyMap") {
+  test("easyMap") {
     val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
-    compareOutputWithSequential(progStaged)(progSeq.emptyMap, progStaged.emptyMap, "emptyMap", in)
+    compareOutputWithSequential(progStaged)(progSeq.easyMap, progStaged.easyMap, "easyMap", in)
   }
 
   test("mapWithLambda") {
     val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
     compareOutputWithSequential(progStaged)(progSeq.mapWithLambda, progStaged.mapWithLambda, "mapWithLambda", in)
+  }
+
+  test("mapWithLambdaIf") {
+    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
+    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIf, progStaged.mapWithLambdaIf, "mapWithLambdaIf", in)
+  }
+
+  test("mapWithLambdaIfGt") {
+    val in = (Array(4.4, 5.0, 6.1), (5.5, 7.7))
+    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIfGt, progStaged.mapWithLambdaIfGt, "mapWithLambdaIfGt", in)
   }
 
 }
