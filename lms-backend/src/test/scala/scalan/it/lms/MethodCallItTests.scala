@@ -14,7 +14,107 @@ import scalan.linalgebra.MatricesDslExp
 import scalan.util.ProcessUtil.launch
 import scalan.{ScalanCtxExp, ScalanExp}
 
-class MethodCallItTests extends BaseItTests {
+class MethodCallItTests extends LmsCommunityItTests{
+  trait Prog extends ProgCommunity  {
+
+    lazy val emptyIf = fun { (in: Rep[(Boolean, (Double, Double))] ) =>  {
+      val Pair(x, Pair(y, z)) = in
+      IF(x) THEN y ELSE z
+    }}
+
+    lazy val exceptionWithIfFalse = fun { (p: Rep[(Int, (Throwable, Throwable))]) => {
+      val Pair(n, Pair(t1, t2)) = p
+      IF(n>0) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
+    }
+    }
+
+    lazy val exceptionWithIfTrue = fun { (p: Rep[(Int, (Throwable, Throwable))]) => {
+      //val Pair(n, Pair(t1, t2)) = p
+      val Pair(n, Pair(t1, t2)) = p
+      IF(n<=0) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
+    }
+    }
+
+    lazy val arrayLengthFun = fun { (v: Rep[Array[Int]] ) =>  {
+      //v.arrayLength
+      v.length
+    }}
+
+    lazy val arrayOneArg = fun { (in: Rep[(Array[Double], Int)] ) =>  {
+      in._1.apply(in._2)
+    }}
+
+    lazy val emptyMap = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
+      val Pair(m0, Pair(vFrom, vTo)) = in
+      val m:Rep[Array[Double]] = m0.map(x => x*x)
+      m.reduce
+    }}
+
+    lazy val mapWithLambda = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
+      val Pair(m0, Pair(vFrom, vTo)) = in
+      def f(x:Rep[Double],y:Rep[Double], z:Rep[Double]): Rep[Double] =  {
+        IF(x!=y) THEN x ELSE z
+      }
+
+      val m:Rep[Array[Double]] = m0.map(x => f(x, vFrom, vTo))
+
+      m.reduce
+    }}
+  }
+
+  class ProgSeq extends ProgCommunitySeq with Prog  {}
+  class ProgStaged extends ProgCommunityExp with  Prog {}
+
+  override val progSeq = new ProgSeq
+  override val progStaged = new ProgStaged
+
+
+
+  test("emptyIfTrue") {
+    val in = (true, (5.0, 7.7))
+    compareOutputWithSequential(progStaged)(progSeq.emptyIf, progStaged.emptyIf, "emptyIfTrue", in)
+  }
+
+  test("emptyIfFalse") {
+    val in = (false, (5.0, 7.7))
+    compareOutputWithSequential(progStaged)(progSeq.emptyIf, progStaged.emptyIf, "emptyIfFalse", in)
+  }
+
+  ignore("exceptionWithIfTrue") {
+    //val in = Array(Array(2, 3), Array(4, 5))
+    val in = (1, (new Exception("branch true exception"), new Exception("branch false exception") ))
+    compareOutputWithSequential(progStaged)(progSeq.exceptionWithIfTrue, progStaged.exceptionWithIfTrue, "exceptionWithIfTrue", in)
+  }
+
+  test("exceptionWithIfFalse") {
+    //val in = Array(Array(2, 3), Array(4, 5))
+    val in = (1, (new Exception("branch true exception"), new Exception("branch false exception") ))
+    compareOutputWithSequential(progStaged)(progSeq.exceptionWithIfFalse, progStaged.exceptionWithIfFalse, "exceptionWithIfFalse", in)
+  }
+
+  test("arrayLengthFun") {
+    val in = Array(4, 5, 6)
+    compareOutputWithSequential(progStaged)(progSeq.arrayLengthFun, progStaged.arrayLengthFun, "arrayLengthFun", in)
+  }
+
+  test("arrayOneArg") {
+    val in = (Array(4.4, 5.0, 6.1), 2)
+    compareOutputWithSequential(progStaged)(progSeq.arrayOneArg, progStaged.arrayOneArg, "arrayOneArg", in)
+  }
+
+  test("emptyMap") {
+    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
+    compareOutputWithSequential(progStaged)(progSeq.emptyMap, progStaged.emptyMap, "emptyMap", in)
+  }
+
+  test("mapWithLambda") {
+    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
+    compareOutputWithSequential(progStaged)(progSeq.mapWithLambda, progStaged.mapWithLambda, "mapWithLambda", in)
+  }
+
+}
+
+class MethodCallItTestsOld extends BaseItTests {
 
   trait TestLmsCompiler extends ScalanCommunityDslExp with ScalanCtxExp with LmsCompilerScala {
     self: ScalanExp with GraphVizExport =>
