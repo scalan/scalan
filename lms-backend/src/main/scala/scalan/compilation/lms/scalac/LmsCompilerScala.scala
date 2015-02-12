@@ -102,14 +102,11 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
             S.println(s"${settings.classpath}\n")
             for(row <- reporter.infos) {
               val pos = s"${row.pos.source.path}:${row.pos.safeLine}"
-              val line1 = s"${row.severity}: ${pos}"
-              val line2 = "|"+row.pos.lineContent
-              val line3 = "|"+" "*(row.pos.column-1) + "^"
-              S.println(line1)
-              S.println(line2)
-              S.println(line3)
+              S.println(s"${row.severity}: ${pos}")
+              S.println("|"+row.pos.lineContent)
+              S.println("|"+" "*(row.pos.column-1) + "^")
             }
-            S.println(s"class $functionName compiled with ${reporter.WARNING.count} warnings")
+            S.println(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings")
             S.close()
 
             reporter.ERROR.count match {
