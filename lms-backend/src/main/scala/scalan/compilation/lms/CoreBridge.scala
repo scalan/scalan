@@ -39,7 +39,7 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] with Interpreter with CommunityMe
             case e: ScalaLanguage#ScalaLib =>
 //              if (!e.jar.isEmpty) scalan.extensionsJars += e.jar
               Manifest.classType(method.getDeclaringClass) match {
-                case (mA: Manifest[a]) => lms.scalaMethod[a](null, PURE, e.pack + "." + conf.funcName.name, List(obj) ++ args.map(v => symMirr(v.asInstanceOf[scalan.Exp[_]])): _*)(mA)
+                case (mA: Manifest[a]) => lms.scalaMethod[a](null, PURE, e.pack + "." + conf.funcName.name, List.empty, List(obj) ++ args.map(v => symMirr(v.asInstanceOf[scalan.Exp[_]])): _*)(mA)
               }
             case e: ScalaLanguage#EmbeddedObject if e.name == "lms" =>
               val name = conf.funcName.name
@@ -50,7 +50,9 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] with Interpreter with CommunityMe
           }
           case None =>
             Manifest.classType(method.getDeclaringClass) match {
-              case (mA: Manifest[a]) => lms.scalaMethod[a](obj, PURE, method.getName, args
+              case (mA: Manifest[a]) => lms.scalaMethod[a](obj, PURE, method.getName,
+                args.filter(_.isInstanceOf[scalan.Element[_]]).map(_.asInstanceOf[scalan.Element[_]].tag),
+                args
                 /* filter out implicit ClassTag params */ .filter(_.isInstanceOf[scalan.Exp[_]])
                 .map(v => symMirr(v.asInstanceOf[scalan.Exp[_]])): _*)(mA)
             }
@@ -308,6 +310,17 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] with Interpreter with CommunityMe
             }
         }
 
+      case loop@scalan.LoopUntil(state, stepSym@scalan.Def(step: scalan.Lambda[_, _]), condSym@scalan.Def(cond: scalan.Lambda[_, _])) => {
+        scalan.createManifest(loop.selfType) match {
+          case (mA: Manifest[a]) => {
+            val cond_ = mirrorLambdaToLmsFunc[a, Boolean](m)(cond.asInstanceOf[scalan.Lambda[a, Boolean]])
+            val step_ = mirrorLambdaToLmsFunc[a, a](m)(step.asInstanceOf[scalan.Lambda[a, a]])
+            val state_ = symMirr(state).asInstanceOf[lms.Exp[a]]
+            val exp = lms.loopUntil[a](state_, cond_, step_)(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((condSym, cond_)) + ((stepSym, step_)))
+          }
+        }
+      }
       //
       // Array Buffer
       //
@@ -1137,24 +1150,20 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] with Interpreter with CommunityMe
           (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lamSym, lambdaF)))
       }
 
+      case lr@scalan.ListFilter(list, lamSym @ scalan.Def(lam: scalan.Lambda[_, _])) =>
+        scalan.createManifest(list.elem) match {
+          case mA: Manifest[a] =>
+            val lambdaF = mirrorLambdaToLmsFunc[a, Boolean](m)(lam.asInstanceOf[scalan.Lambda[a, Boolean]])
+            val exp = lms.listFilter[a](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lamSym, lambdaF)))
+        }
+
       case lr@scalan.ListRangeFrom0(len) =>
         scalan.createManifest(lr.eT) match {
           case mA: Manifest[a] =>
             val exp = lms.listRangeFrom0[a](symMirr(len).asInstanceOf[lms.Exp[Int]])(mA)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
-
-      case loop@scalan.LoopUntil(state, stepSym@scalan.Def(step: scalan.Lambda[_, _]), condSym@scalan.Def(cond: scalan.Lambda[_, _])) => {
-        scalan.createManifest(loop.selfType) match {
-          case (mA: Manifest[a]) => {
-            val cond_ = mirrorLambdaToLmsFunc[a, Boolean](m)(cond.asInstanceOf[scalan.Lambda[a, Boolean]])
-            val step_ = mirrorLambdaToLmsFunc[a, a](m)(step.asInstanceOf[scalan.Lambda[a, a]])
-            val state_ = symMirr(state).asInstanceOf[lms.Exp[a]]
-            val exp = lms.loopUntil[a](state_, cond_, step_)(mA)
-            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((condSym, cond_)) + ((stepSym, step_)))
-          }
-        }
-      }
 
       case scalan.ListHead(xs) =>
         import scalan.extendListElement
@@ -1197,8 +1206,17 @@ trait CoreBridge[A, B] extends LmsBridge[A, B] with Interpreter with CommunityMe
             val exp = lms.list_concat[a](ls, ks)
             (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
         }
-    }
 
+      case scalan.ListReplicate(l, x) =>
+        scalan.createManifest(x.elem) match {
+          case mA: Manifest[a] =>
+            implicit val imA = mA
+            val len = symMirr(l).asInstanceOf[lms.Exp[Int]]
+            val el = symMirr(x).asInstanceOf[lms.Exp[a]]
+            val exp = lms.list_replicate(len, el)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+    }
     tt
   }
 }

@@ -37,7 +37,9 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
       Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
     case el: BaseElemEx[_, _] => {
       val c = el.tag.mirror.runtimeClass(el.tag.tpe)
-      c.getTypeParameters.length match {
+      import scala.reflect.runtime.universe._
+      val targs = el.tag.tpe match { case TypeRef(_, _, args) => args }
+      targs.length match {
         case 0 => Manifest.classType(c)
         case 1 => Manifest.classType(c, LmsType.wildCard)
         case n => Manifest.classType(c, LmsType.wildCard, scala.List.fill(n - 1)(LmsType.wildCard): _*)

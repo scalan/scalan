@@ -6,15 +6,13 @@ import java.io.File.{separator => s}
 import scala.language.reflectiveCalls
 import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.GraphVizExport
-import scalan.compilation.language.Library
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.BaseItTests
 import scalan.it.lms.method.TestMethod
-import scalan.{ScalanCtxExp, ScalanExp}
-
-import scalan.linalgebra.{Matrices, MatricesDslExp}
+import scalan.linalgebra.MatricesDslExp
 import scalan.util.ProcessUtil.launch
+import scalan.{ScalanCtxExp, ScalanExp}
 
 class MethodCallItTests extends BaseItTests {
 

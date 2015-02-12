@@ -16,7 +16,7 @@ trait LmsBackend extends BaseExp { self =>
   def codegen: Codegen
 }
 
-trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp with ListOpsExtExp with StringOpsExp
+trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp with LstOpsExp with StringOpsExp
   with ArrayOpsExtExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with LoopOpsExtExp with OrderingOpsExp with IfThenElseFatExp
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp
@@ -330,7 +330,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
     int_to_double(v)
   }
 
-  def Min[A:Manifest](left: Exp[A], right: Exp[A])(implicit ord:Ordering[A]) = {
+  def Min[A: Manifest](left: Exp[A], right: Exp[A])(implicit ord: Ordering[A]) = {
     left.min(right)
   }
 
@@ -393,7 +393,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
     count
   }
 
-  def replicate[A:Manifest](length: Exp[Int], v: Exp[A]) : Exp[Array[A]]= {
+  def replicate[A: Manifest](length: Exp[Int], v: Exp[A]): Exp[Array[A]] = {
     array(length)(i => v)
   }
 
@@ -557,6 +557,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
     list_map[A, B] (l, f)
   }
 
+  def listFilter[A: Manifest](l: Rep[List[A]], f: Rep[A] => Rep[Boolean]) = {
+    list_filter[A] (l, f)
+  }
+
   def strideArray[A: Manifest](xs: Exp[Array[A]], start: Exp[Int], length: Exp[Int], stride: Exp[Int]) =
     array(length) { i =>
       xs.at(start + i * stride)
@@ -588,7 +592,7 @@ object LmsType {
 class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
 
   trait Codegen extends ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
-  with ScalaGenListOpsExt with ScalaGenArrayOpsExt with ScalaGenNumericOps
+  with ScalaGenLstOps with ScalaGenArrayOpsExt with ScalaGenNumericOps
     with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
     with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenLoopOpsExt with ScalaGenIfThenElseFat with LoopFusionOpt
     with ScalaGenCastingOps with ScalaGenMathOps with ScalaGenMethodCallOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile
@@ -596,12 +600,11 @@ class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
     val IR: self.type = self
     override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
 
-    private def isTuple(name: String) =
-      name.startsWith("Tuple2") || name.startsWith("Tuple3") || name.startsWith("Tuple4") || name.startsWith("Tuple5")
+    private def isTuple(name: String) = name.startsWith("Tuple2")
 
     override def remap[A](m: Manifest[A]) =
-      if (isTuple(m.runtimeClass.getSimpleName)) m.toString
-      else if (m.equals(LmsType.wildCard)) "_"
+      if (m.equals(LmsType.wildCard)) "_"
+      else if (isTuple(m.runtimeClass.getSimpleName)) s"scala.Tuple2[${remap(m.typeArguments(0))}, ${remap(m.typeArguments(1))}]"
       else super.remap(m)
 
     override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
@@ -617,5 +620,9 @@ class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
 class CommunityLmsBackend extends CoreLmsBackend with CommunityLmsBackendBase { self =>
   override val codegen = new Codegen with ScalaGenVectorOps with ScalaGenSystemOps {
     override val IR: self.type = self
+
+    override def emitVarDef(sym: Sym[Variable[Any]], rhs: String): Unit = {
+      stream.println("var " + quote(sym) + " = " + rhs)
+    }
   }
 }
