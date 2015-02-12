@@ -3,9 +3,7 @@ package compilation
 package lms
 package scalac //Underscore is added intentionally to avoid name clash with root scala package
 
-import java.io._
-import java.net.URLClassLoader
-
+//import java.io._
 import scala.tools.nsc.{Global, Settings}
 import scala.tools.nsc.reporters.StoreReporter
 import scalan.util.{FileUtil, ProcessUtil, StringUtil}
@@ -63,6 +61,10 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
 
         val jarFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
         val jarPath = jarFile.getAbsolutePath
+        FileUtil.deleteIfExist(jarFile)
+
+        val logFile=FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.log")
+        FileUtil.deleteIfExist(logFile)
 
         compilerConfig.scalaVersion match {
           case Some(scalaVersion) =>
@@ -92,7 +94,30 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
             val reporter = new StoreReporter
             val compiler: Global = new Global(settings, reporter)
             val run = new compiler.Run
-            run.compile(List(outputSource.getAbsolutePath))
+            val res = run.compile(List(outputSource.getAbsolutePath))
+
+            import java.io.PrintWriter
+            val S = new PrintWriter(logFile)
+            S.println(settings)
+            S.println(s"${settings.classpath}\n")
+            for(row <- reporter.infos) {
+              val pos = s"${row.pos.source.path}:${row.pos.safeLine}"
+              val line1 = s"${row.severity}: ${pos}"
+              val line2 = "|"+row.pos.lineContent
+              val line3 = "|"+" "*(row.pos.column-1) + "^"
+              S.println(line1)
+              S.println(line2)
+              S.println(line3)
+            }
+            S.println(s"class $functionName compiled with ${reporter.WARNING.count} warnings")
+            S.close()
+
+            reporter.ERROR.count match {
+              case 0 => {} //println(s"class $functionName compiled with ${reporter.WARNING.count} warnings")
+              case _ => throw new Exception(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings")
+            }
+
+            res
         }
 
         var urls = scala.Array(jarFile.toURI.toURL)

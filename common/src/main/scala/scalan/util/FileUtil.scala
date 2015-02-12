@@ -86,6 +86,16 @@ object FileUtil {
     }
   }
 
+  def deleteIfExist(fileOrDirectory: File): Unit = {
+    if (fileOrDirectory.isDirectory) {
+      fileOrDirectory.listFiles.foreach(delete)
+    }
+
+    if (fileOrDirectory.exists()) {
+      if (!fileOrDirectory.delete()) throw new IOException(s"Failed to delete file $fileOrDirectory")
+    }
+  }
+
   def currentWorkingDir = Paths.get("").toAbsolutePath.toFile
 
   def file(first: String, rest: String*): File =
