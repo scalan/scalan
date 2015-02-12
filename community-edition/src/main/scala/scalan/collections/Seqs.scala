@@ -11,7 +11,28 @@ trait Seqs extends Base with BaseTypes { self: SeqsDsl =>
   trait SSeq[A] extends BaseTypeEx[Seq[A], SSeq[A]] { self =>
     implicit def eA: Elem[A]
     def wrappedValueOfBaseType: Rep[Seq[A]]
+
+    /** The size of this sequence. */
+    @External def size: Rep[Int]
+
+    /** Tests whether this sequence is empty. */
     @External def isEmpty: Rep[Boolean]
+
+    /** Builds a new sequence by applying a function to all elements of this sequence. */
+    @External def map[B: Elem](f: Rep[A => B]): Rep[Seq[B]]
+
+    /** Reduces the elements of this sequence using the specified associative binary operator. */
+    @External def reduce(op: Rep[((A, A)) => A]): Rep[A]
+
+    /** Selects all elements of this sequence which satisfy a predicate. */
+    @External def filter(p: Rep[A => Boolean]): Rep[Seq[A]]
+
+    /** A copy of the sequence with an element prepended. */
+    @External def +:(elem: Rep[A]): Rep[Seq[A]]
+
+    /** Returns a new sequence which contains all elements of this sequence
+      * except some of occurrences of elements that also appear in that. */
+    @External def diff(that: Rep[Seq[A]]): Rep[Seq[A]]
   }
 
   trait SSeqCompanion extends ExCompanion1[Seq] {
@@ -25,5 +46,9 @@ trait Seqs extends Base with BaseTypes { self: SeqsDsl =>
 }
 
 trait SeqsDsl extends impl.SeqsAbs
-trait SeqsDslSeq extends impl.SeqsSeq
+trait SeqsDslSeq extends impl.SeqsSeq {
+  trait SeqSSeq[A] extends SSeqImpl[A] {
+    override def map[B:Elem](f: Rep[A => B]): Rep[Seq[B]] = wrappedValueOfBaseType.map(f)
+  }
+}
 trait SeqsDslExp extends impl.SeqsExp
