@@ -600,15 +600,18 @@ class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
     val IR: self.type = self
     override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
 
-    private def isTuple(name: String) = name.startsWith("Tuple2")
+    private def isTuple2(name: String) = name.startsWith("Tuple2")
 
     override def remap[A](m: Manifest[A]) =
       if (m.equals(LmsType.wildCard)) "_"
-      else if (isTuple(m.runtimeClass.getSimpleName)) s"scala.Tuple2[${remap(m.typeArguments(0))}, ${remap(m.typeArguments(1))}]"
+      else if (isTuple2(m.runtimeClass.getSimpleName)) {
+        if (m.typeArguments.length == 2) s"scala.Tuple2[${remap(m.typeArguments(0))}, ${remap(m.typeArguments(1))}]"
+        else m.toString
+      }
       else super.remap(m)
 
     override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-      case Struct(ClassTag(name), elems) if isTuple(name) =>
+      case Struct(ClassTag(name), elems) if isTuple2(name) =>
         emitValDef(sym, "(" + elems.map(e => quote(e._2)).mkString(",") + ")")
       case _ => super.emitNode(sym, rhs)
     }
