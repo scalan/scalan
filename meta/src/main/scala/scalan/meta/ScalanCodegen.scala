@@ -341,7 +341,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         }
 
         def converterBody(entity: STraitDef, conc: SClassDef) = {
-          val availableFields = entity.getFieldDefs.map(_.name).toSet
+          val availableFields = entity.getAvailableFields(module)
           val concFields = conc.args.map(_.name)
           val missingFields = concFields.filterNot(availableFields.contains(_))
           if (missingFields.isEmpty) {

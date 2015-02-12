@@ -156,6 +156,25 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     }
   }
 
+  abstract class ArrayOfPairs[A, B](val arr: Rep[Array[(A,B)]])(implicit val eA: Elem[A], val eB: Elem[B])
+    extends IPairArray[A,B] {
+    lazy val elem = element[(A, B)]
+    def as = PArray.fromArray(arr.map(_._1))
+    def bs = PArray.fromArray(arr.map(_._2))
+    def apply(i: Rep[Int]) = arr(i)
+    def length = arr.length
+    def slice(offset: Rep[Int], length: Rep[Int]) =
+      ArrayOfPairs(arr.slice(offset, length))
+    @OverloadId("many")
+    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[(A, B)] =
+      ArrayOfPairs(arr(indices))
+  }
+  trait ArrayOfPairsCompanion extends ConcreteClass2[ArrayOfPairs] with PArrayCompanion {
+    def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]) = {
+      Default.defaultVal(ArrayOfPairs(SArray.empty[(A,B)]))
+    }
+  }
+
   trait INestedArray[A] extends PArray[PArray[A]] {
     def values: Rep[PArray[A]]
     def segments: Rep[PArray[(Int, Int)]]

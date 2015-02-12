@@ -143,8 +143,12 @@ object ScalanAst {
       case md: SMethodDef if md.allArgs.isEmpty => md
     }
 
-    def getAncestorTraits: List[STraitDef] = {
-      ???
+    def getAncestorTraits(module: SEntityModuleDef): List[STraitDef] = {
+      ancestors.filter(tc => module.isEntity(tc.name)).map(tc => module.getEntity(tc.name))
+    }
+
+    def getAvailableFields(module: SEntityModuleDef): Set[String] = {
+      getFieldDefs.map(_.name).toSet ++ getAncestorTraits(module).flatMap(_.getAvailableFields(module))
     }
   }
 
@@ -214,6 +218,7 @@ object ScalanAst {
         case _ => sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
       }
     }
+    def isEntity(name: String) = entities.exists(e => e.name == name)
   }
 
   def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
