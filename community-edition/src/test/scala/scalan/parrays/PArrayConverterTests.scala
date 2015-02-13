@@ -5,7 +5,7 @@ import scalan._
 
 class PArrayConverterTests extends BaseTests { suite =>
 
-  trait ConvProg extends Scalan with PArraysDsl {
+  trait ConvProg extends Scalan with ScalanCommunityDsl {
     lazy val t1 = fun { (in: Rep[PairArray[Int,Double]]) => in.convertTo[ArrayOfPairs[Int, Double]] }
     lazy val t2 = fun { (in: Rep[(Array[Int], Array[Double])]) => {
       val Pair(as, bs) = in
@@ -19,9 +19,9 @@ class PArrayConverterTests extends BaseTests { suite =>
     } }
   }
 
-  class ConvProgStaged(testName: String) extends TestContext(this, testName) with  ConvProg with PArraysDslExp {
+  class ConvProgStaged(testName: String) extends TestContext(this, testName) with  ConvProg with ScalanCommunityDslExp {
   }
-  class ConvProgSeq(testName: String) extends ScalanCtxSeq with  ConvProg with PArraysDslSeq {
+  class ConvProgSeq(testName: String) extends ScalanCtxSeq with  ConvProg with ScalanCommunityDslSeq {
   }
 
   test("convert") {
@@ -35,7 +35,7 @@ class PArrayConverterTests extends BaseTests { suite =>
   test("convertSeq") {
     val ctx = new ConvProgSeq("start");
     {
-      val res = ctx.t2(Array(10, 20), Array(10, 20))
+      val res = ctx.t2((Array(10, 20), Array(10, 20)))
       assertResult(Array((10, 10), (20, 20)))(res)
     }
     {

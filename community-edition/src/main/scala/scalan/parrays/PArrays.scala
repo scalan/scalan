@@ -6,7 +6,7 @@ import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.annotation.unchecked.uncheckedVariance
 
-trait PArrays extends ArrayOps { self: PArraysDsl =>
+trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
 
   type PA[+A] = Rep[PArray[A]]
   trait PArray[@uncheckedVariance +A] extends Reifiable[PArray[A @uncheckedVariance]] {
@@ -199,8 +199,8 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
 
 }
 
-trait PArraysDsl extends impl.PArraysAbs
+trait PArraysDsl extends impl.PArraysAbs { self: ScalanCommunityDsl => }
 
-trait PArraysDslSeq extends impl.PArraysSeq
+trait PArraysDslSeq extends impl.PArraysSeq { self: ScalanCommunityDslSeq => }
 
-trait PArraysDslExp extends impl.PArraysExp
+trait PArraysDslExp extends impl.PArraysExp { self: ScalanCommunityDslExp => }

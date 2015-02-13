@@ -6,7 +6,7 @@ import scalan._
 import scalan.common.{SegmentsDslSeq, SegmentsDslExp, SegmentsDsl}
 
 class SeqsTests extends BaseTests { suite =>
-  trait SeqSimple extends ScalanDsl { self: SeqsDsl with SegmentsDsl  =>
+  trait SeqSimple extends ScalanDsl { self: ScalanCommunityDsl with SegmentsDsl =>
     lazy val tElem = element[Seq[Int]]
     lazy val defaultRep = tElem.defaultRepValue
     lazy val empty = SSeq.empty[Int]
@@ -39,7 +39,7 @@ class SeqsTests extends BaseTests { suite =>
   }
 
   test("basicTests") {
-    val ctx = new TestContext(this, "basicTests") with SeqSimple with SeqsDslExp with SegmentsDslExp {
+    val ctx = new TestContext(this, "basicTests") with SeqSimple with ScalanCommunityDslExp with SegmentsDslExp {
       def test() = { }
     }
     ctx.test
@@ -51,7 +51,7 @@ class SeqsTests extends BaseTests { suite =>
   }
 
   test("Seq_of_domain_type") {
-    val ctx = new TestContext(this, "Seq_of_domain_type") with SeqSimple with SeqsDslExp with SegmentsDslExp {
+    val ctx = new TestContext(this, "Seq_of_domain_type") with SeqSimple with ScalanCommunityDslExp with SegmentsDslExp {
       def test() = { }
     }
     ctx.test
@@ -64,7 +64,7 @@ class SeqsTests extends BaseTests { suite =>
   }
 
   test("simpleHashsetSeq") {
-    val ctx = new ScalanCtxSeq with  SeqSimple with SeqsDslSeq with SegmentsDslSeq {
+    val ctx = new ScalanCtxSeq with  SeqSimple with  ScalanCommunityDslSeq with SegmentsDslSeq {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
       }

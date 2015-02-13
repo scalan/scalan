@@ -4,7 +4,7 @@ import scala.collection.Seq
 import scalan._
 import scalan.common.Default
 
-trait Seqs extends Base with BaseTypes { self: SeqsDsl =>
+trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
   type RSeq[A] = Rep[Seq[A]]
 
   /** Iterable collection that have a defined order of elements. */
@@ -46,8 +46,8 @@ trait Seqs extends Base with BaseTypes { self: SeqsDsl =>
   def DefaultOfSeq[A: Elem]: Default[Seq[A]] = Default.defaultVal(Seq.empty[A])
 }
 
-trait SeqsDsl extends impl.SeqsAbs
-trait SeqsDslSeq extends impl.SeqsSeq {
+trait SeqsDsl extends impl.SeqsAbs { self: ScalanCommunityDsl => }
+trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
   trait SeqSSeq[A] extends SSeqImpl[A] {
     override def map[B:Elem](f: Rep[A => B]): Rep[Seq[B]] = wrappedValueOfBaseType.map(f)
   }
@@ -55,4 +55,4 @@ trait SeqsDslSeq extends impl.SeqsSeq {
     def fromList[A](list: List[A]): Seq[A] = Seq(list: _*)
   }
 }
-trait SeqsDslExp extends impl.SeqsExp
+trait SeqsDslExp extends impl.SeqsExp { self: ScalanCommunityDslExp => }

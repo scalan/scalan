@@ -11,7 +11,7 @@ import scalan.common.Default
 
 // Abs -----------------------------------
 trait PArraysAbs extends Scalan with PArrays {
-  self: PArraysDsl =>
+  self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyPArray[A](p: Rep[PArray[A]]): PArray[A] =
     proxyOps[PArray[A]](p)
@@ -356,7 +356,7 @@ trait PArraysAbs extends Scalan with PArrays {
 
 // Seq -----------------------------------
 trait PArraysSeq extends PArraysDsl with ScalanSeq {
-  self: PArraysDslSeq =>
+  self: ScalanCommunityDslSeq =>
   lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeSeq[PArrayCompanionAbs, PArrayCompanionAbs] {
     lazy val selfType = element[PArrayCompanionAbs]
   }
@@ -449,7 +449,7 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
 
 // Exp -----------------------------------
 trait PArraysExp extends PArraysDsl with ScalanExp {
-  self: PArraysDslExp =>
+  self: ScalanCommunityDslExp =>
   lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeDef[PArrayCompanionAbs, PArrayCompanionAbs] {
     lazy val selfType = element[PArrayCompanionAbs]
     override def mirror(t: Transformer) = this

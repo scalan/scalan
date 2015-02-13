@@ -9,7 +9,7 @@ import scalan.common.Default
 
 // Abs -----------------------------------
 trait SeqsAbs extends Scalan with Seqs {
-  self: SeqsDsl =>
+  self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] =
     proxyOps[SSeq[A]](p)
@@ -155,7 +155,7 @@ trait SeqsAbs extends Scalan with Seqs {
 
 // Seq -----------------------------------
 trait SeqsSeq extends SeqsDsl with ScalanSeq {
-  self: SeqsDslSeq =>
+  self: ScalanCommunityDslSeq =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeSeq[SSeqCompanionAbs, SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
 
@@ -213,7 +213,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
 
 // Exp -----------------------------------
 trait SeqsExp extends SeqsDsl with ScalanExp {
-  self: SeqsDslExp =>
+  self: ScalanCommunityDslExp =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeDef[SSeqCompanionAbs, SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
     override def mirror(t: Transformer) = this

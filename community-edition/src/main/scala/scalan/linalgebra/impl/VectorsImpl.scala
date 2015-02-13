@@ -14,7 +14,7 @@ import scalan.common.Default
 
 // Abs -----------------------------------
 trait VectorsAbs extends Scalan with Vectors {
-  self: VectorsDsl =>
+  self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyVector[T](p: Rep[Vector[T]]): Vector[T] =
     proxyOps[Vector[T]](p)
@@ -162,7 +162,7 @@ trait VectorsAbs extends Scalan with Vectors {
 
 // Seq -----------------------------------
 trait VectorsSeq extends VectorsDsl with ScalanSeq {
-  self: VectorsDslSeq =>
+  self: ScalanCommunityDslSeq =>
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeSeq[VectorCompanionAbs, VectorCompanionAbs] {
     lazy val selfType = element[VectorCompanionAbs]
   }
@@ -204,7 +204,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
 
 // Exp -----------------------------------
 trait VectorsExp extends VectorsDsl with ScalanExp {
-  self: VectorsDslExp =>
+  self: ScalanCommunityDslExp =>
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeDef[VectorCompanionAbs, VectorCompanionAbs] {
     lazy val selfType = element[VectorCompanionAbs]
     override def mirror(t: Transformer) = this
