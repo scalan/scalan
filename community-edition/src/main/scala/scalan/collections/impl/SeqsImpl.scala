@@ -51,10 +51,40 @@ trait SeqsAbs extends Scalan with Seqs {
 
   // default wrapper implementation
   abstract class SSeqImpl[A](val wrappedValueOfBaseType: Rep[Seq[A]])(implicit val eA: Elem[A]) extends SSeq[A] {
+    def size: Rep[Int] =
+      methodCallEx[Int](self,
+        this.getClass.getMethod("size"),
+        List())
+
     def isEmpty: Rep[Boolean] =
       methodCallEx[Boolean](self,
         this.getClass.getMethod("isEmpty"),
         List())
+
+    def map[B:Elem](f: Rep[A => B]): Rep[Seq[B]] =
+      methodCallEx[Seq[B]](self,
+        this.getClass.getMethod("map", classOf[AnyRef], classOf[Elem[B]]),
+        List(f.asInstanceOf[AnyRef], element[B]))
+
+    def reduce(op: Rep[((A,A)) => A]): Rep[A] =
+      methodCallEx[A](self,
+        this.getClass.getMethod("reduce", classOf[AnyRef]),
+        List(op.asInstanceOf[AnyRef]))
+
+    def filter(p: Rep[A => Boolean]): Rep[Seq[A]] =
+      methodCallEx[Seq[A]](self,
+        this.getClass.getMethod("filter", classOf[AnyRef]),
+        List(p.asInstanceOf[AnyRef]))
+
+    def $plus$colon(elem: Rep[A]): Rep[Seq[A]] =
+      methodCallEx[Seq[A]](self,
+        this.getClass.getMethod("$plus$colon", classOf[AnyRef]),
+        List(elem.asInstanceOf[AnyRef]))
+
+    def diff(that: Rep[Seq[A]]): Rep[Seq[A]] =
+      methodCallEx[Seq[A]](self,
+        this.getClass.getMethod("diff", classOf[AnyRef]),
+        List(that.asInstanceOf[AnyRef]))
   }
   trait SSeqImplCompanion
   // elem for concrete class
@@ -141,11 +171,26 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
       (override val wrappedValueOfBaseType: Rep[Seq[A]])
       (implicit eA: Elem[A])
     extends SSeqImpl[A](wrappedValueOfBaseType)
-        with UserTypeSeq[SSeq[A], SSeqImpl[A]] {
+       with SeqSSeq[A] with UserTypeSeq[SSeq[A], SSeqImpl[A]] {
     lazy val selfType = element[SSeqImpl[A]].asInstanceOf[Elem[SSeq[A]]]
+
+    override def size: Rep[Int] =
+      wrappedValueOfBaseType.size
 
     override def isEmpty: Rep[Boolean] =
       wrappedValueOfBaseType.isEmpty
+
+    override def reduce(op: Rep[((A,A)) => A]): Rep[A] =
+      wrappedValueOfBaseType.reduce(scala.Function.untupled(op))
+
+    override def filter(p: Rep[A => Boolean]): Rep[Seq[A]] =
+      wrappedValueOfBaseType.filter(p)
+
+    override def $plus$colon(elem: Rep[A]): Rep[Seq[A]] =
+      wrappedValueOfBaseType.$plus$colon(elem)
+
+    override def diff(that: Rep[Seq[A]]): Rep[Seq[A]] =
+      wrappedValueOfBaseType.diff(that)
   }
   lazy val SSeqImpl = new SSeqImplCompanionAbs with UserTypeSeq[SSeqImplCompanionAbs, SSeqImplCompanionAbs] {
     lazy val selfType = element[SSeqImplCompanionAbs]
@@ -203,6 +248,18 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
       }
     }
 
+    object size {
+      def unapply(d: Def[_]): Option[Rep[SSeq[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "size" =>
+          Some(receiver).asInstanceOf[Option[Rep[SSeq[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SSeq[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object isEmpty {
       def unapply(d: Def[_]): Option[Rep[SSeq[A]] forSome {type A}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "isEmpty" =>
@@ -210,6 +267,66 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Rep[SSeq[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object map {
+      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[A => B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "map" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[A => B]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[A => B]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object reduce {
+      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[((A,A)) => A]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(op, _*), _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "reduce" =>
+          Some((receiver, op)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[((A,A)) => A]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[((A,A)) => A]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object filter {
+      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[A => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(p, _*), _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "filter" =>
+          Some((receiver, p)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[A => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[A => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object +: {
+      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[A]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(elem, _*), _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "$plus$colon" =>
+          Some((receiver, elem)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[A]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[A]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object diff {
+      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[Seq[A]]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(that, _*), _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "diff" =>
+          Some((receiver, that)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[Seq[A]]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[Seq[A]]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
