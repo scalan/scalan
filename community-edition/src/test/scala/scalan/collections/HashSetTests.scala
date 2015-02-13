@@ -1,7 +1,5 @@
 package scalan.collections
 
-import java.io.File
-
 import scala.collection.immutable.HashSet
 import scala.language.reflectiveCalls
 import scalan._
