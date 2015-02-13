@@ -14,49 +14,59 @@ class SeqsTests extends BaseTests { suite =>
     lazy val t1 = fun { (t: Rep[Seq[Int]]) => t }
     lazy val t2 = fun { (in: Rep[(Seq[Int],Int)]) => val Pair(t, i) = in; i +: t }
     lazy val t3 = fun { (in: Rep[(Seq[Segment],Segment)]) => val Pair(t, i) = in; i +: t }
-
-    val e = element[Seq[Segment]]
-//    lazy val t4 = fun { (t: Rep[Seq[Int]]) => t.map(fun { x => x + 1 }) }
-//    lazy val t5 = fun { (in: Rep[(SSeq[Int],Int)]) => val Pair(t, i) = in; t + i }
-//    lazy val t6 = fun { (t: Rep[(Seq[Int],Int)]) => {
-//      t._1.map(fun { x => x + t._2 })
-//    }}
-//    lazy val t7 = fun { (t: Rep[(Seq[Int],Int)]) => {
-//      t._1.fold(t._2)(fun { x => x._1 + x._2 })
-//    }}
-
-  }
-
-  test("simpleHashsetStaged") {
-    val ctx = new TestContext(this, "simpleHashsetStaged") with SeqSimple with SeqsDslExp with SegmentsDslExp {
-      def test() = {
-        //assert(!isInlineThunksOnForce, "precondition for tests")
-        {
-//TODO make this work (recognizer should deal with BaseElemEx)
-//          val Def(Lambda(_, _, x, SThrowableMethods.getMessage(obj))) = t1
-//          assert(x == obj)
-        }
-      }
+    lazy val t4 = fun { (in: Rep[(Seq[Segment],Int)]) =>
+      val Pair(ss, i) = in;
+      ss.map(fun {s => s.shift(i)})
+    }
+    lazy val t5 = fun { (in: Rep[(Seq[Segment],Int)]) =>
+      val Pair(ss, i) = in;
+      ss.map(fun {s => s.shift(i).convertTo[Interval].toData})
+    }
+    lazy val t6 = fun { (in: Rep[Seq[(Int,Int)]]) =>
+      in.map(fun {s => Interval(s)})
+    }
+    lazy val t7 = fun { (in: Rep[Seq[(Int,Int)]]) =>
+      in.map(fun {s => Interval(s)}).map((s: Rep[Interval]) => s.toData)
+    }
+    lazy val t8 = fun { (in: Rep[List[Seq[Segment]]]) =>
+      in.map(seq => seq.map(fun {s => s.shift(1)}))
+    }
+    lazy val t9 = fun { (in: Rep[Seq[List[Segment]]]) =>
+      in.map(fun {xs => xs.map(s => s.shift(1)).reverse})
     }
 
+    val e = element[Seq[Segment]]
+  }
+
+  test("basicTests") {
+    val ctx = new TestContext(this, "basicTests") with SeqSimple with SeqsDslExp with SegmentsDslExp {
+      def test() = { }
+    }
     ctx.test
     ctx.emit("defaultRep", ctx.defaultRep)
     ctx.emit("empty", ctx.empty)
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
     ctx.emit("t3", ctx.t3)
-//    ctx.emit("t4", ctx.t4)
-//    ctx.emit("t5", ctx.t5)
-//    ctx.emit("t6", ctx.t6)
-//    ctx.emit("t7", ctx.t7)
+  }
+
+  test("Seq_of_domain_type") {
+    val ctx = new TestContext(this, "Seq_of_domain_type") with SeqSimple with SeqsDslExp with SegmentsDslExp {
+      def test() = { }
+    }
+    ctx.test
+    ctx.emit("t4", ctx.t4)
+    ctx.emit("t5", ctx.t5)
+    ctx.emit("t6", ctx.t6)
+    ctx.emit("t7", ctx.t7)
+    ctx.emit("t8", ctx.t8)
+    ctx.emit("t9", ctx.t9)
   }
 
   test("simpleHashsetSeq") {
     val ctx = new ScalanCtxSeq with  SeqSimple with SeqsDslSeq with SegmentsDslSeq {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
-        val s = Seq.empty[Int]
-        //s.
       }
     }
     ctx.test
