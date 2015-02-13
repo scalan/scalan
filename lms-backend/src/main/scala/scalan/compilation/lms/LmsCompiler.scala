@@ -38,11 +38,18 @@ trait LmsCompiler extends Compiler { self: ScalanCtxExp =>
     case el: BaseElemEx[_, _] => {
       val c = el.tag.mirror.runtimeClass(el.tag.tpe)
       import scala.reflect.runtime.universe._
-      val targs = el.tag.tpe match { case TypeRef(_, _, args) => args }
+      def toManifest(t: Type) = try {
+        Manifest.classType(el.tag.mirror.runtimeClass(t))
+      } catch {
+        case _ => LmsType.wildCard
+      }
+      val targs = el.tag.tpe match {
+        case TypeRef(_, _, args) => args
+      }
       targs.length match {
         case 0 => Manifest.classType(c)
-        case 1 => Manifest.classType(c, LmsType.wildCard)
-        case n => Manifest.classType(c, LmsType.wildCard, scala.List.fill(n - 1)(LmsType.wildCard): _*)
+        case 1 => Manifest.classType(c, toManifest(targs(0)))
+        case n => Manifest.classType(c, toManifest(targs(0)), targs.slice(1, targs.length).map(toManifest _): _*)
       }
     }
     case el => ???(s"Don't know how to create manifest for $el")

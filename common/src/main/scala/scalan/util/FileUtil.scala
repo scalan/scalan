@@ -4,6 +4,7 @@ import java.io._
 import java.nio.file.Paths
 import scala.Console
 import scala.io.{Source, Codec}
+import scalan.util.ProcessUtil._
 
 object FileUtil {
   def read(file: File, codec: Codec = Codec.UTF8): String = {
@@ -103,4 +104,10 @@ object FileUtil {
 
   def file(first: File, rest: String*): File =
     rest.foldLeft(first) { (file, child) => new File(file, child) }
+
+  def packJar(baseClass: Class[_], methodName: String, path: String, libDir: String, jarName: String) = {
+    new File(s"$path/$libDir/").mkdirs()
+    launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", s"$path/$libDir/$jarName") :+
+      baseClass.getPackage.getName.replaceAll("\\.", "/"): _*)
+  }
 }

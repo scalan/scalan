@@ -11,6 +11,8 @@ import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.BaseItTests
 import scalan.it.lms.method.TestMethod
 import scalan.linalgebra.MatricesDslExp
+import scalan.util.FileUtil
+import scalan.util.FileUtil.packJar
 import scalan.util.ProcessUtil.launch
 import scalan.{ScalanCtxExp, ScalanExp}
 
@@ -285,14 +287,9 @@ class MethodCallItTestsOld extends BaseItTests {
     }
   }
 
-  private def packJar(baseClass: Class[_], methodName: String) = {
-    new File(s"${executableDir(methodName).getAbsolutePath}$s${jarReplaceMethExp.libs}$s").mkdirs()
-    launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", s"${executableDir(methodName).getAbsolutePath}$s${jarReplaceMethExp.libs}$s$testJar") :+ baseClass.getPackage.getName.replaceAll("\\.", s): _*)
-  }
-
   ignore("Mapping Method From Jar") {
     val methodName = "MappingMethodFromJar"
-    packJar(TestMethod.getClass, methodName)
+    packJar(TestMethod.getClass, methodName, FileUtil.file(prefix, methodName).getAbsolutePath, jarReplaceMethExp.libs, testJar)
     val squareLength = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.arrayLength, methodName, Array(5, 9, 2), jarReplaceMethExp.defaultCompilerConfig)
     squareLength should equal(9)
   }
