@@ -134,8 +134,9 @@ trait Transforming { self: ScalanExp =>
       lambdaStack.pop
 
       val newLambda = getMirroredLambdaDef(t2, newLambdaSym, lam)
-
       createDefinition(thunkStack.top, newLambdaSym, newLambda)
+      val newLambdaExp = toExp(newLambda, newLambdaSym)
+
 //      val optScope = thunkStack.top
 //      optScope match {
 //        case Some(scope) =>
@@ -144,7 +145,7 @@ trait Transforming { self: ScalanExp =>
 //          createDefinition(None, newLambdaSym, newLambda)
 //      }
 
-      (t2 + (node -> newLambdaSym), newLambdaSym)
+      (t2 + (node -> newLambdaExp), newLambdaExp)
     }
 
     protected def mirrorThunk[A](t: Ctx, rewriter: Rewriter, node: Exp[Thunk[A]], thunk: ThunkDef[A]): (Ctx, Exp[_]) = {

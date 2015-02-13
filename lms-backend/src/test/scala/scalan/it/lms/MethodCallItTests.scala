@@ -1,11 +1,8 @@
 package scalan.it.lms
 
-import java.io.File
-import java.io.File.{separator => s}
-
 import scala.language.reflectiveCalls
+import scalan.ScalanCtxExp
 import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
-import scalan.compilation.GraphVizExport
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.BaseItTests
@@ -13,8 +10,6 @@ import scalan.it.lms.method.TestMethod
 import scalan.linalgebra.MatricesDslExp
 import scalan.util.FileUtil
 import scalan.util.FileUtil.packJar
-import scalan.util.ProcessUtil.launch
-import scalan.{ScalanCtxExp, ScalanExp}
 
 class MethodCallItTests extends LmsCommunityItTests{
   trait Prog extends ProgCommunity  {
@@ -150,16 +145,12 @@ class MethodCallItTests extends LmsCommunityItTests{
 
 class MethodCallItTestsOld extends BaseItTests {
 
-  trait TestLmsCompiler extends ScalanCommunityDslExp with ScalanCtxExp with LmsCompilerScala {
-    self: ScalanExp with GraphVizExport =>
+  trait TestLmsCompiler extends ScalanCommunityDslExp with ScalanCtxExp with LmsCompilerScala with CommunityBridge {
+    val lms = new CommunityLmsBackend
   }
 
   val exceptionTestExp = new ScalanCommunityExp with TestLmsCompiler {
     self =>
-    def makeBridge[A, B] = new CommunityBridge[A, B] {
-      val scalan = self
-      override val lms = new CommunityLmsBackend
-    }
 
     lazy val tElem = element[Throwable]
     lazy val defaultRep = tElem.defaultRepValue
@@ -207,10 +198,6 @@ class MethodCallItTestsOld extends BaseItTests {
 
   val matricesExp = new MatricesDslExp with ScalanCommunityExp with TestLmsCompiler {
     self =>
-    def makeBridge[A, B] = new CommunityBridge[A, B] {
-      val scalan = self
-      val lms = new CommunityLmsBackend
-    }
 
     lazy val arrayLength = fun { v: Rep[Array[Int]] =>
       PArray(v).length
@@ -230,26 +217,22 @@ class MethodCallItTestsOld extends BaseItTests {
 
   val replaceMethExp = new ReplacementExp {
     self =>
-    def makeBridge[A, B] = new CommunityBridge[A, B] {
-      val scalan = self
-      override val lms = new CommunityLmsBackend
 
-      new ScalaLanguage with CommunityConf {
-        val javaArray = new ScalaLib("", "java.lang.reflect.Array") {
-          val getLength = ScalaFunc('getLength)
-        }
+    new ScalaLanguage with CommunityConf {
+      val javaArray = new ScalaLib("", "java.lang.reflect.Array") {
+        val getLength = ScalaFunc('getLength)
+      }
 
-        val scala2Scala = {
-          import scala.language.reflectiveCalls
+      val scala2Scala = {
+        import scala.language.reflectiveCalls
 
-          Map(
-            scalanCE.parraysPack.parraysFam.parray.length -> javaArray.getLength
-          )
-        }
+        Map(
+          scalanCE.parraysPack.parraysFam.parray.length -> javaArray.getLength
+        )
+      }
 
-        val backend = new ScalaBackend {
-          val functionMap = scala2Scala
-        }
+      val backend = new ScalaBackend {
+        val functionMap = scala2Scala
       }
     }
   }
@@ -262,27 +245,23 @@ class MethodCallItTestsOld extends BaseItTests {
   val testJar = "test.jar"
   val jarReplaceMethExp = new ReplacementExp {
     self =>
-    def makeBridge[A, B] = new CoreBridge[A, B] {
-      val scalan = self
-      override val lms = new CommunityLmsBackend
 
-      new ScalaLanguage with CommunityConf {
+    new ScalaLanguage with CommunityConf {
 
-        val extLib = new ScalaLib(testJar, "scalan.it.lms.method.TestMethod") {
-          val getSquareLength = ScalaFunc('getSquareLength)
-        }
+      val extLib = new ScalaLib(testJar, "scalan.it.lms.method.TestMethod") {
+        val getSquareLength = ScalaFunc('getSquareLength)
+      }
 
-        val scala2Scala = {
-          import scala.language.reflectiveCalls
+      val scala2Scala = {
+        import scala.language.reflectiveCalls
 
-          Map(
-            scalanCE.parraysPack.parraysFam.parray.length -> extLib.getSquareLength
-          )
-        }
+        Map(
+          scalanCE.parraysPack.parraysFam.parray.length -> extLib.getSquareLength
+        )
+      }
 
-        val backend = new ScalaBackend {
-          val functionMap = scala2Scala
-        }
+      val backend = new ScalaBackend {
+        val functionMap = scala2Scala
       }
     }
   }

@@ -1,9 +1,8 @@
 package scalan
 package compilation
 package lms
-package scalac //Underscore is added intentionally to avoid name clash with root scala package
+package scalac
 
-//import java.io._
 import scala.tools.nsc.{Global, Settings}
 import scala.tools.nsc.reporters.StoreReporter
 import scalan.util.{FileUtil, ProcessUtil, StringUtil}
@@ -13,7 +12,7 @@ import java.net.{URL, URLClassLoader}
 import scalan.util.FileUtil.copyToDir
 import scala.collection.mutable
 
-trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
+trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp with LmsBridge =>
 
   /**
    * If scalaVersion is None, uses scala-compiler.jar
@@ -35,13 +34,13 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
-    val outputSource = new File(sourcesDir, functionName + ".scala")
     val buildSbtFile = new File(sourcesDir, "build.sbt")
+
+    val sourceFile = emitSource(sourcesDir, "scala", functionName, graph, eInput, eOutput)
 
     (createManifest(eInput), createManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
-        val bridge = makeBridge[a, b]
-        mainJars = bridge.methodReplaceConf.libPaths.map(j => s"${new File("").getAbsolutePath}$s$libs$s$j")
+        mainJars = methodReplaceConf.libPaths.map(j => s"${new File("").getAbsolutePath}$s$libs$s$j")
         val dir = new File(s"${new File("").getAbsolutePath}$s$libs$s").listFiles()
         dir match {
           case _: Array[File] => dir.filter(_.getName.toLowerCase.endsWith(".jar")).foreach(f => {
@@ -50,18 +49,10 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
           })
           case _ =>
         }
-
-        val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
-        val codegen = bridge.lms.codegen
-
-        FileUtil.withFile(outputSource) { writer =>
-          codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
-          codegen.emitDataStructures(writer)
-        }
-
-        val jarFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
-        val jarPath = jarFile.getAbsolutePath
-        FileUtil.deleteIfExist(jarFile)
+    }
+    val jarFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
+    val jarPath = jarFile.getAbsolutePath
+    FileUtil.deleteIfExist(jarFile)
 
         val logFile=FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.log")
         FileUtil.deleteIfExist(logFile)
@@ -78,7 +69,7 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
                  |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
                  |""".stripMargin
 
-            FileUtil.write(buildSbtFile, buildSbtText)
+        FileUtil.write(buildSbtFile, buildSbtText)
 
             val command = Seq("sbt", "package")
 
@@ -94,7 +85,7 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
             val reporter = new StoreReporter
             val compiler: Global = new Global(settings, reporter)
             val run = new compiler.Run
-            val res = run.compile(List(outputSource.getAbsolutePath))
+            val res = run.compile(List(sourceFile.getAbsolutePath))
 
             import java.io.PrintWriter
             val S = new PrintWriter(logFile)
@@ -113,8 +104,6 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
               case 0 => {} //println(s"class $functionName compiled with ${reporter.WARNING.count} warnings")
               case _ => throw new Exception(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings")
             }
-
-            res
         }
 
         var urls = scala.Array(jarFile.toURI.toURL)
@@ -123,7 +112,6 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp =>
           case _ =>
         }
         CustomCompilerOutput(urls)
-    }
   }
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {

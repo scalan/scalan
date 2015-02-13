@@ -145,14 +145,11 @@ In this mode, Scalan's behavior is very simple: `Rep[A]` is the same type as `A`
 Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a compiler trait.
 ~~~scala
 // to run: lms-backend/test:runMain HelloScalanExp
-object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCompilerScala {
+object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCompilerScala with CommunityBridge {
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
 
-  def makeBridge[A, B] = new CommunityBridge[A, B] {
-    val scalan = HelloScalanExp
-    val lms = new CommunityLmsBackend
-  }
+  val lms = new CommunityLmsBackend
 
   def result = {
     // output directory

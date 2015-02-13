@@ -19,7 +19,10 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   implicit def defaultSThrowableElem: Elem[SThrowable] = element[SThrowableImpl].asElem[SThrowable]
   implicit def ThrowableElement: Elem[Throwable]
 
-  abstract class SThrowableElem[From, To <: SThrowable](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
+  abstract class SThrowableElem[From, To <: SThrowable](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+    override def convert(x: Rep[Reifiable[_]]) = convertSThrowable(x.asRep[SThrowable])
+    def convertSThrowable(x : Rep[SThrowable]): Rep[To]
+  }
 
   trait SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs]
   implicit lazy val SThrowableCompanionElem: SThrowableCompanionElem = new SThrowableCompanionElem {
@@ -52,7 +55,9 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   }
   trait SThrowableImplCompanion
   // elem for concrete class
-  class SThrowableImplElem(iso: Iso[SThrowableImplData, SThrowableImpl]) extends SThrowableElem[SThrowableImplData, SThrowableImpl](iso)
+  class SThrowableImplElem(iso: Iso[SThrowableImplData, SThrowableImpl]) extends SThrowableElem[SThrowableImplData, SThrowableImpl](iso) {
+    def convertSThrowable(x: Rep[SThrowable]) = SThrowableImpl(x.wrappedValueOfBaseType)
+  }
 
   // state representation type
   type SThrowableImplData = Throwable
@@ -72,7 +77,7 @@ trait ExceptionsAbs extends Scalan with Exceptions {
     lazy val tag = {
       weakTypeTag[SThrowableImpl]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SThrowableImpl]](SThrowableImpl(Default.defaultOf[Throwable]))
+    lazy val defaultRepTo = Default.defaultVal[Rep[SThrowableImpl]](SThrowableImpl(DefaultOfThrowable.value))
     lazy val eTo = new SThrowableImplElem(this)
   }
   // 4) constructor and deconstructor
@@ -110,7 +115,9 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   def unmkSThrowableImpl(p: Rep[SThrowableImpl]): Option[(Rep[Throwable])]
 
   // elem for concrete class
-  class SExceptionElem(iso: Iso[SExceptionData, SException]) extends SThrowableElem[SExceptionData, SException](iso)
+  class SExceptionElem(iso: Iso[SExceptionData, SException]) extends SThrowableElem[SExceptionData, SException](iso) {
+    def convertSThrowable(x: Rep[SThrowable]) = SException(x.wrappedValueOfBaseType)
+  }
 
   // state representation type
   type SExceptionData = Throwable
@@ -130,7 +137,7 @@ trait ExceptionsAbs extends Scalan with Exceptions {
     lazy val tag = {
       weakTypeTag[SException]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SException]](SException(Default.defaultOf[Throwable]))
+    lazy val defaultRepTo = Default.defaultVal[Rep[SException]](SException(DefaultOfThrowable.value))
     lazy val eTo = new SExceptionElem(this)
   }
   // 4) constructor and deconstructor
@@ -182,7 +189,7 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
   override def proxyThrowable(p: Rep[Throwable]): SThrowable =
     proxyOpsEx[Throwable,SThrowable, SeqSThrowableImpl](p, bt => SeqSThrowableImpl(bt))
 
-    implicit lazy val ThrowableElement: Elem[Throwable] = new SeqBaseElemEx[Throwable, SThrowable](element[SThrowable])
+    implicit lazy val ThrowableElement: Elem[Throwable] = new SeqBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
 
   case class SeqSThrowableImpl
       (override val wrappedValueOfBaseType: Rep[Throwable])
@@ -239,7 +246,7 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
     override def mirror(t: Transformer) = this
   }
 
-  implicit lazy val ThrowableElement: Elem[Throwable] = new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])
+  implicit lazy val ThrowableElement: Elem[Throwable] = new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
 
   case class ExpSThrowableImpl
       (override val wrappedValueOfBaseType: Rep[Throwable])
@@ -315,6 +322,18 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
     object getMessage {
       def unapply(d: Def[_]): Option[Rep[SThrowable]] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SThrowableElem[_, _]] && method.getName == "getMessage" =>
+          Some(receiver).asInstanceOf[Option[Rep[SThrowable]]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SThrowable]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object wrappedValueOfBaseType {
+      def unapply(d: Def[_]): Option[Rep[SThrowable]] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SThrowableElem[_, _]] && method.getName == "wrappedValueOfBaseType" =>
           Some(receiver).asInstanceOf[Option[Rep[SThrowable]]]
         case _ => None
       }

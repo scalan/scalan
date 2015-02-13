@@ -2,7 +2,6 @@ package scalan
 
 import scalan.compilation.language._
 import scalan.linalgebra.Matrices
-import scalan.parrays.PArrays
 
 trait CommunityMethodMapping extends MethodMapping {
 

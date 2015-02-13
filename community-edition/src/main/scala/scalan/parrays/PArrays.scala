@@ -25,6 +25,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
       val arrScan = arr.scan(m)
       (PArray(arrScan._1), arrScan._2)
     }
+    def zipWithIndex: PA[(A, Int)] = zip(PArray.fromArray(SArray.rangeFrom0(length)))
   }
   
   implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = element[A] match {
@@ -92,10 +93,9 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     }
   }
 
-  abstract class UnitArray(val len: Rep[Int]) extends PArray[Unit] {
+  abstract class UnitArray(val length: Rep[Int]) extends PArray[Unit] {
     def elem = UnitElement
-    def arr = SArray.replicate(len, ())
-    def length = len
+    def arr = SArray.replicate(length, ())
     def apply(i: Rep[Int]) = ()
     @OverloadId("many")
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[Unit] = UnitArray(indices.length)
