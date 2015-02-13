@@ -6,7 +6,7 @@ import scala.virtualization.lms.common._
 import scalan.compilation.lms._
 import scalan.compilation.lms.common.{CXXGenJNIExtractor, JNILmsOpsExp, JNILmsOps}
 
-class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
+class CoreCXXLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>
 
   trait Codegen extends CLikeGenNumericOps
   with CLikeGenEqual
@@ -22,6 +22,7 @@ class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
   with CLikeGenBooleanOps
   with CXXGenFunctions
   with CXXCodegen
+  with CXXGenJNIExtractor
   {
     override val IR: self.type = self
 

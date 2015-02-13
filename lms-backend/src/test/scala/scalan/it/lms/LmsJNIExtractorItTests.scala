@@ -49,6 +49,44 @@ class LmsJNIExtractorItTests extends BaseItTests {
     ctx.generate("sdmvm", ctx.sdmvm)
   }
 
+  test("simplePackGenCxx") {
+    val ctx = new ScalanCtxExp with ProgExp with PackProg {
+      override def subfolder: String = super.subfolder + "-cxx"
+      def test() = {
+
+      }
+
+      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
+        val dir = new File(prefix, subfolder)
+        generate(dir, dir, name, f, GraphVizConfig.default)
+      }
+    }
+
+//    ctx.generate("opyt", ctx.opyt)
+//    ctx.generate("packArray", ctx.packArray)
+    ctx.generate("extractAndPack", ctx.extractAndPack)
+    ctx.generate("packPair", ctx.packPair)
+  }
+
+  test("mvmCxxGen") {
+    val ctx = new ScalanCtxExp with ProgExp with PackProg {
+      override def subfolder: String = super.subfolder + "-cxx"
+      def test() = {
+
+      }
+
+      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
+        val dir = new File(prefix, subfolder)
+        generate(dir, dir, name, f, GraphVizConfig.default)
+      }
+    }
+
+//    ctx.generate("opyt", ctx.opyt)
+    ctx.generate("ddmvm", ctx.ddmvm)
+    ctx.generate("sdmvm", ctx.sdmvm)
+//    ctx.generate("packPair", ctx.packPair)
+  }
+
   test("simpleBuildExecutable") { //TODO: automate executable building
     pending
     val ctx = new ScalanCtxExp with ProgExp with FirstProg {

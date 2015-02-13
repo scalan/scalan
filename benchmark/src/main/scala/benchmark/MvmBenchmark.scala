@@ -1,13 +1,15 @@
-package scalan.benchmark
+package benchmark
 
 import java.io.File
 import java.net.URLClassLoader
 import java.util.concurrent.TimeUnit
 
+import benchmark.jni.NativeMethods
 import org.openjdk.jmh.annotations._
 
 import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunitySeq}
 import scalan.compilation.GraphVizConfig
+import scalan.compilation.lms.cxx.{CommunityCXXLmsBackend, LmsCompilerCXX}
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
 import scalan.linalgebra.{MatricesDslSeq, LinearAlgebraExamples}
@@ -153,6 +155,35 @@ object MvmBenchmark {
   class MvmStateStaged_fsmvm extends MvmStateStagedAbs {
     val fsmvm = loadMethod(ctx)(baseDir, "fsmvm", ctx.fsmvm)
   }
+
+  @State(Scope.Benchmark)
+  @volatile
+  class MvmStateCpp extends MvmStateBase {
+
+//    class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerCXX {
+//      self =>
+//      def makeBridge[A, B] = new CommunityBridge[A, B] {
+//        val scalan = self
+//        val lms = new CommunityCXXLmsBackend
+//      }
+//    }
+//
+//
+//    protected val ctx = new ProgExp
+//
+//    protected val baseDir = FileUtil.file("mvm-staged-cxx")
+//
+//    protected implicit val cfg = ctx.defaultCompilerConfig
+
+    val nm = new NativeMethods
+    var res: Array[Double] = null;
+
+    @TearDown
+    def check(): Unit = {
+//      require(res.deep == dvec.deep, "bad!")
+    }
+  }
+
 }
 
 class MvmBenchmark {
@@ -161,6 +192,15 @@ class MvmBenchmark {
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   def dmdv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
     state.ctx.ddmvm( (state.dmat, state.dvec) )
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def dmdv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.ddmvm( (state.dmat, state.dvec) )
+    state.res = res
+    res
   }
 
   @Benchmark
