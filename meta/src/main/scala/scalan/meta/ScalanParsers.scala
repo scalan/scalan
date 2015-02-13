@@ -143,8 +143,12 @@ object ScalanAst {
       case md: SMethodDef if md.allArgs.isEmpty => md
     }
 
-    def getAncestorTraits: List[STraitDef] = {
-      ???
+    def getAncestorTraits(module: SEntityModuleDef): List[STraitDef] = {
+      ancestors.filter(tc => module.isEntity(tc.name)).map(tc => module.getEntity(tc.name))
+    }
+
+    def getAvailableFields(module: SEntityModuleDef): Set[String] = {
+      getFieldDefs.map(_.name).toSet ++ getAncestorTraits(module).flatMap(_.getAvailableFields(module))
     }
   }
 
@@ -201,18 +205,20 @@ object ScalanAst {
     name: String,
     entityRepSynonym: Option[STpeDef],
     entityOps: STraitDef,
+    entities: List[STraitDef],
     concreteSClasses: List[SClassDef],
     methods: List[SMethodDef],
     selfType: Option[SSelfTypeDef],
     seqDslImpl: Option[SSeqImplementation] = None)
   {
-    def getEntity(name: String) = {
-      val entity = List(entityOps).find(e => e.name == name)
+    def getEntity(name: String): STraitDef = {
+      val entity = entities.find(e => e.name == name)
       entity match {
         case Some(e) => e
-        case _ => sys.error(s"Cannot find entity with name $name")
+        case _ => sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
       }
     }
+    def isEntity(name: String) = entities.exists(e => e.name == name)
   }
 
   def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
@@ -240,13 +246,14 @@ object ScalanAst {
 
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
 
-    def fromModuleTrait(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
+    def apply(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
       val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
 
-      val entity = defs.collectFirst { case t: STraitDef => t }.getOrElse {
+      val traits = defs.collect { case t: STraitDef if !t.name.endsWith("Companion") => t }
+      val entity = traits.headOption.getOrElse {
         throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
       }
 
@@ -277,7 +284,7 @@ object ScalanAst {
 
       val methods = defs.collect { case md: SMethodDef => md }
 
-      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, classes, methods, moduleTrait.selfType)
+      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, traits, classes, methods, moduleTrait.selfType)
     }
   }
 }
@@ -341,9 +348,9 @@ trait ScalanParsers {
     methods.map(methodDef(_))
   }
 
-  def entityModule(pdTree: PackageDef) = {
-    val packageName = pdTree.pid.toString
-    val statements = pdTree.stats
+  def entityModule(fileTree: PackageDef) = {
+    val packageName = fileTree.pid.toString
+    val statements = fileTree.stats
     val imports = statements.collect {
       case i: Import => importStat(i)
     }
@@ -353,23 +360,25 @@ trait ScalanParsers {
       case Seq(only) => only
       case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
     }
-    val moduleTrait = traitDef(moduleTraitTree, moduleTraitTree)
-    val md = SEntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait, config)
 
-    val dslSeq = pdTree.stats.collectFirst {
-      case cd @ ClassDef(_,name,_,_) if name.toString == (moduleTrait.name + "DslSeq") => cd
+    val moduleTraitDef = traitDef(moduleTraitTree, moduleTraitTree)
+    val module = SEntityModuleDef(packageName, imports, moduleTraitDef, config)
+    val moduleName = moduleTraitDef.name
+
+    val dslSeq = fileTree.stats.collectFirst {
+      case cd @ ClassDef(_,name,_,_) if name.toString == (moduleName + "DslSeq") => cd
     }
     val seqExplicitOps = for {
       seqImpl <- dslSeq
       seqOpsTrait <- seqImpl.impl.body.collectFirst {
-        case cd @ ClassDef(_,name,_,_) if name.toString == ("Seq" + md.entityOps.name) => cd
+        case cd @ ClassDef(_,name,_,_) if name.toString == ("Seq" + module.entityOps.name) => cd
       }
     } yield {
       val cd = seqOpsTrait.impl.body.collect { case item: DefDef => item }
       seqImplementation(cd, seqOpsTrait)
     }
 
-    md.copy(seqDslImpl = seqExplicitOps.map(SSeqImplementation(_)))
+    module.copy(seqDslImpl = seqExplicitOps.map(SSeqImplementation(_)))
   }
 
   def importStat(i: Import): SImportStat = {
