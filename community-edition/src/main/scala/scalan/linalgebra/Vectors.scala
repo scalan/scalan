@@ -9,7 +9,7 @@ import scalan.parrays.PArraysDsl
 import scalan.parrays.PArraysDslExp
 import scalan.parrays.PArraysDslSeq
 
-trait Vectors extends PArrays { scalan: VectorsDsl =>
+trait Vectors extends PArrays { self: VectorsDsl =>
   type Vec[T] = Rep[Vector[T]]
   
   trait Vector[T] extends Reifiable[Vector[T]] {

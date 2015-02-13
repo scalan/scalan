@@ -1,6 +1,6 @@
 package scalan.collections
 
-import scala.collection.immutable.Seq
+import scala.collection.Seq
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDslSeq, SegmentsDslExp, SegmentsDsl}

@@ -2,7 +2,7 @@
 
 import java.io.File
 
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
+import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
 import scalan.compilation.lms.scalac.LmsCompilerScala

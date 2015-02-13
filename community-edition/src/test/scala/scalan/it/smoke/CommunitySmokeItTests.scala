@@ -1,7 +1,7 @@
 package scalan.it.smoke
 
-import scalan.ScalanCtxSeq
-import scalan.community._
+import scalan.{ScalanCommunityDslSeq, ScalanCommunitySeq, ScalanCommunity, ScalanCtxSeq}
+//import scalan.community._
 import scalan.collections._
 import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
 

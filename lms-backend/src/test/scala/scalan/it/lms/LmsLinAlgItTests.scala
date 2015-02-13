@@ -1,5 +1,7 @@
+package scalan.it.lms
+
 import scalan.ScalanCtxExp
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityDslSeq}
+import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq}
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.BaseItTests

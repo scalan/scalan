@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 
-import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunitySeq}
+import scalan.{ScalanCommunityDslExp, ScalanCommunitySeq}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
