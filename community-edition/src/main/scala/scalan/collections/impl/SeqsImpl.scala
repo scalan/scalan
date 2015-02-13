@@ -1,7 +1,7 @@
 package scalan.collections
 package impl
 
-import scala.collection.immutable.Seq
+import scala.collection.Seq
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
