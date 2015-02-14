@@ -272,7 +272,15 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         }
       } catch {
         case e: IllegalArgumentException =>
-          logger.error(s"Method call to get result element failed. Object: $zeroNode, method: $m", e)
+          val info = zeroNode match {
+            case view: View[a,b] =>
+              s"""View(${view.source}, Iso[${view.iso}])"""
+            case _ => s"$zeroNode"
+          }
+          logger.error(
+            s"""Method call to get result element failed.
+               |Object: $info; Method: $m""".stripMargin, e)
+          emitGraphOnException("getResultElem", receiver, zero)
           throw e
         case e: InvocationTargetException =>
           e.getCause match {
