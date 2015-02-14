@@ -3,14 +3,15 @@ package compilation
 package lms
 package scalac
 
-import java.io._
-import java.net.URLClassLoader
-
 import scala.tools.nsc.{Global, Settings}
 import scala.tools.nsc.reporters.StoreReporter
-import scalan.util.{FileUtil, ProcessUtil, StringUtil}
+import scalan.util.{ExtensionFilter, FileUtil, ProcessUtil, StringUtil}
+import java.io._
+import java.net.{URL, URLClassLoader}
+import scalan.util.FileUtil.copyToDir
+import scala.collection.mutable
 
-trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp with LmsBridge =>
+trait LmsCompilerScala extends LmsCompiler with CommunityBridgeScala { self: ScalanCtxExp =>
 
   /**
    * If scalaVersion is None, uses scala-compiler.jar
@@ -21,20 +22,37 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp with LmsBridge =
 
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
-  case class CustomCompilerOutput(jar: File)
+  case class CustomCompilerOutput(jars: Array[URL])
 
   def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+
+  val libs = "lib"
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
-
     val buildSbtFile = new File(sourcesDir, "build.sbt")
 
     val sourceFile = emitSource(sourcesDir, "scala", functionName, graph, eInput, eOutput)
 
+    val libsDir = FileUtil.file(FileUtil.currentWorkingDir, libs)
+    val executableLibsDir = FileUtil.file(executableDir, libs)
+    // unused
+    var mainJars = methodReplaceConf.libPaths.map {
+      j => FileUtil.file(libsDir, j).getAbsolutePath
+    }
+    var extensionsJars = Set.empty[String]
+    val dir = FileUtil.listFiles(libsDir, ExtensionFilter("jar"))
+    dir.foreach(f => {
+      mainJars = mainJars + f.getAbsolutePath
+      copyToDir(f, executableLibsDir)
+    })
     val jarFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
     val jarPath = jarFile.getAbsolutePath
+    FileUtil.deleteIfExist(jarFile)
+
+    val logFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.log")
+    FileUtil.deleteIfExist(logFile)
 
     compilerConfig.scalaVersion match {
       case Some(scalaVersion) =>
@@ -65,14 +83,34 @@ trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp with LmsBridge =
         val compiler: Global = new Global(settings, reporter)
         val run = new compiler.Run
         run.compile(List(sourceFile.getAbsolutePath))
+
+        import java.io.PrintWriter
+        val S = new PrintWriter(logFile)
+        S.println(settings)
+        S.println(s"${settings.classpath}\n")
+        for(row <- reporter.infos) {
+          val pos = s"${row.pos.source.path}:${row.pos.safeLine}"
+          S.println(s"${row.severity}: ${pos}")
+          S.println("|"+row.pos.lineContent)
+          S.println("|"+" "*(row.pos.column-1) + "^")
+        }
+        S.println(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings")
+        S.close()
+
+        reporter.ERROR.count match {
+          case 0 => {} //println(s"class $functionName compiled with ${reporter.WARNING.count} warnings")
+          case _ => throw new Exception(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings")
+        }
     }
-    CustomCompilerOutput(jarFile)
+
+    val ar = FileUtil.listFiles(executableLibsDir, ExtensionFilter("jar"))
+    val urls = (jarFile +: ar).map(_.toURI.toURL)
+    CustomCompilerOutput(urls)
   }
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
-    val url = compilerOutput.custom.jar.toURI.toURL
     // ensure Scala library is available
-    val classLoader = new URLClassLoader(Array(url), classOf[_ => _].getClassLoader)
+    val classLoader = new URLClassLoader(compilerOutput.custom.jars, classOf[_ => _].getClassLoader)
     val cls = classLoader.loadClass(compilerOutput.common.name)
     val argumentClass = compilerOutput.common.eInput.classTag.runtimeClass
     (cls, cls.getMethod("apply", argumentClass))

@@ -8,6 +8,7 @@ trait Exceptions extends Base with BaseTypes { self: ExceptionsDsl =>
   type RThrow = Rep[Throwable]
   trait SThrowable extends BaseTypeEx[Throwable, SThrowable] { self =>
     @External def getMessage: Rep[String]
+    @External def initCause (cause: Rep[Throwable]) : Rep[Throwable]
     def wrappedValueOfBaseType: Rep[Throwable]
   }
   trait SThrowableCompanion extends ExCompanion0[Throwable]  {
@@ -18,6 +19,10 @@ trait Exceptions extends Base with BaseTypes { self: ExceptionsDsl =>
   abstract class SException(val wrappedValueOfBaseType: Rep[Throwable]) extends SThrowable {
     def getMessage: Rep[String] =
       methodCallEx[String](self, this.getClass.getMethod("getMessage"), List())
+
+    def initCause (cause: Rep[Throwable]) : Rep[Throwable] = {
+      methodCallEx[Throwable](self, this.getClass.getMethod("initCause", classOf[Object]), List(cause.wrappedValueOfBaseType.asInstanceOf[AnyRef]))
+    }
   }
   trait SExceptionCompanion
 

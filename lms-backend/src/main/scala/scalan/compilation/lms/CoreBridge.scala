@@ -1,10 +1,12 @@
 package scalan
 package compilation.lms
 
+import java.lang.reflect.Method
 import java.util.HashMap
-import scalan.collections.ListOpsExp
 
-trait CoreBridge extends LmsBridge { self: ScalanCtxExp =>
+import scalan.compilation.language.{MethodMapping, Interpreter}
+
+trait CoreBridge extends LmsBridge with Interpreter { self: ScalanCtxExp with MethodMapping =>
 
   val lms: CoreLmsBackendBase
 
@@ -26,6 +28,17 @@ trait CoreBridge extends LmsBridge { self: ScalanCtxExp =>
         val f = mirrorLambdaToLmsFunc[a, b](m)(lam)
         val fun = lms.fun(f)(mA, mB)
         (exps :+ fun, symMirr + ((sym, fun)), funcMirr + ((sym, f)))
+
+      case MethodCall(receiver, method, args, _) =>
+        val exp = transformMethodCall(symMirr, receiver, method, args)
+        (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+
+      case lr@NewObject(aClass, args, _) =>
+        Manifest.classType(aClass) match {
+          case (mA: Manifest[a]) =>
+            val exp = lms.newObj[a](aClass.getCanonicalName, args.map(v => symMirr(v.asInstanceOf[Exp[_]])))(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        }
 
       case Apply(f, x) =>
         (createManifest(f.elem.eDom), createManifest(f.elem.eRange)) match {
@@ -152,6 +165,11 @@ trait CoreBridge extends LmsBridge { self: ScalanCtxExp =>
               case HashCode() => lms.hashCode(arg1_)
               case StringToInt() => lms.stringToInt(arg1_.asInstanceOf[lms.Exp[String]])
               case StringToDouble() => lms.stringToDouble(arg1_.asInstanceOf[lms.Exp[String]])
+              case _ =>
+                op.opName match {
+                  case "Sin" => lms.Sin(arg1_.asInstanceOf[lms.Exp[Double]])
+                  case "ToDouble" => lms.intToDouble(arg1_.asInstanceOf[lms.Exp[Int]])
+            }
             }
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
           }
@@ -221,6 +239,8 @@ trait CoreBridge extends LmsBridge { self: ScalanCtxExp =>
                 lms.stringEndsWith(arg1_.asInstanceOf[lms.Exp[String]], arg2_.asInstanceOf[lms.Exp[String]])
               case StringMatches() =>
                 lms.stringMatches(arg1_.asInstanceOf[lms.Exp[String]], arg2_.asInstanceOf[lms.Exp[String]])
+              case MathPow =>
+                lms.Pow(arg1_.asInstanceOf[lms.Exp[Double]], arg2_.asInstanceOf[lms.Exp[Double]])
             }
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
@@ -1067,6 +1087,19 @@ trait CoreBridge extends LmsBridge { self: ScalanCtxExp =>
         }
       }
 
+      case fun@ArrayFold(source, init, lambdaSym@Def(lam: Lambda[_, _])) =>
+        source.elem match {
+          case el: ArrayElem[_] =>
+            (createManifest(el.eItem), createManifest(fun.selfType)) match {
+              case (mA: Manifest[a], mB: Manifest[b]) =>
+                val lambdaF = mirrorLambdaToLmsFunc[(b, a), b](m)(lam.asInstanceOf[Lambda[(b, a), b]])
+                val lmsSource = symMirr(source).asInstanceOf[lms.Exp[Array[a]]]
+                val lmsInit = symMirr(init).asInstanceOf[lms.Exp[b]]
+                val exp = lms.foldArray[a, b](lmsSource, lmsInit, lambdaF)(mA, mB)
+                (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lambdaSym, lambdaF)))
+            }
+        }
+
       case ArrayStride(xs, start, length, stride) =>
         xs.elem match {
           case el: ArrayElem[a] =>
@@ -1076,6 +1109,29 @@ trait CoreBridge extends LmsBridge { self: ScalanCtxExp =>
             val lmsLength = symMirr(length).asInstanceOf[lms.Exp[Int]]
             val lmsStride = symMirr(stride).asInstanceOf[lms.Exp[Int]]
             val exp = lms.strideArray(lmsXs, lmsStart, lmsLength, lmsStride)(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case lr@ListMap(list, lamSym@Def(lam: Lambda[_, _])) =>
+        (createManifest(list.elem), createManifest(lam.eB)) match {
+        case (mA: Manifest[a], mB: Manifest[b]) =>
+          val lambdaF = mirrorLambdaToLmsFunc[a, b](m)(lam.asInstanceOf[Lambda[a, b]])
+          val exp = lms.listMap[a, b](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA, mB)
+          (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lamSym, lambdaF)))
+      }
+
+      case lr@ListFilter(list, lamSym @ Def(lam: Lambda[_, _])) =>
+        createManifest(list.elem) match {
+          case mA: Manifest[a] =>
+            val lambdaF = mirrorLambdaToLmsFunc[a, Boolean](m)(lam.asInstanceOf[Lambda[a, Boolean]])
+            val exp = lms.listFilter[a](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lamSym, lambdaF)))
+        }
+
+      case lr@ListRangeFrom0(len) =>
+        createManifest(lr.eT) match {
+          case mA: Manifest[a] =>
+            val exp = lms.listRangeFrom0[a](symMirr(len).asInstanceOf[lms.Exp[Int]])(mA)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
 
@@ -1127,8 +1183,9 @@ trait CoreBridge extends LmsBridge { self: ScalanCtxExp =>
             (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
         }
     }
-
     tt
   }
 
+  def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] =
+    !!!("Don't know how to transform method call")
 }
