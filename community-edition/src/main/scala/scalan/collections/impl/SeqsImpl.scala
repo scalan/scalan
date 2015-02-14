@@ -61,6 +61,16 @@ trait SeqsAbs extends Scalan with Seqs {
         this.getClass.getMethod("size"),
         List())
 
+    def apply(idx: Rep[Int]): Rep[A] =
+      methodCallEx[A](self,
+        this.getClass.getMethod("apply", classOf[AnyRef]),
+        List(idx.asInstanceOf[AnyRef]))
+
+    def slice(unc_from: Rep[Int], unc_until: Rep[Int]): Rep[Seq[A]] =
+      methodCallEx[Seq[A]](self,
+        this.getClass.getMethod("slice", classOf[AnyRef], classOf[AnyRef]),
+        List(unc_from.asInstanceOf[AnyRef], unc_until.asInstanceOf[AnyRef]))
+
     def isEmpty: Rep[Boolean] =
       methodCallEx[Boolean](self,
         this.getClass.getMethod("isEmpty"),
@@ -90,6 +100,11 @@ trait SeqsAbs extends Scalan with Seqs {
       methodCallEx[Seq[A]](self,
         this.getClass.getMethod("diff", classOf[AnyRef]),
         List(that.asInstanceOf[AnyRef]))
+
+    def toArray: Rep[Array[A]] =
+      methodCallEx[Array[A]](self,
+        this.getClass.getMethod("toArray"),
+        List())
   }
   trait SSeqImplCompanion
   // elem for concrete class
@@ -185,6 +200,12 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
     override def size: Rep[Int] =
       wrappedValueOfBaseType.size
 
+    override def apply(idx: Rep[Int]): Rep[A] =
+      wrappedValueOfBaseType.apply(idx)
+
+    override def slice(unc_from: Rep[Int], unc_until: Rep[Int]): Rep[Seq[A]] =
+      wrappedValueOfBaseType.slice(unc_from, unc_until)
+
     override def isEmpty: Rep[Boolean] =
       wrappedValueOfBaseType.isEmpty
 
@@ -268,6 +289,30 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
       }
     }
 
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(idx, _*), _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "apply" =>
+          Some((receiver, idx)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(unc_from, unc_until, _*), _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "slice" =>
+          Some((receiver, unc_from, unc_until)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object isEmpty {
       def unapply(d: Def[_]): Option[Rep[SSeq[A]] forSome {type A}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "isEmpty" =>
@@ -335,6 +380,18 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[Seq[A]]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object toArray {
+      def unapply(d: Def[_]): Option[Rep[SSeq[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "toArray" =>
+          Some(receiver).asInstanceOf[Option[Rep[SSeq[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SSeq[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

@@ -1,6 +1,5 @@
 package scalan.collections
 
-import scala.collection.Seq
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDslSeq, SegmentsDslExp, SegmentsDsl}
@@ -75,6 +74,8 @@ class SeqsTests extends BaseTests { suite =>
     {
       val res = ctx.t2((Seq.empty[Int], 10))
       assertResult(Seq(10))(res)
+//      val s: Seq[Int]   = null
+//      s.toArray
     }
 //    {
 //      val res = ctx.t3(10)

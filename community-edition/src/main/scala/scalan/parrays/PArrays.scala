@@ -13,6 +13,7 @@ trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
     implicit def elem: Elem[A @uncheckedVariance]
     def length: Rep[Int]
     def arr: Rep[Array[A @uncheckedVariance]]
+    def seq: Rep[Seq[A]] = SSeq(arr)
     def apply(i: Rep[Int]): Rep[A]
     @OverloadId("many")
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A]
@@ -116,6 +117,22 @@ trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
   trait BaseArrayCompanion extends ConcreteClass1[BaseArray] {
     def defaultOf[A](implicit ea: Elem[A]) =
       Default.defaultVal(BaseArray(SArray.empty[A]))
+  }
+
+  abstract class ArrayOnSeq[A](override val seq: Rep[Seq[A]])(implicit val eA: Elem[A]) extends PArray[A] {
+    def elem = eA
+    def arr = seq.toArray
+    def length = seq.size
+    def apply(i: Rep[Int]) = seq(i)
+    def slice(offset: Rep[Int], length: Rep[Int]) = ArrayOnSeq(seq.slice(offset, offset + length))
+    @OverloadId("many")
+    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A] = {
+      ArrayOnSeq(SSeq(indices.map(i => seq(i))))
+    }
+  }
+  trait ArrayOnSeqCompanion extends ConcreteClass1[ArrayOnSeq] {
+    def defaultOf[A](implicit ea: Elem[A]) =
+      Default.defaultVal(ArrayOnSeq(SSeq.empty[A]))
   }
 
 // TODO We shouldn't need this anymore. Check if recursive types like Tree in EE work without it

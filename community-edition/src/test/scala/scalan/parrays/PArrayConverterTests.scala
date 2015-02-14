@@ -17,6 +17,8 @@ class PArrayConverterTests extends BaseTests { suite =>
       val Pair(as, bs) = ps.convertTo[PairArray[Int, Double]].toData
       Pair(as.arr, bs.arr)
     } }
+    lazy val t4 = fun { (in: Rep[Array[Int]]) => BaseArray(in).convertTo[ArrayOnSeq[Int]].toData }
+    lazy val t5 = fun { (in: Rep[Seq[Int]]) => ArrayOnSeq(in).convertTo[BaseArray[Int]].toData }
   }
 
   class ConvProgStaged(testName: String) extends TestContext(this, testName) with  ConvProg with ScalanCommunityDslExp {
@@ -29,6 +31,8 @@ class PArrayConverterTests extends BaseTests { suite =>
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
     ctx.emit("t3", ctx.t3)
+    ctx.emit("t4", ctx.t4)
+    ctx.emit("t5", ctx.t5)
   }
 
 
@@ -42,6 +46,14 @@ class PArrayConverterTests extends BaseTests { suite =>
       val res = ctx.t3(Array((10, 10.0), (20, 20.0)))
       assertResult(Array(10, 20))(res._1)
       assertResult(Array(10.0, 20.0))(res._2)
+    }
+    {
+      val res = ctx.t4(Array(10, 20))
+      assertResult(Seq(10, 20))(res)
+    }
+    {
+      val res = ctx.t5(Seq(10, 20))
+      assertResult(Array(10, 20))(res)
     }
   }
 
