@@ -11,7 +11,7 @@ import java.net.{URL, URLClassLoader}
 import scalan.util.FileUtil.copyToDir
 import scala.collection.mutable
 
-trait LmsCompilerScala extends LmsCompiler { self: ScalanCtxExp with LmsBridge =>
+trait LmsCompilerScala extends LmsCompiler with CommunityBridgeScala { self: ScalanCtxExp =>
 
   /**
    * If scalaVersion is None, uses scala-compiler.jar

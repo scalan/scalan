@@ -4,9 +4,10 @@ package lms
 
 import java.io.File
 
+import scalan.compilation.language.MethodMapping
 import scalan.util.FileUtil
 
-trait LmsCompiler extends Compiler { self: ScalanCtxExp with LmsBridge =>
+trait LmsCompiler extends Compiler { self: ScalanCtxExp with LmsBridge with MethodMapping =>
   def emitSource[A, B](sourcesDir: File, extension: String, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B]): File = {
     (createManifest(eInput), createManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>

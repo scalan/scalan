@@ -3,7 +3,7 @@ package scalan.compilation.lms
 import scalan.ScalanCtxExp
 import scalan.compilation.language.MethodMapping
 
-trait LmsBridge extends MethodMapping { self: ScalanCtxExp =>
+trait LmsBridge { self: ScalanCtxExp with MethodMapping =>
 
   val lms: LmsBackend
 

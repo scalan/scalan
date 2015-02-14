@@ -1,7 +1,7 @@
 package scalan.it.lms
 
 import scala.language.reflectiveCalls
-import scalan.ScalanCtxExp
+import scalan.{CommunityMethodMapping, ScalanCtxExp}
 import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.LmsCompilerScala
@@ -208,7 +208,7 @@ class MethodCallItTestsOld extends BaseItTests {
     length should equal(3)
   }
 
-  trait ReplacementExp extends MatricesDslExp with ScalanCommunityExp with TestLmsCompiler {
+  trait ReplacementExp extends MatricesDslExp with ScalanCommunityExp with TestLmsCompiler with CommunityMethodMapping {
     lazy val arrayLength = fun { v: Rep[Array[Int]] =>
       PArray(v).length
     }
