@@ -33,6 +33,9 @@ class SeqsTests extends BaseTests { suite =>
     lazy val t9 = fun { (in: Rep[Seq[List[Segment]]]) =>
       in.map(fun {xs => xs.map(s => s.shift(1)).reverse})
     }
+    lazy val t10 = fun { (in: Rep[Array[(Int,Int)]]) =>
+      SSeq(in.map(p => Interval(p))).map(fun { i => i.toData })
+    }
 
     val e = element[Seq[Segment]]
   }

@@ -24,7 +24,8 @@ trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
     @External def isEmpty: Rep[Boolean]
 
     /** Builds a new sequence by applying a function to all elements of this sequence. */
-    @External def map[B: Elem](f: Rep[A => B]): Rep[Seq[B]]
+    @External(methodName = "map") def map[B: Elem](f: Rep[A => B]): Rep[Seq[B]]
+    //@External def map[B: Elem](f: Rep[A] => Rep[B]): Rep[Seq[B]] = mapBy(fun(f))
 
     /** Reduces the elements of this sequence using the specified associative binary operator. */
     @External def reduce(op: Rep[((A, A)) => A]): Rep[A]

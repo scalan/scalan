@@ -2,7 +2,7 @@ package scalan.it.lms
 
 import scala.language.reflectiveCalls
 import scalan.{CommunityMethodMapping, ScalanCtxExp}
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
+import scalan.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.BaseItTests
