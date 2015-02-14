@@ -40,6 +40,7 @@ trait Seqs extends Base with BaseTypes { self: SeqsDsl =>
     @External def apply[A: Elem](@ArgList arr: Rep[Array[A]]): Rep[Seq[A]]
 
     @External def empty[A:Elem]: Rep[Seq[A]]
+    @External def fromList[A:Elem](list: Rep[List[A]]): Rep[Seq[A]]
   }
 
   def DefaultOfSeq[A: Elem]: Default[Seq[A]] = Default.defaultVal(Seq.empty[A])
@@ -49,6 +50,9 @@ trait SeqsDsl extends impl.SeqsAbs
 trait SeqsDslSeq extends impl.SeqsSeq {
   trait SeqSSeq[A] extends SSeqImpl[A] {
     override def map[B:Elem](f: Rep[A => B]): Rep[Seq[B]] = wrappedValueOfBaseType.map(f)
+  }
+  implicit class SeqOps(s: Seq.type) {
+    def fromList[A](list: List[A]): Seq[A] = Seq(list: _*)
   }
 }
 trait SeqsDslExp extends impl.SeqsExp

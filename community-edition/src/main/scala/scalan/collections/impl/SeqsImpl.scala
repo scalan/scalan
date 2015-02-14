@@ -43,6 +43,11 @@ trait SeqsAbs extends Scalan with Seqs {
       methodCallEx[Seq[A]](self,
         this.getClass.getMethod("empty", classOf[Elem[A]]),
         List(element[A]))
+
+    def fromList[A:Elem](list: Rep[List[A]]): Rep[Seq[A]] =
+      methodCallEx[Seq[A]](self,
+        this.getClass.getMethod("fromList", classOf[AnyRef], classOf[Elem[A]]),
+        List(list.asInstanceOf[AnyRef], element[A]))
   }
   def SSeq: Rep[SSeqCompanionAbs]
   implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion = {
@@ -159,6 +164,9 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
 
     override def empty[A:Elem]: Rep[Seq[A]] =
       Seq.empty[A]
+
+    override def fromList[A:Elem](list: Rep[List[A]]): Rep[Seq[A]] =
+      Seq.fromList[A](list)
   }
 
     // override proxy if we deal with BaseTypeEx
@@ -353,6 +361,18 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Unit forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromList {
+      def unapply(d: Def[_]): Option[Rep[List[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(list, _*), _) if receiver.elem.isInstanceOf[SSeqCompanionElem] && method.getName == "fromList" =>
+          Some(list).asInstanceOf[Option[Rep[List[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[List[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
