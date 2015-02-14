@@ -9,7 +9,6 @@ import scalan.it.BaseItTests
 import scalan.it.lms.method.TestMethod
 import scalan.linalgebra.MatricesDslExp
 import scalan.util.FileUtil
-import scalan.util.FileUtil.packJar
 
 class MethodCallItTests extends LmsCommunityItTests{
   trait Prog extends ProgCommunity  {
@@ -268,7 +267,7 @@ class MethodCallItTestsOld extends BaseItTests {
 
   ignore("Mapping Method From Jar") {
     val methodName = "MappingMethodFromJar"
-    packJar(TestMethod.getClass, methodName, FileUtil.file(prefix, methodName).getAbsolutePath, jarReplaceMethExp.libs, testJar)
+    FileUtil.packJar(TestMethod.getClass, methodName, FileUtil.file(prefix, methodName).getAbsolutePath, jarReplaceMethExp.libs, testJar)
     val squareLength = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.arrayLength, methodName, Array(5, 9, 2), jarReplaceMethExp.defaultCompilerConfig)
     squareLength should equal(9)
   }

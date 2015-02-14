@@ -106,8 +106,21 @@ object FileUtil {
     rest.foldLeft(first) { (file, child) => new File(file, child) }
 
   def packJar(baseClass: Class[_], methodName: String, path: String, libDir: String, jarName: String) = {
-    new File(s"$path/$libDir/").mkdirs()
+    file(path, libDir).mkdirs()
     launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", s"$path/$libDir/$jarName") :+
       baseClass.getPackage.getName.replaceAll("\\.", "/"): _*)
   }
+
+  /**
+   * Same as dir.listFiles(filter), except it returns empty array instead of null
+   * if dir doesn't exist or is not a directory
+   */
+  def listFiles(dir: File, filter: FilenameFilter): Array[File] = dir.listFiles(filter) match {
+    case null => Array.empty
+    case array => array
+  }
+}
+
+case class ExtensionFilter(extension: String) extends FilenameFilter {
+  override def accept(dir: File, name: String): Boolean = name.toLowerCase.endsWith(s".$extension")
 }

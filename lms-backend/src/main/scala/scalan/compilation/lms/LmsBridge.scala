@@ -90,12 +90,12 @@ trait LmsBridge extends MethodMapping { self: ScalanCtxExp =>
     case el: MMapElem[_,_] =>
       Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
     case el: BaseElemEx[_, _] => {
-      val c = el.tag.mirror.runtimeClass(el.tag.tpe)
+      val c = el.classTag.runtimeClass
       import scala.reflect.runtime.universe._
       def toManifest(t: Type) = try {
         Manifest.classType(el.tag.mirror.runtimeClass(t))
       } catch {
-        case _ => LmsType.wildCard
+        case _: Exception => LmsType.wildCard
       }
       val targs = el.tag.tpe match {
         case TypeRef(_, _, args) => args
@@ -103,7 +103,7 @@ trait LmsBridge extends MethodMapping { self: ScalanCtxExp =>
       targs.length match {
         case 0 => Manifest.classType(c)
         case 1 => Manifest.classType(c, toManifest(targs(0)))
-        case n => Manifest.classType(c, toManifest(targs(0)), targs.slice(1, targs.length).map(toManifest _): _*)
+        case n => Manifest.classType(c, toManifest(targs(0)), targs.drop(1).map(toManifest): _*)
       }
     }
     case el => ???(s"Don't know how to create manifest for $el")

@@ -6,17 +6,17 @@ import scala.language.postfixOps
 object LanguageId extends Enumeration {
   type LANGUAGE = Value
   val SCALA, CPP = Value
+
+  implicit def defaultLanguage: LANGUAGE = SCALA
 }
 
 trait MethodMapping {
 
   import LanguageId._
 
-  var currentLanguage = SCALA
-
   val backends: mutable.HashMap[LANGUAGE, LanguageConf#Backend[_]] = new mutable.HashMap()
 
-  def methodReplaceConf: LanguageConf#Backend[_] = backends(currentLanguage)
+  def methodReplaceConf(implicit language: LANGUAGE): LanguageConf#Backend[_] = backends(language)
 
   trait Implicit[T] {
     this: T =>

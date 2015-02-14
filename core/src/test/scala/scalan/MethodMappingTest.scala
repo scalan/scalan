@@ -1,6 +1,6 @@
 package scalan
 
-import scalan.compilation.language.LanguageId.CPP
+import scalan.compilation.language.LanguageId._
 import scalan.compilation.language._
 
 class MethodMappingTest extends BaseTests {
@@ -69,7 +69,7 @@ class MethodMappingTest extends BaseTests {
   }
 
   test("C++ Method") {
-    TestMethodMapping.currentLanguage = CPP
+    implicit def defaultLanguage: LANGUAGE = CPP
     val m = TestMethodMapping.methodReplaceConf.get("scalan.parrays.PArrays$PArray", "length").get.asInstanceOf[MethodMapping#CppLanguage#CppFunc]
     "invertMatrix" should equal(m.funcName.name)
     m.args.size should equal(2)
