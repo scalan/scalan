@@ -226,11 +226,11 @@ object ScalanAst {
   //implementations which inherit from the given trait.
   def getConcreteClasses(entity : STraitDef, defs: List[SBodyItem]) : List[SClassDef] = {
     //This function checks if the given entity is in the list of ansestors
-    def isAnAncestor(ancestors: List[STraitCall], entity : STraitDef) : Boolean = {
-      ancestors.find { case STraitCall(traitName ,_) => traitName == entity.name}.isDefined
+    def isAncestor(ancestors: List[STraitCall], entity : STraitDef) : Boolean = {
+      ancestors.exists { case STraitCall(traitName ,_) => traitName == entity.name }
     }
 
-    defs.collect { case c : SClassDef => c}.filter{ c => isAnAncestor(c.ancestors, entity) }
+    defs.collect { case c : SClassDef if isAncestor(c.ancestors, entity) => c}
   }
 
   object SEntityModuleDef {
@@ -331,10 +331,7 @@ object ScalanAst {
       }
 
       //Create a map of traits and their class definitions
-      var classesMap = Map[STraitDef, List[SClassDef]]()
-      for(entity:STraitDef <- entities) {
-        classesMap += ( entity -> getEntityClasses( entity, defs) )
-      }
+      val classesMap = entities.map(entity => entity -> getEntityClasses(entity, defs)).toMap
 
       val methods = defs.collect { case md: SMethodDef => md }
 
@@ -415,7 +412,7 @@ trait ScalanParsers {
       //Get the list of all known module entities (traits)
       val entities = module.entitySClasses.keys
       //Filter out the first matching name
-      (entities collectFirst { case entity : STraitDef if nameToFind == entity.name => Some(entity) }).isDefined
+      (entities.exists{ case entity : STraitDef => nameToFind == entity.name })
     } else {
       false
     }
