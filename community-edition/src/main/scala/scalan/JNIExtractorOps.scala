@@ -160,10 +160,15 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     }
   }
 
-  private def anyval_boxed_class[T  ](elem: Elem[T]): Class[_] = elem match {
+  private def anyval_boxed_class[T]: PartialFunction[Elem[T],Class[_]] = {
+    case BoolElement => classOf[java.lang.Boolean]
     case ByteElement => classOf[java.lang.Byte]
+    case ShortElement => classOf[java.lang.Short]
     case IntElement => classOf[java.lang.Integer]
+    case LongElement => classOf[java.lang.Long]
+    case FloatElement => classOf[java.lang.Float]
     case DoubleElement => classOf[java.lang.Double]
+    case CharElement => classOf[java.lang.Character]
   }
 
   private def box[T: Elem](x: Rep[JNIType[T]]): Rep[JNIType[T]] = {
@@ -205,7 +210,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
           case eI if eI <:< AnyRefElement =>
             JNI_MapObjectArray[a,a](x, {xi:Rep[a] => JNI_Pack(xi)})
           case _ =>
-            JNI_Map[a,a](x, {xi:Rep[a] => xi})
+            JNI_MapPrimitiveArray[a,a](x, {xi:Rep[a] => xi})
         }
       case el: BaseElem[_] =>
         el match {
@@ -236,11 +241,11 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     override def mirror(t: Transformer) = JNI_NewPrimitive[T](t(x))
   }
 
-  case class JNI_Map[A: Elem, B: Elem](x: Rep[Array[A]], f: Rep[A => B]) extends Def[JNIType[Array[B]]] {
+  case class JNI_MapPrimitiveArray[A: Elem, B: Elem](x: Rep[Array[A]], f: Rep[A => B]) extends Def[JNIType[Array[B]]] {
     require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
     override def selfType = element[JNIType[Array[B]]]
-    override def uniqueOpId = "JNI_Map"
-    override def mirror(t: Transformer) = JNI_Map[A,B](t(x), t(f))
+    override def uniqueOpId = "JNI_MapPrimitiveArray"
+    override def mirror(t: Transformer) = JNI_MapPrimitiveArray[A,B](t(x), t(f))
   }
 
   case class JNI_MapObjectArray[A: Elem, B: Elem](x: Rep[Array[A]], f: Rep[A => JNIType[B]]) extends Def[JNIType[Array[B]]] {

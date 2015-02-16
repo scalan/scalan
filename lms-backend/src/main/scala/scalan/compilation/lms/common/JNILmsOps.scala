@@ -2,14 +2,11 @@ package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
 import scala.virtualization.lms.common._
-import scala.virtualization.lms.epfl.test7.{Arrays, ArrayLoopsExp}
+import scala.virtualization.lms.epfl.test7.ArrayLoopsExp
 import scala.virtualization.lms.internal.GenerationFailedException
 import scalan.compilation.lms.cxx.CXXCodegen
 
 
-/**
- * Created by zotov on 12/27/14.
- */
 trait JNILmsOps extends Base {
   trait JNIType[T]
   trait JNIClass

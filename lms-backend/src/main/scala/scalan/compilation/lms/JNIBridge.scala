@@ -151,7 +151,7 @@ trait JNIBridge extends CoreBridge { self: ScalanCtxExp with MethodMapping with 
         val _sig = symMirr(sig).asInstanceOf[lms.Exp[String]]
         val exp = lms.jni_get_method_id(_clazz, _mn, _sig)
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-      case res@JNI_Map(x, fSym@Def(f: Lambda[_, _])) =>
+      case res@JNI_MapPrimitiveArray(x, fSym@Def(f: Lambda[_, _])) =>
         (res.selfType, x.elem) match {
           case (rese: JNITypeElem[jniarr_t], xe: ArrayElem[_]) =>
             rese.tElem match {
