@@ -284,7 +284,7 @@ object ScalanAst {
         }
       }
 
-      //Get the trate name from the trate synonym defined using
+      //Get the trait name from the trait synonym defined using
       //'type' or throws an exception if one can not be found
       private def getTypeTraitName(moduleName : String, typeDef : STpeDef) : String = {
         //ToDo: Potentially this sub-function needs to be extended with looking 'deeper' and 'wider' into arguments of the STpeDef
@@ -316,19 +316,14 @@ object ScalanAst {
       entities.headOption.getOrElse {
         throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
       }
-      //Map the synonyms, if any, into the entities (UDTs)
-      var entityRepSynonyms = Map[STpeDef, STraitDef]()
-      //Iterate through all the synonyms
-      for(synonym:STpeDef <- entityRepSynonymsList){
-        //Get the trait name for a synonym
-        val traitName = getTypeTraitName(moduleName,synonym)
-        //Search for the entity (trait) with the found name
-        val entity = entities.collectFirst{case ent : STraitDef if (ent.name == traitName) => ent}.getOrElse{
-          throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. The trait synonym is defined by the trait named $traitName is not fond.")
+
+      val entityRepSynonyms = entityRepSynonymsList.map {
+        case synonym => synonym -> entities.collectFirst {
+          case ent : STraitDef if (ent.name == getTypeTraitName(moduleName,synonym)) => ent
+        }.getOrElse{
+          throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. The trait synonym is defined by the trait named ${getTypeTraitName(moduleName,synonym)} is not fond.")
         }
-        //If a trait is found then add a mapping
-        entityRepSynonyms += ( synonym -> entity )
-      }
+      }.toMap
 
       //Create a map of traits and their class definitions
       val classesMap = entities.map(entity => entity -> getEntityClasses(entity, defs)).toMap
