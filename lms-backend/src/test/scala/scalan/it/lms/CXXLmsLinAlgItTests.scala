@@ -8,11 +8,8 @@ import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
 
 class CXXLmsLinAlgItTests extends BaseItTests with ItTestsUtilLmsCxx {
-  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerCXX with GraphVizExport { self =>
-    def makeBridge[A, B] = new CoreBridge[A, B] {
-      val scalan = self
-      val lms = new CoreCXXLmsBackend
-    }
+  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerCXX with CoreBridge with GraphVizExport { self =>
+    val lms = new CoreCXXLmsBackend
   }
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunityDslSeq
   
