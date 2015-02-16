@@ -1,21 +1,17 @@
 package scalan.benchmark
 
 import java.io.File
-import java.net.URLClassLoader
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 
-import scalan.{ScalanCommunityDslSeq, ScalanCommunityDslExp, ScalanCommunitySeq}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.scalac.LmsCompilerScala
-import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
-import scalan.linalgebra.{MatricesDslSeq, LinearAlgebraExamples}
+import scalan.compilation.lms.{CommunityBridgeScala, CommunityLmsBackend}
+import scalan.linalgebra.LinearAlgebraExamples
 import scalan.util.FileUtil
+import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq}
 
-/**
- * Created by zotov on 2/3/15.
- */
 object MvmBenchmark {
   @volatile
   class MvmStateBase {
@@ -91,7 +87,7 @@ object MvmBenchmark {
   @volatile
   abstract class MvmStateStagedAbs extends MvmStateBase {
 
-    class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with LmsCompilerScala with CommunityBridge {
+    class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with LmsCompilerScala with CommunityBridgeScala {
       val lms = new CommunityLmsBackend
     }
 
