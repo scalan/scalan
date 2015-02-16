@@ -6,13 +6,14 @@ import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.annotation.unchecked.uncheckedVariance
 
-trait PArrays extends ArrayOps { self: PArraysDsl =>
+trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
 
   type PA[+A] = Rep[PArray[A]]
   trait PArray[@uncheckedVariance +A] extends Reifiable[PArray[A @uncheckedVariance]] {
     implicit def elem: Elem[A @uncheckedVariance]
     def length: Rep[Int]
     def arr: Rep[Array[A @uncheckedVariance]]
+    def seq: Rep[Seq[A]] = SSeq(arr)
     def apply(i: Rep[Int]): Rep[A]
     @OverloadId("many")
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A]
@@ -118,6 +119,22 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
       Default.defaultVal(BaseArray(SArray.empty[A]))
   }
 
+  abstract class ArrayOnSeq[A](override val seq: Rep[Seq[A]])(implicit val eA: Elem[A]) extends PArray[A] {
+    def elem = eA
+    def arr = seq.toArray
+    def length = seq.size
+    def apply(i: Rep[Int]) = seq(i)
+    def slice(offset: Rep[Int], length: Rep[Int]) = ArrayOnSeq(seq.slice(offset, offset + length))
+    @OverloadId("many")
+    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A] = {
+      ArrayOnSeq(SSeq(indices.map(i => seq(i))))
+    }
+  }
+  trait ArrayOnSeqCompanion extends ConcreteClass1[ArrayOnSeq] {
+    def defaultOf[A](implicit ea: Elem[A]) =
+      Default.defaultVal(ArrayOnSeq(SSeq.empty[A]))
+  }
+
 // TODO We shouldn't need this anymore. Check if recursive types like Tree in EE work without it
 // 
 //  abstract class EmptyArray[A](implicit val eA: Elem[A]) extends PArray[A] {
@@ -199,8 +216,8 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
 
 }
 
-trait PArraysDsl extends impl.PArraysAbs
+trait PArraysDsl extends impl.PArraysAbs { self: ScalanCommunityDsl => }
 
-trait PArraysDslSeq extends impl.PArraysSeq
+trait PArraysDslSeq extends impl.PArraysSeq { self: ScalanCommunityDslSeq => }
 
-trait PArraysDslExp extends impl.PArraysExp
+trait PArraysDslExp extends impl.PArraysExp { self: ScalanCommunityDslExp => }

@@ -10,7 +10,7 @@ import scalan.common.Default
 
 // Abs -----------------------------------
 trait HashSetsAbs extends Scalan with HashSets {
-  self: HashSetsDsl =>
+  self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxySHashSet[A](p: Rep[SHashSet[A]]): SHashSet[A] =
     proxyOps[SHashSet[A]](p)
@@ -126,7 +126,7 @@ trait HashSetsAbs extends Scalan with HashSets {
 
 // Seq -----------------------------------
 trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
-  self: HashSetsDslSeq =>
+  self: ScalanCommunityDslSeq =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs with UserTypeSeq[SHashSetCompanionAbs, SHashSetCompanionAbs] {
     lazy val selfType = element[SHashSetCompanionAbs]
 
@@ -166,7 +166,7 @@ trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
 
 // Exp -----------------------------------
 trait HashSetsExp extends HashSetsDsl with ScalanExp {
-  self: HashSetsDslExp =>
+  self: ScalanCommunityDslExp =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs with UserTypeDef[SHashSetCompanionAbs, SHashSetCompanionAbs] {
     lazy val selfType = element[SHashSetCompanionAbs]
     override def mirror(t: Transformer) = this

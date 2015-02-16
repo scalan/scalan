@@ -1,7 +1,7 @@
 package scalan.it.smoke
 
-import scalan.ScalanCtxSeq
-import scalan.community._
+import scalan._
+//import scalan.community._
 import scalan.collections._
 import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
 
@@ -10,7 +10,7 @@ import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
  */
 abstract class CommunitySmokeItTests extends SmokeItTests {
 
-  trait ProgCommunity extends Prog with ScalanCommunity with PArrayExamples with MultiMapsDsl  {
+  trait ProgCommunity extends Prog with ScalanCommunity with PArrayExamples with ScalanCommunityDsl  {
 
     lazy val simpleConst = fun { x: PA[Int] =>
       PArray.singleton(1)

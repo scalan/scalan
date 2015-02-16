@@ -8,7 +8,7 @@ import scalan.common.Default
 
 // Abs -----------------------------------
 trait MultiMapsAbs extends Scalan with MultiMaps {
-  self: MultiMapsDsl =>
+  self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): MMultiMap[K, V] =
     proxyOps[MMultiMap[K, V]](p)
@@ -95,7 +95,7 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
 
 // Seq -----------------------------------
 trait MultiMapsSeq extends MultiMapsDsl with ScalanSeq {
-  self: MultiMapsDslSeq =>
+  self: ScalanCommunityDslSeq =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with UserTypeSeq[MMultiMapCompanionAbs, MMultiMapCompanionAbs] {
     lazy val selfType = element[MMultiMapCompanionAbs]
   }
@@ -120,7 +120,7 @@ trait MultiMapsSeq extends MultiMapsDsl with ScalanSeq {
 
 // Exp -----------------------------------
 trait MultiMapsExp extends MultiMapsDsl with ScalanExp {
-  self: MultiMapsDslExp =>
+  self: ScalanCommunityDslExp =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with UserTypeDef[MMultiMapCompanionAbs, MMultiMapCompanionAbs] {
     lazy val selfType = element[MMultiMapCompanionAbs]
     override def mirror(t: Transformer) = this
