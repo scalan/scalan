@@ -56,11 +56,10 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
     val mA = manifest[A]
   }
 
-  case class ReturnFirstArg[A: Manifest](jArray: Rep[JNIType[A]], ignore: Rep[Any]) extends Def[JNIType[A]]
-//  case class NewPair[A: Manifest, B: Manifest](a: Rep[JNIType[A]], b: Rep[JNIType[B]]) extends Def[JNIType[(A,B)]]
+  case class ReturnFirstArg[A: Manifest](jArray: Rep[JNIType[A]], ignore: Rep[Any]*) extends Def[JNIType[A]]
   case class NewPrimitive[T: Manifest](x: Rep[T]) extends Def[JNIType[T]]
-  case class NewObject[T: Manifest](clazz: Rep[JNIClass], mid: Rep[JNIMethodID], args: Seq[Rep[Any]]) extends Def[JNIType[T]]
-  case class CallObjectMethod[R: Manifest, A: Manifest](x: Rep[JNIType[A]], mid: Rep[JNIMethodID], args: Seq[Rep[Any]]) extends Def[JNIType[R]]
+  case class NewObject[T: Manifest](clazz: Rep[JNIClass], mid: Rep[JNIMethodID], args: Rep[Any]*) extends Def[JNIType[T]]
+  case class CallObjectMethod[R: Manifest, A: Manifest](x: Rep[JNIType[A]], mid: Rep[JNIMethodID], args: Rep[Any]*) extends Def[JNIType[R]]
 
   override def boundSyms(e: Any): List[Sym[Any]] = e match {
     case JNIArrayElem(x,y) =>
@@ -83,7 +82,7 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   def jni_get_field_id(clazz: Rep[JNIClass], fn: Rep[String], sig: Rep[String]): Rep[JNIFieldID] = GetFieldID(clazz, fn, sig)
   def jni_get_method_id(clazz: Rep[JNIClass], mn: Rep[String], sig: Rep[String]): Rep[JNIMethodID] = GetMethodID(clazz, mn, sig)
   def jni_get_object_field_value[A: Manifest, T: Manifest](fid: Rep[JNIFieldID], x: Rep[JNIType[T]]): Rep[JNIType[A]] = GetObjectFieldValue[A,T](fid, x)
-  def jni_call_object_method[R: Manifest, A: Manifest](x: Rep[JNIType[A]], mid: Rep[JNIMethodID], args: Seq[Rep[Any]]): Rep[JNIType[R]] = CallObjectMethod[R,A](x,mid,args)
+  def jni_call_object_method[R: Manifest, A: Manifest](x: Rep[JNIType[A]], mid: Rep[JNIMethodID], args: Rep[Any]*): Rep[JNIType[R]] = CallObjectMethod[R,A](x,mid,args:_*)
   def jni_get_primitive_field_value[A: Manifest, T: Manifest](fid: Rep[JNIFieldID], x: Rep[JNIType[T]]): Rep[A] = GetPrimitiveFieldValue[A,T](fid, x)
   def jni_return_first_arg[A: Manifest](ret: Rep[JNIType[A]], ignore: Rep[Any]): Rep[JNIType[A]] = ReturnFirstArg[A](ret, ignore)
 
@@ -108,8 +107,8 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
     ReturnFirstArg(jArray, res)
   }
 
-  def jni_new_object[T: Manifest](clazz: Rep[JNIClass], mid: Rep[JNIMethodID], args: Seq[Rep[Any]]): Rep[JNIType[T]] = {
-    NewObject[T](clazz, mid, args)
+  def jni_new_object[T: Manifest](clazz: Rep[JNIClass], mid: Rep[JNIMethodID], args: Rep[Any]*): Rep[JNIType[T]] = {
+    NewObject[T](clazz, mid, args:_*)
   }
 
   override
@@ -158,15 +157,17 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
         case mA: Manifest[a_t] =>
           jni_new_primitive[a_t](f(x).asInstanceOf[Exp[a_t]])(mA)
       }
-    case res@NewObject(clazz,mid,args) =>
+    case res@NewObject(clazz,mid,args@_*) =>
       res.tp.typeArguments(0) match {
         case mT: Manifest[t_t] =>
-          jni_new_object[t_t](f(clazz), f(mid), f(args))(mT)
+          val _args = for(arg <- args) yield f(arg)
+          jni_new_object[t_t](f(clazz), f(mid), _args:_*)(mT)
       }
-    case res@CallObjectMethod(x,mid,args) =>
+    case res@CallObjectMethod(x,mid,args@_*) =>
       (res.tp.typeArguments(0),x.tp.typeArguments(0)) match {
         case (mR: Manifest[r_t], mA: Manifest[a_t]) =>
-          jni_call_object_method[r_t,a_t](f(x).asInstanceOf[Exp[JNIType[a_t]]], f(mid), f(args))(mR,mA)
+          val _args = for(arg <- args) yield f(arg)
+          jni_call_object_method[r_t,a_t](f(x).asInstanceOf[Exp[JNIType[a_t]]], f(mid), _args:_*)(mR,mA)
       }
     case res@BoxPrimitive(x) =>
       x.tp.typeArguments(0) match {
@@ -213,10 +214,10 @@ trait CXXGenJNIExtractor extends CXXCodegen {
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case res@NewPrimitive(x) =>
       emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remap(x.tp)}>(${quote(x)})")
-    case res@NewObject(clazz, mid, args: Seq[Exp[_]]) =>
+    case res@NewObject(clazz, mid, args@_*) =>
       val sargs = if(args.isEmpty) "" else ", " + args.map(quote).mkString(", ")
       emitValDef(quote(sym),norefManifest(jobjectManifest(sym.tp)), s"env->NewObject(${quote(clazz)},${quote(mid)}${sargs})")
-    case res@CallObjectMethod(x, mid, args: Seq[Exp[_]]) =>
+    case res@CallObjectMethod(x, mid, args@_*) =>
       val sargs = if(args.isEmpty) "" else ", " + args.map(quote).mkString(", ")
       emitValDef(quote(sym),norefManifest(jobjectManifest(sym.tp)), s"static_cast<${remap(jobjectManifest(sym.tp))}>(env->CallObjectMethod(${quote(x)},${quote(mid)}${sargs}))")
     case res@ReturnFirstArg(jArray, _) =>

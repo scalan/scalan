@@ -102,29 +102,11 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     JNI_GetPrimitiveFieldValue[A,A](fid, x)
   }
 
-  private def get_field[A: Elem, T: Elem](fn: String, x: Rep[JNIType[T]]): Rep[A] = {
-    val clazz = find_class_of_obj(x)
-
-    val sig = x.elem match {
-      case (jnie: JNITypeElem[_]) =>
-        org.objectweb.asm.Type.getType(jnie.tElem.classTag.runtimeClass.getField(fn).getType).getDescriptor
-    }
-
-    val fid = JNI_GetFieldID(clazz, CString(fn), CString(sig))
-
-    element[A] match {
-      case elem if !(elem <:< AnyRefElement) =>
-        unbox(JNI_GetObjectFieldValue[A,T](fid, x))
-      case _ =>
-        JNI_Extract( JNI_GetObjectFieldValue[A,T](fid, x) )
-    }
-  }
-
-  private def get_method_id[T: Elem](x: Rep[JNIType[T]], mn: String, args: Seq[Rep[Any]]): Rep[JNIMethodID] = {
+  private def get_method_id[T: Elem](x: Rep[JNIType[T]], mn: String, args: Rep[Any]*): Rep[JNIMethodID] = {
     val clazz = find_class_of_obj(x)
     val sig = x.elem match {
       case (jnie: JNITypeElem[_]) =>
-        val argclass:List[Class[_]] = args.toList.map({arg => arg.elem.classTag.runtimeClass})
+        val argclass = args.map({arg => arg.elem.classTag.runtimeClass})
         org.objectweb.asm.Type.getMethodDescriptor(jnie.tElem.classTag.runtimeClass.getMethod(mn, argclass:_*))
     }
 
@@ -132,13 +114,13 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   }
 
   private def call_primitive_method[A: Elem, T: Elem](x: Rep[JNIType[T]], mn: String, args: Rep[Any]*): Rep[A] = {
-    val mid = get_method_id(x, mn, args)
-    JNI_Extract( JNI_CallPrimitiveMethod[A,T](mid, x, args) )
+    val mid = get_method_id(x, mn, args:_*)
+    JNI_Extract( JNI_CallPrimitiveMethod[A,T](mid, x, args:_*) )
   }
 
   private def call_object_method[A: Elem, T: Elem](x: Rep[JNIType[T]], mn: String, args: Rep[Any]*): Rep[JNIType[A]] = {
-    val mid = get_method_id(x, mn, args)
-    JNI_CallObjectMethod[A,T](x, mid, args)
+    val mid = get_method_id(x, mn, args:_*)
+    JNI_CallObjectMethod[A,T](x, mid, args:_*)
   }
 
   def JNI_Extract[I: Elem](x: Rep[JNIType[I]]): Rep[I] = {
@@ -149,9 +131,6 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
           case (pe: PairElem[a,b]) =>
             implicit val ae = pe.eFst
             implicit val be = pe.eSnd
-
-//            val f1 = get_field("_1", x)(ae, pe)
-//            val f2 = get_field("_2", x)(be, pe)
 
             val a1 = if( !(ae <:< AnyRefElement) )
               unbox( call_object_method(x, "_1")(ae,pe) )(ae)
@@ -199,7 +178,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
 
         val mid = JNI_GetMethodID(jniclazz, CString(mn), CString(sig))
 
-        JNI_NewObject[T](jniclazz, mid, List(x))
+        JNI_NewObject[T](jniclazz, mid, x)
     }
   }
 
@@ -209,7 +188,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     val sig = s"(Ljava/lang/Object;Ljava/lang/Object;)V"
 
     val mid = JNI_GetMethodID(clazz, CString(mn), CString(sig))
-    JNI_NewObject[(A,B)](clazz, mid, List(a,b))
+    JNI_NewObject[(A,B)](clazz, mid, a, b)
   }
 
 
@@ -241,10 +220,13 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   }
 
   
-  case class JNI_NewObject[T: Elem](clazz: Rep[JNIClass], mid: Rep[JNIMethodID], args: Seq[Rep[JNIType[_]]]) extends Def[JNIType[T]] {
+  case class JNI_NewObject[T: Elem](clazz: Rep[JNIClass], mid: Rep[JNIMethodID], args: Rep[JNIType[_]]*) extends Def[JNIType[T]] {
     override def selfType = element[JNIType[T]]
     override def uniqueOpId = "JNI_NewObject"
-    override def mirror(t: Transformer) = JNI_NewObject[T](t(clazz),t(mid),t(args))
+    override def mirror(t: Transformer) = {
+      val _args = for(arg <- args) yield t(arg)
+      JNI_NewObject[T](t(clazz), t(mid), _args:_*)
+    }
   }
 
   case class JNI_NewPrimitive[T: Elem](x: Rep[T]) extends Def[JNIType[T]] {
@@ -305,17 +287,23 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     override def mirror(t: Transformer) = JNI_GetPrimitiveFieldValue[A,T](t(fid), t(tup))
   }
 
-  case class JNI_CallObjectMethod[A: Elem, T: Elem](x: Rep[JNIType[T]], mid: Rep[JNIMethodID], args: Seq[Rep[Any]]) extends Def[JNIType[A]] {
+  case class JNI_CallObjectMethod[A: Elem, T: Elem](x: Rep[JNIType[T]], mid: Rep[JNIMethodID], args: Rep[Any]*) extends Def[JNIType[A]] {
     override def selfType = element[JNIType[A]]
     override def uniqueOpId = "JNI_CallObjectMethod"
-    override def mirror(t: Transformer) = JNI_CallObjectMethod[A,T](t(x), t(mid), t(args))
+    override def mirror(t: Transformer) = {
+      val _args = for(arg <- args) yield t(arg)
+      JNI_CallObjectMethod[A,T](t(x), t(mid), _args:_*)
+    }
   }
 
-  case class JNI_CallPrimitiveMethod[A: Elem, T: Elem](mid: Rep[JNIMethodID], x: Rep[JNIType[T]], args: Seq[Rep[Any]]) extends Def[JNIType[A]] {
+  case class JNI_CallPrimitiveMethod[A: Elem, T: Elem](mid: Rep[JNIMethodID], x: Rep[JNIType[T]], args: Rep[Any]*) extends Def[JNIType[A]] {
     require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
     override def selfType = element[JNIType[A]]
     override def uniqueOpId = "JNI_CallPrimitiveMethod"
-    override def mirror(t: Transformer) = JNI_CallPrimitiveMethod[A,T](t(mid), t(x), t(args))
+    override def mirror(t: Transformer) = {
+      val _args = for(arg <- args) yield t(arg)
+      JNI_CallPrimitiveMethod[A,T](t(mid), t(x), _args:_*)
+    }
   }
 
   case class JNI_ExtractPrimitive[A: Elem](x: Rep[JNIType[A]]) extends Def[A] {

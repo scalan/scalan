@@ -186,25 +186,25 @@ trait JNIBridge extends CoreBridge { self: ScalanCtxExp with MethodMapping with 
             val exp = lms.jni_new_primitive[a_t](_x)(mA)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
-      case res@JNI_NewObject(clazz,mid,args) => res.selfType match {
+      case res@JNI_NewObject(clazz,mid,args@_*) => res.selfType match {
         case el: JNITypeElem[_] =>
           createManifest(el.tElem) match {
             case mA: Manifest[a_t] =>
               val _clazz = symMirr(clazz).asInstanceOf[lms.Exp[lms.JNIClass]]
               val _mid = symMirr(mid).asInstanceOf[lms.Exp[lms.JNIMethodID]]
               val _args = for( arg <- args ) yield symMirr(arg)
-              val exp = lms.jni_new_object[a_t](_clazz,_mid,_args)(mA)
+              val exp = lms.jni_new_object[a_t](_clazz,_mid,_args:_*)(mA)
               (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
           }
       }
-      case res@JNI_CallObjectMethod(x,mid,args) => (res.selfType, x.elem) match {
+      case res@JNI_CallObjectMethod(x,mid,args@_*) => (res.selfType, x.elem) match {
         case (resel: JNITypeElem[_], xel: JNITypeElem[_]) =>
           (createManifest(resel.tElem), createManifest(xel.tElem)) match {
             case (mR: Manifest[r_t], mA: Manifest[a_t]) =>
               val _x = symMirr(x).asInstanceOf[lms.Exp[lms.JNIType[a_t]]]
               val _mid = symMirr(mid).asInstanceOf[lms.Exp[lms.JNIMethodID]]
               val _args = for( arg <- args ) yield symMirr(arg)
-              val exp = lms.jni_call_object_method[r_t,a_t](_x,_mid,_args)(mR,mA)
+              val exp = lms.jni_call_object_method[r_t,a_t](_x,_mid,_args:_*)(mR,mA)
               (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
           }
       }

@@ -84,11 +84,11 @@ trait PackProg extends FirstProg {
     JNI_Pack(in)
   }
 
-  lazy val extractAndPack = fun {in: Rep[JNIType[(Int,Array[Int])]] =>
+//  lazy val extractAndPack = fun {in: Rep[JNIType[(Int,Array[Int])]] =>
 //  lazy val extractAndPack = fun {in: Rep[JNIType[(Byte,(Int,Double))]] =>
 //  lazy val extractAndPack = fun {in: Rep[JNIType[(Int,Double)]] =>
-//  lazy val extractAndPack = fun {in: Rep[JNIType[( Array[( Array[Int], (Array[Double],Int))], Array[Double])]] =>
-    JNI_Pack( JNI_Extract(in)._2 )
+  lazy val extractAndPack = fun {in: Rep[JNIType[( Array[( Array[Int], (Array[Double],Int))], Array[Double])]] =>
+    JNI_Pack( JNI_Extract(in) )
   }
 
   lazy val opyt = fun {(in: Rep[Array[Int]]) =>
