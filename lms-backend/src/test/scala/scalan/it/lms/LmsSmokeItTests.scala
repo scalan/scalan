@@ -1,7 +1,7 @@
 package scalan
 package it.lms
 
-import scalan.community.ScalanCommunityDslExp
+import scalan.ScalanCommunityDslExp
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.it.smoke.CommunitySmokeItTests

@@ -1,9 +1,9 @@
 package scalan.parrays
 
-import scalan.ScalanDsl
+import scalan.{ScalanCommunityDsl, ScalanDsl}
 import scalan.primitives.PrimitiveExamples
 
-trait PArrayExamples extends ScalanDsl with PArraysDsl with PrimitiveExamples {
+trait PArrayExamples extends ScalanDsl with PArraysDsl with PrimitiveExamples { self: ScalanCommunityDsl =>
   lazy val fromArray = fun { xs: Arr[Int] => PArray(xs) }
   lazy val fromArrayOfPairs = fun { xs: Arr[(Int,Float)] => PArray(xs) }
   lazy val fromAndTo = fun { xs: Arr[(Int,Float)] =>

@@ -1,8 +1,8 @@
 package scalan.performance
 
 import org.scalameter.api._
+import scalan.{ScalanCommunityDslSeq, ScalanCommunitySeq}
 import scalan.linalgebra.LinearAlgebraExamples
-import scalan.community.ScalanCommunitySeq
 import scalan.linalgebra.MatricesDslSeq
 
 class mvm extends BaseBenchmark {
@@ -73,7 +73,7 @@ class mvm extends BaseBenchmark {
     val inFD = Gen.single("fmdv")((fmat,dvec))
     val inFS = Gen.single("fmsv")((fmat,svec))
 
-    val ctx = new ScalanCommunitySeq with LinearAlgebraExamples with MatricesDslSeq
+    val ctx = new  LinearAlgebraExamples with ScalanCommunityDslSeq
 
     performance of "mvm" config (
       exec.minWarmupRuns -> 5,

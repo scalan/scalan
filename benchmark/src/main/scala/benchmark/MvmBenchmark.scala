@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
 
-import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunitySeq}
+import scalan.{ScalanCommunityDslSeq, ScalanCommunityDslExp, ScalanCommunitySeq}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
@@ -85,7 +85,7 @@ object MvmBenchmark {
   @State(Scope.Benchmark)
   @volatile
   class MvmState extends MvmStateBase {
-    val ctx = new ScalanCommunitySeq with LinearAlgebraExamples with MatricesDslSeq
+    val ctx = new ScalanCommunityDslSeq with LinearAlgebraExamples
   }
 
   @volatile

@@ -2,8 +2,7 @@ package scalan.it.lms
 
 import java.io.File
 
-import scalan.ScalanCtxExp
-import scalan.community.ScalanCommunityExp
+import scalan.{ScalanCommunityExp, ScalanCtxExp}
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.compilation.lms.CoreBridge
 import scalan.compilation.lms.cxx.{LmsCompilerCXX, CoreCXXLmsBackend}

@@ -3,7 +3,7 @@ package scalan.linalgebra
 import scalan._
 import scalan.common.Default
 
-trait Matrices extends Vectors { scalan: MatricesDsl =>
+trait Matrices extends Vectors { self: ScalanCommunityDsl =>
   type Matr[T] = Rep[Matrix[T]]
 
   trait Matrix[T] extends Reifiable[Matrix[T]] {
@@ -107,8 +107,8 @@ trait Matrices extends Vectors { scalan: MatricesDsl =>
   //  }
 }
 
-trait MatricesDsl extends impl.MatricesAbs with VectorsDsl {}
+trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommunityDsl => }
 
-trait MatricesDslSeq extends impl.MatricesSeq with VectorsDslSeq
+trait MatricesDslSeq extends impl.MatricesSeq with VectorsDslSeq { self: ScalanCommunityDslSeq => }
 
-trait MatricesDslExp extends impl.MatricesExp with VectorsDslExp
+trait MatricesDslExp extends impl.MatricesExp with VectorsDslExp { self: ScalanCommunityDslExp => }
