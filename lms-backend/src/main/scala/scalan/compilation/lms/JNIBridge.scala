@@ -1,40 +1,52 @@
 package scalan.compilation.lms
 
-import scalan.compilation.lms.common.JNILmsOpsExp
+import scalan.compilation.language.MethodMapping
+import scalan.compilation.lms.common.{JNILmsOps, JNILmsOpsExp}
 import scalan.primitives.AbstractStringsDslExp
-import scalan.{JNIExtractorOpsExp, ScalanExp}
+import scalan.{ScalanCtxExp, JNIExtractorOpsExp}
 
-trait JNIBridge[A, B] extends LmsBridge[A, B] {
+trait JNIBridge extends CoreBridge { self: ScalanCtxExp with MethodMapping with JNIExtractorOpsExp with AbstractStringsDslExp =>
 
-  // `LmsCompiler` mixed just to provide `createManifest` function
-  val scalan: ScalanExp with JNIExtractorOpsExp with AbstractStringsDslExp with LmsCompiler
   val lms: CommunityLmsBackendBase with JNILmsOpsExp
 
-  abstract override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) = {
+  override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
+    case el: JNITypeElem[_] =>
+      Manifest.classType(classOf[JNILmsOps#JNIType[_]], createManifest(el.tElem))
+    case el: JNIArrayElem[arr_t] =>
+      el.eItem match {
+        case ei: Elem[a_t] =>
+          val mItem = createManifest(ei)
+          Manifest.classType(classOf[JNILmsOps#JNIArray[a_t]], mItem)
+      }
+    case el =>
+      super.createManifest(el)
+  }
+
+  abstract override def defTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]) = {
     jniDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)
   }
 
-  def jniDefTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]): DefTransformer = {
+  def jniDefTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]): DefTransformer = {
     val (exps, symMirr, funcMirr) = m
     val sym = e.sym
     val tt: DefTransformer = {
-      case res@scalan.ExpCString(scalan.Def(s: scalan.Const[_])) =>
+      case res@ExpCString(Def(s: Const[_])) =>
         val exp = lms.JNIStringConst(s.x)
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-      case res@scalan.JNI_ExtractPrimitive(x) =>
+      case res@JNI_ExtractPrimitive(x) =>
         x.elem match {
-          case (jnie: scalan.JNITypeElem[jni_a_t]) =>
-            scalan.createManifest(jnie.tElem) match {
+          case (jnie: JNITypeElem[jni_a_t]) =>
+            createManifest(jnie.tElem) match {
               case (mA: Manifest[a_t]) =>
                 val _x = symMirr(x).asInstanceOf[lms.Exp[lms.JNIType[a_t]]]
                 val exp = lms.jni_extract_primitive[a_t](_x)(mA)
                 (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
             }
         }
-      case res@scalan.JNI_ExtractPrimitiveArray(x) =>
+      case res@JNI_ExtractPrimitiveArray(x) =>
         x.elem match {
-          case (jnie: scalan.JNITypeElem[jni_arr_a_t]) =>
-            scalan.createManifest(jnie.tElem) match {
+          case (jnie: JNITypeElem[jni_arr_a_t]) =>
+            createManifest(jnie.tElem) match {
             case (mA: Manifest[arr_a_t]) =>
               mA.typeArguments(0) match {
                 case(mItem: Manifest[a_t]) =>
@@ -44,10 +56,10 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] {
               }
             }
         }
-      case res@scalan.JNI_GetArrayLength(x) =>
+      case res@JNI_GetArrayLength(x) =>
         x.elem match {
-          case (jnie: scalan.JNITypeElem[jni_arr_a_t]) =>
-            scalan.createManifest(jnie.tElem) match {
+          case (jnie: JNITypeElem[jni_arr_a_t]) =>
+            createManifest(jnie.tElem) match {
             case (mA: Manifest[arr_a_t]) =>
               mA.typeArguments(0) match {
                 case (mItem: Manifest[a_t]) =>
@@ -57,10 +69,10 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] {
               }
             }
         }
-      case res@scalan.JNI_ExtractObjectArray(x) =>
+      case res@JNI_ExtractObjectArray(x) =>
         x.elem match {
-          case (jnie: scalan.JNITypeElem[jni_arr_a_t]) =>
-            implicit val m = scalan.createManifest(jnie.tElem)
+          case (jnie: JNITypeElem[jni_arr_a_t]) =>
+            implicit val m = createManifest(jnie.tElem)
             m match {
               case (mA: Manifest[arr_a_t]) =>
                 mA.typeArguments(0) match {
@@ -71,12 +83,12 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] {
                 }
             }
         }
-      case res@scalan.JNI_GetObjectArrayItem(x, i) =>
+      case res@JNI_GetObjectArrayItem(x, i) =>
         x.elem match {
-          case arrel: scalan.ArrayElem[arr_jni_a_t] =>
+          case arrel: ArrayElem[arr_jni_a_t] =>
             arrel.eItem match {
-              case (jnie: scalan.JNITypeElem[jni_a_t]) =>
-                implicit val m = scalan.createManifest(jnie.tElem)
+              case (jnie: JNITypeElem[jni_a_t]) =>
+                implicit val m = createManifest(jnie.tElem)
                 m match {
                   case (mA: Manifest[a_t]) =>
                     val _x = symMirr(x).asInstanceOf[lms.Exp[Array[lms.JNIType[a_t]]]]
@@ -86,10 +98,10 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] {
                 }
             }
         }
-      case res@scalan.JNI_GetObjectClass(x) =>
+      case res@JNI_GetObjectClass(x) =>
         x.elem match {
-          case (jnie: scalan.JNITypeElem[jni_a_t]) =>
-            implicit val m = scalan.createManifest(jnie.tElem)
+          case (jnie: JNITypeElem[jni_a_t]) =>
+            implicit val m = createManifest(jnie.tElem)
             m match {
               case (mA: Manifest[a_t]) =>
                 val _x = symMirr(x).asInstanceOf[lms.Exp[lms.JNIType[a_t]]]
@@ -97,21 +109,21 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] {
                 (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
             }
         }
-      case res@scalan.JNI_FindClass(x) =>
+      case res@JNI_FindClass(x) =>
         val _x = symMirr(x).asInstanceOf[lms.Exp[String]]
         val exp = lms.jni_find_class(_x)
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-      case res@scalan.JNI_GetFieldID(clazz, fn, sig) =>
+      case res@JNI_GetFieldID(clazz, fn, sig) =>
         val _clazz = symMirr(clazz).asInstanceOf[lms.Exp[ lms.JNIClass] ]
         val _fn = symMirr(fn).asInstanceOf[lms.Exp[String]]
         val _sig = symMirr(sig).asInstanceOf[lms.Exp[String]]
         val exp = lms.jni_get_field_id(_clazz, _fn, _sig)
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-      case res@scalan.JNI_GetObjectFieldValue(fid, x) =>
+      case res@JNI_GetObjectFieldValue(fid, x) =>
         (res.selfType, x.elem) match {
-          case (jnife: scalan.JNITypeElem[jni_A_t], jnie: scalan.JNITypeElem[jni_T_t]) =>
-            val mA = scalan.createManifest(jnife.tElem)
-            val mT = scalan.createManifest(jnie.tElem)
+          case (jnife: JNITypeElem[jni_A_t], jnie: JNITypeElem[jni_T_t]) =>
+            val mA = createManifest(jnife.tElem)
+            val mT = createManifest(jnie.tElem)
             (mA,mT) match {
               case (ma: Manifest[a_t], mt: Manifest[t_t]) =>
                 val _x = symMirr(x).asInstanceOf[lms.Exp[lms.JNIType[t_t]]]
@@ -120,11 +132,11 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] {
                 (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
             }
         }
-      case res@scalan.JNI_GetPrimitiveFieldValue(fid, x) =>
+      case res@JNI_GetPrimitiveFieldValue(fid, x) =>
         (res.selfType, x.elem) match {
-          case (rese: scalan.Element[jnifid_A_t], jnie: scalan.JNITypeElem[jni_T_t]) =>
-            val mA = scalan.createManifest(rese)
-            val mT = scalan.createManifest(jnie.tElem)
+          case (rese: Element[jnifid_A_t], jnie: JNITypeElem[jni_T_t]) =>
+            val mA = createManifest(rese)
+            val mT = createManifest(jnie.tElem)
             (mA,mT) match {
               case (ma: Manifest[a_t], mt: Manifest[t_t]) =>
                 val _x = symMirr(x).asInstanceOf[lms.Exp[lms.JNIType[t_t]]]
@@ -133,50 +145,50 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] {
                 (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
             }
         }
-      case res@scalan.JNI_GetMethodID(clazz, mn, sig) =>
+      case res@JNI_GetMethodID(clazz, mn, sig) =>
         val _clazz = symMirr(clazz).asInstanceOf[lms.Exp[ lms.JNIClass] ]
         val _mn = symMirr(mn).asInstanceOf[lms.Exp[String]]
         val _sig = symMirr(sig).asInstanceOf[lms.Exp[String]]
         val exp = lms.jni_get_method_id(_clazz, _mn, _sig)
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-      case res@scalan.JNI_Map(x, fSym@scalan.Def(f: scalan.Lambda[_, _])) =>
+      case res@JNI_Map(x, fSym@Def(f: Lambda[_, _])) =>
         (res.selfType, x.elem) match {
-          case (rese: scalan.JNITypeElem[jniarr_t], xe: scalan.ArrayElem[_]) =>
+          case (rese: JNITypeElem[jniarr_t], xe: ArrayElem[_]) =>
             rese.tElem match {
-              case be: scalan.ArrayElem[_] =>
-                (scalan.createManifest(xe.eItem),scalan.createManifest(be.eItem)) match {
+              case be: ArrayElem[_] =>
+                (createManifest(xe.eItem),createManifest(be.eItem)) match {
                   case (mA: Manifest[a], mB: Manifest[b]) =>
                     val _x = symMirr(x).asInstanceOf[lms.Exp[Array[a]]]
-                    val _f = mirrorLambdaToLmsFunc[a, b](m)(f.asInstanceOf[scalan.Lambda[a, b]])
+                    val _f = mirrorLambdaToLmsFunc[a, b](m)(f.asInstanceOf[Lambda[a, b]])
                     val exp = lms.jni_map_array[a, b](_x, _f)(mA, mB)
                     (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((fSym, _f)))
                 }
             }
         }
-      case res@scalan.JNI_MapObjectArray(x, fSym@scalan.Def(f: scalan.Lambda[_, _])) =>
+      case res@JNI_MapObjectArray(x, fSym@Def(f: Lambda[_, _])) =>
         (res.selfType, x.elem) match {
-          case (rese: scalan.JNITypeElem[_], xe: scalan.ArrayElem[_]) =>
+          case (rese: JNITypeElem[_], xe: ArrayElem[_]) =>
             rese.tElem match {
-              case be: scalan.ArrayElem[_] =>
-                (scalan.createManifest(xe.eItem),scalan.createManifest(be.eItem)) match {
+              case be: ArrayElem[_] =>
+                (createManifest(xe.eItem),createManifest(be.eItem)) match {
                   case (mA: Manifest[a], mB: Manifest[b]) =>
                     val _x = symMirr(x).asInstanceOf[lms.Exp[Array[a]]]
-                    val _f = mirrorLambdaToLmsFunc[a, lms.JNIType[b]](m)(f.asInstanceOf[scalan.Lambda[a, lms.JNIType[b]]])
+                    val _f = mirrorLambdaToLmsFunc[a, lms.JNIType[b]](m)(f.asInstanceOf[Lambda[a, lms.JNIType[b]]])
                     val exp = lms.jni_map_object_array[a, b](_x, _f)(mA, mB)
                     (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((fSym, _f)))
                 }
             }
         }
-      case res@scalan.JNI_NewPrimitive(x) =>
-        scalan.createManifest(x.elem) match {
+      case res@JNI_NewPrimitive(x) =>
+        createManifest(x.elem) match {
           case mA: Manifest[a_t] =>
             val _x = symMirr(x).asInstanceOf[lms.Exp[a_t]]
             val exp = lms.jni_new_primitive[a_t](_x)(mA)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
-      case res@scalan.JNI_NewObject(clazz,mid,args) => res.selfType match {
-        case el: scalan.JNITypeElem[_] =>
-          scalan.createManifest(el.tElem) match {
+      case res@JNI_NewObject(clazz,mid,args) => res.selfType match {
+        case el: JNITypeElem[_] =>
+          createManifest(el.tElem) match {
             case mA: Manifest[a_t] =>
               val _clazz = symMirr(clazz).asInstanceOf[lms.Exp[lms.JNIClass]]
               val _mid = symMirr(mid).asInstanceOf[lms.Exp[lms.JNIMethodID]]
@@ -185,9 +197,9 @@ trait JNIBridge[A, B] extends LmsBridge[A, B] {
               (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
           }
       }
-      case res@scalan.JNI_CallObjectMethod(x,mid,args) => (res.selfType, x.elem) match {
-        case (resel: scalan.JNITypeElem[_], xel: scalan.JNITypeElem[_]) =>
-          (scalan.createManifest(resel.tElem), scalan.createManifest(xel.tElem)) match {
+      case res@JNI_CallObjectMethod(x,mid,args) => (res.selfType, x.elem) match {
+        case (resel: JNITypeElem[_], xel: JNITypeElem[_]) =>
+          (createManifest(resel.tElem), createManifest(xel.tElem)) match {
             case (mR: Manifest[r_t], mA: Manifest[a_t]) =>
               val _x = symMirr(x).asInstanceOf[lms.Exp[lms.JNIType[a_t]]]
               val _mid = symMirr(mid).asInstanceOf[lms.Exp[lms.JNIMethodID]]

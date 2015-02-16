@@ -18,11 +18,8 @@ import scalan.primitives.AbstractStringsDslExp
  * Created by zotov on 1/19/15.
  */
 class LmsJNIExtractorItTests extends BaseItTests {
-  trait ProgExp extends PArraysDslExp with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with VectorsDslExp with MatricesDslExp with JNIExtractorOpsExp with AbstractStringsDslExp { self =>
-    def makeBridge[A, B] = new CommunityBridge[A, B] with JNIBridge[A,B] {
-      val scalan = self
-      val lms = new CommunityCXXLmsBackend
-    }
+  trait ProgExp extends PArraysDslExp with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
+    val lms = new CommunityCXXLmsBackend
   }
 
   test("simpleGenCxx") {
@@ -34,7 +31,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
 
       def generate[A,B](name: String, f: Exp[A => B]): Unit = {
         val dir = new File(prefix, subfolder)
-        generate(dir, dir, name, f, GraphVizConfig.default)
+        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
       }
     }
 
@@ -58,7 +55,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
 
       def generate[A,B](name: String, f: Exp[A => B]): Unit = {
         val dir = new File(prefix, subfolder)
-        generate(dir, dir, name, f, GraphVizConfig.default)
+        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
       }
     }
 
@@ -77,7 +74,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
 
       def generate[A,B](name: String, f: Exp[A => B]): Unit = {
         val dir = new File(prefix, subfolder)
-        generate(dir, dir, name, f, GraphVizConfig.default)
+        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
       }
     }
 
