@@ -93,6 +93,9 @@ object ScalanAst {
   case object ExternalMethod extends MethodAnnotation
   case object ExternalConstructor extends MethodAnnotation
 
+  trait ArgAnnotation
+  case object ArgList extends ArgAnnotation
+
   case class SMethodDef(name: String, tpeArgs: STpeArgs, argSections: List[SMethodArgs],
     tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[MethodAnnotation], elem: Option[Unit] = None) extends SBodyItem {
     def explicitArgs = argSections.filter(!_.impFlag).flatMap(_.args)
@@ -112,7 +115,7 @@ object ScalanAst {
   }
   type STpeArgs = List[STpeArg]
 
-  case class SMethodArg(name: String, tpe: STpeExpr, default: Option[SExpr])
+  case class SMethodArg(name: String, tpe: STpeExpr, default: Option[SExpr], annotations: List[ArgAnnotation] = Nil)
   case class SMethodArgs(impFlag: Boolean, args: List[SMethodArg])
 
   case class SClassArg(impFlag: Boolean, overFlag: Boolean, valFlag: Boolean, name: String, tpe: STpeExpr, default: Option[SExpr])
@@ -136,6 +139,17 @@ object ScalanAst {
       case md: SMethodDef if md.external.fold(false)(_ == a) => md
     }
 
+    def getFieldDefs: List[SMethodDef] = body.collect {
+      case md: SMethodDef if md.allArgs.isEmpty => md
+    }
+
+    def getAncestorTraits(module: SEntityModuleDef): List[STraitDef] = {
+      ancestors.filter(tc => module.isEntity(tc.name)).map(tc => module.getEntity(tc.name))
+    }
+
+    def getAvailableFields(module: SEntityModuleDef): Set[String] = {
+      getFieldDefs.map(_.name).toSet ++ getAncestorTraits(module).flatMap(_.getAvailableFields(module))
+    }
   }
 
   case class STraitDef(
@@ -191,10 +205,21 @@ object ScalanAst {
     name: String,
     entityRepSynonym: Option[STpeDef],
     entityOps: STraitDef,
+    entities: List[STraitDef],
     concreteSClasses: List[SClassDef],
     methods: List[SMethodDef],
     selfType: Option[SSelfTypeDef],
     seqDslImpl: Option[SSeqImplementation] = None)
+  {
+    def getEntity(name: String): STraitDef = {
+      val entity = entities.find(e => e.name == name)
+      entity match {
+        case Some(e) => e
+        case _ => sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
+      }
+    }
+    def isEntity(name: String) = entities.exists(e => e.name == name)
+  }
 
   def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
 
@@ -221,13 +246,14 @@ object ScalanAst {
 
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
 
-    def fromModuleTrait(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
+    def apply(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
       val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
 
-      val entity = defs.collectFirst { case t: STraitDef => t }.getOrElse {
+      val traits = defs.collect { case t: STraitDef if !t.name.endsWith("Companion") => t }
+      val entity = traits.headOption.getOrElse {
         throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
       }
 
@@ -258,7 +284,7 @@ object ScalanAst {
 
       val methods = defs.collect { case md: SMethodDef => md }
 
-      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, classes, methods, moduleTrait.selfType)
+      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, traits, classes, methods, moduleTrait.selfType)
     }
   }
 }
@@ -322,9 +348,9 @@ trait ScalanParsers {
     methods.map(methodDef(_))
   }
 
-  def entityModule(pdTree: PackageDef) = {
-    val packageName = pdTree.pid.toString
-    val statements = pdTree.stats
+  def entityModule(fileTree: PackageDef) = {
+    val packageName = fileTree.pid.toString
+    val statements = fileTree.stats
     val imports = statements.collect {
       case i: Import => importStat(i)
     }
@@ -334,23 +360,25 @@ trait ScalanParsers {
       case Seq(only) => only
       case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
     }
-    val moduleTrait = traitDef(moduleTraitTree, moduleTraitTree)
-    val md = SEntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait, config)
 
-    val dslSeq = pdTree.stats.collectFirst {
-      case cd @ ClassDef(_,name,_,_) if name.toString == (moduleTrait.name + "DslSeq") => cd
+    val moduleTraitDef = traitDef(moduleTraitTree, moduleTraitTree)
+    val module = SEntityModuleDef(packageName, imports, moduleTraitDef, config)
+    val moduleName = moduleTraitDef.name
+
+    val dslSeq = fileTree.stats.collectFirst {
+      case cd @ ClassDef(_,name,_,_) if name.toString == (moduleName + "DslSeq") => cd
     }
     val seqExplicitOps = for {
       seqImpl <- dslSeq
       seqOpsTrait <- seqImpl.impl.body.collectFirst {
-        case cd @ ClassDef(_,name,_,_) if name.toString == ("Seq" + md.entityOps.name) => cd
+        case cd @ ClassDef(_,name,_,_) if name.toString == ("Seq" + module.entityOps.name) => cd
       }
     } yield {
       val cd = seqOpsTrait.impl.body.collect { case item: DefDef => item }
       seqImplementation(cd, seqOpsTrait)
     }
 
-    md.copy(seqDslImpl = seqExplicitOps.map(SSeqImplementation(_)))
+    module.copy(seqDslImpl = seqExplicitOps.map(SSeqImplementation(_)))
   }
 
   def importStat(i: Import): SImportStat = {
@@ -504,6 +532,15 @@ trait ScalanParsers {
   val HasConstructorAnnotation = new MethodAnnotation("Constructor")
   val OverloadIdAnnotation = new MethodAnnotation("OverloadId")
 
+  def ArgAnnotation(anClass: String) = new {
+    def unapply(md: ValDef): Option[List[Tree]] =
+      md.mods.annotations.collectFirst {
+        case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args)
+          if ident.toString == anClass => args
+      }
+  }
+  val HasArgListAnnotation = ArgAnnotation("ArgList")
+
   def methodDef(md: DefDef, isElem: Boolean = false) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
     val args0 = md.vparamss.map(methodArgs)
@@ -576,7 +613,11 @@ trait ScalanParsers {
   def methodArg(vd: ValDef): SMethodArg = {
     val tpe = tpeExpr(vd.tpt)
     val default = optExpr(vd.rhs)
-    SMethodArg(vd.name, tpe, default)
+    val annotations = vd match {
+      case HasArgListAnnotation(_) => List(ArgList)
+      case _ => Nil
+    }
+    SMethodArg(vd.name, tpe, default, annotations)
   }
 
   def selfType(vd: ValDef): Option[SSelfTypeDef] = {

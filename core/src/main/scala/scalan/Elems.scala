@@ -32,7 +32,7 @@ trait Elems extends Base { self: Scalan =>
       replaceAll("""[^# \[\],>]*[#$]""", "")
     lazy val name = getName
 
-    override def toString = s"${getClass.getSimpleName}[$name]"
+    override def toString = s"${getClass.getSimpleName}{$name}"
     override def equals(other: Any) = other match {
       case e: Element[_] => tag == e.tag
       case _ => false

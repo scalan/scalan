@@ -33,7 +33,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
 
   implicit def arrayBufferToArray[T:Elem](buf: Rep[ArrayBuffer[T]]): Arr[T] = buf.toArray
   
-  case class ArrayBufferElem[T](implicit eItem: Elem[T]) extends Element[ArrayBuffer[T]] {
+  case class ArrayBufferElem[T](eItem: Elem[T]) extends Element[ArrayBuffer[T]] {
     override def isEntityType = eItem.isEntityType
     lazy val tag = {
       implicit val tag1 = eItem.tag
@@ -42,7 +42,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
     protected def getDefaultRep = emptyArrayBuffer[T](eItem)
   }
 
-  implicit def arrayBufferElement[A](implicit eA: Elem[A]): Elem[ArrayBuffer[A]] = new ArrayBufferElem[A]
+  implicit def arrayBufferElement[A](implicit eItem: Elem[A]): Elem[ArrayBuffer[A]] = new ArrayBufferElem[A](eItem)
   implicit def ArrayBufferElemExtensions[A](eArr: Elem[ArrayBuffer[A]]): ArrayBufferElem[A] = eArr.asInstanceOf[ArrayBufferElem[A]]
 
   implicit def resolveArrayBuffer[T: Elem](buf: Rep[ArrayBuffer[T]]): ArrayBuffer[T]

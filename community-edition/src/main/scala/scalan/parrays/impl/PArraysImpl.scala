@@ -16,7 +16,10 @@ trait PArraysAbs extends Scalan with PArrays {
   implicit def proxyPArray[A](p: Rep[PArray[A]]): PArray[A] =
     proxyOps[PArray[A]](p)
 
-  abstract class PArrayElem[A, From, To <: PArray[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
+  abstract class PArrayElem[A, From, To <: PArray[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+    override def convert(x: Rep[Reifiable[_]]) = convertPArray(x.asRep[PArray[A]])
+    def convertPArray(x : Rep[PArray[A]]): Rep[To]
+  }
 
   trait PArrayCompanionElem extends CompanionElem[PArrayCompanionAbs]
   implicit lazy val PArrayCompanionElem: PArrayCompanionElem = new PArrayCompanionElem {
@@ -32,8 +35,26 @@ trait PArraysAbs extends Scalan with PArrays {
     proxyOps[PArrayCompanion](p)
   }
 
+  // single proxy for each type family
+  implicit def proxyIPairArray[A, B](p: Rep[IPairArray[A, B]]): IPairArray[A, B] =
+    proxyOps[IPairArray[A, B]](p)
+  abstract class IPairArrayElem[A, B, From, To <: IPairArray[A, B]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+    override def convert(x: Rep[Reifiable[_]]) = convertIPairArray(x.asRep[IPairArray[A, B]])
+    def convertIPairArray(x : Rep[IPairArray[A, B]]): Rep[To]
+  }
+
+  // single proxy for each type family
+  implicit def proxyINestedArray[A](p: Rep[INestedArray[A]]): INestedArray[A] =
+    proxyOps[INestedArray[A]](p)
+  abstract class INestedArrayElem[A, From, To <: INestedArray[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+    override def convert(x: Rep[Reifiable[_]]) = convertINestedArray(x.asRep[INestedArray[A]])
+    def convertINestedArray(x : Rep[INestedArray[A]]): Rep[To]
+  }
+
   // elem for concrete class
-  class UnitArrayElem(iso: Iso[UnitArrayData, UnitArray]) extends PArrayElem[Unit, UnitArrayData, UnitArray](iso)
+  class UnitArrayElem(iso: Iso[UnitArrayData, UnitArray]) extends PArrayElem[Unit, UnitArrayData, UnitArray](iso) {
+    def convertPArray(x: Rep[PArray[Unit]]) = UnitArray(x.length)
+  }
 
   // state representation type
   type UnitArrayData = Int
@@ -43,12 +64,12 @@ trait PArraysAbs extends Scalan with PArrays {
     extends Iso[UnitArrayData, UnitArray] {
     override def from(p: Rep[UnitArray]) =
       unmkUnitArray(p) match {
-        case Some((len)) => len
+        case Some((length)) => length
         case None => !!!
       }
     override def to(p: Rep[Int]) = {
-      val len = p
-      UnitArray(len)
+      val length = p
+      UnitArray(length)
     }
     lazy val tag = {
       weakTypeTag[UnitArray]
@@ -60,8 +81,8 @@ trait PArraysAbs extends Scalan with PArrays {
   abstract class UnitArrayCompanionAbs extends CompanionBase[UnitArrayCompanionAbs] with UnitArrayCompanion {
     override def toString = "UnitArray"
 
-    def apply(len: Rep[Int]): Rep[UnitArray] =
-      mkUnitArray(len)
+    def apply(length: Rep[Int]): Rep[UnitArray] =
+      mkUnitArray(length)
     def unapply(p: Rep[UnitArray]) = unmkUnitArray(p)
   }
   def UnitArray: Rep[UnitArrayCompanionAbs]
@@ -87,11 +108,13 @@ trait PArraysAbs extends Scalan with PArrays {
     new UnitArrayIso
 
   // 6) smart constructor and deconstructor
-  def mkUnitArray(len: Rep[Int]): Rep[UnitArray]
+  def mkUnitArray(length: Rep[Int]): Rep[UnitArray]
   def unmkUnitArray(p: Rep[UnitArray]): Option[(Rep[Int])]
 
   // elem for concrete class
-  class BaseArrayElem[A](iso: Iso[BaseArrayData[A], BaseArray[A]]) extends PArrayElem[A, BaseArrayData[A], BaseArray[A]](iso)
+  class BaseArrayElem[A:Elem](iso: Iso[BaseArrayData[A], BaseArray[A]]) extends PArrayElem[A, BaseArrayData[A], BaseArray[A]](iso) {
+    def convertPArray(x: Rep[PArray[A]]) = BaseArray(x.arr)
+  }
 
   // state representation type
   type BaseArrayData[A] = Array[A]
@@ -149,7 +172,9 @@ trait PArraysAbs extends Scalan with PArrays {
   def unmkBaseArray[A:Elem](p: Rep[BaseArray[A]]): Option[(Rep[Array[A]])]
 
   // elem for concrete class
-  class PairArrayElem[A, B](iso: Iso[PairArrayData[A, B], PairArray[A, B]]) extends PArrayElem[(A,B), PairArrayData[A, B], PairArray[A, B]](iso)
+  class PairArrayElem[A:Elem, B:Elem](iso: Iso[PairArrayData[A, B], PairArray[A, B]]) extends IPairArrayElem[A, B, PairArrayData[A, B], PairArray[A, B]](iso) {
+    def convertIPairArray(x: Rep[IPairArray[A, B]]) = PairArray(x.as, x.bs)
+  }
 
   // state representation type
   type PairArrayData[A, B] = (PArray[A], PArray[B])
@@ -208,7 +233,69 @@ trait PArraysAbs extends Scalan with PArrays {
   def unmkPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]): Option[(Rep[PArray[A]], Rep[PArray[B]])]
 
   // elem for concrete class
-  class NestedArrayElem[A](iso: Iso[NestedArrayData[A], NestedArray[A]]) extends PArrayElem[PArray[A], NestedArrayData[A], NestedArray[A]](iso)
+  class ArrayOfPairsElem[A:Elem, B:Elem](iso: Iso[ArrayOfPairsData[A, B], ArrayOfPairs[A, B]]) extends IPairArrayElem[A, B, ArrayOfPairsData[A, B], ArrayOfPairs[A, B]](iso) {
+    def convertIPairArray(x: Rep[IPairArray[A, B]]) = ArrayOfPairs(x.arr)
+  }
+
+  // state representation type
+  type ArrayOfPairsData[A, B] = Array[(A,B)]
+
+  // 3) Iso for concrete class
+  class ArrayOfPairsIso[A, B](implicit eA: Elem[A], eB: Elem[B])
+    extends Iso[ArrayOfPairsData[A, B], ArrayOfPairs[A, B]] {
+    override def from(p: Rep[ArrayOfPairs[A, B]]) =
+      unmkArrayOfPairs(p) match {
+        case Some((arr)) => arr
+        case None => !!!
+      }
+    override def to(p: Rep[Array[(A,B)]]) = {
+      val arr = p
+      ArrayOfPairs(arr)
+    }
+    lazy val tag = {
+      weakTypeTag[ArrayOfPairs[A, B]]
+    }
+    lazy val defaultRepTo = Default.defaultVal[Rep[ArrayOfPairs[A, B]]](ArrayOfPairs(element[Array[(A,B)]].defaultRepValue))
+    lazy val eTo = new ArrayOfPairsElem[A, B](this)
+  }
+  // 4) constructor and deconstructor
+  abstract class ArrayOfPairsCompanionAbs extends CompanionBase[ArrayOfPairsCompanionAbs] with ArrayOfPairsCompanion {
+    override def toString = "ArrayOfPairs"
+
+    def apply[A, B](arr: Rep[Array[(A,B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[ArrayOfPairs[A, B]] =
+      mkArrayOfPairs(arr)
+    def unapply[A:Elem, B:Elem](p: Rep[ArrayOfPairs[A, B]]) = unmkArrayOfPairs(p)
+  }
+  def ArrayOfPairs: Rep[ArrayOfPairsCompanionAbs]
+  implicit def proxyArrayOfPairsCompanion(p: Rep[ArrayOfPairsCompanionAbs]): ArrayOfPairsCompanionAbs = {
+    proxyOps[ArrayOfPairsCompanionAbs](p)
+  }
+
+  class ArrayOfPairsCompanionElem extends CompanionElem[ArrayOfPairsCompanionAbs] {
+    lazy val tag = weakTypeTag[ArrayOfPairsCompanionAbs]
+    protected def getDefaultRep = ArrayOfPairs
+  }
+  implicit lazy val ArrayOfPairsCompanionElem: ArrayOfPairsCompanionElem = new ArrayOfPairsCompanionElem
+
+  implicit def proxyArrayOfPairs[A, B](p: Rep[ArrayOfPairs[A, B]]): ArrayOfPairs[A, B] =
+    proxyOps[ArrayOfPairs[A, B]](p)
+
+  implicit class ExtendedArrayOfPairs[A, B](p: Rep[ArrayOfPairs[A, B]])(implicit eA: Elem[A], eB: Elem[B]) {
+    def toData: Rep[ArrayOfPairsData[A, B]] = isoArrayOfPairs(eA, eB).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoArrayOfPairs[A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[ArrayOfPairsData[A, B], ArrayOfPairs[A, B]] =
+    new ArrayOfPairsIso[A, B]
+
+  // 6) smart constructor and deconstructor
+  def mkArrayOfPairs[A, B](arr: Rep[Array[(A,B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[ArrayOfPairs[A, B]]
+  def unmkArrayOfPairs[A:Elem, B:Elem](p: Rep[ArrayOfPairs[A, B]]): Option[(Rep[Array[(A,B)]])]
+
+  // elem for concrete class
+  class NestedArrayElem[A:Elem](iso: Iso[NestedArrayData[A], NestedArray[A]]) extends INestedArrayElem[A, NestedArrayData[A], NestedArray[A]](iso) {
+    def convertINestedArray(x: Rep[INestedArray[A]]) = NestedArray(x.values, x.segments)
+  }
 
   // state representation type
   type NestedArrayData[A] = (PArray[A], PArray[(Int,Int)])
@@ -275,9 +362,9 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
   }
 
   case class SeqUnitArray
-      (override val len: Rep[Int])
+      (override val length: Rep[Int])
 
-    extends UnitArray(len)
+    extends UnitArray(length)
         with UserTypeSeq[PArray[Unit], UnitArray] {
     lazy val selfType = element[UnitArray].asInstanceOf[Elem[PArray[Unit]]]
   }
@@ -286,10 +373,10 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
   }
 
   def mkUnitArray
-      (len: Rep[Int]) =
-      new SeqUnitArray(len)
+      (length: Rep[Int]) =
+      new SeqUnitArray(length)
   def unmkUnitArray(p: Rep[UnitArray]) =
-    Some((p.len))
+    Some((p.length))
 
   case class SeqBaseArray[A]
       (override val arr: Rep[Array[A]])
@@ -312,8 +399,8 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
       (override val as: Rep[PArray[A]], override val bs: Rep[PArray[B]])
       (implicit eA: Elem[A], eB: Elem[B])
     extends PairArray[A, B](as, bs)
-        with UserTypeSeq[PArray[(A,B)], PairArray[A, B]] {
-    lazy val selfType = element[PairArray[A, B]].asInstanceOf[Elem[PArray[(A,B)]]]
+        with UserTypeSeq[IPairArray[A,B], PairArray[A, B]] {
+    lazy val selfType = element[PairArray[A, B]].asInstanceOf[Elem[IPairArray[A,B]]]
   }
   lazy val PairArray = new PairArrayCompanionAbs with UserTypeSeq[PairArrayCompanionAbs, PairArrayCompanionAbs] {
     lazy val selfType = element[PairArrayCompanionAbs]
@@ -325,12 +412,29 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
   def unmkPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]) =
     Some((p.as, p.bs))
 
+  case class SeqArrayOfPairs[A, B]
+      (override val arr: Rep[Array[(A,B)]])
+      (implicit eA: Elem[A], eB: Elem[B])
+    extends ArrayOfPairs[A, B](arr)
+        with UserTypeSeq[IPairArray[A,B], ArrayOfPairs[A, B]] {
+    lazy val selfType = element[ArrayOfPairs[A, B]].asInstanceOf[Elem[IPairArray[A,B]]]
+  }
+  lazy val ArrayOfPairs = new ArrayOfPairsCompanionAbs with UserTypeSeq[ArrayOfPairsCompanionAbs, ArrayOfPairsCompanionAbs] {
+    lazy val selfType = element[ArrayOfPairsCompanionAbs]
+  }
+
+  def mkArrayOfPairs[A, B]
+      (arr: Rep[Array[(A,B)]])(implicit eA: Elem[A], eB: Elem[B]) =
+      new SeqArrayOfPairs[A, B](arr)
+  def unmkArrayOfPairs[A:Elem, B:Elem](p: Rep[ArrayOfPairs[A, B]]) =
+    Some((p.arr))
+
   case class SeqNestedArray[A]
       (override val values: Rep[PArray[A]], override val segments: Rep[PArray[(Int,Int)]])
       (implicit eA: Elem[A])
     extends NestedArray[A](values, segments)
-        with UserTypeSeq[PArray[PArray[A]], NestedArray[A]] {
-    lazy val selfType = element[NestedArray[A]].asInstanceOf[Elem[PArray[PArray[A]]]]
+        with UserTypeSeq[INestedArray[A], NestedArray[A]] {
+    lazy val selfType = element[NestedArray[A]].asInstanceOf[Elem[INestedArray[A]]]
   }
   lazy val NestedArray = new NestedArrayCompanionAbs with UserTypeSeq[NestedArrayCompanionAbs, NestedArrayCompanionAbs] {
     lazy val selfType = element[NestedArrayCompanionAbs]
@@ -352,11 +456,11 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
   }
 
   case class ExpUnitArray
-      (override val len: Rep[Int])
+      (override val length: Rep[Int])
 
-    extends UnitArray(len) with UserTypeDef[PArray[Unit], UnitArray] {
+    extends UnitArray(length) with UserTypeDef[PArray[Unit], UnitArray] {
     lazy val selfType = element[UnitArray].asInstanceOf[Elem[PArray[Unit]]]
-    override def mirror(t: Transformer) = ExpUnitArray(t(len))
+    override def mirror(t: Transformer) = ExpUnitArray(t(length))
   }
 
   lazy val UnitArray: Rep[UnitArrayCompanionAbs] = new UnitArrayCompanionAbs with UserTypeDef[UnitArrayCompanionAbs, UnitArrayCompanionAbs] {
@@ -380,18 +484,6 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
     object arr {
       def unapply(d: Def[_]): Option[Rep[UnitArray]] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[UnitArrayElem] && method.getName == "arr" =>
-          Some(receiver).asInstanceOf[Option[Rep[UnitArray]]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Rep[UnitArray]] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object length {
-      def unapply(d: Def[_]): Option[Rep[UnitArray]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[UnitArrayElem] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[UnitArray]]]
         case _ => None
       }
@@ -453,10 +545,10 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
   }
 
   def mkUnitArray
-    (len: Rep[Int]) =
-    new ExpUnitArray(len)
+    (length: Rep[Int]) =
+    new ExpUnitArray(length)
   def unmkUnitArray(p: Rep[UnitArray]) =
-    Some((p.len))
+    Some((p.length))
 
   case class ExpBaseArray[A]
       (override val arr: Rep[Array[A]])
@@ -556,8 +648,8 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
   case class ExpPairArray[A, B]
       (override val as: Rep[PArray[A]], override val bs: Rep[PArray[B]])
       (implicit eA: Elem[A], eB: Elem[B])
-    extends PairArray[A, B](as, bs) with UserTypeDef[PArray[(A,B)], PairArray[A, B]] {
-    lazy val selfType = element[PairArray[A, B]].asInstanceOf[Elem[PArray[(A,B)]]]
+    extends PairArray[A, B](as, bs) with UserTypeDef[IPairArray[A,B], PairArray[A, B]] {
+    lazy val selfType = element[PairArray[A, B]].asInstanceOf[Elem[IPairArray[A,B]]]
     override def mirror(t: Transformer) = ExpPairArray[A, B](t(as), t(bs))
   }
 
@@ -648,11 +740,118 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
   def unmkPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]) =
     Some((p.as, p.bs))
 
+  case class ExpArrayOfPairs[A, B]
+      (override val arr: Rep[Array[(A,B)]])
+      (implicit eA: Elem[A], eB: Elem[B])
+    extends ArrayOfPairs[A, B](arr) with UserTypeDef[IPairArray[A,B], ArrayOfPairs[A, B]] {
+    lazy val selfType = element[ArrayOfPairs[A, B]].asInstanceOf[Elem[IPairArray[A,B]]]
+    override def mirror(t: Transformer) = ExpArrayOfPairs[A, B](t(arr))
+  }
+
+  lazy val ArrayOfPairs: Rep[ArrayOfPairsCompanionAbs] = new ArrayOfPairsCompanionAbs with UserTypeDef[ArrayOfPairsCompanionAbs, ArrayOfPairsCompanionAbs] {
+    lazy val selfType = element[ArrayOfPairsCompanionAbs]
+    override def mirror(t: Transformer) = this
+  }
+
+  object ArrayOfPairsMethods {
+    object as {
+      def unapply(d: Def[_]): Option[Rep[ArrayOfPairs[A, B]] forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ArrayOfPairsElem[_, _]] && method.getName == "as" =>
+          Some(receiver).asInstanceOf[Option[Rep[ArrayOfPairs[A, B]] forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[ArrayOfPairs[A, B]] forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object bs {
+      def unapply(d: Def[_]): Option[Rep[ArrayOfPairs[A, B]] forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ArrayOfPairsElem[_, _]] && method.getName == "bs" =>
+          Some(receiver).asInstanceOf[Option[Rep[ArrayOfPairs[A, B]] forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[ArrayOfPairs[A, B]] forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[ArrayOfPairs[A, B]], Rep[Int]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[ArrayOfPairsElem[_, _]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[ArrayOfPairs[A, B]], Rep[Int]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ArrayOfPairs[A, B]], Rep[Int]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[ArrayOfPairs[A, B]] forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ArrayOfPairsElem[_, _]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[ArrayOfPairs[A, B]] forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[ArrayOfPairs[A, B]] forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[ArrayOfPairs[A, B]], Rep[Int], Rep[Int]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[ArrayOfPairsElem[_, _]] && method.getName == "slice" =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[ArrayOfPairs[A, B]], Rep[Int], Rep[Int]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ArrayOfPairs[A, B]], Rep[Int], Rep[Int]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_many {
+      def unapply(d: Def[_]): Option[(Rep[ArrayOfPairs[A, B]], Arr[Int]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[ArrayOfPairsElem[_, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[ArrayOfPairs[A, B]], Arr[Int]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ArrayOfPairs[A, B]], Arr[Int]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object ArrayOfPairsCompanionMethods {
+    object defaultOf {
+      def unapply(d: Def[_]): Option[(Elem[A], Elem[B]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(ea, eb, _*), _) if receiver.elem.isInstanceOf[ArrayOfPairsCompanionElem] && method.getName == "defaultOf" =>
+          Some((ea, eb)).asInstanceOf[Option[(Elem[A], Elem[B]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Elem[A], Elem[B]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  def mkArrayOfPairs[A, B]
+    (arr: Rep[Array[(A,B)]])(implicit eA: Elem[A], eB: Elem[B]) =
+    new ExpArrayOfPairs[A, B](arr)
+  def unmkArrayOfPairs[A:Elem, B:Elem](p: Rep[ArrayOfPairs[A, B]]) =
+    Some((p.arr))
+
   case class ExpNestedArray[A]
       (override val values: Rep[PArray[A]], override val segments: Rep[PArray[(Int,Int)]])
       (implicit eA: Elem[A])
-    extends NestedArray[A](values, segments) with UserTypeDef[PArray[PArray[A]], NestedArray[A]] {
-    lazy val selfType = element[NestedArray[A]].asInstanceOf[Elem[PArray[PArray[A]]]]
+    extends NestedArray[A](values, segments) with UserTypeDef[INestedArray[A], NestedArray[A]] {
+    lazy val selfType = element[NestedArray[A]].asInstanceOf[Elem[INestedArray[A]]]
     override def mirror(t: Transformer) = ExpNestedArray[A](t(values), t(segments))
   }
 
@@ -849,6 +1048,18 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[PArray[A]], RepMonoid[A]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object zipWithIndex {
+      def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "zipWithIndex" =>
+          Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PArray[A]] forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

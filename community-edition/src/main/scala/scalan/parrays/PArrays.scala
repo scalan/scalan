@@ -25,6 +25,7 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
       val arrScan = arr.scan(m)
       (PArray(arrScan._1), arrScan._2)
     }
+    def zipWithIndex: PA[(A, Int)] = zip(PArray.fromArray(SArray.rangeFrom0(length)))
   }
   
   implicit def defaultPArrayElement[A:Elem]: Elem[PArray[A]] = element[A] match {
@@ -92,10 +93,9 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     }
   }
 
-  abstract class UnitArray(val len: Rep[Int]) extends PArray[Unit] {
+  abstract class UnitArray(val length: Rep[Int]) extends PArray[Unit] {
     def elem = UnitElement
-    def arr = SArray.replicate(len, ())
-    def length = len
+    def arr = SArray.replicate(length, ())
     def apply(i: Rep[Int]) = ()
     @OverloadId("many")
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[Unit] = UnitArray(indices.length)
@@ -131,9 +131,13 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
 //  trait EmptyArrayCompanion extends ConcreteClass1[EmptyArray] {
 //    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(EmptyArray[A])
 //  }
+  trait IPairArray[A,B] extends PArray[(A,B)] {
+    def as: Rep[PArray[A]]
+    def bs: Rep[PArray[B]]
+  }
 
   abstract class PairArray[A, B](val as: Rep[PArray[A]], val bs: Rep[PArray[B]])(implicit val eA: Elem[A], val eB: Elem[B])
-    extends PArray[(A, B)] {
+    extends IPairArray[A,B] {
     lazy val elem = element[(A, B)]
     def arr = as.arr zip bs.arr
     def apply(i: Rep[Int]) = (as(i), bs(i))
@@ -152,9 +156,32 @@ trait PArrays extends ArrayOps { self: PArraysDsl =>
     }
   }
 
+  abstract class ArrayOfPairs[A, B](val arr: Rep[Array[(A,B)]])(implicit val eA: Elem[A], val eB: Elem[B])
+    extends IPairArray[A,B] {
+    lazy val elem = element[(A, B)]
+    def as = PArray.fromArray(arr.map(_._1))
+    def bs = PArray.fromArray(arr.map(_._2))
+    def apply(i: Rep[Int]) = arr(i)
+    def length = arr.length
+    def slice(offset: Rep[Int], length: Rep[Int]) =
+      ArrayOfPairs(arr.slice(offset, length))
+    @OverloadId("many")
+    def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[(A, B)] =
+      ArrayOfPairs(arr(indices))
+  }
+  trait ArrayOfPairsCompanion extends ConcreteClass2[ArrayOfPairs] with PArrayCompanion {
+    def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]) = {
+      Default.defaultVal(ArrayOfPairs(SArray.empty[(A,B)]))
+    }
+  }
+
+  trait INestedArray[A] extends PArray[PArray[A]] {
+    def values: Rep[PArray[A]]
+    def segments: Rep[PArray[(Int, Int)]]
+  }
   // TODO rename back to FlatNestedArray after unification with Scalan
   abstract class NestedArray[A](val values: Rep[PArray[A]], val segments: Rep[PArray[(Int, Int)]])(implicit val eA: Elem[A])
-    extends PArray[PArray[A]] {
+    extends INestedArray[A] {
     lazy val elem = defaultPArrayElement(eA)
     def length = segments.length
     def apply(i: Rep[Int]) = {
