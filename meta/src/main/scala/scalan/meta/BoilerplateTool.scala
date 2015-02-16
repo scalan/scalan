@@ -9,6 +9,7 @@ class BoilerplateTool extends StrictLogging {
     "MM" -> "MMap"
   )
   lazy val coreConfig = CodegenConfig(
+    name = "core",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
       "scalan/primitives/AbstractStrings.scala",
@@ -27,6 +28,7 @@ class BoilerplateTool extends StrictLogging {
     "RSeg" -> "Segment"
   )
   lazy val coreTestsConfig = CodegenConfig(
+    name = "coretests",
     srcPath = "../core/src/test/scala",
     entityFiles = List(
       "scalan/common/Segments.scala"
@@ -43,11 +45,13 @@ class BoilerplateTool extends StrictLogging {
   val liteTypeSynonyms = Map(
     "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
-  lazy val liteConfig = CodegenConfig(
+  lazy val ceConfig = CodegenConfig(
+    name = "ce",
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
       "scalan/parrays/PArrays.scala"
       , "scalan/collections/HashSets.scala"
+      , "scalan/collections/Seqs.scala"
       , "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
       , "scalan/collections/MultiMap.scala"
@@ -64,13 +68,14 @@ class BoilerplateTool extends StrictLogging {
   val eeTypeSynonyms = Set(
     "PS" -> "PSet", "Dist" -> "Distributed"
   )
-  lazy val scalanConfig = CodegenConfig(
+  lazy val eeConfig = CodegenConfig(
+    name = "ee",
     srcPath = "../../scalan/src/main/scala",
     entityFiles = List(
       "scalan/trees/Trees.scala",
       "scalan/math/Matrices.scala",
       "scalan/math/Vectors.scala",
-      "scalan/collections/Sets.scala",
+      "scalan/collections/PSets.scala",
       "scalan/dists/Dists.scala",
       "scalan/parrays/PArrays.scala"
     ),
@@ -93,6 +98,7 @@ class BoilerplateTool extends StrictLogging {
     // declare your type synonims for User Defined types here (see type PA[A] = Rep[PArray[A]])
   )
   lazy val effectsConfig = CodegenConfig(
+    name = "effects",
     srcPath = "../../scalan-effects/src/main/scala",
     entityFiles = List(
       //"scalan/monads/Monads.scala"
@@ -121,11 +127,11 @@ class BoilerplateTool extends StrictLogging {
   val configsMap = Map(
     "coretests" -> List(coreTestsConfig),
     "core" -> List(coreConfig),
-    "ce" -> List(liteConfig),
-    "ee" -> List(scalanConfig),
+    "ce" -> List(ceConfig),
+    "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreTestsConfig, coreConfig, liteConfig),
-    "all" -> List(coreTestsConfig, liteConfig, scalanConfig)
+    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig),
+    "all" -> List(coreTestsConfig, ceConfig, eeConfig)
   )
 
   def main(args: Array[String]) {

@@ -3,13 +3,12 @@ package scalan.compilation.lms.cxx
 import java.io._
 
 import scalan.JNIExtractorOpsExp
+import scalan.CommunityMethodMapping
 import scalan.community.ScalanCommunityExp
-import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.compilation.lms.LmsCompiler
-import scalan.compilation.lms.common.JNILmsOps
-import scalan.util.{FileUtil, ProcessUtil}
+import scalan.compilation.GraphVizConfig
+import scalan.compilation.lms.{LmsBridge, LmsCompiler}
 
-trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with GraphVizExport =>
+trait LmsCompilerCXX extends LmsCompiler with CommunityMethodMapping with JNIExtractorOpsExp { self: ScalanCommunityExp with LmsBridge =>
 
   override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     case el: JNITypeElem[_] =>
@@ -67,30 +66,12 @@ trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanC
                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
-    val outputSource = new File(sourcesDir, functionName + ".cxx")
-
-    (createManifest(eInput), createManifest(eOutput)) match {
-      case (mA: Manifest[a], mB: Manifest[b]) =>
-        val bridge = makeBridge[a, b]
-        val facade = bridge.getFacade(graph.asInstanceOf[bridge.scalan.PGraph])
-        val codegen = bridge.lms.codegen
-
-        FileUtil.withFile(outputSource) { writer =>
-          codegen.emitSource[a, b](facade.apply, functionName, writer)(mA, mB)
-//          val s = bridge.lms.fresh[a](mA)
-//          val body = codegen.reifyBlock(facade.apply(s))(mB)
-//          codegen.emitSource(List(s), body, functionName, writer)(mB)
-//          val bridge.lms.TP(sym,_) = bridge.lms.globalDefs.last
-//          codegen.emitDepGraph( sym, new File( sourcesDir, functionName + "-LMS.dot" ).getAbsolutePath )
-          codegen.emitDataStructures(writer)
-        }
-    }
-
+    emitSource(sourcesDir, "cxx", functionName, graph, eInput, eOutput)
 //    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
-//      outputSource.getAbsolutePath
+//      sourceFile.getAbsolutePath
 //
-    val command = Seq("make")
-    ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
+//    val command = Seq("make")
+//    ProcessUtil.launch(new File(sourcesDir,"release"), command: _*)
   }
 
   override protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
