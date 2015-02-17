@@ -38,7 +38,7 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
     case e => ???(s"Element is $e")
   }
 
-  type Segments = Collection[(Int, Int)]
+  type Segments1 = Collection[(Int, Int)]
 
   trait CollectionCompanion extends TypeFamily1[Collection] {
     def defaultOf[A](implicit ea: Elem[A]): Default[Rep[Collection[A]]] = ea match {
@@ -208,6 +208,7 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
     }
   }
 
+  type NColl[A] = Rep[NestedCollection[A]]
   // TODO rename back to FlatNestedCollection after unification with Scalan
   abstract class NestedCollection[A](val values: Rep[Collection[A]], val segments: Rep[Collection[(Int, Int)]])(implicit val eA: Elem[A])
     extends Collection[Collection[A]] {
@@ -231,13 +232,27 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
     def zip[B: Elem](ys: Coll[B]): Coll[(Collection[A],B)] = PairCollection(self, ys)
   }
   trait NestedCollectionCompanion extends ConcreteClass1[NestedCollection] {
-    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(NestedCollection(element[Collection[A]].defaultRepValue, element[Segments].defaultRepValue))
+    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(NestedCollection(element[Collection[A]].defaultRepValue, element[Segments1].defaultRepValue))
   }
 
 }
 
 trait CollectionsDsl extends impl.CollectionsAbs
 
-trait CollectionsDslSeq extends impl.CollectionsSeq
+trait CollectionsDslSeq extends impl.CollectionsSeq {
+  def fromJuggedArray[T: Elem](arr: Rep[Array[Array[T]]]): NColl[T] = {
+    element[T] match {
+      case baseE: BaseElem[a] =>
+        //implicit val ea = arrE.eItem
+        //val len = arr.length
+        val lens: Arr[Int] = arr.asRep[Array[Array[a]]].map(i => i.length)
+        val positions = lens.scan(0)((x,y) => x + y).dropRight(1).toArray //(numericPlusMonoid[Int])
+        val segments = positions.zip(lens)
+        val flat_arr = arr.asRep[Array[Array[a]]].flatMap{i => i}.asRep[Array[a]]
+        mkNestedCollection(Collection.fromArray(flat_arr), Collection.fromArray(segments)).asRep[NColl[T]]
+      case e => ???(s"Element is $e")
+    }
+  }
+}
 
 trait CollectionsDslExp extends impl.CollectionsExp
