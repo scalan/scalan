@@ -16,14 +16,20 @@ import scala.reflect.internal.util.OffsetPosition
 object ScalanAst {
 
   // STpe universe --------------------------------------------------------------------------
+  
+  /** Type expressions */
   sealed abstract class STpeExpr
   type STpeExprs = List[STpeExpr]
+  
+  /** Invocation of a trait with arguments */
   case class STraitCall(name: String, tpeSExprs: List[STpeExpr]) extends STpeExpr {
     override def toString = name + (if (tpeSExprs.isEmpty) "" else tpeSExprs.mkString("[", ",", "]"))
   }
-  case class STpePrimitive(typeName: String, defaultValueString: String) extends STpeExpr {
-    override def toString = typeName
+  
+  case class STpePrimitive(name: String, defaultValueString: String) extends STpeExpr {
+    override def toString = name
   }
+  
   val STpePrimitives = Map(
     "Int" -> STpePrimitive("Int", "0"),
     "Long" -> STpePrimitive("Long", "0l"),
@@ -33,9 +39,11 @@ object ScalanAst {
     "Double" -> STpePrimitive("Double", "0.0"),
     "String" -> STpePrimitive("String", "\"\"")
   )
+  
   case class STpeTuple(items: List[STpeExpr]) extends STpeExpr {
     override def toString = items.mkString("(", ",", ")")
   }
+  
   case class STpeFunc(domain: STpeExpr, range: STpeExpr) extends STpeExpr {
     override def toString = {
       val domainStr = domain match {
@@ -45,6 +53,7 @@ object ScalanAst {
       s"$domainStr => $range"
     }
   }
+  
   case class STpeSum(items: List[STpeExpr]) extends STpeExpr {
     override def toString = items.mkString("(", "|", ")")
   }
@@ -89,15 +98,25 @@ object ScalanAst {
   abstract class SBodyItem
   case class SImportStat(name: String) extends SBodyItem
 
-  trait MethodAnnotation
+  trait SAnnotation
+  trait MethodAnnotation extends SAnnotation
+
   case object ExternalMethod extends MethodAnnotation
   case object ExternalConstructor extends MethodAnnotation
 
   trait ArgAnnotation
   case object ArgList extends ArgAnnotation
 
-  case class SMethodDef(name: String, tpeArgs: STpeArgs, argSections: List[SMethodArgs],
-    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[MethodAnnotation], elem: Option[Unit] = None) extends SBodyItem {
+  case class SMethodDef(
+    name: String, tpeArgs: STpeArgs, 
+    argSections: List[SMethodArgs],
+    tpeRes: Option[STpeExpr], 
+    isImplicit: Boolean, 
+    overloadId: Option[String], 
+    annotations: List[SAnnotation] = Nil, elem: Option[Unit] = None)
+    extends SBodyItem {
+    def external: Option[MethodAnnotation] = annotations.collect { case a: MethodAnnotation => a }.headOption
+    def isElem: Boolean = elem.isDefined
     def explicitArgs = argSections.filter(!_.impFlag).flatMap(_.args)
     def allArgs = argSections.flatMap(_.args)
   }
@@ -134,7 +153,7 @@ object ScalanAst {
     def companion: Option[STraitOrClassDef]
     def isTrait: Boolean
     def isHighKind = tpeArgs.exists(_.isHighKind)
-
+    def annotations: List[SAnnotation]
     def getMethodsWithAnnotation(a: MethodAnnotation) = body.collect {
       case md: SMethodDef if md.external.fold(false)(_ == a) => md
     }
@@ -158,7 +177,8 @@ object ScalanAst {
     ancestors: List[STraitCall],
     body: List[SBodyItem],
     selfType: Option[SSelfTypeDef],
-    companion: Option[STraitOrClassDef]) extends STraitOrClassDef {
+    companion: Option[STraitOrClassDef],
+    annotations: List[SAnnotation] = Nil) extends STraitOrClassDef {
     def isTrait = true
   }
 
@@ -180,7 +200,8 @@ object ScalanAst {
     body: List[SBodyItem],
     selfType: Option[SSelfTypeDef],
     companion: Option[STraitOrClassDef],
-    isAbstract: Boolean) extends STraitOrClassDef {
+    isAbstract: Boolean,
+    annotations: List[SAnnotation] = Nil) extends STraitOrClassDef {
     def isTrait = false
   }
 
@@ -222,7 +243,12 @@ object ScalanAst {
   }
 
   def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
-
+  object IsImplicitElem {
+    def unapply(item: SBodyItem): Option[(String, STraitCall)] = item match {
+      case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_)) => Some((name, elem))
+      case _ => None
+    }
+  }
   object SEntityModuleDef {
     def getImplicitArgs(entity: STraitDef): SClassArgs = {
       val implicitElems = entity.body.collect {
@@ -276,7 +302,8 @@ object ScalanAst {
 //            companion = defs.collectFirst {
 //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
 //            },
-            true
+            true, Nil
+
           )
           defaultBTImpl :: getConcreteClasses(defs)
         case None => getConcreteClasses(defs)
@@ -519,13 +546,11 @@ trait ScalanParsers {
     case tree => ???(tree)
   }
 
-  case class SAnnotation(name: String, args: List[Tree])
-
-  class MethodAnnotation(anClass: String) {
+  class MethodAnnotation(annClass: String) {
     def unapply(md: DefDef): Option[List[Tree]] =
       md.mods.annotations.collectFirst {
         case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args)
-          if ident.toString == anClass => args
+          if ident.toString == annClass => args
       }
   }
   val HasExternalAnnotation = new MethodAnnotation("External")
@@ -557,7 +582,7 @@ trait ScalanParsers {
       case HasConstructorAnnotation(_) => Some(ExternalConstructor)
       case _ => None
     }
-    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, optExternal, if (isElem) Some(()) else None)
+    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, optExternal.toList, if (isElem) Some(()) else None)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {

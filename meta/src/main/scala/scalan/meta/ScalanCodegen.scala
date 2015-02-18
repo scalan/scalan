@@ -719,7 +719,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         }
 
         s"""  object ${e.name}Methods {
-           |${methods.filterNot(_.elem.isDefined).map(methodExtractor).mkString("\n\n")}
+           |${methods.filterNot(_.isElem).map(methodExtractor).mkString("\n\n")}
            |  }""".stripMargin
       }
 
