@@ -149,5 +149,15 @@ class LmsSmokeItTests extends CommunitySmokeItTests {
     val in = 5
     compareOutputWithSequential(progStaged)(progSeq.reuseTest, progStaged.reuseTest, "reuseTest", in)
   }
+  test("test34arrayEmpty") {
+    val in = 0
+    val stgOut = getStagedOutput[Int,Array[Int]](progStaged)(progStaged.arrayEmpty, "arrayEmpty", in)
+    val seqOut:Array[Int] = progSeq.arrayEmpty(in)
+
+    assert(stgOut.isEmpty, "stgOut.isEmpty")
+    assert(seqOut.isEmpty, "seqOut.isEmpty")
+
+    compareOutputWithSequential(progStaged)(progSeq.arrayEmpty, progStaged.arrayEmpty, "arrayEmpty", in)
+  }
 
 }
