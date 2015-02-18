@@ -78,7 +78,7 @@ trait ArrayOps { self: Scalan =>
       rangeFrom0(n).map(f)
     def repeat[T: Elem](n: Rep[Int])(f: Rep[Int => T]): Arr[T] = rangeFrom0(n).mapBy(f)
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = array_replicate(len, v)
-    def empty[T: Elem] = replicate(0, element[T].defaultRepValue)
+    def empty[T: Elem] = array_empty[T]
   }
 
   // require: n in xs.indices
@@ -142,6 +142,8 @@ trait ArrayOps { self: Scalan =>
   def array_group_by[T:Elem, G:Elem](xs: Arr[T], by: Rep[T => G]): MM[G, ArrayBuffer[T]]
   def array_count[T:Elem](xs: Arr[T], f: Rep[T => Boolean]): Rep[Int]
   def array_sum_by[T:Elem, S:Elem](xs: Arr[T], f: Rep[T => S])(implicit n: Numeric[S]): Rep[S]
+
+  def array_empty[T: Elem]: Arr[T]
 }
 
 trait ArrayOpsSeq extends ArrayOps {
@@ -257,7 +259,8 @@ trait ArrayOpsSeq extends ArrayOps {
     }
     result
   }
-     
+
+  def array_empty[T: Elem]: Arr[T] = scala.Array.empty[T]
 
   def arrayToClassTag[T](xs: Rep[Array[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 }
@@ -370,6 +373,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     def selfType = element[Int]
     override def mirror(t: Transformer) = ArrayCount(t(xs), t(f))
   }
+  case class ArrayEmpty[T]()(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ArrayEmpty[T]()
+  }
 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val eT = xs.elem.eItem
@@ -438,6 +444,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     implicit val eT = xs.elem.eItem
     ArrayStride(xs, start, length, stride)
   }
+
+  override def array_empty[T: Elem]: Arr[T] = ArrayEmpty[T]()
 
   def accessOnlyFirst(x: Exp[_], exp: Exp[_]): Boolean = {
     exp match {
