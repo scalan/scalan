@@ -23,6 +23,12 @@ trait MethodMapping {
     implicit val v: T = this
   }
 
+  case class Library(packageName: String = null, isStatic: Boolean = true) {
+    implicit val v = this
+  }
+
+  case class Link(path: String, header: String, isStatic: Boolean)
+
   trait LanguageConf extends Implicit[LanguageConf] {
 
     import scala.reflect.runtime.universe.typeOf
@@ -104,7 +110,7 @@ trait MethodMapping {
     abstract class CppBackend extends Backend(CPP) {
       type Func = CppFunc
 
-      lazy val libPaths: Set[String] = null /*not implemented*/
+      lazy val libPaths: Set[String] = Set.empty[String]
     }
 
   }

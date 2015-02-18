@@ -1,7 +1,6 @@
 package scalan.it.lms
 
 import scala.language.reflectiveCalls
-import scalan.compilation.language.Library
 import scalan.{CommunityMethodMapping, ScalanCtxExp}
 import scalan.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.lms._

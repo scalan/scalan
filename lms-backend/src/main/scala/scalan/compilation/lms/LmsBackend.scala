@@ -18,7 +18,7 @@ trait LmsBackend extends BaseExp { self =>
 
 trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp with LstOpsExp with StringOpsExp
   with ArrayOpsExtExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
-  with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with LoopOpsExtExp with OrderingOpsExp with IfThenElseFatExp
+  with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp {
   /*type RepD[T] = Rep[T]
@@ -582,22 +582,17 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
   }  */
 }
 
-object LmsType {
-
-  class WildCard
-
-  val wildCard : Manifest[WildCard] = Manifest.classType(classOf[WildCard])
-}
-
 class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
 
   trait Codegen extends ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
   with ScalaGenLstOps with ScalaGenArrayOpsExt with ScalaGenNumericOps
     with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
-    with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenLoopOpsExt with ScalaGenIfThenElseFat with LoopFusionOpt
+    with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
     with ScalaGenCastingOps with ScalaGenMathOps with ScalaGenMethodCallOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile
     with ScalaGenIfThenElse with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions with ScalaGenRangeOps {
     val IR: self.type = self
+    import scalan.compilation.lms.scalac.LmsType
+
     override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
 
     private def isTuple2(name: String) = name.startsWith("Tuple2")
@@ -605,7 +600,7 @@ class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
     override def remap[A](m: Manifest[A]) =
       if (m.equals(LmsType.wildCard)) "_"
       else if (isTuple2(m.runtimeClass.getSimpleName)) {
-        if (m.typeArguments.length == 2) s"scala.Tuple2[${remap(m.typeArguments(0))}, ${remap(m.typeArguments(1))}]"
+        if (m.typeArguments.length == 2) s"(${remap(m.typeArguments(0))}, ${remap(m.typeArguments(1))})"
         else m.toString
       }
       else super.remap(m)

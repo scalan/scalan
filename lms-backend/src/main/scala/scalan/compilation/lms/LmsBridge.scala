@@ -3,7 +3,7 @@ package scalan.compilation.lms
 import scalan.ScalanCtxExp
 import scalan.compilation.language.MethodMapping
 
-trait LmsBridge { self: ScalanCtxExp with MethodMapping =>
+trait LmsBridge { self: ScalanCtxExp =>
 
   val lms: LmsBackend
 
@@ -92,6 +92,8 @@ trait LmsBridge { self: ScalanCtxExp with MethodMapping =>
     case el: BaseElemEx[_, _] => {
       val c = el.classTag.runtimeClass
       import scala.reflect.runtime.universe._
+      import scalan.compilation.lms.scalac.LmsType
+
       def toManifest(t: Type) = try {
         Manifest.classType(el.tag.mirror.runtimeClass(t))
       } catch {
