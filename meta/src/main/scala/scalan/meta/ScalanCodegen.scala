@@ -133,8 +133,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
     def getCompanionOpt = for { bt <- optBT; comp <- module.entityOps.companion } yield comp
 
     def getCompanionMethods = getCompanionOpt.map { comp =>
-      val externalConstrs = comp.getMethodsWithAnnotation(ExternalConstructor)
-      val externalMethods = comp.getMethodsWithAnnotation(ExternalMethod)
+      val externalConstrs = comp.getMethodsWithAnnotation(ConstuctorAnnotation)
+      val externalMethods = comp.getMethodsWithAnnotation(ExternalAnnotation)
       (externalConstrs, externalMethods)
     }
 
@@ -154,7 +154,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       s"(${sec.args.rep(a => {
         if (a.tpe.isTupledFunc)
           s"scala.Function.untupled(${a.name})"
-        else if (a.annotations.contains(ArgList))
+        else if (a.isArgList)
           s"${a.name}: _*"
         else
           s"${a.name}"
@@ -316,7 +316,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         val parentArgs = parent.tpeSExprs.map(_.toString)
         val parentArgsStr = parentArgs.map(_ + ", ").mkString
         lazy val defaultImpl = optBT.opt(bt => {
-          val externalMethods = module.entityOps.getMethodsWithAnnotation(ExternalMethod)
+          val externalMethods = module.entityOps.getMethodsWithAnnotation(ExternalAnnotation)
           val externalMethodsStr = externalMethods.rep(md => externalMethod(md), "\n    ")
           if (className != s"${entityName}Impl") ""
           else {
@@ -452,7 +452,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val implicitArgs = templateData.implicitArgs
       val implicitSignature = templateData.implicitSignature
 
-      val externalMethods = module.entityOps.getMethodsWithAnnotation(ExternalMethod)
+      val externalMethods = module.entityOps.getMethodsWithAnnotation(ExternalAnnotation)
       val externalMethodsStr = filterByExplicitDeclaration(externalMethods).rep(md => externalSeqMethod(md, true), "\n    ")
 
       val userTypeDefs =

@@ -6,6 +6,7 @@ package scalan.meta
 
 import java.io.File
 
+import scala.reflect.{ClassTag,classTag}
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
@@ -95,18 +96,19 @@ trait ScalanAst {
 
   // SAnnotation universe --------------------------------------------------------------------------
   trait SAnnotation {
-    //    def className: String
-    //    def args: List[Any]
+        def annotationClass: String
+        def args: List[Any]
   }
-  trait MethodAnnotation extends SAnnotation
+  case class STraitOrClassAnnotation(annotationClass: String, args: List[Tree]) extends SAnnotation
+  case class SMethodAnnotation(annotationClass: String, args: List[Tree]) extends SAnnotation
+  case class SArgAnnotation(annotationClass: String, args: List[Tree]) extends SAnnotation
 
-  case object ExternalMethod extends MethodAnnotation
+  def annotationNameOf(a: java.lang.annotation.Annotation): String = a.getClass.getSimpleName
 
-  //case class SMethodAnnotation(className: String, args: List[Tree]) extends SAnnotaton
-  case object ExternalConstructor extends MethodAnnotation
-
-  trait ArgAnnotation
-  case object ArgList extends ArgAnnotation
+  //TODO extract this names from the corresponding classed of annotation somehow
+  final val ConstuctorAnnotation = "Constructor"
+  final val ExternalAnnotation = "External"
+  final val ArgListAnnotation = "ArgList"
 
   // SExpr universe --------------------------------------------------------------------------
   case class SExpr(expr: String)
@@ -121,9 +123,9 @@ trait ScalanAst {
     tpeRes: Option[STpeExpr], 
     isImplicit: Boolean, 
     overloadId: Option[String], 
-    annotations: List[SAnnotation] = Nil, elem: Option[Unit] = None)
+    annotations: List[SMethodAnnotation] = Nil, elem: Option[Unit] = None)
     extends SBodyItem {
-    def external: Option[MethodAnnotation] = annotations.collect { case a: MethodAnnotation => a }.headOption
+    def externalOpt: Option[SMethodAnnotation] = annotations.filter(a => a.annotationClass == "External").headOption
     def isElem: Boolean = elem.isDefined
     def explicitArgs = argSections.filter(!_.impFlag).flatMap(_.args)
     def allArgs = argSections.flatMap(_.args)
@@ -142,7 +144,9 @@ trait ScalanAst {
   }
   type STpeArgs = List[STpeArg]
 
-  case class SMethodArg(name: String, tpe: STpeExpr, default: Option[SExpr], annotations: List[ArgAnnotation] = Nil)
+  case class SMethodArg(name: String, tpe: STpeExpr, default: Option[SExpr], annotations: List[SArgAnnotation] = Nil) {
+    def isArgList = annotations.exists(a => a.annotationClass == ArgListAnnotation)
+  }
   case class SMethodArgs(impFlag: Boolean, args: List[SMethodArg])
 
   case class SClassArg(impFlag: Boolean, overFlag: Boolean, valFlag: Boolean, name: String, tpe: STpeExpr, default: Option[SExpr])
@@ -161,9 +165,9 @@ trait ScalanAst {
     def companion: Option[STraitOrClassDef]
     def isTrait: Boolean
     def isHighKind = tpeArgs.exists(_.isHighKind)
-    def annotations: List[SAnnotation]
-    def getMethodsWithAnnotation(a: MethodAnnotation) = body.collect {
-      case md: SMethodDef if md.external.fold(false)(_ == a) => md
+    def annotations: List[STraitOrClassAnnotation]
+    def getMethodsWithAnnotation(annClass: String) = body.collect {
+      case md: SMethodDef if md.annotations.exists(a => a.annotationClass == annClass) => md
     }
 
     def getFieldDefs: List[SMethodDef] = body.collect {
@@ -186,7 +190,7 @@ trait ScalanAst {
     body: List[SBodyItem],
     selfType: Option[SSelfTypeDef],
     companion: Option[STraitOrClassDef],
-    annotations: List[SAnnotation] = Nil) extends STraitOrClassDef {
+    annotations: List[STraitOrClassAnnotation] = Nil) extends STraitOrClassDef {
     def isTrait = true
   }
 
@@ -209,7 +213,7 @@ trait ScalanAst {
     selfType: Option[SSelfTypeDef],
     companion: Option[STraitOrClassDef],
     isAbstract: Boolean,
-    annotations: List[SAnnotation] = Nil) extends STraitOrClassDef {
+    annotations: List[STraitOrClassAnnotation] = Nil) extends STraitOrClassDef {
     def isTrait = false
   }
 
@@ -458,7 +462,8 @@ trait ScalanParsers extends ScalanAst {
       case c: ClassDef if c.name.toString == name + "Companion" =>
         if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
     }.headOption
-    STraitDef(name, tpeArgs, ancestors, body, selfType, companion)
+    val annotations = parseAnnotations(td)((n,as) => STraitOrClassAnnotation(n,as))
+    STraitDef(name, tpeArgs, ancestors, body, selfType, companion, annotations)
   }
 
   def classDef(cd: ClassDef, parentScope: ImplDef): SClassDef = {
@@ -488,7 +493,8 @@ trait ScalanParsers extends ScalanAst {
       case c: ClassDef if c.name.toString == name + "Companion" =>
         if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
     }.headOption
-    SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, companion, isAbstract)
+    val annotations = parseAnnotations(cd)((n,as) => STraitOrClassAnnotation(n,as))
+    SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, companion, isAbstract, annotations)
   }
 
   def objectDef(od: ModuleDef): SObjectDef = {
@@ -553,17 +559,32 @@ trait ScalanParsers extends ScalanAst {
     case tree => ???(tree)
   }
 
-  class ExtractAnnotation(annClass: String) {
+  object ExtractAnnotation {
+    def unapply(a: Tree): Option[(String, List[Tree])] = a match {
+      case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args) => Some((ident, args))
+      case _ => None
+    }
+  }
+
+  def parseAnnotations[A <: SAnnotation](md: MemberDef)(p: (String, List[Tree]) => A): List[A] = {
+    val annotations = md.mods.annotations.map {
+      case ExtractAnnotation (name, args) => p(name, args)
+      case a => !!! (s"Cannot parse annotation $a of MemberDef $md")
+    }
+    annotations
+  }
+
+  class HasAnnotation(annClass: String) {
     def unapply(md: MemberDef): Option[List[Tree]] =
       md.mods.annotations.collectFirst {
-        case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args)
-          if ident.toString == annClass => args
+        case ExtractAnnotation(name, args) if name == annClass => args
       }
   }
-  val HasExternalAnnotation = new ExtractAnnotation("External")
-  val HasConstructorAnnotation = new ExtractAnnotation("Constructor")
-  val HasArgListAnnotation = new ExtractAnnotation("ArgList")
-  val OverloadIdAnnotation = new ExtractAnnotation("OverloadId")
+
+//  val HasExternalAnnotation = new ExtractAnnotation("External")
+//  val HasConstructorAnnotation = new ExtractAnnotation("Constructor")
+  val HasArgListAnnotation = new HasAnnotation("ArgList")
+  val OverloadIdAnnotation = new HasAnnotation("OverloadId")
 
   def methodDef(md: DefDef, isElem: Boolean = false) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
@@ -576,12 +597,16 @@ trait ScalanParsers extends ScalanAst {
         Some(overloadId.toString)
       case _ => None
     }
-    val optExternal = md match {
-      case HasExternalAnnotation(_) => Some(ExternalMethod)
-      case HasConstructorAnnotation(_) => Some(ExternalConstructor)
-      case _ => None
+    val annotations = md.mods.annotations.map {
+      case ExtractAnnotation(name, args) => SMethodAnnotation(name, args)
+      case a => !!!(s"Cannot parse annotation $a of the method $md")
     }
-    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, optExternal.toList, if (isElem) Some(()) else None)
+//    val optExternal = md match {
+//      case HasExternalAnnotation(_) => Some(ExternalMethod)
+//      case HasConstructorAnnotation(_) => Some(ExternalConstructor)
+//      case _ => None
+//    }
+    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, annotations, if (isElem) Some(()) else None)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {
@@ -637,10 +662,7 @@ trait ScalanParsers extends ScalanAst {
   def methodArg(vd: ValDef): SMethodArg = {
     val tpe = tpeExpr(vd.tpt)
     val default = optExpr(vd.rhs)
-    val annotations = vd match {
-      case HasArgListAnnotation(_) => List(ArgList)
-      case _ => Nil
-    }
+    val annotations = parseAnnotations(vd)((n,as) => new SArgAnnotation(n, as))
     SMethodArg(vd.name, tpe, default, annotations)
   }
 
