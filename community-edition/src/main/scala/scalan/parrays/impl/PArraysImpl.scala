@@ -52,7 +52,8 @@ trait PArraysAbs extends Scalan with PArrays {
   }
 
   // elem for concrete class
-  class UnitArrayElem(iso: Iso[UnitArrayData, UnitArray]) extends PArrayElem[Unit, UnitArrayData, UnitArray](iso) {
+  class UnitArrayElem(iso: Iso[UnitArrayData, UnitArray])
+    extends PArrayElem[Unit, UnitArrayData, UnitArray](iso) {
     def convertPArray(x: Rep[PArray[Unit]]) = UnitArray(x.length)
   }
 
@@ -112,7 +113,8 @@ trait PArraysAbs extends Scalan with PArrays {
   def unmkUnitArray(p: Rep[UnitArray]): Option[(Rep[Int])]
 
   // elem for concrete class
-  class BaseArrayElem[A:Elem](iso: Iso[BaseArrayData[A], BaseArray[A]]) extends PArrayElem[A, BaseArrayData[A], BaseArray[A]](iso) {
+  class BaseArrayElem[A](iso: Iso[BaseArrayData[A], BaseArray[A]])(implicit val eA: Elem[A])
+    extends PArrayElem[A, BaseArrayData[A], BaseArray[A]](iso) {
     def convertPArray(x: Rep[PArray[A]]) = BaseArray(x.arr)
   }
 
@@ -172,12 +174,13 @@ trait PArraysAbs extends Scalan with PArrays {
   def unmkBaseArray[A:Elem](p: Rep[BaseArray[A]]): Option[(Rep[Array[A]])]
 
   // elem for concrete class
-  class ArrayOnSeqElem[A:Elem](iso: Iso[ArrayOnSeqData[A], ArrayOnSeq[A]]) extends PArrayElem[A, ArrayOnSeqData[A], ArrayOnSeq[A]](iso) {
+  class ArrayOnSeqElem[A](iso: Iso[ArrayOnSeqData[A], ArrayOnSeq[A]])(implicit val eA: Elem[A])
+    extends PArrayElem[A, ArrayOnSeqData[A], ArrayOnSeq[A]](iso) {
     def convertPArray(x: Rep[PArray[A]]) = ArrayOnSeq(x.seq)
   }
 
   // state representation type
-  type ArrayOnSeqData[A] = Seq[A]
+  type ArrayOnSeqData[A] = SSeq[A]
 
   // 3) Iso for concrete class
   class ArrayOnSeqIso[A](implicit eA: Elem[A])
@@ -187,21 +190,21 @@ trait PArraysAbs extends Scalan with PArrays {
         case Some((seq)) => seq
         case None => !!!
       }
-    override def to(p: Rep[Seq[A]]) = {
+    override def to(p: Rep[SSeq[A]]) = {
       val seq = p
       ArrayOnSeq(seq)
     }
     lazy val tag = {
       weakTypeTag[ArrayOnSeq[A]]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[ArrayOnSeq[A]]](ArrayOnSeq(element[Seq[A]].defaultRepValue))
+    lazy val defaultRepTo = Default.defaultVal[Rep[ArrayOnSeq[A]]](ArrayOnSeq(element[SSeq[A]].defaultRepValue))
     lazy val eTo = new ArrayOnSeqElem[A](this)
   }
   // 4) constructor and deconstructor
   abstract class ArrayOnSeqCompanionAbs extends CompanionBase[ArrayOnSeqCompanionAbs] with ArrayOnSeqCompanion {
     override def toString = "ArrayOnSeq"
 
-    def apply[A](seq: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[ArrayOnSeq[A]] =
+    def apply[A](seq: Rep[SSeq[A]])(implicit eA: Elem[A]): Rep[ArrayOnSeq[A]] =
       mkArrayOnSeq(seq)
     def unapply[A:Elem](p: Rep[ArrayOnSeq[A]]) = unmkArrayOnSeq(p)
   }
@@ -228,11 +231,12 @@ trait PArraysAbs extends Scalan with PArrays {
     new ArrayOnSeqIso[A]
 
   // 6) smart constructor and deconstructor
-  def mkArrayOnSeq[A](seq: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[ArrayOnSeq[A]]
-  def unmkArrayOnSeq[A:Elem](p: Rep[ArrayOnSeq[A]]): Option[(Rep[Seq[A]])]
+  def mkArrayOnSeq[A](seq: Rep[SSeq[A]])(implicit eA: Elem[A]): Rep[ArrayOnSeq[A]]
+  def unmkArrayOnSeq[A:Elem](p: Rep[ArrayOnSeq[A]]): Option[(Rep[SSeq[A]])]
 
   // elem for concrete class
-  class PairArrayElem[A:Elem, B:Elem](iso: Iso[PairArrayData[A, B], PairArray[A, B]]) extends IPairArrayElem[A, B, PairArrayData[A, B], PairArray[A, B]](iso) {
+  class PairArrayElem[A, B](iso: Iso[PairArrayData[A, B], PairArray[A, B]])(implicit val eA: Elem[A], val eB: Elem[B])
+    extends IPairArrayElem[A, B, PairArrayData[A, B], PairArray[A, B]](iso) {
     def convertIPairArray(x: Rep[IPairArray[A, B]]) = PairArray(x.as, x.bs)
   }
 
@@ -293,7 +297,8 @@ trait PArraysAbs extends Scalan with PArrays {
   def unmkPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]): Option[(Rep[PArray[A]], Rep[PArray[B]])]
 
   // elem for concrete class
-  class ArrayOfPairsElem[A:Elem, B:Elem](iso: Iso[ArrayOfPairsData[A, B], ArrayOfPairs[A, B]]) extends IPairArrayElem[A, B, ArrayOfPairsData[A, B], ArrayOfPairs[A, B]](iso) {
+  class ArrayOfPairsElem[A, B](iso: Iso[ArrayOfPairsData[A, B], ArrayOfPairs[A, B]])(implicit val eA: Elem[A], val eB: Elem[B])
+    extends IPairArrayElem[A, B, ArrayOfPairsData[A, B], ArrayOfPairs[A, B]](iso) {
     def convertIPairArray(x: Rep[IPairArray[A, B]]) = ArrayOfPairs(x.arr)
   }
 
@@ -353,7 +358,8 @@ trait PArraysAbs extends Scalan with PArrays {
   def unmkArrayOfPairs[A:Elem, B:Elem](p: Rep[ArrayOfPairs[A, B]]): Option[(Rep[Array[(A,B)]])]
 
   // elem for concrete class
-  class NestedArrayElem[A:Elem](iso: Iso[NestedArrayData[A], NestedArray[A]]) extends INestedArrayElem[A, NestedArrayData[A], NestedArray[A]](iso) {
+  class NestedArrayElem[A](iso: Iso[NestedArrayData[A], NestedArray[A]])(implicit val eA: Elem[A])
+    extends INestedArrayElem[A, NestedArrayData[A], NestedArray[A]](iso) {
     def convertINestedArray(x: Rep[INestedArray[A]]) = NestedArray(x.values, x.segments)
   }
 
@@ -456,7 +462,7 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
     Some((p.arr))
 
   case class SeqArrayOnSeq[A]
-      (override val seq: Rep[Seq[A]])
+      (override val seq: Rep[SSeq[A]])
       (implicit eA: Elem[A])
     extends ArrayOnSeq[A](seq)
         with UserTypeSeq[PArray[A], ArrayOnSeq[A]] {
@@ -467,7 +473,7 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
   }
 
   def mkArrayOnSeq[A]
-      (seq: Rep[Seq[A]])(implicit eA: Elem[A]) =
+      (seq: Rep[SSeq[A]])(implicit eA: Elem[A]) =
       new SeqArrayOnSeq[A](seq)
   def unmkArrayOnSeq[A:Elem](p: Rep[ArrayOnSeq[A]]) =
     Some((p.seq))
@@ -723,7 +729,7 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
     Some((p.arr))
 
   case class ExpArrayOnSeq[A]
-      (override val seq: Rep[Seq[A]])
+      (override val seq: Rep[SSeq[A]])
       (implicit eA: Elem[A])
     extends ArrayOnSeq[A](seq) with UserTypeDef[PArray[A], ArrayOnSeq[A]] {
     lazy val selfType = element[ArrayOnSeq[A]].asInstanceOf[Elem[PArray[A]]]
@@ -824,7 +830,7 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
   }
 
   def mkArrayOnSeq[A]
-    (seq: Rep[Seq[A]])(implicit eA: Elem[A]) =
+    (seq: Rep[SSeq[A]])(implicit eA: Elem[A]) =
     new ExpArrayOnSeq[A](seq)
   def unmkArrayOnSeq[A:Elem](p: Rep[ArrayOnSeq[A]]) =
     Some((p.seq))

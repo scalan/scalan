@@ -153,7 +153,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
     def methodArgsUse(sec: SMethodArgs) = {
       s"(${sec.args.rep(a => {
         if (a.tpe.isTupledFunc)
-          s"scala.Function.untupled(${a.name})"
+          s"${a.name}"
+          //s"scala.Function.untupled(${a.name})"
         else if (a.isArgList)
           s"${a.name}: _*"
         else
@@ -195,7 +196,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val typesDecl = getBoundedTpeArgString(md.tpeArgs)
       s"""
         |    def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
-        |      newObjEx(classOf[$entityNameBT${typesUse}], List(${allArgs.rep(a => s"${a.name}.asRep[Any]")}))
+        |      newObjEx(classOf[$entityName${typesUse}], List(${allArgs.rep(a => s"${a.name}.asRep[Any]")}))
         |""".stripMargin
     }
 
@@ -204,10 +205,16 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
       val typesDecl = getBoundedTpeArgString(md.tpeArgs)
       val typesUse = getTpeArgUseString(md.tpeArgs)
-      s"""
-        |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
-        |      ${if (isInstance) "wrappedValueOfBaseType" else entityNameBT}.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")}
-        |""".stripMargin
+      if (isInstance)
+        s"""
+          |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
+          |      ${entityName}Impl(wrappedValueOfBaseType).${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")}
+          |""".stripMargin
+      else
+        s"""
+          |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
+          |      ${entityName}Impl(${entityNameBT}.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")})
+          |""".stripMargin
     }
 
     def externalSeqConstructor(md: SMethodDef) = {
@@ -216,7 +223,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val typesDecl = getBoundedTpeArgString(md.tpeArgs)
       s"""
         |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
-        |      new $entityNameBT${typesUse}${md.argSections.rep(methodArgsUse(_), "")}
+        |      ${entityName}Impl(new $entityNameBT${typesUse}${md.argSections.rep(methodArgsUse(_), "")})
         |""".stripMargin
     }
 
@@ -234,8 +241,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val proxyBT = optBT.opt(bt => {
         s"""
         |  // BaseTypeEx proxy
-        |  implicit def proxy$entityNameBT${typesWithElems}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
-        |    proxyOps[$entityName${typesUse}](p.asRep[$entityName${typesUse}])
+        |  //implicit def proxy$entityNameBT${typesWithElems}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
+        |  //  proxyOps[$entityName${typesUse}](p.asRep[$entityName${typesUse}])
         |
         |  implicit def default${entityName}Elem${typesWithElems}: Elem[$entityName${typesUse}] = element[${entityName}Impl${typesUse}].asElem[$entityName${typesUse}]
         |""".stripAndTrim
@@ -358,7 +365,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         s"""
         |$defaultImpl
         |  // elem for concrete class
-        |  class ${className}Elem${typesWithElems}(iso: Iso[${className}Data${typesUse}, $className${typesUse}]) extends ${parent.name}Elem[${parentArgsStr}${className}Data${typesUse}, $className${typesUse}](iso) {
+        |  class ${className}Elem${typesDecl}(iso: Iso[${className}Data${typesUse}, $className${typesUse}])$implicitArgsWithVals
+        |    extends ${parent.name}Elem[${parentArgsStr}${className}Data${typesUse}, $className${typesUse}](iso) {
         |    def convert${parent.name}(x: Rep[${parent.name}${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.getEntity(parent.name), c)}
         |  }
         |
@@ -541,8 +549,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val proxyBT = optBT.opt(bt =>
         s"""
          |  // override proxy if we deal with BaseTypeEx
-         |  override def proxy$entityNameBT${typesWithElems}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
-         |    proxyOpsEx[$entityNameBT${typesUse},$entityName${typesUse}, Seq${entityName}Impl$typesUse](p, bt => Seq${entityName}Impl(bt))
+         |  //override def proxy$entityNameBT${typesWithElems}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
+         |  //  proxyOpsEx[$entityNameBT${typesUse},$entityName${typesUse}, Seq${entityName}Impl$typesUse](p, bt => Seq${entityName}Impl(bt))
          |""".stripAndTrim
       )
 

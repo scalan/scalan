@@ -39,7 +39,8 @@ trait VectorsAbs extends Scalan with Vectors {
   }
 
   // elem for concrete class
-  class DenseVectorElem[T:Elem](iso: Iso[DenseVectorData[T], DenseVector[T]]) extends VectorElem[T, DenseVectorData[T], DenseVector[T]](iso) {
+  class DenseVectorElem[T](iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit val elem: Elem[T])
+    extends VectorElem[T, DenseVectorData[T], DenseVector[T]](iso) {
     def convertVector(x: Rep[Vector[T]]) = DenseVector(x.coords)
   }
 
@@ -99,7 +100,8 @@ trait VectorsAbs extends Scalan with Vectors {
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]): Option[(Rep[PArray[T]])]
 
   // elem for concrete class
-  class SparseVectorElem[T:Elem](iso: Iso[SparseVectorData[T], SparseVector[T]]) extends VectorElem[T, SparseVectorData[T], SparseVector[T]](iso) {
+  class SparseVectorElem[T](iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit val elem: Elem[T])
+    extends VectorElem[T, SparseVectorData[T], SparseVector[T]](iso) {
     def convertVector(x: Rep[Vector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
   }
 

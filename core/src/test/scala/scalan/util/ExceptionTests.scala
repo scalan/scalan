@@ -12,7 +12,7 @@ class ExceptionTests extends BaseTests { suite =>
     lazy val tElem = element[Throwable]
     lazy val defaultRep = tElem.defaultRepValue
 
-    lazy val t1 = fun { (t: Rep[Throwable]) => t.getMessage }
+    lazy val t1 = fun { (t: Rep[SThrowable]) => t.getMessage }
     lazy val t2 = fun { (t: Rep[SThrowable]) => t.getMessage }
     lazy val t3 = fun { (t: Rep[SThrowable]) => SException(t.wrappedValueOfBaseType)}
     lazy val t4 = fun { (t: Rep[SThrowable]) => SException(t.wrappedValueOfBaseType).wrappedValueOfBaseType}
@@ -72,7 +72,7 @@ class ExceptionTests extends BaseTests { suite =>
     }
     ctx.test
     val d = ctx.defaultRep
-    val res = ctx.t1(new Throwable("test"))
+    val res = ctx.t1(ctx.SThrowable("test"))
     assertResult("test")(res)
   }
 }

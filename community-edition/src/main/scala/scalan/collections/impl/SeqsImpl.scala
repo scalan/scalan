@@ -5,6 +5,7 @@ import scala.collection.Seq
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
+import scala.reflect.runtime.universe._
 import scalan.common.Default
 
 // Abs -----------------------------------
@@ -14,8 +15,8 @@ trait SeqsAbs extends Scalan with Seqs {
   implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] =
     proxyOps[SSeq[A]](p)
   // BaseTypeEx proxy
-  implicit def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
-    proxyOps[SSeq[A]](p.asRep[SSeq[A]])
+  //implicit def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
+  //  proxyOps[SSeq[A]](p.asRep[SSeq[A]])
 
   implicit def defaultSSeqElem[A:Elem]: Elem[SSeq[A]] = element[SSeqImpl[A]].asElem[SSeq[A]]
   implicit def SeqElement[A:Elem:WeakTypeTag]: Elem[Seq[A]]
@@ -34,18 +35,18 @@ trait SeqsAbs extends Scalan with Seqs {
   abstract class SSeqCompanionAbs extends CompanionBase[SSeqCompanionAbs] with SSeqCompanion {
     override def toString = "SSeq"
 
-    def apply[A:Elem](arr: Rep[Array[A]]): Rep[Seq[A]] =
-      methodCallEx[Seq[A]](self,
+    def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("apply", classOf[AnyRef], classOf[Elem[A]]),
         List(arr.asInstanceOf[AnyRef], element[A]))
 
-    def empty[A:Elem]: Rep[Seq[A]] =
-      methodCallEx[Seq[A]](self,
+    def empty[A:Elem]: Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("empty", classOf[Elem[A]]),
         List(element[A]))
 
-    def fromList[A:Elem](list: Rep[List[A]]): Rep[Seq[A]] =
-      methodCallEx[Seq[A]](self,
+    def fromList[A:Elem](list: Rep[List[A]]): Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("fromList", classOf[AnyRef], classOf[Elem[A]]),
         List(list.asInstanceOf[AnyRef], element[A]))
   }
@@ -66,8 +67,8 @@ trait SeqsAbs extends Scalan with Seqs {
         this.getClass.getMethod("apply", classOf[AnyRef]),
         List(idx.asInstanceOf[AnyRef]))
 
-    def slice(unc_from: Rep[Int], unc_until: Rep[Int]): Rep[Seq[A]] =
-      methodCallEx[Seq[A]](self,
+    def slice(unc_from: Rep[Int], unc_until: Rep[Int]): Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("slice", classOf[AnyRef], classOf[AnyRef]),
         List(unc_from.asInstanceOf[AnyRef], unc_until.asInstanceOf[AnyRef]))
 
@@ -76,8 +77,8 @@ trait SeqsAbs extends Scalan with Seqs {
         this.getClass.getMethod("isEmpty"),
         List())
 
-    def map[B:Elem](f: Rep[A => B]): Rep[Seq[B]] =
-      methodCallEx[Seq[B]](self,
+    def map[B:Elem](f: Rep[A => B]): Rep[SSeq[B]] =
+      methodCallEx[SSeq[B]](self,
         this.getClass.getMethod("map", classOf[AnyRef], classOf[Elem[B]]),
         List(f.asInstanceOf[AnyRef], element[B]))
 
@@ -86,18 +87,18 @@ trait SeqsAbs extends Scalan with Seqs {
         this.getClass.getMethod("reduce", classOf[AnyRef]),
         List(op.asInstanceOf[AnyRef]))
 
-    def filter(p: Rep[A => Boolean]): Rep[Seq[A]] =
-      methodCallEx[Seq[A]](self,
+    def filter(p: Rep[A => Boolean]): Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("filter", classOf[AnyRef]),
         List(p.asInstanceOf[AnyRef]))
 
-    def $plus$colon(elem: Rep[A]): Rep[Seq[A]] =
-      methodCallEx[Seq[A]](self,
+    def $plus$colon(elem: Rep[A]): Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("$plus$colon", classOf[AnyRef]),
         List(elem.asInstanceOf[AnyRef]))
 
-    def diff(that: Rep[Seq[A]]): Rep[Seq[A]] =
-      methodCallEx[Seq[A]](self,
+    def diff(that: Rep[SSeq[A]]): Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("diff", classOf[AnyRef]),
         List(that.asInstanceOf[AnyRef]))
 
@@ -108,7 +109,8 @@ trait SeqsAbs extends Scalan with Seqs {
   }
   trait SSeqImplCompanion
   // elem for concrete class
-  class SSeqImplElem[A:Elem](iso: Iso[SSeqImplData[A], SSeqImpl[A]]) extends SSeqElem[A, SSeqImplData[A], SSeqImpl[A]](iso) {
+  class SSeqImplElem[A](iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit val eA: Elem[A])
+    extends SSeqElem[A, SSeqImplData[A], SSeqImpl[A]](iso) {
     def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
   }
 
@@ -174,19 +176,19 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeSeq[SSeqCompanionAbs, SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
 
-    override def apply[A:Elem](arr: Rep[Array[A]]): Rep[Seq[A]] =
-      Seq.apply[A](arr: _*)
+    override def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
+      SSeqImpl(Seq.apply[A](arr: _*))
 
-    override def empty[A:Elem]: Rep[Seq[A]] =
-      Seq.empty[A]
+    override def empty[A:Elem]: Rep[SSeq[A]] =
+      SSeqImpl(Seq.empty[A])
 
-    override def fromList[A:Elem](list: Rep[List[A]]): Rep[Seq[A]] =
-      Seq.fromList[A](list)
+    override def fromList[A:Elem](list: Rep[List[A]]): Rep[SSeq[A]] =
+      SSeqImpl(Seq.fromList[A](list))
   }
 
     // override proxy if we deal with BaseTypeEx
-  override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
-    proxyOpsEx[Seq[A],SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
+  //override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
+  //  proxyOpsEx[Seq[A],SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
 
     implicit def SeqElement[A:Elem:WeakTypeTag]: Elem[Seq[A]] = new SeqBaseElemEx[Seq[A], SSeq[A]](element[SSeq[A]])(weakTypeTag[Seq[A]], DefaultOfSeq[A])
 
@@ -198,28 +200,28 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
     lazy val selfType = element[SSeqImpl[A]].asInstanceOf[Elem[SSeq[A]]]
 
     override def size: Rep[Int] =
-      wrappedValueOfBaseType.size
+      SSeqImpl(wrappedValueOfBaseType).size
 
     override def apply(idx: Rep[Int]): Rep[A] =
-      wrappedValueOfBaseType.apply(idx)
+      SSeqImpl(wrappedValueOfBaseType).apply(idx)
 
-    override def slice(unc_from: Rep[Int], unc_until: Rep[Int]): Rep[Seq[A]] =
-      wrappedValueOfBaseType.slice(unc_from, unc_until)
+    override def slice(unc_from: Rep[Int], unc_until: Rep[Int]): Rep[SSeq[A]] =
+      SSeqImpl(wrappedValueOfBaseType).slice(unc_from, unc_until)
 
     override def isEmpty: Rep[Boolean] =
-      wrappedValueOfBaseType.isEmpty
+      SSeqImpl(wrappedValueOfBaseType).isEmpty
 
     override def reduce(op: Rep[((A,A)) => A]): Rep[A] =
-      wrappedValueOfBaseType.reduce(scala.Function.untupled(op))
+      SSeqImpl(wrappedValueOfBaseType).reduce(op)
 
-    override def filter(p: Rep[A => Boolean]): Rep[Seq[A]] =
-      wrappedValueOfBaseType.filter(p)
+    override def filter(p: Rep[A => Boolean]): Rep[SSeq[A]] =
+      SSeqImpl(wrappedValueOfBaseType).filter(p)
 
-    override def $plus$colon(elem: Rep[A]): Rep[Seq[A]] =
-      wrappedValueOfBaseType.$plus$colon(elem)
+    override def $plus$colon(elem: Rep[A]): Rep[SSeq[A]] =
+      SSeqImpl(wrappedValueOfBaseType).$plus$colon(elem)
 
-    override def diff(that: Rep[Seq[A]]): Rep[Seq[A]] =
-      wrappedValueOfBaseType.diff(that)
+    override def diff(that: Rep[SSeq[A]]): Rep[SSeq[A]] =
+      SSeqImpl(wrappedValueOfBaseType).diff(that)
   }
   lazy val SSeqImpl = new SSeqImplCompanionAbs with UserTypeSeq[SSeqImplCompanionAbs, SSeqImplCompanionAbs] {
     lazy val selfType = element[SSeqImplCompanionAbs]
@@ -374,12 +376,12 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
     }
 
     object diff {
-      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[Seq[A]]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[SSeq[A]]) forSome {type A}] = d match {
         case MethodCall(receiver, method, Seq(that, _*), _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "diff" =>
-          Some((receiver, that)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[Seq[A]]) forSome {type A}]]
+          Some((receiver, that)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[SSeq[A]]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[Seq[A]]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[SSeq[A]]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
