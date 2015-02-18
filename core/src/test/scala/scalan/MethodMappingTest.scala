@@ -14,7 +14,7 @@ class MethodMappingTest extends BaseTests {
         val parraysPack = new Pack("scalan.parrays") {
           val parraysFam = new Family('PArrays) {
             val parray = new ClassType('PArray, 'PA, TyArg('A)) {
-              val length = Method('length, Nil, tyInt)
+              val length = Method('length, tyInt)
             }
           }
         }

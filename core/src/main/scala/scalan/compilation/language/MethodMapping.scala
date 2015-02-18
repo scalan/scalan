@@ -29,6 +29,7 @@ trait MethodMapping {
     import scala.reflect.runtime.universe.Type
 
     val tyInt = typeOf[Int]
+    val tyString = typeOf[String]
     val tyArray = typeOf[Array[_]]
 
     val backend: Backend[_]
@@ -55,9 +56,9 @@ trait MethodMapping {
 
     case class ClassType(name: Symbol, synonym: Symbol, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]
 
-    case class MethodArg(name: String)
+    case class MethodArg(name: Type)
 
-    case class Method(name: Symbol, args: List[MethodArg], tyRes: Type)(implicit val theType: ClassType)
+    case class Method(name: Symbol, tyRes: Type, args: MethodArg*)(implicit val theType: ClassType)
 
     trait Fun {
       val funcName: Symbol
