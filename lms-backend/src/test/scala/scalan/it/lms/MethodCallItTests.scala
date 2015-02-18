@@ -2,9 +2,9 @@ package scalan.it.lms
 
 import scala.language.reflectiveCalls
 import scalan.{CommunityMethodMapping, ScalanCtxExp}
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
+import scalan.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.LmsCompilerScala
+import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.it.BaseItTests
 import scalan.it.lms.method.TestMethod
 import scalan.linalgebra.MatricesDslExp
@@ -144,7 +144,7 @@ class MethodCallItTests extends LmsCommunityItTests{
 
 class MethodCallItTestsOld extends BaseItTests {
 
-  trait TestLmsCompiler extends ScalanCommunityDslExp with ScalanCtxExp with LmsCompilerScala with CommunityBridge {
+  trait TestLmsCompiler extends ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge {
     val lms = new CommunityLmsBackend
   }
 

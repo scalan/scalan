@@ -8,7 +8,7 @@ import scalan.common.Default
 
 // Abs -----------------------------------
 trait MatricesAbs extends Scalan with Matrices {
-  self: MatricesDsl =>
+  self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] =
     proxyOps[Matrix[T]](p)
@@ -216,7 +216,7 @@ trait MatricesAbs extends Scalan with Matrices {
 
 // Seq -----------------------------------
 trait MatricesSeq extends MatricesDsl with ScalanSeq {
-  self: MatricesDslSeq =>
+  self: ScalanCommunityDslSeq =>
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs with UserTypeSeq[MatrixCompanionAbs, MatrixCompanionAbs] {
     lazy val selfType = element[MatrixCompanionAbs]
   }
@@ -275,7 +275,7 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
 
 // Exp -----------------------------------
 trait MatricesExp extends MatricesDsl with ScalanExp {
-  self: MatricesDslExp =>
+  self: ScalanCommunityDslExp =>
   lazy val Matrix: Rep[MatrixCompanionAbs] = new MatrixCompanionAbs with UserTypeDef[MatrixCompanionAbs, MatrixCompanionAbs] {
     lazy val selfType = element[MatrixCompanionAbs]
     override def mirror(t: Transformer) = this

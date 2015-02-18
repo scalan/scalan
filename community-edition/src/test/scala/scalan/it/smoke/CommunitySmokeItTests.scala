@@ -1,7 +1,7 @@
 package scalan.it.smoke
 
-import scalan.ScalanCtxSeq
-import scalan.community._
+import scalan._
+//import scalan.community._
 import scalan.collections._
 import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
 
@@ -10,7 +10,7 @@ import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
  */
 abstract class CommunitySmokeItTests extends SmokeItTests {
 
-  trait ProgCommunity extends Prog with ScalanCommunity with PArrayExamples with MultiMapsDsl  {
+  trait ProgCommunity extends Prog with ScalanCommunity with PArrayExamples with ScalanCommunityDsl  {
 
     lazy val simpleConst = fun { x: PA[Int] =>
       PArray.singleton(1)
@@ -25,6 +25,11 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
     }
 
    //def componentAccess(t: Rep[((Int,Double),(String,Long))]): Rep[String] = t._2._1
+  lazy val arrayEmpty = fun { _:Rep[Int] => SArray.empty[Int]}
+
+    lazy val arrayReplicate = fun {in:Rep[(Int,Double)] =>
+      SArray.replicate(in._1, in._2)
+    }
 
     lazy val reuseTest = fun { len: Rep[Int] =>
       val matrix: Rep[Array[Array[Int]]] = SArray.tabulate[Array[Int]](len) { n => SArray.tabulate[Int](n) { i => i}}

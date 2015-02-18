@@ -2,15 +2,15 @@ package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
 import scala.virtualization.lms.common._
-import scala.virtualization.lms.epfl.test7.ArrayLoopsExp
 import scala.virtualization.lms.internal.GenericNestedCodegen
 
 trait ArrayOpsExt extends Base {
 
   def foldArray[A: Manifest, B: Manifest](a: Rep[Array[A]], init: Rep[B], f: Rep[(B, A)] => Rep[B]): Rep[B]
+  def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]]
 }
 
-trait ArrayOpsExtExp extends BaseExp with EffectExp {
+trait ArrayOpsExtExp extends BaseExp with EffectExp with ArrayOpsExp {
 
   case class FoldArray[A, B: Manifest](a: Exp[Array[A]], x: Sym[(B, A)], init: Exp[B], b: Block[B]) extends Def[B] {
     val m = manifest[B]
@@ -25,6 +25,8 @@ trait ArrayOpsExtExp extends BaseExp with EffectExp {
     val b = reifyEffects[B](f(x))
     reflectEffect(FoldArray(a, x, init, b), summarizeEffects(b).star)
   }
+
+  def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
 
   override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
     case FoldArray(a, x, init, b) => foldArray(f(a), x, f(init), f(b))(mtype(manifest[A]))

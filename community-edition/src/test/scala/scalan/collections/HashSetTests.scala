@@ -1,13 +1,11 @@
 package scalan.collections
 
-import java.io.File
-
 import scala.collection.immutable.HashSet
 import scala.language.reflectiveCalls
 import scalan._
 
 class HashSetTests extends BaseTests { suite =>
-  trait HashSetSimple extends ScalanDsl with HashSetsDsl {
+  trait HashSetSimple extends ScalanDsl with ScalanCommunityDsl {
     lazy val tElem = element[HashSet[Int]]
     lazy val defaultRep = tElem.defaultRepValue
     lazy val empty = SHashSet.empty[Int]
@@ -27,7 +25,7 @@ class HashSetTests extends BaseTests { suite =>
   }
 
   test("simpleHashsetStaged") {
-    val ctx = new TestContext(this, "simpleHashsetStaged") with HashSetSimple with HashSetsDslExp {
+    val ctx = new TestContext(this, "simpleHashsetStaged") with HashSetSimple with ScalanCommunityDslExp {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {
@@ -51,7 +49,7 @@ class HashSetTests extends BaseTests { suite =>
   }
 
   test("simpleHashsetSeq") {
-    val ctx = new ScalanCtxSeq with  HashSetSimple with HashSetsDslSeq {
+    val ctx = new ScalanCtxSeq with  HashSetSimple with ScalanCommunityDslSeq {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
 

@@ -5,7 +5,7 @@ import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
 
-trait HashSets extends Base with BaseTypes { self: HashSetsDsl =>
+trait HashSets extends Base with BaseTypes { self: ScalanCommunityDsl =>
 
   type RHS[A] = Rep[HashSet[A]]
   trait SHashSet[A] extends BaseTypeEx[HashSet[A], SHashSet[A]] { self =>
@@ -22,11 +22,11 @@ trait HashSets extends Base with BaseTypes { self: HashSetsDsl =>
   def DefaultOfHashSet[A:Elem]: Default[HashSet[A]] = Default.defaultVal(HashSet.empty[A]) //SHashSet.defaultVal
 }
 
-trait HashSetsDsl extends impl.HashSetsAbs
-trait HashSetsDslSeq extends impl.HashSetsSeq {
+trait HashSetsDsl extends impl.HashSetsAbs { self: ScalanCommunityDsl => }
+trait HashSetsDslSeq extends impl.HashSetsSeq { self: ScalanCommunityDslSeq =>
   trait SeqSHashSet[A] extends SHashSetImpl[A] {
     override def map[B:Elem](f: Rep[A => B]): Rep[HashSet[B]] = wrappedValueOfBaseType.map(f)
     //override def +(elem: Rep[A]): Rep[HashSet[A]] = value + elem
   }
 }
-trait HashSetsDslExp extends impl.HashSetsExp
+trait HashSetsDslExp extends impl.HashSetsExp { self: ScalanCommunityDslExp => }

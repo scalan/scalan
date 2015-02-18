@@ -11,7 +11,7 @@ import scalan.common.Default
 
 // Abs -----------------------------------
 trait PArraysAbs extends Scalan with PArrays {
-  self: PArraysDsl =>
+  self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyPArray[A](p: Rep[PArray[A]]): PArray[A] =
     proxyOps[PArray[A]](p)
@@ -170,6 +170,66 @@ trait PArraysAbs extends Scalan with PArrays {
   // 6) smart constructor and deconstructor
   def mkBaseArray[A](arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[BaseArray[A]]
   def unmkBaseArray[A:Elem](p: Rep[BaseArray[A]]): Option[(Rep[Array[A]])]
+
+  // elem for concrete class
+  class ArrayOnSeqElem[A:Elem](iso: Iso[ArrayOnSeqData[A], ArrayOnSeq[A]]) extends PArrayElem[A, ArrayOnSeqData[A], ArrayOnSeq[A]](iso) {
+    def convertPArray(x: Rep[PArray[A]]) = ArrayOnSeq(x.seq)
+  }
+
+  // state representation type
+  type ArrayOnSeqData[A] = Seq[A]
+
+  // 3) Iso for concrete class
+  class ArrayOnSeqIso[A](implicit eA: Elem[A])
+    extends Iso[ArrayOnSeqData[A], ArrayOnSeq[A]] {
+    override def from(p: Rep[ArrayOnSeq[A]]) =
+      unmkArrayOnSeq(p) match {
+        case Some((seq)) => seq
+        case None => !!!
+      }
+    override def to(p: Rep[Seq[A]]) = {
+      val seq = p
+      ArrayOnSeq(seq)
+    }
+    lazy val tag = {
+      weakTypeTag[ArrayOnSeq[A]]
+    }
+    lazy val defaultRepTo = Default.defaultVal[Rep[ArrayOnSeq[A]]](ArrayOnSeq(element[Seq[A]].defaultRepValue))
+    lazy val eTo = new ArrayOnSeqElem[A](this)
+  }
+  // 4) constructor and deconstructor
+  abstract class ArrayOnSeqCompanionAbs extends CompanionBase[ArrayOnSeqCompanionAbs] with ArrayOnSeqCompanion {
+    override def toString = "ArrayOnSeq"
+
+    def apply[A](seq: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[ArrayOnSeq[A]] =
+      mkArrayOnSeq(seq)
+    def unapply[A:Elem](p: Rep[ArrayOnSeq[A]]) = unmkArrayOnSeq(p)
+  }
+  def ArrayOnSeq: Rep[ArrayOnSeqCompanionAbs]
+  implicit def proxyArrayOnSeqCompanion(p: Rep[ArrayOnSeqCompanionAbs]): ArrayOnSeqCompanionAbs = {
+    proxyOps[ArrayOnSeqCompanionAbs](p)
+  }
+
+  class ArrayOnSeqCompanionElem extends CompanionElem[ArrayOnSeqCompanionAbs] {
+    lazy val tag = weakTypeTag[ArrayOnSeqCompanionAbs]
+    protected def getDefaultRep = ArrayOnSeq
+  }
+  implicit lazy val ArrayOnSeqCompanionElem: ArrayOnSeqCompanionElem = new ArrayOnSeqCompanionElem
+
+  implicit def proxyArrayOnSeq[A](p: Rep[ArrayOnSeq[A]]): ArrayOnSeq[A] =
+    proxyOps[ArrayOnSeq[A]](p)
+
+  implicit class ExtendedArrayOnSeq[A](p: Rep[ArrayOnSeq[A]])(implicit eA: Elem[A]) {
+    def toData: Rep[ArrayOnSeqData[A]] = isoArrayOnSeq(eA).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoArrayOnSeq[A](implicit eA: Elem[A]): Iso[ArrayOnSeqData[A], ArrayOnSeq[A]] =
+    new ArrayOnSeqIso[A]
+
+  // 6) smart constructor and deconstructor
+  def mkArrayOnSeq[A](seq: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[ArrayOnSeq[A]]
+  def unmkArrayOnSeq[A:Elem](p: Rep[ArrayOnSeq[A]]): Option[(Rep[Seq[A]])]
 
   // elem for concrete class
   class PairArrayElem[A:Elem, B:Elem](iso: Iso[PairArrayData[A, B], PairArray[A, B]]) extends IPairArrayElem[A, B, PairArrayData[A, B], PairArray[A, B]](iso) {
@@ -356,7 +416,7 @@ trait PArraysAbs extends Scalan with PArrays {
 
 // Seq -----------------------------------
 trait PArraysSeq extends PArraysDsl with ScalanSeq {
-  self: PArraysDslSeq =>
+  self: ScalanCommunityDslSeq =>
   lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeSeq[PArrayCompanionAbs, PArrayCompanionAbs] {
     lazy val selfType = element[PArrayCompanionAbs]
   }
@@ -394,6 +454,23 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
       new SeqBaseArray[A](arr)
   def unmkBaseArray[A:Elem](p: Rep[BaseArray[A]]) =
     Some((p.arr))
+
+  case class SeqArrayOnSeq[A]
+      (override val seq: Rep[Seq[A]])
+      (implicit eA: Elem[A])
+    extends ArrayOnSeq[A](seq)
+        with UserTypeSeq[PArray[A], ArrayOnSeq[A]] {
+    lazy val selfType = element[ArrayOnSeq[A]].asInstanceOf[Elem[PArray[A]]]
+  }
+  lazy val ArrayOnSeq = new ArrayOnSeqCompanionAbs with UserTypeSeq[ArrayOnSeqCompanionAbs, ArrayOnSeqCompanionAbs] {
+    lazy val selfType = element[ArrayOnSeqCompanionAbs]
+  }
+
+  def mkArrayOnSeq[A]
+      (seq: Rep[Seq[A]])(implicit eA: Elem[A]) =
+      new SeqArrayOnSeq[A](seq)
+  def unmkArrayOnSeq[A:Elem](p: Rep[ArrayOnSeq[A]]) =
+    Some((p.seq))
 
   case class SeqPairArray[A, B]
       (override val as: Rep[PArray[A]], override val bs: Rep[PArray[B]])
@@ -449,7 +526,7 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
 
 // Exp -----------------------------------
 trait PArraysExp extends PArraysDsl with ScalanExp {
-  self: PArraysDslExp =>
+  self: ScalanCommunityDslExp =>
   lazy val PArray: Rep[PArrayCompanionAbs] = new PArrayCompanionAbs with UserTypeDef[PArrayCompanionAbs, PArrayCompanionAbs] {
     lazy val selfType = element[PArrayCompanionAbs]
     override def mirror(t: Transformer) = this
@@ -644,6 +721,113 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
     new ExpBaseArray[A](arr)
   def unmkBaseArray[A:Elem](p: Rep[BaseArray[A]]) =
     Some((p.arr))
+
+  case class ExpArrayOnSeq[A]
+      (override val seq: Rep[Seq[A]])
+      (implicit eA: Elem[A])
+    extends ArrayOnSeq[A](seq) with UserTypeDef[PArray[A], ArrayOnSeq[A]] {
+    lazy val selfType = element[ArrayOnSeq[A]].asInstanceOf[Elem[PArray[A]]]
+    override def mirror(t: Transformer) = ExpArrayOnSeq[A](t(seq))
+  }
+
+  lazy val ArrayOnSeq: Rep[ArrayOnSeqCompanionAbs] = new ArrayOnSeqCompanionAbs with UserTypeDef[ArrayOnSeqCompanionAbs, ArrayOnSeqCompanionAbs] {
+    lazy val selfType = element[ArrayOnSeqCompanionAbs]
+    override def mirror(t: Transformer) = this
+  }
+
+  object ArrayOnSeqMethods {
+    object elem {
+      def unapply(d: Def[_]): Option[Rep[ArrayOnSeq[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ArrayOnSeqElem[_]] && method.getName == "elem" =>
+          Some(receiver).asInstanceOf[Option[Rep[ArrayOnSeq[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[ArrayOnSeq[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object arr {
+      def unapply(d: Def[_]): Option[Rep[ArrayOnSeq[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ArrayOnSeqElem[_]] && method.getName == "arr" =>
+          Some(receiver).asInstanceOf[Option[Rep[ArrayOnSeq[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[ArrayOnSeq[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object length {
+      def unapply(d: Def[_]): Option[Rep[ArrayOnSeq[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ArrayOnSeqElem[_]] && method.getName == "length" =>
+          Some(receiver).asInstanceOf[Option[Rep[ArrayOnSeq[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[ArrayOnSeq[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[ArrayOnSeq[A]], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[ArrayOnSeqElem[_]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[ArrayOnSeq[A]], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ArrayOnSeq[A]], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object slice {
+      def unapply(d: Def[_]): Option[(Rep[ArrayOnSeq[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[ArrayOnSeqElem[_]] && method.getName == "slice" =>
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[ArrayOnSeq[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ArrayOnSeq[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_many {
+      def unapply(d: Def[_]): Option[(Rep[ArrayOnSeq[A]], Arr[Int]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[ArrayOnSeqElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[ArrayOnSeq[A]], Arr[Int]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ArrayOnSeq[A]], Arr[Int]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object ArrayOnSeqCompanionMethods {
+    object defaultOf {
+      def unapply(d: Def[_]): Option[Elem[A] forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(ea, _*), _) if receiver.elem.isInstanceOf[ArrayOnSeqCompanionElem] && method.getName == "defaultOf" =>
+          Some(ea).asInstanceOf[Option[Elem[A] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Elem[A] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  def mkArrayOnSeq[A]
+    (seq: Rep[Seq[A]])(implicit eA: Elem[A]) =
+    new ExpArrayOnSeq[A](seq)
+  def unmkArrayOnSeq[A:Elem](p: Rep[ArrayOnSeq[A]]) =
+    Some((p.seq))
 
   case class ExpPairArray[A, B]
       (override val as: Rep[PArray[A]], override val bs: Rep[PArray[B]])
@@ -958,6 +1142,18 @@ trait PArraysExp extends PArraysDsl with ScalanExp {
     object arr {
       def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "arr" =>
+          Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[PArray[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object seq {
+      def unapply(d: Def[_]): Option[Rep[PArray[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[PArrayElem[_, _, _]] && method.getName == "seq" =>
           Some(receiver).asInstanceOf[Option[Rep[PArray[A]] forSome {type A}]]
         case _ => None
       }
