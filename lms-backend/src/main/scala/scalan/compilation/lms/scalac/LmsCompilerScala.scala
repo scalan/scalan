@@ -3,15 +3,18 @@ package compilation
 package lms
 package scalac
 
+import java.io._
+import java.net.{URL, URLClassLoader}
+
 import scala.tools.nsc.{Global, Settings}
 import scala.tools.nsc.reporters.StoreReporter
+import scalan.compilation.language.MethodMapping
 import scalan.util.{ExtensionFilter, FileUtil, ProcessUtil, StringUtil}
 import java.io._
 import java.net.{URL, URLClassLoader}
 import scalan.util.FileUtil.copyToDir
 
-trait LmsCompilerScala extends LmsCompiler with CommunityBridgeScala { self: ScalanCtxExp =>
-
+trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { self: ScalanCtxExp =>
   /**
    * If scalaVersion is None, uses scala-compiler.jar
    *
