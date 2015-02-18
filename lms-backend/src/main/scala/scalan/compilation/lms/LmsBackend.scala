@@ -414,8 +414,6 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
     state
   }
 
-  def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
-
   def fold[A: Manifest, S: Manifest](a: Exp[Array[A]], init: Exp[S], func: Rep[(S, A)] => Rep[S]): Exp[S] = {
     var state = init
     for (x <- a) {
