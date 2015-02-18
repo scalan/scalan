@@ -5,7 +5,6 @@
 package scalan.meta
 
 import scalan.util.{StringUtil, ScalaNameUtil}
-import ScalanAst._
 
 object Extensions {
   implicit class IterableExtensions[A](val it: Iterable[A]) extends AnyVal

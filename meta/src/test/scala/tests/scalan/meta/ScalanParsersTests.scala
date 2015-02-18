@@ -5,8 +5,9 @@ import scalan.meta.{ScalanParsers, BoilerplateToolRun, ScalanAst}
 import scala.reflect.internal.util.BatchSourceFile
 
 class ScalanParsersTests extends BaseTests with ScalanParsers {
-  import ScalanAst._
-  import ScalanAst.{
+  val ast: this.type = this
+  import ast.
+  {
     STraitCall => TC,
     STraitDef => TD,
     SClassDef => CD,

@@ -13,7 +13,9 @@ import scala.language.implicitConversions
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
 
-object ScalanAst {
+trait ScalanAst {
+  val compiler: Global
+  import compiler._
 
   // STpe universe --------------------------------------------------------------------------
   
@@ -91,21 +93,27 @@ object ScalanAst {
     }
   }
 
+  // SAnnotation universe --------------------------------------------------------------------------
+  trait SAnnotation {
+    //    def className: String
+    //    def args: List[Any]
+  }
+  trait MethodAnnotation extends SAnnotation
+
+  case object ExternalMethod extends MethodAnnotation
+
+  //case class SMethodAnnotation(className: String, args: List[Tree]) extends SAnnotaton
+  case object ExternalConstructor extends MethodAnnotation
+
+  trait ArgAnnotation
+  case object ArgList extends ArgAnnotation
+
   // SExpr universe --------------------------------------------------------------------------
   case class SExpr(expr: String)
 
   // SBodyItem universe ----------------------------------------------------------------------
   abstract class SBodyItem
   case class SImportStat(name: String) extends SBodyItem
-
-  trait SAnnotation
-  trait MethodAnnotation extends SAnnotation
-
-  case object ExternalMethod extends MethodAnnotation
-  case object ExternalConstructor extends MethodAnnotation
-
-  trait ArgAnnotation
-  case object ArgList extends ArgAnnotation
 
   case class SMethodDef(
     name: String, tpeArgs: STpeArgs, 
@@ -316,8 +324,7 @@ object ScalanAst {
   }
 }
 
-trait ScalanParsers {
-  import ScalanAst._
+trait ScalanParsers extends ScalanAst {
   val settings = new Settings
   settings.embeddedDefaults(getClass.getClassLoader)
   settings.usejavacp.value = true
@@ -546,25 +553,17 @@ trait ScalanParsers {
     case tree => ???(tree)
   }
 
-  class MethodAnnotation(annClass: String) {
-    def unapply(md: DefDef): Option[List[Tree]] =
+  class ExtractAnnotation(annClass: String) {
+    def unapply(md: MemberDef): Option[List[Tree]] =
       md.mods.annotations.collectFirst {
         case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args)
           if ident.toString == annClass => args
       }
   }
-  val HasExternalAnnotation = new MethodAnnotation("External")
-  val HasConstructorAnnotation = new MethodAnnotation("Constructor")
-  val OverloadIdAnnotation = new MethodAnnotation("OverloadId")
-
-  def ArgAnnotation(anClass: String) = new {
-    def unapply(md: ValDef): Option[List[Tree]] =
-      md.mods.annotations.collectFirst {
-        case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args)
-          if ident.toString == anClass => args
-      }
-  }
-  val HasArgListAnnotation = ArgAnnotation("ArgList")
+  val HasExternalAnnotation = new ExtractAnnotation("External")
+  val HasConstructorAnnotation = new ExtractAnnotation("Constructor")
+  val HasArgListAnnotation = new ExtractAnnotation("ArgList")
+  val OverloadIdAnnotation = new ExtractAnnotation("OverloadId")
 
   def methodDef(md: DefDef, isElem: Boolean = false) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))

@@ -7,7 +7,6 @@ package scalan.meta
 import java.io.File
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
-import ScalanAst._
 import scalan.util.FileUtil
 
 case class CodegenConfig(
