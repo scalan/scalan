@@ -589,7 +589,7 @@ object LmsType {
   val wildCard : Manifest[WildCard] = Manifest.classType(classOf[WildCard])
 }
 
-class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
+class CoreLmsBackend extends CoreLmsBackendBase { self =>
 
   trait Codegen extends ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
   with ScalaGenLstOps with ScalaGenArrayOpsExt with ScalaGenNumericOps

@@ -2,9 +2,9 @@ package scalan.compilation.lms
 
 import java.lang.reflect.Method
 
-import scalan.{CommunityMethodMapping, ScalanCtxExp}
+import scalan.{ScalanCommunityDslExp, CommunityMethodMapping}
 
-trait CommunityBridgeScala extends CoreBridge with CommunityMethodMapping { self: ScalanCtxExp =>
+trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping { self: ScalanCommunityDslExp =>
   override def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] = {
     import lms.EffectId._
 
