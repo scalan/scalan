@@ -285,7 +285,7 @@ class MethodCallItTestsOld extends BaseItTests {
   test("Mapping Method From Jar") {
     val methodName = "MappingMethodFromJar"
     FileUtil.packJar(TestMethod.getClass, methodName, FileUtil.file(prefix, methodName).getAbsolutePath, jarReplaceMethExp.libs, testJar)
-    val messageFromTestMethod = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.message, methodName, new Exception("Original massage"), jarReplaceMethExp.defaultCompilerConfig.copy(scalaVersion = Some("2.10.4")))
+    val messageFromTestMethod = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.message, methodName, new Exception("Original massage"), jarReplaceMethExp.defaultCompilerConfig.copy(scalaVersion = Some("2.11.4")))
     messageFromTestMethod should equal("Test Message")
   }
 }

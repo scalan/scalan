@@ -97,7 +97,7 @@ trait LmsBridge { self: ScalanCtxExp =>
       def toManifest(t: Type) = try {
         Manifest.classType(el.tag.mirror.runtimeClass(t))
       } catch {
-        case _: Exception => LmsType.wildCard
+        case _ => LmsType.wildCard
       }
       val targs = el.tag.tpe match {
         case TypeRef(_, _, args) => args
