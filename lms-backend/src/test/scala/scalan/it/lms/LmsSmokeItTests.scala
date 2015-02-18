@@ -160,4 +160,15 @@ class LmsSmokeItTests extends CommunitySmokeItTests {
     compareOutputWithSequential(progStaged)(progSeq.arrayEmpty, progStaged.arrayEmpty, "arrayEmpty", in)
   }
 
+  test("test35arrayReplicate") {
+    val in = (3, 3.14)
+    val res = Array(3.14, 3.14, 3.14)
+    val stgOut = getStagedOutput[(Int,Double),Array[Double]](progStaged)(progStaged.arrayReplicate, "arrayReplicate", in)
+    val seqOut:Array[Double] = progSeq.arrayReplicate(in)
+
+    assert(stgOut.sameElements( res ), "stgOut.sameElements( res )")
+    assert(seqOut.sameElements( res ), "seqOut.sameElements( res )")
+
+    compareOutputWithSequential(progStaged)(progSeq.arrayReplicate, progStaged.arrayReplicate, "arrayReplicate", in)
+  }
 }
