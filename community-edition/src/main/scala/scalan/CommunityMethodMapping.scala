@@ -60,8 +60,8 @@ trait CommunityMethodMapping extends MethodMapping {
     import scala.language.reflectiveCalls
 
     val linpackCpp = new CppLib("linpack.h", "linpack.o") {
-      val invertMatr = CppFunc('invertMatrix, CppArg(CppType('lapack_matr), 'm), CppArg(CppType('T2), 'V2))
-      val transMatr = CppFunc('transMatrixDouble)
+      val invertMatr = CppFunc("invertMatrix", CppArg(CppType("lapack_matr"), "m"), CppArg(CppType("T2"), "V2"))
+      val transMatr = CppFunc("transMatrixDouble")
     }
 
     val mapScalanCE2Cpp = {

@@ -45,8 +45,8 @@ class MethodMappingTest extends BaseTests {
       import scala.language.reflectiveCalls
 
       val linpackCpp = new CppLib("linpack.h", "linpack.o") {
-        val invertMatr = CppFunc('invertMatrix, CppArg(CppType('lapack_matr), 'm), CppArg(CppType('T2), 'V2))
-        val transMatr = CppFunc('transMatrixDouble)
+        val invertMatr = CppFunc("invertMatrix", CppArg(CppType("lapack_matr"), "m"), CppArg(CppType("T2"), "V2"))
+        val transMatr = CppFunc("transMatrixDouble")
       }
 
       val mapScalanCE2Cpp = {
@@ -71,7 +71,7 @@ class MethodMappingTest extends BaseTests {
   test("C++ Method") {
     implicit def defaultLanguage: LANGUAGE = CPP
     val m = TestMethodMapping.methodReplaceConf.get("scalan.parrays.PArrays$PArray", "length").get.asInstanceOf[MethodMapping#CppLanguage#CppFunc]
-    "invertMatrix" should equal(m.funcName.name)
+    "invertMatrix" should equal(m.funcName)
     m.args.size should equal(2)
   }
 }
