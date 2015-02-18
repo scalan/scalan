@@ -602,9 +602,6 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       }
 
       s"""
-       |// Seq -----------------------------------
-       |trait ${module.name}Seq extends ${module.name}Dsl with ${config.seqContextTrait} {
-       |  ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    $companionMethods
@@ -615,12 +612,18 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
        |  ${baseTypeElem(ed, "Seq")}
        |
        |  ${defs.mkString("\n\n")}
-       |}
        |""".stripAndTrim
     }
 
     def getTraitsSeq : String = {
-      return module.entityOps.map(e => getTraitSeq(EntityData(e, module))).mkString("\n")
+      s"""
+      |// Seq -----------------------------------
+      |trait ${module.name}Seq extends ${module.name}Dsl with ${config.seqContextTrait} {
+      |  ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
+      |
+      |  ${module.entityOps.map(e => getTraitSeq(EntityData(e, module))).mkString("\n")}
+      |}
+      |""".stripAndTrim
     }
 
     def getEntityLazyVal(entity : STraitDef) : String = {
@@ -650,7 +653,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
        |
        |${concreteClassesString.mkString("\n\n")}
        |
-       |${methodExtractorsString.mkString("\n\n")}}
+       |${methodExtractorsString.mkString("\n\n")}
        |}
        |""".stripAndTrim
     }

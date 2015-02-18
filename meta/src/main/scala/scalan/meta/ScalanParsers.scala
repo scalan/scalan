@@ -65,7 +65,7 @@ object ScalanAst {
     def unRep(module: SEntityModuleDef, config: CodegenConfig) = self match {
       case STraitCall("Rep", Seq(t)) => Some(t)
       case STraitCall(name, args) =>
-        val newSynonymMap = for{ (synonym, entity) <- module.entityRepSynonyms} yield (synonym.name, entity.name)
+        val newSynonymMap = module.entityRepSynonyms.toList.filter{ case (synonym, entity) => entity.isDefined}.map{ case (synonym, entity) if entity.isDefined => (synonym.name, entity.get.name) }
         val typeSynonyms = config.entityTypeSynonyms ++ newSynonymMap
         typeSynonyms.get(name).map(unReppedName => STraitCall(unReppedName, args))
       case _ => None
@@ -204,7 +204,7 @@ object ScalanAst {
     packageName: String,
     imports: List[SImportStat],
     name: String,
-    entityRepSynonyms: Map[STpeDef, STraitDef],
+    entityRepSynonyms: Map[STpeDef, Option[STraitDef]],
     entityOps: List[STraitDef],
     entities: List[STraitDef],
     entitySClasses: Map[STraitDef, List[SClassDef]],
@@ -286,17 +286,18 @@ object ScalanAst {
 
       //Get the trait name from the trait synonym defined using
       //'type' or throws an exception if one can not be found
-      private def getTypeTraitName(moduleName : String, typeDef : STpeDef) : String = {
+      private def getTypeTraitName(typeDef : STpeDef) : Option[String] = {
         //ToDo: Potentially this sub-function needs to be extended with looking 'deeper' and 'wider' into arguments of the STpeDef
         def getTypeTraitNameOpt(typeDef : STpeDef) : Option[String] = {
           typeDef match {
-            case STpeDef(_, _, STraitCall(_, args)) => args.collectFirst { case t@STraitCall(subName, _) => subName}
+            case STpeDef(_, _, STraitCall(_, args)) => args.collectFirst { case t@STraitCall(subName, _) => subName }
             case _ => None
           }
         }
-        //Try to find the trate name in the synonym parameters
-        getTypeTraitNameOpt(typeDef).getOrElse{
-          throw new IllegalStateException(s"An unsupported synonym for a trait $typeDef, in module $moduleName, could not find the trait name!")
+        //Try to find the trait name in the synonym parameters, if not return None
+        getTypeTraitNameOpt(typeDef) match {
+          case nameOpt : Option[String] => nameOpt
+          case _ => None
         }
       }
 
@@ -308,20 +309,20 @@ object ScalanAst {
       //Get all of the module-defined synonims
       val entityRepSynonymsList = defs.collect { case t: STpeDef => t }
 
-      //The traits do not end with Companion
+      //The traits (UDTs) do not end with Companion
       val traits = defs.collect { case t: STraitDef if !t.name.endsWith("Companion") => t }
 
-      //Get all the module defined entities (UDTs)
-      val entities = defs.collect { case t: STraitDef => t }
+      //The entity traits (UDTs) do not end with Companion
+      //TODO: There has to be a more robust algorithm for recognising entity traits (using annotations?)
+      val entities = defs.collect { case t: STraitDef if !t.name.endsWith("Companion") => t }
+      //Check that there is at least one trait in the module
       entities.headOption.getOrElse {
         throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
       }
 
       val entityRepSynonyms = entityRepSynonymsList.map {
         case synonym => synonym -> entities.collectFirst {
-          case ent : STraitDef if (ent.name == getTypeTraitName(moduleName,synonym)) => ent
-        }.getOrElse{
-          throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. The trait synonym is defined by the trait named ${getTypeTraitName(moduleName,synonym)} is not fond.")
+          case ent if (Option(ent.name) == getTypeTraitName(synonym)) => ent
         }
       }.toMap
 

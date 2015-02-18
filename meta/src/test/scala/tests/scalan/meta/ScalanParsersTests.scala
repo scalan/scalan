@@ -198,7 +198,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
     val typeDef = STpeDef("Obs", L(STpeArg("A",None,Nil)) , TC("Rep", ancObsA))
     val traitDef = TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None,None,Some(()))), None, None);
-    val typeDefsToTraitDefsMap = Map(typeDef->traitDef)
+    val typeDefsToTraitDefsMap = Map(typeDef->Option(traitDef))
     val traitDefsList = List(traitDef)
     val concreteSClassesList = L(obsImpl1, obsImpl2)
     val traitDefsToconcreteSClassesMap = Map(traitDef -> concreteSClassesList)
@@ -262,7 +262,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
 
     val subEntities = List(traitDefA,traitDefB)
 
-    val typeDefsToTraitDefsMap = Map(typeDefA->traitDefA, typeDefB->traitDefB)
+    val typeDefsToTraitDefsMap = Map(typeDefA->Option(traitDefA), typeDefB->Option(traitDefB))
     val traitDefsList = List(traitDefA, traitDefB)
     val aClassesList = L(obsAImpl1, obsAImpl2)
     val bClassesList = L(obsBImpl1, obsBImpl2)
