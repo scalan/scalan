@@ -272,6 +272,8 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
     a.at(i)
   }
 
+  def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
+
   def arrayGather[A: Manifest](a: Exp[Array[A]], idxs: Exp[Array[Int]]): Exp[Array[A]] = {
     array(idxs.length)(i => a.at(idxs.at(i)))
   }
