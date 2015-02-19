@@ -127,9 +127,9 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
         S.println(settings)
         S.println(s"${settings.classpath}\n")
         for(row <- reporter.infos) {
-          val pos = s"${row.pos.source.path}:${row.pos.safeLine}"
-          S.println(s"${row.severity}: ${pos}")
-          S.println("|"+row.pos.lineContent)
+          S.println(s"${row.severity}: ${row.msg}")
+          S.println(s"|${row.pos.source.path}:${row.pos.safeLine}")
+          S.println(s"|${row.pos.lineContent}")
           S.println("|"+" "*(row.pos.column-1) + "^")
         }
         S.println(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings")
@@ -137,7 +137,7 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
 
         reporter.ERROR.count match {
           case 0 => {} //println(s"class $functionName compiled with ${reporter.WARNING.count} warnings")
-          case _ => throw new Exception(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings")
+          case _ => throw new Exception(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings, see ${logFile.getAbsolutePath} for details")
         }
     }
 
