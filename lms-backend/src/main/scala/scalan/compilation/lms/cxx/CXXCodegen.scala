@@ -4,9 +4,6 @@ import java.io.PrintWriter
 
 import scala.virtualization.lms.internal._
 
-/**
- * Created by zotov on 12/8/14.
- */
 trait CXXCodegen extends CLikeCodegen {
   val IR: Expressions
   import IR._
@@ -66,6 +63,14 @@ trait CXXCodegen extends CLikeCodegen {
     }
   }
 
+  override def emitAssignment(sym: Sym[Any], rhs: String): Unit = {
+    stream.println(super.quote(sym) + " = " + rhs + s"; /*emitAssignment(): ${sym.tp} ${sym} ${rhs}*/")
+  }
+
+  override def emitVarDecl(sym: Sym[Any]): Unit = {
+    stream.println(remap(sym.tp) + " " + quote(sym) + s"; /*emitVarDecl(): ${sym.tp} ${sym}*/")
+  }
+
   override def emitValDef(sym: Sym[Any], rhs: String): Unit = {
     if( moveableSyms.contains(sym) )
       emitValDef(quote(sym), norefManifest(sym.tp), rhs)
@@ -75,12 +80,14 @@ trait CXXCodegen extends CLikeCodegen {
 
   override def quote(x: Exp[Any]) = x match {
     case sym: Sym[_] =>
-      if( moveableSyms.contains(sym) && rightSyms.contains(sym) )
+      if( isMoveable(sym) && moveableSyms.contains(sym) && rightSyms.contains(sym) )
         s"std::move(${super.quote(sym)})"
       else super.quote(sym)
     case _ =>
       super.quote(x)
   }
+
+  def super_quote(x: Exp[Any]) = super.quote(x)
 
   override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
     if (remap(tpe) != "void")
@@ -116,7 +123,7 @@ trait CXXCodegen extends CLikeCodegen {
       emitFileHeader()
 
       val indargs = scala.Range(0, args.length).zip(args);
-      stream.println(s"${sA} apply(${indargs.map( p => s"${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
+      stream.println(s"${sA} apply(${indargs.map( p => s"const ${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
       emitBlock(body)
       stream.println(s"return ${quote(getBlockResult(body))};")
