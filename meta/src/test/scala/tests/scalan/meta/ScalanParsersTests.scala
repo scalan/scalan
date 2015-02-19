@@ -31,6 +31,9 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
   case object TopLevel extends TreeKind
   case object Type extends TreeKind
   case object Member extends TreeKind
+  case object Expr extends TreeKind
+  case object Annotation extends TreeKind
+  case object AnnotationArg extends TreeKind
 
   def parseString(kind: TreeKind, prog: String): Tree = {
     // wrap the string into a complete file
@@ -38,6 +41,9 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
       case TopLevel => prog
       case Type => s"object o { val x: $prog }"
       case Member => s"object o { $prog }"
+      case Expr => s"object o { val x = $prog }"
+      case Annotation => s"object o { @$prog val x = null }"
+      case AnnotationArg => s"object o { @OverloadId($prog) val x = null }"
     }
     val fakeSourceFile = new BatchSourceFile("<no file>", prog1.toCharArray)
     // extract the part corresponding to original prog
@@ -46,6 +52,12 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
       case (Member, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, tree)))))) =>
         tree
       case (Type, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(_, _, tree, _))))))) =>
+        tree
+      case (Expr, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(_, _, _, tree))))))) =>
+        tree
+      case (Annotation, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(Modifiers(_,_,List(tree)), _, _, _))))))) =>
+        tree
+      case (AnnotationArg, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(Modifiers(_,_,List(ExtractAnnotation(_,List(tree)))), _, _, _))))))) =>
         tree
       case (kind, tree) =>
         ???(tree)
@@ -93,7 +105,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
 
   describe("SMethodDef") {
     testSMethod("def f: Int", MD("f", Nil, Nil, Some(INT), false, None, Nil, None))
-    testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, Some("a"), Nil, None))
+    testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, Some("a"), L(SMethodAnnotation("OverloadId",List(SDefaultExpr("\"a\"")))), None))
     testSMethod(
       "def f(x: Int): Int",
       MD("f", Nil, L(MAs(false, List(MA("x", INT, None)))), Some(INT), false, None, Nil, None))
@@ -140,7 +152,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
         IS("scalan._"),
         STpeDef("Rep", L(STpeArg("A", None, Nil)), TC("A", Nil)),
         MD("f", Nil, Nil, Some(T(L(INT, TC("A", Nil)))), false, None, Nil, None),
-        MD("g", Nil, L(MAs(false, L(MA("x", BOOL, None)))), Some(TC("A", Nil)), false, Some("b"), Nil, None)), None, None))
+        MD("g", Nil, L(MAs(false, L(MA("x", BOOL, None)))), Some(TC("A", Nil)), false, Some("b"), L(SMethodAnnotation("OverloadId",List(SDefaultExpr("\"b\"")))), None)), None, None))
 
   }
 

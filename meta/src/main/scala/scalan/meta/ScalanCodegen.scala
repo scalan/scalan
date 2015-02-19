@@ -153,8 +153,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
     def methodArgsUse(sec: SMethodArgs) = {
       s"(${sec.args.rep(a => {
         if (a.tpe.isTupledFunc)
-          s"${a.name}"
-          //s"scala.Function.untupled(${a.name})"
+          s"scala.Function.untupled(${a.name})"
         else if (a.isArgList)
           s"${a.name}: _*"
         else
@@ -205,16 +204,22 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
       val typesDecl = getBoundedTpeArgString(md.tpeArgs)
       val typesUse = getTpeArgUseString(md.tpeArgs)
-      if (isInstance)
-        s"""
-          |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
-          |      ${entityName}Impl(wrappedValueOfBaseType).${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")}
+      val methodHeader =
+        s"""override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
+        |""".stripMargin
+
+      val obj = if (isInstance) "wrappedValueOfBaseType" else entityNameBT
+
+      val methodBody = tyRet.unRep(module, config) match {
+        case Some(STraitCall(name,_)) if name == entityName =>
+          s"""      ${entityName}Impl($obj.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")})
           |""".stripMargin
-      else
-        s"""
-          |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
-          |      ${entityName}Impl(${entityNameBT}.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")})
+        case _ =>
+          s"""      $obj.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")}
           |""".stripMargin
+      }
+
+      methodHeader + methodBody
     }
 
     def externalSeqConstructor(md: SMethodDef) = {
@@ -243,6 +248,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |  // BaseTypeEx proxy
         |  //implicit def proxy$entityNameBT${typesWithElems}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
         |  //  proxyOps[$entityName${typesUse}](p.asRep[$entityName${typesUse}])
+        |
+        |  implicit def unwrapValueOf$entityName${typesDecl}(w: Rep[$entityName${typesUse}]): Rep[$entityNameBT${typesUse}] = w.wrappedValueOfBaseType
         |
         |  implicit def default${entityName}Elem${typesWithElems}: Elem[$entityName${typesUse}] = element[${entityName}Impl${typesUse}].asElem[$entityName${typesUse}]
         |""".stripAndTrim

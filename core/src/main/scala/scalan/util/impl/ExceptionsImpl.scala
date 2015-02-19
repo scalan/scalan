@@ -16,6 +16,8 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   //implicit def proxyThrowable(p: Rep[Throwable]): SThrowable =
   //  proxyOps[SThrowable](p.asRep[SThrowable])
 
+  implicit def unwrapValueOfSThrowable(w: Rep[SThrowable]): Rep[Throwable] = w.wrappedValueOfBaseType
+
   implicit def defaultSThrowableElem: Elem[SThrowable] = element[SThrowableImpl].asElem[SThrowable]
   implicit def ThrowableElement: Elem[Throwable]
 
@@ -199,12 +201,11 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
     extends SThrowableImpl(wrappedValueOfBaseType)
        with SeqSThrowable with UserTypeSeq[SThrowable, SThrowableImpl] {
     lazy val selfType = element[SThrowableImpl].asInstanceOf[Elem[SThrowable]]
-
     override def getMessage: Rep[String] =
-      SThrowableImpl(wrappedValueOfBaseType).getMessage
+      wrappedValueOfBaseType.getMessage
 
     override def initCause(cause: Rep[SThrowable]): Rep[SThrowable] =
-      SThrowableImpl(wrappedValueOfBaseType).initCause(cause)
+      SThrowableImpl(wrappedValueOfBaseType.initCause(cause))
   }
   lazy val SThrowableImpl = new SThrowableImplCompanionAbs with UserTypeSeq[SThrowableImplCompanionAbs, SThrowableImplCompanionAbs] {
     lazy val selfType = element[SThrowableImplCompanionAbs]
@@ -222,12 +223,11 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
     extends SException(wrappedValueOfBaseType)
        with SeqSThrowable with UserTypeSeq[SThrowable, SException] {
     lazy val selfType = element[SException].asInstanceOf[Elem[SThrowable]]
-
     override def getMessage: Rep[String] =
-      SThrowableImpl(wrappedValueOfBaseType).getMessage
+      wrappedValueOfBaseType.getMessage
 
     override def initCause(cause: Rep[SThrowable]): Rep[SThrowable] =
-      SThrowableImpl(wrappedValueOfBaseType).initCause(cause)
+      SThrowableImpl(wrappedValueOfBaseType.initCause(cause))
   }
   lazy val SException = new SExceptionCompanionAbs with UserTypeSeq[SExceptionCompanionAbs, SExceptionCompanionAbs] {
     lazy val selfType = element[SExceptionCompanionAbs]

@@ -61,15 +61,15 @@ class HashSetTests extends BaseTests { suite =>
 
     {
       val res = ctx.t2((SHashSet.empty[Int], 10))
-      assertResult(HashSet(10))(res)
+      assertResult(SHashSetImpl(HashSet(10)))(res)
     }
     {
       val res = ctx.t3(10)
-      assertResult(HashSet(10))(res)
+      assertResult(SHashSetImpl(HashSet(10)))(res)
     }
     {
       val res = ctx.t4(SHashSetImpl(HashSet(10, 20, 30)))
-      assertResult(HashSet(11, 21, 31))(res)
+      assertResult(SHashSetImpl(HashSet(11, 21, 31)))(res)
     }
     {
       val res = ctx.t7((SHashSetImpl(HashSet(10, 20, 30)),0))

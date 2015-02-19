@@ -97,11 +97,11 @@ trait ScalanAst {
   // SAnnotation universe --------------------------------------------------------------------------
   trait SAnnotation {
         def annotationClass: String
-        def args: List[Any]
+        def args: List[SExpr]
   }
-  case class STraitOrClassAnnotation(annotationClass: String, args: List[Tree]) extends SAnnotation
-  case class SMethodAnnotation(annotationClass: String, args: List[Tree]) extends SAnnotation
-  case class SArgAnnotation(annotationClass: String, args: List[Tree]) extends SAnnotation
+  case class STraitOrClassAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
+  case class SMethodAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
+  case class SArgAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
 
   def annotationNameOf(a: java.lang.annotation.Annotation): String = a.getClass.getSimpleName
 
@@ -111,7 +111,8 @@ trait ScalanAst {
   final val ArgListAnnotation = "ArgList"
 
   // SExpr universe --------------------------------------------------------------------------
-  case class SExpr(expr: String)
+  trait SExpr
+  case class SDefaultExpr(expr: String) extends SExpr
 
   // SBodyItem universe ----------------------------------------------------------------------
   abstract class SBodyItem
@@ -462,7 +463,7 @@ trait ScalanParsers extends ScalanAst {
       case c: ClassDef if c.name.toString == name + "Companion" =>
         if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
     }.headOption
-    val annotations = parseAnnotations(td)((n,as) => STraitOrClassAnnotation(n,as))
+    val annotations = parseAnnotations(td)((n,as) => STraitOrClassAnnotation(n,as.map(expr)))
     STraitDef(name, tpeArgs, ancestors, body, selfType, companion, annotations)
   }
 
@@ -493,7 +494,7 @@ trait ScalanParsers extends ScalanAst {
       case c: ClassDef if c.name.toString == name + "Companion" =>
         if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
     }.headOption
-    val annotations = parseAnnotations(cd)((n,as) => STraitOrClassAnnotation(n,as))
+    val annotations = parseAnnotations(cd)((n,as) => STraitOrClassAnnotation(n,as.map(expr)))
     SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, companion, isAbstract, annotations)
   }
 
@@ -598,7 +599,7 @@ trait ScalanParsers extends ScalanAst {
       case _ => None
     }
     val annotations = md.mods.annotations.map {
-      case ExtractAnnotation(name, args) => SMethodAnnotation(name, args)
+      case ExtractAnnotation(name, args) => SMethodAnnotation(name, args.map(expr))
       case a => !!!(s"Cannot parse annotation $a of the method $md")
     }
 //    val optExternal = md match {
@@ -656,13 +657,13 @@ trait ScalanParsers extends ScalanAst {
   }
 
   def expr(tree: Tree): SExpr = tree match {
-    case tree => SExpr(tree.toString)
+    case tree => SDefaultExpr(tree.toString)
   }
 
   def methodArg(vd: ValDef): SMethodArg = {
     val tpe = tpeExpr(vd.tpt)
     val default = optExpr(vd.rhs)
-    val annotations = parseAnnotations(vd)((n,as) => new SArgAnnotation(n, as))
+    val annotations = parseAnnotations(vd)((n,as) => new SArgAnnotation(n, as.map(expr)))
     SMethodArg(vd.name, tpe, default, annotations)
   }
 

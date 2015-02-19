@@ -18,6 +18,8 @@ trait SeqsAbs extends Scalan with Seqs {
   //implicit def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOps[SSeq[A]](p.asRep[SSeq[A]])
 
+  implicit def unwrapValueOfSSeq[A](w: Rep[SSeq[A]]): Rep[Seq[A]] = w.wrappedValueOfBaseType
+
   implicit def defaultSSeqElem[A:Elem]: Elem[SSeq[A]] = element[SSeqImpl[A]].asElem[SSeq[A]]
   implicit def SeqElement[A:Elem:WeakTypeTag]: Elem[Seq[A]]
 
@@ -175,7 +177,6 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeSeq[SSeqCompanionAbs, SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
-
     override def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
       SSeqImpl(Seq.apply[A](arr: _*))
 
@@ -198,30 +199,29 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
     extends SSeqImpl[A](wrappedValueOfBaseType)
        with SeqSSeq[A] with UserTypeSeq[SSeq[A], SSeqImpl[A]] {
     lazy val selfType = element[SSeqImpl[A]].asInstanceOf[Elem[SSeq[A]]]
-
     override def size: Rep[Int] =
-      SSeqImpl(wrappedValueOfBaseType).size
+      wrappedValueOfBaseType.size
 
     override def apply(idx: Rep[Int]): Rep[A] =
-      SSeqImpl(wrappedValueOfBaseType).apply(idx)
+      wrappedValueOfBaseType.apply(idx)
 
     override def slice(unc_from: Rep[Int], unc_until: Rep[Int]): Rep[SSeq[A]] =
-      SSeqImpl(wrappedValueOfBaseType).slice(unc_from, unc_until)
+      SSeqImpl(wrappedValueOfBaseType.slice(unc_from, unc_until))
 
     override def isEmpty: Rep[Boolean] =
-      SSeqImpl(wrappedValueOfBaseType).isEmpty
+      wrappedValueOfBaseType.isEmpty
 
     override def reduce(op: Rep[((A,A)) => A]): Rep[A] =
-      SSeqImpl(wrappedValueOfBaseType).reduce(op)
+      wrappedValueOfBaseType.reduce(scala.Function.untupled(op))
 
     override def filter(p: Rep[A => Boolean]): Rep[SSeq[A]] =
-      SSeqImpl(wrappedValueOfBaseType).filter(p)
+      SSeqImpl(wrappedValueOfBaseType.filter(p))
 
     override def $plus$colon(elem: Rep[A]): Rep[SSeq[A]] =
-      SSeqImpl(wrappedValueOfBaseType).$plus$colon(elem)
+      SSeqImpl(wrappedValueOfBaseType.$plus$colon(elem))
 
     override def diff(that: Rep[SSeq[A]]): Rep[SSeq[A]] =
-      SSeqImpl(wrappedValueOfBaseType).diff(that)
+      SSeqImpl(wrappedValueOfBaseType.diff(that))
   }
   lazy val SSeqImpl = new SSeqImplCompanionAbs with UserTypeSeq[SSeqImplCompanionAbs, SSeqImplCompanionAbs] {
     lazy val selfType = element[SSeqImplCompanionAbs]

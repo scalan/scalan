@@ -88,7 +88,7 @@ class SeqsTests extends BaseTests { suite =>
     import ctx._
     {
       val res = ctx.t2((SSeqImpl(Seq.empty[Int]), 10))
-      assertResult(Seq(10))(res)
+      assertResult(SSeqImpl(Seq(10)))(res)
       val s: Seq[Int]   = null
       //s.zip()
 
