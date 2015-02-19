@@ -16,8 +16,8 @@ trait LmsBackend extends BaseExp { self =>
   def codegen: Codegen
 }
 
-trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp with LstOpsExp with StringOpsExp
-  with ArrayOpsExtExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
+trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp
+  with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp {
@@ -585,11 +585,11 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
 class CoreLmsBackend extends CoreLmsBackendBase { self =>
 
   trait Codegen extends ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
-  with ScalaGenLstOps with ScalaGenArrayOpsExt with ScalaGenNumericOps
-    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
-    with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
-    with ScalaGenCastingOps with ScalaGenMathOps with ScalaGenMethodCallOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile
-    with ScalaGenIfThenElse with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions with ScalaGenRangeOps {
+  with ScalaGenLstOps with ScalaGenNumericOps with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps
+  with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
+  with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
+  with ScalaGenCastingOps with ScalaGenMathOps with ScalaGenMethodCallOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile
+  with ScalaGenIfThenElse with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions with ScalaGenRangeOps {
     val IR: self.type = self
     import scalan.compilation.lms.scalac.LmsType
 
