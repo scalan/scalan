@@ -105,11 +105,13 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
       for ((l,r) <- sym zip rhs) {
         r match {
           case ArrayElem(y) =>
-            stream.println(s"std::vector<${remap(getBlockResult(y).tp)}> ${quote(l)}(${quote(s)});")
+            val mV = Manifest.arrayType(getBlockResult(y).tp)
+            stream.println(s"${remap(mV)} ${quote(l)}(${quote(s)});")
           case ReduceElem(y) =>
             stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
           case ArrayIfElem(c,y) =>
-            stream.println(s"std::vector<${remap(getBlockResult(y).tp)}> ${quote(l)};")
+            val mV = Manifest.arrayType(getBlockResult(y).tp)
+            stream.println(s"${remap(mV)} ${quote(l)};")
           case ReduceIfElem(c,y) =>
             stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
 //          case FlattenElem(y) =>
