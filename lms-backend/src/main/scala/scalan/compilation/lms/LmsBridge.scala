@@ -61,11 +61,11 @@ trait LmsBridge { self: ScalanCtxExp =>
 
   def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     case el: ArrayBufferElem[_] => Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
-    case el: Element[_] => toManifest[T](el.tag.tpe, el)
+    case el: Element[_] => toManifest[T](el.tag.tpe, el.tag.mirror)
     case el => ???(s"Don't know how to create manifest for $el")
   }
 
-  def toManifest[T](t: scala.reflect.runtime.universe.Type, el: Element[_]): Manifest[_] = {
+  def toManifest[T](t: scala.reflect.runtime.universe.Type, m: scala.reflect.runtime.universe.Mirror): Manifest[_] = {
     import scala.reflect.runtime.universe._
     import scalan.compilation.lms.scalac.LmsType
 
@@ -77,11 +77,11 @@ trait LmsBridge { self: ScalanCtxExp =>
     simpleType.applyOrElse[Type, Manifest[_]](t, {
       case _ =>
         try {
-          val c = el.tag.mirror.runtimeClass(t)
+          val c = m.runtimeClass(t)
           args.length match {
             case 0 => Manifest.classType(c)
-            case 1 => Manifest.classType(c, toManifest(args(0), el))
-            case n => Manifest.classType(c, toManifest(args(0), el), args.drop(1).map(toManifest(_, el)): _*)
+            case 1 => Manifest.classType(c, toManifest(args(0), m))
+            case n => Manifest.classType(c, toManifest(args(0), m), args.drop(1).map(toManifest(_, m)): _*)
           }
         } catch {
           case _: NoClassDefFoundError => LmsType.wildCard
