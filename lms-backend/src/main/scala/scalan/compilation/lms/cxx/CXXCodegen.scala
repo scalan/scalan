@@ -8,6 +8,9 @@ trait CXXCodegen extends CLikeCodegen {
   val IR: Expressions
   import IR._
 
+  sealed class OverloadDummy01
+  implicit lazy val overloadDummy01 = new OverloadDummy01
+
   trait size_t
   trait auto_t
 
@@ -71,27 +74,31 @@ trait CXXCodegen extends CLikeCodegen {
     stream.println(remap(sym.tp) + " " + quote(sym) + s"; /*emitVarDecl(): ${sym.tp} ${sym}*/")
   }
 
-  override def emitValDef(sym: Sym[Any], rhs: String): Unit = {
-    if( moveableSyms.contains(sym) )
-      emitValDef(quote(sym), norefManifest(sym.tp), rhs)
-    else
-      emitValDef(quote(sym), sym.tp, rhs)
+  override def emitVarDef(sym: Sym[Variable[Any]], rhs: String): Unit = {
+    emitConstruct(sym, rhs)
   }
 
-  override def quote(x: Exp[Any]) = x match {
+  def emitVarDef(sym: Sym[Any], rhs: String)(implicit ovrld: OverloadDummy01 ): Unit = {
+    emitConstruct(sym, rhs)
+  }
+
+  private def emitConstruct(sym: Sym[Any], rhs: String): Unit = {
+    stream.println(s"${remap(sym.tp)} ${quote(sym)}($rhs); /*emitConstruct(): ${sym.tp} ${sym} = $rhs*/")
+  }
+
+  def quoteMove(x: Exp[Any]): String = x match {
     case sym: Sym[_] =>
       if( isMoveable(sym) && moveableSyms.contains(sym) && rightSyms.contains(sym) )
         s"std::move(${super.quote(sym)})"
-      else super.quote(sym)
+      else
+        super.quote(sym)
     case _ =>
       super.quote(x)
   }
 
-  def super_quote(x: Exp[Any]) = super.quote(x)
-
   override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
     if (remap(tpe) != "void")
-      stream.println(remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
+      stream.println("const " + remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
   }
 
   override def remapWithRef[A](m: Manifest[A]): String = {
@@ -126,7 +133,7 @@ trait CXXCodegen extends CLikeCodegen {
       stream.println(s"${sA} apply(${indargs.map( p => s"const ${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
       emitBlock(body)
-      stream.println(s"return ${quote(getBlockResult(body))};")
+      stream.println(s"return ${quoteMove(getBlockResult(body))};")
 
       stream.println("}")
       stream.println("/*****************************************\n" +
