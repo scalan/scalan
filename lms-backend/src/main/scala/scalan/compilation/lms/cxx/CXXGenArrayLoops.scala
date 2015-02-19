@@ -99,8 +99,9 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
     super.traverseStm(stm)
   }
 
-  override def emitFatNode(sym: List[Sym[Any]], rhs: FatDef) = rhs match {
+  override def emitFatNode(sym: List[Sym[Any]], rhs1: FatDef) = rhs1 match {
     case SimpleFatLoop(s,x,rhs) =>
+      stream.println(s"/*start: ${rhs1.toString}*/")
       for ((l,r) <- sym zip rhs) {
         r match {
           case ArrayElem(y) =>
@@ -135,6 +136,7 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
         }
       }
       stream.println("}")
-    case _ => super.emitFatNode(sym, rhs)
+      stream.println(s"/*end: ${rhs1.toString}*/")
+    case _ => super.emitFatNode(sym, rhs1)
   }
 }
