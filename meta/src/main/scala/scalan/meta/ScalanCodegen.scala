@@ -4,8 +4,6 @@
  */
 package scalan.meta
 
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scalan.util.{StringUtil, ScalaNameUtil}
 import ScalanAst._
 
@@ -379,11 +377,10 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |  }
         |""".stripAndTrim
 
-      //Define the list to put data into, could live with
-      //just a string but this way it is a bit more flexible
-      //In case of a large performance overhead switch to a string
-      val entitiesCode = mutable.MutableList[List[String]]()
-      for( entity <- module.entityOps ) {
+      //Define the list to put data into, could live with just
+      //a string but this way it is a bit more flexible. In case
+      //of a large performance overhead switch to a StringBuffer
+      val entitiesCode = module.entityOps.map { entity =>
         val ed = EntityData(entity, module)
         val entityName = ed.entityName
         val typesDecl = ed.typesDecl
@@ -465,7 +462,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         val concreteClasses = getConcreteEntityClasses(ed)
 
         //Store the generated entity related stuf in the list
-        entitiesCode += List(proxy, proxyBT, baseTypeElem, familyElemStr, companionAbs, subEntriesStr, concreteClasses)
+        List(proxy, proxyBT, baseTypeElem, familyElemStr, companionAbs, subEntriesStr, concreteClasses)
       }
 
       s"""
