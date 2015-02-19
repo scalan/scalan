@@ -3,9 +3,6 @@ package compilation
 package lms
 package scalac
 
-import java.io._
-import java.net.{URL, URLClassLoader}
-
 import scala.tools.nsc.{Global, Settings}
 import scala.tools.nsc.reporters.StoreReporter
 import scalan.compilation.language.MethodMapping
