@@ -89,26 +89,55 @@ trait LmsBridge { self: ScalanCtxExp =>
       Manifest.classType(classOf[List[_]], createManifest(el.eItem))
     case el: MMapElem[_,_] =>
       Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
-    case el: BaseElemEx[_, _] => {
+    case el: Element[_] => {
       val c = el.classTag.runtimeClass
       import scala.reflect.runtime.universe._
-      import scalan.compilation.lms.scalac.LmsType
 
-      def toManifest(t: Type) = try {
-        Manifest.classType(el.tag.mirror.runtimeClass(t))
-      } catch {
-        case _ => LmsType.wildCard
-      }
       val targs = el.tag.tpe match {
         case TypeRef(_, _, args) => args
       }
-      targs.length match {
-        case 0 => Manifest.classType(c)
-        case 1 => Manifest.classType(c, toManifest(targs(0)))
-        case n => Manifest.classType(c, toManifest(targs(0)), targs.drop(1).map(toManifest): _*)
-      }
+      toManifest[T](c, targs, el)
     }
     case el => ???(s"Don't know how to create manifest for $el")
   }
 
+  private def toManifest[T](c: Class[_], args: List[scala.reflect.runtime.universe.Type], el: Element[_]): Manifest[_] = {
+    import scala.reflect.runtime.universe._
+
+    def generics(t: Type): scala.List[Type] = t match {
+      case api: TypeRefApi => api.args
+      case _ => List.empty[Type]
+    }
+
+    import scalan.compilation.lms.scalac.LmsType
+    def m(t: Type): Manifest[_] = try {
+//      simpleType.applyOrElse(t, {
+//        case tp: Type =>
+          toManifest(el.tag.mirror.runtimeClass(t), generics(t), el)
+//      })
+    } catch {
+      case _: NoClassDefFoundError => LmsType.wildCard
+    }
+
+    args.length match {
+      case 0 => Manifest.classType(c)
+      case 1 => Manifest.classType(c, m(args(0)))
+      case n => Manifest.classType(c, m(args(0)), args.drop(1).map(m): _*)
+    }
+  }
+
+/*
+  def simpleType : PartialFunction[scala.reflect.runtime.universe.Type, Manifest[_]] = {
+    case scala.reflect.runtime.universe.typeOf[Unit] => Manifest.Unit
+    case scala.reflect.runtime.universe.typeOf[Boolean] => Manifest.Boolean
+    case scala.reflect.runtime.universe.typeOf[Byte] => Manifest.Byte
+    case scala.reflect.runtime.universe.typeOf[Short] => Manifest.Short
+    case scala.reflect.runtime.universe.typeOf[Int] => Manifest.Int
+    case scala.reflect.runtime.universe.typeOf[Char] => Manifest.Char
+    case scala.reflect.runtime.universe.typeOf[Long] => Manifest.Long
+    case scala.reflect.runtime.universe.typeOf[Float] => Manifest.Float
+    case scala.reflect.runtime.universe.typeOf[Double] => Manifest.Double
+    case scala.reflect.runtime.universe.typeOf[String] => manifest[String]
+  }
+*/
 }

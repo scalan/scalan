@@ -83,6 +83,8 @@ trait MethodMapping {
       val libPaths: Set[String]
 
       val functionMap: Map[Method, Func]
+
+      // To simplify config usage, data are transformed to Backend representation. Direct link to LanguageConf is never used
       lazy val methodMap: Map[(String, String), Option[Func]] = functionMap.map { case (m, f) =>
         (((m.theType.family match {
           case f: Family => f.pack.pack + "." + f.familyName.name + "$"
