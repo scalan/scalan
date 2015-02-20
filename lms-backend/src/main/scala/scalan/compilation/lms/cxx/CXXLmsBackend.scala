@@ -53,6 +53,7 @@ class CommunityCXXLmsBackend extends CoreCXXLmsBackend with CommunityLmsBackendB
           "#include <vector>\n" +
             "#include <cstdlib>\n" +
             "#include <jni-array-wrapper.hpp>\n" +
+            "#include <functional>\n" +
             "/*****************************************\n" +
             "  Emitting Generated Code                  \n" +
             "*******************************************/")
