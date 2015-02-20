@@ -63,6 +63,18 @@ trait LmsBridge { self: ScalanCtxExp =>
     case el: ArrayBufferElem[_] => Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
     case PairElem(eFst, eSnd) =>
       Manifest.classType(classOf[(_, _)], createManifest(eFst), createManifest(eSnd))
+    case SumElem(eLeft, eRight) =>
+      Manifest.classType(classOf[Either[_, _]], createManifest(eLeft), createManifest(eRight))
+    case el: FuncElem[_, _] =>
+      Manifest.classType(classOf[_ => _], createManifest(el.eDom), createManifest(el.eRange))
+    case el: ArrayElem[_] =>
+      Manifest.arrayType(createManifest(el.eItem))
+    case el: ArrayBufferElem[_] =>
+      Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
+    case el: ListElem[_] ⇒
+      Manifest.classType(classOf[List[_]], createManifest(el.eItem))
+    case el: MMapElem[_,_] =>
+      Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
     case el: Element[_] => toManifest[T](el.tag.tpe, el.tag.mirror)
     case el => ???(s"Don't know how to create manifest for $el")
   }
