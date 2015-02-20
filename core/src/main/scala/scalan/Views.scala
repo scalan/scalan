@@ -23,7 +23,8 @@ trait Views extends Elems { self: Scalan =>
       case _ => false
     }
   }
-
+//  abstract class Iso1[A, B, C[_]](implicit eFrom0: Elem[From]) extends Iso[C[From]] {
+//  }
   implicit def viewElement[From, To /*<: UserType[_]*/](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
 
   abstract class ViewElem[From, To](implicit val iso: Iso[From, To]) extends Elem[To] {
@@ -322,12 +323,10 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     case UnpackView(Def(UnpackableDef(source, iso))) => source
     // case UnpackView(view @ UnpackableExp(iso)) => iso.from(view)
 
-
     case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[a, b])))) => {
       val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
       ViewArray(parRes)(iso)
     }
-
 
     case ArrayFold(xs: Rep[Array[t]] @unchecked, HasViews(init, iso: Iso[a, b]), step) =>
       val init1 = init.asRep[a]
@@ -379,7 +378,6 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
             super.rewriteDef(d)
         }
       }
-
     case _ => super.rewriteDef(d)
   }
 
