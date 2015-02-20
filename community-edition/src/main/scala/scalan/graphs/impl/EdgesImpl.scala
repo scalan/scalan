@@ -476,5 +476,17 @@ trait EdgesExp extends GraphsDsl with ScalanCommunityDslExp {
         case _ => None
       }
     }
+
+    object MaxDoubleEdge {
+      def unapply(d: Def[_]): Option[Unit] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeCompanionElem] && method.getName == "MaxDoubleEdge" =>
+          Some(()).asInstanceOf[Option[Unit]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Unit] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 }

@@ -76,23 +76,15 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
 
     def outNeighborsOf(v: Rep[Int]): Coll[Int]
 
-    //def outNeighborsOf(vs: Coll[Int])(implicit o: Overloaded1): NColl[Int]
+    def outNeighborsOf(vs: Coll[Int])(implicit o: Overloaded1): NColl[Int]
 
-    def outNeighboursOf(vs: Coll[Int], excluding: Coll[Boolean]): NColl[Int] = ??? /*{
-      def isExcluded(node: Rep[Int]) = excluding.contains(node)
-      val res = outNeighborsOf(vs).map {
-        _.filter(n => !isExcluded(n))
-      }
-      res
-    }*/
-
-    def outEdgesOf(vs: Coll[Int], excluding: Rep[Coll[Boolean]]): NColl[Edge[V, E]] = ??? /*{
+     def outEdgesOf(vs: Coll[Int], excluding: Rep[PBitSet]): Coll[Edge[V, E]] = {
       def isExcluded(node: Rep[Int]) = excluding.contains(node)
       val res = outEdges(vs, { ed => !isExcluded(ed.toId)})
       res
-    }*/
+    }
 
-    def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): NColl[Edge[V, E]]
+    def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[Edge[V, E]]
 
     def hasEdgeTo(fromId: Rep[Int], toId: Rep[Int]): Rep[Boolean]
 
@@ -141,19 +133,17 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
       res
     }*/
 
-    def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): NColl[Edge[V, E]] = ??? /*{
-      val res = (vs zip outNeighborsOf(vs)).map {
-        case Pair(v, ns) =>
-          ns.indexes.map({ i /*case Pair(i, _)*/ => makeEdgeFrom(v, i)}).
-            filter {
-            predicate(_)
-          }
+    def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[Edge[V, E]] = {
+      val res = (vs zip outNeighborsOf(vs)).flatMap { in =>
+          val Pair(v, ns) = in
+          ns.indexes.map({ i => makeEdgeFrom(v, i)}). filter { predicate(_) }
       }
-      res.asInstanceOf[NColl[Edge[V, E]]]
-    }*/
+      res.asInstanceOf[Coll[Edge[V, E]]]
+    }
+
     def inNeighbors(v: Rep[Int]): Coll[Int] = ??? //inverted.links(v)
-    def outNeighborsOf(v: Rep[Int]): Coll[Int] = ??? //links(v)
-    //def outNeighborsOf(vs: Coll[Int])(implicit o: Overloaded1): NColl[Int] = links ->> vs
+    def outNeighborsOf(v: Rep[Int]): Coll[Int] = links(v)
+    def outNeighborsOf(vs: Coll[Int])(implicit o: Overloaded1): NColl[Int] = links(vs)
     def commonNbrs(v1Id: Rep[Int], v2Id: Rep[Int]): Coll[Int] = ??? /*{
       for (u <- outNeighborsOf(v1Id) if hasEdgeTo(u, v2Id)) yield u
     }*/

@@ -189,7 +189,17 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `outDegrees`: Method's return type PA[Int] is not a Rep
+    object outDegrees {
+      def unapply(d: Def[_]): Option[Rep[AdjacencyGraph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AdjacencyGraphElem[_, _]] && method.getName == "outDegrees" =>
+          Some(receiver).asInstanceOf[Option[Rep[AdjacencyGraph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[AdjacencyGraph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object makeEdgeFrom {
       def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
@@ -322,6 +332,18 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Unit forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromAdjacencyList {
+      def unapply(d: Def[_]): Option[(Coll[V], NColl[E], NColl[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(vertexValues, edgeValues, links, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphCompanionElem] && method.getName == "fromAdjacencyList" =>
+          Some((vertexValues, edgeValues, links)).asInstanceOf[Option[(Coll[V], NColl[E], NColl[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Coll[V], NColl[E], NColl[Int]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -582,12 +604,12 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
     }
 
     object outEdgesOf {
-      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Coll[Boolean]]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[PBitSet]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vs, excluding, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outEdgesOf" =>
-          Some((receiver, vs, excluding)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Rep[Coll[Boolean]]) forSome {type V; type E}]]
+          Some((receiver, vs, excluding)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Rep[PBitSet]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Coll[Boolean]]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[PBitSet]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
