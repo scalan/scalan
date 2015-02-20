@@ -1,6 +1,6 @@
 package scalan.it.lms
 
-import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunityDslSeq}
+import scalan.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunityDslSeq}
 import scalan.compilation.GraphVizExport
 import scalan.compilation.lms.{CoreBridge, CommunityBridge}
 import scalan.compilation.lms.cxx.{CoreCXXLmsBackend, LmsCompilerCXX}
