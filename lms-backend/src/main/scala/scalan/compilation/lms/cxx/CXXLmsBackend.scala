@@ -20,6 +20,9 @@ class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
   with CXXGenFunctions
   with CXXGenArrayOps
   with CXXGenVariables
+  with CXXGenArrayBuilderOps
+  with CXXGenRangeOps
+  with CLikeGenWhile
   with CXXCodegen
   {
     override val IR: self.type = self

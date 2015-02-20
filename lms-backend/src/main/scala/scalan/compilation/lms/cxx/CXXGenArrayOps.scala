@@ -56,13 +56,13 @@ trait CXXGenArrayOps extends BaseGenArrayOps with CXXCodegen {
 //    }
     case afrch@ArrayForeach(a,x,block) =>
 //      stream.println(s"")
-      gen"""{/*start: ${afrch.toString}*/
+      gen"""{/*start: ${sym} = ${afrch.toString}*/
            |size_t len = ${a}.size();
            |for(size_t i = 0; i < len; ++i) {"""
             emitValDef( x, s"${quote(a)}[i]" )
             emitBlock(block)
       gen"""}
-           |}/*end: ${afrch.toString}*/"""
+           |}/*end: ${sym} = ${afrch.toString}*/"""
 //      stream.println(s"")
 //    case ArrayCopy(src,srcPos,dest,destPos,len) => emitValDef(sym, src"System.arraycopy($src,$srcPos,$dest,$destPos,$len)")
 //    case a@ArraySort(x) =>
