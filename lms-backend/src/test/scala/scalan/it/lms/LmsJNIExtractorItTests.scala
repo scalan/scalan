@@ -7,6 +7,7 @@ import scalan._
 import scalan.compilation.lms.JNIBridge
 import scalan.compilation.lms.cxx.{CommunityCXXLmsBackend, LmsCompilerCXX}
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
+import scalan.graphs.MST_example
 import scalan.it.BaseItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.parrays.PArraysDslExp
@@ -16,8 +17,30 @@ import scalan.performance.MVMs
  * Created by zotov on 1/19/15.
  */
 class LmsJNIExtractorItTests extends BaseItTests {
-  trait ProgExp extends PArraysDslExp with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
+  trait ProgExp extends MST_example with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
     val lms = new CommunityCXXLmsBackend
+
+    lazy val MST_JNI = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
+      val data = JNI_Extract(in)
+      val res = MST(data)
+      JNI_Pack(res)
+    }
+  }
+
+  test("MST_JNI") {
+    val ctx = new ScalanCtxExp with ProgExp with FirstProg {
+      override def subfolder: String = "MST_JNI-cxx"
+      def test() = {
+
+      }
+
+      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
+        val dir = new File(prefix, subfolder)
+        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
+      }
+    }
+
+    ctx.generate("MST_JNI", ctx.MST_JNI)
   }
 
   test("simpleGenCxx") {
