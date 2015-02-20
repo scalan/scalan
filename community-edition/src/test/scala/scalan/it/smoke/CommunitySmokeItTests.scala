@@ -2,6 +2,9 @@ package scalan.it.smoke
 
 import scalan._
 //import scalan.community._
+import scalan.JNIExtractorOps
+import scalan.ScalanCtxSeq
+import scalan.community._
 import scalan.collections._
 import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
 
