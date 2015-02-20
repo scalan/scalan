@@ -1,5 +1,7 @@
 package scalan.compilation.lms.cxx
 
+import java.io.PrintWriter
+
 import scala.virtualization.lms.common._
 import scalan.compilation.lms._
 import scalan.compilation.lms.common.{CXXGenJNIExtractor, JNILmsOpsExp, JNILmsOps}
