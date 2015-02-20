@@ -5,11 +5,10 @@ import java.util.HashMap
 import scala.virtualization.lms.common._
 import scala.virtualization.lms.epfl.test7.ArrayLoopsFatExp
 
-trait ArrayOpsExtExp extends BaseExp with ObjectOpsExtExp with LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp
-with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
-with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp
-with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp
-with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp {
+trait ArrayOpsExtExp extends BaseExp with LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp
+with NumericOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp with EqualExp with BooleanOpsExp
+with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp with ArrayOpsExp with WhileExp
+with ArrayBuilderOpsExp with CastingOpsExp with EitherOpsExp with MathOpsExp with ExceptionOpsExp {
 
   def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
 
