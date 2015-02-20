@@ -15,7 +15,7 @@ trait HashSets extends Base with BaseTypes { self: ScalanCommunityDsl =>
     @External def map[B:Elem](f: Rep[A => B]): Rep[SHashSet[B]]
     @External def fold(z: Rep[A])(f : Rep[((A,A)) => A]): Rep[A]
   }
-  trait SHashSetCompanion extends ExCompanion1[HashSet]  {
+  trait SHashSetCompanion extends ExCompanion1[SHashSet]  {
     @External def empty[A:Elem]: Rep[SHashSet[A]]
   }
 

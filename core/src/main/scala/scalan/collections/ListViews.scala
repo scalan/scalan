@@ -151,6 +151,8 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
           iso.from(step(Pair(iso.to(p._1), p._2)))})
         iso.to(res)
       }
+      case _ =>
+        super.rewriteDef(d)
     }
     case ListFoldRight(xs, init, step) => (xs, init, step) match {
       case (Def(view: ViewList[a, b]), init: Rep[s], step) => {
@@ -170,6 +172,8 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
           iso.from(step(Pair(p._1, iso.to(p._2))))})
         iso.to(res)
       }
+      case _ =>
+        super.rewriteDef(d)
     }
     case ListReplicate(len, HasViews(valueWithoutView, iso: Iso[a, b] @unchecked)) => {
       val v = valueWithoutView.asRep[a]

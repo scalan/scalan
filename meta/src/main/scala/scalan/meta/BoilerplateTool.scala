@@ -100,14 +100,13 @@ class BoilerplateTool extends StrictLogging {
     name = "effects",
     srcPath = "../../scalan-effects/src/main/scala",
     entityFiles = List(
-      //"scalan/monads/Monads.scala"
-      //, "scalan/monads/Functors.scala"
-      "scalan/monads/FreeMs.scala"
-      //"scalan/io/Frees.scala"
-      //"scalan/monads/Coproducts.scala"
-      //"scalan/monads/Interactions.scala"
-      //"scalan/monads/Auths.scala"
-      //"scalan/monads/Readers.scala"     
+      "scalan/monads/Frees.scala",
+      "scalan/monads/Coproducts.scala",
+      "scalan/examples/Interactions.scala",
+      "scalan/examples/Auths.scala",
+      "scalan/examples/IOs.scala",
+      "scalan/monads/Readers.scala",
+      "scalan/stream/Processes.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
