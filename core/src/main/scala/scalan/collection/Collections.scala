@@ -220,7 +220,7 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
     def zip[C: Elem](ys: Coll[C]): Coll[((A, B),C)] = PairCollection(self, ys)
     def update (idx: Rep[Int], value: Rep[(A,B)]): Coll[(A,B)] = BaseCollection(arr.update(idx, value))
     def updateMany (idxs: Coll[Int], vals: Coll[(A,B)]): Coll[(A,B)] = BaseCollection(arr.updateMany(idxs.arr, vals.arr))
-    def filter(f: Rep[(A,B) @uncheckedVariance] => Rep[Boolean]): Coll[(A,B)] = ???
+    def filter(f: Rep[(A,B) @uncheckedVariance] => Rep[Boolean]): Coll[(A,B)] = BaseCollection(arr.filter(f))
   }
 
   trait PairCollectionCompanion extends ConcreteClass2[PairCollection] with CollectionCompanion {

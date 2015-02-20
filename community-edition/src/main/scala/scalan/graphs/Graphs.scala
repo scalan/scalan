@@ -109,29 +109,14 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
 
     def vertexNum: Rep[Int] =  links.length
     def edgeNum: Rep[Int] = ??? //links.values.length
-    def inDegrees: Coll[Int] = ??? /*{
-      val zeros = replicate(vertexNum, 0)
-      val ones = replicate(edgeNum, 1)
-      zeros.permuteReduce(links.values, ones)
-    }*/
+    def inDegrees: Coll[Int] = ???
     def outDegrees: Coll[Int] = ??? //links.segLengths
 
     def makeEdgeFrom(v: Rep[Int], iE: Rep[Int]): Rep[AdjEdge[V, E]] = AdjEdge(v, iE, thisGraph)
-    def makeEdgeFromTo(v1: Rep[Int], v2: Rep[Int]): Rep[AdjEdge[V, E]] = ??? /* {
-      val row = links(v1)
-      val iE = ((row zip row.indexes).filter(s => (s._1 === v2)))(0)._2
-      AdjEdge(v1, iE, thisGraph)
-    } */
+    def makeEdgeFromTo(v1: Rep[Int], v2: Rep[Int]): Rep[AdjEdge[V, E]] = ???
 
-    def nodes: Coll[Vertex[V, E]] = ??? //getNodes(links.indexes)
-    def edges: Coll[AdjEdge[V, E]] = ??? /*{
-      val res = for {
-        v: Rep[Int]@unchecked <- links.indexes
-        iE <- links(v).indexes
-      } yield makeEdgeFrom(v, iE)
-
-      res
-    }*/
+    def nodes: Coll[Vertex[V, E]] = ???
+    def edges: Coll[AdjEdge[V, E]] = ???
 
     def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[Edge[V, E]] = {
       val res = (vs zip outNeighborsOf(vs)).flatMap { in =>
@@ -141,22 +126,15 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
       res.asInstanceOf[Coll[Edge[V, E]]]
     }
 
-    def inNeighbors(v: Rep[Int]): Coll[Int] = ??? //inverted.links(v)
+    def inNeighbors(v: Rep[Int]): Coll[Int] = ???
     def outNeighborsOf(v: Rep[Int]): Coll[Int] = links(v)
     def outNeighborsOf(vs: Coll[Int])(implicit o: Overloaded1): NColl[Int] = links(vs)
-    def commonNbrs(v1Id: Rep[Int], v2Id: Rep[Int]): Coll[Int] = ??? /*{
-      for (u <- outNeighborsOf(v1Id) if hasEdgeTo(u, v2Id)) yield u
-    }*/
-    def commonNbrsNum(v1Id: Rep[Int], v2Id: Rep[Int]): Rep[Int] = ??? /*{
-      commonNbrs(v1Id, v2Id).length
-    }*/
+    def commonNbrs(v1Id: Rep[Int], v2Id: Rep[Int]): Coll[Int] = ???
+    def commonNbrsNum(v1Id: Rep[Int], v2Id: Rep[Int]): Rep[Int] = ???
 
-    def hasEdgeTo(fromId: Rep[Int], toId: Rep[Int]): Rep[Boolean] = ??? //outNeighborsOf(fromId).containsSorted(toId)
+    def hasEdgeTo(fromId: Rep[Int], toId: Rep[Int]): Rep[Boolean] = ???
 
-    def discardValues: Rep[SimpleGraph] = ??? /*{
-      val sg = AdjacencyGraph(vertexValues.discardValues, edgeValues.discardNestedValues, links)
-      sg
-    }                                           */
+    def discardValues: Rep[SimpleGraph] = ???
   }
 
   trait AdjacencyGraphCompanion extends ConcreteClass2[AdjacencyGraph] {
@@ -165,6 +143,55 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
                                                                       element[NestedCollection[Int]].defaultRepValue))
     def fromAdjacencyList[V:Elem, E:Elem](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int]) = {
       mkAdjacencyGraph(vertexValues, edgeValues, links)
+    }
+  }
+  abstract class IncidenceGraph[V, E] (val vertexValues: Coll[V], val incMatrixWithVals: Coll[E], val vertexNum: Rep[Int])
+  (implicit val eV: Elem[V], val eE: Elem[E]) extends Graph[V,E] {
+    type EdgeType = IncEdge[V, E]
+    lazy val eEdge = element[EdgeType]
+    def incMatrix = incMatrixWithVals.map({x: Rep[E] => ! (x === eE.defaultRepValue)})
+
+    def edgeNum: Rep[Int] = ??? //links.values.length
+    def inDegrees: Coll[Int] = ???
+    def outDegrees: Coll[Int] = ???
+    def makeEdgeFrom(v: Rep[Int], iE: Rep[Int]): Rep[IncEdge[V, E]] = ??? //AdjEdge(v, iE, thisGraph)
+    def makeEdgeFromTo(v1: Rep[Int], v2: Rep[Int]): Rep[IncEdge[V, E]] = IncEdge(v1, v2, thisGraph)
+
+    def nodes: Coll[Vertex[V, E]] = ???
+    def edges: Coll[IncEdge[V, E]] = ???
+
+    def rowIndexes = Collection.indexRange(vertexNum)
+    def vertexRow(v: Rep[Int]) = incMatrixWithVals.slice((v*vertexNum), vertexNum)
+    def vertexNonZeroRow(v : Rep[Int]):Coll[(E,Int)] = (vertexRow(v) zip rowIndexes).filter({i => !(i._1 === eE.defaultRepValue)})
+
+    def links = ???
+    def edgeValues = ???
+
+    def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[Edge[V, E]] = {
+      val res = vs.flatMap { v =>
+        val es = outEdgesOf(v)
+        val res = es.filter(predicate(_))
+        res
+      }
+      res.asInstanceOf[Coll[Edge[V, E]]]
+    }
+
+    def inNeighbors(v: Rep[Int]): Coll[Int] = ??? //inverted.links(v)
+    def outNeighborsOf(v: Rep[Int]): Coll[Int] = vertexNonZeroRow(v).map(in => in._2)
+    def outEdgesOf(v:Rep[Int]): Coll[Edge[V,E]] = vertexNonZeroRow(v).map(in => makeEdgeFromTo(v, in._2))
+    def outNeighborsOf(vs: Coll[Int])(implicit o: Overloaded1): NColl[Int] = ??? //{ vs.flatMap { outNeighborsOf(_)}
+    def commonNbrs(v1Id: Rep[Int], v2Id: Rep[Int]): Coll[Int] = ???
+    def commonNbrsNum(v1Id: Rep[Int], v2Id: Rep[Int]): Rep[Int] = ???
+    def hasEdgeTo(fromId: Rep[Int], toId: Rep[Int]): Rep[Boolean] = ???
+    def discardValues: Rep[SimpleGraph] = ???
+  }
+
+  trait IncidenceGraphCompanion extends ConcreteClass2[IncidenceGraph] {
+    def defaultOf[V:Elem, E:Elem] = Default.defaultVal(IncidenceGraph(element[Collection[V]].defaultRepValue,
+                                                                      element[Collection[E]].defaultRepValue,
+                                                                      element[Int].defaultRepValue))
+    def fromAdjacencyMatrix[V:Elem, E:Elem](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int]) = {
+      mkIncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }
   }
 }

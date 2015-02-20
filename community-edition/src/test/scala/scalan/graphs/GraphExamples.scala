@@ -7,13 +7,20 @@ import scalan.primitives.PrimitiveExamples
  * Created by afilippov on 2/17/15.
  */
 trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExamples{
-    lazy val fromAndTo = fun { in: Rep[(NestedCollection[Int],NestedCollection[Double])] =>
+    lazy val fromAndToAdj = fun { in: Rep[(NestedCollection[Int],NestedCollection[Double])] =>
       val links = in._1
       val edge_vals = in._2
       val vertex_vals = UnitCollection(links.length)
       val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
       graph.vertexNum
     }
+  lazy val fromAndToInc = fun { in: Rep[(Collection[Double],Int)] =>
+    val incMatrix = in._1
+    val vertexNum = in._2
+    val vertex_vals = UnitCollection(vertexNum)
+    val graph = IncidenceGraph.fromAdjacencyMatrix(vertex_vals, incMatrix, vertexNum)
+    graph.vertexNum
+  }
 
   lazy val MinNumMonoid = RepMonoid[(Double,(Int,Int))]("MinNum", (Double.MaxValue,(Int.MaxValue, Int.MaxValue)), true) {
     (t1, t2) => IF (t1._1 < t2._1) {t1} ELSE t2
@@ -59,7 +66,7 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
     result._3
   }
 
-  lazy val mstFun = fun { in: Rep[(NestedCollection[Int],NestedCollection[Double])] =>
+  lazy val mstFunAdj = fun { in: Rep[(NestedCollection[Int],NestedCollection[Double])] =>
     val links = in._1
     val edge_vals = in._2
     val vertex_vals = UnitCollection(links.length)
@@ -68,13 +75,32 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
     MST_prime(graph, 0, out_in)
   }
 
-  lazy val mstFun1 = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+  lazy val mstFunInc = fun { in: Rep[(Collection[Double], Int)] =>
+    val incMatrix = in._1
+    val vertexNum = in._2
+    val vertex_vals = UnitCollection(vertexNum)
+    val graph = IncidenceGraph.fromAdjacencyMatrix(vertex_vals, incMatrix, vertexNum)
+    val out_in = Collection.replicate(graph.vertexNum, UNVISITED)
+    MST_prime(graph, 0, out_in)
+  }
+
+  lazy val mstFun1Adj = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
     val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
     val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
     val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
 
     val vertex_vals = UnitCollection(segments.length)
     val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+    val out_in = Collection.replicate(graph.vertexNum, UNVISITED)
+    val res = MST_prime(graph, 0, out_in)
+    res.arr
+  }
+
+
+  lazy val mstFun1Inc = fun { in: Rep[(Array[Double], Int)] =>
+    val incMatrix = Collection.fromArray(in._1)
+    val vertex_vals = UnitCollection(in._2)
+    val graph = IncidenceGraph.fromAdjacencyMatrix(vertex_vals, incMatrix, in._2)
     val out_in = Collection.replicate(graph.vertexNum, UNVISITED)
     val res = MST_prime(graph, 0, out_in)
     res.arr

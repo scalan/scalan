@@ -90,6 +90,65 @@ trait GraphsAbs extends ScalanCommunityDsl with Graphs {
   // 6) smart constructor and deconstructor
   def mkAdjacencyGraph[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]]
   def unmkAdjacencyGraph[V:Elem, E:Elem](p: Rep[AdjacencyGraph[V, E]]): Option[(Rep[Collection[V]], Rep[NestedCollection[E]], Rep[NestedCollection[Int]])]
+
+  // elem for concrete class
+  class IncidenceGraphElem[V, E](iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]]) extends GraphElem[V, E, IncidenceGraphData[V, E], IncidenceGraph[V, E]](iso)
+
+  // state representation type
+  type IncidenceGraphData[V, E] = (Collection[V], (Collection[E], Int))
+
+  // 3) Iso for concrete class
+  class IncidenceGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
+    extends Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
+    override def from(p: Rep[IncidenceGraph[V, E]]) =
+      unmkIncidenceGraph(p) match {
+        case Some((vertexValues, incMatrixWithVals, vertexNum)) => Pair(vertexValues, Pair(incMatrixWithVals, vertexNum))
+        case None => !!!
+      }
+    override def to(p: Rep[(Collection[V], (Collection[E], Int))]) = {
+      val Pair(vertexValues, Pair(incMatrixWithVals, vertexNum)) = p
+      IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
+    }
+    lazy val tag = {
+      weakTypeTag[IncidenceGraph[V, E]]
+    }
+    lazy val defaultRepTo = Default.defaultVal[Rep[IncidenceGraph[V, E]]](IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0))
+    lazy val eTo = new IncidenceGraphElem[V, E](this)
+  }
+  // 4) constructor and deconstructor
+  abstract class IncidenceGraphCompanionAbs extends CompanionBase[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {
+    override def toString = "IncidenceGraph"
+    def apply[V, E](p: Rep[IncidenceGraphData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
+      isoIncidenceGraph(eV, eE).to(p)
+    def apply[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
+      mkIncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
+    def unapply[V:Elem, E:Elem](p: Rep[IncidenceGraph[V, E]]) = unmkIncidenceGraph(p)
+  }
+  def IncidenceGraph: Rep[IncidenceGraphCompanionAbs]
+  implicit def proxyIncidenceGraphCompanion(p: Rep[IncidenceGraphCompanionAbs]): IncidenceGraphCompanionAbs = {
+    proxyOps[IncidenceGraphCompanionAbs](p)
+  }
+
+  class IncidenceGraphCompanionElem extends CompanionElem[IncidenceGraphCompanionAbs] {
+    lazy val tag = weakTypeTag[IncidenceGraphCompanionAbs]
+    protected def getDefaultRep = IncidenceGraph
+  }
+  implicit lazy val IncidenceGraphCompanionElem: IncidenceGraphCompanionElem = new IncidenceGraphCompanionElem
+
+  implicit def proxyIncidenceGraph[V, E](p: Rep[IncidenceGraph[V, E]]): IncidenceGraph[V, E] =
+    proxyOps[IncidenceGraph[V, E]](p)
+
+  implicit class ExtendedIncidenceGraph[V, E](p: Rep[IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E]) {
+    def toData: Rep[IncidenceGraphData[V, E]] = isoIncidenceGraph(eV, eE).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoIncidenceGraph[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]] =
+    new IncidenceGraphIso[V, E]
+
+  // 6) smart constructor and deconstructor
+  def mkIncidenceGraph[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]]
+  def unmkIncidenceGraph[V:Elem, E:Elem](p: Rep[IncidenceGraph[V, E]]): Option[(Rep[Collection[V]], Rep[Collection[E]], Rep[Int])]
 }
 
 // Seq -----------------------------------
@@ -104,7 +163,7 @@ trait GraphsSeq extends GraphsDsl with ScalanCommunityDslSeq {
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjacencyGraph[V, E](vertexValues, edgeValues, links)
         with UserTypeSeq[Graph[V,E], AdjacencyGraph[V, E]] {
-    protected def thisGraph = self
+    def thisGraph = self
     lazy val selfType = element[AdjacencyGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
   }
   lazy val AdjacencyGraph = new AdjacencyGraphCompanionAbs with UserTypeSeq[AdjacencyGraphCompanionAbs, AdjacencyGraphCompanionAbs] {
@@ -116,6 +175,24 @@ trait GraphsSeq extends GraphsDsl with ScalanCommunityDslSeq {
       new SeqAdjacencyGraph[V, E](vertexValues, edgeValues, links)
   def unmkAdjacencyGraph[V:Elem, E:Elem](p: Rep[AdjacencyGraph[V, E]]) =
     Some((p.vertexValues, p.edgeValues, p.links))
+
+  case class SeqIncidenceGraph[V, E]
+      (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])
+      (implicit eV: Elem[V], eE: Elem[E])
+    extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
+        with UserTypeSeq[Graph[V,E], IncidenceGraph[V, E]] {
+    def thisGraph = self
+    lazy val selfType = element[IncidenceGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
+  }
+  lazy val IncidenceGraph = new IncidenceGraphCompanionAbs with UserTypeSeq[IncidenceGraphCompanionAbs, IncidenceGraphCompanionAbs] {
+    lazy val selfType = element[IncidenceGraphCompanionAbs]
+  }
+
+  def mkIncidenceGraph[V, E]
+      (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]) =
+      new SeqIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
+  def unmkIncidenceGraph[V:Elem, E:Elem](p: Rep[IncidenceGraph[V, E]]) =
+    Some((p.vertexValues, p.incMatrixWithVals, p.vertexNum))
 }
 
 // Exp -----------------------------------
@@ -130,7 +207,7 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
       (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjacencyGraph[V, E](vertexValues, edgeValues, links) with UserTypeDef[Graph[V,E], AdjacencyGraph[V, E]] {
-    protected def thisGraph = self
+    def thisGraph = self
     lazy val selfType = element[AdjacencyGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
     override def mirror(t: Transformer) = ExpAdjacencyGraph[V, E](t(vertexValues), t(edgeValues), t(links))
   }
@@ -263,18 +340,6 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
       }
     }
 
-    object outNeighborsOf {
-      def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphElem[_, _]] && method.getName == "outNeighborsOf" =>
-          Some((receiver, v)).asInstanceOf[Option[(Rep[AdjacencyGraph[V, E]], Rep[Int]) forSome {type V; type E}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Rep[AdjacencyGraph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object commonNbrs {
       def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(v1Id, v2Id, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphElem[_, _]] && method.getName == "commonNbrs" =>
@@ -355,6 +420,272 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
     new ExpAdjacencyGraph[V, E](vertexValues, edgeValues, links)
   def unmkAdjacencyGraph[V:Elem, E:Elem](p: Rep[AdjacencyGraph[V, E]]) =
     Some((p.vertexValues, p.edgeValues, p.links))
+
+  case class ExpIncidenceGraph[V, E]
+      (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])
+      (implicit eV: Elem[V], eE: Elem[E])
+    extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) with UserTypeDef[Graph[V,E], IncidenceGraph[V, E]] {
+    def thisGraph = self
+    lazy val selfType = element[IncidenceGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
+    override def mirror(t: Transformer) = ExpIncidenceGraph[V, E](t(vertexValues), t(incMatrixWithVals), t(vertexNum))
+  }
+
+  lazy val IncidenceGraph: Rep[IncidenceGraphCompanionAbs] = new IncidenceGraphCompanionAbs with UserTypeDef[IncidenceGraphCompanionAbs, IncidenceGraphCompanionAbs] {
+    lazy val selfType = element[IncidenceGraphCompanionAbs]
+    override def mirror(t: Transformer) = this
+  }
+
+  object IncidenceGraphMethods {
+    object incMatrix {
+      def unapply(d: Def[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "incMatrix" =>
+          Some(receiver).asInstanceOf[Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object edgeNum {
+      def unapply(d: Def[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "edgeNum" =>
+          Some(receiver).asInstanceOf[Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object inDegrees {
+      def unapply(d: Def[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "inDegrees" =>
+          Some(receiver).asInstanceOf[Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object outDegrees {
+      def unapply(d: Def[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "outDegrees" =>
+          Some(receiver).asInstanceOf[Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object makeEdgeFrom {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v, iE, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "makeEdgeFrom" =>
+          Some((receiver, v, iE)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object makeEdgeFromTo {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v1, v2, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "makeEdgeFromTo" =>
+          Some((receiver, v1, v2)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object nodes {
+      def unapply(d: Def[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "nodes" =>
+          Some(receiver).asInstanceOf[Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object edges {
+      def unapply(d: Def[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "edges" =>
+          Some(receiver).asInstanceOf[Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object rowIndexes {
+      def unapply(d: Def[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "rowIndexes" =>
+          Some(receiver).asInstanceOf[Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object vertexRow {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "vertexRow" =>
+          Some((receiver, v)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object vertexNonZeroRow {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "vertexNonZeroRow" =>
+          Some((receiver, v)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object links {
+      def unapply(d: Def[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "links" =>
+          Some(receiver).asInstanceOf[Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    // WARNING: Cannot generate matcher for method `outEdges`: Method has function arguments predicate
+
+    object inNeighbors {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "inNeighbors" =>
+          Some((receiver, v)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object outEdgesOf {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "outEdgesOf" =>
+          Some((receiver, v)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object commonNbrs {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v1Id, v2Id, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "commonNbrs" =>
+          Some((receiver, v1Id, v2Id)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object commonNbrsNum {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v1Id, v2Id, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "commonNbrsNum" =>
+          Some((receiver, v1Id, v2Id)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object hasEdgeTo {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(fromId, toId, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "hasEdgeTo" =>
+          Some((receiver, fromId, toId)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object discardValues {
+      def unapply(d: Def[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "discardValues" =>
+          Some(receiver).asInstanceOf[Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[IncidenceGraph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object IncidenceGraphCompanionMethods {
+    object defaultOf {
+      def unapply(d: Def[_]): Option[Unit forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphCompanionElem] && method.getName == "defaultOf" =>
+          Some(()).asInstanceOf[Option[Unit forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Unit forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromAdjacencyMatrix {
+      def unapply(d: Def[_]): Option[(Coll[V], Coll[E], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(vertexValues, incMatrixWithVals, vertexNum, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphCompanionElem] && method.getName == "fromAdjacencyMatrix" =>
+          Some((vertexValues, incMatrixWithVals, vertexNum)).asInstanceOf[Option[(Coll[V], Coll[E], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Coll[V], Coll[E], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  def mkIncidenceGraph[V, E]
+    (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]) =
+    new ExpIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
+  def unmkIncidenceGraph[V:Elem, E:Elem](p: Rep[IncidenceGraph[V, E]]) =
+    Some((p.vertexValues, p.incMatrixWithVals, p.vertexNum))
 
   object GraphMethods {
     // WARNING: Cannot generate matcher for method `makeEdgeFrom`: Method's return type REdge is not a Rep
@@ -574,30 +905,6 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object outNeighborsOf {
-      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outNeighborsOf" =>
-          Some((receiver, v)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object outNeighboursOf {
-      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Coll[Boolean]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(vs, excluding, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outNeighboursOf" =>
-          Some((receiver, vs, excluding)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Coll[Boolean]) forSome {type V; type E}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int], Coll[Boolean]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

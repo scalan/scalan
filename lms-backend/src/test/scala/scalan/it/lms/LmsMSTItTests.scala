@@ -4,7 +4,7 @@ import scalan.community.ScalanCommunityDslExp
 import scalan.{ScalanCtxSeq, ScalanCtxExp}
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.LmsCompilerScala
-import scalan.graphs.MST_example
+import scalan.graphs.{GraphsDslExp, GraphsDslSeq, GraphExamples, MST_example}
 import scalan.it.BaseItTests
 
 
@@ -15,10 +15,20 @@ abstract class LmsMstItTests extends BaseItTests {
       val lms = new CommunityLmsBackend
     }
   }
+
+  class ProgDslExp extends GraphsDslExp with GraphExamples with ScalanCommunityDslExp with LmsCompilerScala { self =>
+    def makeBridge[A, B] = new CommunityBridge[A, B] {
+      val scalan = self
+      val lms = new CommunityLmsBackend
+    }
+  }
+  class ProgDslSeq extends GraphsDslSeq with GraphExamples with ScalanCtxSeq
   class ProgSeq extends MST_example with ScalanCtxSeq
 
   val progStaged = new ProgExp
   val progSeq = new ProgSeq
+  val progDslStaged = new ProgDslExp
+  val progDslSeq = new ProgDslSeq
 
   def sparseVectorData(arr: Array[Double]) = (0.until(arr.length).toArray, (arr, arr.length))
 }
@@ -62,7 +72,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
     val input = (links, (edgeVals, (offs, lens)))
     val res = progSeq.MST_adjlist(input)
-    //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST", input)
+    //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST_adjList", input)
     println(res.mkString(" , "))
   }
 
@@ -77,7 +87,17 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     })
     val input = (incMatrix, vertexNum)
     val res = progSeq.MST_adjmatrix(input)
-    //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST", input)
+    //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST_adjMatrix", input)
+    println(res.mkString(" , "))
+  }
+  test("MST_adjList_dsl") {
+    val links = graph.flatMap( i=> i)
+    val edgeVals = graphValues.flatMap(i => i)
+    val lens = graph.map(i => i.length)
+    val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
+    val input = (links, (edgeVals, (offs, lens)))
+    val res = progDslSeq.mstFun1Adj(input)
+    compareOutputWithSequential(progDslStaged)(progDslSeq.mstFun1Adj, progDslStaged.mstFun1Adj, "MST_adjList_dsl", input)
     println(res.mkString(" , "))
   }
 
