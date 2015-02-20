@@ -48,8 +48,8 @@ class GraphExamplesSuite extends BaseShouldTests{
   it should "be constructed in Staged context" in {
     val ctx = new ScalanCtxExp with GraphsDslExp with GraphExamples {}
   }
-
-  "in seq context" should "execute functions" in {
+  */
+  "in seq context1" should "execute functions" in {
     val ctx = new ScalanCtxSeq with GraphsDslSeq with GraphExamples {}
     val in1 = ctx.fromJuggedArray(Array(Array(1,2), Array(3,4), Array(5,6)))(ctx.IntElement)
     val in2 = ctx.fromJuggedArray(Array(Array(1.0,2.0), Array(3.0,4.0), Array(5.0,6.0)))(ctx.DoubleElement)
@@ -57,8 +57,8 @@ class GraphExamplesSuite extends BaseShouldTests{
     println(res)
     res should be(in1.length)
   }
-  */
-  /*"in seq context" should "execute functions" in {
+
+  "in seq context2" should "execute functions" in {
     val ctx = new ScalanCtxSeq with GraphsDslSeq with GraphExamples {}
 
     val in1 = ctx.fromJuggedArray(graph)(ctx.IntElement)
@@ -66,9 +66,9 @@ class GraphExamplesSuite extends BaseShouldTests{
     val res = ctx.mstFun((in1,in2))
     println(res)
     //res should be(in1.length)
-  }*/
+  }
 
-  /*"in seq context1" should "execute functions" in {
+  "in seq context3" should "execute functions" in {
     val ctx = new ScalanCtxSeq with GraphsDslSeq with GraphExamples {}
 
     val in1 = ctx.fromJuggedArray(graph)(ctx.IntElement)
@@ -77,7 +77,7 @@ class GraphExamplesSuite extends BaseShouldTests{
     val res = ctx.mstFun1((in1.values.arr,(in2.values.arr, (in1.segOffsets.arr, in1.segLens.arr))) )
     println(res.mkString(","))
     //res should be(in1.length)
-  }*/
+  }
   def testMethod(name: String) = {
     val ctx = new ScalanCtxExp with GraphsDslExp with GraphExamples with GraphVizExport {
       override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
@@ -88,8 +88,8 @@ class GraphExamplesSuite extends BaseShouldTests{
 
   val whenStaged = "when staged"
   //whenStaged should "fromArray" beArgFor { testMethod(_) }
-  //whenStaged should "fromAndTo" beArgFor { testMethod(_) }
-  //whenStaged should "mstFun" beArgFor { testMethod(_) }
+  whenStaged should "fromAndTo" beArgFor { testMethod(_) }
+  whenStaged should "mstFun" beArgFor { testMethod(_) }
   whenStaged should "mstFun1" beArgFor { testMethod(_) }
 
 }

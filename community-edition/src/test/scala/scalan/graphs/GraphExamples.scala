@@ -59,7 +59,7 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
     result._3
   }
 
-  lazy val mstFun2 = fun { in: Rep[(NestedCollection[Int],NestedCollection[Double])] =>
+  lazy val mstFun = fun { in: Rep[(NestedCollection[Int],NestedCollection[Double])] =>
     val links = in._1
     val edge_vals = in._2
     val vertex_vals = UnitCollection(links.length)
@@ -68,7 +68,7 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
     MST_prime(graph, 0, out_in)
   }
 
-  lazy val mstFun3 = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+  lazy val mstFun1 = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
     val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
     val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
     val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
@@ -78,20 +78,5 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
     val out_in = Collection.replicate(graph.vertexNum, UNVISITED)
     val res = MST_prime(graph, 0, out_in)
     res.arr
-  }
-
-  lazy val mstFun1 = fun { in: Rep[Array[Int]] =>
-    //val segments = Collection.fromArray(in._1) zip Collection.fromArray(in._2)
-
-    //val res = from(segments).until(x => x.length == 0){ in =>
-    //in(Collection.indexRange(in.length -1 ))
-    //}
-
-    val par = PArray(in)
-     in.map(i => par(i) -1 )
-
-    //from(par).until(x => x.length == 0){ in => in }
-
-    //res.arr //segments.arr
   }
 }
