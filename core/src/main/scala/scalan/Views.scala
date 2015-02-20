@@ -23,8 +23,13 @@ trait Views extends Elems { self: Scalan =>
       case _ => false
     }
   }
-//  abstract class Iso1[A, B, C[_]](implicit eFrom0: Elem[From]) extends Iso[C[From]] {
-//  }
+
+  abstract class Iso1[A, B, C[_]](val innerIso: Iso[A,B])(implicit cC: Cont[C])
+    extends Iso[C[A], C[B]]()(cC.lift(innerIso.eFrom)) {
+    lazy val eTo = cC.lift(innerIso.eTo)
+    lazy val tag = cC.tag(innerIso.tag)
+  }
+
   implicit def viewElement[From, To /*<: UserType[_]*/](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
 
   abstract class ViewElem[From, To](implicit val iso: Iso[From, To]) extends Elem[To] {
@@ -274,7 +279,9 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     lazy val uniqueOpId = name(selfType, view.elem)
   }
 
-  abstract class View1[A, B, C[_]](implicit val innerIso: Iso[A, B]) extends View[C[A], C[B]]
+  abstract class View1[A, B, C[_]](val iso: Iso1[A,B,C]) extends View[C[A], C[B]] {
+    def innerIso = iso.innerIso
+  }
 
   abstract class View2[A1, A2, B1, B2, C[_, _]](implicit val iso1: Iso[A1, B1], val iso2: Iso[A2, B2]) extends View[C[A1, A2], C[B1, B2]]
 
@@ -325,7 +332,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
     case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[a, b])))) => {
       val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
-      ViewArray(parRes)(iso)
+      ViewArray(parRes)(ArrayIso(iso))
     }
 
     case ArrayFold(xs: Rep[Array[t]] @unchecked, HasViews(init, iso: Iso[a, b]), step) =>

@@ -16,9 +16,10 @@ trait ListViewsSeq extends ListViews with ListOpsSeq with ViewsSeq { self: Scala
 }
 
 trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp { self: ScalanExp =>
-  case class ViewList[A, B](source: Lst[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, List] {
-    lazy val iso = listIso(innerIso)
-    def copy(source: Lst[A]) = ViewList(source)
+
+  case class ViewList[A, B](source: Lst[A])(iso: Iso1[A, B, List]) extends View1[A, B, List](iso) {
+    //lazy val iso = listIso(innerIso)
+    def copy(source: Lst[A]) = ViewList(source)(iso)
     override def toString = s"ViewList[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewList[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -37,31 +38,33 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
     case Def(view: ViewList[_, _]) =>
-      Some((view.source, listIso(view.iso)))
+      Some((view.source, ListIso(view.iso)))
     case UserTypeList(iso: Iso[a, b]) =>
-      val newIso = listIso(iso)
+      val newIso = ListIso(iso)
       val repr = reifyObject(UnpackView(s.asRep[List[b]])(newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
 
-  case class ListIso[A:Elem,B:Elem](iso: Iso[A,B]) extends Iso[List[A], List[B]] {
-    lazy val eTo = element[List[B]]
-    def from(x: Lst[B]) = x.map(iso.from _)
-    def to(x: Lst[A]) = x.map(iso.to _)
-    lazy val tag = {
-      implicit val tB = iso.tag
-      weakTypeTag[List[B]]
-    }
-    lazy val defaultRepTo = Default.defaultVal(SList.empty[B]/*toRep(scala.List.empty[B](eB.classTag))*/)
+  implicit val listContainer: Cont[List] = new Container[List] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[List[T]]
+    def lift[T](implicit eT: Elem[T]) = element[List[T]]
   }
 
-  def listIso[A, B](iso: Iso[A, B]): Iso[List[A], List[B]] = {
+  case class ListIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, List](iso) {
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
-    ListIso(iso)
+    def from(x: Lst[B]) = x.map(iso.from _)
+    def to(x: Lst[A]) = x.map(iso.to _)
+    lazy val defaultRepTo = Default.defaultVal(SList.empty[B])
   }
+
+//  def listIso[A, B](iso: Iso[A, B]): Iso[List[A], List[B]] = {
+//    implicit val eA = iso.eFrom
+//    implicit val eB = iso.eTo
+//    ListIso(iso)
+//  }
   
 //  val HasViewListArg = HasArg(hasViewListArg)
 //
@@ -107,7 +110,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
           val tmp = f1(x)
           iso.from(tmp)
         }
-        val res = ViewList(s)(iso)
+        val res = ViewList(s)(ListIso(iso))
         res
       }
       case (Def(view: ViewList[a, b]), _) => {
@@ -126,12 +129,12 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
       val filtered = view.source.filter { x => f(iso.to(x))}
-      ViewList(filtered)(iso)
+      ViewList(filtered)(ListIso(iso))
     }
     case view1@ViewList(Def(view2@ViewList(arr))) => {
       val compIso = composeIso(view2.innerIso, view1.innerIso)
       implicit val eAB = compIso.eTo
-      ViewList(arr)(compIso)
+      ViewList(arr)(ListIso(compIso))
     }
     case ListFoldLeft(xs, init, step) => (xs, init, step) match {
       case (Def(view: ViewList[a, b]), init: Rep[s], step) => {
@@ -179,7 +182,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       val v = valueWithoutView.asRep[a]
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
-      ViewList(SList.replicate(len, v))(iso)
+      ViewList(SList.replicate(len, v))(ListIso(iso))
     }
     case _ =>
       super.rewriteDef(d)

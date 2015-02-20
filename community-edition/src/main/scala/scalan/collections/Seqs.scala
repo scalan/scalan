@@ -58,22 +58,6 @@ trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
 trait SeqsDsl extends impl.SeqsAbs { self: ScalanCommunityDsl =>
   implicit def extendSSeqElement[T](elem: Elem[SSeq[T]]): SSeqImplElem[T] = elem.asInstanceOf[SSeqImplElem[T]]
 
-  case class SSeqIso[A:Elem,B:Elem](iso: Iso[A,B]) extends Iso[SSeq[A], SSeq[B]] {
-    lazy val eTo = element[SSeq[B]]
-    def from(x: Rep[SSeq[B]]) = x.map(iso.from _)
-    def to(x: Rep[SSeq[A]]) = x.map(iso.to _)
-    lazy val tag = {
-      implicit val tB = iso.tag
-      weakTypeTag[SSeq[B]]
-    }
-    lazy val defaultRepTo = Default.defaultVal(SSeq.empty[B])
-  }
-
-  def seqIso[A, B](iso: Iso[A, B]): Iso[SSeq[A], SSeq[B]] = {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    SSeqIso(iso)
-  }
 }
 
 trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
@@ -88,9 +72,9 @@ trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
 
 trait SeqsDslExp extends impl.SeqsExp { self: ScalanCommunityDslExp =>
 
-  case class ViewSeq[A, B](source: Rep[SSeq[A]])(implicit innerIso: Iso[A, B]) extends View1[A, B, SSeq] {
-    lazy val iso = seqIso(innerIso)
-    def copy(source: Rep[SSeq[A]]) = ViewSeq(source)
+  case class ViewSeq[A, B](source: Rep[SSeq[A]])(iso: Iso1[A, B, SSeq])
+    extends View1[A, B, SSeq](iso) {
+    def copy(source: Rep[SSeq[A]]) = ViewSeq(source)(iso)
     override def toString = s"ViewSeq[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewSeq[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -117,6 +101,19 @@ trait SeqsDslExp extends impl.SeqsExp { self: ScalanCommunityDslExp =>
 //    case _ =>
 //      super.unapplyViews(s)
 //  }).asInstanceOf[Option[Unpacked[T]]]
+
+  implicit val sseqContainer: Cont[SSeq] = new Container[SSeq] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[SSeq[T]]
+    def lift[T](implicit eT: Elem[T]) = element[SSeq[T]]
+  }
+
+  case class SSeqIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SSeq](iso) {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    def from(x: Rep[SSeq[B]]) = x.map(iso.from _)
+    def to(x: Rep[SSeq[A]]) = x.map(iso.to _)
+    lazy val defaultRepTo = Default.defaultVal(SSeq.empty[B])
+  }
 
   type MapArgs[A,B] = (Rep[SSeq[A]], Rep[A => B])
 
