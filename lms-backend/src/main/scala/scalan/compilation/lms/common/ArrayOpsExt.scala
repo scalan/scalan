@@ -3,12 +3,9 @@ package scalan.compilation.lms.common
 import java.util.HashMap
 
 import scala.virtualization.lms.common._
-import scala.virtualization.lms.epfl.test7.ArrayLoopsFatExp
+import scalan.compilation.lms.LmsBackendFacade
 
-trait ArrayOpsExtExp extends BaseExp with LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp
-with NumericOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp with EqualExp with BooleanOpsExp
-with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp with ArrayOpsExp with WhileExp
-with ArrayBuilderOpsExp with CastingOpsExp with EitherOpsExp with MathOpsExp with ExceptionOpsExp {
+trait ArrayOpsExtExp { self: LmsBackendFacade =>
 
   def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
 
