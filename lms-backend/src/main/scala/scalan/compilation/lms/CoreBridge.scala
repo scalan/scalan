@@ -4,9 +4,9 @@ package compilation.lms
 import java.lang.reflect.Method
 import java.util.HashMap
 
-import scalan.compilation.language.{MethodMapping, Interpreter}
+import scalan.compilation.language.{CoreMethodMapping, MethodMapping, Interpreter}
 
-trait CoreBridge extends LmsBridge with Interpreter { self: ScalanCtxExp with MethodMapping =>
+trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { self: ScalanCtxExp =>
 
   val lms: CoreLmsBackendBase
 
@@ -1086,19 +1086,6 @@ trait CoreBridge extends LmsBridge with Interpreter { self: ScalanCtxExp with Me
           }
         }
       }
-
-      case fun@ArrayFold(source, init, lambdaSym@Def(lam: Lambda[_, _])) =>
-        source.elem match {
-          case el: ArrayElem[_] =>
-            (createManifest(el.eItem), createManifest(fun.selfType)) match {
-              case (mA: Manifest[a], mB: Manifest[b]) =>
-                val lambdaF = mirrorLambdaToLmsFunc[(b, a), b](m)(lam.asInstanceOf[Lambda[(b, a), b]])
-                val lmsSource = symMirr(source).asInstanceOf[lms.Exp[Array[a]]]
-                val lmsInit = symMirr(init).asInstanceOf[lms.Exp[b]]
-                val exp = lms.foldArray[a, b](lmsSource, lmsInit, lambdaF)(mA, mB)
-                (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lambdaSym, lambdaF)))
-            }
-        }
 
       case ArrayStride(xs, start, length, stride) =>
         xs.elem match {

@@ -242,20 +242,37 @@ class MethodCallItTestsOld extends BaseItTests {
   }
 
   val testJar = "test.jar"
-  val jarReplaceMethExp = new ReplacementExp {
+  val jarReplaceMethExp = new ScalanCommunityExp with TestLmsCompiler {
     self =>
 
-    new ScalaLanguage with CommunityConf {
+    lazy val message = fun { (t: Rep[Throwable]) => t.getMessage}
+
+    import scala.reflect.runtime.universe.typeOf
+    val tyThrowable = typeOf[Throwable]
+
+    trait TestConf extends LanguageConf {
+      val testLib = new Library("") {
+        val scalanUtilPack = new Pack("scalan.util") {
+          val exceptionsFam = new Family('Exceptions) {
+            val throwable = new ClassType('SThrowable, 'PA) {
+              val getMessage = Method('getMessage, tyString, MethodArg(tyThrowable))
+            }
+          }
+        }
+      }
+    }
+
+    new ScalaLanguage with TestConf {
 
       val extLib = new ScalaLib(testJar, "scalan.it.lms.method.TestMethod") {
-        val getSquareLength = ScalaFunc('getSquareLength)
+        val testMassageMethod = ScalaFunc('testMassage)
       }
 
       val scala2Scala = {
         import scala.language.reflectiveCalls
 
         Map(
-          scalanCE.parraysPack.parraysFam.parray.length -> extLib.getSquareLength
+          testLib.scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMassageMethod
         )
       }
 
@@ -265,11 +282,11 @@ class MethodCallItTestsOld extends BaseItTests {
     }
   }
 
-  ignore("Mapping Method From Jar") {
+  test("Mapping Method From Jar") {
     val methodName = "MappingMethodFromJar"
     FileUtil.packJar(TestMethod.getClass, methodName, FileUtil.file(prefix, methodName).getAbsolutePath, jarReplaceMethExp.libs, testJar)
-    val squareLength = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.arrayLength, methodName, Array(5, 9, 2), jarReplaceMethExp.defaultCompilerConfig)
-    squareLength should equal(9)
+    val messageFromTestMethod = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.message, methodName, new Exception("Original massage"), jarReplaceMethExp.defaultCompilerConfig.copy(scalaVersion = Some("2.11.4")))
+    messageFromTestMethod should equal("Test Message")
   }
 }
 

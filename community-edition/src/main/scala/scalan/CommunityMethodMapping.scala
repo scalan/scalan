@@ -16,15 +16,15 @@ trait CommunityMethodMapping extends MethodMapping {
       val parraysPack = new Pack("scalan.parrays") {
         val parraysFam = new Family('PArrays) {
           val parray = new ClassType('PArray, 'PA, TyArg('A)) {
-            val length = Method('length, Nil, tyInt)
-            val arr = Method('arr, Nil, tyArray)
+            val length = Method('length, tyInt)
+            val arr = Method('arr, tyArray)
           }
         }
       }
       val matrixPack = new Pack("scalan.linalgebra") {
         val matrixFam = new Family('Matrices) {
           val matrix = new ClassType('Matrix, 'PA, TyArg('A)) {
-            val invert = Method('invert, Nil, tyMatrix)
+            val invert = Method('invert, tyMatrix)
           }
         }
       }
@@ -60,8 +60,8 @@ trait CommunityMethodMapping extends MethodMapping {
     import scala.language.reflectiveCalls
 
     val linpackCpp = new CppLib("linpack.h", "linpack.o") {
-      val invertMatr = CppFunc('invertMatrix, CppArg(CppType('lapack_matr), 'm), CppArg(CppType('T2), 'V2))
-      val transMatr = CppFunc('transMatrixDouble)
+      val invertMatr = CppFunc("invertMatrix", CppArg(CppType("lapack_matr"), "m"), CppArg(CppType("T2"), "V2"))
+      val transMatr = CppFunc("transMatrixDouble")
     }
 
     val mapScalanCE2Cpp = {
