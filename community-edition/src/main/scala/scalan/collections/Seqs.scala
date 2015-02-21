@@ -56,8 +56,6 @@ trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
 }
 
 trait SeqsDsl extends impl.SeqsAbs { self: ScalanCommunityDsl =>
-  implicit def extendSSeqElement[T](elem: Elem[SSeq[T]]): SSeqImplElem[T] = elem.asInstanceOf[SSeqImplElem[T]]
-
 }
 
 trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
@@ -72,15 +70,6 @@ trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
 
 trait SeqsDslExp extends impl.SeqsExp { self: ScalanCommunityDslExp =>
 
-  case class ViewSeq[A, B](source: Rep[SSeq[A]])(iso: Iso1[A, B, SSeq])
-    extends View1[A, B, SSeq](iso) {
-    def copy(source: Rep[SSeq[A]]) = ViewSeq(source)(iso)
-    override def toString = s"ViewSeq[${innerIso.eTo.name}]($source)"
-    override def equals(other: Any) = other match {
-      case v: ViewSeq[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
-      case _ => false
-    }
-  }
 
 //  object UserTypeSeq {
 //    def unapply(s: Exp[_]): Option[Iso[_, _]] = {
@@ -102,26 +91,13 @@ trait SeqsDslExp extends impl.SeqsExp { self: ScalanCommunityDslExp =>
 //      super.unapplyViews(s)
 //  }).asInstanceOf[Option[Unpacked[T]]]
 
-  implicit val sseqContainer: Cont[SSeq] = new Container[SSeq] {
-    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[SSeq[T]]
-    def lift[T](implicit eT: Elem[T]) = element[SSeq[T]]
-  }
-
-  case class SSeqIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SSeq](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Rep[SSeq[B]]) = x.map(iso.from _)
-    def to(x: Rep[SSeq[A]]) = x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(SSeq.empty[B])
-  }
-
   type MapArgs[A,B] = (Rep[SSeq[A]], Rep[A => B])
 
   override def rewriteDef[T](d: Def[T]) = d match {
     case SSeqMethods.apply(Def(d2), i) => d2 match {
       case SSeqMethods.map(t: MapArgs[a,b] @unchecked) =>
         val xs = t._1; val f = t._2
-        implicit val eT = xs.elem.eA
+        implicit val eT = xs.elem.eItem
         f(xs(i))
       case _ =>
         super.rewriteDef(d)

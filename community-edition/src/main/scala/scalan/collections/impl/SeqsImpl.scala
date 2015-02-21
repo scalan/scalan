@@ -3,8 +3,6 @@ package impl
 
 import scala.collection.Seq
 import scalan._
-import scalan.common.Default
-import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 
@@ -22,8 +20,22 @@ trait SeqsAbs extends Scalan with Seqs {
 
   implicit def defaultSSeqElem[A:Elem]: Elem[SSeq[A]] = element[SSeqImpl[A]].asElem[SSeq[A]]
   implicit def SeqElement[A:Elem:WeakTypeTag]: Elem[Seq[A]]
+  implicit def castSSeqElement[A](elem: Elem[SSeq[A]]): SSeqElem[A,_,SSeq[A]] = elem.asInstanceOf[SSeqElem[A,_,SSeq[A]]]
 
-  abstract class SSeqElem[A, From, To <: SSeq[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+  implicit val sseqContainer: Cont[SSeq] = new Container[SSeq] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[SSeq[T]]
+    def lift[T](implicit eT: Elem[T]) = element[SSeq[T]]
+  }
+
+  case class SSeqIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SSeq](iso) {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    def from(x: Rep[SSeq[B]]) = x.map(iso.from _)
+    def to(x: Rep[SSeq[A]]) = x.map(iso.to _)
+    lazy val defaultRepTo = Default.defaultVal(SSeq.empty[B])
+  }
+
+  abstract class SSeqElem[A, From, To <: SSeq[A]](implicit iso: Iso[From, To], eA: Elem[A]) extends ViewElem1[A, From, To, SSeq] {
     override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
     def convertSSeq(x : Rep[SSeq[A]]): Rep[To]
   }
@@ -112,7 +124,7 @@ trait SeqsAbs extends Scalan with Seqs {
   trait SSeqImplCompanion
   // elem for concrete class
   class SSeqImplElem[A](iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit val eA: Elem[A])
-    extends SSeqElem[A, SSeqImplData[A], SSeqImpl[A]](iso) {
+    extends SSeqElem[A, SSeqImplData[A], SSeqImpl[A]]()(iso, eA) {
     def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
   }
 
@@ -240,6 +252,16 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeDef[SSeqCompanionAbs, SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
     override def mirror(t: Transformer) = this
+  }
+
+  case class ViewSSeq[A, B](source: Rep[SSeq[A]])(iso: Iso1[A, B, SSeq])
+    extends View1[A, B, SSeq](iso) {
+    def copy(source: Rep[SSeq[A]]) = ViewSSeq(source)(iso)
+    override def toString = s"ViewSeq[${innerIso.eTo.name}]($source)"
+    override def equals(other: Any) = other match {
+      case v: ViewSSeq[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
+      case _ => false
+    }
   }
 
   implicit def SeqElement[A:Elem:WeakTypeTag]: Elem[Seq[A]] = new ExpBaseElemEx[Seq[A], SSeq[A]](element[SSeq[A]])(weakTypeTag[Seq[A]], DefaultOfSeq[A])
