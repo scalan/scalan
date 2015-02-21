@@ -43,9 +43,9 @@ trait Views extends Elems { self: Scalan =>
     def unapply[From, To](ve: ViewElem[From, To]): Option[Iso[From, To]] = Some(ve.iso)
   }
 
-  abstract class ViewElem1[A,From,To,C[_]]
-    (implicit val eItem: Elem[A], val cont: Cont[C], iso: Iso[From, To])
-    extends ViewElem[From, To] {
+  abstract class ViewElem1[A,From,To,C[_]](iso: Iso[From, To])
+    (implicit val eItem: Elem[A], val cont: Cont[C])
+    extends ViewElem[From, To]()(iso) {
   }
 
   object UnpackableElem {

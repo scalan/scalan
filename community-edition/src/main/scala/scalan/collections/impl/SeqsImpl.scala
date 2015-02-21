@@ -35,7 +35,7 @@ trait SeqsAbs extends Scalan with Seqs {
     lazy val defaultRepTo = Default.defaultVal(SSeq.empty[B])
   }
 
-  abstract class SSeqElem[A, From, To <: SSeq[A]](implicit iso: Iso[From, To], eA: Elem[A]) extends ViewElem1[A, From, To, SSeq] {
+  abstract class SSeqElem[A, From, To <: SSeq[A]](iso: Iso[From, To])(implicit eA: Elem[A]) extends ViewElem1[A, From, To, SSeq](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
     def convertSSeq(x : Rep[SSeq[A]]): Rep[To]
   }
@@ -124,7 +124,7 @@ trait SeqsAbs extends Scalan with Seqs {
   trait SSeqImplCompanion
   // elem for concrete class
   class SSeqImplElem[A](iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit val eA: Elem[A])
-    extends SSeqElem[A, SSeqImplData[A], SSeqImpl[A]]()(iso, eA) {
+    extends SSeqElem[A, SSeqImplData[A], SSeqImpl[A]](iso) {
     def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
   }
 
