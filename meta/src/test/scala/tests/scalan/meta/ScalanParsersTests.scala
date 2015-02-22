@@ -108,10 +108,10 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, Some("a"), L(SMethodAnnotation("OverloadId",List(SDefaultExpr("\"a\"")))), None))
     testSMethod(
       "def f(x: Int): Int",
-      MD("f", Nil, L(MAs(false, List(MA("x", INT, None)))), Some(INT), false, None, Nil, None))
+      MD("f", Nil, L(MAs(List(MA(false, false, "x", INT, None)))), Some(INT), false, None, Nil, None))
     testSMethod(
       "def f[A <: T](x: A): Int",
-      MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)), L(MAs(false, L(MA("x", TC("A", Nil), None)))), Some(INT), false, None, Nil, None))
+      MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)), L(MAs(L(MA(false, false, "x", TC("A", Nil), None)))), Some(INT), false, None, Nil, None))
     testSMethod(
       "def f[A : Numeric]: Int",
       MD("f", L(STpeArg("A", None, L("Numeric"))), Nil, Some(INT), false, None, Nil, None))
@@ -120,7 +120,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
       MD(
         "f",
         L(STpeArg("A", Some(INT), L("Numeric", "Fractional"))),
-        L(MAs(false, L(MA("x", TC("A", Nil), None))), MAs(true, L(MA("y", TC("A", Nil), None)))),
+        L(MAs(L(MA(false, false, "x", TC("A", Nil), None))), MAs(L(MA(true, false, "y", TC("A", Nil), None)))),
         Some(INT), false, None, Nil, None))
   }
 
@@ -138,7 +138,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     testTrait("trait Edge[V,E]{ def f[A <: T](x: A, y: (A,T)): Int }",
       traitEdgeVE.copy(
         body = L(MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)),
-          L(MAs(false, L(MA("x", TC("A", Nil), None), MA("y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
+          L(MAs(L(MA(false, false, "x", TC("A", Nil), None), MA(false, false, "y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
           Some(INT), false, None, Nil, None))))
     testTrait(
       """trait A {
@@ -152,7 +152,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
         IS("scalan._"),
         STpeDef("Rep", L(STpeArg("A", None, Nil)), TC("A", Nil)),
         MD("f", Nil, Nil, Some(T(L(INT, TC("A", Nil)))), false, None, Nil, None),
-        MD("g", Nil, L(MAs(false, L(MA("x", BOOL, None)))), Some(TC("A", Nil)), false, Some("b"), L(SMethodAnnotation("OverloadId",List(SDefaultExpr("\"b\"")))), None)), None, None))
+        MD("g", Nil, L(MAs(L(MA(false, false, "x", BOOL, None)))), Some(TC("A", Nil)), false, Some("b"), L(SMethodAnnotation("OverloadId",List(SDefaultExpr("\"b\"")))), None)), None, None))
 
   }
 
@@ -169,9 +169,9 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
 
   describe("SClassDef") {
     val classA =
-      CD("A", Nil, Nil, Nil, Nil, Nil, None, None, false)
+      CD("A", Nil, SClassArgs(Nil), SClassArgs(Nil), Nil, Nil, None, None, false)
     val classEdgeVE =
-      CD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), Nil, Nil, Nil, Nil, None, None, false)
+      CD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), SClassArgs(Nil), SClassArgs(Nil), Nil, Nil, None, None, false)
     testSClass("class A", classA)
     testSClass("class A extends B",
       classA.copy(ancestors = L(TC("B", Nil))))
@@ -180,9 +180,9 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     testSClass("class Edge[V,E]", classEdgeVE)
     testSClass("class Edge[V,E](val x: V){ def f[A <: T](x: A, y: (A,T)): Int }",
       classEdgeVE.copy(
-        args = L(SClassArg(false, false, true, "x", TC("V", Nil), None)),
+        args = SClassArgs(L(SClassArg(false, false, true, "x", TC("V", Nil), None))),
         body = L(MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)),
-          L(MAs(false, L(MA("x", TC("A", Nil), None), MA("y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
+          L(MAs(L(MA(false, false, "x", TC("A", Nil), None), MA(false, false, "y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
           Some(INT), false, None, Nil, None))))
   }
 
@@ -206,7 +206,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
     val entity = TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None, Nil, Some(()))), None, None)
-    val obsImpl1 = CD("ObservableImpl1", tpeArgA, Nil, argEA, ancObsA, Nil, None, None, false)
+    val obsImpl1 = CD("ObservableImpl1", tpeArgA, SClassArgs(Nil), SClassArgs(argEA), ancObsA, Nil, None, None, false)
     val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
 
     testModule(

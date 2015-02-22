@@ -37,6 +37,16 @@ object Extensions {
 
 trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
 
+  implicit class SMethodOrClassArgsOps(as: SMethodOrClassArgs) {
+    def argNames = as.args.map(a => a.name)
+    def argNamesAndTypes = as.args.map(a => s"${a.name}: ${a.tpe}")
+    def argUnrepTypes(module: SEntityModuleDef, config: CodegenConfig) =
+      as.args.map(a => a.tpe.unRep(module, config) match {
+        case Some(t) => t
+        case None => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
+      })
+  }
+
   class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) {
     import Extensions._
     def getTpeArgDecls(args: STpeArgs) = args.map(_.declaration)
@@ -50,35 +60,44 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         s"[${args.rep(t => (if (t.isHighKind) s"${t.declaration}:Cont" else s"${t.name}:Elem") +
           withTags.opt(":WeakTypeTag"))}]")
 
-    abstract class TemplateData(val name: String, val tpeArgs: List[STpeArg]) {
+    abstract class TemplateData(val module: SEntityModuleDef, val entity: STraitOrClassDef) {
+      val name = entity.name
+      val tpeArgs = entity.tpeArgs
       val tpeArgDecls = getTpeArgDecls(tpeArgs)
       val tpeArgUses = getTpeArgUse(tpeArgs)
       val tpeArgDeclString = getTpeArgDeclString(tpeArgs)
       val tpeArgUseString = getTpeArgUseString(tpeArgs)
+      val entityType = name + tpeArgUseString
+      val typesDeclPref = tpeArgDecls.opt(as => s"${as.rep(t => t)}, ")
+      val typesUsePref = tpeArgUses.opt(as => s"${as.rep(t => t)}, ")
+      val implicitArgsDecl = entity.implicitArgs.args.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
+      val implicitArgsUse = entity.implicitArgs.args.opt(args => s"(${args.map(_.name).rep(a => a)})")
+      val implicitTagsDecl = entity.implicitArgs.args.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
+
+      def isContainer1 = tpeArgs.length == 1
       def boundedTpeArgString(withTags: Boolean = false) = getBoundedTpeArgString(tpeArgs, withTags)
-      def nameWithArgs = name + tpeArgUseString
+      def tpeArgsImplicitDecl(typeClass: String) = {
+        tpeArgs.opt(args =>
+          s"(implicit ${args.rep(t => (s"ev${t.name}: $typeClass[${t.name}]"))})")
+      }
     }
     
-    class EntityTemplateData(name: String, tpeArgs: List[STpeArg]) extends TemplateData(name, tpeArgs)
+    class EntityTemplateData(m: SEntityModuleDef, t: STraitDef) extends TemplateData(m, t)
     
     object EntityTemplateData {
-      def apply(t: STraitDef) = new EntityTemplateData(t.name, t.tpeArgs)
+      def apply(m: SEntityModuleDef, t: STraitDef) = new EntityTemplateData(m, t)
     }
     
-    class ConcreteClassTemplateData(name: String, val args: List[SClassArg], implArgs: List[SClassArg], tpeArgs: List[STpeArg], val baseType: STraitCall) extends TemplateData(name, tpeArgs) {
-      val argNames = args.map(a => a.name)
-      val argNamesAndTypes = args.map(a => s"${a.name}: ${a.tpe}")
-      val argUnrepTypes = args.map(a => a.tpe.unRep(module, config) match {
-        case Some(t) => t
-        case None => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
-      })
-      val implicitArgs = implArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
-      val useImplicits = implArgs.opt(args => s"(${args.map(_.name).rep(a => a)})")
-      val implicitSignature = implArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
+    class ConcreteClassTemplateData(m: SEntityModuleDef, c: SClassDef) extends TemplateData(m, c) {
+      val args = c.args
+      val baseType = c.ancestors.head
+      val argNames = args.argNames
+      val argNamesAndTypes = args.argNamesAndTypes
+      val argUnrepTypes = args.argUnrepTypes(module, config)
     }
     
     object ConcreteClassTemplateData {
-      def apply(c: SClassDef) = new ConcreteClassTemplateData(c.name, c.args, c.implicitArgs, c.tpeArgs, c.ancestors.head)
+      def apply(m: SEntityModuleDef, c: SClassDef) = new ConcreteClassTemplateData(m, c)
     }
 
     def dataType(ts: List[STpeExpr]): String = ts match {
@@ -119,7 +138,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
     def typeArgString(typeArgs: Seq[String]) =
       if (typeArgs.isEmpty) "" else typeArgs.mkString("[", ", ", "]")
 
-    val templateData = EntityTemplateData(module.entityOps)
+    val templateData = EntityTemplateData(module, module.entityOps)
     val optBT = module.entityOps.optBaseType
     val entityName = templateData.name
     val entityNameBT = optBT.map(_.name).getOrElse(templateData.name)
@@ -232,17 +251,20 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |""".stripMargin
     }
 
-    def getTraitAbs = {
-      val entityCompOpt = module.entityOps.companion
-      val companionName = s"${entityName}Companion"
-      def entityProxy(entityName: String, typesDecl: String, typesUse: String) =
-        s"""
+    def entityProxy(templateData: EntityTemplateData) = {
+      val entityName = templateData.name
+      val typesDecl = templateData.tpeArgDeclString
+      val typesUse = templateData.tpeArgUseString
+      s"""
         |  // single proxy for each type family
         |  implicit def proxy$entityName${typesDecl}(p: Rep[$entityName${typesUse}]): $entityName$typesUse =
         |    proxyOps[$entityName${typesUse}](p)
         |""".stripAndTrim
+    }
 
-
+    def getTraitAbs = {
+      val entityCompOpt = module.entityOps.companion
+      val companionName = s"${entityName}Companion"
       val proxyBT = optBT.opt(bt => {
         s"""
         |  // BaseTypeEx proxy
@@ -267,14 +289,36 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
           |""".stripAndTrim
         })
 
-      def familyElem(entityName: String, tyArgsDecl: List[String], typesUse: String) =
+      def familyContainer(e: EntityTemplateData) = {
+        val typesDecl = e.tpeArgDeclString
+        val entityElemType = s"${entityName}Elem[${e.typesUsePref}_,${e.entityType}]"
         s"""
-        |  abstract class ${entityName}Elem[${tyArgsDecl.opt(tyArgs => s"${tyArgsDecl.rep(t => t)}, ")}From, To <: $entityName$typesUse](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
-        |    override def convert(x: Rep[Reifiable[_]]) = convert$entityName(x.asRep[$entityName$typesUse])
-        |    def convert$entityName(x : Rep[$entityName$typesUse]): Rep[To]
+        |  implicit def cast${e.name}Element${typesDecl}(elem: Elem[${e.entityType}]): $entityElemType = elem.asInstanceOf[$entityElemType]
+        |  implicit val container${e.name}: Cont[${e.name}] = new Container[${e.name}] {
+        |    def tag${typesDecl}${e.tpeArgsImplicitDecl("WeakTypeTag")} = weakTypeTag[${e.entityType}]
+        |    def lift${typesDecl}${e.tpeArgsImplicitDecl("Elem")} = element[${e.entityType}]
+        |  }
+        |  case class ${e.name}Iso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ${e.name}](iso) {
+        |    implicit val eA = iso.eFrom
+        |    implicit val eB = iso.eTo
+        |    def from(x: Rep[${e.name}[B]]) = x.map(iso.from _)
+        |    def to(x: Rep[${e.name}[A]]) = x.map(iso.to _)
+        |    lazy val defaultRepTo = Default.defaultVal(${e.name}.empty[B])
         |  }
         |""".stripAndTrim
+      }
 
+      def familyElem(e: EntityTemplateData) = {
+        val entityName = e.name
+        val typesUse = e.tpeArgUseString
+        s"""
+        |  abstract class ${e.name}Elem[${e.typesDeclPref}From, To <: ${e.entityType}](iso: Iso[From, To])${e.implicitArgsDecl}
+        |    extends ViewElem1[${e.typesUsePref}From, To, $entityName](iso) {
+        |    override def convert(x: Rep[Reifiable[_]]) = convert$entityName(x.asRep[${e.entityType}])
+        |    def convert$entityName(x : Rep[${e.entityType}]): Rep[To]
+        |  }
+        |""".stripAndTrim
+      }
 
       val companionMethods = getCompanionMethods.opt { case (constrs, methods) =>
         constrs.rep(md => externalConstructor(md), "\n    ") +
@@ -300,32 +344,29 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         |""".stripAndTrim
 
       val subEntities = for { entity <- module.entities.drop(1) } yield {
-        val templateData = EntityTemplateData(entity)
+        val templateData = EntityTemplateData(module, entity)
         val entityName = templateData.name
         val tyArgsDecl = templateData.tpeArgDecls
-        //val tyArgsUse = templateData.tpeArgUses
         val typesDecl = templateData.tpeArgDeclString
         val typesUse = templateData.tpeArgUseString
-        //val typesWithElems = templateData.boundedTpeArgString(false)
-        //val typesWithElemsAndTags = templateData.boundedTpeArgString(true)
         s"""
-        |${entityProxy(entityName, typesDecl, typesUse)}
-        |${familyElem(entityName, tyArgsDecl, typesUse)}
+        |${entityProxy(templateData)}
+        |${familyElem(templateData)}
         |""".stripMargin
       }
 
       val concreteClasses = for { c <- module.concreteSClasses } yield {
         val className = c.name
-        val concTemplateData = ConcreteClassTemplateData(c)
+        val concTemplateData = ConcreteClassTemplateData(module, c)
         val typesDecl = concTemplateData.tpeArgDeclString
         val typesUse = concTemplateData.tpeArgUseString
         val typesWithElems = concTemplateData.boundedTpeArgString(false)
         val fields = concTemplateData.argNames
         val fieldsWithType = concTemplateData.argNamesAndTypes
         val fieldTypes = concTemplateData.argUnrepTypes
-        val implicitArgs = concTemplateData.implicitArgs
-        val useImplicits = concTemplateData.useImplicits
-        val implicitArgsWithVals = c.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")
+        val implicitArgs = concTemplateData.implicitArgsDecl
+        val useImplicits = concTemplateData.implicitArgsUse
+        val implicitArgsWithVals = c.implicitArgs.args.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")
         val parent     = c.ancestors.head
         val parentArgs = parent.tpeSExprs.map(_.toString)
         val parentArgsStr = parentArgs.map(_ + ", ").mkString
@@ -355,7 +396,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
 
         def converterBody(entity: STraitDef, conc: SClassDef) = {
           val availableFields = entity.getAvailableFields(module)
-          val concFields = conc.args.map(_.name)
+          val concFields = conc.args.args.map(_.name)
           val missingFields = concFields.filterNot(availableFields.contains(_))
           if (missingFields.isEmpty) {
             val args = concFields.rep(f => s"x.$f")
@@ -440,12 +481,12 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
        |// Abs -----------------------------------
        |trait ${module.name}Abs extends ${config.baseContextTrait} with ${module.name} {
        |  ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
-       |${entityProxy(entityName, typesDecl, typesUse)}
+       |${entityProxy(templateData)}
        |$proxyBT
        |$baseTypeElem
        |
-       |${familyElem(entityName, tyArgsDecl, typesUse)}
-       |
+       |${if (templateData.isContainer1) familyContainer(templateData) else ""}
+       |${familyElem(templateData)}
        |$companionAbs
        |
        |${subEntities.mkString("\n\n")}
@@ -457,15 +498,14 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
 
     def getSClassSeq(c: SClassDef) = {
       val className = c.name
-      val templateData = ConcreteClassTemplateData(c)
+      val templateData = ConcreteClassTemplateData(module, c)
       val typesDecl = templateData.tpeArgDeclString
       val typesUse = templateData.tpeArgUseString
       val typesWithElems = templateData.boundedTpeArgString(false)
       val fields = templateData.argNames
       val fieldsWithType = templateData.argNamesAndTypes
       val traitWithTypes = templateData.baseType
-      val implicitArgs = templateData.implicitArgs
-      val implicitSignature = templateData.implicitSignature
+      val implicitArgsDecl = templateData.implicitArgsDecl
 
       val externalMethods = module.entityOps.getMethodsWithAnnotation(ExternalAnnotation)
       val externalMethodsStr = filterByExplicitDeclaration(externalMethods).rep(md => externalSeqMethod(md, true), "\n    ")
@@ -474,7 +514,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         s"""
          |  case class Seq$className${typesDecl}
          |      (${fieldsWithType.rep(f => s"override val $f")})
-         |      ${implicitSignature}
+         |      ${implicitArgsDecl}
          |    extends $className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
          |       ${module.seqDslImpl.opt(_ => s"with Seq$entityName${typesUse}")} with UserTypeSeq[$traitWithTypes, $className${typesUse}] {
          |    lazy val selfType = element[${className}${typesUse}].asInstanceOf[Elem[$traitWithTypes]]
@@ -487,7 +527,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val constrDefs =
         s"""
          |  def mk$className${typesDecl}
-         |      (${fieldsWithType.rep()})$implicitArgs =
+         |      (${fieldsWithType.rep()})$implicitArgsDecl =
          |      new Seq$className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
          |  def unmk$className${typesWithElems}(p: Rep[$className${typesUse}]) =
          |    Some((${fields.rep(f => s"p.$f")}))
@@ -498,20 +538,19 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
 
     def getSClassExp(c: SClassDef) = {
       val className = c.name
-      val td = ConcreteClassTemplateData(c)
+      val td = ConcreteClassTemplateData(module, c)
       val typesDecl = td.tpeArgDeclString
       val typesUse = td.tpeArgUseString
       val typesWithElems = td.boundedTpeArgString(false)
       val fields = td.argNames
       val fieldsWithType = td.argNamesAndTypes
       val traitWithTypes = td.baseType
-      val implicitArgs = td.implicitArgs
-      val implicitSignature = td.implicitSignature
+      val implicitArgsDecl = td.implicitArgsDecl
       val userTypeNodeDefs =
         s"""
          |  case class Exp$className${typesDecl}
          |      (${fieldsWithType.rep(f => s"override val $f")})
-         |      ${implicitSignature}
+         |      ${implicitArgsDecl}
          |    extends $className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")} with UserTypeDef[$traitWithTypes, $className${typesUse}] {
          |    lazy val selfType = element[$className${typesUse}].asInstanceOf[Elem[$traitWithTypes]]
          |    override def mirror(t: Transformer) = Exp$className${typesUse}(${fields.rep(f => s"t($f)")})
@@ -528,7 +567,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val constrDefs =
         s"""
          |  def mk$className${typesDecl}
-         |    (${fieldsWithType.rep()})$implicitArgs =
+         |    (${fieldsWithType.rep()})$implicitArgsDecl =
          |    new Exp$className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
          |  def unmk$className${typesWithElems}(p: Rep[$className${typesUse}]) =
          |    Some((${fields.rep(f => s"p.$f")}))
@@ -584,10 +623,26 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
        |""".stripAndTrim
     }
 
+    def familyView(e: EntityTemplateData) = {
+      val typesDecl = e.tpeArgDeclString
+      val entityElemType = s"${entityName}Elem[${e.typesUsePref}_,${e.entityType}]"
+      s"""
+        |  case class View${e.name}[A, B](source: Rep[${e.name}[A]])(iso: Iso1[A, B, ${e.name}])
+        |    extends View1[A, B, ${e.name}](iso) {
+        |    def copy(source: Rep[${e.name}[A]]) = View${e.name}(source)(iso)
+        |    override def toString = s"View${e.name}[${"${innerIso.eTo.name}"}](${"$source"})"
+        |    override def equals(other: Any) = other match {
+        |      case v: View${e.name}[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
+        |      case _ => false
+        |    }
+        |  }
+        |""".stripAndTrim
+    }
+
     def getTraitExp = {
       val e = module.entityOps
       val entityName = e.name
-      val td = EntityTemplateData(e)
+      val td = EntityTemplateData(module, e)
 
       val concreteClassesString = module.concreteSClasses.map(getSClassExp)
       
@@ -600,8 +655,8 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
        |    override def mirror(t: Transformer) = this
        |  }
        |
+       |${if (td.isContainer1) familyView(td) else ""}
        |${baseTypeElem("Exp")}
-       |
        |${concreteClassesString.mkString("\n\n")}
        |
        |${methodExtractorsString(e)}
@@ -625,7 +680,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
         }
 
         def reasonToSkipMethod(m: SMethodDef): Option[String] = {
-          (m.explicitArgs.collect { case SMethodArg(name, STpeFunc(_, _), _, _) => name} match {
+          (m.explicitArgs.collect { case SMethodArg(_,_, name, STpeFunc(_, _), _, _) => name} match {
             case Seq() => None
             case nonEmpty => Some(s"Method has function arguments ${nonEmpty.mkString(", ")}")
           }).orElse {

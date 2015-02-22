@@ -128,13 +128,18 @@ trait ScalanAst {
     extends SBodyItem {
     def externalOpt: Option[SMethodAnnotation] = annotations.filter(a => a.annotationClass == "External").headOption
     def isElem: Boolean = elem.isDefined
-    def explicitArgs = argSections.filter(!_.impFlag).flatMap(_.args)
+    def explicitArgs = argSections.flatMap(_.args.filterNot(_.impFlag))
     def allArgs = argSections.flatMap(_.args)
   }
   case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
   case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
 
-  case class STpeArg(name: String, bound: Option[STpeExpr], contextBound: List[String], tparams: List[STpeArg] = Nil) {
+  case class STpeArg(
+    name: String,
+    bound: Option[STpeExpr],
+    contextBound: List[String],
+    tparams: List[STpeArg] = Nil)
+  {
     def isHighKind = !tparams.isEmpty
     def declaration: String =
       if (isHighKind) {
@@ -145,13 +150,41 @@ trait ScalanAst {
   }
   type STpeArgs = List[STpeArg]
 
-  case class SMethodArg(name: String, tpe: STpeExpr, default: Option[SExpr], annotations: List[SArgAnnotation] = Nil) {
+  trait SMethodOrClassArg {
+    def impFlag: Boolean
+    def overFlag: Boolean
+    def name: String
+    def tpe: STpeExpr
+    def default: Option[SExpr]
+    def annotations: List[SArgAnnotation]
     def isArgList = annotations.exists(a => a.annotationClass == ArgListAnnotation)
   }
-  case class SMethodArgs(impFlag: Boolean, args: List[SMethodArg])
 
-  case class SClassArg(impFlag: Boolean, overFlag: Boolean, valFlag: Boolean, name: String, tpe: STpeExpr, default: Option[SExpr])
-  type SClassArgs = List[SClassArg]
+  case class SMethodArg(
+    impFlag: Boolean,
+    overFlag: Boolean,
+    name: String,
+    tpe: STpeExpr,
+    default: Option[SExpr],
+    annotations: List[SArgAnnotation] = Nil)
+    extends SMethodOrClassArg
+
+  case class SClassArg(
+    impFlag: Boolean,
+    overFlag: Boolean,
+    valFlag: Boolean,
+    name: String,
+    tpe: STpeExpr,
+    default: Option[SExpr],
+    annotations: List[SArgAnnotation] = Nil)
+    extends SMethodOrClassArg
+
+  trait SMethodOrClassArgs {
+    def args: List[SMethodOrClassArg]
+  }
+
+  case class SMethodArgs(args: List[SMethodArg]) extends SMethodOrClassArgs
+  case class SClassArgs(args: List[SClassArg]) extends SMethodOrClassArgs
 
   case class SSelfTypeDef(name: String, components: List[STpeExpr]) {
     def tpe = components.mkString(" with ")
@@ -165,8 +198,10 @@ trait ScalanAst {
     def selfType: Option[SSelfTypeDef]
     def companion: Option[STraitOrClassDef]
     def isTrait: Boolean
-    def isHighKind = tpeArgs.exists(_.isHighKind)
     def annotations: List[STraitOrClassAnnotation]
+    def implicitArgs: SClassArgs
+    def isHighKind = tpeArgs.exists(_.isHighKind)
+
     def getMethodsWithAnnotation(annClass: String) = body.collect {
       case md: SMethodDef if md.annotations.exists(a => a.annotationClass == annClass) => md
     }
@@ -182,6 +217,8 @@ trait ScalanAst {
     def getAvailableFields(module: SEntityModuleDef): Set[String] = {
       getFieldDefs.map(_.name).toSet ++ getAncestorTraits(module).flatMap(_.getAvailableFields(module))
     }
+
+    def getConcreteClasses = body.collect { case c: SClassDef => c }
   }
 
   case class STraitDef(
@@ -192,7 +229,28 @@ trait ScalanAst {
     selfType: Option[SSelfTypeDef],
     companion: Option[STraitOrClassDef],
     annotations: List[STraitOrClassAnnotation] = Nil) extends STraitOrClassDef {
+
     def isTrait = true
+
+    val implicitArgs: SClassArgs = {
+      val implicitElems = body.collect {
+        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_)) => (name, elem)
+      }
+      val args = tpeArgs.map(a => {
+        val optDef = implicitElems.collectFirst {
+          case (methName, elem @ STraitCall("Elem", List(STraitCall(name, _)))) if name == a.name =>
+            (methName, elem)
+        }
+
+        optDef.map { case (name, tyElem) => {
+          SClassArg(true, false, true, name, tyElem, None)
+        }}
+      })
+      val missingElems = args.filterNot(_.isDefined)
+      if (missingElems.length > 0)
+        sys.error(s"implicit def eA: Elem[A] should be declared for all type parameters: missing ${missingElems}")
+      SClassArgs(args.flatMap(a => a))
+    }
   }
 
   final val BaseTypeTraitName = "BaseTypeEx"
@@ -252,36 +310,19 @@ trait ScalanAst {
         case _ => sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
       }
     }
+
     def isEntity(name: String) = entities.exists(e => e.name == name)
   }
 
-  def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
+
   object IsImplicitElem {
     def unapply(item: SBodyItem): Option[(String, STraitCall)] = item match {
       case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_)) => Some((name, elem))
       case _ => None
     }
   }
-  object SEntityModuleDef {
-    def getImplicitArgs(entity: STraitDef): SClassArgs = {
-      val implicitElems = entity.body.collect {
-        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_)) => (name, elem)
-      }
-      val args = entity.tpeArgs.map(a => {
-        val optDef = implicitElems.collectFirst {
-          case (methName, elem @ STraitCall("Elem", List(STraitCall(name, _)))) if name == a.name =>
-            (methName, elem)
-        }
 
-        optDef.map { case (name, tyElem) => {
-          SClassArg(true, false, true, name, tyElem, None)
-        }}
-      })
-      val missingElems = args.filterNot(_.isDefined)
-      if (missingElems.length > 0)
-        sys.error(s"implicit def eA: Elem[A] should be declared for all type parameters: missing ${missingElems}")
-      args.flatMap(a => a)
-    }
+  object SEntityModuleDef {
 
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
 
@@ -304,8 +345,8 @@ trait ScalanAst {
           val defaultBTImpl = SClassDef(
             name = entityImplName,
             tpeArgs = entity.tpeArgs,
-            args = List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None)),
-            implicitArgs = getImplicitArgs(entity),
+            args = SClassArgs(List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None))),
+            implicitArgs = entity.implicitArgs,
             ancestors = List(STraitCall(entity.name, typeUseExprs)),
             body = List(
 
@@ -318,8 +359,8 @@ trait ScalanAst {
             true, Nil
 
           )
-          defaultBTImpl :: getConcreteClasses(defs)
-        case None => getConcreteClasses(defs)
+          defaultBTImpl :: moduleTrait.getConcreteClasses
+        case None => moduleTrait.getConcreteClasses
       }
 
       val methods = defs.collect { case md: SMethodDef => md }
@@ -504,14 +545,15 @@ trait ScalanParsers extends ScalanAst {
     SObjectDef(od.name, ancestors, body)
   }
 
-  def classArgs(vds: List[ValDef]): SClassArgs = vds.filter(!isEvidenceParam(_)).map(classArg)
+  def classArgs(vds: List[ValDef]): SClassArgs = SClassArgs(vds.filter(!isEvidenceParam(_)).map(classArg))
 
   def classArg(vd: ValDef): SClassArg = {
     val tpe = tpeExpr(vd.tpt)
     val default = optExpr(vd.rhs)
     val isOverride = vd.mods.isAnyOverride
     val isVal = vd.mods.isParamAccessor
-    SClassArg(vd.mods.isImplicit, isOverride, isVal, vd.name, tpe, default)
+    val annotations = parseAnnotations(vd)((n,as) => new SArgAnnotation(n, as.map(expr)))
+    SClassArg(vd.mods.isImplicit, isOverride, isVal, vd.name, tpe, default, annotations)
   }
 
   def traitCall(tree: Tree): STraitCall = tree match {
@@ -611,10 +653,9 @@ trait ScalanParsers extends ScalanAst {
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {
-    case Nil => SMethodArgs(false, List.empty)
+    case Nil => SMethodArgs(List.empty)
     case vd :: _ =>
-      val isImplicit = vd.mods.isImplicit
-      SMethodArgs(isImplicit, vds.filter(!isEvidenceParam(_)).map(methodArg))
+      SMethodArgs(vds.filter(!isEvidenceParam(_)).map(methodArg))
   }
 
   def optTpeExpr(tree: Tree): Option[STpeExpr] = {
@@ -664,7 +705,8 @@ trait ScalanParsers extends ScalanAst {
     val tpe = tpeExpr(vd.tpt)
     val default = optExpr(vd.rhs)
     val annotations = parseAnnotations(vd)((n,as) => new SArgAnnotation(n, as.map(expr)))
-    SMethodArg(vd.name, tpe, default, annotations)
+    val isOverride = vd.mods.isAnyOverride
+    SMethodArg(vd.mods.isImplicit, isOverride, vd.name, tpe, default, annotations)
   }
 
   def selfType(vd: ValDef): Option[SSelfTypeDef] = {
