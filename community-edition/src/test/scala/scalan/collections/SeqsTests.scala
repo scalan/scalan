@@ -25,10 +25,10 @@ class SeqsTests extends BaseTests { suite =>
       in.map(fun {s => Interval(s)})
     }
     lazy val t7 = fun { (in: Rep[SSeq[(Int,Int)]]) =>
-      in.map(fun {s => Interval(s)}).map((s: Rep[Interval]) => s.toData)
+      in.map(fun {s => Interval(s)}).filter(fun {(s: Rep[Interval]) => s.length > 10}).map((s: Rep[Interval]) => s.toData)
     }
     lazy val t7_arr = fun { (in: Rep[Array[(Int,Int)]]) =>
-      in.map(s => Interval(s)).map((s: Rep[Interval]) => s.toData)
+      in.map(s => Interval(s)).filter((s: Rep[Interval]) => s.length > 10).map((s: Rep[Interval]) => s.toData)
     }
     lazy val t8 = fun { (in: Rep[List[SSeq[Segment]]]) =>
       in.map(seq => seq.map(fun {s => s.shift(1)}))
