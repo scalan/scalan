@@ -13,11 +13,11 @@ trait MatricesAbs extends Scalan with Matrices {
   implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] =
     proxyOps[Matrix[T]](p)
 
-  abstract class MatrixElem[T, From, To <: Matrix[T]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+  abstract class MatrixElem[T, From, To <: Matrix[T]](iso: Iso[From, To])(implicit elem: Elem[T])
+    extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertMatrix(x.asRep[Matrix[T]])
     def convertMatrix(x : Rep[Matrix[T]]): Rep[To]
   }
-
   trait MatrixCompanionElem extends CompanionElem[MatrixCompanionAbs]
   implicit lazy val MatrixCompanionElem: MatrixCompanionElem = new MatrixCompanionElem {
     lazy val tag = weakTypeTag[MatrixCompanionAbs]

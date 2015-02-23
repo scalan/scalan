@@ -13,11 +13,11 @@ trait SegmentsAbs extends Scalan with Segments {
   implicit def proxySegment(p: Rep[Segment]): Segment =
     proxyOps[Segment](p)
 
-  abstract class SegmentElem[From, To <: Segment](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+  abstract class SegmentElem[From, To <: Segment](iso: Iso[From, To])
+    extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertSegment(x.asRep[Segment])
     def convertSegment(x : Rep[Segment]): Rep[To]
   }
-
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
   implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
     lazy val tag = weakTypeTag[SegmentCompanionAbs]

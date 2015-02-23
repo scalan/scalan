@@ -19,11 +19,11 @@ trait VectorsAbs extends Scalan with Vectors {
   implicit def proxyVector[T](p: Rep[Vector[T]]): Vector[T] =
     proxyOps[Vector[T]](p)
 
-  abstract class VectorElem[T, From, To <: Vector[T]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+  abstract class VectorElem[T, From, To <: Vector[T]](iso: Iso[From, To])(implicit elem: Elem[T])
+    extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertVector(x.asRep[Vector[T]])
     def convertVector(x : Rep[Vector[T]]): Rep[To]
   }
-
   trait VectorCompanionElem extends CompanionElem[VectorCompanionAbs]
   implicit lazy val VectorCompanionElem: VectorCompanionElem = new VectorCompanionElem {
     lazy val tag = weakTypeTag[VectorCompanionAbs]

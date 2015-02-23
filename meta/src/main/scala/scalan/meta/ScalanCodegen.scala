@@ -73,9 +73,12 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       val implicitArgsDecl = entity.implicitArgs.args.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
       val implicitArgsUse = entity.implicitArgs.args.opt(args => s"(${args.map(_.name).rep(a => a)})")
       val implicitTagsDecl = entity.implicitArgs.args.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
+      val optBT = entity.optBaseType
 
-      def isContainer1 = tpeArgs.length == 1
+      def isContainer1 = tpeArgs.length == 1 && optBT.isDefined
+
       def boundedTpeArgString(withTags: Boolean = false) = getBoundedTpeArgString(tpeArgs, withTags)
+
       def tpeArgsImplicitDecl(typeClass: String) = {
         tpeArgs.opt(args =>
           s"(implicit ${args.rep(t => (s"ev${t.name}: $typeClass[${t.name}]"))})")
@@ -139,7 +142,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       if (typeArgs.isEmpty) "" else typeArgs.mkString("[", ", ", "]")
 
     val templateData = EntityTemplateData(module, module.entityOps)
-    val optBT = module.entityOps.optBaseType
+    val optBT = templateData.optBT
     val entityName = templateData.name
     val entityNameBT = optBT.map(_.name).getOrElse(templateData.name)
     val tyArgsDecl = templateData.tpeArgDecls
@@ -311,9 +314,10 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
       def familyElem(e: EntityTemplateData) = {
         val entityName = e.name
         val typesUse = e.tpeArgUseString
+        val isCont = e.isContainer1
         s"""
         |  abstract class ${e.name}Elem[${e.typesDeclPref}From, To <: ${e.entityType}](iso: Iso[From, To])${e.implicitArgsDecl}
-        |    extends ViewElem1[${e.typesUsePref}From, To, $entityName](iso) {
+        |    extends ViewElem${isCont.opt("1")}[${isCont.opt(e.typesUsePref)}From, To${isCont.opt(s", $entityName")}](iso) {
         |    override def convert(x: Rep[Reifiable[_]]) = convert$entityName(x.asRep[${e.entityType}])
         |    def convert$entityName(x : Rep[${e.entityType}]): Rep[To]
         |  }

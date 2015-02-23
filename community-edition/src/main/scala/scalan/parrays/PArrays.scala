@@ -149,6 +149,8 @@ trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
 //    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(EmptyArray[A])
 //  }
   trait IPairArray[A,B] extends PArray[(A,B)] {
+    implicit def eA: Elem[A]
+    implicit def eB: Elem[B]
     def as: Rep[PArray[A]]
     def bs: Rep[PArray[B]]
   }
@@ -193,6 +195,7 @@ trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
   }
 
   trait INestedArray[A] extends PArray[PArray[A]] {
+    implicit def eA: Elem[A]
     def values: Rep[PArray[A]]
     def segments: Rep[PArray[(Int, Int)]]
   }

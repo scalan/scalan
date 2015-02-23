@@ -232,30 +232,30 @@ trait ScalanAst {
 
     def isTrait = true
 
-    val implicitArgs: SClassArgs = {
+    lazy val implicitArgs: SClassArgs = {
       val implicitElems = body.collect {
         case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_)) => (name, elem)
       }
-      val args = tpeArgs.map(a => {
+      val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map(a => {
         val optDef = implicitElems.collectFirst {
           case (methName, elem @ STraitCall("Elem", List(STraitCall(name, _)))) if name == a.name =>
             (methName, elem)
         }
 
-        optDef.map { case (name, tyElem) => {
-          SClassArg(true, false, true, name, tyElem, None)
+        optDef.fold[Either[STpeArg, SClassArg]](Left[STpeArg, SClassArg](a)) { case (name, tyElem) => {
+          Right[STpeArg, SClassArg](SClassArg(true, false, true, name, tyElem, None))
         }}
       })
-      val missingElems = args.filterNot(_.isDefined)
+      val missingElems = args.filter(_.isLeft)
       if (missingElems.length > 0)
         sys.error(s"implicit def eA: Elem[A] should be declared for all type parameters: missing ${missingElems}")
-      SClassArgs(args.flatMap(a => a))
+      SClassArgs(args.flatMap(a => a.fold(_ => Nil, List(_))))
     }
   }
 
   final val BaseTypeTraitName = "BaseTypeEx"
 
-  implicit class STraitDefOps(td: STraitDef) {
+  implicit class STraitOrClassDefOps(td: STraitOrClassDef) {
     def optBaseType: Option[STraitCall] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
       case Some(STraitCall(_, (h: STraitCall) :: _)) => Some(h)
       case _ => None

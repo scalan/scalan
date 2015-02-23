@@ -16,11 +16,11 @@ trait PArraysAbs extends Scalan with PArrays {
   implicit def proxyPArray[A](p: Rep[PArray[A]]): PArray[A] =
     proxyOps[PArray[A]](p)
 
-  abstract class PArrayElem[A, From, To <: PArray[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+  abstract class PArrayElem[A, From, To <: PArray[A]](iso: Iso[From, To])(implicit elem: Elem[A])
+    extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertPArray(x.asRep[PArray[A]])
     def convertPArray(x : Rep[PArray[A]]): Rep[To]
   }
-
   trait PArrayCompanionElem extends CompanionElem[PArrayCompanionAbs]
   implicit lazy val PArrayCompanionElem: PArrayCompanionElem = new PArrayCompanionElem {
     lazy val tag = weakTypeTag[PArrayCompanionAbs]
@@ -38,7 +38,8 @@ trait PArraysAbs extends Scalan with PArrays {
   // single proxy for each type family
   implicit def proxyIPairArray[A, B](p: Rep[IPairArray[A, B]]): IPairArray[A, B] =
     proxyOps[IPairArray[A, B]](p)
-  abstract class IPairArrayElem[A, B, From, To <: IPairArray[A, B]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+  abstract class IPairArrayElem[A, B, From, To <: IPairArray[A, B]](iso: Iso[From, To])(implicit eA: Elem[A], eB: Elem[B])
+    extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertIPairArray(x.asRep[IPairArray[A, B]])
     def convertIPairArray(x : Rep[IPairArray[A, B]]): Rep[To]
   }
@@ -46,7 +47,8 @@ trait PArraysAbs extends Scalan with PArrays {
   // single proxy for each type family
   implicit def proxyINestedArray[A](p: Rep[INestedArray[A]]): INestedArray[A] =
     proxyOps[INestedArray[A]](p)
-  abstract class INestedArrayElem[A, From, To <: INestedArray[A]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+  abstract class INestedArrayElem[A, From, To <: INestedArray[A]](iso: Iso[From, To])(implicit eA: Elem[A])
+    extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertINestedArray(x.asRep[INestedArray[A]])
     def convertINestedArray(x : Rep[INestedArray[A]]): Rep[To]
   }

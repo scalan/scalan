@@ -21,11 +21,11 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   implicit def defaultSThrowableElem: Elem[SThrowable] = element[SThrowableImpl].asElem[SThrowable]
   implicit def ThrowableElement: Elem[Throwable]
 
-  abstract class SThrowableElem[From, To <: SThrowable](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+  abstract class SThrowableElem[From, To <: SThrowable](iso: Iso[From, To])
+    extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertSThrowable(x.asRep[SThrowable])
     def convertSThrowable(x : Rep[SThrowable]): Rep[To]
   }
-
   trait SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs]
   implicit lazy val SThrowableCompanionElem: SThrowableCompanionElem = new SThrowableCompanionElem {
     lazy val tag = weakTypeTag[SThrowableCompanionAbs]
@@ -249,7 +249,6 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   }
 
   implicit lazy val ThrowableElement: Elem[Throwable] = new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
-
   case class ExpSThrowableImpl
       (override val wrappedValueOfBaseType: Rep[Throwable])
 
