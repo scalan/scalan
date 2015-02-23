@@ -135,7 +135,7 @@ trait ScalanCodegen extends ScalanParsers { ctx: EntityManagement =>
             s"element[$t].defaultRepValue"
           }
         }
-        case STpeTuple(items) => pairify(items.map(zerpSExpr))
+        case STpeTuple(items) => pairify(items.map(zeroSExpr(entity, _)))
         case STpeFunc(domain, range) => s"""fun { (x: Rep[${domain}]) => ${zeroSExpr(entity, range)} }"""
         case t => throw new IllegalArgumentException(s"Can't generate zero value for $t")
       }
