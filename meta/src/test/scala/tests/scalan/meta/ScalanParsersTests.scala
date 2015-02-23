@@ -193,17 +193,89 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
     val entity = TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None,None,Some(()))), None, None)
+    val subEntities = List(entity)
     val obsImpl1 = CD("ObservableImpl1", tpeArgA, Nil, argEA, ancObsA, Nil, None, None, false)
     val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
+    val typeDef = STpeDef("Obs", L(STpeArg("A",None,Nil)) , TC("Rep", ancObsA))
+    val traitDef = TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None,None,Some(()))), None, None);
+    val typeDefsToTraitDefsMap = Map(typeDef->Option(traitDef))
+    val traitDefsList = List(traitDef)
+    val concreteSClassesList = L(obsImpl1, obsImpl2)
+    val traitDefsToconcreteSClassesMap = Map(traitDef -> concreteSClassesList)
+    val entityModuleDef = EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
+                              typeDefsToTraitDefsMap,
+                              traitDefsList,
+                              subEntities,
+                              traitDefsToconcreteSClassesMap,
+                              Nil,
+                              None)
 
-    testModule(
-      reactiveModule,
-      EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
-        Some(STpeDef("Obs", L(STpeArg("A",None,Nil)) , TC("Rep", ancObsA))),
-        entity,
-        List(entity),
-        L(obsImpl1, obsImpl2),
-        Nil,
-        None))
+      testModule( reactiveModule, entityModuleDef);
+  }
+
+  describe("SEntityModuleDefs") {
+    val reactiveModule =
+      """package scalan.rx
+        |import scalan._
+        |trait Reactive extends ScalanDsl {
+        |
+        |  type ObsA[A] = Rep[ObservableA[A]]
+        |  trait ObservableA[A] {
+        |    implicit def eA: Elem[A]
+        |  }
+        |  class ObservableAImpl1[A](implicit val eA: Elem[A]) extends ObservableA[A] {
+        |  }
+        |  class ObservableAImpl2[A](implicit val eA: Elem[A]) extends ObservableA[A] {
+        |  }
+        |
+        |  type ObsB[B] = Rep[ObservableB[B]]
+        |  trait ObservableB[B] {
+        |    implicit def eB: Elem[B]
+        |  }
+        |  class ObservableBImpl1[B](implicit val eB: Elem[B]) extends ObservableB[B] {
+        |  }
+        |  class ObservableBImpl2[B](implicit val eB: Elem[B]) extends ObservableB[B] {
+        |  }
+        |}
+      """.stripMargin
+
+    val ancObsA = L(TC("ObservableA", L(TC("A", Nil))))
+    val ancObsB = L(TC("ObservableB", L(TC("B", Nil))))
+
+    val tpeArgA = L(STpeArg("A", None, Nil))
+    val tpeArgB = L(STpeArg("B", None, Nil))
+
+    val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
+    val argEB = L(SClassArg(true, false, true, "eB", TC("Elem", L(TC("B", Nil))), None))
+
+    val obsAImpl1 = CD("ObservableAImpl1", tpeArgA, Nil, argEA, ancObsA, Nil, None, None, false)
+    val obsAImpl2 = obsAImpl1.copy(name = "ObservableAImpl2")
+
+    val obsBImpl1 = CD("ObservableBImpl1", tpeArgB, Nil, argEB, ancObsB, Nil, None, None, false)
+    val obsBImpl2 = obsBImpl1.copy(name = "ObservableBImpl2")
+
+    val typeDefA = STpeDef("ObsA", L(STpeArg("A",None,Nil)) , TC("Rep", ancObsA))
+    val traitDefA = TD("ObservableA", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None,None,Some(()))), None, None);
+
+    val typeDefB = STpeDef("ObsB", L(STpeArg("B",None,Nil)) , TC("Rep", ancObsB))
+    val traitDefB = TD("ObservableB", tpeArgB, Nil, L(SMethodDef("eB",List(),List(),Some(TC("Elem",L(TC("B",Nil)))),true,None,None,Some(()))), None, None);
+
+    val subEntities = List(traitDefA,traitDefB)
+
+    val typeDefsToTraitDefsMap = Map(typeDefA->Option(traitDefA), typeDefB->Option(traitDefB))
+    val traitDefsList = List(traitDefA, traitDefB)
+    val aClassesList = L(obsAImpl1, obsAImpl2)
+    val bClassesList = L(obsBImpl1, obsBImpl2)
+    val traitDefsToconcreteSClassesMap = Map(traitDefA -> aClassesList, traitDefB -> bClassesList)
+
+    val entityModuleDef = EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
+                              typeDefsToTraitDefsMap,
+                              traitDefsList,
+                              subEntities,
+                              traitDefsToconcreteSClassesMap,
+                              Nil,
+                              None)
+
+    testModule( reactiveModule, entityModuleDef)
   }
 }

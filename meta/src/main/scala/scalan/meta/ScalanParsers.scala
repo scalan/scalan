@@ -6,6 +6,7 @@ package scalan.meta
 
 import java.io.File
 
+import scala.collection.mutable
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
@@ -64,8 +65,8 @@ object ScalanAst {
     def unRep(module: SEntityModuleDef, config: CodegenConfig) = self match {
       case STraitCall("Rep", Seq(t)) => Some(t)
       case STraitCall(name, args) =>
-        val typeSynonyms = config.entityTypeSynonyms ++
-          module.entityRepSynonym.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
+        val newSynonymMap = module.entityRepSynonyms.toList.filter{ case (synonym, entity) => entity.isDefined}.map{ case (synonym, entity) if entity.isDefined => (synonym.name, entity.get.name) }
+        val typeSynonyms = config.entityTypeSynonyms ++ newSynonymMap
         typeSynonyms.get(name).map(unReppedName => STraitCall(unReppedName, args))
       case _ => None
     }
@@ -203,10 +204,10 @@ object ScalanAst {
     packageName: String,
     imports: List[SImportStat],
     name: String,
-    entityRepSynonym: Option[STpeDef],
-    entityOps: STraitDef,
+    entityRepSynonyms: Map[STpeDef, Option[STraitDef]],
+    entityOps: List[STraitDef],
     entities: List[STraitDef],
-    concreteSClasses: List[SClassDef],
+    entitySClasses: Map[STraitDef, List[SClassDef]],
     methods: List[SMethodDef],
     selfType: Option[SSelfTypeDef],
     seqDslImpl: Option[SSeqImplementation] = None)
@@ -221,7 +222,16 @@ object ScalanAst {
     def isEntity(name: String) = entities.exists(e => e.name == name)
   }
 
-  def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
+  //This function will filter out the concrete class
+  //implementations which inherit from the given trait.
+  def getConcreteClasses(entity : STraitDef, defs: List[SBodyItem]) : List[SClassDef] = {
+    //This function checks if the given entity is in the list of ansestors
+    def isAncestor(ancestors: List[STraitCall], entity : STraitDef) : Boolean = {
+      ancestors.exists { case STraitCall(traitName ,_) => traitName == entity.name }
+    }
+
+    defs.collect { case c : SClassDef if isAncestor(c.ancestors, entity) => c}
+  }
 
   object SEntityModuleDef {
     def getImplicitArgs(entity: STraitDef): SClassArgs = {
@@ -246,45 +256,82 @@ object ScalanAst {
 
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
 
+      //Obtain the concrete entity classes for a given trait
+      private def getEntityClasses( entity : STraitDef, defs: List[SBodyItem]) : List[SClassDef] = {
+        entity.optBaseType match {
+          case Some(bt) =>
+            val entityName = entity.name
+            val entityImplName = entityName + "Impl"
+            val typeUseExprs = entity.tpeArgs.map(tpeUseExpr(_))
+            val defaultBTImpl = SClassDef(
+              name = entityImplName,
+              tpeArgs = entity.tpeArgs,
+              args = List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None)),
+              implicitArgs = getImplicitArgs(entity),
+              ancestors = List(STraitCall(entity.name, typeUseExprs)),
+              body = List(
+
+              ),
+              selfType = None,
+              companion = None,
+              //            companion = defs.collectFirst {
+              //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
+              //            },
+              true
+            )
+            defaultBTImpl :: getConcreteClasses(entity, defs)
+          case None => getConcreteClasses(entity, defs)
+        }
+      }
+
+      //Get the trait name from the trait synonym defined using
+      //'type' or throws an exception if one can not be found
+      private def getTypeTraitName(typeDef : STpeDef) : Option[String] = {
+        //ToDo: Potentially this sub-function needs to be extended with looking 'deeper' and 'wider' into arguments of the STpeDef
+        def getTypeTraitNameOpt(typeDef : STpeDef) : Option[String] = {
+          typeDef match {
+            case STpeDef(_, _, STraitCall(_, args)) => args.collectFirst { case t@STraitCall(subName, _) => subName }
+            case _ => None
+          }
+        }
+        //Try to find the trait name in the synonym parameters, if not return None
+        getTypeTraitNameOpt(typeDef) match {
+          case nameOpt : Option[String] => nameOpt
+          case _ => None
+        }
+      }
+
+
     def apply(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 
-      val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
+      //Get all of the module-defined synonims
+      val entityRepSynonymsList = defs.collect { case t: STpeDef => t }
 
+      //The traits (UDTs) do not end with Companion
       val traits = defs.collect { case t: STraitDef if !t.name.endsWith("Companion") => t }
-      val entity = traits.headOption.getOrElse {
+
+      //The entity traits (UDTs) do not end with Companion
+      //TODO: There has to be a more robust algorithm for recognising entity traits (using annotations?)
+      val entities = defs.collect { case t: STraitDef if !t.name.endsWith("Companion") => t }
+      //Check that there is at least one trait in the module
+      entities.headOption.getOrElse {
         throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
       }
 
-      val classes = entity.optBaseType match {
-        case Some(bt) =>
-          val entityName = entity.name
-          val entityImplName = entityName + "Impl"
-          val typeUseExprs = entity.tpeArgs.map(tpeUseExpr(_))
-          val defaultBTImpl = SClassDef(
-            name = entityImplName,
-            tpeArgs = entity.tpeArgs,
-            args = List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None)),
-            implicitArgs = getImplicitArgs(entity),
-            ancestors = List(STraitCall(entity.name, typeUseExprs)),
-            body = List(
+      val entityRepSynonyms = entityRepSynonymsList.map {
+        case synonym => synonym -> entities.collectFirst {
+          case ent if (Option(ent.name) == getTypeTraitName(synonym)) => ent
+        }
+      }.toMap
 
-            ),
-            selfType = None,
-            companion = None,
-//            companion = defs.collectFirst {
-//              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
-//            },
-            true
-          )
-          defaultBTImpl :: getConcreteClasses(defs)
-        case None => getConcreteClasses(defs)
-      }
+      //Create a map of traits and their class definitions
+      val classesMap = entities.map(entity => entity -> getEntityClasses(entity, defs)).toMap
 
       val methods = defs.collect { case md: SMethodDef => md }
 
-      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, traits, classes, methods, moduleTrait.selfType)
+      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonyms, entities, traits, classesMap, methods, moduleTrait.selfType)
     }
   }
 }
@@ -348,6 +395,25 @@ trait ScalanParsers {
     methods.map(methodDef(_))
   }
 
+  //Checks if the given name is equal to the module entity name prefixed with "Seq"
+  private def isAModuleSeqEntityName(module : SEntityModuleDef, name : String) : Boolean = {
+    //First check if the given name begins with the Seq, if not then it is now worth searching
+    val seqPrefix = "Seq"
+    if( name.startsWith(seqPrefix) )
+    {
+      //Since the name begind with "Seq" and the entity
+      //names do not, it is more efficient to get rid
+      //of the "Seq" prefix before starting the search
+      val nameToFind = name.substring(seqPrefix.length)
+      //Get the list of all known module entities (traits)
+      val entities = module.entitySClasses.keys
+      //Filter out the first matching name
+      (entities.exists{ case entity : STraitDef => nameToFind == entity.name })
+    } else {
+      false
+    }
+  }
+
   def entityModule(fileTree: PackageDef) = {
     val packageName = fileTree.pid.toString
     val statements = fileTree.stats
@@ -371,7 +437,7 @@ trait ScalanParsers {
     val seqExplicitOps = for {
       seqImpl <- dslSeq
       seqOpsTrait <- seqImpl.impl.body.collectFirst {
-        case cd @ ClassDef(_,name,_,_) if name.toString == ("Seq" + module.entityOps.name) => cd
+        case cd @ ClassDef(_,name,_,_) if isAModuleSeqEntityName(module, name) => cd
       }
     } yield {
       val cd = seqOpsTrait.impl.body.collect { case item: DefDef => item }
