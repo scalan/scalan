@@ -238,6 +238,8 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
       new SeqSException(wrappedValueOfBaseType)
   def unmkSException(p: Rep[SException]) =
     Some((p.wrappedValueOfBaseType))
+
+  implicit def wrapThrowableToSThrowable(v: Throwable): SThrowable = SThrowableImpl(v)
 }
 
 // Exp -----------------------------------

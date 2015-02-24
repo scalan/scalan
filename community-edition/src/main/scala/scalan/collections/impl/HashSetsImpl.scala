@@ -175,6 +175,8 @@ trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
       new SeqSHashSetImpl[A](wrappedValueOfBaseType)
   def unmkSHashSetImpl[A:Elem](p: Rep[SHashSetImpl[A]]) =
     Some((p.wrappedValueOfBaseType))
+
+  implicit def wrapHashSetToSHashSet[A:Elem](v: HashSet[A]): SHashSet[A] = SHashSetImpl(v)
 }
 
 // Exp -----------------------------------

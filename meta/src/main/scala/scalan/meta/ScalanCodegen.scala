@@ -529,12 +529,17 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
     def getTraitSeq = {
       val e = module.entityOps
       val entityName = e.name
-      val defs = for { c <- module.concreteSClasses } yield getSClassSeq(c)
-      val proxyBT = optBT.opt(bt =>
+      val classesSeq = for { c <- module.concreteSClasses } yield getSClassSeq(c)
+      val proxyBTSeq = optBT.opt(bt =>
         s"""
          |  // override proxy if we deal with BaseTypeEx
          |  //override def proxy$entityNameBT${typesWithElems}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
          |  //  proxyOpsEx[$entityNameBT${typesUse},$entityName${typesUse}, Seq${entityName}Impl$typesUse](p, bt => Seq${entityName}Impl(bt))
+         |""".stripAndTrim
+      )
+      val baseTypeToWrapperConvertionSeq = optBT.opt(bt =>
+        s"""
+         |  implicit def wrap${entityNameBT}To$entityName${typesWithElems}(v: $entityNameBT${typesUse}): $entityName$typesUse = ${entityName}Impl(v)
          |""".stripAndTrim
       )
 
@@ -552,11 +557,13 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
        |    $companionMethods
        |  }
        |
-       |  $proxyBT
+       |  $proxyBTSeq
        |
        |  ${baseTypeElem("Seq")}
        |
-       |${defs.mkString("\n\n")}
+       |${classesSeq.mkString("\n\n")}
+       |
+       |$baseTypeToWrapperConvertionSeq
        |}
        |""".stripAndTrim
     }
