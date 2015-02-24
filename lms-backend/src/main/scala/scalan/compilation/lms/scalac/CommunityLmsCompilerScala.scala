@@ -12,8 +12,8 @@ trait CommunityLmsCompilerScala extends LmsCompilerScala with CommunityBridgeSca
   override protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                                 (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
 
-    val libsDir = FileUtil.file(FileUtil.currentWorkingDir, libs)
-    val executableLibsDir = FileUtil.file(executableDir, libs)
+    val libsDir = FileUtil.file(FileUtil.currentWorkingDir, lib)
+    val executableLibsDir = FileUtil.file(executableDir, lib)
     // unused
     var mainJars = methodReplaceConf.libPaths.map {
       j => FileUtil.file(libsDir, j).getAbsolutePath

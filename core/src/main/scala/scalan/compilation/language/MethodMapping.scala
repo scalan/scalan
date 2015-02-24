@@ -23,12 +23,6 @@ trait MethodMapping {
     implicit val v: T = this
   }
 
-  case class Library(packageName: String = null, isStatic: Boolean = true) {
-    implicit val v = this
-  }
-
-  case class Link(path: String, header: String, isStatic: Boolean)
-
   trait LanguageConf extends Implicit[LanguageConf] {
 
     import scala.reflect.runtime.universe.typeOf
@@ -40,11 +34,18 @@ trait MethodMapping {
 
     val backend: Backend[_]
 
-    trait Lib {
+    trait Fn {
+      fns += this
+    }
+
+    case class Library(packageName: String = null, dependencies: Array[String] = Array.empty[String]) {
+      implicit val v = this
       libs += this
     }
 
-    val libs: mutable.HashSet[Lib] = new mutable.HashSet()
+    val fns: mutable.HashSet[Fn] = new mutable.HashSet()
+    
+    val libs: mutable.HashSet[Library] = new mutable.HashSet()
 
     case class Pack(pack: String)(implicit val lib: Library) extends Implicit[Pack]
 
@@ -67,7 +68,7 @@ trait MethodMapping {
     case class Method(name: Symbol, tyRes: Type, args: MethodArg*)(implicit val theType: ClassType)
 
     trait Fun {
-      val lib: Lib = null
+      val lib: Fn = null
     }
 
     abstract class Backend[TC <: LanguageConf](language: LANGUAGE)(implicit val l: TC) {
@@ -78,8 +79,9 @@ trait MethodMapping {
         methodMap.getOrElse((classPath, method), None)
       }
 
-      lazy val libs = l.libs
-
+      lazy val fns = l.fns
+      lazy val dependencies = l.libs.flatMap(_.dependencies)
+      
       val libPaths: Set[String]
 
       val functionMap: Map[Method, Func]
@@ -101,7 +103,7 @@ trait MethodMapping {
 
   trait CppLanguage extends LanguageConf {
 
-    case class CppLib(hfile: String, libfile: String) extends Lib with Implicit[CppLib]
+    case class CppLib(hfile: String, libfile: String) extends Fn with Implicit[CppLib]
 
     case class CppType(name: String)
 
@@ -119,20 +121,20 @@ trait MethodMapping {
 
   trait ScalaLanguage extends LanguageConf {
 
-    case class ScalaLib(jar: String, pack: String) extends Lib with Implicit[ScalaLib]
+    case class ScalaLib(jar: String, pack: String) extends Fn with Implicit[ScalaLib]
 
-    case class EmbeddedObject(name: String) extends Lib with Implicit[EmbeddedObject]
+    case class EmbeddedObject(name: String) extends Fn with Implicit[EmbeddedObject]
 
     case class ScalaType(name: Symbol)
 
     case class ScalaArg(ty: ScalaType, name: Symbol)
 
-    case class ScalaFunc(funcName: Symbol, args: ScalaArg*)(implicit override val lib: Lib) extends Fun
+    case class ScalaFunc(funcName: Symbol, args: ScalaArg*)(implicit override val lib: Fn) extends Fun
 
     abstract class ScalaBackend extends Backend(SCALA) {
       type Func = ScalaFunc
 
-      lazy val libPaths: Set[String] = libs filter(_.isInstanceOf[ScalaLib]) map (_.asInstanceOf[ScalaLib].jar) filter (!_.isEmpty) to
+      lazy val libPaths: Set[String] = fns filter(_.isInstanceOf[ScalaLib]) map (_.asInstanceOf[ScalaLib].jar) filter (!_.isEmpty) to
     }
   }
 }

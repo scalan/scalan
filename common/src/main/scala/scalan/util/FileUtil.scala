@@ -1,6 +1,7 @@
 package scalan.util
 
 import java.io._
+import java.nio.ByteBuffer
 import java.nio.file.Paths
 import scala.Console
 import scala.io.{Source, Codec}
@@ -65,6 +66,15 @@ object FileUtil {
     new FileOutputStream(target).getChannel.transferFrom(new FileInputStream(source).getChannel, 0, Long.MaxValue)
   }
 
+  def move(source: File, target: File): Unit = {
+    copy(source, target)
+    delete(source)
+  }
+
+  def addPrefix(file: File, prefix: String): Unit = {
+    write(file, prefix + read(file))
+  }
+
   /**
    * Copy file source to targetDir, keeping the original file name
    */
@@ -98,6 +108,8 @@ object FileUtil {
   }
 
   def currentWorkingDir = Paths.get("").toAbsolutePath.toFile
+
+  def currentClassDir = getClass.getClassLoader.getResource("").getFile
 
   def file(first: String, rest: String*): File =
     file(new File(first), rest: _*)

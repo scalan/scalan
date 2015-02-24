@@ -1,14 +1,11 @@
 package scalan.it.lms
 
 import scala.language.reflectiveCalls
-import scalan.{CommunityMethodMapping, ScalanCtxExp}
-import scalan.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.it.BaseItTests
-import scalan.it.lms.method.TestMethod
 import scalan.linalgebra.MatricesDslExp
-import scalan.util.FileUtil
+import scalan.{CommunityMethodMapping, ScalanCommunityDslExp, ScalanCommunityExp, ScalanCtxExp}
 
 class MethodCallItTests extends LmsCommunityItTests{
   trait Prog extends ProgCommunity  {
@@ -264,7 +261,7 @@ class MethodCallItTestsOld extends BaseItTests {
 
     new ScalaLanguage with TestConf {
 
-      val extLib = new ScalaLib(testJar, "scalan.it.lms.method.TestMethod") {
+      val extLib = new ScalaLib(testJar, "scalan.it.lms.MappingMethodFromJar.TestMethod") {
         val testMassageMethod = ScalaFunc('testMassage)
       }
 
@@ -284,8 +281,8 @@ class MethodCallItTestsOld extends BaseItTests {
 
   test("Mapping Method From Jar") {
     val methodName = "MappingMethodFromJar"
-    FileUtil.packJar(TestMethod.getClass, methodName, FileUtil.file(prefix, methodName).getAbsolutePath, jarReplaceMethExp.libs, testJar)
-    val messageFromTestMethod = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.message, methodName, new Exception("Original massage"), jarReplaceMethExp.defaultCompilerConfig.copy(scalaVersion = Some("2.11.4")))
+    val messageFromTestMethod = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.message, methodName, new Exception("Original massage"),
+      jarReplaceMethExp.defaultCompilerConfig.copy(scalaVersion = Some("2.11.4"), mainPack = "scalan.it.lms.MappingMethodFromJar", extraClasses = Array("scalan.it.lms.MappingMethodFromJar.TestMethod")))
     messageFromTestMethod should equal("Test Message")
   }
 }

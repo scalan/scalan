@@ -9,7 +9,7 @@ import scalan.compilation.language.MethodMapping
 import scalan.util.{ExtensionFilter, FileUtil, ProcessUtil, StringUtil}
 import java.io._
 import java.net.{URL, URLClassLoader}
-import scalan.util.FileUtil.copyToDir
+import scalan.util.FileUtil.{file, copyToDir}
 
 trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { self: ScalanCtxExp =>
   /**
@@ -17,15 +17,15 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
    *
    * Otherwise uses SBT to compile with the desired version
    */
-  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String])
+  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], mainPack: String = null, extraClasses : Array[String] = Array.empty[String])
 
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
-  case class CustomCompilerOutput(jars: Array[URL])
+  case class CustomCompilerOutput(jars: Array[URL], mainPack: String = null)
 
   def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
-  val libs = "lib"
+  val lib = "lib"
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
@@ -34,36 +34,81 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
 
     val sourceFile = emitSource(sourcesDir, "scala", functionName, graph, eInput, eOutput)
 
-    val libsDir = FileUtil.file(FileUtil.currentWorkingDir, libs)
-    val executableLibsDir = FileUtil.file(executableDir, libs)
+    val libsDir = file(FileUtil.currentWorkingDir, lib)
+    val executableLibsDir = file(executableDir, lib)
+
+    var jars = methodReplaceConf.libPaths.map {
+      j => file(libsDir, j).getAbsolutePath
+    }
     val dir = FileUtil.listFiles(libsDir, ExtensionFilter("jar"))
     dir.foreach(f => {
+      jars = jars + f.getAbsolutePath
       copyToDir(f, executableLibsDir)
     })
-    val jarFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
+
+    val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
     val jarPath = jarFile.getAbsolutePath
     FileUtil.deleteIfExist(jarFile)
 
-    val logFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.log")
+    val logFile = file(executableDir.getAbsoluteFile, s"$functionName.log")
     FileUtil.deleteIfExist(logFile)
 
     compilerConfig.scalaVersion match {
       case Some(scalaVersion) =>
-        val buildSbtText =
-          s"""name := "$functionName"
-             |
-             |scalaVersion := "$scalaVersion"
-             |
-             |artifactPath in Compile in packageBin := file("$jarPath")
-             |
-             |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
-             |""".stripMargin
+        compilerConfig.mainPack match {
+          case mainPack: String =>
+            val mainClass: String = mainPack + ".run"
+            val jar = s"$functionName.jar"
+            val src = file(executableDir, "src", "main", "scala")
+            val f = file(src, mainPack.replaceAll("\\.", File.separator), s"$functionName.scala")
+            FileUtil.move(sourceFile, f)
+            FileUtil.addPrefix(f, s"package $mainPack\n")
+            val mainClassFile = mainClass.replaceAll("\\.", File.separator) + ".scala"
+            FileUtil.copy(FileUtil.file(FileUtil.currentClassDir, mainClassFile), file(src, mainClassFile))
 
-        FileUtil.write(buildSbtFile, buildSbtText)
+            for (c <- compilerConfig.extraClasses) {
+              val scalaFile = c.replaceAll("\\.", File.separator) + ".scala"
+              FileUtil.copy(file(FileUtil.currentClassDir, scalaFile), file(src, scalaFile))
+            }
 
-        val command = Seq("sbt", "package")
+            FileUtil.write(file(sourcesDir, "build.sbt"),
+              s"""name := "$functionName"
+                 |scalaVersion := "$scalaVersion"
+                 |${methodReplaceConf.dependencies.map(d => s"libraryDependencies += $d").mkString("\n")}
+                 |assemblyJarName in assembly := "$jar"
+                 |mainClass in assembly := Some("$mainClass")
+                 |assemblyMergeStrategy in assembly := {
+                 |  case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
+                 |  case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
+                 |  case "application.conf"                            => MergeStrategy.concat
+                 |  case "META-INF/MANIFEST.MF"                        => MergeStrategy.discard
+                 |  case "META-INF/manifest.mf"                        => MergeStrategy.discard
+                 |  case x => MergeStrategy.first
+                 |}
+              """.stripMargin)
 
-        ProcessUtil.launch(sourcesDir, command: _*)
+            FileUtil.write(file(sourcesDir, "project", "plugins.sbt"),
+              """resolvers += Resolver.sonatypeRepo("public")
+                |addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.12.0")
+              """.stripMargin)
+
+            ProcessUtil.launch(sourcesDir, "sbt", "assembly")
+            FileUtil.move(file(executableDir, "target", s"scala-${scalaVersion.substring(0, scalaVersion.lastIndexOf("."))}", jar),
+              file(executableDir, jar))
+
+          case _ =>
+            FileUtil.write(buildSbtFile,
+              s"""name := "$functionName"
+              |
+              |scalaVersion := "$scalaVersion"
+              |
+              |artifactPath in Compile in packageBin := file("$jarPath")
+              |
+              |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
+              |""".stripMargin)
+            val command = Seq("sbt", "package")
+            ProcessUtil.launch(sourcesDir, command: _*)
+        }
       case None =>
         val settings = new Settings
         settings.usejavacp.value = true
@@ -98,13 +143,17 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
 
     val ar = FileUtil.listFiles(executableLibsDir, ExtensionFilter("jar"))
     val urls = (jarFile +: ar).map(_.toURI.toURL)
-    CustomCompilerOutput(urls)
+    CustomCompilerOutput(urls, compilerConfig.mainPack)
   }
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
     // ensure Scala library is available
     val classLoader = new URLClassLoader(compilerOutput.custom.jars, classOf[_ => _].getClassLoader)
-    val cls = classLoader.loadClass(compilerOutput.common.name)
+    val pack = compilerOutput.custom.mainPack match {
+      case p: String => p + "."
+      case _ => ""
+    }
+    val cls = classLoader.loadClass(pack + compilerOutput.common.name)
     val argumentClass = compilerOutput.common.eInput.classTag.runtimeClass
     (cls, cls.getMethod("apply", argumentClass))
   }
