@@ -124,6 +124,7 @@ trait CXXCodegen extends CLikeCodegen {
           "#include <vector>\n" +
           "#include <cstdlib>\n" +
           "#include <functional>\n" +
+          "#include <algorithm>\n" +
           "/*****************************************\n" +
           "  Emitting Generated Code                  \n" +
           "*******************************************/")

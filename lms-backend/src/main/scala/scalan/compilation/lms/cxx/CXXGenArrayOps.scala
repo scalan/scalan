@@ -14,6 +14,8 @@ trait CXXGenArrayOps extends BaseGenArrayOps with CXXCodegen {
         rhs match {
           case ArrayNew(_) =>
             moveableSyms += sym
+          case Reflect(ArrayNew(_),_,_) =>
+            moveableSyms += sym
           case _ =>
             ()
         }
@@ -64,7 +66,13 @@ trait CXXGenArrayOps extends BaseGenArrayOps with CXXCodegen {
       gen"""}
            |}/*end: ${sym} = ${afrch.toString}*/"""
 //      stream.println(s"")
-//    case ArrayCopy(src,srcPos,dest,destPos,len) => emitValDef(sym, src"System.arraycopy($src,$srcPos,$dest,$destPos,$len)")
+    case ArrayCopy(src,srcPos,dest,destPos,len) =>
+      stream.println(s"{/*start: ${rhs.toString}*/")
+      stream.println(src"const auto srcBegin = ${src}.begin();")
+      stream.println(src"const auto destBegin = ${dest}.begin();")
+      stream.println(src"std::copy(srcBegin+${srcPos}, srcBegin+${srcPos}+${len}, destBegin+${destPos});")
+      emitValDef(sym, src"$dest")
+      stream.println(s"}/*end: ${rhs.toString}*/")
 //    case a@ArraySort(x) =>
 //      gen"""val $sym = {
 //                      |val d = new Array[${remap(a.m)}]($x.length)
