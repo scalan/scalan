@@ -111,4 +111,11 @@ class CXXLmsSmokeItTests extends SmokeItTests {
 //    getStagedOutput(progStaged)(progStaged.lambdaConst, "lambdaConst", in).isInstanceOf[Right[_, _]]
   }
 
+  test("arrayUpdate") {
+    val in = Array(0, 0)
+    val functionName = "arrayUpdate"
+    val dir = new File(prefix, functionName)
+    progStaged.buildExecutable(dir, dir, functionName, progStaged.arrayUpdate, GraphVizConfig.default)
+//    compareOutputWithSequential(progStaged)(progSeq.arrayUpdate, progStaged.arrayUpdate, "arrayUpdate", in)
+  }
 }
