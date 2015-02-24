@@ -9,7 +9,7 @@ class NativeMethods {
   type TT = Array[Int]
 //  type TT = ( Array[( Array[Int], (Array[Double],Int))], Array[Double])
   @native def extractAndPack( in: TT ): TT
-  @native def MST( in: (Array[Int], (Array[Double], (Array[Int], Array[Int]))) ): Array[Int]
+  @native def MSTadjlist( in: (Array[Int], (Array[Double], (Array[Int], Array[Int]))) ): Array[Int]
 
   @native def ddmvm( in: (Array[Array[Double]], Array[Double]) ): Array[Double]
   @native def sdmvm( p: (Array[(Array[Int],(Array[Double], Int))], Array[Double]) ): Array[Double]

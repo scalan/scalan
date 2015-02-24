@@ -20,9 +20,9 @@ class LmsJNIExtractorItTests extends BaseItTests {
   trait ProgExp extends MST_example with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
     val lms = new CommunityCXXLmsBackend
 
-    lazy val MST_JNI = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
+    lazy val MST_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
       val data = JNI_Extract(in)
-      val res = MST(data)
+      val res = MST_adjlist(data)
       JNI_Pack(res)
     }
   }
@@ -40,7 +40,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
       }
     }
 
-    ctx.generate("MST_JNI", ctx.MST_JNI)
+    ctx.generate("MST_JNI_adjlist", ctx.MST_JNI_adjlist)
   }
 
   test("simpleGenCxx") {

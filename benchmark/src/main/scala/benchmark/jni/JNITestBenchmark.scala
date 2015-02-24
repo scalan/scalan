@@ -108,7 +108,7 @@ class JNIMSTBenchmark {
     (method.invoke(instance, _: AnyRef)).asInstanceOf[A => B]
   }
 
-  val MST_staged = loadMethod(ctx)(baseDir, "MST", ctx.MST)
+  val MST_adjlist_staged = loadMethod(ctx)(baseDir, "MST_adjlist", ctx.MST_adjlist)
 
   @TearDown
   def check(): Unit = {
@@ -119,8 +119,8 @@ class JNIMSTBenchmark {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def MST( state: JNIMSTBenchmark ): Array[Int] = {
-    val res = state.nativeMethods.MST( state.input )
+  def MST_adjlist_cxx( state: JNIMSTBenchmark ): Array[Int] = {
+    val res = state.nativeMethods.MSTadjlist( state.input )
     state.res = res
     res
   }
@@ -128,8 +128,8 @@ class JNIMSTBenchmark {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def MST_staged( state: JNIMSTBenchmark ): Array[Int] = {
-    val res = state.MST_staged(state.input)
+  def MST_adjlist_staged( state: JNIMSTBenchmark ): Array[Int] = {
+    val res = state.MST_adjlist_staged(state.input)
     state.res = res
     res
   }
