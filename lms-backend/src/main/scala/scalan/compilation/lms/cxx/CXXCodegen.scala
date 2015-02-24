@@ -88,7 +88,7 @@ trait CXXCodegen extends CLikeCodegen {
 
   def quoteMove(x: Exp[Any]): String = x match {
     case sym: Sym[_] =>
-      if( isMoveable(sym) && moveableSyms.contains(sym) && rightSyms.contains(sym) )
+      if( isMoveable(sym) && moveableSyms.contains(sym) /*&& rightSyms.contains(sym)*/ )
         s"std::move(${super.quote(sym)})"
       else
         super.quote(sym)
@@ -98,7 +98,7 @@ trait CXXCodegen extends CLikeCodegen {
 
   override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
     if (remap(tpe) != "void")
-      stream.println(remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
+      stream.println("const " + remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
   }
 
   override def remapWithRef[A](m: Manifest[A]): String = {
@@ -130,7 +130,7 @@ trait CXXCodegen extends CLikeCodegen {
       emitFileHeader()
 
       val indargs = scala.Range(0, args.length).zip(args);
-      stream.println(s"${sA} apply(${indargs.map( p => s"${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
+      stream.println(s"${sA} apply(${indargs.map( p => s"const ${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
       emitBlock(body)
       stream.println(s"return ${quoteMove(getBlockResult(body))};")
