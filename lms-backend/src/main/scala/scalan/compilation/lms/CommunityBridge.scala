@@ -1,24 +1,23 @@
 package scalan.compilation.lms
 
-import scalan.community.{ScalanCommunityExp, ScalanCommunityDslExp}
+import scalan.CommunityMethodMapping
+import scalan.ScalanCommunityDslExp
 
-trait CommunityBridge[A, B] extends CoreBridge[A, B] {
+trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with CommunityMethodMapping =>
 
-  // `LmsCompiler` mixed just to provide `createManifest` function
-  val scalan: ScalanCommunityDslExp with ScalanCommunityExp with LmsCompiler
   val lms: CommunityLmsBackendBase
 
-  abstract override def defTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]) =
+  abstract override def defTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]) =
     linalgDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)
 
-  def linalgDefTransformer[T](m: Mirror, g: scalan.AstGraph, e: scalan.TableEntry[T]): DefTransformer = {
+  def linalgDefTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]): DefTransformer = {
     val (exps, symMirr, funcMirr) = m
     val sym = e.sym
     val tt: DefTransformer = {
-      case scalan.DotSparse(i1, v1, i2, v2) =>
+      case DotSparse(i1, v1, i2, v2) =>
         v1.elem match {
-          case el: scalan.ArrayElem[_] =>
-            scalan.createManifest(el.eItem) match {
+          case el: ArrayElem[_] =>
+            createManifest(el.eItem) match {
               case (mA: Manifest[a]) =>
                 val i1_ = symMirr(i1).asInstanceOf[lms.Exp[Array[Int]]]
                 val i2_ = symMirr(i2).asInstanceOf[lms.Exp[Array[Int]]]

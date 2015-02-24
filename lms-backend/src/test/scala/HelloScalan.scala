@@ -2,10 +2,10 @@
 
 import java.io.File
 
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
+import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
-import scalan.compilation.lms.scalac.LmsCompilerScala
+import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.it.BaseItTests
 
 // ScalanCommunityDsl includes ScalanCommunity and all DSLs defined in that project
@@ -32,14 +32,11 @@ object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
 }
 
 // to run: lms-backend/test:runMain HelloScalanExp
-object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCompilerScala {
+object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with CommunityLmsCompilerScala with CommunityBridge {
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
 
-  def makeBridge[A, B] = new CommunityBridge[A, B] {
-    val scalan = HelloScalanExp
-    val lms = new CommunityLmsBackend
-  }
+  val lms = new CommunityLmsBackend
 
   def result = {
     // output directory

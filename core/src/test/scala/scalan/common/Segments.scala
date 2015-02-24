@@ -26,6 +26,14 @@ trait Segments { self: SegmentsDsl =>
     def shift(ofs: Rep[Int]) = Slice(start + ofs, length)
   }
   trait SliceCompanion
+
+  abstract class Centered(val center: Rep[Int], val radius: Rep[Int]) extends Segment {
+    def start = center - radius
+    def end = center + radius
+    def length = radius * 2
+    def shift(ofs: Rep[Int]) = Centered(center + ofs, radius)
+  }
+  trait CenteredCompanion
 }
 
 

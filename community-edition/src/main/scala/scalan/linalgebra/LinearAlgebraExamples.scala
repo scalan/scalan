@@ -1,6 +1,8 @@
 package scalan.linalgebra
 
-trait LinearAlgebraExamples extends MatricesDsl {
+import scalan.ScalanCommunityDsl
+
+trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
   def mvm[T](matrix: Matr[T], vector: Vec[T])(implicit eT: Elem[T], n: Numeric[T]): Vec[T] =
     matrix.rows.map { r => r.dot(vector) }
 

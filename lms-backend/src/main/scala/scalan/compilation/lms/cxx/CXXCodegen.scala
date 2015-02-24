@@ -4,12 +4,12 @@ import java.io.PrintWriter
 
 import scala.virtualization.lms.internal._
 
-/**
- * Created by zotov on 12/8/14.
- */
 trait CXXCodegen extends CLikeCodegen {
   val IR: Expressions
   import IR._
+
+  sealed class OverloadDummy01
+  implicit lazy val overloadDummy01 = new OverloadDummy01
 
   trait size_t
   trait auto_t
@@ -27,11 +27,20 @@ trait CXXCodegen extends CLikeCodegen {
     res
   }
 
+  def isMoveable( sym: Exp[Any]): Boolean = {
+    if (sym.tp <:< Manifest.AnyRef)
+      true
+    else
+      false
+  }
+
   override def traverseStm(stm: Stm): Unit = {
     stm match {
       case TP(sym,rhs) =>
         rightSyms.clear
         rightSyms ++= syms(rhs)
+        if (isMoveable(sym) && syms(rhs).find(moveableSyms.contains) != None) // derived from moveable
+          moveableSyms += sym
       case _ =>
         ()
     }
@@ -57,25 +66,39 @@ trait CXXCodegen extends CLikeCodegen {
     }
   }
 
-  override def emitValDef(sym: Sym[Any], rhs: String): Unit = {
-    if( moveableSyms.contains(sym) )
-      emitValDef(quote(sym), norefManifest(sym.tp), rhs)
-    else
-      emitValDef(quote(sym), sym.tp, rhs)
+  override def emitAssignment(sym: Sym[Any], rhs: String): Unit = {
+    stream.println(super.quote(sym) + " = " + rhs + s"; /*emitAssignment(): ${sym.tp} ${sym} ${rhs}*/")
   }
 
-  override def quote(x: Exp[Any]) = x match {
+  override def emitVarDecl(sym: Sym[Any]): Unit = {
+    stream.println(remap(sym.tp) + " " + quote(sym) + s"; /*emitVarDecl(): ${sym.tp} ${sym}*/")
+  }
+
+  override def emitVarDef(sym: Sym[Variable[Any]], rhs: String): Unit = {
+    emitConstruct(sym, rhs)
+  }
+
+  def emitVarDef(sym: Sym[Any], rhs: String)(implicit ovrld: OverloadDummy01 ): Unit = {
+    emitConstruct(sym, rhs)
+  }
+
+  private def emitConstruct(sym: Sym[Any], rhs: String): Unit = {
+    stream.println(s"${remap(sym.tp)} ${quote(sym)}($rhs); /*emitConstruct(): ${sym.tp} ${sym} = $rhs*/")
+  }
+
+  def quoteMove(x: Exp[Any]): String = x match {
     case sym: Sym[_] =>
-      if( moveableSyms.contains(sym) && rightSyms.contains(sym) )
+      if( isMoveable(sym) && moveableSyms.contains(sym) /*&& rightSyms.contains(sym)*/ )
         s"std::move(${super.quote(sym)})"
-      else super.quote(sym)
+      else
+        super.quote(sym)
     case _ =>
       super.quote(x)
   }
 
   override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
     if (remap(tpe) != "void")
-      stream.println(remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
+      stream.println("const " + remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
   }
 
   override def remapWithRef[A](m: Manifest[A]): String = {
@@ -101,16 +124,17 @@ trait CXXCodegen extends CLikeCodegen {
           "#include <vector>\n" +
           "#include <cstdlib>\n" +
           "#include <functional>\n" +
+          "#include <algorithm>\n" +
           "/*****************************************\n" +
           "  Emitting Generated Code                  \n" +
           "*******************************************/")
       emitFileHeader()
 
       val indargs = scala.Range(0, args.length).zip(args);
-      stream.println(s"${sA} apply(${indargs.map( p => s"${remap(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
+      stream.println(s"${sA} apply(${indargs.map( p => s"const ${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
       emitBlock(body)
-      stream.println(s"return ${quote(getBlockResult(body))};")
+      stream.println(s"return ${quoteMove(getBlockResult(body))};")
 
       stream.println("}")
       stream.println("/*****************************************\n" +
@@ -135,6 +159,14 @@ trait CXXFatCodegen extends CXXCodegen with CLikeFatCodegen {
       case TTP(lhs,mhs,rhs) =>
         if( syms(rhs).contains(moveableSyms.contains _) )
           moveableSyms ++= lhs
+      case TP(sym, rhs) =>
+        rhs match {
+          case Forward(x) =>
+            if( isMoveable(sym) )
+              moveableSyms += sym
+          case _ =>
+            ()
+        }
       case _ =>
         ()
     }

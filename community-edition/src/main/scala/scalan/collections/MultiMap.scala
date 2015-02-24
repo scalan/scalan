@@ -3,12 +3,12 @@ package scalan.collections
 import scalan._
 import scalan.common.Default
 
-trait MultiMaps extends Base { self: MultiMapsDsl =>
+trait MultiMaps extends Base { self: ScalanCommunityDsl =>
 
   trait MMultiMap[K, V] extends Reifiable[MMultiMap[K, V]] {
     implicit def elemKey: Elem[K]
     implicit def elemValue: Elem[V]
-
+    def map: Rep[MMap[K, ArrayBuffer[V]]]
     def union(that: Rep[MMultiMap[K, V]]): Rep[MMultiMap[K, V]]
     def isEmpty: Rep[Boolean] = (size === 0)
     def contains(key: Rep[K]): Rep[Boolean]
@@ -82,7 +82,7 @@ trait MultiMaps extends Base { self: MultiMapsDsl =>
   }
 }
 
-trait MultiMapsDsl extends ScalanDsl with impl.MultiMapsAbs with MultiMaps {
+trait MultiMapsDsl extends ScalanDsl with impl.MultiMapsAbs with MultiMaps { self: ScalanCommunityDsl =>
   implicit class MultiMapExt[K:Elem,V:Elem](map: Rep[MMultiMap[K,V]]) {
     def reduce[T:Elem](f: Arr[V] => Rep[T]): MM[K, T] = map.reduceBy[T](f)
     def applyIf[T](key: Rep[K], exists: Rep[ArrayBuffer[V]] => Rep[T], otherwise: () => Rep[T]): Rep[T] =
@@ -90,7 +90,7 @@ trait MultiMapsDsl extends ScalanDsl with impl.MultiMapsAbs with MultiMaps {
   }
 }
 
-trait MultiMapsDslSeq extends MultiMapsDsl with impl.MultiMapsSeq with ScalanSeq {
+trait MultiMapsDslSeq extends MultiMapsDsl with impl.MultiMapsSeq with ScalanSeq { self: ScalanCommunityDslSeq =>
   def appendMultiMap[K: Elem, V: Elem](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[MMap[K, ArrayBuffer[V]]] = {
     if (map.contains(key)) {
       map(key) += value
@@ -102,7 +102,7 @@ trait MultiMapsDslSeq extends MultiMapsDsl with impl.MultiMapsSeq with ScalanSeq
   }
 }
 
-trait MultiMapsDslExp extends MultiMapsDsl with impl.MultiMapsExp with ScalanExp {
+trait MultiMapsDslExp extends MultiMapsDsl with impl.MultiMapsExp with ScalanExp { self: ScalanCommunityDslExp =>
   def appendMultiMap[K: Elem, V: Elem](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[MMap[K, ArrayBuffer[V]]] =
     AppendMultiMap(map, key, value)
 

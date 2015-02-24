@@ -192,6 +192,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     val tpeArgA = L(STpeArg("A", None, Nil))
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
+    val entity = TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None,None,Some(()))), None, None)
     val obsImpl1 = CD("ObservableImpl1", tpeArgA, Nil, argEA, ancObsA, Nil, None, None, false)
     val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
 
@@ -199,7 +200,8 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
       reactiveModule,
       EMD("scalan.rx", L(SImportStat("scalan._")), "Reactive",
         Some(STpeDef("Obs", L(STpeArg("A",None,Nil)) , TC("Rep", ancObsA))),
-        TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None,None,Some(()))), None, None),
+        entity,
+        List(entity),
         L(obsImpl1, obsImpl2),
         Nil,
         None))

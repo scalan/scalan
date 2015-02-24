@@ -106,6 +106,8 @@ trait GraphVizExport { self: ScalanExp =>
         emitDepGraph(file.getName, ss)(_, config)
       }
     }
+  def emitGraphOnException(contextName: String, ss: Exp[_]*) =
+    emitDepGraph(ss, FileUtil.file("test-out", "exceptions", s"${contextName}_context.dot"))(defaultGraphVizConfig)
   // this can be made the main method in the future
   // to avoid potential inconsistencies in schedules
   // or to add information accessible from the graph
