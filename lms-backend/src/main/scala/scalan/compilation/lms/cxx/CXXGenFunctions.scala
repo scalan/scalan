@@ -20,10 +20,10 @@ trait CXXGenFunctions extends CLikeGenEffect with BaseGenFunctions with CXXCodeg
   def emitLambdaDef(sym: Sym[Any], x: Exp[_], y: Block[Any]): Unit = {
     val z = getBlockResult(y)
 //    stream.println( s"${remap(norefManifest(sym.tp))} ${quote(sym)} = [${freeInScope(scala.List(x), scala.List(z)).map(quote).mkString(",")}](${remap(x.tp)} ${quote(x)}) -> ${remap(z.tp)} {" )
-    stream.println( s"${remap(norefManifest(sym.tp))} ${quote(sym)} = [&](${remap(x.tp)} ${quote(x)}) -> ${remap(z.tp)} {" )
+    stream.println( s"const ${remapWithRef(sym.tp)} ${quote(sym)} = [&](const ${remapWithRef(x.tp)} ${quote(x)}) -> ${remap(z.tp)} {" )
     emitBlock(y)
     if (remap(z.tp) != "void")
-      stream.println("return " + quote(z) + ";")
+      stream.println("return " + quoteMove(z) + ";")
     stream.println("};")
   }
 
