@@ -45,6 +45,7 @@ trait ScalanDsl
   with ListViews
   with ExceptionsDsl
   with CollectionsDsl
+  with AbstractStringsDsl
 
 trait ScalanSeq
   extends Scalan
@@ -78,6 +79,7 @@ trait ScalanCtxSeq
   with ListViewsSeq
   with ExceptionsDslSeq
   with CollectionsDslSeq
+  with AbstractStringsDslSeq
 
 trait ScalanExp
   extends Scalan
@@ -115,3 +117,4 @@ trait ScalanCtxExp
   with ListViewsExp
   with ExceptionsDslExp
   with CollectionsDslExp
+  with AbstractStringsDslExp

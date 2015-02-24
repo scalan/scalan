@@ -3,7 +3,7 @@ package scalan.it.smoke
 import scalan._
 //import scalan.community._
 import scalan.collections._
-import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
+import scalan.parrays.{PArrayExamples, PArraysDslSeq}
 
 /**
  *  Tests that very simple examples are run correctly
