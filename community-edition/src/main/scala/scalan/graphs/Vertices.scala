@@ -3,7 +3,7 @@ package scalan.graphs
 import scalan.common.Default
 import scalan.ScalanDsl
 import scalan.collection.CollectionsDsl
-import scalan.community.ScalanCommunityDsl
+import scalan.ScalanCommunityDsl
 
 /**
  * Created by afilippov on 2/16/15.

@@ -1,7 +1,7 @@
 package scalan.graphs
 
 import scalan.common.Default
-import scalan.community.ScalanCommunityDsl
+import scalan.ScalanCommunityDsl
 import scalan.{ScalanSeq, ScalanExp, ScalanDsl}
 import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 

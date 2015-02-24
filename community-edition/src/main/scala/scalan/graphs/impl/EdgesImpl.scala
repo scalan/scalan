@@ -2,7 +2,7 @@ package scalan.graphs
 package impl
 
 import scalan.common.Default
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
+import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
 import scalan.{ScalanSeq, ScalanExp, ScalanDsl}
 import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scala.reflect.runtime.universe._

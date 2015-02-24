@@ -1,31 +1,33 @@
 package scalan.it.lms
 
-import scalan.community.ScalanCommunityDslExp
+import scalan.ScalanCommunityDslExp
+import scalan.compilation.GraphVizConfig
+import scalan.compilation.lms.cxx.{CoreCXXLmsBackend, LmsCompilerCXX}
+import scalan.util.FileUtil
 import scalan.{ScalanCtxSeq, ScalanCtxExp}
 import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.LmsCompilerScala
+import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
 import scalan.graphs.{GraphsDslExp, GraphsDslSeq, GraphExamples, MST_example}
 import scalan.it.BaseItTests
 
 
 abstract class LmsMstItTests extends BaseItTests {
-  class ProgExp extends MST_example with ScalanCommunityDslExp with LmsCompilerScala { self =>
-    def makeBridge[A, B] = new CommunityBridge[A, B] {
-      val scalan = self
-      val lms = new CommunityLmsBackend
-    }
+  class ProgExp extends MST_example with ScalanCommunityDslExp with CommunityLmsCompilerScala with CommunityBridge { self =>
+    val lms = new CommunityLmsBackend
   }
 
-  class ProgDslExp extends GraphsDslExp with GraphExamples with ScalanCommunityDslExp with LmsCompilerScala { self =>
-    def makeBridge[A, B] = new CommunityBridge[A, B] {
-      val scalan = self
-      val lms = new CommunityLmsBackend
-    }
+  class ProgExpCXX extends MST_example with ScalanCommunityDslExp with LmsCompilerCXX with CoreBridge { self =>
+    val lms = new CoreCXXLmsBackend
+  }
+
+  class ProgDslExp extends GraphsDslExp with GraphExamples with ScalanCommunityDslExp with CommunityLmsCompilerScala with CommunityBridge { self =>
+    val lms = new CommunityLmsBackend
   }
   class ProgDslSeq extends GraphsDslSeq with GraphExamples with ScalanCtxSeq
   class ProgSeq extends MST_example with ScalanCtxSeq
 
   val progStaged = new ProgExp
+  val progStagedCXX = new ProgExpCXX
   val progSeq = new ProgSeq
   val progDslStaged = new ProgDslExp
   val progDslSeq = new ProgDslSeq
@@ -72,7 +74,9 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
     val input = (links, (edgeVals, (offs, lens)))
     val res = progSeq.MST_adjlist(input)
-    //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST_adjList", input)
+//    compareOutputWithSequential(progStaged)(progSeq.MST_adjlist, progStaged.MST_adjlist, "MST_adjList", input)
+    val dir = FileUtil.file(prefix, "MST_adjList")
+    progStagedCXX.buildExecutable(dir,dir,"MST_adjList", progStagedCXX.MST_adjlist, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
 
@@ -87,7 +91,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     })
     val input = (incMatrix, vertexNum)
     val res = progSeq.MST_adjmatrix(input)
-    //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST_adjMatrix", input)
+    compareOutputWithSequential(progStaged)(progSeq.MST_adjmatrix, progStaged.MST_adjmatrix, "MST_adjMatrix", input)
     println(res.mkString(" , "))
   }
   test("MST_adjList_dsl") {

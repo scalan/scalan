@@ -4,7 +4,7 @@ package impl
 import scalan.common.Default
 import scalan.ScalanDsl
 import scalan.collection.CollectionsDsl
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
+import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
 import scala.reflect.runtime.universe._
 import scalan.common.Default
 

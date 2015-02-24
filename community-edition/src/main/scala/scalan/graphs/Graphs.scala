@@ -2,9 +2,10 @@ package scalan.graphs
 
 import scalan.ScalanDsl
 import scalan.collection.CollectionsDsl
+import scalan.collections.BitSets
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
-import scalan.community.ScalanCommunityDsl
+import scalan.ScalanCommunityDsl
 
 /**
  * Created by afilippov on 2/17/15.

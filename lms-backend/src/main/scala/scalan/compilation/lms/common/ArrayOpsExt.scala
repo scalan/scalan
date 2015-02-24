@@ -8,9 +8,10 @@ trait ArrayOpsExt extends Base {
 
   def foldArray[A: Manifest, B: Manifest](a: Rep[Array[A]], init: Rep[B], f: Rep[(B, A)] => Rep[B]): Rep[B]
   def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]]
+  def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]]
 }
 
-trait ArrayOpsExtExp extends BaseExp with EffectExp with ArrayOpsExp {
+trait ArrayOpsExtExp extends BaseExp with EffectExp with ArrayOpsExp with ArrayBuilderOpsExp {
 
   case class FoldArray[A, B: Manifest](a: Exp[Array[A]], x: Sym[(B, A)], init: Exp[B], b: Block[B]) extends Def[B] {
     val m = manifest[B]
@@ -27,6 +28,12 @@ trait ArrayOpsExtExp extends BaseExp with EffectExp with ArrayOpsExp {
   }
 
   def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
+
+  def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]] = {
+    val bu = ArrayBuilder.make[A]
+    for(a <- xs ) {bu += a}
+    bu.result
+  }
 
   override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
     case FoldArray(a, x, init, b) => foldArray(f(a), x, f(init), f(b))(mtype(manifest[A]))
