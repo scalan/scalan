@@ -21,7 +21,7 @@ trait CXXGenArrayBuilderOps  extends CXXCodegen with BaseGenArrayBuilderOps with
     stm match {
       case TP(sym,rhs) =>
         rhs match {
-          case ArrayBuilderMake() =>
+          case Reflect( ArrayBuilderMake(), _, _) =>
               moveableSyms += sym
           case _ =>
             ()
@@ -43,7 +43,7 @@ trait CXXGenArrayBuilderOps  extends CXXCodegen with BaseGenArrayBuilderOps with
 //      emitValDef(sym, src"$l.clear()")
       stream.println(s"${quote(l)}.clear();")
     case ArrayBuilderResult(x) =>
-      emitVarDef(sym, s"${quoteMove(x)}")
+      emitValDef(sym, s"${quote(x)}")
     case _ =>
       super.emitNode(sym, rhs)
   }
