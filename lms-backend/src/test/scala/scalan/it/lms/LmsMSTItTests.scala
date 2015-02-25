@@ -86,8 +86,10 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val lens = graph.map(i => i.length)
     val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
     val input = (links, (edgeVals, (offs, lens)))
-    val res = progSeq.MSF_adjlist(input)
-    //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST_adjList", input)
+    val res = progSeq.MSF_adjlist(input) //-1 , 0 , 1 , 2 , 3 , 2 , 5 , 2 , 6 , -1 , 9 , 9
+    compareOutputWithSequential(progStaged)(progSeq.MSF_adjlist, progStaged.MSF_adjlist, "MSF_adjList", input)
+    val dir = FileUtil.file(prefix, "MSF_adjlist")
+    progStagedCXX.buildExecutable(dir,dir,"MSF_adjlist", progStagedCXX.MSF_adjlist, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
 
@@ -118,7 +120,9 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     })
     val input = (incMatrix, vertexNum)
     val res = progSeq.MSF_adjmatrix(input)
-    //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST_adjMatrix", input)
+    compareOutputWithSequential(progStaged)(progSeq.MSF_adjmatrix, progStaged.MSF_adjmatrix, "MSF_adjMatrix", input)
+    val dir = FileUtil.file(prefix, "MSF_adjMatrix")
+    progStagedCXX.buildExecutable(dir,dir,"MSF_adjMatrix", progStagedCXX.MSF_adjmatrix, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
 

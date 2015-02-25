@@ -28,6 +28,18 @@ class LmsJNIExtractorItTests extends BaseItTests {
       val res = MST_adjmatrix(data)
       JNI_Pack(res)
     }
+
+    lazy val MSF_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
+      val data = JNI_Extract(in)
+      val res = MSF_adjlist(data)
+      JNI_Pack(res)
+    }
+
+    lazy val MSF_JNI_adjmatrix = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
+      val data = JNI_Extract(in)
+      val res = MSF_adjmatrix(data)
+      JNI_Pack(res)
+    }
   }
 
   test("MST_JNI") {
@@ -45,6 +57,8 @@ class LmsJNIExtractorItTests extends BaseItTests {
 
     ctx.generate("MST_JNI_adjlist", ctx.MST_JNI_adjlist)
     ctx.generate("MST_JNI_adjmatrix", ctx.MST_JNI_adjmatrix)
+    ctx.generate("MSF_JNI_adjlist", ctx.MSF_JNI_adjlist)
+    ctx.generate("MSF_JNI_adjmatrix", ctx.MSF_JNI_adjmatrix)
   }
 
   test("simpleGenCxx") {
