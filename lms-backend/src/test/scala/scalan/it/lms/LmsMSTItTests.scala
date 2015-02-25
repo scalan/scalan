@@ -74,7 +74,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
     val input = (links, (edgeVals, (offs, lens)))
     val res = progSeq.MST_adjlist(input)
-//    compareOutputWithSequential(progStaged)(progSeq.MST_adjlist, progStaged.MST_adjlist, "MST_adjList", input)
+    compareOutputWithSequential(progStaged)(progSeq.MST_adjlist, progStaged.MST_adjlist, "MST_adjList", input)
     val dir = FileUtil.file(prefix, "MST_adjList")
     progStagedCXX.buildExecutable(dir,dir,"MST_adjList", progStagedCXX.MST_adjlist, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
     println(res.mkString(" , "))
@@ -92,6 +92,8 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val input = (incMatrix, vertexNum)
     val res = progSeq.MST_adjmatrix(input)
     compareOutputWithSequential(progStaged)(progSeq.MST_adjmatrix, progStaged.MST_adjmatrix, "MST_adjMatrix", input)
+    val dir = FileUtil.file(prefix, "MST_adjMatrix")
+    progStagedCXX.buildExecutable(dir,dir,"MST_adjMatrix", progStagedCXX.MST_adjmatrix, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
   test("MST_adjList_dsl") {
