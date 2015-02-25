@@ -8,9 +8,6 @@ trait CXXCodegen extends CLikeCodegen {
   val IR: Expressions
   import IR._
 
-  sealed class OverloadDummy01
-  implicit lazy val overloadDummy01 = new OverloadDummy01
-
   trait size_t
   trait auto_t
 
@@ -78,12 +75,8 @@ trait CXXCodegen extends CLikeCodegen {
     emitConstruct(sym, rhs)
   }
 
-  def emitVarDef(sym: Sym[Any], rhs: String)(implicit ovrld: OverloadDummy01 ): Unit = {
-    emitConstruct(sym, rhs)
-  }
-
-  private def emitConstruct(sym: Sym[Any], rhs: String): Unit = {
-    stream.println(s"${remap(sym.tp)} ${quote(sym)}($rhs); /*emitConstruct(): ${sym.tp} ${sym} = $rhs*/")
+  def emitConstruct(sym: Sym[Any], args: String*): Unit = {
+    stream.println(s"${remap(sym.tp)} ${quote(sym)}(${args.mkString(",")}); /*emitConstruct(): ${sym.tp} ${sym}(${args.mkString(",")})*/")
   }
 
   def quoteMove(x: Exp[Any]): String = x match {
