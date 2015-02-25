@@ -3,19 +3,15 @@ package scalan.it.lms
 import java.io.File
 
 import scala.language.reflectiveCalls
-import scalan._
 import scalan.compilation.lms.JNIBridge
 import scalan.compilation.lms.cxx.{CommunityCXXLmsBackend, LmsCompilerCXX}
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.graphs.MST_example
 import scalan.it.BaseItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.parrays.PArraysDslExp
 import scalan.performance.MVMs
+import scalan._
 
-/**
- * Created by zotov on 1/19/15.
- */
 class LmsJNIExtractorItTests extends BaseItTests {
   trait ProgExp extends MST_example with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
     val lms = new CommunityCXXLmsBackend
@@ -86,7 +82,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
     ctx.generate("packPair", ctx.packPair)
   }
 
-  test("mvmCxxGen") {
+  test("mvm") {
     val ctx = new ScalanCtxExp with ProgExp with PackProg {
       override def subfolder: String = super.subfolder + "-cxx"
       def test() = {

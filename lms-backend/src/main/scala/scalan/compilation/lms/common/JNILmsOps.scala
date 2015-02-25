@@ -71,6 +71,7 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   def jni_new_object_array[A: Manifest](len: Rep[Int], clazz: Rep[JNIClass]): Rep[JNIType[Array[A]]] = NewObjectArray[A](len, clazz)
   def jni_extract_primitive[T: Manifest](x: Rep[JNIType[T]]): Rep[T] = ExtractPrimitive(x)
   def jni_extract_primitive_array[T: Manifest](x: Rep[JNIType[Array[T]]]): Rep[JNIArray[T]] = ExtractPrimitiveArray(x)
+  def jni_extract_primitive_array_var[T: Manifest](x: Rep[JNIType[Array[T]]]): Rep[JNIArray[T]] = reflectMutable(ExtractPrimitiveArray(x))
   def jni_get_array_length[T: Manifest](x: Rep[JNIType[Array[T]]]): Rep[Int] = GetArrayLength(x)
   def jni_extract_object_array[T: Manifest](x: Rep[JNIType[Array[T]]]): Rep[Array[JNIType[T]]] = ExtractObjectArray(x)
   def jni_get_object_array_item[T: Manifest](x: Rep[Array[JNIType[T]]], i: Rep[Int]): Rep[JNIType[T]] = GetObjectArrayItem(x, i)
@@ -85,7 +86,7 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
 
   def jni_map_array[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[B]): Exp[JNIType[Array[B]]] = {
     val jArray = jni_new_primitive_array[B](a.length)
-    val jniArray = jni_extract_primitive_array(jArray)
+    val jniArray = jni_extract_primitive_array_var(jArray)
     val f1 = {i:Rep[Int] => f(a.at(i))}
     val x = fresh[Int]
     val y = reifyEffects(f1(x))
@@ -110,6 +111,10 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
 
   override
   def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
+    case Reflect(SimpleLoop(s,v,body: JNIArrayElem[A]), u, es) =>
+      reflectMirrored(Reflect(SimpleLoop(f(s),f(v).asInstanceOf[Sym[Int]],mirrorFatDef(body,f)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
+    case res@Reflect(ExtractPrimitiveArray(x), u, es) =>
+      reflectMirrored(Reflect(ExtractPrimitiveArray(f(x)), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
     case GetObjectArrayItem(x, i) =>
       x.tp.typeArguments(0).typeArguments(0) match {
         case(mA: Manifest[a_t]) =>
@@ -210,42 +215,44 @@ trait CXXGenJNIExtractor extends CXXCodegen {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case res@NewPrimitive(x) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remap(x.tp)}>(${quote(x)})")
+      emitValDef(sym, s"static_cast<${remap(x.tp)}>(${quote(x)})")
     case res@NewObject(clazz, mid, args@_*) =>
       val sargs = if(args.isEmpty) "" else ", " + args.map(quote).mkString(", ")
-      emitValDef(quote(sym),norefManifest(jobjectManifest(sym.tp)), s"env->NewObject(${quote(clazz)},${quote(mid)}${sargs})")
+      emitValDef(quote(sym), jobjectManifest(sym.tp), s"env->NewObject(${quote(clazz)},${quote(mid)}${sargs})")
     case res@CallObjectMethod(x, mid, args@_*) =>
       val sargs = if(args.isEmpty) "" else ", " + args.map(quote).mkString(", ")
-      emitValDef(quote(sym),norefManifest(jobjectManifest(sym.tp)), s"static_cast<${remap(jobjectManifest(sym.tp))}>(env->CallObjectMethod(${quote(x)},${quote(mid)}${sargs}))")
+      emitValDef(quote(sym),jobjectManifest(sym.tp), s"static_cast<${remap(jobjectManifest(sym.tp))}>(env->CallObjectMethod(${quote(x)},${quote(mid)}${sargs}))")
     case res@ReturnFirstArg(jArray, _) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"${quote(jArray)}")
+      emitValDef(sym, s"${quote(jArray)}")
     case res@NewPrimitiveArray(len) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"env->New${res.mA.toString}Array(${quote(len)})")
+      emitValDef(sym, s"env->New${res.mA.toString}Array(${quote(len)})")
     case res@NewObjectArray(len, clazz) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"env->NewObjectArray(${quote(len)}, ${quote(clazz)}, nullptr)")
+      emitValDef(sym, s"env->NewObjectArray(${quote(len)}, ${quote(clazz)}, nullptr)")
     case FindClass(className) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"env->FindClass(${quote(className)})")
+      emitValDef(sym, s"env->FindClass(${quote(className)})")
     case ExtractPrimitive(x) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remap(norefManifest(sym.tp))}>(${quote(x)})")
+      emitValDef(sym, s"static_cast<${remap(norefManifest(sym.tp))}>(${quote(x)})")
     case ExtractPrimitiveArray(x) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"${remap(sym.tp)}(env, ${quote(x)})")
+      emitValDef(sym, s"${remap(sym.tp)}(env, ${quote(x)})")
+    case Reflect(ExtractPrimitiveArray(x),_,_) =>
+      emitConstruct(sym, "env", s"${quote(x)}")
     case GetArrayLength(x) =>
-      emitValDef(quote(sym), sym.tp, s"env->GetArrayLength(${quote(x)})")
+      emitValDef(sym, s"env->GetArrayLength(${quote(x)})")
     case ExtractObjectArray(x) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"${quote(x)} /*ExtractObjectArray: sym.tp=${sym.tp}*/")
+      emitValDef(sym, s"${quote(x)} /*ExtractObjectArray: sym.tp=${sym.tp}*/")
     case GetObjectArrayItem(x, i) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remapObject(sym.tp)}>(env->GetObjectArrayElement(${quote(x)}, ${quote(i)}))")
+      emitValDef(sym, s"static_cast<${remapObject(sym.tp)}>(env->GetObjectArrayElement(${quote(x)}, ${quote(i)}))")
     case GetObjectClass(x) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"env->GetObjectClass(${quote(x)})")
+      emitValDef(sym, s"env->GetObjectClass(${quote(x)})")
     case GetFieldID(clazz, fn, sig) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"env->GetFieldID(${quote(clazz)}, ${quote(fn)}, ${quote(sig)})")
+      emitValDef(sym, s"env->GetFieldID(${quote(clazz)}, ${quote(fn)}, ${quote(sig)})")
     case GetMethodID(clazz, mn, sig) =>
-      emitValDef(quote(sym), norefManifest(sym.tp), s"env->GetMethodID(${quote(clazz)}, ${quote(mn)}, ${quote(sig)})")
+      emitValDef(sym, s"env->GetMethodID(${quote(clazz)}, ${quote(mn)}, ${quote(sig)})")
     case GetObjectFieldValue(fid, x) =>
-      emitValDef(quote(sym), norefManifest(jobjectManifest(sym.tp)), s"static_cast<${remap(jobjectManifest(sym.tp))}>(env->GetObjectField(${quote(x)}, ${quote(fid)})) /*GetObjectField: sym.tp=${sym.tp}*/")
+      emitValDef(quote(sym), jobjectManifest(sym.tp), s"static_cast<${remap(jobjectManifest(sym.tp))}>(env->GetObjectField(${quote(x)}, ${quote(fid)})) /*GetObjectField: sym.tp=${sym.tp}*/")
     case res@GetPrimitiveFieldValue(fid, x) =>
       val funName = s"Get${res.tp.toString}Field"
-      emitValDef(quote(sym), norefManifest(sym.tp), s"static_cast<${remap(norefManifest(sym.tp))}>(env->${funName}(${quote(x)}, ${quote(fid)}))")
+      emitValDef(sym, s"static_cast<${remap(norefManifest(sym.tp))}>(env->${funName}(${quote(x)}, ${quote(fid)}))")
     case _ =>
       super.emitNode(sym, rhs)
   }

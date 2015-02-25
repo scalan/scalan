@@ -2,9 +2,10 @@ package scalan.compilation.lms.cxx
 
 import java.io._
 
+import scalan.{CommunityMethodMapping, JNIExtractorOpsExp}
+import scalan.ScalanCommunityExp
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{LmsBridge, LmsCompiler}
-import scalan.{CommunityMethodMapping, JNIExtractorOpsExp, ScalanCommunityExp}
 
 trait LmsCompilerCXX extends LmsCompiler with CommunityMethodMapping with JNIExtractorOpsExp { self: ScalanCommunityExp with LmsBridge =>
 

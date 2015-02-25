@@ -1,9 +1,9 @@
 package scalan.it.smoke
 
 import scalan._
-//import scalan.community._
+import scalan.JNIExtractorOps
 import scalan.collections._
-import scalan.parrays.{PArrayExamples, PArraysDslSeq}
+import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
 
 /**
  *  Tests that very simple examples are run correctly
