@@ -6,6 +6,7 @@ import scala.language.reflectiveCalls
 import scalan.compilation.lms.JNIBridge
 import scalan.compilation.lms.cxx.{CommunityCXXLmsBackend, LmsCompilerCXX}
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
+import scalan.graphs.MST_example
 import scalan.it.BaseItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.parrays.PArraysDslExp
@@ -19,6 +20,12 @@ class LmsJNIExtractorItTests extends BaseItTests {
     lazy val MST_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
       val data = JNI_Extract(in)
       val res = MST_adjlist(data)
+      JNI_Pack(res)
+    }
+
+    lazy val MST_JNI_adjmatrix = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
+      val data = JNI_Extract(in)
+      val res = MST_adjmatrix(data)
       JNI_Pack(res)
     }
   }
@@ -37,6 +44,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
     }
 
     ctx.generate("MST_JNI_adjlist", ctx.MST_JNI_adjlist)
+    ctx.generate("MST_JNI_adjmatrix", ctx.MST_JNI_adjmatrix)
   }
 
   test("simpleGenCxx") {

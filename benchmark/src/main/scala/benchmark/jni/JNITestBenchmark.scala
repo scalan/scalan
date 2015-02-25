@@ -85,6 +85,16 @@ class JNIMSTBenchmark {
   val input = (links, (edgeVals, (offs, lens)))
   val right = Array(-1 , 0 , 1 , 2 , 3 , 2 , 5 , 2 , 6 , -2 , -2 , -2) //epends on the order of operations and algorithm behaviour
 
+  val vertexNum = graph.length
+  val incMatrix = (graph zip graphValues).flatMap({ in =>
+    val row = in._1
+    val vals = in._2
+    val zero = scala.Array.fill(vertexNum)(0.0)
+    for (i <- 0 to row.length-1) { zero(row(i)) = vals(i) }
+    zero
+  })
+  val inputM = (incMatrix, vertexNum)
+
   val nativeMethods = new NativeMethods
 
   var res: Array[Int] = null
@@ -109,11 +119,12 @@ class JNIMSTBenchmark {
   }
 
   val MST_adjlist_staged = loadMethod(ctx)(baseDir, "MST_adjlist", ctx.MST_adjlist)
+  val MST_adjmatrix_staged = loadMethod(ctx)(baseDir, "MST_adjmatrix", ctx.MST_adjmatrix)
 
   @TearDown
   def check(): Unit = {
     //      require(res == in, s"error!")
-    require(res.deep == right.deep, s"error!")
+    require(res.deep == right.deep, s"res.deep == right.deep")
   }
 
   @Benchmark
@@ -128,8 +139,26 @@ class JNIMSTBenchmark {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def MST_adjmatrix_cxx( state: JNIMSTBenchmark ): Array[Int] = {
+    val res = state.nativeMethods.MSTadjmatrix( state.inputM )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
   def MST_adjlist_staged( state: JNIMSTBenchmark ): Array[Int] = {
     val res = state.MST_adjlist_staged(state.input)
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def MST_adjmatrix_staged( state: JNIMSTBenchmark ): Array[Int] = {
+    val res = state.MST_adjmatrix_staged(state.inputM)
     state.res = res
     res
   }

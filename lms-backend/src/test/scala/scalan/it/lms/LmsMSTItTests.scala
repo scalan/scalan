@@ -97,6 +97,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     println(res.mkString(" , "))
   }
   test("MST_adjList_dsl") {
+    pending
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
