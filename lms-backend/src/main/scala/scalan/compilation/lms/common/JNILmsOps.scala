@@ -235,7 +235,7 @@ trait CXXGenJNIExtractor extends CXXCodegen {
     case ExtractPrimitiveArray(x) =>
       emitValDef(sym, s"${remap(sym.tp)}(env, ${quote(x)})")
     case Reflect(ExtractPrimitiveArray(x),_,_) =>
-      emitVarDef(sym, s"${remap(sym.tp)}(env, ${quote(x)})")
+      emitConstruct(sym, "env", s"${quote(x)}")
     case GetArrayLength(x) =>
       emitValDef(sym, s"env->GetArrayLength(${quote(x)})")
     case ExtractObjectArray(x) =>
