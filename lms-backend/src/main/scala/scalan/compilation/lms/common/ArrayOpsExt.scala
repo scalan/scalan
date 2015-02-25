@@ -32,6 +32,7 @@ trait ArrayOpsExtExp extends BaseExp with EffectExp with ArrayOpsExp with ArrayB
   def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]] = {
     val bu = ArrayBuilder.make[A]
     for(a <- xs ) {bu += a}
+    bu += value
     bu.result
   }
 
