@@ -3,7 +3,6 @@ package scalan.it.lms
 import scala.language.reflectiveCalls
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
-import scalan.it.BaseItTests
 import scalan.linalgebra.MatricesDslExp
 import scalan.{CommunityMethodMapping, ScalanCommunityDslExp, ScalanCommunityExp, ScalanCtxExp}
 
@@ -136,10 +135,6 @@ class MethodCallItTests extends LmsCommunityItTests{
     val in = (Array(4.4, 5.0, 6.1), (5.5, 7.7))
     compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIfGt, progStaged.mapWithLambdaIfGt, "mapWithLambdaIfGt", in)
   }
-
-}
-
-class MethodCallItTestsOld extends BaseItTests {
 
   trait TestLmsCompiler extends ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge {
     val lms = new CommunityLmsBackend
@@ -281,10 +276,9 @@ class MethodCallItTestsOld extends BaseItTests {
 
   test("Mapping Method From Jar") {
     val methodName = "MappingMethodFromJar"
+    val conf = jarReplaceExp.defaultCompilerConfig
     val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, methodName, new Exception("Original massage"),
-      jarReplaceExp.defaultCompilerConfig.copy(scalaVersion = Some("2.11.4"),
-        sbt = jarReplaceExp.defaultCompilerConfig.sbt.copy(mainPack = "scalan.it.lms.MappingMethodFromJar",
-          extraClasses = Seq("scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
+      conf.copy(scalaVersion = Some("2.10.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.it.lms.MappingMethodFromJar"), extraClasses = Seq("scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
     messageFromTestMethod should equal("Test Message")
   }
 }
