@@ -17,7 +17,8 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
    *
    * Otherwise uses SBT to compile with the desired version
    */
-  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], mainPack: String = null, extraClasses : Array[String] = Array.empty[String])
+  case class SbtConfig(mainPack: String = null, extraClasses : Seq[String] = Seq.empty[String], commands: Seq[String] = Seq("clean" ,"compile"))
+  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig())
 
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
@@ -55,7 +56,7 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
 
     compilerConfig.scalaVersion match {
       case Some(scalaVersion) =>
-        compilerConfig.mainPack match {
+        compilerConfig.sbt.mainPack match {
           case mainPack: String =>
             val mainClass: String = mainPack + ".run"
             val jar = s"$functionName.jar"
@@ -66,7 +67,7 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
             val mainClassFile = mainClass.replaceAll("\\.", File.separator) + ".scala"
             FileUtil.copy(FileUtil.file(FileUtil.currentClassDir, mainClassFile), file(src, mainClassFile))
 
-            for (c <- compilerConfig.extraClasses) {
+            for (c <- compilerConfig.sbt.extraClasses) {
               val scalaFile = c.replaceAll("\\.", File.separator) + ".scala"
               FileUtil.copy(file(FileUtil.currentClassDir, scalaFile), file(src, scalaFile))
             }
@@ -77,12 +78,14 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
                  |${methodReplaceConf.dependencies.map(d => s"libraryDependencies += $d").mkString("\n")}
                  |assemblyJarName in assembly := "$jar"
                  |mainClass in assembly := Some("$mainClass")
+                 |version := ""
                  |assemblyMergeStrategy in assembly := {
                  |  case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
                  |  case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
                  |  case "application.conf"                            => MergeStrategy.concat
-                 |  case "META-INF/MANIFEST.MF"                        => MergeStrategy.discard
-                 |  case "META-INF/manifest.mf"                        => MergeStrategy.discard
+                 |  case PathList("META-INF", ps @ _*) if ps.nonEmpty && (ps.last.toLowerCase.endsWith(".mf") ||
+                 |    ps.last.toLowerCase.endsWith(".sf")
+                 |    || ps.last.toLowerCase.endsWith(".dsa"))            => MergeStrategy.discard
                  |  case x => MergeStrategy.first
                  |}
               """.stripMargin)
@@ -92,9 +95,13 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
                 |addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.12.0")
               """.stripMargin)
 
-            ProcessUtil.launch(sourcesDir, "sbt", "assembly")
-            FileUtil.move(file(executableDir, "target", s"scala-${scalaVersion.substring(0, scalaVersion.lastIndexOf("."))}", jar),
-              file(executableDir, jar))
+            compilerConfig.sbt.commands.foreach(com => ProcessUtil.launch(sourcesDir, "sbt", com))
+
+            val jarFile = file(executableDir, "target", s"scala-${scalaVersion.substring(0, scalaVersion.lastIndexOf("."))}", jar)
+            jarFile.exists() match {
+              case true => FileUtil.move(jarFile, file(executableDir, jar))
+              case false =>
+            }
 
           case _ =>
             FileUtil.write(buildSbtFile,
@@ -143,7 +150,7 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
 
     val ar = FileUtil.listFiles(executableLibsDir, ExtensionFilter("jar"))
     val urls = (jarFile +: ar).map(_.toURI.toURL)
-    CustomCompilerOutput(urls, compilerConfig.mainPack)
+    CustomCompilerOutput(urls, compilerConfig.sbt.mainPack)
   }
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {

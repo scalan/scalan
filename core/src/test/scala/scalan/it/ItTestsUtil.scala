@@ -24,10 +24,13 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
     getStagedOutputConfig(back)(f, functionName, input, back.defaultCompilerConfig)
 
   def getStagedOutputConfig[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig): B = {
-    val dir = FileUtil.file(prefix, functionName)
-
-    val compiled = back.buildExecutable(dir, functionName, f, graphVizConfig)(compilerConfig)
+    val compiled = compileSource(back)(f, functionName, compilerConfig)
     back.execute(compiled, input)
+  }
+
+  def compileSource[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, compilerConfig: back.CompilerConfig) : back.CompilerOutput[A, B] = {
+    val dir = FileUtil.file(prefix, functionName)
+    back.buildExecutable(dir, functionName, f, graphVizConfig)(compilerConfig)
   }
 
   implicit def defaultComparator[A](expected: A, actual: A) {

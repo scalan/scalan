@@ -239,7 +239,7 @@ class MethodCallItTestsOld extends BaseItTests {
   }
 
   val testJar = "test.jar"
-  val jarReplaceMethExp = new ScalanCommunityExp with TestLmsCompiler {
+  val jarReplaceExp = new ScalanCommunityExp with TestLmsCompiler {
     self =>
 
     lazy val message = fun { (t: Rep[Throwable]) => t.getMessage}
@@ -281,8 +281,10 @@ class MethodCallItTestsOld extends BaseItTests {
 
   test("Mapping Method From Jar") {
     val methodName = "MappingMethodFromJar"
-    val messageFromTestMethod = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.message, methodName, new Exception("Original massage"),
-      jarReplaceMethExp.defaultCompilerConfig.copy(scalaVersion = Some("2.11.4"), mainPack = "scalan.it.lms.MappingMethodFromJar", extraClasses = Array("scalan.it.lms.MappingMethodFromJar.TestMethod")))
+    val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, methodName, new Exception("Original massage"),
+      jarReplaceExp.defaultCompilerConfig.copy(scalaVersion = Some("2.11.4"),
+        sbt = jarReplaceExp.defaultCompilerConfig.sbt.copy(mainPack = "scalan.it.lms.MappingMethodFromJar",
+          extraClasses = Seq("scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
     messageFromTestMethod should equal("Test Message")
   }
 }
