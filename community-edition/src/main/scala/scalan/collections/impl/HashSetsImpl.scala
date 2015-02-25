@@ -23,20 +23,8 @@ trait HashSetsAbs extends Scalan with HashSets {
   implicit def defaultSHashSetElem[A:Elem]: Elem[SHashSet[A]] = element[SHashSetImpl[A]].asElem[SHashSet[A]]
   implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]]
 
-  implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, _,SHashSet[A]] = elem.asInstanceOf[SHashSetElem[A, _,SHashSet[A]]]
-  implicit val containerSHashSet: Cont[SHashSet] = new Container[SHashSet] {
-    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SHashSet[A]]
-    def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
-  }
-  case class SHashSetIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SHashSet](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Rep[SHashSet[B]]) = x.map(iso.from _)
-    def to(x: Rep[SHashSet[A]]) = x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(SHashSet.empty[B])
-  }
   abstract class SHashSetElem[A, From, To <: SHashSet[A]](iso: Iso[From, To])(implicit eA: Elem[A])
-    extends ViewElem1[A, From, To, SHashSet](iso) {
+    extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
     def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To]
   }
@@ -187,15 +175,6 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
     override def mirror(t: Transformer) = this
   }
 
-  case class ViewSHashSet[A, B](source: Rep[SHashSet[A]])(iso: Iso1[A, B, SHashSet])
-    extends View1[A, B, SHashSet](iso) {
-    def copy(source: Rep[SHashSet[A]]) = ViewSHashSet(source)(iso)
-    override def toString = s"ViewSHashSet[${innerIso.eTo.name}]($source)"
-    override def equals(other: Any) = other match {
-      case v: ViewSHashSet[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
-      case _ => false
-    }
-  }
   implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
   case class ExpSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])

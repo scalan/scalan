@@ -92,6 +92,7 @@ trait ScalanAst {
   final val ConstuctorAnnotation = "Constructor"
   final val ExternalAnnotation = "External"
   final val ArgListAnnotation = "ArgList"
+  final val ContainerTypeAnnotation = "ContainerType"
 
   // SExpr universe --------------------------------------------------------------------------
   trait SExpr
@@ -202,6 +203,10 @@ trait ScalanAst {
     }
 
     def getConcreteClasses = body.collect { case c: SClassDef => c }
+
+    def getAnnotation(annotName: String) = annotations.find(a => a.annotationClass == annotName)
+
+    def hasAnnotation(annotName: String) = getAnnotation(annotName).isDefined
   }
 
   case class STraitDef(

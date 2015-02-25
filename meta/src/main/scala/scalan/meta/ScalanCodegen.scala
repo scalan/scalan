@@ -20,7 +20,7 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
     val optBT = entity.optBaseType
     val firstAncestorType = entity.ancestors.head
 
-    def isContainer1 = tpeArgs.length == 1 && optBT.isDefined
+    def isContainer1 = tpeArgs.length == 1 && entity.hasAnnotation(ContainerTypeAnnotation)
 
     def boundedTpeArgString(withTags: Boolean = false) = tpeArgs.getBoundedTpeArgString(withTags)
 

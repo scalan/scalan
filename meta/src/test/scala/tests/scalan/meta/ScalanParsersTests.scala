@@ -219,4 +219,26 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
         Nil,
         None))
   }
+
+  val testModule =
+    """package scalan.test
+      |trait Module extends ScalanDsl {
+      |  type Obs[A] = Rep[Observable[A]]
+      |  @ContainerType
+      |  trait Cont[A] extends Reifiable[Cont[A]] {
+      |    implicit def eA: Elem[A]
+      |    @External
+      |    def map[B:Elem](
+      |  }
+      |  trait PairCont[A,B] extends Cont[(A,B)] {
+      |
+      |  }
+      |  class ContImpl1[A](implicit val eA: Elem[A]) extends Observable[A] {
+      |  }
+      |  class ContImpl2[A](implicit val eA: Elem[A]) extends Observable[A] {
+      |  }
+      |}
+    """.stripMargin
+  describe("annotations")  {
+  }
 }

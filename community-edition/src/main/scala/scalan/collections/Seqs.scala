@@ -9,15 +9,18 @@ trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
   type RSeq[A] = Rep[SSeq[A]]
 
   /** Iterable collection that have a defined order of elements. */
+  @ContainerType
   trait SSeq[A] extends BaseTypeEx[Seq[A], SSeq[A]] { self =>
     implicit def eA: Elem[A]
     def wrappedValueOfBaseType: Rep[Seq[A]]
 
     /** The size of this sequence. */
-    @External def size: Rep[Int]
+    @External @Semantics(name = ContainerLength)
+    def size: Rep[Int]
 
     /** Selects an element by its index in the $coll. */
-    @External def apply(idx: Rep[Int]): Rep[A]
+    @External @Semantics(name = ContainerApply)
+    def apply(idx: Rep[Int]): Rep[A]
 
     @External def slice(unc_from: Rep[Int], unc_until: Rep[Int]): Rep[SSeq[A]]
 
