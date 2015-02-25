@@ -7,7 +7,9 @@ import scala.reflect.runtime.universe._
 
 trait HashSets extends Base with BaseTypes { self: ScalanCommunityDsl =>
 
-  type RHS[A] = Rep[HashSet[A]]
+  type RHS[A] = Rep[SHashSet[A]]
+
+  @ContainerType
   trait SHashSet[A] extends BaseTypeEx[HashSet[A], SHashSet[A]] { self =>
     implicit def eA: Elem[A]
     def wrappedValueOfBaseType: Rep[HashSet[A]]

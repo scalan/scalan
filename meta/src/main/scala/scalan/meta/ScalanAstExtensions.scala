@@ -29,4 +29,8 @@ trait ScalanAstExtensions extends ScalanAst {
         s"[${args.rep(t => (if (t.isHighKind) s"${t.declaration}:Cont" else s"${t.name}:Elem") +
           withTags.opt(":WeakTypeTag"))}]")
   }
+
+  implicit class STpeDefOps(td: STpeDef) {
+    def emitTypeDecl = s"type ${td.name}${td.tpeArgs.getTpeArgDeclString} = Rep[${td.rhs}}]"
+  }
 }

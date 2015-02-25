@@ -131,6 +131,7 @@ trait ScalanAst {
         s"$name[$params]"
       }
       else name
+    def toTraitCall: STraitCall = STraitCall(name, tparams.map(_.toTraitCall))
   }
   type STpeArgs = List[STpeArg]
 

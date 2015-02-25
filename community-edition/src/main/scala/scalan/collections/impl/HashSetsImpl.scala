@@ -23,8 +23,20 @@ trait HashSetsAbs extends Scalan with HashSets {
   implicit def defaultSHashSetElem[A:Elem]: Elem[SHashSet[A]] = element[SHashSetImpl[A]].asElem[SHashSet[A]]
   implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]]
 
+  implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, _,SHashSet[A]] = elem.asInstanceOf[SHashSetElem[A, _,SHashSet[A]]]
+  implicit val containerSHashSet: Cont[SHashSet] = new Container[SHashSet] {
+    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SHashSet[A]]
+    def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
+  }
+  case class SHashSetIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SHashSet](iso) {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    def from(x: Rep[SHashSet[B]]) = x.map(iso.from _)
+    def to(x: Rep[SHashSet[A]]) = x.map(iso.to _)
+    lazy val defaultRepTo = Default.defaultVal(SHashSet.empty[B])
+  }
   abstract class SHashSetElem[A, From, To <: SHashSet[A]](iso: Iso[From, To])(implicit eA: Elem[A])
-    extends ViewElem[From, To](iso) {
+    extends ViewElem1[A, From, To, SHashSet](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
     def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To]
   }
@@ -175,6 +187,15 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
     override def mirror(t: Transformer) = this
   }
 
+  case class ViewSHashSet[A, B](source: Rep[SHashSet[A]])(iso: Iso1[A, B, SHashSet])
+    extends View1[A, B, SHashSet](iso) {
+    def copy(source: Rep[SHashSet[A]]) = ViewSHashSet(source)(iso)
+    override def toString = s"ViewSHashSet[${innerIso.eTo.name}]($source)"
+    override def equals(other: Any) = other match {
+      case v: ViewSHashSet[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
+      case _ => false
+    }
+  }
   implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
   case class ExpSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])
@@ -260,5 +281,64 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
         case _ => None
       }
     }
+  }
+
+  object UserTypeSHashSet {
+    def unapply(s: Exp[_]): Option[Iso[_, _]] = {
+      s.elem match {
+        case e: SHashSetElem[a,from,to] => e.eItem match {
+          case UnpackableElem(iso) => Some(iso)
+          case _ => None
+        }
+        case _ => None
+      }
+    }
+  }
+
+  override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
+    case Def(view: ViewSHashSet[_, _]) =>
+      Some((view.source, SHashSetIso(view.iso)))
+    case UserTypeSHashSet(iso: Iso[a, b]) =>
+      val newIso = SHashSetIso(iso)
+      val repr = reifyObject(UnpackView(s.asRep[SHashSet[b]])(newIso))
+      Some((repr, newIso))
+    case _ =>
+      super.unapplyViews(s)
+  }).asInstanceOf[Option[Unpacked[T]]]
+
+  type SHashSetMapArgs[A,B] = (Rep[SHashSet[A]], Rep[A => B])
+
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case SHashSetMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+    case SHashSetMethods.map(t: SHashSetMapArgs[_,c] @unchecked) => t match {
+      case (xs: RHS[a]@unchecked, f @ Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) => {
+        val f1 = f.asRep[a => c]
+        implicit val eA = xs.elem.eItem
+        implicit val eB = iso.eFrom
+        val s = xs.map( fun { x =>
+          val tmp = f1(x)
+          iso.from(tmp)
+        })
+        val res = ViewSHashSet(s)(SHashSetIso(iso))
+        res
+      }
+      case (Def(view: ViewSHashSet[a, b]), _) => {
+        val iso = view.innerIso
+        val ff = t._2.asRep[b => c]
+        implicit val eA = iso.eFrom
+        implicit val eB = iso.eTo
+        implicit val eC = ff.elem.eRange
+        view.source.map(fun { x => ff(iso.to(x))})
+      }
+      case _ =>
+        super.rewriteDef(d)
+    }
+    case view1@ViewSHashSet(Def(view2@ViewSHashSet(arr))) => {
+      val compIso = composeIso(view2.innerIso, view1.innerIso)
+      implicit val eAB = compIso.eTo
+      ViewSHashSet(arr)(SHashSetIso(compIso))
+    }
+
+    case _ => super.rewriteDef(d)
   }
 }

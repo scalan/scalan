@@ -19,6 +19,17 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
     val implicitArgsUse = entity.implicitArgs.args.opt(args => s"(${args.map(_.name).rep()})")
     val optBT = entity.optBaseType
     val firstAncestorType = entity.ancestors.head
+    val entityRepSynonimOpt = module.entityRepSynonym
+
+    def entityRepSynonim = entityRepSynonimOpt match {
+      case Some(s) => s
+      case None => STpeDef("Rep" + name, tpeArgs, STraitCall("Rep", List(STraitCall(name, tpeArgs.map(_.toTraitCall)))))
+    }
+
+    def emitEntityRepSynonim = {
+      val td = entityRepSynonim
+      td.emitTypeDecl
+    }
 
     def isContainer1 = tpeArgs.length == 1 && entity.hasAnnotation(ContainerTypeAnnotation)
 
@@ -584,6 +595,82 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
         |""".stripAndTrim
     }
 
+    def emitContainerRules(e: EntityTemplateData) = {
+      val syn = e.entityRepSynonim
+      if (e.isContainer1) {
+        s"""
+          |    case ${e.name}Methods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+          |    case ${e.name}Methods.map(t: ${e.name}MapArgs[_,c] @unchecked) => t match {
+          |      case (xs: ${syn.name}[a]@unchecked, f @ Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) => {
+          |        val f1 = f.asRep[a => c]
+          |        implicit val eA = xs.elem.eItem
+          |        implicit val eB = iso.eFrom
+          |        val s = xs.map( fun { x =>
+          |          val tmp = f1(x)
+          |          iso.from(tmp)
+          |        })
+          |        val res = View${e.name}(s)(${e.name}Iso(iso))
+          |        res
+          |      }
+          |      case (Def(view: View${e.name}[a, b]), _) => {
+          |        val iso = view.innerIso
+          |        val ff = t._2.asRep[b => c]
+          |        implicit val eA = iso.eFrom
+          |        implicit val eB = iso.eTo
+          |        implicit val eC = ff.elem.eRange
+          |        view.source.map(fun { x => ff(iso.to(x))})
+          |      }
+          |      case _ =>
+          |        super.rewriteDef(d)
+          |    }
+          |    case view1@View${e.name}(Def(view2@View${e.name}(arr))) => {
+          |      val compIso = composeIso(view2.innerIso, view1.innerIso)
+          |      implicit val eAB = compIso.eTo
+          |      View${e.name}(arr)(${e.name}Iso(compIso))
+          |    }
+           """.stripMargin
+      }
+      else ""
+    }
+
+    def emitRewriteDef(e: EntityTemplateData) = {
+      if (e.isContainer1) {
+        s"""
+        |  object UserType${e.name} {
+        |    def unapply(s: Exp[_]): Option[Iso[_, _]] = {
+        |      s.elem match {
+        |        case e: ${e.name}Elem[a,from,to] => e.eItem match {
+        |          case UnpackableElem(iso) => Some(iso)
+        |          case _ => None
+        |        }
+        |        case _ => None
+        |      }
+        |    }
+        |  }
+        |
+        |  override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
+        |    case Def(view: View${e.name}[_, _]) =>
+        |      Some((view.source, ${e.name}Iso(view.iso)))
+        |    case UserType${e.name}(iso: Iso[a, b]) =>
+        |      val newIso = ${e.name}Iso(iso)
+        |      val repr = reifyObject(UnpackView(s.asRep[${e.name}[b]])(newIso))
+        |      Some((repr, newIso))
+        |    case _ =>
+        |      super.unapplyViews(s)
+        |  }).asInstanceOf[Option[Unpacked[T]]]
+        |
+        |  type ${e.name}MapArgs[A,B] = (Rep[${e.name}[A]], Rep[A => B])
+        |  ${(!e.entityRepSynonimOpt.isDefined).opt(e.emitEntityRepSynonim)}
+        |
+        |  override def rewriteDef[T](d: Def[T]) = d match {
+        |    ${emitContainerRules(e)}
+        |    case _ => super.rewriteDef(d)
+        |  }
+         """.stripMargin
+      }
+      else ""
+    }
+
     def getTraitExp = {
       val e = module.entityOps
       val entityName = e.name
@@ -605,6 +692,8 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
        |${concreteClassesString.mkString("\n\n")}
        |
        |${methodExtractorsString(e)}
+
+       |${emitRewriteDef(td)}
        |}
        |""".stripAndTrim
     }
