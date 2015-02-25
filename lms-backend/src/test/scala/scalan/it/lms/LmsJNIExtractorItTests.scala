@@ -3,20 +3,15 @@ package scalan.it.lms
 import java.io.File
 
 import scala.language.reflectiveCalls
-import scalan.compilation.lms.{JNIBridge, CommunityBridge}
+import scalan.compilation.lms.JNIBridge
 import scalan.compilation.lms.cxx.{CommunityCXXLmsBackend, LmsCompilerCXX}
-import scalan.it.BaseItTests
-import scalan.performance.MVMs
-import scalan._
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
+import scalan.it.BaseItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.parrays.PArraysDslExp
-import scalan.primitives.AbstractStringsDslExp
+import scalan.performance.MVMs
+import scalan._
 
-/**
- * Created by zotov on 1/19/15.
- */
 class LmsJNIExtractorItTests extends BaseItTests {
   trait ProgExp extends PArraysDslExp with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
     val lms = new CommunityCXXLmsBackend
