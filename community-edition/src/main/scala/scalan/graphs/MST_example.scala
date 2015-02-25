@@ -74,6 +74,24 @@ trait MST_example extends Scalan{
     result._3
   }
 
+  def MSF_prime_adjlist(links: Rep[Array[Int]], edge_vals: Rep[Array[Double]], offs: Rep[Array[Int]], lens: Rep[Array[Int]]): Arr[Int] = {
+    val startVertex = toRep(0);
+    val vertexNum = offs.length
+    val out = SArray.replicate(vertexNum, UNVISITED)
+    val stop = toRep(false)
+
+    val outIndexes = SArray.rangeFrom0(vertexNum)
+    val result = from( startVertex, out, stop).until((_, _, stop) => stop ) { (start, out, stop) =>
+      val newOut = MST_prime_adjlist(links, edge_vals, offs, lens, start, out)
+      val remain = (outIndexes zip newOut).filter( x => x._2 === UNVISITED)
+      val stop = (remain.length === 0)
+      val newStart = IF (stop) THEN toRep(0) ELSE remain(0)._1
+      (newStart, newOut, stop)
+
+    }
+    result._2
+  }
+
   lazy val MST_adjlist = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
     val links = in._1
     val edge_vals = in._2
@@ -81,6 +99,14 @@ trait MST_example extends Scalan{
     val segLens = in._4
 
     MST_prime_adjlist(links, edge_vals, segOffsets, segLens, 0, SArray.replicate(segOffsets.length, UNVISITED))
+  }
+  lazy val MSF_adjlist = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val links = in._1
+    val edge_vals = in._2
+    val segOffsets = in._3
+    val segLens = in._4
+
+    MSF_prime_adjlist(links, edge_vals, segOffsets, segLens)
   }
 
   def MST_prime_adjmatrix(incMatrix: Rep[Array[Double]], vertexNum: Rep[Int],
@@ -138,10 +164,32 @@ trait MST_example extends Scalan{
     result._3
   }
 
+  def MSF_prime_adjmatrix(incMatrix: Rep[Array[Double]], vertexNum: Rep[Int]): Arr[Int] = {
+    val startVertex = toRep(0);
+    val out = SArray.replicate(vertexNum, UNVISITED)
+    val stop = toRep(false)
+
+    val outIndexes = SArray.rangeFrom0(vertexNum)
+    val result = from( startVertex, out, stop).until((_, _, stop) => stop ) { (start, out, stop) =>
+      val newOut = MST_prime_adjmatrix(incMatrix, vertexNum, start, out)
+      val remain = (outIndexes zip newOut).filter( x => x._2 === UNVISITED)
+      val stop = (remain.length === 0)
+      val newStart = IF (stop) THEN toRep(0) ELSE remain(0)._1
+      (newStart, newOut, stop)
+
+    }
+    result._2
+  }
   lazy val MST_adjmatrix = fun { in: Rep[(Array[Double], Int)] =>
     val links = in._1
     val vertexNum = in._2
 
     MST_prime_adjmatrix(links, vertexNum, 0, SArray.replicate(vertexNum, UNVISITED))
+  }
+  lazy val MSF_adjmatrix = fun { in: Rep[(Array[Double], Int)] =>
+    val links = in._1
+    val vertexNum = in._2
+
+    MSF_prime_adjmatrix(links, vertexNum)
   }
 }

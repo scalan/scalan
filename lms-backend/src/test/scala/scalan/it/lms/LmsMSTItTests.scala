@@ -79,6 +79,17 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     progStagedCXX.buildExecutable(dir,dir,"MST_adjList", progStagedCXX.MST_adjlist, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
+  test("MSF_adjList") {
+
+    val links = graph.flatMap( i=> i)
+    val edgeVals = graphValues.flatMap(i => i)
+    val lens = graph.map(i => i.length)
+    val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
+    val input = (links, (edgeVals, (offs, lens)))
+    val res = progSeq.MSF_adjlist(input)
+    //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST_adjList", input)
+    println(res.mkString(" , "))
+  }
 
   test("MST_adjMatrix") {
     val vertexNum = graph.length
@@ -96,6 +107,21 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     progStagedCXX.buildExecutable(dir,dir,"MST_adjMatrix", progStagedCXX.MST_adjmatrix, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
+  test("MSF_adjMatrix") {
+    val vertexNum = graph.length
+    val incMatrix = (graph zip graphValues).flatMap({ in =>
+      val row = in._1
+      val vals = in._2
+      val zero = scala.Array.fill(vertexNum)(0.0)
+      for (i <- 0 to row.length-1) { zero(row(i)) = vals(i) }
+      zero
+    })
+    val input = (incMatrix, vertexNum)
+    val res = progSeq.MSF_adjmatrix(input)
+    //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST_adjMatrix", input)
+    println(res.mkString(" , "))
+  }
+
   test("MST_adjList_dsl") {
     pending
     val links = graph.flatMap( i=> i)
@@ -104,7 +130,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
     val input = (links, (edgeVals, (offs, lens)))
     val res = progDslSeq.mstFun1Adj(input)
-    compareOutputWithSequential(progDslStaged)(progDslSeq.mstFun1Adj, progDslStaged.mstFun1Adj, "MST_adjList_dsl", input)
+    //compareOutputWithSequential(progDslStaged)(progDslSeq.mstFun1Adj, progDslStaged.mstFun1Adj, "MST_adjList_dsl", input)
     println(res.mkString(" , "))
   }
 
