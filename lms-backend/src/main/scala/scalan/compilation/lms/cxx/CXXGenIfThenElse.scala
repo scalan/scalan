@@ -21,13 +21,14 @@ trait CXXGenIfThenElse  extends CXXCodegen with BaseGenIfThenElse with CLikeGenE
             emitBlock(b)
             stream.println("}")
           case _ =>
-            if (isPrimitiveType(sym.tp)) stream.println("%s %s;".format(remap(sym.tp),quote(sym)))
+            if (isPrimitiveType(sym.tp))
+              emitVarDecl(sym)
             stream.println("if (" + quote(c) + ") {")
             emitBlock(a)
-            stream.println("%s = %s;".format(quote(sym),quote(getBlockResult(a))))
+            emitAssignment(sym, quoteMove(getBlockResult(a)))
             stream.println("} else {")
             emitBlock(b)
-            stream.println("%s = %s;".format(quote(sym),quote(getBlockResult(b))))
+            emitAssignment(sym, quoteMove(getBlockResult(a)))
             stream.println("}")
         }
       /*
