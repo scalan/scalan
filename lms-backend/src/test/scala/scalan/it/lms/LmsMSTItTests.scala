@@ -92,6 +92,8 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val input = (incMatrix, vertexNum)
     val res = progSeq.MST_adjmatrix(input)
     compareOutputWithSequential(progStaged)(progSeq.MST_adjmatrix, progStaged.MST_adjmatrix, "MST_adjMatrix", input)
+    val dir = FileUtil.file(prefix, "MST_adjMatrix")
+    progStagedCXX.buildExecutable(dir,dir,"MST_adjMatrix", progStagedCXX.MST_adjmatrix, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
   test("MST_adjList_dsl") {
