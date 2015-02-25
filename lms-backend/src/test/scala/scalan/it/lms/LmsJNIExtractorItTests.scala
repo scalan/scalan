@@ -60,7 +60,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
     ctx.generate("packPair", ctx.packPair)
   }
 
-  test("mvmCxxGen") {
+  test("mvm") {
     val ctx = new ScalanCtxExp with ProgExp with PackProg {
       override def subfolder: String = super.subfolder + "-cxx"
       def test() = {
