@@ -36,7 +36,7 @@ trait CXXGenStruct extends CLikeGenBase with BaseGenStruct with CXXCodegen {
     case Struct(tag, elems) =>
       sym.tp match {
         case tup2m if tup2m.runtimeClass == classOf[Tuple2[_,_]] =>
-          emitValDef( sym, s"${remap(sym.tp)}(${elems.map(e => quote(e._2)).mkString(",")})" )
+          emitVarDef( sym, s"${remap(sym.tp)}(${elems.map(e => quoteMove(e._2)).mkString(",")})" )
         case _ =>
           registerStruct(structName(sym.tp), elems)
           emitValDef(sym, "new " + structName(sym.tp) + "(" + elems.map(e => quote(e._2)).mkString(",") + ")")

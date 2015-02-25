@@ -5,6 +5,7 @@ import java.io.PrintWriter
 import scala.virtualization.lms.common._
 import scalan.compilation.lms._
 import scalan.compilation.lms.common.{CXXGenJNIExtractor, JNILmsOpsExp, JNILmsOps}
+import scalan.compilation.lms.CoreLmsBackendBase
 
 class CoreCXXLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>
 
@@ -21,6 +22,11 @@ class CoreCXXLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>
   with CLikeGenOrderingOps
   with CLikeGenBooleanOps
   with CXXGenFunctions
+  with CXXGenArrayOps
+  with CXXGenVariables
+  with CXXGenArrayBuilderOps
+  with CXXGenRangeOps
+  with CLikeGenWhile
   with CXXCodegen
   with CXXGenJNIExtractor
   {

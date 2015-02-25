@@ -566,8 +566,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
       xs.at(start + i * stride)
     }
   def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
-    xs.update(index, value)
-    xs
+    val newArr =  array_obj_new(xs.length)
+    array_copy(xs, 0, newArr, 0, xs.length)
+    newArr.update(index, value)
+    newArr
   }
 
   def ifThenElse[A:Manifest](cond: Exp[Boolean], iftrue: () => Exp[A], iffalse: () => Exp[A]) = {
@@ -589,7 +591,7 @@ object LmsType {
   val wildCard : Manifest[WildCard] = Manifest.classType(classOf[WildCard])
 }
 
-class CoreLmsBackend extends LmsBackend with LmsBackendFacade { self =>
+class CoreLmsBackend extends CoreLmsBackendBase { self =>
 
   trait Codegen extends ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
   with ScalaGenLstOps with ScalaGenArrayOpsExt with ScalaGenNumericOps

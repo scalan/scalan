@@ -1,14 +1,12 @@
 package scalan
 package it.lms
 
-import scalan.community.ScalanCommunityDslExp
 import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.LmsCompilerScala
+import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.it.smoke.CommunitySmokeItTests
-import scalan.collections._
 
 class LmsSmokeItTests extends CommunitySmokeItTests {
-  class ProgExp extends ProgCommunity with ScalanCommunityDslExp with LmsCompilerScala with CoreBridge {
+  class ProgExp extends ProgCommunity with ScalanCommunityDslExp with CommunityLmsCompilerScala with CoreBridge {
     val lms = new CommunityLmsBackend
   }
   
@@ -151,5 +149,26 @@ class LmsSmokeItTests extends CommunitySmokeItTests {
     val in = 5
     compareOutputWithSequential(progStaged)(progSeq.reuseTest, progStaged.reuseTest, "reuseTest", in)
   }
+  test("test34arrayEmpty") {
+    val in = 0
+    val stgOut = getStagedOutput[Int,Array[Int]](progStaged)(progStaged.arrayEmpty, "arrayEmpty", in)
+    val seqOut:Array[Int] = progSeq.arrayEmpty(in)
 
+    assert(stgOut.isEmpty, "stgOut.isEmpty")
+    assert(seqOut.isEmpty, "seqOut.isEmpty")
+
+    compareOutputWithSequential(progStaged)(progSeq.arrayEmpty, progStaged.arrayEmpty, "arrayEmpty", in)
+  }
+
+  test("test35arrayReplicate") {
+    val in = (3, 3.14)
+    val res = Array(3.14, 3.14, 3.14)
+    val stgOut = getStagedOutput[(Int,Double),Array[Double]](progStaged)(progStaged.arrayReplicate, "arrayReplicate", in)
+    val seqOut:Array[Double] = progSeq.arrayReplicate(in)
+
+    assert(stgOut.sameElements( res ), "stgOut.sameElements( res )")
+    assert(seqOut.sameElements( res ), "seqOut.sameElements( res )")
+
+    compareOutputWithSequential(progStaged)(progSeq.arrayReplicate, progStaged.arrayReplicate, "arrayReplicate", in)
+  }
 }

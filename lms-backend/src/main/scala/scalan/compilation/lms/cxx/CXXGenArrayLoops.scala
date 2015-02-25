@@ -102,19 +102,20 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
     super.traverseStm(stm)
   }
 
-  override def emitFatNode(sym: List[Sym[Any]], rhs: FatDef) = rhs match {
+  override def emitFatNode(sym: List[Sym[Any]], rhs1: FatDef) = rhs1 match {
     case SimpleFatLoop(s,x,rhs) =>
+      stream.println(s"/*start: ${rhs1.toString}*/")
       for ((l,r) <- sym zip rhs) {
         r match {
           case JArrayElem(x,y) =>
           case JNIArrayElem(x,y) =>
 //            stream.println(s"std::vector<${remap(getBlockResult(y).tp)}> ${quote(l)}(${quote(s)}); /*JNIArrayElem*/")
           case ArrayElem(y) =>
-            stream.println(s"std::vector<${remap(getBlockResult(y).tp)}> ${quote(l)}(${quote(s)});")
+            emitVarDef(l, quoteMove(s))
           case ReduceElem(y) =>
             stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
           case ArrayIfElem(c,y) =>
-            stream.println(s"std::vector<${remap(getBlockResult(y).tp)}> ${quote(l)};")
+            emitVarDecl(l)
           case ReduceIfElem(c,y) =>
             stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
 //          case FlattenElem(y) =>
@@ -147,6 +148,7 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
         }
       }
       stream.println("}")
-    case _ => super.emitFatNode(sym, rhs)
+      stream.println(s"/*end: ${rhs1.toString}*/")
+    case _ => super.emitFatNode(sym, rhs1)
   }
 }

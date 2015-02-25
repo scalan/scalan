@@ -3,16 +3,15 @@ package compilation
 package lms
 package scalac
 
-import scala.tools.nsc.{Global, Settings}
-import scala.tools.nsc.reporters.StoreReporter
-import scalan.util.{ExtensionFilter, FileUtil, ProcessUtil, StringUtil}
 import java.io._
 import java.net.{URL, URLClassLoader}
-import scalan.util.FileUtil.copyToDir
-import scala.collection.mutable
 
-trait LmsCompilerScala extends LmsCompiler with CommunityBridgeScala { self: ScalanCtxExp =>
+import scala.tools.nsc.{Global, Settings}
+import scala.tools.nsc.reporters.StoreReporter
+import scalan.compilation.language.MethodMapping
+import scalan.util.{ExtensionFilter, FileUtil, ProcessUtil, StringUtil}
 
+trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { self: ScalanCtxExp =>
   /**
    * If scalaVersion is None, uses scala-compiler.jar
    *
@@ -37,16 +36,7 @@ trait LmsCompilerScala extends LmsCompiler with CommunityBridgeScala { self: Sca
 
     val libsDir = FileUtil.file(FileUtil.currentWorkingDir, libs)
     val executableLibsDir = FileUtil.file(executableDir, libs)
-    // unused
-    var mainJars = methodReplaceConf.libPaths.map {
-      j => FileUtil.file(libsDir, j).getAbsolutePath
-    }
-    var extensionsJars = Set.empty[String]
-    val dir = FileUtil.listFiles(libsDir, ExtensionFilter("jar"))
-    dir.foreach(f => {
-      mainJars = mainJars + f.getAbsolutePath
-      copyToDir(f, executableLibsDir)
-    })
+
     val jarFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
     val jarPath = jarFile.getAbsolutePath
     FileUtil.deleteIfExist(jarFile)

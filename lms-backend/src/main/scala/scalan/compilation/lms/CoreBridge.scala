@@ -1112,6 +1112,23 @@ trait CoreBridge extends LmsBridge with Interpreter { self: ScalanCtxExp with Me
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
 
+      case r@ArrayReplicate(len, value) =>
+        createManifest(r.eT) match {
+          case mA: Manifest[a_t] =>
+            val _len = symMirr(len).asInstanceOf[lms.Exp[Int]]
+            val _value = symMirr(value).asInstanceOf[lms.Exp[a_t]]
+            val exp = lms.replicate[a_t](_len, _value)(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        }
+
+      case res@ArrayEmpty() =>
+          createManifest(res.eT) match {
+            case mA: Manifest[a_t] =>
+              val zero = lms.Const(0)
+              val exp = lms.array_new[a_t](zero)(mA)
+              (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+          }
+
       case lr@ListMap(list, lamSym@Def(lam: Lambda[_, _])) =>
         (createManifest(list.elem), createManifest(lam.eB)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
