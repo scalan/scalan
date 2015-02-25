@@ -15,7 +15,7 @@ trait CXXGenRangeOps extends CXXCodegen with CLikeGenEffect with BaseGenRangeOps
 //          |$i = $i + 1
 //          |}"""
 
-      emitVarDef(i, s"${quoteMove(start)}")
+      emitConstruct(i, s"${quoteMove(start)}")
       gen"""while($i < $start) {
            |${nestedBlock(body)}
            |$i += 1;

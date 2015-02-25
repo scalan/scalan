@@ -105,7 +105,7 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
       for ((l,r) <- sym zip rhs) {
         r match {
           case ArrayElem(y) =>
-            emitVarDef(l, quoteMove(s))
+            emitConstruct(l, quoteMove(s))
           case ReduceElem(y) =>
             stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
           case ArrayIfElem(c,y) =>
@@ -124,11 +124,11 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
       for ((l,r) <- sym zip rhs) {
         r match {
           case ArrayElem(y) =>
-            stream.println(quote(l) + "["+quote(ii)+"] = " + quote(getBlockResult(y)) + ";")
+            stream.println(quote(l) + "["+quote(ii)+"] = " + quoteMove(getBlockResult(y)) + ";")
           case ReduceElem(y) =>
             stream.println(quote(l) + " += " + quote(getBlockResult(y)) + ";")
           case ArrayIfElem(c,y) =>
-            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + ".push_back( " + quote(getBlockResult(y)) + " );")
+            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + ".push_back( " + quoteMove(getBlockResult(y)) + " );")
           case ReduceIfElem(c,y) =>
             stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + " += " + quote(getBlockResult(y)) + ";")
 //          case FlattenElem(y) =>
