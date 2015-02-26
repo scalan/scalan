@@ -246,7 +246,7 @@ class MethodCallItTestsOld extends BaseItTests {
   val jarReplaceMethExp = new ScalanCommunityExp with TestLmsCompiler {
     self =>
 
-    lazy val message = fun { (t: Rep[Throwable]) => t.getMessage}
+    lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
 
     import scala.reflect.runtime.universe.typeOf
     val tyThrowable = typeOf[Throwable]
@@ -256,7 +256,7 @@ class MethodCallItTestsOld extends BaseItTests {
         val scalanUtilPack = new Pack("scalan.util") {
           val exceptionsFam = new Family('Exceptions) {
             val throwable = new ClassType('SThrowable, 'PA) {
-              val getMessage = Method('getMessage, tyString, MethodArg(tyThrowable))
+              val getMessage = Method('getMessage, tyString, MethodArg(tyString))
             }
           }
         }
@@ -283,10 +283,10 @@ class MethodCallItTestsOld extends BaseItTests {
     }
   }
 
-  test("Mapping Method From Jar") {
+  ignore("Mapping Method From Jar") {
     val methodName = "MappingMethodFromJar"
     FileUtil.packJar(TestMethod.getClass, methodName, FileUtil.file(prefix, methodName).getAbsolutePath, jarReplaceMethExp.libs, testJar)
-    val messageFromTestMethod = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.message, methodName, new Exception("Original massage"), jarReplaceMethExp.defaultCompilerConfig.copy(scalaVersion = Some("2.11.4")))
+    val messageFromTestMethod = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.message, methodName, "Original massage", jarReplaceMethExp.defaultCompilerConfig.copy(scalaVersion = Some("2.11.4")))
     messageFromTestMethod should equal("Test Message")
   }
 }
