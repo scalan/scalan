@@ -38,7 +38,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
     case Def(view: ViewList[_, _]) =>
-      Some((view.source, ListIso(view.iso)))
+      Some((view.source, view.iso))
     case UserTypeList(iso: Iso[a, b]) =>
       val newIso = ListIso(iso)
       val repr = reifyObject(UnpackView(s.asRep[List[b]])(newIso))

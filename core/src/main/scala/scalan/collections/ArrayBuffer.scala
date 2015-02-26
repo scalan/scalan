@@ -108,7 +108,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
     case Def(view: ViewArrayBuffer[_, _]) =>
-      Some((view.source, ArrayBufferIso(view.iso)))
+      Some((view.source, view.iso))
     case UserTypeArrayBuffer(iso: Iso[a, b]) =>
       val newIso = ArrayBufferIso(iso)
       val repr = reifyObject(UnpackView(s.asRep[ArrayBuffer[b]])(newIso))
@@ -231,12 +231,13 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
       val xs1 = xs.asRep[ArrayBuffer[a]]
       implicit val eA = xs1.elem.eItem
       implicit val eC = iso.eFrom
-       val s = xs1.map { x =>
+      val s = xs1.map { x =>
         val tmp = f1(x)
         iso.from(tmp)
-       }
+      }
       val res = ViewArrayBuffer(s)(ArrayBufferIso(iso))
-     case view1@ViewArrayBuffer(Def(view2@ViewArrayBuffer(arr))) =>
+      res
+    case view1@ViewArrayBuffer(Def(view2@ViewArrayBuffer(arr))) =>
       val compIso = composeIso(view2.innerIso, view1.innerIso)
       implicit val eAB = compIso.eTo
       ViewArrayBuffer(arr)(ArrayBufferIso(compIso))

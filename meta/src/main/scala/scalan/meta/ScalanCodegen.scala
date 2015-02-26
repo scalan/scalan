@@ -652,7 +652,7 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
         |
         |  override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
         |    case Def(view: View${e.name}[_, _]) =>
-        |      Some((view.source, ${e.name}Iso(view.iso)))
+        |      Some((view.source, view.iso))
         |    case UserType${e.name}(iso: Iso[a, b]) =>
         |      val newIso = ${e.name}Iso(iso)
         |      val repr = reifyObject(UnpackView(s.asRep[${e.name}[b]])(newIso))

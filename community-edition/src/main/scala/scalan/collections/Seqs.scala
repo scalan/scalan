@@ -84,7 +84,10 @@ trait SeqsDslExp extends impl.SeqsExp { self: ScalanCommunityDslExp =>
       case _ =>
         super.rewriteDef(d)
     }
-
+    case SSeqCompanionMethods.apply(HasViews(source, iso: ArrayIso[a,b])) => {
+      implicit val ea = iso.eA
+      ViewSSeq(SSeq(source.asRep[Array[a]]))(SSeqIso(iso.innerIso))
+    }
     case SSeqMethods.filter(Def(view: ViewSSeq[a, b]), f) => {
       val ff = f.asRep[b => Boolean]
       val iso = view.innerIso

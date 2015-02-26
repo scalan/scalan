@@ -88,8 +88,8 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
   }
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
-    case Def(view: ViewArray[_, _]) =>
-      Some((view.source, ArrayIso(view.iso)))
+    case Def(view: ViewArray[a, b]) =>
+      Some((view.source, view.iso))
     case UserTypeArray(iso: Iso[a, b]) =>
       val newIso = ArrayIso(iso)
       val repr = reifyObject(UnpackView(s.asRep[Array[b]])(newIso))

@@ -39,6 +39,9 @@ class SeqsTests extends BaseTests { suite =>
     lazy val t10 = fun { (in: Rep[Array[(Int,Int)]]) =>
       SSeq(in.map(p => Interval(p))).map(fun { i => i.toData })
     }
+    lazy val t11 = fun { (in: Rep[Array[(Int,Int)]]) =>
+      SSeq(in.map(p => Interval(p))).map(fun { i => i.length })
+    }
 
     val e = element[SSeq[Segment]]
   }
@@ -67,6 +70,8 @@ class SeqsTests extends BaseTests { suite =>
     ctx.emit("t7_arr", ctx.t7_arr)
     ctx.emit("t8", ctx.t8)
     ctx.emit("t9", ctx.t9)
+    ctx.emit("t10", ctx.t10)
+    ctx.emit("t11", ctx.t11)
   }
 
   test("IsosForSeq") {

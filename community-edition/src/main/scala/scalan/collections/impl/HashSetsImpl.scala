@@ -300,7 +300,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
     case Def(view: ViewSHashSet[_, _]) =>
-      Some((view.source, SHashSetIso(view.iso)))
+      Some((view.source, view.iso))
     case UserTypeSHashSet(iso: Iso[a, b]) =>
       val newIso = SHashSetIso(iso)
       val repr = reifyObject(UnpackView(s.asRep[SHashSet[b]])(newIso))
