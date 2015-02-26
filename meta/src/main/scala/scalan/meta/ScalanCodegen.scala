@@ -199,14 +199,16 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
         |""".stripMargin
     }
 
-    def entityProxy(templateData: EntityTemplateData) = {
-      val entityName = templateData.name
-      val typesDecl = templateData.tpeArgDeclString
-      val typesUse = templateData.tpeArgUseString
+    def entityProxy(e: EntityTemplateData) = {
+      val entityName = e.name
+      val typesDecl = e.tpeArgDeclString
+      val typesUse = e.tpeArgUseString
       s"""
         |  // single proxy for each type family
-        |  implicit def proxy$entityName${typesDecl}(p: Rep[$entityName${typesUse}]): $entityName$typesUse =
-        |    proxyOps[$entityName${typesUse}](p)
+        |  implicit def proxy$entityName${typesDecl}(p: Rep[${e.entityType}]): ${e.entityType} = {
+        |    implicit val tag = weakTypeTag[${e.entityType}]
+        |    proxyOps[${e.entityType}](p)(TagImplicits.typeTagToClassTag[${e.entityType}])
+        |  }
         |""".stripAndTrim
     }
 

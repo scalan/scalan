@@ -6,14 +6,17 @@ import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait HashSetsAbs extends Scalan with HashSets {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
-  implicit def proxySHashSet[A](p: Rep[SHashSet[A]]): SHashSet[A] =
-    proxyOps[SHashSet[A]](p)
+  implicit def proxySHashSet[A](p: Rep[SHashSet[A]]): SHashSet[A] = {
+    implicit val tag = weakTypeTag[SHashSet[A]]
+    proxyOps[SHashSet[A]](p)(TagImplicits.typeTagToClassTag[SHashSet[A]])
+  }
   // BaseTypeEx proxy
   //implicit def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
   //  proxyOps[SHashSet[A]](p.asRep[SHashSet[A]])

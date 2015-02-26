@@ -4,14 +4,17 @@ package impl
 import scala.reflect.runtime.universe._
 import scalan._
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait SegmentsAbs extends Scalan with Segments {
   self: SegmentsDsl =>
   // single proxy for each type family
-  implicit def proxySegment(p: Rep[Segment]): Segment =
-    proxyOps[Segment](p)
+  implicit def proxySegment(p: Rep[Segment]): Segment = {
+    implicit val tag = weakTypeTag[Segment]
+    proxyOps[Segment](p)(TagImplicits.typeTagToClassTag[Segment])
+  }
 
   abstract class SegmentElem[From, To <: Segment](iso: Iso[From, To])
     extends ViewElem[From, To](iso) {

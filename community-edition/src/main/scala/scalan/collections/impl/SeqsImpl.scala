@@ -6,14 +6,17 @@ import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait SeqsAbs extends Scalan with Seqs {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
-  implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] =
-    proxyOps[SSeq[A]](p)
+  implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] = {
+    implicit val tag = weakTypeTag[SSeq[A]]
+    proxyOps[SSeq[A]](p)(TagImplicits.typeTagToClassTag[SSeq[A]])
+  }
   // BaseTypeEx proxy
   //implicit def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOps[SSeq[A]](p.asRep[SSeq[A]])

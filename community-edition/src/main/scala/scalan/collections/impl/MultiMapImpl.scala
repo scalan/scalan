@@ -4,14 +4,17 @@ package impl
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait MultiMapsAbs extends Scalan with MultiMaps {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
-  implicit def proxyMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): MMultiMap[K, V] =
-    proxyOps[MMultiMap[K, V]](p)
+  implicit def proxyMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): MMultiMap[K, V] = {
+    implicit val tag = weakTypeTag[MMultiMap[K, V]]
+    proxyOps[MMultiMap[K, V]](p)(TagImplicits.typeTagToClassTag[MMultiMap[K, V]])
+  }
 
   abstract class MMultiMapElem[K, V, From, To <: MMultiMap[K, V]](iso: Iso[From, To])(implicit elemKey: Elem[K], elemValue: Elem[V])
     extends ViewElem[From, To](iso) {

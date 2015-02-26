@@ -4,14 +4,17 @@ package impl
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait MatricesAbs extends Scalan with Matrices {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
-  implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] =
-    proxyOps[Matrix[T]](p)
+  implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] = {
+    implicit val tag = weakTypeTag[Matrix[T]]
+    proxyOps[Matrix[T]](p)(TagImplicits.typeTagToClassTag[Matrix[T]])
+  }
 
   abstract class MatrixElem[T, From, To <: Matrix[T]](iso: Iso[From, To])(implicit elem: Elem[T])
     extends ViewElem[From, To](iso) {

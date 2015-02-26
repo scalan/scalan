@@ -4,14 +4,17 @@ package impl
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait ExceptionsAbs extends Scalan with Exceptions {
   self: ExceptionsDsl =>
   // single proxy for each type family
-  implicit def proxySThrowable(p: Rep[SThrowable]): SThrowable =
-    proxyOps[SThrowable](p)
+  implicit def proxySThrowable(p: Rep[SThrowable]): SThrowable = {
+    implicit val tag = weakTypeTag[SThrowable]
+    proxyOps[SThrowable](p)(TagImplicits.typeTagToClassTag[SThrowable])
+  }
   // BaseTypeEx proxy
   //implicit def proxyThrowable(p: Rep[Throwable]): SThrowable =
   //  proxyOps[SThrowable](p.asRep[SThrowable])

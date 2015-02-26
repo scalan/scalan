@@ -7,14 +7,17 @@ import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait PArraysAbs extends Scalan with PArrays {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
-  implicit def proxyPArray[A](p: Rep[PArray[A]]): PArray[A] =
-    proxyOps[PArray[A]](p)
+  implicit def proxyPArray[A](p: Rep[PArray[A]]): PArray[A] = {
+    implicit val tag = weakTypeTag[PArray[A]]
+    proxyOps[PArray[A]](p)(TagImplicits.typeTagToClassTag[PArray[A]])
+  }
 
   abstract class PArrayElem[A, From, To <: PArray[A]](iso: Iso[From, To])(implicit elem: Elem[A])
     extends ViewElem[From, To](iso) {
@@ -36,8 +39,10 @@ trait PArraysAbs extends Scalan with PArrays {
   }
 
   // single proxy for each type family
-  implicit def proxyIPairArray[A, B](p: Rep[IPairArray[A, B]]): IPairArray[A, B] =
-    proxyOps[IPairArray[A, B]](p)
+  implicit def proxyIPairArray[A, B](p: Rep[IPairArray[A, B]]): IPairArray[A, B] = {
+    implicit val tag = weakTypeTag[IPairArray[A, B]]
+    proxyOps[IPairArray[A, B]](p)(TagImplicits.typeTagToClassTag[IPairArray[A, B]])
+  }
   abstract class IPairArrayElem[A, B, From, To <: IPairArray[A, B]](iso: Iso[From, To])(implicit eA: Elem[A], eB: Elem[B])
     extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertIPairArray(x.asRep[IPairArray[A, B]])
@@ -45,8 +50,10 @@ trait PArraysAbs extends Scalan with PArrays {
   }
 
   // single proxy for each type family
-  implicit def proxyINestedArray[A](p: Rep[INestedArray[A]]): INestedArray[A] =
-    proxyOps[INestedArray[A]](p)
+  implicit def proxyINestedArray[A](p: Rep[INestedArray[A]]): INestedArray[A] = {
+    implicit val tag = weakTypeTag[INestedArray[A]]
+    proxyOps[INestedArray[A]](p)(TagImplicits.typeTagToClassTag[INestedArray[A]])
+  }
   abstract class INestedArrayElem[A, From, To <: INestedArray[A]](iso: Iso[From, To])(implicit eA: Elem[A])
     extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertINestedArray(x.asRep[INestedArray[A]])

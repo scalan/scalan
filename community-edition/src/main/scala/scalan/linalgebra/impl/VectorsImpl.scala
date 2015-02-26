@@ -10,14 +10,17 @@ import scalan.parrays.PArraysDsl
 import scalan.parrays.PArraysDslExp
 import scalan.parrays.PArraysDslSeq
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait VectorsAbs extends Scalan with Vectors {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
-  implicit def proxyVector[T](p: Rep[Vector[T]]): Vector[T] =
-    proxyOps[Vector[T]](p)
+  implicit def proxyVector[T](p: Rep[Vector[T]]): Vector[T] = {
+    implicit val tag = weakTypeTag[Vector[T]]
+    proxyOps[Vector[T]](p)(TagImplicits.typeTagToClassTag[Vector[T]])
+  }
 
   abstract class VectorElem[T, From, To <: Vector[T]](iso: Iso[From, To])(implicit elem: Elem[T])
     extends ViewElem[From, To](iso) {
