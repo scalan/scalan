@@ -13,7 +13,7 @@ trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
     implicit def elem: Elem[A @uncheckedVariance]
     def length: Rep[Int]
     def arr: Rep[Array[A @uncheckedVariance]]
-    def seq: Rep[Seq[A]] = SSeq(arr)
+    def seq: Rep[SSeq[A] @uncheckedVariance] = SSeq(arr)
     def apply(i: Rep[Int]): Rep[A]
     @OverloadId("many")
     def apply(indices: Arr[Int])(implicit o: Overloaded1): PA[A]
@@ -119,7 +119,7 @@ trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
       Default.defaultVal(BaseArray(SArray.empty[A]))
   }
 
-  abstract class ArrayOnSeq[A](override val seq: Rep[Seq[A]])(implicit val eA: Elem[A]) extends PArray[A] {
+  abstract class ArrayOnSeq[A](override val seq: Rep[SSeq[A]])(implicit val eA: Elem[A]) extends PArray[A] {
     def elem = eA
     def arr = seq.toArray
     def length = seq.size
@@ -149,6 +149,8 @@ trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
 //    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(EmptyArray[A])
 //  }
   trait IPairArray[A,B] extends PArray[(A,B)] {
+    implicit def eA: Elem[A]
+    implicit def eB: Elem[B]
     def as: Rep[PArray[A]]
     def bs: Rep[PArray[B]]
   }
@@ -193,6 +195,7 @@ trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
   }
 
   trait INestedArray[A] extends PArray[PArray[A]] {
+    implicit def eA: Elem[A]
     def values: Rep[PArray[A]]
     def segments: Rep[PArray[(Int, Int)]]
   }

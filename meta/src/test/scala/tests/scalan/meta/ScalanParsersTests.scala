@@ -5,8 +5,9 @@ import scalan.meta.{ScalanParsers, BoilerplateToolRun, ScalanAst}
 import scala.reflect.internal.util.BatchSourceFile
 
 class ScalanParsersTests extends BaseTests with ScalanParsers {
-  import ScalanAst._
-  import ScalanAst.{
+  val ast: this.type = this
+  import ast.
+  {
     STraitCall => TC,
     STraitDef => TD,
     SClassDef => CD,
@@ -30,6 +31,9 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
   case object TopLevel extends TreeKind
   case object Type extends TreeKind
   case object Member extends TreeKind
+  case object Expr extends TreeKind
+  case object Annotation extends TreeKind
+  case object AnnotationArg extends TreeKind
 
   def parseString(kind: TreeKind, prog: String): Tree = {
     // wrap the string into a complete file
@@ -37,6 +41,9 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
       case TopLevel => prog
       case Type => s"object o { val x: $prog }"
       case Member => s"object o { $prog }"
+      case Expr => s"object o { val x = $prog }"
+      case Annotation => s"object o { @$prog val x = null }"
+      case AnnotationArg => s"object o { @OverloadId($prog) val x = null }"
     }
     val fakeSourceFile = new BatchSourceFile("<no file>", prog1.toCharArray)
     // extract the part corresponding to original prog
@@ -45,6 +52,12 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
       case (Member, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, tree)))))) =>
         tree
       case (Type, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(_, _, tree, _))))))) =>
+        tree
+      case (Expr, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(_, _, _, tree))))))) =>
+        tree
+      case (Annotation, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(Modifiers(_,_,List(tree)), _, _, _))))))) =>
+        tree
+      case (AnnotationArg, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, ValDef(Modifiers(_,_,List(ExtractAnnotation(_,List(tree)))), _, _, _))))))) =>
         tree
       case (kind, tree) =>
         ???(tree)
@@ -91,24 +104,24 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
   }
 
   describe("SMethodDef") {
-    testSMethod("def f: Int", MD("f", Nil, Nil, Some(INT), false, None, None))
-    testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, Some("a"), None))
+    testSMethod("def f: Int", MD("f", Nil, Nil, Some(INT), false, None, Nil, None))
+    testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, Some("a"), L(SMethodAnnotation("OverloadId",List(SDefaultExpr("\"a\"")))), None))
     testSMethod(
       "def f(x: Int): Int",
-      MD("f", Nil, L(MAs(false, List(MA("x", INT, None)))), Some(INT), false, None, None))
+      MD("f", Nil, L(MAs(List(MA(false, false, "x", INT, None)))), Some(INT), false, None, Nil, None))
     testSMethod(
       "def f[A <: T](x: A): Int",
-      MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)), L(MAs(false, L(MA("x", TC("A", Nil), None)))), Some(INT), false, None, None))
+      MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)), L(MAs(L(MA(false, false, "x", TC("A", Nil), None)))), Some(INT), false, None, Nil, None))
     testSMethod(
       "def f[A : Numeric]: Int",
-      MD("f", L(STpeArg("A", None, L("Numeric"))), Nil, Some(INT), false, None, None))
+      MD("f", L(STpeArg("A", None, L("Numeric"))), Nil, Some(INT), false, None, Nil, None))
     testSMethod(
       "def f[A <: Int : Numeric : Fractional](x: A)(implicit y: A): Int",
       MD(
         "f",
         L(STpeArg("A", Some(INT), L("Numeric", "Fractional"))),
-        L(MAs(false, L(MA("x", TC("A", Nil), None))), MAs(true, L(MA("y", TC("A", Nil), None)))),
-        Some(INT), false, None, None))
+        L(MAs(L(MA(false, false, "x", TC("A", Nil), None))), MAs(L(MA(true, false, "y", TC("A", Nil), None)))),
+        Some(INT), false, None, Nil, None))
   }
 
   describe("TraitDef") {
@@ -125,8 +138,8 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     testTrait("trait Edge[V,E]{ def f[A <: T](x: A, y: (A,T)): Int }",
       traitEdgeVE.copy(
         body = L(MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)),
-          L(MAs(false, L(MA("x", TC("A", Nil), None), MA("y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
-          Some(INT), false, None, None))))
+          L(MAs(L(MA(false, false, "x", TC("A", Nil), None), MA(false, false, "y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
+          Some(INT), false, None, Nil, None))))
     testTrait(
       """trait A {
         |  import scalan._
@@ -138,8 +151,8 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
       TD("A", Nil, Nil, L(
         IS("scalan._"),
         STpeDef("Rep", L(STpeArg("A", None, Nil)), TC("A", Nil)),
-        MD("f", Nil, Nil, Some(T(L(INT, TC("A", Nil)))), false, None, None),
-        MD("g", Nil, L(MAs(false, L(MA("x", BOOL, None)))), Some(TC("A", Nil)), false, Some("b"), None)), None, None))
+        MD("f", Nil, Nil, Some(T(L(INT, TC("A", Nil)))), false, None, Nil, None),
+        MD("g", Nil, L(MAs(L(MA(false, false, "x", BOOL, None)))), Some(TC("A", Nil)), false, Some("b"), L(SMethodAnnotation("OverloadId",List(SDefaultExpr("\"b\"")))), None)), None, None))
 
   }
 
@@ -156,9 +169,9 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
 
   describe("SClassDef") {
     val classA =
-      CD("A", Nil, Nil, Nil, Nil, Nil, None, None, false)
+      CD("A", Nil, SClassArgs(Nil), SClassArgs(Nil), Nil, Nil, None, None, false)
     val classEdgeVE =
-      CD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), Nil, Nil, Nil, Nil, None, None, false)
+      CD("Edge", L(STpeArg("V", None, Nil), STpeArg("E", None, Nil)), SClassArgs(Nil), SClassArgs(Nil), Nil, Nil, None, None, false)
     testSClass("class A", classA)
     testSClass("class A extends B",
       classA.copy(ancestors = L(TC("B", Nil))))
@@ -167,10 +180,10 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     testSClass("class Edge[V,E]", classEdgeVE)
     testSClass("class Edge[V,E](val x: V){ def f[A <: T](x: A, y: (A,T)): Int }",
       classEdgeVE.copy(
-        args = L(SClassArg(false, false, true, "x", TC("V", Nil), None)),
+        args = SClassArgs(L(SClassArg(false, false, true, "x", TC("V", Nil), None))),
         body = L(MD("f", L(STpeArg("A", Some(TC("T", Nil)), Nil)),
-          L(MAs(false, L(MA("x", TC("A", Nil), None), MA("y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
-          Some(INT), false, None, None))))
+          L(MAs(L(MA(false, false, "x", TC("A", Nil), None), MA(false, false, "y", T(L(TC("A", Nil), TC("T", Nil))), None)))),
+          Some(INT), false, None, Nil, None))))
   }
 
   describe("SEntityModuleDef") {
@@ -192,8 +205,8 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     val tpeArgA = L(STpeArg("A", None, Nil))
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
-    val entity = TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None,None,Some(()))), None, None)
-    val obsImpl1 = CD("ObservableImpl1", tpeArgA, Nil, argEA, ancObsA, Nil, None, None, false)
+    val entity = TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None, Nil, Some(()))), None, None)
+    val obsImpl1 = CD("ObservableImpl1", tpeArgA, SClassArgs(Nil), SClassArgs(argEA), ancObsA, Nil, None, None, false)
     val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
 
     testModule(
@@ -205,5 +218,27 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
         L(obsImpl1, obsImpl2),
         Nil,
         None))
+  }
+
+  val testModule =
+    """package scalan.test
+      |trait Module extends ScalanDsl {
+      |  type Obs[A] = Rep[Observable[A]]
+      |  @ContainerType
+      |  trait Cont[A] extends Reifiable[Cont[A]] {
+      |    implicit def eA: Elem[A]
+      |    @External
+      |    def map[B:Elem](
+      |  }
+      |  trait PairCont[A,B] extends Cont[(A,B)] {
+      |
+      |  }
+      |  class ContImpl1[A](implicit val eA: Elem[A]) extends Observable[A] {
+      |  }
+      |  class ContImpl2[A](implicit val eA: Elem[A]) extends Observable[A] {
+      |  }
+      |}
+    """.stripMargin
+  describe("annotations")  {
   }
 }

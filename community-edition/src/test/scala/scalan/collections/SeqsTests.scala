@@ -10,34 +10,37 @@ class SeqsTests extends BaseTests { suite =>
     lazy val defaultRep = tElem.defaultRepValue
     lazy val empty = SSeq.empty[Int]
 
-    lazy val t1 = fun { (t: Rep[Seq[Int]]) => t }
-    lazy val t2 = fun { (in: Rep[(Seq[Int],Int)]) => val Pair(t, i) = in; i +: t }
-    lazy val t3 = fun { (in: Rep[(Seq[Segment],Segment)]) => val Pair(t, i) = in; i +: t }
-    lazy val t4 = fun { (in: Rep[(Seq[Segment],Int)]) =>
+    lazy val t1 = fun { (t: Rep[SSeq[Int]]) => t }
+    lazy val t2 = fun { (in: Rep[(SSeq[Int],Int)]) => val Pair(t, i) = in; i +: t }
+    lazy val t3 = fun { (in: Rep[(SSeq[Segment],Segment)]) => val Pair(t, i) = in; i +: t }
+    lazy val t4 = fun { (in: Rep[(SSeq[Segment],Int)]) =>
       val Pair(ss, i) = in;
       ss.map(fun {s => s.shift(i)})
     }
-    lazy val t5 = fun { (in: Rep[(Seq[Segment],Int)]) =>
+    lazy val t5 = fun { (in: Rep[(SSeq[Segment],Int)]) =>
       val Pair(ss, i) = in;
       ss.map(fun {s => s.shift(i).convertTo[Interval].toData})
     }
-    lazy val t6 = fun { (in: Rep[Seq[(Int,Int)]]) =>
+    lazy val t6 = fun { (in: Rep[SSeq[(Int,Int)]]) =>
       in.map(fun {s => Interval(s)})
     }
-    lazy val t7 = fun { (in: Rep[Seq[(Int,Int)]]) =>
-      in.map(fun {s => Interval(s)}).map((s: Rep[Interval]) => s.toData)
+    lazy val t7 = fun { (in: Rep[SSeq[(Int,Int)]]) =>
+      in.map(fun {s => Interval(s)}).filter(fun {(s: Rep[Interval]) => s.length > 10}).map((s: Rep[Interval]) => s.toData)
     }
-    lazy val t8 = fun { (in: Rep[List[Seq[Segment]]]) =>
+    lazy val t7_arr = fun { (in: Rep[Array[(Int,Int)]]) =>
+      in.map(s => Interval(s)).filter((s: Rep[Interval]) => s.length > 10).map((s: Rep[Interval]) => s.toData)
+    }
+    lazy val t8 = fun { (in: Rep[List[SSeq[Segment]]]) =>
       in.map(seq => seq.map(fun {s => s.shift(1)}))
     }
-    lazy val t9 = fun { (in: Rep[Seq[List[Segment]]]) =>
+    lazy val t9 = fun { (in: Rep[SSeq[List[Segment]]]) =>
       in.map(fun {xs => xs.map(s => s.shift(1)).reverse})
     }
     lazy val t10 = fun { (in: Rep[Array[(Int,Int)]]) =>
       SSeq(in.map(p => Interval(p))).map(fun { i => i.toData })
     }
 
-    val e = element[Seq[Segment]]
+    val e = element[SSeq[Segment]]
   }
 
   test("basicTests") {
@@ -61,8 +64,17 @@ class SeqsTests extends BaseTests { suite =>
     ctx.emit("t5", ctx.t5)
     ctx.emit("t6", ctx.t6)
     ctx.emit("t7", ctx.t7)
+    ctx.emit("t7_arr", ctx.t7_arr)
     ctx.emit("t8", ctx.t8)
     ctx.emit("t9", ctx.t9)
+  }
+
+  test("IsosForSeq") {
+    val ctx = new TestContext(this, "IsosForSeq") with SeqSimple with ScalanCommunityDslExp with SegmentsDslExp {
+      def test() = { }
+    }
+    ctx.emit("t7", ctx.t7)
+    ctx.emit("t7_arr", ctx.t7_arr)
   }
 
   test("simpleHashsetSeq") {
@@ -73,12 +85,13 @@ class SeqsTests extends BaseTests { suite =>
     }
     ctx.test
     val d = ctx.defaultRep
-
+    import ctx._
     {
-      val res = ctx.t2((Seq.empty[Int], 10))
-      assertResult(Seq(10))(res)
-//      val s: Seq[Int]   = null
-//      s.toArray
+      val res = ctx.t2((SSeqImpl(Seq.empty[Int]), 10))
+      assertResult(SSeqImpl(Seq(10)))(res)
+      val s: Seq[Int]   = null
+      //s.zip()
+
     }
 //    {
 //      val res = ctx.t3(10)

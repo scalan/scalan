@@ -13,11 +13,11 @@ trait MatricesAbs extends Scalan with Matrices {
   implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] =
     proxyOps[Matrix[T]](p)
 
-  abstract class MatrixElem[T, From, To <: Matrix[T]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+  abstract class MatrixElem[T, From, To <: Matrix[T]](iso: Iso[From, To])(implicit elem: Elem[T])
+    extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertMatrix(x.asRep[Matrix[T]])
     def convertMatrix(x : Rep[Matrix[T]]): Rep[To]
   }
-
   trait MatrixCompanionElem extends CompanionElem[MatrixCompanionAbs]
   implicit lazy val MatrixCompanionElem: MatrixCompanionElem = new MatrixCompanionElem {
     lazy val tag = weakTypeTag[MatrixCompanionAbs]
@@ -33,7 +33,8 @@ trait MatricesAbs extends Scalan with Matrices {
   }
 
   // elem for concrete class
-  class RowMajorMatrixElem[T:Elem](iso: Iso[RowMajorMatrixData[T], RowMajorMatrix[T]]) extends MatrixElem[T, RowMajorMatrixData[T], RowMajorMatrix[T]](iso) {
+  class RowMajorMatrixElem[T](iso: Iso[RowMajorMatrixData[T], RowMajorMatrix[T]])(implicit val elem: Elem[T])
+    extends MatrixElem[T, RowMajorMatrixData[T], RowMajorMatrix[T]](iso) {
     def convertMatrix(x: Rep[Matrix[T]]) = RowMajorMatrix(x.rows)
   }
 
@@ -93,7 +94,8 @@ trait MatricesAbs extends Scalan with Matrices {
   def unmkRowMajorMatrix[T:Elem](p: Rep[RowMajorMatrix[T]]): Option[(Rep[PArray[Vector[T]]])]
 
   // elem for concrete class
-  class RowMajorFlatMatrixElem[T:Elem](iso: Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]]) extends MatrixElem[T, RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]](iso) {
+  class RowMajorFlatMatrixElem[T](iso: Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]])(implicit val elem: Elem[T])
+    extends MatrixElem[T, RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]](iso) {
     def convertMatrix(x: Rep[Matrix[T]]) = RowMajorFlatMatrix(x.rmValues, x.numColumns)
   }
 
@@ -154,7 +156,8 @@ trait MatricesAbs extends Scalan with Matrices {
   def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]): Option[(Rep[PArray[T]], Rep[Int])]
 
   // elem for concrete class
-  class RowMajorSparseMatrixElem[T:Elem](iso: Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]]) extends MatrixElem[T, RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]](iso) {
+  class RowMajorSparseMatrixElem[T](iso: Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]])(implicit val elem: Elem[T])
+    extends MatrixElem[T, RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]](iso) {
     def convertMatrix(x: Rep[Matrix[T]]) = RowMajorSparseMatrix(x.rows)
   }
 
