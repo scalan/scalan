@@ -39,7 +39,7 @@ trait Compiler extends BaseExp with Passes {
 
     passes.zipWithIndex.foldLeft(g0) { case (graph, (passFunc, index)) =>
       val pass = passFunc(graph)
-      val graph1 = pass(graph)
+      val graph1 = pass(graph).withoutContext
 
       val indexStr = (index + 1).toString
       val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"

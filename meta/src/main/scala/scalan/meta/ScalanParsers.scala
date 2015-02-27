@@ -6,6 +6,7 @@ package scalan.meta
 
 import java.io.File
 
+import scala.reflect.{ClassTag,classTag}
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
@@ -13,258 +14,7 @@ import scala.language.implicitConversions
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
 
-object ScalanAst {
-
-  // STpe universe --------------------------------------------------------------------------
-  sealed abstract class STpeExpr
-  type STpeExprs = List[STpeExpr]
-  case class STraitCall(name: String, tpeSExprs: List[STpeExpr]) extends STpeExpr {
-    override def toString = name + (if (tpeSExprs.isEmpty) "" else tpeSExprs.mkString("[", ",", "]"))
-  }
-  case class STpePrimitive(typeName: String, defaultValueString: String) extends STpeExpr {
-    override def toString = typeName
-  }
-  val STpePrimitives = Map(
-    "Int" -> STpePrimitive("Int", "0"),
-    "Long" -> STpePrimitive("Long", "0l"),
-    "Byte" -> STpePrimitive("Byte", "0.toByte"),
-    "Boolean" -> STpePrimitive("Boolean", "false"),
-    "Float" -> STpePrimitive("Float", "0.0f"),
-    "Double" -> STpePrimitive("Double", "0.0"),
-    "String" -> STpePrimitive("String", "\"\"")
-  )
-  case class STpeTuple(items: List[STpeExpr]) extends STpeExpr {
-    override def toString = items.mkString("(", ",", ")")
-  }
-  case class STpeFunc(domain: STpeExpr, range: STpeExpr) extends STpeExpr {
-    override def toString = {
-      val domainStr = domain match {
-        case tuple: STpeTuple => s"($tuple)"
-        case _ => domain.toString
-      }
-      s"$domainStr => $range"
-    }
-  }
-  case class STpeSum(items: List[STpeExpr]) extends STpeExpr {
-    override def toString = items.mkString("(", "|", ")")
-  }
-
-  implicit class STpeExprExtensions(self: STpeExpr) {
-    def applySubst(subst: Map[String, STpeExpr]): STpeExpr = self match {
-      case STraitCall(n, args) => // higher-kind usage of names is not supported  Array[A] - ok, A[Int] - nok
-        subst.get(n) match {
-          case Some(t) => t
-          case None => STraitCall(n, args map { _.applySubst(subst) })
-        }
-      case STpeTuple(items) => STpeTuple(items map { _.applySubst(subst) })
-      case STpeSum(items) => STpeSum(items map { _.applySubst(subst) })
-      case _ => self
-    }
-
-    def unRep(module: SEntityModuleDef, config: CodegenConfig) = self match {
-      case STraitCall("Rep", Seq(t)) => Some(t)
-      case STraitCall(name, args) =>
-        val typeSynonyms = config.entityTypeSynonyms ++
-          module.entityRepSynonym.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
-        typeSynonyms.get(name).map(unReppedName => STraitCall(unReppedName, args))
-      case _ => None
-    }
-
-    def isRep(module: SEntityModuleDef, config: CodegenConfig) = unRep(module, config) match {
-      case Some(_) => true
-      case None => false
-    }
-
-    def isTupledFunc = self match {
-      case STraitCall("Rep", List(STpeFunc(STpeTuple(a1 :: a2 :: tail), _))) => true
-      case STpeFunc(STpeTuple(a1 :: a2 :: tail), _) => true
-      case _ => false
-    }
-  }
-
-  // SExpr universe --------------------------------------------------------------------------
-  case class SExpr(expr: String)
-
-  // SBodyItem universe ----------------------------------------------------------------------
-  abstract class SBodyItem
-  case class SImportStat(name: String) extends SBodyItem
-
-  trait MethodAnnotation
-  case object ExternalMethod extends MethodAnnotation
-  case object ExternalConstructor extends MethodAnnotation
-
-  case class SMethodDef(name: String, tpeArgs: STpeArgs, argSections: List[SMethodArgs],
-    tpeRes: Option[STpeExpr], isImplicit: Boolean, overloadId: Option[String], external: Option[MethodAnnotation], elem: Option[Unit] = None) extends SBodyItem {
-    def explicitArgs = argSections.filter(!_.impFlag).flatMap(_.args)
-    def allArgs = argSections.flatMap(_.args)
-  }
-  case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
-  case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
-
-  case class STpeArg(name: String, bound: Option[STpeExpr], contextBound: List[String], tparams: List[STpeArg] = Nil) {
-    def isHighKind = !tparams.isEmpty
-    def declaration: String =
-      if (isHighKind) {
-        val params = tparams.map(_.declaration).mkString(",")
-        s"$name[$params]"
-      }
-      else name
-  }
-  type STpeArgs = List[STpeArg]
-
-  case class SMethodArg(name: String, tpe: STpeExpr, default: Option[SExpr])
-  case class SMethodArgs(impFlag: Boolean, args: List[SMethodArg])
-
-  case class SClassArg(impFlag: Boolean, overFlag: Boolean, valFlag: Boolean, name: String, tpe: STpeExpr, default: Option[SExpr])
-  type SClassArgs = List[SClassArg]
-
-  case class SSelfTypeDef(name: String, components: List[STpeExpr]) {
-    def tpe = components.mkString(" with ")
-  }
-
-  abstract class STraitOrClassDef extends SBodyItem {
-    def name: String
-    def tpeArgs: List[STpeArg]
-    def ancestors: List[STraitCall]
-    def body: List[SBodyItem]
-    def selfType: Option[SSelfTypeDef]
-    def companion: Option[STraitOrClassDef]
-    def isTrait: Boolean
-    def isHighKind = tpeArgs.exists(_.isHighKind)
-
-    def getMethodsWithAnnotation(a: MethodAnnotation) = body.collect {
-      case md: SMethodDef if md.external.fold(false)(_ == a) => md
-    }
-
-  }
-
-  case class STraitDef(
-    name: String,
-    tpeArgs: List[STpeArg],
-    ancestors: List[STraitCall],
-    body: List[SBodyItem],
-    selfType: Option[SSelfTypeDef],
-    companion: Option[STraitOrClassDef]) extends STraitOrClassDef {
-    def isTrait = true
-  }
-
-  final val BaseTypeTraitName = "BaseTypeEx"
-
-  implicit class STraitDefOps(td: STraitDef) {
-    def optBaseType: Option[STraitCall] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
-      case Some(STraitCall(_, (h: STraitCall) :: _)) => Some(h)
-      case _ => None
-    }
-  }
-
-  case class SClassDef(
-    name: String,
-    tpeArgs: List[STpeArg],
-    args: SClassArgs,
-    implicitArgs: SClassArgs,
-    ancestors: List[STraitCall],
-    body: List[SBodyItem],
-    selfType: Option[SSelfTypeDef],
-    companion: Option[STraitOrClassDef],
-    isAbstract: Boolean) extends STraitOrClassDef {
-    def isTrait = false
-  }
-
-  case class SObjectDef(
-    name: String,
-    ancestors: List[STraitCall],
-    body: List[SBodyItem]) extends SBodyItem
-
-  case class SSeqImplementation(explicitMethods: List[SMethodDef]) {
-    def containsMethodDef(m: SMethodDef) = {
-      val equalSignature = for {
-        eq <- explicitMethods.filter(em => em.name == m.name)
-              if eq.allArgs == m.allArgs && eq.tpeArgs == m.tpeArgs
-      } yield eq
-      equalSignature.length > 0
-    }
-  }
-
-  case class SEntityModuleDef(
-    packageName: String,
-    imports: List[SImportStat],
-    name: String,
-    entityRepSynonym: Option[STpeDef],
-    entityOps: STraitDef,
-    concreteSClasses: List[SClassDef],
-    methods: List[SMethodDef],
-    selfType: Option[SSelfTypeDef],
-    seqDslImpl: Option[SSeqImplementation] = None)
-
-  def getConcreteClasses(defs: List[SBodyItem]) = defs.collect { case c: SClassDef => c }
-
-  object SEntityModuleDef {
-    def getImplicitArgs(entity: STraitDef): SClassArgs = {
-      val implicitElems = entity.body.collect {
-        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_)) => (name, elem)
-      }
-      val args = entity.tpeArgs.map(a => {
-        val optDef = implicitElems.collectFirst {
-          case (methName, elem @ STraitCall("Elem", List(STraitCall(name, _)))) if name == a.name =>
-            (methName, elem)
-        }
-
-        optDef.map { case (name, tyElem) => {
-          SClassArg(true, false, true, name, tyElem, None)
-        }}
-      })
-      val missingElems = args.filterNot(_.isDefined)
-      if (missingElems.length > 0)
-        sys.error(s"implicit def eA: Elem[A] should be declared for all type parameters: missing ${missingElems}")
-      args.flatMap(a => a)
-    }
-
-    def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
-
-    def fromModuleTrait(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
-      val moduleName = moduleTrait.name
-      val defs = moduleTrait.body
-
-      val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
-
-      val entity = defs.collectFirst { case t: STraitDef => t }.getOrElse {
-        throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
-      }
-
-      val classes = entity.optBaseType match {
-        case Some(bt) =>
-          val entityName = entity.name
-          val entityImplName = entityName + "Impl"
-          val typeUseExprs = entity.tpeArgs.map(tpeUseExpr(_))
-          val defaultBTImpl = SClassDef(
-            name = entityImplName,
-            tpeArgs = entity.tpeArgs,
-            args = List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None)),
-            implicitArgs = getImplicitArgs(entity),
-            ancestors = List(STraitCall(entity.name, typeUseExprs)),
-            body = List(
-
-            ),
-            selfType = None,
-            companion = None,
-//            companion = defs.collectFirst {
-//              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
-//            },
-            true
-          )
-          defaultBTImpl :: getConcreteClasses(defs)
-        case None => getConcreteClasses(defs)
-      }
-
-      val methods = defs.collect { case md: SMethodDef => md }
-
-      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, classes, methods, moduleTrait.selfType)
-    }
-  }
-}
-
-trait ScalanParsers {
-  import ScalanAst._
+trait ScalanParsers extends ScalanAst {
   val settings = new Settings
   settings.embeddedDefaults(getClass.getClassLoader)
   settings.usejavacp.value = true
@@ -322,9 +72,9 @@ trait ScalanParsers {
     methods.map(methodDef(_))
   }
 
-  def entityModule(pdTree: PackageDef) = {
-    val packageName = pdTree.pid.toString
-    val statements = pdTree.stats
+  def entityModule(fileTree: PackageDef) = {
+    val packageName = fileTree.pid.toString
+    val statements = fileTree.stats
     val imports = statements.collect {
       case i: Import => importStat(i)
     }
@@ -334,23 +84,25 @@ trait ScalanParsers {
       case Seq(only) => only
       case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
     }
-    val moduleTrait = traitDef(moduleTraitTree, moduleTraitTree)
-    val md = SEntityModuleDef.fromModuleTrait(packageName, imports, moduleTrait, config)
 
-    val dslSeq = pdTree.stats.collectFirst {
-      case cd @ ClassDef(_,name,_,_) if name.toString == (moduleTrait.name + "DslSeq") => cd
+    val moduleTraitDef = traitDef(moduleTraitTree, moduleTraitTree)
+    val module = SEntityModuleDef(packageName, imports, moduleTraitDef, config)
+    val moduleName = moduleTraitDef.name
+
+    val dslSeq = fileTree.stats.collectFirst {
+      case cd @ ClassDef(_,name,_,_) if name.toString == (moduleName + "DslSeq") => cd
     }
     val seqExplicitOps = for {
       seqImpl <- dslSeq
       seqOpsTrait <- seqImpl.impl.body.collectFirst {
-        case cd @ ClassDef(_,name,_,_) if name.toString == ("Seq" + md.entityOps.name) => cd
+        case cd @ ClassDef(_,name,_,_) if name.toString == ("Seq" + module.entityOps.name) => cd
       }
     } yield {
       val cd = seqOpsTrait.impl.body.collect { case item: DefDef => item }
       seqImplementation(cd, seqOpsTrait)
     }
 
-    md.copy(seqDslImpl = seqExplicitOps.map(SSeqImplementation(_)))
+    module.copy(seqDslImpl = seqExplicitOps.map(SSeqImplementation(_)))
   }
 
   def importStat(i: Import): SImportStat = {
@@ -396,7 +148,8 @@ trait ScalanParsers {
       case c: ClassDef if c.name.toString == name + "Companion" =>
         if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
     }.headOption
-    STraitDef(name, tpeArgs, ancestors, body, selfType, companion)
+    val annotations = parseAnnotations(td)((n,as) => STraitOrClassAnnotation(n,as.map(expr)))
+    STraitDef(name, tpeArgs, ancestors, body, selfType, companion, annotations)
   }
 
   def classDef(cd: ClassDef, parentScope: ImplDef): SClassDef = {
@@ -426,7 +179,8 @@ trait ScalanParsers {
       case c: ClassDef if c.name.toString == name + "Companion" =>
         if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
     }.headOption
-    SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, companion, isAbstract)
+    val annotations = parseAnnotations(cd)((n,as) => STraitOrClassAnnotation(n,as.map(expr)))
+    SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, companion, isAbstract, annotations)
   }
 
   def objectDef(od: ModuleDef): SObjectDef = {
@@ -435,14 +189,15 @@ trait ScalanParsers {
     SObjectDef(od.name, ancestors, body)
   }
 
-  def classArgs(vds: List[ValDef]): SClassArgs = vds.filter(!isEvidenceParam(_)).map(classArg)
+  def classArgs(vds: List[ValDef]): SClassArgs = SClassArgs(vds.filter(!isEvidenceParam(_)).map(classArg))
 
   def classArg(vd: ValDef): SClassArg = {
     val tpe = tpeExpr(vd.tpt)
     val default = optExpr(vd.rhs)
     val isOverride = vd.mods.isAnyOverride
     val isVal = vd.mods.isParamAccessor
-    SClassArg(vd.mods.isImplicit, isOverride, isVal, vd.name, tpe, default)
+    val annotations = parseAnnotations(vd)((n,as) => new SArgAnnotation(n, as.map(expr)))
+    SClassArg(vd.mods.isImplicit, isOverride, isVal, vd.name, tpe, default, annotations)
   }
 
   def traitCall(tree: Tree): STraitCall = tree match {
@@ -491,18 +246,32 @@ trait ScalanParsers {
     case tree => ???(tree)
   }
 
-  case class SAnnotation(name: String, args: List[Tree])
+  object ExtractAnnotation {
+    def unapply(a: Tree): Option[(String, List[Tree])] = a match {
+      case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args) => Some((ident, args))
+      case _ => None
+    }
+  }
 
-  class MethodAnnotation(anClass: String) {
-    def unapply(md: DefDef): Option[List[Tree]] =
+  def parseAnnotations[A <: SAnnotation](md: MemberDef)(p: (String, List[Tree]) => A): List[A] = {
+    val annotations = md.mods.annotations.map {
+      case ExtractAnnotation (name, args) => p(name, args)
+      case a => !!! (s"Cannot parse annotation $a of MemberDef $md")
+    }
+    annotations
+  }
+
+  class HasAnnotation(annClass: String) {
+    def unapply(md: MemberDef): Option[List[Tree]] =
       md.mods.annotations.collectFirst {
-        case Apply(Select(New(Ident(ident)), nme.CONSTRUCTOR), args)
-          if ident.toString == anClass => args
+        case ExtractAnnotation(name, args) if name == annClass => args
       }
   }
-  val HasExternalAnnotation = new MethodAnnotation("External")
-  val HasConstructorAnnotation = new MethodAnnotation("Constructor")
-  val OverloadIdAnnotation = new MethodAnnotation("OverloadId")
+
+//  val HasExternalAnnotation = new ExtractAnnotation("External")
+//  val HasConstructorAnnotation = new ExtractAnnotation("Constructor")
+  val HasArgListAnnotation = new HasAnnotation("ArgList")
+  val OverloadIdAnnotation = new HasAnnotation("OverloadId")
 
   def methodDef(md: DefDef, isElem: Boolean = false) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
@@ -515,19 +284,22 @@ trait ScalanParsers {
         Some(overloadId.toString)
       case _ => None
     }
-    val optExternal = md match {
-      case HasExternalAnnotation(_) => Some(ExternalMethod)
-      case HasConstructorAnnotation(_) => Some(ExternalConstructor)
-      case _ => None
+    val annotations = md.mods.annotations.map {
+      case ExtractAnnotation(name, args) => SMethodAnnotation(name, args.map(expr))
+      case a => !!!(s"Cannot parse annotation $a of the method $md")
     }
-    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, optExternal, if (isElem) Some(()) else None)
+//    val optExternal = md match {
+//      case HasExternalAnnotation(_) => Some(ExternalMethod)
+//      case HasConstructorAnnotation(_) => Some(ExternalConstructor)
+//      case _ => None
+//    }
+    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, annotations, if (isElem) Some(()) else None)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {
-    case Nil => SMethodArgs(false, List.empty)
+    case Nil => SMethodArgs(List.empty)
     case vd :: _ =>
-      val isImplicit = vd.mods.isImplicit
-      SMethodArgs(isImplicit, vds.filter(!isEvidenceParam(_)).map(methodArg))
+      SMethodArgs(vds.filter(!isEvidenceParam(_)).map(methodArg))
   }
 
   def optTpeExpr(tree: Tree): Option[STpeExpr] = {
@@ -570,13 +342,15 @@ trait ScalanParsers {
   }
 
   def expr(tree: Tree): SExpr = tree match {
-    case tree => SExpr(tree.toString)
+    case tree => SDefaultExpr(tree.toString)
   }
 
   def methodArg(vd: ValDef): SMethodArg = {
     val tpe = tpeExpr(vd.tpt)
     val default = optExpr(vd.rhs)
-    SMethodArg(vd.name, tpe, default)
+    val annotations = parseAnnotations(vd)((n,as) => new SArgAnnotation(n, as.map(expr)))
+    val isOverride = vd.mods.isAnyOverride
+    SMethodArg(vd.mods.isImplicit, isOverride, vd.name, tpe, default, annotations)
   }
 
   def selfType(vd: ValDef): Option[SSelfTypeDef] = {

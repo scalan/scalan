@@ -17,7 +17,7 @@ trait SegmentMethodWrappers extends Scalan with SegmentsDsl {
   lazy val Slice_shift = fun { (in: Rep[(SliceData, Int)]) => val Pair(i, o) = in; Slice(i).shift(o) }
 }
 
-class SegmentsTests extends BaseTests { suite =>
+class SegmentMethodWrappersTests extends BaseTests { suite =>
 
   class SegmentMethodWrappersStaged(testName: String) extends TestContext(this, testName) with  SegmentMethodWrappers with SegmentsDslExp {
   }

@@ -16,6 +16,7 @@ trait NumericOps { self: Scalan =>
     def toDouble = NumericToDouble(n).apply(x)
     def toInt = NumericToInt(n).apply(x)
     def toStr:Rep[String] = NumericToString().apply(x)
+    def toLong = NumericToLong(n).apply(x)
     def ceil = Math.ceil(toDouble)
     def floor = Math.floor(toDouble)
   }
@@ -49,6 +50,8 @@ trait NumericOps { self: Scalan =>
   case class NumericToFloat[T](n: Numeric[T]) extends UnOp[T, Float]("ToFloat", n.toFloat)
 
   case class NumericToInt[T](n: Numeric[T]) extends UnOp[T,Int]("ToInt", n.toInt)
+
+  case class NumericToLong[T](n: Numeric[T]) extends UnOp[T,Long]("ToLong", n.toLong)
 
   case class NumericToString[T]() extends UnOp[T,String]("ToString", _.toString)
 

@@ -12,6 +12,7 @@ import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl/*, Excepti
 trait Scalan
   extends Base
   with Elems
+  with Containers
   with BaseTypes
   with Views
   with Proxy
@@ -50,6 +51,7 @@ trait ScalanSeq
   extends Scalan
   with BaseSeq
   with ElemsSeq
+  with ContainersSeq
   with BaseTypesSeq
   with ViewsSeq
   with ProxySeq
@@ -83,6 +85,7 @@ trait ScalanExp
   extends Scalan
   with BaseExp
   with ElemsExp
+  with ContainersExp
   with BaseTypesExp
   with ViewsExp
   with ProxyExp

@@ -65,9 +65,12 @@ trait ArrayViewsSeq extends ArrayViews with ArrayOpsSeq with ViewsSeq { self: Sc
 }
 
 trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseExp { self: ScalanExp =>
-  case class ViewArray[A, B](source: Arr[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Array] {
-    lazy val iso = arrayIso(innerIso)
-    def copy(source: Arr[A]) = ViewArray(source)
+  
+  case class ViewArray[A, B](source: Arr[A])(iso: Iso1[A, B, Array])
+    extends View1[A, B, Array](iso) {
+    //def this(source: Arr[A])(iso: Iso[A, B]) = this(source)(ArrayIso(iso))
+    //lazy val iso = ArrayIso(innerIso)
+    def copy(source: Arr[A]) = ViewArray(source)(iso)
     override def toString = s"ViewArray[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewArray[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -85,33 +88,32 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
   }
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
-    case Def(view: ViewArray[_, _]) =>
-      Some((view.source, arrayIso(view.iso)))
+    case Def(view: ViewArray[a, b]) =>
+      Some((view.source, view.iso))
     case UserTypeArray(iso: Iso[a, b]) =>
-      val newIso = arrayIso(iso)
+      val newIso = ArrayIso(iso)
       val repr = reifyObject(UnpackView(s.asRep[Array[b]])(newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
 
-  case class ArrayIso[A:Elem,B:Elem](iso: Iso[A,B]) extends Iso[Array[A], Array[B]] {
-    lazy val eTo = element[Array[B]]
+  implicit val arrayContainer: Cont[Array] = new Container[Array] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Array[T]]
+    def lift[T](implicit eT: Elem[T]) = element[Array[T]]
+  }
+
+  case class ArrayIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Array](iso) {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
     def from(x: Arr[B]) = x.map(iso.from _)
     def to(x: Arr[A]) = x.map(iso.to _)
-    lazy val tag = {
-      implicit val tB = iso.tag
-      weakTypeTag[Array[B]]
-    }
     lazy val defaultRepTo = Default.defaultVal(SArray.empty[B])
   }
 
-  def arrayIso[A, B](iso: Iso[A, B]): Iso[Array[A], Array[B]] = {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    ArrayIso(iso)
-  }
-  
+//  def ArrayIso[A, B](iso: Iso[A, B]): Iso[Array[A], Array[B]] =
+//    ArrayIso(iso)
+
   val HasViewArrayArg = HasArg(hasViewArrayArg)
 
   protected def hasViewArrayArg(s: Exp[_]): Boolean = s match {
@@ -168,7 +170,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
     val filtered = view.source.filter { x => f(iso.to(x)) }
-    ViewArray(filtered)(iso)
+    ViewArray(filtered)(ArrayIso(iso))
   }
   
   def liftViewArrayFromArgs[T](d: Def[T])/*(implicit eT: Elem[T])*/: Option[Exp[_]] = d match {
@@ -187,14 +189,14 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     case ArrayUpdate(Def(view: ViewArray[a, b]), i, HasViews(value, iso2: Iso[c, d])) if view.innerIso == iso2 =>
       implicit val eA = view.innerIso.eFrom
       implicit val eB = view.innerIso.eTo
-      val res = ViewArray(view.source.update(i, value.asRep[a]))(view.innerIso)
+      val res = ViewArray(view.source.update(i, value.asRep[a]))(view.iso)
       Some(res)
     case ArrayFold(Def(view: ViewArray[_,_]), init, f) =>
       Some(foldUnderlyingArray(view, init, f))
     case ArrayApplyMany(Def(view: ViewArray[a, b]), is) =>
       implicit val eA = view.innerIso.eFrom
       implicit val eB = view.innerIso.eTo
-      val res = ViewArray(view.source(is))(view.innerIso)
+      val res = ViewArray(view.source(is))(view.iso)
       Some(res)
     case ArrayFlatMap(Def(view: ViewArray[_, _]), f) =>
       Some(flatMapUnderlyingArray(view, f))
@@ -231,9 +233,9 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       val value = srcValue.asRep[a]
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
-      val arrIso = arrayIso[a,b](iso)
+      val arrIso = ArrayIso[a,b](iso)
       val srcBuf = arrIso.from(arr.asRep[Array[b]])
-      ViewArray(srcBuf.update(i, value))(iso)
+      ViewArray(srcBuf.update(i, value))(arrIso)
     case ArrayMap(xs: Arr[a] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
       val f1 = f.asRep[a => b]
       val xs1 = xs.asRep[Array[a]]
@@ -246,7 +248,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
         iso.from(tmp)
         // UnpackView(f1(x))(iso)
       }
-      val res = ViewArray(s)(iso)
+      val res = ViewArray(s)(ArrayIso(iso))
       // val res = ViewArray(s.values)(iso).nestBy(s.segments)
       res
     case ArrayFlatMap(xs: Arr[a] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, arrIso: ArrayIso[c, b])))) =>
@@ -277,7 +279,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       //println(view1)
       val compIso = composeIso(view2.innerIso, view1.innerIso)
       implicit val eAB = compIso.eTo
-      ViewArray(arr)(compIso)
+      ViewArray(arr)(ArrayIso(compIso))
     case _ =>
       super.rewriteDef(d)
   }

@@ -33,7 +33,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
 
   implicit def arrayBufferToArray[T:Elem](buf: Rep[ArrayBuffer[T]]): Arr[T] = buf.toArray
   
-  case class ArrayBufferElem[T](implicit eItem: Elem[T]) extends Element[ArrayBuffer[T]] {
+  case class ArrayBufferElem[T](eItem: Elem[T]) extends Element[ArrayBuffer[T]] {
     override def isEntityType = eItem.isEntityType
     lazy val tag = {
       implicit val tag1 = eItem.tag
@@ -42,7 +42,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
     protected def getDefaultRep = emptyArrayBuffer[T](eItem)
   }
 
-  implicit def arrayBufferElement[A](implicit eA: Elem[A]): Elem[ArrayBuffer[A]] = new ArrayBufferElem[A]
+  implicit def arrayBufferElement[A](implicit eItem: Elem[A]): Elem[ArrayBuffer[A]] = new ArrayBufferElem[A](eItem)
   implicit def ArrayBufferElemExtensions[A](eArr: Elem[ArrayBuffer[A]]): ArrayBufferElem[A] = eArr.asInstanceOf[ArrayBufferElem[A]]
 
   implicit def resolveArrayBuffer[T: Elem](buf: Rep[ArrayBuffer[T]]): ArrayBuffer[T]
@@ -82,9 +82,10 @@ trait ArrayBuffersSeq extends ArrayBuffers { self: ScalanSeq =>
 }
 
 trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
-  case class ViewArrayBuffer[A, B](source: Rep[ArrayBuffer[A]])(implicit innerIso: Iso[A, B]) extends View1[A, B, ArrayBuffer] {
-    lazy val iso = arrayBufferIso(innerIso)
-    def copy(source: Rep[ArrayBuffer[A]]) = ViewArrayBuffer(source)
+  case class ViewArrayBuffer[A, B](source: Rep[ArrayBuffer[A]])(iso: Iso1[A, B, ArrayBuffer])
+    extends View1[A, B, ArrayBuffer](iso) {
+    //lazy val iso = arrayBufferIso(innerIso)
+    def copy(source: Rep[ArrayBuffer[A]]) = ViewArrayBuffer(source)(iso)
     override def toString = s"ViewArrayBuffer[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewArrayBuffer[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -107,29 +108,43 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
     case Def(view: ViewArrayBuffer[_, _]) =>
-      Some((view.source, arrayBufferIso(view.iso)))
+      Some((view.source, view.iso))
     case UserTypeArrayBuffer(iso: Iso[a, b]) =>
-      val newIso = arrayBufferIso(iso)
+      val newIso = ArrayBufferIso(iso)
       val repr = reifyObject(UnpackView(s.asRep[ArrayBuffer[b]])(newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
 
-  def arrayBufferIso[A, B](iso: Iso[A, B]): Iso[ArrayBuffer[A], ArrayBuffer[B]] = {
+  implicit val arrayBufferContainer: Cont[ArrayBuffer] = new Container[ArrayBuffer] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[ArrayBuffer[T]]
+    def lift[T](implicit eT: Elem[T]) = element[ArrayBuffer[T]]
+  }
+
+  case class ArrayBufferIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ArrayBuffer](iso) {
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
-    new Iso[ArrayBuffer[A], ArrayBuffer[B]] {
-      lazy val eTo = element[ArrayBuffer[B]]
-      def from(x: Rep[ArrayBuffer[B]]) = x.map(iso.from _)
-      def to(x: Rep[ArrayBuffer[A]]) = x.map(iso.to _)
-      lazy val tag = {
-        implicit val tB = iso.tag
-        weakTypeTag[ArrayBuffer[B]]
-      }
-      lazy val defaultRepTo = Default.defaultVal(ArrayBuffer.empty[B])
-    }
+    def from(x: Rep[ArrayBuffer[B]]) = x.map(iso.from _)
+    def to(x: Rep[ArrayBuffer[A]]) = x.map(iso.to _)
+    lazy val defaultRepTo = Default.defaultVal(ArrayBuffer.empty[B])
   }
+
+//  new Iso[ArrayBuffer[A], ArrayBuffer[B]] {
+//    lazy val eTo = element[ArrayBuffer[B]]
+//    def from(x: Rep[ArrayBuffer[B]]) = x.map(iso.from _)
+//    def to(x: Rep[ArrayBuffer[A]]) = x.map(iso.to _)
+//    lazy val tag = {
+//      implicit val tB = iso.tag
+//      weakTypeTag[ArrayBuffer[B]]
+//    }
+//    lazy val defaultRepTo = Default.defaultVal(ArrayBuffer.empty[B])
+//  }
+//
+//  def arrayBufferIso[A, B](iso: Iso[A, B]): Iso[ArrayBuffer[A], ArrayBuffer[B]] = {
+//    implicit val eA = iso.eFrom
+//    implicit val eB = iso.eTo
+//  }
 
   protected def hasArrayBufferViewArg(s: Exp[_]): Boolean = s match {
     case Def(_: ViewArrayBuffer[_, _]) => true
@@ -155,12 +170,12 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
     case ArrayBufferAppend(Def(view: ViewArrayBuffer[a, b]), HasViews(value, iso2: Iso[c, d])) if view.innerIso == iso2 =>
       implicit val eA = view.innerIso.eFrom
       implicit val eB = view.innerIso.eTo
-      val res = ViewArrayBuffer(view.source += value.asRep[a])(view.innerIso)
+      val res = ViewArrayBuffer(view.source += value.asRep[a])(view.iso)
       Some(res)
     case ArrayBufferAppendArray(Def(dst: ViewArrayBuffer[a, b]), Def(src: ViewArray[c, d])) if dst.innerIso == src.innerIso =>
       implicit val eA = dst.innerIso.eFrom
       implicit val eB = dst.innerIso.eTo
-      val res = ViewArrayBuffer(dst.source ++= src.source.asRep[Array[a]])(dst.innerIso)
+      val res = ViewArrayBuffer(dst.source ++= src.source.asRep[Array[a]])(ArrayBufferIso(dst.innerIso))
       Some(res)
       /*
     case ArrayBufferAppend(Def(view: ViewArrayBuffer[a, b]), Def(UnpackableDef(value, iso2: Iso[c, d]))) if view.innerIso == iso2 =>
@@ -174,7 +189,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
     case ArrayBufferToArray(Def(view: ViewArrayBuffer[a, b])) =>
       implicit val eA = view.innerIso.eFrom
       implicit val eB = view.innerIso.eTo
-      val res = ViewArray(view.source.toArray)(view.innerIso)
+      val res = ViewArray(view.source.toArray)(ArrayIso(view.innerIso))
       Some(res)
     case _ => None
   }
@@ -192,14 +207,14 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
       val value = srcValue.asRep[a]
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
-      val bufIso = arrayBufferIso[a,b](iso)
+      val bufIso = ArrayBufferIso[a,b](iso)
       val srcBuf = bufIso.from(buf.asRep[ArrayBuffer[b]])
-      ViewArrayBuffer(srcBuf += value)(iso)
+      ViewArrayBuffer(srcBuf += value)(bufIso)
     case mk@MakeArrayBuffer(ctx) =>
        mk.selfType.eItem match {
          case e: ViewElem[a, b] => {
            implicit val eA = e.iso.eFrom
-           ViewArrayBuffer(ArrayBuffer.make[a](ctx))(e.iso)
+           ViewArrayBuffer(ArrayBuffer.make[a](ctx))(ArrayBufferIso(e.iso))
          }
          case _ => super.rewriteDef(d)
        }
@@ -216,15 +231,16 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
       val xs1 = xs.asRep[ArrayBuffer[a]]
       implicit val eA = xs1.elem.eItem
       implicit val eC = iso.eFrom
-       val s = xs1.map { x =>
+      val s = xs1.map { x =>
         val tmp = f1(x)
         iso.from(tmp)
-       }
-      val res = ViewArrayBuffer(s)(iso)
-     case view1@ViewArrayBuffer(Def(view2@ViewArrayBuffer(arr))) =>
+      }
+      val res = ViewArrayBuffer(s)(ArrayBufferIso(iso))
+      res
+    case view1@ViewArrayBuffer(Def(view2@ViewArrayBuffer(arr))) =>
       val compIso = composeIso(view2.innerIso, view1.innerIso)
       implicit val eAB = compIso.eTo
-      ViewArrayBuffer(arr)(compIso)
+      ViewArrayBuffer(arr)(ArrayBufferIso(compIso))
     case _ =>
       super.rewriteDef(d)
   }

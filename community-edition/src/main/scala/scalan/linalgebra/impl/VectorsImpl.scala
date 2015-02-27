@@ -10,17 +10,23 @@ import scalan.parrays.PArraysDsl
 import scalan.parrays.PArraysDslExp
 import scalan.parrays.PArraysDslSeq
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait VectorsAbs extends Scalan with Vectors {
-  self: VectorsDsl =>
+  self: ScalanCommunityDsl =>
   // single proxy for each type family
-  implicit def proxyVector[T](p: Rep[Vector[T]]): Vector[T] =
-    proxyOps[Vector[T]](p)
+  implicit def proxyVector[T](p: Rep[Vector[T]]): Vector[T] = {
+    implicit val tag = weakTypeTag[Vector[T]]
+    proxyOps[Vector[T]](p)(TagImplicits.typeTagToClassTag[Vector[T]])
+  }
 
-  abstract class VectorElem[T, From, To <: Vector[T]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
-
+  abstract class VectorElem[T, From, To <: Vector[T]](iso: Iso[From, To])(implicit elem: Elem[T])
+    extends ViewElem[From, To](iso) {
+    override def convert(x: Rep[Reifiable[_]]) = convertVector(x.asRep[Vector[T]])
+    def convertVector(x : Rep[Vector[T]]): Rep[To]
+  }
   trait VectorCompanionElem extends CompanionElem[VectorCompanionAbs]
   implicit lazy val VectorCompanionElem: VectorCompanionElem = new VectorCompanionElem {
     lazy val tag = weakTypeTag[VectorCompanionAbs]
@@ -36,7 +42,10 @@ trait VectorsAbs extends Scalan with Vectors {
   }
 
   // elem for concrete class
-  class DenseVectorElem[T](iso: Iso[DenseVectorData[T], DenseVector[T]]) extends VectorElem[T, DenseVectorData[T], DenseVector[T]](iso)
+  class DenseVectorElem[T](iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit val elem: Elem[T])
+    extends VectorElem[T, DenseVectorData[T], DenseVector[T]](iso) {
+    def convertVector(x: Rep[Vector[T]]) = DenseVector(x.coords)
+  }
 
   // state representation type
   type DenseVectorData[T] = PArray[T]
@@ -94,7 +103,10 @@ trait VectorsAbs extends Scalan with Vectors {
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]): Option[(Rep[PArray[T]])]
 
   // elem for concrete class
-  class SparseVectorElem[T](iso: Iso[SparseVectorData[T], SparseVector[T]]) extends VectorElem[T, SparseVectorData[T], SparseVector[T]](iso)
+  class SparseVectorElem[T](iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit val elem: Elem[T])
+    extends VectorElem[T, SparseVectorData[T], SparseVector[T]](iso) {
+    def convertVector(x: Rep[Vector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
+  }
 
   // state representation type
   type SparseVectorData[T] = (Array[Int], (PArray[T], Int))
@@ -155,7 +167,7 @@ trait VectorsAbs extends Scalan with Vectors {
 
 // Seq -----------------------------------
 trait VectorsSeq extends VectorsDsl with ScalanSeq {
-  self: VectorsDslSeq =>
+  self: ScalanCommunityDslSeq =>
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeSeq[VectorCompanionAbs, VectorCompanionAbs] {
     lazy val selfType = element[VectorCompanionAbs]
   }
@@ -197,7 +209,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
 
 // Exp -----------------------------------
 trait VectorsExp extends VectorsDsl with ScalanExp {
-  self: VectorsDslExp =>
+  self: ScalanCommunityDslExp =>
   lazy val Vector: Rep[VectorCompanionAbs] = new VectorCompanionAbs with UserTypeDef[VectorCompanionAbs, VectorCompanionAbs] {
     lazy val selfType = element[VectorCompanionAbs]
     override def mirror(t: Transformer) = this
@@ -248,6 +260,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object nonZeroIndices {
+      def unapply(d: Def[_]): Option[Rep[DenseVector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "nonZeroIndices" =>
+          Some(receiver).asInstanceOf[Option[Rep[DenseVector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[DenseVector[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object nonZeroValues {
+      def unapply(d: Def[_]): Option[Rep[DenseVector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "nonZeroValues" =>
+          Some(receiver).asInstanceOf[Option[Rep[DenseVector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[DenseVector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -401,6 +437,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[Vector[T]], Rep[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object nonZeroIndices {
+      def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VectorElem[_, _, _]] && method.getName == "nonZeroIndices" =>
+          Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Vector[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object nonZeroValues {
+      def unapply(d: Def[_]): Option[Rep[Vector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VectorElem[_, _, _]] && method.getName == "nonZeroValues" =>
+          Some(receiver).asInstanceOf[Option[Rep[Vector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Vector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

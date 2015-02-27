@@ -4,6 +4,7 @@ import java.io._
 import java.nio.file.Paths
 import scala.Console
 import scala.io.{Source, Codec}
+import scalan.util.ProcessUtil._
 
 object FileUtil {
   def read(file: File, codec: Codec = Codec.UTF8): String = {
@@ -86,6 +87,16 @@ object FileUtil {
     }
   }
 
+  def deleteIfExist(fileOrDirectory: File): Unit = {
+    if (fileOrDirectory.isDirectory) {
+      fileOrDirectory.listFiles.foreach(delete)
+    }
+
+    if (fileOrDirectory.exists()) {
+      if (!fileOrDirectory.delete()) throw new IOException(s"Failed to delete file $fileOrDirectory")
+    }
+  }
+
   def currentWorkingDir = Paths.get("").toAbsolutePath.toFile
 
   def file(first: String, rest: String*): File =
@@ -93,4 +104,23 @@ object FileUtil {
 
   def file(first: File, rest: String*): File =
     rest.foldLeft(first) { (file, child) => new File(file, child) }
+
+  def packJar(baseClass: Class[_], methodName: String, path: String, libDir: String, jarName: String) = {
+    file(path, libDir).mkdirs()
+    launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", file(path, libDir, jarName).getAbsolutePath) :+
+      baseClass.getPackage.getName.replaceAll("\\.", "/"): _*)
+  }
+
+  /**
+   * Same as dir.listFiles(filter), except it returns empty array instead of null
+   * if dir doesn't exist or is not a directory
+   */
+  def listFiles(dir: File, filter: FilenameFilter): Array[File] = dir.listFiles(filter) match {
+    case null => Array.empty
+    case array => array
+  }
+}
+
+case class ExtensionFilter(extension: String) extends FilenameFilter {
+  override def accept(dir: File, name: String): Boolean = name.toLowerCase.endsWith(s".$extension")
 }

@@ -28,6 +28,9 @@ trait BaseTypes extends Base { self: Scalan =>
   trait ExCompanion1[TBase[_]] {
     //def defaultVal[A]: Default[TBase[A]]
   }
+
+  final val ContainerLength = "ContainerLength"
+  final val ContainerApply = "ContainerApply"
 }
  trait BaseTypesSeq extends BaseTypes { scalan: ScalanSeq =>
    class SeqBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
