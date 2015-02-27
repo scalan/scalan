@@ -211,7 +211,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     case pa @ ArrayZip(arr1: Arr[a] @unchecked, Def(v1:ViewArray[_,_])) => {
       implicit val eA = arr1.elem.eItem
       val iso2 = identityIso(eA)
-      val pIso = pairIso(iso2, v1.innerIso)
+      val pIso = ArrayIso(pairIso(iso2, v1.innerIso))
       implicit val eAB = pIso.eTo
       val zipped = arr1 zip v1.source
       Some(ViewArray(zipped)(pIso))
@@ -261,7 +261,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
         val tmp = f1(x)
         arrIso.from(tmp)
       }
-      val res = ViewArray(s)(arrIso.iso)
+      val res = ViewArray(s)(ArrayIso(arrIso.iso))
       res
 
       /*
