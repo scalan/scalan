@@ -109,6 +109,8 @@ class JNIMSTBenchmarkSSCA {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
   def MST_adjlist_cxx( state: MST_adjlist_State ): Array[Int] = {
     val res = state.nativeMethods.MSTadjlist( state.input )
     state.res = res
@@ -118,6 +120,8 @@ class JNIMSTBenchmarkSSCA {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
   def MST_adjmatrix_cxx( state: MST_adjmatrix_State ): Array[Int] = {
     val res = state.nativeMethods.MSTadjmatrix( state.inputM )
     state.res = res
@@ -127,6 +131,8 @@ class JNIMSTBenchmarkSSCA {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def MST_adjlist_staged( state: MSF_adjlist_State ): Array[Int] = {
     val res = state.MSF_adjlist(state.input)
     state.res = res
@@ -136,6 +142,8 @@ class JNIMSTBenchmarkSSCA {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def MST_adjmatrix_staged( state: MST_adjmatrix_State ): Array[Int] = {
     val res = state.MST_adjmatrix(state.inputM)
     state.res = res
@@ -145,6 +153,8 @@ class JNIMSTBenchmarkSSCA {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
   def MSF_adjlist_cxx( state: MSF_adjlist_State ): Array[Int] = {
     val res = state.nativeMethods.MSFadjlist( state.input )
     state.res = res
@@ -154,6 +164,8 @@ class JNIMSTBenchmarkSSCA {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
   def MSF_adjmatrix_cxx( state: MSF_adjmatrix_State ): Array[Int] = {
     val res = state.nativeMethods.MSFadjmatrix( state.inputM )
     state.res = res
@@ -163,6 +175,8 @@ class JNIMSTBenchmarkSSCA {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def MSF_adjlist_staged( state: MSF_adjlist_State ): Array[Int] = {
     val res = state.MSF_adjlist(state.input)
     state.res = res
@@ -172,6 +186,8 @@ class JNIMSTBenchmarkSSCA {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def MSF_adjmatrix_staged( state: MSF_adjmatrix_State ): Array[Int] = {
     val res = state.MSF_adjmatrix(state.inputM)
     state.res = res
