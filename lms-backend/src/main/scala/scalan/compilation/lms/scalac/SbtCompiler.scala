@@ -1,6 +1,7 @@
 package scalan.compilation.lms.scalac
 
 import java.io.File
+import java.io.File.separator
 
 import scalan.util.{StringUtil, ProcessUtil, ExtensionFilter, FileUtil}
 import scalan.util.FileUtil._
@@ -26,15 +27,15 @@ trait SbtCompiler { self:LmsCompilerScala =>
         val mainClass = mainPack + "." + compilerConfig.sbt.mainClassSimpleName
         val jar = s"$functionName.jar"
         val src = file(executableDir, "src", "main", "scala")
-        val f = file(src, mainPack.replaceAll("\\.", File.separator), s"$functionName.scala")
+        val f = file(src, mainPack.replaceAll("\\.", separator), s"$functionName.scala")
         move(sourceFile, f)
         addHeader(f, s"package $mainPack")
-        val mainClassFile = mainClass.replaceAll("\\.", File.separator) + ".scala"
-        copy(file(currentClassDir, mainClassFile), file(src, mainClassFile))
-
-        for (c <- compilerConfig.sbt.extraClasses) {
-          val scalaFile = c.replaceAll("\\.", File.separator) + ".scala"
-          copy(file(currentClassDir, scalaFile), file(src, scalaFile))
+        for (c <- mainClass +: compilerConfig.sbt.extraClasses) {
+          val scalaFile = c.replaceAll("\\.", separator) + ".scala"
+          var f = file(currentClassDir, scalaFile)
+          if (!f.exists() && currentClassDir.endsWith("test-classes" + separator))
+            f = file(replaceFirstDirName(currentClassDir, "test-classes", "classes"), scalaFile)
+          copy(f, file(src, scalaFile))
         }
 
         write(file(sourcesDir, "build.sbt"),

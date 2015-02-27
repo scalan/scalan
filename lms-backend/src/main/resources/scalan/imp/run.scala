@@ -1,4 +1,4 @@
-package scalan.it.lms.imp
+package scalan.imp
 
 object run {
 

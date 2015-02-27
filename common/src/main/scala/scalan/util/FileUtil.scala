@@ -1,5 +1,6 @@
 package scalan.util
 
+import java.io.File.separator
 import java.io._
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
@@ -136,6 +137,8 @@ object FileUtil {
     launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", file(path, libDir, jarName).getAbsolutePath) :+
       baseClass.getPackage.getName.replaceAll("\\.", "/"): _*)
   }
+
+  def replaceFirstDirName(path: String, oldName: String, newName: String): String = path.replace(separator + oldName + separator, separator + newName + separator)
 
   /**
    * Same as dir.listFiles(filter), except it returns empty array instead of null

@@ -213,12 +213,11 @@ class MethodCallItTests extends LmsCommunityItTests{
   test("Class Mapping") {
     val conf = replaceMethExp.defaultCompilerConfig
     val length = getStagedOutputConfig(replaceMethExp)(replaceMethExp.arrayLength, "ClassMapping", Array(5, 9, 2),
-      conf.copy(scalaVersion = Some("2.10.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.it.lms.imp"),
-        extraClasses = Seq("scalan.it.lms.imp.ArrayImp"), commands = Seq("assembly"))))
+      conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
+        extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("assembly"))))
     length should equal(3)
   }
 
-  val testJar = "test.jar"
   val jarReplaceExp = new ScalanCommunityExp with TestLmsCompiler {
     self =>
 
@@ -241,7 +240,7 @@ class MethodCallItTests extends LmsCommunityItTests{
 
     new ScalaLanguage with TestConf {
 
-      val extLib = new ScalaLib(testJar, "scalan.it.lms.MappingMethodFromJar.TestMethod") {
+      val extLib = new ScalaLib("", "scalan.it.lms.MappingMethodFromJar.TestMethod") {
         val testMassageMethod = ScalaFunc('testMassage)
       }
 
@@ -259,10 +258,13 @@ class MethodCallItTests extends LmsCommunityItTests{
     }
   }
 
-  test("Mapping Method From Jar") {
-    val conf = jarReplaceExp.defaultCompilerConfig
+  ignore("Mapping Method From Jar") {
     val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", new Exception("Original massage"),
       conf.copy(scalaVersion = Some("2.10.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.it.lms.MappingMethodFromJar"),
+  ignore("Mapping Method From Jar") {
+    val conf = jarReplaceExp.defaultCompilerConfig
+    val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", "Original massage",
+      conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.it.lms.MappingMethodFromJar"),
         extraClasses = Seq("scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
     messageFromTestMethod should equal("Test Message")
   }

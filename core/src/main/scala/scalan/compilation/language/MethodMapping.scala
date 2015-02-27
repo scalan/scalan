@@ -2,6 +2,7 @@ package scalan.compilation.language
 
 import scala.collection.mutable
 import scala.language.postfixOps
+import scala.reflect.runtime.universe.typeOf
 
 object LanguageId extends Enumeration {
   type LANGUAGE = Value
@@ -24,13 +25,13 @@ trait MethodMapping {
   }
 
   trait LanguageConf extends Implicit[LanguageConf] {
-
-    import scala.reflect.runtime.universe.typeOf
     import scala.reflect.runtime.universe.Type
 
     val tyInt = typeOf[Int]
     val tyString = typeOf[String]
     val tyArray = typeOf[Array[_]]
+
+    case class CaseClassObject(aType: Type) extends Fn with Implicit[CaseClassObject]
 
     val backend: Backend[_]
 
@@ -86,6 +87,8 @@ trait MethodMapping {
 
       val functionMap: Map[Method, Func]
 
+//      val caseClassMap: Map[CaseClassObject, Func] = Map.empty[CaseClassObject, Func]
+
       // To simplify config usage, data are transformed to Backend representation. Direct link to LanguageConf is never used
       lazy val methodMap: Map[(String, String), Option[Func]] = functionMap.map { case (m, f) =>
         (((m.theType.family match {
@@ -98,7 +101,6 @@ trait MethodMapping {
         }) + m.theType.name.name, m.name.name), Some(f))
       } toMap
     }
-
   }
 
   trait CppLanguage extends LanguageConf {
@@ -116,12 +118,11 @@ trait MethodMapping {
 
       lazy val libPaths: Set[String] = Set.empty[String]
     }
-
   }
 
   trait ScalaLanguage extends LanguageConf {
 
-    case class ScalaLib(jar: String, pack: String) extends Fn with Implicit[ScalaLib]
+    case class ScalaLib(jar: String = "", pack: String = "") extends Fn with Implicit[ScalaLib]
 
     case class EmbeddedObject(name: String) extends Fn with Implicit[EmbeddedObject]
 
@@ -150,5 +151,3 @@ trait CoreMethodMapping extends MethodMapping {
     }
   }
 }
-
-
