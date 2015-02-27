@@ -73,7 +73,18 @@ trait MethodMapping {
     }
 
     abstract class Backend[TC <: LanguageConf](language: LANGUAGE)(implicit val l: TC) {
-      backends += language -> this
+      backends += {
+        (backends.get(language), this) match {
+          case (conf: LanguageConf#Backend[_], current) =>
+            language -> new Backend(language) {
+              override type Func = current.Func
+              override val libPaths = conf.libPaths ++ current.libPaths
+              override val functionMap: Map[Method, Func] = current.functionMap //todo conf.functionMap ++ current.functionMap
+            }
+          case (_, current) => language -> current
+        }
+      }
+
       type Func <: Fun
 
       def get(classPath: String, method: String): Option[Func] = {
@@ -86,6 +97,8 @@ trait MethodMapping {
       val libPaths: Set[String]
 
       val functionMap: Map[Method, Func]
+
+      val classMap: Map[Class[_], Func] = Map.empty[Class[_], Func]
 
 //      val caseClassMap: Map[CaseClassObject, Func] = Map.empty[CaseClassObject, Func]
 

@@ -2,9 +2,10 @@ package scalan.compilation.lms
 
 import java.lang.reflect.Method
 
+import scalan.compilation.language.ScalaInterpreter
 import scalan.{ScalanCommunityDslExp, CommunityMethodMapping}
 
-trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping { self: ScalanCommunityDslExp =>
+trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping with ScalaInterpreter { self: ScalanCommunityDslExp =>
 
   override def defTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]) =
     communityTransformer(m, g, e) orElse super.defTransformer(m, g, e)
@@ -27,7 +28,7 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping {
 
     val obj = symMirr(receiver.asInstanceOf[Exp[_]])
 
-    getFunc(method) match {
+    mappedFunc(method) match {
       case Some(conf: ScalaLanguage#ScalaFunc) => conf.lib match {
         case e: ScalaLanguage#ScalaLib =>
           Manifest.classType(method.getDeclaringClass) match {

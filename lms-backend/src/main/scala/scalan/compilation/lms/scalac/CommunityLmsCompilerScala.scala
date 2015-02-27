@@ -28,7 +28,11 @@ trait CommunityLmsCompilerScala extends LmsCompilerScala with CommunityBridgeSca
   }
 
   override def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]]): lms.Exp[A] = {
-    lms.newObj[A](aClass.getCanonicalName, args.map(v => symMirr(v.asInstanceOf[Exp[_]])))
+    val name = mappedClassName(aClass) match {
+      case Some(n) => n
+      case _ => aClass.getName
+    }
+    lms.newObj[A](name, args.map(v => symMirr(v.asInstanceOf[Exp[_]])))
   }
 
 }

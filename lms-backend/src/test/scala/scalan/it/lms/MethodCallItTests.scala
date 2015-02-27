@@ -252,20 +252,22 @@ class MethodCallItTests extends LmsCommunityItTests{
         )
       }
 
+      val main = new ScalaLib() {
+        val throwableImp = ScalaFunc(Symbol("scalan.imp.ThrowableImp"))
+      }
+
       val backend = new ScalaBackend {
         val functionMap = scala2Scala
+        override val classMap = Map[Class[_], ScalaFunc](classOf[scalan.util.Exceptions#SThrowable] -> main.throwableImp)
       }
     }
   }
 
-  ignore("Mapping Method From Jar") {
-    val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", new Exception("Original massage"),
-      conf.copy(scalaVersion = Some("2.10.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.it.lms.MappingMethodFromJar"),
-  ignore("Mapping Method From Jar") {
+  test("Mapping Method From Jar") {
     val conf = jarReplaceExp.defaultCompilerConfig
     val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", "Original massage",
-      conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.it.lms.MappingMethodFromJar"),
-        extraClasses = Seq("scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
+      conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
+        extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
     messageFromTestMethod should equal("Test Message")
   }
 }
