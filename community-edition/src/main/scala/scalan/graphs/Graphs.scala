@@ -217,6 +217,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
 trait GraphsDsl extends impl.GraphsAbs
   with EdgesDsl
   with VerticesDsl
+  with FrontsDsl
   with CollectionsDsl
   with ScalanCommunityDsl {
 
@@ -225,13 +226,13 @@ trait GraphsDsl extends impl.GraphsAbs
 trait GraphsDslSeq extends impl.GraphsSeq
   with EdgesDslSeq
   with VerticesDslSeq
-  //  with BitSetsSeq
+  with FrontsDslSeq
   with CollectionsDslSeq
   with ScalanCommunityDslSeq
 
 trait GraphsDslExp extends impl.GraphsExp
   with EdgesDslExp
   with VerticesDslExp
-  //  with BitSetsExp
+  with FrontsDslExp
   with CollectionsDslExp
   with ScalanCommunityDslExp
