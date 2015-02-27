@@ -18,8 +18,6 @@ object JNIMSTBenchmarkSSCA {
 
   case class InputDataSSCA(inFileName: String) {
     val g = GraphUtilsSSCA(Paths.get(inFileName))
-    val input: (Array[Int], (Array[Double], (Array[Int], Array[Int]))) = (g.endV.toArray, (g.weights.toArray, (g.rowInd.dropRight(1).toArray, GraphUtilsSSCA.calcSegLens(g.rowInd.toArray))))
-    val inputM: (Array[Double], Int) = (GraphUtilsSSCA.toDenseWeights(g).toArray, g.n)
   }
 
 
@@ -29,15 +27,12 @@ object JNIMSTBenchmarkSSCA {
     @Param(Array("ssca2-3", "ssca2-10"))
     var inFileName: String = _
 
-    var inputData: InputDataSSCA = _
     var input: (Array[Int],(Array[Double], (Array[Int], Array[Int]))) = _
-    var inputM: (Array[Double], Int) = _
 
     @Setup
     def prepare(): Unit = {
-      inputData = InputDataSSCA(inFileName)
-      input = inputData.input
-      inputM = inputData.inputM
+      val g = InputDataSSCA(inFileName).g
+      input = (g.endV.toArray, (g.weights.toArray, (g.rowInd.dropRight(1).toArray, GraphUtilsSSCA.calcSegLens(g.rowInd.toArray))))
     }
 
     class ProgSeq extends MST_example with ScalanCtxSeq
@@ -75,13 +70,25 @@ object JNIMSTBenchmarkSSCA {
   }
 
   @State(Scope.Benchmark)
+  trait MST_adjmatrix_StateBase extends MST_StateBase {
+
+    var inputM: (Array[Double],Int) = _
+
+    @Setup
+    override def prepare(): Unit = {
+      val g = InputDataSSCA(inFileName).g
+      inputM = (GraphUtilsSSCA.toDenseWeights(g).toArray, g.n)
+    }
+  }
+
+  @State(Scope.Benchmark)
   class MST_adjlist_State extends MST_StateBase {
     val MST_adjlist = loadMethod(ctx)(baseDir, "MST_adjlist", ctx.MST_adjlist)
 //    lazy val resSeq = progSeq.MST_adjlist(input)
   }
 
   @State(Scope.Benchmark)
-  class MST_adjmatrix_State extends MST_StateBase {
+  class MST_adjmatrix_State extends MST_adjmatrix_StateBase {
     val MST_adjmatrix = loadMethod(ctx)(baseDir, "MST_adjmatrix", ctx.MST_adjmatrix)
 //    lazy val resSeq = progSeq.MST_adjmatrix(inputM)
   }
@@ -93,7 +100,7 @@ object JNIMSTBenchmarkSSCA {
   }
 
   @State(Scope.Benchmark)
-  class MSF_adjmatrix_State extends MST_StateBase {
+  class MSF_adjmatrix_State extends MST_adjmatrix_StateBase {
     val MSF_adjmatrix = loadMethod(ctx)(baseDir, "MSF_adjmatrix", ctx.MSF_adjmatrix)
 //    lazy val resSeq = progSeq.MSF_adjmatrix(inputM)
   }
