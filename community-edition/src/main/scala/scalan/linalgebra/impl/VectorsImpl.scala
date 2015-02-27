@@ -184,7 +184,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
   }
 
   def mkDenseVector[T]
-      (coords: Rep[PArray[T]])(implicit elem: Elem[T]) =
+      (coords: Rep[PArray[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
       new SeqDenseVector[T](coords)
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]) =
     Some((p.coords))
@@ -201,7 +201,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
   }
 
   def mkSparseVector[T]
-      (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]) =
+      (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
       new SeqSparseVector[T](nonZeroIndices, nonZeroValues, length)
   def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]) =
     Some((p.nonZeroIndices, p.nonZeroValues, p.length))

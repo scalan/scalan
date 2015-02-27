@@ -165,7 +165,7 @@ class BoilerplateTool extends StrictLogging {
     "ce" -> List(ceConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig),
+    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig, graphConfig),
     "all" -> List(coreTestsConfig, ceConfig, eeConfig)
   )
 

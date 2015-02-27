@@ -243,7 +243,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
   }
 
   def mkSSeqImpl[A]
-      (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]) =
+      (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
       new SeqSSeqImpl[A](wrappedValueOfBaseType)
   def unmkSSeqImpl[A:Elem](p: Rep[SSeqImpl[A]]) =
     Some((p.wrappedValueOfBaseType))

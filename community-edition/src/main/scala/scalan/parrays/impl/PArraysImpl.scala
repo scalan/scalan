@@ -448,7 +448,7 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
   }
 
   def mkUnitArray
-      (length: Rep[Int]) =
+      (length: Rep[Int]): Rep[UnitArray] =
       new SeqUnitArray(length)
   def unmkUnitArray(p: Rep[UnitArray]) =
     Some((p.length))
@@ -465,7 +465,7 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
   }
 
   def mkBaseArray[A]
-      (arr: Rep[Array[A]])(implicit eA: Elem[A]) =
+      (arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[BaseArray[A]] =
       new SeqBaseArray[A](arr)
   def unmkBaseArray[A:Elem](p: Rep[BaseArray[A]]) =
     Some((p.arr))
@@ -482,7 +482,7 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
   }
 
   def mkArrayOnSeq[A]
-      (seq: Rep[SSeq[A]])(implicit eA: Elem[A]) =
+      (seq: Rep[SSeq[A]])(implicit eA: Elem[A]): Rep[ArrayOnSeq[A]] =
       new SeqArrayOnSeq[A](seq)
   def unmkArrayOnSeq[A:Elem](p: Rep[ArrayOnSeq[A]]) =
     Some((p.seq))
@@ -499,7 +499,7 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
   }
 
   def mkPairArray[A, B]
-      (as: Rep[PArray[A]], bs: Rep[PArray[B]])(implicit eA: Elem[A], eB: Elem[B]) =
+      (as: Rep[PArray[A]], bs: Rep[PArray[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairArray[A, B]] =
       new SeqPairArray[A, B](as, bs)
   def unmkPairArray[A:Elem, B:Elem](p: Rep[PairArray[A, B]]) =
     Some((p.as, p.bs))
@@ -516,7 +516,7 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
   }
 
   def mkArrayOfPairs[A, B]
-      (arr: Rep[Array[(A,B)]])(implicit eA: Elem[A], eB: Elem[B]) =
+      (arr: Rep[Array[(A,B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[ArrayOfPairs[A, B]] =
       new SeqArrayOfPairs[A, B](arr)
   def unmkArrayOfPairs[A:Elem, B:Elem](p: Rep[ArrayOfPairs[A, B]]) =
     Some((p.arr))
@@ -533,7 +533,7 @@ trait PArraysSeq extends PArraysDsl with ScalanSeq {
   }
 
   def mkNestedArray[A]
-      (values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])(implicit eA: Elem[A]) =
+      (values: Rep[PArray[A]], segments: Rep[PArray[(Int,Int)]])(implicit eA: Elem[A]): Rep[NestedArray[A]] =
       new SeqNestedArray[A](values, segments)
   def unmkNestedArray[A:Elem](p: Rep[NestedArray[A]]) =
     Some((p.values, p.segments))

@@ -242,7 +242,7 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
   }
 
   def mkInterval
-      (start: Rep[Int], end: Rep[Int]) =
+      (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
       new SeqInterval(start, end)
   def unmkInterval(p: Rep[Interval]) =
     Some((p.start, p.end))
@@ -259,7 +259,7 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
   }
 
   def mkSlice
-      (start: Rep[Int], length: Rep[Int]) =
+      (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
       new SeqSlice(start, length)
   def unmkSlice(p: Rep[Slice]) =
     Some((p.start, p.length))
@@ -276,7 +276,7 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
   }
 
   def mkCentered
-      (center: Rep[Int], radius: Rep[Int]) =
+      (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
       new SeqCentered(center, radius)
   def unmkCentered(p: Rep[Centered]) =
     Some((p.center, p.radius))
