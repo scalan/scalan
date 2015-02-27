@@ -510,6 +510,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
 
   override def rewriteDef[T](d: Def[T]) = d match {
     case SSeqMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+      /*
     case SSeqMethods.map(t: SSeqMapArgs[_,c] @unchecked) => t match {
       case (xs: RSeq[a]@unchecked, f @ Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) => {
         val f1 = f.asRep[a => c]
@@ -538,7 +539,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
       implicit val eAB = compIso.eTo
       ViewSSeq(arr)(SSeqIso(compIso))
     }
-
+*/
     case _ => super.rewriteDef(d)
   }
 }
