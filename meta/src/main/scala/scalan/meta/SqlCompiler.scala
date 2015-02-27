@@ -43,13 +43,14 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
     }).mkString("\n\n")
   }
 
-  val currMethod:SMethodDef = throw new IllegalStateException("Selet can be used only inside method")
+  var currMethod:SMethodDef = null
 
   def generateQuery(m: SMethodDef): String = {
     val args = m.allArgs.map(arg => arg.name + ": " + arg.tpe).mkString(", ")
     val sql = m.body.get.asInstanceOf[SApply].args(0).asInstanceOf[SLiteral].value
     val select = parseSelect(sql)
     val op = select.operator
+    currMethod = m
     s"""type ${m.name}_Result = ${resultType(select)}
       |
       | override def ${m.name}(${args}) = ${generateOperator(op)}${tableToArray(op)}""".stripMargin

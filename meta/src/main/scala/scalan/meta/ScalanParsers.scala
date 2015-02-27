@@ -294,7 +294,7 @@ trait ScalanParsers extends ScalanAst {
 //    }
      val optBody:Option[SExpr] = md.rhs match {
        case Apply(ident:Ident, args) if ident.name.intern() == "sql" =>
-         Some(SApply(SLiteral("sql"), List(SLiteral(args(0).asInstanceOf[Apply].fun.asInstanceOf[Select].qualifier.asInstanceOf[Apply].args(0).asInstanceOf[Literal].value.stringValue))))
+         Some(SApply(SLiteral("sql"), List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue))))
        case _ => None
      }
      val optElem = if (isElem) Some(()) else None
