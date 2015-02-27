@@ -1,28 +1,21 @@
 package scalan.it.lms
 
-import scalan.community.ScalanCommunityDslExp
-import scalan.{ScalanCtxSeq, ScalanCtxExp}
+import scalan.{ScalanCommunityDslSeq, ScalanCommunityDslExp, ScalanCtxSeq, ScalanCtxExp}
 import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.LmsCompilerScala
+import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
 import scalan.graphs.{GraphsDslExp, GraphsDslSeq, GraphExamples, MST_example}
 import scalan.it.BaseItTests
 
 
 abstract class LmsMstItTests extends BaseItTests {
-  class ProgExp extends MST_example with ScalanCommunityDslExp with LmsCompilerScala { self =>
-    def makeBridge[A, B] = new CommunityBridge[A, B] {
-      val scalan = self
-      val lms = new CommunityLmsBackend
-    }
+  class ProgExp extends MST_example with ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge { self =>
+    val lms = new CommunityLmsBackend
   }
 
-  class ProgDslExp extends GraphsDslExp with GraphExamples with ScalanCommunityDslExp with LmsCompilerScala { self =>
-    def makeBridge[A, B] = new CommunityBridge[A, B] {
-      val scalan = self
-      val lms = new CommunityLmsBackend
-    }
+  class ProgDslExp extends GraphsDslExp with GraphExamples with ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge { self =>
+    val lms = new CommunityLmsBackend
   }
-  class ProgDslSeq extends GraphsDslSeq with GraphExamples with ScalanCtxSeq
+  class ProgDslSeq extends GraphsDslSeq with GraphExamples with ScalanCommunityDslSeq
   class ProgSeq extends MST_example with ScalanCtxSeq
 
   val progStaged = new ProgExp

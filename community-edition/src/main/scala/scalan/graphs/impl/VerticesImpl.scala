@@ -1,22 +1,28 @@
 package scalan.graphs
 package impl
 
+import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
-import scalan.ScalanDsl
+import scalan.{ScalanExp, ScalanCommunityDslSeq, ScalanCommunityDslExp, ScalanCommunityDsl}
 import scalan.collection.CollectionsDsl
-import scalan.community.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl}
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait VerticesAbs extends ScalanCommunityDsl with Vertices {
   self: GraphsDsl =>
   // single proxy for each type family
-  implicit def proxyVertex[V, E](p: Rep[Vertex[V, E]]): Vertex[V, E] =
-    proxyOps[Vertex[V, E]](p)
+  implicit def proxyVertex[V, E](p: Rep[Vertex[V, E]]): Vertex[V, E] = {
+    implicit val tag = weakTypeTag[Vertex[V, E]]
+    proxyOps[Vertex[V, E]](p)(TagImplicits.typeTagToClassTag[Vertex[V, E]])
+  }
 
-  abstract class VertexElem[V, E, From, To <: Vertex[V, E]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso)
-
+  abstract class VertexElem[V, E, From, To <: Vertex[V, E]](iso: Iso[From, To])(implicit eV: Elem[V], eE: Elem[E])
+    extends ViewElem[From, To](iso) {
+    override def convert(x: Rep[Reifiable[_]]) = convertVertex(x.asRep[Vertex[V, E]])
+    def convertVertex(x : Rep[Vertex[V, E]]): Rep[To]
+  }
   trait VertexCompanionElem extends CompanionElem[VertexCompanionAbs]
   implicit lazy val VertexCompanionElem: VertexCompanionElem = new VertexCompanionElem {
     lazy val tag = weakTypeTag[VertexCompanionAbs]
@@ -32,7 +38,10 @@ trait VerticesAbs extends ScalanCommunityDsl with Vertices {
   }
 
   // elem for concrete class
-  class SVertexElem[V, E](iso: Iso[SVertexData[V, E], SVertex[V, E]]) extends VertexElem[V, E, SVertexData[V, E], SVertex[V, E]](iso)
+  class SVertexElem[V, E](iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit val eV: Elem[V], val eE: Elem[E])
+    extends VertexElem[V, E, SVertexData[V, E], SVertex[V, E]](iso) {
+    def convertVertex(x: Rep[Vertex[V, E]]) = SVertex(x.id, x.graph)
+  }
 
   // state representation type
   type SVertexData[V, E] = (Int, Graph[V,E])
@@ -92,7 +101,7 @@ trait VerticesAbs extends ScalanCommunityDsl with Vertices {
 }
 
 // Seq -----------------------------------
-trait VerticesSeq extends GraphsDsl with ScalanCommunityDslSeq {
+trait VerticesSeq extends ScalanCommunityDslSeq {
   self: GraphsDslSeq =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeSeq[VertexCompanionAbs, VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]
@@ -117,7 +126,7 @@ trait VerticesSeq extends GraphsDsl with ScalanCommunityDslSeq {
 }
 
 // Exp -----------------------------------
-trait VerticesExp extends GraphsDsl with ScalanCommunityDslExp {
+trait VerticesExp extends ScalanCommunityDslExp {
   self: GraphsDslExp =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeDef[VertexCompanionAbs, VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]
@@ -155,7 +164,7 @@ trait VerticesExp extends GraphsDsl with ScalanCommunityDslExp {
   }
 
   def mkSVertex[V, E]
-    (id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]) =
+    (id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
     new ExpSVertex[V, E](id, graph)
   def unmkSVertex[V:Elem, E:Elem](p: Rep[SVertex[V, E]]) =
     Some((p.id, p.graph))

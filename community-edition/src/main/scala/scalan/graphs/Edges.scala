@@ -1,7 +1,8 @@
 package scalan.graphs
 
+import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
-import scalan.community.ScalanCommunityDsl
+import scalan.ScalanCommunityDsl
 import scalan.{ScalanSeq, ScalanExp, ScalanDsl}
 import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 
@@ -10,7 +11,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
   /**
    * Created by afilippov on 2/16/15.
    */
-  trait Edge[V, E] {
+  trait Edge[V, E]  extends Reifiable[Edge[V @uncheckedVariance, E  @uncheckedVariance]]{
     implicit def eV: Elem[V]
 
     implicit def eE: Elem[E]

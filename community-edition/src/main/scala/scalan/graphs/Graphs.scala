@@ -1,10 +1,11 @@
 package scalan.graphs
 
-import scalan.ScalanDsl
+import scala.annotation.unchecked.uncheckedVariance
+import scalan.{ScalanCommunityDsl, ScalanDsl}
 import scalan.collection.CollectionsDsl
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
-import scalan.community.ScalanCommunityDsl
+
 
 /**
  * Created by afilippov on 2/17/15.
@@ -17,7 +18,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
   type IncidentMatrix = Collection[Boolean]
   type EdgeList = (Collection[Int], Collection[Int])
 
-  trait Graph[V,E] {
+  trait Graph[V,E] extends Reifiable[Graph[V @uncheckedVariance, E  @uncheckedVariance]]{
     type Node = Rep[Vertex[V, E]]
     type EdgeType <: Edge[V, E]
     type REdge = Rep[EdgeType]

@@ -1,6 +1,6 @@
 package scalan.graphs
 
-import scalan.community.ScalanCommunityDsl
+import scalan.ScalanCommunityDsl
 import scalan.primitives.PrimitiveExamples
 
 /**

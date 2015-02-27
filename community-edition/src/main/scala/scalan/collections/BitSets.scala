@@ -12,7 +12,7 @@ import scala.reflect.runtime.universe._
 import scalan.collection.CollectionsDsl
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
-import scalan.community.{ScalanCommunitySeq, ScalanCommunityExp, ScalanCommunity}
+import scalan.{ScalanCommunitySeq, ScalanCommunityExp, ScalanCommunity}
 
 trait BitSets  { self: ScalanCommunity with CollectionsDsl =>
   trait PBitSetOps {
@@ -32,7 +32,7 @@ trait BitSets  { self: ScalanCommunity with CollectionsDsl =>
     override def to(p: Coll[Boolean]) = PBitSet(p)
     def tag = weakTypeTag[PBitSet]
     lazy val defaultRepTo = Default.defaultVal(PBitSet(emptyColl[Boolean]))
-    lazy val eTo = new ViewElem()(this) {}
+    lazy val eTo = new ViewElem(this) {}
   }
   object PBitSet {
     def apply(flags: Coll[Boolean]): Rep[PBitSet]  = mkPBitSet(flags)
