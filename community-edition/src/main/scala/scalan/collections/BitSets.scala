@@ -21,6 +21,7 @@ trait BitSets  { self: ScalanCommunity with CollectionsDsl =>
       val flags = (bits zip that.bits) map { case Pair(x,y) => x || y }
       PBitSet(flags)
     }
+    def length: Rep[Int] = bits.length
     def contains(n: Rep[Int]): Rep[Boolean] = bits(n)
     def add(n: Rep[Int]): Rep[PBitSet] = PBitSet(bits.update(n, true))
     def add(ns: Coll[Int])(implicit o: Overloaded1): Rep[PBitSet] = PBitSet(bits.updateMany(ns, Collection.replicate(ns.length, true)))

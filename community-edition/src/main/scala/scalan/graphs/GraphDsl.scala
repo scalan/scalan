@@ -9,7 +9,7 @@ import scalan.{ScalanCommunityDsl, ScalanCommunityDslExp, ScalanCommunityDslSeq}
 //import scalan.{ScalanEnterpriseDslSeq, ScalanEnterpriseDslExp}
 //import scalan.collections.{BitSetsExp, BitSetsSeq, BitSets}
 
-trait GraphsDsl extends impl.GraphsAbs with impl.EdgesAbs with impl.VerticesAbs /*with BitSets*/ with CollectionsDsl with ScalanCommunityDsl {
+trait GraphsDsl extends impl.GraphsAbs with impl.EdgesAbs with impl.VerticesAbs with CollectionsDsl with FrontsDsl with ScalanCommunityDsl {
 
 }
 
@@ -18,8 +18,8 @@ trait GraphsDslSeq
   with impl.GraphsSeq
   with impl.EdgesSeq
   with impl.VerticesSeq
-//  with BitSetsSeq
   with CollectionsDslSeq
+  with FrontsDslSeq
   with ScalanCommunityDslSeq
 
 trait GraphsDslExp
@@ -27,6 +27,6 @@ trait GraphsDslExp
   with impl.GraphsExp
   with impl.EdgesExp
   with impl.VerticesExp
-//  with BitSetsExp
   with CollectionsDslExp
+  with FrontsDslExp
   with ScalanCommunityDslExp

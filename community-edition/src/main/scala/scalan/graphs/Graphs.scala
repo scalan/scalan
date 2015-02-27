@@ -86,6 +86,12 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
       res
     }
 
+    def outEdgesOf(fr: Rep[Front]): Coll[Edge[V,E]] = {
+      def isExcluded(node: Rep[Int]) = fr.contains(node)
+      val res = outEdges(fr.set, { ed => !isExcluded(ed.toId)})
+      res
+    }
+
     def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[Edge[V, E]]
 
     def hasEdgeTo(fromId: Rep[Int], toId: Rep[Int]): Rep[Boolean]
@@ -173,7 +179,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
 
     def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[IncEdge[V, E]] = {
       val res = vs.flatMap { v =>
-        val es = outEdgesOf(v)
+        val es = outEdgesOf1(v)
         val res = es.filter(predicate(_))
         res
       }
@@ -182,7 +188,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
 
     def inNeighbors(v: Rep[Int]): Coll[Int] = ??? //inverted.links(v)
     def outNeighborsOf(v: Rep[Int]): Coll[Int] = vertexNonZeroRow(v).map(in => in._2)
-    def outEdgesOf(v:Rep[Int]): Coll[Edge[V,E]] = vertexNonZeroRow(v).map(in => makeEdgeFromTo(v, in._2))
+    def outEdgesOf1(v:Rep[Int]): Coll[Edge[V,E]] = vertexNonZeroRow(v).map(in => makeEdgeFromTo(v, in._2))
     def outNeighborsOf(vs: Coll[Int])(implicit o: Overloaded1): NColl[Int] = ??? //{ vs.flatMap { outNeighborsOf(_)}
     def commonNbrs(v1Id: Rep[Int], v2Id: Rep[Int]): Coll[Int] = ???
     def commonNbrsNum(v1Id: Rep[Int], v2Id: Rep[Int]): Rep[Int] = ???

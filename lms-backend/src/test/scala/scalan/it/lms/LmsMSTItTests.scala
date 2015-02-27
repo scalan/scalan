@@ -116,8 +116,9 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
     val input = (links, (edgeVals, (offs, lens)))
     val res = progDslSeq.mstFun1Adj(input)
-    //compareOutputWithSequential(progDslStaged)(progDslSeq.mstFun1Adj, progDslStaged.mstFun1Adj, "MST_adjList_dsl", input)
     println(res.mkString(" , "))
+    //compareOutputWithSequential(progDslStaged)(progDslSeq.mstFun1Adj, progDslStaged.mstFun1Adj, "MST_adjList_dsl", input)
+
   }
 
 }
