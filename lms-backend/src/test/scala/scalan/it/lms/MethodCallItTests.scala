@@ -200,36 +200,20 @@ class MethodCallItTests extends LmsCommunityItTests{
     length should equal(3)
   }
 
-  trait ReplacementExp extends MatricesDslExp with ScalanCommunityExp with TestLmsCompiler with CommunityMethodMapping {
+  val replaceMethExp = new MatricesDslExp with ScalanCommunityExp with TestLmsCompiler with CommunityMethodMapping {
     lazy val arrayLength = fun { v: Rep[Array[Int]] =>
       PArray(v).length
     }
-  }
-
-  val replaceMethExp = new ReplacementExp {
-    self =>
-
-    new ScalaLanguage with CommunityConf {
-      val javaArray = new ScalaLib("", "java.lang.reflect.Array") {
-        val getLength = ScalaFunc('getLength)
-      }
-
-      val scala2Scala = {
-        import scala.language.reflectiveCalls
-
-        Map(
-          scalanCE.parraysPack.parraysFam.parray.length -> javaArray.getLength
-        )
-      }
-
-      val backend = new ScalaBackend {
-        val functionMap = scala2Scala
-      }
+    override val AllInvokeEnabler = invokeEnabler("all_apply") {
+      (o, m) => !m.getName.equals("length")
     }
   }
 
-  test("Method Replacement") {
-    val length = getStagedOutputConfig(replaceMethExp)(replaceMethExp.arrayLength, "MethodReplacement", Array(5, 9, 2), replaceMethExp.defaultCompilerConfig)
+  test("Class Mapping") {
+    val conf = replaceMethExp.defaultCompilerConfig
+    val length = getStagedOutputConfig(replaceMethExp)(replaceMethExp.arrayLength, "ClassMapping", Array(5, 9, 2),
+      conf.copy(scalaVersion = Some("2.10.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.it.lms.imp"),
+        extraClasses = Seq("scalan.it.lms.imp.ArrayImp"), commands = Seq("assembly"))))
     length should equal(3)
   }
 
@@ -275,10 +259,10 @@ class MethodCallItTests extends LmsCommunityItTests{
   }
 
   test("Mapping Method From Jar") {
-    val methodName = "MappingMethodFromJar"
     val conf = jarReplaceExp.defaultCompilerConfig
-    val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, methodName, new Exception("Original massage"),
-      conf.copy(scalaVersion = Some("2.10.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.it.lms.MappingMethodFromJar"), extraClasses = Seq("scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
+    val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", new Exception("Original massage"),
+      conf.copy(scalaVersion = Some("2.10.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.it.lms.MappingMethodFromJar"),
+        extraClasses = Seq("scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
     messageFromTestMethod should equal("Test Message")
   }
 }

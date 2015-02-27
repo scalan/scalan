@@ -18,7 +18,6 @@ trait CommunityLmsCompilerScala extends LmsCompilerScala with CommunityBridgeSca
     var mainJars = methodReplaceConf.libPaths.map {
       j => FileUtil.file(libsDir, j).getAbsolutePath
     }
-    var extensionsJars = Set.empty[String]
     val dir = FileUtil.listFiles(libsDir, ExtensionFilter("jar"))
     dir.foreach(f => {
       mainJars = mainJars + f.getAbsolutePath
@@ -26,6 +25,10 @@ trait CommunityLmsCompilerScala extends LmsCompilerScala with CommunityBridgeSca
     })
 
     super.doBuildExecutable[A, B](sourcesDir, executableDir, functionName, graph, graphVizConfig)(compilerConfig, eInput, eOutput)
+  }
+
+  override def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]]): lms.Exp[A] = {
+    lms.newObj[A](aClass.getCanonicalName, args.map(v => symMirr(v.asInstanceOf[Exp[_]])))
   }
 
 }
