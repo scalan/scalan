@@ -27,6 +27,7 @@ trait VectorsAbs extends Scalan with Vectors {
     override def convert(x: Rep[Reifiable[_]]) = convertVector(x.asRep[Vector[T]])
     def convertVector(x : Rep[Vector[T]]): Rep[To]
   }
+
   trait VectorCompanionElem extends CompanionElem[VectorCompanionAbs]
   implicit lazy val VectorCompanionElem: VectorCompanionElem = new VectorCompanionElem {
     lazy val tag = weakTypeTag[VectorCompanionAbs]

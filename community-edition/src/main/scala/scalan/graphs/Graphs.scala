@@ -80,13 +80,13 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     def outNeighborsOf(v: Rep[Int]): Coll[Int]
     @OverloadId("2")
     def outNeighborsOf(vs: Coll[Int])(implicit o: Overloaded1): NColl[Int]
-
-     def outEdgesOf(vs: Coll[Int], excluding: Rep[PBitSet]): Coll[Edge[V, E]] = {
+    @OverloadId("1")
+    def outEdgesOf(vs: Coll[Int], excluding: Rep[PBitSet]): Coll[Edge[V, E]] = {
       def isExcluded(node: Rep[Int]) = excluding.contains(node)
       val res = outEdges(vs, { ed => !isExcluded(ed.toId)})
       res
     }
-
+    @OverloadId("2")
     def outEdgesOf(fr: Rep[Front]): Coll[Edge[V,E]] = {
       def isExcluded(node: Rep[Int]) = fr.contains(node)
       val res = outEdges(fr.set, { ed => !isExcluded(ed.toId)})

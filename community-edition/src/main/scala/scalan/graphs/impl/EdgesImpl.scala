@@ -24,6 +24,7 @@ trait EdgesAbs extends Scalan with Edges {
     override def convert(x: Rep[Reifiable[_]]) = convertEdge(x.asRep[Edge[V, E]])
     def convertEdge(x : Rep[Edge[V, E]]): Rep[To]
   }
+
   trait EdgeCompanionElem extends CompanionElem[EdgeCompanionAbs]
   implicit lazy val EdgeCompanionElem: EdgeCompanionElem = new EdgeCompanionElem {
     lazy val tag = weakTypeTag[EdgeCompanionAbs]

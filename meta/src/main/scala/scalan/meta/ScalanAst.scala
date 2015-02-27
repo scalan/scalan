@@ -116,7 +116,9 @@ trait ScalanAst {
     tpeRes: Option[STpeExpr],
     isImplicit: Boolean,
     overloadId: Option[String],
-    annotations: List[SMethodAnnotation] = Nil, body: Option[SExpr] = None, elem: Option[Unit] = None)
+    annotations: List[SMethodAnnotation] = Nil,
+    body: Option[SExpr] = None,
+    elem: Option[Unit] = None)
     extends SBodyItem {
     def externalOpt: Option[SMethodAnnotation] = annotations.filter(a => a.annotationClass == "External").headOption
     def isElem: Boolean = elem.isDefined
@@ -230,7 +232,7 @@ trait ScalanAst {
     def isTrait = true
     lazy val implicitArgs: SClassArgs = {
       val implicitElems = body.collect {
-        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_), Some(_)) => (name, elem)
+        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, _, Some(_)) => (name, elem)
       }
       val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map(a => {
         val optDef = implicitElems.collectFirst {

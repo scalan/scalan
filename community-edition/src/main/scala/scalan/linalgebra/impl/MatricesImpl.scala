@@ -21,6 +21,7 @@ trait MatricesAbs extends Scalan with Matrices {
     override def convert(x: Rep[Reifiable[_]]) = convertMatrix(x.asRep[Matrix[T]])
     def convertMatrix(x : Rep[Matrix[T]]): Rep[To]
   }
+
   trait MatrixCompanionElem extends CompanionElem[MatrixCompanionAbs]
   implicit lazy val MatrixCompanionElem: MatrixCompanionElem = new MatrixCompanionElem {
     lazy val tag = weakTypeTag[MatrixCompanionAbs]

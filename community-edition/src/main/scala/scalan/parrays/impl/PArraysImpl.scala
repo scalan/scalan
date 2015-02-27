@@ -24,6 +24,7 @@ trait PArraysAbs extends Scalan with PArrays {
     override def convert(x: Rep[Reifiable[_]]) = convertPArray(x.asRep[PArray[A]])
     def convertPArray(x : Rep[PArray[A]]): Rep[To]
   }
+
   trait PArrayCompanionElem extends CompanionElem[PArrayCompanionAbs]
   implicit lazy val PArrayCompanionElem: PArrayCompanionElem = new PArrayCompanionElem {
     lazy val tag = weakTypeTag[PArrayCompanionAbs]

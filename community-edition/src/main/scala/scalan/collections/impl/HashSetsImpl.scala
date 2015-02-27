@@ -43,6 +43,7 @@ trait HashSetsAbs extends Scalan with HashSets {
     override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
     def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To]
   }
+
   trait SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs]
   implicit lazy val SHashSetCompanionElem: SHashSetCompanionElem = new SHashSetCompanionElem {
     lazy val tag = weakTypeTag[SHashSetCompanionAbs]

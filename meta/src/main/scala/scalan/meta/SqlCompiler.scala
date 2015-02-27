@@ -43,7 +43,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
     }).mkString("\n\n")
   }
 
-  val currMethod:SMethodDef = throw new IllegalStateException("Selet can be used only inside method")
+  def currMethod:SMethodDef = throw new IllegalStateException("Selet can be used only inside method")
 
   def generateQuery(m: SMethodDef): String = {
     val args = m.allArgs.map(arg => arg.name + ": " + arg.tpe).mkString(", ")

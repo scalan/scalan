@@ -21,6 +21,7 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
     override def convert(x: Rep[Reifiable[_]]) = convertMMultiMap(x.asRep[MMultiMap[K, V]])
     def convertMMultiMap(x : Rep[MMultiMap[K, V]]): Rep[To]
   }
+
   trait MMultiMapCompanionElem extends CompanionElem[MMultiMapCompanionAbs]
   implicit lazy val MMultiMapCompanionElem: MMultiMapCompanionElem = new MMultiMapCompanionElem {
     lazy val tag = weakTypeTag[MMultiMapCompanionAbs]

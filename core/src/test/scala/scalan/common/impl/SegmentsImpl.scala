@@ -21,6 +21,7 @@ trait SegmentsAbs extends Scalan with Segments {
     override def convert(x: Rep[Reifiable[_]]) = convertSegment(x.asRep[Segment])
     def convertSegment(x : Rep[Segment]): Rep[To]
   }
+
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
   implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
     lazy val tag = weakTypeTag[SegmentCompanionAbs]

@@ -24,6 +24,7 @@ trait VerticesAbs extends Scalan with Vertices {
     override def convert(x: Rep[Reifiable[_]]) = convertVertex(x.asRep[Vertex[V, E]])
     def convertVertex(x : Rep[Vertex[V, E]]): Rep[To]
   }
+
   trait VertexCompanionElem extends CompanionElem[VertexCompanionAbs]
   implicit lazy val VertexCompanionElem: VertexCompanionElem = new VertexCompanionElem {
     lazy val tag = weakTypeTag[VertexCompanionAbs]

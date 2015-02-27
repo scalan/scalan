@@ -485,7 +485,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |$sqlSchema
        |
        |$sqlQueries
-       |
        |$companionAbs
        |
        |${subEntities.mkString("\n\n")}

@@ -43,6 +43,7 @@ trait SeqsAbs extends Scalan with Seqs {
     override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
     def convertSSeq(x : Rep[SSeq[A]]): Rep[To]
   }
+
   trait SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs]
   implicit lazy val SSeqCompanionElem: SSeqCompanionElem = new SSeqCompanionElem {
     lazy val tag = weakTypeTag[SSeqCompanionAbs]
