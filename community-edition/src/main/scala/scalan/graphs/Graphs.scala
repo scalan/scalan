@@ -41,6 +41,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     def links: NColl[Int]
 
     def incMatrix: Coll[Boolean]
+    def incMatrixWithVals: Coll[E]
 
     def discardValues: Rep[SimpleGraph]
 
@@ -106,6 +107,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     type EdgeType = AdjEdge[V, E]
     lazy val eEdge = element[EdgeType]
     def incMatrix = ???
+    def incMatrixWithVals = ???
 
     def vertexNum: Rep[Int] =  links.length
     def edgeNum: Rep[Int] = ??? //links.values.length
@@ -149,6 +151,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
   (implicit val eV: Elem[V], val eE: Elem[E]) extends Graph[V,E] {
     type EdgeType = IncEdge[V, E]
     lazy val eEdge = element[EdgeType]
+    implicit val eEdgeCommon = eEdge.asElem[Edge[V,E]]
     def incMatrix = incMatrixWithVals.map({x: Rep[E] => ! (x === eE.defaultRepValue)})
 
     def edgeNum: Rep[Int] = ??? //links.values.length
@@ -167,13 +170,13 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     def links = ???
     def edgeValues = ???
 
-    def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[Edge[V, E]] = {
+    def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[IncEdge[V, E]] = {
       val res = vs.flatMap { v =>
         val es = outEdgesOf(v)
         val res = es.filter(predicate(_))
         res
       }
-      res.asInstanceOf[Coll[Edge[V, E]]]
+      res.asInstanceOf[Coll[IncEdge[V, E]]]
     }
 
     def inNeighbors(v: Rep[Int]): Coll[Int] = ??? //inverted.links(v)

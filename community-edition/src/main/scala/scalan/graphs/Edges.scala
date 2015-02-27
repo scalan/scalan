@@ -66,7 +66,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
 
   abstract class IncEdge[V, E](val fromId: Rep[Int], val toId: Rep[Int], val graph: PG[V, E])
                               (implicit val eV: Elem[V], val eE: Elem[E]) extends Edge[V, E] {
-    //private def indexOfTarget = graph.edgeValues.segOffsets(fromId) + outIndex
+    private def indexOfTarget = fromId*graph.vertexNum + toId
     //def toId: Rep[Int] = graph.links.values(indexOfTarget)
     def outIndex = ???
 
@@ -74,7 +74,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
 
     def toNode: Rep[Vertex[V, E]] = SVertex(toId, graph)
 
-    def value: Rep[E] = ??? //graph.edgeValues.values(indexOfTarget)
+    def value: Rep[E] = graph.incMatrixWithVals(indexOfTarget)
   }
   trait IncEdgeCompanion extends ConcreteClass2[Edge] {
     def defaultOf[T: Elem, V:Elem] = Default.defaultVal(IncEdge(-1, -1, element[Graph[T,V]].defaultRepValue))

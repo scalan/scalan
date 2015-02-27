@@ -27,8 +27,8 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
   }
 
   def minEdge(e1: Rep[Edge[Unit,Double]], e2: Rep[Edge[Unit,Double]]) = IF (e1.value < e2.value) {e1} ELSE {e2}
-  lazy val MinEdgeMonoid = new RepMonoid[Edge[Unit, Double]]("MinEdge", Edge.MaxDoubleEdge, fun { p: Rep[(Edge[Unit,Double], Edge[Unit,Double])] =>
-    IF (p._1.value < p._2.value) {p._1} ELSE {p._2} }, true)
+  //lazy val MinEdgeMonoid = new RepMonoid[Edge[Unit, Double]]("MinEdge", Edge.MaxDoubleEdge, fun { p: Rep[(Edge[Unit,Double], Edge[Unit,Double])] =>
+  //  IF (p._1.value < p._2.value) {p._1} ELSE {p._2} }, true)
 
   val UNVISITED = -2
   val NO_PARENT= -1
@@ -49,11 +49,13 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
         //val vals = ns.map({ edge => edge.value})
         //val froms = ns.map(edge => edge.fromId)
         //val tos = ns.map({ edge => edge.toId})
-        //val minEdge = (vals zip (froms zip tos)).reduce(MinNumMonoid)
-        val minEdge = ns.reduce(MinEdgeMonoid)
+        val minEdge = ns.map({ edge => Pair(edge.value, Pair(edge.fromId, edge.toId))}).reduce(MinNumMonoid)
+        //val minEdge = ns.reduce(MinEdgeMonoid)
 
-        val from: Rep[Int] = minEdge.fromId
-        val to: Rep[Int] = minEdge.toId
+        //val from: Rep[Int] = minEdge.fromId
+        val from: Rep[Int] = minEdge._2
+        //val to: Rep[Int] = minEdge.toId
+        val to: Rep[Int] = minEdge._3
 
         val newFront = front.append(to)
         val newVisited = visited add to

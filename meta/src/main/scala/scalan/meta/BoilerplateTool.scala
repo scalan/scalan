@@ -42,6 +42,10 @@ class BoilerplateTool extends StrictLogging {
   val liteTypeSynonyms = Map(
     "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
+
+  val collectTypeSynonyms = Map(
+    "PG" -> "Graph" , "Coll" -> "Collection", "NColl" -> "NestedCollection", "CBA" -> "CBArray", "NCBA" -> "NCBArray"
+  )
   lazy val liteConfig = CodegenConfig(
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
@@ -113,7 +117,7 @@ class BoilerplateTool extends StrictLogging {
   )
 
   lazy val collConfig = CodegenConfig(
-    srcPath = "core/src/main/scala",
+    srcPath = "/home/afilippov/gitlab/scalan-lite-public/core/src/main/scala",
     entityFiles = List(
       //"scalan/monads/Monads.scala"
       //, "scalan/monads/Functors.scala"
@@ -130,7 +134,28 @@ class BoilerplateTool extends StrictLogging {
     extraImports = List(
       "scala.reflect.runtime.universe._",
       "scalan.common.Default"),
-    effectsTypeSynonims
+    collectTypeSynonyms
+  )
+
+  lazy val graphConfig = CodegenConfig(
+    srcPath = "/home/afilippov/gitlab/scalan-lite-public/community-edition/src/main/scala",
+    entityFiles = List(
+      "scalan/graphs/Graphs.scala"//,
+      //"scalan/graphs/Vertices.scala",
+      //"scalan/graphs/Edges.scala"
+      //"scalan/io/Frees.scala"
+      //"scalan/monads/Coproducts.scala"
+      //"scalan/monads/Interactions.scala"
+      //"scalan/monads/Auths.scala"
+      //"scalan/monads/Readers.scala"
+    ),
+    baseContextTrait = "ScalanCommunityDsl",
+    seqContextTrait = "ScalanCommunityDslSeq",
+    stagedContextTrait = "ScalanCommunityDslExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._",
+      "scalan.common.Default"),
+    collectTypeSynonyms
   )
 
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
@@ -139,6 +164,7 @@ class BoilerplateTool extends StrictLogging {
     }.distinct
 
   val configsMap = Map(
+    "graphs" -> List(graphConfig),
     "collections" -> List(collConfig),
     "coretests" -> List(coreTestsConfig),
     "core" -> List(coreConfig),
