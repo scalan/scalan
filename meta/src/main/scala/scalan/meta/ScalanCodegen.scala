@@ -2,7 +2,7 @@ package scalan.meta
 
 import scalan.util.{StringUtil, ScalaNameUtil}
 
-trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: EntityManagement =>
+trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensions { ctx: EntityManagement =>
   import PrintExtensions._
 
   abstract class TemplateData(val module: SEntityModuleDef, val entity: STraitOrClassDef) {
@@ -54,7 +54,7 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
       case t :: Nil => t.toString
       case t :: ts => s"($t, ${dataType(ts)})"
     }
-    
+
     def pairify(fs: List[String]): String = fs match {
       case Nil => "unit"
       case f :: Nil => f
@@ -68,8 +68,8 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
       case STpePrimitive(_, defaultValueString) => defaultValueString
       case STraitCall(name, args)
         if module.entityOps.tpeArgs.exists(a => a.name == name && a.isHighKind) =>
-           s"c$name.lift(${args.rep(a => s"e${a}")}).defaultRepValue"
-      case tc @ STraitCall(name, args) => {
+        s"c$name.lift(${args.rep(a => s"e${a}")}).defaultRepValue"
+      case tc@STraitCall(name, args) => {
         val optBT = module.entityOps.optBaseType
         val isBT = optBT.exists(bt => bt.name == name)
         if (isBT) {
@@ -98,7 +98,7 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
     val typesWithElems = templateData.boundedTpeArgString(false)
     val typesWithElemsAndTags = templateData.boundedTpeArgString(true)
 
-    def getCompanionOpt = for { bt <- optBT; comp <- module.entityOps.companion } yield comp
+    def getCompanionOpt = for {bt <- optBT; comp <- module.entityOps.companion} yield comp
 
     def getCompanionMethods = getCompanionOpt.map { comp =>
       val externalConstrs = comp.getMethodsWithAnnotation(ConstuctorAnnotation)
@@ -118,14 +118,16 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
     def methodArgSection(sec: SMethodArgs) = s"(${sec.argNamesAndTypes.rep()})"
 
     def methodArgsUse(sec: SMethodArgs) = {
-      s"(${sec.args.rep(a => {
-        if (a.tpe.isTupledFunc)
-          s"scala.Function.untupled(${a.name})"
-        else if (a.isArgList)
-          s"${a.name}: _*"
-        else
-          s"${a.name}"
-      })})"
+      s"(${
+        sec.args.rep(a => {
+          if (a.tpe.isTupledFunc)
+            s"scala.Function.untupled(${a.name})"
+          else if (a.isArgList)
+            s"${a.name}: _*"
+          else
+            s"${a.name}"
+        })
+      })"
     }
 
     def externalMethod(md: SMethodDef) = {
@@ -178,7 +180,7 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
       val obj = if (isInstance) "wrappedValueOfBaseType" else entityNameBT
 
       val methodBody = tyRet.unRep(module, config) match {
-        case Some(STraitCall(name,_)) if name == entityName =>
+        case Some(STraitCall(name, _)) if name == entityName =>
           s"""      ${entityName}Impl($obj.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")})
           |""".stripMargin
         case _ =>
@@ -212,7 +214,44 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
         |""".stripAndTrim
     }
 
+    def extractSqlQueries(body: List[SBodyItem]): String = {
+      body.collect { case m: SMethodDef =>
+        m.body match {
+          case Some(call: SApply) =>
+            call.fun match {
+              case SLiteral(value) if value == "sql" => generateQuery(m)
+              case _ => ""
+            }
+          case _ => ""
+        }
+      }.mkString("\n\n")
+    }
+
     def getTraitAbs = {
+      val sqlDDL = module.methods.map(m =>
+        if (!m.tpeRes.isDefined) {
+          m.body match {
+            case Some(call: SApply) =>
+              call.fun match {
+                case SLiteral(value) if value == "sql" => call.args(0).asInstanceOf[SLiteral].value
+                case _ => ""
+              }
+            case _ => ""
+          }
+        } else "").mkString
+      val sqlSchema = if (sqlDDL.isEmpty) "" else generateSchema(sqlDDL)
+      val sqlQueries = module.methods.filter(m =>
+        if (m.tpeRes.isDefined) {
+          m.body match {
+            case Some(call: SApply) =>
+              call.fun match {
+                case SLiteral(value) if value == "sql" => true
+                case _ => false
+              }
+            case _ => false
+          }
+        } else false).map(m => generateQuery(m)).mkString("\n\n")
+
       val entityCompOpt = module.entityOps.companion
       val companionName = s"${entityName}Companion"
       val proxyBT = optBT.opt(bt => {
@@ -276,7 +315,7 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
         methods.rep(md => externalMethod(md), "\n    ")
       }
 
-
+      val companionSql = entityCompOpt.opt(comp => extractSqlQueries(comp.body))
       val companionAbs = s"""
         |  trait ${companionName}Elem extends CompanionElem[${companionName}Abs]
         |  implicit lazy val ${companionName}Elem: ${companionName}Elem = new ${companionName}Elem {
@@ -287,6 +326,7 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
         |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs] with ${companionName} {
         |    override def toString = "$entityName"
         |    $companionMethods
+        |    $companionSql
         |  }
         |  def $entityName: Rep[${companionName}Abs]
         |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} = {
@@ -300,9 +340,11 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
         val tyArgsDecl = templateData.tpeArgDecls
         val typesDecl = templateData.tpeArgDeclString
         val typesUse = templateData.tpeArgUseString
+
         s"""
         |${entityProxy(templateData)}
         |${familyElem(templateData)}
+        |${extractSqlQueries(entity.body)}
         |""".stripMargin
       }
 
@@ -321,6 +363,7 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
         val parent     = c.ancestors.head
         val parentArgs = parent.tpeSExprs.map(_.toString)
         val parentArgsStr = parentArgs.map(_ + ", ").mkString
+
         lazy val defaultImpl = optBT.opt(bt => {
           val externalMethods = module.entityOps.getMethodsWithAnnotation(ExternalAnnotation)
           val externalMethodsStr = externalMethods.rep(md => externalMethod(md), "\n    ")
@@ -345,7 +388,7 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
             ""
         }
 
-        def converterBody(entity: STraitDef, conc: SClassDef) = {
+        def converterBody(entity: STraitOrClassDef, conc: SClassDef) = {
           val availableFields = entity.getAvailableFields(module)
           val concFields = conc.args.args.map(_.name)
           val missingFields = concFields.filterNot(availableFields.contains(_))
@@ -399,6 +442,7 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
         |    def apply${typesDecl}(${fieldsWithType.rep()})${implicitArgs}: Rep[$className${typesUse}] =
         |      mk$className(${fields.rep()})
         |    def unapply${typesWithElems}(p: Rep[$className${typesUse}]) = unmk$className(p)
+        |    ${extractSqlQueries(c.body)}
         |  }
         |  def $className: Rep[${className}CompanionAbs]
         |  implicit def proxy${className}Companion(p: Rep[${className}CompanionAbs]): ${className}CompanionAbs = {
@@ -438,6 +482,10 @@ trait ScalanCodegen extends ScalanParsers with ScalanAstExtensions { ctx: Entity
        |
        |${if (templateData.isContainer1) familyContainer(templateData) else ""}
        |${familyElem(templateData)}
+       |$sqlSchema
+       |
+       |$sqlQueries
+       |
        |$companionAbs
        |
        |${subEntities.mkString("\n\n")}

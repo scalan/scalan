@@ -84,9 +84,11 @@ trait ScalanParsers extends ScalanAst {
       case Seq(only) => only
       case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
     }
+    val sql = statements.collect { case dd: DefDef if dd.tpt.isEmpty && dd.rhs.isInstanceOf[Apply] && dd.rhs.asInstanceOf[Apply].fun.symbol.name == "sql" =>
+        dd.rhs.asInstanceOf[Apply].args(0).asInstanceOf[Literal].value.stringValue }.mkString(";")
 
     val moduleTraitDef = traitDef(moduleTraitTree, moduleTraitTree)
-    val module = SEntityModuleDef(packageName, imports, moduleTraitDef, config)
+    val module = SEntityModuleDef(packageName, imports, moduleTraitDef, config, sql)
     val moduleName = moduleTraitDef.name
 
     val dslSeq = fileTree.stats.collectFirst {
@@ -293,7 +295,13 @@ trait ScalanParsers extends ScalanAst {
 //      case HasConstructorAnnotation(_) => Some(ExternalConstructor)
 //      case _ => None
 //    }
-    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, annotations, if (isElem) Some(()) else None)
+     val optBody:Option[SExpr] = md.rhs match {
+       case call:Apply if call.fun.symbol.name == "sql" =>
+         Some(SApply(SLiteral("sql"), List(SLiteral(call.args(0).asInstanceOf[Literal].value.stringValue))))
+       case _ => None
+     }
+     val optElem = if (isElem) Some(()) else None
+     SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, annotations, optBody, optElem)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {
@@ -331,6 +339,7 @@ trait ScalanParsers extends ScalanAst {
         STraitCall(tpt.toString, argTpeExprs)
     case Annotated(_, arg) =>
       tpeExpr(arg)
+    case TypeBoundsTree(lo, hi) => STpeTypeBounds(tpeExpr(lo), tpeExpr(hi))
     case tree => ???(tree)
   }
 
