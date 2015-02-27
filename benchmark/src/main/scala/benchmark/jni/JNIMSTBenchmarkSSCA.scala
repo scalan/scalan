@@ -140,7 +140,7 @@ class JNIMSTBenchmarkSSCA {
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Warmup(iterations = 10)
   @Measurement(iterations = 10)
-  def MST_adjlist_staged( state: MSF_adjlist_State ): Array[Int] = {
+  def MST_adjlist_scala( state: MSF_adjlist_State ): Array[Int] = {
     val res = state.MSF_adjlist(state.input)
     state.res = res
     res
@@ -151,7 +151,7 @@ class JNIMSTBenchmarkSSCA {
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Warmup(iterations = 10)
   @Measurement(iterations = 10)
-  def MST_adjmatrix_staged( state: MST_adjmatrix_State ): Array[Int] = {
+  def MST_adjmatrix_scala( state: MST_adjmatrix_State ): Array[Int] = {
     val res = state.MST_adjmatrix(state.inputM)
     state.res = res
     res
@@ -184,7 +184,7 @@ class JNIMSTBenchmarkSSCA {
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Warmup(iterations = 10)
   @Measurement(iterations = 10)
-  def MSF_adjlist_staged( state: MSF_adjlist_State ): Array[Int] = {
+  def MSF_adjlist_scala( state: MSF_adjlist_State ): Array[Int] = {
     val res = state.MSF_adjlist(state.input)
     state.res = res
     res
@@ -195,7 +195,7 @@ class JNIMSTBenchmarkSSCA {
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   @Warmup(iterations = 10)
   @Measurement(iterations = 10)
-  def MSF_adjmatrix_staged( state: MSF_adjmatrix_State ): Array[Int] = {
+  def MSF_adjmatrix_scala( state: MSF_adjmatrix_State ): Array[Int] = {
     val res = state.MSF_adjmatrix(state.inputM)
     state.res = res
     res
