@@ -5,7 +5,6 @@ package jni
  * Created by zotov on 1/30/15.
  */
 class NativeMethods {
-  System.loadLibrary("jniddmvm")
   type TT = Array[Int]
 //  type TT = ( Array[( Array[Int], (Array[Double],Int))], Array[Double])
   @native def extractAndPack( in: TT ): TT
