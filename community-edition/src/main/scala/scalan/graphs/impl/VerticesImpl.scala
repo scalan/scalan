@@ -3,14 +3,15 @@ package impl
 
 import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
-import scalan.{ScalanExp, ScalanCommunityDslSeq, ScalanCommunityDslExp, ScalanCommunityDsl}
+import scalan.{Scalan, ScalanExp, ScalanSeq}
 import scalan.collection.CollectionsDsl
+import scalan.ScalanCommunityDsl
 import scala.reflect.runtime.universe._
 import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait VerticesAbs extends ScalanCommunityDsl with Vertices {
+trait VerticesAbs extends Scalan with Vertices {
   self: GraphsDsl =>
   // single proxy for each type family
   implicit def proxyVertex[V, E](p: Rep[Vertex[V, E]]): Vertex[V, E] = {
@@ -101,7 +102,7 @@ trait VerticesAbs extends ScalanCommunityDsl with Vertices {
 }
 
 // Seq -----------------------------------
-trait VerticesSeq extends ScalanCommunityDslSeq {
+trait VerticesSeq extends VerticesDsl with ScalanSeq {
   self: GraphsDslSeq =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeSeq[VertexCompanionAbs, VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]
@@ -119,14 +120,14 @@ trait VerticesSeq extends ScalanCommunityDslSeq {
   }
 
   def mkSVertex[V, E]
-      (id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]) =
+      (id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       new SeqSVertex[V, E](id, graph)
   def unmkSVertex[V:Elem, E:Elem](p: Rep[SVertex[V, E]]) =
     Some((p.id, p.graph))
 }
 
 // Exp -----------------------------------
-trait VerticesExp extends ScalanCommunityDslExp {
+trait VerticesExp extends VerticesDsl with ScalanExp {
   self: GraphsDslExp =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeDef[VertexCompanionAbs, VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]

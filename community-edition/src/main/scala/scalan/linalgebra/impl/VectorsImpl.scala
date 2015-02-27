@@ -305,7 +305,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   }
 
   def mkDenseVector[T]
-    (coords: Rep[PArray[T]])(implicit elem: Elem[T]) =
+    (coords: Rep[PArray[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
     new ExpDenseVector[T](coords)
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]) =
     Some((p.coords))
@@ -388,7 +388,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   }
 
   def mkSparseVector[T]
-    (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]) =
+    (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
     new ExpSparseVector[T](nonZeroIndices, nonZeroValues, length)
   def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]) =
     Some((p.nonZeroIndices, p.nonZeroValues, p.length))

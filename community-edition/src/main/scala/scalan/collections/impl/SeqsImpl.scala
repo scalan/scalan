@@ -286,7 +286,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
   }
 
   def mkSSeqImpl[A]
-    (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]) =
+    (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
     new ExpSSeqImpl[A](wrappedValueOfBaseType)
   def unmkSSeqImpl[A:Elem](p: Rep[SSeqImpl[A]]) =
     Some((p.wrappedValueOfBaseType))

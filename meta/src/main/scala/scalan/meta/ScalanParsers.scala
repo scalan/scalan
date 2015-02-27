@@ -331,6 +331,7 @@ trait ScalanParsers extends ScalanAst {
         STraitCall(tpt.toString, argTpeExprs)
     case Annotated(_, arg) =>
       tpeExpr(arg)
+    case TypeBoundsTree(lo, hi) => STpePrimitive("Any", "null")
     case tree => ???(tree)
   }
 

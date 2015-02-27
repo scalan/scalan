@@ -389,7 +389,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   def mkRowMajorMatrix[T]
-    (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]) =
+    (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]): Rep[RowMajorMatrix[T]] =
     new ExpRowMajorMatrix[T](rows)
   def unmkRowMajorMatrix[T:Elem](p: Rep[RowMajorMatrix[T]]) =
     Some((p.rows))
@@ -484,7 +484,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   def mkRowMajorFlatMatrix[T]
-    (rmValues: Rep[PArray[T]], numColumns: Rep[Int])(implicit elem: Elem[T]) =
+    (rmValues: Rep[PArray[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
     new ExpRowMajorFlatMatrix[T](rmValues, numColumns)
   def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]) =
     Some((p.rmValues, p.numColumns))
@@ -591,7 +591,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   def mkRowMajorSparseMatrix[T]
-    (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]) =
+    (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]] =
     new ExpRowMajorSparseMatrix[T](rows)
   def unmkRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]) =
     Some((p.rows))

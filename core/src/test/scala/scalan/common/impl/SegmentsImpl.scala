@@ -333,7 +333,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   }
 
   def mkInterval
-    (start: Rep[Int], end: Rep[Int]) =
+    (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
     new ExpInterval(start, end)
   def unmkInterval(p: Rep[Interval]) =
     Some((p.start, p.end))
@@ -381,7 +381,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   }
 
   def mkSlice
-    (start: Rep[Int], length: Rep[Int]) =
+    (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
     new ExpSlice(start, length)
   def unmkSlice(p: Rep[Slice]) =
     Some((p.start, p.length))
@@ -453,7 +453,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   }
 
   def mkCentered
-    (center: Rep[Int], radius: Rep[Int]) =
+    (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
     new ExpCentered(center, radius)
   def unmkCentered(p: Rep[Centered]) =
     Some((p.center, p.radius))

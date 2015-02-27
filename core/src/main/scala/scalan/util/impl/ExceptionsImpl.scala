@@ -271,7 +271,7 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   }
 
   def mkSThrowableImpl
-    (wrappedValueOfBaseType: Rep[Throwable]) =
+    (wrappedValueOfBaseType: Rep[Throwable]): Rep[SThrowableImpl] =
     new ExpSThrowableImpl(wrappedValueOfBaseType)
   def unmkSThrowableImpl(p: Rep[SThrowableImpl]) =
     Some((p.wrappedValueOfBaseType))
@@ -319,7 +319,7 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   }
 
   def mkSException
-    (wrappedValueOfBaseType: Rep[Throwable]) =
+    (wrappedValueOfBaseType: Rep[Throwable]): Rep[SException] =
     new ExpSException(wrappedValueOfBaseType)
   def unmkSException(p: Rep[SException]) =
     Some((p.wrappedValueOfBaseType))

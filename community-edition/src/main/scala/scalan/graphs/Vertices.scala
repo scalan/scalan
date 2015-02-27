@@ -2,7 +2,7 @@ package scalan.graphs
 
 import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
-import scalan.ScalanDsl
+import scalan.{Scalan, ScalanExp, ScalanSeq}
 import scalan.collection.CollectionsDsl
 import scalan.ScalanCommunityDsl
 
@@ -34,3 +34,7 @@ trait Vertices extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl 
     def defaultOf[T:Elem, V:Elem] = Default.defaultVal(SVertex(-1, element[Graph[T,V]].defaultRepValue))
   }
 }
+
+trait VerticesDsl extends impl.VerticesAbs { self: GraphsDsl => }
+trait VerticesDslSeq extends impl.VerticesSeq { self: GraphsDslSeq => }
+trait VerticesDslExp extends impl.VerticesExp { self: GraphsDslExp => }

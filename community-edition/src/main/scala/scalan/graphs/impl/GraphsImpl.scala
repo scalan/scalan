@@ -2,8 +2,9 @@ package scalan.graphs
 package impl
 
 import scala.annotation.unchecked.uncheckedVariance
-import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityDsl, ScalanDsl}
-import scalan.collection.CollectionsDsl
+import scalan._
+import scalan.{ScalanSeq, ScalanExp, Scalan}
+import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe._
@@ -11,7 +12,7 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait GraphsAbs extends ScalanCommunityDsl with Graphs {
+trait GraphsAbs extends Scalan with Graphs {
   self: GraphsDsl =>
   // single proxy for each type family
   implicit def proxyGraph[V, E](p: Rep[Graph[V, E]]): Graph[V, E] = {
@@ -164,7 +165,7 @@ trait GraphsAbs extends ScalanCommunityDsl with Graphs {
 }
 
 // Seq -----------------------------------
-trait GraphsSeq extends GraphsDsl with ScalanCommunityDslSeq {
+trait GraphsSeq extends GraphsDsl with ScalanSeq {
   self: GraphsDslSeq =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeSeq[GraphCompanionAbs, GraphCompanionAbs] {
     lazy val selfType = element[GraphCompanionAbs]
@@ -175,7 +176,6 @@ trait GraphsSeq extends GraphsDsl with ScalanCommunityDslSeq {
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjacencyGraph[V, E](vertexValues, edgeValues, links)
         with UserTypeSeq[Graph[V,E], AdjacencyGraph[V, E]] {
-    lazy val thisGraph = self
     lazy val selfType = element[AdjacencyGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
   }
   lazy val AdjacencyGraph = new AdjacencyGraphCompanionAbs with UserTypeSeq[AdjacencyGraphCompanionAbs, AdjacencyGraphCompanionAbs] {
@@ -183,7 +183,7 @@ trait GraphsSeq extends GraphsDsl with ScalanCommunityDslSeq {
   }
 
   def mkAdjacencyGraph[V, E]
-      (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]) =
+      (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
       new SeqAdjacencyGraph[V, E](vertexValues, edgeValues, links)
   def unmkAdjacencyGraph[V:Elem, E:Elem](p: Rep[AdjacencyGraph[V, E]]) =
     Some((p.vertexValues, p.edgeValues, p.links))
@@ -193,7 +193,6 @@ trait GraphsSeq extends GraphsDsl with ScalanCommunityDslSeq {
       (implicit eV: Elem[V], eE: Elem[E])
     extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
         with UserTypeSeq[Graph[V,E], IncidenceGraph[V, E]] {
-    lazy val thisGraph = self
     lazy val selfType = element[IncidenceGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
   }
   lazy val IncidenceGraph = new IncidenceGraphCompanionAbs with UserTypeSeq[IncidenceGraphCompanionAbs, IncidenceGraphCompanionAbs] {
@@ -201,14 +200,14 @@ trait GraphsSeq extends GraphsDsl with ScalanCommunityDslSeq {
   }
 
   def mkIncidenceGraph[V, E]
-      (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]) =
+      (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
       new SeqIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
   def unmkIncidenceGraph[V:Elem, E:Elem](p: Rep[IncidenceGraph[V, E]]) =
     Some((p.vertexValues, p.incMatrixWithVals, p.vertexNum))
 }
 
 // Exp -----------------------------------
-trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
+trait GraphsExp extends GraphsDsl with ScalanExp {
   self: GraphsDslExp =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeDef[GraphCompanionAbs, GraphCompanionAbs] {
     lazy val selfType = element[GraphCompanionAbs]
@@ -219,7 +218,6 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
       (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjacencyGraph[V, E](vertexValues, edgeValues, links) with UserTypeDef[Graph[V,E], AdjacencyGraph[V, E]] {
-    lazy val thisGraph = self
     lazy val selfType = element[AdjacencyGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
     override def mirror(t: Transformer) = ExpAdjacencyGraph[V, E](t(vertexValues), t(edgeValues), t(links))
   }
@@ -364,13 +362,25 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
       }
     }
 
-    object outNeighborsOf {
+    object outNeighborsOf_1 {
       def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphElem[_, _]] && method.getName == "outNeighborsOf" =>
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphElem[_, _]] && method.getName == "outNeighborsOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "1" } =>
           Some((receiver, v)).asInstanceOf[Option[(Rep[AdjacencyGraph[V, E]], Rep[Int]) forSome {type V; type E}]]
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[AdjacencyGraph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object outNeighborsOf_2 {
+      def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(vs, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphElem[_, _]] && method.getName == "outNeighborsOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "2" } =>
+          Some((receiver, vs)).asInstanceOf[Option[(Rep[AdjacencyGraph[V, E]], Coll[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -452,7 +462,7 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
   }
 
   def mkAdjacencyGraph[V, E]
-    (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]) =
+    (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
     new ExpAdjacencyGraph[V, E](vertexValues, edgeValues, links)
   def unmkAdjacencyGraph[V:Elem, E:Elem](p: Rep[AdjacencyGraph[V, E]]) =
     Some((p.vertexValues, p.edgeValues, p.links))
@@ -461,7 +471,6 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
       (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])
       (implicit eV: Elem[V], eE: Elem[E])
     extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) with UserTypeDef[Graph[V,E], IncidenceGraph[V, E]] {
-    lazy val thisGraph = self
     lazy val selfType = element[IncidenceGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
     override def mirror(t: Transformer) = ExpIncidenceGraph[V, E](t(vertexValues), t(incMatrixWithVals), t(vertexNum))
   }
@@ -642,13 +651,25 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
       }
     }
 
-    object outNeighborsOf {
+    object outNeighborsOf_1 {
       def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "outNeighborsOf" =>
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "outNeighborsOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "1" } =>
           Some((receiver, v)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}]]
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object outNeighborsOf_2 {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(vs, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "outNeighborsOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "2" } =>
+          Some((receiver, vs)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Coll[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -742,7 +763,7 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
   }
 
   def mkIncidenceGraph[V, E]
-    (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]) =
+    (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
     new ExpIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
   def unmkIncidenceGraph[V:Elem, E:Elem](p: Rep[IncidenceGraph[V, E]]) =
     Some((p.vertexValues, p.incMatrixWithVals, p.vertexNum))
@@ -977,6 +998,30 @@ trait GraphsExp extends GraphsDsl with ScalanCommunityDslExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object outNeighborsOf_1 {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outNeighborsOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "1" } =>
+          Some((receiver, v)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object outNeighborsOf_2 {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(vs, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outNeighborsOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "2" } =>
+          Some((receiver, vs)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
