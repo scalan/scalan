@@ -136,8 +136,8 @@ class GraphExamplesSuite extends BaseShouldTests{
   //whenStaged should "fromArray" beArgFor { testMethod(_) }
   whenStaged should "fromAndToAdj" beArgFor { testMethod(_) }
   whenStaged should "fromAndToInc" beArgFor { testMethod(_) }
-  whenStaged should "mstFunAdj" beArgFor { testMethod(_) }
-  whenStaged should "mstFunInc" beArgFor { testMethod(_) }
+  //whenStaged should "mstFunAdj" beArgFor { testMethod(_) }
+  //whenStaged should "mstFunInc" beArgFor { testMethod(_) }
   whenStaged should "mstFun1Adj" beArgFor { testMethod(_) }
-  whenStaged should "mstFun1Inc" beArgFor { testMethod(_) }
+  //whenStaged should "mstFun1Inc" beArgFor { testMethod(_) }
 }
