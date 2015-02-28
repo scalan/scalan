@@ -450,12 +450,6 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   def mkStringD[A:Manifest](a: Exp[DeliteArray[A]]) : Exp[String] = {
     a mkString unitD(" ")
   }  */
-  def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
-    val newArr =  array_obj_new(xs.length)
-    array_copy(xs, 0, newArr, 0, xs.length)
-    newArr.update(index, value)
-    newArr
-  }
 }
 
 class CoreLmsBackend extends CoreLmsBackendBase { self =>

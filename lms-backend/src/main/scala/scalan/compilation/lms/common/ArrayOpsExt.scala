@@ -8,7 +8,6 @@ import scalan.compilation.lms.LmsBackendFacade
 trait ArrayOpsExtExp { self: LmsBackendFacade =>
 
   def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
-  def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]]
 
   def mapFromArray[K: Manifest, V: Manifest](arr: Exp[Array[(K, V)]]): Exp[HashMap[K, V]] = {
     val h = HashMap[K, V]()
@@ -88,6 +87,12 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
     }
 
   def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
+//    val newArr =  array_obj_new(xs.length)
+//    array_copy(xs, 0, newArr, 0, xs.length)
+//    newArr.update(index, value)
+//    newArr
+
+    //inplace update of immutable array...
     xs.update(index, value)
     xs
   }
