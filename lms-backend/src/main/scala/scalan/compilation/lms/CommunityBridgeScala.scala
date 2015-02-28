@@ -11,7 +11,7 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping {
     val obj = symMirr(receiver.asInstanceOf[Exp[_]])
 
     getFunc(method) match {
-      case Some(conf: LanguageConf#Fun) => conf.lib match {
+      case Some(conf: ScalaLanguage#ScalaFunc) => conf.lib match {
         case e: ScalaLanguage#ScalaLib =>
           //              if (!e.jar.isEmpty) extensionsJars += e.jar
           Manifest.classType(method.getDeclaringClass) match {
@@ -34,5 +34,4 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping {
         }
     }
   }
-
 }

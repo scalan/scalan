@@ -18,7 +18,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     coreTypeSynonyms
   )
@@ -36,13 +36,16 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     coreTestsTypeSynonyms
   )
 
   val liteTypeSynonyms = Map(
     "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
+  )
+  val collectTypeSynonyms = Map(
+    "PG" -> "Graph" , "Coll" -> "Collection", "NColl" -> "NestedCollection"
   )
   lazy val ceConfig = CodegenConfig(
     name = "ce",
@@ -59,7 +62,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     coreTypeSynonyms ++ liteTypeSynonyms
   )
@@ -82,7 +85,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanEnterpriseSeq",
     stagedContextTrait = "ScalanEnterpriseExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
   )
@@ -100,43 +103,53 @@ class BoilerplateTool extends StrictLogging {
     name = "effects",
     srcPath = "../../scalan-effects/src/main/scala",
     entityFiles = List(
-      //"scalan/monads/Monads.scala"
-      //, "scalan/monads/Functors.scala"
-      "scalan/monads/FreeMs.scala"
-      //"scalan/io/Frees.scala"
-      //"scalan/monads/Coproducts.scala"
-      //"scalan/monads/Interactions.scala"
-      //"scalan/monads/Auths.scala"
-      //"scalan/monads/Readers.scala"     
+      "scalan/monads/Frees.scala",
+      "scalan/monads/Coproducts.scala",
+      "scalan/examples/Interactions.scala",
+      "scalan/examples/Auths.scala",
+      "scalan/examples/IOs.scala",
+      "scalan/monads/Readers.scala",
+      "scalan/stream/Processes.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     effectsTypeSynonims
   )
 
-  lazy val collConfig = CodegenConfig(
-    srcPath = "core/src/main/scala",
+  lazy val collectionsConfig = CodegenConfig(
+    name = "collections",
+    srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
-      //"scalan/monads/Monads.scala"
-      //, "scalan/monads/Functors.scala"
       "scalan/collection/Collections.scala"
-      //"scalan/io/Frees.scala"
-      //"scalan/monads/Coproducts.scala"
-      //"scalan/monads/Interactions.scala"
-      //"scalan/monads/Auths.scala"
-      //"scalan/monads/Readers.scala"
+     ),
+    baseContextTrait = "Scalan",
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._", "scala.reflect._",
+      "scalan.common.Default"),
+    collectTypeSynonyms
+  )
+
+  lazy val graphConfig = CodegenConfig(
+    name = "graphs",
+    srcPath = "../community-edition/src/main/scala",
+    entityFiles = List(
+      "scalan/graphs/Graphs.scala",
+      "scalan/graphs/Vertices.scala",
+      "scalan/graphs/Edges.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
-    effectsTypeSynonims
+    collectTypeSynonyms
   )
 
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
@@ -145,13 +158,14 @@ class BoilerplateTool extends StrictLogging {
     }.distinct
 
   val configsMap = Map(
-    "collections" -> List(collConfig),
+    "graphs" -> List(graphConfig),
+    "collections" -> List(collectionsConfig),
     "coretests" -> List(coreTestsConfig),
     "core" -> List(coreConfig),
     "ce" -> List(ceConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig),
+    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig, graphConfig),
     "all" -> List(coreTestsConfig, ceConfig, eeConfig)
   )
 

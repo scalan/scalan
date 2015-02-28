@@ -1,5 +1,6 @@
 package scalan
 
+import scalan.collection._
 import scalan.collections._
 import scalan.linalgebra.{MatricesDsl, MatricesDslExp, MatricesDslSeq}
 import scalan.parrays._
@@ -13,6 +14,8 @@ trait ScalanCommunityExp extends ScalanCtxExp
   with ScalanCommunity
 
 trait ScalanCommunityDsl extends ScalanCommunity
+  with CollectionsDsl
+  with BitSets
   with PArraysDsl
   with MatricesDsl
   with MultiMapsDsl
@@ -20,6 +23,7 @@ trait ScalanCommunityDsl extends ScalanCommunity
   with SeqsDsl
 
 trait ScalanCommunityDslSeq extends ScalanCommunitySeq with ScalanCommunityDsl
+  with BitSetsSeq
   with PArraysDslSeq
   with MatricesDslSeq
   with MultiMapsDslSeq
@@ -27,6 +31,7 @@ trait ScalanCommunityDslSeq extends ScalanCommunitySeq with ScalanCommunityDsl
   with SeqsDslSeq
 
 trait ScalanCommunityDslExp extends ScalanCommunityExp with ScalanCommunityDsl
+  with BitSetsExp
   with PArraysDslExp
   with MatricesDslExp
   with MultiMapsDslExp

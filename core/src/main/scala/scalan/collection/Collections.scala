@@ -118,10 +118,9 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
     def indexRange(l: Rep[Int]): Coll[Int] = BaseCollection(array_rangeFrom0(l))
   }
 
-  abstract class UnitCollection(val len: Rep[Int]) extends Collection[Unit] {
+  abstract class UnitCollection(val length: Rep[Int]) extends Collection[Unit] {
     def elem = UnitElement
-    def arr = SArray.replicate(len, ())
-    def length = len
+    def arr = SArray.replicate(length, ())
     def apply(i: Rep[Int]) = ()
     def map[B: Elem](f: Rep[Unit] => Rep[B]): Coll[B] = Collection(arr.map(f))
     def mapBy[B: Elem](f: Rep[Unit => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))

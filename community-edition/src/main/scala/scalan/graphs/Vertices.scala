@@ -1,7 +1,8 @@
 package scalan.graphs
 
+import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
-import scalan.ScalanDsl
+import scalan.{Scalan, ScalanExp, ScalanSeq}
 import scalan.collection.CollectionsDsl
 import scalan.ScalanCommunityDsl
 
@@ -9,7 +10,7 @@ import scalan.ScalanCommunityDsl
  * Created by afilippov on 2/16/15.
  */
 trait Vertices extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
-  trait Vertex[V, E] {
+  trait Vertex[V, E] extends Reifiable[Vertex[V @uncheckedVariance, E  @uncheckedVariance]]{
     implicit def eV: Elem[V]
     implicit def eE: Elem[E]
     implicit def graph: PG[V, E]  // ?
@@ -33,3 +34,7 @@ trait Vertices extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl 
     def defaultOf[T:Elem, V:Elem] = Default.defaultVal(SVertex(-1, element[Graph[T,V]].defaultRepValue))
   }
 }
+
+trait VerticesDsl extends impl.VerticesAbs { self: GraphsDsl => }
+trait VerticesDslSeq extends impl.VerticesSeq { self: GraphsDslSeq => }
+trait VerticesDslExp extends impl.VerticesExp { self: GraphsDslExp => }
