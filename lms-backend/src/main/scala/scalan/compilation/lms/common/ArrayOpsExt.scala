@@ -87,6 +87,12 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
     }
 
   def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
+//    val newArr =  array_obj_new(xs.length)
+//    array_copy(xs, 0, newArr, 0, xs.length)
+//    newArr.update(index, value)
+//    newArr
+
+    //inplace update of immutable array...
     xs.update(index, value)
     xs
   }
@@ -142,6 +148,13 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
       sum += func(x)
     }
     sum
+  }
+
+  def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]] = {
+    val bu = ArrayBuilder.make[A]
+    for(a <- xs ) {bu += a}
+    bu += value
+    bu.result
   }
 
 }

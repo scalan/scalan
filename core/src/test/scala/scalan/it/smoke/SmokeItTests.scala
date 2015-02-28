@@ -88,6 +88,8 @@ abstract class SmokeItTests extends BaseItTests {
       (a, b)
     }
 
+    lazy val arrayUpdate = fun {in: Rep[Array[Int]] => val f = {a:Rep[Array[Int]] => a.update(0,1)}; f(in)}
+
 //    lazy val simpleMap = fun {x: PA[Int] =>
 //      x.map(y => y + 1)
 //    }
