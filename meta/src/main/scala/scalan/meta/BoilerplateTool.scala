@@ -122,7 +122,7 @@ class BoilerplateTool extends StrictLogging {
 
   lazy val collectionsConfig = CodegenConfig(
     name = "collections",
-    srcPath = "/home/afilippov/gitlab/scalan-lite-public/core/src/main/scala",
+    srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
       "scalan/collection/Collections.scala"
      ),
@@ -137,15 +137,15 @@ class BoilerplateTool extends StrictLogging {
 
   lazy val graphConfig = CodegenConfig(
     name = "graphs",
-    srcPath = "/home/afilippov/gitlab/scalan-lite-public/community-edition/src/main/scala",
+    srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
       "scalan/graphs/Graphs.scala",
       "scalan/graphs/Vertices.scala",
       "scalan/graphs/Edges.scala"
     ),
-    baseContextTrait = "ScalanCommunityDsl",
-    seqContextTrait = "ScalanCommunityDslSeq",
-    stagedContextTrait = "ScalanCommunityDslExp",
+    baseContextTrait = "Scalan",
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
     extraImports = List(
       "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
@@ -165,7 +165,7 @@ class BoilerplateTool extends StrictLogging {
     "ce" -> List(ceConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig),
+    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig, graphConfig),
     "all" -> List(coreTestsConfig, ceConfig, eeConfig)
   )
 

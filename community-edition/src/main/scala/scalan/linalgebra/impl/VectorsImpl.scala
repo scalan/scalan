@@ -27,6 +27,7 @@ trait VectorsAbs extends Scalan with Vectors {
     override def convert(x: Rep[Reifiable[_]]) = convertVector(x.asRep[Vector[T]])
     def convertVector(x : Rep[Vector[T]]): Rep[To]
   }
+
   trait VectorCompanionElem extends CompanionElem[VectorCompanionAbs]
   implicit lazy val VectorCompanionElem: VectorCompanionElem = new VectorCompanionElem {
     lazy val tag = weakTypeTag[VectorCompanionAbs]
@@ -184,7 +185,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
   }
 
   def mkDenseVector[T]
-      (coords: Rep[PArray[T]])(implicit elem: Elem[T]) =
+      (coords: Rep[PArray[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
       new SeqDenseVector[T](coords)
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]) =
     Some((p.coords))
@@ -201,7 +202,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
   }
 
   def mkSparseVector[T]
-      (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]) =
+      (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
       new SeqSparseVector[T](nonZeroIndices, nonZeroValues, length)
   def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]) =
     Some((p.nonZeroIndices, p.nonZeroValues, p.length))
@@ -305,7 +306,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   }
 
   def mkDenseVector[T]
-    (coords: Rep[PArray[T]])(implicit elem: Elem[T]) =
+    (coords: Rep[PArray[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
     new ExpDenseVector[T](coords)
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]) =
     Some((p.coords))
@@ -388,7 +389,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   }
 
   def mkSparseVector[T]
-    (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]) =
+    (nonZeroIndices: Rep[Array[Int]], nonZeroValues: Rep[PArray[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
     new ExpSparseVector[T](nonZeroIndices, nonZeroValues, length)
   def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]) =
     Some((p.nonZeroIndices, p.nonZeroValues, p.length))

@@ -3,14 +3,15 @@ package impl
 
 import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
-import scalan._
+import scalan.ScalanCommunityDsl
+import scalan.{ScalanSeq, ScalanExp, Scalan}
 import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scala.reflect.runtime.universe._
 import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait EdgesAbs extends ScalanCommunityDsl with Edges {
+trait EdgesAbs extends Scalan with Edges {
   self: GraphsDsl =>
   // single proxy for each type family
   implicit def proxyEdge[V, E](p: Rep[Edge[V, E]]): Edge[V, E] = {
@@ -23,6 +24,7 @@ trait EdgesAbs extends ScalanCommunityDsl with Edges {
     override def convert(x: Rep[Reifiable[_]]) = convertEdge(x.asRep[Edge[V, E]])
     def convertEdge(x : Rep[Edge[V, E]]): Rep[To]
   }
+
   trait EdgeCompanionElem extends CompanionElem[EdgeCompanionAbs]
   implicit lazy val EdgeCompanionElem: EdgeCompanionElem = new EdgeCompanionElem {
     lazy val tag = weakTypeTag[EdgeCompanionAbs]
@@ -163,7 +165,7 @@ trait EdgesAbs extends ScalanCommunityDsl with Edges {
 }
 
 // Seq -----------------------------------
-trait EdgesSeq extends ScalanCommunityDslSeq {
+trait EdgesSeq extends EdgesDsl with ScalanSeq {
   self: GraphsDslSeq =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeSeq[EdgeCompanionAbs, EdgeCompanionAbs] {
     lazy val selfType = element[EdgeCompanionAbs]
@@ -205,7 +207,7 @@ trait EdgesSeq extends ScalanCommunityDslSeq {
 }
 
 // Exp -----------------------------------
-trait EdgesExp extends ScalanCommunityDslExp {
+trait EdgesExp extends EdgesDsl with ScalanExp {
   self: GraphsDslExp =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeDef[EdgeCompanionAbs, EdgeCompanionAbs] {
     lazy val selfType = element[EdgeCompanionAbs]

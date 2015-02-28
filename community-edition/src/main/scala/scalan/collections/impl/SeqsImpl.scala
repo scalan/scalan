@@ -43,6 +43,7 @@ trait SeqsAbs extends Scalan with Seqs {
     override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
     def convertSSeq(x : Rep[SSeq[A]]): Rep[To]
   }
+
   trait SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs]
   implicit lazy val SSeqCompanionElem: SSeqCompanionElem = new SSeqCompanionElem {
     lazy val tag = weakTypeTag[SSeqCompanionAbs]
@@ -243,7 +244,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
   }
 
   def mkSSeqImpl[A]
-      (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]) =
+      (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
       new SeqSSeqImpl[A](wrappedValueOfBaseType)
   def unmkSSeqImpl[A:Elem](p: Rep[SSeqImpl[A]]) =
     Some((p.wrappedValueOfBaseType))
@@ -286,7 +287,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
   }
 
   def mkSSeqImpl[A]
-    (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]) =
+    (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
     new ExpSSeqImpl[A](wrappedValueOfBaseType)
   def unmkSSeqImpl[A:Elem](p: Rep[SSeqImpl[A]]) =
     Some((p.wrappedValueOfBaseType))

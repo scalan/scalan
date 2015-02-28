@@ -3,7 +3,7 @@ package scalan.graphs
 import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
 import scalan.ScalanCommunityDsl
-import scalan.{ScalanSeq, ScalanExp, ScalanDsl}
+import scalan.{ScalanSeq, ScalanExp, Scalan}
 import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 
 trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
@@ -82,3 +82,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
   }
 
 }
+
+trait EdgesDsl extends impl.EdgesAbs { self: GraphsDsl => }
+trait EdgesDslSeq extends impl.EdgesSeq { self: GraphsDslSeq => }
+trait EdgesDslExp extends impl.EdgesExp { self: GraphsDslExp => }

@@ -16,7 +16,13 @@ trait ScalanAst {
     override def toString = name
   }
 
+  case class STpeTypeBounds(lo: STpeExpr, hi: STpeExpr) extends STpeExpr {
+    override def toString = ">:" + lo + "<:" + hi
+  }
+
   val STpePrimitives = Map(
+    "Any" -> STpePrimitive("Any", ""),
+    "Nothing" -> STpePrimitive("Nothing", ""),
     "Int" -> STpePrimitive("Int", "0"),
     "Long" -> STpePrimitive("Long", "0l"),
     "Byte" -> STpePrimitive("Byte", "0.toByte"),
@@ -96,6 +102,8 @@ trait ScalanAst {
 
   // SExpr universe --------------------------------------------------------------------------
   trait SExpr
+  case class SApply(fun: SExpr, args: List[SExpr]) extends SExpr
+  case class SLiteral(value: String) extends SExpr
   case class SDefaultExpr(expr: String) extends SExpr
 
   // SBodyItem universe ----------------------------------------------------------------------
@@ -108,7 +116,9 @@ trait ScalanAst {
     tpeRes: Option[STpeExpr],
     isImplicit: Boolean,
     overloadId: Option[String],
-    annotations: List[SMethodAnnotation] = Nil, elem: Option[Unit] = None)
+    annotations: List[SMethodAnnotation] = Nil,
+    body: Option[SExpr] = None,
+    elem: Option[Unit] = None)
     extends SBodyItem {
     def externalOpt: Option[SMethodAnnotation] = annotations.filter(a => a.annotationClass == "External").headOption
     def isElem: Boolean = elem.isDefined
@@ -195,7 +205,7 @@ trait ScalanAst {
       case md: SMethodDef if md.allArgs.isEmpty => md
     }
 
-    def getAncestorTraits(module: SEntityModuleDef): List[STraitDef] = {
+    def getAncestorTraits(module: SEntityModuleDef): List[STraitOrClassDef] = {
       ancestors.filter(tc => module.isEntity(tc.name)).map(tc => module.getEntity(tc.name))
     }
 
@@ -220,10 +230,9 @@ trait ScalanAst {
     annotations: List[STraitOrClassAnnotation] = Nil) extends STraitOrClassDef {
 
     def isTrait = true
-
     lazy val implicitArgs: SClassArgs = {
       val implicitElems = body.collect {
-        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_)) => (name, elem)
+        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, _, Some(_)) => (name, elem)
       }
       val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map(a => {
         val optDef = implicitElems.collectFirst {
@@ -237,7 +246,7 @@ trait ScalanAst {
       })
       val missingElems = args.filter(_.isLeft)
       if (missingElems.length > 0)
-        sys.error(s"implicit def eA: Elem[A] should be declared for all type parameters: missing ${missingElems}")
+        println/*sys.error*/(s"implicit def eA: Elem[A] should be declared for all type parameters: missing ${missingElems}")
       SClassArgs(args.flatMap(a => a.fold(_ => Nil, List(_))))
     }
   }
@@ -292,11 +301,15 @@ trait ScalanAst {
     selfType: Option[SSelfTypeDef],
     seqDslImpl: Option[SSeqImplementation] = None)
   {
-    def getEntity(name: String): STraitDef = {
-      val entity = entities.find(e => e.name == name)
-      entity match {
+    def getEntity(name: String): STraitOrClassDef = {
+      entities.find(e => e.name == name) match {
         case Some(e) => e
-        case _ => sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
+        case _ =>
+          concreteSClasses.find(e => e.name == name) match {
+            case Some(e) => e
+            case _ =>
+              sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
+          }
       }
     }
 
@@ -306,7 +319,7 @@ trait ScalanAst {
 
   object IsImplicitElem {
     def unapply(item: SBodyItem): Option[(String, STraitCall)] = item match {
-      case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_)) => Some((name, elem))
+      case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_), Some(_)) => Some((name, elem))
       case _ => None
     }
   }
@@ -351,7 +364,6 @@ trait ScalanAst {
           defaultBTImpl :: moduleTrait.getConcreteClasses
         case None => moduleTrait.getConcreteClasses
       }
-
       val methods = defs.collect { case md: SMethodDef => md }
 
       SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, traits, classes, methods, moduleTrait.selfType)
