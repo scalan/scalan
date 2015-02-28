@@ -131,7 +131,8 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[Edge[V, E]] = {
       val res = (vs zip outNeighborsOf(vs)).flatMap { in =>
           val Pair(v, ns) = in
-          ns.indexes.map({ i => makeEdgeFrom(v, i)}). filter { predicate(_) }
+          val edges = ns.indexes.map({ i => makeEdgeFrom(v, i)})
+          edges.filter { predicate(_) }
       }
       res.asInstanceOf[Coll[Edge[V, E]]]
     }

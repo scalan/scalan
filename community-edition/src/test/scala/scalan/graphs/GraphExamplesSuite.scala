@@ -49,6 +49,7 @@ class GraphExamplesSuite extends BaseShouldTests{
     val ctx = new ScalanCtxExp with GraphsDslExp with GraphExamples {}
   }
   */
+
   "in seq context1" should "execute functions" in {
     val ctx = new ScalanCtxSeq with GraphsDslSeq with GraphExamples {}
     val in1 = ctx.fromJuggedArray(Array(Array(1,2), Array(3,4), Array(5,6)))(ctx.IntElement)
@@ -121,6 +122,60 @@ class GraphExamplesSuite extends BaseShouldTests{
     println(res.mkString(","))
     //res should be(in1.length)
   }
+  "in seq context7" should "execute functions" in {
+    val ctx = new ScalanCtxSeq with GraphsDslSeq with GraphExamples {}
+
+    val in1 = ctx.fromJuggedArray(graph)(ctx.IntElement)
+    val in2 = ctx.fromJuggedArray(graphValues)(ctx.DoubleElement)
+    val res = ctx.mstFunAdjMap((in1,in2))
+    println(res)
+    //res should be(in1.length)
+  }
+  "in seq context8" should "execute functions" in {
+    val ctx = new ScalanCtxSeq with GraphsDslSeq with GraphExamples {}
+
+    val vertexNum = graph.length
+    val incMatrix = (graph zip graphValues).flatMap({ in =>
+      val row = in._1
+      val vals = in._2
+      val zero = scala.Array.fill(vertexNum)(0.0)
+      for (i <- 0 to row.length-1) { zero(row(i)) = vals(i) }
+      zero
+    })
+
+    val inM = ctx.Collection.fromArray(incMatrix)(ctx.DoubleElement)
+    val res = ctx.mstFunIncMap((inM,vertexNum))
+    println(res)
+    //res should be(in1.length)
+  }
+
+  "in seq context9" should "execute functions" in {
+    val ctx = new ScalanCtxSeq with GraphsDslSeq with GraphExamples {}
+
+    val in1 = ctx.fromJuggedArray(graph)(ctx.IntElement)
+    val in2 = ctx.fromJuggedArray(graphValues)(ctx.DoubleElement)
+
+    val res = ctx.mstFun1AdjMap((in1.values.arr,(in2.values.arr, (in1.segOffsets.arr, in1.segLens.arr))) )
+    println(res.mkString(","))
+    //res should be(in1.length)
+  }
+
+  "in seq context10" should "execute functions" in {
+    val ctx = new ScalanCtxSeq with GraphsDslSeq with GraphExamples {}
+
+    val vertexNum = graph.length
+    val incMatrix = (graph zip graphValues).flatMap({ in =>
+      val row = in._1
+      val vals = in._2
+      val zero = scala.Array.fill(vertexNum)(0.0)
+      for (i <- 0 to row.length-1) { zero(row(i)) = vals(i) }
+      zero
+    })
+
+    val res = ctx.mstFun1IncMap((incMatrix, vertexNum))
+    println(res.mkString(","))
+    //res should be(in1.length)
+  }
 
 
   def testMethod(name: String) = {
@@ -133,11 +188,14 @@ class GraphExamplesSuite extends BaseShouldTests{
   }
 
   val whenStaged = "when staged"
-  //whenStaged should "fromArray" beArgFor { testMethod(_) }
   whenStaged should "fromAndToAdj" beArgFor { testMethod(_) }
   whenStaged should "fromAndToInc" beArgFor { testMethod(_) }
   //whenStaged should "mstFunAdj" beArgFor { testMethod(_) }
   //whenStaged should "mstFunInc" beArgFor { testMethod(_) }
   whenStaged should "mstFun1Adj" beArgFor { testMethod(_) }
-  //whenStaged should "mstFun1Inc" beArgFor { testMethod(_) }
+  whenStaged should "mstFun1Inc" beArgFor { testMethod(_) }
+  whenStaged should "mstFunAdjMap" beArgFor { testMethod(_) }
+  whenStaged should "mstFunIncMap" beArgFor { testMethod(_) }
+  whenStaged should "mstFun1AdjMap" beArgFor { testMethod(_) }
+  whenStaged should "mstFun1IncMap" beArgFor { testMethod(_) }
 }

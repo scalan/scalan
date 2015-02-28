@@ -125,7 +125,7 @@ trait EdgesAbs extends Scalan with Edges {
     lazy val tag = {
       weakTypeTag[IncEdge[V, E]]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[IncEdge[V, E]]](IncEdge(0, 0, element[Graph[V,E]].defaultRepValue))
+    lazy val defaultRepTo = Default.defaultVal[Rep[IncEdge[V, E]]](IncEdge(0, 0, element[IncidenceGraph[V,E]].defaultRepValue))
     lazy val eTo = new IncEdgeElem[V, E](this)
   }
   // 4) constructor and deconstructor
