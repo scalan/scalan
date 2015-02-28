@@ -10,7 +10,7 @@ import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 
 trait Fronts extends ScalanCommunityDsl with CollectionsDsl { self: FrontsDsl =>
   trait Front extends Reifiable[Front] {
-    def total: Rep[Int]
+    //def total: Rep[Int]
 
     def contains(v: Rep[Int]): Rep[Boolean]
 
@@ -28,11 +28,14 @@ trait Fronts extends ScalanCommunityDsl with CollectionsDsl { self: FrontsDsl =>
       BaseFront(set, bits)
     }
 
-    def fromHashSet(hs: Rep[SHashSet[Int]]) = HsFront(hs)
+    def fromStartNodeMap(start: Rep[Int], len: Rep[Int]) = {
+      val empty = MMap.empty[Int,Unit]
+      MapBasedFront(empty).append(start)
+    }
   }
 
   abstract class BaseFront(val set: Rep[Collection[Int]], val bits: Rep[PBitSet]) extends Front {
-    def total = bits.length
+    //def total = bits.length
 
     def contains(v: Rep[Int]) = bits.contains(v)
 
@@ -49,18 +52,20 @@ trait Fronts extends ScalanCommunityDsl with CollectionsDsl { self: FrontsDsl =>
     def defaultOf = Default.defaultVal(BaseFront(element[Collection[Int]].defaultRepValue, element[PBitSet].defaultRepValue))
   }
 
-  abstract class HsFront(val hashSet: Rep[SHashSet[Int]]) extends Front {
-    def total = ???
+  abstract class MapBasedFront(val mmap: Rep[MMap[Int,Unit]]) extends Front {
+    //def total = ???
 
-    def contains(v: Rep[Int]) = ???
+    def contains(v: Rep[Int]) = {
+      mmap.contains(v)
+    }
 
-    def append(v: Rep[Int]): Rep[HsFront] = ???
+    def append(v: Rep[Int]): Rep[MapBasedFront] = MapBasedFront(mmap.update(v, ()) | mmap)
 
-    def set: Rep[Collection[Int]] = ??? //Collection(hashSet.floor)
+    def set: Rep[Collection[Int]] = Collection(mmap.keys)
   }
 
-  trait HsFrontCompanion extends ConcreteClass0[Front] {
-    def defaultOf = Default.defaultVal(HsFront(element[SHashSet[Int]].defaultRepValue))
+  trait MapBasedFrontCompanion extends ConcreteClass0[Front] {
+    def defaultOf = Default.defaultVal(MapBasedFront(element[MMap[Int, Unit]].defaultRepValue))
   }
 
 }

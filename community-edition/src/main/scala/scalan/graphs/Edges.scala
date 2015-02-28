@@ -78,7 +78,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
     def value: Rep[E] = graph.incMatrixWithVals(indexOfTarget)
   }
   trait IncEdgeCompanion extends ConcreteClass2[Edge] {
-    def defaultOf[T: Elem, V:Elem] = Default.defaultVal(IncEdge(-1, -1, element[Graph[T,V]].defaultRepValue))
+    def defaultOf[T: Elem, V:Elem] = Default.defaultVal(IncEdge(-1, -1, element[IncidenceGraph[T,V]].defaultRepValue))
   }
 
 }
