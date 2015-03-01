@@ -40,7 +40,7 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
       (front.append(to), out.update(to, from))
     }
 
-    from(startFront, out)(startFront.selfType1, out.selfType1).until(stopCondition)(step)._2
+    from(startFront, out).until(stopCondition)(step)._2
   }
 
   def MSF_prime(g: Rep[Graph[Unit,Double]])  = {
