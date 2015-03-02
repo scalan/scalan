@@ -92,6 +92,12 @@ trait CXXCodegen extends CLikeCodegen {
   override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
     if (remap(tpe) != "void")
       stream.println("const " + remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
+    else
+      throw new IllegalArgumentException("can not emit void symbol, use emitUnitStatement() instead.")
+  }
+
+  def emitUnitStatement(rhs: String): Unit = {
+    stream.println(rhs + ";")
   }
 
   override def remapWithRef[A](m: Manifest[A]): String = {
@@ -118,13 +124,14 @@ trait CXXCodegen extends CLikeCodegen {
           "#include <cstdlib>\n" +
           "#include <functional>\n" +
           "#include <algorithm>\n" +
+          "#include <unordered_map>\n" +
           "/*****************************************\n" +
           "  Emitting Generated Code                  \n" +
           "*******************************************/")
       emitFileHeader()
 
       val indargs = scala.Range(0, args.length).zip(args);
-      stream.println(s"${sA} apply(${indargs.map( p => s"const ${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
+      stream.println(s"${sA} apply_$className(${indargs.map( p => s"const ${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
       emitBlock(body)
       stream.println(s"return ${quoteMove(getBlockResult(body))};")

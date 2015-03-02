@@ -1,17 +1,27 @@
 package scalan
 package it.lms
 
+import scalan.collections.SimpleMapTests
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.it.smoke.CommunitySmokeItTests
 
-class LmsSmokeItTests extends CommunitySmokeItTests {
-  class ProgExp extends ProgCommunity with ScalanCommunityDslExp with CommunityLmsCompilerScala with CoreBridge {
+class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
+  class ProgExp extends ProgCommunity with SimpleMapProg with ScalanCommunityDslExp with CommunityLmsCompilerScala with CoreBridge {
     val lms = new CommunityLmsBackend
   }
-  
+
+  override val progSeq = new ProgCommunitySeq with SimpleMapProg
   override val progStaged = new ProgExp
 
+  test("mapPutContains") {
+    val in = (314,3.14)
+    compareOutputWithSequential(progStaged)(progSeq.mapPutContains, progStaged.mapPutContains, "mapPutContains", in)
+  }
+  test("mapAsSet") {
+    val in = 314
+    compareOutputWithSequential(progStaged)(progSeq.mapAsSet, progStaged.mapAsSet, "mapAsSet", in)
+  }
   test("simpleArith") {
     val in = 2
     compareOutputWithSequential(progStaged)(progSeq.simpleArith, progStaged.simpleArith, "simpleArith", in)

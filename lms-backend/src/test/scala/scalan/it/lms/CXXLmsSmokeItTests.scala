@@ -2,19 +2,41 @@ package scalan.it.lms
 
 import java.io.File
 
+import scalan.collections.SimpleMapTests
 import scalan.{ScalanCommunityExp, ScalanCtxExp}
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.compilation.lms.CoreBridge
 import scalan.compilation.lms.cxx.{LmsCompilerCXX, CoreCXXLmsBackend}
 import scalan.it.smoke.SmokeItTests
 
-class CXXLmsSmokeItTests extends SmokeItTests {
-  class ProgExp extends Prog with ScalanCtxExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX with CoreBridge {
+class CXXLmsSmokeItTests extends SmokeItTests with SimpleMapTests {
+  class ProgExp extends Prog with SimpleMapProg with ScalanCtxExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX with CoreBridge {
     val lms = new CoreCXXLmsBackend
   }
   
   override val progStaged = new ProgExp
   import progStaged.defaultCompilerConfig
+
+  test("mapEmpty") {
+    val in = 314 //ignored
+    val functionName = "mapEmpty"
+    val dir = new File(prefix, functionName)
+    progStaged.buildExecutable(dir, dir, functionName, progStaged.mapEmpty, GraphVizConfig.default)
+  }
+
+  test("mapPutContains") {
+    val in = (314,3.14)
+    val functionName = "mapPutContains"
+    val dir = new File(prefix, functionName)
+    progStaged.buildExecutable(dir, dir, functionName, progStaged.mapPutContains, GraphVizConfig.default)
+  }
+
+  test("mapAsSet") {
+    val in = 314
+    val functionName = "mapAsSet"
+    val dir = new File(prefix, functionName)
+    progStaged.buildExecutable(dir, dir, functionName, progStaged.mapAsSet, GraphVizConfig.default)
+  }
 
   test("test0simpleArith") {
     val in = 2
