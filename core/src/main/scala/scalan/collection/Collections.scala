@@ -256,7 +256,12 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
       val newValues = segments(indices).flatMap { in =>
         values.slice(in._1, in._2)
       }
-      NestedCollection(newValues, segments(indices))
+      val newSegments = {
+        val newLens = segments(indices).map{_._2}
+        val newOffsArr = newLens.arr.scan._1
+        Collection(newOffsArr) zip newLens
+      }
+      NestedCollection(newValues, newSegments)
     }
     def map[B: Elem](f: Rep[Collection[A @uncheckedVariance]] => Rep[B]): Coll[B] =  Collection(arr.map(f))
     def mapBy[B: Elem](f: Rep[Collection[A] => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))
