@@ -1,5 +1,5 @@
 package scalan.imp
 
-class ThrowableImp(massage: String) {
-  def getMessage = massage
+class ThrowableImp(message: String) {
+  def getMessage = message
 }

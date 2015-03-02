@@ -175,16 +175,16 @@ class MethodCallItTests extends LmsCommunityItTests{
   }
 
 //  test("Throwable Method Call") {
-//    val originalText = "Exception massage"
+//    val originalText = "Exception message"
 //    val text = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.message, "ThrowableMethodCall", new Exception(originalText), exceptionTestExp.defaultCompilerConfig)
 //    text should equal(originalText)
 //    val text2 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.initCause, "ThrowableInitCauseMethodCall", (new Exception(originalText), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
 //    text2 should equal(originalText)
 //    val text3 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.initCause2, "ThrowableManyInitCauseMethodCall", (new Exception(originalText), (new Exception("some text"), (new Exception("some text"), (new Exception("some text"), new Exception("some text"))))), exceptionTestExp.defaultCompilerConfig)
 //    text3 should equal(originalText)
-//    val text4 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfFalse, "IfFalseMethodCall", (new Exception("Exception massage"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
+//    val text4 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfFalse, "IfFalseMethodCall", (new Exception("Exception message"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
 //    text4 should equal(originalText)
-//    val text5 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfTrue, "IfTrueMethodCall", (new Exception("Exception massage"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
+//    val text5 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfTrue, "IfTrueMethodCall", (new Exception("Exception message"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
 //    text5 should equal("some text")
 //  }
 
@@ -205,9 +205,8 @@ class MethodCallItTests extends LmsCommunityItTests{
     lazy val arrayLength = fun { v: Rep[Array[Int]] =>
       PArray(v).length
     }
-    override val AllInvokeEnabler = invokeEnabler("all_apply") {
-      (o, m) => !m.getName.equals("length")
-    }
+
+    override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, invokeEnabler("skip_length_method") { (o, m) => !m.getName.equals("length")})
   }
 
   test("Class Mapping") {
@@ -241,14 +240,14 @@ class MethodCallItTests extends LmsCommunityItTests{
     new ScalaLanguage with TestConf {
 
       val extLib = new ScalaLib("", "scalan.it.lms.MappingMethodFromJar.TestMethod") {
-        val testMassageMethod = ScalaFunc('testMassage)
+        val testMessageMethod = ScalaFunc('testMessage)
       }
 
       val scala2Scala = {
         import scala.language.reflectiveCalls
 
         Map(
-          testLib.scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMassageMethod
+          testLib.scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMessageMethod
         )
       }
 
@@ -265,7 +264,7 @@ class MethodCallItTests extends LmsCommunityItTests{
 
   test("Mapping Method From Jar") {
     val conf = jarReplaceExp.defaultCompilerConfig
-    val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", "Original massage",
+    val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", "Original message",
       conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
         extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
     messageFromTestMethod should equal("Test Message")

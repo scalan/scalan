@@ -16,12 +16,8 @@ trait SbtCompiler { self:LmsCompilerScala =>
     val buildSbtFile = new File(sourcesDir, "build.sbt")
     val libsDir = file(currentWorkingDir, lib)
     val executableLibsDir = file(executableDir, lib)
-    var jars = methodReplaceConf.libPaths.map { j => file(libsDir, j).getAbsolutePath }
-    val dir = listFiles(libsDir, ExtensionFilter("jar"))
-    dir.foreach(f => {
-      jars = jars + f.getAbsolutePath
-      copyToDir(f, executableLibsDir)
-    })
+
+    listFiles(libsDir, ExtensionFilter("jar")).foreach(f =>  copyToDir(f, executableLibsDir))
     compilerConfig.sbt.mainPack match {
       case Some(mainPack) =>
         val mainClass = mainPack + "." + compilerConfig.sbt.mainClassSimpleName
@@ -32,10 +28,7 @@ trait SbtCompiler { self:LmsCompilerScala =>
         addHeader(f, s"package $mainPack")
         for (c <- mainClass +: compilerConfig.sbt.extraClasses) {
           val scalaFile = c.replaceAll("\\.", separator) + ".scala"
-          var f = file(currentClassDir, scalaFile)
-          if (!f.exists() && currentClassDir.endsWith("test-classes" + separator))
-            f = file(replaceFirstDirName(currentClassDir, "test-classes", "classes"), scalaFile)
-          copy(f, file(src, scalaFile))
+          copyFromClassPath(scalaFile, file(src, scalaFile))
         }
 
         write(file(sourcesDir, "build.sbt"),

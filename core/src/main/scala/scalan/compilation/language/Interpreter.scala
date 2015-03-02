@@ -9,5 +9,5 @@ trait Interpreter {
     methodReplaceConf.get(method.getDeclaringClass.getName, method.getName) 
   }
 
-  def mappedClassName(c: Class[_]): Option[String] = ???
+  def mappedClassName(c: Class[_]): Option[String] = sys.error("Don't know how to transform method call")
 }

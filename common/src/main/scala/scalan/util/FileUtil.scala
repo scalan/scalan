@@ -2,6 +2,7 @@ package scalan.util
 
 import java.io.File.separator
 import java.io._
+import java.nio.channels.Channels
 import java.nio.file._
 import java.nio.file.attribute.BasicFileAttributes
 
@@ -68,6 +69,11 @@ object FileUtil {
     new FileOutputStream(target).getChannel.transferFrom(new FileInputStream(source).getChannel, 0, Long.MaxValue)
   }
 
+  def copyFromClassPath(source: String, target: File): Unit = {
+    target.getParentFile.mkdirs()
+    new FileOutputStream(target).getChannel.transferFrom(Channels.newChannel(getClass.getClassLoader.getResourceAsStream(source)), 0, Long.MaxValue)
+  }
+
   /**
    * Copy file source to targetDir, keeping the original file name
    */
@@ -96,20 +102,16 @@ object FileUtil {
     if (fileOrDirectory.exists()) delete(fileOrDirectory)
   }
 
-  @throws(classOf[IOException])
   def removeRecursive(path: Path) {
     Files.walkFileTree(path, new SimpleFileVisitor[Path]() {
-      @throws(classOf[IOException])
       override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
         Files.delete(file)
         FileVisitResult.CONTINUE
       }
-      @throws(classOf[IOException])
       override def visitFileFailed(file: Path, exc: IOException): FileVisitResult = {
         Files.delete(file)
         FileVisitResult.CONTINUE
       }
-      @throws(classOf[IOException])
       override def postVisitDirectory(dir: Path, exc: IOException): FileVisitResult = {
         if (exc == null) {
           Files.delete(dir)
@@ -137,8 +139,6 @@ object FileUtil {
     launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", file(path, libDir, jarName).getAbsolutePath) :+
       baseClass.getPackage.getName.replaceAll("\\.", "/"): _*)
   }
-
-  def replaceFirstDirName(path: String, oldName: String, newName: String): String = path.replace(separator + oldName + separator, separator + newName + separator)
 
   /**
    * Same as dir.listFiles(filter), except it returns empty array instead of null
