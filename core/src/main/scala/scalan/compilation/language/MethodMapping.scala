@@ -23,12 +23,19 @@ trait MethodMapping {
     implicit val v: T = this
   }
 
+  case class Library(packageName: String = null, isStatic: Boolean = true) {
+    implicit val v = this
+  }
+
+  case class Link(path: String, header: String, isStatic: Boolean)
+
   trait LanguageConf extends Implicit[LanguageConf] {
 
     import scala.reflect.runtime.universe.typeOf
     import scala.reflect.runtime.universe.Type
 
     val tyInt = typeOf[Int]
+    val tyString = typeOf[String]
     val tyArray = typeOf[Array[_]]
 
     val backend: Backend[_]
@@ -55,12 +62,11 @@ trait MethodMapping {
 
     case class ClassType(name: Symbol, synonym: Symbol, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]
 
-    case class MethodArg(name: String)
+    case class MethodArg(name: Type)
 
-    case class Method(name: Symbol, args: List[MethodArg], tyRes: Type)(implicit val theType: ClassType)
+    case class Method(name: Symbol, tyRes: Type, args: MethodArg*)(implicit val theType: ClassType)
 
     trait Fun {
-      val funcName: Symbol
       val lib: Lib = null
     }
 
@@ -77,6 +83,8 @@ trait MethodMapping {
       val libPaths: Set[String]
 
       val functionMap: Map[Method, Func]
+
+      // To simplify config usage, data are transformed to Backend representation. Direct link to LanguageConf is never used
       lazy val methodMap: Map[(String, String), Option[Func]] = functionMap.map { case (m, f) =>
         (((m.theType.family match {
           case f: Family => f.pack.pack + "." + f.familyName.name + "$"
@@ -95,23 +103,23 @@ trait MethodMapping {
 
     case class CppLib(hfile: String, libfile: String) extends Lib with Implicit[CppLib]
 
-    case class CppType(name: Symbol)
+    case class CppType(name: String)
 
-    case class CppArg(ty: CppType, name: Symbol)
+    case class CppArg(ty: CppType, name: String)
 
-    case class CppFunc(override val funcName: Symbol, args: CppArg*)(implicit override val lib: CppLib) extends Fun
+    case class CppFunc(funcName: String, args: CppArg*)(implicit override val lib: CppLib) extends Fun
 
     abstract class CppBackend extends Backend(CPP) {
       type Func = CppFunc
 
-      lazy val libPaths: Set[String] = null /*not implemented*/
+      lazy val libPaths: Set[String] = Set.empty[String]
     }
 
   }
 
   trait ScalaLanguage extends LanguageConf {
 
-    case class ScalaLib(val jar: String, pack: String) extends Lib with Implicit[ScalaLib]
+    case class ScalaLib(jar: String, pack: String) extends Lib with Implicit[ScalaLib]
 
     case class EmbeddedObject(name: String) extends Lib with Implicit[EmbeddedObject]
 
@@ -126,8 +134,19 @@ trait MethodMapping {
 
       lazy val libPaths: Set[String] = libs filter(_.isInstanceOf[ScalaLib]) map (_.asInstanceOf[ScalaLib].jar) filter (!_.isEmpty) to
     }
-
   }
-
 }
+
+trait CoreMethodMapping extends MethodMapping {
+
+  trait CoreConf extends LanguageConf
+
+  new ScalaLanguage with CoreConf {
+
+    val backend = new ScalaBackend {
+      val functionMap = Map.empty[Method, Func]
+    }
+  }
+}
+
 

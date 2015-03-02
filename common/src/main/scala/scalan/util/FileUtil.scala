@@ -107,7 +107,7 @@ object FileUtil {
 
   def packJar(baseClass: Class[_], methodName: String, path: String, libDir: String, jarName: String) = {
     file(path, libDir).mkdirs()
-    launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", s"$path/$libDir/$jarName") :+
+    launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", file(path, libDir, jarName).getAbsolutePath) :+
       baseClass.getPackage.getName.replaceAll("\\.", "/"): _*)
   }
 
