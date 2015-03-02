@@ -561,8 +561,10 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
     op match {
       case Join(outer, inner, on) => generateOperator(outer) + s"""\n$indent.join(${generateOperator(inner)})(${generateJoinKey(outer, on)}, ${generateJoinKey(inner, on)})"""
       case Scan(t) =>
-        currMethod.explicitArgs.find(arg =>
-          arg.tpe.isInstanceOf[STraitCall] && arg.tpe.asInstanceOf[STraitCall].name == "Table" &&  arg.tpe.asInstanceOf[STraitCall].tpeSExprs(0).toString == t.name.capitalize) match { // TODO: global lookup
+        currMethod.explicitArgs.find(arg =>arg.tpe match { 
+          case STraitCall(n1, List(STraitCall(n2, List(p)))) if n1 == "Rep" && n2 == "Table" && p.toString == t.name.capitalize => true
+          case _ => false
+        }) match { // TODO: global lookup
           case Some(arg) => arg.name
           case _ => t.name.toLowerCase
         }
