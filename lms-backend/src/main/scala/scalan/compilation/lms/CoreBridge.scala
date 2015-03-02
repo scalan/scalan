@@ -1087,6 +1087,32 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
         }
       }
 
+      case ArrayScan(source, monoid) => {
+        source.elem match {
+          case el: ArrayElem[_] => {
+            createManifest(el.eItem) match {
+              case (mA: Manifest[a]) => {
+                val src = symMirr(source).asInstanceOf[lms.Exp[Array[a]]]
+                monoid.opName match {
+                  case "+" =>
+                    val exp = lms.sum[a](src)(mA)
+                    (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+                  case _ =>
+                    monoid.append match {
+                      case opSym@Def(lambda: Lambda[_, _]) => {
+                        val zero = symMirr(monoid.zero).asInstanceOf[lms.Exp[a]]
+                        val op = mirrorLambdaToLmsFunc[(a, a), a](m)(lambda.asInstanceOf[Lambda[(a, a), a]])
+                        val exp = lms.reduce[a](src, zero, op)(mA)
+                        (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((opSym, op)))
+                      }
+                    }
+                }
+              }
+            }
+          }
+        }
+      }
+
       case ArrayStride(xs, start, length, stride) =>
         xs.elem match {
           case el: ArrayElem[a] =>
@@ -1115,6 +1141,16 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
               val exp = lms.array_new[a_t](zero)(mA)
               (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
           }
+
+      case ArrayAppend(xs, value) =>
+        xs.elem match {
+          case el: ArrayElem[a] =>
+            val mA = createManifest(el.eItem).asInstanceOf[Manifest[a]]
+            val lmsXs = symMirr(xs).asInstanceOf[lms.Exp[Array[a]]]
+            val lmsValue = symMirr(value).asInstanceOf[lms.Exp[a]]
+            val exp = lms.array_append(lmsXs, lmsValue)(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        }
 
       case lr@ListMap(list, lamSym@Def(lam: Lambda[_, _])) =>
         (createManifest(list.elem), createManifest(lam.eB)) match {

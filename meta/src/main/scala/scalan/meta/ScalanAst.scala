@@ -116,7 +116,9 @@ trait ScalanAst {
     tpeRes: Option[STpeExpr],
     isImplicit: Boolean,
     overloadId: Option[String],
-    annotations: List[SMethodAnnotation] = Nil, body: Option[SExpr] = None, elem: Option[Unit] = None)
+    annotations: List[SMethodAnnotation] = Nil,
+    body: Option[SExpr] = None,
+    elem: Option[Unit] = None)
     extends SBodyItem {
     def externalOpt: Option[SMethodAnnotation] = annotations.filter(a => a.annotationClass == "External").headOption
     def isElem: Boolean = elem.isDefined

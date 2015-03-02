@@ -21,6 +21,7 @@ trait SegmentsAbs extends Scalan with Segments {
     override def convert(x: Rep[Reifiable[_]]) = convertSegment(x.asRep[Segment])
     def convertSegment(x : Rep[Segment]): Rep[To]
   }
+
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
   implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
     lazy val tag = weakTypeTag[SegmentCompanionAbs]
@@ -242,7 +243,7 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
   }
 
   def mkInterval
-      (start: Rep[Int], end: Rep[Int]) =
+      (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
       new SeqInterval(start, end)
   def unmkInterval(p: Rep[Interval]) =
     Some((p.start, p.end))
@@ -259,7 +260,7 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
   }
 
   def mkSlice
-      (start: Rep[Int], length: Rep[Int]) =
+      (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
       new SeqSlice(start, length)
   def unmkSlice(p: Rep[Slice]) =
     Some((p.start, p.length))
@@ -276,7 +277,7 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
   }
 
   def mkCentered
-      (center: Rep[Int], radius: Rep[Int]) =
+      (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
       new SeqCentered(center, radius)
   def unmkCentered(p: Rep[Centered]) =
     Some((p.center, p.radius))
@@ -333,7 +334,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   }
 
   def mkInterval
-    (start: Rep[Int], end: Rep[Int]) =
+    (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
     new ExpInterval(start, end)
   def unmkInterval(p: Rep[Interval]) =
     Some((p.start, p.end))
@@ -381,7 +382,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   }
 
   def mkSlice
-    (start: Rep[Int], length: Rep[Int]) =
+    (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
     new ExpSlice(start, length)
   def unmkSlice(p: Rep[Slice]) =
     Some((p.start, p.length))
@@ -453,7 +454,7 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   }
 
   def mkCentered
-    (center: Rep[Int], radius: Rep[Int]) =
+    (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
     new ExpCentered(center, radius)
   def unmkCentered(p: Rep[Centered]) =
     Some((p.center, p.radius))

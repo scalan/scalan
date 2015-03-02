@@ -21,6 +21,7 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
     override def convert(x: Rep[Reifiable[_]]) = convertMMultiMap(x.asRep[MMultiMap[K, V]])
     def convertMMultiMap(x : Rep[MMultiMap[K, V]]): Rep[To]
   }
+
   trait MMultiMapCompanionElem extends CompanionElem[MMultiMapCompanionAbs]
   implicit lazy val MMultiMapCompanionElem: MMultiMapCompanionElem = new MMultiMapCompanionElem {
     lazy val tag = weakTypeTag[MMultiMapCompanionAbs]
@@ -116,7 +117,7 @@ trait MultiMapsSeq extends MultiMapsDsl with ScalanSeq {
   }
 
   def mkHashMMultiMap[K, V]
-      (map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]) =
+      (map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
       new SeqHashMMultiMap[K, V](map)
   def unmkHashMMultiMap[K:Elem, V:Elem](p: Rep[HashMMultiMap[K, V]]) =
     Some((p.map))
@@ -340,7 +341,7 @@ trait MultiMapsExp extends MultiMapsDsl with ScalanExp {
   }
 
   def mkHashMMultiMap[K, V]
-    (map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]) =
+    (map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
     new ExpHashMMultiMap[K, V](map)
   def unmkHashMMultiMap[K:Elem, V:Elem](p: Rep[HashMMultiMap[K, V]]) =
     Some((p.map))

@@ -79,14 +79,15 @@ class CXXLmsSmokeItTests extends SmokeItTests {
       progStaged.buildExecutable(dir, dir, functionName, progStaged.simpleIf, GraphVizConfig.default)
 //    compareOutputWithSequential(progStaged)(progSeq.simpleIf, progStaged.simpleIf, "simpleIf", in)
   }
-  ignore("test10simpleSum") { //TODO: CLikeGen: remap(m) : Type scala.util.Either[Int, Unit] cannot be remapped.
+  test("test10simpleSum") { //TODO: CLikeGen: remap(m) : Type scala.util.Either[Int, Unit] cannot be remapped.
+    pending
     val in = 7
     val functionName = "simpleSum"
     val dir = new File(prefix, functionName)
     progStaged.buildExecutable(dir, dir, functionName, progStaged.simpleSum, GraphVizConfig.default)
 //    compareOutputWithSequential(progStaged)(progSeq.simpleSum, progStaged.simpleSum, "simpleSum", in)
   }
-  test("test11simpleOptionOps") {
+  test("test11optionOps") {
     val in = 7
     val functionName = "optionOps"
     val dir = new File(prefix, functionName)
@@ -101,7 +102,8 @@ class CXXLmsSmokeItTests extends SmokeItTests {
     progStaged.buildExecutable(dir, dir, functionName, progStaged.lambdaApply, GraphVizConfig.default)
 //    compareOutputWithSequential(progStaged)(progSeq.lambdaApply, progStaged.lambdaApply, "lambdaApply", (x, f))
   }
-  ignore("lambdaConst") {
+  test("lambdaConst") {
+    pending
     val in = 7
     val functionName = "lambdaConst"
     val dir = new File(prefix, functionName)
@@ -109,4 +111,11 @@ class CXXLmsSmokeItTests extends SmokeItTests {
 //    getStagedOutput(progStaged)(progStaged.lambdaConst, "lambdaConst", in).isInstanceOf[Right[_, _]]
   }
 
+  test("arrayUpdate") {
+    val in = Array(0, 0)
+    val functionName = "arrayUpdate"
+    val dir = new File(prefix, functionName)
+    progStaged.buildExecutable(dir, dir, functionName, progStaged.arrayUpdate, GraphVizConfig.default)
+//    compareOutputWithSequential(progStaged)(progSeq.arrayUpdate, progStaged.arrayUpdate, "arrayUpdate", in)
+  }
 }

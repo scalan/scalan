@@ -1,9 +1,7 @@
 package scalan.compilation.lms.cxx
 
-import java.io.PrintWriter
-
 import scala.virtualization.lms.common._
-import scalan.compilation.lms.{CoreLmsBackendBase, LmsBackend, LmsBackendFacade}
+import scalan.compilation.lms.CoreLmsBackendBase
 
 class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
 
@@ -20,6 +18,11 @@ class CoreCXXLmsBackend extends CoreLmsBackendBase { self =>
   with CLikeGenOrderingOps
   with CLikeGenBooleanOps
   with CXXGenFunctions
+  with CXXGenArrayOps
+  with CXXGenVariables
+  with CXXGenArrayBuilderOps
+  with CXXGenRangeOps
+  with CLikeGenWhile
   with CXXCodegen
   {
     override val IR: self.type = self

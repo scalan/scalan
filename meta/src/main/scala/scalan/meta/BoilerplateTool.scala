@@ -44,6 +44,9 @@ class BoilerplateTool extends StrictLogging {
   val liteTypeSynonyms = Map(
     "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
+  val collectTypeSynonyms = Map(
+    "PG" -> "Graph" , "Coll" -> "Collection", "NColl" -> "NestedCollection"
+  )
   lazy val ceConfig = CodegenConfig(
     name = "ce",
     srcPath = "../community-edition/src/main/scala",
@@ -117,18 +120,52 @@ class BoilerplateTool extends StrictLogging {
     effectsTypeSynonims
   )
 
+  lazy val collectionsConfig = CodegenConfig(
+    name = "collections",
+    srcPath = "../community-edition/src/main/scala",
+    entityFiles = List(
+      "scalan/collection/Collections.scala"
+     ),
+    baseContextTrait = "Scalan",
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._", "scala.reflect._",
+      "scalan.common.Default"),
+    collectTypeSynonyms
+  )
+
+  lazy val graphConfig = CodegenConfig(
+    name = "graphs",
+    srcPath = "../community-edition/src/main/scala",
+    entityFiles = List(
+      "scalan/graphs/Graphs.scala",
+      "scalan/graphs/Vertices.scala",
+      "scalan/graphs/Edges.scala"
+    ),
+    baseContextTrait = "Scalan",
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._", "scala.reflect._",
+      "scalan.common.Default"),
+    collectTypeSynonyms
+  )
+
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
     args.flatMap { arg => configsMap.getOrElse(arg,
       sys.error(s"Unknown codegen config $arg. Allowed values: ${configsMap.keySet.mkString(", ")}"))
     }.distinct
 
   val configsMap = Map(
+    "graphs" -> List(graphConfig),
+    "collections" -> List(collectionsConfig),
     "coretests" -> List(coreTestsConfig),
     "core" -> List(coreConfig),
     "ce" -> List(ceConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig),
+    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig, graphConfig),
     "all" -> List(coreTestsConfig, ceConfig, eeConfig)
   )
 

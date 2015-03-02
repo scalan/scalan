@@ -526,7 +526,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val constrDefs =
         s"""
          |  def mk$className${typesDecl}
-         |      (${fieldsWithType.rep()})$implicitArgsDecl =
+         |      (${fieldsWithType.rep()})$implicitArgsDecl: Rep[$className${typesUse}] =
          |      new Seq$className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
          |  def unmk$className${typesWithElems}(p: Rep[$className${typesUse}]) =
          |    Some((${fields.rep(f => s"p.$f")}))
@@ -566,7 +566,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val constrDefs =
         s"""
          |  def mk$className${typesDecl}
-         |    (${fieldsWithType.rep()})$implicitArgsDecl =
+         |    (${fieldsWithType.rep()})$implicitArgsDecl: Rep[$className${typesUse}] =
          |    new Exp$className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
          |  def unmk$className${typesWithElems}(p: Rep[$className${typesUse}]) =
          |    Some((${fields.rep(f => s"p.$f")}))

@@ -43,6 +43,7 @@ trait HashSetsAbs extends Scalan with HashSets {
     override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
     def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To]
   }
+
   trait SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs]
   implicit lazy val SHashSetCompanionElem: SHashSetCompanionElem = new SHashSetCompanionElem {
     lazy val tag = weakTypeTag[SHashSetCompanionAbs]
@@ -174,7 +175,7 @@ trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
   }
 
   def mkSHashSetImpl[A]
-      (wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]) =
+      (wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
       new SeqSHashSetImpl[A](wrappedValueOfBaseType)
   def unmkSHashSetImpl[A:Elem](p: Rep[SHashSetImpl[A]]) =
     Some((p.wrappedValueOfBaseType))
@@ -217,7 +218,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   }
 
   def mkSHashSetImpl[A]
-    (wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]) =
+    (wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
     new ExpSHashSetImpl[A](wrappedValueOfBaseType)
   def unmkSHashSetImpl[A:Elem](p: Rep[SHashSetImpl[A]]) =
     Some((p.wrappedValueOfBaseType))
