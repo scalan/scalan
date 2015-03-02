@@ -128,13 +128,16 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
     state
   }
 
-  def scan[A: Manifest](a: Exp[Array[A]], zero: Exp[A], accumulate: Rep[(A, A)] => Rep[A]): Exp[Array[A]] = {
+  /* This is not always woking */
+  def scan[A: Manifest](a: Exp[Array[A]], zero: Exp[A], accumulate: Rep[(A, A)] => Rep[A]): Exp[(Array[A], A)] = {
     var state = zero
-    array(a.length)(i => {
+    val arr1 = array(a.length)(i => {
       val res = state
-      state = accumulate((state.AsInstanceOf[A], a.at(i)))
+      val loc = if (i==0) zero else a.at(i-1)
+      state = accumulate((state.AsInstanceOf[A], loc))
       res
     })
+    Tuple2(arr1, accumulate(arr1.at(a.length -1),a.at(a.length -1)) )
   }
 
   def fold[A: Manifest, S: Manifest](a: Exp[Array[A]], init: Exp[S], func: Rep[(S, A)] => Rep[S]): Exp[S] = {
