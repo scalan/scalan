@@ -22,6 +22,14 @@ trait Fronts extends ScalanCommunityDsl with CollectionsDsl { self: FrontsDsl =>
   trait FrontCompanion {
     def defaultOf = BaseFront.defaultOf
 
+    def emptyBaseFront(len: Rep[Int]) = {
+      val bits = PBitSet.empty(len)
+      val set = Collection(SArray.empty[Int])
+      BaseFront(set, bits)
+    }
+    def emptyMapBasedFront(len: Rep[Int]) = {
+      MapBasedFront(MMap.empty[Int,Unit])
+    }
     def fromStartNode(start: Rep[Int], len: Rep[Int]) = {
       val bits = PBitSet.empty(len).add(start)
       val set = Collection.singleton(start)

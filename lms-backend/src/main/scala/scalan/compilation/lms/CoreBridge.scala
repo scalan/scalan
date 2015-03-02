@@ -1094,15 +1094,15 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
               case (mA: Manifest[a]) => {
                 val src = symMirr(source).asInstanceOf[lms.Exp[Array[a]]]
                 monoid.opName match {
-                  case "+" =>
-                    val exp = lms.sum[a](src)(mA)
-                    (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+                  //case "+" =>
+                  //  val exp = lms.sum[a](src)(mA)
+                  //  (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
                   case _ =>
                     monoid.append match {
                       case opSym@Def(lambda: Lambda[_, _]) => {
                         val zero = symMirr(monoid.zero).asInstanceOf[lms.Exp[a]]
                         val op = mirrorLambdaToLmsFunc[(a, a), a](m)(lambda.asInstanceOf[Lambda[(a, a), a]])
-                        val exp = lms.reduce[a](src, zero, op)(mA)
+                        val exp = lms.scan[a](src, zero, op)(mA)
                         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((opSym, op)))
                       }
                     }
