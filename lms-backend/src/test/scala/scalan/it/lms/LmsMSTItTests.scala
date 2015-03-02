@@ -133,7 +133,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     //compareOutputWithSequential(progDslStaged)(progDslSeq.mstFun1Adj, progDslStaged.mstFun1Adj, "MST_adjList_dsl", input)
 
   }
-  test("MST_adjListMap_dsl") {
+  ignore("MST_adjListMap_dsl") {
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
