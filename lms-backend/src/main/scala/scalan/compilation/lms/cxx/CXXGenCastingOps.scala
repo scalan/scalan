@@ -12,9 +12,9 @@ trait CXXGenCastingOps extends CXXCodegen {
   override def emitNode(sym: Sym[Any], rhs: Def[Any]): Unit = {
     rhs match {
       case RepAsInstanceOf(sy, t1, t2) if t1 != t2 =>
-        emitValDef(sym, s"static_cast<${remap(t2)}>(${quote(sy)})")
+        emitValDef(sym, s"static_cast<${remap(t2)}>(${quote(sy)}) /*${rhs.toString}*/")
       case RepAsInstanceOf(sy, _, _) =>
-        emitValDef(sym, quote(sy))
+        emitValDef(sym, quote(sy) + s" /*${rhs.toString}*/")
       case _ => super.emitNode(sym, rhs)
     }
   }

@@ -33,8 +33,7 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
 
     def step(front: Rep[Front], out: Coll[Int]) = {
       val outEdges = g.outEdgesOf(front)
-      val minEdges = outEdges.map({ edge => Pair(edge.value, Pair(edge.fromId, edge.toId))})
-      val minEdge = minEdges.reduce(MinWeightMonoid)
+      val minEdge = outEdges.map({ edge => Pair(edge.value, Pair(edge.fromId, edge.toId))}).reduce(MinWeightMonoid)
       val from = minEdge._2
       val to = minEdge._3
       (front.append(to), out.update(to, from))

@@ -44,6 +44,7 @@ trait Base extends LazyLogging { self: Scalan =>
   def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for $x with element $eA")
   implicit def liftToRep[A:Elem](x: A): Rep[A] = toRep(x)
 
+  type RReifiable[+T] = Rep[Reifiable[T]]
   trait Reifiable[+T] extends Product {
     def selfType: Elem[T @uncheckedVariance]
     def self: Rep[T]

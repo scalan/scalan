@@ -1142,6 +1142,16 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
               (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
           }
 
+      case ArrayAppend(xs, value) =>
+        xs.elem match {
+          case el: ArrayElem[a] =>
+            val mA = createManifest(el.eItem).asInstanceOf[Manifest[a]]
+            val lmsXs = symMirr(xs).asInstanceOf[lms.Exp[Array[a]]]
+            val lmsValue = symMirr(value).asInstanceOf[lms.Exp[a]]
+            val exp = lms.array_append(lmsXs, lmsValue)(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        }
+
       case lr@ListMap(list, lamSym@Def(lam: Lambda[_, _])) =>
         (createManifest(list.elem), createManifest(lam.eB)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
