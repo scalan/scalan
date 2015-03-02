@@ -62,9 +62,9 @@ trait SeqsAbs extends Scalan with Seqs {
         this.getClass.getMethod("empty", classOf[Elem[A]]),
         List(element[A]))
 
-    def fromElem[A:Elem](elem: Rep[A]): Rep[SSeq[A]] =
+    def single[A:Elem](elem: Rep[A]): Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,
-        this.getClass.getMethod("fromElem", classOf[AnyRef], classOf[Elem[A]]),
+        this.getClass.getMethod("single", classOf[AnyRef], classOf[Elem[A]]),
         List(elem.asInstanceOf[AnyRef], element[A]))
 
     def fromList[A:Elem](list: Rep[List[A]]): Rep[SSeq[A]] =
@@ -203,8 +203,8 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
     override def empty[A:Elem]: Rep[SSeq[A]] =
       SSeqImpl(Seq.empty[A])
 
-    override def fromElem[A:Elem](elem: Rep[A]): Rep[SSeq[A]] =
-      SSeqImpl(Seq.fromElem[A](elem))
+    override def single[A:Elem](elem: Rep[A]): Rep[SSeq[A]] =
+      SSeqImpl(Seq.single[A](elem))
 
     override def fromList[A:Elem](list: Rep[List[A]]): Rep[SSeq[A]] =
       SSeqImpl(Seq.fromList[A](list))
@@ -458,9 +458,9 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
       }
     }
 
-    object fromElem {
+    object single {
       def unapply(d: Def[_]): Option[Rep[A] forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(elem, _*), _) if receiver.elem.isInstanceOf[SSeqCompanionElem] && method.getName == "fromElem" =>
+        case MethodCall(receiver, method, Seq(elem, _*), _) if receiver.elem.isInstanceOf[SSeqCompanionElem] && method.getName == "single" =>
           Some(elem).asInstanceOf[Option[Rep[A] forSome {type A}]]
         case _ => None
       }
@@ -510,7 +510,6 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
 
   override def rewriteDef[T](d: Def[T]) = d match {
     case SSeqMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
-      /*
     case SSeqMethods.map(t: SSeqMapArgs[_,c] @unchecked) => t match {
       case (xs: RSeq[a]@unchecked, f @ Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) => {
         val f1 = f.asRep[a => c]
@@ -539,7 +538,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
       implicit val eAB = compIso.eTo
       ViewSSeq(arr)(SSeqIso(compIso))
     }
-*/
+
     case _ => super.rewriteDef(d)
   }
 }

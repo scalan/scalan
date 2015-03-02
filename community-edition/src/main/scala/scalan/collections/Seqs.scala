@@ -55,8 +55,8 @@ trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
     /** Creates a sequence without elements. */
     @External def empty[A:Elem]: Rep[SSeq[A]]
 
-    /** Creates a sequence with one element. */
-    @External def fromElem[A: Elem](elem: Rep[A]): Rep[SSeq[A]]
+    /** Creates a sequence that contains one element. */
+    @External def single[A: Elem](elem: Rep[A]): Rep[SSeq[A]]
 
     /** Creates a sequence which based on a list. */
     @External def fromList[A:Elem](list: Rep[List[A]]): Rep[SSeq[A]]
@@ -74,7 +74,7 @@ trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
     override def toArray = wrappedValueOfBaseType.toArray[A](eA.classTag)
   }
   implicit class SeqOps(s: Seq.type) {
-    def fromElem[A](elem: A): Seq[A] = Seq(elem)
+    def single[A](elem: A): Seq[A] = Seq(elem)
     def fromList[A](list: List[A]): Seq[A] = Seq(list: _*)
   }
 }
