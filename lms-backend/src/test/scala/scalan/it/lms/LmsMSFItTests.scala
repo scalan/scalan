@@ -96,7 +96,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     Array(2.0, 0.5)
   )
 
-  /* Commented
+  // Commented
   test("MSF_adjList") {
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
@@ -125,7 +125,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val resStaged = getStagedOutputConfig(progStaged2)(progStaged2.msfFunIncBase, "MSF_adjMatrix", input, progStaged2.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
   }
-  */
+
   test("MSF_adjListMap") {
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
