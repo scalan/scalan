@@ -63,7 +63,7 @@ class CommunityCXXLmsBackend extends CoreCXXLmsBackend with CommunityLmsBackendB
         val has = indargs.map(p => p._2.tp.runtimeClass)
           .contains(classOf[JNILmsOps#JNIType[_]])
         val jniEnv = if (has) "JNIEnv* env, " else ""
-        stream.println(s"${sA} apply(${jniEnv}${indargs.map(p => s"${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
+        stream.println(s"${sA} apply_$className(${jniEnv}${indargs.map(p => s"${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
         emitBlock(body)
         stream.println(s"return ${quote(getBlockResult(body))};")

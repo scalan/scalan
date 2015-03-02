@@ -124,7 +124,7 @@ trait CXXCodegen extends CLikeCodegen {
       emitFileHeader()
 
       val indargs = scala.Range(0, args.length).zip(args);
-      stream.println(s"${sA} apply(${indargs.map( p => s"const ${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
+      stream.println(s"${sA} apply_$className(${indargs.map( p => s"const ${remapWithRef(p._2.tp)} ${quote(p._2)}").mkString(", ")} ) {")
 
       emitBlock(body)
       stream.println(s"return ${quoteMove(getBlockResult(body))};")
