@@ -122,26 +122,4 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     println(res.mkString(" , "))
   }
 
-  test("MST_adjList_dsl") {
-    val links = graph.flatMap( i=> i)
-    val edgeVals = graphValues.flatMap(i => i)
-    val lens = graph.map(i => i.length)
-    val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
-    val input = (links, (edgeVals, (offs, lens)))
-    val res = progDslSeq.mstFun1Adj(input)
-    println(res.mkString(" , "))
-    //compareOutputWithSequential(progDslStaged)(progDslSeq.mstFun1Adj, progDslStaged.mstFun1Adj, "MST_adjList_dsl", input)
-
-  }
-  ignore("MST_adjListMap_dsl") {
-    val links = graph.flatMap( i=> i)
-    val edgeVals = graphValues.flatMap(i => i)
-    val lens = graph.map(i => i.length)
-    val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
-    val input = (links, (edgeVals, (offs, lens)))
-    val res = progDslSeq.mstFun1AdjMap(input)
-    //println(res.mkString(" , "))
-    compareOutputWithSequential(progDslStaged)(progDslSeq.mstFun1AdjMap, progDslStaged.mstFun1AdjMap, "MST_adjListMap_dsl", input)
-  }
-
 }
