@@ -2,7 +2,6 @@ package scalan.compilation.lms.common
 
 import java.util.HashMap
 
-import scala.virtualization.lms.common._
 import scalan.compilation.lms.LmsBackendFacade
 
 trait ArrayOpsExtExp { self: LmsBackendFacade =>

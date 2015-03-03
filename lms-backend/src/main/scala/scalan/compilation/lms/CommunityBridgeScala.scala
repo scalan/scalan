@@ -2,18 +2,35 @@ package scalan.compilation.lms
 
 import java.lang.reflect.Method
 
+import scalan.compilation.language.ScalaInterpreter
 import scalan.{ScalanCommunityDslExp, CommunityMethodMapping}
 
-trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping { self: ScalanCommunityDslExp =>
+trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping with ScalaInterpreter { self: ScalanCommunityDslExp =>
+
+  override def defTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]) =
+    communityTransformer(m, g, e) orElse super.defTransformer(m, g, e)
+
+  def communityTransformer[T](m: LmsMirror, fromGraph: AstGraph, tp: TableEntry[T]): DefTransformer = {
+    val (exps, symMirr, funcMirr) = m
+    val sym = tp.sym
+    val tt: DefTransformer = {
+      case u: scalan.parrays.impl.PArraysExp#ExpBaseArray[_] =>
+        val exp = Manifest.classType(u.getClass) match {
+          case (mA: Manifest[a]) => lms.newObj[a]("scalan.imp.ArrayImp", Seq(symMirr(u.arr.asInstanceOf[Exp[_]])))(mA)
+        }
+        (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+    }
+    tt
+  }
+
   override def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] = {
     import lms.EffectId._
 
     val obj = symMirr(receiver.asInstanceOf[Exp[_]])
 
-    getFunc(method) match {
+    mappedFunc(method) match {
       case Some(conf: ScalaLanguage#ScalaFunc) => conf.lib match {
         case e: ScalaLanguage#ScalaLib =>
-          //              if (!e.jar.isEmpty) extensionsJars += e.jar
           Manifest.classType(method.getDeclaringClass) match {
             case (mA: Manifest[a]) => lms.scalaMethod[a](null, PURE, e.pack + "." + conf.funcName.name, List.empty, List(obj) ++ args.map(v => symMirr(v.asInstanceOf[Exp[_]])): _*)(mA)
           }

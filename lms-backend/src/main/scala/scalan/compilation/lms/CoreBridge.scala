@@ -36,7 +36,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
       case lr@NewObject(aClass, args, _) =>
         Manifest.classType(aClass) match {
           case (mA: Manifest[a]) =>
-            val exp = lms.newObj[a](aClass.getCanonicalName, args.map(v => symMirr(v.asInstanceOf[Exp[_]])))(mA)
+            val exp = newObj[a](symMirr, aClass, args.asInstanceOf[Seq[Rep[_]]])(mA)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
 
@@ -1226,6 +1226,6 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
     tt
   }
 
-  def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] =
-    !!!("Don't know how to transform method call")
+  def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] = !!!("Don't know how to transform method call")
+  def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]]): lms.Exp[A] = !!!("Don't know how to create new object")
 }

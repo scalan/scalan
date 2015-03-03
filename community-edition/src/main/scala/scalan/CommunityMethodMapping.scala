@@ -29,6 +29,8 @@ trait CommunityMethodMapping extends MethodMapping {
         }
       }
     }
+
+    val expBaseArray = new CaseClassObject(typeOf[scalan.parrays.impl.PArraysExp#ExpBaseArray[_]])
   }
 
   new ScalaLanguage with CommunityConf {
@@ -52,7 +54,7 @@ trait CommunityMethodMapping extends MethodMapping {
     }
 
     val backend = new ScalaBackend {
-      val functionMap = mapScalanCE2Scala // ++ ???
+      val functionMap = mapScalanCE2Scala
     }
   }
 
