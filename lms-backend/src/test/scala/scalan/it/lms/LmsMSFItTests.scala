@@ -1,5 +1,8 @@
 package scalan.it.lms
 
+import scalan.compilation.GraphVizConfig
+import scalan.compilation.lms.cxx.{CoreCXXLmsBackend, LmsCompilerCXX}
+import scalan.util.FileUtil
 import scalan.{ScalanCommunityDslSeq, ScalanCommunityDslExp, ScalanCtxSeq, ScalanCtxExp}
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
@@ -55,6 +58,9 @@ abstract class LmsMsfItTests extends BaseItTests {
   class ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge { self =>
     val lms = new CommunityLmsBackend
   }
+  class ProgExpCXX extends GraphsDslExp with MsfFuncs with ScalanCommunityDslExp with LmsCompilerCXX with CoreBridge { self =>
+    val lms = new CoreCXXLmsBackend
+  }
 
   class ProgSeq extends GraphsDslSeq with MsfFuncs with ScalanCommunityDslSeq
 
@@ -63,6 +69,10 @@ abstract class LmsMsfItTests extends BaseItTests {
   val progStaged2 = new ProgExp
   val progStaged3 = new ProgExp
   val progStaged4 = new ProgExp
+  val progStaged1CXX = new ProgExpCXX
+  val progStaged2CXX = new ProgExpCXX
+  val progStaged3CXX = new ProgExpCXX
+  val progStaged4CXX = new ProgExpCXX
 }
 
 class LmsMsfPrimeItTests extends LmsMsfItTests {
@@ -107,6 +117,9 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     println("Seq: " + resSeq.mkString(" , "))
     val resStaged = getStagedOutputConfig(progStaged1)(progStaged1.msfFunAdjBase, "MSF_adjList", input, progStaged1.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
+
+    val dir = FileUtil.file(prefix, "MSF_adjList")
+    progStaged1CXX.buildExecutable(dir,dir,"MSF_adjList", progStaged1CXX.msfFunAdjBase, GraphVizConfig.default)(progStaged1CXX.defaultCompilerConfig)
   }
   test("MSF_adjMatrix") {
     val vertexNum = graph.length
@@ -124,6 +137,9 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     println("Seq: " + resSeq.mkString(" , "))
     val resStaged = getStagedOutputConfig(progStaged2)(progStaged2.msfFunIncBase, "MSF_adjMatrix", input, progStaged2.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
+
+    val dir = FileUtil.file(prefix, "MSF_adjMatrix")
+    progStaged2CXX.buildExecutable(dir,dir,"MSF_adjMatrix", progStaged2CXX.msfFunIncBase, GraphVizConfig.default)(progStaged2CXX.defaultCompilerConfig)
   }
 
   test("MSF_adjListMap") {
@@ -136,7 +152,11 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     println("Seq: " + resSeq.mkString(" , "))
     val resStaged = getStagedOutputConfig(progStaged3)(progStaged3.msfFunAdjMap, "MSF_adjListMap", input, progStaged3.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
+
+    val dir = FileUtil.file(prefix, "MSF_adjListMap")
+    progStaged3CXX.buildExecutable(dir,dir,"MSF_adjListMap", progStaged3CXX.msfFunAdjMap, GraphVizConfig.default)(progStaged3CXX.defaultCompilerConfig)
   }
+
   test("MSF_adjMatrixMap") {
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
@@ -153,5 +173,8 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     println("Seq: " + resSeq.mkString(" , "))
     val resStaged = getStagedOutputConfig(progStaged4)(progStaged4.msfFunIncMap, "MSF_adjMatrixMap", input, progStaged4.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
+
+    val dir = FileUtil.file(prefix, "MSF_adjMatrixMap")
+    progStaged4CXX.buildExecutable(dir,dir,"MSF_adjMatrixMap", progStaged4CXX.msfFunIncMap, GraphVizConfig.default)(progStaged4CXX.defaultCompilerConfig)
   }
 }

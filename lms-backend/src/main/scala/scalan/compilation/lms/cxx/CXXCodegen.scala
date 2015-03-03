@@ -64,11 +64,15 @@ trait CXXCodegen extends CLikeCodegen {
   }
 
   override def emitAssignment(sym: Sym[Any], rhs: String): Unit = {
-    stream.println(super.quote(sym) + " = " + rhs + s"; /*emitAssignment(): ${sym.tp} ${sym} ${rhs}*/")
+    val tt = remap(sym.tp)
+    if( "void" != tt )
+      stream.println(super.quote(sym) + " = " + rhs + s"; /*emitAssignment(): ${sym.tp} ${sym} ${rhs}*/")
   }
 
   override def emitVarDecl(sym: Sym[Any]): Unit = {
-    stream.println(remap(sym.tp) + " " + quote(sym) + s"; /*emitVarDecl(): ${sym.tp} ${sym}*/")
+    val tt = remap(sym.tp)
+    if( "void" != tt )
+      stream.println(tt + " " + quote(sym) + s"; /*emitVarDecl(): ${sym.tp} ${sym}*/")
   }
 
   override def emitVarDef(sym: Sym[Variable[Any]], rhs: String): Unit = {
@@ -92,8 +96,9 @@ trait CXXCodegen extends CLikeCodegen {
   override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
     if (remap(tpe) != "void")
       stream.println("const " + remapWithRef(tpe) + " " + sym + " = " + rhs + ";")
-    else
-      throw new IllegalArgumentException("can not emit void symbol, use emitUnitStatement() instead.")
+//    else
+//      stream.println(rhs + ";")
+//      throw new IllegalArgumentException(s"can not emit void symbol, use emitUnitStatement() instead. $sym: $tpe = $rhs ")
   }
 
   def emitUnitStatement(rhs: String): Unit = {
