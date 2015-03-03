@@ -18,7 +18,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     coreTypeSynonyms
   )
@@ -36,7 +36,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     coreTestsTypeSynonyms
   )
@@ -59,7 +59,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     coreTypeSynonyms ++ liteTypeSynonyms
   )
@@ -82,7 +82,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanEnterpriseSeq",
     stagedContextTrait = "ScalanEnterpriseExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
   )
@@ -100,20 +100,19 @@ class BoilerplateTool extends StrictLogging {
     name = "effects",
     srcPath = "../../scalan-effects/src/main/scala",
     entityFiles = List(
-      //"scalan/monads/Monads.scala"
-      //, "scalan/monads/Functors.scala"
-      "scalan/monads/FreeMs.scala"
-      //"scalan/io/Frees.scala"
-      //"scalan/monads/Coproducts.scala"
-      //"scalan/monads/Interactions.scala"
-      //"scalan/monads/Auths.scala"
-      //"scalan/monads/Readers.scala"     
+      "scalan/monads/Frees.scala",
+      "scalan/monads/Coproducts.scala",
+      "scalan/examples/Interactions.scala",
+      "scalan/examples/Auths.scala",
+      "scalan/examples/IOs.scala",
+      "scalan/monads/Readers.scala",
+      "scalan/stream/Processes.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     effectsTypeSynonims
   )

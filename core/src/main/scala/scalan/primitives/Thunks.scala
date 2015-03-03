@@ -87,9 +87,10 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
     val roots = List(root)
   }
 
-  case class ThunkView[A, B](source: Rep[Thunk[A]])(implicit i: Iso[A, B]) extends View1[A, B, Thunk] {
-    lazy val iso = thunkIso(i)
-    def copy(source: Rep[Thunk[A]]) = ThunkView(source)
+  case class ThunkView[A, B](source: Rep[Thunk[A]])(iso: Iso1[A, B, Thunk])
+    extends View1[A, B, Thunk](iso) {
+    //lazy val iso = thunkIso(i)
+    def copy(source: Rep[Thunk[A]]) = ThunkView(source)(iso)
   }
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
@@ -99,22 +100,24 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
 
-  case class ThunkIso[A:Elem,B:Elem](iso: Iso[A,B]) extends Iso[Thunk[A], Thunk[B]] {
-    lazy val eTo = element[Thunk[B]]
-    def from(x: Th[B]) = Thunk { iso.from(x.force) }
-    def to(x: Th[A]) = Thunk { iso.to(x.force) }
-    lazy val tag = {
-      implicit val tB = iso.tag
-      weakTypeTag[Thunk[B]]
-    }
-    lazy val defaultRepTo = DefaultOfThunk[B]
+  implicit val thunkContainer: Cont[Thunk] = new Container[Thunk] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Thunk[T]]
+    def lift[T](implicit eT: Elem[T]) = element[Thunk[T]]
   }
 
-  def thunkIso[A, B](iso: Iso[A, B]): Iso[Thunk[A], Thunk[B]] = {
+  case class ThunkIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Thunk](iso) {
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
-    ThunkIso(iso)
+    def from(x: Th[B]) = ??? //x.map(iso.from _)
+    def to(x: Th[A]) = ??? //x.map(iso.to _)
+    lazy val defaultRepTo = Default.defaultVal(Thunk(eB.defaultRepValue)(eB))
   }
+
+//  def thunkIso[A, B](iso: Iso[A, B]): Iso[Thunk[A], Thunk[B]] = {
+//    implicit val eA = iso.eFrom
+//    implicit val eB = iso.eTo
+//    ThunkIso(iso)
+//  }
 
   class ThunkScope(val thunkSym: Exp[Any], val body: ListBuffer[TableEntry[Any]] = ListBuffer.empty) {
     def +=(te: TableEntry[_]) =
@@ -204,7 +207,7 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
       val newTh = Thunk { iso.from(forceThunkDefByMirror(th)) }   // execute original th as part of new thunk
-      ThunkView(newTh)(iso)
+      ThunkView(newTh)(ThunkIso(iso))
     }
     case ThunkForce(HasViews(srcTh, iso: ThunkIso[a,b])) => {
       implicit val eA = iso.iso.eFrom
