@@ -51,6 +51,30 @@ abstract class LmsMsfItTests extends BaseItTests {
       res.arr
     }
 
+    lazy val msfFunAdjList = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
+      val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
+      val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
+
+      val vertex_vals = UnitCollection(segments.length)
+      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+      val startFront = Front.emptyListBasedFront(graph.vertexNum)
+      val res = MSF_prime(graph, startFront)
+      res.arr
+    }
+
+    lazy val msfTest = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
+      val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
+      val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
+
+      val vertex_vals = UnitCollection(segments.length)
+      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+      val startFront = Front.emptyListBasedFront(graph.vertexNum).append(0)
+      val res = test_prime(graph, startFront)
+      res.arr
+    }
+
   }
   class ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge { self =>
     val lms = new CommunityLmsBackend
@@ -97,6 +121,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
   )
 
   // Commented
+  /*
   test("MSF_adjList") {
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
@@ -152,6 +177,29 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val resSeq = progSeq.msfFunIncMap(input)
     println("Seq: " + resSeq.mkString(" , "))
     val resStaged = getStagedOutputConfig(progStaged4)(progStaged4.msfFunIncMap, "MSF_adjMatrixMap", input, progStaged4.defaultCompilerConfig)
+    println("Staged: " + resStaged.mkString(","))
+  } */
+  /*
+  test("MSF_adjListList") {
+    val links = graph.flatMap( i=> i)
+    val edgeVals = graphValues.flatMap(i => i)
+    val lens = graph.map(i => i.length)
+    val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
+    val input = (links, (edgeVals, (offs, lens)))
+    val resSeq = progSeq.msfFunAdjList(input)
+    println("Seq: " + resSeq.mkString(" , "))
+    val resStaged = getStagedOutputConfig(progStaged3)(progStaged3.msfFunAdjList, "MSF_adjListList", input, progStaged3.defaultCompilerConfig)
+    println("Staged: " + resStaged.mkString(","))
+  } */
+  test("MSF_adjListList") {
+    val links = graph.flatMap( i=> i)
+    val edgeVals = graphValues.flatMap(i => i)
+    val lens = graph.map(i => i.length)
+    val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
+    val input = (links, (edgeVals, (offs, lens)))
+    //val resSeq = progSeq.msfTest(input)
+    //println("Seq: " + resSeq.mkString(" , "))
+    val resStaged = getStagedOutputConfig(progStaged3)(progStaged3.msfTest, "MSF_TEST", input, progStaged3.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
   }
 }
