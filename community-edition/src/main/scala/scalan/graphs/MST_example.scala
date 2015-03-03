@@ -192,4 +192,311 @@ trait MST_example extends Scalan{
 
     MSF_prime_adjmatrix(links, vertexNum)
   }
+
+  def MST_prime_adjlistMap(links: Rep[Array[Int]], edge_vals: Rep[Array[Double]], offs: Rep[Array[Int]], lens: Rep[Array[Int]],
+                        startVertex: Rep[Int], outInitial: Rep[Array[Int]]) = {
+
+    def outNeighboursOf(index: Rep[Int]): Rep[Array[Int]] = {
+      links.slice(offs(index), lens(index))
+    }
+
+    def fromId(edge: REdge): Rep[Int] = edge._1
+    def outIndex(edge: REdge): Rep[Int] = edge._2
+    def value(edge: REdge) = edge_vals(indexOfTarget(edge))
+    def indexOfTarget(edge: REdge): Rep[Int] = offs(fromId(edge)) + outIndex(edge)
+    def toId(edge: REdge): Rep[Int] = links(indexOfTarget(edge))
+
+
+    def outEdgesOf(front: Rep[MMap[Int, Unit]]) : Rep[Array[Ed]] = {
+      def predicate(edge: REdge): Rep[Boolean] = front.contains(toId(edge))
+
+      val res = front.keys.flatMap { v =>
+        val ns = outNeighboursOf(v)
+        SArray.rangeFrom0(ns.length).map({ i => (v, i)}). filter { !predicate(_) }
+      }
+      res
+    }
+    def stopCondition(unused1: Any, unused2: Any, stop: Rep[Boolean]) = stop
+
+    val vertexNum = offs.length
+    val empty = MMap.empty[Int,Unit]
+    val startFront = (empty.update(startVertex, ()) | empty)
+
+    val out = outInitial.update(startVertex, NO_PARENT)
+    val st = toRep(false)
+
+    val result = from(startFront, out, st).until(stopCondition) { (front, out, st) =>
+      val outEdges = outEdgesOf(front)
+      val stop = (outEdges.length === toRep(0))
+      val res = IF  (stop) THEN {
+        (front, out)
+      } ELSE {
+        val minEdge = outEdges.map({ edge => Pair(value(edge), Pair(fromId(edge), toId(edge)))}).reduce(MinNumMonoid)
+        val from = minEdge._2
+        val to = minEdge._3
+        val newFront = (front.update(to, ()) | front)
+        val newOut = out.update(to, from)
+        (newFront, newOut)
+      }
+      (res._1, res._2, stop)
+    }
+    result._2
+  }
+
+  def MSF_prime_adjlistMap(links: Rep[Array[Int]], edge_vals: Rep[Array[Double]], offs: Rep[Array[Int]], lens: Rep[Array[Int]]): Arr[Int] = {
+    val startVertex = toRep(0);
+    val vertexNum = offs.length
+    val out = SArray.replicate(vertexNum, UNVISITED)
+
+    val outIndexes = SArray.rangeFrom0(vertexNum)
+    val result = from( startVertex, out).until((start, _) => (start === toRep(-1)) ) { (start, out) =>
+      val newOut = MST_prime_adjlistMap(links, edge_vals, offs, lens, start, out)
+      val remain = (outIndexes zip newOut).filter( x => x._2 === UNVISITED)
+      val newStart = IF (remain.length === 0) THEN toRep(-1) ELSE remain(0)._1
+      (newStart, newOut)
+    }
+    result._2
+  }
+
+  lazy val MST_adjlistMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val links = in._1
+    val edge_vals = in._2
+    val segOffsets = in._3
+    val segLens = in._4
+
+    MST_prime_adjlistMap(links, edge_vals, segOffsets, segLens, 0, SArray.replicate(segOffsets.length, UNVISITED))
+  }
+  lazy val MSF_adjlistMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val links = in._1
+    val edge_vals = in._2
+    val segOffsets = in._3
+    val segLens = in._4
+
+    MSF_prime_adjlistMap(links, edge_vals, segOffsets, segLens)
+  }
+
+  def MST_prime_adjmatrixMap(incMatrix: Rep[Array[Double]], vertexNum: Rep[Int],
+                             startVertex: Rep[Int], outInitial: Rep[Array[Int]]) = {
+
+    def rowIndexes = SArray.rangeFrom0(vertexNum)
+    def vertexRow(v: Rep[Int]) : Arr[Double] = incMatrix.slice((v*vertexNum), vertexNum)
+
+    def fromId(edge: REdge): Rep[Int] = edge._1
+    def value(edge: REdge) = incMatrix(indexOfTarget(edge))
+    def indexOfTarget(edge: REdge): Rep[Int] = fromId(edge)*vertexNum + toId(edge)
+    def toId(edge: REdge): Rep[Int] = edge._2
+
+    def outEdgesOf(front: Rep[MMap[Int, Unit]]) : Rep[Array[Ed]] = {
+      def predicate(v: Rep[Int]): Rep[Boolean] = !front.contains(v)
+
+      val res = front.keys.flatMap { v =>
+        val row = vertexRow(v)
+        (row zip rowIndexes).filter({i =>  (i._1 > toRep(0.0)) && predicate(i._2) }).map( i => (v,i._2))
+      }
+      res
+    }
+    def stopCondition(unused1: Any, unused2: Any, stop: Rep[Boolean]) = stop
+
+    val empty = MMap.empty[Int,Unit]
+    val startFront = (empty.update(startVertex, ()) | empty)
+    val out = outInitial.update(startVertex, NO_PARENT)
+    val st = toRep(false)
+
+    val result = from(startFront, out, st).until(stopCondition) { (front, out, st) =>
+      val outEdges = outEdgesOf(front)
+      val stop = (outEdges.length === toRep(0))
+      val res = IF  (stop) THEN {
+        (front, out)
+      } ELSE {
+        val minEdge = outEdges.map({ edge => Pair(value(edge), Pair(fromId(edge), toId(edge)))}).reduce(MinNumMonoid)
+        val from = minEdge._2
+        val to = minEdge._3
+        val newFront = (front.update(to, ()) | front)
+        val newOut = out.update(to, from)
+        (newFront, newOut)
+      }
+      (res._1, res._2, stop)
+    }
+    result._2
+  }
+
+  def MSF_prime_adjmatrixMap(incMatrix: Rep[Array[Double]], vertexNum: Rep[Int]): Arr[Int] = {
+    val startVertex = toRep(0);
+    val out = SArray.replicate(vertexNum, UNVISITED)
+
+    val outIndexes = SArray.rangeFrom0(vertexNum)
+    val result = from( startVertex, out).until((start, _) => (start === toRep(-1)) ) { (start, out) =>
+      val newOut = MST_prime_adjmatrixMap(incMatrix, vertexNum, start, out)
+      val remain = (outIndexes zip newOut).filter( x => x._2 === UNVISITED)
+      val newStart = IF (remain.length === 0) THEN toRep(-1) ELSE remain(0)._1
+      (newStart, newOut)
+    }
+    result._2
+  }
+
+  lazy val MST_adjmatrixMap = fun { in: Rep[(Array[Double], Int)] =>
+    val links = in._1
+    val vertexNum = in._2
+
+    MST_prime_adjmatrixMap(links, vertexNum, 0, SArray.replicate(vertexNum, UNVISITED))
+  }
+  lazy val MSF_adjmatrixMap = fun { in: Rep[(Array[Double], Int)] =>
+    val links = in._1
+    val vertexNum = in._2
+
+    MSF_prime_adjmatrixMap(links, vertexNum)
+  }
+  /*
+  def MST_prime_adjlistMap(links: Rep[Array[Int]], edge_vals: Rep[Array[Double]], offs: Rep[Array[Int]], lens: Rep[Array[Int]],
+                           startVertex: Rep[Int], outInitial: Rep[Array[Int]]) = {
+
+    def outNeighboursOf(index: Rep[Int]): Rep[Array[Int]] = {
+      links.slice(offs(index), lens(index))
+    }
+
+    def fromId(edge: REdge): Rep[Int] = edge._1
+    def outIndex(edge: REdge): Rep[Int] = edge._2
+    def value(edge: REdge) = edge_vals(indexOfTarget(edge))
+    def indexOfTarget(edge: REdge): Rep[Int] = offs(fromId(edge)) + outIndex(edge)
+    def toId(edge: REdge): Rep[Int] = links(indexOfTarget(edge))
+
+
+    def outEdgesOf(front: Rep[MMap[Int, Unit]]) : Rep[Array[Ed]] = {
+      def predicate(edge: REdge): Rep[Boolean] = front.contains(toId(edge))
+
+      val res = front.keys.flatMap { v =>
+        val ns = outNeighboursOf(v)
+        SArray.rangeFrom0(ns.length).map({ i => (v, i)}). filter { !predicate(_) }
+      }
+      res
+    }
+    def stopCondition(unused1: Any, unused2: Any, stop: Rep[Boolean]) = stop
+
+    val vertexNum = offs.length
+    val startFront = MMap.empty[Int,Unit]
+
+    val out = outInitial.update(startVertex, NO_PARENT)
+    val st = toRep(false)
+
+    val result = from(startFront, out, st).until(stopCondition) { (front, out, st) =>
+      val outEdges = outEdgesOf(front)
+      val stop = (outEdges.length == 0)
+      val res = IF  (stop) THEN {
+        (front, out)
+      } ELSE {
+        val minEdge = outEdges.map({ edge => Pair(value(edge), Pair(fromId(edge), toId(edge)))}).reduce(MinNumMonoid)
+        val from = minEdge._2
+        val to = minEdge._3
+        val newFront = (front.update(to, ()) | front)
+        val newOut = out.update(to, from)
+        (newFront, newOut)
+      }
+      (res._1, res._2, stop)
+    }
+    result._2
+  }
+
+  def MSF_prime_adjlistMap(links: Rep[Array[Int]], edge_vals: Rep[Array[Double]], offs: Rep[Array[Int]], lens: Rep[Array[Int]]): Arr[Int] = {
+    val startVertex = toRep(0);
+    val vertexNum = offs.length
+    val out = SArray.replicate(vertexNum, UNVISITED)
+
+    val outIndexes = SArray.rangeFrom0(vertexNum)
+    val result = from( startVertex, out).until((start, _) => (start > 0) ) { (start, out) =>
+      val newOut = MST_prime_adjlistMap(links, edge_vals, offs, lens, start, out)
+      val remain = (outIndexes zip newOut).filter( x => x._2 === UNVISITED)
+      val newStart = IF (remain.length === 0) THEN toRep(-1) ELSE remain(0)._1
+      (newStart, newOut)
+    }
+    result._2
+  }
+
+  lazy val MST_adjlistMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val links = in._1
+    val edge_vals = in._2
+    val segOffsets = in._3
+    val segLens = in._4
+
+    MST_prime_adjlist(links, edge_vals, segOffsets, segLens, 0, SArray.replicate(segOffsets.length, UNVISITED))
+  }
+  lazy val MSF_adjlistMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val links = in._1
+    val edge_vals = in._2
+    val segOffsets = in._3
+    val segLens = in._4
+
+    MSF_prime_adjlist(links, edge_vals, segOffsets, segLens)
+  }
+
+  def MST_prime_adjmatrixMap(incMatrix: Rep[Array[Double]], vertexNum: Rep[Int],
+                             startVertex: Rep[Int], outInitial: Rep[Array[Int]]) = {
+
+    def rowIndexes = SArray.rangeFrom0(vertexNum)
+    def vertexRow(v: Rep[Int]) : Arr[Double] = incMatrix.slice((v*vertexNum), vertexNum)
+
+    def fromId(edge: REdge): Rep[Int] = edge._1
+    def value(edge: REdge) = incMatrix(indexOfTarget(edge))
+    def indexOfTarget(edge: REdge): Rep[Int] = fromId(edge)*vertexNum + toId(edge)
+    def toId(edge: REdge): Rep[Int] = edge._2
+
+    def outEdgesOf(front: Rep[MMap[Int, Unit]]) : Rep[Array[Ed]] = {
+      def predicate(v: Rep[Int]): Rep[Boolean] = front.contains(v)
+
+      val res = front.keys.flatMap { v =>
+        val row = vertexRow(v)
+        (row zip rowIndexes).filter({i =>  (i._1 > toRep(0)) && predicate(i._2) }).map( i => (v,i._2))
+      }
+      res
+    }
+    def stopCondition(unused1: Any, unused2: Any, stop: Rep[Boolean]) = stop
+
+    val startFront = MMap.empty[Int,Unit]
+    val out = outInitial.update(startVertex, NO_PARENT)
+    val st = toRep(false)
+
+    val result = from(startFront, out, st).until(stopCondition) { (front, out, st) =>
+      val outEdges = outEdgesOf(front)
+      val stop = (outEdges.length == 0)
+      val res = IF  (stop) THEN {
+        (front, out)
+      } ELSE {
+        val minEdge = outEdges.map({ edge => Pair(value(edge), Pair(fromId(edge), toId(edge)))}).reduce(MinNumMonoid)
+        val from = minEdge._2
+        val to = minEdge._3
+        val newFront = (front.update(to, ()) | front)
+        val newOut = out.update(to, from)
+        (newFront, newOut)
+      }
+      (res._1, res._2, stop)
+    }
+    result._2
+  }
+
+  def MSF_prime_adjmatrixMap(incMatrix: Rep[Array[Double]], vertexNum: Rep[Int]): Arr[Int] = {
+    val startVertex = toRep(0);
+    val out = SArray.replicate(vertexNum, UNVISITED)
+
+    val outIndexes = SArray.rangeFrom0(vertexNum)
+    val result = from( startVertex, out).until((start, _) => (start > 0) ) { (start, out) =>
+      val newOut = MST_prime_adjmatrixMap(incMatrix, vertexNum, start, out)
+      val remain = (outIndexes zip newOut).filter( x => x._2 === UNVISITED)
+      val newStart = IF (remain.length === 0) THEN toRep(-1) ELSE remain(0)._1
+      (newStart, newOut)
+    }
+    result._2
+  }
+
+  lazy val MST_adjmatrixMap = fun { in: Rep[(Array[Double], Int)] =>
+    val links = in._1
+    val vertexNum = in._2
+
+    MST_prime_adjmatrix(links, vertexNum, 0, SArray.replicate(vertexNum, UNVISITED))
+  }
+  lazy val MSF_adjmatrixMap = fun { in: Rep[(Array[Double], Int)] =>
+    val links = in._1
+    val vertexNum = in._2
+
+    MSF_prime_adjmatrix(links, vertexNum)
+  } */
+
 }
