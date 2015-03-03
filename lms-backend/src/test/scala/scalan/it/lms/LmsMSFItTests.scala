@@ -55,27 +55,29 @@ abstract class LmsMsfItTests extends BaseItTests {
     }
 
     lazy val msfFunAdjList = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
-      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
-
-      val vertex_vals = UnitCollection(segments.length)
-      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
-      val startFront = Front.emptyListBasedFront(graph.vertexNum)
-      val res = MSF_prime(graph, startFront)
-      res.arr
+//      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
+//      val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
+//      val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
+//
+//      val vertex_vals = UnitCollection(segments.length)
+//      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+//      val startFront = Front.emptyListBasedFront(graph.vertexNum)
+//      val res = MSF_prime(graph, startFront)
+//      res.arr
+      in._1
     }
 
     lazy val msfTest = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
-      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
-
-      val vertex_vals = UnitCollection(segments.length)
-      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
-      val startFront = Front.emptyListBasedFront(graph.vertexNum).append(0)
-      val res = test_prime(graph, startFront)
-      res.arr
+//      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
+//      val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
+//      val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
+//
+//      val vertex_vals = UnitCollection(segments.length)
+//      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+//      val startFront = Front.emptyListBasedFront(graph.vertexNum).append(0)
+//      val res = test_prime(graph, startFront)
+//      res.arr
+      in._1
     }
 
   }
