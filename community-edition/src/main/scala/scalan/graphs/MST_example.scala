@@ -273,7 +273,7 @@ trait MST_example extends Scalan{
 
     MSF_prime_adjlist(links, edge_vals, segOffsets, segLens)
   }
-  /*
+
   def MST_prime_adjmatrixMap(incMatrix: Rep[Array[Double]], vertexNum: Rep[Int],
                              startVertex: Rep[Int], outInitial: Rep[Array[Int]]) = {
 
@@ -332,20 +332,16 @@ trait MST_example extends Scalan{
     result._2
   }
 
-  lazy val MST_adjmatrixMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+  lazy val MST_adjmatrixMap = fun { in: Rep[(Array[Double], Int)] =>
     val links = in._1
-    val edge_vals = in._2
-    val segOffsets = in._3
-    val segLens = in._4
+    val vertexNum = in._2
 
-    MST_prime_adjlist(links, edge_vals, segOffsets, segLens, 0, SArray.replicate(segOffsets.length, UNVISITED))
+    MST_prime_adjmatrix(links, vertexNum, 0, SArray.replicate(vertexNum, UNVISITED))
   }
-  lazy val MSF_adjmatrixMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+  lazy val MSF_adjmatrixMap = fun { in: Rep[(Array[Double], Int)] =>
     val links = in._1
-    val edge_vals = in._2
-    val segOffsets = in._3
-    val segLens = in._4
+    val vertexNum = in._2
 
-    MSF_prime_adjlist(links, edge_vals, segOffsets, segLens)
-  }     */
+    MSF_prime_adjmatrix(links, vertexNum)
+  }
 }

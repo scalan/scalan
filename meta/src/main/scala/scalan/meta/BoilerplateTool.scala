@@ -122,7 +122,7 @@ class BoilerplateTool extends StrictLogging {
 
   lazy val collectionsConfig = CodegenConfig(
     name = "collections",
-    srcPath = "../community-edition/src/main/scala",
+    srcPath = "/home/afilippov/gitlab/scalan-lite-public/core/src/main/scala",
     entityFiles = List(
       "scalan/collection/Collections.scala"
      ),
@@ -154,7 +154,7 @@ class BoilerplateTool extends StrictLogging {
 
   lazy val frontsConfig = CodegenConfig(
     name = "fronts",
-    srcPath = "../community-edition/src/main/scala",
+    srcPath = "/home/afilippov/gitlab/scalan-lite-public/community-edition/src/main/scala",
     entityFiles = List(
       "scalan/graphs/Fronts.scala"
     ),
