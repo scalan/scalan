@@ -134,6 +134,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     println("Staged: " + resStaged.mkString(","))
   }
 
+
   test("MSF_adjMatrixMap") {
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
@@ -147,6 +148,34 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val resSeq = progSeq.MSF_adjmatrixMap(input)
     println(resSeq.mkString(" , "))
     val resStaged = getStagedOutputConfig(progStaged)(progStaged.MSF_adjmatrixMap, "MSF_adjmatrixMap", input, progStaged.defaultCompilerConfig)
+    println("Staged: " + resStaged.mkString(","))
+  }
+
+  test("MSF_adjListList") {
+    val links = graph.flatMap( i=> i)
+    val edgeVals = graphValues.flatMap(i => i)
+    val lens = graph.map(i => i.length)
+    val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
+    val input = (links, (edgeVals, (offs, lens)))
+    val resSeq = progSeq.MSF_adjlistList(input)
+    println(resSeq.mkString(" , "))
+    val resStaged = getStagedOutputConfig(progStaged)(progStaged.MSF_adjlistList, "MSF_adjlistList", input, progStaged.defaultCompilerConfig)
+    println("Staged: " + resStaged.mkString(","))
+  }
+
+  test("MSF_adjMatrixList") {
+    val vertexNum = graph.length
+    val incMatrix = (graph zip graphValues).flatMap({ in =>
+      val row = in._1
+      val vals = in._2
+      val zero = scala.Array.fill(vertexNum)(0.0)
+      for (i <- 0 to row.length-1) { zero(row(i)) = vals(i) }
+      zero
+    })
+    val input = (incMatrix, vertexNum)
+    val resSeq = progSeq.MSF_adjmatrixList(input)
+    println(resSeq.mkString(" , "))
+    val resStaged = getStagedOutputConfig(progStaged)(progStaged.MSF_adjmatrixList, "MSF_adjmatrixList", input, progStaged.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
   }
 
