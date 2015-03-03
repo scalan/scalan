@@ -133,7 +133,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val resStaged = getStagedOutputConfig(progStaged)(progStaged.MSF_adjlistMap, "MSF_adjlistMap", input, progStaged.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
   }
-  /*
+
   test("MSF_adjMatrixMap") {
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
@@ -148,7 +148,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     println(resSeq.mkString(" , "))
     val resStaged = getStagedOutputConfig(progStaged)(progStaged.MSF_adjmatrixMap, "MSF_adjmatrixMap", input, progStaged.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
-  }  */
+  }
 
 
 }
