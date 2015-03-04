@@ -20,7 +20,8 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp
-  with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp {
+  with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
+  with WhileExpExt {
   /*type RepD[T] = Rep[T]
   */
 
@@ -434,6 +435,14 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
 
   def listMap[A: Manifest, B: Manifest](l: Rep[List[A]], f:Rep[A] => Rep[B]) = {
     list_map[A, B] (l, f)
+  }
+
+  def listFlatMap[A: Manifest, B: Manifest](l: Rep[List[A]], f:Rep[A] => Rep[Array[B]]) = {
+    ???
+  }
+
+  def listLength[A:Manifest](l: Rep[List[A]]) = {
+    list_toarray[A](l).length
   }
 
   def listFilter[A: Manifest](l: Rep[List[A]], f: Rep[A] => Rep[Boolean]) = {
