@@ -306,9 +306,9 @@ trait MST_example extends Scalan with ListOps {
     val result = from(startFront, out, st).until(stopCondition) { (front, out, st) =>
       val outEdges = outEdgesOf(front)
       val stop = (outEdges.length === toRep(0))
-      val res = { /*IF  (stop) THEN {
+      val res = IF  (stop) THEN {
         (front, out)
-      } ELSE */
+      } ELSE {
         val minEdge = outEdges.map({ edge => Pair(value(edge), Pair(fromId(edge), toId(edge)))}).reduce(MinNumMonoid)
         val from = minEdge._2
         val to = minEdge._3
