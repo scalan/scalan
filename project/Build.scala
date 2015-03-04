@@ -114,7 +114,7 @@ object ScalanBuild extends Build {
       fork in ItTest := true)
 
   lazy val benchmark = project.withTestConfigsAndCommonSettings
-    .dependsOn(core, ce, lmsBackend % "compile->compile;compile->test")
+    .dependsOn(core, ce, lmsBackend ) //% "compile->compile;compile->test")
     .settings(jmhSettings: _*)
     .settings(
       libraryDependencies ++= Seq(

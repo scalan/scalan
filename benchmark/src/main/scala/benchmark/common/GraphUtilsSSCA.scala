@@ -1,20 +1,10 @@
 package benchmark.common
 
-import java.nio.file.{Path, Paths, Files}
+import java.nio.file.{Files, Path, Paths}
 
-import _root_.scodec.Attempt
-import _root_.scodec.Attempt
-import _root_.scodec.Codec
-import _root_.scodec.Codec
-import _root_.scodec.DecodeResult
-import _root_.scodec.DecodeResult
-import _root_.scodec.Decoder
-import _root_.scodec.Decoder
-import _root_.scodec.bits.BitVector
-import _root_.scodec.bits.BitVector
-import _root_.scodec.codecs._
-import _root_.scodec.codecs._
-import scodec.codecs.implicits._
+import scodec.{Attempt, Codec, DecodeResult, Decoder}
+import scodec.bits.BitVector
+import scodec.codecs._
 
 import scala.collection.mutable
 
