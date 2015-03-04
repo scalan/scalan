@@ -122,6 +122,18 @@ object JNIMSTBenchmarkSSCA {
     val MSF_adjmatrixMap = loadMethod(ctx)(baseDir, "MSF_adjmatrixMap", ctx.MSF_adjmatrixMap)
     override lazy val resSeq = progSeq.MSF_adjmatrixMap(inputM)
   }
+
+  @State(Scope.Benchmark)
+  class MSF_adjlistList_State extends MST_StateBase {
+    val MSF_adjlistList = loadMethod(ctx)(baseDir, "MSF_adjlistList", ctx.MSF_adjlistList)
+    override lazy val resSeq = progSeq.MSF_adjlistList(input)
+  }
+
+  @State(Scope.Benchmark)
+  class MSF_adjmatrixList_State extends MST_adjmatrix_StateBase {
+    val MSF_adjmatrixList = loadMethod(ctx)(baseDir, "MSF_adjmatrixList", ctx.MSF_adjmatrixList)
+    override lazy val resSeq = progSeq.MSF_adjmatrixList(inputM)
+  }
 } //object JNIMSTBenchmarkSSCA
 
 class JNIMSTBenchmarkSSCA {
@@ -235,6 +247,28 @@ class JNIMSTBenchmarkSSCA {
   @Measurement(iterations = 10)
   def MSF_adjmatrixMap_scala( state: MSF_adjmatrixMap_State ): Array[Int] = {
     val res = state.MSF_adjmatrixMap(state.inputM)
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
+  def MSF_adjlistList_scala( state: MSF_adjlistList_State ): Array[Int] = {
+    val res = state.MSF_adjlistList(state.input)
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
+  def MSF_adjmatrixList_scala( state: MSF_adjmatrixList_State ): Array[Int] = {
+    val res = state.MSF_adjmatrixList(state.inputM)
     state.res = res
     res
   }
