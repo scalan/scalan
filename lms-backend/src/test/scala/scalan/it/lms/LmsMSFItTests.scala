@@ -72,6 +72,18 @@ abstract class LmsMsfItTests extends BaseItTests {
       val res = MSF_prime(graph, startFront)
       res.arr
     }
+
+    lazy val funFallingTest = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
+      val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
+      val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
+
+      val vertex_vals = UnitCollection(segments.length)
+      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+      val startFront = Front.emptyListBasedFront(graph.vertexNum)
+      val res = fallingTest(graph, startFront)
+      res.arr
+    }
   }
 
   class ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge { self =>
@@ -87,6 +99,7 @@ abstract class LmsMsfItTests extends BaseItTests {
   lazy val progStaged4 = new ProgExp
   lazy val progStaged5 = new ProgExp
   lazy val progStaged6 = new ProgExp
+  lazy val progStaged7 = new ProgExp
 }
 
 class LmsMsfPrimeItTests extends LmsMsfItTests {
@@ -206,6 +219,17 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val resSeq = progSeq.msfFunIncList(input)
     println("Seq: " + resSeq.mkString(" , "))
     val resStaged = getStagedOutputConfig(progStaged6)(progStaged6.msfFunIncList, "MSF_adjMatrixList", input, progStaged6.defaultCompilerConfig)
+    println("Staged: " + resStaged.mkString(","))
+  }
+  test("fallingTest") {
+    val links = graph.flatMap( i=> i)
+    val edgeVals = graphValues.flatMap(i => i)
+    val lens = graph.map(i => i.length)
+    val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
+    val input = (links, (edgeVals, (offs, lens)))
+    val resSeq = progSeq.funFallingTest(input)
+    println("Seq: " + resSeq.mkString(" , "))
+    val resStaged = getStagedOutputConfig(progStaged7)(progStaged7.funFallingTest, "fallingTest", input, progStaged7.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
   }
 }
