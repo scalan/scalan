@@ -437,6 +437,14 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     list_map[A, B] (l, f)
   }
 
+  def listFlatMap[A: Manifest, B: Manifest](l: Rep[List[A]], f:Rep[A] => Rep[Array[B]]) = {
+    ???
+  }
+
+  def listLength[A:Manifest](l: Rep[List[A]]) = {
+    list_toarray[A](l).length
+  }
+
   def listFilter[A: Manifest](l: Rep[List[A]], f: Rep[A] => Rep[Boolean]) = {
     list_filter[A] (l, f)
   }
