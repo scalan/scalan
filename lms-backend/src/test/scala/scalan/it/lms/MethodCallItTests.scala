@@ -1,14 +1,10 @@
 package scalan.it.lms
 
 import scala.language.reflectiveCalls
-import scalan.{CommunityMethodMapping, ScalanCtxExp}
-import scalan.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
-import scalan.it.BaseItTests
-import scalan.it.lms.method.TestMethod
 import scalan.linalgebra.MatricesDslExp
-import scalan.util.FileUtil
+import scalan.{CommunityMethodMapping, ScalanCommunityDslExp, ScalanCommunityExp, ScalanCtxExp}
 
 class MethodCallItTests extends LmsCommunityItTests{
   trait Prog extends ProgCommunity  {
@@ -18,13 +14,13 @@ class MethodCallItTests extends LmsCommunityItTests{
       IF(x) THEN y ELSE z
     }}
 
-    lazy val exceptionWithIfFalse = fun { (p: Rep[(Int, (Throwable, Throwable))]) => {
+    lazy val exceptionWithIfFalse = fun { (p: Rep[(Int, (SThrowable, SThrowable))]) => {
       val Pair(n, Pair(t1, t2)) = p
       IF(n>0) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
     }
     }
 
-    lazy val exceptionWithIfTrue = fun { (p: Rep[(Int, (Throwable, Throwable))]) => {
+    lazy val exceptionWithIfTrue = fun { (p: Rep[(Int, (SThrowable, SThrowable))]) => {
       //val Pair(n, Pair(t1, t2)) = p
       val Pair(n, Pair(t1, t2)) = p
       IF(n<=0) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
@@ -98,51 +94,48 @@ class MethodCallItTests extends LmsCommunityItTests{
     compareOutputWithSequential(progStaged)(progSeq.emptyIf, progStaged.emptyIf, "emptyIfFalse", in)
   }
 
-  ignore("exceptionWithIfTrue") {
-    //val in = Array(Array(2, 3), Array(4, 5))
-    val in = (1, (new Exception("branch true exception"), new Exception("branch false exception") ))
-    compareOutputWithSequential(progStaged)(progSeq.exceptionWithIfTrue, progStaged.exceptionWithIfTrue, "exceptionWithIfTrue", in)
-  }
-
-  test("exceptionWithIfFalse") {
-    //val in = Array(Array(2, 3), Array(4, 5))
-    val in = (1, (new Exception("branch true exception"), new Exception("branch false exception") ))
-    compareOutputWithSequential(progStaged)(progSeq.exceptionWithIfFalse, progStaged.exceptionWithIfFalse, "exceptionWithIfFalse", in)
-  }
-
-  test("arrayLengthFun") {
-    val in = Array(4, 5, 6)
-    compareOutputWithSequential(progStaged)(progSeq.arrayLengthFun, progStaged.arrayLengthFun, "arrayLengthFun", in)
-  }
-
-  test("arrayOneArg") {
-    val in = (Array(4.4, 5.0, 6.1), 2)
-    compareOutputWithSequential(progStaged)(progSeq.arrayOneArg, progStaged.arrayOneArg, "arrayOneArg", in)
-  }
-
-  test("easyMap") {
-    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
-    compareOutputWithSequential(progStaged)(progSeq.easyMap, progStaged.easyMap, "easyMap", in)
-  }
-
-  test("mapWithLambda") {
-    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
-    compareOutputWithSequential(progStaged)(progSeq.mapWithLambda, progStaged.mapWithLambda, "mapWithLambda", in)
-  }
-
-  test("mapWithLambdaIf") {
-    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
-    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIf, progStaged.mapWithLambdaIf, "mapWithLambdaIf", in)
-  }
-
-  test("mapWithLambdaIfGt") {
-    val in = (Array(4.4, 5.0, 6.1), (5.5, 7.7))
-    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIfGt, progStaged.mapWithLambdaIfGt, "mapWithLambdaIfGt", in)
-  }
-
-}
-
-class MethodCallItTestsOld extends BaseItTests {
+//  ignore("exceptionWithIfTrue") {
+//    //val in = Array(Array(2, 3), Array(4, 5))
+//    import progSeq._
+//    val in = (1, (SThrowable("branch true exception"), SThrowable("branch false exception") ))
+//    compareOutputWithSequential(progStaged)(progSeq.exceptionWithIfTrue, progStaged.exceptionWithIfTrue, "exceptionWithIfTrue", in)
+//  }
+//
+//  test("exceptionWithIfFalse") {
+//    //val in = Array(Array(2, 3), Array(4, 5))
+//    val in = (1, (new Exception("branch true exception"), new Exception("branch false exception") ))
+//    compareOutputWithSequential(progStaged)(progSeq.exceptionWithIfFalse, progStaged.exceptionWithIfFalse, "exceptionWithIfFalse", in)
+//  }
+//
+//  test("arrayLengthFun") {
+//    val in = Array(4, 5, 6)
+//    compareOutputWithSequential(progStaged)(progSeq.arrayLengthFun, progStaged.arrayLengthFun, "arrayLengthFun", in)
+//  }
+//
+//  test("arrayOneArg") {
+//    val in = (Array(4.4, 5.0, 6.1), 2)
+//    compareOutputWithSequential(progStaged)(progSeq.arrayOneArg, progStaged.arrayOneArg, "arrayOneArg", in)
+//  }
+//
+//  test("easyMap") {
+//    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
+//    compareOutputWithSequential(progStaged)(progSeq.easyMap, progStaged.easyMap, "easyMap", in)
+//  }
+//
+//  test("mapWithLambda") {
+//    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
+//    compareOutputWithSequential(progStaged)(progSeq.mapWithLambda, progStaged.mapWithLambda, "mapWithLambda", in)
+//  }
+//
+//  test("mapWithLambdaIf") {
+//    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
+//    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIf, progStaged.mapWithLambdaIf, "mapWithLambdaIf", in)
+//  }
+//
+//  test("mapWithLambdaIfGt") {
+//    val in = (Array(4.4, 5.0, 6.1), (5.5, 7.7))
+//    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIfGt, progStaged.mapWithLambdaIfGt, "mapWithLambdaIfGt", in)
+//  }
 
   trait TestLmsCompiler extends ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge {
     val lms = new CommunityLmsBackend
@@ -154,46 +147,46 @@ class MethodCallItTestsOld extends BaseItTests {
     lazy val tElem = element[Throwable]
     lazy val defaultRep = tElem.defaultRepValue
 
-    lazy val message = fun { (t: Rep[Throwable]) => t.getMessage}
+    lazy val message = fun { (t: Rep[SThrowable]) => t.getMessage}
 
-    lazy val initCause = fun { (p: Rep[(Throwable, Throwable)]) => {
+    lazy val initCause = fun { (p: Rep[(SThrowable, SThrowable)]) => {
       val Pair(t1, t2) = p
       t1.initCause(t2).getMessage
     }
     }
 
-    lazy val initCause2 = fun { (p: Rep[(Throwable, (Throwable, (Throwable, (Throwable, Throwable))))]) => {
+    lazy val initCause2 = fun { (p: Rep[(SThrowable, (SThrowable, (SThrowable, (SThrowable, SThrowable))))]) => {
       val Pair(t1, Pair(t2, Pair(t3, Pair(t4, t5)))) = p
       t1.initCause(t2.initCause(t3.initCause(t4.initCause(t5)))).getMessage
     }
     }
 
-    lazy val withIfFalse = fun { (p: Rep[(Throwable, Throwable)]) => {
+    lazy val withIfFalse = fun { (p: Rep[(SThrowable, SThrowable)]) => {
       val Pair(t1, t2) = p
       IF(false) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
     }
     }
 
-    lazy val withIfTrue = fun { (p: Rep[(Throwable, Throwable)]) => {
+    lazy val withIfTrue = fun { (p: Rep[(SThrowable, SThrowable)]) => {
       val Pair(t1, t2) = p
       IF(true) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
     }
     }
   }
 
-  test("Throwable Method Call") {
-    val originalText = "Exception massage"
-    val text = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.message, "ThrowableMethodCall", new Exception(originalText), exceptionTestExp.defaultCompilerConfig)
-    text should equal(originalText)
-    val text2 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.initCause, "ThrowableInitCauseMethodCall", (new Exception(originalText), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
-    text2 should equal(originalText)
-    val text3 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.initCause2, "ThrowableManyInitCauseMethodCall", (new Exception(originalText), (new Exception("some text"), (new Exception("some text"), (new Exception("some text"), new Exception("some text"))))), exceptionTestExp.defaultCompilerConfig)
-    text3 should equal(originalText)
-    val text4 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfFalse, "IfFalseMethodCall", (new Exception("Exception massage"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
-    text4 should equal(originalText)
-    val text5 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfTrue, "IfTrueMethodCall", (new Exception("Exception massage"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
-    text5 should equal("some text")
-  }
+//  test("Throwable Method Call") {
+//    val originalText = "Exception message"
+//    val text = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.message, "ThrowableMethodCall", new Exception(originalText), exceptionTestExp.defaultCompilerConfig)
+//    text should equal(originalText)
+//    val text2 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.initCause, "ThrowableInitCauseMethodCall", (new Exception(originalText), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
+//    text2 should equal(originalText)
+//    val text3 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.initCause2, "ThrowableManyInitCauseMethodCall", (new Exception(originalText), (new Exception("some text"), (new Exception("some text"), (new Exception("some text"), new Exception("some text"))))), exceptionTestExp.defaultCompilerConfig)
+//    text3 should equal(originalText)
+//    val text4 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfFalse, "IfFalseMethodCall", (new Exception("Exception message"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
+//    text4 should equal(originalText)
+//    val text5 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfTrue, "IfTrueMethodCall", (new Exception("Exception message"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
+//    text5 should equal("some text")
+//  }
 
   val matricesExp = new MatricesDslExp with ScalanCommunityExp with TestLmsCompiler {
     self =>
@@ -208,68 +201,73 @@ class MethodCallItTestsOld extends BaseItTests {
     length should equal(3)
   }
 
-  trait ReplacementExp extends MatricesDslExp with ScalanCommunityExp with TestLmsCompiler with CommunityMethodMapping {
+  val replaceMethExp = new MatricesDslExp with ScalanCommunityExp with TestLmsCompiler with CommunityMethodMapping {
     lazy val arrayLength = fun { v: Rep[Array[Int]] =>
       PArray(v).length
     }
+
+    override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, invokeEnabler("skip_length_method") { (o, m) => !m.getName.equals("length")})
   }
 
-  val replaceMethExp = new ReplacementExp {
-    self =>
-
-    new ScalaLanguage with CommunityConf {
-      val javaArray = new ScalaLib("", "java.lang.reflect.Array") {
-        val getLength = ScalaFunc('getLength)
-      }
-
-      val scala2Scala = {
-        import scala.language.reflectiveCalls
-
-        Map(
-          scalanCE.parraysPack.parraysFam.parray.length -> javaArray.getLength
-        )
-      }
-
-      val backend = new ScalaBackend {
-        val functionMap = scala2Scala
-      }
-    }
-  }
-
-  test("Method Replacement") {
-    val length = getStagedOutputConfig(replaceMethExp)(replaceMethExp.arrayLength, "MethodReplacement", Array(5, 9, 2), replaceMethExp.defaultCompilerConfig)
+  test("Class Mapping") {
+    val conf = replaceMethExp.defaultCompilerConfig
+    val length = getStagedOutputConfig(replaceMethExp)(replaceMethExp.arrayLength, "ClassMapping", Array(5, 9, 2),
+      conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
+        extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("assembly"))))
     length should equal(3)
   }
 
-  val testJar = "test.jar"
-  val jarReplaceMethExp = new ReplacementExp {
+  val jarReplaceExp = new ScalanCommunityExp with TestLmsCompiler {
     self =>
 
-    new ScalaLanguage with CommunityConf {
+    lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
 
-      val extLib = new ScalaLib(testJar, "scalan.it.lms.method.TestMethod") {
-        val getSquareLength = ScalaFunc('getSquareLength)
+    import scala.reflect.runtime.universe.typeOf
+    val tyThrowable = typeOf[Throwable]
+
+    trait TestConf extends LanguageConf {
+      val testLib = new Library("") {
+        val scalanUtilPack = new Pack("scalan.util") {
+          val exceptionsFam = new Family('Exceptions) {
+            val throwable = new ClassType('SThrowable, 'PA) {
+              val getMessage = Method('getMessage, tyString, MethodArg(tyString))
+            }
+          }
+        }
+      }
+    }
+
+    new ScalaLanguage with TestConf {
+
+      val extLib = new ScalaLib("", "scalan.it.lms.MappingMethodFromJar.TestMethod") {
+        val testMessageMethod = ScalaFunc('testMessage)
       }
 
       val scala2Scala = {
         import scala.language.reflectiveCalls
 
         Map(
-          scalanCE.parraysPack.parraysFam.parray.length -> extLib.getSquareLength
+          testLib.scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMessageMethod
         )
+      }
+
+      val main = new ScalaLib() {
+        val throwableImp = ScalaFunc(Symbol("scalan.imp.ThrowableImp"))
       }
 
       val backend = new ScalaBackend {
         val functionMap = scala2Scala
+        override val classMap = Map[Class[_], ScalaFunc](classOf[scalan.util.Exceptions#SThrowable] -> main.throwableImp)
       }
     }
   }
 
-  ignore("Mapping Method From Jar") {
-    val methodName = "MappingMethodFromJar"
-    FileUtil.packJar(TestMethod.getClass, methodName, FileUtil.file(prefix, methodName).getAbsolutePath, jarReplaceMethExp.libs, testJar)
-    val squareLength = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.arrayLength, methodName, Array(5, 9, 2), jarReplaceMethExp.defaultCompilerConfig)
-    squareLength should equal(9)
+  test("Mapping Method From Jar") {
+    val conf = jarReplaceExp.defaultCompilerConfig
+    val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", "Original message",
+      conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
+        extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
+    messageFromTestMethod should equal("Test Message")
   }
 }
 

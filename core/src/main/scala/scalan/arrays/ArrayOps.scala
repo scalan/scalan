@@ -51,6 +51,8 @@ trait ArrayOps { self: Scalan =>
 
     def update(index: Rep[Int], value: Rep[T]) = array_update(xs, index, value)
 
+    def append(value: Rep[T]) = array_append(xs, value)
+
     def updateMany(indexes: Arr[Int], values: Arr[T]) = array_updateMany(xs, indexes, values)
 
     // new functions to support SQL-like queries
@@ -130,6 +132,8 @@ trait ArrayOps { self: Scalan =>
   // provide: res.length == xs.length
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T]
 
+  def array_append[T](xs: Arr[T], value: Rep[T]): Arr[T]
+
   // require: forall i -> indexes(i) in xs.indices && indexes.length == values.length
   // provide: res.length == xs.length
   def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = ???
@@ -178,6 +182,11 @@ trait ArrayOpsSeq extends ArrayOps {
     implicit val ct = arrayToClassTag(xs)
     xs.update(index, value)
     xs
+  }
+
+  def array_append[T](xs: Arr[T], value: Rep[T]): Arr[T] = {
+    implicit val ct = arrayToClassTag(xs)
+    xs :+ value
   }
 
   def array_sum_by[T: Elem, S: Elem](xs: Arr[T], f: Rep[T => S])(implicit n: Numeric[S]): Rep[S] = {
@@ -332,6 +341,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArrayUpdate[T](xs: Exp[Array[T]], index: Exp[Int], value: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayUpdate(t(xs), t(index), t(value))
   }
+  case class ArrayAppend[T](xs: Exp[Array[T]], value: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ArrayAppend(t(xs), t(value))
+  }
   case class ArrayRangeFrom0(n: Exp[Int]) extends ArrayDef[Int] {
     def eT = element[Int]
     override def mirror(t: Transformer) = ArrayRangeFrom0(t(n))
@@ -380,6 +392,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val eT = xs.elem.eItem
     ArrayUpdate(xs, index, value)
+  }
+
+  def array_append[T](xs: Arr[T], value: Rep[T]): Arr[T] = {
+    implicit val eT = xs.elem.eItem
+    ArrayAppend(xs, value)
   }
 
   def array_sum[T:Elem](xs: Arr[T])(implicit n: Numeric[T]): Rep[T] = ArraySum(xs, n)

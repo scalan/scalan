@@ -8,6 +8,7 @@ object ProcessUtil {
     val absoluteWorkingDir = workingDir.getAbsoluteFile
     builder.directory(absoluteWorkingDir)
     builder.redirectErrorStream(true)
+    builder.inheritIO()
     val proc = builder.start()
     val exitCode = proc.waitFor()
     if (exitCode != 0) {

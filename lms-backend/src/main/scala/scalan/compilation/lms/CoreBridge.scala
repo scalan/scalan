@@ -4,9 +4,9 @@ package compilation.lms
 import java.lang.reflect.Method
 import java.util.HashMap
 
-import scalan.compilation.language.{MethodMapping, Interpreter}
+import scalan.compilation.language.{CoreMethodMapping, MethodMapping, Interpreter}
 
-trait CoreBridge extends LmsBridge with Interpreter { self: ScalanCtxExp with MethodMapping =>
+trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { self: ScalanCtxExp =>
 
   val lms: CoreLmsBackendBase
 
@@ -36,7 +36,7 @@ trait CoreBridge extends LmsBridge with Interpreter { self: ScalanCtxExp with Me
       case lr@NewObject(aClass, args, _) =>
         Manifest.classType(aClass) match {
           case (mA: Manifest[a]) =>
-            val exp = lms.newObj[a](aClass.getCanonicalName, args.map(v => symMirr(v.asInstanceOf[Exp[_]])))(mA)
+            val exp = newObj[a](symMirr, aClass, args.asInstanceOf[Seq[Rep[_]]])(mA)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
 
@@ -1087,18 +1087,31 @@ trait CoreBridge extends LmsBridge with Interpreter { self: ScalanCtxExp with Me
         }
       }
 
-      case fun@ArrayFold(source, init, lambdaSym@Def(lam: Lambda[_, _])) =>
+      case ArrayScan(source, monoid) => {
         source.elem match {
-          case el: ArrayElem[_] =>
-            (createManifest(el.eItem), createManifest(fun.selfType)) match {
-              case (mA: Manifest[a], mB: Manifest[b]) =>
-                val lambdaF = mirrorLambdaToLmsFunc[(b, a), b](m)(lam.asInstanceOf[Lambda[(b, a), b]])
-                val lmsSource = symMirr(source).asInstanceOf[lms.Exp[Array[a]]]
-                val lmsInit = symMirr(init).asInstanceOf[lms.Exp[b]]
-                val exp = lms.foldArray[a, b](lmsSource, lmsInit, lambdaF)(mA, mB)
-                (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lambdaSym, lambdaF)))
+          case el: ArrayElem[_] => {
+            createManifest(el.eItem) match {
+              case (mA: Manifest[a]) => {
+                val src = symMirr(source).asInstanceOf[lms.Exp[Array[a]]]
+                monoid.opName match {
+                  case "+" =>
+                    val exp = lms.sum[a](src)(mA)
+                    (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+                  case _ =>
+                    monoid.append match {
+                      case opSym@Def(lambda: Lambda[_, _]) => {
+                        val zero = symMirr(monoid.zero).asInstanceOf[lms.Exp[a]]
+                        val op = mirrorLambdaToLmsFunc[(a, a), a](m)(lambda.asInstanceOf[Lambda[(a, a), a]])
+                        val exp = lms.reduce[a](src, zero, op)(mA)
+                        (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((opSym, op)))
+                      }
+                    }
+                }
+              }
             }
+          }
         }
+      }
 
       case ArrayStride(xs, start, length, stride) =>
         xs.elem match {
@@ -1128,6 +1141,16 @@ trait CoreBridge extends LmsBridge with Interpreter { self: ScalanCtxExp with Me
               val exp = lms.array_new[a_t](zero)(mA)
               (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
           }
+
+      case ArrayAppend(xs, value) =>
+        xs.elem match {
+          case el: ArrayElem[a] =>
+            val mA = createManifest(el.eItem).asInstanceOf[Manifest[a]]
+            val lmsXs = symMirr(xs).asInstanceOf[lms.Exp[Array[a]]]
+            val lmsValue = symMirr(value).asInstanceOf[lms.Exp[a]]
+            val exp = lms.array_append(lmsXs, lmsValue)(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        }
 
       case lr@ListMap(list, lamSym@Def(lam: Lambda[_, _])) =>
         (createManifest(list.elem), createManifest(lam.eB)) match {
@@ -1203,6 +1226,6 @@ trait CoreBridge extends LmsBridge with Interpreter { self: ScalanCtxExp with Me
     tt
   }
 
-  def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] =
-    !!!("Don't know how to transform method call")
+  def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] = !!!("Don't know how to transform method call")
+  def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]]): lms.Exp[A] = !!!("Don't know how to create new object")
 }

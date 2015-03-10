@@ -1,5 +1,6 @@
 package scalan.primitives
 
+import scala.annotation.unchecked.uncheckedVariance
 import scalan.staged.{BaseExp}
 import scalan.{ScalanExp, ScalanSeq, Base, Scalan}
 
@@ -36,9 +37,15 @@ trait IfThenElseSeq extends IfThenElse { self: ScalanSeq =>
   def __ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T] = if(cond) thenp else elsep
 }
 
-trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanExp =>
+trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: ScalanExp =>
 
-  case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit selfType: Elem[T]) extends BaseDef[T] {
+  abstract class AbstractIfThenElse[+T](implicit override val selfType: Elem[T @uncheckedVariance]) extends BaseDef[T] {
+    val cond: Exp[Boolean]
+    val thenp: Exp[T]
+    val elsep: Exp[T]
+  }
+
+  case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit override val selfType: Elem[T]) extends AbstractIfThenElse[T] {
     def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = IfThenElse(t(cond), t(thenp), t(elsep))
   }
@@ -50,6 +57,37 @@ trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanExp =>
 
   implicit class IfThenElseOps[T](tableEntry: TableEntry[T]) {
     def isIfThenElse = tableEntry.rhs match { case IfThenElse(_,_,_) => true case _ => false }
+  }
+  
+  override def aliasSyms(e: Any): List[Exp[Any]] = e match {
+    case IfThenElse(c,a,b) => syms(a):::syms(b)
+    case _ => super.aliasSyms(e)
+  }
+
+  override def containSyms(e: Any): List[Exp[Any]] = e match {
+    case IfThenElse(c,a,b) => Nil
+    case _ => super.containSyms(e)
+  }
+
+  override def extractSyms(e: Any): List[Exp[Any]] = e match {
+    case IfThenElse(c,a,b) => Nil
+    case _ => super.extractSyms(e)
+  }
+
+  override def copySyms(e: Any): List[Exp[Any]] = e match {
+    case IfThenElse(c,a,b) => Nil // could return a,b but implied by aliasSyms
+    case _ => super.copySyms(e)
+  }
+
+
+  override def symsFreq(e: Any): List[(Exp[Any], Double)] = e match {
+    case IfThenElse(c, t, e) => freqNormal(c) ++ freqCold(t) ++ freqCold(e)
+    case _ => super.symsFreq(e)
+  }
+
+  override def boundSyms(e: Any): List[Exp[Any]] = e match {
+    case IfThenElse(c, t, e) => effectSyms(t):::effectSyms(e)
+    case _ => super.boundSyms(e)
   }
 
   def liftFromIfThenElse[A,B,C](cond: Rep[Boolean], a: Rep[A], b: Rep[B], iso1: Iso[A,C], iso2: Iso[B,C]): Rep[C] = {
@@ -77,10 +115,17 @@ trait IfThenElseExp extends IfThenElse with BaseExp { self: ScalanExp =>
     case Tup(Def(IfThenElse(c1, t1, e1)), Def(IfThenElse(c2, t2, e2))) if c1 == c2 =>
       IF (c1) THEN { Pair(t1, t2) } ELSE { Pair(e1, e2) }
 
+    case First(Def(IfThenElse(cond, thenp: Rep[(a, b)] @unchecked, elsep))) =>
+      implicit val (eA, eB) = (thenp.elem.eFst, thenp.elem.eSnd)
+      IfThenElse[a](cond, First(thenp), First(elsep.asRep[(a, b)]))
+
+    case Second(Def(IfThenElse(cond, thenp: Rep[(a, b)] @unchecked, elsep))) =>
+      implicit val (eA, eB) = (thenp.elem.eFst, thenp.elem.eSnd)
+      IfThenElse[b](cond, Second(thenp), Second(elsep.asRep[(a, b)]))
+
     case apply: Apply[a, b] => apply.f match {
-      case Def(IfThenElse(c, t, e)) => {
+      case Def(IfThenElse(c, t, e)) =>
         IF (c) { t.asRep[a=>b](apply.arg) } ELSE { e.asRep[a=>b](apply.arg) }
-      }
       case _ => super.rewriteDef(d)
     }
 

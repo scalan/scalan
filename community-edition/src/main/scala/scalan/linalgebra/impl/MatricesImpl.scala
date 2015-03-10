@@ -4,16 +4,20 @@ package impl
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
+import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
 trait MatricesAbs extends Scalan with Matrices {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
-  implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] =
-    proxyOps[Matrix[T]](p)
+  implicit def proxyMatrix[T](p: Rep[Matrix[T]]): Matrix[T] = {
+    implicit val tag = weakTypeTag[Matrix[T]]
+    proxyOps[Matrix[T]](p)(TagImplicits.typeTagToClassTag[Matrix[T]])
+  }
 
-  abstract class MatrixElem[T, From, To <: Matrix[T]](iso: Iso[From, To]) extends ViewElem[From, To]()(iso) {
+  abstract class MatrixElem[T, From, To <: Matrix[T]](iso: Iso[From, To])(implicit elem: Elem[T])
+    extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertMatrix(x.asRep[Matrix[T]])
     def convertMatrix(x : Rep[Matrix[T]]): Rep[To]
   }
@@ -33,7 +37,8 @@ trait MatricesAbs extends Scalan with Matrices {
   }
 
   // elem for concrete class
-  class RowMajorMatrixElem[T:Elem](iso: Iso[RowMajorMatrixData[T], RowMajorMatrix[T]]) extends MatrixElem[T, RowMajorMatrixData[T], RowMajorMatrix[T]](iso) {
+  class RowMajorMatrixElem[T](iso: Iso[RowMajorMatrixData[T], RowMajorMatrix[T]])(implicit val elem: Elem[T])
+    extends MatrixElem[T, RowMajorMatrixData[T], RowMajorMatrix[T]](iso) {
     def convertMatrix(x: Rep[Matrix[T]]) = RowMajorMatrix(x.rows)
   }
 
@@ -93,7 +98,8 @@ trait MatricesAbs extends Scalan with Matrices {
   def unmkRowMajorMatrix[T:Elem](p: Rep[RowMajorMatrix[T]]): Option[(Rep[PArray[Vector[T]]])]
 
   // elem for concrete class
-  class RowMajorFlatMatrixElem[T:Elem](iso: Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]]) extends MatrixElem[T, RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]](iso) {
+  class RowMajorFlatMatrixElem[T](iso: Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]])(implicit val elem: Elem[T])
+    extends MatrixElem[T, RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]](iso) {
     def convertMatrix(x: Rep[Matrix[T]]) = RowMajorFlatMatrix(x.rmValues, x.numColumns)
   }
 
@@ -154,7 +160,8 @@ trait MatricesAbs extends Scalan with Matrices {
   def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]): Option[(Rep[PArray[T]], Rep[Int])]
 
   // elem for concrete class
-  class RowMajorSparseMatrixElem[T:Elem](iso: Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]]) extends MatrixElem[T, RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]](iso) {
+  class RowMajorSparseMatrixElem[T](iso: Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]])(implicit val elem: Elem[T])
+    extends MatrixElem[T, RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]](iso) {
     def convertMatrix(x: Rep[Matrix[T]]) = RowMajorSparseMatrix(x.rows)
   }
 
@@ -233,7 +240,7 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
   }
 
   def mkRowMajorMatrix[T]
-      (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]) =
+      (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]): Rep[RowMajorMatrix[T]] =
       new SeqRowMajorMatrix[T](rows)
   def unmkRowMajorMatrix[T:Elem](p: Rep[RowMajorMatrix[T]]) =
     Some((p.rows))
@@ -250,7 +257,7 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
   }
 
   def mkRowMajorFlatMatrix[T]
-      (rmValues: Rep[PArray[T]], numColumns: Rep[Int])(implicit elem: Elem[T]) =
+      (rmValues: Rep[PArray[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
       new SeqRowMajorFlatMatrix[T](rmValues, numColumns)
   def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]) =
     Some((p.rmValues, p.numColumns))
@@ -267,7 +274,7 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
   }
 
   def mkRowMajorSparseMatrix[T]
-      (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]) =
+      (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]] =
       new SeqRowMajorSparseMatrix[T](rows)
   def unmkRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]) =
     Some((p.rows))
@@ -383,7 +390,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   def mkRowMajorMatrix[T]
-    (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]) =
+    (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]): Rep[RowMajorMatrix[T]] =
     new ExpRowMajorMatrix[T](rows)
   def unmkRowMajorMatrix[T:Elem](p: Rep[RowMajorMatrix[T]]) =
     Some((p.rows))
@@ -478,7 +485,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   def mkRowMajorFlatMatrix[T]
-    (rmValues: Rep[PArray[T]], numColumns: Rep[Int])(implicit elem: Elem[T]) =
+    (rmValues: Rep[PArray[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
     new ExpRowMajorFlatMatrix[T](rmValues, numColumns)
   def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]) =
     Some((p.rmValues, p.numColumns))
@@ -585,7 +592,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   def mkRowMajorSparseMatrix[T]
-    (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]) =
+    (rows: Rep[PArray[Vector[T]]])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]] =
     new ExpRowMajorSparseMatrix[T](rows)
   def unmkRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]) =
     Some((p.rows))

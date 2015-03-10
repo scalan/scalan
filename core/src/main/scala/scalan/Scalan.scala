@@ -1,5 +1,6 @@
 package scalan
 
+import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scalan.compilation.GraphVizExport
 import scalan.primitives._
 import scalan.collections._
@@ -11,6 +12,7 @@ import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl/*, Excepti
 trait Scalan
   extends Base
   with Elems
+  with Containers
   with BaseTypes
   with Views
   with Proxy
@@ -34,21 +36,22 @@ trait Scalan
   with Exceptions
   with ArrayViews
   with Thunks
-  with Effects {
-
-}
+  with Effects
+  with Metadata
 
 trait ScalanDsl
   extends Scalan
   with ListOps
   with ListViews
   with ExceptionsDsl
+  with CollectionsDsl
   with AbstractStringsDsl
 
 trait ScalanSeq
   extends Scalan
   with BaseSeq
   with ElemsSeq
+  with ContainersSeq
   with BaseTypesSeq
   with ViewsSeq
   with ProxySeq
@@ -69,6 +72,7 @@ trait ScalanSeq
   with StringOpsSeq
   with ThunksSeq
   with EffectsSeq
+  with MetadataSeq
 
 trait ScalanCtxSeq
   extends ScalanDsl
@@ -76,12 +80,14 @@ trait ScalanCtxSeq
   with ListOpsSeq
   with ListViewsSeq
   with ExceptionsDslSeq
+  with CollectionsDslSeq
   with AbstractStringsDslSeq
 
 trait ScalanExp
   extends Scalan
   with BaseExp
   with ElemsExp
+  with ContainersExp
   with BaseTypesExp
   with ViewsExp
   with ProxyExp
@@ -104,6 +110,7 @@ trait ScalanExp
   with StringOpsExp
   with ThunksExp
   with EffectsExp
+  with MetadataExp
 
 trait ScalanCtxExp
   extends ScalanDsl
@@ -113,4 +120,5 @@ trait ScalanCtxExp
   with ListOpsExp
   with ListViewsExp
   with ExceptionsDslExp
+  with CollectionsDslExp
   with AbstractStringsDslExp

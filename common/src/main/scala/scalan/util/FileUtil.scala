@@ -1,9 +1,13 @@
 package scalan.util
 
+import java.io.File.separator
 import java.io._
-import java.nio.file.Paths
+import java.nio.channels.Channels
+import java.nio.file._
+import java.nio.file.attribute.BasicFileAttributes
+
 import scala.Console
-import scala.io.{Source, Codec}
+import scala.io.{Codec, Source}
 import scalan.util.ProcessUtil._
 
 object FileUtil {
@@ -65,39 +69,64 @@ object FileUtil {
     new FileOutputStream(target).getChannel.transferFrom(new FileInputStream(source).getChannel, 0, Long.MaxValue)
   }
 
+  def copyFromClassPath(source: String, target: File): Unit = {
+    target.getParentFile.mkdirs()
+    new FileOutputStream(target).getChannel.transferFrom(Channels.newChannel(getClass.getClassLoader.getResourceAsStream(source)), 0, Long.MaxValue)
+  }
+
   /**
    * Copy file source to targetDir, keeping the original file name
    */
   def copyToDir(source: File, targetDir: File): Unit =
     copy(source, new File(targetDir, source.getName))
 
+  def move(source: File, target: File): Unit = {
+    copy(source, target)
+    delete(source)
+  }
+
+  /**
+   * Add header into the file
+   */
+  def addHeader(file: File, header: String): Unit = write(file, header + "\n" + read(file))
+
   /**
    * Like fileOrDirectory.delete() but works for non-empty directories
    * and throws exceptions instead of returning false on failure
    */
   def delete(fileOrDirectory: File): Unit = {
-    if (fileOrDirectory.isDirectory) {
-      fileOrDirectory.listFiles.foreach(delete)
-    }
-
-    if (fileOrDirectory.exists()) {
-      if (!fileOrDirectory.delete()) throw new IOException(s"Failed to delete file $fileOrDirectory")
-    } else {
-      throw new FileNotFoundException(s"$fileOrDirectory doesn't exist")
-    }
+    removeRecursive(fileOrDirectory.toPath)
   }
 
   def deleteIfExist(fileOrDirectory: File): Unit = {
-    if (fileOrDirectory.isDirectory) {
-      fileOrDirectory.listFiles.foreach(delete)
-    }
+    if (fileOrDirectory.exists()) delete(fileOrDirectory)
+  }
 
-    if (fileOrDirectory.exists()) {
-      if (!fileOrDirectory.delete()) throw new IOException(s"Failed to delete file $fileOrDirectory")
-    }
+  def removeRecursive(path: Path) {
+    Files.walkFileTree(path, new SimpleFileVisitor[Path]() {
+      override def visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult = {
+        Files.delete(file)
+        FileVisitResult.CONTINUE
+      }
+      override def visitFileFailed(file: Path, exc: IOException): FileVisitResult = {
+        Files.delete(file)
+        FileVisitResult.CONTINUE
+      }
+      override def postVisitDirectory(dir: Path, exc: IOException): FileVisitResult = {
+        if (exc == null) {
+          Files.delete(dir)
+          FileVisitResult.CONTINUE
+        }
+        else {
+          throw exc
+        }
+      }
+    })
   }
 
   def currentWorkingDir = Paths.get("").toAbsolutePath.toFile
+
+  def currentClassDir = getClass.getClassLoader.getResource("").getFile
 
   def file(first: String, rest: String*): File =
     file(new File(first), rest: _*)
@@ -107,7 +136,7 @@ object FileUtil {
 
   def packJar(baseClass: Class[_], methodName: String, path: String, libDir: String, jarName: String) = {
     file(path, libDir).mkdirs()
-    launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", s"$path/$libDir/$jarName") :+
+    launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", file(path, libDir, jarName).getAbsolutePath) :+
       baseClass.getPackage.getName.replaceAll("\\.", "/"): _*)
   }
 

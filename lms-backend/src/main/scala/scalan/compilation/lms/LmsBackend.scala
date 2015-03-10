@@ -16,9 +16,9 @@ trait LmsBackend extends BaseExp { self =>
   def codegen: Codegen
 }
 
-trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrimitives with LiftNumeric with ListOpsExp with LstOpsExp with StringOpsExp
-  with ArrayOpsExtExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
-  with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with LoopOpsExtExp with OrderingOpsExp with IfThenElseFatExp
+trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimitives with LiftNumeric with ArrayOpsExtExp with ListOpsExp
+  with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
+  with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp {
   /*type RepD[T] = Rep[T]
@@ -166,14 +166,6 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
     HashMap[K, V]()
   }
 
-  def mapFromArray[K: Manifest, V: Manifest](arr: Exp[Array[(K, V)]]): Exp[HashMap[K, V]] = {
-    val h = HashMap[K, V]()
-    for (pair <- arr) {
-      h.update(pair._1, pair._2)
-    }
-    h
-  }
-
   def mapUsingFunc[K: Manifest, V: Manifest](count: Rep[Int], f: Exp[Int] => Exp[(K, V)]): Exp[HashMap[K, V]] = {
     val h = HashMap[K, V]()
     for (i <- 0 until count) {
@@ -268,18 +260,6 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
     map.values.toArray
   }
 
-  def arrayGet[A: Manifest](a: Exp[Array[A]], i: Exp[Int]): Exp[A] = {
-    a.at(i)
-  }
-
-  def arrayGather[A: Manifest](a: Exp[Array[A]], idxs: Exp[Array[Int]]): Exp[Array[A]] = {
-    array(idxs.length)(i => a.at(idxs.at(i)))
-  }
-
-  def arrayLength[A: Manifest](a: Exp[Array[A]]): Exp[Int] = {
-    a.length
-  }
-
   def tuple[A: Manifest, B: Manifest](a: Exp[A], b: Exp[B]): Exp[(A, B)] = {
     Tuple2(a, b)
   }
@@ -364,72 +344,6 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
 
   def stringToDouble(str: Exp[String]) = str.toDouble
 
-  def mapArray[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[B]): Exp[Array[B]] = {
-    //    a.map(f)
-    array(a.length)(i => f(a.at(i)))
-  }
-
-  def flatMapArray[A: Manifest, B: Manifest](arr: Exp[Array[A]], f: Rep[A] => Rep[Array[B]]): Exp[Array[B]] = {
-    val buf = ArrayBuilder.make[B]
-    for (x <- arr; y <- f(x)) {
-      buf += y
-    }
-    buf.result
-  }
-
-  def findArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Array[Int]] = {
-    arrayIf(a.length) { i => (f(a.at(i)), i)}
-  }
-
-  def filterArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Array[A]] = {
-    arrayIf(a.length) { i => (f(a.at(i)), a.at(i))}
-  }
-
-  def countArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Int] = {
-    var count = 0
-    for (x <- a) {
-      if (f(x)) count += 1
-    }
-    count
-  }
-
-  def replicate[A: Manifest](length: Exp[Int], v: Exp[A]): Exp[Array[A]] = {
-    array(length)(i => v)
-  }
-
-  def indexRangeD(length: Exp[Int]): Exp[Array[Int]] = {
-    array(length)(i => i)
-    array(length)(i => i)
-  }
-
-  def sum[A: Manifest](a: Exp[Array[A]]): Exp[A] = {
-    sum(a.length) { i => a.at(i).AsInstanceOf[Double]}.AsInstanceOf[A]
-  }
-
-  def reduce[A: Manifest](a: Exp[Array[A]], zero: Exp[A], accumulate: Rep[(A, A)] => Rep[A]): Exp[A] = {
-    var state = zero
-    for (x <- a) {
-      state = accumulate((state.AsInstanceOf[A], x))
-    }
-    state
-  }
-
-  def fold[A: Manifest, S: Manifest](a: Exp[Array[A]], init: Exp[S], func: Rep[(S, A)] => Rep[S]): Exp[S] = {
-    var state = init
-    for (x <- a) {
-      state = func((state.AsInstanceOf[S], x))
-    }
-    state
-  }
-
-  def sumBy[A: Manifest, S: Manifest](a: Exp[Array[A]], func: Rep[A] => Rep[S])(implicit n: Numeric[S]): Exp[S] = {
-    var sum = n.zero
-    for (x <- a) {
-      sum += func(x)
-    }
-    sum
-  }
-
 
   def arrayMapReduce[T: Manifest, K: Manifest, V: Manifest](in: Exp[Array[T]], map: Rep[T] => Rep[(K, V)], reduce: Rep[(V, V)] => Rep[V]): Exp[HashMap[K, V]] = {
     val result = HashMap[K, V]()
@@ -482,19 +396,6 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
 
   def lambda[A: Manifest, B: Manifest](f: Rep[A] => Rep[B]) = fun(f)
 
-  def newArray[A: Manifest](length: Rep[Int]): Rep[Array[A]] = NewArray[A](length)
-
-  def opZipWith[A: Manifest, B: Manifest, R: Manifest](f: (Rep[A], Rep[B]) => Rep[R], a: Exp[Array[A]], b: Exp[Array[B]]): Exp[Array[R]] = {
-    array(a.length)(i => f(a.at(i), b.at(i)))
-  }
-
-  def opZip[A: Manifest, B: Manifest](a: Exp[Array[A]], b: Exp[Array[B]]): Exp[Array[(A, B)]] = {
-    array[(A, B)](a.length)(i => (a.at(i), b.at(i)))
-  }
-
-  def arraySort[A: Manifest](a: Exp[Array[A]]): Exp[Array[A]] = {
-    a.sort
-  }
 
   //def arraySortBy[A: Manifest, B: Manifest](a: Exp[Array[A]], by: Rep[A] => Rep[B])(implicit o: Ordering[B]): Exp[Array[A]]
     //mapArray[(B,A),A](mapArray[A,(B,A)](a, x => (by(x), x)).sort, p => p._2)
@@ -531,45 +432,12 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
     hash_code(obj)
   }
 
-  def arraySum[A: Manifest](xs: Exp[Array[A]])(implicit n : Numeric[A]): Exp[A] = {
-    var sum = n.zero
-    for (x <- xs) sum += x
-    sum
-  }
-  def arrayMax[A: Manifest](xs: Exp[Array[A]])(implicit o : Ordering[A]): Exp[A] = {
-    var max = xs.at(0) // we need Optional type to correctly implement min/max, but it is abselnt in CE
-    for (x <- xs) if (x > max) max = x
-    max
-  }
-  def arrayMin[A: Manifest](xs: Exp[Array[A]])(implicit o : Ordering[A]): Exp[A] = {
-    var min = xs.at(0) // we need Optional type to correctly implement min/max, but it is abselnt in CE
-    for (x <- xs) if (x < min) min = x
-    min
-  }
-
-  def arrayAvg[A: Manifest](xs: Exp[Array[A]])(implicit n : Numeric[A]): Exp[Double] = {
-    var sum = n.zero
-    for (x <- xs) sum += x
-    sum.AsInstanceOf[Double] / xs.length
-  }
-
   def listMap[A: Manifest, B: Manifest](l: Rep[List[A]], f:Rep[A] => Rep[B]) = {
     list_map[A, B] (l, f)
   }
 
   def listFilter[A: Manifest](l: Rep[List[A]], f: Rep[A] => Rep[Boolean]) = {
     list_filter[A] (l, f)
-  }
-
-  def strideArray[A: Manifest](xs: Exp[Array[A]], start: Exp[Int], length: Exp[Int], stride: Exp[Int]) =
-    array(length) { i =>
-      xs.at(start + i * stride)
-    }
-  def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
-    val newArr =  array_obj_new(xs.length)
-    array_copy(xs, 0, newArr, 0, xs.length)
-    newArr.update(index, value)
-    newArr
   }
 
   def ifThenElse[A:Manifest](cond: Exp[Boolean], iftrue: () => Exp[A], iffalse: () => Exp[A]) = {
@@ -584,22 +452,17 @@ trait LmsBackendFacade extends ObjectOpsExtExp with  LiftVariables with LiftPrim
   }  */
 }
 
-object LmsType {
-
-  class WildCard
-
-  val wildCard : Manifest[WildCard] = Manifest.classType(classOf[WildCard])
-}
-
 class CoreLmsBackend extends CoreLmsBackendBase { self =>
 
   trait Codegen extends ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
-  with ScalaGenLstOps with ScalaGenArrayOpsExt with ScalaGenNumericOps
-    with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
-    with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenLoopOpsExt with ScalaGenIfThenElseFat with LoopFusionOpt
-    with ScalaGenCastingOps with ScalaGenMathOps with ScalaGenMethodCallOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile
-    with ScalaGenIfThenElse with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions with ScalaGenRangeOps {
+  with ScalaGenLstOps with ScalaGenNumericOps with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps
+  with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
+  with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
+  with ScalaGenCastingOps with ScalaGenMathOps with ScalaGenMethodCallOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile
+  with ScalaGenIfThenElse with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions with ScalaGenRangeOps {
     val IR: self.type = self
+    import scalan.compilation.lms.scalac.LmsType
+
     override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
 
     private def isTuple2(name: String) = name.startsWith("Tuple2")
@@ -607,7 +470,7 @@ class CoreLmsBackend extends CoreLmsBackendBase { self =>
     override def remap[A](m: Manifest[A]) =
       if (m.equals(LmsType.wildCard)) "_"
       else if (isTuple2(m.runtimeClass.getSimpleName)) {
-        if (m.typeArguments.length == 2) s"scala.Tuple2[${remap(m.typeArguments(0))}, ${remap(m.typeArguments(1))}]"
+        if (m.typeArguments.length == 2) s"(${remap(m.typeArguments(0))}, ${remap(m.typeArguments(1))})"
         else m.toString
       }
       else super.remap(m)
@@ -625,11 +488,5 @@ class CoreLmsBackend extends CoreLmsBackendBase { self =>
 class CommunityLmsBackend extends CoreLmsBackend with CommunityLmsBackendBase { self =>
   override val codegen = new Codegen with ScalaGenVectorOps with ScalaGenSystemOps {
     override val IR: self.type = self
-/*
-    override def emitVarDef(sym: Sym[Variable[Any]], rhs: String): Unit = {
-      stream.println("var " + quote(sym) + " = " + rhs)
-    }
-*/
-
   }
 }

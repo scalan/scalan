@@ -132,8 +132,20 @@ trait Elems extends Base { self: Scalan =>
     implicit def typeTagToClassTag[A](implicit tag: WeakTypeTag[A]): ClassTag[A] = ClassTag(tag.mirror.runtimeClass(tag.tpe))
   }
 
-  //  implicit def elemElement[A](implicit elema: Elem[A]): Elem[Elem[A]] =
-  //    new ElemElem[A](elema)
+  type R <: Reifiable[_]
+
+  def elemFromRep[A](x: Rep[A])(implicit eA: Elem[A]): Elem[A] = eA match {
+    case ve: ViewElem[_,_] =>
+      x.asRep[Reifiable[_]].selfType1.asInstanceOf[Elem[A]]
+    case pe: PairElem[a,b] =>
+      implicit val ea = pe.eFst
+      implicit val eb = pe.eSnd
+      Def.unapply[(a,b)](x) match {
+        case Some(p) => pairElement(elemFromRep(x.asRep[(a,b)]._1)(ea), elemFromRep(x.asRep[(a,b)]._2)(eb))
+        case _ => eA
+      }
+    case _ => eA
+  }
 }
 
 trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>

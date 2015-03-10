@@ -6,61 +6,40 @@ package scalac
 import java.io._
 import java.net.{URL, URLClassLoader}
 
-import scala.tools.nsc.{Global, Settings}
 import scala.tools.nsc.reporters.StoreReporter
+import scala.tools.nsc.{Global, Settings}
 import scalan.compilation.language.MethodMapping
-import scalan.util.{ExtensionFilter, FileUtil, ProcessUtil, StringUtil}
+import scalan.util.FileUtil
+import scalan.util.FileUtil.file
 
-trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { self: ScalanCtxExp =>
+trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with MethodMapping { self: ScalanCtxExp =>
   /**
    * If scalaVersion is None, uses scala-compiler.jar
    *
    * Otherwise uses SBT to compile with the desired version
    */
-  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String])
-
+  case class CustomCompilerOutput(jar: URL, mainClass: Option[String] = None)
+  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig())
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
-  case class CustomCompilerOutput(jars: Array[URL])
-
   def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
-
-  val libs = "lib"
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
-    val buildSbtFile = new File(sourcesDir, "build.sbt")
-
     val sourceFile = emitSource(sourcesDir, "scala", functionName, graph, eInput, eOutput)
-
-    val libsDir = FileUtil.file(FileUtil.currentWorkingDir, libs)
-    val executableLibsDir = FileUtil.file(executableDir, libs)
-
-    val jarFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.jar")
-    val jarPath = jarFile.getAbsolutePath
+    val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
     FileUtil.deleteIfExist(jarFile)
-
-    val logFile = FileUtil.file(executableDir.getAbsoluteFile, s"$functionName.log")
+    val jarPath = jarFile.getAbsolutePath
+    val logFile = file(executableDir.getAbsoluteFile, s"$functionName.log")
     FileUtil.deleteIfExist(logFile)
+    val mainClass : Option[String] = compilerConfig.sbt.mainPack match {
+      case Some(mainPack) => Some(mainPack + "." +  functionName)
+      case _ =>  None
+    }
 
     compilerConfig.scalaVersion match {
-      case Some(scalaVersion) =>
-        val buildSbtText =
-          s"""name := "$functionName"
-             |
-             |scalaVersion := "$scalaVersion"
-             |
-             |artifactPath in Compile in packageBin := file("$jarPath")
-             |
-             |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
-             |""".stripMargin
-
-        FileUtil.write(buildSbtFile, buildSbtText)
-
-        val command = Seq("sbt", "package")
-
-        ProcessUtil.launch(sourcesDir, command: _*)
+      case Some(scalaVersion) => sbtCompile(sourcesDir, executableDir, functionName, compilerConfig, sourceFile, jarPath)
       case None =>
         val settings = new Settings
         settings.usejavacp.value = true
@@ -79,29 +58,31 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMapping { 
         S.println(settings)
         S.println(s"${settings.classpath}\n")
         for(row <- reporter.infos) {
-          val pos = s"${row.pos.source.path}:${row.pos.safeLine}"
-          S.println(s"${row.severity}: ${pos}")
-          S.println("|"+row.pos.lineContent)
+          S.println(s"${row.severity}: ${row.msg}")
+          S.println(s"|${row.pos.source.path}:${row.pos.safeLine}")
+          S.println(s"|${row.pos.lineContent}")
           S.println("|"+" "*(row.pos.column-1) + "^")
         }
         S.println(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings")
         S.close()
 
         reporter.ERROR.count match {
-          case 0 => {} //println(s"class $functionName compiled with ${reporter.WARNING.count} warnings")
-          case _ => throw new Exception(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings")
+          case 0 => //println(s"class $functionName compiled with ${reporter.WARNING.count} warnings")
+          case _ => throw new Exception(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings, see ${logFile.getAbsolutePath} for details")
         }
     }
-
-    val ar = FileUtil.listFiles(executableLibsDir, ExtensionFilter("jar"))
-    val urls = (jarFile +: ar).map(_.toURI.toURL)
-    CustomCompilerOutput(urls)
+    CustomCompilerOutput(jarFile.toURI.toURL, mainClass)
   }
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
     // ensure Scala library is available
-    val classLoader = new URLClassLoader(compilerOutput.custom.jars, classOf[_ => _].getClassLoader)
-    val cls = classLoader.loadClass(compilerOutput.common.name)
+    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), classOf[_ => _].getClassLoader)
+    val cls = classLoader.loadClass(
+      compilerOutput.custom.mainClass match {
+        case Some(mainClass) => mainClass
+        case _ => compilerOutput.common.name
+      }
+    )
     val argumentClass = compilerOutput.common.eInput.classTag.runtimeClass
     (cls, cls.getMethod("apply", argumentClass))
   }
