@@ -1,14 +1,10 @@
 package scalan.it.lms
 
 import scala.language.reflectiveCalls
-import scalan.{CommunityMethodMapping, ScalanCtxExp}
-import scalan.{ScalanCommunityDslExp, ScalanCommunityExp}
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
-import scalan.it.BaseItTests
-import scalan.it.lms.method.TestMethod
 import scalan.linalgebra.MatricesDslExp
-import scalan.util.FileUtil
+import scalan.{CommunityMethodMapping, ScalanCommunityDslExp, ScalanCommunityExp, ScalanCtxExp}
 
 class MethodCallItTests extends LmsCommunityItTests{
   trait Prog extends ProgCommunity  {
@@ -141,10 +137,6 @@ class MethodCallItTests extends LmsCommunityItTests{
 //    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIfGt, progStaged.mapWithLambdaIfGt, "mapWithLambdaIfGt", in)
 //  }
 
-}
-
-class MethodCallItTestsOld extends BaseItTests {
-
   trait TestLmsCompiler extends ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge {
     val lms = new CommunityLmsBackend
   }
@@ -183,16 +175,16 @@ class MethodCallItTestsOld extends BaseItTests {
   }
 
 //  test("Throwable Method Call") {
-//    val originalText = "Exception massage"
+//    val originalText = "Exception message"
 //    val text = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.message, "ThrowableMethodCall", new Exception(originalText), exceptionTestExp.defaultCompilerConfig)
 //    text should equal(originalText)
 //    val text2 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.initCause, "ThrowableInitCauseMethodCall", (new Exception(originalText), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
 //    text2 should equal(originalText)
 //    val text3 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.initCause2, "ThrowableManyInitCauseMethodCall", (new Exception(originalText), (new Exception("some text"), (new Exception("some text"), (new Exception("some text"), new Exception("some text"))))), exceptionTestExp.defaultCompilerConfig)
 //    text3 should equal(originalText)
-//    val text4 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfFalse, "IfFalseMethodCall", (new Exception("Exception massage"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
+//    val text4 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfFalse, "IfFalseMethodCall", (new Exception("Exception message"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
 //    text4 should equal(originalText)
-//    val text5 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfTrue, "IfTrueMethodCall", (new Exception("Exception massage"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
+//    val text5 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfTrue, "IfTrueMethodCall", (new Exception("Exception message"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
 //    text5 should equal("some text")
 //  }
 
@@ -209,41 +201,23 @@ class MethodCallItTestsOld extends BaseItTests {
     length should equal(3)
   }
 
-  trait ReplacementExp extends MatricesDslExp with ScalanCommunityExp with TestLmsCompiler with CommunityMethodMapping {
+  val replaceMethExp = new MatricesDslExp with ScalanCommunityExp with TestLmsCompiler with CommunityMethodMapping {
     lazy val arrayLength = fun { v: Rep[Array[Int]] =>
       PArray(v).length
     }
+
+    override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, invokeEnabler("skip_length_method") { (o, m) => !m.getName.equals("length")})
   }
 
-  val replaceMethExp = new ReplacementExp {
-    self =>
-
-    new ScalaLanguage with CommunityConf {
-      val javaArray = new ScalaLib("", "java.lang.reflect.Array") {
-        val getLength = ScalaFunc('getLength)
-      }
-
-      val scala2Scala = {
-        import scala.language.reflectiveCalls
-
-        Map(
-          scalanCE.parraysPack.parraysFam.parray.length -> javaArray.getLength
-        )
-      }
-
-      val backend = new ScalaBackend {
-        val functionMap = scala2Scala
-      }
-    }
-  }
-
-  test("Method Replacement") {
-    val length = getStagedOutputConfig(replaceMethExp)(replaceMethExp.arrayLength, "MethodReplacement", Array(5, 9, 2), replaceMethExp.defaultCompilerConfig)
+  test("Class Mapping") {
+    val conf = replaceMethExp.defaultCompilerConfig
+    val length = getStagedOutputConfig(replaceMethExp)(replaceMethExp.arrayLength, "ClassMapping", Array(5, 9, 2),
+      conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
+        extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("assembly"))))
     length should equal(3)
   }
 
-  val testJar = "test.jar"
-  val jarReplaceMethExp = new ScalanCommunityExp with TestLmsCompiler {
+  val jarReplaceExp = new ScalanCommunityExp with TestLmsCompiler {
     self =>
 
     lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
@@ -265,28 +239,34 @@ class MethodCallItTestsOld extends BaseItTests {
 
     new ScalaLanguage with TestConf {
 
-      val extLib = new ScalaLib(testJar, "scalan.it.lms.method.TestMethod") {
-        val testMassageMethod = ScalaFunc('testMassage)
+      val extLib = new ScalaLib("", "scalan.it.lms.MappingMethodFromJar.TestMethod") {
+        val testMessageMethod = ScalaFunc('testMessage)
       }
 
       val scala2Scala = {
         import scala.language.reflectiveCalls
 
         Map(
-          testLib.scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMassageMethod
+          testLib.scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMessageMethod
         )
+      }
+
+      val main = new ScalaLib() {
+        val throwableImp = ScalaFunc(Symbol("scalan.imp.ThrowableImp"))
       }
 
       val backend = new ScalaBackend {
         val functionMap = scala2Scala
+        override val classMap = Map[Class[_], ScalaFunc](classOf[scalan.util.Exceptions#SThrowable] -> main.throwableImp)
       }
     }
   }
 
-  ignore("Mapping Method From Jar") {
-    val methodName = "MappingMethodFromJar"
-    FileUtil.packJar(TestMethod.getClass, methodName, FileUtil.file(prefix, methodName).getAbsolutePath, jarReplaceMethExp.libs, testJar)
-    val messageFromTestMethod = getStagedOutputConfig(jarReplaceMethExp)(jarReplaceMethExp.message, methodName, "Original massage", jarReplaceMethExp.defaultCompilerConfig.copy(scalaVersion = Some("2.11.4")))
+  test("Mapping Method From Jar") {
+    val conf = jarReplaceExp.defaultCompilerConfig
+    val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", "Original message",
+      conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
+        extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
     messageFromTestMethod should equal("Test Message")
   }
 }

@@ -145,7 +145,7 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
   */
   test("test21compoundMapValue") {
     val in = (Array("one", "two", "three"), Array((1, 1.1), (2, 2.2), (3, 3.3)))
-    compareOutputWithSequential(progStaged)(progSeq.compoundMapValue, progStaged.compoundMapValue, "filterCompound", in)
+    compareOutputWithSequential(progStaged)(progSeq.compoundMapValue, progStaged.compoundMapValue, "compoundMapValue", in)
   }
   test("test22fillArrayBuffer") {
     val in = Array(1, 2, 3, 4, 5, 6, 7, 8, 9)

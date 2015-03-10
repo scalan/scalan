@@ -4,6 +4,7 @@ import java.io.File
 
 import scalan.ScalanExp
 import scalan.staged.BaseExp
+import scalan.util.FileUtil
 
 trait Compiler extends BaseExp with Passes {
   self: ScalanExp with GraphVizExport =>
@@ -14,8 +15,7 @@ trait Compiler extends BaseExp with Passes {
 
   type CustomCompilerOutput
 
-  case class CommonCompilerOutput[A, B]
-    (executableDir: File, name: String, eInput: Elem[A], eOutput: Elem[B])
+  case class CommonCompilerOutput[A, B](executableDir: File, name: String, eInput: Elem[A], eOutput: Elem[B])
 
   case class CompilerOutput[A, B](common: CommonCompilerOutput[A, B], custom: CustomCompilerOutput, config: CompilerConfig)
 
@@ -63,9 +63,9 @@ trait Compiler extends BaseExp with Passes {
   }
 
   def buildExecutable[A, B](sourcesAndExecutableDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)
-                           (implicit compilerConfig: CompilerConfig): CompilerOutput[A, B] =
+                           (implicit compilerConfig: CompilerConfig): CompilerOutput[A, B] = {
     buildExecutable(sourcesAndExecutableDir, sourcesAndExecutableDir, functionName, func, graphVizConfig)(compilerConfig)
-
+  }
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]): CustomCompilerOutput
 

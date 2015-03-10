@@ -497,11 +497,5 @@ class CoreLmsBackend extends CoreLmsBackendBase { self =>
 class CommunityLmsBackend extends CoreLmsBackend with CommunityLmsBackendBase { self =>
   override val codegen = new Codegen with ScalaGenVectorOps with ScalaGenSystemOps {
     override val IR: self.type = self
-/*
-    override def emitVarDef(sym: Sym[Variable[Any]], rhs: String): Unit = {
-      stream.println("var " + quote(sym) + " = " + rhs)
-    }
-*/
-
   }
 }
