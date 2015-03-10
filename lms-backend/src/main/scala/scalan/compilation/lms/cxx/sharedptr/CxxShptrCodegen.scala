@@ -12,7 +12,7 @@ trait CxxShptrCodegen extends CLikeCodegen {
   trait size_t
   trait SharedPtr[T]
 
-  private def toShptrManifest(m: Manifest[_]): Manifest[_] = {
+  def toShptrManifest(m: Manifest[_]): Manifest[_] = {
     val nArgs = m.typeArguments.length
     val newM = nArgs match {
       case 0 => m
@@ -20,18 +20,22 @@ trait CxxShptrCodegen extends CLikeCodegen {
       case n => Manifest.classType(m.runtimeClass, toShptrManifest(m.typeArguments(0)), m.typeArguments.drop(1).map(toShptrManifest): _*)
     }
 
-    if( m <:< Manifest.AnyVal || m.runtimeClass == classOf[scala.Tuple2[_,_]])
-      newM
-    else
-      Manifest.classType(classOf[SharedPtr[_]], newM)
+    m match {
+      case _ if m <:< Manifest.AnyVal => newM
+      case _ if m.runtimeClass == classOf[scala.Tuple2[_, _]] => newM
+      case _ if m.runtimeClass == classOf[Variable[_]] => newM
+      case _ if m.runtimeClass == classOf[_=>_] => newM
+      case _ =>
+        Manifest.classType(classOf[SharedPtr[_]], newM)
+    }
   }
 
-  override def emitValDef(sym: Sym[Any], rhs: String ): Unit = {
+  final override def emitValDef(sym: Sym[Any], rhs: String ): Unit = {
     val newTp = toShptrManifest(sym.tp)
     emitValDef(quote(sym), newTp, rhs)
   }
 
-  override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
+  final override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
     if( !isVoidType(tpe) ) {
         stream.println(src"${remap(tpe)} $sym  = $rhs; /*emitValDef(): ${sym.toString}: ${tpe.toString} = ${rhs.toString}*/")
     }
@@ -54,11 +58,16 @@ trait CxxShptrCodegen extends CLikeCodegen {
     }
   }
 
-  def emitConstruct(sym: Sym[Any], args: String*): Unit = {
-    if (!isPrimitiveType(sym.tp) && sym.tp.runtimeClass != classOf[Tuple2[_,_]])
-      stream.println(s"${remap(sym.tp)} ${quote(sym)} = std::make_shared(${args.mkString(",")}); /*emitConstruct(): ${sym.tp} ${sym}(${args.mkString(",")})*/")
+  final override def emitVarDecl(sym: Sym[Any]): Unit = {
+    emitConstruct(sym)
+  }
+
+  final def emitConstruct(sym: Sym[Any], args: String*): Unit = {
+    val newTp = toShptrManifest(sym.tp)
+    if (newTp.runtimeClass == classOf[SharedPtr[_]])
+      stream.println(s"${remap(newTp)} ${quote(sym)} = std::make_shared<${remap(newTp.typeArguments(0))}>(${args.mkString(",")}); /*emitConstruct(): ${sym.tp} ${sym}(${args.mkString(",")})*/")
     else
-      stream.println(s"${remap(sym.tp)} ${quote(sym)}(${args.mkString(",")}); /*emitConstruct(): ${sym.tp} ${sym}(${args.mkString(",")})*/")
+      stream.println(s"${remap(newTp)} ${quote(sym)} = ${remap(newTp)}(${args.mkString(",")}); /*emitConstruct(): ${sym.tp} ${sym}(${args.mkString(",")})*/")
   }
 //  override def wrapSharedPtr(tpe: String): String = {
 //    if(!isPrimitiveType(tpe) && !isVoidType(tpe))

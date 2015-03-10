@@ -11,11 +11,23 @@ import scalan.it.smoke.SmokeItTests
 class CxxShptrLmsSmokeItTests extends SmokeItTests {
   class ProgExp extends Prog with ScalanCtxExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX with CoreBridge {
     val lms = new CoreCxxShptrLmsBackend
+
+    lazy val arrayForeach = fun {arr:Rep[Array[Double]] =>
+//      val init = SArray.replicate(1, 0.0)
+      arr.fold(arr, {p:Rep[(Array[Double],Double)] => p._1.update(0, p._1(0) + p._2 + 1.0)})
+    }
   }
 
   override val progStaged = new ProgExp
   import progStaged.defaultCompilerConfig
 
+  test("arrayForeach") {
+    val in = 2
+    val functionName = "arrayForeach"
+    val dir = new File(prefix, functionName)
+    progStaged.buildExecutable(dir, dir, functionName, progStaged.arrayForeach, GraphVizConfig.default)
+    //    compareOutputWithSequential(progStaged)(progSeq.simpleArith, progStaged.simpleArith, "simpleArith", in)
+  }
   test("test0simpleArith") {
     val in = 2
     val functionName = "simpleArith"

@@ -23,18 +23,21 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case ArrayIndex(xs, i) =>
+//    case ArrayIndex(xs, i) =>
+//      emitValDef(sym, src"(*$xs)[$i]")
+    case ArrayApply(xs,i) =>
       emitValDef(sym, src"(*$xs)[$i]")
-    case ArrayLength(x) => emitValDef(sym, src"$x.size()")
-    case ArrayApply(x,n) => emitValDef(sym, src"$x[$n]")
-    case ArrayUpdate(x,n,y) => stream.println(src"$x[$n] = $y; /*${rhs.toString }*/")
+    case ArrayLength(x) =>
+      emitValDef(sym, src"$x->size()")
+    case ArrayUpdate(x,n,y) =>
+      stream.println(src"(*$x)[$n] = $y; /*${rhs.toString }*/")
     //    case ArraySlice(x,s,e) =>
     //      val tp=remap(x.tp.typeArguments(0))
     //      emitValDef(sym, src"({ size_t sz=sizeof("+tp+")*($e-$s); "+tp+"* r = ("+tp+"*)malloc(sz); memcpy(r,(("+tp+"*)$x)+$s,sz); r; })")
     case a@ArrayNew(Const(0)) =>
-      stream.println(s"${remap(sym.tp)} ${quote(sym)}; /*${a}*/");
+      emitConstruct(sym)
     case a@ArrayNew(n) =>
-      stream.println(s"${remap(sym.tp)} ${quote(sym)}(${quote(n)}); /*${a}*/");
+      emitConstruct(sym, src"$n")
     //    case e@ArrayFromSeq(xs) => {
     //      emitData(sym, xs)
     //      emitValDef(sym,
@@ -54,20 +57,22 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
     //        }
     //      )
     //    }
-    case afrch@ArrayForeach(a,x,block) =>
+    case ArrayForeach(a,x,block) =>
       //      stream.println(s"")
-      gen"""{/*start: ${sym} = ${afrch.toString}*/
-                                                  |size_t len = ${a}.size();
-                                                                      |for(size_t i = 0; i < len; ++i) {"""
-      emitValDef( x, s"${quote(a)}[i]" )
+      val len = s"${quote(sym)}_len"
+      val i = s"${quote(sym)}_i"
+      gen"""{/*start: ${sym} = ${rhs.toString}*/
+           |size_t $len = $a->size();
+           |for(size_t $i = 0; $i < $len; ++$i) {"""
+      emitValDef( x, src"(*$a)[$i]" )
       emitBlock(block)
       gen"""}
-           |}/*end: ${sym} = ${afrch.toString}*/"""
+           |}/*end: ${sym} = ${rhs.toString}*/"""
     //      stream.println(s"")
     case ArrayCopy(src,srcPos,dest,destPos,len) =>
       stream.println(s"{/*start: ${rhs.toString}*/")
-      stream.println(src"const auto srcBegin = ${src}.begin();")
-      stream.println(src"const auto destBegin = ${dest}.begin();")
+      stream.println(src"const auto srcBegin = ${src}->begin();")
+      stream.println(src"const auto destBegin = ${dest}->begin();")
       stream.println(src"std::copy(srcBegin+${srcPos}, srcBegin+${srcPos}+${len}, destBegin+${destPos});")
       emitValDef(sym, src"$dest")
       stream.println(s"}/*end: ${rhs.toString}*/")
