@@ -15,6 +15,7 @@ import scalan.util.FileUtil
 import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq}
 
 object MvmBenchmark {
+  @State(Scope.Benchmark)
   @volatile
   class MvmStateBase {
     // all declared vars to make them volatile
@@ -61,6 +62,21 @@ object MvmBenchmark {
     var (dvec, svec) = genRandVec(width, vecSparse)
     var (dmat, smat) = genRandMat(height, width, matSparse)
     var fmat = (dmat.flatten, width)
+
+    // calculate correct result
+    val right:Array[Double] = scala.Array.tabulate(dmat.length)(_=>0.0)
+    for(i <- 0 until dmat.length) {
+      for(j <- 0 until dmat(i).length) {
+        right(i) += dmat(i)(j) * dvec(j)
+      }
+    }
+
+    var res: Array[Double] = Array.empty;
+
+    @TearDown
+    def check(): Unit = {
+      require(res.sameElements(right), "res.sameElements(right)")
+    }
 
     //printDenseVec(dvec, "Dense Vector:")
     //printSparseVec(svec, "Sparse Vector:")
@@ -168,22 +184,120 @@ object MvmBenchmark {
 //    protected implicit val cfg = ctx.defaultCompilerConfig
 
     val nm = new NativeMethods
-    var res: Array[Double] = null;
-
-    @TearDown
-    def check(): Unit = {
-//      require(res.deep == dvec.deep, "bad!")
-    }
   }
 
 }
 
 class MvmBenchmark {
+  System.loadLibrary("jniMVM")
+
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
   def dmdv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.ddmvm( (state.dmat, state.dvec) )
+    val res = state.ctx.ddmvm( (state.dmat, state.dvec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def dmsv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
+    val res = state.ctx.dsmvm( (state.dmat, state.svec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def smdv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
+    val res = state.ctx.sdmvm( (state.smat, state.dvec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def smsv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
+    val res = state.ctx.ssmvm( (state.smat, state.svec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def fmdv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
+    val res = state.ctx.fdmvm( (state.fmat, state.dvec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def fmsv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
+    val res = state.ctx.fsmvm( (state.fmat, state.svec) )
+    state.res = res
+    res
+  }
+
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def dmdv_staged(state: MvmBenchmark.MvmStateStaged_ddmvm): Array[Double] = {
+    val res = state.ddmvm( (state.dmat, state.dvec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def dmsv_staged(state: MvmBenchmark.MvmStateStaged_dsmvm): Array[Double] = {
+    val res = state.dsmvm( (state.dmat, state.svec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def smdv_staged(state: MvmBenchmark.MvmStateStaged_sdmvm): Array[Double] = {
+    val res = state.sdmvm( (state.smat, state.dvec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def smsv_staged(state: MvmBenchmark.MvmStateStaged_ssmvm): Array[Double] = {
+    val res = state.ssmvm( (state.smat, state.svec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def fmdv_staged(state: MvmBenchmark.MvmStateStaged_fdmvm): Array[Double] = {
+    val res = state.fdmvm( (state.fmat, state.dvec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def fmsv_staged(state: MvmBenchmark.MvmStateStaged_fsmvm): Array[Double] = {
+    val res = state.fsmvm( (state.fmat, state.svec) )
+    state.res = res
+    res
   }
 
   @Benchmark
@@ -198,78 +312,45 @@ class MvmBenchmark {
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def dmsv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.dsmvm( (state.dmat, state.svec) )
+  def dmsv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.dsmvm( (state.dmat, state.svec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def smdv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.sdmvm( (state.smat, state.dvec) )
+  def smdv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.sdmvm( (state.smat, state.dvec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def smsv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.ssmvm( (state.smat, state.svec) )
+  def smsv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.ssmvm( (state.smat, state.svec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def fmdv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.fdmvm( (state.fmat, state.dvec) )
+  def fmdv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.fdmvm( (state.fmat, state.dvec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def fmsv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.fsmvm( (state.fmat, state.svec) )
-  }
-
-
-  @Benchmark
-  @BenchmarkMode(Array(Mode.AverageTime))
-  @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def dmdv_staged(state: MvmBenchmark.MvmStateStaged_ddmvm): Array[Double] = {
-    state.ddmvm( (state.dmat, state.dvec) )
-  }
-
-  @Benchmark
-  @BenchmarkMode(Array(Mode.AverageTime))
-  @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def dmsv_staged(state: MvmBenchmark.MvmStateStaged_dsmvm): Array[Double] = {
-    state.dsmvm( (state.dmat, state.svec) )
-  }
-
-  @Benchmark
-  @BenchmarkMode(Array(Mode.AverageTime))
-  @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def smdv_staged(state: MvmBenchmark.MvmStateStaged_sdmvm): Array[Double] = {
-    state.sdmvm( (state.smat, state.dvec) )
-  }
-
-  @Benchmark
-  @BenchmarkMode(Array(Mode.AverageTime))
-  @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def smsv_staged(state: MvmBenchmark.MvmStateStaged_ssmvm): Array[Double] = {
-    state.ssmvm( (state.smat, state.svec) )
-  }
-
-  @Benchmark
-  @BenchmarkMode(Array(Mode.AverageTime))
-  @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def fmdv_staged(state: MvmBenchmark.MvmStateStaged_fdmvm): Array[Double] = {
-    state.fdmvm( (state.fmat, state.dvec) )
-  }
-
-  @Benchmark
-  @BenchmarkMode(Array(Mode.AverageTime))
-  @OutputTimeUnit(TimeUnit.MILLISECONDS)
-  def fmsv_staged(state: MvmBenchmark.MvmStateStaged_fsmvm): Array[Double] = {
-    state.fsmvm( (state.fmat, state.svec) )
+  def fmsv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.fsmvm( (state.fmat, state.svec) )
+    state.res = res
+    res
   }
 }
