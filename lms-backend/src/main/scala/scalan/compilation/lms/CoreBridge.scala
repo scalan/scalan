@@ -1094,15 +1094,15 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
               case (mA: Manifest[a]) => {
                 val src = symMirr(source).asInstanceOf[lms.Exp[Array[a]]]
                 monoid.opName match {
-                  case "+" =>
-                    val exp = lms.sum[a](src)(mA)
-                    (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+                  //case "+" =>
+                  //  val exp = lms.sum[a](src)(mA)
+                  //  (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
                   case _ =>
                     monoid.append match {
                       case opSym@Def(lambda: Lambda[_, _]) => {
                         val zero = symMirr(monoid.zero).asInstanceOf[lms.Exp[a]]
                         val op = mirrorLambdaToLmsFunc[(a, a), a](m)(lambda.asInstanceOf[Lambda[(a, a), a]])
-                        val exp = lms.reduce[a](src, zero, op)(mA)
+                        val exp = lms.scan[a](src, zero, op)(mA)
                         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((opSym, op)))
                       }
                     }
@@ -1160,6 +1160,24 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
           (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lamSym, lambdaF)))
       }
 
+      case lr@ListFlatMap(list, lamSym@Def(lam: Lambda[_, _])) =>
+        lam.eB match {
+          case el: ArrayElem[_] =>
+            (createManifest(list.elem), createManifest(el.eItem)) match {
+              case (mA: Manifest[a], mB: Manifest[b]) =>
+                val lambdaF = mirrorLambdaToLmsFunc[a, Array[b]](m)(lam.asInstanceOf[Lambda[a, Array[b]]])
+                val exp = lms.listFlatMap[a, b](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA, mB)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lamSym, lambdaF)))
+        }
+        }
+
+      case lr@ListLength(list) =>
+           createManifest(list.elem) match {
+              case (mA: Manifest[a]) =>
+                val exp = lms.listLength[a](symMirr(list).asInstanceOf[lms.Exp[List[a]]])(mA)
+                (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr )
+            }
+
       case lr@ListFilter(list, lamSym @ Def(lam: Lambda[_, _])) =>
         createManifest(list.elem) match {
           case mA: Manifest[a] =>
@@ -1210,6 +1228,14 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
             val ls = symMirr(xs).asInstanceOf[lms.Exp[List[a]]]
             val ks = symMirr(ys).asInstanceOf[lms.Exp[List[a]]]
             val exp = lms.list_concat[a](ls, ks)
+            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
+        }
+      case ListToArray(xs) =>
+        createManifest(xs.elem.eItem) match {
+          case mA: Manifest[a] =>
+            implicit val imA = mA
+            val ls = symMirr(xs).asInstanceOf[lms.Exp[List[a]]]
+            val exp = lms.list_toarray[a](ls)
             (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
         }
 
