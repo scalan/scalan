@@ -2,6 +2,7 @@ package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
 import scala.virtualization.lms.common._
+import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait VectorOps extends Base {
 
@@ -54,6 +55,41 @@ trait ScalaGenVectorOps extends ScalaGenBase {
       stream.println("\t\t}")
       stream.println("\t}")
       stream.println("\tout")
+      stream.println("}")
+    case _ => super.emitNode(sym, rhs)
+  }
+
+}
+
+trait CxxShptrGenVectorOps extends CxxShptrCodegen {
+  val IR: VectorOpsExp
+  import IR._
+
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case ds @ ArrayDotProdSparse(idxs1, vals1, idxs2, vals2) =>
+      // TODO use proper source quasiquoter
+      stream.println("// generating dot product")
+      emitConstruct(sym)
+      stream.println("{")
+      stream.println(s"\tauto idxs1 = ${quote(idxs1)};")
+      stream.println(s"\tauto idxs2 = ${quote(idxs2)};")
+      stream.println(s"\tauto vals1 = ${quote(vals1)};")
+      stream.println(s"\tauto vals2 = ${quote(vals2)};")
+      stream.println("\tsize_t i1 = 0;")
+      stream.println("\tsize_t i2 = 0;")
+      stream.println("\twhile (i1 < idxs1->size() && i2 < idxs2->size()) {")
+      stream.println("\t\tauto ind1 = (*idxs1)[i1];")
+      stream.println("\t\tauto ind2 = (*idxs2)[i2];")
+      stream.println("\t\tif (ind1 == ind2) { ")
+      stream.println(s"\t\t\t${quote(sym)} += (*vals1)[i1] * (*vals2)[i2];")
+      stream.println("\t\t\ti1+=1;")
+      stream.println("\t\t\ti2+=1;")
+      stream.println("\t\t} else if (ind1 < ind2 ) {")
+      stream.println("\t\t\ti1+=1;")
+      stream.println("\t\t} else {")
+      stream.println("\t\t\ti2+=1;")
+      stream.println("\t\t}")
+      stream.println("\t};")
       stream.println("}")
     case _ => super.emitNode(sym, rhs)
   }

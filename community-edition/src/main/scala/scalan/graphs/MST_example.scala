@@ -213,9 +213,9 @@ trait MST_example extends Scalan with ListOps {
 
       val res = front.keys.flatMap { v =>
         val ns = outNeighboursOf(v)
-        SArray.rangeFrom0(ns.length).map({ i => (v, i)}). filter { !predicate(_) }
+        SArray.rangeFrom0(ns.length).map({ i => (v, i)})/*. filter { !predicate(_) }*/
       }
-      res
+      res.filter{ !predicate(_)}
     }
     def stopCondition(unused1: Any, unused2: Any, stop: Rep[Boolean]) = stop
 
@@ -471,7 +471,7 @@ trait MST_example extends Scalan with ListOps {
 
     val result = from(startFront, visited, out, st).until((_, _, _, stop) => stop) { (front,visited, out, stop) =>
       val outEdges = outEdgesOf(front, visited)
-      val stop = (outEdges.length === 0) //isEmpty
+      val stop = (outEdges.length === 0)
     val res = IF  (stop) THEN {
         (front, visited, out)
       } ELSE {

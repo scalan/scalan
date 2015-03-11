@@ -57,6 +57,11 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
     result._2
   }
 
+  def fallingTest(g: Rep[Graph[Unit,Double]], startFront: Rep[Front]) = {
+    val front = startFront.append(0)
+    g.outEdgesOf(front).map(_.toId)
+  }
+
   lazy val mstFunAdj = fun { in: Rep[(NestedCollection[Int],NestedCollection[Double])] =>
     val links = in._1
     val edge_vals = in._2

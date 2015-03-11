@@ -18,6 +18,7 @@ trait ListOps { self: Scalan =>
     def length = list_length(xs)
     def mapBy[R: Elem](f: Rep[T => R]) = list_map(xs, f)
     def map[R: Elem](f: Rep[T] => Rep[R]) = list_map(xs, fun(f))
+    def flatMap[R:Elem](f: Rep[T] => Arr[R]) = list_flatMap(xs, fun(f))
     def reduce(implicit m: RepMonoid[T]) = list_reduce(xs)
 
     def foldLeft[S: Elem](init: Rep[S])(f: Rep[((S, T)) => S]): Rep[S] = list_foldLeft[T, S](xs, init, f)
@@ -71,6 +72,7 @@ trait ListOps { self: Scalan =>
 
   // provide: xs.length == res.length
   def list_map[T, R: Elem](xs: Lst[T], f: Rep[T => R]): Lst[R]
+  def list_flatMap[T, R: Elem](xs: Lst[T], f: Rep[T => Array[R]]): Lst[R]
   
   def list_reduce[T](xs: Lst[T])(implicit m: RepMonoid[T]): Rep[T]
   def list_foldLeft[T,S:Elem](xs: Lst[T], init:Rep[S], f:Rep[((S,T))=>S]): Rep[S]
@@ -128,6 +130,7 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
 
   def list_length[T](a: Lst[T]): Rep[Int] = a.length
   def list_map[T, R: Elem](xs: List[T], f: T => R) = xs.map(f)
+  def list_flatMap[T, R: Elem](xs: List[T], f: T => Array[R]) = xs.flatMap(in => f(in).toList)
   def list_reduce[T](xs: Lst[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x, y) => m.append((x, y)))
   def list_foldLeft[T, S: Elem](xs: Lst[T], init: Rep[S], f: Rep[((S, T)) => S]): Rep[S] = {
     var state = init
@@ -206,6 +209,12 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
     implicit lazy val eT = withResultElem(f) { e => e }
     override def mirror(t: Transformer) = ListMap(t(xs), t(f))
   }
+  case class ListFlatMap[T, R](xs: Exp[List[T]], f: Exp[T => Array[R]]) extends ListDef[R] {
+    implicit lazy val eT = withResultElem(f) { e => e match {
+      case ArrayElem(el) => el
+    } }
+    override def mirror(t: Transformer) = ListFlatMap(t(xs), t(f))
+  }
   case class ListReduce[T](xs: Exp[List[T]], implicit val m: RepMonoid[T]) extends Def[T] with ListMethod[T] {
     def selfType = xs.elem.eItem
     override def mirror(t: Transformer) = ListReduce[T](t(xs), m)
@@ -265,6 +274,7 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
 
   def list_length[T](a: Exp[List[T]]): Rep[Int] = ListLength(a)
   def list_map[T, R: Elem](xs: Exp[List[T]], f: Exp[T => R]) = ListMap(xs, f)
+  def list_flatMap[T, R: Elem](xs: Exp[List[T]], f: Exp[T => Array[R]]) = ListFlatMap(xs, f)
 
   def list_reduce[T](xs: Lst[T])(implicit m: RepMonoid[T]) =
     withElemOfList(xs) { implicit eT => ListReduce(xs, m) }
