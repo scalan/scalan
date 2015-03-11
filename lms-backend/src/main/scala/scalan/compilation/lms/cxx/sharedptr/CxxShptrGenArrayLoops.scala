@@ -2,9 +2,10 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import scala.virtualization.lms.common._
 import scala.virtualization.lms.epfl.test7.{ArrayLoopsExp, ArrayLoopsFatExp}
+import scalan.compilation.lms.common.JNILmsOpsExp
 
 trait CxxShptrGenFatArrayLoopsFusionOpt extends CxxShptrGenArrayLoopsFat with LoopFusionOpt {
-  val IR: ArrayLoopsFatExp with IfThenElseFatExp
+  val IR: ArrayLoopsFatExp with IfThenElseFatExp with JNILmsOpsExp
   import IR._
 
   override def unapplySimpleIndex(e: Def[Any]) = e match {
@@ -18,6 +19,7 @@ trait CxxShptrGenFatArrayLoopsFusionOpt extends CxxShptrGenArrayLoopsFat with Lo
 
   override def unapplySimpleCollect(e: Def[Any]) = e match {
     case ArrayElem(Block(a)) => Some(a) //TODO: block??
+    case JNIArrayElem(x,Block(a)) => Some(a)
     case _ => super.unapplySimpleCollect(e)
   }
 
@@ -28,6 +30,7 @@ trait CxxShptrGenFatArrayLoopsFusionOpt extends CxxShptrGenArrayLoopsFat with Lo
 
   override def applyAddCondition(e: Def[Any], c: List[Exp[Boolean]]) = e match { //TODO: should c be list or not?
     case ArrayElem(a) if c.length == 1 => ArrayIfElem(c(0),a)
+    case JNIArrayElem(x,a) if c.length == 1 => JNIArrayIfElem(x,c(0),a)
     case ReduceElem(a) if c.length == 1 => ReduceIfElem(c(0),a)
     case _ => super.applyAddCondition(e,c)
   }
@@ -63,7 +66,7 @@ trait CxxShptrGenArrayLoops extends CLikeGenLoops with CxxShptrCodegen {
 }
 
 trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsFat {
-  val IR: ArrayLoopsFatExp
+  val IR: ArrayLoopsFatExp with JNILmsOpsExp
   import IR._
 
   override def emitFatNode(sym: List[Sym[Any]], rhs1: FatDef) = rhs1 match {
@@ -71,6 +74,8 @@ trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsF
       stream.println(s"/*start: ${rhs1.toString}*/")
       for ((l,r) <- sym zip rhs) {
         r match {
+          case JArrayElem(x,y) =>
+          case JNIArrayElem(x,y) =>
           case ArrayElem(y) =>
             emitConstruct(l, quote(s))
           case ReduceElem(y) =>
@@ -92,6 +97,12 @@ trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsF
       emitFatBlock(syms(rhs).map(Block(_))) // TODO: check this
       for ((l,r) <- sym zip rhs) {
         r match {
+          case JArrayElem(x,y) =>
+            val q = getBlockResult(y)
+            stream.println( s"env->SetObjectArrayElement( ${quote(x)}, ${quote(ii)}, ${quote(q)}); /*JArrayElem*/" )
+          case JNIArrayElem(x,y) =>
+            val q = getBlockResult(y)
+            stream.println(src"(*$x)[$ii] = $q; /*JNIArrayElem*/")
           case ArrayElem(y) =>
             stream.println(src"(*$l)[$ii] = ${quote(getBlockResult(y))};")
           case ReduceElem(y) =>

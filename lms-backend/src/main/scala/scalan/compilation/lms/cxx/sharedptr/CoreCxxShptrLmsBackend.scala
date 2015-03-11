@@ -1,9 +1,13 @@
-package scalan.compilation.lms.cxx.sharedptr
+package scalan
+package compilation
+package lms
+package cxx
+package sharedptr
 
 import scala.virtualization.lms.common._
-import scalan.compilation.lms.CoreLmsBackendBase
+import scalan.compilation.lms.common.{CxxShptrGenJNIExtractor, JNILmsOpsExp}
 
-class CoreCxxShptrLmsBackend extends CoreLmsBackendBase { self =>
+class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>
 
   trait Codegen extends CxxShptrCodegen
   with CLikeGenEqual
@@ -22,6 +26,7 @@ class CoreCxxShptrLmsBackend extends CoreLmsBackendBase { self =>
   with CxxShptrGenRangeOps
   with CLikeGenWhile
   with CLikeGenNumericOps
+  with CxxShptrGenJNIExtractor
   {
     override val IR: self.type = self
 

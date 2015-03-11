@@ -3,18 +3,19 @@ package scalan.it.lms
 import java.io.File
 
 import scala.language.reflectiveCalls
+import scalan._
 import scalan.compilation.lms.JNIBridge
-import scalan.compilation.lms.cxx.{CommunityCXXLmsBackend, LmsCompilerCXX}
+import scalan.compilation.lms.cxx.LmsCompilerCXX
+import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.it.BaseItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.parrays.PArraysDslExp
 import scalan.performance.MVMs
-import scalan._
 
 class LmsJNIExtractorItTests extends BaseItTests {
   trait ProgExp extends PArraysDslExp with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
-    val lms = new CommunityCXXLmsBackend
+    val lms = new CoreCxxShptrLmsBackend
   }
 
   test("simpleGenCxx") {
