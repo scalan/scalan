@@ -64,10 +64,20 @@ trait ScalaGenMethodCallOps extends ScalaGenBase {
     case ScalaMethod(caller, methodName, types, args) =>
       stream.print("val " + quote(sym) + " = ")
       caller match {
-        case c: Rep[_] => stream.print(quote(caller) + ".")
+        case c: Rep[_] => stream.print(quote(caller))
         case _ =>
       }
-      stream.print(methodName)
+      caller match {
+        case c: Rep[_] => methodName match {
+          case c: String => stream.print(".")
+          case _ =>
+        }
+        case _ =>
+      }
+      methodName match {
+        case c: String => stream.print(methodName)
+        case _ =>
+      }
       types.isEmpty match {
         case true =>
         case _ => stream.print(s"[${types map(_.tpe.toString)  mkString ","}]")

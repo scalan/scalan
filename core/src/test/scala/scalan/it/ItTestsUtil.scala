@@ -7,6 +7,7 @@ import org.scalatest.{Matchers, Suite}
 import scalan.TestsUtil
 import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
+import scalan.util.FileUtil.file
 
 // extracted so it can be used with different suite styles
 trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
@@ -16,7 +17,7 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
   def graphVizConfig = GraphVizConfig.default
 
   def assertFileContentCheck(name: String): Unit =
-    FileUtil.read(FileUtil.file(prefix, name)) should be(FileUtil.read(FileUtil.file(prefix, name + ".check")))
+    FileUtil.read(file(prefix, name)) should be(FileUtil.read(file(prefix, name + ".check")))
 
   // there are bad interactions between path-dependent types and default parameters, so
   // we can't simply make config a default parameter
@@ -24,10 +25,12 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
     getStagedOutputConfig(back)(f, functionName, input, back.defaultCompilerConfig)
 
   def getStagedOutputConfig[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig): B = {
-    val dir = FileUtil.file(prefix, functionName)
-
-    val compiled = back.buildExecutable(dir, functionName, f, graphVizConfig)(compilerConfig)
+    val compiled = compileSource(back)(f, functionName, compilerConfig)
     back.execute(compiled, input)
+  }
+
+  def compileSource[A, B](back: Compiler)(f: back.Exp[A => B], functionName: String, compilerConfig: back.CompilerConfig) : back.CompilerOutput[A, B] = {
+    back.buildExecutable(file(prefix, functionName), functionName, f, graphVizConfig)(compilerConfig)
   }
 
   implicit def defaultComparator[A](expected: A, actual: A) {
