@@ -20,14 +20,16 @@ trait CxxShptrCodegen extends CLikeCodegen {
       case n => Manifest.classType(m.runtimeClass, toShptrManifest(m.typeArguments(0)), m.typeArguments.drop(1).map(toShptrManifest): _*)
     }
 
-    m match {
-      case _ if m <:< Manifest.AnyVal => newM
-      case _ if m.runtimeClass == classOf[scala.Tuple2[_, _]] => newM
-      case _ if m.runtimeClass == classOf[Variable[_]] => newM
-      case _ if m.runtimeClass == classOf[_=>_] => newM
-      case _ =>
-        Manifest.classType(classOf[SharedPtr[_]], newM)
-    }
+    wrapSharedPtr(newM)
+  }
+
+  def wrapSharedPtr:PartialFunction[Manifest[_],Manifest[_]] = {
+    case m if m <:< Manifest.AnyVal => m
+    case m if m.runtimeClass == classOf[scala.Tuple2[_, _]] => m
+    case m if m.runtimeClass == classOf[Variable[_]] => m
+    case m if m.runtimeClass == classOf[_=>_] => m
+    case m =>
+      Manifest.classType(classOf[SharedPtr[_]], m)
   }
 
   final override def emitValDef(sym: Sym[Any], rhs: String ): Unit = {
@@ -37,7 +39,7 @@ trait CxxShptrCodegen extends CLikeCodegen {
 
   final override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
     if( !isVoidType(tpe) ) {
-        stream.println(src"${remap(tpe)} $sym  = $rhs; /*emitValDef(): ${sym.toString}: ${tpe.toString} = ${rhs.toString}*/")
+        stream.println(src"${remap(tpe)} $sym = $rhs; /*emitValDef(): ${sym.toString}: ${tpe.toString} = ${rhs.toString}*/")
     }
   }
 
