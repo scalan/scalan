@@ -1,15 +1,13 @@
 package scalan.staged
 
 import scalan.ScalanExp
-import scalan.common.GraphUtil
 
 trait ProgramGraphs extends AstGraphs { self: ScalanExp =>
 
   type PGraph = ProgramGraph[MapTransformer]
 
   // immutable program graph
-  case class ProgramGraph[Ctx <: Transformer : TransformerOps](roots: List[Exp[_]], mapping: Ctx)
-  	  extends AstGraph {
+  case class ProgramGraph[Ctx <: Transformer : TransformerOps](roots: List[Exp[_]], mapping: Ctx) extends AstGraph {
     def this(roots: List[Exp[_]]) { this(roots, implicitly[TransformerOps[Ctx]].empty) }
     def this(root: Exp[_]) { this(List(root)) }
 
