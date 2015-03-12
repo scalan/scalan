@@ -5,13 +5,13 @@ package scalan.linalgebra
   */
 
 import scalan._
-import scalan.common.OverloadHack.Overloaded1
+import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scalan.common.Default
-import scalan.linalgebra.Math
 
 trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
   type Matrix[T] = Rep[AbstractMatrix[T]]
+  def Matrix: Rep[AbstractMatrixCompanionAbs] = AbstractMatrix
 
   trait AbstractMatrix[T] extends Reifiable[AbstractMatrix[T]] {
     def numColumns: Rep[Int]
@@ -21,11 +21,16 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def columns: Rep[Collection[AbstractVector[T]]]
     def rmValues: Rep[Collection[T]]
 
+    @OverloadId("rowsByVector")
+    def apply(vector: Vector[Int])(implicit o: Overloaded2): Matrix[T] = apply(vector.items)
+    @OverloadId("rows")
+    def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T]
     @OverloadId("row")
     def apply(row: Rep[Int]): Vector[T]
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T]
 
     def transpose: Matrix[T]
+    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T]
 
     //@OverloadId("vector")
     def *(vector: Vector[T])(implicit n: Numeric[T]): Vector[T] =
@@ -45,17 +50,27 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   abstract class RowMajorDirectMatrix[T](val rows: Rep[Collection[AbstractVector[T]]])
                                   (implicit val elem: Elem[T])
     extends AbstractMatrix[T] {
-    def companion = RowMajorMatrix
+    def companion = RowMajorDirectMatrix
     def numRows: Rep[Int] = rows.length
     def numColumns = rows(0).length
     def columns = Collection(SArray.tabulate(numColumns) { j => DenseVector(rows.map(_(j))) })
     def rmValues = ???
 
+    @OverloadId("rows")
+    def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
+      RowMajorDirectMatrix(iRows.map(i => rows(i)))
+    }
     @OverloadId("row")
     def apply(row: Rep[Int]): Vector[T] = rows(row)
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = apply(row)(column)
 
     def transpose: Matrix[T] = ???
+    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
+      val coll = Collection.indexRange(numColumns).map { column =>
+        Collection.indexRange(numRows).map { row => rows(row)(column) }.reduce
+      }
+      DenseVector(coll)
+    }
   }
 
   abstract class RowMajorNestedMatrix[T](val rmValues: Rep[Collection[T]], val numColumns: Rep[Int])
@@ -63,7 +78,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     extends AbstractMatrix[T] {
 
     def items = rmValues
-    def companion = RowMajorFlatMatrix
+    def companion = RowMajorNestedMatrix
     def numRows: Rep[Int] = rmValues.length /! numColumns
     def columns: Rep[Collection[AbstractVector[T]]] = {
       Collection.indexRange(numColumns).map { i =>
@@ -71,6 +86,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
     def rows: Coll[DenseVector[T]] = Collection(rmValues.arr.grouped(numColumns).map { row => DenseVector(Collection(row)) })
 
+    @OverloadId("rows")
+    def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
+      Matrix(iRows.map(i => items.slice(numColumns * i, numColumns)).flatMap(v => v), numColumns)
+    }
     @OverloadId("row")
     def apply(row: Rep[Int]): Vector[T] = DenseVector(rmValues.slice(row * numColumns, numColumns))
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = items(toCellIndex(row, column))
@@ -90,7 +109,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def transposeIndices(is: Coll[Int]): Coll[Int] = {
       for { i <- is } yield {
         val Pair(iRow, iCol) = fromCellIndex(i)
-        val transM = RowMajorFlatMatrix(items, numRows)
+        val transM = RowMajorNestedMatrix(items, numRows)
         transM.toCellIndex(iCol, iRow)
       }
     }
@@ -128,6 +147,12 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       RowMajorFlatMatrix(transposedItems, numRows)
     }*/
     def transpose: Matrix[T] = transpose(10)
+    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
+      val coll = Collection.indexRange(numColumns).map { column =>
+        Collection.indexRange(numRows).map { row => this(row)(column) }.reduce
+      }
+      DenseVector(coll)
+    }
   }
 
   abstract class RowMajorSparseMatrix[T](val rows: Rep[Collection[AbstractVector[T]]], val numColumns: Rep[Int])
@@ -139,6 +164,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     //def numColumns = rows(0).length
     def rmValues = ???
 
+    @OverloadId("rows")
+    def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
+      RowMajorSparseMatrix(iRows.map(i => rows(i)), numColumns)
+    }
     @OverloadId("row")
     def apply(row: Rep[Int]): Vector[T] = rows(row)
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = rows(row)(column)
@@ -149,26 +178,27 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       val newSparseRows = newNestedItems map { nonZeroItems => SparseVector(nonZeroItems, numRows)}
       CompressedRowMatrix(newSparseRows, numRows)
     }*/
+    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = ???
   }
 
   trait AbstractMatrixCompanion extends TypeFamily1[AbstractMatrix] {
 
     def defaultOf[T: Elem]: Default[Rep[AbstractMatrix[T]]] =
-      RowMajorFlatMatrix.defaultOf[T]
+      RowMajorNestedMatrix.defaultOf[T]
     def fromColumns[T: Elem](cols: Rep[Collection[AbstractVector[T]]]): Rep[AbstractMatrix[T]] =
-      RowMajorFlatMatrix.fromColumns(cols)
-    def apply[A: Elem](items: Coll[A], numColumns: Rep[Int])(implicit o: Overloaded1): Matrix[A] = RowMajorFlatMatrix(items, numColumns)
+      RowMajorNestedMatrix.fromColumns(cols)
+    def apply[A: Elem](items: Coll[A], numColumns: Rep[Int])(implicit o: Overloaded1): Matrix[A] = RowMajorNestedMatrix(items, numColumns)
   }
 
-  trait RowMajorMatrixCompanion extends ConcreteClass1[RowMajorDirectMatrix] with AbstractMatrixCompanion {
-    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorMatrix(element[Collection[DenseVector[T]]].defaultRepValue))
+  trait RowMajorDirectMatrixCompanion extends ConcreteClass1[RowMajorDirectMatrix] with AbstractMatrixCompanion {
+    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorDirectMatrix(element[Collection[DenseVector[T]]].defaultRepValue))
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Rep[AbstractMatrix[T]] =
-      RowMajorMatrix(Collection(SArray.tabulate(cols(0).length) { i => DenseVector(cols.map(_(i))) }))
+      RowMajorDirectMatrix(Collection(SArray.tabulate(cols(0).length) { i => DenseVector(cols.map(_(i))) }))
   }
 
-  trait RowMajorFlatMatrixCompanion extends ConcreteClass1[RowMajorNestedMatrix] with AbstractMatrixCompanion {
+  trait RowMajorNestedMatrixCompanion extends ConcreteClass1[RowMajorNestedMatrix] with AbstractMatrixCompanion {
 
-    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorFlatMatrix(element[Collection[T]].defaultRepValue, IntElement.defaultRepValue))
+    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorNestedMatrix(element[Collection[T]].defaultRepValue, IntElement.defaultRepValue))
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = {
       val numColumns = cols.length
       val numRows = cols(0).length
@@ -176,18 +206,16 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       val rmValues = Collection.indexRange(numRows * numColumns).map { i =>
         columnsArr(i % numColumns)(i /! numColumns)
       }
-      RowMajorFlatMatrix(rmValues, numColumns)
+      RowMajorNestedMatrix(rmValues, numColumns)
     }
   }
 
   trait RowMajorSparseMatrixCompanion extends ConcreteClass1[RowMajorSparseMatrix] with AbstractMatrixCompanion {
 
     override def defaultOf[T: Elem] = Default.defaultVal(RowMajorSparseMatrix(element[Collection[AbstractVector[T]]].defaultRepValue, IntElement.defaultRepValue))
-                                    //Default.defaultVal(SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, IntElement.defaultRepValue))
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = ???
   }
 
-  //implicit def matrixElem[T](implicit e: Elem[T]): Elem[Matrix[T]] = element[RowMajorFlatMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
   implicit def matrixElem[T](implicit e: Elem[T]): Elem[AbstractMatrix[T]] = element[RowMajorNestedMatrix[T]].asElem[AbstractMatrix[T]]
 }
 
