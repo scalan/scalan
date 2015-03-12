@@ -19,10 +19,47 @@ object MvmBenchmark {
   @volatile
   class MvmStateBase {
     // all declared vars to make them volatile
-    var height = 10000
-    var width = 10000
-    var matSparse = 0.9
-    var vecSparse = 0.1
+    @Param(Array("10000"))
+    var height:Int = _
+    @Param(Array("10000"))
+    var width:Int = _
+    @Param(Array("0.9"))
+    var matSparse:Double = _
+    @Param(Array("0.1"))
+    var vecSparse:Double = _
+
+    type DVec[T] = Array[T]
+    type SVec[T] = (Array[Int], (Array[T], Int))
+    var dvec: DVec[Double] = _
+    var svec: SVec[Double] = _
+    var dmat: Array[DVec[Double]] = _
+    var smat: Array[SVec[Double]] = _
+    var fmat: (DVec[Double], Int) = _
+
+    var right: DVec[Double] = _
+    var res: DVec[Double] = Array.empty;
+
+    @Setup
+    def prepare(): Unit = {
+      val p = genRandVec(width, vecSparse)
+      dvec = p._1
+      svec = p._2
+
+      val p1 = genRandMat(height, width, matSparse)
+      dmat = p1._1
+      smat = p1._2
+
+      fmat = (dmat.flatten, width)
+
+      // calculate correct result
+      right = scala.Array.tabulate(dmat.length)(_=>0.0)
+      for(i <- 0 until dmat.length) {
+        for(j <- 0 until dmat(i).length) {
+          right(i) += dmat(i)(j) * dvec(j)
+        }
+      }
+    }
+
     var max = 10
 
     def genRandVec(len: Int, sp: Double) = {
@@ -57,21 +94,6 @@ object MvmBenchmark {
       for (i <- m) printSparseVec(i)
       println("")
     }
-
-
-    var (dvec, svec) = genRandVec(width, vecSparse)
-    var (dmat, smat) = genRandMat(height, width, matSparse)
-    var fmat = (dmat.flatten, width)
-
-    // calculate correct result
-    val right:Array[Double] = scala.Array.tabulate(dmat.length)(_=>0.0)
-    for(i <- 0 until dmat.length) {
-      for(j <- 0 until dmat(i).length) {
-        right(i) += dmat(i)(j) * dvec(j)
-      }
-    }
-
-    var res: Array[Double] = Array.empty;
 
     @TearDown
     def check(): Unit = {
