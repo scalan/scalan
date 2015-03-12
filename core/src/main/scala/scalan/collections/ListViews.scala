@@ -124,6 +124,32 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       case _ =>
         super.rewriteDef(d)
     }
+    case lm: ListFlatMap[_,c] => (lm.xs, lm.f) match {
+      case (xs: Lst[a]@unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, arrIso: ArrayIso[b, c])))) => {
+        val f1 = f.asRep[a => Array[c]]
+        val xs1 = xs.asRep[List[a]]
+        implicit val eA = xs1.elem.eItem
+        implicit val eC = arrIso.iso.eFrom
+
+        val s = xs1.flatMap { x =>
+          val tmp = f1(x)
+          arrIso.from(tmp)
+        }
+        val res = ViewList(s)(ListIso(arrIso.iso))
+        res
+      }
+      case (Def(view: ViewList[a, b]), _) => {
+        val iso = view.innerIso
+        val f = lm.f.asRep[b => Array[c]]
+        implicit val eA = iso.eFrom
+        implicit val eB = iso.eTo
+        implicit val eAC: Elem[Array[c]] = f.elem.eRange
+        implicit val eC = eAC.eItem
+        view.source.flatMap { x => f(iso.to(x))}
+      }
+      case _ =>
+        super.rewriteDef(d)
+    }
     case ListFilter(Def(view: ViewList[a, b]), f) => {
       val iso = view.innerIso
       implicit val eA = iso.eFrom

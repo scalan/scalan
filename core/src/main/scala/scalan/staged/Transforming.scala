@@ -172,6 +172,9 @@ trait Transforming { self: ScalanExp =>
       (t1 + (node -> newThunkSym), newThunkSym)
     }
 
+    protected def mirrorMetadata[A, B](t: Ctx, old: Exp[A], mirrored: Exp[B]) =
+      (t, allMetadataOf(old))
+
     protected def isMirrored(t: Ctx, node: Exp[_]): Boolean = t.isDefinedAt(node)
 
     // TODO make protected
@@ -179,7 +182,7 @@ trait Transforming { self: ScalanExp =>
       isMirrored(t, node) match {         // cannot use 'if' because it becomes staged
         case true => (t, t(node))
         case _ =>
-          node match {
+          (node match {
             case Def(d) => d match {
               case lam: Lambda[a, b] =>
                 mirrorLambda(t, rewriter, node.asRep[a => b], lam)
@@ -190,6 +193,11 @@ trait Transforming { self: ScalanExp =>
             }
             case _ =>
               mirrorVar(t, rewriter, node)
+          }) match {
+            case (t1, mirrored: Exp[b]) =>
+              val (t2, mirroredMetadata) = mirrorMetadata(t1, node, mirrored)
+              setAllMetadata(mirrored, mirroredMetadata)
+              (t2, mirrored)
           }
       }
     }

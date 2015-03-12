@@ -36,9 +36,8 @@ trait Scalan
   with Exceptions
   with ArrayViews
   with Thunks
-  with Effects {
-
-}
+  with Effects
+  with Metadata
 
 trait ScalanDsl
   extends Scalan
@@ -72,6 +71,7 @@ trait ScalanSeq
   with StringOpsSeq
   with ThunksSeq
   with EffectsSeq
+  with MetadataSeq
 
 trait ScalanCtxSeq
   extends ScalanDsl
@@ -108,6 +108,7 @@ trait ScalanExp
   with StringOpsExp
   with ThunksExp
   with EffectsExp
+  with MetadataExp
 
 trait ScalanCtxExp
   extends ScalanDsl

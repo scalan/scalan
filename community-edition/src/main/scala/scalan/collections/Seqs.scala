@@ -44,6 +44,7 @@ trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
       * except some of occurrences of elements that also appear in that. */
     @External def diff(that: Rep[SSeq[A]]): Rep[SSeq[A]]
 
+    /** Convert the sequence to an array. */
     @External def toArray: Rep[Array[A]]
   }
 
@@ -51,7 +52,13 @@ trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
     /** Creates a sequence based on an array. */
     @External def apply[A: Elem](@ArgList arr: Rep[Array[A]]): Rep[SSeq[A]]
 
+    /** Creates a sequence without elements. */
     @External def empty[A:Elem]: Rep[SSeq[A]]
+
+    /** Creates a sequence that contains one element. */
+    @External def single[A: Elem](elem: Rep[A]): Rep[SSeq[A]]
+
+    /** Creates a sequence which based on a list. */
     @External def fromList[A:Elem](list: Rep[List[A]]): Rep[SSeq[A]]
   }
 
@@ -67,6 +74,7 @@ trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
     override def toArray = wrappedValueOfBaseType.toArray[A](eA.classTag)
   }
   implicit class SeqOps(s: Seq.type) {
+    def single[A](elem: A): Seq[A] = Seq(elem)
     def fromList[A](list: List[A]): Seq[A] = Seq(list: _*)
   }
 }
