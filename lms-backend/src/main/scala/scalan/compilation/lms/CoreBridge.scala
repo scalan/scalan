@@ -18,6 +18,18 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
     val sym = tp.sym
 
     val tt: DefTransformer = {
+
+      case MethodCall(receiver, method, args, _) =>
+        val exp = transformMethodCall(symMirr, receiver, method, args)
+        (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+
+      case lr@NewObject(aClass, args, _) =>
+        Manifest.classType(aClass) match {
+          case (mA: Manifest[a]) =>
+            val exp = newObj[a](symMirr, aClass, args.asInstanceOf[Seq[Rep[_]]], true)(mA)
+            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+        }
+
       case _: CompanionBase[_] =>
         // ignore companion objects
         m
@@ -28,17 +40,6 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
         val f = mirrorLambdaToLmsFunc[a, b](m)(lam)
         val fun = lms.fun(f)(mA, mB)
         (exps :+ fun, symMirr + ((sym, fun)), funcMirr + ((sym, f)))
-
-      case MethodCall(receiver, method, args, _) =>
-        val exp = transformMethodCall(symMirr, receiver, method, args)
-        (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-
-      case lr@NewObject(aClass, args, _) =>
-        Manifest.classType(aClass) match {
-          case (mA: Manifest[a]) =>
-            val exp = newObj[a](symMirr, aClass, args.asInstanceOf[Seq[Rep[_]]])(mA)
-            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
-        }
 
       case Apply(f, x) =>
         (createManifest(f.elem.eDom), createManifest(f.elem.eRange)) match {
@@ -1253,5 +1254,5 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
   }
 
   def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] = !!!("Don't know how to transform method call")
-  def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]]): lms.Exp[A] = !!!("Don't know how to create new object")
+  def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = !!!("Don't know how to create new object")
 }

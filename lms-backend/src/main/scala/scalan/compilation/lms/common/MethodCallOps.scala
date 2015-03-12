@@ -69,8 +69,8 @@ trait ScalaGenMethodCallOps extends ScalaGenBase {
       }
       caller match {
         case c: Rep[_] => methodName match {
-          case c: String => stream.print(".")
-          case _ =>
+          case c: String if c.isEmpty =>
+          case _ => stream.print(".")
         }
         case _ =>
       }
