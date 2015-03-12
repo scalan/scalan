@@ -12,6 +12,7 @@ class NativeMethods {
   @native def ssmvm( p: (Array[(Array[Int], (Array[Double], Int))], (Array[Int], (Array[Double], Int))) ): Array[Double]
   @native def fdmvm( p: ((Array[Double], Int), Array[Double]) ): Array[Double]
   @native def fsmvm( p: ((Array[Double], Int), (Array[Int], (Array[Double], Int))) ): Array[Double]
+  @native def sdmvmManualNoSharedPtr( p: (Array[(Array[Int],(Array[Double], Int))], Array[Double]) ): Array[Double]
 
   @native def sdmvmScalanJNI( p: (Array[(Array[Int],(Array[Double], Int))], Array[Double]) ): Array[Double]
 }

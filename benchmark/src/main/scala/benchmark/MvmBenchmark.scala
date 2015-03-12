@@ -375,4 +375,14 @@ class MvmBenchmark {
     state.res = res
     res
   }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  def smdv_cpp_manual_no_shared_ptr(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.sdmvmManualNoSharedPtr( (state.smat, state.dvec) )
+    state.res = res
+    res
+  }
+
 }
