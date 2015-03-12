@@ -1,5 +1,6 @@
 package scalan
 
+import scala.collection.mutable
 import scalan.compilation.language.LanguageId._
 import scalan.compilation.language._
 
@@ -25,13 +26,13 @@ class MethodMappingTest extends BaseTests {
       import scala.language.reflectiveCalls
 
       val linpackScala = new ScalaLib("linpack.jar", "org.linpack") {
-        val invertMatr = ScalaFunc('invertMatrixDouble, ScalaArg(ScalaType('lapack_matr), 'm), ScalaArg(ScalaType('T1), 'V1))
-        val arrayLength = ScalaFunc('arrayLength)
+        val invertMatr = ScalaFunc('invertMatrixDouble, ScalaArg(ScalaType('lapack_matr), 'm), ScalaArg(ScalaType('T1), 'V1))()
+        val arrayLength = ScalaFunc('arrayLength)()
       }
 
       val mapScalanCE2Scala = {
         import scalanCE._
-        Map(
+        mutable.Map(
           parraysPack.parraysFam.parray.length -> linpackScala.arrayLength
         )
       }
@@ -51,7 +52,7 @@ class MethodMappingTest extends BaseTests {
 
       val mapScalanCE2Cpp = {
         import scalanCE._
-        Map(
+        mutable.Map(
           parraysPack.parraysFam.parray.length -> linpackCpp.invertMatr
         )
       }
