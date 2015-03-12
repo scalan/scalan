@@ -28,10 +28,8 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
     def filter(f: Rep[A @uncheckedVariance] => Rep[Boolean]): Coll[A]
     def flatMap[B: Elem](f: Rep[A @uncheckedVariance] => Coll[B]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[A @uncheckedVariance]): Coll[A] = Collection(arr.append(value))
-    /*def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(Collection[A], A)] = {
-      val arrScan = arr.scan(m)
-      (Collection(arrScan._1), arrScan._2)
-    } */
+    def containsSorted(value: Rep[A @uncheckedVariance]): Rep[Int] = ???
+    def find(value: Rep[A @uncheckedVariance]): Rep[Int] = ???
   }
 
   implicit def defaultCollectionElement[A:Elem]: Elem[Collection[A]] = element[A] match {
@@ -220,6 +218,18 @@ trait Collections extends ArrayOps with ListOps { self: CollectionsDsl =>
     def update (idx: Rep[Int], value: Rep[(A,B)]): Coll[(A,B)] = BaseCollection(arr.update(idx, value))
     def updateMany (idxs: Coll[Int], vals: Coll[(A,B)]): Coll[(A,B)] = BaseCollection(arr.updateMany(idxs.arr, vals.arr))
     def filter(f: Rep[(A,B) @uncheckedVariance] => Rep[Boolean]): Coll[(A,B)] = BaseCollection(arr.filter(f))
+  }
+
+  implicit def toPairCollection[A: Elem, B: Elem](coll: Rep[Collection[(A, B)]]): Rep[PairCollection[A, B]] = {
+    /*val res = coll.map(_._1) zip coll.map(_._2)
+    res.asRep[PairCollection[A, B]]*/
+    coll.convertTo[PairCollection[A, B]]
+  }
+
+  implicit def fromPairCollection[A: Elem, B: Elem](pairColl: Rep[PairCollection[A, B]]): Rep[Collection[(A, B)]] = {
+    /*val res = pairColl.as zip pairColl.bs
+    res//.asRep[Collection[(A, B)]]*/
+    pairColl.convertTo[Collection[(A, B)]]
   }
 
   trait PairCollectionCompanion extends ConcreteClass2[PairCollection] with CollectionCompanion {
