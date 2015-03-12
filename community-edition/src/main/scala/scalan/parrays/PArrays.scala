@@ -155,6 +155,8 @@ trait PArrays extends ArrayOps { self: ScalanCommunityDsl =>
     def bs: Rep[PArray[B]]
   }
 
+  implicit def cnvrt[A:Elem,B:Elem](x: PA[(A,B)]) = x.asRep[IPairArray[A, B]]
+
   abstract class PairArray[A, B](val as: Rep[PArray[A]], val bs: Rep[PArray[B]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends IPairArray[A,B] {
     lazy val elem = element[(A, B)]

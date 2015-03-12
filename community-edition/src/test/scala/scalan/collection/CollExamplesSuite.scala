@@ -1,31 +1,31 @@
-package scalan.parrays
+package scalan.collection
 
 import java.io.File
 import java.lang.reflect.Method
 
-import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan._
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 
 
-class PArrayExamplesSuite extends BaseShouldTests {
+class CollExamplesSuite extends BaseShouldTests {
 
   "when mixing trait" should "be constructed in Seq context" in {
-      val ctx = new ScalanCommunityDslSeq with PArrayExamples {}
+      val ctx = new ScalanCommunityDslSeq with CollExamples {}
   }
   
   it should "be constructed in Staged context" in {
-    val ctx = new ScalanCommunityDslExp with PArrayExamples {}
+    val ctx = new ScalanCommunityDslExp with CollExamples {}
   }
 
   "in seq context" should "execute functions" in {
-    val ctx = new ScalanCommunityDslSeq with PArrayExamples {}
+    val ctx = new ScalanCommunityDslSeq with CollExamples {}
     val in = Array((1,2f), (3,4f), (5,6f))
     val res = ctx.fromAndTo(in)
     res should be(in)
   }
 
   def testMethod(name: String) = {
-    val ctx = new ScalanCommunityDslExp with PArrayExamples with GraphVizExport {
+    val ctx = new ScalanCommunityDslExp with CollExamples with GraphVizExport {
       override def isInvokeEnabled(d: Def[_], m: Method) = true //HACK: invoke all domain methods if possible //TODO this is not how it should be specified
     }
     val f = ctx.getStagedFunc(name)
@@ -45,12 +45,12 @@ class PArrayExamplesSuite extends BaseShouldTests {
   whenStaged should "splitMap3" beArgFor { testMethod(_) }
   whenStaged should "splitMapMap" beArgFor { testMethod(_) }
   whenStaged should "mapScalar" beArgFor { testMethod(_) }
-  whenStaged should "expBaseArraysInIf" beArgFor { testMethod(_) }
-  whenStaged should "expBaseArraysInIfSpec" beArgFor { testMethod(_) }
-  whenStaged should "expPairArraysInIf" beArgFor { testMethod(_) }
-  whenStaged should "expPairArraysInIfSpec" beArgFor { testMethod(_) }
-  whenStaged should "expPairArraysInIfDiffTypes" beArgFor { testMethod(_) }
-  whenStaged should "expPairArraysInIfDiffTypesSpec" beArgFor { testMethod(_) }
+  whenStaged should "expBaseCollectionsInIf" beArgFor { testMethod(_) }
+  whenStaged should "expBaseCollectionsInIfSpec" beArgFor { testMethod(_) }
+  whenStaged should "expPairCollectionsInIf" beArgFor { testMethod(_) }
+  whenStaged should "expPairCollectionsInIfSpec" beArgFor { testMethod(_) }
+  whenStaged should "expPairCollectionsInIfDiffTypes" beArgFor { testMethod(_) }
+  whenStaged should "expPairCollectionsInIfDiffTypesSpec" beArgFor { testMethod(_) }
   whenStaged should "sumFold" beArgFor { testMethod(_) }
   whenStaged should "sumFoldSpec" beArgFor { testMethod(_) }
   whenStaged should "pairInIf" beArgFor { testMethod(_) }
