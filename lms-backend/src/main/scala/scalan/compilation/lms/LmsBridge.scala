@@ -79,6 +79,17 @@ trait LmsBridge { self: ScalanCtxExp =>
     case el => ???(s"Don't know how to create manifest for $el")
   }
 
+  def toManifest(o: Any): Manifest[_] = {
+    classToManifest(o.getClass)
+  }
+
+  import scala.reflect.runtime.universe
+  def classToManifest(c: Class[_]): Manifest[_] = {
+    val runtimeMirror = universe.runtimeMirror(c.getClassLoader)
+    val aType = runtimeMirror.classSymbol(c).toType
+    toManifest(aType, runtimeMirror)
+  }
+
   def toManifest[T](t: scala.reflect.runtime.universe.Type, m: scala.reflect.runtime.universe.Mirror): Manifest[_] = {
     import scala.reflect.runtime.universe._
     import scalan.compilation.lms.scalac.LmsType

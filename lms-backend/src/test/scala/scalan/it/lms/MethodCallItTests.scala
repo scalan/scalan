@@ -1,12 +1,21 @@
 package scalan.it.lms
 
+import org.scalatest.BeforeAndAfterAll
+
+import scala.collection.mutable
 import scala.language.reflectiveCalls
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.linalgebra.MatricesDslExp
+import scalan.util.FileUtil
 import scalan.{CommunityMethodMapping, ScalanCommunityDslExp, ScalanCommunityExp, ScalanCtxExp}
 
-class MethodCallItTests extends LmsCommunityItTests{
+class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
+
+  override def beforeAll() = {
+        FileUtil.deleteIfExist(prefix)
+  }
+
   trait Prog extends ProgCommunity  {
 
     lazy val emptyIf = fun { (in: Rep[(Boolean, (Double, Double))] ) =>  {
@@ -240,19 +249,19 @@ class MethodCallItTests extends LmsCommunityItTests{
     new ScalaLanguage with TestConf {
 
       val extLib = new ScalaLib("", "scalan.it.lms.MappingMethodFromJar.TestMethod") {
-        val testMessageMethod = ScalaFunc('testMessage)
+        val testMessageMethod = ScalaFunc('testMessage)(true)
       }
 
       val scala2Scala = {
         import scala.language.reflectiveCalls
 
-        Map(
+        mutable.Map(
           testLib.scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMessageMethod
         )
       }
 
       val main = new ScalaLib() {
-        val throwableImp = ScalaFunc(Symbol("scalan.imp.ThrowableImp"))
+        val throwableImp = ScalaFunc(Symbol("scalan.imp.ThrowableImp"))(true)
       }
 
       val backend = new ScalaBackend {
