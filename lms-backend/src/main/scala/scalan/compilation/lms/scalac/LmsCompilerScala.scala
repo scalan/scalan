@@ -19,7 +19,7 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
    * Otherwise uses SBT to compile with the desired version
    */
   case class CustomCompilerOutput(jar: URL, mainClass: Option[String] = None)
-  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig())
+  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String])
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
   def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)

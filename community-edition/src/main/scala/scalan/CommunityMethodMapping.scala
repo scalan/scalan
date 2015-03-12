@@ -1,5 +1,6 @@
 package scalan
 
+import scala.collection.mutable
 import scalan.compilation.language._
 import scalan.linalgebra.Matrices
 
@@ -36,18 +37,18 @@ trait CommunityMethodMapping extends MethodMapping {
   new ScalaLanguage with CommunityConf {
 
     val linpackScala = new ScalaLib("linpack.jar", "org.linpack") {
-      val invertMatr = ScalaFunc('invertMatrixDouble, ScalaArg(ScalaType('lapack_matr), 'm), ScalaArg(ScalaType('T1), 'V1))
+      val invertMatr = ScalaFunc('invertMatrixDouble, ScalaArg(ScalaType('lapack_matr), 'm), ScalaArg(ScalaType('T1), 'V1))()
     }
 
     val lms = new EmbeddedObject("lms") {
-      val arrayLength = ScalaFunc('arrayLength)
+      val arrayLength = ScalaFunc('arrayLength)()
     }
 
     val mapScalanCE2Scala = {
       import scalanCE._
       import scala.language.reflectiveCalls
 
-      Map(
+      mutable.Map(
         collectionsPack.collectionsFam.collection.length -> lms.arrayLength,
         matrixPack.matrixFam.matrix.invert -> linpackScala.invertMatr
       )
@@ -68,7 +69,7 @@ trait CommunityMethodMapping extends MethodMapping {
 
     val mapScalanCE2Cpp = {
       import scalanCE._
-      Map(
+      mutable.Map(
         matrixPack.matrixFam.matrix.invert -> linpackCpp.invertMatr
       )
     }
