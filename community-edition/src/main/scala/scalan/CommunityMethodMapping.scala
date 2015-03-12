@@ -9,7 +9,7 @@ trait CommunityMethodMapping extends MethodMapping {
 
     import scala.reflect.runtime.universe.typeOf
 
-    val tyMatrix = typeOf[Matrices#Matrix[_]]
+    val tyMatrix = typeOf[Matrices#AbstractMatrix[_]]
 
     val scalanCE = new Library("scalan-ce.jar") {
 
@@ -23,7 +23,7 @@ trait CommunityMethodMapping extends MethodMapping {
       }
       val matrixPack = new Pack("scalan.linalgebra") {
         val matrixFam = new Family('Matrices) {
-          val matrix = new ClassType('Matrix, 'PA, TyArg('A)) {
+          val matrix = new ClassType('AbstractMatrix, 'PA, TyArg('A)) {
             val invert = Method('invert, tyMatrix)
           }
         }

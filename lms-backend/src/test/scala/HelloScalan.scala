@@ -12,8 +12,8 @@ import scalan.it.BaseItTests
 trait HelloScalan extends ScalanCommunityDsl {
   lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matr[Double] = RowMajorMatrix(PArray(m.map { r: Arr[Double] => DenseVector(PArray(r))}))
-    val vector: Vec[Double] = DenseVector(PArray(v))
+    val matrix: Matrix[Double] = RowMajorMatrix(PArray(m.map { r: Arr[Double] => DenseVector(PArray(r))}))
+    val vector: Vector[Double] = DenseVector(PArray(v))
     (matrix * vector).coords.arr
   }
   // example input
