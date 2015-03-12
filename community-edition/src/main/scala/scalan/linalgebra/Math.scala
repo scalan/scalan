@@ -11,7 +11,7 @@ trait Math { self: ScalanCommunityDsl =>
   def transposeNested[T](m: Matrix[T], blockSize: Rep[Int]): Matrix[T] = {
     ???
   }
-  def transposeJagged[T](m: Matrix[T]): Matrix[T] = ??? /*{
+  def transposeDirect[T](m: Matrix[T]): Matrix[T] = ??? /*{
     val nestedItems = m.rows//.map { row => row.nonZeroItems }
     val newNestedItems = //CompressedRowMatrix.transpose(nestedItems, numColumns)
         for (i <- Collection.indexRange(m.numColumns))

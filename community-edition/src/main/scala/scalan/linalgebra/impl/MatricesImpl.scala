@@ -39,8 +39,69 @@ trait MatricesAbs extends Scalan with Matrices {
   }
 
   // elem for concrete class
-  class RowMajorFlatMatrixElem[T](iso: Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]])(implicit val elem: Elem[T])
-    extends AbstractMatrixElem[T, RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]](iso) {
+  class RowMajorMatrixElem[T](iso: Iso[RowMajorMatrixData[T], RowMajorDirectMatrix[T]])(implicit val elem: Elem[T])
+    extends AbstractMatrixElem[T, RowMajorMatrixData[T], RowMajorDirectMatrix[T]](iso) {
+    def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = RowMajorMatrix(x.rows)
+  }
+
+  // state representation type
+  type RowMajorMatrixData[T] = Collection[AbstractVector[T]]
+
+  // 3) Iso for concrete class
+  class RowMajorMatrixIso[T](implicit elem: Elem[T])
+    extends Iso[RowMajorMatrixData[T], RowMajorDirectMatrix[T]] {
+    override def from(p: Rep[RowMajorDirectMatrix[T]]) =
+      unmkRowMajorMatrix(p) match {
+        case Some((rows)) => rows
+        case None => !!!
+      }
+    override def to(p: Rep[Collection[AbstractVector[T]]]) = {
+      val rows = p
+      RowMajorMatrix(rows)
+    }
+    lazy val tag = {
+      weakTypeTag[RowMajorDirectMatrix[T]]
+    }
+    lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorDirectMatrix[T]]](RowMajorMatrix(element[Collection[AbstractVector[T]]].defaultRepValue))
+    lazy val eTo = new RowMajorMatrixElem[T](this)
+  }
+  // 4) constructor and deconstructor
+  abstract class RowMajorMatrixCompanionAbs extends CompanionBase[RowMajorMatrixCompanionAbs] with RowMajorMatrixCompanion {
+    override def toString = "RowMajorMatrix"
+
+    def apply[T](rows: Rep[Collection[AbstractVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorDirectMatrix[T]] =
+      mkRowMajorMatrix(rows)
+    def unapply[T:Elem](p: Rep[RowMajorDirectMatrix[T]]) = unmkRowMajorMatrix(p)
+  }
+  def RowMajorMatrix: Rep[RowMajorMatrixCompanionAbs]
+  implicit def proxyRowMajorMatrixCompanion(p: Rep[RowMajorMatrixCompanionAbs]): RowMajorMatrixCompanionAbs = {
+    proxyOps[RowMajorMatrixCompanionAbs](p)
+  }
+
+  class RowMajorMatrixCompanionElem extends CompanionElem[RowMajorMatrixCompanionAbs] {
+    lazy val tag = weakTypeTag[RowMajorMatrixCompanionAbs]
+    protected def getDefaultRep = RowMajorMatrix
+  }
+  implicit lazy val RowMajorMatrixCompanionElem: RowMajorMatrixCompanionElem = new RowMajorMatrixCompanionElem
+
+  implicit def proxyRowMajorMatrix[T](p: Rep[RowMajorDirectMatrix[T]]): RowMajorDirectMatrix[T] =
+    proxyOps[RowMajorDirectMatrix[T]](p)
+
+  implicit class ExtendedRowMajorMatrix[T](p: Rep[RowMajorDirectMatrix[T]])(implicit elem: Elem[T]) {
+    def toData: Rep[RowMajorMatrixData[T]] = isoRowMajorMatrix(elem).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoRowMajorMatrix[T](implicit elem: Elem[T]): Iso[RowMajorMatrixData[T], RowMajorDirectMatrix[T]] =
+    new RowMajorMatrixIso[T]
+
+  // 6) smart constructor and deconstructor
+  def mkRowMajorMatrix[T](rows: Rep[Collection[AbstractVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorDirectMatrix[T]]
+  def unmkRowMajorMatrix[T:Elem](p: Rep[RowMajorDirectMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]])]
+
+  // elem for concrete class
+  class RowMajorFlatMatrixElem[T](iso: Iso[RowMajorFlatMatrixData[T], RowMajorNestedMatrix[T]])(implicit val elem: Elem[T])
+    extends AbstractMatrixElem[T, RowMajorFlatMatrixData[T], RowMajorNestedMatrix[T]](iso) {
     def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = RowMajorFlatMatrix(x.rmValues, x.numColumns)
   }
 
@@ -49,8 +110,8 @@ trait MatricesAbs extends Scalan with Matrices {
 
   // 3) Iso for concrete class
   class RowMajorFlatMatrixIso[T](implicit elem: Elem[T])
-    extends Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]] {
-    override def from(p: Rep[RowMajorFlatMatrix[T]]) =
+    extends Iso[RowMajorFlatMatrixData[T], RowMajorNestedMatrix[T]] {
+    override def from(p: Rep[RowMajorNestedMatrix[T]]) =
       unmkRowMajorFlatMatrix(p) match {
         case Some((rmValues, numColumns)) => Pair(rmValues, numColumns)
         case None => !!!
@@ -60,19 +121,19 @@ trait MatricesAbs extends Scalan with Matrices {
       RowMajorFlatMatrix(rmValues, numColumns)
     }
     lazy val tag = {
-      weakTypeTag[RowMajorFlatMatrix[T]]
+      weakTypeTag[RowMajorNestedMatrix[T]]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorFlatMatrix[T]]](RowMajorFlatMatrix(element[Collection[T]].defaultRepValue, 0))
+    lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorNestedMatrix[T]]](RowMajorFlatMatrix(element[Collection[T]].defaultRepValue, 0))
     lazy val eTo = new RowMajorFlatMatrixElem[T](this)
   }
   // 4) constructor and deconstructor
   abstract class RowMajorFlatMatrixCompanionAbs extends CompanionBase[RowMajorFlatMatrixCompanionAbs] with RowMajorFlatMatrixCompanion {
     override def toString = "RowMajorFlatMatrix"
-    def apply[T](p: Rep[RowMajorFlatMatrixData[T]])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
+    def apply[T](p: Rep[RowMajorFlatMatrixData[T]])(implicit elem: Elem[T]): Rep[RowMajorNestedMatrix[T]] =
       isoRowMajorFlatMatrix(elem).to(p)
-    def apply[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
+    def apply[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorNestedMatrix[T]] =
       mkRowMajorFlatMatrix(rmValues, numColumns)
-    def unapply[T:Elem](p: Rep[RowMajorFlatMatrix[T]]) = unmkRowMajorFlatMatrix(p)
+    def unapply[T:Elem](p: Rep[RowMajorNestedMatrix[T]]) = unmkRowMajorFlatMatrix(p)
   }
   def RowMajorFlatMatrix: Rep[RowMajorFlatMatrixCompanionAbs]
   implicit def proxyRowMajorFlatMatrixCompanion(p: Rep[RowMajorFlatMatrixCompanionAbs]): RowMajorFlatMatrixCompanionAbs = {
@@ -85,20 +146,20 @@ trait MatricesAbs extends Scalan with Matrices {
   }
   implicit lazy val RowMajorFlatMatrixCompanionElem: RowMajorFlatMatrixCompanionElem = new RowMajorFlatMatrixCompanionElem
 
-  implicit def proxyRowMajorFlatMatrix[T](p: Rep[RowMajorFlatMatrix[T]]): RowMajorFlatMatrix[T] =
-    proxyOps[RowMajorFlatMatrix[T]](p)
+  implicit def proxyRowMajorFlatMatrix[T](p: Rep[RowMajorNestedMatrix[T]]): RowMajorNestedMatrix[T] =
+    proxyOps[RowMajorNestedMatrix[T]](p)
 
-  implicit class ExtendedRowMajorFlatMatrix[T](p: Rep[RowMajorFlatMatrix[T]])(implicit elem: Elem[T]) {
+  implicit class ExtendedRowMajorFlatMatrix[T](p: Rep[RowMajorNestedMatrix[T]])(implicit elem: Elem[T]) {
     def toData: Rep[RowMajorFlatMatrixData[T]] = isoRowMajorFlatMatrix(elem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoRowMajorFlatMatrix[T](implicit elem: Elem[T]): Iso[RowMajorFlatMatrixData[T], RowMajorFlatMatrix[T]] =
+  implicit def isoRowMajorFlatMatrix[T](implicit elem: Elem[T]): Iso[RowMajorFlatMatrixData[T], RowMajorNestedMatrix[T]] =
     new RowMajorFlatMatrixIso[T]
 
   // 6) smart constructor and deconstructor
-  def mkRowMajorFlatMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]]
-  def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]): Option[(Rep[Collection[T]], Rep[Int])]
+  def mkRowMajorFlatMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorNestedMatrix[T]]
+  def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorNestedMatrix[T]]): Option[(Rep[Collection[T]], Rep[Int])]
 
   // elem for concrete class
   class RowMajorSparseMatrixElem[T](iso: Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]])(implicit val elem: Elem[T])
@@ -170,21 +231,38 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
     lazy val selfType = element[AbstractMatrixCompanionAbs]
   }
 
-  case class SeqRowMajorFlatMatrix[T]
+  case class SeqRowMajorDirectMatrix[T]
+      (override val rows: Rep[Collection[AbstractVector[T]]])
+      (implicit elem: Elem[T])
+    extends RowMajorDirectMatrix[T](rows)
+        with UserTypeSeq[AbstractMatrix[T], RowMajorDirectMatrix[T]] {
+    lazy val selfType = element[RowMajorDirectMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
+  }
+  lazy val RowMajorMatrix = new RowMajorMatrixCompanionAbs with UserTypeSeq[RowMajorMatrixCompanionAbs, RowMajorMatrixCompanionAbs] {
+    lazy val selfType = element[RowMajorMatrixCompanionAbs]
+  }
+
+  def mkRowMajorMatrix[T]
+      (rows: Rep[Collection[AbstractVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorDirectMatrix[T]] =
+      new SeqRowMajorDirectMatrix[T](rows)
+  def unmkRowMajorMatrix[T:Elem](p: Rep[RowMajorDirectMatrix[T]]) =
+    Some((p.rows))
+
+  case class SeqRowMajorNestedMatrix[T]
       (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
       (implicit elem: Elem[T])
-    extends RowMajorFlatMatrix[T](rmValues, numColumns)
-        with UserTypeSeq[AbstractMatrix[T], RowMajorFlatMatrix[T]] {
-    lazy val selfType = element[RowMajorFlatMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
+    extends RowMajorNestedMatrix[T](rmValues, numColumns)
+        with UserTypeSeq[AbstractMatrix[T], RowMajorNestedMatrix[T]] {
+    lazy val selfType = element[RowMajorNestedMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
   }
   lazy val RowMajorFlatMatrix = new RowMajorFlatMatrixCompanionAbs with UserTypeSeq[RowMajorFlatMatrixCompanionAbs, RowMajorFlatMatrixCompanionAbs] {
     lazy val selfType = element[RowMajorFlatMatrixCompanionAbs]
   }
 
   def mkRowMajorFlatMatrix[T]
-      (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
-      new SeqRowMajorFlatMatrix[T](rmValues, numColumns)
-  def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]) =
+      (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorNestedMatrix[T]] =
+      new SeqRowMajorNestedMatrix[T](rmValues, numColumns)
+  def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorNestedMatrix[T]]) =
     Some((p.rmValues, p.numColumns))
 
   case class SeqRowMajorSparseMatrix[T]
@@ -213,12 +291,119 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     override def mirror(t: Transformer) = this
   }
 
-  case class ExpRowMajorFlatMatrix[T]
+  case class ExpRowMajorDirectMatrix[T]
+      (override val rows: Rep[Collection[AbstractVector[T]]])
+      (implicit elem: Elem[T])
+    extends RowMajorDirectMatrix[T](rows) with UserTypeDef[AbstractMatrix[T], RowMajorDirectMatrix[T]] {
+    lazy val selfType = element[RowMajorDirectMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
+    override def mirror(t: Transformer) = ExpRowMajorDirectMatrix[T](t(rows))
+  }
+
+  lazy val RowMajorMatrix: Rep[RowMajorMatrixCompanionAbs] = new RowMajorMatrixCompanionAbs with UserTypeDef[RowMajorMatrixCompanionAbs, RowMajorMatrixCompanionAbs] {
+    lazy val selfType = element[RowMajorMatrixCompanionAbs]
+    override def mirror(t: Transformer) = this
+  }
+
+  object RowMajorMatrixMethods {
+    object companion {
+      def unapply(d: Def[_]): Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[_]] && method.getName == "companion" =>
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object numRows {
+      def unapply(d: Def[_]): Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[_]] && method.getName == "numRows" =>
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object numColumns {
+      def unapply(d: Def[_]): Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[_]] && method.getName == "numColumns" =>
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object columns {
+      def unapply(d: Def[_]): Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[_]] && method.getName == "columns" =>
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object rmValues {
+      def unapply(d: Def[_]): Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorMatrixElem[_]] && method.getName == "rmValues" =>
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorDirectMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object RowMajorMatrixCompanionMethods {
+    object defaultOf {
+      def unapply(d: Def[_]): Option[Unit forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorMatrixCompanionElem] && method.getName == "defaultOf" =>
+          Some(()).asInstanceOf[Option[Unit forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Unit forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromColumns {
+      def unapply(d: Def[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem.isInstanceOf[RowMajorMatrixCompanionElem] && method.getName == "fromColumns" =>
+          Some(cols).asInstanceOf[Option[Coll[AbstractVector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  def mkRowMajorMatrix[T]
+    (rows: Rep[Collection[AbstractVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorDirectMatrix[T]] =
+    new ExpRowMajorDirectMatrix[T](rows)
+  def unmkRowMajorMatrix[T:Elem](p: Rep[RowMajorDirectMatrix[T]]) =
+    Some((p.rows))
+
+  case class ExpRowMajorNestedMatrix[T]
       (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
       (implicit elem: Elem[T])
-    extends RowMajorFlatMatrix[T](rmValues, numColumns) with UserTypeDef[AbstractMatrix[T], RowMajorFlatMatrix[T]] {
-    lazy val selfType = element[RowMajorFlatMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
-    override def mirror(t: Transformer) = ExpRowMajorFlatMatrix[T](t(rmValues), t(numColumns))
+    extends RowMajorNestedMatrix[T](rmValues, numColumns) with UserTypeDef[AbstractMatrix[T], RowMajorNestedMatrix[T]] {
+    lazy val selfType = element[RowMajorNestedMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
+    override def mirror(t: Transformer) = ExpRowMajorNestedMatrix[T](t(rmValues), t(numColumns))
   }
 
   lazy val RowMajorFlatMatrix: Rep[RowMajorFlatMatrixCompanionAbs] = new RowMajorFlatMatrixCompanionAbs with UserTypeDef[RowMajorFlatMatrixCompanionAbs, RowMajorFlatMatrixCompanionAbs] {
@@ -228,36 +413,48 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
   object RowMajorFlatMatrixMethods {
     object items {
-      def unapply(d: Def[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "items" =>
-          Some(receiver).asInstanceOf[Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}]]
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object companion {
+      def unapply(d: Def[_]): Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "companion" =>
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object numRows {
-      def unapply(d: Def[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "numRows" =>
-          Some(receiver).asInstanceOf[Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}]]
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object columns {
-      def unapply(d: Def[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "columns" =>
-          Some(receiver).asInstanceOf[Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}]]
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -268,36 +465,36 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     // WARNING: Cannot generate matcher for method `apply`: Method's return type Vector[T] is not a Rep
 
     object apply {
-      def unapply(d: Def[_]): Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(row, column, _*), _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, row, column)).asInstanceOf[Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}]]
+          Some((receiver, row, column)).asInstanceOf[Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object fromCellIndex {
-      def unapply(d: Def[_]): Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(iCell, _*), _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "fromCellIndex" =>
-          Some((receiver, iCell)).asInstanceOf[Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int]) forSome {type T}]]
+          Some((receiver, iCell)).asInstanceOf[Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object toCellIndex {
-      def unapply(d: Def[_]): Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(iRow, iCol, _*), _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "toCellIndex" =>
-          Some((receiver, iRow, iCol)).asInstanceOf[Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}]]
+          Some((receiver, iRow, iCol)).asInstanceOf[Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -310,24 +507,24 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     // WARNING: Cannot generate matcher for method `getTranspositionOfBlocks`: Method's return type PairColl[Int,Int] is not a Rep
 
     object transpose_block_size {
-      def unapply(d: Def[_]): Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(blockSize, _*), _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "transpose" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "block_size" } =>
-          Some((receiver, blockSize)).asInstanceOf[Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int]) forSome {type T}]]
+          Some((receiver, blockSize)).asInstanceOf[Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[RowMajorFlatMatrix[T]], Rep[Int]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object transpose {
-      def unapply(d: Def[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorFlatMatrixElem[_]] && method.getName == "transpose"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some(receiver).asInstanceOf[Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}]]
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[RowMajorFlatMatrix[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorNestedMatrix[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -361,9 +558,9 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   def mkRowMajorFlatMatrix[T]
-    (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorFlatMatrix[T]] =
-    new ExpRowMajorFlatMatrix[T](rmValues, numColumns)
-  def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorFlatMatrix[T]]) =
+    (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorNestedMatrix[T]] =
+    new ExpRowMajorNestedMatrix[T](rmValues, numColumns)
+  def unmkRowMajorFlatMatrix[T:Elem](p: Rep[RowMajorNestedMatrix[T]]) =
     Some((p.rmValues, p.numColumns))
 
   case class ExpRowMajorSparseMatrix[T]
@@ -380,6 +577,18 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   object RowMajorSparseMatrixMethods {
+    object companion {
+      def unapply(d: Def[_]): Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[_]] && method.getName == "companion" =>
+          Some(receiver).asInstanceOf[Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object columns {
       def unapply(d: Def[_]): Option[Rep[RowMajorSparseMatrix[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[_]] && method.getName == "columns" =>
@@ -566,8 +775,8 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
     object matrix_* {
       def unapply(d: Def[_]): Option[(Rep[AbstractMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(mat, n, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixElem[_, _, _]] && method.getName == "$times" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "matrix" } =>
-          Some((receiver, mat, n)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}]]
+        case MethodCall(receiver, method, Seq(matrix, n, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixElem[_, _, _]] && method.getName == "$times" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "matrix" } =>
+          Some((receiver, matrix, n)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}]]
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[AbstractMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = exp match {
