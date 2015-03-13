@@ -2,7 +2,6 @@ package scalan.linalgebra
 package impl
 
 import scalan._
-import scalan.collection.Collections
 import scalan.common.Default
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.reflect.runtime.universe._

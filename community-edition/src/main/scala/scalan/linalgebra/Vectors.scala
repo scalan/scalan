@@ -5,11 +5,10 @@ package scalan.linalgebra
  */
 
 import scalan._
-import scalan.collection.Collections
 import scalan.common.Default
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 
-trait Vectors extends Collections { self: ScalanCommunityDsl =>
+trait Vectors { self: ScalanCommunityDsl =>
 
   type Vector[T] = Rep[AbstractVector[T]]
   type PairColl[A, B] = Rep[PairCollection[A, B]]
@@ -20,7 +19,7 @@ trait Vectors extends Collections { self: ScalanCommunityDsl =>
     def items: Rep[Collection[T]]
     def nonZeroIndices: Rep[Collection[Int]]
     def nonZeroValues:  Rep[Collection[T]]
-    def nonZeroItems: Rep[PairCollection[Int, T]]
+    def nonZeroItems: Rep[Collection[(Int, T)]]
     //def nonZeroItems:   Rep[Collection[(Int, T)]]
     implicit def elem: Elem[T]
     def zeroValue = elem.defaultRepValue
@@ -64,7 +63,7 @@ trait Vectors extends Collections { self: ScalanCommunityDsl =>
     def length = items.length
     def nonZeroIndices: Rep[Collection[Int]] = nonZeroItems.map { case Pair(i, v) => i }
     def nonZeroValues:  Rep[Collection[T]] = items.filter(v => v !== zeroValue)
-    def nonZeroItems:   Rep[PairCollection[Int, T]] = {
+    def nonZeroItems:   Rep[Collection[(Int, T)]] = {
     //def nonZeroItems:   Rep[Collection[(Int, T)]] = {
       (Collection.indexRange(length) zip items).filter { case Pair(i, v) => v !== zeroValue }
     }
@@ -130,7 +129,7 @@ trait Vectors extends Collections { self: ScalanCommunityDsl =>
     extends AbstractVector[T] {
 
     def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
-    def nonZeroItems: Rep[PairCollection[Int, T]] = nonZeroIndices zip nonZeroValues
+    def nonZeroItems: Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
     //def nonZeroItems: Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
 
     def apply(i: Rep[Int]): Rep[T] = ??? // TODO: need efficient way to get value by index
@@ -207,12 +206,12 @@ trait Vectors extends Collections { self: ScalanCommunityDsl =>
       Default.defaultVal(SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, IntElement.defaultRepValue))
     }
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
-      val nonZeroItems: Rep[PairCollection[Int, T]] =
-        toPairCollection((Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero })
+      val nonZeroItems: Rep[IPairCollection[Int, T]] =
+        cnvrtPairColl((Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero })
       SparseVector(nonZeroItems, items.length)
     }
     @OverloadId("SparseVectorCompanion_apply_nonZeroItems")
-    def apply[T: Elem](nonZeroItems: Rep[PairCollection[Int, T]], length: Rep[Int])
+    def apply[T: Elem](nonZeroItems: Rep[IPairCollection[Int, T]], length: Rep[Int])
                       (implicit n: Numeric[T], o: Overloaded2): Rep[SparseVector[T]] = {
       SparseVector(nonZeroItems.as, nonZeroItems.bs, length)
     }

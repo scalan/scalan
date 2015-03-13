@@ -114,7 +114,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       }
     }
 
-    def getTranspositionOfBlocks(blocks: Coll[((Int, Int), (Int, Int))]): PairColl[Int, Int] = {
+    def getTranspositionOfBlocks(blocks: Coll[((Int, Int), (Int, Int))]): Rep[IPairCollection[Int, Int]] = {
       val res = for { Pair(Pair(top, left), Pair(height, width)) <- blocks } yield {
         val bcis = blockCellIndices(top, left, height, width)
         val trans = transposeIndices(bcis)
