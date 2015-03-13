@@ -11,7 +11,6 @@ import scalan.common.Default
 trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
   type Matrix[T] = Rep[AbstractMatrix[T]]
-  def Matrix: Rep[AbstractMatrixCompanionAbs] = AbstractMatrix
 
   trait AbstractMatrix[T] extends Reifiable[AbstractMatrix[T]] {
     def numColumns: Rep[Int]
@@ -43,6 +42,8 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       val resColumns = matrix.columns.map { col: Rep[AbstractVector[T]] => this * col }
       companion.fromColumns(resColumns)
     }
+    def average(implicit f: Fractional[T], m: RepMonoid[T]): Rep[T]
+
     def companion: Rep[AbstractMatrixCompanion]
   }
 
@@ -76,6 +77,11 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
         Collection.indexRange(numRows).map { row => rows(row)(column) }.reduce
       }
       DenseVector(coll)
+    }
+
+    def average(implicit f: Fractional[T], m: RepMonoid[T]): Rep[T] = {
+      val flat = rows.map(v => v.items).flatMap(v => v)
+      flat.reduce / flat.length.asRep[T]
     }
   }
 
@@ -162,6 +168,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       }
       DenseVector(coll)
     }
+
+    def average(implicit f: Fractional[T], m: RepMonoid[T]): Rep[T] = {
+      items.reduce / items.length.asRep[T]
+    }
   }
 
   abstract class RowMajorSparseMatrix[T](val rows: Rep[Collection[AbstractVector[T]]], val numColumns: Rep[Int])
@@ -191,6 +201,11 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       DenseVector(rows.map(row => row.reduce))
     }*/
     def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = ???
+
+    def average(implicit f: Fractional[T], m: RepMonoid[T]): Rep[T] = {
+      val items = rows.map(v => v.nonZeroValues).flatMap(v => v)
+      items.reduce / items.length.asRep[T]
+    }
   }
 
   trait AbstractMatrixCompanion extends TypeFamily1[AbstractMatrix] {
@@ -231,7 +246,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   implicit def matrixElem[T](implicit e: Elem[T]): Elem[AbstractMatrix[T]] = element[RowMajorNestedMatrix[T]].asElem[AbstractMatrix[T]]
 }
 
-trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommunityDsl => }
+trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommunityDsl =>
+
+  def Matrix: Rep[AbstractMatrixCompanionAbs] = AbstractMatrix
+}
 
 trait MatricesDslSeq extends impl.MatricesSeq with VectorsDslSeq { self: ScalanCommunityDslSeq => }
 
