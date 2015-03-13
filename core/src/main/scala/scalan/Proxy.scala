@@ -171,6 +171,29 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     proxy.asInstanceOf[Ops]
   }
 
+  private def getSuperMethod(m: Method): Method = {
+    val c = m.getDeclaringClass
+    val superClass = c.getSuperclass
+    if (superClass == null) return null
+
+    try superClass.getMethod(m.getName, m.getParameterTypes: _*)
+    catch {
+      case e: NoSuchMethodException => {
+        val is = c.getInterfaces
+        val methods = is.toIterator.map(i =>
+          try Some(i.getMethod(m.getName, m.getParameterTypes: _*))
+          catch {
+            case e: NoSuchMethodException => None
+          })
+        val mOpt = methods.collectFirst {case Some(m) => m}
+        mOpt match {
+          case Some(m) => m
+          case None => null
+        }
+      }
+    }
+  }
+
   // FIXME this is a hack, this should be handled in Passes
   // The problem is that rewriting in ProgramGraph.transform is non-recursive
   // We need some way to make isInvokeEnabled local to graph
@@ -183,11 +206,16 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   def isInvokeEnabled(d: Def[_], m: Method) = invokeTesters.exists(_(d, m))
 
-  def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) =
-    m.getDeclaringClass.isAssignableFrom(d.getClass) &&
+  def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) = {
+    if (m.getDeclaringClass.isAssignableFrom(d.getClass))
       (isInvokeEnabled(d, m) || hasFuncArg(args) ||
         // e.g. for methods returning Elem
         (m.getReturnType != classOf[AnyRef] && m.getReturnType != classOf[Exp[_]]))
+    else {
+      //val parent = commonAncestor(m.getDeclaringClass, d.getClass)
+      false
+    }
+  }
 
   def addInvokeTester(pred: InvokeTester): Unit = {
     invokeTesters += pred
@@ -205,6 +233,24 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       case _ => false
     }
 
+  def invokeSuperMethod(d: Def[_], m: Method, args: Array[AnyRef]): Option[AnyRef] = {
+    var isCalled = false
+    var res: AnyRef = null
+    var superMethod: Method = null
+    do {
+      superMethod = getSuperMethod(m)
+      if (superMethod != null && shouldInvoke(d, superMethod, args)) {
+        res = superMethod.invoke(d, args: _*)
+        isCalled = true
+      }
+    } while (false) //TODO make it work for many levels of inheritance (!isCalled && superMethod != null)
+
+    if (isCalled)
+      Some(res)
+    else
+      None
+  }
+
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   protected var methodCallReceivers = Set.empty[Exp[_]]
 
@@ -214,10 +260,19 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) Array.empty[AnyRef] else _args
       receiver match {
-        // call method of the node when it's allowed
         case Def(d) if shouldInvoke(d, m, args) =>
+          // call method of the node when it's allowed
           val res = m.invoke(d, args: _*)
           res
+        case Def(d) => {
+          // try to call method m via inherited class or interfaces
+          val optRes = invokeSuperMethod(d, m, args)
+          optRes match {
+            case Some(res) => res
+            case None =>
+              invokeMethodOfVar(m, args)
+          }
+        }
         case _ => invokeMethodOfVar(m, args)
       }
     }
