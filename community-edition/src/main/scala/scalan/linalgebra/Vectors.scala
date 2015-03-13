@@ -109,7 +109,7 @@ trait Vectors { self: ScalanCommunityDsl =>
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
     def dot(other: Vector[T])(implicit n: Numeric[T]): Rep[T] = {
       val vRes: Vector[T] = other *^ items
-      val res = vRes.reduce
+      val res = vRes.nonZeroValues.reduce
       res
     }
     /*{
@@ -178,7 +178,9 @@ trait Vectors { self: ScalanCommunityDsl =>
       matchVec[T, T](other) {
         dv => nonZeroItems.map { case Pair(i, y) => dv.items(i) * y }.reduce
       } {
-        sv => innerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues).bs.reduce
+        // TODO implemets innerJoin and uncomment
+        //sv => innerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues).bs.reduce
+        sv => dotSparse(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues)
           //??? //sv => dotPA(coords(sv.nonZeroIndices), sv.nonZeroValues)(n, elem)
       }
     }

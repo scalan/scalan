@@ -4,7 +4,7 @@ import scalan.ScalanCommunityDsl
 
 trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
   def mvm[T](matrix: Matrix[T], vector: Vector[T])(implicit eT: Elem[T], n: Numeric[T]): Vector[T] =
-    DenseVector(matrix.rows.map { r => r dot vector })
+    DenseVector(matrix.rows.mapBy( fun{ r => r dot vector }))
 
   lazy val ddmvm = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
@@ -25,7 +25,7 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     val width = m(0)._3
     val matrix: Matrix[Double] = RowMajorSparseMatrix(Collection(m.map {
       r: Rep[(Array[Int], (Array[Double], Int))] =>
-      SparseVector(Collection(r._1), Collection(r._2), r._3).convertTo[AbstractVector[Double]]}), width)
+      SparseVector(Collection(r._1), Collection(r._2), r._3)}), width)
     val vector: Vector[Double] = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
