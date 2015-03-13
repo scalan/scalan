@@ -1,8 +1,8 @@
 package scalan
 
 import scalan.collections._
-import scalan.linalgebra.{MatricesDsl, MatricesDslExp, MatricesDslSeq}
 import scalan.parrays._
+import scalan.linalgebra.{MatricesDslExp, MatricesDslSeq, MatricesDsl}
 
 trait ScalanCommunity extends Scalan
 
