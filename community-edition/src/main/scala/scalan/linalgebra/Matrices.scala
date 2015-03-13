@@ -30,6 +30,9 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T]
 
     def transpose: Matrix[T]
+    def reduceByRows(implicit m: RepMonoid[T]): Vector[T] = {
+      DenseVector(rows.map(row => row.reduce))
+    }
     def reduceByColumns(implicit m: RepMonoid[T]): Vector[T]
 
     //@OverloadId("vector")
@@ -48,7 +51,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   // and making it invariant against AbstractVector implementations
   
   abstract class RowMajorDirectMatrix[T](val rows: Rep[Collection[AbstractVector[T]]])
-                                  (implicit val elem: Elem[T])
+                                        (implicit val elem: Elem[T])
     extends AbstractMatrix[T] {
     def companion = RowMajorDirectMatrix
     def numRows: Rep[Int] = rows.length
@@ -65,6 +68,9 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = apply(row)(column)
 
     def transpose: Matrix[T] = ???
+    /*def reduceByRows(implicit m: RepMonoid[T]): Vector[T] = {
+      DenseVector(rows.map(row => row.reduce))
+    }*/
     def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
       val coll = Collection.indexRange(numColumns).map { column =>
         Collection.indexRange(numRows).map { row => rows(row)(column) }.reduce
@@ -74,7 +80,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   }
 
   abstract class RowMajorNestedMatrix[T](val rmValues: Rep[Collection[T]], val numColumns: Rep[Int])
-                                      (implicit val elem: Elem[T])
+                                        (implicit val elem: Elem[T])
     extends AbstractMatrix[T] {
 
     def items = rmValues
@@ -147,6 +153,9 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       RowMajorFlatMatrix(transposedItems, numRows)
     }*/
     def transpose: Matrix[T] = transpose(10)
+    /*def reduceByRows(implicit m: RepMonoid[T]): Vector[T] = {
+      DenseVector(rows.map(row => row.reduce))
+    }*/
     def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
       val coll = Collection.indexRange(numColumns).map { column =>
         Collection.indexRange(numRows).map { row => this(row)(column) }.reduce
@@ -170,13 +179,16 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
     @OverloadId("row")
     def apply(row: Rep[Int]): Vector[T] = rows(row)
-    def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = rows(row)(column)
+    def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = apply(row)(column)
 
     def transpose: Rep[AbstractMatrix[T]] = transposeDirect(this) /*{
       val nestedItems = sparseRows map {row => row.nonZeroItems}
       val newNestedItems = CompressedRowMatrix.transpose(nestedItems, numColumns)
       val newSparseRows = newNestedItems map { nonZeroItems => SparseVector(nonZeroItems, numRows)}
       CompressedRowMatrix(newSparseRows, numRows)
+    }*/
+    /*def reduceByRows(implicit m: RepMonoid[T]): Vector[T] = {
+      DenseVector(rows.map(row => row.reduce))
     }*/
     def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = ???
   }
