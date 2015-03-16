@@ -18,7 +18,8 @@ class CxxShptrLmsSmokeItTests extends SmokeItTests {
     }
 
     lazy val testList = fun {in:Rep[Int] =>
-      SList.replicate(3, 1)
+      val l = SList.replicate(3, in)
+      l.toArray
     }
   }
 
