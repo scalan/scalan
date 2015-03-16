@@ -1,14 +1,14 @@
 package scalan.graphs
 import scala.annotation.unchecked.uncheckedVariance
+import scalan.collections.CollectionsDsl
 import scalan.common.Default
 import scalan._
-import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 
 /**
  * Created by afilippov on 2/27/15.
  */
 
-trait Fronts extends ScalanCommunityDsl with CollectionsDsl { self: FrontsDsl =>
+trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
   trait Front extends Reifiable[Front] {
     //def total: Rep[Int]
 

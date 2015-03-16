@@ -86,7 +86,10 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     override lazy val schedule = super.schedule
 
     def isGlobalLambda: Boolean =
-      freeVars.forall { x => x.isConst || x.isLambda }
+      freeVars.forall { x =>
+        val xIsGlobalLambda = x.isLambda && { val Def(lam: Lambda[_, _]) = x; lam.isGlobalLambda }
+        x.isConst || xIsGlobalLambda
+      }
   }
 
   type LambdaData[A,B] = (Lambda[A,B], Option[Exp[A] => Exp[B]], Exp[A], Exp[B])
