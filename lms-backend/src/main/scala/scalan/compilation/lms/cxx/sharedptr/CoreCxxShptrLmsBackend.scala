@@ -22,6 +22,7 @@ class CoreCxxShptrLmsBackend extends CoreLmsBackendBase { self =>
   with CxxShptrGenRangeOps
   with CLikeGenWhile
   with CLikeGenNumericOps
+  with CxxShptrGenListOps
   {
     override val IR: self.type = self
 

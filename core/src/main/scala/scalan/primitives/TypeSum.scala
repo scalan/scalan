@@ -1,9 +1,7 @@
 package scalan.primitives
 
-import scalan.common.Lazy
 import scalan.staged.BaseExp
 import scalan.{ ScalanExp, Scalan, ScalanSeq }
-import scala.language.implicitConversions
 
 trait TypeSum { self: Scalan =>
 
@@ -117,23 +115,10 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
       foldD.sum.fold(a => foldD.left(a)._2, b => foldD.right(b)._2)(d.selfType)
 
     case foldD: SumFold[a,b,T] => foldD.sum match {
-      case Def(IfThenElse(cond, Def(Left(left: Rep[a])), Def(Right(right: Rep[b])))) if !d.selfType.isEntityType =>
-        // this rule is only applied when result of fold is base type.
-        // Otherwise it yields stack overflow as this rule is mutually recursive with lifting Views over IfThenElse
-        IF(cond) THEN {
-          foldD.left(left)
-        } ELSE {
-          foldD.right(right)
-        }
-
-      case Def(IfThenElse(cond, Def(Right(right: Rep[b])), Def(Left(left: Rep[a])))) /*if !d.selfType.isEntityType*/ =>
-        // this rule is only applied when result of fold is base type.
-        // Otherwise it yields stack overflow as this rule is mutually recursive with lifting Views over IfThenElse
-        IF(cond) THEN {
-          foldD.right(right)
-        } ELSE {
-          foldD.left(left)
-        }
+      // this rule is only applied when result of fold is base type.
+      // Otherwise it yields stack overflow as this rule is mutually recursive with lifting Views over IfThenElse
+      case Def(IfThenElse(p, thenp: Rep[Either[_, _]] @unchecked, elsep: Rep[Either[_, _]] @unchecked)) if !d.selfType.isEntityType =>
+        __ifThenElse[T](p, SumFold(thenp, foldD.left, foldD.right)(foldD.selfType), SumFold(elsep, foldD.left, foldD.right)(foldD.selfType))
 
       case Def(view: SumView[a1,a2,b1,b2]) if !d.selfType.isEntityType =>
         view.source.fold(x => foldD.left.asRep[b1 => T](view.iso1.to(x)), y => foldD.right.asRep[b2 => T](view.iso2.to(y)))(d.selfType)
@@ -147,11 +132,11 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
       case Def(Left(left: Rep[a])) =>
         implicit val eLeft = left.elem
-        foldD.left.asRep[a => T](left)
+        foldD.left(left)
 
       case Def(Right(right: Rep[a])) =>
         implicit val eRight = right.elem
-        foldD.right.asRep[a => T](right)
+        foldD.right(right)
 
       case _ => super.rewriteDef(d)
     }

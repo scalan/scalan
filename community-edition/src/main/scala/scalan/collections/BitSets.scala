@@ -9,12 +9,11 @@ package scalan.collections
  */
 import scalan._
 import scala.reflect.runtime.universe._
-import scalan.collection.CollectionsDsl
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scalan.{ScalanCommunitySeq, ScalanCommunityExp, ScalanCommunity}
 
-trait BitSets  { self: ScalanCommunity with CollectionsDsl =>
+trait BitSets  { self: ScalanCommunityDsl =>
   trait PBitSetOps {
     def bits: Coll[Boolean]
     def union(that: Rep[PBitSet]) = {
@@ -49,13 +48,13 @@ trait BitSets  { self: ScalanCommunity with CollectionsDsl =>
   def unmkPBitSet(p: Rep[PBitSet]): Option[Coll[Boolean]]
 }
 
-trait BitSetsSeq extends BitSets { self: ScalanCommunitySeq =>
+trait BitSetsSeq extends BitSets { self: ScalanCommunityDslSeq =>
   implicit lazy val isoPBitSet:Iso[Collection[Boolean], PBitSet] = new PBitSetIso
   def mkPBitSet(flags: Coll[Boolean]) = new PBitSet(flags)
   def unmkPBitSet(p: Rep[PBitSet]) = Some(p.bits)
 }
 
-trait BitSetsExp extends BitSets { self: ScalanCommunityExp =>
+trait BitSetsExp extends BitSets { self: ScalanCommunityDslExp =>
 
   case class ExpBitSet(override val bits: Coll[Boolean])
     extends PBitSet(bits) with Def[PBitSet] {
