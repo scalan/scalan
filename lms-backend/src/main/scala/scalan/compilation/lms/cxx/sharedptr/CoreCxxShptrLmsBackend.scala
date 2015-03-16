@@ -2,6 +2,7 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import scala.virtualization.lms.common._
 import scalan.compilation.lms.CoreLmsBackendBase
+import scalan.compilation.lms.common.CxxShptrGenLstOps
 
 class CoreCxxShptrLmsBackend extends CoreLmsBackendBase { self =>
 
@@ -23,6 +24,7 @@ class CoreCxxShptrLmsBackend extends CoreLmsBackendBase { self =>
   with CLikeGenWhile
   with CLikeGenNumericOps
   with CxxShptrGenListOps
+  with CxxShptrGenLstOps
   {
     override val IR: self.type = self
 

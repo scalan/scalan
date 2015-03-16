@@ -70,6 +70,18 @@ namespace scalan
             this->h = std::make_shared<node_t>(*args.begin(), l.h);
         }
 
+        immutable_list(size_t aLen, const T& aV)
+        {
+            auto l = immutable_list();
+            for( size_t i = 1; i < aLen; ++i )
+            {
+                l = immutable_list(aV, l);
+            }
+
+            this->len = l.len + 1;
+            this->h = std::make_shared<node_t>(aV, l.h);
+        }
+
         bool empty() const
         {
             return !this->h; // implicit conversion via shared_ptr::operator bool()

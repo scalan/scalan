@@ -1,9 +1,10 @@
 package scalan.compilation.lms.cxx.sharedptr
 
 import scala.virtualization.lms.common.{BaseGenListOps, CLikeGenEffect, ListOpsExp}
+import scalan.compilation.lms.common.LstOpsExp
 
 trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeGenEffect {
-  val IR: ListOpsExp
+  val IR: ListOpsExp with LstOpsExp
   import IR._
 
   override def remap[A](m: Manifest[A]) : String = {
@@ -66,7 +67,8 @@ trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeG
                                        |${nestedBlock(blk)}
           |$blk
           |}"""
-    case ListToArray(l) => emitValDef(sym, src"$l.toArray")
+    case ListToArray(l) =>
+      emitConstruct(sym, src"$l->cbegin()", src"$l->cend()")
     case ListToSeq(l) => emitValDef(sym, src"$l.toSeq")
     case _ => super.emitNode(sym, rhs)
   }
