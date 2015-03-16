@@ -10,11 +10,10 @@ import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.it.BaseItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
-import scalan.parrays.PArraysDslExp
 import scalan.performance.MVMs
 
 class LmsJNIExtractorItTests extends BaseItTests {
-  trait ProgExp extends PArraysDslExp with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
+  trait ProgExp extends ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
     val lms = new CoreCxxShptrLmsBackend
   }
 
