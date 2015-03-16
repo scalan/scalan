@@ -27,6 +27,7 @@ class CoreCXXLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>
   with CXXGenArrayBuilderOps
   with CXXGenRangeOps
   with CLikeGenWhile
+  with CXXGenHashMapOps
   with CXXCodegen
   with CXXGenJNIExtractor
   {
