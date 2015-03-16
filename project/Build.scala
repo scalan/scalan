@@ -21,8 +21,8 @@ object ScalanBuild extends Build {
     "-language:experimental.macros")
 
   val commonDeps = libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "2.2.3" % "test",
-    "org.scalacheck" %% "scalacheck" % "1.12.1" % "test",
+    "org.scalatest" %% "scalatest" % "2.2.4" % "test",
+    "org.scalacheck" %% "scalacheck" % "1.12.2" % "test",
     "com.github.axel22" %% "scalameter" % "0.5-M2" % "test",
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
     "ch.qos.logback" % "logback-classic" % "1.1.2")
@@ -44,10 +44,10 @@ object ScalanBuild extends Build {
     test in assembly := {})
 
   val crossCompilation =
-    crossScalaVersions := Seq("2.10.4", "2.11.5")
+    crossScalaVersions := Seq("2.10.5", "2.11.6")
 
   val commonSettings = Seq(
-    scalaVersion := "2.10.4",
+    scalaVersion := "2.10.5",
     organization := "com.huawei.scalan",
     publishTo := {
       val nexus = "http://10.122.85.37:9081/nexus/"
