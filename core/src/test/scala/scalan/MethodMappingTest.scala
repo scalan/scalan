@@ -11,9 +11,9 @@ class MethodMappingTest extends BaseTests {
 
       val scalanCE = new Library("scalan-ce.jar") {
 
-        val parraysPack = new Pack("scalan.parrays") {
-          val parraysFam = new Family('PArrays) {
-            val parray = new ClassType('PArray, 'PA, TyArg('A)) {
+        val collectionsPack = new Pack("scalan.collections") {
+          val collectionsFam = new Family('Collections) {
+            val collection = new ClassType('Collection, 'Coll, TyArg('A)) {
               val length = Method('length, tyInt)
             }
           }
@@ -32,7 +32,7 @@ class MethodMappingTest extends BaseTests {
       val mapScalanCE2Scala = {
         import scalanCE._
         Map(
-          parraysPack.parraysFam.parray.length -> linpackScala.arrayLength
+          collectionsPack.collectionsFam.collection.length -> linpackScala.arrayLength
         )
       }
 
@@ -52,7 +52,7 @@ class MethodMappingTest extends BaseTests {
       val mapScalanCE2Cpp = {
         import scalanCE._
         Map(
-          parraysPack.parraysFam.parray.length -> linpackCpp.invertMatr
+          collectionsPack.collectionsFam.collection.length -> linpackCpp.invertMatr
         )
       }
 
@@ -63,14 +63,14 @@ class MethodMappingTest extends BaseTests {
   }
 
   test("Scala Method") {
-    val m = TestMethodMapping.methodReplaceConf.get("scalan.parrays.PArrays$PArray", "length").get.asInstanceOf[MethodMapping#ScalaLanguage#ScalaFunc]
+    val m = TestMethodMapping.methodReplaceConf.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMapping#ScalaLanguage#ScalaFunc]
     "arrayLength" should equal(m.funcName.name)
     m.args.size should equal(0)
   }
 
   test("C++ Method") {
     implicit def defaultLanguage: LANGUAGE = CPP
-    val m = TestMethodMapping.methodReplaceConf.get("scalan.parrays.PArrays$PArray", "length").get.asInstanceOf[MethodMapping#CppLanguage#CppFunc]
+    val m = TestMethodMapping.methodReplaceConf.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMapping#CppLanguage#CppFunc]
     "invertMatrix" should equal(m.funcName)
     m.args.size should equal(2)
   }

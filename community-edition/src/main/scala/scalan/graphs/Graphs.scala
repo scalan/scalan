@@ -2,8 +2,8 @@ package scalan.graphs
 
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
+import scalan.collections.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scalan.{ScalanSeq, ScalanExp, Scalan}
-import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 
@@ -129,12 +129,10 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     def edges: Coll[AdjEdge[V, E]] = ???
 
     def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[Edge[V, E]] = {
-      val res = (vs zip outNeighborsOf(vs)).flatMap { in =>
-          val Pair(v, ns) = in
-          val edges = ns.indexes.map({ i => makeEdgeFrom(v, i)})
-          edges.filter { predicate(_) }
+      val res = vs.flatMap { v =>
+          outNeighborsOf(v).indexes.map({ i => makeEdgeFrom(v, i)})
       }
-      res.asInstanceOf[Coll[Edge[V, E]]]
+      res.filter { predicate(_) }.asInstanceOf[Coll[Edge[V, E]]]
     }
 
     def inNeighbors(v: Rep[Int]): Coll[Int] = ???
@@ -183,11 +181,9 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
 
     def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[IncEdge[V, E]] = {
       val res = vs.flatMap { v =>
-        val es = outEdgesOf1(v)
-        val res = es.filter(predicate(_))
-        res
-      }
-      res.asInstanceOf[Coll[IncEdge[V, E]]]
+        outEdgesOf1(v)
+       }
+      res.filter(predicate(_)).asInstanceOf[Coll[IncEdge[V, E]]]
     }
 
     def inNeighbors(v: Rep[Int]): Coll[Int] = ??? //inverted.links(v)

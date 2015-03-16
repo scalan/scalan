@@ -4,7 +4,7 @@ package impl
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.{ScalanSeq, ScalanExp, Scalan}
-import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
+import scalan.collections.CollectionsDslExp
 import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe._

@@ -5,7 +5,7 @@ import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
 import scalan.ScalanCommunityDsl
 import scalan.{ScalanSeq, ScalanExp, Scalan}
-import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
+import scalan.collections.CollectionsDslExp
 import scala.reflect.runtime.universe._
 import scala.reflect._
 import scalan.common.Default
@@ -112,7 +112,7 @@ trait EdgesAbs extends Scalan with Edges {
 
   // 3) Iso for concrete class
   class IncEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[IncEdgeData[V, E], IncEdge[V, E]] {
+    extends Iso[IncEdgeData[V, E], IncEdge[V, E]]()(element[(Int, (Int,IncidenceGraph[V,E]))].asElem[(Int, (Int, Graph[V,E]))]) {
     override def from(p: Rep[IncEdge[V, E]]) =
       unmkIncEdge(p) match {
         case Some((fromId, toId, graph)) => Pair(fromId, Pair(toId, graph))

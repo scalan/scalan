@@ -6,6 +6,8 @@ package sharedptr
 
 import scala.virtualization.lms.common._
 import scalan.compilation.lms.common.{CxxShptrGenJNIExtractor, JNILmsOpsExp}
+import scalan.compilation.lms.CoreLmsBackendBase
+import scalan.compilation.lms.common.CxxShptrGenLstOps
 
 class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>
 
@@ -26,6 +28,8 @@ class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self
   with CxxShptrGenRangeOps
   with CLikeGenWhile
   with CLikeGenNumericOps
+  with CxxShptrGenListOps
+  with CxxShptrGenLstOps
   with CxxShptrGenJNIExtractor
   {
     override val IR: self.type = self

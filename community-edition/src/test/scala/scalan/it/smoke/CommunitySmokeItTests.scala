@@ -2,23 +2,25 @@ package scalan.it.smoke
 
 import scalan._
 import scalan.JNIExtractorOps
+import scalan.collection.CollExamples
+
+//import scalan.community._
 import scalan.collections._
-import scalan.parrays.{PArraysDslSeq, PArraysDslExp, PArrayExamples}
 
 /**
  *  Tests that very simple examples are run correctly
  */
 abstract class CommunitySmokeItTests extends SmokeItTests {
 
-  trait ProgCommunity extends Prog with ScalanCommunity with PArrayExamples with ScalanCommunityDsl  {
+  trait ProgCommunity extends Prog with ScalanCommunity with CollExamples with ScalanCommunityDsl  {
 
-    lazy val simpleConst = fun { x: PA[Int] =>
-      PArray.singleton(1)
+    lazy val simpleConst = fun { x: Coll[Int] =>
+      Collection.singleton(1)
     }
 
     lazy val expBaseArrays = fun { xss: Arr[Array[Int]] =>
-      val pss1: Arr[PArray[Int]] = xss.map { xs: Rep[Array[Int]] => PArray(xs)}
-      val res = pss1.map { ps: PA[Int] =>
+      val pss1: Arr[Collection[Int]] = xss.map { xs: Rep[Array[Int]] => Collection(xs)}
+      val res = pss1.map { ps: Coll[Int] =>
         ps.arr
       }
       res
@@ -116,7 +118,7 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
 
   }
 
-class ProgCommunitySeq extends ProgCommunity with PArraysDslSeq with ScalanCommunitySeq with ScalanCommunityDslSeq with MultiMapsDslSeq {
+class ProgCommunitySeq extends ProgCommunity with ScalanCommunitySeq with ScalanCommunityDslSeq with MultiMapsDslSeq {
 }
 
 // TODO

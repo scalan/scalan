@@ -190,8 +190,8 @@ class GraphExamplesSuite extends BaseShouldTests{
   val whenStaged = "when staged"
   whenStaged should "fromAndToAdj" beArgFor { testMethod(_) }
   whenStaged should "fromAndToInc" beArgFor { testMethod(_) }
-  //whenStaged should "mstFunAdj" beArgFor { testMethod(_) }
-  //whenStaged should "mstFunInc" beArgFor { testMethod(_) }
+  whenStaged should "mstFunAdj" beArgFor { testMethod(_) }
+  whenStaged should "mstFunInc" beArgFor { testMethod(_) }
   whenStaged should "mstFun1Adj" beArgFor { testMethod(_) }
   whenStaged should "mstFun1Inc" beArgFor { testMethod(_) }
   whenStaged should "mstFunAdjMap" beArgFor { testMethod(_) }
