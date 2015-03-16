@@ -11,10 +11,9 @@ import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.graphs.MST_example
 import scalan.it.BaseItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
-import scalan.performance.MVMs
 
 class LmsJNIExtractorItTests extends BaseItTests {
-  trait ProgExp extends ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
+  trait ProgExp extends MST_example with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
     val lms = new CoreCxxShptrLmsBackend
     
     lazy val MST_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
@@ -40,6 +39,18 @@ class LmsJNIExtractorItTests extends BaseItTests {
       val res = MSF_adjmatrix(data)
       JNI_Pack(res)
     }
+
+    lazy val MSF_JNI_adjlistList = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
+      val data = JNI_Extract(in)
+      val res = MSF_adjlistList(data)
+      JNI_Pack(res)
+    }
+
+    lazy val MSF_JNI_adjmatrixList = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
+      val data = JNI_Extract(in)
+      val res = MSF_adjmatrixList(data)
+      JNI_Pack(res)
+    }
   }
 
   test("MST_JNI") {
@@ -55,11 +66,12 @@ class LmsJNIExtractorItTests extends BaseItTests {
       }
     }
 
-    ctx.generate("MST_JNI_adjlist", ctx.MST_JNI_adjlist)
-    ctx.generate("MST_JNI_adjmatrix", ctx.MST_JNI_adjmatrix)
+//    ctx.generate("MST_JNI_adjlist", ctx.MST_JNI_adjlist)
+//    ctx.generate("MST_JNI_adjmatrix", ctx.MST_JNI_adjmatrix)
     ctx.generate("MSF_JNI_adjlist", ctx.MSF_JNI_adjlist)
     ctx.generate("MSF_JNI_adjmatrix", ctx.MSF_JNI_adjmatrix)
-  }
+    ctx.generate("MSF_JNI_adjlistList", ctx.MSF_JNI_adjlistList)
+    ctx.generate("MSF_JNI_adjmatrixList", ctx.MSF_JNI_adjmatrixList)
   }
 
   test("simpleGenCxx") {
@@ -143,29 +155,29 @@ class LmsJNIExtractorItTests extends BaseItTests {
 
   test("simpleExecute") { //TODO: automate execution
     pending
-    val ctx = new ScalanCtxExp with ProgExp with FirstProg {
-      override def subfolder: String = "release"
-
-      def test() = {
-      }
-
-      def execute(): Unit = {
-        val dir = new File(prefix, subfolder)
-//        System.setProperty("java.library.path", dir.getAbsolutePath) //TODO: is there a way to set path dynamically?
-        println(s"java.library.path=${System.getProperty("java.library.path")}")
-        System.loadLibrary("jniExtractor")
-
-//        val m = scala.Array(scala.Array(34.0, 89.0),scala.Array(12.0, 43.0))
-        val m = scala.Array( (scala.Array(0,1), (scala.Array(34.0, 88.0), 2))
-                           , (scala.Array(0,1), (scala.Array(12.0, 43.0), 2)) )
-        val v = scala.Array(77.0, 12.0)
-
-        val res = (new MVMs).extractorTest( (m,v) )
-        println(res.mkString("[",", ","]"))
-        //assert(res sameElements (v map {a => k*a}) )
-      }
-    }
-
-    ctx.execute
+//    val ctx = new ScalanCtxExp with ProgExp with FirstProg {
+//      override def subfolder: String = "release"
+//
+//      def test() = {
+//      }
+//
+//      def execute(): Unit = {
+//        val dir = new File(prefix, subfolder)
+////        System.setProperty("java.library.path", dir.getAbsolutePath) //TODO: is there a way to set path dynamically?
+//        println(s"java.library.path=${System.getProperty("java.library.path")}")
+//        System.loadLibrary("jniExtractor")
+//
+////        val m = scala.Array(scala.Array(34.0, 89.0),scala.Array(12.0, 43.0))
+//        val m = scala.Array( (scala.Array(0,1), (scala.Array(34.0, 88.0), 2))
+//                           , (scala.Array(0,1), (scala.Array(12.0, 43.0), 2)) )
+//        val v = scala.Array(77.0, 12.0)
+//
+//        val res = (new MVMs).extractorTest( (m,v) )
+//        println(res.mkString("[",", ","]"))
+//        //assert(res sameElements (v map {a => k*a}) )
+//      }
+//    }
+//
+//    ctx.execute
   }
 }

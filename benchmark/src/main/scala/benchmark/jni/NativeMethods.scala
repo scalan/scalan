@@ -9,6 +9,8 @@ class NativeMethods {
   @native def MSTadjmatrix( in: (Array[Double], Int) ): Array[Int]
   @native def MSFadjlist( in: (Array[Int], (Array[Double], (Array[Int], Array[Int]))) ): Array[Int]
   @native def MSFadjmatrix( in: (Array[Double], Int) ): Array[Int]
+  @native def MSFadjlistList( in: (Array[Int], (Array[Double], (Array[Int], Array[Int]))) ): Array[Int]
+  @native def MSFadjmatrixList( in: (Array[Double], Int) ): Array[Int]
 
   @native def ddmvm( in: (Array[Array[Double]], Array[Double]) ): Array[Double]
   @native def dsmvm( p: (Array[Array[Double]], (Array[Int], (Array[Double], Int))) ): Array[Double]

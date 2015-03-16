@@ -272,4 +272,26 @@ class JNIMSTBenchmarkSSCA {
     state.res = res
     res
   }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
+  def MSF_adjlistList_cxx( state: MSF_adjlistList_State ): Array[Int] = {
+    val res = state.nativeMethods.MSFadjlistList(state.input)
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
+  def MSF_adjmatrixList_cxx( state: MSF_adjmatrixList_State ): Array[Int] = {
+    val res = state.nativeMethods.MSFadjmatrixList(state.inputM)
+    state.res = res
+    res
+  }
 } //class JNIMSTBenchmarkSSCA
