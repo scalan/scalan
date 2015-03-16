@@ -188,7 +188,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
   }
 
   test("MSF_adjListList") {
-    pending
+//    pending
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
@@ -198,8 +198,8 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     println(resSeq.mkString(" , "))
     val resStaged = getStagedOutputConfig(progStaged)(progStaged.MSF_adjlistList, "MSF_adjlistList", input, progStaged.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
-//    val dir = FileUtil.file(prefix, "MSF_adjlistList")
-//    progStagedCXX.buildExecutable(dir,dir,"MSF_adjlistList", progStagedCXX.MSF_adjlistList, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
+    val dir = FileUtil.file(prefix, "MSF_adjlistList")
+    progStagedCXX.buildExecutable(dir,dir,"MSF_adjlistList", progStagedCXX.MSF_adjlistList, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
   }
 
   test("MSF_adjMatrixList") {
