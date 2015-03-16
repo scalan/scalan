@@ -203,7 +203,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
   }
 
   test("MSF_adjMatrixList") {
-    pending
+//    pending
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
       val row = in._1
@@ -217,8 +217,8 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     println(resSeq.mkString(" , "))
     val resStaged = getStagedOutputConfig(progStaged)(progStaged.MSF_adjmatrixList, "MSF_adjmatrixList", input, progStaged.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
-//    val dir = FileUtil.file(prefix, "MSF_adjmatrixList")
-//    progStagedCXX.buildExecutable(dir,dir,"MSF_adjmatrixList", progStagedCXX.MSF_adjmatrixList, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
+    val dir = FileUtil.file(prefix, "MSF_adjmatrixList")
+    progStagedCXX.buildExecutable(dir,dir,"MSF_adjmatrixList", progStagedCXX.MSF_adjmatrixList, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
   }
 
   test("MST_adjMatrixList") {
