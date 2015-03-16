@@ -8,6 +8,7 @@ import scalan.compilation.lms.JNIBridge
 import scalan.compilation.lms.cxx.LmsCompilerCXX
 import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
+import scalan.graphs.MST_example
 import scalan.it.BaseItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 import scalan.performance.MVMs
@@ -15,6 +16,50 @@ import scalan.performance.MVMs
 class LmsJNIExtractorItTests extends BaseItTests {
   trait ProgExp extends ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
     val lms = new CoreCxxShptrLmsBackend
+    
+    lazy val MST_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
+      val data = JNI_Extract(in)
+      val res = MST_adjlist(data)
+      JNI_Pack(res)
+    }
+
+    lazy val MST_JNI_adjmatrix = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
+      val data = JNI_Extract(in)
+      val res = MST_adjmatrix(data)
+      JNI_Pack(res)
+    }
+
+    lazy val MSF_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
+      val data = JNI_Extract(in)
+      val res = MSF_adjlist(data)
+      JNI_Pack(res)
+    }
+
+    lazy val MSF_JNI_adjmatrix = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
+      val data = JNI_Extract(in)
+      val res = MSF_adjmatrix(data)
+      JNI_Pack(res)
+    }
+  }
+
+  test("MST_JNI") {
+    val ctx = new ScalanCtxExp with ProgExp with FirstProg {
+      override def subfolder: String = "MST_JNI-cxx"
+      def test() = {
+
+      }
+
+      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
+        val dir = new File(prefix, subfolder)
+        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
+      }
+    }
+
+    ctx.generate("MST_JNI_adjlist", ctx.MST_JNI_adjlist)
+    ctx.generate("MST_JNI_adjmatrix", ctx.MST_JNI_adjmatrix)
+    ctx.generate("MSF_JNI_adjlist", ctx.MSF_JNI_adjlist)
+    ctx.generate("MSF_JNI_adjmatrix", ctx.MSF_JNI_adjmatrix)
+  }
   }
 
   test("simpleGenCxx") {

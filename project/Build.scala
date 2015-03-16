@@ -114,9 +114,16 @@ object ScalanBuild extends Build {
       fork in ItTest := true)
 
   lazy val benchmark = project.withTestConfigsAndCommonSettings
-    .dependsOn(core, ce, lmsBackend)
+    .dependsOn(core, ce, lmsBackend ) //% "compile->compile;compile->test")
     .settings(jmhSettings: _*)
     .settings(
+      libraryDependencies ++= Seq(
+        "org.scodec" %% "scodec-bits" % "1.0.5"
+      , "org.scodec" %% "scodec-core" % "1.7.0"
+      ).++( if( scalaBinaryVersion.value startsWith "2.10" )
+              Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full))
+            else Nil
+      ),
       scalaOrganization := "org.scala-lang.virtualized",
       scalaVersion := virtScala,
       publishArtifact := false

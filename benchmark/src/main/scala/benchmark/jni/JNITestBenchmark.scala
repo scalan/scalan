@@ -1,9 +1,17 @@
 package benchmark
 package jni
 
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
+
+import scalan.ScalanCommunityDslExp
+import scalan.compilation.GraphVizConfig
+import scalan.compilation.lms.CommunityLmsBackend
+import scalan.compilation.lms.scalac.LmsCompilerScala
+import scalan.graphs.MST_example
+import scalan.util.FileUtil
 
 object JNITestBenchmark {
   @State(Scope.Benchmark)
