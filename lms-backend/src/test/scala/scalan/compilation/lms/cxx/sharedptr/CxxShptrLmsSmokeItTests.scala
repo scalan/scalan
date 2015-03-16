@@ -16,10 +16,21 @@ class CxxShptrLmsSmokeItTests extends SmokeItTests {
 //      val init = SArray.replicate(1, 0.0)
       arr.fold(arr, {p:Rep[(Array[Double],Double)] => p._1.update(0, p._1(0) + p._2 + 1.0)})
     }
+
+    lazy val testList = fun {in:Rep[Int] =>
+      SList.replicate(3, 1)
+    }
   }
 
   override val progStaged = new ProgExp
   import progStaged.defaultCompilerConfig
+
+  test("testList") {
+    val in = 2
+    val functionName = "testList"
+    val dir = new File(prefix, functionName)
+    progStaged.buildExecutable(dir, dir, functionName, progStaged.testList, GraphVizConfig.default)
+  }
 
   test("arrayForeach") {
     val in = 2

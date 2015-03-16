@@ -90,6 +90,7 @@ trait CxxShptrCodegen extends CLikeCodegen {
           "#include <cstdlib>\n" +
           "#include <functional>\n" +
           "#include <algorithm>\n" +
+          "#include <immutable_list.hpp>\n" +
           "/*****************************************\n" +
           "  Emitting Generated Code                  \n" +
           "*******************************************/")
