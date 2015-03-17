@@ -1,19 +1,19 @@
 package scalan.it.lms
 
 import java.io.File
+
 import scala.language.reflectiveCalls
-import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.compilation.lms.JNIBridge
-import scalan.compilation.lms.cxx.{CommunityCXXLmsBackend, LmsCompilerCXX}
-import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
-import scalan.performance.MVMs
 import scalan._
-import scalan.graphs.{GraphsDslExp}
-import scalan.it.BaseItTests
+import scalan.compilation.lms.JNIBridge
+import scalan.compilation.lms.cxx.LmsCompilerCXX
+import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
+import scalan.graphs.GraphsDslExp
+import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
 class JNI_MsfItTests extends LmsMsfItTests {
   trait ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
-    val lms = new CommunityCXXLmsBackend
+    val lms = new CoreCxxShptrLmsBackend
 
     lazy val MSF_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
       val data = JNI_Extract(in)

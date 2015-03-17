@@ -3,8 +3,7 @@ package scalan.compilation.lms.common
 import scala.reflect.SourceContext
 import scala.virtualization.lms.common._
 import scala.virtualization.lms.epfl.test7.ArrayLoopsExp
-import scala.virtualization.lms.internal.{GenericCodegen, GenerationFailedException}
-import scalan.compilation.lms.cxx.CXXCodegen
+import scala.virtualization.lms.internal.{GenerationFailedException, GenericCodegen}
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 
@@ -247,79 +246,6 @@ trait JNIExtractorOpsCxxGenBase extends GenericCodegen {
     case _ =>
       throw new GenerationFailedException(s"JNIExtractorOpsCxxGenBase.remapObject(m) : Type ${m} cannot be remapped to jobject.")
   }
-}
-
-trait CXXGenJNIExtractor extends CXXCodegen with JNIExtractorOpsCxxGenBase {
-  val IR: JNILmsOpsExp
-  import IR._
-
-  override def traverseStm(stm: Stm): Unit = {
-    stm match {
-      case TP(sym,rhs) => rhs match {
-        case ExtractPrimitiveArray(_) =>
-          moveableSyms += sym
-        case _ =>
-          ()
-      }
-      case _ =>
-        ()
-    }
-    super.traverseStm(stm)
-  }
-
-  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case res@NewPrimitive(x) =>
-      emitValDef(sym, s"static_cast<${remap(x.tp)}>(${quote(x)})")
-    case res@NewObject(clazz, mid, args@_*) =>
-      val sargs = if(args.isEmpty) "" else ", " + args.map(quote).mkString(", ")
-      emitValDef(quote(sym), jobjectManifest(sym.tp), s"env->NewObject(${quote(clazz)},${quote(mid)}${sargs})")
-    case res@CallObjectMethod(x, mid, args@_*) =>
-      val sargs = if(args.isEmpty) "" else ", " + args.map(quote).mkString(", ")
-      emitValDef(quote(sym),jobjectManifest(sym.tp), s"static_cast<${remap(jobjectManifest(sym.tp))}>(env->CallObjectMethod(${quote(x)},${quote(mid)}${sargs}))")
-    case res@ReturnFirstArg(jArray, _) =>
-      emitValDef(sym, s"${quote(jArray)}")
-    case res@NewPrimitiveArray(len) =>
-      emitValDef(sym, s"env->New${res.mA.toString}Array(${quote(len)})")
-    case res@NewObjectArray(len, clazz) =>
-      emitValDef(sym, s"env->NewObjectArray(${quote(len)}, ${quote(clazz)}, nullptr)")
-    case FindClass(className) =>
-      emitValDef(sym, s"env->FindClass(${quote(className)})")
-    case ExtractPrimitive(x) =>
-      emitValDef(sym, s"static_cast<${remap(norefManifest(sym.tp))}>(${quote(x)})")
-    case ExtractPrimitiveArray(x) =>
-      emitValDef(sym, s"${remap(sym.tp)}(env, ${quote(x)})")
-    case Reflect(ExtractPrimitiveArray(x),_,_) =>
-      emitConstruct(sym, "env", s"${quote(x)}")
-    case GetArrayLength(x) =>
-      emitValDef(sym, s"env->GetArrayLength(${quote(x)})")
-    case ExtractObjectArray(x) =>
-      emitValDef(sym, s"${quote(x)} /*ExtractObjectArray: sym.tp=${sym.tp}*/")
-    case GetObjectArrayItem(x, i) =>
-      emitValDef(sym, s"static_cast<${remapObject(sym.tp)}>(env->GetObjectArrayElement(${quote(x)}, ${quote(i)}))")
-    case GetObjectClass(x) =>
-      emitValDef(sym, s"env->GetObjectClass(${quote(x)})")
-    case GetFieldID(clazz, fn, sig) =>
-      emitValDef(sym, s"env->GetFieldID(${quote(clazz)}, ${quote(fn)}, ${quote(sig)})")
-    case GetMethodID(clazz, mn, sig) =>
-      emitValDef(sym, s"env->GetMethodID(${quote(clazz)}, ${quote(mn)}, ${quote(sig)})")
-    case GetObjectFieldValue(fid, x) =>
-      emitValDef(quote(sym), jobjectManifest(sym.tp), s"static_cast<${remap(jobjectManifest(sym.tp))}>(env->GetObjectField(${quote(x)}, ${quote(fid)})) /*GetObjectField: sym.tp=${sym.tp}*/")
-    case res@GetPrimitiveFieldValue(fid, x) =>
-      val funName = s"Get${res.tp.toString}Field"
-      emitValDef(sym, s"static_cast<${remap(norefManifest(sym.tp))}>(env->${funName}(${quote(x)}, ${quote(fid)}))")
-    case _ =>
-      super.emitNode(sym, rhs)
-  }
-
-  override def quote(x: Exp[Any]) = {
-    x match {
-      case JNIStringConst(str) =>
-        "\""+str.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")+"\""
-      case _ =>
-        super.quote(x)
-    }
-  }
-
 }
 
 trait CxxShptrGenJNIExtractor extends CxxShptrCodegen with JNIExtractorOpsCxxGenBase {
