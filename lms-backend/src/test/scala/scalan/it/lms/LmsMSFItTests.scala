@@ -1,6 +1,6 @@
 package scalan.it.lms
 
-import scalan.{ScalanCommunityDslSeq, ScalanCommunityDslExp, ScalanCtxSeq, ScalanCtxExp}
+import scalan._
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
 import scalan.graphs.{GraphsDslExp, GraphsDslSeq, GraphExamples, MST_example}
@@ -85,33 +85,46 @@ abstract class LmsMsfItTests extends BaseItTests {
       res.arr
     }
 
-    lazy val funFallingTest = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
-      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
+    def createGraph(links: Arr[Int], evalues: Rep[Array[Double]], ofs: Arr[Int], lens: Arr[Int]) = {
+      val segments = Collection.fromArray(ofs) zip Collection.fromArray(lens)
+      val linksColl = NestedCollection.createNestedCollection(Collection.fromArray(links), segments)
+      val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(evalues), segments)
 
       val vertex_vals = UnitCollection(segments.length)
-      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, linksColl)
+      graph
+    }
+
+    lazy val funFallingTestWithLists = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+      val Pair(links, Pair(evalues, Pair(ofs, lens))) = in
+      val graph = createGraph(links, evalues, ofs, lens)
       val startFront = Front.emptyListBasedFront(graph.vertexNum)
+      val res = fallingTest(graph, startFront)
+      res.arr
+    }
+    lazy val funFallingTestWithArrays = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+      val Pair(links, Pair(evalues, Pair(ofs, lens))) = in
+      val graph = createGraph(links, evalues, ofs, lens)
+      val startFront = Front.emptyBaseFront(graph.vertexNum)
       val res = fallingTest(graph, startFront)
       res.arr
     }
   }
 
-  class ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge { self =>
+  trait ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge { self =>
     val lms = new CommunityLmsBackend
   }
 
   class ProgSeq extends GraphsDslSeq with MsfFuncs with ScalanCommunityDslSeq
 
   val progSeq = new ProgSeq
-  lazy val progStaged1 = new ProgExp
-  lazy val progStaged2 = new ProgExp
-  lazy val progStaged3 = new ProgExp
-  lazy val progStaged4 = new ProgExp
-  lazy val progStaged5 = new ProgExp
-  lazy val progStaged6 = new ProgExp
-  lazy val progStaged7 = new ProgExp
+  lazy val progStaged1 = new ProgExp {}
+  lazy val progStaged2 = new ProgExp {}
+  lazy val progStaged3 = new ProgExp {}
+  lazy val progStaged4 = new ProgExp {}
+  lazy val progStaged5 = new ProgExp {}
+  lazy val progStaged6 = new ProgExp {}
+  lazy val progStaged7 = new ProgExp {}
 }
 
 class LmsMsfPrimeItTests extends LmsMsfItTests {
@@ -252,15 +265,27 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
   }
 
   test("fallingTest") {
-    pending
+    //pending
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
     val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
     val input = (links, (edgeVals, (offs, lens)))
-    val resSeq = progSeq.funFallingTest(input)
+    val resSeq = progSeq.funFallingTestWithLists(input)
     println("Seq: " + resSeq.mkString(" , "))
-    val resStaged = getStagedOutputConfig(progStaged7)(progStaged7.funFallingTest, "fallingTest", input, progStaged7.defaultCompilerConfig)
+    val resStaged = getStagedOutputConfig(progStaged7)(progStaged7.funFallingTestWithLists, "fallingTest", input, progStaged7.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
+  }
+
+  test("fallingTestWithLists") {
+    //pending
+    val ctx = new TestContext(this, "fallingTestWithLists") with ProgExp
+    ctx.emit("funFallingTestWithLists", ctx.funFallingTestWithLists)
+  }
+
+  test("fallingTestWithArrays") {
+    //pending
+    val ctx = new TestContext(this, "fallingTestWithArrays") with ProgExp
+    ctx.emit("funFallingTestWithArrays", ctx.funFallingTestWithArrays)
   }
 }
