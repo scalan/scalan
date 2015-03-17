@@ -77,7 +77,7 @@ trait LmsBridge { self: ScalanCtxExp =>
       Manifest.classType(classOf[List[_]], createManifest(el.eItem))
     case el: MMapElem[_,_] =>
       Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
-    case el: Element[_] => toManifest[T](el.tag)
+    case el: Element[_] => tagToManifest[T](el.tag)
     case el => ???(s"Don't know how to create manifest for $el")
   }
 }
