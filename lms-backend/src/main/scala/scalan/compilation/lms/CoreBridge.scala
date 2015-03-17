@@ -19,6 +19,10 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
 
     val tt: DefTransformer = {
 
+      case _: CompanionBase[_] =>
+        // ignore companion objects
+        m
+
       case MethodCall(receiver, method, args, _) =>
         val exp = transformMethodCall(symMirr, receiver, method, args)
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
@@ -29,10 +33,6 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
             val exp = newObj[a](symMirr, aClass, args.asInstanceOf[Seq[Rep[_]]], true)(mA)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
-
-      case _: CompanionBase[_] =>
-        // ignore companion objects
-        m
 
       case lam: Lambda[a, b] =>
         val mA = createManifest(lam.x.elem).asInstanceOf[Manifest[a]]
