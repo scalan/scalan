@@ -37,11 +37,11 @@ trait Scalan
   with Thunks
   with Effects
   with Metadata
+  with ListOps
+  with ListViews
 
 trait ScalanDsl
   extends Scalan
-  with ListOps
-  with ListViews
   with ExceptionsDsl
   with AbstractStringsDsl
 
@@ -71,12 +71,12 @@ trait ScalanSeq
   with ThunksSeq
   with EffectsSeq
   with MetadataSeq
+  with ListOpsSeq
+  with ListViewsSeq
 
 trait ScalanCtxSeq
   extends ScalanDsl
   with ScalanSeq
-  with ListOpsSeq
-  with ListViewsSeq
   with ExceptionsDslSeq
   with AbstractStringsDslSeq
 
@@ -108,13 +108,13 @@ trait ScalanExp
   with ThunksExp
   with EffectsExp
   with MetadataExp
+  with ListOpsExp
+  with ListViewsExp
 
 trait ScalanCtxExp
   extends ScalanDsl
   with ScalanExp
   with Expressions
   with GraphVizExport
-  with ListOpsExp
-  with ListViewsExp
   with ExceptionsDslExp
   with AbstractStringsDslExp

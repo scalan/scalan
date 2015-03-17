@@ -46,6 +46,9 @@ trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
 
     /** Convert the sequence to an array. */
     @External def toArray: Rep[Array[A]]
+
+    /** Convert the sequence to list. */
+    @External def toList: Rep[List[A]]
   }
 
   trait SSeqCompanion extends ExCompanion1[SSeq] {

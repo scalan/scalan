@@ -17,7 +17,7 @@ trait MatricesAbs extends Scalan with Matrices {
     proxyOps[AbstractMatrix[T]](p)(TagImplicits.typeTagToClassTag[AbstractMatrix[T]])
   }
 
-  abstract class AbstractMatrixElem[T, From, To <: AbstractMatrix[T]](iso: Iso[From, To])
+  abstract class AbstractMatrixElem[T, From, To <: AbstractMatrix[T]](iso: Iso[From, To])(implicit elem: Elem[T])
     extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertAbstractMatrix(x.asRep[AbstractMatrix[T]])
     def convertAbstractMatrix(x : Rep[AbstractMatrix[T]]): Rep[To]
@@ -401,6 +401,8 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case _ => None
       }
     }
+
+    // WARNING: Cannot generate matcher for method `reduceByColumns`: Method's return type Vector[T] is not a Rep
   }
 
   object RowMajorDirectMatrixCompanionMethods {
@@ -553,7 +555,17 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
     // WARNING: Cannot generate matcher for method `transposeIndices`: Method's return type Coll[Int] is not a Rep
 
-    // WARNING: Cannot generate matcher for method `getTranspositionOfBlocks`: Method's return type PairColl[Int,Int] is not a Rep
+    object getTranspositionOfBlocks {
+      def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Coll[((Int,Int),(Int,Int))]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(blocks, _*), _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixElem[_]] && method.getName == "getTranspositionOfBlocks" =>
+          Some((receiver, blocks)).asInstanceOf[Option[(Rep[RowMajorNestedMatrix[T]], Coll[((Int,Int),(Int,Int))]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[RowMajorNestedMatrix[T]], Coll[((Int,Int),(Int,Int))]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object transpose_block_size {
       def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int]) forSome {type T}] = d match {
@@ -578,6 +590,8 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case _ => None
       }
     }
+
+    // WARNING: Cannot generate matcher for method `reduceByColumns`: Method's return type Vector[T] is not a Rep
   }
 
   object RowMajorNestedMatrixCompanionMethods {
@@ -711,6 +725,8 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case _ => None
       }
     }
+
+    // WARNING: Cannot generate matcher for method `reduceByColumns`: Method's return type Vector[T] is not a Rep
   }
 
   object RowMajorSparseMatrixCompanionMethods {
@@ -855,6 +871,8 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case _ => None
       }
     }
+
+    // WARNING: Cannot generate matcher for method `reduceByColumns`: Method's return type Vector[T] is not a Rep
 
     // WARNING: Cannot generate matcher for method `$times`: Method's return type Vector[T] is not a Rep
 

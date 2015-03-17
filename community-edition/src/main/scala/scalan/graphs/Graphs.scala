@@ -19,7 +19,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
   type IncidentMatrix = Collection[Boolean]
   type EdgeList = (Collection[Int], Collection[Int])
 
-  trait Graph[V,E] extends Reifiable[Graph[V @uncheckedVariance, E  @uncheckedVariance]]{
+  trait Graph[V,E] extends Reifiable[Graph[V, E]]{
     type Node = Rep[Vertex[V, E]]
     type EdgeType <: Edge[V, E]
     type REdge = Rep[EdgeType]
@@ -132,7 +132,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
       val res = vs.flatMap { v =>
           outNeighborsOf(v).indexes.map({ i => makeEdgeFrom(v, i)})
       }
-      res.filter { predicate(_) }.asInstanceOf[Coll[Edge[V, E]]]
+      res.filter { predicate(_) }//.asInstanceOf[Coll[Edge[V, E]]]
     }
 
     def inNeighbors(v: Rep[Int]): Coll[Int] = ???
@@ -152,7 +152,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     def defaultOf[V:Elem, E:Elem] = Default.defaultVal(AdjacencyGraph(element[Collection[V]].defaultRepValue,
                                                                       element[NestedCollection[E]].defaultRepValue,
                                                                       element[NestedCollection[Int]].defaultRepValue))
-    def fromAdjacencyList[V:Elem, E:Elem](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int]) = {
+    def fromAdjacencyList[V:Elem, E:Elem](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int]): Rep[AdjacencyGraph[V, E]] = {
       mkAdjacencyGraph(vertexValues, edgeValues, links)
     }
   }
