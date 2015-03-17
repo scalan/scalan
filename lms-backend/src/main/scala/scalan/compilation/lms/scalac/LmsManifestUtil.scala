@@ -15,7 +15,7 @@ object LmsManifestUtil {
     toManifest(aType, runtimeMirror)
   }
 
-  def toManifest[T](t: WeakTypeTag[T]): Manifest[_] = toManifest(t.tpe, t.mirror)
+  def tagToManifest[T](t: WeakTypeTag[T]): Manifest[_] = toManifest(t.tpe, t.mirror)
 
   private def toManifest[T](t: scala.reflect.runtime.universe.Type, m: scala.reflect.runtime.universe.Mirror): Manifest[_] = {
     val args = t match {
