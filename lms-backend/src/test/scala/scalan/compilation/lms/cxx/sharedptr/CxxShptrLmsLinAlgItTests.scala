@@ -2,7 +2,7 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import scalan.compilation.GraphVizExport
 import scalan.compilation.lms.CoreBridge
-import scalan.compilation.lms.cxx.{CoreCXXLmsBackend, LmsCompilerCXX}
+import scalan.compilation.lms.cxx.LmsCompilerCXX
 import scalan.it.BaseItTests
 import scalan.it.lms.ItTestsUtilLmsCxx
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}

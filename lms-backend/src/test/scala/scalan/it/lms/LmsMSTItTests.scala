@@ -1,14 +1,14 @@
 package scalan.it.lms
 
-import scalan.ScalanCommunityDslExp
+import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
+import scalan.{ScalanCommunityDslExp, ScalanCtxSeq}
 import scalan.compilation.GraphVizConfig
-import scalan.compilation.lms.cxx.{CoreCXXLmsBackend, LmsCompilerCXX}
-import scalan.util.FileUtil
-import scalan.{ScalanCtxSeq, ScalanCtxExp}
 import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
-import scalan.graphs.{GraphsDslExp, GraphsDslSeq, GraphExamples, MST_example}
+import scalan.compilation.lms.cxx.LmsCompilerCXX
+import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.graphs.{GraphExamples, GraphsDslExp, GraphsDslSeq, MST_example}
 import scalan.it.BaseItTests
+import scalan.util.FileUtil
 
 
 abstract class LmsMstItTests extends BaseItTests {
@@ -17,7 +17,7 @@ abstract class LmsMstItTests extends BaseItTests {
   }
 
   class ProgExpCXX extends MST_example with ScalanCommunityDslExp with LmsCompilerCXX with CoreBridge { self =>
-    val lms = new CoreCXXLmsBackend
+    val lms = new CoreCxxShptrLmsBackend
   }
 
   class ProgDslExp extends GraphsDslExp with GraphExamples with ScalanCommunityDslExp with CommunityLmsCompilerScala with CommunityBridge { self =>
@@ -36,7 +36,6 @@ abstract class LmsMstItTests extends BaseItTests {
 }
 
 class LmsMstPrimeItTests extends LmsMstItTests {
-  import progSeq._
   val graph = Array(
     Array(1, 8),
     Array(0, 2, 8),
