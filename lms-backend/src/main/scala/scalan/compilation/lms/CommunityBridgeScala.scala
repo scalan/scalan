@@ -14,9 +14,9 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping w
     val (exps, symMirr, funcMirr) = m
     val sym = tp.sym
     val tt: DefTransformer = {
-      case ba: scalan.parrays.impl.PArraysExp#ExpBaseArray[_] =>
-        val exp = Manifest.classType(ba.getClass) match {
-          case (mA: Manifest[a]) => lms.newObj[a]("scalan.imp.ArrayImp", Seq(symMirr(ba.arr.asInstanceOf[Exp[_]])), true)(mA)
+      case u: scalan.collections.impl.CollectionsExp#ExpBaseCollection[_] =>
+        val exp = Manifest.classType(u.getClass) match {
+          case (mA: Manifest[a]) => lms.newObj[a]("scalan.imp.ArrayImp", Seq(symMirr(u.arr.asInstanceOf[Exp[_]])), true)(mA)
         }
         (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }

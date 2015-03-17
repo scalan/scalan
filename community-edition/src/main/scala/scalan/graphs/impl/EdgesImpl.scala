@@ -5,7 +5,7 @@ import scala.annotation.unchecked.uncheckedVariance
 import scalan.common.Default
 import scalan.ScalanCommunityDsl
 import scalan.{ScalanSeq, ScalanExp, Scalan}
-import scalan.collection.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
+import scalan.collections.CollectionsDslExp
 import scala.reflect.runtime.universe._
 import scala.reflect._
 import scalan.common.Default

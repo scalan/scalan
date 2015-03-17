@@ -10,13 +10,13 @@ trait CommunityMethodMapping extends MethodMapping {
 
     import scala.reflect.runtime.universe.typeOf
 
-    val tyMatrix = typeOf[Matrices#Matrix[_]]
+    val tyMatrix = typeOf[Matrices#AbstractMatrix[_]]
 
     val scalanCE = new Library("scalan-ce.jar") {
 
-      val parraysPack = new Pack("scalan.parrays") {
-        val parraysFam = new Family('PArrays) {
-          val parray = new ClassType('PArray, 'PA, TyArg('A)) {
+      val collectionsPack = new Pack("scalan.collections") {
+        val collectionsFam = new Family('Collections) {
+          val collection = new ClassType('Collection, 'Coll, TyArg('A)) {
             val length = Method('length, tyInt)
             val arr = Method('arr, tyArray)
           }
@@ -24,14 +24,14 @@ trait CommunityMethodMapping extends MethodMapping {
       }
       val matrixPack = new Pack("scalan.linalgebra") {
         val matrixFam = new Family('Matrices) {
-          val matrix = new ClassType('Matrix, 'PA, TyArg('A)) {
+          val matrix = new ClassType('AbstractMatrix, 'PA, TyArg('A)) {
             val invert = Method('invert, tyMatrix)
           }
         }
       }
     }
 
-    val expBaseArray = new CaseClassObject(typeOf[scalan.parrays.impl.PArraysExp#ExpBaseArray[_]])
+    val expBaseCollection = new CaseClassObject(typeOf[scalan.collections.impl.CollectionsExp#ExpBaseCollection[_]])
   }
 
   new ScalaLanguage with CommunityConf {
@@ -49,7 +49,7 @@ trait CommunityMethodMapping extends MethodMapping {
       import scala.language.reflectiveCalls
 
       mutable.Map(
-        parraysPack.parraysFam.parray.length -> lms.arrayLength,
+        collectionsPack.collectionsFam.collection.length -> lms.arrayLength,
         matrixPack.matrixFam.matrix.invert -> linpackScala.invertMatr
       )
     }

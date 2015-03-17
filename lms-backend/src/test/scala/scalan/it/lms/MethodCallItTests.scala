@@ -201,7 +201,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
     self =>
 
     lazy val arrayLength = fun { v: Rep[Array[Int]] =>
-      PArray(v).length
+      Collection(v).length
     }
   }
 
@@ -212,7 +212,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 
   val replaceMethExp = new MatricesDslExp with ScalanCommunityExp with TestLmsCompiler with CommunityMethodMapping {
     lazy val arrayLength = fun { v: Rep[Array[Int]] =>
-      PArray(v).length
+      Collection(v).length
     }
 
     override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, invokeEnabler("skip_length_method") { (o, m) => !m.getName.equals("length")})
