@@ -40,7 +40,7 @@ trait CxxShptrCodegen extends CLikeCodegen {
 
   final override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
     if( !isVoidType(tpe) ) {
-        stream.println(src"${remap(tpe)} $sym = $rhs; /*emitValDef(): ${sym.toString}: ${tpe.toString} = ${rhs.toString}*/")
+        stream.println(src"${remap(tpe)} $sym = $rhs;")
     }
   }
 
@@ -68,16 +68,10 @@ trait CxxShptrCodegen extends CLikeCodegen {
   final def emitConstruct(sym: Sym[Any], args: String*): Unit = {
     val newTp = toShptrManifest(sym.tp)
     if (newTp.runtimeClass == classOf[SharedPtr[_]])
-      stream.println(s"${remap(newTp)} ${quote(sym)} = std::make_shared<${remap(newTp.typeArguments(0))}>(${args.mkString(",")}); /*emitConstruct(): ${sym.tp} ${sym}(${args.mkString(",")})*/")
+      stream.println(s"${remap(newTp)} ${quote(sym)} = std::make_shared<${remap(newTp.typeArguments(0))}>(${args.mkString(",")});")
     else
-      stream.println(s"${remap(newTp)} ${quote(sym)} = ${remap(newTp)}(${args.mkString(",")}); /*emitConstruct(): ${sym.tp} ${sym}(${args.mkString(",")})*/")
+      stream.println(s"${remap(newTp)} ${quote(sym)} = ${remap(newTp)}(${args.mkString(",")});")
   }
-//  override def wrapSharedPtr(tpe: String): String = {
-//    if(!isPrimitiveType(tpe) && !isVoidType(tpe))
-//      "std::shared_ptr<" + tpe + ">"
-//    else
-//      tpe
-//  }
 
   override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
     val resultM = manifest[A]
