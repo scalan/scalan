@@ -48,28 +48,30 @@ trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeG
 //    case ListMkString(xs) => emitValDef(sym, src"$xs.mkString")
 //    case ListMkString2(xs,s) => emitValDef(sym, src"$xs.mkString($s)")
     case ListMap(l,x,blk) =>
+      val symM = toShptrManifest(sym.tp)
       val blkres = getBlockResult(blk);
+      val blkresM = toShptrManifest(blkres.tp)
       gen"/*start: ${rhs.toString} */"
       emitConstruct(sym)
-      gen"if( !$l->empty() ) {"
-      val v = fresh(sym.tp.typeArguments(0))
+      gen"if( $l && !$l->empty() ) {"
+      val v = fresh(symM.typeArguments(0))
       gen"{"
       emitValDef(x, src"$l->front()")
       emitBlock(blk)
-      val q = fresh(sym.tp)
+      val q = fresh(symM)
       emitConstruct(q, src"$sym->push_front($blkres)")
       gen"$sym = $q;"
       gen"}"
       gen"{"
-      val cur = fresh(sym.tp)
-      val ll = fresh(sym.tp)
+      val cur = fresh(symM)
+      val ll = fresh(symM)
       emitValDef(cur, src"$sym")
       gen"for(auto it = ++($l->begin()); it != $l->end(); ++it) {"
       emitValDef(x, "*it");
       emitBlock(blk)
       emitValDef(ll, src"$cur")
       val q1 = fresh(cur.tp)
-      emitConstruct(q1, src"std::initializer_list<${remap(blkres.tp)}>{$blkres}")
+      emitConstruct(q1, src"std::initializer_list<${remap(blkresM)}>{$blkres}")
       gen"""$cur = $q1;
            |$ll->set_tail(*$cur);
            |$sym->set_len($sym->length() + 1);
