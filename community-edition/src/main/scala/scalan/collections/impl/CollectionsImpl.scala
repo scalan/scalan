@@ -19,7 +19,7 @@ trait CollectionsAbs extends Scalan with Collections {
     proxyOps[Collection[A]](p)(TagImplicits.typeTagToClassTag[Collection[A]])
   }
 
-  abstract class CollectionElem[A, From, To <: Collection[A]](iso: Iso[From, To])
+  abstract class CollectionElem[A, From, To <: Collection[A]](iso: Iso[From, To])(implicit elem: Elem[A])
     extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertCollection(x.asRep[Collection[A]])
     def convertCollection(x : Rep[Collection[A]]): Rep[To]
@@ -44,7 +44,7 @@ trait CollectionsAbs extends Scalan with Collections {
     implicit val tag = weakTypeTag[IPairCollection[A, B]]
     proxyOps[IPairCollection[A, B]](p)(TagImplicits.typeTagToClassTag[IPairCollection[A, B]])
   }
-  abstract class IPairCollectionElem[A, B, From, To <: IPairCollection[A, B]](iso: Iso[From, To])
+  abstract class IPairCollectionElem[A, B, From, To <: IPairCollection[A, B]](iso: Iso[From, To])(implicit eA: Elem[A], eB: Elem[B])
     extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertIPairCollection(x.asRep[IPairCollection[A, B]])
     def convertIPairCollection(x : Rep[IPairCollection[A, B]]): Rep[To]
@@ -55,7 +55,7 @@ trait CollectionsAbs extends Scalan with Collections {
     implicit val tag = weakTypeTag[INestedCollection[A]]
     proxyOps[INestedCollection[A]](p)(TagImplicits.typeTagToClassTag[INestedCollection[A]])
   }
-  abstract class INestedCollectionElem[A, From, To <: INestedCollection[A]](iso: Iso[From, To])
+  abstract class INestedCollectionElem[A, From, To <: INestedCollection[A]](iso: Iso[From, To])(implicit eA: Elem[A])
     extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertINestedCollection(x.asRep[INestedCollection[A]])
     def convertINestedCollection(x : Rep[INestedCollection[A]]): Rep[To]

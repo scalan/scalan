@@ -232,7 +232,7 @@ trait ScalanAst {
     def isTrait = true
     lazy val implicitArgs: SClassArgs = {
       val implicitElems = body.collect {
-        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_), Some(_)) => (name, elem)
+        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, _, Some(_)) => (name, elem)
       }
       val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map(a => {
         val optDef = implicitElems.collectFirst {
@@ -246,7 +246,7 @@ trait ScalanAst {
       })
       val missingElems = args.filter(_.isLeft)
       if (missingElems.length > 0)
-        println/*sys.error*/(s"implicit def eA: Elem[A] should be declared for all type parameters: missing ${missingElems}")
+        println/*sys.error*/(s"implicit def eA: Elem[A] should be declared for all type parameters of ${name}: missing ${missingElems}")
       SClassArgs(args.flatMap(a => a.fold(_ => Nil, List(_))))
     }
   }
