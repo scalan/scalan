@@ -81,7 +81,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     @OverloadId("2")
     def outNeighborsOf(vs: Coll[Int])(implicit o: Overloaded1): NColl[Int]
     @OverloadId("1")
-    def outEdgesOf(vs: Coll[Int], excluding: Rep[PBitSet]): Coll[Edge[V, E]] = {
+    def outEdgesOf(vs: Coll[Int], excluding: Rep[BitSet]): Coll[Edge[V, E]] = {
       def isExcluded(node: Rep[Int]) = excluding.contains(node)
       val res = outEdges(vs, { ed => !isExcluded(ed.toId)})
       res

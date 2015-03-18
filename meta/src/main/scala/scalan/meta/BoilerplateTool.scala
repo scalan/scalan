@@ -57,6 +57,7 @@ class BoilerplateTool extends StrictLogging {
       , "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
       , "scalan/collections/MultiMap.scala"
+      , "scalan/collections/BitSets.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",

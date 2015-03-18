@@ -23,17 +23,17 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
     def defaultOf = BaseFront.defaultOf
 
     def emptyBaseFront(len: Rep[Int]) = {
-      val bits = PBitSet.empty(len)
+      val bits = BitSet.empty(len)
       val set = BaseCollection(SArray.empty[Int])
       BaseFront(set, bits)
     }
     def emptyListBasedFront(len: Rep[Int]) = {
-      val bits = PBitSet.empty(len)
+      val bits = BitSet.empty(len)
       val set = ListCollection(SList.empty[Int])
       ListFront(set, bits)
     }
     def emptyCollBasedFront(len: Rep[Int]) = {
-      val bits = PBitSet.empty(len)
+      val bits = BitSet.empty(len)
       val set = ListCollection(SList.empty[Int])
       CollectionFront(set, bits)
     }
@@ -41,7 +41,7 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
       MapBasedFront(MMap.empty[Int,Unit])
     }
     def fromStartNode(start: Rep[Int], len: Rep[Int]) = {
-      val bits = PBitSet.empty(len).add(start)
+      val bits = BitSet.empty(len).add(start)
       val set = Collection.singleton(start).convertTo[BaseCollection[Int]]
       BaseFront(set, bits)
     }
@@ -52,7 +52,7 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
     }
   }
 
-  abstract class BaseFront(val set: Rep[BaseCollection[Int]], val bits: Rep[PBitSet]) extends Front {
+  abstract class BaseFront(val set: Rep[BaseCollection[Int]], val bits: Rep[BitSet]) extends Front {
     def contains(v: Rep[Int]) = bits.contains(v)
 
     def append(v: Rep[Int]) = {
@@ -65,10 +65,10 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
   }
 
   trait BaseFrontCompanion extends ConcreteClass0[Front] {
-    def defaultOf = Default.defaultVal(BaseFront(element[BaseCollection[Int]].defaultRepValue, element[PBitSet].defaultRepValue))
+    def defaultOf = Default.defaultVal(BaseFront(element[BaseCollection[Int]].defaultRepValue, element[BitSet].defaultRepValue))
   }
 
-  abstract class ListFront(val set: Rep[ListCollection[Int]], val bits: Rep[PBitSet]) extends Front {
+  abstract class ListFront(val set: Rep[ListCollection[Int]], val bits: Rep[BitSet]) extends Front {
     //def total = bits.length
 
     def contains(v: Rep[Int]) = bits.contains(v)
@@ -79,10 +79,10 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
   }
 
   trait ListFrontCompanion extends ConcreteClass0[Front] {
-    def defaultOf = Default.defaultVal(ListFront(element[ListCollection[Int]].defaultRepValue, element[PBitSet].defaultRepValue))
+    def defaultOf = Default.defaultVal(ListFront(element[ListCollection[Int]].defaultRepValue, element[BitSet].defaultRepValue))
   }
 
-  abstract class CollectionFront(val set: Rep[Collection[Int]], val bits: Rep[PBitSet]) extends Front {
+  abstract class CollectionFront(val set: Rep[Collection[Int]], val bits: Rep[BitSet]) extends Front {
     def contains(v: Rep[Int]) = bits.contains(v)
 
     def append(v: Rep[Int]) = {
@@ -93,7 +93,7 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
   trait CollectionFrontCompanion extends ConcreteClass0[Front] {
     def defaultOf = Default.defaultVal(
       CollectionFront(element[Collection[Int]].defaultRepValue,
-                      element[PBitSet].defaultRepValue))
+                      element[BitSet].defaultRepValue))
   }
 
   abstract class MapBasedFront(val mmap: Rep[MMap[Int,Unit]]) extends Front {

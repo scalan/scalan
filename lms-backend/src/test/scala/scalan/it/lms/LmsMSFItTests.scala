@@ -265,7 +265,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
   }
 
   test("fallingTest") {
-    //pending
+    pending
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
@@ -278,7 +278,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
   }
 
   test("fallingTestWithLists") {
-    //pending
+    pending
     val ctx = new TestContext(this, "fallingTestWithLists") with ProgExp
     ctx.emit("funFallingTestWithLists", ctx.funFallingTestWithLists)
   }
