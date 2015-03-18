@@ -13,18 +13,23 @@ trait CxxShptrCodegen extends CLikeCodegen {
   trait SharedPtr[T]
 
   def toShptrManifest(m: Manifest[_]): Manifest[_] = {
-    val nArgs = m.typeArguments.length
-    val newM = nArgs match {
-      case 0 => m
-      case 1 => Manifest.classType(m.runtimeClass, toShptrManifest(m.typeArguments(0)))
-      case n => Manifest.classType(m.runtimeClass, toShptrManifest(m.typeArguments(0)), m.typeArguments.drop(1).map(toShptrManifest): _*)
-    }
+    if( m.runtimeClass == classOf[SharedPtr[_]] )
+      m
+    else {
+      val nArgs = m.typeArguments.length
+      val newM = nArgs match {
+        case 0 => m
+        case 1 => Manifest.classType(m.runtimeClass, toShptrManifest(m.typeArguments(0)))
+        case n => Manifest.classType(m.runtimeClass, toShptrManifest(m.typeArguments(0)), m.typeArguments.drop(1).map(toShptrManifest): _*)
+      }
 
-    wrapSharedPtr(newM)
+      wrapSharedPtr(newM)
+    }
   }
 
   def wrapSharedPtr:PartialFunction[Manifest[_],Manifest[_]] = {
     case m if m <:< Manifest.AnyVal => m
+    case m if m.runtimeClass == classOf[SharedPtr[_]] => m
     case m if m.runtimeClass == classOf[scala.Tuple2[_, _]] => m
     case m if m.runtimeClass == classOf[Variable[_]] => m
     case m if m.runtimeClass == classOf[_=>_] => m
