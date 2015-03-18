@@ -1154,7 +1154,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
         }
 
       case lr@ListMap(list, lamSym@Def(lam: Lambda[_, _])) =>
-        (createManifest(list.elem), createManifest(lam.eB)) match {
+        (createManifest(list.elem.eItem), createManifest(lam.eB)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
           val lambdaF = mirrorLambdaToLmsFunc[a, b](m)(lam.asInstanceOf[Lambda[a, b]])
           val exp = lms.listMap[a, b](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA, mB)
@@ -1164,7 +1164,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
       case lr@ListFlatMap(list, lamSym@Def(lam: Lambda[_, _])) =>
         lam.eB match {
           case el: ArrayElem[_] =>
-            (createManifest(list.elem), createManifest(el.eItem)) match {
+            (createManifest(list.elem.eItem), createManifest(el.eItem)) match {
               case (mA: Manifest[a], mB: Manifest[b]) =>
                 val lambdaF = mirrorLambdaToLmsFunc[a, Array[b]](m)(lam.asInstanceOf[Lambda[a, Array[b]]])
                 val exp = lms.listFlatMap[a, b](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA, mB)
@@ -1173,14 +1173,14 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
         }
 
       case lr@ListLength(list) =>
-           createManifest(list.elem) match {
+           createManifest(list.elem.eItem) match {
               case (mA: Manifest[a]) =>
                 val exp = lms.listLength[a](symMirr(list).asInstanceOf[lms.Exp[List[a]]])(mA)
                 (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr )
             }
 
       case lr@ListFilter(list, lamSym @ Def(lam: Lambda[_, _])) =>
-        createManifest(list.elem) match {
+        createManifest(list.elem.eItem) match {
           case mA: Manifest[a] =>
             val lambdaF = mirrorLambdaToLmsFunc[a, Boolean](m)(lam.asInstanceOf[Lambda[a, Boolean]])
             val exp = lms.listFilter[a](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA)
