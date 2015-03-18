@@ -17,9 +17,8 @@ class CxxShptrLmsSmokeItTests extends SmokeItTests {
       arr.fold(arr, {p:Rep[(Array[Double],Double)] => p._1.update(0, p._1(0) + p._2 + 1.0)})
     }
 
-    lazy val testList = fun {in:Rep[Int] =>
-      val l = SList.replicate(3, in)
-      l.toArray
+    lazy val testList = fun {in:Rep[List[Int]] =>
+      in.map{a=>a*2}
     }
   }
 

@@ -43,33 +43,62 @@ trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeG
       emitValDef(sym, src"$xs->pop_front()")
     case ListIsEmpty(xs) =>
       emitValDef(sym, src"$xs->empty()")
-    case ListFromSeq(xs) =>
-      emitValDef(sym, src"List($xs: _*)")
-    case ListMkString(xs) => emitValDef(sym, src"$xs.mkString")
-    case ListMkString2(xs,s) => emitValDef(sym, src"$xs.mkString($s)")
+//    case ListFromSeq(xs) =>
+//      emitValDef(sym, src"List($xs: _*)")
+//    case ListMkString(xs) => emitValDef(sym, src"$xs.mkString")
+//    case ListMkString2(xs,s) => emitValDef(sym, src"$xs.mkString($s)")
     case ListMap(l,x,blk) =>
-      gen"""val $sym = $l.map { $x =>
-                                    |${nestedBlock(blk)}
-          |$blk
-          |}"""
-    case ListFlatMap(l, x, b) =>
-      gen"""val $sym = $l.flatMap { $x =>
-                                        |${nestedBlock(b)}
-          |$b
-          |}"""
-    case ListFilter(l, x, b) =>
-      gen"""val $sym = $l.filter { $x =>
-                                       |${nestedBlock(b)}
-          |$b
-          |}"""
-    case ListSortBy(l,x,blk) =>
-      gen"""val $sym = $l.sortBy { $x =>
-                                       |${nestedBlock(blk)}
-          |$blk
-          |}"""
+      val blkres = getBlockResult(blk);
+      gen"/*start: ${rhs.toString} */"
+      emitConstruct(sym)
+      gen"if( !$l->empty() ) {"
+      val v = fresh(sym.tp.typeArguments(0))
+      gen"{"
+      emitValDef(x, src"$l->front()")
+      emitBlock(blk)
+      val q = fresh(sym.tp)
+      emitConstruct(q, src"$sym->push_front($blkres)")
+      gen"$sym = $q;"
+      gen"}"
+      gen"{"
+      val cur = fresh(sym.tp)
+      val ll = fresh(sym.tp)
+      emitValDef(cur, src"$sym")
+      gen"for(auto it = ++($l->begin()); it != $l->end(); ++it) {"
+      emitValDef(x, "*it");
+      emitBlock(blk)
+      emitValDef(ll, src"$cur")
+      val q1 = fresh(cur.tp)
+      emitConstruct(q1, src"std::initializer_list<${remap(blkres.tp)}>{$blkres}")
+      gen"""$cur = $q1;
+           |$ll->set_tail(*$cur);
+           |$sym->set_len($sym->length() + 1);
+           |}"""
+      gen"}"
+      gen"}"//if( !$l->empty() )
+      gen"/*end: ${rhs.toString} */"
+
+//    case ListFlatMap(l, x, b) =>
+//      gen"""val $sym = $l.flatMap { $x =>
+//                                        |${nestedBlock(b)}
+//          |$b
+//          |}"""
+//    case ListFilter(l, x, b) =>
+//      gen"""val $sym = $l.filter { $x =>
+//                                       |${nestedBlock(b)}
+//          |$b
+//          |}"""
+//    case ListSortBy(l,x,blk) =>
+//      gen"""val $sym = $l.sortBy { $x =>
+//                                       |${nestedBlock(blk)}
+//          |$blk
+//          |}"""
     case ListToArray(l) =>
       emitConstruct(sym, src"$l->cbegin()", src"$l->cend()")
-    case ListToSeq(l) => emitValDef(sym, src"$l.toSeq")
-    case _ => super.emitNode(sym, rhs)
+
+//    case ListToSeq(l) => emitValDef(sym, src"$l.toSeq")
+
+    case _ =>
+      super.emitNode(sym, rhs)
   }
 }
