@@ -1,42 +1,18 @@
-package scalan.compilation.lms.cxx
+package scalan.compilation.lms.cxx.sharedptr
 
 import java.io.PrintWriter
 
-import scala.virtualization.lms.common._
+import scala.virtualization.lms.common.{BaseGenStruct, Record, StructExp}
 
-/**
- * Created by zotov on 12/2/14.
- */
-//TODO: there are many modifications and thinking required
-trait CXXGenStruct extends CLikeGenBase with BaseGenStruct with CXXCodegen {
+trait CxxShptrGenStruct  extends CxxShptrCodegen with BaseGenStruct {
   val IR: StructExp
   import IR._
-
-  override def traverseStm(stm: Stm): Unit = {
-    stm match {
-      case TP(sym,rhs) =>
-        rhs match {
-          case Struct(tag, elems) =>
-            sym.tp match {
-              case tup2m if tup2m.runtimeClass == classOf[Tuple2[_,_]] =>
-                moveableSyms += sym
-              case _ =>
-                ()
-            }
-          case _ =>
-            ()
-        }
-      case _ =>
-        ()
-    }
-    super.traverseStm(stm)
-  }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case Struct(tag, elems) =>
       sym.tp match {
         case tup2m if tup2m.runtimeClass == classOf[Tuple2[_,_]] =>
-          emitConstruct( sym, elems.map(e => quoteMove(e._2)).mkString(","))
+          emitConstruct( sym, elems.map(e => quote(e._2)).mkString(","))
         case _ =>
           registerStruct(structName(sym.tp), elems)
           emitValDef(sym, "new " + structName(sym.tp) + "(" + elems.map(e => quote(e._2)).mkString(",") + ")")

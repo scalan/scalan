@@ -153,6 +153,11 @@ public:
         return this->raw_array[idx];
     }
 
+    T& operator[]( size_t idx )
+    {
+        return this->raw_array[idx];
+    }
+
     const jni_array<T>& operator=( jni_array&& anArray )
     {
         //	std::cout << "jni_array<T>& operator=( jni_array&& anArray )" << std::endl;
@@ -164,7 +169,7 @@ public:
 private:
     const JNIEnv* env;
     const jni_array_t jniArray;
-    const T* raw_array;
+	T* raw_array;
 
     const int32_t sz;
 

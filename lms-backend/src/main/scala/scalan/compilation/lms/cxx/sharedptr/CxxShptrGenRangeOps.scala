@@ -1,8 +1,8 @@
-package scalan.compilation.lms.cxx
+package scalan.compilation.lms.cxx.sharedptr
 
 import scala.virtualization.lms.common.{BaseGenRangeOps, CLikeGenEffect}
 
-trait CXXGenRangeOps extends CXXCodegen with CLikeGenEffect with BaseGenRangeOps {
+trait CxxShptrGenRangeOps extends CxxShptrCodegen with CLikeGenEffect with BaseGenRangeOps {
   import IR._
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
@@ -15,7 +15,7 @@ trait CXXGenRangeOps extends CXXCodegen with CLikeGenEffect with BaseGenRangeOps
 //          |$i = $i + 1
 //          |}"""
 
-      emitConstruct(i, s"${quoteMove(start)}")
+      emitConstruct(i, s"${quote(start)}")
       gen"""while($i < $start) {
            |${nestedBlock(body)}
            |$i += 1;

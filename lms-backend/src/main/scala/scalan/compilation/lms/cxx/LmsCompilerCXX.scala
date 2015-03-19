@@ -1,11 +1,13 @@
 package scalan.compilation.lms.cxx
 
 import java.io._
+
+import scalan.JNIExtractorOpsExp
 import scalan.ScalanCommunityExp
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{LmsBridge, LmsCompiler}
 
-trait LmsCompilerCXX extends LmsCompiler { self: ScalanCommunityExp with LmsBridge =>
+trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with LmsBridge =>
 
   type CustomCompilerOutput = Unit
 

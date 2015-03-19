@@ -210,9 +210,7 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
     override def mirror(t: Transformer) = ListMap(t(xs), t(f))
   }
   case class ListFlatMap[T, R](xs: Exp[List[T]], f: Exp[T => Array[R]]) extends ListDef[R] {
-    implicit lazy val eT = withResultElem(f) { e => e match {
-      case ArrayElem(el) => el
-    } }
+    implicit lazy val eT = withResultElem(f) { e => e.asInstanceOf[ArrayElem[R]].eItem }
     override def mirror(t: Transformer) = ListFlatMap(t(xs), t(f))
   }
   case class ListReduce[T](xs: Exp[List[T]], implicit val m: RepMonoid[T]) extends Def[T] with ListMethod[T] {

@@ -1,6 +1,7 @@
 package scalan.it.smoke
 
 import scalan._
+import scalan.JNIExtractorOps
 import scalan.collection.CollExamples
 
 //import scalan.community._
