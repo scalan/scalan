@@ -1,18 +1,14 @@
-package scalan.compilation.lms.cxx
+package scalan.compilation.lms.cxx.sharedptr
 
 import scala.virtualization.lms.common._
 
-/**
- * Created by zotov on 2/5/15.
- */
-trait CXXGenIfThenElse  extends CXXCodegen with BaseGenIfThenElse with CLikeGenEffect {
+trait CxxShptrGenIfThenElse  extends CxxShptrCodegen with BaseGenIfThenElse with CLikeGenEffect {
   val IR: IfThenElseExp
   import IR._
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = {
     rhs match {
       case IfThenElse(c,a,b) =>
-        //TODO: using if-else does not work
         remap(sym.tp) match {
           case "void" =>
             stream.println("if (" + quote(c) + ") {")
@@ -25,10 +21,10 @@ trait CXXGenIfThenElse  extends CXXCodegen with BaseGenIfThenElse with CLikeGenE
               emitVarDecl(sym)
             stream.println("if (" + quote(c) + ") {")
             emitBlock(a)
-            emitAssignment(sym, quoteMove(getBlockResult(a)))
+            emitAssignment(sym, quote(getBlockResult(a)))
             stream.println("} else {")
             emitBlock(b)
-            emitAssignment(sym, quoteMove(getBlockResult(a)))
+            emitAssignment(sym, quote(getBlockResult(a)))
             stream.println("}")
         }
       /*
@@ -56,24 +52,8 @@ trait CXXGenIfThenElse  extends CXXCodegen with BaseGenIfThenElse with CLikeGenE
   }
 }
 
-trait CXXGenIfThenElseFat extends CXXGenIfThenElse with CLikeGenFat with BaseGenIfThenElseFat {
+trait CxxShptrGenIfThenElseFat extends CxxShptrGenIfThenElse with CLikeGenFat with BaseGenIfThenElseFat {
   import IR._
-
-  override def traverseStm(stm: Stm): Unit = {
-    stm match {
-      case TTP(lhs, mhs, rhs) =>
-        rhs match {
-          case SimpleFatIfThenElse(_, _, _) =>
-            for( l <- lhs ) moveableSyms += l
-          case _ =>
-            ()
-        }
-      case _ =>
-        ()
-    }
-
-    super.traverseStm(stm)
-  }
 
   override def emitFatNode(symList: List[Sym[Any]], rhs: FatDef) = rhs match {
     case SimpleFatIfThenElse(c,as,bs) =>
@@ -81,10 +61,10 @@ trait CXXGenIfThenElseFat extends CXXGenIfThenElse with CLikeGenFat with BaseGen
       symList.foreach( {sym => emitVarDecl(sym)} )
       stream.println(s"if (${quote(c)}) {")
       emitFatBlock(as)
-      (symList zip as.map(getBlockResult)).foreach( {p => emitAssignment(p._1, s"${quoteMove(p._2)}")} )
+      (symList zip as.map(getBlockResult)).foreach( {p => emitAssignment(p._1, s"${quote(p._2)}")} )
       stream.println("} else {")
       emitFatBlock(bs)
-      (symList zip bs.map(getBlockResult)).foreach( {p => emitAssignment(p._1, s"${quoteMove(p._2)}")} )
+      (symList zip bs.map(getBlockResult)).foreach( {p => emitAssignment(p._1, s"${quote(p._2)}")} )
       stream.println("}")
     case _ => super.emitFatNode(symList, rhs)
   }

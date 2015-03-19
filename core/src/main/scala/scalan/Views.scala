@@ -393,9 +393,9 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     case _ => super.rewriteDef(d)
   }
 
-  override def rewriteVar[T](v: Exp[T]) = v.elem match {
-    case UnpackableElem(iso: Iso[a, T @unchecked]) =>
-      iso.to(fresh[a](Lazy(iso.eFrom)))
-    case _ => super.rewriteVar(v)
-  }
+//  override def rewriteVar[T](v: Exp[T]) = v.elem match {
+//    case UnpackableElem(iso: Iso[a, T @unchecked]) =>
+//      iso.to(fresh[a](Lazy(iso.eFrom)))
+//    case _ => super.rewriteVar(v)
+//  }
 }

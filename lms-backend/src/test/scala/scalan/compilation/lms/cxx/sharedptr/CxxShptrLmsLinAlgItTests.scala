@@ -1,15 +1,16 @@
-package scalan.it.lms
+package scalan.compilation.lms.cxx.sharedptr
 
-import scalan.{ScalanCommunityExp, ScalanCommunityDslExp, ScalanCommunityDslSeq}
 import scalan.compilation.GraphVizExport
-import scalan.compilation.lms.{CoreBridge, CommunityBridge}
-import scalan.compilation.lms.cxx.{CoreCXXLmsBackend, LmsCompilerCXX}
+import scalan.compilation.lms.CoreBridge
+import scalan.compilation.lms.cxx.LmsCompilerCXX
 import scalan.it.BaseItTests
+import scalan.it.lms.ItTestsUtilLmsCxx
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
+import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityExp}
 
-class CXXLmsLinAlgItTests extends BaseItTests with ItTestsUtilLmsCxx {
+class CxxShptrLmsLinAlgItTests extends BaseItTests with ItTestsUtilLmsCxx {
   class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerCXX with CoreBridge with GraphVizExport { self =>
-    val lms = new CoreCXXLmsBackend
+    val lms = new CoreCxxShptrLmsBackend
   }
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunityDslSeq
   
@@ -17,12 +18,12 @@ class CXXLmsLinAlgItTests extends BaseItTests with ItTestsUtilLmsCxx {
   val progSeq = new ProgSeq
   
   def sparseVectorData(arr: Array[Double]) = (0.until(arr.length).toArray, (arr, arr.length))
+
+  implicit val compilerConfig = progStaged.defaultCompilerConfig
 }
 
-class CXXLmsMvmItTests extends CXXLmsLinAlgItTests {
+class CxxShptrLmsMvmItTests extends CxxShptrLmsLinAlgItTests {
   import progSeq._
-  import scala.Array
-  import progStaged.defaultCompilerConfig
 
   test("ddmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
@@ -135,10 +136,8 @@ class CXXLmsMvmItTests extends CXXLmsLinAlgItTests {
   }
 }
 
-class CXXLmsMmmItTests extends CXXLmsLinAlgItTests {
+class CxxShptrLmsMmmItTests extends CxxShptrLmsLinAlgItTests {
   import progSeq._
-  import scala.Array
-  import progStaged.defaultCompilerConfig
 
   test("ddmmm") {
     val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0))

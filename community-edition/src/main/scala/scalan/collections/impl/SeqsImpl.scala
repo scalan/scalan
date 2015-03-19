@@ -129,6 +129,11 @@ trait SeqsAbs extends Scalan with Seqs {
       methodCallEx[Array[A]](self,
         this.getClass.getMethod("toArray"),
         List())
+
+    def toList: Rep[List[A]] =
+      methodCallEx[List[A]](self,
+        this.getClass.getMethod("toList"),
+        List())
   }
   trait SSeqImplCompanion
   // elem for concrete class
@@ -246,6 +251,9 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
 
     override def diff(that: Rep[SSeq[A]]): Rep[SSeq[A]] =
       SSeqImpl(wrappedValueOfBaseType.diff(that))
+
+    override def toList: Rep[List[A]] =
+      wrappedValueOfBaseType.toList
   }
   lazy val SSeqImpl = new SSeqImplCompanionAbs with UserTypeSeq[SSeqImplCompanionAbs, SSeqImplCompanionAbs] {
     lazy val selfType = element[SSeqImplCompanionAbs]
@@ -424,6 +432,18 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
     object toArray {
       def unapply(d: Def[_]): Option[Rep[SSeq[A]] forSome {type A}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "toArray" =>
+          Some(receiver).asInstanceOf[Option[Rep[SSeq[A]] forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SSeq[A]] forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object toList {
+      def unapply(d: Def[_]): Option[Rep[SSeq[A]] forSome {type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SSeqElem[_, _, _]] && method.getName == "toList" =>
           Some(receiver).asInstanceOf[Option[Rep[SSeq[A]] forSome {type A}]]
         case _ => None
       }

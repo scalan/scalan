@@ -22,6 +22,8 @@ trait SegmentsAbs extends Scalan with Segments {
     def convertSegment(x : Rep[Segment]): Rep[To]
   }
 
+  abstract class SegmentIso[From,To <: Segment](implicit eFrom0: Elem[From]) extends Iso[From,To]
+
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
   implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
     lazy val tag = weakTypeTag[SegmentCompanionAbs]
@@ -47,7 +49,7 @@ trait SegmentsAbs extends Scalan with Segments {
 
   // 3) Iso for concrete class
   class IntervalIso
-    extends Iso[IntervalData, Interval] {
+    extends SegmentIso[IntervalData, Interval] {
     override def from(p: Rep[Interval]) =
       unmkInterval(p) match {
         case Some((start, end)) => Pair(start, end)
@@ -109,7 +111,7 @@ trait SegmentsAbs extends Scalan with Segments {
 
   // 3) Iso for concrete class
   class SliceIso
-    extends Iso[SliceData, Slice] {
+    extends SegmentIso[SliceData, Slice] {
     override def from(p: Rep[Slice]) =
       unmkSlice(p) match {
         case Some((start, length)) => Pair(start, length)
@@ -172,7 +174,7 @@ trait SegmentsAbs extends Scalan with Segments {
 
   // 3) Iso for concrete class
   class CenteredIso
-    extends Iso[CenteredData, Centered] {
+    extends SegmentIso[CenteredData, Centered] {
     override def from(p: Rep[Centered]) =
       unmkCentered(p) match {
         case Some((center, radius)) => Pair(center, radius)

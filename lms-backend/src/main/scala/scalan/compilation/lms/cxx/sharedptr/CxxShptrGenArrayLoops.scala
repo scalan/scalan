@@ -1,13 +1,11 @@
-package scalan.compilation.lms.cxx
+package scalan.compilation.lms.cxx.sharedptr
 
 import scala.virtualization.lms.common._
 import scala.virtualization.lms.epfl.test7.{ArrayLoopsExp, ArrayLoopsFatExp}
+import scalan.compilation.lms.common.JNILmsOpsExp
 
-/**
- * Created by zotov on 11/25/14.
- */
-trait CXXGenFatArrayLoopsFusionOpt extends CXXGenArrayLoopsFat with LoopFusionOpt {
-  val IR: ArrayLoopsFatExp with IfThenElseFatExp
+trait CxxShptrGenFatArrayLoopsFusionOpt extends CxxShptrGenArrayLoopsFat with LoopFusionOpt {
+  val IR: ArrayLoopsFatExp with IfThenElseFatExp with JNILmsOpsExp
   import IR._
 
   override def unapplySimpleIndex(e: Def[Any]) = e match {
@@ -21,6 +19,7 @@ trait CXXGenFatArrayLoopsFusionOpt extends CXXGenArrayLoopsFat with LoopFusionOp
 
   override def unapplySimpleCollect(e: Def[Any]) = e match {
     case ArrayElem(Block(a)) => Some(a) //TODO: block??
+    case JNIArrayElem(x,Block(a)) => Some(a)
     case _ => super.unapplySimpleCollect(e)
   }
 
@@ -31,12 +30,13 @@ trait CXXGenFatArrayLoopsFusionOpt extends CXXGenArrayLoopsFat with LoopFusionOp
 
   override def applyAddCondition(e: Def[Any], c: List[Exp[Boolean]]) = e match { //TODO: should c be list or not?
     case ArrayElem(a) if c.length == 1 => ArrayIfElem(c(0),a)
+    case JNIArrayElem(x,a) if c.length == 1 => JNIArrayIfElem(x,c(0),a)
     case ReduceElem(a) if c.length == 1 => ReduceIfElem(c(0),a)
     case _ => super.applyAddCondition(e,c)
   }
 }
 
-trait CXXGenArrayLoops extends CLikeGenLoops with CXXCodegen {
+trait CxxShptrGenArrayLoops extends CLikeGenLoops with CxxShptrCodegen {
   val IR: ArrayLoopsExp
   import IR._
 
@@ -58,60 +58,34 @@ trait CXXGenArrayLoops extends CLikeGenLoops with CXXCodegen {
       stream.println(quote(getBlockResult(y)))
       stream.println("}")
     case ArrayIndex(a,i) =>
-      emitValDef(sym, quote(a) + "[" + quote(i) + "]")
+      emitValDef(sym, src"(*$a)[$i]")
     case ArrayLength(a) =>
-      emitValDef(quote(sym), manifest[size_t], quote(a) + ".size()")
+      emitValDef(quote(sym), manifest[size_t], quote(a) + "->size()")
     case _ => super.emitNode(sym, rhs)
   }
 }
 
-trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
-  val IR: ArrayLoopsFatExp
+trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsFat {
+  val IR: ArrayLoopsFatExp with JNILmsOpsExp
   import IR._
-
-  override def traverseStm(stm: Stm): Unit = {
-    stm match {
-      case TTP(lhs,mhs,rhs) =>
-        rhs match {
-          case SimpleFatLoop(s, x, rhs) =>
-            for ((l, r) <- lhs zip rhs) {
-              r match {
-                case ArrayElem(_) =>
-                  moveableSyms += l
-                case ReduceElem(_) =>
-                  if(isMoveable(l))
-                    moveableSyms += l
-                case ArrayIfElem(_,_) =>
-                  moveableSyms += l
-                case ReduceIfElem(_,_) =>
-                  if(isMoveable(l))
-                    moveableSyms += l
-                case _ =>
-                  ()
-              }
-            }
-          case _ =>
-            ()
-        }
-      case _ =>
-        ()
-    }
-    super.traverseStm(stm)
-  }
 
   override def emitFatNode(sym: List[Sym[Any]], rhs1: FatDef) = rhs1 match {
     case SimpleFatLoop(s,x,rhs) =>
       stream.println(s"/*start: ${rhs1.toString}*/")
       for ((l,r) <- sym zip rhs) {
         r match {
+          case JArrayElem(x,y) =>
+          case JNIArrayElem(x,y) =>
           case ArrayElem(y) =>
-            emitConstruct(l, quoteMove(s))
+            emitConstruct(l, quote(s))
           case ReduceElem(y) =>
-            stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
+            emitConstruct(l)
+            //stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
           case ArrayIfElem(c,y) =>
             emitVarDecl(l)
           case ReduceIfElem(c,y) =>
-            stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
+            emitConstruct(l)
+            //stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
 //          case FlattenElem(y) =>
 //            stream.println("var " + quote(l) + " = new ArrayBuilder[" + remap(getBlockResult(y).tp) + "]")
         }
@@ -123,12 +97,18 @@ trait CXXGenArrayLoopsFat extends CXXGenArrayLoops with CLikeGenLoopsFat {
       emitFatBlock(syms(rhs).map(Block(_))) // TODO: check this
       for ((l,r) <- sym zip rhs) {
         r match {
+          case JArrayElem(x,y) =>
+            val q = getBlockResult(y)
+            stream.println( s"env->SetObjectArrayElement( ${quote(x)}, ${quote(ii)}, ${quote(q)}); /*JArrayElem*/" )
+          case JNIArrayElem(x,y) =>
+            val q = getBlockResult(y)
+            stream.println(src"(*$x)[$ii] = $q; /*JNIArrayElem*/")
           case ArrayElem(y) =>
-            stream.println(quote(l) + "["+quote(ii)+"] = " + quoteMove(getBlockResult(y)) + ";")
+            stream.println(src"(*$l)[$ii] = ${quote(getBlockResult(y))};")
           case ReduceElem(y) =>
             stream.println(quote(l) + " += " + quote(getBlockResult(y)) + ";")
           case ArrayIfElem(c,y) =>
-            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + ".push_back( " + quoteMove(getBlockResult(y)) + " );")
+            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + "->push_back( " + quote(getBlockResult(y)) + " );")
           case ReduceIfElem(c,y) =>
             stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + " += " + quote(getBlockResult(y)) + ";")
 //          case FlattenElem(y) =>

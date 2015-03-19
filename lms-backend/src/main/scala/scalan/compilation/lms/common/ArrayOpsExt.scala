@@ -86,8 +86,14 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
     }
 
   def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
-    xs.update(index, value)
-    xs
+    val newArr =  array_obj_new(xs.length)
+    array_copy(xs, 0, newArr, 0, xs.length)
+    newArr.update(index, value)
+    newArr
+
+//    //inplace update of immutable array...
+//    xs.update(index, value)
+//    xs
   }
 
   def arraySum[A: Manifest](xs: Exp[Array[A]])(implicit n: Numeric[A]): Exp[A] = {

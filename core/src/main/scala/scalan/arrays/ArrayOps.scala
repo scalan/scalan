@@ -71,6 +71,8 @@ trait ArrayOps { self: Scalan =>
     def count(f: Rep[T => Boolean]) = array_count(xs, f)
 
     def sumBy[S: Elem](f: Rep[T => S])(implicit n: Numeric[S]): Rep[S] = array_sum_by(xs, f)
+
+    def toList = array_toList(xs)
   }
 
   // name to avoid conflict with scala.Array
@@ -148,6 +150,7 @@ trait ArrayOps { self: Scalan =>
   def array_sum_by[T:Elem, S:Elem](xs: Arr[T], f: Rep[T => S])(implicit n: Numeric[S]): Rep[S]
 
   def array_empty[T: Elem]: Arr[T]
+  def array_toList[T:Elem](xs: Arr[T]): Lst[T]
 }
 
 trait ArrayOpsSeq extends ArrayOps {
@@ -270,7 +273,7 @@ trait ArrayOpsSeq extends ArrayOps {
   }
 
   def array_empty[T: Elem]: Arr[T] = scala.Array.empty[T]
-
+  def array_toList[T:Elem](xs: Array[T]): Lst[T] = xs.to[List]
   def arrayToClassTag[T](xs: Rep[Array[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 }
 
@@ -388,6 +391,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArrayEmpty[T]()(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayEmpty[T]()
   }
+  case class ArrayToList[T](xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
+    override def mirror(t: Transformer) = ArrayToList(t(xs))
+  }
 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val eT = xs.elem.eItem
@@ -461,6 +467,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     implicit val eT = xs.elem.eItem
     ArrayStride(xs, start, length, stride)
   }
+
+  def array_toList[T:Elem](xs: Arr[T]): Lst[T] =
+    ArrayToList(xs)
 
   override def array_empty[T: Elem]: Arr[T] = ArrayEmpty[T]()
 

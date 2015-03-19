@@ -14,13 +14,13 @@ class FrontTests extends BaseTests { suite =>
     lazy val t1 = fun { (in: Rep[(Int,(Array[Int],Array[Boolean]))]) =>
       val Pair(v, Pair(xs, bits)) = in
       val c = Collection.fromArray(xs)
-      val f = example(Pair(v, CollectionFront(c, PBitSet(bits))))
+      val f = example(Pair(v, CollectionFront(c, BitSet(bits))))
       f.set.arr
     }
     lazy val t2 = fun { (in: Rep[(Int,(List[Int],Array[Boolean]))]) =>
       val Pair(v, Pair(xs, bits)) = in
       val c = Collection.fromList(xs)
-      val f = example(Pair(v, CollectionFront(c, PBitSet(bits))))
+      val f = example(Pair(v, CollectionFront(c, BitSet(bits))))
       f.set.arr
     }
 

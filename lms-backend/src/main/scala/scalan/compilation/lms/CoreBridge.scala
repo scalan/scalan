@@ -1161,16 +1161,16 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
           (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lamSym, lambdaF)))
       }
 
-      case lr@ListFlatMap(list, lamSym@Def(lam: Lambda[_, _])) =>
-        lam.eB match {
-          case el: ArrayElem[_] =>
-            (createManifest(list.elem.eItem), createManifest(el.eItem)) match {
-              case (mA: Manifest[a], mB: Manifest[b]) =>
-                val lambdaF = mirrorLambdaToLmsFunc[a, Array[b]](m)(lam.asInstanceOf[Lambda[a, Array[b]]])
-                val exp = lms.listFlatMap[a, b](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA, mB)
-            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lamSym, lambdaF)))
-        }
-        }
+//      case lr@ListFlatMap(list, lamSym@Def(lam: Lambda[_, _])) =>
+//        lam.eB match {
+//          case el: ArrayElem[_] =>
+//            (createManifest(list.elem.eItem), createManifest(el.eItem)) match {
+//              case (mA: Manifest[a], mB: Manifest[b]) =>
+//                val lambdaF = mirrorLambdaToLmsFunc[a, Array[b]](m)(lam.asInstanceOf[Lambda[a, Array[b]]])
+//                val exp = lms.listFlatMap[a, b](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA, mB)
+//            (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr + ((lamSym, lambdaF)))
+//        }
+//        }
 
       case lr@ListLength(list) =>
            createManifest(list.elem.eItem) match {
