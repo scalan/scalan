@@ -1029,12 +1029,12 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
     }
 
     object outEdgesOf_1 {
-      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[PBitSet]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[BitSet]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vs, excluding, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outEdgesOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "1" } =>
-          Some((receiver, vs, excluding)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Rep[PBitSet]) forSome {type V; type E}]]
+          Some((receiver, vs, excluding)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Rep[BitSet]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[PBitSet]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[BitSet]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

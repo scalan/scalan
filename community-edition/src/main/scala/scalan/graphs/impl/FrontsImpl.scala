@@ -46,7 +46,7 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
   }
 
   // state representation type
-  type BaseFrontData = (BaseCollection[Int], PBitSet)
+  type BaseFrontData = (BaseCollection[Int], BitSet)
 
   // 3) Iso for concrete class
   class BaseFrontIso
@@ -56,14 +56,14 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
         case Some((set, bits)) => Pair(set, bits)
         case None => !!!
       }
-    override def to(p: Rep[(BaseCollection[Int], PBitSet)]) = {
+    override def to(p: Rep[(BaseCollection[Int], BitSet)]) = {
       val Pair(set, bits) = p
       BaseFront(set, bits)
     }
     lazy val tag = {
       weakTypeTag[BaseFront]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[BaseFront]](BaseFront(element[BaseCollection[Int]].defaultRepValue, element[PBitSet].defaultRepValue))
+    lazy val defaultRepTo = Default.defaultVal[Rep[BaseFront]](BaseFront(element[BaseCollection[Int]].defaultRepValue, element[BitSet].defaultRepValue))
     lazy val eTo = new BaseFrontElem(this)
   }
   // 4) constructor and deconstructor
@@ -71,7 +71,7 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
     override def toString = "BaseFront"
     def apply(p: Rep[BaseFrontData]): Rep[BaseFront] =
       isoBaseFront.to(p)
-    def apply(set: Rep[BaseCollection[Int]], bits: Rep[PBitSet]): Rep[BaseFront] =
+    def apply(set: Rep[BaseCollection[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
       mkBaseFront(set, bits)
     def unapply(p: Rep[BaseFront]) = unmkBaseFront(p)
   }
@@ -98,8 +98,8 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
     new BaseFrontIso
 
   // 6) smart constructor and deconstructor
-  def mkBaseFront(set: Rep[BaseCollection[Int]], bits: Rep[PBitSet]): Rep[BaseFront]
-  def unmkBaseFront(p: Rep[BaseFront]): Option[(Rep[BaseCollection[Int]], Rep[PBitSet])]
+  def mkBaseFront(set: Rep[BaseCollection[Int]], bits: Rep[BitSet]): Rep[BaseFront]
+  def unmkBaseFront(p: Rep[BaseFront]): Option[(Rep[BaseCollection[Int]], Rep[BitSet])]
 
   // elem for concrete class
   class ListFrontElem(iso: Iso[ListFrontData, ListFront])
@@ -109,7 +109,7 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
   }
 
   // state representation type
-  type ListFrontData = (ListCollection[Int], PBitSet)
+  type ListFrontData = (ListCollection[Int], BitSet)
 
   // 3) Iso for concrete class
   class ListFrontIso
@@ -119,14 +119,14 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
         case Some((set, bits)) => Pair(set, bits)
         case None => !!!
       }
-    override def to(p: Rep[(ListCollection[Int], PBitSet)]) = {
+    override def to(p: Rep[(ListCollection[Int], BitSet)]) = {
       val Pair(set, bits) = p
       ListFront(set, bits)
     }
     lazy val tag = {
       weakTypeTag[ListFront]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[ListFront]](ListFront(element[ListCollection[Int]].defaultRepValue, element[PBitSet].defaultRepValue))
+    lazy val defaultRepTo = Default.defaultVal[Rep[ListFront]](ListFront(element[ListCollection[Int]].defaultRepValue, element[BitSet].defaultRepValue))
     lazy val eTo = new ListFrontElem(this)
   }
   // 4) constructor and deconstructor
@@ -134,7 +134,7 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
     override def toString = "ListFront"
     def apply(p: Rep[ListFrontData]): Rep[ListFront] =
       isoListFront.to(p)
-    def apply(set: Rep[ListCollection[Int]], bits: Rep[PBitSet]): Rep[ListFront] =
+    def apply(set: Rep[ListCollection[Int]], bits: Rep[BitSet]): Rep[ListFront] =
       mkListFront(set, bits)
     def unapply(p: Rep[ListFront]) = unmkListFront(p)
   }
@@ -161,8 +161,8 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
     new ListFrontIso
 
   // 6) smart constructor and deconstructor
-  def mkListFront(set: Rep[ListCollection[Int]], bits: Rep[PBitSet]): Rep[ListFront]
-  def unmkListFront(p: Rep[ListFront]): Option[(Rep[ListCollection[Int]], Rep[PBitSet])]
+  def mkListFront(set: Rep[ListCollection[Int]], bits: Rep[BitSet]): Rep[ListFront]
+  def unmkListFront(p: Rep[ListFront]): Option[(Rep[ListCollection[Int]], Rep[BitSet])]
 
   // elem for concrete class
   class CollectionFrontElem(iso: Iso[CollectionFrontData, CollectionFront])
@@ -172,7 +172,7 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
   }
 
   // state representation type
-  type CollectionFrontData = (Collection[Int], PBitSet)
+  type CollectionFrontData = (Collection[Int], BitSet)
 
   // 3) Iso for concrete class
   class CollectionFrontIso
@@ -182,14 +182,14 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
         case Some((set, bits)) => Pair(set, bits)
         case None => !!!
       }
-    override def to(p: Rep[(Collection[Int], PBitSet)]) = {
+    override def to(p: Rep[(Collection[Int], BitSet)]) = {
       val Pair(set, bits) = p
       CollectionFront(set, bits)
     }
     lazy val tag = {
       weakTypeTag[CollectionFront]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionFront]](CollectionFront(element[Collection[Int]].defaultRepValue, element[PBitSet].defaultRepValue))
+    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionFront]](CollectionFront(element[Collection[Int]].defaultRepValue, element[BitSet].defaultRepValue))
     lazy val eTo = new CollectionFrontElem(this)
   }
   // 4) constructor and deconstructor
@@ -197,7 +197,7 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
     override def toString = "CollectionFront"
     def apply(p: Rep[CollectionFrontData]): Rep[CollectionFront] =
       isoCollectionFront.to(p)
-    def apply(set: Rep[Collection[Int]], bits: Rep[PBitSet]): Rep[CollectionFront] =
+    def apply(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
       mkCollectionFront(set, bits)
     def unapply(p: Rep[CollectionFront]) = unmkCollectionFront(p)
   }
@@ -224,8 +224,8 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
     new CollectionFrontIso
 
   // 6) smart constructor and deconstructor
-  def mkCollectionFront(set: Rep[Collection[Int]], bits: Rep[PBitSet]): Rep[CollectionFront]
-  def unmkCollectionFront(p: Rep[CollectionFront]): Option[(Rep[Collection[Int]], Rep[PBitSet])]
+  def mkCollectionFront(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront]
+  def unmkCollectionFront(p: Rep[CollectionFront]): Option[(Rep[Collection[Int]], Rep[BitSet])]
 
   // elem for concrete class
   class MapBasedFrontElem(iso: Iso[MapBasedFrontData, MapBasedFront])
@@ -298,7 +298,7 @@ trait FrontsSeq extends FrontsDsl with ScalanCommunityDslSeq {
   }
 
   case class SeqBaseFront
-      (override val set: Rep[BaseCollection[Int]], override val bits: Rep[PBitSet])
+      (override val set: Rep[BaseCollection[Int]], override val bits: Rep[BitSet])
 
     extends BaseFront(set, bits)
         with UserTypeSeq[Front, BaseFront] {
@@ -309,13 +309,13 @@ trait FrontsSeq extends FrontsDsl with ScalanCommunityDslSeq {
   }
 
   def mkBaseFront
-      (set: Rep[BaseCollection[Int]], bits: Rep[PBitSet]): Rep[BaseFront] =
+      (set: Rep[BaseCollection[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
       new SeqBaseFront(set, bits)
   def unmkBaseFront(p: Rep[BaseFront]) =
     Some((p.set, p.bits))
 
   case class SeqListFront
-      (override val set: Rep[ListCollection[Int]], override val bits: Rep[PBitSet])
+      (override val set: Rep[ListCollection[Int]], override val bits: Rep[BitSet])
 
     extends ListFront(set, bits)
         with UserTypeSeq[Front, ListFront] {
@@ -326,13 +326,13 @@ trait FrontsSeq extends FrontsDsl with ScalanCommunityDslSeq {
   }
 
   def mkListFront
-      (set: Rep[ListCollection[Int]], bits: Rep[PBitSet]): Rep[ListFront] =
+      (set: Rep[ListCollection[Int]], bits: Rep[BitSet]): Rep[ListFront] =
       new SeqListFront(set, bits)
   def unmkListFront(p: Rep[ListFront]) =
     Some((p.set, p.bits))
 
   case class SeqCollectionFront
-      (override val set: Rep[Collection[Int]], override val bits: Rep[PBitSet])
+      (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
 
     extends CollectionFront(set, bits)
         with UserTypeSeq[Front, CollectionFront] {
@@ -343,7 +343,7 @@ trait FrontsSeq extends FrontsDsl with ScalanCommunityDslSeq {
   }
 
   def mkCollectionFront
-      (set: Rep[Collection[Int]], bits: Rep[PBitSet]): Rep[CollectionFront] =
+      (set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
       new SeqCollectionFront(set, bits)
   def unmkCollectionFront(p: Rep[CollectionFront]) =
     Some((p.set, p.bits))
@@ -375,7 +375,7 @@ trait FrontsExp extends FrontsDsl with ScalanCommunityDslExp {
   }
 
   case class ExpBaseFront
-      (override val set: Rep[BaseCollection[Int]], override val bits: Rep[PBitSet])
+      (override val set: Rep[BaseCollection[Int]], override val bits: Rep[BitSet])
 
     extends BaseFront(set, bits) with UserTypeDef[Front, BaseFront] {
     lazy val selfType = element[BaseFront].asInstanceOf[Elem[Front]]
@@ -428,13 +428,13 @@ trait FrontsExp extends FrontsDsl with ScalanCommunityDslExp {
   }
 
   def mkBaseFront
-    (set: Rep[BaseCollection[Int]], bits: Rep[PBitSet]): Rep[BaseFront] =
+    (set: Rep[BaseCollection[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
     new ExpBaseFront(set, bits)
   def unmkBaseFront(p: Rep[BaseFront]) =
     Some((p.set, p.bits))
 
   case class ExpListFront
-      (override val set: Rep[ListCollection[Int]], override val bits: Rep[PBitSet])
+      (override val set: Rep[ListCollection[Int]], override val bits: Rep[BitSet])
 
     extends ListFront(set, bits) with UserTypeDef[Front, ListFront] {
     lazy val selfType = element[ListFront].asInstanceOf[Elem[Front]]
@@ -487,13 +487,13 @@ trait FrontsExp extends FrontsDsl with ScalanCommunityDslExp {
   }
 
   def mkListFront
-    (set: Rep[ListCollection[Int]], bits: Rep[PBitSet]): Rep[ListFront] =
+    (set: Rep[ListCollection[Int]], bits: Rep[BitSet]): Rep[ListFront] =
     new ExpListFront(set, bits)
   def unmkListFront(p: Rep[ListFront]) =
     Some((p.set, p.bits))
 
   case class ExpCollectionFront
-      (override val set: Rep[Collection[Int]], override val bits: Rep[PBitSet])
+      (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
 
     extends CollectionFront(set, bits) with UserTypeDef[Front, CollectionFront] {
     lazy val selfType = element[CollectionFront].asInstanceOf[Elem[Front]]
@@ -546,7 +546,7 @@ trait FrontsExp extends FrontsDsl with ScalanCommunityDslExp {
   }
 
   def mkCollectionFront
-    (set: Rep[Collection[Int]], bits: Rep[PBitSet]): Rep[CollectionFront] =
+    (set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
     new ExpCollectionFront(set, bits)
   def unmkCollectionFront(p: Rep[CollectionFront]) =
     Some((p.set, p.bits))

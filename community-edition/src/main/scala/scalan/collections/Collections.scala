@@ -13,6 +13,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     implicit def elem: Elem[A @uncheckedVariance]
     def length: Rep[Int]
     def arr: Rep[Array[A @uncheckedVariance]]
+    def lst: Rep[List[A @uncheckedVariance]]
     def seq: Rep[SSeq[A] @uncheckedVariance] = SSeq(arr)
     def apply(i: Rep[Int]): Rep[A]
     @OverloadId("many")
@@ -121,6 +122,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   abstract class UnitCollection(val length: Rep[Int]) extends Collection[Unit] {
     def elem = UnitElement
     def arr = SArray.replicate(length, ())
+    def lst = SList.replicate(length, ())
     def apply(i: Rep[Int]) = ()
     def map[B: Elem](f: Rep[Unit] => Rep[B]): Coll[B] = Collection(arr.map(f))
     def mapBy[B: Elem](f: Rep[Unit => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))
@@ -141,6 +143,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
   abstract class BaseCollection[A](val arr: Rep[Array[A]])(implicit val eA: Elem[A]) extends Collection[A] {
     def elem = eA
+    def lst = arr.toList
     def length = arr.length
     def apply(i: Rep[Int]) = arr(i)
     def map[B: Elem](f: Rep[A @uncheckedVariance] => Rep[B]): Coll[B] = Collection(arr.map(f))
@@ -192,6 +195,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   abstract class CollectionOnSeq[A](override val seq: Rep[SSeq[A]])(implicit val eA: Elem[A]) extends Collection[A] {
     def elem = eA
     def arr = seq.toArray
+    def lst = seq.toList
     def length = seq.size
     def apply(i: Rep[Int]) = seq(i)
     def slice(offset: Rep[Int], length: Rep[Int]) = CollectionOnSeq(seq.slice(offset, offset + length))
@@ -233,6 +237,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       }
     }
     def arr = (as.arr zip bs.arr)
+    def lst = (as.lst zip bs.lst)
     def apply(i: Rep[Int]) = (as(i), bs(i))
     def length = as.length
     def slice(offset: Rep[Int], length: Rep[Int]) =
@@ -264,6 +269,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   abstract class CollectionOfPairs[A, B](val arr: Rep[Array[(A,B)]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends IPairCollection[A,B] {
     lazy val elem = element[(A, B)]
+    def lst = arr.toList
     def as = Collection.fromArray(arr.map(_._1))
     def bs = Collection.fromArray(arr.map(_._2))
     def apply(i: Rep[Int]) = arr(i)
@@ -316,6 +322,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       val Pair(offset,length) = seg
       values.slice(offset, length)
     }
+    def lst = arr.toList
     def slice(offset: Rep[Int], length: Rep[Int]) = ???
     @OverloadId("many")
     def apply(indices: Coll[Int])(implicit o: Overloaded1): NColl[A] = {

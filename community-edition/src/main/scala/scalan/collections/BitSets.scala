@@ -1,84 +1,42 @@
 package scalan.collections
 
 /**
- * Created by afilippov on 2/18/15.
- */
-/**
  * Author: Alexander Slesarenko
  * Date: 1/26/13
  */
 import scalan._
-import scala.reflect.runtime.universe._
-import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
-import scalan.{ScalanCommunitySeq, ScalanCommunityExp, ScalanCommunity}
 
 trait BitSets  { self: ScalanCommunityDsl =>
-  trait PBitSetOps {
-    def bits: Coll[Boolean]
-    def union(that: Rep[PBitSet]) = {
+  type BS = Rep[BitSet]
+  trait BitSet extends Reifiable[BitSet] {
+    def bits: Rep[Collection[Boolean]]
+    def union(that: Rep[BitSet]) = {
       val flags = (bits zip that.bits) map { case Pair(x,y) => x || y }
-      PBitSet(flags)
+      BitSet(flags)
     }
     def length: Rep[Int] = bits.length
     def contains(n: Rep[Int]): Rep[Boolean] = bits(n)
-    def add(n: Rep[Int]): Rep[PBitSet] = PBitSet(bits.update(n, true))
-    def add(ns: Coll[Int])(implicit o: Overloaded1): Rep[PBitSet] = PBitSet(bits.updateMany(ns, Collection.replicate(ns.length, true)))
+    def add(n: Rep[Int]): Rep[BitSet] = BitSet(bits.update(n, true))
+    @OverloadId("many")
+    def add(ns: Coll[Int])(implicit o: Overloaded1): Rep[BitSet] = BitSet(bits.updateMany(ns, Collection.replicate(ns.length, true)))
   }
+  trait BitSetCompanion {
+    def apply(flags: Coll[Boolean]): Rep[BitSet] = BoolCollBitSet(flags)
+    def apply(flags: Rep[Array[Boolean]])(implicit o: Overloaded1): Rep[BitSet] =
+      BitSet(Collection.fromArray(flags))
+    def empty(range: Rep[Int]) = BitSet(Collection.replicate(range, false))
+  }
+  implicit def defaultBitSetElem: Elem[BitSet] = element[BoolCollBitSet].asElem[BitSet]
 
-  class PBitSet(val bits: Coll[Boolean]) extends PBitSetOps
-  class PBitSetIso extends Iso[Collection[Boolean], PBitSet] {
-    override def from(p: Rep[PBitSet]) = p match { case PBitSet(bits) => bits }
-    override def to(p: Coll[Boolean]) = PBitSet(p)
-    def tag = weakTypeTag[PBitSet]
-    lazy val defaultRepTo = Default.defaultVal(PBitSet(emptyColl[Boolean]))
-    lazy val eTo = new ViewElem(this) {}
+  abstract class BoolCollBitSet(val bits: Rep[Collection[Boolean]]) extends BitSet {
   }
-  object PBitSet {
-    def apply(flags: Coll[Boolean]): Rep[PBitSet]  = mkPBitSet(flags)
-    def apply(flags: Rep[Array[Boolean]])(implicit o: Overloaded1): Rep[PBitSet] =
-      mkPBitSet(Collection.fromArray(flags))
-    def unapply(p: Rep[PBitSet]) = unmkPBitSet(p)
-    def empty(range: Rep[Int]) = PBitSet(Collection.replicate(range, false))
-  }
-
-  implicit val isoPBitSet: Iso[Collection[Boolean], PBitSet]
-  implicit def repToPointProxyOps(p: Rep[PBitSet]): PBitSetOps = proxyOps[PBitSetOps](p)
-  def mkPBitSet(flags: Coll[Boolean]): Rep[PBitSet]
-  def unmkPBitSet(p: Rep[PBitSet]): Option[Coll[Boolean]]
+  trait BoolCollBitSetCompanion
 }
 
-trait BitSetsSeq extends BitSets { self: ScalanCommunityDslSeq =>
-  implicit lazy val isoPBitSet:Iso[Collection[Boolean], PBitSet] = new PBitSetIso
-  def mkPBitSet(flags: Coll[Boolean]) = new PBitSet(flags)
-  def unmkPBitSet(p: Rep[PBitSet]) = Some(p.bits)
-}
-
-trait BitSetsExp extends BitSets { self: ScalanCommunityDslExp =>
-
-  case class ExpBitSet(override val bits: Coll[Boolean])
-    extends PBitSet(bits) with Def[PBitSet] {
-    def uniqueOpId = ""
-    lazy val selfType = element[PBitSet]
-    override def mirror(t: Transformer) = ExpBitSet(t(bits))
-  }
-
-  object ExpBitSet {
-    //    addRewriteRules({
-    //      case MethodCall(Def(ExpBitSet(bits)), "bits", _) => bits
-    //    })
-  }
-  def mkPBitSet(flags: Coll[Boolean]) = ExpBitSet(flags)
-  def unmkPBitSet(p: Rep[PBitSet]) = Some(p.bits)
-
-  implicit lazy val isoPBitSet:Iso[Collection[Boolean], PBitSet] = new PBitSetIso
-}
-
-//trait BitSetsDsl extends BitSets
-
-//trait BitSetsDslSeq extends BitSetsSeq
-
-//trait BitSetsDslExp extends BitSetsExp
+trait BitSetsDsl extends impl.BitSetsAbs { self: ScalanCommunityDsl => }
+trait BitSetsDslSeq extends impl.BitSetsSeq { self: ScalanCommunityDslSeq => }
+trait BitSetsDslExp extends impl.BitSetsExp { self: ScalanCommunityDslExp => }
 
 
 
