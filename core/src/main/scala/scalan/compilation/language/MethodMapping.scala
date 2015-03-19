@@ -1,7 +1,5 @@
 package scalan.compilation.language
 
-import java.util.Objects
-
 import scala.collection.mutable
 import scala.language.postfixOps
 import scala.reflect.runtime.universe.typeOf
@@ -67,7 +65,7 @@ trait MethodMapping {
     case class ClassType(name: Symbol, synonym: Symbol, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]{
       override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[ClassType] && {
         val m = obj.asInstanceOf[ClassType]
-        Objects.equals(m.name, name) && Objects.equals(m.synonym, synonym) && Objects.equals(m.tyArgs, tyArgs) && Objects.equals(m.family, family) && Objects.equals(m.pack, pack)
+        m.name == name && m.synonym == synonym && m.tyArgs == tyArgs && m.family == family && m.pack == pack
       }
     }
 
@@ -77,7 +75,7 @@ trait MethodMapping {
     case class Method(name: Symbol, tyRes: Type, args: MethodArg*)(implicit val theType: ClassType){
       override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[Method] && {
        val m = obj.asInstanceOf[Method]
-        Objects.equals(m.name, name) && Objects.equals(m.tyRes, tyRes) && Objects.equals(m.args, args) && Objects.equals(m.theType, theType)
+        m.name == name && m.tyRes == tyRes && m.args == args && m.theType == theType
       }
     }
 
