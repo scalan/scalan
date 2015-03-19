@@ -639,6 +639,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
         case ArrayReplicate(length, _) => length
         case ArrayStride(_, _, length, _) => length
         case ArrayRangeFrom0(n) => n
+        case ArrayEmpty()  => toRep(0)
         case _ =>
           super.rewriteDef(d)
       }
