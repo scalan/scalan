@@ -27,12 +27,11 @@ trait CommunityLmsCompilerScala extends LmsCompilerScala with CommunityBridgeSca
     super.doBuildExecutable[A, B](sourcesDir, executableDir, functionName, graph, graphVizConfig)(compilerConfig, eInput, eOutput)
   }
 
-  override def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]]): lms.Exp[A] = {
+  override def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = {
     val name = mappedClassName(aClass) match {
       case Some(n) => n
       case _ => aClass.getName
     }
-    lms.newObj[A](name, args.map(v => symMirr(v.asInstanceOf[Exp[_]])))
+    lms.newObj[A](name, args.map(v => symMirr(v.asInstanceOf[Exp[_]])), newKeyWord)
   }
-
 }

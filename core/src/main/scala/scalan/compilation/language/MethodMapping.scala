@@ -62,11 +62,22 @@ trait MethodMapping {
 
     trait DomainType extends Ty
 
-    case class ClassType(name: Symbol, synonym: Symbol, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]
+    case class ClassType(name: Symbol, synonym: Symbol, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]{
+      override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[ClassType] && {
+        val m = obj.asInstanceOf[ClassType]
+        m.name == name && m.synonym == synonym && m.tyArgs == tyArgs && m.family == family && m.pack == pack
+      }
+    }
+
 
     case class MethodArg(name: Type)
 
-    case class Method(name: Symbol, tyRes: Type, args: MethodArg*)(implicit val theType: ClassType)
+    case class Method(name: Symbol, tyRes: Type, args: MethodArg*)(implicit val theType: ClassType){
+      override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[Method] && {
+       val m = obj.asInstanceOf[Method]
+        m.name == name && m.tyRes == tyRes && m.args == args && m.theType == theType
+      }
+    }
 
     trait Fun {
       val lib: Fn = null
@@ -75,14 +86,12 @@ trait MethodMapping {
     abstract class Backend[TC <: LanguageConf](language: LANGUAGE)(implicit val l: TC) {
       backends += {
         (backends.get(language), this) match {
-          case (conf: LanguageConf#Backend[_], current) =>
-            language -> new Backend(language) {
-              override type Func = current.Func
-              override val libPaths = conf.libPaths ++ current.libPaths
-              override val functionMap: Map[Method, Func] = current.functionMap //todo conf.functionMap ++ current.functionMap
-            }
-          case (_, current) => language -> current
+          case (Some(conf: LanguageConf#Backend[_]), current) =>
+            current.libPaths ++: conf.libPaths
+//            current.functionMap ++: conf.functionMap
+          case _ =>
         }
+        language -> this
       }
 
       type Func <: Fun
@@ -94,9 +103,9 @@ trait MethodMapping {
       lazy val fns = l.fns
       lazy val dependencies = l.libs.flatMap(_.dependencies)
       
-      val libPaths: Set[String]
+      val libPaths: mutable.Set[String]
 
-      val functionMap: Map[Method, Func]
+      val functionMap: mutable.Map[Method, Func]
 
       val classMap: Map[Class[_], Func] = Map.empty[Class[_], Func]
 
@@ -129,7 +138,7 @@ trait MethodMapping {
     abstract class CppBackend extends Backend(CPP) {
       type Func = CppFunc
 
-      lazy val libPaths: Set[String] = Set.empty[String]
+      lazy val libPaths: mutable.Set[String] = mutable.Set.empty[String]
     }
   }
 
@@ -143,12 +152,12 @@ trait MethodMapping {
 
     case class ScalaArg(ty: ScalaType, name: Symbol)
 
-    case class ScalaFunc(funcName: Symbol, args: ScalaArg*)(implicit override val lib: Fn) extends Fun
+    case class ScalaFunc(funcName: Symbol, args: ScalaArg*)(val wrapper : Boolean = false)(implicit override val lib: Fn) extends Fun
 
     abstract class ScalaBackend extends Backend(SCALA) {
       type Func = ScalaFunc
 
-      lazy val libPaths: Set[String] = fns filter(_.isInstanceOf[ScalaLib]) map (_.asInstanceOf[ScalaLib].jar) filter (!_.isEmpty) to
+      lazy val libPaths: mutable.Set[String] = fns filter(_.isInstanceOf[ScalaLib]) map (_.asInstanceOf[ScalaLib].jar) filter (!_.isEmpty) to
     }
   }
 }
@@ -160,7 +169,7 @@ trait CoreMethodMapping extends MethodMapping {
   new ScalaLanguage with CoreConf {
 
     val backend = new ScalaBackend {
-      val functionMap = Map.empty[Method, Func]
+      val functionMap = mutable.Map.empty[Method, Func]
     }
   }
 }
