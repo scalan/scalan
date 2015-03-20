@@ -359,6 +359,14 @@ trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSe
         val segments = positions.zip(lens)
         val flat_arr = arr.asRep[Array[Array[a]]].flatMap{i => i}.toArray.asRep[Array[a]]
         mkNestedCollection(Collection.fromArray(flat_arr), Collection.fromArray(segments)).asRep[NColl[T]]
+      case pairE: PairElem[a, b] =>
+        implicit val ct = pairE.classTag
+        //val len = arr.length
+        val lens: Arr[Int] = arr.asRep[Array[Array[(a, b)]]].map(i => i.length)
+        val positions = lens.scan(0)((x,y) => x + y).dropRight(1).toArray
+        val segments = positions.zip(lens)
+        val flat_arr = arr.asRep[Array[Array[(a, b)]]].flatMap{i => i}.toArray.asRep[Array[(a, b)]]
+        mkNestedCollection(Collection.fromArray(flat_arr), Collection.fromArray(segments)).asRep[NColl[T]]
       case e => ???(s"Element is $e")
     }
   }
