@@ -1,11 +1,13 @@
-package scalan.benchmark
+package benchmark
 
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+import benchmark.jni.NativeMethods
 import org.openjdk.jmh.annotations._
 
 import scalan.compilation.GraphVizConfig
+import scalan.compilation.lms.cxx.{CommunityCXXLmsBackend, LmsCompilerCXX}
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.{CommunityBridgeScala, CommunityLmsBackend}
 import scalan.linalgebra.LinearAlgebraExamples
@@ -13,13 +15,51 @@ import scalan.util.FileUtil
 import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq}
 
 object MvmBenchmark {
+  @State(Scope.Benchmark)
   @volatile
   class MvmStateBase {
     // all declared vars to make them volatile
-    var height = 10000
-    var width = 10000
-    var matSparse = 0.9
-    var vecSparse = 0.1
+    @Param(Array("10000"))
+    var height:Int = _
+    @Param(Array("10000"))
+    var width:Int = _
+    @Param(Array("0.9"))
+    var matSparse:Double = _
+    @Param(Array("0.1"))
+    var vecSparse:Double = _
+
+    type DVec[T] = Array[T]
+    type SVec[T] = (Array[Int], (Array[T], Int))
+    var dvec: DVec[Double] = _
+    var svec: SVec[Double] = _
+    var dmat: Array[DVec[Double]] = _
+    var smat: Array[SVec[Double]] = _
+    var fmat: (DVec[Double], Int) = _
+
+    var right: DVec[Double] = _
+    var res: DVec[Double] = Array.empty;
+
+    @Setup
+    def prepare(): Unit = {
+      val p = genRandVec(width, vecSparse)
+      dvec = p._1
+      svec = p._2
+
+      val p1 = genRandMat(height, width, matSparse)
+      dmat = p1._1
+      smat = p1._2
+
+      fmat = (dmat.flatten, width)
+
+      // calculate correct result
+      right = scala.Array.tabulate(dmat.length)(_=>0.0)
+      for(i <- 0 until dmat.length) {
+        for(j <- 0 until dmat(i).length) {
+          right(i) += dmat(i)(j) * dvec(j)
+        }
+      }
+    }
+
     var max = 10
 
     def genRandVec(len: Int, sp: Double) = {
@@ -55,10 +95,10 @@ object MvmBenchmark {
       println("")
     }
 
-
-    var (dvec, svec) = genRandVec(width, vecSparse)
-    var (dmat, smat) = genRandMat(height, width, matSparse)
-    var fmat = (dmat.flatten, width)
+    @TearDown
+    def check(): Unit = {
+      require(res.sameElements(right), "res.sameElements(right)")
+    }
 
     //printDenseVec(dvec, "Dense Vector:")
     //printSparseVec(svec, "Sparse Vector:")
@@ -145,91 +185,242 @@ object MvmBenchmark {
   class MvmStateStaged_fsmvm extends MvmStateStagedAbs {
     val fsmvm = loadMethod(ctx)(baseDir, "fsmvm", ctx.fsmvm)
   }
+
+  @State(Scope.Benchmark)
+  @volatile
+  class MvmStateCpp extends MvmStateBase {
+
+//    class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerCXX {
+//      self =>
+//      def makeBridge[A, B] = new CommunityBridge[A, B] {
+//        val scalan = self
+//        val lms = new CommunityCXXLmsBackend
+//      }
+//    }
+//
+//
+//    protected val ctx = new ProgExp
+//
+//    protected val baseDir = FileUtil.file("mvm-staged-cxx")
+//
+//    protected implicit val cfg = ctx.defaultCompilerConfig
+
+    val nm = new NativeMethods
+  }
+
 }
 
 class MvmBenchmark {
+  System.loadLibrary("jniMVM")
+
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def dmdv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.ddmvm( (state.dmat, state.dvec) )
+    val res = state.ctx.ddmvm( (state.dmat, state.dvec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def dmsv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.dsmvm( (state.dmat, state.svec) )
+    val res = state.ctx.dsmvm( (state.dmat, state.svec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def smdv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.sdmvm( (state.smat, state.dvec) )
+    val res = state.ctx.sdmvm( (state.smat, state.dvec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def smsv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.ssmvm( (state.smat, state.svec) )
+    val res = state.ctx.ssmvm( (state.smat, state.svec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def fmdv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.fdmvm( (state.fmat, state.dvec) )
+    val res = state.ctx.fdmvm( (state.fmat, state.dvec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def fmsv_seq(state: MvmBenchmark.MvmState): Array[Double] = {
-    state.ctx.fsmvm( (state.fmat, state.svec) )
+    val res = state.ctx.fsmvm( (state.fmat, state.svec) )
+    state.res = res
+    res
   }
 
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def dmdv_staged(state: MvmBenchmark.MvmStateStaged_ddmvm): Array[Double] = {
-    state.ddmvm( (state.dmat, state.dvec) )
+    val res = state.ddmvm( (state.dmat, state.dvec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def dmsv_staged(state: MvmBenchmark.MvmStateStaged_dsmvm): Array[Double] = {
-    state.dsmvm( (state.dmat, state.svec) )
+    val res = state.dsmvm( (state.dmat, state.svec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def smdv_staged(state: MvmBenchmark.MvmStateStaged_sdmvm): Array[Double] = {
-    state.sdmvm( (state.smat, state.dvec) )
+    val res = state.sdmvm( (state.smat, state.dvec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def smsv_staged(state: MvmBenchmark.MvmStateStaged_ssmvm): Array[Double] = {
-    state.ssmvm( (state.smat, state.svec) )
+    val res = state.ssmvm( (state.smat, state.svec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def fmdv_staged(state: MvmBenchmark.MvmStateStaged_fdmvm): Array[Double] = {
-    state.fdmvm( (state.fmat, state.dvec) )
+    val res = state.fdmvm( (state.fmat, state.dvec) )
+    state.res = res
+    res
   }
 
   @Benchmark
   @BenchmarkMode(Array(Mode.AverageTime))
   @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 10)
+  @Measurement(iterations = 10)
   def fmsv_staged(state: MvmBenchmark.MvmStateStaged_fsmvm): Array[Double] = {
-    state.fsmvm( (state.fmat, state.svec) )
+    val res = state.fsmvm( (state.fmat, state.svec) )
+    state.res = res
+    res
   }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
+  def dmdv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.ddmvm( (state.dmat, state.dvec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
+  def dmsv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.dsmvm( (state.dmat, state.svec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
+  def smdv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.sdmvm( (state.smat, state.dvec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
+  def smsv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.ssmvm( (state.smat, state.svec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
+  def fmdv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.fdmvm( (state.fmat, state.dvec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
+  def fmsv_cpp(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.fsmvm( (state.fmat, state.svec) )
+    state.res = res
+    res
+  }
+
+  @Benchmark
+  @BenchmarkMode(Array(Mode.AverageTime))
+  @OutputTimeUnit(TimeUnit.MILLISECONDS)
+  @Warmup(iterations = 1)
+  @Measurement(iterations = 10)
+  def smdv_cpp_manual_no_shared_ptr(state: MvmBenchmark.MvmStateCpp): Array[Double] = {
+    val res = state.nm.sdmvmManualNoSharedPtr( (state.smat, state.dvec) )
+    state.res = res
+    res
+  }
+
 }

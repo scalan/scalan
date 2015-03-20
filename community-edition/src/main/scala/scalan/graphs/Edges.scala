@@ -5,18 +5,20 @@ import scalan.collections.CollectionsDsl
 import scalan.common.Default
 import scalan.ScalanCommunityDsl
 import scalan.{ScalanSeq, ScalanExp, Scalan}
+import scalan.Owner
 
 trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
 
   /**
    * Created by afilippov on 2/16/15.
    */
-  trait Edge[V, E]  extends Reifiable[Edge[V @uncheckedVariance, E  @uncheckedVariance]]{
+  trait Edge[V, E]  extends Reifiable[Edge[V,E]]{
     implicit def eV: Elem[V]
 
     implicit def eE: Elem[E]
 
-    implicit def graph: PG[V, E] // ?
+    @Owner
+    implicit def graph: PG[V, E]
 
     //private def indexOfTarget = this.graph.edgeValues.segOffsets(fromId) + outIndex
 

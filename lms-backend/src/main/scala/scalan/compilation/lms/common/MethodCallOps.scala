@@ -2,6 +2,7 @@ package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
 import scala.virtualization.lms.common._
+import scalan.compilation.lms.scalac.LmsManifestUtil.tagToManifest
 
 trait MethodCallOps extends Base {
   import scala.reflect.runtime.universe.WeakTypeTag
@@ -69,8 +70,8 @@ trait ScalaGenMethodCallOps extends ScalaGenBase {
       }
       caller match {
         case c: Rep[_] => methodName match {
-          case c: String => stream.print(".")
-          case _ =>
+          case c: String if c.isEmpty =>
+          case _ => stream.print(".")
         }
         case _ =>
       }
@@ -80,7 +81,7 @@ trait ScalaGenMethodCallOps extends ScalaGenBase {
       }
       types.isEmpty match {
         case true =>
-        case _ => stream.print(s"[${types map(_.tpe.toString)  mkString ","}]")
+        case _ => stream.print(s"[${types map(t => remap(tagToManifest(t)))  mkString ","}]")
       }
       args.isEmpty match {
         case true =>

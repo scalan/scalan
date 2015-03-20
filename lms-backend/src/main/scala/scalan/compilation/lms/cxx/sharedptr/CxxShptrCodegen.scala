@@ -2,7 +2,8 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import java.io.PrintWriter
 
-import scala.virtualization.lms.internal.{CLikeCodegen, GenerationFailedException, Expressions, GenericCodegen}
+import scala.virtualization.lms.internal.{CLikeCodegen, Expressions, GenerationFailedException}
+import scalan.compilation.lms.common.JNILmsOps
 
 
 trait CxxShptrCodegen extends CLikeCodegen {
@@ -78,7 +79,8 @@ trait CxxShptrCodegen extends CLikeCodegen {
   }
 
   override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
-    val sA = remap(toShptrManifest(manifest[A]))
+    val resultM = manifest[A]
+    val sA = remap(toShptrManifest(resultM))
 
     //      val staticData = getFreeDataBlock(body)
 
@@ -90,13 +92,16 @@ trait CxxShptrCodegen extends CLikeCodegen {
           "#include <functional>\n" +
           "#include <algorithm>\n" +
           "#include <scalan/immutable_list.hpp>\n" +
+          "#include <jni-array-wrapper.hpp>\n" +
           "/*****************************************\n" +
           "  Emitting Generated Code                  \n" +
           "*******************************************/")
       emitFileHeader()
 
       val indargs = scala.Range(0, args.length).zip(args);
-      stream.println(s"${sA} apply_$className(${indargs.map( p => s"${remap(toShptrManifest(p._2.tp))} ${quote(p._2)}").mkString(", ")} ) {")
+      val has = indargs.map(p => p._2.tp.runtimeClass).contains(classOf[JNILmsOps#JNIType[_]]) || resultM.runtimeClass == classOf[JNILmsOps#JNIType[_]]
+      val jniEnv = if (has) "JNIEnv* env, " else ""
+      stream.println(s"${sA} apply_$className(${jniEnv}${indargs.map( p => s"${remap(toShptrManifest(p._2.tp))} ${quote(p._2)}").mkString(", ")} ) {")
 
       emitBlock(body)
       stream.println(s"return ${quote(getBlockResult(body))};")

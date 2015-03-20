@@ -18,16 +18,10 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
     val sym = tp.sym
 
     val tt: DefTransformer = {
+
       case _: CompanionBase[_] =>
         // ignore companion objects
         m
-
-      case lam: Lambda[a, b] =>
-        val mA = createManifest(lam.x.elem).asInstanceOf[Manifest[a]]
-        val mB = createManifest(lam.y.elem).asInstanceOf[Manifest[b]]
-        val f = mirrorLambdaToLmsFunc[a, b](m)(lam)
-        val fun = lms.fun(f)(mA, mB)
-        (exps :+ fun, symMirr + ((sym, fun)), funcMirr + ((sym, f)))
 
       case MethodCall(receiver, method, args, _) =>
         val exp = transformMethodCall(symMirr, receiver, method, args)
@@ -36,9 +30,16 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
       case lr@NewObject(aClass, args, _) =>
         Manifest.classType(aClass) match {
           case (mA: Manifest[a]) =>
-            val exp = newObj[a](symMirr, aClass, args.asInstanceOf[Seq[Rep[_]]])(mA)
+            val exp = newObj[a](symMirr, aClass, args.asInstanceOf[Seq[Rep[_]]], true)(mA)
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
         }
+
+      case lam: Lambda[a, b] =>
+        val mA = createManifest(lam.x.elem).asInstanceOf[Manifest[a]]
+        val mB = createManifest(lam.y.elem).asInstanceOf[Manifest[b]]
+        val f = mirrorLambdaToLmsFunc[a, b](m)(lam)
+        val fun = lms.fun(f)(mA, mB)
+        (exps :+ fun, symMirr + ((sym, fun)), funcMirr + ((sym, f)))
 
       case Apply(f, x) =>
         (createManifest(f.elem.eDom), createManifest(f.elem.eRange)) match {
@@ -1153,7 +1154,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
         }
 
       case lr@ListMap(list, lamSym@Def(lam: Lambda[_, _])) =>
-        (createManifest(list.elem), createManifest(lam.eB)) match {
+        (createManifest(list.elem.eItem), createManifest(lam.eB)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
           val lambdaF = mirrorLambdaToLmsFunc[a, b](m)(lam.asInstanceOf[Lambda[a, b]])
           val exp = lms.listMap[a, b](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA, mB)
@@ -1163,7 +1164,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
 //      case lr@ListFlatMap(list, lamSym@Def(lam: Lambda[_, _])) =>
 //        lam.eB match {
 //          case el: ArrayElem[_] =>
-//            (createManifest(list.elem), createManifest(el.eItem)) match {
+//            (createManifest(list.elem.eItem), createManifest(el.eItem)) match {
 //              case (mA: Manifest[a], mB: Manifest[b]) =>
 //                val lambdaF = mirrorLambdaToLmsFunc[a, Array[b]](m)(lam.asInstanceOf[Lambda[a, Array[b]]])
 //                val exp = lms.listFlatMap[a, b](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA, mB)
@@ -1172,14 +1173,14 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
 //        }
 
       case lr@ListLength(list) =>
-           createManifest(list.elem) match {
+           createManifest(list.elem.eItem) match {
               case (mA: Manifest[a]) =>
                 val exp = lms.listLength[a](symMirr(list).asInstanceOf[lms.Exp[List[a]]])(mA)
                 (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr )
             }
 
       case lr@ListFilter(list, lamSym @ Def(lam: Lambda[_, _])) =>
-        createManifest(list.elem) match {
+        createManifest(list.elem.eItem) match {
           case mA: Manifest[a] =>
             val lambdaF = mirrorLambdaToLmsFunc[a, Boolean](m)(lam.asInstanceOf[Lambda[a, Boolean]])
             val exp = lms.listFilter[a](symMirr(list).asInstanceOf[lms.Exp[List[a]]], lambdaF)(mA)
@@ -1253,5 +1254,5 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
   }
 
   def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] = !!!("Don't know how to transform method call")
-  def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]]): lms.Exp[A] = !!!("Don't know how to create new object")
+  def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = !!!("Don't know how to create new object")
 }

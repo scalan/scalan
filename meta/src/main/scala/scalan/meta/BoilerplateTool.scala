@@ -12,6 +12,7 @@ class BoilerplateTool extends StrictLogging {
     name = "core",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
+      "scalan/primitives/AbstractStrings.scala",
       "scalan/util/Exceptions.scala"
     ),
     baseContextTrait = "Scalan",
@@ -51,12 +52,12 @@ class BoilerplateTool extends StrictLogging {
     name = "ce",
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
-      "scalan/parrays/PArrays.scala"
-      , "scalan/collections/HashSets.scala"
+       "scalan/collections/HashSets.scala"
       , "scalan/collections/Seqs.scala"
       , "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
       , "scalan/collections/MultiMap.scala"
+      , "scalan/collections/BitSets.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
