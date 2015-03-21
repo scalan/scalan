@@ -5,9 +5,7 @@ package cxx
 package sharedptr
 
 import scala.virtualization.lms.common._
-import scalan.compilation.lms.common.{CxxShptrGenJNIExtractor, JNILmsOpsExp}
-import scalan.compilation.lms.CoreLmsBackendBase
-import scalan.compilation.lms.common.CxxShptrGenLstOps
+import scalan.compilation.lms.common.{CxxShptrGenJNIExtractor, CxxShptrGenLstOps, JNILmsOpsExp}
 
 class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>
 
@@ -22,7 +20,8 @@ class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self
   with CLikeGenOrderingOps
   with CLikeGenBooleanOps
   with CxxShptrGenFunctions
-  with CxxShptrGenArrayOps
+//  with CxxShptrGenArrayOps
+  with CxxShptrGenArrayOpsBoost
   with CxxShptrGenVariables
   with CxxShptrGenArrayBuilderOps
   with CxxShptrGenRangeOps

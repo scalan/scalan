@@ -6,6 +6,8 @@ trait CxxShptrGenFunctions extends CLikeGenEffect with BaseGenFunctions with Cxx
   val IR: FunctionsExp
   import IR._
 
+  headerFiles ++= Seq("functional")
+
   override def remap[A](m: Manifest[A]): String = {
     m.runtimeClass match {
       case c if c == classOf[(_ => _)] =>

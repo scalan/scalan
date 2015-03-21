@@ -13,6 +13,10 @@ trait CxxShptrCodegen extends CLikeCodegen {
   trait size_t
   trait SharedPtr[T]
 
+  var headerFiles: collection.mutable.HashSet[String] = collection.mutable.HashSet.empty
+
+  headerFiles ++= Seq("memory")
+
   def toShptrManifest(m: Manifest[_]): Manifest[_] = {
     if( m.runtimeClass == classOf[SharedPtr[_]] )
       m
@@ -70,6 +74,9 @@ trait CxxShptrCodegen extends CLikeCodegen {
     emitConstruct(sym)
   }
 
+  final override def emitVarDef(sym: Sym[Variable[Any]], rhs: String): Unit =
+    emitValDef(sym, rhs)
+
   final def emitConstruct(sym: Sym[Any], args: String*): Unit = {
     val newTp = toShptrManifest(sym.tp)
     if (newTp.runtimeClass == classOf[SharedPtr[_]])
@@ -85,14 +92,8 @@ trait CxxShptrCodegen extends CLikeCodegen {
     //      val staticData = getFreeDataBlock(body)
 
     withStream(out) {
+      headerFiles.map {fn => s"#include <${fn}>"} map ( stream.println _ )
       stream.println(
-          "#include <memory>\n" +
-          "#include <vector>\n" +
-          "#include <cstdlib>\n" +
-          "#include <functional>\n" +
-          "#include <algorithm>\n" +
-          "#include <scalan/immutable_list.hpp>\n" +
-          "#include <jni-array-wrapper.hpp>\n" +
           "/*****************************************\n" +
           "  Emitting Generated Code                  \n" +
           "*******************************************/")

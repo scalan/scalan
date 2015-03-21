@@ -7,6 +7,8 @@ trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeG
   val IR: ListOpsExp with LstOpsExp
   import IR._
 
+  headerFiles ++= Seq( "scalan/immutable_list.hpp" )
+
   override def remap[A](m: Manifest[A]) : String = {
     m match {
       case _ if m.runtimeClass == classOf[List[_]] =>

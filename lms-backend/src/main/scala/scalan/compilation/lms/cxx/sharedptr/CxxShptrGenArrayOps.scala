@@ -12,6 +12,8 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
   val IR: Expressions with ArrayOpsExp with ArrayLoopsExp
   import IR._
 
+  headerFiles ++= Seq("vector", "algorithm")
+
   override def remap[A](m: Manifest[A]) : String = {
     m match {
       case _ if m.runtimeClass.isArray =>
@@ -99,5 +101,29 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
     //          |}"""
     //    case ArrayToSeq(a) => emitValDef(sym, src"$a.toSeq")
     case _ => super.emitNode(sym, rhs)
+  }
+}
+
+trait CxxShptrGenArrayOpsBoost extends CxxShptrGenArrayOps {
+  val IR : Expressions with ArrayOpsExp with ArrayLoopsExp
+  import IR._
+
+  headerFiles ++= Seq("boost/container/vector.hpp")
+
+  override def remap[A](m: Manifest[A]) : String = {
+    m match {
+      case _ if m.runtimeClass.isArray =>
+        val mA = m.typeArguments(0)
+        src"boost::container::vector<${mA}>"
+      case _ =>
+        super.remap(m)
+    }
+  }
+
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case a@ArrayNew(n) =>
+      emitConstruct(sym, src"$n", "boost::container::default_init")
+    case _ =>
+      super.emitNode(sym, rhs)
   }
 }
