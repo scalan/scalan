@@ -1,3 +1,6 @@
+#ifndef __SCALAN_IMMUTABLE_LIST_HPP__
+#define __SCALAN_IMMUTABLE_LIST_HPP__
+
 #include <memory>
 #include <type_traits>
 #include <boost/iterator/iterator_facade.hpp>
@@ -155,3 +158,5 @@ namespace scalan
         }
     };
 } //namespace scalan
+
+#endif //__SCALAN_IMMUTABLE_LIST_HPP__
