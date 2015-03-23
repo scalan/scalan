@@ -8,7 +8,7 @@ import scalan.util.FileUtil._
 
 trait SbtCompiler { self:LmsCompilerScala =>
 
-  case class SbtConfig(mainPack: Option[String] = None, extraClasses : Seq[String] = Seq.empty[String], mainClassSimpleName: String = "run", commands: Seq[String] = Seq("clean", "compile"))
+  case class SbtConfig(mainPack: Option[String] = None, extraClasses : Seq[String] = Seq.empty[String], resources : Seq[String] = Seq.empty[String], mainClassSimpleName: String = "run", commands: Seq[String] = Seq("clean", "compile"))
   val lib = "lib"
 
   def sbtCompile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: CompilerConfig, sourceFile : File, jarPath : String): Unit = {
@@ -20,16 +20,34 @@ trait SbtCompiler { self:LmsCompilerScala =>
     listFiles(libsDir, ExtensionFilter("jar")).foreach(f =>  copyToDir(f, executableLibsDir))
     compilerConfig.sbt.mainPack match {
       case Some(mainPack) =>
-        val mainClass = mainPack + "." + compilerConfig.sbt.mainClassSimpleName
         val jar = s"$functionName.jar"
         val src = file(executableDir, "src", "main", "scala")
+        val resources = file(executableDir, "src", "main", "resources")
         val f = file(src, mainPack.replaceAll("\\.", separator), s"$functionName.scala")
         move(sourceFile, f)
         addHeader(f, s"package $mainPack")
-        for (c <- mainClass +: compilerConfig.sbt.extraClasses) {
-          val scalaFile = c.replaceAll("\\.", separator) + ".scala"
+        def scalaSource(className: String) = className.replaceAll("\\.", separator)  + ".scala"
+
+        val mainClass = scalaSource(mainPack + "." + compilerConfig.sbt.mainClassSimpleName)
+        val mainDest = file(src, mainClass)
+        try {
+          copyFromClassPath(mainClass, mainDest)
+        } catch {
+          case _: NullPointerException =>
+            write(mainDest,
+              s"""package $mainPack
+                  |object ${compilerConfig.sbt.mainClassSimpleName} {
+                  | def main(args: Array[String]): Unit = {
+                  |  println("Main function isn't implemented for program '$functionName'")
+                  | }
+                  |}
+          """.stripMargin)
+        }
+        for (c <- compilerConfig.sbt.extraClasses) {
+          val scalaFile = scalaSource(c)
           copyFromClassPath(scalaFile, file(src, scalaFile))
         }
+        for (c <- compilerConfig.sbt.resources) copyFromClassPath(c, file(resources, c))
 
         write(file(sourcesDir, "build.sbt"),
           s"""name := "$functionName"
@@ -38,6 +56,8 @@ trait SbtCompiler { self:LmsCompilerScala =>
               |assemblyJarName in assembly := "$jar"
               |mainClass in assembly := Some("$mainClass")
               |version := "1"
+              |artifactPath in Compile in packageBin := file("$jarPath")
+              |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
               |assemblyMergeStrategy in assembly := {
               |  case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
               |  case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
