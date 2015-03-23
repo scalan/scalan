@@ -3,6 +3,7 @@ package staged
 
 import scala.language.reflectiveCalls
 import scalan.compilation.Passes
+import scalan.primitives._
 
 class RewritingTests extends BaseTests {
 
@@ -42,6 +43,28 @@ class RewritingTests extends BaseTests {
     }
   }
 
+  trait SpecializationsExp extends ScalanExp with AbstractStringsDsl with AbstractStringsDslExp {
+
+    lazy val fooSpec = fun { s: Rep[AString] => s.wrappedValueOfBaseType }
+
+    override def concreteImplementations[T](e: Elem[T]): Seq[Elem[_]] = Seq(element[CString], element[SString])
+//      e match {
+//      case _: AStringElem[f, t] => Seq(element[CString], element[SString])
+//      case _: BaseElem[Int] => Seq(element[CString], element[SString])
+//      case _ => Seq(element[CString], element[SString])
+//    }
+
+  }
+
+  val ps = new TestContext(this, "Specializations") with SpecializationsExp {
+
+    def testSpecs(): Unit = {
+      emit("fooSpec", fooSpec)
+      val ss = specializations(fooSpec)
+      assert(ss.nonEmpty)
+    }
+  }
+
   trait Prog extends ScalanExp {
     lazy val ifFold = fun { pp: Rep[Boolean] =>
       val e1 = toLeftSum[Double, Int](1d)
@@ -78,6 +101,8 @@ class RewritingTests extends BaseTests {
   }
 
   test("root Lambda")(p0.testMkRight)
+
+  test("specializations")(ps.testSpecs)
 
   test("SumFold(IfThenElse(p, t, e)) -> IfThenElse(p, SumFold, SumFold)")(p.testIfFold)
   test("SumFold(IfThenElse(p, IfThenElse, e) -> IfThenElse(p, IfThenElse(p, SumFold, SumFold), SumFold)")(p.testIfIfFold)

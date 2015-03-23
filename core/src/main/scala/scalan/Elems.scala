@@ -5,7 +5,6 @@ import Default._
 import scalan.common.Lazy
 import scalan.staged.BaseExp
 import annotation.implicitNotFound
-import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
 import scalan.util.StringUtil

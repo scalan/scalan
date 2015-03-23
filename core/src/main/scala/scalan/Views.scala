@@ -1,7 +1,6 @@
 package scalan
 
 import scalan.common.Default
-import scala.language.higherKinds
 import scalan.common.Lazy
 import scala.reflect.runtime.universe._
 import scalan.staged.BaseExp
@@ -225,8 +224,33 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
   def shouldUnpack(e: ViewElem[_, _]) = unpackTesters.exists(_(e))
 
+  /**
+   *  Terrible hack to get the concrete implementations for given abstract type,
+   *  this should be implemented by meta in the future
+   */
+  private var elemImpls: Map[Elem[_], Seq[Elem[_]]] = Map.empty.withDefaultValue(Seq())
+  def addImpls[A](k: Elem[A], v: Seq[Elem[_]]): Unit =
+    elemImpls = elemImpls.updated(k, v)
+  def addAllImpls(xs: Seq[Elem[_]]): Unit =
+    elemImpls = elemImpls.withDefaultValue(xs)
+  def concreteImplementations[T](e: Elem[T]): Seq[Elem[_]] = elemImpls(e)
+
   trait UserTypeDef[T, TImpl <: T] extends ReifiableExp[T, TImpl] {
     def uniqueOpId = selfType.name
+  }
+
+  object AllViews {
+    def unapplySeq[T](s: Exp[T]): Option[Seq[Iso[_, T]]] = unapplyAllViews(s)
+  }
+
+  def unapplyAllViews[T](s: Exp[T]): Option[Seq[Iso[_, T]]] = {
+    val es = concreteImplementations(s.elem)
+    val iss = es collect {
+      case UnpackableElem(iso: Iso[_, T @unchecked]) => iso
+    }
+    println(s"iss=$iss")
+    // cast is redundant, it fixes compilation in 2.10
+    if (iss.isEmpty) None else Some(iss.asInstanceOf[Seq[Iso[_, T]]])
   }
 
   object HasViews {
@@ -406,7 +430,25 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
             }
         }
       }
+
+//    case λ @ Lambda(f: Lambda[x, y], _, AllViews(iss @ _*), _) =>
+//      val specs = specializations(λ)
+//      setMetadata(λ, MetaKey[Seq[Exp[_]]]("specializations"))(specs)
+
     case _ => super.rewriteDef(d)
+  }
+
+  private[scalan] def specializations[A](d: Exp[A]): Seq[Exp[_]] = d match {
+    case Def(Lambda(f: Lambda[x, y], _, AllViews(iss @ _*), _)) =>
+      iss map {
+        case iso: Iso[a, x] =>
+          implicit val eF = iso.eFrom
+          implicit val eT = iso.eTo
+          fun { i: Rep[a] => mirrorApply(f, iso.to(i)) }
+      }
+
+    case _ =>
+      Seq()
   }
 
 //  override def rewriteVar[T](v: Exp[T]) = v.elem match {
