@@ -252,6 +252,8 @@ trait CxxShptrGenJNIExtractor extends CxxShptrCodegen with JNIExtractorOpsCxxGen
   val IR: JNILmsOpsExp
   import IR._
 
+  headerFiles ++= Seq("jni-array-wrapper.hpp")
+
   override def toShptrManifest(m: Manifest[_]): Manifest[_] = {
     m.runtimeClass match {
       case c if c == classOf[JNIType[_]] => m

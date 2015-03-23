@@ -77,15 +77,13 @@ trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsF
           case JArrayElem(x,y) =>
           case JNIArrayElem(x,y) =>
           case ArrayElem(y) =>
-            emitConstruct(l, quote(s))
+            emitNode(l, ArrayNew(s))
           case ReduceElem(y) =>
-            emitConstruct(l)
-            //stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
+            emitNode(l, NewVar(Const(0.0)))
           case ArrayIfElem(c,y) =>
-            emitVarDecl(l)
+            emitNode(l, ArrayNew(Const(0)))
           case ReduceIfElem(c,y) =>
-            emitConstruct(l)
-            //stream.println(s"${remap(l.tp)} ${quote(l)} = ${remap(getBlockResult(y).tp)}();")
+            emitNode(l, NewVar(Const(0.0)))
 //          case FlattenElem(y) =>
 //            stream.println("var " + quote(l) + " = new ArrayBuilder[" + remap(getBlockResult(y).tp) + "]")
         }
