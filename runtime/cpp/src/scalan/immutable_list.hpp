@@ -50,12 +50,14 @@ namespace scalan
 
     public:
         typedef T value_type;
+        typedef T& reference;
+        typedef const T& const_reference;
         typedef detail::immutable_list_iterator_base<node_t,T> iterator;
         typedef detail::immutable_list_iterator_base<typename std::add_const<node_t>::type, typename std::add_const<T>::type> const_iterator;
 
         immutable_list() : len(0) {}
 
-        immutable_list(const T& aV, const immutable_list<T>& aTail): len(aTail.len + 1), h(std::make_shared<node_t>(aV, aTail.h)) {}
+        immutable_list(const_reference aV, const immutable_list<T>& aTail): len(aTail.len + 1), h(std::make_shared<node_t>(aV, aTail.h)) {}
 
         immutable_list(const immutable_list<T>& aFirst, const immutable_list<T>& aSecond) {
             auto l = loop( ++aFirst.begin(), aFirst.end(), aSecond );
@@ -70,7 +72,7 @@ namespace scalan
             this->h = std::make_shared<node_t>(*args.begin(), l.h);
         }
 
-        immutable_list(size_t aLen, const T& aV)
+        immutable_list(size_t aLen, const_reference aV)
         {
             auto l = immutable_list();
             for( size_t i = 1; i < aLen; ++i )
@@ -87,9 +89,10 @@ namespace scalan
             return !this->h; // implicit conversion via shared_ptr::operator bool()
         }
 
-        T& front() const { return this->h->val; }
+        reference front() { return this->h->val; }
+        const_reference front() const { return this->h->val; }
 
-        immutable_list<T> push_front(T aV) const
+        immutable_list<T> push_front(const_reference aV) const
         {
             return immutable_list(aV, *this);
         }
@@ -120,6 +123,17 @@ namespace scalan
         }
 
         size_t length() const { return this->len; }
+
+        void set_tail( immutable_list& aTail )
+        {
+            const_cast<shared_ptr<node_t>&>(this->h->next) = aTail.h;
+            this->len += aTail.len;
+        }
+
+        void set_len(size_t aLen)
+        {
+            this->len = aLen;
+        }
 
     private:
         size_t len;
