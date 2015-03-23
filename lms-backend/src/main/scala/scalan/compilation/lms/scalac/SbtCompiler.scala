@@ -54,7 +54,7 @@ trait SbtCompiler { self:LmsCompilerScala =>
               |scalaVersion := "$scalaVersion"
               |${methodReplaceConf.dependencies.map(d => s"libraryDependencies += $d").mkString("\n")}
               |assemblyJarName in assembly := "$jar"
-              |mainClass in assembly := Some("$mainClass")
+              |mainClass in assembly := Some("${mainPack + "." + compilerConfig.sbt.mainClassSimpleName}")
               |version := "1"
               |artifactPath in Compile in packageBin := file("$jarPath")
               |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})

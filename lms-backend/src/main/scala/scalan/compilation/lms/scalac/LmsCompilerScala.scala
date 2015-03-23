@@ -76,7 +76,7 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
     // ensure Scala library is available
-    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), classOf[_ => _].getClassLoader)
+    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), self.getClass.getClassLoader)
     val cls = classLoader.loadClass(
       compilerOutput.custom.mainClass match {
         case Some(mainClass) => mainClass
