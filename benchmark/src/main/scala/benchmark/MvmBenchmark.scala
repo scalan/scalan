@@ -7,7 +7,6 @@ import benchmark.jni.NativeMethods
 import org.openjdk.jmh.annotations._
 
 import scalan.compilation.GraphVizConfig
-import scalan.compilation.lms.cxx.{CommunityCXXLmsBackend, LmsCompilerCXX}
 import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.compilation.lms.{CommunityBridgeScala, CommunityLmsBackend}
 import scalan.linalgebra.LinearAlgebraExamples
