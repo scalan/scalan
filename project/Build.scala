@@ -84,7 +84,7 @@ object ScalanBuild extends Build {
     .settings(
       libraryDependencies ++= Seq(
         "com.chuusai" % "shapeless" % "2.0.0" cross CrossVersion.binaryMapped {
-          case "2.10" => scalaVersion.value
+          case "2.10" => "2.10.4"
           case v => v
         },
         "cglib" % "cglib" % "3.1",
