@@ -48,7 +48,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def *(mat: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]] = ???
 
-    def euclideanNorm(implicit num: Numeric[T]): Rep[T]
+    def euclideanNorm(implicit num: Numeric[T]): Rep[Double]
 
     def reduce(implicit m: RepMonoid[T]): Rep[T]
     def dot(other: Vector[T])(implicit n: Numeric[T]): Rep[T]
@@ -71,10 +71,14 @@ trait Vectors { self: ScalanCommunityDsl =>
     def apply(i: Rep[Int]): Rep[T] = items(i)
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      matchVec[T, AbstractVector[T]](other) {
+      matchVector[T, AbstractVector[T]](other) {
         dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 + v2 })
       } { // TODO: I don't like constructing sv.items in this method, permuteReduce is preferrable
-        sv => DenseVector((items zip sv.items).map { case Pair(v1, v2) => v1 + v2 })
+        //sv => DenseVector((items zip sv.items).map { case Pair(v1, v2) => v1 + v2 })
+        sv =>
+          val nonZeroValuesNew = (sv.nonZeroValues zip items(sv.nonZeroIndices)).map { case Pair(v1, v2) => v1 + v2 }
+          val coll = items.updateMany(nonZeroIndices, nonZeroValuesNew)
+          DenseVector(coll)
       }
     }
     @OverloadId("elementwise_sum_value")
@@ -83,10 +87,14 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
 
     def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      matchVec[T, AbstractVector[T]](other) {
+      matchVector[T, AbstractVector[T]](other) {
         dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 - v2 })
       } { // TODO: I don't like constructing sv.items in this method
-        sv => DenseVector((items zip sv.items).map { case Pair(v1, v2) => v1 - v2 })
+        //sv => DenseVector((items zip sv.items).map { case Pair(v1, v2) => v1 - v2 })
+        sv =>
+          val nonZeroValuesNew = (items(sv.nonZeroIndices) zip sv.nonZeroValues).map { case Pair(v1, v2) => v1 - v2 }
+          val coll = items.updateMany(nonZeroIndices, nonZeroValuesNew)
+          DenseVector(coll)
       }
     }
     @OverloadId("elementwise_diff_collection")
@@ -95,7 +103,7 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
 
     def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      matchVec[T, AbstractVector[T]](other) {
+      matchVector[T, AbstractVector[T]](other) {
         dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 * v2 })
       } {
         sv => SparseVector(sv.nonZeroIndices, sv.nonZeroItems.map { case Pair(i, y) => items(i) * y }, sv.length)
@@ -120,7 +128,7 @@ trait Vectors { self: ScalanCommunityDsl =>
       }
     }*/
 
-    def euclideanNorm(implicit num: Numeric[T]): Rep[T] = Math.sqrt(items.map(v => v * v).reduce.asRep[Double]).asRep[T]
+    def euclideanNorm(implicit num: Numeric[T]): Rep[Double] = Math.sqrt(items.map(v => v * v).reduce.asRep[Double])
   }
 
   abstract class SparseVector[T](val nonZeroIndices: Rep[Collection[Int]],
@@ -135,8 +143,12 @@ trait Vectors { self: ScalanCommunityDsl =>
     def apply(i: Rep[Int]): Rep[T] = ??? // TODO: need efficient way to get value by index
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      matchVec[T, AbstractVector[T]](other) { // TODO: I don't like constructing items in this method
-        dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 + v2 })
+      matchVector[T, AbstractVector[T]](other) { // TODO: I don't like constructing items in this method
+        //dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 + v2 })
+        dv => dv +^ this
+          /*val nonZeroValuesNew = (nonZeroValues zip dv.items(nonZeroIndices)).map { case Pair(v1, v2) => v1 + v2 }
+          val coll = dv.items.updateMany(nonZeroIndices, nonZeroValuesNew)
+          DenseVector(coll)*/
       } {
         sv => ??? // TODO: need outerJoin of Collections
       }
@@ -148,8 +160,12 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
 
     def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      matchVec[T, AbstractVector[T]](other) { // TODO: I don't like constructing items in this method
-        dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 + v2 })
+      matchVector[T, AbstractVector[T]](other) { // TODO: I don't like constructing items in this method
+        //dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 + v2 })
+        dv =>
+          val nonZeroValuesNew = (nonZeroValues zip dv.items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
+          val coll = dv.items.updateMany(nonZeroIndices, nonZeroValuesNew)
+          DenseVector(coll)
       } {
         sv => ??? // TODO: need outerJoin of Collections
       }
@@ -160,7 +176,7 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
 
     def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      matchVec[T, AbstractVector[T]](other) {
+      matchVector[T, AbstractVector[T]](other) {
         dv => SparseVector(nonZeroIndices, nonZeroItems.map { case Pair(i, y) => dv.items(i) * y }, length)
       } {
         sv => SparseVector(innerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues), length)
@@ -175,7 +191,7 @@ trait Vectors { self: ScalanCommunityDsl =>
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)  //TODO: it's inefficient
 
     def dot(other: Rep[AbstractVector[T]])(implicit n: Numeric[T]): Rep[T] = {
-      matchVec[T, T](other) {
+      matchVector[T, T](other) {
         dv => nonZeroItems.map { case Pair(i, y) => dv.items(i) * y }.reduce
       } {
         // TODO implemets innerJoin and uncomment
@@ -185,7 +201,7 @@ trait Vectors { self: ScalanCommunityDsl =>
       }
     }
 
-    def euclideanNorm(implicit num: Numeric[T]): Rep[T] = Math.sqrt(nonZeroValues.map(v => v * v).reduce.asRep[Double]).asRep[T]
+    def euclideanNorm(implicit num: Numeric[T]): Rep[Double] = Math.sqrt(nonZeroValues.map(v => v * v).reduce.asRep[Double])
   }
 
   implicit def eVec[T: Elem]: Elem[AbstractVector[T]] = element[DenseVector[T]].asElem[AbstractVector[T]]
@@ -223,7 +239,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
 trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
 
-  def matchVec[T, R](vec: Vector[T])(dense: Rep[DenseVector[T]] => Rep[R])
+  def matchVector[T, R](vector: Vector[T])(dense: Rep[DenseVector[T]] => Rep[R])
                                  (sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R]
 
   def dotSparse[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
@@ -243,9 +259,9 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
 
 trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
 
-  def matchVec[T, R](vec: Vector[T])(dense: Rep[DenseVector[T]] => Rep[R])
-                      (sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R] = {
-    vec match {
+  def matchVector[T, R](vector: Vector[T])(dense: Rep[DenseVector[T]] => Rep[R])
+                                          (sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R] = {
+    vector match {
       case dv: DenseVector[_] => dense(dv)
       case sv: SparseVector[_] => sparse(sv)
     }
@@ -414,11 +430,11 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
 
 trait VectorsDslExp extends impl.VectorsExp { self: ScalanCommunityDslExp =>
 
-  def matchVec[T, R](vec: Vector[T])(dense: Rep[DenseVector[T]] => Rep[R])
-                      (sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R] = {
-    vec.elem.asInstanceOf[Elem[_]] match {
-      case _: DenseVectorElem[_] => dense(vec.asRep[DenseVector[T]])
-      case _: SparseVectorElem[_] => sparse(vec.asRep[SparseVector[T]])
+  def matchVector[T, R](vector: Vector[T])(dense: Rep[DenseVector[T]] => Rep[R])
+                                          (sparse: Rep[SparseVector[T]] => Rep[R]): Rep[R] = {
+    vector.elem.asInstanceOf[Elem[_]] match {
+      case _: DenseVectorElem[_] => dense(vector.asRep[DenseVector[T]])
+      case _: SparseVectorElem[_] => sparse(vector.asRep[SparseVector[T]])
     }
   }
 
