@@ -200,7 +200,12 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     /*def reduceByRows(implicit m: RepMonoid[T]): Vector[T] = {
       DenseVector(rows.map(row => row.reduce))
     }*/
-    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = ???
+    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
+      val coll = Collection.indexRange(numColumns).map { column =>
+        Collection.indexRange(numRows).map { row => rows(row)(column) }.reduce
+      }
+      DenseVector(coll)
+    }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
       val items = rows.map(v => v.nonZeroValues).flatMap(v => v)
@@ -210,18 +215,17 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
   trait AbstractMatrixCompanion extends TypeFamily1[AbstractMatrix] {
 
-    def defaultOf[T: Elem]: Default[Rep[AbstractMatrix[T]]] =
-      RowMajorNestedMatrix.defaultOf[T]
-    def fromColumns[T: Elem](cols: Rep[Collection[AbstractVector[T]]]): Rep[AbstractMatrix[T]] =
+    def defaultOf[T: Elem]: Default[Rep[AbstractMatrix[T]]] = RowMajorNestedMatrix.defaultOf[T]
+    def fromColumns[T: Elem](cols: Rep[Collection[AbstractVector[T]]]): Rep[AbstractMatrix[T]] = {
       RowMajorNestedMatrix.fromColumns(cols)
-    //@OverloadId("applyCollection")
-    //def apply[T](items: Coll[T], numColumns: Rep[Int])(implicit elem: Elem[T], o: Overloaded1): Matrix[T] = RowMajorNestedMatrix(items, numColumns)
-    //@OverloadId("applyNestedCollection")
-    def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])(implicit elem: Elem[T], o: Overloaded2): Matrix[T] =
+    }
+    def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
+                    (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = {
       RowMajorSparseMatrix(items.map { coll =>
         val collPair = coll.convertTo[PairCollection[Int, T]]
         SparseVector(collPair.as, collPair.bs, numColumns)
       }, numColumns)
+    }
   }
 
   trait RowMajorDirectMatrixCompanion extends ConcreteClass1[RowMajorDirectMatrix] with AbstractMatrixCompanion {
@@ -241,6 +245,9 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
         columnsArr(i % numColumns)(i /! numColumns)
       }
       RowMajorNestedMatrix(rmValues, numColumns)
+    }
+    def fromRows[T: Elem](rows: Coll[AbstractVector[T]]): Matrix[T] = {
+      RowMajorNestedMatrix(rows.flatMap(v => v.convertTo[DenseVector[T]].items), rows(0).length)
     }
   }
 
