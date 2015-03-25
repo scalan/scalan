@@ -4,7 +4,7 @@ import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
 import scalan.{ScalanCommunityDslExp, ScalanCtxSeq}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms._
-import scalan.compilation.lms.cxx.LmsCompilerCXX
+import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.graphs.{GraphExamples, GraphsDslExp, GraphsDslSeq, MST_example}
 import scalan.it.BaseItTests
@@ -16,7 +16,7 @@ abstract class LmsMstItTests extends BaseItTests {
     val lms = new CommunityLmsBackend
   }
 
-  class ProgExpCXX extends MST_example with ScalanCommunityDslExp with LmsCompilerCXX with CoreBridge { self =>
+  class ProgExpCxx extends MST_example with ScalanCommunityDslExp with LmsCompilerCxx with CoreBridge { self =>
     val lms = new CoreCxxShptrLmsBackend
   }
 
@@ -27,7 +27,7 @@ abstract class LmsMstItTests extends BaseItTests {
   class ProgSeq extends MST_example with ScalanCtxSeq
 
   val progStaged = new ProgExp
-  val progStagedCXX = new ProgExpCXX
+  val progStagedCxx = new ProgExpCxx
   val progSeq = new ProgSeq
   val progDslStaged = new ProgDslExp
   val progDslSeq = new ProgDslSeq
@@ -75,7 +75,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val res = progSeq.MST_adjlist(input)
     compareOutputWithSequential(progStaged)(progSeq.MST_adjlist, progStaged.MST_adjlist, "MST_adjList", input)
     val dir = FileUtil.file(prefix, "MST_adjList")
-    progStagedCXX.buildExecutable(dir,dir,"MST_adjList", progStagedCXX.MST_adjlist, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
+    progStagedCxx.buildExecutable(dir,dir,"MST_adjList", progStagedCxx.MST_adjlist, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
   test("MSF_adjList") {
@@ -88,7 +88,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val res = progSeq.MSF_adjlist(input)
     //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST_adjList", input)
     val dir = FileUtil.file(prefix, "MSF_adjlist")
-    progStagedCXX.buildExecutable(dir,dir,"MSF_adjlist", progStagedCXX.MSF_adjlist, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
+    progStagedCxx.buildExecutable(dir,dir,"MSF_adjlist", progStagedCxx.MSF_adjlist, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
 
@@ -105,7 +105,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val res = progSeq.MST_adjmatrix(input)
     compareOutputWithSequential(progStaged)(progSeq.MST_adjmatrix, progStaged.MST_adjmatrix, "MST_adjMatrix", input)
     val dir = FileUtil.file(prefix, "MST_adjMatrix")
-    progStagedCXX.buildExecutable(dir,dir,"MST_adjMatrix", progStagedCXX.MST_adjmatrix, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
+    progStagedCxx.buildExecutable(dir,dir,"MST_adjMatrix", progStagedCxx.MST_adjmatrix, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
   test("MSF_adjMatrix") {
@@ -121,7 +121,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val res = progSeq.MSF_adjmatrix(input)
     //compareOutputWithSequential(progStaged)(progSeq.MST, progStaged.MST, "MST_adjMatrix", input)
     val dir = FileUtil.file(prefix, "MSF_adjmatrix")
-    progStagedCXX.buildExecutable(dir,dir,"MSF_adjmatrix", progStagedCXX.MSF_adjmatrix, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
+    progStagedCxx.buildExecutable(dir,dir,"MSF_adjmatrix", progStagedCxx.MSF_adjmatrix, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
 
@@ -136,7 +136,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val resStaged = getStagedOutputConfig(progStaged)(progStaged.MSF_adjlistMap, "MSF_adjlistMap", input, progStaged.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
 //    val dir = FileUtil.file(prefix, "MSF_adjlistMap")
-//    progStagedCXX.buildExecutable(dir,dir,"MSF_adjlistMap", progStagedCXX.MSF_adjlistMap, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
+//    progStagedCxx.buildExecutable(dir,dir,"MSF_adjlistMap", progStagedCxx.MSF_adjlistMap, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
   }
 
   test("MSF_adjMatrixMap") {
@@ -166,7 +166,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val resStaged = getStagedOutputConfig(progStaged)(progStaged.MST_adjlistMap, "MST_adjlistMap", input, progStaged.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
 //    val dir = FileUtil.file(prefix, "MST_adjlistMap")
-//    progStagedCXX.buildExecutable(dir,dir,"MST_adjlistMap", progStagedCXX.MST_adjlistMap, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
+//    progStagedCxx.buildExecutable(dir,dir,"MST_adjlistMap", progStagedCxx.MST_adjlistMap, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
   }
   test("MST_adjMatrixMap") {
     pending
@@ -197,7 +197,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val resStaged = getStagedOutputConfig(progStaged)(progStaged.MSF_adjlistList, "MSF_adjlistList", input, progStaged.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
     val dir = FileUtil.file(prefix, "MSF_adjlistList")
-    progStagedCXX.buildExecutable(dir,dir,"MSF_adjlistList", progStagedCXX.MSF_adjlistList, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
+    progStagedCxx.buildExecutable(dir,dir,"MSF_adjlistList", progStagedCxx.MSF_adjlistList, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
   }
 
   test("MSF_adjMatrixList") {
@@ -216,7 +216,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val resStaged = getStagedOutputConfig(progStaged)(progStaged.MSF_adjmatrixList, "MSF_adjmatrixList", input, progStaged.defaultCompilerConfig)
     println("Staged: " + resStaged.mkString(","))
     val dir = FileUtil.file(prefix, "MSF_adjmatrixList")
-    progStagedCXX.buildExecutable(dir,dir,"MSF_adjmatrixList", progStagedCXX.MSF_adjmatrixList, GraphVizConfig.default)(progStagedCXX.defaultCompilerConfig)
+    progStagedCxx.buildExecutable(dir,dir,"MSF_adjmatrixList", progStagedCxx.MSF_adjmatrixList, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
   }
 
   test("MST_adjMatrixList") {

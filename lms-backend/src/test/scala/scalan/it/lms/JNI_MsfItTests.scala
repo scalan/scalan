@@ -5,14 +5,14 @@ import java.io.File
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.compilation.lms.JNIBridge
-import scalan.compilation.lms.cxx.LmsCompilerCXX
+import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.graphs.GraphsDslExp
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
 class JNI_MsfItTests extends LmsMsfItTests {
-  trait ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCXX with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
+  trait ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCxx with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
     val lms = new CoreCxxShptrLmsBackend
 
     lazy val MSF_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
