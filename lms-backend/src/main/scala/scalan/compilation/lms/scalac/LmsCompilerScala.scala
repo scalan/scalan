@@ -18,7 +18,7 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
    *
    * Otherwise uses SBT to compile with the desired version
    */
-  case class CustomCompilerOutput(jar: URL, mainClass: Option[String] = None)
+  case class CustomCompilerOutput(jar: URL, mainClass: Option[String] = None, output: Option[BufferedReader] = None)
   case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String])
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
@@ -37,8 +37,7 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
       case Some(mainPack) => Some(mainPack + "." +  functionName)
       case _ =>  None
     }
-
-    compilerConfig.scalaVersion match {
+    val output: Option[BufferedReader] = compilerConfig.scalaVersion match {
       case Some(scalaVersion) => sbtCompile(sourcesDir, executableDir, functionName, compilerConfig, sourceFile, jarPath)
       case None =>
         val settings = new Settings
@@ -70,8 +69,9 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
           case 0 => //println(s"class $functionName compiled with ${reporter.WARNING.count} warnings")
           case _ => throw new Exception(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings, see ${logFile.getAbsolutePath} for details")
         }
+        None
     }
-    CustomCompilerOutput(jarFile.toURI.toURL, mainClass)
+    CustomCompilerOutput(jarFile.toURI.toURL, mainClass, output)
   }
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {

@@ -1,6 +1,6 @@
 package scalan.compilation.lms.scalac
 
-import java.io.File
+import java.io.{BufferedReader, File}
 import java.io.File.separator
 
 import scalan.util.{StringUtil, ProcessUtil, ExtensionFilter, FileUtil}
@@ -8,10 +8,10 @@ import scalan.util.FileUtil._
 
 trait SbtCompiler { self:LmsCompilerScala =>
 
-  case class SbtConfig(mainPack: Option[String] = None, extraClasses : Seq[String] = Seq.empty[String], resources : Seq[String] = Seq.empty[String], mainClassSimpleName: String = "run", commands: Seq[String] = Seq("clean", "compile"))
+  case class SbtConfig(mainPack: Option[String] = None, extraClasses : Seq[String] = Seq.empty[String], resources : Seq[String] = Seq.empty[String], mainClassSimpleName: String = "run", commands: Seq[String] = Seq("clean", "compile"), toSystemOut: Boolean = true)
   val lib = "lib"
 
-  def sbtCompile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: CompilerConfig, sourceFile : File, jarPath : String): Unit = {
+  def sbtCompile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: CompilerConfig, sourceFile : File, jarPath : String): Option[BufferedReader] = {
     val scalaVersion = compilerConfig.scalaVersion.get
     val buildSbtFile = new File(sourcesDir, "build.sbt")
     val libsDir = file(currentWorkingDir, lib)
@@ -75,13 +75,15 @@ trait SbtCompiler { self:LmsCompilerScala =>
 
         write(file(sourcesDir, "project", "build.properties"), "sbt.version=0.13.7")
 
-        compilerConfig.sbt.commands.foreach(com => ProcessUtil.launch(sourcesDir, "sbt", com))
+        compilerConfig.sbt.commands.dropRight(1).foreach(com => ProcessUtil.launch(sourcesDir, true, "sbt", com))
+        val br: Option[BufferedReader] = ProcessUtil.launch(sourcesDir, compilerConfig.sbt.toSystemOut, "sbt", compilerConfig.sbt.commands.last)
 
         val jarFile = file(executableDir, "target", s"scala-${scalaVersion.substring(0, scalaVersion.lastIndexOf("."))}", jar)
         jarFile.exists() match {
           case true => move(jarFile, file(executableDir, jar))
           case false =>
         }
+        br
 
       case _ =>
         write(buildSbtFile,
@@ -94,7 +96,7 @@ trait SbtCompiler { self:LmsCompilerScala =>
               |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
               |""".stripMargin)
         val command = Seq("sbt", "package")
-        ProcessUtil.launch(sourcesDir, command: _*)
+        ProcessUtil.launch(sourcesDir, true, command: _*)
     }
   }
 }
