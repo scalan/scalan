@@ -2,7 +2,6 @@ package scalan.it.smoke
 
 import scalan._
 import scalan.JNIExtractorOps
-import scalan.collection.CollExamples
 
 //import scalan.community._
 import scalan.collections._
@@ -12,7 +11,7 @@ import scalan.collections._
  */
 abstract class CommunitySmokeItTests extends SmokeItTests {
 
-  trait ProgCommunity extends Prog with ScalanCommunity with CollExamples with ScalanCommunityDsl  {
+  trait ProgCommunity extends Prog with ScalanCommunity with CollectionExamples with ScalanCommunityDsl  {
 
     lazy val simpleConst = fun { x: Coll[Int] =>
       Collection.singleton(1)
@@ -32,6 +31,9 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
     lazy val arrayReplicate = fun {in:Rep[(Int,Double)] =>
       SArray.replicate(in._1, in._2)
     }
+
+    lazy val emptyNestedUnitArray = fun {_ : Rep[Int] => array_empty[Array[Unit]]}
+
 
     lazy val reuseTest = fun { len: Rep[Int] =>
       val matrix: Rep[Array[Array[Int]]] = SArray.tabulate[Array[Int]](len) { n => SArray.tabulate[Int](n) { i => i}}
