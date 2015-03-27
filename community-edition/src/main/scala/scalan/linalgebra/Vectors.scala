@@ -213,7 +213,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
   trait DenseVectorCompanion extends ConcreteClass1[AbstractVector] {
     def defaultOf[T: Elem] = DenseVector.defaultOf[T]
-    def zero[T: Elem](len: Rep[Int]) = {
+    def zero[T: Elem](len: Rep[Int]): Vector[T] = {
       val zeroV = element[T].defaultRepValue
       DenseVector(Collection.replicate(len, zeroV))
     }
