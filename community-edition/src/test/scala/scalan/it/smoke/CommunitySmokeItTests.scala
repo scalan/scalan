@@ -2,7 +2,6 @@ package scalan.it.smoke
 
 import scalan._
 import scalan.JNIExtractorOps
-import scalan.collection.CollExamples
 
 //import scalan.community._
 import scalan.collections._
@@ -12,7 +11,7 @@ import scalan.collections._
  */
 abstract class CommunitySmokeItTests extends SmokeItTests {
 
-  trait ProgCommunity extends Prog with ScalanCommunity with CollExamples with ScalanCommunityDsl  {
+  trait ProgCommunity extends Prog with ScalanCommunity with CollectionExamples with ScalanCommunityDsl  {
 
     lazy val simpleConst = fun { x: Coll[Int] =>
       Collection.singleton(1)

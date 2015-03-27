@@ -1,9 +1,9 @@
-package scalan.collection
+package scalan.collections
 
+import scalan.ScalanCommunityDsl
 import scalan.primitives.PrimitiveExamples
-import scalan.{ScalanCommunityDsl, ScalanDsl}
 
-trait CollExamples extends ScalanDsl with PrimitiveExamples { self: ScalanCommunityDsl =>
+trait CollectionExamples extends ScalanCommunityDsl with PrimitiveExamples {
   lazy val fromArray = fun { xs: Arr[Int] => Collection(xs) }
   lazy val fromArrayOfPairs = fun { xs: Arr[(Int,Float)] => Collection(xs) }
   lazy val fromAndTo = fun { xs: Arr[(Int,Float)] =>
@@ -25,7 +25,7 @@ trait CollExamples extends ScalanDsl with PrimitiveExamples { self: ScalanCommun
   lazy val mapCollections = fun { xs: Coll[Int] => xs.mapBy(inc) }
   //lazy val mapScalarNested = fun {(xs: NA[Int]) => xs.mapBy(mapScalar) }
 
-  //lazy val filterScalar = fun {(xs: PA[Int]) => xs.filter(x => x > 0) }
+  //lazy val filterScalar = fun {(xs: Coll[Int]) => xs.filter(x => x > 0) }
   //lazy val filterScalarNested = fun {(xss: NA[Int]) => xss.mapBy(filterScalar) }
 
   lazy val expBaseCollectionsInIf = fun { xs: Arr[Int] =>
@@ -34,6 +34,14 @@ trait CollExamples extends ScalanDsl with PrimitiveExamples { self: ScalanCommun
     val res = IF (xs.length > 10) THEN { ys } ELSE { zs }
     res
   }
+
+  lazy val expListCollectionsInIf = fun { xs: Lst[Int] =>
+    val ys = ListCollection(xs)
+    val zs = ListCollection(xs.map { x => x + 1 })
+    val res = IF (xs.length > 10) THEN { ys } ELSE { zs }
+    res
+  }
+
   lazy val expBaseCollectionsInIfSpec = fun { xs: Arr[Int] =>
     expBaseCollectionsInIf(xs).arr
   }
@@ -72,7 +80,7 @@ trait CollExamples extends ScalanDsl with PrimitiveExamples { self: ScalanCommun
       }
       res
     },
-    ys => PairCollection(BaseCollection(ys), BaseCollection(ys)))
+      ys => PairCollection(BaseCollection(ys), BaseCollection(ys)))
   }
   lazy val sumFoldSpec = fun { in: Rep[Array[(Int,Int)] | Array[Int]] =>
     sumFold(in).arr
@@ -97,6 +105,22 @@ trait CollExamples extends ScalanDsl with PrimitiveExamples { self: ScalanCommun
   lazy val nestedPairInIfSpec = fun { xs: Arr[Int] =>
     val res = nestedPairInIf(xs)
     (res._1.arr, res._2.arr)
+  }
+
+  lazy val nestedListPairInIf = fun { in: Lst[Int] =>
+    val xs: Coll[Int] = ListCollection(in)
+    val ys = xs.map { x => x + 1 }
+    val res = IF (xs.length > 10) THEN { Pair(Pair(xs, ys), xs) } ELSE { Pair(Pair(xs,xs),ys) }
+    Pair(res._1._2, res._2)
+  }
+  lazy val nestedListPairInIfSpec = fun { xs: Lst[Int] =>
+    val res = nestedListPairInIf(xs)
+    (res._1.arr, res._2.arr)
+  }
+
+  lazy val listCollectionPairZipWith = fun { in: Lst[Int] =>
+    val xs: Coll[Int] = Collection.fromList(in)
+    (xs zip xs).map(x => x._1 + x._2).arr
   }
 
 }

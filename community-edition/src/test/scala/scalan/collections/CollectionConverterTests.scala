@@ -1,4 +1,4 @@
-package scalan.collection
+package scalan.collections
 
 import scala.language.reflectiveCalls
 import scalan._
