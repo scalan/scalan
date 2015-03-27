@@ -9,7 +9,8 @@ import scalan.ScalanCommunityDsl
 trait Math { self: ScalanCommunityDsl =>
 
   def transposeNested[T: Elem: Numeric](m: Matrix[T], blockSize: Rep[Int]): Matrix[T] = {
-    ???
+    m // TODO: faked because we need to implement everything
+      // for default element Of AbstractMatrix that is RowMajorNestedMatrix
   }
 //  def transposeDirect[T](m: Matrix[T]): Matrix[T] = {
 //    val nestedItems = m.rows//.map { row => row.nonZeroItems }

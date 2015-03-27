@@ -71,9 +71,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = apply(row)(column)
 
     def transpose(implicit n: Numeric[T]): Matrix[T] = ???
-    /*def reduceByRows(implicit m: RepMonoid[T]): Vector[T] = {
-      DenseVector(rows.map(row => row.reduce))
-    }*/
+
     def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
       val coll = Collection.indexRange(numColumns).map { column =>
         Collection.indexRange(numRows).map { row => rows(row)(column) }.reduce
