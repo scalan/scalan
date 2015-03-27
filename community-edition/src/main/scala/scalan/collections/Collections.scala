@@ -300,8 +300,8 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     implicit def eA: Elem[A]
     def values: Rep[Collection[A]]
     def segments: Rep[Collection[(Int, Int)]]
-    def segOffsets = segments.asRep[IPairCollection[Int,Int]].as
-    def segLens = segments.asRep[IPairCollection[Int,Int]].bs
+    def segOffsets = convertPairColl(segments).as
+    def segLens = convertPairColl(segments).bs
   }
   //type NColl[A] = Rep[NestedCollection[A]]
   type NColl[A] = Rep[INestedCollection[A]]
