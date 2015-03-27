@@ -225,7 +225,7 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
       val nonZeroItems: Rep[IPairCollection[Int, T]] =
-        cnvrtPairColl((Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero })
+        convertPairColl((Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero })
       SparseVector(nonZeroItems, items.length)
     }
     @OverloadId("SparseVectorCompanion_apply_nonZeroItems")

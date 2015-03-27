@@ -225,7 +225,8 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def bs: Rep[Collection[B]]
   }
 
-  implicit def cnvrtPairColl[A:Elem,B:Elem](x: Coll[(A,B)]) = x.asRep[IPairCollection[A, B]]
+  implicit def convertPairColl[A:Elem,B:Elem](x: Coll[(A,B)]): Rep[IPairCollection[A, B]] = x.asRep[IPairCollection[A, B]]
+  implicit def eIPairColl[A: Elem, B:Elem]: Elem[IPairCollection[A,B]] = element[PairCollection[A,B]].asElem[IPairCollection[A,B]]
 
   abstract class PairCollection[A, B](val as: Rep[Collection[A]], val bs: Rep[Collection[B]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends IPairCollection[A, B] {
@@ -303,8 +304,9 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def segLens = segments.asRep[IPairCollection[Int,Int]].bs
   }
   //type NColl[A] = Rep[NestedCollection[A]]
-  //type NCollection[A] = Collection[Collection[A]]
-  type NColl[A] = Rep[NestedCollection[A]]
+  type NColl[A] = Rep[INestedCollection[A]]
+  implicit def convertNestedColl[A:Elem](x: Coll[Collection[A]]): Rep[INestedCollection[A]] = x.asRep[INestedCollection[A]]
+  implicit def eINestedColl[A: Elem]: Elem[INestedCollection[A]] = element[NestedCollection[A]].asElem[INestedCollection[A]]
 
   // TODO rename back to FlatNestedCollection after unification with Scalan
   abstract class NestedCollection[A](val values: Coll[A], val segments: Coll[(Int, Int)])(implicit val eA: Elem[A])
@@ -356,7 +358,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl => }
 
 trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSeq =>
-  def fromJuggedArray[T: Elem](arr: Rep[Array[Array[T]]]): NColl[T] = {
+  def fromJuggedArray[T: Elem](arr: Rep[Array[Array[T]]]): Rep[NestedCollection[T]] = {
     element[T] match {
       case baseE: BaseElem[a] =>
         implicit val ct = baseE.classTag
@@ -365,7 +367,7 @@ trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSe
         val positions = lens.scan(0)((x,y) => x + y).dropRight(1).toArray
         val segments = positions.zip(lens)
         val flat_arr = arr.asRep[Array[Array[a]]].flatMap{i => i}.toArray.asRep[Array[a]]
-        mkNestedCollection(Collection.fromArray(flat_arr), Collection.fromArray(segments)).asRep[NColl[T]]
+        mkNestedCollection(Collection.fromArray(flat_arr), Collection.fromArray(segments)).asRep[NestedCollection[T]]
       case pairE: PairElem[a, b] =>
         implicit val ct = pairE.classTag
         //val len = arr.length
@@ -373,7 +375,7 @@ trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSe
         val positions = lens.scan(0)((x,y) => x + y).dropRight(1).toArray
         val segments = positions.zip(lens)
         val flat_arr = arr.asRep[Array[Array[(a, b)]]].flatMap{i => i}.toArray.asRep[Array[(a, b)]]
-        mkNestedCollection(Collection.fromArray(flat_arr), Collection.fromArray(segments)).asRep[NColl[T]]
+        mkNestedCollection(Collection.fromArray(flat_arr), Collection.fromArray(segments)).asRep[NestedCollection[T]]
       case e => ???(s"Element is $e")
     }
   }
