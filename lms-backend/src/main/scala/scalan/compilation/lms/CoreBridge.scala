@@ -168,8 +168,9 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
               case StringToDouble() => lms.stringToDouble(arg1_.asInstanceOf[lms.Exp[String]])
               case _ =>
                 op.opName match {
-                  case "Sin" => lms.Sin(arg1_.asInstanceOf[lms.Exp[Double]])
+                  case "Exp" => lms.Exp(arg1_.asInstanceOf[lms.Exp[Double]])
                   case "ToDouble" => lms.intToDouble(arg1_.asInstanceOf[lms.Exp[Int]])
+                  case "Sin" => lms.Sin(arg1_.asInstanceOf[lms.Exp[Double]])
             }
             }
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
