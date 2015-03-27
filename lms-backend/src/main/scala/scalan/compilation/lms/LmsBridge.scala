@@ -1,5 +1,6 @@
 package scalan.compilation.lms
 
+import scala.reflect.ClassTag
 import scalan.ScalanCtxExp
 import scalan.compilation.lms.scalac.LmsManifestUtil
 import LmsManifestUtil._
@@ -70,10 +71,15 @@ trait LmsBridge { self: ScalanCtxExp =>
     case el: FuncElem[_, _] =>
       Manifest.classType(classOf[_ => _], createManifest(el.eDom), createManifest(el.eRange))
     case el: ArrayElem[_] =>
-      Manifest.arrayType(createManifest(el.eItem))
+      // see Scala bug https://issues.scala-lang.org/browse/SI-8183 (won't fix)
+      val m = el.eItem match {
+        case UnitElement => manifest[scala.runtime.BoxedUnit]
+        case _ => createManifest(el.eItem)
+      }
+      Manifest.arrayType(m)
     case el: ArrayBufferElem[_] =>
       Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
-    case el: ListElem[_] ⇒
+    case el: ListElem[_] =>
       Manifest.classType(classOf[List[_]], createManifest(el.eItem))
     case el: MMapElem[_,_] =>
       Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))

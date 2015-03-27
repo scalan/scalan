@@ -33,6 +33,9 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       SArray.replicate(in._1, in._2)
     }
 
+    lazy val emptyNestedUnitArray = fun {_ : Rep[Int] => array_empty[Array[Unit]]}
+
+
     lazy val reuseTest = fun { len: Rep[Int] =>
       val matrix: Rep[Array[Array[Int]]] = SArray.tabulate[Array[Int]](len) { n => SArray.tabulate[Int](n) { i => i}}
       matrix.map(row => row.reduce) zip matrix.map(row => row.reduce * 2)
