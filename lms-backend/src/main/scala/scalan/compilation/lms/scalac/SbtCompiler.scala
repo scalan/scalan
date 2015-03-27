@@ -52,7 +52,7 @@ trait SbtCompiler { self:LmsCompilerScala =>
         write(file(sourcesDir, "build.sbt"),
           s"""name := "$functionName"
               |scalaVersion := "$scalaVersion"
-              |${methodReplaceConf.dependencies.map(d => s"libraryDependencies += $d").mkString("\n")}
+              |${methodReplaceConf.flatMap(conf => conf.dependencies).map(d => s"libraryDependencies += $d").mkString("\n")}
               |assemblyJarName in assembly := "$jar"
               |mainClass in assembly := Some("${mainPack + "." + compilerConfig.sbt.mainClassSimpleName}")
               |version := "1"

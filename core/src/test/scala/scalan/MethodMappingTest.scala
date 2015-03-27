@@ -64,14 +64,14 @@ class MethodMappingTest extends BaseTests {
   }
 
   test("Scala Method") {
-    val m = TestMethodMapping.methodReplaceConf.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMapping#ScalaLanguage#ScalaFunc]
+    val m = TestMethodMapping.methodReplaceConf.head.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMapping#ScalaLanguage#ScalaFunc]
     "arrayLength" should equal(m.funcName.name)
     m.args.size should equal(0)
   }
 
   test("C++ Method") {
     implicit def defaultLanguage: LANGUAGE = CPP
-    val m = TestMethodMapping.methodReplaceConf.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMapping#CppLanguage#CppFunc]
+    val m = TestMethodMapping.methodReplaceConf.head.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMapping#CppLanguage#CppFunc]
     "invertMatrix" should equal(m.funcName)
     m.args.size should equal(2)
   }

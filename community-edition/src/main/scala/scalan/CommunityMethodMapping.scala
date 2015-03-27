@@ -12,7 +12,7 @@ trait CommunityMethodMapping extends MethodMapping {
 
     val tyMatrix = typeOf[Matrices#AbstractMatrix[_]]
 
-    val scalanCE = new Library("scalan-ce.jar") {
+    val scalanCE = new Library(/*"scalan-ce.jar"*/) {
 
       val collectionsPack = new Pack("scalan.collections") {
         val collectionsFam = new Family('Collections) {
@@ -36,7 +36,7 @@ trait CommunityMethodMapping extends MethodMapping {
 
   new ScalaLanguage with CommunityConf {
 
-    val linpackScala = new ScalaLib("linpack.jar", "org.linpack") {
+    val linpackScala = new ScalaLib(/*"linpack.jar",*/ pack = "org.linpack") {
       val invertMatr = ScalaFunc('invertMatrixDouble, ScalaArg(ScalaType('lapack_matr), 'm), ScalaArg(ScalaType('T1), 'V1))()
     }
 
@@ -48,9 +48,9 @@ trait CommunityMethodMapping extends MethodMapping {
       import scalanCE._
       import scala.language.reflectiveCalls
 
-      mutable.Map(
-        collectionsPack.collectionsFam.collection.length -> lms.arrayLength,
-        matrixPack.matrixFam.matrix.invert -> linpackScala.invertMatr
+      mutable.Map[Method, ScalaFunc](
+//        collectionsPack.collectionsFam.collection.length -> lms.arrayLength,
+//        matrixPack.matrixFam.matrix.invert -> linpackScala.invertMatr
       )
     }
 

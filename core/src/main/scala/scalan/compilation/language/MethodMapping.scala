@@ -15,9 +15,9 @@ trait MethodMapping {
 
   import LanguageId._
 
-  val backends: mutable.HashMap[LANGUAGE, LanguageConf#Backend[_]] = new mutable.HashMap()
+  val backends: mutable.HashMap[LANGUAGE, mutable.Set[LanguageConf#Backend[_]]] = new mutable.HashMap()
 
-  def methodReplaceConf(implicit language: LANGUAGE): LanguageConf#Backend[_] = backends(language)
+  def methodReplaceConf(implicit language: LANGUAGE): mutable.Set[LanguageConf#Backend[_]] = backends(language)
 
   trait Implicit[T] {
     this: T =>
@@ -84,17 +84,14 @@ trait MethodMapping {
     }
 
     abstract class Backend[TC <: LanguageConf](language: LANGUAGE)(implicit val l: TC) {
-      backends += {
-        (backends.get(language), this) match {
-          case (Some(conf: LanguageConf#Backend[_]), current) =>
-            current.libPaths ++: conf.libPaths
-//            current.functionMap ++: conf.functionMap
-          case _ =>
-        }
-        language -> this
-      }
-
       type Func <: Fun
+
+      (backends.get(language), this) match {
+        case (Some(conf: mutable.Set[_]), current) =>
+          conf += current
+        case _ =>
+          backends +=  language -> mutable.Set(this)
+      }
 
       def get(classPath: String, method: String): Option[Func] = {
         methodMap.getOrElse((classPath, method), None)
@@ -108,8 +105,6 @@ trait MethodMapping {
       val functionMap: mutable.Map[Method, Func]
 
       val classMap: Map[Class[_], Func] = Map.empty[Class[_], Func]
-
-//      val caseClassMap: Map[CaseClassObject, Func] = Map.empty[CaseClassObject, Func]
 
       // To simplify config usage, data are transformed to Backend representation. Direct link to LanguageConf is never used
       lazy val methodMap: Map[(String, String), Option[Func]] = functionMap.map { case (m, f) =>
