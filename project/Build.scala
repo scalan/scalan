@@ -46,6 +46,7 @@ object ScalanBuild extends Build {
   val crossCompilation =
     crossScalaVersions := Seq("2.10.5", "2.11.6")
 
+  // Doesn't cross-build properly due to a Scala bug currently
   val commonSettings = Seq(
     scalaVersion := "2.10.5",
     organization := "com.huawei.scalan",
@@ -56,7 +57,7 @@ object ScalanBuild extends Build {
       else
         Some("releases" at (nexus + "content/repositories/releases"))
     },
-    opts, commonDeps) ++ testSettings ++ releaseSettings :+ (ReleaseKeys.crossBuild := true)
+    opts, commonDeps) ++ testSettings ++ releaseSettings // :+ (ReleaseKeys.crossBuild := true)
 
   lazy val ItTest = config("it").extend(Test)
 
