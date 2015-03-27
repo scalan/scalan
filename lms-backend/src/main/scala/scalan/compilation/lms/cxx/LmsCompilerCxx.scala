@@ -7,7 +7,7 @@ import scalan.ScalanCommunityExp
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{LmsBridge, LmsCompiler}
 
-trait LmsCompilerCXX extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with LmsBridge =>
+trait LmsCompilerCxx extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with LmsBridge =>
 
   type CustomCompilerOutput = Unit
 

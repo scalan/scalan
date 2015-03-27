@@ -9,7 +9,7 @@ import java.io.File
 import scalan.it.smoke.SmokeItTests
 
 class CxxShptrLmsSmokeItTests extends SmokeItTests {
-  class ProgExp extends Prog with ScalanCtxExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCXX with CoreBridge {
+  class ProgExp extends Prog with ScalanCtxExp with ScalanCommunityExp with GraphVizExport with LmsCompilerCxx with CoreBridge {
     val lms = new CoreCxxShptrLmsBackend
 
     lazy val arrayForeach = fun {arr:Rep[Array[Double]] =>

@@ -189,11 +189,11 @@ object MvmBenchmark {
   @volatile
   class MvmStateCpp extends MvmStateBase {
 
-//    class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerCXX {
+//    class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerCxx {
 //      self =>
 //      def makeBridge[A, B] = new CommunityBridge[A, B] {
 //        val scalan = self
-//        val lms = new CommunityCXXLmsBackend
+//        val lms = new CommunityCxxLmsBackend
 //      }
 //    }
 //

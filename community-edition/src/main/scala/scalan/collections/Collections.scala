@@ -351,21 +351,20 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   trait NestedCollectionCompanion extends ConcreteClass1[NestedCollection] {
     def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(NestedCollection(element[Collection[A]].defaultRepValue, element[Segments1].defaultRepValue))
     def createNestedCollection[A:Elem](vals: Coll[A], segments: Coll[(Int,Int)]) = NestedCollection(vals, segments)
+
+    def fromJuggedArray[T: Elem](arr: Rep[Array[Array[T]]]): Rep[NestedCollection[T]] = {
+      val lens: Arr[Int] = arr.map(i => i.length)
+      val positions = lens.scan._1
+      val segments = positions.zip(lens)
+      val flat_arr = arr.flatMap {i => i}
+      mkNestedCollection(Collection.fromArray(flat_arr), Collection.fromArray(segments))
+    }
   }
 
 }
 
 trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl => }
 
-trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSeq =>
-  def fromJuggedArray[T: Elem](arr: Rep[Array[Array[T]]]): Rep[NestedCollection[T]] = {
-    implicit val ct = element[T].classTag
-    val lens: Arr[Int] = arr.map(i => i.length)
-    val positions = lens.scan(0)((x,y) => x + y).dropRight(1).toArray
-    val segments = positions.zip(lens)
-    val flat_arr = arr.flatMap {i => i}.toArray
-    mkNestedCollection(Collection.fromArray(flat_arr), Collection.fromArray(segments))
-  }
-}
+trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSeq => }
 
 trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslExp => }
