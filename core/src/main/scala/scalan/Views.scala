@@ -8,6 +8,12 @@ import scalan.staged.BaseExp
 
 trait Views extends Elems { self: Scalan =>
 
+  abstract class EntityElem[A] extends Elem[A] {
+    def convert(x: Rep[Reifiable[_]]): Rep[A] = !!!("should not be called")
+  }
+  abstract class EntityElem1[A,C[_]](val eItem: Elem[A], val cont: Cont[C]) extends Elem[A] {
+  }
+
   // eFrom0 is used to avoid making eFrom implicit in subtypes
   // and support recursive types
   abstract class Iso[From, To](implicit eFrom0: Elem[From]) {
@@ -32,20 +38,21 @@ trait Views extends Elems { self: Scalan =>
 
   implicit def viewElement[From, To](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
 
-  abstract class ViewElem[From, To](val iso: Iso[From, To]) extends Elem[To] {
+  trait ViewElem[From, To] extends Elem[To] {
+    def iso: Iso[From, To]
     override def isEntityType = shouldUnpack(this)
-    lazy val tag: WeakTypeTag[To] = iso.tag
+    def tag: WeakTypeTag[To] = iso.tag
     protected def getDefaultRep = iso.defaultRepTo.value
-    def convert(x: Rep[Reifiable[_]]): Rep[To] = !!!("should not be called")
   }
 
   object ViewElem {
     def unapply[From, To](ve: ViewElem[From, To]): Option[Iso[From, To]] = Some(ve.iso)
   }
 
-  abstract class ViewElem1[A,From,To,C[_]](iso: Iso[From, To])
-    (implicit val eItem: Elem[A], val cont: Cont[C])
-    extends ViewElem[From, To](iso) {
+  abstract class ViewElem1[A,From,To,C[_]]
+    extends ViewElem[From, To] {
+    def eItem: Elem[A]
+    def cont: Cont[C]
   }
 
   object UnpackableElem {
@@ -180,7 +187,7 @@ trait Views extends Elems { self: Scalan =>
   def repReifiable_convertTo[T <: Reifiable[_], R <: Reifiable[_]]
                             (x: Rep[T])(implicit eR: Elem[R]): Rep[R] = {
     eR match {
-      case viewE: ViewElem[_,R] @unchecked => viewE.convert(x)
+      case entE: EntityElem[R] @unchecked => entE.convert(x)
       case _ => !!!(s"Cannot convert $x to a value of type ${eR.name}: ViewElem expected but ${eR.tag} found")
     }
   }

@@ -1951,6 +1951,18 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object fromJuggedArray {
+      def unapply(d: Def[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem.isInstanceOf[NestedCollectionCompanionElem] && method.getName == "fromJuggedArray" =>
+          Some(arr).asInstanceOf[Option[Rep[Array[Array[T]]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   def mkNestedCollection[A]
