@@ -12,8 +12,7 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   self: ExceptionsDsl =>
   // single proxy for each type family
   implicit def proxySThrowable(p: Rep[SThrowable]): SThrowable = {
-    implicit val tag = weakTypeTag[SThrowable]
-    proxyOps[SThrowable](p)(TagImplicits.typeTagToClassTag[SThrowable])
+    proxyOps[SThrowable](p)(classTag[SThrowable])
   }
   // BaseTypeEx proxy
   //implicit def proxyThrowable(p: Rep[Throwable]): SThrowable =
@@ -27,7 +26,9 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   class SThrowableElem[To <: SThrowable]
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[SThrowableElem[_]]); weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertSThrowable(x.asRep[SThrowable])
     def convertSThrowable(x : Rep[SThrowable]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[SThrowableElem[_]])

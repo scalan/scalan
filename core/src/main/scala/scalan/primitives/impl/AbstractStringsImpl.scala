@@ -12,14 +12,15 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
   self: AbstractStringsDsl =>
   // single proxy for each type family
   implicit def proxyAString(p: Rep[AString]): AString = {
-    implicit val tag = weakTypeTag[AString]
-    proxyOps[AString](p)(TagImplicits.typeTagToClassTag[AString])
+    proxyOps[AString](p)(classTag[AString])
   }
 
   class AStringElem[To <: AString]
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[AStringElem[_]]); weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertAString(x.asRep[AString])
     def convertAString(x : Rep[AString]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[AStringElem[_]])

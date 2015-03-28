@@ -14,8 +14,7 @@ trait HashSetsAbs extends Scalan with HashSets {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxySHashSet[A](p: Rep[SHashSet[A]]): SHashSet[A] = {
-    implicit val tag = weakTypeTag[SHashSet[A]]
-    proxyOps[SHashSet[A]](p)(TagImplicits.typeTagToClassTag[SHashSet[A]])
+    proxyOps[SHashSet[A]](p)(classTag[SHashSet[A]])
   }
   // BaseTypeEx proxy
   //implicit def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
@@ -41,7 +40,10 @@ trait HashSetsAbs extends Scalan with HashSets {
   class SHashSetElem[A, To <: SHashSet[A]](implicit eA: Elem[A])
     extends EntityElem1[A, To, SHashSet](eA,container[SHashSet]) {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[SHashSetElem[_,_]]); weakTypeTag[SHashSet[A]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[SHashSet[A]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
     def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[SHashSetElem[_,_]])
@@ -115,6 +117,7 @@ trait HashSetsAbs extends Scalan with HashSets {
       SHashSetImpl(wrappedValueOfBaseType)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[SHashSetImpl[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SHashSetImpl[A]]](SHashSetImpl(DefaultOfHashSet[A].value))

@@ -15,14 +15,16 @@ trait CollectionsAbs extends Scalan with Collections {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyCollection[A](p: Rep[Collection[A]]): Collection[A] = {
-    implicit val tag = weakTypeTag[Collection[A]]
-    proxyOps[Collection[A]](p)(TagImplicits.typeTagToClassTag[Collection[A]])
+    proxyOps[Collection[A]](p)(classTag[Collection[A]])
   }
 
   class CollectionElem[A, To <: Collection[A]](implicit elem: Elem[A])
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[CollectionElem[_,_]]); weakTypeTag[Collection[A]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagA = elem.tag
+      weakTypeTag[Collection[A]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertCollection(x.asRep[Collection[A]])
     def convertCollection(x : Rep[Collection[A]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[CollectionElem[_,_]])
@@ -50,13 +52,16 @@ trait CollectionsAbs extends Scalan with Collections {
 
   // single proxy for each type family
   implicit def proxyIPairCollection[A, B](p: Rep[IPairCollection[A, B]]): IPairCollection[A, B] = {
-    implicit val tag = weakTypeTag[IPairCollection[A, B]]
-    proxyOps[IPairCollection[A, B]](p)(TagImplicits.typeTagToClassTag[IPairCollection[A, B]])
+    proxyOps[IPairCollection[A, B]](p)(classTag[IPairCollection[A, B]])
   }
   class IPairCollectionElem[A, B, To <: IPairCollection[A, B]](implicit eA: Elem[A], eB: Elem[B])
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[IPairCollectionElem[_,_,_]]); weakTypeTag[IPairCollection[A, B]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      weakTypeTag[IPairCollection[A, B]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertIPairCollection(x.asRep[IPairCollection[A, B]])
     def convertIPairCollection(x : Rep[IPairCollection[A, B]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[IPairCollectionElem[_,_,_]])
@@ -70,13 +75,15 @@ trait CollectionsAbs extends Scalan with Collections {
 
   // single proxy for each type family
   implicit def proxyINestedCollection[A](p: Rep[INestedCollection[A]]): INestedCollection[A] = {
-    implicit val tag = weakTypeTag[INestedCollection[A]]
-    proxyOps[INestedCollection[A]](p)(TagImplicits.typeTagToClassTag[INestedCollection[A]])
+    proxyOps[INestedCollection[A]](p)(classTag[INestedCollection[A]])
   }
   class INestedCollectionElem[A, To <: INestedCollection[A]](implicit eA: Elem[A])
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[INestedCollectionElem[_,_]]); weakTypeTag[INestedCollection[A]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[INestedCollection[A]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertINestedCollection(x.asRep[INestedCollection[A]])
     def convertINestedCollection(x : Rep[INestedCollection[A]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[INestedCollectionElem[_,_]])
@@ -177,6 +184,7 @@ trait CollectionsAbs extends Scalan with Collections {
       BaseCollection(arr)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[BaseCollection[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[BaseCollection[A]]](BaseCollection(element[Array[A]].defaultRepValue))
@@ -241,6 +249,7 @@ trait CollectionsAbs extends Scalan with Collections {
       ListCollection(lst)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[ListCollection[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[ListCollection[A]]](ListCollection(element[List[A]].defaultRepValue))
@@ -305,6 +314,7 @@ trait CollectionsAbs extends Scalan with Collections {
       CollectionOnSeq(seq)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[CollectionOnSeq[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOnSeq[A]]](CollectionOnSeq(element[SSeq[A]].defaultRepValue))
@@ -369,6 +379,8 @@ trait CollectionsAbs extends Scalan with Collections {
       PairCollection(as, bs)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
       weakTypeTag[PairCollection[A, B]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[PairCollection[A, B]]](PairCollection(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue))
@@ -434,6 +446,8 @@ trait CollectionsAbs extends Scalan with Collections {
       CollectionOfPairs(arr)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
       weakTypeTag[CollectionOfPairs[A, B]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOfPairs[A, B]]](CollectionOfPairs(element[Array[(A,B)]].defaultRepValue))
@@ -498,6 +512,7 @@ trait CollectionsAbs extends Scalan with Collections {
       NestedCollection(values, segments)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[NestedCollection[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[NestedCollection[A]]](NestedCollection(element[Collection[A]].defaultRepValue, element[Collection[(Int,Int)]].defaultRepValue))

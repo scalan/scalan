@@ -13,14 +13,16 @@ trait VectorsAbs extends Scalan with Vectors {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyAbstractVector[T](p: Rep[AbstractVector[T]]): AbstractVector[T] = {
-    implicit val tag = weakTypeTag[AbstractVector[T]]
-    proxyOps[AbstractVector[T]](p)(TagImplicits.typeTagToClassTag[AbstractVector[T]])
+    proxyOps[AbstractVector[T]](p)(classTag[AbstractVector[T]])
   }
 
   class AbstractVectorElem[T, To <: AbstractVector[T]](implicit elem: Elem[T])
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[AbstractVectorElem[_,_]]); weakTypeTag[AbstractVector[T]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagT = elem.tag
+      weakTypeTag[AbstractVector[T]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertAbstractVector(x.asRep[AbstractVector[T]])
     def convertAbstractVector(x : Rep[AbstractVector[T]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[AbstractVectorElem[_,_]])
@@ -71,6 +73,7 @@ trait VectorsAbs extends Scalan with Vectors {
       DenseVector(items)
     }
     lazy val tag = {
+      implicit val tagT = elem.tag
       weakTypeTag[DenseVector[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[DenseVector[T]]](DenseVector(element[Collection[T]].defaultRepValue))
@@ -135,6 +138,7 @@ trait VectorsAbs extends Scalan with Vectors {
       SparseVector(nonZeroIndices, nonZeroValues, length)
     }
     lazy val tag = {
+      implicit val tagT = elem.tag
       weakTypeTag[SparseVector[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector[T]]](SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, 0))

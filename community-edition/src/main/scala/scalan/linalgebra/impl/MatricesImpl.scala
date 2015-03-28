@@ -13,14 +13,16 @@ trait MatricesAbs extends Scalan with Matrices {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyAbstractMatrix[T](p: Rep[AbstractMatrix[T]]): AbstractMatrix[T] = {
-    implicit val tag = weakTypeTag[AbstractMatrix[T]]
-    proxyOps[AbstractMatrix[T]](p)(TagImplicits.typeTagToClassTag[AbstractMatrix[T]])
+    proxyOps[AbstractMatrix[T]](p)(classTag[AbstractMatrix[T]])
   }
 
   class AbstractMatrixElem[T, To <: AbstractMatrix[T]](implicit elem: Elem[T])
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[AbstractMatrixElem[_,_]]); weakTypeTag[AbstractMatrix[T]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagT = elem.tag
+      weakTypeTag[AbstractMatrix[T]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertAbstractMatrix(x.asRep[AbstractMatrix[T]])
     def convertAbstractMatrix(x : Rep[AbstractMatrix[T]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[AbstractMatrixElem[_,_]])
@@ -71,6 +73,7 @@ trait MatricesAbs extends Scalan with Matrices {
       RowMajorDirectMatrix(rows)
     }
     lazy val tag = {
+      implicit val tagT = elem.tag
       weakTypeTag[RowMajorDirectMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorDirectMatrix[T]]](RowMajorDirectMatrix(element[Collection[AbstractVector[T]]].defaultRepValue))
@@ -135,6 +138,7 @@ trait MatricesAbs extends Scalan with Matrices {
       RowMajorNestedMatrix(rmValues, numColumns)
     }
     lazy val tag = {
+      implicit val tagT = elem.tag
       weakTypeTag[RowMajorNestedMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorNestedMatrix[T]]](RowMajorNestedMatrix(element[Collection[T]].defaultRepValue, 0))
@@ -200,6 +204,7 @@ trait MatricesAbs extends Scalan with Matrices {
       RowMajorSparseMatrix(rows, numColumns)
     }
     lazy val tag = {
+      implicit val tagT = elem.tag
       weakTypeTag[RowMajorSparseMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[RowMajorSparseMatrix[T]]](RowMajorSparseMatrix(element[Collection[AbstractVector[T]]].defaultRepValue, 0))

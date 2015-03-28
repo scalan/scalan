@@ -3,20 +3,19 @@
  */
 package scalan
 
-import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 import scala.reflect.ClassTag
+import scala.reflect.runtime.universe._
 
 import org.objenesis.ObjenesisStd
 
 import net.sf.cglib.proxy.Enhancer
 import net.sf.cglib.proxy.Factory
 import net.sf.cglib.proxy.InvocationHandler
-import scalan.common.Lazy
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.BaseExp
-import scalan.util.ScalaNameUtil
+import scalan.util.{StringUtil, ReflectionUtil, ScalaNameUtil}
 
 trait Proxy { self: Scalan =>
   def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops
@@ -259,6 +258,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   protected var methodCallReceivers = Set.empty[Exp[_]]
 
   class ExpInvocationHandler[T](receiver: Exp[T]) extends InvocationHandler {
+    import ExpInvocationHandler._
+
     override def toString = s"ExpInvocationHandler(${receiver.toStringWithDefinition})"
 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
@@ -314,39 +315,148 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
     def getResultElem(m: Method, args: Array[AnyRef]): Elem[_] = {
       val e = receiver.elem
-      val zero = e match {
-        case extE: BaseElemEx[_,_] => extE.getWrapperElem.defaultRepValue
-        case _ => e.defaultRepValue
+      val tag = e match {
+        case extE: BaseElemEx[_,_] => extE.getWrapperElem.tag
+        case _ => e.tag
       }
-      val Def(zeroNode) = zero
-      try {
-        val args1 = args.map {
-          case e: Exp[_] => e.elem.defaultRepValue
-          case nonExp => nonExp
-        }
-        val res = m.invoke(zeroNode, args1: _*)
-        res match {
-          case s: Exp[_] => s.elem
-          case other => !!!(s"Staged method call ${ScalaNameUtil.cleanScalaName(m.toString)} must return an Exp, but got $other")
-        }
-      } catch {
-        case e: IllegalArgumentException =>
-          val info = zeroNode match {
-            case view: View[a,b] =>
-              s"""View(${view.source}, Iso[${view.iso}])"""
-            case _ => s"$zeroNode"
+      val tpe = tag.tpe
+      val scalaMethod = findScalaMethod(tpe, m)
+      // http://stackoverflow.com/questions/29256896/get-precise-return-type-from-a-typetag-and-a-method
+      val returnType = scalaMethod.returnType.asSeenFrom(tpe, scalaMethod.owner).normalize
+      returnType match {
+        // FIXME can't figure out proper comparison with RepType here
+        case TypeRef(_, sym, List(tpe1)) if sym.name.toString == "Rep" =>
+          // FIXME assumed for now to correspond to the method's type params, in the same order
+          val elemParams = args.collect { case e: Elem[_] => e }
+          val elemMap = scalaMethod.typeParams.zip(elemParams).toMap
+          // check if return type is a BaseTypeEx
+          val baseType = tpe.baseType(ExpInvocationHandler.BaseTypeExSym) match {
+            case NoType => definitions.NothingTpe
+            // e.g. Throwable from BaseTypeEx[Throwable, SThrowable]
+            case TypeRef(_, _, params) => params(0).asSeenFrom(tpe, scalaMethod.owner)
+            case unexpected => !!!(s"unexpected result from ${tpe1}.baseType(BaseTypeEx): $unexpected")
           }
-          logger.error(
-            s"""Method call to get result element failed.
-               |Object: $info; Method: $m""".stripMargin, e)
-          emitGraphOnException("getResultElem", receiver, zero)
-          throw e
-        case e: InvocationTargetException =>
-          e.getCause match {
-            case e1: ElemException[_] => e1.element
-            case _ => throw e
+          elemFromType(tpe1, elemMap, baseType)
+        case _ =>
+          !!!(s"Return type of method $m should be a Rep, but is $returnType")
+      }
+    }
+
+    def findScalaMethod(tpe: Type, m: Method) = {
+      val scalaMethod0 = tpe.member(newTermName(m.getName))
+      if (scalaMethod0.isTerm) {
+        val overloads = scalaMethod0.asTerm.alternatives
+        (if (overloads.length == 1) {
+          scalaMethod0
+        } else {
+          val javaOverloadId = m.getAnnotation(classOf[OverloadId]) match {
+            case null => None
+            case jAnnotation => Some(jAnnotation.value)
+          }
+
+          overloads.find { sym =>
+            !isSupertypeOfReifiableExp(sym.owner) && {
+              val scalaOverloadId = ReflectionUtil.annotation[OverloadId](sym).map { sAnnotation =>
+                val LiteralArgument(Constant(sOverloadId)) = sAnnotation.javaArgs.head._2
+                sOverloadId
+              }
+              scalaOverloadId == javaOverloadId
+            }
+          }.get
+        }).asMethod
+      } else
+        !!!(s"Method $m couldn't be found on type $tpe")
+    }
+
+    def elemFromType(tpe: Type, elemMap: Map[Symbol, Elem[_]], baseType: Type): Elem[_] = tpe.normalize match {
+      case TypeRef(_, classSymbol, params) => classSymbol match {
+        case UnitSym => UnitElement
+        case BooleanSym => BoolElement
+        case ByteSym => ByteElement
+        case ShortSym => ShortElement
+        case IntSym => IntElement
+        case LongSym => LongElement
+        case FloatSym => FloatElement
+        case DoubleSym => DoubleElement
+        case StringSym => StringElement
+        case PredefStringSym => StringElement
+        case CharSym => CharElement
+        case Tuple2Sym =>
+          pairElement(elemFromType(params(0), elemMap, baseType), elemFromType(params(1), elemMap, baseType))
+        case EitherSym =>
+          sumElement(elemFromType(params(0), elemMap, baseType), elemFromType(params(1), elemMap, baseType))
+        case Function1Sym =>
+          funcElement(elemFromType(params(0), elemMap, baseType), elemFromType(params(1), elemMap, baseType))
+        case ArraySym =>
+          arrayElement(elemFromType(params(0), elemMap, baseType))
+        case _ if classSymbol.asType.isAbstractType =>
+          elemMap.getOrElse(classSymbol, !!!(s"Can't create element for abstract type $tpe"))
+        case _ if classSymbol.isClass =>
+          val elemClasses = Array.fill[Class[_]](params.length)(classOf[Element[_]])
+          val paramElems = params.map(elemFromType(_, elemMap, baseType))
+          // entity type or base type
+          if (classSymbol.asClass.isTrait || classSymbol == baseType.typeSymbol) {
+            // abstract case, call *Element
+            val methodName = StringUtil.lowerCaseFirst(classSymbol.name.toString) + "Element"
+            // self.getClass will return the final cake, which should contain the method
+            try {
+              val method = self.getClass.getMethod(methodName, elemClasses: _*)
+              try {
+                val resultElem = method.invoke(self, paramElems: _*)
+                resultElem.asInstanceOf[Elem[_]]
+              } catch {
+                case e: Exception =>
+                  throw new Exception(s"Failed to invoke $methodName($paramElems)", e)
+              }
+            } catch {
+              case _: NoSuchMethodException =>
+                !!!(s"Failed to find element-creating method with name $methodName and ${params.length} Element parameters")
+            }
+          } else {
+            // concrete case, call viewElement(*Iso)
+            val methodName = "iso" + classSymbol.name.toString
+            try {
+              val method = self.getClass.getMethod(methodName, elemClasses: _*)
+              try {
+                val resultIso = method.invoke(self, paramElems: _*)
+                resultIso.asInstanceOf[Iso[_, _]].eTo
+              } catch {
+                case e: Exception =>
+                  throw new Exception(s"Failed to invoke $methodName($paramElems)", e)
+              }
+            } catch {
+              case _: NoSuchMethodException =>
+                !!!(s"Failed to find iso-creating method with name $methodName and ${params.length} Element parameters")
+            }
           }
       }
+      case _ => ???(s"Failed to create element from type $tpe")
+    }
+
+    private object ExpInvocationHandler {
+      val RepSym = weakTypeOf[Rep[_]].typeSymbol
+
+      val UnitSym = typeOf[Unit].typeSymbol
+      val BooleanSym = typeOf[Boolean].typeSymbol
+      val ByteSym = typeOf[Byte].typeSymbol
+      val ShortSym = typeOf[Short].typeSymbol
+      val IntSym = typeOf[Int].typeSymbol
+      val LongSym = typeOf[Long].typeSymbol
+      val FloatSym = typeOf[Float].typeSymbol
+      val DoubleSym = typeOf[Double].typeSymbol
+      val StringSym = typeOf[String].typeSymbol
+      val PredefStringSym = definitions.PredefModule.moduleClass.asType.toType.member(newTypeName("String"))
+      val CharSym = typeOf[Char].typeSymbol
+
+      val Tuple2Sym = typeOf[(_, _)].typeSymbol
+      val EitherSym = typeOf[_ | _].typeSymbol
+      val Function1Sym = typeOf[_ => _].typeSymbol
+      val ArraySym = typeOf[Array[_]].typeSymbol
+
+      val BaseTypeExSym = typeOf[BaseTypeEx[_, _]].typeSymbol
+
+      def isSupertypeOfReifiableExp(clazz: Symbol) =
+        typeOf[ReifiableExp[_, _]].baseClasses.contains(clazz)
     }
 
     // code from Scalan

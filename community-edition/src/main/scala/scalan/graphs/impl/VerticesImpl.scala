@@ -15,14 +15,17 @@ trait VerticesAbs extends Scalan with Vertices {
   self: GraphsDsl =>
   // single proxy for each type family
   implicit def proxyVertex[V, E](p: Rep[Vertex[V, E]]): Vertex[V, E] = {
-    implicit val tag = weakTypeTag[Vertex[V, E]]
-    proxyOps[Vertex[V, E]](p)(TagImplicits.typeTagToClassTag[Vertex[V, E]])
+    proxyOps[Vertex[V, E]](p)(classTag[Vertex[V, E]])
   }
 
   class VertexElem[V, E, To <: Vertex[V, E]](implicit eV: Elem[V], eE: Elem[E])
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[VertexElem[_,_,_]]); weakTypeTag[Vertex[V, E]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[Vertex[V, E]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertVertex(x.asRep[Vertex[V, E]])
     def convertVertex(x : Rep[Vertex[V, E]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[VertexElem[_,_,_]])
@@ -73,6 +76,8 @@ trait VerticesAbs extends Scalan with Vertices {
       SVertex(id, graph)
     }
     lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
       weakTypeTag[SVertex[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SVertex[V, E]]](SVertex(0, element[Graph[V,E]].defaultRepValue))

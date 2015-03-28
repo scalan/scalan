@@ -16,14 +16,17 @@ trait EdgesAbs extends Scalan with Edges {
   self: GraphsDsl =>
   // single proxy for each type family
   implicit def proxyEdge[V, E](p: Rep[Edge[V, E]]): Edge[V, E] = {
-    implicit val tag = weakTypeTag[Edge[V, E]]
-    proxyOps[Edge[V, E]](p)(TagImplicits.typeTagToClassTag[Edge[V, E]])
+    proxyOps[Edge[V, E]](p)(classTag[Edge[V, E]])
   }
 
   class EdgeElem[V, E, To <: Edge[V, E]](implicit eV: Elem[V], eE: Elem[E])
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[EdgeElem[_,_,_]]); weakTypeTag[Edge[V, E]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[Edge[V, E]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertEdge(x.asRep[Edge[V, E]])
     def convertEdge(x : Rep[Edge[V, E]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[EdgeElem[_,_,_]])
@@ -74,6 +77,8 @@ trait EdgesAbs extends Scalan with Edges {
       AdjEdge(fromId, outIndex, graph)
     }
     lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
       weakTypeTag[AdjEdge[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[AdjEdge[V, E]]](AdjEdge(0, 0, element[Graph[V,E]].defaultRepValue))
@@ -139,6 +144,8 @@ trait EdgesAbs extends Scalan with Edges {
       IncEdge(fromId, toId, graph)
     }
     lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
       weakTypeTag[IncEdge[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[IncEdge[V, E]]](IncEdge(0, 0, element[Graph[V,E]].defaultRepValue))

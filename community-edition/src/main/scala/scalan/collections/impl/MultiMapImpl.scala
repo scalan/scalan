@@ -12,14 +12,17 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): MMultiMap[K, V] = {
-    implicit val tag = weakTypeTag[MMultiMap[K, V]]
-    proxyOps[MMultiMap[K, V]](p)(TagImplicits.typeTagToClassTag[MMultiMap[K, V]])
+    proxyOps[MMultiMap[K, V]](p)(classTag[MMultiMap[K, V]])
   }
 
   class MMultiMapElem[K, V, To <: MMultiMap[K, V]](implicit elemKey: Elem[K], elemValue: Elem[V])
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[MMultiMapElem[_,_,_]]); weakTypeTag[MMultiMap[K, V]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagK = elemKey.tag
+      implicit val tagV = elemValue.tag
+      weakTypeTag[MMultiMap[K, V]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertMMultiMap(x.asRep[MMultiMap[K, V]])
     def convertMMultiMap(x : Rep[MMultiMap[K, V]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[MMultiMapElem[_,_,_]])
@@ -70,6 +73,8 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
       HashMMultiMap(map)
     }
     lazy val tag = {
+      implicit val tagK = elemKey.tag
+      implicit val tagV = elemValue.tag
       weakTypeTag[HashMMultiMap[K, V]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[HashMMultiMap[K, V]]](HashMMultiMap(element[MMap[K,ArrayBuffer[V]]].defaultRepValue))

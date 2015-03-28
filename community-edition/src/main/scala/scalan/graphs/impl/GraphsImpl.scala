@@ -16,14 +16,17 @@ trait GraphsAbs extends Scalan with Graphs {
   self: GraphsDsl =>
   // single proxy for each type family
   implicit def proxyGraph[V, E](p: Rep[Graph[V, E]]): Graph[V, E] = {
-    implicit val tag = weakTypeTag[Graph[V, E]]
-    proxyOps[Graph[V, E]](p)(TagImplicits.typeTagToClassTag[Graph[V, E]])
+    proxyOps[Graph[V, E]](p)(classTag[Graph[V, E]])
   }
 
   class GraphElem[V, E, To <: Graph[V, E]](implicit eV: Elem[V], eE: Elem[E])
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[GraphElem[_,_,_]]); weakTypeTag[Graph[V, E]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[Graph[V, E]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertGraph(x.asRep[Graph[V, E]])
     def convertGraph(x : Rep[Graph[V, E]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[GraphElem[_,_,_]])
@@ -74,6 +77,8 @@ trait GraphsAbs extends Scalan with Graphs {
       AdjacencyGraph(vertexValues, edgeValues, links)
     }
     lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
       weakTypeTag[AdjacencyGraph[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[AdjacencyGraph[V, E]]](AdjacencyGraph(element[Collection[V]].defaultRepValue, element[INestedCollection[E]].defaultRepValue, element[INestedCollection[Int]].defaultRepValue))
@@ -139,6 +144,8 @@ trait GraphsAbs extends Scalan with Graphs {
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }
     lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
       weakTypeTag[IncidenceGraph[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[IncidenceGraph[V, E]]](IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0))

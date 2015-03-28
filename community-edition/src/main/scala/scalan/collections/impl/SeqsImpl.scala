@@ -14,8 +14,7 @@ trait SeqsAbs extends Scalan with Seqs {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] = {
-    implicit val tag = weakTypeTag[SSeq[A]]
-    proxyOps[SSeq[A]](p)(TagImplicits.typeTagToClassTag[SSeq[A]])
+    proxyOps[SSeq[A]](p)(classTag[SSeq[A]])
   }
   // BaseTypeEx proxy
   //implicit def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
@@ -41,7 +40,10 @@ trait SeqsAbs extends Scalan with Seqs {
   class SSeqElem[A, To <: SSeq[A]](implicit eA: Elem[A])
     extends EntityElem1[A, To, SSeq](eA,container[SSeq]) {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[SSeqElem[_,_]]); weakTypeTag[SSeq[A]].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[SSeq[A]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
     def convertSSeq(x : Rep[SSeq[A]]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[SSeqElem[_,_]])
@@ -170,6 +172,7 @@ trait SeqsAbs extends Scalan with Seqs {
       SSeqImpl(wrappedValueOfBaseType)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[SSeqImpl[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SSeqImpl[A]]](SSeqImpl(DefaultOfSeq[A].value))

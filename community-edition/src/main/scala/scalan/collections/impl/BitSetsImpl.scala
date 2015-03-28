@@ -12,14 +12,15 @@ trait BitSetsAbs extends Scalan with BitSets {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyBitSet(p: Rep[BitSet]): BitSet = {
-    implicit val tag = weakTypeTag[BitSet]
-    proxyOps[BitSet](p)(TagImplicits.typeTagToClassTag[BitSet])
+    proxyOps[BitSet](p)(classTag[BitSet])
   }
 
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[BitSetElem[_]]); weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertBitSet(x.asRep[BitSet])
     def convertBitSet(x : Rep[BitSet]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[BitSetElem[_]])

@@ -12,14 +12,15 @@ trait SegmentsAbs extends Scalan with Segments {
   self: SegmentsDsl =>
   // single proxy for each type family
   implicit def proxySegment(p: Rep[Segment]): Segment = {
-    implicit val tag = weakTypeTag[Segment]
-    proxyOps[Segment](p)(TagImplicits.typeTagToClassTag[Segment])
+    proxyOps[Segment](p)(classTag[Segment])
   }
 
   class SegmentElem[To <: Segment]
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[SegmentElem[_]]); weakTypeTag[Segment].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      weakTypeTag[Segment].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertSegment(x.asRep[Segment])
     def convertSegment(x : Rep[Segment]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[SegmentElem[_]])
