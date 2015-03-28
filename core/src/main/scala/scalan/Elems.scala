@@ -144,8 +144,6 @@ trait Elems extends Base { self: Scalan =>
 
   }
 
-  type R <: Reifiable[_]
-
   def elemFromRep[A](x: Rep[A])(implicit eA: Elem[A]): Elem[A] = eA match {
     case ve: ViewElem[_,_] =>
       x.asRep[Reifiable[_]].selfType1.asInstanceOf[Elem[A]]
