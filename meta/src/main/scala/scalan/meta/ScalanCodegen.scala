@@ -280,7 +280,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
 
       def familyContainer(e: EntityTemplateData) = {
         val typesDecl = e.tpeArgDeclString
-        val entityElemType = s"${entityName}Elem[${e.typesUsePref}_,${e.entityType}]"
+        val entityElemType = s"${entityName}Elem[${e.typesUsePref}${e.entityType}]"
         s"""
         |  implicit def cast${e.name}Element${typesDecl}(elem: Elem[${e.entityType}]): $entityElemType = elem.asInstanceOf[$entityElemType]
         |  implicit val container${e.name}: Cont[${e.name}] = new Container[${e.name}] {
@@ -301,14 +301,15 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         val entityName = e.name
         val typesUse = e.tpeArgUseString
         val isCont = e.isContainer1
+        val underscores = e.tpeArgDecls.map(_ => "_,").mkString("")
         s"""
-        |  class ${e.name}Elem[To <: ${e.entityType}]
-        |    extends EntityElem${isCont.opt("1")}[To${isCont.opt(s", $entityName")}] {
+        |  class ${e.name}Elem[${e.typesDeclPref}To <: ${e.entityType}]${e.implicitArgsDecl}
+        |    extends EntityElem${isCont.opt("1")}[${isCont.opt(e.typesUsePref)}To${isCont.opt(s", $entityName")}]${isCont.opt(s"(${e.tpeArgs.map("e" + _.name + ",").mkString("")}container[$entityName])")} {
         |    def isEntityType = true
-        |    def tag = { assert(this.isInstanceOf[${e.name}Elem[_]]); weakTypeTag[${e.entityType}].asInstanceOf[WeakTypeTag[To]]}
+        |    def tag = { assert(this.isInstanceOf[${e.name}Elem[${underscores}_]]); weakTypeTag[${e.entityType}].asInstanceOf[WeakTypeTag[To]]}
         |    override def convert(x: Rep[Reifiable[_]]) = convert$entityName(x.asRep[${e.entityType}])
         |    def convert$entityName(x : Rep[${e.entityType}]): Rep[To] = {
-        |      assert(x.selfType1.isInstanceOf[${e.name}Elem[_]])
+        |      assert(x.selfType1.isInstanceOf[${e.name}Elem[${underscores}_]])
         |      x.asRep[To]
         |    }
         |    def getDefaultRep: Rep[To] = ???
@@ -415,11 +416,11 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |$defaultImpl
         |  // elem for concrete class
         |  class ${className}Elem${typesDecl}(val iso: Iso[${className}Data${typesUse}, $className${typesUse}])$implicitArgsWithVals
-        |    extends ${parent.name}Elem[$className${typesUse}]
-        |    with ViewElem${isCont.opt("1")}[${parentArgsStr}${className}Data${typesUse}, $className${typesUse}] {
+        |    extends ${parent.name}Elem[${parentArgsStr}$className${typesUse}]
+        |    with ViewElem${isCont.opt("1")}[${isCont.opt(parentArgsStr)}${className}Data${typesUse}, $className${typesUse}${isCont.opt(s", ${parent.name}")}] {
         |    override def convert${parent.name}(x: Rep[${parent.name}${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.getEntity(parent.name), c)}
-        |    override def getDefaultRep = super[ViewElem].getDefaultRep
-        |    override lazy val tag = super[ViewElem].tag
+        |    override def getDefaultRep = super[ViewElem${isCont.opt("1")}].getDefaultRep
+        |    override lazy val tag = super[ViewElem${isCont.opt("1")}].tag
         |  }
         |
         |  // state representation type
@@ -699,7 +700,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |  object UserType${e.name} {
         |    def unapply(s: Exp[_]): Option[Iso[_, _]] = {
         |      s.elem match {
-        |        case e: ${e.name}Elem[a,from,to] => e.eItem match {
+        |        case e: ${e.name}Elem[a,to] => e.eItem match {
         |          case UnpackableElem(iso) => Some(iso)
         |          case _ => None
         |        }

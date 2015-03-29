@@ -2,10 +2,7 @@ package scalan.collections
 package impl
 
 import scalan._
-import scala.reflect.runtime.universe._
-import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
-import scalan.{ScalanCommunitySeq, ScalanCommunityExp, ScalanCommunity}
 import scala.reflect.runtime.universe._
 import scala.reflect._
 import scalan.common.Default
@@ -19,10 +16,16 @@ trait BitSetsAbs extends Scalan with BitSets {
     proxyOps[BitSet](p)(TagImplicits.typeTagToClassTag[BitSet])
   }
 
-  abstract class BitSetElem[From, To <: BitSet](iso: Iso[From, To])
-    extends ViewElem[From, To](iso) {
+  class BitSetElem[To <: BitSet]
+    extends EntityElem[To] {
+    def isEntityType = true
+    def tag = { assert(this.isInstanceOf[BitSetElem[_]]); weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]}
     override def convert(x: Rep[Reifiable[_]]) = convertBitSet(x.asRep[BitSet])
-    def convertBitSet(x : Rep[BitSet]): Rep[To]
+    def convertBitSet(x : Rep[BitSet]): Rep[To] = {
+      assert(x.selfType1.isInstanceOf[BitSetElem[_]])
+      x.asRep[To]
+    }
+    def getDefaultRep: Rep[To] = ???
   }
 
   trait BitSetCompanionElem extends CompanionElem[BitSetCompanionAbs]
@@ -40,9 +43,12 @@ trait BitSetsAbs extends Scalan with BitSets {
   }
 
   // elem for concrete class
-  class BoolCollBitSetElem(iso: Iso[BoolCollBitSetData, BoolCollBitSet])
-    extends BitSetElem[BoolCollBitSetData, BoolCollBitSet](iso) {
-    def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
+  class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])
+    extends BitSetElem[BoolCollBitSet]
+    with ViewElem[BoolCollBitSetData, BoolCollBitSet] {
+    override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -162,7 +168,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
   object BitSetMethods {
     object bits {
       def unapply(d: Def[_]): Option[Rep[BitSet]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "bits" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "bits" =>
           Some(receiver).asInstanceOf[Option[Rep[BitSet]]]
         case _ => None
       }
@@ -174,7 +180,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object union {
       def unapply(d: Def[_]): Option[(Rep[BitSet], Rep[BitSet])] = d match {
-        case MethodCall(receiver, method, Seq(that, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "union" =>
+        case MethodCall(receiver, method, Seq(that, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "union" =>
           Some((receiver, that)).asInstanceOf[Option[(Rep[BitSet], Rep[BitSet])]]
         case _ => None
       }
@@ -186,7 +192,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object length {
       def unapply(d: Def[_]): Option[Rep[BitSet]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "length" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[BitSet]]]
         case _ => None
       }
@@ -198,7 +204,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object contains {
       def unapply(d: Def[_]): Option[(Rep[BitSet], Rep[Int])] = d match {
-        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "contains" =>
+        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "contains" =>
           Some((receiver, n)).asInstanceOf[Option[(Rep[BitSet], Rep[Int])]]
         case _ => None
       }
@@ -210,7 +216,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object add {
       def unapply(d: Def[_]): Option[(Rep[BitSet], Rep[Int])] = d match {
-        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "add"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "add"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, n)).asInstanceOf[Option[(Rep[BitSet], Rep[Int])]]
         case _ => None
       }
@@ -222,7 +228,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object add_many {
       def unapply(d: Def[_]): Option[(Rep[BitSet], Coll[Int])] = d match {
-        case MethodCall(receiver, method, Seq(ns, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "add" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+        case MethodCall(receiver, method, Seq(ns, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "add" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
           Some((receiver, ns)).asInstanceOf[Option[(Rep[BitSet], Coll[Int])]]
         case _ => None
       }
@@ -235,8 +241,20 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
   object BitSetCompanionMethods {
     object apply {
+      def unapply(d: Def[_]): Option[Coll[Boolean]] = d match {
+        case MethodCall(receiver, method, Seq(flags, _*), _) if receiver.elem.isInstanceOf[BitSetCompanionElem] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some(flags).asInstanceOf[Option[Coll[Boolean]]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Coll[Boolean]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_many {
       def unapply(d: Def[_]): Option[Rep[Array[Boolean]]] = d match {
-        case MethodCall(receiver, method, Seq(flags, _*), _) if receiver.elem.isInstanceOf[BitSetCompanionElem] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(flags, _*), _) if receiver.elem.isInstanceOf[BitSetCompanionElem] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
           Some(flags).asInstanceOf[Option[Rep[Array[Boolean]]]]
         case _ => None
       }

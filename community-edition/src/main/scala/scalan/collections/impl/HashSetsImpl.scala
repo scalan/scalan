@@ -26,7 +26,7 @@ trait HashSetsAbs extends Scalan with HashSets {
   implicit def defaultSHashSetElem[A:Elem]: Elem[SHashSet[A]] = element[SHashSetImpl[A]].asElem[SHashSet[A]]
   implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]]
 
-  implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, _,SHashSet[A]] = elem.asInstanceOf[SHashSetElem[A, _,SHashSet[A]]]
+  implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, SHashSet[A]] = elem.asInstanceOf[SHashSetElem[A, SHashSet[A]]]
   implicit val containerSHashSet: Cont[SHashSet] = new Container[SHashSet] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SHashSet[A]]
     def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
@@ -38,10 +38,16 @@ trait HashSetsAbs extends Scalan with HashSets {
     def to(x: Rep[SHashSet[A]]) = x.map(iso.to _)
     lazy val defaultRepTo = Default.defaultVal(SHashSet.empty[B])
   }
-  abstract class SHashSetElem[A, From, To <: SHashSet[A]](iso: Iso[From, To])(implicit eA: Elem[A])
-    extends ViewElem1[A, From, To, SHashSet](iso) {
+  class SHashSetElem[A, To <: SHashSet[A]](implicit eA: Elem[A])
+    extends EntityElem1[A, To, SHashSet](eA,container[SHashSet]) {
+    def isEntityType = true
+    def tag = { assert(this.isInstanceOf[SHashSetElem[_,_]]); weakTypeTag[SHashSet[A]].asInstanceOf[WeakTypeTag[To]]}
     override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
-    def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To]
+    def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To] = {
+      assert(x.selfType1.isInstanceOf[SHashSetElem[_,_]])
+      x.asRep[To]
+    }
+    def getDefaultRep: Rep[To] = ???
   }
 
   trait SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs]
@@ -82,9 +88,12 @@ trait HashSetsAbs extends Scalan with HashSets {
   }
   trait SHashSetImplCompanion
   // elem for concrete class
-  class SHashSetImplElem[A](iso: Iso[SHashSetImplData[A], SHashSetImpl[A]])(implicit val eA: Elem[A])
-    extends SHashSetElem[A, SHashSetImplData[A], SHashSetImpl[A]](iso) {
-    def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
+  class SHashSetImplElem[A](val iso: Iso[SHashSetImplData[A], SHashSetImpl[A]])(implicit val eA: Elem[A])
+    extends SHashSetElem[A, SHashSetImpl[A]]
+    with ViewElem1[A, SHashSetImplData[A], SHashSetImpl[A], SHashSet] {
+    override def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
+    override def getDefaultRep = super[ViewElem1].getDefaultRep
+    override lazy val tag = super[ViewElem1].tag
   }
 
   // state representation type
@@ -226,7 +235,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   object SHashSetMethods {
     object wrappedValueOfBaseType {
       def unapply(d: Def[_]): Option[Rep[SHashSet[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "wrappedValueOfBaseType" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SHashSetElem[_, _]] && method.getName == "wrappedValueOfBaseType" =>
           Some(receiver).asInstanceOf[Option[Rep[SHashSet[A]] forSome {type A}]]
         case _ => None
       }
@@ -238,7 +247,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
 
     object + {
       def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(elem, _*), _) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "$plus" =>
+        case MethodCall(receiver, method, Seq(elem, _*), _) if receiver.elem.isInstanceOf[SHashSetElem[_, _]] && method.getName == "$plus" =>
           Some((receiver, elem)).asInstanceOf[Option[(Rep[SHashSet[A]], Rep[A]) forSome {type A}]]
         case _ => None
       }
@@ -250,7 +259,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
 
     object map {
       def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A => B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "map" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[SHashSetElem[_, _]] && method.getName == "map" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[SHashSet[A]], Rep[A => B]) forSome {type A; type B}]]
         case _ => None
       }
@@ -262,7 +271,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
 
     object fold {
       def unapply(d: Def[_]): Option[(Rep[SHashSet[A]], Rep[A], Rep[((A,A)) => A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(z, f, _*), _) if receiver.elem.isInstanceOf[SHashSetElem[_, _, _]] && method.getName == "fold" =>
+        case MethodCall(receiver, method, Seq(z, f, _*), _) if receiver.elem.isInstanceOf[SHashSetElem[_, _]] && method.getName == "fold" =>
           Some((receiver, z, f)).asInstanceOf[Option[(Rep[SHashSet[A]], Rep[A], Rep[((A,A)) => A]) forSome {type A}]]
         case _ => None
       }
@@ -290,7 +299,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   object UserTypeSHashSet {
     def unapply(s: Exp[_]): Option[Iso[_, _]] = {
       s.elem match {
-        case e: SHashSetElem[a,from,to] => e.eItem match {
+        case e: SHashSetElem[a,to] => e.eItem match {
           case UnpackableElem(iso) => Some(iso)
           case _ => None
         }

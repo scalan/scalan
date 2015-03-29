@@ -7,11 +7,13 @@ import scala.reflect.runtime.universe._
 import scalan.staged.BaseExp
 
 trait Views extends Elems { self: Scalan =>
-
-  abstract class EntityElem[A] extends Elem[A] {
+  trait Convertable[A] {
     def convert(x: Rep[Reifiable[_]]): Rep[A] = !!!("should not be called")
   }
-  abstract class EntityElem1[A,C[_]](val eItem: Elem[A], val cont: Cont[C]) extends Elem[A] {
+  abstract class EntityElem[A] extends Elem[A] with Convertable[A] {
+  }
+  abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
+    extends Elem[To] with Convertable[To] {
   }
 
   // eFrom0 is used to avoid making eFrom implicit in subtypes
@@ -49,7 +51,7 @@ trait Views extends Elems { self: Scalan =>
     def unapply[From, To](ve: ViewElem[From, To]): Option[Iso[From, To]] = Some(ve.iso)
   }
 
-  abstract class ViewElem1[A,From,To,C[_]]
+  trait ViewElem1[A,From,To,C[_]]
     extends ViewElem[From, To] {
     def eItem: Elem[A]
     def cont: Cont[C]

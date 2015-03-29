@@ -112,7 +112,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
     def singleton[T: Elem](v: Rep[T]): Coll[T] = {
       element[T] match {
-        case paE: CollectionElem[_, _, _] => ???
+        case paE: CollectionElem[_, _] => ???
         case _ => replicate(toRep(1), v)
       }
     }
