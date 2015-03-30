@@ -275,7 +275,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
     val conf = jarReplaceExp.defaultCompilerConfig
     val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", "Original message",
       conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
-        extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("assembly"))))
+        extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("package"))))
     messageFromTestMethod should equal("Test Message")
   }
 }

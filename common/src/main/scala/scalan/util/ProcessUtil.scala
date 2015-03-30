@@ -9,13 +9,33 @@ object ProcessUtil {
       directory(absoluteWorkingDir).
       redirectErrorStream(true)
     val proc = builder.start()
-    val br = Some(new BufferedReader(new InputStreamReader(proc.getInputStream)))
+    val reader = new BufferedReader(new InputStreamReader(proc.getInputStream))
+    var br: Option[BufferedReader] = None
     val exitCode = proc.waitFor()
-    val output = readOutput(proc)
-    if (exitCode != 0) {
-      throw new RuntimeException(s"Executing '${command.mkString(" ")}' in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n$output")
-    } else {
-      Console.print(output)
+    exitCode match {
+      case 0 =>
+        toSystemOut match {
+          case true =>
+            try {
+              var line: String = reader.readLine()
+              while (line != null) line = reader.readLine()
+            } finally {
+              reader.close()
+            }
+          case false => br = Some(reader)
+        }
+      case _ =>
+        try {
+          var line: String = reader.readLine()
+          val sb = new StringBuilder
+          while (line != null) {
+            sb.append(line).append("\n")
+            line = reader.readLine()
+          }
+          throw new RuntimeException(s"Executing '${command.mkString(" ")}' in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n$sb")
+        } finally {
+          reader.close()
+        }
     }
     br
   }
