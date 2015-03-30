@@ -222,7 +222,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
     val conf = replaceMethExp.defaultCompilerConfig
     val length = getStagedOutputConfig(replaceMethExp)(replaceMethExp.arrayLength, "ClassMapping", Array(5, 9, 2),
       conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
-        extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("assembly"))))
+        extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("package"))))
     length should equal(3)
   }
 

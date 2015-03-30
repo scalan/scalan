@@ -18,7 +18,7 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
    *
    * Otherwise uses SBT to compile with the desired version
    */
-  case class CustomCompilerOutput(jar: URL, mainClass: Option[String] = None, output: Option[BufferedReader] = None)
+  case class CustomCompilerOutput(jar: URL, mainClass: Option[String] = None, output: Option[Array[String]] = None)
   case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String])
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
@@ -37,8 +37,8 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
       case Some(mainPack) => Some(mainPack + "." +  functionName)
       case _ =>  None
     }
-    val output: Option[BufferedReader] = compilerConfig.scalaVersion match {
-      case Some(scalaVersion) => sbtCompile(sourcesDir, executableDir, functionName, compilerConfig, sourceFile, jarPath)
+    val output: Option[Array[String]] = compilerConfig.scalaVersion match {
+      case Some(scalaVersion) => Some(sbtCompile(sourcesDir, executableDir, functionName, compilerConfig, sourceFile, jarPath))
       case None =>
         val settings = new Settings
         settings.usejavacp.value = true
