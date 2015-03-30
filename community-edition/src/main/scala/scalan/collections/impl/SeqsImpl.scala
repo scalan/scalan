@@ -50,6 +50,9 @@ trait SeqsAbs extends Scalan with Seqs {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def sSeqElement[A](implicit eA: Elem[A]) =
+    new SSeqElem[A, SSeq[A]]()(eA)
+
   trait SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs]
   implicit lazy val SSeqCompanionElem: SSeqCompanionElem = new SSeqCompanionElem {
     lazy val tag = weakTypeTag[SSeqCompanionAbs]

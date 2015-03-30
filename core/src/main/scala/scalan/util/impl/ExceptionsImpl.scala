@@ -36,6 +36,9 @@ trait ExceptionsAbs extends Scalan with Exceptions {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def sThrowableElement =
+    new SThrowableElem[SThrowable]()
+
   trait SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs]
   implicit lazy val SThrowableCompanionElem: SThrowableCompanionElem = new SThrowableCompanionElem {
     lazy val tag = weakTypeTag[SThrowableCompanionAbs]

@@ -31,6 +31,9 @@ trait VerticesAbs extends Scalan with Vertices {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def vertexElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
+    new VertexElem[V, E, Vertex[V, E]]()(eV, eE)
+
   trait VertexCompanionElem extends CompanionElem[VertexCompanionAbs]
   implicit lazy val VertexCompanionElem: VertexCompanionElem = new VertexCompanionElem {
     lazy val tag = weakTypeTag[VertexCompanionAbs]

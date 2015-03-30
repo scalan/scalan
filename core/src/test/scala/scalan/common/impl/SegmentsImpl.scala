@@ -28,6 +28,9 @@ trait SegmentsAbs extends Scalan with Segments {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def segmentElement =
+    new SegmentElem[Segment]()
+
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
   implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
     lazy val tag = weakTypeTag[SegmentCompanionAbs]

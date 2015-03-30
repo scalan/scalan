@@ -202,8 +202,8 @@ class BoilerplateTool extends StrictLogging {
     "la" -> List(laConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig),
-    "all" -> List(coreTestsConfig, ceConfig, eeConfig)
+    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig, collectionsConfig, graphConfig),
+    "all" -> List(coreTestsConfig, ceConfig, eeConfig, coreConfig, collectionsConfig, graphConfig)
   )
 
   def main(args: Array[String]) {

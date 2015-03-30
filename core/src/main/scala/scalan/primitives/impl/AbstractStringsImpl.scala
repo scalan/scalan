@@ -28,6 +28,9 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def aStringElement =
+    new AStringElem[AString]()
+
   trait AStringCompanionElem extends CompanionElem[AStringCompanionAbs]
   implicit lazy val AStringCompanionElem: AStringCompanionElem = new AStringCompanionElem {
     lazy val tag = weakTypeTag[AStringCompanionAbs]

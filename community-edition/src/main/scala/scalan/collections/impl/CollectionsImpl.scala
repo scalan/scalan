@@ -31,6 +31,9 @@ trait CollectionsAbs extends Scalan with Collections {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def collectionElement[A](implicit elem: Elem[A]) =
+    new CollectionElem[A, Collection[A]]()(elem)
+
   trait CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs]
   implicit lazy val CollectionCompanionElem: CollectionCompanionElem = new CollectionCompanionElem {
     lazy val tag = weakTypeTag[CollectionCompanionAbs]
@@ -62,6 +65,9 @@ trait CollectionsAbs extends Scalan with Collections {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def iPairCollectionElement[A, B](implicit eA: Elem[A], eB: Elem[B]) =
+    new IPairCollectionElem[A, B, IPairCollection[A, B]]()(eA, eB)
+
   // single proxy for each type family
   implicit def proxyINestedCollection[A](p: Rep[INestedCollection[A]]): INestedCollection[A] = {
     implicit val tag = weakTypeTag[INestedCollection[A]]
@@ -78,6 +84,9 @@ trait CollectionsAbs extends Scalan with Collections {
     }
     def getDefaultRep: Rep[To] = ???
   }
+
+  def iNestedCollectionElement[A](implicit eA: Elem[A]) =
+    new INestedCollectionElem[A, INestedCollection[A]]()(eA)
 
   // elem for concrete class
   class UnitCollectionElem(val iso: Iso[UnitCollectionData, UnitCollection])

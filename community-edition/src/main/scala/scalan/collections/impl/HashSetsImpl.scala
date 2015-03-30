@@ -50,6 +50,9 @@ trait HashSetsAbs extends Scalan with HashSets {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def sHashSetElement[A](implicit eA: Elem[A]) =
+    new SHashSetElem[A, SHashSet[A]]()(eA)
+
   trait SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs]
   implicit lazy val SHashSetCompanionElem: SHashSetCompanionElem = new SHashSetCompanionElem {
     lazy val tag = weakTypeTag[SHashSetCompanionAbs]

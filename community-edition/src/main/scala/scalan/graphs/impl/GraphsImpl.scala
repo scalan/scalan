@@ -32,6 +32,9 @@ trait GraphsAbs extends Scalan with Graphs {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def graphElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
+    new GraphElem[V, E, Graph[V, E]]()(eV, eE)
+
   trait GraphCompanionElem extends CompanionElem[GraphCompanionAbs]
   implicit lazy val GraphCompanionElem: GraphCompanionElem = new GraphCompanionElem {
     lazy val tag = weakTypeTag[GraphCompanionAbs]

@@ -28,6 +28,9 @@ trait BitSetsAbs extends Scalan with BitSets {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def bitSetElement =
+    new BitSetElem[BitSet]()
+
   trait BitSetCompanionElem extends CompanionElem[BitSetCompanionAbs]
   implicit lazy val BitSetCompanionElem: BitSetCompanionElem = new BitSetCompanionElem {
     lazy val tag = weakTypeTag[BitSetCompanionAbs]

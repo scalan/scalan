@@ -314,6 +314,9 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |    }
         |    def getDefaultRep: Rep[To] = ???
         |  }
+        |
+        |  def ${StringUtil.lowerCaseFirst(e.name)}Element${e.tpeArgDecls.opt(args => s"[${args.mkString(", ")}]")}${e.implicitArgsDecl} =
+        |    new ${e.name}Elem[${e.typesDeclPref}${e.entityType}]()${e.implicitArgsUse}
         |""".stripAndTrim
       }
 

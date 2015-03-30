@@ -29,6 +29,9 @@ trait VectorsAbs extends Scalan with Vectors {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def abstractVectorElement[T](implicit elem: Elem[T]) =
+    new AbstractVectorElem[T, AbstractVector[T]]()(elem)
+
   trait AbstractVectorCompanionElem extends CompanionElem[AbstractVectorCompanionAbs]
   implicit lazy val AbstractVectorCompanionElem: AbstractVectorCompanionElem = new AbstractVectorCompanionElem {
     lazy val tag = weakTypeTag[AbstractVectorCompanionAbs]

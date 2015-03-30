@@ -29,6 +29,9 @@ trait MatricesAbs extends Scalan with Matrices {
     def getDefaultRep: Rep[To] = ???
   }
 
+  def abstractMatrixElement[T](implicit elem: Elem[T]) =
+    new AbstractMatrixElem[T, AbstractMatrix[T]]()(elem)
+
   trait AbstractMatrixCompanionElem extends CompanionElem[AbstractMatrixCompanionAbs]
   implicit lazy val AbstractMatrixCompanionElem: AbstractMatrixCompanionElem = new AbstractMatrixCompanionElem {
     lazy val tag = weakTypeTag[AbstractMatrixCompanionAbs]
