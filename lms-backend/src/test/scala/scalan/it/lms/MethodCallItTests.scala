@@ -8,7 +8,7 @@ import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.linalgebra.MatricesDslExp
 import scalan.util.FileUtil
-import scalan.{CommunityMethodMapping, ScalanCommunityDslExp, ScalanCommunityExp, ScalanCtxExp}
+import scalan.{CommunityMethodMappingDSL, ScalanCommunityDslExp, ScalanCommunityExp, ScalanCtxExp}
 
 class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 
@@ -210,7 +210,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
     length should equal(3)
   }
 
-  val replaceMethExp = new MatricesDslExp with ScalanCommunityExp with TestLmsCompiler with CommunityMethodMapping {
+  val replaceMethExp = new MatricesDslExp with ScalanCommunityExp with TestLmsCompiler with CommunityMethodMappingDSL {
     lazy val arrayLength = fun { v: Rep[Array[Int]] =>
       Collection(v).length
     }
@@ -234,11 +234,11 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
     import scala.reflect.runtime.universe.typeOf
     val tyThrowable = typeOf[Throwable]
 
-    trait TestConf extends LanguageConf {
+    trait TestConf extends MappingTags {
       val testLib = new Library("") {
         val scalanUtilPack = new Pack("scalan.util") {
           val exceptionsFam = new Family('Exceptions) {
-            val throwable = new ClassType('SThrowable, 'PA) {
+            val throwable = new ClassType('SThrowable) {
               val getMessage = Method('getMessage, tyString, MethodArg(tyString))
             }
           }
@@ -246,7 +246,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
       }
     }
 
-    new ScalaLanguage with TestConf {
+    new ScalaMappingDSL with TestConf {
 
       val extLib = new ScalaLib("", "scalan.it.lms.MappingMethodFromJar.TestMethod") {
         val testMessageMethod = ScalaFunc('testMessage)(true)
@@ -255,7 +255,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
       val scala2Scala = {
         import scala.language.reflectiveCalls
 
-        mutable.Map(
+        Map(
           testLib.scalanUtilPack.exceptionsFam.throwable.getMessage -> extLib.testMessageMethod
         )
       }
@@ -264,7 +264,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
         val throwableImp = ScalaFunc(Symbol("scalan.imp.ThrowableImp"))(true)
       }
 
-      val backend = new ScalaBackend {
+      val mapping = new ScalaMapping {
         val functionMap = scala2Scala
         override val classMap = Map[Class[_], ScalaFunc](classOf[scalan.util.Exceptions#SThrowable] -> main.throwableImp)
       }

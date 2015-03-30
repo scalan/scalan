@@ -3,10 +3,10 @@ package scalan.compilation.language
 import java.lang.reflect.{Method => JMethod}
 
 trait Interpreter {
-  this: MethodMapping =>
+  this: MethodMappingDSL =>
 
-  def mappedFunc(method: JMethod): Option[LanguageConf#Fun] = {
-    var fun: Option[LanguageConf#Fun] = None
+  def mappedFunc(method: JMethod): Option[MappingTags#Fun] = {
+    var fun: Option[MappingTags#Fun] = None
     methodReplaceConf.foreach(languageBackend => {
       val f = languageBackend.get(method.getDeclaringClass.getName, method.getName)
       f match {

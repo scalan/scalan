@@ -1,20 +1,19 @@
 package scalan
 
-import scala.collection.mutable
 import scalan.compilation.language.LanguageId._
 import scalan.compilation.language._
 
-class MethodMappingTest extends BaseTests {
+class MethodMappingDSLTest extends BaseTests {
 
-  object TestMethodMapping extends MethodMapping {
+  object TestMethodMappingDSL$ extends MethodMappingDSL {
 
-    trait CommunityConf extends LanguageConf {
+    trait CommunityConf extends MappingTags {
 
       val scalanCE = new Library("scalan-ce.jar") {
 
         val collectionsPack = new Pack("scalan.collections") {
           val collectionsFam = new Family('Collections) {
-            val collection = new ClassType('Collection, 'Coll, TyArg('A)) {
+            val collection = new ClassType('Collection, TyArg('A)) {
               val length = Method('length, tyInt)
             }
           }
@@ -22,7 +21,7 @@ class MethodMappingTest extends BaseTests {
       }
     }
 
-    new ScalaLanguage with CommunityConf {
+    new ScalaMappingDSL with CommunityConf {
       import scala.language.reflectiveCalls
 
       val linpackScala = new ScalaLib("linpack.jar", "org.linpack") {
@@ -32,17 +31,17 @@ class MethodMappingTest extends BaseTests {
 
       val mapScalanCE2Scala = {
         import scalanCE._
-        mutable.Map(
+        Map(
           collectionsPack.collectionsFam.collection.length -> linpackScala.arrayLength
         )
       }
 
-      val backend = new ScalaBackend {
-        val functionMap = mapScalanCE2Scala // ++ ???
+      val mapping = new ScalaMapping {
+        val functionMap = mapScalanCE2Scala
       }
     }
 
-    new CppLanguage with CommunityConf {
+    new CppMappingDSL with CommunityConf {
       import scala.language.reflectiveCalls
 
       val linpackCpp = new CppLib("linpack.h", "linpack.o") {
@@ -52,26 +51,26 @@ class MethodMappingTest extends BaseTests {
 
       val mapScalanCE2Cpp = {
         import scalanCE._
-        mutable.Map(
+        Map(
           collectionsPack.collectionsFam.collection.length -> linpackCpp.invertMatr
         )
       }
 
-      val backend = new CppBackend {
-        val functionMap = mapScalanCE2Cpp // ++ ???
+      val mapping = new CppMapping {
+        val functionMap = mapScalanCE2Cpp
       }
     }
   }
 
   test("Scala Method") {
-    val m = TestMethodMapping.methodReplaceConf.head.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMapping#ScalaLanguage#ScalaFunc]
+    val m = TestMethodMappingDSL$.methodReplaceConf.head.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMappingDSL#ScalaMappingDSL#ScalaFunc]
     "arrayLength" should equal(m.funcName.name)
     m.args.size should equal(0)
   }
 
   test("C++ Method") {
-    implicit def defaultLanguage: LANGUAGE = CPP
-    val m = TestMethodMapping.methodReplaceConf.head.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMapping#CppLanguage#CppFunc]
+    implicit def defaultLanguage: LANGUAGE_ID = CPP
+    val m = TestMethodMappingDSL$.methodReplaceConf.head.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMappingDSL#CppMappingDSL#CppFunc]
     "invertMatrix" should equal(m.funcName)
     m.args.size should equal(2)
   }

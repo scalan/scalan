@@ -1,9 +1,9 @@
 package scalan.compilation.lms
 
-import scalan.CommunityMethodMapping
+import scalan.CommunityMethodMappingDSL
 import scalan.ScalanCommunityDslExp
 
-trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with CommunityMethodMapping =>
+trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with CommunityMethodMappingDSL =>
 
   val lms: CommunityLmsBackendBase
 

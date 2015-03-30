@@ -9,10 +9,7 @@ object ProcessUtil {
       directory(absoluteWorkingDir).
       redirectErrorStream(true)
     val proc = builder.start()
-    val br = toSystemOut match {
-      case true => None
-      case false => Some(new BufferedReader(new InputStreamReader(proc.getInputStream)))
-    }
+    val br = Some(new BufferedReader(new InputStreamReader(proc.getInputStream)))
     val exitCode = proc.waitFor()
     val output = readOutput(proc)
     if (exitCode != 0) {

@@ -8,11 +8,11 @@ import java.net.{URL, URLClassLoader}
 
 import scala.tools.nsc.reporters.StoreReporter
 import scala.tools.nsc.{Global, Settings}
-import scalan.compilation.language.MethodMapping
+import scalan.compilation.language.MethodMappingDSL
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
-trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with MethodMapping { self: ScalanCtxExp =>
+trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with MethodMappingDSL { self: ScalanCtxExp =>
   /**
    * If scalaVersion is None, uses scala-compiler.jar
    *

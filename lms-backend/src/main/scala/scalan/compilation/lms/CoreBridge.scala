@@ -4,9 +4,9 @@ package compilation.lms
 import java.lang.reflect.Method
 import java.util.HashMap
 
-import scalan.compilation.language.{CoreMethodMapping, MethodMapping, Interpreter}
+import scalan.compilation.language.{CoreMethodMappingDSL, MethodMappingDSL, Interpreter}
 
-trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { self: ScalanCtxExp =>
+trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { self: ScalanCtxExp =>
 
   val lms: CoreLmsBackendBase
 
