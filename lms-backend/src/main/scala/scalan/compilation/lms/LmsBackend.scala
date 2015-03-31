@@ -307,6 +307,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     math_sin(v)
   }
 
+  def Exp(v: Exp[Double]) : Exp[Double] = {
+    math_exp(v)
+  }
+
   def intToDouble(v: Exp[Int]) : Exp[Double] = {
     int_to_double(v)
   }

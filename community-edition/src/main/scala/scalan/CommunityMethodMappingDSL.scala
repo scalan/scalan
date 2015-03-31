@@ -1,22 +1,21 @@
 package scalan
 
-import scala.collection.mutable
 import scalan.compilation.language._
 import scalan.linalgebra.Matrices
 
-trait CommunityMethodMapping extends MethodMapping {
+trait CommunityMethodMappingDSL extends MethodMappingDSL {
 
-  trait CommunityConf extends LanguageConf {
+  trait CommunityMappingTags extends MappingTags {
 
     import scala.reflect.runtime.universe.typeOf
 
     val tyMatrix = typeOf[Matrices#AbstractMatrix[_]]
 
-    val scalanCE = new Library("scalan-ce.jar") {
+    val scalanCE = new Library() {
 
       val collectionsPack = new Pack("scalan.collections") {
         val collectionsFam = new Family('Collections) {
-          val collection = new ClassType('Collection, 'Coll, TyArg('A)) {
+          val collection = new ClassType('Collection, TyArg('A)) {
             val length = Method('length, tyInt)
             val arr = Method('arr, tyArray)
           }
@@ -24,7 +23,7 @@ trait CommunityMethodMapping extends MethodMapping {
       }
       val matrixPack = new Pack("scalan.linalgebra") {
         val matrixFam = new Family('Matrices) {
-          val matrix = new ClassType('AbstractMatrix, 'PA, TyArg('A)) {
+          val matrix = new ClassType('AbstractMatrix, TyArg('A)) {
             val invert = Method('invert, tyMatrix)
           }
         }
@@ -34,9 +33,9 @@ trait CommunityMethodMapping extends MethodMapping {
     val expBaseCollection = new CaseClassObject(typeOf[scalan.collections.impl.CollectionsExp#ExpBaseCollection[_]])
   }
 
-  new ScalaLanguage with CommunityConf {
+  new ScalaMappingDSL with CommunityMappingTags {
 
-    val linpackScala = new ScalaLib("linpack.jar", "org.linpack") {
+    val linpackScala = new ScalaLib(pack = "org.linpack") {
       val invertMatr = ScalaFunc('invertMatrixDouble, ScalaArg(ScalaType('lapack_matr), 'm), ScalaArg(ScalaType('T1), 'V1))()
     }
 
@@ -45,21 +44,17 @@ trait CommunityMethodMapping extends MethodMapping {
     }
 
     val mapScalanCE2Scala = {
-      import scalanCE._
       import scala.language.reflectiveCalls
 
-      mutable.Map(
-        collectionsPack.collectionsFam.collection.length -> lms.arrayLength,
-        matrixPack.matrixFam.matrix.invert -> linpackScala.invertMatr
-      )
+      Map[Method, ScalaFunc]()
     }
 
-    val backend = new ScalaBackend {
+    val mapping = new ScalaMapping {
       val functionMap = mapScalanCE2Scala
     }
   }
 
-  new CppLanguage with CommunityConf {
+  new CppMappingDSL with CommunityMappingTags {
     import scala.language.reflectiveCalls
 
     val linpackCpp = new CppLib("linpack.h", "linpack.o") {
@@ -69,13 +64,13 @@ trait CommunityMethodMapping extends MethodMapping {
 
     val mapScalanCE2Cpp = {
       import scalanCE._
-      mutable.Map(
+      Map(
         matrixPack.matrixFam.matrix.invert -> linpackCpp.invertMatr
       )
     }
 
-    val backend = new CppBackend {
-      val functionMap = mapScalanCE2Cpp // ++ ???
+    val mapping = new CppMapping {
+      val functionMap = mapScalanCE2Cpp
     }
   }
 }

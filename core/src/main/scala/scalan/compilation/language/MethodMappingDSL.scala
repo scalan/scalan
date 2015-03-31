@@ -5,26 +5,26 @@ import scala.language.postfixOps
 import scala.reflect.runtime.universe.typeOf
 
 object LanguageId extends Enumeration {
-  type LANGUAGE = Value
+  type LANGUAGE_ID = Value
   val SCALA, CPP = Value
 
-  implicit def defaultLanguage: LANGUAGE = SCALA
+  implicit def defaultLanguage: LANGUAGE_ID = SCALA
 }
 
-trait MethodMapping {
+trait MethodMappingDSL {
 
   import LanguageId._
 
-  val backends: mutable.HashMap[LANGUAGE, LanguageConf#Backend[_]] = new mutable.HashMap()
+  val mappingDSLs: mutable.HashMap[LANGUAGE_ID, mutable.ArrayBuffer[MappingTags#Mapping[_]]] = new mutable.HashMap()
 
-  def methodReplaceConf(implicit language: LANGUAGE): LanguageConf#Backend[_] = backends(language)
+  def methodReplaceConf(implicit languageId: LANGUAGE_ID): mutable.ArrayBuffer[MappingTags#Mapping[_]] = mappingDSLs(languageId)
 
   trait Implicit[T] {
     this: T =>
     implicit val v: T = this
   }
 
-  trait LanguageConf extends Implicit[LanguageConf] {
+  trait MappingTags extends Implicit[MappingTags] {
     import scala.reflect.runtime.universe.Type
 
     val tyInt = typeOf[Int]
@@ -33,7 +33,7 @@ trait MethodMapping {
 
     case class CaseClassObject(aType: Type) extends Fn with Implicit[CaseClassObject]
 
-    val backend: Backend[_]
+    val mapping: Mapping[_]
 
     trait Fn {
       fns += this
@@ -62,13 +62,12 @@ trait MethodMapping {
 
     trait DomainType extends Ty
 
-    case class ClassType(name: Symbol, synonym: Symbol, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]{
+    case class ClassType(name: Symbol, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]{
       override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[ClassType] && {
         val m = obj.asInstanceOf[ClassType]
-        m.name == name && m.synonym == synonym && m.tyArgs == tyArgs && m.family == family && m.pack == pack
+        m.name == name && m.tyArgs == tyArgs && m.family == family && m.pack == pack
       }
     }
-
 
     case class MethodArg(name: Type)
 
@@ -83,18 +82,13 @@ trait MethodMapping {
       val lib: Fn = null
     }
 
-    abstract class Backend[TC <: LanguageConf](language: LANGUAGE)(implicit val l: TC) {
-      backends += {
-        (backends.get(language), this) match {
-          case (Some(conf: LanguageConf#Backend[_]), current) =>
-            current.libPaths ++: conf.libPaths
-//            current.functionMap ++: conf.functionMap
-          case _ =>
-        }
-        language -> this
-      }
-
+    abstract class Mapping[TC <: MappingTags](languageId: LANGUAGE_ID)(implicit val l: TC) {
       type Func <: Fun
+
+      (mappingDSLs.get(languageId), this) match {
+        case (Some(conf: mutable.ArrayBuffer[_]), current) => conf += current
+        case _ => mappingDSLs +=  languageId -> mutable.ArrayBuffer(this)
+      }
 
       def get(classPath: String, method: String): Option[Func] = {
         methodMap.getOrElse((classPath, method), None)
@@ -103,13 +97,11 @@ trait MethodMapping {
       lazy val fns = l.fns
       lazy val dependencies = l.libs.flatMap(_.dependencies)
       
-      val libPaths: mutable.Set[String]
+      val libPaths: Set[String]
 
-      val functionMap: mutable.Map[Method, Func]
+      val functionMap: Map[Method, Func]
 
       val classMap: Map[Class[_], Func] = Map.empty[Class[_], Func]
-
-//      val caseClassMap: Map[CaseClassObject, Func] = Map.empty[CaseClassObject, Func]
 
       // To simplify config usage, data are transformed to Backend representation. Direct link to LanguageConf is never used
       lazy val methodMap: Map[(String, String), Option[Func]] = functionMap.map { case (m, f) =>
@@ -121,11 +113,11 @@ trait MethodMapping {
               case _ => ""
             }
         }) + m.theType.name.name, m.name.name), Some(f))
-      } toMap
+      }
     }
   }
 
-  trait CppLanguage extends LanguageConf {
+  trait CppMappingDSL extends MappingTags {
 
     case class CppLib(hfile: String, libfile: String) extends Fn with Implicit[CppLib]
 
@@ -135,14 +127,14 @@ trait MethodMapping {
 
     case class CppFunc(funcName: String, args: CppArg*)(implicit override val lib: CppLib) extends Fun
 
-    abstract class CppBackend extends Backend(CPP) {
+    abstract class CppMapping extends Mapping(CPP) {
       type Func = CppFunc
 
-      lazy val libPaths: mutable.Set[String] = mutable.Set.empty[String]
+      lazy val libPaths: Set[String] = Set.empty[String]
     }
   }
 
-  trait ScalaLanguage extends LanguageConf {
+  trait ScalaMappingDSL extends MappingTags {
 
     case class ScalaLib(jar: String = "", pack: String = "") extends Fn with Implicit[ScalaLib]
 
@@ -154,22 +146,22 @@ trait MethodMapping {
 
     case class ScalaFunc(funcName: Symbol, args: ScalaArg*)(val wrapper : Boolean = false)(implicit override val lib: Fn) extends Fun
 
-    abstract class ScalaBackend extends Backend(SCALA) {
+    abstract class ScalaMapping extends Mapping(SCALA) {
       type Func = ScalaFunc
 
-      lazy val libPaths: mutable.Set[String] = fns filter(_.isInstanceOf[ScalaLib]) map (_.asInstanceOf[ScalaLib].jar) filter (!_.isEmpty) to
+      lazy val libPaths: Set[String] = fns filter(_.isInstanceOf[ScalaLib]) map (_.asInstanceOf[ScalaLib].jar) filter (!_.isEmpty) to
     }
   }
 }
 
-trait CoreMethodMapping extends MethodMapping {
+trait CoreMethodMappingDSL extends MethodMappingDSL {
 
-  trait CoreConf extends LanguageConf
+  trait CoreMapping extends MappingTags
 
-  new ScalaLanguage with CoreConf {
+  new ScalaMappingDSL with CoreMapping {
 
-    val backend = new ScalaBackend {
-      val functionMap = mutable.Map.empty[Method, Func]
+    val mapping = new ScalaMapping {
+      val functionMap = Map.empty[Method, Func]
     }
   }
 }

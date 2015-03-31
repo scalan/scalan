@@ -1,6 +1,5 @@
 package scalan.util
 
-import java.io.File.separator
 import java.io._
 import java.nio.channels.Channels
 import java.nio.file._
@@ -8,7 +7,6 @@ import java.nio.file.attribute.BasicFileAttributes
 
 import scala.Console
 import scala.io.{Codec, Source}
-import scalan.util.ProcessUtil._
 
 object FileUtil {
   def read(file: File, codec: Codec = Codec.UTF8): String = {
@@ -133,12 +131,6 @@ object FileUtil {
 
   def file(first: File, rest: String*): File =
     rest.foldLeft(first) { (file, child) => new File(file, child) }
-
-  def packJar(baseClass: Class[_], methodName: String, path: String, libDir: String, jarName: String) = {
-    file(path, libDir).mkdirs()
-    launch(new File(baseClass.getClassLoader.getResource(".").toURI), Seq("jar", "-cvf", file(path, libDir, jarName).getAbsolutePath) :+
-      baseClass.getPackage.getName.replaceAll("\\.", "/"): _*)
-  }
 
   /**
    * Same as dir.listFiles(filter), except it returns empty array instead of null

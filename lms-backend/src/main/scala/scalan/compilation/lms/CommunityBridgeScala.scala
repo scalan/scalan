@@ -3,9 +3,9 @@ package scalan.compilation.lms
 import java.lang.reflect.Method
 
 import scalan.compilation.language.ScalaInterpreter
-import scalan.{ScalanCommunityDslExp, CommunityMethodMapping}
+import scalan.{ScalanCommunityDslExp, CommunityMethodMappingDSL}
 
-trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping with ScalaInterpreter { self: ScalanCommunityDslExp =>
+trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDSL with ScalaInterpreter { self: ScalanCommunityDslExp =>
 
   override def defTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]) =
     communityTransformer(m, g, e) orElse super.defTransformer(m, g, e)
@@ -27,8 +27,8 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping w
     import lms.EffectId._
 
     mappedFunc(method) match {
-      case Some(conf: ScalaLanguage#ScalaFunc) => conf.lib match {
-        case e: ScalaLanguage#ScalaLib =>
+      case Some(conf: ScalaMappingDSL#ScalaFunc) => conf.lib match {
+        case e: ScalaMappingDSL#ScalaLib =>
           val param = conf.wrapper match {
             case true => Seq(symMirr(receiver.asInstanceOf[Exp[_]]))
             case false => Seq.empty[lms.Exp[_]]
@@ -41,7 +41,7 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMapping w
             case (mA: Manifest[a]) => lms.scalaMethod[a](null, PURE, methodName, List.empty,
               param ++ args.filter(_.isInstanceOf[Exp[_]]).map(v => symMirr(v.asInstanceOf[Exp[_]])): _*)(mA)
           }
-        case e: ScalaLanguage#EmbeddedObject if e.name == "lms" =>
+        case e: ScalaMappingDSL#EmbeddedObject if e.name == "lms" =>
           val obj = symMirr(receiver.asInstanceOf[Exp[_]])
           val name = conf.funcName.name
           import scala.reflect.runtime.universe._

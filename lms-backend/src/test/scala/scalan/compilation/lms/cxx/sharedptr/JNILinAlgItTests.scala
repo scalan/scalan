@@ -10,7 +10,7 @@ import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslExp, VectorsDslExp}
 
 class JNILinAlgItTests extends BaseItTests{
-  class ProgExp extends LinearAlgebraExamples with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCxx with JNIBridge with CommunityBridge with CommunityMethodMapping with VectorsDslExp with MatricesDslExp { self =>
+  class ProgExp extends LinearAlgebraExamples with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCxx with JNIBridge with CommunityBridge with CommunityMethodMappingDSL with VectorsDslExp with MatricesDslExp { self =>
     val lms = new CommunityCxxShptrLmsBackend
 
     lazy val ddmvm_jni = fun { p: Rep[JNIType[(Array[Array[Double]], Array[Double])]] =>
