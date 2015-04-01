@@ -117,10 +117,12 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
     def dot(other: Vector[T])(implicit n: Numeric[T]): Rep[T] = {
-      matchVector[T, AbstractVector[T]](other) {
-        dv => (dv.items zip items).map { case Pair(v1, v2) => v1 * v2}.reduce
+      matchVector[T, T](other) {
+        dv =>
+          val res = (dv.items zip items).map { case Pair(v1, v2) => v1 * v2 }
+          res.reduce
       } {
-        sv => (items(sv.nonZeroIndices) zip sv.nonZeroValues).map { case Pair(v1, v2) => v1 * v2}.reduce
+        sv => (items(sv.nonZeroIndices) zip sv.nonZeroValues).map { case Pair(v1, v2) => v1 * v2 }.reduce
       }
 //      val vRes: Vector[T] = other *^ items
 //      val res = vRes.nonZeroValues.reduce
