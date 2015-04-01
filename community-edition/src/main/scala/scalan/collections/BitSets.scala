@@ -28,7 +28,6 @@ trait BitSets  { self: ScalanCommunityDsl =>
       BitSet(Collection.fromArray(flags))
     def empty(range: Rep[Int]) = BitSet(Collection.replicate(range, false))
   }
-  implicit def defaultBitSetElem: Elem[BitSet] = element[BoolCollBitSet].asElem[BitSet]
 
   abstract class BoolCollBitSet(val bits: Rep[Collection[Boolean]]) extends BitSet {
   }

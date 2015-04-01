@@ -60,10 +60,6 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
     }
   }
 
-  implicit def defaultFrontElement: Elem[Front] = {
-    element[BaseFront].asElem[Front]
-  }
-
   trait BaseFrontCompanion extends ConcreteClass0[Front] {
     def defaultOf = Default.defaultVal(BaseFront(element[BaseCollection[Int]].defaultRepValue, element[BitSet].defaultRepValue))
   }

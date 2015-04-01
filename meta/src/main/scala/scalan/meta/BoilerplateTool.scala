@@ -161,7 +161,8 @@ class BoilerplateTool extends StrictLogging {
     entityFiles = List(
       "scalan/graphs/Graphs.scala",
       "scalan/graphs/Vertices.scala",
-      "scalan/graphs/Edges.scala"
+      "scalan/graphs/Edges.scala",
+      "scalan/graphs/Fronts.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -172,32 +173,15 @@ class BoilerplateTool extends StrictLogging {
     collectTypeSynonyms
   )
 
-  lazy val frontsConfig = CodegenConfig(
-    name = "fronts",
-    srcPath = "../community-edition/src/main/scala",
-    entityFiles = List(
-      "scalan/graphs/Fronts.scala"
-    ),
-    baseContextTrait = "ScalanCommunityDsl",
-    seqContextTrait = "ScalanCommunityDslSeq",
-    stagedContextTrait = "ScalanCommunityDslExp",
-    extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
-    Map()
-  )
-
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
     args.flatMap { arg => configsMap.getOrElse(arg,
       sys.error(s"Unknown codegen config $arg. Allowed values: ${configsMap.keySet.mkString(", ")}"))
     }.distinct
 
   val configsMap = Map(
-    "fronts" -> List(frontsConfig),
     "graphs" -> List(graphConfig),
     "collections" -> List(collectionsConfig),
-    "coretests" -> List(coreTestsConfig),
-    "core" -> List(coreConfig),
+    "core" -> List(coreConfig, coreTestsConfig),
     "ce" -> List(ceConfig),
     "la" -> List(laConfig),
     "ee" -> List(eeConfig),

@@ -294,8 +294,6 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     override def defaultOf[T: Elem] = Default.defaultVal(RowMajorSparseMatrix(element[Collection[AbstractVector[T]]].defaultRepValue, IntElement.defaultRepValue))
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = ???
   }
-
-  implicit def matrixElem[T](implicit e: Elem[T]): Elem[AbstractMatrix[T]] = element[RowMajorNestedMatrix[T]].asElem[AbstractMatrix[T]]
 }
 
 trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommunityDsl =>

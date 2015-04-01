@@ -33,7 +33,7 @@ trait CollectionsAbs extends Scalan with Collections {
     def getDefaultRep: Rep[To] = ???
   }
 
-  def collectionElement[A](implicit elem: Elem[A]) =
+  implicit def collectionElement[A](implicit elem: Elem[A]) =
     new CollectionElem[A, Collection[A]]()(elem)
 
   trait CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs]
@@ -70,7 +70,7 @@ trait CollectionsAbs extends Scalan with Collections {
     def getDefaultRep: Rep[To] = ???
   }
 
-  def iPairCollectionElement[A, B](implicit eA: Elem[A], eB: Elem[B]) =
+  implicit def iPairCollectionElement[A, B](implicit eA: Elem[A], eB: Elem[B]) =
     new IPairCollectionElem[A, B, IPairCollection[A, B]]()(eA, eB)
 
   // single proxy for each type family
@@ -92,7 +92,7 @@ trait CollectionsAbs extends Scalan with Collections {
     def getDefaultRep: Rep[To] = ???
   }
 
-  def iNestedCollectionElement[A](implicit eA: Elem[A]) =
+  implicit def iNestedCollectionElement[A](implicit eA: Elem[A]) =
     new INestedCollectionElem[A, INestedCollection[A]]()(eA)
 
   // elem for concrete class

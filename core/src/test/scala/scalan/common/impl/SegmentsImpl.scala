@@ -29,7 +29,7 @@ trait SegmentsAbs extends Scalan with Segments {
     def getDefaultRep: Rep[To] = ???
   }
 
-  def segmentElement =
+  implicit def segmentElement =
     new SegmentElem[Segment]()
 
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]

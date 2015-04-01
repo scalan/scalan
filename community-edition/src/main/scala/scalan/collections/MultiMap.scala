@@ -26,8 +26,6 @@ trait MultiMaps extends Base { self: ScalanCommunityDsl =>
 
   def appendMultiMap[K:Elem,V:Elem](map: Rep[MMap[K,ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[MMap[K,ArrayBuffer[V]]];
 
-  implicit def defaultMultiMapElement[K:Elem,V:Elem]: Elem[MMultiMap[K,V]] = element[HashMMultiMap[K,V]].asElem[MMultiMap[K,V]]
-
   trait MMultiMapCompanion extends TypeFamily2[MMultiMap] {
     def defaultOf[K:Elem,V:Elem]: Default[Rep[MMultiMap[K, V]]] = HashMMultiMap.defaultOf[K,V]
     def empty[K:Elem,V:Elem]: Rep[MMultiMap[K, V]] = HashMMultiMap.empty[K,V]

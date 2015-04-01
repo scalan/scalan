@@ -29,7 +29,7 @@ trait BitSetsAbs extends Scalan with BitSets {
     def getDefaultRep: Rep[To] = ???
   }
 
-  def bitSetElement =
+  implicit def bitSetElement =
     new BitSetElem[BitSet]()
 
   trait BitSetCompanionElem extends CompanionElem[BitSetCompanionAbs]

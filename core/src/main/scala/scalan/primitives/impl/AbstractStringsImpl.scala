@@ -29,7 +29,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
     def getDefaultRep: Rep[To] = ???
   }
 
-  def aStringElement =
+  implicit def aStringElement =
     new AStringElem[AString]()
 
   trait AStringCompanionElem extends CompanionElem[AStringCompanionAbs]

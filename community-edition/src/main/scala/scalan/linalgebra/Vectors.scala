@@ -190,8 +190,6 @@ trait Vectors { self: ScalanCommunityDsl =>
     def euclideanNorm(implicit num: Numeric[T]): Rep[Double] = Math.sqrt(nonZeroValues.map(v => v * v).reduce.asRep[Double])
   }
 
-  implicit def eVec[T: Elem]: Elem[AbstractVector[T]] = element[DenseVector[T]].asElem[AbstractVector[T]]
-
   trait AbstractVectorCompanion extends TypeFamily1[AbstractVector] {
     def defaultOf[T: Elem] = DenseVector.defaultOf[T]
     def zero[T: Elem](len: Rep[Int]) = DenseVector.zero[T](len)

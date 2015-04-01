@@ -52,7 +52,7 @@ trait HashSetsAbs extends Scalan with HashSets {
     def getDefaultRep: Rep[To] = ???
   }
 
-  def sHashSetElement[A](implicit eA: Elem[A]) =
+  implicit def sHashSetElement[A](implicit eA: Elem[A]) =
     new SHashSetElem[A, SHashSet[A]]()(eA)
 
   trait SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs]
