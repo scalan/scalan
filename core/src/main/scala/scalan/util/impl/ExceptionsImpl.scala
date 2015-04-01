@@ -37,7 +37,7 @@ trait ExceptionsAbs extends Scalan with Exceptions {
     def getDefaultRep: Rep[To] = ???
   }
 
-  def sThrowableElement =
+  implicit def sThrowableElement =
     new SThrowableElem[SThrowable]()
 
   trait SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs]

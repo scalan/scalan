@@ -102,10 +102,6 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     def commonNbrsNum(v1Id: Rep[Int], v2Id: Rep[Int]): Rep[Int]
   }
 
-  implicit def defaultGraphElement[V: Elem, E: Elem]: Elem[Graph[V,E]] = {
-    element[AdjacencyGraph[V,E]].asElem[Graph[V,E]]
-  }
-
   trait GraphCompanion extends TypeFamily2[Graph] {
     def defaultOf[T: Elem, V:Elem] = AdjacencyGraph.defaultOf[T,V]
   }
@@ -160,7 +156,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
   (implicit val eV: Elem[V], val eE: Elem[E]) extends Graph[V,E] {
     type EdgeType = IncEdge[V, E]
     lazy val eEdge = element[EdgeType]
-    implicit val eEdgeCommon = eEdge.asElem[Edge[V,E]]
+    implicit val edgeElement = eEdge.asElem[Edge[V,E]]
     def incMatrix = incMatrixWithVals.map({x: Rep[E] => ! (x === eE.defaultRepValue)})
 
     def edgeNum: Rep[Int] = ??? //links.values.length

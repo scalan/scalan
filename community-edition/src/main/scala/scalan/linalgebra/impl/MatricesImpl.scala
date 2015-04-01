@@ -31,7 +31,7 @@ trait MatricesAbs extends Scalan with Matrices {
     def getDefaultRep: Rep[To] = ???
   }
 
-  def abstractMatrixElement[T](implicit elem: Elem[T]) =
+  implicit def abstractMatrixElement[T](implicit elem: Elem[T]) =
     new AbstractMatrixElem[T, AbstractMatrix[T]]()(elem)
 
   trait AbstractMatrixCompanionElem extends CompanionElem[AbstractMatrixCompanionAbs]

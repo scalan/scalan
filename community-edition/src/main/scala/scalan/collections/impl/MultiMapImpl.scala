@@ -31,7 +31,7 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
     def getDefaultRep: Rep[To] = ???
   }
 
-  def mMultiMapElement[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]) =
+  implicit def mMultiMapElement[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]) =
     new MMultiMapElem[K, V, MMultiMap[K, V]]()(elemKey, elemValue)
 
   trait MMultiMapCompanionElem extends CompanionElem[MMultiMapCompanionAbs]

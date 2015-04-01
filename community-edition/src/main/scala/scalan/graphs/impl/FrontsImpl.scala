@@ -10,18 +10,19 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait FrontsAbs extends ScalanCommunityDsl with Fronts {
+trait FrontsAbs extends Scalan with Fronts {
   self: FrontsDsl =>
   // single proxy for each type family
   implicit def proxyFront(p: Rep[Front]): Front = {
-    implicit val tag = weakTypeTag[Front]
-    proxyOps[Front](p)(TagImplicits.typeTagToClassTag[Front])
+    proxyOps[Front](p)(classTag[Front])
   }
 
   class FrontElem[To <: Front]
     extends EntityElem[To] {
     def isEntityType = true
-    def tag = { assert(this.isInstanceOf[FrontElem[_]]); weakTypeTag[Front].asInstanceOf[WeakTypeTag[To]]}
+    def tag = {
+      weakTypeTag[Front].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertFront(x.asRep[Front])
     def convertFront(x : Rep[Front]): Rep[To] = {
       assert(x.selfType1.isInstanceOf[FrontElem[_]])
@@ -29,6 +30,9 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
     }
     def getDefaultRep: Rep[To] = ???
   }
+
+  implicit def frontElement =
+    new FrontElem[Front]()
 
   trait FrontCompanionElem extends CompanionElem[FrontCompanionAbs]
   implicit lazy val FrontCompanionElem: FrontCompanionElem = new FrontCompanionElem {
@@ -309,7 +313,7 @@ trait FrontsAbs extends ScalanCommunityDsl with Fronts {
 }
 
 // Seq -----------------------------------
-trait FrontsSeq extends FrontsDsl with ScalanCommunityDslSeq {
+trait FrontsSeq extends FrontsDsl with ScalanSeq {
   self: FrontsDslSeq =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeSeq[FrontCompanionAbs, FrontCompanionAbs] {
     lazy val selfType = element[FrontCompanionAbs]
@@ -385,7 +389,7 @@ trait FrontsSeq extends FrontsDsl with ScalanCommunityDslSeq {
 }
 
 // Exp -----------------------------------
-trait FrontsExp extends FrontsDsl with ScalanCommunityDslExp {
+trait FrontsExp extends FrontsDsl with ScalanExp {
   self: FrontsDslExp =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeDef[FrontCompanionAbs, FrontCompanionAbs] {
     lazy val selfType = element[FrontCompanionAbs]

@@ -13,7 +13,6 @@ trait AbstractStrings extends Base with BaseTypes { self: AbstractStringsDsl =>
     def defaultVal = Default.defaultVal("")
     def apply(msg: Rep[String]): Rep[String] = newObjEx(classOf[String], List(msg.asRep[AnyRef]))
   }
-  implicit def defaultAStringElem: Elem[AString] = element[SString].asElem[AString]
 
   abstract class SString(val wrappedValueOfBaseType: Rep[String]) extends AString
   trait SStringCompanion

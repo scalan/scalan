@@ -59,10 +59,6 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
     def value: Rep[E] = graph.edgeValues.values(indexOfTarget)
   }
 
-  implicit def defaultEdgeElement[V: Elem, E: Elem]: Elem[Edge[V,E]] = {
-    element[AdjEdge[V,E]].asElem[Edge[V,E]]
-  }
-
   trait AdjEdgeCompanion extends ConcreteClass2[Edge] {
     def defaultOf[T: Elem, V:Elem] = Default.defaultVal(AdjEdge(element[Int].defaultRepValue, element[Int].defaultRepValue, element[Graph[T,V]].defaultRepValue))
   }

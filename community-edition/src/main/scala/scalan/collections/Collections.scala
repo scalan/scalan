@@ -35,16 +35,6 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     } */
   }
 
-  implicit def defaultCollectionElement[A:Elem]: Elem[Collection[A]] = element[A] match {
-    case _: BaseElem[_] => element[BaseCollection[A]].asElem[Collection[A]]
-    case pe: PairElem[a, b] =>
-      implicit val ea = pe.eFst
-      implicit val eb = pe.eSnd
-      element[PairCollection[a, b]].asElem[Collection[A]]
-    case viewE: ViewElem[_, _] => element[BaseCollection[A]].asElem[Collection[A]]
-    case e => ???(s"Element is $e")
-  }
-
   def emptyColl[A: Elem]: Coll[A] = element[Collection[A]].defaultRepValue
   type Segments1 = Collection[(Int, Int)]
 
@@ -311,7 +301,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   // TODO rename back to FlatNestedCollection after unification with Scalan
   abstract class NestedCollection[A](val values: Coll[A], val segments: Coll[(Int, Int)])(implicit val eA: Elem[A])
     extends INestedCollection[A] {
-    lazy val elem = defaultCollectionElement(eA)
+    lazy val elem = collectionElement(eA)
     def length = segments.length
     //def segOffsets = segments.asInstanceOf[Rep[PairCollection[Int,Int]]].as
     //def segLens = segments.asInstanceOf[Rep[PairCollection[Int,Int]]].bs
