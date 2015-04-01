@@ -21,7 +21,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def map[B: Elem](f: Rep[A @uncheckedVariance] => Rep[B]): Coll[B] //= Collection(arr.map(f))
     def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): Coll[B] //= Collection(arr.mapBy(f))
     def zip[B: Elem](ys: Coll[B]): Coll[(A, B)] // = PairCollection(self, ys)
-    def slice(offset: Rep[Int], length: Rep[Int]): Rep[Collection[A]]
+    def slice(offset: Rep[Int], length: Rep[Int]): Coll[A]
     def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] //= arr.reduce(m)
     def update (idx: Rep[Int], value: Rep[A @uncheckedVariance]): Coll[A]
     def updateMany (idxs: Coll[Int], vals: Coll[A @uncheckedVariance]): Coll[A]
@@ -315,7 +315,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       values.slice(offset, length)
     }
     def lst = arr.toList
-    def slice(offset: Rep[Int], length: Rep[Int]) = ???
+    def slice(offset: Rep[Int], length: Rep[Int]): NColl[A] = ???
     @OverloadId("many")
     def apply(indices: Coll[Int])(implicit o: Overloaded1): NColl[A] = {
       val newValues = segments(indices).flatMap { in =>
@@ -328,7 +328,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       }
       NestedCollection(newValues, newSegments)
     }
-    def map[B: Elem](f: Rep[Collection[A @uncheckedVariance]] => Rep[B]): Coll[B] =  Collection(arr.map(f))
+    def map[B: Elem](f: Rep[Collection[A @uncheckedVariance]] => Rep[B]): Coll[B] = Collection(arr.map(f))
     def mapBy[B: Elem](f: Rep[Collection[A] => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))
     def reduce(implicit m: RepMonoid[Collection[A @uncheckedVariance]]): Coll[A] = arr.reduce(m)
     def zip[B: Elem](ys: Coll[B]): Coll[(Collection[A],B)] = PairCollection(self, ys)

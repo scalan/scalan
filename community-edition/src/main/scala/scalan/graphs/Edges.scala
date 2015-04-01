@@ -67,7 +67,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
                               (implicit val eV: Elem[V], val eE: Elem[E]) extends Edge[V, E] {
     private def indexOfTarget = fromId*graph.vertexNum + toId
     //def toId: Rep[Int] = graph.links.values(indexOfTarget)
-    def outIndex = ???
+    def outIndex: Rep[Int] = ???
 
     def fromNode: Rep[Vertex[V, E]] = SVertex(fromId, graph)
 

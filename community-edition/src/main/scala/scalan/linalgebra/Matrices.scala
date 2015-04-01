@@ -60,7 +60,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def numRows: Rep[Int] = rows.length
     def numColumns = rows(0).length
     def columns = Collection(SArray.tabulate(numColumns) { j => DenseVector(rows.map(_(j))) })
-    def rmValues = ???
+    def rmValues: Rep[Collection[T]] = ???
 
     @OverloadId("rows")
     def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
@@ -199,10 +199,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
                                         (implicit val elem: Elem[T])
     extends AbstractMatrix[T] {
     def companion = RowMajorSparseMatrix
-    def columns = ???
+    def columns: Rep[Collection[AbstractVector[T]]] = ???
     def numRows = rows.length
     //def numColumns = rows(0).length
-    def rmValues = ???
+    def rmValues: Rep[Collection[T]] = ???
 
     @OverloadId("rows")
     def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
