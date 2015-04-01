@@ -49,8 +49,6 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def apply[T: Elem](arr: Rep[Array[T]]): Coll[T] = fromArray(arr)
     def fromArray[T: Elem](arr: Rep[Array[T]]): Coll[T] = {
       element[T] match {
-        case baseE: BaseElem[a] =>
-          BaseCollection[a](arr.asRep[Array[a]])
         case pairE: PairElem[a, b] =>
           implicit val ea = pairE.eFst
           implicit val eb = pairE.eSnd
@@ -58,10 +56,10 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
           val as = fromArray(ps.map { _._1 })
           val bs = fromArray(ps.map { _._2 })
           as zip bs //PairCollection[a,b](as, bs)
-        case viewE: ViewElem[a, b] =>
-          // TODO
-          BaseCollection[b](arr.asRep[Array[b]])
-        case e => ???(s"Element is $e")
+        // TODO add cases for NestedCollection and View
+        //        case viewE: ViewElem[a, b] =>
+        //          BaseCollection[b](arr.asRep[Array[b]])
+        case e => BaseCollection(arr)
       }
     }
     def fromList[T: Elem](arr: Rep[List[T]]): Coll[T] = {
