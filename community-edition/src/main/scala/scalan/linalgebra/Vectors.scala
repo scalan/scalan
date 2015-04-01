@@ -20,7 +20,6 @@ trait Vectors { self: ScalanCommunityDsl =>
     def nonZeroIndices: Rep[Collection[Int]]
     def nonZeroValues:  Rep[Collection[T]]
     def nonZeroItems: Rep[Collection[(Int, T)]]
-    //def nonZeroItems:   Rep[Collection[(Int, T)]]
     implicit def elem: Elem[T]
     def zeroValue = elem.defaultRepValue
 
@@ -64,7 +63,6 @@ trait Vectors { self: ScalanCommunityDsl =>
     def nonZeroIndices: Rep[Collection[Int]] = nonZeroItems.map { case Pair(i, v) => i }
     def nonZeroValues:  Rep[Collection[T]] = items.filter(v => v !== zeroValue)
     def nonZeroItems:   Rep[Collection[(Int, T)]] = {
-    //def nonZeroItems:   Rep[Collection[(Int, T)]] = {
       (Collection.indexRange(length) zip items).filter { case Pair(i, v) => v !== zeroValue }
     }
 
@@ -73,12 +71,10 @@ trait Vectors { self: ScalanCommunityDsl =>
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       matchVector[T, AbstractVector[T]](other) {
         dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 + v2 })
-      } { // TODO: I don't like constructing sv.items in this method, permuteReduce is preferrable
-        //sv => DenseVector((items zip sv.items).map { case Pair(v1, v2) => v1 + v2 })
+      } {
         sv =>
           val nonZeroValuesNew = (sv.nonZeroValues zip items(sv.nonZeroIndices)).map { case Pair(v1, v2) => v1 + v2 }
-          val coll = items.updateMany(nonZeroIndices, nonZeroValuesNew)
-          DenseVector(coll)
+          DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
       }
     }
     @OverloadId("elementwise_sum_value")
@@ -89,12 +85,10 @@ trait Vectors { self: ScalanCommunityDsl =>
     def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       matchVector[T, AbstractVector[T]](other) {
         dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 - v2 })
-      } { // TODO: I don't like constructing sv.items in this method
-        //sv => DenseVector((items zip sv.items).map { case Pair(v1, v2) => v1 - v2 })
+      } {
         sv =>
           val nonZeroValuesNew = (items(sv.nonZeroIndices) zip sv.nonZeroValues).map { case Pair(v1, v2) => v1 - v2 }
-          val coll = items.updateMany(nonZeroIndices, nonZeroValuesNew)
-          DenseVector(coll)
+          DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
       }
     }
     @OverloadId("elementwise_diff_collection")
@@ -106,8 +100,9 @@ trait Vectors { self: ScalanCommunityDsl =>
       matchVector[T, AbstractVector[T]](other) {
         dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 * v2 })
       } {
-        sv => SparseVector(sv.nonZeroIndices, (sv.nonZeroValues zip items(sv.nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }, sv.length)
-                          //sv.nonZeroIndices, sv.nonZeroItems.map { case Pair(i, y) => items(i) * y }, sv.length)
+        sv =>
+          val nonZeroValuesNew = (sv.nonZeroValues zip items(sv.nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
+          SparseVector(sv.nonZeroIndices, nonZeroValuesNew, sv.length)
       }
     }
     @OverloadId("elementwise_mult_value")
@@ -124,17 +119,7 @@ trait Vectors { self: ScalanCommunityDsl =>
       } {
         sv => (items(sv.nonZeroIndices) zip sv.nonZeroValues).map { case Pair(v1, v2) => v1 * v2 }.reduce
       }
-//      val vRes: Vector[T] = other *^ items
-//      val res = vRes.nonZeroValues.reduce
-//      res
     }
-    /*{
-      matchVec[T, T](other) {
-        dv => (items zip dv.items).map { case Pair(v, dv) => v * dv }.reduce
-      } {
-        sv => n.zero//??? //sv => dotPA(coords(sv.nonZeroIndices), sv.nonZeroValues)(n, elem)
-      }
-    }*/
 
     def euclideanNorm(implicit num: Numeric[T]): Rep[Double] = Math.sqrt(items.map(v => v * v).reduce.asRep[Double])
   }
@@ -146,20 +131,14 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
     def nonZeroItems: Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
-    //def nonZeroItems: Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
 
     def apply(i: Rep[Int]): Rep[T] = ??? // TODO: need efficient way to get value by index
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      matchVector[T, AbstractVector[T]](other) { // TODO: I don't like constructing items in this method
-        //dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 + v2 })
+      matchVector[T, AbstractVector[T]](other) {
         dv => dv +^ this
-          /*val nonZeroValuesNew = (nonZeroValues zip dv.items(nonZeroIndices)).map { case Pair(v1, v2) => v1 + v2 }
-          val coll = dv.items.updateMany(nonZeroIndices, nonZeroValuesNew)
-          DenseVector(coll)*/
       } {
         sv => SparseVector(outerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues), length)
-        //sv => ??? // TODO: need outerJoin of Collections
       }
     }
 
@@ -170,14 +149,11 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       matchVector[T, AbstractVector[T]](other) { // TODO: I don't like constructing items in this method
-        //dv => DenseVector((items zip dv.items).map { case Pair(v1, v2) => v1 + v2 })
         dv =>
           val nonZeroValuesNew = (nonZeroValues zip dv.items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
-          val coll = dv.items.updateMany(nonZeroIndices, nonZeroValuesNew)
-          DenseVector(coll)
+          DenseVector(dv.items.updateMany(nonZeroIndices, nonZeroValuesNew))
       } {
         sv => SparseVector(outerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues), length)
-        //sv => ??? // TODO: need outerJoin of Collections
       }
     }
     @OverloadId("elementwise_diff_collection")
@@ -187,11 +163,11 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       matchVector[T, AbstractVector[T]](other) {
-        dv => SparseVector(nonZeroIndices, (dv.items(nonZeroIndices) zip nonZeroValues).map { case Pair(v1, v2) => v1 * v2 }, length)
-            //SparseVector(nonZeroIndices, nonZeroItems.map { case Pair(i, y) => dv.items(i) * y }, length)
+        dv =>
+          val nonZeroValuesNew = (dv.items(nonZeroIndices) zip nonZeroValues).map { case Pair(v1, v2) => v1 * v2 }
+          SparseVector(nonZeroIndices, nonZeroValuesNew, length)
       } {
         sv => SparseVector(innerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues), length)
-          //??? // TODO: need innerJoin of Collections
       }
     }
     @OverloadId("elementwise_mult_value")
@@ -204,12 +180,10 @@ trait Vectors { self: ScalanCommunityDsl =>
     def dot(other: Rep[AbstractVector[T]])(implicit n: Numeric[T]): Rep[T] = {
       matchVector[T, T](other) {
         dv => (dv.items(nonZeroIndices) zip nonZeroValues).map { case Pair(v1, v2) => v1 - v2 }.reduce
-             //nonZeroItems.map { case Pair(i, y) => dv.items(i) * y }.reduce
       } {
         // TODO implemets innerJoin and uncomment
         //sv => innerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues).bs.reduce
         sv => dotSparse(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues)
-          //??? //sv => dotPA(coords(sv.nonZeroIndices), sv.nonZeroValues)(n, elem)
       }
     }
 
@@ -259,7 +233,6 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
 
   def dotMerge[T: Elem](xItems: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                        (implicit n: Numeric[T]): Rep[T] = {
-    //(yIndices zip yValues).map { case Pair(i, y) => xItems(i) * y }.reduce
     (xItems(yIndices) zip yValues).map { case Pair(x, y) => x * y }.reduce
   }
 
@@ -293,6 +266,7 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
     }
   }
 
+  //TODO: need to implement innerJoin and outerJoin, preferable in Collections DSL
   def innerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): PairColl[Int, T] = ???/*{
     var result = n.zero
