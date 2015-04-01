@@ -50,7 +50,7 @@ trait Maps extends  Base  { self: Scalan =>
     protected def getDefaultRep = emptyMap[K, V](eKey, eValue)
   }
 
-  implicit def mapElement[K, V](implicit eKey: Elem[K], eValue: Elem[V]): MMapElem[K, V] = new MMapElem(eKey, eValue)
+  implicit def mMapElement[K, V](implicit eKey: Elem[K], eValue: Elem[V]): MMapElem[K, V] = new MMapElem(eKey, eValue)
   def extendMMapElement[K, V](implicit elem: Elem[MMap[K, V]]) = elem.asInstanceOf[MMapElem[K, V]]
 
   implicit def resolveMMap[K: Elem, V: Elem](map: MM[K, V]): MMap[K, V]

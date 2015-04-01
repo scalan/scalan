@@ -23,7 +23,7 @@ trait HashSetsAbs extends Scalan with HashSets {
   implicit def unwrapValueOfSHashSet[A](w: Rep[SHashSet[A]]): Rep[HashSet[A]] = w.wrappedValueOfBaseType
 
   implicit def defaultSHashSetElem[A:Elem]: Elem[SHashSet[A]] = element[SHashSetImpl[A]].asElem[SHashSet[A]]
-  implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]]
+  implicit def hashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]]
 
   implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, SHashSet[A]] = elem.asInstanceOf[SHashSetElem[A, SHashSet[A]]]
   implicit val containerSHashSet: Cont[SHashSet] = new Container[SHashSet] {
@@ -171,7 +171,7 @@ trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
   //override def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
   //  proxyOpsEx[HashSet[A],SHashSet[A], SeqSHashSetImpl[A]](p, bt => SeqSHashSetImpl(bt))
 
-    implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new SeqBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
+    implicit def hashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new SeqBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
 
   case class SeqSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])
@@ -215,7 +215,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
       case _ => false
     }
   }
-  implicit def HashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
+  implicit def hashSetElement[A:Elem:WeakTypeTag]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
   case class ExpSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])
       (implicit eA: Elem[A])

@@ -21,7 +21,7 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   implicit def unwrapValueOfSThrowable(w: Rep[SThrowable]): Rep[Throwable] = w.wrappedValueOfBaseType
 
   implicit def defaultSThrowableElem: Elem[SThrowable] = element[SThrowableImpl].asElem[SThrowable]
-  implicit def ThrowableElement: Elem[Throwable]
+  implicit def throwableElement: Elem[Throwable]
 
   class SThrowableElem[To <: SThrowable]
     extends EntityElem[To] {
@@ -213,7 +213,7 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
   //override def proxyThrowable(p: Rep[Throwable]): SThrowable =
   //  proxyOpsEx[Throwable,SThrowable, SeqSThrowableImpl](p, bt => SeqSThrowableImpl(bt))
 
-    implicit lazy val ThrowableElement: Elem[Throwable] = new SeqBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
+    implicit lazy val throwableElement: Elem[Throwable] = new SeqBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
 
   case class SeqSThrowableImpl
       (override val wrappedValueOfBaseType: Rep[Throwable])
@@ -270,7 +270,7 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
     override def mirror(t: Transformer) = this
   }
 
-  implicit lazy val ThrowableElement: Elem[Throwable] = new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
+  implicit lazy val throwableElement: Elem[Throwable] = new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
   case class ExpSThrowableImpl
       (override val wrappedValueOfBaseType: Rep[Throwable])
 

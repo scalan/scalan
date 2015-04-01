@@ -269,12 +269,12 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val baseTypeElem = optBT.opt(bt =>
         if (tyArgsDecl.isEmpty) {
           s"""
-          |  implicit def ${bt.name}Element: Elem[${bt.name}]
+          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element: Elem[${bt.name}]
           |""".stripAndTrim
         }
         else {
           s"""
-          |  implicit def ${bt.name}Element${typesWithElemsAndTags}: Elem[$entityNameBT${typesUse}]
+          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElemsAndTags}: Elem[$entityNameBT${typesUse}]
           |""".stripAndTrim
         })
 
@@ -605,12 +605,12 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     def baseTypeElem(ctx: String) = optBT.opt(bt =>
       if (tyArgsDecl.isEmpty) {
         s"""
-          |  implicit lazy val ${bt.name}Element: Elem[${bt.name}] = new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])(weakTypeTag[${bt.name}], ${getDefaultOfBT(bt)})
+          |  implicit lazy val ${StringUtil.lowerCaseFirst(bt.name)}Element: Elem[${bt.name}] = new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])(weakTypeTag[${bt.name}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       }
       else {
         s"""
-          |  implicit def ${bt.name}Element${typesWithElemsAndTags}: Elem[$entityNameBT${typesUse}] = new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
+          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElemsAndTags}: Elem[$entityNameBT${typesUse}] = new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       })
 
