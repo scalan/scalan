@@ -110,8 +110,8 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
   (implicit val eV: Elem[V], val eE: Elem[E]) extends Graph[V,E] {
     type EdgeType = AdjEdge[V, E]
     lazy val eEdge = element[EdgeType]
-    def incMatrix = ???
-    def incMatrixWithVals = ???
+    def incMatrix: Coll[Boolean] = ???
+    def incMatrixWithVals: Coll[E] = ???
 
     def vertexNum: Rep[Int] =  links.length
     def edgeNum: Rep[Int] = ??? //links.values.length
@@ -172,8 +172,8 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     def vertexRow(v: Rep[Int]) = incMatrixWithVals.slice((v*vertexNum), vertexNum)
     def vertexNonZeroRow(v : Rep[Int]):Coll[(E,Int)] = (vertexRow(v) zip rowIndexes).filter({i => !(i._1 === eE.defaultRepValue)})
 
-    def links = ???
-    def edgeValues = ???
+    def links: NColl[Int] = ???
+    def edgeValues: NColl[E] = ???
 
     def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E]] => Rep[Boolean]): Coll[IncEdge[V, E]] = {
       val res = vs.flatMap { v =>
