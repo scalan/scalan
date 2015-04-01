@@ -1250,6 +1250,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
     tt
   }
 
-  def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] = !!!("Don't know how to transform method call")
+  def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] =
+    !!!("Don't know how to transform method call: " + method.getName() + "; " + method.toString())
   def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = !!!("Don't know how to create new object")
 }
