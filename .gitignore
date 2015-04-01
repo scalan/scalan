@@ -16,3 +16,4 @@ tmp/
 .settings
 .worksheet
 benchmark/mvm-staged
+/bin
