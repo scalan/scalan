@@ -13,6 +13,13 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     (matrix * vector).items.arr
   }
 
+  lazy val ddmvmList = fun { p: Rep[(List[Array[Double]], Array[Double])] =>
+    val Pair(m, v) = p
+    val matrix: Matrix[Double] = RowMajorDirectMatrix(ListCollection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }))
+    val vector: Vector[Double] = DenseVector(Collection(v))
+    (matrix * vector).items.arr
+  }
+
   lazy val dsmvm = fun { p: Rep[(Array[Array[Double]], (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
     val matrix: Matrix[Double] = RowMajorDirectMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }))
