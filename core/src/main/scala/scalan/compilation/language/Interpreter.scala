@@ -3,11 +3,9 @@ package scalan.compilation.language
 import java.lang.reflect.{Method => JMethod}
 
 trait Interpreter {
-  this: MethodMapping =>
+  this: MethodMappingDSL =>
 
-  def mappedFunc(method: JMethod): Option[LanguageConf#Fun] = {
-    methodReplaceConf.get(method.getDeclaringClass.getName, method.getName) 
-  }
+  def mappedFunc(method: JMethod): Option[MappingTags#Fun] = methodReplaceConf.map(l => l.get(method.getDeclaringClass.getName, method.getName)).reverse.find(_ != None).getOrElse(None)
 
-  def mappedClassName(c: Class[_]): Option[String] = sys.error("Don't know how to transform method call")
+  def mappedClassName(c: Class[_]): Option[String] = sys.error(s"Don't know how to transform method call: $c")
 }

@@ -17,7 +17,7 @@ trait MatricesAbs extends Scalan with Matrices {
     proxyOps[AbstractMatrix[T]](p)(TagImplicits.typeTagToClassTag[AbstractMatrix[T]])
   }
 
-  abstract class AbstractMatrixElem[T, From, To <: AbstractMatrix[T]](iso: Iso[From, To])(implicit elem: Elem[T])
+  abstract class AbstractMatrixElem[T, From, To <: AbstractMatrix[T]](iso: Iso[From, To])
     extends ViewElem[From, To](iso) {
     override def convert(x: Rep[Reifiable[_]]) = convertAbstractMatrix(x.asRep[AbstractMatrix[T]])
     def convertAbstractMatrix(x : Rep[AbstractMatrix[T]]): Rep[To]
@@ -403,6 +403,18 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     }
 
     // WARNING: Cannot generate matcher for method `reduceByColumns`: Method's return type Vector[T] is not a Rep
+
+    object average {
+      def unapply(d: Def[_]): Option[(Rep[RowMajorDirectMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, m, _*), _) if receiver.elem.isInstanceOf[RowMajorDirectMatrixElem[_]] && method.getName == "average" =>
+          Some((receiver, f, m)).asInstanceOf[Option[(Rep[RowMajorDirectMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[RowMajorDirectMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object RowMajorDirectMatrixCompanionMethods {
@@ -592,6 +604,18 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     }
 
     // WARNING: Cannot generate matcher for method `reduceByColumns`: Method's return type Vector[T] is not a Rep
+
+    object average {
+      def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, m, _*), _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixElem[_]] && method.getName == "average" =>
+          Some((receiver, f, m)).asInstanceOf[Option[(Rep[RowMajorNestedMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[RowMajorNestedMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object RowMajorNestedMatrixCompanionMethods {
@@ -727,6 +751,18 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     }
 
     // WARNING: Cannot generate matcher for method `reduceByColumns`: Method's return type Vector[T] is not a Rep
+
+    object average {
+      def unapply(d: Def[_]): Option[(Rep[RowMajorSparseMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, m, _*), _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[_]] && method.getName == "average" =>
+          Some((receiver, f, m)).asInstanceOf[Option[(Rep[RowMajorSparseMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[RowMajorSparseMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object RowMajorSparseMatrixCompanionMethods {
@@ -872,6 +908,8 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
       }
     }
 
+    // WARNING: Cannot generate matcher for method `reduceByRows`: Method's return type Vector[T] is not a Rep
+
     // WARNING: Cannot generate matcher for method `reduceByColumns`: Method's return type Vector[T] is not a Rep
 
     // WARNING: Cannot generate matcher for method `$times`: Method's return type Vector[T] is not a Rep
@@ -883,6 +921,18 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[AbstractMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object average {
+      def unapply(d: Def[_]): Option[(Rep[AbstractMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, m, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixElem[_, _, _]] && method.getName == "average" =>
+          Some((receiver, f, m)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractMatrix[T]], Fractional[T], RepMonoid[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -911,18 +961,6 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Rep[Collection[AbstractVector[T]]] forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object apply {
-      def unapply(d: Def[_]): Option[(Coll[A], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(items, numColumns, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixCompanionElem] && method.getName == "apply" =>
-          Some((items, numColumns)).asInstanceOf[Option[(Coll[A], Rep[Int]) forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Coll[A], Rep[Int]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

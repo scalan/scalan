@@ -181,4 +181,15 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
 
     compareOutputWithSequential(progStaged)(progSeq.arrayReplicate, progStaged.arrayReplicate, "arrayReplicate", in)
   }
+
+  test("test36emptyNestedUnitArray") {
+    // Wrong type is generated in SBT/TeamCity, right in IDEA
+    pending
+    val in = 3
+    val seqOut = progSeq.emptyNestedUnitArray(in)
+    println(seqOut)
+
+    val stgOut = getStagedOutput(progStaged)(progStaged.emptyNestedUnitArray, "emptyNestedUnitArray", in)
+    println(stgOut)
+  }
 }

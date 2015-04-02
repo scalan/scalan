@@ -46,6 +46,7 @@ object ScalanBuild extends Build {
   val crossCompilation =
     crossScalaVersions := Seq("2.10.5", "2.11.6")
 
+  // Doesn't cross-build properly due to a Scala bug currently
   val commonSettings = Seq(
     scalaVersion := "2.10.5",
     organization := "com.huawei.scalan",
@@ -56,7 +57,7 @@ object ScalanBuild extends Build {
       else
         Some("releases" at (nexus + "content/repositories/releases"))
     },
-    opts, commonDeps) ++ testSettings ++ releaseSettings :+ (ReleaseKeys.crossBuild := true)
+    opts, commonDeps) ++ testSettings ++ releaseSettings // :+ (ReleaseKeys.crossBuild := true)
 
   lazy val ItTest = config("it").extend(Test)
 
@@ -112,22 +113,6 @@ object ScalanBuild extends Build {
       ReleaseKeys.snapshotDependencies := Seq.empty,
       fork in Test := true,
       fork in ItTest := true)
-
-  lazy val benchmark = project.withTestConfigsAndCommonSettings
-    .dependsOn(core, ce, lmsBackend ) //% "compile->compile;compile->test")
-    .settings(jmhSettings: _*)
-    .settings(
-      libraryDependencies ++= Seq(
-        "org.scodec" %% "scodec-bits" % "1.0.5"
-      , "org.scodec" %% "scodec-core" % "1.7.0"
-      ).++( if( scalaBinaryVersion.value startsWith "2.10" )
-              Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.0.1" cross CrossVersion.full))
-            else Nil
-      ),
-      scalaOrganization := "org.scala-lang.virtualized",
-      scalaVersion := virtScala,
-      publishArtifact := false
-    )
 
   // name to make this the default project
   lazy val root = Project("scalan", file("."))

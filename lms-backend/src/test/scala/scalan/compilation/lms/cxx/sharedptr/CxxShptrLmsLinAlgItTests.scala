@@ -2,14 +2,14 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import scalan.compilation.GraphVizExport
 import scalan.compilation.lms.CoreBridge
-import scalan.compilation.lms.cxx.LmsCompilerCXX
+import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.it.BaseItTests
 import scalan.it.lms.ItTestsUtilLmsCxx
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
 import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunityExp}
 
 class CxxShptrLmsLinAlgItTests extends BaseItTests with ItTestsUtilLmsCxx {
-  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerCXX with CoreBridge with GraphVizExport { self =>
+  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with ScalanCommunityExp with LmsCompilerCxx with CoreBridge with GraphVizExport { self =>
     val lms = new CoreCxxShptrLmsBackend
   }
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunityDslSeq

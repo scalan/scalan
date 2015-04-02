@@ -4,9 +4,9 @@ package compilation.lms
 import java.lang.reflect.Method
 import java.util.HashMap
 
-import scalan.compilation.language.{CoreMethodMapping, MethodMapping, Interpreter}
+import scalan.compilation.language.{CoreMethodMappingDSL, MethodMappingDSL, Interpreter}
 
-trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { self: ScalanCtxExp =>
+trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { self: ScalanCtxExp =>
 
   val lms: CoreLmsBackendBase
 
@@ -166,11 +166,8 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
               case HashCode() => lms.hashCode(arg1_)
               case StringToInt() => lms.stringToInt(arg1_.asInstanceOf[lms.Exp[String]])
               case StringToDouble() => lms.stringToDouble(arg1_.asInstanceOf[lms.Exp[String]])
-              case _ =>
-                op.opName match {
-                  case "Sin" => lms.Sin(arg1_.asInstanceOf[lms.Exp[Double]])
-                  case "ToDouble" => lms.intToDouble(arg1_.asInstanceOf[lms.Exp[Int]])
-            }
+              case MathExp => lms.Exp(arg1_.asInstanceOf[lms.Exp[Double]])
+              case MathSin => lms.Sin(arg1_.asInstanceOf[lms.Exp[Double]])
             }
             (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
           }
@@ -1253,6 +1250,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMapping { sel
     tt
   }
 
-  def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] = !!!("Don't know how to transform method call")
+  def transformMethodCall[T](symMirr: SymMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] =
+    !!!(s"Don't know how to transform method call: $method")
   def newObj[A: Manifest](symMirr: SymMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = !!!("Don't know how to create new object")
 }

@@ -2,31 +2,31 @@ package scalan.util
 
 import java.io.{InputStreamReader, BufferedReader, File}
 
+import scala.collection.mutable
+
 object ProcessUtil {
-  def launch(workingDir: File, command: String*) {
-    val builder = new ProcessBuilder(command: _*)
+  def launch(workingDir: File, command: String*): Array[String] = {
     val absoluteWorkingDir = workingDir.getAbsoluteFile
-    builder.directory(absoluteWorkingDir)
-    builder.inheritIO()
+    val builder = new ProcessBuilder(command: _*).
+      directory(absoluteWorkingDir).
+      redirectErrorStream(true)
     val proc = builder.start()
-    val exitCode = proc.waitFor()
-    if (exitCode != 0) {
-      val stream = proc.getInputStream
-      try {
-        val sb = new StringBuilder()
-        val reader = new BufferedReader(new InputStreamReader(stream))
-        var line: String = reader.readLine()
-        while (line != null) {
-          sb.append(line).append("\n")
-          line = reader.readLine()
-        }
-        throw new RuntimeException(s"Executing '${command.mkString(" ")}' in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n$sb")
-      } finally {
-        stream.close()
+    val reader = new BufferedReader(new InputStreamReader(proc.getInputStream))
+    val ar = mutable.ArrayBuffer[String]()
+    var notDone = true
+    while (notDone) {
+      notDone = reader.readLine() match {
+        case null => false
+        case s2: String =>
+          ar += s2
+          true
       }
-    } else {
-      // program executed successfully
+    }
+    reader.close()
+    val exitCode = proc.waitFor()
+    exitCode match {
+      case 0 => ar.toArray
+      case _ => throw new RuntimeException(s"Executing '${command.mkString(" ")}' in directory $absoluteWorkingDir returned exit code $exitCode with following output:\n${ar.mkString("\n")}")
     }
   }
-
 }

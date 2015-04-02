@@ -8,17 +8,17 @@ import java.net.{URL, URLClassLoader}
 
 import scala.tools.nsc.reporters.StoreReporter
 import scala.tools.nsc.{Global, Settings}
-import scalan.compilation.language.MethodMapping
+import scalan.compilation.language.MethodMappingDSL
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
-trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with MethodMapping { self: ScalanCtxExp =>
+trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with MethodMappingDSL { self: ScalanCtxExp =>
   /**
    * If scalaVersion is None, uses scala-compiler.jar
    *
    * Otherwise uses SBT to compile with the desired version
    */
-  case class CustomCompilerOutput(jar: URL, mainClass: Option[String] = None)
+  case class CustomCompilerOutput(jar: URL, mainClass: Option[String] = None, output: Option[Array[String]] = None)
   case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String])
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
@@ -37,9 +37,8 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
       case Some(mainPack) => Some(mainPack + "." +  functionName)
       case _ =>  None
     }
-
-    compilerConfig.scalaVersion match {
-      case Some(scalaVersion) => sbtCompile(sourcesDir, executableDir, functionName, compilerConfig, sourceFile, jarPath)
+    val output: Option[Array[String]] = compilerConfig.scalaVersion match {
+      case Some(scalaVersion) => Some(sbtCompile(sourcesDir, executableDir, functionName, compilerConfig, sourceFile, jarPath))
       case None =>
         val settings = new Settings
         settings.usejavacp.value = true
@@ -70,13 +69,14 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
           case 0 => //println(s"class $functionName compiled with ${reporter.WARNING.count} warnings")
           case _ => throw new Exception(s"class $functionName compiled with ${reporter.ERROR.count} errors and ${reporter.WARNING.count} warnings, see ${logFile.getAbsolutePath} for details")
         }
+        None
     }
-    CustomCompilerOutput(jarFile.toURI.toURL, mainClass)
+    CustomCompilerOutput(jarFile.toURI.toURL, mainClass, output)
   }
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
     // ensure Scala library is available
-    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), classOf[_ => _].getClassLoader)
+    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), self.getClass.getClassLoader)
     val cls = classLoader.loadClass(
       compilerOutput.custom.mainClass match {
         case Some(mainClass) => mainClass

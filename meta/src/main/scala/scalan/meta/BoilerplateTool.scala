@@ -46,7 +46,7 @@ class BoilerplateTool extends StrictLogging {
     "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
   val collectTypeSynonyms = Map(
-    "PG" -> "Graph" , "Coll" -> "Collection", "NColl" -> "NestedCollection"
+    "PG" -> "Graph", "Coll" -> "Collection", "NColl" -> "INestedCollection"
   )
   lazy val ceConfig = CodegenConfig(
     name = "ce",
@@ -66,6 +66,25 @@ class BoilerplateTool extends StrictLogging {
       "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
     coreTypeSynonyms ++ liteTypeSynonyms
+  )
+
+  val laTypeSynonyms = Map(
+    "Vec" -> "Vector", "Matr" -> "Matrix"
+  )
+  lazy val laConfig = CodegenConfig(
+    name = "la",
+    srcPath = "../community-edition/src/main/scala",
+    entityFiles = List(
+        "scalan/linalgebra/Vectors.scala"
+      , "scalan/linalgebra/Matrices.scala"
+    ),
+    baseContextTrait = "Scalan",
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._", "scala.reflect._",
+      "scalan.common.Default"),
+    coreTypeSynonyms ++ laTypeSynonyms
   )
 
   val eeTypeSynonyms = Set(
@@ -180,6 +199,7 @@ class BoilerplateTool extends StrictLogging {
     "coretests" -> List(coreTestsConfig),
     "core" -> List(coreConfig),
     "ce" -> List(ceConfig),
+    "la" -> List(laConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
     "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig),
