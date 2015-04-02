@@ -30,6 +30,14 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     compareOutputWithSequential(progStaged)(progSeq.ddmvm, progStaged.ddmvm, "ddmvm", in)
   }
 
+  test("ddmvmList") {
+    val inM = List(Array(1.0, 1.0), Array(0.0, 1.0))
+    val inV = Array(2.0, 3.0)
+    val in = Pair(inM, inV)
+    val out = Array(5.0, 3.0)
+    compareOutputWithSequential(progStaged)(progSeq.ddmvmList, progStaged.ddmvmList, "ddmvmList", in)
+  }
+
   test("dsmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = sparseVectorData(Array(2.0, 3.0))
