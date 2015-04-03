@@ -7,7 +7,6 @@ import scalan.common.{SegmentsDslSeq, SegmentsDslExp, SegmentsDsl}
 class SeqsTests extends BaseTests { suite =>
   trait SeqSimple extends ScalanDsl { self: ScalanCommunityDsl with SegmentsDsl =>
     lazy val tElem = element[Seq[Int]]
-    lazy val defaultRep = tElem.defaultRepValue
     lazy val empty = SSeq.empty[Int]
 
     lazy val t1 = fun { (t: Rep[SSeq[Int]]) => t }
@@ -51,7 +50,6 @@ class SeqsTests extends BaseTests { suite =>
       def test() = { }
     }
     ctx.test
-    ctx.emit("defaultRep", ctx.defaultRep)
     ctx.emit("empty", ctx.empty)
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
@@ -89,7 +87,6 @@ class SeqsTests extends BaseTests { suite =>
       }
     }
     ctx.test
-    val d = ctx.defaultRep
     import ctx._
     {
       val res = ctx.t2((SSeqImpl(Seq.empty[Int]), 10))
