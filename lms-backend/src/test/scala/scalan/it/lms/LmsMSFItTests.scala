@@ -264,6 +264,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     println("Staged: " + resStaged.mkString(","))
   }
 
+  // FIXME should probably get fixed along with fallingTestWithLists below
   test("fallingTest") {
     pending
     val links = graph.flatMap( i=> i)
@@ -277,6 +278,8 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     println("Staged: " + resStaged.mkString(","))
   }
 
+  // FIXME Problem during list rewriting (may be the same as in LmsLinAlgItTests.ddmvmList):
+  // Method public abstract java.lang.Object scalan.graphs.Edges$Edge.toId() couldn't be found on type (Int, (Int, (Int, ((Array[Double], (CollectionsAbs.this.BaseCollection[Int], CollectionsAbs.this.BaseCollection[Int])), (Array[Int], (CollectionsAbs.this.BaseCollection[Int], CollectionsAbs.this.BaseCollection[Int]))))))
   test("fallingTestWithLists") {
     pending
     val ctx = new TestContext(this, "fallingTestWithLists") with ProgExp
