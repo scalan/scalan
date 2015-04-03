@@ -11,7 +11,6 @@ import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 trait Vectors { self: ScalanCommunityDsl =>
 
   type Vector[T] = Rep[AbstractVector[T]]
-  type PairColl[A, B] = Rep[PairCollection[A, B]]
 
   trait AbstractVector[T] extends Reifiable[AbstractVector[T]] {
 
@@ -211,7 +210,7 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
       val nonZeroItems: Rep[IPairCollection[Int, T]] =
-        convertPairColl((Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero })
+        (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }
       SparseVector(nonZeroItems, items.length)
     }
     @OverloadId("SparseVectorCompanion_apply_nonZeroItems")

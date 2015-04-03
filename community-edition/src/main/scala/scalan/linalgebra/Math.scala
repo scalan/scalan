@@ -37,16 +37,16 @@ trait Math { self: ScalanCommunityDsl =>
     val newNestedItems =
         for (i <- Collection.indexRange(m.numColumns))
         yield {
-          val newRow: Coll[(Int, T)] =
-            for (j <- Collection.indexRange(nestedItems.length)
-                 if nestedItems(j).nonZeroIndices.filter(l => l === i).length !== toRep(0))
-            yield {
+          val indices = Collection.indexRange(nestedItems.length).filter {
+            j => nestedItems(j).nonZeroIndices.filter(l => l === i).length !== toRep(0)
+          }
+          val newRow: PairColl[Int, T] =
+            indices.zip(indices.map { j =>
               val indices = nestedItems(j).nonZeroIndices
               val values = nestedItems(j).nonZeroValues
-              val Pair(r, k) = (indices zip Collection.indexRange(indices.length)).filter(l => l._1 === i)(0)
-              val newElem = Pair(j, values(k))
-              newElem
-            }
+              val p = (indices zip Collection.indexRange(indices.length)).filter(l => l._1 === i)(0)
+              values(p._2)
+            })
           SparseVector(newRow, m.numRows)
         }
     RowMajorSparseMatrix(newNestedItems, m.numRows)

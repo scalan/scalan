@@ -104,8 +104,8 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
 
   lazy val mstFun1Adj = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
     val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-    val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
-    val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
+    val links = NestedCollection(Collection.fromArray(in._1), segments)
+    val edge_vals = NestedCollection(Collection.fromArray(in._2), segments)
 
     val vertex_vals = UnitCollection(segments.length)
     val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
@@ -117,8 +117,8 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
 
   lazy val mstFun1AdjMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
     val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-    val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
-    val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
+    val links = NestedCollection(Collection.fromArray(in._1), segments)
+    val edge_vals = NestedCollection(Collection.fromArray(in._2), segments)
 
     val vertex_vals = UnitCollection(segments.length)
     val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
@@ -130,8 +130,8 @@ trait GraphExamples extends ScalanCommunityDsl with GraphsDsl with PrimitiveExam
 
   /*lazy val msfFunAdjMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
     val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-    val links = NestedCollection.createNestedCollection(Collection.fromArray(in._1), segments)
-    val edge_vals = NestedCollection.createNestedCollection(Collection.fromArray(in._2), segments)
+    val links = NestedCollection(Collection.fromArray(in._1), segments)
+    val edge_vals = NestedCollection(Collection.fromArray(in._2), segments)
 
     val vertex_vals = UnitCollection(segments.length)
     val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)

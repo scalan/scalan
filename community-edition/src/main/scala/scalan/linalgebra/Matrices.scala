@@ -130,14 +130,15 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       }
     }
 
-    def getTranspositionOfBlocks(blocks: Coll[((Int, Int), (Int, Int))]): Rep[IPairCollection[Int, Int]] = {
-      val res = for { Pair(Pair(top, left), Pair(height, width)) <- blocks } yield {
-        val bcis = blockCellIndices(top, left, height, width)
-        val trans = transposeIndices(bcis)
-        bcis zip trans
-      }
-      res.flatMap(c => c)
-    }
+    // doesn't compile currently
+//    def getTranspositionOfBlocks(blocks: Coll[((Int, Int), (Int, Int))]): Rep[IPairCollection[Int, Int]] = {
+//      val res = for { Pair(Pair(top, left), Pair(height, width)) <- blocks } yield {
+//        val bcis = blockCellIndices(top, left, height, width)
+//        val trans = transposeIndices(bcis)
+//        bcis zip trans
+//      }
+//      res.flatMap(c => c)
+//    }
 
     @OverloadId("block_size")
     def transpose(blockSize: Rep[Int])(implicit n: Numeric[T]): Matrix[T] = transposeNested(this, blockSize)/*{

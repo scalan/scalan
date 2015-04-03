@@ -497,7 +497,7 @@ trait CollectionsAbs extends Scalan with Collections {
   }
 
   // state representation type
-  type NestedCollectionData[A] = (Collection[A], Collection[(Int,Int)])
+  type NestedCollectionData[A] = (Collection[A], IPairCollection[Int,Int])
 
   // 3) Iso for concrete class
   class NestedCollectionIso[A](implicit eA: Elem[A])
@@ -507,7 +507,7 @@ trait CollectionsAbs extends Scalan with Collections {
         case Some((values, segments)) => Pair(values, segments)
         case None => !!!
       }
-    override def to(p: Rep[(Collection[A], Collection[(Int,Int)])]) = {
+    override def to(p: Rep[(Collection[A], IPairCollection[Int,Int])]) = {
       val Pair(values, segments) = p
       NestedCollection(values, segments)
     }
@@ -515,7 +515,7 @@ trait CollectionsAbs extends Scalan with Collections {
       implicit val tagA = eA.tag
       weakTypeTag[NestedCollection[A]]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[NestedCollection[A]]](NestedCollection(element[Collection[A]].defaultRepValue, element[Collection[(Int,Int)]].defaultRepValue))
+    lazy val defaultRepTo = Default.defaultVal[Rep[NestedCollection[A]]](NestedCollection(element[Collection[A]].defaultRepValue, element[IPairCollection[Int,Int]].defaultRepValue))
     lazy val eTo = new NestedCollectionElem[A](this)
   }
   // 4) constructor and deconstructor
@@ -523,7 +523,7 @@ trait CollectionsAbs extends Scalan with Collections {
     override def toString = "NestedCollection"
     def apply[A](p: Rep[NestedCollectionData[A]])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
       isoNestedCollection(eA).to(p)
-    def apply[A](values: Coll[A], segments: Coll[(Int,Int)])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
+    def apply[A](values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
       mkNestedCollection(values, segments)
     def unapply[A:Elem](p: Rep[NestedCollection[A]]) = unmkNestedCollection(p)
   }
@@ -550,8 +550,8 @@ trait CollectionsAbs extends Scalan with Collections {
     new NestedCollectionIso[A]
 
   // 6) smart constructor and deconstructor
-  def mkNestedCollection[A](values: Coll[A], segments: Coll[(Int,Int)])(implicit eA: Elem[A]): Rep[NestedCollection[A]]
-  def unmkNestedCollection[A:Elem](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[A]], Rep[Collection[(Int,Int)]])]
+  def mkNestedCollection[A](values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]]
+  def unmkNestedCollection[A:Elem](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[A]], Rep[IPairCollection[Int,Int]])]
 }
 
 // Seq -----------------------------------
@@ -664,7 +664,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
     Some((p.arr))
 
   case class SeqNestedCollection[A]
-      (override val values: Coll[A], override val segments: Coll[(Int,Int)])
+      (override val values: Coll[A], override val segments: PairColl[Int,Int])
       (implicit eA: Elem[A])
     extends NestedCollection[A](values, segments)
         with UserTypeSeq[INestedCollection[A], NestedCollection[A]] {
@@ -675,7 +675,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   }
 
   def mkNestedCollection[A]
-      (values: Coll[A], segments: Coll[(Int,Int)])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
+      (values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
       new SeqNestedCollection[A](values, segments)
   def unmkNestedCollection[A:Elem](p: Rep[NestedCollection[A]]) =
     Some((p.values, p.segments))
@@ -1826,7 +1826,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
     Some((p.arr))
 
   case class ExpNestedCollection[A]
-      (override val values: Coll[A], override val segments: Coll[(Int,Int)])
+      (override val values: Coll[A], override val segments: PairColl[Int,Int])
       (implicit eA: Elem[A])
     extends NestedCollection[A](values, segments) with UserTypeDef[INestedCollection[A], NestedCollection[A]] {
     lazy val selfType = element[NestedCollection[A]].asInstanceOf[Elem[INestedCollection[A]]]
@@ -2029,7 +2029,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   def mkNestedCollection[A]
-    (values: Coll[A], segments: Coll[(Int,Int)])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
+    (values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
     new ExpNestedCollection[A](values, segments)
   def unmkNestedCollection[A:Elem](p: Rep[NestedCollection[A]]) =
     Some((p.values, p.segments))

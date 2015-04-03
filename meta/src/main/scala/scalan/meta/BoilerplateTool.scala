@@ -46,7 +46,7 @@ class BoilerplateTool extends StrictLogging {
     "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
   )
   val collectTypeSynonyms = Map(
-    "PG" -> "Graph", "Coll" -> "Collection", "NColl" -> "INestedCollection"
+    "PG" -> "Graph", "Coll" -> "Collection", "PairColl" -> "IPairCollection", "NColl" -> "INestedCollection"
   )
   lazy val ceConfig = CodegenConfig(
     name = "ce",
