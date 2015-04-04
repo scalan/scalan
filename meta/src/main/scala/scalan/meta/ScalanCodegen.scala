@@ -707,7 +707,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
           |        super.rewriteDef(d)
           |    }
           |    case view1@View${e.name}(Def(view2@View${e.name}(arr))) => {
-          |      val compIso = composeIso(view2.innerIso, view1.innerIso)
+          |      val compIso = composeIso(view1.innerIso, view2.innerIso)
           |      implicit val eAB = compIso.eTo
           |      View${e.name}(arr)(${e.name}Iso(compIso))
           |    }

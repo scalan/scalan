@@ -329,8 +329,8 @@ trait MapViewsExp extends MapsExp with ViewsExp with BaseExp { self: ScalanExp =
       case _ => super.rewriteDef(d)
     }
     case view1@ViewMap(Def(view2@ViewMap(map))) =>
-      val compIso1 = composeIso(view2.iso1, view1.iso1)
-      val compIso2 = composeIso(view2.iso2, view1.iso2)
+      val compIso1 = composeIso(view1.iso1, view2.iso1)
+      val compIso2 = composeIso(view1.iso2, view2.iso2)
       implicit val kAB = compIso1.eTo
       implicit val vAB = compIso2.eTo
       ViewMap(map)(compIso1, compIso2)

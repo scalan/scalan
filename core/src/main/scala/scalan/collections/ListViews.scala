@@ -158,7 +158,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       ViewList(filtered)(ListIso(iso))
     }
     case view1@ViewList(Def(view2@ViewList(arr))) => {
-      val compIso = composeIso(view2.innerIso, view1.innerIso)
+      val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
       ViewList(arr)(ListIso(compIso))
     }

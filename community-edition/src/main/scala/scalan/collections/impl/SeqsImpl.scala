@@ -570,7 +570,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
         super.rewriteDef(d)
     }
     case view1@ViewSSeq(Def(view2@ViewSSeq(arr))) => {
-      val compIso = composeIso(view2.innerIso, view1.innerIso)
+      val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
       ViewSSeq(arr)(SSeqIso(compIso))
     }
