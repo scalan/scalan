@@ -277,7 +277,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       */
     case view1@ViewArray(Def(view2@ViewArray(arr))) =>
       //println(view1)
-      val compIso = composeIso(view2.innerIso, view1.innerIso)
+      val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
       ViewArray(arr)(ArrayIso(compIso))
     case _ =>

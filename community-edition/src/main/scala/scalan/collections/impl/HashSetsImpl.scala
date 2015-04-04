@@ -353,7 +353,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
         super.rewriteDef(d)
     }
     case view1@ViewSHashSet(Def(view2@ViewSHashSet(arr))) => {
-      val compIso = composeIso(view2.innerIso, view1.innerIso)
+      val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
       ViewSHashSet(arr)(SHashSetIso(compIso))
     }

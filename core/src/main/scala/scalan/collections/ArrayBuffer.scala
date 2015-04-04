@@ -238,7 +238,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
       val res = ViewArrayBuffer(s)(ArrayBufferIso(iso))
       res
     case view1@ViewArrayBuffer(Def(view2@ViewArrayBuffer(arr))) =>
-      val compIso = composeIso(view2.innerIso, view1.innerIso)
+      val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
       ViewArrayBuffer(arr)(ArrayBufferIso(compIso))
     case _ =>
