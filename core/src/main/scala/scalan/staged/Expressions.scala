@@ -291,11 +291,6 @@ trait BaseExp extends Base { self: ScalanExp =>
     }
     def tp: TableEntry[_] = findDefinition(symbol).get
     def sameScopeAs(other: Exp[_]): Boolean = this.tp.lambda == other.tp.lambda
-
-    def mirror(t: Transformer) = symbol match {
-      case Def(d) => d.mirror(t)
-      case _ => fresh(Lazy(symbol.elem))
-    }
   }
 
   implicit class DefForSomeOps(d: Def[_]) {
