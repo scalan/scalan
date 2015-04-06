@@ -751,8 +751,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[UnitCollection], Rep[Unit => B]) forSome {type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[UnitCollectionElem] && method.getName == "mapBy" =>
@@ -837,9 +835,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[UnitCollection], Rep[Unit => Boolean])] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[UnitCollectionElem] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[UnitCollection], Rep[Unit => Boolean])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[UnitCollection], Rep[Unit => Boolean])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[UnitCollection], Rep[Unit => Collection[B]]) forSome {type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[UnitCollectionElem] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[UnitCollection], Rep[Unit => Collection[B]]) forSome {type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[UnitCollection], Rep[Unit => Collection[B]]) forSome {type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[UnitCollection], Rep[Unit])] = d match {
@@ -936,8 +954,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[BaseCollection[A]], Rep[A => B]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[BaseCollectionElem[_]] && method.getName == "mapBy" =>
@@ -1022,9 +1038,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[BaseCollection[A]], Rep[A => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[BaseCollectionElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[BaseCollection[A]], Rep[A => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[BaseCollection[A]], Rep[A => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[BaseCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[BaseCollectionElem[_]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[BaseCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[BaseCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[BaseCollection[A]], Rep[A]) forSome {type A}] = d match {
@@ -1121,8 +1157,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[ListCollection[A]], Rep[A => B]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[ListCollectionElem[_]] && method.getName == "mapBy" =>
@@ -1207,9 +1241,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[ListCollection[A]], Rep[A => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[ListCollectionElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[ListCollection[A]], Rep[A => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ListCollection[A]], Rep[A => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[ListCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[ListCollectionElem[_]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[ListCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ListCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[ListCollection[A]], Rep[A]) forSome {type A}] = d match {
@@ -1342,8 +1396,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A => B]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOnSeqElem[_]] && method.getName == "mapBy" =>
@@ -1404,9 +1456,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOnSeqElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOnSeq[A]], Rep[A => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOnSeqElem[_]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOnSeq[A]], Rep[A => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A]) forSome {type A}] = d match {
@@ -1455,8 +1527,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object PairCollectionMethods {
-    // WARNING: Cannot generate matcher for method `mapPairs`: Method has function arguments f
-
     object arr {
       def unapply(d: Def[_]): Option[Rep[PairCollection[A, B]] forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _]] && method.getName == "arr" =>
@@ -1947,8 +2017,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A] => B]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[NestedCollectionElem[_]] && method.getName == "mapBy" =>
@@ -2009,9 +2077,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[NestedCollectionElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[NestedCollectionElem[_]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A]]) forSome {type A}] = d match {
@@ -2131,8 +2219,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A => B]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "mapBy" =>
@@ -2217,9 +2303,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[A]], Rep[A => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[A => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[A]], Rep[A => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A]) forSome {type A}] = d match {
