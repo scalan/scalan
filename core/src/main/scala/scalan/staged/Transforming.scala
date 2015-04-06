@@ -102,7 +102,7 @@ trait Transforming { self: ScalanExp =>
   }
 
   abstract class Mirror[Ctx <: Transformer : TransformerOps] {
-    def apply[A](t: Ctx, rw: Rewriter, x: Exp[A]): (Ctx, Exp[_]) = (t, x.mirror(t))
+    def apply[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = (t, d.mirror(t))
 
     // every mirrorXXX method should return a pair (t + (v -> v1), v1)
     protected def mirrorVar[A](t: Ctx, rewriter: Rewriter, v: Exp[A]): (Ctx, Exp[_]) = {
@@ -111,7 +111,7 @@ trait Transforming { self: ScalanExp =>
     }
 
     protected def mirrorDef[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = {
-      val (t1, mirrored) = apply(t, rewriter, node)
+      val (t1, mirrored) = apply(t, rewriter, node, d)
       var res = mirrored
       var curr = res
       do {
