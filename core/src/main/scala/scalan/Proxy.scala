@@ -343,6 +343,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         funcElement(elemFromType(params(0), elemMap, baseType), elemFromType(params(1), elemMap, baseType))
       case ArraySym =>
         arrayElement(elemFromType(params(0), elemMap, baseType))
+      case ListSym =>
+        listElement(elemFromType(params(0), elemMap, baseType))
       case _ if classSymbol.asType.isAbstractType =>
         elemMap.getOrElse(classSymbol, !!!(s"Can't create element for abstract type $tpe"))
       case _ if classSymbol.isClass =>
@@ -406,6 +408,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val EitherSym = typeOf[_ | _].typeSymbol
     val Function1Sym = typeOf[_ => _].typeSymbol
     val ArraySym = typeOf[Array[_]].typeSymbol
+    val ListSym = typeOf[List[_]].typeSymbol
 
     val BaseTypeExSym = typeOf[BaseTypeEx[_, _]].typeSymbol
   }
