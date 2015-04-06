@@ -60,12 +60,6 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
     lazy val defaultRepTo = Default.defaultVal(SList.empty[B])
   }
 
-//  def listIso[A, B](iso: Iso[A, B]): Iso[List[A], List[B]] = {
-//    implicit val eA = iso.eFrom
-//    implicit val eB = iso.eTo
-//    ListIso(iso)
-//  }
-  
 //  val HasViewListArg = HasArg(hasViewListArg)
 //
 //  protected def hasViewListArg(s: Exp[_]): Boolean = s match {
