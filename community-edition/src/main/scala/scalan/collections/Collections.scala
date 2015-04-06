@@ -18,7 +18,6 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def apply(i: Rep[Int]): Rep[A]
     @OverloadId("many")
     def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[A]
-    def map[B: Elem](f: Rep[A @uncheckedVariance] => Rep[B]): Coll[B] //= Collection(arr.map(f))
     def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): Coll[B] //= Collection(arr.mapBy(f))
     def zip[B: Elem](ys: Coll[B]): PairColl[A @uncheckedVariance, B] // = PairCollection(self, ys)
     def slice(offset: Rep[Int], length: Rep[Int]): Coll[A]
@@ -26,8 +25,8 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def update (idx: Rep[Int], value: Rep[A @uncheckedVariance]): Coll[A]
     def updateMany (idxs: Coll[Int], vals: Coll[A @uncheckedVariance]): Coll[A]
     def indexes: Coll[Int] = Collection.indexRange(length)
-    def filter(f: Rep[A @uncheckedVariance] => Rep[Boolean]): Coll[A]
-    def flatMap[B: Elem](f: Rep[A @uncheckedVariance] => Coll[B]): Coll[B] // = Collection(arr.flatMap {in => f(in).arr} )
+    def filterBy(f: Rep[A @uncheckedVariance => Boolean]): Coll[A]
+    def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] // = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[A @uncheckedVariance]): Coll[A]  // = Collection(arr.append(value))
     /*def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(Collection[A], A)] = {
       val arrScan = arr.scan(m)
@@ -112,7 +111,6 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def arr = SArray.replicate(length, ())
     def lst = SList.replicate(length, ())
     def apply(i: Rep[Int]) = ()
-    def map[B: Elem](f: Rep[Unit] => Rep[B]): Coll[B] = Collection(arr.map(f))
     def mapBy[B: Elem](f: Rep[Unit => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))
     @OverloadId("many")
     def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[Unit] = UnitCollection(indices.length)
@@ -120,9 +118,9 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def reduce(implicit m: RepMonoid[Unit @uncheckedVariance]): Rep[Unit] = ()
     def zip[B: Elem](ys: Coll[B]): PairColl[Unit, B] = PairCollection(self, ys)
     def update (idx: Rep[Int], value: Rep[Unit]): Coll[Unit] = self
-    def updateMany (idxs: Coll[Int], vals: Coll[Unit]): Coll[Unit] = self //UnitCollection(arr.updateMany(idxs.arr, vals.arr))
-    def filter(f: Rep[Unit] => Rep[Boolean]): Coll[Unit] = Collection(arr.filter(f))
-    def flatMap[B: Elem](f: Rep[Unit] => Coll[B]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
+    def updateMany (idxs: Coll[Int], vals: Coll[Unit]): Coll[Unit] = self
+    def filterBy(f: Rep[Unit => Boolean]): Coll[Unit] = Collection(arr.filterBy(f))
+    def flatMapBy[B: Elem](f: Rep[Unit => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[Unit]): Coll[Unit]  = Collection(arr.append(value))
   }
   trait UnitCollectionCompanion extends ConcreteClass0[UnitCollection] {
@@ -134,7 +132,6 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def lst = arr.toList
     def length = arr.length
     def apply(i: Rep[Int]) = arr(i)
-    def map[B: Elem](f: Rep[A @uncheckedVariance] => Rep[B]): Coll[B] = Collection(arr.map(f))
     def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))
     def slice(offset: Rep[Int], length: Rep[Int]) = {
       val sl = arr.slice(offset, length)
@@ -146,8 +143,8 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def zip[B: Elem](ys: Coll[B]): PairColl[A, B] = PairCollection(self, ys)
     def update (idx: Rep[Int], value: Rep[A]): Coll[A] = BaseCollection(arr.update(idx, value))
     def updateMany (idxs: Coll[Int], vals: Coll[A]): Coll[A] = BaseCollection(arr.updateMany(idxs.arr, vals.arr))
-    def filter(f: Rep[A @uncheckedVariance] => Rep[Boolean]): Coll[A] = BaseCollection(arr.filter(f))
-    def flatMap[B: Elem](f: Rep[A @uncheckedVariance] => Coll[B]): Coll[B] = BaseCollection(arr.flatMap {in => f(in).arr} )
+    def filterBy(f: Rep[A @uncheckedVariance => Boolean]): Coll[A] = BaseCollection(arr.filterBy(f))
+    def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr})
     def append(value: Rep[A @uncheckedVariance]): Coll[A]  = BaseCollection(arr.append(value))
   }
   trait BaseCollectionCompanion extends ConcreteClass1[BaseCollection] {
@@ -162,7 +159,6 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def length = lst.length
     def apply(i: Rep[Int]) = lst(i)
     def arr = lst.toArray
-    def map[B: Elem](f: Rep[A @uncheckedVariance] => Rep[B]): Coll[B] = ListCollection(lst.map(f))
     def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): Coll[B] = ListCollection(lst.mapBy(f))
     def slice(offset: Rep[Int], length: Rep[Int]) = ListCollection(lst.slice(offset, length))
     @OverloadId("many")
@@ -171,8 +167,8 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def zip[B: Elem](ys: Coll[B]): PairColl[A, B] = PairCollection(self, ys)
     def update (idx: Rep[Int], value: Rep[A]): Coll[A] = ???
     def updateMany (idxs: Coll[Int], vals: Coll[A]): Coll[A] = ???
-    def filter(f: Rep[A @uncheckedVariance] => Rep[Boolean]): Coll[A] = ListCollection(lst.filter(f))
-    def flatMap[B: Elem](f: Rep[A @uncheckedVariance] => Coll[B]): Coll[B] =
+    def filterBy(f: Rep[A @uncheckedVariance => Boolean]): Coll[A] = ListCollection(lst.filterBy(f))
+    def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] =
       ListCollection(lst.flatMap { in => f(in).lst } )
     def append(value: Rep[A @uncheckedVariance]): Coll[A]  = ListCollection(value :: lst)
   }
@@ -192,14 +188,13 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[A] = {
       CollectionOnSeq(SSeq(indices.arr.map(i => seq(i))))
     }
-    def map[B: Elem](f: Rep[A @uncheckedVariance] => Rep[B]): Coll[B] = ???
     def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): Coll[B] = ???
     def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] = ???
     def zip[B: Elem](ys: Coll[B]): PairColl[A, B] = ???
     def update (idx: Rep[Int], value: Rep[A]): Coll[A] = ???
     def updateMany (idxs: Coll[Int], vals: Coll[A]): Coll[A] = ???
-    def filter(f: Rep[A @uncheckedVariance] => Rep[Boolean]): Coll[A] = ???
-    def flatMap[B: Elem](f: Rep[A @uncheckedVariance] => Coll[B]): Coll[B] = ???
+    def filterBy(f: Rep[A @uncheckedVariance => Boolean]): Coll[A] = ???
+    def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] = ???
     def append(value: Rep[A @uncheckedVariance]): Coll[A]  = ???
   }
   trait CollectionOnSeqCompanion extends ConcreteClass1[CollectionOnSeq] {
@@ -212,7 +207,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     implicit def eB: Elem[B]
     def as: Rep[Collection[A]]
     def bs: Rep[Collection[B]]
-    override def filter(f: Rep[(A, B)] => Rep[Boolean]): Rep[IPairCollection[A, B]]
+    override def filterBy(f: Rep[((A, B)) => Boolean]): Rep[IPairCollection[A, B]]
     @OverloadId("many")
     override def apply(indices: Coll[Int])(implicit o: Overloaded1): Rep[IPairCollection[A, B]]
   }
@@ -221,12 +216,6 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   abstract class PairCollection[A, B](val as: Rep[Collection[A]], val bs: Rep[Collection[B]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends IPairCollection[A, B] {
     lazy val elem = element[(A, B)]
-    def mapPairs[R: Elem](f: (Rep[A], Rep[B]) => Rep[R]): Coll[R] = {
-      map { (p: Rep[(A, B)]) =>
-        val Pair(a, b) = p
-        f(a, b)
-      }
-    }
     def arr = (as.arr zip bs.arr)
     def lst = (as.lst zip bs.lst)
     def apply(i: Rep[Int]) = (as(i), bs(i))
@@ -235,7 +224,6 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       PairCollection(as.slice(offset, length), bs.slice(offset, length))
     @OverloadId("many")
     def apply(indices: Coll[Int])(implicit o: Overloaded1): PairColl[A, B] = as(indices) zip bs(indices)
-    def map[C: Elem](f: Rep[(A,B) @uncheckedVariance] => Rep[C]): Coll[C] =  Collection (arr.map (f) )
     def mapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => C]): Coll[C] = Collection(arr.mapBy(f))   // TODO: this should be done in another way
     def reduce(implicit m: RepMonoid[(A,B) @uncheckedVariance]): Rep[(A,B)] = arr.reduce(m)  // TODO: this should be done in another way
     def zip[C: Elem](ys: Coll[C]): PairColl[(A, B),C] = PairCollection(self, ys)
@@ -244,9 +232,9 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       val cvals = vals.asRep[IPairCollection[A,B]]
       PairCollection(as.updateMany(idxs, cvals.as), bs.updateMany(idxs, cvals.bs))
     }
-    def filter(f: Rep[(A,B) @uncheckedVariance] => Rep[Boolean]): PairColl[A, B] =
-      Collection(arr.filter(f)).asRep[IPairCollection[A, B]]
-    def flatMap[C: Elem](f: Rep[(A,B) @uncheckedVariance] => Coll[C]): Coll[C] = Collection(arr.flatMap {in => f(in).arr} )
+    def filterBy(f: Rep[(A,B) @uncheckedVariance => Boolean]): PairColl[A, B] =
+      Collection(arr.filterBy(f)).asRep[IPairCollection[A, B]]
+    def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = PairCollection(as.append(value._1), bs.append(value._2))
   }
 
@@ -271,14 +259,13 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     @OverloadId("many")
     def apply(indices: Coll[Int])(implicit o: Overloaded1): PairColl[A, B] =
       CollectionOfPairs(arr(indices.arr))
-    def map[C: Elem](f: Rep[(A,B) @uncheckedVariance] => Rep[C]): Coll[C] =  Collection(arr.map (f) )
     def mapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => C]): Coll[C] = Collection(arr.mapBy(f))   // TODO: this should be done in another way
     def reduce(implicit m: RepMonoid[(A,B) @uncheckedVariance]): Rep[(A,B)] = arr.reduce(m)  // TODO: this should be done in another way
     def zip[C: Elem](ys: Coll[C]): PairColl[(A, B),C] = PairCollection(self, ys)
     def update (idx: Rep[Int], value: Rep[(A,B)]): Coll[(A,B)] = CollectionOfPairs(arr.update(idx, value))
     def updateMany (idxs: Coll[Int], vals: Coll[(A,B)]): Coll[(A,B)] = CollectionOfPairs(arr.updateMany(idxs.arr, vals.arr))
-    def filter(f: Rep[(A,B) @uncheckedVariance] => Rep[Boolean]): PairColl[A,B] = CollectionOfPairs(arr.filter(f))
-    def flatMap[C: Elem](f: Rep[(A,B) @uncheckedVariance] => Coll[C]): Coll[C] = Collection(arr.flatMap {in => f(in).arr} )
+    def filterBy(f: Rep[(A,B) @uncheckedVariance => Boolean]): PairColl[A,B] = CollectionOfPairs(arr.filterBy(f))
+    def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = CollectionOfPairs(arr.append(value))
   }
   trait CollectionOfPairsCompanion extends ConcreteClass2[CollectionOfPairs] with CollectionCompanion {
@@ -329,14 +316,13 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       }
       NestedCollection(newValues, newSegments)
     }
-    def map[B: Elem](f: Rep[Collection[A @uncheckedVariance]] => Rep[B]): Coll[B] = Collection(arr.map(f))
     def mapBy[B: Elem](f: Rep[Collection[A] => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))
     def reduce(implicit m: RepMonoid[Collection[A @uncheckedVariance]]): Coll[A] = arr.reduce(m)
     def zip[B: Elem](ys: Coll[B]): PairColl[Collection[A], B] = PairCollection(self, ys)
     def update (idx: Rep[Int], value: Rep[Collection[A]]): NColl[A] = ???
     def updateMany (idxs: Coll[Int], vals: Coll[Collection[A]]): NColl[A] = ???
-    def filter(f: Rep[Collection[A @uncheckedVariance]] => Rep[Boolean]): NColl[A] = ???
-    def flatMap[B: Elem](f: Rep[Collection[A @uncheckedVariance]] => Coll[B]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
+    def filterBy(f: Rep[Collection[A @uncheckedVariance] => Boolean]): NColl[A] = ???
+    def flatMapBy[B: Elem](f: Rep[Collection[A @uncheckedVariance] => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[Collection[A @uncheckedVariance]]): NColl[A]  = ??? //Collection(arr.append(value))
   }
   trait NestedCollectionCompanion extends ConcreteClass1[NestedCollection] {
@@ -353,7 +339,28 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
 }
 
-trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl => }
+trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl =>
+  implicit class CollectionExtensions[A](coll: Coll[A]) {
+    implicit def eItem: Elem[A] = coll.selfType1.asInstanceOf[CollectionElem[A, _]].elem
+
+    def map[B: Elem](f: Rep[A] => Rep[B]): Coll[B] = coll.mapBy(fun(f))
+
+    def filter(f: Rep[A] => Rep[Boolean]): Coll[A] = coll.filterBy(fun(f))
+
+    def flatMap[B: Elem](f: Rep[A] => Coll[B]): Coll[B] = coll.flatMapBy(fun(f))
+  }
+
+  implicit class IPairCollectionExtensions[A, B](coll: PairColl[A, B]) {
+    implicit def eItem: Elem[(A, B)] = coll.selfType1.asInstanceOf[CollectionElem[(A, B), _]].elem
+
+    def map[C: Elem](f: Rep[(A, B)] => Rep[C]): Coll[C] = coll.mapBy(fun(f))
+
+    def filter(f: Rep[(A, B)] => Rep[Boolean]): PairColl[A, B] = coll.filterBy(fun(f))
+
+    def flatMap[C: Elem](f: Rep[(A, B)] => Coll[C]): Coll[C] = coll.flatMapBy(fun(f))
+  }
+
+}
 
 trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSeq => }
 
