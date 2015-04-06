@@ -37,10 +37,10 @@ trait SeqsAbs extends Scalan with Seqs {
     def to(x: Rep[SSeq[A]]) = x.map(iso.to _)
     lazy val defaultRepTo = Default.defaultVal(SSeq.empty[B])
   }
-  class SSeqElem[A, To <: SSeq[A]](implicit eA: Elem[A])
+  class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
     extends EntityElem1[A, To, SSeq](eA,container[SSeq]) {
-    def isEntityType = true
-    def tag = {
+    override def isEntityType = true
+    override def tag = {
       implicit val tagA = eA.tag
       weakTypeTag[SSeq[A]].asInstanceOf[WeakTypeTag[To]]
     }
@@ -49,7 +49,7 @@ trait SeqsAbs extends Scalan with Seqs {
       assert(x.selfType1.isInstanceOf[SSeqElem[_,_]])
       x.asRep[To]
     }
-    def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def sSeqElement[A](implicit eA: Elem[A]) =
@@ -116,7 +116,7 @@ trait SeqsAbs extends Scalan with Seqs {
         this.getClass.getMethod("map", classOf[AnyRef], classOf[Elem[B]]),
         List(f.asInstanceOf[AnyRef], element[B]))
 
-    def reduce(op: Rep[((A,A)) => A]): Rep[A] =
+    def reduce(op: Rep[((A, A)) => A]): Rep[A] =
       methodCallEx[A](self,
         this.getClass.getMethod("reduce", classOf[AnyRef]),
         List(op.asInstanceOf[AnyRef]))
@@ -148,7 +148,7 @@ trait SeqsAbs extends Scalan with Seqs {
   }
   trait SSeqImplCompanion
   // elem for concrete class
-  class SSeqImplElem[A](val iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit val eA: Elem[A])
+  class SSeqImplElem[A](val iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit eA: Elem[A])
     extends SSeqElem[A, SSeqImpl[A]]
     with ViewElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
     override def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
@@ -255,7 +255,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
     override def isEmpty: Rep[Boolean] =
       wrappedValueOfBaseType.isEmpty
 
-    override def reduce(op: Rep[((A,A)) => A]): Rep[A] =
+    override def reduce(op: Rep[((A, A)) => A]): Rep[A] =
       wrappedValueOfBaseType.reduce(scala.Function.untupled(op))
 
     override def filter(p: Rep[A => Boolean]): Rep[SSeq[A]] =
@@ -397,12 +397,12 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
     }
 
     object reduce {
-      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[((A,A)) => A]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[SSeq[A]], Rep[((A, A)) => A]) forSome {type A}] = d match {
         case MethodCall(receiver, method, Seq(op, _*), _) if receiver.elem.isInstanceOf[SSeqElem[_, _]] && method.getName == "reduce" =>
-          Some((receiver, op)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[((A,A)) => A]) forSome {type A}]]
+          Some((receiver, op)).asInstanceOf[Option[(Rep[SSeq[A]], Rep[((A, A)) => A]) forSome {type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[((A,A)) => A]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[SSeq[A]], Rep[((A, A)) => A]) forSome {type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

@@ -19,8 +19,8 @@ trait FrontsAbs extends Scalan with Fronts {
 
   class FrontElem[To <: Front]
     extends EntityElem[To] {
-    def isEntityType = true
-    def tag = {
+    override def isEntityType = true
+    override def tag = {
       weakTypeTag[Front].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertFront(x.asRep[Front])
@@ -28,7 +28,7 @@ trait FrontsAbs extends Scalan with Fronts {
       assert(x.selfType1.isInstanceOf[FrontElem[_]])
       x.asRep[To]
     }
-    def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def frontElement =

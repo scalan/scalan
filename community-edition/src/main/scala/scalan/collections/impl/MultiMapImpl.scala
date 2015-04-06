@@ -15,10 +15,10 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
     proxyOps[MMultiMap[K, V]](p)(classTag[MMultiMap[K, V]])
   }
 
-  class MMultiMapElem[K, V, To <: MMultiMap[K, V]](implicit elemKey: Elem[K], elemValue: Elem[V])
+  class MMultiMapElem[K, V, To <: MMultiMap[K, V]](implicit val elemKey: Elem[K], val elemValue: Elem[V])
     extends EntityElem[To] {
-    def isEntityType = true
-    def tag = {
+    override def isEntityType = true
+    override def tag = {
       implicit val tagK = elemKey.tag
       implicit val tagV = elemValue.tag
       weakTypeTag[MMultiMap[K, V]].asInstanceOf[WeakTypeTag[To]]
@@ -28,7 +28,7 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
       assert(x.selfType1.isInstanceOf[MMultiMapElem[_,_,_]])
       x.asRep[To]
     }
-    def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def mMultiMapElement[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]) =
@@ -49,7 +49,7 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
   }
 
   // elem for concrete class
-  class HashMMultiMapElem[K, V](val iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]])(implicit val elemKey: Elem[K], val elemValue: Elem[V])
+  class HashMMultiMapElem[K, V](val iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]])(implicit elemKey: Elem[K], elemValue: Elem[V])
     extends MMultiMapElem[K, V, HashMMultiMap[K, V]]
     with ViewElem[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
     override def convertMMultiMap(x: Rep[MMultiMap[K, V]]) = HashMMultiMap(x.map)
@@ -345,12 +345,12 @@ trait MultiMapsExp extends MultiMapsDsl with ScalanExp {
     }
 
     object fromArray {
-      def unapply(d: Def[_]): Option[Arr[(K,V)] forSome {type K; type V}] = d match {
+      def unapply(d: Def[_]): Option[Arr[(K, V)] forSome {type K; type V}] = d match {
         case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem.isInstanceOf[HashMMultiMapCompanionElem] && method.getName == "fromArray" =>
-          Some(arr).asInstanceOf[Option[Arr[(K,V)] forSome {type K; type V}]]
+          Some(arr).asInstanceOf[Option[Arr[(K, V)] forSome {type K; type V}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Arr[(K,V)] forSome {type K; type V}] = exp match {
+      def unapply(exp: Exp[_]): Option[Arr[(K, V)] forSome {type K; type V}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -561,12 +561,12 @@ trait MultiMapsExp extends MultiMapsDsl with ScalanExp {
     }
 
     object fromArray {
-      def unapply(d: Def[_]): Option[Arr[(K,V)] forSome {type K; type V}] = d match {
+      def unapply(d: Def[_]): Option[Arr[(K, V)] forSome {type K; type V}] = d match {
         case MethodCall(receiver, method, Seq(a, _*), _) if receiver.elem.isInstanceOf[MMultiMapCompanionElem] && method.getName == "fromArray" =>
-          Some(a).asInstanceOf[Option[Arr[(K,V)] forSome {type K; type V}]]
+          Some(a).asInstanceOf[Option[Arr[(K, V)] forSome {type K; type V}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Arr[(K,V)] forSome {type K; type V}] = exp match {
+      def unapply(exp: Exp[_]): Option[Arr[(K, V)] forSome {type K; type V}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

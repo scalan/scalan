@@ -302,11 +302,17 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         val typesUse = e.tpeArgUseString
         val isCont = e.isContainer1
         val underscores = e.tpeArgDecls.map(_ => "_,").mkString("")
+        val parentElem = e.firstAncestorType match {
+          case STraitCall("Reifiable", _) | STraitCall("BaseTypeEx", _) =>
+            s"EntityElem${isCont.opt("1")}[${isCont.opt(e.typesUsePref)}To${isCont.opt(s", $entityName")}]${isCont.opt(s"(${e.tpeArgs.map("e" + _.name + ",").mkString("")}container[$entityName])")}"
+          case STraitCall(parentName, parentTypes) =>
+            s"${parentName}Elem[${parentTypes.map(_.toString + ", ").mkString("")}To]"
+        }
         s"""
-        |  class ${e.name}Elem[${e.typesDeclPref}To <: ${e.entityType}]${e.implicitArgsDecl}
-        |    extends EntityElem${isCont.opt("1")}[${isCont.opt(e.typesUsePref)}To${isCont.opt(s", $entityName")}]${isCont.opt(s"(${e.tpeArgs.map("e" + _.name + ",").mkString("")}container[$entityName])")} {
-        |    def isEntityType = true
-        |    def tag = {
+        |  class ${e.name}Elem[${e.typesDeclPref}To <: ${e.entityType}]${e.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")}
+        |    extends $parentElem {
+        |    override def isEntityType = true
+        |    override def tag = {
         |${e.implicitArgs.flatMap(arg => arg.tpe match {
           case STraitCall(name, List(tpe)) if name == "Elem" || name == "Element" =>
             Some(s"      implicit val tag${tpe} = ${arg.name}.tag")
@@ -319,7 +325,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |      assert(x.selfType1.isInstanceOf[${e.name}Elem[${underscores}_]])
         |      x.asRep[To]
         |    }
-        |    def getDefaultRep: Rep[To] = ???
+        |    override def getDefaultRep: Rep[To] = ???
         |  }
         |${
           val elemMethodName = StringUtil.lowerCaseFirst(e.name) + "Element"
@@ -431,7 +437,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         s"""
         |$defaultImpl
         |  // elem for concrete class
-        |  class ${className}Elem${typesDecl}(val iso: Iso[${className}Data${typesUse}, $className${typesUse}])$implicitArgsWithVals
+        |  class ${className}Elem${typesDecl}(val iso: Iso[${className}Data${typesUse}, $className${typesUse}])$implicitArgs
         |    extends ${parent.name}Elem[${parentArgsStr}$className${typesUse}]
         |    with ViewElem${isCont.opt("1")}[${isCont.opt(parentArgsStr)}${className}Data${typesUse}, $className${typesUse}${isCont.opt(s", ${parent.name}")}] {
         |    override def convert${parent.name}(x: Rep[${parent.name}${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.getEntity(parent.name), c)}
