@@ -60,37 +60,6 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
     lazy val defaultRepTo = Default.defaultVal(SList.empty[B])
   }
 
-//  val HasViewListArg = HasArg(hasViewListArg)
-//
-//  protected def hasViewListArg(s: Exp[_]): Boolean = s match {
-//    case Def(_: ViewList[_, _]) => true
-//    case _ => false
-//  }
-
-//  def mapUnderlyingList[A,B,C](view: ViewList[A,B], f: Rep[B=>C]): Lst[C] = {
-//    val iso = view.innerIso
-//    implicit val eA = iso.eFrom
-//    implicit val eB = iso.eTo
-//    implicit val eC: Elem[C] = f.elem.eRange
-//    view.source.map { x => f(iso.to(x)) }
-//  }
-//
-//  def filterUnderlyingList[A, B](view: ViewList[A, B], f: Rep[B => Boolean]): Lst[B] = {
-//    val iso = view.innerIso
-//    implicit val eA = iso.eFrom
-//    implicit val eB = iso.eTo
-//    val filtered = view.source.filter { x => f(iso.to(x)) }
-//    ViewList(filtered)(iso)
-//  }
-//
-//  def liftViewListFromArgs[T](d: Def[T])/*(implicit eT: Elem[T])*/: Option[Exp[_]] = d match {
-//    case ListMap(Def(view: ViewList[_, _]), f) =>
-//      Some(mapUnderlyingList(view, f))
-//    case ListFilter(Def(view: ViewList[_, _]), f) =>
-//      Some(filterUnderlyingList(view, f))
-//    case _ => None
-//  }
-
   override def rewriteDef[T](d: Def[T]) = d match {
     case ListLength(Def(ViewList(arr: Lst[a]@unchecked))) =>
       list_length(arr)
