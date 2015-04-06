@@ -18,10 +18,10 @@ trait VerticesAbs extends Scalan with Vertices {
     proxyOps[Vertex[V, E]](p)(classTag[Vertex[V, E]])
   }
 
-  class VertexElem[V, E, To <: Vertex[V, E]](implicit eV: Elem[V], eE: Elem[E])
+  class VertexElem[V, E, To <: Vertex[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
-    def isEntityType = true
-    def tag = {
+    override def isEntityType = true
+    override def tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
       weakTypeTag[Vertex[V, E]].asInstanceOf[WeakTypeTag[To]]
@@ -31,7 +31,7 @@ trait VerticesAbs extends Scalan with Vertices {
       assert(x.selfType1.isInstanceOf[VertexElem[_,_,_]])
       x.asRep[To]
     }
-    def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def vertexElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
@@ -52,7 +52,7 @@ trait VerticesAbs extends Scalan with Vertices {
   }
 
   // elem for concrete class
-  class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit val eV: Elem[V], val eE: Elem[E])
+  class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends VertexElem[V, E, SVertex[V, E]]
     with ViewElem[SVertexData[V, E], SVertex[V, E]] {
     override def convertVertex(x: Rep[Vertex[V, E]]) = SVertex(x.id, x.graph)

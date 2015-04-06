@@ -19,10 +19,10 @@ trait GraphsAbs extends Scalan with Graphs {
     proxyOps[Graph[V, E]](p)(classTag[Graph[V, E]])
   }
 
-  class GraphElem[V, E, To <: Graph[V, E]](implicit eV: Elem[V], eE: Elem[E])
+  class GraphElem[V, E, To <: Graph[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
-    def isEntityType = true
-    def tag = {
+    override def isEntityType = true
+    override def tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
       weakTypeTag[Graph[V, E]].asInstanceOf[WeakTypeTag[To]]
@@ -32,7 +32,7 @@ trait GraphsAbs extends Scalan with Graphs {
       assert(x.selfType1.isInstanceOf[GraphElem[_,_,_]])
       x.asRep[To]
     }
-    def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def graphElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
@@ -53,7 +53,7 @@ trait GraphsAbs extends Scalan with Graphs {
   }
 
   // elem for concrete class
-  class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit val eV: Elem[V], val eE: Elem[E])
+  class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
     with ViewElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
@@ -120,7 +120,7 @@ trait GraphsAbs extends Scalan with Graphs {
   def unmkAdjacencyGraph[V:Elem, E:Elem](p: Rep[AdjacencyGraph[V, E]]): Option[(Rep[Collection[V]], Rep[INestedCollection[E]], Rep[INestedCollection[Int]])]
 
   // elem for concrete class
-  class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit val eV: Elem[V], val eE: Elem[E])
+  class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, IncidenceGraph[V, E]]
     with ViewElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
@@ -880,7 +880,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `unzipValues`: Method's return type (Rep[SimpleGraph],Coll[V],NColl[E]) is not a Rep
+    // WARNING: Cannot generate matcher for method `unzipValues`: Method's return type (Rep[SimpleGraph], Coll[V], NColl[E]) is not a Rep
 
     object addEdges {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[EdgeList]) forSome {type V; type E}] = d match {

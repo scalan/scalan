@@ -17,8 +17,8 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
 
   class AStringElem[To <: AString]
     extends EntityElem[To] {
-    def isEntityType = true
-    def tag = {
+    override def isEntityType = true
+    override def tag = {
       weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertAString(x.asRep[AString])
@@ -26,7 +26,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
       assert(x.selfType1.isInstanceOf[AStringElem[_]])
       x.asRep[To]
     }
-    def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def aStringElement =

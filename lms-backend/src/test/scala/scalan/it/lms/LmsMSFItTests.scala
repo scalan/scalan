@@ -234,7 +234,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
   }
 
   test("MSF_adjListColl") {
-    //pending
+    pending
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)

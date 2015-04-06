@@ -33,7 +33,7 @@ trait ScalanAst {
   )
 
   case class STpeTuple(items: List[STpeExpr]) extends STpeExpr {
-    override def toString = items.mkString("(", ",", ")")
+    override def toString = items.mkString("(", ", ", ")")
   }
 
   case class STpeFunc(domain: STpeExpr, range: STpeExpr) extends STpeExpr {
@@ -47,7 +47,7 @@ trait ScalanAst {
   }
 
   case class STpeSum(items: List[STpeExpr]) extends STpeExpr {
-    override def toString = items.mkString("(", "|", ")")
+    override def toString = items.mkString("(", " | ", ")")
   }
 
   implicit class STpeExprExtensions(self: STpeExpr) {

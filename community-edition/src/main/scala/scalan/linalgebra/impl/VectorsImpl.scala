@@ -16,10 +16,10 @@ trait VectorsAbs extends Scalan with Vectors {
     proxyOps[AbstractVector[T]](p)(classTag[AbstractVector[T]])
   }
 
-  class AbstractVectorElem[T, To <: AbstractVector[T]](implicit elem: Elem[T])
+  class AbstractVectorElem[T, To <: AbstractVector[T]](implicit val elem: Elem[T])
     extends EntityElem[To] {
-    def isEntityType = true
-    def tag = {
+    override def isEntityType = true
+    override def tag = {
       implicit val tagT = elem.tag
       weakTypeTag[AbstractVector[T]].asInstanceOf[WeakTypeTag[To]]
     }
@@ -28,7 +28,7 @@ trait VectorsAbs extends Scalan with Vectors {
       assert(x.selfType1.isInstanceOf[AbstractVectorElem[_,_]])
       x.asRep[To]
     }
-    def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def abstractVectorElement[T](implicit elem: Elem[T]) =
@@ -49,7 +49,7 @@ trait VectorsAbs extends Scalan with Vectors {
   }
 
   // elem for concrete class
-  class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit val elem: Elem[T])
+  class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit elem: Elem[T])
     extends AbstractVectorElem[T, DenseVector[T]]
     with ViewElem[DenseVectorData[T], DenseVector[T]] {
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = DenseVector(x.items)
@@ -114,7 +114,7 @@ trait VectorsAbs extends Scalan with Vectors {
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]): Option[(Rep[Collection[T]])]
 
   // elem for concrete class
-  class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit val elem: Elem[T])
+  class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit elem: Elem[T])
     extends AbstractVectorElem[T, SparseVector[T]]
     with ViewElem[SparseVectorData[T], SparseVector[T]] {
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)

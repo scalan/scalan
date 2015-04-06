@@ -17,8 +17,8 @@ trait SegmentsAbs extends Scalan with Segments {
 
   class SegmentElem[To <: Segment]
     extends EntityElem[To] {
-    def isEntityType = true
-    def tag = {
+    override def isEntityType = true
+    override def tag = {
       weakTypeTag[Segment].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSegment(x.asRep[Segment])
@@ -26,7 +26,7 @@ trait SegmentsAbs extends Scalan with Segments {
       assert(x.selfType1.isInstanceOf[SegmentElem[_]])
       x.asRep[To]
     }
-    def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def segmentElement =

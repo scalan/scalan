@@ -16,10 +16,10 @@ trait MatricesAbs extends Scalan with Matrices {
     proxyOps[AbstractMatrix[T]](p)(classTag[AbstractMatrix[T]])
   }
 
-  class AbstractMatrixElem[T, To <: AbstractMatrix[T]](implicit elem: Elem[T])
+  class AbstractMatrixElem[T, To <: AbstractMatrix[T]](implicit val elem: Elem[T])
     extends EntityElem[To] {
-    def isEntityType = true
-    def tag = {
+    override def isEntityType = true
+    override def tag = {
       implicit val tagT = elem.tag
       weakTypeTag[AbstractMatrix[T]].asInstanceOf[WeakTypeTag[To]]
     }
@@ -28,7 +28,7 @@ trait MatricesAbs extends Scalan with Matrices {
       assert(x.selfType1.isInstanceOf[AbstractMatrixElem[_,_]])
       x.asRep[To]
     }
-    def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def abstractMatrixElement[T](implicit elem: Elem[T]) =
@@ -49,7 +49,7 @@ trait MatricesAbs extends Scalan with Matrices {
   }
 
   // elem for concrete class
-  class RowMajorDirectMatrixElem[T](val iso: Iso[RowMajorDirectMatrixData[T], RowMajorDirectMatrix[T]])(implicit val elem: Elem[T])
+  class RowMajorDirectMatrixElem[T](val iso: Iso[RowMajorDirectMatrixData[T], RowMajorDirectMatrix[T]])(implicit elem: Elem[T])
     extends AbstractMatrixElem[T, RowMajorDirectMatrix[T]]
     with ViewElem[RowMajorDirectMatrixData[T], RowMajorDirectMatrix[T]] {
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = RowMajorDirectMatrix(x.rows)
@@ -114,7 +114,7 @@ trait MatricesAbs extends Scalan with Matrices {
   def unmkRowMajorDirectMatrix[T:Elem](p: Rep[RowMajorDirectMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]])]
 
   // elem for concrete class
-  class RowMajorNestedMatrixElem[T](val iso: Iso[RowMajorNestedMatrixData[T], RowMajorNestedMatrix[T]])(implicit val elem: Elem[T])
+  class RowMajorNestedMatrixElem[T](val iso: Iso[RowMajorNestedMatrixData[T], RowMajorNestedMatrix[T]])(implicit elem: Elem[T])
     extends AbstractMatrixElem[T, RowMajorNestedMatrix[T]]
     with ViewElem[RowMajorNestedMatrixData[T], RowMajorNestedMatrix[T]] {
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = RowMajorNestedMatrix(x.rmValues, x.numColumns)
@@ -180,7 +180,7 @@ trait MatricesAbs extends Scalan with Matrices {
   def unmkRowMajorNestedMatrix[T:Elem](p: Rep[RowMajorNestedMatrix[T]]): Option[(Rep[Collection[T]], Rep[Int])]
 
   // elem for concrete class
-  class RowMajorSparseMatrixElem[T](val iso: Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]])(implicit val elem: Elem[T])
+  class RowMajorSparseMatrixElem[T](val iso: Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]])(implicit elem: Elem[T])
     extends AbstractMatrixElem[T, RowMajorSparseMatrix[T]]
     with ViewElem[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]] {
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = RowMajorSparseMatrix(x.rows, x.numColumns)
@@ -603,18 +603,6 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     // WARNING: Cannot generate matcher for method `blockCellIndices`: Method's return type Coll[Int] is not a Rep
 
     // WARNING: Cannot generate matcher for method `transposeIndices`: Method's return type Coll[Int] is not a Rep
-
-    object getTranspositionOfBlocks {
-      def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Coll[((Int,Int),(Int,Int))]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(blocks, _*), _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixElem[_]] && method.getName == "getTranspositionOfBlocks" =>
-          Some((receiver, blocks)).asInstanceOf[Option[(Rep[RowMajorNestedMatrix[T]], Coll[((Int,Int),(Int,Int))]) forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Rep[RowMajorNestedMatrix[T]], Coll[((Int,Int),(Int,Int))]) forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
 
     object transpose_block_size {
       def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
@@ -1058,12 +1046,12 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     }
 
     object fromNColl {
-      def unapply(d: Def[_]): Option[(NColl[(Int,T)], Rep[Int], Elem[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(NColl[(Int, T)], Rep[Int], Elem[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(items, numColumns, elem, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixCompanionElem] && method.getName == "fromNColl" =>
-          Some((items, numColumns, elem)).asInstanceOf[Option[(NColl[(Int,T)], Rep[Int], Elem[T]) forSome {type T}]]
+          Some((items, numColumns, elem)).asInstanceOf[Option[(NColl[(Int, T)], Rep[Int], Elem[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(NColl[(Int,T)], Rep[Int], Elem[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(NColl[(Int, T)], Rep[Int], Elem[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

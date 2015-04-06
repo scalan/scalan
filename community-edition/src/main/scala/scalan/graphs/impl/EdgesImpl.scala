@@ -19,10 +19,10 @@ trait EdgesAbs extends Scalan with Edges {
     proxyOps[Edge[V, E]](p)(classTag[Edge[V, E]])
   }
 
-  class EdgeElem[V, E, To <: Edge[V, E]](implicit eV: Elem[V], eE: Elem[E])
+  class EdgeElem[V, E, To <: Edge[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
-    def isEntityType = true
-    def tag = {
+    override def isEntityType = true
+    override def tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
       weakTypeTag[Edge[V, E]].asInstanceOf[WeakTypeTag[To]]
@@ -32,7 +32,7 @@ trait EdgesAbs extends Scalan with Edges {
       assert(x.selfType1.isInstanceOf[EdgeElem[_,_,_]])
       x.asRep[To]
     }
-    def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def edgeElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
@@ -53,7 +53,7 @@ trait EdgesAbs extends Scalan with Edges {
   }
 
   // elem for concrete class
-  class AdjEdgeElem[V, E](val iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit val eV: Elem[V], val eE: Elem[E])
+  class AdjEdgeElem[V, E](val iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends EdgeElem[V, E, AdjEdge[V, E]]
     with ViewElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
     override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
@@ -120,7 +120,7 @@ trait EdgesAbs extends Scalan with Edges {
   def unmkAdjEdge[V:Elem, E:Elem](p: Rep[AdjEdge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V,E]])]
 
   // elem for concrete class
-  class IncEdgeElem[V, E](val iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit val eV: Elem[V], val eE: Elem[E])
+  class IncEdgeElem[V, E](val iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends EdgeElem[V, E, IncEdge[V, E]]
     with ViewElem[IncEdgeData[V, E], IncEdge[V, E]] {
     override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
