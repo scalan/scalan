@@ -23,6 +23,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def zeroValue = elem.defaultRepValue
 
     def apply(i: Rep[Int]): Rep[T]
+    @OverloadId("apply_by_collection")
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T]
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T]
     @OverloadId("elementwise_sum_collection")
@@ -66,6 +68,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
 
     def apply(i: Rep[Int]): Rep[T] = items(i)
+    @OverloadId("apply_by_collection")
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = DenseVector(items(is))
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
@@ -132,6 +136,9 @@ trait Vectors { self: ScalanCommunityDsl =>
     def nonZeroItems: Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
 
     def apply(i: Rep[Int]): Rep[T] = ??? // TODO: need efficient way to get value by index
+
+    @OverloadId("apply_by_collection")
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = ??? // TODO: need efficient way to get value by index
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
