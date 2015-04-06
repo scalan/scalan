@@ -13,76 +13,74 @@ import scalan.{CommunityMethodMappingDSL, ScalanCommunityDslExp, ScalanCommunity
 class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 
   override def beforeAll() = {
-        FileUtil.deleteIfExist(prefix)
+    FileUtil.deleteIfExist(prefix)
   }
 
   trait Prog extends ProgCommunity  {
 
-    lazy val emptyIf = fun { (in: Rep[(Boolean, (Double, Double))] ) =>  {
+    lazy val emptyIf = fun { (in: Rep[(Boolean, (Double, Double))]) =>
       val Pair(x, Pair(y, z)) = in
       IF(x) THEN y ELSE z
-    }}
+    }
 
-    lazy val exceptionWithIfFalse = fun { (p: Rep[(Int, (SThrowable, SThrowable))]) => {
+    lazy val exceptionWithIfFalse = fun { (p: Rep[(Int, (SThrowable, SThrowable))]) =>
       val Pair(n, Pair(t1, t2)) = p
       IF(n>0) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
     }
-    }
 
-    lazy val exceptionWithIfTrue = fun { (p: Rep[(Int, (SThrowable, SThrowable))]) => {
+    lazy val exceptionWithIfTrue = fun { (p: Rep[(Int, (SThrowable, SThrowable))]) =>
       //val Pair(n, Pair(t1, t2)) = p
       val Pair(n, Pair(t1, t2)) = p
       IF(n<=0) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
     }
-    }
 
-    lazy val arrayLengthFun = fun { (v: Rep[Array[Int]] ) =>  {
+    lazy val arrayLengthFun = fun { (v: Rep[Array[Int]]) =>
       //v.arrayLength
       v.length
-    }}
+    }
 
-    lazy val arrayOneArg = fun { (in: Rep[(Array[Double], Int)] ) =>  {
+    lazy val arrayOneArg = fun { (in: Rep[(Array[Double], Int)]) =>
       in._1.apply(in._2)
-    }}
+    }
 
-    lazy val easyMap = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
+    lazy val easyMap = fun { (in: Rep[(Array[Double], (Double, Double))]) =>
       val Pair(m0, Pair(vFrom, vTo)) = in
       val m:Rep[Array[Double]] = m0.map(x => x*x)
       m.reduce
-    }}
+    }
 
-    lazy val mapWithLambda = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
+    lazy val mapWithLambda = fun { (in: Rep[(Array[Double], (Double, Double))]) =>
       val Pair(m0, Pair(vFrom, vTo)) = in
-      def f(x:Rep[Double],y:Rep[Double], z:Rep[Double]): Rep[Double] =  {
+      def f(x:Rep[Double],y:Rep[Double], z:Rep[Double]): Rep[Double] = {
         x*y+z
       }
 
       val m:Rep[Array[Double]] = m0.map(x => f(x, vFrom, vTo))
 
       m.reduce
-    }}
+    }
 
-    lazy val mapWithLambdaIf = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
+    lazy val mapWithLambdaIf = fun { (in: Rep[(Array[Double], (Double, Double))]) =>
       val Pair(m0, Pair(vFrom, vTo)) = in
-      def f(x:Rep[Double],y:Rep[Double], z:Rep[Double]): Rep[Double] =  {
+      def f(x:Rep[Double],y:Rep[Double], z:Rep[Double]): Rep[Double] = {
         IF(x===y) THEN z ELSE x
       }
 
       val m:Rep[Array[Double]] = m0.map(x => f(x, vFrom, vTo))
 
       m.reduce
-    }}
+    }
 
-    lazy val mapWithLambdaIfGt = fun { (in: Rep[(Array[Double], (Double, Double))] ) =>  {
+    lazy val mapWithLambdaIfGt = fun { (in: Rep[(Array[Double], (Double, Double))]) =>
       val Pair(m0, Pair(vFrom, vTo)) = in
-      def f(x:Rep[Double],y:Rep[Double], z:Rep[Double]): Rep[Double] =  {
+      def f(x:Rep[Double],y:Rep[Double], z:Rep[Double]): Rep[Double] = {
         IF(x<y) THEN x ELSE z
       }
 
       val m:Rep[Array[Double]] = m0.map(x => f(x, vFrom, vTo))
 
       m.reduce
-    }}
+    }
   }
 
   class ProgSeq extends ProgCommunitySeq with Prog  {}
@@ -90,8 +88,6 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 
   override val progSeq = new ProgSeq
   override val progStaged = new ProgStaged
-
-
 
   test("emptyIfTrue") {
     val in = (true, (5.0, 7.7))
@@ -158,28 +154,24 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 
     lazy val message = fun { (t: Rep[SThrowable]) => t.getMessage}
 
-    lazy val initCause = fun { (p: Rep[(SThrowable, SThrowable)]) => {
+    lazy val initCause = fun { (p: Rep[(SThrowable, SThrowable)]) =>
       val Pair(t1, t2) = p
       t1.initCause(t2).getMessage
     }
-    }
 
-    lazy val initCause2 = fun { (p: Rep[(SThrowable, (SThrowable, (SThrowable, (SThrowable, SThrowable))))]) => {
+    lazy val initCause2 = fun { (p: Rep[(SThrowable, (SThrowable, (SThrowable, (SThrowable, SThrowable))))]) =>
       val Pair(t1, Pair(t2, Pair(t3, Pair(t4, t5)))) = p
       t1.initCause(t2.initCause(t3.initCause(t4.initCause(t5)))).getMessage
     }
-    }
 
-    lazy val withIfFalse = fun { (p: Rep[(SThrowable, SThrowable)]) => {
+    lazy val withIfFalse = fun { (p: Rep[(SThrowable, SThrowable)]) =>
       val Pair(t1, t2) = p
       IF(false) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
     }
-    }
 
-    lazy val withIfTrue = fun { (p: Rep[(SThrowable, SThrowable)]) => {
+    lazy val withIfTrue = fun { (p: Rep[(SThrowable, SThrowable)]) =>
       val Pair(t1, t2) = p
       IF(true) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
-    }
     }
   }
 
