@@ -172,7 +172,8 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def update (idx: Rep[Int], value: Rep[A]): Coll[A] = ???
     def updateMany (idxs: Coll[Int], vals: Coll[A]): Coll[A] = ???
     def filter(f: Rep[A @uncheckedVariance] => Rep[Boolean]): Coll[A] = ListCollection(lst.filter(f))
-    def flatMap[B: Elem](f: Rep[A @uncheckedVariance] => Coll[B]): Coll[B] = ListCollection(lst.flatMap {in => f(in).arr} )
+    def flatMap[B: Elem](f: Rep[A @uncheckedVariance] => Coll[B]): Coll[B] =
+      ListCollection(lst.flatMap { in => f(in).lst } )
     def append(value: Rep[A @uncheckedVariance]): Coll[A]  = ListCollection(value :: lst)
   }
   trait ListCollectionCompanion extends ConcreteClass1[ListCollection] {
