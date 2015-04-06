@@ -211,11 +211,13 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
   }
 
   test("Class Mapping") {
-    // FIXME takes a very long time for some reason
-    pending
+    if (isOnTeamCity) {
+      // takes extremely long to run on TeamCity
+      pending
+    }
     val conf = replaceMethExp.defaultCompilerConfig
     val length = getStagedOutputConfig(replaceMethExp)(replaceMethExp.arrayLength, "ClassMapping", Array(5, 9, 2),
-      conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
+      conf.copy(scalaVersion = Some("2.11.6"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
         extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("package"))))
     length should equal(3)
   }
@@ -266,14 +268,14 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
   }
 
   test("Mapping Method From Jar") {
-    // FIXME takes a very long time for some reason (at least sometimes)
-    pending
+    if (isOnTeamCity) {
+      // takes extremely long to run on TeamCity
+      pending
+    }
     val conf = jarReplaceExp.defaultCompilerConfig
     val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.message, "MappingMethodFromJar", "Original message",
-      conf.copy(scalaVersion = Some("2.11.4"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
+      conf.copy(scalaVersion = Some("2.11.6"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
         extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("package"))))
     messageFromTestMethod should equal("Test Message")
   }
 }
-
-
