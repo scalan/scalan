@@ -15,6 +15,8 @@ trait TestsUtil {
     val pathComponents = suiteName.split('.')
     FileUtil.file(testOutDir, pathComponents: _*)
   }
+
+  def isOnTeamCity = System.getenv("TEAMCITY_VERSION") != null
 }
 
 // TODO switch to FunSpec and eliminate duplication in test names (e.g. RewriteSuite)
