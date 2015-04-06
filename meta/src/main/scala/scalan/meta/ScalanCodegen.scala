@@ -97,7 +97,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     val typesDecl = templateData.tpeArgDeclString
     val typesUse = templateData.tpeArgUseString
     val typesWithElems = templateData.boundedTpeArgString(false)
-    val typesWithElemsAndTags = templateData.boundedTpeArgString(true)
 
     def getCompanionOpt = for {bt <- optBT; comp <- module.entityOps.companion} yield comp
 
@@ -274,7 +273,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         }
         else {
           s"""
-          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElemsAndTags}: Elem[$entityNameBT${typesUse}]
+          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}]
           |""".stripAndTrim
         })
 
@@ -622,7 +621,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       }
       else {
         s"""
-          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElemsAndTags}: Elem[$entityNameBT${typesUse}] = new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
+          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] = new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       })
 
