@@ -11,6 +11,8 @@ trait ListOpsExpExt extends ListOpsExp { self: LmsBackendFacade =>
         ListPrepend(f(xs),f(a)).asInstanceOf[Def[A]]
       case ListCons(a,xs) =>
         ListCons(f(a),f(xs)).asInstanceOf[Def[A]]
+      case ListFromSeq(xs) =>
+        ListFromSeq(f(xs)).asInstanceOf[Def[A]]
       case _ =>
         super.mirrorDef(e,f)
     }
