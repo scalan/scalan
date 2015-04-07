@@ -227,14 +227,14 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def mapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => C]): Coll[C] = Collection(arr.mapBy(f))   // TODO: this should be done in another way
     def reduce(implicit m: RepMonoid[(A,B) @uncheckedVariance]): Rep[(A,B)] = arr.reduce(m)  // TODO: this should be done in another way
     def zip[C: Elem](ys: Coll[C]): PairColl[(A, B),C] = PairCollection(self, ys)
-    def update (idx: Rep[Int], value: Rep[(A,B)]): Coll[(A,B)] = PairCollection(as.update(idx, value._1), bs.update(idx, value._2))
-    def updateMany (idxs: Coll[Int], vals: Coll[(A,B)]): Coll[(A,B)] = {
-      val cvals = vals.asRep[IPairCollection[A,B]]
-      PairCollection(as.updateMany(idxs, cvals.as), bs.updateMany(idxs, cvals.bs))
-    }
+    def update (idx: Rep[Int], value: Rep[(A, B)]): PairColl[A, B] =
+      PairCollection(as.update(idx, value._1), bs.update(idx, value._2))
+    def updateMany (idxs: Coll[Int], vals: Coll[(A, B)]): PairColl[A, B] =
+      PairCollection(as.updateMany(idxs, vals.as), bs.updateMany(idxs, vals.bs))
     def filterBy(f: Rep[(A,B) @uncheckedVariance => Boolean]): PairColl[A, B] =
-      Collection(arr.filterBy(f)).asRep[IPairCollection[A, B]]
-    def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] = Collection(arr.flatMap {in => f(in).arr} )
+      CollectionOfPairs(arr.filterBy(f))
+    def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] =
+      Collection(arr.flatMap {in => f(in).arr})
     def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = PairCollection(as.append(value._1), bs.append(value._2))
   }
 
@@ -310,7 +310,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
         values.slice(in._1, in._2)
       }
       val newSegments = {
-        val newLens = segments(indices).map{_._2}
+        val newLens = segments(indices).bs
         val newOffsArr = newLens.arr.scan._1
         Collection(newOffsArr) zip newLens
       }
@@ -337,11 +337,30 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     }
   }
 
+  implicit def convertCollectionElem[A](e: Elem[Collection[A]]): CollectionElem[A, _] =
+    e.asInstanceOf[CollectionElem[A, _]]
+
+  implicit class AbstractPairCollectionExtensions[A, B](coll: Coll[(A, B)]) {
+    val collElem = convertCollectionElem(coll.selfType1)
+
+    def asPairColl: PairColl[A, B] =
+      CollectionOfPairs(coll.arr)(collElem.elem.eFst, collElem.elem.eSnd)
+
+    def as: Coll[A] = collElem match {
+      case _: IPairCollectionElem[_, _, _] => coll.asRep[IPairCollection[A, B]].as
+      case _ => coll.map(_._1)(collElem.elem.eFst)
+    }
+
+    def bs: Coll[B] = coll.selfType1 match {
+      case _: IPairCollectionElem[_, _, _] => coll.asRep[IPairCollection[A, B]].bs
+      case _ => coll.map(_._2)(collElem.elem.eSnd)
+    }
+  }
 }
 
 trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl =>
   implicit class CollectionExtensions[A](coll: Coll[A]) {
-    implicit def eItem: Elem[A] = coll.selfType1.asInstanceOf[CollectionElem[A, _]].elem
+    implicit def eItem: Elem[A] = coll.selfType1.elem
 
     def map[B: Elem](f: Rep[A] => Rep[B]): Coll[B] = coll.mapBy(fun(f))
 
