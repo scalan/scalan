@@ -261,8 +261,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
                     (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = {
       RowMajorSparseMatrix(items.map { coll =>
-        val collPair = coll.convertTo[PairCollection[Int, T]]
-        SparseVector(collPair.as, collPair.bs, numColumns)
+        // FIXME: convertTo does nor work
+        //val collPair = coll.convertTo[PairCollection[Int, T]]
+        //SparseVector(collPair.as, collPair.bs, numColumns)
+        SparseVector(coll.as, coll.bs, numColumns)
       }, numColumns)
     }
   }
