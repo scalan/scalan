@@ -304,6 +304,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
       }
     }
 
+    object dense_+^: {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(dv, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "dense_$plus$up$colon" =>
+          Some((receiver, dv, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_+^: {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(sv, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "sparse_$plus$up$colon" =>
+          Some((receiver, sv, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object +^ {
       def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "$plus$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
@@ -328,6 +352,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
       }
     }
 
+    object dense_-^: {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(dv, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "dense_$minus$up$colon" =>
+          Some((receiver, dv, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_-^: {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(sv, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "sparse_$minus$up$colon" =>
+          Some((receiver, sv, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object -^ {
       def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "$minus$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
@@ -347,6 +395,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object dense_*^: {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(dv, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "dense_$times$up$colon" =>
+          Some((receiver, dv, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_*^: {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(sv, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "sparse_$times$up$colon" =>
+          Some((receiver, sv, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -383,6 +455,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], RepMonoid[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object dense_dot_: {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(dv, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "dense_dot_$colon" =>
+          Some((receiver, dv, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_dot_: {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(sv, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "sparse_dot_$colon" =>
+          Some((receiver, sv, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -495,6 +591,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
       }
     }
 
+    object dense_+^: {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(dv, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "dense_$plus$up$colon" =>
+          Some((receiver, dv, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_+^: {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(sv, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "sparse_$plus$up$colon" =>
+          Some((receiver, sv, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object +^ {
       def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "$plus$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
@@ -519,6 +639,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
       }
     }
 
+    object dense_-^: {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(dv, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "dense_$minus$up$colon" =>
+          Some((receiver, dv, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_-^: {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(sv, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "sparse_$minus$up$colon" =>
+          Some((receiver, sv, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object -^ {
       def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "$minus$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
@@ -538,6 +682,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object dense_*^: {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(dv, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "dense_$times$up$colon" =>
+          Some((receiver, dv, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_*^: {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(sv, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "sparse_$times$up$colon" =>
+          Some((receiver, sv, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -574,6 +742,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], RepMonoid[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object dense_dot_: {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(dv, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "dense_dot_$colon" =>
+          Some((receiver, dv, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_dot_: {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(sv, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "sparse_dot_$colon" =>
+          Some((receiver, sv, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -630,12 +822,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
     }
 
     object apply_SparseVectorCompanion_apply_nonZeroItems {
-      def unapply(d: Def[_]): Option[(Rep[IPairCollection[Int,T]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[(Int, T)]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(nonZeroItems, length, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorCompanionElem] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "SparseVectorCompanion_apply_nonZeroItems" } =>
-          Some((nonZeroItems, length, n)).asInstanceOf[Option[(Rep[IPairCollection[Int,T]], Rep[Int], Numeric[T]) forSome {type T}]]
+          Some((nonZeroItems, length, n)).asInstanceOf[Option[(Rep[Collection[(Int, T)]], Rep[Int], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IPairCollection[Int,T]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[(Int, T)]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -781,6 +973,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
       }
     }
 
+    object dense_+^: {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(self, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "dense_$plus$up$colon" =>
+          Some((receiver, self, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_+^: {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(self, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "sparse_$plus$up$colon" =>
+          Some((receiver, self, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object -^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$minus$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
@@ -788,6 +1004,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object dense_-^: {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(self, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "dense_$minus$up$colon" =>
+          Some((receiver, self, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_-^: {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(self, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "sparse_$minus$up$colon" =>
+          Some((receiver, self, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -824,6 +1064,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object dense_*^: {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(self, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "dense_$times$up$colon" =>
+          Some((receiver, self, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_*^: {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(self, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "sparse_$times$up$colon" =>
+          Some((receiver, self, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -896,6 +1160,30 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], RepMonoid[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object dense_dot_: {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "dense_dot_$colon" =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[DenseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object sparse_dot_: {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "sparse_dot_$colon" =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
