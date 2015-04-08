@@ -9,10 +9,11 @@ import java.net.{URL, URLClassLoader}
 import scala.tools.nsc.reporters.StoreReporter
 import scala.tools.nsc.{Global, Settings}
 import scalan.compilation.language.MethodMappingDSL
+import scalan.compilation.lms.source2bin.{SbtConfig, SbtCompiler}
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
-trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with MethodMappingDSL { self: ScalanCtxExp =>
+trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL { self: ScalanCtxExp =>
   /**
    * If scalaVersion is None, uses scala-compiler.jar
    *
@@ -26,6 +27,7 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
+    SbtCompiler.prepareDir(executableDir)
     /* LMS stuff */
     val sourceFile = emitSource(sourcesDir, "scala", functionName, graph, eInput, eOutput)
     val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
@@ -37,8 +39,9 @@ trait LmsCompilerScala extends LmsCompiler with SbtCompiler with CoreBridge with
       case Some(mainPack) => Some(mainPack + "." +  functionName)
       case _ =>  None
     }
+    val dependencies:Array[String] = methodReplaceConf.flatMap(conf => conf.dependencies).toArray
     val output: Option[Array[String]] = compilerConfig.scalaVersion match {
-      case Some(scalaVersion) => Some(sbtCompile(sourcesDir, executableDir, functionName, compilerConfig, sourceFile, jarPath))
+      case Some(scalaVersion) => Some(SbtCompiler.sbtCompile(sourcesDir, executableDir, functionName, compilerConfig, dependencies, sourceFile, jarPath))
       case None =>
         val settings = new Settings
         settings.usejavacp.value = true

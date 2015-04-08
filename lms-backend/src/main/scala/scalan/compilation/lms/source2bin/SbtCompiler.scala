@@ -1,17 +1,24 @@
-package scalan.compilation.lms.scalac
+package scalan.compilation.lms.source2bin
 
-import java.io.{BufferedReader, File}
+import java.io.File
 import java.io.File.separator
 
-import scalan.util.{StringUtil, ProcessUtil, ExtensionFilter, FileUtil}
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.util.FileUtil._
+import scalan.util.{FileUtil, ExtensionFilter, ProcessUtil, StringUtil}
 
-trait SbtCompiler { self:LmsCompilerScala =>
+object SbtCompiler { //self:LmsCompilerScala =>
 
-  case class SbtConfig(mainPack: Option[String] = None, extraClasses : Seq[String] = Seq.empty[String], resources : Seq[String] = Seq.empty[String], mainClassSimpleName: String = "run", commands: Seq[String] = Seq("clean", "compile"), toSystemOut: Boolean = true)
   val lib = "lib"
 
-  def sbtCompile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: CompilerConfig, sourceFile : File, jarPath : String): Array[String] = {
+  def prepareDir(executableDir: File) = {
+    val libDir = FileUtil.file(FileUtil.currentWorkingDir, lib)
+    val executableLibsDir = FileUtil.file(executableDir, lib)
+    val dir = FileUtil.listFiles(libDir, ExtensionFilter("jar"))
+    dir.foreach(f => FileUtil.copyToDir(f, executableLibsDir))
+  }
+
+  def sbtCompile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: LmsCompilerScala#CompilerConfig, dependencies: Array[String], sourceFile : File, jarPath : String): Array[String] = {
     val scalaVersion = compilerConfig.scalaVersion.get
     val buildSbtFile = new File(sourcesDir, "build.sbt")
     val libsDir = file(currentWorkingDir, lib)
@@ -52,7 +59,7 @@ trait SbtCompiler { self:LmsCompilerScala =>
         write(file(sourcesDir, "build.sbt"),
           s"""name := "$functionName"
               |scalaVersion := "$scalaVersion"
-              |${methodReplaceConf.flatMap(conf => conf.dependencies).map(d => s"libraryDependencies += $d").mkString("\n")}
+              |${dependencies.map(d => s"libraryDependencies += $d").mkString("\n")}
               |assemblyJarName in assembly := "$jar"
               |mainClass in assembly := Some("${mainPack + "." + compilerConfig.sbt.mainClassSimpleName}")
               |version := "1"
