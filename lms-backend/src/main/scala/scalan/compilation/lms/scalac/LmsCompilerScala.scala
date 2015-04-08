@@ -5,11 +5,8 @@ package scalac
 
 import java.io._
 import java.net.{URL, URLClassLoader}
-
-import scala.tools.nsc.reporters.StoreReporter
-import scala.tools.nsc.{Global, Settings}
 import scalan.compilation.language.MethodMappingDSL
-import scalan.compilation.lms.source2bin.{Nsc, SbtConfig, SbtCompiler}
+import scalan.compilation.lms.source2bin.{Nsc, SbtConfig, Sbt}
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
@@ -27,7 +24,7 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
-    SbtCompiler.prepareDir(executableDir)
+    Sbt.prepareDir(executableDir) //todo - check: is it sbt-specific function?
     /* LMS stuff */
     val sourceFile = emitSource(sourcesDir, "scala", functionName, graph, eInput, eOutput)
     val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
@@ -37,10 +34,10 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL
       case Some(mainPack) => Some(mainPack + "." +  functionName)
       case _ =>  None
     }
-    val dependencies:Array[String] = methodReplaceConf.flatMap(conf => conf.dependencies).toArray
     val output: Option[Array[String]] = compilerConfig.scalaVersion match {
       case Some(scalaVersion) =>
-        Some(SbtCompiler.sbtCompile(sourcesDir, executableDir, functionName, compilerConfig, dependencies, sourceFile, jarPath))
+        val dependencies:Array[String] = methodReplaceConf.flatMap(conf => conf.dependencies).toArray
+        Some(Sbt.compile(sourcesDir, executableDir, functionName, compilerConfig, dependencies, sourceFile, jarPath))
       case None =>
         Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, sourceFile, jarPath)
         None

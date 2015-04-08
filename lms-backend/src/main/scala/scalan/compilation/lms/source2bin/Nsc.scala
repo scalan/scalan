@@ -9,12 +9,13 @@ import scalan.util.FileUtil
 import scalan.util.FileUtil._
 
 /**
- * Created by adel on 4/8/15.
+ * make jar-file from scala-file via internal compiler scala.tools.nsc
+ *  Created by adel on 4/8/15.
  */
+
 object Nsc {
 
-  def compile(executableDir:File, functionName: String, extraCompilerOptions:List[String], sourceFile : File, jarPath : String): Array[String] =
-  {
+  def compile(executableDir: File, functionName: String, extraCompilerOptions: List[String], sourceFile: File, jarPath: String): Array[String] = {
     val logFile = file(executableDir.getAbsoluteFile, s"$functionName.log")
     FileUtil.deleteIfExist(logFile)
 
@@ -24,9 +25,9 @@ object Nsc {
     // see http://stackoverflow.com/questions/27934282/object-scala-in-compiler-mirror-not-found-running-scala-compiler-programatical
     settings.embeddedDefaults[LmsCompilerScala]
     val compilerOptions = "-d" :: jarPath :: extraCompilerOptions
-    settings.processArguments(compilerOptions, false)
+    settings.processArguments(compilerOptions, processAll = false)
     val reporter = new StoreReporter
-    val compiler: Global = new Global(settings, reporter)
+    val compiler = new Global(settings, reporter)
     val run = new compiler.Run
     run.compile(List(sourceFile.getAbsolutePath))
 
