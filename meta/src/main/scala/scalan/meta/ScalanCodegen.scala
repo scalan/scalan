@@ -224,6 +224,30 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       }.mkString("\n\n")
     }
 
+    def entityMatcher(module: SEntityModuleDef) = {
+      val classes = module.concreteSClasses
+      val e = module.entityOps
+      val name = e.name
+      val typesDecl = e.tpeArgs.getTpeArgDeclString
+      val typesDecl2 = e.tpeArgs.getTpeArgDecls.opt(tyArgs => s"${tyArgs.rep(t => t)}")
+      val retType = e.tpeArgs.getTpeArgDecls.last.toString + "1"
+      val typesDecl3 = s"[$typesDecl2, $retType]"
+      val title = s"def match$name$typesDecl3"
+      val arg = s"(${name.toLowerCase()}: Rep[$name$typesDecl])"
+      val whitespaces = scala.Array.fill(title.length + 2)(" ").reduce(_ + _)
+      val lambdas = classes.map { c =>
+      s"(${c.name.toLowerCase()}: Rep[${c.name}$typesDecl] => Rep[$retType])" }.opt(specs => s"${specs.rep(t => t, s"\n$whitespaces")}")
+      s"""\n
+        |  $title$arg$lambdas: Rep[$retType]
+        |""".stripAndTrim
+    }
+    def entityMatcherSeq(module: SEntityModuleDef) = {
+      entityMatcher(module) + " = ???"
+    }
+    def entityMatcherExp(module: SEntityModuleDef) = {
+      entityMatcher(module) + " = ???"
+    }
+
     def getTraitAbs = {
       val sqlDDL = module.methods.map(m =>
         if (!m.tpeRes.isDefined) {
@@ -527,6 +551,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |${subEntities.mkString("\n\n")}
        |
        |${concreteClasses.mkString("\n\n")}
+       |${entityMatcher(module)}
        |}
        |""".stripAndTrim
     }
@@ -661,6 +686,8 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |${classesSeq.mkString("\n\n")}
        |
        |$baseTypeToWrapperConvertionSeq
+       |
+       |${entityMatcherSeq(module)}
        |}
        |""".stripAndTrim
     }
@@ -774,8 +801,8 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |${concreteClassesString.mkString("\n\n")}
        |
        |${methodExtractorsString(e)}
-
        |${emitRewriteDef(td)}
+       |${entityMatcherExp(module)}
        |}
        |""".stripAndTrim
     }
