@@ -155,3 +155,25 @@ class LmsMmmItTests extends LmsLinAlgItTests {
     compareOutputWithSequential(progStaged)(progSeq.ffmmm, progStaged.ffmmm, "ffmmm", in)
   }
 }
+
+class AbstractElemItTests extends LmsLinAlgItTests {
+  import progSeq._
+
+  lazy val jArrTrain2x2 = Array(Array((0, 5.0), (1, 3.0)), Array((1, 4.0)))
+  lazy val jArrTest2x2 = Array(Array((0, 5.0), (1, 3.0)), Array((0, 3.0), (1, 4.0)))
+
+  def getNArrayWithSegmentsFromJaggedArray(jaggedArray: Array[Array[(Int, Double)]]) = {
+    val arr = jaggedArray.flatMap(v => v)
+    val lens = jaggedArray.map(i => i.length)
+    val offs = lens.scanLeft(0)((x, y) => x + y).take(lens.length)
+    (arr, offs zip lens)
+  }
+
+  test("pattern matching vectors with abstract elem works") {
+    val arrTrain = Array((0, 5.0), (1, 3.0), (1, 4.0))
+    lazy val width = 5
+
+    val in = Tuple(width, arrTrain)
+    getStagedOutput(progStaged)(progStaged.dotWithAbstractElem, "patternMatchAbstract", in)
+  }
+}

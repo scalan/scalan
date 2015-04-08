@@ -31,6 +31,13 @@ trait Proxy { self: Scalan =>
 
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
+
+  def matchFallback = throw new PatternMatchException
+
+  /**
+   * Can be thrown to prevent invoke
+   */
+  class PatternMatchException extends Exception
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>

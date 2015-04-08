@@ -131,4 +131,26 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     val matrix2 = RowMajorNestedMatrix(Collection(m2._1), m2._2)
     (matrix1 * matrix2).rows.arr.map(_.items.arr)
   }
+
+  lazy val dotWithAbstractElem = fun { in: Rep[(Int, Array[(Int, Double)])] =>
+    def RandomMatrix(numRows: IntRep, numColumns: IntRep): Matrix[Double] = {
+      val n = numRows * numColumns
+      val coll = Collection.replicate(n, 0.0)
+      RowMajorNestedMatrix(coll, numColumns)
+    }
+
+    val Tuple(width, arrFlat) = in
+    val nUsers = arrFlat.length
+    val mP = RandomMatrix(nUsers, width)
+    val rowsColl = mP.rows
+    val coll = (rowsColl zip rowsColl).map {
+      case Tuple(vR, vP) =>
+        val abstractVectorElem = vP.selfType1
+        assert(abstractVectorElem.getClass == classOf[AbstractVectorElem[_, _]])
+        // dot is implemented with a pattern match, remove or change this test if this changes
+        val mQReduced = rowsColl map { row => row dot vP }
+        mQReduced
+    }
+    coll.arr.map(_.arr)
+  }
 }
