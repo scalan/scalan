@@ -32,7 +32,7 @@ trait Proxy { self: Scalan =>
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
 
-  def matchFallback = throw new PatternMatchException
+  def patternMatchError(obj: Any): Nothing
 
   /**
    * Can be thrown to prevent invoke
@@ -91,6 +91,8 @@ trait ProxySeq extends Proxy { self: ScalanSeq =>
     val constr = c.getConstructor(types: _*)
     constr.newInstance(args.map(_.asInstanceOf[AnyRef]): _*) //.asInstanceOf[Rep[A]]
   }
+
+  def patternMatchError(obj: Any) = throw new MatchError(obj)
 }
 
 trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp =>
@@ -531,4 +533,11 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 //    }
 
   }
+
+  def patternMatchError(obj: Any): Nothing = throw new FailedInvokeException
+
+  /**
+   * Can be thrown to prevent invoke
+   */
+  class FailedInvokeException extends Exception
 }

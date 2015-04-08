@@ -1,5 +1,7 @@
 package scalan
 
+import java.lang.reflect.InvocationTargetException
+
 import scalan.common.Default
 import scala.language.higherKinds
 import scalan.common.Lazy
@@ -381,8 +383,12 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       iso.to(loopRes)
     case call @ MethodCall(Def(obj), m, args, neverInvoke) =>
       if (!neverInvoke && m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
-        val res = m.invoke(obj, args: _*)
-        res.asInstanceOf[Exp[_]]
+        try {
+          val res = m.invoke(obj, args: _*)
+          res.asInstanceOf[Exp[_]]
+        } catch {
+          case e: InvocationTargetException if e.getCause.isInstanceOf[FailedInvokeException] => super.rewriteDef(d)
+        }
       } else {
         call.selfType match {
           case resultElem: Elem[r] =>

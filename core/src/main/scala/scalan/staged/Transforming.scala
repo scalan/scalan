@@ -1,5 +1,7 @@
 package scalan.staged
 
+import java.lang.reflect.InvocationTargetException
+
 import scalan.ScalanExp
 import scalan.common.Lazy
 
@@ -64,7 +66,11 @@ trait Transforming { self: ScalanExp =>
     def apply[T](x: Exp[T]): Exp[T] = x match {
       case Def(MethodCall(Def(d), m, args, neverInvoke)) =>
         if (!neverInvoke && shouldInvoke(d, m, args.toArray))
-          m.invoke(d, args: _*).asInstanceOf[Exp[T]]
+          try {
+            m.invoke(d, args: _*).asInstanceOf[Exp[T]]
+          } catch {
+            case e: InvocationTargetException if e.getCause.isInstanceOf[FailedInvokeException] => x
+          }
         else {
           val optRes = invokeSuperMethod(d, m, args.toArray)
           optRes match {
