@@ -86,7 +86,7 @@ trait VectorsAbs extends Scalan with Vectors {
   object DenseVectorMatcher {
     def unapply[T:Elem](p: Rep[AbstractVector[T]]) = unmkDenseVector(p)
   }
-  val DenseVector: Rep[DenseVectorCompanionAbs]
+  def DenseVector: Rep[DenseVectorCompanionAbs]
   implicit def proxyDenseVectorCompanion(p: Rep[DenseVectorCompanionAbs]): DenseVectorCompanionAbs = {
     proxyOps[DenseVectorCompanionAbs](p)
   }
@@ -151,7 +151,7 @@ trait VectorsAbs extends Scalan with Vectors {
   object SparseVectorMatcher {
     def unapply[T:Elem](p: Rep[AbstractVector[T]]) = unmkSparseVector(p)
   }
-  val SparseVector: Rep[SparseVectorCompanionAbs]
+  def SparseVector: Rep[SparseVectorCompanionAbs]
   implicit def proxySparseVectorCompanion(p: Rep[SparseVectorCompanionAbs]): SparseVectorCompanionAbs = {
     proxyOps[SparseVectorCompanionAbs](p)
   }
@@ -418,6 +418,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   }
 
   object DenseVectorCompanionMethods {
+
     object zero {
       def unapply(d: Def[_]): Option[Rep[Int] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem.isInstanceOf[DenseVectorCompanionElem] && method.getName == "zero" =>
