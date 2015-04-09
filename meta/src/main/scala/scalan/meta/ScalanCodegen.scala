@@ -65,6 +65,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
           s"\n$whitespace(f$i: Rep[${c.name}[$types]] => Rep[$retType])"
         }.opt(specs => s"${specs.rep(t => t, s"")}") + s"\n$whitespace(fb: Rep[${entity.name}[$types]] => Rep[$retType])"
       }
+      def fallback = s"      case _ => fb(x)"
       def declaration(module: SEntityModuleDef) = {
         val entity = module.entityOps
         val name = entity.name
@@ -75,7 +76,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
           |""".stripAndTrim
       }
     }
-    import InternalFunctions.declaration
+    import InternalFunctions.{declaration, fallback}
 
     def entityMatcherAbs(module: SEntityModuleDef) = {
       declaration(module)
@@ -88,7 +89,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val body = s""" = {
         |    x match {
         |$cases
-        |      case xb: ${module.entityOps.name}[_] => fb(xb)
+        |$fallback
         |    }
         |  }"""
       s"""\n
@@ -104,7 +105,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val body = s""" = {
         |    x.elem.asInstanceOf[Elem[_]] match {
         |$cases
-        |      case _ => fb(x)
+        |$fallback
         |    }
         |  }"""
       s"""\n
