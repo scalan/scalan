@@ -242,10 +242,56 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |""".stripAndTrim
     }
     def entityMatcherSeq(module: SEntityModuleDef) = {
-      entityMatcher(module) + " = ???"
+      val classes = module.concreteSClasses
+      val e = module.entityOps
+      val name = e.name
+      val typesDecl = e.tpeArgs.getTpeArgDeclString
+      val typesDecl2 = e.tpeArgs.getTpeArgDecls.opt(tyArgs => s"${tyArgs.rep(t => t)}")
+      val retType = e.tpeArgs.getTpeArgDecls.last.toString + "1"
+      val typesDecl3 = s"[$typesDecl2, $retType]"
+      val title = s"def match$name$typesDecl3"
+      val argName = name.toLowerCase
+      val argString = s"($argName: Rep[$name$typesDecl])"
+      val whitespaces = scala.Array.fill(title.length + 2)(" ").reduce(_ + _)
+      val lambdas = classes.map { c =>
+      s"(${c.name.toLowerCase}: Rep[${c.name}$typesDecl] => Rep[$retType])" }.opt(specs => s"${specs.rep(t => t, s"\n$whitespaces")}")
+      val cases = classes.map { c =>
+      s"      case instance${c.name}: ${c.name}[_] => ${c.name.toLowerCase}(instance${c.name})" }.opt(specs => s"${specs.rep(t => t, s"\n")}")
+      val body = s"""
+        | = {
+        |    $argName match {
+        |$cases
+        |    }
+        |  }""".stripAndTrim
+      s"""\n
+        |  $title$argString$lambdas: Rep[$retType]$body
+        |""".stripAndTrim
     }
     def entityMatcherExp(module: SEntityModuleDef) = {
-      entityMatcher(module) + " = ???"
+      val classes = module.concreteSClasses
+      val e = module.entityOps
+      val name = e.name
+      val typesDecl = e.tpeArgs.getTpeArgDeclString
+      val typesDecl2 = e.tpeArgs.getTpeArgDecls.opt(tyArgs => s"${tyArgs.rep(t => t)}")
+      val retType = e.tpeArgs.getTpeArgDecls.last.toString + "1"
+      val typesDecl3 = s"[$typesDecl2, $retType]"
+      val title = s"def match$name$typesDecl3"
+      val argName = name.toLowerCase
+      val argString = s"($argName: Rep[$name$typesDecl])"
+      val whitespaces = scala.Array.fill(title.length + 2)(" ").reduce(_ + _)
+      val lambdas = classes.map { c =>
+      s"(${c.name.toLowerCase}: Rep[${c.name}$typesDecl] => Rep[$retType])" }.opt(specs => s"${specs.rep(t => t, s"\n$whitespaces")}")
+      val cases = classes.map { c =>
+      s"      case _: ${c.name}Elem[_] => ${c.name.toLowerCase}($argName.asRep[${c.name}$typesDecl])" }.opt(specs => s"${specs.rep(t => t, s"\n")}")
+      val body = s"""
+        | = {
+        |    $argName.elem.asInstanceOf[Elem[_]] match {
+        |$cases
+        |    }
+        |  }""".stripAndTrim
+      s"""\n
+        |  $title$argString$lambdas: Rep[$retType]$body
+        |""".stripAndTrim
     }
 
     def getTraitAbs = {

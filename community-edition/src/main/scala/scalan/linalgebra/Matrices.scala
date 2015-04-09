@@ -184,11 +184,12 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     def *^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
-      matchMatrix[T, AbstractMatrix[T]](other) {
+      matchAbstractMatrix[T, AbstractMatrix[T]](other) {
         nm => RowMajorNestedMatrix((rows zip nm.rows).flatMap { case Pair(v1, v2) => (v1 *^ v2).items }, numColumns)
       } {
         sm => RowMajorSparseMatrix((rows zip sm.rows).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
       }
+      {???}
     }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
@@ -230,11 +231,12 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     def +^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
-      matchMatrix[T, AbstractMatrix[T]](other) {
+      matchAbstractMatrix[T, AbstractMatrix[T]](other) {
         nm => RowMajorNestedMatrix((rows zip nm.rows).flatMap { case Pair(v1, v2) => (v1 +^ v2).items }, numColumns)
       } {
         sm => RowMajorSparseMatrix((rows zip sm.rows).map { case Pair(v1, v2) => v1 +^ v2 }, numColumns)
       }
+      {???}
     }
 
     def *^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
@@ -297,28 +299,28 @@ trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommuni
 
   def Matrix: Rep[AbstractMatrixCompanionAbs] = AbstractMatrix
 
-  def matchMatrix[T, R](matrix: Matrix[T])(dense: Rep[RowMajorNestedMatrix[T]] => Rep[R])
-                                          (sparse: Rep[RowMajorSparseMatrix[T]] => Rep[R]): Rep[R]
+//  def matchMatrix[T, R](matrix: Matrix[T])(dense: Rep[RowMajorNestedMatrix[T]] => Rep[R])
+//                                          (sparse: Rep[RowMajorSparseMatrix[T]] => Rep[R]): Rep[R]
 }
 
 trait MatricesDslSeq extends impl.MatricesSeq with VectorsDslSeq { self: ScalanCommunityDslSeq =>
 
-  def matchMatrix[T, R](matrix: Matrix[T])(dense: Rep[RowMajorNestedMatrix[T]] => Rep[R])
-                                       (sparse: Rep[RowMajorSparseMatrix[T]] => Rep[R]): Rep[R] = {
-    matrix match {
-      case dm: RowMajorNestedMatrix[_] => dense(dm)
-      case sm: RowMajorSparseMatrix[_] => sparse(sm)
-    }
-  }
+//  def matchMatrix[T, R](matrix: Matrix[T])(dense: Rep[RowMajorNestedMatrix[T]] => Rep[R])
+//                                       (sparse: Rep[RowMajorSparseMatrix[T]] => Rep[R]): Rep[R] = {
+//    matrix match {
+//      case dm: RowMajorNestedMatrix[_] => dense(dm)
+//      case sm: RowMajorSparseMatrix[_] => sparse(sm)
+//    }
+//  }
 }
 
 trait MatricesDslExp extends impl.MatricesExp with VectorsDslExp { self: ScalanCommunityDslExp =>
 
-  def matchMatrix[T, R](matrix: Matrix[T])(dense: Rep[RowMajorNestedMatrix[T]] => Rep[R])
-                                          (sparse: Rep[RowMajorSparseMatrix[T]] => Rep[R]): Rep[R] = {
-    matrix.elem.asInstanceOf[Elem[_]] match {
-      case _: RowMajorNestedMatrixElem[_] => dense(matrix.asRep[RowMajorNestedMatrix[T]])
-      case _: RowMajorSparseMatrixElem[_] => sparse(matrix.asRep[RowMajorSparseMatrix[T]])
-    }
-  }
+//  def matchMatrix[T, R](matrix: Matrix[T])(dense: Rep[RowMajorNestedMatrix[T]] => Rep[R])
+//                                          (sparse: Rep[RowMajorSparseMatrix[T]] => Rep[R]): Rep[R] = {
+//    matrix.elem.asInstanceOf[Elem[_]] match {
+//      case _: RowMajorNestedMatrixElem[_] => dense(matrix.asRep[RowMajorNestedMatrix[T]])
+//      case _: RowMajorSparseMatrixElem[_] => sparse(matrix.asRep[RowMajorSparseMatrix[T]])
+//    }
+//  }
 }
