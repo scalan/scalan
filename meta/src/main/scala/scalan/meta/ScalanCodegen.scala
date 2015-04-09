@@ -38,7 +38,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
 
     def tpeArgsImplicitDecl(typeClass: String) = {
       tpeArgs.opt(args =>
-        s"(implicit ${args.rep(t => (s"ev${t.name}: $typeClass[${t.name}]"))})")
+        s"(implicit ${args.rep(t => s"ev${t.name}: $typeClass[${t.name}]")})")
     }
   }
 
@@ -48,7 +48,67 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     val classType = name + tpeArgUseString
   }
 
-  class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) {
+  trait MatcherGenerator {
+
+    object InternalFunctions {
+
+      def whitespaces(title: String) = scala.Array.fill(title.length + 2)(" ").reduce(_ + _)
+      def returnType(entity: STraitDef) = entity.tpeArgs.getTpeArgDecls.last.toString + "1"
+      def typesNoBraces(entity: STraitDef) = entity.tpeArgs.getTpeArgDecls.opt(tyArgs => s"${tyArgs.rep(t => t)}")
+      def title(entity: STraitDef) = s"def match${entity.name}[${typesNoBraces(entity)}, ${returnType(entity)}]"
+      def lambdas(module: SEntityModuleDef, whitespace: String) = {
+        val entity = module.entityOps
+        val classes = module.concreteSClasses
+        (1.to(classes.length).toList zip classes).map { case Pair(i, c) =>
+          s"\n$whitespace(f$i: Rep[${c.name}[${typesNoBraces(entity)}]] => Rep[${returnType(entity)}])"
+        }.opt(specs => s"${specs.rep(t => t, s"")}")
+      }
+      def declaration(module: SEntityModuleDef) = {
+        val entity = module.entityOps
+        val name = entity.name
+        val types = typesNoBraces(entity)
+        val titleDef = title(module.entityOps)
+        s"""\n
+          |  ${title(entity)}(x: Rep[$name[$types]])${lambdas(module, whitespaces(titleDef))}: Rep[${returnType(entity)}]
+          |""".stripAndTrim
+      }
+    }
+    import InternalFunctions._
+
+    def entityMatcherAbs(module: SEntityModuleDef) = {
+      declaration(module)
+    }
+    def entityMatcherSeq(module: SEntityModuleDef) = {
+      val classes = module.concreteSClasses
+      val cases = (1.to(classes.length).toList zip classes).map { case Pair(i, c) =>
+        s"      case x$i: ${c.name}[_] => f$i(x$i)\n"
+      }.opt(specs => s"${specs.rep(t => t, s"")}")
+      val body = s""" = {
+        |    x match {
+        |$cases
+        |    }
+        |  }"""
+      s"""\n
+        |  ${declaration(module)}$body
+        |""".stripAndTrim
+    }
+    def entityMatcherExp(module: SEntityModuleDef) = {
+      val classes = module.concreteSClasses
+      val types = module.entityOps.tpeArgs.getTpeArgDeclString
+      val cases = (1.to(classes.length).toList zip classes).map { case Pair(i, c) =>
+        s"      case _: ${c.name}Elem[_] => f$i(x.asRep[${c.name}$types])" }.opt(specs => s"${specs.rep(t => t, s"\n")}")
+      val body = s""" = {
+        |    x.elem.asInstanceOf[Elem[_]] match {
+        |$cases
+        |    }
+        |  }"""
+      s"""\n
+        |  ${declaration(module)}$body
+        |""".stripAndTrim
+    }
+  }
+
+  class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) extends MatcherGenerator {
 
     def dataType(ts: List[STpeExpr]): String = ts match {
       case Nil => "Unit"
@@ -69,7 +129,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       case STpePrimitive(_, defaultValueString) => defaultValueString
       case STraitCall(name, args)
         if module.entityOps.tpeArgs.exists(a => a.name == name && a.isHighKind) =>
-        s"c$name.lift(${args.rep(a => s"e${a}")}).defaultRepValue"
+        s"c$name.lift(${args.rep(a => s"e$a")}).defaultRepValue"
       case tc@STraitCall(name, args) => {
         val optBT = module.entityOps.optBaseType
         val isBT = optBT.exists(bt => bt.name == name)
@@ -81,7 +141,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         }
       }
       case STpeTuple(items) => pairify(items.map(zeroSExpr))
-      case STpeFunc(domain, range) => s"""fun { (x: Rep[${domain}]) => ${zeroSExpr(range)} }"""
+      case STpeFunc(domain, range) => s"""fun { (x: Rep[$domain]) => ${zeroSExpr(range)} }"""
       case t => throw new IllegalArgumentException(s"Can't generate zero value for $t")
     }
 
@@ -92,6 +152,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     val optBT = templateData.optBT
     val entityName = templateData.name
     val entityNameBT = optBT.map(_.name).getOrElse(templateData.name)
+    val entityNameBT1 = optBT.getOrElse(templateData.name)
     val tyArgsDecl = templateData.tpeArgDecls
     val tyArgsUse = templateData.tpeArgUses
     val typesDecl = templateData.tpeArgDeclString
@@ -222,76 +283,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
           case _ => ""
         }
       }.mkString("\n\n")
-    }
-
-    def entityMatcher(module: SEntityModuleDef) = {
-      val classes = module.concreteSClasses
-      val e = module.entityOps
-      val name = e.name
-      val typesDecl = e.tpeArgs.getTpeArgDeclString
-      val typesDecl2 = e.tpeArgs.getTpeArgDecls.opt(tyArgs => s"${tyArgs.rep(t => t)}")
-      val retType = e.tpeArgs.getTpeArgDecls.last.toString + "1"
-      val typesDecl3 = s"[$typesDecl2, $retType]"
-      val title = s"def match$name$typesDecl3"
-      val arg = s"(${name.toLowerCase()}: Rep[$name$typesDecl])"
-      val whitespaces = scala.Array.fill(title.length + 2)(" ").reduce(_ + _)
-      val lambdas = classes.map { c =>
-      s"(${c.name.toLowerCase()}: Rep[${c.name}$typesDecl] => Rep[$retType])" }.opt(specs => s"${specs.rep(t => t, s"\n$whitespaces")}")
-      s"""\n
-        |  $title$arg$lambdas: Rep[$retType]
-        |""".stripAndTrim
-    }
-    def entityMatcherSeq(module: SEntityModuleDef) = {
-      val classes = module.concreteSClasses
-      val e = module.entityOps
-      val name = e.name
-      val typesDecl = e.tpeArgs.getTpeArgDeclString
-      val typesDecl2 = e.tpeArgs.getTpeArgDecls.opt(tyArgs => s"${tyArgs.rep(t => t)}")
-      val retType = e.tpeArgs.getTpeArgDecls.last.toString + "1"
-      val typesDecl3 = s"[$typesDecl2, $retType]"
-      val title = s"def match$name$typesDecl3"
-      val argName = name.toLowerCase
-      val argString = s"($argName: Rep[$name$typesDecl])"
-      val whitespaces = scala.Array.fill(title.length + 2)(" ").reduce(_ + _)
-      val lambdas = classes.map { c =>
-      s"(${c.name.toLowerCase}: Rep[${c.name}$typesDecl] => Rep[$retType])" }.opt(specs => s"${specs.rep(t => t, s"\n$whitespaces")}")
-      val cases = classes.map { c =>
-      s"      case instance${c.name}: ${c.name}[_] => ${c.name.toLowerCase}(instance${c.name})" }.opt(specs => s"${specs.rep(t => t, s"\n")}")
-      val body = s"""
-        | = {
-        |    $argName match {
-        |$cases
-        |    }
-        |  }""".stripAndTrim
-      s"""\n
-        |  $title$argString$lambdas: Rep[$retType]$body
-        |""".stripAndTrim
-    }
-    def entityMatcherExp(module: SEntityModuleDef) = {
-      val classes = module.concreteSClasses
-      val e = module.entityOps
-      val name = e.name
-      val typesDecl = e.tpeArgs.getTpeArgDeclString
-      val typesDecl2 = e.tpeArgs.getTpeArgDecls.opt(tyArgs => s"${tyArgs.rep(t => t)}")
-      val retType = e.tpeArgs.getTpeArgDecls.last.toString + "1"
-      val typesDecl3 = s"[$typesDecl2, $retType]"
-      val title = s"def match$name$typesDecl3"
-      val argName = name.toLowerCase
-      val argString = s"($argName: Rep[$name$typesDecl])"
-      val whitespaces = scala.Array.fill(title.length + 2)(" ").reduce(_ + _)
-      val lambdas = classes.map { c =>
-      s"(${c.name.toLowerCase}: Rep[${c.name}$typesDecl] => Rep[$retType])" }.opt(specs => s"${specs.rep(t => t, s"\n$whitespaces")}")
-      val cases = classes.map { c =>
-      s"      case _: ${c.name}Elem[_] => ${c.name.toLowerCase}($argName.asRep[${c.name}$typesDecl])" }.opt(specs => s"${specs.rep(t => t, s"\n")}")
-      val body = s"""
-        | = {
-        |    $argName.elem.asInstanceOf[Elem[_]] match {
-        |$cases
-        |    }
-        |  }""".stripAndTrim
-      s"""\n
-        |  $title$argString$lambdas: Rep[$retType]$body
-        |""".stripAndTrim
     }
 
     def getTraitAbs = {
@@ -597,7 +588,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |${subEntities.mkString("\n\n")}
        |
        |${concreteClasses.mkString("\n\n")}
-       |${entityMatcher(module)}
+       |${entityMatcherAbs(module)}
        |}
        |""".stripAndTrim
     }
