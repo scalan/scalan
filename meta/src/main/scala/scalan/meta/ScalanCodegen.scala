@@ -59,9 +59,11 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       def lambdas(module: SEntityModuleDef, whitespace: String) = {
         val entity = module.entityOps
         val classes = module.concreteSClasses
+        val types = typesNoBraces(entity)
+        val retType = returnType(entity)
         (1.to(classes.length).toList zip classes).map { case Pair(i, c) =>
-          s"\n$whitespace(f$i: Rep[${c.name}[${typesNoBraces(entity)}]] => Rep[${returnType(entity)}])"
-        }.opt(specs => s"${specs.rep(t => t, s"")}")
+          s"\n$whitespace(f$i: Rep[${c.name}[$types]] => Rep[$retType])"
+        }.opt(specs => s"${specs.rep(t => t, s"")}") + s"\n$whitespace(fb: Rep[${entity.name}[$types]] => Rep[$retType])"
       }
       def declaration(module: SEntityModuleDef) = {
         val entity = module.entityOps
@@ -73,7 +75,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
           |""".stripAndTrim
       }
     }
-    import InternalFunctions._
+    import InternalFunctions.declaration
 
     def entityMatcherAbs(module: SEntityModuleDef) = {
       declaration(module)
@@ -81,11 +83,12 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     def entityMatcherSeq(module: SEntityModuleDef) = {
       val classes = module.concreteSClasses
       val cases = (1.to(classes.length).toList zip classes).map { case Pair(i, c) =>
-        s"      case x$i: ${c.name}[_] => f$i(x$i)\n"
-      }.opt(specs => s"${specs.rep(t => t, s"")}")
+        s"      case x$i: ${c.name}[_] => f$i(x$i)"
+      }.opt(specs => s"${specs.rep(t => t, s"\n")}")
       val body = s""" = {
         |    x match {
         |$cases
+        |      case xb: ${module.entityOps.name}[_] => fb(xb)
         |    }
         |  }"""
       s"""\n
@@ -96,10 +99,12 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val classes = module.concreteSClasses
       val types = module.entityOps.tpeArgs.getTpeArgDeclString
       val cases = (1.to(classes.length).toList zip classes).map { case Pair(i, c) =>
-        s"      case _: ${c.name}Elem[_] => f$i(x.asRep[${c.name}$types])" }.opt(specs => s"${specs.rep(t => t, s"\n")}")
+        s"      case _: ${c.name}Elem[_] => f$i(x.asRep[${c.name}$types])"
+      }.opt(specs => s"${specs.rep(t => t, s"\n")}")
       val body = s""" = {
         |    x.elem.asInstanceOf[Elem[_]] match {
         |$cases
+        |      case _ => fb(x)
         |    }
         |  }"""
       s"""\n
