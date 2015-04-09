@@ -244,6 +244,12 @@ trait MatricesAbs extends Scalan with Matrices {
   // 6) smart constructor and deconstructor
   def mkRowMajorSparseMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]]
   def unmkRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]], Rep[Int])]
+
+  def matchAbstractMatrix[T, T1](x: Rep[AbstractMatrix[T]])
+                                (f1: Rep[RowMajorDirectMatrix[T]] => Rep[T1])
+                                (f2: Rep[RowMajorNestedMatrix[T]] => Rep[T1])
+                                (f3: Rep[RowMajorSparseMatrix[T]] => Rep[T1])
+                                (fb: Rep[AbstractMatrix[T]] => Rep[T1]): Rep[T1]
 }
 
 // Seq -----------------------------------
@@ -303,6 +309,19 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
       new SeqRowMajorSparseMatrix[T](rows, numColumns)
   def unmkRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]) =
     Some((p.rows, p.numColumns))
+
+  def matchAbstractMatrix[T, T1](x: Rep[AbstractMatrix[T]])
+                                (f1: Rep[RowMajorDirectMatrix[T]] => Rep[T1])
+                                (f2: Rep[RowMajorNestedMatrix[T]] => Rep[T1])
+                                (f3: Rep[RowMajorSparseMatrix[T]] => Rep[T1])
+                                (fb: Rep[AbstractMatrix[T]] => Rep[T1]): Rep[T1] = {
+    x match {
+      case x1: RowMajorDirectMatrix[_] => f1(x1)
+      case x2: RowMajorNestedMatrix[_] => f2(x2)
+      case x3: RowMajorSparseMatrix[_] => f3(x3)
+      case _ => fb(x)
+    }
+  }
 }
 
 // Exp -----------------------------------
@@ -1187,6 +1206,19 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case Def(d) => unapply(d)
         case _ => None
       }
+    }
+  }
+
+  def matchAbstractMatrix[T, T1](x: Rep[AbstractMatrix[T]])
+                                (f1: Rep[RowMajorDirectMatrix[T]] => Rep[T1])
+                                (f2: Rep[RowMajorNestedMatrix[T]] => Rep[T1])
+                                (f3: Rep[RowMajorSparseMatrix[T]] => Rep[T1])
+                                (fb: Rep[AbstractMatrix[T]] => Rep[T1]): Rep[T1] = {
+    x.elem.asInstanceOf[Elem[_]] match {
+      case _: RowMajorDirectMatrixElem[_] => f1(x.asRep[RowMajorDirectMatrix[T]])
+      case _: RowMajorNestedMatrixElem[_] => f2(x.asRep[RowMajorNestedMatrix[T]])
+      case _: RowMajorSparseMatrixElem[_] => f3(x.asRep[RowMajorSparseMatrix[T]])
+      case _ => fb(x)
     }
   }
 }
