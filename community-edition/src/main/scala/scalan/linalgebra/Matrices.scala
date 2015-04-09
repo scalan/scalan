@@ -184,7 +184,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     def *^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
-      matchAbstractMatrix[T, AbstractMatrix[T]](other) {
+      matchAbstractMatrix[T, AbstractMatrix[T]](other) {???} {
         nm => RowMajorNestedMatrix((rows zip nm.rows).flatMap { case Pair(v1, v2) => (v1 *^ v2).items }, numColumns)
       } {
         sm => RowMajorSparseMatrix((rows zip sm.rows).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
@@ -231,7 +231,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     def +^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
-      matchAbstractMatrix[T, AbstractMatrix[T]](other) {
+      matchAbstractMatrix[T, AbstractMatrix[T]](other) {???} {
         nm => RowMajorNestedMatrix((rows zip nm.rows).flatMap { case Pair(v1, v2) => (v1 +^ v2).items }, numColumns)
       } {
         sm => RowMajorSparseMatrix((rows zip sm.rows).map { case Pair(v1, v2) => v1 +^ v2 }, numColumns)
