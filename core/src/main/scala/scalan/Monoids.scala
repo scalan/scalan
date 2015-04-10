@@ -3,6 +3,8 @@ package scalan
 trait Monoids { self: Scalan =>
   case class RepMonoid[A](opName: String, zero: Rep[A], append: Rep[((A, A)) => A], isCommutative: Boolean)(implicit val eA: Elem[A]) {
     override def toString = repMonoid_toString(this)
+    // avoids having to write monoid.append((x, y))
+    def append(x: Rep[A], y: Rep[A]): Rep[A] = append.apply(Pair(x, y))
   }
 
   object RepMonoid {

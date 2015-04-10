@@ -171,7 +171,7 @@ trait ArrayOpsSeq extends ArrayOps {
 
   def array_flat_map[T, R: Elem](xs: Array[T], f: T => Array[R]) = genericArrayOps(xs).flatMap(x => f(x).toSeq)
 
-  def array_reduce[T](xs: Arr[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x, y) => m.append((x, y)))
+  def array_reduce[T](xs: Arr[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)(m.append)
 
   def array_fold[T, S: Elem](xs: Arr[T], init: Rep[S], f: Rep[((S, T)) => S]): Rep[S] = {
     var state = init
@@ -219,7 +219,7 @@ trait ArrayOpsSeq extends ArrayOps {
   }
 
   def array_scan[T](xs: Array[T])(implicit m: RepMonoid[T], elem: Elem[T]): Rep[(Array[T], T)] = {
-    val scan = xs.scan(m.zero)((x, y) => m.append((x, y)))
+    val scan = xs.scan(m.zero)(m.append)
     val sum = scan.last
     (scan.dropRight(1).toArray, sum)
   }
