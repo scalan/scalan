@@ -97,7 +97,7 @@ trait ProxySeq extends Proxy { self: ScalanSeq =>
 
 trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp =>
   // call mkMethodCall instead of constructor
-  case class MethodCall private[ProxyExp] (receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean) extends Def[Any] {
+  case class MethodCall private[ProxyExp] (receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean)(val selfType: Elem[Any]) extends Def[Any] {
     def uniqueOpId = s"$name:${method.getName}"
     override def mirror(t: Transformer) = {
       val args1 = args.map {
@@ -113,8 +113,6 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         replace("public ", "").replace("abstract ", "")
       s"MethodCall($receiver, $methodStr, [${args.mkString(", ")}], $neverInvoke)"
     }
-
-    lazy val selfType = getResultElem(receiver, method, args).asElem[Any]
 
     def tryInvoke: InvokeResult =
       receiver match {
@@ -153,7 +151,13 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   def mkMethodCall(receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean): Exp[_] = {
-    reifyObject(MethodCall(receiver, method, args, neverInvoke))
+    val resultElem = getResultElem(receiver, method, args)
+    mkMethodCall(receiver, method, args, neverInvoke, resultElem)
+  }
+
+  // prefer calling the above overload
+  def mkMethodCall(receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean, resultElem: Elem[_]): Exp[_] = {
+    reifyObject(MethodCall(receiver, method, args, neverInvoke)(resultElem.asElem[Any]))
   }
 
   override protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig) = sym match {

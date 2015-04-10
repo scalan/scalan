@@ -388,20 +388,24 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
         case InvokeImpossible =>
           call.selfType match {
             case resultElem: Elem[r] =>
-              // asRep[r] casts below should be safe
+              // asRep[r] cast below should be safe
+              // explicit resultElem to make sure both branches have the same type
+              def copyMethodCall(newReceiver: Exp[_]) =
+                mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[r]
+
               obj match {
                 case foldD: SumFold[a,b,_] =>
                   val res = foldD.sum.fold (
-                    a => mkMethodCall(foldD.left(a), m, args, neverInvoke).asRep[r],
-                    b => mkMethodCall(foldD.right(b), m, args, neverInvoke).asRep[r]
+                    a => copyMethodCall(foldD.left(a)),
+                    b => copyMethodCall(foldD.right(b))
                   )(resultElem)
                   res.asInstanceOf[Exp[_]]
                 case IfThenElse(cond, t, e) =>
                   implicit val elem: Elem[r] = resultElem
                   IF (cond) {
-                    mkMethodCall(t, m, args, neverInvoke).asRep[r]
+                    copyMethodCall(t)
                   } ELSE {
-                    mkMethodCall(e, m, args, neverInvoke).asRep[r]
+                    copyMethodCall(e)
                   }
                 case _ =>
                   super.rewriteDef(d)
