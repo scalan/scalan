@@ -153,4 +153,20 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     }
     coll.arr.map(_.arr)
   }
+
+  lazy val funSimpleSum = fun { in: Rep[(Array[Array[Int]], Array[Int])] =>
+    val Tuple(nestedArr, vecArr) = in
+    val rows = Collection( nestedArr.map( arr => DenseVector(Collection(arr))))
+    val dv = DenseVector(Collection(vecArr))
+
+    val newRows =  rows.map { v =>
+      val resV = IF(v.length === dv.length) THEN {
+        dv +^ v
+      } ELSE {
+        v
+      }
+      resV //.convertTo[DenseVector[Int]]
+    }
+    newRows.flatMap { v => v.items}.arr
+  }
 }
