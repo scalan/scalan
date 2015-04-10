@@ -241,6 +241,12 @@ trait SegmentsAbs extends Scalan with Segments {
   // 6) smart constructor and deconstructor
   def mkCentered(center: Rep[Int], radius: Rep[Int]): Rep[Centered]
   def unmkCentered(p: Rep[Centered]): Option[(Rep[Int], Rep[Int])]
+
+  def matchSegment[R](x: Rep[Segment])
+                     (f1: Rep[Interval] => Rep[R])
+                     (f2: Rep[Slice] => Rep[R])
+                     (f3: Rep[Centered] => Rep[R])
+                     (fb: Rep[Segment] => Rep[R]): Rep[R]
 }
 
 // Seq -----------------------------------
@@ -300,6 +306,19 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
       new SeqCentered(center, radius)
   def unmkCentered(p: Rep[Centered]) =
     Some((p.center, p.radius))
+
+  def matchSegment[R](x: Rep[Segment])
+                     (f1: Rep[Interval] => Rep[R])
+                     (f2: Rep[Slice] => Rep[R])
+                     (f3: Rep[Centered] => Rep[R])
+                     (fb: Rep[Segment] => Rep[R]): Rep[R] = {
+    x match {
+      case x1: Interval => f1(x1)
+      case x2: Slice => f2(x2)
+      case x3: Centered => f3(x3)
+      case _ => fb(x)
+    }
+  }
 }
 
 // Exp -----------------------------------
@@ -529,5 +548,18 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   }
 
   object SegmentCompanionMethods {
+  }
+
+  def matchSegment[R](x: Rep[Segment])
+                     (f1: Rep[Interval] => Rep[R])
+                     (f2: Rep[Slice] => Rep[R])
+                     (f3: Rep[Centered] => Rep[R])
+                     (fb: Rep[Segment] => Rep[R]): Rep[R] = {
+    x.elem.asInstanceOf[Elem[_]] match {
+      case _: IntervalElem => f1(x.asRep[Interval])
+      case _: SliceElem => f2(x.asRep[Slice])
+      case _: CenteredElem => f3(x.asRep[Centered])
+      case _ => fb(x)
+    }
   }
 }
