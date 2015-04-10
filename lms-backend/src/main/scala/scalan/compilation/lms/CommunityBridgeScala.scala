@@ -49,6 +49,8 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDS
           val lmsMethod = m.symbol.typeSignature.member(newTermName(name))
           m.reflectMethod(lmsMethod.asMethod).apply(obj, createManifest(receiver.asInstanceOf[Exp[_]].elem)).asInstanceOf[lms.Exp[_]]
       }
+      case Some(nonScalaFunc) =>
+        !!!(s"$nonScalaFunc is not a ScalaMappingDSL#ScalaFunc")
       case None =>
         val obj = symMirr(receiver.asInstanceOf[Exp[_]])
         Manifest.classType(method.getDeclaringClass) match {
