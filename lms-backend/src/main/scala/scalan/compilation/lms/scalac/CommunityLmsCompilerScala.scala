@@ -11,10 +11,6 @@ trait CommunityLmsCompilerScala extends LmsCompilerScala with CommunityBridgeSca
 
   override protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                                 (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
-    val libDir = FileUtil.file(FileUtil.currentWorkingDir, lib)
-    val executableLibsDir = FileUtil.file(executableDir, lib)
-    val dir = FileUtil.listFiles(libDir, ExtensionFilter("jar"))
-    dir.foreach(f => FileUtil.copyToDir(f, executableLibsDir))
     super.doBuildExecutable[A, B](sourcesDir, executableDir, functionName, graph, graphVizConfig)(compilerConfig, eInput, eOutput)
   }
 

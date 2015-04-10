@@ -1,23 +1,32 @@
-package scalan.compilation.lms.scalac
+package scalan.compilation.lms.source2bin
 
-import java.io.{BufferedReader, File}
+import java.io.File
 import java.io.File.separator
 
-import scalan.util.{StringUtil, ProcessUtil, ExtensionFilter, FileUtil}
+import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.util.FileUtil._
+import scalan.util.{FileUtil, ExtensionFilter, ProcessUtil, StringUtil}
 
-trait SbtCompiler { self:LmsCompilerScala =>
+object Sbt { 
 
-  case class SbtConfig(mainPack: Option[String] = None, extraClasses : Seq[String] = Seq.empty[String], resources : Seq[String] = Seq.empty[String], mainClassSimpleName: String = "run", commands: Seq[String] = Seq("clean", "compile"), toSystemOut: Boolean = true)
   val lib = "lib"
 
-  def sbtCompile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: CompilerConfig, sourceFile : File, jarPath : String): Array[String] = {
-    val scalaVersion = compilerConfig.scalaVersion.get
+  def prepareDir(executableDir: File) = {
+    val libDir = FileUtil.file(FileUtil.currentWorkingDir, lib)
+    val executableLibsDir = FileUtil.file(executableDir, lib)
+    val dir = FileUtil.listFiles(libDir, ExtensionFilter("jar"))
+    dir.foreach(f => FileUtil.copyToDir(f, executableLibsDir))
+  }
+
+  def compile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: LmsCompilerScala#CompilerConfig, dependencies: Array[String], sourceFile: File, jarPath: String): Array[String] = {
+    val scalaVersion = compilerConfig.scalaVersion.getOrElse {
+      throw new Exception(s"You must define compilerConfig.scalaVersion for use Sbt.compile method")
+    }
     val buildSbtFile = new File(sourcesDir, "build.sbt")
     val libsDir = file(currentWorkingDir, lib)
     val executableLibsDir = file(executableDir, lib)
 
-    listFiles(libsDir, ExtensionFilter("jar")).foreach(f =>  copyToDir(f, executableLibsDir))
+    listFiles(libsDir, ExtensionFilter("jar")).foreach(f => copyToDir(f, executableLibsDir))
     compilerConfig.sbt.mainPack match {
       case Some(mainPack) =>
         val jar = s"$functionName.jar"
@@ -52,7 +61,7 @@ trait SbtCompiler { self:LmsCompilerScala =>
         write(file(sourcesDir, "build.sbt"),
           s"""name := "$functionName"
               |scalaVersion := "$scalaVersion"
-              |${methodReplaceConf.flatMap(conf => conf.dependencies).map(d => s"libraryDependencies += $d").mkString("\n")}
+              |${dependencies.map(d => s"libraryDependencies += $d").mkString("\n")}
               |assemblyJarName in assembly := "$jar"
               |mainClass in assembly := Some("${mainPack + "." + compilerConfig.sbt.mainClassSimpleName}")
               |version := "1"
@@ -76,14 +85,14 @@ trait SbtCompiler { self:LmsCompilerScala =>
         write(file(sourcesDir, "project", "build.properties"), "sbt.version=0.13.7")
 
         compilerConfig.sbt.commands.dropRight(1).foreach(com => ProcessUtil.launch(sourcesDir, "sbt", com))
-        val br: Array[String] = ProcessUtil.launch(sourcesDir, "sbt", compilerConfig.sbt.commands.last)
+        val output: Array[String] = ProcessUtil.launch(sourcesDir, "sbt", compilerConfig.sbt.commands.last)
 
         val jarFile = file(executableDir, "target", s"scala-${scalaVersion.substring(0, scalaVersion.lastIndexOf("."))}", jar)
         jarFile.exists() match {
           case true => move(jarFile, file(executableDir, jar))
           case false =>
         }
-        br
+        output
 
       case _ =>
         write(buildSbtFile,
