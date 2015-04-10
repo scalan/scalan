@@ -3,7 +3,7 @@
  */
 package scalan
 
-import java.lang.reflect.Method
+import java.lang.reflect.{InvocationTargetException, Method}
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
@@ -115,6 +115,30 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     }
 
     lazy val selfType = getResultElem(receiver, method, args).asElem[Any]
+
+    def tryInvoke: InvokeResult =
+      receiver match {
+        case Def(d) =>
+          val argsArray = args.toArray
+
+          if (!neverInvoke && shouldInvoke(d, method, argsArray))
+            try {
+              InvokeSuccess(method.invoke(d, args: _*).asInstanceOf[Exp[_]])
+            } catch {
+              case e: InvocationTargetException => InvokeFailure(e.getCause)
+            }
+          else {
+            try {
+              invokeSuperMethod(d, method, argsArray) match {
+                case Some(res) => InvokeSuccess(res.asInstanceOf[Exp[_]])
+                case None => InvokeImpossible
+              }
+            } catch {
+              case e: InvocationTargetException => InvokeFailure(e.getCause)
+            }
+          }
+        case _ => InvokeImpossible
+      }
   }
 
   case class NewObject[T](clazz: Class[T] , args: List[AnyRef], neverInvoke: Boolean)(implicit selfType: Elem[T]) extends BaseDef[T] {
@@ -227,12 +251,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   def isInvokeEnabled(d: Def[_], m: Method) = invokeTesters.exists(_(d, m))
 
-  def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) = {
-    if (m.getDeclaringClass.isAssignableFrom(d.getClass))
-      (isInvokeEnabled(d, m) || hasFuncArg(args) ||
+  private def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) = {
+    if (m.getDeclaringClass.isAssignableFrom(d.getClass)) {
+      isInvokeEnabled(d, m) || hasFuncArg(args) ||
         // e.g. for methods returning Elem
-        (m.getReturnType != classOf[AnyRef] && m.getReturnType != classOf[Exp[_]]))
-    else {
+        (m.getReturnType != classOf[AnyRef] && m.getReturnType != classOf[Exp[_]])
+    } else {
       //val parent = commonAncestor(m.getDeclaringClass, d.getClass)
       false
     }
@@ -254,22 +278,17 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       case _ => false
     }
 
-  def invokeSuperMethod(d: Def[_], m: Method, args: Array[AnyRef]): Option[AnyRef] = {
-    var isCalled = false
-    var res: AnyRef = null
+  private def invokeSuperMethod(d: Def[_], m: Method, args: Array[AnyRef]): Option[AnyRef] = {
+    var res: Option[AnyRef] = None
     var superMethod: Method = null
     do {
       superMethod = getSuperMethod(m)
       if (superMethod != null && shouldInvoke(d, superMethod, args)) {
-        res = superMethod.invoke(d, args: _*)
-        isCalled = true
+        res = Some(superMethod.invoke(d, args: _*))
       }
-    } while (false) //(!isCalled && superMethod != null) //TODO make it work for many levels of inheritance
+    } while (false) //(!res.isDefined && superMethod != null) //TODO make it work for many levels of inheritance
 
-    if (isCalled)
-      Some(res)
-    else
-      None
+    res
   }
 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
@@ -424,6 +443,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   private def isSupertypeOfReifiableExp(clazz: Symbol) =
     typeOf[ReifiableExp[_, _]].baseClasses.contains(clazz)
+
+  sealed trait InvokeResult
+
+  case class InvokeSuccess(result: Rep[_]) extends InvokeResult
+  case class InvokeFailure(exception: Throwable) extends InvokeResult
+  case object InvokeImpossible extends InvokeResult
 
   class ExpInvocationHandler[T](receiver: Exp[T]) extends InvocationHandler {
     override def toString = s"ExpInvocationHandler(${receiver.toStringWithDefinition})"

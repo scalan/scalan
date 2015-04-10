@@ -382,35 +382,31 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       val loopRes = LoopUntil(start1, step1, isMatch1)
       iso.to(loopRes)
     case call @ MethodCall(Def(obj), m, args, neverInvoke) =>
-      if (!neverInvoke && m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
-        try {
-          val res = m.invoke(obj, args: _*)
-          res.asInstanceOf[Exp[_]]
-        } catch {
-          case e: InvocationTargetException if e.getCause.isInstanceOf[FailedInvokeException] => super.rewriteDef(d)
-        }
-      } else {
-        call.selfType match {
-          case resultElem: Elem[r] =>
-            // asRep[r] casts below should be safe
-            obj match {
-              case foldD: SumFold[a,b,_] =>
-                val res = foldD.sum.fold (
-                  a => mkMethodCall(foldD.left(a), m, args, neverInvoke).asRep[r],
-                  b => mkMethodCall(foldD.right(b), m, args, neverInvoke).asRep[r]
-                )(resultElem)
-                res.asInstanceOf[Exp[_]]
-              case IfThenElse(cond, t, e) =>
-                implicit val elem: Elem[r] = resultElem
-                IF (cond) {
-                  mkMethodCall(t, m, args, neverInvoke).asRep[r]
-                } ELSE {
-                  mkMethodCall(e, m, args, neverInvoke).asRep[r]
-                }
-              case _ =>
-                super.rewriteDef(d)
-            }
-        }
+      call.tryInvoke match {
+        case InvokeSuccess(res) => res
+        case InvokeFailure(_) => super.rewriteDef(d)
+        case InvokeImpossible =>
+          call.selfType match {
+            case resultElem: Elem[r] =>
+              // asRep[r] casts below should be safe
+              obj match {
+                case foldD: SumFold[a,b,_] =>
+                  val res = foldD.sum.fold (
+                    a => mkMethodCall(foldD.left(a), m, args, neverInvoke).asRep[r],
+                    b => mkMethodCall(foldD.right(b), m, args, neverInvoke).asRep[r]
+                  )(resultElem)
+                  res.asInstanceOf[Exp[_]]
+                case IfThenElse(cond, t, e) =>
+                  implicit val elem: Elem[r] = resultElem
+                  IF (cond) {
+                    mkMethodCall(t, m, args, neverInvoke).asRep[r]
+                  } ELSE {
+                    mkMethodCall(e, m, args, neverInvoke).asRep[r]
+                  }
+                case _ =>
+                  super.rewriteDef(d)
+              }
+          }
       }
     case _ => super.rewriteDef(d)
   }

@@ -64,19 +64,10 @@ trait Transforming { self: ScalanExp =>
 
   object InvokeRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = x match {
-      case Def(MethodCall(Def(d), m, args, neverInvoke)) =>
-        if (!neverInvoke && shouldInvoke(d, m, args.toArray))
-          try {
-            m.invoke(d, args: _*).asInstanceOf[Exp[T]]
-          } catch {
-            case e: InvocationTargetException if e.getCause.isInstanceOf[FailedInvokeException] => x
-          }
-        else {
-          val optRes = invokeSuperMethod(d, m, args.toArray)
-          optRes match {
-            case Some(res) => res.asInstanceOf[Exp[T]]
-            case None => x
-          }
+      case Def(call: MethodCall) =>
+        call.tryInvoke match {
+          case InvokeSuccess(res) => res.asRep[T]
+          case _ => x
         }
       case _ => x
     }
