@@ -386,30 +386,26 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
         case InvokeSuccess(res) => res
         case InvokeFailure(_) => super.rewriteDef(d)
         case InvokeImpossible =>
-          call.selfType match {
-            case resultElem: Elem[r] =>
-              // asRep[r] cast below should be safe
-              // explicit resultElem to make sure both branches have the same type
-              def copyMethodCall(newReceiver: Exp[_]) =
-                mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[r]
+          implicit val resultElem: Elem[T] = d.selfType
+          // asRep[T] cast below should be safe
+          // explicit resultElem to make sure both branches have the same type
+          def copyMethodCall(newReceiver: Exp[_]) =
+            mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[T]
 
-              obj match {
-                case foldD: SumFold[a,b,_] =>
-                  val res = foldD.sum.fold (
-                    a => copyMethodCall(foldD.left(a)),
-                    b => copyMethodCall(foldD.right(b))
-                  )(resultElem)
-                  res.asInstanceOf[Exp[_]]
-                case IfThenElse(cond, t, e) =>
-                  implicit val elem: Elem[r] = resultElem
-                  IF (cond) {
-                    copyMethodCall(t)
-                  } ELSE {
-                    copyMethodCall(e)
-                  }
-                case _ =>
-                  super.rewriteDef(d)
+          obj match {
+            case SumFold(sum, left, right) =>
+              sum.fold(
+                a => copyMethodCall(left(a)),
+                b => copyMethodCall(right(b))
+              )
+            case IfThenElse(cond, t, e) =>
+              IF (cond) {
+                copyMethodCall(t)
+              } ELSE {
+                copyMethodCall(e)
               }
+            case _ =>
+              super.rewriteDef(d)
           }
       }
     case _ => super.rewriteDef(d)
