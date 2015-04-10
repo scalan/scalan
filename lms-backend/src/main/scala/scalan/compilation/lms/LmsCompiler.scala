@@ -5,12 +5,32 @@ package lms
 import java.io.File
 
 import scalan.compilation.language.{CoreMethodMappingDSL, MethodMappingDSL}
+import scalan.compilation.lms.graph.LmsOutputGraphExport
 import scalan.util.FileUtil
 
 trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxExp with LmsBridge =>
   def emitSource[A, B](sourcesDir: File, extension: String, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B]): File = {
     (createManifest(eInput), createManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
+
+        // ***$$$*** transform graph in lms start
+        /*
+        val graphEmitter = new GraphLmsBackend
+        val codegen = graphEmitter.codegen
+        val lmsFunc = apply[a, b](graph)
+        try {
+          codegen.emitSource[a, b](lmsFunc, functionName, writer)(mA, mB)
+        } catch {
+          case e: Throwable => {
+            println("ERROR in codegen.emitSource: " + e)
+          }
+        }
+        println("=== codegen.graphStream.roots.head.toString ===" )
+        println(codegen.graphStream.roots.head.toString)
+        println("===============================================" )
+        */
+        // ***$$$*** transform graph in lms stop
+
         val sourceFile = new File(sourcesDir, s"$functionName.$extension")
         FileUtil.withFile(sourceFile) { writer =>
           val codegen = lms.codegen
@@ -25,5 +45,55 @@ trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxEx
         }
         sourceFile
     }
+  }
+
+  override def buildGraph[A, B](sourcesDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): PGraph = {
+    // pass scalan phases
+    val graph = super.buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
+
+//    (createManifest[A], createManifest[B]) match {
+//      case (mA: Manifest[a], mB: Manifest[b]) =>
+
+    func.elem match
+    {
+      case f:FuncElem[a, b] =>
+        println(s"func.elem ${f.eDom} ${f.eRange}")
+        (createManifest(f.eDom), createManifest(f.eRange)) match {
+          case (mA: Manifest[a], mB: Manifest[b]) =>
+            val codegen = lms.grapfCodegen
+            val lmsFunc = apply[a, b](graph)
+
+            val log = new File(sourcesDir, s"${functionName}_lms.log")
+            FileUtil.withFile(log) { writer =>
+              try {
+                codegen.emitSource[a, b](lmsFunc, functionName, writer)(mA, mB)
+              } catch {
+                case e: RuntimeException =>
+                  println("ERROR in codegen.emitSource: " + e)
+              }
+            }
+
+            println("=== codegen.graphStream.roots.head.toString ===" )
+            codegen.graphStream.roots.isEmpty match{
+              case true => println("EMPTY")
+              case false =>
+                println(codegen.graphStream.roots.head.toString)
+                // todo - output graph for view. need convert IR.Sym to scalan.Sym for use emitDepGraph
+                //val dotFileName = s"${functionName}_LMS.dot"
+                //val graph = ProgramGraph(codegen.graphStream.roots, implicitly[TransformerOps[Transformer]].empty)
+                //emitDepGraph(graph, new File(sourcesDir, dotFileName))(graphVizConfig)
+            }
+            println("===============================================" )
+
+            //val exporter = new LmsOutputGraphExport(lms)
+            val dotFile = new File(sourcesDir, s"${functionName}_lms.dot")
+
+            codegen.graphStream.exportToGraphVis(dotFile, graphVizConfig)
+        }
+      case _ =>
+        throw new Exception("ERROR func.elem not mached to FuncElem // in LmsCompiler.buildGraph")
+    }
+
+    graph
   }
 }

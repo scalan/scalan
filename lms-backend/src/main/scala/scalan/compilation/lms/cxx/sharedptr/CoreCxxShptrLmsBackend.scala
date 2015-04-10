@@ -5,11 +5,13 @@ package cxx
 package sharedptr
 
 import scala.virtualization.lms.common._
-import scalan.compilation.lms.common.{CxxShptrGenJNIExtractor, CxxShptrGenLstOps, JNILmsOpsExp}
+import scalan.compilation.lms.common.{CxxShptrGenVectorOps, CxxShptrGenJNIExtractor, CxxShptrGenLstOps, JNILmsOpsExp}
 
-class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>
+class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>  //code for ArrayDotProdSparse defined in emitNode in CxxShptrGenVectorOps
 
-  trait Codegen extends CxxShptrCodegen
+  trait Codegen extends BaseCodegen[self.type]
+  with CxxShptrCodegen
+  with CxxShptrGenVectorOps
   with CLikeGenEqual
   with CLikeGenPrimitiveOps
   with CxxShptrGenStruct

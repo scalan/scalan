@@ -1,19 +1,30 @@
 package scalan.compilation.lms
 
 import scala.collection.mutable
-import scala.virtualization.lms.internal.GenericCodegen
+import scala.virtualization.lms.internal.Expressions
+import scala.virtualization.lms.internal.{Effects, NestedBlockTraversal, GenericCodegen}
 import scalan.compilation.lms.common._
+import scalan.compilation.lms.graph.GraphCodegen
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
 import java.util.HashMap
 
-trait LmsBackend extends BaseExp { self =>
 
-  type Codegen <: GenericCodegen {
+trait BaseCodegen[BackendType <: LmsBackendFacade] extends GenericCodegen with NestedBlockTraversal{
+  val IR: BackendType
+  override def traverseStm(stm: IR.type#Stm) = super.traverseStm(stm)
+}
+
+
+trait LmsBackend extends LmsBackendFacade { self =>
+
+/*  type Codegen <: GenericCodegen {
     val IR: self.type
-  }
+  } */
 
-  def codegen: Codegen
+  def codegen: BaseCodegen[self.type]
+  val grapfCodegen: GraphCodegen[self.type] = new GraphCodegen(self)
+
 }
 
 trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimitives with LiftNumeric with ArrayOpsExtExp with ListOpsExp
@@ -21,7 +32,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
-  with WhileExpExt with ListOpsExpExt with FunctionsExpExt {
+  with WhileExpExt with ListOpsExpExt with FunctionsExpExt with Effects {
   /*type RepD[T] = Rep[T]
   */
 
@@ -475,7 +486,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
 
 class CoreLmsBackend extends CoreLmsBackendBase { self =>
 
-  trait Codegen extends ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
+  trait Codegen extends BaseCodegen[self.type] with ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
   with ScalaGenLstOps with ScalaGenNumericOps with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps
   with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
   with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt

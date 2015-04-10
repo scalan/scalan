@@ -183,6 +183,10 @@ sealed trait Orientation
 object Portrait extends Orientation
 object Landscape extends Orientation
 
+sealed trait ControlFlowStyle
+object ControlFlowWithBoxes extends ControlFlowStyle
+object ControlFlowWithArrows extends ControlFlowStyle
+
 // outside the cake to be usable from ItTestsUtil
 case class GraphVizConfig(emitGraphs: Boolean,
                           orientation: Orientation,
@@ -222,6 +226,7 @@ object GraphVizConfig {
     orientation = Portrait,
     maxLabelLineLength = 40,
     subgraphClusters = true)
+=======
 
   def none = default.copy(emitGraphs = false)
 }
