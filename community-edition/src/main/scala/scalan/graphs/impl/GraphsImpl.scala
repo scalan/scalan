@@ -16,15 +16,27 @@ trait GraphsAbs extends Scalan with Graphs {
   self: GraphsDsl =>
   // single proxy for each type family
   implicit def proxyGraph[V, E](p: Rep[Graph[V, E]]): Graph[V, E] = {
-    implicit val tag = weakTypeTag[Graph[V, E]]
-    proxyOps[Graph[V, E]](p)(TagImplicits.typeTagToClassTag[Graph[V, E]])
+    proxyOps[Graph[V, E]](p)(classTag[Graph[V, E]])
   }
 
-  abstract class GraphElem[V, E, From, To <: Graph[V, E]](iso: Iso[From, To])(implicit eV: Elem[V], eE: Elem[E])
-    extends ViewElem[From, To](iso) {
+  class GraphElem[V, E, To <: Graph[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
+    extends EntityElem[To] {
+    override def isEntityType = true
+    override def tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[Graph[V, E]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertGraph(x.asRep[Graph[V, E]])
-    def convertGraph(x : Rep[Graph[V, E]]): Rep[To]
+    def convertGraph(x : Rep[Graph[V, E]]): Rep[To] = {
+      assert(x.selfType1.isInstanceOf[GraphElem[_,_,_]])
+      x.asRep[To]
+    }
+    override def getDefaultRep: Rep[To] = ???
   }
+
+  implicit def graphElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
+    new GraphElem[V, E, Graph[V, E]]()(eV, eE)
 
   trait GraphCompanionElem extends CompanionElem[GraphCompanionAbs]
   implicit lazy val GraphCompanionElem: GraphCompanionElem = new GraphCompanionElem {
@@ -41,9 +53,12 @@ trait GraphsAbs extends Scalan with Graphs {
   }
 
   // elem for concrete class
-  class AdjacencyGraphElem[V, E](iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit val eV: Elem[V], val eE: Elem[E])
-    extends GraphElem[V, E, AdjacencyGraphData[V, E], AdjacencyGraph[V, E]](iso) {
-    def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
+  class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
+    extends GraphElem[V, E, AdjacencyGraph[V, E]]
+    with ViewElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
+    override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -62,6 +77,8 @@ trait GraphsAbs extends Scalan with Graphs {
       AdjacencyGraph(vertexValues, edgeValues, links)
     }
     lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
       weakTypeTag[AdjacencyGraph[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[AdjacencyGraph[V, E]]](AdjacencyGraph(element[Collection[V]].defaultRepValue, element[INestedCollection[E]].defaultRepValue, element[INestedCollection[Int]].defaultRepValue))
@@ -103,9 +120,12 @@ trait GraphsAbs extends Scalan with Graphs {
   def unmkAdjacencyGraph[V:Elem, E:Elem](p: Rep[AdjacencyGraph[V, E]]): Option[(Rep[Collection[V]], Rep[INestedCollection[E]], Rep[INestedCollection[Int]])]
 
   // elem for concrete class
-  class IncidenceGraphElem[V, E](iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit val eV: Elem[V], val eE: Elem[E])
-    extends GraphElem[V, E, IncidenceGraphData[V, E], IncidenceGraph[V, E]](iso) {
-    def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
+  class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
+    extends GraphElem[V, E, IncidenceGraph[V, E]]
+    with ViewElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
+    override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -124,6 +144,8 @@ trait GraphsAbs extends Scalan with Graphs {
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }
     lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
       weakTypeTag[IncidenceGraph[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[IncidenceGraph[V, E]]](IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0))
@@ -349,7 +371,17 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `outEdges`: Method has function arguments predicate
+    object outEdges {
+      def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(vs, predicate, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphElem[_, _]] && method.getName == "outEdges" =>
+          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object inNeighbors {
       def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
@@ -638,7 +670,17 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `outEdges`: Method has function arguments predicate
+    object outEdges {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(vs, predicate, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "outEdges" =>
+          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object inNeighbors {
       def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
@@ -776,7 +818,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object thisGraph {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "thisGraph" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "thisGraph" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -788,7 +830,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object vertexValues {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "vertexValues" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "vertexValues" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -800,7 +842,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object edgeValues {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "edgeValues" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "edgeValues" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -812,7 +854,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object links {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "links" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "links" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -824,7 +866,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object incMatrix {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "incMatrix" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "incMatrix" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -836,7 +878,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object incMatrixWithVals {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "incMatrixWithVals" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "incMatrixWithVals" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -848,7 +890,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object discardValues {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "discardValues" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "discardValues" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -858,11 +900,11 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `unzipValues`: Method's return type (Rep[SimpleGraph],Coll[V],NColl[E]) is not a Rep
+    // WARNING: Cannot generate matcher for method `unzipValues`: Method's return type (Rep[SimpleGraph], Coll[V], NColl[E]) is not a Rep
 
     object addEdges {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[EdgeList]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(el, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "addEdges" =>
+        case MethodCall(receiver, method, Seq(el, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "addEdges" =>
           Some((receiver, el)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[EdgeList]) forSome {type V; type E}]]
         case _ => None
       }
@@ -874,7 +916,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object inverted {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "inverted" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "inverted" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -886,7 +928,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object complement {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "complement" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "complement" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -898,7 +940,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object vertexNum {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "vertexNum" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "vertexNum" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -910,7 +952,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object edgeNum {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "edgeNum" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "edgeNum" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -922,7 +964,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object inDegrees {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "inDegrees" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "inDegrees" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -934,7 +976,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object outDegrees {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outDegrees" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "outDegrees" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -946,7 +988,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object getNode {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(vId, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "getNode" =>
+        case MethodCall(receiver, method, Seq(vId, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "getNode" =>
           Some((receiver, vId)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}]]
         case _ => None
       }
@@ -958,7 +1000,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object getNodes {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(vIds, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "getNodes" =>
+        case MethodCall(receiver, method, Seq(vIds, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "getNodes" =>
           Some((receiver, vIds)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int]) forSome {type V; type E}]]
         case _ => None
       }
@@ -970,7 +1012,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object nodes {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "nodes" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "nodes" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -982,7 +1024,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object edges {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "edges" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "edges" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -994,7 +1036,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object inNeighbors {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "inNeighbors" =>
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "inNeighbors" =>
           Some((receiver, v)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}]]
         case _ => None
       }
@@ -1006,7 +1048,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object outNeighborsOf_1 {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outNeighborsOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "1" } =>
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "outNeighborsOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "1" } =>
           Some((receiver, v)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int]) forSome {type V; type E}]]
         case _ => None
       }
@@ -1018,7 +1060,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object outNeighborsOf_2 {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(vs, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outNeighborsOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "2" } =>
+        case MethodCall(receiver, method, Seq(vs, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "outNeighborsOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "2" } =>
           Some((receiver, vs)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int]) forSome {type V; type E}]]
         case _ => None
       }
@@ -1030,7 +1072,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object outEdgesOf_1 {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[BitSet]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(vs, excluding, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outEdgesOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "1" } =>
+        case MethodCall(receiver, method, Seq(vs, excluding, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "outEdgesOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "1" } =>
           Some((receiver, vs, excluding)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Rep[BitSet]) forSome {type V; type E}]]
         case _ => None
       }
@@ -1042,7 +1084,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object outEdgesOf_2 {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Front]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(fr, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "outEdgesOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "2" } =>
+        case MethodCall(receiver, method, Seq(fr, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "outEdgesOf" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "2" } =>
           Some((receiver, fr)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Front]) forSome {type V; type E}]]
         case _ => None
       }
@@ -1052,11 +1094,21 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `outEdges`: Method has function arguments predicate
+    object outEdges {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(vs, predicate, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "outEdges" =>
+          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object hasEdgeTo {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(fromId, toId, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "hasEdgeTo" =>
+        case MethodCall(receiver, method, Seq(fromId, toId, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "hasEdgeTo" =>
           Some((receiver, fromId, toId)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
         case _ => None
       }
@@ -1068,7 +1120,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object commonNbrs {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(v1Id, v2Id, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "commonNbrs" =>
+        case MethodCall(receiver, method, Seq(v1Id, v2Id, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "commonNbrs" =>
           Some((receiver, v1Id, v2Id)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
         case _ => None
       }
@@ -1080,7 +1132,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
 
     object commonNbrsNum {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(v1Id, v2Id, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _, _]] && method.getName == "commonNbrsNum" =>
+        case MethodCall(receiver, method, Seq(v1Id, v2Id, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "commonNbrsNum" =>
           Some((receiver, v1Id, v2Id)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
         case _ => None
       }

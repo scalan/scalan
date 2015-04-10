@@ -15,15 +15,26 @@ trait CollectionsAbs extends Scalan with Collections {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyCollection[A](p: Rep[Collection[A]]): Collection[A] = {
-    implicit val tag = weakTypeTag[Collection[A]]
-    proxyOps[Collection[A]](p)(TagImplicits.typeTagToClassTag[Collection[A]])
+    proxyOps[Collection[A]](p)(classTag[Collection[A]])
   }
 
-  abstract class CollectionElem[A, From, To <: Collection[A]](iso: Iso[From, To])(implicit elem: Elem[A])
-    extends ViewElem[From, To](iso) {
+  class CollectionElem[A, To <: Collection[A]](implicit val elem: Elem[A])
+    extends EntityElem[To] {
+    override def isEntityType = true
+    override def tag = {
+      implicit val tagA = elem.tag
+      weakTypeTag[Collection[A]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertCollection(x.asRep[Collection[A]])
-    def convertCollection(x : Rep[Collection[A]]): Rep[To]
+    def convertCollection(x : Rep[Collection[A]]): Rep[To] = {
+      assert(x.selfType1.isInstanceOf[CollectionElem[_,_]])
+      x.asRep[To]
+    }
+    override def getDefaultRep: Rep[To] = ???
   }
+
+  implicit def collectionElement[A](implicit elem: Elem[A]) =
+    new CollectionElem[A, Collection[A]]()(elem)
 
   trait CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs]
   implicit lazy val CollectionCompanionElem: CollectionCompanionElem = new CollectionCompanionElem {
@@ -41,30 +52,56 @@ trait CollectionsAbs extends Scalan with Collections {
 
   // single proxy for each type family
   implicit def proxyIPairCollection[A, B](p: Rep[IPairCollection[A, B]]): IPairCollection[A, B] = {
-    implicit val tag = weakTypeTag[IPairCollection[A, B]]
-    proxyOps[IPairCollection[A, B]](p)(TagImplicits.typeTagToClassTag[IPairCollection[A, B]])
+    proxyOps[IPairCollection[A, B]](p)(classTag[IPairCollection[A, B]])
   }
-  abstract class IPairCollectionElem[A, B, From, To <: IPairCollection[A, B]](iso: Iso[From, To])(implicit eA: Elem[A], eB: Elem[B])
-    extends ViewElem[From, To](iso) {
+  class IPairCollectionElem[A, B, To <: IPairCollection[A, B]](implicit val eA: Elem[A], val eB: Elem[B])
+    extends CollectionElem[(A, B), To] {
+    override def isEntityType = true
+    override def tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      weakTypeTag[IPairCollection[A, B]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertIPairCollection(x.asRep[IPairCollection[A, B]])
-    def convertIPairCollection(x : Rep[IPairCollection[A, B]]): Rep[To]
+    def convertIPairCollection(x : Rep[IPairCollection[A, B]]): Rep[To] = {
+      assert(x.selfType1.isInstanceOf[IPairCollectionElem[_,_,_]])
+      x.asRep[To]
+    }
+    override def getDefaultRep: Rep[To] = ???
   }
+
+  implicit def iPairCollectionElement[A, B](implicit eA: Elem[A], eB: Elem[B]) =
+    new IPairCollectionElem[A, B, IPairCollection[A, B]]()(eA, eB)
 
   // single proxy for each type family
   implicit def proxyINestedCollection[A](p: Rep[INestedCollection[A]]): INestedCollection[A] = {
-    implicit val tag = weakTypeTag[INestedCollection[A]]
-    proxyOps[INestedCollection[A]](p)(TagImplicits.typeTagToClassTag[INestedCollection[A]])
+    proxyOps[INestedCollection[A]](p)(classTag[INestedCollection[A]])
   }
-  abstract class INestedCollectionElem[A, From, To <: INestedCollection[A]](iso: Iso[From, To])(implicit eA: Elem[A])
-    extends ViewElem[From, To](iso) {
+  class INestedCollectionElem[A, To <: INestedCollection[A]](implicit val eA: Elem[A])
+    extends CollectionElem[Collection[A], To] {
+    override def isEntityType = true
+    override def tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[INestedCollection[A]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertINestedCollection(x.asRep[INestedCollection[A]])
-    def convertINestedCollection(x : Rep[INestedCollection[A]]): Rep[To]
+    def convertINestedCollection(x : Rep[INestedCollection[A]]): Rep[To] = {
+      assert(x.selfType1.isInstanceOf[INestedCollectionElem[_,_]])
+      x.asRep[To]
+    }
+    override def getDefaultRep: Rep[To] = ???
   }
 
+  implicit def iNestedCollectionElement[A](implicit eA: Elem[A]) =
+    new INestedCollectionElem[A, INestedCollection[A]]()(eA)
+
   // elem for concrete class
-  class UnitCollectionElem(iso: Iso[UnitCollectionData, UnitCollection])
-    extends CollectionElem[Unit, UnitCollectionData, UnitCollection](iso) {
-    def convertCollection(x: Rep[Collection[Unit]]) = UnitCollection(x.length)
+  class UnitCollectionElem(val iso: Iso[UnitCollectionData, UnitCollection])
+    extends CollectionElem[Unit, UnitCollection]
+    with ViewElem[UnitCollectionData, UnitCollection] {
+    override def convertCollection(x: Rep[Collection[Unit]]) = UnitCollection(x.length)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -123,9 +160,12 @@ trait CollectionsAbs extends Scalan with Collections {
   def unmkUnitCollection(p: Rep[UnitCollection]): Option[(Rep[Int])]
 
   // elem for concrete class
-  class BaseCollectionElem[A](iso: Iso[BaseCollectionData[A], BaseCollection[A]])(implicit val eA: Elem[A])
-    extends CollectionElem[A, BaseCollectionData[A], BaseCollection[A]](iso) {
-    def convertCollection(x: Rep[Collection[A]]) = BaseCollection(x.arr)
+  class BaseCollectionElem[A](val iso: Iso[BaseCollectionData[A], BaseCollection[A]])(implicit eA: Elem[A])
+    extends CollectionElem[A, BaseCollection[A]]
+    with ViewElem[BaseCollectionData[A], BaseCollection[A]] {
+    override def convertCollection(x: Rep[Collection[A]]) = BaseCollection(x.arr)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -144,6 +184,7 @@ trait CollectionsAbs extends Scalan with Collections {
       BaseCollection(arr)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[BaseCollection[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[BaseCollection[A]]](BaseCollection(element[Array[A]].defaultRepValue))
@@ -184,9 +225,12 @@ trait CollectionsAbs extends Scalan with Collections {
   def unmkBaseCollection[A:Elem](p: Rep[BaseCollection[A]]): Option[(Rep[Array[A]])]
 
   // elem for concrete class
-  class ListCollectionElem[A](iso: Iso[ListCollectionData[A], ListCollection[A]])(implicit val eA: Elem[A])
-    extends CollectionElem[A, ListCollectionData[A], ListCollection[A]](iso) {
-    def convertCollection(x: Rep[Collection[A]]) = ListCollection(x.lst)
+  class ListCollectionElem[A](val iso: Iso[ListCollectionData[A], ListCollection[A]])(implicit eA: Elem[A])
+    extends CollectionElem[A, ListCollection[A]]
+    with ViewElem[ListCollectionData[A], ListCollection[A]] {
+    override def convertCollection(x: Rep[Collection[A]]) = ListCollection(x.lst)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -205,6 +249,7 @@ trait CollectionsAbs extends Scalan with Collections {
       ListCollection(lst)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[ListCollection[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[ListCollection[A]]](ListCollection(element[List[A]].defaultRepValue))
@@ -245,9 +290,12 @@ trait CollectionsAbs extends Scalan with Collections {
   def unmkListCollection[A:Elem](p: Rep[ListCollection[A]]): Option[(Rep[List[A]])]
 
   // elem for concrete class
-  class CollectionOnSeqElem[A](iso: Iso[CollectionOnSeqData[A], CollectionOnSeq[A]])(implicit val eA: Elem[A])
-    extends CollectionElem[A, CollectionOnSeqData[A], CollectionOnSeq[A]](iso) {
-    def convertCollection(x: Rep[Collection[A]]) = CollectionOnSeq(x.seq)
+  class CollectionOnSeqElem[A](val iso: Iso[CollectionOnSeqData[A], CollectionOnSeq[A]])(implicit eA: Elem[A])
+    extends CollectionElem[A, CollectionOnSeq[A]]
+    with ViewElem[CollectionOnSeqData[A], CollectionOnSeq[A]] {
+    override def convertCollection(x: Rep[Collection[A]]) = CollectionOnSeq(x.seq)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -266,6 +314,7 @@ trait CollectionsAbs extends Scalan with Collections {
       CollectionOnSeq(seq)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[CollectionOnSeq[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOnSeq[A]]](CollectionOnSeq(element[SSeq[A]].defaultRepValue))
@@ -306,9 +355,12 @@ trait CollectionsAbs extends Scalan with Collections {
   def unmkCollectionOnSeq[A:Elem](p: Rep[CollectionOnSeq[A]]): Option[(Rep[SSeq[A]])]
 
   // elem for concrete class
-  class PairCollectionElem[A, B](iso: Iso[PairCollectionData[A, B], PairCollection[A, B]])(implicit val eA: Elem[A], val eB: Elem[B])
-    extends IPairCollectionElem[A, B, PairCollectionData[A, B], PairCollection[A, B]](iso) {
-    def convertIPairCollection(x: Rep[IPairCollection[A, B]]) = PairCollection(x.as, x.bs)
+  class PairCollectionElem[A, B](val iso: Iso[PairCollectionData[A, B], PairCollection[A, B]])(implicit eA: Elem[A], eB: Elem[B])
+    extends IPairCollectionElem[A, B, PairCollection[A, B]]
+    with ViewElem[PairCollectionData[A, B], PairCollection[A, B]] {
+    override def convertIPairCollection(x: Rep[IPairCollection[A, B]]) = PairCollection(x.as, x.bs)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -327,6 +379,8 @@ trait CollectionsAbs extends Scalan with Collections {
       PairCollection(as, bs)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
       weakTypeTag[PairCollection[A, B]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[PairCollection[A, B]]](PairCollection(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue))
@@ -368,13 +422,16 @@ trait CollectionsAbs extends Scalan with Collections {
   def unmkPairCollection[A:Elem, B:Elem](p: Rep[PairCollection[A, B]]): Option[(Rep[Collection[A]], Rep[Collection[B]])]
 
   // elem for concrete class
-  class CollectionOfPairsElem[A, B](iso: Iso[CollectionOfPairsData[A, B], CollectionOfPairs[A, B]])(implicit val eA: Elem[A], val eB: Elem[B])
-    extends IPairCollectionElem[A, B, CollectionOfPairsData[A, B], CollectionOfPairs[A, B]](iso) {
-    def convertIPairCollection(x: Rep[IPairCollection[A, B]]) = CollectionOfPairs(x.arr)
+  class CollectionOfPairsElem[A, B](val iso: Iso[CollectionOfPairsData[A, B], CollectionOfPairs[A, B]])(implicit eA: Elem[A], eB: Elem[B])
+    extends IPairCollectionElem[A, B, CollectionOfPairs[A, B]]
+    with ViewElem[CollectionOfPairsData[A, B], CollectionOfPairs[A, B]] {
+    override def convertIPairCollection(x: Rep[IPairCollection[A, B]]) = CollectionOfPairs(x.arr)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
-  type CollectionOfPairsData[A, B] = Array[(A,B)]
+  type CollectionOfPairsData[A, B] = Array[(A, B)]
 
   // 3) Iso for concrete class
   class CollectionOfPairsIso[A, B](implicit eA: Elem[A], eB: Elem[B])
@@ -384,21 +441,23 @@ trait CollectionsAbs extends Scalan with Collections {
         case Some((arr)) => arr
         case None => !!!
       }
-    override def to(p: Rep[Array[(A,B)]]) = {
+    override def to(p: Rep[Array[(A, B)]]) = {
       val arr = p
       CollectionOfPairs(arr)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
       weakTypeTag[CollectionOfPairs[A, B]]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOfPairs[A, B]]](CollectionOfPairs(element[Array[(A,B)]].defaultRepValue))
+    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOfPairs[A, B]]](CollectionOfPairs(element[Array[(A, B)]].defaultRepValue))
     lazy val eTo = new CollectionOfPairsElem[A, B](this)
   }
   // 4) constructor and deconstructor
   abstract class CollectionOfPairsCompanionAbs extends CompanionBase[CollectionOfPairsCompanionAbs] with CollectionOfPairsCompanion {
     override def toString = "CollectionOfPairs"
 
-    def apply[A, B](arr: Rep[Array[(A,B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]] =
+    def apply[A, B](arr: Rep[Array[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]] =
       mkCollectionOfPairs(arr)
     def unapply[A:Elem, B:Elem](p: Rep[CollectionOfPairs[A, B]]) = unmkCollectionOfPairs(p)
   }
@@ -425,17 +484,20 @@ trait CollectionsAbs extends Scalan with Collections {
     new CollectionOfPairsIso[A, B]
 
   // 6) smart constructor and deconstructor
-  def mkCollectionOfPairs[A, B](arr: Rep[Array[(A,B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]]
-  def unmkCollectionOfPairs[A:Elem, B:Elem](p: Rep[CollectionOfPairs[A, B]]): Option[(Rep[Array[(A,B)]])]
+  def mkCollectionOfPairs[A, B](arr: Rep[Array[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]]
+  def unmkCollectionOfPairs[A:Elem, B:Elem](p: Rep[CollectionOfPairs[A, B]]): Option[(Rep[Array[(A, B)]])]
 
   // elem for concrete class
-  class NestedCollectionElem[A](iso: Iso[NestedCollectionData[A], NestedCollection[A]])(implicit val eA: Elem[A])
-    extends INestedCollectionElem[A, NestedCollectionData[A], NestedCollection[A]](iso) {
-    def convertINestedCollection(x: Rep[INestedCollection[A]]) = NestedCollection(x.values, x.segments)
+  class NestedCollectionElem[A](val iso: Iso[NestedCollectionData[A], NestedCollection[A]])(implicit eA: Elem[A])
+    extends INestedCollectionElem[A, NestedCollection[A]]
+    with ViewElem[NestedCollectionData[A], NestedCollection[A]] {
+    override def convertINestedCollection(x: Rep[INestedCollection[A]]) = NestedCollection(x.values, x.segments)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
-  type NestedCollectionData[A] = (Collection[A], Collection[(Int,Int)])
+  type NestedCollectionData[A] = (Collection[A], IPairCollection[Int,Int])
 
   // 3) Iso for concrete class
   class NestedCollectionIso[A](implicit eA: Elem[A])
@@ -445,14 +507,15 @@ trait CollectionsAbs extends Scalan with Collections {
         case Some((values, segments)) => Pair(values, segments)
         case None => !!!
       }
-    override def to(p: Rep[(Collection[A], Collection[(Int,Int)])]) = {
+    override def to(p: Rep[(Collection[A], IPairCollection[Int,Int])]) = {
       val Pair(values, segments) = p
       NestedCollection(values, segments)
     }
     lazy val tag = {
+      implicit val tagA = eA.tag
       weakTypeTag[NestedCollection[A]]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[NestedCollection[A]]](NestedCollection(element[Collection[A]].defaultRepValue, element[Collection[(Int,Int)]].defaultRepValue))
+    lazy val defaultRepTo = Default.defaultVal[Rep[NestedCollection[A]]](NestedCollection(element[Collection[A]].defaultRepValue, element[IPairCollection[Int,Int]].defaultRepValue))
     lazy val eTo = new NestedCollectionElem[A](this)
   }
   // 4) constructor and deconstructor
@@ -460,7 +523,7 @@ trait CollectionsAbs extends Scalan with Collections {
     override def toString = "NestedCollection"
     def apply[A](p: Rep[NestedCollectionData[A]])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
       isoNestedCollection(eA).to(p)
-    def apply[A](values: Coll[A], segments: Coll[(Int,Int)])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
+    def apply[A](values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
       mkNestedCollection(values, segments)
     def unapply[A:Elem](p: Rep[NestedCollection[A]]) = unmkNestedCollection(p)
   }
@@ -487,8 +550,8 @@ trait CollectionsAbs extends Scalan with Collections {
     new NestedCollectionIso[A]
 
   // 6) smart constructor and deconstructor
-  def mkNestedCollection[A](values: Coll[A], segments: Coll[(Int,Int)])(implicit eA: Elem[A]): Rep[NestedCollection[A]]
-  def unmkNestedCollection[A:Elem](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[A]], Rep[Collection[(Int,Int)]])]
+  def mkNestedCollection[A](values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]]
+  def unmkNestedCollection[A:Elem](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[A]], Rep[IPairCollection[Int,Int]])]
 }
 
 // Seq -----------------------------------
@@ -584,7 +647,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
     Some((p.as, p.bs))
 
   case class SeqCollectionOfPairs[A, B]
-      (override val arr: Rep[Array[(A,B)]])
+      (override val arr: Rep[Array[(A, B)]])
       (implicit eA: Elem[A], eB: Elem[B])
     extends CollectionOfPairs[A, B](arr)
         with UserTypeSeq[IPairCollection[A,B], CollectionOfPairs[A, B]] {
@@ -595,13 +658,13 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   }
 
   def mkCollectionOfPairs[A, B]
-      (arr: Rep[Array[(A,B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]] =
+      (arr: Rep[Array[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]] =
       new SeqCollectionOfPairs[A, B](arr)
   def unmkCollectionOfPairs[A:Elem, B:Elem](p: Rep[CollectionOfPairs[A, B]]) =
     Some((p.arr))
 
   case class SeqNestedCollection[A]
-      (override val values: Coll[A], override val segments: Coll[(Int,Int)])
+      (override val values: Coll[A], override val segments: PairColl[Int,Int])
       (implicit eA: Elem[A])
     extends NestedCollection[A](values, segments)
         with UserTypeSeq[INestedCollection[A], NestedCollection[A]] {
@@ -612,7 +675,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   }
 
   def mkNestedCollection[A]
-      (values: Coll[A], segments: Coll[(Int,Int)])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
+      (values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
       new SeqNestedCollection[A](values, segments)
   def unmkNestedCollection[A:Elem](p: Rep[NestedCollection[A]]) =
     Some((p.values, p.segments))
@@ -687,8 +750,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
         case _ => None
       }
     }
-
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
 
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[UnitCollection], Rep[Unit => B]) forSome {type B}] = d match {
@@ -774,9 +835,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[UnitCollection], Rep[Unit => Boolean])] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[UnitCollectionElem] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[UnitCollection], Rep[Unit => Boolean])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[UnitCollection], Rep[Unit => Boolean])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[UnitCollection], Rep[Unit => Collection[B]]) forSome {type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[UnitCollectionElem] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[UnitCollection], Rep[Unit => Collection[B]]) forSome {type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[UnitCollection], Rep[Unit => Collection[B]]) forSome {type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[UnitCollection], Rep[Unit])] = d match {
@@ -873,8 +954,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[BaseCollection[A]], Rep[A => B]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[BaseCollectionElem[_]] && method.getName == "mapBy" =>
@@ -959,9 +1038,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[BaseCollection[A]], Rep[A => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[BaseCollectionElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[BaseCollection[A]], Rep[A => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[BaseCollection[A]], Rep[A => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[BaseCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[BaseCollectionElem[_]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[BaseCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[BaseCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[BaseCollection[A]], Rep[A]) forSome {type A}] = d match {
@@ -1058,8 +1157,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[ListCollection[A]], Rep[A => B]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[ListCollectionElem[_]] && method.getName == "mapBy" =>
@@ -1144,9 +1241,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[ListCollection[A]], Rep[A => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[ListCollectionElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[ListCollection[A]], Rep[A => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ListCollection[A]], Rep[A => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[ListCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[ListCollectionElem[_]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[ListCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ListCollection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[ListCollection[A]], Rep[A]) forSome {type A}] = d match {
@@ -1279,8 +1396,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A => B]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOnSeqElem[_]] && method.getName == "mapBy" =>
@@ -1341,9 +1456,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOnSeqElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOnSeq[A]], Rep[A => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOnSeqElem[_]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOnSeq[A]], Rep[A => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[CollectionOnSeq[A]], Rep[A]) forSome {type A}] = d match {
@@ -1392,8 +1527,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object PairCollectionMethods {
-    // WARNING: Cannot generate matcher for method `mapPairs`: Method has function arguments f
-
     object arr {
       def unapply(d: Def[_]): Option[Rep[PairCollection[A, B]] forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _]] && method.getName == "arr" =>
@@ -1466,27 +1599,25 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Rep[((A,B)) => C]) forSome {type A; type B; type C}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Rep[((A, B)) => C]) forSome {type A; type B; type C}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Rep[((A,B)) => C]) forSome {type A; type B; type C}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Rep[((A, B)) => C]) forSome {type A; type B; type C}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Rep[((A,B)) => C]) forSome {type A; type B; type C}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Rep[((A, B)) => C]) forSome {type A; type B; type C}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object reduce {
-      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], RepMonoid[(A,B)]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], RepMonoid[(A, B)]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _]] && method.getName == "reduce" =>
-          Some((receiver, m)).asInstanceOf[Option[(Rep[PairCollection[A, B]], RepMonoid[(A,B)]) forSome {type A; type B}]]
+          Some((receiver, m)).asInstanceOf[Option[(Rep[PairCollection[A, B]], RepMonoid[(A, B)]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], RepMonoid[(A,B)]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], RepMonoid[(A, B)]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1505,40 +1636,60 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
     }
 
     object update {
-      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Rep[Int], Rep[(A,B)]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Rep[Int], Rep[(A, B)]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _]] && method.getName == "update" =>
-          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Rep[Int], Rep[(A,B)]) forSome {type A; type B}]]
+          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Rep[Int], Rep[(A, B)]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Rep[Int], Rep[(A,B)]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Rep[Int], Rep[(A, B)]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object updateMany {
-      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Coll[Int], Coll[(A,B)]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Coll[Int], Coll[(A, B)]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _]] && method.getName == "updateMany" =>
-          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Coll[Int], Coll[(A,B)]) forSome {type A; type B}]]
+          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Coll[Int], Coll[(A, B)]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Coll[Int], Coll[(A,B)]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Coll[Int], Coll[(A, B)]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
-
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
-
-    object append {
-      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Rep[(A,B)]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _]] && method.getName == "append" =>
-          Some((receiver, value)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Rep[(A,B)]) forSome {type A; type B}]]
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Rep[((A, B)) => Boolean]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Rep[((A, B)) => Boolean]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Rep[(A,B)]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Rep[((A, B)) => Boolean]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Rep[((A, B)) => Collection[C]]) forSome {type A; type B; type C}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Rep[((A, B)) => Collection[C]]) forSome {type A; type B; type C}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Rep[((A, B)) => Collection[C]]) forSome {type A; type B; type C}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object append {
+      def unapply(d: Def[_]): Option[(Rep[PairCollection[A, B]], Rep[(A, B)]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[PairCollectionElem[_, _]] && method.getName == "append" =>
+          Some((receiver, value)).asInstanceOf[Option[(Rep[PairCollection[A, B]], Rep[(A, B)]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollection[A, B]], Rep[(A, B)]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1566,7 +1717,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
     Some((p.as, p.bs))
 
   case class ExpCollectionOfPairs[A, B]
-      (override val arr: Rep[Array[(A,B)]])
+      (override val arr: Rep[Array[(A, B)]])
       (implicit eA: Elem[A], eB: Elem[B])
     extends CollectionOfPairs[A, B](arr) with UserTypeDef[IPairCollection[A,B], CollectionOfPairs[A, B]] {
     lazy val selfType = element[CollectionOfPairs[A, B]].asInstanceOf[Elem[IPairCollection[A,B]]]
@@ -1663,27 +1814,25 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[((A,B)) => C]) forSome {type A; type B; type C}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[((A, B)) => C]) forSome {type A; type B; type C}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOfPairsElem[_, _]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], Rep[((A,B)) => C]) forSome {type A; type B; type C}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], Rep[((A, B)) => C]) forSome {type A; type B; type C}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[((A,B)) => C]) forSome {type A; type B; type C}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[((A, B)) => C]) forSome {type A; type B; type C}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object reduce {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], RepMonoid[(A,B)]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], RepMonoid[(A, B)]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[CollectionOfPairsElem[_, _]] && method.getName == "reduce" =>
-          Some((receiver, m)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], RepMonoid[(A,B)]) forSome {type A; type B}]]
+          Some((receiver, m)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], RepMonoid[(A, B)]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], RepMonoid[(A,B)]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], RepMonoid[(A, B)]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1702,40 +1851,60 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
     }
 
     object update {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[Int], Rep[(A,B)]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[Int], Rep[(A, B)]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[CollectionOfPairsElem[_, _]] && method.getName == "update" =>
-          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], Rep[Int], Rep[(A,B)]) forSome {type A; type B}]]
+          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], Rep[Int], Rep[(A, B)]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[Int], Rep[(A,B)]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[Int], Rep[(A, B)]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object updateMany {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], Coll[Int], Coll[(A,B)]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], Coll[Int], Coll[(A, B)]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[CollectionOfPairsElem[_, _]] && method.getName == "updateMany" =>
-          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], Coll[Int], Coll[(A,B)]) forSome {type A; type B}]]
+          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], Coll[Int], Coll[(A, B)]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], Coll[Int], Coll[(A,B)]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], Coll[Int], Coll[(A, B)]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
-
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
-
-    object append {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[(A,B)]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[CollectionOfPairsElem[_, _]] && method.getName == "append" =>
-          Some((receiver, value)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], Rep[(A,B)]) forSome {type A; type B}]]
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[((A, B)) => Boolean]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOfPairsElem[_, _]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], Rep[((A, B)) => Boolean]) forSome {type A; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[(A,B)]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[((A, B)) => Boolean]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[((A, B)) => Collection[C]]) forSome {type A; type B; type C}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOfPairsElem[_, _]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], Rep[((A, B)) => Collection[C]]) forSome {type A; type B; type C}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[((A, B)) => Collection[C]]) forSome {type A; type B; type C}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object append {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[(A, B)]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[CollectionOfPairsElem[_, _]] && method.getName == "append" =>
+          Some((receiver, value)).asInstanceOf[Option[(Rep[CollectionOfPairs[A, B]], Rep[(A, B)]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOfPairs[A, B]], Rep[(A, B)]) forSome {type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1757,13 +1926,13 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   def mkCollectionOfPairs[A, B]
-    (arr: Rep[Array[(A,B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]] =
+    (arr: Rep[Array[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]] =
     new ExpCollectionOfPairs[A, B](arr)
   def unmkCollectionOfPairs[A:Elem, B:Elem](p: Rep[CollectionOfPairs[A, B]]) =
     Some((p.arr))
 
   case class ExpNestedCollection[A]
-      (override val values: Coll[A], override val segments: Coll[(Int,Int)])
+      (override val values: Coll[A], override val segments: PairColl[Int,Int])
       (implicit eA: Elem[A])
     extends NestedCollection[A](values, segments) with UserTypeDef[INestedCollection[A], NestedCollection[A]] {
     lazy val selfType = element[NestedCollection[A]].asInstanceOf[Elem[INestedCollection[A]]]
@@ -1848,8 +2017,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A] => B]) forSome {type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[NestedCollectionElem[_]] && method.getName == "mapBy" =>
@@ -1910,9 +2077,29 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[NestedCollectionElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[NestedCollectionElem[_]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A] => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[NestedCollection[A]], Rep[Collection[A]]) forSome {type A}] = d match {
@@ -1940,13 +2127,13 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    object createNestedCollection {
-      def unapply(d: Def[_]): Option[(Coll[A], Coll[(Int,Int)]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(vals, segments, _*), _) if receiver.elem.isInstanceOf[NestedCollectionCompanionElem] && method.getName == "createNestedCollection" =>
-          Some((vals, segments)).asInstanceOf[Option[(Coll[A], Coll[(Int,Int)]) forSome {type A}]]
+    object fromJuggedArray {
+      def unapply(d: Def[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem.isInstanceOf[NestedCollectionCompanionElem] && method.getName == "fromJuggedArray" =>
+          Some(arr).asInstanceOf[Option[Rep[Array[Array[T]]] forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Coll[A], Coll[(Int,Int)]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1954,7 +2141,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   def mkNestedCollection[A]
-    (values: Coll[A], segments: Coll[(Int,Int)])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
+    (values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
     new ExpNestedCollection[A](values, segments)
   def unmkNestedCollection[A:Elem](p: Rep[NestedCollection[A]]) =
     Some((p.values, p.segments))
@@ -1962,7 +2149,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   object CollectionMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[Collection[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "length" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[Collection[A]] forSome {type A}]]
         case _ => None
       }
@@ -1974,7 +2161,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object arr {
       def unapply(d: Def[_]): Option[Rep[Collection[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "arr" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "arr" =>
           Some(receiver).asInstanceOf[Option[Rep[Collection[A]] forSome {type A}]]
         case _ => None
       }
@@ -1986,7 +2173,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object lst {
       def unapply(d: Def[_]): Option[Rep[Collection[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "lst" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "lst" =>
           Some(receiver).asInstanceOf[Option[Rep[Collection[A]] forSome {type A}]]
         case _ => None
       }
@@ -1998,7 +2185,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object seq {
       def unapply(d: Def[_]): Option[Rep[Collection[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "seq" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "seq" =>
           Some(receiver).asInstanceOf[Option[Rep[Collection[A]] forSome {type A}]]
         case _ => None
       }
@@ -2010,7 +2197,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, i)).asInstanceOf[Option[(Rep[Collection[A]], Rep[Int]) forSome {type A}]]
         case _ => None
       }
@@ -2022,7 +2209,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object apply_many {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], Coll[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+        case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
           Some((receiver, indices)).asInstanceOf[Option[(Rep[Collection[A]], Coll[Int]) forSome {type A}]]
         case _ => None
       }
@@ -2032,11 +2219,9 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
-
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A => B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "mapBy" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "mapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[A]], Rep[A => B]) forSome {type A; type B}]]
         case _ => None
       }
@@ -2048,7 +2233,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object zip {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], Coll[B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "zip" =>
+        case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "zip" =>
           Some((receiver, ys)).asInstanceOf[Option[(Rep[Collection[A]], Coll[B]) forSome {type A; type B}]]
         case _ => None
       }
@@ -2060,7 +2245,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object slice {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "slice" =>
+        case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "slice" =>
           Some((receiver, offset, length)).asInstanceOf[Option[(Rep[Collection[A]], Rep[Int], Rep[Int]) forSome {type A}]]
         case _ => None
       }
@@ -2072,7 +2257,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object reduce {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], RepMonoid[A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "reduce" =>
+        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "reduce" =>
           Some((receiver, m)).asInstanceOf[Option[(Rep[Collection[A]], RepMonoid[A]) forSome {type A}]]
         case _ => None
       }
@@ -2084,7 +2269,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object update {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[Int], Rep[A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "update" =>
+        case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "update" =>
           Some((receiver, idx, value)).asInstanceOf[Option[(Rep[Collection[A]], Rep[Int], Rep[A]) forSome {type A}]]
         case _ => None
       }
@@ -2096,7 +2281,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object updateMany {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], Coll[Int], Coll[A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "updateMany" =>
+        case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "updateMany" =>
           Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[Collection[A]], Coll[Int], Coll[A]) forSome {type A}]]
         case _ => None
       }
@@ -2108,7 +2293,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object indexes {
       def unapply(d: Def[_]): Option[Rep[Collection[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "indexes" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "indexes" =>
           Some(receiver).asInstanceOf[Option[Rep[Collection[A]] forSome {type A}]]
         case _ => None
       }
@@ -2118,13 +2303,33 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `filter`: Method has function arguments f
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A => Boolean]) forSome {type A}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[A]], Rep[A => Boolean]) forSome {type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[A => Boolean]) forSome {type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[A]], Rep[A => Collection[B]]) forSome {type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[A => Collection[B]]) forSome {type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object append {
       def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A]) forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _, _]] && method.getName == "append" =>
+        case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "append" =>
           Some((receiver, value)).asInstanceOf[Option[(Rep[Collection[A]], Rep[A]) forSome {type A}]]
         case _ => None
       }

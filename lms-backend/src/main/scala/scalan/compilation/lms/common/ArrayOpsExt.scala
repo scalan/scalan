@@ -2,9 +2,11 @@ package scalan.compilation.lms.common
 
 import java.util.HashMap
 
+import scala.reflect.SourceContext
+import scala.virtualization.lms.internal.Transforming
 import scalan.compilation.lms.LmsBackendFacade
 
-trait ArrayOpsExtExp { self: LmsBackendFacade =>
+trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
 
   def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
 
@@ -57,22 +59,21 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
     count
   }
 
-  def replicate[A: Manifest](length: Exp[Int], v: Exp[A]): Exp[Array[A]] = {
+  def arrayReplicate[A: Manifest](length: Exp[Int], v: Exp[A]): Exp[Array[A]] = {
     array(length)(i => v)
   }
 
-  def indexRangeD(length: Exp[Int]): Exp[Array[Int]] = {
-    array(length)(i => i)
+  def indexRangeArray(length: Exp[Int]): Exp[Array[Int]] = {
     array(length)(i => i)
   }
 
   def newArray[A: Manifest](length: Rep[Int]): Rep[Array[A]] = NewArray[A](length)
 
-  def opZipWith[A: Manifest, B: Manifest, R: Manifest](f: (Rep[A], Rep[B]) => Rep[R], a: Exp[Array[A]], b: Exp[Array[B]]): Exp[Array[R]] = {
+  def arrayZipWith[A: Manifest, B: Manifest, R: Manifest](f: (Rep[A], Rep[B]) => Rep[R], a: Exp[Array[A]], b: Exp[Array[B]]): Exp[Array[R]] = {
     array(a.length)(i => f(a.at(i), b.at(i)))
   }
 
-  def opZip[A: Manifest, B: Manifest](a: Exp[Array[A]], b: Exp[Array[B]]): Exp[Array[(A, B)]] = {
+  def arrayZip[A: Manifest, B: Manifest](a: Exp[Array[A]], b: Exp[Array[B]]): Exp[Array[(A, B)]] = {
     array[(A, B)](a.length)(i => (a.at(i), b.at(i)))
   }
 
@@ -121,11 +122,11 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
   }
 
 
-  def sum[A: Manifest](a: Exp[Array[A]]): Exp[A] = {
+  def sumArray[A: Manifest](a: Exp[Array[A]]): Exp[A] = {
     sum(a.length) { i => a.at(i).AsInstanceOf[Double]}.AsInstanceOf[A]
   }
 
-  def reduce[A: Manifest](a: Exp[Array[A]], zero: Exp[A], accumulate: Rep[(A, A)] => Rep[A]): Exp[A] = {
+  def reduceArray[A: Manifest](a: Exp[Array[A]], zero: Exp[A], accumulate: Rep[(A, A)] => Rep[A]): Exp[A] = {
     var state = zero
     for (x <- a) {
       state = accumulate((state.AsInstanceOf[A], x))
@@ -134,7 +135,7 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
   }
 
   /* This is not always woking */
-  def scan[A: Manifest](a: Exp[Array[A]], zero: Exp[A], accumulate: Rep[(A, A)] => Rep[A]): Exp[(Array[A], A)] = {
+  def scanArray[A: Manifest](a: Exp[Array[A]], zero: Exp[A], accumulate: Rep[(A, A)] => Rep[A]): Exp[(Array[A], A)] = {
     var state = zero
     val arr1 = array(a.length)(i => {
       val res = state
@@ -142,10 +143,10 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
       state = accumulate((state.AsInstanceOf[A], loc))
       res
     })
-    Tuple2(arr1, accumulate(arr1.at(a.length -1),a.at(a.length -1)) )
+    Tuple2(arr1, accumulate((arr1.at(a.length - 1), a.at(a.length - 1))))
   }
 
-  def fold[A: Manifest, S: Manifest](a: Exp[Array[A]], init: Exp[S], func: Rep[(S, A)] => Rep[S]): Exp[S] = {
+  def foldArray[A: Manifest, S: Manifest](a: Exp[Array[A]], init: Exp[S], func: Rep[(S, A)] => Rep[S]): Exp[S] = {
     var state = init
     for (x <- a) {
       state = func((state.AsInstanceOf[S], x))
@@ -153,7 +154,7 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
     state
   }
 
-  def sumBy[A: Manifest, S: Manifest](a: Exp[Array[A]], func: Rep[A] => Rep[S])(implicit n: Numeric[S]): Exp[S] = {
+  def sumArrayBy[A: Manifest, S: Manifest](a: Exp[Array[A]], func: Rep[A] => Rep[S])(implicit n: Numeric[S]): Exp[S] = {
     var sum = n.zero
     for (x <- a) {
       sum += func(x)
@@ -168,5 +169,15 @@ trait ArrayOpsExtExp { self: LmsBackendFacade =>
     bu.result
   }
 
-}
+  def arrayToList[A: Manifest](xs: Rep[Array[A]]): Rep[List[A]] =
+    list_fromseq(array_toseq(xs))
 
+  override def mirrorDef[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = {
+    e match {
+      case ArrayToSeq(arr) =>
+        ArrayToSeq(f(arr)).asInstanceOf[Def[A]]
+      case _ =>
+        super.mirrorDef(e,f)
+    }
+  }
+}

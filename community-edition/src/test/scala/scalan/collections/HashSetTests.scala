@@ -7,7 +7,6 @@ import scalan._
 class HashSetTests extends BaseTests { suite =>
   trait HashSetSimple extends ScalanDsl with ScalanCommunityDsl {
     lazy val tElem = element[HashSet[Int]]
-    lazy val defaultRep = tElem.defaultRepValue
     lazy val empty = SHashSet.empty[Int]
 
     lazy val t1 = fun { (t: Rep[SHashSet[Int]]) => t }
@@ -37,7 +36,6 @@ class HashSetTests extends BaseTests { suite =>
     }
 
     ctx.test
-    ctx.emit("defaultRep", ctx.defaultRep)
     ctx.emit("empty", ctx.empty)
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
@@ -57,7 +55,6 @@ class HashSetTests extends BaseTests { suite =>
     }
     import ctx._
     ctx.test
-    val d = ctx.defaultRep
 
     {
       val res = ctx.t2((SHashSet.empty[Int], 10))

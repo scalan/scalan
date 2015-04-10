@@ -2,10 +2,11 @@ package scalan.graphs
 package impl
 
 import scala.annotation.unchecked.uncheckedVariance
+import scalan.collections.CollectionsDsl
 import scalan.common.Default
 import scalan.ScalanCommunityDsl
 import scalan.{ScalanSeq, ScalanExp, Scalan}
-import scalan.collections.CollectionsDslExp
+import scalan.Owner
 import scala.reflect.runtime.universe._
 import scala.reflect._
 import scalan.common.Default
@@ -15,15 +16,27 @@ trait EdgesAbs extends Scalan with Edges {
   self: GraphsDsl =>
   // single proxy for each type family
   implicit def proxyEdge[V, E](p: Rep[Edge[V, E]]): Edge[V, E] = {
-    implicit val tag = weakTypeTag[Edge[V, E]]
-    proxyOps[Edge[V, E]](p)(TagImplicits.typeTagToClassTag[Edge[V, E]])
+    proxyOps[Edge[V, E]](p)(classTag[Edge[V, E]])
   }
 
-  abstract class EdgeElem[V, E, From, To <: Edge[V, E]](iso: Iso[From, To])(implicit eV: Elem[V], eE: Elem[E])
-    extends ViewElem[From, To](iso) {
+  class EdgeElem[V, E, To <: Edge[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
+    extends EntityElem[To] {
+    override def isEntityType = true
+    override def tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[Edge[V, E]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertEdge(x.asRep[Edge[V, E]])
-    def convertEdge(x : Rep[Edge[V, E]]): Rep[To]
+    def convertEdge(x : Rep[Edge[V, E]]): Rep[To] = {
+      assert(x.selfType1.isInstanceOf[EdgeElem[_,_,_]])
+      x.asRep[To]
+    }
+    override def getDefaultRep: Rep[To] = ???
   }
+
+  implicit def edgeElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
+    new EdgeElem[V, E, Edge[V, E]]()(eV, eE)
 
   trait EdgeCompanionElem extends CompanionElem[EdgeCompanionAbs]
   implicit lazy val EdgeCompanionElem: EdgeCompanionElem = new EdgeCompanionElem {
@@ -40,9 +53,12 @@ trait EdgesAbs extends Scalan with Edges {
   }
 
   // elem for concrete class
-  class AdjEdgeElem[V, E](iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit val eV: Elem[V], val eE: Elem[E])
-    extends EdgeElem[V, E, AdjEdgeData[V, E], AdjEdge[V, E]](iso) {
-    def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
+  class AdjEdgeElem[V, E](val iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
+    extends EdgeElem[V, E, AdjEdge[V, E]]
+    with ViewElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
+    override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -61,6 +77,8 @@ trait EdgesAbs extends Scalan with Edges {
       AdjEdge(fromId, outIndex, graph)
     }
     lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
       weakTypeTag[AdjEdge[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[AdjEdge[V, E]]](AdjEdge(0, 0, element[Graph[V,E]].defaultRepValue))
@@ -102,9 +120,12 @@ trait EdgesAbs extends Scalan with Edges {
   def unmkAdjEdge[V:Elem, E:Elem](p: Rep[AdjEdge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V,E]])]
 
   // elem for concrete class
-  class IncEdgeElem[V, E](iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit val eV: Elem[V], val eE: Elem[E])
-    extends EdgeElem[V, E, IncEdgeData[V, E], IncEdge[V, E]](iso) {
-    def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
+  class IncEdgeElem[V, E](val iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
+    extends EdgeElem[V, E, IncEdge[V, E]]
+    with ViewElem[IncEdgeData[V, E], IncEdge[V, E]] {
+    override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -112,7 +133,7 @@ trait EdgesAbs extends Scalan with Edges {
 
   // 3) Iso for concrete class
   class IncEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[IncEdgeData[V, E], IncEdge[V, E]]()(element[(Int, (Int,IncidenceGraph[V,E]))].asElem[(Int, (Int, Graph[V,E]))]) {
+    extends Iso[IncEdgeData[V, E], IncEdge[V, E]] {
     override def from(p: Rep[IncEdge[V, E]]) =
       unmkIncEdge(p) match {
         case Some((fromId, toId, graph)) => Pair(fromId, Pair(toId, graph))
@@ -123,9 +144,11 @@ trait EdgesAbs extends Scalan with Edges {
       IncEdge(fromId, toId, graph)
     }
     lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
       weakTypeTag[IncEdge[V, E]]
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[IncEdge[V, E]]](IncEdge(0, 0, element[IncidenceGraph[V,E]].defaultRepValue))
+    lazy val defaultRepTo = Default.defaultVal[Rep[IncEdge[V, E]]](IncEdge(0, 0, element[Graph[V,E]].defaultRepValue))
     lazy val eTo = new IncEdgeElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -407,7 +430,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   object EdgeMethods {
     object graph {
       def unapply(d: Def[_]): Option[Rep[Edge[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _, _]] && method.getName == "graph" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _]] && method.getName == "graph" =>
           Some(receiver).asInstanceOf[Option[Rep[Edge[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -419,7 +442,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
 
     object outIndex {
       def unapply(d: Def[_]): Option[Rep[Edge[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _, _]] && method.getName == "outIndex" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _]] && method.getName == "outIndex" =>
           Some(receiver).asInstanceOf[Option[Rep[Edge[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -431,7 +454,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
 
     object fromId {
       def unapply(d: Def[_]): Option[Rep[Edge[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _, _]] && method.getName == "fromId" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _]] && method.getName == "fromId" =>
           Some(receiver).asInstanceOf[Option[Rep[Edge[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -443,7 +466,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
 
     object toId {
       def unapply(d: Def[_]): Option[Rep[Edge[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _, _]] && method.getName == "toId" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _]] && method.getName == "toId" =>
           Some(receiver).asInstanceOf[Option[Rep[Edge[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -455,7 +478,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
 
     object fromNode {
       def unapply(d: Def[_]): Option[Rep[Edge[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _, _]] && method.getName == "fromNode" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _]] && method.getName == "fromNode" =>
           Some(receiver).asInstanceOf[Option[Rep[Edge[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -467,7 +490,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
 
     object toNode {
       def unapply(d: Def[_]): Option[Rep[Edge[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _, _]] && method.getName == "toNode" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _]] && method.getName == "toNode" =>
           Some(receiver).asInstanceOf[Option[Rep[Edge[V, E]] forSome {type V; type E}]]
         case _ => None
       }
@@ -479,7 +502,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
 
     object value {
       def unapply(d: Def[_]): Option[Rep[Edge[V, E]] forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _, _]] && method.getName == "value" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeElem[_, _, _]] && method.getName == "value" =>
           Some(receiver).asInstanceOf[Option[Rep[Edge[V, E]] forSome {type V; type E}]]
         case _ => None
       }

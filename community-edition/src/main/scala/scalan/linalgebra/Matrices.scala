@@ -60,7 +60,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def numRows: Rep[Int] = rows.length
     def numColumns = rows(0).length
     def columns = Collection(SArray.tabulate(numColumns) { j => DenseVector(rows.map(_(j))) })
-    def rmValues = ???
+    def rmValues: Rep[Collection[T]] = ???
 
     @OverloadId("rows")
     def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
@@ -130,14 +130,15 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       }
     }
 
-    def getTranspositionOfBlocks(blocks: Coll[((Int, Int), (Int, Int))]): Rep[IPairCollection[Int, Int]] = {
-      val res = for { Pair(Pair(top, left), Pair(height, width)) <- blocks } yield {
-        val bcis = blockCellIndices(top, left, height, width)
-        val trans = transposeIndices(bcis)
-        bcis zip trans
-      }
-      res.flatMap(c => c)
-    }
+    // doesn't compile currently
+//    def getTranspositionOfBlocks(blocks: Coll[((Int, Int), (Int, Int))]): Rep[IPairCollection[Int, Int]] = {
+//      val res = for { Pair(Pair(top, left), Pair(height, width)) <- blocks } yield {
+//        val bcis = blockCellIndices(top, left, height, width)
+//        val trans = transposeIndices(bcis)
+//        bcis zip trans
+//      }
+//      res.flatMap(c => c)
+//    }
 
     @OverloadId("block_size")
     def transpose(blockSize: Rep[Int])(implicit n: Numeric[T]): Matrix[T] = transposeNested(this, blockSize)/*{
@@ -199,10 +200,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
                                         (implicit val elem: Elem[T])
     extends AbstractMatrix[T] {
     def companion = RowMajorSparseMatrix
-    def columns = ???
+    def columns: Rep[Collection[AbstractVector[T]]] = ???
     def numRows = rows.length
     //def numColumns = rows(0).length
-    def rmValues = ???
+    def rmValues: Rep[Collection[T]] = ???
 
     @OverloadId("rows")
     def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
@@ -260,8 +261,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
                     (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = {
       RowMajorSparseMatrix(items.map { coll =>
-        val collPair = coll.convertTo[PairCollection[Int, T]]
-        SparseVector(collPair.as, collPair.bs, numColumns)
+        // FIXME: convertTo does nor work
+        //val collPair = coll.convertTo[PairCollection[Int, T]]
+        //SparseVector(collPair.as, collPair.bs, numColumns)
+        SparseVector(coll.as, coll.bs, numColumns)
       }, numColumns)
     }
   }
@@ -294,8 +297,6 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     override def defaultOf[T: Elem] = Default.defaultVal(RowMajorSparseMatrix(element[Collection[AbstractVector[T]]].defaultRepValue, IntElement.defaultRepValue))
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = ???
   }
-
-  implicit def matrixElem[T](implicit e: Elem[T]): Elem[AbstractMatrix[T]] = element[RowMajorNestedMatrix[T]].asElem[AbstractMatrix[T]]
 }
 
 trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommunityDsl =>

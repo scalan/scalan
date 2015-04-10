@@ -42,7 +42,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
     def defaultOf[T: Elem, V:Elem] = AdjEdge.defaultOf[T,V]
     def MaxDoubleEdge =  AdjEdge(element[Int].defaultRepValue, element[Int].defaultRepValue,
       AdjacencyGraph(element[Collection[Unit]].defaultRepValue,
-        NestedCollection(Collection.singleton(Double.MaxValue), Collection.singleton(Pair(0,1))),
+        NestedCollection(Collection.singleton(Double.MaxValue), PairCollection(Collection.singleton(0), Collection.singleton(1))),
         element[NestedCollection[Int]].defaultRepValue)
     )
   }
@@ -59,10 +59,6 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
     def value: Rep[E] = graph.edgeValues.values(indexOfTarget)
   }
 
-  implicit def defaultEdgeElement[V: Elem, E: Elem]: Elem[Edge[V,E]] = {
-    element[AdjEdge[V,E]].asElem[Edge[V,E]]
-  }
-
   trait AdjEdgeCompanion extends ConcreteClass2[Edge] {
     def defaultOf[T: Elem, V:Elem] = Default.defaultVal(AdjEdge(element[Int].defaultRepValue, element[Int].defaultRepValue, element[Graph[T,V]].defaultRepValue))
   }
@@ -71,7 +67,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
                               (implicit val eV: Elem[V], val eE: Elem[E]) extends Edge[V, E] {
     private def indexOfTarget = fromId*graph.vertexNum + toId
     //def toId: Rep[Int] = graph.links.values(indexOfTarget)
-    def outIndex = ???
+    def outIndex: Rep[Int] = ???
 
     def fromNode: Rep[Vertex[V, E]] = SVertex(fromId, graph)
 

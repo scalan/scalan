@@ -21,7 +21,7 @@ class CollectionConverterTests extends BaseTests { suite =>
     lazy val t5 = fun { (in: Rep[SSeq[Int]]) => CollectionOnSeq(in).convertTo[BaseCollection[Int]].toData }
     lazy val t6 = fun { (in: Rep[Array[(Int,Int)]]) =>
       val in0 = BaseCollection(in)
-      val in1: Rep[IPairCollection[Int,Int]] = in0.map(i => (i._1 + i._2, i._2) )
+      val in1 = in0.map(i => (i._1 + i._2, i._2) )
       (in1.arr)
     }
   }

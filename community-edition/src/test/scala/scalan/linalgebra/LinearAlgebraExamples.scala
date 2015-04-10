@@ -13,6 +13,13 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     (matrix * vector).items.arr
   }
 
+  lazy val ddmvmList = fun { p: Rep[(List[Array[Double]], Array[Double])] =>
+    val Pair(m, v) = p
+    val matrix: Matrix[Double] = RowMajorDirectMatrix(ListCollection(m.mapBy( fun { r: Arr[Double] => DenseVector(Collection(r)) })))
+    val vector: Vector[Double] = DenseVector(Collection(v))
+    (matrix * vector).items.arr
+  }
+
   lazy val dsmvm = fun { p: Rep[(Array[Array[Double]], (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
     val matrix: Matrix[Double] = RowMajorDirectMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }))
@@ -123,5 +130,43 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     val matrix1 = RowMajorNestedMatrix(Collection(m1._1), m1._2)
     val matrix2 = RowMajorNestedMatrix(Collection(m2._1), m2._2)
     (matrix1 * matrix2).rows.arr.map(_.items.arr)
+  }
+
+  lazy val dotWithAbstractElem = fun { in: Rep[(Int, Array[(Int, Double)])] =>
+    def RandomMatrix(numRows: IntRep, numColumns: IntRep): Matrix[Double] = {
+      val n = numRows * numColumns
+      val coll = Collection.replicate(n, 0.0)
+      RowMajorNestedMatrix(coll, numColumns)
+    }
+
+    val Tuple(width, arrFlat) = in
+    val nUsers = arrFlat.length
+    val mP = RandomMatrix(nUsers, width)
+    val rowsColl = mP.rows
+    val coll = (rowsColl zip rowsColl).map {
+      case Tuple(vR, vP) =>
+        val abstractVectorElem = vP.selfType1
+        assert(abstractVectorElem.getClass == classOf[AbstractVectorElem[_, _]])
+        // dot is implemented with a pattern match, remove or change this test if this changes
+        val mQReduced = rowsColl map { row => row dot vP }
+        mQReduced
+    }
+    coll.arr.map(_.arr)
+  }
+
+  lazy val funSimpleSum = fun { in: Rep[(Array[Array[Int]], Array[Int])] =>
+    val Tuple(nestedArr, vecArr) = in
+    val rows = Collection( nestedArr.map( arr => DenseVector(Collection(arr))))
+    val dv = DenseVector(Collection(vecArr))
+
+    val newRows =  rows.map { v =>
+      val resV = IF(v.length === dv.length) THEN {
+        dv +^ v
+      } ELSE {
+        v
+      }
+      resV //.convertTo[DenseVector[Int]]
+    }
+    newRows.flatMap { v => v.items}.arr
   }
 }

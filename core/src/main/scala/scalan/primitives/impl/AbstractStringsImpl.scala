@@ -12,15 +12,25 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
   self: AbstractStringsDsl =>
   // single proxy for each type family
   implicit def proxyAString(p: Rep[AString]): AString = {
-    implicit val tag = weakTypeTag[AString]
-    proxyOps[AString](p)(TagImplicits.typeTagToClassTag[AString])
+    proxyOps[AString](p)(classTag[AString])
   }
 
-  abstract class AStringElem[From, To <: AString](iso: Iso[From, To])
-    extends ViewElem[From, To](iso) {
+  class AStringElem[To <: AString]
+    extends EntityElem[To] {
+    override def isEntityType = true
+    override def tag = {
+      weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertAString(x.asRep[AString])
-    def convertAString(x : Rep[AString]): Rep[To]
+    def convertAString(x : Rep[AString]): Rep[To] = {
+      assert(x.selfType1.isInstanceOf[AStringElem[_]])
+      x.asRep[To]
+    }
+    override def getDefaultRep: Rep[To] = ???
   }
+
+  implicit def aStringElement =
+    new AStringElem[AString]()
 
   trait AStringCompanionElem extends CompanionElem[AStringCompanionAbs]
   implicit lazy val AStringCompanionElem: AStringCompanionElem = new AStringCompanionElem {
@@ -37,9 +47,12 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
   }
 
   // elem for concrete class
-  class SStringElem(iso: Iso[SStringData, SString])
-    extends AStringElem[SStringData, SString](iso) {
-    def convertAString(x: Rep[AString]) = SString(x.wrappedValueOfBaseType)
+  class SStringElem(val iso: Iso[SStringData, SString])
+    extends AStringElem[SString]
+    with ViewElem[SStringData, SString] {
+    override def convertAString(x: Rep[AString]) = SString(x.wrappedValueOfBaseType)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -98,9 +111,12 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
   def unmkSString(p: Rep[SString]): Option[(Rep[String])]
 
   // elem for concrete class
-  class CStringElem(iso: Iso[CStringData, CString])
-    extends AStringElem[CStringData, CString](iso) {
-    def convertAString(x: Rep[AString]) = CString(x.wrappedValueOfBaseType)
+  class CStringElem(val iso: Iso[CStringData, CString])
+    extends AStringElem[CString]
+    with ViewElem[CStringData, CString] {
+    override def convertAString(x: Rep[AString]) = CString(x.wrappedValueOfBaseType)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -262,7 +278,7 @@ trait AbstractStringsExp extends AbstractStringsDsl with ScalanExp {
   object AStringMethods {
     object wrappedValueOfBaseType {
       def unapply(d: Def[_]): Option[Rep[AString]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AStringElem[_, _]] && method.getName == "wrappedValueOfBaseType" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AStringElem[_]] && method.getName == "wrappedValueOfBaseType" =>
           Some(receiver).asInstanceOf[Option[Rep[AString]]]
         case _ => None
       }

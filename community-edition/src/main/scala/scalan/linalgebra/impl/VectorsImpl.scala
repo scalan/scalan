@@ -13,15 +13,26 @@ trait VectorsAbs extends Scalan with Vectors {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyAbstractVector[T](p: Rep[AbstractVector[T]]): AbstractVector[T] = {
-    implicit val tag = weakTypeTag[AbstractVector[T]]
-    proxyOps[AbstractVector[T]](p)(TagImplicits.typeTagToClassTag[AbstractVector[T]])
+    proxyOps[AbstractVector[T]](p)(classTag[AbstractVector[T]])
   }
 
-  abstract class AbstractVectorElem[T, From, To <: AbstractVector[T]](iso: Iso[From, To])(implicit elem: Elem[T])
-    extends ViewElem[From, To](iso) {
+  class AbstractVectorElem[T, To <: AbstractVector[T]](implicit val elem: Elem[T])
+    extends EntityElem[To] {
+    override def isEntityType = true
+    override def tag = {
+      implicit val tagT = elem.tag
+      weakTypeTag[AbstractVector[T]].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertAbstractVector(x.asRep[AbstractVector[T]])
-    def convertAbstractVector(x : Rep[AbstractVector[T]]): Rep[To]
+    def convertAbstractVector(x : Rep[AbstractVector[T]]): Rep[To] = {
+      assert(x.selfType1.isInstanceOf[AbstractVectorElem[_,_]])
+      x.asRep[To]
+    }
+    override def getDefaultRep: Rep[To] = ???
   }
+
+  implicit def abstractVectorElement[T](implicit elem: Elem[T]) =
+    new AbstractVectorElem[T, AbstractVector[T]]()(elem)
 
   trait AbstractVectorCompanionElem extends CompanionElem[AbstractVectorCompanionAbs]
   implicit lazy val AbstractVectorCompanionElem: AbstractVectorCompanionElem = new AbstractVectorCompanionElem {
@@ -38,9 +49,12 @@ trait VectorsAbs extends Scalan with Vectors {
   }
 
   // elem for concrete class
-  class DenseVectorElem[T](iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit val elem: Elem[T])
-    extends AbstractVectorElem[T, DenseVectorData[T], DenseVector[T]](iso) {
-    def convertAbstractVector(x: Rep[AbstractVector[T]]) = DenseVector(x.items)
+  class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit elem: Elem[T])
+    extends AbstractVectorElem[T, DenseVector[T]]
+    with ViewElem[DenseVectorData[T], DenseVector[T]] {
+    override def convertAbstractVector(x: Rep[AbstractVector[T]]) = DenseVector(x.items)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -59,6 +73,7 @@ trait VectorsAbs extends Scalan with Vectors {
       DenseVector(items)
     }
     lazy val tag = {
+      implicit val tagT = elem.tag
       weakTypeTag[DenseVector[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[DenseVector[T]]](DenseVector(element[Collection[T]].defaultRepValue))
@@ -99,9 +114,12 @@ trait VectorsAbs extends Scalan with Vectors {
   def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]): Option[(Rep[Collection[T]])]
 
   // elem for concrete class
-  class SparseVectorElem[T](iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit val elem: Elem[T])
-    extends AbstractVectorElem[T, SparseVectorData[T], SparseVector[T]](iso) {
-    def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
+  class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit elem: Elem[T])
+    extends AbstractVectorElem[T, SparseVector[T]]
+    with ViewElem[SparseVectorData[T], SparseVector[T]] {
+    override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -120,6 +138,7 @@ trait VectorsAbs extends Scalan with Vectors {
       SparseVector(nonZeroIndices, nonZeroValues, length)
     }
     lazy val tag = {
+      implicit val tagT = elem.tag
       weakTypeTag[SparseVector[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector[T]]](SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, 0))
@@ -644,7 +663,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   object AbstractVectorMethods {
     object length {
       def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "length" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
         case _ => None
       }
@@ -656,7 +675,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object items {
       def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "items" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "items" =>
           Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
         case _ => None
       }
@@ -668,7 +687,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object nonZeroIndices {
       def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "nonZeroIndices" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "nonZeroIndices" =>
           Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
         case _ => None
       }
@@ -680,7 +699,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object nonZeroValues {
       def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "nonZeroValues" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "nonZeroValues" =>
           Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
         case _ => None
       }
@@ -692,7 +711,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object nonZeroItems {
       def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "nonZeroItems" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "nonZeroItems" =>
           Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
         case _ => None
       }
@@ -704,7 +723,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object zeroValue {
       def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "zeroValue" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "zeroValue" =>
           Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
         case _ => None
       }
@@ -716,7 +735,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "apply" =>
           Some((receiver, i)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[Int]) forSome {type T}]]
         case _ => None
       }
@@ -728,7 +747,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object +^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$plus$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$plus$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -740,7 +759,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object elementwise_sum_collection_+^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$plus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_sum_collection" } =>
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$plus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_sum_collection" } =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -752,7 +771,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object elementwise_sum_value_+^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$plus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_sum_value" } =>
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$plus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_sum_value" } =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -764,7 +783,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object -^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$minus$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$minus$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -776,7 +795,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object elementwise_diff_collection_-^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$minus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_diff_collection" } =>
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$minus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_diff_collection" } =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -788,7 +807,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object elementwise_diff_value_-^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$minus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_diff_value" } =>
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$minus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_diff_value" } =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -800,7 +819,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object *^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$times$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$times$up"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -812,7 +831,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object elementwise_mult_collection_*^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$times$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_mult_collection" } =>
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$times$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_mult_collection" } =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Coll[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -824,7 +843,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object elementwise_mult_value_*^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$times$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_mult_value" } =>
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$times$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_mult_value" } =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -836,7 +855,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object /^ {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T], Fractional[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, f, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$div$up" =>
+        case MethodCall(receiver, method, Seq(other, f, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$div$up" =>
           Some((receiver, other, f)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T], Fractional[T]) forSome {type T}]]
         case _ => None
       }
@@ -848,7 +867,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object * {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(mat, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "$times" =>
+        case MethodCall(receiver, method, Seq(mat, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$times" =>
           Some((receiver, mat, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -860,7 +879,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object euclideanNorm {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(num, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "euclideanNorm" =>
+        case MethodCall(receiver, method, Seq(num, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "euclideanNorm" =>
           Some((receiver, num)).asInstanceOf[Option[(Rep[AbstractVector[T]], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -872,7 +891,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object reduce {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], RepMonoid[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "reduce" =>
+        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "reduce" =>
           Some((receiver, m)).asInstanceOf[Option[(Rep[AbstractVector[T]], RepMonoid[T]) forSome {type T}]]
         case _ => None
       }
@@ -884,7 +903,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object dot {
       def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "dot" =>
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "dot" =>
           Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Vector[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -896,7 +915,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
     object nonZeroesLength {
       def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _, _]] && method.getName == "nonZeroesLength" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "nonZeroesLength" =>
           Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
         case _ => None
       }

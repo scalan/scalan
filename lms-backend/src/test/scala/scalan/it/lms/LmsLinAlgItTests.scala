@@ -1,6 +1,7 @@
 package scalan.it.lms
 
 import scalan.ScalanCtxExp
+import scalan.util.FileUtil._
 import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq}
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
@@ -28,6 +29,14 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     val in = Pair(inM, inV)
     val out = Array(5.0, 3.0)
     compareOutputWithSequential(progStaged)(progSeq.ddmvm, progStaged.ddmvm, "ddmvm", in)
+  }
+
+  test("ddmvmList") {
+    val inM = List(Array(1.0, 1.0), Array(0.0, 1.0))
+    val inV = Array(2.0, 3.0)
+    val in = Pair(inM, inV)
+    val out = Array(5.0, 3.0)
+    compareOutputWithSequential(progStaged)(progSeq.ddmvmList, progStaged.ddmvmList, "ddmvmList", in)
   }
 
   test("dsmvm") {
@@ -146,4 +155,40 @@ class LmsMmmItTests extends LmsLinAlgItTests {
     val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
     compareOutputWithSequential(progStaged)(progSeq.ffmmm, progStaged.ffmmm, "ffmmm", in)
   }
+}
+
+class AbstractElemItTests extends LmsLinAlgItTests {
+  import progSeq._
+
+  lazy val jArrTrain2x2 = Array(Array((0, 5.0), (1, 3.0)), Array((1, 4.0)))
+  lazy val jArrTest2x2 = Array(Array((0, 5.0), (1, 3.0)), Array((0, 3.0), (1, 4.0)))
+
+  def getNArrayWithSegmentsFromJaggedArray(jaggedArray: Array[Array[(Int, Double)]]) = {
+    val arr = jaggedArray.flatMap(v => v)
+    val lens = jaggedArray.map(i => i.length)
+    val offs = lens.scanLeft(0)((x, y) => x + y).take(lens.length)
+    (arr, offs zip lens)
+  }
+
+  test("pattern matching vectors with abstract elem works") {
+    val arrTrain = Array((0, 5.0), (1, 3.0), (1, 4.0))
+    lazy val width = 5
+
+    val in = Tuple(width, arrTrain)
+    getStagedOutput(progStaged)(progStaged.dotWithAbstractElem, "patternMatchAbstract", in)
+  }
+
+  test("elems divergence in if_then_else branches") {
+    val matrix = Array(Array(0, 5), Array(1, 3), Array(1, 4))
+    val vector = Array(1,2)
+
+    val progStaged = new ProgExp
+    val in = Tuple(matrix, vector)
+    // Different branches of if_then_else operator unexpectedly produce different elems.
+    // This causes Sums and SumViews to appear.
+    // Produced code could not be executed. The test only build final graph.
+    // Bad behavior remains (with a different graph) if DenseVector.+^ is changed to return DenseVector
+    progStaged.buildGraph(file(prefix, "simpleSum"), "simpleSum", progStaged.funSimpleSum, graphVizConfig)(progStaged.defaultCompilerConfig)
+  }
+
 }

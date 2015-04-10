@@ -66,7 +66,6 @@ class LmsMstPrimeItTests extends LmsMstItTests {
   )
 
   test("MST_adjList") {
-
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
@@ -78,8 +77,8 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     progStagedCxx.buildExecutable(dir,dir,"MST_adjList", progStagedCxx.MST_adjlist, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
     println(res.mkString(" , "))
   }
-  test("MSF_adjList") {
 
+  test("MSF_adjList") {
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
@@ -140,7 +139,6 @@ class LmsMstPrimeItTests extends LmsMstItTests {
   }
 
   test("MSF_adjMatrixMap") {
-    pending
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
       val row = in._1
@@ -169,7 +167,6 @@ class LmsMstPrimeItTests extends LmsMstItTests {
 //    progStagedCxx.buildExecutable(dir,dir,"MST_adjlistMap", progStagedCxx.MST_adjlistMap, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
   }
   test("MST_adjMatrixMap") {
-    pending
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
       val row = in._1
@@ -186,7 +183,6 @@ class LmsMstPrimeItTests extends LmsMstItTests {
   }
 
   test("MSF_adjListList") {
-//    pending
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
@@ -201,7 +197,6 @@ class LmsMstPrimeItTests extends LmsMstItTests {
   }
 
   test("MSF_adjMatrixList") {
-//    pending
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
       val row = in._1
@@ -220,7 +215,6 @@ class LmsMstPrimeItTests extends LmsMstItTests {
   }
 
   test("MST_adjMatrixList") {
-    pending
     val vertexNum = graph.length
     val incMatrix = (graph zip graphValues).flatMap({ in =>
       val row = in._1

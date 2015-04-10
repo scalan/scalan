@@ -12,6 +12,11 @@ class ConverterTests extends BaseTests { suite =>
     lazy val t4 = fun { (in: Rep[SliceData]) => Slice(in).convertTo[Interval].toData }
     lazy val t5 = fun { (in: Rep[CenteredData]) => Centered(in).convertTo[Interval].toData }
     lazy val t6 = fun { (in: Rep[IntervalData]) => Interval(in).convertTo[Centered].toData }
+
+//    lazy val t7 = fun { (in: Rep[(Interval,Int)]) =>
+//      val Pair(i, n) = in
+//      Pair(i, n).convertTo[(Slice, Int)]  //TODO relax <: Reifiable[_] constraint
+//    }
   }
 
   class ConvProgStaged(testName: String) extends TestContext(this, testName) with  ConvProg with SegmentsDslExp {
@@ -19,8 +24,8 @@ class ConverterTests extends BaseTests { suite =>
   class ConvProgSeq(testName: String) extends ScalanCtxSeq with  ConvProg with SegmentsDslSeq {
   }
 
-  test("convert") {
-    val ctx = new ConvProgStaged("start")
+  test("simple converter tests") {
+    val ctx = new ConvProgStaged("simple converter tests")
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
     ctx.emit("t3", ctx.t3)
