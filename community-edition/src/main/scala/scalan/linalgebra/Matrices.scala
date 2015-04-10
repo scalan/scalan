@@ -279,11 +279,13 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
         SparseVector(coll.as, coll.bs, numColumns)
       }, numColumns)
     }
+    def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = RowMajorSparseMatrix.fromRows(rows, length)
   }
 
   trait RowMajorDirectMatrixCompanion extends ConcreteClass1[RowMajorDirectMatrix] with AbstractMatrixCompanion {
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Rep[AbstractMatrix[T]] =
       RowMajorDirectMatrix(Collection(SArray.tabulate(cols(0).length) { i => DenseVector(cols.map(_(i))) }))
+    override def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = ???
   }
 
   trait RowMajorNestedMatrixCompanion extends ConcreteClass1[RowMajorNestedMatrix] with AbstractMatrixCompanion {
@@ -296,13 +298,16 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       }
       RowMajorNestedMatrix(rmValues, numColumns)
     }
-    def fromRows[T: Elem](rows: Coll[AbstractVector[T]]): Matrix[T] = {
-      RowMajorNestedMatrix(rows.flatMap(v => v.convertTo[DenseVector[T]].items), rows(0).length)
+    override def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = {
+      RowMajorNestedMatrix(rows.flatMap(v => v.convertTo[DenseVector[T]].items), length)
     }
   }
 
   trait RowMajorSparseMatrixCompanion extends ConcreteClass1[RowMajorSparseMatrix] with AbstractMatrixCompanion {
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = ???
+    override def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = {
+      RowMajorSparseMatrix(rows, length)
+    }
   }
 }
 

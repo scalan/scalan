@@ -502,6 +502,18 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object fromRows {
+      def unapply(d: Def[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(rows, length, _*), _) if receiver.elem.isInstanceOf[RowMajorDirectMatrixCompanionElem] && method.getName == "fromRows" =>
+          Some((rows, length)).asInstanceOf[Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   def mkRowMajorDirectMatrix[T]
@@ -759,12 +771,12 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     }
 
     object fromRows {
-      def unapply(d: Def[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(rows, _*), _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixCompanionElem] && method.getName == "fromRows" =>
-          Some(rows).asInstanceOf[Option[Coll[AbstractVector[T]] forSome {type T}]]
+      def unapply(d: Def[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(rows, length, _*), _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixCompanionElem] && method.getName == "fromRows" =>
+          Some((rows, length)).asInstanceOf[Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -948,6 +960,18 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromRows {
+      def unapply(d: Def[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(rows, length, _*), _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixCompanionElem] && method.getName == "fromRows" =>
+          Some((rows, length)).asInstanceOf[Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1202,6 +1226,18 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(NColl[(Int, T)], Rep[Int], Elem[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromRows {
+      def unapply(d: Def[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(rows, length, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixCompanionElem] && method.getName == "fromRows" =>
+          Some((rows, length)).asInstanceOf[Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Coll[AbstractVector[T]], IntRep) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
