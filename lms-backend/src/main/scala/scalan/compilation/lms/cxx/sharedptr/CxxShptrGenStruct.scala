@@ -31,7 +31,7 @@ trait CxxShptrGenStruct  extends CxxShptrCodegen with BaseGenStruct {
   }
 
   override def remap[A](m: Manifest[A]) = m match {
-    case s if s <:< manifest[Record] => structName(m)
+    case s if s <::< manifest[Record] => structName(m)
     case _ => super.remap(m)
   }
 
