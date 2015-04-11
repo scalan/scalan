@@ -15,7 +15,19 @@ trait Views extends Elems { self: Scalan =>
   abstract class EntityElem[A] extends Elem[A] with Convertable[A] {
   }
   abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
-    extends Elem[To] with Convertable[To] {
+    extends EntityElem[To] {
+  }
+
+  type Conv[From,To] = Converter[From,To]
+  abstract class Converter[From,To](implicit eFrom0: Elem[From]) {
+    def eFrom: Elem[From] = eFrom0
+    def eTo: Elem[To]
+    def apply(x: Rep[From]): Rep[To]
+    override def toString = s"${eFrom.name} --> ${eTo.name}"
+    override def equals(other: Any) = other match {
+      case c: Converter[_, _] => eFrom == c.eFrom && eTo == c.eTo
+      case _ => false
+    }
   }
 
   // eFrom0 is used to avoid making eFrom implicit in subtypes
@@ -80,93 +92,112 @@ trait Views extends Elems { self: Scalan =>
   trait ConcreteClass3[T[_, _, _]]
   trait ConcreteClass4[T[_, _, _, _]]
 
-  def identityIso[A](implicit elem: Elem[A]): Iso[A, A] =
-    new Iso[A, A] {
-      def eTo = elem
-      def tag = elem.tag
-      lazy val defaultRepTo = Default.defaultVal(elem.defaultRepValue)
-      def from(x: Rep[A]) = x
-      def to(x: Rep[A]) = x
-    }
+  case class IdentityIso[A](eTo: Elem[A]) extends Iso[A, A]()(eTo) {
+    def tag = eTo.tag
+    lazy val defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
+    def from(x: Rep[A]) = x
+    def to(x: Rep[A]) = x
+  }
+  def identityIso[A](implicit elem: Elem[A]): Iso[A, A] = IdentityIso[A](elem)
 
-  def pairIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[(A1, A2), (B1, B2)] = {
+  case class PairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
+    extends Iso[(A1, A2), (B1, B2)]()(pairElement(iso1.eFrom, iso2.eFrom)) {
     implicit val eA1 = iso1.eFrom
     implicit val eA2 = iso2.eFrom
     implicit val eB1 = iso1.eTo
     implicit val eB2 = iso2.eTo
     val eBB = element[(B1, B2)]
-    new Iso[(A1, A2), (B1, B2)] {
-      def eTo = eBB
-      var fromCacheKey:Option[Rep[(B1,B2)]] = None
-      var fromCacheValue:Option[Rep[(A1,A2)]] = None
-      var toCacheKey:Option[Rep[(A1,A2)]] = None
-      var toCacheValue:Option[Rep[(B1,B2)]] = None
 
-      def from(b: Rep[(B1, B2)]) = {
-        if (fromCacheKey.isEmpty || b != fromCacheKey.get) {
-          fromCacheKey = Some(b)
-          fromCacheValue = Some((iso1.from(b._1), iso2.from(b._2)))
-        }
-        fromCacheValue.get
+    def eTo = eBB
+    var fromCacheKey:Option[Rep[(B1,B2)]] = None
+    var fromCacheValue:Option[Rep[(A1,A2)]] = None
+    var toCacheKey:Option[Rep[(A1,A2)]] = None
+    var toCacheValue:Option[Rep[(B1,B2)]] = None
+
+    def from(b: Rep[(B1, B2)]) = {
+      if (fromCacheKey.isEmpty || b != fromCacheKey.get) {
+        fromCacheKey = Some(b)
+        fromCacheValue = Some((iso1.from(b._1), iso2.from(b._2)))
       }
-      def to(a: Rep[(A1, A2)]) = {
-        if (toCacheKey.isEmpty || a != toCacheKey.get) {
-          toCacheKey = Some(a)
-          toCacheValue = Some((iso1.to(a._1), iso2.to(a._2)))
-        }
-        toCacheValue.get
-      }
-      def tag = eBB.tag
-      lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
+      fromCacheValue.get
     }
+    def to(a: Rep[(A1, A2)]) = {
+      if (toCacheKey.isEmpty || a != toCacheKey.get) {
+        toCacheKey = Some(a)
+        toCacheValue = Some((iso1.to(a._1), iso2.to(a._2)))
+      }
+      toCacheValue.get
+    }
+    def tag = eBB.tag
+    lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
   }
+  def pairIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[(A1, A2), (B1, B2)] = PairIso(iso1, iso2)
 
-  def sumIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[A1 | A2, B1 | B2] = {
+  case class SumIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
+    extends Iso[A1 | A2, B1 | B2]()(sumElement(iso1.eFrom, iso2.eFrom)) {
     implicit val eA1 = iso1.eFrom
     implicit val eA2 = iso2.eFrom
     implicit val eB1 = iso1.eTo
     implicit val eB2 = iso2.eTo
     val eBB = element[B1 | B2]
-    new Iso[A1 | A2, B1 | B2] {
-      def eTo = eBB
-      def from(b: Rep[B1 | B2]) =
-        b.fold(b1 => toLeftSum(iso1.from(b1))(eA2),
-               b2 => toRightSum(iso2.from(b2))(eA1))
-      def to(a: Rep[A1 | A2]) =
-        a.fold(a1 => toLeftSum(iso1.to(a1))(eB2),
-               a2 => toRightSum(iso2.to(a2))(eB1))
-      def tag = eBB.tag
-      lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
-    }
+    def eTo = eBB
+    def from(b: Rep[B1 | B2]) =
+      b.fold(b1 => toLeftSum(iso1.from(b1))(eA2),
+        b2 => toRightSum(iso2.from(b2))(eA1))
+    def to(a: Rep[A1 | A2]) =
+      a.fold(a1 => toLeftSum(iso1.to(a1))(eB2),
+        a2 => toRightSum(iso2.to(a2))(eB1))
+    def tag = eBB.tag
+    lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
+  }
+  def sumIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[A1 | A2, B1 | B2] = SumIso(iso1, iso2)
+
+  case class ComposeIso[A,B,C](iso2: Iso[B, C], iso1: Iso[A, B]) extends Iso[A, C]()(iso1.eFrom) {
+    def eTo = iso2.eTo
+    def from(c: Rep[C]) = iso1.from(iso2.from(c))
+    def to(a: Rep[A]) = iso2.to(iso1.to(a))
+    def tag = iso2.tag
+    def defaultRepTo = iso2.defaultRepTo
   }
 
-  def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = {
-    new Iso[A, C]()(iso1.eFrom) {
-      def eTo = iso2.eTo
-      def from(c: Rep[C]) = iso1.from(iso2.from(c))
-      def to(a: Rep[A]) = iso2.to(iso1.to(a))
-      def tag = iso2.tag
-      def defaultRepTo = iso2.defaultRepTo
-    }
-  }
+  def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = ComposeIso(iso2, iso1)
 
-  def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] = {
+  case class FuncIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D])
+    extends Iso[A => C, B => D]()(funcElement(iso1.eFrom, iso2.eFrom)) {
     implicit val eA = iso1.eFrom
     implicit val eB = iso1.eTo
     implicit val eC = iso2.eFrom
     implicit val eD = iso2.eTo
-    new Iso[A => C, B => D] {
-      lazy val eTo = funcElement(eB, eD)
-      def from(f: Rep[B => D]): Rep[A => C] = {
-        fun { b => iso2.from(f(iso1.to(b))) }
-      }
-      def to(f: Rep[A => C]): Rep[B => D] = {
-        fun { a => iso2.to(f(iso1.from(a))) }
-      }
-      def tag = eTo.tag
-      lazy val defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
+    lazy val eTo = funcElement(eB, eD)
+    def from(f: Rep[B => D]): Rep[A => C] = {
+      fun { b => iso2.from(f(iso1.to(b))) }
     }
+    def to(f: Rep[A => C]): Rep[B => D] = {
+      fun { a => iso2.to(f(iso1.from(a))) }
+    }
+    def tag = eTo.tag
+    lazy val defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
   }
+  def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] = FuncIso(iso1, iso2)
+
+  case class ConvertBeforeIso[A, B, C](convTo: Conv[A,B], convFrom: Conv[B,A], iso: Iso[B,C])
+    extends Iso[A,C]()(convTo.eFrom) {
+    def eTo = iso.eTo
+    def tag = eTo.tag
+    def to(a: Rep[A]) = iso.to(convTo(a))
+    def from(c: Rep[C]) = convFrom(iso.from(c))
+    def defaultRepTo = iso.defaultRepTo
+  }
+  def convertBeforeIso[A, B, C](convTo: Conv[A,B], convFrom: Conv[B,A], iso: Iso[B,C]): Iso[A, C] = ConvertBeforeIso(convTo, convFrom, iso)
+
+  case class ConvertAfterIso[A,B,C](iso: Iso[A,B], convTo: Conv[B,C], convFrom: Conv[C,B]) extends Iso[A,C]()(iso.eFrom) {
+    def eTo = convTo.eTo
+    def to(a: Rep[A]) = convTo(iso.to(a))
+    def from(c: Rep[C]) = iso.from(convFrom(c))
+    def tag = eTo.tag
+    def defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
+  }
+  def convertAfterIso[A,B,C](iso: Iso[A,B], convTo: Conv[B,C], convFrom: Conv[C,B]): Iso[A, C] = ConvertAfterIso(iso, convTo, convFrom)
 
   implicit class RepReifiableViewOps[T <: Reifiable[_]](x: Rep[T]) {
     def convertTo[R <: Reifiable[_]: Elem]: Rep[R] = repReifiable_convertTo[T,R](x)
@@ -320,11 +351,6 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       view.iso1.to(source._1)
     case Second(Def(view@PairView(source))) =>
       view.iso2.to(source._2)
-
-    case l @ Left(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
-      SumView(toLeftSum(a.asRep[a1])(l.eRight))(iso, identityIso(l.eRight)).self
-    case r @ Right(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
-      SumView(toRightSum(a.asRep[a1])(r.eLeft))(identityIso(r.eLeft), iso).self
 
     // case UnpackableDef(Def(uv @ UnpackView(view)), iso) if iso.eTo == view.iso.eTo => view
     case UnpackView(Def(UnpackableDef(source, iso))) => source

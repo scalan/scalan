@@ -114,13 +114,18 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     case Second(Def(foldD: SumFold[a,b,(r1,T)]@unchecked)) =>
       foldD.sum.fold(a => foldD.left(a)._2, b => foldD.right(b)._2)(d.selfType)
 
+    case l @ Left(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
+      SumView(toLeftSum(a.asRep[a1])(l.eRight))(iso, identityIso(l.eRight)).self
+    case r @ Right(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
+      SumView(toRightSum(a.asRep[a1])(r.eLeft))(identityIso(r.eLeft), iso).self
+
     case foldD: SumFold[a,b,T] => foldD.sum match {
       // this rule is only applied when result of fold is base type.
       // Otherwise it yields stack overflow as this rule is mutually recursive with lifting Views over IfThenElse
       case Def(IfThenElse(p, thenp: Rep[Either[_, _]] @unchecked, elsep: Rep[Either[_, _]] @unchecked)) if !d.selfType.isEntityType =>
         __ifThenElse[T](p, SumFold(thenp, foldD.left, foldD.right)(foldD.selfType), SumFold(elsep, foldD.left, foldD.right)(foldD.selfType))
 
-      case Def(view: SumView[a1,a2,b1,b2]) if !d.selfType.isEntityType =>
+      case Def(view: SumView[a1,a2,b1,b2]) /*if !d.selfType.isEntityType*/ =>
         view.source.fold(x => foldD.left.asRep[b1 => T](view.iso1.to(x)), y => foldD.right.asRep[b2 => T](view.iso2.to(y)))(d.selfType)
 
       case Def(join @ IsJoinSum(sum)) =>
