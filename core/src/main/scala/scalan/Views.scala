@@ -384,7 +384,11 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     case call @ MethodCall(Def(obj), m, args, neverInvoke) =>
       call.tryInvoke match {
         case InvokeSuccess(res) => res
-        case InvokeFailure(_) => super.rewriteDef(d)
+        case InvokeFailure(e) =>
+          if (e.isInstanceOf[DelayInvokeException])
+            super.rewriteDef(d)
+          else
+            !!!(s"Failed to invoke $call", e)
         case InvokeImpossible =>
           implicit val resultElem: Elem[T] = d.selfType
           // asRep[T] cast below should be safe
