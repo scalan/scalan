@@ -64,10 +64,7 @@ trait VectorsAbs extends Scalan with Vectors {
   class DenseVectorIso[T](implicit elem: Elem[T])
     extends Iso[DenseVectorData[T], DenseVector[T]] {
     override def from(p: Rep[DenseVector[T]]) =
-      unmkDenseVector(p) match {
-        case Some((items)) => items
-        case None => !!!
-      }
+      p.items
     override def to(p: Rep[Collection[T]]) = {
       val items = p
       DenseVector(items)
@@ -85,9 +82,11 @@ trait VectorsAbs extends Scalan with Vectors {
 
     def apply[T](items: Rep[Collection[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
       mkDenseVector(items)
-    def unapply[T:Elem](p: Rep[DenseVector[T]]) = unmkDenseVector(p)
   }
-  def DenseVector: Rep[DenseVectorCompanionAbs]
+  object DenseVectorMatcher {
+    def unapply[T:Elem](p: Rep[AbstractVector[T]]) = unmkDenseVector(p)
+  }
+  val DenseVector: Rep[DenseVectorCompanionAbs]
   implicit def proxyDenseVectorCompanion(p: Rep[DenseVectorCompanionAbs]): DenseVectorCompanionAbs = {
     proxyOps[DenseVectorCompanionAbs](p)
   }
@@ -111,7 +110,7 @@ trait VectorsAbs extends Scalan with Vectors {
 
   // 6) smart constructor and deconstructor
   def mkDenseVector[T](items: Rep[Collection[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]]
-  def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]): Option[(Rep[Collection[T]])]
+  def unmkDenseVector[T:Elem](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[T]])]
 
   // elem for concrete class
   class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit elem: Elem[T])
@@ -129,10 +128,7 @@ trait VectorsAbs extends Scalan with Vectors {
   class SparseVectorIso[T](implicit elem: Elem[T])
     extends Iso[SparseVectorData[T], SparseVector[T]] {
     override def from(p: Rep[SparseVector[T]]) =
-      unmkSparseVector(p) match {
-        case Some((nonZeroIndices, nonZeroValues, length)) => Pair(nonZeroIndices, Pair(nonZeroValues, length))
-        case None => !!!
-      }
+      (p.nonZeroIndices, p.nonZeroValues, p.length)
     override def to(p: Rep[(Collection[Int], (Collection[T], Int))]) = {
       val Pair(nonZeroIndices, Pair(nonZeroValues, length)) = p
       SparseVector(nonZeroIndices, nonZeroValues, length)
@@ -151,9 +147,11 @@ trait VectorsAbs extends Scalan with Vectors {
       isoSparseVector(elem).to(p)
     def apply[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
       mkSparseVector(nonZeroIndices, nonZeroValues, length)
-    def unapply[T:Elem](p: Rep[SparseVector[T]]) = unmkSparseVector(p)
   }
-  def SparseVector: Rep[SparseVectorCompanionAbs]
+  object SparseVectorMatcher {
+    def unapply[T:Elem](p: Rep[AbstractVector[T]]) = unmkSparseVector(p)
+  }
+  val SparseVector: Rep[SparseVectorCompanionAbs]
   implicit def proxySparseVectorCompanion(p: Rep[SparseVectorCompanionAbs]): SparseVectorCompanionAbs = {
     proxyOps[SparseVectorCompanionAbs](p)
   }
@@ -177,7 +175,7 @@ trait VectorsAbs extends Scalan with Vectors {
 
   // 6) smart constructor and deconstructor
   def mkSparseVector[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]]
-  def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int])]
+  def unmkSparseVector[T:Elem](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int])]
 }
 
 // Seq -----------------------------------
@@ -201,8 +199,11 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
   def mkDenseVector[T]
       (items: Rep[Collection[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
       new SeqDenseVector[T](items)
-  def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]) =
-    Some((p.items))
+  def unmkDenseVector[T:Elem](p: Rep[AbstractVector[T]]) = p match {
+    case p: DenseVector[T] @unchecked =>
+      Some((p.items))
+    case _ => None
+  }
 
   case class SeqSparseVector[T]
       (override val nonZeroIndices: Rep[Collection[Int]], override val nonZeroValues: Rep[Collection[T]], override val length: Rep[Int])
@@ -218,8 +219,11 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
   def mkSparseVector[T]
       (nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
       new SeqSparseVector[T](nonZeroIndices, nonZeroValues, length)
-  def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]) =
-    Some((p.nonZeroIndices, p.nonZeroValues, p.length))
+  def unmkSparseVector[T:Elem](p: Rep[AbstractVector[T]]) = p match {
+    case p: SparseVector[T] @unchecked =>
+      Some((p.nonZeroIndices, p.nonZeroValues, p.length))
+    case _ => None
+  }
 }
 
 // Exp -----------------------------------
@@ -430,8 +434,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   def mkDenseVector[T]
     (items: Rep[Collection[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
     new ExpDenseVector[T](items)
-  def unmkDenseVector[T:Elem](p: Rep[DenseVector[T]]) =
-    Some((p.items))
+  def unmkDenseVector[T:Elem](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: DenseVectorElem[T] @unchecked =>
+      Some((p.items))
+    case _ =>
+      None
+  }
 
   case class ExpSparseVector[T]
       (override val nonZeroIndices: Rep[Collection[Int]], override val nonZeroValues: Rep[Collection[T]], override val length: Rep[Int])
@@ -633,8 +641,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   def mkSparseVector[T]
     (nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
     new ExpSparseVector[T](nonZeroIndices, nonZeroValues, length)
-  def unmkSparseVector[T:Elem](p: Rep[SparseVector[T]]) =
-    Some((p.nonZeroIndices, p.nonZeroValues, p.length))
+  def unmkSparseVector[T:Elem](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: SparseVectorElem[T] @unchecked =>
+      Some((p.nonZeroIndices, p.nonZeroValues, p.length))
+    case _ =>
+      None
+  }
 
   object AbstractVectorMethods {
     object length {
