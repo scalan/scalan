@@ -157,6 +157,9 @@ trait Elems extends Base { self: Scalan =>
       }
     case _ => eA
   }
+
+  def assertEqualElems[A](e1: Elem[A], e2: Elem[A], m: => String) =
+    assert(e1 == e2, s"Element $e1 != $e2: $m")
 }
 
 trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
