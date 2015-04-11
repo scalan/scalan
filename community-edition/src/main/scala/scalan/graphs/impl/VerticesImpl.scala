@@ -169,17 +169,6 @@ trait VerticesExp extends VerticesDsl with ScalanExp {
   }
 
   object SVertexCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T; type V}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SVertexCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T; type V}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T; type V}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkSVertex[V, E]
@@ -311,16 +300,5 @@ trait VerticesExp extends VerticesDsl with ScalanExp {
   }
 
   object VertexCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T; type V}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[VertexCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T; type V}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T; type V}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 }

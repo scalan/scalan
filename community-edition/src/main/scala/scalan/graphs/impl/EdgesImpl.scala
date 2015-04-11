@@ -313,17 +313,6 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   }
 
   object AdjEdgeCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T; type V}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AdjEdgeCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T; type V}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T; type V}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkAdjEdge[V, E]
@@ -408,17 +397,6 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   }
 
   object IncEdgeCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T; type V}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncEdgeCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T; type V}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T; type V}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkIncEdge[V, E]
@@ -514,18 +492,6 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   }
 
   object EdgeCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T; type V}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T; type V}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T; type V}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object MaxDoubleEdge {
       def unapply(d: Def[_]): Option[Unit] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeCompanionElem] && method.getName == "MaxDoubleEdge" =>

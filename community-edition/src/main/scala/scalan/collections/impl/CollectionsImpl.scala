@@ -873,17 +873,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object UnitCollectionCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[UnitCollectionCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkUnitCollection
@@ -1076,17 +1065,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object BaseCollectionCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Elem[A] forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(ea, _*), _) if receiver.elem.isInstanceOf[BaseCollectionCompanionElem] && method.getName == "defaultOf" =>
-          Some(ea).asInstanceOf[Option[Elem[A] forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Elem[A] forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkBaseCollection[A]
@@ -1279,17 +1257,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object ListCollectionCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Elem[A] forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(ea, _*), _) if receiver.elem.isInstanceOf[ListCollectionCompanionElem] && method.getName == "defaultOf" =>
-          Some(ea).asInstanceOf[Option[Elem[A] forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Elem[A] forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkListCollection[A]
@@ -1494,17 +1461,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object CollectionOnSeqCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Elem[A] forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(ea, _*), _) if receiver.elem.isInstanceOf[CollectionOnSeqCompanionElem] && method.getName == "defaultOf" =>
-          Some(ea).asInstanceOf[Option[Elem[A] forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Elem[A] forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkCollectionOnSeq[A]
@@ -1697,17 +1653,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object PairCollectionCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[(Elem[A], Elem[B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(ea, eb, _*), _) if receiver.elem.isInstanceOf[PairCollectionCompanionElem] && method.getName == "defaultOf" =>
-          Some((ea, eb)).asInstanceOf[Option[(Elem[A], Elem[B]) forSome {type A; type B}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Elem[A], Elem[B]) forSome {type A; type B}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkPairCollection[A, B]
@@ -1912,17 +1857,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object CollectionOfPairsCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[(Elem[A], Elem[B]) forSome {type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(ea, eb, _*), _) if receiver.elem.isInstanceOf[CollectionOfPairsCompanionElem] && method.getName == "defaultOf" =>
-          Some((ea, eb)).asInstanceOf[Option[(Elem[A], Elem[B]) forSome {type A; type B}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Elem[A], Elem[B]) forSome {type A; type B}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkCollectionOfPairs[A, B]
@@ -2115,18 +2049,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object NestedCollectionCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Elem[A] forSome {type A}] = d match {
-        case MethodCall(receiver, method, Seq(ea, _*), _) if receiver.elem.isInstanceOf[NestedCollectionCompanionElem] && method.getName == "defaultOf" =>
-          Some(ea).asInstanceOf[Option[Elem[A] forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Elem[A] forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object fromJuggedArray {
       def unapply(d: Def[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem.isInstanceOf[NestedCollectionCompanionElem] && method.getName == "fromJuggedArray" =>
@@ -2341,8 +2263,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object CollectionCompanionMethods {
-    // WARNING: Cannot generate matcher for method `defaultOf`: Method's return type Default[Rep[Collection[A]]] is not a Rep
-
     object apply {
       def unapply(d: Def[_]): Option[Rep[Array[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem.isInstanceOf[CollectionCompanionElem] && method.getName == "apply" =>

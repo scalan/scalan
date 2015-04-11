@@ -70,31 +70,15 @@ trait Views extends Elems { self: Scalan =>
     override def isEntityType = false
   }
 
-  trait TypeFamily1[F[_]] {
-    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[F[A]]]
-  }
-  trait TypeFamily2[F[_, _]] {
-    def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[F[A, B]]]
-  }
-  trait TypeFamily3[F[_, _, _]] {
-    def defaultOf[A, B, C](implicit ea: Elem[A], eb: Elem[B], ec: Elem[C]): Default[Rep[F[A, B, C]]]
-  }
+  trait TypeFamily1[F[_]]
+  trait TypeFamily2[F[_, _]]
+  trait TypeFamily3[F[_, _, _]]
 
-  trait ConcreteClass0[C] {
-    def defaultOf: Default[Rep[C]]
-  }
-  trait ConcreteClass1[C[_]] {
-    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[C[A]]]
-  }
-  trait ConcreteClass2[C[_, _]] {
-    def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[C[A, B]]]
-  }
-  trait ConcreteClass3[T[_, _, _]] {
-    def defaultOf[A, B, C](implicit ea: Elem[A], eb: Elem[B], ec: Elem[C]): Default[Rep[T[A, B, C]]]
-  }
-  trait ConcreteClass4[T[_, _, _, _]] {
-    def defaultOf[A, B, C, D](implicit ea: Elem[A], eb: Elem[B], ec: Elem[C], ed : Elem[D]): Default[Rep[T[A, B, C, D]]]
-  }
+  trait ConcreteClass0[C]
+  trait ConcreteClass1[C[_]]
+  trait ConcreteClass2[C[_, _]]
+  trait ConcreteClass3[T[_, _, _]]
+  trait ConcreteClass4[T[_, _, _, _]]
 
   def identityIso[A](implicit elem: Elem[A]): Iso[A, A] =
     new Iso[A, A] {

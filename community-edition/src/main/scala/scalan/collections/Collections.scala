@@ -38,14 +38,8 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   type Segments1 = IPairCollection[Int, Int]
 
   trait CollectionCompanion extends TypeFamily1[Collection] {
-    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[Collection[A]]] = ea match {
-      case UnitElement => Default.defaultVal(UnitCollection(0).asRep[Collection[A]])
-      case baseE: BaseElem[a] => BaseCollection.defaultOf[a](baseE)
-      case pairE: PairElem[a, b] => PairCollection.defaultOf[a, b](pairE.eFst, pairE.eSnd)
-      case e => ???(s"Element is $e")
-    }
-
     def apply[T: Elem](arr: Rep[Array[T]]): Coll[T] = fromArray(arr)
+
     def fromArray[T: Elem](arr: Rep[Array[T]]): Coll[T] = {
       element[T] match {
         case pairE: PairElem[a, b] =>
@@ -61,6 +55,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
         case e => BaseCollection(arr)
       }
     }
+
     def fromList[T: Elem](arr: Rep[List[T]]): Coll[T] = {
       element[T] match {
         case baseE: BaseElem[a] =>
@@ -123,9 +118,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def flatMapBy[B: Elem](f: Rep[Unit => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[Unit]): Coll[Unit]  = Collection(arr.append(value))
   }
-  trait UnitCollectionCompanion extends ConcreteClass0[UnitCollection] {
-    def defaultOf = Default.defaultVal(UnitCollection(0))
-  }
+  trait UnitCollectionCompanion extends ConcreteClass0[UnitCollection]
 
   abstract class BaseCollection[A](val arr: Rep[Array[A]])(implicit val eA: Elem[A]) extends Collection[A] {
     def elem = eA
@@ -147,12 +140,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr})
     def append(value: Rep[A @uncheckedVariance]): Coll[A]  = BaseCollection(arr.append(value))
   }
-  trait BaseCollectionCompanion extends ConcreteClass1[BaseCollection] {
-    def defaultOf[A](implicit ea: Elem[A]) = {
-      implicit val ct = ea.classTag
-      Default.defaultVal(BaseCollection(Array.empty[A]))
-    }
-  }
+  trait BaseCollectionCompanion extends ConcreteClass1[BaseCollection]
 
   abstract class ListCollection[A](val lst: Rep[List[A]])(implicit val eA: Elem[A]) extends Collection[A] {
     def elem = eA
@@ -172,10 +160,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       ListCollection(lst.flatMap { in => f(in).lst } )
     def append(value: Rep[A @uncheckedVariance]): Coll[A]  = ListCollection(value :: lst)
   }
-  trait ListCollectionCompanion extends ConcreteClass1[ListCollection] {
-    def defaultOf[A](implicit ea: Elem[A]) =
-      Default.defaultVal(ListCollection(List.empty[A]))
-  }
+  trait ListCollectionCompanion extends ConcreteClass1[ListCollection]
 
   abstract class CollectionOnSeq[A](override val seq: Rep[SSeq[A]])(implicit val eA: Elem[A]) extends Collection[A] {
     def elem = eA
@@ -197,10 +182,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] = ???
     def append(value: Rep[A @uncheckedVariance]): Coll[A]  = ???
   }
-  trait CollectionOnSeqCompanion extends ConcreteClass1[CollectionOnSeq] {
-    def defaultOf[A](implicit ea: Elem[A]) =
-      Default.defaultVal(CollectionOnSeq(SSeq.empty[A]))
-  }
+  trait CollectionOnSeqCompanion extends ConcreteClass1[CollectionOnSeq]
 
   trait IPairCollection[A,B] extends Collection[(A,B)] {
     implicit def eA: Elem[A]
@@ -238,13 +220,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = PairCollection(as.append(value._1), bs.append(value._2))
   }
 
-  trait PairCollectionCompanion extends ConcreteClass2[PairCollection] with CollectionCompanion {
-    def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]) = {
-      val as = BaseCollection.defaultOf[A].value
-      val bs = BaseCollection.defaultOf[B].value
-      Default.defaultVal(PairCollection(as, bs))
-    }
-  }
+  trait PairCollectionCompanion extends ConcreteClass2[PairCollection] with CollectionCompanion
 
   abstract class CollectionOfPairs[A, B](val arr: Rep[Array[(A,B)]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends IPairCollection[A,B] {
@@ -268,11 +244,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = CollectionOfPairs(arr.append(value))
   }
-  trait CollectionOfPairsCompanion extends ConcreteClass2[CollectionOfPairs] with CollectionCompanion {
-    def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]) = {
-      Default.defaultVal(CollectionOfPairs(SArray.empty[(A,B)]))
-    }
-  }
+  trait CollectionOfPairsCompanion extends ConcreteClass2[CollectionOfPairs] with CollectionCompanion
 
   trait INestedCollection[A] extends Collection[Collection[A]] {
     implicit def eA: Elem[A]
@@ -326,8 +298,6 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def append(value: Rep[Collection[A @uncheckedVariance]]): NColl[A]  = ??? //Collection(arr.append(value))
   }
   trait NestedCollectionCompanion extends ConcreteClass1[NestedCollection] {
-    def defaultOf[A](implicit ea: Elem[A]) = Default.defaultVal(NestedCollection(element[Collection[A]].defaultRepValue, element[Segments1].defaultRepValue))
-
     def fromJuggedArray[T: Elem](arr: Rep[Array[Array[T]]]): Rep[NestedCollection[T]] = {
       val lens: Arr[Int] = arr.map(i => i.length)
       val positions = lens.scan._1

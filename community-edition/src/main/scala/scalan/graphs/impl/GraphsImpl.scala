@@ -469,18 +469,6 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   }
 
   object AdjacencyGraphCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AdjacencyGraphCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type V; type E}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type V; type E}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object fromAdjacencyList {
       def unapply(d: Def[_]): Option[(Coll[V], NColl[E], NColl[Int]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vertexValues, edgeValues, links, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphCompanionElem] && method.getName == "fromAdjacencyList" =>
@@ -780,18 +768,6 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   }
 
   object IncidenceGraphCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type V; type E}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type V; type E}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object fromAdjacencyMatrix {
       def unapply(d: Def[_]): Option[(Coll[V], Coll[E], Rep[Int]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vertexValues, incMatrixWithVals, vertexNum, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphCompanionElem] && method.getName == "fromAdjacencyMatrix" =>
@@ -1144,16 +1120,5 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   }
 
   object GraphCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T; type V}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T; type V}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T; type V}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 }

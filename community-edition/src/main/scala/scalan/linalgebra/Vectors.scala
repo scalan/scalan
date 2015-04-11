@@ -216,12 +216,10 @@ trait Vectors { self: ScalanCommunityDsl =>
   }
 
   trait AbstractVectorCompanion extends TypeFamily1[AbstractVector] {
-    def defaultOf[T: Elem] = DenseVector.defaultOf[T]
     def zero[T: Elem](len: Rep[Int]) = DenseVector.zero[T](len)
   }
 
   trait DenseVectorCompanion extends ConcreteClass1[AbstractVector] {
-    def defaultOf[T: Elem] = DenseVector.defaultOf[T]
     def zero[T: Elem](len: Rep[Int]): Vector[T] = {
       val zeroV = element[T].defaultRepValue
       DenseVector(Collection.replicate(len, zeroV))
@@ -229,9 +227,6 @@ trait Vectors { self: ScalanCommunityDsl =>
   }
 
   trait SparseVectorCompanion extends ConcreteClass1[AbstractVector] {
-    def defaultOf[T: Elem] = {
-      Default.defaultVal(SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, IntElement.defaultRepValue))
-    }
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
       val nonZeroItems: Rep[IPairCollection[Int, T]] =
         (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }

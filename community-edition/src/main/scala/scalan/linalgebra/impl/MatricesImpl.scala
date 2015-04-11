@@ -455,18 +455,6 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   object RowMajorDirectMatrixCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorDirectMatrixCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object fromColumns {
       def unapply(d: Def[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem.isInstanceOf[RowMajorDirectMatrixCompanionElem] && method.getName == "fromColumns" =>
@@ -658,18 +646,6 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   object RowMajorNestedMatrixCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object fromColumns {
       def unapply(d: Def[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixCompanionElem] && method.getName == "fromColumns" =>
@@ -831,18 +807,6 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   object RowMajorSparseMatrixCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object fromColumns {
       def unapply(d: Def[_]): Option[Coll[AbstractVector[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixCompanionElem] && method.getName == "fromColumns" =>
@@ -1031,8 +995,6 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   object AbstractMatrixCompanionMethods {
-    // WARNING: Cannot generate matcher for method `defaultOf`: Method's return type Default[Rep[AbstractMatrix[T]]] is not a Rep
-
     object fromColumns {
       def unapply(d: Def[_]): Option[Rep[Collection[AbstractVector[T]]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(cols, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixCompanionElem] && method.getName == "fromColumns" =>

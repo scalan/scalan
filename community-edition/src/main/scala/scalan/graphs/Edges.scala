@@ -39,8 +39,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
   }
 
   trait EdgeCompanion extends TypeFamily2[Edge] {
-    def defaultOf[T: Elem, V:Elem] = AdjEdge.defaultOf[T,V]
-    def MaxDoubleEdge =  AdjEdge(element[Int].defaultRepValue, element[Int].defaultRepValue,
+    def MaxDoubleEdge = AdjEdge(element[Int].defaultRepValue, element[Int].defaultRepValue,
       AdjacencyGraph(element[Collection[Unit]].defaultRepValue,
         NestedCollection(Collection.singleton(Double.MaxValue), PairCollection(Collection.singleton(0), Collection.singleton(1))),
         element[NestedCollection[Int]].defaultRepValue)
@@ -59,9 +58,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
     def value: Rep[E] = graph.edgeValues.values(indexOfTarget)
   }
 
-  trait AdjEdgeCompanion extends ConcreteClass2[Edge] {
-    def defaultOf[T: Elem, V:Elem] = Default.defaultVal(AdjEdge(element[Int].defaultRepValue, element[Int].defaultRepValue, element[Graph[T,V]].defaultRepValue))
-  }
+  trait AdjEdgeCompanion extends ConcreteClass2[Edge]
 
   abstract class IncEdge[V, E](val fromId: Rep[Int], val toId: Rep[Int], val graph: PG[V, E])
                               (implicit val eV: Elem[V], val eE: Elem[E]) extends Edge[V, E] {
@@ -75,9 +72,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
 
     def value: Rep[E] = graph.incMatrixWithVals(indexOfTarget)
   }
-  trait IncEdgeCompanion extends ConcreteClass2[Edge] {
-    def defaultOf[T: Elem, V:Elem] = Default.defaultVal(IncEdge(-1, -1, element[IncidenceGraph[T,V]].defaultRepValue))
-  }
+  trait IncEdgeCompanion extends ConcreteClass2[Edge]
 
 }
 
