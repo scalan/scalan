@@ -56,12 +56,12 @@ trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
 
 trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
-  case class Left[A, B](left: Exp[A])(implicit val eB: Elem[B]) extends BaseDef[(A | B)]()(sumElement(left.elem, eB)) {
+  case class Left[A, B](left: Exp[A])(implicit val eRight: Elem[B]) extends BaseDef[(A | B)]()(sumElement(left.elem, eRight)) {
     override def mirror(t: Transformer) = Left[A, B](t(left))
     lazy val uniqueOpId = name(selfType)
   }
 
-  case class Right[A, B](right: Exp[B])(implicit val eA: Elem[A]) extends BaseDef[(A | B)]()(sumElement(eA, right.elem)) {
+  case class Right[A, B](right: Exp[B])(implicit val eLeft: Elem[A]) extends BaseDef[(A | B)]()(sumElement(eLeft, right.elem)) {
     override def mirror(t: Transformer) = Right[A, B](t(right))
     lazy val uniqueOpId = name(selfType)
   }
@@ -89,8 +89,8 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
   }
 
   class SumOpsExp[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
-    implicit def eA = s.elem.eLeft
-    implicit def eB = s.elem.eRight
+    implicit def eA: Elem[A] = s.elem.eLeft
+    implicit def eB: Elem[B] = s.elem.eRight
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = SumFold(s, fun(l), fun(r))
     def isLeft = IsLeft(s)
     def isRight = IsRight(s)

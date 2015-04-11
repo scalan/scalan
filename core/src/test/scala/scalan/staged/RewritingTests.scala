@@ -25,7 +25,7 @@ class RewritingTests extends BaseTests {
       case lam: Lambda[a, |[_, b]] @unchecked =>
         lam.y match {
           case Def(r @ Right(_)) =>
-            implicit val eA = r.eA.asInstanceOf[Elem[b]]
+            implicit val eA = r.eLeft.asInstanceOf[Elem[b]]
             fun { x: Rep[b] => toLeftSum[b, b](x) }
           case _ => super.rewriteDef(d)
         }

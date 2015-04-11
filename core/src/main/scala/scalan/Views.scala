@@ -322,9 +322,9 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       view.iso2.to(source._2)
 
     case l @ Left(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
-      SumView(toLeftSum(a.asRep[a1])(l.eB))(iso, identityIso(l.eB)).self
+      SumView(toLeftSum(a.asRep[a1])(l.eRight))(iso, identityIso(l.eRight)).self
     case r @ Right(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
-      SumView(toRightSum(a.asRep[a1])(r.eA))(identityIso(r.eA), iso).self
+      SumView(toRightSum(a.asRep[a1])(r.eLeft))(identityIso(r.eLeft), iso).self
 
     // case UnpackableDef(Def(uv @ UnpackView(view)), iso) if iso.eTo == view.iso.eTo => view
     case UnpackView(Def(UnpackableDef(source, iso))) => source
