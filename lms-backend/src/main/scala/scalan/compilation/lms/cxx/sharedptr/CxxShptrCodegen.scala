@@ -3,10 +3,11 @@ package scalan.compilation.lms.cxx.sharedptr
 import java.io.PrintWriter
 
 import scala.virtualization.lms.internal.{CLikeCodegen, Expressions, GenerationFailedException}
+import scalan.compilation.lms.ManifestUtil
 import scalan.compilation.lms.common.JNILmsOps
 
 
-trait CxxShptrCodegen extends CLikeCodegen {
+trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
   val IR: Expressions
   import IR._
 
@@ -33,7 +34,7 @@ trait CxxShptrCodegen extends CLikeCodegen {
   }
 
   def wrapSharedPtr:PartialFunction[Manifest[_],Manifest[_]] = {
-    case m if m <:< Manifest.AnyVal => m
+    case m if m.isPrimitive => m
     case m if m.runtimeClass == classOf[SharedPtr[_]] => m
     case m if m.runtimeClass == classOf[scala.Tuple2[_, _]] => m
     case m if m.runtimeClass == classOf[Variable[_]] => m
@@ -63,7 +64,7 @@ trait CxxShptrCodegen extends CLikeCodegen {
         val mA = m.typeArguments(0)
         val mB = m.typeArguments(1)
         src"std::pair<${remap(mA)},${remap(mB)}>"
-      case _ if m <:< Manifest.AnyVal =>
+      case _ if m.isPrimitive =>
         super[CLikeCodegen].remap(m)
       case _ =>
         throw new GenerationFailedException(s"CxxShptrCodegen.remap(): $m can not be remaped.")

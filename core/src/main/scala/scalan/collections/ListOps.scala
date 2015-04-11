@@ -131,7 +131,7 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
   def list_length[T](a: Lst[T]): Rep[Int] = a.length
   def list_map[T, R: Elem](xs: List[T], f: T => R) = xs.map(f)
   def list_flatMap[T, R: Elem](xs: List[T], f: T => List[R]) = xs.flatMap(f)
-  def list_reduce[T](xs: Lst[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x, y) => m.append((x, y)))
+  def list_reduce[T](xs: Lst[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)(m.append)
   def list_foldLeft[T, S: Elem](xs: Lst[T], init: Rep[S], f: Rep[((S, T)) => S]): Rep[S] = {
     var state = init
     for (x <- xs) {
@@ -144,7 +144,7 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
   }
   def list_zip[T, U](xs: List[T], ys: List[U]): List[(T, U)] = xs zip ys
   def list_scan[T](xs: List[T])(implicit m: RepMonoid[T], elem : Elem[T]): Rep[(List[T], T)] = {
-    val scan = xs.scan(m.zero)((x, y) => m.append((x, y)))
+    val scan = xs.scan(m.zero)(m.append)
     val sum = scan.last
     (scan.dropRight(1).toList, sum)
   }

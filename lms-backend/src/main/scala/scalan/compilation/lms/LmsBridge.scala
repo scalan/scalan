@@ -77,8 +77,6 @@ trait LmsBridge { self: ScalanCtxExp =>
         case _ => createManifest(el.eItem)
       }
       Manifest.arrayType(m)
-    case el: ArrayBufferElem[_] =>
-      Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
     case el: ListElem[_] =>
       Manifest.classType(classOf[List[_]], createManifest(el.eItem))
     case el: MMapElem[_,_] =>

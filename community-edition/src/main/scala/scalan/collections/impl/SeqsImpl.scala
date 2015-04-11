@@ -542,38 +542,33 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
 
-  type SSeqMapArgs[A,B] = (Rep[SSeq[A]], Rep[A => B])
-
   override def rewriteDef[T](d: Def[T]) = d match {
     case SSeqMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
-    case SSeqMethods.map(t: SSeqMapArgs[_,c] @unchecked) => t match {
-      case (xs: RSeq[a]@unchecked, f @ Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) => {
+    case SSeqMethods.map(xs, f) => (xs, f) match {
+      case (xs: RSeq[a] @unchecked, f @ Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) =>
         val f1 = f.asRep[a => c]
         implicit val eA = xs.elem.eItem
         implicit val eB = iso.eFrom
-        val s = xs.map( fun { x =>
+        val s = xs.map(fun { x =>
           val tmp = f1(x)
           iso.from(tmp)
         })
         val res = ViewSSeq(s)(SSeqIso(iso))
         res
-      }
-      case (Def(view: ViewSSeq[a, b]), _) => {
+      case (Def(view: ViewSSeq[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
         val iso = view.innerIso
-        val ff = t._2.asRep[b => c]
+        val f1 = f.asRep[b => c]
         implicit val eA = iso.eFrom
         implicit val eB = iso.eTo
-        implicit val eC = ff.elem.eRange
-        view.source.map(fun { x => ff(iso.to(x))})
-      }
+        implicit val eC = f1.elem.eRange
+        view.source.map(fun { x => f1(iso.to(x)) })
       case _ =>
         super.rewriteDef(d)
     }
-    case view1@ViewSSeq(Def(view2@ViewSSeq(arr))) => {
+    case view1@ViewSSeq(Def(view2@ViewSSeq(arr))) =>
       val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
       ViewSSeq(arr)(SSeqIso(compIso))
-    }
 
     case _ => super.rewriteDef(d)
   }

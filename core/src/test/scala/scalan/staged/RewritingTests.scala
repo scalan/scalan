@@ -21,11 +21,14 @@ class RewritingTests extends BaseTests {
     lazy val mkRight = fun { x: Rep[Int] => toRightSum[Int, Int](x) }
 
     override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
-        // rewrite fun(x => Right) to fun(x => Left(x))
-      case Lambda(lam: Lambda[a, |[_, b]] @unchecked, _, _, Def(r @ Right(_))) =>
-        implicit val eA = r.eA.asInstanceOf[Elem[b]]
-        fun { x: Rep[b] => toLeftSum[b, b](x) }
-
+      // rewrite fun(x => Right) to fun(x => Left(x))
+      case lam: Lambda[a, |[_, b]] @unchecked =>
+        lam.y match {
+          case Def(r @ Right(_)) =>
+            implicit val eA = r.eA.asInstanceOf[Elem[b]]
+            fun { x: Rep[b] => toLeftSum[b, b](x) }
+          case _ => super.rewriteDef(d)
+        }
       case _ =>
         super.rewriteDef(d)
     }
@@ -37,8 +40,9 @@ class RewritingTests extends BaseTests {
       val newLambda = doTransform(mkRight)
       emit("mkRight'", newLambda)
 
-      val Def(Lambda(_, _, x, Def(Left(l)))) = newLambda
-      assert(x == l)
+      val Def(lam: Lambda[_, _]) = newLambda
+      val Def(Left(l)) = lam.y
+      assert(lam.x == l)
     }
   }
 

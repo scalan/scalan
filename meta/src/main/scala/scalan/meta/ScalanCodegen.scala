@@ -688,34 +688,31 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       if (e.isContainer1) {
         s"""
           |    case ${e.name}Methods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
-          |    case ${e.name}Methods.map(t: ${e.name}MapArgs[_,c] @unchecked) => t match {
-          |      case (xs: ${syn.name}[a]@unchecked, f @ Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) => {
+          |    case ${e.name}Methods.map(xs, f) => (xs, f) match {
+          |      case (xs: ${syn.name}[a] @unchecked, f @ Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) =>
           |        val f1 = f.asRep[a => c]
           |        implicit val eA = xs.elem.eItem
           |        implicit val eB = iso.eFrom
-          |        val s = xs.map( fun { x =>
+          |        val s = xs.map(fun { x =>
           |          val tmp = f1(x)
           |          iso.from(tmp)
           |        })
           |        val res = View${e.name}(s)(${e.name}Iso(iso))
           |        res
-          |      }
-          |      case (Def(view: View${e.name}[a, b]), _) => {
+          |      case (Def(view: View${e.name}[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
           |        val iso = view.innerIso
-          |        val ff = t._2.asRep[b => c]
+          |        val f1 = f.asRep[b => c]
           |        implicit val eA = iso.eFrom
           |        implicit val eB = iso.eTo
-          |        implicit val eC = ff.elem.eRange
-          |        view.source.map(fun { x => ff(iso.to(x))})
-          |      }
+          |        implicit val eC = f1.elem.eRange
+          |        view.source.map(fun { x => f1(iso.to(x)) })
           |      case _ =>
           |        super.rewriteDef(d)
           |    }
-          |    case view1@View${e.name}(Def(view2@View${e.name}(arr))) => {
+          |    case view1@View${e.name}(Def(view2@View${e.name}(arr))) =>
           |      val compIso = composeIso(view1.innerIso, view2.innerIso)
           |      implicit val eAB = compIso.eTo
           |      View${e.name}(arr)(${e.name}Iso(compIso))
-          |    }
            """.stripMargin
       }
       else ""
@@ -747,7 +744,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |      super.unapplyViews(s)
         |  }).asInstanceOf[Option[Unpacked[T]]]
         |
-        |  type ${e.name}MapArgs[A,B] = (Rep[${e.name}[A]], Rep[A => B])
         |  ${(!e.entityRepSynonimOpt.isDefined).opt(e.emitEntityRepSynonim)}
         |
         |  override def rewriteDef[T](d: Def[T]) = d match {
