@@ -254,7 +254,6 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
   trait AbstractMatrixCompanion extends TypeFamily1[AbstractMatrix] {
 
-    def defaultOf[T: Elem]: Default[Rep[AbstractMatrix[T]]] = RowMajorNestedMatrix.defaultOf[T]
     def fromColumns[T: Elem](cols: Rep[Collection[AbstractVector[T]]]): Rep[AbstractMatrix[T]] = {
       RowMajorNestedMatrix.fromColumns(cols)
     }
@@ -270,14 +269,11 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   }
 
   trait RowMajorDirectMatrixCompanion extends ConcreteClass1[RowMajorDirectMatrix] with AbstractMatrixCompanion {
-    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorDirectMatrix(element[Collection[DenseVector[T]]].defaultRepValue))
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Rep[AbstractMatrix[T]] =
       RowMajorDirectMatrix(Collection(SArray.tabulate(cols(0).length) { i => DenseVector(cols.map(_(i))) }))
   }
 
   trait RowMajorNestedMatrixCompanion extends ConcreteClass1[RowMajorNestedMatrix] with AbstractMatrixCompanion {
-
-    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorNestedMatrix(element[Collection[T]].defaultRepValue, IntElement.defaultRepValue))
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = {
       val numColumns = cols.length
       val numRows = cols(0).length
@@ -293,8 +289,6 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   }
 
   trait RowMajorSparseMatrixCompanion extends ConcreteClass1[RowMajorSparseMatrix] with AbstractMatrixCompanion {
-
-    override def defaultOf[T: Elem] = Default.defaultVal(RowMajorSparseMatrix(element[Collection[AbstractVector[T]]].defaultRepValue, IntElement.defaultRepValue))
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = ???
   }
 }

@@ -66,7 +66,13 @@ trait Transforming { self: ScalanExp =>
     def apply[T](x: Exp[T]): Exp[T] = x match {
       case Def(call: MethodCall) =>
         call.tryInvoke match {
-          case InvokeSuccess(res) => res.asRep[T]
+          case InvokeSuccess(res) =>
+            res.asRep[T]
+          case InvokeFailure(e) =>
+            if (e.isInstanceOf[DelayInvokeException])
+              x
+            else
+              !!!(s"Failed to invoke $call", e)
           case _ => x
         }
       case _ => x

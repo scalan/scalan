@@ -308,18 +308,6 @@ trait MultiMapsExp extends MultiMapsDsl with ScalanExp {
   }
 
   object HashMMultiMapCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type K; type V}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[HashMMultiMapCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type K; type V}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type K; type V}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object empty {
       def unapply(d: Def[_]): Option[Unit forSome {type K; type V}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[HashMMultiMapCompanionElem] && method.getName == "empty" =>
@@ -534,8 +522,6 @@ trait MultiMapsExp extends MultiMapsDsl with ScalanExp {
   }
 
   object MMultiMapCompanionMethods {
-    // WARNING: Cannot generate matcher for method `defaultOf`: Method's return type Default[Rep[MMultiMap[K,V]]] is not a Rep
-
     object empty {
       def unapply(d: Def[_]): Option[Unit forSome {type K; type V}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MMultiMapCompanionElem] && method.getName == "empty" =>

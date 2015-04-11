@@ -5,6 +5,7 @@ package scalan
 
 import java.lang.reflect.{InvocationTargetException, Method}
 
+import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
 
@@ -33,11 +34,6 @@ trait Proxy { self: Scalan =>
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
 
   def patternMatchError(obj: Any): Nothing
-
-  /**
-   * Can be thrown to prevent invoke
-   */
-  class PatternMatchException extends Exception
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
@@ -119,11 +115,14 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         case Def(d) =>
           val argsArray = args.toArray
 
-          if (!neverInvoke && shouldInvoke(d, method, argsArray))
+          if (neverInvoke) {
+            InvokeImpossible
+          } else if (shouldInvoke(d, method, argsArray))
             try {
               InvokeSuccess(method.invoke(d, args: _*).asInstanceOf[Exp[_]])
             } catch {
-              case e: InvocationTargetException => InvokeFailure(e.getCause)
+              case e: Exception =>
+                InvokeFailure(baseCause(e))
             }
           else {
             try {
@@ -132,7 +131,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                 case None => InvokeImpossible
               }
             } catch {
-              case e: InvocationTargetException => InvokeFailure(e.getCause)
+              case e: Exception => InvokeFailure(baseCause(e))
             }
           }
         case _ => InvokeImpossible
@@ -158,6 +157,15 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   // prefer calling the above overload
   def mkMethodCall(receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean, resultElem: Elem[_]): Exp[_] = {
     reifyObject(MethodCall(receiver, method, args, neverInvoke)(resultElem.asElem[Any]))
+  }
+
+  @tailrec
+  private def baseCause(e: Throwable): Throwable = e match {
+    case e: java.lang.reflect.UndeclaredThrowableException => baseCause(e.getCause)
+    case e: net.sf.cglib.proxy.UndeclaredThrowableException => baseCause(e.getCause)
+    case e: InvocationTargetException => baseCause(e.getCause)
+    case e: ExceptionInInitializerError => baseCause(e.getCause)
+    case e => e
   }
 
   override protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig) = sym match {
@@ -394,7 +402,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               resultElem.asInstanceOf[Elem[_]]
             } catch {
               case e: Exception =>
-                throw new Exception(s"Failed to invoke $methodName($paramElems)", e)
+                !!!(s"Failed to invoke $methodName($paramElems)", e)
             }
           } catch {
             case _: NoSuchMethodException =>
@@ -410,7 +418,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               resultIso.asInstanceOf[Iso[_, _]].eTo
             } catch {
               case e: Exception =>
-                throw new Exception(s"Failed to invoke $methodName($paramElems)", e)
+                !!!(s"Failed to invoke $methodName($paramElems)", e)
             }
           } catch {
             case _: NoSuchMethodException =>
@@ -422,7 +430,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   private object Symbols {
-    val RepSym = weakTypeOf[Rep[_]].typeSymbol
+    val RepSym = typeOf[Rep[_]].typeSymbol
 
     val UnitSym = typeOf[Unit].typeSymbol
     val BooleanSym = typeOf[Boolean].typeSymbol
@@ -460,19 +468,24 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     def invoke(proxy: AnyRef, m: Method, _args: Array[AnyRef]) = {
       val args = if (_args == null) Array.empty[AnyRef] else _args
       receiver match {
-        case Def(d) if shouldInvoke(d, m, args) =>
-          // call method of the node when it's allowed
-          val res = m.invoke(d, args: _*)
-          res
-        case Def(d) => {
-          // try to call method m via inherited class or interfaces
-          val optRes = invokeSuperMethod(d, m, args)
-          optRes match {
-            case Some(res) => res
-            case None =>
-              invokeMethodOfVar(m, args)
+        case Def(d) =>
+          if (shouldInvoke(d, m, args)) {
+            try {
+              // call method of the node when it's allowed
+              val res = m.invoke(d, args: _*)
+              res
+            } catch {
+              case e: Exception => !!!("Method invocation failed", baseCause(e))
+            }
+          } else {
+            // try to call method m via inherited class or interfaces
+            val optRes = invokeSuperMethod(d, m, args)
+            optRes match {
+              case Some(res) => res
+              case None =>
+                invokeMethodOfVar(m, args)
+            }
           }
-        }
         case _ => invokeMethodOfVar(m, args)
       }
     }
@@ -563,10 +576,10 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   }
 
-  def patternMatchError(obj: Any): Nothing = throw new FailedInvokeException
+  def patternMatchError(obj: Any): Nothing = throw new DelayInvokeException
 
   /**
    * Can be thrown to prevent invoke
    */
-  class FailedInvokeException extends Exception
+  class DelayInvokeException extends Exception
 }

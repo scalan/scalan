@@ -6,7 +6,18 @@ class BoilerplateTool extends StrictLogging {
   val coreTypeSynonyms = Map(
     "RThrow" -> "Throwable",
     "Arr" -> "Array",
-    "MM" -> "MMap"
+    "MM" -> "MMap",
+    "IntRep" -> "Int",
+    "DoubleRep" -> "Double",
+    "BoolRep" -> "Boolean",
+    "UnitRep" -> "Unit",
+    "NothingRep" -> "Nothing",
+    "ByteRep" -> "Byte",
+    "ShortRep" -> "Short",
+    "CharRep" -> "Char",
+    "LongRep" -> "Long",
+    "FloatRep" -> "Float",
+    "DoubleRep" -> "Double"
   )
   lazy val coreConfig = CodegenConfig(
     name = "core",
@@ -24,7 +35,7 @@ class BoilerplateTool extends StrictLogging {
     coreTypeSynonyms
   )
 
-  val coreTestsTypeSynonyms = Map(
+  val coreTestsTypeSynonyms = coreTypeSynonyms ++ Map(
     "RSeg" -> "Segment"
   )
   lazy val coreTestsConfig = CodegenConfig(
@@ -42,11 +53,8 @@ class BoilerplateTool extends StrictLogging {
     coreTestsTypeSynonyms
   )
 
-  val liteTypeSynonyms = Map(
-    "PA" -> "PArray", "NA" -> "NArray", "Vec" -> "Vector", "Matr" -> "Matrix"
-  )
-  val collectTypeSynonyms = Map(
-    "PG" -> "Graph", "Coll" -> "Collection", "PairColl" -> "IPairCollection", "NColl" -> "INestedCollection"
+  val collectTypeSynonyms = coreTypeSynonyms ++ Map(
+    "Coll" -> "Collection", "PairColl" -> "IPairCollection", "NColl" -> "INestedCollection"
   )
   lazy val ceConfig = CodegenConfig(
     name = "ce",
@@ -54,8 +62,6 @@ class BoilerplateTool extends StrictLogging {
     entityFiles = List(
        "scalan/collections/HashSets.scala"
       , "scalan/collections/Seqs.scala"
-      , "scalan/linalgebra/Vectors.scala"
-      , "scalan/linalgebra/Matrices.scala"
       , "scalan/collections/MultiMap.scala"
       , "scalan/collections/BitSets.scala"
     ),
@@ -65,11 +71,11 @@ class BoilerplateTool extends StrictLogging {
     extraImports = List(
       "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
-    coreTypeSynonyms ++ liteTypeSynonyms
+    collectTypeSynonyms
   )
 
-  val laTypeSynonyms = Map(
-    "Vec" -> "Vector", "Matr" -> "Matrix"
+  val laTypeSynonyms = collectTypeSynonyms ++ Map(
+    "Vector" -> "AbstractVector", "Matrix" -> "AbstractMatrix"
   )
   lazy val laConfig = CodegenConfig(
     name = "la",
@@ -84,11 +90,11 @@ class BoilerplateTool extends StrictLogging {
     extraImports = List(
       "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
-    coreTypeSynonyms ++ laTypeSynonyms
+    laTypeSynonyms
   )
 
-  val eeTypeSynonyms = Set(
-    "PS" -> "PSet", "Dist" -> "Distributed"
+  val eeTypeSynonyms = coreTypeSynonyms ++ Map(
+    "PS" -> "PSet", "Dist" -> "Distributed", "PA" -> "PArray", "NA" -> "NestedArray"
   )
   lazy val eeConfig = CodegenConfig(
     name = "ee",
@@ -107,7 +113,7 @@ class BoilerplateTool extends StrictLogging {
     extraImports = List(
       "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
-    coreTypeSynonyms ++ liteTypeSynonyms ++ eeTypeSynonyms
+    eeTypeSynonyms
   )
 
   val effectsTypeSynonims = Map(
@@ -155,6 +161,7 @@ class BoilerplateTool extends StrictLogging {
     collectTypeSynonyms
   )
 
+  val graphTypeSynonyms = collectTypeSynonyms ++ Map("PG" -> "Graph", "REdge" -> "EdgeType")
   lazy val graphConfig = CodegenConfig(
     name = "graphs",
     srcPath = "../community-edition/src/main/scala",
@@ -170,7 +177,7 @@ class BoilerplateTool extends StrictLogging {
     extraImports = List(
       "scala.reflect.runtime.universe._", "scala.reflect._",
       "scalan.common.Default"),
-    collectTypeSynonyms
+    graphTypeSynonyms
   )
 
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
@@ -186,8 +193,8 @@ class BoilerplateTool extends StrictLogging {
     "la" -> List(laConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreTestsConfig, coreConfig, ceConfig, collectionsConfig, graphConfig),
-    "all" -> List(coreTestsConfig, ceConfig, eeConfig, coreConfig, collectionsConfig, graphConfig)
+    "ce-all" -> List(coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig),
+    "all" -> List(coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, eeConfig)
   )
 
   def main(args: Array[String]) {

@@ -436,17 +436,6 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   }
 
   object BaseFrontCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[BaseFrontCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkBaseFront
@@ -495,17 +484,6 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   }
 
   object ListFrontCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ListFrontCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkListFront
@@ -554,17 +532,6 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   }
 
   object CollectionFrontCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionFrontCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkCollectionFront
@@ -625,17 +592,6 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   }
 
   object MapBasedFrontCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[MapBasedFrontCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 
   def mkMapBasedFront
@@ -683,18 +639,6 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   }
 
   object FrontCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[FrontCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object emptyBaseFront {
       def unapply(d: Def[_]): Option[Rep[Int]] = d match {
         case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem.isInstanceOf[FrontCompanionElem] && method.getName == "emptyBaseFront" =>

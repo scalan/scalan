@@ -25,14 +25,10 @@ trait Vertices extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl 
     def commonNbrs(v: Rep[Vertex[V,E]]): Coll[Vertex[V,E]] = ??? //mkView(graph.commonNbrs(id, v.id))
     def commonNbrsNum(v: Rep[Vertex[V,E]]): Rep[Int] = graph.commonNbrsNum(id, v.id)
   }
-  trait VertexCompanion extends TypeFamily2[Vertex] {
-    def defaultOf[T: Elem, V:Elem] = SVertex.defaultOf[T,V]
-  }
+  trait VertexCompanion extends TypeFamily2[Vertex]
 
   abstract class SVertex[V,E] (val id: Rep[Int], val graph: PG[V, E]) (implicit val eV: Elem[V], val eE: Elem[E]) extends Vertex[V,E]{}
-  trait SVertexCompanion extends ConcreteClass2[SVertex] {
-    def defaultOf[T:Elem, V:Elem] = Default.defaultVal(SVertex(-1, element[Graph[T,V]].defaultRepValue))
-  }
+  trait SVertexCompanion extends ConcreteClass2[SVertex]
 }
 
 trait VerticesDsl extends impl.VerticesAbs { self: GraphsDsl => }

@@ -23,17 +23,20 @@ trait Base extends LazyLogging { self: Scalan =>
   type DoubleRep = Rep[Double]
   type :=>[-A, +B] = PartialFunction[A, B]
 
-  class StagingException[A](message: String, val syms: Seq[Rep[_]]) extends RuntimeException(message)
+  class StagingException(message: String, cause: Throwable) extends RuntimeException(message, cause) {
+    def this(message: String) = this(message, null)
+  }
 
-  class ElemException[A](message: String)(implicit val element: Elem[A]) extends StagingException(message, Seq())
+  class ElemException[A](message: String)(implicit val element: Elem[A]) extends StagingException(message)
 
   def ??? : Nothing = ???("not implemented")
-  def ???(msg: String): Nothing = sys.error(msg)
-  def ???(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString, syms)
+  def ???(value: Any): Nothing = throw new NotImplementedError(value.toString)
+  def ???(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString)
 
   def !!! : Nothing = !!!("should not be called")
-  def !!!(msg: String): Nothing = sys.error(msg)
-  def !!!(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString, syms)
+  def !!!(msg: String): Nothing = throw new StagingException(msg)
+  def !!!(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString)
+  def !!!(msg: String, e: Throwable): Nothing = throw new StagingException(msg, e)
 
   var isDebug: Boolean = Base.config.getProperty("scalan.debug") != null
 

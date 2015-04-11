@@ -469,18 +469,6 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   }
 
   object AdjacencyGraphCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AdjacencyGraphCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type V; type E}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type V; type E}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object fromAdjacencyList {
       def unapply(d: Def[_]): Option[(Coll[V], NColl[E], NColl[Int]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vertexValues, edgeValues, links, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphCompanionElem] && method.getName == "fromAdjacencyList" =>
@@ -780,18 +768,6 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   }
 
   object IncidenceGraphCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[IncidenceGraphCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type V; type E}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type V; type E}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object fromAdjacencyMatrix {
       def unapply(d: Def[_]): Option[(Coll[V], Coll[E], Rep[Int]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vertexValues, incMatrixWithVals, vertexNum, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphCompanionElem] && method.getName == "fromAdjacencyMatrix" =>
@@ -812,9 +788,29 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
     Some((p.vertexValues, p.incMatrixWithVals, p.vertexNum))
 
   object GraphMethods {
-    // WARNING: Cannot generate matcher for method `makeEdgeFrom`: Method's return type REdge is not a Rep
+    object makeEdgeFrom {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v, iE, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "makeEdgeFrom" =>
+          Some((receiver, v, iE)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `makeEdgeFromTo`: Method's return type REdge is not a Rep
+    object makeEdgeFromTo {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v1, v2, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "makeEdgeFromTo" =>
+          Some((receiver, v1, v2)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object thisGraph {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
@@ -899,8 +895,6 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
         case _ => None
       }
     }
-
-    // WARNING: Cannot generate matcher for method `unzipValues`: Method's return type (Rep[SimpleGraph], Coll[V], NColl[E]) is not a Rep
 
     object addEdges {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[EdgeList]) forSome {type V; type E}] = d match {
@@ -1144,16 +1138,5 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   }
 
   object GraphCompanionMethods {
-    object defaultOf {
-      def unapply(d: Def[_]): Option[Unit forSome {type T; type V}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphCompanionElem] && method.getName == "defaultOf" =>
-          Some(()).asInstanceOf[Option[Unit forSome {type T; type V}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit forSome {type T; type V}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
   }
 }

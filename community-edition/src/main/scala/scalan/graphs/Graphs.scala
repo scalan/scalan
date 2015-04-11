@@ -47,8 +47,6 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
 
     def discardValues: Rep[SimpleGraph]
 
-    def unzipValues: (Rep[SimpleGraph], Coll[V], NColl[E]) = (discardValues, vertexValues, edgeValues)
-
     //def zipValues[V1: Elem](vs: Coll[V1]): PG[V1, E]
 
     //def zipValues[V1: Elem, E1: Elem](vs: Coll[V1], ess: NColl[E1]): PG[V1, E1]
@@ -100,9 +98,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     def commonNbrsNum(v1Id: Rep[Int], v2Id: Rep[Int]): Rep[Int]
   }
 
-  trait GraphCompanion extends TypeFamily2[Graph] {
-    def defaultOf[T: Elem, V:Elem] = AdjacencyGraph.defaultOf[T,V]
-  }
+  trait GraphCompanion extends TypeFamily2[Graph]
 
   abstract class AdjacencyGraph[V, E](val vertexValues: Coll[V], val edgeValues: NColl[E], val links: NColl[Int])
   (implicit val eV: Elem[V], val eE: Elem[E]) extends Graph[V,E] {
@@ -143,9 +139,6 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
   }
 
   trait AdjacencyGraphCompanion extends ConcreteClass2[AdjacencyGraph] {
-    def defaultOf[V:Elem, E:Elem] = Default.defaultVal(AdjacencyGraph(element[Collection[V]].defaultRepValue,
-                                                                      element[NestedCollection[E]].defaultRepValue,
-                                                                      element[NestedCollection[Int]].defaultRepValue))
     def fromAdjacencyList[V:Elem, E:Elem](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int]): Rep[AdjacencyGraph[V, E]] = {
       mkAdjacencyGraph(vertexValues, edgeValues, links)
     }
@@ -196,9 +189,6 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
   }
 
   trait IncidenceGraphCompanion extends ConcreteClass2[IncidenceGraph] {
-    def defaultOf[V:Elem, E:Elem] = Default.defaultVal(IncidenceGraph(element[Collection[V]].defaultRepValue,
-                                                                      element[Collection[E]].defaultRepValue,
-                                                                      element[Int].defaultRepValue))
     def fromAdjacencyMatrix[V:Elem, E:Elem](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int]) = {
       mkIncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }

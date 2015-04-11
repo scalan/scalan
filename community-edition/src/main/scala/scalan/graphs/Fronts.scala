@@ -20,8 +20,6 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
   }
 
   trait FrontCompanion {
-    def defaultOf = BaseFront.defaultOf
-
     def emptyBaseFront(len: Rep[Int]) = {
       val bits = BitSet.empty(len)
       val set = BaseCollection(SArray.empty[Int])
@@ -60,9 +58,7 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
     }
   }
 
-  trait BaseFrontCompanion extends ConcreteClass0[Front] {
-    def defaultOf = Default.defaultVal(BaseFront(element[BaseCollection[Int]].defaultRepValue, element[BitSet].defaultRepValue))
-  }
+  trait BaseFrontCompanion extends ConcreteClass0[Front]
 
   abstract class ListFront(val set: Rep[ListCollection[Int]], val bits: Rep[BitSet]) extends Front {
     //def total = bits.length
@@ -74,9 +70,7 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
     }
   }
 
-  trait ListFrontCompanion extends ConcreteClass0[Front] {
-    def defaultOf = Default.defaultVal(ListFront(element[ListCollection[Int]].defaultRepValue, element[BitSet].defaultRepValue))
-  }
+  trait ListFrontCompanion extends ConcreteClass0[Front]
 
   abstract class CollectionFront(val set: Rep[Collection[Int]], val bits: Rep[BitSet]) extends Front {
     def contains(v: Rep[Int]) = bits.contains(v)
@@ -86,11 +80,7 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
     }
   }
 
-  trait CollectionFrontCompanion extends ConcreteClass0[Front] {
-    def defaultOf = Default.defaultVal(
-      CollectionFront(element[Collection[Int]].defaultRepValue,
-                      element[BitSet].defaultRepValue))
-  }
+  trait CollectionFrontCompanion extends ConcreteClass0[Front]
 
   abstract class MapBasedFront(val mmap: Rep[MMap[Int,Unit]]) extends Front {
     def contains(v: Rep[Int]) = {
@@ -102,14 +92,9 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
     def set: Rep[Collection[Int]] = Collection(mmap.keys)
   }
 
-  trait MapBasedFrontCompanion extends ConcreteClass0[Front] {
-    def defaultOf = Default.defaultVal(MapBasedFront(element[MMap[Int, Unit]].defaultRepValue))
-  }
-
-
-
+  trait MapBasedFrontCompanion extends ConcreteClass0[Front]
 }
+
 trait FrontsDsl extends impl.FrontsAbs
 trait FrontsDslSeq extends impl.FrontsSeq
 trait FrontsDslExp extends impl.FrontsExp
-
