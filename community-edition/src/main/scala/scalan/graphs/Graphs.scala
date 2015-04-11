@@ -47,8 +47,6 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
 
     def discardValues: Rep[SimpleGraph]
 
-    def unzipValues: (Rep[SimpleGraph], Coll[V], NColl[E]) = (discardValues, vertexValues, edgeValues)
-
     //def zipValues[V1: Elem](vs: Coll[V1]): PG[V1, E]
 
     //def zipValues[V1: Elem, E1: Elem](vs: Coll[V1], ess: NColl[E1]): PG[V1, E1]

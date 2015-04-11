@@ -788,9 +788,29 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
     Some((p.vertexValues, p.incMatrixWithVals, p.vertexNum))
 
   object GraphMethods {
-    // WARNING: Cannot generate matcher for method `makeEdgeFrom`: Method's return type REdge is not a Rep
+    object makeEdgeFrom {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v, iE, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "makeEdgeFrom" =>
+          Some((receiver, v, iE)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
-    // WARNING: Cannot generate matcher for method `makeEdgeFromTo`: Method's return type REdge is not a Rep
+    object makeEdgeFromTo {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, Seq(v1, v2, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "makeEdgeFromTo" =>
+          Some((receiver, v1, v2)).asInstanceOf[Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Rep[Int], Rep[Int]) forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object thisGraph {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
@@ -875,8 +895,6 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
         case _ => None
       }
     }
-
-    // WARNING: Cannot generate matcher for method `unzipValues`: Method's return type (Rep[SimpleGraph], Coll[V], NColl[E]) is not a Rep
 
     object addEdges {
       def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Rep[EdgeList]) forSome {type V; type E}] = d match {
