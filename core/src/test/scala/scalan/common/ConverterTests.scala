@@ -12,6 +12,11 @@ class ConverterTests extends BaseTests { suite =>
     lazy val t4 = fun { (in: Rep[SliceData]) => Slice(in).convertTo[Interval].toData }
     lazy val t5 = fun { (in: Rep[CenteredData]) => Centered(in).convertTo[Interval].toData }
     lazy val t6 = fun { (in: Rep[IntervalData]) => Interval(in).convertTo[Centered].toData }
+    lazy val t7 = fun { (in: Rep[IntervalData]) =>
+      val Pair(s, l) = in
+      val res = IF (s < 0) THEN { Interval(in):RSeg } ELSE { Slice(0, l):RSeg }
+      res.length
+    }
 
 //    lazy val t7 = fun { (in: Rep[(Interval,Int)]) =>
 //      val Pair(i, n) = in
@@ -34,14 +39,19 @@ class ConverterTests extends BaseTests { suite =>
   }
 
   ignore("convertToCentered") {
-    val ctx = new ConvProgStaged("start")
+    val ctx = new ConvProgStaged("convertToCentered")
     ctx.emit("t6", ctx.t6)
   }
 
   test("convertSeq") {
-    val ctx = new ConvProgSeq("start")
+    val ctx = new ConvProgSeq("convertSeq")
     val res = ctx.t4((10,20))
     assertResult((10,30))(res)
+  }
+
+  test("converIfThenElse") {
+    val ctx = new ConvProgStaged("converIfThenElse")
+    ctx.emit("t7", ctx.t7)
   }
 
 }

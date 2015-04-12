@@ -18,18 +18,6 @@ trait Views extends Elems { self: Scalan =>
     extends EntityElem[To] {
   }
 
-  type Conv[From,To] = Converter[From,To]
-  abstract class Converter[From,To](implicit eFrom0: Elem[From]) {
-    def eFrom: Elem[From] = eFrom0
-    def eTo: Elem[To]
-    def apply(x: Rep[From]): Rep[To]
-    override def toString = s"${eFrom.name} --> ${eTo.name}"
-    override def equals(other: Any) = other match {
-      case c: Converter[_, _] => eFrom == c.eFrom && eTo == c.eTo
-      case _ => false
-    }
-  }
-
   // eFrom0 is used to avoid making eFrom implicit in subtypes
   // and support recursive types
   abstract class Iso[From, To](implicit eFrom0: Elem[From]) {
@@ -180,8 +168,8 @@ trait Views extends Elems { self: Scalan =>
   }
   def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] = FuncIso(iso1, iso2)
 
-  case class ConvertBeforeIso[A, B, C](convTo: Conv[A,B], convFrom: Conv[B,A], iso: Iso[B,C])
-    extends Iso[A,C]()(convTo.eFrom) {
+  case class ConvertBeforeIso[A, B, C](convTo: Converter[A,B], convFrom: Converter[B,A], iso: Iso[B,C])
+    extends Iso[A,C]()(convTo.eDom) {
     def eTo = iso.eTo
     def tag = eTo.tag
     def to(a: Rep[A]) = iso.to(convTo(a))
@@ -191,7 +179,7 @@ trait Views extends Elems { self: Scalan =>
   def convertBeforeIso[A, B, C](convTo: Conv[A,B], convFrom: Conv[B,A], iso: Iso[B,C]): Iso[A, C] = ConvertBeforeIso(convTo, convFrom, iso)
 
   case class ConvertAfterIso[A,B,C](iso: Iso[A,B], convTo: Conv[B,C], convFrom: Conv[C,B]) extends Iso[A,C]()(iso.eFrom) {
-    def eTo = convTo.eTo
+    def eTo = convTo.eRange
     def to(a: Rep[A]) = convTo(iso.to(a))
     def from(c: Rep[C]) = iso.from(convFrom(c))
     def tag = eTo.tag

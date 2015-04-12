@@ -3,7 +3,25 @@ package scalan.meta
 import com.typesafe.scalalogging.slf4j.StrictLogging
 
 class BoilerplateTool extends StrictLogging {
-  val coreTypeSynonyms = Map(
+  val scalanTypeSynonyms = Map(
+    "Conv" -> "Converter"
+  )
+  lazy val scalanConfig = CodegenConfig(
+    name = "scalan",
+    srcPath = "../core/src/main/scala",
+    entityFiles = List(
+      "scalan/Converters.scala"
+    ),
+    baseContextTrait = "", // not defined means not declare
+    seqContextTrait = "",
+    stagedContextTrait = "",
+    extraImports = List(
+      "scala.reflect.runtime.universe._", "scala.reflect._",
+      "scalan.common.Default"),
+    scalanTypeSynonyms
+  )
+
+  val coreTypeSynonyms = scalanTypeSynonyms ++ Map(
     "RThrow" -> "Throwable",
     "Arr" -> "Array",
     "MM" -> "MMap",
@@ -23,8 +41,9 @@ class BoilerplateTool extends StrictLogging {
     name = "core",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
-      "scalan/primitives/AbstractStrings.scala",
-      "scalan/util/Exceptions.scala"
+//      "scalan/primitives/AbstractStrings.scala",
+//      "scalan/util/Exceptions.scala",
+      "scalan/Converters.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -206,6 +225,7 @@ class BoilerplateTool extends StrictLogging {
 
   val configsMap = Map(
     "graphs" -> List(graphConfig),
+    "scalan" -> List(scalanConfig),
     "collections" -> List(collectionsConfig),
     "core" -> List(coreConfig, coreTestsConfig),
     "core-test" -> List(coreTestsConfig),

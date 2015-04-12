@@ -628,7 +628,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
 
       s"""
        |// Abs -----------------------------------
-       |trait ${module.name}Abs extends ${config.baseContextTrait} with ${module.name} {
+       |trait ${module.name}Abs extends ${module.name} ${config.baseContextTrait.opt(t => "with " + t)} {
        |  ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
        |${entityProxy(templateData)}
        |$proxyBT
@@ -783,7 +783,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
 
       s"""
        |// Seq -----------------------------------
-       |trait ${module.name}Seq extends ${module.name}Dsl with ${config.seqContextTrait} {
+       |trait ${module.name}Seq extends ${module.name}Dsl ${config.seqContextTrait.opt(t => "with " + t)} {
        |  ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
@@ -898,7 +898,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       
       s"""
        |// Exp -----------------------------------
-       |trait ${module.name}Exp extends ${module.name}Dsl with ${config.stagedContextTrait} {
+       |trait ${module.name}Exp extends ${module.name}Dsl ${config.stagedContextTrait.opt(t => "with " + t)} {
        |  ${module.selfType.opt(t => s"self: ${t.tpe}Exp =>")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
