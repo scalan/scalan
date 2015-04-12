@@ -168,24 +168,19 @@ trait Views extends Elems { self: Scalan =>
   }
   def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] = FuncIso(iso1, iso2)
 
-  case class ConvertBeforeIso[A, B, C](convTo: Converter[A,B], convFrom: Converter[B,A], iso: Iso[B,C])
-    extends Iso[A,C]()(convTo.eDom) {
-    def eTo = iso.eTo
-    def tag = eTo.tag
-    def to(a: Rep[A]) = iso.to(convTo(a))
-    def from(c: Rep[C]) = convFrom(iso.from(c))
-    def defaultRepTo = iso.defaultRepTo
-  }
-  def convertBeforeIso[A, B, C](convTo: Conv[A,B], convFrom: Conv[B,A], iso: Iso[B,C]): Iso[A, C] = ConvertBeforeIso(convTo, convFrom, iso)
-
-  case class ConvertAfterIso[A,B,C](iso: Iso[A,B], convTo: Conv[B,C], convFrom: Conv[C,B]) extends Iso[A,C]()(iso.eFrom) {
+  case class ConverterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A])
+    extends Iso[A,B]()(convTo.eDom) {
     def eTo = convTo.eRange
-    def to(a: Rep[A]) = convTo(iso.to(a))
-    def from(c: Rep[C]) = iso.from(convFrom(c))
     def tag = eTo.tag
+    def to(a: Rep[A]) = convTo(a)
+    def from(b: Rep[B]) = convFrom(b)
     def defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
   }
-  def convertAfterIso[A,B,C](iso: Iso[A,B], convTo: Conv[B,C], convFrom: Conv[C,B]): Iso[A, C] = ConvertAfterIso(iso, convTo, convFrom)
+  def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso[A,B] = ConverterIso(convTo, convFrom)
+
+  def convertBeforeIso[A, B, C](convTo: Conv[A,B], convFrom: Conv[B,A], iso: Iso[B,C]): Iso[A, C] = composeIso(iso, converterIso(convTo, convFrom))
+
+  def convertAfterIso[A,B,C](iso: Iso[A,B], convTo: Conv[B,C], convFrom: Conv[C,B]): Iso[A, C] = composeIso(converterIso(convTo, convFrom), iso)
 
   implicit class RepReifiableViewOps[T <: Reifiable[_]](x: Rep[T]) {
     def convertTo[R <: Reifiable[_]: Elem]: Rep[R] = repReifiable_convertTo[T,R](x)
