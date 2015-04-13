@@ -22,12 +22,11 @@ trait JNIBridge extends CoreBridge { self: ScalanCtxExp with MethodMappingDSL wi
       super.createManifest(el)
   }
 
-  abstract override def defTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]) = {
-    jniDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)
+  abstract override def defTransformer[T](m: LmsMirror, g: AstGraph, sym: Exp[T]) = {
+    jniDefTransformer(m, g, sym) orElse super.defTransformer(m, g, sym)
   }
 
-  def jniDefTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]): DefTransformer = {
-    val sym = e.sym
+  def jniDefTransformer[T](m: LmsMirror, g: AstGraph, sym: Exp[T]): DefTransformer = {
     val tt: DefTransformer = {
       case res@ExpCString(Def(s: Const[_])) =>
         val exp = lms.JNIStringConst(s.x)
@@ -158,7 +157,7 @@ trait JNIBridge extends CoreBridge { self: ScalanCtxExp with MethodMappingDSL wi
                 (createManifest(xe.eItem),createManifest(be.eItem)) match {
                   case (mA: Manifest[a], mB: Manifest[b]) =>
                     val _x = m.symMirror[Array[a]](x)
-                    val _f = mirrorLambdaToLmsFunc[a, b](m)(f.asInstanceOf[Lambda[a, b]])
+                    val _f = m.mirrorLambda[a, b](f.asInstanceOf[Lambda[a, b]])
                     val exp = lms.jni_map_array[a, b](_x, _f)(mA, mB)
                     m.addSym(sym, exp).addFunc(fSym, _f)
                 }
@@ -172,7 +171,7 @@ trait JNIBridge extends CoreBridge { self: ScalanCtxExp with MethodMappingDSL wi
                 (createManifest(xe.eItem),createManifest(be.eItem)) match {
                   case (mA: Manifest[a], mB: Manifest[b]) =>
                     val _x = m.symMirror[Array[a]](x)
-                    val _f = mirrorLambdaToLmsFunc[a, lms.JNIType[b]](m)(f.asInstanceOf[Lambda[a, lms.JNIType[b]]])
+                    val _f = m.mirrorLambda[a, lms.JNIType[b]](f.asInstanceOf[Lambda[a, lms.JNIType[b]]])
                     val exp = lms.jni_map_object_array[a, b](_x, _f)(mA, mB)
                     m.addSym(sym, exp).addFunc(fSym, _f)
                 }

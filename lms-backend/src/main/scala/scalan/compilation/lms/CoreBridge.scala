@@ -10,12 +10,10 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
 
   val lms: CoreLmsBackendBase
 
-  override def defTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]) =
-    coreDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)
+  override def defTransformer[T](m: LmsMirror, g: AstGraph, sym: Exp[T]) =
+    coreDefTransformer(m, g, sym) orElse super.defTransformer(m, g, sym)
 
-  def coreDefTransformer[T](m: LmsMirror, fromGraph: AstGraph, tp: TableEntry[T]): DefTransformer = {
-    val sym = tp.sym
-
+  def coreDefTransformer[T](m: LmsMirror, fromGraph: AstGraph, sym: Exp[T]): DefTransformer = {
     val tt: DefTransformer = {
 
       case _: CompanionBase[_] =>
@@ -36,7 +34,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
       case lam: Lambda[a, b] =>
         val mA = createManifest(lam.x.elem).asInstanceOf[Manifest[a]]
         val mB = createManifest(lam.y.elem).asInstanceOf[Manifest[b]]
-        val f = mirrorLambdaToLmsFunc[a, b](m)(lam)
+        val f = m.mirrorLambda[a, b](lam)
         val fun = lms.fun(f)(mA, mB)
         m.addFuncAndSym(sym, f, fun)
 
@@ -264,8 +262,8 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
 
             fromGraph.branches.ifBranches.get(sym) match {
               case Some(branches) =>
-                def thenBody = mirrorBlockToLms(m)(branches.thenBody, iftrue)
-                def elseBody = mirrorBlockToLms(m)(branches.elseBody, iffalse)
+                def thenBody = m.mirrorBlock(branches.thenBody, iftrue)
+                def elseBody = m.mirrorBlock(branches.elseBody, iffalse)
                 val exp = lms.ifThenElse(cond_, thenBody, elseBody)(mA)
                 m.addSym(sym, exp)
               case _ =>
@@ -279,8 +277,8 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
       case loop@LoopUntil(state, stepSym@Def(step: Lambda[_, _]), condSym@Def(cond: Lambda[_, _])) => {
         createManifest(loop.selfType) match {
           case (mA: Manifest[a]) => {
-            val cond_ = mirrorLambdaToLmsFunc[a, Boolean](m)(cond.asInstanceOf[Lambda[a, Boolean]])
-            val step_ = mirrorLambdaToLmsFunc[a, a](m)(step.asInstanceOf[Lambda[a, a]])
+            val cond_ = m.mirrorLambda[a, Boolean](cond.asInstanceOf[Lambda[a, Boolean]])
+            val step_ = m.mirrorLambda[a, a](step.asInstanceOf[Lambda[a, a]])
             val state_ = m.symMirror[a](state)
             val exp = lms.loopUntil[a](state_, cond_, step_)(mA)
             m.addSym(sym, exp).addFunc(condSym, cond_).addFunc(stepSym, step_)
@@ -360,7 +358,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             (createManifest(from.eItem), createManifest(to.eItem)) match {
               case (mA: Manifest[a], mB: Manifest[b]) => {
                 val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[a]](buf)
-                val f_ = mirrorLambdaToLmsFunc[a, b](m)(lambda.asInstanceOf[Lambda[a, b]])
+                val f_ = m.mirrorLambda[a, b](lambda.asInstanceOf[Lambda[a, b]])
                 val exp = lms.arrayBufferMap(b_, f_)(mA, mB)
                 m.addSym(sym, exp).addFunc(lambdaSym, f_)
               }
@@ -481,7 +479,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             createManifest(elem.eItem) match {
               case mT: Manifest[t] => {
                 val n = m.symMirror[Int](count)
-                val f = mirrorLambdaToLmsFunc[Int, t](m)(lambda.asInstanceOf[Lambda[Int, t]])
+                val f = m.mirrorLambda[Int, t](lambda.asInstanceOf[Lambda[Int, t]])
                 val exp = lms.arrayBufferUsingFunc(n, f)(mT)
                 m.addSym(sym, exp).addFunc(lambdaSym, f)
               }
@@ -538,7 +536,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             (createManifest(elem.eKey), createManifest(elem.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val n = m.symMirror[Int](count)
-                val f = mirrorLambdaToLmsFunc[Int, (k, v)](m)(lambda.asInstanceOf[Lambda[Int, (k, v)]])
+                val f = m.mirrorLambda[Int, (k, v)](lambda.asInstanceOf[Lambda[Int, (k, v)]])
                 val exp = lms.mapUsingFunc[k, v](n, f)(mK, mV)
                 m.addSym(sym, exp).addFunc(lambdaSym, f)
               }
@@ -604,7 +602,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             (createManifest(in.eKey), createManifest(in.eValue), createManifest(out.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v], mT: Manifest[t]) => {
                 val map_ = m.symMirror[HashMap[k, v]](map)
-                val f = mirrorLambdaToLmsFunc[v, t](m)(lambda.asInstanceOf[Lambda[v, t]])
+                val f = m.mirrorLambda[v, t](lambda.asInstanceOf[Lambda[v, t]])
                 val exp = lms.mapTransformValues[k, v, t](map_, f)(mK, mV, mT)
                 m.addSym(sym, exp).addFunc(lamSym, f)
               }
@@ -619,7 +617,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val left_ = m.symMirror[HashMap[k, v]](left)
                 val right_ = m.symMirror[HashMap[k, v]](right)
-                val reduce_ = mirrorLambdaToLmsFunc[(v, v), v](m)(reduce.asInstanceOf[Lambda[(v, v), v]])
+                val reduce_ = m.mirrorLambda[(v, v), v](reduce.asInstanceOf[Lambda[(v, v), v]])
                 val exp = lms.mapReduce[k, v](left_, right_, reduce_)(mK, mV)
                 m.addSym(sym, exp).addFunc(reduceSym, reduce_)
               }
@@ -676,8 +674,8 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
               case (mT: Manifest[t], mK: Manifest[k], mV: Manifest[v]) => {
                 val map_ = m.symMirror[HashMap[k, v]](map)
                 val key_ = m.symMirror[k](key)
-                val exists_ = mirrorLambdaToLmsFunc[v, t](m)(exists.asInstanceOf[Lambda[v, t]])
-                val otherwise_ = mirrorLambdaToLmsFunc[Unit, t](m)(otherwise.asInstanceOf[Lambda[Unit, t]])
+                val exists_ = m.mirrorLambda[v, t](exists.asInstanceOf[Lambda[v, t]])
+                val otherwise_ = m.mirrorLambda[Unit, t](otherwise.asInstanceOf[Lambda[Unit, t]])
                 val exp = lms.mapApplyIf[k, v, t](map_, key_, exists_, otherwise_)(mK, mV, mT)
                 m.addSym(sym, exp).addFunc(s1, exists_).addFunc(s2, otherwise_)
               }
@@ -804,7 +802,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           case (el: ArrayElem[a]) => {
             (createManifest(el.eItem), createManifest(by.eB)) match {
               case (mA: Manifest[a], mB: Manifest[b]) =>
-                val by_ = mirrorLambdaToLmsFunc[a, b](m)(by.asInstanceOf[Lambda[a, b]])
+                val by_ = m.mirrorLambda[a, b](by.asInstanceOf[Lambda[a, b]])
                 val arg_ = m.symMirror[Array[a]](arg)
                 val exp = lms.arraySortBy[a, b](arg_, by_)(mA, mB)
                 m.addSym(sym, exp).addFunc(lambdaSym, by_)
@@ -817,7 +815,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           case (ae: ArrayElem[a], me: MMapElem[k, v]) => {
             (createManifest(ae.eItem), createManifest(me.eKey)) match {
               case (mA: Manifest[a], mK: Manifest[k]) => {
-                val by_ = mirrorLambdaToLmsFunc[a, k](m)(by.asInstanceOf[Lambda[a, k]])
+                val by_ = m.mirrorLambda[a, k](by.asInstanceOf[Lambda[a, k]])
                 val arg_ = m.symMirror[Array[a]](arg)
                 val exp = lms.arrayGroupBy[a, k](arg_, by_)(mA, mK)
                 m.addSym(sym, exp).addFunc(lambdaSym, by_)
@@ -881,7 +879,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           case (el: ArrayElem[_], el1: ArrayElem[_]) =>
             (createManifest(el.eItem), createManifest(el1.eItem)) match {
               case (mA: Manifest[a], mB: Manifest[b]) =>
-                val f = mirrorLambdaToLmsFunc[a, b](m)(lam.asInstanceOf[Lambda[a, b]]) //(mA, mB)
+                val f = m.mirrorLambda[a, b](lam.asInstanceOf[Lambda[a, b]]) //(mA, mB)
               val lmsSource = m.symMirror[Array[a]](source)
                 val exp = lms.mapArray[a, b](lmsSource, f)(mA, mB)
                 m.addSym(sym, exp).addFunc(lambdaSym, f)
@@ -893,7 +891,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           case (el: ArrayElem[_], el1: ArrayElem[_]) =>
             (createManifest(el.eItem), createManifest(el1.eItem)) match {
               case (mA: Manifest[a], mB: Manifest[b]) =>
-                val f = mirrorLambdaToLmsFunc[a, Array[b]](m)(lam.asInstanceOf[Lambda[a, Array[b]]]) //(mA, mB)
+                val f = m.mirrorLambda[a, Array[b]](lam.asInstanceOf[Lambda[a, Array[b]]]) //(mA, mB)
                 val lmsSource = m.symMirror[Array[a]](source)
                 val exp = lms.flatMapArray[a, b](lmsSource, f)(mA, mB)
                 m.addSym(sym, exp).addFunc(lambdaSym, f)
@@ -906,7 +904,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           case el: ArrayElem[_] =>
             createManifest(el.eItem) match {
               case mA: Manifest[a] =>
-                val f = mirrorLambdaToLmsFunc[a, Boolean](m)(lam.asInstanceOf[Lambda[a, Boolean]]) //(mA, mB)
+                val f = m.mirrorLambda[a, Boolean](lam.asInstanceOf[Lambda[a, Boolean]]) //(mA, mB)
                 val lmsSource = m.symMirror[Array[a]](source)
                 val exp = lms.filterArray[a](lmsSource, f)(mA)
                 m.addSym(sym, exp).addFunc(lambdaSym, f)
@@ -918,7 +916,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           case (el: ArrayElem[_]) => {
             (createManifest(el.eItem)) match {
               case (mA: Manifest[a]) =>
-                val f = mirrorLambdaToLmsFunc[a, Boolean](m)(lam.asInstanceOf[Lambda[a, Boolean]]) //(mA, mB)
+                val f = m.mirrorLambda[a, Boolean](lam.asInstanceOf[Lambda[a, Boolean]]) //(mA, mB)
                 val lmsSource = m.symMirror[Array[a]](source)
                 val exp = lms.findArray[a](lmsSource, f)(mA)
                 m.addSym(sym, exp).addFunc(lambdaSym, f)
@@ -931,7 +929,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           case (el: ArrayElem[_]) =>
             (createManifest(el.eItem)) match {
               case (mA: Manifest[a]) =>
-                val f = mirrorLambdaToLmsFunc[a, Boolean](m)(lam.asInstanceOf[Lambda[a, Boolean]]) //(mA, mB)
+                val f = m.mirrorLambda[a, Boolean](lam.asInstanceOf[Lambda[a, Boolean]]) //(mA, mB)
                 val lmsSource = m.symMirror[Array[a]](source)
                 val exp = lms.countArray[a](lmsSource, f)(mA)
                 m.addSym(sym, exp).addFunc(lambdaSym, f)
@@ -944,8 +942,8 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             (createManifest(me.eKey), createManifest(me.eValue)) match {
               case (mK: Manifest[k], mV: Manifest[v]) => {
                 val n_ = m.symMirror[Int](range.n)
-                val map_ = mirrorLambdaToLmsFunc[Int, (k, v)](m)(map.asInstanceOf[Lambda[Int, (k, v)]])
-                val reduce_ = mirrorLambdaToLmsFunc[(v, v), v](m)(reduce.asInstanceOf[Lambda[(v, v), v]])
+                val map_ = m.mirrorLambda[Int, (k, v)](map.asInstanceOf[Lambda[Int, (k, v)]])
+                val reduce_ = m.mirrorLambda[(v, v), v](reduce.asInstanceOf[Lambda[(v, v), v]])
                 val exp = lms.rangeMapReduce(n_, map_, reduce_)(mK, mV)
                 m.addSym(sym, exp).addFunc(mapSym, map_).addFunc(reduceSym, reduce_)
               }
@@ -960,10 +958,10 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             (createManifest(ma), createManifest(me.eKey), createManifest(me.eValue)) match {
               case (mA: Manifest[a], mK: Manifest[k], mV: Manifest[v]) => {
                 val n_ = m.symMirror[Int](range.n)
-                val map1_ = mirrorLambdaToLmsFunc[Int, a](m)(map1.asInstanceOf[Lambda[Int, a]])
-                val filter_ = mirrorLambdaToLmsFunc[a, Boolean](m)(filter.asInstanceOf[Lambda[a, Boolean]])
-                val map2_ = mirrorLambdaToLmsFunc[a, (k, v)](m)(map2.asInstanceOf[Lambda[a, (k, v)]])
-                val reduce_ = mirrorLambdaToLmsFunc[(v, v), v](m)(reduce.asInstanceOf[Lambda[(v, v), v]])
+                val map1_ = m.mirrorLambda[Int, a](map1.asInstanceOf[Lambda[Int, a]])
+                val filter_ = m.mirrorLambda[a, Boolean](filter.asInstanceOf[Lambda[a, Boolean]])
+                val map2_ = m.mirrorLambda[a, (k, v)](map2.asInstanceOf[Lambda[a, (k, v)]])
+                val reduce_ = m.mirrorLambda[(v, v), v](reduce.asInstanceOf[Lambda[(v, v), v]])
                 val exp = lms.rangeFilterMapReduce(n_, map1_, filter_, map2_, reduce_)(mA, mK, mV)
                 m.addSym(sym, exp).addFunc(map1Sym, map1_).addFunc(map2Sym, map2_).
                   addFunc(filterSym, filter_).addFunc(reduceSym, reduce_)
@@ -978,9 +976,9 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             (createManifest(ae.eItem), createManifest(me.eKey), createManifest(me.eValue)) match {
               case (mA: Manifest[a], mK: Manifest[k], mV: Manifest[v]) => {
                 val source_ = m.symMirror[Array[a]](source)
-                val filter_ = mirrorLambdaToLmsFunc[a, Boolean](m)(filter.asInstanceOf[Lambda[a, Boolean]])
-                val map_ = mirrorLambdaToLmsFunc[a, (k, v)](m)(map.asInstanceOf[Lambda[a, (k, v)]])
-                val reduce_ = mirrorLambdaToLmsFunc[(v, v), v](m)(reduce.asInstanceOf[Lambda[(v, v), v]])
+                val filter_ = m.mirrorLambda[a, Boolean](filter.asInstanceOf[Lambda[a, Boolean]])
+                val map_ = m.mirrorLambda[a, (k, v)](map.asInstanceOf[Lambda[a, (k, v)]])
+                val reduce_ = m.mirrorLambda[(v, v), v](reduce.asInstanceOf[Lambda[(v, v), v]])
                 val exp = lms.filterMapReduce(source_, filter_, map_, reduce_)(mA, mK, mV)
                 m.addSym(sym, exp).addFunc(mapSym, map_).
                   addFunc(filterSym, filter_).addFunc(reduceSym, reduce_)
@@ -995,8 +993,8 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             (createManifest(ae.eItem), createManifest(me.eKey), createManifest(me.eValue)) match {
               case (mA: Manifest[a], mK: Manifest[k], mV: Manifest[v]) => {
                 val source_ = m.symMirror[Array[a]](source)
-                val map_ = mirrorLambdaToLmsFunc[a, (k, v)](m)(map.asInstanceOf[Lambda[a, (k, v)]])
-                val reduce_ = mirrorLambdaToLmsFunc[(v, v), v](m)(reduce.asInstanceOf[Lambda[(v, v), v]])
+                val map_ = m.mirrorLambda[a, (k, v)](map.asInstanceOf[Lambda[a, (k, v)]])
+                val reduce_ = m.mirrorLambda[(v, v), v](reduce.asInstanceOf[Lambda[(v, v), v]])
                 val exp = lms.arrayMapReduce(source_, map_, reduce_)(mA, mK, mV)
                 m.addSym(sym, exp).addFunc(mapSym, map_).addFunc(reduceSym, reduce_)
               }
@@ -1011,7 +1009,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
               case (mS: Manifest[s], mA: Manifest[a]) => {
                 val src = m.symMirror[Array[a]](source)
                 val state = m.symMirror[s](init)
-                val func = mirrorLambdaToLmsFunc[(s, a), s](m)(step.asInstanceOf[Lambda[(s, a), s]])
+                val func = m.mirrorLambda[(s, a), s](step.asInstanceOf[Lambda[(s, a), s]])
                 val exp = lms.foldArray[a, s](src, state, func)(mA, mS)
                 m.addSym(sym, exp).addFunc(stepSym, func)
               }
@@ -1025,7 +1023,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             (createManifest(e), createManifest(ae.eItem)) match {
               case (mS: Manifest[s], mA: Manifest[a]) => {
                 val src = m.symMirror[Array[a]](source)
-                val func = mirrorLambdaToLmsFunc[a, s](m)(f.asInstanceOf[Lambda[a, s]])
+                val func = m.mirrorLambda[a, s](f.asInstanceOf[Lambda[a, s]])
                 val exp = lms.sumArrayBy[a, s](src, func)(mA, mS, n.asInstanceOf[Numeric[s]])
                 m.addSym(sym, exp).addFunc(lamSym, func)
               }
@@ -1039,7 +1037,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             createManifest(el) match {
               case (mB: Manifest[b]) => {
                 val n = m.symMirror[Int](nJobs)
-                val func = mirrorLambdaToLmsFunc[Int, b](m)(f.asInstanceOf[Lambda[Int, b]])
+                val func = m.mirrorLambda[Int, b](f.asInstanceOf[Lambda[Int, b]])
                 val exp = lms.parallelExecute[b](n, func)(mB)
                 m.addSym(sym, exp).addFunc(lamSym, func)
               }
@@ -1073,7 +1071,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
                     monoid.append match {
                       case opSym@Def(lambda: Lambda[_, _]) => {
                         val zero = m.symMirror[a](monoid.zero)
-                        val op = mirrorLambdaToLmsFunc[(a, a), a](m)(lambda.asInstanceOf[Lambda[(a, a), a]])
+                        val op = m.mirrorLambda[(a, a), a](lambda.asInstanceOf[Lambda[(a, a), a]])
                         val exp = lms.reduceArray[a](src, zero, op)(mA)
                         m.addSym(sym, exp).addFunc(opSym, op)
                       }
@@ -1099,7 +1097,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
                     monoid.append match {
                       case opSym@Def(lambda: Lambda[_, _]) => {
                         val zero = m.symMirror[a](monoid.zero)
-                        val op = mirrorLambdaToLmsFunc[(a, a), a](m)(lambda.asInstanceOf[Lambda[(a, a), a]])
+                        val op = m.mirrorLambda[(a, a), a](lambda.asInstanceOf[Lambda[(a, a), a]])
                         val exp = lms.scanArray[a](src, zero, op)(mA)
                         m.addSym(sym, exp).addFunc(opSym, op)
                       }
@@ -1161,7 +1159,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
       case lr@ListMap(list, lamSym@Def(lam: Lambda[_, _])) =>
         (createManifest(list.elem.eItem), createManifest(lam.eB)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
-          val lambdaF = mirrorLambdaToLmsFunc[a, b](m)(lam.asInstanceOf[Lambda[a, b]])
+          val lambdaF = m.mirrorLambda[a, b](lam.asInstanceOf[Lambda[a, b]])
           val exp = lms.listMap[a, b](m.symMirror[List[a]](list), lambdaF)(mA, mB)
           m.addSym(sym, exp).addFunc(lamSym, lambdaF)
       }
@@ -1171,7 +1169,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           case el: ListElem[_] =>
             (createManifest(list.elem.eItem), createManifest(el.eItem)) match {
               case (mA: Manifest[a], mB: Manifest[b]) =>
-                val lambdaF = mirrorLambdaToLmsFunc[a, List[b]](m)(lam.asInstanceOf[Lambda[a, List[b]]])
+                val lambdaF = m.mirrorLambda[a, List[b]](lam.asInstanceOf[Lambda[a, List[b]]])
                 val exp = lms.listFlatMap[a, b](m.symMirror[List[a]](list), lambdaF)(mA, mB)
                 m.addSym(sym, exp).addFunc(lamSym, lambdaF)
           }
@@ -1187,7 +1185,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
       case lr@ListFilter(list, lamSym @ Def(lam: Lambda[_, _])) =>
         createManifest(list.elem.eItem) match {
           case mA: Manifest[a] =>
-            val lambdaF = mirrorLambdaToLmsFunc[a, Boolean](m)(lam.asInstanceOf[Lambda[a, Boolean]])
+            val lambdaF = m.mirrorLambda[a, Boolean](lam.asInstanceOf[Lambda[a, Boolean]])
             val exp = lms.listFilter[a](m.symMirror[List[a]](list), lambdaF)(mA)
             m.addSym(sym, exp).addFunc(lamSym, lambdaF)
         }
@@ -1265,7 +1263,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
               case opSym@Def(lambda: Lambda[_, _]) =>
                 val zero = monoid.zero
                 val lmsZero = m.symMirror[a](zero)
-                val op = mirrorLambdaToLmsFunc[(a, a), a](m)(lambda.asInstanceOf[Lambda[(a, a), a]])
+                val op = m.mirrorLambda[(a, a), a](lambda.asInstanceOf[Lambda[(a, a), a]])
                 val exp = lms.reduceList[a](src, lmsZero, op)(mA)
                 m.addSym(zero, lmsZero).addSym(sym, exp).addFunc(opSym, op)
             }

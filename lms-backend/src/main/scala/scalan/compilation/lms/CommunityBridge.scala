@@ -7,11 +7,10 @@ trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with Comm
 
   val lms: CommunityLmsBackendBase
 
-  abstract override def defTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]) =
-    linalgDefTransformer(m, g, e) orElse super.defTransformer(m, g, e)
+  abstract override def defTransformer[T](m: LmsMirror, g: AstGraph, sym: Exp[T]) =
+    linalgDefTransformer(m, g, sym) orElse super.defTransformer(m, g, sym)
 
-  def linalgDefTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]): DefTransformer = {
-    val sym = e.sym
+  def linalgDefTransformer[T](m: LmsMirror, g: AstGraph, sym: Exp[T]): DefTransformer = {
     val tt: DefTransformer = {
       case DotSparse(i1, v1, i2, v2) =>
         v1.elem match {
