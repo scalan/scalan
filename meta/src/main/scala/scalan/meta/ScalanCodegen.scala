@@ -535,10 +535,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |  class ${className}Iso${typesDecl}${implicitArgs}
         |    extends Iso[${className}Data${typesUse}, $className${typesUse}]$maybeElemHack {
         |    override def from(p: Rep[$className${typesUse}]) =
-        |      unmk${className}(p) match {
-        |        case Some((${fields.opt(fields => fields.rep(), "unit")})) => ${pairify(fields)}
-        |        case None => !!!
-        |      }
+        |      ${fields.map(fields => "p." + fields).opt(s => if (s.toList.length > 1) s"(${s.rep()})" else s.rep(), "")}
         |    override def to(p: Rep[${dataType(fieldTypes)}]) = {
         |      val ${pairify(fields)} = p
         |      $className(${fields.rep()})
@@ -563,8 +560,10 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |      iso$className${useImplicits}.to(p)""".stripAndTrim)}
         |    def apply${typesDecl}(${fieldsWithType.rep()})${implicitArgs}: Rep[$className${typesUse}] =
         |      mk$className(${fields.rep()})
-        |    def unapply${typesWithElems}(p: Rep[$className${typesUse}]) = unmk$className(p)
         |    ${extractSqlQueries(c.body)}
+        |  }
+        |  object ${className}Matcher {
+        |    def unapply${typesWithElems}(p: Rep[$entityName${typesUse}]) = unmk$className(p)
         |  }
         |  def $className: Rep[${className}CompanionAbs]
         |  implicit def proxy${className}Companion(p: Rep[${className}CompanionAbs]): ${className}CompanionAbs = {
@@ -590,7 +589,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |
         |  // 6) smart constructor and deconstructor
         |  def mk$className${typesDecl}(${fieldsWithType.rep()})${implicitArgs}: Rep[$className${typesUse}]
-        |  def unmk$className${typesWithElems}(p: Rep[$className${typesUse}]): Option[(${fieldTypes.opt(fieldTypes => fieldTypes.rep(t => s"Rep[$t]"), "Rep[Unit]")})]
+        |  def unmk$className${typesWithElems}(p: Rep[$entityName${typesUse}]): Option[(${fieldTypes.opt(fieldTypes => fieldTypes.rep(t => s"Rep[$t]"), "Rep[Unit]")})]
         |""".stripAndTrim
       }
 
@@ -613,7 +612,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |${subEntities.mkString("\n\n")}
        |
        |${concreteClasses.mkString("\n\n")}
-       |${entityMatcherAbs(module)}
        |}
        |""".stripAndTrim
     }
@@ -651,8 +649,11 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
          |  def mk$className${typesDecl}
          |      (${fieldsWithType.rep()})$implicitArgsDecl: Rep[$className${typesUse}] =
          |      new Seq$className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
-         |  def unmk$className${typesWithElems}(p: Rep[$className${typesUse}]) =
-         |    Some((${fields.rep(f => s"p.$f")}))
+         |  def unmk$className${typesWithElems}(p: Rep[$entityName${typesUse}]) = p match {
+         |    case p: $className${typesUse} @unchecked =>
+         |      Some((${fields.rep(f => s"p.$f")}))
+         |    case _ => None
+         |  }
          |""".stripAndTrim
 
       s"""$userTypeDefs\n\n$constrDefs"""
@@ -691,8 +692,12 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
          |  def mk$className${typesDecl}
          |    (${fieldsWithType.rep()})$implicitArgsDecl: Rep[$className${typesUse}] =
          |    new Exp$className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
-         |  def unmk$className${typesWithElems}(p: Rep[$className${typesUse}]) =
-         |    Some((${fields.rep(f => s"p.$f")}))
+         |  def unmk$className${typesWithElems}(p: Rep[$entityName${typesUse}]) = p.elem.asInstanceOf[Elem[_]] match {
+         |    case _: ${className}Elem${typesUse} @unchecked =>
+         |      Some((${fields.rep(f => s"p.$f")}))
+         |    case _ =>
+         |      None
+         |  }
          |""".stripAndTrim
 
       s"""$userTypeNodeDefs\n\n$constrDefs"""
@@ -748,8 +753,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |${classesSeq.mkString("\n\n")}
        |
        |$baseTypeToWrapperConvertionSeq
-       |
-       |${entityMatcherSeq(module)}
        |}
        |""".stripAndTrim
     }
@@ -864,7 +867,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |
        |${methodExtractorsString(e)}
        |${emitRewriteDef(td)}
-       |${entityMatcherExp(module)}
        |}
        |""".stripAndTrim
     }
@@ -961,7 +963,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
                   } else {
                     overloadId match {
                       case None =>
-                        "&& method.getAnnotation(classOf[scalan.OverloadId]) == null"
+                        " && method.getAnnotation(classOf[scalan.OverloadId]) == null"
                       case Some(id) =>
                         s""" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "$id" }"""
                     }
