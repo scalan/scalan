@@ -53,26 +53,38 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     object InternalFunctions {
 
       def whitespaces(title: String) = scala.Array.fill(title.length + 2)(" ").reduce(_ + _)
-      def returnType(entity: STraitDef) = entity.tpeArgs.getTpeArgDecls.last.toString + "1"
+      def returnType(entity: STraitDef) = //entity.tpeArgs.getTpeArgDecls.last.toString + "1"
+      {
+        val types = entity.tpeArgs.getTpeArgDecls
+        if (types == Nil) "R" else types.last.toString + "1"
+      }
       def typesNoBraces(entity: STraitDef) = entity.tpeArgs.getTpeArgDecls.opt(tyArgs => s"${tyArgs.rep(t => t)}")
-      def title(entity: STraitDef) = s"def match${entity.name}[${typesNoBraces(entity)}, ${returnType(entity)}]"
+      def genericSignature(entity: STraitDef) = {
+        val types = entity.tpeArgs.getTpeArgDecls
+        if (types == Nil) "[R]" else s"[${typesNoBraces(entity)}, ${returnType(entity)}]"
+      }
+      def typesBraces(entity: STraitDef) = {
+        val types = entity.tpeArgs.getTpeArgDecls
+        if (types == Nil) "" else types.opt(tyArgs => s"[${tyArgs.rep(t => t)}]")
+      }
+      def title(entity: STraitDef) = s"def match${entity.name}${genericSignature(entity)}"
       def lambdas(module: SEntityModuleDef, whitespace: String) = {
         val entity = module.entityOps
         val classes = module.concreteSClasses
-        val types = typesNoBraces(entity)
+        val types = typesBraces(entity)
         val retType = returnType(entity)
         (1.to(classes.length).toList zip classes).map { case Pair(i, c) =>
-          s"\n$whitespace(f$i: Rep[${c.name}[$types]] => Rep[$retType])"
-        }.opt(specs => s"${specs.rep(t => t, s"")}") + s"\n$whitespace(fb: Rep[${entity.name}[$types]] => Rep[$retType])"
+          s"\n$whitespace(f$i: Rep[${c.name}$types] => Rep[$retType])"
+        }.opt(specs => s"${specs.rep(t => t, s"")}") + s"\n$whitespace(fb: Rep[${entity.name}$types] => Rep[$retType])"
       }
       def fallback = s"      case _ => fb(x)"
       def declaration(module: SEntityModuleDef) = {
         val entity = module.entityOps
         val name = entity.name
-        val types = typesNoBraces(entity)
+        val types = typesBraces(entity)
         val titleDef = title(module.entityOps)
         s"""\n
-          |  ${title(entity)}(x: Rep[$name[$types]])${lambdas(module, whitespaces(titleDef))}: Rep[${returnType(entity)}]
+          |  ${title(entity)}(x: Rep[$name$types])${lambdas(module, whitespaces(titleDef))}: Rep[${returnType(entity)}]
           |""".stripAndTrim
       }
     }
@@ -83,8 +95,12 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     }
     def entityMatcherSeq(module: SEntityModuleDef) = {
       val classes = module.concreteSClasses
+      val anyType = if (module.entityOps.tpeArgs == Nil) "" else if (module.entityOps.tpeArgs.length == 1) "[_]" else {
+        "[_" + 2.to(module.entityOps.tpeArgs.length).map(_ => ", _").reduce(_ + _) + "]"
+      }
+        //"[_]"
       val cases = (1.to(classes.length).toList zip classes).map { case Pair(i, c) =>
-        s"      case x$i: ${c.name}[_] => f$i(x$i)"
+        s"      case x$i: ${c.name}$anyType => f$i(x$i)"
       }.opt(specs => s"${specs.rep(t => t, s"\n")}")
       val body = s""" = {
         |    x match {
@@ -99,8 +115,11 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     def entityMatcherExp(module: SEntityModuleDef) = {
       val classes = module.concreteSClasses
       val types = module.entityOps.tpeArgs.getTpeArgDeclString
+      val anyType = if (module.entityOps.tpeArgs == Nil) "" else if (module.entityOps.tpeArgs.length == 1) "[_]" else {
+        "[_" + 2.to(module.entityOps.tpeArgs.length).map(_ => ", _").reduce(_ + _) + "]"
+      }
       val cases = (1.to(classes.length).toList zip classes).map { case Pair(i, c) =>
-        s"      case _: ${c.name}Elem[_] => f$i(x.asRep[${c.name}$types])"
+        s"      case _: ${c.name}Elem$anyType => f$i(x.asRep[${c.name}$types])"
       }.opt(specs => s"${specs.rep(t => t, s"\n")}")
       val body = s""" = {
         |    x.elem.asInstanceOf[Elem[_]] match {
