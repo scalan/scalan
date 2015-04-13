@@ -1,3 +1,4 @@
+
 package scalan.collections
 package impl
 
@@ -10,12 +11,14 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait HashSetsAbs extends Scalan with HashSets {
+trait HashSetsAbs extends HashSets with Scalan {
   self: ScalanCommunityDsl =>
+
   // single proxy for each type family
   implicit def proxySHashSet[A](p: Rep[SHashSet[A]]): SHashSet[A] = {
     proxyOps[SHashSet[A]](p)(classTag[SHashSet[A]])
   }
+
   // BaseTypeEx proxy
   //implicit def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
   //  proxyOps[SHashSet[A]](p.asRep[SHashSet[A]])
@@ -23,6 +26,7 @@ trait HashSetsAbs extends Scalan with HashSets {
   implicit def unwrapValueOfSHashSet[A](w: Rep[SHashSet[A]]): Rep[HashSet[A]] = w.wrappedValueOfBaseType
 
   implicit def defaultSHashSetElem[A:Elem]: Elem[SHashSet[A]] = element[SHashSetImpl[A]].asElem[SHashSet[A]]
+
   implicit def hashSetElement[A:Elem]: Elem[HashSet[A]]
 
   implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, SHashSet[A]] = elem.asInstanceOf[SHashSetElem[A, SHashSet[A]]]
@@ -37,6 +41,7 @@ trait HashSetsAbs extends Scalan with HashSets {
     def to(x: Rep[SHashSet[A]]) = x.map(iso.to _)
     lazy val defaultRepTo = Default.defaultVal(SHashSet.empty[B])
   }
+
   class SHashSetElem[A, To <: SHashSet[A]](implicit val eA: Elem[A])
     extends EntityElem1[A, To, SHashSet](eA,container[SHashSet]) {
     override def isEntityType = true
@@ -95,10 +100,10 @@ trait HashSetsAbs extends Scalan with HashSets {
   // elem for concrete class
   class SHashSetImplElem[A](val iso: Iso[SHashSetImplData[A], SHashSetImpl[A]])(implicit eA: Elem[A])
     extends SHashSetElem[A, SHashSetImpl[A]]
-    with ViewElem1[A, SHashSetImplData[A], SHashSetImpl[A], SHashSet] {
+    with ConcreteElem1[A, SHashSetImplData[A], SHashSetImpl[A], SHashSet] {
     override def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ViewElem1].getDefaultRep
-    override lazy val tag = super[ViewElem1].tag
+    override def getDefaultRep = super[ConcreteElem1].getDefaultRep
+    override lazy val tag = super[ConcreteElem1].tag
   }
 
   // state representation type
@@ -166,11 +171,11 @@ trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
       SHashSetImpl(HashSet.empty[A])
   }
 
-    // override proxy if we deal with BaseTypeEx
+  // override proxy if we deal with BaseTypeEx
   //override def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
   //  proxyOpsEx[HashSet[A],SHashSet[A], SeqSHashSetImpl[A]](p, bt => SeqSHashSetImpl(bt))
 
-    implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] = new SeqBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
+  implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] = new SeqBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
 
   case class SeqSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])
@@ -217,7 +222,9 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
       case _ => false
     }
   }
+
   implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
+
   case class ExpSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])
       (implicit eA: Elem[A])

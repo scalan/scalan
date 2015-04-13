@@ -31,6 +31,10 @@ trait Views extends Elems { self: Scalan =>
       }
     }
   }
+  trait ConcreteElem1[A, TData, TClass, C[_]]
+    extends EntityElem1[A, TClass, C]
+       with ViewElem1[A, TData, TClass, C] { eClass =>
+  }
 
   // eFrom0 is used to avoid making eFrom implicit in subtypes
   // and support recursive types

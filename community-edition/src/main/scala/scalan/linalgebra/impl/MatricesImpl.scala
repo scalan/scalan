@@ -1,3 +1,4 @@
+
 package scalan.linalgebra
 package impl
 
@@ -8,8 +9,9 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait MatricesAbs extends Scalan with Matrices {
+trait MatricesAbs extends Matrices with Scalan {
   self: ScalanCommunityDsl =>
+
   // single proxy for each type family
   implicit def proxyAbstractMatrix[T](p: Rep[AbstractMatrix[T]]): AbstractMatrix[T] = {
     proxyOps[AbstractMatrix[T]](p)(classTag[AbstractMatrix[T]])
@@ -50,10 +52,10 @@ trait MatricesAbs extends Scalan with Matrices {
   // elem for concrete class
   class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit elem: Elem[T])
     extends AbstractMatrixElem[T, DenseFlatMatrix[T]]
-    with ViewElem[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
+    with ConcreteElem[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = DenseFlatMatrix(x.rmValues, x.numColumns)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -78,6 +80,7 @@ trait MatricesAbs extends Scalan with Matrices {
   // 4) constructor and deconstructor
   abstract class DenseFlatMatrixCompanionAbs extends CompanionBase[DenseFlatMatrixCompanionAbs] with DenseFlatMatrixCompanion {
     override def toString = "DenseFlatMatrix"
+
     def apply[T](p: Rep[DenseFlatMatrixData[T]])(implicit elem: Elem[T]): Rep[DenseFlatMatrix[T]] =
       isoDenseFlatMatrix(elem).to(p)
     def apply[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[DenseFlatMatrix[T]] =
@@ -115,10 +118,10 @@ trait MatricesAbs extends Scalan with Matrices {
   // elem for concrete class
   class CompoundMatrixElem[T](val iso: Iso[CompoundMatrixData[T], CompoundMatrix[T]])(implicit elem: Elem[T])
     extends AbstractMatrixElem[T, CompoundMatrix[T]]
-    with ViewElem[CompoundMatrixData[T], CompoundMatrix[T]] {
+    with ConcreteElem[CompoundMatrixData[T], CompoundMatrix[T]] {
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = CompoundMatrix(x.rows, x.numColumns)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -143,6 +146,7 @@ trait MatricesAbs extends Scalan with Matrices {
   // 4) constructor and deconstructor
   abstract class CompoundMatrixCompanionAbs extends CompanionBase[CompoundMatrixCompanionAbs] with CompoundMatrixCompanion {
     override def toString = "CompoundMatrix"
+
     def apply[T](p: Rep[CompoundMatrixData[T]])(implicit elem: Elem[T]): Rep[CompoundMatrix[T]] =
       isoCompoundMatrix(elem).to(p)
     def apply[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[CompoundMatrix[T]] =
@@ -636,36 +640,36 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     }
 
     object matrix_* {
-      def unapply(d: Def[_]): Option[(Rep[CompoundMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CompoundMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(matrix, n, _*), _) if receiver.elem.isInstanceOf[CompoundMatrixElem[_]] && method.getName == "$times" =>
-          Some((receiver, matrix, n)).asInstanceOf[Option[(Rep[CompoundMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}]]
+          Some((receiver, matrix, n)).asInstanceOf[Option[(Rep[CompoundMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object +^^ {
-      def unapply(d: Def[_]): Option[(Rep[CompoundMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CompoundMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[CompoundMatrixElem[_]] && method.getName == "$plus$up$up" =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[CompoundMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}]]
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[CompoundMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object *^^ {
-      def unapply(d: Def[_]): Option[(Rep[CompoundMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CompoundMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[CompoundMatrixElem[_]] && method.getName == "$times$up$up" =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[CompoundMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}]]
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[CompoundMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CompoundMatrix[T]], Rep[AbstractMatrix[T]], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CompoundMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

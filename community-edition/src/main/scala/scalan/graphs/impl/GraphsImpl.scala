@@ -1,3 +1,4 @@
+
 package scalan.graphs
 package impl
 
@@ -12,8 +13,9 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait GraphsAbs extends Scalan with Graphs {
+trait GraphsAbs extends Graphs with Scalan {
   self: GraphsDsl =>
+
   // single proxy for each type family
   implicit def proxyGraph[V, E](p: Rep[Graph[V, E]]): Graph[V, E] = {
     proxyOps[Graph[V, E]](p)(classTag[Graph[V, E]])
@@ -55,10 +57,10 @@ trait GraphsAbs extends Scalan with Graphs {
   // elem for concrete class
   class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
-    with ViewElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
+    with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -84,6 +86,7 @@ trait GraphsAbs extends Scalan with Graphs {
   // 4) constructor and deconstructor
   abstract class AdjacencyGraphCompanionAbs extends CompanionBase[AdjacencyGraphCompanionAbs] with AdjacencyGraphCompanion {
     override def toString = "AdjacencyGraph"
+
     def apply[V, E](p: Rep[AdjacencyGraphData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
       isoAdjacencyGraph(eV, eE).to(p)
     def apply[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
@@ -121,10 +124,10 @@ trait GraphsAbs extends Scalan with Graphs {
   // elem for concrete class
   class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, IncidenceGraph[V, E]]
-    with ViewElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
+    with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -150,6 +153,7 @@ trait GraphsAbs extends Scalan with Graphs {
   // 4) constructor and deconstructor
   abstract class IncidenceGraphCompanionAbs extends CompanionBase[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {
     override def toString = "IncidenceGraph"
+
     def apply[V, E](p: Rep[IncidenceGraphData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
       isoIncidenceGraph(eV, eE).to(p)
     def apply[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =

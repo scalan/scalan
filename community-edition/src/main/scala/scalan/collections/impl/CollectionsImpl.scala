@@ -1,3 +1,4 @@
+
 package scalan.collections
 package impl
 
@@ -11,8 +12,9 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait CollectionsAbs extends Scalan with Collections {
+trait CollectionsAbs extends Collections with Scalan {
   self: ScalanCommunityDsl =>
+
   // single proxy for each type family
   implicit def proxyCollection[A](p: Rep[Collection[A]]): Collection[A] = {
     proxyOps[Collection[A]](p)(classTag[Collection[A]])
@@ -54,6 +56,7 @@ trait CollectionsAbs extends Scalan with Collections {
   implicit def proxyIPairCollection[A, B](p: Rep[IPairCollection[A, B]]): IPairCollection[A, B] = {
     proxyOps[IPairCollection[A, B]](p)(classTag[IPairCollection[A, B]])
   }
+
   class IPairCollectionElem[A, B, To <: IPairCollection[A, B]](implicit val eA: Elem[A], val eB: Elem[B])
     extends CollectionElem[(A, B), To] {
     override def isEntityType = true
@@ -77,6 +80,7 @@ trait CollectionsAbs extends Scalan with Collections {
   implicit def proxyINestedCollection[A](p: Rep[INestedCollection[A]]): INestedCollection[A] = {
     proxyOps[INestedCollection[A]](p)(classTag[INestedCollection[A]])
   }
+
   class INestedCollectionElem[A, To <: INestedCollection[A]](implicit val eA: Elem[A])
     extends CollectionElem[Collection[A], To] {
     override def isEntityType = true
@@ -98,10 +102,10 @@ trait CollectionsAbs extends Scalan with Collections {
   // elem for concrete class
   class UnitCollectionElem(val iso: Iso[UnitCollectionData, UnitCollection])
     extends CollectionElem[Unit, UnitCollection]
-    with ViewElem[UnitCollectionData, UnitCollection] {
+    with ConcreteElem[UnitCollectionData, UnitCollection] {
     override def convertCollection(x: Rep[Collection[Unit]]) = UnitCollection(x.length)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -161,10 +165,10 @@ trait CollectionsAbs extends Scalan with Collections {
   // elem for concrete class
   class BaseCollectionElem[A](val iso: Iso[BaseCollectionData[A], BaseCollection[A]])(implicit eA: Elem[A])
     extends CollectionElem[A, BaseCollection[A]]
-    with ViewElem[BaseCollectionData[A], BaseCollection[A]] {
+    with ConcreteElem[BaseCollectionData[A], BaseCollection[A]] {
     override def convertCollection(x: Rep[Collection[A]]) = BaseCollection(x.arr)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -225,10 +229,10 @@ trait CollectionsAbs extends Scalan with Collections {
   // elem for concrete class
   class ListCollectionElem[A](val iso: Iso[ListCollectionData[A], ListCollection[A]])(implicit eA: Elem[A])
     extends CollectionElem[A, ListCollection[A]]
-    with ViewElem[ListCollectionData[A], ListCollection[A]] {
+    with ConcreteElem[ListCollectionData[A], ListCollection[A]] {
     override def convertCollection(x: Rep[Collection[A]]) = ListCollection(x.lst)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -289,10 +293,10 @@ trait CollectionsAbs extends Scalan with Collections {
   // elem for concrete class
   class CollectionOnSeqElem[A](val iso: Iso[CollectionOnSeqData[A], CollectionOnSeq[A]])(implicit eA: Elem[A])
     extends CollectionElem[A, CollectionOnSeq[A]]
-    with ViewElem[CollectionOnSeqData[A], CollectionOnSeq[A]] {
+    with ConcreteElem[CollectionOnSeqData[A], CollectionOnSeq[A]] {
     override def convertCollection(x: Rep[Collection[A]]) = CollectionOnSeq(x.seq)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -353,10 +357,10 @@ trait CollectionsAbs extends Scalan with Collections {
   // elem for concrete class
   class PairCollectionElem[A, B](val iso: Iso[PairCollectionData[A, B], PairCollection[A, B]])(implicit eA: Elem[A], eB: Elem[B])
     extends IPairCollectionElem[A, B, PairCollection[A, B]]
-    with ViewElem[PairCollectionData[A, B], PairCollection[A, B]] {
+    with ConcreteElem[PairCollectionData[A, B], PairCollection[A, B]] {
     override def convertIPairCollection(x: Rep[IPairCollection[A, B]]) = PairCollection(x.as, x.bs)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -382,6 +386,7 @@ trait CollectionsAbs extends Scalan with Collections {
   // 4) constructor and deconstructor
   abstract class PairCollectionCompanionAbs extends CompanionBase[PairCollectionCompanionAbs] with PairCollectionCompanion {
     override def toString = "PairCollection"
+
     def apply[A, B](p: Rep[PairCollectionData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollection[A, B]] =
       isoPairCollection(eA, eB).to(p)
     def apply[A, B](as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollection[A, B]] =
@@ -419,10 +424,10 @@ trait CollectionsAbs extends Scalan with Collections {
   // elem for concrete class
   class CollectionOfPairsElem[A, B](val iso: Iso[CollectionOfPairsData[A, B], CollectionOfPairs[A, B]])(implicit eA: Elem[A], eB: Elem[B])
     extends IPairCollectionElem[A, B, CollectionOfPairs[A, B]]
-    with ViewElem[CollectionOfPairsData[A, B], CollectionOfPairs[A, B]] {
+    with ConcreteElem[CollectionOfPairsData[A, B], CollectionOfPairs[A, B]] {
     override def convertIPairCollection(x: Rep[IPairCollection[A, B]]) = CollectionOfPairs(x.arr)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -484,10 +489,10 @@ trait CollectionsAbs extends Scalan with Collections {
   // elem for concrete class
   class NestedCollectionElem[A](val iso: Iso[NestedCollectionData[A], NestedCollection[A]])(implicit eA: Elem[A])
     extends INestedCollectionElem[A, NestedCollection[A]]
-    with ViewElem[NestedCollectionData[A], NestedCollection[A]] {
+    with ConcreteElem[NestedCollectionData[A], NestedCollection[A]] {
     override def convertINestedCollection(x: Rep[INestedCollection[A]]) = NestedCollection(x.values, x.segments)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -512,6 +517,7 @@ trait CollectionsAbs extends Scalan with Collections {
   // 4) constructor and deconstructor
   abstract class NestedCollectionCompanionAbs extends CompanionBase[NestedCollectionCompanionAbs] with NestedCollectionCompanion {
     override def toString = "NestedCollection"
+
     def apply[A](p: Rep[NestedCollectionData[A]])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
       isoNestedCollection(eA).to(p)
     def apply[A](values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =

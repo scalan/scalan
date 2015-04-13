@@ -1,3 +1,4 @@
+
 package scalan.linalgebra
 package impl
 
@@ -10,8 +11,9 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait VectorsAbs extends Scalan with Vectors {
+trait VectorsAbs extends Vectors with Scalan {
   self: ScalanCommunityDsl =>
+
   // single proxy for each type family
   implicit def proxyAbstractVector[T](p: Rep[AbstractVector[T]]): AbstractVector[T] = {
     proxyOps[AbstractVector[T]](p)(classTag[AbstractVector[T]])
@@ -52,10 +54,10 @@ trait VectorsAbs extends Scalan with Vectors {
   // elem for concrete class
   class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit elem: Elem[T])
     extends AbstractVectorElem[T, DenseVector[T]]
-    with ViewElem[DenseVectorData[T], DenseVector[T]] {
+    with ConcreteElem[DenseVectorData[T], DenseVector[T]] {
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = DenseVector(x.items)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -116,10 +118,10 @@ trait VectorsAbs extends Scalan with Vectors {
   // elem for concrete class
   class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit elem: Elem[T])
     extends AbstractVectorElem[T, SparseVector[T]]
-    with ViewElem[SparseVectorData[T], SparseVector[T]] {
+    with ConcreteElem[SparseVectorData[T], SparseVector[T]] {
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -144,6 +146,7 @@ trait VectorsAbs extends Scalan with Vectors {
   // 4) constructor and deconstructor
   abstract class SparseVectorCompanionAbs extends CompanionBase[SparseVectorCompanionAbs] with SparseVectorCompanion {
     override def toString = "SparseVector"
+
     def apply[T](p: Rep[SparseVectorData[T]])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
       isoSparseVector(elem).to(p)
     def apply[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =

@@ -1,3 +1,4 @@
+
 package scalan.graphs
 package impl
 
@@ -12,8 +13,9 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait EdgesAbs extends Scalan with Edges {
+trait EdgesAbs extends Edges with Scalan {
   self: GraphsDsl =>
+
   // single proxy for each type family
   implicit def proxyEdge[V, E](p: Rep[Edge[V, E]]): Edge[V, E] = {
     proxyOps[Edge[V, E]](p)(classTag[Edge[V, E]])
@@ -55,10 +57,10 @@ trait EdgesAbs extends Scalan with Edges {
   // elem for concrete class
   class AdjEdgeElem[V, E](val iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends EdgeElem[V, E, AdjEdge[V, E]]
-    with ViewElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
+    with ConcreteElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
     override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -84,6 +86,7 @@ trait EdgesAbs extends Scalan with Edges {
   // 4) constructor and deconstructor
   abstract class AdjEdgeCompanionAbs extends CompanionBase[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
     override def toString = "AdjEdge"
+
     def apply[V, E](p: Rep[AdjEdgeData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       isoAdjEdge(eV, eE).to(p)
     def apply[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
@@ -121,10 +124,10 @@ trait EdgesAbs extends Scalan with Edges {
   // elem for concrete class
   class IncEdgeElem[V, E](val iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends EdgeElem[V, E, IncEdge[V, E]]
-    with ViewElem[IncEdgeData[V, E], IncEdge[V, E]] {
+    with ConcreteElem[IncEdgeData[V, E], IncEdge[V, E]] {
     override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -150,6 +153,7 @@ trait EdgesAbs extends Scalan with Edges {
   // 4) constructor and deconstructor
   abstract class IncEdgeCompanionAbs extends CompanionBase[IncEdgeCompanionAbs] with IncEdgeCompanion {
     override def toString = "IncEdge"
+
     def apply[V, E](p: Rep[IncEdgeData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       isoIncEdge(eV, eE).to(p)
     def apply[V, E](fromId: Rep[Int], toId: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =

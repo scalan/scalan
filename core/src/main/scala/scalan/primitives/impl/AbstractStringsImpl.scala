@@ -1,3 +1,4 @@
+
 package scalan.primitives
 package impl
 
@@ -8,8 +9,9 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait AbstractStringsAbs extends Scalan with AbstractStrings {
+trait AbstractStringsAbs extends AbstractStrings with Scalan {
   self: AbstractStringsDsl =>
+
   // single proxy for each type family
   implicit def proxyAString(p: Rep[AString]): AString = {
     proxyOps[AString](p)(classTag[AString])
@@ -49,10 +51,10 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
   // elem for concrete class
   class SStringElem(val iso: Iso[SStringData, SString])
     extends AStringElem[SString]
-    with ViewElem[SStringData, SString] {
+    with ConcreteElem[SStringData, SString] {
     override def convertAString(x: Rep[AString]) = SString(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -112,10 +114,10 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
   // elem for concrete class
   class CStringElem(val iso: Iso[CStringData, CString])
     extends AStringElem[CString]
-    with ViewElem[CStringData, CString] {
+    with ConcreteElem[CStringData, CString] {
     override def convertAString(x: Rep[AString]) = CString(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type

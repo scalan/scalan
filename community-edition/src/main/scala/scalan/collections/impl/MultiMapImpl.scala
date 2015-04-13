@@ -1,3 +1,4 @@
+
 package scalan.collections
 package impl
 
@@ -8,8 +9,9 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait MultiMapsAbs extends Scalan with MultiMaps {
+trait MultiMapsAbs extends MultiMaps with Scalan {
   self: ScalanCommunityDsl =>
+
   // single proxy for each type family
   implicit def proxyMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): MMultiMap[K, V] = {
     proxyOps[MMultiMap[K, V]](p)(classTag[MMultiMap[K, V]])
@@ -51,10 +53,10 @@ trait MultiMapsAbs extends Scalan with MultiMaps {
   // elem for concrete class
   class HashMMultiMapElem[K, V](val iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]])(implicit elemKey: Elem[K], elemValue: Elem[V])
     extends MMultiMapElem[K, V, HashMMultiMap[K, V]]
-    with ViewElem[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
+    with ConcreteElem[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
     override def convertMMultiMap(x: Rep[MMultiMap[K, V]]) = HashMMultiMap(x.map)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type

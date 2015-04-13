@@ -41,9 +41,8 @@ class BoilerplateTool extends StrictLogging {
     name = "core",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
-//      "scalan/primitives/AbstractStrings.scala",
-//      "scalan/util/Exceptions.scala",
-      "scalan/Converters.scala"
+      "scalan/primitives/AbstractStrings.scala",
+      "scalan/util/Exceptions.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -224,18 +223,20 @@ class BoilerplateTool extends StrictLogging {
     }.distinct
 
   val configsMap = Map(
-    "graphs" -> List(graphConfig),
     "scalan" -> List(scalanConfig),
+    "core" -> List(coreConfig),
+    "coretests" -> List(coreTestsConfig),
     "collections" -> List(collectionsConfig),
     "core" -> List(coreConfig, coreTestsConfig),
     "core-test" -> List(coreTestsConfig),
     "mt" -> List(metaTestConfig),
+    "graphs" -> List(graphConfig),
     "ce" -> List(ceConfig),
     "la" -> List(laConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig),
-    "all" -> List(coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, eeConfig)
+    "ce-all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig),
+    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, eeConfig)
   )
 
   def main(args: Array[String]) {

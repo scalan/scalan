@@ -1,3 +1,4 @@
+
 package scalan.graphs
 package impl
 
@@ -11,8 +12,9 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait VerticesAbs extends Scalan with Vertices {
+trait VerticesAbs extends Vertices with Scalan {
   self: GraphsDsl =>
+
   // single proxy for each type family
   implicit def proxyVertex[V, E](p: Rep[Vertex[V, E]]): Vertex[V, E] = {
     proxyOps[Vertex[V, E]](p)(classTag[Vertex[V, E]])
@@ -54,10 +56,10 @@ trait VerticesAbs extends Scalan with Vertices {
   // elem for concrete class
   class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends VertexElem[V, E, SVertex[V, E]]
-    with ViewElem[SVertexData[V, E], SVertex[V, E]] {
+    with ConcreteElem[SVertexData[V, E], SVertex[V, E]] {
     override def convertVertex(x: Rep[Vertex[V, E]]) = SVertex(x.id, x.graph)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -83,6 +85,7 @@ trait VerticesAbs extends Scalan with Vertices {
   // 4) constructor and deconstructor
   abstract class SVertexCompanionAbs extends CompanionBase[SVertexCompanionAbs] with SVertexCompanion {
     override def toString = "SVertex"
+
     def apply[V, E](p: Rep[SVertexData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       isoSVertex(eV, eE).to(p)
     def apply[V, E](id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =

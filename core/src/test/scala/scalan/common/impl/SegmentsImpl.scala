@@ -1,3 +1,4 @@
+
 package scalan.common
 package impl
 
@@ -8,8 +9,9 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait SegmentsAbs extends Scalan with Segments {
+trait SegmentsAbs extends Segments with Scalan {
   self: SegmentsDsl =>
+
   // single proxy for each type family
   implicit def proxySegment(p: Rep[Segment]): Segment = {
     proxyOps[Segment](p)(classTag[Segment])
@@ -76,6 +78,7 @@ trait SegmentsAbs extends Scalan with Segments {
   // 4) constructor and deconstructor
   abstract class IntervalCompanionAbs extends CompanionBase[IntervalCompanionAbs] with IntervalCompanion {
     override def toString = "Interval"
+
     def apply(p: Rep[IntervalData]): Rep[Interval] =
       isoInterval.to(p)
     def apply(start: Rep[Int], end: Rep[Int]): Rep[Interval] =
@@ -140,6 +143,7 @@ trait SegmentsAbs extends Scalan with Segments {
   // 4) constructor and deconstructor
   abstract class SliceCompanionAbs extends CompanionBase[SliceCompanionAbs] with SliceCompanion {
     override def toString = "Slice"
+
     def apply(p: Rep[SliceData]): Rep[Slice] =
       isoSlice.to(p)
     def apply(start: Rep[Int], length: Rep[Int]): Rep[Slice] =
@@ -205,6 +209,7 @@ trait SegmentsAbs extends Scalan with Segments {
   // 4) constructor and deconstructor
   abstract class CenteredCompanionAbs extends CompanionBase[CenteredCompanionAbs] with CenteredCompanion {
     override def toString = "Centered"
+
     def apply(p: Rep[CenteredData]): Rep[Centered] =
       isoCentered.to(p)
     def apply(center: Rep[Int], radius: Rep[Int]): Rep[Centered] =

@@ -1,3 +1,4 @@
+
 package scalan.collections
 package impl
 
@@ -10,12 +11,14 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait SeqsAbs extends Scalan with Seqs {
+trait SeqsAbs extends Seqs with Scalan {
   self: ScalanCommunityDsl =>
+
   // single proxy for each type family
   implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] = {
     proxyOps[SSeq[A]](p)(classTag[SSeq[A]])
   }
+
   // BaseTypeEx proxy
   //implicit def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOps[SSeq[A]](p.asRep[SSeq[A]])
@@ -23,6 +26,7 @@ trait SeqsAbs extends Scalan with Seqs {
   implicit def unwrapValueOfSSeq[A](w: Rep[SSeq[A]]): Rep[Seq[A]] = w.wrappedValueOfBaseType
 
   implicit def defaultSSeqElem[A:Elem]: Elem[SSeq[A]] = element[SSeqImpl[A]].asElem[SSeq[A]]
+
   implicit def seqElement[A:Elem]: Elem[Seq[A]]
 
   implicit def castSSeqElement[A](elem: Elem[SSeq[A]]): SSeqElem[A, SSeq[A]] = elem.asInstanceOf[SSeqElem[A, SSeq[A]]]
@@ -37,6 +41,7 @@ trait SeqsAbs extends Scalan with Seqs {
     def to(x: Rep[SSeq[A]]) = x.map(iso.to _)
     lazy val defaultRepTo = Default.defaultVal(SSeq.empty[B])
   }
+
   class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
     extends EntityElem1[A, To, SSeq](eA,container[SSeq]) {
     override def isEntityType = true
@@ -150,10 +155,10 @@ trait SeqsAbs extends Scalan with Seqs {
   // elem for concrete class
   class SSeqImplElem[A](val iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit eA: Elem[A])
     extends SSeqElem[A, SSeqImpl[A]]
-    with ViewElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
+    with ConcreteElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
     override def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ViewElem1].getDefaultRep
-    override lazy val tag = super[ViewElem1].tag
+    override def getDefaultRep = super[ConcreteElem1].getDefaultRep
+    override lazy val tag = super[ConcreteElem1].tag
   }
 
   // state representation type
@@ -230,11 +235,11 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
       SSeqImpl(Seq.fromList[A](list))
   }
 
-    // override proxy if we deal with BaseTypeEx
+  // override proxy if we deal with BaseTypeEx
   //override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOpsEx[Seq[A],SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
 
-    implicit def seqElement[A:Elem]: Elem[Seq[A]] = new SeqBaseElemEx[Seq[A], SSeq[A]](element[SSeq[A]])(weakTypeTag[Seq[A]], DefaultOfSeq[A])
+  implicit def seqElement[A:Elem]: Elem[Seq[A]] = new SeqBaseElemEx[Seq[A], SSeq[A]](element[SSeq[A]])(weakTypeTag[Seq[A]], DefaultOfSeq[A])
 
   case class SeqSSeqImpl[A]
       (override val wrappedValueOfBaseType: Rep[Seq[A]])
@@ -302,7 +307,9 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
       case _ => false
     }
   }
+
   implicit def seqElement[A:Elem]: Elem[Seq[A]] = new ExpBaseElemEx[Seq[A], SSeq[A]](element[SSeq[A]])(weakTypeTag[Seq[A]], DefaultOfSeq[A])
+
   case class ExpSSeqImpl[A]
       (override val wrappedValueOfBaseType: Rep[Seq[A]])
       (implicit eA: Elem[A])
