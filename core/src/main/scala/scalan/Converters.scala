@@ -33,6 +33,18 @@ trait Converters extends Views { self: Scalan =>
     lazy val convFun = fun { x: Rep[(A1,A2)] => apply(x) }
   }
   trait PairConverterCompanion
+
+  abstract class SumConverter[A1, A2, B1, B2]
+    (val conv1: Conv[A1, B1], val conv2: Conv[A2, B2])
+    (implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
+    extends Converter[(A1 | A2), (B1 | B2)] {
+
+    val eDom = sumElement(eA1, eA2)
+    val eRange = sumElement(eB1, eB2)
+    def apply(x: Rep[(A1|A2)]) = { x.mapSum(a1 => conv1(a1), a2 => conv2(a2)) }
+    lazy val convFun = fun { x: Rep[(A1 | A2)] => apply(x) }
+  }
+  trait SumConverterCompanion
 }
 
 trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
@@ -68,6 +80,16 @@ trait ConvertersDslExp extends impl.ConvertersExp { self: ScalanExp =>
           c2 <- hasConverter(ea2, eb2)
         }
         yield PairConverter(c1, c2)
+      case (pA: SumElem[a1,a2], pB: SumElem[b1,b2]) =>
+        implicit val ea1 = pA.eLeft
+        implicit val eb1 = pB.eLeft
+        implicit val ea2 = pA.eRight
+        implicit val eb2 = pB.eRight
+        for {
+          c1 <- hasConverter(ea1, eb1)
+          c2 <- hasConverter(ea2, eb2)
+        }
+        yield SumConverter(c1, c2)
       case (eEntity: EntityElem[_], eClass: ConcreteElem[tData,tClass]) =>
         val convOpt = eClass.getConverterFrom(eEntity)
         convOpt

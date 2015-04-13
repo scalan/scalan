@@ -25,6 +25,11 @@ trait TypeSum { self: Scalan =>
 
   def toRightSum[A: Elem, B](a: Rep[B]): Rep[(A | B)]
 
+  implicit class RepExtensionsForSum[A](x: Rep[A]) {
+    def asLeft[B:Elem]: Rep[A | B] = toLeftSum[A,B](x)
+    def asRight[B:Elem]: Rep[B | A] = toRightSum[B,A](x)
+  }
+
   implicit class JoinSumOps[A:Elem](sum: Rep[A|A]) {
     def joinSum: Rep[A] = sum.fold(a => a, a => a)
   }

@@ -28,6 +28,29 @@ class ConverterTests extends BaseTests { suite =>
       val res = IF (l > 10) THEN { segm.shift(1) } ELSE { Slice(0, l):RSeg }
       res.length
     }
+    lazy val t10 = fun { (in: Rep[IntervalData]) =>
+      val Pair(s, l) = in
+      val res = IF (s < 0) THEN { toRight(Interval(in):RSeg) } ELSE { toRight(Slice(0, l):RSeg) }
+      res.fold(_ => 0, s => s.length)
+    }
+    lazy val t11 = fun { (in: Rep[IntervalData]) =>
+      val Pair(s, l) = in
+      val res = IF (s < 0) THEN {
+        (Interval(in):RSeg).asLeft[Segment]
+      } ELSE {
+        (Slice(0, l):RSeg).asRight[Segment]
+      }
+      res.fold(l => l.length, r => r.length)
+    }
+    lazy val t12 = fun { (in: Rep[IntervalData]) =>
+      val Pair(s, l) = in
+      val res = IF (s < 0) THEN {
+        (Interval(in):RSeg).asRight[Segment]
+      } ELSE {
+        (Slice(0, l):RSeg).asLeft[Segment]
+      }
+      res.fold(l => l.length, r => r.length)
+    }
 
 //    lazy val t7 = fun { (in: Rep[(Interval,Int)]) =>
 //      val Pair(i, n) = in
@@ -63,8 +86,19 @@ class ConverterTests extends BaseTests { suite =>
   test("converIfThenElse") {
     val ctx = new ConvProgStaged("converIfThenElse")
     ctx.emit("t7", ctx.t7)
-    ctx.emit("t8", ctx.t8)
     ctx.emit("t9", ctx.t9)
+  }
+
+  test("converIfThenElseWithPair") {
+    val ctx = new ConvProgStaged("converIfThenElseWithPair")
+    ctx.emit("t8", ctx.t8)
+  }
+
+  test("converIfThenElseWithSum") {
+    val ctx = new ConvProgStaged("converIfThenElseWithSum")
+    ctx.emit("t10", ctx.t10)
+    ctx.emit("t11", ctx.t11)
+    ctx.emit("t12", ctx.t12)
   }
 
 }
