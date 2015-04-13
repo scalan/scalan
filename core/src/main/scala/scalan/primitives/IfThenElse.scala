@@ -91,6 +91,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
   }
 
   def liftFromIfThenElse[A,B,C](cond: Rep[Boolean], a: Rep[A], b: Rep[B], iso1: Iso[A,C], iso2: Iso[B,C]): Rep[C] = {
+    assertEqualElems(iso1.eTo, iso2.eTo, s"liftFromIfThenElse($cond, $a, $b, $iso1, $iso2)")
     val ea = iso1.eFrom
     val eb = iso2.eFrom
     implicit val ec = iso1.eTo
@@ -99,12 +100,36 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     res
   }
 
+  def liftFromIfThenElse[A,B,C,D](
+        cond: Rep[Boolean], a: Rep[A], b: Rep[B],
+        iso1: Iso[A,C], iso2: Iso[B,D],
+        toD: Conv[C,D], toC: Conv[D,C]): Rep[C] =
+  {
+    val ea = iso1.eFrom
+    val eb = iso2.eFrom
+    implicit val ec = iso1.eTo
+    val (i1, i2) =
+        if (ec == iso2.eTo)
+          (iso1, iso2.asInstanceOf[Iso[B,C]])
+        else {
+          (iso1, convertAfterIso(iso2, toC, toD))
+        }
+    liftFromIfThenElse(cond, a, b, i1, i2)
+  }
+
   override def rewriteDef[T](d: Def[T]) = d match {
     case IfThenElse(Def(Const(true)), t, _) => t
     case IfThenElse(Def(Const(false)), _, e) => e
+    case IfThenElse(c, t, e) if t == e => t
 
-    case IfThenElse(cond, Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, _]))) =>
-      liftFromIfThenElse(cond, a.asRep[a], b.asRep[b], iso1, iso2)
+    case IfThenElse(cond,
+                    Def(UnpackableDef(a, iso1: Iso[a, c])),
+                    Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+      (iso1.eTo, iso2.eTo) match {
+        case IsConvertible(cTo, cFrom) =>
+          liftFromIfThenElse(cond, a.asRep[a], b.asRep[b], iso1, iso2, cTo, cFrom)
+        case _ => super.rewriteDef(d)
+      }
 
     case IfThenElse(cond, a, Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
       liftFromIfThenElse(cond, a, b.asRep[b], identityIso(a.elem), iso2)

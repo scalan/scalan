@@ -6,20 +6,33 @@ trait Converters extends Views { self: Scalan =>
   trait Converter[T,R] extends Reifiable[Converter[T,R]] {
     implicit def eDom: Elem[T]
     implicit def eRange: Elem[R]
+    def convFun: Rep[T => R]
     def apply(x: Rep[T]): Rep[R]
-//    override def toString = s"${eDom.name} --> ${eRange.name}"
-//    override def equals(other: Any) = other match {
-//      case c: Converter[_, _] => eDom == c.eDom && eRange == c.eRange
-//      case _ => false
-//    }
   }
   trait ConverterCompanion
 
-  abstract class ConverterImpl[T,R]()(implicit val eDom: Elem[T], val eRange: Elem[R])
+  abstract class BaseConverter[T,R](val convFun: Rep[T => R])(implicit val eDom: Elem[T], val eRange: Elem[R])
     extends Converter[T,R] {
-    def apply(x: Rep[T]): Rep[R] = !!!  // dummy implementation to make scalan-meta happy
+    def apply(x: Rep[T]): Rep[R] = convFun(x)
+    override def toString: String = s"${eDom.name} --> ${eRange.name}"
+    override def equals(other: Any): Boolean = other match {
+      case c: Converters#Converter[_, _] => eDom == c.eDom && eRange == c.eRange
+      case _ => false
+    }
   }
-  trait ConverterImplCompanion
+  trait BaseConverterCompanion
+
+  abstract class PairConverter[A1, A2, B1, B2]
+    (val conv1: Conv[A1, B1], val conv2: Conv[A2, B2])
+    (implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
+    extends Converter[(A1, A2), (B1, B2)] {
+
+    val eDom = pairElement(eA1, eA2)
+    val eRange = pairElement(eB1, eB2)
+    def apply(x: Rep[(A1,A2)]) = { val Pair(a1, a2) = x; Pair(conv1(a1), conv2(a2)) }
+    lazy val convFun = fun { x: Rep[(A1,A2)] => apply(x) }
+  }
+  trait PairConverterCompanion
 }
 
 trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
@@ -44,7 +57,25 @@ trait ConvertersDslExp extends impl.ConvertersExp { self: ScalanExp =>
   }
 
   def hasConverter[A,B](eA: Elem[A], eB: Elem[B]): Option[Conv[A,B]] = {
-    ???
+    (eA, eB) match {
+      case (pA: PairElem[a1,a2], pB: PairElem[b1,b2]) =>
+        implicit val ea1 = pA.eFst
+        implicit val eb1 = pB.eFst
+        implicit val ea2 = pA.eSnd
+        implicit val eb2 = pB.eSnd
+        for {
+          c1 <- hasConverter(ea1, eb1)
+          c2 <- hasConverter(ea2, eb2)
+        }
+        yield PairConverter(c1, c2)
+      case (eEntity: EntityElem[_], eClass: ConcreteElem[tData,tClass]) =>
+        val convOpt = eClass.getConverterFrom(eEntity)
+        convOpt
+      case (e1: BaseElem[a], e2: BaseElem[_]) if e1 == e2 =>
+        implicit val ea = e1
+        Some(BaseConverter(fun { x: Rep[a] => x }).asRep[Converter[A,B]])
+      case _ => None
+    }
   }
 
 

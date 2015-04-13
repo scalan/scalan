@@ -17,6 +17,17 @@ class ConverterTests extends BaseTests { suite =>
       val res = IF (s < 0) THEN { Interval(in):RSeg } ELSE { Slice(0, l):RSeg }
       res.length
     }
+    lazy val t8 = fun { (in: Rep[IntervalData]) =>
+      val Pair(s, l) = in
+      val Pair(i, res) = IF (s < 0) THEN { Pair(1, Interval(in):RSeg) } ELSE { Pair(2, Slice(0, l):RSeg) }
+      i + res.length
+    }
+    lazy val t9 = fun { (in: Rep[IntervalData]) =>
+      val Pair(s, l) = in
+      val segm = IF (s < 0) THEN { Interval(in):RSeg } ELSE { Slice(0, l):RSeg }
+      val res = IF (l > 10) THEN { segm.shift(1) } ELSE { Slice(0, l):RSeg }
+      res.length
+    }
 
 //    lazy val t7 = fun { (in: Rep[(Interval,Int)]) =>
 //      val Pair(i, n) = in
@@ -52,6 +63,8 @@ class ConverterTests extends BaseTests { suite =>
   test("converIfThenElse") {
     val ctx = new ConvProgStaged("converIfThenElse")
     ctx.emit("t7", ctx.t7)
+    ctx.emit("t8", ctx.t8)
+    ctx.emit("t9", ctx.t9)
   }
 
 }
