@@ -10,15 +10,16 @@ trait LmsBridge { self: ScalanCtxExp =>
 
   type LmsFunction = (lms.Exp[A] => lms.Exp[B]) forSome {type A; type B}
 
-  class LmsMirror private (lastExp: Option[lms.Exp[_]], symMirror: Map[Exp[_], lms.Exp[_]], funcMirror: Map[Exp[_], LmsFunction]) {
+  class LmsMirror private (lastExp: Option[lms.Exp[_]], private val symMirror: Map[Exp[_], lms.Exp[_]], funcMirror: Map[Exp[_], LmsFunction]) {
     def addSym(scalanExp: Exp[_], lmsExp: lms.Exp[_]) =
       new LmsMirror(Some(lmsExp), symMirror.updated(scalanExp, lmsExp), funcMirror)
     def addFuncAndSym(scalanExp: Exp[_], lmsFunc: LmsFunction, lmsExp: lms.Exp[_]) =
       new LmsMirror(Some(lmsExp), symMirror.updated(scalanExp, lmsExp), funcMirror.updated(scalanExp, lmsFunc))
     def addFunc(scalanExp: Exp[_], lmsFunc: LmsFunction) =
       new LmsMirror(lastExp, symMirror, funcMirror.updated(scalanExp, lmsFunc))
-    def withoutLastExp = new LmsMirror(None, symMirror, funcMirror)
-    def lastExpOrElse(default: => lms.Exp[_]) = lastExp.getOrElse(default)
+    private def withoutLastExp = new LmsMirror(None, symMirror, funcMirror)
+    private def withLastExp(e: lms.Exp[_]) = new LmsMirror(Some(e), symMirror, funcMirror)
+    private def lastExpOrElse(default: => lms.Exp[_]) = lastExp.getOrElse(default)
 
     def symMirror[A](scalanExp: Exp[_]): lms.Exp[A] = symMirror.apply(scalanExp).asInstanceOf[lms.Exp[A]]
     def symMirrorUntyped(scalanExp: Exp[_]): lms.Exp[_] = symMirror.apply(scalanExp)
@@ -44,8 +45,11 @@ trait LmsBridge { self: ScalanCtxExp =>
     }
 
     def mirrorDefs(fromGraph: AstGraph, defs: Seq[TableEntry[_]]): LmsMirror = {
-      val finalMirror = defs.foldLeft(withoutLastExp) {
-        (m, t) => defTransformer(m, fromGraph, t.sym)(t.rhs)
+      val finalMirror = defs.foldLeft(withoutLastExp) { (m, t) =>
+        m.symMirror.get(t.sym) match {
+          case Some(lmsExp) => m.withLastExp(lmsExp)
+          case None => defTransformer(m, fromGraph, t.sym)(t.rhs)
+        }
       }
       finalMirror
     }
