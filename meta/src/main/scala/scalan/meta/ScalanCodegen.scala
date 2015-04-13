@@ -555,10 +555,10 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |  // elem for concrete class
         |  class ${className}Elem${typesDecl}(val iso: Iso[${className}Data${typesUse}, $className${typesUse}])$implicitArgs
         |    extends ${parent.name}Elem[${parentArgsStr}$className${typesUse}]
-        |    with ViewElem${isCont.opt("1")}[${isCont.opt(parentArgsStr)}${className}Data${typesUse}, $className${typesUse}${isCont.opt(s", ${parent.name}")}] {
+        |    with ConcreteElem${isCont.opt("1")}[${isCont.opt(parentArgsStr)}${className}Data${typesUse}, $className${typesUse}${isCont.opt(s", ${parent.name}")}] {
         |    override def convert${parent.name}(x: Rep[${parent.name}${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.getEntity(parent.name), c)}
-        |    override def getDefaultRep = super[ViewElem${isCont.opt("1")}].getDefaultRep
-        |    override lazy val tag = super[ViewElem${isCont.opt("1")}].tag
+        |    override def getDefaultRep = super[ConcreteElem${isCont.opt("1")}].getDefaultRep
+        |    override lazy val tag = super[ConcreteElem${isCont.opt("1")}].tag
         |  }
         |
         |  // state representation type
