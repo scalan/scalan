@@ -48,7 +48,7 @@ trait LmsBridge { self: ScalanCtxExp =>
       val finalMirror = defs.foldLeft(withoutLastExp) { (m, t) =>
         m.symMirror.get(t.sym) match {
           case Some(lmsExp) => m.withLastExp(lmsExp)
-          case None => defTransformer(m, fromGraph, t.sym)(t.rhs)
+          case None => transformDef(m, fromGraph, t.sym, t.rhs)
         }
       }
       finalMirror
@@ -59,10 +59,8 @@ trait LmsBridge { self: ScalanCtxExp =>
     val empty = new LmsMirror(None, Map.empty, Map.empty)
   }
 
-  type DefTransformer = PartialFunction[Def[_], LmsMirror]
-
-  def defTransformer[T](m: LmsMirror, g: AstGraph, sym: Exp[T]): DefTransformer = {
-    case x => !!!(s"LMSBridge: Don't know how to mirror symbol ${x.self.toStringWithDefinition}")
+  def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]): LmsMirror = {
+    !!!(s"LMSBridge: Don't know how to mirror ${sym.toStringWithDefinition}")
   }
 
   // can't just return lmsFunc: lms.Exp[A] => lms.Exp[B], since mirrorDefs needs to be called in LMS context

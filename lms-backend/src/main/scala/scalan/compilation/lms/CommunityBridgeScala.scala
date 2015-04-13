@@ -7,9 +7,6 @@ import scalan.{ScalanCommunityDslExp, CommunityMethodMappingDSL}
 
 trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDSL with ScalaInterpreter { self: ScalanCommunityDslExp =>
 
-  override def defTransformer[T](m: LmsMirror, g: AstGraph, sym: Exp[T]) =
-    communityTransformer(m, g, sym) orElse super.defTransformer(m, g, sym)
-
   override def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] = {
     import lms.EffectId._
 
@@ -50,15 +47,13 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDS
     }
   }
 
-  def communityTransformer[T](m: LmsMirror, fromGraph: AstGraph, sym: Exp[T]): DefTransformer = {
-    val tt: DefTransformer = {
-      case u: scalan.collections.impl.CollectionsExp#ExpBaseCollection[_] =>
-        val exp = Manifest.classType(u.getClass) match {
-          case (mA: Manifest[a]) =>
-            lms.newObj[a]("scalan.imp.ArrayImp", Seq(m.symMirrorUntyped(u.arr.asInstanceOf[Exp[_]])), true)(mA)
-        }
-        m.addSym(sym, exp)
-    }
-    tt
+  override def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
+    case u: scalan.collections.impl.CollectionsExp#ExpBaseCollection[_] =>
+      val exp = Manifest.classType(u.getClass) match {
+        case (mA: Manifest[a]) =>
+          lms.newObj[a]("scalan.imp.ArrayImp", Seq(m.symMirrorUntyped(u.arr.asInstanceOf[Exp[_]])), true)(mA)
+      }
+      m.addSym(sym, exp)
+    case _ => super.transformDef(m, g, sym, d)
   }
 }
