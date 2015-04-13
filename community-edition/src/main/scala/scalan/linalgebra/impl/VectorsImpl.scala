@@ -183,7 +183,7 @@ trait VectorsAbs extends Scalan with Vectors {
 // Seq -----------------------------------
 trait VectorsSeq extends VectorsDsl with ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs with UserTypeSeq[AbstractVectorCompanionAbs, AbstractVectorCompanionAbs] {
+  lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs with UserTypeSeq[AbstractVectorCompanionAbs] {
     lazy val selfType = element[AbstractVectorCompanionAbs]
   }
 
@@ -191,10 +191,10 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
       (override val items: Rep[Collection[T]])
       (implicit elem: Elem[T])
     extends DenseVector[T](items)
-        with UserTypeSeq[AbstractVector[T], DenseVector[T]] {
-    lazy val selfType = element[DenseVector[T]].asInstanceOf[Elem[AbstractVector[T]]]
+        with UserTypeSeq[DenseVector[T]] {
+    lazy val selfType = element[DenseVector[T]]
   }
-  lazy val DenseVector = new DenseVectorCompanionAbs with UserTypeSeq[DenseVectorCompanionAbs, DenseVectorCompanionAbs] {
+  lazy val DenseVector = new DenseVectorCompanionAbs with UserTypeSeq[DenseVectorCompanionAbs] {
     lazy val selfType = element[DenseVectorCompanionAbs]
   }
 
@@ -208,10 +208,10 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
       (override val nonZeroIndices: Rep[Collection[Int]], override val nonZeroValues: Rep[Collection[T]], override val length: Rep[Int])
       (implicit elem: Elem[T])
     extends SparseVector[T](nonZeroIndices, nonZeroValues, length)
-        with UserTypeSeq[AbstractVector[T], SparseVector[T]] {
-    lazy val selfType = element[SparseVector[T]].asInstanceOf[Elem[AbstractVector[T]]]
+        with UserTypeSeq[SparseVector[T]] {
+    lazy val selfType = element[SparseVector[T]]
   }
-  lazy val SparseVector = new SparseVectorCompanionAbs with UserTypeSeq[SparseVectorCompanionAbs, SparseVectorCompanionAbs] {
+  lazy val SparseVector = new SparseVectorCompanionAbs with UserTypeSeq[SparseVectorCompanionAbs] {
     lazy val selfType = element[SparseVectorCompanionAbs]
   }
 
@@ -225,7 +225,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
 // Exp -----------------------------------
 trait VectorsExp extends VectorsDsl with ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs with UserTypeDef[AbstractVectorCompanionAbs, AbstractVectorCompanionAbs] {
+  lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs with UserTypeDef[AbstractVectorCompanionAbs] {
     lazy val selfType = element[AbstractVectorCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -233,12 +233,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   case class ExpDenseVector[T]
       (override val items: Rep[Collection[T]])
       (implicit elem: Elem[T])
-    extends DenseVector[T](items) with UserTypeDef[AbstractVector[T], DenseVector[T]] {
-    lazy val selfType = element[DenseVector[T]].asInstanceOf[Elem[AbstractVector[T]]]
+    extends DenseVector[T](items) with UserTypeDef[DenseVector[T]] {
+    lazy val selfType = element[DenseVector[T]]
     override def mirror(t: Transformer) = ExpDenseVector[T](t(items))
   }
 
-  lazy val DenseVector: Rep[DenseVectorCompanionAbs] = new DenseVectorCompanionAbs with UserTypeDef[DenseVectorCompanionAbs, DenseVectorCompanionAbs] {
+  lazy val DenseVector: Rep[DenseVectorCompanionAbs] = new DenseVectorCompanionAbs with UserTypeDef[DenseVectorCompanionAbs] {
     lazy val selfType = element[DenseVectorCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -436,12 +436,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   case class ExpSparseVector[T]
       (override val nonZeroIndices: Rep[Collection[Int]], override val nonZeroValues: Rep[Collection[T]], override val length: Rep[Int])
       (implicit elem: Elem[T])
-    extends SparseVector[T](nonZeroIndices, nonZeroValues, length) with UserTypeDef[AbstractVector[T], SparseVector[T]] {
-    lazy val selfType = element[SparseVector[T]].asInstanceOf[Elem[AbstractVector[T]]]
+    extends SparseVector[T](nonZeroIndices, nonZeroValues, length) with UserTypeDef[SparseVector[T]] {
+    lazy val selfType = element[SparseVector[T]]
     override def mirror(t: Transformer) = ExpSparseVector[T](t(nonZeroIndices), t(nonZeroValues), t(length))
   }
 
-  lazy val SparseVector: Rep[SparseVectorCompanionAbs] = new SparseVectorCompanionAbs with UserTypeDef[SparseVectorCompanionAbs, SparseVectorCompanionAbs] {
+  lazy val SparseVector: Rep[SparseVectorCompanionAbs] = new SparseVectorCompanionAbs with UserTypeDef[SparseVectorCompanionAbs] {
     lazy val selfType = element[SparseVectorCompanionAbs]
     override def mirror(t: Transformer) = this
   }

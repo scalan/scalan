@@ -557,7 +557,7 @@ trait CollectionsAbs extends Scalan with Collections {
 // Seq -----------------------------------
 trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeSeq[CollectionCompanionAbs, CollectionCompanionAbs] {
+  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeSeq[CollectionCompanionAbs] {
     lazy val selfType = element[CollectionCompanionAbs]
   }
 
@@ -565,10 +565,10 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
       (override val length: Rep[Int])
 
     extends UnitCollection(length)
-        with UserTypeSeq[Collection[Unit], UnitCollection] {
-    lazy val selfType = element[UnitCollection].asInstanceOf[Elem[Collection[Unit]]]
+        with UserTypeSeq[UnitCollection] {
+    lazy val selfType = element[UnitCollection]
   }
-  lazy val UnitCollection = new UnitCollectionCompanionAbs with UserTypeSeq[UnitCollectionCompanionAbs, UnitCollectionCompanionAbs] {
+  lazy val UnitCollection = new UnitCollectionCompanionAbs with UserTypeSeq[UnitCollectionCompanionAbs] {
     lazy val selfType = element[UnitCollectionCompanionAbs]
   }
 
@@ -582,10 +582,10 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
       (override val arr: Rep[Array[A]])
       (implicit eA: Elem[A])
     extends BaseCollection[A](arr)
-        with UserTypeSeq[Collection[A], BaseCollection[A]] {
-    lazy val selfType = element[BaseCollection[A]].asInstanceOf[Elem[Collection[A]]]
+        with UserTypeSeq[BaseCollection[A]] {
+    lazy val selfType = element[BaseCollection[A]]
   }
-  lazy val BaseCollection = new BaseCollectionCompanionAbs with UserTypeSeq[BaseCollectionCompanionAbs, BaseCollectionCompanionAbs] {
+  lazy val BaseCollection = new BaseCollectionCompanionAbs with UserTypeSeq[BaseCollectionCompanionAbs] {
     lazy val selfType = element[BaseCollectionCompanionAbs]
   }
 
@@ -599,10 +599,10 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
       (override val lst: Rep[List[A]])
       (implicit eA: Elem[A])
     extends ListCollection[A](lst)
-        with UserTypeSeq[Collection[A], ListCollection[A]] {
-    lazy val selfType = element[ListCollection[A]].asInstanceOf[Elem[Collection[A]]]
+        with UserTypeSeq[ListCollection[A]] {
+    lazy val selfType = element[ListCollection[A]]
   }
-  lazy val ListCollection = new ListCollectionCompanionAbs with UserTypeSeq[ListCollectionCompanionAbs, ListCollectionCompanionAbs] {
+  lazy val ListCollection = new ListCollectionCompanionAbs with UserTypeSeq[ListCollectionCompanionAbs] {
     lazy val selfType = element[ListCollectionCompanionAbs]
   }
 
@@ -616,10 +616,10 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
       (override val seq: Rep[SSeq[A]])
       (implicit eA: Elem[A])
     extends CollectionOnSeq[A](seq)
-        with UserTypeSeq[Collection[A], CollectionOnSeq[A]] {
-    lazy val selfType = element[CollectionOnSeq[A]].asInstanceOf[Elem[Collection[A]]]
+        with UserTypeSeq[CollectionOnSeq[A]] {
+    lazy val selfType = element[CollectionOnSeq[A]]
   }
-  lazy val CollectionOnSeq = new CollectionOnSeqCompanionAbs with UserTypeSeq[CollectionOnSeqCompanionAbs, CollectionOnSeqCompanionAbs] {
+  lazy val CollectionOnSeq = new CollectionOnSeqCompanionAbs with UserTypeSeq[CollectionOnSeqCompanionAbs] {
     lazy val selfType = element[CollectionOnSeqCompanionAbs]
   }
 
@@ -633,10 +633,10 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
       (override val as: Rep[Collection[A]], override val bs: Rep[Collection[B]])
       (implicit eA: Elem[A], eB: Elem[B])
     extends PairCollection[A, B](as, bs)
-        with UserTypeSeq[IPairCollection[A,B], PairCollection[A, B]] {
-    lazy val selfType = element[PairCollection[A, B]].asInstanceOf[Elem[IPairCollection[A,B]]]
+        with UserTypeSeq[PairCollection[A, B]] {
+    lazy val selfType = element[PairCollection[A, B]]
   }
-  lazy val PairCollection = new PairCollectionCompanionAbs with UserTypeSeq[PairCollectionCompanionAbs, PairCollectionCompanionAbs] {
+  lazy val PairCollection = new PairCollectionCompanionAbs with UserTypeSeq[PairCollectionCompanionAbs] {
     lazy val selfType = element[PairCollectionCompanionAbs]
   }
 
@@ -650,10 +650,10 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
       (override val arr: Rep[Array[(A, B)]])
       (implicit eA: Elem[A], eB: Elem[B])
     extends CollectionOfPairs[A, B](arr)
-        with UserTypeSeq[IPairCollection[A,B], CollectionOfPairs[A, B]] {
-    lazy val selfType = element[CollectionOfPairs[A, B]].asInstanceOf[Elem[IPairCollection[A,B]]]
+        with UserTypeSeq[CollectionOfPairs[A, B]] {
+    lazy val selfType = element[CollectionOfPairs[A, B]]
   }
-  lazy val CollectionOfPairs = new CollectionOfPairsCompanionAbs with UserTypeSeq[CollectionOfPairsCompanionAbs, CollectionOfPairsCompanionAbs] {
+  lazy val CollectionOfPairs = new CollectionOfPairsCompanionAbs with UserTypeSeq[CollectionOfPairsCompanionAbs] {
     lazy val selfType = element[CollectionOfPairsCompanionAbs]
   }
 
@@ -667,10 +667,10 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
       (override val values: Coll[A], override val segments: PairColl[Int,Int])
       (implicit eA: Elem[A])
     extends NestedCollection[A](values, segments)
-        with UserTypeSeq[INestedCollection[A], NestedCollection[A]] {
-    lazy val selfType = element[NestedCollection[A]].asInstanceOf[Elem[INestedCollection[A]]]
+        with UserTypeSeq[NestedCollection[A]] {
+    lazy val selfType = element[NestedCollection[A]]
   }
-  lazy val NestedCollection = new NestedCollectionCompanionAbs with UserTypeSeq[NestedCollectionCompanionAbs, NestedCollectionCompanionAbs] {
+  lazy val NestedCollection = new NestedCollectionCompanionAbs with UserTypeSeq[NestedCollectionCompanionAbs] {
     lazy val selfType = element[NestedCollectionCompanionAbs]
   }
 
@@ -684,7 +684,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
 // Exp -----------------------------------
 trait CollectionsExp extends CollectionsDsl with ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeDef[CollectionCompanionAbs, CollectionCompanionAbs] {
+  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeDef[CollectionCompanionAbs] {
     lazy val selfType = element[CollectionCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -692,12 +692,12 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   case class ExpUnitCollection
       (override val length: Rep[Int])
 
-    extends UnitCollection(length) with UserTypeDef[Collection[Unit], UnitCollection] {
-    lazy val selfType = element[UnitCollection].asInstanceOf[Elem[Collection[Unit]]]
+    extends UnitCollection(length) with UserTypeDef[UnitCollection] {
+    lazy val selfType = element[UnitCollection]
     override def mirror(t: Transformer) = ExpUnitCollection(t(length))
   }
 
-  lazy val UnitCollection: Rep[UnitCollectionCompanionAbs] = new UnitCollectionCompanionAbs with UserTypeDef[UnitCollectionCompanionAbs, UnitCollectionCompanionAbs] {
+  lazy val UnitCollection: Rep[UnitCollectionCompanionAbs] = new UnitCollectionCompanionAbs with UserTypeDef[UnitCollectionCompanionAbs] {
     lazy val selfType = element[UnitCollectionCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -884,12 +884,12 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   case class ExpBaseCollection[A]
       (override val arr: Rep[Array[A]])
       (implicit eA: Elem[A])
-    extends BaseCollection[A](arr) with UserTypeDef[Collection[A], BaseCollection[A]] {
-    lazy val selfType = element[BaseCollection[A]].asInstanceOf[Elem[Collection[A]]]
+    extends BaseCollection[A](arr) with UserTypeDef[BaseCollection[A]] {
+    lazy val selfType = element[BaseCollection[A]]
     override def mirror(t: Transformer) = ExpBaseCollection[A](t(arr))
   }
 
-  lazy val BaseCollection: Rep[BaseCollectionCompanionAbs] = new BaseCollectionCompanionAbs with UserTypeDef[BaseCollectionCompanionAbs, BaseCollectionCompanionAbs] {
+  lazy val BaseCollection: Rep[BaseCollectionCompanionAbs] = new BaseCollectionCompanionAbs with UserTypeDef[BaseCollectionCompanionAbs] {
     lazy val selfType = element[BaseCollectionCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -1076,12 +1076,12 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   case class ExpListCollection[A]
       (override val lst: Rep[List[A]])
       (implicit eA: Elem[A])
-    extends ListCollection[A](lst) with UserTypeDef[Collection[A], ListCollection[A]] {
-    lazy val selfType = element[ListCollection[A]].asInstanceOf[Elem[Collection[A]]]
+    extends ListCollection[A](lst) with UserTypeDef[ListCollection[A]] {
+    lazy val selfType = element[ListCollection[A]]
     override def mirror(t: Transformer) = ExpListCollection[A](t(lst))
   }
 
-  lazy val ListCollection: Rep[ListCollectionCompanionAbs] = new ListCollectionCompanionAbs with UserTypeDef[ListCollectionCompanionAbs, ListCollectionCompanionAbs] {
+  lazy val ListCollection: Rep[ListCollectionCompanionAbs] = new ListCollectionCompanionAbs with UserTypeDef[ListCollectionCompanionAbs] {
     lazy val selfType = element[ListCollectionCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -1268,12 +1268,12 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   case class ExpCollectionOnSeq[A]
       (override val seq: Rep[SSeq[A]])
       (implicit eA: Elem[A])
-    extends CollectionOnSeq[A](seq) with UserTypeDef[Collection[A], CollectionOnSeq[A]] {
-    lazy val selfType = element[CollectionOnSeq[A]].asInstanceOf[Elem[Collection[A]]]
+    extends CollectionOnSeq[A](seq) with UserTypeDef[CollectionOnSeq[A]] {
+    lazy val selfType = element[CollectionOnSeq[A]]
     override def mirror(t: Transformer) = ExpCollectionOnSeq[A](t(seq))
   }
 
-  lazy val CollectionOnSeq: Rep[CollectionOnSeqCompanionAbs] = new CollectionOnSeqCompanionAbs with UserTypeDef[CollectionOnSeqCompanionAbs, CollectionOnSeqCompanionAbs] {
+  lazy val CollectionOnSeq: Rep[CollectionOnSeqCompanionAbs] = new CollectionOnSeqCompanionAbs with UserTypeDef[CollectionOnSeqCompanionAbs] {
     lazy val selfType = element[CollectionOnSeqCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -1472,12 +1472,12 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   case class ExpPairCollection[A, B]
       (override val as: Rep[Collection[A]], override val bs: Rep[Collection[B]])
       (implicit eA: Elem[A], eB: Elem[B])
-    extends PairCollection[A, B](as, bs) with UserTypeDef[IPairCollection[A,B], PairCollection[A, B]] {
-    lazy val selfType = element[PairCollection[A, B]].asInstanceOf[Elem[IPairCollection[A,B]]]
+    extends PairCollection[A, B](as, bs) with UserTypeDef[PairCollection[A, B]] {
+    lazy val selfType = element[PairCollection[A, B]]
     override def mirror(t: Transformer) = ExpPairCollection[A, B](t(as), t(bs))
   }
 
-  lazy val PairCollection: Rep[PairCollectionCompanionAbs] = new PairCollectionCompanionAbs with UserTypeDef[PairCollectionCompanionAbs, PairCollectionCompanionAbs] {
+  lazy val PairCollection: Rep[PairCollectionCompanionAbs] = new PairCollectionCompanionAbs with UserTypeDef[PairCollectionCompanionAbs] {
     lazy val selfType = element[PairCollectionCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -1664,12 +1664,12 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   case class ExpCollectionOfPairs[A, B]
       (override val arr: Rep[Array[(A, B)]])
       (implicit eA: Elem[A], eB: Elem[B])
-    extends CollectionOfPairs[A, B](arr) with UserTypeDef[IPairCollection[A,B], CollectionOfPairs[A, B]] {
-    lazy val selfType = element[CollectionOfPairs[A, B]].asInstanceOf[Elem[IPairCollection[A,B]]]
+    extends CollectionOfPairs[A, B](arr) with UserTypeDef[CollectionOfPairs[A, B]] {
+    lazy val selfType = element[CollectionOfPairs[A, B]]
     override def mirror(t: Transformer) = ExpCollectionOfPairs[A, B](t(arr))
   }
 
-  lazy val CollectionOfPairs: Rep[CollectionOfPairsCompanionAbs] = new CollectionOfPairsCompanionAbs with UserTypeDef[CollectionOfPairsCompanionAbs, CollectionOfPairsCompanionAbs] {
+  lazy val CollectionOfPairs: Rep[CollectionOfPairsCompanionAbs] = new CollectionOfPairsCompanionAbs with UserTypeDef[CollectionOfPairsCompanionAbs] {
     lazy val selfType = element[CollectionOfPairsCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -1868,12 +1868,12 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   case class ExpNestedCollection[A]
       (override val values: Coll[A], override val segments: PairColl[Int,Int])
       (implicit eA: Elem[A])
-    extends NestedCollection[A](values, segments) with UserTypeDef[INestedCollection[A], NestedCollection[A]] {
-    lazy val selfType = element[NestedCollection[A]].asInstanceOf[Elem[INestedCollection[A]]]
+    extends NestedCollection[A](values, segments) with UserTypeDef[NestedCollection[A]] {
+    lazy val selfType = element[NestedCollection[A]]
     override def mirror(t: Transformer) = ExpNestedCollection[A](t(values), t(segments))
   }
 
-  lazy val NestedCollection: Rep[NestedCollectionCompanionAbs] = new NestedCollectionCompanionAbs with UserTypeDef[NestedCollectionCompanionAbs, NestedCollectionCompanionAbs] {
+  lazy val NestedCollection: Rep[NestedCollectionCompanionAbs] = new NestedCollectionCompanionAbs with UserTypeDef[NestedCollectionCompanionAbs] {
     lazy val selfType = element[NestedCollectionCompanionAbs]
     override def mirror(t: Transformer) = this
   }

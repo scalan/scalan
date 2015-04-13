@@ -8,6 +8,7 @@ import java.lang.reflect.{InvocationTargetException, Method}
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe._
+import scala.util.{Try, Success}
 
 import org.objenesis.ObjenesisStd
 
@@ -224,31 +225,29 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     proxy.asInstanceOf[Ops]
   }
 
-  final val skipInterfaces = Set("Object", "Product", "Reifiable", "Serializable")
+  final val skipInterfaces = {
+    val mirror = scala.reflect.runtime.currentMirror
+    Symbols.SuperTypesOfDef.flatMap { sym =>
+      Try[Class[_]](mirror.runtimeClass(sym.asClass)).toOption
+    }
+  }
 
-  private def getSuperMethod(m: Method): Method = {
+  private def getSuperMethod(m: Method): Option[Method] = {
     val c = m.getDeclaringClass
     val superClass = c.getSuperclass
     val optClassMethod =
-      if (superClass == null || skipInterfaces.contains(superClass.getSimpleName)) None
+      if (superClass == null || skipInterfaces.contains(superClass))
+        None
       else
-        try Some(superClass.getMethod(m.getName, m.getParameterTypes: _*))
-        catch {
-          case e: NoSuchMethodException => None
-        }
-    optClassMethod.getOrElse(
-    {
+        Try(superClass.getMethod(m.getName, m.getParameterTypes: _*)).toOption
+    optClassMethod.orElse {
       val is = c.getInterfaces
       val methods = is.toIterator
-        .filterNot(i => skipInterfaces.contains(i.getSimpleName))
-        .map(i =>
-          try Some(i.getMethod(m.getName, m.getParameterTypes: _*))
-          catch {
-            case e: NoSuchMethodException => None
-          })
-      val optInterfaceMethod = methods.collectFirst { case Some(m) => m }
-      optInterfaceMethod.getOrElse(null)
-    })
+        .filterNot(i => skipInterfaces.contains(i))
+        .map(i => Try(i.getMethod(m.getName, m.getParameterTypes: _*)))
+      val optInterfaceMethod = methods.collectFirst { case Success(m) => m }
+      optInterfaceMethod
+    }
   }
 
   // FIXME this is a hack, this should be handled in Passes
@@ -291,16 +290,18 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     }
 
   private def invokeSuperMethod(d: Def[_], m: Method, args: Array[AnyRef]): Option[AnyRef] = {
-    var res: Option[AnyRef] = None
-    var superMethod: Method = null
-    do {
-      superMethod = getSuperMethod(m)
-      if (superMethod != null && shouldInvoke(d, superMethod, args)) {
-        res = Some(superMethod.invoke(d, args: _*))
+    @tailrec
+    def loop(m: Method): Option[AnyRef] =
+      getSuperMethod(m) match {
+        case None => None
+        case Some(superMethod) =>
+          if (shouldInvoke(d, superMethod, args))
+            Some(superMethod.invoke(d, args: _*))
+          else
+            loop(superMethod)
       }
-    } while (false) //(!res.isDefined && superMethod != null) //TODO make it work for many levels of inheritance
 
-    res
+    loop(m)
   }
 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
@@ -348,7 +349,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         }
 
         overloads.find { sym =>
-          !isSupertypeOfReifiableExp(sym.owner) && {
+          !isSupertypeOfDef(sym.owner) && {
             val scalaOverloadId = ReflectionUtil.annotation[OverloadId](sym).map { sAnnotation =>
               val LiteralArgument(Constant(sOverloadId)) = sAnnotation.javaArgs.head._2
               sOverloadId
@@ -451,10 +452,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val ListSym = typeOf[List[_]].typeSymbol
 
     val BaseTypeExSym = typeOf[BaseTypeEx[_, _]].typeSymbol
+
+    val SuperTypesOfDef = typeOf[Def[_]].baseClasses.toSet
   }
 
-  private def isSupertypeOfReifiableExp(clazz: Symbol) =
-    typeOf[ReifiableExp[_, _]].baseClasses.contains(clazz)
+  private def isSupertypeOfDef(clazz: Symbol) =
+    SuperTypesOfDef.contains(clazz)
 
   sealed trait InvokeResult
 

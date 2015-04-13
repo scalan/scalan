@@ -315,7 +315,7 @@ trait FrontsAbs extends Scalan with Fronts {
 // Seq -----------------------------------
 trait FrontsSeq extends FrontsDsl with ScalanSeq {
   self: FrontsDslSeq =>
-  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeSeq[FrontCompanionAbs, FrontCompanionAbs] {
+  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeSeq[FrontCompanionAbs] {
     lazy val selfType = element[FrontCompanionAbs]
   }
 
@@ -323,10 +323,10 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
       (override val set: Rep[BaseCollection[Int]], override val bits: Rep[BitSet])
 
     extends BaseFront(set, bits)
-        with UserTypeSeq[Front, BaseFront] {
-    lazy val selfType = element[BaseFront].asInstanceOf[Elem[Front]]
+        with UserTypeSeq[BaseFront] {
+    lazy val selfType = element[BaseFront]
   }
-  lazy val BaseFront = new BaseFrontCompanionAbs with UserTypeSeq[BaseFrontCompanionAbs, BaseFrontCompanionAbs] {
+  lazy val BaseFront = new BaseFrontCompanionAbs with UserTypeSeq[BaseFrontCompanionAbs] {
     lazy val selfType = element[BaseFrontCompanionAbs]
   }
 
@@ -340,10 +340,10 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
       (override val set: Rep[ListCollection[Int]], override val bits: Rep[BitSet])
 
     extends ListFront(set, bits)
-        with UserTypeSeq[Front, ListFront] {
-    lazy val selfType = element[ListFront].asInstanceOf[Elem[Front]]
+        with UserTypeSeq[ListFront] {
+    lazy val selfType = element[ListFront]
   }
-  lazy val ListFront = new ListFrontCompanionAbs with UserTypeSeq[ListFrontCompanionAbs, ListFrontCompanionAbs] {
+  lazy val ListFront = new ListFrontCompanionAbs with UserTypeSeq[ListFrontCompanionAbs] {
     lazy val selfType = element[ListFrontCompanionAbs]
   }
 
@@ -357,10 +357,10 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
       (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
 
     extends CollectionFront(set, bits)
-        with UserTypeSeq[Front, CollectionFront] {
-    lazy val selfType = element[CollectionFront].asInstanceOf[Elem[Front]]
+        with UserTypeSeq[CollectionFront] {
+    lazy val selfType = element[CollectionFront]
   }
-  lazy val CollectionFront = new CollectionFrontCompanionAbs with UserTypeSeq[CollectionFrontCompanionAbs, CollectionFrontCompanionAbs] {
+  lazy val CollectionFront = new CollectionFrontCompanionAbs with UserTypeSeq[CollectionFrontCompanionAbs] {
     lazy val selfType = element[CollectionFrontCompanionAbs]
   }
 
@@ -374,10 +374,10 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
       (override val mmap: Rep[MMap[Int,Unit]])
 
     extends MapBasedFront(mmap)
-        with UserTypeSeq[Front, MapBasedFront] {
-    lazy val selfType = element[MapBasedFront].asInstanceOf[Elem[Front]]
+        with UserTypeSeq[MapBasedFront] {
+    lazy val selfType = element[MapBasedFront]
   }
-  lazy val MapBasedFront = new MapBasedFrontCompanionAbs with UserTypeSeq[MapBasedFrontCompanionAbs, MapBasedFrontCompanionAbs] {
+  lazy val MapBasedFront = new MapBasedFrontCompanionAbs with UserTypeSeq[MapBasedFrontCompanionAbs] {
     lazy val selfType = element[MapBasedFrontCompanionAbs]
   }
 
@@ -391,7 +391,7 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
 // Exp -----------------------------------
 trait FrontsExp extends FrontsDsl with ScalanExp {
   self: FrontsDslExp =>
-  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeDef[FrontCompanionAbs, FrontCompanionAbs] {
+  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeDef[FrontCompanionAbs] {
     lazy val selfType = element[FrontCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -399,12 +399,12 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   case class ExpBaseFront
       (override val set: Rep[BaseCollection[Int]], override val bits: Rep[BitSet])
 
-    extends BaseFront(set, bits) with UserTypeDef[Front, BaseFront] {
-    lazy val selfType = element[BaseFront].asInstanceOf[Elem[Front]]
+    extends BaseFront(set, bits) with UserTypeDef[BaseFront] {
+    lazy val selfType = element[BaseFront]
     override def mirror(t: Transformer) = ExpBaseFront(t(set), t(bits))
   }
 
-  lazy val BaseFront: Rep[BaseFrontCompanionAbs] = new BaseFrontCompanionAbs with UserTypeDef[BaseFrontCompanionAbs, BaseFrontCompanionAbs] {
+  lazy val BaseFront: Rep[BaseFrontCompanionAbs] = new BaseFrontCompanionAbs with UserTypeDef[BaseFrontCompanionAbs] {
     lazy val selfType = element[BaseFrontCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -447,12 +447,12 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   case class ExpListFront
       (override val set: Rep[ListCollection[Int]], override val bits: Rep[BitSet])
 
-    extends ListFront(set, bits) with UserTypeDef[Front, ListFront] {
-    lazy val selfType = element[ListFront].asInstanceOf[Elem[Front]]
+    extends ListFront(set, bits) with UserTypeDef[ListFront] {
+    lazy val selfType = element[ListFront]
     override def mirror(t: Transformer) = ExpListFront(t(set), t(bits))
   }
 
-  lazy val ListFront: Rep[ListFrontCompanionAbs] = new ListFrontCompanionAbs with UserTypeDef[ListFrontCompanionAbs, ListFrontCompanionAbs] {
+  lazy val ListFront: Rep[ListFrontCompanionAbs] = new ListFrontCompanionAbs with UserTypeDef[ListFrontCompanionAbs] {
     lazy val selfType = element[ListFrontCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -495,12 +495,12 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   case class ExpCollectionFront
       (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
 
-    extends CollectionFront(set, bits) with UserTypeDef[Front, CollectionFront] {
-    lazy val selfType = element[CollectionFront].asInstanceOf[Elem[Front]]
+    extends CollectionFront(set, bits) with UserTypeDef[CollectionFront] {
+    lazy val selfType = element[CollectionFront]
     override def mirror(t: Transformer) = ExpCollectionFront(t(set), t(bits))
   }
 
-  lazy val CollectionFront: Rep[CollectionFrontCompanionAbs] = new CollectionFrontCompanionAbs with UserTypeDef[CollectionFrontCompanionAbs, CollectionFrontCompanionAbs] {
+  lazy val CollectionFront: Rep[CollectionFrontCompanionAbs] = new CollectionFrontCompanionAbs with UserTypeDef[CollectionFrontCompanionAbs] {
     lazy val selfType = element[CollectionFrontCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -543,12 +543,12 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   case class ExpMapBasedFront
       (override val mmap: Rep[MMap[Int,Unit]])
 
-    extends MapBasedFront(mmap) with UserTypeDef[Front, MapBasedFront] {
-    lazy val selfType = element[MapBasedFront].asInstanceOf[Elem[Front]]
+    extends MapBasedFront(mmap) with UserTypeDef[MapBasedFront] {
+    lazy val selfType = element[MapBasedFront]
     override def mirror(t: Transformer) = ExpMapBasedFront(t(mmap))
   }
 
-  lazy val MapBasedFront: Rep[MapBasedFrontCompanionAbs] = new MapBasedFrontCompanionAbs with UserTypeDef[MapBasedFrontCompanionAbs, MapBasedFrontCompanionAbs] {
+  lazy val MapBasedFront: Rep[MapBasedFrontCompanionAbs] = new MapBasedFrontCompanionAbs with UserTypeDef[MapBasedFrontCompanionAbs] {
     lazy val selfType = element[MapBasedFrontCompanionAbs]
     override def mirror(t: Transformer) = this
   }

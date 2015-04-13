@@ -182,7 +182,7 @@ trait Views extends Elems { self: Scalan =>
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
-  trait UserTypeSeq[T, TImpl <: T] extends Reifiable[T] { thisType: T =>
+  trait UserTypeSeq[T] extends Reifiable[T] { thisType: T =>
     def self = this
   }
 
@@ -211,7 +211,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
   def shouldUnpack(e: ViewElem[_, _]) = unpackTesters.exists(_(e))
 
-  trait UserTypeDef[T, TImpl <: T] extends ReifiableExp[T, TImpl] {
+  trait UserTypeDef[T] extends Def[T] {
     def uniqueOpId = selfType.name
   }
 

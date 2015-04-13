@@ -553,11 +553,11 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
          |      (${fieldsWithType.rep(f => s"override val $f")})
          |      ${implicitArgsDecl}
          |    extends $className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")}
-         |       ${module.seqDslImpl.opt(_ => s"with Seq$entityName${typesUse}")} with UserTypeSeq[$traitWithTypes, $className${typesUse}] {
-         |    lazy val selfType = element[${className}${typesUse}].asInstanceOf[Elem[$traitWithTypes]]
+         |       ${module.seqDslImpl.opt(_ => s"with Seq$entityName${typesUse}")} with UserTypeSeq[$className${typesUse}] {
+         |    lazy val selfType = element[${className}${typesUse}]
          |    $externalMethodsStr
          |  }
-         |  lazy val $className = new ${className}CompanionAbs with UserTypeSeq[${className}CompanionAbs, ${className}CompanionAbs] {
+         |  lazy val $className = new ${className}CompanionAbs with UserTypeSeq[${className}CompanionAbs] {
          |    lazy val selfType = element[${className}CompanionAbs]
          |  }""".stripAndTrim
 
@@ -588,12 +588,12 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
          |  case class Exp$className${typesDecl}
          |      (${fieldsWithType.rep(f => s"override val $f")})
          |      ${implicitArgsDecl}
-         |    extends $className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")} with UserTypeDef[$traitWithTypes, $className${typesUse}] {
-         |    lazy val selfType = element[$className${typesUse}].asInstanceOf[Elem[$traitWithTypes]]
+         |    extends $className${typesUse}(${fields.rep()})${c.selfType.opt(t => s" with ${t.tpe}")} with UserTypeDef[$className${typesUse}] {
+         |    lazy val selfType = element[$className${typesUse}]
          |    override def mirror(t: Transformer) = Exp$className${typesUse}(${fields.rep(f => s"t($f)")})
          |  }
          |
-         |  lazy val $className: Rep[${className}CompanionAbs] = new ${className}CompanionAbs with UserTypeDef[${className}CompanionAbs, ${className}CompanionAbs] {
+         |  lazy val $className: Rep[${className}CompanionAbs] = new ${className}CompanionAbs with UserTypeDef[${className}CompanionAbs] {
          |    lazy val selfType = element[${className}CompanionAbs]
          |    override def mirror(t: Transformer) = this
          |  }
@@ -651,7 +651,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |// Seq -----------------------------------
        |trait ${module.name}Seq extends ${module.name}Dsl with ${config.seqContextTrait} {
        |  ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
-       |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
+       |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    $companionMethods
        |  }
@@ -766,7 +766,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |// Exp -----------------------------------
        |trait ${module.name}Exp extends ${module.name}Dsl with ${config.stagedContextTrait} {
        |  ${module.selfType.opt(t => s"self: ${t.tpe}Exp =>")}
-       |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs, ${entityName}CompanionAbs] {
+       |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this
        |  }
