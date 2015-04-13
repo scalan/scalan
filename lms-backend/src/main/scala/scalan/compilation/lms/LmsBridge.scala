@@ -1,6 +1,5 @@
 package scalan.compilation.lms
 
-import scala.reflect.ClassTag
 import scalan.ScalanCtxExp
 import scalan.compilation.lms.scalac.LmsManifestUtil
 import LmsManifestUtil._
@@ -9,17 +8,32 @@ trait LmsBridge { self: ScalanCtxExp =>
 
   val lms: LmsBackend
 
-  type SymMirror = Map[Exp[_], lms.Exp[A] forSome {type A}]
-  type FuncMirror = Map[Exp[_], (lms.Exp[A] => lms.Exp[B]) forSome {type A; type B}]
-  type ExpMirror = Seq[lms.Exp[_]]
+  type LmsFunction = (lms.Exp[A] => lms.Exp[B]) forSome {type A; type B}
 
-  type LmsMirror = (ExpMirror, SymMirror, FuncMirror)
+  class LmsMirror(val lastExp: Option[lms.Exp[_]], symMirror: Map[Exp[_], lms.Exp[_]], funcMirror: Map[Exp[_], LmsFunction]) {
+    def addSym(scalanExp: Exp[_], lmsExp: lms.Exp[_]) =
+      new LmsMirror(Some(lmsExp), symMirror.updated(scalanExp, lmsExp), funcMirror)
+    def addFuncAndSym(scalanExp: Exp[_], lmsFunc: LmsFunction, lmsExp: lms.Exp[_]) =
+      new LmsMirror(Some(lmsExp), symMirror.updated(scalanExp, lmsExp), funcMirror.updated(scalanExp, lmsFunc))
+    def addFunc(scalanExp: Exp[_], lmsFunc: LmsFunction) =
+      new LmsMirror(lastExp, symMirror, funcMirror.updated(scalanExp, lmsFunc))
+    def withoutLastExp = new LmsMirror(None, symMirror, funcMirror)
+
+    def symMirror[A](scalanExp: Exp[_]): lms.Exp[A] = symMirror.apply(scalanExp).asInstanceOf[lms.Exp[A]]
+    def symMirrorUntyped(scalanExp: Exp[_]): lms.Exp[_] = symMirror.apply(scalanExp)
+    def funcMirror[A, B](scalanExp: Exp[_]): lms.Exp[A] => lms.Exp[B] =
+      funcMirror.apply(scalanExp).asInstanceOf[lms.Exp[A] => lms.Exp[B]]
+  }
+
+  object LmsMirror {
+    val empty = new LmsMirror(None, Map.empty, Map.empty)
+  }
 
   type EntryTransformer = PartialFunction[TableEntry[_], LmsMirror]
   type DefTransformer = PartialFunction[Def[_], LmsMirror]
 
   def defTransformer[T](m: LmsMirror, g: AstGraph, e: TableEntry[T]): DefTransformer = {
-    case x => !!!(s"MSBridge: Don't know how to mirror symbol ${x.self.toStringWithDefinition}")
+    case x => !!!(s"LMSBridge: Don't know how to mirror symbol ${x.self.toStringWithDefinition}")
   }
 
   def tableTransformer(m: LmsMirror, g: AstGraph): EntryTransformer = {
@@ -27,12 +41,11 @@ trait LmsBridge { self: ScalanCtxExp =>
   }
 
   def mirrorLambdaToLmsFunc[I, R](m: LmsMirror)(lam: Lambda[I, R]): (lms.Exp[I] => lms.Exp[R]) = {
-    val (expMirror, symMirror, funcMirror) = m
     val lamX = lam.x
     val f = { x: lms.Exp[I] =>
       val sched = lam.scheduleSingleLevel
-      val (lamExps, _, _) = mirrorDefs((expMirror, symMirror + ((lamX, x)), funcMirror))(lam, sched)
-      val res = lamExps.lastOption.getOrElse(x)
+      val lastExp = mirrorDefs(m.addSym(lamX, x))(lam, sched).lastExp
+      val res = lastExp.getOrElse(x)
       res.asInstanceOf[lms.Exp[R]]
     }
     f
@@ -40,25 +53,22 @@ trait LmsBridge { self: ScalanCtxExp =>
 
   /* Mirror block */
   def mirrorBlockToLms[R](m: LmsMirror)(block: ThunkDef[_], dflt: Rep[_]): () => lms.Exp[R] = { () =>
-    val (_, symMirror, _) = m
     val sched = block.scheduleSingleLevel
-    val (blockExps, _, _) = mirrorDefs(m)(block, sched)
-    val res = blockExps.lastOption.getOrElse(symMirror(dflt))
+    val lastExp = mirrorDefs(m)(block, sched).lastExp
+    val res = lastExp.getOrElse(m.symMirrorUntyped(dflt))
     res.asInstanceOf[lms.Exp[R]]
   }
 
   def mirrorDefs(m: LmsMirror)(fromGraph: AstGraph, defs: Seq[TableEntry[_]]): LmsMirror = {
-    val (_, symMirror, funcMirror) = m
-    val init: LmsMirror = (List.empty[lms.Exp[_]], symMirror, funcMirror)
-    val (lmsExps, finalSymMirr, finalFuncMirr) = defs.foldLeft(init)((m, t) => tableTransformer(m, fromGraph)(t))
-    (lmsExps, finalSymMirr, finalFuncMirr)
+    val init: LmsMirror = m.withoutLastExp
+    val finalMirror = defs.foldLeft(init)((m, t) => tableTransformer(m, fromGraph)(t))
+    finalMirror
   }
 
   // can't just return lmsFunc: lms.Exp[A] => lms.Exp[B], since mirrorDefs needs to be called in LMS context
   def apply[A, B](g: PGraph) = { x: lms.Exp[A] =>
-    val emptyMirror: LmsMirror = (Seq.empty, Map.empty, Map.empty)
-    val (_, _, finalFuncMirror) = mirrorDefs(emptyMirror)(g, g.schedule)
-    val lmsFunc = finalFuncMirror(g.roots.last).asInstanceOf[lms.Exp[A] => lms.Exp[B]]
+    val finalMirror = mirrorDefs(LmsMirror.empty)(g, g.schedule)
+    val lmsFunc = finalMirror.funcMirror[A, B](g.roots.last)
     lmsFunc(x)
   }
 
