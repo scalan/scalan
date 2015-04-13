@@ -64,10 +64,7 @@ trait MatricesAbs extends Scalan with Matrices {
   class RowMajorDirectMatrixIso[T](implicit elem: Elem[T])
     extends Iso[RowMajorDirectMatrixData[T], RowMajorDirectMatrix[T]] {
     override def from(p: Rep[RowMajorDirectMatrix[T]]) =
-      unmkRowMajorDirectMatrix(p) match {
-        case Some((rows)) => rows
-        case None => !!!
-      }
+      p.rows
     override def to(p: Rep[Collection[AbstractVector[T]]]) = {
       val rows = p
       RowMajorDirectMatrix(rows)
@@ -85,7 +82,9 @@ trait MatricesAbs extends Scalan with Matrices {
 
     def apply[T](rows: Rep[Collection[AbstractVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorDirectMatrix[T]] =
       mkRowMajorDirectMatrix(rows)
-    def unapply[T:Elem](p: Rep[RowMajorDirectMatrix[T]]) = unmkRowMajorDirectMatrix(p)
+  }
+  object RowMajorDirectMatrixMatcher {
+    def unapply[T:Elem](p: Rep[AbstractMatrix[T]]) = unmkRowMajorDirectMatrix(p)
   }
   def RowMajorDirectMatrix: Rep[RowMajorDirectMatrixCompanionAbs]
   implicit def proxyRowMajorDirectMatrixCompanion(p: Rep[RowMajorDirectMatrixCompanionAbs]): RowMajorDirectMatrixCompanionAbs = {
@@ -111,7 +110,7 @@ trait MatricesAbs extends Scalan with Matrices {
 
   // 6) smart constructor and deconstructor
   def mkRowMajorDirectMatrix[T](rows: Rep[Collection[AbstractVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorDirectMatrix[T]]
-  def unmkRowMajorDirectMatrix[T:Elem](p: Rep[RowMajorDirectMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]])]
+  def unmkRowMajorDirectMatrix[T:Elem](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]])]
 
   // elem for concrete class
   class RowMajorNestedMatrixElem[T](val iso: Iso[RowMajorNestedMatrixData[T], RowMajorNestedMatrix[T]])(implicit elem: Elem[T])
@@ -129,10 +128,7 @@ trait MatricesAbs extends Scalan with Matrices {
   class RowMajorNestedMatrixIso[T](implicit elem: Elem[T])
     extends Iso[RowMajorNestedMatrixData[T], RowMajorNestedMatrix[T]] {
     override def from(p: Rep[RowMajorNestedMatrix[T]]) =
-      unmkRowMajorNestedMatrix(p) match {
-        case Some((rmValues, numColumns)) => Pair(rmValues, numColumns)
-        case None => !!!
-      }
+      (p.rmValues, p.numColumns)
     override def to(p: Rep[(Collection[T], Int)]) = {
       val Pair(rmValues, numColumns) = p
       RowMajorNestedMatrix(rmValues, numColumns)
@@ -151,7 +147,9 @@ trait MatricesAbs extends Scalan with Matrices {
       isoRowMajorNestedMatrix(elem).to(p)
     def apply[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorNestedMatrix[T]] =
       mkRowMajorNestedMatrix(rmValues, numColumns)
-    def unapply[T:Elem](p: Rep[RowMajorNestedMatrix[T]]) = unmkRowMajorNestedMatrix(p)
+  }
+  object RowMajorNestedMatrixMatcher {
+    def unapply[T:Elem](p: Rep[AbstractMatrix[T]]) = unmkRowMajorNestedMatrix(p)
   }
   def RowMajorNestedMatrix: Rep[RowMajorNestedMatrixCompanionAbs]
   implicit def proxyRowMajorNestedMatrixCompanion(p: Rep[RowMajorNestedMatrixCompanionAbs]): RowMajorNestedMatrixCompanionAbs = {
@@ -177,7 +175,7 @@ trait MatricesAbs extends Scalan with Matrices {
 
   // 6) smart constructor and deconstructor
   def mkRowMajorNestedMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorNestedMatrix[T]]
-  def unmkRowMajorNestedMatrix[T:Elem](p: Rep[RowMajorNestedMatrix[T]]): Option[(Rep[Collection[T]], Rep[Int])]
+  def unmkRowMajorNestedMatrix[T:Elem](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[T]], Rep[Int])]
 
   // elem for concrete class
   class RowMajorSparseMatrixElem[T](val iso: Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]])(implicit elem: Elem[T])
@@ -195,10 +193,7 @@ trait MatricesAbs extends Scalan with Matrices {
   class RowMajorSparseMatrixIso[T](implicit elem: Elem[T])
     extends Iso[RowMajorSparseMatrixData[T], RowMajorSparseMatrix[T]] {
     override def from(p: Rep[RowMajorSparseMatrix[T]]) =
-      unmkRowMajorSparseMatrix(p) match {
-        case Some((rows, numColumns)) => Pair(rows, numColumns)
-        case None => !!!
-      }
+      (p.rows, p.numColumns)
     override def to(p: Rep[(Collection[AbstractVector[T]], Int)]) = {
       val Pair(rows, numColumns) = p
       RowMajorSparseMatrix(rows, numColumns)
@@ -217,7 +212,9 @@ trait MatricesAbs extends Scalan with Matrices {
       isoRowMajorSparseMatrix(elem).to(p)
     def apply[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]] =
       mkRowMajorSparseMatrix(rows, numColumns)
-    def unapply[T:Elem](p: Rep[RowMajorSparseMatrix[T]]) = unmkRowMajorSparseMatrix(p)
+  }
+  object RowMajorSparseMatrixMatcher {
+    def unapply[T:Elem](p: Rep[AbstractMatrix[T]]) = unmkRowMajorSparseMatrix(p)
   }
   def RowMajorSparseMatrix: Rep[RowMajorSparseMatrixCompanionAbs]
   implicit def proxyRowMajorSparseMatrixCompanion(p: Rep[RowMajorSparseMatrixCompanionAbs]): RowMajorSparseMatrixCompanionAbs = {
@@ -243,13 +240,7 @@ trait MatricesAbs extends Scalan with Matrices {
 
   // 6) smart constructor and deconstructor
   def mkRowMajorSparseMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]]
-  def unmkRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]], Rep[Int])]
-
-  def matchAbstractMatrix[T, T1](x: Rep[AbstractMatrix[T]])
-                                (f1: Rep[RowMajorDirectMatrix[T]] => Rep[T1])
-                                (f2: Rep[RowMajorNestedMatrix[T]] => Rep[T1])
-                                (f3: Rep[RowMajorSparseMatrix[T]] => Rep[T1])
-                                (fb: Rep[AbstractMatrix[T]] => Rep[T1]): Rep[T1]
+  def unmkRowMajorSparseMatrix[T:Elem](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]], Rep[Int])]
 }
 
 // Seq -----------------------------------
@@ -273,8 +264,11 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
   def mkRowMajorDirectMatrix[T]
       (rows: Rep[Collection[AbstractVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorDirectMatrix[T]] =
       new SeqRowMajorDirectMatrix[T](rows)
-  def unmkRowMajorDirectMatrix[T:Elem](p: Rep[RowMajorDirectMatrix[T]]) =
-    Some((p.rows))
+  def unmkRowMajorDirectMatrix[T:Elem](p: Rep[AbstractMatrix[T]]) = p match {
+    case p: RowMajorDirectMatrix[T] @unchecked =>
+      Some((p.rows))
+    case _ => None
+  }
 
   case class SeqRowMajorNestedMatrix[T]
       (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
@@ -290,8 +284,11 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
   def mkRowMajorNestedMatrix[T]
       (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorNestedMatrix[T]] =
       new SeqRowMajorNestedMatrix[T](rmValues, numColumns)
-  def unmkRowMajorNestedMatrix[T:Elem](p: Rep[RowMajorNestedMatrix[T]]) =
-    Some((p.rmValues, p.numColumns))
+  def unmkRowMajorNestedMatrix[T:Elem](p: Rep[AbstractMatrix[T]]) = p match {
+    case p: RowMajorNestedMatrix[T] @unchecked =>
+      Some((p.rmValues, p.numColumns))
+    case _ => None
+  }
 
   case class SeqRowMajorSparseMatrix[T]
       (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])
@@ -307,20 +304,10 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
   def mkRowMajorSparseMatrix[T]
       (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]] =
       new SeqRowMajorSparseMatrix[T](rows, numColumns)
-  def unmkRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]) =
-    Some((p.rows, p.numColumns))
-
-  def matchAbstractMatrix[T, T1](x: Rep[AbstractMatrix[T]])
-                                (f1: Rep[RowMajorDirectMatrix[T]] => Rep[T1])
-                                (f2: Rep[RowMajorNestedMatrix[T]] => Rep[T1])
-                                (f3: Rep[RowMajorSparseMatrix[T]] => Rep[T1])
-                                (fb: Rep[AbstractMatrix[T]] => Rep[T1]): Rep[T1] = {
-    x match {
-      case x1: RowMajorDirectMatrix[_] => f1(x1)
-      case x2: RowMajorNestedMatrix[_] => f2(x2)
-      case x3: RowMajorSparseMatrix[_] => f3(x3)
-      case _ => fb(x)
-    }
+  def unmkRowMajorSparseMatrix[T:Elem](p: Rep[AbstractMatrix[T]]) = p match {
+    case p: RowMajorSparseMatrix[T] @unchecked =>
+      Some((p.rows, p.numColumns))
+    case _ => None
   }
 }
 
@@ -432,7 +419,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[RowMajorDirectMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(row, column, _*), _) if receiver.elem.isInstanceOf[RowMajorDirectMatrixElem[_]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(row, column, _*), _) if receiver.elem.isInstanceOf[RowMajorDirectMatrixElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, row, column)).asInstanceOf[Option[(Rep[RowMajorDirectMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}]]
         case _ => None
       }
@@ -520,8 +507,12 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   def mkRowMajorDirectMatrix[T]
     (rows: Rep[Collection[AbstractVector[T]]])(implicit elem: Elem[T]): Rep[RowMajorDirectMatrix[T]] =
     new ExpRowMajorDirectMatrix[T](rows)
-  def unmkRowMajorDirectMatrix[T:Elem](p: Rep[RowMajorDirectMatrix[T]]) =
-    Some((p.rows))
+  def unmkRowMajorDirectMatrix[T:Elem](p: Rep[AbstractMatrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: RowMajorDirectMatrixElem[T] @unchecked =>
+      Some((p.rows))
+    case _ =>
+      None
+  }
 
   case class ExpRowMajorNestedMatrix[T]
       (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
@@ -623,7 +614,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(row, column, _*), _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixElem[_]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(row, column, _*), _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, row, column)).asInstanceOf[Option[(Rep[RowMajorNestedMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}]]
         case _ => None
       }
@@ -695,7 +686,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
     object transpose {
       def unapply(d: Def[_]): Option[(Rep[RowMajorNestedMatrix[T]], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixElem[_]] && method.getName == "transpose"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[RowMajorNestedMatrixElem[_]] && method.getName == "transpose" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, n)).asInstanceOf[Option[(Rep[RowMajorNestedMatrix[T]], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -783,8 +774,12 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   def mkRowMajorNestedMatrix[T]
     (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorNestedMatrix[T]] =
     new ExpRowMajorNestedMatrix[T](rmValues, numColumns)
-  def unmkRowMajorNestedMatrix[T:Elem](p: Rep[RowMajorNestedMatrix[T]]) =
-    Some((p.rmValues, p.numColumns))
+  def unmkRowMajorNestedMatrix[T:Elem](p: Rep[AbstractMatrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: RowMajorNestedMatrixElem[T] @unchecked =>
+      Some((p.rmValues, p.numColumns))
+    case _ =>
+      None
+  }
 
   case class ExpRowMajorSparseMatrix[T]
       (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])
@@ -874,7 +869,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[RowMajorSparseMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(row, column, _*), _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[_]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(row, column, _*), _) if receiver.elem.isInstanceOf[RowMajorSparseMatrixElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, row, column)).asInstanceOf[Option[(Rep[RowMajorSparseMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}]]
         case _ => None
       }
@@ -962,8 +957,12 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   def mkRowMajorSparseMatrix[T]
     (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[RowMajorSparseMatrix[T]] =
     new ExpRowMajorSparseMatrix[T](rows, numColumns)
-  def unmkRowMajorSparseMatrix[T:Elem](p: Rep[RowMajorSparseMatrix[T]]) =
-    Some((p.rows, p.numColumns))
+  def unmkRowMajorSparseMatrix[T:Elem](p: Rep[AbstractMatrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: RowMajorSparseMatrixElem[T] @unchecked =>
+      Some((p.rows, p.numColumns))
+    case _ =>
+      None
+  }
 
   object AbstractMatrixMethods {
     object numColumns {
@@ -1064,7 +1063,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
     object apply {
       def unapply(d: Def[_]): Option[(Rep[AbstractMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(row, column, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixElem[_, _]] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(row, column, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixElem[_, _]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, row, column)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Rep[Int], Rep[Int]) forSome {type T}]]
         case _ => None
       }
@@ -1112,7 +1111,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
     object * {
       def unapply(d: Def[_]): Option[(Rep[AbstractMatrix[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(vector, n, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixElem[_, _]] && method.getName == "$times"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(vector, n, _*), _) if receiver.elem.isInstanceOf[AbstractMatrixElem[_, _]] && method.getName == "$times" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, vector, n)).asInstanceOf[Option[(Rep[AbstractMatrix[T]], Vector[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }
@@ -1206,19 +1205,6 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
         case Def(d) => unapply(d)
         case _ => None
       }
-    }
-  }
-
-  def matchAbstractMatrix[T, T1](x: Rep[AbstractMatrix[T]])
-                                (f1: Rep[RowMajorDirectMatrix[T]] => Rep[T1])
-                                (f2: Rep[RowMajorNestedMatrix[T]] => Rep[T1])
-                                (f3: Rep[RowMajorSparseMatrix[T]] => Rep[T1])
-                                (fb: Rep[AbstractMatrix[T]] => Rep[T1]): Rep[T1] = {
-    x.elem.asInstanceOf[Elem[_]] match {
-      case _: RowMajorDirectMatrixElem[_] => f1(x.asRep[RowMajorDirectMatrix[T]])
-      case _: RowMajorNestedMatrixElem[_] => f2(x.asRep[RowMajorNestedMatrix[T]])
-      case _: RowMajorSparseMatrixElem[_] => f3(x.asRep[RowMajorSparseMatrix[T]])
-      case _ => fb(x)
     }
   }
 }

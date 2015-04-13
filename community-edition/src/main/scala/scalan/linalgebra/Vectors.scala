@@ -79,7 +79,6 @@ trait Vectors { self: ScalanCommunityDsl =>
         case _ =>
           DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 + v2 })
       }
-      {???}
     }
 
     @OverloadId("elementwise_sum_value")
@@ -95,7 +94,6 @@ trait Vectors { self: ScalanCommunityDsl =>
         case _ =>
           DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 - v2 })
       }
-      {???}
     }
     @OverloadId("elementwise_diff_collection")
     def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
@@ -110,7 +108,6 @@ trait Vectors { self: ScalanCommunityDsl =>
         case _ =>
           DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 * v2 })
       }
-      {???}
     }
     @OverloadId("elementwise_mult_value")
     def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
@@ -125,7 +122,6 @@ trait Vectors { self: ScalanCommunityDsl =>
         case _ =>
           (other.items zip items).map { case Pair(v1, v2) => v1 * v2 }.reduce
       }
-      {???}
     }
 
     def euclideanNorm(implicit num: Numeric[T]): Rep[Double] = Math.sqrt(items.map(v => v * v).reduce.asRep[Double])
@@ -151,7 +147,6 @@ trait Vectors { self: ScalanCommunityDsl =>
         case _ =>
           other +^ self
       }
-      {???}
     }
 
     @OverloadId("elementwise_sum_value")
@@ -170,7 +165,6 @@ trait Vectors { self: ScalanCommunityDsl =>
         case _ =>
           (other -^ self) *^ n.negate(n.one)
       }
-      {???}
     }
     @OverloadId("elementwise_diff_collection")
     def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
@@ -184,7 +178,6 @@ trait Vectors { self: ScalanCommunityDsl =>
         case _ =>
           other *^ self
       }
-      {???}
     }
     @OverloadId("elementwise_mult_value")
     def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
@@ -202,7 +195,6 @@ trait Vectors { self: ScalanCommunityDsl =>
         case _ =>
           other.dot(self)
       }
-      {???}
     }
 
     def euclideanNorm(implicit num: Numeric[T]): Rep[Double] = Math.sqrt(nonZeroValues.map(v => v * v).reduce.asRep[Double])

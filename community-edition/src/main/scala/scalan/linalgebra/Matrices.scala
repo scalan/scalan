@@ -184,12 +184,20 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     def *^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
-      matchAbstractMatrix[T, AbstractMatrix[T]](other) {???} {
+      other match {
+        case RowMajorNestedMatrixMatcher(rmValues1, _) =>
+          RowMajorNestedMatrix((rmValues zip rmValues1).map { case Pair(v1, v2) => v1 * v2 }, numColumns)
+        case RowMajorSparseMatrixMatcher(rows1, _) =>
+          RowMajorSparseMatrix((rows zip rows1).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
+        case _ =>
+          other *^^ self
+      }
+      /*matchAbstractMatrix[T, AbstractMatrix[T]](other) {???} {
         nm => RowMajorNestedMatrix((rows zip nm.rows).flatMap { case Pair(v1, v2) => (v1 *^ v2).items }, numColumns)
       } {
         sm => RowMajorSparseMatrix((rows zip sm.rows).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
       }
-      {???}
+      {???}*/
     }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
@@ -231,21 +239,24 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     def +^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
-      matchAbstractMatrix[T, AbstractMatrix[T]](other) {???} {
+      other match {
+        case RowMajorNestedMatrixMatcher(rmValues1, _) =>
+          RowMajorNestedMatrix((rmValues zip rmValues1).map { case Pair(v1, v2) => v1 + v2 }, numColumns)
+        case RowMajorSparseMatrixMatcher(rows1, _) =>
+          RowMajorSparseMatrix((rows zip rows1).map { case Pair(v1, v2) => v1 +^ v2 }, numColumns)
+        case _ =>
+          other +^^ self
+      }
+      /*matchAbstractMatrix[T, AbstractMatrix[T]](other) {???} {
         nm => RowMajorNestedMatrix((rows zip nm.rows).flatMap { case Pair(v1, v2) => (v1 +^ v2).items }, numColumns)
       } {
         sm => RowMajorSparseMatrix((rows zip sm.rows).map { case Pair(v1, v2) => v1 +^ v2 }, numColumns)
       }
-      {???}
+      {???}*/
     }
 
     def *^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
       RowMajorSparseMatrix((rows zip other.rows).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
-      /*matchMatrix[T, AbstractMatrix[T]](other) {
-        dm => RowMajorNestedMatrix((rows zip other.rows).flatMap { case Pair(v1, v2) => (v1 +^ v2).items }, numColumns)
-      } {
-        sm => RowMajorSparseMatrix((rows zip other.rows).map { case Pair(v1, v2) => v1 +^ v2 }, numColumns)
-      }*/
     }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
