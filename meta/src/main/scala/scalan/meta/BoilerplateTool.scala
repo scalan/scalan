@@ -189,6 +189,7 @@ class BoilerplateTool extends StrictLogging {
     "graphs" -> List(graphConfig),
     "collections" -> List(collectionsConfig),
     "core" -> List(coreConfig, coreTestsConfig),
+    "core-test" -> List(coreTestsConfig),
     "ce" -> List(ceConfig),
     "la" -> List(laConfig),
     "ee" -> List(eeConfig),
