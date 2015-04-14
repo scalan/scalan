@@ -106,14 +106,12 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       (externalConstrs, externalMethods)
     }
 
-    def filterByExplicitDeclaration(ms: List[SMethodDef]) = {
-      val filtered = module.seqDslImpl match {
+    def filterByExplicitDeclaration(ms: List[SMethodDef]): List[SMethodDef] =
+      module.seqDslImpl match { 
         case Some(impl) =>
-          for {m <- ms if !impl.containsMethodDef(m)} yield m
+          ms.filterNot(impl.containsMethodDef(_))
         case None => ms
       }
-      filtered
-    }
 
     def methodArgSection(sec: SMethodArgs) = s"(${sec.argNamesAndTypes.rep()})"
 
@@ -148,7 +146,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       } yield s"${if (cb == "Elem") "element" else "weakTypeTag"}[${a.name}]")
       val compoundArgs = !(allArgs.isEmpty || elemArgs.isEmpty)
       s"""
-        |    def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
+        |    ${if (md.body.isDefined) "override def" else "def"} ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: ${tyRet.toString} =
         |      methodCallEx[$tyRetStr](self,
         |        this.getClass.getMethod("${md.name}"$argClassesStr$elemClassesStr),
         |        List(${allArgs.rep(a => s"${a.name}.asInstanceOf[AnyRef]")}${compoundArgs.opt(", ")}${elemArgs.rep()}))
@@ -644,7 +642,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
 
       val companionMethods = getCompanionMethods.opt { case (constrs, methods) =>
         filterByExplicitDeclaration(constrs).rep(md => externalSeqConstructor(md), "\n    ") +
-        filterByExplicitDeclaration(methods).rep(md => externalSeqMethod(md, false), "\n    ")
+        filterByExplicitDeclaration(methods).filter(_.body.isEmpty).rep(md => externalSeqMethod(md, false), "\n    ")
       }
 
       s"""

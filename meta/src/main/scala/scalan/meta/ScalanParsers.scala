@@ -297,9 +297,10 @@ trait ScalanParsers extends ScalanAst {
 //      case _ => None
 //    }
      val optBody:Option[SExpr] = md.rhs match {
+       case EmptyTree => None
        case Apply(ident:Ident, args) if ident.name.intern() == "sql" =>
          Some(SApply(SLiteral("sql"), List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue))))
-       case _ => None
+       case tree => Some(SDefaultExpr(tree.toString))
      }
      val optElem = if (isElem) Some(()) else None
      SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, annotations, optBody, optElem)
