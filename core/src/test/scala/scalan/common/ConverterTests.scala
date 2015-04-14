@@ -47,6 +47,9 @@ class ConverterTests extends BaseTests { suite =>
   test("converIfThenElseWithOption") {
     val ctx = new ConvProgStaged("converIfThenElseWithSum")
     ctx.emit("t10", ctx.t10)
+    ctx.emit("t10_1", ctx.t10_1)
+    ctx.emit("t10_2", ctx.t10_2)
+    ctx.emit("t10_3", ctx.t10_3)
   }
 
   test("converIfThenElseWithSum") {

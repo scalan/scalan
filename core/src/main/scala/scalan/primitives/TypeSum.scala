@@ -121,6 +121,13 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     }
   }
 
+  object IsSumMapLambda {
+    def unapply[A,B](f: Rep[A => B]): Option[SumMap[_,_,_,_]] = f match {
+      case Def(Lambda(_, _, x, Def(m: SumMap[_,_,_,_]))) if x == m.sum => Some(m)
+      case _ => None
+    }
+  }
+
   def liftFromSumFold[T1,T2,A,B](
         sum: Rep[T1|T2], left: Rep[T1 => B], right: Rep[T2 => B], iso: Iso[A,B]): Rep[B] = {
     implicit val eA = iso.eFrom
@@ -165,6 +172,21 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     case r@Right(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
       SumView(toRightSum(a.asRep[a1])(r.eLeft))(identityIso(r.eLeft), iso).self
 
+    case m1 @ SumMap(Def(f: SumFold[a0,b0,_]), left, right) =>
+      f.sum.fold(a0 => left(f.left(a0)), b0 => right(f.right(b0)))
+
+    case m1 @ SumMap(Def(m2: SumMap[a0,b0,a1,b1]), left, right) =>
+      m2.sum.mapSum(a0 => left(m2.left(a0)), b0 => right(m2.right(b0)))
+
+    case f @ SumFold(Def(m: SumMap[a0,b0,a,b]), left, right) =>
+      m.sum.fold(x => left(m.left(x)), y => right(m.right(y)))
+
+    case f @ SumFold(Def(IfThenElse(cond, Def(Left(x)), Def(Right(y)))), left, right) =>
+      IF (cond) THEN { left(x) } ELSE { right(y) }
+
+//    case f1 @ SumFold(Def(f2: SumFold[a0,b0,_]), left, right) =>
+//      m.sum.fold(x => left(m.left(x)), y => right(m.right(y)))
+
     case foldD @ SumFold(sum,
       LambdaResultHasViews(left,  iso1: Iso[a, c]),
       LambdaResultHasViews(right, iso2: Iso[_, _])) if iso1 == iso2 =>
@@ -172,6 +194,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
       val newFold = liftFromSumFold(sum, left, right, iso1)
       newFold
     }
+
 
     case foldD: SumFold[a, b, T] => foldD.sum match {
       // this rule is only applied when result of fold is base type.
@@ -181,6 +204,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
       case Def(view: SumView[a1, a2, b1, b2]) /*if !d.selfType.isEntityType*/ =>
         view.source.fold(x => foldD.left.asRep[b1 => T](view.iso1.to(x)), y => foldD.right.asRep[b2 => T](view.iso2.to(y)))
+
 
       case Def(join@IsJoinSum(sum)) =>
         val source = sum.asRep[(a | b) | (a | b)]
