@@ -166,18 +166,18 @@ trait Views extends Elems { self: Scalan =>
 
   case class SumIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
     extends Iso[A1 | A2, B1 | B2]()(sumElement(iso1.eFrom, iso2.eFrom)) {
-    implicit val eA1 = iso1.eFrom
-    implicit val eA2 = iso2.eFrom
+//    implicit val eA1 = iso1.eFrom
+//    implicit val eA2 = iso2.eFrom
     implicit val eB1 = iso1.eTo
     implicit val eB2 = iso2.eTo
     val eBB = element[B1 | B2]
     def eTo = eBB
     def from(b: Rep[B1 | B2]) =
-      b.fold(b1 => toLeftSum(iso1.from(b1))(eA2),
-        b2 => toRightSum(iso2.from(b2))(eA1))
+      b.mapSum(b1 => iso1.from(b1),
+               b2 => iso2.from(b2))
     def to(a: Rep[A1 | A2]) =
-      a.fold(a1 => toLeftSum(iso1.to(a1))(eB2),
-        a2 => toRightSum(iso2.to(a2))(eB1))
+      a.mapSum(a1 => iso1.to(a1),
+               a2 => iso2.to(a2))
     def tag = eBB.tag
     lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
   }
