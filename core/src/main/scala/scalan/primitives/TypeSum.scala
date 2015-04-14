@@ -2,6 +2,7 @@ package scalan.primitives
 
 import scalan.staged.BaseExp
 import scalan.{ ScalanExp, Scalan, ScalanSeq }
+import scalan.common.Lazy
 
 trait TypeSum { self: Scalan =>
 
@@ -90,7 +91,9 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
   case class SumFold[A, B, R](sum: Exp[(A | B)], left: Exp[A => R], right: Exp[B => R])(implicit selfType: Elem[R]) extends BaseDef[R] {
     override def mirror(t: Transformer) = SumFold(t(sum), t(left), t(right))
-    lazy val uniqueOpId = name(sum.elem.eLeft, sum.elem.eRight)
+    lazy val eA = sum.elem.eLeft
+    lazy val eB = sum.elem.eRight
+    lazy val uniqueOpId = name(eA, eB)
   }
 
   class SumOpsExp[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
@@ -109,31 +112,46 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     }
   }
 
+  def liftFromSumFold[T1,T2,A,B,C,D](
+        sum: Rep[T1|T2], left: Rep[T1 => C], right: Rep[T2 => D],
+        iso1: Iso[A,C], iso2: Iso[B,D],
+        toD: Conv[C,D], toC: Conv[D,C]): Rep[C] = {
+    implicit val eA = iso1.eFrom
+    val l1 = { l: Rep[T1] => iso1.from(left(l))}
+    val r1 = { r: Rep[T2] => iso1.from(toC(right(r)))}
+    iso1.to(sum.fold(l1, r1))
+  }
+
+  val FindFoldArg = FindArg(a => a match {
+    case Def(_: SumFold[_,_,_]) => true
+    case _ => false
+  })
+
   override def rewriteDef[T](d: Def[T]) = d match {
     case SumFold(sum, Def(Lambda(_, _, _, l)), Def(Lambda(_, _, _, r))) if l == r =>
       l
 
-    case First(Def(foldD: SumFold[a,b,(T,r2)]@unchecked)) =>
+    case First(Def(foldD: SumFold[a, b, (T, r2)]@unchecked)) =>
       foldD.sum.fold(a => foldD.left(a)._1, b => foldD.right(b)._1)(d.selfType)
 
-    case Second(Def(foldD: SumFold[a,b,(r1,T)]@unchecked)) =>
+    case Second(Def(foldD: SumFold[a, b, (r1, T)]@unchecked)) =>
       foldD.sum.fold(a => foldD.left(a)._2, b => foldD.right(b)._2)(d.selfType)
 
-    case l @ Left(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
+    case l@Left(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
       SumView(toLeftSum(a.asRep[a1])(l.eRight))(iso, identityIso(l.eRight)).self
-    case r @ Right(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
+    case r@Right(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
       SumView(toRightSum(a.asRep[a1])(r.eLeft))(identityIso(r.eLeft), iso).self
 
-    case foldD: SumFold[a,b,T] => foldD.sum match {
+    case foldD: SumFold[a, b, T] => foldD.sum match {
       // this rule is only applied when result of fold is base type.
       // Otherwise it yields stack overflow as this rule is mutually recursive with lifting Views over IfThenElse
-      case Def(IfThenElse(p, thenp: Rep[Either[_, _]] @unchecked, elsep: Rep[Either[_, _]] @unchecked)) if !d.selfType.isEntityType =>
+      case Def(IfThenElse(p, thenp: Rep[Either[_, _]]@unchecked, elsep: Rep[Either[_, _]]@unchecked)) if !d.selfType.isEntityType =>
         __ifThenElse[T](p, SumFold(thenp, foldD.left, foldD.right)(foldD.selfType), SumFold(elsep, foldD.left, foldD.right)(foldD.selfType))
 
-      case Def(view: SumView[a1,a2,b1,b2]) /*if !d.selfType.isEntityType*/ =>
+      case Def(view: SumView[a1, a2, b1, b2]) /*if !d.selfType.isEntityType*/ =>
         view.source.fold(x => foldD.left.asRep[b1 => T](view.iso1.to(x)), y => foldD.right.asRep[b2 => T](view.iso2.to(y)))(d.selfType)
 
-      case Def(join @ IsJoinSum(sum)) =>
+      case Def(join@IsJoinSum(sum)) =>
         val source = sum.asRep[(a | b) | (a | b)]
         implicit val eT = foldD.selfType
         source.fold(
@@ -149,12 +167,64 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
         foldD.right(right)
 
       case _ => super.rewriteDef(d)
+
+      //      case _ => (foldD.left, foldD.right) match {
+      //        case (Def(Lambda(left:  Lambda[t1,c], _, _, HasViews(a1, iso1: Iso[a1, _]))),
+      //              Def(Lambda(right: Lambda[t2,d], _, _, HasViews(b1, iso2: Iso[b1, _])))) =>
+      //          (iso1.eTo, iso2.eTo) match {
+      //            case IsConvertible(cTo, cFrom) =>
+      //              liftFromSumFold(foldD.sum, foldD.left, foldD.right, iso1, iso2, cTo, cFrom)
+      //            case _ => super.rewriteDef(d)
+      //          }
+      //
+      //        case _ => super.rewriteDef(d)
+      //      }
+      //    case sf @ SumFold(sum,
+      //        Def(Lambda(left:  Lambda[t1,c], _, _, HasViews(a, iso1: Iso[a, _]))),
+      //        Def(Lambda(right: Lambda[t2,d], _, _, HasViews(b, iso2: Iso[b, _])))) => {
+      //        val ea = iso1.eFrom
+      //        val et1 = left.eA
+      //        val et2 = right.eA
+      //        (iso1.eTo, iso2.eTo) match {
+      //          case IsConvertible(cTo, cFrom) =>
+      //
+      //          case _ => super.rewriteDef(d)
+      //        }
+      //     }
+
     }
 
     case IsLeft(Def(Left(_))) => true
     case IsLeft(Def(Right(_))) => false
     case IsRight(Def(Left(_))) => false
     case IsRight(Def(Right(_))) => true
+
+//    case FindFoldArg(arg) => {
+//      arg match {
+//        case Def(foldD@SumFold(_, Def(Lambda(left: Lambda[t1, c], _, _, HasViews(a1, iso1: Iso[a1, _]))),
+//        Def(Lambda(right: Lambda[t2, d], _, _, HasViews(b1, iso2: Iso[b1, _])))))
+//          if !d.isInstanceOf[MethodCall] =>
+//          (iso1.eTo, iso2.eTo) match {
+//            case IsConvertible(cTo, cFrom) =>
+//              val newFold = liftFromSumFold(foldD.sum, foldD.left, foldD.right, iso1, iso2, cTo, cFrom)
+//              d.mirror(new MapTransformer(arg -> newFold))
+//            case _ => super.rewriteDef(d)
+//          }
+//        case _ => super.rewriteDef(d)
+//      }
+//    }
+    case call @ MethodCall(Def(foldD @ SumFold(sum, left, right)), m, args, neverInvoke) => {
+      implicit val resultElem: Elem[T] = d.selfType
+      // asRep[T] cast below should be safe
+      // explicit resultElem to make sure both branches have the same type
+      def copyMethodCall(newReceiver: Exp[_]) =
+        mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[T]
+
+      sum.fold(
+        a => copyMethodCall(left(a)),
+        b => copyMethodCall(right(b))
+      )
+    }
     case _ => super.rewriteDef(d)
   }
 }

@@ -108,12 +108,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     val ea = iso1.eFrom
     val eb = iso2.eFrom
     implicit val ec = iso1.eTo
-    val (i1, i2) =
-        if (ec == iso2.eTo)
-          (iso1, iso2.asInstanceOf[Iso[B,C]])
-        else {
-          (iso1, convertAfterIso(iso2, toC, toD))
-        }
+    val (i1, i2) = unifyIsos(iso1, iso2, toD, toC)
     liftFromIfThenElse(cond, a, b, i1, i2)
   }
 

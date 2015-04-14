@@ -52,10 +52,10 @@ class ConverterTests extends BaseTests { suite =>
       res.fold(l => l.length, r => r.length)
     }
 
-//    lazy val t7 = fun { (in: Rep[(Interval,Int)]) =>
-//      val Pair(i, n) = in
-//      Pair(i, n).convertTo[(Slice, Int)]  //TODO relax <: Reifiable[_] constraint
-//    }
+    lazy val t13 = fun { (in: Rep[(Int|Array[Int])]) =>
+      val res = in.fold(i => Interval(-1,i):RSeg, a => Slice(0, a.length):RSeg)
+      res.length
+    }
   }
 
   class ConvProgStaged(testName: String) extends TestContext(this, testName) with  ConvProg with SegmentsDslExp {
@@ -94,11 +94,20 @@ class ConverterTests extends BaseTests { suite =>
     ctx.emit("t8", ctx.t8)
   }
 
-  test("converIfThenElseWithSum") {
+  test("converIfThenElseWithOption") {
     val ctx = new ConvProgStaged("converIfThenElseWithSum")
     ctx.emit("t10", ctx.t10)
+  }
+
+  test("converIfThenElseWithSum") {
+    val ctx = new ConvProgStaged("converIfThenElseWithSum")
     ctx.emit("t11", ctx.t11)
     ctx.emit("t12", ctx.t12)
+  }
+
+  test("convertSumFold") {
+    val ctx = new ConvProgStaged("converIfThenElseWithSum")
+    ctx.emit("t13", ctx.t13)
   }
 
 }
