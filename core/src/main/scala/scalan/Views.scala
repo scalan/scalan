@@ -225,6 +225,22 @@ trait Views extends Elems { self: Scalan =>
 
   def convertAfterIso[A,B,C](iso: Iso[A,B], convTo: Conv[B,C], convFrom: Conv[C,B]): Iso[A, C] = composeIso(converterIso(convTo, convFrom), iso)
 
+  def unifyIsos[A,B,C,D](iso1: Iso[A,C], iso2: Iso[B,D],
+                         toD: Conv[C,D], toC: Conv[D,C]): (Iso[A,C], Iso[B,C]) =
+  {
+    val ea = iso1.eFrom
+    val eb = iso2.eFrom
+    implicit val ec = iso1.eTo
+    val (i1, i2) =
+      if (ec == iso2.eTo)
+        (iso1, iso2.asInstanceOf[Iso[B,C]])
+      else {
+        (iso1, convertAfterIso(iso2, toC, toD))
+      }
+    (i1, i2)
+  }
+
+
   implicit class RepReifiableViewOps[T <: Reifiable[_]](x: Rep[T]) {
     def convertTo[R <: Reifiable[_]: Elem]: Rep[R] = repReifiable_convertTo[T,R](x)
   }
@@ -342,13 +358,6 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
   abstract class View2[A1, A2, B1, B2, C[_, _]](implicit val iso1: Iso[A1, B1], val iso2: Iso[A2, B2]) extends View[C[A1, A2], C[B1, B2]]
 
-  //  type Identity[T] = T
-  //
-  //  case class ViewVar[A, B](source: Rep[A])(implicit innerIso: Iso[A, B]) extends View1[A, B, Identity] {
-  //    def iso = innerIso
-  //    def copy(source: Rep[A]) = ViewVar(source)
-  //  }
-
   case class PairView[A1, A2, B1, B2](source: Rep[(A1, A2)])(implicit iso1: Iso[A1, B1], iso2: Iso[A2, B2]) extends View2[A1, A2, B1, B2, Tuple2] {
     lazy val iso = pairIso(iso1, iso2)
     def copy(source: Rep[(A1, A2)]) = PairView(source)
@@ -433,11 +442,6 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
             mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[T]
 
           obj match {
-            case SumFold(sum, left, right) =>
-              sum.fold(
-                a => copyMethodCall(left(a)),
-                b => copyMethodCall(right(b))
-              )
             case IfThenElse(cond, t, e) =>
               IF (cond) {
                 copyMethodCall(t)
