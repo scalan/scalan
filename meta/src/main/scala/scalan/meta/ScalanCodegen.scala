@@ -1,6 +1,7 @@
 package scalan.meta
 
 import scalan.util.{StringUtil, ScalaNameUtil}
+import scala.annotation.tailrec
 
 trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensions { ctx: EntityManagement =>
   import PrintExtensions._
@@ -502,12 +503,31 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         })
 
         // necessary in cases Scala type inference fails
+        lazy val getImplicitElem: String = {
+          @tailrec
+          def implElem(args: List[String])(str0: String): String = {
+            val size = args.length
+            if (size > 2) {
+              val str = str0 + s"pairElement(implicitly[Elem[${args(0)}]], "
+              implElem(args.drop(1))(str)
+            }
+            else
+              str0 + s"pairElement(implicitly[Elem[${args(0)}]], implicitly[Elem[${args(1)}]])"
+          }
+          val args = fieldTypes.map(a => a.toString)//c.implicitArgs.args.map(a => a.name)
+          if (args.length >= 3) {
+            val impls = implElem(args)("")
+            val sks = 1.until(args.length - 1).map(_ => ")").toList :+ ""
+            val sk = sks.reduce(_ + _)
+            s"()(${impls + sk})"
+          } else ""
+        }
         val maybeElemHack = {
           val elemMethodName = StringUtil.lowerCaseFirst(className + "DataElem")
           if (module.methods.exists(_.name == elemMethodName))
             s"()($elemMethodName)"
           else
-            ""
+            getImplicitElem
         }
 
         def converterBody(entity: STraitOrClassDef, conc: SClassDef) = {
