@@ -113,7 +113,8 @@ class BoilerplateTool extends StrictLogging {
   )
 
   val eeTypeSynonyms = coreTypeSynonyms ++ Map(
-    "PS" -> "PSet", "Dist" -> "Distributed", "PA" -> "PArray", "NA" -> "NestedArray"
+    "PS" -> "PSet", "Dist" -> "Distributed", "PA" -> "PArray", "NA" -> "NestedArray", "PM" -> "PMap",
+    "Vec" -> "Vector", "Matr" -> "Matrix"
   )
   lazy val eeConfig = CodegenConfig(
     name = "ee",
