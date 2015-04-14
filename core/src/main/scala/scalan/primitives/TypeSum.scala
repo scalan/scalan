@@ -12,7 +12,7 @@ trait TypeSum { self: Scalan =>
     def isLeft: Rep[Boolean]
     def isRight: Rep[Boolean]
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R]
-    def mapSum[C:Elem,D:Elem](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) =
+    def mapSum[C:Elem,D:Elem](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]): Rep[C|D] =
       fold(l => toLeftSum[C,D](fl(l)), r => toRightSum[C,D](fr(r)))
   }
 
@@ -96,10 +96,18 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     lazy val uniqueOpId = name(eA, eB)
   }
 
+  case class SumMap[A, B, C, D](sum: Exp[(A | B)], left: Exp[A => C], right: Exp[B => D]) extends BaseDef[(C | D)]()(sumElement(left.elem.eRange, right.elem.eRange)) {
+    override def mirror(t: Transformer) = SumMap(t(sum), t(left), t(right))
+    lazy val eA = sum.elem.eLeft
+    lazy val eB = sum.elem.eRight
+    lazy val uniqueOpId = name(left.elem, right.elem)
+  }
+
   class SumOpsExp[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
     implicit def eA: Elem[A] = s.elem.eLeft
     implicit def eB: Elem[B] = s.elem.eRight
     def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = SumFold(s, fun(l), fun(r))
+    def map[C,D](l: Rep[A] => Rep[C], r: Rep[B] => Rep[D]): Rep[C | D] = SumMap(s, fun(l), fun(r))
     def isLeft = IsLeft(s)
     def isRight = IsRight(s)
   }
@@ -111,6 +119,23 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
       case _ => None
     }
   }
+
+  def liftFromSumFold[T1,T2,A,B](
+        sum: Rep[T1|T2], left: Rep[T1 => B], right: Rep[T2 => B], iso: Iso[A,B]): Rep[B] = {
+    implicit val eA = iso.eFrom
+    val l1 = { l: Rep[T1] => iso.from(left(l))}
+    val r1 = { r: Rep[T2] => iso.from(right(r))}
+    val res = sum.fold(l1, r1)
+    iso.to(res)
+  }
+
+//  def liftFromNestedSumFold[B1,B2,T1,T2,A,B](
+//         outer: SumFold[B1,B2,B], inner: SumFold[T1,T2,(B1|B2)], iso: Iso[A,(B1|B2)]): Rep[B] = {
+//    implicit val eA = iso.eFrom
+//    val l1 = { l: Rep[T1] => iso.from(left(l))}
+//    val r1 = { r: Rep[T2] => iso.from(right(r))}
+//    iso.to(sum.fold(l1, r1))
+//  }
 
   def liftFromSumFold[T1,T2,A,B,C,D](
         sum: Rep[T1|T2], left: Rep[T1 => C], right: Rep[T2 => D],
@@ -131,16 +156,29 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     case SumFold(sum, Def(Lambda(_, _, _, l)), Def(Lambda(_, _, _, r))) if l == r =>
       l
 
+    // Rule: fold(s, l, r)._1 ==> fold(s, x => l(x)._1, y => r(y)._1)
     case First(Def(foldD: SumFold[a, b, (T, r2)]@unchecked)) =>
       foldD.sum.fold(a => foldD.left(a)._1, b => foldD.right(b)._1)(d.selfType)
 
+    // Rule: fold(s, l, r)._2 ==> fold(s, x => l(x)._2, y => r(y)._2)
     case Second(Def(foldD: SumFold[a, b, (r1, T)]@unchecked)) =>
       foldD.sum.fold(a => foldD.left(a)._2, b => foldD.right(b)._2)(d.selfType)
 
+    // Rule: Left(V(a, iso)) ==> V(Left(a), SumIso(iso, identityIso))
     case l@Left(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
       SumView(toLeftSum(a.asRep[a1])(l.eRight))(iso, identityIso(l.eRight)).self
+
+    // Rule: Right(V(a, iso)) ==> V(Right(a), SumIso(identityIso, iso))
     case r@Right(Def(UnpackableDef(a, iso: Iso[a1, b1]))) =>
       SumView(toRightSum(a.asRep[a1])(r.eLeft))(identityIso(r.eLeft), iso).self
+
+    case foldD @ SumFold(sum,
+      LambdaResultHasViews(left,  iso1: Iso[a, c]),
+      LambdaResultHasViews(right, iso2: Iso[_, _])) if iso1 == iso2 =>
+    {
+      val newFold = liftFromSumFold(sum, left, right, iso1)
+      newFold
+    }
 
     case foldD: SumFold[a, b, T] => foldD.sum match {
       // this rule is only applied when result of fold is base type.
@@ -194,29 +232,34 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
     }
 
-    case IsLeft(Def(Left(_))) => true
-    case IsLeft(Def(Right(_))) => false
-    case IsRight(Def(Left(_))) => false
-    case IsRight(Def(Right(_))) => true
+    //    case FindFoldArg(arg) => {
+    //      arg match {
+    //        case Def(foldD@SumFold(_, Def(Lambda(left: Lambda[t1, c], _, _, HasViews(a1, iso1: Iso[a1, _]))),
+    //        Def(Lambda(right: Lambda[t2, d], _, _, HasViews(b1, iso2: Iso[b1, _])))))
+    //          if !d.isInstanceOf[MethodCall] =>
+    //          (iso1.eTo, iso2.eTo) match {
+    //            case IsConvertible(cTo, cFrom) =>
+    //              val newFold = liftFromSumFold(foldD.sum, foldD.left, foldD.right, iso1, iso2, cTo, cFrom)
+    //              d.mirror(new MapTransformer(arg -> newFold))
+    //            case _ => super.rewriteDef(d)
+    //          }
+    //        case _ => super.rewriteDef(d)
+    //      }
+    //    }
 
-//    case FindFoldArg(arg) => {
-//      arg match {
-//        case Def(foldD@SumFold(_, Def(Lambda(left: Lambda[t1, c], _, _, HasViews(a1, iso1: Iso[a1, _]))),
-//        Def(Lambda(right: Lambda[t2, d], _, _, HasViews(b1, iso2: Iso[b1, _])))))
-//          if !d.isInstanceOf[MethodCall] =>
-//          (iso1.eTo, iso2.eTo) match {
-//            case IsConvertible(cTo, cFrom) =>
-//              val newFold = liftFromSumFold(foldD.sum, foldD.left, foldD.right, iso1, iso2, cTo, cFrom)
-//              d.mirror(new MapTransformer(arg -> newFold))
-//            case _ => super.rewriteDef(d)
-//          }
-//        case _ => super.rewriteDef(d)
-//      }
-//    }
+
+    case call @ MethodCall(
+      Def(foldD @ SumFold(sum,
+          LambdaResultHasViews(left,  iso1: Iso[a, c]),
+          LambdaResultHasViews(right, iso2: Iso[_, _]))), m, args, neverInvoke)
+      if iso1 == iso2 =>
+    {
+      val newFold = liftFromSumFold(foldD.sum, foldD.left, foldD.right, iso1)
+      mkMethodCall(newFold, m, args, neverInvoke, call.selfType)
+    }
+
     case call @ MethodCall(Def(foldD @ SumFold(sum, left, right)), m, args, neverInvoke) => {
       implicit val resultElem: Elem[T] = d.selfType
-      // asRep[T] cast below should be safe
-      // explicit resultElem to make sure both branches have the same type
       def copyMethodCall(newReceiver: Exp[_]) =
         mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[T]
 
@@ -225,6 +268,12 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
         b => copyMethodCall(right(b))
       )
     }
+
+    case IsLeft(Def(Left(_))) => true
+    case IsLeft(Def(Right(_))) => false
+    case IsRight(Def(Left(_))) => false
+    case IsRight(Def(Right(_))) => true
     case _ => super.rewriteDef(d)
   }
+
 }

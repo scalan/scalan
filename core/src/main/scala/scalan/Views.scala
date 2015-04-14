@@ -272,6 +272,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   }
 
   type Unpacked[T] = (Rep[Source], Iso[Source, T]) forSome { type Source }
+  type UnpackedLambdaResult[T,R] = (Rep[T => R], Iso[Source, R]) forSome { type Source }
 
   type UnpackTester = Element[_] => Boolean
 
@@ -304,6 +305,18 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
           val (sv2, iso2) = opt2.getOrElse(trivialView(s2))
           Some((Pair(sv1, sv2), pairIso(iso1, iso2)))
       }
+    case Def(l @ Left(s)) =>
+      val optRight = l.eRight match {
+        case ve: ViewElem[_,_] => UnpackableElem.unapply(ve)
+        case _ => None
+      }
+      (unapplyViews(s), optRight) match {
+        case (None, None) => None
+        case (opt1, opt2) =>
+          val (sv1, iso1) = opt1.getOrElse(trivialView(s))
+          val iso2 = opt2.getOrElse(identityIso(l.eRight))
+          Some((sv1.asLeft(iso2.eFrom), sumIso(iso1, iso2)))
+      }
     case _ =>
       UnpackableExp.unapply(s)
   }).asInstanceOf[Option[Unpacked[T]]]
@@ -335,6 +348,14 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
             case _ => None
           }
       }
+  }
+
+  object LambdaResultHasViews {
+    def unapply[A,C](l: Rep[A => C]): Option[UnpackedLambdaResult[A,C]] = l match {
+      case Def(Lambda(_, _, _, HasViews(_, iso: Iso[b, _]))) =>
+        Some((l, iso))
+      case _ => None
+    }
   }
 
   abstract class View[From, To] extends Def[To] {
