@@ -8,21 +8,24 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
 
   lazy val ddmvm = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matrix[Double] = RowMajorDirectMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }))
+    val width = m(0).length
+    val matrix: Matrix[Double] = RowMajorSparseMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
     val vector: Vector[Double] = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
 
   lazy val ddmvmList = fun { p: Rep[(List[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matrix[Double] = RowMajorDirectMatrix(ListCollection(m.mapBy( fun { r: Arr[Double] => DenseVector(Collection(r)) })))
+    val width = m(0).length
+    val matrix: Matrix[Double] = RowMajorSparseMatrix(ListCollection(m.mapBy( fun { r: Arr[Double] => DenseVector(Collection(r)) })), width)
     val vector: Vector[Double] = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
 
   lazy val dsmvm = fun { p: Rep[(Array[Array[Double]], (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
-    val matrix: Matrix[Double] = RowMajorDirectMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }))
+    val width = m(0).length
+    val matrix: Matrix[Double] = RowMajorSparseMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
     val vector: Vector[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
     (matrix * vector).items.arr
   }
@@ -63,14 +66,16 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
 
   lazy val ddmvm0 = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matrix[Double] = RowMajorDirectMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }))
+    val width = m(0).length
+    val matrix: Matrix[Double] = RowMajorSparseMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
     val vector: Vector[Double] = DenseVector(Collection(v))
     mvm(matrix, vector).items.arr
   }
 
   lazy val dsmvm0 = fun { p: Rep[(Array[Array[Double]], (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
-    val matrix: Matrix[Double] = RowMajorDirectMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }))
+    val width = m(0).length
+    val matrix: Matrix[Double] = RowMajorSparseMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
     val vector: Vector[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
     mvm(matrix, vector).items.arr
   }
@@ -111,8 +116,10 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
 
   lazy val ddmmm = fun { p: Rep[(Array[Array[Double]], Array[Array[Double]])] =>
     val Pair(m1, m2) = p
-    val matrix1 = RowMajorDirectMatrix(Collection(m1.map { r: Arr[Double] => DenseVector(Collection(r)) }))
-    val matrix2 = RowMajorDirectMatrix(Collection(m2.map { r: Arr[Double] => DenseVector(Collection(r)) }))
+    val width1 = m1(0).length
+    val width2 = m2(0).length
+    val matrix1 = RowMajorSparseMatrix(Collection(m1.map { r: Arr[Double] => DenseVector(Collection(r)) }), width1)
+    val matrix2 = RowMajorSparseMatrix(Collection(m2.map { r: Arr[Double] => DenseVector(Collection(r)) }), width2)
     (matrix1 * matrix2).rows.arr.map(_.items.arr)
   }
 
