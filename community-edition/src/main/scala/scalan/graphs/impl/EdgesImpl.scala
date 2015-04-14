@@ -190,7 +190,7 @@ trait EdgesAbs extends Scalan with Edges {
 // Seq -----------------------------------
 trait EdgesSeq extends EdgesDsl with ScalanSeq {
   self: GraphsDslSeq =>
-  lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeSeq[EdgeCompanionAbs, EdgeCompanionAbs] {
+  lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeSeq[EdgeCompanionAbs] {
     lazy val selfType = element[EdgeCompanionAbs]
   }
 
@@ -198,10 +198,10 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
       (override val fromId: Rep[Int], override val outIndex: Rep[Int], override val graph: PG[V,E])
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjEdge[V, E](fromId, outIndex, graph)
-        with UserTypeSeq[Edge[V,E], AdjEdge[V, E]] {
-    lazy val selfType = element[AdjEdge[V, E]].asInstanceOf[Elem[Edge[V,E]]]
+        with UserTypeSeq[AdjEdge[V, E]] {
+    lazy val selfType = element[AdjEdge[V, E]]
   }
-  lazy val AdjEdge = new AdjEdgeCompanionAbs with UserTypeSeq[AdjEdgeCompanionAbs, AdjEdgeCompanionAbs] {
+  lazy val AdjEdge = new AdjEdgeCompanionAbs with UserTypeSeq[AdjEdgeCompanionAbs] {
     lazy val selfType = element[AdjEdgeCompanionAbs]
   }
 
@@ -215,10 +215,10 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
       (override val fromId: Rep[Int], override val toId: Rep[Int], override val graph: PG[V,E])
       (implicit eV: Elem[V], eE: Elem[E])
     extends IncEdge[V, E](fromId, toId, graph)
-        with UserTypeSeq[Edge[V,E], IncEdge[V, E]] {
-    lazy val selfType = element[IncEdge[V, E]].asInstanceOf[Elem[Edge[V,E]]]
+        with UserTypeSeq[IncEdge[V, E]] {
+    lazy val selfType = element[IncEdge[V, E]]
   }
-  lazy val IncEdge = new IncEdgeCompanionAbs with UserTypeSeq[IncEdgeCompanionAbs, IncEdgeCompanionAbs] {
+  lazy val IncEdge = new IncEdgeCompanionAbs with UserTypeSeq[IncEdgeCompanionAbs] {
     lazy val selfType = element[IncEdgeCompanionAbs]
   }
 
@@ -232,7 +232,7 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
 // Exp -----------------------------------
 trait EdgesExp extends EdgesDsl with ScalanExp {
   self: GraphsDslExp =>
-  lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeDef[EdgeCompanionAbs, EdgeCompanionAbs] {
+  lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeDef[EdgeCompanionAbs] {
     lazy val selfType = element[EdgeCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -240,12 +240,12 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   case class ExpAdjEdge[V, E]
       (override val fromId: Rep[Int], override val outIndex: Rep[Int], override val graph: PG[V,E])
       (implicit eV: Elem[V], eE: Elem[E])
-    extends AdjEdge[V, E](fromId, outIndex, graph) with UserTypeDef[Edge[V,E], AdjEdge[V, E]] {
-    lazy val selfType = element[AdjEdge[V, E]].asInstanceOf[Elem[Edge[V,E]]]
+    extends AdjEdge[V, E](fromId, outIndex, graph) with UserTypeDef[AdjEdge[V, E]] {
+    lazy val selfType = element[AdjEdge[V, E]]
     override def mirror(t: Transformer) = ExpAdjEdge[V, E](t(fromId), t(outIndex), t(graph))
   }
 
-  lazy val AdjEdge: Rep[AdjEdgeCompanionAbs] = new AdjEdgeCompanionAbs with UserTypeDef[AdjEdgeCompanionAbs, AdjEdgeCompanionAbs] {
+  lazy val AdjEdge: Rep[AdjEdgeCompanionAbs] = new AdjEdgeCompanionAbs with UserTypeDef[AdjEdgeCompanionAbs] {
     lazy val selfType = element[AdjEdgeCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -324,12 +324,12 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   case class ExpIncEdge[V, E]
       (override val fromId: Rep[Int], override val toId: Rep[Int], override val graph: PG[V,E])
       (implicit eV: Elem[V], eE: Elem[E])
-    extends IncEdge[V, E](fromId, toId, graph) with UserTypeDef[Edge[V,E], IncEdge[V, E]] {
-    lazy val selfType = element[IncEdge[V, E]].asInstanceOf[Elem[Edge[V,E]]]
+    extends IncEdge[V, E](fromId, toId, graph) with UserTypeDef[IncEdge[V, E]] {
+    lazy val selfType = element[IncEdge[V, E]]
     override def mirror(t: Transformer) = ExpIncEdge[V, E](t(fromId), t(toId), t(graph))
   }
 
-  lazy val IncEdge: Rep[IncEdgeCompanionAbs] = new IncEdgeCompanionAbs with UserTypeDef[IncEdgeCompanionAbs, IncEdgeCompanionAbs] {
+  lazy val IncEdge: Rep[IncEdgeCompanionAbs] = new IncEdgeCompanionAbs with UserTypeDef[IncEdgeCompanionAbs] {
     lazy val selfType = element[IncEdgeCompanionAbs]
     override def mirror(t: Transformer) = this
   }

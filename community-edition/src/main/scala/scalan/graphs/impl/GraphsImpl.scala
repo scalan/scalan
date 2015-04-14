@@ -190,7 +190,7 @@ trait GraphsAbs extends Scalan with Graphs {
 // Seq -----------------------------------
 trait GraphsSeq extends GraphsDsl with ScalanSeq {
   self: GraphsDslSeq =>
-  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeSeq[GraphCompanionAbs, GraphCompanionAbs] {
+  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeSeq[GraphCompanionAbs] {
     lazy val selfType = element[GraphCompanionAbs]
   }
 
@@ -198,10 +198,10 @@ trait GraphsSeq extends GraphsDsl with ScalanSeq {
       (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjacencyGraph[V, E](vertexValues, edgeValues, links)
-        with UserTypeSeq[Graph[V,E], AdjacencyGraph[V, E]] {
-    lazy val selfType = element[AdjacencyGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
+        with UserTypeSeq[AdjacencyGraph[V, E]] {
+    lazy val selfType = element[AdjacencyGraph[V, E]]
   }
-  lazy val AdjacencyGraph = new AdjacencyGraphCompanionAbs with UserTypeSeq[AdjacencyGraphCompanionAbs, AdjacencyGraphCompanionAbs] {
+  lazy val AdjacencyGraph = new AdjacencyGraphCompanionAbs with UserTypeSeq[AdjacencyGraphCompanionAbs] {
     lazy val selfType = element[AdjacencyGraphCompanionAbs]
   }
 
@@ -215,10 +215,10 @@ trait GraphsSeq extends GraphsDsl with ScalanSeq {
       (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])
       (implicit eV: Elem[V], eE: Elem[E])
     extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
-        with UserTypeSeq[Graph[V,E], IncidenceGraph[V, E]] {
-    lazy val selfType = element[IncidenceGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
+        with UserTypeSeq[IncidenceGraph[V, E]] {
+    lazy val selfType = element[IncidenceGraph[V, E]]
   }
-  lazy val IncidenceGraph = new IncidenceGraphCompanionAbs with UserTypeSeq[IncidenceGraphCompanionAbs, IncidenceGraphCompanionAbs] {
+  lazy val IncidenceGraph = new IncidenceGraphCompanionAbs with UserTypeSeq[IncidenceGraphCompanionAbs] {
     lazy val selfType = element[IncidenceGraphCompanionAbs]
   }
 
@@ -232,7 +232,7 @@ trait GraphsSeq extends GraphsDsl with ScalanSeq {
 // Exp -----------------------------------
 trait GraphsExp extends GraphsDsl with ScalanExp {
   self: GraphsDslExp =>
-  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeDef[GraphCompanionAbs, GraphCompanionAbs] {
+  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeDef[GraphCompanionAbs] {
     lazy val selfType = element[GraphCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -240,12 +240,12 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   case class ExpAdjacencyGraph[V, E]
       (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])
       (implicit eV: Elem[V], eE: Elem[E])
-    extends AdjacencyGraph[V, E](vertexValues, edgeValues, links) with UserTypeDef[Graph[V,E], AdjacencyGraph[V, E]] {
-    lazy val selfType = element[AdjacencyGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
+    extends AdjacencyGraph[V, E](vertexValues, edgeValues, links) with UserTypeDef[AdjacencyGraph[V, E]] {
+    lazy val selfType = element[AdjacencyGraph[V, E]]
     override def mirror(t: Transformer) = ExpAdjacencyGraph[V, E](t(vertexValues), t(edgeValues), t(links))
   }
 
-  lazy val AdjacencyGraph: Rep[AdjacencyGraphCompanionAbs] = new AdjacencyGraphCompanionAbs with UserTypeDef[AdjacencyGraphCompanionAbs, AdjacencyGraphCompanionAbs] {
+  lazy val AdjacencyGraph: Rep[AdjacencyGraphCompanionAbs] = new AdjacencyGraphCompanionAbs with UserTypeDef[AdjacencyGraphCompanionAbs] {
     lazy val selfType = element[AdjacencyGraphCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -491,12 +491,12 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   case class ExpIncidenceGraph[V, E]
       (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])
       (implicit eV: Elem[V], eE: Elem[E])
-    extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) with UserTypeDef[Graph[V,E], IncidenceGraph[V, E]] {
-    lazy val selfType = element[IncidenceGraph[V, E]].asInstanceOf[Elem[Graph[V,E]]]
+    extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) with UserTypeDef[IncidenceGraph[V, E]] {
+    lazy val selfType = element[IncidenceGraph[V, E]]
     override def mirror(t: Transformer) = ExpIncidenceGraph[V, E](t(vertexValues), t(incMatrixWithVals), t(vertexNum))
   }
 
-  lazy val IncidenceGraph: Rep[IncidenceGraphCompanionAbs] = new IncidenceGraphCompanionAbs with UserTypeDef[IncidenceGraphCompanionAbs, IncidenceGraphCompanionAbs] {
+  lazy val IncidenceGraph: Rep[IncidenceGraphCompanionAbs] = new IncidenceGraphCompanionAbs with UserTypeDef[IncidenceGraphCompanionAbs] {
     lazy val selfType = element[IncidenceGraphCompanionAbs]
     override def mirror(t: Transformer) = this
   }

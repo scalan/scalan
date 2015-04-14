@@ -216,7 +216,7 @@ trait SeqsAbs extends Scalan with Seqs {
 // Seq -----------------------------------
 trait SeqsSeq extends SeqsDsl with ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeSeq[SSeqCompanionAbs, SSeqCompanionAbs] {
+  lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeSeq[SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
     override def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
       SSeqImpl(Seq.apply[A](arr: _*))
@@ -241,8 +241,8 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
       (override val wrappedValueOfBaseType: Rep[Seq[A]])
       (implicit eA: Elem[A])
     extends SSeqImpl[A](wrappedValueOfBaseType)
-       with SeqSSeq[A] with UserTypeSeq[SSeq[A], SSeqImpl[A]] {
-    lazy val selfType = element[SSeqImpl[A]].asInstanceOf[Elem[SSeq[A]]]
+       with SeqSSeq[A] with UserTypeSeq[SSeqImpl[A]] {
+    lazy val selfType = element[SSeqImpl[A]]
     override def size: Rep[Int] =
       wrappedValueOfBaseType.size
 
@@ -270,7 +270,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
     override def toList: Rep[List[A]] =
       wrappedValueOfBaseType.toList
   }
-  lazy val SSeqImpl = new SSeqImplCompanionAbs with UserTypeSeq[SSeqImplCompanionAbs, SSeqImplCompanionAbs] {
+  lazy val SSeqImpl = new SSeqImplCompanionAbs with UserTypeSeq[SSeqImplCompanionAbs] {
     lazy val selfType = element[SSeqImplCompanionAbs]
   }
 
@@ -286,7 +286,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
 // Exp -----------------------------------
 trait SeqsExp extends SeqsDsl with ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeDef[SSeqCompanionAbs, SSeqCompanionAbs] {
+  lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeDef[SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -304,12 +304,12 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
   case class ExpSSeqImpl[A]
       (override val wrappedValueOfBaseType: Rep[Seq[A]])
       (implicit eA: Elem[A])
-    extends SSeqImpl[A](wrappedValueOfBaseType) with UserTypeDef[SSeq[A], SSeqImpl[A]] {
-    lazy val selfType = element[SSeqImpl[A]].asInstanceOf[Elem[SSeq[A]]]
+    extends SSeqImpl[A](wrappedValueOfBaseType) with UserTypeDef[SSeqImpl[A]] {
+    lazy val selfType = element[SSeqImpl[A]]
     override def mirror(t: Transformer) = ExpSSeqImpl[A](t(wrappedValueOfBaseType))
   }
 
-  lazy val SSeqImpl: Rep[SSeqImplCompanionAbs] = new SSeqImplCompanionAbs with UserTypeDef[SSeqImplCompanionAbs, SSeqImplCompanionAbs] {
+  lazy val SSeqImpl: Rep[SSeqImplCompanionAbs] = new SSeqImplCompanionAbs with UserTypeDef[SSeqImplCompanionAbs] {
     lazy val selfType = element[SSeqImplCompanionAbs]
     override def mirror(t: Transformer) = this
   }

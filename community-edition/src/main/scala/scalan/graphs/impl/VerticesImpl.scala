@@ -122,7 +122,7 @@ trait VerticesAbs extends Scalan with Vertices {
 // Seq -----------------------------------
 trait VerticesSeq extends VerticesDsl with ScalanSeq {
   self: GraphsDslSeq =>
-  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeSeq[VertexCompanionAbs, VertexCompanionAbs] {
+  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeSeq[VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]
   }
 
@@ -130,10 +130,10 @@ trait VerticesSeq extends VerticesDsl with ScalanSeq {
       (override val id: Rep[Int], override val graph: PG[V,E])
       (implicit eV: Elem[V], eE: Elem[E])
     extends SVertex[V, E](id, graph)
-        with UserTypeSeq[Vertex[V,E], SVertex[V, E]] {
-    lazy val selfType = element[SVertex[V, E]].asInstanceOf[Elem[Vertex[V,E]]]
+        with UserTypeSeq[SVertex[V, E]] {
+    lazy val selfType = element[SVertex[V, E]]
   }
-  lazy val SVertex = new SVertexCompanionAbs with UserTypeSeq[SVertexCompanionAbs, SVertexCompanionAbs] {
+  lazy val SVertex = new SVertexCompanionAbs with UserTypeSeq[SVertexCompanionAbs] {
     lazy val selfType = element[SVertexCompanionAbs]
   }
 
@@ -147,7 +147,7 @@ trait VerticesSeq extends VerticesDsl with ScalanSeq {
 // Exp -----------------------------------
 trait VerticesExp extends VerticesDsl with ScalanExp {
   self: GraphsDslExp =>
-  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeDef[VertexCompanionAbs, VertexCompanionAbs] {
+  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeDef[VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -155,12 +155,12 @@ trait VerticesExp extends VerticesDsl with ScalanExp {
   case class ExpSVertex[V, E]
       (override val id: Rep[Int], override val graph: PG[V,E])
       (implicit eV: Elem[V], eE: Elem[E])
-    extends SVertex[V, E](id, graph) with UserTypeDef[Vertex[V,E], SVertex[V, E]] {
-    lazy val selfType = element[SVertex[V, E]].asInstanceOf[Elem[Vertex[V,E]]]
+    extends SVertex[V, E](id, graph) with UserTypeDef[SVertex[V, E]] {
+    lazy val selfType = element[SVertex[V, E]]
     override def mirror(t: Transformer) = ExpSVertex[V, E](t(id), t(graph))
   }
 
-  lazy val SVertex: Rep[SVertexCompanionAbs] = new SVertexCompanionAbs with UserTypeDef[SVertexCompanionAbs, SVertexCompanionAbs] {
+  lazy val SVertex: Rep[SVertexCompanionAbs] = new SVertexCompanionAbs with UserTypeDef[SVertexCompanionAbs] {
     lazy val selfType = element[SVertexCompanionAbs]
     override def mirror(t: Transformer) = this
   }

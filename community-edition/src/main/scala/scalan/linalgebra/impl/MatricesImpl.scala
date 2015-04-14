@@ -249,7 +249,7 @@ trait MatricesAbs extends Scalan with Matrices {
 // Seq -----------------------------------
 trait MatricesSeq extends MatricesDsl with ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with UserTypeSeq[AbstractMatrixCompanionAbs, AbstractMatrixCompanionAbs] {
+  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with UserTypeSeq[AbstractMatrixCompanionAbs] {
     lazy val selfType = element[AbstractMatrixCompanionAbs]
   }
 
@@ -257,10 +257,10 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
       (override val rows: Rep[Collection[AbstractVector[T]]])
       (implicit elem: Elem[T])
     extends RowMajorDirectMatrix[T](rows)
-        with UserTypeSeq[AbstractMatrix[T], RowMajorDirectMatrix[T]] {
-    lazy val selfType = element[RowMajorDirectMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
+        with UserTypeSeq[RowMajorDirectMatrix[T]] {
+    lazy val selfType = element[RowMajorDirectMatrix[T]]
   }
-  lazy val RowMajorDirectMatrix = new RowMajorDirectMatrixCompanionAbs with UserTypeSeq[RowMajorDirectMatrixCompanionAbs, RowMajorDirectMatrixCompanionAbs] {
+  lazy val RowMajorDirectMatrix = new RowMajorDirectMatrixCompanionAbs with UserTypeSeq[RowMajorDirectMatrixCompanionAbs] {
     lazy val selfType = element[RowMajorDirectMatrixCompanionAbs]
   }
 
@@ -274,10 +274,10 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
       (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
       (implicit elem: Elem[T])
     extends RowMajorNestedMatrix[T](rmValues, numColumns)
-        with UserTypeSeq[AbstractMatrix[T], RowMajorNestedMatrix[T]] {
-    lazy val selfType = element[RowMajorNestedMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
+        with UserTypeSeq[RowMajorNestedMatrix[T]] {
+    lazy val selfType = element[RowMajorNestedMatrix[T]]
   }
-  lazy val RowMajorNestedMatrix = new RowMajorNestedMatrixCompanionAbs with UserTypeSeq[RowMajorNestedMatrixCompanionAbs, RowMajorNestedMatrixCompanionAbs] {
+  lazy val RowMajorNestedMatrix = new RowMajorNestedMatrixCompanionAbs with UserTypeSeq[RowMajorNestedMatrixCompanionAbs] {
     lazy val selfType = element[RowMajorNestedMatrixCompanionAbs]
   }
 
@@ -291,10 +291,10 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
       (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])
       (implicit elem: Elem[T])
     extends RowMajorSparseMatrix[T](rows, numColumns)
-        with UserTypeSeq[AbstractMatrix[T], RowMajorSparseMatrix[T]] {
-    lazy val selfType = element[RowMajorSparseMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
+        with UserTypeSeq[RowMajorSparseMatrix[T]] {
+    lazy val selfType = element[RowMajorSparseMatrix[T]]
   }
-  lazy val RowMajorSparseMatrix = new RowMajorSparseMatrixCompanionAbs with UserTypeSeq[RowMajorSparseMatrixCompanionAbs, RowMajorSparseMatrixCompanionAbs] {
+  lazy val RowMajorSparseMatrix = new RowMajorSparseMatrixCompanionAbs with UserTypeSeq[RowMajorSparseMatrixCompanionAbs] {
     lazy val selfType = element[RowMajorSparseMatrixCompanionAbs]
   }
 
@@ -308,7 +308,7 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
 // Exp -----------------------------------
 trait MatricesExp extends MatricesDsl with ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with UserTypeDef[AbstractMatrixCompanionAbs, AbstractMatrixCompanionAbs] {
+  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with UserTypeDef[AbstractMatrixCompanionAbs] {
     lazy val selfType = element[AbstractMatrixCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -316,12 +316,12 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   case class ExpRowMajorDirectMatrix[T]
       (override val rows: Rep[Collection[AbstractVector[T]]])
       (implicit elem: Elem[T])
-    extends RowMajorDirectMatrix[T](rows) with UserTypeDef[AbstractMatrix[T], RowMajorDirectMatrix[T]] {
-    lazy val selfType = element[RowMajorDirectMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
+    extends RowMajorDirectMatrix[T](rows) with UserTypeDef[RowMajorDirectMatrix[T]] {
+    lazy val selfType = element[RowMajorDirectMatrix[T]]
     override def mirror(t: Transformer) = ExpRowMajorDirectMatrix[T](t(rows))
   }
 
-  lazy val RowMajorDirectMatrix: Rep[RowMajorDirectMatrixCompanionAbs] = new RowMajorDirectMatrixCompanionAbs with UserTypeDef[RowMajorDirectMatrixCompanionAbs, RowMajorDirectMatrixCompanionAbs] {
+  lazy val RowMajorDirectMatrix: Rep[RowMajorDirectMatrixCompanionAbs] = new RowMajorDirectMatrixCompanionAbs with UserTypeDef[RowMajorDirectMatrixCompanionAbs] {
     lazy val selfType = element[RowMajorDirectMatrixCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -507,12 +507,12 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   case class ExpRowMajorNestedMatrix[T]
       (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
       (implicit elem: Elem[T])
-    extends RowMajorNestedMatrix[T](rmValues, numColumns) with UserTypeDef[AbstractMatrix[T], RowMajorNestedMatrix[T]] {
-    lazy val selfType = element[RowMajorNestedMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
+    extends RowMajorNestedMatrix[T](rmValues, numColumns) with UserTypeDef[RowMajorNestedMatrix[T]] {
+    lazy val selfType = element[RowMajorNestedMatrix[T]]
     override def mirror(t: Transformer) = ExpRowMajorNestedMatrix[T](t(rmValues), t(numColumns))
   }
 
-  lazy val RowMajorNestedMatrix: Rep[RowMajorNestedMatrixCompanionAbs] = new RowMajorNestedMatrixCompanionAbs with UserTypeDef[RowMajorNestedMatrixCompanionAbs, RowMajorNestedMatrixCompanionAbs] {
+  lazy val RowMajorNestedMatrix: Rep[RowMajorNestedMatrixCompanionAbs] = new RowMajorNestedMatrixCompanionAbs with UserTypeDef[RowMajorNestedMatrixCompanionAbs] {
     lazy val selfType = element[RowMajorNestedMatrixCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -770,12 +770,12 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   case class ExpRowMajorSparseMatrix[T]
       (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])
       (implicit elem: Elem[T])
-    extends RowMajorSparseMatrix[T](rows, numColumns) with UserTypeDef[AbstractMatrix[T], RowMajorSparseMatrix[T]] {
-    lazy val selfType = element[RowMajorSparseMatrix[T]].asInstanceOf[Elem[AbstractMatrix[T]]]
+    extends RowMajorSparseMatrix[T](rows, numColumns) with UserTypeDef[RowMajorSparseMatrix[T]] {
+    lazy val selfType = element[RowMajorSparseMatrix[T]]
     override def mirror(t: Transformer) = ExpRowMajorSparseMatrix[T](t(rows), t(numColumns))
   }
 
-  lazy val RowMajorSparseMatrix: Rep[RowMajorSparseMatrixCompanionAbs] = new RowMajorSparseMatrixCompanionAbs with UserTypeDef[RowMajorSparseMatrixCompanionAbs, RowMajorSparseMatrixCompanionAbs] {
+  lazy val RowMajorSparseMatrix: Rep[RowMajorSparseMatrixCompanionAbs] = new RowMajorSparseMatrixCompanionAbs with UserTypeDef[RowMajorSparseMatrixCompanionAbs] {
     lazy val selfType = element[RowMajorSparseMatrixCompanionAbs]
     override def mirror(t: Transformer) = this
   }

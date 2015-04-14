@@ -114,7 +114,7 @@ trait BitSetsAbs extends Scalan with BitSets {
 // Seq -----------------------------------
 trait BitSetsSeq extends BitSetsDsl with ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeSeq[BitSetCompanionAbs, BitSetCompanionAbs] {
+  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeSeq[BitSetCompanionAbs] {
     lazy val selfType = element[BitSetCompanionAbs]
   }
 
@@ -122,10 +122,10 @@ trait BitSetsSeq extends BitSetsDsl with ScalanSeq {
       (override val bits: Rep[Collection[Boolean]])
 
     extends BoolCollBitSet(bits)
-        with UserTypeSeq[BitSet, BoolCollBitSet] {
-    lazy val selfType = element[BoolCollBitSet].asInstanceOf[Elem[BitSet]]
+        with UserTypeSeq[BoolCollBitSet] {
+    lazy val selfType = element[BoolCollBitSet]
   }
-  lazy val BoolCollBitSet = new BoolCollBitSetCompanionAbs with UserTypeSeq[BoolCollBitSetCompanionAbs, BoolCollBitSetCompanionAbs] {
+  lazy val BoolCollBitSet = new BoolCollBitSetCompanionAbs with UserTypeSeq[BoolCollBitSetCompanionAbs] {
     lazy val selfType = element[BoolCollBitSetCompanionAbs]
   }
 
@@ -139,7 +139,7 @@ trait BitSetsSeq extends BitSetsDsl with ScalanSeq {
 // Exp -----------------------------------
 trait BitSetsExp extends BitSetsDsl with ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeDef[BitSetCompanionAbs, BitSetCompanionAbs] {
+  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeDef[BitSetCompanionAbs] {
     lazy val selfType = element[BitSetCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -147,12 +147,12 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
   case class ExpBoolCollBitSet
       (override val bits: Rep[Collection[Boolean]])
 
-    extends BoolCollBitSet(bits) with UserTypeDef[BitSet, BoolCollBitSet] {
-    lazy val selfType = element[BoolCollBitSet].asInstanceOf[Elem[BitSet]]
+    extends BoolCollBitSet(bits) with UserTypeDef[BoolCollBitSet] {
+    lazy val selfType = element[BoolCollBitSet]
     override def mirror(t: Transformer) = ExpBoolCollBitSet(t(bits))
   }
 
-  lazy val BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs] = new BoolCollBitSetCompanionAbs with UserTypeDef[BoolCollBitSetCompanionAbs, BoolCollBitSetCompanionAbs] {
+  lazy val BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs] = new BoolCollBitSetCompanionAbs with UserTypeDef[BoolCollBitSetCompanionAbs] {
     lazy val selfType = element[BoolCollBitSetCompanionAbs]
     override def mirror(t: Transformer) = this
   }

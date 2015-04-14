@@ -178,7 +178,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
 // Seq -----------------------------------
 trait AbstractStringsSeq extends AbstractStringsDsl with ScalanSeq {
   self: AbstractStringsDslSeq =>
-  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeSeq[AStringCompanionAbs, AStringCompanionAbs] {
+  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeSeq[AStringCompanionAbs] {
     lazy val selfType = element[AStringCompanionAbs]
   }
 
@@ -186,10 +186,10 @@ trait AbstractStringsSeq extends AbstractStringsDsl with ScalanSeq {
       (override val wrappedValueOfBaseType: Rep[String])
 
     extends SString(wrappedValueOfBaseType)
-        with UserTypeSeq[AString, SString] {
-    lazy val selfType = element[SString].asInstanceOf[Elem[AString]]
+        with UserTypeSeq[SString] {
+    lazy val selfType = element[SString]
   }
-  lazy val SString = new SStringCompanionAbs with UserTypeSeq[SStringCompanionAbs, SStringCompanionAbs] {
+  lazy val SString = new SStringCompanionAbs with UserTypeSeq[SStringCompanionAbs] {
     lazy val selfType = element[SStringCompanionAbs]
   }
 
@@ -203,10 +203,10 @@ trait AbstractStringsSeq extends AbstractStringsDsl with ScalanSeq {
       (override val wrappedValueOfBaseType: Rep[String])
 
     extends CString(wrappedValueOfBaseType)
-        with UserTypeSeq[AString, CString] {
-    lazy val selfType = element[CString].asInstanceOf[Elem[AString]]
+        with UserTypeSeq[CString] {
+    lazy val selfType = element[CString]
   }
-  lazy val CString = new CStringCompanionAbs with UserTypeSeq[CStringCompanionAbs, CStringCompanionAbs] {
+  lazy val CString = new CStringCompanionAbs with UserTypeSeq[CStringCompanionAbs] {
     lazy val selfType = element[CStringCompanionAbs]
   }
 
@@ -220,7 +220,7 @@ trait AbstractStringsSeq extends AbstractStringsDsl with ScalanSeq {
 // Exp -----------------------------------
 trait AbstractStringsExp extends AbstractStringsDsl with ScalanExp {
   self: AbstractStringsDslExp =>
-  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeDef[AStringCompanionAbs, AStringCompanionAbs] {
+  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeDef[AStringCompanionAbs] {
     lazy val selfType = element[AStringCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -228,12 +228,12 @@ trait AbstractStringsExp extends AbstractStringsDsl with ScalanExp {
   case class ExpSString
       (override val wrappedValueOfBaseType: Rep[String])
 
-    extends SString(wrappedValueOfBaseType) with UserTypeDef[AString, SString] {
-    lazy val selfType = element[SString].asInstanceOf[Elem[AString]]
+    extends SString(wrappedValueOfBaseType) with UserTypeDef[SString] {
+    lazy val selfType = element[SString]
     override def mirror(t: Transformer) = ExpSString(t(wrappedValueOfBaseType))
   }
 
-  lazy val SString: Rep[SStringCompanionAbs] = new SStringCompanionAbs with UserTypeDef[SStringCompanionAbs, SStringCompanionAbs] {
+  lazy val SString: Rep[SStringCompanionAbs] = new SStringCompanionAbs with UserTypeDef[SStringCompanionAbs] {
     lazy val selfType = element[SStringCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -253,12 +253,12 @@ trait AbstractStringsExp extends AbstractStringsDsl with ScalanExp {
   case class ExpCString
       (override val wrappedValueOfBaseType: Rep[String])
 
-    extends CString(wrappedValueOfBaseType) with UserTypeDef[AString, CString] {
-    lazy val selfType = element[CString].asInstanceOf[Elem[AString]]
+    extends CString(wrappedValueOfBaseType) with UserTypeDef[CString] {
+    lazy val selfType = element[CString]
     override def mirror(t: Transformer) = ExpCString(t(wrappedValueOfBaseType))
   }
 
-  lazy val CString: Rep[CStringCompanionAbs] = new CStringCompanionAbs with UserTypeDef[CStringCompanionAbs, CStringCompanionAbs] {
+  lazy val CString: Rep[CStringCompanionAbs] = new CStringCompanionAbs with UserTypeDef[CStringCompanionAbs] {
     lazy val selfType = element[CStringCompanionAbs]
     override def mirror(t: Transformer) = this
   }
