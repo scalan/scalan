@@ -86,10 +86,7 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   class SThrowableImplIso
     extends Iso[SThrowableImplData, SThrowableImpl] {
     override def from(p: Rep[SThrowableImpl]) =
-      unmkSThrowableImpl(p) match {
-        case Some((wrappedValueOfBaseType)) => wrappedValueOfBaseType
-        case None => !!!
-      }
+      p.wrappedValueOfBaseType
     override def to(p: Rep[Throwable]) = {
       val wrappedValueOfBaseType = p
       SThrowableImpl(wrappedValueOfBaseType)
@@ -106,7 +103,9 @@ trait ExceptionsAbs extends Scalan with Exceptions {
 
     def apply(wrappedValueOfBaseType: Rep[Throwable]): Rep[SThrowableImpl] =
       mkSThrowableImpl(wrappedValueOfBaseType)
-    def unapply(p: Rep[SThrowableImpl]) = unmkSThrowableImpl(p)
+  }
+  object SThrowableImplMatcher {
+    def unapply(p: Rep[SThrowable]) = unmkSThrowableImpl(p)
   }
   def SThrowableImpl: Rep[SThrowableImplCompanionAbs]
   implicit def proxySThrowableImplCompanion(p: Rep[SThrowableImplCompanionAbs]): SThrowableImplCompanionAbs = {
@@ -132,7 +131,7 @@ trait ExceptionsAbs extends Scalan with Exceptions {
 
   // 6) smart constructor and deconstructor
   def mkSThrowableImpl(wrappedValueOfBaseType: Rep[Throwable]): Rep[SThrowableImpl]
-  def unmkSThrowableImpl(p: Rep[SThrowableImpl]): Option[(Rep[Throwable])]
+  def unmkSThrowableImpl(p: Rep[SThrowable]): Option[(Rep[Throwable])]
 
   // elem for concrete class
   class SExceptionElem(val iso: Iso[SExceptionData, SException])
@@ -150,10 +149,7 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   class SExceptionIso
     extends Iso[SExceptionData, SException] {
     override def from(p: Rep[SException]) =
-      unmkSException(p) match {
-        case Some((wrappedValueOfBaseType)) => wrappedValueOfBaseType
-        case None => !!!
-      }
+      p.wrappedValueOfBaseType
     override def to(p: Rep[Throwable]) = {
       val wrappedValueOfBaseType = p
       SException(wrappedValueOfBaseType)
@@ -170,7 +166,9 @@ trait ExceptionsAbs extends Scalan with Exceptions {
 
     def apply(wrappedValueOfBaseType: Rep[Throwable]): Rep[SException] =
       mkSException(wrappedValueOfBaseType)
-    def unapply(p: Rep[SException]) = unmkSException(p)
+  }
+  object SExceptionMatcher {
+    def unapply(p: Rep[SThrowable]) = unmkSException(p)
   }
   def SException: Rep[SExceptionCompanionAbs]
   implicit def proxySExceptionCompanion(p: Rep[SExceptionCompanionAbs]): SExceptionCompanionAbs = {
@@ -196,7 +194,7 @@ trait ExceptionsAbs extends Scalan with Exceptions {
 
   // 6) smart constructor and deconstructor
   def mkSException(wrappedValueOfBaseType: Rep[Throwable]): Rep[SException]
-  def unmkSException(p: Rep[SException]): Option[(Rep[Throwable])]
+  def unmkSException(p: Rep[SThrowable]): Option[(Rep[Throwable])]
 }
 
 // Seq -----------------------------------
@@ -234,8 +232,11 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
   def mkSThrowableImpl
       (wrappedValueOfBaseType: Rep[Throwable]): Rep[SThrowableImpl] =
       new SeqSThrowableImpl(wrappedValueOfBaseType)
-  def unmkSThrowableImpl(p: Rep[SThrowableImpl]) =
-    Some((p.wrappedValueOfBaseType))
+  def unmkSThrowableImpl(p: Rep[SThrowable]) = p match {
+    case p: SThrowableImpl @unchecked =>
+      Some((p.wrappedValueOfBaseType))
+    case _ => None
+  }
 
   case class SeqSException
       (override val wrappedValueOfBaseType: Rep[Throwable])
@@ -256,8 +257,11 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
   def mkSException
       (wrappedValueOfBaseType: Rep[Throwable]): Rep[SException] =
       new SeqSException(wrappedValueOfBaseType)
-  def unmkSException(p: Rep[SException]) =
-    Some((p.wrappedValueOfBaseType))
+  def unmkSException(p: Rep[SThrowable]) = p match {
+    case p: SException @unchecked =>
+      Some((p.wrappedValueOfBaseType))
+    case _ => None
+  }
 
   implicit def wrapThrowableToSThrowable(v: Throwable): SThrowable = SThrowableImpl(v)
 }
@@ -290,8 +294,12 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   def mkSThrowableImpl
     (wrappedValueOfBaseType: Rep[Throwable]): Rep[SThrowableImpl] =
     new ExpSThrowableImpl(wrappedValueOfBaseType)
-  def unmkSThrowableImpl(p: Rep[SThrowableImpl]) =
-    Some((p.wrappedValueOfBaseType))
+  def unmkSThrowableImpl(p: Rep[SThrowable]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: SThrowableImplElem @unchecked =>
+      Some((p.asRep[SThrowableImpl].wrappedValueOfBaseType))
+    case _ =>
+      None
+  }
 
   case class ExpSException
       (override val wrappedValueOfBaseType: Rep[Throwable])
@@ -338,8 +346,12 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   def mkSException
     (wrappedValueOfBaseType: Rep[Throwable]): Rep[SException] =
     new ExpSException(wrappedValueOfBaseType)
-  def unmkSException(p: Rep[SException]) =
-    Some((p.wrappedValueOfBaseType))
+  def unmkSException(p: Rep[SThrowable]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: SExceptionElem @unchecked =>
+      Some((p.asRep[SException].wrappedValueOfBaseType))
+    case _ =>
+      None
+  }
 
   object SThrowableMethods {
     object getMessage {

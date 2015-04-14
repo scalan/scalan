@@ -18,19 +18,14 @@ trait Segments { self: SegmentsDsl =>
   abstract class Interval(val start: Rep[Int], val end: Rep[Int]) extends Segment {
     def length = end - start
     def shift(ofs: Rep[Int]) = Interval(start + ofs, end + ofs)
-    def attach(seg: Rep[Segment]): Rep[Segment] = matchSegment(seg) {
-      ivl => 
-        val startMin = Math.min(start, seg.start)
-        val startMax = Math.min(start, seg.start)
-        val endMin = Math.min(start, seg.start)
-        val endMax = Math.min(start, seg.start)
-        ???
-    } {
-      slc => ???
-    } {
-      cnt => ???
-    } {
-      abs => ???
+    def attach(seg: Rep[Segment]): Rep[Segment] = seg match {
+      case IntervalMatcher(start, end) =>
+        seg
+      case SliceMatcher(start, length) =>
+        self
+      case CenteredMatcher(center, radius) =>
+        self
+      case _ => seg attach self
     }
   }
   trait IntervalCompanion
@@ -38,15 +33,7 @@ trait Segments { self: SegmentsDsl =>
   abstract class Slice(val start: Rep[Int], val length: Rep[Int]) extends Segment {
     def end = start + length
     def shift(ofs: Rep[Int]) = Slice(start + ofs, length)
-    def attach(seg: Rep[Segment]): Rep[Segment] = matchSegment(seg) {
-      ivl => ???
-    } {
-      slc => ???
-    } {
-      cnt => ???
-    } {
-      abs => ???
-    }
+    def attach(seg: Rep[Segment]): Rep[Segment] = self
   }
   trait SliceCompanion
 
@@ -55,19 +42,10 @@ trait Segments { self: SegmentsDsl =>
     def end = center + radius
     def length = radius * 2
     def shift(ofs: Rep[Int]) = Centered(center + ofs, radius)
-    def attach(seg: Rep[Segment]): Rep[Segment] = matchSegment(seg) {
-      ivl => ???
-    } {
-      slc => ???
-    } {
-      cnt => ???
-    } {
-      abs => ???
-    }
+    def attach(seg: Rep[Segment]): Rep[Segment] = self
   }
   trait CenteredCompanion
 }
-
 
 trait SegmentsDsl extends impl.SegmentsAbs {
 }

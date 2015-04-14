@@ -509,7 +509,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     new ExpRowMajorDirectMatrix[T](rows)
   def unmkRowMajorDirectMatrix[T:Elem](p: Rep[AbstractMatrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: RowMajorDirectMatrixElem[T] @unchecked =>
-      Some((p.rows))
+      Some((p.asRep[RowMajorDirectMatrix[T]].rows))
     case _ =>
       None
   }
@@ -776,7 +776,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     new ExpRowMajorNestedMatrix[T](rmValues, numColumns)
   def unmkRowMajorNestedMatrix[T:Elem](p: Rep[AbstractMatrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: RowMajorNestedMatrixElem[T] @unchecked =>
-      Some((p.rmValues, p.numColumns))
+      Some((p.asRep[RowMajorNestedMatrix[T]].rmValues, p.asRep[RowMajorNestedMatrix[T]].numColumns))
     case _ =>
       None
   }
@@ -959,7 +959,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
     new ExpRowMajorSparseMatrix[T](rows, numColumns)
   def unmkRowMajorSparseMatrix[T:Elem](p: Rep[AbstractMatrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: RowMajorSparseMatrixElem[T] @unchecked =>
-      Some((p.rows, p.numColumns))
+      Some((p.asRep[RowMajorSparseMatrix[T]].rows, p.asRep[RowMajorSparseMatrix[T]].numColumns))
     case _ =>
       None
   }

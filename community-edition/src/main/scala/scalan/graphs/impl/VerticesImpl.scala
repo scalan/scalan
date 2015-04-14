@@ -67,10 +67,7 @@ trait VerticesAbs extends Scalan with Vertices {
   class SVertexIso[V, E](implicit eV: Elem[V], eE: Elem[E])
     extends Iso[SVertexData[V, E], SVertex[V, E]] {
     override def from(p: Rep[SVertex[V, E]]) =
-      unmkSVertex(p) match {
-        case Some((id, graph)) => Pair(id, graph)
-        case None => !!!
-      }
+      (p.id, p.graph)
     override def to(p: Rep[(Int, Graph[V,E])]) = {
       val Pair(id, graph) = p
       SVertex(id, graph)
@@ -90,7 +87,9 @@ trait VerticesAbs extends Scalan with Vertices {
       isoSVertex(eV, eE).to(p)
     def apply[V, E](id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       mkSVertex(id, graph)
-    def unapply[V:Elem, E:Elem](p: Rep[SVertex[V, E]]) = unmkSVertex(p)
+  }
+  object SVertexMatcher {
+    def unapply[V:Elem, E:Elem](p: Rep[Vertex[V, E]]) = unmkSVertex(p)
   }
   def SVertex: Rep[SVertexCompanionAbs]
   implicit def proxySVertexCompanion(p: Rep[SVertexCompanionAbs]): SVertexCompanionAbs = {
@@ -116,7 +115,7 @@ trait VerticesAbs extends Scalan with Vertices {
 
   // 6) smart constructor and deconstructor
   def mkSVertex[V, E](id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]
-  def unmkSVertex[V:Elem, E:Elem](p: Rep[SVertex[V, E]]): Option[(Rep[Int], Rep[Graph[V,E]])]
+  def unmkSVertex[V:Elem, E:Elem](p: Rep[Vertex[V, E]]): Option[(Rep[Int], Rep[Graph[V,E]])]
 }
 
 // Seq -----------------------------------
@@ -140,8 +139,11 @@ trait VerticesSeq extends VerticesDsl with ScalanSeq {
   def mkSVertex[V, E]
       (id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       new SeqSVertex[V, E](id, graph)
-  def unmkSVertex[V:Elem, E:Elem](p: Rep[SVertex[V, E]]) =
-    Some((p.id, p.graph))
+  def unmkSVertex[V:Elem, E:Elem](p: Rep[Vertex[V, E]]) = p match {
+    case p: SVertex[V, E] @unchecked =>
+      Some((p.id, p.graph))
+    case _ => None
+  }
 }
 
 // Exp -----------------------------------
@@ -174,8 +176,12 @@ trait VerticesExp extends VerticesDsl with ScalanExp {
   def mkSVertex[V, E]
     (id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
     new ExpSVertex[V, E](id, graph)
-  def unmkSVertex[V:Elem, E:Elem](p: Rep[SVertex[V, E]]) =
-    Some((p.id, p.graph))
+  def unmkSVertex[V:Elem, E:Elem](p: Rep[Vertex[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: SVertexElem[V, E] @unchecked =>
+      Some((p.asRep[SVertex[V, E]].id, p.asRep[SVertex[V, E]].graph))
+    case _ =>
+      None
+  }
 
   object VertexMethods {
     object graph {

@@ -108,10 +108,7 @@ trait HashSetsAbs extends Scalan with HashSets {
   class SHashSetImplIso[A](implicit eA: Elem[A])
     extends Iso[SHashSetImplData[A], SHashSetImpl[A]] {
     override def from(p: Rep[SHashSetImpl[A]]) =
-      unmkSHashSetImpl(p) match {
-        case Some((wrappedValueOfBaseType)) => wrappedValueOfBaseType
-        case None => !!!
-      }
+      p.wrappedValueOfBaseType
     override def to(p: Rep[HashSet[A]]) = {
       val wrappedValueOfBaseType = p
       SHashSetImpl(wrappedValueOfBaseType)
@@ -129,7 +126,9 @@ trait HashSetsAbs extends Scalan with HashSets {
 
     def apply[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
       mkSHashSetImpl(wrappedValueOfBaseType)
-    def unapply[A:Elem](p: Rep[SHashSetImpl[A]]) = unmkSHashSetImpl(p)
+  }
+  object SHashSetImplMatcher {
+    def unapply[A:Elem](p: Rep[SHashSet[A]]) = unmkSHashSetImpl(p)
   }
   def SHashSetImpl: Rep[SHashSetImplCompanionAbs]
   implicit def proxySHashSetImplCompanion(p: Rep[SHashSetImplCompanionAbs]): SHashSetImplCompanionAbs = {
@@ -155,7 +154,7 @@ trait HashSetsAbs extends Scalan with HashSets {
 
   // 6) smart constructor and deconstructor
   def mkSHashSetImpl[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]]
-  def unmkSHashSetImpl[A:Elem](p: Rep[SHashSetImpl[A]]): Option[(Rep[HashSet[A]])]
+  def unmkSHashSetImpl[A:Elem](p: Rep[SHashSet[A]]): Option[(Rep[HashSet[A]])]
 }
 
 // Seq -----------------------------------
@@ -192,8 +191,11 @@ trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
   def mkSHashSetImpl[A]
       (wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
       new SeqSHashSetImpl[A](wrappedValueOfBaseType)
-  def unmkSHashSetImpl[A:Elem](p: Rep[SHashSetImpl[A]]) =
-    Some((p.wrappedValueOfBaseType))
+  def unmkSHashSetImpl[A:Elem](p: Rep[SHashSet[A]]) = p match {
+    case p: SHashSetImpl[A] @unchecked =>
+      Some((p.wrappedValueOfBaseType))
+    case _ => None
+  }
 
   implicit def wrapHashSetToSHashSet[A:Elem](v: HashSet[A]): SHashSet[A] = SHashSetImpl(v)
 }
@@ -235,8 +237,12 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   def mkSHashSetImpl[A]
     (wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
     new ExpSHashSetImpl[A](wrappedValueOfBaseType)
-  def unmkSHashSetImpl[A:Elem](p: Rep[SHashSetImpl[A]]) =
-    Some((p.wrappedValueOfBaseType))
+  def unmkSHashSetImpl[A:Elem](p: Rep[SHashSet[A]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: SHashSetImplElem[A] @unchecked =>
+      Some((p.asRep[SHashSetImpl[A]].wrappedValueOfBaseType))
+    case _ =>
+      None
+  }
 
   object SHashSetMethods {
     object wrappedValueOfBaseType {
