@@ -180,6 +180,25 @@ class BoilerplateTool extends StrictLogging {
     graphTypeSynonyms
   )
 
+  val metaTestTypeSynonyms = coreTypeSynonyms ++ Map(
+    "RMetaTest" -> "MetaTest"
+  )
+  lazy val metaTestConfig = CodegenConfig(
+    name = "metaTest",
+    srcPath = "../core/src/test/scala",
+    entityFiles = List(
+      "scalan/common/MetaTests.scala"
+    ),
+    baseContextTrait = "Scalan",
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scalan.{Scalan, ScalanSeq, ScalanExp}",
+      "scala.reflect.runtime.universe._", "scala.reflect._",
+      "scalan.common.Default"),
+    metaTestTypeSynonyms
+  )
+
   def getConfigs(args: Array[String]): Seq[CodegenConfig] =
     args.flatMap { arg => configsMap.getOrElse(arg,
       sys.error(s"Unknown codegen config $arg. Allowed values: ${configsMap.keySet.mkString(", ")}"))
@@ -190,11 +209,12 @@ class BoilerplateTool extends StrictLogging {
     "collections" -> List(collectionsConfig),
     "core" -> List(coreConfig, coreTestsConfig),
     "core-test" -> List(coreTestsConfig),
+    "mt" -> List(metaTestConfig),
     "ce" -> List(ceConfig),
     "la" -> List(laConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig),
+    "ce-all" -> List(coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig),
     "all" -> List(coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, eeConfig)
   )
 
