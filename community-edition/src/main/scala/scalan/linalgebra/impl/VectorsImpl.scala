@@ -126,7 +126,7 @@ trait VectorsAbs extends Scalan with Vectors {
 
   // 3) Iso for concrete class
   class SparseVectorIso[T](implicit elem: Elem[T])
-    extends Iso[SparseVectorData[T], SparseVector[T]] {
+    extends Iso[SparseVectorData[T], SparseVector[T]]()(pairElement(implicitly[Elem[Collection[Int]]], pairElement(implicitly[Elem[Collection[T]]], implicitly[Elem[Int]]))) {
     override def from(p: Rep[SparseVector[T]]) =
       (p.nonZeroIndices, p.nonZeroValues, p.length)
     override def to(p: Rep[(Collection[Int], (Collection[T], Int))]) = {

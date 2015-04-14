@@ -66,7 +66,7 @@ trait GraphsAbs extends Scalan with Graphs {
 
   // 3) Iso for concrete class
   class AdjacencyGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
+    extends Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]]()(pairElement(implicitly[Elem[Collection[V]]], pairElement(implicitly[Elem[INestedCollection[E]]], implicitly[Elem[INestedCollection[Int]]]))) {
     override def from(p: Rep[AdjacencyGraph[V, E]]) =
       (p.vertexValues, p.edgeValues, p.links)
     override def to(p: Rep[(Collection[V], (INestedCollection[E], INestedCollection[Int]))]) = {
@@ -132,7 +132,7 @@ trait GraphsAbs extends Scalan with Graphs {
 
   // 3) Iso for concrete class
   class IncidenceGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
+    extends Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]]()(pairElement(implicitly[Elem[Collection[V]]], pairElement(implicitly[Elem[Collection[E]]], implicitly[Elem[Int]]))) {
     override def from(p: Rep[IncidenceGraph[V, E]]) =
       (p.vertexValues, p.incMatrixWithVals, p.vertexNum)
     override def to(p: Rep[(Collection[V], (Collection[E], Int))]) = {
