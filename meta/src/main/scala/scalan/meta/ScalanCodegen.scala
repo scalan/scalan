@@ -21,7 +21,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     val implicitArgsUse = implicitArgs.opt(args => s"(${args.map(_.name).rep()})")
     val optBT = entity.optBaseType
     val entityNameBT = optBT.map(_.name).getOrElse(name)
-    val firstAncestorType = entity.ancestors.head
+    val firstAncestorType = entity.ancestors.headOption
     val entityRepSynonimOpt = module.entityRepSynonym
 
     def entityRepSynonim = entityRepSynonimOpt match {
@@ -180,6 +180,20 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
 
     def typeArgString(typeArgs: Seq[String]) =
       if (typeArgs.isEmpty) "" else typeArgs.mkString("[", ", ", "]")
+
+    def typeToIdentifier(t: STpeExpr): String = {
+      def mkId(name: String, parts: Seq[STpeExpr]) =
+        (name +: parts).mkString("_")
+
+      t match {
+        case STpePrimitive(name, _) => name
+        case STraitCall(name, args) => mkId(name, args)
+        case STpeTuple(items) => mkId("Tuple", items)
+        case STpeSum(items) => mkId("Sum", items)
+        case STpeFunc(domain, range) => mkId("Func", Seq(domain, range))
+        case STpeTypeBounds(lo, hi) => mkId("Bounds", Seq(lo, hi))
+      }
+    }
 
     val templateData = EntityTemplateData(module, module.entityOps)
     val optBT = templateData.optBT
@@ -403,17 +417,17 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         val isCont = e.isContainer1
         val underscores = e.tpeArgDecls.map(_ => "_,").mkString("")
         val (isW, parentName, parentTyArgs, parentArgs) = e.firstAncestorType match {
-          case STraitCall("Reifiable", _) =>
+          case Some(STraitCall("Reifiable", _)) =>
             (false,
              s"EntityElem${isCont.opt("1")}",
              s"[${isCont.opt(e.typesUsePref)}Abs${isCont.opt(s", $entityName")}]",
              s"${isCont.opt(s"(${e.tpeArgs.map("e" + _.name + ",").mkString("")}container[$entityName])")}")
-          case STraitCall("TypeWrapper", _) =>
+          case Some(STraitCall("TypeWrapper", _)) =>
             (true,
              s"WrapperElem${isCont.opt("1")}",
              s"[${isCont.opt(e.typesUsePref)}Abs${isCont.opt(s", ${e.entityNameBT}, $entityName")}]",
              s"${isCont.opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.entityNameBT}], container[$entityName])")}")
-          case STraitCall(parentName, parentTypes) =>
+          case Some(STraitCall(parentName, parentTypes)) =>
             (false,
              s"${parentName}Elem",
              s"[${parentTypes.map(_.toString + ", ").mkString("")}To]",
@@ -429,7 +443,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |    override def tag = {
         |${e.implicitArgs.flatMap(arg => arg.tpe match {
           case STraitCall(name, List(tpe)) if name == "Elem" || name == "Element" =>
-            Some(s"      implicit val tag${tpe} = ${arg.name}.tag")
+            Some(s"      implicit val tag${typeToIdentifier(tpe)} = ${arg.name}.tag")
           case _=> None
         }).mkString("\n")}
         |      weakTypeTag[${e.entityType}].asInstanceOf[WeakTypeTag[Abs]]
@@ -605,7 +619,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |
         |${c.implicitArgs.args.flatMap(arg => arg.tpe match {
             case STraitCall(name, List(tpe)) if name == "Elem" || name == "Element" =>
-              Some(s"      implicit val tag${tpe} = ${arg.name}.tag")
+              Some(s"      implicit val tag${typeToIdentifier(tpe)} = ${arg.name}.tag")
             case _ => None
           }).mkString("\n")}
         |      weakTypeTag[$className${typesUse}]
@@ -689,7 +703,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val typesWithElems = templateData.boundedTpeArgString(false)
       val fields = c.args.argNames
       val fieldsWithType = c.args.argNamesAndTypes
-      val traitWithTypes = templateData.firstAncestorType
       val implicitArgsDecl = templateData.implicitArgsDecl
 
       val externalMethods = module.entityOps.getMethodsWithAnnotation(ExternalAnnotation)
@@ -737,7 +750,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val typesWithElems = d.boundedTpeArgString(false)
       val fields = c.args.argNames
       val fieldsWithType = c.args.argNamesAndTypes
-      val traitWithTypes = d.firstAncestorType
       val implicitArgsDecl = d.implicitArgsDecl
 
       val parent     = c.ancestors.head
