@@ -1,11 +1,12 @@
 package scalan
 
 import scalan.common.{ViewExamples, SegmentsDslExp, CommonExamples}
+import org.scalatest.Assertions._
 
 class ViewTestsCtx(suite: TestsUtil, testName: String)
   extends TestContext(suite, testName)
 {
-  def testLambdaResultHasViews[A,B](msg: String, f: Rep[A => B], expectedDataElem: Elem[_]) =
+  def testLambdaResultHasViewsWithDataType[A,B](msg: String, f: Rep[A => B], expectedDataElem: Elem[_]) =
     _testLambdaResultHasViews(msg, f, Some(expectedDataElem))
 
   def testLambdaResultHasViews[A,B](msg: String, f: Rep[A => B]) =
@@ -20,4 +21,10 @@ class ViewTestsCtx(suite: TestsUtil, testName: String)
     }
     assert(ok, msg)
   }
+
+  def testGetIso[From, To](e: Elem[To], eFromExpected: Elem[From]) = {
+    val iso = getIsoByElem(e)
+    assertResult(eFromExpected)(iso.eFrom)
+  }
+
 }

@@ -98,18 +98,6 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
 
-  implicit val arrayContainer: Cont[Array] = new Container[Array] {
-    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Array[T]]
-    def lift[T](implicit eT: Elem[T]) = element[Array[T]]
-  }
-
-  case class ArrayIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Array](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Arr[B]) = x.map(iso.from _)
-    def to(x: Arr[A]) = x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(SArray.empty[B])
-  }
 
 //  def ArrayIso[A, B](iso: Iso[A, B]): Iso[Array[A], Array[B]] =
 //    ArrayIso(iso)

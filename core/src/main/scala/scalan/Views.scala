@@ -134,6 +134,9 @@ trait Views extends Elems { self: Scalan =>
       val iso1 = getIsoByElem(pe.eLeft)
       val iso2 = getIsoByElem(pe.eRight)
       sumIso(iso1,iso2)
+    case ae: ArrayElem[_] =>
+      val iso = getIsoByElem(ae.eItem)
+      ArrayIso(iso)
     case ee: EntityElem[_] =>
       identityIso(ee)
     case be: BaseElem[_] =>

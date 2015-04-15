@@ -88,11 +88,24 @@ trait Elems extends Base { self: Scalan =>
     }
   }
 
-  abstract class ArrayElem[A] extends Element[Array[A]] {
-    def eItem: Element[A]
+  implicit val arrayContainer: Cont[Array] = new Container[Array] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Array[T]]
+    def lift[T](implicit eT: Elem[T]) = element[Array[T]]
   }
 
-  case class ScalaArrayElem[A](eItem: Elem[A]) extends ArrayElem[A] {
+  case class ArrayIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Array](iso) {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    def from(x: Arr[B]) = x.map(iso.from _)
+    def to(x: Arr[A]) = x.map(iso.to _)
+    lazy val defaultRepTo = Default.defaultVal(SArray.empty[B])
+  }
+
+  abstract class ArrayElem[A](implicit override val eItem: Elem[A])
+    extends EntityElem1[A, Array[A], Array](eItem, container[Array]) {
+  }
+
+  case class ScalaArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     override def isEntityType = eItem.isEntityType
     lazy val tag = {
       implicit val tag1 = eItem.tag
