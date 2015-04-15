@@ -49,49 +49,8 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def companion: Rep[AbstractMatrixCompanion]
   }
 
-  // TODO: we have similar classes RowMajorDirectMatrix and RowMajorSparseMatrix, 
-  // should consider leaving only RowMajorDirectMatrix 
-  // and making it invariant against AbstractVector implementations
-  
-  abstract class RowMajorDirectMatrix[T](val rows: Rep[Collection[AbstractVector[T]]])
-                                        (implicit val elem: Elem[T])
-    extends AbstractMatrix[T] {
-    def companion = RowMajorDirectMatrix
-    def numRows: Rep[Int] = rows.length
-    def numColumns = rows(0).length
-    def columns = Collection(SArray.tabulate(numColumns) { j => DenseVector(rows.map(_(j))) })
-    def rmValues: Rep[Collection[T]] = ???
-
-    @OverloadId("rows")
-    def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
-      RowMajorDirectMatrix(iRows.map(i => rows(i)))
-    }
-    @OverloadId("row")
-    def apply(row: Rep[Int]): Vector[T] = rows(row)
-    def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = apply(row)(column)
-
-    def transpose(implicit n: Numeric[T]): Matrix[T] = ???
-
-    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
-      val coll = Collection.indexRange(numColumns).map { column =>
-        Collection.indexRange(numRows).map { row => rows(row)(column) }.reduce
-      }
-      DenseVector(coll)
-    }
-
-    def +^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = ???
-
-    def *^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = ???
-
-    def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
-      val flat = rows.map(v => v.items).flatMap(v => v)
-      flat.reduce.toDouble / flat.length.toDouble
-    }
-  }
-
   abstract class RowMajorNestedMatrix[T](val rmValues: Rep[Collection[T]], val numColumns: Rep[Int])
-                                        (implicit val elem: Elem[T])
-    extends AbstractMatrix[T] {
+                                        (implicit val elem: Elem[T]) extends AbstractMatrix[T] {
 
     def items = rmValues
     def companion = RowMajorNestedMatrix
@@ -206,8 +165,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   }
 
   abstract class RowMajorSparseMatrix[T](val rows: Rep[Collection[AbstractVector[T]]], val numColumns: Rep[Int])
-                                        (implicit val elem: Elem[T])
-    extends AbstractMatrix[T] {
+                                        (implicit val elem: Elem[T]) extends AbstractMatrix[T] {
     def companion = RowMajorSparseMatrix
     def columns: Rep[Collection[AbstractVector[T]]] = ???
     def numRows = rows.length
@@ -280,12 +238,6 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       }, numColumns)
     }
     def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = RowMajorSparseMatrix.fromRows(rows, length)
-  }
-
-  trait RowMajorDirectMatrixCompanion extends ConcreteClass1[RowMajorDirectMatrix] with AbstractMatrixCompanion {
-    override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Rep[AbstractMatrix[T]] =
-      RowMajorDirectMatrix(Collection(SArray.tabulate(cols(0).length) { i => DenseVector(cols.map(_(i))) }))
-    override def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = ???
   }
 
   trait RowMajorNestedMatrixCompanion extends ConcreteClass1[RowMajorNestedMatrix] with AbstractMatrixCompanion {
