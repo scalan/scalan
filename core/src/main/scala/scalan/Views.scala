@@ -50,6 +50,7 @@ trait Views extends Elems { self: Scalan =>
       case i: Iso[_, _] => eFrom == i.eFrom && eTo == i.eTo
       case _ => false
     }
+    def isIdentity: Boolean = false
   }
 
   abstract class Iso1[A, B, C[_]](val innerIso: Iso[A,B])(implicit cC: Cont[C])
@@ -103,11 +104,40 @@ trait Views extends Elems { self: Scalan =>
 
 
   object UnpackableElem {
-    def unapply(e: ViewElem[_, _]) =
-      if (shouldUnpack(e)) Some(e.iso) else None
+    def unapply(e: Elem[_]) =
+      if (shouldUnpack(e)) {
+        val iso = getIsoByElem(e)
+        if (iso.isIdentity)
+          None
+        else
+          Some(iso)
+      }
+      else None
   }
 
-  def shouldUnpack(e: ViewElem[_, _]): Boolean
+  def shouldUnpack(e: Elem[_]): Boolean
+
+//  def isIdentityIso[T](iso: Iso[_,T]): Boolean = iso match {
+//    case id: IdentityIso[_] => true
+//    case pair: PairIso[_,_,_,_] =>
+//      isIdentityIso(pair.iso1) && isIdentityIso(pair.iso2)
+//    case sum: SumIso[]
+//  }
+
+  def getIsoByElem[T](e: Elem[T]): Iso[_, T] = (e match {
+    case ve: ViewElem[_,_] => ve.iso
+    case pe: PairElem[a,b] =>
+      val iso1 = getIsoByElem(pe.eFst)
+      val iso2 = getIsoByElem(pe.eSnd)
+      pairIso(iso1,iso2)
+    case pe: SumElem[a,b] =>
+      val iso1 = getIsoByElem(pe.eLeft)
+      val iso2 = getIsoByElem(pe.eRight)
+      sumIso(iso1,iso2)
+    case be: BaseElem[_] =>
+      identityIso(e)
+    case _ => !!!(s"Don't know how to build iso for element $e")
+  }).asInstanceOf[Iso[_,T]]
 
   trait CompanionElem[T] extends Elem[T] {
     override def isEntityType = false
@@ -128,6 +158,7 @@ trait Views extends Elems { self: Scalan =>
     lazy val defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
     def from(x: Rep[A]) = x
     def to(x: Rep[A]) = x
+    override def isIdentity = true
   }
   def identityIso[A](implicit elem: Elem[A]): Iso[A, A] = IdentityIso[A](elem)
 
@@ -161,6 +192,7 @@ trait Views extends Elems { self: Scalan =>
     }
     def tag = eBB.tag
     lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
+    override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
   def pairIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[(A1, A2), (B1, B2)] = PairIso(iso1, iso2)
 
@@ -180,6 +212,7 @@ trait Views extends Elems { self: Scalan =>
                a2 => iso2.to(a2))
     def tag = eBB.tag
     lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
+    override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
   def sumIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[A1 | A2, B1 | B2] = SumIso(iso1, iso2)
 
@@ -189,6 +222,7 @@ trait Views extends Elems { self: Scalan =>
     def to(a: Rep[A]) = iso2.to(iso1.to(a))
     def tag = iso2.tag
     def defaultRepTo = iso2.defaultRepTo
+    override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
 
   def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = ComposeIso(iso2, iso1)
@@ -208,6 +242,7 @@ trait Views extends Elems { self: Scalan =>
     }
     def tag = eTo.tag
     lazy val defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
+    override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
   def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] = FuncIso(iso1, iso2)
 
@@ -218,6 +253,7 @@ trait Views extends Elems { self: Scalan =>
     def to(a: Rep[A]) = convTo(a)
     def from(b: Rep[B]) = convFrom(b)
     def defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
+    override def isIdentity = false
   }
   def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso[A,B] = ConverterIso(convTo, convFrom)
 
@@ -259,7 +295,7 @@ trait ViewsSeq extends Views { self: ScalanSeq =>
     def self = this
   }
 
-  def shouldUnpack(e: ViewElem[_, _]) = true
+  def shouldUnpack(e: Elem[_]) = true
 }
 
 trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
@@ -283,14 +319,15 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   def removeUnpackTester(tester: UnpackTester): Unit =
     unpackTesters -= tester
 
-  def shouldUnpack(e: ViewElem[_, _]) = unpackTesters.exists(_(e))
+  def shouldUnpack(e: Elem[_]) = unpackTesters.exists(_(e))
 
   trait UserTypeDef[T] extends Def[T] {
     def uniqueOpId = selfType.name
   }
 
   object HasViews {
-    def unapply[T](s: Exp[T]): Option[Unpacked[T]] = unapplyViews(s)
+    def unapply[T](s: Exp[T]): Option[Unpacked[T]] =
+      unapplyViews(s)
   }
 
   // for simplifying unapplyViews
@@ -316,6 +353,18 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
           val (sv1, iso1) = opt1.getOrElse(trivialView(s))
           val iso2 = opt2.getOrElse(identityIso(l.eRight))
           Some((sv1.asLeft(iso2.eFrom), sumIso(iso1, iso2)))
+      }
+    case Def(r @ Right(s)) =>
+      val optLeft = r.eLeft match {
+        case ve: ViewElem[_,_] => UnpackableElem.unapply(ve)
+        case _ => None
+      }
+      (optLeft, unapplyViews(s)) match {
+        case (None, None) => None
+        case (opt1, opt2) =>
+          val (sv2, iso2) = opt2.getOrElse(trivialView(s))
+          val iso1 = opt1.getOrElse(identityIso(r.eLeft))
+          Some((sv2.asRight(iso1.eFrom), sumIso(iso1, iso2)))
       }
     case _ =>
       UnpackableExp.unapply(s)

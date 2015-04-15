@@ -103,7 +103,7 @@ class JNIExtractorTests extends BaseTests {
 
   trait TestContext extends ScalanCtxExp with JNIExtractorOpsExp {
     override def isInvokeEnabled(d: Def[_], m: Method) = true
-    override def shouldUnpack(e: ViewElem[_, _]) = true
+    override def shouldUnpack(e: Elem[_]) = true
     def subfolder: String
     def emit(name: String, ss: Exp[_]*) =
       emitDepGraph(ss.toList, FileUtil.file(prefix, subfolder, s"/$name.dot") )(GraphVizConfig.default)

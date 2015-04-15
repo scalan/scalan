@@ -174,7 +174,7 @@ class ThunkTests extends BaseTests { suite =>
     val ctx = new TestContext(this, "thunksOfDomainTypesWithoutIsoLifting") with SegmentsDslExp with MyDomainProg {
       isInlineThunksOnForce = false
       override def isInvokeEnabled(d: Def[_], m: Method) = true
-      override def shouldUnpack(e: ViewElem[_, _]) = false
+      override def shouldUnpack(e: Elem[_]) = false
 
       def test() = {
         assert(!isInlineThunksOnForce, ": precondition for tests");
