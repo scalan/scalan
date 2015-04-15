@@ -181,8 +181,8 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     case f @ SumFold(Def(m: SumMap[a0,b0,a,b]), left, right) =>
       m.sum.fold(x => left(m.left(x)), y => right(m.right(y)))
 
-    case f @ SumFold(Def(IfThenElse(cond, Def(Left(x)), Def(Right(y)))), left, right) =>
-      IF (cond) THEN { left(x) } ELSE { right(y) }
+//    case f @ SumFold(Def(IfThenElse(cond, Def(Left(x)), Def(Right(y)))), left, right) =>
+//      IF (cond) THEN { left(x) } ELSE { right(y) }
 
 //    case f1 @ SumFold(Def(f2: SumFold[a0,b0,_]), left, right) =>
 //      m.sum.fold(x => left(m.left(x)), y => right(m.right(y)))
@@ -199,7 +199,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     case foldD: SumFold[a, b, T] => foldD.sum match {
       // this rule is only applied when result of fold is base type.
       // Otherwise it yields stack overflow as this rule is mutually recursive with lifting Views over IfThenElse
-      case Def(IfThenElse(p, thenp: Rep[Either[_, _]]@unchecked, elsep: Rep[Either[_, _]]@unchecked)) if !d.selfType.isEntityType =>
+      case Def(IfThenElse(p, thenp: Rep[Either[_, _]]@unchecked, elsep: Rep[Either[_, _]]@unchecked)) /*if !d.selfType.isEntityType*/ =>
         __ifThenElse[T](p, SumFold(thenp, foldD.left, foldD.right), SumFold(elsep, foldD.left, foldD.right))
 
       case Def(view: SumView[a1, a2, b1, b2]) /*if !d.selfType.isEntityType*/ =>

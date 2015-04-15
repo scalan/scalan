@@ -449,6 +449,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       iso.to(loopRes)
     case call @ MethodCall(Def(obj), m, args, neverInvoke) =>
       call.tryInvoke match {
+        // Rule: obj.m(args) ==> body(m).subst{xs -> args}
         case InvokeSuccess(res) => res
         case InvokeFailure(e) =>
           if (e.isInstanceOf[DelayInvokeException])
@@ -463,6 +464,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
             mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[T]
 
           obj match {
+            // Rule: (if(c) t else e).m(args) ==> if (c) t.m(args) else e.m(args)
             case IfThenElse(cond, t, e) =>
               IF (cond) {
                 copyMethodCall(t)
