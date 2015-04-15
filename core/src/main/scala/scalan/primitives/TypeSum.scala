@@ -164,13 +164,17 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     case Second(Def(foldD: SumFold[a, b, (r1, T)]@unchecked)) =>
       foldD.sum.fold(a => foldD.left(a)._2, b => foldD.right(b)._2)
 
-    // Rule: Left(V(a, iso)) ==> V(Left(a), SumIso(iso, identityIso))
+    // Rule: Left[A,B](V(a, iso)) ==> V(Left(a), SumIso(iso, iso[B]))
     case l@Left(HasViews(a, iso: Iso[a1, b1])) =>
-      SumView(toLeftSum(a.asRep[a1])(l.eRight))(iso, identityIso(l.eRight)).self
+      val eR = l.eRight
+      val iso2 = getIsoByElem(eR).asInstanceOf[Iso[Any,Any]]
+      SumView(a.asRep[a1].asLeft(eR))(iso, iso2).self
 
-    // Rule: Right(V(a, iso)) ==> V(Right(a), SumIso(identityIso, iso))
+    // Rule: Right[A,B](V(a, iso)) ==> V(Right(a), SumIso(iso[A], iso))
     case r@Right(HasViews(a, iso: Iso[a1, b1])) =>
-      SumView(toRightSum(a.asRep[a1])(r.eLeft))(identityIso(r.eLeft), iso).self
+      val eL = r.eLeft
+      val iso1 = getIsoByElem(eL).asInstanceOf[Iso[Any,Any]]
+      SumView(a.asRep[a1].asRight(eL))(iso1, iso).self
 
     case m1 @ SumMap(Def(f: SumFold[a0,b0,_]), left, right) =>
       f.sum.fold(a0 => left(f.left(a0)), b0 => right(f.right(b0)))

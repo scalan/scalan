@@ -202,6 +202,8 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       mapReduceUnderlyingArray(view, map, reduce)
     case ArrayFilter(Def(view: ViewArray[_, _]), f) =>
       filterUnderlyingArray(view, f)
+
+    // Rule: ???
     case pa @ ArrayZip(arr1: Arr[a] @unchecked, Def(v1:ViewArray[_,_])) =>
       implicit val eA = arr1.elem.eItem
       val iso2 = identityIso(eA)
@@ -209,6 +211,8 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       implicit val eAB = pIso.eTo
       val zipped = arr1 zip v1.source
       ViewArray(zipped)(pIso)
+
+    // Rule: ???
     case ArrayUpdate(arr, i, HasViews(srcValue, iso: Iso[a,b]))  =>
       val value = srcValue.asRep[a]
       implicit val eA = iso.eFrom
@@ -216,6 +220,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       val arrIso = ArrayIso[a,b](iso)
       val srcBuf = arrIso.from(arr.asRep[Array[b]])
       ViewArray(srcBuf.update(i, value))(arrIso)
+
     case ArrayMap(xs: Arr[a] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
       val f1 = f.asRep[a => b]
       val xs1 = xs.asRep[Array[a]]

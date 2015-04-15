@@ -134,8 +134,10 @@ trait Views extends Elems { self: Scalan =>
       val iso1 = getIsoByElem(pe.eLeft)
       val iso2 = getIsoByElem(pe.eRight)
       sumIso(iso1,iso2)
+    case ee: EntityElem[_] =>
+      identityIso(ee)
     case be: BaseElem[_] =>
-      identityIso(e)
+      identityIso(be)
     case _ => !!!(s"Don't know how to build iso for element $e")
   }).asInstanceOf[Iso[_,T]]
 
@@ -331,38 +333,30 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   }
 
   // for simplifying unapplyViews
-  protected def trivialView[T](s: Exp[T]) = (s, identityIso(s.elem))
+  protected def trivialUnapply[T](s: Exp[T]) = (s, identityIso(s.elem))
 
   def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
     case Def(Tup(s1, s2)) =>
       (unapplyViews(s1), unapplyViews(s2)) match {
         case (None, None) => None
         case (opt1, opt2) =>
-          val (sv1, iso1) = opt1.getOrElse(trivialView(s1))
-          val (sv2, iso2) = opt2.getOrElse(trivialView(s2))
+          val (sv1, iso1) = opt1.getOrElse(trivialUnapply(s1))
+          val (sv2, iso2) = opt2.getOrElse(trivialUnapply(s2))
           Some((Pair(sv1, sv2), pairIso(iso1, iso2)))
       }
     case Def(l @ Left(s)) =>
-      val optRight = l.eRight match {
-        case ve: ViewElem[_,_] => UnpackableElem.unapply(ve)
-        case _ => None
-      }
-      (unapplyViews(s), optRight) match {
+      (unapplyViews(s), UnpackableElem.unapply(l.eRight)) match {
         case (None, None) => None
         case (opt1, opt2) =>
-          val (sv1, iso1) = opt1.getOrElse(trivialView(s))
+          val (sv1, iso1) = opt1.getOrElse(trivialUnapply(s))
           val iso2 = opt2.getOrElse(identityIso(l.eRight))
           Some((sv1.asLeft(iso2.eFrom), sumIso(iso1, iso2)))
       }
     case Def(r @ Right(s)) =>
-      val optLeft = r.eLeft match {
-        case ve: ViewElem[_,_] => UnpackableElem.unapply(ve)
-        case _ => None
-      }
-      (optLeft, unapplyViews(s)) match {
+      (UnpackableElem.unapply(r.eLeft), unapplyViews(s)) match {
         case (None, None) => None
         case (opt1, opt2) =>
-          val (sv2, iso2) = opt2.getOrElse(trivialView(s))
+          val (sv2, iso2) = opt2.getOrElse(trivialUnapply(s))
           val iso1 = opt1.getOrElse(identityIso(r.eLeft))
           Some((sv2.asRight(iso1.eFrom), sumIso(iso1, iso2)))
       }
@@ -439,33 +433,47 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    //      case ViewPair(Def(ViewPair(a, iso1)), iso2) =>
-    //        ViewPair(a, composeIso(iso2, iso1))
+    // Rule: (V(a, iso1), V(b, iso2)) ==> V((a,b), PairIso(iso1, iso2))
     case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
       PairView((a.asRep[a], b.asRep[b]))(iso1, iso2)
+
+    // Rule: (V(a, iso1), b) ==> V((a,b), PairIso(iso1, id))
     case Tup(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
       PairView((a.asRep[a], b))(iso1, identityIso(b.elem)).self
+
+    // Rule: (a, V(b, iso2)) ==> V((a,b), PairIso(id, iso2))
     case Tup(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
       PairView((a, b.asRep[b]))(identityIso(a.elem), iso2).self
 
-    case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) => iso2.to(Semicolon(a.asRep[a], b.asRep[b])(iso2.eFrom))
-    case block@Semicolon(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) => iso2.to(Semicolon(a, b.asRep[b])(iso2.eFrom))
-    case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) => Semicolon(a.asRep[a], b)(block.selfType.asElem[b])
+    // Rule: V(a, iso1) ; V(b, iso2)) ==> iso2.to(a ; b)
+    case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+      iso2.to(Semicolon(a.asRep[a], b.asRep[b])(iso2.eFrom))
 
+    // Rule: a ; V(b, iso2)) ==> iso2.to(a ; b)
+    case block@Semicolon(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
+      iso2.to(Semicolon(a, b.asRep[b])(iso2.eFrom))
+
+    // Rule: V(a, iso1) ; b ==> a ; b
+    case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
+      Semicolon(a.asRep[a], b)(block.selfType.asElem[b])
+
+    // Rule: PairView(source, iso1, _)._1  ==> iso1.to(source._1)
     case First(Def(view@PairView(source))) =>
       view.iso1.to(source._1)
+
+    // Rule: PairView(source, _, iso2)._2  ==> iso2.to(source._2)
     case Second(Def(view@PairView(source))) =>
       view.iso2.to(source._2)
 
-    // case UnpackableDef(Def(uv @ UnpackView(view)), iso) if iso.eTo == view.iso.eTo => view
+    // Rule: UnpackView(V(source, iso))  ==> source
     case UnpackView(Def(UnpackableDef(source, iso))) => source
-    // case UnpackView(view @ UnpackableExp(iso)) => iso.from(view)
 
-    case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[a, b])))) => {
+    // Rule: ParExec(nJobs, f @ i => ... V(_, iso)) ==> V(ParExec(nJobs, f >> iso.from), ArrayIso(iso))
+    case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[a, b])))) =>
       val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
       ViewArray(parRes)(ArrayIso(iso))
-    }
 
+    // Rule: ArrayFold(xs, V(init, iso), step) ==> iso.to(ArrayFold(xs, init, p => iso.from(step(iso.to(p._1), p._2)) ))
     case ArrayFold(xs: Rep[Array[t]] @unchecked, HasViews(init, iso: Iso[a, b]), step) =>
       val init1 = init.asRep[a]
       implicit val eT = xs.elem.asElem[Array[t]].eItem
@@ -479,6 +487,8 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       }
       val foldRes = ArrayFold(xs, init1, step1)
       iso.to(foldRes)
+
+    // Rule: loop(V(start, iso), step, isMatch) ==> iso.to(loop(start, iso.to >> step >> iso.from, iso.to >> isMatch))
     case LoopUntil(HasViews(startWithoutViews, iso: Iso[a, b]), step, isMatch) =>
       val start1 = startWithoutViews.asRep[a]
       implicit val eA = iso.eFrom
@@ -496,6 +506,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       }
       val loopRes = LoopUntil(start1, step1, isMatch1)
       iso.to(loopRes)
+
     case call @ MethodCall(Def(obj), m, args, neverInvoke) =>
       call.tryInvoke match {
         // Rule: obj.m(args) ==> body(m).subst{xs -> args}
