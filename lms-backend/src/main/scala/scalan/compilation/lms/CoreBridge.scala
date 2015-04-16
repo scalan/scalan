@@ -1133,19 +1133,19 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
                 val exp = lms.reduceList[a](src, lmsZero, op)(mA)
                 (exps ++ List(lmsZero, exp), symMirr + ((sym, exp)) + ((zero, lmsZero)), funcMirr + ((opSym, op)))
             }
-        }
+        }*/
 
       case ArrayBinarySearch(i, xs, o) =>
         xs.elem match {
           case el: ArrayElem[_] =>
             createManifest(el.eItem) match {
               case (mA: Manifest[a]) =>
-                val idxs = symMirr(xs).asInstanceOf[lms.Exp[Array[Int]]]
-                val index = symMirr(i).asInstanceOf[lms.Exp[Int]]
+                val idxs = m.symMirror[Array[Int]](xs)
+                val index = m.symMirror[Int](i)
                 val exp = lms.array_binarySearch[a](index, idxs)(mA)
-                (exps ++ List(exp), symMirr + ((sym, exp)), funcMirr)
+                m.addSym(sym, exp)
             }
-        }*/
+        }
     case _ => super.transformDef(m, g, sym, d)
   }
 
