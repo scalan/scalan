@@ -7,6 +7,7 @@ package scalan.linalgebra
 import scalan._
 import scalan.common.Default
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
+import scala.annotation.tailrec
 
 trait Vectors { self: ScalanCommunityDsl =>
 
@@ -135,7 +136,31 @@ trait Vectors { self: ScalanCommunityDsl =>
     def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
     def nonZeroItems: Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
 
-    def apply(i: Rep[Int]): Rep[T] = ??? // TODO: need efficient way to get value by index
+    def apply(i: IntRep): Rep[T] = {
+      val k = binarySearch(i, nonZeroIndices)
+      IF (k >= toRep(0)) THEN nonZeroValues(k) ELSE zeroValue
+    }// ??? // TODO: need efficient way to get value by index
+      /*{
+        val zero = toRep(0)
+        val one = toRep(1)
+        val two = toRep(2)
+        //@tailrec
+        def check(start: IntRep, end: IntRep): Rep[T] = {
+          println("call recursive: " + start + ", " + end)
+          IF (end - start < two) THEN {
+            IF (i === nonZeroIndices(start)) THEN nonZeroValues(start) ELSE {
+              IF (i === nonZeroIndices(end)) THEN nonZeroValues(end) ELSE zeroValue
+            }
+          } ELSE {
+            val middle = (start + end) div two
+            IF (i === nonZeroIndices(middle)) THEN nonZeroValues(middle) ELSE {
+              IF (i < nonZeroIndices(middle)) THEN check(start, middle - one) ELSE check(middle + one, end)
+            }
+          }
+        }
+        check(zero, i)
+      }
+    }*/
 
     @OverloadId("apply_by_collection")
     def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = ??? // TODO: need efficient way to get value by index
@@ -241,6 +266,8 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
 
   def outerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): PairColl[Int, T]
+
+  def binarySearch(index: IntRep, indices: Coll[Int]): IntRep
 }
 
 trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
@@ -405,6 +432,26 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
 
     fromArray(buffer.toArray)(pairElement(eK, eR))
   }*/
+
+  def binarySearch(index: IntRep, indices: Coll[Int]): IntRep = {
+    val zero = 0
+    val one = 1
+    val two = 2
+    //@tailrec
+    def check(start: Int, end: Int): Int = {
+      if (end - start < two) {
+        if (index === indices(start)) start else {
+          if (index === indices(end)) end else -1
+        }
+      } else {
+        val middle = (start + end) div two
+        if (index === indices(middle)) middle else {
+          if (index < indices(middle)) check(start, middle - one) else check(middle + one, end)
+        }
+      }
+    }
+    check(zero, index)
+  }
 }
 
 trait VectorsDslExp extends impl.VectorsExp { self: ScalanCommunityDslExp =>
@@ -424,4 +471,6 @@ trait VectorsDslExp extends impl.VectorsExp { self: ScalanCommunityDslExp =>
 
   def outerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): PairColl[Int, T] = ???
+
+  def binarySearch(index: IntRep, indices: Coll[Int]): IntRep = array_binary_search(index, indices.arr)
 }

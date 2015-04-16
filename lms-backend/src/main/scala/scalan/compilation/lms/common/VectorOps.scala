@@ -7,6 +7,7 @@ import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 trait VectorOps extends Base {
 
   def array_dotProductSparse[A:Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]): Rep[A]
+  def array_binarySearch[A:Manifest](idx: Rep[Int], idxs: Rep[Array[Int]]): Rep[Int]
 }
 
 
@@ -16,11 +17,19 @@ trait VectorOpsExp extends VectorOps with BaseExp {
     val m = manifest[A]
   }
 
+  case class ArrayBinarySearch[A:Manifest](idx: Rep[Int], idxs: Rep[Array[Int]]) extends Def[Int] {
+    val m = manifest[Int]
+  }
+
   def array_dotProductSparse[A:Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]) =
     ArrayDotProdSparse(idxs1, vals1, idxs2, vals2)
 
+  def array_binarySearch[A:Manifest](idx: Rep[Int], idxs: Rep[Array[Int]]): Rep[Int] =
+    ArrayBinarySearch(idx, idxs)
+
   override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
     case ArrayDotProdSparse(i1, v1,i2, v2) => array_dotProductSparse(f(i1), f(v1), f(i2), f(v2))(mtype(manifest[A]))
+    case ArrayBinarySearch(i, is) => array_binarySearch(f(i), f(is))(mtype(manifest[Int])).asInstanceOf[Exp[A]] // TODO: is this hack valid?
     case _ => super.mirror(e,f)
   }
 }
@@ -54,6 +63,13 @@ trait ScalaGenVectorOps extends ScalaGenBase {
       stream.println("\t\t\ti2+=1")
       stream.println("\t\t}")
       stream.println("\t}")
+      stream.println("\tout")
+      stream.println("}")
+    case ds @ ArrayBinarySearch(i, is) =>
+      // TODO use proper source quasiquoter
+      stream.println("// generating Binary Search in array")
+      stream.println("val " + quote(sym) + " = {")
+      stream.println("\tval out:" + remap(ds.m) + " = java.util.Arrays.binarySearch(" + quote(is) + ", " + quote(i) + ")")
       stream.println("\tout")
       stream.println("}")
     case _ => super.emitNode(sym, rhs)

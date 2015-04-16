@@ -192,3 +192,36 @@ class AbstractElemItTests extends LmsLinAlgItTests {
   }
 
 }
+
+class VectorMethodsItTests extends LmsLinAlgItTests {
+
+  import progSeq._
+
+  lazy val vector1 = Array(Pair(0, 1.0), Pair(1, 2.0), Pair(2, 3.0), Pair(3, 4.0), Pair(4, 5.0))
+  lazy val vector2 = Array(Pair(0, 1.0), Pair(2, 3.0), Pair(3, 4.0))
+  lazy val len = 5
+
+  test("applySparseVector1") {
+
+    val progStaged = new ProgExp
+
+    val i = 2
+    val in = Tuple(vector1, len, i)
+    val out = 3
+    //progStaged.buildGraph(file(prefix, "simpleSum"), "simpleSum", progStaged.funSimpleSum, graphVizConfig)(progStaged.defaultCompilerConfig)
+    compareOutputWithSequential(progStaged)(progSeq.applySparseVector, progStaged.applySparseVector, "applySparseVector1", in)
+    compareOutputWithExpected(progStaged)(out, progStaged.applySparseVector, "applySparseVector1e", in)
+  }
+
+  test("applySparseVector2") {
+
+    val progStaged = new ProgExp
+
+    val i = 3
+    val in = Tuple(vector2, len, i)
+    val out = 4
+    //progStaged.buildGraph(file(prefix, "simpleSum"), "simpleSum", progStaged.funSimpleSum, graphVizConfig)(progStaged.defaultCompilerConfig)
+    compareOutputWithSequential(progStaged)(progSeq.applySparseVector, progStaged.applySparseVector, "applySparseVector2", in)
+    compareOutputWithExpected(progStaged)(out, progStaged.applySparseVector, "applySparseVector2e", in)
+  }
+}

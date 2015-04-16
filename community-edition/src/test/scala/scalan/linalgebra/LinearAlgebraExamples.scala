@@ -176,4 +176,11 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     }
     newRows.flatMap { v => v.items}.arr
   }
+
+  lazy val applySparseVector = fun { in: Rep[(Array[(Int, Double)], (Int, Int))] =>
+    val Tuple(a, n, i) = in
+    val coll = CollectionOfPairs(a)
+    val vec = SparseVector(coll, n)
+    vec(i).toInt
+  }
 }
