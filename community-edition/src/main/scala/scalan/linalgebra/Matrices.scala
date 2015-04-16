@@ -105,6 +105,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       DenseVector(coll)
     }
 
+    @OverloadId("matrix")
     def *(matrix: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]] = {
       val resColumns = matrix.columns.map { col: Rep[AbstractVector[T]] => this * col }
       companion.fromColumns(resColumns)
@@ -145,7 +146,9 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   abstract class RowMajorSparseMatrix[T](val rows: Rep[Collection[AbstractVector[T]]], val numColumns: Rep[Int])
                                         (implicit val elem: Elem[T]) extends AbstractMatrix[T] {
     def companion = RowMajorSparseMatrix
-    def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = self.transpose.rows
+    def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = {
+      Collection(SArray.tabulate(numColumns) { j => DenseVector(rows.map(_(j)))})
+    }
     def numRows = rows.length
     def rmValues: Rep[Collection[T]] = rows.flatMap(row => row.items)
 
@@ -166,8 +169,9 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       DenseVector(coll)
     }
 
+    @OverloadId("matrix")
     def *(matrix: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]] = {
-      val mT = matrix.transpose
+      val mT = matrix.companion.fromRows(matrix.columns, matrix.numRows)
       RowMajorSparseMatrix(self.rows.map(row => mT * row), matrix.numColumns)
     }
 
