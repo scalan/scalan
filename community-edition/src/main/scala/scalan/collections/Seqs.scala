@@ -83,19 +83,17 @@ trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
 }
 
 trait SeqsDslExp extends impl.SeqsExp { self: ScalanCommunityDslExp =>
-
+  import SSeqMethods._
   override def rewriteDef[T](d: Def[T]) = d match {
-    case SSeqMethods.apply(Def(d2), i) => d2 match {
-      case SSeqMethods.map(xs: RSeq[a], f: Rep[Function1[_, b]] @unchecked) =>
-        implicit val eT = xs.elem.eItem
-        f.asRep[a => b](xs(i))
-      case _ =>
-        super.rewriteDef(d)
-    }
-    case SSeqCompanionMethods.apply(HasViews(source, iso: ArrayIso[a,b])) => {
-      implicit val ea = iso.eA
-      ViewSSeq(SSeq(source.asRep[Array[a]]))(SSeqIso(iso.innerIso))
-    }
+    // Rule: xs.map(f)(i) ==> f(xs(i))
+    case apply(Def(map(xs: RSeq[a], f: Rep[Function1[_, b]] @unchecked)), i) =>
+      implicit val eT = xs.elem.eItem
+      f.asRep[a => b](xs(i))
+
+//    case SSeqCompanionMethods.apply(HasViews(source, iso: ArrayIso[a,b])) => {
+//      implicit val ea = iso.eA
+//      ViewSSeq(SSeq(source.asRep[Array[a]]))(SSeqIso(iso.innerIso))
+//    }
     case SSeqMethods.filter(Def(view: ViewSSeq[a, b]), f) => {
       val ff = f.asRep[b => Boolean]
       val iso = view.innerIso

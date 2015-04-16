@@ -51,11 +51,33 @@ class ViewTests extends BaseTests { suite =>
     testGetIso(element[Interval], element[(Int, Int)])
     testGetIso(element[(Slice, Int)], element[((Int, Int),Int)])
 
+    // Array
     testGetIso(element[Array[Int]], element[Array[Int]])
     testGetIso(element[Array[(Int,Int)]], element[Array[(Int,Int)]])
 
     testGetIso(element[Array[Segment]], element[Array[Segment]])
     testGetIso(element[Array[Interval]], element[Array[(Int,Int)]])
+
+    // List
+    testGetIso(element[List[Int]], element[List[Int]])
+    testGetIso(element[List[(Int,Int)]], element[List[(Int,Int)]])
+
+    testGetIso(element[List[Segment]], element[List[Segment]])
+    testGetIso(element[List[Interval]], element[List[(Int,Int)]])
+
+    // ArrayBuffer
+    testGetIso(element[ArrayBuffer[Int]], element[ArrayBuffer[Int]])
+    testGetIso(element[ArrayBuffer[(Int,Int)]], element[ArrayBuffer[(Int,Int)]])
+
+    testGetIso(element[ArrayBuffer[Segment]], element[ArrayBuffer[Segment]])
+    testGetIso(element[ArrayBuffer[Interval]], element[ArrayBuffer[(Int,Int)]])
+
+    // Thunk
+    testGetIso(element[Thunk[Int]], element[Thunk[Int]])
+    testGetIso(element[Thunk[(Int,Int)]], element[Thunk[(Int,Int)]])
+
+    testGetIso(element[Thunk[Segment]], element[Thunk[Segment]])
+    testGetIso(element[Thunk[Interval]], element[Thunk[(Int,Int)]])
 
   }
 }

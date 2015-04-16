@@ -32,14 +32,28 @@ trait ArrayBuffers extends Base { self: Scalan =>
   }
 
   implicit def arrayBufferToArray[T:Elem](buf: Rep[ArrayBuffer[T]]): Arr[T] = buf.toArray
-  
-  case class ArrayBufferElem[T](eItem: Elem[T]) extends Element[ArrayBuffer[T]] {
+
+  implicit val arrayBufferContainer: Cont[ArrayBuffer] = new Container[ArrayBuffer] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[ArrayBuffer[T]]
+    def lift[T](implicit eT: Elem[T]) = element[ArrayBuffer[T]]
+  }
+
+  case class ArrayBufferIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ArrayBuffer](iso) {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    def from(x: Rep[ArrayBuffer[B]]) = x.map(iso.from _)
+    def to(x: Rep[ArrayBuffer[A]]) = x.map(iso.to _)
+    lazy val defaultRepTo = Default.defaultVal(ArrayBuffer.empty[B])
+  }
+
+  case class ArrayBufferElem[A](override val eItem: Elem[A])
+    extends EntityElem1[A, ArrayBuffer[A], ArrayBuffer](eItem, container[ArrayBuffer]) {
     override def isEntityType = eItem.isEntityType
     lazy val tag = {
       implicit val tag1 = eItem.tag
-      weakTypeTag[ArrayBuffer[T]]
+      weakTypeTag[ArrayBuffer[A]]
     }
-    protected def getDefaultRep = emptyArrayBuffer[T](eItem)
+    protected def getDefaultRep = ArrayBuffer.empty[A](eItem)
   }
 
   implicit def arrayBufferElement[A](implicit eItem: Elem[A]): Elem[ArrayBuffer[A]] = new ArrayBufferElem[A](eItem)
@@ -116,19 +130,6 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
     case _ =>
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
-
-  implicit val arrayBufferContainer: Cont[ArrayBuffer] = new Container[ArrayBuffer] {
-    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[ArrayBuffer[T]]
-    def lift[T](implicit eT: Elem[T]) = element[ArrayBuffer[T]]
-  }
-
-  case class ArrayBufferIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ArrayBuffer](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Rep[ArrayBuffer[B]]) = x.map(iso.from _)
-    def to(x: Rep[ArrayBuffer[A]]) = x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(ArrayBuffer.empty[B])
-  }
 
 //  new Iso[ArrayBuffer[A], ArrayBuffer[B]] {
 //    lazy val eTo = element[ArrayBuffer[B]]

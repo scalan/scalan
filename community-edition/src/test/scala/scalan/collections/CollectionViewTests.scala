@@ -23,10 +23,14 @@ class CollectionViewTests extends BaseTests { suite =>
 
   test("getIsoByElem") {
     val ctx = new ViewTestsCtx(this, "LambdaResultHasViews_Sums")
-                  with CollectionsDslExp with ScalanCommunityDslExp
+                  with CollectionsDslExp with ScalanCommunityDslExp with SegmentsDslExp
     import ctx._
 
     testGetIso(element[Collection[Int]], element[Collection[Int]])
     testGetIso(element[BaseCollection[Int]], element[Array[Int]])
+    testGetIso(element[ListCollection[Int]], element[List[Int]])
+    testGetIso(element[ListCollection[(Int,Int)]], element[List[(Int,Int)]])
+    testGetIso(element[ListCollection[Segment]], element[List[Segment]])
+    testGetIso(element[ListCollection[Interval]], element[List[(Int,Int)]])
   }
 }

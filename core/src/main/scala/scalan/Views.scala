@@ -57,6 +57,7 @@ trait Views extends Elems { self: Scalan =>
     extends Iso[C[A], C[B]]()(cC.lift(innerIso.eFrom)) {
     lazy val eTo = cC.lift(innerIso.eTo)
     lazy val tag = cC.tag(innerIso.tag)
+    override def isIdentity = innerIso.isIdentity
   }
 
   implicit def viewElement[From, To](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
@@ -125,7 +126,13 @@ trait Views extends Elems { self: Scalan =>
 //  }
 
   def getIsoByElem[T](e: Elem[T]): Iso[_, T] = (e match {
-    case ve: ViewElem[_,_] => ve.iso
+    case ve: ViewElem[_,_] =>
+      val eFrom = ve.iso.eFrom
+      val deepIso = getIsoByElem(eFrom)
+      if (deepIso.isIdentity)
+        ve.iso
+      else
+        composeIso(ve.iso, deepIso)
     case pe: PairElem[a,b] =>
       val iso1 = getIsoByElem(pe.eFst)
       val iso2 = getIsoByElem(pe.eSnd)
@@ -137,6 +144,15 @@ trait Views extends Elems { self: Scalan =>
     case ae: ArrayElem[_] =>
       val iso = getIsoByElem(ae.eItem)
       ArrayIso(iso)
+    case ae: ListElem[_] =>
+      val iso = getIsoByElem(ae.eItem)
+      ListIso(iso)
+    case ae: ArrayBufferElem[_] =>
+      val iso = getIsoByElem(ae.eItem)
+      ArrayBufferIso(iso)
+    case ae: ThunkElem[_] =>
+      val iso = getIsoByElem(ae.eItem)
+      ThunkIso(iso)
     case ee: EntityElem[_] =>
       identityIso(ee)
     case be: BaseElem[_] =>
