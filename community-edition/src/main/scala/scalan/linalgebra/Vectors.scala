@@ -138,6 +138,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def apply(i: IntRep): Rep[T] = {
       val k = binarySearch(i, nonZeroIndices)
+      println("binarySearch(" + i + "): " + k)
       IF (k >= toRep(0)) THEN nonZeroValues(k) ELSE zeroValue
     }// ??? // TODO: need efficient way to get value by index
       /*{
@@ -437,7 +438,6 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
     val zero = 0
     val one = 1
     val two = 2
-    //@tailrec
     def check(start: Int, end: Int): Int = {
       if (end - start < two) {
         if (index === indices(start)) start else {
@@ -450,7 +450,7 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
         }
       }
     }
-    check(zero, index)
+    check(zero, Math.min(index, indices.length))
   }
 }
 

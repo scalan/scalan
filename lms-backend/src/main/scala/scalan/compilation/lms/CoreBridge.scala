@@ -1109,32 +1109,6 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           }
       }
 
-      /*case ListReplicate(l, x) =>
-        createManifest(x.elem) match {
-          case mA: Manifest[a] =>
-            implicit val imA = mA
-            val len = symMirr(l).asInstanceOf[lms.Exp[Int]]
-            val el = symMirr(x).asInstanceOf[lms.Exp[a]]
-            val exp = lms.list_replicate(len, el)
-            (exps :+ exp, symMirr + ((sym, exp)), funcMirr)
-        }
-
-      case ListReduce(source, monoid) =>
-        createManifest(monoid.eA) match {
-          case (mA: Manifest[a]) =>
-            val src = symMirr(source).asInstanceOf[lms.Exp[List[a]]]
-            // may want to special-case e.g. sum and product if sumList can be implemented generically
-            // (see comment there and implementation for ArrayReduce above)
-            monoid.append match {
-              case opSym@Def(lambda: Lambda[_, _]) =>
-                val zero = monoid.zero
-                val lmsZero = symMirr(zero).asInstanceOf[lms.Exp[a]]
-                val op = mirrorLambdaToLmsFunc[(a, a), a](m)(lambda.asInstanceOf[Lambda[(a, a), a]])
-                val exp = lms.reduceList[a](src, lmsZero, op)(mA)
-                (exps ++ List(lmsZero, exp), symMirr + ((sym, exp)) + ((zero, lmsZero)), funcMirr + ((opSym, op)))
-            }
-        }*/
-
       case ArrayBinarySearch(i, xs, o) =>
         xs.elem match {
           case el: ArrayElem[_] =>

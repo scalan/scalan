@@ -181,6 +181,8 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     val Tuple(a, n, i) = in
     val coll = CollectionOfPairs(a)
     val vec = SparseVector(coll, n)
-    vec(i).toInt
+    val res = vec(i).toInt
+    println("vec(" + i + "): " + res)
+    res
   }
 }
