@@ -141,6 +141,10 @@ trait Views extends Elems { self: Scalan =>
       val iso1 = getIsoByElem(pe.eLeft)
       val iso2 = getIsoByElem(pe.eRight)
       sumIso(iso1,iso2)
+    case fe: FuncElem[a,b] =>
+      val iso1 = getIsoByElem(fe.eDom)
+      val iso2 = getIsoByElem(fe.eRange)
+      funcIso(iso1,iso2)
     case ae: ArrayElem[_] =>
       val iso = getIsoByElem(ae.eItem)
       ArrayIso(iso)
@@ -153,6 +157,8 @@ trait Views extends Elems { self: Scalan =>
     case ae: ThunkElem[_] =>
       val iso = getIsoByElem(ae.eItem)
       ThunkIso(iso)
+    case me: MMapElem[_,_] =>
+      identityIso(me)
     case ee: EntityElem[_] =>
       identityIso(ee)
     case be: BaseElem[_] =>
