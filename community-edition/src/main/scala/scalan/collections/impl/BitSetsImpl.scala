@@ -62,10 +62,7 @@ trait BitSetsAbs extends Scalan with BitSets {
   class BoolCollBitSetIso
     extends Iso[BoolCollBitSetData, BoolCollBitSet] {
     override def from(p: Rep[BoolCollBitSet]) =
-      unmkBoolCollBitSet(p) match {
-        case Some((bits)) => bits
-        case None => !!!
-      }
+      p.bits
     override def to(p: Rep[Collection[Boolean]]) = {
       val bits = p
       BoolCollBitSet(bits)
@@ -82,7 +79,9 @@ trait BitSetsAbs extends Scalan with BitSets {
 
     def apply(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
       mkBoolCollBitSet(bits)
-    def unapply(p: Rep[BoolCollBitSet]) = unmkBoolCollBitSet(p)
+  }
+  object BoolCollBitSetMatcher {
+    def unapply(p: Rep[BitSet]) = unmkBoolCollBitSet(p)
   }
   def BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs]
   implicit def proxyBoolCollBitSetCompanion(p: Rep[BoolCollBitSetCompanionAbs]): BoolCollBitSetCompanionAbs = {
@@ -108,7 +107,7 @@ trait BitSetsAbs extends Scalan with BitSets {
 
   // 6) smart constructor and deconstructor
   def mkBoolCollBitSet(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet]
-  def unmkBoolCollBitSet(p: Rep[BoolCollBitSet]): Option[(Rep[Collection[Boolean]])]
+  def unmkBoolCollBitSet(p: Rep[BitSet]): Option[(Rep[Collection[Boolean]])]
 }
 
 // Seq -----------------------------------
@@ -132,8 +131,11 @@ trait BitSetsSeq extends BitSetsDsl with ScalanSeq {
   def mkBoolCollBitSet
       (bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
       new SeqBoolCollBitSet(bits)
-  def unmkBoolCollBitSet(p: Rep[BoolCollBitSet]) =
-    Some((p.bits))
+  def unmkBoolCollBitSet(p: Rep[BitSet]) = p match {
+    case p: BoolCollBitSet @unchecked =>
+      Some((p.bits))
+    case _ => None
+  }
 }
 
 // Exp -----------------------------------
@@ -166,8 +168,12 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
   def mkBoolCollBitSet
     (bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
     new ExpBoolCollBitSet(bits)
-  def unmkBoolCollBitSet(p: Rep[BoolCollBitSet]) =
-    Some((p.bits))
+  def unmkBoolCollBitSet(p: Rep[BitSet]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: BoolCollBitSetElem @unchecked =>
+      Some((p.asRep[BoolCollBitSet].bits))
+    case _ =>
+      None
+  }
 
   object BitSetMethods {
     object bits {
@@ -220,7 +226,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object add {
       def unapply(d: Def[_]): Option[(Rep[BitSet], Rep[Int])] = d match {
-        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "add"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "add" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, n)).asInstanceOf[Option[(Rep[BitSet], Rep[Int])]]
         case _ => None
       }
@@ -246,7 +252,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
   object BitSetCompanionMethods {
     object apply {
       def unapply(d: Def[_]): Option[Coll[Boolean]] = d match {
-        case MethodCall(receiver, method, Seq(flags, _*), _) if receiver.elem.isInstanceOf[BitSetCompanionElem] && method.getName == "apply"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(flags, _*), _) if receiver.elem.isInstanceOf[BitSetCompanionElem] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some(flags).asInstanceOf[Option[Coll[Boolean]]]
         case _ => None
       }

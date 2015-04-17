@@ -65,10 +65,7 @@ trait FrontsAbs extends Scalan with Fronts {
   class BaseFrontIso
     extends Iso[BaseFrontData, BaseFront] {
     override def from(p: Rep[BaseFront]) =
-      unmkBaseFront(p) match {
-        case Some((set, bits)) => Pair(set, bits)
-        case None => !!!
-      }
+      (p.set, p.bits)
     override def to(p: Rep[(BaseCollection[Int], BitSet)]) = {
       val Pair(set, bits) = p
       BaseFront(set, bits)
@@ -86,7 +83,9 @@ trait FrontsAbs extends Scalan with Fronts {
       isoBaseFront.to(p)
     def apply(set: Rep[BaseCollection[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
       mkBaseFront(set, bits)
-    def unapply(p: Rep[BaseFront]) = unmkBaseFront(p)
+  }
+  object BaseFrontMatcher {
+    def unapply(p: Rep[Front]) = unmkBaseFront(p)
   }
   def BaseFront: Rep[BaseFrontCompanionAbs]
   implicit def proxyBaseFrontCompanion(p: Rep[BaseFrontCompanionAbs]): BaseFrontCompanionAbs = {
@@ -112,7 +111,7 @@ trait FrontsAbs extends Scalan with Fronts {
 
   // 6) smart constructor and deconstructor
   def mkBaseFront(set: Rep[BaseCollection[Int]], bits: Rep[BitSet]): Rep[BaseFront]
-  def unmkBaseFront(p: Rep[BaseFront]): Option[(Rep[BaseCollection[Int]], Rep[BitSet])]
+  def unmkBaseFront(p: Rep[Front]): Option[(Rep[BaseCollection[Int]], Rep[BitSet])]
 
   // elem for concrete class
   class ListFrontElem(val iso: Iso[ListFrontData, ListFront])
@@ -131,10 +130,7 @@ trait FrontsAbs extends Scalan with Fronts {
   class ListFrontIso
     extends Iso[ListFrontData, ListFront] {
     override def from(p: Rep[ListFront]) =
-      unmkListFront(p) match {
-        case Some((set, bits)) => Pair(set, bits)
-        case None => !!!
-      }
+      (p.set, p.bits)
     override def to(p: Rep[(ListCollection[Int], BitSet)]) = {
       val Pair(set, bits) = p
       ListFront(set, bits)
@@ -152,7 +148,9 @@ trait FrontsAbs extends Scalan with Fronts {
       isoListFront.to(p)
     def apply(set: Rep[ListCollection[Int]], bits: Rep[BitSet]): Rep[ListFront] =
       mkListFront(set, bits)
-    def unapply(p: Rep[ListFront]) = unmkListFront(p)
+  }
+  object ListFrontMatcher {
+    def unapply(p: Rep[Front]) = unmkListFront(p)
   }
   def ListFront: Rep[ListFrontCompanionAbs]
   implicit def proxyListFrontCompanion(p: Rep[ListFrontCompanionAbs]): ListFrontCompanionAbs = {
@@ -178,7 +176,7 @@ trait FrontsAbs extends Scalan with Fronts {
 
   // 6) smart constructor and deconstructor
   def mkListFront(set: Rep[ListCollection[Int]], bits: Rep[BitSet]): Rep[ListFront]
-  def unmkListFront(p: Rep[ListFront]): Option[(Rep[ListCollection[Int]], Rep[BitSet])]
+  def unmkListFront(p: Rep[Front]): Option[(Rep[ListCollection[Int]], Rep[BitSet])]
 
   // elem for concrete class
   class CollectionFrontElem(val iso: Iso[CollectionFrontData, CollectionFront])
@@ -197,10 +195,7 @@ trait FrontsAbs extends Scalan with Fronts {
   class CollectionFrontIso
     extends Iso[CollectionFrontData, CollectionFront] {
     override def from(p: Rep[CollectionFront]) =
-      unmkCollectionFront(p) match {
-        case Some((set, bits)) => Pair(set, bits)
-        case None => !!!
-      }
+      (p.set, p.bits)
     override def to(p: Rep[(Collection[Int], BitSet)]) = {
       val Pair(set, bits) = p
       CollectionFront(set, bits)
@@ -218,7 +213,9 @@ trait FrontsAbs extends Scalan with Fronts {
       isoCollectionFront.to(p)
     def apply(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
       mkCollectionFront(set, bits)
-    def unapply(p: Rep[CollectionFront]) = unmkCollectionFront(p)
+  }
+  object CollectionFrontMatcher {
+    def unapply(p: Rep[Front]) = unmkCollectionFront(p)
   }
   def CollectionFront: Rep[CollectionFrontCompanionAbs]
   implicit def proxyCollectionFrontCompanion(p: Rep[CollectionFrontCompanionAbs]): CollectionFrontCompanionAbs = {
@@ -244,7 +241,7 @@ trait FrontsAbs extends Scalan with Fronts {
 
   // 6) smart constructor and deconstructor
   def mkCollectionFront(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront]
-  def unmkCollectionFront(p: Rep[CollectionFront]): Option[(Rep[Collection[Int]], Rep[BitSet])]
+  def unmkCollectionFront(p: Rep[Front]): Option[(Rep[Collection[Int]], Rep[BitSet])]
 
   // elem for concrete class
   class MapBasedFrontElem(val iso: Iso[MapBasedFrontData, MapBasedFront])
@@ -263,10 +260,7 @@ trait FrontsAbs extends Scalan with Fronts {
   class MapBasedFrontIso
     extends Iso[MapBasedFrontData, MapBasedFront] {
     override def from(p: Rep[MapBasedFront]) =
-      unmkMapBasedFront(p) match {
-        case Some((mmap)) => mmap
-        case None => !!!
-      }
+      p.mmap
     override def to(p: Rep[MMap[Int,Unit]]) = {
       val mmap = p
       MapBasedFront(mmap)
@@ -283,7 +277,9 @@ trait FrontsAbs extends Scalan with Fronts {
 
     def apply(mmap: Rep[MMap[Int,Unit]]): Rep[MapBasedFront] =
       mkMapBasedFront(mmap)
-    def unapply(p: Rep[MapBasedFront]) = unmkMapBasedFront(p)
+  }
+  object MapBasedFrontMatcher {
+    def unapply(p: Rep[Front]) = unmkMapBasedFront(p)
   }
   def MapBasedFront: Rep[MapBasedFrontCompanionAbs]
   implicit def proxyMapBasedFrontCompanion(p: Rep[MapBasedFrontCompanionAbs]): MapBasedFrontCompanionAbs = {
@@ -309,7 +305,7 @@ trait FrontsAbs extends Scalan with Fronts {
 
   // 6) smart constructor and deconstructor
   def mkMapBasedFront(mmap: Rep[MMap[Int,Unit]]): Rep[MapBasedFront]
-  def unmkMapBasedFront(p: Rep[MapBasedFront]): Option[(Rep[MMap[Int,Unit]])]
+  def unmkMapBasedFront(p: Rep[Front]): Option[(Rep[MMap[Int,Unit]])]
 }
 
 // Seq -----------------------------------
@@ -333,8 +329,11 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
   def mkBaseFront
       (set: Rep[BaseCollection[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
       new SeqBaseFront(set, bits)
-  def unmkBaseFront(p: Rep[BaseFront]) =
-    Some((p.set, p.bits))
+  def unmkBaseFront(p: Rep[Front]) = p match {
+    case p: BaseFront @unchecked =>
+      Some((p.set, p.bits))
+    case _ => None
+  }
 
   case class SeqListFront
       (override val set: Rep[ListCollection[Int]], override val bits: Rep[BitSet])
@@ -350,8 +349,11 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
   def mkListFront
       (set: Rep[ListCollection[Int]], bits: Rep[BitSet]): Rep[ListFront] =
       new SeqListFront(set, bits)
-  def unmkListFront(p: Rep[ListFront]) =
-    Some((p.set, p.bits))
+  def unmkListFront(p: Rep[Front]) = p match {
+    case p: ListFront @unchecked =>
+      Some((p.set, p.bits))
+    case _ => None
+  }
 
   case class SeqCollectionFront
       (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
@@ -367,8 +369,11 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
   def mkCollectionFront
       (set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
       new SeqCollectionFront(set, bits)
-  def unmkCollectionFront(p: Rep[CollectionFront]) =
-    Some((p.set, p.bits))
+  def unmkCollectionFront(p: Rep[Front]) = p match {
+    case p: CollectionFront @unchecked =>
+      Some((p.set, p.bits))
+    case _ => None
+  }
 
   case class SeqMapBasedFront
       (override val mmap: Rep[MMap[Int,Unit]])
@@ -384,8 +389,11 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
   def mkMapBasedFront
       (mmap: Rep[MMap[Int,Unit]]): Rep[MapBasedFront] =
       new SeqMapBasedFront(mmap)
-  def unmkMapBasedFront(p: Rep[MapBasedFront]) =
-    Some((p.mmap))
+  def unmkMapBasedFront(p: Rep[Front]) = p match {
+    case p: MapBasedFront @unchecked =>
+      Some((p.mmap))
+    case _ => None
+  }
 }
 
 // Exp -----------------------------------
@@ -441,8 +449,12 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   def mkBaseFront
     (set: Rep[BaseCollection[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
     new ExpBaseFront(set, bits)
-  def unmkBaseFront(p: Rep[BaseFront]) =
-    Some((p.set, p.bits))
+  def unmkBaseFront(p: Rep[Front]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: BaseFrontElem @unchecked =>
+      Some((p.asRep[BaseFront].set, p.asRep[BaseFront].bits))
+    case _ =>
+      None
+  }
 
   case class ExpListFront
       (override val set: Rep[ListCollection[Int]], override val bits: Rep[BitSet])
@@ -489,8 +501,12 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   def mkListFront
     (set: Rep[ListCollection[Int]], bits: Rep[BitSet]): Rep[ListFront] =
     new ExpListFront(set, bits)
-  def unmkListFront(p: Rep[ListFront]) =
-    Some((p.set, p.bits))
+  def unmkListFront(p: Rep[Front]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: ListFrontElem @unchecked =>
+      Some((p.asRep[ListFront].set, p.asRep[ListFront].bits))
+    case _ =>
+      None
+  }
 
   case class ExpCollectionFront
       (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
@@ -537,8 +553,12 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   def mkCollectionFront
     (set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
     new ExpCollectionFront(set, bits)
-  def unmkCollectionFront(p: Rep[CollectionFront]) =
-    Some((p.set, p.bits))
+  def unmkCollectionFront(p: Rep[Front]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: CollectionFrontElem @unchecked =>
+      Some((p.asRep[CollectionFront].set, p.asRep[CollectionFront].bits))
+    case _ =>
+      None
+  }
 
   case class ExpMapBasedFront
       (override val mmap: Rep[MMap[Int,Unit]])
@@ -597,8 +617,12 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   def mkMapBasedFront
     (mmap: Rep[MMap[Int,Unit]]): Rep[MapBasedFront] =
     new ExpMapBasedFront(mmap)
-  def unmkMapBasedFront(p: Rep[MapBasedFront]) =
-    Some((p.mmap))
+  def unmkMapBasedFront(p: Rep[Front]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: MapBasedFrontElem @unchecked =>
+      Some((p.asRep[MapBasedFront].mmap))
+    case _ =>
+      None
+  }
 
   object FrontMethods {
     object contains {

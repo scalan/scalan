@@ -62,10 +62,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
   class SStringIso
     extends Iso[SStringData, SString] {
     override def from(p: Rep[SString]) =
-      unmkSString(p) match {
-        case Some((wrappedValueOfBaseType)) => wrappedValueOfBaseType
-        case None => !!!
-      }
+      p.wrappedValueOfBaseType
     override def to(p: Rep[String]) = {
       val wrappedValueOfBaseType = p
       SString(wrappedValueOfBaseType)
@@ -82,7 +79,9 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
 
     def apply(wrappedValueOfBaseType: Rep[String]): Rep[SString] =
       mkSString(wrappedValueOfBaseType)
-    def unapply(p: Rep[SString]) = unmkSString(p)
+  }
+  object SStringMatcher {
+    def unapply(p: Rep[AString]) = unmkSString(p)
   }
   def SString: Rep[SStringCompanionAbs]
   implicit def proxySStringCompanion(p: Rep[SStringCompanionAbs]): SStringCompanionAbs = {
@@ -108,7 +107,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
 
   // 6) smart constructor and deconstructor
   def mkSString(wrappedValueOfBaseType: Rep[String]): Rep[SString]
-  def unmkSString(p: Rep[SString]): Option[(Rep[String])]
+  def unmkSString(p: Rep[AString]): Option[(Rep[String])]
 
   // elem for concrete class
   class CStringElem(val iso: Iso[CStringData, CString])
@@ -126,10 +125,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
   class CStringIso
     extends Iso[CStringData, CString] {
     override def from(p: Rep[CString]) =
-      unmkCString(p) match {
-        case Some((wrappedValueOfBaseType)) => wrappedValueOfBaseType
-        case None => !!!
-      }
+      p.wrappedValueOfBaseType
     override def to(p: Rep[String]) = {
       val wrappedValueOfBaseType = p
       CString(wrappedValueOfBaseType)
@@ -146,7 +142,9 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
 
     def apply(wrappedValueOfBaseType: Rep[String]): Rep[CString] =
       mkCString(wrappedValueOfBaseType)
-    def unapply(p: Rep[CString]) = unmkCString(p)
+  }
+  object CStringMatcher {
+    def unapply(p: Rep[AString]) = unmkCString(p)
   }
   def CString: Rep[CStringCompanionAbs]
   implicit def proxyCStringCompanion(p: Rep[CStringCompanionAbs]): CStringCompanionAbs = {
@@ -172,7 +170,7 @@ trait AbstractStringsAbs extends Scalan with AbstractStrings {
 
   // 6) smart constructor and deconstructor
   def mkCString(wrappedValueOfBaseType: Rep[String]): Rep[CString]
-  def unmkCString(p: Rep[CString]): Option[(Rep[String])]
+  def unmkCString(p: Rep[AString]): Option[(Rep[String])]
 }
 
 // Seq -----------------------------------
@@ -196,8 +194,11 @@ trait AbstractStringsSeq extends AbstractStringsDsl with ScalanSeq {
   def mkSString
       (wrappedValueOfBaseType: Rep[String]): Rep[SString] =
       new SeqSString(wrappedValueOfBaseType)
-  def unmkSString(p: Rep[SString]) =
-    Some((p.wrappedValueOfBaseType))
+  def unmkSString(p: Rep[AString]) = p match {
+    case p: SString @unchecked =>
+      Some((p.wrappedValueOfBaseType))
+    case _ => None
+  }
 
   case class SeqCString
       (override val wrappedValueOfBaseType: Rep[String])
@@ -213,8 +214,11 @@ trait AbstractStringsSeq extends AbstractStringsDsl with ScalanSeq {
   def mkCString
       (wrappedValueOfBaseType: Rep[String]): Rep[CString] =
       new SeqCString(wrappedValueOfBaseType)
-  def unmkCString(p: Rep[CString]) =
-    Some((p.wrappedValueOfBaseType))
+  def unmkCString(p: Rep[AString]) = p match {
+    case p: CString @unchecked =>
+      Some((p.wrappedValueOfBaseType))
+    case _ => None
+  }
 }
 
 // Exp -----------------------------------
@@ -247,8 +251,12 @@ trait AbstractStringsExp extends AbstractStringsDsl with ScalanExp {
   def mkSString
     (wrappedValueOfBaseType: Rep[String]): Rep[SString] =
     new ExpSString(wrappedValueOfBaseType)
-  def unmkSString(p: Rep[SString]) =
-    Some((p.wrappedValueOfBaseType))
+  def unmkSString(p: Rep[AString]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: SStringElem @unchecked =>
+      Some((p.asRep[SString].wrappedValueOfBaseType))
+    case _ =>
+      None
+  }
 
   case class ExpCString
       (override val wrappedValueOfBaseType: Rep[String])
@@ -272,8 +280,12 @@ trait AbstractStringsExp extends AbstractStringsDsl with ScalanExp {
   def mkCString
     (wrappedValueOfBaseType: Rep[String]): Rep[CString] =
     new ExpCString(wrappedValueOfBaseType)
-  def unmkCString(p: Rep[CString]) =
-    Some((p.wrappedValueOfBaseType))
+  def unmkCString(p: Rep[AString]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: CStringElem @unchecked =>
+      Some((p.asRep[CString].wrappedValueOfBaseType))
+    case _ =>
+      None
+  }
 
   object AStringMethods {
     object wrappedValueOfBaseType {

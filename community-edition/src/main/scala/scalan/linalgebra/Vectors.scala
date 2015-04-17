@@ -7,6 +7,7 @@ package scalan.linalgebra
 import scalan._
 import scalan.common.Default
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
+import scala.annotation.tailrec
 
 trait Vectors { self: ScalanCommunityDsl =>
 
@@ -23,6 +24,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def zeroValue = elem.defaultRepValue
 
     def apply(i: Rep[Int]): Rep[T]
+    @OverloadId("apply_by_collection")
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T]
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T]
     @OverloadId("elementwise_sum_collection")
@@ -66,36 +69,31 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
 
     def apply(i: Rep[Int]): Rep[T] = items(i)
+    @OverloadId("apply_by_collection")
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = DenseVector(items(is))
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      def default = DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 + v2 })
-
-      matchVector[T, AbstractVector[T]](other) {
-        dv => default
-      } {
-        sv =>
-          val nonZeroValuesNew = (sv.nonZeroValues zip items(sv.nonZeroIndices)).map { case Pair(v1, v2) => v1 + v2 }
+      other match {
+        case SparseVectorMatcher(nonZeroIndices, nonZeroValues, _) =>
+          val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 + v2 }
           DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
-      } {
-        v => default
+        case _ =>
+          DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 + v2 })
       }
     }
+
     @OverloadId("elementwise_sum_value")
     def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       DenseVector(items.map(v => v + other))
     }
 
     def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      def default = DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 - v2 })
-
-      matchVector[T, AbstractVector[T]](other) {
-        dv => default
-      } {
-        sv =>
-          val nonZeroValuesNew = (items(sv.nonZeroIndices) zip sv.nonZeroValues).map { case Pair(v1, v2) => v1 - v2 }
+      other match {
+        case SparseVectorMatcher(nonZeroIndices, nonZeroValues, _) =>
+          val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
           DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
-      } {
-        v => default
+        case _ =>
+          DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 - v2 })
       }
     }
     @OverloadId("elementwise_diff_collection")
@@ -104,16 +102,12 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
 
     def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      def default = DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 * v2 })
-
-      matchVector[T, AbstractVector[T]](other) {
-        dv => default
-      } {
-        sv =>
-          val nonZeroValuesNew = (sv.nonZeroValues zip items(sv.nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
-          SparseVector(sv.nonZeroIndices, nonZeroValuesNew, sv.length)
-      } {
-        v => default
+      other match {
+        case SparseVectorMatcher(nonZeroIndices, nonZeroValues, _) =>
+          val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 * v2 }
+          DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
+        case _ =>
+          DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 * v2 })
       }
     }
     @OverloadId("elementwise_mult_value")
@@ -123,14 +117,11 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
     def dot(other: Vector[T])(implicit n: Numeric[T]): Rep[T] = {
-      def default = (other.items zip items).map { case Pair(v1, v2) => v1 * v2 }.reduce
-
-      matchVector[T, T](other) {
-        dv => default
-      } {
-        sv => (items(sv.nonZeroIndices) zip sv.nonZeroValues).map { case Pair(v1, v2) => v1 * v2 }.reduce
-      } {
-        v => default
+      other match {
+        case SparseVectorMatcher(nonZeroIndices, nonZeroValues, _) =>
+          (items(nonZeroIndices) zip nonZeroValues).map { case Pair(v1, v2) => v1 * v2 }.reduce
+        case _ =>
+          (other.items zip items).map { case Pair(v1, v2) => v1 * v2 }.reduce
       }
     }
 
@@ -145,17 +136,42 @@ trait Vectors { self: ScalanCommunityDsl =>
     def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
     def nonZeroItems: Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
 
-    def apply(i: Rep[Int]): Rep[T] = ??? // TODO: need efficient way to get value by index
+    def apply(i: IntRep): Rep[T] = {
+      val k = binarySearch(i, nonZeroIndices)
+      println("binarySearch(" + i + "): " + k)
+      IF (k >= toRep(0)) THEN nonZeroValues(k) ELSE zeroValue
+    }// ??? // TODO: need efficient way to get value by index
+      /*{
+        val zero = toRep(0)
+        val one = toRep(1)
+        val two = toRep(2)
+        //@tailrec
+        def check(start: IntRep, end: IntRep): Rep[T] = {
+          println("call recursive: " + start + ", " + end)
+          IF (end - start < two) THEN {
+            IF (i === nonZeroIndices(start)) THEN nonZeroValues(start) ELSE {
+              IF (i === nonZeroIndices(end)) THEN nonZeroValues(end) ELSE zeroValue
+            }
+          } ELSE {
+            val middle = (start + end) div two
+            IF (i === nonZeroIndices(middle)) THEN nonZeroValues(middle) ELSE {
+              IF (i < nonZeroIndices(middle)) THEN check(start, middle - one) ELSE check(middle + one, end)
+            }
+          }
+        }
+        check(zero, i)
+      }
+    }*/
+
+    @OverloadId("apply_by_collection")
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = ??? // TODO: need efficient way to get value by index
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      def default = other +^ self
-
-      matchVector[T, AbstractVector[T]](other) {
-        dv => default
-      } {
-        sv => SparseVector(outerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues), length)
-      } {
-        v => default
+      other match {
+        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
+          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+        case _ =>
+          other +^ self
       }
     }
 
@@ -165,14 +181,15 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
 
     def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      matchVector[T, AbstractVector[T]](other) { // TODO: I don't like constructing items in this method
-        dv =>
-          val nonZeroValuesNew = (nonZeroValues zip dv.items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
-          DenseVector(dv.items.updateMany(nonZeroIndices, nonZeroValuesNew))
-      } {
-        sv => SparseVector(outerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues), length)
-      } {
-        v => (v -^ self) *^ n.negate(n.one)
+      // TODO: I don't like constructing items in this method
+      other match {
+        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
+          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+        case DenseVectorMatcher(items) =>
+          val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
+          DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
+        case _ =>
+          (other -^ self) *^ n.negate(n.one)
       }
     }
     @OverloadId("elementwise_diff_collection")
@@ -181,14 +198,11 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
 
     def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
-      def default = other *^ self
-
-      matchVector[T, AbstractVector[T]](other) {
-        dv => default
-      } {
-        sv => SparseVector(innerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues), length)
-      } {
-        v => default
+      other match {
+        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
+          SparseVector(innerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+        case _ =>
+          other *^ self
       }
     }
     @OverloadId("elementwise_mult_value")
@@ -199,16 +213,13 @@ trait Vectors { self: ScalanCommunityDsl =>
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)  //TODO: it's inefficient
 
     def dot(other: Rep[AbstractVector[T]])(implicit n: Numeric[T]): Rep[T] = {
-      def default = other.dot(self)
-
-      matchVector[T, T](other) {
-        dv => default
-      } {
-        // TODO implement innerJoin and uncomment
-        //sv => innerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues).bs.reduce
-        sv => dotSparse(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues)
-      } {
-        v => default
+      other match {
+        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
+          // TODO implement innerJoin and uncomment
+          //sv => innerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues).bs.reduce
+          dotSparse(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1)
+        case _ =>
+          other.dot(self)
       }
     }
 
@@ -243,11 +254,6 @@ trait Vectors { self: ScalanCommunityDsl =>
 
 trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
 
-  def matchVector[T, R](vector: Vector[T])
-                       (dense: Rep[DenseVector[T]] => Rep[R])
-                       (sparse: Rep[SparseVector[T]] => Rep[R])
-                       (fallback: Vector[T] => Rep[R]): Rep[R]
-
   def dotSparse[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): Rep[T]
 
@@ -261,21 +267,11 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
 
   def outerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): PairColl[Int, T]
+
+  def binarySearch(index: IntRep, indices: Coll[Int]): IntRep
 }
 
 trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
-
-  def matchVector[T, R](vector: Vector[T])
-                       (dense: Rep[DenseVector[T]] => Rep[R])
-                       (sparse: Rep[SparseVector[T]] => Rep[R])
-                       (fallback: Vector[T] => Rep[R]): Rep[R] = {
-    vector match {
-      case dv: DenseVector[_] => dense(dv)
-      case sv: SparseVector[_] => sparse(sv)
-        // never happens in this case
-      case _ => fallback(vector)
-    }
-  }
 
   def dotSparse[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): Rep[T] = {
@@ -437,21 +433,28 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
 
     fromArray(buffer.toArray)(pairElement(eK, eR))
   }*/
+
+  def binarySearch(index: IntRep, indices: Coll[Int]): IntRep = {
+    val zero = 0
+    val one = 1
+    val two = 2
+    def check(start: Int, end: Int): Int = {
+      if (end - start < two) {
+        if (index === indices(start)) start else {
+          if (index === indices(end)) end else -1
+        }
+      } else {
+        val middle = (start + end) div two
+        if (index === indices(middle)) middle else {
+          if (index < indices(middle)) check(start, middle - one) else check(middle + one, end)
+        }
+      }
+    }
+    check(zero, Math.min(index, indices.length))
+  }
 }
 
 trait VectorsDslExp extends impl.VectorsExp { self: ScalanCommunityDslExp =>
-
-  def matchVector[T, R](vector: Vector[T])
-                       (dense: Rep[DenseVector[T]] => Rep[R])
-                       (sparse: Rep[SparseVector[T]] => Rep[R])
-                       (fallback: Vector[T] => Rep[R]): Rep[R] = {
-    vector.elem.asInstanceOf[Elem[_]] match {
-      case _: DenseVectorElem[_] => dense(vector.asRep[DenseVector[T]])
-      case _: SparseVectorElem[_] => sparse(vector.asRep[SparseVector[T]])
-      case _ => fallback(vector)
-    }
-  }
-
   def dotSparse[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): Rep[T] = {
     DotSparse(xIndices.arr, xValues.arr, yIndices.arr, yValues.arr)
@@ -468,4 +471,6 @@ trait VectorsDslExp extends impl.VectorsExp { self: ScalanCommunityDslExp =>
 
   def outerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): PairColl[Int, T] = ???
+
+  def binarySearch(index: IntRep, indices: Coll[Int]): IntRep = array_binary_search(index, indices.arr)
 }

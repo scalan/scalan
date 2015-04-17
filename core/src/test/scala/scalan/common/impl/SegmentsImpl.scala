@@ -62,10 +62,7 @@ trait SegmentsAbs extends Scalan with Segments {
   class IntervalIso
     extends Iso[IntervalData, Interval] {
     override def from(p: Rep[Interval]) =
-      unmkInterval(p) match {
-        case Some((start, end)) => Pair(start, end)
-        case None => !!!
-      }
+      (p.start, p.end)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(start, end) = p
       Interval(start, end)
@@ -83,7 +80,9 @@ trait SegmentsAbs extends Scalan with Segments {
       isoInterval.to(p)
     def apply(start: Rep[Int], end: Rep[Int]): Rep[Interval] =
       mkInterval(start, end)
-    def unapply(p: Rep[Interval]) = unmkInterval(p)
+  }
+  object IntervalMatcher {
+    def unapply(p: Rep[Segment]) = unmkInterval(p)
   }
   def Interval: Rep[IntervalCompanionAbs]
   implicit def proxyIntervalCompanion(p: Rep[IntervalCompanionAbs]): IntervalCompanionAbs = {
@@ -109,7 +108,7 @@ trait SegmentsAbs extends Scalan with Segments {
 
   // 6) smart constructor and deconstructor
   def mkInterval(start: Rep[Int], end: Rep[Int]): Rep[Interval]
-  def unmkInterval(p: Rep[Interval]): Option[(Rep[Int], Rep[Int])]
+  def unmkInterval(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
 
   // elem for concrete class
   class SliceElem(val iso: Iso[SliceData, Slice])
@@ -127,10 +126,7 @@ trait SegmentsAbs extends Scalan with Segments {
   class SliceIso
     extends Iso[SliceData, Slice] {
     override def from(p: Rep[Slice]) =
-      unmkSlice(p) match {
-        case Some((start, length)) => Pair(start, length)
-        case None => !!!
-      }
+      (p.start, p.length)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(start, length) = p
       Slice(start, length)
@@ -148,7 +144,9 @@ trait SegmentsAbs extends Scalan with Segments {
       isoSlice.to(p)
     def apply(start: Rep[Int], length: Rep[Int]): Rep[Slice] =
       mkSlice(start, length)
-    def unapply(p: Rep[Slice]) = unmkSlice(p)
+  }
+  object SliceMatcher {
+    def unapply(p: Rep[Segment]) = unmkSlice(p)
   }
   def Slice: Rep[SliceCompanionAbs]
   implicit def proxySliceCompanion(p: Rep[SliceCompanionAbs]): SliceCompanionAbs = {
@@ -174,7 +172,7 @@ trait SegmentsAbs extends Scalan with Segments {
 
   // 6) smart constructor and deconstructor
   def mkSlice(start: Rep[Int], length: Rep[Int]): Rep[Slice]
-  def unmkSlice(p: Rep[Slice]): Option[(Rep[Int], Rep[Int])]
+  def unmkSlice(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
 
   // elem for concrete class
   class CenteredElem(val iso: Iso[CenteredData, Centered])
@@ -193,10 +191,7 @@ trait SegmentsAbs extends Scalan with Segments {
   class CenteredIso
     extends Iso[CenteredData, Centered] {
     override def from(p: Rep[Centered]) =
-      unmkCentered(p) match {
-        case Some((center, radius)) => Pair(center, radius)
-        case None => !!!
-      }
+      (p.center, p.radius)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(center, radius) = p
       Centered(center, radius)
@@ -214,7 +209,9 @@ trait SegmentsAbs extends Scalan with Segments {
       isoCentered.to(p)
     def apply(center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
       mkCentered(center, radius)
-    def unapply(p: Rep[Centered]) = unmkCentered(p)
+  }
+  object CenteredMatcher {
+    def unapply(p: Rep[Segment]) = unmkCentered(p)
   }
   def Centered: Rep[CenteredCompanionAbs]
   implicit def proxyCenteredCompanion(p: Rep[CenteredCompanionAbs]): CenteredCompanionAbs = {
@@ -240,7 +237,7 @@ trait SegmentsAbs extends Scalan with Segments {
 
   // 6) smart constructor and deconstructor
   def mkCentered(center: Rep[Int], radius: Rep[Int]): Rep[Centered]
-  def unmkCentered(p: Rep[Centered]): Option[(Rep[Int], Rep[Int])]
+  def unmkCentered(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
 }
 
 // Seq -----------------------------------
@@ -264,8 +261,11 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
   def mkInterval
       (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
       new SeqInterval(start, end)
-  def unmkInterval(p: Rep[Interval]) =
-    Some((p.start, p.end))
+  def unmkInterval(p: Rep[Segment]) = p match {
+    case p: Interval @unchecked =>
+      Some((p.start, p.end))
+    case _ => None
+  }
 
   case class SeqSlice
       (override val start: Rep[Int], override val length: Rep[Int])
@@ -281,8 +281,11 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
   def mkSlice
       (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
       new SeqSlice(start, length)
-  def unmkSlice(p: Rep[Slice]) =
-    Some((p.start, p.length))
+  def unmkSlice(p: Rep[Segment]) = p match {
+    case p: Slice @unchecked =>
+      Some((p.start, p.length))
+    case _ => None
+  }
 
   case class SeqCentered
       (override val center: Rep[Int], override val radius: Rep[Int])
@@ -298,8 +301,11 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
   def mkCentered
       (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
       new SeqCentered(center, radius)
-  def unmkCentered(p: Rep[Centered]) =
-    Some((p.center, p.radius))
+  def unmkCentered(p: Rep[Segment]) = p match {
+    case p: Centered @unchecked =>
+      Some((p.center, p.radius))
+    case _ => None
+  }
 }
 
 // Exp -----------------------------------
@@ -347,6 +353,18 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object attach {
+      def unapply(d: Def[_]): Option[(Rep[Interval], Rep[Segment])] = d match {
+        case MethodCall(receiver, method, Seq(seg, _*), _) if receiver.elem.isInstanceOf[IntervalElem] && method.getName == "attach" =>
+          Some((receiver, seg)).asInstanceOf[Option[(Rep[Interval], Rep[Segment])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Interval], Rep[Segment])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object IntervalCompanionMethods {
@@ -355,8 +373,12 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   def mkInterval
     (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
     new ExpInterval(start, end)
-  def unmkInterval(p: Rep[Interval]) =
-    Some((p.start, p.end))
+  def unmkInterval(p: Rep[Segment]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: IntervalElem @unchecked =>
+      Some((p.asRep[Interval].start, p.asRep[Interval].end))
+    case _ =>
+      None
+  }
 
   case class ExpSlice
       (override val start: Rep[Int], override val length: Rep[Int])
@@ -395,6 +417,18 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object attach {
+      def unapply(d: Def[_]): Option[(Rep[Slice], Rep[Segment])] = d match {
+        case MethodCall(receiver, method, Seq(seg, _*), _) if receiver.elem.isInstanceOf[SliceElem] && method.getName == "attach" =>
+          Some((receiver, seg)).asInstanceOf[Option[(Rep[Slice], Rep[Segment])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Slice], Rep[Segment])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object SliceCompanionMethods {
@@ -403,8 +437,12 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   def mkSlice
     (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
     new ExpSlice(start, length)
-  def unmkSlice(p: Rep[Slice]) =
-    Some((p.start, p.length))
+  def unmkSlice(p: Rep[Segment]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: SliceElem @unchecked =>
+      Some((p.asRep[Slice].start, p.asRep[Slice].length))
+    case _ =>
+      None
+  }
 
   case class ExpCentered
       (override val center: Rep[Int], override val radius: Rep[Int])
@@ -467,6 +505,18 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object attach {
+      def unapply(d: Def[_]): Option[(Rep[Centered], Rep[Segment])] = d match {
+        case MethodCall(receiver, method, Seq(seg, _*), _) if receiver.elem.isInstanceOf[CenteredElem] && method.getName == "attach" =>
+          Some((receiver, seg)).asInstanceOf[Option[(Rep[Centered], Rep[Segment])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Centered], Rep[Segment])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object CenteredCompanionMethods {
@@ -475,8 +525,12 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
   def mkCentered
     (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
     new ExpCentered(center, radius)
-  def unmkCentered(p: Rep[Centered]) =
-    Some((p.center, p.radius))
+  def unmkCentered(p: Rep[Segment]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: CenteredElem @unchecked =>
+      Some((p.asRep[Centered].center, p.asRep[Centered].radius))
+    case _ =>
+      None
+  }
 
   object SegmentMethods {
     object start {
@@ -522,6 +576,18 @@ trait SegmentsExp extends SegmentsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[Segment], Rep[Int])] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object attach {
+      def unapply(d: Def[_]): Option[(Rep[Segment], Rep[Segment])] = d match {
+        case MethodCall(receiver, method, Seq(seg, _*), _) if receiver.elem.isInstanceOf[SegmentElem[_]] && method.getName == "attach" =>
+          Some((receiver, seg)).asInstanceOf[Option[(Rep[Segment], Rep[Segment])]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Segment], Rep[Segment])] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
