@@ -5,8 +5,7 @@ package scalan.linalgebra
   */
 
 import scalan._
-import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
-import scalan.common.Default
+import scalan.common.OverloadHack.{Overloaded1, Overloaded2}
 
 trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
@@ -38,16 +37,9 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def *(vector: Vector[T])(implicit n: Numeric[T]): Vector[T] =
       DenseVector(rows.map { r => r.dot(vector) })
     @OverloadId("matrix")
-    def *(matrix: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]]/* = {
-      //val resColumns = matrix.columns.map { col: Rep[AbstractVector[T]] => this * col }
-      //companion.fromColumns(resColumns)
-
-      // TODO: we actually get Dense Matrix all the time, so it's in flat form always
-      val mT = matrix.transpose
-      RowMajorNestedMatrix(self.rows.flatMap(row => (mT * row).items), matrix.numColumns)
-    }*/
-    def +^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]]
-    def *^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]]
+    def *(matrix: Matrix[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T]
+    def +^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T]
+    def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T]
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep
 
     def companion: Rep[AbstractMatrixCompanion]
@@ -67,7 +59,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
     @OverloadId("rows")
     def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
-      RowMajorNestedMatrix(iRows.map(i => items.slice(numColumns * i, numColumns)).flatMap(v => v), numColumns)
+      companion(iRows.map(i => items.slice(numColumns * i, numColumns)).flatMap(v => v), numColumns)
     }
     @OverloadId("row")
     def apply(row: Rep[Int]): Vector[T] = DenseVector(rmValues.slice(row * numColumns, numColumns))
@@ -76,26 +68,9 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def fromCellIndex(iCell: Rep[Int]): Rep[(Int, Int)] = Pair(iCell /! numColumns, iCell % numColumns)
     def toCellIndex(iRow: Rep[Int], iCol: Rep[Int]): Rep[Int] = numColumns * iRow + iCol
 
-    def blockCellIndices(top: Rep[Int], left: Rep[Int], height: Rep[Int], width: Rep[Int]): Coll[Int] = {
-      for {
-        i <- Collection.indexRange(height)
-        j <- Collection.indexRange(width)
-      } yield {
-        toCellIndex(top + i, left + j)
-      }
-    }
-
-    def transposeIndices(is: Coll[Int]): Coll[Int] = {
-      for { i <- is } yield {
-        val Pair(iRow, iCol) = fromCellIndex(i)
-        val transM = RowMajorNestedMatrix(items, numRows)
-        transM.toCellIndex(iCol, iRow)
-      }
-    }
-
     @OverloadId("block_size")
     def transpose(blockSize: Rep[Int])(implicit n: Numeric[T]): Matrix[T] =
-      RowMajorNestedMatrix(columns.flatMap(col => col.items), numRows) //transposeNested(this, blockSize)
+      companion(columns.flatMap(col => col.items), numRows)
     def transpose(implicit n: Numeric[T]): Matrix[T] = transpose(10)
 
     def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
@@ -106,31 +81,20 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     @OverloadId("matrix")
-    def *(matrix: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]] = {
-      val resColumns = matrix.columns.map { col: Rep[AbstractVector[T]] => this * col }
-      companion.fromColumns(resColumns)
-      /*matrix match {
-        case RowMajorNestedMatrixMatcher(_, numColumns1) =>
-          val mT = matrix.transpose
-          RowMajorNestedMatrix(self.flatMap(row => (mT * row).items), numColumns1)
-        case RowMajorSparseMatrixMatcher(_, numColumns1) =>
-          val mT = matrix.transpose
-          // TODO: we actually get Dense Matrix all the time, so it's in flat form always
-          //RowMajorSparseMatrix(self.map(row => mT * row), numColumns1)
-          RowMajorNestedMatrix(self.flatMap(row => (mT * row).items), numColumns1)
-        case _ =>
-          other *^^ self
-      }*/
+    def *(matrix: Matrix[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T] = {
+      val mT = matrix.companion.fromRows(matrix.columns, matrix.numRows)
+      val res = rows.flatMap { row => (mT * row).items}
+      companion(res, matrix.numColumns)
     }
 
-    def +^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
-      RowMajorNestedMatrix((rows zip other.rows).flatMap { case Pair(v1, v2) => (v1 +^ v2).items }, numColumns)
+    def +^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
+      companion((rows zip other.rows).flatMap { case Pair(v1, v2) => (v1 +^ v2).items }, numColumns)
     }
 
-    def *^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
+    def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       other match {
         case RowMajorNestedMatrixMatcher(rmValues1, _) =>
-          RowMajorNestedMatrix((rmValues zip rmValues1).map { case Pair(v1, v2) => v1 * v2 }, numColumns)
+          companion((rmValues zip rmValues1).map { case Pair(v1, v2) => v1 * v2 }, numColumns)
         case RowMajorSparseMatrixMatcher(rows1, _) =>
           RowMajorSparseMatrix((rows zip rows1).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
         case _ =>
@@ -154,7 +118,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
     @OverloadId("rows")
     def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
-      RowMajorSparseMatrix(iRows.map(i => rows(i)), numColumns)
+      companion(iRows.map(i => rows(i)), numColumns)
     }
     @OverloadId("row")
     def apply(row: Rep[Int]): Vector[T] = rows(row)
@@ -172,24 +136,22 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     @OverloadId("matrix")
     def *(matrix: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]] = {
       val mT = matrix.companion.fromRows(matrix.columns, matrix.numRows)
-      RowMajorSparseMatrix(self.rows.map(row => mT * row), matrix.numColumns)
+      companion(self.rows.map(row => mT * row), matrix.numColumns)
     }
 
     def +^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
       other match {
         case RowMajorNestedMatrixMatcher(rmValues1, _) =>
-          //RowMajorNestedMatrix((rmValues zip rmValues1).map { case Pair(v1, v2) => v1 + v2 }, numColumns)
-          //(rows zip nm.rows).flatMap { case Pair(v1, v2) => (v1 +^ v2).items }, numColumns)
           other +^^ self
         case RowMajorSparseMatrixMatcher(rows1, _) =>
-          RowMajorSparseMatrix((rows zip rows1).map { case Pair(v1, v2) => v1 +^ v2 }, numColumns)
+          companion((rows zip rows1).map { case Pair(v1, v2) => v1 +^ v2 }, numColumns)
         case _ =>
           other +^^ self
       }
     }
 
     def *^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
-      RowMajorSparseMatrix((rows zip other.rows).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
+      companion((rows zip other.rows).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
     }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
@@ -204,14 +166,9 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       RowMajorNestedMatrix.fromColumns(cols)
     }
     def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
-                    (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = {
-      RowMajorSparseMatrix(items.map { coll =>
-        // FIXME: convertTo does not work
-        //val collPair = coll.convertTo[PairCollection[Int, T]]
-        //SparseVector(collPair.as, collPair.bs, numColumns)
-        SparseVector(coll.as, coll.bs, numColumns)
-      }, numColumns)
-    }
+                    (implicit elem: Elem[T], o: Overloaded1): Matrix[T] = RowMajorSparseMatrix.fromNColl(items, numColumns)
+    def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
+                    (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = RowMajorSparseMatrix.fromNColl(items, numColumns)
     def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = RowMajorSparseMatrix.fromRows(rows, length)
   }
 
@@ -225,6 +182,12 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       }
       RowMajorNestedMatrix(rmValues, numColumns)
     }
+    override def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
+                             (implicit elem: Elem[T], o: Overloaded1): Matrix[T] = ???
+    override def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
+                             (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = {
+      RowMajorNestedMatrix(items.flatMap { coll => coll }, numColumns)
+    }
     override def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = {
       RowMajorNestedMatrix(rows.flatMap(v => v.convertTo[DenseVector[T]].items), length)
     }
@@ -232,6 +195,14 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
   trait RowMajorSparseMatrixCompanion extends ConcreteClass1[RowMajorSparseMatrix] with AbstractMatrixCompanion {
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = ???
+    override def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
+                             (implicit elem: Elem[T], o: Overloaded1): Matrix[T] = {
+      RowMajorSparseMatrix(items.map { coll => SparseVector(coll.as, coll.bs, numColumns) }, numColumns)
+    }
+    override def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
+                             (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = {
+      RowMajorSparseMatrix(items.map { coll => DenseVector(coll) }, numColumns)
+    }
     override def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = {
       RowMajorSparseMatrix(rows, length)
     }
