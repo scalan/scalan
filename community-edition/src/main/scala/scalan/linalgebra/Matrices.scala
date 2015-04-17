@@ -45,11 +45,11 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def companion: Rep[AbstractMatrixCompanion]
   }
 
-  abstract class RowMajorNestedMatrix[T](val rmValues: Rep[Collection[T]], val numColumns: Rep[Int])
-                                        (implicit val elem: Elem[T]) extends AbstractMatrix[T] {
+  abstract class DenseFlatMatrix[T](val rmValues: Rep[Collection[T]], val numColumns: Rep[Int])
+                                   (implicit val elem: Elem[T]) extends AbstractMatrix[T] {
 
     def items = rmValues
-    def companion = RowMajorNestedMatrix
+    def companion = DenseFlatMatrix
     def numRows: Rep[Int] = rmValues.length /! numColumns
     def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = {
       Collection.indexRange(numColumns).map { i =>
@@ -93,10 +93,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
     def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       other match {
-        case RowMajorNestedMatrixMatcher(rmValues1, _) =>
+        case DenseFlatMatrixMatcher(rmValues1, _) =>
           companion((rmValues zip rmValues1).map { case Pair(v1, v2) => v1 * v2 }, numColumns)
-        case RowMajorSparseMatrixMatcher(rows1, _) =>
-          RowMajorSparseMatrix((rows zip rows1).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
+        case CompoundMatrixMatcher(rows1, _) =>
+          CompoundMatrix((rows zip rows1).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
         case _ =>
           other *^^ self
       }
@@ -107,9 +107,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
   }
 
-  abstract class RowMajorSparseMatrix[T](val rows: Rep[Collection[AbstractVector[T]]], val numColumns: Rep[Int])
-                                        (implicit val elem: Elem[T]) extends AbstractMatrix[T] {
-    def companion = RowMajorSparseMatrix
+  abstract class CompoundMatrix[T](val rows: Rep[Collection[AbstractVector[T]]], val numColumns: Rep[Int])
+                                  (implicit val elem: Elem[T]) extends AbstractMatrix[T] {
+
+    def companion = CompoundMatrix
     def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = {
       Collection(SArray.tabulate(numColumns) { j => DenseVector(rows.map(_(j)))})
     }
@@ -124,7 +125,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def apply(row: Rep[Int]): Vector[T] = rows(row)
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = apply(row)(column)
 
-    def transpose(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = transposeDirect(self)
+    def transpose(implicit n: Numeric[T]): Matrix[T] = transposeDirect(self)
 
     def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
       val coll = Collection.indexRange(numColumns).map { column =>
@@ -134,23 +135,23 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     @OverloadId("matrix")
-    def *(matrix: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]] = {
+    def *(matrix: Matrix[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T] = {
       val mT = matrix.companion.fromRows(matrix.columns, matrix.numRows)
       companion(self.rows.map(row => mT * row), matrix.numColumns)
     }
 
-    def +^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
+    def +^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       other match {
-        case RowMajorNestedMatrixMatcher(rmValues1, _) =>
+        case DenseFlatMatrixMatcher(rmValues1, _) =>
           other +^^ self
-        case RowMajorSparseMatrixMatcher(rows1, _) =>
+        case CompoundMatrixMatcher(rows1, _) =>
           companion((rows zip rows1).map { case Pair(v1, v2) => v1 +^ v2 }, numColumns)
         case _ =>
           other +^^ self
       }
     }
 
-    def *^^(other: Rep[AbstractMatrix[T]])(implicit n: Numeric[T]): Rep[AbstractMatrix[T]] = {
+    def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       companion((rows zip other.rows).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
     }
 
@@ -162,17 +163,18 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
   trait AbstractMatrixCompanion extends TypeFamily1[AbstractMatrix] {
 
-    def fromColumns[T: Elem](cols: Rep[Collection[AbstractVector[T]]]): Rep[AbstractMatrix[T]] = {
-      RowMajorNestedMatrix.fromColumns(cols)
+    def fromColumns[T: Elem](cols: Rep[Collection[AbstractVector[T]]]): Matrix[T] = {
+      DenseFlatMatrix.fromColumns(cols)
     }
     def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
-                    (implicit elem: Elem[T], o: Overloaded1): Matrix[T] = RowMajorSparseMatrix.fromNColl(items, numColumns)
+                    (implicit elem: Elem[T], o: Overloaded1): Matrix[T] = CompoundMatrix.fromNColl(items, numColumns)
+    @OverloadId("dense")
     def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
-                    (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = RowMajorSparseMatrix.fromNColl(items, numColumns)
-    def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = RowMajorSparseMatrix.fromRows(rows, length)
+                    (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = CompoundMatrix.fromNColl(items, numColumns)
+    def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = CompoundMatrix.fromRows(rows, length)
   }
 
-  trait RowMajorNestedMatrixCompanion extends ConcreteClass1[RowMajorNestedMatrix] with AbstractMatrixCompanion {
+  trait DenseFlatMatrixCompanion extends ConcreteClass1[DenseFlatMatrix] with AbstractMatrixCompanion {
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = {
       val numColumns = cols.length
       val numRows = cols(0).length
@@ -180,31 +182,33 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       val rmValues = Collection.indexRange(numRows * numColumns).map { i =>
         columnsArr(i % numColumns)(i /! numColumns)
       }
-      RowMajorNestedMatrix(rmValues, numColumns)
+      DenseFlatMatrix(rmValues, numColumns)
     }
     override def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
                              (implicit elem: Elem[T], o: Overloaded1): Matrix[T] = ???
+    @OverloadId("dense")
     override def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
                              (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = {
-      RowMajorNestedMatrix(items.flatMap { coll => coll }, numColumns)
+      DenseFlatMatrix(items.flatMap { coll => coll }, numColumns)
     }
     override def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = {
-      RowMajorNestedMatrix(rows.flatMap(v => v.convertTo[DenseVector[T]].items), length)
+      DenseFlatMatrix(rows.flatMap(v => v.convertTo[DenseVector[T]].items), length)
     }
   }
 
-  trait RowMajorSparseMatrixCompanion extends ConcreteClass1[RowMajorSparseMatrix] with AbstractMatrixCompanion {
+  trait CompoundMatrixCompanion extends ConcreteClass1[CompoundMatrix] with AbstractMatrixCompanion {
     override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = ???
     override def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
                              (implicit elem: Elem[T], o: Overloaded1): Matrix[T] = {
-      RowMajorSparseMatrix(items.map { coll => SparseVector(coll.as, coll.bs, numColumns) }, numColumns)
+      CompoundMatrix(items.map { coll => SparseVector(coll.as, coll.bs, numColumns) }, numColumns)
     }
+    @OverloadId("dense")
     override def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
                              (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = {
-      RowMajorSparseMatrix(items.map { coll => DenseVector(coll) }, numColumns)
+      CompoundMatrix(items.map { coll => DenseVector(coll) }, numColumns)
     }
     override def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = {
-      RowMajorSparseMatrix(rows, length)
+      CompoundMatrix(rows, length)
     }
   }
 }

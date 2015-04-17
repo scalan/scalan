@@ -18,7 +18,7 @@ trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
     @External @Semantics(name = ContainerLength)
     def size: Rep[Int]
 
-    /** Selects an element by its index in the $coll. */
+    /** Selects an element by its index in the coll. */
     @External @Semantics(name = ContainerApply)
     def apply(idx: Rep[Int]): Rep[A]
 

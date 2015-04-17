@@ -25,6 +25,6 @@ trait Math { self: ScalanCommunityDsl =>
             })
           SparseVector(newRow, m.numRows)
         }
-    RowMajorSparseMatrix(newNestedItems, m.numRows)
+    CompoundMatrix(newNestedItems, m.numRows)
   }
 }

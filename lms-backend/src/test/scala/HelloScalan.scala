@@ -13,7 +13,7 @@ trait HelloScalan extends ScalanCommunityDsl {
   lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0).length
-    val matrix: Matrix[Double] = RowMajorSparseMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r))}), width)
+    val matrix: Matrix[Double] = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r))}), width)
     val vector: Vector[Double] = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
