@@ -176,6 +176,8 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     e match {
       case ArrayToSeq(arr) =>
         ArrayToSeq(f(arr)).asInstanceOf[Def[A]]
+      case ArrayIndex(arr, i) =>
+        ArrayIndex(f(arr), f(i)).asInstanceOf[Def[A]]
       case _ =>
         super.mirrorDef(e,f)
     }
