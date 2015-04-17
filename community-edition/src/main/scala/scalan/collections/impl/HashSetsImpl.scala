@@ -19,7 +19,7 @@ trait HashSetsAbs extends HashSets with Scalan {
     proxyOps[SHashSet[A]](p)(classTag[SHashSet[A]])
   }
 
-  // BaseTypeEx proxy
+  // TypeWrapper proxy
   //implicit def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
   //  proxyOps[SHashSet[A]](p.asRep[SHashSet[A]])
 
@@ -171,7 +171,7 @@ trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
       SHashSetImpl(HashSet.empty[A])
   }
 
-  // override proxy if we deal with BaseTypeEx
+  // override proxy if we deal with TypeWrapper
   //override def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
   //  proxyOpsEx[HashSet[A],SHashSet[A], SeqSHashSetImpl[A]](p, bt => SeqSHashSetImpl(bt))
 

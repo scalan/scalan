@@ -251,7 +251,7 @@ trait ScalanAst {
     }
   }
 
-  final val BaseTypeTraitName = "BaseTypeEx"
+  final val BaseTypeTraitName = "TypeWrapper"
 
   implicit class STraitOrClassDefOps(td: STraitOrClassDef) {
     def optBaseType: Option[STraitCall] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {

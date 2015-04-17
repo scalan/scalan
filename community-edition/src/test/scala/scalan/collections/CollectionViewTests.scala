@@ -27,10 +27,17 @@ class CollectionViewTests extends BaseTests { suite =>
     import ctx._
 
     testGetIso(element[Collection[Int]], element[Collection[Int]])
+    testGetIso(element[Collection[Segment]], element[Collection[Segment]])
+    //testGetIso(element[Collection[Interval]], element[Collection[(Int,Int)]])  // TODO Iso
+
     testGetIso(element[BaseCollection[Int]], element[Array[Int]])
     testGetIso(element[ListCollection[Int]], element[List[Int]])
     testGetIso(element[ListCollection[(Int,Int)]], element[List[(Int,Int)]])
     testGetIso(element[ListCollection[Segment]], element[List[Segment]])
     testGetIso(element[ListCollection[Interval]], element[List[(Int,Int)]])
+
+    testGetIso(element[Seq[Int]], element[Seq[Int]])
+    testGetIso(element[SSeq[Int]], element[SSeq[Int]])
+    testGetIso(element[SSeqImpl[Int]], element[Seq[Int]])
   }
 }

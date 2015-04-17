@@ -173,8 +173,10 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     // Rule: Right[A,B](V(a, iso)) ==> V(Right(a), SumIso(iso[A], iso))
     case r@Right(HasViews(a, iso: Iso[a1, b1])) =>
       val eL = r.eLeft
-      val iso1 = getIsoByElem(eL).asInstanceOf[Iso[Any,Any]]
-      SumView(a.asRep[a1].asRight(eL))(iso1, iso).self
+      getIsoByElem(eL) match {
+        case iso1: Iso[a2,b2] =>
+          SumView(a.asRep[a1].asRight(iso1.eFrom))(iso1, iso).self
+      }
 
     case m1 @ SumMap(Def(f: SumFold[a0,b0,_]), left, right) =>
       f.sum.fold(a0 => left(f.left(a0)), b0 => right(f.right(b0)))

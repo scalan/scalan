@@ -35,7 +35,7 @@ trait Elems extends Base { self: Scalan =>
 
     override def toString = s"${getClass.getSimpleName}{$name}"
     override def equals(other: Any) = other match {
-      case e: Element[_] => tag == e.tag
+      case e: Element[_] => tag.tpe =:= e.tag.tpe
       case _ => false
     }
     override def hashCode = tag.hashCode

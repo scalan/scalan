@@ -17,7 +17,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     proxyOps[SThrowable](p)(classTag[SThrowable])
   }
 
-  // BaseTypeEx proxy
+  // TypeWrapper proxy
   //implicit def proxyThrowable(p: Rep[Throwable]): SThrowable =
   //  proxyOps[SThrowable](p.asRep[SThrowable])
 
@@ -211,7 +211,7 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
       SThrowableImpl(new Throwable(msg))
   }
 
-  // override proxy if we deal with BaseTypeEx
+  // override proxy if we deal with TypeWrapper
   //override def proxyThrowable(p: Rep[Throwable]): SThrowable =
   //  proxyOpsEx[Throwable,SThrowable, SeqSThrowableImpl](p, bt => SeqSThrowableImpl(bt))
 

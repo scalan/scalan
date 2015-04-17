@@ -159,6 +159,9 @@ trait Views extends Elems { self: Scalan =>
       ThunkIso(iso)
     case me: MMapElem[_,_] =>
       identityIso(me)
+//    case ee1: EntityElem1[_,_,_] =>
+//      val iso = getIsoByElem(ee1.eItem)
+//      TODO implement using ContainerIso
     case ee: EntityElem[_] =>
       identityIso(ee)
     case be: BaseElem[_] =>

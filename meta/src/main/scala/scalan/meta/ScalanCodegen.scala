@@ -346,7 +346,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val companionName = s"${entityName}Companion"
       val proxyBT = optBT.opt(bt => {
         s"""
-        |  // BaseTypeEx proxy
+        |  // TypeWrapper proxy
         |  //implicit def proxy$entityNameBT${typesWithElems}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
         |  //  proxyOps[$entityName${typesUse}](p.asRep[$entityName${typesUse}])
         |
@@ -393,7 +393,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         val isCont = e.isContainer1
         val underscores = e.tpeArgDecls.map(_ => "_,").mkString("")
         val parentElem = e.firstAncestorType match {
-          case STraitCall("Reifiable", _) | STraitCall("BaseTypeEx", _) =>
+          case STraitCall("Reifiable", _) | STraitCall("TypeWrapper", _) =>
             s"EntityElem${isCont.opt("1")}[${isCont.opt(e.typesUsePref)}To${isCont.opt(s", $entityName")}]${isCont.opt(s"(${e.tpeArgs.map("e" + _.name + ",").mkString("")}container[$entityName])")}"
           case STraitCall(parentName, parentTypes) =>
             s"${parentName}Elem[${parentTypes.map(_.toString + ", ").mkString("")}To]"
@@ -765,7 +765,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val classesSeq = for { c <- module.concreteSClasses } yield getSClassSeq(c)
       val proxyBTSeq = optBT.opt(bt =>
         s"""
-         |  // override proxy if we deal with BaseTypeEx
+         |  // override proxy if we deal with TypeWrapper
          |  //override def proxy$entityNameBT${typesWithElems}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
          |  //  proxyOpsEx[$entityNameBT${typesUse},$entityName${typesUse}, Seq${entityName}Impl$typesUse](p, bt => Seq${entityName}Impl(bt))
          |""".stripAndTrim

@@ -19,7 +19,7 @@ trait SeqsAbs extends Seqs with Scalan {
     proxyOps[SSeq[A]](p)(classTag[SSeq[A]])
   }
 
-  // BaseTypeEx proxy
+  // TypeWrapper proxy
   //implicit def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOps[SSeq[A]](p.asRep[SSeq[A]])
 
@@ -235,7 +235,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
       SSeqImpl(Seq.fromList[A](list))
   }
 
-  // override proxy if we deal with BaseTypeEx
+  // override proxy if we deal with TypeWrapper
   //override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOpsEx[Seq[A],SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
 

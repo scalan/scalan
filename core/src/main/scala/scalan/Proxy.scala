@@ -323,12 +323,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         // FIXME assumed for now to correspond to the method's type params, in the same order
         val elemParams = args.collect { case e: Elem[_] => e }
         val elemMap = scalaMethod.typeParams.zip(elemParams).toMap
-        // check if return type is a BaseTypeEx
+        // check if return type is a TypeWrapper
         val baseType = tpe.baseType(Symbols.BaseTypeExSym) match {
           case NoType => definitions.NothingTpe
-          // e.g. Throwable from BaseTypeEx[Throwable, SThrowable]
+          // e.g. Throwable from TypeWrapper[Throwable, SThrowable]
           case TypeRef(_, _, params) => params(0).asSeenFrom(tpe, scalaMethod.owner)
-          case unexpected => !!!(s"unexpected result from ${tpe1}.baseType(BaseTypeEx): $unexpected")
+          case unexpected => !!!(s"unexpected result from ${tpe1}.baseType(TypeWrapper): $unexpected")
         }
         elemFromType(tpe1, elemMap, baseType)
       case _ =>
@@ -451,7 +451,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val ArraySym = typeOf[Array[_]].typeSymbol
     val ListSym = typeOf[List[_]].typeSymbol
 
-    val BaseTypeExSym = typeOf[BaseTypeEx[_, _]].typeSymbol
+    val BaseTypeExSym = typeOf[TypeWrapper[_, _]].typeSymbol
 
     val SuperTypesOfDef = typeOf[Def[_]].baseClasses.toSet
   }
