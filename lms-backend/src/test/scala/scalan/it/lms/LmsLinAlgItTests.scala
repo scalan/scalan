@@ -140,12 +140,13 @@ class LmsMmmItTests extends LmsLinAlgItTests {
   }
 
   test("ssmmm") {
-    pending
+    //pending
     val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
     val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
     val in = Pair(inM1, inM2)
     val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
     compareOutputWithSequential(progStaged)(progSeq.ssmmm, progStaged.ssmmm, "ssmmm", in)
+    compareOutputWithExpected(progStaged)(out, progStaged.ssmmm, "ssmmm_out", in)
   }
 
   test("ffmmm") {
