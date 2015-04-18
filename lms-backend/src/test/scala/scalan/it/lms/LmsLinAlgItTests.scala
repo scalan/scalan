@@ -180,11 +180,9 @@ class AbstractElemItTests extends LmsLinAlgItTests {
   }
 
   test("elems divergence in if_then_else branches") {
-    // Different branches of if_then_else operator unexpectedly produce different elems.
+    // Different branches of if_then_else operator produce different elems.
     // This causes Sums and SumViews to appear.
-    // Produced code could not be executed. The test only build final graph.
-    // Bad behavior remains (with a different graph) if DenseVector.+^ is changed to return DenseVector
-    //pending
+    // The test verifies iso lifting in this case (see IfThenElse.rewriteDef)
     val matrix = Array(Array(0, 5), Array(1, 3), Array(1, 4))
     val vector = Array(1,2)
 
