@@ -410,6 +410,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
             s"${parentName}Elem[${parentTypes.map(_.toString + ", ").mkString("")}To]"
         }
         s"""
+        |  // familyElem
         |  class ${e.name}Elem[${e.typesDeclPref}To <: ${e.entityType}]${e.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")}
         |    extends $parentElem {
         |    override def isEntityType = true
@@ -423,7 +424,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |    }
         |    override def convert(x: Rep[Reifiable[_]]) = convert$entityName(x.asRep[${e.entityType}])
         |    def convert$entityName(x : Rep[${e.entityType}]): Rep[To] = {
-        |      assert(x.selfType1.isInstanceOf[${e.name}Elem[${underscores}_]])
+        |      //assert(x.selfType1.isInstanceOf[${e.name}Elem[${underscores}_]])
         |      x.asRep[To]
         |    }
         |    override def getDefaultRep: Rep[To] = ???
@@ -433,7 +434,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
           if (!module.methods.exists(_.name == elemMethodName)) {
             s"""
                |  implicit def ${StringUtil.lowerCaseFirst(e.name)}Element${e.tpeArgDecls.opt(args => s"[${args.mkString(", ")}]")}${e.implicitArgsDecl} =
-               |    new ${e.name}Elem[${e.typesDeclPref}${e.entityType}]()${e.implicitArgsUse}
+               |    new ${e.name}Elem[${e.typesUsePref}${e.entityType}]()${e.implicitArgsUse}
                |""".stripMargin
           } else ""
         }

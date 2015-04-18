@@ -17,6 +17,7 @@ trait SegmentsAbs extends Segments with Scalan {
     proxyOps[Segment](p)(classTag[Segment])
   }
 
+  // familyElem
   class SegmentElem[To <: Segment]
     extends EntityElem[To] {
     override def isEntityType = true
@@ -25,7 +26,7 @@ trait SegmentsAbs extends Segments with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSegment(x.asRep[Segment])
     def convertSegment(x : Rep[Segment]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[SegmentElem[_]])
+      //assert(x.selfType1.isInstanceOf[SegmentElem[_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
