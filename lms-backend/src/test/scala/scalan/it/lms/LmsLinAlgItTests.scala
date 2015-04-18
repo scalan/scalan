@@ -184,7 +184,7 @@ class AbstractElemItTests extends LmsLinAlgItTests {
     // This causes Sums and SumViews to appear.
     // Produced code could not be executed. The test only build final graph.
     // Bad behavior remains (with a different graph) if DenseVector.+^ is changed to return DenseVector
-    pending
+    //pending
     val matrix = Array(Array(0, 5), Array(1, 3), Array(1, 4))
     val vector = Array(1,2)
 

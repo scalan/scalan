@@ -93,9 +93,9 @@ trait ConvertersDslExp extends impl.ConvertersExp { self: ScalanExp =>
       case (eEntity: EntityElem[_], eClass: ConcreteElem[tData,tClass]) =>
         val convOpt = eClass.getConverterFrom(eEntity)
         convOpt
-      case (e1: BaseElem[a], e2: BaseElem[_]) if e1 == e2 =>
+      case (e1, e2) if e1 == e2 =>
         implicit val ea = e1
-        Some(BaseConverter(fun { x: Rep[a] => x }).asRep[Converter[A,B]])
+        Some(BaseConverter(fun { x: Rep[A] => x }).asRep[Converter[A,B]])
       case _ => None
     }
   }
