@@ -371,8 +371,19 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       def familyContainer(e: EntityTemplateData) = {
         val typesDecl = e.tpeArgDeclString
         val entityElemType = s"${entityName}Elem[${e.typesUsePref}${e.entityType}]"
+        val btContainer = optBT.opt(bt =>
+          s"""
+             |  implicit val container${bt.name}: Cont[${bt.name}] = new Container[${bt.name}] {
+             |    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[${bt.name}[A]]
+             |    def lift[A](implicit evA: Elem[A]) = element[${bt.name}[A]]
+             |  }
+           """.stripMargin)
+
         s"""
         |  implicit def cast${e.name}Element${typesDecl}(elem: Elem[${e.entityType}]): $entityElemType = elem.asInstanceOf[$entityElemType]
+        |
+        |  $btContainer
+        |
         |  implicit val container${e.name}: Cont[${e.name}] = new Container[${e.name}] {
         |    def tag${typesDecl}${e.tpeArgsImplicitDecl("WeakTypeTag")} = weakTypeTag[${e.entityType}]
         |    def lift${typesDecl}${e.tpeArgsImplicitDecl("Elem")} = element[${e.entityType}]
@@ -751,6 +762,14 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       if (tyArgsDecl.isEmpty) {
         s"""
           |  implicit lazy val ${StringUtil.lowerCaseFirst(bt.name)}Element: Elem[${bt.name}] = new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])(weakTypeTag[${bt.name}], ${getDefaultOfBT(bt)})
+          |""".stripAndTrim
+      }
+      else if (templateData.isContainer1) {
+        val elems = templateData.tpeArgUses.rep(ty => s"element[$ty]")
+        s"""
+          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] =
+          |      new ${ctx}BaseElemEx1[${templateData.typesUsePref}$entityName${typesUse}, $entityNameBT](
+          |           element[$entityName${typesUse}])($elems, container[${bt.name}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       }
       else {
