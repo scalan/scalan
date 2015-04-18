@@ -61,6 +61,7 @@ class BoilerplateTool extends StrictLogging {
     srcPath = "../core/src/test/scala",
     entityFiles = List(
       "scalan/common/Segments.scala"
+      , "scalan/common/Kinds.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
