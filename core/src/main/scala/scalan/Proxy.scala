@@ -320,6 +320,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val tpe = tag.tpe
     val instanceElemMap = getElemsMapFromInstanceElem(e, tpe)
     val scalaMethod = findScalaMethod(tpe, m)
+
     // http://stackoverflow.com/questions/29256896/get-precise-return-type-from-a-typetag-and-a-method
     val returnType = scalaMethod.returnType.asSeenFrom(tpe, scalaMethod.owner).normalize
     returnType match {
@@ -332,7 +333,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
             (scala.Left[Elem[_], SomeCont](e.elem), tpeE)
           case (elem: Elem[_], TypeRef(_, ElementSym, List(tpeElem))) =>
             (scala.Left[Elem[_], SomeCont](elem), tpeElem)
-          case (cont: SomeCont, TypeRef(_, ContSym, List(tpeCont))) =>
+          case (cont: SomeCont @unchecked, TypeRef(_, ContSym, List(tpeCont))) =>
             (scala.Right[Elem[_], SomeCont](cont), tpeCont)
           case (op: UnOp[_, _], TypeRef(_, _, List(_, tpeResult))) =>
             (scala.Left[Elem[_], SomeCont](op.eResult), tpeResult)
@@ -572,7 +573,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val scalaMethod0 = tpe.member(newTermName(m.getName))
     if (scalaMethod0.isTerm) {
       val overloads = scalaMethod0.asTerm.alternatives
-      (if (overloads.length == 1) {
+      val scalaMethod1 = (if (overloads.length == 1) {
         scalaMethod0
       } else {
         val javaOverloadId = m.getAnnotation(classOf[OverloadId]) match {
@@ -588,8 +589,19 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
             }
             scalaOverloadId == javaOverloadId
           }
-        }.get
+        }.getOrElse {
+          val overloadIdString = javaOverloadId.fold("no overload id")(x => s"""overload id "$x"""")
+          !!!(s"Method with name ${m.getName} and $overloadIdString doesn't exist on type $tpe")
+        }
       }).asMethod
+
+      if (scalaMethod1.returnType.typeSymbol != definitions.NothingClass) {
+        scalaMethod1
+      } else {
+        scalaMethod1.allOverriddenSymbols.find(_.asMethod.returnType.typeSymbol != definitions.NothingClass).getOrElse {
+          !!!(s"Method $scalaMethod1 on type $tpe and all overridden methods return Nothing")
+        }.asMethod
+      }
     } else
       !!!(s"Method $m couldn't be found on type $tpe")
   }
