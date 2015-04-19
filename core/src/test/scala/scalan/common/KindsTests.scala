@@ -16,7 +16,7 @@ class KindsTests extends BaseTests { suite =>
   }
 
   test("kindMap") {
-    pending
+    //pending
     val name = "kindMap"
     val ctx = new ConvProgStaged(name)
     ctx.emit(name, ctx.kindMap)

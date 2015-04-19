@@ -16,7 +16,7 @@ trait KindsAbs extends Kinds with Scalan {
   }
 
   // familyElem
-  class KindElem[F[_], A, To <: Kind[F, A]](implicit val eA: Elem[A])
+  class KindElem[F[_], A, To <: Kind[F, A]](implicit val eA: Elem[A], val cF: Cont[F])
     extends EntityElem[To] {
     override def isEntityType = true
     override def tag = {
@@ -31,8 +31,8 @@ trait KindsAbs extends Kinds with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def kindElement[F[_], A](implicit eA: Elem[A]) =
-    new KindElem[F, A, Kind[F, A]]()(eA)
+  implicit def kindElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]) =
+    new KindElem[F, A, Kind[F, A]]()(eA,cF)
 
   trait KindCompanionElem extends CompanionElem[KindCompanionAbs]
   implicit lazy val KindCompanionElem: KindCompanionElem = new KindCompanionElem {
