@@ -175,8 +175,8 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
-      val items = rows.flatMap(v => v.nonZeroValues) //.flatMap(v => v)
-      items.reduce.toDouble / items.length.toDouble
+      val items = rows.flatMap(v => v.nonZeroValues)
+      items.reduce.toDouble / (numRows * numColumns).toDouble
     }
   }
 
@@ -190,7 +190,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     @OverloadId("dense")
     def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
                     (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = CompoundMatrix.fromNColl(items, numColumns)
-    def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = CompoundMatrix.fromRows(rows, length)
+    def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = ??? //CompoundMatrix.fromRows(rows, length)
   }
 
   trait DenseFlatMatrixCompanion extends ConcreteClass1[DenseFlatMatrix] with AbstractMatrixCompanion {
@@ -232,7 +232,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   }
 }
 
-trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommunityDsl => }
+trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommunityDsl =>
+
+  type MatrixCompanion = Rep[AbstractMatrixCompanion]
+}
 
 trait MatricesDslSeq extends impl.MatricesSeq with VectorsDslSeq { self: ScalanCommunityDslSeq => }
 

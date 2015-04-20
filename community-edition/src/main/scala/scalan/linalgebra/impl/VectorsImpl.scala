@@ -434,6 +434,18 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object companion {
+      def unapply(d: Def[_]): Option[Rep[DenseVector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "companion" =>
+          Some(receiver).asInstanceOf[Option[Rep[DenseVector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[DenseVector[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object DenseVectorCompanionMethods {
@@ -625,6 +637,18 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object companion {
+      def unapply(d: Def[_]): Option[Rep[SparseVector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "companion" =>
+          Some(receiver).asInstanceOf[Option[Rep[SparseVector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SparseVector[T]] forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -947,6 +971,18 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
     object nonZeroesLength {
       def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "nonZeroesLength" =>
+          Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object companion {
+      def unapply(d: Def[_]): Option[Rep[AbstractVector[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "companion" =>
           Some(receiver).asInstanceOf[Option[Rep[AbstractVector[T]] forSome {type T}]]
         case _ => None
       }
