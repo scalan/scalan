@@ -349,16 +349,26 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         if (sym.asType.typeParams.size > 0) {
           // FIXME hardcoding - naming convention is assumed to be consistent with ScalanCodegen
           val methodName = "c" + sym.name.toString
-          val res = invokeMethod(e, methodName).asInstanceOf[SomeCont]
-          (sym -> scala.Right[Elem[_], SomeCont](res))
+          val value = try {
+            val res = invokeMethod(e, methodName).asInstanceOf[SomeCont]
+            scala.Right[Elem[_], SomeCont](res)
+          } catch {
+            case _: Throwable => null
+          }
+          (sym -> value)
         }
         else {
           val methodName = "e" + sym.name.toString
-          val res = invokeMethod(e, methodName).asInstanceOf[Elem[_]]
-          (sym -> scala.Left[Elem[_], SomeCont](res))
+          val value = try {
+            val res = invokeMethod(e, methodName).asInstanceOf[Elem[_]]
+            scala.Left[Elem[_], SomeCont](res)
+          } catch {
+            case _: Throwable => null
+          }
+          (sym -> value)
         }
     }
-    kvs.toMap
+    kvs.filter { case (k,v) => v != null }.toMap
   }
 
   private def invokeMethod(obj: AnyRef, methodName: String): AnyRef = {
@@ -437,7 +447,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               // handle high-kind argument
               // FIXME use better way of lookup other than by names (to avoid name collisions)
               val optRes = elemMap.find {case (sym, d) => sym.name == classSymbol.name}
-              val res = optRes.getOrElse(classSymbol, !!!(s"Can't find descriptor for type argument $typaram of $tpe"))._2.right.get
+              val res = optRes.getOrElse(!!!(s"Can't find descriptor for type argument $typaram of $tpe"))._2.right.get
               res
             case _ =>
               elemFromType(typaram, elemMap, baseType)
@@ -446,7 +456,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
         val descClasses = paramDescs.map {
           case e: Elem[_] => classOf[Elem[_]]
-          case c: SomeCont => classOf[SomeCont]
+          case c: SomeCont @unchecked => classOf[SomeCont]
           case d => !!!(s"Unknown type descriptior $d")
         }.toArray
         // entity type or base type
