@@ -19,6 +19,7 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
   }
 
   test("seqsSimpleMap") {
+    //pending
     val in = Seq(2, 3)
     compileSource(progStaged)(progStaged.seqsSimpleMap, "seqsSimpleMap", progStaged.defaultCompilerConfig)
     //compareOutputWithSequential(progStaged)(progSeq.seqsSimpleMap, progStaged.seqsSimpleMap, "seqsSimpleMap", in)
