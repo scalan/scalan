@@ -29,11 +29,13 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 
   abstract class WrapperElem[TBase, TExt](implicit val baseElem: Elem[TBase]) extends EntityElem[TExt] {
+    def eTo: Elem[_]
   }
 
-  abstract class WrapperElem1[A, To, CBase[_], CW[_]](implicit eA: Elem[A], val contBase: Cont[CBase], contW: Cont[CW])
-    extends EntityElem1[A, To, CW](eA, contW) {
+  abstract class WrapperElem1[A, Abs, CBase[_], CW[_]](implicit eA: Elem[A], val contBase: Cont[CBase], contW: Cont[CW])
+    extends EntityElem1[A, Abs, CW](eA, contW) {
     def baseElem: Elem[CBase[A]] = contBase.lift(eA)
+    def eTo: Elem[_]
   }
 
   trait ExCompanion0[TBase] {
@@ -57,7 +59,8 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 
 }
- trait TypeWrappersSeq extends TypeWrappers { scalan: ScalanSeq =>
+
+trait TypeWrappersSeq extends TypeWrappers { scalan: ScalanSeq =>
    class SeqBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
                                 (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
      extends BaseElemEx[TBase, TExt](extE) {
@@ -116,8 +119,10 @@ trait TypeWrappersExp extends TypeWrappers with GraphVizExport { scalan: ScalanE
       case a => a.getClass
     }
 
-    val newMethod = eUnwrappedReceiver.getMethod(mc.method.getName, argClasses: _*)
-    val newCall = mkMethodCall(unwrappedReceiver, newMethod, newArgs, true, eUnwrappedRes)
+    // keep unwrapped method because real method may have different signature
+    // moreover it is not necessary exists
+    // this should be handled in Backend using config
+    val newCall = mkMethodCall(unwrappedReceiver, mc.method, newArgs, true, eUnwrappedRes)
     newCall.asRep[T]
   }
 }

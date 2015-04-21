@@ -43,6 +43,7 @@ class HasViewsTests extends BaseTests { suite =>
 
     lazy val seqsSimpleMap = fun { x: Rep[Seq[Int]] =>
       val seqImp = SSeqImpl(x)
+      testHasViews(seqImp, element[Seq[Int]])
       val res = seqImp.map({i: Rep[Int] => i+1})
       res.wrappedValueOfBaseType
     }

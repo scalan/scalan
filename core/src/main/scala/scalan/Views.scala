@@ -2,6 +2,7 @@ package scalan
 
 import java.lang.reflect.InvocationTargetException
 
+import scala.collection.mutable
 import scalan.common.Default
 import scala.language.higherKinds
 import scalan.common.Lazy
@@ -162,6 +163,19 @@ trait Views extends Elems { self: Scalan =>
 //    case ee1: EntityElem1[_,_,_] =>
 //      val iso = getIsoByElem(ee1.eItem)
 //      TODO implement using ContainerIso
+
+    case we: WrapperElem[Reifiable[base],Reifiable[ext]] @unchecked =>
+      implicit val eBase = we.baseElem
+      implicit val eExt = we.eTo
+      val iso = getIsoByElem(eExt)
+      iso
+
+    case we: WrapperElem1[a, Reifiable[ext], cbase, cw] @unchecked =>
+      implicit val ea = we.eItem
+      implicit val eBase = we.baseElem
+      implicit val eExt = we.eTo
+      val iso = getIsoByElem(eExt)
+      iso
     case ee: EntityElem[_] =>
       identityIso(ee)
     case be: BaseElem[_] =>
