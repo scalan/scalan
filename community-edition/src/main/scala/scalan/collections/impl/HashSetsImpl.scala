@@ -1,3 +1,4 @@
+
 package scalan.collections
 package impl
 
@@ -10,22 +11,31 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait HashSetsAbs extends Scalan with HashSets {
+trait HashSetsAbs extends HashSets with Scalan {
   self: ScalanCommunityDsl =>
+
   // single proxy for each type family
   implicit def proxySHashSet[A](p: Rep[SHashSet[A]]): SHashSet[A] = {
     proxyOps[SHashSet[A]](p)(classTag[SHashSet[A]])
   }
-  // BaseTypeEx proxy
+
+  // TypeWrapper proxy
   //implicit def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
   //  proxyOps[SHashSet[A]](p.asRep[SHashSet[A]])
 
   implicit def unwrapValueOfSHashSet[A](w: Rep[SHashSet[A]]): Rep[HashSet[A]] = w.wrappedValueOfBaseType
 
   implicit def defaultSHashSetElem[A:Elem]: Elem[SHashSet[A]] = element[SHashSetImpl[A]].asElem[SHashSet[A]]
+
   implicit def hashSetElement[A:Elem]: Elem[HashSet[A]]
 
   implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, SHashSet[A]] = elem.asInstanceOf[SHashSetElem[A, SHashSet[A]]]
+
+  implicit val containerHashSet: Cont[HashSet] = new Container[HashSet] {
+    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[HashSet[A]]
+    def lift[A](implicit evA: Elem[A]) = element[HashSet[A]]
+  }
+
   implicit val containerSHashSet: Cont[SHashSet] = new Container[SHashSet] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SHashSet[A]]
     def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
@@ -37,6 +47,8 @@ trait HashSetsAbs extends Scalan with HashSets {
     def to(x: Rep[SHashSet[A]]) = x.map(iso.to _)
     lazy val defaultRepTo = Default.defaultVal(SHashSet.empty[B])
   }
+
+  // familyElem
   class SHashSetElem[A, To <: SHashSet[A]](implicit val eA: Elem[A])
     extends EntityElem1[A, To, SHashSet](eA,container[SHashSet]) {
     override def isEntityType = true
@@ -46,7 +58,7 @@ trait HashSetsAbs extends Scalan with HashSets {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
     def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[SHashSetElem[_,_]])
+      //assert(x.selfType1.isInstanceOf[SHashSetElem[_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -95,10 +107,10 @@ trait HashSetsAbs extends Scalan with HashSets {
   // elem for concrete class
   class SHashSetImplElem[A](val iso: Iso[SHashSetImplData[A], SHashSetImpl[A]])(implicit eA: Elem[A])
     extends SHashSetElem[A, SHashSetImpl[A]]
-    with ViewElem1[A, SHashSetImplData[A], SHashSetImpl[A], SHashSet] {
+    with ConcreteElem1[A, SHashSetImplData[A], SHashSetImpl[A], SHashSet] {
     override def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ViewElem1].getDefaultRep
-    override lazy val tag = super[ViewElem1].tag
+    override def getDefaultRep = super[ConcreteElem1].getDefaultRep
+    override lazy val tag = super[ConcreteElem1].tag
   }
 
   // state representation type
@@ -128,7 +140,7 @@ trait HashSetsAbs extends Scalan with HashSets {
       mkSHashSetImpl(wrappedValueOfBaseType)
   }
   object SHashSetImplMatcher {
-    def unapply[A:Elem](p: Rep[SHashSet[A]]) = unmkSHashSetImpl(p)
+    def unapply[A](p: Rep[SHashSet[A]]) = unmkSHashSetImpl(p)
   }
   def SHashSetImpl: Rep[SHashSetImplCompanionAbs]
   implicit def proxySHashSetImplCompanion(p: Rep[SHashSetImplCompanionAbs]): SHashSetImplCompanionAbs = {
@@ -154,7 +166,7 @@ trait HashSetsAbs extends Scalan with HashSets {
 
   // 6) smart constructor and deconstructor
   def mkSHashSetImpl[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]]
-  def unmkSHashSetImpl[A:Elem](p: Rep[SHashSet[A]]): Option[(Rep[HashSet[A]])]
+  def unmkSHashSetImpl[A](p: Rep[SHashSet[A]]): Option[(Rep[HashSet[A]])]
 }
 
 // Seq -----------------------------------
@@ -166,11 +178,13 @@ trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
       SHashSetImpl(HashSet.empty[A])
   }
 
-    // override proxy if we deal with BaseTypeEx
+  // override proxy if we deal with TypeWrapper
   //override def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
   //  proxyOpsEx[HashSet[A],SHashSet[A], SeqSHashSetImpl[A]](p, bt => SeqSHashSetImpl(bt))
 
-    implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] = new SeqBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
+  implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] =
+      new SeqBaseElemEx1[A, SHashSet[A], HashSet](
+           element[SHashSet[A]])(element[A], container[HashSet], DefaultOfHashSet[A])
 
   case class SeqSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])
@@ -191,7 +205,7 @@ trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
   def mkSHashSetImpl[A]
       (wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
       new SeqSHashSetImpl[A](wrappedValueOfBaseType)
-  def unmkSHashSetImpl[A:Elem](p: Rep[SHashSet[A]]) = p match {
+  def unmkSHashSetImpl[A](p: Rep[SHashSet[A]]) = p match {
     case p: SHashSetImpl[A] @unchecked =>
       Some((p.wrappedValueOfBaseType))
     case _ => None
@@ -217,7 +231,11 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
       case _ => false
     }
   }
-  implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] = new ExpBaseElemEx[HashSet[A], SHashSet[A]](element[SHashSet[A]])(weakTypeTag[HashSet[A]], DefaultOfHashSet[A])
+
+  implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] =
+      new ExpBaseElemEx1[A, SHashSet[A], HashSet](
+           element[SHashSet[A]])(element[A], container[HashSet], DefaultOfHashSet[A])
+
   case class ExpSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])
       (implicit eA: Elem[A])
@@ -237,7 +255,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   def mkSHashSetImpl[A]
     (wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
     new ExpSHashSetImpl[A](wrappedValueOfBaseType)
-  def unmkSHashSetImpl[A:Elem](p: Rep[SHashSet[A]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkSHashSetImpl[A](p: Rep[SHashSet[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SHashSetImplElem[A] @unchecked =>
       Some((p.asRep[SHashSetImpl[A]].wrappedValueOfBaseType))
     case _ =>

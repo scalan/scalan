@@ -6,7 +6,7 @@ import scalan.common.Default
 trait AbstractStrings extends Base with BaseTypes { self: AbstractStringsDsl =>
 
   type RStr = Rep[String]
-  trait AString extends BaseTypeEx[String, AString] { self =>
+  trait AString extends TypeWrapper[String, AString] { self =>
     def wrappedValueOfBaseType: Rep[String]
   }
   trait AStringCompanion extends ExCompanion0[String]  {

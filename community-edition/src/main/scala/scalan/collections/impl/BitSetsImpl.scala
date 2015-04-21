@@ -1,3 +1,4 @@
+
 package scalan.collections
 package impl
 
@@ -8,13 +9,15 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait BitSetsAbs extends Scalan with BitSets {
+trait BitSetsAbs extends BitSets with Scalan {
   self: ScalanCommunityDsl =>
+
   // single proxy for each type family
   implicit def proxyBitSet(p: Rep[BitSet]): BitSet = {
     proxyOps[BitSet](p)(classTag[BitSet])
   }
 
+  // familyElem
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
     override def isEntityType = true
@@ -23,7 +26,7 @@ trait BitSetsAbs extends Scalan with BitSets {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertBitSet(x.asRep[BitSet])
     def convertBitSet(x : Rep[BitSet]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[BitSetElem[_]])
+      //assert(x.selfType1.isInstanceOf[BitSetElem[_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -49,10 +52,10 @@ trait BitSetsAbs extends Scalan with BitSets {
   // elem for concrete class
   class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])
     extends BitSetElem[BoolCollBitSet]
-    with ViewElem[BoolCollBitSetData, BoolCollBitSet] {
+    with ConcreteElem[BoolCollBitSetData, BoolCollBitSet] {
     override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type

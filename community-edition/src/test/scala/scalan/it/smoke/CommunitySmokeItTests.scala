@@ -17,6 +17,14 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       Collection.singleton(1)
     }
 
+    def sSeqMap(x: Rep[SSeq[Int]]) = {
+      x.map({i: Rep[Int] => i+1})
+    }
+    lazy val seqsSimpleMap = fun { x: Rep[Seq[Int]] =>
+      val seqImp = SSeqImpl(x)
+      val res = sSeqMap(seqImp)
+      res.wrappedValueOfBaseType
+    }
     lazy val expBaseArrays = fun { xss: Arr[Array[Int]] =>
       val pss1: Arr[Collection[Int]] = xss.map { xs: Rep[Array[Int]] => Collection(xs)}
       val res = pss1.map { ps: Coll[Int] =>

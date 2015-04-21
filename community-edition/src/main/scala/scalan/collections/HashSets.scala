@@ -10,7 +10,7 @@ trait HashSets extends Base with BaseTypes { self: ScalanCommunityDsl =>
   type RHS[A] = Rep[SHashSet[A]]
 
   @ContainerType
-  trait SHashSet[A] extends BaseTypeEx[HashSet[A], SHashSet[A]] { self =>
+  trait SHashSet[A] extends TypeWrapper[HashSet[A], SHashSet[A]] { self =>
     implicit def eA: Elem[A]
     def wrappedValueOfBaseType: Rep[HashSet[A]]
     @External def +(elem: Rep[A]): Rep[SHashSet[A]]

@@ -143,18 +143,18 @@ trait GraphVizExport { self: ScalanExp =>
         if (!emitted1.contains(s)) {
           d match {
             case g: AstGraph if shouldEmitCluster(g) =>
-              stream.println(s"subgraph cluster_$s {")
-              stream.println(s"style=dashed; color=${StringUtil.quote(clusterColor(g))}")
+//              stream.println(s"subgraph cluster_$s {")
+//              stream.println(s"style=dashed; color=${StringUtil.quote(clusterColor(g))}")
               emitNode(s, d)
               // for lambdas, do we want lambdaDeps instead?
               val sources = g.boundVars
-              if (sources.nonEmpty) {
-                stream.println(s"{rank=source; ${sources.mkString("; ")}}")
-              }
+//              if (sources.nonEmpty) {
+//                stream.println(s"{rank=source; ${sources.mkString("; ")}}")
+//              }
               val schedule1 = clusterSchedule(g)
               val emitted2 = emitClusters(schedule1, emitted1 + s)
-              stream.println(s"{rank=sink; $s}")
-              stream.println("}")
+//              stream.println(s"{rank=sink; $s}")
+              //stream.println("}")
               emitted2
             case _ =>
               emitNode(s, d)

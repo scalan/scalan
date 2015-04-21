@@ -39,9 +39,10 @@ trait Scalan
   with Metadata
   with ListOps
   with ListViews
+  with ConvertersDsl
 
 trait ScalanDsl
-  extends Scalan
+extends Scalan
   with ExceptionsDsl
   with AbstractStringsDsl
 
@@ -73,9 +74,10 @@ trait ScalanSeq
   with MetadataSeq
   with ListOpsSeq
   with ListViewsSeq
+  with ConvertersDslSeq
 
 trait ScalanCtxSeq
-  extends ScalanDsl
+extends ScalanDsl
   with ScalanSeq
   with ExceptionsDslSeq
   with AbstractStringsDslSeq
@@ -110,9 +112,10 @@ trait ScalanExp
   with MetadataExp
   with ListOpsExp
   with ListViewsExp
+  with ConvertersDslExp
 
 trait ScalanCtxExp
-  extends ScalanDsl
+extends ScalanDsl
   with ScalanExp
   with Expressions
   with GraphVizExport

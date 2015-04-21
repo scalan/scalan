@@ -307,6 +307,9 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   protected var methodCallReceivers = Set.empty[Exp[_]]
 
+  type SomeCont = Cont[C] forSome { type C[_] }
+  type TypeDesc = Elem[_] | SomeCont
+
   private def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = {
     val e = receiver.elem
     val tag = e match {
@@ -314,6 +317,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       case _ => e.tag
     }
     val tpe = tag.tpe
+    val instanceElemMap = getElemsMapFromInstanceElem(e, tpe)
     val scalaMethod = findScalaMethod(tpe, m)
     // http://stackoverflow.com/questions/29256896/get-precise-return-type-from-a-typetag-and-a-method
     val returnType = scalaMethod.returnType.asSeenFrom(tpe, scalaMethod.owner).normalize
@@ -321,18 +325,65 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       // FIXME can't figure out proper comparison with RepType here
       case TypeRef(_, sym, List(tpe1)) if sym.name.toString == "Rep" =>
         // FIXME assumed for now to correspond to the method's type params, in the same order
-        val elemParams = args.collect { case e: Elem[_] => e }
-        val elemMap = scalaMethod.typeParams.zip(elemParams).toMap
-        // check if return type is a BaseTypeEx
-        val baseType = tpe.baseType(Symbols.BaseTypeExSym) match {
+        val elemParams = args.collect {
+          case e: Elem[_] => scala.Left(e)
+          case c: SomeCont @unchecked => scala.Right[Elem[_], SomeCont](c)
+        }
+        val elemMap = instanceElemMap ++ scalaMethod.typeParams.zip(elemParams).toMap
+        // check if return type is a TypeWrapper
+        val baseType = tpe.baseType(Symbols.TypeWrapperSym) match {
           case NoType => definitions.NothingTpe
-          // e.g. Throwable from BaseTypeEx[Throwable, SThrowable]
+          // e.g. Throwable from TypeWrapper[Throwable, SThrowable]
           case TypeRef(_, _, params) => params(0).asSeenFrom(tpe, scalaMethod.owner)
-          case unexpected => !!!(s"unexpected result from ${tpe1}.baseType(BaseTypeEx): $unexpected")
+          case unexpected => !!!(s"unexpected result from ${tpe1}.baseType(TypeWrapper): $unexpected")
         }
         elemFromType(tpe1, elemMap, baseType)
       case _ =>
         !!!(s"Return type of method $m should be a Rep, but is $returnType")
+    }
+  }
+
+  private def getElemsMapFromInstanceElem(e: Elem[_], tpe: Type): Map[Symbol, TypeDesc] = {
+    val kvs = tpe.typeSymbol.asType.typeParams.collect {
+      case sym if sym.isParameter =>
+        if (sym.asType.typeParams.size > 0) {
+          // FIXME hardcoding - naming convention is assumed to be consistent with ScalanCodegen
+          val methodName = "c" + sym.name.toString
+          val value = try {
+            val res = invokeMethod(e, methodName).asInstanceOf[SomeCont]
+            scala.Right[Elem[_], SomeCont](res)
+          } catch {
+            case _: Throwable => null
+          }
+          (sym -> value)
+        }
+        else {
+          val methodName = "e" + sym.name.toString
+          val value = try {
+            val res = invokeMethod(e, methodName).asInstanceOf[Elem[_]]
+            scala.Left[Elem[_], SomeCont](res)
+          } catch {
+            case _: Throwable => null
+          }
+          (sym -> value)
+        }
+    }
+    kvs.filter { case (k,v) => v != null }.toMap
+  }
+
+  private def invokeMethod(obj: AnyRef, methodName: String): AnyRef = {
+    try {
+      val method = obj.getClass.getMethod(methodName)
+      try {
+        val result = method.invoke(obj)
+        result
+      } catch {
+        case e: Exception =>
+          !!!(s"Failed to invoke $methodName of object $obj", e)
+      }
+    } catch {
+      case _: NoSuchMethodException =>
+        !!!(s"Failed to find method with name $methodName  of object $obj")
     }
   }
 
@@ -363,7 +414,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   import Symbols._
-  private def elemFromType(tpe: Type, elemMap: Map[Symbol, Elem[_]], baseType: Type): Elem[_] = tpe.normalize match {
+  private def elemFromType(tpe: Type, elemMap: Map[Symbol, TypeDesc], baseType: Type): Elem[_] = tpe.normalize match {
     case TypeRef(_, classSymbol, params) => classSymbol match {
       case UnitSym => UnitElement
       case BooleanSym => BoolElement
@@ -387,23 +438,40 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       case ListSym =>
         listElement(elemFromType(params(0), elemMap, baseType))
       case _ if classSymbol.asType.isAbstractType =>
-        elemMap.getOrElse(classSymbol, !!!(s"Can't create element for abstract type $tpe"))
+        elemMap.getOrElse(classSymbol, !!!(s"Can't create element for abstract type $tpe")).left.get
       case _ if classSymbol.isClass =>
-        val elemClasses = Array.fill[Class[_]](params.length)(classOf[Element[_]])
-        val paramElems = params.map(elemFromType(_, elemMap, baseType))
+        //val elemClasses = Array.fill[Class[_]](params.length)(classOf[Element[_]])
+        val paramDescs = params.map(typaram => {
+          typaram match {
+            case TypeRef(_, classSymbol, params) if typaram.takesTypeArgs =>
+              // handle high-kind argument
+              // FIXME use better way of lookup other than by names (to avoid name collisions)
+              val optRes = elemMap.find {case (sym, d) => sym.name == classSymbol.name}
+              val res = optRes.getOrElse(!!!(s"Can't find descriptor for type argument $typaram of $tpe"))._2.right.get
+              res
+            case _ =>
+              elemFromType(typaram, elemMap, baseType)
+          }
+        })
+
+        val descClasses = paramDescs.map {
+          case e: Elem[_] => classOf[Elem[_]]
+          case c: SomeCont @unchecked => classOf[SomeCont]
+          case d => !!!(s"Unknown type descriptior $d")
+        }.toArray
         // entity type or base type
         if (classSymbol.asClass.isTrait || classSymbol == baseType.typeSymbol) {
           // abstract case, call *Element
           val methodName = StringUtil.lowerCaseFirst(classSymbol.name.toString) + "Element"
           // self.getClass will return the final cake, which should contain the method
           try {
-            val method = self.getClass.getMethod(methodName, elemClasses: _*)
+            val method = self.getClass.getMethod(methodName, descClasses: _*)
             try {
-              val resultElem = method.invoke(self, paramElems: _*)
+              val resultElem = method.invoke(self, paramDescs: _*)
               resultElem.asInstanceOf[Elem[_]]
             } catch {
               case e: Exception =>
-                !!!(s"Failed to invoke $methodName($paramElems)", e)
+                !!!(s"Failed to invoke $methodName($paramDescs)", e)
             }
           } catch {
             case _: NoSuchMethodException =>
@@ -413,13 +481,13 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
           // concrete case, call viewElement(*Iso)
           val methodName = "iso" + classSymbol.name.toString
           try {
-            val method = self.getClass.getMethod(methodName, elemClasses: _*)
+            val method = self.getClass.getMethod(methodName, descClasses: _*)
             try {
-              val resultIso = method.invoke(self, paramElems: _*)
+              val resultIso = method.invoke(self, paramDescs: _*)
               resultIso.asInstanceOf[Iso[_, _]].eTo
             } catch {
               case e: Exception =>
-                !!!(s"Failed to invoke $methodName($paramElems)", e)
+                !!!(s"Failed to invoke $methodName($paramDescs)", e)
             }
           } catch {
             case _: NoSuchMethodException =>
@@ -427,6 +495,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
           }
         }
     }
+//    case PolyType(params, resultType) =>
+//      tpe match {
+//        case TypeRef(_, classSymbol, params) =>
+//          val res = elemMap.getOrElse(classSymbol, !!!(s"Can't create element for abstract type $tpe")).right.get
+//          res
+//      }
     case _ => ???(s"Failed to create element from type $tpe")
   }
 
@@ -451,7 +525,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val ArraySym = typeOf[Array[_]].typeSymbol
     val ListSym = typeOf[List[_]].typeSymbol
 
-    val BaseTypeExSym = typeOf[BaseTypeEx[_, _]].typeSymbol
+    val TypeWrapperSym = typeOf[TypeWrapper[_, _]].typeSymbol
 
     val SuperTypesOfDef = typeOf[Def[_]].baseClasses.toSet
   }

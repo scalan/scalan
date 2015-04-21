@@ -24,5 +24,7 @@ object PrintExtensions {
 
   implicit class StringExtensions(val str: String) extends AnyVal {
     def stripAndTrim = str.stripMargin.stripPrefix("\n").stripLineEnd
+    def opt(show: String => String = _.toString, default: String = ""): String =
+      (!str.isEmpty).opt(show(str), default)
   }
 }

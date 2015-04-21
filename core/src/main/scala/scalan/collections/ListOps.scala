@@ -48,12 +48,26 @@ trait ListOps { self: Scalan =>
     def empty[T: Elem] = replicate(0, element[T].defaultRepValue)
   }
 
-  case class ListElem[T](eItem: Elem[T]) extends Element[List[T]] {
+  implicit val listContainer: Cont[List] = new Container[List] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[List[T]]
+    def lift[T](implicit eT: Elem[T]) = element[List[T]]
+  }
+
+  case class ListIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, List](iso) {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    def from(x: Lst[B]) = x.map(iso.from _)
+    def to(x: Lst[A]) = x.map(iso.to _)
+    lazy val defaultRepTo = Default.defaultVal(SList.empty[B])
+  }
+
+  case class ListElem[A](override val eItem: Elem[A])
+    extends EntityElem1[A, List[A], List](eItem, container[List]) {
     override def isEntityType = eItem.isEntityType
 
     lazy val tag = {
       implicit val rt = eItem.tag
-      weakTypeTag[List[T]]
+      weakTypeTag[List[A]]
     }
 
     protected def getDefaultRep = SList.empty(eItem)

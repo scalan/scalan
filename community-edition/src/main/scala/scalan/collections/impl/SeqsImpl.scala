@@ -1,3 +1,4 @@
+
 package scalan.collections
 package impl
 
@@ -10,22 +11,31 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait SeqsAbs extends Scalan with Seqs {
+trait SeqsAbs extends Seqs with Scalan {
   self: ScalanCommunityDsl =>
+
   // single proxy for each type family
   implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] = {
     proxyOps[SSeq[A]](p)(classTag[SSeq[A]])
   }
-  // BaseTypeEx proxy
+
+  // TypeWrapper proxy
   //implicit def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOps[SSeq[A]](p.asRep[SSeq[A]])
 
   implicit def unwrapValueOfSSeq[A](w: Rep[SSeq[A]]): Rep[Seq[A]] = w.wrappedValueOfBaseType
 
   implicit def defaultSSeqElem[A:Elem]: Elem[SSeq[A]] = element[SSeqImpl[A]].asElem[SSeq[A]]
+
   implicit def seqElement[A:Elem]: Elem[Seq[A]]
 
   implicit def castSSeqElement[A](elem: Elem[SSeq[A]]): SSeqElem[A, SSeq[A]] = elem.asInstanceOf[SSeqElem[A, SSeq[A]]]
+
+  implicit val containerSeq: Cont[Seq] = new Container[Seq] {
+    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Seq[A]]
+    def lift[A](implicit evA: Elem[A]) = element[Seq[A]]
+  }
+
   implicit val containerSSeq: Cont[SSeq] = new Container[SSeq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SSeq[A]]
     def lift[A](implicit evA: Elem[A]) = element[SSeq[A]]
@@ -37,6 +47,8 @@ trait SeqsAbs extends Scalan with Seqs {
     def to(x: Rep[SSeq[A]]) = x.map(iso.to _)
     lazy val defaultRepTo = Default.defaultVal(SSeq.empty[B])
   }
+
+  // familyElem
   class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
     extends EntityElem1[A, To, SSeq](eA,container[SSeq]) {
     override def isEntityType = true
@@ -46,7 +58,7 @@ trait SeqsAbs extends Scalan with Seqs {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
     def convertSSeq(x : Rep[SSeq[A]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[SSeqElem[_,_]])
+      //assert(x.selfType1.isInstanceOf[SSeqElem[_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -150,10 +162,10 @@ trait SeqsAbs extends Scalan with Seqs {
   // elem for concrete class
   class SSeqImplElem[A](val iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit eA: Elem[A])
     extends SSeqElem[A, SSeqImpl[A]]
-    with ViewElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
+    with ConcreteElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
     override def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ViewElem1].getDefaultRep
-    override lazy val tag = super[ViewElem1].tag
+    override def getDefaultRep = super[ConcreteElem1].getDefaultRep
+    override lazy val tag = super[ConcreteElem1].tag
   }
 
   // state representation type
@@ -183,7 +195,7 @@ trait SeqsAbs extends Scalan with Seqs {
       mkSSeqImpl(wrappedValueOfBaseType)
   }
   object SSeqImplMatcher {
-    def unapply[A:Elem](p: Rep[SSeq[A]]) = unmkSSeqImpl(p)
+    def unapply[A](p: Rep[SSeq[A]]) = unmkSSeqImpl(p)
   }
   def SSeqImpl: Rep[SSeqImplCompanionAbs]
   implicit def proxySSeqImplCompanion(p: Rep[SSeqImplCompanionAbs]): SSeqImplCompanionAbs = {
@@ -209,7 +221,7 @@ trait SeqsAbs extends Scalan with Seqs {
 
   // 6) smart constructor and deconstructor
   def mkSSeqImpl[A](wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]]
-  def unmkSSeqImpl[A:Elem](p: Rep[SSeq[A]]): Option[(Rep[Seq[A]])]
+  def unmkSSeqImpl[A](p: Rep[SSeq[A]]): Option[(Rep[Seq[A]])]
 }
 
 // Seq -----------------------------------
@@ -230,11 +242,13 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
       SSeqImpl(Seq.fromList[A](list))
   }
 
-    // override proxy if we deal with BaseTypeEx
+  // override proxy if we deal with TypeWrapper
   //override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOpsEx[Seq[A],SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
 
-    implicit def seqElement[A:Elem]: Elem[Seq[A]] = new SeqBaseElemEx[Seq[A], SSeq[A]](element[SSeq[A]])(weakTypeTag[Seq[A]], DefaultOfSeq[A])
+  implicit def seqElement[A:Elem]: Elem[Seq[A]] =
+      new SeqBaseElemEx1[A, SSeq[A], Seq](
+           element[SSeq[A]])(element[A], container[Seq], DefaultOfSeq[A])
 
   case class SeqSSeqImpl[A]
       (override val wrappedValueOfBaseType: Rep[Seq[A]])
@@ -276,7 +290,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
   def mkSSeqImpl[A]
       (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
       new SeqSSeqImpl[A](wrappedValueOfBaseType)
-  def unmkSSeqImpl[A:Elem](p: Rep[SSeq[A]]) = p match {
+  def unmkSSeqImpl[A](p: Rep[SSeq[A]]) = p match {
     case p: SSeqImpl[A] @unchecked =>
       Some((p.wrappedValueOfBaseType))
     case _ => None
@@ -302,7 +316,11 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
       case _ => false
     }
   }
-  implicit def seqElement[A:Elem]: Elem[Seq[A]] = new ExpBaseElemEx[Seq[A], SSeq[A]](element[SSeq[A]])(weakTypeTag[Seq[A]], DefaultOfSeq[A])
+
+  implicit def seqElement[A:Elem]: Elem[Seq[A]] =
+      new ExpBaseElemEx1[A, SSeq[A], Seq](
+           element[SSeq[A]])(element[A], container[Seq], DefaultOfSeq[A])
+
   case class ExpSSeqImpl[A]
       (override val wrappedValueOfBaseType: Rep[Seq[A]])
       (implicit eA: Elem[A])
@@ -322,7 +340,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
   def mkSSeqImpl[A]
     (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
     new ExpSSeqImpl[A](wrappedValueOfBaseType)
-  def unmkSSeqImpl[A:Elem](p: Rep[SSeq[A]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkSSeqImpl[A](p: Rep[SSeq[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SSeqImplElem[A] @unchecked =>
       Some((p.asRep[SSeqImpl[A]].wrappedValueOfBaseType))
     case _ =>

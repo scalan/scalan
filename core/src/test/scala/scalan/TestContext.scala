@@ -11,7 +11,7 @@ import scalan.util.FileUtil
  */
 abstract class TestContext(suite: TestsUtil, testName: String) extends ScalanCtxExp {
   override def isInvokeEnabled(d: Def[_], m: Method) = true
-  override def shouldUnpack(e: ViewElem[_, _]) = true
+  override def shouldUnpack(e: Elem[_]) = true
   def emit(name: String, ss: Exp[_]*) =
     emitDepGraph(ss, FileUtil.file(suite.prefix, testName, s"$name.dot"))(defaultGraphVizConfig)
 }

@@ -3,7 +3,25 @@ package scalan.meta
 import com.typesafe.scalalogging.slf4j.StrictLogging
 
 class BoilerplateTool extends StrictLogging {
-  val coreTypeSynonyms = Map(
+  val scalanTypeSynonyms = Map(
+    "Conv" -> "Converter"
+  )
+  lazy val scalanConfig = CodegenConfig(
+    name = "scalan",
+    srcPath = "../core/src/main/scala",
+    entityFiles = List(
+      "scalan/Converters.scala"
+    ),
+    baseContextTrait = "", // not defined means not declare
+    seqContextTrait = "",
+    stagedContextTrait = "",
+    extraImports = List(
+      "scala.reflect.runtime.universe._", "scala.reflect._",
+      "scalan.common.Default"),
+    scalanTypeSynonyms
+  )
+
+  val coreTypeSynonyms = scalanTypeSynonyms ++ Map(
     "RThrow" -> "Throwable",
     "Arr" -> "Array",
     "MM" -> "MMap",
@@ -43,6 +61,7 @@ class BoilerplateTool extends StrictLogging {
     srcPath = "../core/src/test/scala",
     entityFiles = List(
       "scalan/common/Segments.scala"
+      , "scalan/common/Kinds.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -205,17 +224,20 @@ class BoilerplateTool extends StrictLogging {
     }.distinct
 
   val configsMap = Map(
-    "graphs" -> List(graphConfig),
+    "scalan" -> List(scalanConfig),
+    "core" -> List(coreConfig),
+    "coretests" -> List(coreTestsConfig),
     "collections" -> List(collectionsConfig),
     "core" -> List(coreConfig, coreTestsConfig),
     "core-test" -> List(coreTestsConfig),
     "mt" -> List(metaTestConfig),
+    "graphs" -> List(graphConfig),
     "ce" -> List(ceConfig),
     "la" -> List(laConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig),
-    "all" -> List(coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, eeConfig)
+    "ce-all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig),
+    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, eeConfig)
   )
 
   def main(args: Array[String]) {
