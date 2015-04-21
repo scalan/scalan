@@ -36,8 +36,17 @@ class CollectionViewTests extends BaseTests { suite =>
     testGetIso(element[ListCollection[Segment]], element[List[Segment]])
     testGetIso(element[ListCollection[Interval]], element[List[(Int,Int)]])
 
+    // wrappers
     testGetIso(element[Seq[Int]], element[Seq[Int]])
+    testGetIso(element[Seq[(Int,Int)]], element[Seq[(Int, Int)]])
+    testGetIso(element[Seq[Segment]], element[Seq[Segment]])
+    //testGetIso(element[Seq[Interval]], element[Seq[(Int, Int)]])
+
     testGetIso(element[SSeq[Int]], element[Seq[Int]])
+    testGetIso(element[SSeq[(Int,Int)]], element[Seq[(Int, Int)]])
+    testGetIso(element[SSeq[Segment]], element[Seq[Segment]])
+    //testGetIso(element[SSeq[Interval]], element[Seq[(Int, Int)]])
+
     testGetIso(element[SSeqImpl[Int]], element[Seq[Int]])
 
     testGetIso(element[Throwable], element[Throwable])
