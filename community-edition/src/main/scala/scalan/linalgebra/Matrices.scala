@@ -156,7 +156,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
-      val items = rows.map(v => v.nonZeroValues).flatMap(v => v)
+      val items = rows.flatMap(v => v.nonZeroValues) //.flatMap(v => v)
       items.reduce.toDouble / items.length.toDouble
     }
   }
