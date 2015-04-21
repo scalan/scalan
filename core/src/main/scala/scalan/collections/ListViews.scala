@@ -60,43 +60,6 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
     lazy val defaultRepTo = Default.defaultVal(SList.empty[B])
   }
 
-//  def listIso[A, B](iso: Iso[A, B]): Iso[List[A], List[B]] = {
-//    implicit val eA = iso.eFrom
-//    implicit val eB = iso.eTo
-//    ListIso(iso)
-//  }
-  
-//  val HasViewListArg = HasArg(hasViewListArg)
-//
-//  protected def hasViewListArg(s: Exp[_]): Boolean = s match {
-//    case Def(_: ViewList[_, _]) => true
-//    case _ => false
-//  }
-
-//  def mapUnderlyingList[A,B,C](view: ViewList[A,B], f: Rep[B=>C]): Lst[C] = {
-//    val iso = view.innerIso
-//    implicit val eA = iso.eFrom
-//    implicit val eB = iso.eTo
-//    implicit val eC: Elem[C] = f.elem.eRange
-//    view.source.map { x => f(iso.to(x)) }
-//  }
-//
-//  def filterUnderlyingList[A, B](view: ViewList[A, B], f: Rep[B => Boolean]): Lst[B] = {
-//    val iso = view.innerIso
-//    implicit val eA = iso.eFrom
-//    implicit val eB = iso.eTo
-//    val filtered = view.source.filter { x => f(iso.to(x)) }
-//    ViewList(filtered)(iso)
-//  }
-//
-//  def liftViewListFromArgs[T](d: Def[T])/*(implicit eT: Elem[T])*/: Option[Exp[_]] = d match {
-//    case ListMap(Def(view: ViewList[_, _]), f) =>
-//      Some(mapUnderlyingList(view, f))
-//    case ListFilter(Def(view: ViewList[_, _]), f) =>
-//      Some(filterUnderlyingList(view, f))
-//    case _ => None
-//  }
-
   override def rewriteDef[T](d: Def[T]) = d match {
     case ListLength(Def(ViewList(arr: Lst[a]@unchecked))) =>
       list_length(arr)
@@ -125,27 +88,27 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
         super.rewriteDef(d)
     }
     case lm: ListFlatMap[_,c] => (lm.xs, lm.f) match {
-      case (xs: Lst[a]@unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, arrIso: ArrayIso[b, c])))) => {
-        val f1 = f.asRep[a => Array[c]]
+      case (xs: Lst[a]@unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, listIso: ListIso[b, c])))) => {
+        val f1 = f.asRep[a => List[c]]
         val xs1 = xs.asRep[List[a]]
         implicit val eA = xs1.elem.eItem
-        implicit val eC = arrIso.iso.eFrom
+        implicit val eC = listIso.iso.eFrom
 
         val s = xs1.flatMap { x =>
           val tmp = f1(x)
-          arrIso.from(tmp)
+          listIso.from(tmp)
         }
-        val res = ViewList(s)(ListIso(arrIso.iso))
+        val res = ViewList(s)(listIso)
         res
       }
       case (Def(view: ViewList[a, b]), _) => {
         val iso = view.innerIso
-        val f = lm.f.asRep[b => Array[c]]
+        val f = lm.f.asRep[b => List[c]]
         implicit val eA = iso.eFrom
         implicit val eB = iso.eTo
-        implicit val eAC: Elem[Array[c]] = f.elem.eRange
+        implicit val eAC: Elem[List[c]] = f.elem.eRange
         implicit val eC = eAC.eItem
-        view.source.flatMap { x => f(iso.to(x))}
+        view.source.flatMap { x => f(iso.to(x)) }
       }
       case _ =>
         super.rewriteDef(d)
@@ -158,7 +121,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       ViewList(filtered)(ListIso(iso))
     }
     case view1@ViewList(Def(view2@ViewList(arr))) => {
-      val compIso = composeIso(view2.innerIso, view1.innerIso)
+      val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
       ViewList(arr)(ListIso(compIso))
     }

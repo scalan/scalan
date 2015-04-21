@@ -17,6 +17,10 @@ trait StringOps extends UnBinOps { self: Scalan =>
     def matches(rhs: Rep[String]) = StringMatches().apply(lhs, rhs)
   }
 
+  object StringObject {
+    def empty = toRep("")
+  }
+
   def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String]
   def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char]
 

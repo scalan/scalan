@@ -238,7 +238,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
       val res = ViewArrayBuffer(s)(ArrayBufferIso(iso))
       res
     case view1@ViewArrayBuffer(Def(view2@ViewArrayBuffer(arr))) =>
-      val compIso = composeIso(view2.innerIso, view1.innerIso)
+      val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
       ViewArrayBuffer(arr)(ArrayBufferIso(compIso))
     case _ =>
@@ -350,8 +350,8 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
     case s: Exp[_] => {
       val elem = s.elem
       elem match { 
-        case ae:ArrayBufferElem[_] => ArrayBufferRep(sym)(ae.asInstanceOf[ArrayBufferElem[T]].eItem)
-	case _ => ArrayBufferRep(sym)(elem.asInstanceOf[Elem[T]])
+        case ae: ArrayBufferElem[_] => ArrayBufferRep(sym)(ae.asInstanceOf[ArrayBufferElem[T]].eItem)
+	      case _ => ArrayBufferRep(sym)(elem.asInstanceOf[Elem[T]])
       }
     }
     case _ => ???("cannot resolve ReifiableObject for symbol:", sym)

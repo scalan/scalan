@@ -151,6 +151,8 @@ trait ArrayOps { self: Scalan =>
 
   def array_empty[T: Elem]: Arr[T]
   def array_toList[T:Elem](xs: Arr[T]): Lst[T]
+
+  def array_binary_search[T](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T]
 }
 
 trait ArrayOpsSeq extends ArrayOps {
@@ -171,7 +173,7 @@ trait ArrayOpsSeq extends ArrayOps {
 
   def array_flat_map[T, R: Elem](xs: Array[T], f: T => Array[R]) = genericArrayOps(xs).flatMap(x => f(x).toSeq)
 
-  def array_reduce[T](xs: Arr[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)((x, y) => m.append((x, y)))
+  def array_reduce[T](xs: Arr[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)(m.append)
 
   def array_fold[T, S: Elem](xs: Arr[T], init: Rep[S], f: Rep[((S, T)) => S]): Rep[S] = {
     var state = init
@@ -219,7 +221,7 @@ trait ArrayOpsSeq extends ArrayOps {
   }
 
   def array_scan[T](xs: Array[T])(implicit m: RepMonoid[T], elem: Elem[T]): Rep[(Array[T], T)] = {
-    val scan = xs.scan(m.zero)((x, y) => m.append((x, y)))
+    val scan = xs.scan(m.zero)(m.append)
     val sum = scan.last
     (scan.dropRight(1).toArray, sum)
   }
@@ -275,6 +277,8 @@ trait ArrayOpsSeq extends ArrayOps {
   def array_empty[T: Elem]: Arr[T] = scala.Array.empty[T]
   def array_toList[T:Elem](xs: Array[T]): Lst[T] = xs.to[List]
   def arrayToClassTag[T](xs: Rep[Array[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
+
+  def array_binary_search[T](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = ???
 }
 
 trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
@@ -393,6 +397,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   }
   case class ArrayToList[T](xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
     override def mirror(t: Transformer) = ArrayToList(t(xs))
+  }
+
+  case class ArrayBinarySearch[T: Elem](i: Exp[T], xs: Exp[Array[T]], o: Ordering[T]) extends Def[T] with ArrayMethod[T] {
+    lazy val selfType = xs.elem.eItem
+    override def mirror(t: Transformer) = ArrayBinarySearch(t(i), t(xs), o)
   }
 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
@@ -572,6 +581,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     val second = secondOnlyExp(l.x, newX, l.y)
     val newLam = new Lambda[A, B](None, newX, second.asRep[B], newSym, l.mayInline)
     toExp(newLam, newSym)
+  }
+
+  def array_binary_search[T](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = {
+    implicit val eT = is.elem.eItem
+    ArrayBinarySearch(i, is, o)
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {

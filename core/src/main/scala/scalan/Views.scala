@@ -1,5 +1,7 @@
 package scalan
 
+import java.lang.reflect.InvocationTargetException
+
 import scalan.common.Default
 import scala.language.higherKinds
 import scalan.common.Lazy
@@ -7,6 +9,14 @@ import scala.reflect.runtime.universe._
 import scalan.staged.BaseExp
 
 trait Views extends Elems { self: Scalan =>
+  trait Convertable[A] {
+    def convert(x: Rep[Reifiable[_]]): Rep[A] = !!!("should not be called")
+  }
+  abstract class EntityElem[A] extends Elem[A] with Convertable[A] {
+  }
+  abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
+    extends Elem[To] with Convertable[To] {
+  }
 
   // eFrom0 is used to avoid making eFrom implicit in subtypes
   // and support recursive types
@@ -32,20 +42,21 @@ trait Views extends Elems { self: Scalan =>
 
   implicit def viewElement[From, To](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
 
-  abstract class ViewElem[From, To](val iso: Iso[From, To]) extends Elem[To] {
+  trait ViewElem[From, To] extends Elem[To] {
+    def iso: Iso[From, To]
     override def isEntityType = shouldUnpack(this)
-    lazy val tag: WeakTypeTag[To] = iso.tag
+    def tag: WeakTypeTag[To] = iso.tag
     protected def getDefaultRep = iso.defaultRepTo.value
-    def convert(x: Rep[Reifiable[_]]): Rep[To] = !!!("should not be called")
   }
 
   object ViewElem {
     def unapply[From, To](ve: ViewElem[From, To]): Option[Iso[From, To]] = Some(ve.iso)
   }
 
-  abstract class ViewElem1[A,From,To,C[_]](iso: Iso[From, To])
-    (implicit val eItem: Elem[A], val cont: Cont[C])
-    extends ViewElem[From, To](iso) {
+  trait ViewElem1[A,From,To,C[_]]
+    extends ViewElem[From, To] {
+    def eItem: Elem[A]
+    def cont: Cont[C]
   }
 
   object UnpackableElem {
@@ -59,31 +70,15 @@ trait Views extends Elems { self: Scalan =>
     override def isEntityType = false
   }
 
-  trait TypeFamily1[F[_]] {
-    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[F[A]]]
-  }
-  trait TypeFamily2[F[_, _]] {
-    def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[F[A, B]]]
-  }
-  trait TypeFamily3[F[_, _, _]] {
-    def defaultOf[A, B, C](implicit ea: Elem[A], eb: Elem[B], ec: Elem[C]): Default[Rep[F[A, B, C]]]
-  }
+  trait TypeFamily1[F[_]]
+  trait TypeFamily2[F[_, _]]
+  trait TypeFamily3[F[_, _, _]]
 
-  trait ConcreteClass0[C] {
-    def defaultOf: Default[Rep[C]]
-  }
-  trait ConcreteClass1[C[_]] {
-    def defaultOf[A](implicit ea: Elem[A]): Default[Rep[C[A]]]
-  }
-  trait ConcreteClass2[C[_, _]] {
-    def defaultOf[A, B](implicit ea: Elem[A], eb: Elem[B]): Default[Rep[C[A, B]]]
-  }
-  trait ConcreteClass3[T[_, _, _]] {
-    def defaultOf[A, B, C](implicit ea: Elem[A], eb: Elem[B], ec: Elem[C]): Default[Rep[T[A, B, C]]]
-  }
-  trait ConcreteClass4[T[_, _, _, _]] {
-    def defaultOf[A, B, C, D](implicit ea: Elem[A], eb: Elem[B], ec: Elem[C], ed : Elem[D]): Default[Rep[T[A, B, C, D]]]
-  }
+  trait ConcreteClass0[C]
+  trait ConcreteClass1[C[_]]
+  trait ConcreteClass2[C[_, _]]
+  trait ConcreteClass3[T[_, _, _]]
+  trait ConcreteClass4[T[_, _, _, _]]
 
   def identityIso[A](implicit elem: Elem[A]): Iso[A, A] =
     new Iso[A, A] {
@@ -180,14 +175,14 @@ trait Views extends Elems { self: Scalan =>
   def repReifiable_convertTo[T <: Reifiable[_], R <: Reifiable[_]]
                             (x: Rep[T])(implicit eR: Elem[R]): Rep[R] = {
     eR match {
-      case viewE: ViewElem[_,R] @unchecked => viewE.convert(x)
+      case entE: EntityElem[R] @unchecked => entE.convert(x)
       case _ => !!!(s"Cannot convert $x to a value of type ${eR.name}: ViewElem expected but ${eR.tag} found")
     }
   }
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
-  trait UserTypeSeq[T, TImpl <: T] extends Reifiable[T] { thisType: T =>
+  trait UserTypeSeq[T] extends Reifiable[T] { thisType: T =>
     def self = this
   }
 
@@ -216,7 +211,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
   def shouldUnpack(e: ViewElem[_, _]) = unpackTesters.exists(_(e))
 
-  trait UserTypeDef[T, TImpl <: T] extends ReifiableExp[T, TImpl] {
+  trait UserTypeDef[T] extends Def[T] {
     def uniqueOpId = selfType.name
   }
 
@@ -359,36 +354,47 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       implicit val eB = iso.eTo
       val step1 = fun { (x: Rep[a]) =>
         val x_viewed = iso.to(x)
-        val res_viewed = mirrorApply(step.asRep[b => b], x_viewed)
+        val res_viewed = step.asRep[b => b](x_viewed) // mirrorApply(step.asRep[b => b], x_viewed)
         val res = iso.from(res_viewed)
         res
       }
       val isMatch1 = fun { (x: Rep[a]) =>
         val x_viewed = iso.to(x)
-        val res = mirrorApply(isMatch.asRep[b => Boolean], x_viewed)
+        val res = isMatch.asRep[b => Boolean](x_viewed) // mirrorApply(isMatch.asRep[b => Boolean], x_viewed)
         res
       }
       val loopRes = LoopUntil(start1, step1, isMatch1)
       iso.to(loopRes)
     case call @ MethodCall(Def(obj), m, args, neverInvoke) =>
-      if (!neverInvoke && m.getDeclaringClass.isAssignableFrom(obj.getClass) && isInvokeEnabled(obj, m)) {
-        val res = m.invoke(obj, args: _*)
-        res.asInstanceOf[Exp[_]]
-      } else {
-        obj match {
-          case foldD: SumFold[a,b,r] =>
-            val resultElem = call.selfType
-            val res = foldD.sum.fold (
-              a => MethodCall(foldD.left(a), m, args, neverInvoke)(resultElem),
-              b => MethodCall(foldD.right(b), m, args, neverInvoke)(resultElem)
-            )(resultElem)
-            res.asInstanceOf[Exp[_]]
-          case IfThenElse(cond, t, e) =>
-            implicit val elem = call.selfType
-            IF (cond) { MethodCall(t, m, args, neverInvoke)(elem) } ELSE { MethodCall(e, m, args, neverInvoke)(elem) }
-          case _ =>
+      call.tryInvoke match {
+        case InvokeSuccess(res) => res
+        case InvokeFailure(e) =>
+          if (e.isInstanceOf[DelayInvokeException])
             super.rewriteDef(d)
-        }
+          else
+            !!!(s"Failed to invoke $call", e)
+        case InvokeImpossible =>
+          implicit val resultElem: Elem[T] = d.selfType
+          // asRep[T] cast below should be safe
+          // explicit resultElem to make sure both branches have the same type
+          def copyMethodCall(newReceiver: Exp[_]) =
+            mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[T]
+
+          obj match {
+            case SumFold(sum, left, right) =>
+              sum.fold(
+                a => copyMethodCall(left(a)),
+                b => copyMethodCall(right(b))
+              )
+            case IfThenElse(cond, t, e) =>
+              IF (cond) {
+                copyMethodCall(t)
+              } ELSE {
+                copyMethodCall(e)
+              }
+            case _ =>
+              super.rewriteDef(d)
+          }
       }
     case _ => super.rewriteDef(d)
   }

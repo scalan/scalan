@@ -2,10 +2,7 @@ package scalan.collections
 package impl
 
 import scalan._
-import scala.reflect.runtime.universe._
-import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
-import scalan.{ScalanCommunitySeq, ScalanCommunityExp, ScalanCommunity}
 import scala.reflect.runtime.universe._
 import scala.reflect._
 import scalan.common.Default
@@ -15,15 +12,25 @@ trait BitSetsAbs extends Scalan with BitSets {
   self: ScalanCommunityDsl =>
   // single proxy for each type family
   implicit def proxyBitSet(p: Rep[BitSet]): BitSet = {
-    implicit val tag = weakTypeTag[BitSet]
-    proxyOps[BitSet](p)(TagImplicits.typeTagToClassTag[BitSet])
+    proxyOps[BitSet](p)(classTag[BitSet])
   }
 
-  abstract class BitSetElem[From, To <: BitSet](iso: Iso[From, To])
-    extends ViewElem[From, To](iso) {
+  class BitSetElem[To <: BitSet]
+    extends EntityElem[To] {
+    override def isEntityType = true
+    override def tag = {
+      weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
+    }
     override def convert(x: Rep[Reifiable[_]]) = convertBitSet(x.asRep[BitSet])
-    def convertBitSet(x : Rep[BitSet]): Rep[To]
+    def convertBitSet(x : Rep[BitSet]): Rep[To] = {
+      assert(x.selfType1.isInstanceOf[BitSetElem[_]])
+      x.asRep[To]
+    }
+    override def getDefaultRep: Rep[To] = ???
   }
+
+  implicit def bitSetElement =
+    new BitSetElem[BitSet]()
 
   trait BitSetCompanionElem extends CompanionElem[BitSetCompanionAbs]
   implicit lazy val BitSetCompanionElem: BitSetCompanionElem = new BitSetCompanionElem {
@@ -40,9 +47,12 @@ trait BitSetsAbs extends Scalan with BitSets {
   }
 
   // elem for concrete class
-  class BoolCollBitSetElem(iso: Iso[BoolCollBitSetData, BoolCollBitSet])
-    extends BitSetElem[BoolCollBitSetData, BoolCollBitSet](iso) {
-    def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
+  class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])
+    extends BitSetElem[BoolCollBitSet]
+    with ViewElem[BoolCollBitSetData, BoolCollBitSet] {
+    override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
+    override def getDefaultRep = super[ViewElem].getDefaultRep
+    override lazy val tag = super[ViewElem].tag
   }
 
   // state representation type
@@ -52,10 +62,7 @@ trait BitSetsAbs extends Scalan with BitSets {
   class BoolCollBitSetIso
     extends Iso[BoolCollBitSetData, BoolCollBitSet] {
     override def from(p: Rep[BoolCollBitSet]) =
-      unmkBoolCollBitSet(p) match {
-        case Some((bits)) => bits
-        case None => !!!
-      }
+      p.bits
     override def to(p: Rep[Collection[Boolean]]) = {
       val bits = p
       BoolCollBitSet(bits)
@@ -72,7 +79,9 @@ trait BitSetsAbs extends Scalan with BitSets {
 
     def apply(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
       mkBoolCollBitSet(bits)
-    def unapply(p: Rep[BoolCollBitSet]) = unmkBoolCollBitSet(p)
+  }
+  object BoolCollBitSetMatcher {
+    def unapply(p: Rep[BitSet]) = unmkBoolCollBitSet(p)
   }
   def BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs]
   implicit def proxyBoolCollBitSetCompanion(p: Rep[BoolCollBitSetCompanionAbs]): BoolCollBitSetCompanionAbs = {
@@ -98,13 +107,13 @@ trait BitSetsAbs extends Scalan with BitSets {
 
   // 6) smart constructor and deconstructor
   def mkBoolCollBitSet(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet]
-  def unmkBoolCollBitSet(p: Rep[BoolCollBitSet]): Option[(Rep[Collection[Boolean]])]
+  def unmkBoolCollBitSet(p: Rep[BitSet]): Option[(Rep[Collection[Boolean]])]
 }
 
 // Seq -----------------------------------
 trait BitSetsSeq extends BitSetsDsl with ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeSeq[BitSetCompanionAbs, BitSetCompanionAbs] {
+  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeSeq[BitSetCompanionAbs] {
     lazy val selfType = element[BitSetCompanionAbs]
   }
 
@@ -112,24 +121,27 @@ trait BitSetsSeq extends BitSetsDsl with ScalanSeq {
       (override val bits: Rep[Collection[Boolean]])
 
     extends BoolCollBitSet(bits)
-        with UserTypeSeq[BitSet, BoolCollBitSet] {
-    lazy val selfType = element[BoolCollBitSet].asInstanceOf[Elem[BitSet]]
+        with UserTypeSeq[BoolCollBitSet] {
+    lazy val selfType = element[BoolCollBitSet]
   }
-  lazy val BoolCollBitSet = new BoolCollBitSetCompanionAbs with UserTypeSeq[BoolCollBitSetCompanionAbs, BoolCollBitSetCompanionAbs] {
+  lazy val BoolCollBitSet = new BoolCollBitSetCompanionAbs with UserTypeSeq[BoolCollBitSetCompanionAbs] {
     lazy val selfType = element[BoolCollBitSetCompanionAbs]
   }
 
   def mkBoolCollBitSet
       (bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
       new SeqBoolCollBitSet(bits)
-  def unmkBoolCollBitSet(p: Rep[BoolCollBitSet]) =
-    Some((p.bits))
+  def unmkBoolCollBitSet(p: Rep[BitSet]) = p match {
+    case p: BoolCollBitSet @unchecked =>
+      Some((p.bits))
+    case _ => None
+  }
 }
 
 // Exp -----------------------------------
 trait BitSetsExp extends BitSetsDsl with ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeDef[BitSetCompanionAbs, BitSetCompanionAbs] {
+  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeDef[BitSetCompanionAbs] {
     lazy val selfType = element[BitSetCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -137,12 +149,12 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
   case class ExpBoolCollBitSet
       (override val bits: Rep[Collection[Boolean]])
 
-    extends BoolCollBitSet(bits) with UserTypeDef[BitSet, BoolCollBitSet] {
-    lazy val selfType = element[BoolCollBitSet].asInstanceOf[Elem[BitSet]]
+    extends BoolCollBitSet(bits) with UserTypeDef[BoolCollBitSet] {
+    lazy val selfType = element[BoolCollBitSet]
     override def mirror(t: Transformer) = ExpBoolCollBitSet(t(bits))
   }
 
-  lazy val BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs] = new BoolCollBitSetCompanionAbs with UserTypeDef[BoolCollBitSetCompanionAbs, BoolCollBitSetCompanionAbs] {
+  lazy val BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs] = new BoolCollBitSetCompanionAbs with UserTypeDef[BoolCollBitSetCompanionAbs] {
     lazy val selfType = element[BoolCollBitSetCompanionAbs]
     override def mirror(t: Transformer) = this
   }
@@ -156,13 +168,17 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
   def mkBoolCollBitSet
     (bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
     new ExpBoolCollBitSet(bits)
-  def unmkBoolCollBitSet(p: Rep[BoolCollBitSet]) =
-    Some((p.bits))
+  def unmkBoolCollBitSet(p: Rep[BitSet]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: BoolCollBitSetElem @unchecked =>
+      Some((p.asRep[BoolCollBitSet].bits))
+    case _ =>
+      None
+  }
 
   object BitSetMethods {
     object bits {
       def unapply(d: Def[_]): Option[Rep[BitSet]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "bits" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "bits" =>
           Some(receiver).asInstanceOf[Option[Rep[BitSet]]]
         case _ => None
       }
@@ -174,7 +190,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object union {
       def unapply(d: Def[_]): Option[(Rep[BitSet], Rep[BitSet])] = d match {
-        case MethodCall(receiver, method, Seq(that, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "union" =>
+        case MethodCall(receiver, method, Seq(that, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "union" =>
           Some((receiver, that)).asInstanceOf[Option[(Rep[BitSet], Rep[BitSet])]]
         case _ => None
       }
@@ -186,7 +202,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object length {
       def unapply(d: Def[_]): Option[Rep[BitSet]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "length" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "length" =>
           Some(receiver).asInstanceOf[Option[Rep[BitSet]]]
         case _ => None
       }
@@ -198,7 +214,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object contains {
       def unapply(d: Def[_]): Option[(Rep[BitSet], Rep[Int])] = d match {
-        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "contains" =>
+        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "contains" =>
           Some((receiver, n)).asInstanceOf[Option[(Rep[BitSet], Rep[Int])]]
         case _ => None
       }
@@ -210,7 +226,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object add {
       def unapply(d: Def[_]): Option[(Rep[BitSet], Rep[Int])] = d match {
-        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "add"&& method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "add" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
           Some((receiver, n)).asInstanceOf[Option[(Rep[BitSet], Rep[Int])]]
         case _ => None
       }
@@ -222,7 +238,7 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
     object add_many {
       def unapply(d: Def[_]): Option[(Rep[BitSet], Coll[Int])] = d match {
-        case MethodCall(receiver, method, Seq(ns, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_, _]] && method.getName == "add" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
+        case MethodCall(receiver, method, Seq(ns, _*), _) if receiver.elem.isInstanceOf[BitSetElem[_]] && method.getName == "add" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
           Some((receiver, ns)).asInstanceOf[Option[(Rep[BitSet], Coll[Int])]]
         case _ => None
       }
@@ -235,8 +251,20 @@ trait BitSetsExp extends BitSetsDsl with ScalanExp {
 
   object BitSetCompanionMethods {
     object apply {
+      def unapply(d: Def[_]): Option[Coll[Boolean]] = d match {
+        case MethodCall(receiver, method, Seq(flags, _*), _) if receiver.elem.isInstanceOf[BitSetCompanionElem] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some(flags).asInstanceOf[Option[Coll[Boolean]]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Coll[Boolean]] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_many {
       def unapply(d: Def[_]): Option[Rep[Array[Boolean]]] = d match {
-        case MethodCall(receiver, method, Seq(flags, _*), _) if receiver.elem.isInstanceOf[BitSetCompanionElem] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(flags, _*), _) if receiver.elem.isInstanceOf[BitSetCompanionElem] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
           Some(flags).asInstanceOf[Option[Rep[Array[Boolean]]]]
         case _ => None
       }

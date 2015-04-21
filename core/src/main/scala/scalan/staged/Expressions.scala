@@ -38,8 +38,7 @@ trait BaseExp extends Base { self: ScalanExp =>
   }
   type ExpAny = Exp[_]
 
-  // this trait is mixed in Def[A]
-  trait ReifiableExp[+T, +TImpl <: T] extends Reifiable[T] {
+  trait Def[+T] extends Reifiable[T] {
     lazy val self: Rep[T] = reifyObject(this)
     def name: String = getClass.getSimpleName
     def name[A](eA: Elem[A]): String = s"$name[${eA.name}]"
@@ -48,8 +47,6 @@ trait BaseExp extends Base { self: ScalanExp =>
     def mirror(f: Transformer): Rep[T]
   }
 
-  type Def[+A] = ReifiableExp[A,A]
-  
   abstract class BaseDef[+T](implicit val selfType: Elem[T @uncheckedVariance]) extends Def[T]
 
   case class Const[T: Elem](x: T) extends BaseDef[T] {
@@ -95,10 +92,8 @@ trait BaseExp extends Base { self: ScalanExp =>
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T]
-  implicit def reifyObject[T](obj: ReifiableExp[_,T]): Rep[T] = {
-    // TODO bad cast
-    val obj1 = obj.asInstanceOf[Def[T]]
-    toExp(obj1, fresh[T](Lazy(obj1.selfType)))
+  implicit def reifyObject[T](obj: Def[T]): Rep[T] = {
+    toExp(obj, fresh[T](Lazy(obj.selfType)))
   }
 
   override def toRep[A](x: A)(implicit eA: Elem[A]):Rep[A] = eA match {
@@ -118,7 +113,7 @@ trait BaseExp extends Base { self: ScalanExp =>
     case _ =>
       x match {
         // this may be called instead of reifyObject implicit in some cases
-        case d: ReifiableExp[_, A @unchecked] => reifyObject(d)
+        case d: Def[A @unchecked] => reifyObject(d)
         case _ => super.toRep(x)(eA)
       }
   }
@@ -291,11 +286,6 @@ trait BaseExp extends Base { self: ScalanExp =>
     }
     def tp: TableEntry[_] = findDefinition(symbol).get
     def sameScopeAs(other: Exp[_]): Boolean = this.tp.lambda == other.tp.lambda
-
-    def mirror(t: Transformer) = symbol match {
-      case Def(d) => d.mirror(t)
-      case _ => fresh(Lazy(symbol.elem))
-    }
   }
 
   implicit class DefForSomeOps(d: Def[_]) {

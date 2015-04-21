@@ -228,8 +228,12 @@ trait ScalanParsers extends ScalanAst {
       Some(STpeDef(td.name, tpeArgs, rhs))
     case td: ClassDef if td.mods.isTrait =>
       Some(traitDef(td, parentScope))
-    case cd: ClassDef if !cd.mods.isTrait => // isClass doesn't exist
-      Some(classDef(cd, parentScope))
+    case cd: ClassDef if !cd.mods.isTrait =>
+      // don't include implicit conversion classes
+      if (!cd.mods.isImplicit)
+        Some(classDef(cd, parentScope))
+      else
+        None
     case od: ModuleDef =>
       Some(objectDef(od))
     case vd: ValDef =>
@@ -293,9 +297,10 @@ trait ScalanParsers extends ScalanAst {
 //      case _ => None
 //    }
      val optBody:Option[SExpr] = md.rhs match {
+       case EmptyTree => None
        case Apply(ident:Ident, args) if ident.name.intern() == "sql" =>
          Some(SApply(SLiteral("sql"), List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue))))
-       case _ => None
+       case tree => Some(SDefaultExpr(tree.toString))
      }
      val optElem = if (isElem) Some(()) else None
      SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, annotations, optBody, optElem)

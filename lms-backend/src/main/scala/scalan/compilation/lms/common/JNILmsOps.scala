@@ -4,8 +4,8 @@ import scala.reflect.SourceContext
 import scala.virtualization.lms.common._
 import scala.virtualization.lms.epfl.test7.ArrayLoopsExp
 import scala.virtualization.lms.internal.{GenerationFailedException, GenericCodegen}
+import scalan.compilation.lms.ManifestUtil
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
-
 
 trait JNILmsOps extends Base {
   trait JNIType[T]
@@ -15,7 +15,7 @@ trait JNILmsOps extends Base {
   trait JNIArray[T]
 }
 
-trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with BaseExp {
+trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with BaseExp with ManifestUtil {
   case class JNIStringConst(x: String) extends Exp[String]
 
   case class JNIArrayElem[T](x: Rep[JNIArray[T]], y: Block[T]) extends Def[JNIArray[T]]
@@ -27,7 +27,7 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   case class FindClass[T](className: Rep[String]) extends Def[JNIClass]
 
   case class BoxPrimitive[T: Manifest](x: Rep[JNIType[T]]) extends Def[JNIType[T]] {
-    require( (manifest[T] <:< Manifest.AnyVal), "(" + manifest[T] + " <:< " + Manifest.AnyVal + ") isn't true")
+    require(manifest[T].isPrimitive, "(" + manifest[T] + " <:< " + Manifest.AnyVal + ") isn't true")
   }
 
   case class ExtractPrimitive[T](x: Rep[JNIType[T]]) extends Def[T]
@@ -44,12 +44,12 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   }
 
   case class NewPrimitiveArray[A: Manifest](len: Rep[Int]) extends Def[JNIType[Array[A]]] {
-    require( (manifest[A] <:< Manifest.AnyVal), "(" + manifest[A] + " <:< " + Manifest.AnyVal + ") isn't true")
+    require(manifest[A].isPrimitive, "(" + manifest[A] + " <:< " + Manifest.AnyVal + ") isn't true")
     val mA = manifest[A]
   }
 
   case class NewObjectArray[A: Manifest](len: Rep[Int], clazz: Rep[JNIClass]) extends Def[JNIType[Array[A]]] {
-    require( (manifest[A] <:< Manifest.AnyRef), "(" + manifest[A] + " <:< " + Manifest.AnyRef + ") isn't true")
+    require(manifest[A].isClass, "(" + manifest[A] + " <:< " + Manifest.AnyRef + ") isn't true")
     val mA = manifest[A]
   }
 
@@ -192,7 +192,7 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   }).asInstanceOf[Def[A]]
 }
 
-trait JNIExtractorOpsCxxGenBase extends GenericCodegen {
+trait JNIExtractorOpsCxxGenBase extends GenericCodegen with ManifestUtil {
   val IR: JNILmsOpsExp
   import IR._
 
@@ -227,14 +227,14 @@ trait JNIExtractorOpsCxxGenBase extends GenericCodegen {
     case Manifest.Byte => "jbyte"
     case Manifest.Int => "jint"
     case Manifest.Double => "jdouble"
-    case _ if m <:< Manifest.AnyRef => "jobject"
+    case _ if m.isClass => "jobject"
     case _ =>
       throw new GenerationFailedException(s"JNIExtractorOpsCxxGenBase.remapSimpleType(m) : Type ${m} cannot be remapped.")
   }
 
   protected def remapObject[A](m: Manifest[A]): String = m match {
     case _ if m.runtimeClass == classOf[JNIType[_]] => m.typeArguments(0) match {
-      case mT if mT <:< Manifest.AnyVal => "jobject"
+      case mT if mT.isPrimitive => "jobject"
       case _ => remap(m)
     }
     case _ if m.runtimeClass.isArray => m.typeArguments(0) match {

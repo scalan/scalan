@@ -1,5 +1,7 @@
 package scalan.staged
 
+import java.lang.reflect.InvocationTargetException
+
 import scalan.ScalanExp
 import scalan.common.Lazy
 
@@ -62,15 +64,16 @@ trait Transforming { self: ScalanExp =>
 
   object InvokeRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = x match {
-      case Def(MethodCall(Def(d), m, args, neverInvoke)) =>
-        if (!neverInvoke && shouldInvoke(d, m, args.toArray))
-          m.invoke(d, args: _*).asInstanceOf[Exp[T]]
-        else {
-          val optRes = invokeSuperMethod(d, m, args.toArray)
-          optRes match {
-            case Some(res) => res.asInstanceOf[Exp[T]]
-            case None => x
-          }
+      case Def(call: MethodCall) =>
+        call.tryInvoke match {
+          case InvokeSuccess(res) =>
+            res.asRep[T]
+          case InvokeFailure(e) =>
+            if (e.isInstanceOf[DelayInvokeException])
+              x
+            else
+              !!!(s"Failed to invoke $call", e)
+          case _ => x
         }
       case _ => x
     }
@@ -102,7 +105,7 @@ trait Transforming { self: ScalanExp =>
   }
 
   abstract class Mirror[Ctx <: Transformer : TransformerOps] {
-    def apply[A](t: Ctx, rw: Rewriter, x: Exp[A]): (Ctx, Exp[_]) = (t, x.mirror(t))
+    def apply[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = (t, d.mirror(t))
 
     // every mirrorXXX method should return a pair (t + (v -> v1), v1)
     protected def mirrorVar[A](t: Ctx, rewriter: Rewriter, v: Exp[A]): (Ctx, Exp[_]) = {
@@ -111,7 +114,7 @@ trait Transforming { self: ScalanExp =>
     }
 
     protected def mirrorDef[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = {
-      val (t1, mirrored) = apply(t, rewriter, node)
+      val (t1, mirrored) = apply(t, rewriter, node, d)
       var res = mirrored
       var curr = res
       do {

@@ -10,7 +10,6 @@ import scalan._
 class ExceptionTests extends BaseTests { suite =>
   trait ThrowableExamples extends ScalanDsl {
     lazy val tElem = element[Throwable]
-    lazy val defaultRep = tElem.defaultRepValue
 
     lazy val t1 = fun { (t: Rep[SThrowable]) => t.getMessage }
     lazy val t2 = fun { (t: Rep[SThrowable]) => t.getMessage }
@@ -36,8 +35,7 @@ class ExceptionTests extends BaseTests { suite =>
         }
       }
     }
-    ctx.test
-    ctx.emit("defaultRep", ctx.defaultRep)
+    ctx.test()
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
     ctx.emit("t3", ctx.t3)
@@ -71,7 +69,6 @@ class ExceptionTests extends BaseTests { suite =>
       }
     }
     ctx.test
-    val d = ctx.defaultRep
     val res = ctx.t1(ctx.SThrowable("test"))
     assertResult("test")(res)
   }

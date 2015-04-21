@@ -104,7 +104,8 @@ object ScalanBuild extends Build {
     .withTestConfigsAndCommonSettings
     .settings(
       libraryDependencies ++= Seq(lms,
-        lms classifier "tests",
+        // old version of ScalaTest used in LMS can lead to ClassCastException
+        lms classifier "tests" exclude("org.scalatest", "scalatest_2.10") exclude("org.scalatest", "scalatest_2.11"),
         "org.scala-lang.virtualized" % "scala-library" % virtScala,
         "org.scala-lang.virtualized" % "scala-compiler" % virtScala),
       scalaOrganization := "org.scala-lang.virtualized",

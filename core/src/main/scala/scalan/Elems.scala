@@ -8,6 +8,7 @@ import annotation.implicitNotFound
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
+import scalan.util.StringUtil
 
 trait Elems extends Base { self: Scalan =>
 
@@ -143,8 +144,6 @@ trait Elems extends Base { self: Scalan =>
     }
 
   }
-
-  type R <: Reifiable[_]
 
   def elemFromRep[A](x: Rep[A])(implicit eA: Elem[A]): Elem[A] = eA match {
     case ve: ViewElem[_,_] =>

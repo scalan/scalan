@@ -23,11 +23,11 @@ trait BitSets  { self: ScalanCommunityDsl =>
   }
   trait BitSetCompanion {
     def apply(flags: Coll[Boolean]): Rep[BitSet] = BoolCollBitSet(flags)
+    @OverloadId("many")
     def apply(flags: Rep[Array[Boolean]])(implicit o: Overloaded1): Rep[BitSet] =
       BitSet(Collection.fromArray(flags))
     def empty(range: Rep[Int]) = BitSet(Collection.replicate(range, false))
   }
-  implicit def defaultBitSetElem: Elem[BitSet] = element[BoolCollBitSet].asElem[BitSet]
 
   abstract class BoolCollBitSet(val bits: Rep[Collection[Boolean]]) extends BitSet {
   }

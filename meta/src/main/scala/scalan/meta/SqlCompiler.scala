@@ -35,12 +35,11 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
   def generateSchema(sql: String): String = {
     val statements = parseDDL(sql)
 
-    statements.map(stmt => {
-      stmt match {
-        case s: CreateIndexStmt => generateIndex(s)
-        case s: CreateTableStmt => generateTable(s.table)
-      }
-    }).mkString("\n\n")
+    statements.map {
+      case s: CreateIndexStmt => generateIndex(s)
+      case s: CreateTableStmt => generateTable(s.table)
+      case s => throw new NotImplementedError(s"Cannot generate schema for statement $s")
+    }.mkString("\n\n")
   }
 
   var currMethod:SMethodDef = null
@@ -91,6 +90,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
       case Project(p, columns) => tables(p)
       case TableAlias(t, a) => tables(t)
       case SubSelect(p) => tables(p)
+      case _ => throw new NotImplementedError(s"tables($op)")
     }
   }
 
@@ -173,8 +173,8 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
       case Project(p, columns) => ProjectContext(buildContext(p), columns)
       case TableAlias(p, a) => AliasContext(buildContext(p), a)
       case SubSelect(p) => buildContext(p)
+      case _ => throw new NotImplementedError(s"tables($op)")
     }
-
   }
 
   def divOp(expr: Expression) = if (getExprType(expr) == IntType) "/!" else "/"
@@ -264,6 +264,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
         subselect
       }
       case FuncExpr(name, args) => name + "(" + args.map(p => generateExpr(p)).mkString(", ") + ")"
+      case _ => throw new NotImplementedError(s"generateExpr($expr)")
     }
   }
 
@@ -310,6 +311,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
       case c: ColumnRef => lookup(c).column.ctype
       case SelectExpr(s) => DoubleType
       case FuncExpr(nume, args) => DoubleType
+      case _ => throw new NotImplementedError(s"getExprType($expr)")
     }
   }
 
@@ -339,6 +341,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
         case (None, Some(b)) => b.scope + b.path
         case (None, None) => throw SqlException("Failed to locate column in join condition")
       }
+      case _ => throw new NotImplementedError(s"extractKey($on)")
     }
   }
 
@@ -392,6 +395,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
       case SumExpr(opd) => generateExpr(opd)
       case MaxExpr(opd) => generateExpr(opd)
       case MinExpr(opd) => generateExpr(opd)
+      case _ => throw new NotImplementedError(s"generateAggOperand($agg)")
     }
   }
 
@@ -404,6 +408,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
       case SumExpr(opd) => s"""$s1 + $s2"""
       case MaxExpr(opd) => s"""if ($s1 > $s2) $s1 else $s2"""
       case MinExpr(opd) => s"""if ($s1 < $s2) $s1 else $s2"""
+      case _ => throw new NotImplementedError(s"aggCombine($agg, $s1, $s2)")
     }
   }
 
@@ -436,6 +441,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
         if (keyIndex < 0) throw SqlException("Unsupported group-by clause")
         currScope.name + ".head" + indexToPath(keyIndex, gby.length)
       }
+      case _ => throw new NotImplementedError(s"generateAggResult($columns, $aggregates, $gby, $i, $count)")
     }
   }
 
@@ -593,6 +599,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
         val subquery = generateOperator(p)
         indent = saveIdent
         subquery
+      case _ => throw new NotImplementedError(s"generateOperator($op)")
     }
   }
 
@@ -619,6 +626,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
       }
       case TableAlias(t, a) => generateOperator(t)
       case SubSelect(p) => operatorType(p)
+      case _ => throw new NotImplementedError(s"operatorType($op)")
     }
   }
 

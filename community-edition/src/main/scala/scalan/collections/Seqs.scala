@@ -18,7 +18,7 @@ trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
     @External @Semantics(name = ContainerLength)
     def size: Rep[Int]
 
-    /** Selects an element by its index in the $coll. */
+    /** Selects an element by its index in the coll. */
     @External @Semantics(name = ContainerApply)
     def apply(idx: Rep[Int]): Rep[A]
 
@@ -84,14 +84,11 @@ trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
 
 trait SeqsDslExp extends impl.SeqsExp { self: ScalanCommunityDslExp =>
 
-  type FilterArgs[A] = (Rep[SSeq[A]], Rep[A => Boolean])
-
   override def rewriteDef[T](d: Def[T]) = d match {
     case SSeqMethods.apply(Def(d2), i) => d2 match {
-      case SSeqMethods.map(t: SSeqMapArgs[a,b] @unchecked) =>
-        val xs = t._1; val f = t._2
+      case SSeqMethods.map(xs: RSeq[a], f: Rep[Function1[_, b]] @unchecked) =>
         implicit val eT = xs.elem.eItem
-        f(xs(i))
+        f.asRep[a => b](xs(i))
       case _ =>
         super.rewriteDef(d)
     }

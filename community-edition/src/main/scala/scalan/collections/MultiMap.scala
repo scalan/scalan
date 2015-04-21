@@ -26,10 +26,7 @@ trait MultiMaps extends Base { self: ScalanCommunityDsl =>
 
   def appendMultiMap[K:Elem,V:Elem](map: Rep[MMap[K,ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[MMap[K,ArrayBuffer[V]]];
 
-  implicit def defaultMultiMapElement[K:Elem,V:Elem]: Elem[MMultiMap[K,V]] = element[HashMMultiMap[K,V]].asElem[MMultiMap[K,V]]
-
   trait MMultiMapCompanion extends TypeFamily2[MMultiMap] {
-    def defaultOf[K:Elem,V:Elem]: Default[Rep[MMultiMap[K, V]]] = HashMMultiMap.defaultOf[K,V]
     def empty[K:Elem,V:Elem]: Rep[MMultiMap[K, V]] = HashMMultiMap.empty[K,V]
     def make[K:Elem,V:Elem](name: Rep[String]): Rep[MMultiMap[K, V]] = HashMMultiMap.make[K,V](name)
     def fromArray[K:Elem,V:Elem](a: Arr[(K,V)]): Rep[MMultiMap[K, V]] = HashMMultiMap.fromArray[K,V](a)
@@ -70,7 +67,6 @@ trait MultiMaps extends Base { self: ScalanCommunityDsl =>
   }    
 
   trait HashMMultiMapCompanion extends ConcreteClass2[HashMMultiMap] with MMultiMapCompanion {
-    override def defaultOf[K:Elem,V:Elem] = Default.defaultVal(HashMMultiMap(element[MMap[K, ArrayBuffer[V]]].defaultRepValue))
     override def empty[K:Elem,V:Elem]: Rep[MMultiMap[K, V]] = HashMMultiMap(MMap.empty[K, ArrayBuffer[V]])
 //    override def empty[K:Elem,V:Elem]: Rep[MultiMap[K, V]] = HashMMultiMap(MMap.create[K, ArrayBuffer[V]](0, fun { i => (element[K].defaultRepValue, ArrayBuffer.empty[V])}))
    override def make[K:Elem,V:Elem](name: Rep[String]): Rep[MMultiMap[K, V]] = HashMMultiMap[K,V](MMap.make[K, ArrayBuffer[V]](name))
