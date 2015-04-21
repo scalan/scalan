@@ -236,7 +236,7 @@ trait ScalanParsers extends ScalanAst {
         val tpeRes = optTpeExpr(vd.tpt)
         val isImplicit = vd.mods.isImplicit
         val isLazy = vd.mods.isLazy
-        Some(SValDef(vd.name, tpeRes, isImplicit, isLazy))
+        Some(SValDef(vd.name, tpeRes, None, isImplicit, isLazy))
       } else
         None
     case EmptyTree =>
