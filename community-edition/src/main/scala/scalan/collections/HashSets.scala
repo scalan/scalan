@@ -5,7 +5,7 @@ import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
 
-trait HashSets extends Base with BaseTypes { self: ScalanCommunityDsl =>
+trait HashSets extends Base with TypeWrappers { self: ScalanCommunityDsl =>
 
   type RHS[A] = Rep[SHashSet[A]]
 

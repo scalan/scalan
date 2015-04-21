@@ -5,7 +5,7 @@ import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
 
-trait Seqs extends Base with BaseTypes { self: ScalanCommunityDsl =>
+trait Seqs extends Base with TypeWrappers { self: ScalanCommunityDsl =>
   type RSeq[A] = Rep[SSeq[A]]
 
   /** Iterable collection that have a defined order of elements. */

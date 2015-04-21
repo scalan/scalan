@@ -50,7 +50,7 @@ trait SeqsAbs extends Seqs with Scalan {
 
   // familyElem
   class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
-    extends EntityElem1[A, To, SSeq](eA,container[SSeq]) {
+    extends WrapperElem1[A, To, Seq, SSeq]()(eA, container[Seq], container[SSeq]) {
     override def isEntityType = true
     override def tag = {
       implicit val tagA = eA.tag
@@ -568,8 +568,19 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
 
   override def rewriteDef[T](d: Def[T]) = d match {
     case SSeqMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+
+    // Rule: V(a, WrapperIso(iso)).m(args) ==> iso.to(a.m(unwrap(args)))
+//    case mc @ MethodCall(HasViews(source, implIso), m, args, neverInvoke)
+//              if implIso.isInstanceOf[SSeqImplIso[_]] =>
+//      val resultElem = mc.selfType
+//      unwrapElem(resultElem) match {
+//        case eRes: Elem[r] =>
+//          val newCall = unwrapMethodCall(mc, source, eRes)
+//          implIso.asInstanceOf[Iso[r,_]].to(newCall)
+//      }
+
     case SSeqMethods.map(xs, f) => (xs, f) match {
-      case (xs: RSeq[a] @unchecked, f @ Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) =>
+      case (xs: RSeq[a] @unchecked, LambdaResultHasViews(f, iso: Iso[b, c])) =>
         val f1 = f.asRep[a => c]
         implicit val eA = xs.elem.eItem
         implicit val eB = iso.eFrom
@@ -579,13 +590,13 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
         })
         val res = ViewSSeq(s)(SSeqIso(iso))
         res
-      case (Def(view: ViewSSeq[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
-        val iso = view.innerIso
+      case (HasViews(source, contIso: SSeqIso[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
         val f1 = f.asRep[b => c]
+        val iso = contIso.iso
         implicit val eA = iso.eFrom
         implicit val eB = iso.eTo
         implicit val eC = f1.elem.eRange
-        view.source.map(fun { x => f1(iso.to(x)) })
+        source.asRep[SSeq[a]].map(fun { x => f1(iso.to(x)) })
       case _ =>
         super.rewriteDef(d)
     }

@@ -1,5 +1,7 @@
 package scalan
 
+import java.lang.reflect.Method
+
 import scalan.common.Default
 import Default._
 import scalan.common.Lazy
@@ -48,6 +50,11 @@ trait Elems extends Base { self: Scalan =>
 
   implicit class ElemForSomeExtension(e: Elem[_]) {
     def asElem[T]: Elem[T] = e.asInstanceOf[Elem[T]]
+
+    def getMethod(methodName: String, argClasses: Class[_]*): Method = {
+      val m = e.classTag.runtimeClass.getMethod(methodName, argClasses: _*)
+      m
+    }
   }
 
   class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Element[A] with Serializable {
