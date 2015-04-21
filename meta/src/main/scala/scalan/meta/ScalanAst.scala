@@ -1,5 +1,5 @@
 package scalan.meta
-s
+
 trait ScalanAst {
   // STpe universe --------------------------------------------------------------------------
 
