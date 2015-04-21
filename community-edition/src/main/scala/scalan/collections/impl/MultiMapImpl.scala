@@ -10,7 +10,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait MultiMapsAbs extends MultiMaps with Scalan {
   self: ScalanCommunityDsl =>
-
   // single proxy for each type family
   implicit def proxyMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): MMultiMap[K, V] = {
     proxyOps[MMultiMap[K, V]](p)(classTag[MMultiMap[K, V]])

@@ -14,7 +14,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait EdgesAbs extends Edges with Scalan {
   self: GraphsDsl =>
-
   // single proxy for each type family
   implicit def proxyEdge[V, E](p: Rep[Edge[V, E]]): Edge[V, E] = {
     proxyOps[Edge[V, E]](p)(classTag[Edge[V, E]])

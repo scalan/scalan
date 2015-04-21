@@ -9,7 +9,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait KindsAbs extends Kinds with Scalan {
   self: KindsDsl =>
-
   // single proxy for each type family
   implicit def proxyKind[F[_], A](p: Rep[Kind[F, A]]): Kind[F, A] = {
     proxyOps[Kind[F, A]](p)(classTag[Kind[F, A]])

@@ -13,7 +13,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait CollectionsAbs extends Collections with Scalan {
   self: ScalanCommunityDsl =>
-
   // single proxy for each type family
   implicit def proxyCollection[A](p: Rep[Collection[A]]): Collection[A] = {
     proxyOps[Collection[A]](p)(classTag[Collection[A]])

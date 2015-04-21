@@ -8,7 +8,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait ConvertersAbs extends Converters  {
   self: Scalan =>
-
   // single proxy for each type family
   implicit def proxyConverter[T, R](p: Rep[Converter[T, R]]): Converter[T, R] = {
     proxyOps[Converter[T, R]](p)(classTag[Converter[T, R]])

@@ -10,7 +10,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait SegmentsAbs extends Segments with Scalan {
   self: SegmentsDsl =>
-
   // single proxy for each type family
   implicit def proxySegment(p: Rep[Segment]): Segment = {
     proxyOps[Segment](p)(classTag[Segment])

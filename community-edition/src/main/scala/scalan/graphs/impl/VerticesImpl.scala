@@ -13,7 +13,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait VerticesAbs extends Vertices with Scalan {
   self: GraphsDsl =>
-
   // single proxy for each type family
   implicit def proxyVertex[V, E](p: Rep[Vertex[V, E]]): Vertex[V, E] = {
     proxyOps[Vertex[V, E]](p)(classTag[Vertex[V, E]])

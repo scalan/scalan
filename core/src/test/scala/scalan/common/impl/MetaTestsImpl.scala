@@ -9,7 +9,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait MetaTestsAbs extends MetaTests with Scalan {
   self: MetaTestsDsl =>
-
   // single proxy for each type family
   implicit def proxyMetaTest[T](p: Rep[MetaTest[T]]): MetaTest[T] = {
     proxyOps[MetaTest[T]](p)(classTag[MetaTest[T]])

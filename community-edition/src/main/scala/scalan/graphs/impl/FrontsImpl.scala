@@ -12,7 +12,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait FrontsAbs extends Fronts with Scalan {
   self: FrontsDsl =>
-
   // single proxy for each type family
   implicit def proxyFront(p: Rep[Front]): Front = {
     proxyOps[Front](p)(classTag[Front])

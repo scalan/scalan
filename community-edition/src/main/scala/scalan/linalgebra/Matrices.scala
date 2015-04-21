@@ -90,7 +90,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       companion(columns.flatMap(col => col.items), numRows)
     def transpose(implicit n: Numeric[T]): Matrix[T] = transpose(10)
 
-    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
+    def reduceByColumns(implicit m: RepMonoid[T], n: Numeric[T]): Vector[T] = {
       val coll = Collection.indexRange(numColumns).map { column =>
         Collection.indexRange(numRows).map { row => this(row)(column) }.reduce
       }
@@ -144,7 +144,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
     def transpose(implicit n: Numeric[T]): Matrix[T] = transposeDirect(self)
 
-    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
+    def reduceByColumns(implicit m: RepMonoid[T], n: Numeric[T]): Vector[T] = {
       val coll = Collection.indexRange(numColumns).map { column =>
         Collection.indexRange(numRows).map { row => rows(row)(column) }.reduce
       }

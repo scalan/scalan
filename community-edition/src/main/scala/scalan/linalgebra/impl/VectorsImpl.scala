@@ -12,7 +12,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait VectorsAbs extends Vectors with Scalan {
   self: ScalanCommunityDsl =>
-
   // single proxy for each type family
   implicit def proxyAbstractVector[T](p: Rep[AbstractVector[T]]): AbstractVector[T] = {
     proxyOps[AbstractVector[T]](p)(classTag[AbstractVector[T]])

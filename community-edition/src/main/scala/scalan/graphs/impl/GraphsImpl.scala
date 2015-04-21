@@ -14,7 +14,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait GraphsAbs extends Graphs with Scalan {
   self: GraphsDsl =>
-
   // single proxy for each type family
   implicit def proxyGraph[V, E](p: Rep[Graph[V, E]]): Graph[V, E] = {
     proxyOps[Graph[V, E]](p)(classTag[Graph[V, E]])

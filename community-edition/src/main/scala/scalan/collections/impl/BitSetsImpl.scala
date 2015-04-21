@@ -10,7 +10,6 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait BitSetsAbs extends BitSets with Scalan {
   self: ScalanCommunityDsl =>
-
   // single proxy for each type family
   implicit def proxyBitSet(p: Rep[BitSet]): BitSet = {
     proxyOps[BitSet](p)(classTag[BitSet])
