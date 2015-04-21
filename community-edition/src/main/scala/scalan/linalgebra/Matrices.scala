@@ -5,7 +5,9 @@ package scalan.linalgebra
   */
 
 import scalan._
-import scalan.common.OverloadHack.{Overloaded1, Overloaded2}
+import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
+import scalan.common.Default
+import scala.annotation.unchecked.uncheckedVariance
 
 trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
@@ -27,11 +29,22 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def apply(row: Rep[Int]): Vector[T]
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T]
 
+    //def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Matrix[R]
+
     def transpose(implicit n: Numeric[T]): Matrix[T]
     def reduceByRows(implicit m: RepMonoid[T]): Vector[T] = {
       DenseVector(rows.map(row => row.nonZeroValues.reduce))
     }
-    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T]
+    def reduceByColumns(implicit m: RepMonoid[T], n: Numeric[T]): Vector[T]
+
+    def countNonZeroesByColumns(implicit n: Numeric[T]): Vector[Int] = {
+      /*val zero = elem.defaultRepValue
+      lazy val NonZeroesMonoid = RepMonoid[T]("NonZeroesMonoid", 0, false) {
+        case (x1, x2) => (x1 !== zero).toInt + (x2 !== zero).toInt
+      }*/
+      val mT = transpose
+      DenseVector(mT.rows.map(row => row.nonZeroIndices.length))
+    }
 
     //@OverloadId("vector")
     def *(vector: Vector[T])(implicit n: Numeric[T]): Vector[T] =
@@ -64,6 +77,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     @OverloadId("row")
     def apply(row: Rep[Int]): Vector[T] = DenseVector(rmValues.slice(row * numColumns, numColumns))
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = items(toCellIndex(row, column))
+
+    /*def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Matrix[R] = {
+      RowMajorNestedMatrix()
+    }*/
 
     def fromCellIndex(iCell: Rep[Int]): Rep[(Int, Int)] = Pair(iCell /! numColumns, iCell % numColumns)
     def toCellIndex(iRow: Rep[Int], iCol: Rep[Int]): Rep[Int] = numColumns * iRow + iCol
@@ -132,6 +149,8 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
         Collection.indexRange(numRows).map { row => rows(row)(column) }.reduce
       }
       DenseVector(coll)
+//      val mT = transpose
+//      mT.reduceByRows
     }
 
     @OverloadId("matrix")
