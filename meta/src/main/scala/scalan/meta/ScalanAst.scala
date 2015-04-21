@@ -118,10 +118,9 @@ trait ScalanAst {
     overloadId: Option[String],
     annotations: List[SMethodAnnotation] = Nil,
     body: Option[SExpr] = None,
-    elem: Option[Unit] = None)
+    isElemOrCont: Boolean = false)
     extends SBodyItem {
     def externalOpt: Option[SMethodAnnotation] = annotations.filter(a => a.annotationClass == "External").headOption
-    def isElem: Boolean = elem.isDefined
     def explicitArgs = argSections.flatMap(_.args.filterNot(_.impFlag))
     def allArgs = argSections.flatMap(_.args)
   }
@@ -232,21 +231,25 @@ trait ScalanAst {
     def isTrait = true
     lazy val implicitArgs: SClassArgs = {
       val implicitElems = body.collect {
-        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, _, Some(_)) => (name, elem)
+        case SMethodDef(name, _, _, Some(elemOrCont), true, _, _, _, true) =>
+          (name, elemOrCont)
       }
-      val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map(a => {
+      val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map { a =>
         val optDef = implicitElems.collectFirst {
-          case (methName, elem @ STraitCall("Elem", List(STraitCall(name, _)))) if name == a.name =>
+          case (methName, elem @ STraitCall(_, List(STraitCall(name, _)))) if name == a.name =>
             (methName, elem)
         }
 
-        optDef.fold[Either[STpeArg, SClassArg]](Left[STpeArg, SClassArg](a)) { case (name, tyElem) => {
-          Right[STpeArg, SClassArg](SClassArg(true, false, true, name, tyElem, None))
-        }}
-      })
+        optDef match {
+          case None =>
+            Left(a)
+          case Some((name, tyElem)) =>
+            Right(SClassArg(true, false, true, name, tyElem, None))
+        }
+      }
       val missingElems = args.filter(_.isLeft)
-      if (missingElems.length > 0)
-        println/*sys.error*/(s"implicit def eA: Elem[A] should be declared for all type parameters of ${name}: missing ${missingElems}")
+      if (missingElems.nonEmpty)
+        println/*sys.error*/(s"implicit def eA: Elem[A] should be declared for all type parameters of ${name}: missing ${missingElems.mkString(", ")}")
       SClassArgs(args.flatMap(a => a.fold(_ => Nil, List(_))))
     }
   }
@@ -314,14 +317,6 @@ trait ScalanAst {
     }
 
     def isEntity(name: String) = entities.exists(e => e.name == name)
-  }
-
-
-  object IsImplicitElem {
-    def unapply(item: SBodyItem): Option[(String, STraitCall)] = item match {
-      case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_), Some(_)) => Some((name, elem))
-      case _ => None
-    }
   }
 
   object SEntityModuleDef {

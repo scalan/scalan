@@ -16,6 +16,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
     proxyOps[MetaTest[T]](p)(classTag[MetaTest[T]])
   }
 
+  // familyElem
   class MetaTestElem[T, To <: MetaTest[T]](implicit val elem: Elem[T])
     extends EntityElem[To] {
     override def isEntityType = true
@@ -25,7 +26,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertMetaTest(x.asRep[MetaTest[T]])
     def convertMetaTest(x : Rep[MetaTest[T]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[MetaTestElem[_,_]])
+      //assert(x.selfType1.isInstanceOf[MetaTestElem[_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -150,7 +151,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
       mkMT1(data, size)
   }
   object MT1Matcher {
-    def unapply[T:Elem](p: Rep[MetaTest[T]]) = unmkMT1(p)
+    def unapply[T](p: Rep[MetaTest[T]]) = unmkMT1(p)
   }
   def MT1: Rep[MT1CompanionAbs]
   implicit def proxyMT1Companion(p: Rep[MT1CompanionAbs]): MT1CompanionAbs = {
@@ -176,7 +177,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkMT1[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]]
-  def unmkMT1[T:Elem](p: Rep[MetaTest[T]]): Option[(Rep[T], Rep[Int])]
+  def unmkMT1[T](p: Rep[MetaTest[T]]): Option[(Rep[T], Rep[Int])]
 
   // elem for concrete class
   class MT2Elem[T, R](val iso: Iso[MT2Data[T, R], MT2[T, R]])(implicit eT: Elem[T], eR: Elem[R])
@@ -218,7 +219,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
       mkMT2(indices, values, size)
   }
   object MT2Matcher {
-    def unapply[T:Elem, R:Elem](p: Rep[MetaTest[(T, R)]]) = unmkMT2(p)
+    def unapply[T, R](p: Rep[MetaTest[(T, R)]]) = unmkMT2(p)
   }
   def MT2: Rep[MT2CompanionAbs]
   implicit def proxyMT2Companion(p: Rep[MT2CompanionAbs]): MT2CompanionAbs = {
@@ -244,7 +245,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkMT2[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]]
-  def unmkMT2[T:Elem, R:Elem](p: Rep[MetaTest[(T, R)]]): Option[(Rep[T], Rep[R], Rep[Int])]
+  def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]): Option[(Rep[T], Rep[R], Rep[Int])]
 }
 
 // Seq -----------------------------------
@@ -288,7 +289,7 @@ trait MetaTestsSeq extends MetaTestsDsl with ScalanSeq {
   def mkMT1[T]
       (data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
       new SeqMT1[T](data, size)
-  def unmkMT1[T:Elem](p: Rep[MetaTest[T]]) = p match {
+  def unmkMT1[T](p: Rep[MetaTest[T]]) = p match {
     case p: MT1[T] @unchecked =>
       Some((p.data, p.size))
     case _ => None
@@ -308,7 +309,7 @@ trait MetaTestsSeq extends MetaTestsDsl with ScalanSeq {
   def mkMT2[T, R]
       (indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
       new SeqMT2[T, R](indices, values, size)
-  def unmkMT2[T:Elem, R:Elem](p: Rep[MetaTest[(T, R)]]) = p match {
+  def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]) = p match {
     case p: MT2[T, R] @unchecked =>
       Some((p.indices, p.values, p.size))
     case _ => None
@@ -432,7 +433,7 @@ trait MetaTestsExp extends MetaTestsDsl with ScalanExp {
   def mkMT1[T]
     (data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
     new ExpMT1[T](data, size)
-  def unmkMT1[T:Elem](p: Rep[MetaTest[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkMT1[T](p: Rep[MetaTest[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: MT1Elem[T] @unchecked =>
       Some((p.asRep[MT1[T]].data, p.asRep[MT1[T]].size))
     case _ =>
@@ -484,7 +485,7 @@ trait MetaTestsExp extends MetaTestsDsl with ScalanExp {
   def mkMT2[T, R]
     (indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
     new ExpMT2[T, R](indices, values, size)
-  def unmkMT2[T:Elem, R:Elem](p: Rep[MetaTest[(T, R)]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: MT2Elem[T, R] @unchecked =>
       Some((p.asRep[MT2[T, R]].indices, p.asRep[MT2[T, R]].values, p.asRep[MT2[T, R]].size))
     case _ =>

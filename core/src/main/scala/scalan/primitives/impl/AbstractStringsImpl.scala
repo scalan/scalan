@@ -17,6 +17,7 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     proxyOps[AString](p)(classTag[AString])
   }
 
+  // familyElem
   class AStringElem[To <: AString]
     extends EntityElem[To] {
     override def isEntityType = true
@@ -25,7 +26,7 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertAString(x.asRep[AString])
     def convertAString(x : Rep[AString]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[AStringElem[_]])
+      //assert(x.selfType1.isInstanceOf[AStringElem[_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

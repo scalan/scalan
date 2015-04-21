@@ -19,6 +19,7 @@ trait FrontsAbs extends Fronts with Scalan {
     proxyOps[Front](p)(classTag[Front])
   }
 
+  // familyElem
   class FrontElem[To <: Front]
     extends EntityElem[To] {
     override def isEntityType = true
@@ -27,7 +28,7 @@ trait FrontsAbs extends Fronts with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertFront(x.asRep[Front])
     def convertFront(x : Rep[Front]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[FrontElem[_]])
+      //assert(x.selfType1.isInstanceOf[FrontElem[_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

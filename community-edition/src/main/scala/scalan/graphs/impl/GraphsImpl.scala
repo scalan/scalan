@@ -21,6 +21,7 @@ trait GraphsAbs extends Graphs with Scalan {
     proxyOps[Graph[V, E]](p)(classTag[Graph[V, E]])
   }
 
+  // familyElem
   class GraphElem[V, E, To <: Graph[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
     override def isEntityType = true
@@ -31,7 +32,7 @@ trait GraphsAbs extends Graphs with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertGraph(x.asRep[Graph[V, E]])
     def convertGraph(x : Rep[Graph[V, E]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[GraphElem[_,_,_]])
+      //assert(x.selfType1.isInstanceOf[GraphElem[_,_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -93,7 +94,7 @@ trait GraphsAbs extends Graphs with Scalan {
       mkAdjacencyGraph(vertexValues, edgeValues, links)
   }
   object AdjacencyGraphMatcher {
-    def unapply[V:Elem, E:Elem](p: Rep[Graph[V, E]]) = unmkAdjacencyGraph(p)
+    def unapply[V, E](p: Rep[Graph[V, E]]) = unmkAdjacencyGraph(p)
   }
   def AdjacencyGraph: Rep[AdjacencyGraphCompanionAbs]
   implicit def proxyAdjacencyGraphCompanion(p: Rep[AdjacencyGraphCompanionAbs]): AdjacencyGraphCompanionAbs = {
@@ -119,7 +120,7 @@ trait GraphsAbs extends Graphs with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkAdjacencyGraph[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]]
-  def unmkAdjacencyGraph[V:Elem, E:Elem](p: Rep[Graph[V, E]]): Option[(Rep[Collection[V]], Rep[INestedCollection[E]], Rep[INestedCollection[Int]])]
+  def unmkAdjacencyGraph[V, E](p: Rep[Graph[V, E]]): Option[(Rep[Collection[V]], Rep[INestedCollection[E]], Rep[INestedCollection[Int]])]
 
   // elem for concrete class
   class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
@@ -160,7 +161,7 @@ trait GraphsAbs extends Graphs with Scalan {
       mkIncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
   }
   object IncidenceGraphMatcher {
-    def unapply[V:Elem, E:Elem](p: Rep[Graph[V, E]]) = unmkIncidenceGraph(p)
+    def unapply[V, E](p: Rep[Graph[V, E]]) = unmkIncidenceGraph(p)
   }
   def IncidenceGraph: Rep[IncidenceGraphCompanionAbs]
   implicit def proxyIncidenceGraphCompanion(p: Rep[IncidenceGraphCompanionAbs]): IncidenceGraphCompanionAbs = {
@@ -186,7 +187,7 @@ trait GraphsAbs extends Graphs with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkIncidenceGraph[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]]
-  def unmkIncidenceGraph[V:Elem, E:Elem](p: Rep[Graph[V, E]]): Option[(Rep[Collection[V]], Rep[Collection[E]], Rep[Int])]
+  def unmkIncidenceGraph[V, E](p: Rep[Graph[V, E]]): Option[(Rep[Collection[V]], Rep[Collection[E]], Rep[Int])]
 }
 
 // Seq -----------------------------------
@@ -210,7 +211,7 @@ trait GraphsSeq extends GraphsDsl with ScalanSeq {
   def mkAdjacencyGraph[V, E]
       (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
       new SeqAdjacencyGraph[V, E](vertexValues, edgeValues, links)
-  def unmkAdjacencyGraph[V:Elem, E:Elem](p: Rep[Graph[V, E]]) = p match {
+  def unmkAdjacencyGraph[V, E](p: Rep[Graph[V, E]]) = p match {
     case p: AdjacencyGraph[V, E] @unchecked =>
       Some((p.vertexValues, p.edgeValues, p.links))
     case _ => None
@@ -230,7 +231,7 @@ trait GraphsSeq extends GraphsDsl with ScalanSeq {
   def mkIncidenceGraph[V, E]
       (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
       new SeqIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
-  def unmkIncidenceGraph[V:Elem, E:Elem](p: Rep[Graph[V, E]]) = p match {
+  def unmkIncidenceGraph[V, E](p: Rep[Graph[V, E]]) = p match {
     case p: IncidenceGraph[V, E] @unchecked =>
       Some((p.vertexValues, p.incMatrixWithVals, p.vertexNum))
     case _ => None
@@ -493,7 +494,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   def mkAdjacencyGraph[V, E]
     (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
     new ExpAdjacencyGraph[V, E](vertexValues, edgeValues, links)
-  def unmkAdjacencyGraph[V:Elem, E:Elem](p: Rep[Graph[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkAdjacencyGraph[V, E](p: Rep[Graph[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: AdjacencyGraphElem[V, E] @unchecked =>
       Some((p.asRep[AdjacencyGraph[V, E]].vertexValues, p.asRep[AdjacencyGraph[V, E]].edgeValues, p.asRep[AdjacencyGraph[V, E]].links))
     case _ =>
@@ -796,7 +797,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   def mkIncidenceGraph[V, E]
     (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
     new ExpIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
-  def unmkIncidenceGraph[V:Elem, E:Elem](p: Rep[Graph[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkIncidenceGraph[V, E](p: Rep[Graph[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: IncidenceGraphElem[V, E] @unchecked =>
       Some((p.asRep[IncidenceGraph[V, E]].vertexValues, p.asRep[IncidenceGraph[V, E]].incMatrixWithVals, p.asRep[IncidenceGraph[V, E]].vertexNum))
     case _ =>

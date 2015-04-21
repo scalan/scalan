@@ -1,8 +1,8 @@
+
 package scalan.common
 package impl
 
 import scalan._
-import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe._
 import scala.reflect._
 import scalan.common.Default
@@ -10,13 +10,14 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait KindsAbs extends Kinds with Scalan {
   self: KindsDsl =>
+
   // single proxy for each type family
   implicit def proxyKind[F[_], A](p: Rep[Kind[F, A]]): Kind[F, A] = {
     proxyOps[Kind[F, A]](p)(classTag[Kind[F, A]])
   }
 
   // familyElem
-  class KindElem[F[_], A, To <: Kind[F, A]](implicit val eA: Elem[A], val cF: Cont[F])
+  class KindElem[F[_], A, To <: Kind[F, A]](implicit val cF: Cont[F], val eA: Elem[A])
     extends EntityElem[To] {
     override def isEntityType = true
     override def tag = {
@@ -32,7 +33,7 @@ trait KindsAbs extends Kinds with Scalan {
   }
 
   implicit def kindElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]) =
-    new KindElem[F, A, Kind[F, A]]()(eA,cF)
+    new KindElem[F, A, Kind[F, A]]()(cF, eA)
 
   trait KindCompanionElem extends CompanionElem[KindCompanionAbs]
   implicit lazy val KindCompanionElem: KindCompanionElem = new KindCompanionElem {
@@ -65,10 +66,7 @@ trait KindsAbs extends Kinds with Scalan {
   class ReturnIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
     extends Iso[ReturnData[F, A], Return[F, A]] {
     override def from(p: Rep[Return[F, A]]) =
-      unmkReturn(p) match {
-        case Some((a)) => a
-        case None => !!!
-      }
+      p.a
     override def to(p: Rep[A]) = {
       val a = p
       Return(a)
@@ -86,7 +84,9 @@ trait KindsAbs extends Kinds with Scalan {
 
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
       mkReturn(a)
-    def unapply[F[_]:Cont, A:Elem](p: Rep[Return[F, A]]) = unmkReturn(p)
+  }
+  object ReturnMatcher {
+    def unapply[F[_], A](p: Rep[Kind[F, A]]) = unmkReturn(p)
   }
   def Return: Rep[ReturnCompanionAbs]
   implicit def proxyReturnCompanion(p: Rep[ReturnCompanionAbs]): ReturnCompanionAbs = {
@@ -112,7 +112,7 @@ trait KindsAbs extends Kinds with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
-  def unmkReturn[F[_]:Cont, A:Elem](p: Rep[Return[F, A]]): Option[(Rep[A])]
+  def unmkReturn[F[_], A](p: Rep[Kind[F, A]]): Option[(Rep[A])]
 
   // elem for concrete class
   class BindElem[F[_], S, B](val iso: Iso[BindData[F, S, B], Bind[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
@@ -131,10 +131,7 @@ trait KindsAbs extends Kinds with Scalan {
   class BindIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends Iso[BindData[F, S, B], Bind[F, S, B]] {
     override def from(p: Rep[Bind[F, S, B]]) =
-      unmkBind(p) match {
-        case Some((a, f)) => Pair(a, f)
-        case None => !!!
-      }
+      (p.a, p.f)
     override def to(p: Rep[(Kind[F,S], S => Kind[F,B])]) = {
       val Pair(a, f) = p
       Bind(a, f)
@@ -150,11 +147,14 @@ trait KindsAbs extends Kinds with Scalan {
   // 4) constructor and deconstructor
   abstract class BindCompanionAbs extends CompanionBase[BindCompanionAbs] with BindCompanion {
     override def toString = "Bind"
+
     def apply[F[_], S, B](p: Rep[BindData[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       isoBind(eS, eA, cF).to(p)
     def apply[F[_], S, B](a: Rep[Kind[F,S]], f: Rep[S => Kind[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       mkBind(a, f)
-    def unapply[F[_]:Cont, S:Elem, B:Elem](p: Rep[Bind[F, S, B]]) = unmkBind(p)
+  }
+  object BindMatcher {
+    def unapply[F[_], S, B](p: Rep[Kind[F, B]]) = unmkBind(p)
   }
   def Bind: Rep[BindCompanionAbs]
   implicit def proxyBindCompanion(p: Rep[BindCompanionAbs]): BindCompanionAbs = {
@@ -180,7 +180,7 @@ trait KindsAbs extends Kinds with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkBind[F[_], S, B](a: Rep[Kind[F,S]], f: Rep[S => Kind[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]
-  def unmkBind[F[_]:Cont, S:Elem, B:Elem](p: Rep[Bind[F, S, B]]): Option[(Rep[Kind[F,S]], Rep[S => Kind[F,B]])]
+  def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]): Option[(Rep[Kind[F,S]], Rep[S => Kind[F,B]])]
 }
 
 // Seq -----------------------------------
@@ -204,8 +204,11 @@ trait KindsSeq extends KindsDsl with ScalanSeq {
   def mkReturn[F[_], A]
       (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
       new SeqReturn[F, A](a)
-  def unmkReturn[F[_]:Cont, A:Elem](p: Rep[Return[F, A]]) =
-    Some((p.a))
+  def unmkReturn[F[_], A](p: Rep[Kind[F, A]]) = p match {
+    case p: Return[F, A] @unchecked =>
+      Some((p.a))
+    case _ => None
+  }
 
   case class SeqBind[F[_], S, B]
       (override val a: Rep[Kind[F,S]], override val f: Rep[S => Kind[F,B]])
@@ -221,8 +224,11 @@ trait KindsSeq extends KindsDsl with ScalanSeq {
   def mkBind[F[_], S, B]
       (a: Rep[Kind[F,S]], f: Rep[S => Kind[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       new SeqBind[F, S, B](a, f)
-  def unmkBind[F[_]:Cont, S:Elem, B:Elem](p: Rep[Bind[F, S, B]]) =
-    Some((p.a, p.f))
+  def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]) = p match {
+    case p: Bind[F, S, B] @unchecked =>
+      Some((p.a, p.f))
+    case _ => None
+  }
 }
 
 // Exp -----------------------------------
@@ -256,8 +262,12 @@ trait KindsExp extends KindsDsl with ScalanExp {
   def mkReturn[F[_], A]
     (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
     new ExpReturn[F, A](a)
-  def unmkReturn[F[_]:Cont, A:Elem](p: Rep[Return[F, A]]) =
-    Some((p.a))
+  def unmkReturn[F[_], A](p: Rep[Kind[F, A]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: ReturnElem[F, A] @unchecked =>
+      Some((p.asRep[Return[F, A]].a))
+    case _ =>
+      None
+  }
 
   case class ExpBind[F[_], S, B]
       (override val a: Rep[Kind[F,S]], override val f: Rep[S => Kind[F,B]])
@@ -282,12 +292,14 @@ trait KindsExp extends KindsDsl with ScalanExp {
   def mkBind[F[_], S, B]
     (a: Rep[Kind[F,S]], f: Rep[S => Kind[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
     new ExpBind[F, S, B](a, f)
-  def unmkBind[F[_]:Cont, S:Elem, B:Elem](p: Rep[Bind[F, S, B]]) =
-    Some((p.a, p.f))
+  def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: BindElem[F, S, B] @unchecked =>
+      Some((p.asRep[Bind[F, S, B]].a, p.asRep[Bind[F, S, B]].f))
+    case _ =>
+      None
+  }
 
   object KindMethods {
-    // WARNING: Cannot generate matcher for method `cF`: Method's return type Cont[F] is not a Rep
-
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
 
     object mapBy {

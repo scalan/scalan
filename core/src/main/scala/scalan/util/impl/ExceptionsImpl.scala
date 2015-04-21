@@ -27,6 +27,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
 
   implicit def throwableElement: Elem[Throwable]
 
+  // familyElem
   class SThrowableElem[To <: SThrowable]
     extends EntityElem[To] {
     override def isEntityType = true
@@ -35,7 +36,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSThrowable(x.asRep[SThrowable])
     def convertSThrowable(x : Rep[SThrowable]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[SThrowableElem[_]])
+      //assert(x.selfType1.isInstanceOf[SThrowableElem[_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

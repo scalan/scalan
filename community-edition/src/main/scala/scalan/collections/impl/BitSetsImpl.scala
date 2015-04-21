@@ -17,6 +17,7 @@ trait BitSetsAbs extends BitSets with Scalan {
     proxyOps[BitSet](p)(classTag[BitSet])
   }
 
+  // familyElem
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
     override def isEntityType = true
@@ -25,7 +26,7 @@ trait BitSetsAbs extends BitSets with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertBitSet(x.asRep[BitSet])
     def convertBitSet(x : Rep[BitSet]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[BitSetElem[_]])
+      //assert(x.selfType1.isInstanceOf[BitSetElem[_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

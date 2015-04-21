@@ -21,6 +21,7 @@ trait EdgesAbs extends Edges with Scalan {
     proxyOps[Edge[V, E]](p)(classTag[Edge[V, E]])
   }
 
+  // familyElem
   class EdgeElem[V, E, To <: Edge[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
     override def isEntityType = true
@@ -31,7 +32,7 @@ trait EdgesAbs extends Edges with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertEdge(x.asRep[Edge[V, E]])
     def convertEdge(x : Rep[Edge[V, E]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[EdgeElem[_,_,_]])
+      //assert(x.selfType1.isInstanceOf[EdgeElem[_,_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -93,7 +94,7 @@ trait EdgesAbs extends Edges with Scalan {
       mkAdjEdge(fromId, outIndex, graph)
   }
   object AdjEdgeMatcher {
-    def unapply[V:Elem, E:Elem](p: Rep[Edge[V, E]]) = unmkAdjEdge(p)
+    def unapply[V, E](p: Rep[Edge[V, E]]) = unmkAdjEdge(p)
   }
   def AdjEdge: Rep[AdjEdgeCompanionAbs]
   implicit def proxyAdjEdgeCompanion(p: Rep[AdjEdgeCompanionAbs]): AdjEdgeCompanionAbs = {
@@ -119,7 +120,7 @@ trait EdgesAbs extends Edges with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkAdjEdge[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]]
-  def unmkAdjEdge[V:Elem, E:Elem](p: Rep[Edge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V,E]])]
+  def unmkAdjEdge[V, E](p: Rep[Edge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V,E]])]
 
   // elem for concrete class
   class IncEdgeElem[V, E](val iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
@@ -160,7 +161,7 @@ trait EdgesAbs extends Edges with Scalan {
       mkIncEdge(fromId, toId, graph)
   }
   object IncEdgeMatcher {
-    def unapply[V:Elem, E:Elem](p: Rep[Edge[V, E]]) = unmkIncEdge(p)
+    def unapply[V, E](p: Rep[Edge[V, E]]) = unmkIncEdge(p)
   }
   def IncEdge: Rep[IncEdgeCompanionAbs]
   implicit def proxyIncEdgeCompanion(p: Rep[IncEdgeCompanionAbs]): IncEdgeCompanionAbs = {
@@ -186,7 +187,7 @@ trait EdgesAbs extends Edges with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkIncEdge[V, E](fromId: Rep[Int], toId: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]]
-  def unmkIncEdge[V:Elem, E:Elem](p: Rep[Edge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V,E]])]
+  def unmkIncEdge[V, E](p: Rep[Edge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V,E]])]
 }
 
 // Seq -----------------------------------
@@ -210,7 +211,7 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
   def mkAdjEdge[V, E]
       (fromId: Rep[Int], outIndex: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       new SeqAdjEdge[V, E](fromId, outIndex, graph)
-  def unmkAdjEdge[V:Elem, E:Elem](p: Rep[Edge[V, E]]) = p match {
+  def unmkAdjEdge[V, E](p: Rep[Edge[V, E]]) = p match {
     case p: AdjEdge[V, E] @unchecked =>
       Some((p.fromId, p.outIndex, p.graph))
     case _ => None
@@ -230,7 +231,7 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
   def mkIncEdge[V, E]
       (fromId: Rep[Int], toId: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       new SeqIncEdge[V, E](fromId, toId, graph)
-  def unmkIncEdge[V:Elem, E:Elem](p: Rep[Edge[V, E]]) = p match {
+  def unmkIncEdge[V, E](p: Rep[Edge[V, E]]) = p match {
     case p: IncEdge[V, E] @unchecked =>
       Some((p.fromId, p.toId, p.graph))
     case _ => None
@@ -326,7 +327,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   def mkAdjEdge[V, E]
     (fromId: Rep[Int], outIndex: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
     new ExpAdjEdge[V, E](fromId, outIndex, graph)
-  def unmkAdjEdge[V:Elem, E:Elem](p: Rep[Edge[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkAdjEdge[V, E](p: Rep[Edge[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: AdjEdgeElem[V, E] @unchecked =>
       Some((p.asRep[AdjEdge[V, E]].fromId, p.asRep[AdjEdge[V, E]].outIndex, p.asRep[AdjEdge[V, E]].graph))
     case _ =>
@@ -414,7 +415,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   def mkIncEdge[V, E]
     (fromId: Rep[Int], toId: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
     new ExpIncEdge[V, E](fromId, toId, graph)
-  def unmkIncEdge[V:Elem, E:Elem](p: Rep[Edge[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkIncEdge[V, E](p: Rep[Edge[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: IncEdgeElem[V, E] @unchecked =>
       Some((p.asRep[IncEdge[V, E]].fromId, p.asRep[IncEdge[V, E]].toId, p.asRep[IncEdge[V, E]].graph))
     case _ =>

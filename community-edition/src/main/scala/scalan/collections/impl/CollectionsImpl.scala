@@ -20,6 +20,7 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[Collection[A]](p)(classTag[Collection[A]])
   }
 
+  // familyElem
   class CollectionElem[A, To <: Collection[A]](implicit val elem: Elem[A])
     extends EntityElem[To] {
     override def isEntityType = true
@@ -29,7 +30,7 @@ trait CollectionsAbs extends Collections with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertCollection(x.asRep[Collection[A]])
     def convertCollection(x : Rep[Collection[A]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[CollectionElem[_,_]])
+      //assert(x.selfType1.isInstanceOf[CollectionElem[_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -57,6 +58,7 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[IPairCollection[A, B]](p)(classTag[IPairCollection[A, B]])
   }
 
+  // familyElem
   class IPairCollectionElem[A, B, To <: IPairCollection[A, B]](implicit val eA: Elem[A], val eB: Elem[B])
     extends CollectionElem[(A, B), To] {
     override def isEntityType = true
@@ -67,7 +69,7 @@ trait CollectionsAbs extends Collections with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertIPairCollection(x.asRep[IPairCollection[A, B]])
     def convertIPairCollection(x : Rep[IPairCollection[A, B]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[IPairCollectionElem[_,_,_]])
+      //assert(x.selfType1.isInstanceOf[IPairCollectionElem[_,_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -81,6 +83,7 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[INestedCollection[A]](p)(classTag[INestedCollection[A]])
   }
 
+  // familyElem
   class INestedCollectionElem[A, To <: INestedCollection[A]](implicit val eA: Elem[A])
     extends CollectionElem[Collection[A], To] {
     override def isEntityType = true
@@ -90,7 +93,7 @@ trait CollectionsAbs extends Collections with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertINestedCollection(x.asRep[INestedCollection[A]])
     def convertINestedCollection(x : Rep[INestedCollection[A]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[INestedCollectionElem[_,_]])
+      //assert(x.selfType1.isInstanceOf[INestedCollectionElem[_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -198,7 +201,7 @@ trait CollectionsAbs extends Collections with Scalan {
       mkBaseCollection(arr)
   }
   object BaseCollectionMatcher {
-    def unapply[A:Elem](p: Rep[Collection[A]]) = unmkBaseCollection(p)
+    def unapply[A](p: Rep[Collection[A]]) = unmkBaseCollection(p)
   }
   def BaseCollection: Rep[BaseCollectionCompanionAbs]
   implicit def proxyBaseCollectionCompanion(p: Rep[BaseCollectionCompanionAbs]): BaseCollectionCompanionAbs = {
@@ -224,7 +227,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkBaseCollection[A](arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[BaseCollection[A]]
-  def unmkBaseCollection[A:Elem](p: Rep[Collection[A]]): Option[(Rep[Array[A]])]
+  def unmkBaseCollection[A](p: Rep[Collection[A]]): Option[(Rep[Array[A]])]
 
   // elem for concrete class
   class ListCollectionElem[A](val iso: Iso[ListCollectionData[A], ListCollection[A]])(implicit eA: Elem[A])
@@ -262,7 +265,7 @@ trait CollectionsAbs extends Collections with Scalan {
       mkListCollection(lst)
   }
   object ListCollectionMatcher {
-    def unapply[A:Elem](p: Rep[Collection[A]]) = unmkListCollection(p)
+    def unapply[A](p: Rep[Collection[A]]) = unmkListCollection(p)
   }
   def ListCollection: Rep[ListCollectionCompanionAbs]
   implicit def proxyListCollectionCompanion(p: Rep[ListCollectionCompanionAbs]): ListCollectionCompanionAbs = {
@@ -288,7 +291,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkListCollection[A](lst: Rep[List[A]])(implicit eA: Elem[A]): Rep[ListCollection[A]]
-  def unmkListCollection[A:Elem](p: Rep[Collection[A]]): Option[(Rep[List[A]])]
+  def unmkListCollection[A](p: Rep[Collection[A]]): Option[(Rep[List[A]])]
 
   // elem for concrete class
   class CollectionOnSeqElem[A](val iso: Iso[CollectionOnSeqData[A], CollectionOnSeq[A]])(implicit eA: Elem[A])
@@ -326,7 +329,7 @@ trait CollectionsAbs extends Collections with Scalan {
       mkCollectionOnSeq(seq)
   }
   object CollectionOnSeqMatcher {
-    def unapply[A:Elem](p: Rep[Collection[A]]) = unmkCollectionOnSeq(p)
+    def unapply[A](p: Rep[Collection[A]]) = unmkCollectionOnSeq(p)
   }
   def CollectionOnSeq: Rep[CollectionOnSeqCompanionAbs]
   implicit def proxyCollectionOnSeqCompanion(p: Rep[CollectionOnSeqCompanionAbs]): CollectionOnSeqCompanionAbs = {
@@ -352,7 +355,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkCollectionOnSeq[A](seq: Rep[SSeq[A]])(implicit eA: Elem[A]): Rep[CollectionOnSeq[A]]
-  def unmkCollectionOnSeq[A:Elem](p: Rep[Collection[A]]): Option[(Rep[SSeq[A]])]
+  def unmkCollectionOnSeq[A](p: Rep[Collection[A]]): Option[(Rep[SSeq[A]])]
 
   // elem for concrete class
   class PairCollectionElem[A, B](val iso: Iso[PairCollectionData[A, B], PairCollection[A, B]])(implicit eA: Elem[A], eB: Elem[B])
@@ -393,7 +396,7 @@ trait CollectionsAbs extends Collections with Scalan {
       mkPairCollection(as, bs)
   }
   object PairCollectionMatcher {
-    def unapply[A:Elem, B:Elem](p: Rep[IPairCollection[A, B]]) = unmkPairCollection(p)
+    def unapply[A, B](p: Rep[IPairCollection[A, B]]) = unmkPairCollection(p)
   }
   def PairCollection: Rep[PairCollectionCompanionAbs]
   implicit def proxyPairCollectionCompanion(p: Rep[PairCollectionCompanionAbs]): PairCollectionCompanionAbs = {
@@ -419,7 +422,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkPairCollection[A, B](as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollection[A, B]]
-  def unmkPairCollection[A:Elem, B:Elem](p: Rep[IPairCollection[A, B]]): Option[(Rep[Collection[A]], Rep[Collection[B]])]
+  def unmkPairCollection[A, B](p: Rep[IPairCollection[A, B]]): Option[(Rep[Collection[A]], Rep[Collection[B]])]
 
   // elem for concrete class
   class CollectionOfPairsElem[A, B](val iso: Iso[CollectionOfPairsData[A, B], CollectionOfPairs[A, B]])(implicit eA: Elem[A], eB: Elem[B])
@@ -458,7 +461,7 @@ trait CollectionsAbs extends Collections with Scalan {
       mkCollectionOfPairs(arr)
   }
   object CollectionOfPairsMatcher {
-    def unapply[A:Elem, B:Elem](p: Rep[IPairCollection[A, B]]) = unmkCollectionOfPairs(p)
+    def unapply[A, B](p: Rep[IPairCollection[A, B]]) = unmkCollectionOfPairs(p)
   }
   def CollectionOfPairs: Rep[CollectionOfPairsCompanionAbs]
   implicit def proxyCollectionOfPairsCompanion(p: Rep[CollectionOfPairsCompanionAbs]): CollectionOfPairsCompanionAbs = {
@@ -484,7 +487,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkCollectionOfPairs[A, B](arr: Rep[Array[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]]
-  def unmkCollectionOfPairs[A:Elem, B:Elem](p: Rep[IPairCollection[A, B]]): Option[(Rep[Array[(A, B)]])]
+  def unmkCollectionOfPairs[A, B](p: Rep[IPairCollection[A, B]]): Option[(Rep[Array[(A, B)]])]
 
   // elem for concrete class
   class NestedCollectionElem[A](val iso: Iso[NestedCollectionData[A], NestedCollection[A]])(implicit eA: Elem[A])
@@ -524,7 +527,7 @@ trait CollectionsAbs extends Collections with Scalan {
       mkNestedCollection(values, segments)
   }
   object NestedCollectionMatcher {
-    def unapply[A:Elem](p: Rep[INestedCollection[A]]) = unmkNestedCollection(p)
+    def unapply[A](p: Rep[INestedCollection[A]]) = unmkNestedCollection(p)
   }
   def NestedCollection: Rep[NestedCollectionCompanionAbs]
   implicit def proxyNestedCollectionCompanion(p: Rep[NestedCollectionCompanionAbs]): NestedCollectionCompanionAbs = {
@@ -550,7 +553,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkNestedCollection[A](values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]]
-  def unmkNestedCollection[A:Elem](p: Rep[INestedCollection[A]]): Option[(Rep[Collection[A]], Rep[IPairCollection[Int,Int]])]
+  def unmkNestedCollection[A](p: Rep[INestedCollection[A]]): Option[(Rep[Collection[A]], Rep[IPairCollection[Int,Int]])]
 }
 
 // Seq -----------------------------------
@@ -594,7 +597,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   def mkBaseCollection[A]
       (arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[BaseCollection[A]] =
       new SeqBaseCollection[A](arr)
-  def unmkBaseCollection[A:Elem](p: Rep[Collection[A]]) = p match {
+  def unmkBaseCollection[A](p: Rep[Collection[A]]) = p match {
     case p: BaseCollection[A] @unchecked =>
       Some((p.arr))
     case _ => None
@@ -614,7 +617,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   def mkListCollection[A]
       (lst: Rep[List[A]])(implicit eA: Elem[A]): Rep[ListCollection[A]] =
       new SeqListCollection[A](lst)
-  def unmkListCollection[A:Elem](p: Rep[Collection[A]]) = p match {
+  def unmkListCollection[A](p: Rep[Collection[A]]) = p match {
     case p: ListCollection[A] @unchecked =>
       Some((p.lst))
     case _ => None
@@ -634,7 +637,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   def mkCollectionOnSeq[A]
       (seq: Rep[SSeq[A]])(implicit eA: Elem[A]): Rep[CollectionOnSeq[A]] =
       new SeqCollectionOnSeq[A](seq)
-  def unmkCollectionOnSeq[A:Elem](p: Rep[Collection[A]]) = p match {
+  def unmkCollectionOnSeq[A](p: Rep[Collection[A]]) = p match {
     case p: CollectionOnSeq[A] @unchecked =>
       Some((p.seq))
     case _ => None
@@ -654,7 +657,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   def mkPairCollection[A, B]
       (as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollection[A, B]] =
       new SeqPairCollection[A, B](as, bs)
-  def unmkPairCollection[A:Elem, B:Elem](p: Rep[IPairCollection[A, B]]) = p match {
+  def unmkPairCollection[A, B](p: Rep[IPairCollection[A, B]]) = p match {
     case p: PairCollection[A, B] @unchecked =>
       Some((p.as, p.bs))
     case _ => None
@@ -674,7 +677,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   def mkCollectionOfPairs[A, B]
       (arr: Rep[Array[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]] =
       new SeqCollectionOfPairs[A, B](arr)
-  def unmkCollectionOfPairs[A:Elem, B:Elem](p: Rep[IPairCollection[A, B]]) = p match {
+  def unmkCollectionOfPairs[A, B](p: Rep[IPairCollection[A, B]]) = p match {
     case p: CollectionOfPairs[A, B] @unchecked =>
       Some((p.arr))
     case _ => None
@@ -694,7 +697,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   def mkNestedCollection[A]
       (values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
       new SeqNestedCollection[A](values, segments)
-  def unmkNestedCollection[A:Elem](p: Rep[INestedCollection[A]]) = p match {
+  def unmkNestedCollection[A](p: Rep[INestedCollection[A]]) = p match {
     case p: NestedCollection[A] @unchecked =>
       Some((p.values, p.segments))
     case _ => None
@@ -1094,7 +1097,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   def mkBaseCollection[A]
     (arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[BaseCollection[A]] =
     new ExpBaseCollection[A](arr)
-  def unmkBaseCollection[A:Elem](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkBaseCollection[A](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: BaseCollectionElem[A] @unchecked =>
       Some((p.asRep[BaseCollection[A]].arr))
     case _ =>
@@ -1290,7 +1293,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   def mkListCollection[A]
     (lst: Rep[List[A]])(implicit eA: Elem[A]): Rep[ListCollection[A]] =
     new ExpListCollection[A](lst)
-  def unmkListCollection[A:Elem](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkListCollection[A](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: ListCollectionElem[A] @unchecked =>
       Some((p.asRep[ListCollection[A]].lst))
     case _ =>
@@ -1498,7 +1501,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   def mkCollectionOnSeq[A]
     (seq: Rep[SSeq[A]])(implicit eA: Elem[A]): Rep[CollectionOnSeq[A]] =
     new ExpCollectionOnSeq[A](seq)
-  def unmkCollectionOnSeq[A:Elem](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkCollectionOnSeq[A](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CollectionOnSeqElem[A] @unchecked =>
       Some((p.asRep[CollectionOnSeq[A]].seq))
     case _ =>
@@ -1694,7 +1697,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   def mkPairCollection[A, B]
     (as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollection[A, B]] =
     new ExpPairCollection[A, B](as, bs)
-  def unmkPairCollection[A:Elem, B:Elem](p: Rep[IPairCollection[A, B]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkPairCollection[A, B](p: Rep[IPairCollection[A, B]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: PairCollectionElem[A, B] @unchecked =>
       Some((p.asRep[PairCollection[A, B]].as, p.asRep[PairCollection[A, B]].bs))
     case _ =>
@@ -1902,7 +1905,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   def mkCollectionOfPairs[A, B]
     (arr: Rep[Array[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[CollectionOfPairs[A, B]] =
     new ExpCollectionOfPairs[A, B](arr)
-  def unmkCollectionOfPairs[A:Elem, B:Elem](p: Rep[IPairCollection[A, B]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkCollectionOfPairs[A, B](p: Rep[IPairCollection[A, B]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CollectionOfPairsElem[A, B] @unchecked =>
       Some((p.asRep[CollectionOfPairs[A, B]].arr))
     case _ =>
@@ -2109,7 +2112,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   def mkNestedCollection[A]
     (values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
     new ExpNestedCollection[A](values, segments)
-  def unmkNestedCollection[A:Elem](p: Rep[INestedCollection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkNestedCollection[A](p: Rep[INestedCollection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: NestedCollectionElem[A] @unchecked =>
       Some((p.asRep[NestedCollection[A]].values, p.asRep[NestedCollection[A]].segments))
     case _ =>

@@ -15,6 +15,7 @@ trait ConvertersAbs extends Converters  {
     proxyOps[Converter[T, R]](p)(classTag[Converter[T, R]])
   }
 
+  // familyElem
   class ConverterElem[T, R, To <: Converter[T, R]](implicit val eDom: Elem[T], val eRange: Elem[R])
     extends EntityElem[To] {
     override def isEntityType = true
@@ -25,7 +26,7 @@ trait ConvertersAbs extends Converters  {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertConverter(x.asRep[Converter[T, R]])
     def convertConverter(x : Rep[Converter[T, R]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[ConverterElem[_,_,_]])
+      //assert(x.selfType1.isInstanceOf[ConverterElem[_,_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -85,7 +86,7 @@ trait ConvertersAbs extends Converters  {
       mkBaseConverter(convFun)
   }
   object BaseConverterMatcher {
-    def unapply[T:Elem, R:Elem](p: Rep[Converter[T, R]]) = unmkBaseConverter(p)
+    def unapply[T, R](p: Rep[Converter[T, R]]) = unmkBaseConverter(p)
   }
   def BaseConverter: Rep[BaseConverterCompanionAbs]
   implicit def proxyBaseConverterCompanion(p: Rep[BaseConverterCompanionAbs]): BaseConverterCompanionAbs = {
@@ -111,7 +112,7 @@ trait ConvertersAbs extends Converters  {
 
   // 6) smart constructor and deconstructor
   def mkBaseConverter[T, R](convFun: Rep[T => R])(implicit eDom: Elem[T], eRange: Elem[R]): Rep[BaseConverter[T, R]]
-  def unmkBaseConverter[T:Elem, R:Elem](p: Rep[Converter[T, R]]): Option[(Rep[T => R])]
+  def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]): Option[(Rep[T => R])]
 
   // elem for concrete class
   class PairConverterElem[A1, A2, B1, B2](val iso: Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
@@ -155,7 +156,7 @@ trait ConvertersAbs extends Converters  {
       mkPairConverter(conv1, conv2)
   }
   object PairConverterMatcher {
-    def unapply[A1:Elem, A2:Elem, B1:Elem, B2:Elem](p: Rep[Converter[(A1, A2), (B1, B2)]]) = unmkPairConverter(p)
+    def unapply[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]) = unmkPairConverter(p)
   }
   def PairConverter: Rep[PairConverterCompanionAbs]
   implicit def proxyPairConverterCompanion(p: Rep[PairConverterCompanionAbs]): PairConverterCompanionAbs = {
@@ -181,7 +182,7 @@ trait ConvertersAbs extends Converters  {
 
   // 6) smart constructor and deconstructor
   def mkPairConverter[A1, A2, B1, B2](conv1: Conv[A1,B1], conv2: Conv[A2,B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]]
-  def unmkPairConverter[A1:Elem, A2:Elem, B1:Elem, B2:Elem](p: Rep[Converter[(A1, A2), (B1, B2)]]): Option[(Rep[Converter[A1,B1]], Rep[Converter[A2,B2]])]
+  def unmkPairConverter[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]): Option[(Rep[Converter[A1,B1]], Rep[Converter[A2,B2]])]
 
   // elem for concrete class
   class SumConverterElem[A1, A2, B1, B2](val iso: Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
@@ -225,7 +226,7 @@ trait ConvertersAbs extends Converters  {
       mkSumConverter(conv1, conv2)
   }
   object SumConverterMatcher {
-    def unapply[A1:Elem, A2:Elem, B1:Elem, B2:Elem](p: Rep[Converter[$bar[A1,A2], $bar[B1,B2]]]) = unmkSumConverter(p)
+    def unapply[A1, A2, B1, B2](p: Rep[Converter[$bar[A1,A2], $bar[B1,B2]]]) = unmkSumConverter(p)
   }
   def SumConverter: Rep[SumConverterCompanionAbs]
   implicit def proxySumConverterCompanion(p: Rep[SumConverterCompanionAbs]): SumConverterCompanionAbs = {
@@ -251,7 +252,7 @@ trait ConvertersAbs extends Converters  {
 
   // 6) smart constructor and deconstructor
   def mkSumConverter[A1, A2, B1, B2](conv1: Conv[A1,B1], conv2: Conv[A2,B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]]
-  def unmkSumConverter[A1:Elem, A2:Elem, B1:Elem, B2:Elem](p: Rep[Converter[$bar[A1,A2], $bar[B1,B2]]]): Option[(Rep[Converter[A1,B1]], Rep[Converter[A2,B2]])]
+  def unmkSumConverter[A1, A2, B1, B2](p: Rep[Converter[$bar[A1,A2], $bar[B1,B2]]]): Option[(Rep[Converter[A1,B1]], Rep[Converter[A2,B2]])]
 }
 
 // Seq -----------------------------------
@@ -275,7 +276,7 @@ trait ConvertersSeq extends ConvertersDsl  {
   def mkBaseConverter[T, R]
       (convFun: Rep[T => R])(implicit eDom: Elem[T], eRange: Elem[R]): Rep[BaseConverter[T, R]] =
       new SeqBaseConverter[T, R](convFun)
-  def unmkBaseConverter[T:Elem, R:Elem](p: Rep[Converter[T, R]]) = p match {
+  def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]) = p match {
     case p: BaseConverter[T, R] @unchecked =>
       Some((p.convFun))
     case _ => None
@@ -295,7 +296,7 @@ trait ConvertersSeq extends ConvertersDsl  {
   def mkPairConverter[A1, A2, B1, B2]
       (conv1: Conv[A1,B1], conv2: Conv[A2,B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
       new SeqPairConverter[A1, A2, B1, B2](conv1, conv2)
-  def unmkPairConverter[A1:Elem, A2:Elem, B1:Elem, B2:Elem](p: Rep[Converter[(A1, A2), (B1, B2)]]) = p match {
+  def unmkPairConverter[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]) = p match {
     case p: PairConverter[A1, A2, B1, B2] @unchecked =>
       Some((p.conv1, p.conv2))
     case _ => None
@@ -315,7 +316,7 @@ trait ConvertersSeq extends ConvertersDsl  {
   def mkSumConverter[A1, A2, B1, B2]
       (conv1: Conv[A1,B1], conv2: Conv[A2,B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
       new SeqSumConverter[A1, A2, B1, B2](conv1, conv2)
-  def unmkSumConverter[A1:Elem, A2:Elem, B1:Elem, B2:Elem](p: Rep[Converter[$bar[A1,A2], $bar[B1,B2]]]) = p match {
+  def unmkSumConverter[A1, A2, B1, B2](p: Rep[Converter[$bar[A1,A2], $bar[B1,B2]]]) = p match {
     case p: SumConverter[A1, A2, B1, B2] @unchecked =>
       Some((p.conv1, p.conv2))
     case _ => None
@@ -367,7 +368,7 @@ trait ConvertersExp extends ConvertersDsl  {
   def mkBaseConverter[T, R]
     (convFun: Rep[T => R])(implicit eDom: Elem[T], eRange: Elem[R]): Rep[BaseConverter[T, R]] =
     new ExpBaseConverter[T, R](convFun)
-  def unmkBaseConverter[T:Elem, R:Elem](p: Rep[Converter[T, R]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: BaseConverterElem[T, R] @unchecked =>
       Some((p.asRep[BaseConverter[T, R]].convFun))
     case _ =>
@@ -407,7 +408,7 @@ trait ConvertersExp extends ConvertersDsl  {
   def mkPairConverter[A1, A2, B1, B2]
     (conv1: Conv[A1,B1], conv2: Conv[A2,B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
     new ExpPairConverter[A1, A2, B1, B2](conv1, conv2)
-  def unmkPairConverter[A1:Elem, A2:Elem, B1:Elem, B2:Elem](p: Rep[Converter[(A1, A2), (B1, B2)]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkPairConverter[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: PairConverterElem[A1, A2, B1, B2] @unchecked =>
       Some((p.asRep[PairConverter[A1, A2, B1, B2]].conv1, p.asRep[PairConverter[A1, A2, B1, B2]].conv2))
     case _ =>
@@ -447,7 +448,7 @@ trait ConvertersExp extends ConvertersDsl  {
   def mkSumConverter[A1, A2, B1, B2]
     (conv1: Conv[A1,B1], conv2: Conv[A2,B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
     new ExpSumConverter[A1, A2, B1, B2](conv1, conv2)
-  def unmkSumConverter[A1:Elem, A2:Elem, B1:Elem, B2:Elem](p: Rep[Converter[$bar[A1,A2], $bar[B1,B2]]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkSumConverter[A1, A2, B1, B2](p: Rep[Converter[$bar[A1,A2], $bar[B1,B2]]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SumConverterElem[A1, A2, B1, B2] @unchecked =>
       Some((p.asRep[SumConverter[A1, A2, B1, B2]].conv1, p.asRep[SumConverter[A1, A2, B1, B2]].conv2))
     case _ =>

@@ -48,6 +48,7 @@ trait SeqsAbs extends Seqs with Scalan {
     lazy val defaultRepTo = Default.defaultVal(SSeq.empty[B])
   }
 
+  // familyElem
   class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
     extends EntityElem1[A, To, SSeq](eA,container[SSeq]) {
     override def isEntityType = true
@@ -57,7 +58,7 @@ trait SeqsAbs extends Seqs with Scalan {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
     def convertSSeq(x : Rep[SSeq[A]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[SSeqElem[_,_]])
+      //assert(x.selfType1.isInstanceOf[SSeqElem[_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -194,7 +195,7 @@ trait SeqsAbs extends Seqs with Scalan {
       mkSSeqImpl(wrappedValueOfBaseType)
   }
   object SSeqImplMatcher {
-    def unapply[A:Elem](p: Rep[SSeq[A]]) = unmkSSeqImpl(p)
+    def unapply[A](p: Rep[SSeq[A]]) = unmkSSeqImpl(p)
   }
   def SSeqImpl: Rep[SSeqImplCompanionAbs]
   implicit def proxySSeqImplCompanion(p: Rep[SSeqImplCompanionAbs]): SSeqImplCompanionAbs = {
@@ -220,7 +221,7 @@ trait SeqsAbs extends Seqs with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkSSeqImpl[A](wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]]
-  def unmkSSeqImpl[A:Elem](p: Rep[SSeq[A]]): Option[(Rep[Seq[A]])]
+  def unmkSSeqImpl[A](p: Rep[SSeq[A]]): Option[(Rep[Seq[A]])]
 }
 
 // Seq -----------------------------------
@@ -289,7 +290,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
   def mkSSeqImpl[A]
       (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
       new SeqSSeqImpl[A](wrappedValueOfBaseType)
-  def unmkSSeqImpl[A:Elem](p: Rep[SSeq[A]]) = p match {
+  def unmkSSeqImpl[A](p: Rep[SSeq[A]]) = p match {
     case p: SSeqImpl[A] @unchecked =>
       Some((p.wrappedValueOfBaseType))
     case _ => None
@@ -339,7 +340,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
   def mkSSeqImpl[A]
     (wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
     new ExpSSeqImpl[A](wrappedValueOfBaseType)
-  def unmkSSeqImpl[A:Elem](p: Rep[SSeq[A]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkSSeqImpl[A](p: Rep[SSeq[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SSeqImplElem[A] @unchecked =>
       Some((p.asRep[SSeqImpl[A]].wrappedValueOfBaseType))
     case _ =>
