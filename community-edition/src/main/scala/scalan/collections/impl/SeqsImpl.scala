@@ -570,7 +570,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
     case SSeqMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
-    case mc @ MethodCall(Def(wrapper: ExpSSeqImpl[_]), m, args, neverInvoke) =>
+    case mc @ MethodCall(Def(wrapper: ExpSSeqImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
       val resultElem = mc.selfType
       val wrapperIso = getIsoByElem(resultElem)
       wrapperIso match {
