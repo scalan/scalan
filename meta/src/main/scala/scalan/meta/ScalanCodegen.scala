@@ -37,7 +37,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     def isContainer1 = tpeArgs.length == 1 && entity.hasAnnotation(ContainerTypeAnnotation)
 
     def isWrapper = firstAncestorType match {
-      case STraitCall("TypeWrapper", _) => true
+      case Some(STraitCall("TypeWrapper", _)) => true
       case _ => false
     }
 
