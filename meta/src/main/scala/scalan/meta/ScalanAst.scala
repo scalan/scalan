@@ -124,7 +124,7 @@ trait ScalanAst {
     def explicitArgs = argSections.flatMap(_.args.filterNot(_.impFlag))
     def allArgs = argSections.flatMap(_.args)
   }
-  case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
+  case class SValDef(name: String, tpe: Option[STpeExpr], rhs: Option[SExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
   case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
 
   case class STpeArg(
@@ -302,6 +302,7 @@ trait ScalanAst {
     concreteSClasses: List[SClassDef],
     methods: List[SMethodDef],
     selfType: Option[SSelfTypeDef],
+    body: List[SBodyItem] = Nil,
     seqDslImpl: Option[SSeqImplementation] = None)
   {
     def getEntity(name: String): STraitOrClassDef = {
