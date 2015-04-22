@@ -1,4 +1,3 @@
-
 package scalan.collections
 package impl
 
@@ -18,22 +17,23 @@ trait BitSetsAbs extends BitSets with Scalan {
   }
 
   // familyElem
-  class BitSetElem[To <: BitSet]
-    extends EntityElem[To] {
+  class BitSetElem[Abs <: BitSet]
+    extends EntityElem[Abs] {
     override def isEntityType = true
     override def tag = {
-      weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
+      weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[Abs]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertBitSet(x.asRep[BitSet])
-    def convertBitSet(x : Rep[BitSet]): Rep[To] = {
+    def convertBitSet(x : Rep[BitSet]): Rep[Abs] = {
       //assert(x.selfType1.isInstanceOf[BitSetElem[_]])
-      x.asRep[To]
+      x.asRep[Abs]
     }
-    override def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[Abs] = ???
   }
 
-  implicit def bitSetElement =
-    new BitSetElem[BitSet]()
+  implicit def bitSetElement: Elem[BitSet] =
+    new BitSetElem[BitSet] {
+    }
 
   trait BitSetCompanionElem extends CompanionElem[BitSetCompanionAbs]
   implicit lazy val BitSetCompanionElem: BitSetCompanionElem = new BitSetCompanionElem {

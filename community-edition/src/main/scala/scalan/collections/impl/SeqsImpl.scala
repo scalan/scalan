@@ -1,4 +1,3 @@
-
 package scalan.collections
 package impl
 
@@ -243,11 +242,11 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
       SSeqImpl(Seq.fromList[A](list))
   }
 
-  // override proxy if we deal with TypeWrapper
+    // override proxy if we deal with TypeWrapper
   //override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOpsEx[Seq[A],SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
 
-  implicit def seqElement[A:Elem]: Elem[Seq[A]] =
+    implicit def seqElement[A:Elem]: Elem[Seq[A]] =
       new SeqBaseElemEx1[A, SSeq[A], Seq](
            element[SSeq[A]])(element[A], container[Seq], DefaultOfSeq[A])
 

@@ -1,4 +1,3 @@
-
 package scalan.collections
 package impl
 
@@ -18,24 +17,25 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
   }
 
   // familyElem
-  class MMultiMapElem[K, V, To <: MMultiMap[K, V]](implicit val elemKey: Elem[K], val elemValue: Elem[V])
-    extends EntityElem[To] {
+  class MMultiMapElem[K, V, Abs <: MMultiMap[K, V]](implicit val elemKey: Elem[K], val elemValue: Elem[V])
+    extends EntityElem[Abs] {
     override def isEntityType = true
     override def tag = {
       implicit val tagK = elemKey.tag
       implicit val tagV = elemValue.tag
-      weakTypeTag[MMultiMap[K, V]].asInstanceOf[WeakTypeTag[To]]
+      weakTypeTag[MMultiMap[K, V]].asInstanceOf[WeakTypeTag[Abs]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertMMultiMap(x.asRep[MMultiMap[K, V]])
-    def convertMMultiMap(x : Rep[MMultiMap[K, V]]): Rep[To] = {
+    def convertMMultiMap(x : Rep[MMultiMap[K, V]]): Rep[Abs] = {
       //assert(x.selfType1.isInstanceOf[MMultiMapElem[_,_,_]])
-      x.asRep[To]
+      x.asRep[Abs]
     }
-    override def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[Abs] = ???
   }
 
-  implicit def mMultiMapElement[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]) =
-    new MMultiMapElem[K, V, MMultiMap[K, V]]()(elemKey, elemValue)
+  implicit def mMultiMapElement[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]): Elem[MMultiMap[K, V]] =
+    new MMultiMapElem[K, V, MMultiMap[K, V]] {
+    }
 
   trait MMultiMapCompanionElem extends CompanionElem[MMultiMapCompanionAbs]
   implicit lazy val MMultiMapCompanionElem: MMultiMapCompanionElem = new MMultiMapCompanionElem {
