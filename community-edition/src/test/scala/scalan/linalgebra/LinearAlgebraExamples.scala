@@ -185,4 +185,22 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     println("vec(" + i + "): " + res)
     res
   }
+
+  lazy val jArrTrain2x2 = Array(Array((0, 5.0), (1, 3.0)), Array((1, 4.0)))
+
+  lazy val transpose = fun { in: Rep[(Array[(Int, Double)], (Array[(Int, Int)], Int))] =>
+    val Tuple(arrFlat, segsArr, nItems) = in
+    val nColl: NColl[(Int, Double)] = NestedCollection(Collection(arrFlat), CollectionOfPairs(segsArr))
+    val mR: Matrix[Double] = CompoundMatrix.fromNColl(nColl, nItems)
+    mR.transpose.rows.map({v => v.nonZeroItems.arr}).arr
+  }
+
+  def getNArrayWithSegmentsFromJaggedArray(jaggedArray: Array[Array[(Int, Double)]]) = {
+    //val arr = jaggedArray.flatMap(v => v)
+    val arrI = jaggedArray.flatMap(v => v.map(_._1))
+    val arrV = jaggedArray.flatMap(v => v.map(_._2))
+    val lens = jaggedArray.map(i => i.length)
+    val offs = lens.scanLeft(0)((x, y) => x + y).take(lens.length)
+    (arrI zip arrV, offs zip lens)
+  }
 }

@@ -8,6 +8,7 @@ import scalan._
 import scalan.common.Default
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.tailrec
+import scala.annotation.unchecked.uncheckedVariance
 
 trait Vectors { self: ScalanCommunityDsl =>
 
@@ -26,6 +27,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def apply(i: Rep[Int]): Rep[T]
     @OverloadId("apply_by_collection")
     def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T]
+
+    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R]
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T]
     @OverloadId("elementwise_sum_collection")
@@ -73,6 +76,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def apply(i: Rep[Int]): Rep[T] = items(i)
     @OverloadId("apply_by_collection")
     def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = DenseVector(items(is))
+
+    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R] = DenseVector(items.mapBy(f))
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
@@ -141,12 +146,112 @@ trait Vectors { self: ScalanCommunityDsl =>
     def nonZeroItems: Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
 
     def apply(i: IntRep): Rep[T] = {
-      val k = binarySearch(i, nonZeroIndices)
-      IF (k >= toRep(0)) THEN nonZeroValues(k) ELSE zeroValue
+      val zero = toRep(0)
+      IF (nonZeroIndices.length > zero) THEN {
+        val k = binarySearch(i, nonZeroIndices)
+        IF (k >= zero) THEN nonZeroValues(k) ELSE zeroValue
+      } ELSE zeroValue
     }
 
     @OverloadId("apply_by_collection")
     def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = ??? // TODO: need efficient way to get value by index
+
+    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R] = {
+      IF (f(zeroValue) === element[R].defaultRepValue) THEN {
+        SparseVector(nonZeroIndices, nonZeroValues.mapBy(f), length)
+      } ELSE {
+        ???
+      }
+    }
+
+    def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+      other match {
+        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
+          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+        case _ =>
+          other +^ self
+      }
+    }
+
+    @OverloadId("elementwise_sum_value")
+    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      DenseVector(items.map(v => v + other))
+    }
+
+    def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+      // TODO: I don't like constructing items in this method
+      other match {
+        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
+          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+        case DenseVectorMatcher(items) =>
+          val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
+          DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
+        case _ =>
+          (other -^ self) *^ n.negate(n.one)
+      }
+    }
+    @OverloadId("elementwise_diff_collection")
+    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      DenseVector(items.map(v => v - other))
+    }
+
+    def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+      other match {
+        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
+          SparseVector(innerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+        case _ =>
+          other *^ self
+      }
+    }
+    @OverloadId("elementwise_mult_value")
+    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      SparseVector(nonZeroIndices, nonZeroValues.map(v => v * other), length)
+    }
+
+    def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)  //TODO: it's inefficient
+
+    def dot(other: Rep[AbstractVector[T]])(implicit n: Numeric[T]): Rep[T] = {
+      other match {
+        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
+          // TODO implement innerJoin and uncomment
+          //sv => innerJoin(nonZeroIndices, nonZeroValues, sv.nonZeroIndices, sv.nonZeroValues).bs.reduce
+          dotSparse(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1)
+        case _ =>
+          other.dot(self)
+      }
+    }
+
+    def euclideanNorm(implicit num: Numeric[T]): Rep[Double] = Math.sqrt(nonZeroValues.map(v => v * v).reduce.asRep[Double])
+
+    def companion = SparseVector
+  }
+
+  abstract class SparseVector1[T](val nonZeroItems: Rep[Collection[(Int, T)]],
+                                  val length: Rep[Int])(implicit val elem: Elem[T])
+    extends AbstractVector[T] {
+
+    def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
+    def nonZeroIndices: Rep[Collection[Int]] = nonZeroItems.as
+    def nonZeroValues: Rep[Collection[T]] = nonZeroItems.bs
+
+    def apply(i: IntRep): Rep[T] = {
+      val zero = toRep(0)
+      IF (nonZeroIndices.length > zero) THEN {
+        val k = binarySearch(i, nonZeroIndices)
+        IF (k >= zero) THEN nonZeroValues(k) ELSE zeroValue
+      } ELSE zeroValue
+    }
+
+    @OverloadId("apply_by_collection")
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = ??? // TODO: need efficient way to get value by index
+
+    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R] = {
+      IF (f(zeroValue) === element[R].defaultRepValue) THEN {
+        SparseVector(nonZeroIndices, nonZeroValues.mapBy(f), length)
+      } ELSE {
+        ???
+      }
+    }
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
@@ -212,6 +317,8 @@ trait Vectors { self: ScalanCommunityDsl =>
 
   trait AbstractVectorCompanion extends TypeFamily1[AbstractVector] {
     def zero[T: Elem](len: Rep[Int]): Vector[T] = ??? //DenseVector.zero[T](len)
+    def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
+                                nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vector[T] = ???
   }
 
   trait DenseVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
@@ -219,6 +326,8 @@ trait Vectors { self: ScalanCommunityDsl =>
       val zeroV = element[T].defaultRepValue
       DenseVector(Collection.replicate(len, zeroV))
     }
+    override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
+                                nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vector[T] = ???
   }
 
   trait SparseVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
@@ -233,6 +342,24 @@ trait Vectors { self: ScalanCommunityDsl =>
       SparseVector(nonZeroItems.as, nonZeroItems.bs, length)
     }
     override def zero[T: Elem](len: Rep[Int]) = SparseVector(emptyColl[Int], emptyColl[T], len)
+    override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]],
+                                         length: Rep[Int]): Vector[T] = SparseVector(nonZeroIndices, nonZeroValues, length)
+  }
+
+  trait SparseVector1Companion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
+    def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector1[T]] = {
+      val nonZeroItems: Rep[IPairCollection[Int, T]] =
+        (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }
+      SparseVector1(nonZeroItems, items.length)
+    }
+    @OverloadId("SparseVector1Companion_apply_nonZeroItems")
+    def apply[T: Elem](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])
+                      (implicit n: Numeric[T], o: Overloaded2): Rep[SparseVector1[T]] = {
+      SparseVector1(nonZeroIndices zip nonZeroValues, length)
+    }
+    override def zero[T: Elem](len: Rep[Int]) = SparseVector(emptyColl[Int], emptyColl[T], len)
+    override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]],
+                                         length: Rep[Int]): Vector[T] = SparseVector1(nonZeroIndices zip nonZeroValues, length)
   }
 }
 
@@ -255,6 +382,16 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
                         (implicit n: Numeric[T]): PairColl[Int, T]
 
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep
+
+  implicit class VectorExtensions[T](vector: Vector[T]) {
+    implicit def eItem: Elem[T] = vector.elem
+
+    def map[R: Elem](f: Rep[T] => Rep[R]): Vector[R] = vector.mapBy(fun(f))
+
+    //def filter(f: Rep[T] => Rep[Boolean]): Matrix[T] = matrix.filterBy(fun(f))
+
+    //def flatMap[R: Elem](f: Rep[T] => Coll[R]): Matrix[R] = matrix.flatMapBy(fun(f))
+  }
 }
 
 trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
@@ -436,7 +573,7 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
         }
       }
     }
-    check(zero, Math.min(index, indices.length))
+    check(zero, Math.min(index, indices.length - one))
   }
 }
 

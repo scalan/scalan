@@ -5,6 +5,7 @@ import scalan._
 import scalan.common.Default
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.tailrec
+import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect._
 import scalan.common.Default
@@ -183,6 +184,71 @@ trait VectorsAbs extends Vectors with Scalan {
   // 6) smart constructor and deconstructor
   def mkSparseVector[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]]
   def unmkSparseVector[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int])]
+
+  // elem for concrete class
+  class SparseVector1Elem[T](val iso: Iso[SparseVector1Data[T], SparseVector1[T]])(implicit elem: Elem[T])
+    extends AbstractVectorElem[T, SparseVector1[T]]
+    with ConcreteElem[SparseVector1Data[T], SparseVector1[T]] {
+    override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector1(x.nonZeroItems, x.length)
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
+  }
+
+  // state representation type
+  type SparseVector1Data[T] = (Collection[(Int, T)], Int)
+
+  // 3) Iso for concrete class
+  class SparseVector1Iso[T](implicit elem: Elem[T])
+    extends Iso[SparseVector1Data[T], SparseVector1[T]]()(pairElement(implicitly[Elem[Collection[(Int, T)]]], implicitly[Elem[Int]])) {
+    override def from(p: Rep[SparseVector1[T]]) =
+      (p.nonZeroItems, p.length)
+    override def to(p: Rep[(Collection[(Int, T)], Int)]) = {
+      val Pair(nonZeroItems, length) = p
+      SparseVector1(nonZeroItems, length)
+    }
+    lazy val tag = {
+      implicit val tagT = elem.tag
+      weakTypeTag[SparseVector1[T]]
+    }
+    lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector1[T]]](SparseVector1(element[Collection[(Int, T)]].defaultRepValue, 0))
+    lazy val eTo = new SparseVector1Elem[T](this)
+  }
+  // 4) constructor and deconstructor
+  abstract class SparseVector1CompanionAbs extends CompanionBase[SparseVector1CompanionAbs] with SparseVector1Companion {
+    override def toString = "SparseVector1"
+    def apply[T](p: Rep[SparseVector1Data[T]])(implicit elem: Elem[T]): Rep[SparseVector1[T]] =
+      isoSparseVector1(elem).to(p)
+    def apply[T](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector1[T]] =
+      mkSparseVector1(nonZeroItems, length)
+  }
+  object SparseVector1Matcher {
+    def unapply[T](p: Rep[AbstractVector[T]]) = unmkSparseVector1(p)
+  }
+  def SparseVector1: Rep[SparseVector1CompanionAbs]
+  implicit def proxySparseVector1Companion(p: Rep[SparseVector1CompanionAbs]): SparseVector1CompanionAbs = {
+    proxyOps[SparseVector1CompanionAbs](p)
+  }
+
+  class SparseVector1CompanionElem extends CompanionElem[SparseVector1CompanionAbs] {
+    lazy val tag = weakTypeTag[SparseVector1CompanionAbs]
+    protected def getDefaultRep = SparseVector1
+  }
+  implicit lazy val SparseVector1CompanionElem: SparseVector1CompanionElem = new SparseVector1CompanionElem
+
+  implicit def proxySparseVector1[T](p: Rep[SparseVector1[T]]): SparseVector1[T] =
+    proxyOps[SparseVector1[T]](p)
+
+  implicit class ExtendedSparseVector1[T](p: Rep[SparseVector1[T]])(implicit elem: Elem[T]) {
+    def toData: Rep[SparseVector1Data[T]] = isoSparseVector1(elem).from(p)
+  }
+
+  // 5) implicit resolution of Iso
+  implicit def isoSparseVector1[T](implicit elem: Elem[T]): Iso[SparseVector1Data[T], SparseVector1[T]] =
+    new SparseVector1Iso[T]
+
+  // 6) smart constructor and deconstructor
+  def mkSparseVector1[T](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector1[T]]
+  def unmkSparseVector1[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[(Int, T)]], Rep[Int])]
 }
 
 // Seq -----------------------------------
@@ -229,6 +295,26 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
   def unmkSparseVector[T](p: Rep[AbstractVector[T]]) = p match {
     case p: SparseVector[T] @unchecked =>
       Some((p.nonZeroIndices, p.nonZeroValues, p.length))
+    case _ => None
+  }
+
+  case class SeqSparseVector1[T]
+      (override val nonZeroItems: Rep[Collection[(Int, T)]], override val length: Rep[Int])
+      (implicit elem: Elem[T])
+    extends SparseVector1[T](nonZeroItems, length)
+        with UserTypeSeq[SparseVector1[T]] {
+    lazy val selfType = element[SparseVector1[T]]
+  }
+  lazy val SparseVector1 = new SparseVector1CompanionAbs with UserTypeSeq[SparseVector1CompanionAbs] {
+    lazy val selfType = element[SparseVector1CompanionAbs]
+  }
+
+  def mkSparseVector1[T]
+      (nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector1[T]] =
+      new SeqSparseVector1[T](nonZeroItems, length)
+  def unmkSparseVector1[T](p: Rep[AbstractVector[T]]) = p match {
+    case p: SparseVector1[T] @unchecked =>
+      Some((p.nonZeroItems, p.length))
     case _ => None
   }
 }
@@ -322,6 +408,18 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Coll[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object mapBy {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[T => R]) forSome {type T; type R}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[T => R]) forSome {type T; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[T => R]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -460,6 +558,18 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object fromSparseData {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(nonZeroIndices, nonZeroValues, length, _*), _) if receiver.elem.isInstanceOf[DenseVectorCompanionElem] && method.getName == "fromSparseData" =>
+          Some((nonZeroIndices, nonZeroValues, length)).asInstanceOf[Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   def mkDenseVector[T]
@@ -529,6 +639,18 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Coll[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object mapBy {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[T => R]) forSome {type T; type R}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[T => R]) forSome {type T; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[T => R]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -691,6 +813,18 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object fromSparseData {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(nonZeroIndices, nonZeroValues, length, _*), _) if receiver.elem.isInstanceOf[SparseVectorCompanionElem] && method.getName == "fromSparseData" =>
+          Some((nonZeroIndices, nonZeroValues, length)).asInstanceOf[Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   def mkSparseVector[T]
@@ -699,6 +833,273 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   def unmkSparseVector[T](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SparseVectorElem[T] @unchecked =>
       Some((p.asRep[SparseVector[T]].nonZeroIndices, p.asRep[SparseVector[T]].nonZeroValues, p.asRep[SparseVector[T]].length))
+    case _ =>
+      None
+  }
+
+  case class ExpSparseVector1[T]
+      (override val nonZeroItems: Rep[Collection[(Int, T)]], override val length: Rep[Int])
+      (implicit elem: Elem[T])
+    extends SparseVector1[T](nonZeroItems, length) with UserTypeDef[SparseVector1[T]] {
+    lazy val selfType = element[SparseVector1[T]]
+    override def mirror(t: Transformer) = ExpSparseVector1[T](t(nonZeroItems), t(length))
+  }
+
+  lazy val SparseVector1: Rep[SparseVector1CompanionAbs] = new SparseVector1CompanionAbs with UserTypeDef[SparseVector1CompanionAbs] {
+    lazy val selfType = element[SparseVector1CompanionAbs]
+    override def mirror(t: Transformer) = this
+  }
+
+  object SparseVector1Methods {
+    object items {
+      def unapply(d: Def[_]): Option[Rep[SparseVector1[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "items" =>
+          Some(receiver).asInstanceOf[Option[Rep[SparseVector1[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SparseVector1[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object nonZeroIndices {
+      def unapply(d: Def[_]): Option[Rep[SparseVector1[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "nonZeroIndices" =>
+          Some(receiver).asInstanceOf[Option[Rep[SparseVector1[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SparseVector1[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object nonZeroValues {
+      def unapply(d: Def[_]): Option[Rep[SparseVector1[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "nonZeroValues" =>
+          Some(receiver).asInstanceOf[Option[Rep[SparseVector1[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SparseVector1[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], IntRep) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, i)).asInstanceOf[Option[(Rep[SparseVector1[T]], IntRep) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], IntRep) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_apply_by_collection {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Coll[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(is, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "apply_by_collection" } =>
+          Some((receiver, is)).asInstanceOf[Option[(Rep[SparseVector1[T]], Coll[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Coll[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object mapBy {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[T => R]) forSome {type T; type R}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[T => R]) forSome {type T; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[T => R]) forSome {type T; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object +^ {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "$plus$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Vector[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Vector[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object elementwise_sum_value_+^ {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "$plus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_sum_value" } =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object -^ {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "$minus$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Vector[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Vector[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object elementwise_diff_collection_-^ {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "$minus$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_diff_collection" } =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object *^ {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "$times$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Vector[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Vector[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object elementwise_mult_value_*^ {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "$times$up" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "elementwise_mult_value" } =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object reduce {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], RepMonoid[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "reduce" =>
+          Some((receiver, m)).asInstanceOf[Option[(Rep[SparseVector1[T]], RepMonoid[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], RepMonoid[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object dot {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[AbstractVector[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "dot" =>
+          Some((receiver, other, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[AbstractVector[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[AbstractVector[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object euclideanNorm {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(num, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "euclideanNorm" =>
+          Some((receiver, num)).asInstanceOf[Option[(Rep[SparseVector1[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object companion {
+      def unapply(d: Def[_]): Option[Rep[SparseVector1[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "companion" =>
+          Some(receiver).asInstanceOf[Option[Rep[SparseVector1[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[SparseVector1[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  object SparseVector1CompanionMethods {
+    object apply {
+      def unapply(d: Def[_]): Option[(Rep[Collection[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(items, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1CompanionElem] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((items, n)).asInstanceOf[Option[(Rep[Collection[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object apply_SparseVector1Companion_apply_nonZeroItems {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(nonZeroIndices, nonZeroValues, length, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1CompanionElem] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "SparseVector1Companion_apply_nonZeroItems" } =>
+          Some((nonZeroIndices, nonZeroValues, length, n)).asInstanceOf[Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object zero {
+      def unapply(d: Def[_]): Option[Rep[Int] forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem.isInstanceOf[SparseVector1CompanionElem] && method.getName == "zero" =>
+          Some(len).asInstanceOf[Option[Rep[Int] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Int] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromSparseData {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(nonZeroIndices, nonZeroValues, length, _*), _) if receiver.elem.isInstanceOf[SparseVector1CompanionElem] && method.getName == "fromSparseData" =>
+          Some((nonZeroIndices, nonZeroValues, length)).asInstanceOf[Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+  }
+
+  def mkSparseVector1[T]
+    (nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector1[T]] =
+    new ExpSparseVector1[T](nonZeroItems, length)
+  def unmkSparseVector1[T](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: SparseVector1Elem[T] @unchecked =>
+      Some((p.asRep[SparseVector1[T]].nonZeroItems, p.asRep[SparseVector1[T]].length))
     case _ =>
       None
   }
@@ -795,6 +1196,18 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Coll[Int]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object mapBy {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T => R]) forSome {type T; type R}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "mapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T => R]) forSome {type T; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T => R]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1001,6 +1414,18 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Rep[Int] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object fromSparseData {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(nonZeroIndices, nonZeroValues, length, _*), _) if receiver.elem.isInstanceOf[AbstractVectorCompanionElem] && method.getName == "fromSparseData" =>
+          Some((nonZeroIndices, nonZeroValues, length)).asInstanceOf[Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

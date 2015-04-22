@@ -223,4 +223,12 @@ class VectorMethodsItTests extends LmsLinAlgItTests {
     compareOutputWithSequential(progStaged)(progSeq.applySparseVector, progStaged.applySparseVector, "applySparseVector2", in)
     compareOutputWithExpected(progStaged)(out, progStaged.applySparseVector, "applySparseVector2e", in)
   }
+
+  test ("transpose") {
+    val nItems = 2
+    val (arrTrain, segsTrain) = progSeq.getNArrayWithSegmentsFromJaggedArray(progSeq.jArrTrain2x2)
+    val in = progSeq.Tuple(arrTrain, segsTrain, nItems)
+
+    compareOutputWithSequential(progStaged)(progSeq.transpose, progStaged.transpose, "transpose", in)
+  }
 }
