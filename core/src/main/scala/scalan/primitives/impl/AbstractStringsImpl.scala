@@ -1,4 +1,3 @@
-
 package scalan.primitives
 package impl
 
@@ -18,22 +17,23 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
   }
 
   // familyElem
-  class AStringElem[To <: AString]
-    extends EntityElem[To] {
+  class AStringElem[Abs <: AString]
+    extends EntityElem[Abs] {
     override def isEntityType = true
     override def tag = {
-      weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
+      weakTypeTag[AString].asInstanceOf[WeakTypeTag[Abs]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertAString(x.asRep[AString])
-    def convertAString(x : Rep[AString]): Rep[To] = {
+    def convertAString(x : Rep[AString]): Rep[Abs] = {
       //assert(x.selfType1.isInstanceOf[AStringElem[_]])
-      x.asRep[To]
+      x.asRep[Abs]
     }
-    override def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[Abs] = ???
   }
 
-  implicit def aStringElement =
-    new AStringElem[AString]()
+  implicit def aStringElement: Elem[AString] =
+    new AStringElem[AString] {
+    }
 
   trait AStringCompanionElem extends CompanionElem[AStringCompanionAbs]
   implicit lazy val AStringCompanionElem: AStringCompanionElem = new AStringCompanionElem {

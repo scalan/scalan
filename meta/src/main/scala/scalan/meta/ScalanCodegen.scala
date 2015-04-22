@@ -155,7 +155,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       case f :: fs => s"Pair($f, ${pairify(fs)})"
     }
 
-    def getDefaultOfBT(tc: STraitCall) =
+    def getDefaultOfBT(tc: STpeExpr) =
       s"DefaultOf${tc.name}" + tc.tpeSExprs.opt(args => s"[${args.rep()}]")
 
     def zeroSExpr(t: STpeExpr): String = t match {
