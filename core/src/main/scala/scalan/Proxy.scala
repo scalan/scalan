@@ -310,6 +310,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   type SomeCont = Cont[C] forSome { type C[_] }
   type TypeDesc = Elem[_] | SomeCont
 
+  import Symbols._
   private def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = {
     val e = receiver.elem
     val tag = e match {
@@ -319,25 +320,206 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val tpe = tag.tpe
     val instanceElemMap = getElemsMapFromInstanceElem(e, tpe)
     val scalaMethod = findScalaMethod(tpe, m)
+
     // http://stackoverflow.com/questions/29256896/get-precise-return-type-from-a-typetag-and-a-method
     val returnType = scalaMethod.returnType.asSeenFrom(tpe, scalaMethod.owner).normalize
     returnType match {
       // FIXME can't figure out proper comparison with RepType here
       case TypeRef(_, sym, List(tpe1)) if sym.name.toString == "Rep" =>
-        // FIXME assumed for now to correspond to the method's type params, in the same order
-        val elemParams = args.collect {
-          case e: Elem[_] => scala.Left(e)
-          case c: SomeCont @unchecked => scala.Right[Elem[_], SomeCont](c)
+        val paramTypes = scalaMethod.paramss.flatten.map(_.typeSignature.asSeenFrom(tpe, scalaMethod.owner).normalize)
+        // reverse to let implicit elem parameters be first
+        val elemsWithTypes: List[(TypeDesc, Type)] = args.zip(paramTypes).reverse.collect {
+          case (e: Exp[_], TypeRef(_, sym, List(tpeE))) if sym.name.toString == "Rep" =>
+            (scala.Left[Elem[_], SomeCont](e.elem), tpeE)
+          case (elem: Elem[_], TypeRef(_, ElementSym, List(tpeElem))) =>
+            (scala.Left[Elem[_], SomeCont](elem), tpeElem)
+          case (cont: SomeCont @unchecked, TypeRef(_, ContSym, List(tpeCont))) =>
+            (scala.Right[Elem[_], SomeCont](cont), tpeCont)
+          case (op: UnOp[_, _], TypeRef(_, _, List(_, tpeResult))) =>
+            (scala.Left[Elem[_], SomeCont](op.eResult), tpeResult)
+          case (op: BinOp[_, _], TypeRef(_, _, List(_, tpeResult))) =>
+            (scala.Left[Elem[_], SomeCont](op.eResult), tpeResult)
         }
-        val elemMap = instanceElemMap ++ scalaMethod.typeParams.zip(elemParams).toMap
-        // check if return type is a TypeWrapper
-        val baseType = tpe.baseType(Symbols.TypeWrapperSym) match {
-          case NoType => definitions.NothingTpe
-          // e.g. Throwable from TypeWrapper[Throwable, SThrowable]
-          case TypeRef(_, _, params) => params(0).asSeenFrom(tpe, scalaMethod.owner)
-          case unexpected => !!!(s"unexpected result from ${tpe1}.baseType(TypeWrapper): $unexpected")
+
+        def extractParts(elem: Elem[_], classSymbol: Symbol, params: List[Type], tpe: Type) = classSymbol match {
+          case UnitSym | BooleanSym | ByteSym | ShortSym | IntSym | LongSym |
+               FloatSym | DoubleSym | StringSym | PredefStringSym | CharSym =>
+            Nil
+          case Tuple2Sym =>
+            val elem1 = elem.asInstanceOf[PairElem[_, _]]
+            List(scala.Left(elem1.eFst) -> params(0), scala.Left(elem1.eSnd) -> params(1))
+          case EitherSym =>
+            val elem1 = elem.asInstanceOf[SumElem[_, _]]
+            List(scala.Left(elem1.eLeft) -> params(0), scala.Left(elem1.eRight) -> params(1))
+          case Function1Sym =>
+            val elem1 = elem.asInstanceOf[FuncElem[_, _]]
+            List(scala.Left(elem1.eDom) -> params(0), scala.Left(elem1.eRange) -> params(1))
+          case ArraySym =>
+            val elem1 = elem.asInstanceOf[ArrayElem[_]]
+            List(scala.Left(elem1.eItem) -> params(0))
+          case ListSym =>
+            val elem1 = elem.asInstanceOf[ListElem[_]]
+            List(scala.Left(elem1.eItem) -> params(0))
+          case _ if classSymbol.isClass =>
+            val declarations = classSymbol.asClass.selfType.declarations
+            val res = declarations.flatMap {
+              case member if member.isMethod =>
+                val memberTpe = member.asMethod.returnType.normalize
+                memberTpe match {
+                  // member returning Elem, such as eItem
+                  case TypeRef(_, ElementSym, params) =>
+                    val param = params(0).asSeenFrom(tpe, classSymbol)
+                    // There should be a method with the same name on the corresponding element class
+                    val correspondingElemMethod = elem.getClass.getMethod(member.name.toString)
+                    val elem1 = correspondingElemMethod.invoke(elem).asInstanceOf[Elem[_]]
+                    List(scala.Left[Elem[_], SomeCont](elem1) -> param)
+                  case TypeRef(_, ContSym, params) =>
+                    val param = params(0).asSeenFrom(tpe, classSymbol)
+                    // There should be a method with the same name on the corresponding element class
+                    val correspondingElemMethod = elem.getClass.getMethod(member.name.toString)
+                    val cont1 = correspondingElemMethod.invoke(elem).asInstanceOf[SomeCont]
+                    List(scala.Right[Elem[_], SomeCont](cont1) -> param)
+                  case _ => Nil
+                }
+            }.toList
+            res
         }
-        elemFromType(tpe1, elemMap, baseType)
+
+        @tailrec
+        def loop(elemsWithTypes: List[(TypeDesc, Type)], unknownParams: Set[Symbol], knownParams: Map[Symbol, TypeDesc]): Map[Symbol, TypeDesc] =
+          if (unknownParams.isEmpty)
+            knownParams
+          else
+            elemsWithTypes match {
+              case Nil =>
+                knownParams
+              case (scala.Left(elem), tpe) :: rest =>
+                tpe.normalize match {
+                  case TypeRef(_, classSymbol, params) => classSymbol match {
+                    case _ if classSymbol.asType.isAbstractType =>
+                      loop(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, scala.Left(elem)))
+                    case _ =>
+                      val elemParts = extractParts(elem, classSymbol, params, tpe)
+                      loop(elemParts ++ rest, unknownParams, knownParams)
+                  }
+                  case _ =>
+                    !!!(s"$tpe was not a TypeRef")
+                }
+              case (scala.Right(cont), tpe) :: rest =>
+                tpe.normalize match {
+                  case TypeRef(_, classSymbol, params) => classSymbol match {
+                    case _ if classSymbol.asType.isAbstractType =>
+                      loop(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, scala.Right(cont)))
+                    case _ =>
+                      // TODO can extract parts?
+                      loop(rest, unknownParams, knownParams)
+                  }
+                  case _ =>
+                    !!!(s"$tpe was not a TypeRef")
+                }
+            }
+
+        try {
+          val elemMap = instanceElemMap ++ loop(elemsWithTypes, scalaMethod.typeParams.toSet, Map.empty)
+          // check if return type is a TypeWrapper
+          val baseType = tpe.baseType(TypeWrapperSym) match {
+            case NoType => definitions.NothingTpe
+            // e.g. Throwable from TypeWrapper[Throwable, SThrowable]
+            case TypeRef(_, _, params) => params(0).asSeenFrom(tpe, scalaMethod.owner)
+            case unexpected => !!!(s"unexpected result from ${tpe1}.baseType(BaseTypeEx): $unexpected")
+          }
+
+          def elemFromType(tpe: Type): Elem[_] = tpe.normalize match {
+            case TypeRef(_, classSymbol, params) => classSymbol match {
+              case UnitSym => UnitElement
+              case BooleanSym => BoolElement
+              case ByteSym => ByteElement
+              case ShortSym => ShortElement
+              case IntSym => IntElement
+              case LongSym => LongElement
+              case FloatSym => FloatElement
+              case DoubleSym => DoubleElement
+              case StringSym => StringElement
+              case PredefStringSym => StringElement
+              case CharSym => CharElement
+              case Tuple2Sym =>
+                pairElement(elemFromType(params(0)), elemFromType(params(1)))
+              case EitherSym =>
+                sumElement(elemFromType(params(0)), elemFromType(params(1)))
+              case Function1Sym =>
+                funcElement(elemFromType(params(0)), elemFromType(params(1)))
+              case ArraySym =>
+                arrayElement(elemFromType(params(0)))
+              case ListSym =>
+                listElement(elemFromType(params(0)))
+              case _ if classSymbol.asType.isAbstractType =>
+                elemMap.getOrElse(classSymbol, !!!(s"Can't create element for abstract type $tpe")) match {
+                  case scala.Left(elem) => elem
+                  case scala.Right(cont) =>
+                    val paramElem = elemFromType(params(0))
+                    cont.lift(paramElem)
+                }
+              case _ if classSymbol.isClass =>
+                val paramDescs = params.map {
+                  case typaram@TypeRef(_, classSymbol, params) if typaram.takesTypeArgs =>
+                    // handle high-kind argument
+                    // FIXME use better way of lookup other than by names (to avoid name collisions)
+                    val optRes = elemMap.find { case (sym, d) => sym.name == classSymbol.name }
+                    val res = optRes.getOrElse(!!!(s"Can't find descriptor for type argument $typaram of $tpe"))._2.right.get
+                    res
+                  case typaram =>
+                    elemFromType(typaram)
+                }
+
+                val descClasses = paramDescs.map {
+                  case e: Elem[_] => classOf[Elem[_]]
+                  case c: SomeCont @unchecked => classOf[SomeCont]
+                  case d => !!!(s"Unknown type descriptior $d")
+                }.toArray
+                // entity type or base type
+                if (classSymbol.asClass.isTrait || classSymbol == baseType.typeSymbol) {
+                  // abstract case, call *Element
+                  val methodName = StringUtil.lowerCaseFirst(classSymbol.name.toString) + "Element"
+                  // self.getClass will return the final cake, which should contain the method
+                  try {
+                    val method = self.getClass.getMethod(methodName, descClasses: _*)
+                    try {
+                      val resultElem = method.invoke(self, paramDescs: _*)
+                      resultElem.asInstanceOf[Elem[_]]
+                    } catch {
+                      case e: Exception =>
+                        !!!(s"Failed to invoke $methodName($paramDescs)", e)
+                    }
+                  } catch {
+                    case _: NoSuchMethodException =>
+                      !!!(s"Failed to find element-creating method with name $methodName and parameter classes ${descClasses.map(_.getSimpleName).mkString(", ")}")
+                  }
+                } else {
+                  // concrete case, call viewElement(*Iso)
+                  val methodName = "iso" + classSymbol.name.toString
+                  try {
+                    val method = self.getClass.getMethod(methodName, descClasses: _*)
+                    try {
+                      val resultIso = method.invoke(self, paramDescs: _*)
+                      resultIso.asInstanceOf[Iso[_, _]].eTo
+                    } catch {
+                      case e: Exception =>
+                        !!!(s"Failed to invoke $methodName($paramDescs)", e)
+                    }
+                  } catch {
+                    case e: Exception =>
+                      !!!(s"Failed to find iso-creating method with name $methodName and parameter classes ${descClasses.map(_.getSimpleName).mkString(", ")}")
+                  }
+                }
+            }
+            case _ => !!!(s"Failed to create element from type $tpe")
+          }
+
+          elemFromType(tpe1)
+        } catch {
+          case e: Exception =>
+            !!!(s"Failure to get result elem for method $m on type $tpe\nReturn type: $returnType", e)
+        }
       case _ =>
         !!!(s"Return type of method $m should be a Rep, but is $returnType")
     }
@@ -391,7 +573,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val scalaMethod0 = tpe.member(newTermName(m.getName))
     if (scalaMethod0.isTerm) {
       val overloads = scalaMethod0.asTerm.alternatives
-      (if (overloads.length == 1) {
+      val scalaMethod1 = (if (overloads.length == 1) {
         scalaMethod0
       } else {
         val javaOverloadId = m.getAnnotation(classOf[OverloadId]) match {
@@ -407,101 +589,21 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
             }
             scalaOverloadId == javaOverloadId
           }
-        }.get
+        }.getOrElse {
+          val overloadIdString = javaOverloadId.fold("no overload id")(x => s"""overload id "$x"""")
+          !!!(s"Method with name ${m.getName} and $overloadIdString doesn't exist on type $tpe")
+        }
       }).asMethod
+
+      if (scalaMethod1.returnType.typeSymbol != definitions.NothingClass) {
+        scalaMethod1
+      } else {
+        scalaMethod1.allOverriddenSymbols.find(_.asMethod.returnType.typeSymbol != definitions.NothingClass).getOrElse {
+          !!!(s"Method $scalaMethod1 on type $tpe and all overridden methods return Nothing")
+        }.asMethod
+      }
     } else
       !!!(s"Method $m couldn't be found on type $tpe")
-  }
-
-  import Symbols._
-  private def elemFromType(tpe: Type, elemMap: Map[Symbol, TypeDesc], baseType: Type): Elem[_] = tpe.normalize match {
-    case TypeRef(_, classSymbol, params) => classSymbol match {
-      case UnitSym => UnitElement
-      case BooleanSym => BoolElement
-      case ByteSym => ByteElement
-      case ShortSym => ShortElement
-      case IntSym => IntElement
-      case LongSym => LongElement
-      case FloatSym => FloatElement
-      case DoubleSym => DoubleElement
-      case StringSym => StringElement
-      case PredefStringSym => StringElement
-      case CharSym => CharElement
-      case Tuple2Sym =>
-        pairElement(elemFromType(params(0), elemMap, baseType), elemFromType(params(1), elemMap, baseType))
-      case EitherSym =>
-        sumElement(elemFromType(params(0), elemMap, baseType), elemFromType(params(1), elemMap, baseType))
-      case Function1Sym =>
-        funcElement(elemFromType(params(0), elemMap, baseType), elemFromType(params(1), elemMap, baseType))
-      case ArraySym =>
-        arrayElement(elemFromType(params(0), elemMap, baseType))
-      case ListSym =>
-        listElement(elemFromType(params(0), elemMap, baseType))
-      case _ if classSymbol.asType.isAbstractType =>
-        elemMap.getOrElse(classSymbol, !!!(s"Can't create element for abstract type $tpe")).left.get
-      case _ if classSymbol.isClass =>
-        //val elemClasses = Array.fill[Class[_]](params.length)(classOf[Element[_]])
-        val paramDescs = params.map(typaram => {
-          typaram match {
-            case TypeRef(_, classSymbol, params) if typaram.takesTypeArgs =>
-              // handle high-kind argument
-              // FIXME use better way of lookup other than by names (to avoid name collisions)
-              val optRes = elemMap.find {case (sym, d) => sym.name == classSymbol.name}
-              val res = optRes.getOrElse(!!!(s"Can't find descriptor for type argument $typaram of $tpe"))._2.right.get
-              res
-            case _ =>
-              elemFromType(typaram, elemMap, baseType)
-          }
-        })
-
-        val descClasses = paramDescs.map {
-          case e: Elem[_] => classOf[Elem[_]]
-          case c: SomeCont @unchecked => classOf[SomeCont]
-          case d => !!!(s"Unknown type descriptior $d")
-        }.toArray
-        // entity type or base type
-        if (classSymbol.asClass.isTrait || classSymbol == baseType.typeSymbol) {
-          // abstract case, call *Element
-          val methodName = StringUtil.lowerCaseFirst(classSymbol.name.toString) + "Element"
-          // self.getClass will return the final cake, which should contain the method
-          try {
-            val method = self.getClass.getMethod(methodName, descClasses: _*)
-            try {
-              val resultElem = method.invoke(self, paramDescs: _*)
-              resultElem.asInstanceOf[Elem[_]]
-            } catch {
-              case e: Exception =>
-                !!!(s"Failed to invoke $methodName($paramDescs)", e)
-            }
-          } catch {
-            case _: NoSuchMethodException =>
-              !!!(s"Failed to find element-creating method with name $methodName and ${params.length} Element parameters")
-          }
-        } else {
-          // concrete case, call viewElement(*Iso)
-          val methodName = "iso" + classSymbol.name.toString
-          try {
-            val method = self.getClass.getMethod(methodName, descClasses: _*)
-            try {
-              val resultIso = method.invoke(self, paramDescs: _*)
-              resultIso.asInstanceOf[Iso[_, _]].eTo
-            } catch {
-              case e: Exception =>
-                !!!(s"Failed to invoke $methodName($paramDescs)", e)
-            }
-          } catch {
-            case _: NoSuchMethodException =>
-              !!!(s"Failed to find iso-creating method with name $methodName and ${params.length} Element parameters")
-          }
-        }
-    }
-//    case PolyType(params, resultType) =>
-//      tpe match {
-//        case TypeRef(_, classSymbol, params) =>
-//          val res = elemMap.getOrElse(classSymbol, !!!(s"Can't create element for abstract type $tpe")).right.get
-//          res
-//      }
-    case _ => ???(s"Failed to create element from type $tpe")
   }
 
   private object Symbols {
@@ -527,11 +629,14 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
     val TypeWrapperSym = typeOf[TypeWrapper[_, _]].typeSymbol
 
+    val ElementSym = typeOf[Element[_]].typeSymbol
+    val ContSym = typeOf[SomeCont].typeSymbol
+
     val SuperTypesOfDef = typeOf[Def[_]].baseClasses.toSet
   }
 
   private def isSupertypeOfDef(clazz: Symbol) =
-    SuperTypesOfDef.contains(clazz)
+    Symbols.SuperTypesOfDef.contains(clazz)
 
   sealed trait InvokeResult
 

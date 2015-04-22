@@ -159,12 +159,6 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
       val e = elsep.asRep[b]
       liftFromIfThenElse(c, t, e, iso1, iso2, cTo.asRep[Converter[c,d]], cFrom.asRep[Converter[d,c]])
 
-//    case IfThenElse(cond, a, Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
-//      liftFromIfThenElse(cond, a, b.asRep[b], identityIso(a.elem), iso2)
-//
-//    case IfThenElse(cond, Def(UnpackableDef(a, iso1: Iso[a, c])), b) =>
-//      liftFromIfThenElse(cond, a.asRep[a], b, iso1, identityIso(b.elem))
-
     // Rule: (if (c1) t1 else e1, if (c2) t2 else e2) when c1 == c2 ==> if (c1) (t1, t2) else (e1, e2)
     case Tup(Def(IfThenElse(c1, t1, e1)), Def(IfThenElse(c2, t2, e2))) if c1 == c2 =>
       IF (c1) THEN { Pair(t1, t2) } ELSE { Pair(e1, e2) }

@@ -197,15 +197,13 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
 
     case foldD: SumFold[a, b, T] => foldD.sum match {
-      // this rule is only applied when result of fold is base type.
-      // Otherwise it yields stack overflow as this rule is mutually recursive with lifting Views over IfThenElse
 
       // Rule: fold(if (c) t else e, l, r) ==> if (c) fold(t, l, r) else fold(e, l, r)
-      case Def(IfThenElse(c, t: Rep[Either[_, _]]@unchecked, e: Rep[Either[_, _]]@unchecked)) /*if !d.selfType.isEntityType*/ =>
+      case Def(IfThenElse(c, t: Rep[Either[_, _]]@unchecked, e: Rep[Either[_, _]]@unchecked)) =>
         __ifThenElse[T](c, SumFold(t, foldD.left, foldD.right), SumFold(e, foldD.left, foldD.right))
 
       // Rule: fold(SumView(source, iso1, iso2), l, r) ==> fold(source, iso1.to >> l, iso2.to >> r)
-      case Def(view: SumView[a1, a2, b1, b2]) /*if !d.selfType.isEntityType*/ =>
+      case Def(view: SumView[a1, a2, b1, b2])  =>
         view.source.fold(x => foldD.left.asRep[b1 => T](view.iso1.to(x)), y => foldD.right.asRep[b2 => T](view.iso2.to(y)))
 
       // Rule: fold(fold(sum, id, id), l, r) ==> fold(sum, x => fold(x, l, r), y => fold(y, l, r))
@@ -226,47 +224,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
         foldD.right(right)
 
       case _ => super.rewriteDef(d)
-
-      //      case _ => (foldD.left, foldD.right) match {
-      //        case (Def(Lambda(left:  Lambda[t1,c], _, _, HasViews(a1, iso1: Iso[a1, _]))),
-      //              Def(Lambda(right: Lambda[t2,d], _, _, HasViews(b1, iso2: Iso[b1, _])))) =>
-      //          (iso1.eTo, iso2.eTo) match {
-      //            case IsConvertible(cTo, cFrom) =>
-      //              liftFromSumFold(foldD.sum, foldD.left, foldD.right, iso1, iso2, cTo, cFrom)
-      //            case _ => super.rewriteDef(d)
-      //          }
-      //
-      //        case _ => super.rewriteDef(d)
-      //      }
-      //    case sf @ SumFold(sum,
-      //        Def(Lambda(left:  Lambda[t1,c], _, _, HasViews(a, iso1: Iso[a, _]))),
-      //        Def(Lambda(right: Lambda[t2,d], _, _, HasViews(b, iso2: Iso[b, _])))) => {
-      //        val ea = iso1.eFrom
-      //        val et1 = left.eA
-      //        val et2 = right.eA
-      //        (iso1.eTo, iso2.eTo) match {
-      //          case IsConvertible(cTo, cFrom) =>
-      //
-      //          case _ => super.rewriteDef(d)
-      //        }
-      //     }
-
     }
-
-    //    case FindFoldArg(arg) => {
-    //      arg match {
-    //        case Def(foldD@SumFold(_, Def(Lambda(left: Lambda[t1, c], _, _, HasViews(a1, iso1: Iso[a1, _]))),
-    //        Def(Lambda(right: Lambda[t2, d], _, _, HasViews(b1, iso2: Iso[b1, _])))))
-    //          if !d.isInstanceOf[MethodCall] =>
-    //          (iso1.eTo, iso2.eTo) match {
-    //            case IsConvertible(cTo, cFrom) =>
-    //              val newFold = liftFromSumFold(foldD.sum, foldD.left, foldD.right, iso1, iso2, cTo, cFrom)
-    //              d.mirror(new MapTransformer(arg -> newFold))
-    //            case _ => super.rewriteDef(d)
-    //          }
-    //        case _ => super.rewriteDef(d)
-    //      }
-    //    }
 
     // Rule:
     case call @ MethodCall(

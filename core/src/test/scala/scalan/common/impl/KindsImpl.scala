@@ -1,4 +1,3 @@
-
 package scalan.common
 package impl
 
@@ -17,23 +16,24 @@ trait KindsAbs extends Kinds with Scalan {
   }
 
   // familyElem
-  class KindElem[F[_], A, To <: Kind[F, A]](implicit val cF: Cont[F], val eA: Elem[A])
-    extends EntityElem[To] {
+  class KindElem[F[_], A, Abs <: Kind[F, A]](implicit val cF: Cont[F], val eA: Elem[A])
+    extends EntityElem[Abs] {
     override def isEntityType = true
     override def tag = {
       implicit val tagA = eA.tag
-      weakTypeTag[Kind[F, A]].asInstanceOf[WeakTypeTag[To]]
+      weakTypeTag[Kind[F, A]].asInstanceOf[WeakTypeTag[Abs]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertKind(x.asRep[Kind[F, A]])
-    def convertKind(x : Rep[Kind[F, A]]): Rep[To] = {
+    def convertKind(x : Rep[Kind[F, A]]): Rep[Abs] = {
       //assert(x.selfType1.isInstanceOf[KindElem[_,_,_]])
-      x.asRep[To]
+      x.asRep[Abs]
     }
-    override def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[Abs] = ???
   }
 
-  implicit def kindElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]) =
-    new KindElem[F, A, Kind[F, A]]()(cF, eA)
+  implicit def kindElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]): Elem[Kind[F, A]] =
+    new KindElem[F, A, Kind[F, A]] {
+    }
 
   trait KindCompanionElem extends CompanionElem[KindCompanionAbs]
   implicit lazy val KindCompanionElem: KindCompanionElem = new KindCompanionElem {
@@ -147,7 +147,6 @@ trait KindsAbs extends Kinds with Scalan {
   // 4) constructor and deconstructor
   abstract class BindCompanionAbs extends CompanionBase[BindCompanionAbs] with BindCompanion {
     override def toString = "Bind"
-
     def apply[F[_], S, B](p: Rep[BindData[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       isoBind(eS, eA, cF).to(p)
     def apply[F[_], S, B](a: Rep[Kind[F,S]], f: Rep[S => Kind[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =

@@ -27,4 +27,19 @@ class ViewTestsCtx(suite: TestsUtil, testName: String)
     assertResult(eFromExpected)(iso.eFrom)
   }
 
+  def testHasViews[T](s: Rep[T], eExpected: Elem[_]) = {
+    val HasViews(source, iso) = s
+    assertResult(eExpected)(iso.eFrom)
+    assertResult(eExpected)(source.elem)
+  }
+
+  def testNoViews[T](s: Rep[T]) = {
+    s match {
+      case HasViews(source, iso) =>
+        assert(false, s"no views expected, but found ($source, $iso)")
+      case _ => // ok
+    }
+  }
+
+
 }

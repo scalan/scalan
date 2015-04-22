@@ -1,4 +1,3 @@
-
 package scalan.common
 package impl
 
@@ -18,22 +17,23 @@ trait SegmentsAbs extends Segments with Scalan {
   }
 
   // familyElem
-  class SegmentElem[To <: Segment]
-    extends EntityElem[To] {
+  class SegmentElem[Abs <: Segment]
+    extends EntityElem[Abs] {
     override def isEntityType = true
     override def tag = {
-      weakTypeTag[Segment].asInstanceOf[WeakTypeTag[To]]
+      weakTypeTag[Segment].asInstanceOf[WeakTypeTag[Abs]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSegment(x.asRep[Segment])
-    def convertSegment(x : Rep[Segment]): Rep[To] = {
+    def convertSegment(x : Rep[Segment]): Rep[Abs] = {
       //assert(x.selfType1.isInstanceOf[SegmentElem[_]])
-      x.asRep[To]
+      x.asRep[Abs]
     }
-    override def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[Abs] = ???
   }
 
-  implicit def segmentElement =
-    new SegmentElem[Segment]()
+  implicit def segmentElement: Elem[Segment] =
+    new SegmentElem[Segment] {
+    }
 
   trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
   implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
@@ -79,7 +79,6 @@ trait SegmentsAbs extends Segments with Scalan {
   // 4) constructor and deconstructor
   abstract class IntervalCompanionAbs extends CompanionBase[IntervalCompanionAbs] with IntervalCompanion {
     override def toString = "Interval"
-
     def apply(p: Rep[IntervalData]): Rep[Interval] =
       isoInterval.to(p)
     def apply(start: Rep[Int], end: Rep[Int]): Rep[Interval] =
@@ -144,7 +143,6 @@ trait SegmentsAbs extends Segments with Scalan {
   // 4) constructor and deconstructor
   abstract class SliceCompanionAbs extends CompanionBase[SliceCompanionAbs] with SliceCompanion {
     override def toString = "Slice"
-
     def apply(p: Rep[SliceData]): Rep[Slice] =
       isoSlice.to(p)
     def apply(start: Rep[Int], length: Rep[Int]): Rep[Slice] =
@@ -210,7 +208,6 @@ trait SegmentsAbs extends Segments with Scalan {
   // 4) constructor and deconstructor
   abstract class CenteredCompanionAbs extends CompanionBase[CenteredCompanionAbs] with CenteredCompanion {
     override def toString = "Centered"
-
     def apply(p: Rep[CenteredData]): Rep[Centered] =
       isoCentered.to(p)
     def apply(center: Rep[Int], radius: Rep[Int]): Rep[Centered] =

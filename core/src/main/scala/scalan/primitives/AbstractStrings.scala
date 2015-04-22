@@ -3,7 +3,7 @@ package scalan.primitives
 import scalan._
 import scalan.common.Default
 
-trait AbstractStrings extends Base with BaseTypes { self: AbstractStringsDsl =>
+trait AbstractStrings extends Base with TypeWrappers { self: AbstractStringsDsl =>
 
   type RStr = Rep[String]
   trait AString extends TypeWrapper[String, AString] { self =>

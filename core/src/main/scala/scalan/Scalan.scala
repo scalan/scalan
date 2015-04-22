@@ -12,7 +12,7 @@ trait Scalan
   extends Base
   with Elems
   with Containers
-  with BaseTypes
+  with TypeWrappers
   with Views
   with Proxy
   with Tuples
@@ -51,7 +51,7 @@ trait ScalanSeq
   with BaseSeq
   with ElemsSeq
   with ContainersSeq
-  with BaseTypesSeq
+  with TypeWrappersSeq
   with ViewsSeq
   with ProxySeq
   with TuplesSeq
@@ -87,7 +87,7 @@ trait ScalanExp
   with BaseExp
   with ElemsExp
   with ContainersExp
-  with BaseTypesExp
+  with TypeWrappersExp
   with ViewsExp
   with ProxyExp
   with TuplesExp

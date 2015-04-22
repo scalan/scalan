@@ -1,4 +1,3 @@
-
 package scalan.collections
 package impl
 
@@ -25,8 +24,6 @@ trait SeqsAbs extends Seqs with Scalan {
 
   implicit def unwrapValueOfSSeq[A](w: Rep[SSeq[A]]): Rep[Seq[A]] = w.wrappedValueOfBaseType
 
-  implicit def defaultSSeqElem[A:Elem]: Elem[SSeq[A]] = element[SSeqImpl[A]].asElem[SSeq[A]]
-
   implicit def seqElement[A:Elem]: Elem[Seq[A]]
 
   implicit def castSSeqElement[A](elem: Elem[SSeq[A]]): SSeqElem[A, SSeq[A]] = elem.asInstanceOf[SSeqElem[A, SSeq[A]]]
@@ -49,23 +46,25 @@ trait SeqsAbs extends Seqs with Scalan {
   }
 
   // familyElem
-  class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
-    extends EntityElem1[A, To, SSeq](eA,container[SSeq]) {
+  abstract class SSeqElem[A, Abs <: SSeq[A]](implicit val eA: Elem[A])
+    extends WrapperElem1[A, Abs, Seq, SSeq]()(eA, container[Seq], container[SSeq]) {
     override def isEntityType = true
     override def tag = {
       implicit val tagA = eA.tag
-      weakTypeTag[SSeq[A]].asInstanceOf[WeakTypeTag[To]]
+      weakTypeTag[SSeq[A]].asInstanceOf[WeakTypeTag[Abs]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
-    def convertSSeq(x : Rep[SSeq[A]]): Rep[To] = {
+    def convertSSeq(x : Rep[SSeq[A]]): Rep[Abs] = {
       //assert(x.selfType1.isInstanceOf[SSeqElem[_,_]])
-      x.asRep[To]
+      x.asRep[Abs]
     }
-    override def getDefaultRep: Rep[To] = ???
+    override def getDefaultRep: Rep[Abs] = ???
   }
 
-  implicit def sSeqElement[A](implicit eA: Elem[A]) =
-    new SSeqElem[A, SSeq[A]]()(eA)
+  implicit def sSeqElement[A](implicit eA: Elem[A]): Elem[SSeq[A]] =
+    new SSeqElem[A, SSeq[A]] {
+      lazy val eTo = element[SSeqImpl[A]]
+    }
 
   trait SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs]
   implicit lazy val SSeqCompanionElem: SSeqCompanionElem = new SSeqCompanionElem {
@@ -163,6 +162,7 @@ trait SeqsAbs extends Seqs with Scalan {
   class SSeqImplElem[A](val iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit eA: Elem[A])
     extends SSeqElem[A, SSeqImpl[A]]
     with ConcreteElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
+    lazy val eTo = this
     override def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem1].getDefaultRep
     override lazy val tag = super[ConcreteElem1].tag
@@ -242,11 +242,11 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
       SSeqImpl(Seq.fromList[A](list))
   }
 
-  // override proxy if we deal with TypeWrapper
+    // override proxy if we deal with TypeWrapper
   //override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOpsEx[Seq[A],SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
 
-  implicit def seqElement[A:Elem]: Elem[Seq[A]] =
+    implicit def seqElement[A:Elem]: Elem[Seq[A]] =
       new SeqBaseElemEx1[A, SSeq[A], Seq](
            element[SSeq[A]])(element[A], container[Seq], DefaultOfSeq[A])
 
@@ -568,8 +568,20 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
 
   override def rewriteDef[T](d: Def[T]) = d match {
     case SSeqMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+
+    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
+    case mc @ MethodCall(Def(wrapper: ExpSSeqImpl[_]), m, args, neverInvoke) =>
+      val resultElem = mc.selfType
+      val wrapperIso = getIsoByElem(resultElem)
+      wrapperIso match {
+        case iso: Iso[base,ext] =>
+          val eRes = iso.eFrom
+          val newCall = unwrapMethodCall(mc, wrapper.wrappedValueOfBaseType, eRes)
+          iso.to(newCall)
+      }
+
     case SSeqMethods.map(xs, f) => (xs, f) match {
-      case (xs: RSeq[a] @unchecked, f @ Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[b, c])))) =>
+      case (xs: RSeq[a] @unchecked, LambdaResultHasViews(f, iso: Iso[b, c])) =>
         val f1 = f.asRep[a => c]
         implicit val eA = xs.elem.eItem
         implicit val eB = iso.eFrom
@@ -579,13 +591,13 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
         })
         val res = ViewSSeq(s)(SSeqIso(iso))
         res
-      case (Def(view: ViewSSeq[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
-        val iso = view.innerIso
+      case (HasViews(source, contIso: SSeqIso[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
         val f1 = f.asRep[b => c]
+        val iso = contIso.iso
         implicit val eA = iso.eFrom
         implicit val eB = iso.eTo
         implicit val eC = f1.elem.eRange
-        view.source.map(fun { x => f1(iso.to(x)) })
+        source.asRep[SSeq[a]].map(fun { x => f1(iso.to(x)) })
       case _ =>
         super.rewriteDef(d)
     }
