@@ -416,22 +416,25 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         val typesUse = e.tpeArgUseString
         val isCont = e.isContainer1
         val underscores = e.tpeArgDecls.map(_ => "_,").mkString("")
-        val (isW, parentName, parentTyArgs, parentArgs) = e.firstAncestorType match {
+        val isW = e.isWrapper
+        val hasArgs = !e.tpeArgs.isEmpty
+        val (parentName, parentTyArgs, parentArgs) = e.firstAncestorType match {
           case Some(STraitCall("Reifiable", _)) =>
-            (false,
-             s"EntityElem${isCont.opt("1")}",
+            (s"EntityElem${isCont.opt("1")}",
              s"[${isCont.opt(e.typesUsePref)}Abs${isCont.opt(s", $entityName")}]",
              s"${isCont.opt(s"(${e.tpeArgs.map("e" + _.name + ",").mkString("")}container[$entityName])")}")
           case Some(STraitCall("TypeWrapper", _)) =>
-            (true,
-             s"WrapperElem${isCont.opt("1")}",
-             s"[${isCont.opt(e.typesUsePref)}Abs${isCont.opt(s", ${e.entityNameBT}, $entityName")}]",
-             s"${isCont.opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.entityNameBT}], container[$entityName])")}")
+            (s"WrapperElem${isCont.opt("1")}",
+             if (isCont || hasArgs)
+               s"[${isCont.opt(e.typesUsePref)}Abs${isCont.opt(s", ${e.entityNameBT}, $entityName")}]"
+             else
+               s"[${e.entityNameBT}, Abs]",
+             s"${(isCont || hasArgs).opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.entityNameBT}], container[$entityName])")}")
           case Some(STraitCall(parentName, parentTypes)) =>
-            (false,
-             s"${parentName}Elem",
+            (s"${parentName}Elem",
              s"[${parentTypes.map(_.toString + ", ").mkString("")}To]",
              "")
+          case p => !!!(s"Unsupported parent type $p of the entity ${e.name}")
         }
         val parentElem = s"$parentName$parentTyArgs$parentArgs"
 
