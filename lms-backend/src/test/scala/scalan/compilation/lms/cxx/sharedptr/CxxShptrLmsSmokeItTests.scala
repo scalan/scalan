@@ -20,11 +20,21 @@ class CxxShptrLmsSmokeItTests extends SmokeItTests {
     lazy val testList = fun {in:Rep[List[Array[Double]]] =>
       in.map{a => a.map({v => v*2.0})}
     }
+
+    lazy val testStringDuplicate = fun {str:Rep[String] => (str + str + "duplicate").startsWith("hello")}
   }
 
   override val progStaged = new ProgExp
   import progStaged.defaultCompilerConfig
 
+  test("testStringDuplicate") {
+    val in = "word_"
+    val functionName = "testStringDuplicate"
+    val dir = new File(prefix, functionName)
+    progStaged.buildExecutable(dir, dir, functionName, progStaged.testStringDuplicate, GraphVizConfig.default)
+  }
+  
+  
   test("testList") {
     val in = 2
     val functionName = "testList"
