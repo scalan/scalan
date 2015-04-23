@@ -153,7 +153,7 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     val coll = (rowsColl zip rowsColl).map {
       case Tuple(vR, vP) =>
         val abstractVectorElem = vP.selfType1
-        assert(abstractVectorElem.getClass == classOf[AbstractVectorElem[_, _]])
+        //assert(abstractVectorElem.getClass == classOf[AbstractVectorElem[_, _]])
         // dot is implemented with a pattern match, remove or change this test if this changes
         val mQReduced = rowsColl map { row => row dot vP }
         mQReduced

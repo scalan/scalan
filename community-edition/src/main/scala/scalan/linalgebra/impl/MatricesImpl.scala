@@ -1,4 +1,3 @@
-
 package scalan.linalgebra
 package impl
 
@@ -33,8 +32,9 @@ trait MatricesAbs extends Matrices with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def abstractMatrixElement[T](implicit elem: Elem[T]) =
-    new AbstractMatrixElem[T, AbstractMatrix[T]]()(elem)
+  implicit def abstractMatrixElement[T](implicit elem: Elem[T]): Elem[AbstractMatrix[T]] =
+    new AbstractMatrixElem[T, AbstractMatrix[T]] {
+    }
 
   trait AbstractMatrixCompanionElem extends CompanionElem[AbstractMatrixCompanionAbs]
   implicit lazy val AbstractMatrixCompanionElem: AbstractMatrixCompanionElem = new AbstractMatrixCompanionElem {
@@ -81,7 +81,6 @@ trait MatricesAbs extends Matrices with Scalan {
   // 4) constructor and deconstructor
   abstract class DenseFlatMatrixCompanionAbs extends CompanionBase[DenseFlatMatrixCompanionAbs] with DenseFlatMatrixCompanion {
     override def toString = "DenseFlatMatrix"
-
     def apply[T](p: Rep[DenseFlatMatrixData[T]])(implicit elem: Elem[T]): Rep[DenseFlatMatrix[T]] =
       isoDenseFlatMatrix(elem).to(p)
     def apply[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[DenseFlatMatrix[T]] =
@@ -147,7 +146,6 @@ trait MatricesAbs extends Matrices with Scalan {
   // 4) constructor and deconstructor
   abstract class CompoundMatrixCompanionAbs extends CompanionBase[CompoundMatrixCompanionAbs] with CompoundMatrixCompanion {
     override def toString = "CompoundMatrix"
-
     def apply[T](p: Rep[CompoundMatrixData[T]])(implicit elem: Elem[T]): Rep[CompoundMatrix[T]] =
       isoCompoundMatrix(elem).to(p)
     def apply[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[CompoundMatrix[T]] =

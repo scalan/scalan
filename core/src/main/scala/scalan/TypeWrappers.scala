@@ -49,15 +49,7 @@ trait TypeWrappers extends Base { self: Scalan =>
   final val ContainerLength = "ContainerLength"
   final val ContainerApply = "ContainerApply"
 
-  def unwrapElem(e: Elem[_]): Elem[_] = e match {
-    case ce: ConcreteElem[_,_] =>
-      val iso = getIsoByElem(e)
-      iso.eFrom match {
-        case eBase: BaseElemEx[_,_] => ???
-      }
-    case ee: EntityElem[_] => ???
-  }
-
+  def isValueAccessor(m: Method) = m.getName == "wrappedValueOfBaseType"
 }
 
 trait TypeWrappersSeq extends TypeWrappers { scalan: ScalanSeq =>

@@ -17,20 +17,20 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
   }
 
   // familyElem
-  class MMultiMapElem[K, V, Abs <: MMultiMap[K, V]](implicit val elemKey: Elem[K], val elemValue: Elem[V])
-    extends EntityElem[Abs] {
+  class MMultiMapElem[K, V, To <: MMultiMap[K, V]](implicit val elemKey: Elem[K], val elemValue: Elem[V])
+    extends EntityElem[To] {
     override def isEntityType = true
     override def tag = {
       implicit val tagK = elemKey.tag
       implicit val tagV = elemValue.tag
-      weakTypeTag[MMultiMap[K, V]].asInstanceOf[WeakTypeTag[Abs]]
+      weakTypeTag[MMultiMap[K, V]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertMMultiMap(x.asRep[MMultiMap[K, V]])
-    def convertMMultiMap(x : Rep[MMultiMap[K, V]]): Rep[Abs] = {
+    def convertMMultiMap(x : Rep[MMultiMap[K, V]]): Rep[To] = {
       //assert(x.selfType1.isInstanceOf[MMultiMapElem[_,_,_]])
-      x.asRep[Abs]
+      x.asRep[To]
     }
-    override def getDefaultRep: Rep[Abs] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def mMultiMapElement[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]): Elem[MMultiMap[K, V]] =

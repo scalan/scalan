@@ -1,4 +1,3 @@
-
 package scalan.primitives
 package impl
 
@@ -32,8 +31,9 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def aStringElement =
-    new AStringElem[AString]()
+  implicit def aStringElement: Elem[AString] =
+    new AStringElem[AString] {
+    }
 
   trait AStringCompanionElem extends CompanionElem[AStringCompanionAbs]
   implicit lazy val AStringCompanionElem: AStringCompanionElem = new AStringCompanionElem {

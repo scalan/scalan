@@ -17,18 +17,18 @@ trait BitSetsAbs extends BitSets with Scalan {
   }
 
   // familyElem
-  class BitSetElem[Abs <: BitSet]
-    extends EntityElem[Abs] {
+  class BitSetElem[To <: BitSet]
+    extends EntityElem[To] {
     override def isEntityType = true
     override def tag = {
-      weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[Abs]]
+      weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertBitSet(x.asRep[BitSet])
-    def convertBitSet(x : Rep[BitSet]): Rep[Abs] = {
+    def convertBitSet(x : Rep[BitSet]): Rep[To] = {
       //assert(x.selfType1.isInstanceOf[BitSetElem[_]])
-      x.asRep[Abs]
+      x.asRep[To]
     }
-    override def getDefaultRep: Rep[Abs] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def bitSetElement: Elem[BitSet] =

@@ -4,7 +4,10 @@ trait ScalanAst {
   // STpe universe --------------------------------------------------------------------------
 
   /** Type expressions */
-  sealed abstract class STpeExpr
+  sealed abstract class STpeExpr {
+    def name: String
+    def tpeSExprs: List[STpeExpr]
+  }
   type STpeExprs = List[STpeExpr]
 
   /** Invocation of a trait with arguments */
@@ -14,10 +17,13 @@ trait ScalanAst {
 
   case class STpePrimitive(name: String, defaultValueString: String) extends STpeExpr {
     override def toString = name
+    def tpeSExprs = Nil
   }
 
   case class STpeTypeBounds(lo: STpeExpr, hi: STpeExpr) extends STpeExpr {
+    def name = "Bounds"
     override def toString = ">:" + lo + "<:" + hi
+    def tpeSExprs = Nil
   }
 
   val STpePrimitives = Map(
@@ -32,11 +38,14 @@ trait ScalanAst {
     "String" -> STpePrimitive("String", "\"\"")
   )
 
-  case class STpeTuple(items: List[STpeExpr]) extends STpeExpr {
-    override def toString = items.mkString("(", ", ", ")")
+  case class STpeTuple(tpeSExprs: List[STpeExpr]) extends STpeExpr {
+    override def name = "Tuple" + tpeSExprs.length
+    override def toString = tpeSExprs.mkString("(", ", ", ")")
   }
 
   case class STpeFunc(domain: STpeExpr, range: STpeExpr) extends STpeExpr {
+    def name = "Function1"
+    def tpeSExprs = List(domain, range)
     override def toString = {
       val domainStr = domain match {
         case tuple: STpeTuple => s"($tuple)"
@@ -46,8 +55,10 @@ trait ScalanAst {
     }
   }
 
-  case class STpeSum(items: List[STpeExpr]) extends STpeExpr {
-    override def toString = items.mkString("(", " | ", ")")
+  case class STpeSum(tpeSExprs: List[STpeExpr]) extends STpeExpr {
+    def name = "Either"
+    //def tpeSExprs = items
+    override def toString = tpeSExprs.mkString("(", " | ", ")")
   }
 
   implicit class STpeExprExtensions(self: STpeExpr) {
@@ -124,7 +135,7 @@ trait ScalanAst {
     def explicitArgs = argSections.flatMap(_.args.filterNot(_.impFlag))
     def allArgs = argSections.flatMap(_.args)
   }
-  case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
+  case class SValDef(name: String, tpe: Option[STpeExpr], rhs: Option[SExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
   case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
 
   case class STpeArg(
@@ -257,8 +268,8 @@ trait ScalanAst {
   final val BaseTypeTraitName = "TypeWrapper"
 
   implicit class STraitOrClassDefOps(td: STraitOrClassDef) {
-    def optBaseType: Option[STraitCall] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
-      case Some(STraitCall(_, (h: STraitCall) :: _)) => Some(h)
+    def optBaseType: Option[STpeExpr] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
+      case Some(STraitCall(_, h :: _)) => Some(h)
       case _ => None
     }
   }
@@ -302,6 +313,7 @@ trait ScalanAst {
     concreteSClasses: List[SClassDef],
     methods: List[SMethodDef],
     selfType: Option[SSelfTypeDef],
+    body: List[SBodyItem] = Nil,
     seqDslImpl: Option[SSeqImplementation] = None)
   {
     def getEntity(name: String): STraitOrClassDef = {

@@ -1,4 +1,3 @@
-
 package scalan.graphs
 package impl
 
@@ -37,8 +36,9 @@ trait VerticesAbs extends Vertices with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def vertexElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
-    new VertexElem[V, E, Vertex[V, E]]()(eV, eE)
+  implicit def vertexElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Vertex[V, E]] =
+    new VertexElem[V, E, Vertex[V, E]] {
+    }
 
   trait VertexCompanionElem extends CompanionElem[VertexCompanionAbs]
   implicit lazy val VertexCompanionElem: VertexCompanionElem = new VertexCompanionElem {
@@ -86,7 +86,6 @@ trait VerticesAbs extends Vertices with Scalan {
   // 4) constructor and deconstructor
   abstract class SVertexCompanionAbs extends CompanionBase[SVertexCompanionAbs] with SVertexCompanion {
     override def toString = "SVertex"
-
     def apply[V, E](p: Rep[SVertexData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       isoSVertex(eV, eE).to(p)
     def apply[V, E](id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =

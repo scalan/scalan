@@ -16,19 +16,19 @@ trait KindsAbs extends Kinds with Scalan {
   }
 
   // familyElem
-  class KindElem[F[_], A, Abs <: Kind[F, A]](implicit val cF: Cont[F], val eA: Elem[A])
-    extends EntityElem[Abs] {
+  class KindElem[F[_], A, To <: Kind[F, A]](implicit val cF: Cont[F], val eA: Elem[A])
+    extends EntityElem[To] {
     override def isEntityType = true
     override def tag = {
       implicit val tagA = eA.tag
-      weakTypeTag[Kind[F, A]].asInstanceOf[WeakTypeTag[Abs]]
+      weakTypeTag[Kind[F, A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertKind(x.asRep[Kind[F, A]])
-    def convertKind(x : Rep[Kind[F, A]]): Rep[Abs] = {
+    def convertKind(x : Rep[Kind[F, A]]): Rep[To] = {
       //assert(x.selfType1.isInstanceOf[KindElem[_,_,_]])
-      x.asRep[Abs]
+      x.asRep[To]
     }
-    override def getDefaultRep: Rep[Abs] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def kindElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]): Elem[Kind[F, A]] =

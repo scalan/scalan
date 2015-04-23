@@ -1,4 +1,3 @@
-
 package scalan.graphs
 package impl
 
@@ -34,8 +33,9 @@ trait FrontsAbs extends Fronts with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def frontElement =
-    new FrontElem[Front]()
+  implicit def frontElement: Elem[Front] =
+    new FrontElem[Front] {
+    }
 
   trait FrontCompanionElem extends CompanionElem[FrontCompanionAbs]
   implicit lazy val FrontCompanionElem: FrontCompanionElem = new FrontCompanionElem {
@@ -82,7 +82,6 @@ trait FrontsAbs extends Fronts with Scalan {
   // 4) constructor and deconstructor
   abstract class BaseFrontCompanionAbs extends CompanionBase[BaseFrontCompanionAbs] with BaseFrontCompanion {
     override def toString = "BaseFront"
-
     def apply(p: Rep[BaseFrontData]): Rep[BaseFront] =
       isoBaseFront.to(p)
     def apply(set: Rep[BaseCollection[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
@@ -148,7 +147,6 @@ trait FrontsAbs extends Fronts with Scalan {
   // 4) constructor and deconstructor
   abstract class ListFrontCompanionAbs extends CompanionBase[ListFrontCompanionAbs] with ListFrontCompanion {
     override def toString = "ListFront"
-
     def apply(p: Rep[ListFrontData]): Rep[ListFront] =
       isoListFront.to(p)
     def apply(set: Rep[ListCollection[Int]], bits: Rep[BitSet]): Rep[ListFront] =
@@ -214,7 +212,6 @@ trait FrontsAbs extends Fronts with Scalan {
   // 4) constructor and deconstructor
   abstract class CollectionFrontCompanionAbs extends CompanionBase[CollectionFrontCompanionAbs] with CollectionFrontCompanion {
     override def toString = "CollectionFront"
-
     def apply(p: Rep[CollectionFrontData]): Rep[CollectionFront] =
       isoCollectionFront.to(p)
     def apply(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =

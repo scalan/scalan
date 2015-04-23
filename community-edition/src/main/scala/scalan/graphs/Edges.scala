@@ -18,7 +18,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
     implicit def eE: Elem[E]
 
     @Owner
-    implicit def graph: PG[V, E]
+    implicit def graph: Rep[Graph[V, E]]
 
     //private def indexOfTarget = this.graph.edgeValues.segOffsets(fromId) + outIndex
 
@@ -45,7 +45,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
         element[NestedCollection[Int]].defaultRepValue)
     )
   }
-  abstract class AdjEdge[V, E](val fromId: Rep[Int], val outIndex: Rep[Int], val graph: PG[V, E])
+  abstract class AdjEdge[V, E](val fromId: Rep[Int], val outIndex: Rep[Int], val graph: Rep[Graph[V, E]])
                               (implicit val eV: Elem[V], val eE: Elem[E]) extends Edge[V, E] {
     private def indexOfTarget = graph.edgeValues.segOffsets(fromId) + outIndex
 
@@ -60,7 +60,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
 
   trait AdjEdgeCompanion extends ConcreteClass2[Edge]
 
-  abstract class IncEdge[V, E](val fromId: Rep[Int], val toId: Rep[Int], val graph: PG[V, E])
+  abstract class IncEdge[V, E](val fromId: Rep[Int], val toId: Rep[Int], val graph: Rep[Graph[V, E]])
                               (implicit val eV: Elem[V], val eE: Elem[E]) extends Edge[V, E] {
     private def indexOfTarget = fromId*graph.vertexNum + toId
     //def toId: Rep[Int] = graph.links.values(indexOfTarget)
