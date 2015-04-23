@@ -17,18 +17,18 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
   }
 
   // familyElem
-  class AStringElem[Abs <: AString]
-    extends EntityElem[Abs] {
+  class AStringElem[To <: AString]
+    extends EntityElem[To] {
     override def isEntityType = true
     override def tag = {
-      weakTypeTag[AString].asInstanceOf[WeakTypeTag[Abs]]
+      weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertAString(x.asRep[AString])
-    def convertAString(x : Rep[AString]): Rep[Abs] = {
+    def convertAString(x : Rep[AString]): Rep[To] = {
       //assert(x.selfType1.isInstanceOf[AStringElem[_]])
-      x.asRep[Abs]
+      x.asRep[To]
     }
-    override def getDefaultRep: Rep[Abs] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def aStringElement: Elem[AString] =

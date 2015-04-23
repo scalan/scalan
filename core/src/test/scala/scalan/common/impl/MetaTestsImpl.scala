@@ -1,4 +1,3 @@
-
 package scalan.common
 package impl
 
@@ -32,8 +31,9 @@ trait MetaTestsAbs extends MetaTests with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def metaTestElement[T](implicit elem: Elem[T]) =
-    new MetaTestElem[T, MetaTest[T]]()(elem)
+  implicit def metaTestElement[T](implicit elem: Elem[T]): Elem[MetaTest[T]] =
+    new MetaTestElem[T, MetaTest[T]] {
+    }
 
   trait MetaTestCompanionElem extends CompanionElem[MetaTestCompanionAbs]
   implicit lazy val MetaTestCompanionElem: MetaTestCompanionElem = new MetaTestCompanionElem {
@@ -144,7 +144,6 @@ trait MetaTestsAbs extends MetaTests with Scalan {
   // 4) constructor and deconstructor
   abstract class MT1CompanionAbs extends CompanionBase[MT1CompanionAbs] with MT1Companion {
     override def toString = "MT1"
-
     def apply[T](p: Rep[MT1Data[T]])(implicit elem: Elem[T]): Rep[MT1[T]] =
       isoMT1(elem).to(p)
     def apply[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
@@ -212,7 +211,6 @@ trait MetaTestsAbs extends MetaTests with Scalan {
   // 4) constructor and deconstructor
   abstract class MT2CompanionAbs extends CompanionBase[MT2CompanionAbs] with MT2Companion {
     override def toString = "MT2"
-
     def apply[T, R](p: Rep[MT2Data[T, R]])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
       isoMT2(eT, eR).to(p)
     def apply[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =

@@ -46,19 +46,19 @@ trait SeqsAbs extends Seqs with Scalan {
   }
 
   // familyElem
-  abstract class SSeqElem[A, Abs <: SSeq[A]](implicit val eA: Elem[A])
-    extends WrapperElem1[A, Abs, Seq, SSeq]()(eA, container[Seq], container[SSeq]) {
+  abstract class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
+    extends WrapperElem1[A, To, Seq, SSeq]()(eA, container[Seq], container[SSeq]) {
     override def isEntityType = true
     override def tag = {
       implicit val tagA = eA.tag
-      weakTypeTag[SSeq[A]].asInstanceOf[WeakTypeTag[Abs]]
+      weakTypeTag[SSeq[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
-    def convertSSeq(x : Rep[SSeq[A]]): Rep[Abs] = {
+    def convertSSeq(x : Rep[SSeq[A]]): Rep[To] = {
       //assert(x.selfType1.isInstanceOf[SSeqElem[_,_]])
-      x.asRep[Abs]
+      x.asRep[To]
     }
-    override def getDefaultRep: Rep[Abs] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def sSeqElement[A](implicit eA: Elem[A]): Elem[SSeq[A]] =

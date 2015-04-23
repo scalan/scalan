@@ -25,18 +25,18 @@ trait ExceptionsAbs extends Exceptions with Scalan {
   implicit def throwableElement: Elem[Throwable]
 
   // familyElem
-  abstract class SThrowableElem[Abs <: SThrowable]
-    extends WrapperElem[Throwable, Abs] {
+  abstract class SThrowableElem[To <: SThrowable]
+    extends WrapperElem[Throwable, To] {
     override def isEntityType = true
     override def tag = {
-      weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[Abs]]
+      weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSThrowable(x.asRep[SThrowable])
-    def convertSThrowable(x : Rep[SThrowable]): Rep[Abs] = {
+    def convertSThrowable(x : Rep[SThrowable]): Rep[To] = {
       //assert(x.selfType1.isInstanceOf[SThrowableElem[_]])
-      x.asRep[Abs]
+      x.asRep[To]
     }
-    override def getDefaultRep: Rep[Abs] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def sThrowableElement: Elem[SThrowable] =

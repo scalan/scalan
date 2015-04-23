@@ -420,14 +420,14 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         val (parentName, parentTyArgs, parentArgs) = e.firstAncestorType match {
           case Some(STraitCall("Reifiable", _)) =>
             (s"EntityElem${cont.opt("1")}",
-             s"[${cont.opt(e.typesUsePref)}Abs${cont.opt(s", $entityName")}]",
+             s"[${cont.opt(e.typesUsePref)}To${cont.opt(s", $entityName")}]",
              s"${cont.opt(s"(${e.tpeArgs.map("e" + _.name + ",").mkString("")}container[$entityName])")}")
           case Some(STraitCall("TypeWrapper", _)) =>
             (s"WrapperElem${cont.opt("1")}",
              if (cont)
-               s"[${cont.opt(e.typesUsePref)}Abs${cont.opt(s", ${e.entityNameBT}, $entityName")}]"
+               s"[${cont.opt(e.typesUsePref)}To${cont.opt(s", ${e.entityNameBT}, $entityName")}]"
              else
-               s"[${e.entityNameBT}, Abs]",
+               s"[${e.entityNameBT}, To]",
              s"${cont.opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.entityNameBT}], container[$entityName])")}")
           case Some(STraitCall(parentName, parentTypes)) =>
             (s"${parentName}Elem",
@@ -439,7 +439,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
 
         s"""
         |  // familyElem
-        |  ${isW.opt("abstract ")}class ${e.name}Elem[${e.typesDeclPref}Abs <: ${e.entityType}]${e.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")}
+        |  ${isW.opt("abstract ")}class ${e.name}Elem[${e.typesDeclPref}To <: ${e.entityType}]${e.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")}
         |    extends $parentElem {
         |    override def isEntityType = true
         |    override def tag = {
@@ -448,14 +448,14 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
             Some(s"      implicit val tag${typeToIdentifier(tpe)} = ${arg.name}.tag")
           case _=> None
         }).mkString("\n")}
-        |      weakTypeTag[${e.entityType}].asInstanceOf[WeakTypeTag[Abs]]
+        |      weakTypeTag[${e.entityType}].asInstanceOf[WeakTypeTag[To]]
         |    }
         |    override def convert(x: Rep[Reifiable[_]]) = convert$entityName(x.asRep[${e.entityType}])
-        |    def convert$entityName(x : Rep[${e.entityType}]): Rep[Abs] = {
+        |    def convert$entityName(x : Rep[${e.entityType}]): Rep[To] = {
         |      //assert(x.selfType1.isInstanceOf[${e.name}Elem[${underscores}_]])
-        |      x.asRep[Abs]
+        |      x.asRep[To]
         |    }
-        |    override def getDefaultRep: Rep[Abs] = ???
+        |    override def getDefaultRep: Rep[To] = ???
         |  }
         |${
           val elemMethodName = StringUtil.lowerCaseFirst(e.name) + "Element"

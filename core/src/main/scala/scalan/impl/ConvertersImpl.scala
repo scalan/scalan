@@ -1,4 +1,3 @@
-
 package scalan
 package impl
 
@@ -32,8 +31,9 @@ trait ConvertersAbs extends Converters  {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def converterElement[T, R](implicit eDom: Elem[T], eRange: Elem[R]) =
-    new ConverterElem[T, R, Converter[T, R]]()(eDom, eRange)
+  implicit def converterElement[T, R](implicit eDom: Elem[T], eRange: Elem[R]): Elem[Converter[T, R]] =
+    new ConverterElem[T, R, Converter[T, R]] {
+    }
 
   trait ConverterCompanionElem extends CompanionElem[ConverterCompanionAbs]
   implicit lazy val ConverterCompanionElem: ConverterCompanionElem = new ConverterCompanionElem {
@@ -149,7 +149,6 @@ trait ConvertersAbs extends Converters  {
   // 4) constructor and deconstructor
   abstract class PairConverterCompanionAbs extends CompanionBase[PairConverterCompanionAbs] with PairConverterCompanion {
     override def toString = "PairConverter"
-
     def apply[A1, A2, B1, B2](p: Rep[PairConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
       isoPairConverter(eA1, eA2, eB1, eB2).to(p)
     def apply[A1, A2, B1, B2](conv1: Conv[A1,B1], conv2: Conv[A2,B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
@@ -219,7 +218,6 @@ trait ConvertersAbs extends Converters  {
   // 4) constructor and deconstructor
   abstract class SumConverterCompanionAbs extends CompanionBase[SumConverterCompanionAbs] with SumConverterCompanion {
     override def toString = "SumConverter"
-
     def apply[A1, A2, B1, B2](p: Rep[SumConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
       isoSumConverter(eA1, eA2, eB1, eB2).to(p)
     def apply[A1, A2, B1, B2](conv1: Conv[A1,B1], conv2: Conv[A2,B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =

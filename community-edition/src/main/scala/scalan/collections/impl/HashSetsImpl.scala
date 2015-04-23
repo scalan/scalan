@@ -46,19 +46,19 @@ trait HashSetsAbs extends HashSets with Scalan {
   }
 
   // familyElem
-  abstract class SHashSetElem[A, Abs <: SHashSet[A]](implicit val eA: Elem[A])
-    extends WrapperElem1[A, Abs, HashSet, SHashSet]()(eA, container[HashSet], container[SHashSet]) {
+  abstract class SHashSetElem[A, To <: SHashSet[A]](implicit val eA: Elem[A])
+    extends WrapperElem1[A, To, HashSet, SHashSet]()(eA, container[HashSet], container[SHashSet]) {
     override def isEntityType = true
     override def tag = {
       implicit val tagA = eA.tag
-      weakTypeTag[SHashSet[A]].asInstanceOf[WeakTypeTag[Abs]]
+      weakTypeTag[SHashSet[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
-    def convertSHashSet(x : Rep[SHashSet[A]]): Rep[Abs] = {
+    def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To] = {
       //assert(x.selfType1.isInstanceOf[SHashSetElem[_,_]])
-      x.asRep[Abs]
+      x.asRep[To]
     }
-    override def getDefaultRep: Rep[Abs] = ???
+    override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def sHashSetElement[A](implicit eA: Elem[A]): Elem[SHashSet[A]] =

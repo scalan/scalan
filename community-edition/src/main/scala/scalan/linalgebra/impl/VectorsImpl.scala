@@ -1,4 +1,3 @@
-
 package scalan.linalgebra
 package impl
 
@@ -35,8 +34,9 @@ trait VectorsAbs extends Vectors with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def abstractVectorElement[T](implicit elem: Elem[T]) =
-    new AbstractVectorElem[T, AbstractVector[T]]()(elem)
+  implicit def abstractVectorElement[T](implicit elem: Elem[T]): Elem[AbstractVector[T]] =
+    new AbstractVectorElem[T, AbstractVector[T]] {
+    }
 
   trait AbstractVectorCompanionElem extends CompanionElem[AbstractVectorCompanionAbs]
   implicit lazy val AbstractVectorCompanionElem: AbstractVectorCompanionElem = new AbstractVectorCompanionElem {
@@ -147,7 +147,6 @@ trait VectorsAbs extends Vectors with Scalan {
   // 4) constructor and deconstructor
   abstract class SparseVectorCompanionAbs extends CompanionBase[SparseVectorCompanionAbs] with SparseVectorCompanion {
     override def toString = "SparseVector"
-
     def apply[T](p: Rep[SparseVectorData[T]])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
       isoSparseVector(elem).to(p)
     def apply[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =

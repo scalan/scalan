@@ -1,4 +1,3 @@
-
 package scalan.collections
 package impl
 
@@ -36,8 +35,9 @@ trait CollectionsAbs extends Collections with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def collectionElement[A](implicit elem: Elem[A]) =
-    new CollectionElem[A, Collection[A]]()(elem)
+  implicit def collectionElement[A](implicit elem: Elem[A]): Elem[Collection[A]] =
+    new CollectionElem[A, Collection[A]] {
+    }
 
   trait CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs]
   implicit lazy val CollectionCompanionElem: CollectionCompanionElem = new CollectionCompanionElem {
@@ -57,7 +57,6 @@ trait CollectionsAbs extends Collections with Scalan {
   implicit def proxyIPairCollection[A, B](p: Rep[IPairCollection[A, B]]): IPairCollection[A, B] = {
     proxyOps[IPairCollection[A, B]](p)(classTag[IPairCollection[A, B]])
   }
-
   // familyElem
   class IPairCollectionElem[A, B, To <: IPairCollection[A, B]](implicit val eA: Elem[A], val eB: Elem[B])
     extends CollectionElem[(A, B), To] {
@@ -75,14 +74,14 @@ trait CollectionsAbs extends Collections with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def iPairCollectionElement[A, B](implicit eA: Elem[A], eB: Elem[B]) =
-    new IPairCollectionElem[A, B, IPairCollection[A, B]]()(eA, eB)
+  implicit def iPairCollectionElement[A, B](implicit eA: Elem[A], eB: Elem[B]): Elem[IPairCollection[A, B]] =
+    new IPairCollectionElem[A, B, IPairCollection[A, B]] {
+    }
 
   // single proxy for each type family
   implicit def proxyINestedCollection[A](p: Rep[INestedCollection[A]]): INestedCollection[A] = {
     proxyOps[INestedCollection[A]](p)(classTag[INestedCollection[A]])
   }
-
   // familyElem
   class INestedCollectionElem[A, To <: INestedCollection[A]](implicit val eA: Elem[A])
     extends CollectionElem[Collection[A], To] {
@@ -99,8 +98,9 @@ trait CollectionsAbs extends Collections with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def iNestedCollectionElement[A](implicit eA: Elem[A]) =
-    new INestedCollectionElem[A, INestedCollection[A]]()(eA)
+  implicit def iNestedCollectionElement[A](implicit eA: Elem[A]): Elem[INestedCollection[A]] =
+    new INestedCollectionElem[A, INestedCollection[A]] {
+    }
 
   // elem for concrete class
   class UnitCollectionElem(val iso: Iso[UnitCollectionData, UnitCollection])
@@ -389,7 +389,6 @@ trait CollectionsAbs extends Collections with Scalan {
   // 4) constructor and deconstructor
   abstract class PairCollectionCompanionAbs extends CompanionBase[PairCollectionCompanionAbs] with PairCollectionCompanion {
     override def toString = "PairCollection"
-
     def apply[A, B](p: Rep[PairCollectionData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollection[A, B]] =
       isoPairCollection(eA, eB).to(p)
     def apply[A, B](as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollection[A, B]] =
@@ -520,7 +519,6 @@ trait CollectionsAbs extends Collections with Scalan {
   // 4) constructor and deconstructor
   abstract class NestedCollectionCompanionAbs extends CompanionBase[NestedCollectionCompanionAbs] with NestedCollectionCompanion {
     override def toString = "NestedCollection"
-
     def apply[A](p: Rep[NestedCollectionData[A]])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =
       isoNestedCollection(eA).to(p)
     def apply[A](values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollection[A]] =

@@ -1,4 +1,3 @@
-
 package scalan.graphs
 package impl
 
@@ -38,8 +37,9 @@ trait EdgesAbs extends Edges with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def edgeElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
-    new EdgeElem[V, E, Edge[V, E]]()(eV, eE)
+  implicit def edgeElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Edge[V, E]] =
+    new EdgeElem[V, E, Edge[V, E]] {
+    }
 
   trait EdgeCompanionElem extends CompanionElem[EdgeCompanionAbs]
   implicit lazy val EdgeCompanionElem: EdgeCompanionElem = new EdgeCompanionElem {
@@ -87,10 +87,9 @@ trait EdgesAbs extends Edges with Scalan {
   // 4) constructor and deconstructor
   abstract class AdjEdgeCompanionAbs extends CompanionBase[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
     override def toString = "AdjEdge"
-
     def apply[V, E](p: Rep[AdjEdgeData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       isoAdjEdge(eV, eE).to(p)
-    def apply[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
+    def apply[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       mkAdjEdge(fromId, outIndex, graph)
   }
   object AdjEdgeMatcher {
@@ -119,7 +118,7 @@ trait EdgesAbs extends Edges with Scalan {
     new AdjEdgeIso[V, E]
 
   // 6) smart constructor and deconstructor
-  def mkAdjEdge[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]]
+  def mkAdjEdge[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]]
   def unmkAdjEdge[V, E](p: Rep[Edge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V,E]])]
 
   // elem for concrete class
@@ -154,10 +153,9 @@ trait EdgesAbs extends Edges with Scalan {
   // 4) constructor and deconstructor
   abstract class IncEdgeCompanionAbs extends CompanionBase[IncEdgeCompanionAbs] with IncEdgeCompanion {
     override def toString = "IncEdge"
-
     def apply[V, E](p: Rep[IncEdgeData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       isoIncEdge(eV, eE).to(p)
-    def apply[V, E](fromId: Rep[Int], toId: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
+    def apply[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       mkIncEdge(fromId, toId, graph)
   }
   object IncEdgeMatcher {
@@ -186,7 +184,7 @@ trait EdgesAbs extends Edges with Scalan {
     new IncEdgeIso[V, E]
 
   // 6) smart constructor and deconstructor
-  def mkIncEdge[V, E](fromId: Rep[Int], toId: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]]
+  def mkIncEdge[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]]
   def unmkIncEdge[V, E](p: Rep[Edge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V,E]])]
 }
 
@@ -198,7 +196,7 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
   }
 
   case class SeqAdjEdge[V, E]
-      (override val fromId: Rep[Int], override val outIndex: Rep[Int], override val graph: PG[V,E])
+      (override val fromId: Rep[Int], override val outIndex: Rep[Int], override val graph: Rep[Graph[V,E]])
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjEdge[V, E](fromId, outIndex, graph)
         with UserTypeSeq[AdjEdge[V, E]] {
@@ -209,7 +207,7 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
   }
 
   def mkAdjEdge[V, E]
-      (fromId: Rep[Int], outIndex: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
+      (fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       new SeqAdjEdge[V, E](fromId, outIndex, graph)
   def unmkAdjEdge[V, E](p: Rep[Edge[V, E]]) = p match {
     case p: AdjEdge[V, E] @unchecked =>
@@ -218,7 +216,7 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
   }
 
   case class SeqIncEdge[V, E]
-      (override val fromId: Rep[Int], override val toId: Rep[Int], override val graph: PG[V,E])
+      (override val fromId: Rep[Int], override val toId: Rep[Int], override val graph: Rep[Graph[V,E]])
       (implicit eV: Elem[V], eE: Elem[E])
     extends IncEdge[V, E](fromId, toId, graph)
         with UserTypeSeq[IncEdge[V, E]] {
@@ -229,7 +227,7 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
   }
 
   def mkIncEdge[V, E]
-      (fromId: Rep[Int], toId: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
+      (fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       new SeqIncEdge[V, E](fromId, toId, graph)
   def unmkIncEdge[V, E](p: Rep[Edge[V, E]]) = p match {
     case p: IncEdge[V, E] @unchecked =>
@@ -247,7 +245,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   }
 
   case class ExpAdjEdge[V, E]
-      (override val fromId: Rep[Int], override val outIndex: Rep[Int], override val graph: PG[V,E])
+      (override val fromId: Rep[Int], override val outIndex: Rep[Int], override val graph: Rep[Graph[V,E]])
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjEdge[V, E](fromId, outIndex, graph) with UserTypeDef[AdjEdge[V, E]] {
     lazy val selfType = element[AdjEdge[V, E]]
@@ -325,7 +323,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   }
 
   def mkAdjEdge[V, E]
-    (fromId: Rep[Int], outIndex: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
+    (fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
     new ExpAdjEdge[V, E](fromId, outIndex, graph)
   def unmkAdjEdge[V, E](p: Rep[Edge[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: AdjEdgeElem[V, E] @unchecked =>
@@ -335,7 +333,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   }
 
   case class ExpIncEdge[V, E]
-      (override val fromId: Rep[Int], override val toId: Rep[Int], override val graph: PG[V,E])
+      (override val fromId: Rep[Int], override val toId: Rep[Int], override val graph: Rep[Graph[V,E]])
       (implicit eV: Elem[V], eE: Elem[E])
     extends IncEdge[V, E](fromId, toId, graph) with UserTypeDef[IncEdge[V, E]] {
     lazy val selfType = element[IncEdge[V, E]]
@@ -413,7 +411,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   }
 
   def mkIncEdge[V, E]
-    (fromId: Rep[Int], toId: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
+    (fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
     new ExpIncEdge[V, E](fromId, toId, graph)
   def unmkIncEdge[V, E](p: Rep[Edge[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: IncEdgeElem[V, E] @unchecked =>

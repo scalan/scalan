@@ -1,4 +1,3 @@
-
 package scalan.graphs
 package impl
 
@@ -38,8 +37,9 @@ trait GraphsAbs extends Graphs with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def graphElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
-    new GraphElem[V, E, Graph[V, E]]()(eV, eE)
+  implicit def graphElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Graph[V, E]] =
+    new GraphElem[V, E, Graph[V, E]] {
+    }
 
   trait GraphCompanionElem extends CompanionElem[GraphCompanionAbs]
   implicit lazy val GraphCompanionElem: GraphCompanionElem = new GraphCompanionElem {
@@ -87,7 +87,6 @@ trait GraphsAbs extends Graphs with Scalan {
   // 4) constructor and deconstructor
   abstract class AdjacencyGraphCompanionAbs extends CompanionBase[AdjacencyGraphCompanionAbs] with AdjacencyGraphCompanion {
     override def toString = "AdjacencyGraph"
-
     def apply[V, E](p: Rep[AdjacencyGraphData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
       isoAdjacencyGraph(eV, eE).to(p)
     def apply[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
@@ -154,7 +153,6 @@ trait GraphsAbs extends Graphs with Scalan {
   // 4) constructor and deconstructor
   abstract class IncidenceGraphCompanionAbs extends CompanionBase[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {
     override def toString = "IncidenceGraph"
-
     def apply[V, E](p: Rep[IncidenceGraphData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
       isoIncidenceGraph(eV, eE).to(p)
     def apply[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
