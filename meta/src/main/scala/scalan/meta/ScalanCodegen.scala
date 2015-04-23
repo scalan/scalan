@@ -414,22 +414,21 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       def familyElem(e: EntityTemplateData) = {
         val entityName = e.name
         val typesUse = e.tpeArgUseString
-        val isCont = e.isContainer1
+        val cont = e.isContainer1
         val underscores = e.tpeArgDecls.map(_ => "_,").mkString("")
         val isW = e.isWrapper
-        val hasArgs = !e.tpeArgs.isEmpty
         val (parentName, parentTyArgs, parentArgs) = e.firstAncestorType match {
           case Some(STraitCall("Reifiable", _)) =>
-            (s"EntityElem${isCont.opt("1")}",
-             s"[${isCont.opt(e.typesUsePref)}Abs${isCont.opt(s", $entityName")}]",
-             s"${isCont.opt(s"(${e.tpeArgs.map("e" + _.name + ",").mkString("")}container[$entityName])")}")
+            (s"EntityElem${cont.opt("1")}",
+             s"[${cont.opt(e.typesUsePref)}Abs${cont.opt(s", $entityName")}]",
+             s"${cont.opt(s"(${e.tpeArgs.map("e" + _.name + ",").mkString("")}container[$entityName])")}")
           case Some(STraitCall("TypeWrapper", _)) =>
-            (s"WrapperElem${isCont.opt("1")}",
-             if (isCont || hasArgs)
-               s"[${isCont.opt(e.typesUsePref)}Abs${isCont.opt(s", ${e.entityNameBT}, $entityName")}]"
+            (s"WrapperElem${cont.opt("1")}",
+             if (cont)
+               s"[${cont.opt(e.typesUsePref)}Abs${cont.opt(s", ${e.entityNameBT}, $entityName")}]"
              else
                s"[${e.entityNameBT}, Abs]",
-             s"${(isCont || hasArgs).opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.entityNameBT}], container[$entityName])")}")
+             s"${cont.opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.entityNameBT}], container[$entityName])")}")
           case Some(STraitCall(parentName, parentTypes)) =>
             (s"${parentName}Elem",
              s"[${parentTypes.map(_.toString + ", ").mkString("")}To]",
@@ -879,7 +878,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
           |    case ${e.name}Methods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
           |
           |    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
-          |    case mc @ MethodCall(Def(wrapper: Exp${e.name}Impl[_]), m, args, neverInvoke) =>
+          |    case mc @ MethodCall(Def(wrapper: Exp${e.name}Impl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
           |      val resultElem = mc.selfType
           |      val wrapperIso = getIsoByElem(resultElem)
           |      wrapperIso match {
