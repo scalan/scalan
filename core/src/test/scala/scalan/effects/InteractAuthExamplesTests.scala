@@ -6,11 +6,7 @@ import java.lang.reflect.Method
 import scala.language.reflectiveCalls
 import scalan.{TestContext, BaseTests, ScalanCtxExp}
 
-/**
- * User: Alexander Slesarenko   
- * Date: 8/3/14
- */
-class   InteractAuthExamplesTests extends BaseTests {
+class InteractAuthExamplesTests extends BaseTests {
 
   trait MyProg extends InteractionsDsl {
     val OperM = Monad[Oper]
@@ -67,6 +63,7 @@ class   InteractAuthExamplesTests extends BaseTests {
   }
 
   test("crossDomainStaged") {
+    pending
     val ctx = new TestContext(this, "crossDomainStaged") with MyCrossDomainProg with InteractionsDslExp with AuthenticationsDslExp {
       override def isInvokeEnabled(d: Def[_], m: Method) = true
     }
