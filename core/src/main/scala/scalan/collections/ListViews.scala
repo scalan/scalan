@@ -47,19 +47,6 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
 
-  implicit val listContainer: Cont[List] = new Container[List] {
-    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[List[T]]
-    def lift[T](implicit eT: Elem[T]) = element[List[T]]
-  }
-
-  case class ListIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, List](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Lst[B]) = x.map(iso.from _)
-    def to(x: Lst[A]) = x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(SList.empty[B])
-  }
-
   override def rewriteDef[T](d: Def[T]) = d match {
     case ListLength(Def(ViewList(arr: Lst[a]@unchecked))) =>
       list_length(arr)

@@ -8,37 +8,41 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait ExceptionsAbs extends Scalan with Exceptions {
+trait ExceptionsAbs extends Exceptions with Scalan {
   self: ExceptionsDsl =>
+
   // single proxy for each type family
   implicit def proxySThrowable(p: Rep[SThrowable]): SThrowable = {
     proxyOps[SThrowable](p)(classTag[SThrowable])
   }
-  // BaseTypeEx proxy
+
+  // TypeWrapper proxy
   //implicit def proxyThrowable(p: Rep[Throwable]): SThrowable =
   //  proxyOps[SThrowable](p.asRep[SThrowable])
 
   implicit def unwrapValueOfSThrowable(w: Rep[SThrowable]): Rep[Throwable] = w.wrappedValueOfBaseType
 
-  implicit def defaultSThrowableElem: Elem[SThrowable] = element[SThrowableImpl].asElem[SThrowable]
   implicit def throwableElement: Elem[Throwable]
 
-  class SThrowableElem[To <: SThrowable]
-    extends EntityElem[To] {
+  // familyElem
+  abstract class SThrowableElem[To <: SThrowable]
+    extends WrapperElem[Throwable, To] {
     override def isEntityType = true
     override def tag = {
       weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertSThrowable(x.asRep[SThrowable])
     def convertSThrowable(x : Rep[SThrowable]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[SThrowableElem[_]])
+      //assert(x.selfType1.isInstanceOf[SThrowableElem[_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def sThrowableElement =
-    new SThrowableElem[SThrowable]()
+  implicit def sThrowableElement: Elem[SThrowable] =
+    new SThrowableElem[SThrowable] {
+      lazy val eTo = element[SThrowableImpl]
+    }
 
   trait SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs]
   implicit lazy val SThrowableCompanionElem: SThrowableCompanionElem = new SThrowableCompanionElem {
@@ -73,10 +77,11 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   // elem for concrete class
   class SThrowableImplElem(val iso: Iso[SThrowableImplData, SThrowableImpl])
     extends SThrowableElem[SThrowableImpl]
-    with ViewElem[SThrowableImplData, SThrowableImpl] {
+    with ConcreteElem[SThrowableImplData, SThrowableImpl] {
+    lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SThrowableImpl(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -136,10 +141,11 @@ trait ExceptionsAbs extends Scalan with Exceptions {
   // elem for concrete class
   class SExceptionElem(val iso: Iso[SExceptionData, SException])
     extends SThrowableElem[SException]
-    with ViewElem[SExceptionData, SException] {
+    with ConcreteElem[SExceptionData, SException] {
+    lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SException(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -207,7 +213,7 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
       SThrowableImpl(new Throwable(msg))
   }
 
-    // override proxy if we deal with BaseTypeEx
+    // override proxy if we deal with TypeWrapper
   //override def proxyThrowable(p: Rep[Throwable]): SThrowable =
   //  proxyOpsEx[Throwable,SThrowable, SeqSThrowableImpl](p, bt => SeqSThrowableImpl(bt))
 
@@ -275,6 +281,7 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   }
 
   implicit lazy val throwableElement: Elem[Throwable] = new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
+
   case class ExpSThrowableImpl
       (override val wrappedValueOfBaseType: Rep[Throwable])
 

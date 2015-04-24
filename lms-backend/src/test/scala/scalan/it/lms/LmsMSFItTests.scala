@@ -283,7 +283,6 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
   }
 
   test("fallingTestWithArrays") {
-    //pending
     val ctx = new TestContext(this, "fallingTestWithArrays") with ProgExp
     ctx.emit("funFallingTestWithArrays", ctx.funFallingTestWithArrays)
   }

@@ -17,8 +17,24 @@ trait Thunks { self: Scalan =>
 
   implicit class RepThunkOps[T: Elem](t: Th[T]) {
     def force() = thunk_force(t)
+    def map[R:Elem](f: Rep[T => R]): Th[R] = Thunk { f(t.force) }
   }
-  case class ThunkElem[A](val eItem: Elem[A]) extends Element[Thunk[A]] {
+
+  implicit val thunkContainer: Cont[Thunk] = new Container[Thunk] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Thunk[T]]
+    def lift[T](implicit eT: Elem[T]) = element[Thunk[T]]
+  }
+
+  case class ThunkIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Thunk](iso) {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    def from(x: Th[B]) = x.map(fun(iso.from))
+    def to(x: Th[A]) = x.map(fun(iso.to))
+    lazy val defaultRepTo = Default.defaultVal(Thunk(eB.defaultRepValue)(eB))
+  }
+
+  case class ThunkElem[A](override val eItem: Elem[A])
+    extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
     override def isEntityType = eItem.isEntityType
     lazy val tag = {
       implicit val rt = eItem.tag
@@ -100,18 +116,6 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
 
-  implicit val thunkContainer: Cont[Thunk] = new Container[Thunk] {
-    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Thunk[T]]
-    def lift[T](implicit eT: Elem[T]) = element[Thunk[T]]
-  }
-
-  case class ThunkIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Thunk](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Th[B]) = ??? //x.map(iso.from _)
-    def to(x: Th[A]) = ??? //x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(Thunk(eB.defaultRepValue)(eB))
-  }
 
 //  def thunkIso[A, B](iso: Iso[A, B]): Iso[Thunk[A], Thunk[B]] = {
 //    implicit val eA = iso.eFrom

@@ -4,7 +4,10 @@ trait ScalanAst {
   // STpe universe --------------------------------------------------------------------------
 
   /** Type expressions */
-  sealed abstract class STpeExpr
+  sealed abstract class STpeExpr {
+    def name: String
+    def tpeSExprs: List[STpeExpr]
+  }
   type STpeExprs = List[STpeExpr]
 
   /** Invocation of a trait with arguments */
@@ -14,10 +17,13 @@ trait ScalanAst {
 
   case class STpePrimitive(name: String, defaultValueString: String) extends STpeExpr {
     override def toString = name
+    def tpeSExprs = Nil
   }
 
   case class STpeTypeBounds(lo: STpeExpr, hi: STpeExpr) extends STpeExpr {
+    def name = "Bounds"
     override def toString = ">:" + lo + "<:" + hi
+    def tpeSExprs = Nil
   }
 
   val STpePrimitives = Map(
@@ -32,11 +38,14 @@ trait ScalanAst {
     "String" -> STpePrimitive("String", "\"\"")
   )
 
-  case class STpeTuple(items: List[STpeExpr]) extends STpeExpr {
-    override def toString = items.mkString("(", ", ", ")")
+  case class STpeTuple(tpeSExprs: List[STpeExpr]) extends STpeExpr {
+    override def name = "Tuple" + tpeSExprs.length
+    override def toString = tpeSExprs.mkString("(", ", ", ")")
   }
 
   case class STpeFunc(domain: STpeExpr, range: STpeExpr) extends STpeExpr {
+    def name = "Function1"
+    def tpeSExprs = List(domain, range)
     override def toString = {
       val domainStr = domain match {
         case tuple: STpeTuple => s"($tuple)"
@@ -46,8 +55,10 @@ trait ScalanAst {
     }
   }
 
-  case class STpeSum(items: List[STpeExpr]) extends STpeExpr {
-    override def toString = items.mkString("(", " | ", ")")
+  case class STpeSum(tpeSExprs: List[STpeExpr]) extends STpeExpr {
+    def name = "Either"
+    //def tpeSExprs = items
+    override def toString = tpeSExprs.mkString("(", " | ", ")")
   }
 
   implicit class STpeExprExtensions(self: STpeExpr) {
@@ -118,14 +129,13 @@ trait ScalanAst {
     overloadId: Option[String],
     annotations: List[SMethodAnnotation] = Nil,
     body: Option[SExpr] = None,
-    elem: Option[Unit] = None)
+    isElemOrCont: Boolean = false)
     extends SBodyItem {
     def externalOpt: Option[SMethodAnnotation] = annotations.filter(a => a.annotationClass == "External").headOption
-    def isElem: Boolean = elem.isDefined
     def explicitArgs = argSections.flatMap(_.args.filterNot(_.impFlag))
     def allArgs = argSections.flatMap(_.args)
   }
-  case class SValDef(name: String, tpe: Option[STpeExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
+  case class SValDef(name: String, tpe: Option[STpeExpr], rhs: Option[SExpr], isLazy: Boolean, isImplicit: Boolean) extends SBodyItem
   case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
 
   case class STpeArg(
@@ -232,30 +242,34 @@ trait ScalanAst {
     def isTrait = true
     lazy val implicitArgs: SClassArgs = {
       val implicitElems = body.collect {
-        case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, _, Some(_)) => (name, elem)
+        case SMethodDef(name, _, _, Some(elemOrCont), true, _, _, _, true) =>
+          (name, elemOrCont)
       }
-      val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map(a => {
+      val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map { a =>
         val optDef = implicitElems.collectFirst {
-          case (methName, elem @ STraitCall("Elem", List(STraitCall(name, _)))) if name == a.name =>
+          case (methName, elem @ STraitCall(_, List(STraitCall(name, _)))) if name == a.name =>
             (methName, elem)
         }
 
-        optDef.fold[Either[STpeArg, SClassArg]](Left[STpeArg, SClassArg](a)) { case (name, tyElem) => {
-          Right[STpeArg, SClassArg](SClassArg(true, false, true, name, tyElem, None))
-        }}
-      })
+        optDef match {
+          case None =>
+            Left(a)
+          case Some((name, tyElem)) =>
+            Right(SClassArg(true, false, true, name, tyElem, None))
+        }
+      }
       val missingElems = args.filter(_.isLeft)
-      if (missingElems.length > 0)
-        println/*sys.error*/(s"implicit def eA: Elem[A] should be declared for all type parameters of ${name}: missing ${missingElems}")
+      if (missingElems.nonEmpty)
+        println/*sys.error*/(s"implicit def eA: Elem[A] should be declared for all type parameters of ${name}: missing ${missingElems.mkString(", ")}")
       SClassArgs(args.flatMap(a => a.fold(_ => Nil, List(_))))
     }
   }
 
-  final val BaseTypeTraitName = "BaseTypeEx"
+  final val BaseTypeTraitName = "TypeWrapper"
 
   implicit class STraitOrClassDefOps(td: STraitOrClassDef) {
-    def optBaseType: Option[STraitCall] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
-      case Some(STraitCall(_, (h: STraitCall) :: _)) => Some(h)
+    def optBaseType: Option[STpeExpr] = td.ancestors.find(a => a.name == BaseTypeTraitName) match {
+      case Some(STraitCall(_, h :: _)) => Some(h)
       case _ => None
     }
   }
@@ -299,6 +313,7 @@ trait ScalanAst {
     concreteSClasses: List[SClassDef],
     methods: List[SMethodDef],
     selfType: Option[SSelfTypeDef],
+    body: List[SBodyItem] = Nil,
     seqDslImpl: Option[SSeqImplementation] = None)
   {
     def getEntity(name: String): STraitOrClassDef = {
@@ -314,14 +329,6 @@ trait ScalanAst {
     }
 
     def isEntity(name: String) = entities.exists(e => e.name == name)
-  }
-
-
-  object IsImplicitElem {
-    def unapply(item: SBodyItem): Option[(String, STraitCall)] = item match {
-      case md @ SMethodDef(name, _, _, Some(elem @ STraitCall("Elem", List(tyArg))), true, _, _, Some(_), Some(_)) => Some((name, elem))
-      case _ => None
-    }
   }
 
   object SEntityModuleDef {

@@ -39,6 +39,7 @@ object ScalanBuild extends Build {
     parallelExecution in PerfTest := false,
     fork in PerfTest := true,
     javaOptions in PerfTest ++= Seq("-Xmx30G", "-Xms15G"),
+    javaOptions in ItTest ++= Seq("-Xmx3G", "-Xms2G", "-XX:MaxPermSize=1024M"),
     publishArtifact in Test := true,
     publishArtifact in(Test, packageDoc) := false,
     test in assembly := {})

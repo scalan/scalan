@@ -304,6 +304,13 @@ trait BaseExp extends Base { self: ScalanExp =>
     }
   }
 
+  case class FindArg(predicate: Exp[_] => Boolean) {
+    def unapply[T](d: Def[T]): Option[Exp[_]] = {
+      val args = dep(d)
+      for { a <- args.find(predicate) } yield a
+    }
+  }
+
   final def rewrite[T](s: Exp[T]): Exp[_] = s match {
     case Def(d) => rewriteDef(d)
     case _ => rewriteVar(s)

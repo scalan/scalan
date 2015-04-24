@@ -17,4 +17,11 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
     val in = Array(Array(2, 3), Array(4, 5))
     compareOutputWithSequential(progStaged)(progSeq.expBaseArrays, progStaged.expBaseArrays, "expBaseArrays", in)
   }
+
+  test("seqsSimpleMap") {
+    pending
+    val in = Seq(2, 3)
+    compileSource(progStaged)(progStaged.seqsSimpleMap, "seqsSimpleMap", progStaged.defaultCompilerConfig)
+    //compareOutputWithSequential(progStaged)(progSeq.seqsSimpleMap, progStaged.seqsSimpleMap, "seqsSimpleMap", in)
+  }
 }

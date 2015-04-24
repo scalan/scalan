@@ -12,7 +12,7 @@ trait Scalan
   extends Base
   with Elems
   with Containers
-  with BaseTypes
+  with TypeWrappers
   with Views
   with Proxy
   with Tuples
@@ -39,9 +39,10 @@ trait Scalan
   with Metadata
   with ListOps
   with ListViews
+  with ConvertersDsl
 
 trait ScalanDsl
-  extends Scalan
+extends Scalan
   with ExceptionsDsl
   with AbstractStringsDsl
 
@@ -50,7 +51,7 @@ trait ScalanSeq
   with BaseSeq
   with ElemsSeq
   with ContainersSeq
-  with BaseTypesSeq
+  with TypeWrappersSeq
   with ViewsSeq
   with ProxySeq
   with TuplesSeq
@@ -73,9 +74,10 @@ trait ScalanSeq
   with MetadataSeq
   with ListOpsSeq
   with ListViewsSeq
+  with ConvertersDslSeq
 
 trait ScalanCtxSeq
-  extends ScalanDsl
+extends ScalanDsl
   with ScalanSeq
   with ExceptionsDslSeq
   with AbstractStringsDslSeq
@@ -85,7 +87,7 @@ trait ScalanExp
   with BaseExp
   with ElemsExp
   with ContainersExp
-  with BaseTypesExp
+  with TypeWrappersExp
   with ViewsExp
   with ProxyExp
   with TuplesExp
@@ -110,9 +112,10 @@ trait ScalanExp
   with MetadataExp
   with ListOpsExp
   with ListViewsExp
+  with ConvertersDslExp
 
 trait ScalanCtxExp
-  extends ScalanDsl
+extends ScalanDsl
   with ScalanExp
   with Expressions
   with GraphVizExport

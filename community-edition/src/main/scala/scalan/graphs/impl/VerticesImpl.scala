@@ -11,13 +11,15 @@ import scala.reflect._
 import scalan.common.Default
 
 // Abs -----------------------------------
-trait VerticesAbs extends Scalan with Vertices {
+trait VerticesAbs extends Vertices with Scalan {
   self: GraphsDsl =>
+
   // single proxy for each type family
   implicit def proxyVertex[V, E](p: Rep[Vertex[V, E]]): Vertex[V, E] = {
     proxyOps[Vertex[V, E]](p)(classTag[Vertex[V, E]])
   }
 
+  // familyElem
   class VertexElem[V, E, To <: Vertex[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
     override def isEntityType = true
@@ -28,14 +30,15 @@ trait VerticesAbs extends Scalan with Vertices {
     }
     override def convert(x: Rep[Reifiable[_]]) = convertVertex(x.asRep[Vertex[V, E]])
     def convertVertex(x : Rep[Vertex[V, E]]): Rep[To] = {
-      assert(x.selfType1.isInstanceOf[VertexElem[_,_,_]])
+      //assert(x.selfType1.isInstanceOf[VertexElem[_,_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def vertexElement[V, E](implicit eV: Elem[V], eE: Elem[E]) =
-    new VertexElem[V, E, Vertex[V, E]]()(eV, eE)
+  implicit def vertexElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Vertex[V, E]] =
+    new VertexElem[V, E, Vertex[V, E]] {
+    }
 
   trait VertexCompanionElem extends CompanionElem[VertexCompanionAbs]
   implicit lazy val VertexCompanionElem: VertexCompanionElem = new VertexCompanionElem {
@@ -54,10 +57,10 @@ trait VerticesAbs extends Scalan with Vertices {
   // elem for concrete class
   class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends VertexElem[V, E, SVertex[V, E]]
-    with ViewElem[SVertexData[V, E], SVertex[V, E]] {
+    with ConcreteElem[SVertexData[V, E], SVertex[V, E]] {
     override def convertVertex(x: Rep[Vertex[V, E]]) = SVertex(x.id, x.graph)
-    override def getDefaultRep = super[ViewElem].getDefaultRep
-    override lazy val tag = super[ViewElem].tag
+    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override lazy val tag = super[ConcreteElem].tag
   }
 
   // state representation type
@@ -89,7 +92,7 @@ trait VerticesAbs extends Scalan with Vertices {
       mkSVertex(id, graph)
   }
   object SVertexMatcher {
-    def unapply[V:Elem, E:Elem](p: Rep[Vertex[V, E]]) = unmkSVertex(p)
+    def unapply[V, E](p: Rep[Vertex[V, E]]) = unmkSVertex(p)
   }
   def SVertex: Rep[SVertexCompanionAbs]
   implicit def proxySVertexCompanion(p: Rep[SVertexCompanionAbs]): SVertexCompanionAbs = {
@@ -115,7 +118,7 @@ trait VerticesAbs extends Scalan with Vertices {
 
   // 6) smart constructor and deconstructor
   def mkSVertex[V, E](id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]
-  def unmkSVertex[V:Elem, E:Elem](p: Rep[Vertex[V, E]]): Option[(Rep[Int], Rep[Graph[V,E]])]
+  def unmkSVertex[V, E](p: Rep[Vertex[V, E]]): Option[(Rep[Int], Rep[Graph[V,E]])]
 }
 
 // Seq -----------------------------------
@@ -139,7 +142,7 @@ trait VerticesSeq extends VerticesDsl with ScalanSeq {
   def mkSVertex[V, E]
       (id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       new SeqSVertex[V, E](id, graph)
-  def unmkSVertex[V:Elem, E:Elem](p: Rep[Vertex[V, E]]) = p match {
+  def unmkSVertex[V, E](p: Rep[Vertex[V, E]]) = p match {
     case p: SVertex[V, E] @unchecked =>
       Some((p.id, p.graph))
     case _ => None
@@ -176,7 +179,7 @@ trait VerticesExp extends VerticesDsl with ScalanExp {
   def mkSVertex[V, E]
     (id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
     new ExpSVertex[V, E](id, graph)
-  def unmkSVertex[V:Elem, E:Elem](p: Rep[Vertex[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkSVertex[V, E](p: Rep[Vertex[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SVertexElem[V, E] @unchecked =>
       Some((p.asRep[SVertex[V, E]].id, p.asRep[SVertex[V, E]].graph))
     case _ =>

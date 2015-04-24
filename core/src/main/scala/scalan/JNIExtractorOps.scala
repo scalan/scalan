@@ -47,7 +47,7 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
 //    lazy val defaultRep = scalan.common.Default.defaultVal[Rep[JNIFieldID[T]]](null.asInstanceOf[JNIFieldID[T]])
 //  }
 
-  case class JNIArrayElem[A](eItem: Elem[A]) extends ArrayElem[A] {
+  case class JNIArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     override def isEntityType = eItem.isEntityType
 
     lazy val tag = {

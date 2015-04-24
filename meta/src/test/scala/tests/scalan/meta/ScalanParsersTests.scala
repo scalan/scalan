@@ -205,7 +205,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
     val tpeArgA = L(STpeArg("A", None, Nil))
     val ancObsA = L(TC("Observable", L(TC("A", Nil))))
     val argEA = L(SClassArg(true, false, true, "eA", TC("Elem", L(TC("A", Nil))), None))
-    val entity = TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None, Nil, None, Some(()))), None, None)
+    val entity = TD("Observable", tpeArgA, Nil, L(SMethodDef("eA",List(),List(),Some(TC("Elem",L(TC("A",Nil)))),true,None, Nil, None, true)), None, None)
     val obsImpl1 = CD("ObservableImpl1", tpeArgA, SClassArgs(Nil), SClassArgs(argEA), ancObsA, Nil, None, None, false)
     val obsImpl2 = obsImpl1.copy(name = "ObservableImpl2")
 

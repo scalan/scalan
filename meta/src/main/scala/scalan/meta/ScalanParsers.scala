@@ -214,12 +214,7 @@ trait ScalanParsers extends ScalanAst {
       Some(importStat(i))
     case md: DefDef =>
       if (!nme.isConstructorName(md.name))
-        md.tpt match {
-          case AppliedTypeTree(tpt, _) if tpt.toString == "Elem" || tpt.toString == "Element" =>
-            Some(methodDef(md, true))
-          case _ =>
-            Some(methodDef(md))
-        }
+        Some(methodDef(md))
       else
         None
     case td: TypeDef =>
@@ -241,7 +236,7 @@ trait ScalanParsers extends ScalanAst {
         val tpeRes = optTpeExpr(vd.tpt)
         val isImplicit = vd.mods.isImplicit
         val isLazy = vd.mods.isLazy
-        Some(SValDef(vd.name, tpeRes, isImplicit, isLazy))
+        Some(SValDef(vd.name, tpeRes, None, isImplicit, isLazy))
       } else
         None
     case EmptyTree =>
@@ -276,7 +271,7 @@ trait ScalanParsers extends ScalanAst {
   val HasArgListAnnotation = new HasAnnotation("ArgList")
   val OverloadIdAnnotation = new HasAnnotation("OverloadId")
 
-  def methodDef(md: DefDef, isElem: Boolean = false) = {
+  def methodDef(md: DefDef) = {
     val tpeArgs = this.tpeArgs(md.tparams, md.vparamss.lastOption.getOrElse(Nil))
     val args0 = md.vparamss.map(methodArgs)
     val args = if (!args0.isEmpty && args0.last.args.isEmpty) args0.init else args0
@@ -296,14 +291,20 @@ trait ScalanParsers extends ScalanAst {
 //      case HasConstructorAnnotation(_) => Some(ExternalConstructor)
 //      case _ => None
 //    }
-     val optBody:Option[SExpr] = md.rhs match {
-       case EmptyTree => None
-       case Apply(ident:Ident, args) if ident.name.intern() == "sql" =>
-         Some(SApply(SLiteral("sql"), List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue))))
-       case tree => Some(SDefaultExpr(tree.toString))
-     }
-     val optElem = if (isElem) Some(()) else None
-     SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, annotations, optBody, optElem)
+    val optBody:Option[SExpr] = md.rhs match {
+      case EmptyTree => None
+      case Apply(ident:Ident, args) if ident.name.intern() == "sql" =>
+        Some(SApply(SLiteral("sql"), List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue))))
+      case tree => Some(SDefaultExpr(tree.toString))
+    }
+    val isElemOrCont = md.tpt match {
+      case AppliedTypeTree(tpt, _) if Set("Elem", "Element", "Cont", "Container").contains(tpt.toString) =>
+        true
+      case _ =>
+        false
+    }
+
+    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, annotations, optBody, isElemOrCont)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {

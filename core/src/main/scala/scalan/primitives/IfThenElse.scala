@@ -91,6 +91,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
   }
 
   def liftFromIfThenElse[A,B,C](cond: Rep[Boolean], a: Rep[A], b: Rep[B], iso1: Iso[A,C], iso2: Iso[B,C]): Rep[C] = {
+    assertEqualElems(iso1.eTo, iso2.eTo, s"liftFromIfThenElse($cond, $a, $b, $iso1, $iso2)")
     val ea = iso1.eFrom
     val eb = iso2.eFrom
     implicit val ec = iso1.eTo
@@ -99,30 +100,80 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     res
   }
 
+  def liftFromIfThenElse[A,B,C,D](
+        cond: Rep[Boolean], a: Rep[A], b: Rep[B],
+        iso1: Iso[A,C], iso2: Iso[B,D],
+        toD: Conv[C,D], toC: Conv[D,C]): Rep[C] =
+  {
+    val ea = iso1.eFrom
+    val eb = iso2.eFrom
+    implicit val ec = iso1.eTo
+    val (i1, i2) = unifyIsos(iso1, iso2, toD, toC)
+    liftFromIfThenElse(cond, a, b, i1, i2)
+  }
+
+  type UnpackedIf[A,B,C,D] = (Rep[Boolean], Rep[A], Rep[B], Iso[A,C], Iso[B,D], Conv[C,D], Conv[D,C])
+
+  object IfThenElseHasViewsWithConvertibleBranches {
+    def unapply[T](d: Def[T]): Option[UnpackedIf[A,B,C,D] forSome {type A; type B; type C; type D}] =
+    {
+      val optHasViews = d match {
+        case ite @ IfThenElse(cond, HasViews(a, iso1: Iso[a, c]), HasViews(b, iso2: Iso[b, d])) =>
+          Some((ite.cond, a, b, iso1, iso2))
+
+        case ite @ IfThenElse(cond, a, HasViews(b, iso2: Iso[b, d])) =>
+          Some((ite.cond, a, b, identityIso(a.elem), iso2))
+
+        case ite @ IfThenElse(cond, HasViews(a, iso1: Iso[a, c]), b) =>
+          Some((ite.cond, a, b, iso1, identityIso(b.elem)))
+
+        case _ => None
+      }
+      optHasViews match {
+        case Some((c, a, b, iso1: Iso[a,c], iso2: Iso[b,d])) =>
+          (iso1.eTo, iso2.eTo) match {
+            case IsConvertible(cTo, cFrom) =>
+              Some((c, a.asRep[a], b.asRep[b], iso1, iso2, cTo, cFrom))
+            case _ => None
+          }
+        case None => None
+      }
+    }
+  }
+
   override def rewriteDef[T](d: Def[T]) = d match {
+    // Rule: if (true) t else e ==> t
     case IfThenElse(Def(Const(true)), t, _) => t
+
+    // Rule: if (false) t else e ==> e
     case IfThenElse(Def(Const(false)), _, e) => e
 
-    case IfThenElse(cond, Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, _]))) =>
-      liftFromIfThenElse(cond, a.asRep[a], b.asRep[b], iso1, iso2)
+    // Rule: if (c) t else t  ==> t
+    case IfThenElse(c, t, e) if t == e => t
 
-    case IfThenElse(cond, a, Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
-      liftFromIfThenElse(cond, a, b.asRep[b], identityIso(a.elem), iso2)
+    // Rule: if (c) V(a, iso1) else V(b, iso2) when IsConvertible(iso1.eTo, iso2.eTo) ==>
+    case IfThenElseHasViewsWithConvertibleBranches(
+           cond, thenp, elsep, iso1: Iso[a, c], iso2: Iso[b, d], cTo, cFrom) =>
+      val c = cond
+      val t = thenp.asRep[a]
+      val e = elsep.asRep[b]
+      liftFromIfThenElse(c, t, e, iso1, iso2, cTo.asRep[Converter[c,d]], cFrom.asRep[Converter[d,c]])
 
-    case IfThenElse(cond, Def(UnpackableDef(a, iso1: Iso[a, c])), b) =>
-      liftFromIfThenElse(cond, a.asRep[a], b, iso1, identityIso(b.elem))
-
+    // Rule: (if (c1) t1 else e1, if (c2) t2 else e2) when c1 == c2 ==> if (c1) (t1, t2) else (e1, e2)
     case Tup(Def(IfThenElse(c1, t1, e1)), Def(IfThenElse(c2, t2, e2))) if c1 == c2 =>
       IF (c1) THEN { Pair(t1, t2) } ELSE { Pair(e1, e2) }
 
+    // Rule: (if (c) t else e)._1 ==> if (c) t._1 else e._1
     case First(Def(IfThenElse(cond, thenp: Rep[(a, b)] @unchecked, elsep))) =>
       implicit val (eA, eB) = (thenp.elem.eFst, thenp.elem.eSnd)
       IfThenElse[a](cond, First(thenp), First(elsep.asRep[(a, b)]))
 
+    // Rule: (if (c) t else e)._2 ==> if (c) t._2 else e._2
     case Second(Def(IfThenElse(cond, thenp: Rep[(a, b)] @unchecked, elsep))) =>
       implicit val (eA, eB) = (thenp.elem.eFst, thenp.elem.eSnd)
       IfThenElse[b](cond, Second(thenp), Second(elsep.asRep[(a, b)]))
 
+    // Rule: (if (c) t else e)(arg) ==> if (c) t(arg) else e(arg)
     case apply: Apply[a, b] => apply.f match {
       case Def(IfThenElse(c, t, e)) =>
         IF (c) { t.asRep[a=>b](apply.arg) } ELSE { e.asRep[a=>b](apply.arg) }
