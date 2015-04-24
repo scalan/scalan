@@ -73,8 +73,8 @@ trait ScalaGenEitherOps extends ScalaGenBase {
   import IR._
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case EitherGetLeft(sum) => emitValDef(sym, src"$sum.left")
-    case EitherGetRight(sum) => emitValDef(sym, src"$sum.right")
+    case EitherGetLeft(sum) => emitValDef(sym, src"$sum.left.get")
+    case EitherGetRight(sum) => emitValDef(sym, src"$sum.right.get")
     case EitherLeft(a, _, _) => emitValDef(sym, src"Left($a)")
     case EitherRight(b, _, _) => emitValDef(sym, src"Right($b)")
     case EitherIsLeft(sum) => emitValDef(sym, src"$sum.isLeft")
@@ -87,12 +87,10 @@ trait ScalaGenEitherOps extends ScalaGenBase {
 trait CxxShptrGenEitherOps extends CxxShptrCodegen {
   val IR: EitherOpsExp
   import IR._
-
-  private def remapUnit[A: Manifest](m: Manifest[A]): String = {
-    if( m.runtimeClass == classOf[Unit] )
-      "boost::blank"
-    else
-      remap(m)
+  override def wrapSharedPtr:PartialFunction[Manifest[_],Manifest[_]] = {
+    case m if m.runtimeClass == classOf[scala.util.Either[_,_]] => m
+    case m =>
+      super.wrapSharedPtr(m)
   }
 
   override def remap[A](m: Manifest[A]): String = {
@@ -100,25 +98,27 @@ trait CxxShptrGenEitherOps extends CxxShptrCodegen {
       case c if c == classOf[scala.util.Either[_,_]] =>
         val mA = m.typeArguments(0)
         val mB = m.typeArguments(1)
-        s"boost::variant<${remapUnit(mA)},${remapUnit(mB)}>"
+        s"boost::variant<${remap(mA)},${remap(mB)}>"
       case _ =>
         super.remap(m)
     }
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case EitherGetLeft(sum) =>
+      emitValDef(sym, src"boost::get<${remap(sum.tp.typeArguments(0))}>($sum)")
+    case EitherGetRight(sum) =>
+      emitValDef(sym, src"boost::get<${remap(sum.tp.typeArguments(1))}>($sum)")
     case EitherLeft(a, _, _) =>
-      val construct = if(a.tp.runtimeClass == classOf[Unit]) "" else s"(${quote(a)})"
-      stream.println(s"${remap(sym.tp)} ${quote(sym)}${construct};")
+      stream.println(s"${remap(sym.tp)} ${quote(sym)}(${quote(a)});")
     case EitherRight(b, _, _) =>
-      val construct = if(b.tp.runtimeClass == classOf[Unit]) "" else s"(${quote(b)})"
       stream.println(s"${remap(sym.tp)} ${quote(sym)}(${quote(b)});")
     case EitherIsLeft(sum) =>
       emitValDef(sym, s"${quote(sum)}.which() == 0")
     case EitherIsRight(sum) =>
       emitValDef(sym, s"${quote(sum)}.which() == 1")
     case EitherFold(sum, l, r) =>
-      emitValDef(sym, s"${quote(sum)}.which() == 0 ? ${quote(l)}(boost::get<${remapUnit(l.tp.typeArguments(0))}>(${quote(sum)})) : ${quote(r)}(boost::get<${remapUnit(r.tp.typeArguments(0))}>(${quote(sum)}))")
+      emitValDef(sym, s"${quote(sum)}.which() == 0 ? ${quote(l)}(boost::get<${remap(l.tp.typeArguments(0))}>(${quote(sum)})) : ${quote(r)}(boost::get<${remap(r.tp.typeArguments(0))}>(${quote(sum)}))")
     case _ =>
       super.emitNode(sym, rhs)
   }

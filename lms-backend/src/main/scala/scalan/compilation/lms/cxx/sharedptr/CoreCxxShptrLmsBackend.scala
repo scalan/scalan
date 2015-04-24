@@ -31,6 +31,7 @@ class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self
   with CxxShptrGenLstOps
   with CxxShptrGenJNIExtractor
   with CxxShptrGenEitherOps
+  with CxxShptrGenIterableOps
   {
     override val IR: self.type = self
 
