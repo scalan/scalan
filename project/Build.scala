@@ -49,7 +49,7 @@ object ScalanBuild extends Build {
 
   // Doesn't cross-build properly due to a Scala bug currently
   val commonSettings = Seq(
-    scalaVersion := "2.10.5",
+    scalaVersion := "2.11.6",
     organization := "com.huawei.scalan",
     publishTo := {
       val nexus = "http://10.122.85.37:9081/nexus/"

@@ -352,6 +352,11 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   override def rewriteDef[T](d: Def[T]) = d match {
     case SHashSetMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
 
+    case view1@ViewSHashSet(Def(view2@ViewSHashSet(arr))) =>
+      val compIso = composeIso(view1.innerIso, view2.innerIso)
+      implicit val eAB = compIso.eTo
+      ViewSHashSet(arr)(SHashSetIso(compIso))
+
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSHashSetImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
       val resultElem = mc.selfType
@@ -384,10 +389,6 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
       case _ =>
         super.rewriteDef(d)
     }
-    case view1@ViewSHashSet(Def(view2@ViewSHashSet(arr))) =>
-      val compIso = composeIso(view1.innerIso, view2.innerIso)
-      implicit val eAB = compIso.eTo
-      ViewSHashSet(arr)(SHashSetIso(compIso))
 
     case _ => super.rewriteDef(d)
   }
