@@ -10,7 +10,11 @@ trait LmsBridge { self: ScalanCtxExp =>
 
   type LmsFunction = (lms.Exp[A] => lms.Exp[B]) forSome {type A; type B}
 
-  class LmsMirror private (lastExp: Option[lms.Exp[_]], private val symMirror: Map[Exp[_], lms.Exp[_]], funcMirror: Map[Exp[_], LmsFunction]) {
+  class LmsMirror private (
+       lastExp: Option[lms.Exp[_]],
+       private val symMirror: Map[Exp[_], lms.Exp[_]],
+       funcMirror: Map[Exp[_], LmsFunction])
+  {
     def addSym(scalanExp: Exp[_], lmsExp: lms.Exp[_]) =
       new LmsMirror(Some(lmsExp), symMirror.updated(scalanExp, lmsExp), funcMirror)
     def addFuncAndSym(scalanExp: Exp[_], lmsFunc: LmsFunction, lmsExp: lms.Exp[_]) =
