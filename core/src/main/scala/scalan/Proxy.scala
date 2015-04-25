@@ -258,9 +258,16 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   type InvokeTester = (Def[_], Method) => Boolean
 
   // we need to always invoke these for creating default values
-  private val companionApply: InvokeTester =
+  private val isCompanionApply: InvokeTester =
     (_, m) => m.getName == "apply" && m.getDeclaringClass.getName.endsWith("CompanionAbs")
-  private var invokeTesters: Set[InvokeTester] = Set(companionApply)
+
+  private val isFieldGetterCache = collection.mutable.Map.empty[(Type, Method), Boolean]
+  private val isFieldGetter: InvokeTester = { (d, m) =>
+    val tpe = d.selfType.tag.tpe
+    isFieldGetterCache.getOrElseUpdate((tpe, m),
+      findScalaMethod(tpe, m).isParamAccessor)
+  }
+  private var invokeTesters: Set[InvokeTester] = Set(isCompanionApply, isFieldGetter)
 
   def isInvokeEnabled(d: Def[_], m: Method) = invokeTesters.exists(_(d, m))
 
