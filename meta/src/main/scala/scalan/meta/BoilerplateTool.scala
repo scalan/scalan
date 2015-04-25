@@ -166,6 +166,31 @@ class BoilerplateTool extends StrictLogging {
     effectsTypeSynonims
   )
 
+  val effects2TypeSynonims = Map(
+    "RFree"       -> "Free",
+    "RCoproduct"  -> "Coproduct",
+    "RepInteract" -> "Interact",
+    "RepAuth" -> "Auth"
+    // declare your type synonims for User Defined types here (see type PA[A] = Rep[PArray[A]])
+  )
+  lazy val effects2Config = CodegenConfig(
+    name = "effects2",
+    srcPath = "../core/src/test/scala",
+    entityFiles = List(
+      "scalan/effects/Frees.scala",
+      "scalan/effects/Coproducts.scala",
+      "scalan/effects/Interactions.scala",
+      "scalan/effects/Auths.scala"
+    ),
+    baseContextTrait = "Scalan",
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._", "scala.reflect._",
+      "scalan.common.Default"),
+    effects2TypeSynonims
+  )
+
   lazy val collectionsConfig = CodegenConfig(
     name = "collections",
     srcPath = "../community-edition/src/main/scala",
@@ -237,6 +262,7 @@ class BoilerplateTool extends StrictLogging {
     "mt" -> List(metaTestConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
+    "effects2" -> List(effects2Config),
     "ce-all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig),
     "all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, eeConfig)
   )
