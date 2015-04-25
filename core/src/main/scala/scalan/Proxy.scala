@@ -203,6 +203,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   private val proxies = scala.collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]
   private val objenesis = new ObjenesisStd
+  private val runtimeMirror =
+    scala.reflect.runtime.universe.runtimeMirror(getClass.getClassLoader).asInstanceOf[RuntimeMirror]
 
   override def proxyOps[Ops <: AnyRef](x: Rep[Ops])(implicit ct: ClassTag[Ops]): Ops =
     x match {
@@ -344,7 +346,11 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         val eItem = elemFromType(params(0), elemMap, baseType)
         listElement(eItem)
       case _ if classSymbol.asType.isAbstractType =>
-        elemMap.getOrElse(classSymbol, !!!(s"Can't create element for abstract type $tpe")) match {
+        elemMap.getOrElse(
+          classSymbol,
+          elemMap.collectFirst { case (sym, desc) if sym.name == classSymbol.name => desc }.getOrElse {
+            !!!(s"Can't create element for abstract type $tpe")
+          }) match {
           case scala.Left(elem) => elem
           case scala.Right(cont) =>
             val paramElem = elemFromType(params(0), elemMap, baseType)
@@ -451,9 +457,9 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   @tailrec
-  private def loop(elemsWithTypes: List[(TypeDesc, Type)],
-           unknownParams : Set[Symbol],
-           knownParams   : Map[Symbol, TypeDesc]): Map[Symbol, TypeDesc] =
+  private def extractElems(elemsWithTypes: List[(TypeDesc, Type)],
+                           unknownParams: Set[Symbol],
+                           knownParams: Map[Symbol, TypeDesc]): Map[Symbol, TypeDesc] =
     if (unknownParams.isEmpty)
       knownParams
     else
@@ -464,25 +470,27 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
           tpe.normalize match {
             case TypeRef(_, classSymbol, params) => classSymbol match {
               case _ if classSymbol.asType.isAbstractType =>
-                loop(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, scala.Left(elem)))
+                extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, scala.Left(elem)))
               case _ =>
                 val elemParts = extractParts(elem, classSymbol, params, tpe)
-                loop(elemParts ++ rest, unknownParams, knownParams)
+                extractElems(elemParts ++ rest, unknownParams, knownParams)
             }
             case _ =>
               !!!(s"$tpe was not a TypeRef")
           }
         case (scala.Right(cont), tpe) :: rest =>
-          tpe.normalize match {
-            case TypeRef(_, classSymbol, params) => classSymbol match {
-              case _ if classSymbol.asType.isAbstractType =>
-                loop(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, scala.Right(cont)))
-              case _ =>
-                // TODO can extract parts?
-                loop(rest, unknownParams, knownParams)
-            }
-            case _ =>
-              !!!(s"$tpe was not a TypeRef")
+          val classSymbol = tpe.normalize match {
+            case TypeRef(_, classSymbol, _) => classSymbol
+            case PolyType(_, TypeRef(_, classSymbol, _)) => classSymbol
+            case _ => !!!(s"Failed to extract symbol from $tpe")
+          }
+
+          if (classSymbol.asType.isAbstractType)
+            extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, scala.Right(cont)))
+          else {
+//            val elem = cont.lift(UnitElement)
+//            val elemParts = extractParts(elem, classSymbol, List(typeOf[Unit]), tpe)
+            extractElems(/*elemParts ++ */rest, unknownParams, knownParams)
           }
       }
 
@@ -567,7 +575,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       !!!(s"Method $m couldn't be found on type $tpe")
   }
 
-  private def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = {
+  protected def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = {
     val e = receiver.elem
     val tag = e match {
       case extE: BaseElemEx[_,_] => extE.getWrapperElem.tag
@@ -584,21 +592,44 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       case TypeRef(_, sym, List(tpe1)) if sym.name.toString == "Rep" =>
         val paramTypes = scalaMethod.paramss.flatten.map(_.typeSignature.asSeenFrom(tpe, scalaMethod.owner).normalize)
         // reverse to let implicit elem parameters be first
-        val elemsWithTypes: List[(TypeDesc, Type)] = args.zip(paramTypes).reverse.collect {
+        val elemsWithTypes: List[(TypeDesc, Type)] = args.zip(paramTypes).reverse.flatMap {
           case (e: Exp[_], TypeRef(_, sym, List(tpeE))) if sym.name.toString == "Rep" =>
-            (scala.Left[Elem[_], SomeCont](e.elem), tpeE)
+            List(scala.Left[Elem[_], SomeCont](e.elem) -> tpeE)
           case (elem: Elem[_], TypeRef(_, ElementSym, List(tpeElem))) =>
-            (scala.Left[Elem[_], SomeCont](elem), tpeElem)
+            List(scala.Left[Elem[_], SomeCont](elem) -> tpeElem)
           case (cont: SomeCont @unchecked, TypeRef(_, ContSym, List(tpeCont))) =>
-            (scala.Right[Elem[_], SomeCont](cont), tpeCont)
-          case (op: UnOp[_, _], TypeRef(_, _, List(_, tpeResult))) =>
-            (scala.Left[Elem[_], SomeCont](op.eResult), tpeResult)
-          case (op: BinOp[_, _], TypeRef(_, _, List(_, tpeResult))) =>
-            (scala.Left[Elem[_], SomeCont](op.eResult), tpeResult)
+            List(scala.Right[Elem[_], SomeCont](cont) -> tpeCont)
+          // below cases can be safely skipped without doing reflection
+          case (_: Function0[_] | _: Function1[_, _] | _: Function2[_, _, _] | _: Numeric[_] | _: Ordering[_], _) => Nil
+          case (obj, tpeObj) =>
+            tpeObj.members.flatMap {
+              case method: MethodSymbol if method.paramss.isEmpty =>
+                method.returnType.normalize match {
+                  case TypeRef(_, ElementSym | ContSym, List(tpeElemOrCont)) =>
+                    // TODO this doesn't work in InteractAuthExamplesTests.crossDomainStaged
+                    // due to an apparent bug in scala-reflect. Test again after updating to 2.11
+
+                    // val objMirror = runtimeMirror.reflect(obj)
+                    // val methodMirror = objMirror.reflectMethod(method)
+                    val jMethod = ReflectionUtil.methodToJava(method)
+                    jMethod.invoke(obj) /* methodMirror.apply() */ match {
+                      case elem: Elem[_] =>
+                        List(scala.Left[Elem[_], SomeCont](elem) -> tpeElemOrCont.asSeenFrom(tpeObj, method.owner))
+                      case cont: SomeCont @unchecked =>
+                        List(scala.Right[Elem[_], SomeCont](cont) -> tpeElemOrCont.asSeenFrom(tpeObj, method.owner))
+                      case x =>
+                        !!!(s"$tpeObj.$method must return Elem or Cont but returned $x")
+                    }
+                  case _ =>
+                    Nil
+                }
+              case _ => Nil
+            }
         }
 
         try {
-          val elemMap = instanceElemMap ++ loop(elemsWithTypes, scalaMethod.typeParams.toSet, Map.empty)
+          val paramElemMap = extractElems(elemsWithTypes, scalaMethod.typeParams.toSet, Map.empty)
+          val elemMap = instanceElemMap ++ paramElemMap
           // check if return type is a TypeWrapper
           val baseType = tpe.baseType(TypeWrapperSym) match {
             case NoType => definitions.NothingTpe
