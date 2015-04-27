@@ -9,6 +9,7 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait MetaTestsAbs extends MetaTests with Scalan {
   self: MetaTestsDsl =>
+
   // single proxy for each type family
   implicit def proxyMetaTest[T](p: Rep[MetaTest[T]]): MetaTest[T] = {
     proxyOps[MetaTest[T]](p)(classTag[MetaTest[T]])
@@ -130,7 +131,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
 
   // 3) Iso for concrete class
   class MT1Iso[T](implicit elem: Elem[T])
-    extends Iso[MT1Data[T], MT1[T]] {
+    extends Iso[MT1Data[T], MT1[T]]()(pairElement(implicitly[Elem[T]], implicitly[Elem[Int]])) {
     override def from(p: Rep[MT1[T]]) =
       (p.data, p.size)
     override def to(p: Rep[(T, Int)]) = {

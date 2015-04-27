@@ -10,6 +10,7 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait SegmentsAbs extends Segments with Scalan {
   self: SegmentsDsl =>
+
   // single proxy for each type family
   implicit def proxySegment(p: Rep[Segment]): Segment = {
     proxyOps[Segment](p)(classTag[Segment])
@@ -66,7 +67,7 @@ trait SegmentsAbs extends Segments with Scalan {
 
   // 3) Iso for concrete class
   class IntervalIso
-    extends Iso[IntervalData, Interval] {
+    extends Iso[IntervalData, Interval]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]])) {
     override def from(p: Rep[Interval]) =
       (p.start, p.end)
     override def to(p: Rep[(Int, Int)]) = {
@@ -130,7 +131,7 @@ trait SegmentsAbs extends Segments with Scalan {
 
   // 3) Iso for concrete class
   class SliceIso
-    extends Iso[SliceData, Slice] {
+    extends Iso[SliceData, Slice]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]])) {
     override def from(p: Rep[Slice]) =
       (p.start, p.length)
     override def to(p: Rep[(Int, Int)]) = {
@@ -195,7 +196,7 @@ trait SegmentsAbs extends Segments with Scalan {
 
   // 3) Iso for concrete class
   class CenteredIso
-    extends Iso[CenteredData, Centered] {
+    extends Iso[CenteredData, Centered]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]])) {
     override def from(p: Rep[Centered]) =
       (p.center, p.radius)
     override def to(p: Rep[(Int, Int)]) = {

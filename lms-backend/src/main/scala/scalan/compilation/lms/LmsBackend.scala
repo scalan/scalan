@@ -503,7 +503,6 @@ class CoreLmsBackend extends CoreLmsBackendBase { self =>
 }
 
 class CommunityLmsBackend extends CoreLmsBackend with CommunityLmsBackendBase { self =>
-  // TODO: why commented code fails build?
   override val codegen = new Codegen with ScalaGenVectorOps with ScalaGenExtNumOps with ScalaGenSystemOps {
     override val IR: self.type = self
   }

@@ -10,6 +10,7 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait AbstractStringsAbs extends AbstractStrings with Scalan {
   self: AbstractStringsDsl =>
+
   // single proxy for each type family
   implicit def proxyAString(p: Rep[AString]): AString = {
     proxyOps[AString](p)(classTag[AString])

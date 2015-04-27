@@ -12,6 +12,7 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait MatricesAbs extends Matrices with Scalan {
   self: ScalanCommunityDsl =>
+
   // single proxy for each type family
   implicit def proxyAbstractMatrix[T](p: Rep[AbstractMatrix[T]]): AbstractMatrix[T] = {
     proxyOps[AbstractMatrix[T]](p)(classTag[AbstractMatrix[T]])
@@ -69,7 +70,7 @@ trait MatricesAbs extends Matrices with Scalan {
 
   // 3) Iso for concrete class
   class DenseFlatMatrixIso[T](implicit elem: Elem[T])
-    extends Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
+    extends Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]]()(pairElement(implicitly[Elem[Collection[T]]], implicitly[Elem[Int]])) {
     override def from(p: Rep[DenseFlatMatrix[T]]) =
       (p.rmValues, p.numColumns)
     override def to(p: Rep[(Collection[T], Int)]) = {
@@ -134,7 +135,7 @@ trait MatricesAbs extends Matrices with Scalan {
 
   // 3) Iso for concrete class
   class CompoundMatrixIso[T](implicit elem: Elem[T])
-    extends Iso[CompoundMatrixData[T], CompoundMatrix[T]] {
+    extends Iso[CompoundMatrixData[T], CompoundMatrix[T]]()(pairElement(implicitly[Elem[Collection[AbstractVector[T]]]], implicitly[Elem[Int]])) {
     override def from(p: Rep[CompoundMatrix[T]]) =
       (p.rows, p.numColumns)
     override def to(p: Rep[(Collection[AbstractVector[T]], Int)]) = {

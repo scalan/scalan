@@ -9,6 +9,7 @@ import scalan.common.Default
 // Abs -----------------------------------
 trait KindsAbs extends Kinds with Scalan {
   self: KindsDsl =>
+
   // single proxy for each type family
   implicit def proxyKind[F[_], A](p: Rep[Kind[F, A]]): Kind[F, A] = {
     proxyOps[Kind[F, A]](p)(classTag[Kind[F, A]])
@@ -132,7 +133,7 @@ trait KindsAbs extends Kinds with Scalan {
 
   // 3) Iso for concrete class
   class BindIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Iso[BindData[F, S, B], Bind[F, S, B]] {
+    extends Iso[BindData[F, S, B], Bind[F, S, B]]()(pairElement(implicitly[Elem[Kind[F,S]]], implicitly[Elem[S => Kind[F,B]]])) {
     override def from(p: Rep[Bind[F, S, B]]) =
       (p.a, p.f)
     override def to(p: Rep[(Kind[F,S], S => Kind[F,B])]) = {
