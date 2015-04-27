@@ -22,8 +22,8 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
   override val IR: BackendCake = backend
   import IR._
 
-  case class AssignDef[+A:Manifest](id:Int, rhs: Option[Def[_]], withDeclare:Boolean, withMonoid:String = "") extends Exp[A]  //id - for simplify, evidence$1 - Manifest for extract type
-  case class AssignExp[+A:Manifest](id:Int, rhs: Option[Exp[A]], withDeclare:Boolean, withMonoid:String = "") extends Exp[A]  //id - for simplify, evidence$1 - Manifest for extract type
+  case class AssignDef[+A:Manifest](id:Int, rhs: Option[Def[_]], withDeclare:Boolean, withMonoid:String = "=") extends Exp[A]  //id - for simplify, evidence$1 - Manifest for extract type
+  case class AssignExp[+A:Manifest](id:Int, rhs: Option[Exp[A]], withDeclare:Boolean, withMonoid:String = "=") extends Exp[A]  //id - for simplify, evidence$1 - Manifest for extract type
 
   case class BlockExp(block: ControlGraphBlock) extends Exp[Any]
 
@@ -144,7 +144,7 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
           val name = s"loop${block.v.id}"
           stream.println(s"subgraph cluster_${name} {")
           stream.println("style=dashed; color=\"#FFCCCC\"")  //as Thunk
-          val rangeExp = AssignExp(block.v.id, Some(block.size), true)
+          val rangeExp = AssignExp(block.v.id, Some(block.size), true, "<-")
           val coreName = exportNode(name, rangeExp, "hexagon")  // , prevNodeName
           val statements = block.statements.reverse
           val last = statements.foldLeft(coreName:String)((prevName, node) => exportNode(name, node, "box", prevName))
@@ -211,7 +211,7 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
           name
         case x: AssignDef[_] =>
           val name = s"${blockName}__x${x.id}"
-          val label = config.nodeLabel(Seq(name, x.withMonoid, x.rhs.toString))
+          val label = config.nodeLabel(Seq(s"x${x.id}", x.withMonoid, x.rhs.getOrElse("None").toString))
           stream.println(s"$name [${label} shape=${shape}]")
           x.withDeclare match {
             case false => printDependenceEdge (mapSym2Name.getOrElse (x.id, s"${x.id}"), name)
@@ -223,7 +223,7 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
           name
         case x: AssignExp[_] =>
           val name = s"${blockName}__x${x.id}"
-          val label = config.nodeLabel(Seq(name, x.withMonoid, x.rhs.toString))
+          val label = config.nodeLabel(Seq(s"x${x.id}", x.withMonoid, x.rhs.getOrElse("None").toString))
           stream.println(s"$name [${label} shape=${shape}]")
           x.withDeclare match {
             case false => printDependenceEdge (mapSym2Name.getOrElse (x.id, s"${x.id}"), name)
