@@ -427,7 +427,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
              if (cont)
                s"[${cont.opt(e.typesUsePref)}To${cont.opt(s", ${e.entityNameBT}, $entityName")}]"
              else
-               s"[${e.entityNameBT}, To]",
+               s"[${e.entityNameBT}${e.tpeArgUseString}, To]",
              s"${cont.opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.entityNameBT}], container[$entityName])")}")
           case Some(STraitCall(parentName, parentTypes)) =>
             (s"${parentName}Elem",
