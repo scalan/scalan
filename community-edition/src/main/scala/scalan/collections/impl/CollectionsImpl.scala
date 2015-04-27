@@ -66,9 +66,12 @@ trait CollectionsAbs extends Collections with Scalan {
       implicit val tagB = eB.tag
       weakTypeTag[IPairCollection[A, B]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertIPairCollection(x.asRep[IPairCollection[A, B]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[IPairCollection[A, B]] =>  convertIPairCollection(x) }
+      tryConvert(element[IPairCollection[A,B]], this, x, conv)
+    }
     def convertIPairCollection(x : Rep[IPairCollection[A, B]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[IPairCollectionElem[_,_,_]])
+      assert(x.selfType1.isInstanceOf[IPairCollectionElem[_,_,_]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
