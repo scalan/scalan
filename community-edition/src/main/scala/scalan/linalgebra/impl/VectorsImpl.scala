@@ -26,9 +26,13 @@ trait VectorsAbs extends Vectors with Scalan {
       implicit val tagT = elem.tag
       weakTypeTag[AbstractVector[T]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertAbstractVector(x.asRep[AbstractVector[T]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[AbstractVector[T]] =>  convertAbstractVector(x) }
+      tryConvert(element[AbstractVector[T]], this, x, conv)
+    }
+
     def convertAbstractVector(x : Rep[AbstractVector[T]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[AbstractVectorElem[_,_]])
+      assert(x.selfType1 match { case _: AbstractVectorElem[_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

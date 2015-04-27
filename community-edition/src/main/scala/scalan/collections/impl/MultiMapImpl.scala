@@ -25,9 +25,13 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
       implicit val tagV = elemValue.tag
       weakTypeTag[MMultiMap[K, V]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertMMultiMap(x.asRep[MMultiMap[K, V]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[MMultiMap[K, V]] =>  convertMMultiMap(x) }
+      tryConvert(element[MMultiMap[K, V]], this, x, conv)
+    }
+
     def convertMMultiMap(x : Rep[MMultiMap[K, V]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[MMultiMapElem[_,_,_]])
+      assert(x.selfType1 match { case _: MMultiMapElem[_,_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

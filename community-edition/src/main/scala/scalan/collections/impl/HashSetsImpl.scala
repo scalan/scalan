@@ -53,9 +53,13 @@ trait HashSetsAbs extends HashSets with Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[SHashSet[A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[SHashSet[A]] =>  convertSHashSet(x) }
+      tryConvert(element[SHashSet[A]], this, x, conv)
+    }
+
     def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[SHashSetElem[_,_]])
+      assert(x.selfType1 match { case _: SHashSetElem[_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

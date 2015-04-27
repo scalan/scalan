@@ -23,9 +23,13 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     override def tag = {
       weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertAString(x.asRep[AString])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[AString] =>  convertAString(x) }
+      tryConvert(element[AString], this, x, conv)
+    }
+
     def convertAString(x : Rep[AString]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[AStringElem[_]])
+      assert(x.selfType1 match { case _: AStringElem[_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

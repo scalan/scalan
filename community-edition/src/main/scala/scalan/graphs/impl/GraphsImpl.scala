@@ -29,9 +29,13 @@ trait GraphsAbs extends Graphs with Scalan {
       implicit val tagE = eE.tag
       weakTypeTag[Graph[V, E]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertGraph(x.asRep[Graph[V, E]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[Graph[V, E]] =>  convertGraph(x) }
+      tryConvert(element[Graph[V, E]], this, x, conv)
+    }
+
     def convertGraph(x : Rep[Graph[V, E]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[GraphElem[_,_,_]])
+      assert(x.selfType1 match { case _: GraphElem[_,_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
