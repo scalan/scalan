@@ -182,7 +182,6 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     val coll = CollectionOfPairs(a)
     val vec = SparseVector(coll, n)
     val res = vec(i).toInt
-    println("vec(" + i + "): " + res)
     res
   }
 
@@ -193,6 +192,51 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     val nColl: NColl[(Int, Double)] = NestedCollection(Collection(arrFlat), CollectionOfPairs(segsArr))
     val mR: Matrix[Double] = CompoundMatrix.fromNColl(nColl, nItems)
     mR.transpose.rows.map({v => v.nonZeroItems.arr}).arr
+  }
+
+  lazy val funRandom = fun {in: Rep[Double] =>
+    val one = toRep(1.0)
+    val thousand = toRep(1000.0)
+    val res = Collection.replicate(toRep(10000), one).map(v => Thunk { random(in) } ).arr
+    res // TODO: no reduce for Thunk, also backend fails in Math.abs()
+    /*val average = (thousand * res.reduce / res.length.toDouble + toRep(0.5)).toInt.toDouble / thousand
+    val stddev = (thousand * Math.sqrt(res.map(v => (v - average) * (v - average)).reduce / res.length.toDouble) +
+      toRep(0.5)).toInt.toDouble / thousand
+    println("average: " + average)
+    println("stddev:  " + stddev)
+    (Math.sqrt(average * average) < one / thousand, Math.sqrt((stddev - in) * (stddev - in)) < one / thousand)*/
+  }
+
+  lazy val funRandomArray = fun {in: Rep[Int] =>
+    val one = toRep(1.0)
+    val thousand = toRep(1000.0)
+    val arr = Collection.replicate(in, one).arr
+    val res = array_randomGaussian(toRep(0.0), one, arr)
+    val average = (thousand * res.reduce / res.length.toDouble + toRep(0.5)).toInt.toDouble / thousand
+    val stddev = (thousand * Math.sqrt(res.map(v => (v - average) * (v - average)).reduce / res.length.toDouble) +
+      toRep(0.5)).toInt.toDouble / thousand
+    println("average: " + average)
+    println("stddev:  " + stddev)
+    // TODO: backend fails in Math.abs()
+    (Math.sqrt(average * average) < one / thousand, Math.sqrt((stddev - one) * (stddev - one)) < one / thousand)
+  }
+
+  lazy val funZipMapViewBoth = fun {in: Rep[Int] =>
+    val collVec = Collection.replicate(in, in.toDouble).map(v => DenseVector(Collection.replicate(in, v)))
+    val res = (collVec zip collVec).map { case Pair(v1, v2) => (v1 +^ v2).reduce}.reduce
+    res
+  }
+
+  lazy val funZipMapViewLeft = fun {in: Rep[Int] =>
+    val collVec = Collection.replicate(in, in.toDouble).map(v => DenseVector(Collection.replicate(in, v)))
+    val res = (collVec zip Collection.replicate(in, in.toDouble)).map { case Pair(v1, v2) => (v1 +^ v2).reduce}.reduce
+    res
+  }
+
+  lazy val funZipMapViewRight = fun {in: Rep[Int] =>
+    val collVec = Collection.replicate(in, in.toDouble).map(v => DenseVector(Collection.replicate(in, v)))
+    val res = (Collection.replicate(in, in.toDouble) zip collVec).map { case Pair(v1, v2) => (v2 +^ v1).reduce}.reduce
+    res
   }
 
   def getNArrayWithSegmentsFromJaggedArray(jaggedArray: Array[Array[(Int, Double)]]) = {

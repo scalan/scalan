@@ -19,7 +19,7 @@ trait LmsBackend extends BaseExp { self =>
 trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimitives with LiftNumeric with ArrayOpsExtExp with ListOpsExp
   with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp
-  with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp
+  with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt {
   /*type RepD[T] = Rep[T]
@@ -503,7 +503,8 @@ class CoreLmsBackend extends CoreLmsBackendBase { self =>
 }
 
 class CommunityLmsBackend extends CoreLmsBackend with CommunityLmsBackendBase { self =>
-  override val codegen = new Codegen with ScalaGenVectorOps with ScalaGenSystemOps {
+  // TODO: why commented code fails build?
+  override val codegen = new Codegen with ScalaGenVectorOps with ScalaGenExtNumOps with ScalaGenSystemOps {
     override val IR: self.type = self
   }
 }

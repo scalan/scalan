@@ -1132,6 +1132,19 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
                 m.addSym(sym, exp)
             }
         }
+
+      case ArrayRandomGaussian(a, e, xs) =>
+        xs.elem match {
+          case el: ArrayElem[_] =>
+            createManifest(el.eItem) match {
+              case (mA: Manifest[a]) =>
+                val array = m.symMirror[Array[Double]](xs)
+                val median = m.symMirror[Double](a)
+                val dev = m.symMirror[Double](e)
+                val exp = lms.array_randomGaussian[a](median, dev, array)(mA)
+                m.addSym(sym, exp)
+            }
+        }
     case _ => super.transformDef(m, g, sym, d)
   }
 
