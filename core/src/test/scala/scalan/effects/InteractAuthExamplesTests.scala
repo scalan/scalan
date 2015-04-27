@@ -62,8 +62,8 @@ class InteractAuthExamplesTests extends BaseTests {
     def runApp = app.run(AuthOper or InteractOper)
   }
 
+  // TODO test passes but takes multiple minutes and has huge IDs in the runApp graph (s1932149!)
   test("crossDomainStaged") {
-    pending
     val ctx = new TestContext(this, "crossDomainStaged") with MyCrossDomainProg with InteractionsDslExp with AuthenticationsDslExp {
       override def isInvokeEnabled(d: Def[_], m: Method) = true
     }
