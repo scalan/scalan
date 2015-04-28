@@ -14,8 +14,14 @@ trait Views extends Elems { self: Scalan =>
   trait Convertible[A] {
     def convert(x: Rep[Reifiable[_]]): Rep[A] = !!!("should not be called")
   }
-  abstract class EntityElem[A] extends Elem[A] with Convertible[A] {
+  abstract class EntityElem[A] extends Elem[A] with Convertible[A] with scala.Equals {
     //def getConverterTo[B](eB: Elem[B]): Conv[A,B] = !!!  //TODO make it abstract
+    // TODO generate code for this in implementations
+    def canEqual(other: Any) = other.isInstanceOf[EntityElem[_]]
+    override def equals(other: Any) = other match {
+      case other: EntityElem[_] => other.canEqual(this) && tag.tpe =:= other.tag.tpe
+      case _ => false
+    }
   }
   abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
     extends EntityElem[To] {

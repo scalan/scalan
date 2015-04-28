@@ -38,7 +38,7 @@ trait Maps extends  Base  { self: Scalan =>
     def fromArray[K: Elem, V: Elem](arr: Arr[(K, V)]) = mapFromArray(arr)
   }
 
-  class MMapElem[K, V](val eKey: Elem[K], val eValue: Elem[V]) extends Element[MMap[K, V]] {
+  case class MMapElem[K, V](eKey: Elem[K], eValue: Elem[V]) extends Element[MMap[K, V]] {
     override def isEntityType = eKey.isEntityType || eValue.isEntityType
 
     lazy val tag = {

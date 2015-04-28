@@ -1,6 +1,7 @@
 package scalan
 package impl
 
+import scalan.staged.Expressions
 import scala.reflect.runtime.universe._
 import scala.reflect._
 import scalan.common.Default
@@ -18,7 +19,7 @@ trait ConvertersAbs extends Converters  {
   class ConverterElem[T, R, To <: Converter[T, R]](implicit val eDom: Elem[T], val eRange: Elem[R])
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagT = eDom.tag
       implicit val tagR = eRange.tag
       weakTypeTag[Converter[T, R]].asInstanceOf[WeakTypeTag[To]]
@@ -29,18 +30,16 @@ trait ConvertersAbs extends Converters  {
     }
 
     def convertConverter(x : Rep[Converter[T, R]]): Rep[To] = {
-      assert(x.selfType1 match { case _: ConverterElem[_,_,_] => true case _ => false })
+      assert(x.selfType1 match { case _: ConverterElem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def converterElement[T, R](implicit eDom: Elem[T], eRange: Elem[R]): Elem[Converter[T, R]] =
-    new ConverterElem[T, R, Converter[T, R]] {
-    }
+    new ConverterElem[T, R, Converter[T, R]]
 
-  trait ConverterCompanionElem extends CompanionElem[ConverterCompanionAbs]
-  implicit lazy val ConverterCompanionElem: ConverterCompanionElem = new ConverterCompanionElem {
+  implicit object ConverterCompanionElem extends CompanionElem[ConverterCompanionAbs] {
     lazy val tag = weakTypeTag[ConverterCompanionAbs]
     protected def getDefaultRep = Converter
   }
@@ -97,11 +96,10 @@ trait ConvertersAbs extends Converters  {
     proxyOps[BaseConverterCompanionAbs](p)
   }
 
-  class BaseConverterCompanionElem extends CompanionElem[BaseConverterCompanionAbs] {
+  implicit object BaseConverterCompanionElem extends CompanionElem[BaseConverterCompanionAbs] {
     lazy val tag = weakTypeTag[BaseConverterCompanionAbs]
     protected def getDefaultRep = BaseConverter
   }
-  implicit lazy val BaseConverterCompanionElem: BaseConverterCompanionElem = new BaseConverterCompanionElem
 
   implicit def proxyBaseConverter[T, R](p: Rep[BaseConverter[T, R]]): BaseConverter[T, R] =
     proxyOps[BaseConverter[T, R]](p)
@@ -166,11 +164,10 @@ trait ConvertersAbs extends Converters  {
     proxyOps[PairConverterCompanionAbs](p)
   }
 
-  class PairConverterCompanionElem extends CompanionElem[PairConverterCompanionAbs] {
+  implicit object PairConverterCompanionElem extends CompanionElem[PairConverterCompanionAbs] {
     lazy val tag = weakTypeTag[PairConverterCompanionAbs]
     protected def getDefaultRep = PairConverter
   }
-  implicit lazy val PairConverterCompanionElem: PairConverterCompanionElem = new PairConverterCompanionElem
 
   implicit def proxyPairConverter[A1, A2, B1, B2](p: Rep[PairConverter[A1, A2, B1, B2]]): PairConverter[A1, A2, B1, B2] =
     proxyOps[PairConverter[A1, A2, B1, B2]](p)
@@ -235,11 +232,10 @@ trait ConvertersAbs extends Converters  {
     proxyOps[SumConverterCompanionAbs](p)
   }
 
-  class SumConverterCompanionElem extends CompanionElem[SumConverterCompanionAbs] {
+  implicit object SumConverterCompanionElem extends CompanionElem[SumConverterCompanionAbs] {
     lazy val tag = weakTypeTag[SumConverterCompanionAbs]
     protected def getDefaultRep = SumConverter
   }
-  implicit lazy val SumConverterCompanionElem: SumConverterCompanionElem = new SumConverterCompanionElem
 
   implicit def proxySumConverter[A1, A2, B1, B2](p: Rep[SumConverter[A1, A2, B1, B2]]): SumConverter[A1, A2, B1, B2] =
     proxyOps[SumConverter[A1, A2, B1, B2]](p)

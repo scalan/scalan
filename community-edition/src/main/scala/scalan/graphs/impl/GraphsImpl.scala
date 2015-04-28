@@ -24,7 +24,7 @@ trait GraphsAbs extends Graphs with Scalan {
   class GraphElem[V, E, To <: Graph[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
       weakTypeTag[Graph[V, E]].asInstanceOf[WeakTypeTag[To]]
@@ -35,18 +35,16 @@ trait GraphsAbs extends Graphs with Scalan {
     }
 
     def convertGraph(x : Rep[Graph[V, E]]): Rep[To] = {
-      assert(x.selfType1 match { case _: GraphElem[_,_,_] => true case _ => false })
+      assert(x.selfType1 match { case _: GraphElem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def graphElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Graph[V, E]] =
-    new GraphElem[V, E, Graph[V, E]] {
-    }
+    new GraphElem[V, E, Graph[V, E]]
 
-  trait GraphCompanionElem extends CompanionElem[GraphCompanionAbs]
-  implicit lazy val GraphCompanionElem: GraphCompanionElem = new GraphCompanionElem {
+  implicit object GraphCompanionElem extends CompanionElem[GraphCompanionAbs] {
     lazy val tag = weakTypeTag[GraphCompanionAbs]
     protected def getDefaultRep = Graph
   }
@@ -104,11 +102,10 @@ trait GraphsAbs extends Graphs with Scalan {
     proxyOps[AdjacencyGraphCompanionAbs](p)
   }
 
-  class AdjacencyGraphCompanionElem extends CompanionElem[AdjacencyGraphCompanionAbs] {
+  implicit object AdjacencyGraphCompanionElem extends CompanionElem[AdjacencyGraphCompanionAbs] {
     lazy val tag = weakTypeTag[AdjacencyGraphCompanionAbs]
     protected def getDefaultRep = AdjacencyGraph
   }
-  implicit lazy val AdjacencyGraphCompanionElem: AdjacencyGraphCompanionElem = new AdjacencyGraphCompanionElem
 
   implicit def proxyAdjacencyGraph[V, E](p: Rep[AdjacencyGraph[V, E]]): AdjacencyGraph[V, E] =
     proxyOps[AdjacencyGraph[V, E]](p)
@@ -170,11 +167,10 @@ trait GraphsAbs extends Graphs with Scalan {
     proxyOps[IncidenceGraphCompanionAbs](p)
   }
 
-  class IncidenceGraphCompanionElem extends CompanionElem[IncidenceGraphCompanionAbs] {
+  implicit object IncidenceGraphCompanionElem extends CompanionElem[IncidenceGraphCompanionAbs] {
     lazy val tag = weakTypeTag[IncidenceGraphCompanionAbs]
     protected def getDefaultRep = IncidenceGraph
   }
-  implicit lazy val IncidenceGraphCompanionElem: IncidenceGraphCompanionElem = new IncidenceGraphCompanionElem
 
   implicit def proxyIncidenceGraph[V, E](p: Rep[IncidenceGraph[V, E]]): IncidenceGraph[V, E] =
     proxyOps[IncidenceGraph[V, E]](p)
@@ -482,7 +478,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   object AdjacencyGraphCompanionMethods {
     object fromAdjacencyList {
       def unapply(d: Def[_]): Option[(Coll[V], NColl[E], NColl[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(vertexValues, edgeValues, links, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphCompanionElem] && method.getName == "fromAdjacencyList" =>
+        case MethodCall(receiver, method, Seq(vertexValues, edgeValues, links, _*), _) if receiver.elem == AdjacencyGraphCompanionElem && method.getName == "fromAdjacencyList" =>
           Some((vertexValues, edgeValues, links)).asInstanceOf[Option[(Coll[V], NColl[E], NColl[Int]) forSome {type V; type E}]]
         case _ => None
       }
@@ -785,7 +781,7 @@ trait GraphsExp extends GraphsDsl with ScalanExp {
   object IncidenceGraphCompanionMethods {
     object fromAdjacencyMatrix {
       def unapply(d: Def[_]): Option[(Coll[V], Coll[E], Rep[Int]) forSome {type V; type E}] = d match {
-        case MethodCall(receiver, method, Seq(vertexValues, incMatrixWithVals, vertexNum, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphCompanionElem] && method.getName == "fromAdjacencyMatrix" =>
+        case MethodCall(receiver, method, Seq(vertexValues, incMatrixWithVals, vertexNum, _*), _) if receiver.elem == IncidenceGraphCompanionElem && method.getName == "fromAdjacencyMatrix" =>
           Some((vertexValues, incMatrixWithVals, vertexNum)).asInstanceOf[Option[(Coll[V], Coll[E], Rep[Int]) forSome {type V; type E}]]
         case _ => None
       }

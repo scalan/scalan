@@ -20,7 +20,7 @@ trait SegmentsAbs extends Segments with Scalan {
   class SegmentElem[To <: Segment]
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       weakTypeTag[Segment].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
@@ -29,18 +29,16 @@ trait SegmentsAbs extends Segments with Scalan {
     }
 
     def convertSegment(x : Rep[Segment]): Rep[To] = {
-      assert(x.selfType1 match { case _: SegmentElem[_] => true case _ => false })
+      assert(x.selfType1 match { case _: SegmentElem[_] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def segmentElement: Elem[Segment] =
-    new SegmentElem[Segment] {
-    }
+    new SegmentElem[Segment]
 
-  trait SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs]
-  implicit lazy val SegmentCompanionElem: SegmentCompanionElem = new SegmentCompanionElem {
+  implicit object SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs] {
     lazy val tag = weakTypeTag[SegmentCompanionAbs]
     protected def getDefaultRep = Segment
   }
@@ -96,11 +94,10 @@ trait SegmentsAbs extends Segments with Scalan {
     proxyOps[IntervalCompanionAbs](p)
   }
 
-  class IntervalCompanionElem extends CompanionElem[IntervalCompanionAbs] {
+  implicit object IntervalCompanionElem extends CompanionElem[IntervalCompanionAbs] {
     lazy val tag = weakTypeTag[IntervalCompanionAbs]
     protected def getDefaultRep = Interval
   }
-  implicit lazy val IntervalCompanionElem: IntervalCompanionElem = new IntervalCompanionElem
 
   implicit def proxyInterval(p: Rep[Interval]): Interval =
     proxyOps[Interval](p)
@@ -160,11 +157,10 @@ trait SegmentsAbs extends Segments with Scalan {
     proxyOps[SliceCompanionAbs](p)
   }
 
-  class SliceCompanionElem extends CompanionElem[SliceCompanionAbs] {
+  implicit object SliceCompanionElem extends CompanionElem[SliceCompanionAbs] {
     lazy val tag = weakTypeTag[SliceCompanionAbs]
     protected def getDefaultRep = Slice
   }
-  implicit lazy val SliceCompanionElem: SliceCompanionElem = new SliceCompanionElem
 
   implicit def proxySlice(p: Rep[Slice]): Slice =
     proxyOps[Slice](p)
@@ -225,11 +221,10 @@ trait SegmentsAbs extends Segments with Scalan {
     proxyOps[CenteredCompanionAbs](p)
   }
 
-  class CenteredCompanionElem extends CompanionElem[CenteredCompanionAbs] {
+  implicit object CenteredCompanionElem extends CompanionElem[CenteredCompanionAbs] {
     lazy val tag = weakTypeTag[CenteredCompanionAbs]
     protected def getDefaultRep = Centered
   }
-  implicit lazy val CenteredCompanionElem: CenteredCompanionElem = new CenteredCompanionElem
 
   implicit def proxyCentered(p: Rep[Centered]): Centered =
     proxyOps[Centered](p)

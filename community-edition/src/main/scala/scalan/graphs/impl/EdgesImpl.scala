@@ -24,7 +24,7 @@ trait EdgesAbs extends Edges with Scalan {
   class EdgeElem[V, E, To <: Edge[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
       weakTypeTag[Edge[V, E]].asInstanceOf[WeakTypeTag[To]]
@@ -35,18 +35,16 @@ trait EdgesAbs extends Edges with Scalan {
     }
 
     def convertEdge(x : Rep[Edge[V, E]]): Rep[To] = {
-      assert(x.selfType1 match { case _: EdgeElem[_,_,_] => true case _ => false })
+      assert(x.selfType1 match { case _: EdgeElem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def edgeElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Edge[V, E]] =
-    new EdgeElem[V, E, Edge[V, E]] {
-    }
+    new EdgeElem[V, E, Edge[V, E]]
 
-  trait EdgeCompanionElem extends CompanionElem[EdgeCompanionAbs]
-  implicit lazy val EdgeCompanionElem: EdgeCompanionElem = new EdgeCompanionElem {
+  implicit object EdgeCompanionElem extends CompanionElem[EdgeCompanionAbs] {
     lazy val tag = weakTypeTag[EdgeCompanionAbs]
     protected def getDefaultRep = Edge
   }
@@ -104,11 +102,10 @@ trait EdgesAbs extends Edges with Scalan {
     proxyOps[AdjEdgeCompanionAbs](p)
   }
 
-  class AdjEdgeCompanionElem extends CompanionElem[AdjEdgeCompanionAbs] {
+  implicit object AdjEdgeCompanionElem extends CompanionElem[AdjEdgeCompanionAbs] {
     lazy val tag = weakTypeTag[AdjEdgeCompanionAbs]
     protected def getDefaultRep = AdjEdge
   }
-  implicit lazy val AdjEdgeCompanionElem: AdjEdgeCompanionElem = new AdjEdgeCompanionElem
 
   implicit def proxyAdjEdge[V, E](p: Rep[AdjEdge[V, E]]): AdjEdge[V, E] =
     proxyOps[AdjEdge[V, E]](p)
@@ -170,11 +167,10 @@ trait EdgesAbs extends Edges with Scalan {
     proxyOps[IncEdgeCompanionAbs](p)
   }
 
-  class IncEdgeCompanionElem extends CompanionElem[IncEdgeCompanionAbs] {
+  implicit object IncEdgeCompanionElem extends CompanionElem[IncEdgeCompanionAbs] {
     lazy val tag = weakTypeTag[IncEdgeCompanionAbs]
     protected def getDefaultRep = IncEdge
   }
-  implicit lazy val IncEdgeCompanionElem: IncEdgeCompanionElem = new IncEdgeCompanionElem
 
   implicit def proxyIncEdge[V, E](p: Rep[IncEdge[V, E]]): IncEdge[V, E] =
     proxyOps[IncEdge[V, E]](p)
@@ -513,7 +509,7 @@ trait EdgesExp extends EdgesDsl with ScalanExp {
   object EdgeCompanionMethods {
     object MaxDoubleEdge {
       def unapply(d: Def[_]): Option[Unit] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[EdgeCompanionElem] && method.getName == "MaxDoubleEdge" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem == EdgeCompanionElem && method.getName == "MaxDoubleEdge" =>
           Some(()).asInstanceOf[Option[Unit]]
         case _ => None
       }

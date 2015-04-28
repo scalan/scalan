@@ -19,7 +19,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
   class MetaTestElem[T, To <: MetaTest[T]](implicit val elem: Elem[T])
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagT = elem.tag
       weakTypeTag[MetaTest[T]].asInstanceOf[WeakTypeTag[To]]
     }
@@ -29,18 +29,16 @@ trait MetaTestsAbs extends MetaTests with Scalan {
     }
 
     def convertMetaTest(x : Rep[MetaTest[T]]): Rep[To] = {
-      assert(x.selfType1 match { case _: MetaTestElem[_,_] => true case _ => false })
+      assert(x.selfType1 match { case _: MetaTestElem[_, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def metaTestElement[T](implicit elem: Elem[T]): Elem[MetaTest[T]] =
-    new MetaTestElem[T, MetaTest[T]] {
-    }
+    new MetaTestElem[T, MetaTest[T]]
 
-  trait MetaTestCompanionElem extends CompanionElem[MetaTestCompanionAbs]
-  implicit lazy val MetaTestCompanionElem: MetaTestCompanionElem = new MetaTestCompanionElem {
+  implicit object MetaTestCompanionElem extends CompanionElem[MetaTestCompanionAbs] {
     lazy val tag = weakTypeTag[MetaTestCompanionAbs]
     protected def getDefaultRep = MetaTest
   }
@@ -95,11 +93,10 @@ trait MetaTestsAbs extends MetaTests with Scalan {
     proxyOps[MT0CompanionAbs](p)
   }
 
-  class MT0CompanionElem extends CompanionElem[MT0CompanionAbs] {
+  implicit object MT0CompanionElem extends CompanionElem[MT0CompanionAbs] {
     lazy val tag = weakTypeTag[MT0CompanionAbs]
     protected def getDefaultRep = MT0
   }
-  implicit lazy val MT0CompanionElem: MT0CompanionElem = new MT0CompanionElem
 
   implicit def proxyMT0(p: Rep[MT0]): MT0 =
     proxyOps[MT0](p)
@@ -161,11 +158,10 @@ trait MetaTestsAbs extends MetaTests with Scalan {
     proxyOps[MT1CompanionAbs](p)
   }
 
-  class MT1CompanionElem extends CompanionElem[MT1CompanionAbs] {
+  implicit object MT1CompanionElem extends CompanionElem[MT1CompanionAbs] {
     lazy val tag = weakTypeTag[MT1CompanionAbs]
     protected def getDefaultRep = MT1
   }
-  implicit lazy val MT1CompanionElem: MT1CompanionElem = new MT1CompanionElem
 
   implicit def proxyMT1[T](p: Rep[MT1[T]]): MT1[T] =
     proxyOps[MT1[T]](p)
@@ -228,11 +224,10 @@ trait MetaTestsAbs extends MetaTests with Scalan {
     proxyOps[MT2CompanionAbs](p)
   }
 
-  class MT2CompanionElem extends CompanionElem[MT2CompanionAbs] {
+  implicit object MT2CompanionElem extends CompanionElem[MT2CompanionAbs] {
     lazy val tag = weakTypeTag[MT2CompanionAbs]
     protected def getDefaultRep = MT2
   }
-  implicit lazy val MT2CompanionElem: MT2CompanionElem = new MT2CompanionElem
 
   implicit def proxyMT2[T, R](p: Rep[MT2[T, R]]): MT2[T, R] =
     proxyOps[MT2[T, R]](p)

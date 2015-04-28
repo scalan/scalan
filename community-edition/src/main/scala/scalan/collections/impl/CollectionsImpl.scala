@@ -23,7 +23,7 @@ trait CollectionsAbs extends Collections with Scalan {
   class CollectionElem[A, To <: Collection[A]](implicit val elem: Elem[A])
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagA = elem.tag
       weakTypeTag[Collection[A]].asInstanceOf[WeakTypeTag[To]]
     }
@@ -33,18 +33,16 @@ trait CollectionsAbs extends Collections with Scalan {
     }
 
     def convertCollection(x : Rep[Collection[A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: CollectionElem[_,_] => true case _ => false })
+      assert(x.selfType1 match { case _: CollectionElem[_, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def collectionElement[A](implicit elem: Elem[A]): Elem[Collection[A]] =
-    new CollectionElem[A, Collection[A]] {
-    }
+    new CollectionElem[A, Collection[A]]
 
-  trait CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs]
-  implicit lazy val CollectionCompanionElem: CollectionCompanionElem = new CollectionCompanionElem {
+  implicit object CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionCompanionAbs]
     protected def getDefaultRep = Collection
   }
@@ -65,7 +63,7 @@ trait CollectionsAbs extends Collections with Scalan {
   class IPairCollectionElem[A, B, To <: IPairCollection[A, B]](implicit val eA: Elem[A], val eB: Elem[B])
     extends CollectionElem[(A, B), To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagA = eA.tag
       implicit val tagB = eB.tag
       weakTypeTag[IPairCollection[A, B]].asInstanceOf[WeakTypeTag[To]]
@@ -76,15 +74,14 @@ trait CollectionsAbs extends Collections with Scalan {
     }
 
     def convertIPairCollection(x : Rep[IPairCollection[A, B]]): Rep[To] = {
-      assert(x.selfType1 match { case _: IPairCollectionElem[_,_,_] => true case _ => false })
+      assert(x.selfType1 match { case _: IPairCollectionElem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def iPairCollectionElement[A, B](implicit eA: Elem[A], eB: Elem[B]): Elem[IPairCollection[A, B]] =
-    new IPairCollectionElem[A, B, IPairCollection[A, B]] {
-    }
+    new IPairCollectionElem[A, B, IPairCollection[A, B]]
 
   // single proxy for each type family
   implicit def proxyINestedCollection[A](p: Rep[INestedCollection[A]]): INestedCollection[A] = {
@@ -94,7 +91,7 @@ trait CollectionsAbs extends Collections with Scalan {
   class INestedCollectionElem[A, To <: INestedCollection[A]](implicit val eA: Elem[A])
     extends CollectionElem[Collection[A], To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[INestedCollection[A]].asInstanceOf[WeakTypeTag[To]]
     }
@@ -104,15 +101,14 @@ trait CollectionsAbs extends Collections with Scalan {
     }
 
     def convertINestedCollection(x : Rep[INestedCollection[A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: INestedCollectionElem[_,_] => true case _ => false })
+      assert(x.selfType1 match { case _: INestedCollectionElem[_, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def iNestedCollectionElement[A](implicit eA: Elem[A]): Elem[INestedCollection[A]] =
-    new INestedCollectionElem[A, INestedCollection[A]] {
-    }
+    new INestedCollectionElem[A, INestedCollection[A]]
 
   // elem for concrete class
   class UnitCollectionElem(val iso: Iso[UnitCollectionData, UnitCollection])
@@ -156,11 +152,10 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[UnitCollectionCompanionAbs](p)
   }
 
-  class UnitCollectionCompanionElem extends CompanionElem[UnitCollectionCompanionAbs] {
+  implicit object UnitCollectionCompanionElem extends CompanionElem[UnitCollectionCompanionAbs] {
     lazy val tag = weakTypeTag[UnitCollectionCompanionAbs]
     protected def getDefaultRep = UnitCollection
   }
-  implicit lazy val UnitCollectionCompanionElem: UnitCollectionCompanionElem = new UnitCollectionCompanionElem
 
   implicit def proxyUnitCollection(p: Rep[UnitCollection]): UnitCollection =
     proxyOps[UnitCollection](p)
@@ -220,11 +215,10 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[BaseCollectionCompanionAbs](p)
   }
 
-  class BaseCollectionCompanionElem extends CompanionElem[BaseCollectionCompanionAbs] {
+  implicit object BaseCollectionCompanionElem extends CompanionElem[BaseCollectionCompanionAbs] {
     lazy val tag = weakTypeTag[BaseCollectionCompanionAbs]
     protected def getDefaultRep = BaseCollection
   }
-  implicit lazy val BaseCollectionCompanionElem: BaseCollectionCompanionElem = new BaseCollectionCompanionElem
 
   implicit def proxyBaseCollection[A](p: Rep[BaseCollection[A]]): BaseCollection[A] =
     proxyOps[BaseCollection[A]](p)
@@ -284,11 +278,10 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[ListCollectionCompanionAbs](p)
   }
 
-  class ListCollectionCompanionElem extends CompanionElem[ListCollectionCompanionAbs] {
+  implicit object ListCollectionCompanionElem extends CompanionElem[ListCollectionCompanionAbs] {
     lazy val tag = weakTypeTag[ListCollectionCompanionAbs]
     protected def getDefaultRep = ListCollection
   }
-  implicit lazy val ListCollectionCompanionElem: ListCollectionCompanionElem = new ListCollectionCompanionElem
 
   implicit def proxyListCollection[A](p: Rep[ListCollection[A]]): ListCollection[A] =
     proxyOps[ListCollection[A]](p)
@@ -348,11 +341,10 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[CollectionOnSeqCompanionAbs](p)
   }
 
-  class CollectionOnSeqCompanionElem extends CompanionElem[CollectionOnSeqCompanionAbs] {
+  implicit object CollectionOnSeqCompanionElem extends CompanionElem[CollectionOnSeqCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionOnSeqCompanionAbs]
     protected def getDefaultRep = CollectionOnSeq
   }
-  implicit lazy val CollectionOnSeqCompanionElem: CollectionOnSeqCompanionElem = new CollectionOnSeqCompanionElem
 
   implicit def proxyCollectionOnSeq[A](p: Rep[CollectionOnSeq[A]]): CollectionOnSeq[A] =
     proxyOps[CollectionOnSeq[A]](p)
@@ -414,11 +406,10 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[PairCollectionCompanionAbs](p)
   }
 
-  class PairCollectionCompanionElem extends CompanionElem[PairCollectionCompanionAbs] {
+  implicit object PairCollectionCompanionElem extends CompanionElem[PairCollectionCompanionAbs] {
     lazy val tag = weakTypeTag[PairCollectionCompanionAbs]
     protected def getDefaultRep = PairCollection
   }
-  implicit lazy val PairCollectionCompanionElem: PairCollectionCompanionElem = new PairCollectionCompanionElem
 
   implicit def proxyPairCollection[A, B](p: Rep[PairCollection[A, B]]): PairCollection[A, B] =
     proxyOps[PairCollection[A, B]](p)
@@ -479,11 +470,10 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[CollectionOfPairsCompanionAbs](p)
   }
 
-  class CollectionOfPairsCompanionElem extends CompanionElem[CollectionOfPairsCompanionAbs] {
+  implicit object CollectionOfPairsCompanionElem extends CompanionElem[CollectionOfPairsCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionOfPairsCompanionAbs]
     protected def getDefaultRep = CollectionOfPairs
   }
-  implicit lazy val CollectionOfPairsCompanionElem: CollectionOfPairsCompanionElem = new CollectionOfPairsCompanionElem
 
   implicit def proxyCollectionOfPairs[A, B](p: Rep[CollectionOfPairs[A, B]]): CollectionOfPairs[A, B] =
     proxyOps[CollectionOfPairs[A, B]](p)
@@ -544,11 +534,10 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[NestedCollectionCompanionAbs](p)
   }
 
-  class NestedCollectionCompanionElem extends CompanionElem[NestedCollectionCompanionAbs] {
+  implicit object NestedCollectionCompanionElem extends CompanionElem[NestedCollectionCompanionAbs] {
     lazy val tag = weakTypeTag[NestedCollectionCompanionAbs]
     protected def getDefaultRep = NestedCollection
   }
-  implicit lazy val NestedCollectionCompanionElem: NestedCollectionCompanionElem = new NestedCollectionCompanionElem
 
   implicit def proxyNestedCollection[A](p: Rep[NestedCollection[A]]): NestedCollection[A] =
     proxyOps[NestedCollection[A]](p)
@@ -2108,7 +2097,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   object NestedCollectionCompanionMethods {
     object fromJuggedArray {
       def unapply(d: Def[_]): Option[Rep[Array[Array[T]]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem.isInstanceOf[NestedCollectionCompanionElem] && method.getName == "fromJuggedArray" =>
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == NestedCollectionCompanionElem && method.getName == "fromJuggedArray" =>
           Some(arr).asInstanceOf[Option[Rep[Array[Array[T]]] forSome {type T}]]
         case _ => None
       }
@@ -2326,7 +2315,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   object CollectionCompanionMethods {
     object apply {
       def unapply(d: Def[_]): Option[Rep[Array[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem.isInstanceOf[CollectionCompanionElem] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == CollectionCompanionElem && method.getName == "apply" =>
           Some(arr).asInstanceOf[Option[Rep[Array[T]] forSome {type T}]]
         case _ => None
       }
@@ -2338,7 +2327,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object fromArray {
       def unapply(d: Def[_]): Option[Rep[Array[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem.isInstanceOf[CollectionCompanionElem] && method.getName == "fromArray" =>
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == CollectionCompanionElem && method.getName == "fromArray" =>
           Some(arr).asInstanceOf[Option[Rep[Array[T]] forSome {type T}]]
         case _ => None
       }
@@ -2350,7 +2339,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object fromList {
       def unapply(d: Def[_]): Option[Rep[List[T]] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem.isInstanceOf[CollectionCompanionElem] && method.getName == "fromList" =>
+        case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == CollectionCompanionElem && method.getName == "fromList" =>
           Some(arr).asInstanceOf[Option[Rep[List[T]] forSome {type T}]]
         case _ => None
       }
@@ -2362,7 +2351,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object replicate {
       def unapply(d: Def[_]): Option[(Rep[Int], Rep[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(len, v, _*), _) if receiver.elem.isInstanceOf[CollectionCompanionElem] && method.getName == "replicate" =>
+        case MethodCall(receiver, method, Seq(len, v, _*), _) if receiver.elem == CollectionCompanionElem && method.getName == "replicate" =>
           Some((len, v)).asInstanceOf[Option[(Rep[Int], Rep[T]) forSome {type T}]]
         case _ => None
       }
@@ -2374,7 +2363,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object singleton {
       def unapply(d: Def[_]): Option[Rep[T] forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[CollectionCompanionElem] && method.getName == "singleton" =>
+        case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem == CollectionCompanionElem && method.getName == "singleton" =>
           Some(v).asInstanceOf[Option[Rep[T] forSome {type T}]]
         case _ => None
       }
@@ -2386,7 +2375,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
     object indexRange {
       def unapply(d: Def[_]): Option[Rep[Int]] = d match {
-        case MethodCall(receiver, method, Seq(l, _*), _) if receiver.elem.isInstanceOf[CollectionCompanionElem] && method.getName == "indexRange" =>
+        case MethodCall(receiver, method, Seq(l, _*), _) if receiver.elem == CollectionCompanionElem && method.getName == "indexRange" =>
           Some(l).asInstanceOf[Option[Rep[Int]]]
         case _ => None
       }

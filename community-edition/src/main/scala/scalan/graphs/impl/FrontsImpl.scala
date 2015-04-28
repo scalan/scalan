@@ -22,7 +22,7 @@ trait FrontsAbs extends Fronts with Scalan {
   class FrontElem[To <: Front]
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       weakTypeTag[Front].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
@@ -31,18 +31,16 @@ trait FrontsAbs extends Fronts with Scalan {
     }
 
     def convertFront(x : Rep[Front]): Rep[To] = {
-      assert(x.selfType1 match { case _: FrontElem[_] => true case _ => false })
+      assert(x.selfType1 match { case _: FrontElem[_] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def frontElement: Elem[Front] =
-    new FrontElem[Front] {
-    }
+    new FrontElem[Front]
 
-  trait FrontCompanionElem extends CompanionElem[FrontCompanionAbs]
-  implicit lazy val FrontCompanionElem: FrontCompanionElem = new FrontCompanionElem {
+  implicit object FrontCompanionElem extends CompanionElem[FrontCompanionAbs] {
     lazy val tag = weakTypeTag[FrontCompanionAbs]
     protected def getDefaultRep = Front
   }
@@ -99,11 +97,10 @@ trait FrontsAbs extends Fronts with Scalan {
     proxyOps[BaseFrontCompanionAbs](p)
   }
 
-  class BaseFrontCompanionElem extends CompanionElem[BaseFrontCompanionAbs] {
+  implicit object BaseFrontCompanionElem extends CompanionElem[BaseFrontCompanionAbs] {
     lazy val tag = weakTypeTag[BaseFrontCompanionAbs]
     protected def getDefaultRep = BaseFront
   }
-  implicit lazy val BaseFrontCompanionElem: BaseFrontCompanionElem = new BaseFrontCompanionElem
 
   implicit def proxyBaseFront(p: Rep[BaseFront]): BaseFront =
     proxyOps[BaseFront](p)
@@ -164,11 +161,10 @@ trait FrontsAbs extends Fronts with Scalan {
     proxyOps[ListFrontCompanionAbs](p)
   }
 
-  class ListFrontCompanionElem extends CompanionElem[ListFrontCompanionAbs] {
+  implicit object ListFrontCompanionElem extends CompanionElem[ListFrontCompanionAbs] {
     lazy val tag = weakTypeTag[ListFrontCompanionAbs]
     protected def getDefaultRep = ListFront
   }
-  implicit lazy val ListFrontCompanionElem: ListFrontCompanionElem = new ListFrontCompanionElem
 
   implicit def proxyListFront(p: Rep[ListFront]): ListFront =
     proxyOps[ListFront](p)
@@ -229,11 +225,10 @@ trait FrontsAbs extends Fronts with Scalan {
     proxyOps[CollectionFrontCompanionAbs](p)
   }
 
-  class CollectionFrontCompanionElem extends CompanionElem[CollectionFrontCompanionAbs] {
+  implicit object CollectionFrontCompanionElem extends CompanionElem[CollectionFrontCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionFrontCompanionAbs]
     protected def getDefaultRep = CollectionFront
   }
-  implicit lazy val CollectionFrontCompanionElem: CollectionFrontCompanionElem = new CollectionFrontCompanionElem
 
   implicit def proxyCollectionFront(p: Rep[CollectionFront]): CollectionFront =
     proxyOps[CollectionFront](p)
@@ -293,11 +288,10 @@ trait FrontsAbs extends Fronts with Scalan {
     proxyOps[MapBasedFrontCompanionAbs](p)
   }
 
-  class MapBasedFrontCompanionElem extends CompanionElem[MapBasedFrontCompanionAbs] {
+  implicit object MapBasedFrontCompanionElem extends CompanionElem[MapBasedFrontCompanionAbs] {
     lazy val tag = weakTypeTag[MapBasedFrontCompanionAbs]
     protected def getDefaultRep = MapBasedFront
   }
-  implicit lazy val MapBasedFrontCompanionElem: MapBasedFrontCompanionElem = new MapBasedFrontCompanionElem
 
   implicit def proxyMapBasedFront(p: Rep[MapBasedFront]): MapBasedFront =
     proxyOps[MapBasedFront](p)
@@ -672,7 +666,7 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
   object FrontCompanionMethods {
     object emptyBaseFront {
       def unapply(d: Def[_]): Option[Rep[Int]] = d match {
-        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem.isInstanceOf[FrontCompanionElem] && method.getName == "emptyBaseFront" =>
+        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem == FrontCompanionElem && method.getName == "emptyBaseFront" =>
           Some(len).asInstanceOf[Option[Rep[Int]]]
         case _ => None
       }
@@ -684,7 +678,7 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
 
     object emptyListBasedFront {
       def unapply(d: Def[_]): Option[Rep[Int]] = d match {
-        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem.isInstanceOf[FrontCompanionElem] && method.getName == "emptyListBasedFront" =>
+        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem == FrontCompanionElem && method.getName == "emptyListBasedFront" =>
           Some(len).asInstanceOf[Option[Rep[Int]]]
         case _ => None
       }
@@ -696,7 +690,7 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
 
     object emptyCollBasedFront {
       def unapply(d: Def[_]): Option[Rep[Int]] = d match {
-        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem.isInstanceOf[FrontCompanionElem] && method.getName == "emptyCollBasedFront" =>
+        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem == FrontCompanionElem && method.getName == "emptyCollBasedFront" =>
           Some(len).asInstanceOf[Option[Rep[Int]]]
         case _ => None
       }
@@ -708,7 +702,7 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
 
     object emptyMapBasedFront {
       def unapply(d: Def[_]): Option[Rep[Int]] = d match {
-        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem.isInstanceOf[FrontCompanionElem] && method.getName == "emptyMapBasedFront" =>
+        case MethodCall(receiver, method, Seq(len, _*), _) if receiver.elem == FrontCompanionElem && method.getName == "emptyMapBasedFront" =>
           Some(len).asInstanceOf[Option[Rep[Int]]]
         case _ => None
       }
@@ -720,7 +714,7 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
 
     object fromStartNode {
       def unapply(d: Def[_]): Option[(Rep[Int], Rep[Int])] = d match {
-        case MethodCall(receiver, method, Seq(start, len, _*), _) if receiver.elem.isInstanceOf[FrontCompanionElem] && method.getName == "fromStartNode" =>
+        case MethodCall(receiver, method, Seq(start, len, _*), _) if receiver.elem == FrontCompanionElem && method.getName == "fromStartNode" =>
           Some((start, len)).asInstanceOf[Option[(Rep[Int], Rep[Int])]]
         case _ => None
       }
@@ -732,7 +726,7 @@ trait FrontsExp extends FrontsDsl with ScalanExp {
 
     object fromStartNodeMap {
       def unapply(d: Def[_]): Option[(Rep[Int], Rep[Int])] = d match {
-        case MethodCall(receiver, method, Seq(start, len, _*), _) if receiver.elem.isInstanceOf[FrontCompanionElem] && method.getName == "fromStartNodeMap" =>
+        case MethodCall(receiver, method, Seq(start, len, _*), _) if receiver.elem == FrontCompanionElem && method.getName == "fromStartNodeMap" =>
           Some((start, len)).asInstanceOf[Option[(Rep[Int], Rep[Int])]]
         case _ => None
       }

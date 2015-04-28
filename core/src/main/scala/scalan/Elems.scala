@@ -19,7 +19,7 @@ trait Elems extends Base { self: Scalan =>
   type LElem[A] = Lazy[Elem[A]] // lazy element
 
   @implicitNotFound(msg = "No Element available for ${A}.")
-  abstract class Element[A] extends Serializable {
+  abstract class Element[A] extends Serializable { _: scala.Equals =>
     def isEntityType: Boolean
     def isBaseType: Boolean = this.isInstanceOf[BaseElem[_]]
     def tag: WeakTypeTag[A]
@@ -36,10 +36,6 @@ trait Elems extends Base { self: Scalan =>
     lazy val name = getName
 
     override def toString = s"${getClass.getSimpleName}{$name}"
-    override def equals(other: Any) = other match {
-      case e: Element[_] => tag.tpe =:= e.tag.tpe
-      case _ => false
-    }
     override def hashCode = tag.hashCode
 
     def <:<(e: Element[_]) = tag.tpe <:< e.tag.tpe
@@ -57,9 +53,14 @@ trait Elems extends Base { self: Scalan =>
     }
   }
 
-  class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Element[A] with Serializable {
+  class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Element[A] with Serializable with scala.Equals {
     protected def getDefaultRep = toRep(z.value)(this)
     override def isEntityType = false
+    override def canEqual(other: Any) = other.isInstanceOf[BaseElem[_]]
+    override def equals(other: Any) = other match {
+      case other: BaseElem[_] => other.canEqual(this) && tag.tpe =:= other.tag.tpe
+      case _ => false
+    }
   }
 
   case class PairElem[A, B](eFst: Elem[A], eSnd: Elem[B]) extends Element[(A, B)] {

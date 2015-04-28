@@ -23,7 +23,7 @@ trait VerticesAbs extends Vertices with Scalan {
   class VertexElem[V, E, To <: Vertex[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
       weakTypeTag[Vertex[V, E]].asInstanceOf[WeakTypeTag[To]]
@@ -34,18 +34,16 @@ trait VerticesAbs extends Vertices with Scalan {
     }
 
     def convertVertex(x : Rep[Vertex[V, E]]): Rep[To] = {
-      assert(x.selfType1 match { case _: VertexElem[_,_,_] => true case _ => false })
+      assert(x.selfType1 match { case _: VertexElem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def vertexElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Vertex[V, E]] =
-    new VertexElem[V, E, Vertex[V, E]] {
-    }
+    new VertexElem[V, E, Vertex[V, E]]
 
-  trait VertexCompanionElem extends CompanionElem[VertexCompanionAbs]
-  implicit lazy val VertexCompanionElem: VertexCompanionElem = new VertexCompanionElem {
+  implicit object VertexCompanionElem extends CompanionElem[VertexCompanionAbs] {
     lazy val tag = weakTypeTag[VertexCompanionAbs]
     protected def getDefaultRep = Vertex
   }
@@ -103,11 +101,10 @@ trait VerticesAbs extends Vertices with Scalan {
     proxyOps[SVertexCompanionAbs](p)
   }
 
-  class SVertexCompanionElem extends CompanionElem[SVertexCompanionAbs] {
+  implicit object SVertexCompanionElem extends CompanionElem[SVertexCompanionAbs] {
     lazy val tag = weakTypeTag[SVertexCompanionAbs]
     protected def getDefaultRep = SVertex
   }
-  implicit lazy val SVertexCompanionElem: SVertexCompanionElem = new SVertexCompanionElem
 
   implicit def proxySVertex[V, E](p: Rep[SVertex[V, E]]): SVertex[V, E] =
     proxyOps[SVertex[V, E]](p)

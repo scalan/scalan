@@ -19,7 +19,7 @@ trait KindsAbs extends Kinds with Scalan {
   class KindElem[F[_], A, To <: Kind[F, A]](implicit val cF: Cont[F], val eA: Elem[A])
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[Kind[F, A]].asInstanceOf[WeakTypeTag[To]]
     }
@@ -29,18 +29,16 @@ trait KindsAbs extends Kinds with Scalan {
     }
 
     def convertKind(x : Rep[Kind[F, A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: KindElem[_,_,_] => true case _ => false })
+      assert(x.selfType1 match { case _: KindElem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def kindElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]): Elem[Kind[F, A]] =
-    new KindElem[F, A, Kind[F, A]] {
-    }
+    new KindElem[F, A, Kind[F, A]]
 
-  trait KindCompanionElem extends CompanionElem[KindCompanionAbs]
-  implicit lazy val KindCompanionElem: KindCompanionElem = new KindCompanionElem {
+  implicit object KindCompanionElem extends CompanionElem[KindCompanionAbs] {
     lazy val tag = weakTypeTag[KindCompanionAbs]
     protected def getDefaultRep = Kind
   }
@@ -97,11 +95,10 @@ trait KindsAbs extends Kinds with Scalan {
     proxyOps[ReturnCompanionAbs](p)
   }
 
-  class ReturnCompanionElem extends CompanionElem[ReturnCompanionAbs] {
+  implicit object ReturnCompanionElem extends CompanionElem[ReturnCompanionAbs] {
     lazy val tag = weakTypeTag[ReturnCompanionAbs]
     protected def getDefaultRep = Return
   }
-  implicit lazy val ReturnCompanionElem: ReturnCompanionElem = new ReturnCompanionElem
 
   implicit def proxyReturn[F[_], A](p: Rep[Return[F, A]]): Return[F, A] =
     proxyOps[Return[F, A]](p)
@@ -164,11 +161,10 @@ trait KindsAbs extends Kinds with Scalan {
     proxyOps[BindCompanionAbs](p)
   }
 
-  class BindCompanionElem extends CompanionElem[BindCompanionAbs] {
+  implicit object BindCompanionElem extends CompanionElem[BindCompanionAbs] {
     lazy val tag = weakTypeTag[BindCompanionAbs]
     protected def getDefaultRep = Bind
   }
-  implicit lazy val BindCompanionElem: BindCompanionElem = new BindCompanionElem
 
   implicit def proxyBind[F[_], S, B](p: Rep[Bind[F, S, B]]): Bind[F, S, B] =
     proxyOps[Bind[F, S, B]](p)
@@ -307,7 +303,7 @@ trait KindsExp extends KindsDsl with ScalanExp {
 
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem match { case ve: ViewElem[_, _] => ve match { case _: KindElem[_, _, _] => true; case _ => false }; case _ => false }) && method.getName == "mapBy" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem match { case _: KindElem[_, _, _] => true; case _ => false }) && method.getName == "mapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}]]
         case _ => None
       }
