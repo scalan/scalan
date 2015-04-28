@@ -57,7 +57,9 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     with ConcreteElem[SStringData, SString] {
     override def convertAString(x: Rep[AString]) = SString(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      weakTypeTag[SString]
+    }
   }
 
   // state representation type
@@ -71,9 +73,6 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     override def to(p: Rep[String]) = {
       val wrappedValueOfBaseType = p
       SString(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      weakTypeTag[SString]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SString]](SString(""))
     lazy val eTo = new SStringElem(this)
@@ -119,7 +118,9 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     with ConcreteElem[CStringData, CString] {
     override def convertAString(x: Rep[AString]) = CString(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      weakTypeTag[CString]
+    }
   }
 
   // state representation type
@@ -133,9 +134,6 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     override def to(p: Rep[String]) = {
       val wrappedValueOfBaseType = p
       CString(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      weakTypeTag[CString]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[CString]](CString(""))
     lazy val eTo = new CStringElem(this)

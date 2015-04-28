@@ -61,7 +61,10 @@ trait VectorsAbs extends Vectors with Scalan {
     with ConcreteElem[DenseVectorData[T], DenseVector[T]] {
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = DenseVector(x.items)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagT = elem.tag
+      weakTypeTag[DenseVector[T]]
+    }
   }
 
   // state representation type
@@ -75,10 +78,6 @@ trait VectorsAbs extends Vectors with Scalan {
     override def to(p: Rep[Collection[T]]) = {
       val items = p
       DenseVector(items)
-    }
-    lazy val tag = {
-      implicit val tagT = elem.tag
-      weakTypeTag[DenseVector[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[DenseVector[T]]](DenseVector(element[Collection[T]].defaultRepValue))
     lazy val eTo = new DenseVectorElem[T](this)
@@ -124,7 +123,10 @@ trait VectorsAbs extends Vectors with Scalan {
     with ConcreteElem[SparseVectorData[T], SparseVector[T]] {
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagT = elem.tag
+      weakTypeTag[SparseVector[T]]
+    }
   }
 
   // state representation type
@@ -138,10 +140,6 @@ trait VectorsAbs extends Vectors with Scalan {
     override def to(p: Rep[(Collection[Int], (Collection[T], Int))]) = {
       val Pair(nonZeroIndices, Pair(nonZeroValues, length)) = p
       SparseVector(nonZeroIndices, nonZeroValues, length)
-    }
-    lazy val tag = {
-      implicit val tagT = elem.tag
-      weakTypeTag[SparseVector[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector[T]]](SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, 0))
     lazy val eTo = new SparseVectorElem[T](this)
@@ -188,7 +186,10 @@ trait VectorsAbs extends Vectors with Scalan {
     with ConcreteElem[SparseVector1Data[T], SparseVector1[T]] {
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector1(x.nonZeroItems, x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagT = elem.tag
+      weakTypeTag[SparseVector1[T]]
+    }
   }
 
   // state representation type
@@ -202,10 +203,6 @@ trait VectorsAbs extends Vectors with Scalan {
     override def to(p: Rep[(Collection[(Int, T)], Int)]) = {
       val Pair(nonZeroItems, length) = p
       SparseVector1(nonZeroItems, length)
-    }
-    lazy val tag = {
-      implicit val tagT = elem.tag
-      weakTypeTag[SparseVector1[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector1[T]]](SparseVector1(element[Collection[(Int, T)]].defaultRepValue, 0))
     lazy val eTo = new SparseVector1Elem[T](this)

@@ -116,7 +116,9 @@ trait CollectionsAbs extends Collections with Scalan {
     with ConcreteElem[UnitCollectionData, UnitCollection] {
     override def convertCollection(x: Rep[Collection[Unit]]) = UnitCollection(x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      weakTypeTag[UnitCollection]
+    }
   }
 
   // state representation type
@@ -130,9 +132,6 @@ trait CollectionsAbs extends Collections with Scalan {
     override def to(p: Rep[Int]) = {
       val length = p
       UnitCollection(length)
-    }
-    lazy val tag = {
-      weakTypeTag[UnitCollection]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[UnitCollection]](UnitCollection(0))
     lazy val eTo = new UnitCollectionElem(this)
@@ -178,7 +177,10 @@ trait CollectionsAbs extends Collections with Scalan {
     with ConcreteElem[BaseCollectionData[A], BaseCollection[A]] {
     override def convertCollection(x: Rep[Collection[A]]) = BaseCollection(x.arr)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[BaseCollection[A]]
+    }
   }
 
   // state representation type
@@ -192,10 +194,6 @@ trait CollectionsAbs extends Collections with Scalan {
     override def to(p: Rep[Array[A]]) = {
       val arr = p
       BaseCollection(arr)
-    }
-    lazy val tag = {
-      implicit val tagA = eA.tag
-      weakTypeTag[BaseCollection[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[BaseCollection[A]]](BaseCollection(element[Array[A]].defaultRepValue))
     lazy val eTo = new BaseCollectionElem[A](this)
@@ -241,7 +239,10 @@ trait CollectionsAbs extends Collections with Scalan {
     with ConcreteElem[ListCollectionData[A], ListCollection[A]] {
     override def convertCollection(x: Rep[Collection[A]]) = ListCollection(x.lst)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[ListCollection[A]]
+    }
   }
 
   // state representation type
@@ -255,10 +256,6 @@ trait CollectionsAbs extends Collections with Scalan {
     override def to(p: Rep[List[A]]) = {
       val lst = p
       ListCollection(lst)
-    }
-    lazy val tag = {
-      implicit val tagA = eA.tag
-      weakTypeTag[ListCollection[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[ListCollection[A]]](ListCollection(element[List[A]].defaultRepValue))
     lazy val eTo = new ListCollectionElem[A](this)
@@ -304,7 +301,10 @@ trait CollectionsAbs extends Collections with Scalan {
     with ConcreteElem[CollectionOnSeqData[A], CollectionOnSeq[A]] {
     override def convertCollection(x: Rep[Collection[A]]) = CollectionOnSeq(x.seq)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[CollectionOnSeq[A]]
+    }
   }
 
   // state representation type
@@ -318,10 +318,6 @@ trait CollectionsAbs extends Collections with Scalan {
     override def to(p: Rep[SSeq[A]]) = {
       val seq = p
       CollectionOnSeq(seq)
-    }
-    lazy val tag = {
-      implicit val tagA = eA.tag
-      weakTypeTag[CollectionOnSeq[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOnSeq[A]]](CollectionOnSeq(element[SSeq[A]].defaultRepValue))
     lazy val eTo = new CollectionOnSeqElem[A](this)
@@ -367,7 +363,11 @@ trait CollectionsAbs extends Collections with Scalan {
     with ConcreteElem[PairCollectionData[A, B], PairCollection[A, B]] {
     override def convertIPairCollection(x: Rep[IPairCollection[A, B]]) = PairCollection(x.as, x.bs)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      weakTypeTag[PairCollection[A, B]]
+    }
   }
 
   // state representation type
@@ -381,11 +381,6 @@ trait CollectionsAbs extends Collections with Scalan {
     override def to(p: Rep[(Collection[A], Collection[B])]) = {
       val Pair(as, bs) = p
       PairCollection(as, bs)
-    }
-    lazy val tag = {
-      implicit val tagA = eA.tag
-      implicit val tagB = eB.tag
-      weakTypeTag[PairCollection[A, B]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[PairCollection[A, B]]](PairCollection(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue))
     lazy val eTo = new PairCollectionElem[A, B](this)
@@ -432,7 +427,11 @@ trait CollectionsAbs extends Collections with Scalan {
     with ConcreteElem[CollectionOfPairsData[A, B], CollectionOfPairs[A, B]] {
     override def convertIPairCollection(x: Rep[IPairCollection[A, B]]) = CollectionOfPairs(x.arr)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      weakTypeTag[CollectionOfPairs[A, B]]
+    }
   }
 
   // state representation type
@@ -446,11 +445,6 @@ trait CollectionsAbs extends Collections with Scalan {
     override def to(p: Rep[Array[(A, B)]]) = {
       val arr = p
       CollectionOfPairs(arr)
-    }
-    lazy val tag = {
-      implicit val tagA = eA.tag
-      implicit val tagB = eB.tag
-      weakTypeTag[CollectionOfPairs[A, B]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOfPairs[A, B]]](CollectionOfPairs(element[Array[(A, B)]].defaultRepValue))
     lazy val eTo = new CollectionOfPairsElem[A, B](this)
@@ -496,7 +490,10 @@ trait CollectionsAbs extends Collections with Scalan {
     with ConcreteElem[NestedCollectionData[A], NestedCollection[A]] {
     override def convertINestedCollection(x: Rep[INestedCollection[A]]) = NestedCollection(x.values, x.segments)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[NestedCollection[A]]
+    }
   }
 
   // state representation type
@@ -510,10 +507,6 @@ trait CollectionsAbs extends Collections with Scalan {
     override def to(p: Rep[(Collection[A], IPairCollection[Int,Int])]) = {
       val Pair(values, segments) = p
       NestedCollection(values, segments)
-    }
-    lazy val tag = {
-      implicit val tagA = eA.tag
-      weakTypeTag[NestedCollection[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[NestedCollection[A]]](NestedCollection(element[Collection[A]].defaultRepValue, element[IPairCollection[Int,Int]].defaultRepValue))
     lazy val eTo = new NestedCollectionElem[A](this)

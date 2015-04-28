@@ -57,7 +57,9 @@ trait BitSetsAbs extends BitSets with Scalan {
     with ConcreteElem[BoolCollBitSetData, BoolCollBitSet] {
     override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      weakTypeTag[BoolCollBitSet]
+    }
   }
 
   // state representation type
@@ -71,9 +73,6 @@ trait BitSetsAbs extends BitSets with Scalan {
     override def to(p: Rep[Collection[Boolean]]) = {
       val bits = p
       BoolCollBitSet(bits)
-    }
-    lazy val tag = {
-      weakTypeTag[BoolCollBitSet]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[BoolCollBitSet]](BoolCollBitSet(element[Collection[Boolean]].defaultRepValue))
     lazy val eTo = new BoolCollBitSetElem(this)

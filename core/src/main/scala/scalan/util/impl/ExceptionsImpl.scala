@@ -84,7 +84,9 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SThrowableImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      weakTypeTag[SThrowableImpl]
+    }
   }
 
   // state representation type
@@ -98,9 +100,6 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     override def to(p: Rep[Throwable]) = {
       val wrappedValueOfBaseType = p
       SThrowableImpl(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      weakTypeTag[SThrowableImpl]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SThrowableImpl]](SThrowableImpl(DefaultOfThrowable.value))
     lazy val eTo = new SThrowableImplElem(this)
@@ -147,7 +146,9 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SException(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      weakTypeTag[SException]
+    }
   }
 
   // state representation type
@@ -161,9 +162,6 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     override def to(p: Rep[Throwable]) = {
       val wrappedValueOfBaseType = p
       SException(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      weakTypeTag[SException]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SException]](SException(DefaultOfThrowable.value))
     lazy val eTo = new SExceptionElem(this)

@@ -48,7 +48,6 @@ trait Views extends Elems { self: Scalan =>
   abstract class Iso[From, To](implicit eFrom0: Elem[From]) {
     def eFrom: Elem[From] = eFrom0
     def eTo: Elem[To]
-    def tag: WeakTypeTag[To]
     def defaultRepTo: Default[Rep[To]]
     def from(p: Rep[To]): Rep[From]
     def to(p: Rep[From]): Rep[To]
@@ -63,7 +62,6 @@ trait Views extends Elems { self: Scalan =>
   abstract class Iso1[A, B, C[_]](val innerIso: Iso[A,B])(implicit cC: Cont[C])
     extends Iso[C[A], C[B]]()(cC.lift(innerIso.eFrom)) {
     lazy val eTo = cC.lift(innerIso.eTo)
-    lazy val tag = cC.tag(innerIso.tag)
     override def isIdentity = innerIso.isIdentity
   }
 
@@ -72,7 +70,6 @@ trait Views extends Elems { self: Scalan =>
   trait ViewElem[From, To] extends Elem[To] {
     def iso: Iso[From, To]
     override def isEntityType = shouldUnpack(this)
-    def tag: WeakTypeTag[To] = iso.tag
     protected def getDefaultRep = iso.defaultRepTo.value
   }
 
@@ -206,7 +203,6 @@ trait Views extends Elems { self: Scalan =>
   trait ConcreteClass4[T[_, _, _, _]]
 
   case class IdentityIso[A](eTo: Elem[A]) extends Iso[A, A]()(eTo) {
-    def tag = eTo.tag
     lazy val defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
     def from(x: Rep[A]) = x
     def to(x: Rep[A]) = x
@@ -242,7 +238,6 @@ trait Views extends Elems { self: Scalan =>
       }
       toCacheValue.get
     }
-    def tag = eBB.tag
     lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
@@ -262,7 +257,6 @@ trait Views extends Elems { self: Scalan =>
     def to(a: Rep[A1 | A2]) =
       a.mapSum(a1 => iso1.to(a1),
                a2 => iso2.to(a2))
-    def tag = eBB.tag
     lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
@@ -272,7 +266,6 @@ trait Views extends Elems { self: Scalan =>
     def eTo = iso2.eTo
     def from(c: Rep[C]) = iso1.from(iso2.from(c))
     def to(a: Rep[A]) = iso2.to(iso1.to(a))
-    def tag = iso2.tag
     def defaultRepTo = iso2.defaultRepTo
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
@@ -292,7 +285,6 @@ trait Views extends Elems { self: Scalan =>
     def to(f: Rep[A => C]): Rep[B => D] = {
       fun { a => iso2.to(f(iso1.from(a))) }
     }
-    def tag = eTo.tag
     lazy val defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
@@ -301,7 +293,6 @@ trait Views extends Elems { self: Scalan =>
   case class ConverterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A])
     extends Iso[A,B]()(convTo.eDom) {
     def eTo = convTo.eRange
-    def tag = eTo.tag
     def to(a: Rep[A]) = convTo(a)
     def from(b: Rep[B]) = convFrom(b)
     def defaultRepTo = Default.defaultVal(eTo.defaultRepValue)

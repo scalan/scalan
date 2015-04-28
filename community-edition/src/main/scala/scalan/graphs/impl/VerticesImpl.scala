@@ -62,7 +62,11 @@ trait VerticesAbs extends Vertices with Scalan {
     with ConcreteElem[SVertexData[V, E], SVertex[V, E]] {
     override def convertVertex(x: Rep[Vertex[V, E]]) = SVertex(x.id, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[SVertex[V, E]]
+    }
   }
 
   // state representation type
@@ -76,11 +80,6 @@ trait VerticesAbs extends Vertices with Scalan {
     override def to(p: Rep[(Int, Graph[V,E])]) = {
       val Pair(id, graph) = p
       SVertex(id, graph)
-    }
-    lazy val tag = {
-      implicit val tagV = eV.tag
-      implicit val tagE = eE.tag
-      weakTypeTag[SVertex[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SVertex[V, E]]](SVertex(0, element[Graph[V,E]].defaultRepValue))
     lazy val eTo = new SVertexElem[V, E](this)

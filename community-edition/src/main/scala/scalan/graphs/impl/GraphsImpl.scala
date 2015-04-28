@@ -63,7 +63,11 @@ trait GraphsAbs extends Graphs with Scalan {
     with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[AdjacencyGraph[V, E]]
+    }
   }
 
   // state representation type
@@ -77,11 +81,6 @@ trait GraphsAbs extends Graphs with Scalan {
     override def to(p: Rep[(Collection[V], (INestedCollection[E], INestedCollection[Int]))]) = {
       val Pair(vertexValues, Pair(edgeValues, links)) = p
       AdjacencyGraph(vertexValues, edgeValues, links)
-    }
-    lazy val tag = {
-      implicit val tagV = eV.tag
-      implicit val tagE = eE.tag
-      weakTypeTag[AdjacencyGraph[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[AdjacencyGraph[V, E]]](AdjacencyGraph(element[Collection[V]].defaultRepValue, element[INestedCollection[E]].defaultRepValue, element[INestedCollection[Int]].defaultRepValue))
     lazy val eTo = new AdjacencyGraphElem[V, E](this)
@@ -128,7 +127,11 @@ trait GraphsAbs extends Graphs with Scalan {
     with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[IncidenceGraph[V, E]]
+    }
   }
 
   // state representation type
@@ -142,11 +145,6 @@ trait GraphsAbs extends Graphs with Scalan {
     override def to(p: Rep[(Collection[V], (Collection[E], Int))]) = {
       val Pair(vertexValues, Pair(incMatrixWithVals, vertexNum)) = p
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
-    }
-    lazy val tag = {
-      implicit val tagV = eV.tag
-      implicit val tagE = eE.tag
-      weakTypeTag[IncidenceGraph[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[IncidenceGraph[V, E]]](IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0))
     lazy val eTo = new IncidenceGraphElem[V, E](this)

@@ -605,7 +605,14 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |    ${templateData.isWrapper.opt("lazy val eTo = this")}
         |    override def convert${parent.name}(x: Rep[${parent.name}${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.getEntity(parent.name), c)}
         |    override def getDefaultRep = super[ConcreteElem${isCont.opt("1")}].getDefaultRep
-        |    override lazy val tag = super[ConcreteElem${isCont.opt("1")}].tag
+        |    override lazy val tag = {
+        |${c.implicitArgs.args.flatMap(arg => arg.tpe match {
+             case STraitCall(name, List(tpe)) if name == "Elem" || name == "Element" =>
+               Some (s"      implicit val tag${typeToIdentifier(tpe)} = ${arg.name}.tag")
+             case _ => None
+          }).mkString("\n")}
+        |      weakTypeTag[$className${typesUse}]
+        |    }
         |  }
         |
         |  // state representation type
@@ -619,15 +626,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |    override def to(p: Rep[${dataType(fieldTypes)}]) = {
         |      val ${pairify(fields)} = p
         |      $className(${fields.rep()})
-        |    }
-        |    lazy val tag = {
-        |
-        |${c.implicitArgs.args.flatMap(arg => arg.tpe match {
-            case STraitCall(name, List(tpe)) if name == "Elem" || name == "Element" =>
-              Some(s"      implicit val tag${typeToIdentifier(tpe)} = ${arg.name}.tag")
-            case _ => None
-          }).mkString("\n")}
-        |      weakTypeTag[$className${typesUse}]
         |    }
         |    lazy val defaultRepTo = Default.defaultVal[Rep[$className${typesUse}]]($className(${fieldTypes.rep(zeroSExpr(_))}))
         |    lazy val eTo = new ${className}Elem${typesUse}(this)

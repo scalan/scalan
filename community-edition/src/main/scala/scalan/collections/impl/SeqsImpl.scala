@@ -168,7 +168,10 @@ trait SeqsAbs extends Seqs with Scalan {
     lazy val eTo = this
     override def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem1].getDefaultRep
-    override lazy val tag = super[ConcreteElem1].tag
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[SSeqImpl[A]]
+    }
   }
 
   // state representation type
@@ -182,10 +185,6 @@ trait SeqsAbs extends Seqs with Scalan {
     override def to(p: Rep[Seq[A]]) = {
       val wrappedValueOfBaseType = p
       SSeqImpl(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      implicit val tagA = eA.tag
-      weakTypeTag[SSeqImpl[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SSeqImpl[A]]](SSeqImpl(DefaultOfSeq[A].value))
     lazy val eTo = new SSeqImplElem[A](this)

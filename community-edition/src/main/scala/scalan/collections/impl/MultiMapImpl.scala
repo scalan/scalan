@@ -59,7 +59,11 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
     with ConcreteElem[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
     override def convertMMultiMap(x: Rep[MMultiMap[K, V]]) = HashMMultiMap(x.map)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagK = elemKey.tag
+      implicit val tagV = elemValue.tag
+      weakTypeTag[HashMMultiMap[K, V]]
+    }
   }
 
   // state representation type
@@ -73,11 +77,6 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
     override def to(p: Rep[MMap[K,ArrayBuffer[V]]]) = {
       val map = p
       HashMMultiMap(map)
-    }
-    lazy val tag = {
-      implicit val tagK = elemKey.tag
-      implicit val tagV = elemValue.tag
-      weakTypeTag[HashMMultiMap[K, V]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[HashMMultiMap[K, V]]](HashMMultiMap(element[MMap[K,ArrayBuffer[V]]].defaultRepValue))
     lazy val eTo = new HashMMultiMapElem[K, V](this)

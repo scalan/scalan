@@ -63,7 +63,11 @@ trait EdgesAbs extends Edges with Scalan {
     with ConcreteElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
     override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[AdjEdge[V, E]]
+    }
   }
 
   // state representation type
@@ -77,11 +81,6 @@ trait EdgesAbs extends Edges with Scalan {
     override def to(p: Rep[(Int, (Int, Graph[V,E]))]) = {
       val Pair(fromId, Pair(outIndex, graph)) = p
       AdjEdge(fromId, outIndex, graph)
-    }
-    lazy val tag = {
-      implicit val tagV = eV.tag
-      implicit val tagE = eE.tag
-      weakTypeTag[AdjEdge[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[AdjEdge[V, E]]](AdjEdge(0, 0, element[Graph[V,E]].defaultRepValue))
     lazy val eTo = new AdjEdgeElem[V, E](this)
@@ -128,7 +127,11 @@ trait EdgesAbs extends Edges with Scalan {
     with ConcreteElem[IncEdgeData[V, E], IncEdge[V, E]] {
     override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[IncEdge[V, E]]
+    }
   }
 
   // state representation type
@@ -142,11 +145,6 @@ trait EdgesAbs extends Edges with Scalan {
     override def to(p: Rep[(Int, (Int, Graph[V,E]))]) = {
       val Pair(fromId, Pair(toId, graph)) = p
       IncEdge(fromId, toId, graph)
-    }
-    lazy val tag = {
-      implicit val tagV = eV.tag
-      implicit val tagE = eE.tag
-      weakTypeTag[IncEdge[V, E]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[IncEdge[V, E]]](IncEdge(0, 0, element[Graph[V,E]].defaultRepValue))
     lazy val eTo = new IncEdgeElem[V, E](this)

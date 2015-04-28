@@ -60,7 +60,10 @@ trait MatricesAbs extends Matrices with Scalan {
     with ConcreteElem[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = DenseFlatMatrix(x.rmValues, x.numColumns)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagT = elem.tag
+      weakTypeTag[DenseFlatMatrix[T]]
+    }
   }
 
   // state representation type
@@ -74,10 +77,6 @@ trait MatricesAbs extends Matrices with Scalan {
     override def to(p: Rep[(Collection[T], Int)]) = {
       val Pair(rmValues, numColumns) = p
       DenseFlatMatrix(rmValues, numColumns)
-    }
-    lazy val tag = {
-      implicit val tagT = elem.tag
-      weakTypeTag[DenseFlatMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[DenseFlatMatrix[T]]](DenseFlatMatrix(element[Collection[T]].defaultRepValue, 0))
     lazy val eTo = new DenseFlatMatrixElem[T](this)
@@ -124,7 +123,10 @@ trait MatricesAbs extends Matrices with Scalan {
     with ConcreteElem[CompoundMatrixData[T], CompoundMatrix[T]] {
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = CompoundMatrix(x.rows, x.numColumns)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagT = elem.tag
+      weakTypeTag[CompoundMatrix[T]]
+    }
   }
 
   // state representation type
@@ -138,10 +140,6 @@ trait MatricesAbs extends Matrices with Scalan {
     override def to(p: Rep[(Collection[AbstractVector[T]], Int)]) = {
       val Pair(rows, numColumns) = p
       CompoundMatrix(rows, numColumns)
-    }
-    lazy val tag = {
-      implicit val tagT = elem.tag
-      weakTypeTag[CompoundMatrix[T]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[CompoundMatrix[T]]](CompoundMatrix(element[Collection[AbstractVector[T]]].defaultRepValue, 0))
     lazy val eTo = new CompoundMatrixElem[T](this)

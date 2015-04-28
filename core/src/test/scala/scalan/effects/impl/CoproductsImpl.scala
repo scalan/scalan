@@ -24,9 +24,13 @@ trait CoproductsAbs extends Coproducts with Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[Coproduct[F, G, A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertCoproduct(x.asRep[Coproduct[F, G, A]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[Coproduct[F, G, A]] =>  convertCoproduct(x) }
+      tryConvert(element[Coproduct[F, G, A]], this, x, conv)
+    }
+
     def convertCoproduct(x : Rep[Coproduct[F, G, A]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[CoproductElem[_, _, _, _]])
+      assert(x.selfType1 match { case _: CoproductElem[_, _, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -54,7 +58,10 @@ trait CoproductsAbs extends Coproducts with Scalan {
     with ConcreteElem[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
     override def convertCoproduct(x: Rep[Coproduct[F, G, A]]) = CoproductImpl(x.run)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[CoproductImpl[F, G, A]]
+    }
   }
 
   // state representation type
@@ -68,10 +75,6 @@ trait CoproductsAbs extends Coproducts with Scalan {
     override def to(p: Rep[Either[F[A],G[A]]]) = {
       val run = p
       CoproductImpl(run)
-    }
-    lazy val tag = {
-      implicit val tagA = eA.tag
-      weakTypeTag[CoproductImpl[F, G, A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[CoproductImpl[F, G, A]]](CoproductImpl(element[Either[F[A],G[A]]].defaultRepValue))
     lazy val eTo = new CoproductImplElem[F, G, A](this)

@@ -113,7 +113,10 @@ trait HashSetsAbs extends HashSets with Scalan {
     lazy val eTo = this
     override def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem1].getDefaultRep
-    override lazy val tag = super[ConcreteElem1].tag
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[SHashSetImpl[A]]
+    }
   }
 
   // state representation type
@@ -127,10 +130,6 @@ trait HashSetsAbs extends HashSets with Scalan {
     override def to(p: Rep[HashSet[A]]) = {
       val wrappedValueOfBaseType = p
       SHashSetImpl(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      implicit val tagA = eA.tag
-      weakTypeTag[SHashSetImpl[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SHashSetImpl[A]]](SHashSetImpl(DefaultOfHashSet[A].value))
     lazy val eTo = new SHashSetImplElem[A](this)
