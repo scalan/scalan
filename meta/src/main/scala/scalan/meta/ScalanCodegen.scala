@@ -1087,7 +1087,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
                   s"receiver.elem == $traitElem"
                 } else if (e.isHighKind) {
                   // same as isInstanceOf[$traitElem], but that won't compile
-                  s"(receiver.elem match { case _: $traitElem => true; case _ => false })"
+                  s"(receiver.elem.asInstanceOf[Element[_]] match { case _: $traitElem => true; case _ => false })"
                 } else {
                   s"receiver.elem.isInstanceOf[$traitElem]"
                 }

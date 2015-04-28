@@ -21,24 +21,22 @@ trait AuthenticationsAbs extends Authentications with Scalan {
   class AuthElem[A, To <: Auth[A]](implicit val eA: Elem[A])
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[Auth[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertAuth(x.asRep[Auth[A]])
     def convertAuth(x : Rep[Auth[A]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[AuthElem[_,_]])
+      //assert(x.selfType1.isInstanceOf[AuthElem[_, _]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def authElement[A](implicit eA: Elem[A]): Elem[Auth[A]] =
-    new AuthElem[A, Auth[A]] {
-    }
+    new AuthElem[A, Auth[A]]
 
-  trait AuthCompanionElem extends CompanionElem[AuthCompanionAbs]
-  implicit lazy val AuthCompanionElem: AuthCompanionElem = new AuthCompanionElem {
+  implicit object AuthCompanionElem extends CompanionElem[AuthCompanionAbs] {
     lazy val tag = weakTypeTag[AuthCompanionAbs]
     protected def getDefaultRep = Auth
   }
@@ -95,11 +93,10 @@ trait AuthenticationsAbs extends Authentications with Scalan {
     proxyOps[LoginCompanionAbs](p)
   }
 
-  class LoginCompanionElem extends CompanionElem[LoginCompanionAbs] {
+  implicit object LoginCompanionElem extends CompanionElem[LoginCompanionAbs] {
     lazy val tag = weakTypeTag[LoginCompanionAbs]
     protected def getDefaultRep = Login
   }
-  implicit lazy val LoginCompanionElem: LoginCompanionElem = new LoginCompanionElem
 
   implicit def proxyLogin(p: Rep[Login]): Login =
     proxyOps[Login](p)
@@ -160,11 +157,10 @@ trait AuthenticationsAbs extends Authentications with Scalan {
     proxyOps[HasPermissionCompanionAbs](p)
   }
 
-  class HasPermissionCompanionElem extends CompanionElem[HasPermissionCompanionAbs] {
+  implicit object HasPermissionCompanionElem extends CompanionElem[HasPermissionCompanionAbs] {
     lazy val tag = weakTypeTag[HasPermissionCompanionAbs]
     protected def getDefaultRep = HasPermission
   }
-  implicit lazy val HasPermissionCompanionElem: HasPermissionCompanionElem = new HasPermissionCompanionElem
 
   implicit def proxyHasPermission(p: Rep[HasPermission]): HasPermission =
     proxyOps[HasPermission](p)

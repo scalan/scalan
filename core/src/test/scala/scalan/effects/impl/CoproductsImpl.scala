@@ -20,24 +20,22 @@ trait CoproductsAbs extends Coproducts with Scalan {
   class CoproductElem[F[_], G[_], A, To <: Coproduct[F, G, A]](implicit val cF: Cont[F], val cG: Cont[G], val eA: Elem[A])
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[Coproduct[F, G, A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertCoproduct(x.asRep[Coproduct[F, G, A]])
     def convertCoproduct(x : Rep[Coproduct[F, G, A]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[CoproductElem[_,_,_,_]])
+      //assert(x.selfType1.isInstanceOf[CoproductElem[_, _, _, _]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def coproductElement[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Elem[Coproduct[F, G, A]] =
-    new CoproductElem[F, G, A, Coproduct[F, G, A]] {
-    }
+    new CoproductElem[F, G, A, Coproduct[F, G, A]]
 
-  trait CoproductCompanionElem extends CompanionElem[CoproductCompanionAbs]
-  implicit lazy val CoproductCompanionElem: CoproductCompanionElem = new CoproductCompanionElem {
+  implicit object CoproductCompanionElem extends CompanionElem[CoproductCompanionAbs] {
     lazy val tag = weakTypeTag[CoproductCompanionAbs]
     protected def getDefaultRep = Coproduct
   }
@@ -93,11 +91,10 @@ trait CoproductsAbs extends Coproducts with Scalan {
     proxyOps[CoproductImplCompanionAbs](p)
   }
 
-  class CoproductImplCompanionElem extends CompanionElem[CoproductImplCompanionAbs] {
+  implicit object CoproductImplCompanionElem extends CompanionElem[CoproductImplCompanionAbs] {
     lazy val tag = weakTypeTag[CoproductImplCompanionAbs]
     protected def getDefaultRep = CoproductImpl
   }
-  implicit lazy val CoproductImplCompanionElem: CoproductImplCompanionElem = new CoproductImplCompanionElem
 
   implicit def proxyCoproductImpl[F[_], G[_], A](p: Rep[CoproductImpl[F, G, A]]): CoproductImpl[F, G, A] =
     proxyOps[CoproductImpl[F, G, A]](p)
@@ -183,7 +180,7 @@ trait CoproductsExp extends CoproductsDsl with ScalanExp {
   object CoproductMethods {
     object run {
       def unapply(d: Def[_]): Option[Rep[Coproduct[F, G, A]] forSome {type F[_]; type G[_]; type A}] = d match {
-        case MethodCall(receiver, method, _, _) if (receiver.elem match { case ve: ViewElem[_, _] => ve match { case _: CoproductElem[_, _, _, _] => true; case _ => false }; case _ => false }) && method.getName == "run" =>
+        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: CoproductElem[_, _, _, _] => true; case _ => false }) && method.getName == "run" =>
           Some(receiver).asInstanceOf[Option[Rep[Coproduct[F, G, A]] forSome {type F[_]; type G[_]; type A}]]
         case _ => None
       }

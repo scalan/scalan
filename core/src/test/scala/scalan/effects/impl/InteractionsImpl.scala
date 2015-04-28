@@ -21,24 +21,22 @@ trait InteractionsAbs extends Interactions with Scalan {
   class InteractElem[A, To <: Interact[A]](implicit val eA: Elem[A])
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[Interact[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = convertInteract(x.asRep[Interact[A]])
     def convertInteract(x : Rep[Interact[A]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[InteractElem[_,_]])
+      //assert(x.selfType1.isInstanceOf[InteractElem[_, _]])
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def interactElement[A](implicit eA: Elem[A]): Elem[Interact[A]] =
-    new InteractElem[A, Interact[A]] {
-    }
+    new InteractElem[A, Interact[A]]
 
-  trait InteractCompanionElem extends CompanionElem[InteractCompanionAbs]
-  implicit lazy val InteractCompanionElem: InteractCompanionElem = new InteractCompanionElem {
+  implicit object InteractCompanionElem extends CompanionElem[InteractCompanionAbs] {
     lazy val tag = weakTypeTag[InteractCompanionAbs]
     protected def getDefaultRep = Interact
   }
@@ -94,11 +92,10 @@ trait InteractionsAbs extends Interactions with Scalan {
     proxyOps[AskCompanionAbs](p)
   }
 
-  class AskCompanionElem extends CompanionElem[AskCompanionAbs] {
+  implicit object AskCompanionElem extends CompanionElem[AskCompanionAbs] {
     lazy val tag = weakTypeTag[AskCompanionAbs]
     protected def getDefaultRep = Ask
   }
-  implicit lazy val AskCompanionElem: AskCompanionElem = new AskCompanionElem
 
   implicit def proxyAsk(p: Rep[Ask]): Ask =
     proxyOps[Ask](p)
@@ -158,11 +155,10 @@ trait InteractionsAbs extends Interactions with Scalan {
     proxyOps[TellCompanionAbs](p)
   }
 
-  class TellCompanionElem extends CompanionElem[TellCompanionAbs] {
+  implicit object TellCompanionElem extends CompanionElem[TellCompanionAbs] {
     lazy val tag = weakTypeTag[TellCompanionAbs]
     protected def getDefaultRep = Tell
   }
-  implicit lazy val TellCompanionElem: TellCompanionElem = new TellCompanionElem
 
   implicit def proxyTell(p: Rep[Tell]): Tell =
     proxyOps[Tell](p)
