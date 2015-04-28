@@ -36,7 +36,6 @@ trait Elems extends Base { self: Scalan =>
     lazy val name = getName
 
     override def toString = s"${getClass.getSimpleName}{$name}"
-    override def hashCode = tag.hashCode
 
     def <:<(e: Element[_]) = tag.tpe <:< e.tag.tpe
     def >:>(e: Element[_]) = e <:< this
@@ -61,6 +60,7 @@ trait Elems extends Base { self: Scalan =>
       case other: BaseElem[_] => other.canEqual(this) && tag.tpe =:= other.tag.tpe
       case _ => false
     }
+    override def hashCode = tag.tpe.hashCode
   }
 
   case class PairElem[A, B](eFst: Elem[A], eSnd: Elem[B]) extends Element[(A, B)] {

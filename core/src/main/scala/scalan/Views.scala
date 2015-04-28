@@ -22,6 +22,7 @@ trait Views extends Elems { self: Scalan =>
       case other: EntityElem[_] => other.canEqual(this) && tag.tpe =:= other.tag.tpe
       case _ => false
     }
+    override def hashCode = tag.tpe.hashCode
   }
   abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
     extends EntityElem[To] {
