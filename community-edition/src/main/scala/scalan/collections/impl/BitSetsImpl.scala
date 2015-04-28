@@ -23,9 +23,13 @@ trait BitSetsAbs extends BitSets with Scalan {
     override def tag = {
       weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertBitSet(x.asRep[BitSet])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[BitSet] =>  convertBitSet(x) }
+      tryConvert(element[BitSet], this, x, conv)
+    }
+
     def convertBitSet(x : Rep[BitSet]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[BitSetElem[_]])
+      assert(x.selfType1 match { case _: BitSetElem[_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

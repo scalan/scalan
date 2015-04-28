@@ -27,9 +27,13 @@ trait CollectionsAbs extends Collections with Scalan {
       implicit val tagA = elem.tag
       weakTypeTag[Collection[A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertCollection(x.asRep[Collection[A]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[Collection[A]] =>  convertCollection(x) }
+      tryConvert(element[Collection[A]], this, x, conv)
+    }
+
     def convertCollection(x : Rep[Collection[A]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[CollectionElem[_,_]])
+      assert(x.selfType1 match { case _: CollectionElem[_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -66,9 +70,13 @@ trait CollectionsAbs extends Collections with Scalan {
       implicit val tagB = eB.tag
       weakTypeTag[IPairCollection[A, B]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertIPairCollection(x.asRep[IPairCollection[A, B]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[IPairCollection[A, B]] =>  convertIPairCollection(x) }
+      tryConvert(element[IPairCollection[A, B]], this, x, conv)
+    }
+
     def convertIPairCollection(x : Rep[IPairCollection[A, B]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[IPairCollectionElem[_,_,_]])
+      assert(x.selfType1 match { case _: IPairCollectionElem[_,_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -90,9 +98,13 @@ trait CollectionsAbs extends Collections with Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[INestedCollection[A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertINestedCollection(x.asRep[INestedCollection[A]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[INestedCollection[A]] =>  convertINestedCollection(x) }
+      tryConvert(element[INestedCollection[A]], this, x, conv)
+    }
+
     def convertINestedCollection(x : Rep[INestedCollection[A]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[INestedCollectionElem[_,_]])
+      assert(x.selfType1 match { case _: INestedCollectionElem[_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

@@ -31,9 +31,13 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     override def tag = {
       weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertSThrowable(x.asRep[SThrowable])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[SThrowable] =>  convertSThrowable(x) }
+      tryConvert(element[SThrowable], this, x, conv)
+    }
+
     def convertSThrowable(x : Rep[SThrowable]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[SThrowableElem[_]])
+      assert(x.selfType1 match { case _: SThrowableElem[_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

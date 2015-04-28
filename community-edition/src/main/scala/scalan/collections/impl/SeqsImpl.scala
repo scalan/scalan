@@ -53,9 +53,13 @@ trait SeqsAbs extends Seqs with Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[SSeq[A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertSSeq(x.asRep[SSeq[A]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[SSeq[A]] =>  convertSSeq(x) }
+      tryConvert(element[SSeq[A]], this, x, conv)
+    }
+
     def convertSSeq(x : Rep[SSeq[A]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[SSeqElem[_,_]])
+      assert(x.selfType1 match { case _: SSeqElem[_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

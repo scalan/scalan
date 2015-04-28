@@ -1,5 +1,7 @@
 package scalan
 
+import scalan.staged.Expressions
+
 trait Converters extends Views { self: Scalan =>
 
   type Conv[T,R] = Rep[Converter[T,R]]
@@ -48,12 +50,27 @@ trait Converters extends Views { self: Scalan =>
 }
 
 trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
+  def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To]
 }
 
 trait ConvertersDslSeq extends impl.ConvertersSeq { self: ScalanSeq =>
+  def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To] = conv(x.asRep[From])
 }
 
-trait ConvertersDslExp extends impl.ConvertersExp { self: ScalanExp =>
+trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: ScalanExp =>
+
+  case class Convert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To])
+    extends BaseDef[To]()(eTo) {
+    def uniqueOpId: String = name(eFrom, eTo)
+    def mirror(f: Transformer): Rep[To] = Convert(eFrom, eTo, f(x), f(conv))
+  }
+
+  def tryConvert[From, To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To] = {
+    if (x.elem <:< eFrom)
+      conv(x.asRep[From])
+    else
+      Convert(eFrom, eTo, x, conv)
+  }
 
   object HasConv {
     def unapply[A,B](elems: (Elem[A], Elem[B])): Option[Conv[A,B]] = hasConverter(elems._1, elems._2)
@@ -100,5 +117,10 @@ trait ConvertersDslExp extends impl.ConvertersExp { self: ScalanExp =>
     }
   }
 
-
+  override def rewriteDef[T](d: Def[T]) = d match {
+    // Rule: convert(eFrom, eTo, x, conv) if x.elem <:< eFrom  ==>  conv(x)
+    case Convert(eFrom: Elem[from], eTo: Elem[to], x,  conv) if x.elem <:< eFrom =>
+      conv(x)
+    case _ => super.rewriteDef(d)
+  }
 }

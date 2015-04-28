@@ -23,9 +23,13 @@ trait KindsAbs extends Kinds with Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[Kind[F, A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertKind(x.asRep[Kind[F, A]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[Kind[F, A]] =>  convertKind(x) }
+      tryConvert(element[Kind[F, A]], this, x, conv)
+    }
+
     def convertKind(x : Rep[Kind[F, A]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[KindElem[_,_,_]])
+      assert(x.selfType1 match { case _: KindElem[_,_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

@@ -23,9 +23,13 @@ trait ConvertersAbs extends Converters  {
       implicit val tagR = eRange.tag
       weakTypeTag[Converter[T, R]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertConverter(x.asRep[Converter[T, R]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[Converter[T, R]] =>  convertConverter(x) }
+      tryConvert(element[Converter[T, R]], this, x, conv)
+    }
+
     def convertConverter(x : Rep[Converter[T, R]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[ConverterElem[_,_,_]])
+      assert(x.selfType1 match { case _: ConverterElem[_,_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

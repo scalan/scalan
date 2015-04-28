@@ -65,7 +65,7 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
     compareOutputWithSequential(progStaged)(progSeq.simpleIf, progStaged.simpleIf, "simpleIf", in)
   }
   test("simpleSum") {
-    pending
+    //pending
     val in = 7
     compareOutputWithSequential(progStaged)(progSeq.simpleSum, progStaged.simpleSum, "simpleSum", in)
   }

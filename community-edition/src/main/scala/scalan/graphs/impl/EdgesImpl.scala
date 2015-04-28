@@ -29,9 +29,13 @@ trait EdgesAbs extends Edges with Scalan {
       implicit val tagE = eE.tag
       weakTypeTag[Edge[V, E]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertEdge(x.asRep[Edge[V, E]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[Edge[V, E]] =>  convertEdge(x) }
+      tryConvert(element[Edge[V, E]], this, x, conv)
+    }
+
     def convertEdge(x : Rep[Edge[V, E]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[EdgeElem[_,_,_]])
+      assert(x.selfType1 match { case _: EdgeElem[_,_,_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

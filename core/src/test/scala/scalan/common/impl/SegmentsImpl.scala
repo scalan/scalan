@@ -23,9 +23,13 @@ trait SegmentsAbs extends Segments with Scalan {
     override def tag = {
       weakTypeTag[Segment].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertSegment(x.asRep[Segment])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[Segment] =>  convertSegment(x) }
+      tryConvert(element[Segment], this, x, conv)
+    }
+
     def convertSegment(x : Rep[Segment]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[SegmentElem[_]])
+      assert(x.selfType1 match { case _: SegmentElem[_] => true case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???

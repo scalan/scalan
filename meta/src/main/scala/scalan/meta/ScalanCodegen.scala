@@ -427,7 +427,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
              if (cont)
                s"[${cont.opt(e.typesUsePref)}To${cont.opt(s", ${e.entityNameBT}, $entityName")}]"
              else
-               s"[${e.entityNameBT}, To]",
+               s"[${e.entityNameBT}${e.tpeArgUseString}, To]",
              s"${cont.opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.entityNameBT}], container[$entityName])")}")
           case Some(STraitCall(parentName, parentTypes)) =>
             (s"${parentName}Elem",
@@ -450,9 +450,13 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         }).mkString("\n")}
         |      weakTypeTag[${e.entityType}].asInstanceOf[WeakTypeTag[To]]
         |    }
-        |    override def convert(x: Rep[Reifiable[_]]) = convert$entityName(x.asRep[${e.entityType}])
+        |    override def convert(x: Rep[Reifiable[_]]) = {
+        |      val conv = fun {x: Rep[${e.entityType}] =>  convert$entityName(x) }
+        |      tryConvert(element[${e.entityType}], this, x, conv)
+        |    }
+        |
         |    def convert$entityName(x : Rep[${e.entityType}]): Rep[To] = {
-        |      //assert(x.selfType1.isInstanceOf[${e.name}Elem[${underscores}_]])
+        |      assert(x.selfType1 match { case _: ${e.name}Elem[${underscores}_] => true case _ => false })
         |      x.asRep[To]
         |    }
         |    override def getDefaultRep: Rep[To] = ???

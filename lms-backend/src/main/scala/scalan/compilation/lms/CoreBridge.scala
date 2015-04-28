@@ -11,7 +11,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
   val lms: CoreLmsBackendBase
 
   override def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
-    case _: CompanionBase[_] =>
+    case _: CompanionBase[_] =>  //TODO backend
       // ignore companion objects
       m
 
@@ -20,15 +20,15 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
       m.addSym(sym, exp)
 
     case lr@NewObject(aClass, args, _) =>
-      Manifest.classType(aClass) match {
+      Manifest.classType(aClass) match { //TODO backend: better manifest construction
         case (mA: Manifest[a]) =>
           val exp = newObj[a](m, aClass, args.asInstanceOf[Seq[Rep[_]]], true)(mA)
           m.addSym(sym, exp)
       }
 
     case lam: Lambda[a, b] =>
-      val mA = createManifest(lam.x.elem).asInstanceOf[Manifest[a]]
-      val mB = createManifest(lam.y.elem).asInstanceOf[Manifest[b]]
+      val mA = createManifest(lam.eA).asInstanceOf[Manifest[a]]
+      val mB = createManifest(lam.eB).asInstanceOf[Manifest[b]]
       val f = m.mirrorLambda[a, b](lam)
       val fun = lms.fun(f)(mA, mB)
       m.addFuncAndSym(sym, f, fun)
@@ -95,6 +95,17 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           val left = m.symMirror[a => r](l)
           val right = m.symMirror[b => r](r)
           val exp = lms.make_fold(sum, left, right)
+          m.addSym(sym, exp)
+      }
+
+    case SumMap(s, l, r) =>
+      (createManifest(s.elem.eLeft), createManifest(s.elem.eRight), createManifest(l.elem.eRange), createManifest(r.elem.eRange)) match {
+        case (mA: Manifest[a], mB: Manifest[b], mC: Manifest[c], mD: Manifest[d]) =>
+          implicit val (imA, imB, imC, imD) = (mA, mB, mC, mD)
+          val sum = m.symMirror[Either[a, b]](s)
+          val left = m.symMirror[a => c](l)
+          val right = m.symMirror[b => d](r)
+          val exp = lms.make_map(sum, left, right)
           m.addSym(sym, exp)
       }
 
