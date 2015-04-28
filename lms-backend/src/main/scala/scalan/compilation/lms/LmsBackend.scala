@@ -37,6 +37,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     arg.toInt
   }
 
+  def LongToIntExt(arg: Exp[Long]) = {
+    long_toint(arg)
+  }
+
   def DoubleToFloat(arg: Exp[Double]) = {
     arg.toFloat
   }
