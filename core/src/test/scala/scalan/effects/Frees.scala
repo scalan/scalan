@@ -60,7 +60,7 @@ trait Frees extends Base { self: MonadsDsl =>
 //      Monad[G].flatMap(trans(a)) { s =>
 //        f(s).foldMap(trans)
 //      }
-    override def step = a match {
+    override lazy val step: Rep[Free[F,B]] = a match {
       case Def(b: Bind[F,s,S]) => b.a.flatMap((a: Rep[s]) => b.f(a).flatMap(s => f(s))).step
       case Def(ret: Return[F,S]) => f(ret.a).step
       case _ => self
