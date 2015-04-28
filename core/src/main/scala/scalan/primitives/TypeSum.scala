@@ -10,7 +10,9 @@ trait TypeSum { self: Scalan =>
     def isLeft: Rep[Boolean]
     def isRight: Rep[Boolean]
     def fold[R](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R]
+    def foldBy[R](l: Rep[A => R], r: Rep[B => R]): Rep[R]
     def mapSum[C,D](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]): Rep[C|D]
+    def mapSumBy[C,D](fl: Rep[A => C], fr: Rep[B => D]): Rep[C|D]
   }
 
   implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B]
@@ -29,15 +31,19 @@ trait TypeSum { self: Scalan =>
   }
 
   implicit class JoinSumOps[A:Elem](sum: Rep[A|A]) {
-    def joinSum: Rep[A] = sum.fold(a => a, a => a)
+    def joinSum: Rep[A] = sum.foldBy(identityFun, identityFun)
   }
   implicit class OptionOps[A:Elem](opt: Rep[Unit|A]) {
     def map[B:Elem](f: Rep[A] => Rep[B]): Rep[Unit | B] =
-      opt.mapSum(identity, f)
+      opt.mapSumBy(identityFun, fun(f))
     def flatMap[B: Elem](f: Rep[A] => Rep[Unit | B]): Rep[Unit | B] =
-      opt.fold(_ => toLeftSum[Unit, B](()), f)
+      opt.foldBy(constFun(SOption.none[B]), fun(f))
     def getOrElse[B >: A : Elem](default: Rep[B]): Rep[B] =
-      opt.fold(l => default, r => r)
+      opt.foldBy(constFun(default), identityFun)
+  }
+  object SOption {
+    def none[A: Elem] = toLeftSum[Unit, A](())
+    def some[A](x: Rep[A]) = toRightSum[Unit, A](x)
   }
 }
 
@@ -48,15 +54,15 @@ trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
   def toRightSum[A: Elem, B](a: Rep[B]): Rep[(A | B)] = Right[A, B](a)
 
   class SeqSumOps[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
-    //def eA = element[A]; def eB = element[B]
-    def fold[R](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = s.fold(l, r)
-    def mapSum[C, D](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) =
+    def fold[R](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = foldBy(l, r)
+    def foldBy[R](l: Rep[A => R], r: Rep[B => R]): Rep[R] = s.fold(l, r)
+    def mapSum[C, D](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) = mapSumBy(fl, fr)
+    def mapSumBy[C, D](fl: Rep[A => C], fr: Rep[B => D]) =
       s.fold(x => Left(fl(x)), y => Right(fr(y)))
     def isLeft = s.isLeft
     def isRight = s.isRight
   }
   implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B] = new SeqSumOps[A, B](s)
-
 }
 
 trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
@@ -105,10 +111,12 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
   }
 
   class SumOpsExp[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
-    implicit def eA: Elem[A] = s.elem.eLeft
-    implicit def eB: Elem[B] = s.elem.eRight
-    def fold[R](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = SumFold(s, fun(l), fun(r))
-    def mapSum[C,D](l: Rep[A] => Rep[C], r: Rep[B] => Rep[D]): Rep[C | D] = SumMap(s, fun(l), fun(r))
+    implicit def eLeft: Elem[A] = s.elem.eLeft
+    implicit def eRight: Elem[B] = s.elem.eRight
+    def fold[R](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = foldBy(fun(l), fun(r))
+    def foldBy[R](l: Rep[A => R], r: Rep[B => R]): Rep[R] = SumFold(s, l, r)
+    def mapSum[C, D](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) = mapSumBy(fun(fl), fun(fr))
+    def mapSumBy[C, D](l: Rep[A => C], r: Rep[B => D]): Rep[C | D] = SumMap(s, l, r)
     def isLeft = IsLeft(s)
     def isRight = IsRight(s)
   }
@@ -203,15 +211,15 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
         __ifThenElse[T](c, SumFold(t, foldD.left, foldD.right), SumFold(e, foldD.left, foldD.right))
 
       // Rule: fold(SumView(source, iso1, iso2), l, r) ==> fold(source, iso1.to >> l, iso2.to >> r)
-      case Def(view: SumView[a1, a2, b1, b2])  =>
+      case Def(view: SumView[a1, a2, b1, b2]) =>
         view.source.fold(x => foldD.left.asRep[b1 => T](view.iso1.to(x)), y => foldD.right.asRep[b2 => T](view.iso2.to(y)))
 
       // Rule: fold(fold(sum, id, id), l, r) ==> fold(sum, x => fold(x, l, r), y => fold(y, l, r))
       case Def(join@IsJoinSum(sum)) =>
         val source = sum.asRep[(a | b) | (a | b)]
         source.fold(
-          x => x.fold(a => foldD.left(a), b => foldD.right(b)),
-          y => y.fold(a => foldD.left(a), b => foldD.right(b)))
+          x => x.foldBy(foldD.left, foldD.right),
+          y => y.foldBy(foldD.left, foldD.right))
 
       // Rule: fold(Left(left), l, r) ==> l(left)
       case Def(Left(left: Rep[a])) =>

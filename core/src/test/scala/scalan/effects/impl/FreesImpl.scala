@@ -336,6 +336,18 @@ trait FreesExp extends FreesDsl with ScalanExp {
   object ReturnMethods {
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
 
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[Return[F, A]], Rep[A => Free[F,B]]) forSome {type F[_]; type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Return[F, A]], Rep[A => Free[F,B]]) forSome {type F[_]; type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Return[F, A]], Rep[A => Free[F,B]]) forSome {type F[_]; type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object foldMap {
       def unapply(d: Def[_]): Option[(Rep[Return[F, A]], $tilde$greater[F,G]) forSome {type F[_]; type A; type G[_]}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "foldMap" =>
@@ -418,6 +430,18 @@ trait FreesExp extends FreesDsl with ScalanExp {
   object BindMethods {
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f1
 
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[Bind[F, S, B]], Rep[B => Free[F,R]]) forSome {type F[_]; type S; type B; type R}] = d match {
+        case MethodCall(receiver, method, Seq(f1, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
+          Some((receiver, f1)).asInstanceOf[Option[(Rep[Bind[F, S, B]], Rep[B => Free[F,R]]) forSome {type F[_]; type S; type B; type R}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Bind[F, S, B]], Rep[B => Free[F,R]]) forSome {type F[_]; type S; type B; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object foldMap {
       def unapply(d: Def[_]): Option[(Rep[Bind[F, S, B]], $tilde$greater[F,G]) forSome {type F[_]; type S; type B; type G[_]}] = d match {
         case MethodCall(receiver, method, Seq(trans, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "foldMap" =>
@@ -425,18 +449,6 @@ trait FreesExp extends FreesDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[Bind[F, S, B]], $tilde$greater[F,G]) forSome {type F[_]; type S; type B; type G[_]}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
-    object step {
-      def unapply(d: Def[_]): Option[Rep[Bind[F, S, B]] forSome {type F[_]; type S; type B}] = d match {
-        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "step" =>
-          Some(receiver).asInstanceOf[Option[Rep[Bind[F, S, B]] forSome {type F[_]; type S; type B}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Rep[Bind[F, S, B]] forSome {type F[_]; type S; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -458,6 +470,18 @@ trait FreesExp extends FreesDsl with ScalanExp {
 
   object FreeMethods {
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
+
+    object flatMapBy {
+      def unapply(d: Def[_]): Option[(Rep[Free[F, A]], Rep[A => Free[F,B]]) forSome {type F[_]; type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Free[F, A]], Rep[A => Free[F,B]]) forSome {type F[_]; type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Free[F, A]], Rep[A => Free[F,B]]) forSome {type F[_]; type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
 
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = d match {

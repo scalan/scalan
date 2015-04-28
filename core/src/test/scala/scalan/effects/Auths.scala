@@ -16,7 +16,7 @@ trait Authentications { self: AuthenticationsDsl =>
   trait AuthCompanion
 
   abstract class Login(val user: Rep[String], val password: Rep[String]) extends Auth[Unit | String] {
-    def eA = element[Unit | String]
+    val eA = element[Unit | String]
 
     def toOper = {
       for {
@@ -25,7 +25,7 @@ trait Authentications { self: AuthenticationsDsl =>
         IF (cond) {
           toRight("john.snow")
         } ELSE {
-          toLeftSum[Unit,String](())
+          SOption.none[String]
         }
     }
   }

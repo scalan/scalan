@@ -250,18 +250,6 @@ trait AuthenticationsExp extends AuthenticationsDsl with ScalanExp {
   }
 
   object LoginMethods {
-    object eA {
-      def unapply(d: Def[_]): Option[Rep[Login]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[LoginElem] && method.getName == "eA" =>
-          Some(receiver).asInstanceOf[Option[Rep[Login]]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Rep[Login]] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object toOper {
       def unapply(d: Def[_]): Option[Rep[Login]] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[LoginElem] && method.getName == "toOper" =>

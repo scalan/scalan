@@ -21,6 +21,8 @@ trait Functions { self: Scalan =>
   //def fun[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = mkLambda(f)
   //def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
   //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C]
+  def identityFun[A: Elem]: Rep[A => A]
+  def constFun[A: Elem, B](x: Rep[B]): Rep[A => B]
 }
 
 trait FunctionsSeq extends Functions { self: ScalanSeq =>
@@ -42,6 +44,8 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
 //  def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = {
 //    f(letrec(f, mayInline))(_)
 //  }
+  def identityFun[A: Elem]: Rep[A => A] = x => x
+  def constFun[A: Elem, B](x: Rep[B]): Rep[A => B] = _ => x
 }
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanExp =>
@@ -303,5 +307,13 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def functionSplit[A, B, C](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] =
     fun { (x: Rep[A]) => Pair(f(x), g(x)) }(Lazy(f.elem.eDom))
+
+  private val identityFuns = collection.mutable.Map.empty[Element[_], Exp[_]]
+  def identityFun[A](implicit e: Element[A]) =
+    identityFuns.getOrElseUpdate(e, fun[A, A](x => x)).asRep[A => A]
+
+  private val constFuns = collection.mutable.Map.empty[(Element[_], Exp[_]), Exp[_]]
+  def constFun[A, B](x: Rep[B])(implicit e: Element[A]) =
+    constFuns.getOrElseUpdate((e, x), fun[A, B](_ => x)).asRep[A => B]
 }
 
