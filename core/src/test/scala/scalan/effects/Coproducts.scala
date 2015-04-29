@@ -56,6 +56,8 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
           c.run.fold(fa => self(fa),
                      ha => f(ha))
       }
+
+    override def toString = s"${cIn.name} ~> ${cOut.name}"
   }
 
   sealed trait Inject[F[_],G[_]] {

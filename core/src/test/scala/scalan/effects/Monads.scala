@@ -111,6 +111,8 @@ trait Monads extends Base  with ListOps { self: MonadsDsl =>
         h(x)
       }
 
+    override def toString = s"Monad[${cF.name}}]"
+
     // syntax
     implicit def toMonadic[A:Elem](a: Rep[F[A]]): Monadic[F,A] =
       new Monadic[F,A] { val F = Monad.this; val eA = element[A]; def get = a }

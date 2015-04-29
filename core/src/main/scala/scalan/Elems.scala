@@ -27,12 +27,7 @@ trait Elems extends Base { self: Scalan =>
     // should only be called by defaultRepValue
     protected def getDefaultRep: Rep[A]
     lazy val defaultRepValue = getDefaultRep
-    protected def getName = tag.tpe.toString.
-      replaceAll("[A-Za-z0-9_.]*this.", "").
-      replace("scala.math.Numeric$", "").
-      replace("scala.", "").
-      replace("java.lang.", "").
-      replaceAll("""[^# \[\],>]*[#$]""", "")
+    protected def getName = cleanUpTypeName(tag.tpe)
     lazy val name = getName
 
     override def toString = s"${getClass.getSimpleName}{$name}"
@@ -40,6 +35,14 @@ trait Elems extends Base { self: Scalan =>
     def <:<(e: Element[_]) = tag.tpe <:< e.tag.tpe
     def >:>(e: Element[_]) = e <:< this
   }
+
+  def cleanUpTypeName(tpe: Type) = tpe.toString.
+    replaceAll("[A-Za-z0-9_.]*this.", "").
+    replace("scala.math.Numeric$", "").
+    replace("scala.math.Ordering$", "").
+    replace("scala.", "").
+    replace("java.lang.", "").
+    replaceAll("""[^# \[\],>]*[#$]""", "")
 
   def element[A](implicit ea: Elem[A]): Elem[A] = ea
 
