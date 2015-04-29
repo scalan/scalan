@@ -139,9 +139,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
   def liftFromSumFold[T1,T2,A,B](
         sum: Rep[T1|T2], left: Rep[T1 => B], right: Rep[T2 => B], iso: Iso[A,B]): Rep[B] = {
     implicit val eA = iso.eFrom
-    val l1 = { l: Rep[T1] => iso.from(left(l))}
-    val r1 = { r: Rep[T2] => iso.from(right(r))}
-    val res = sum.fold(l1, r1)
+    val res = sum.foldBy(iso.fromFun << left, iso.fromFun << right)
     iso.to(res)
   }
 
@@ -150,9 +148,8 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
         iso1: Iso[A,C], iso2: Iso[B,D],
         toD: Conv[C,D], toC: Conv[D,C]): Rep[C] = {
     implicit val eA = iso1.eFrom
-    val l1 = { l: Rep[T1] => iso1.from(left(l))}
-    val r1 = { r: Rep[T2] => iso1.from(toC(right(r)))}
-    iso1.to(sum.fold(l1, r1))
+    val res = sum.foldBy(iso1.fromFun << left, iso1.fromFun << toC.convFun << right)
+    iso1.to(res)
   }
 
   val FindFoldArg = FindArg(a => a match {
@@ -166,11 +163,13 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
     // Rule: fold(s, l, r)._1 ==> fold(s, x => l(x)._1, y => r(y)._1)
     case First(Def(foldD: SumFold[a, b, (T, r2)]@unchecked)) =>
-      foldD.sum.fold(a => foldD.left(a)._1, b => foldD.right(b)._1)
+      implicit val eRes = foldD.selfType
+      foldD.sum.foldBy(foldD.left >> fun(_._1), foldD.right >> fun(_._1))
 
     // Rule: fold(s, l, r)._2 ==> fold(s, x => l(x)._2, y => r(y)._2)
     case Second(Def(foldD: SumFold[a, b, (r1, T)]@unchecked)) =>
-      foldD.sum.fold(a => foldD.left(a)._2, b => foldD.right(b)._2)
+      implicit val eRes = foldD.selfType
+      foldD.sum.foldBy(foldD.left >> fun(_._2), foldD.right >> fun(_._2))
 
     // Rule: Left[A,B](V(a, iso)) ==> V(Left(a), SumIso(iso, iso[B]))
     case l@Left(HasViews(a, iso: Iso[a1, b1])) =>
@@ -187,13 +186,13 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
       }
 
     case m1 @ SumMap(Def(f: SumFold[a0,b0,_]), left, right) =>
-      f.sum.fold(a0 => left(f.left(a0)), b0 => right(f.right(b0)))
+      f.sum.foldBy(left << f.left, right << f.right)
 
     case m1 @ SumMap(Def(m2: SumMap[a0,b0,a1,b1]), left, right) =>
-      m2.sum.mapSum(a0 => left(m2.left(a0)), b0 => right(m2.right(b0)))
+      m2.sum.mapSumBy(left << m2.left, right << m2.right)
 
     case f @ SumFold(Def(m: SumMap[a0,b0,a,b]), left, right) =>
-      m.sum.fold(x => left(m.left(x)), y => right(m.right(y)))
+      m.sum.foldBy(left << m.left, right << m.right)
 
     case foldD @ SumFold(sum,
       LambdaResultHasViews(left,  iso1: Iso[a, c]),
@@ -203,7 +202,6 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
       newFold
     }
 
-
     case foldD: SumFold[a, b, T] => foldD.sum match {
 
       // Rule: fold(if (c) t else e, l, r) ==> if (c) fold(t, l, r) else fold(e, l, r)
@@ -212,14 +210,14 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
       // Rule: fold(SumView(source, iso1, iso2), l, r) ==> fold(source, iso1.to >> l, iso2.to >> r)
       case Def(view: SumView[a1, a2, b1, b2]) =>
-        view.source.fold(x => foldD.left.asRep[b1 => T](view.iso1.to(x)), y => foldD.right.asRep[b2 => T](view.iso2.to(y)))
+        view.source.foldBy(foldD.left.asRep[b1 => T] << view.iso1.toFun, foldD.right.asRep[b2 => T] << view.iso2.toFun)
 
       // Rule: fold(fold(sum, id, id), l, r) ==> fold(sum, x => fold(x, l, r), y => fold(y, l, r))
       case Def(join@IsJoinSum(sum)) =>
         val source = sum.asRep[(a | b) | (a | b)]
-        source.fold(
-          x => x.foldBy(foldD.left, foldD.right),
-          y => y.foldBy(foldD.left, foldD.right))
+        implicit val eRes: Elem[a | b] = source.elem.eLeft
+        val f1 = fun { x: Rep[a | b] => x.foldBy(foldD.left, foldD.right) }
+        source.foldBy(f1, f1)
 
       // Rule: fold(Left(left), l, r) ==> l(left)
       case Def(Left(left: Rep[a])) =>

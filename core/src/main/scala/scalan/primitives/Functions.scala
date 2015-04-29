@@ -9,6 +9,8 @@ import scalan.common.Lazy
 trait Functions { self: Scalan =>
   implicit class LambdaOps[A,B](f: Rep[A => B]) {
     def apply(x: Rep[A]): Rep[B] = mkApply(f, x)
+    def >>[C](g: Rep[B => C]) = compose(g, f)
+    def <<[C](g: Rep[C => A]) = compose(f, g)
   }
   def par[B:Elem](nJobs: Rep[Int], f: Rep[Int=>B]): Arr[B]
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B]
@@ -23,6 +25,7 @@ trait Functions { self: Scalan =>
   //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C]
   def identityFun[A: Elem]: Rep[A => A]
   def constFun[A: Elem, B](x: Rep[B]): Rep[A => B]
+  def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C]
 }
 
 trait FunctionsSeq extends Functions { self: ScalanSeq =>
@@ -46,6 +49,7 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
 //  }
   def identityFun[A: Elem]: Rep[A => A] = x => x
   def constFun[A: Elem, B](x: Rep[B]): Rep[A => B] = _ => x
+  def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = x => f(g(x))
 }
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanExp =>
@@ -315,5 +319,17 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   private val constFuns = collection.mutable.Map.empty[(Element[_], Exp[_]), Exp[_]]
   def constFun[A, B](x: Rep[B])(implicit e: Element[A]) =
     constFuns.getOrElseUpdate((e, x), fun[A, B](_ => x)).asRep[A => B]
+
+  def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = {
+    f match {
+      case Def(l: Lambda[_, _]) if l.isIdentity => g.asRep[A => C]
+      case _ => g match {
+        case Def(l: Lambda[_, _]) if l.isIdentity => f.asRep[A => C]
+        case _ =>
+          implicit val eA = g.elem.eDom
+          fun { x => f(g(x)) }
+      }
+    }
+  }
 }
 

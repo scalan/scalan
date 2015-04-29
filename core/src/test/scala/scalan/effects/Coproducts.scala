@@ -74,16 +74,16 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
     implicit def injLeft[F[_]:Cont,G[_]:Cont] = new Inject[F,({type λ[α] = Coproduct[F,G,α]})#λ] {
       def inj[A:Elem](sub: Rep[F[A]]) = CoproductImpl(sub.asLeft[G[A]])
       def prj[A:Elem](sup: Rep[Coproduct[F,G,A]]) =
-        sup.run.fold(fa => toRight(fa),
-                     ga => SOption.none[F[A]])
+        sup.run.foldBy(fun { fa => toRight(fa) },
+                       constFun(SOption.none[F[A]]))
     }
 
     implicit def injRight[F[_]:Cont,G[_]:Cont,H[_]:Cont](implicit I: Inject[F,G]) =
       new Inject[F,({type f[x] = Coproduct[H,G,x]})#f] {
         def inj[A:Elem](sub: Rep[F[A]]) = CoproductImpl(I.inj(sub).asRight[H[A]])
         def prj[A:Elem](sup: Rep[Coproduct[H,G,A]]) =
-          sup.run.fold(ha => SOption.none[F[A]],
-                       ga => I.prj(ga))
+          sup.run.foldBy(constFun(SOption.none[F[A]]),
+                         fun { ga => I.prj(ga) })
       }
   }
 

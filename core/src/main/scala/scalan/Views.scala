@@ -58,6 +58,8 @@ trait Views extends Elems { self: Scalan =>
       case _ => false
     }
     def isIdentity: Boolean = false
+    lazy val fromFun = fun { x: Rep[To] => from(x) }(Lazy(eTo))
+    lazy val toFun = fun { x: Rep[From] => to(x) }
   }
 
   abstract class Iso1[A, B, C[_]](val innerIso: Iso[A,B])(implicit cC: Cont[C])
@@ -253,11 +255,9 @@ trait Views extends Elems { self: Scalan =>
     val eBB = element[B1 | B2]
     def eTo = eBB
     def from(b: Rep[B1 | B2]) =
-      b.mapSum(b1 => iso1.from(b1),
-               b2 => iso2.from(b2))
+      b.mapSumBy(iso1.fromFun, iso2.fromFun)
     def to(a: Rep[A1 | A2]) =
-      a.mapSum(a1 => iso1.to(a1),
-               a2 => iso2.to(a2))
+      a.mapSumBy(iso1.toFun, iso2.toFun)
     lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
