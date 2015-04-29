@@ -226,7 +226,6 @@ object GraphVizConfig {
     orientation = Portrait,
     maxLabelLineLength = 40,
     subgraphClusters = true)
-=======
 
   def none = default.copy(emitGraphs = false)
 }
