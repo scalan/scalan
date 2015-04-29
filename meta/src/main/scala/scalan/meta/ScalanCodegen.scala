@@ -2,6 +2,7 @@ package scalan.meta
 
 import scalan.util.{StringUtil, ScalaNameUtil}
 import scala.annotation.tailrec
+import ScalanAst._
 
 trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensions { ctx: EntityManagement =>
   import PrintExtensions._
@@ -189,7 +190,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         case STpePrimitive(name, _) => name
         case STraitCall(name, args) => mkId(name, args)
         case STpeTuple(items) => mkId("Tuple", items)
-        case STpeSum(items) => mkId("Sum", items)
+        //case STpeSum(items) => mkId("Sum", items)
         case STpeFunc(domain, range) => mkId("Func", Seq(domain, range))
         case STpeTypeBounds(lo, hi) => mkId("Bounds", Seq(lo, hi))
       }
@@ -242,7 +243,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
       val allArgs = md.argSections.flatMap(_.args)
       val typesDecl = md.tpeArgs.getBoundedTpeArgString(false)
-      val tyRetStr = tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))
+      val tyRetStr = tyRet.unRep(module, config.entityTypeSynonyms).getOrElse(!!!(msgRepRetType))
       val argClassesStr = allArgs.rep(a => s", classOf[AnyRef]", "")
       val elemClassesStr = (for {
         a <- md.tpeArgs
@@ -265,7 +266,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val msgExplicitRetType = "External constructors should be declared with explicit type of returning value (result type)"
       lazy val msgRepRetType = s"Invalid constructor declaration $md. External constructors should have return type of type Rep[T] for some T."
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
-      val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))
+      val unrepRet = tyRet.unRep(module, config.entityTypeSynonyms).getOrElse(!!!(msgRepRetType))
       val allArgs = md.argSections.flatMap(_.args)
       val typesDecl = md.tpeArgs.getBoundedTpeArgString(false)
       s"""
@@ -285,7 +286,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
 
       val obj = if (isInstance) "wrappedValueOfBaseType" else entityNameBT
 
-      val methodBody = tyRet.unRep(module, config) match {
+      val methodBody = tyRet.unRep(module, config.entityTypeSynonyms) match {
         case Some(STraitCall(name, _)) if name == entityName =>
           s"""      ${entityName}Impl($obj.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")})
           |""".stripMargin
@@ -999,11 +1000,11 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         }
 
         def reasonToSkipMethod(m: SMethodDef): Option[String] = {
-          (m.explicitArgs.collect { case SMethodArg(_,_, name, STpeFunc(_, _), _, _) => name} match {
+          (m.explicitArgs.collect { case SMethodArg(_,_, name, STpeFunc(_, _), _, _, _) => name} match {
             case Seq() => None
             case nonEmpty => Some(s"Method has function arguments ${nonEmpty.mkString(", ")}")
           }).orElse {
-            m.tpeRes.filter(!_.isRep(module, config)).map {
+            m.tpeRes.filter(!_.isRep(module, config.entityTypeSynonyms)).map {
               returnTpe => s"Method's return type $returnTpe is not a Rep"
             }
           }

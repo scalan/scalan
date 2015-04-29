@@ -13,8 +13,9 @@ import scala.tools.nsc.reporters.StoreReporter
 import scala.language.implicitConversions
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
+import ScalanAst._
 
-trait ScalanParsers extends ScalanAst {
+trait ScalanParsers {
   val settings = new Settings
   settings.embeddedDefaults(getClass.getClassLoader)
   settings.usejavacp.value = true
@@ -85,7 +86,7 @@ trait ScalanParsers extends ScalanAst {
       case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
     }
     val moduleTraitDef = traitDef(moduleTraitTree, moduleTraitTree)
-    val module = SEntityModuleDef(packageName, imports, moduleTraitDef, config)
+    val module = SEntityModuleDef(packageName, imports, moduleTraitDef)
     val moduleName = moduleTraitDef.name
 
     val dslSeq = fileTree.stats.collectFirst {
@@ -236,7 +237,7 @@ trait ScalanParsers extends ScalanAst {
         val tpeRes = optTpeExpr(vd.tpt)
         val isImplicit = vd.mods.isImplicit
         val isLazy = vd.mods.isLazy
-        Some(SValDef(vd.name, tpeRes, None, isImplicit, isLazy))
+        Some(SValDef(vd.name, tpeRes, isImplicit, isLazy, SEmpty()))
       } else
         None
     case EmptyTree =>
@@ -277,6 +278,7 @@ trait ScalanParsers extends ScalanAst {
     val args = if (!args0.isEmpty && args0.last.args.isEmpty) args0.init else args0
     val tpeRes = optTpeExpr(md.tpt)
     val isImplicit = md.mods.isImplicit
+    val isOverride = md.mods.isOverride
     val optOverloadId = md match {
       case OverloadIdAnnotation(List(Literal(Constant(overloadId)))) =>
         Some(overloadId.toString)
@@ -294,7 +296,7 @@ trait ScalanParsers extends ScalanAst {
     val optBody:Option[SExpr] = md.rhs match {
       case EmptyTree => None
       case Apply(ident:Ident, args) if ident.name.intern() == "sql" =>
-        Some(SApply(SLiteral("sql"), List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue))))
+        Some(SApply(SLiteral("sql"), List(), List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue))))
       case tree => Some(SDefaultExpr(tree.toString))
     }
     val isElemOrCont = md.tpt match {
@@ -304,7 +306,8 @@ trait ScalanParsers extends ScalanAst {
         false
     }
 
-    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, optOverloadId, annotations, optBody, isElemOrCont)
+    SMethodDef(md.name, tpeArgs, args, tpeRes, isImplicit, isOverride,
+      optOverloadId, annotations, optBody, isElemOrCont)
   }
 
   def methodArgs(vds: List[ValDef]): SMethodArgs = vds match {

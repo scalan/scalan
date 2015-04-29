@@ -1,9 +1,10 @@
 package scalan.meta
-
 /**
  * Created by knizhnik on 1/14/15.
  */
-trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
+import ScalanAst._
+
+trait SqlCompiler extends SqlAST with SqlParser {
   case class Scope(var ctx: Context, outer: Option[Scope], nesting: Int, name: String) {
     def lookup(col: ColumnRef): Binding = {
       ctx.resolve(col.table, col.name) match {

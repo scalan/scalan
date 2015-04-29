@@ -1,9 +1,10 @@
 package scalan.meta
-
 /**
  * Created by slesarenko on 23/02/15.
  */
-trait ScalanAstExtensions extends ScalanAst {
+import ScalanAst._
+
+trait ScalanAstExtensions {
   import scalan.meta.PrintExtensions._
 
   implicit class SMethodOrClassArgsOps(as: SMethodOrClassArgs) {
@@ -11,7 +12,7 @@ trait ScalanAstExtensions extends ScalanAst {
     def argNamesAndTypes = as.args.map(a => s"${a.name}: ${a.tpe}")
 
     def argUnrepTypes(module: SEntityModuleDef, config: CodegenConfig) =
-      as.args.map(a => a.tpe.unRep(module, config) match {
+      as.args.map(a => a.tpe.unRep(module, config.entityTypeSynonyms) match {
         case Some(t) => t
         case None => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
       })

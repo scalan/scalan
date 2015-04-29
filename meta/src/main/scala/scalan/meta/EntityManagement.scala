@@ -8,6 +8,7 @@ import java.io.File
 
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scalan.util.FileUtil
+import ScalanAst._
 
 case class CodegenConfig(
   name: String,
