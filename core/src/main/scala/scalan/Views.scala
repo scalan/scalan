@@ -57,10 +57,17 @@ trait Views extends Elems { self: Scalan =>
       case i: Iso[_, _] => eFrom == i.eFrom && eTo == i.eTo
       case _ => false
     }
+    override def hashCode = 41 * eFrom.hashCode + eTo.hashCode
     def isIdentity: Boolean = false
     lazy val fromFun = fun { x: Rep[To] => from(x) }(Lazy(eTo))
     lazy val toFun = fun { x: Rep[From] => to(x) }
+
+    if (isDebug) {
+      debug$IsoCounter(this) += 1
+    }
   }
+
+  private val debug$IsoCounter = counter[Iso[_, _]]
 
   abstract class Iso1[A, B, C[_]](val innerIso: Iso[A,B])(implicit cC: Cont[C])
     extends Iso[C[A], C[B]]()(cC.lift(innerIso.eFrom)) {

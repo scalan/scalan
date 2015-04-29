@@ -34,7 +34,13 @@ trait Elems extends Base { self: Scalan =>
 
     def <:<(e: Element[_]) = tag.tpe <:< e.tag.tpe
     def >:>(e: Element[_]) = e <:< this
+
+    if (isDebug) {
+      debug$ElementCounter(this) += 1
+    }
   }
+
+  private val debug$ElementCounter = counter[Elem[_]]
 
   def cleanUpTypeName(tpe: Type) = tpe.toString.
     replaceAll("[A-Za-z0-9_.]*this.", "").
