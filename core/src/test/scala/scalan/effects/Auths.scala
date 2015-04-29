@@ -16,7 +16,7 @@ trait Authentications { self: AuthenticationsDsl =>
   trait AuthCompanion
 
   abstract class Login(val user: Rep[String], val password: Rep[String]) extends Auth[Unit | String] {
-    def eA = element[Unit | String]
+    val eA = element[Unit | String]
 
     def toOper = {
       for {
@@ -25,7 +25,7 @@ trait Authentications { self: AuthenticationsDsl =>
         IF (cond) {
           toRight("john.snow")
         } ELSE {
-          toLeftSum[Unit,String](())
+          SOption.none[String]
         }
     }
   }
@@ -42,7 +42,7 @@ trait Authentications { self: AuthenticationsDsl =>
 trait AuthenticationsDsl extends ScalanDsl with impl.AuthenticationsAbs with Authentications
     with MonadsDsl {
 
-  implicit def AuthCont: Cont[Auth] = new Container[Auth] {
+  implicit val AuthCont: Cont[Auth] = new Container[Auth] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Auth[T]]
     def lift[T](implicit eT: Elem[T]) = element[Auth[T]]
   }

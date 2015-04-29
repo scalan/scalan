@@ -143,18 +143,22 @@ trait GraphVizExport { self: ScalanExp =>
         if (!emitted1.contains(s)) {
           d match {
             case g: AstGraph if shouldEmitCluster(g) =>
-//              stream.println(s"subgraph cluster_$s {")
-//              stream.println(s"style=dashed; color=${StringUtil.quote(clusterColor(g))}")
+              if (config.subgraphClusters) {
+                stream.println(s"subgraph cluster_$s {")
+                stream.println(s"style=dashed; color=${StringUtil.quote(clusterColor(g))}")
+              }
               emitNode(s, d)
               // for lambdas, do we want lambdaDeps instead?
               val sources = g.boundVars
-//              if (sources.nonEmpty) {
-//                stream.println(s"{rank=source; ${sources.mkString("; ")}}")
-//              }
+              if (config.subgraphClusters && sources.nonEmpty) {
+                stream.println(s"{rank=source; ${sources.mkString("; ")}}")
+              }
               val schedule1 = clusterSchedule(g)
               val emitted2 = emitClusters(schedule1, emitted1 + s)
-//              stream.println(s"{rank=sink; $s}")
-              //stream.println("}")
+              if (config.subgraphClusters) {
+                stream.println(s"{rank=sink; $s}")
+                stream.println("}")
+              }
               emitted2
             case _ =>
               emitNode(s, d)
@@ -200,14 +204,16 @@ object Landscape extends Orientation
 // outside the cake to be usable from ItTestsUtil
 case class GraphVizConfig(emitGraphs: Boolean,
                           orientation: Orientation,
-                          maxLabelLineLength: Int)
+                          maxLabelLineLength: Int,
+                          subgraphClusters: Boolean)
 object GraphVizConfig {
   // not made implicit because it would be too easy to use
   // it accidentally instead of passing up
   def default = GraphVizConfig(
     emitGraphs = true,
     orientation = Portrait,
-    maxLabelLineLength = 40)
+    maxLabelLineLength = 40,
+    subgraphClusters = true)
 
   def none = default.copy(emitGraphs = false)
 }

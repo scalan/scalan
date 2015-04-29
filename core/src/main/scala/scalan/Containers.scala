@@ -11,6 +11,24 @@ trait Containers { self: Scalan =>
   trait Container[F[_]] {
     def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[F[T]]
     def lift[T](implicit eT: Elem[T]): Elem[F[T]]
+
+    protected def getName = {
+      // note: will use WeakTypeTag[x], so x type parameter ends up in the result
+      // instead of the actual type parameter it's called with (see below)
+      def tpeA[x] = tag[x].tpe
+
+      val tpe = tpeA[Nothing]
+
+      val str = cleanUpTypeName(tpe)
+
+      if (str.endsWith("[x]"))
+        str.stripSuffix("[x]")
+      else
+        "[x]" + str
+    }
+    lazy val name = getName
+
+    override def toString = s"${getClass.getSimpleName}{$name}"
   }
 
   def container[F[_]: Cont] = implicitly[Cont[F]]

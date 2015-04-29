@@ -10,7 +10,8 @@ trait Frees extends Base { self: MonadsDsl =>
     implicit def eA: Elem[A]
     implicit def cF: Cont[F]
 
-    def flatMap[B:Elem](f: Rep[A] => Rep[Free[F,B]]): Rep[Free[F,B]] = Bind(self, fun(f))
+    def flatMap[B:Elem](f: Rep[A] => Rep[Free[F,B]]): Rep[Free[F,B]] = flatMapBy(fun(f))
+    def flatMapBy[B:Elem](f: Rep[A => Free[F,B]]): Rep[Free[F,B]] = Bind(self, f)
 
     def mapBy[B:Elem](f: Rep[A => B]): Rep[Free[F,B]] =
       flatMap(a => Return(f(a)))
@@ -28,6 +29,7 @@ trait Frees extends Base { self: MonadsDsl =>
         (implicit val eA: Elem[A], val cF: Cont[F]) extends Free[F,A]
   {
     override def flatMap[B:Elem](f: Rep[A] => Rep[Free[F,B]]): Rep[Free[F,B]] = f(a)
+    override def flatMapBy[B:Elem](f: Rep[A => Free[F,B]]): Rep[Free[F,B]] = f(a)
 
     def foldMap[G[_]:Monad](f: F ~> G): Rep[G[A]] = Monad[G].unit(a)
   }
@@ -45,9 +47,10 @@ trait Frees extends Base { self: MonadsDsl =>
         (val a: Rep[Free[F, S]], val f: Rep[S => Free[F,B]])
         (implicit val eS: Elem[S], val eA: Elem[B], val cF: Cont[F]) extends Free[F,B] {
 
-    override def flatMap[R:Elem](f1: Rep[B] => Rep[Free[F,R]]): Rep[Free[F,R]] = {
+    override def flatMap[R:Elem](f1: Rep[B] => Rep[Free[F,R]]): Rep[Free[F,R]] =
       a.flatMap((s: Rep[S]) => f(s).flatMap(f1))
-    }
+    override def flatMapBy[R:Elem](f1: Rep[B => Free[F,R]]): Rep[Free[F,R]] =
+      a.flatMap((s: Rep[S]) => f(s).flatMapBy(f1))
 
     def foldMap[G[_]:Monad](trans: F ~> G): Rep[G[B]] = a match {
       case Def(susp: Suspend[F,S]) =>
@@ -60,8 +63,8 @@ trait Frees extends Base { self: MonadsDsl =>
 //      Monad[G].flatMap(trans(a)) { s =>
 //        f(s).foldMap(trans)
 //      }
-    override def step = a match {
-      case Def(b: Bind[F,s,S]) => b.a.flatMap((a: Rep[s]) => b.f(a).flatMap(s => f(s))).step
+    override lazy val step: Rep[Free[F,B]] = a match {
+      case Def(b: Bind[F,s,S]) => b.a.flatMap((a: Rep[s]) => b.f(a).flatMapBy(f)).step
       case Def(ret: Return[F,S]) => f(ret.a).step
       case _ => self
     }

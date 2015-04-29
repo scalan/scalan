@@ -20,7 +20,6 @@ class InteractAuthExamplesTests extends BaseTests {
 
   // TODO test passes but takes multiple minutes and has huge IDs in the runApp graph (s1932149!)
   test("crossDomainStaged") {
-    pending
     val ctx = new TestContext(this, "crossDomainStaged") with CrossDomainExample with InteractionsDslExp with AuthenticationsDslExp {
       override def isInvokeEnabled(d: Def[_], m: Method) = true
     }
