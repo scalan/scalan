@@ -5,11 +5,12 @@ import scala.util.parsing.combinator.PackratParsers
 import scala.util.parsing.combinator.lexical.StdLexical
 import scala.util.parsing.combinator.syntactical.StandardTokenParsers
 import scala.util.parsing.input.CharArrayReader.EofCh
+import SqlAST._
 
 /**
  * Created by knizhnik on 1/13/15.
  */
-trait SqlParser extends SqlAST {
+trait SqlParser {
 
   def parseDDL(sql: String) = Grammar.schema(sql)
   def parseSelect(sql: String) = Grammar.select(sql)
