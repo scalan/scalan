@@ -5,7 +5,6 @@ package lms
 import java.io.File
 
 import scalan.compilation.language.{CoreMethodMappingDSL, MethodMappingDSL}
-import scalan.compilation.lms.graph.LmsOutputGraphExport
 import scalan.util.FileUtil
 
 trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxExp with LmsBridge =>
@@ -51,16 +50,13 @@ trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxEx
     // pass scalan phases
     val graph = super.buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
 
-//    (createManifest[A], createManifest[B]) match {
-//      case (mA: Manifest[a], mB: Manifest[b]) =>
-
     func.elem match
     {
       case f:FuncElem[a, b] =>
         println(s"func.elem ${f.eDom} ${f.eRange}")
         (createManifest(f.eDom), createManifest(f.eRange)) match {
           case (mA: Manifest[a], mB: Manifest[b]) =>
-            val codegen = lms.grapfCodegen
+            val codegen = lms.graphCodegen
             val lmsFunc = apply[a, b](graph)
 
             val log = new File(sourcesDir, s"${functionName}_lms.log")
@@ -73,19 +69,12 @@ trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxEx
               }
             }
 
-            println("=== codegen.graphStream.roots.head.toString ===" )
             codegen.graphStream.roots.isEmpty match{
-              case true => println("EMPTY")
+              case true => println("EMPTY graphStream")
               case false =>
                 println(codegen.graphStream.roots.head.toString)
-                // todo - output graph for view. need convert IR.Sym to scalan.Sym for use emitDepGraph
-                //val dotFileName = s"${functionName}_LMS.dot"
-                //val graph = ProgramGraph(codegen.graphStream.roots, implicitly[TransformerOps[Transformer]].empty)
-                //emitDepGraph(graph, new File(sourcesDir, dotFileName))(graphVizConfig)
             }
-            println("===============================================" )
 
-            //val exporter = new LmsOutputGraphExport(lms)
             val dotFile = new File(sourcesDir, s"${functionName}_lms.dot")
 
             codegen.graphStream.exportToGraphVis(dotFile, graphVizConfig)

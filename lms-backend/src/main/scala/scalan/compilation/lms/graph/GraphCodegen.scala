@@ -298,7 +298,6 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
 
   // FROM GenericFatCodegen
   override def emitFatNode(symList: List[Sym[Any]], rhs: FatDef): Unit = {
-    println(s"emitFatNode for symbol ${symList.head.id} (sz = ${symList.length}), rhs = ${rhs.toString}")
     rhs match {
       case SimpleFatIfThenElse(c, as, bs) =>
         stream.println(s"emitFatNode for symbol ${symList.head.id}... (sz = ${symList.length}), rhs = ${rhs.toString}")

@@ -23,7 +23,7 @@ trait LmsBackend extends LmsBackendFacade { self =>
   } */
 
   def codegen: BaseCodegen[self.type]
-  val grapfCodegen: GraphCodegen[self.type] = new GraphCodegen(self)
+  val graphCodegen: GraphCodegen[self.type] = new GraphCodegen(self)
 
 }
 
