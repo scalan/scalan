@@ -19,7 +19,7 @@ trait LmsBackend extends BaseExp { self =>
 trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimitives with LiftNumeric with ArrayOpsExtExp with ListOpsExp
   with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp
-  with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp
+  with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt {
   /*type RepD[T] = Rep[T]
@@ -35,6 +35,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
 
   def DoubleToInt(arg: Exp[Double]) = {
     arg.toInt
+  }
+
+  def LongToIntExt(arg: Exp[Long]) = {
+    long_toint(arg)
   }
 
   def DoubleToFloat(arg: Exp[Double]) = {
@@ -307,6 +311,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     math_sin(v)
   }
 
+  def Sqrt(v: Exp[Double]) : Exp[Double] = {
+    math_sqrt(v)
+  }
+
   def Exp(v: Exp[Double]) : Exp[Double] = {
     math_exp(v)
   }
@@ -499,7 +507,7 @@ class CoreLmsBackend extends CoreLmsBackendBase { self =>
 }
 
 class CommunityLmsBackend extends CoreLmsBackend with CommunityLmsBackendBase { self =>
-  override val codegen = new Codegen with ScalaGenVectorOps with ScalaGenSystemOps {
+  override val codegen = new Codegen with ScalaGenVectorOps with ScalaGenExtNumOps with ScalaGenSystemOps {
     override val IR: self.type = self
   }
 }

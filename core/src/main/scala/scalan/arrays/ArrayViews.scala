@@ -191,13 +191,22 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     case ArrayFilter(Def(view: ViewArray[_, _]), f) =>
       filterUnderlyingArray(view, f)
 
-    // Rule: ???
-    case pa @ ArrayZip(arr1: Arr[a] @unchecked, Def(v1:ViewArray[_,_])) =>
+    case pa @ ArrayZip(Def(v1:ViewArray[a,_]), arr2: Arr[b] @unchecked) =>
+      implicit val eA = v1.source.elem.eItem
+      implicit val eB = arr2.elem.eItem
+      val iso2 = identityIso(eB)
+      val pIso = ArrayIso(pairIso(v1.innerIso, iso2))
+      implicit val eAB = pIso.eTo
+      implicit val eBA = pIso.eFrom
+      val zipped = v1.source zip arr2
+      ViewArray(zipped)(pIso)
+
+    case pa @ ArrayZip(arr1: Arr[a] @unchecked, Def(v2:ViewArray[_,_])) =>
       implicit val eA = arr1.elem.eItem
       val iso2 = identityIso(eA)
-      val pIso = ArrayIso(pairIso(iso2, v1.innerIso))
+      val pIso = ArrayIso(pairIso(iso2, v2.innerIso))
       implicit val eAB = pIso.eTo
-      val zipped = arr1 zip v1.source
+      val zipped = arr1 zip v2.source
       ViewArray(zipped)(pIso)
 
     // Rule: ???

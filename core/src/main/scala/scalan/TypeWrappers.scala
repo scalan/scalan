@@ -117,4 +117,9 @@ trait TypeWrappersExp extends TypeWrappers with GraphVizExport { scalan: ScalanE
     val newCall = mkMethodCall(unwrappedReceiver, mc.method, newArgs, true, eUnwrappedRes)
     newCall.asRep[T]
   }
+  def unwrapNewObj[T](clazz: Class[T], args: List[AnyRef], neverInvoke: Boolean, eUnwrappedRes: Elem[T]): Rep[T] = {
+    val newArgs = unwrapSyms(args)
+    val newObj = new NewObject[T](clazz, newArgs, neverInvoke)(eUnwrappedRes)
+    newObj
+  }
 }

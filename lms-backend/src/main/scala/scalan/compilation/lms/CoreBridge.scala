@@ -160,6 +160,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             case NumericToInt(n) => mA match {
               case Manifest.Float => lms.FloatToInt(arg1_.asInstanceOf[lms.Exp[Float]])
               case Manifest.Double => lms.DoubleToInt(arg1_.asInstanceOf[lms.Exp[Double]])
+              case Manifest.Long => lms.LongToIntExt(arg1_.asInstanceOf[lms.Exp[Long]])
               case Manifest.Int => arg1_
             }
             case NumericToString() => lms.ToString(arg1_)
@@ -168,6 +169,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
             case StringToDouble() => lms.stringToDouble(arg1_.asInstanceOf[lms.Exp[String]])
             case MathExp => lms.Exp(arg1_.asInstanceOf[lms.Exp[Double]])
             case MathSin => lms.Sin(arg1_.asInstanceOf[lms.Exp[Double]])
+            case MathSqrt => lms.Sqrt(arg1_.asInstanceOf[lms.Exp[Double]])
           }
           m.addSym(sym, exp)
       }
@@ -1128,6 +1130,19 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
                 val idxs = m.symMirror[Array[Int]](xs)
                 val index = m.symMirror[Int](i)
                 val exp = lms.array_binarySearch[a](index, idxs)(mA)
+                m.addSym(sym, exp)
+            }
+        }
+
+      case ArrayRandomGaussian(a, e, xs) =>
+        xs.elem match {
+          case el: ArrayElem[_] =>
+            createManifest(el.eItem) match {
+              case (mA: Manifest[a]) =>
+                val array = m.symMirror[Array[Double]](xs)
+                val median = m.symMirror[Double](a)
+                val dev = m.symMirror[Double](e)
+                val exp = lms.array_randomGaussian[a](median, dev, array)(mA)
                 m.addSym(sym, exp)
             }
         }

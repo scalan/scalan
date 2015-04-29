@@ -133,7 +133,7 @@ trait ConvertersAbs extends Converters  {
 
   // 3) Iso for concrete class
   class PairConverterIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] {
+    extends Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]]()(pairElement(implicitly[Elem[Converter[A1,B1]]], implicitly[Elem[Converter[A2,B2]]])) {
     override def from(p: Rep[PairConverter[A1, A2, B1, B2]]) =
       (p.conv1, p.conv2)
     override def to(p: Rep[(Converter[A1,B1], Converter[A2,B2])]) = {
@@ -202,7 +202,7 @@ trait ConvertersAbs extends Converters  {
 
   // 3) Iso for concrete class
   class SumConverterIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] {
+    extends Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]]()(pairElement(implicitly[Elem[Converter[A1,B1]]], implicitly[Elem[Converter[A2,B2]]])) {
     override def from(p: Rep[SumConverter[A1, A2, B1, B2]]) =
       (p.conv1, p.conv2)
     override def to(p: Rep[(Converter[A1,B1], Converter[A2,B2])]) = {

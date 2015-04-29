@@ -223,4 +223,47 @@ class VectorMethodsItTests extends LmsLinAlgItTests {
     compareOutputWithSequential(progStaged)(progSeq.applySparseVector, progStaged.applySparseVector, "applySparseVector2", in)
     compareOutputWithExpected(progStaged)(out, progStaged.applySparseVector, "applySparseVector2e", in)
   }
+
+  test ("transpose") {
+    val nItems = 2
+    val (arrTrain, segsTrain) = progSeq.getNArrayWithSegmentsFromJaggedArray(progSeq.jArrTrain2x2)
+    val in = progSeq.Tuple(arrTrain, segsTrain, nItems)
+
+    compareOutputWithSequential(progStaged)(progSeq.transpose, progStaged.transpose, "transpose", in)
+  }
+
+  ignore ("random") {
+    val c = 1.0
+    val in = c
+
+    compareOutputWithSequential(progStaged)(progSeq.funRandom, progStaged.funRandom, "random", in)
+  }
+
+  test ("randomArray") {
+    val c = 1000
+    val in = c
+
+    compareOutputWithSequential(progStaged)(progSeq.funRandomArray, progStaged.funRandomArray, "randomArray", in)
+  }
+
+  test ("ZipMapViewBoth") {
+    val c = 10
+    val in = c
+
+    compareOutputWithSequential(progStaged)(progSeq.funZipMapViewBoth, progStaged.funZipMapViewBoth, "ZipMapViewBoth", in)
+  }
+
+  test ("ZipMapViewLeft") {
+    val c = 10
+    val in = c
+
+    compareOutputWithSequential(progStaged)(progSeq.funZipMapViewLeft, progStaged.funZipMapViewLeft, "funZipMapViewLeft", in)
+  }
+
+  test ("ZipMapViewRight") {
+    val c = 10
+    val in = c
+
+    compareOutputWithSequential(progStaged)(progSeq.funZipMapViewRight, progStaged.funZipMapViewRight, "funZipMapViewRight", in)
+  }
 }

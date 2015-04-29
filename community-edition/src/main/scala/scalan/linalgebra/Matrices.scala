@@ -5,7 +5,9 @@ package scalan.linalgebra
   */
 
 import scalan._
-import scalan.common.OverloadHack.{Overloaded1, Overloaded2}
+import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
+import scalan.common.Default
+import scala.annotation.unchecked.uncheckedVariance
 
 trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
@@ -27,15 +29,28 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def apply(row: Rep[Int]): Vector[T]
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T]
 
+    //def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Matrix[R]
+    def mapBy[R: Elem](f: Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]): Matrix[R]
+
     def transpose(implicit n: Numeric[T]): Matrix[T]
     def reduceByRows(implicit m: RepMonoid[T]): Vector[T] = {
       DenseVector(rows.map(row => row.nonZeroValues.reduce))
     }
-    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T]
+    def reduceByColumns(implicit m: RepMonoid[T], n: Numeric[T]): Vector[T]
+
+    def countNonZeroesByColumns(implicit n: Numeric[T]): Vector[Int] = {
+      /*val zero = elem.defaultRepValue
+      lazy val NonZeroesMonoid = RepMonoid[T]("NonZeroesMonoid", 0, false) {
+        case (x1, x2) => (x1 !== zero).toInt + (x2 !== zero).toInt
+      }*/
+      val mT = transpose
+      DenseVector(mT.rows.map(row => row.nonZeroIndices.length))
+    }
 
     //@OverloadId("vector")
-    def *(vector: Vector[T])(implicit n: Numeric[T]): Vector[T] =
+    def *(vector: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       DenseVector(rows.map { r => r.dot(vector) })
+    }
     @OverloadId("matrix")
     def *(matrix: Matrix[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T]
     def +^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T]
@@ -65,6 +80,14 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def apply(row: Rep[Int]): Vector[T] = DenseVector(rmValues.slice(row * numColumns, numColumns))
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = items(toCellIndex(row, column))
 
+    //def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Matrix[R] = {
+    //  DenseFlatMatrix()
+    //}
+
+    def mapBy[R: Elem](f: Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]): Matrix[R] = {
+      CompoundMatrix(rows.mapBy(f), numColumns)
+    }
+
     def fromCellIndex(iCell: Rep[Int]): Rep[(Int, Int)] = Pair(iCell /! numColumns, iCell % numColumns)
     def toCellIndex(iRow: Rep[Int], iCol: Rep[Int]): Rep[Int] = numColumns * iRow + iCol
 
@@ -73,7 +96,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       companion(columns.flatMap(col => col.items), numRows)
     def transpose(implicit n: Numeric[T]): Matrix[T] = transpose(10)
 
-    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
+    def reduceByColumns(implicit m: RepMonoid[T], n: Numeric[T]): Vector[T] = {
       val coll = Collection.indexRange(numColumns).map { column =>
         Collection.indexRange(numRows).map { row => this(row)(column) }.reduce
       }
@@ -125,13 +148,19 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def apply(row: Rep[Int]): Vector[T] = rows(row)
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = apply(row)(column)
 
+    def mapBy[R: Elem](f: Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]): Matrix[R] = {
+      DenseFlatMatrix.fromRows(rows.mapBy(f), numColumns)
+    }
+
     def transpose(implicit n: Numeric[T]): Matrix[T] = transposeDirect(self)
 
-    def reduceByColumns(implicit m: RepMonoid[T]): Vector[T] = {
+    def reduceByColumns(implicit m: RepMonoid[T], n: Numeric[T]): Vector[T] = {
       val coll = Collection.indexRange(numColumns).map { column =>
         Collection.indexRange(numRows).map { row => rows(row)(column) }.reduce
       }
       DenseVector(coll)
+//      val mT = transpose
+//      mT.reduceByRows
     }
 
     @OverloadId("matrix")
@@ -156,8 +185,8 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
-      val items = rows.map(v => v.nonZeroValues).flatMap(v => v)
-      items.reduce.toDouble / items.length.toDouble
+      val items = rows.flatMap(v => v.nonZeroValues)
+      items.reduce.toDouble / (numRows * numColumns).toDouble
     }
   }
 
@@ -171,7 +200,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     @OverloadId("dense")
     def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
                     (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = CompoundMatrix.fromNColl(items, numColumns)
-    def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = CompoundMatrix.fromRows(rows, length)
+    def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = ??? //CompoundMatrix.fromRows(rows, length)
   }
 
   trait DenseFlatMatrixCompanion extends ConcreteClass1[DenseFlatMatrix] with AbstractMatrixCompanion {
@@ -213,7 +242,20 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   }
 }
 
-trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommunityDsl => }
+trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommunityDsl =>
+
+  type MatrixCompanion = Rep[AbstractMatrixCompanion]
+
+  implicit class MatrixExtensions[T](matrix: Matrix[T]) {
+    implicit def eItem: Elem[T] = matrix.elem
+
+    def map[R: Elem](f: Vector[T] => Vector[R]): Matrix[R] = matrix.mapBy(fun(f))
+
+    //def filter(f: Rep[T] => Rep[Boolean]): Matrix[T] = matrix.filterBy(fun(f))
+
+    //def flatMap[R: Elem](f: Rep[T] => Coll[R]): Matrix[R] = matrix.flatMapBy(fun(f))
+  }
+}
 
 trait MatricesDslSeq extends impl.MatricesSeq with VectorsDslSeq { self: ScalanCommunityDslSeq => }
 

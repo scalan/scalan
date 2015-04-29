@@ -558,14 +558,15 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
               val str = str0 + s"pairElement(implicitly[Elem[${args(0)}]], "
               implElem(args.drop(1))(str)
             }
-            else
-              str0 + s"pairElement(implicitly[Elem[${args(0)}]], implicitly[Elem[${args(1)}]])"
+            else {
+              if (size > 1) str0 + s"pairElement(implicitly[Elem[${args(0)}]], implicitly[Elem[${args(1)}]])"
+              else str0 + s"(implicitly[Elem[${args(0)}]])"
+            }
           }
           val args = fieldTypes.map(a => a.toString)//c.implicitArgs.args.map(a => a.name)
-          if (args.length >= 3) {
+          if (args.length >= 2) {
             val impls = implElem(args)("")
-            val sks = 1.until(args.length - 1).map(_ => ")").toList :+ ""
-            val sk = sks.reduce(_ + _)
+            val sk = ")" * (args.length - 2)
             s"()(${impls + sk})"
           } else ""
         }

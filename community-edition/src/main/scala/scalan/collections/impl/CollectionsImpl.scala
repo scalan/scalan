@@ -383,7 +383,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // 3) Iso for concrete class
   class PairCollectionIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends Iso[PairCollectionData[A, B], PairCollection[A, B]] {
+    extends Iso[PairCollectionData[A, B], PairCollection[A, B]]()(pairElement(implicitly[Elem[Collection[A]]], implicitly[Elem[Collection[B]]])) {
     override def from(p: Rep[PairCollection[A, B]]) =
       (p.as, p.bs)
     override def to(p: Rep[(Collection[A], Collection[B])]) = {
@@ -514,7 +514,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // 3) Iso for concrete class
   class NestedCollectionIso[A](implicit eA: Elem[A])
-    extends Iso[NestedCollectionData[A], NestedCollection[A]] {
+    extends Iso[NestedCollectionData[A], NestedCollection[A]]()(pairElement(implicitly[Elem[Collection[A]]], implicitly[Elem[IPairCollection[Int,Int]]])) {
     override def from(p: Rep[NestedCollection[A]]) =
       (p.values, p.segments)
     override def to(p: Rep[(Collection[A], IPairCollection[Int,Int])]) = {

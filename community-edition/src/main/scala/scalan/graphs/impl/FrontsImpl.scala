@@ -70,7 +70,7 @@ trait FrontsAbs extends Fronts with Scalan {
 
   // 3) Iso for concrete class
   class BaseFrontIso
-    extends Iso[BaseFrontData, BaseFront] {
+    extends Iso[BaseFrontData, BaseFront]()(pairElement(implicitly[Elem[BaseCollection[Int]]], implicitly[Elem[BitSet]])) {
     override def from(p: Rep[BaseFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(BaseCollection[Int], BitSet)]) = {
@@ -135,7 +135,7 @@ trait FrontsAbs extends Fronts with Scalan {
 
   // 3) Iso for concrete class
   class ListFrontIso
-    extends Iso[ListFrontData, ListFront] {
+    extends Iso[ListFrontData, ListFront]()(pairElement(implicitly[Elem[ListCollection[Int]]], implicitly[Elem[BitSet]])) {
     override def from(p: Rep[ListFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(ListCollection[Int], BitSet)]) = {
@@ -200,7 +200,7 @@ trait FrontsAbs extends Fronts with Scalan {
 
   // 3) Iso for concrete class
   class CollectionFrontIso
-    extends Iso[CollectionFrontData, CollectionFront] {
+    extends Iso[CollectionFrontData, CollectionFront]()(pairElement(implicitly[Elem[Collection[Int]]], implicitly[Elem[BitSet]])) {
     override def from(p: Rep[CollectionFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(Collection[Int], BitSet)]) = {

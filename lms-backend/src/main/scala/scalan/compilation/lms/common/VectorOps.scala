@@ -8,6 +8,7 @@ trait VectorOps extends Base {
 
   def array_dotProductSparse[A:Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]): Rep[A]
   def array_binarySearch[A:Manifest](idx: Rep[Int], idxs: Rep[Array[Int]]): Rep[Int]
+  def array_randomGaussian[A:Manifest](a: Rep[Double], e: Rep[Double], arr: Rep[Array[Double]]): Rep[Array[Double]]
 }
 
 
@@ -17,8 +18,12 @@ trait VectorOpsExp extends VectorOps with BaseExp {
     val m = manifest[A]
   }
 
-  case class ArrayBinarySearch[A:Manifest](idx: Rep[Int], idxs: Rep[Array[Int]]) extends Def[Int] {
+  case class ArrayBinarySearch[A:Manifest](idx: Exp[Int], idxs: Exp[Array[Int]]) extends Def[Int] {
     val m = manifest[Int]
+  }
+
+  case class ArrayRandomGaussian[A:Manifest](a: Exp[Double], e: Exp[Double], xs: Exp[Array[Double]]) extends Def[Array[Double]] {
+    val m = manifest[Double]
   }
 
   def array_dotProductSparse[A:Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]) =
@@ -27,9 +32,13 @@ trait VectorOpsExp extends VectorOps with BaseExp {
   def array_binarySearch[A:Manifest](idx: Rep[Int], idxs: Rep[Array[Int]]): Rep[Int] =
     ArrayBinarySearch(idx, idxs)
 
+  def array_randomGaussian[A:Manifest](a: Rep[Double], e: Rep[Double], arr: Rep[Array[Double]]): Rep[Array[Double]] =
+    ArrayRandomGaussian(a, e, arr)
+
   override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
     case ArrayDotProdSparse(i1, v1,i2, v2) => array_dotProductSparse(f(i1), f(v1), f(i2), f(v2))(mtype(manifest[A]))
     case ArrayBinarySearch(i, is) => array_binarySearch(f(i), f(is))(mtype(manifest[Int])).asInstanceOf[Exp[A]] // TODO: is this hack valid?
+    case ArrayRandomGaussian(a, d, arr) => array_randomGaussian(f(a), f(d), f(arr))(mtype(manifest[Double])).asInstanceOf[Exp[A]] // TODO: is this hack valid?
     case _ => super.mirror(e,f)
   }
 }
@@ -72,6 +81,11 @@ trait ScalaGenVectorOps extends ScalaGenBase {
       stream.println("\tval out:" + remap(ds.m) + " = java.util.Arrays.binarySearch(" + quote(is) + ", " + quote(i) + ")")
       stream.println("\tout")
       stream.println("}")
+    case ds @ ArrayRandomGaussian(a, d, arr) =>
+      // TODO use proper source quasiquoter
+      stream.println("// generating Random Gaussian values in array")
+      stream.println("val " + quote(sym) + " = " + quote(arr) + ".map { _ => util.Random.nextGaussian() * " +
+        quote(d) + ".asInstanceOf[Double] + " + quote(a) + ".asInstanceOf[Double] }")
     case _ => super.emitNode(sym, rhs)
   }
 
