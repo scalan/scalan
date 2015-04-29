@@ -214,13 +214,12 @@ trait Views extends Elems { self: Scalan =>
 
   case class PairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
     extends Iso[(A1, A2), (B1, B2)]()(pairElement(iso1.eFrom, iso2.eFrom)) {
-    implicit val eA1 = iso1.eFrom
-    implicit val eA2 = iso2.eFrom
-    implicit val eB1 = iso1.eTo
-    implicit val eB2 = iso2.eTo
-    val eBB = element[(B1, B2)]
+    implicit def eA1 = iso1.eFrom
+    implicit def eA2 = iso2.eFrom
+    implicit def eB1 = iso1.eTo
+    implicit def eB2 = iso2.eTo
+    lazy val eTo = element[(B1, B2)]
 
-    def eTo = eBB
     var fromCacheKey:Option[Rep[(B1,B2)]] = None
     var fromCacheValue:Option[Rep[(A1,A2)]] = None
     var toCacheKey:Option[Rep[(A1,A2)]] = None
@@ -240,7 +239,7 @@ trait Views extends Elems { self: Scalan =>
       }
       toCacheValue.get
     }
-    lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
+    lazy val defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
   def pairIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[(A1, A2), (B1, B2)] = PairIso(iso1, iso2)
@@ -249,15 +248,14 @@ trait Views extends Elems { self: Scalan =>
     extends Iso[A1 | A2, B1 | B2]()(sumElement(iso1.eFrom, iso2.eFrom)) {
 //    implicit val eA1 = iso1.eFrom
 //    implicit val eA2 = iso2.eFrom
-    implicit val eB1 = iso1.eTo
-    implicit val eB2 = iso2.eTo
-    val eBB = element[B1 | B2]
-    def eTo = eBB
+    implicit def eB1 = iso1.eTo
+    implicit def eB2 = iso2.eTo
+    lazy val eTo = element[B1 | B2]
     def from(b: Rep[B1 | B2]) =
       b.mapSumBy(iso1.fromFun, iso2.fromFun)
     def to(a: Rep[A1 | A2]) =
       a.mapSumBy(iso1.toFun, iso2.toFun)
-    lazy val defaultRepTo = Default.defaultVal(eBB.defaultRepValue)
+    lazy val defaultRepTo = Default.defaultVal(eTo.defaultRepValue)
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
   def sumIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[A1 | A2, B1 | B2] = SumIso(iso1, iso2)
@@ -274,10 +272,10 @@ trait Views extends Elems { self: Scalan =>
 
   case class FuncIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D])
     extends Iso[A => C, B => D]()(funcElement(iso1.eFrom, iso2.eFrom)) {
-    implicit val eA = iso1.eFrom
-    implicit val eB = iso1.eTo
-    implicit val eC = iso2.eFrom
-    implicit val eD = iso2.eTo
+    implicit def eA = iso1.eFrom
+    implicit def eB = iso1.eTo
+    implicit def eC = iso2.eFrom
+    implicit def eD = iso2.eTo
     lazy val eTo = funcElement(eB, eD)
     def from(f: Rep[B => D]): Rep[A => C] = {
       fun { b => iso2.from(f(iso1.to(b))) }
