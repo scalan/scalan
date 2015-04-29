@@ -42,7 +42,7 @@ trait Authentications { self: AuthenticationsDsl =>
 trait AuthenticationsDsl extends ScalanDsl with impl.AuthenticationsAbs with Authentications
     with MonadsDsl {
 
-  implicit def AuthCont: Cont[Auth] = new Container[Auth] {
+  implicit val AuthCont: Cont[Auth] = new Container[Auth] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Auth[T]]
     def lift[T](implicit eT: Elem[T]) = element[Auth[T]]
   }

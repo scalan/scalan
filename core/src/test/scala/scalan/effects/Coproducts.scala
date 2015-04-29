@@ -46,11 +46,11 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
 
     def or[H[_]:Cont](f: H ~> G): ({ type f[x] = Coproduct[F, H, x]})#f ~> G =
       new (({type f[x] = Coproduct[F,H,x]})#f ~> G) {
-        def cIn = {
+        val cIn = {
           implicit val cF = self.cIn
           container[({type f[x] = Coproduct[F,H,x]})#f]
         }
-        implicit def cOut = self.cOut
+        def cOut = self.cOut
 
         def apply[A:Elem](c: Rep[Coproduct[F,H,A]]): Rep[G[A]] =
           c.run.fold(fa => self(fa),

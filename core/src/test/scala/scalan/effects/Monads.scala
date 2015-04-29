@@ -142,7 +142,7 @@ trait Monads extends Base  with ListOps { self: MonadsDsl =>
 
   type Id[A] = A
 
-  implicit def idCont: Cont[Id] = new Container[Id] {
+  implicit val idCont: Cont[Id] = new Container[Id] {
     def tag[T](implicit tT: WeakTypeTag[T]) = tT
     def lift[T](implicit eT: Elem[T]) = eT
   }
@@ -155,7 +155,7 @@ trait Monads extends Base  with ListOps { self: MonadsDsl =>
 
   type Oper[A] = Int => (Int, A)
 
-  implicit def operCont: Cont[Oper] = new Container[Oper] {
+  implicit val operCont: Cont[Oper] = new Container[Oper] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Oper[T]]
     def lift[T](implicit eT: Elem[T]) = funcElement(element[Int], element[(Int,T)])
   }
