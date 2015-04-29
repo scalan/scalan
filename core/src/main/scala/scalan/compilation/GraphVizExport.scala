@@ -21,23 +21,7 @@ trait GraphVizExport { self: ScalanExp =>
 
   // ensures nice line wrapping
   final protected def nodeLabel(parts: String*)(implicit config: GraphVizConfig) = {
-    var lineLength = 0
-    val sb = new StringBuilder()
-    var isFirst = true
-    parts.foreach { part =>
-      if (isFirst) {
-        isFirst = false
-      } else if (lineLength + part.length + 1 <= config.maxLabelLineLength) {
-        sb.append(" ")
-        lineLength += 1
-      } else {
-        sb.append("\\l")
-        lineLength = 0
-      }
-      sb.append(part)
-      lineLength += part.length
-    }
-    s"label=${StringUtil.quote(sb.result)}"
+    config.nodeLabel(parts)
   }
 
   protected def emitNode(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
@@ -173,12 +157,10 @@ trait GraphVizExport { self: ScalanExp =>
   private def emitDepGraph(name: String, ss: Seq[Exp[_]])(implicit stream: PrintWriter, config: GraphVizConfig): Unit = {
     stream.println(s"""digraph "${name}" {""")
 
-    val deflist = buildScheduleForResult(ss, dep)
-
     stream.println("concentrate=true")
-    if (config.orientation == Landscape) {
-      stream.println("rankdir=LR")
-    }
+    stream.println(config.orientationString)
+
+    val deflist = buildScheduleForResult(ss, dep)
 
     val lambdaBodies: Set[Exp[_]] = deflist.collect {
       case TableEntry(_, lam: Lambda[_, _]) => lam.y
@@ -205,7 +187,33 @@ object Landscape extends Orientation
 case class GraphVizConfig(emitGraphs: Boolean,
                           orientation: Orientation,
                           maxLabelLineLength: Int,
-                          subgraphClusters: Boolean)
+                          subgraphClusters: Boolean) {
+
+  // ensures nice line wrapping
+  def nodeLabel(parts: Seq[String]):String = {
+    var lineLength = 0
+    val sb = new StringBuilder()
+    var isFirst = true
+    parts.foreach { part =>
+      if (isFirst) {
+        isFirst = false
+      } else if (lineLength + part.length + 1 <= maxLabelLineLength) {
+        sb.append(" ")
+        lineLength += 1
+      } else {
+        sb.append("\\l")
+        lineLength = 0
+      }
+      sb.append(part)
+      lineLength += part.length
+    }
+    s"label=${StringUtil.quote(sb.result)}"
+  }
+
+  def orientationString = if (orientation == Landscape) "rankdir=LR" else ""
+
+}
+
 object GraphVizConfig {
   // not made implicit because it would be too easy to use
   // it accidentally instead of passing up
