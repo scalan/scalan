@@ -19,4 +19,8 @@ object Base {
     prop.putAll(System.getProperties)
     prop
   }
+
+  def !!!(msg: String) = {
+    throw new IllegalStateException(msg)
+  }
 }

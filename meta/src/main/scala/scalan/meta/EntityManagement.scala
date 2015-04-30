@@ -21,7 +21,7 @@ case class CodegenConfig(
   entityTypeSynonyms: Map[String, String]
 )
 
-class EntityManagement(val config: CodegenConfig) extends ScalanCodegen with LazyLogging { ctx =>
+class EntityManagement(val config: CodegenConfig) extends ScalanParsers with LazyLogging {
 
   case class EntityManager(name: String, file: File, entityDef: SEntityModuleDef, config: CodegenConfig)
 
@@ -40,7 +40,7 @@ class EntityManagement(val config: CodegenConfig) extends ScalanCodegen with Laz
   def generateAll() = {
     entities.foreach { m =>
       println(s"  generating ${m.file}")
-      val g = new EntityFileGenerator(m.entityDef, m.config)
+      val g = new ScalanCodegen.EntityFileGenerator(m.entityDef, m.config)
       val implCode = g.getImplFile
       saveEntity(m.file, implCode)
     }

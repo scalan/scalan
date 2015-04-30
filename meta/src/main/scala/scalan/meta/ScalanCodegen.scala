@@ -4,7 +4,8 @@ import scalan.util.{StringUtil, ScalaNameUtil}
 import scala.annotation.tailrec
 import ScalanAst._
 
-trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensions { ctx: EntityManagement =>
+object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
+  import Base.!!!
   import PrintExtensions._
 
   abstract class TemplateData(val module: SEntityModuleDef, val entity: STraitOrClassDef) {

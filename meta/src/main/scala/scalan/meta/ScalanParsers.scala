@@ -41,13 +41,11 @@ trait ScalanParsers {
     }
   }
 
+  def !!!(msg: String) = Base.!!!(msg)
+
   def !!!(msg: String, tree: Tree) = {
     val fullMsg = s"$msg at ${positionString(tree)}"
     throw new IllegalStateException(fullMsg)
-  }
-
-  def !!!(msg: String) = {
-    throw new IllegalStateException(msg)
   }
 
   def ???(tree: Tree) = {
