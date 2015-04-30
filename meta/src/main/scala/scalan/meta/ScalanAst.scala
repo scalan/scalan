@@ -67,16 +67,18 @@ object ScalanAst {
       case _ => self
     }
 
-    def unRep(module: SEntityModuleDef, synonyms: Map[String, String] = Map()): Option[STpeExpr] = self match {
+    def unRep(module: SEntityModuleDef /*, config: CodegenConfig*/): Option[STpeExpr] = self match {
       case STraitCall("Rep", Seq(t)) => Some(t)
-      case STraitCall(name, args) =>
-        val typeSynonyms = synonyms ++
-          module.entityRepSynonym.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
-        typeSynonyms.get(name).map(unReppedName => STraitCall(unReppedName, args))
+      /*
+            case STraitCall(name, args) =>
+              val typeSynonyms = config.entityTypeSynonyms ++
+                module.entityRepSynonym.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
+              typeSynonyms.get(name).map(unReppedName => STraitCall(unReppedName, args))
+      */
       case t => Some(t)
     }
 
-    def isRep(module: SEntityModuleDef, synonyms: Map[String, String] = Map()) = unRep(module, synonyms) match {
+    def isRep(module: SEntityModuleDef/*, config: CodegenConfig*/) = unRep(module/*, config*/) match {
       case Some(_) => true
       case None => false
     }
