@@ -10,17 +10,6 @@ import com.typesafe.scalalogging.slf4j.LazyLogging
 import scalan.util.FileUtil
 import ScalanAst._
 
-case class CodegenConfig(
-  name: String,
-  srcPath: String,
-  entityFiles: List[String],
-  baseContextTrait: String,
-  seqContextTrait: String,
-  stagedContextTrait: String,
-  extraImports: List[String],
-  entityTypeSynonyms: Map[String, String]
-)
-
 class EntityManagement(val config: CodegenConfig) extends ScalanParsers with LazyLogging {
 
   case class EntityManager(name: String, file: File, entityDef: SEntityModuleDef, config: CodegenConfig)
