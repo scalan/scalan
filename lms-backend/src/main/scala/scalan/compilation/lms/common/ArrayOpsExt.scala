@@ -36,28 +36,34 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
   }
 
   def flatMapArray[A: Manifest, B: Manifest](arr: Exp[Array[A]], f: Rep[A] => Rep[Array[B]]): Exp[Array[B]] = {
-    val buf = ArrayBuilder.make[B]
-    for (x <- arr; y <- f(x)) {
-      buf += y
-    }
-    buf.result
+    flatten(arr.length)(i => f(arr.at(i)))
   }
+//  def flatMapArray[A: Manifest, B: Manifest](arr: Exp[Array[A]], f: Rep[A] => Rep[Array[B]]): Exp[Array[B]] = {
+//    val buf = ArrayBuilder.make[B]
+//    for (x <- arr; y <- f(x)) {
+//      buf += y
+//    }
+//    buf.result
+//  }
 
   def findArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Array[Int]] = {
     arrayIf(a.length) { i => (f(a.at(i)), i)}
   }
 
   def filterArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Array[A]] = {
-    arrayIf(a.length) { i => (f(a.at(i)), a.at(i))}
+    arrayIf(a.length) { i => { val item = a.at(i); (f(item), item) }}
   }
 
   def countArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Int] = {
-    var count = 0
-    for (x <- a) {
-      if (f(x)) count += 1
-    }
-    count
+    sumIfInt(a.length)(i => (f(a.at(i)), 1))
   }
+//  def countArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Int] = {
+//    var count = 0
+//    for (x <- a) {
+//      if (f(x)) count += 1
+//    }
+//    count
+//  }
 
   def arrayReplicate[A: Manifest](length: Exp[Int], v: Exp[A]): Exp[Array[A]] = {
     array(length)(i => v)
@@ -87,15 +93,20 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     }
 
   def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
-    val newArr =  array_obj_new(xs.length)
-    array_copy(xs, 0, newArr, 0, xs.length)
+    val newArr =  xs.mutable
     newArr.update(index, value)
     newArr
-
-//    //inplace update of immutable array...
-//    xs.update(index, value)
-//    xs
   }
+//  def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
+//    val newArr =  array_obj_new(xs.length)
+//    array_copy(xs, 0, newArr, 0, xs.length)
+//    newArr.update(index, value)
+//    newArr
+//
+////    //inplace update of immutable array...
+////    xs.update(index, value)
+////    xs
+//  }
 
   def arraySum[A: Manifest](xs: Exp[Array[A]])(implicit n: Numeric[A]): Exp[A] = {
     var sum = n.zero
@@ -136,15 +147,25 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
 
   /* This is not always woking */
   def scanArray[A: Manifest](a: Exp[Array[A]], zero: Exp[A], accumulate: Rep[(A, A)] => Rep[A]): Exp[(Array[A], A)] = {
-    var state = zero
-    val arr1 = array(a.length)(i => {
-      val res = state
-      val loc = if (i==0) zero else a.at(i-1)
-      state = accumulate((state.AsInstanceOf[A], loc))
-      res
-    })
-    Tuple2(arr1, accumulate((arr1.at(a.length - 1), a.at(a.length - 1))))
+    var sum = zero
+    val len = a.length
+    val res = newArray(len).mutable
+    for (i <- 0 until len) {
+      res.update(i, sum)
+      sum += a.at(i)
+    }
+    (res, sum: Rep[A])
   }
+//  def scanArray[A: Manifest](a: Exp[Array[A]], zero: Exp[A], accumulate: Rep[(A, A)] => Rep[A]): Exp[(Array[A], A)] = {
+//    var state = zero
+//    val arr1 = array(a.length)(i => {
+//      val res = state
+//      val loc = if (i==0) zero else a.at(i-1)
+//      state = accumulate((state.AsInstanceOf[A], loc))
+//      res
+//    })
+//    Tuple2(arr1, accumulate((arr1.at(a.length - 1), a.at(a.length - 1))))
+//  }
 
   def foldArray[A: Manifest, S: Manifest](a: Exp[Array[A]], init: Exp[S], func: Rep[(S, A)] => Rep[S]): Exp[S] = {
     var state = init
@@ -173,13 +194,13 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     list_fromseq(array_toseq(xs))
 
   override def mirrorDef[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = {
-    e match {
+    (e match {
       case ArrayToSeq(arr) =>
-        ArrayToSeq(f(arr)).asInstanceOf[Def[A]]
+        ArrayToSeq(f(arr))
       case ArrayIndex(arr, i) =>
-        ArrayIndex(f(arr), f(i)).asInstanceOf[Def[A]]
+        ArrayIndex(f(arr), f(i))
       case _ =>
         super.mirrorDef(e,f)
-    }
+    }).asInstanceOf[Def[A]]
   }
 }

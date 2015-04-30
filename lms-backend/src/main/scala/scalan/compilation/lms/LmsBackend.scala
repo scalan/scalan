@@ -1,7 +1,7 @@
 package scalan.compilation.lms
 
 import scala.collection.mutable
-import scala.virtualization.lms.internal.Expressions
+import scala.virtualization.lms.epfl.test8.{ScalaGenArrayMutation, ArrayMutationExp}
 import scala.virtualization.lms.internal.{Effects, NestedBlockTraversal, GenericCodegen}
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.graph.GraphCodegen
@@ -29,7 +29,8 @@ trait LmsBackend extends LmsBackendFacade { self =>
 
 trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimitives with LiftNumeric with ArrayOpsExtExp with ListOpsExp
   with LstOpsExp with StringOpsExp with NumericOpsExp with RangeOpsExp with PrimitiveOpsExp with FunctionsExp with HashMapOpsExp
-  with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with OrderingOpsExp with IfThenElseFatExp
+  with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with ArrayMutationExp with OrderingOpsExp
+  with IfThenElseFatExp with VariablesExpOpt
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt with Effects {
@@ -111,11 +112,8 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
 
   def throwException(msg: Exp[String]) = fatal(msg)
 
-  //  def loopUntil[A:Manifest](state: Exp[A], cond: Rep[A] => Rep[Boolean], step: Rep[A] => Rep[A]): Exp[A] = {
-  //    if (cond(state)) loopUntil(step(state), cond, step) else state
-  //  }
-
   def loopUntil[A: Manifest](init: Exp[A], cond: Rep[A] => Rep[Boolean], step: Rep[A] => Rep[A]): Exp[A] = {
+    // TODO check correctness
     var state = init
     while (!cond(state)) state = step(state)
     state
@@ -144,6 +142,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
 
   def arrayBufferApply[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]], i: Exp[Int]): Exp[T] = ???
 
+  // TODO optimize
   def arrayBufferLength[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]]): Exp[Int] = buf.result.length
 
   def arrayBufferMap[A: Manifest, B: Manifest](buf: Exp[mutable.ArrayBuilder[A]], f: Rep[A] => Rep[B]): Exp[mutable.ArrayBuilder[B]] = ???
@@ -437,7 +436,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     val result = HashMap[K, mutable.ArrayBuilder[A]]()
     for (x <- in) {
       val key = by(x)
-      if (result.contains(key)) {
+      if (result.contains(key)) {     // TODO optimize: make result(key) return empty builder for new keys
         result(key) += x
         ()
       } else {
@@ -470,7 +469,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   }
 
   def listLength[A:Manifest](l: Rep[List[A]]) = {
-    list_toarray[A](l).length
+    list_toarray[A](l).length      // TODO optimize
   }
 
   def listFilter[A: Manifest](l: Rep[List[A]], f: Rep[A] => Rep[Boolean]) = {
@@ -494,7 +493,7 @@ class CoreLmsBackend extends CoreLmsBackendBase { self =>
   trait Codegen extends BaseCodegen[self.type] with ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
   with ScalaGenLstOps with ScalaGenNumericOps with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps
   with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
-  with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenIfThenElseFat with LoopFusionOpt
+  with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenArrayMutation with ScalaGenIfThenElseFat with LoopFusionOpt
   with ScalaGenCastingOps with ScalaGenMathOps with ScalaGenMethodCallOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile
   with ScalaGenIfThenElse with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions with ScalaGenRangeOps {
     val IR: self.type = self
