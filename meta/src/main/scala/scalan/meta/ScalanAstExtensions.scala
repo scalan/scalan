@@ -9,7 +9,7 @@ trait ScalanAstExtensions {
 
   implicit class SMethodOrClassArgsOps(as: SMethodOrClassArgs) {
     def argNames = as.args.map(a => a.name)
-    def argNamesAndTypes = as.args.map(a => s"${a.name}: ${a.tpe}")
+    def argNamesAndTypes = as.args.map(a => s"${a.name}: Rep[${a.tpe}]")
 
     def argUnrepTypes(module: SEntityModuleDef/*, config: CodegenConfig*/) =
       as.args.map(a => a.tpe.unRep(module/*, config.entityTypeSynonyms*/) match {
