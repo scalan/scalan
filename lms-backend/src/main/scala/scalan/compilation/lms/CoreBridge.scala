@@ -1149,6 +1149,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
                 m.addSym(sym, exp)
             }
         }
+
     case _ => super.transformDef(m, g, sym, d)
   }
 

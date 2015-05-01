@@ -15,7 +15,6 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
   override val progStaged = new ProgExp
 
   test ("convertPairCollectionSOA")  {
-    pending
     val in = Array(Array((1,2.0),(2,3.0)), Array((3,4.0), (5,6.0)))
     compareOutputWithSequential(progStaged)(progSeq.convertPairCollectionSOA, progStaged.convertPairCollectionSOA, "convertPairCollectionSOA", in)
   }
