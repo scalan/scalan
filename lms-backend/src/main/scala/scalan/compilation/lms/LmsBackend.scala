@@ -33,7 +33,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   with IfThenElseFatExp with VariablesExpOpt
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
-  with WhileExpExt with ListOpsExpExt with FunctionsExpExt with Effects {
+  with WhileExpExt with ListOpsExpExt with FunctionsExpExt with Effects with MiscOpsExp {
   /*type RepD[T] = Rep[T]
   */
 

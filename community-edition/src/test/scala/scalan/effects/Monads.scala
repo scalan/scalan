@@ -190,6 +190,7 @@ trait Monads extends Base  with ListOps { self: MonadsDsl =>
 trait MonadsDsl extends ScalanDsl with Monads
   with FreesDsl
   with CoproductsDsl
+  with ScalanCommunityDsl
   //with ReadersDsl
 {
   def eval[A:Elem](v: Rep[A]): Rep[Oper[A]]
@@ -199,15 +200,17 @@ trait MonadsDslSeq extends MonadsDsl
   with ScalanCtxSeq
   with FreesDslSeq
   with CoproductsDslSeq
+  with ScalanCommunityDslSeq
   //with ReadersDslSeq
 {
   def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = i => (i + 1, v)
 }
 
 trait MonadsDslExp extends MonadsDsl
-  with ScalanCtxExp
+  with ScalanCommunityDsl
   with FreesDslExp
   with CoproductsDslExp
+  with ScalanCommunityDslExp
   //with ReadersDslExp
 {
   def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun { i => Eval(i, v) }

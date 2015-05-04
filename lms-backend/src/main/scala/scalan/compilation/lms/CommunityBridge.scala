@@ -1,7 +1,6 @@
 package scalan.compilation.lms
 
-import scalan.CommunityMethodMappingDSL
-import scalan.ScalanCommunityDslExp
+import scalan.{CommunityMethodMappingDSL, ScalanCommunityDslExp}
 
 trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with CommunityMethodMappingDSL =>
 
@@ -30,6 +29,16 @@ trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with Comm
       val exp = lms.numeric_Random(bound_)
 
       m.addSym(sym, exp)//.addFunc(bound_, exp => exp)
+
+    case Println(i, s) =>
+      val s1 = m.symMirror[String](s)
+      val exp = lms.println(s1)
+      m.addSym(sym, exp)
+
+//    case ReadLine(i) =>
+//      val exp = lms.readline
+//      m.addSym(sym, exp)
+
     case _ => super.transformDef(m, g, sym, d)
   }
 }
