@@ -368,7 +368,7 @@ object ScalanAst {
 
     def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
 
-    def apply(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef): SEntityModuleDef = {
+    def apply(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
       val moduleName = moduleTrait.name
       val defs = moduleTrait.body
 

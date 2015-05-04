@@ -53,19 +53,8 @@ trait ScalanParsers {
       throw new Exception(s"Unexpected Scala tree")
   }
 
-  //def config: CodegenConfig
-  /*
-    def parseEntityModule(file: File) = {
-      val source = compiler.getSourceFile(file.getPath)
-      val tree = compiler.parseTree(source)
-      tree match {
-        case pd: PackageDef =>
-          entityModule(pd)
-        case tree =>
-          throw new Exception(s"Unexpected tree in file $file:\n\n$tree")
-      }
-    }
-  */
+  def config: CodegenConfig
+
   def seqImplementation(methods: List[DefDef], parent: Tree): List[SMethodDef] = {
     methods.map(methodDef(_))
   }
@@ -83,7 +72,7 @@ trait ScalanParsers {
       case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
     }
     val moduleTraitDef = traitDef(moduleTraitTree, Some(moduleTraitTree))
-    val module = SEntityModuleDef(packageName, imports, moduleTraitDef/*, config*/)
+    val module = SEntityModuleDef(packageName, imports, moduleTraitDef, config)
     val moduleName = moduleTraitDef.name
 
     val dslSeq = fileTree.stats.collectFirst {

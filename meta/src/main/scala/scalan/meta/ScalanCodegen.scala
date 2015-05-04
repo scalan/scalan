@@ -194,6 +194,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         //case STpeSum(items) => mkId("Sum", items)
         case STpeFunc(domain, range) => mkId("Func", Seq(domain, range))
         case STpeTypeBounds(lo, hi) => mkId("Bounds", Seq(lo, hi))
+        case _ => t.name
       }
     }
 
