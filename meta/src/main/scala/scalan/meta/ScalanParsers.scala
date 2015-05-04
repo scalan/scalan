@@ -46,11 +46,11 @@ trait ScalanParsers {
     throw new IllegalStateException(msg)
   }
 
-  def parse(tree: Tree) = tree match {
+  def parse(name: String, tree: Tree) = tree match {
     case pd: PackageDef =>
       entityModule(pd)
     case tree =>
-      throw new Exception(s"Unexpected Scala tree")
+      throw new Exception(s"Unexpected tree in $name:\n\n$tree")
   }
 
   def config: CodegenConfig

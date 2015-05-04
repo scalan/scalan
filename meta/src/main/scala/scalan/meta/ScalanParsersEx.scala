@@ -16,11 +16,7 @@ trait ScalanParsersEx extends ScalanParsers {
   def parseEntityModule(file: File) = {
     val source = compiler.getSourceFile(file.getPath)
     val tree = compiler.parseTree(source)
-    tree match {
-      case pd: compiler.PackageDef =>
-        entityModule(pd)
-      case tree =>
-        throw new Exception(s"Unexpected tree in file $file:\n\n$tree")
-    }
+
+    parse(file.getPath, tree)
   }
 }
