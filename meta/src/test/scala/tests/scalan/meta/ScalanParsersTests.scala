@@ -1,11 +1,11 @@
 package tests.scalan.meta
 
 import tests.BaseTests
-import scalan.meta.{ScalanParsers, BoilerplateToolRun}
+import scalan.meta.{ScalanParsersEx, BoilerplateToolRun}
 import scala.reflect.internal.util.BatchSourceFile
 import scalan.meta.ScalanAst._
 
-class ScalanParsersTests extends BaseTests with ScalanParsers {
+class ScalanParsersTests extends BaseTests with ScalanParsersEx {
   val ast: this.type = this
   import scalan.meta.ScalanAst.
   {
@@ -78,10 +78,10 @@ class ScalanParsersTests extends BaseTests with ScalanParsers {
   }
 
   def testTrait(prog: String, expected: STraitDef) {
-    test(Member, prog, expected) { case tree: ClassDef => traitDef(tree, tree) }
+    test(Member, prog, expected) { case tree: ClassDef => traitDef(tree, Some(tree)) }
   }
   def testSClass(prog: String, expected: SClassDef) {
-    test(Member, prog, expected) { case tree: ClassDef => classDef(tree, tree) }
+    test(Member, prog, expected) { case tree: ClassDef => classDef(tree, Some(tree)) }
   }
 
   def testSTpe(prog: String, expected: STpeExpr) {
