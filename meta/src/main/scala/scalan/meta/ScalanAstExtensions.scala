@@ -11,8 +11,8 @@ trait ScalanAstExtensions {
     def argNames = as.args.map(a => a.name)
     def argNamesAndTypes = as.args.map(a => s"${a.name}: Rep[${a.tpe}]")
 
-    def argUnrepTypes(module: SEntityModuleDef/*, config: CodegenConfig*/) =
-      as.args.map(a => a.tpe.unRep(module/*, config.entityTypeSynonyms*/) match {
+    def argUnrepTypes(module: SEntityModuleDef, config: CodegenConfig) =
+      as.args.map(a => a.tpe.unRep(module, config) match {
         case Some(t) => t
         case None => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
       })

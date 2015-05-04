@@ -245,7 +245,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
       val allArgs = md.argSections.flatMap(_.args)
       val typesDecl = md.tpeArgs.getBoundedTpeArgString(false)
-      val tyRetStr = tyRet.unRep(module/*, config.entityTypeSynonyms*/).getOrElse(!!!(msgRepRetType))
+      val tyRetStr = tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))
       val argClassesStr = allArgs.rep(a => s", classOf[AnyRef]", "")
       val elemClassesStr = (for {
         a <- md.tpeArgs
@@ -268,7 +268,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val msgExplicitRetType = "External constructors should be declared with explicit type of returning value (result type)"
       lazy val msgRepRetType = s"Invalid constructor declaration $md. External constructors should have return type of type Rep[T] for some T."
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
-      val unrepRet = tyRet.unRep(module/*, config.entityTypeSynonyms*/).getOrElse(!!!(msgRepRetType))
+      val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))
       val allArgs = md.argSections.flatMap(_.args)
       val typesDecl = md.tpeArgs.getBoundedTpeArgString(false)
       s"""
@@ -288,7 +288,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
       val obj = if (isInstance) "wrappedValueOfBaseType" else entityNameBT
 
-      val methodBody = tyRet.unRep(module/*, config.entityTypeSynonyms*/) match {
+      val methodBody = tyRet.unRep(module, config) match {
         case Some(STraitCall(name, _)) if name == entityName =>
           s"""      ${entityName}Impl($obj.${md.name}$typesUse${md.argSections.rep(methodArgsUse(_), "")})
           |""".stripMargin
@@ -524,7 +524,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val typesWithElems = concTemplateData.boundedTpeArgString(false)
         val fields = c.args.argNames
         val fieldsWithType = c.args.argNamesAndTypes
-        val fieldTypes = c.args.argUnrepTypes(module/*, config*/)
+        val fieldTypes = c.args.argUnrepTypes(module, config)
         val implicitArgs = concTemplateData.implicitArgsDecl
         val useImplicits = concTemplateData.implicitArgsUse
         val implicitArgsWithVals = c.implicitArgs.args.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")
@@ -1006,7 +1006,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
             case Seq() => None
             case nonEmpty => Some(s"Method has function arguments ${nonEmpty.mkString(", ")}")
           }).orElse {
-            m.tpeRes.filter(!_.isRep(module/*, config.entityTypeSynonyms*/)).map {
+            m.tpeRes.filter(!_.isRep(module, config)).map {
               returnTpe => s"Method's return type $returnTpe is not a Rep"
             }
           }
