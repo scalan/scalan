@@ -5,24 +5,16 @@
 package scalan.meta
 
 import java.io.File
-
-import scala.reflect.{ClassTag,classTag}
-import scala.tools.nsc.interactive.Global
-import scala.tools.nsc.Settings
-import scala.tools.nsc.reporters.StoreReporter
 import scala.language.implicitConversions
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
 import ScalanAst._
 
 trait ScalanParsers {
-  val settings = new Settings
-  settings.embeddedDefaults(getClass.getClassLoader)
-  settings.usejavacp.value = true
-  val reporter = new StoreReporter
-  val compiler: Global = new Global(settings, reporter)
-
+  type Compiler <: scala.tools.nsc.Global
+  val compiler: Compiler
   import compiler._
+
   implicit def nameToString(name: compiler.Name): String = name.toString
 
   implicit class OptionListOps[A](opt: Option[List[A]]) {
@@ -55,17 +47,6 @@ trait ScalanParsers {
   }
 
   def config: CodegenConfig
-
-  def parseEntityModule(file: File) = {
-    val source = compiler.getSourceFile(file.getPath)
-    val tree = compiler.parseTree(source)
-    tree match {
-      case pd: PackageDef =>
-        entityModule(pd)
-      case tree =>
-        throw new Exception(s"Unexpected tree in file $file:\n\n$tree")
-    }
-  }
 
   def seqImplementation(methods: List[DefDef], parent: Tree): List[SMethodDef] = {
     methods.map(methodDef(_))
