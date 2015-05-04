@@ -224,7 +224,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         case None => ms
       }
 
-    def methodArgSection(sec: SMethodArgs) = s"(${sec.argNamesAndTypes.rep()})"
+    def methodArgSection(sec: SMethodArgs) = s"(${sec.argNamesAndTypes(config).rep()})"
 
     def methodArgsUse(sec: SMethodArgs) = {
       s"(${
@@ -523,7 +523,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val typesUse = concTemplateData.tpeArgUseString
         val typesWithElems = concTemplateData.boundedTpeArgString(false)
         val fields = c.args.argNames
-        val fieldsWithType = c.args.argNamesAndTypes
+        val fieldsWithType = c.args.argNamesAndTypes(config)
         val fieldTypes = c.args.argUnrepTypes(module, config)
         val implicitArgs = concTemplateData.implicitArgsDecl
         val useImplicits = concTemplateData.implicitArgsUse
@@ -707,7 +707,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val typesUse = templateData.tpeArgUseString
       val typesWithElems = templateData.boundedTpeArgString(false)
       val fields = c.args.argNames
-      val fieldsWithType = c.args.argNamesAndTypes
+      val fieldsWithType = c.args.argNamesAndTypes(config)
       val implicitArgsDecl = templateData.implicitArgsDecl
 
       val externalMethods = module.entityOps.getMethodsWithAnnotation(ExternalAnnotation)
@@ -754,7 +754,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val typesUse = d.tpeArgUseString
       val typesWithElems = d.boundedTpeArgString(false)
       val fields = c.args.argNames
-      val fieldsWithType = c.args.argNamesAndTypes
+      val fieldsWithType = c.args.argNamesAndTypes(config)
       val implicitArgsDecl = d.implicitArgsDecl
 
       val parent     = c.ancestors.head
@@ -1030,7 +1030,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
               val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.declaration).toSet
               val returnType = {
                 val receiverType = s"Rep[${e.name + typeArgString(e.tpeArgs.map(_.name))}]"
-                val argTypes = methodArgs.map("Rep[" + _.tpe.toString + "]")
+                val argTypes = if (config.isAlreadyRep) methodArgs.map(_.tpe.toString)
+                               else methodArgs.map("Rep[" + _.tpe.toString + "]")
                 val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
                   case Seq() => "Unit"
                   case Seq(single) => single

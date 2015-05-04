@@ -11,7 +11,8 @@ case class CodegenConfig(
                           seqContextTrait: String,
                           stagedContextTrait: String,
                           extraImports: List[String],
-                          entityTypeSynonyms: Map[String, String]
+                          entityTypeSynonyms: Map[String, String],
+                          isAlreadyRep: Boolean = true
                           )
 
 object Base {
