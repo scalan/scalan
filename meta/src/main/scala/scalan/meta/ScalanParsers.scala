@@ -217,8 +217,12 @@ trait ScalanParsers {
       Some(STpeDef(td.name, tpeArgs, rhs))
     case td: ClassDef if td.mods.isTrait =>
       Some(traitDef(td, parentScope))
-    case cd: ClassDef if !cd.mods.isTrait => // isClass doesn't exist
-      Some(classDef(cd, parentScope))
+    case cd: ClassDef if !cd.mods.isTrait =>
+      // don't include implicit conversion classes
+      if (!cd.mods.isImplicit)
+        Some(classDef(cd, parentScope))
+      else
+        None
     case od: ModuleDef =>
       Some(objectDef(od))
     case vd: ValDef =>
