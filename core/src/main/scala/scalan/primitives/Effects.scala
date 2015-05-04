@@ -13,13 +13,11 @@ import scalan.common.{Utils, Lazy}
  Their usage in Scalan is limited to be consistent with functional semantics of Scalan.
  Don't expect everything possible in LMS to be also possible in Scalan in the same way.
  There are changes in the code:
- Sym -> Exp
- Manifest -> Elem
- infix -> implicit class
- no SourceContext, withPos
- mirroring implemented in Scalan way (though consistent with LMS)
- Reflect contains symbol of effectfull operations (which is added to global defs, which means
- that two Reflect nodes may share the same operation due to Def unification)
+ - Sym -> Exp
+ - Manifest -> Elem
+ - infix -> implicit class
+ - no SourceContext, withPos
+ - mirroring implemented in Scalan way (though consistent with LMS)
  */
 
 trait Effects { self: Scalan =>
@@ -71,16 +69,15 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
 
   def reflectSubGraph(ds: List[Stm]): Unit = {
     val lhs = ds.flatMap(_.lhs)
-    assert(allDistinct(lhs), "multiple defs: " + ds)
-    // equivalent to: globalDefs filter (_.lhs exists (lhs contains _))
+    assert(allDistinct(lhs), "ERROR: multiple defs: " + ds)
 
     val existing = lhs flatMap (globalDefsCache get _)
-    assert(existing.isEmpty, "already defined: " + existing + " for " + ds)
+    assert(existing.isEmpty, "ERROR: already defined: " + existing + " for " + ds)
 
     localDefs = localDefs ::: ds
     globalDefs = globalDefs ::: ds
     for (stm <- ds; s <- stm.lhs) {
-      globalDefsCache += (s->stm)
+      globalDefsCache += (s -> stm)
     }
   }
 
@@ -130,11 +127,13 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
   def Alloc() = new Summary(false,false,false,false,true,false,Nil,Nil,Nil,Nil)
   def Control() = new Summary(false,false,false,false,false,true,Nil,Nil,Nil,Nil)
 
-  def Read(v: List[Exp[Any]]) = new Summary(false,false,false,false,false,false,v.distinct,v.distinct,Nil,Nil)
-  def Write(v: List[Exp[Any]]) = new Summary(false,false,false,false,false,false,Nil,Nil,v.distinct,v.distinct)
+  def Read(v: List[Exp[Any]]) = { val ds = v.distinct; new Summary(false,false,false,false,false,false,ds,ds,Nil,Nil) }
+  def Write(v: List[Exp[Any]]) = { val ds = v.distinct; new Summary(false,false,false,false,false,false,Nil,Nil,ds,ds) }
 
-  def mayRead(u: Summary, a: List[Exp[Any]]): Boolean = u.mayGlobal || a.exists(u.mayRead contains _)
-  def mayWrite(u: Summary, a: List[Exp[Any]]): Boolean = u.mayGlobal || a.exists(u.mayWrite contains _)
+  def mayRead(u: Summary, as: List[Exp[Any]]): Boolean =
+    u.mayGlobal || as.exists(a => u.mayRead contains a)
+  def mayWrite(u: Summary, as: List[Exp[Any]]): Boolean =
+    u.mayGlobal || as.exists(a => u.mayWrite contains a)
   def maySimple(u: Summary): Boolean = u.mayGlobal || u.maySimple
 
   def mustMutable(u: Summary): Boolean = u.resAlloc
@@ -435,12 +434,13 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
 
   def reflectMirrored[A:Elem](zd: Reflect[A]): Exp[A] = {
     checkContext()
+    createReflectDefinition(fresh[A], zd)
     // warn if type is Any. TODO: make optional, sometimes Exp[Any] is fine
     //if (manifest[A] == manifest[Any]) printlog("warning: possible missing mtype call - reflectMirrored with Def of type Any: " + zd)
-    context.filter { case Def(d) if d == zd => true case _ => false }.reverse match {
-      //case z::_ => z.asInstanceOf[Exp[A]]  -- unsafe: we don't have a tight context, so we might pick one from a flattened subcontext
-      case _ => createReflectDefinition(fresh[A], zd)
-    }
+//    context.filter { case Def(d) if d == zd => true case _ => false }.reverse match {
+//      //case z::_ => z.asInstanceOf[Exp[A]]  -- unsafe: we don't have a tight context, so we might pick one from a flattened subcontext
+//      case _ => createReflectDefinition(fresh[A], zd)
+//    }
   }
 
   def checkIllegalSharing(z: Exp[Any], mutableAliases: List[Exp[Any]]) {
@@ -593,8 +593,8 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
 
   def checkReflect[A](s: Exp[A], x: Reflect[A]) = x match {
     case Reflect(Reify(_,_,_),_,_) =>
-      printerr("error: reflecting a reify node.")
-      printerr("at " + s + "=" + x)
+      printerr("ERROR: reflecting a reify node.")
+      printerr(s"at $s = $x")
     case _ => //ok
   }
 
