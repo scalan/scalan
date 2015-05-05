@@ -68,12 +68,13 @@ object ScalanAst {
     }
 
     def unRep(module: SEntityModuleDef , config: CodegenConfig): Option[STpeExpr] = self match {
+      case t if (!config.isAlreadyRep) => Some(t)
       case STraitCall("Rep", Seq(t)) => Some(t)
       case STraitCall(name, args) =>
         val typeSynonyms = config.entityTypeSynonyms ++
           module.entityRepSynonym.toSeq.map(typeSyn => typeSyn.name -> module.entityOps.name).toMap
         typeSynonyms.get(name).map(unReppedName => STraitCall(unReppedName, args))
-      case t => Some(t)
+      case _ => None
     }
 
     def isRep(module: SEntityModuleDef, config: CodegenConfig) = unRep(module, config) match {

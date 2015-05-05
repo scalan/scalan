@@ -16,11 +16,14 @@ trait ScalanAstExtensions {
         as.args.map(a => s"${a.name}: Rep[${a.tpe}]")
     }
 
-    def argUnrepTypes(module: SEntityModuleDef, config: CodegenConfig) =
-      as.args.map(a => a.tpe.unRep(module, config) match {
-        case Some(t) => t
-        case None => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
-      })
+    def argUnrepTypes(module: SEntityModuleDef, config: CodegenConfig) = {
+      if (config.isAlreadyRep) {
+        as.args.map(a => a.tpe.unRep(module, config) match {
+          case Some(t) => t
+          case None => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
+        })
+      } else as.args.map(_.tpe)
+    }
   }
 
   implicit class STpeArgsOps(args: STpeArgs) {
