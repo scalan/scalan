@@ -48,7 +48,7 @@ trait SqlCompiler extends SqlParser {
 
   def generateQuery(m: SMethodDef): String = {
     val args = m.allArgs.map(arg => arg.name + ": " + arg.tpe).mkString(", ")
-    val sql = m.body.get.asInstanceOf[SApply].args(0).asInstanceOf[SLiteral].value
+    val sql = m.body.get.asInstanceOf[SApply].argss(0)(0).asInstanceOf[SLiteral].value
     val select = parseSelect(sql)
     val op = select.operator
     currMethod = m

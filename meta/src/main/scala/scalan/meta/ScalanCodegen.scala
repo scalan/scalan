@@ -341,7 +341,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           m.body match {
             case Some(call: SApply) =>
               call.fun match {
-                case SLiteral(value) if value == "sql" => call.args(0).asInstanceOf[SLiteral].value
+                case SLiteral(value) if value == "sql" => call.argss(0)(0).asInstanceOf[SLiteral].value
                 case _ => ""
               }
             case _ => ""

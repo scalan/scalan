@@ -125,7 +125,7 @@ object ScalanAst {
   case class SConst(c: Any) extends SExpr
   case class SIdent(name: String) extends SExpr
   case class SAssign(left: SExpr, right: SExpr) extends SExpr
-  case class SApply(fun: SExpr, ts: List[STpeExpr], args: List[SExpr]) extends SExpr
+  case class SApply(fun: SExpr, ts: List[STpeExpr], argss: List[List[SExpr]]) extends SExpr
   case class STypeApply(fun: SExpr, ts: List[STpeExpr]) extends SExpr
   case class SSelect(expr: SExpr, tname: String) extends SExpr
   case class SBlock(init: List[SExpr], last: SExpr) extends SExpr

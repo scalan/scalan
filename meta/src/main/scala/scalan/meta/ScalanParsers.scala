@@ -288,7 +288,7 @@ trait ScalanParsers {
     //    }
     val optBody:Option[SExpr] = md.rhs match {
       case Apply(ident:Ident, args) if ident.name.intern() == "sql" =>
-        Some(SApply(SLiteral("sql"), List(), List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue))))
+        Some(SApply(SLiteral("sql"), List(), List(List(SLiteral(args(0).asInstanceOf[Literal].value.stringValue)))))
       case _ => optExpr(md.rhs)
     }
     val isElemOrCont = md.tpt match {
@@ -386,7 +386,6 @@ trait ScalanParsers {
       SContr(name.toString(), args.map(parseExpr))
     case Apply(Select(Ident(TermName("scala")), TermName(tuple)), args) if tuple.startsWith("Tuple") =>
       STuple(args.map(parseExpr))
-    case q"$expr[..$tpts](..$exprs)" => SApply(parseExpr(expr), tpts.map(tpeExpr), exprs.map(parseExpr))
     case Block(init, last) => SBlock(init.map(parseExpr), parseExpr(last))
     case q"$mods val $tname: $tpt = $expr" =>
       SValDef(tname, optTpeExpr(tpt), mods.isLazy, mods.isImplicit, parseExpr(expr))
@@ -395,7 +394,8 @@ trait ScalanParsers {
     case q"(..$params) => $expr" => SFunc(params.map(param => parseExpr(param).asInstanceOf[SValDef]), parseExpr(expr))
     case q"$tpname.this" => SThis(tpname)
     case q"$expr: @$annot" => SAnnotated(parseExpr(expr), annot.toString)
-    case q"$expr[..$tpts]" => STypeApply(parseExpr(expr), tpts.map(tpeExpr))
+    case TypeApply(fun: Tree, args: List[Tree]) => STypeApply(parseExpr(fun), args.map(tpeExpr))
+    case q"$expr[..$tpts](...$exprss)" => SApply(parseExpr(expr), tpts.map(tpeExpr), exprss.map(_.map(parseExpr)))
     case bi => optBodyItem(bi, None) match {
       case Some(item) => item
       case None => print("Error parsing of " + showRaw(bi)); SDefaultExpr("Error parsing")
