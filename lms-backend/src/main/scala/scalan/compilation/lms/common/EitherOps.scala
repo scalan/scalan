@@ -55,11 +55,11 @@ trait EitherOpsExp extends EitherOps with FunctionsExp with IfThenElseExp with B
     val x1 = get_right(sum)(mA,mB)
     val r = reifyEffects(right(x1))
 
-  def make_map[A, B, C, D](sum: Rep[Either[A, B]], left: Rep[A => C], right: Rep[B => D])(implicit mA: Manifest[A], mB: Manifest[B], mC: Manifest[C], mD: Manifest[D], pos: SourceContext): Rep[Either[C, D]] =
-    EitherMap(sum, left, right)
-
     ifThenElse( make_isLeft(sum), l, r )
   }
+
+  def make_map[A, B, C, D](sum: Rep[Either[A, B]], left: Rep[A => C], right: Rep[B => D])(implicit mA: Manifest[A], mB: Manifest[B], mC: Manifest[C], mD: Manifest[D], pos: SourceContext): Rep[Either[C, D]] =
+    EitherMap(sum, left, right)
 
   def get_left[A: Manifest, B: Manifest](sum: Rep[Either[A,B]]): Rep[A] = EitherGetLeft(sum)
   def get_right[A: Manifest, B: Manifest](sum: Rep[Either[A,B]]): Rep[B] = EitherGetRight(sum)
