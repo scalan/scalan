@@ -8,45 +8,30 @@ import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp}
 
 class EffectsTests extends BaseTests { suite =>
-  trait ConsoleDsl extends Scalan {
-    def print(s: Rep[String]): Rep[Unit]
-    def read: Rep[String]
-  }
+//  trait ConsoleDsl extends Scalan {
+//    def print(s: Rep[String]): Rep[Unit]
+//    def read: Rep[String]
+//  }
 
-  trait MyProg extends Scalan with ConsoleDsl {
+  trait MyProg extends Scalan {
     lazy val t1 = fun { (in: Rep[String]) => Thunk {
-        print(in)
+        console_printlnE(in)
     }}
     lazy val t2 = fun { (in: Rep[String]) => Thunk {
-      print(in)
-      print(in + in)
+      console_printlnE(in)
+      console_printlnE(in + in)
     }}
     lazy val t3 = fun { (in: Rep[String]) => Thunk {
-      Thunk { print(in) }
-      print(in + in)
-      print(in + in)
-      print(in + in)
-      print(in + in)
+      Thunk { console_printlnE(in) }
+      console_printlnE(in + in)
+      console_printlnE(in + in)
+      console_printlnE(in + in)
+      console_printlnE(in + in)
     }}
 
   }
 
-  abstract class MyProgStaged(testName: String) extends TestContext(this, testName) with  MyProg  with ConsoleDsl {
-
-    def print(s: Rep[String]): Rep[Unit] =
-      reflectEffect(Print(s))
-    def read: Rep[String] =
-      reflectEffect(Read())
-
-    case class Print(s: Rep[String]) extends BaseDef[Unit]  {
-      override def uniqueOpId = name(selfType)
-      override def mirror(t: Transformer) = Print(t(s))
-    }
-
-    case class Read() extends BaseDef[String]  {
-      override def uniqueOpId = name(selfType)
-      override def mirror(t: Transformer) = Read()
-    }
+  abstract class MyProgStaged(testName: String) extends TestContext(this, testName) with  MyProg {
   }
 
   test("simpleEffectsStaged") {
@@ -92,12 +77,8 @@ class EffectsTests extends BaseTests { suite =>
 
   test("throwablesSeq") {
     val ctx = new ScalanCtxSeq with  MyProg {
-      def print(s: Rep[String]): Rep[Unit] = print(s)
-      def read: Rep[String] = Console.readLine()
-
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
-
       }
     }
     ctx.test
