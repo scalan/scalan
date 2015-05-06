@@ -223,25 +223,25 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   }
 
   def mkLambda[A,B,C]
-  (fun: Rep[A]=>Rep[B]=>Rep[C])
+  (f: Rep[A]=>Rep[B]=>Rep[C])
   (implicit eA: LElem[A], eB: LElem[B]): Rep[A=>B=>C] = {
     val y = fresh[B]
-    mkLambda((a: Rep[A]) => lambda(y)((b:Rep[B]) => fun(a)(b), true), true)
+    mkLambda((a: Rep[A]) => lambda(y)((b:Rep[B]) => f(a)(b), true), true)
   }
 
-  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = {
+  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = {
     implicit val leAB = Lazy(pairElement(eA.value, eB.value))
     mkLambda({ (p: Rep[(A, B)]) =>
       val (x, y) = unzipPair(p)
-      fun(x, y)
+      f(x, y)
     }, true)
   }
 
-  def lambda[A,B](x: Rep[A])(fun: Exp[A] => Exp[B], mayInline: Boolean): Exp[A=>B] = {
+  def lambda[A,B](x: Rep[A])(f: Exp[A] => Exp[B], mayInline: Boolean): Exp[A=>B] = {
     val res = fresh[A => B](Lazy(
       !!!("should not be called: this symbol should have definition and element should be taken from corresponding lambda"))
     )
-    reifyFunction(fun, x, res, mayInline)
+    reifyFunction(f, x, res, mayInline)
   }
 
   class LambdaStack {
@@ -344,5 +344,12 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
           fun { x => f(g(x)) }
       }
     }
+  }
+
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case Apply(f @ Def(l: Lambda[a,b]), x) if l.mayInline => {
+      f(x)
+    }
+    case _ => super.rewriteDef(d)
   }
 }

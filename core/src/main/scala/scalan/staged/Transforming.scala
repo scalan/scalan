@@ -136,27 +136,24 @@ trait Transforming { self: ScalanExp =>
     }
 
     protected def mirrorLambda[A, B](t: Ctx, rewriter: Rewriter, node: Exp[A => B], lam: Lambda[A, B]): (Ctx, Exp[_]) = {
+      var tRes: Ctx = t
       val (t1, newVar) = mirrorNode(t, rewriter, lam.x)
       val newLambdaSym = getMirroredLambdaSym(node)
 
-      lambdaStack.push(newLambdaSym)
-      val schedule = lam.scheduleSyms
-      val (t2, _) = mirrorSymbols(t1, rewriter, schedule)
-      lambdaStack.pop
+      reifyEffects({
+        lambdaStack.push(newLambdaSym)
+        val schedule = lam.scheduleSyms
+        val (t2, _) = mirrorSymbols(t1, rewriter, schedule)
+        lambdaStack.pop
+        tRes = t2
+        t2(lam.y)
+      })
 
-      val newLambda = getMirroredLambdaDef(t2, newLambdaSym, lam)
+      val newLambda = getMirroredLambdaDef(tRes, newLambdaSym, lam)
       createDefinition(thunkStack.top, newLambdaSym, newLambda)
       val newLambdaExp = toExp(newLambda, newLambdaSym)
 
-//      val optScope = thunkStack.top
-//      optScope match {
-//        case Some(scope) =>
-//          val te = createDefinition(optScope, newLambdaSym, newLambda)
-//        case None =>
-//          createDefinition(None, newLambdaSym, newLambda)
-//      }
-
-      (t2 + (node -> newLambdaExp), newLambdaExp)
+      (tRes + (node -> newLambdaExp), newLambdaExp)
     }
 
     protected def mirrorThunk[A](t: Ctx, rewriter: Rewriter, node: Exp[Thunk[A]], thunk: ThunkDef[A]): (Ctx, Exp[_]) = {

@@ -495,7 +495,9 @@ class CoreLmsBackend extends CoreLmsBackendBase { self =>
   with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
   with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenArrayMutation with ScalaGenIfThenElseFat with LoopFusionOpt
   with ScalaGenCastingOps with ScalaGenMathOps with ScalaGenMethodCallOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile
-  with ScalaGenIfThenElse with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions with ScalaGenRangeOps {
+  with ScalaGenIfThenElse with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions with ScalaGenRangeOps
+  with ScalaGenMiscOps
+  {
     val IR: self.type = self
     import scalan.compilation.lms.scalac.LmsType
 

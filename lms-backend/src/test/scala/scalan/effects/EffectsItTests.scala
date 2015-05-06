@@ -9,7 +9,10 @@ import scalan.it.BaseItTests
 
 class EffectsItTests extends BaseItTests {
   trait EffectsRunner extends InteractExample {
-    lazy val runInteract = fun {in: Rep[Int] => runApp(in) }
+    lazy val runInteract = fun {in: Rep[Int] =>
+      val app = runApp
+      app(in)._2
+    }
   }
   class EffectsExp extends EffectsRunner
                       with CommunityLmsCompilerScala with CoreBridge
