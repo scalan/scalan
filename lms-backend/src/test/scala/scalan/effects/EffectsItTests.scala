@@ -1,8 +1,7 @@
 package scalan.effects
 
 import scalan.examples.{AuthenticationsDslExp, AuthenticationsDslSeq, InteractionsDslSeq, InteractionsDslExp}
-import scalan.io.ConsoleCompiler
-import scalan.monads.{MonadsDslExp, MonadsDslSeq}
+import scalan.primitives.EffectfulCompiler
 import scalan.{ScalanCommunityDslExp, ScalanCommunityDslSeq, ScalanCommunitySeq}
 import scalan.collections.{MultiMapsDslSeq}
 import scalan.compilation.lms._
@@ -20,7 +19,7 @@ class EffectsItTests extends BaseItTests {
 
   trait EffectsExp extends CommunityLmsCompilerScala with CoreBridge
                       with ScalanCommunityDslExp
-                      with ConsoleCompiler {
+                      with EffectfulCompiler {
     val lms = new CommunityLmsBackend
 
   }

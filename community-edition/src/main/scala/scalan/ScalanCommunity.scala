@@ -1,19 +1,15 @@
 package scalan
 
 import scalan.collections._
-import scalan.io.{ConsoleExp, ConsoleSeq, Console}
 import scalan.linalgebra.{MatricesDslExp, MatricesDslSeq, MatricesDsl}
 
 trait ScalanCommunity extends Scalan
-  with Console
 
 trait ScalanCommunitySeq extends ScalanCtxSeq
   with ScalanCommunity
-  with ConsoleSeq
 
 trait ScalanCommunityExp extends ScalanCtxExp
   with ScalanCommunity
-  with ConsoleExp
 
 trait ScalanCommunityDsl extends ScalanCommunity
   with CollectionsDsl

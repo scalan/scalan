@@ -40,6 +40,7 @@ trait Scalan
   with ListOps
   with ListViews
   with ConvertersDsl
+  with Effectful
 
 trait ScalanDsl
 extends Scalan
@@ -75,6 +76,7 @@ trait ScalanSeq
   with ListOpsSeq
   with ListViewsSeq
   with ConvertersDslSeq
+  with EffectfulSeq
 
 trait ScalanCtxSeq
 extends ScalanDsl
@@ -113,6 +115,7 @@ trait ScalanExp
   with ListOpsExp
   with ListViewsExp
   with ConvertersDslExp
+  with EffectfulExp
 
 trait ScalanCtxExp
 extends ScalanDsl
