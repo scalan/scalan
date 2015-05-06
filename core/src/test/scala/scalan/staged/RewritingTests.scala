@@ -51,7 +51,7 @@ class RewritingTests extends BaseTests {
       val e1 = toLeftSum[Double, Int](1d)
       val e2 = toRightSum[Double, Int](2)
       val iff = __ifThenElse(pp, e1, e2)
-      iff.fold(_ => 10, _ => 100)
+      iff.foldBy(constFun(10), constFun(100))
     }
 
     lazy val ifIfFold = fun2 { (p1: Rep[Boolean], p2: Rep[Boolean]) =>
@@ -62,7 +62,7 @@ class RewritingTests extends BaseTests {
         p1,
         __ifThenElse(p2, e1, e2),
         e3)
-      iff.fold(_ => 10, _ => 100)
+      iff.foldBy(constFun(10), constFun(100))
     }
   }
 

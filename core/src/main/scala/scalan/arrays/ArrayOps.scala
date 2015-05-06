@@ -152,7 +152,9 @@ trait ArrayOps { self: Scalan =>
   def array_empty[T: Elem]: Arr[T]
   def array_toList[T:Elem](xs: Arr[T]): Lst[T]
 
-  def array_binary_search[T](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T]
+  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T]
+
+  def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double]
 }
 
 trait ArrayOpsSeq extends ArrayOps {
@@ -278,7 +280,10 @@ trait ArrayOpsSeq extends ArrayOps {
   def array_toList[T:Elem](xs: Array[T]): Lst[T] = xs.to[List]
   def arrayToClassTag[T](xs: Rep[Array[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 
-  def array_binary_search[T](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = ???
+  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = ???
+
+  def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double] =
+    arr.map(_ => scala.util.Random.nextGaussian() * e + m)
 }
 
 trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
@@ -402,6 +407,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArrayBinarySearch[T: Elem](i: Exp[T], xs: Exp[Array[T]], o: Ordering[T]) extends Def[T] with ArrayMethod[T] {
     lazy val selfType = xs.elem.eItem
     override def mirror(t: Transformer) = ArrayBinarySearch(t(i), t(xs), o)
+  }
+
+  case class ArrayRandomGaussian[T](m: Exp[T], e: Exp[T], xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ArrayRandomGaussian(t(m), t(e), t(xs))
   }
 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
@@ -583,9 +592,12 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     toExp(newLam, newSym)
   }
 
-  def array_binary_search[T](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = {
-    implicit val eT = is.elem.eItem
+  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = {
     ArrayBinarySearch(i, is, o)
+  }
+
+  def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double] = {
+    ArrayRandomGaussian(m, e, arr)
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {

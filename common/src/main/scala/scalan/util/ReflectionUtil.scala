@@ -1,5 +1,6 @@
 package scalan.util
 
+import scala.reflect.{ReflectionUtil0, runtime}
 import scala.reflect.runtime.universe._
 
 object ReflectionUtil {
@@ -8,4 +9,6 @@ object ReflectionUtil {
   def annotation[T: TypeTag](symbol: Symbol) = symbol.annotations.find {
     _.tpe =:= typeOf[T]
   }
+
+  def methodToJava(sym: MethodSymbol) = ReflectionUtil0.methodToJava(sym)
 }

@@ -68,8 +68,8 @@ abstract class SmokeItTests extends BaseItTests {
 
     lazy val optionOps = fun { x: Rep[Int] =>
       val d = 19
-      val l = toLeftSum[Unit, Int](()).map(_ + 3)
-      val r = toRightSum[Unit, Int](x).map(_ + 7).flatMap(x => toRight(x * 2))
+      val l = SOption.none[Int].map(_ + 3)
+      val r = SOption.some(x).map(_ + 7).flatMap(x => toRight(x * 2))
       (l.getOrElse(d), r.getOrElse(d))
     }
 
@@ -79,7 +79,7 @@ abstract class SmokeItTests extends BaseItTests {
 
     lazy val lambdaConst = fun { x: Rep[Int] =>
       val f = fun { x: Rep[Int] => true }
-      toRightSum[Unit, Int => Boolean](f)
+      SOption.some(f)
     }
 
     lazy val logicalOps = fun2 { (x: Rep[Boolean], y: Rep[Boolean]) =>

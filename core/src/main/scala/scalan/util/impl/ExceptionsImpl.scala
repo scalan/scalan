@@ -28,12 +28,16 @@ trait ExceptionsAbs extends Exceptions with Scalan {
   abstract class SThrowableElem[To <: SThrowable]
     extends WrapperElem[Throwable, To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertSThrowable(x.asRep[SThrowable])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[SThrowable] =>  convertSThrowable(x) }
+      tryConvert(element[SThrowable], this, x, conv)
+    }
+
     def convertSThrowable(x : Rep[SThrowable]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[SThrowableElem[_]])
+      assert(x.selfType1 match { case _: SThrowableElem[_] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -44,8 +48,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
       lazy val eTo = element[SThrowableImpl]
     }
 
-  trait SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs]
-  implicit lazy val SThrowableCompanionElem: SThrowableCompanionElem = new SThrowableCompanionElem {
+  implicit object SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs] {
     lazy val tag = weakTypeTag[SThrowableCompanionAbs]
     protected def getDefaultRep = SThrowable
   }
@@ -81,7 +84,9 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SThrowableImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      weakTypeTag[SThrowableImpl]
+    }
   }
 
   // state representation type
@@ -95,9 +100,6 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     override def to(p: Rep[Throwable]) = {
       val wrappedValueOfBaseType = p
       SThrowableImpl(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      weakTypeTag[SThrowableImpl]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SThrowableImpl]](SThrowableImpl(DefaultOfThrowable.value))
     lazy val eTo = new SThrowableImplElem(this)
@@ -117,11 +119,10 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     proxyOps[SThrowableImplCompanionAbs](p)
   }
 
-  class SThrowableImplCompanionElem extends CompanionElem[SThrowableImplCompanionAbs] {
+  implicit object SThrowableImplCompanionElem extends CompanionElem[SThrowableImplCompanionAbs] {
     lazy val tag = weakTypeTag[SThrowableImplCompanionAbs]
     protected def getDefaultRep = SThrowableImpl
   }
-  implicit lazy val SThrowableImplCompanionElem: SThrowableImplCompanionElem = new SThrowableImplCompanionElem
 
   implicit def proxySThrowableImpl(p: Rep[SThrowableImpl]): SThrowableImpl =
     proxyOps[SThrowableImpl](p)
@@ -145,7 +146,9 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SException(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      weakTypeTag[SException]
+    }
   }
 
   // state representation type
@@ -159,9 +162,6 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     override def to(p: Rep[Throwable]) = {
       val wrappedValueOfBaseType = p
       SException(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      weakTypeTag[SException]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SException]](SException(DefaultOfThrowable.value))
     lazy val eTo = new SExceptionElem(this)
@@ -181,11 +181,10 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     proxyOps[SExceptionCompanionAbs](p)
   }
 
-  class SExceptionCompanionElem extends CompanionElem[SExceptionCompanionAbs] {
+  implicit object SExceptionCompanionElem extends CompanionElem[SExceptionCompanionAbs] {
     lazy val tag = weakTypeTag[SExceptionCompanionAbs]
     protected def getDefaultRep = SException
   }
-  implicit lazy val SExceptionCompanionElem: SExceptionCompanionElem = new SExceptionCompanionElem
 
   implicit def proxySException(p: Rep[SException]): SException =
     proxyOps[SException](p)
@@ -401,7 +400,7 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   object SThrowableCompanionMethods {
     object apply {
       def unapply(d: Def[_]): Option[Rep[String]] = d match {
-        case MethodCall(receiver, method, Seq(msg, _*), _) if receiver.elem.isInstanceOf[SThrowableCompanionElem] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(msg, _*), _) if receiver.elem == SThrowableCompanionElem && method.getName == "apply" =>
           Some(msg).asInstanceOf[Option[Rep[String]]]
         case _ => None
       }

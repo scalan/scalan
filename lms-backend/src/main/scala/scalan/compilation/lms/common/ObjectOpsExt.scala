@@ -19,7 +19,8 @@ trait ObjectOpsExtExp extends ObjectOpsExt with BaseExp {
   }
 
   override def mirror[A: Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
-    case NewObj(className, args, newKeyWord) => newObj(className, args.map(arg => f(arg)), newKeyWord)(mtype(manifest[A]))
+    case NewObj(className, args, newKeyWord) =>
+      newObj(className, args.map(arg => f(arg)), newKeyWord)(mtype(manifest[A])) // TODO check: Why not use the manifest from the NewObj
     case _ => super.mirror(e, f)
   }
 }

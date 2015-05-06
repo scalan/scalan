@@ -11,6 +11,7 @@ trait EitherOps extends Base {
   def make_isLeft[A: Manifest, B: Manifest](sum: Rep[Either[A, B]])(implicit pos: SourceContext): Rep[Boolean]
   def make_isRight[A: Manifest, B: Manifest](sum: Rep[Either[A, B]])(implicit pos: SourceContext): Rep[Boolean]
   def make_fold[A: Manifest, B: Manifest, R: Manifest](sum: Rep[Either[A, B]], left: Rep[A => R], right: Rep[B => R])(implicit pos: SourceContext): Rep[R]
+  def make_map[A: Manifest, B: Manifest, C: Manifest, D:Manifest](sum: Rep[Either[A, B]], left: Rep[A => C], right: Rep[B => D])(implicit pos: SourceContext): Rep[Either[C, D]]
 }
 
 trait EitherOpsExp extends EitherOps with FunctionsExp with IfThenElseExp with BaseExp {
@@ -26,6 +27,12 @@ trait EitherOpsExp extends EitherOps with FunctionsExp with IfThenElseExp with B
   case class EitherIsLeft[A: Manifest, B: Manifest](sum: Rep[Either[A, B]]) extends EitherDef[A, B, Boolean]
   case class EitherIsRight[A: Manifest, B: Manifest](sum: Rep[Either[A, B]]) extends EitherDef[A, B, Boolean]
   case class EitherFold[A: Manifest, B: Manifest, R: Manifest](sum: Rep[Either[A, B]], left: Rep[A => R], right: Rep[B => R]) extends EitherDef[A, B, R]
+  case class EitherMap[A: Manifest, B: Manifest, C: Manifest, D:Manifest](
+    sum: Rep[Either[A, B]], left: Rep[A => C], right: Rep[B => D])
+    extends EitherDef[A, B, Either[C,D]] {
+    def mC = manifest[C]
+    def mD = manifest[D]
+  }
   case class EitherGetLeft[A: Manifest, B: Manifest](sum: Rep[Either[A,B]]) extends Def[A]
   case class EitherGetRight[A: Manifest, B: Manifest](sum: Rep[Either[A,B]]) extends Def[B]
 
@@ -48,6 +55,9 @@ trait EitherOpsExp extends EitherOps with FunctionsExp with IfThenElseExp with B
     val x1 = get_right(sum)(mA,mB)
     val r = reifyEffects(right(x1))
 
+  def make_map[A, B, C, D](sum: Rep[Either[A, B]], left: Rep[A => C], right: Rep[B => D])(implicit mA: Manifest[A], mB: Manifest[B], mC: Manifest[C], mD: Manifest[D], pos: SourceContext): Rep[Either[C, D]] =
+    EitherMap(sum, left, right)
+
     ifThenElse( make_isLeft(sum), l, r )
   }
 
@@ -64,6 +74,7 @@ trait EitherOpsExp extends EitherOps with FunctionsExp with IfThenElseExp with B
     case e @ EitherIsLeft(s) => make_isLeft(t(s))(e.mA, e.mB, pos)
     case e @ EitherIsRight(s) => make_isRight(t(s))(e.mA, e.mB, pos)
     case e @ EitherFold(s, l, r) => make_fold(t(s), t(l), t(r))(e.mA, e.mB, mtype(e.mR), pos)
+    case e @ EitherMap(s, l, r) => make_map(t(s), t(l), t(r))(e.mA, e.mB, e.mC, e.mD, pos)
     case _ => super.mirror(e, t)
   }).asInstanceOf[Exp[A]]
 }
@@ -80,6 +91,7 @@ trait ScalaGenEitherOps extends ScalaGenBase {
     case EitherIsLeft(sum) => emitValDef(sym, src"$sum.isLeft")
     case EitherIsRight(sum) => emitValDef(sym, src"$sum.isRight")
     case EitherFold(sum, l, r) => emitValDef(sym, src"$sum.fold($l, $r)")
+    case EitherMap(sum, l, r) => emitValDef(sym, src"$sum.fold(a => Left($l(a)), b => Right($r(b)))")
     case _ => super.emitNode(sym, rhs)
   }
 }

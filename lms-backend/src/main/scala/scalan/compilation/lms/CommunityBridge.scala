@@ -22,6 +22,14 @@ trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with Comm
               m.addSym(sym, exp)
           }
       }
+//    case Reflect(NumericRand(bound, i), u, es) =>
+//      reflectMirrored(Reflect(ListForeach(f(a),f(x).asInstanceOf[Sym[A]],f(b)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
+    case NumericRand(bound, i) =>
+      val bound_ = m.symMirror[Double](bound)
+      //val i_ = m.symMirror[Int](i)
+      val exp = lms.numeric_Random(bound_)
+
+      m.addSym(sym, exp)//.addFunc(bound_, exp => exp)
     case _ => super.transformDef(m, g, sym, d)
   }
 }

@@ -49,13 +49,17 @@ trait HashSetsAbs extends HashSets with Scalan {
   abstract class SHashSetElem[A, To <: SHashSet[A]](implicit val eA: Elem[A])
     extends WrapperElem1[A, To, HashSet, SHashSet]()(eA, container[HashSet], container[SHashSet]) {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[SHashSet[A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertSHashSet(x.asRep[SHashSet[A]])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[SHashSet[A]] =>  convertSHashSet(x) }
+      tryConvert(element[SHashSet[A]], this, x, conv)
+    }
+
     def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[SHashSetElem[_,_]])
+      assert(x.selfType1 match { case _: SHashSetElem[_, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -66,8 +70,7 @@ trait HashSetsAbs extends HashSets with Scalan {
       lazy val eTo = element[SHashSetImpl[A]]
     }
 
-  trait SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs]
-  implicit lazy val SHashSetCompanionElem: SHashSetCompanionElem = new SHashSetCompanionElem {
+  implicit object SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs] {
     lazy val tag = weakTypeTag[SHashSetCompanionAbs]
     protected def getDefaultRep = SHashSet
   }
@@ -110,7 +113,10 @@ trait HashSetsAbs extends HashSets with Scalan {
     lazy val eTo = this
     override def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem1].getDefaultRep
-    override lazy val tag = super[ConcreteElem1].tag
+    override lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[SHashSetImpl[A]]
+    }
   }
 
   // state representation type
@@ -124,10 +130,6 @@ trait HashSetsAbs extends HashSets with Scalan {
     override def to(p: Rep[HashSet[A]]) = {
       val wrappedValueOfBaseType = p
       SHashSetImpl(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      implicit val tagA = eA.tag
-      weakTypeTag[SHashSetImpl[A]]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SHashSetImpl[A]]](SHashSetImpl(DefaultOfHashSet[A].value))
     lazy val eTo = new SHashSetImplElem[A](this)
@@ -147,11 +149,10 @@ trait HashSetsAbs extends HashSets with Scalan {
     proxyOps[SHashSetImplCompanionAbs](p)
   }
 
-  class SHashSetImplCompanionElem extends CompanionElem[SHashSetImplCompanionAbs] {
+  implicit object SHashSetImplCompanionElem extends CompanionElem[SHashSetImplCompanionAbs] {
     lazy val tag = weakTypeTag[SHashSetImplCompanionAbs]
     protected def getDefaultRep = SHashSetImpl
   }
-  implicit lazy val SHashSetImplCompanionElem: SHashSetImplCompanionElem = new SHashSetImplCompanionElem
 
   implicit def proxySHashSetImpl[A](p: Rep[SHashSetImpl[A]]): SHashSetImpl[A] =
     proxyOps[SHashSetImpl[A]](p)
@@ -315,7 +316,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   object SHashSetCompanionMethods {
     object empty {
       def unapply(d: Def[_]): Option[Unit forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[SHashSetCompanionElem] && method.getName == "empty" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem == SHashSetCompanionElem && method.getName == "empty" =>
           Some(()).asInstanceOf[Option[Unit forSome {type A}]]
         case _ => None
       }

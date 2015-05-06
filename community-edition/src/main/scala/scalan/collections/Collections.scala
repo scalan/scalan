@@ -220,7 +220,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = PairCollection(as.append(value._1), bs.append(value._2))
   }
 
-  trait PairCollectionCompanion extends ConcreteClass2[PairCollection] with CollectionCompanion
+  trait PairCollectionCompanion extends ConcreteClass2[PairCollection]
 
   abstract class CollectionOfPairs[A, B](val arr: Rep[Array[(A,B)]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends IPairCollection[A,B] {
@@ -244,7 +244,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = CollectionOfPairs(arr.append(value))
   }
-  trait CollectionOfPairsCompanion extends ConcreteClass2[CollectionOfPairs] with CollectionCompanion
+  trait CollectionOfPairsCompanion extends ConcreteClass2[CollectionOfPairs]
 
   trait INestedCollection[A] extends Collection[Collection[A]] {
     implicit def eA: Elem[A]
