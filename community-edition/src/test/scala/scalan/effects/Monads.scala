@@ -193,7 +193,7 @@ trait MonadsDsl extends ScalanDsl with Monads
   with ScalanCommunityDsl
   //with ReadersDsl
 {
-  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]]
+  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun {i => console_eval(i,v)}
 }
 
 trait MonadsDslSeq extends MonadsDsl
@@ -203,7 +203,6 @@ trait MonadsDslSeq extends MonadsDsl
   with ScalanCommunityDslSeq
   //with ReadersDslSeq
 {
-  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = i => (i + 1, v)
 }
 
 trait MonadsDslExp extends MonadsDsl
@@ -213,10 +212,4 @@ trait MonadsDslExp extends MonadsDsl
   with ScalanCommunityDslExp
   //with ReadersDslExp
 {
-  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun { i => Eval(i, v) }
-
-  case class Eval[A:Elem](i: Rep[Int], v: Rep[A]) extends BaseDef[(Int, A)]  {
-    override def uniqueOpId = name(selfType)
-    override def mirror(t: Transformer) = Eval(t(i), t(v))
-  }
 }

@@ -14,7 +14,7 @@ trait DummyCompiler extends ScalanExp with Compiler with GraphVizExport {
 
   type CustomCompilerOutput = Unit
 
-  def graphPasses(compilerConfig: CompilerConfig) = Seq.empty[PGraph => GraphPass]
+  override def graphPasses(compilerConfig: CompilerConfig) = Seq.empty[PGraph => GraphPass]
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = ()

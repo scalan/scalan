@@ -13,7 +13,7 @@ trait LmsCompilerCxx extends LmsCompiler with JNIExtractorOpsExp  with PointerOp
   type CompilerConfig = Unit
   implicit val defaultCompilerConfig = ()
 
-  def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+  override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
   override protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
