@@ -31,7 +31,7 @@ class EffectsTests extends BaseTests { suite =>
 
   }
 
-  abstract class MyProgStaged(testName: String) extends TestContext(this, testName) with  MyProg {
+  abstract class MyProgStaged(testName: String) extends TestCompilerContext(this, testName) with  MyProg with EffectfulCompiler {
   }
 
   test("simpleEffectsStaged") {
@@ -39,8 +39,8 @@ class EffectsTests extends BaseTests { suite =>
       def test() = { }
     }
     ctx.test
-    ctx.emit("t1", ctx.t1)
-    ctx.emit("t2", ctx.t2)
+    ctx.test("t1", ctx.t1)
+    ctx.test("t2", ctx.t2)
   }
 
   test("nestedThunksStaged") {
@@ -48,7 +48,7 @@ class EffectsTests extends BaseTests { suite =>
       def test() = { }
     }
     ctx.test
-    ctx.emit("t3", ctx.t3)
+    ctx.test("t3", ctx.t3)
   }
 
   trait MyDomainProg extends Scalan with SegmentsDsl {
@@ -72,7 +72,7 @@ class EffectsTests extends BaseTests { suite =>
       }
     }
     ctx.test
-   // ctx.emit("t1", ctx.t1)
+   // ctx.test("t1", ctx.t1)
   }
 
   test("throwablesSeq") {
