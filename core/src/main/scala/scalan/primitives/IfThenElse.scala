@@ -50,9 +50,16 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     override def mirror(t: Transformer) = IfThenElse(t(cond), t(thenp), t(elsep))
   }
 
+  def reifyBranch[T](b: => Exp[T]): Exp[T] = {
+    val Block(res) = reifyEffects(b)
+    res
+  }
+
   override def __ifThenElse[T](cond: Exp[Boolean], thenp: => Exp[T], elsep: => Exp[T]): Exp[T] = {
-    implicit val eT = thenp.elem
-    IfThenElse(cond, thenp, elsep)
+    val t = reifyBranch(thenp)
+    val e = reifyBranch(elsep)
+    implicit val eT = t.elem
+    IfThenElse(cond, t, e)
   }
 
   implicit class IfThenElseOps[T](tableEntry: TableEntry[T]) {

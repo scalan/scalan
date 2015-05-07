@@ -29,6 +29,9 @@ class EffectsTests extends BaseTests { suite =>
       console_printlnE(in + in)
     }}
 
+    lazy val t4 = fun { (in: Rep[String]) =>
+      IF (in.contains("abc")) THEN { console_printlnE(in) } ELSE { console_printlnE(in) }
+    }
   }
 
   abstract class MyProgStaged(testName: String) extends TestCompilerContext(this, testName) with  MyProg with EffectfulCompiler {
@@ -51,6 +54,13 @@ class EffectsTests extends BaseTests { suite =>
     ctx.test("t3", ctx.t3)
   }
 
+  test("IfThenElseWithEffectsSimple") {
+    val ctx = new MyProgStaged("IfThenElseWithEffectsSimple") {
+      def test() = { }
+    }
+    ctx.test
+    ctx.test("t4", ctx.t4)
+  }
   trait MyDomainProg extends Scalan with SegmentsDsl {
 //    lazy val t1 = fun { (in: Rep[Int]) =>
 //      Thunk { Interval(in, in) }.force.length

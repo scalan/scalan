@@ -647,7 +647,10 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     if (deps.isEmpty && mustPure(summary)) Block(result) else Block(Reify(result, summary, pruneContext(deps))) // calls toAtom...
   }
 
-
+  def reifyEffectsExp[A](block: => Exp[A], controlScope: Boolean = false): Exp[A] = {
+    val Block(res) = reifyEffects(block, controlScope)
+    res
+  }
   // reify the effects of a block that is executed 'here' (if it is executed at all).
   // all assumptions about the current context carry over unchanged.
   def reifyEffectsHere[A](block: => Exp[A], controlScope: Boolean = false): Block[A] = {

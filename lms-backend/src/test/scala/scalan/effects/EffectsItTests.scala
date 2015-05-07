@@ -15,6 +15,10 @@ class EffectsItTests extends BaseItTests {
       val app = runApp
       app(in)._2
     }
+    lazy val runInteract2 = fun {in: Rep[Int] =>
+      val app = runApp2
+      app(in)._2
+    }
   }
 
   trait EffectsExp extends CommunityLmsCompilerScala with CoreBridge
@@ -33,6 +37,14 @@ class EffectsItTests extends BaseItTests {
     //pending
     val in = 10
     compareOutputWithSequential(progStaged)(progSeq.runInteract, progStaged.runInteract, "runInteract", in)
+  }
+
+  test("runInteract2")  {
+    val progSeq = new EffectsSeq with InteractWrapper with InteractionsDslSeq
+    val progStaged = new EffectsExp with InteractWrapper with InteractionsDslExp
+    //pending
+    val in = 10
+    val actual = getStagedOutputConfig(progStaged)(progStaged.runInteract2, "runInteract2", in, progStaged.defaultCompilerConfig)
   }
 
   trait CrossDomainWrapper extends CrossDomainExample {

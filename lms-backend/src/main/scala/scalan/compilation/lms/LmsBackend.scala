@@ -480,6 +480,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     if (cond) iftrue() else iffalse()
   }
 
+  def reify[T:Manifest](x: Exp[T], u: Summary, effects: List[Exp[Any]]): Exp[T] = {
+    toAtom(Reify(x, u, effects))
+  }
+
   //def printlnD(s: Exp[Any])  = println(s)
   def unitD[T:Manifest](x: T) = unit[T](x)
   /*

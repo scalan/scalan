@@ -167,7 +167,6 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
     val newThunk = ThunkDef(res, scheduled)
     val u = summarizeEffects(b)
     reflectEffect(newThunk, u, newThunkSym)
-    //toExp(newThunk, newThunkSym)
   }
 
   var isInlineThunksOnForce = false

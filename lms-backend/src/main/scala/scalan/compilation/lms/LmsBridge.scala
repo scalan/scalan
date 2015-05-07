@@ -26,9 +26,15 @@ trait LmsBridge { self: ScalanCtxExp =>
     private def lastExpOrElse(default: => lms.Exp[_]) = lastExp.getOrElse(default)
 
     def symMirror[A](scalanExp: Exp[_]): lms.Exp[A] = symMirror.apply(scalanExp).asInstanceOf[lms.Exp[A]]
+    def symsMirror[A](scalanExps: List[Exp[_]]): List[lms.Sym[A]] =
+      scalanExps.map(e => symMirror[A](e).asInstanceOf[lms.Sym[A]])
     def symMirrorUntyped(scalanExp: Exp[_]): lms.Exp[_] = symMirror.apply(scalanExp)
     def funcMirror[A, B](scalanExp: Exp[_]): lms.Exp[A] => lms.Exp[B] =
       funcMirror.apply(scalanExp).asInstanceOf[lms.Exp[A] => lms.Exp[B]]
+
+    def summaryMirror(ss: Summary): lms.Summary =
+      new lms.Summary(ss.maySimple, ss.mstSimple, ss.mayGlobal, ss.mstGlobal, ss.resAlloc, ss.control,
+                      symsMirror(ss.mayRead), symsMirror(ss.mstRead), symsMirror(ss.mayWrite), symsMirror(ss.mstWrite))
 
     def mirrorLambda[I, R](lam: Lambda[I, R]): (lms.Exp[I] => lms.Exp[R]) = {
       val lamX = lam.x
