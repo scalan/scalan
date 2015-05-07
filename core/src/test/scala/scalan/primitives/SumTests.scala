@@ -30,4 +30,28 @@ class SumTests extends BaseTests { suite =>
     emit("t2", t2)
   }
 
+  test("SumMap(Right(x)) rewriting") {
+    val ctx = new TestContext(this, "SumMapRightRewriting") {
+      lazy val t1 = fun { x: Rep[Int] =>
+        x.asRight[Int].mapSum(_ + 1, _ - 1)
+      }
+    }
+    import ctx._
+
+    emit("t1", t1)
+    val Lambda(_, _, _, Def(Right(_))) = t1.getLambda
+  }
+
+  test("SumMap(Left(x)) rewriting") {
+    val ctx = new TestContext(this, "SumMapLeftRewriting") {
+      lazy val t1 = fun { x: Rep[Int] =>
+        x.asLeft[Int].mapSum(_ + 1, _ - 1)
+      }
+    }
+    import ctx._
+
+    emit("t1", t1)
+    val Lambda(_, _, _, Def(Left(_))) = t1.getLambda
+  }
+
 }
