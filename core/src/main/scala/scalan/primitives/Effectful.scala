@@ -60,10 +60,10 @@ trait EffectfulCompiler extends EffectfulExp with Expressions with Compiler { se
   object EffectfulRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {
       case Def(Println(i, s)) =>
-        Pair(i + 1, reifyEffectsExp(console_printlnE(s)))
+        Pair(i + 1, console_printlnE(s))
 
       case Def(ReadLine(i)) =>
-        Pair(i + 1, reifyEffectsExp(console_readlineE()))
+        Pair(i + 1, console_readlineE())
 
       case Def(Eval(i,v)) =>
         Pair(i + 1, v)

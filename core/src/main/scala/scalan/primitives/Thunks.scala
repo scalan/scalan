@@ -177,7 +177,7 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
   }
   def forceThunkDefByMirror[A](th: ThunkDef[A], subst: MapTransformer = MapTransformer.Empty): Exp[A] = {
     val body = th.scheduleSyms
-    val (t, _) = DefaultMirror.mirrorSymbols(subst, NoRewriting, body)
+    val (t, _) = DefaultMirror.mirrorSymbols(subst, NoRewriting, th, body)
     t(th.root).asRep[A]
   }
 

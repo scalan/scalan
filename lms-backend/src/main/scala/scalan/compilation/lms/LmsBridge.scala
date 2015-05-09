@@ -36,19 +36,10 @@ trait LmsBridge { self: ScalanCtxExp =>
       new lms.Summary(ss.maySimple, ss.mstSimple, ss.mayGlobal, ss.mstGlobal, ss.resAlloc, ss.control,
                       symsMirror(ss.mayRead), symsMirror(ss.mstRead), symsMirror(ss.mayWrite), symsMirror(ss.mstWrite))
 
-    def filterReifyRoots(graph: AstGraph, schedule: Schedule): Schedule = {
-      val filtered = schedule.filter(tp => tp.rhs match {
-        case Reify(_,_,_) if graph.isRoot(tp.sym) =>
-          false
-        case _ => true
-      })
-      filtered
-    }
-
     def mirrorLambda[I, R](lam: Lambda[I, R]): (lms.Exp[I] => lms.Exp[R]) = {
       val lamX = lam.x
       val f = { x: lms.Exp[I] =>
-        val sched = filterReifyRoots(lam, lam.scheduleSingleLevel)
+        val sched = lam.filterReifyRoots(lam.scheduleSingleLevel)
         val finalMirror = addSym(lamX, x).mirrorDefs(lam, sched)
         val res = finalMirror.lastExpOrElse(x)
         res.asInstanceOf[lms.Exp[R]]
@@ -57,7 +48,7 @@ trait LmsBridge { self: ScalanCtxExp =>
     }
 
     def mirrorBlock[R](block: ThunkDef[_], dflt: Rep[_]): () => lms.Exp[R] = { () =>
-      val sched = filterReifyRoots(block, block.scheduleSingleLevel)
+      val sched = block.filterReifyRoots(block.scheduleSingleLevel)
       val finalMirror = mirrorDefs(block, sched)
       val res = finalMirror.lastExpOrElse(symMirrorUntyped(dflt))
       res.asInstanceOf[lms.Exp[R]]

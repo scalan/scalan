@@ -94,6 +94,15 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
      */
     def scheduleSingleLevel = schedule.filter(tp => !isAssignedToIfBranch(tp.sym))
 
+    def filterReifyRoots(schedule: Schedule): Schedule = {
+      val filtered = schedule.filter(tp => tp.rhs match {
+        case Reify(_,_,_) if isRoot(tp.sym) =>
+          false
+        case _ => true
+      })
+      filtered
+    }
+
     lazy val lambdaBoundSyms: Set[Exp[_]] = {
       schedule.foldLeft(Set.empty[Exp[_]]) { (acc, tp) =>
         val deps = nodes(tp.sym).inputSyms

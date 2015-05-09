@@ -208,7 +208,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   def mirrorApply[A,B](f: Exp[A => B], s: Exp[A], subst: MapTransformer = MapTransformer.Empty): Exp[B] = {
     val Def(lam: Lambda[A, B]) = f
     val body = lam.scheduleSyms
-    val (t, _) = DefaultMirror.mirrorSymbols(subst + (lam.x -> s), NoRewriting, body)
+    val (t, _) = DefaultMirror.mirrorSymbols(subst + (lam.x -> s), NoRewriting, lam, body)
     t(lam.y).asRep[B]
   }
 
