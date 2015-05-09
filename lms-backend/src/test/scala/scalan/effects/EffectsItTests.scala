@@ -19,6 +19,29 @@ class EffectsItTests extends BaseItTests {
       val app = runApp2
       app(in)._2
     }
+
+    lazy val t4 = fun { (in: Rep[String]) =>
+      IF (in.contains("abc")) THEN { console_printlnE(in) } ELSE { console_printlnE(in) }
+    }
+
+    lazy val t5 = fun { (in: Rep[String]) =>
+      IF (in.contains(console_readlineE())) THEN { console_printlnE(in) } ELSE { console_printlnE(in) }
+    }
+
+    lazy val t6 = fun { (in: Rep[String]) =>
+      val input = console_readlineE()
+      val user = IF (input !== (null: String)) { input } ELSE { "admin" }
+      IF (in.contains(user)) THEN {
+        console_printlnE(in)
+      } ELSE {
+        console_printlnE(in + "rejected")
+      }
+    }
+//    lazy val t6 = fun { (in: Rep[String]) =>
+//      val input = console_readlineE()
+//      val user = IF (input.length !== 0) { input } ELSE { "admin" }
+//      IF (in.contains(user)) THEN { console_printlnE(in) } ELSE { console_printlnE(in) }
+//    }
   }
 
   trait EffectsExp extends CommunityLmsCompilerScala with CoreBridge
@@ -45,6 +68,21 @@ class EffectsItTests extends BaseItTests {
     //pending
     val in = 10
     val actual = getStagedOutputConfig(progStaged)(progStaged.runInteract2, "runInteract2", in, progStaged.defaultCompilerConfig)
+  }
+
+  test("ifBranches")  {
+    val progStaged = new EffectsExp with InteractWrapper with InteractionsDslExp
+    //pending
+    val in = "abc"
+    ///val actual = getStagedOutputConfig(progStaged)(progStaged.t4, "t4", in, progStaged.defaultCompilerConfig)
+    val actual5 = getStagedOutputConfig(progStaged)(progStaged.t5, "t5", in, progStaged.defaultCompilerConfig)
+  }
+
+  test("ifBranches2")  {
+    val progStaged = new EffectsExp with InteractWrapper with InteractionsDslExp
+    //pending
+    val in = "abc"
+    val actual = getStagedOutputConfig(progStaged)(progStaged.t6, "t6", in, progStaged.defaultCompilerConfig)
   }
 
   trait CrossDomainWrapper extends CrossDomainExample {

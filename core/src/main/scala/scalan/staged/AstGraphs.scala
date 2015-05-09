@@ -41,6 +41,14 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
       free
     }
 
+    def reifiedEffectSyms: List[Exp[_]] = {
+      val es = roots.flatMap(r => r match {
+        case Def(Reify(_, _, es)) => es
+        case _ => Nil
+      })
+      es.distinct
+    }
+
     def schedule: Schedule = {
       if (boundVars.isEmpty)
         buildScheduleForResult(roots, _.getDeps)
@@ -48,7 +56,7 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
       if (isIdentity) Nil
       else {
         val g = new PGraph(roots)
-        val sh = g.scheduleFrom(boundVars)
+        val sh = g.scheduleFrom(boundVars ++ reifiedEffectSyms)
         if (sh.isEmpty) {
           val consts = roots.collect { case DefTableEntry(tp) => tp }
           consts  // the case when body is consists of consts
@@ -70,6 +78,7 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     def isIdentity: Boolean = boundVars == roots
     def isLocalDef(s: Exp[_]): Boolean = scheduleSyms contains s
     def isLocalDef[T](tp: TableEntry[T]): Boolean = isLocalDef(tp.sym)
+    def isRoot(s: Exp[_]): Boolean = roots contains s
 
     lazy val scheduleFromProjections =
       buildScheduleForResult(roots, s => if (isLambdaBoundProjection(s)) Nil else s.getDeps)

@@ -361,6 +361,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     str.substring(start, end)
   }
 
+  def stringLength(str: Exp[String]): Exp[Int] = {
+    string_length(str)
+  }
+
   def charAt(str: Exp[String], index: Exp[Int]) = str.charAt(index)
 
   def stringToInt(str: Exp[String]) = str.toInt

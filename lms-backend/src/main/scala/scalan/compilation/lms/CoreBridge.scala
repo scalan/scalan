@@ -184,6 +184,11 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
       val exp = lms.substring(str_, start_, end_)
       m.addSym(sym, exp)
 
+    case StringLength(str) =>
+      val str_ = m.symMirror[String](str)
+      val exp = lms.stringLength(str_)
+      m.addSym(sym, exp)
+
     case StringApply(str, index) =>
       val str_ = m.symMirror[String](str)
       val index_ = m.symMirror[Int](index)

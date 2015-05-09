@@ -39,13 +39,14 @@ trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with Comm
       val exp = lms.readline
       m.addSym(sym, exp)
 
-    case Reify(x, u, es) =>
-      createManifest(x.elem) match {
-        case (mA: Manifest[a]) =>
-          val x1 = m.symMirror[a](x)
-          val exp = lms.reify(x1, m.summaryMirror(u), es.map(e => m.symMirror(e)))(mA)
-          m.addSym(sym, exp)
-      }
+    case Reify(x, u, es) => m
+//    case Reify(x, u, es) =>
+//      createManifest(x.elem) match {
+//        case (mA: Manifest[a]) =>
+//          val x1 = m.symMirror[a](x)
+//          val exp = lms.reify(x1, m.summaryMirror(u), es.map(e => m.symMirror(e)))(mA)
+//          m.addSym(sym, exp)
+//      }
     case _ => super.transformDef(m, g, sym, d)
   }
 }

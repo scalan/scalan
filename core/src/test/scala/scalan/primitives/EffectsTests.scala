@@ -56,7 +56,12 @@ class EffectsTests extends BaseTests { suite =>
 
   test("IfThenElseWithEffectsSimple") {
     val ctx = new MyProgStaged("IfThenElseWithEffectsSimple") {
-      def test() = { }
+      def test() = {
+        val Def(lam : Lambda[_,_]) = t4
+        val b = lam.branches
+        assert(true)
+
+      }
     }
     ctx.test
     ctx.test("t4", ctx.t4)
