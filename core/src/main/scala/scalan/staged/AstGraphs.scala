@@ -31,6 +31,25 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     def symbols = sch.map(_.sym)
   }
 
+  def getEffectfulSyms(sch: Schedule): Set[Exp[_]] = {
+    val es = sch.flatMap(tp => effectSyms(tp.rhs)).toSet
+    es
+  }
+
+  def getScope(g: PGraph, vars: List[Exp[_]]): Schedule = {
+    def loop(currScope: immutable.Set[Exp[_]]): Schedule = {
+      val sch = g.scheduleFrom(currScope)
+      val currSch = g.getRootsIfEmpty(sch)
+      val es = getEffectfulSyms(currSch)
+      val newEffects = es -- currScope
+      if (newEffects.isEmpty)
+        currSch
+      else
+        loop(currScope ++ newEffects)
+    }
+    loop(vars.toSet)
+  }
+
   trait AstGraph { thisGraph =>
     def boundVars: List[Exp[_]]
     def roots: List[Exp[_]]
@@ -41,13 +60,13 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
       free
     }
 
-    def reifiedEffectSyms: List[Exp[_]] = {
-      val es = roots.flatMap(r => r match {
-        case Def(Reify(_, _, es)) => es
-        case _ => Nil
-      })
-      es.distinct
-    }
+    def getRootsIfEmpty(sch: Schedule) =
+      if (sch.isEmpty) {
+        val consts = roots.collect { case DefTableEntry(tp) => tp }
+        consts  // the case when body is consists of consts
+      }
+      else
+        sch
 
     def schedule: Schedule = {
       if (boundVars.isEmpty)
@@ -56,17 +75,14 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
       if (isIdentity) Nil
       else {
         val g = new PGraph(roots)
-        val sh = g.scheduleFrom(boundVars ++ reifiedEffectSyms)
-        if (sh.isEmpty) {
-          val consts = roots.collect { case DefTableEntry(tp) => tp }
-          consts  // the case when body is consists of consts
-        }
-        else
-          sh
+        val scope = getScope(g, boundVars)
+        scope
+//        val res = g.schedule.filter(tp => scope.contains(tp.sym))
+//        res
       }
     }
 
-    def scheduleFrom(x: List[Exp[_]]): Schedule = {
+    def scheduleFrom(x: immutable.Set[Exp[_]]): Schedule = {
       val locals = GraphUtil.depthFirstSetFrom[Exp[_]](x)(sym => usagesOf(sym).filter(domain.contains))
       schedule.filter(locals contains _.sym)
     }

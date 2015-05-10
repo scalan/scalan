@@ -97,6 +97,14 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     case _ => super.boundSyms(e)
   }
 
+  override def effectSyms(x: Any): List[Exp[Any]] = x match {
+    case IfThenElse(c, t, e) =>
+      val ts = Def.unapply(t).map(d => effectSyms(d)).toList.flatten
+      val es = Def.unapply(e).map(d => effectSyms(d)).toList.flatten
+      ts ::: es
+    case _ => super.effectSyms(x)
+  }
+
   def liftFromIfThenElse[A,B,C](cond: Rep[Boolean], a: Rep[A], b: Rep[B], iso1: Iso[A,C], iso2: Iso[B,C]): Rep[C] = {
     assertEqualElems(iso1.eTo, iso2.eTo, s"liftFromIfThenElse($cond, $a, $b, $iso1, $iso2)")
     val ea = iso1.eFrom

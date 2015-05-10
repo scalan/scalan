@@ -19,7 +19,11 @@ trait InteractExample extends InteractionsDsl {
   def prg2[F[_]:Cont](implicit I: Interacts[F]) = { import I._;
     for {
       uid <- ask("What's your user ID?")
-      res <- IF (uid.contains("admin")) THEN { tell("Ok") } ELSE { tell("Forbidden") }
+      res <- IF ((uid !== (null: String))) {
+        IF (uid.contains("admin")) THEN { tell("Ok") } ELSE { tell("Forbidden") }
+      } ELSE {
+        tell("enter again")
+      }
     } yield res
   }
 

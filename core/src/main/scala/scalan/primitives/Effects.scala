@@ -231,7 +231,7 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
   }
 
   override def effectSyms(x: Any): List[Exp[Any]] = x match {
-    case Def(Reify(y, u, es)) => es.asInstanceOf[List[Exp[Any]]]
+    case Reify(y, u, es) => es.asInstanceOf[List[Exp[Any]]]
     case _ => super.effectSyms(x)
   }
 
