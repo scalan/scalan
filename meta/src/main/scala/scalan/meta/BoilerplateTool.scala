@@ -179,6 +179,7 @@ class BoilerplateTool extends StrictLogging {
     entityFiles = List(
       "scalan/effects/IOs.scala",
       "scalan/effects/Readers.scala",
+      "scalan/effects/Processes.scala",
       "scalan/effects/Frees.scala",
       "scalan/effects/Coproducts.scala",
       "scalan/effects/Interactions.scala",
