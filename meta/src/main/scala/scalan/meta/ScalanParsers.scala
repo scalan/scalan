@@ -395,10 +395,20 @@ trait ScalanParsers {
     case q"$tpname.this" => SThis(tpname)
     case q"$expr: @$annot" => SAnnotated(parseExpr(expr), annot.toString)
     case TypeApply(fun: Tree, args: List[Tree]) => STypeApply(parseExpr(fun), args.map(tpeExpr))
+    case q"$expr match { case ..$cases } " => SMatch(parseExpr(expr), cases.map{_ match {
+      case cq"$pat if $guard => $body" => SCase(parsePattern(pat), parseExpr(guard), parseExpr(body))
+      case c => throw new NotImplementedError(s"parseExpr: match {case ${showRaw(c)}")
+    }})
     case q"$expr[..$tpts](...$exprss)" => SApply(parseExpr(expr), tpts.map(tpeExpr), exprss.map(_.map(parseExpr)))
     case bi => optBodyItem(bi, None) match {
       case Some(item) => item
       case None => print("Error parsing of " + showRaw(bi)); SDefaultExpr("Error parsing")
     }
+  }
+
+  def parsePattern(pat: Tree): SExpr = pat match {
+    case pq"_" => SIdent("_")
+    case pq"$name @ $pat" => SBind(name, parseExpr(pat))
+    case pq"$value" => parseExpr(value)
   }
 }
