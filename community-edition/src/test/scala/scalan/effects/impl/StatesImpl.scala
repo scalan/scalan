@@ -210,12 +210,12 @@ trait StatesExp extends StatesDsl with ScalanExp {
     }
 
     object set {
-      def unapply(d: Def[_]): Option[S forSome {type S}] = d match {
+      def unapply(d: Def[_]): Option[Rep[S] forSome {type S}] = d match {
         case MethodCall(receiver, method, Seq(s, _*), _) if receiver.elem == StateCompanionElem && method.getName == "set" =>
-          Some(s).asInstanceOf[Option[S forSome {type S}]]
+          Some(s).asInstanceOf[Option[Rep[S] forSome {type S}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[S forSome {type S}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[S] forSome {type S}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

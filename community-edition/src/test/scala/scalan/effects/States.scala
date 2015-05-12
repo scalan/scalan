@@ -22,7 +22,7 @@ trait States extends Base { self: MonadsDsl =>
   trait StateCompanion {
 //    def apply[S,A]()
     def get[S:Elem]: Rep[State[S,S]] = StateBase(fun { s => (s,s) })
-    def set[S:Elem](s: S): Rep[State[S,Unit]] = StateBase(fun { _ => ((),s) })
+    def set[S:Elem](s: Rep[S]): Rep[State[S,Unit]] = StateBase(fun { _ => Pair((),s) })
   }
   
 
