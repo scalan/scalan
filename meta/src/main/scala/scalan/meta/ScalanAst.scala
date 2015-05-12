@@ -141,7 +141,7 @@ object ScalanAst {
   case class SAnnotated(expr: SExpr, annot: String) extends SExpr
   case class STuple(exprs: List[SExpr]) extends SExpr
   case class SCase(pat: SExpr, guard: SExpr, body: SExpr) extends SExpr
-  case class SBind(name: String, body: SExpr) extends SExpr
+  case class SBind(name: String, pat: SExpr) extends SExpr
   case class SMatch(selector: SExpr, cases: List[SCase]) extends SExpr
 
   // SBodyItem universe ----------------------------------------------------------------------

@@ -408,7 +408,7 @@ trait ScalanParsers {
 
   def parsePattern(pat: Tree): SExpr = pat match {
     case pq"_" => SIdent("_")
-    case pq"$name @ $pat" => SBind(name, parseExpr(pat))
+    case pq"$name @ $pat" => SBind(name, parsePattern(pat))
     case pq"$value" => parseExpr(value)
   }
 }
