@@ -192,6 +192,7 @@ trait MonadsDsl extends ScalanDsl with Monads
   with CoproductsDsl
   with ScalanCommunityDsl
   with ReadersDsl
+  with StatesDsl
 {
   def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun {i => console_eval(i,v)}
 }
@@ -202,6 +203,7 @@ trait MonadsDslSeq extends MonadsDsl
   with CoproductsDslSeq
   with ScalanCommunityDslSeq
   with ReadersDslSeq
+  with StatesDslSeq
 {
 }
 
@@ -211,5 +213,6 @@ trait MonadsDslExp extends MonadsDsl
   with CoproductsDslExp
   with ScalanCommunityDslExp
   with ReadersDslExp
+  with StatesDslExp
 {
 }

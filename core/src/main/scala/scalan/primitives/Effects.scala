@@ -38,9 +38,9 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     case _ => Nil
   }
 
-  type State = List[Exp[Any]] // TODO: maybe use TableEntry instead to save lookup
+  type EffectsStack = List[Exp[Any]] // TODO: maybe use TableEntry instead to save lookup
 
-  var context: State = _
+  var context: EffectsStack = _
 
   var conditionalScope = false // used to construct Control nodes
 
@@ -557,11 +557,11 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
     }
   }
 
-  def calculateDependencies(u: Summary): State = {
+  def calculateDependencies(u: Summary): EffectsStack = {
     checkContext();
     calculateDependencies(context, u, true)
   }
-  def calculateDependencies(scope: State, u: Summary, mayPrune: Boolean): State = {
+  def calculateDependencies(scope: EffectsStack, u: Summary, mayPrune: Boolean): EffectsStack = {
     if (u.mayGlobal) scope else {
       val read = u.mayRead
       val write = u.mayWrite
