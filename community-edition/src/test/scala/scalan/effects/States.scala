@@ -9,14 +9,6 @@ trait States extends Base { self: MonadsDsl =>
   trait State[S, A] extends Reifiable[State[S, A]] {
     implicit def eS: Elem[S]
     implicit def eA: Elem[A]
-//    def map[B](f: A => B): State[S, B] =
-//      flatMap(a => unit(f(a)))
-//    def map2[B,C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
-//      flatMap(a => sb.map(b => f(a, b)))
-//    def flatMap[B](f: A => State[S, B]): State[S, B] = State(s => {
-//      val (a, s1) = run(s)
-//      f(a).run(s1)
-//    })
     def run: Rep[S => (A, S)]
   }
   trait StateCompanion {
@@ -24,7 +16,6 @@ trait States extends Base { self: MonadsDsl =>
     def get[S:Elem]: Rep[State[S,S]] = StateBase(fun { s => (s,s) })
     def set[S:Elem](s: Rep[S]): Rep[State[S,Unit]] = StateBase(fun { _ => Pair((),s) })
   }
-  
 
   abstract class StateBase[S, A]
       (val run: Rep[S => (A,S)])
@@ -74,6 +65,21 @@ trait StatesDslExp extends impl.StatesExp { self: MonadsDslExp =>
             val Pair(Pair(a,s), t) = p
             step(Pair(State({ _ => Pair(a,s) }), t)).run(s)
           }}
+      }
+    case Apply(Def(StateMethods.run(Def(CollectionMethods.foldLeft(xs, start: RepState[s,a], f)))), s0) =>
+      xs.elem match {
+        case el: CollectionElem[t,_] =>
+          implicit val eT = el.eItem
+          val st = start.asRep[State[s,a]]
+          val step = f.asRep[((State[s,a],t)) => State[s,a]]
+          val initState = s0.asRep[s]
+          implicit val eS = initState.elem
+          val init = st.run(initState)
+          implicit val eA = init.elem.eFst
+          xs.asRep[Collection[t]].foldLeft(init, {p: Rep[((a,s),t)] => {
+            val Pair(Pair(a,s), t) = p
+            step(Pair(State({ _ => Pair(a,s) }), t)).run(s)
+          }})
       }
     case _ => super.rewriteDef(d)
   }

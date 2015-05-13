@@ -2314,9 +2314,23 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object foldLeft {
+      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[S], Rep[((S, A)) => S]) forSome {type A; type S}] = d match {
+        case MethodCall(receiver, method, Seq(init, f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "foldLeft" =>
+          Some((receiver, init, f)).asInstanceOf[Option[(Rep[Collection[A]], Rep[S], Rep[((S, A)) => S]) forSome {type A; type S}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[S], Rep[((S, A)) => S]) forSome {type A; type S}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object CollectionCompanionMethods {
+    // WARNING: Cannot generate matcher for method `manager`: Method's return type CollectionManager is not a Rep
+
     object apply {
       def unapply(d: Def[_]): Option[Rep[Array[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(arr, _*), _) if receiver.elem == CollectionCompanionElem && method.getName == "apply" =>
@@ -2360,6 +2374,18 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[Int], Rep[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object empty {
+      def unapply(d: Def[_]): Option[Unit forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem == CollectionCompanionElem && method.getName == "empty" =>
+          Some(()).asInstanceOf[Option[Unit forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Unit forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

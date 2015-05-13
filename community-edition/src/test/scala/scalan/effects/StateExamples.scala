@@ -48,18 +48,18 @@ trait StateExamples extends MonadsDsl { self =>
     zipCollectionWithIndex(Collection(xs)).arr
   }
 
-//  def zipCollectionWithIndex2[A:Elem](as: Coll[A])(implicit C: CollectionManager): Coll[(Int,A)] =
-//    as.foldLeft(F.unit(C.empty[(Int, A)]))({ p =>
-//      val Pair(acc, a) = p
-//      for {
-//        xs <- acc
-//        n  <- State.get[Int]
-//        _  <- State.set(n + 1)
-//      } yield xs.append(Pair(n, a))
-//    }).run(0)._1
-//
-//  lazy val zipCollectionWithIndexW = fun { xs: Arr[Double] =>
-//    implicit val C = Collection.manager
-//    zipCollectionWithIndex(Collection(xs))
-//  }
+  def zipCollectionWithIndex3[A:Elem](as: Coll[A])(implicit C: CollectionManager): Coll[(Int,A)] =
+    as.foldLeft[State[Int,Collection[(Int, A)]]](F.unit(C.empty[(Int, A)]), fun { p =>
+      val Pair(acc, a) = p
+      for {
+        xs <- acc
+        n  <- State.get[Int]
+        _  <- State.set(n + 1)
+      } yield xs.append(Pair(n, a))
+    }).run(0)._1
+
+  lazy val zipCollectionWithIndexW3 = fun { xs: Arr[Double] =>
+    implicit val C = Collection.manager
+    zipCollectionWithIndex3(Collection(xs)).arr
+  }
 }

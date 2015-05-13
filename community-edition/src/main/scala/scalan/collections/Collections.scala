@@ -28,6 +28,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def filterBy(f: Rep[A @uncheckedVariance => Boolean]): Coll[A]
     def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] // = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[A @uncheckedVariance]): Coll[A]  // = Collection(arr.append(value))
+    def foldLeft[S: Elem](init: Rep[S], f: Rep[((S, A)) => S]): Rep[S] = arr.fold(init, f)
     /*def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(Collection[A], A)] = {
       val arrScan = arr.scan(m)
       (Collection(arrScan._1), arrScan._2)
@@ -36,16 +37,6 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
   def emptyColl[A: Elem]: Coll[A] = element[Collection[A]].defaultRepValue
   type Segments1 = PairCollection[Int, Int]
-
-  trait CollectionManager {
-    def apply[T: Elem](arr: Rep[Array[T]]): Coll[T]
-    def fromArray[T: Elem](arr: Rep[Array[T]]): Coll[T]
-    def fromList[T: Elem](arr: Rep[List[T]]): Coll[T]
-    def replicate[T: Elem](len: Rep[Int], v: Rep[T]): Coll[T]
-    def empty[T: Elem]: Coll[T]
-    def singleton[T: Elem](v: Rep[T]): Coll[T]
-    def indexRange(l: Rep[Int]): Coll[Int]
-  }
 
   trait CollectionCompanion extends TypeFamily1[Collection] with CollectionManager {
     def manager: CollectionManager = this
@@ -366,6 +357,16 @@ trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl =>
     def filter(f: Rep[A] => Rep[Boolean]): Coll[A] = coll.filterBy(fun(f))
 
     def flatMap[B: Elem](f: Rep[A] => Coll[B]): Coll[B] = coll.flatMapBy(fun(f))
+  }
+
+  trait CollectionManager {
+    def apply[T: Elem](arr: Rep[Array[T]]): Coll[T]
+    def fromArray[T: Elem](arr: Rep[Array[T]]): Coll[T]
+    def fromList[T: Elem](arr: Rep[List[T]]): Coll[T]
+    def replicate[T: Elem](len: Rep[Int], v: Rep[T]): Coll[T]
+    def empty[T: Elem]: Coll[T]
+    def singleton[T: Elem](v: Rep[T]): Coll[T]
+    def indexRange(l: Rep[Int]): Coll[Int]
   }
 }
 
