@@ -702,6 +702,16 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
               m.addSym(sym, exp)
           }
       }
+    case ArrayReverse(arg) =>
+      arg.elem match {
+        case (el: ArrayElem[_]) =>
+          createManifest(el.eItem) match {
+            case (mA: Manifest[a]) =>
+              val arg_ = m.symMirror[Array[a]](arg)
+              val exp = lms.arrayReverse[a](arg_)(mA)
+              m.addSym(sym, exp)
+          }
+      }
     case sort@ArraySortBy(arg, lambdaSym@Def(by: Lambda[_, b]), o) =>
       sort.selfType match {
         case (el: ArrayElem[a]) =>
@@ -1009,6 +1019,16 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
           m.addSym(sym, exp)
       }
 
+    case ArrayCons(value, xs) =>
+      xs.elem match {
+        case el: ArrayElem[a] =>
+          val mA = createManifest(el.eItem).asInstanceOf[Manifest[a]]
+          val lmsXs = m.symMirror[Array[a]](xs)
+          val lmsValue = m.symMirror[a](value)
+          val exp = lms.array_cons(lmsValue, lmsXs)(mA)
+          m.addSym(sym, exp)
+      }
+
     case ArrayToList(xs) =>
       createManifest(xs.elem.eItem) match {
         case mA: Manifest[a] =>
@@ -1033,8 +1053,16 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
               val lambdaF = m.mirrorLambda[a, List[b]](lam.asInstanceOf[Lambda[a, List[b]]])
               val exp = lms.listFlatMap[a, b](m.symMirror[List[a]](list), lambdaF)(mA, mB)
               m.addSym(sym, exp).addFunc(lamSym, lambdaF)
-        }
+          }
       }
+
+//    case lr@ListFoldLeft(list: Lst[a], init: Exp[s], lamSym @ Def(lam: Lambda[_, _])) =>
+//      (createManifest(list.elem.eItem), createManifest(init.elem)) match {
+//        case (mA: Manifest[a], mS: Manifest[s]) =>
+//          val lambdaF = m.mirrorLambda[(s,a), s](lam.asInstanceOf[Lambda[(s,a), s]])
+//          val exp = lms.listFlatMap[a, b](m.symMirror[List[a]](list), lambdaF)(mA, mB)
+//          m.addSym(sym, exp).addFunc(lamSym, lambdaF)
+//      }
 
     case lr@ListLength(list) =>
       createManifest(list.elem.eItem) match {

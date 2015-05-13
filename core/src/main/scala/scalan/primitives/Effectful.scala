@@ -74,5 +74,5 @@ trait EffectfulCompiler extends EffectfulExp with Expressions with Compiler { se
 
   override def graphPasses(compilerConfig: CompilerConfig) =
     super.graphPasses(compilerConfig) :+
-      constantPass(GraphTransformPass("io", DefaultMirror, EffectfulRewriter))
+    constantPass(GraphTransformPass("effects", DefaultMirror, EffectfulRewriter))
 }

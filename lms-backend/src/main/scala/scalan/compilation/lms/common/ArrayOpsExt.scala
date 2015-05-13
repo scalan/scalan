@@ -87,6 +87,10 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     a.sort
   }
 
+  def arrayReverse[A: Manifest](a: Exp[Array[A]]): Exp[Array[A]] = {
+    a.reverse
+  }
+
   def strideArray[A: Manifest](xs: Exp[Array[A]], start: Exp[Int], length: Exp[Int], stride: Exp[Int]) =
     array(length) { i =>
       xs.at(start + i * stride)
@@ -188,6 +192,10 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     for(a <- xs ) {bu += a}
     bu += value
     bu.result
+  }
+
+  def array_cons[A: Manifest](value: Rep[A], xs: Rep[Array[A]]): Rep[Array[A]] = {
+    xs.insert(0, value)
   }
 
   def arrayToList[A: Manifest](xs: Rep[Array[A]]): Rep[List[A]] =

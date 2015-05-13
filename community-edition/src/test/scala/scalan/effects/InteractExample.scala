@@ -2,9 +2,6 @@ package scalan.effects
 
 import scalan.examples.InteractionsDsl
 
-/**
- * Created by slesarenko on 25/04/15.
- */
 trait InteractExample extends InteractionsDsl {
   val OperM = Monad[Oper]
 
@@ -34,4 +31,14 @@ trait InteractExample extends InteractionsDsl {
 
   lazy val app2: Rep[Free[App, Unit]] = prg2[App]
   def runApp2 = app2.run(InteractOper)
+
+  lazy val runAppW = fun {in: Rep[Int] =>
+    val app = runApp
+    app(in)._2
+  }
+  lazy val runApp2W = fun {in: Rep[Int] =>
+    val app = runApp2
+    app(in)._2
+  }
+
 }

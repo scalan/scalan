@@ -6,8 +6,8 @@ trait StateExamples extends MonadsDsl { self =>
   implicit val F = stateMonad[Int]
   import F.toMonadic
 
-  def zipWithIndex[A:Elem](as: Rep[List[A]]): Rep[List[(Int,A)]] =
-    as.foldLeft(F.unit(SList.empty[(Int, A)]))(fun { p =>
+  def zipWithIndex[A:Elem](as: Rep[Array[A]]): Rep[Array[(Int,A)]] =
+    as.foldLeft(F.unit(SArray.empty[(Int, A)]))({ p =>
       val Pair(acc, a) = p
       for {
         xs <- acc
@@ -16,5 +16,5 @@ trait StateExamples extends MonadsDsl { self =>
       } yield (n, a) :: xs
     }).run(0)._1.reverse
 
-  lazy val zipWithIndexW = fun { xs: Lst[Double] => zipWithIndex(xs) }
+  lazy val zipWithIndexW = fun { xs: Arr[Double] => zipWithIndex(xs) }
 }
