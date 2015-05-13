@@ -424,8 +424,8 @@ trait ScalanParsers {
     case Bind(_, expr) => throw new NotImplementedError(s"parsePattern: Bind(_, expr) = ${showRaw(pat)}")
     case Literal(Constant(c)) => SConstPattern(SConst(c))
     case Ident(id) => SStableIdPattern(SIdent(id.toString))
-    case Select(_, _) | This(_) =>
-      throw new NotImplementedError(s"parsePattern: ${showRaw(pat)}")
+    case Select(qual, name) => SSelPattern(parseExpr(qual), name.toString)
     case Alternative(alts) => throw new NotImplementedError(s"parsePattern: ${showRaw(pat)}")
+    case _ => throw new NotImplementedError(s"parsePattern: ${showRaw(pat)}")
   }
 }
