@@ -406,9 +406,26 @@ trait ScalanParsers {
     }
   }
 
-  def parsePattern(pat: Tree): SExpr = pat match {
-    case pq"_" => SIdent("_")
-    case pq"$name @ $pat" => SBind(name, parsePattern(pat))
-    case pq"$value" => parseExpr(value)
+  object WildcardPattern {
+    def unapply(pat: Tree): Boolean = pat match {
+      case Bind(nme.WILDCARD, WildcardPattern()) => true
+      case Star(WildcardPattern())               => true
+      case x: Ident                              => treeInfo.isVarPattern(x)
+      case Alternative(ps)                       => ps forall unapply
+      case EmptyTree                             => true
+      case _                                     => false
+    }
+  }
+
+  def parsePattern(pat: Tree): SPattern = pat match {
+    case WildcardPattern() => SWildcardPattern()
+    case _: UnApply | _: Apply => throw new NotImplementedError(s"parsePattern: _: UnApply | _: Apply = ${showRaw(pat)}")
+    case Typed(Ident(_), _) => throw new NotImplementedError(s"parsePattern: Typed(Ident(_), _) = ${showRaw(pat)}")
+    case Bind(_, expr) => throw new NotImplementedError(s"parsePattern: Bind(_, expr) = ${showRaw(pat)}")
+    case Literal(Constant(c)) => SConstPattern(SConst(c))
+    case Ident(id) => SStableIdPattern(SIdent(id.toString))
+    case Select(_, _) | This(_) =>
+      throw new NotImplementedError(s"parsePattern: ${showRaw(pat)}")
+    case Alternative(alts) => throw new NotImplementedError(s"parsePattern: ${showRaw(pat)}")
   }
 }

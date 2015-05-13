@@ -140,9 +140,13 @@ object ScalanAst {
   //case class SExternalExpr(ext: AnyRef) extends SExpr
   case class SAnnotated(expr: SExpr, annot: String) extends SExpr
   case class STuple(exprs: List[SExpr]) extends SExpr
-  case class SCase(pat: SExpr, guard: SExpr, body: SExpr) extends SExpr
-  case class SBind(name: String, pat: SExpr) extends SExpr
+  case class SCase(pat: SPattern, guard: SExpr, body: SExpr) extends SExpr
   case class SMatch(selector: SExpr, cases: List[SCase]) extends SExpr
+
+  trait SPattern
+  case class SWildcardPattern() extends SPattern
+  case class SConstPattern(const: SConst) extends SPattern
+  case class SStableIdPattern(id: SIdent) extends SPattern
 
   // SBodyItem universe ----------------------------------------------------------------------
   abstract class SBodyItem extends SExpr
