@@ -421,7 +421,7 @@ trait ScalanParsers {
     case WildcardPattern() => SWildcardPattern()
     case _: UnApply | _: Apply => throw new NotImplementedError(s"parsePattern: _: UnApply | _: Apply = ${showRaw(pat)}")
     case Typed(Ident(termNames.WILDCARD), tpe) => STypedPattern(tpeExpr(tpe))
-    case Bind(_, expr) => throw new NotImplementedError(s"parsePattern: Bind(_, expr) = ${showRaw(pat)}")
+    case Bind(TermName(name), expr) => SBindPattern(name, parsePattern(expr))
     case Literal(Constant(c)) => SConstPattern(SConst(c))
     case Ident(id) => SStableIdPattern(SIdent(id.toString))
     case Select(qual, name) => SSelPattern(parseExpr(qual), name.toString)
