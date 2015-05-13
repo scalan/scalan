@@ -149,6 +149,7 @@ object ScalanAst {
   case class SStableIdPattern(id: SIdent) extends SPattern
   case class SSelPattern(sel: SExpr, name: String) extends SPattern
   case class SAltPattern(alts: List[SPattern]) extends SPattern
+  case class STypedPattern(tpe: STpeExpr) extends SPattern
 
   // SBodyItem universe ----------------------------------------------------------------------
   abstract class SBodyItem extends SExpr

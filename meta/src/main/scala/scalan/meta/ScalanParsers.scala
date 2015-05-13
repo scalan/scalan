@@ -420,7 +420,7 @@ trait ScalanParsers {
   def parsePattern(pat: Tree): SPattern = pat match {
     case WildcardPattern() => SWildcardPattern()
     case _: UnApply | _: Apply => throw new NotImplementedError(s"parsePattern: _: UnApply | _: Apply = ${showRaw(pat)}")
-    case Typed(Ident(_), _) => throw new NotImplementedError(s"parsePattern: Typed(Ident(_), _) = ${showRaw(pat)}")
+    case Typed(Ident(termNames.WILDCARD), tpe) => STypedPattern(tpeExpr(tpe))
     case Bind(_, expr) => throw new NotImplementedError(s"parsePattern: Bind(_, expr) = ${showRaw(pat)}")
     case Literal(Constant(c)) => SConstPattern(SConst(c))
     case Ident(id) => SStableIdPattern(SIdent(id.toString))
