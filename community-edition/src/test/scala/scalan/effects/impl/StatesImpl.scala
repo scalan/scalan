@@ -197,6 +197,8 @@ trait StatesExp extends StatesDsl with ScalanExp {
   }
 
   object StateCompanionMethods {
+    // WARNING: Cannot generate matcher for method `apply`: Method has function arguments r
+
     object get {
       def unapply(d: Def[_]): Option[Unit forSome {type S}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem == StateCompanionElem && method.getName == "get" =>

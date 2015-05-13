@@ -66,11 +66,25 @@ class EffectsItTests extends BaseItTests
     val actual2 = getStagedOutputConfig(progStaged)(progStaged.t2, "t2", in, progStaged.defaultCompilerConfig)
   }
 
-  test("zipWithIndex")  {
+  test("zipArrayWithIndex")  {
     val progStaged = new EffectsExp with StateExamples with MonadsDslExp
     //pending
     val in = Array(10.0, 20.0, 30.0)
-    val res = getStagedOutputConfig(progStaged)(progStaged.zipWithIndexW, "zipWithIndex", in, progStaged.defaultCompilerConfig)
+    val res = getStagedOutputConfig(progStaged)(progStaged.zipArrayWithIndexW, "zipArrayWithIndex", in, progStaged.defaultCompilerConfig)
+  }
+
+  test("zipCollectionWithIndex")  {
+    val progStaged = new EffectsExp with StateExamples with MonadsDslExp
+    //pending
+    val in = Array(10.0, 20.0, 30.0)
+    val res = getStagedOutputConfig(progStaged)(progStaged.zipCollectionWithIndexW, "zipCollectionWithIndex", in, progStaged.defaultCompilerConfig)
+  }
+
+  test("zipCollectionWithIndex2")  {
+    val progStaged = new EffectsExp with StateExamples with MonadsDslExp
+    //pending
+    val in = Array(10.0, 20.0, 30.0)
+    val res = getStagedOutputConfig(progStaged)(progStaged.zipCollectionWithIndexW2, "zipCollectionWithIndex2", in, progStaged.defaultCompilerConfig)
   }
 
 }

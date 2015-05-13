@@ -12,7 +12,7 @@ class StateTests extends BaseTests {
     val ctx = new TestContext(this, "zipWithIndex") with MonadsDslExp with StateExamples {
       override def isInvokeEnabled(d: Def[_], m: Method) = true
     }
-    ctx.emit("zipWithIndex", ctx.zipWithIndexW)
+    ctx.emit("zipWithIndex", ctx.zipArrayWithIndexW)
   }
 
 

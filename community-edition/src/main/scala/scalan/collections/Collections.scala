@@ -37,7 +37,18 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   def emptyColl[A: Elem]: Coll[A] = element[Collection[A]].defaultRepValue
   type Segments1 = PairCollection[Int, Int]
 
-  trait CollectionCompanion extends TypeFamily1[Collection] {
+  trait CollectionManager {
+    def apply[T: Elem](arr: Rep[Array[T]]): Coll[T]
+    def fromArray[T: Elem](arr: Rep[Array[T]]): Coll[T]
+    def fromList[T: Elem](arr: Rep[List[T]]): Coll[T]
+    def replicate[T: Elem](len: Rep[Int], v: Rep[T]): Coll[T]
+    def empty[T: Elem]: Coll[T]
+    def singleton[T: Elem](v: Rep[T]): Coll[T]
+    def indexRange(l: Rep[Int]): Coll[Int]
+  }
+
+  trait CollectionCompanion extends TypeFamily1[Collection] with CollectionManager {
+    def manager: CollectionManager = this
     def apply[T: Elem](arr: Rep[Array[T]]): Coll[T] = fromArray(arr)
 
     def fromArray[T: Elem](arr: Rep[Array[T]]): Coll[T] = {
@@ -88,6 +99,23 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
         }
         case viewElem: ViewElem[a, b] =>
           CollectionOverArray(SArray.replicate(len, v))
+        case e => ???(s"Element is $e")
+      }
+    }
+
+    def empty[T: Elem]: Coll[T] = {
+      element[T] match {
+        case baseE: BaseElem[a] =>
+          CollectionOverArray[a](SArray.empty[T])
+        case pairElem: PairElem[a ,b] => {
+          implicit val ea = pairElem.eFst
+          implicit val eb = pairElem.eSnd
+          val as = empty[a]
+          val bs = empty[b]
+          as zip bs
+        }
+        case viewElem: ViewElem[a, b] =>
+          CollectionOverArray(SArray.empty[T])
         case e => ???(s"Element is $e")
       }
     }

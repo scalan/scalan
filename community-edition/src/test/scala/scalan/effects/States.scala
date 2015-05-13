@@ -20,7 +20,7 @@ trait States extends Base { self: MonadsDsl =>
     def run: Rep[S => (A, S)]
   }
   trait StateCompanion {
-//    def apply[S:Elem,A](r: Rep[S] => Rep[(A,S)]) = StateBase(fun(r))
+    def apply[S:Elem,A:Elem](r: Rep[S] => Rep[(A,S)]) = StateBase(fun(r))
     def get[S:Elem]: Rep[State[S,S]] = StateBase(fun { s => (s,s) })
     def set[S:Elem](s: Rep[S]): Rep[State[S,Unit]] = StateBase(fun { _ => Pair((),s) })
   }
@@ -59,15 +59,22 @@ trait StatesDslSeq extends impl.StatesSeq { self: MonadsDslSeq =>
 }
 
 trait StatesDslExp extends impl.StatesExp { self: MonadsDslExp =>
-//  override def rewriteDef[T](d: Def[T]) = d match {
-//    case Apply(Def(StateMethods.run(Def(ArrayFold(xs: Arr[t], start: Rep[State[s,a]], f)))), s0) =>
-//      val step = f.asRep[(State[s,a],t) => State[s,a]]
-//      val initState = s0.asRep[s]
-//      implicit val eS = initState.elem
-//      xs.foldLeft(start.run(initState))(p: Rep[((s,a),t)] => {
-//        val Pair(Pair(s,a),t) = p
-//        step(State(fun {}), t).run(s)
-//      })
-//    case _ => super.rewriteDef(d)
-//  }
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case Apply(Def(StateMethods.run(Def(ArrayFold(xs, start: RepState[s,a], f)))), s0) =>
+      xs.elem match {
+        case el: ArrayElem[t] =>
+          implicit val eT = el.eItem
+          val st = start.asRep[State[s,a]]
+          val step = f.asRep[((State[s,a],t)) => State[s,a]]
+          val initState = s0.asRep[s]
+          implicit val eS = initState.elem
+          val init = st.run(initState)
+          implicit val eA = init.elem.eFst
+          xs.asRep[Array[t]].foldLeft(init){p: Rep[((a,s),t)] => {
+            val Pair(Pair(a,s), t) = p
+            step(Pair(State({ _ => Pair(a,s) }), t)).run(s)
+          }}
+      }
+    case _ => super.rewriteDef(d)
+  }
 }
