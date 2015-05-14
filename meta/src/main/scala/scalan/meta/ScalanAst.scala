@@ -151,6 +151,7 @@ object ScalanAst {
   case class SAltPattern(alts: List[SPattern]) extends SPattern
   case class STypedPattern(tpe: STpeExpr) extends SPattern
   case class SBindPattern(name: String, pat: SPattern) extends SPattern
+  case class SApplyPattern(fun: SExpr, args: List[SExpr]) extends SPattern
 
   // SBodyItem universe ----------------------------------------------------------------------
   abstract class SBodyItem extends SExpr

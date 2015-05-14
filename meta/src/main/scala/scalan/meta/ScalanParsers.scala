@@ -419,7 +419,7 @@ trait ScalanParsers {
 
   def parsePattern(pat: Tree): SPattern = pat match {
     case WildcardPattern() => SWildcardPattern()
-    case _: UnApply | _: Apply => throw new NotImplementedError(s"parsePattern: _: UnApply | _: Apply = ${showRaw(pat)}")
+    case Apply(fun, args) => SApplyPattern(parseExpr(fun), args.map(parseExpr))
     case Typed(Ident(termNames.WILDCARD), tpe) => STypedPattern(tpeExpr(tpe))
     case Bind(TermName(name), expr) => SBindPattern(name, parsePattern(expr))
     case Literal(Constant(c)) => SConstPattern(SConst(c))
