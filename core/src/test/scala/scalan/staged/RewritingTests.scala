@@ -40,9 +40,9 @@ class RewritingTests extends BaseTests {
       val newLambda = doTransform(mkRight)
       emit("mkRight'", newLambda)
 
-      val Def(lam: Lambda[_, _]) = newLambda
-      val Def(Left(l)) = lam.y
-      assert(lam.x == l)
+      inside(newLambda) { case Def(Lambda(_, _, x, Def(Left(l)))) =>
+        assert(x == l)
+      }
     }
   }
 
@@ -70,14 +70,12 @@ class RewritingTests extends BaseTests {
 
     def testIfFold(): Unit = {
       emit("ifFold", ifFold)
-      val Def(Lambda(_, _, _, y)) = ifFold
-      val Def(IfThenElse(cond, Def(Const(10)), Def(Const(100)))) = y
+      ifFold.getLambda.y should matchPattern { case Def(IfThenElse(_, Def(Const(10)), Def(Const(100)))) => }
     }
 
     def testIfIfFold(): Unit = {
       emit("ifIfFold", ifIfFold)
-      val Def(Lambda(_, _, _, y)) = ifIfFold
-      val Def(IfThenElse(c1, Def(IfThenElse(c2, Def(Const(10)), Def(Const(100)))), Def(Const(100)))) = y
+      ifIfFold.getLambda.y should matchPattern { case Def(IfThenElse(c1, Def(IfThenElse(c2, Def(Const(10)), Def(Const(100)))), Def(Const(100)))) => }
     }
   }
 
