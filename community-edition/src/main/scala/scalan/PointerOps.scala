@@ -8,25 +8,29 @@ trait PointerOps { self: Scalan =>
 
   def nullPtr[A: Elem]: Rep[Pointer[A]]
 
-  case class PointerElem[A: Elem](eItem: Elem[A]) extends Elem[Pointer[A]] {
-    override val tag = {
+  case class PointerElem[A: Elem, To <: Pointer[A]](eItem: Elem[A]) extends EntityElem[To] {
+    override lazy val tag = {
       implicit val ttag = eItem.tag
-      weakTypeTag[Pointer[A]]
+      weakTypeTag[Pointer[A]].asInstanceOf[WeakTypeTag[To]]
     }
+    def convertPointer(x: Rep[Pointer[A]]): Rep[To] = x.asRep[To]
     override def isEntityType: Boolean = eItem.isEntityType
-    protected def getDefaultRep = nullPtr[A]
+    protected def getDefaultRep = convertPointer(nullPtr[A])
   }
-  implicit def PointerElement[A: Elem]: Elem[Pointer[A]] = new PointerElem[A](element[A])
-
-  case class ScalarElem[A: Elem](eItem: Elem[A]) extends Elem[Scalar[A]] {
-    override val tag = {
+  implicit def PointerElement[A](implicit eItem: Elem[A]): Elem[Pointer[A]] =
+    new PointerElem[A, Pointer[A]](eItem)
+  
+  case class ScalarElem[A: Elem, To <: Scalar[A]](eItem: Elem[A]) extends EntityElem[To] {
+    override lazy val tag = {
       implicit val ttag = eItem.tag
-      weakTypeTag[Scalar[A]]
+      weakTypeTag[Scalar[A]].asInstanceOf[WeakTypeTag[To]]
     }
+    def convertScalar(x: Rep[Scalar[A]]): Rep[To] = x.asRep[To]
     override def isEntityType: Boolean = eItem.isEntityType
-    protected def getDefaultRep = eItem.defaultRepValue.asInstanceOf[Rep[Scalar[A]]]
+    protected def getDefaultRep = convertScalar(eItem.defaultRepValue.asRep[Scalar[A]])
   }
-  implicit def ScalarElement[A: Elem]: Elem[Scalar[A]] = new ScalarElem[A](element[A])
+  implicit def ScalarElement[A](implicit eItem: Elem[A]): Elem[Scalar[A]] =
+    new ScalarElem[A, Scalar[A]](eItem)
 }
 
 trait PointerOpsExp extends PointerOps { self: ScalanExp =>

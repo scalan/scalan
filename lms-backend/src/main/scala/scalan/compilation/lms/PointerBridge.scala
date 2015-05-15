@@ -9,10 +9,10 @@ trait PointerBridge extends CoreBridge { self: ScalanCtxExp with MethodMappingDS
   val lms: CoreLmsBackendBase with PointerLmsOpsExp
 
   override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
-    case el: ScalarElem[_] =>
-      Manifest.classType(classOf[PointerLmsOps#Scalar[_]], createManifest(el.eItem))
-    case el: PointerElem[_] =>
-      Manifest.classType(classOf[PointerLmsOps#Pointer[_]], createManifest(el.eItem))
+    case ScalarElem(eItem) =>
+      Manifest.classType(classOf[PointerLmsOps#Scalar[_]], createManifest(eItem))
+    case PointerElem(eItem) =>
+      Manifest.classType(classOf[PointerLmsOps#Pointer[_]], createManifest(eItem))
     case el =>
       super.createManifest(el)
   }
@@ -20,8 +20,8 @@ trait PointerBridge extends CoreBridge { self: ScalanCtxExp with MethodMappingDS
   override def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = {
     def itemElem(sourceElem: Elem[_]) = sourceElem match {
       case ScalaArrayElem(eItem) => eItem
-      case elem: ScalarElem[_] => elem.eItem
-      case elem: PointerElem[_] => elem.eItem
+      case ScalarElem(eItem) => eItem
+      case PointerElem(eItem) => eItem
       case _ => !!!(s"cannot get itemElement for $sourceElem")
     }
     def createItemManifest(sourceElem: Elem[_]) = createManifest(itemElem(sourceElem))
