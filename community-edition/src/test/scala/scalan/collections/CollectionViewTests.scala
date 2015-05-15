@@ -9,10 +9,10 @@ class CollectionViewTests extends BaseTests { suite =>
   test("LambdaResultHasViews") {
     val ctx = new ViewTestsCtx(this, "LambdaResultHasViews")
                   with CollectionsDslExp with ScalanCommunityDslExp {
-      lazy val t1 = fun { (in: Rep[Array[Int]]) => BaseCollection(in) }
-      lazy val t2 = fun { (in: Rep[Array[Int]]) => (BaseCollection(in), in.length) }
-      lazy val t3 = fun { (in: Rep[Array[Int]]) => (BaseCollection(in), in) }
-      lazy val t4 = fun { (in: Rep[Array[Int]]) => PairCollection(BaseCollection(in), ListCollection(in.toList)) }
+      lazy val t1 = fun { (in: Rep[Array[Int]]) => CollectionOverArray(in) }
+      lazy val t2 = fun { (in: Rep[Array[Int]]) => (CollectionOverArray(in), in.length) }
+      lazy val t3 = fun { (in: Rep[Array[Int]]) => (CollectionOverArray(in), in) }
+      lazy val t4 = fun { (in: Rep[Array[Int]]) => PairCollectionSOA(CollectionOverArray(in), CollectionOverList(in.toList)) }
     }
     import ctx._
     testLambdaResultHasViewsWithDataType("t1", t1, element[Array[Int]])
@@ -30,11 +30,11 @@ class CollectionViewTests extends BaseTests { suite =>
     testGetIso(element[Collection[Segment]], element[Collection[Segment]])
     //testGetIso(element[Collection[Interval]], element[Collection[(Int,Int)]])  // TODO Iso
 
-    testGetIso(element[BaseCollection[Int]], element[Array[Int]])
-    testGetIso(element[ListCollection[Int]], element[List[Int]])
-    testGetIso(element[ListCollection[(Int,Int)]], element[List[(Int,Int)]])
-    testGetIso(element[ListCollection[Segment]], element[List[Segment]])
-    testGetIso(element[ListCollection[Interval]], element[List[(Int,Int)]])
+    testGetIso(element[CollectionOverArray[Int]], element[Array[Int]])
+    testGetIso(element[CollectionOverList[Int]], element[List[Int]])
+    testGetIso(element[CollectionOverList[(Int,Int)]], element[List[(Int,Int)]])
+    testGetIso(element[CollectionOverList[Segment]], element[List[Segment]])
+    testGetIso(element[CollectionOverList[Interval]], element[List[(Int,Int)]])
 
     // wrappers
     testGetIso(element[Seq[Int]], element[Seq[Int]])

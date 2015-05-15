@@ -41,8 +41,8 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
   trait EdgeCompanion extends TypeFamily2[Edge] {
     def MaxDoubleEdge = AdjEdge(element[Int].defaultRepValue, element[Int].defaultRepValue,
       AdjacencyGraph(element[Collection[Unit]].defaultRepValue,
-        NestedCollection(Collection.singleton(Double.MaxValue), PairCollection(Collection.singleton(0), Collection.singleton(1))),
-        element[NestedCollection[Int]].defaultRepValue)
+        NestedCollectionFlat(Collection.singleton(Double.MaxValue), PairCollectionSOA(Collection.singleton(0), Collection.singleton(1))),
+        element[NestedCollectionFlat[Int]].defaultRepValue)
     )
   }
   abstract class AdjEdge[V, E](val fromId: Rep[Int], val outIndex: Rep[Int], val graph: Rep[Graph[V, E]])

@@ -12,8 +12,8 @@ abstract class LmsMsfItTests extends BaseItTests {
   trait MsfFuncs extends GraphExamples {
     lazy val msfFunAdjBase = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
       val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollection(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollection(Collection.fromArray(in._2), segments)
+      val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
+      val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
 
       val vertex_vals = UnitCollection(segments.length)
       val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
@@ -32,8 +32,8 @@ abstract class LmsMsfItTests extends BaseItTests {
     }
     lazy val msfFunAdjMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
       val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollection(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollection(Collection.fromArray(in._2), segments)
+      val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
+      val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
 
       val vertex_vals = UnitCollection(segments.length)
       val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
@@ -53,8 +53,8 @@ abstract class LmsMsfItTests extends BaseItTests {
 
     lazy val msfFunAdjList = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
       val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollection(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollection(Collection.fromArray(in._2), segments)
+      val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
+      val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
 
       val vertex_vals = UnitCollection(segments.length)
       val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
@@ -65,8 +65,8 @@ abstract class LmsMsfItTests extends BaseItTests {
 
     lazy val msfFunAdjColl = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
       val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollection(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollection(Collection.fromArray(in._2), segments)
+      val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
+      val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
 
       val vertex_vals = UnitCollection(segments.length)
       val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
@@ -87,8 +87,8 @@ abstract class LmsMsfItTests extends BaseItTests {
 
     def createGraph(links: Arr[Int], evalues: Rep[Array[Double]], ofs: Arr[Int], lens: Arr[Int]) = {
       val segments = Collection.fromArray(ofs) zip Collection.fromArray(lens)
-      val linksColl = NestedCollection(Collection.fromArray(links), segments)
-      val edge_vals = NestedCollection(Collection.fromArray(evalues), segments)
+      val linksColl = NestedCollectionFlat(Collection.fromArray(links), segments)
+      val edge_vals = NestedCollectionFlat(Collection.fromArray(evalues), segments)
 
       val vertex_vals = UnitCollection(segments.length)
       val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, linksColl)

@@ -126,11 +126,11 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       map1.union(map2).toArray.map(p => (p._1, p._2.toArray.sum)).sortBy(fun { p => p._1})
     }
 
-    lazy val convertPairCollection = fun { in: Rep[Array[Array[(Int, Double)]]] =>
-      val items = NestedCollection.fromJuggedArray(in)
+    lazy val convertPairCollectionSOA = fun { in: Rep[Array[Array[(Int, Double)]]] =>
+      val items = NestedCollectionFlat.fromJuggedArray(in)
       items.map { coll =>
         // FIXME: convertTo does nor work
-        val collPair = coll.convertTo[PairCollection[Int, Double]]
+        val collPair = coll.convertTo[PairCollectionSOA[Int, Double]]
         (coll.as.reduce, coll.bs.reduce)
       }.arr
     }
