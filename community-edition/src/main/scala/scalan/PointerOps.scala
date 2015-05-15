@@ -31,12 +31,12 @@ trait PointerOps { self: Scalan =>
 
 trait PointerOpsExp extends PointerOps { self: ScalanExp =>
 
-  case class NullPtr[A: Elem] extends Def[Pointer[A]] {
+  case class NullPtr[A: Elem]() extends Def[Pointer[A]] {
     override def selfType = element[Pointer[A]]
     override def uniqueOpId = "NullPtr"
-    override def mirror(t: Transformer) = NullPtr[A]
+    override def mirror(t: Transformer) = NullPtr[A]()
   }
-  def nullPtr[A: Elem]: Exp[Pointer[A]] = NullPtr[A]
+  def nullPtr[A: Elem]: Exp[Pointer[A]] = NullPtr[A]()
 
   // type Scalar for case when Exp[A] is a value and no pointer can be applied
   case class CreateScalar[A: Elem](source: Exp[A]) extends Def[Scalar[A]] {
@@ -46,12 +46,19 @@ trait PointerOpsExp extends PointerOps { self: ScalanExp =>
   }
   def createScalar[A: Elem](source: Exp[A]): Exp[Scalar[A]] = CreateScalar[A](source)
 
-  case class PtrScalar[A: Elem](xScalar: Exp[Scalar[A]]) extends Def[Pointer[A]] {
+  case class ScalarPtr[A: Elem](xScalar: Exp[Scalar[A]]) extends Def[Pointer[A]] {
     override def selfType = element[Pointer[A]]
-    override def uniqueOpId = "PtrScalar"
-    override def mirror(t: Transformer) = PtrScalar[A](t(xScalar))
+    override def uniqueOpId = "ScalarPtr"
+    override def mirror(t: Transformer) = ScalarPtr[A](t(xScalar))
   }
-  def ptrScalar[A: Elem](xScalar: Exp[Scalar[A]]): Exp[Pointer[A]] = PtrScalar(xScalar)
+  def scalarPtr[A: Elem](xScalar: Exp[Scalar[A]]): Exp[Pointer[A]] = ScalarPtr(xScalar)
+
+  case class ArrayPtr[A: Elem](xs: Exp[Array[A]]) extends Def[Pointer[A]] {
+    override def selfType = element[Pointer[A]]
+    override def uniqueOpId = "ArrayPtr"
+    override def mirror(t: Transformer) = ArrayPtr(t(xs))
+  }
+  def arrayPtr[A: Elem](xs: Exp[Array[A]]): Exp[Pointer[A]] = ArrayPtr(xs)
 
 }
 

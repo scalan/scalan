@@ -19,15 +19,18 @@ trait PointerLmsOpsExp
   with FunctionsExp
   with BaseExp {
 
-  // note: m: Manifest[A] is needed to distinct CreateScalar[Int](0) and CreateScalar[Double](0.0), when 0 == 0.0
+  // note: m: Manifest[A] need to distinct objects CreateScalar[Int](0) and CreateScalar[Double](0.0), when 0 == 0.0
   case class CreateScalar[A](source: Exp[A], m: Manifest[A]) extends Def[Scalar[A]]
   def createScalar[A: Manifest](source: Exp[A]): Exp[Scalar[A]] = CreateScalar(source, manifest[A])
 
   case class NullPtr[A](m: Manifest[A]) extends Def[Pointer[A]]
   def nullPtr[A: Manifest]: Exp[Pointer[A]] = NullPtr(manifest[A])
 
-  case class PtrScalar[A: Manifest](xScalar: Exp[Scalar[A]]) extends Def[Pointer[A]]
-  def ptrScalar[A: Manifest](xScalar: Exp[Scalar[A]]): Exp[Pointer[A]] = PtrScalar(xScalar)
+  case class ScalarPtr[A: Manifest](xScalar: Exp[Scalar[A]]) extends Def[Pointer[A]]
+  def scalarPtr[A: Manifest](xScalar: Exp[Scalar[A]]): Exp[Pointer[A]] = ScalarPtr(xScalar)
+
+  case class ArrayPtr[A: Manifest](xs: Rep[Array[A]]) extends Def[Pointer[A]]
+  def arrayPtr[A: Manifest](xs: Exp[Array[A]]): Exp[Pointer[A]] = ArrayPtr(xs)
 }
 
 trait CxxShptrGenPointer extends CxxShptrCodegen {
@@ -58,6 +61,12 @@ trait CxxShptrGenPointer extends CxxShptrCodegen {
 
     case NullPtr(_) =>
       emitValDef(sym, "NULL")
+
+    case ScalarPtr(xScalar) =>
+      emitValDef(sym, s"&${quote(xScalar)}")
+
+    case ArrayPtr(xs) =>
+      emitValDef(sym, s"&(*${quote(xs)})[0]")
 
     case _ =>
       super.emitNode(sym, rhs)
