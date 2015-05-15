@@ -61,7 +61,7 @@ trait CxxShptrGenPointer extends CxxShptrCodegen {
       emitValDef(sym, quote(x))
 
     case NullPtr(_) =>
-      emitValDef(sym, "NULL")
+      emitValDef(sym, "nullptr")
 
     case ScalarPtr(xScalar) =>
       emitValDef(sym, s"&${quote(xScalar)}")
