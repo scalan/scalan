@@ -145,7 +145,7 @@ object ScalanAst {
 
   trait SPattern
   case class SWildcardPattern() extends SPattern
-  case class SConstPattern(const: SConst) extends SPattern
+  case class SLiteralPattern(const: SConst) extends SPattern
   case class SStableIdPattern(id: SIdent) extends SPattern
   case class SSelPattern(sel: SExpr, name: String) extends SPattern
   case class SAltPattern(alts: List[SPattern]) extends SPattern

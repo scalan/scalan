@@ -422,7 +422,7 @@ trait ScalanParsers {
     case Apply(fun, pats) => SApplyPattern(parseExpr(fun), pats.map(parsePattern))
     case Typed(Ident(termNames.WILDCARD), tpe) => STypedPattern(tpeExpr(tpe))
     case Bind(TermName(name), expr) => SBindPattern(name, parsePattern(expr))
-    case Literal(Constant(c)) => SConstPattern(SConst(c))
+    case Literal(Constant(c)) => SLiteralPattern(SConst(c))
     case Ident(id) => SStableIdPattern(SIdent(id.toString))
     case Select(qual, name) => SSelPattern(parseExpr(qual), name.toString)
     case Alternative(alts) => SAltPattern(alts.map(parsePattern))
