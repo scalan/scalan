@@ -21,8 +21,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def nonZeroIndices: Rep[Collection[Int]]
     def nonZeroValues:  Rep[Collection[T]]
     def nonZeroItems: Rep[Collection[(Int, T)]]
-    implicit def elem: Elem[T]
-    def zeroValue = elem.defaultRepValue
+    implicit def eItem: Elem[T]
+    def zeroValue = eItem.defaultRepValue
 
     def apply(i: Rep[Int]): Rep[T]
     @OverloadId("apply_by_collection")
@@ -63,7 +63,7 @@ trait Vectors { self: ScalanCommunityDsl =>
   }
 
   abstract class DenseVector[T](val items: Rep[Collection[T]])
-                               (implicit val elem: Elem[T])
+                               (implicit val eItem: Elem[T])
     extends AbstractVector[T] {
 
     def length = items.length
@@ -139,7 +139,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
   abstract class SparseVector[T](val nonZeroIndices: Rep[Collection[Int]],
                                  val nonZeroValues: Rep[Collection[T]],
-                                 val length: Rep[Int])(implicit val elem: Elem[T])
+                                 val length: Rep[Int])(implicit val eItem: Elem[T])
     extends AbstractVector[T] {
 
     def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
@@ -227,7 +227,7 @@ trait Vectors { self: ScalanCommunityDsl =>
   }
 
   abstract class SparseVector1[T](val nonZeroItems: Rep[Collection[(Int, T)]],
-                                  val length: Rep[Int])(implicit val elem: Elem[T])
+                                  val length: Rep[Int])(implicit val eItem: Elem[T])
     extends AbstractVector[T] {
 
     def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
@@ -384,7 +384,7 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep
 
   implicit class VectorExtensions[T](vector: Vector[T]) {
-    implicit def eItem: Elem[T] = vector.elem
+    implicit def eItem: Elem[T] = vector.eItem
 
     def map[R: Elem](f: Rep[T] => Rep[R]): Vector[R] = vector.mapBy(fun(f))
 

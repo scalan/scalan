@@ -10,7 +10,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
   type Coll[+A] = Rep[Collection[A]]
   trait Collection[@uncheckedVariance +A] extends Reifiable[Collection[A @uncheckedVariance]] {
-    implicit def elem: Elem[A @uncheckedVariance]
+    implicit def eItem: Elem[A @uncheckedVariance]
     def length: Rep[Int]
     def arr: Rep[Array[A @uncheckedVariance]]
     def lst: Rep[List[A @uncheckedVariance]]
@@ -102,7 +102,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   }
 
   abstract class UnitCollection(val length: Rep[Int]) extends Collection[Unit] {
-    def elem = UnitElement
+    def eItem = UnitElement
     def arr = SArray.replicate(length, ())
     def lst = SList.replicate(length, ())
     def apply(i: Rep[Int]) = ()
@@ -120,8 +120,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   }
   trait UnitCollectionCompanion extends ConcreteClass0[UnitCollection]
 
-  abstract class CollectionOverArray[A](val arr: Rep[Array[A]])(implicit val eA: Elem[A]) extends Collection[A] {
-    def elem = eA
+  abstract class CollectionOverArray[A](val arr: Rep[Array[A]])(implicit val eItem: Elem[A]) extends Collection[A] {
     def lst = arr.toList
     def length = arr.length
     def apply(i: Rep[Int]) = arr(i)
@@ -142,8 +141,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   }
   trait CollectionOverArrayCompanion extends ConcreteClass1[CollectionOverArray]
 
-  abstract class CollectionOverList[A](val lst: Rep[List[A]])(implicit val eA: Elem[A]) extends Collection[A] {
-    def elem = eA
+  abstract class CollectionOverList[A](val lst: Rep[List[A]])(implicit val eItem: Elem[A]) extends Collection[A] {
     def length = lst.length
     def apply(i: Rep[Int]) = lst(i)
     def arr = lst.toArray
@@ -162,8 +160,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   }
   trait CollectionOverListCompanion extends ConcreteClass1[CollectionOverList]
 
-  abstract class CollectionOverSeq[A](override val seq: Rep[SSeq[A]])(implicit val eA: Elem[A]) extends Collection[A] {
-    def elem = eA
+  abstract class CollectionOverSeq[A](override val seq: Rep[SSeq[A]])(implicit val eItem: Elem[A]) extends Collection[A] {
     def arr = seq.toArray
     def lst = seq.toList
     def length = seq.size
@@ -197,7 +194,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
   abstract class PairCollectionSOA[A, B](val as: Rep[Collection[A]], val bs: Rep[Collection[B]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends PairCollection[A, B] {
-    lazy val elem = element[(A, B)]
+    lazy val eItem = element[(A, B)]
     def arr = (as.arr zip bs.arr)
     def lst = (as.lst zip bs.lst)
     def coll: Coll[(A, B)] = self
@@ -225,7 +222,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
   abstract class PairCollectionAOS[A, B](val coll: Rep[Collection[(A,B)]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends PairCollection[A,B] {
-    lazy val elem = element[(A, B)]
+    lazy val eItem = element[(A, B)]
     def arr = coll.arr
     def lst = coll.lst
     override def seq = coll.seq
@@ -265,7 +262,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
   abstract class NestedCollectionFlat[A](val values: Coll[A], val segments: PairColl[Int, Int])(implicit val eA: Elem[A])
     extends NestedCollection[A] {
-    lazy val elem = collectionElement(eA)
+    lazy val eItem = collectionElement(eA)
     def length = segments.length
     //def segOffsets = segments.asInstanceOf[Rep[PairCollectionSOA[Int,Int]]].as
     //def segLens = segments.asInstanceOf[Rep[PairCollectionSOA[Int,Int]]].bs
@@ -318,23 +315,23 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     val collElem = convertCollectionElem(coll.selfType1)
 
     def asPairColl: PairColl[A, B] =
-      PairCollectionAOS(coll)(collElem.elem.eFst, collElem.elem.eSnd)
+      PairCollectionAOS(coll)(collElem.eItem.eFst, collElem.eItem.eSnd)
 
     def as: Coll[A] = collElem match {
       case _: PairCollectionElem[_, _, _] => coll.asRep[PairCollection[A, B]].as
-      case _ => coll.map(_._1)(collElem.elem.eFst)
+      case _ => coll.map(_._1)(collElem.eItem.eFst)
     }
 
     def bs: Coll[B] = coll.selfType1 match {
       case _: PairCollectionElem[_, _, _] => coll.asRep[PairCollection[A, B]].bs
-      case _ => coll.map(_._2)(collElem.elem.eSnd)
+      case _ => coll.map(_._2)(collElem.eItem.eSnd)
     }
   }
 }
 
 trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl =>
   implicit class CollectionExtensions[A](coll: Coll[A]) {
-    implicit def eItem: Elem[A] = coll.selfType1.elem
+    implicit def eItem: Elem[A] = coll.selfType1.eItem
 
     def map[B: Elem](f: Rep[A] => Rep[B]): Coll[B] = coll.mapBy(fun(f))
 

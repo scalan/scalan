@@ -20,11 +20,11 @@ trait CollectionsAbs extends Collections with Scalan {
   }
 
   // familyElem
-  class CollectionElem[A, To <: Collection[A]](implicit val elem: Elem[A])
+  class CollectionElem[A, To <: Collection[A]](implicit val eItem: Elem[A])
     extends EntityElem[To] {
     override def isEntityType = true
     override lazy val tag = {
-      implicit val tagA = elem.tag
+      implicit val tagA = eItem.tag
       weakTypeTag[Collection[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
@@ -39,7 +39,7 @@ trait CollectionsAbs extends Collections with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def collectionElement[A](implicit elem: Elem[A]): Elem[Collection[A]] =
+  implicit def collectionElement[A](implicit eItem: Elem[A]): Elem[Collection[A]] =
     new CollectionElem[A, Collection[A]]
 
   implicit object CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs] {
@@ -172,13 +172,13 @@ trait CollectionsAbs extends Collections with Scalan {
   def unmkUnitCollection(p: Rep[Collection[Unit]]): Option[(Rep[Int])]
 
   // elem for concrete class
-  class CollectionOverArrayElem[A](val iso: Iso[CollectionOverArrayData[A], CollectionOverArray[A]])(implicit eA: Elem[A])
+  class CollectionOverArrayElem[A](val iso: Iso[CollectionOverArrayData[A], CollectionOverArray[A]])(implicit eItem: Elem[A])
     extends CollectionElem[A, CollectionOverArray[A]]
     with ConcreteElem[CollectionOverArrayData[A], CollectionOverArray[A]] {
     override def convertCollection(x: Rep[Collection[A]]) = CollectionOverArray(x.arr)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagA = eA.tag
+      implicit val tagA = eItem.tag
       weakTypeTag[CollectionOverArray[A]]
     }
   }
@@ -187,7 +187,7 @@ trait CollectionsAbs extends Collections with Scalan {
   type CollectionOverArrayData[A] = Array[A]
 
   // 3) Iso for concrete class
-  class CollectionOverArrayIso[A](implicit eA: Elem[A])
+  class CollectionOverArrayIso[A](implicit eItem: Elem[A])
     extends Iso[CollectionOverArrayData[A], CollectionOverArray[A]] {
     override def from(p: Rep[CollectionOverArray[A]]) =
       p.arr
@@ -202,7 +202,7 @@ trait CollectionsAbs extends Collections with Scalan {
   abstract class CollectionOverArrayCompanionAbs extends CompanionBase[CollectionOverArrayCompanionAbs] with CollectionOverArrayCompanion {
     override def toString = "CollectionOverArray"
 
-    def apply[A](arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[CollectionOverArray[A]] =
+    def apply[A](arr: Rep[Array[A]])(implicit eItem: Elem[A]): Rep[CollectionOverArray[A]] =
       mkCollectionOverArray(arr)
   }
   object CollectionOverArrayMatcher {
@@ -221,26 +221,26 @@ trait CollectionsAbs extends Collections with Scalan {
   implicit def proxyCollectionOverArray[A](p: Rep[CollectionOverArray[A]]): CollectionOverArray[A] =
     proxyOps[CollectionOverArray[A]](p)
 
-  implicit class ExtendedCollectionOverArray[A](p: Rep[CollectionOverArray[A]])(implicit eA: Elem[A]) {
-    def toData: Rep[CollectionOverArrayData[A]] = isoCollectionOverArray(eA).from(p)
+  implicit class ExtendedCollectionOverArray[A](p: Rep[CollectionOverArray[A]])(implicit eItem: Elem[A]) {
+    def toData: Rep[CollectionOverArrayData[A]] = isoCollectionOverArray(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoCollectionOverArray[A](implicit eA: Elem[A]): Iso[CollectionOverArrayData[A], CollectionOverArray[A]] =
+  implicit def isoCollectionOverArray[A](implicit eItem: Elem[A]): Iso[CollectionOverArrayData[A], CollectionOverArray[A]] =
     new CollectionOverArrayIso[A]
 
   // 6) smart constructor and deconstructor
-  def mkCollectionOverArray[A](arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[CollectionOverArray[A]]
+  def mkCollectionOverArray[A](arr: Rep[Array[A]])(implicit eItem: Elem[A]): Rep[CollectionOverArray[A]]
   def unmkCollectionOverArray[A](p: Rep[Collection[A]]): Option[(Rep[Array[A]])]
 
   // elem for concrete class
-  class CollectionOverListElem[A](val iso: Iso[CollectionOverListData[A], CollectionOverList[A]])(implicit eA: Elem[A])
+  class CollectionOverListElem[A](val iso: Iso[CollectionOverListData[A], CollectionOverList[A]])(implicit eItem: Elem[A])
     extends CollectionElem[A, CollectionOverList[A]]
     with ConcreteElem[CollectionOverListData[A], CollectionOverList[A]] {
     override def convertCollection(x: Rep[Collection[A]]) = CollectionOverList(x.lst)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagA = eA.tag
+      implicit val tagA = eItem.tag
       weakTypeTag[CollectionOverList[A]]
     }
   }
@@ -249,7 +249,7 @@ trait CollectionsAbs extends Collections with Scalan {
   type CollectionOverListData[A] = List[A]
 
   // 3) Iso for concrete class
-  class CollectionOverListIso[A](implicit eA: Elem[A])
+  class CollectionOverListIso[A](implicit eItem: Elem[A])
     extends Iso[CollectionOverListData[A], CollectionOverList[A]] {
     override def from(p: Rep[CollectionOverList[A]]) =
       p.lst
@@ -264,7 +264,7 @@ trait CollectionsAbs extends Collections with Scalan {
   abstract class CollectionOverListCompanionAbs extends CompanionBase[CollectionOverListCompanionAbs] with CollectionOverListCompanion {
     override def toString = "CollectionOverList"
 
-    def apply[A](lst: Rep[List[A]])(implicit eA: Elem[A]): Rep[CollectionOverList[A]] =
+    def apply[A](lst: Rep[List[A]])(implicit eItem: Elem[A]): Rep[CollectionOverList[A]] =
       mkCollectionOverList(lst)
   }
   object CollectionOverListMatcher {
@@ -283,26 +283,26 @@ trait CollectionsAbs extends Collections with Scalan {
   implicit def proxyCollectionOverList[A](p: Rep[CollectionOverList[A]]): CollectionOverList[A] =
     proxyOps[CollectionOverList[A]](p)
 
-  implicit class ExtendedCollectionOverList[A](p: Rep[CollectionOverList[A]])(implicit eA: Elem[A]) {
-    def toData: Rep[CollectionOverListData[A]] = isoCollectionOverList(eA).from(p)
+  implicit class ExtendedCollectionOverList[A](p: Rep[CollectionOverList[A]])(implicit eItem: Elem[A]) {
+    def toData: Rep[CollectionOverListData[A]] = isoCollectionOverList(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoCollectionOverList[A](implicit eA: Elem[A]): Iso[CollectionOverListData[A], CollectionOverList[A]] =
+  implicit def isoCollectionOverList[A](implicit eItem: Elem[A]): Iso[CollectionOverListData[A], CollectionOverList[A]] =
     new CollectionOverListIso[A]
 
   // 6) smart constructor and deconstructor
-  def mkCollectionOverList[A](lst: Rep[List[A]])(implicit eA: Elem[A]): Rep[CollectionOverList[A]]
+  def mkCollectionOverList[A](lst: Rep[List[A]])(implicit eItem: Elem[A]): Rep[CollectionOverList[A]]
   def unmkCollectionOverList[A](p: Rep[Collection[A]]): Option[(Rep[List[A]])]
 
   // elem for concrete class
-  class CollectionOverSeqElem[A](val iso: Iso[CollectionOverSeqData[A], CollectionOverSeq[A]])(implicit eA: Elem[A])
+  class CollectionOverSeqElem[A](val iso: Iso[CollectionOverSeqData[A], CollectionOverSeq[A]])(implicit eItem: Elem[A])
     extends CollectionElem[A, CollectionOverSeq[A]]
     with ConcreteElem[CollectionOverSeqData[A], CollectionOverSeq[A]] {
     override def convertCollection(x: Rep[Collection[A]]) = CollectionOverSeq(x.seq)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagA = eA.tag
+      implicit val tagA = eItem.tag
       weakTypeTag[CollectionOverSeq[A]]
     }
   }
@@ -311,7 +311,7 @@ trait CollectionsAbs extends Collections with Scalan {
   type CollectionOverSeqData[A] = SSeq[A]
 
   // 3) Iso for concrete class
-  class CollectionOverSeqIso[A](implicit eA: Elem[A])
+  class CollectionOverSeqIso[A](implicit eItem: Elem[A])
     extends Iso[CollectionOverSeqData[A], CollectionOverSeq[A]] {
     override def from(p: Rep[CollectionOverSeq[A]]) =
       p.seq
@@ -326,7 +326,7 @@ trait CollectionsAbs extends Collections with Scalan {
   abstract class CollectionOverSeqCompanionAbs extends CompanionBase[CollectionOverSeqCompanionAbs] with CollectionOverSeqCompanion {
     override def toString = "CollectionOverSeq"
 
-    def apply[A](seq: Rep[SSeq[A]])(implicit eA: Elem[A]): Rep[CollectionOverSeq[A]] =
+    def apply[A](seq: Rep[SSeq[A]])(implicit eItem: Elem[A]): Rep[CollectionOverSeq[A]] =
       mkCollectionOverSeq(seq)
   }
   object CollectionOverSeqMatcher {
@@ -345,16 +345,16 @@ trait CollectionsAbs extends Collections with Scalan {
   implicit def proxyCollectionOverSeq[A](p: Rep[CollectionOverSeq[A]]): CollectionOverSeq[A] =
     proxyOps[CollectionOverSeq[A]](p)
 
-  implicit class ExtendedCollectionOverSeq[A](p: Rep[CollectionOverSeq[A]])(implicit eA: Elem[A]) {
-    def toData: Rep[CollectionOverSeqData[A]] = isoCollectionOverSeq(eA).from(p)
+  implicit class ExtendedCollectionOverSeq[A](p: Rep[CollectionOverSeq[A]])(implicit eItem: Elem[A]) {
+    def toData: Rep[CollectionOverSeqData[A]] = isoCollectionOverSeq(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoCollectionOverSeq[A](implicit eA: Elem[A]): Iso[CollectionOverSeqData[A], CollectionOverSeq[A]] =
+  implicit def isoCollectionOverSeq[A](implicit eItem: Elem[A]): Iso[CollectionOverSeqData[A], CollectionOverSeq[A]] =
     new CollectionOverSeqIso[A]
 
   // 6) smart constructor and deconstructor
-  def mkCollectionOverSeq[A](seq: Rep[SSeq[A]])(implicit eA: Elem[A]): Rep[CollectionOverSeq[A]]
+  def mkCollectionOverSeq[A](seq: Rep[SSeq[A]])(implicit eItem: Elem[A]): Rep[CollectionOverSeq[A]]
   def unmkCollectionOverSeq[A](p: Rep[Collection[A]]): Option[(Rep[SSeq[A]])]
 
   // elem for concrete class
@@ -577,7 +577,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
 
   case class SeqCollectionOverArray[A]
       (override val arr: Rep[Array[A]])
-      (implicit eA: Elem[A])
+      (implicit eItem: Elem[A])
     extends CollectionOverArray[A](arr)
         with UserTypeSeq[CollectionOverArray[A]] {
     lazy val selfType = element[CollectionOverArray[A]]
@@ -587,7 +587,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   }
 
   def mkCollectionOverArray[A]
-      (arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[CollectionOverArray[A]] =
+      (arr: Rep[Array[A]])(implicit eItem: Elem[A]): Rep[CollectionOverArray[A]] =
       new SeqCollectionOverArray[A](arr)
   def unmkCollectionOverArray[A](p: Rep[Collection[A]]) = p match {
     case p: CollectionOverArray[A] @unchecked =>
@@ -597,7 +597,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
 
   case class SeqCollectionOverList[A]
       (override val lst: Rep[List[A]])
-      (implicit eA: Elem[A])
+      (implicit eItem: Elem[A])
     extends CollectionOverList[A](lst)
         with UserTypeSeq[CollectionOverList[A]] {
     lazy val selfType = element[CollectionOverList[A]]
@@ -607,7 +607,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   }
 
   def mkCollectionOverList[A]
-      (lst: Rep[List[A]])(implicit eA: Elem[A]): Rep[CollectionOverList[A]] =
+      (lst: Rep[List[A]])(implicit eItem: Elem[A]): Rep[CollectionOverList[A]] =
       new SeqCollectionOverList[A](lst)
   def unmkCollectionOverList[A](p: Rep[Collection[A]]) = p match {
     case p: CollectionOverList[A] @unchecked =>
@@ -617,7 +617,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
 
   case class SeqCollectionOverSeq[A]
       (override val seq: Rep[SSeq[A]])
-      (implicit eA: Elem[A])
+      (implicit eItem: Elem[A])
     extends CollectionOverSeq[A](seq)
         with UserTypeSeq[CollectionOverSeq[A]] {
     lazy val selfType = element[CollectionOverSeq[A]]
@@ -627,7 +627,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
   }
 
   def mkCollectionOverSeq[A]
-      (seq: Rep[SSeq[A]])(implicit eA: Elem[A]): Rep[CollectionOverSeq[A]] =
+      (seq: Rep[SSeq[A]])(implicit eItem: Elem[A]): Rep[CollectionOverSeq[A]] =
       new SeqCollectionOverSeq[A](seq)
   def unmkCollectionOverSeq[A](p: Rep[Collection[A]]) = p match {
     case p: CollectionOverSeq[A] @unchecked =>
@@ -718,9 +718,9 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object UnitCollectionMethods {
-    object elem {
+    object eItem {
       def unapply(d: Def[_]): Option[Rep[UnitCollection]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[UnitCollectionElem] && method.getName == "elem" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[UnitCollectionElem] && method.getName == "eItem" =>
           Some(receiver).asInstanceOf[Option[Rep[UnitCollection]]]
         case _ => None
       }
@@ -902,7 +902,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
   case class ExpCollectionOverArray[A]
       (override val arr: Rep[Array[A]])
-      (implicit eA: Elem[A])
+      (implicit eItem: Elem[A])
     extends CollectionOverArray[A](arr) with UserTypeDef[CollectionOverArray[A]] {
     lazy val selfType = element[CollectionOverArray[A]]
     override def mirror(t: Transformer) = ExpCollectionOverArray[A](t(arr))
@@ -914,18 +914,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object CollectionOverArrayMethods {
-    object elem {
-      def unapply(d: Def[_]): Option[Rep[CollectionOverArray[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "elem" =>
-          Some(receiver).asInstanceOf[Option[Rep[CollectionOverArray[A]] forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Rep[CollectionOverArray[A]] forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object lst {
       def unapply(d: Def[_]): Option[Rep[CollectionOverArray[A]] forSome {type A}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "lst" =>
@@ -1087,7 +1075,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   def mkCollectionOverArray[A]
-    (arr: Rep[Array[A]])(implicit eA: Elem[A]): Rep[CollectionOverArray[A]] =
+    (arr: Rep[Array[A]])(implicit eItem: Elem[A]): Rep[CollectionOverArray[A]] =
     new ExpCollectionOverArray[A](arr)
   def unmkCollectionOverArray[A](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CollectionOverArrayElem[A] @unchecked =>
@@ -1098,7 +1086,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
   case class ExpCollectionOverList[A]
       (override val lst: Rep[List[A]])
-      (implicit eA: Elem[A])
+      (implicit eItem: Elem[A])
     extends CollectionOverList[A](lst) with UserTypeDef[CollectionOverList[A]] {
     lazy val selfType = element[CollectionOverList[A]]
     override def mirror(t: Transformer) = ExpCollectionOverList[A](t(lst))
@@ -1110,18 +1098,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object CollectionOverListMethods {
-    object elem {
-      def unapply(d: Def[_]): Option[Rep[CollectionOverList[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "elem" =>
-          Some(receiver).asInstanceOf[Option[Rep[CollectionOverList[A]] forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Rep[CollectionOverList[A]] forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object length {
       def unapply(d: Def[_]): Option[Rep[CollectionOverList[A]] forSome {type A}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "length" =>
@@ -1283,7 +1259,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   def mkCollectionOverList[A]
-    (lst: Rep[List[A]])(implicit eA: Elem[A]): Rep[CollectionOverList[A]] =
+    (lst: Rep[List[A]])(implicit eItem: Elem[A]): Rep[CollectionOverList[A]] =
     new ExpCollectionOverList[A](lst)
   def unmkCollectionOverList[A](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CollectionOverListElem[A] @unchecked =>
@@ -1294,7 +1270,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
   case class ExpCollectionOverSeq[A]
       (override val seq: Rep[SSeq[A]])
-      (implicit eA: Elem[A])
+      (implicit eItem: Elem[A])
     extends CollectionOverSeq[A](seq) with UserTypeDef[CollectionOverSeq[A]] {
     lazy val selfType = element[CollectionOverSeq[A]]
     override def mirror(t: Transformer) = ExpCollectionOverSeq[A](t(seq))
@@ -1306,18 +1282,6 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   object CollectionOverSeqMethods {
-    object elem {
-      def unapply(d: Def[_]): Option[Rep[CollectionOverSeq[A]] forSome {type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "elem" =>
-          Some(receiver).asInstanceOf[Option[Rep[CollectionOverSeq[A]] forSome {type A}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Rep[CollectionOverSeq[A]] forSome {type A}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object arr {
       def unapply(d: Def[_]): Option[Rep[CollectionOverSeq[A]] forSome {type A}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "arr" =>
@@ -1491,7 +1455,7 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   }
 
   def mkCollectionOverSeq[A]
-    (seq: Rep[SSeq[A]])(implicit eA: Elem[A]): Rep[CollectionOverSeq[A]] =
+    (seq: Rep[SSeq[A]])(implicit eItem: Elem[A]): Rep[CollectionOverSeq[A]] =
     new ExpCollectionOverSeq[A](seq)
   def unmkCollectionOverSeq[A](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CollectionOverSeqElem[A] @unchecked =>
