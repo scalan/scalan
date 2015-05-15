@@ -28,15 +28,23 @@ class PointerItTests extends BaseItTests {
     }
 
     lazy val intPtr = fun { i: Rep[Int] =>
-      var iScalar = createScalar(i)
+      val iScalar = createScalar(i)
       val iPtr = scalarPtr(iScalar)
       iPtr
     }
 
     lazy val valuePtr = fun { i: Rep[Int] =>  // input not used
-      var yScalar = createScalar(2)    // note: in cpp we cannot take address of const: &2, here we use scalar type
+      val yScalar = createScalar(2)    // note: in cpp we cannot take address of const: &2, here we use scalar type
       val yPtr = scalarPtr(yScalar)
       yPtr
+    }
+
+    lazy val intIfPtr = fun { i: Rep[Int] =>
+      val iPtr = intPtr(i)
+      val yPtr = valuePtr(i)
+      val int0: Rep[Int] = 0
+      val ifPtr = __ifThenElse(i === int0, iPtr, yPtr)
+      ifPtr
     }
 
     lazy val xsArrayPtr = fun { xs: Rep[Array[Int]] =>
@@ -62,15 +70,11 @@ class PointerItTests extends BaseItTests {
     commonTestScenario[Int, (progExp.Scalar[Int], progExp.Scalar[Double])]("pairScalarIntDoubleSame", progExp.pairScalarIntDoubleSame)
   }
 
-  test("intPtr") {
-    commonTestScenario[Int, progExp.Pointer[Int]]("intPtr", progExp.intPtr)
-  }
+  test("intPtr") { commonTestScenario[Int, progExp.Pointer[Int]]("intPtr", progExp.intPtr) }
 
-  test("valuePtr") {
-    commonTestScenario[Int, progExp.Pointer[Int]]("valuePtr", progExp.valuePtr)
-  }
+  test("valuePtr") { commonTestScenario[Int, progExp.Pointer[Int]]("valuePtr", progExp.valuePtr) }
 
-  test("xsArrayPtr") {
-    commonTestScenario[Array[Int], progExp.Pointer[Int]]("xsArrayPtr", progExp.xsArrayPtr)
-  }
+  test("intIfPtr") { commonTestScenario[Int, progExp.Pointer[Int]]("intIfPtr", progExp.intIfPtr) }
+
+  test("xsArrayPtr") { commonTestScenario[Array[Int], progExp.Pointer[Int]]("xsArrayPtr", progExp.xsArrayPtr) }
 }

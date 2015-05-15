@@ -23,6 +23,7 @@ trait PointerLmsOpsExp
   case class CreateScalar[A](source: Exp[A], m: Manifest[A]) extends Def[Scalar[A]]
   def createScalar[A: Manifest](source: Exp[A]): Exp[Scalar[A]] = CreateScalar(source, manifest[A])
 
+  // note: m: Manifest[A] need to distinct objects NullPtr[Int] and NullPtr[Double] to be correct type for result pointer
   case class NullPtr[A](m: Manifest[A]) extends Def[Pointer[A]]
   def nullPtr[A: Manifest]: Exp[Pointer[A]] = NullPtr(manifest[A])
 
