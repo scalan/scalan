@@ -29,7 +29,7 @@ trait KindsAbs extends Kinds with Scalan {
     }
 
     def convertKind(x : Rep[Kind[F, A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: KindElem[_, _, _] => true; case _ => false })
+      assert(x.selfType1.asInstanceOf[Element[_]] match { case _: KindElem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -38,7 +38,7 @@ trait KindsAbs extends Kinds with Scalan {
   implicit def kindElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]): Elem[Kind[F, A]] =
     new KindElem[F, A, Kind[F, A]]
 
-  implicit object KindCompanionElem extends CompanionElem[KindCompanionAbs] {
+  implicit case object KindCompanionElem extends CompanionElem[KindCompanionAbs] {
     lazy val tag = weakTypeTag[KindCompanionAbs]
     protected def getDefaultRep = Kind
   }
@@ -94,7 +94,7 @@ trait KindsAbs extends Kinds with Scalan {
     proxyOps[ReturnCompanionAbs](p)
   }
 
-  implicit object ReturnCompanionElem extends CompanionElem[ReturnCompanionAbs] {
+  implicit case object ReturnCompanionElem extends CompanionElem[ReturnCompanionAbs] {
     lazy val tag = weakTypeTag[ReturnCompanionAbs]
     protected def getDefaultRep = Return
   }
@@ -159,7 +159,7 @@ trait KindsAbs extends Kinds with Scalan {
     proxyOps[BindCompanionAbs](p)
   }
 
-  implicit object BindCompanionElem extends CompanionElem[BindCompanionAbs] {
+  implicit case object BindCompanionElem extends CompanionElem[BindCompanionAbs] {
     lazy val tag = weakTypeTag[BindCompanionAbs]
     protected def getDefaultRep = Bind
   }

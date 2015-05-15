@@ -40,7 +40,7 @@ trait InteractionsAbs extends Interactions with Scalan {
   implicit def interactElement[A](implicit eA: Elem[A]): Elem[Interact[A]] =
     new InteractElem[A, Interact[A]]
 
-  implicit object InteractCompanionElem extends CompanionElem[InteractCompanionAbs] {
+  implicit case object InteractCompanionElem extends CompanionElem[InteractCompanionAbs] {
     lazy val tag = weakTypeTag[InteractCompanionAbs]
     protected def getDefaultRep = Interact
   }
@@ -95,7 +95,7 @@ trait InteractionsAbs extends Interactions with Scalan {
     proxyOps[AskCompanionAbs](p)
   }
 
-  implicit object AskCompanionElem extends CompanionElem[AskCompanionAbs] {
+  implicit case object AskCompanionElem extends CompanionElem[AskCompanionAbs] {
     lazy val tag = weakTypeTag[AskCompanionAbs]
     protected def getDefaultRep = Ask
   }
@@ -157,7 +157,7 @@ trait InteractionsAbs extends Interactions with Scalan {
     proxyOps[TellCompanionAbs](p)
   }
 
-  implicit object TellCompanionElem extends CompanionElem[TellCompanionAbs] {
+  implicit case object TellCompanionElem extends CompanionElem[TellCompanionAbs] {
     lazy val tag = weakTypeTag[TellCompanionAbs]
     protected def getDefaultRep = Tell
   }

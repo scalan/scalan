@@ -30,7 +30,7 @@ trait FreesAbs extends Frees with Scalan {
     }
 
     def convertFree(x : Rep[Free[F, A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: FreeElem[_, _, _] => true; case _ => false })
+      assert(x.selfType1.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -39,7 +39,7 @@ trait FreesAbs extends Frees with Scalan {
   implicit def freeElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]): Elem[Free[F, A]] =
     new FreeElem[F, A, Free[F, A]]
 
-  implicit object FreeCompanionElem extends CompanionElem[FreeCompanionAbs] {
+  implicit case object FreeCompanionElem extends CompanionElem[FreeCompanionAbs] {
     lazy val tag = weakTypeTag[FreeCompanionAbs]
     protected def getDefaultRep = Free
   }
@@ -95,7 +95,7 @@ trait FreesAbs extends Frees with Scalan {
     proxyOps[ReturnCompanionAbs](p)
   }
 
-  implicit object ReturnCompanionElem extends CompanionElem[ReturnCompanionAbs] {
+  implicit case object ReturnCompanionElem extends CompanionElem[ReturnCompanionAbs] {
     lazy val tag = weakTypeTag[ReturnCompanionAbs]
     protected def getDefaultRep = Return
   }
@@ -158,7 +158,7 @@ trait FreesAbs extends Frees with Scalan {
     proxyOps[SuspendCompanionAbs](p)
   }
 
-  implicit object SuspendCompanionElem extends CompanionElem[SuspendCompanionAbs] {
+  implicit case object SuspendCompanionElem extends CompanionElem[SuspendCompanionAbs] {
     lazy val tag = weakTypeTag[SuspendCompanionAbs]
     protected def getDefaultRep = Suspend
   }
@@ -223,7 +223,7 @@ trait FreesAbs extends Frees with Scalan {
     proxyOps[BindCompanionAbs](p)
   }
 
-  implicit object BindCompanionElem extends CompanionElem[BindCompanionAbs] {
+  implicit case object BindCompanionElem extends CompanionElem[BindCompanionAbs] {
     lazy val tag = weakTypeTag[BindCompanionAbs]
     protected def getDefaultRep = Bind
   }

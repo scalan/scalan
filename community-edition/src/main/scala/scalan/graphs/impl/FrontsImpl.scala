@@ -40,7 +40,7 @@ trait FrontsAbs extends Fronts with Scalan {
   implicit def frontElement: Elem[Front] =
     new FrontElem[Front]
 
-  implicit object FrontCompanionElem extends CompanionElem[FrontCompanionAbs] {
+  implicit case object FrontCompanionElem extends CompanionElem[FrontCompanionAbs] {
     lazy val tag = weakTypeTag[FrontCompanionAbs]
     protected def getDefaultRep = Front
   }
@@ -96,7 +96,7 @@ trait FrontsAbs extends Fronts with Scalan {
     proxyOps[BaseFrontCompanionAbs](p)
   }
 
-  implicit object BaseFrontCompanionElem extends CompanionElem[BaseFrontCompanionAbs] {
+  implicit case object BaseFrontCompanionElem extends CompanionElem[BaseFrontCompanionAbs] {
     lazy val tag = weakTypeTag[BaseFrontCompanionAbs]
     protected def getDefaultRep = BaseFront
   }
@@ -159,7 +159,7 @@ trait FrontsAbs extends Fronts with Scalan {
     proxyOps[ListFrontCompanionAbs](p)
   }
 
-  implicit object ListFrontCompanionElem extends CompanionElem[ListFrontCompanionAbs] {
+  implicit case object ListFrontCompanionElem extends CompanionElem[ListFrontCompanionAbs] {
     lazy val tag = weakTypeTag[ListFrontCompanionAbs]
     protected def getDefaultRep = ListFront
   }
@@ -222,7 +222,7 @@ trait FrontsAbs extends Fronts with Scalan {
     proxyOps[CollectionFrontCompanionAbs](p)
   }
 
-  implicit object CollectionFrontCompanionElem extends CompanionElem[CollectionFrontCompanionAbs] {
+  implicit case object CollectionFrontCompanionElem extends CompanionElem[CollectionFrontCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionFrontCompanionAbs]
     protected def getDefaultRep = CollectionFront
   }
@@ -284,7 +284,7 @@ trait FrontsAbs extends Fronts with Scalan {
     proxyOps[MapBasedFrontCompanionAbs](p)
   }
 
-  implicit object MapBasedFrontCompanionElem extends CompanionElem[MapBasedFrontCompanionAbs] {
+  implicit case object MapBasedFrontCompanionElem extends CompanionElem[MapBasedFrontCompanionAbs] {
     lazy val tag = weakTypeTag[MapBasedFrontCompanionAbs]
     protected def getDefaultRep = MapBasedFront
   }

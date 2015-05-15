@@ -42,7 +42,7 @@ trait VectorsAbs extends Vectors with Scalan {
   implicit def abstractVectorElement[T](implicit eItem: Elem[T]): Elem[AbstractVector[T]] =
     new AbstractVectorElem[T, AbstractVector[T]]
 
-  implicit object AbstractVectorCompanionElem extends CompanionElem[AbstractVectorCompanionAbs] {
+  implicit case object AbstractVectorCompanionElem extends CompanionElem[AbstractVectorCompanionAbs] {
     lazy val tag = weakTypeTag[AbstractVectorCompanionAbs]
     protected def getDefaultRep = AbstractVector
   }
@@ -97,7 +97,7 @@ trait VectorsAbs extends Vectors with Scalan {
     proxyOps[DenseVectorCompanionAbs](p)
   }
 
-  implicit object DenseVectorCompanionElem extends CompanionElem[DenseVectorCompanionAbs] {
+  implicit case object DenseVectorCompanionElem extends CompanionElem[DenseVectorCompanionAbs] {
     lazy val tag = weakTypeTag[DenseVectorCompanionAbs]
     protected def getDefaultRep = DenseVector
   }
@@ -160,7 +160,7 @@ trait VectorsAbs extends Vectors with Scalan {
     proxyOps[SparseVectorCompanionAbs](p)
   }
 
-  implicit object SparseVectorCompanionElem extends CompanionElem[SparseVectorCompanionAbs] {
+  implicit case object SparseVectorCompanionElem extends CompanionElem[SparseVectorCompanionAbs] {
     lazy val tag = weakTypeTag[SparseVectorCompanionAbs]
     protected def getDefaultRep = SparseVector
   }
@@ -223,7 +223,7 @@ trait VectorsAbs extends Vectors with Scalan {
     proxyOps[SparseVector1CompanionAbs](p)
   }
 
-  implicit object SparseVector1CompanionElem extends CompanionElem[SparseVector1CompanionAbs] {
+  implicit case object SparseVector1CompanionElem extends CompanionElem[SparseVector1CompanionAbs] {
     lazy val tag = weakTypeTag[SparseVector1CompanionAbs]
     protected def getDefaultRep = SparseVector1
   }

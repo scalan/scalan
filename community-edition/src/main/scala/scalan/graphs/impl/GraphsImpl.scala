@@ -44,7 +44,7 @@ trait GraphsAbs extends Graphs with Scalan {
   implicit def graphElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Graph[V, E]] =
     new GraphElem[V, E, Graph[V, E]]
 
-  implicit object GraphCompanionElem extends CompanionElem[GraphCompanionAbs] {
+  implicit case object GraphCompanionElem extends CompanionElem[GraphCompanionAbs] {
     lazy val tag = weakTypeTag[GraphCompanionAbs]
     protected def getDefaultRep = Graph
   }
@@ -101,7 +101,7 @@ trait GraphsAbs extends Graphs with Scalan {
     proxyOps[AdjacencyGraphCompanionAbs](p)
   }
 
-  implicit object AdjacencyGraphCompanionElem extends CompanionElem[AdjacencyGraphCompanionAbs] {
+  implicit case object AdjacencyGraphCompanionElem extends CompanionElem[AdjacencyGraphCompanionAbs] {
     lazy val tag = weakTypeTag[AdjacencyGraphCompanionAbs]
     protected def getDefaultRep = AdjacencyGraph
   }
@@ -165,7 +165,7 @@ trait GraphsAbs extends Graphs with Scalan {
     proxyOps[IncidenceGraphCompanionAbs](p)
   }
 
-  implicit object IncidenceGraphCompanionElem extends CompanionElem[IncidenceGraphCompanionAbs] {
+  implicit case object IncidenceGraphCompanionElem extends CompanionElem[IncidenceGraphCompanionAbs] {
     lazy val tag = weakTypeTag[IncidenceGraphCompanionAbs]
     protected def getDefaultRep = IncidenceGraph
   }

@@ -44,7 +44,7 @@ trait EdgesAbs extends Edges with Scalan {
   implicit def edgeElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Edge[V, E]] =
     new EdgeElem[V, E, Edge[V, E]]
 
-  implicit object EdgeCompanionElem extends CompanionElem[EdgeCompanionAbs] {
+  implicit case object EdgeCompanionElem extends CompanionElem[EdgeCompanionAbs] {
     lazy val tag = weakTypeTag[EdgeCompanionAbs]
     protected def getDefaultRep = Edge
   }
@@ -101,7 +101,7 @@ trait EdgesAbs extends Edges with Scalan {
     proxyOps[AdjEdgeCompanionAbs](p)
   }
 
-  implicit object AdjEdgeCompanionElem extends CompanionElem[AdjEdgeCompanionAbs] {
+  implicit case object AdjEdgeCompanionElem extends CompanionElem[AdjEdgeCompanionAbs] {
     lazy val tag = weakTypeTag[AdjEdgeCompanionAbs]
     protected def getDefaultRep = AdjEdge
   }
@@ -165,7 +165,7 @@ trait EdgesAbs extends Edges with Scalan {
     proxyOps[IncEdgeCompanionAbs](p)
   }
 
-  implicit object IncEdgeCompanionElem extends CompanionElem[IncEdgeCompanionAbs] {
+  implicit case object IncEdgeCompanionElem extends CompanionElem[IncEdgeCompanionAbs] {
     lazy val tag = weakTypeTag[IncEdgeCompanionAbs]
     protected def getDefaultRep = IncEdge
   }

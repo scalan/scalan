@@ -40,7 +40,7 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
   implicit def mMultiMapElement[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]): Elem[MMultiMap[K, V]] =
     new MMultiMapElem[K, V, MMultiMap[K, V]]
 
-  implicit object MMultiMapCompanionElem extends CompanionElem[MMultiMapCompanionAbs] {
+  implicit case object MMultiMapCompanionElem extends CompanionElem[MMultiMapCompanionAbs] {
     lazy val tag = weakTypeTag[MMultiMapCompanionAbs]
     protected def getDefaultRep = MMultiMap
   }
@@ -96,7 +96,7 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
     proxyOps[HashMMultiMapCompanionAbs](p)
   }
 
-  implicit object HashMMultiMapCompanionElem extends CompanionElem[HashMMultiMapCompanionAbs] {
+  implicit case object HashMMultiMapCompanionElem extends CompanionElem[HashMMultiMapCompanionAbs] {
     lazy val tag = weakTypeTag[HashMMultiMapCompanionAbs]
     protected def getDefaultRep = HashMMultiMap
   }

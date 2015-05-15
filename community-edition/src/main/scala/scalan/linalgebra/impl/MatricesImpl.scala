@@ -41,7 +41,7 @@ trait MatricesAbs extends Matrices with Scalan {
   implicit def abstractMatrixElement[T](implicit eItem: Elem[T]): Elem[AbstractMatrix[T]] =
     new AbstractMatrixElem[T, AbstractMatrix[T]]
 
-  implicit object AbstractMatrixCompanionElem extends CompanionElem[AbstractMatrixCompanionAbs] {
+  implicit case object AbstractMatrixCompanionElem extends CompanionElem[AbstractMatrixCompanionAbs] {
     lazy val tag = weakTypeTag[AbstractMatrixCompanionAbs]
     protected def getDefaultRep = AbstractMatrix
   }
@@ -97,7 +97,7 @@ trait MatricesAbs extends Matrices with Scalan {
     proxyOps[DenseFlatMatrixCompanionAbs](p)
   }
 
-  implicit object DenseFlatMatrixCompanionElem extends CompanionElem[DenseFlatMatrixCompanionAbs] {
+  implicit case object DenseFlatMatrixCompanionElem extends CompanionElem[DenseFlatMatrixCompanionAbs] {
     lazy val tag = weakTypeTag[DenseFlatMatrixCompanionAbs]
     protected def getDefaultRep = DenseFlatMatrix
   }
@@ -160,7 +160,7 @@ trait MatricesAbs extends Matrices with Scalan {
     proxyOps[CompoundMatrixCompanionAbs](p)
   }
 
-  implicit object CompoundMatrixCompanionElem extends CompanionElem[CompoundMatrixCompanionAbs] {
+  implicit case object CompoundMatrixCompanionElem extends CompanionElem[CompoundMatrixCompanionAbs] {
     lazy val tag = weakTypeTag[CompoundMatrixCompanionAbs]
     protected def getDefaultRep = CompoundMatrix
   }

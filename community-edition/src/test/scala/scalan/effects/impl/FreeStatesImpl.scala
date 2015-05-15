@@ -41,7 +41,7 @@ trait FreeStatesAbs extends FreeStates with Scalan {
   implicit def stateFElement[S, A](implicit eS: Elem[S], eA: Elem[A]): Elem[StateF[S, A]] =
     new StateFElem[S, A, StateF[S, A]]
 
-  implicit object StateFCompanionElem extends CompanionElem[StateFCompanionAbs] {
+  implicit case object StateFCompanionElem extends CompanionElem[StateFCompanionAbs] {
     lazy val tag = weakTypeTag[StateFCompanionAbs]
     protected def getDefaultRep = StateF
   }
@@ -98,7 +98,7 @@ trait FreeStatesAbs extends FreeStates with Scalan {
     proxyOps[StateGetCompanionAbs](p)
   }
 
-  implicit object StateGetCompanionElem extends CompanionElem[StateGetCompanionAbs] {
+  implicit case object StateGetCompanionElem extends CompanionElem[StateGetCompanionAbs] {
     lazy val tag = weakTypeTag[StateGetCompanionAbs]
     protected def getDefaultRep = StateGet
   }
@@ -163,7 +163,7 @@ trait FreeStatesAbs extends FreeStates with Scalan {
     proxyOps[StatePutCompanionAbs](p)
   }
 
-  implicit object StatePutCompanionElem extends CompanionElem[StatePutCompanionAbs] {
+  implicit case object StatePutCompanionElem extends CompanionElem[StatePutCompanionAbs] {
     lazy val tag = weakTypeTag[StatePutCompanionAbs]
     protected def getDefaultRep = StatePut
   }

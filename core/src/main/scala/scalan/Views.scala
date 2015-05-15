@@ -70,7 +70,7 @@ trait Views extends Elems { self: Scalan =>
 
   implicit def viewElement[From, To](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from Iso
 
-  trait ViewElem[From, To] extends Elem[To] {
+  trait ViewElem[From, To] extends Elem[To] { _: scala.Equals =>
     def iso: Iso[From, To]
     override def isEntityType = shouldUnpack(this)
     protected def getDefaultRep = iso.defaultRepTo.value
@@ -80,8 +80,7 @@ trait Views extends Elems { self: Scalan =>
     def unapply[From, To](ve: ViewElem[From, To]): Option[Iso[From, To]] = Some(ve.iso)
   }
 
-  trait ViewElem1[A,From,To,C[_]]
-    extends ViewElem[From, To] {
+  trait ViewElem1[A,From,To,C[_]] extends ViewElem[From, To] { _: scala.Equals =>
     def eItem: Elem[A]
     def cont: Cont[C]
   }
@@ -191,7 +190,7 @@ trait Views extends Elems { self: Scalan =>
     case _ => !!!(s"Don't know how to build iso for element $e")
   }).asInstanceOf[Iso[_,T]]
 
-  trait CompanionElem[T] extends Elem[T] {
+  trait CompanionElem[T] extends Elem[T] { _: scala.Equals =>
     override def isEntityType = false
   }
 

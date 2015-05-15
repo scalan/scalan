@@ -40,7 +40,7 @@ trait ReadersAbs extends Readers with Scalan {
   implicit def readerElement[Env, A](implicit eEnv: Elem[Env], eA: Elem[A]): Elem[Reader[Env, A]] =
     new ReaderElem[Env, A, Reader[Env, A]]
 
-  implicit object ReaderCompanionElem extends CompanionElem[ReaderCompanionAbs] {
+  implicit case object ReaderCompanionElem extends CompanionElem[ReaderCompanionAbs] {
     lazy val tag = weakTypeTag[ReaderCompanionAbs]
     protected def getDefaultRep = Reader
   }
@@ -96,7 +96,7 @@ trait ReadersAbs extends Readers with Scalan {
     proxyOps[ReaderBaseCompanionAbs](p)
   }
 
-  implicit object ReaderBaseCompanionElem extends CompanionElem[ReaderBaseCompanionAbs] {
+  implicit case object ReaderBaseCompanionElem extends CompanionElem[ReaderBaseCompanionAbs] {
     lazy val tag = weakTypeTag[ReaderBaseCompanionAbs]
     protected def getDefaultRep = ReaderBase
   }

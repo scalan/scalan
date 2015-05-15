@@ -39,7 +39,7 @@ trait ConvertersAbs extends Converters  {
   implicit def converterElement[T, R](implicit eT: Elem[T], eR: Elem[R]): Elem[Converter[T, R]] =
     new ConverterElem[T, R, Converter[T, R]]
 
-  implicit object ConverterCompanionElem extends CompanionElem[ConverterCompanionAbs] {
+  implicit case object ConverterCompanionElem extends CompanionElem[ConverterCompanionAbs] {
     lazy val tag = weakTypeTag[ConverterCompanionAbs]
     protected def getDefaultRep = Converter
   }
@@ -95,7 +95,7 @@ trait ConvertersAbs extends Converters  {
     proxyOps[BaseConverterCompanionAbs](p)
   }
 
-  implicit object BaseConverterCompanionElem extends CompanionElem[BaseConverterCompanionAbs] {
+  implicit case object BaseConverterCompanionElem extends CompanionElem[BaseConverterCompanionAbs] {
     lazy val tag = weakTypeTag[BaseConverterCompanionAbs]
     protected def getDefaultRep = BaseConverter
   }
@@ -162,7 +162,7 @@ trait ConvertersAbs extends Converters  {
     proxyOps[PairConverterCompanionAbs](p)
   }
 
-  implicit object PairConverterCompanionElem extends CompanionElem[PairConverterCompanionAbs] {
+  implicit case object PairConverterCompanionElem extends CompanionElem[PairConverterCompanionAbs] {
     lazy val tag = weakTypeTag[PairConverterCompanionAbs]
     protected def getDefaultRep = PairConverter
   }
@@ -229,7 +229,7 @@ trait ConvertersAbs extends Converters  {
     proxyOps[SumConverterCompanionAbs](p)
   }
 
-  implicit object SumConverterCompanionElem extends CompanionElem[SumConverterCompanionAbs] {
+  implicit case object SumConverterCompanionElem extends CompanionElem[SumConverterCompanionAbs] {
     lazy val tag = weakTypeTag[SumConverterCompanionAbs]
     protected def getDefaultRep = SumConverter
   }

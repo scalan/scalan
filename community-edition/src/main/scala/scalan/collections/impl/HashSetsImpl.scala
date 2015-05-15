@@ -70,7 +70,7 @@ trait HashSetsAbs extends HashSets with Scalan {
       lazy val eTo = element[SHashSetImpl[A]]
     }
 
-  implicit object SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs] {
+  implicit case object SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs] {
     lazy val tag = weakTypeTag[SHashSetCompanionAbs]
     protected def getDefaultRep = SHashSet
   }
@@ -144,7 +144,7 @@ trait HashSetsAbs extends HashSets with Scalan {
     proxyOps[SHashSetImplCompanionAbs](p)
   }
 
-  implicit object SHashSetImplCompanionElem extends CompanionElem[SHashSetImplCompanionAbs] {
+  implicit case object SHashSetImplCompanionElem extends CompanionElem[SHashSetImplCompanionAbs] {
     lazy val tag = weakTypeTag[SHashSetImplCompanionAbs]
     protected def getDefaultRep = SHashSetImpl
   }
