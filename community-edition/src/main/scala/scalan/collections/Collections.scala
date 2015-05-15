@@ -189,9 +189,9 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     implicit def eB: Elem[B]
     def as: Rep[Collection[A]]
     def bs: Rep[Collection[B]]
-    override def filterBy(f: Rep[((A, B)) => Boolean]): Rep[IPairCollection[A, B]]
     @OverloadId("many")
     override def apply(indices: Coll[Int])(implicit o: Overloaded1): Rep[IPairCollection[A, B]]
+    def coll: Coll[(A, B)]
   }
   type PairColl[A, B] = Rep[IPairCollection[A, B]]
 
@@ -200,6 +200,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     lazy val elem = element[(A, B)]
     def arr = (as.arr zip bs.arr)
     def lst = (as.lst zip bs.lst)
+    def coll: Coll[(A, B)] = self
     def apply(i: Rep[Int]) = (as(i), bs(i))
     def length = as.length
     def slice(offset: Rep[Int], length: Rep[Int]) =
@@ -213,8 +214,8 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       PairCollection(as.update(idx, value._1), bs.update(idx, value._2))
     def updateMany (idxs: Coll[Int], vals: Coll[(A, B)]): PairColl[A, B] =
       PairCollection(as.updateMany(idxs, vals.as), bs.updateMany(idxs, vals.bs))
-    def filterBy(f: Rep[(A,B) @uncheckedVariance => Boolean]): PairColl[A, B] =
-      CollectionOfPairs(arr.filterBy(f))
+    def filterBy(f: Rep[(A,B) @uncheckedVariance => Boolean]) =
+      BaseCollection(arr.filterBy(f))
     def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] =
       Collection(arr.flatMap {in => f(in).arr})
     def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = PairCollection(as.append(value._1), bs.append(value._2))
@@ -222,29 +223,33 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
   trait PairCollectionCompanion extends ConcreteClass2[PairCollection]
 
-  abstract class CollectionOfPairs[A, B](val arr: Rep[Array[(A,B)]])(implicit val eA: Elem[A], val eB: Elem[B])
+  abstract class CollectionOfPairs[A, B](val coll: Rep[Collection[(A,B)]])(implicit val eA: Elem[A], val eB: Elem[B])
     extends IPairCollection[A,B] {
     lazy val elem = element[(A, B)]
-    def lst = arr.toList
-    def as = Collection.fromArray(arr.map(_._1))
-    def bs = Collection.fromArray(arr.map(_._2))
-    def apply(i: Rep[Int]) = arr(i)
-    def length = arr.length
+    def arr = coll.arr
+    def lst = coll.lst
+    override def seq = coll.seq
+    def as = coll.map(_._1)
+    def bs = coll.map(_._2)
+    def apply(i: Rep[Int]) = coll(i)
+    def length = coll.length
     def slice(offset: Rep[Int], length: Rep[Int]) =
-      CollectionOfPairs(arr.slice(offset, length))
+      CollectionOfPairs(coll.slice(offset, length))
     @OverloadId("many")
     def apply(indices: Coll[Int])(implicit o: Overloaded1): PairColl[A, B] =
-      CollectionOfPairs(arr(indices.arr))
-    def mapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => C]): Coll[C] = Collection(arr.mapBy(f))   // TODO: this should be done in another way
-    def reduce(implicit m: RepMonoid[(A,B) @uncheckedVariance]): Rep[(A,B)] = arr.reduce(m)  // TODO: this should be done in another way
+      CollectionOfPairs(coll(indices))
+    def mapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => C]): Coll[C] = coll.mapBy(f)
+    def reduce(implicit m: RepMonoid[(A,B) @uncheckedVariance]): Rep[(A,B)] = coll.reduce(m)
     def zip[C: Elem](ys: Coll[C]): PairColl[(A, B),C] = PairCollection(self, ys)
-    def update (idx: Rep[Int], value: Rep[(A,B)]): Coll[(A,B)] = CollectionOfPairs(arr.update(idx, value))
-    def updateMany (idxs: Coll[Int], vals: Coll[(A,B)]): Coll[(A,B)] = CollectionOfPairs(arr.updateMany(idxs.arr, vals.arr))
-    def filterBy(f: Rep[(A,B) @uncheckedVariance => Boolean]): PairColl[A,B] = CollectionOfPairs(arr.filterBy(f))
-    def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] = Collection(arr.flatMap {in => f(in).arr} )
-    def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = CollectionOfPairs(arr.append(value))
+    def update (idx: Rep[Int], value: Rep[(A,B)]): Coll[(A,B)] = CollectionOfPairs(coll.update(idx, value))
+    def updateMany (idxs: Coll[Int], vals: Coll[(A,B)]): Coll[(A,B)] = CollectionOfPairs(coll.updateMany(idxs, vals))
+    def filterBy(f: Rep[(A,B) @uncheckedVariance => Boolean]) = coll.filterBy(f)
+    def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] = coll.flatMapBy(f)
+    def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = CollectionOfPairs(coll.append(value))
   }
-  trait CollectionOfPairsCompanion extends ConcreteClass2[CollectionOfPairs]
+  trait CollectionOfPairsCompanion extends ConcreteClass2[CollectionOfPairs] {
+    def fromArray[A: Elem, B: Elem](arr: Arr[(A, B)]) = CollectionOfPairs(BaseCollection(arr))
+  }
 
   trait INestedCollection[A] extends Collection[Collection[A]] {
     implicit def eA: Elem[A]
@@ -314,7 +319,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     val collElem = convertCollectionElem(coll.selfType1)
 
     def asPairColl: PairColl[A, B] =
-      CollectionOfPairs(coll.arr)(collElem.elem.eFst, collElem.elem.eSnd)
+      CollectionOfPairs(coll)(collElem.elem.eFst, collElem.elem.eSnd)
 
     def as: Coll[A] = collElem match {
       case _: IPairCollectionElem[_, _, _] => coll.asRep[IPairCollection[A, B]].as
@@ -338,19 +343,13 @@ trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl =>
 
     def flatMap[B: Elem](f: Rep[A] => Coll[B]): Coll[B] = coll.flatMapBy(fun(f))
   }
-
-  implicit class IPairCollectionExtensions[A, B](coll: PairColl[A, B]) {
-    implicit def eItem: Elem[(A, B)] = coll.selfType1.asInstanceOf[CollectionElem[(A, B), _]].elem
-
-    def map[C: Elem](f: Rep[(A, B)] => Rep[C]): Coll[C] = coll.mapBy(fun(f))
-
-    def filter(f: Rep[(A, B)] => Rep[Boolean]): PairColl[A, B] = coll.filterBy(fun(f))
-
-    def flatMap[C: Elem](f: Rep[(A, B)] => Coll[C]): Coll[C] = coll.flatMapBy(fun(f))
-  }
-
 }
 
 trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSeq => }
 
-trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslExp => }
+trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslExp =>
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case ExpCollectionOfPairs(pairColl @ Def(_: IPairCollection[_, _])) => pairColl
+    case _ => super.rewriteDef(d)
+  }
+}

@@ -332,12 +332,12 @@ trait Vectors { self: ScalanCommunityDsl =>
 
   trait SparseVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
-      val nonZeroItems: Rep[IPairCollection[Int, T]] =
+      val nonZeroItems =
         (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }
       SparseVector(nonZeroItems, items.length)
     }
     @OverloadId("SparseVectorCompanion_apply_nonZeroItems")
-    def apply[T: Elem](nonZeroItems: Rep[IPairCollection[Int, T]], length: Rep[Int])
+    def apply[T: Elem](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])
                       (implicit n: Numeric[T], o: Overloaded2): Rep[SparseVector[T]] = {
       SparseVector(nonZeroItems.as, nonZeroItems.bs, length)
     }
@@ -348,7 +348,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
   trait SparseVector1Companion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector1[T]] = {
-      val nonZeroItems: Rep[IPairCollection[Int, T]] =
+      val nonZeroItems =
         (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }
       SparseVector1(nonZeroItems, items.length)
     }

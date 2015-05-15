@@ -179,7 +179,7 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
 
   lazy val applySparseVector = fun { in: Rep[(Array[(Int, Double)], (Int, Int))] =>
     val Tuple(a, n, i) = in
-    val coll = CollectionOfPairs(a)
+    val coll = BaseCollection(a)
     val vec = SparseVector(coll, n)
     val res = vec(i).toInt
     res
@@ -189,7 +189,7 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
 
   lazy val transpose = fun { in: Rep[(Array[(Int, Double)], (Array[(Int, Int)], Int))] =>
     val Tuple(arrFlat, segsArr, nItems) = in
-    val nColl: NColl[(Int, Double)] = NestedCollection(Collection(arrFlat), CollectionOfPairs(segsArr))
+    val nColl: NColl[(Int, Double)] = NestedCollection(Collection(arrFlat), CollectionOfPairs.fromArray(segsArr))
     val mR: Matrix[Double] = CompoundMatrix.fromNColl(nColl, nItems)
     mR.transpose.rows.map({v => v.nonZeroItems.arr}).arr
   }

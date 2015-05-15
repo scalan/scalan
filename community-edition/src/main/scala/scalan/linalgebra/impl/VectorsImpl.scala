@@ -784,12 +784,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
     }
 
     object apply_SparseVectorCompanion_apply_nonZeroItems {
-      def unapply(d: Def[_]): Option[(Rep[IPairCollection[Int,T]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[(Int, T)]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(nonZeroItems, length, n, _*), _) if receiver.elem == SparseVectorCompanionElem && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "SparseVectorCompanion_apply_nonZeroItems" } =>
-          Some((nonZeroItems, length, n)).asInstanceOf[Option[(Rep[IPairCollection[Int,T]], Rep[Int], Numeric[T]) forSome {type T}]]
+          Some((nonZeroItems, length, n)).asInstanceOf[Option[(Rep[Collection[(Int, T)]], Rep[Int], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IPairCollection[Int,T]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[(Int, T)]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

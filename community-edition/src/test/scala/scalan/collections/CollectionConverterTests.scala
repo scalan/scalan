@@ -7,13 +7,14 @@ class CollectionConverterTests extends BaseTests { suite =>
 
   trait ConvProg extends Scalan with ScalanCommunityDsl {
     lazy val t1 = fun { (in: Rep[PairCollection[Int,Double]]) => in.convertTo[CollectionOfPairs[Int, Double]] }
-    lazy val t2 = fun { (in: Rep[(Array[Int], Array[Double])]) => {
+    lazy val t2 = fun { (in: Rep[(Array[Int], Array[Double])]) =>
       val Pair(as, bs) = in
       val ps = Collection.fromArray(as) zip Collection.fromArray(bs)
-      ps.convertTo[CollectionOfPairs[Int, Double]].toData
-    } }
+      val ps1 = ps.convertTo[CollectionOfPairs[Int, Double]]
+      ps1.arr
+    }
     lazy val t3 = fun { (in: Rep[Array[(Int,Double)]]) => {
-      val ps = CollectionOfPairs(in)
+      val ps = CollectionOfPairs(BaseCollection(in))
       val Pair(as, bs) = ps.convertTo[PairCollection[Int, Double]].toData
       Pair(as.arr, bs.arr)
     } }
