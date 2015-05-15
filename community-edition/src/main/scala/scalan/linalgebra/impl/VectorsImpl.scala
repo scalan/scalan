@@ -20,11 +20,11 @@ trait VectorsAbs extends Vectors with Scalan {
   }
 
   // familyElem
-  class AbstractVectorElem[T, To <: AbstractVector[T]](implicit val elem: Elem[T])
+  class AbstractVectorElem[T, To <: AbstractVector[T]](implicit val eItem: Elem[T])
     extends EntityElem[To] {
     override def isEntityType = true
     override lazy val tag = {
-      implicit val tagT = elem.tag
+      implicit val tagT = eItem.tag
       weakTypeTag[AbstractVector[T]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
@@ -39,7 +39,7 @@ trait VectorsAbs extends Vectors with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def abstractVectorElement[T](implicit elem: Elem[T]): Elem[AbstractVector[T]] =
+  implicit def abstractVectorElement[T](implicit eItem: Elem[T]): Elem[AbstractVector[T]] =
     new AbstractVectorElem[T, AbstractVector[T]]
 
   implicit object AbstractVectorCompanionElem extends CompanionElem[AbstractVectorCompanionAbs] {
@@ -56,13 +56,13 @@ trait VectorsAbs extends Vectors with Scalan {
   }
 
   // elem for concrete class
-  class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit elem: Elem[T])
+  class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit eItem: Elem[T])
     extends AbstractVectorElem[T, DenseVector[T]]
     with ConcreteElem[DenseVectorData[T], DenseVector[T]] {
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = DenseVector(x.items)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagT = elem.tag
+      implicit val tagT = eItem.tag
       weakTypeTag[DenseVector[T]]
     }
   }
@@ -71,7 +71,7 @@ trait VectorsAbs extends Vectors with Scalan {
   type DenseVectorData[T] = Collection[T]
 
   // 3) Iso for concrete class
-  class DenseVectorIso[T](implicit elem: Elem[T])
+  class DenseVectorIso[T](implicit eItem: Elem[T])
     extends Iso[DenseVectorData[T], DenseVector[T]] {
     override def from(p: Rep[DenseVector[T]]) =
       p.items
@@ -86,7 +86,7 @@ trait VectorsAbs extends Vectors with Scalan {
   abstract class DenseVectorCompanionAbs extends CompanionBase[DenseVectorCompanionAbs] with DenseVectorCompanion {
     override def toString = "DenseVector"
 
-    def apply[T](items: Rep[Collection[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
+    def apply[T](items: Rep[Collection[T]])(implicit eItem: Elem[T]): Rep[DenseVector[T]] =
       mkDenseVector(items)
   }
   object DenseVectorMatcher {
@@ -105,26 +105,26 @@ trait VectorsAbs extends Vectors with Scalan {
   implicit def proxyDenseVector[T](p: Rep[DenseVector[T]]): DenseVector[T] =
     proxyOps[DenseVector[T]](p)
 
-  implicit class ExtendedDenseVector[T](p: Rep[DenseVector[T]])(implicit elem: Elem[T]) {
-    def toData: Rep[DenseVectorData[T]] = isoDenseVector(elem).from(p)
+  implicit class ExtendedDenseVector[T](p: Rep[DenseVector[T]])(implicit eItem: Elem[T]) {
+    def toData: Rep[DenseVectorData[T]] = isoDenseVector(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoDenseVector[T](implicit elem: Elem[T]): Iso[DenseVectorData[T], DenseVector[T]] =
+  implicit def isoDenseVector[T](implicit eItem: Elem[T]): Iso[DenseVectorData[T], DenseVector[T]] =
     new DenseVectorIso[T]
 
   // 6) smart constructor and deconstructor
-  def mkDenseVector[T](items: Rep[Collection[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]]
+  def mkDenseVector[T](items: Rep[Collection[T]])(implicit eItem: Elem[T]): Rep[DenseVector[T]]
   def unmkDenseVector[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[T]])]
 
   // elem for concrete class
-  class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit elem: Elem[T])
+  class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit eItem: Elem[T])
     extends AbstractVectorElem[T, SparseVector[T]]
     with ConcreteElem[SparseVectorData[T], SparseVector[T]] {
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagT = elem.tag
+      implicit val tagT = eItem.tag
       weakTypeTag[SparseVector[T]]
     }
   }
@@ -133,7 +133,7 @@ trait VectorsAbs extends Vectors with Scalan {
   type SparseVectorData[T] = (Collection[Int], (Collection[T], Int))
 
   // 3) Iso for concrete class
-  class SparseVectorIso[T](implicit elem: Elem[T])
+  class SparseVectorIso[T](implicit eItem: Elem[T])
     extends Iso[SparseVectorData[T], SparseVector[T]]()(pairElement(implicitly[Elem[Collection[Int]]], pairElement(implicitly[Elem[Collection[T]]], implicitly[Elem[Int]]))) {
     override def from(p: Rep[SparseVector[T]]) =
       (p.nonZeroIndices, p.nonZeroValues, p.length)
@@ -147,9 +147,9 @@ trait VectorsAbs extends Vectors with Scalan {
   // 4) constructor and deconstructor
   abstract class SparseVectorCompanionAbs extends CompanionBase[SparseVectorCompanionAbs] with SparseVectorCompanion {
     override def toString = "SparseVector"
-    def apply[T](p: Rep[SparseVectorData[T]])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
-      isoSparseVector(elem).to(p)
-    def apply[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
+    def apply[T](p: Rep[SparseVectorData[T]])(implicit eItem: Elem[T]): Rep[SparseVector[T]] =
+      isoSparseVector(eItem).to(p)
+    def apply[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eItem: Elem[T]): Rep[SparseVector[T]] =
       mkSparseVector(nonZeroIndices, nonZeroValues, length)
   }
   object SparseVectorMatcher {
@@ -168,26 +168,26 @@ trait VectorsAbs extends Vectors with Scalan {
   implicit def proxySparseVector[T](p: Rep[SparseVector[T]]): SparseVector[T] =
     proxyOps[SparseVector[T]](p)
 
-  implicit class ExtendedSparseVector[T](p: Rep[SparseVector[T]])(implicit elem: Elem[T]) {
-    def toData: Rep[SparseVectorData[T]] = isoSparseVector(elem).from(p)
+  implicit class ExtendedSparseVector[T](p: Rep[SparseVector[T]])(implicit eItem: Elem[T]) {
+    def toData: Rep[SparseVectorData[T]] = isoSparseVector(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoSparseVector[T](implicit elem: Elem[T]): Iso[SparseVectorData[T], SparseVector[T]] =
+  implicit def isoSparseVector[T](implicit eItem: Elem[T]): Iso[SparseVectorData[T], SparseVector[T]] =
     new SparseVectorIso[T]
 
   // 6) smart constructor and deconstructor
-  def mkSparseVector[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]]
+  def mkSparseVector[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eItem: Elem[T]): Rep[SparseVector[T]]
   def unmkSparseVector[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[Int]], Rep[Collection[T]], Rep[Int])]
 
   // elem for concrete class
-  class SparseVector1Elem[T](val iso: Iso[SparseVector1Data[T], SparseVector1[T]])(implicit elem: Elem[T])
+  class SparseVector1Elem[T](val iso: Iso[SparseVector1Data[T], SparseVector1[T]])(implicit eItem: Elem[T])
     extends AbstractVectorElem[T, SparseVector1[T]]
     with ConcreteElem[SparseVector1Data[T], SparseVector1[T]] {
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector1(x.nonZeroItems, x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagT = elem.tag
+      implicit val tagT = eItem.tag
       weakTypeTag[SparseVector1[T]]
     }
   }
@@ -196,7 +196,7 @@ trait VectorsAbs extends Vectors with Scalan {
   type SparseVector1Data[T] = (Collection[(Int, T)], Int)
 
   // 3) Iso for concrete class
-  class SparseVector1Iso[T](implicit elem: Elem[T])
+  class SparseVector1Iso[T](implicit eItem: Elem[T])
     extends Iso[SparseVector1Data[T], SparseVector1[T]]()(pairElement(implicitly[Elem[Collection[(Int, T)]]], implicitly[Elem[Int]])) {
     override def from(p: Rep[SparseVector1[T]]) =
       (p.nonZeroItems, p.length)
@@ -210,9 +210,9 @@ trait VectorsAbs extends Vectors with Scalan {
   // 4) constructor and deconstructor
   abstract class SparseVector1CompanionAbs extends CompanionBase[SparseVector1CompanionAbs] with SparseVector1Companion {
     override def toString = "SparseVector1"
-    def apply[T](p: Rep[SparseVector1Data[T]])(implicit elem: Elem[T]): Rep[SparseVector1[T]] =
-      isoSparseVector1(elem).to(p)
-    def apply[T](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector1[T]] =
+    def apply[T](p: Rep[SparseVector1Data[T]])(implicit eItem: Elem[T]): Rep[SparseVector1[T]] =
+      isoSparseVector1(eItem).to(p)
+    def apply[T](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit eItem: Elem[T]): Rep[SparseVector1[T]] =
       mkSparseVector1(nonZeroItems, length)
   }
   object SparseVector1Matcher {
@@ -231,16 +231,16 @@ trait VectorsAbs extends Vectors with Scalan {
   implicit def proxySparseVector1[T](p: Rep[SparseVector1[T]]): SparseVector1[T] =
     proxyOps[SparseVector1[T]](p)
 
-  implicit class ExtendedSparseVector1[T](p: Rep[SparseVector1[T]])(implicit elem: Elem[T]) {
-    def toData: Rep[SparseVector1Data[T]] = isoSparseVector1(elem).from(p)
+  implicit class ExtendedSparseVector1[T](p: Rep[SparseVector1[T]])(implicit eItem: Elem[T]) {
+    def toData: Rep[SparseVector1Data[T]] = isoSparseVector1(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoSparseVector1[T](implicit elem: Elem[T]): Iso[SparseVector1Data[T], SparseVector1[T]] =
+  implicit def isoSparseVector1[T](implicit eItem: Elem[T]): Iso[SparseVector1Data[T], SparseVector1[T]] =
     new SparseVector1Iso[T]
 
   // 6) smart constructor and deconstructor
-  def mkSparseVector1[T](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector1[T]]
+  def mkSparseVector1[T](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit eItem: Elem[T]): Rep[SparseVector1[T]]
   def unmkSparseVector1[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[(Int, T)]], Rep[Int])]
 }
 
@@ -253,7 +253,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
 
   case class SeqDenseVector[T]
       (override val items: Rep[Collection[T]])
-      (implicit elem: Elem[T])
+      (implicit eItem: Elem[T])
     extends DenseVector[T](items)
         with UserTypeSeq[DenseVector[T]] {
     lazy val selfType = element[DenseVector[T]]
@@ -263,7 +263,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
   }
 
   def mkDenseVector[T]
-      (items: Rep[Collection[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
+      (items: Rep[Collection[T]])(implicit eItem: Elem[T]): Rep[DenseVector[T]] =
       new SeqDenseVector[T](items)
   def unmkDenseVector[T](p: Rep[AbstractVector[T]]) = p match {
     case p: DenseVector[T] @unchecked =>
@@ -273,7 +273,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
 
   case class SeqSparseVector[T]
       (override val nonZeroIndices: Rep[Collection[Int]], override val nonZeroValues: Rep[Collection[T]], override val length: Rep[Int])
-      (implicit elem: Elem[T])
+      (implicit eItem: Elem[T])
     extends SparseVector[T](nonZeroIndices, nonZeroValues, length)
         with UserTypeSeq[SparseVector[T]] {
     lazy val selfType = element[SparseVector[T]]
@@ -283,7 +283,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
   }
 
   def mkSparseVector[T]
-      (nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
+      (nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eItem: Elem[T]): Rep[SparseVector[T]] =
       new SeqSparseVector[T](nonZeroIndices, nonZeroValues, length)
   def unmkSparseVector[T](p: Rep[AbstractVector[T]]) = p match {
     case p: SparseVector[T] @unchecked =>
@@ -293,7 +293,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
 
   case class SeqSparseVector1[T]
       (override val nonZeroItems: Rep[Collection[(Int, T)]], override val length: Rep[Int])
-      (implicit elem: Elem[T])
+      (implicit eItem: Elem[T])
     extends SparseVector1[T](nonZeroItems, length)
         with UserTypeSeq[SparseVector1[T]] {
     lazy val selfType = element[SparseVector1[T]]
@@ -303,7 +303,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
   }
 
   def mkSparseVector1[T]
-      (nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector1[T]] =
+      (nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit eItem: Elem[T]): Rep[SparseVector1[T]] =
       new SeqSparseVector1[T](nonZeroItems, length)
   def unmkSparseVector1[T](p: Rep[AbstractVector[T]]) = p match {
     case p: SparseVector1[T] @unchecked =>
@@ -322,7 +322,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
   case class ExpDenseVector[T]
       (override val items: Rep[Collection[T]])
-      (implicit elem: Elem[T])
+      (implicit eItem: Elem[T])
     extends DenseVector[T](items) with UserTypeDef[DenseVector[T]] {
     lazy val selfType = element[DenseVector[T]]
     override def mirror(t: Transformer) = ExpDenseVector[T](t(items))
@@ -566,7 +566,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   }
 
   def mkDenseVector[T]
-    (items: Rep[Collection[T]])(implicit elem: Elem[T]): Rep[DenseVector[T]] =
+    (items: Rep[Collection[T]])(implicit eItem: Elem[T]): Rep[DenseVector[T]] =
     new ExpDenseVector[T](items)
   def unmkDenseVector[T](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: DenseVectorElem[T] @unchecked =>
@@ -577,7 +577,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
   case class ExpSparseVector[T]
       (override val nonZeroIndices: Rep[Collection[Int]], override val nonZeroValues: Rep[Collection[T]], override val length: Rep[Int])
-      (implicit elem: Elem[T])
+      (implicit eItem: Elem[T])
     extends SparseVector[T](nonZeroIndices, nonZeroValues, length) with UserTypeDef[SparseVector[T]] {
     lazy val selfType = element[SparseVector[T]]
     override def mirror(t: Transformer) = ExpSparseVector[T](t(nonZeroIndices), t(nonZeroValues), t(length))
@@ -784,12 +784,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
     }
 
     object apply_SparseVectorCompanion_apply_nonZeroItems {
-      def unapply(d: Def[_]): Option[(Rep[IPairCollection[Int,T]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[(Int, T)]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(nonZeroItems, length, n, _*), _) if receiver.elem == SparseVectorCompanionElem && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "SparseVectorCompanion_apply_nonZeroItems" } =>
-          Some((nonZeroItems, length, n)).asInstanceOf[Option[(Rep[IPairCollection[Int,T]], Rep[Int], Numeric[T]) forSome {type T}]]
+          Some((nonZeroItems, length, n)).asInstanceOf[Option[(Rep[Collection[(Int, T)]], Rep[Int], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IPairCollection[Int,T]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[(Int, T)]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -821,7 +821,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   }
 
   def mkSparseVector[T]
-    (nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector[T]] =
+    (nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eItem: Elem[T]): Rep[SparseVector[T]] =
     new ExpSparseVector[T](nonZeroIndices, nonZeroValues, length)
   def unmkSparseVector[T](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SparseVectorElem[T] @unchecked =>
@@ -832,7 +832,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
 
   case class ExpSparseVector1[T]
       (override val nonZeroItems: Rep[Collection[(Int, T)]], override val length: Rep[Int])
-      (implicit elem: Elem[T])
+      (implicit eItem: Elem[T])
     extends SparseVector1[T](nonZeroItems, length) with UserTypeDef[SparseVector1[T]] {
     lazy val selfType = element[SparseVector1[T]]
     override def mirror(t: Transformer) = ExpSparseVector1[T](t(nonZeroItems), t(length))
@@ -1088,7 +1088,7 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
   }
 
   def mkSparseVector1[T]
-    (nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit elem: Elem[T]): Rep[SparseVector1[T]] =
+    (nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit eItem: Elem[T]): Rep[SparseVector1[T]] =
     new ExpSparseVector1[T](nonZeroItems, length)
   def unmkSparseVector1[T](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SparseVector1Elem[T] @unchecked =>

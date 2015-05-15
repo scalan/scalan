@@ -22,17 +22,17 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
   trait FrontCompanion {
     def emptyBaseFront(len: Rep[Int]) = {
       val bits = BitSet.empty(len)
-      val set = BaseCollection(SArray.empty[Int])
+      val set = CollectionOverArray(SArray.empty[Int])
       BaseFront(set, bits)
     }
     def emptyListBasedFront(len: Rep[Int]) = {
       val bits = BitSet.empty(len)
-      val set = ListCollection(SList.empty[Int])
+      val set = CollectionOverList(SList.empty[Int])
       ListFront(set, bits)
     }
     def emptyCollBasedFront(len: Rep[Int]) = {
       val bits = BitSet.empty(len)
-      val set = ListCollection(SList.empty[Int])
+      val set = CollectionOverList(SList.empty[Int])
       CollectionFront(set, bits)
     }
     def emptyMapBasedFront(len: Rep[Int]) = {
@@ -40,7 +40,7 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
     }
     def fromStartNode(start: Rep[Int], len: Rep[Int]) = {
       val bits = BitSet.empty(len).add(start)
-      val set = Collection.singleton(start).convertTo[BaseCollection[Int]]
+      val set = Collection.singleton(start).convertTo[CollectionOverArray[Int]]
       BaseFront(set, bits)
     }
 
@@ -50,23 +50,23 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
     }
   }
 
-  abstract class BaseFront(val set: Rep[BaseCollection[Int]], val bits: Rep[BitSet]) extends Front {
+  abstract class BaseFront(val set: Rep[CollectionOverArray[Int]], val bits: Rep[BitSet]) extends Front {
     def contains(v: Rep[Int]) = bits.contains(v)
 
     def append(v: Rep[Int]) = {
-      BaseFront(set.append(v).convertTo[BaseCollection[Int]], bits.add(v))
+      BaseFront(set.append(v).convertTo[CollectionOverArray[Int]], bits.add(v))
     }
   }
 
   trait BaseFrontCompanion extends ConcreteClass0[Front]
 
-  abstract class ListFront(val set: Rep[ListCollection[Int]], val bits: Rep[BitSet]) extends Front {
+  abstract class ListFront(val set: Rep[CollectionOverList[Int]], val bits: Rep[BitSet]) extends Front {
     //def total = bits.length
 
     def contains(v: Rep[Int]) = bits.contains(v)
 
     def append(v: Rep[Int]) = {
-      ListFront(set.append(v).convertTo[ListCollection[Int]], bits.add(v))
+      ListFront(set.append(v).convertTo[CollectionOverList[Int]], bits.add(v))
     }
   }
 

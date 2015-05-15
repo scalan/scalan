@@ -16,7 +16,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   trait AbstractMatrix[T] extends Reifiable[AbstractMatrix[T]] {
     def numColumns: Rep[Int]
     def numRows: Rep[Int]
-    implicit def elem: Elem[T]
+    implicit def eItem: Elem[T]
     def rows: Rep[Collection[AbstractVector[T]]]
     def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]]
     def rmValues: Rep[Collection[T]]
@@ -61,7 +61,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   }
 
   abstract class DenseFlatMatrix[T](val rmValues: Rep[Collection[T]], val numColumns: Rep[Int])
-                                   (implicit val elem: Elem[T]) extends AbstractMatrix[T] {
+                                   (implicit val eItem: Elem[T]) extends AbstractMatrix[T] {
 
     def items = rmValues
     def companion = DenseFlatMatrix
@@ -131,7 +131,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
   }
 
   abstract class CompoundMatrix[T](val rows: Rep[Collection[AbstractVector[T]]], val numColumns: Rep[Int])
-                                  (implicit val elem: Elem[T]) extends AbstractMatrix[T] {
+                                  (implicit val eItem: Elem[T]) extends AbstractMatrix[T] {
 
     def companion = CompoundMatrix
     def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = {
@@ -247,7 +247,7 @@ trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommuni
   type MatrixCompanion = Rep[AbstractMatrixCompanion]
 
   implicit class MatrixExtensions[T](matrix: Matrix[T]) {
-    implicit def eItem: Elem[T] = matrix.elem
+    implicit def eItem: Elem[T] = matrix.eItem
 
     def map[R: Elem](f: Vector[T] => Vector[R]): Matrix[R] = matrix.mapBy(fun(f))
 

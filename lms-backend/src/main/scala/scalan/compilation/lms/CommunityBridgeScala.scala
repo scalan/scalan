@@ -48,7 +48,7 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDS
   }
 
   override def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
-    case u: scalan.collections.impl.CollectionsExp#ExpBaseCollection[_] =>
+    case u: scalan.collections.impl.CollectionsExp#ExpCollectionOverArray[_] =>
       val exp = Manifest.classType(u.getClass) match {
         case (mA: Manifest[a]) =>
           lms.newObj[a]("scalan.imp.ArrayImp", Seq(m.symMirrorUntyped(u.arr.asInstanceOf[Exp[_]])), true)(mA)

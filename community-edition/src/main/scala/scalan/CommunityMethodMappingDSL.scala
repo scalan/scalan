@@ -30,7 +30,7 @@ trait CommunityMethodMappingDSL extends MethodMappingDSL {
       }
     }
 
-    val expBaseCollection = new CaseClassObject(typeOf[scalan.collections.impl.CollectionsExp#ExpBaseCollection[_]])
+    val expCollectionOverArray = new CaseClassObject(typeOf[scalan.collections.impl.CollectionsExp#ExpCollectionOverArray[_]])
   }
 
   new ScalaMappingDSL with CommunityMappingTags {

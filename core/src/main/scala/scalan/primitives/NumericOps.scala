@@ -76,7 +76,6 @@ trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
 
 trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>
   case class NumericRand[T](bound: Exp[T], id: Int = IdSupply.nextId)(implicit eT: Elem[T]) extends BaseDef[T] {
-    def elem = eT
     def uniqueOpId = name(eT)
     override def mirror(t: Transformer) = NumericRand(t(bound))(eT)
   }

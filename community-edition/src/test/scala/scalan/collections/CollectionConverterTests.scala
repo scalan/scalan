@@ -6,21 +6,22 @@ import scalan._
 class CollectionConverterTests extends BaseTests { suite =>
 
   trait ConvProg extends Scalan with ScalanCommunityDsl {
-    lazy val t1 = fun { (in: Rep[PairCollection[Int,Double]]) => in.convertTo[CollectionOfPairs[Int, Double]] }
-    lazy val t2 = fun { (in: Rep[(Array[Int], Array[Double])]) => {
+    lazy val t1 = fun { (in: Rep[PairCollectionSOA[Int,Double]]) => in.convertTo[PairCollectionAOS[Int, Double]] }
+    lazy val t2 = fun { (in: Rep[(Array[Int], Array[Double])]) =>
       val Pair(as, bs) = in
       val ps = Collection.fromArray(as) zip Collection.fromArray(bs)
-      ps.convertTo[CollectionOfPairs[Int, Double]].toData
-    } }
+      val ps1 = ps.convertTo[PairCollectionAOS[Int, Double]]
+      ps1.arr
+    }
     lazy val t3 = fun { (in: Rep[Array[(Int,Double)]]) => {
-      val ps = CollectionOfPairs(in)
-      val Pair(as, bs) = ps.convertTo[PairCollection[Int, Double]].toData
+      val ps = PairCollectionAOS(CollectionOverArray(in))
+      val Pair(as, bs) = ps.convertTo[PairCollectionSOA[Int, Double]].toData
       Pair(as.arr, bs.arr)
     } }
-    lazy val t4 = fun { (in: Rep[Array[Int]]) => BaseCollection(in).convertTo[CollectionOnSeq[Int]].toData }
-    lazy val t5 = fun { (in: Rep[SSeq[Int]]) => CollectionOnSeq(in).convertTo[BaseCollection[Int]].toData }
+    lazy val t4 = fun { (in: Rep[Array[Int]]) => CollectionOverArray(in).convertTo[CollectionOverSeq[Int]].toData }
+    lazy val t5 = fun { (in: Rep[SSeq[Int]]) => CollectionOverSeq(in).convertTo[CollectionOverArray[Int]].toData }
     lazy val t6 = fun { (in: Rep[Array[(Int,Int)]]) =>
-      val in0 = BaseCollection(in)
+      val in0 = CollectionOverArray(in)
       val in1 = in0.map(i => (i._1 + i._2, i._2) )
       (in1.arr)
     }

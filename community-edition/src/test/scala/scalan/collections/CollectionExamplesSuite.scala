@@ -52,13 +52,13 @@ class CollectionExamplesSuite extends BaseShouldTests {
   whenStaged should "splitMap3" beArgFor { testMethod(_) }
   whenStaged should "splitMapMap" beArgFor { testMethod(_) }
   whenStaged should "mapScalar" beArgFor { testMethod(_) }
-  whenStaged should "expBaseCollectionsInIf" beArgFor { testMethod(_) }
-  whenStaged should "expListCollectionsInIf" beArgFor { testMethod(_) }
-  whenStaged should "expBaseCollectionsInIfSpec" beArgFor { testMethod(_) }
-  whenStaged should "expPairCollectionsInIf" beArgFor { testMethod(_) }
-  whenStaged should "expPairCollectionsInIfSpec" beArgFor { testMethod(_) }
-  whenStaged should "expPairCollectionsInIfDiffTypes" beArgFor { testMethod(_) }
-  whenStaged should "expPairCollectionsInIfDiffTypesSpec" beArgFor { testMethod(_) }
+  whenStaged should "expCollectionOverArraysInIf" beArgFor { testMethod(_) }
+  whenStaged should "expCollectionOverListsInIf" beArgFor { testMethod(_) }
+  whenStaged should "expCollectionOverArraysInIfSpec" beArgFor { testMethod(_) }
+  whenStaged should "expPairCollectionSOAsInIf" beArgFor { testMethod(_) }
+  whenStaged should "expPairCollectionSOAsInIfSpec" beArgFor { testMethod(_) }
+  whenStaged should "expPairCollectionSOAsInIfDiffTypes" beArgFor { testMethod(_) }
+  whenStaged should "expPairCollectionSOAsInIfDiffTypesSpec" beArgFor { testMethod(_) }
   whenStaged should "sumFold" beArgFor { testMethod(_) }
   whenStaged should "sumFoldSpec" beArgFor { testMethod(_) }
   whenStaged should "pairInIf" beArgFor { testMethod(_) }
