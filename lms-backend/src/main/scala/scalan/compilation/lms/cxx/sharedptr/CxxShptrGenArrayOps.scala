@@ -6,10 +6,11 @@ package sharedptr
 
 import scala.virtualization.lms.common.{BaseGenArrayOps, ArrayOpsExp}
 import scala.virtualization.lms.epfl.test7.ArrayLoopsExp
+import scala.virtualization.lms.epfl.test8.ArrayMutationExp
 import scala.virtualization.lms.internal.Expressions
 
 trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
-  val IR: Expressions with ArrayOpsExp with ArrayLoopsExp
+  val IR: Expressions with ArrayOpsExp with ArrayLoopsExp with ArrayMutationExp
   import IR._
 
   headerFiles ++= Seq("vector", "algorithm")
@@ -40,6 +41,8 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
       emitConstruct(sym)
     case a@ArrayNew(n) =>
       emitConstruct(sym, src"$n")
+    case ArrayMutable(a) =>
+      emitValDef(sym, src"$a /* clone */")
     //    case e@ArrayFromSeq(xs) => {
     //      emitData(sym, xs)
     //      emitValDef(sym,
@@ -105,7 +108,7 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
 }
 
 trait CxxShptrGenArrayOpsBoost extends CxxShptrGenArrayOps {
-  val IR : Expressions with ArrayOpsExp with ArrayLoopsExp
+  val IR : Expressions with ArrayOpsExp with ArrayLoopsExp with ArrayMutationExp
   import IR._
 
   headerFiles ++= Seq("boost/container/vector.hpp")
