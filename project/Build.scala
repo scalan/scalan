@@ -2,7 +2,6 @@ import sbt.Keys._
 import sbt._
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtrelease.ReleasePlugin._
-import pl.project13.scala.sbt.SbtJmh._
 
 object ScalanBuild extends Build {
 
@@ -25,6 +24,8 @@ object ScalanBuild extends Build {
     "org.scalacheck" %% "scalacheck" % "1.12.2" % "test",
     "com.github.axel22" %% "scalameter" % "0.5-M2" % "test",
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
+    // otherwise scala-logging-slf4j pulls 2.11.0
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     "ch.qos.logback" % "logback-classic" % "1.1.2")
 
   val testSettings = inConfig(ItTest)(Defaults.testTasks) ++
@@ -45,11 +46,11 @@ object ScalanBuild extends Build {
     test in assembly := {})
 
   val crossCompilation =
-    crossScalaVersions := Seq("2.10.5", "2.11.6")
+    crossScalaVersions := Seq("2.11.6")
 
   // Doesn't cross-build properly due to a Scala bug currently
   val commonSettings = Seq(
-    scalaVersion := "2.10.5",
+    scalaVersion := "2.11.6",
     organization := "com.huawei.scalan",
     publishTo := {
       val nexus = "http://10.122.85.37:9081/nexus/"
@@ -85,10 +86,7 @@ object ScalanBuild extends Build {
   lazy val core = project.dependsOn(common.allConfigDependency).withTestConfigsAndCommonSettings
     .settings(
       libraryDependencies ++= Seq(
-        "com.chuusai" % "shapeless" % "2.0.0" cross CrossVersion.binaryMapped {
-          case "2.10" => "2.10.4"
-          case v => v
-        },
+        "com.chuusai" %% "shapeless" % "2.0.0",
         "cglib" % "cglib" % "3.1",
         "org.objenesis" % "objenesis" % "2.1"))
 
@@ -96,9 +94,9 @@ object ScalanBuild extends Build {
     .dependsOn(core.allConfigDependency)
     .withTestConfigsAndCommonSettings
 
-  val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.10.2")
+  val virtScala = Option(System.getenv("SCALA_VIRTUALIZED_VERSION")).getOrElse("2.11.2")
 
-  val lms = "EPFL" % "lms_local_2.10" % "0.3-SNAPSHOT"
+  val lms = "EPFL" %% "lms_local" % "0.3-SNAPSHOT"
 
   lazy val lmsBackend = Project("lms-backend", file("lms-backend"))
     .dependsOn(core.allConfigDependency, ce.allConfigDependency)
@@ -106,7 +104,7 @@ object ScalanBuild extends Build {
     .settings(
       libraryDependencies ++= Seq(lms,
         // old version of ScalaTest used in LMS can lead to ClassCastException
-        lms classifier "tests" exclude("org.scalatest", "scalatest_2.10") exclude("org.scalatest", "scalatest_2.11"),
+        lms classifier "tests" exclude("org.scalatest", "scalatest_2.11"),
         "org.scala-lang.virtualized" % "scala-library" % virtScala,
         "org.scala-lang.virtualized" % "scala-compiler" % virtScala),
       scalaOrganization := "org.scala-lang.virtualized",
