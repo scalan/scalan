@@ -35,16 +35,16 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     array(a.length)(i => f(a.at(i)))
   }
 
-  def flatMapArray[A: Manifest, B: Manifest](arr: Exp[Array[A]], f: Rep[A] => Rep[Array[B]]): Exp[Array[B]] = {
-    flatten(arr.length)(i => f(arr.at(i)))
-  }
 //  def flatMapArray[A: Manifest, B: Manifest](arr: Exp[Array[A]], f: Rep[A] => Rep[Array[B]]): Exp[Array[B]] = {
-//    val buf = ArrayBuilder.make[B]
-//    for (x <- arr; y <- f(x)) {
-//      buf += y
-//    }
-//    buf.result
+//    flatten(arr.length)(i => f(arr.at(i)))
 //  }
+  def flatMapArray[A: Manifest, B: Manifest](arr: Exp[Array[A]], f: Rep[A] => Rep[Array[B]]): Exp[Array[B]] = {
+    val buf = ArrayBuilder.make[B]
+    for (x <- arr; y <- f(x)) {
+      buf += y
+    }
+    buf.result
+  }
 
   def findArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Array[Int]] = {
     arrayIf(a.length) { i => (f(a.at(i)), i)}
