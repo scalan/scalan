@@ -50,10 +50,8 @@ trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxEx
     // pass scalan phases
     val graph = super.buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
 
-    func.elem match
-    {
-      case f:FuncElem[a, b] =>
-        println(s"func.elem ${f.eDom} ${f.eRange}")
+    func.elem match {
+      case f: FuncElem[a, b] =>
         (createManifest(f.eDom), createManifest(f.eRange)) match {
           case (mA: Manifest[a], mB: Manifest[b]) =>
             val codegen = lms.graphCodegen
@@ -64,15 +62,10 @@ trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxEx
               try {
                 codegen.emitSource[a, b](lmsFunc, functionName, writer)(mA, mB)
               } catch {
-                case e: RuntimeException =>
-                  println("ERROR in codegen.emitSource: " + e)
+                case e: Exception =>
+                  println("Exception in codegen.emitSource:")
+                  e.printStackTrace()
               }
-            }
-
-            codegen.graphStream.roots.isEmpty match{
-              case true => println("EMPTY graphStream")
-              case false =>
-                println(codegen.graphStream.roots.head.toString)
             }
 
             val dotFile = new File(sourcesDir, s"${functionName}_lms.dot")
@@ -80,7 +73,7 @@ trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxEx
             codegen.graphStream.exportToGraphVis(dotFile, graphVizConfig)
         }
       case _ =>
-        throw new Exception("ERROR func.elem not mached to FuncElem // in LmsCompiler.buildGraph")
+        throw new Exception(s"LmsCompiler.buildGraph expects a function, but got ${func.toStringWithType}")
     }
 
     graph
