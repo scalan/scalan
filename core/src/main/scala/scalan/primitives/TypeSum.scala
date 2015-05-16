@@ -185,6 +185,16 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
           SumView(a.asRep[a1].asRight(iso1.eFrom))(iso1, iso).self
       }
 
+    case SumMap(Def(Right(x)), f: Rep[Function1[a, b]] @unchecked, g: Rep[Function1[c, d]] @unchecked) =>
+      implicit val eB = f.elem.eRange
+      implicit val eD = g.elem.eRange
+      toRightSum[b, d](g(x))
+
+    case SumMap(Def(Left(x)), f: Rep[Function1[a, b]] @unchecked, g: Rep[Function1[c, d]] @unchecked) =>
+      implicit val eB = f.elem.eRange
+      implicit val eD = g.elem.eRange
+      toLeftSum[b, d](f(x))
+
     case m1 @ SumMap(Def(f: SumFold[a0,b0,_]), left, right) =>
       f.sum.foldBy(left << f.left, right << f.right)
 

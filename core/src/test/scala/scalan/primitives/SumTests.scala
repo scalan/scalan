@@ -11,7 +11,7 @@ class SumTests extends BaseTests { suite =>
       lazy val t1 = fun { x: Rep[Int|Unit] => x.mapSum(l => l + 1, r => r) }
     }
     import ctx._
-    val IsSumMapLambda(m) = t1
+    t1 should matchPattern { case IsSumMapLambda(_) => }
   }
 
   test("constant propagation from If to SumFold") {
@@ -28,6 +28,30 @@ class SumTests extends BaseTests { suite =>
     import ctx._
     emit("t1", t1)
     emit("t2", t2)
+  }
+
+  test("SumMap(Right(x)) rewriting") {
+    val ctx = new TestContext(this, "SumMapRightRewriting") {
+      lazy val t1 = fun { x: Rep[Int] =>
+        x.asRight[Int].mapSum(_ + 1, _ - 1)
+      }
+    }
+    import ctx._
+
+    emit("t1", t1)
+    t1.getLambda.y should matchPattern { case Def(Right(_)) => }
+  }
+
+  test("SumMap(Left(x)) rewriting") {
+    val ctx = new TestContext(this, "SumMapLeftRewriting") {
+      lazy val t1 = fun { x: Rep[Int] =>
+        x.asLeft[Int].mapSum(_ + 1, _ - 1)
+      }
+    }
+    import ctx._
+
+    emit("t1", t1)
+    t1.getLambda.y should matchPattern { case Def(Left(_)) => }
   }
 
 }
