@@ -67,28 +67,36 @@ class EffectsItTests extends BaseItTests
   }
 
   test("zipArrayWithIndex")  {
-    val progStaged = new EffectsExp with StateExamples with MonadsDslExp
+    val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
+      val F = state0Monad[Int]
+    }
     //pending
     val in = Array(10.0, 20.0, 30.0)
     val res = getStagedOutputConfig(progStaged)(progStaged.zipArrayWithIndexW, "zipArrayWithIndex", in, progStaged.defaultCompilerConfig)
   }
 
   test("zipCollectionWithIndex")  {
-    val progStaged = new EffectsExp with StateExamples with MonadsDslExp
+    val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
+      val F = state0Monad[Int]
+    }
     //pending
     val in = Array(10.0, 20.0, 30.0)
     val res = getStagedOutputConfig(progStaged)(progStaged.zipCollectionWithIndexW, "zipCollectionWithIndex", in, progStaged.defaultCompilerConfig)
   }
 
   test("zipCollectionWithIndex2")  {
-    val progStaged = new EffectsExp with StateExamples with MonadsDslExp
+    val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
+      val F = state0Monad[Int]
+    }
     //pending
     val in = Array(10.0, 20.0, 30.0)
     val res = getStagedOutputConfig(progStaged)(progStaged.zipCollectionWithIndexW2, "zipCollectionWithIndex2", in, progStaged.defaultCompilerConfig)
   }
 
   test("zipCollectionWithIndex3")  {
-    val progStaged = new EffectsExp with StateExamples with MonadsDslExp
+    val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
+      val F = state0Monad[Int]
+    }
     //pending
     val in = Array(10.0, 20.0, 30.0)
     val res = getStagedOutputConfig(progStaged)(progStaged.zipCollectionWithIndexW3, "zipCollectionWithIndex3", in, progStaged.defaultCompilerConfig)

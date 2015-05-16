@@ -3,7 +3,7 @@ package scalan.effects
 import scalan.monads.MonadsDsl
 
 trait StateExamples extends MonadsDsl { self =>
-  implicit val F = stateMonad[Int]
+  implicit val F: Monad[({type f[x] = State0[Int,x]})#f]
   import F.toMonadic
 
   def zipArrayWithIndex[A:Elem](as: Rep[Array[A]]): Rep[Array[(Int,A)]] =
@@ -11,8 +11,8 @@ trait StateExamples extends MonadsDsl { self =>
       val Pair(acc, a) = p
       for {
         xs <- acc
-        n  <- State.get[Int]
-        _  <- State.set(n + 1)
+        n  <- State0.get[Int]
+        _  <- State0.set(n + 1)
       } yield xs.append(Pair(n, a))
     }).run(0)._1
 
@@ -23,8 +23,8 @@ trait StateExamples extends MonadsDsl { self =>
       val Pair(acc, a) = p
       for {
         xs <- acc
-        n  <- State.get[Int]
-        _  <- State.set(n + 1)
+        n  <- State0.get[Int]
+        _  <- State0.set(n + 1)
       } yield xs.append(Pair(n, a))
     }).run(0)._1
 
@@ -49,12 +49,12 @@ trait StateExamples extends MonadsDsl { self =>
   }
 
   def zipCollectionWithIndex3[A:Elem](as: Coll[A])(implicit C: CollectionManager): Coll[(Int,A)] =
-    as.foldLeft[State[Int,Collection[(Int, A)]]](F.unit(C.empty[(Int, A)]), fun { p =>
+    as.foldLeft[State0[Int,Collection[(Int, A)]]](F.unit(C.empty[(Int, A)]), fun { p =>
       val Pair(acc, a) = p
       for {
         xs <- acc
-        n  <- State.get[Int]
-        _  <- State.set(n + 1)
+        n  <- State0.get[Int]
+        _  <- State0.set(n + 1)
       } yield xs.append(Pair(n, a))
     }).run(0)._1
 

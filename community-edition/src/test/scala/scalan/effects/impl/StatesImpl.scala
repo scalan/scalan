@@ -12,52 +12,52 @@ trait StatesAbs extends States with Scalan {
   self: MonadsDsl =>
 
   // single proxy for each type family
-  implicit def proxyState[S, A](p: Rep[State[S, A]]): State[S, A] = {
-    proxyOps[State[S, A]](p)(classTag[State[S, A]])
+  implicit def proxyState0[S, A](p: Rep[State0[S, A]]): State0[S, A] = {
+    proxyOps[State0[S, A]](p)(classTag[State0[S, A]])
   }
 
   // familyElem
-  class StateElem[S, A, To <: State[S, A]](implicit val eS: Elem[S], val eA: Elem[A])
+  class State0Elem[S, A, To <: State0[S, A]](implicit val eS: Elem[S], val eA: Elem[A])
     extends EntityElem[To] {
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagS = eS.tag
       implicit val tagA = eA.tag
-      weakTypeTag[State[S, A]].asInstanceOf[WeakTypeTag[To]]
+      weakTypeTag[State0[S, A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[State[S, A]] =>  convertState(x) }
-      tryConvert(element[State[S, A]], this, x, conv)
+      val conv = fun {x: Rep[State0[S, A]] =>  convertState0(x) }
+      tryConvert(element[State0[S, A]], this, x, conv)
     }
 
-    def convertState(x : Rep[State[S, A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: StateElem[_, _, _] => true; case _ => false })
+    def convertState0(x : Rep[State0[S, A]]): Rep[To] = {
+      assert(x.selfType1 match { case _: State0Elem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def stateElement[S, A](implicit eS: Elem[S], eA: Elem[A]): Elem[State[S, A]] =
-    new StateElem[S, A, State[S, A]]
+  implicit def state0Element[S, A](implicit eS: Elem[S], eA: Elem[A]): Elem[State0[S, A]] =
+    new State0Elem[S, A, State0[S, A]]
 
-  implicit object StateCompanionElem extends CompanionElem[StateCompanionAbs] {
-    lazy val tag = weakTypeTag[StateCompanionAbs]
-    protected def getDefaultRep = State
+  implicit object State0CompanionElem extends CompanionElem[State0CompanionAbs] {
+    lazy val tag = weakTypeTag[State0CompanionAbs]
+    protected def getDefaultRep = State0
   }
 
-  abstract class StateCompanionAbs extends CompanionBase[StateCompanionAbs] with StateCompanion {
-    override def toString = "State"
+  abstract class State0CompanionAbs extends CompanionBase[State0CompanionAbs] with State0Companion {
+    override def toString = "State0"
   }
-  def State: Rep[StateCompanionAbs]
-  implicit def proxyStateCompanion(p: Rep[StateCompanion]): StateCompanion = {
-    proxyOps[StateCompanion](p)
+  def State0: Rep[State0CompanionAbs]
+  implicit def proxyState0Companion(p: Rep[State0Companion]): State0Companion = {
+    proxyOps[State0Companion](p)
   }
 
   // elem for concrete class
   class StateBaseElem[S, A](val iso: Iso[StateBaseData[S, A], StateBase[S, A]])(implicit eS: Elem[S], eA: Elem[A])
-    extends StateElem[S, A, StateBase[S, A]]
+    extends State0Elem[S, A, StateBase[S, A]]
     with ConcreteElem[StateBaseData[S, A], StateBase[S, A]] {
-    override def convertState(x: Rep[State[S, A]]) = StateBase(x.run)
+    override def convertState0(x: Rep[State0[S, A]]) = StateBase(x.run)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
       implicit val tagS = eS.tag
@@ -89,7 +89,7 @@ trait StatesAbs extends States with Scalan {
       mkStateBase(run)
   }
   object StateBaseMatcher {
-    def unapply[S, A](p: Rep[State[S, A]]) = unmkStateBase(p)
+    def unapply[S, A](p: Rep[State0[S, A]]) = unmkStateBase(p)
   }
   def StateBase: Rep[StateBaseCompanionAbs]
   implicit def proxyStateBaseCompanion(p: Rep[StateBaseCompanionAbs]): StateBaseCompanionAbs = {
@@ -114,14 +114,14 @@ trait StatesAbs extends States with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkStateBase[S, A](run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]]
-  def unmkStateBase[S, A](p: Rep[State[S, A]]): Option[(Rep[S => (A, S)])]
+  def unmkStateBase[S, A](p: Rep[State0[S, A]]): Option[(Rep[S => (A, S)])]
 }
 
 // Seq -----------------------------------
 trait StatesSeq extends StatesDsl with ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val State: Rep[StateCompanionAbs] = new StateCompanionAbs with UserTypeSeq[StateCompanionAbs] {
-    lazy val selfType = element[StateCompanionAbs]
+  lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs with UserTypeSeq[State0CompanionAbs] {
+    lazy val selfType = element[State0CompanionAbs]
   }
 
   case class SeqStateBase[S, A]
@@ -138,7 +138,7 @@ trait StatesSeq extends StatesDsl with ScalanSeq {
   def mkStateBase[S, A]
       (run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]] =
       new SeqStateBase[S, A](run)
-  def unmkStateBase[S, A](p: Rep[State[S, A]]) = p match {
+  def unmkStateBase[S, A](p: Rep[State0[S, A]]) = p match {
     case p: StateBase[S, A] @unchecked =>
       Some((p.run))
     case _ => None
@@ -148,8 +148,8 @@ trait StatesSeq extends StatesDsl with ScalanSeq {
 // Exp -----------------------------------
 trait StatesExp extends StatesDsl with ScalanExp {
   self: MonadsDslExp =>
-  lazy val State: Rep[StateCompanionAbs] = new StateCompanionAbs with UserTypeDef[StateCompanionAbs] {
-    lazy val selfType = element[StateCompanionAbs]
+  lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs with UserTypeDef[State0CompanionAbs] {
+    lazy val selfType = element[State0CompanionAbs]
     override def mirror(t: Transformer) = this
   }
 
@@ -175,33 +175,33 @@ trait StatesExp extends StatesDsl with ScalanExp {
   def mkStateBase[S, A]
     (run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]] =
     new ExpStateBase[S, A](run)
-  def unmkStateBase[S, A](p: Rep[State[S, A]]) = p.elem.asInstanceOf[Elem[_]] match {
+  def unmkStateBase[S, A](p: Rep[State0[S, A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: StateBaseElem[S, A] @unchecked =>
       Some((p.asRep[StateBase[S, A]].run))
     case _ =>
       None
   }
 
-  object StateMethods {
+  object State0Methods {
     object run {
-      def unapply(d: Def[_]): Option[Rep[State[S, A]] forSome {type S; type A}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[StateElem[_, _, _]] && method.getName == "run" =>
-          Some(receiver).asInstanceOf[Option[Rep[State[S, A]] forSome {type S; type A}]]
+      def unapply(d: Def[_]): Option[Rep[State0[S, A]] forSome {type S; type A}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[State0Elem[_, _, _]] && method.getName == "run" =>
+          Some(receiver).asInstanceOf[Option[Rep[State0[S, A]] forSome {type S; type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[State[S, A]] forSome {type S; type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[State0[S, A]] forSome {type S; type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
   }
 
-  object StateCompanionMethods {
+  object State0CompanionMethods {
     // WARNING: Cannot generate matcher for method `apply`: Method has function arguments r
 
     object get {
       def unapply(d: Def[_]): Option[Unit forSome {type S}] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem == StateCompanionElem && method.getName == "get" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem == State0CompanionElem && method.getName == "get" =>
           Some(()).asInstanceOf[Option[Unit forSome {type S}]]
         case _ => None
       }
@@ -213,7 +213,7 @@ trait StatesExp extends StatesDsl with ScalanExp {
 
     object set {
       def unapply(d: Def[_]): Option[Rep[S] forSome {type S}] = d match {
-        case MethodCall(receiver, method, Seq(s, _*), _) if receiver.elem == StateCompanionElem && method.getName == "set" =>
+        case MethodCall(receiver, method, Seq(s, _*), _) if receiver.elem == State0CompanionElem && method.getName == "set" =>
           Some(s).asInstanceOf[Option[Rep[S] forSome {type S}]]
         case _ => None
       }
