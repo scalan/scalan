@@ -3,6 +3,7 @@ package scalan.primitives
 import java.io.File
 import java.lang.reflect.Method
 
+import scala.io.StdIn
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp}

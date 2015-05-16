@@ -435,7 +435,7 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
     }
   }*/
 
-  def pairArray_innerJoin[Int, T](xs: Coll[(Int, T)], ys: Coll[(Int, T)], f: Rep[((T, T)) => T])
+  def pairArray_innerJoin[T](xs: Coll[(Int, T)], ys: Coll[(Int, T)], f: Rep[((T, T)) => T])
                                  (implicit ordK: Ordering[Int], eR: Elem[T]): Coll[(Int, T)] = ???/*{
     //implicit val eK: Elem[Int] = xs.eItem.eFst
 
@@ -480,7 +480,7 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
     fromArray(buffer.toArray)(pairElement(eK, eR))
   }*/
 
-  def pairArray_outerJoin[Int, T](xs: Coll[(Int, T)], ys: Coll[(Int, T)], f: Rep[((T, T)) => T], f1: Rep[T => T], f2: Rep[T => T])
+  def pairArray_outerJoin[T](xs: Coll[(Int, T)], ys: Coll[(Int, T)], f: Rep[((T, T)) => T], f1: Rep[T => T], f2: Rep[T => T])
                                  (implicit ordK: Ordering[Int], eR: Elem[T]): Coll[(Int, T)] = ???/*{
     implicit val eK: Elem[K] = xs.eItem.eFst
 

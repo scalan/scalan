@@ -31,7 +31,7 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDS
           val name = conf.funcName.name
           import scala.reflect.runtime.universe._
           val instanceMirror = runtimeMirror(obj.getClass.getClassLoader).reflect(lms)
-          val lmsMethod = instanceMirror.symbol.typeSignature.member(newTermName(name))
+          val lmsMethod = instanceMirror.symbol.typeSignature.member(TermName(name))
           instanceMirror.reflectMethod(lmsMethod.asMethod).apply(obj, createManifest(receiver.elem)).asInstanceOf[lms.Exp[_]]
       }
       case Some(nonScalaFunc) =>

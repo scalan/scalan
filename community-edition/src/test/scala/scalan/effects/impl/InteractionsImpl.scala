@@ -1,6 +1,7 @@
 package scalan.examples
 package impl
 
+import scala.io.StdIn
 import scala.reflect.runtime.universe._
 import scalan._
 import scalan.monads._

@@ -102,10 +102,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   type LambdaData[A,B] = (Lambda[A,B], Option[Exp[A] => Exp[B]], Exp[A], Exp[B])
   object Lambda {
-    def unapply[A,B](d: Def[A => B]): Option[LambdaData[A,B]] = d match {
-      case lam: Lambda[A, B] @unchecked =>
-        Some((lam, lam.f, lam.x, lam.y))
-      case _ => None
+    def unapply[A,B](lam: Lambda[A, B]): Option[LambdaData[A,B]] = lam match {
+      case null => None
+      case _ => Some((lam, lam.f, lam.x, lam.y))
     }
   }
 

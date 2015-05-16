@@ -93,7 +93,7 @@ trait StatesDslExp extends impl.StatesExp { self: MonadsDslExp =>
             step(Pair(StateBase(fun { _ => Pair(a,s) }), t)).run(s)
           }}
       }
-    case Apply(Def(State0Methods.run(Def(CollectionMethods.foldLeft(xs, start: RepState[s,a], f)))), s0) =>
+    case Apply(Def(State0Methods.run(Def(CollectionMethods.foldLeft(xs, start: RepState[s,a] @unchecked, f)))), s0) =>
       xs.elem match {
         case el: CollectionElem[t,_] =>
           implicit val eT = el.eItem

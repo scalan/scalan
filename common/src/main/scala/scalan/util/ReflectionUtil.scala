@@ -7,7 +7,7 @@ object ReflectionUtil {
   def typeSymbol[A: TypeTag] = typeOf[A].typeSymbol
 
   def annotation[T: TypeTag](symbol: Symbol) = symbol.annotations.find {
-    _.tpe =:= typeOf[T]
+    _.tree.tpe =:= typeOf[T]
   }
 
   def methodToJava(sym: MethodSymbol) = ReflectionUtil0.methodToJava(sym)
