@@ -68,7 +68,7 @@ class EffectsItTests extends BaseItTests
 
   test("zipArrayWithIndex")  {
     val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
-      val F = state0Monad[Int]
+      val State = new State0Manager[Int]
     }
     //pending
     val in = Array(10.0, 20.0, 30.0)
@@ -77,7 +77,7 @@ class EffectsItTests extends BaseItTests
 
   test("zipCollectionWithIndex")  {
     val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
-      val F = state0Monad[Int]
+      val State = new State0Manager[Int]
     }
     //pending
     val in = Array(10.0, 20.0, 30.0)
@@ -86,7 +86,7 @@ class EffectsItTests extends BaseItTests
 
   test("zipCollectionWithIndex2")  {
     val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
-      val F = state0Monad[Int]
+      val State = new State0Manager[Int]
     }
     //pending
     val in = Array(10.0, 20.0, 30.0)
@@ -95,7 +95,7 @@ class EffectsItTests extends BaseItTests
 
   test("zipCollectionWithIndex3")  {
     val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
-      val F = state0Monad[Int]
+      val State = new State0Manager[Int]
     }
     //pending
     val in = Array(10.0, 20.0, 30.0)

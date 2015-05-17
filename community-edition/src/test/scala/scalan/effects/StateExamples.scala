@@ -3,30 +3,31 @@ package scalan.effects
 import scalan.monads.MonadsDsl
 
 trait StateExamples extends MonadsDsl { self =>
-  implicit val F: Monad[({type f[x] = State0[Int,x]})#f]
-  import F.toMonadic
+  val State: StateManager[Int]
+  import State._
+  import State.monad.toMonadic
 
   def zipArrayWithIndex[A:Elem](as: Rep[Array[A]]): Rep[Array[(Int,A)]] =
-    as.foldLeft(F.unit(SArray.empty[(Int, A)]))({ p =>
+    State.eval(as.foldLeft(State.unit(SArray.empty[(Int, A)]))({ p =>
       val Pair(acc, a) = p
       for {
         xs <- acc
-        n  <- State0.get[Int]
-        _  <- State0.set(n + 1)
+        n  <- State.get
+        _  <- State.set(n + 1)
       } yield xs.append(Pair(n, a))
-    }).run(0)._1
+    }), 0)
 
   lazy val zipArrayWithIndexW = fun { xs: Arr[Double] => zipArrayWithIndex(xs) }
 
   def zipCollectionWithIndex[A:Elem](as: Coll[A])(implicit C: CollectionManager): Coll[(Int,A)] =
-    as.arr.foldLeft(F.unit(C.empty[(Int, A)]))({ p =>
+    State.eval(as.arr.foldLeft(State.unit(C.empty[(Int, A)]))({ p =>
       val Pair(acc, a) = p
       for {
         xs <- acc
-        n  <- State0.get[Int]
-        _  <- State0.set(n + 1)
+        n  <- State.get
+        _  <- State.set(n + 1)
       } yield xs.append(Pair(n, a))
-    }).run(0)._1
+    }), 0)
 
   lazy val zipCollectionWithIndexW = fun { xs: Arr[Double] =>
     implicit val C = Collection.manager
@@ -49,14 +50,14 @@ trait StateExamples extends MonadsDsl { self =>
   }
 
   def zipCollectionWithIndex3[A:Elem](as: Coll[A])(implicit C: CollectionManager): Coll[(Int,A)] =
-    as.foldLeft[State0[Int,Collection[(Int, A)]]](F.unit(C.empty[(Int, A)]), fun { p =>
+    State.eval(as.foldLeft[State[Collection[(Int, A)]]](State.unit(C.empty[(Int, A)]), fun { p =>
       val Pair(acc, a) = p
       for {
         xs <- acc
-        n  <- State0.get[Int]
-        _  <- State0.set(n + 1)
+        n  <- State.get
+        _  <- State.set(n + 1)
       } yield xs.append(Pair(n, a))
-    }).run(0)._1
+    }), 0)
 
   lazy val zipCollectionWithIndexW3 = fun { xs: Arr[Double] =>
     implicit val C = Collection.manager

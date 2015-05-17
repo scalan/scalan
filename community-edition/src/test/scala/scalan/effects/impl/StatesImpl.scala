@@ -197,6 +197,18 @@ trait StatesExp extends StatesDsl with ScalanExp {
   }
 
   object State0CompanionMethods {
+    object unit {
+      def unapply(d: Def[_]): Option[Rep[A] forSome {type S; type A}] = d match {
+        case MethodCall(receiver, method, Seq(a, _*), _) if receiver.elem == State0CompanionElem && method.getName == "unit" =>
+          Some(a).asInstanceOf[Option[Rep[A] forSome {type S; type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[A] forSome {type S; type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     // WARNING: Cannot generate matcher for method `apply`: Method has function arguments r
 
     object get {
@@ -218,6 +230,18 @@ trait StatesExp extends StatesDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Rep[S] forSome {type S}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object eval {
+      def unapply(d: Def[_]): Option[(Rep[State0[S,A]], Rep[S]) forSome {type S; type A}] = d match {
+        case MethodCall(receiver, method, Seq(t, s, _*), _) if receiver.elem == State0CompanionElem && method.getName == "eval" =>
+          Some((t, s)).asInstanceOf[Option[(Rep[State0[S,A]], Rep[S]) forSome {type S; type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[State0[S,A]], Rep[S]) forSome {type S; type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

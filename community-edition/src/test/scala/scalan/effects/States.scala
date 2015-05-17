@@ -11,12 +11,12 @@ trait States extends Base { self: MonadsDsl =>
     implicit def eA: Elem[A]
     def run: Rep[S => (A, S)]
   }
-  trait State0Companion extends StateManager {
-    type State[S,A] = State0[S,A]
-    def apply[S:Elem,A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[State[S,A]] = StateBase(fun(r))
-    def get[S:Elem]: Rep[State[S,S]] = apply { s => (s,s) }
-    def set[S:Elem](s: Rep[S]): Rep[State[S,Unit]] = apply { _ => Pair((),s) }
-    def run[S: Elem, A: Elem](s: Rep[S], t: Rep[State[S, A]]) = t.run(s)._1
+  trait State0Companion {
+    def unit[S: Elem, A: Elem](a: Rep[A]) = StateBase(fun {s: Rep[S] => (a,s)})
+    def apply[S:Elem,A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[State0[S,A]] = StateBase(fun(r))
+    def get[S:Elem]: Rep[State0[S,S]] = apply { s => (s,s) }
+    def set[S:Elem](s: Rep[S]): Rep[State0[S,Unit]] = apply { _ => Pair((),s) }
+    def eval[S: Elem, A: Elem](t: Rep[State0[S, A]], s: Rep[S]) = t.run(s)._1
   }
 
   abstract class StateBase[S, A]
@@ -24,25 +24,21 @@ trait States extends Base { self: MonadsDsl =>
       (implicit val eS: Elem[S], val eA: Elem[A]) extends State0[S, A] {
   }
   trait StateBaseCompanion extends State0Companion
-
-//  abstract class LoggingState[L, S, A]
-//      (val logginRun: Rep[(L,S) => (A,(L,S))])
-//      (implicit val eL: Elem[L], val eS: Elem[S], val eA: Elem[A]) extends State[S, A] {
-//    def run = fun { s: Rep[S] => }
-//  }
-//  trait LoggingStateCompanion extends StateCompanion
-
 }
 
 
 trait StatesDsl extends impl.StatesAbs { self: MonadsDsl =>
 
-  trait StateManager {
-    type State[S,A]
-    def apply[S:Elem,A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[State[S,A]]
-    def get[S:Elem]: Rep[State[S,S]]
-    def set[S:Elem](s: Rep[S]): Rep[State[S,Unit]]
-    def run[S:Elem,A:Elem](s: Rep[S], t: Rep[State[S,A]]): Rep[A]
+  trait StateManager[S] {
+    type State[A]
+    def eS: Elem[S]
+    def unit[A:Elem](a: Rep[A]): Rep[State[A]]
+    def apply[A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[State[A]]
+    def get: Rep[State[S]]
+    def set(s: Rep[S]): Rep[State[Unit]]
+    def eval[A:Elem](t: Rep[State[A]], s: Rep[S]): Rep[A]
+    implicit val monad: Monad[State]
+    implicit def stateElem[A:Elem]: Elem[State[A]]
   }
 
   implicit def state0Cont[S:Elem]: Cont[({type f[x] = State0[S,x]})#f] = new Container[({type f[x] = State0[S,x]})#f] {
@@ -52,15 +48,25 @@ trait StatesDsl extends impl.StatesAbs { self: MonadsDsl =>
 
   implicit def state0Monad[S:Elem]: Monad[({type f[x] = State0[S,x]})#f] = new Monad[({type f[x] = State0[S,x]})#f] {
     def cF = state0Cont
-    def unit[A:Elem](a: Rep[A]): Rep[State0[S, A]] = {
-      StateBase(fun {s: Rep[S] => (a,s)})
-    }
+    def unit[A:Elem](a: Rep[A]): Rep[State0[S, A]] = State0.unit(a)
     override def flatMap[A:Elem,B:Elem](st: Rep[State0[S, A]])(f: Rep[A] => Rep[State0[S, B]]): Rep[State0[S, B]] =
       StateBase(fun { (s: Rep[S]) =>
         val Pair(a, s1) = st.run(s)
         val st2 = f(a)
         st2.run(s1)
       })
+  }
+
+  class State0Manager[S:Elem] extends StateManager[S] {
+    type State[A] = State0[S,A]
+    def eS: Elem[S] = element[S]
+    def unit[A:Elem](a: Rep[A]): Rep[State[A]] = State0.unit(a)
+    def apply[A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[State[A]] = State0.apply(r)
+    def get: Rep[State[S]] = State0.get[S]
+    def set(s: Rep[S]): Rep[State[Unit]] = State0.set(s)
+    def eval[A:Elem](t: Rep[State[A]], s: Rep[S]): Rep[A] = State0.eval(t, s)
+    implicit val monad: Monad[State] = state0Monad[S]
+    implicit def stateElem[A:Elem]: Elem[State[A]] = state0Element
   }
 }
 
