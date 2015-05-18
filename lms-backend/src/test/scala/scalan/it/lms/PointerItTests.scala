@@ -21,14 +21,13 @@ class PointerItTests extends BaseItTests {
 
     val lms = new CoreCxxShptrLmsBackend
 
-
     lazy val intPtr = fun { i: Rep[Int] =>
       val iPtr = scalarPtr(i)
       iPtr
     }
 
     lazy val valuePtr = fun { i: Rep[Int] =>  // input not used
-      val yPtr = scalarPtr(2)   // note: in cpp we cannot take address of const: &2, here we use scalar type
+      val yPtr = scalarPtr(2)   // note: in cpp we cannot take address of const: &2, here we use scalar pointer
       yPtr
     }
 
