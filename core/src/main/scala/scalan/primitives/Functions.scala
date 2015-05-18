@@ -119,6 +119,11 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         None
   }
 
+  // matcher version of Lambda.isIdentity
+  object IdentityLambda {
+    def unapply[A,B](lam: Lambda[A, B]): Boolean = lam.isIdentity
+  }
+
   case class ParallelExecute[B:Elem](nJobs: Exp[Int], f: Exp[Int => B])  extends Def[Array[B]] {
     def selfType = element[Array[B]]
     def uniqueOpId = name(selfType)
@@ -331,9 +336,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = {
     f match {
-      case Def(l: Lambda[_, _]) if l.isIdentity => g.asRep[A => C]
+      case Def(IdentityLambda()) => g.asRep[A => C]
       case _ => g match {
-        case Def(l: Lambda[_, _]) if l.isIdentity => f.asRep[A => C]
+        case Def(IdentityLambda()) => f.asRep[A => C]
         case _ =>
           implicit val eA = g.elem.eDom
           fun { x => f(g(x)) }
@@ -341,4 +346,3 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 }
-

@@ -124,7 +124,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
   object IsJoinSum {
     def unapply[T](d: Def[T]): Option[Rep[Source] forSome { type Source }] = d match {
-      case SumFold(source, Def(Lambda(l,_,_,_)), Def(Lambda(r,_,_,_))) if l.isIdentity && r.isIdentity => Some(source)
+      case SumFold(source, Def(IdentityLambda()), Def(IdentityLambda())) => Some(source)
       case _ => None
     }
   }

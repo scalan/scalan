@@ -568,7 +568,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
   }).asInstanceOf[Option[Unpacked[T]]]
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case SSeqMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+    case SSeqMethods.map(xs, Def(IdentityLambda())) => xs
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSSeqImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
