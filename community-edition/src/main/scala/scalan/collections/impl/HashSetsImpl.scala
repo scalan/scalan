@@ -351,7 +351,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   }).asInstanceOf[Option[Unpacked[T]]]
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case SHashSetMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+    case SHashSetMethods.map(xs, Def(IdentityLambda())) => xs
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSHashSetImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>

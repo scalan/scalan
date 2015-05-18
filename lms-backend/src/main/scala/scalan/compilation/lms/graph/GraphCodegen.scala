@@ -250,7 +250,6 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
   override def emitSource[A : Manifest](args: List[Sym[_]], body: Block[A], className: String, aStream: PrintWriter): List[(IR.type#Sym[Any], Any)] = {
     stream = aStream
     graphStream.clean()
-    println (s"emit $className" )
     graphStream.blockBegin(FuncBlock(args, className, Nil)) //todo last arg should be result-type
     emitBlock(body)
     graphStream.blockEnd()

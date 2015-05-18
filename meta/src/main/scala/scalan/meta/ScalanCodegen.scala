@@ -875,7 +875,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val syn = e.entityRepSynonim
       if (e.isContainer1) {
         s"""
-          |    case ${e.name}Methods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+          |    case ${e.name}Methods.map(xs, Def(IdentityLambda())) => xs
           |
           |    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
           |    case mc @ MethodCall(Def(wrapper: Exp${e.name}Impl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>

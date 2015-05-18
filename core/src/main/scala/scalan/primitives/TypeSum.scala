@@ -124,7 +124,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
   object IsJoinSum {
     def unapply[T](d: Def[T]): Option[Rep[Source] forSome { type Source }] = d match {
-      case SumFold(source, Def(Lambda(l,_,_,_)), Def(Lambda(r,_,_,_))) if l.isIdentity && r.isIdentity => Some(source)
+      case SumFold(source, Def(IdentityLambda()), Def(IdentityLambda())) => Some(source)
       case _ => None
     }
   }
@@ -158,7 +158,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
   })
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case SumFold(sum, Def(Lambda(_, _, _, l)), Def(Lambda(_, _, _, r))) if l == r =>
+    case SumFold(sum, Def(ConstantLambda(l)), Def(ConstantLambda(r))) if l == r =>
       l
 
     // Rule: fold(s, l, r)._1 ==> fold(s, x => l(x)._1, y => r(y)._1)
