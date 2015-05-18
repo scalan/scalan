@@ -103,11 +103,20 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   type LambdaData[A,B] = (Lambda[A,B], Option[Exp[A] => Exp[B]], Exp[A], Exp[B])
   object Lambda {
     def unapply[A,B](d: Def[A => B]): Option[LambdaData[A,B]] = d match {
-      case l: Lambda[_,_] =>
-        val lam = l.asInstanceOf[Lambda[A,B]]
+      case lam: Lambda[A, B] @unchecked =>
         Some((lam, lam.f, lam.x, lam.y))
       case _ => None
     }
+  }
+
+  object ConstantLambda {
+    // if lam.y depends on lam.x indirectly, lam.schedule must contain the dependency path
+    // and its length will be > 1
+    def unapply[A,B](lam: Lambda[A, B]): Option[Exp[B]] =
+      if (lam.schedule.length <= 1 && !dep(lam.y).contains(lam.x))
+        Some(lam.y)
+      else
+        None
   }
 
   case class ParallelExecute[B:Elem](nJobs: Exp[Int], f: Exp[Int => B])  extends Def[Array[B]] {
