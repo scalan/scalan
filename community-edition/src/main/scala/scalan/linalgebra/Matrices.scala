@@ -247,7 +247,7 @@ trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommuni
   type MatrixCompanion = Rep[AbstractMatrixCompanion]
 
   implicit class MatrixExtensions[T](matrix: Matrix[T]) {
-    implicit def eItem: Elem[T] = matrix.eItem
+    implicit def eItem: Elem[T] = matrix.selfType1.asInstanceOf[AbstractMatrixElem[T, _]].eItem
 
     def map[R: Elem](f: Vector[T] => Vector[R]): Matrix[R] = matrix.mapBy(fun(f))
 

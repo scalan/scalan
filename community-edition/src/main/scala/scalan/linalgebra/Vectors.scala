@@ -103,7 +103,7 @@ trait Vectors { self: ScalanCommunityDsl =>
           DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 - v2 })
       }
     }
-    @OverloadId("elementwise_diff_collection")
+    @OverloadId("elementwise_diff_value")
     def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       DenseVector(items.map(v => v - other))
     }
@@ -190,7 +190,7 @@ trait Vectors { self: ScalanCommunityDsl =>
           (other -^ self) *^ n.negate(n.one)
       }
     }
-    @OverloadId("elementwise_diff_collection")
+    @OverloadId("elementwise_diff_value")
     def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       DenseVector(items.map(v => v - other))
     }
@@ -279,7 +279,7 @@ trait Vectors { self: ScalanCommunityDsl =>
           (other -^ self) *^ n.negate(n.one)
       }
     }
-    @OverloadId("elementwise_diff_collection")
+    @OverloadId("elementwise_diff_value")
     def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       DenseVector(items.map(v => v - other))
     }
@@ -384,7 +384,7 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep
 
   implicit class VectorExtensions[T](vector: Vector[T]) {
-    implicit def eItem: Elem[T] = vector.eItem
+    implicit def eItem: Elem[T] = vector.selfType1.asInstanceOf[AbstractVectorElem[T, _]].eItem
 
     def map[R: Elem](f: Rep[T] => Rep[R]): Vector[R] = vector.mapBy(fun(f))
 
