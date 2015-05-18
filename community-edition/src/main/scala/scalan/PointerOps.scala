@@ -48,14 +48,13 @@ trait PointerOpsExp extends PointerOps { self: ScalanExp =>
     override def uniqueOpId = "Scalar"
     override def mirror(t: Transformer) = CreateScalar[A](t(source))
   }
-  def createScalar[A: Elem](source: Exp[A]): Exp[Scalar[A]] = CreateScalar[A](source)
 
   case class ScalarPtr[A: Elem](xScalar: Exp[Scalar[A]]) extends Def[Pointer[A]] {
     override def selfType = element[Pointer[A]]
     override def uniqueOpId = "ScalarPtr"
     override def mirror(t: Transformer) = ScalarPtr[A](t(xScalar))
   }
-  def scalarPtr[A: Elem](xScalar: Exp[Scalar[A]]): Exp[Pointer[A]] = ScalarPtr(xScalar)
+  def scalarPtr[A: Elem](source: Exp[A]): Exp[Pointer[A]] = ScalarPtr(CreateScalar(source))
 
   case class ArrayPtr[A: Elem](xs: Exp[Array[A]]) extends Def[Pointer[A]] {
     override def selfType = element[Pointer[A]]

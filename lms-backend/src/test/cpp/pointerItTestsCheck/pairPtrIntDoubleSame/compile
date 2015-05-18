@@ -1,6 +1,6 @@
 #!/bin/bash
 
-testName=pairScalarIntDoubleSame
+testName=pairPtrIntDoubleSame
 
 scalanCore=../../../../../..
 src=$scalanCore/lms-backend/it-out/scalan/it/lms/Pointer/$testName

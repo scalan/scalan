@@ -38,8 +38,6 @@ trait CxxShptrGenPointer extends CxxShptrCodegen {
   val IR: PointerLmsOpsExp
   import IR._
 
-  def !!!(s: String) = throw new GenerationFailedException(s)
-
   override def remap[A](m: Manifest[A]): String = {
     def standartRemap[A](m: Manifest[A]) = remap(m.typeArguments(0))
     m.runtimeClass match {
@@ -64,10 +62,10 @@ trait CxxShptrGenPointer extends CxxShptrCodegen {
       emitValDef(sym, "nullptr")
 
     case ScalarPtr(xScalar) =>
-      emitValDef(sym, s"&${quote(xScalar)}")
+      emitValDef(sym, s"std::addressof(${quote(xScalar)})")
 
     case ArrayPtr(xs) =>
-      emitValDef(sym, s"&(*${quote(xs)})[0]")
+      emitValDef(sym, s"std::addressof((*${quote(xs)})[0])")
 
     case _ =>
       super.emitNode(sym, rhs)

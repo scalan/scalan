@@ -21,22 +21,21 @@ class PointerItTests extends BaseItTests {
 
     val lms = new CoreCxxShptrLmsBackend
 
-    lazy val pairScalarIntDoubleSame = fun { i: Rep[Int] => // not used
-      val iDef = createScalar[Int](0)
-      val dDef = createScalar[Double](0.0)
-      (iDef, dDef)
-    }
 
     lazy val intPtr = fun { i: Rep[Int] =>
-      val iScalar = createScalar(i)
-      val iPtr = scalarPtr(iScalar)
+      val iPtr = scalarPtr(i)
       iPtr
     }
 
     lazy val valuePtr = fun { i: Rep[Int] =>  // input not used
-      val yScalar = createScalar(2)    // note: in cpp we cannot take address of const: &2, here we use scalar type
-      val yPtr = scalarPtr(yScalar)
+      val yPtr = scalarPtr(2)   // note: in cpp we cannot take address of const: &2, here we use scalar type
       yPtr
+    }
+
+    lazy val pairPtrIntDoubleSame = fun { i: Rep[Int] => // not used
+      val int0Ptr = scalarPtr[Int](0)
+      val double0Ptr = scalarPtr[Double](0.0)
+      (int0Ptr, double0Ptr)
     }
 
     lazy val intIfPtr = fun { i: Rep[Int] =>
@@ -66,15 +65,17 @@ class PointerItTests extends BaseItTests {
    * .../scalan-lite-public/lms-backend/src/test/cpp/pointerItTestsCheck$ . check
    */
 
-  test("pairScalarIntDoubleSame") {
-    commonTestScenario[Int, (progExp.Scalar[Int], progExp.Scalar[Double])]("pairScalarIntDoubleSame", progExp.pairScalarIntDoubleSame)
+  type Pointer[T] = progExp.Pointer[T]
+
+  test("intPtr") { commonTestScenario[Int, Pointer[Int]]("intPtr", progExp.intPtr) }
+
+  test("valuePtr") { commonTestScenario[Int, Pointer[Int]]("valuePtr", progExp.valuePtr) }
+
+  test("pairPtrIntDoubleSame") {
+    commonTestScenario[Int, (Pointer[Int], Pointer[Double])]("pairPtrIntDoubleSame", progExp.pairPtrIntDoubleSame)
   }
 
-  test("intPtr") { commonTestScenario[Int, progExp.Pointer[Int]]("intPtr", progExp.intPtr) }
+  test("intIfPtr") { commonTestScenario[Int, Pointer[Int]]("intIfPtr", progExp.intIfPtr) }
 
-  test("valuePtr") { commonTestScenario[Int, progExp.Pointer[Int]]("valuePtr", progExp.valuePtr) }
-
-  test("intIfPtr") { commonTestScenario[Int, progExp.Pointer[Int]]("intIfPtr", progExp.intIfPtr) }
-
-  test("xsArrayPtr") { commonTestScenario[Array[Int], progExp.Pointer[Int]]("xsArrayPtr", progExp.xsArrayPtr) }
+  test("xsArrayPtr") { commonTestScenario[Array[Int], Pointer[Int]]("xsArrayPtr", progExp.xsArrayPtr) }
 }
