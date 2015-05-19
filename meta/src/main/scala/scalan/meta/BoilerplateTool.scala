@@ -181,6 +181,7 @@ class BoilerplateTool extends StrictLogging {
       "scalan/effects/Readers.scala",
       "scalan/effects/States.scala",
       "scalan/effects/FreeStates.scala",
+      "scalan/effects/FreeMs.scala",
       "scalan/effects/Processes.scala",
       "scalan/effects/Frees.scala",
       "scalan/effects/Coproducts.scala",

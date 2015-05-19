@@ -3,7 +3,7 @@ package scalan.monads
 import scalan.collections.ListOps
 import scalan._
 import scala.reflect.runtime.universe._
-import scalan.effects.{FreeStatesDslSeq, FreeStatesDslExp, FreeStatesDsl}
+import scalan.effects._
 
 /**
  * Created by slesarenko on 05/01/15.
@@ -195,6 +195,7 @@ trait MonadsDsl extends ScalanDsl with Monads
   with ReadersDsl
   with StatesDsl
   with FreeStatesDsl
+  with FreeMsDsl
 {
   def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun {i => console_eval(i,v)}
 }
@@ -207,6 +208,7 @@ trait MonadsDslSeq extends MonadsDsl
   with ReadersDslSeq
   with StatesDslSeq
   with FreeStatesDslSeq
+  with FreeMsDslSeq
 {
 }
 
@@ -218,5 +220,6 @@ trait MonadsDslExp extends MonadsDsl
   with ReadersDslExp
   with StatesDslExp
   with FreeStatesDslExp
+  with FreeMsDslExp
 {
 }

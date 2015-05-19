@@ -79,7 +79,7 @@ trait ProcessesAbs extends Processes with Scalan {
       val Pair(req, recv) = p
       Await(req, recv)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Await[F, A, O]]](Await(cF.lift(eA).defaultRepValue, fun { (x: Rep[$bar[Throwable,A]]) => element[Process[F,O]].defaultRepValue }))
+    lazy val defaultRepTo = Default.defaultVal[Rep[Await[F, A, O]]](Await(cF.lift(element[A]).defaultRepValue, fun { (x: Rep[$bar[Throwable,A]]) => element[Process[F,O]].defaultRepValue }))
     lazy val eTo = new AwaitElem[F, A, O](this)
   }
   // 4) constructor and deconstructor
