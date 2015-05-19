@@ -6,28 +6,31 @@
 namespace scalan
 {
 
-class EnumeratorUnit: public Enumerator<boost::blank>
+class EnumeratorUnit
 {
     public:
     typedef boost::blank value_type;
 
-    virtual const value_type& current() const
+    const value_type& current() const
     {
         return unit_value;
     }
 
-    virtual bool moveNext()
+    bool moveNext()
     {
         return true;
     }
 };
 
-const std::shared_ptr<Enumerator<boost::blank>> unitEnumerator = std::make_shared<EnumeratorUnit>();
+const std::shared_ptr<EnumeratorUnit> unitEnumerator = std::make_shared<EnumeratorUnit>();
 
-class EnumerableUnit: public Enumerable<boost::blank>
+class EnumerableUnit
 {
     public:
-    virtual std::shared_ptr<Enumerator<boost::blank>> enumerator() const
+    typedef EnumeratorUnit enumerator_t;
+    typedef typename enumerator_t::value_type value_type;
+        
+    std::shared_ptr<EnumeratorUnit> enumerator() const
     {
         return unitEnumerator;
     }
