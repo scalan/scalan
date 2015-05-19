@@ -33,7 +33,7 @@ trait StatesDsl extends impl.StatesAbs { self: MonadsDsl =>
     type State[A]
     def eS: Elem[S]
     def unit[A:Elem](a: Rep[A]): Rep[State[A]]
-    def apply[A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[State[A]]
+//    def apply[A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[State[A]]
     def get: Rep[State[S]]
     def set(s: Rep[S]): Rep[State[Unit]]
     def eval[A:Elem](t: Rep[State[A]], s: Rep[S]): Rep[A]

@@ -20,14 +20,6 @@ trait FreeMs extends Base { self: MonadsDsl =>
     def map[B:Elem](f: Rep[A] => Rep[B]): Rep[FreeM[F,B]] = mapBy(fun(f))
 
     def resume(implicit F: Functor[F]): Rep[F[FreeM[F,A]] | A]
-//    =
-//      self.selfType1.asInstanceOf[FreeMElem[F,_,_]] match {
-//          case r: ReturnElem[F,A] => self.asRep[Return[F,A]].a.asRight[F[A]]
-//          case s: SuspendElem[F,A] => self.asRep[Suspend[F,A]].a.asLeft[A]
-//          case b: BindElem[F,s,A] =>
-//            val b = seld.asRep[Bind[F,s,A]]
-//
-//      }
   }
   trait FreeMCompanion
 

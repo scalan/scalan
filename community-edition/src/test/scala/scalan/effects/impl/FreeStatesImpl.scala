@@ -314,8 +314,6 @@ trait FreeStatesExp extends FreeStatesDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `apply`: Method has function arguments r
-
     object get {
       def unapply(d: Def[_]): Option[Unit forSome {type S}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem == StateFCompanionElem && method.getName == "get" =>

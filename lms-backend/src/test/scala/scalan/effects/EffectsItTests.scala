@@ -102,4 +102,12 @@ class EffectsItTests extends BaseItTests
     val res = getStagedOutputConfig(progStaged)(progStaged.zipCollectionWithIndexW3, "zipCollectionWithIndex3", in, progStaged.defaultCompilerConfig)
   }
 
+  test("zipCollectionWithIndex3_Free")  {
+    val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
+      val State = new FreeStateManager[Int]
+    }
+    pending
+    val in = Array(10.0, 20.0, 30.0)
+    val res = getStagedOutputConfig(progStaged)(progStaged.zipCollectionWithIndexW3, "zipCollectionWithIndex3_Free", in, progStaged.defaultCompilerConfig)
+  }
 }

@@ -13,21 +13,29 @@ trait FreeStates extends Base { self: MonadsDsl =>
   }
 
   trait StateFCompanion {
-    def unit[S: Elem, A: Elem](a: Rep[A]): Rep[FreeState[S,A]] = Return[({type f[x] = StateF[S,x]})#f, A](a)
-    def apply[S:Elem,A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[FreeState[S,A]] = ???
-    def get[S:Elem]: Rep[FreeState[S,S]] =
-      Suspend[({type f[x] = StateF[S,x]})#f, S](StateGet(fun { s: Rep[S] => s }))
-    def set[S:Elem](s: Rep[S]): Rep[FreeState[S,Unit]] = Suspend[({type f[x] = StateF[S,x]})#f, Unit](StatePut(s, ()))
-    def eval[S: Elem, A: Elem](t: Rep[FreeState[S, A]], s: Rep[S]): Rep[A] = ???
-//    {
-//      val r: FreeState[S,A] = proxyFree[({type f[x] = StateF[S,x]})#f, A](t)
-//      r.resume(statefFunctor).fold(
-//        l => l match {
-//          case Def(g: StateGet[_, _]) => ???
-//          case Def(p: StatePut[_, _]) => ???
-//        },
-//        r => r)
-//    }
+    def unit[S: Elem, A: Elem](a: Rep[A]): Rep[FreeState[S,A]] = Done[({type f[x] = StateF[S,x]})#f, A](a)
+//    def apply[S:Elem,A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[FreeState[S,A]] = ???
+
+    def get[S:Elem]: Rep[FreeState[S,S]] = {
+      type F[x] = StateF[S, x]
+      More[F, S](StateGet[S, FreeM[F,S]](fun { s: Rep[S] => Done[F, S](s) }))
+    }
+
+    def set[S:Elem](s: Rep[S]): Rep[FreeState[S,Unit]] = {
+      type F[x] = StateF[S, x]
+      More[F, Unit](StatePut(s, Done[F,Unit](())))
+    }
+
+    def eval[S: Elem, A: Elem](t: Rep[FreeState[S, A]], s: Rep[S]): Rep[A] = {
+      type F[x] = StateF[S, x]
+      val r: FreeState[S,A] = proxyFreeM[F, A](t)
+      r.resume(statefFunctor).fold(
+        l => l match {
+          case Def(g: StateGet[S, FreeM[F,A]] @unchecked) => eval(g.f(s), s)
+          case Def(p: StatePut[S, FreeM[F,A]] @unchecked) => eval(p.a, p.s)
+        },
+        r => r)
+    }
   }
 
   abstract class StateGet[S, A]
@@ -47,7 +55,7 @@ trait FreeStates extends Base { self: MonadsDsl =>
 
 trait FreeStatesDsl extends impl.FreeStatesAbs { self: MonadsDsl =>
 
-  type FreeState[S,A] = Free[({type f[x] = StateF[S,x]})#f, A]
+  type FreeState[S,A] = FreeM[({type f[x] = StateF[S,x]})#f, A]
 
   implicit def statefFunctor[S:Elem] = new Functor[({type λ[α] = StateF[S,α]})#λ] {
     def map[A:Elem,B:Elem](m: Rep[StateF[S, A]])(f: Rep[A] => Rep[B]) = m match {
@@ -61,6 +69,18 @@ trait FreeStatesDsl extends impl.FreeStatesAbs { self: MonadsDsl =>
     def lift[T](implicit eT: Elem[T]) = element[StateF[S,T]]
   }
 
+  class FreeStateManager[S:Elem] extends StateManager[S] {
+    type F[A] = StateF[S,A]
+    type State[A] = FreeState[S,A]
+    def eS: Elem[S] = element[S]
+    def unit[A:Elem](a: Rep[A]): Rep[State[A]] = StateF.unit(a)
+//    def apply[A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[State[A]] = State0.apply(r)
+    def get: Rep[State[S]] = StateF.get[S]
+    def set(s: Rep[S]): Rep[State[Unit]] = StateF.set(s)
+    def eval[A:Elem](t: Rep[State[A]], s: Rep[S]): Rep[A] = StateF.eval(t, s)
+    implicit val monad: Monad[State] = freeMMonad[F]//(freeMCont[F](stateFCont))
+    implicit def stateElem[A:Elem]: Elem[State[A]] = freeMElement[F,A]
+  }
 }
 
 trait FreeStatesDslSeq extends impl.FreeStatesSeq { self: MonadsDslSeq =>
