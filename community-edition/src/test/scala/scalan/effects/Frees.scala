@@ -21,6 +21,15 @@ trait Frees extends Base { self: MonadsDsl =>
     def foldMap[G[_]:Monad](f: F ~> G): Rep[G[A]]
     def run[G[_]:Monad](f: F ~> G): Rep[G[A]] = step.foldMap(f)
     def step: Rep[Free[F,A]] = self   // for Return and Suspend
+//    def resume(implicit F: Functor[F]): Rep[F[A] | A]
+//    =
+//      self.selfType1.asInstanceOf[FreeElem[F,_,_]] match {
+//          case r: ReturnElem[F,A] => self.asRep[Return[F,A]].a.asRight[F[A]]
+//          case s: SuspendElem[F,A] => self.asRep[Suspend[F,A]].a.asLeft[A]
+//          case b: BindElem[F,s,A] =>
+//            val b = seld.asRep[Bind[F,s,A]]
+//
+//      }
   }
   trait FreeCompanion
 
@@ -32,6 +41,7 @@ trait Frees extends Base { self: MonadsDsl =>
     override def flatMapBy[B:Elem](f: Rep[A => Free[F,B]]): Rep[Free[F,B]] = f(a)
 
     def foldMap[G[_]:Monad](f: F ~> G): Rep[G[A]] = Monad[G].unit(a)
+//    def resume(implicit F: Functor[F]): Rep[F[A] | A] = a.asRight[F[A]]
   }
   trait ReturnCompanion
 
@@ -40,6 +50,7 @@ trait Frees extends Base { self: MonadsDsl =>
         (implicit val eA: Elem[A], val cF: Cont[F]) extends Free[F, A] {
 
     def foldMap[G[_]:Monad](trans: F ~> G): Rep[G[A]] = trans(a)
+//    def resume(implicit F: Functor[F]): Rep[F[A] | A] = a.asLeft[A]
   }
   trait SuspendCompanion
 
@@ -68,6 +79,12 @@ trait Frees extends Base { self: MonadsDsl =>
       case Def(ret: Return[F,S]) => f(ret.a).step
       case _ => self
     }
+//    def resume(implicit F: Functor[F]): Rep[F[B] | B] = a match {
+//      case r: ReturnElem[F,S] => f(a.asRep[Return[F,S]].a).resume
+//      case s: SuspendElem[F,S] => F.map(a.asRep[Suspend[F,S]].a)().asLeft[B]
+//      case b: BindElem[F,s,A] =>
+//        val b = seld.asRep[Bind[F,s,A]]
+//    }
   }
   trait BindCompanion
 
