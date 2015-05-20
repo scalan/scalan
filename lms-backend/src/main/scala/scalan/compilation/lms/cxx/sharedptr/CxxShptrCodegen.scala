@@ -4,7 +4,7 @@ import java.io.PrintWriter
 
 import scala.virtualization.lms.internal.{CLikeCodegen, Expressions, GenerationFailedException}
 import scalan.compilation.lms.ManifestUtil
-import scalan.compilation.lms.common.JNILmsOps
+import scalan.compilation.lms.common.{JNILmsOps, PointerLmsOps}
 
 
 trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
@@ -80,10 +80,18 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
 
   final def emitConstruct(sym: Sym[Any], args: String*): Unit = {
     val newTp = toShptrManifest(sym.tp)
-    if (newTp.runtimeClass == classOf[SharedPtr[_]])
-      stream.println(s"${remap(newTp)} ${quote(sym)} = std::make_shared<${remap(newTp.typeArguments(0))}>(${args.mkString(",")});")
-    else
-      stream.println(s"${remap(newTp)} ${quote(sym)} = ${remap(newTp)}(${args.mkString(",")});")
+    newTp.runtimeClass match {
+      case c if c == classOf[SharedPtr[_]] =>
+        stream.println(s"${remap(newTp)} ${quote(sym)} = std::make_shared<${remap(newTp.typeArguments(0))}>(${args.mkString(",")});")
+      case c if c == classOf[PointerLmsOps#Pointer[_]] =>
+        args.length match {
+          case 0 => stream.println(s"${remap(newTp)} ${quote(sym)} = nullptr;")
+          case 1 => stream.println(s"${remap(newTp)} ${quote(sym)} = ${args(0)};")
+          case _ => throw new GenerationFailedException(s"CxxShptrCodegen.emitConstruct(): cannot initialize pointer from several arguments")
+        }
+      case _ =>
+        stream.println(s"${remap(newTp)} ${quote(sym)} = ${remap(newTp)}(${args.mkString(",")});")
+    }
   }
 
   override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
