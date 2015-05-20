@@ -365,12 +365,36 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         }
       case _ if classSymbol.isClass =>
         val paramDescs = params.map {
-          case typaram@TypeRef(_, classSymbol, params) if typaram.takesTypeArgs =>
+          case typaram if typaram.takesTypeArgs =>
             // handle high-kind argument
-            // FIXME use better way of lookup other than by names (to avoid name collisions)
-            val optRes = elemMap.find { case (sym, d) => sym.name == classSymbol.name }
-            val res = optRes.getOrElse(!!!(s"Can't find descriptor for type argument $typaram of $tpe"))._2.right.get
-            res
+            typaram match {
+              case TypeRef(_, classSymbol, _) =>
+                // FIXME use better way of lookup other than by names (to avoid name collisions)
+                val optRes = elemMap.find { case (sym, d) => sym.name == classSymbol.name }
+                optRes match {
+                  case Some((_, desc)) => desc match {
+                    case scala.Right(cont) => cont
+                    case scala.Left(elem) =>
+                      !!!(s"Expected a container, got $elem for type argument $typaram of $tpe")
+                  }
+                  case _ =>
+                    !!!(s"Can't find descriptor for type argument $typaram of $tpe")
+                }
+              case PolyType(_, _) =>
+                // fake to make the compiler happy
+                type F[A] = A
+
+                new Container[F] {
+                  def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[F[T]] = ???
+                  def lift[T](implicit eT: Elem[T]): Elem[F[T]] = {
+                    val tpe1 = appliedType(typaram, List(eT.tag.tpe))
+                    // TODO incorrect baseType
+                    elemFromType(tpe1, elemMap, baseType).asInstanceOf[Elem[F[T]]]
+                  }
+
+                  override protected def getName = typaram.toString
+                }
+            }
           case typaram =>
             elemFromType(typaram, elemMap, baseType)
         }

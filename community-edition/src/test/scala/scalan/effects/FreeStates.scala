@@ -33,6 +33,7 @@ trait FreeStates extends Base { self: MonadsDsl =>
         l => l match {
           case Def(g: StateGet[S, FreeM[F,A]] @unchecked) => eval(g.f(s), s)
           case Def(p: StatePut[S, FreeM[F,A]] @unchecked) => eval(p.a, p.s)
+          case _ => patternMatchError(l)
         },
         r => r)
     }
@@ -61,6 +62,7 @@ trait FreeStatesDsl extends impl.FreeStatesAbs { self: MonadsDsl =>
     def map[A:Elem,B:Elem](m: Rep[StateF[S, A]])(f: Rep[A] => Rep[B]) = m match {
       case Def(g: StateGet[_,_]) => StateGet((s: Rep[S]) => f(g.f.asRep[S=>A](s)))
       case Def(p: StatePut[_,_]) => StatePut(p.s.asRep[S], f(p.a.asRep[A]))
+      case _ => patternMatchError(m)
     }
   }
 
