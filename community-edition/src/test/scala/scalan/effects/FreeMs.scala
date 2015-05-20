@@ -19,7 +19,7 @@ trait FreeMs extends Base { self: MonadsDsl =>
 
     def map[B:Elem](f: Rep[A] => Rep[B]): Rep[FreeM[F,B]] = mapBy(fun(f))
 
-    def resume(implicit F: Functor[F]): Rep[F[FreeM[F,A]] | A]
+    def resume(implicit fF: Functor[F]): Rep[F[FreeM[F,A]] | A]
   }
   trait FreeMCompanion
 
@@ -29,7 +29,7 @@ trait FreeMs extends Base { self: MonadsDsl =>
   {
     override def flatMap[B:Elem](f: Rep[A] => Rep[FreeM[F,B]]): Rep[FreeM[F,B]] = f(a)
     override def flatMapBy[B:Elem](f: Rep[A => FreeM[F,B]]): Rep[FreeM[F,B]] = f(a)
-    def resume(implicit F: Functor[F]): Rep[F[FreeM[F,A]] | A] = a.asRight[F[FreeM[F,A]]]
+    def resume(implicit fF: Functor[F]): Rep[F[FreeM[F,A]] | A] = a.asRight[F[FreeM[F,A]]]
   }
   trait DoneCompanion
 
@@ -37,7 +37,7 @@ trait FreeMs extends Base { self: MonadsDsl =>
         (val k: Rep[F[FreeM[F,A]]])
         (implicit val eA: Elem[A], val cF: Cont[F]) extends FreeM[F, A] {
 
-    def resume(implicit F: Functor[F]): Rep[F[FreeM[F,A]] | A] = k.asLeft[A]
+    def resume(implicit fF: Functor[F]): Rep[F[FreeM[F,A]] | A] = k.asLeft[A]
   }
   trait MoreCompanion
 
@@ -50,9 +50,9 @@ trait FreeMs extends Base { self: MonadsDsl =>
     override def flatMapBy[R:Elem](f1: Rep[B => FreeM[F,R]]): Rep[FreeM[F,R]] =
       a.flatMap((s: Rep[S]) => f(s).flatMapBy(f1))
 
-    def resume(implicit F: Functor[F]): Rep[F[FreeM[F,B]] | B] = a.selfType1.asInstanceOf[FreeMElem[F, _, _]] match {
+    def resume(implicit fF: Functor[F]): Rep[F[FreeM[F,B]] | B] = a.selfType1.asInstanceOf[FreeMElem[F, _, _]] match {
       case r: DoneElem[F,S] => f(a.asRep[Done[F,S]].a).resume
-      case s: MoreElem[F,S] => F.map(a.asRep[More[F,S]].k)(fs => fs.flatMapBy(f)).asLeft[B]
+      case s: MoreElem[F,S] => fF.map(a.asRep[More[F,S]].k)(fs => fs.flatMapBy(f)).asLeft[B]
       case fm: FlatMapElem[F,s,S] =>
         val fm = a.asRep[FlatMap[F,s,S]]
         fm.a.flatMap((x: Rep[s]) => fm.f(x) flatMapBy f).resume

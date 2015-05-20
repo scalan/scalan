@@ -14,7 +14,6 @@ trait FreeStates extends Base { self: MonadsDsl =>
 
   trait StateFCompanion {
     def unit[S: Elem, A: Elem](a: Rep[A]): Rep[FreeState[S,A]] = Done[({type f[x] = StateF[S,x]})#f, A](a)
-//    def apply[S:Elem,A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[FreeState[S,A]] = ???
 
     def get[S:Elem]: Rep[FreeState[S,S]] = {
       type F[x] = StateF[S, x]
@@ -62,7 +61,6 @@ trait FreeStates extends Base { self: MonadsDsl =>
 
 }
 
-
 trait FreeStatesDsl extends impl.FreeStatesAbs { self: MonadsDsl =>
 
   type FreeState[S,A] = FreeM[({type f[x] = StateF[S,x]})#f, A]
@@ -85,11 +83,10 @@ trait FreeStatesDsl extends impl.FreeStatesAbs { self: MonadsDsl =>
     type State[A] = FreeState[S,A]
     def eS: Elem[S] = element[S]
     def unit[A:Elem](a: Rep[A]): Rep[State[A]] = StateF.unit(a)
-//    def apply[A:Elem](r: Rep[S] => Rep[(A,S)]): Rep[State[A]] = State0.apply(r)
     def get: Rep[State[S]] = StateF.get[S]
     def set(s: Rep[S]): Rep[State[Unit]] = StateF.set(s)
     def eval[A:Elem](t: Rep[State[A]], s: Rep[S]): Rep[A] = StateF.eval(t, s)
-    implicit val monad: Monad[State] = freeMMonad[F]//(freeMCont[F](stateFCont))
+    implicit val monad: Monad[State] = freeMMonad[F]
     implicit def stateElem[A:Elem]: Elem[State[A]] = freeMElement[F,A]
   }
 }
@@ -132,6 +129,7 @@ trait FreeStatesDslExp extends impl.FreeStatesExp { self: MonadsDslExp =>
             StateF.run(step(Pair(state1, t)), s)
           })
       }
+    //case StateFCompanionMethods.run()
     case _ => super.rewriteDef(d)
   }
 }

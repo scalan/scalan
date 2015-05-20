@@ -349,6 +349,17 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
       }
     }
 
+    object resume {
+      def unapply(d: Def[_]): Option[(Rep[Done[F, A]], Functor[F]) forSome {type F[_]; type A}] = d match {
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: DoneElem[_, _] => true; case _ => false }) && method.getName == "resume" =>
+          Some((receiver, fF)).asInstanceOf[Option[(Rep[Done[F, A]], Functor[F]) forSome {type F[_]; type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Done[F, A]], Functor[F]) forSome {type F[_]; type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object DoneCompanionMethods {
@@ -378,6 +389,17 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
   }
 
   object MoreMethods {
+    object resume {
+      def unapply(d: Def[_]): Option[(Rep[More[F, A]], Functor[F]) forSome {type F[_]; type A}] = d match {
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: MoreElem[_, _] => true; case _ => false }) && method.getName == "resume" =>
+          Some((receiver, fF)).asInstanceOf[Option[(Rep[More[F, A]], Functor[F]) forSome {type F[_]; type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[More[F, A]], Functor[F]) forSome {type F[_]; type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object MoreCompanionMethods {
@@ -421,6 +443,17 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
       }
     }
 
+    object resume {
+      def unapply(d: Def[_]): Option[(Rep[FlatMap[F, S, B]], Functor[F]) forSome {type F[_]; type S; type B}] = d match {
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FlatMapElem[_, _, _] => true; case _ => false }) && method.getName == "resume" =>
+          Some((receiver, fF)).asInstanceOf[Option[(Rep[FlatMap[F, S, B]], Functor[F]) forSome {type F[_]; type S; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FlatMap[F, S, B]], Functor[F]) forSome {type F[_]; type S; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object FlatMapCompanionMethods {
@@ -465,6 +498,17 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
 
     // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
 
+    object resume {
+      def unapply(d: Def[_]): Option[(Rep[FreeM[F, A]], Functor[F]) forSome {type F[_]; type A}] = d match {
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeMElem[_, _, _] => true; case _ => false }) && method.getName == "resume" =>
+          Some((receiver, fF)).asInstanceOf[Option[(Rep[FreeM[F, A]], Functor[F]) forSome {type F[_]; type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FreeM[F, A]], Functor[F]) forSome {type F[_]; type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object FreeMCompanionMethods {
