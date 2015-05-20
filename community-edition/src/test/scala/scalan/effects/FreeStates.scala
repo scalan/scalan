@@ -26,17 +26,26 @@ trait FreeStates extends Base { self: MonadsDsl =>
       More[F, Unit](StatePut(s, Done[F,Unit](())))
     }
 
-    def eval[S: Elem, A: Elem](t: Rep[FreeState[S, A]], s: Rep[S]): Rep[A] = {
-      type F[x] = StateF[S, x]
-      val r: FreeState[S,A] = proxyFreeM[F, A](t)
-      r.resume(statefFunctor).fold(
+    def run[S: Elem, A: Elem](t: Rep[FreeState[S, A]], s: Rep[S]): Rep[(A, S)] = {
+      t.resume(statefFunctor).fold(
         l => l match {
-          case Def(g: StateGet[S, FreeM[F,A]] @unchecked) => eval(g.f(s), s)
-          case Def(p: StatePut[S, FreeM[F,A]] @unchecked) => eval(p.a, p.s)
+          case Def(g: StateGet[S, FreeState[S, A]] @unchecked) => run(g.f(s), s)
+          case Def(p: StatePut[S, FreeState[S, A]] @unchecked) => run(p.a, p.s)
           case _ => patternMatchError(l)
         },
-        r => r)
+        r => (r, s))
     }
+
+  }
+
+  implicit class StateFCompanionExtensions(c: Rep[StateFCompanion]) {
+    def eval[S: Elem, A: Elem](t: Rep[FreeState[S, A]], s: Rep[S]): Rep[A] =
+      c.run(t,s)._1
+  }
+
+  implicit def proxyFreeState[S, A](t: Rep[FreeState[S, A]]): FreeState[S, A] = {
+    type F[x] = StateF[S, x]
+    proxyFreeM[F, A](t)
   }
 
   abstract class StateGet[S, A]
@@ -89,4 +98,40 @@ trait FreeStatesDslSeq extends impl.FreeStatesSeq { self: MonadsDslSeq =>
 }
 
 trait FreeStatesDslExp extends impl.FreeStatesExp { self: MonadsDslExp =>
+  override def rewriteDef[T](d: Def[T]) = d match {
+    // Rule: xs.fold(init,f).run(s0) ==> xs.fold(init.run(s0), ((a,s),t) => f(State(_ => (a,s)),t).run(s))
+    case StateFCompanionMethods.run(Def(ArrayFold(xs, start: Rep[FreeState[s,a]] @unchecked, f)), s0) =>
+      xs.elem match {
+        case el: ArrayElem[t] =>
+          implicit val eT = el.eItem
+          val st = start.asRep[FreeState[s,a]]
+          val step = f.asRep[((FreeState[s,a],t)) => FreeState[s,a]]
+          val initState = s0.asRep[s]
+          implicit val eS = initState.elem
+          implicit val eA = st.elem.asInstanceOf[FreeMElem[({type f[x] = StateF[s,x]})#f, a, _]].eA
+          val init = StateF.run(st, initState)
+          xs.asRep[Array[t]].foldLeft(init){p: Rep[((a,s),t)] =>
+            val Pair(Pair(a,s), t) = p
+            val state1 = StateF.set(s).mapBy(constFun(a))
+            StateF.run(step(Pair(state1, t)), s)
+          }
+      }
+    case StateFCompanionMethods.run(Def(CollectionMethods.foldLeft(xs, start: Rep[FreeState[s,a]] @unchecked, f)), s0) =>
+      xs.elem match {
+        case el: CollectionElem[t,_] =>
+          implicit val eT = el.eItem
+          val st = start.asRep[FreeState[s,a]]
+          val step = f.asRep[((FreeState[s,a],t)) => FreeState[s,a]]
+          val initState = s0.asRep[s]
+          implicit val eS = initState.elem
+          implicit val eA = st.elem.asInstanceOf[FreeMElem[({type f[x] = StateF[s,x]})#f, a, _]].eA
+          val init = StateF.run(st, initState)
+          xs.asRep[Collection[t]].foldLeft(init, {p: Rep[((a,s),t)] =>
+            val Pair(Pair(a,s), t) = p
+            val state1 = StateF.set(s).mapBy(constFun(a))
+            StateF.run(step(Pair(state1, t)), s)
+          })
+      }
+    case _ => super.rewriteDef(d)
+  }
 }
