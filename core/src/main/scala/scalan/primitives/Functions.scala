@@ -113,7 +113,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     // if lam.y depends on lam.x indirectly, lam.schedule must contain the dependency path
     // and its length will be > 1
     def unapply[A,B](lam: Lambda[A, B]): Option[Exp[B]] =
-      if (lam.schedule.length <= 1 && !dep(lam.y).contains(lam.x))
+      if (lam.schedule.length <= 1 && !dep(lam.y).contains(lam.x) && lam.y != lam.x)
         Some(lam.y)
       else
         None
