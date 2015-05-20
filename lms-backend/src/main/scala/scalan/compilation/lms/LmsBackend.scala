@@ -368,6 +368,11 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
 
   def stringToDouble(str: Exp[String]) = str.toDouble
 
+  def booleanToInt(bool: Exp[Boolean]) = if (bool) 1 else 0
+
+  def Log(x: Exp[Double]) = math_log(x)
+
+  def Abs[T:Manifest: Numeric](x: Exp[T]) = math_abs(x)
 
   def arrayMapReduce[T: Manifest, K: Manifest, V: Manifest](in: Exp[Array[T]], map: Rep[T] => Rep[(K, V)], reduce: Rep[(V, V)] => Rep[V]): Exp[HashMap[K, V]] = {
     val result = HashMap[K, V]()
