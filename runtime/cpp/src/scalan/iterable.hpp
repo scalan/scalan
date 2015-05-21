@@ -37,6 +37,24 @@ R foldLeft(const EnumerableT& anIn, R z, std::function<R( std::pair<R,typename E
     return z;    
 }
 
+template<class EnumerableT>
+typename EnumerableT::value_type last(const EnumerableT& anIt )
+{
+    auto en = anIt.enumerator();
+    if( en->moveNext() )
+    {
+        typename EnumerableT::value_type res = en->current();
+        while(en->moveNext())
+        {
+            res = en->current();
+        }
+
+        return res;
+    }
+    else
+        throw std::out_of_range("empty iterator");
+}
+
 } //namespace scalan
 
 #endif // __SCALAN_ITERABLE_HPP__
