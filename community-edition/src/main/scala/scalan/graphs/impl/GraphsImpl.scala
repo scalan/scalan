@@ -71,18 +71,18 @@ trait GraphsAbs extends Graphs with Scalan {
   }
 
   // state representation type
-  type AdjacencyGraphData[V, E] = (Collection[V], (INestedCollection[E], INestedCollection[Int]))
+  type AdjacencyGraphData[V, E] = (Collection[V], (NestedCollection[E], NestedCollection[Int]))
 
   // 3) Iso for concrete class
   class AdjacencyGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]]()(pairElement(implicitly[Elem[Collection[V]]], pairElement(implicitly[Elem[INestedCollection[E]]], implicitly[Elem[INestedCollection[Int]]]))) {
+    extends Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]]()(pairElement(implicitly[Elem[Collection[V]]], pairElement(implicitly[Elem[NestedCollection[E]]], implicitly[Elem[NestedCollection[Int]]]))) {
     override def from(p: Rep[AdjacencyGraph[V, E]]) =
       (p.vertexValues, p.edgeValues, p.links)
-    override def to(p: Rep[(Collection[V], (INestedCollection[E], INestedCollection[Int]))]) = {
+    override def to(p: Rep[(Collection[V], (NestedCollection[E], NestedCollection[Int]))]) = {
       val Pair(vertexValues, Pair(edgeValues, links)) = p
       AdjacencyGraph(vertexValues, edgeValues, links)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[AdjacencyGraph[V, E]]](AdjacencyGraph(element[Collection[V]].defaultRepValue, element[INestedCollection[E]].defaultRepValue, element[INestedCollection[Int]].defaultRepValue))
+    lazy val defaultRepTo = Default.defaultVal[Rep[AdjacencyGraph[V, E]]](AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue))
     lazy val eTo = new AdjacencyGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -119,7 +119,7 @@ trait GraphsAbs extends Graphs with Scalan {
 
   // 6) smart constructor and deconstructor
   def mkAdjacencyGraph[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]]
-  def unmkAdjacencyGraph[V, E](p: Rep[Graph[V, E]]): Option[(Rep[Collection[V]], Rep[INestedCollection[E]], Rep[INestedCollection[Int]])]
+  def unmkAdjacencyGraph[V, E](p: Rep[Graph[V, E]]): Option[(Rep[Collection[V]], Rep[NestedCollection[E]], Rep[NestedCollection[Int]])]
 
   // elem for concrete class
   class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])

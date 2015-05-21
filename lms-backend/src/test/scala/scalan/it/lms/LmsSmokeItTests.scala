@@ -14,10 +14,10 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
   override val progSeq = new ProgCommunitySeq with SimpleMapProg
   override val progStaged = new ProgExp
 
-  test ("convertPairCollection")  {
+  test ("convertPairCollectionSOA")  {
     pending
     val in = Array(Array((1,2.0),(2,3.0)), Array((3,4.0), (5,6.0)))
-    compareOutputWithSequential(progStaged)(progSeq.convertPairCollection, progStaged.convertPairCollection, "convertPairCollection", in)
+    compareOutputWithSequential(progStaged)(progSeq.convertPairCollectionSOA, progStaged.convertPairCollectionSOA, "convertPairCollectionSOA", in)
   }
 
   test("mapPutContains") {

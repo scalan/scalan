@@ -23,7 +23,7 @@ class EffectsItTests extends BaseItTests {
   val progSeq = new EffectsSeq
   val progStaged = new EffectsExp
 
-  test("convertPairCollection")  {
+  test("convertPairCollectionSOA")  {
     pending
     val in = 10
     compareOutputWithSequential(progStaged)(progSeq.runInteract, progStaged.runInteract, "runInteract", in)

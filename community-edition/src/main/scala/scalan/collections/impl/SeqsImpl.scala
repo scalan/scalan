@@ -77,26 +77,6 @@ trait SeqsAbs extends Seqs with Scalan {
 
   abstract class SSeqCompanionAbs extends CompanionBase[SSeqCompanionAbs] with SSeqCompanion {
     override def toString = "SSeq"
-
-    def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
-      methodCallEx[SSeq[A]](self,
-        this.getClass.getMethod("apply", classOf[AnyRef], classOf[Elem[A]]),
-        List(arr.asInstanceOf[AnyRef], element[A]))
-
-    def empty[A:Elem]: Rep[SSeq[A]] =
-      methodCallEx[SSeq[A]](self,
-        this.getClass.getMethod("empty", classOf[Elem[A]]),
-        List(element[A]))
-
-    def single[A:Elem](elem: Rep[A]): Rep[SSeq[A]] =
-      methodCallEx[SSeq[A]](self,
-        this.getClass.getMethod("single", classOf[AnyRef], classOf[Elem[A]]),
-        List(elem.asInstanceOf[AnyRef], element[A]))
-
-    def fromList[A:Elem](list: Rep[List[A]]): Rep[SSeq[A]] =
-      methodCallEx[SSeq[A]](self,
-        this.getClass.getMethod("fromList", classOf[AnyRef], classOf[Elem[A]]),
-        List(list.asInstanceOf[AnyRef], element[A]))
   }
   def SSeq: Rep[SSeqCompanionAbs]
   implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion = {
@@ -306,6 +286,26 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeDef[SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
     override def mirror(t: Transformer) = this
+
+    def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
+        this.getClass.getMethod("apply", classOf[AnyRef], classOf[Elem[A]]),
+        List(arr.asInstanceOf[AnyRef], element[A]))
+
+    def empty[A:Elem]: Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
+        this.getClass.getMethod("empty", classOf[Elem[A]]),
+        List(element[A]))
+
+    def single[A:Elem](elem: Rep[A]): Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
+        this.getClass.getMethod("single", classOf[AnyRef], classOf[Elem[A]]),
+        List(elem.asInstanceOf[AnyRef], element[A]))
+
+    def fromList[A:Elem](list: Rep[List[A]]): Rep[SSeq[A]] =
+      methodCallEx[SSeq[A]](self,
+        this.getClass.getMethod("fromList", classOf[AnyRef], classOf[Elem[A]]),
+        List(list.asInstanceOf[AnyRef], element[A]))
   }
 
   case class ViewSSeq[A, B](source: Rep[SSeq[A]])(iso: Iso1[A, B, SSeq])
@@ -568,7 +568,7 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
   }).asInstanceOf[Option[Unpacked[T]]]
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case SSeqMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+    case SSeqMethods.map(xs, Def(IdentityLambda())) => xs
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSSeqImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>

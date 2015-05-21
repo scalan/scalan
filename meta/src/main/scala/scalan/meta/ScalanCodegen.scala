@@ -215,7 +215,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
     }
 
     def filterByExplicitDeclaration(ms: List[SMethodDef]): List[SMethodDef] =
-      module.seqDslImpl match { 
+      module.seqDslImpl match {
         case Some(impl) =>
           ms.filterNot(impl.containsMethodDef(_))
         case None => ms
@@ -474,11 +474,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |""".stripAndTrim
       }
 
-      val companionMethods = getCompanionMethods.opt { case (constrs, methods) =>
-        constrs.rep(md => externalConstructor(md), "\n    ") +
-        methods.rep(md => externalMethod(md), "\n    ")
-      }
-
       val companionSql = entityCompOpt.opt(comp => extractSqlQueries(comp.body))
       val companionAbs = s"""
         |  implicit object ${companionName}Elem extends CompanionElem[${companionName}Abs] {
@@ -488,7 +483,6 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |
         |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs] with ${companionName} {
         |    override def toString = "$entityName"
-        |    $companionMethods
         |    $companionSql
         |  }
         |  def $entityName: Rep[${companionName}Abs]
@@ -875,7 +869,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val syn = e.entityRepSynonim
       if (e.isContainer1) {
         s"""
-          |    case ${e.name}Methods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+          |    case ${e.name}Methods.map(xs, Def(IdentityLambda())) => xs
           |
           |    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
           |    case mc @ MethodCall(Def(wrapper: Exp${e.name}Impl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
@@ -960,8 +954,13 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val entityName = e.name
       val td = EntityTemplateData(module, e)
 
+      val companionMethods = getCompanionMethods.opt { case (constrs, methods) =>
+        constrs.rep(md => externalConstructor(md), "\n    ") +
+        methods.rep(md => externalMethod(md), "\n    ")
+      }
+
       val concreteClassesString = module.concreteSClasses.map(getSClassExp)
-      
+
       s"""
        |// Exp -----------------------------------
        |trait ${module.name}Exp extends ${module.name}Dsl ${config.stagedContextTrait.opt(t => "with " + t)} {
@@ -969,6 +968,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this
+       |    $companionMethods
        |  }
        |
        |${if (td.isContainer1) familyView(td) else ""}

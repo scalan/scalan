@@ -21,8 +21,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def nonZeroIndices: Rep[Collection[Int]]
     def nonZeroValues:  Rep[Collection[T]]
     def nonZeroItems: Rep[Collection[(Int, T)]]
-    implicit def elem: Elem[T]
-    def zeroValue = elem.defaultRepValue
+    implicit def eItem: Elem[T]
+    def zeroValue = eItem.defaultRepValue
 
     def apply(i: Rep[Int]): Rep[T]
     @OverloadId("apply_by_collection")
@@ -63,7 +63,7 @@ trait Vectors { self: ScalanCommunityDsl =>
   }
 
   abstract class DenseVector[T](val items: Rep[Collection[T]])
-                               (implicit val elem: Elem[T])
+                               (implicit val eItem: Elem[T])
     extends AbstractVector[T] {
 
     def length = items.length
@@ -103,7 +103,7 @@ trait Vectors { self: ScalanCommunityDsl =>
           DenseVector((items zip other.items).map { case Pair(v1, v2) => v1 - v2 })
       }
     }
-    @OverloadId("elementwise_diff_collection")
+    @OverloadId("elementwise_diff_value")
     def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       DenseVector(items.map(v => v - other))
     }
@@ -139,7 +139,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
   abstract class SparseVector[T](val nonZeroIndices: Rep[Collection[Int]],
                                  val nonZeroValues: Rep[Collection[T]],
-                                 val length: Rep[Int])(implicit val elem: Elem[T])
+                                 val length: Rep[Int])(implicit val eItem: Elem[T])
     extends AbstractVector[T] {
 
     def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
@@ -190,7 +190,7 @@ trait Vectors { self: ScalanCommunityDsl =>
           (other -^ self) *^ n.negate(n.one)
       }
     }
-    @OverloadId("elementwise_diff_collection")
+    @OverloadId("elementwise_diff_value")
     def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       DenseVector(items.map(v => v - other))
     }
@@ -227,7 +227,7 @@ trait Vectors { self: ScalanCommunityDsl =>
   }
 
   abstract class SparseVector1[T](val nonZeroItems: Rep[Collection[(Int, T)]],
-                                  val length: Rep[Int])(implicit val elem: Elem[T])
+                                  val length: Rep[Int])(implicit val eItem: Elem[T])
     extends AbstractVector[T] {
 
     def items: Rep[Collection[T]] = Collection.replicate(length, zeroValue).updateMany(nonZeroIndices, nonZeroValues)
@@ -279,7 +279,7 @@ trait Vectors { self: ScalanCommunityDsl =>
           (other -^ self) *^ n.negate(n.one)
       }
     }
-    @OverloadId("elementwise_diff_collection")
+    @OverloadId("elementwise_diff_value")
     def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       DenseVector(items.map(v => v - other))
     }
@@ -332,12 +332,12 @@ trait Vectors { self: ScalanCommunityDsl =>
 
   trait SparseVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector[T]] = {
-      val nonZeroItems: Rep[IPairCollection[Int, T]] =
+      val nonZeroItems =
         (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }
       SparseVector(nonZeroItems, items.length)
     }
     @OverloadId("SparseVectorCompanion_apply_nonZeroItems")
-    def apply[T: Elem](nonZeroItems: Rep[IPairCollection[Int, T]], length: Rep[Int])
+    def apply[T: Elem](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])
                       (implicit n: Numeric[T], o: Overloaded2): Rep[SparseVector[T]] = {
       SparseVector(nonZeroItems.as, nonZeroItems.bs, length)
     }
@@ -348,7 +348,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
   trait SparseVector1Companion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
     def apply[T: Elem](items: Rep[Collection[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[SparseVector1[T]] = {
-      val nonZeroItems: Rep[IPairCollection[Int, T]] =
+      val nonZeroItems =
         (Collection.indexRange(items.length) zip items).filter { case Pair(i, v) => v !== n.zero }
       SparseVector1(nonZeroItems, items.length)
     }
@@ -384,7 +384,7 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep
 
   implicit class VectorExtensions[T](vector: Vector[T]) {
-    implicit def eItem: Elem[T] = vector.elem
+    implicit def eItem: Elem[T] = vector.selfType1.asInstanceOf[AbstractVectorElem[T, _]].eItem
 
     def map[R: Elem](f: Rep[T] => Rep[R]): Vector[R] = vector.mapBy(fun(f))
 

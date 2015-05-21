@@ -2,11 +2,11 @@ package scalan.compilation.lms.cxx
 
 import java.io._
 
-import scalan.{ScalanCtxExp, JNIExtractorOpsExp}
+import scalan.{PointerOpsExp, JNIExtractorOpsExp, ScalanCommunityExp}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{LmsBridge, LmsCompiler}
 
-trait LmsCompilerCxx extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCtxExp with LmsBridge =>
+trait LmsCompilerCxx extends LmsCompiler with JNIExtractorOpsExp  with PointerOpsExp { self: ScalanCommunityExp with LmsBridge =>
 
   type CustomCompilerOutput = Unit
 

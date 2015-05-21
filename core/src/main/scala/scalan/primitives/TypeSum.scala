@@ -124,7 +124,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
   object IsJoinSum {
     def unapply[T](d: Def[T]): Option[Rep[Source] forSome { type Source }] = d match {
-      case SumFold(source, Def(Lambda(l,_,_,_)), Def(Lambda(r,_,_,_))) if l.isIdentity && r.isIdentity => Some(source)
+      case SumFold(source, Def(IdentityLambda()), Def(IdentityLambda())) => Some(source)
       case _ => None
     }
   }
@@ -158,7 +158,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
   })
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case SumFold(sum, Def(Lambda(_, _, _, l)), Def(Lambda(_, _, _, r))) if l == r =>
+    case SumFold(sum, Def(ConstantLambda(l)), Def(ConstantLambda(r))) if l == r =>
       l
 
     // Rule: fold(s, l, r)._1 ==> fold(s, x => l(x)._1, y => r(y)._1)
@@ -184,6 +184,16 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
         case iso1: Iso[a2,b2] =>
           SumView(a.asRep[a1].asRight(iso1.eFrom))(iso1, iso).self
       }
+
+    case SumMap(Def(Right(x)), f: Rep[Function1[a, b]] @unchecked, g: Rep[Function1[c, d]] @unchecked) =>
+      implicit val eB = f.elem.eRange
+      implicit val eD = g.elem.eRange
+      toRightSum[b, d](g(x))
+
+    case SumMap(Def(Left(x)), f: Rep[Function1[a, b]] @unchecked, g: Rep[Function1[c, d]] @unchecked) =>
+      implicit val eB = f.elem.eRange
+      implicit val eD = g.elem.eRange
+      toLeftSum[b, d](f(x))
 
     case m1 @ SumMap(Def(f: SumFold[a0,b0,_]), left, right) =>
       f.sum.foldBy(left << f.left, right << f.right)

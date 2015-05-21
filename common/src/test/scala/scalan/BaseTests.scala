@@ -1,7 +1,7 @@
 package scalan
 
 import org.scalatest.words.ResultOfStringPassedToVerb
-import org.scalatest.{FlatSpec, FunSuite, Matchers}
+import org.scalatest.{FlatSpec, FunSuite, Inside, Matchers}
 
 import scalan.util.FileUtil
 
@@ -20,7 +20,7 @@ trait TestsUtil {
 }
 
 // TODO switch to FunSpec and eliminate duplication in test names (e.g. RewriteSuite)
-abstract class BaseTests extends FunSuite with Matchers with TestsUtil
+abstract class BaseTests extends FunSuite with Matchers with Inside with TestsUtil
 
 abstract class BaseShouldTests extends FlatSpec with Matchers with TestsUtil {
   protected final class InAndIgnoreMethods2(resultOfStringPassedToVerb: ResultOfStringPassedToVerb) {
@@ -47,8 +47,8 @@ abstract class BaseShouldTests extends FlatSpec with Matchers with TestsUtil {
     def beArgFor(testFun: String => Unit) {
       _inner.in(testFun(rest.trim))
     }
-  }  
-  
+  }
+
   protected implicit def convertToInAndIgnoreMethods2(resultOfStringPassedToVerb: ResultOfStringPassedToVerb) =
     new InAndIgnoreMethods2(resultOfStringPassedToVerb)
 

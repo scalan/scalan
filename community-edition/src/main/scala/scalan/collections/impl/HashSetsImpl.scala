@@ -77,11 +77,6 @@ trait HashSetsAbs extends HashSets with Scalan {
 
   abstract class SHashSetCompanionAbs extends CompanionBase[SHashSetCompanionAbs] with SHashSetCompanion {
     override def toString = "SHashSet"
-
-    def empty[A:Elem]: Rep[SHashSet[A]] =
-      methodCallEx[SHashSet[A]](self,
-        this.getClass.getMethod("empty", classOf[Elem[A]]),
-        List(element[A]))
   }
   def SHashSet: Rep[SHashSetCompanionAbs]
   implicit def proxySHashSetCompanion(p: Rep[SHashSetCompanion]): SHashSetCompanion = {
@@ -221,6 +216,11 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs with UserTypeDef[SHashSetCompanionAbs] {
     lazy val selfType = element[SHashSetCompanionAbs]
     override def mirror(t: Transformer) = this
+
+    def empty[A:Elem]: Rep[SHashSet[A]] =
+      methodCallEx[SHashSet[A]](self,
+        this.getClass.getMethod("empty", classOf[Elem[A]]),
+        List(element[A]))
   }
 
   case class ViewSHashSet[A, B](source: Rep[SHashSet[A]])(iso: Iso1[A, B, SHashSet])
@@ -351,7 +351,7 @@ trait HashSetsExp extends HashSetsDsl with ScalanExp {
   }).asInstanceOf[Option[Unpacked[T]]]
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case SHashSetMethods.map(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+    case SHashSetMethods.map(xs, Def(IdentityLambda())) => xs
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSHashSetImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>

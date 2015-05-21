@@ -87,6 +87,9 @@ trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: Scala
 
   def hasConverter[A,B](eA: Elem[A], eB: Elem[B]): Option[Conv[A,B]] = {
     (eA, eB) match {
+      case (e1, e2) if e1 == e2 =>
+        implicit val ea = e1
+        Some(BaseConverter(identityFun[A]).asRep[Converter[A,B]])
       case (pA: PairElem[a1,a2], pB: PairElem[b1,b2]) =>
         implicit val ea1 = pA.eFst
         implicit val eb1 = pB.eFst
@@ -110,9 +113,6 @@ trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: Scala
       case (eEntity: EntityElem[_], eClass: ConcreteElem[tData,tClass]) =>
         val convOpt = eClass.getConverterFrom(eEntity)
         convOpt
-      case (e1, e2) if e1 == e2 =>
-        implicit val ea = e1
-        Some(BaseConverter(fun { x: Rep[A] => x }).asRep[Converter[A,B]])
       case _ => None
     }
   }

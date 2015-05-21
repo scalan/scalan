@@ -55,9 +55,6 @@ trait ExceptionsAbs extends Exceptions with Scalan {
 
   abstract class SThrowableCompanionAbs extends CompanionBase[SThrowableCompanionAbs] with SThrowableCompanion {
     override def toString = "SThrowable"
-
-    def apply(msg: Rep[String]): Rep[SThrowable] =
-      newObjEx(classOf[SThrowable], List(msg.asRep[Any]))
   }
   def SThrowable: Rep[SThrowableCompanionAbs]
   implicit def proxySThrowableCompanion(p: Rep[SThrowableCompanion]): SThrowableCompanion = {
@@ -277,6 +274,9 @@ trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs with UserTypeDef[SThrowableCompanionAbs] {
     lazy val selfType = element[SThrowableCompanionAbs]
     override def mirror(t: Transformer) = this
+
+    def apply(msg: Rep[String]): Rep[SThrowable] =
+      newObjEx(classOf[SThrowable], List(msg.asRep[Any]))
   }
 
   implicit lazy val throwableElement: Elem[Throwable] = new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)

@@ -17,7 +17,7 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
   lazy val ddmvmList = fun { p: Rep[(List[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0).length
-    val matrix: Matrix[Double] = CompoundMatrix(ListCollection(m.mapBy( fun { r: Arr[Double] => DenseVector(Collection(r)) })), width)
+    val matrix: Matrix[Double] = CompoundMatrix(CollectionOverList(m.mapBy( fun { r: Arr[Double] => DenseVector(Collection(r)) })), width)
     val vector: Vector[Double] = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
@@ -179,7 +179,7 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
 
   lazy val applySparseVector = fun { in: Rep[(Array[(Int, Double)], (Int, Int))] =>
     val Tuple(a, n, i) = in
-    val coll = CollectionOfPairs(a)
+    val coll = CollectionOverArray(a)
     val vec = SparseVector(coll, n)
     val res = vec(i).toInt
     res
@@ -189,7 +189,7 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
 
   lazy val transpose = fun { in: Rep[(Array[(Int, Double)], (Array[(Int, Int)], Int))] =>
     val Tuple(arrFlat, segsArr, nItems) = in
-    val nColl: NColl[(Int, Double)] = NestedCollection(Collection(arrFlat), CollectionOfPairs(segsArr))
+    val nColl: NColl[(Int, Double)] = NestedCollectionFlat(Collection(arrFlat), PairCollectionAOS.fromArray(segsArr))
     val mR: Matrix[Double] = CompoundMatrix.fromNColl(nColl, nItems)
     mR.transpose.rows.map({v => v.nonZeroItems.arr}).arr
   }

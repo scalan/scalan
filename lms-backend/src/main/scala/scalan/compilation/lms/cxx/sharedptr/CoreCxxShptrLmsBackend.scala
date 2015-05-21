@@ -7,7 +7,7 @@ package sharedptr
 import scala.virtualization.lms.common._
 import scalan.compilation.lms.common._
 
-class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>  //code for ArrayDotProdSparse defined in emitNode in CxxShptrGenVectorOps
+class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp with PointerLmsOpsExp { self =>
 
   trait Codegen extends BaseCodegen[self.type]
   with CxxShptrCodegen
@@ -33,6 +33,7 @@ class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self
   with CxxShptrGenLstOps
   with CxxShptrGenJNIExtractor
   with CxxShptrGenStringOps
+  with CxxShptrGenPointer
   with CxxShptrGenEitherOps
   with CxxShptrGenIterableOps
   {

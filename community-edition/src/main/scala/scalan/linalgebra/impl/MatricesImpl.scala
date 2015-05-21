@@ -19,11 +19,11 @@ trait MatricesAbs extends Matrices with Scalan {
   }
 
   // familyElem
-  class AbstractMatrixElem[T, To <: AbstractMatrix[T]](implicit val elem: Elem[T])
+  class AbstractMatrixElem[T, To <: AbstractMatrix[T]](implicit val eItem: Elem[T])
     extends EntityElem[To] {
     override def isEntityType = true
     override lazy val tag = {
-      implicit val tagT = elem.tag
+      implicit val tagT = eItem.tag
       weakTypeTag[AbstractMatrix[T]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
@@ -38,7 +38,7 @@ trait MatricesAbs extends Matrices with Scalan {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def abstractMatrixElement[T](implicit elem: Elem[T]): Elem[AbstractMatrix[T]] =
+  implicit def abstractMatrixElement[T](implicit eItem: Elem[T]): Elem[AbstractMatrix[T]] =
     new AbstractMatrixElem[T, AbstractMatrix[T]]
 
   implicit object AbstractMatrixCompanionElem extends CompanionElem[AbstractMatrixCompanionAbs] {
@@ -55,13 +55,13 @@ trait MatricesAbs extends Matrices with Scalan {
   }
 
   // elem for concrete class
-  class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit elem: Elem[T])
+  class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit eItem: Elem[T])
     extends AbstractMatrixElem[T, DenseFlatMatrix[T]]
     with ConcreteElem[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = DenseFlatMatrix(x.rmValues, x.numColumns)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagT = elem.tag
+      implicit val tagT = eItem.tag
       weakTypeTag[DenseFlatMatrix[T]]
     }
   }
@@ -70,7 +70,7 @@ trait MatricesAbs extends Matrices with Scalan {
   type DenseFlatMatrixData[T] = (Collection[T], Int)
 
   // 3) Iso for concrete class
-  class DenseFlatMatrixIso[T](implicit elem: Elem[T])
+  class DenseFlatMatrixIso[T](implicit eItem: Elem[T])
     extends Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]]()(pairElement(implicitly[Elem[Collection[T]]], implicitly[Elem[Int]])) {
     override def from(p: Rep[DenseFlatMatrix[T]]) =
       (p.rmValues, p.numColumns)
@@ -84,9 +84,9 @@ trait MatricesAbs extends Matrices with Scalan {
   // 4) constructor and deconstructor
   abstract class DenseFlatMatrixCompanionAbs extends CompanionBase[DenseFlatMatrixCompanionAbs] with DenseFlatMatrixCompanion {
     override def toString = "DenseFlatMatrix"
-    def apply[T](p: Rep[DenseFlatMatrixData[T]])(implicit elem: Elem[T]): Rep[DenseFlatMatrix[T]] =
-      isoDenseFlatMatrix(elem).to(p)
-    def apply[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[DenseFlatMatrix[T]] =
+    def apply[T](p: Rep[DenseFlatMatrixData[T]])(implicit eItem: Elem[T]): Rep[DenseFlatMatrix[T]] =
+      isoDenseFlatMatrix(eItem).to(p)
+    def apply[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eItem: Elem[T]): Rep[DenseFlatMatrix[T]] =
       mkDenseFlatMatrix(rmValues, numColumns)
   }
   object DenseFlatMatrixMatcher {
@@ -105,26 +105,26 @@ trait MatricesAbs extends Matrices with Scalan {
   implicit def proxyDenseFlatMatrix[T](p: Rep[DenseFlatMatrix[T]]): DenseFlatMatrix[T] =
     proxyOps[DenseFlatMatrix[T]](p)
 
-  implicit class ExtendedDenseFlatMatrix[T](p: Rep[DenseFlatMatrix[T]])(implicit elem: Elem[T]) {
-    def toData: Rep[DenseFlatMatrixData[T]] = isoDenseFlatMatrix(elem).from(p)
+  implicit class ExtendedDenseFlatMatrix[T](p: Rep[DenseFlatMatrix[T]])(implicit eItem: Elem[T]) {
+    def toData: Rep[DenseFlatMatrixData[T]] = isoDenseFlatMatrix(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoDenseFlatMatrix[T](implicit elem: Elem[T]): Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]] =
+  implicit def isoDenseFlatMatrix[T](implicit eItem: Elem[T]): Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]] =
     new DenseFlatMatrixIso[T]
 
   // 6) smart constructor and deconstructor
-  def mkDenseFlatMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[DenseFlatMatrix[T]]
+  def mkDenseFlatMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eItem: Elem[T]): Rep[DenseFlatMatrix[T]]
   def unmkDenseFlatMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[T]], Rep[Int])]
 
   // elem for concrete class
-  class CompoundMatrixElem[T](val iso: Iso[CompoundMatrixData[T], CompoundMatrix[T]])(implicit elem: Elem[T])
+  class CompoundMatrixElem[T](val iso: Iso[CompoundMatrixData[T], CompoundMatrix[T]])(implicit eItem: Elem[T])
     extends AbstractMatrixElem[T, CompoundMatrix[T]]
     with ConcreteElem[CompoundMatrixData[T], CompoundMatrix[T]] {
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = CompoundMatrix(x.rows, x.numColumns)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagT = elem.tag
+      implicit val tagT = eItem.tag
       weakTypeTag[CompoundMatrix[T]]
     }
   }
@@ -133,7 +133,7 @@ trait MatricesAbs extends Matrices with Scalan {
   type CompoundMatrixData[T] = (Collection[AbstractVector[T]], Int)
 
   // 3) Iso for concrete class
-  class CompoundMatrixIso[T](implicit elem: Elem[T])
+  class CompoundMatrixIso[T](implicit eItem: Elem[T])
     extends Iso[CompoundMatrixData[T], CompoundMatrix[T]]()(pairElement(implicitly[Elem[Collection[AbstractVector[T]]]], implicitly[Elem[Int]])) {
     override def from(p: Rep[CompoundMatrix[T]]) =
       (p.rows, p.numColumns)
@@ -147,9 +147,9 @@ trait MatricesAbs extends Matrices with Scalan {
   // 4) constructor and deconstructor
   abstract class CompoundMatrixCompanionAbs extends CompanionBase[CompoundMatrixCompanionAbs] with CompoundMatrixCompanion {
     override def toString = "CompoundMatrix"
-    def apply[T](p: Rep[CompoundMatrixData[T]])(implicit elem: Elem[T]): Rep[CompoundMatrix[T]] =
-      isoCompoundMatrix(elem).to(p)
-    def apply[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[CompoundMatrix[T]] =
+    def apply[T](p: Rep[CompoundMatrixData[T]])(implicit eItem: Elem[T]): Rep[CompoundMatrix[T]] =
+      isoCompoundMatrix(eItem).to(p)
+    def apply[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eItem: Elem[T]): Rep[CompoundMatrix[T]] =
       mkCompoundMatrix(rows, numColumns)
   }
   object CompoundMatrixMatcher {
@@ -168,16 +168,16 @@ trait MatricesAbs extends Matrices with Scalan {
   implicit def proxyCompoundMatrix[T](p: Rep[CompoundMatrix[T]]): CompoundMatrix[T] =
     proxyOps[CompoundMatrix[T]](p)
 
-  implicit class ExtendedCompoundMatrix[T](p: Rep[CompoundMatrix[T]])(implicit elem: Elem[T]) {
-    def toData: Rep[CompoundMatrixData[T]] = isoCompoundMatrix(elem).from(p)
+  implicit class ExtendedCompoundMatrix[T](p: Rep[CompoundMatrix[T]])(implicit eItem: Elem[T]) {
+    def toData: Rep[CompoundMatrixData[T]] = isoCompoundMatrix(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoCompoundMatrix[T](implicit elem: Elem[T]): Iso[CompoundMatrixData[T], CompoundMatrix[T]] =
+  implicit def isoCompoundMatrix[T](implicit eItem: Elem[T]): Iso[CompoundMatrixData[T], CompoundMatrix[T]] =
     new CompoundMatrixIso[T]
 
   // 6) smart constructor and deconstructor
-  def mkCompoundMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[CompoundMatrix[T]]
+  def mkCompoundMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eItem: Elem[T]): Rep[CompoundMatrix[T]]
   def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]], Rep[Int])]
 }
 
@@ -190,7 +190,7 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
 
   case class SeqDenseFlatMatrix[T]
       (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
-      (implicit elem: Elem[T])
+      (implicit eItem: Elem[T])
     extends DenseFlatMatrix[T](rmValues, numColumns)
         with UserTypeSeq[DenseFlatMatrix[T]] {
     lazy val selfType = element[DenseFlatMatrix[T]]
@@ -200,7 +200,7 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
   }
 
   def mkDenseFlatMatrix[T]
-      (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[DenseFlatMatrix[T]] =
+      (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eItem: Elem[T]): Rep[DenseFlatMatrix[T]] =
       new SeqDenseFlatMatrix[T](rmValues, numColumns)
   def unmkDenseFlatMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: DenseFlatMatrix[T] @unchecked =>
@@ -210,7 +210,7 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
 
   case class SeqCompoundMatrix[T]
       (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])
-      (implicit elem: Elem[T])
+      (implicit eItem: Elem[T])
     extends CompoundMatrix[T](rows, numColumns)
         with UserTypeSeq[CompoundMatrix[T]] {
     lazy val selfType = element[CompoundMatrix[T]]
@@ -220,7 +220,7 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
   }
 
   def mkCompoundMatrix[T]
-      (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[CompoundMatrix[T]] =
+      (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eItem: Elem[T]): Rep[CompoundMatrix[T]] =
       new SeqCompoundMatrix[T](rows, numColumns)
   def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: CompoundMatrix[T] @unchecked =>
@@ -239,7 +239,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
   case class ExpDenseFlatMatrix[T]
       (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
-      (implicit elem: Elem[T])
+      (implicit eItem: Elem[T])
     extends DenseFlatMatrix[T](rmValues, numColumns) with UserTypeDef[DenseFlatMatrix[T]] {
     lazy val selfType = element[DenseFlatMatrix[T]]
     override def mirror(t: Transformer) = ExpDenseFlatMatrix[T](t(rmValues), t(numColumns))
@@ -519,7 +519,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   def mkDenseFlatMatrix[T]
-    (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[DenseFlatMatrix[T]] =
+    (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eItem: Elem[T]): Rep[DenseFlatMatrix[T]] =
     new ExpDenseFlatMatrix[T](rmValues, numColumns)
   def unmkDenseFlatMatrix[T](p: Rep[AbstractMatrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: DenseFlatMatrixElem[T] @unchecked =>
@@ -530,7 +530,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
 
   case class ExpCompoundMatrix[T]
       (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])
-      (implicit elem: Elem[T])
+      (implicit eItem: Elem[T])
     extends CompoundMatrix[T](rows, numColumns) with UserTypeDef[CompoundMatrix[T]] {
     lazy val selfType = element[CompoundMatrix[T]]
     override def mirror(t: Transformer) = ExpCompoundMatrix[T](t(rows), t(numColumns))
@@ -762,7 +762,7 @@ trait MatricesExp extends MatricesDsl with ScalanExp {
   }
 
   def mkCompoundMatrix[T]
-    (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit elem: Elem[T]): Rep[CompoundMatrix[T]] =
+    (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eItem: Elem[T]): Rep[CompoundMatrix[T]] =
     new ExpCompoundMatrix[T](rows, numColumns)
   def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CompoundMatrixElem[T] @unchecked =>
