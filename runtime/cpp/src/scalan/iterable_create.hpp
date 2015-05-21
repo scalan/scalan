@@ -56,6 +56,9 @@ class CreateGenEnumerator
         while( true )
         {
 //            std::cout << "before nextFunc()" << std::endl;
+            if( isComplete(std::make_pair(curState, srcNext)) )
+                return false;
+            
             pair<S,variant<boost::blank,B>>
             p = nextFunc(std::make_pair(curState, srcNext));
 //            std::cout << "after nextFunc()" << std::endl;
