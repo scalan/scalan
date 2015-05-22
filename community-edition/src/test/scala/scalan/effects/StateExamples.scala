@@ -8,14 +8,15 @@ trait StateExamples extends MonadsDsl { self =>
   import State.monad.toMonadic
 
   def zipArrayWithIndex[A:Elem](as: Rep[Array[A]]): Rep[Array[(Int,A)]] =
-    State.eval(as.foldLeft(State.unit(SArray.empty[(Int, A)]))({ p =>
-      val Pair(acc, a) = p
-      for {
-        xs <- acc
-        n  <- State.get
-        _  <- State.set(n + 1)
-      } yield xs.append(Pair(n, a))
-    }), 0)
+    State.eval(
+      as.foldLeft(State.unit(SArray.empty[(Int, A)])) { p =>
+        val Pair(acc, a) = p
+        for {
+          xs <- acc
+          n  <- State.get
+          _  <- State.set(n + 1)
+        } yield xs.append(Pair(n, a))
+      }, 0)
 
   lazy val zipArrayWithIndexW = fun { xs: Arr[Double] => zipArrayWithIndex(xs) }
 
