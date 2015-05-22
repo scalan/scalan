@@ -209,8 +209,6 @@ trait StatesExp extends StatesDsl with ScalanExp {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `apply`: Method has function arguments r
-
     object get {
       def unapply(d: Def[_]): Option[Unit forSome {type S}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem == State0CompanionElem && method.getName == "get" =>
@@ -230,6 +228,18 @@ trait StatesExp extends StatesDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[Rep[S] forSome {type S}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object run {
+      def unapply(d: Def[_]): Option[(Rep[FreeState[S,A]], Rep[S]) forSome {type S; type A}] = d match {
+        case MethodCall(receiver, method, Seq(t, s, _*), _) if receiver.elem == State0CompanionElem && method.getName == "run" =>
+          Some((t, s)).asInstanceOf[Option[(Rep[FreeState[S,A]], Rep[S]) forSome {type S; type A}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FreeState[S,A]], Rep[S]) forSome {type S; type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
