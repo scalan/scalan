@@ -187,13 +187,16 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     sum
   }
 
-  def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]] = {
-    val bu = ArrayBuilder.make[A]
-    for(a <- xs ) {bu += a}
-    bu += value
-    bu.result
-  }
+//  def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]] = {
+//    val bu = ArrayBuilder.make[A]
+//    for(a <- xs ) {bu += a}
+//    bu += value
+//    bu.result
+//  }
 
+  def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]] = {
+    xs.insert(xs.length, value)
+  }
   def array_cons[A: Manifest](value: Rep[A], xs: Rep[Array[A]]): Rep[Array[A]] = {
     xs.insert(0, value)
   }
