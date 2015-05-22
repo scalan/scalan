@@ -131,6 +131,11 @@ trait CxxShptrGenEitherOps extends CxxShptrCodegen {
       emitValDef(sym, s"${quote(sum)}.which() == 1")
     case EitherFold(sum, l, r) =>
       emitValDef(sym, s"${quote(sum)}.which() == 0 ? ${quote(l)}(boost::get<${remap(l.tp.typeArguments(0))}>(${quote(sum)})) : ${quote(r)}(boost::get<${remap(r.tp.typeArguments(0))}>(${quote(sum)}))")
+    case EitherMap(sum, l, r) =>
+      val tpl = remap(sum.tp.typeArguments(0))
+      val tpr = remap(sum.tp.typeArguments(1))
+      val rtp = remap(sym.tp)
+      emitValDef(sym, src"${quote(sum)}.which() == 0 ? $rtp(${quote(l)}(boost::get<$tpl>(${quote(sum)}))) : $rtp(${quote(r)}(boost::get<$tpr>(${quote(sum)})))")
     case _ =>
       super.emitNode(sym, rhs)
   }
