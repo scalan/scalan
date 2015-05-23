@@ -6,19 +6,19 @@ trait Converters extends Views { self: Scalan =>
 
   type Conv[T,R] = Rep[Converter[T,R]]
   trait Converter[T,R] extends Reifiable[Converter[T,R]] {
-    implicit def eDom: Elem[T]
-    implicit def eRange: Elem[R]
+    implicit def eT: Elem[T]
+    implicit def eR: Elem[R]
     def convFun: Rep[T => R]
     def apply(x: Rep[T]): Rep[R]
   }
   trait ConverterCompanion
 
-  abstract class BaseConverter[T,R](val convFun: Rep[T => R])(implicit val eDom: Elem[T], val eRange: Elem[R])
+  abstract class BaseConverter[T,R](val convFun: Rep[T => R])(implicit val eT: Elem[T], val eR: Elem[R])
     extends Converter[T,R] {
     def apply(x: Rep[T]): Rep[R] = convFun(x)
-    override def toString: String = s"${eDom.name} --> ${eRange.name}"
+    override def toString: String = s"${eT.name} --> ${eR.name}"
     override def equals(other: Any): Boolean = other match {
-      case c: Converters#Converter[_, _] => eDom == c.eDom && eRange == c.eRange
+      case c: Converters#Converter[_, _] => eT == c.eT && eR == c.eR
       case _ => false
     }
   }
@@ -29,8 +29,8 @@ trait Converters extends Views { self: Scalan =>
     (implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
     extends Converter[(A1, A2), (B1, B2)] {
 
-    val eDom = pairElement(eA1, eA2)
-    val eRange = pairElement(eB1, eB2)
+    val eT = pairElement(eA1, eA2)
+    val eR = pairElement(eB1, eB2)
     def apply(x: Rep[(A1,A2)]) = { val Pair(a1, a2) = x; Pair(conv1(a1), conv2(a2)) }
     lazy val convFun = fun { x: Rep[(A1,A2)] => apply(x) }
   }
@@ -41,8 +41,8 @@ trait Converters extends Views { self: Scalan =>
     (implicit val eA1: Elem[A1], val eA2: Elem[A2], val eB1: Elem[B1], val eB2: Elem[B2])
     extends Converter[(A1 | A2), (B1 | B2)] {
 
-    val eDom = sumElement(eA1, eA2)
-    val eRange = sumElement(eB1, eB2)
+    val eT = sumElement(eA1, eA2)
+    val eR = sumElement(eB1, eB2)
     def apply(x: Rep[(A1|A2)]) = { x.mapSumBy(conv1.convFun, conv2.convFun) }
     lazy val convFun = fun { x: Rep[(A1 | A2)] => apply(x) }
   }

@@ -292,8 +292,8 @@ trait Views extends Elems { self: Scalan =>
   def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] = FuncIso(iso1, iso2)
 
   case class ConverterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A])
-    extends Iso[A,B]()(convTo.eDom) {
-    def eTo = convTo.eRange
+    extends Iso[A,B]()(convTo.eT) {
+    def eTo = convTo.eR
     def to(a: Rep[A]) = convTo(a)
     def from(b: Rep[B]) = convFrom(b)
     def defaultRepTo = Default.defaultVal(eTo.defaultRepValue)

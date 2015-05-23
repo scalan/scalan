@@ -16,12 +16,12 @@ trait ConvertersAbs extends Converters  {
   }
 
   // familyElem
-  class ConverterElem[T, R, To <: Converter[T, R]](implicit val eDom: Elem[T], val eRange: Elem[R])
+  class ConverterElem[T, R, To <: Converter[T, R]](implicit val eT: Elem[T], val eR: Elem[R])
     extends EntityElem[To] {
     override def isEntityType = true
     override lazy val tag = {
-      implicit val tagT = eDom.tag
-      implicit val tagR = eRange.tag
+      implicit val tagT = eT.tag
+      implicit val tagR = eR.tag
       weakTypeTag[Converter[T, R]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
@@ -36,7 +36,7 @@ trait ConvertersAbs extends Converters  {
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def converterElement[T, R](implicit eDom: Elem[T], eRange: Elem[R]): Elem[Converter[T, R]] =
+  implicit def converterElement[T, R](implicit eT: Elem[T], eR: Elem[R]): Elem[Converter[T, R]] =
     new ConverterElem[T, R, Converter[T, R]]
 
   implicit object ConverterCompanionElem extends CompanionElem[ConverterCompanionAbs] {
@@ -53,14 +53,14 @@ trait ConvertersAbs extends Converters  {
   }
 
   // elem for concrete class
-  class BaseConverterElem[T, R](val iso: Iso[BaseConverterData[T, R], BaseConverter[T, R]])(implicit eDom: Elem[T], eRange: Elem[R])
+  class BaseConverterElem[T, R](val iso: Iso[BaseConverterData[T, R], BaseConverter[T, R]])(implicit eT: Elem[T], eR: Elem[R])
     extends ConverterElem[T, R, BaseConverter[T, R]]
     with ConcreteElem[BaseConverterData[T, R], BaseConverter[T, R]] {
     override def convertConverter(x: Rep[Converter[T, R]]) = BaseConverter(x.convFun)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagT = eDom.tag
-      implicit val tagR = eRange.tag
+      implicit val tagT = eT.tag
+      implicit val tagR = eR.tag
       weakTypeTag[BaseConverter[T, R]]
     }
   }
@@ -69,7 +69,7 @@ trait ConvertersAbs extends Converters  {
   type BaseConverterData[T, R] = T => R
 
   // 3) Iso for concrete class
-  class BaseConverterIso[T, R](implicit eDom: Elem[T], eRange: Elem[R])
+  class BaseConverterIso[T, R](implicit eT: Elem[T], eR: Elem[R])
     extends Iso[BaseConverterData[T, R], BaseConverter[T, R]] {
     override def from(p: Rep[BaseConverter[T, R]]) =
       p.convFun
@@ -84,7 +84,7 @@ trait ConvertersAbs extends Converters  {
   abstract class BaseConverterCompanionAbs extends CompanionBase[BaseConverterCompanionAbs] with BaseConverterCompanion {
     override def toString = "BaseConverter"
 
-    def apply[T, R](convFun: Rep[T => R])(implicit eDom: Elem[T], eRange: Elem[R]): Rep[BaseConverter[T, R]] =
+    def apply[T, R](convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]] =
       mkBaseConverter(convFun)
   }
   object BaseConverterMatcher {
@@ -103,16 +103,16 @@ trait ConvertersAbs extends Converters  {
   implicit def proxyBaseConverter[T, R](p: Rep[BaseConverter[T, R]]): BaseConverter[T, R] =
     proxyOps[BaseConverter[T, R]](p)
 
-  implicit class ExtendedBaseConverter[T, R](p: Rep[BaseConverter[T, R]])(implicit eDom: Elem[T], eRange: Elem[R]) {
-    def toData: Rep[BaseConverterData[T, R]] = isoBaseConverter(eDom, eRange).from(p)
+  implicit class ExtendedBaseConverter[T, R](p: Rep[BaseConverter[T, R]])(implicit eT: Elem[T], eR: Elem[R]) {
+    def toData: Rep[BaseConverterData[T, R]] = isoBaseConverter(eT, eR).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoBaseConverter[T, R](implicit eDom: Elem[T], eRange: Elem[R]): Iso[BaseConverterData[T, R], BaseConverter[T, R]] =
+  implicit def isoBaseConverter[T, R](implicit eT: Elem[T], eR: Elem[R]): Iso[BaseConverterData[T, R], BaseConverter[T, R]] =
     new BaseConverterIso[T, R]
 
   // 6) smart constructor and deconstructor
-  def mkBaseConverter[T, R](convFun: Rep[T => R])(implicit eDom: Elem[T], eRange: Elem[R]): Rep[BaseConverter[T, R]]
+  def mkBaseConverter[T, R](convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]]
   def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]): Option[(Rep[T => R])]
 
   // elem for concrete class
@@ -259,7 +259,7 @@ trait ConvertersSeq extends ConvertersDsl  {
 
   case class SeqBaseConverter[T, R]
       (override val convFun: Rep[T => R])
-      (implicit eDom: Elem[T], eRange: Elem[R])
+      (implicit eT: Elem[T], eR: Elem[R])
     extends BaseConverter[T, R](convFun)
         with UserTypeSeq[BaseConverter[T, R]] {
     lazy val selfType = element[BaseConverter[T, R]]
@@ -269,7 +269,7 @@ trait ConvertersSeq extends ConvertersDsl  {
   }
 
   def mkBaseConverter[T, R]
-      (convFun: Rep[T => R])(implicit eDom: Elem[T], eRange: Elem[R]): Rep[BaseConverter[T, R]] =
+      (convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]] =
       new SeqBaseConverter[T, R](convFun)
   def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]) = p match {
     case p: BaseConverter[T, R] @unchecked =>
@@ -328,7 +328,7 @@ trait ConvertersExp extends ConvertersDsl  {
 
   case class ExpBaseConverter[T, R]
       (override val convFun: Rep[T => R])
-      (implicit eDom: Elem[T], eRange: Elem[R])
+      (implicit eT: Elem[T], eR: Elem[R])
     extends BaseConverter[T, R](convFun) with UserTypeDef[BaseConverter[T, R]] {
     lazy val selfType = element[BaseConverter[T, R]]
     override def mirror(t: Transformer) = ExpBaseConverter[T, R](t(convFun))
@@ -361,7 +361,7 @@ trait ConvertersExp extends ConvertersDsl  {
   }
 
   def mkBaseConverter[T, R]
-    (convFun: Rep[T => R])(implicit eDom: Elem[T], eRange: Elem[R]): Rep[BaseConverter[T, R]] =
+    (convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]] =
     new ExpBaseConverter[T, R](convFun)
   def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: BaseConverterElem[T, R] @unchecked =>
