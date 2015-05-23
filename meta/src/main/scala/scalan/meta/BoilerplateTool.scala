@@ -175,8 +175,14 @@ class BoilerplateTool extends StrictLogging {
   )
   lazy val effects2Config = CodegenConfig(
     name = "effects2",
-    srcPath = "../core/src/test/scala",
+    srcPath = "../community-edition/src/test/scala",
     entityFiles = List(
+      "scalan/effects/IOs.scala",
+      "scalan/effects/Readers.scala",
+      "scalan/effects/States.scala",
+      "scalan/effects/FreeStates.scala",
+      "scalan/effects/FreeMs.scala",
+      "scalan/effects/Processes.scala",
       "scalan/effects/Frees.scala",
       "scalan/effects/Coproducts.scala",
       "scalan/effects/Interactions.scala",

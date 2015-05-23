@@ -50,9 +50,16 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     override def mirror(t: Transformer) = IfThenElse(t(cond), t(thenp), t(elsep))
   }
 
+  def reifyBranch[T](b: => Exp[T]): Exp[T] = {
+    val Block(res) = reifyEffects(b)
+    res
+  }
+
   override def __ifThenElse[T](cond: Exp[Boolean], thenp: => Exp[T], elsep: => Exp[T]): Exp[T] = {
-    implicit val eT = thenp.elem
-    IfThenElse(cond, thenp, elsep)
+    val t = reifyBranch(thenp)
+    val e = reifyBranch(elsep)
+    implicit val eT = t.elem
+    IfThenElse(cond, t, e)
   }
 
   implicit class IfThenElseOps[T](tableEntry: TableEntry[T]) {
@@ -88,6 +95,14 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
   override def boundSyms(e: Any): List[Exp[Any]] = e match {
     case IfThenElse(c, t, e) => effectSyms(t):::effectSyms(e)
     case _ => super.boundSyms(e)
+  }
+
+  override def effectSyms(x: Any): List[Exp[Any]] = x match {
+    case IfThenElse(c, t, e) =>
+      val ts = Def.unapply(t).map(d => effectSyms(d)).toList.flatten
+      val es = Def.unapply(e).map(d => effectSyms(d)).toList.flatten
+      ts ::: es
+    case _ => super.effectSyms(x)
   }
 
   def liftFromIfThenElse[A,B,C](cond: Rep[Boolean], a: Rep[A], b: Rep[B], iso1: Iso[A,C], iso2: Iso[B,C]): Rep[C] = {

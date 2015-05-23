@@ -338,6 +338,8 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
               emitNode(l, ArrayNew(Const(0)))
             case ReduceIfElem(c,y) =>
               emitNode(l, NewVar(Const(0.0)))
+            case ReduceIfIntElem(c,y) =>
+              emitNode(l, NewVar(Const(0)))
             case x =>
               stream.println(s"ERROR: SimpleFatLoop: can not generate init var for {${l} = ${r}}")
           }
@@ -414,6 +416,7 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
   override def applyAddCondition(e: Def[Any], c: List[Exp[Boolean]]) = e match { //TODO: should c be list or not?
     case ArrayElem(a) if c.length == 1 => ArrayIfElem(c(0),a)
     case ReduceElem(a) if c.length == 1 => ReduceIfElem(c(0),a)
+    case ReduceIntElem(a) if c.length == 1 => ReduceIfIntElem(c(0),a)
     case _ => super.applyAddCondition(e,c)
   }
   //copy-pasting end

@@ -32,6 +32,7 @@ trait CxxShptrGenFatArrayLoopsFusionOpt extends CxxShptrGenArrayLoopsFat with Lo
     case ArrayElem(a) if c.length == 1 => ArrayIfElem(c(0),a)
     case JNIArrayElem(x,a) if c.length == 1 => JNIArrayIfElem(x,c(0),a)
     case ReduceElem(a) if c.length == 1 => ReduceIfElem(c(0),a)
+    case ReduceIntElem(a) if c.length == 1 => ReduceIfIntElem(c(0),a)
     case _ => super.applyAddCondition(e,c)
   }
 }
@@ -84,6 +85,8 @@ trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsF
             emitNode(l, ArrayNew(Const(0)))
           case ReduceIfElem(c,y) =>
             emitNode(l, NewVar(Const(0.0)))
+          case ReduceIfIntElem(c,y) =>
+            emitNode(l, NewVar(Const(0)))
 //          case FlattenElem(y) =>
 //            stream.println("var " + quote(l) + " = new ArrayBuilder[" + remap(getBlockResult(y).tp) + "]")
         }
@@ -108,6 +111,8 @@ trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsF
           case ArrayIfElem(c,y) =>
             stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + "->push_back( " + quote(getBlockResult(y)) + " );")
           case ReduceIfElem(c,y) =>
+            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + " += " + quote(getBlockResult(y)) + ";")
+          case ReduceIfIntElem(c,y) =>
             stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + " += " + quote(getBlockResult(y)) + ";")
 //          case FlattenElem(y) =>
 //            stream.println(quote(l) + " ++= " + quote(getBlockResult(y)))

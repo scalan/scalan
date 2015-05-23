@@ -2,10 +2,10 @@ package scalan
 
 import scala.reflect.runtime.universe._
 import scalan.common.{SegmentsDslExp, Lazy}
-import scalan.monads.{FreesDslExp, MonadsDslExp}
+//import scalan.monads.{FreesDslExp, MonadsDslExp}
 
 class ProxyTests extends BaseTests { suite =>
-  class Ctx(testName: String) extends TestContext(suite, testName) with SegmentsDslExp with FreesDslExp with MonadsDslExp {
+  class Ctx(testName: String) extends TestContext(suite, testName) with SegmentsDslExp /*with FreesDslExp with MonadsDslExp*/ {
     def testElemFromType(tpe: Type, elemMap: Map[Symbol, TypeDesc], expected: Elem[_]) = {
       assertResult(expected)(elemFromType(tpe, elemMap, definitions.NothingTpe))
     }

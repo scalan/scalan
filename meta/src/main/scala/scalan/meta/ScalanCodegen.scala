@@ -162,7 +162,13 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       case STpePrimitive(_, defaultValueString) => defaultValueString
       case STraitCall(name, args)
         if module.entityOps.tpeArgs.exists(a => a.name == name && a.isHighKind) =>
-        s"c$name.lift(${args.rep(a => s"e$a")}).defaultRepValue"
+        val arg = args(0)
+        arg match {
+          case STraitCall(name2, _) if module.entityOps.tpeArgs.exists(a => a.name == name2) =>
+            s"c$name.lift(${args.rep(a => s"e$a")}).defaultRepValue"
+          case _ =>
+            s"c$name.lift(${args.rep(a => s"element[$a]")}).defaultRepValue"
+        }
       case tc@STraitCall(name, args) => {
         val optBT = module.entityOps.optBaseType
         val isBT = optBT.exists(bt => bt.name == name)

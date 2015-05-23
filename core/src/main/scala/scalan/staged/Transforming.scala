@@ -127,36 +127,70 @@ trait Transforming { self: ScalanExp =>
 
     protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Exp[_] = fresh(Lazy(node.elem))
 
-    // require: should be called after lam.schedule is mirrored
-    private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], lam: Lambda[_,_]): Lambda[_,_] = {
-      val newVar = t(lam.x)
-      val newBody = t(lam.y)
-      val newLambdaDef = new Lambda(None, newVar, newBody, newLambdaSym.asRep[Any=>Any], lam.mayInline)
+    // require: should be called after oldlam.schedule is mirrored
+    private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], oldLam: Lambda[_,_], newRoot: Exp[_]): Lambda[_,_] = {
+      val newVar = t(oldLam.x)
+      val newLambdaDef = new Lambda(None, newVar, newRoot, newLambdaSym.asRep[Any=>Any], oldLam.mayInline)
       newLambdaDef
     }
 
     protected def mirrorLambda[A, B](t: Ctx, rewriter: Rewriter, node: Exp[A => B], lam: Lambda[A, B]): (Ctx, Exp[_]) = {
-      val (t1, newVar) = mirrorNode(t, rewriter, lam.x)
+      var tRes: Ctx = t
+      val (t1, newVar) = mirrorNode(t, rewriter, lam, lam.x)
       val newLambdaSym = getMirroredLambdaSym(node)
-
       lambdaStack.push(newLambdaSym)
-      val schedule = lam.scheduleSyms
-      val (t2, _) = mirrorSymbols(t1, rewriter, schedule)
-      lambdaStack.pop
 
-      val newLambda = getMirroredLambdaDef(t2, newLambdaSym, lam)
+      // original root
+      val originalRoot = lam.y match {
+        case Def(Reify(x, _, _)) => x
+        case _ => lam.y
+      }
+      // new effects may appear during body mirroring (i.e. new Reflect nodes)
+      // thus we need to forget original Reify node and create a new one
+      val Block(newRoot) = reifyEffects({
+        val schedule = lam.filterReifyRoots(lam.scheduleSingleLevel).map(_.sym)
+        val (t2, _) = mirrorSymbols(t1, rewriter, lam, schedule)
+        tRes = t2
+        tRes(originalRoot) // this will be a new root (wrapped in Reify if needed)
+      })
+
+      lambdaStack.pop
+      val newLambda = getMirroredLambdaDef(tRes, newLambdaSym, lam, newRoot)
       createDefinition(thunkStack.top, newLambdaSym, newLambda)
       val newLambdaExp = toExp(newLambda, newLambdaSym)
 
-//      val optScope = thunkStack.top
-//      optScope match {
-//        case Some(scope) =>
-//          val te = createDefinition(optScope, newLambdaSym, newLambda)
-//        case None =>
-//          createDefinition(None, newLambdaSym, newLambda)
-//      }
+      (tRes + (node -> newLambdaExp), newLambdaExp)
+    }
 
-      (t2 + (node -> newLambdaExp), newLambdaExp)
+    protected def mirrorBranch[A](t: Ctx, rewriter: Rewriter, g: AstGraph, branch: ThunkDef[A]): (Ctx, Exp[_]) = {
+      // get original root unwrapping Reify nodes
+      val originalRoot = branch.root match {
+        case Def(Reify(x, _, _)) => x
+        case _ => branch.root
+      }
+      val schedule = branch.filterReifyRoots(branch.scheduleSingleLevel).map(_.sym)
+      val (t2, _) = mirrorSymbols(t, rewriter, branch, schedule)
+      val newRoot = t2(originalRoot)
+      (t2, newRoot)
+    }
+
+    protected def mirrorIfThenElse[A](t: Ctx, rewriter: Rewriter, g: AstGraph, node: Exp[A], ite: IfThenElse[A]): (Ctx, Exp[_]) = {
+      g.branches.ifBranches.get(node) match {
+        case Some(branches) =>
+          var tRes: Ctx = t
+          val newIte = IF (t(ite.cond)) THEN {
+            val (t1, res) = mirrorBranch(t, rewriter, g, branches.thenBody)
+            tRes = t1
+            res
+          } ELSE {
+            val (t2, res) = mirrorBranch(tRes, rewriter, g, branches.elseBody)
+            tRes = t2
+            res
+          }
+          (tRes + (node -> newIte), newIte)
+        case _ =>
+          mirrorDef(t, rewriter, node, ite)
+      }
     }
 
     protected def mirrorThunk[A](t: Ctx, rewriter: Rewriter, node: Exp[Thunk[A]], thunk: ThunkDef[A]): (Ctx, Exp[_]) = {
@@ -165,21 +199,13 @@ trait Transforming { self: ScalanExp =>
 
       thunkStack.push(newScope)
       val schedule = thunk.scheduleSyms
-      val (t1, newSchedule) = mirrorSymbols(t, rewriter, schedule)
+      val (t1, newSchedule) = mirrorSymbols(t, rewriter, thunk, schedule)
       thunkStack.pop
 
       val newRoot = t1(thunk.root)
       val newThunk = ThunkDef(newRoot, newSchedule.map { case DefTableEntry(te) => te })
 
       createDefinition(thunkStack.top, newThunkSym, newThunk)
-//      val optScope = thunkStack.top
-//      optScope match {
-//        case Some(scope) =>
-//          createDefinition(optScope, newThunkSym, newThunk)
-//        case None =>
-//          createDefinition(None, newThunkSym, newThunk)
-//      }
-
       (t1 + (node -> newThunkSym), newThunkSym)
     }
 
@@ -189,7 +215,7 @@ trait Transforming { self: ScalanExp =>
     protected def isMirrored(t: Ctx, node: Exp[_]): Boolean = t.isDefinedAt(node)
 
     // TODO make protected
-    def mirrorNode[A](t: Ctx, rewriter: Rewriter, node: Exp[A]): (Ctx, Exp[_]) = {
+    def mirrorNode[A](t: Ctx, rewriter: Rewriter, g: AstGraph, node: Exp[A]): (Ctx, Exp[_]) = {
       isMirrored(t, node) match {         // cannot use 'if' because it becomes staged
         case true => (t, t(node))
         case _ =>
@@ -199,6 +225,8 @@ trait Transforming { self: ScalanExp =>
                 mirrorLambda(t, rewriter, node.asRep[a => b], lam)
               case th: ThunkDef[a] =>
                 mirrorThunk(t, rewriter, node.asRep[Thunk[a]], th)
+              case ite: IfThenElse[a] =>
+                mirrorIfThenElse(t, rewriter, g, node.asRep[a], ite)
               case _ =>
                 mirrorDef(t, rewriter, node, d)
             }
@@ -213,10 +241,10 @@ trait Transforming { self: ScalanExp =>
       }
     }
 
-    def mirrorSymbols(t0: Ctx, rewriter: Rewriter, nodes: Seq[Exp[_]]) = {
+    def mirrorSymbols(t0: Ctx, rewriter: Rewriter, g: AstGraph, nodes: Seq[Exp[_]]) = {
       val (t, revMirrored) = nodes.foldLeft((t0, List.empty[Exp[_]])) {
         case ((t1, nodes), n) =>
-          val (t2, n1) = mirrorNode(t1, rewriter, n)
+          val (t2, n1) = mirrorNode(t1, rewriter, g, n)
           (t2, n1 :: nodes)
       }
       (t, revMirrored.reverse)

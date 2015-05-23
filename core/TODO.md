@@ -32,4 +32,7 @@
 
 6. Consider use of LElem: where is it actually needed?
 
-7. Rename Elem to Type
+7. Implement FP abstractions
+    - State monad
+    - Candy state machine from fpinscala
+    -

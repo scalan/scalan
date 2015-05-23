@@ -27,4 +27,9 @@ trait CrossDomainExample extends InteractionsDsl with AuthenticationsDsl {
   lazy val app = prg[App]
 
   def runApp = app.run(AuthOper or InteractOper)
+
+  lazy val runAppW = fun {in: Rep[Int] =>
+    val app = runApp
+    app(in)._2
+  }
 }

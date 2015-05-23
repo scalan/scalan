@@ -3,6 +3,7 @@ package scalan.monads
 import scalan.collections.ListOps
 import scalan._
 import scala.reflect.runtime.universe._
+import scalan.effects._
 
 /**
  * Created by slesarenko on 05/01/15.
@@ -190,30 +191,35 @@ trait Monads extends Base  with ListOps { self: MonadsDsl =>
 trait MonadsDsl extends ScalanDsl with Monads
   with FreesDsl
   with CoproductsDsl
-  //with ReadersDsl
+  with ScalanCommunityDsl
+  with ReadersDsl
+  with StatesDsl
+  with FreeStatesDsl
+  with FreeMsDsl
 {
-  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]]
+  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun {i => console_eval(i,v)}
 }
 
 trait MonadsDslSeq extends MonadsDsl
   with ScalanCtxSeq
   with FreesDslSeq
   with CoproductsDslSeq
-  //with ReadersDslSeq
+  with ScalanCommunityDslSeq
+  with ReadersDslSeq
+  with StatesDslSeq
+  with FreeStatesDslSeq
+  with FreeMsDslSeq
 {
-  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = i => (i + 1, v)
 }
 
 trait MonadsDslExp extends MonadsDsl
-  with ScalanCtxExp
+  with ScalanCommunityDsl
   with FreesDslExp
   with CoproductsDslExp
-  //with ReadersDslExp
+  with ScalanCommunityDslExp
+  with ReadersDslExp
+  with StatesDslExp
+  with FreeStatesDslExp
+  with FreeMsDslExp
 {
-  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun { i => Eval(i, v) }
-
-  case class Eval[A:Elem](i: Rep[Int], v: Rep[A]) extends BaseDef[(Int, A)]  {
-    override def uniqueOpId = name(selfType)
-    override def mirror(t: Transformer) = Eval(t(i), t(v))
-  }
 }

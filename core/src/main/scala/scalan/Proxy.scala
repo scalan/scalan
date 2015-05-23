@@ -365,12 +365,36 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         }
       case _ if classSymbol.isClass =>
         val paramDescs = params.map {
-          case typaram@TypeRef(_, classSymbol, params) if typaram.takesTypeArgs =>
+          case typaram if typaram.takesTypeArgs =>
             // handle high-kind argument
-            // FIXME use better way of lookup other than by names (to avoid name collisions)
-            val optRes = elemMap.find { case (sym, d) => sym.name == classSymbol.name }
-            val res = optRes.getOrElse(!!!(s"Can't find descriptor for type argument $typaram of $tpe"))._2.right.get
-            res
+            typaram match {
+              case TypeRef(_, classSymbol, _) =>
+                // FIXME use better way of lookup other than by names (to avoid name collisions)
+                val optRes = elemMap.find { case (sym, d) => sym.name == classSymbol.name }
+                optRes match {
+                  case Some((_, desc)) => desc match {
+                    case scala.Right(cont) => cont
+                    case scala.Left(elem) =>
+                      !!!(s"Expected a container, got $elem for type argument $typaram of $tpe")
+                  }
+                  case _ =>
+                    !!!(s"Can't find descriptor for type argument $typaram of $tpe")
+                }
+              case PolyType(_, _) =>
+                // fake to make the compiler happy
+                type F[A] = A
+
+                new Container[F] {
+                  def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[F[T]] = ???
+                  def lift[T](implicit eT: Elem[T]): Elem[F[T]] = {
+                    val tpe1 = appliedType(typaram, List(eT.tag.tpe))
+                    // TODO incorrect baseType
+                    elemFromType(tpe1, elemMap, baseType).asInstanceOf[Elem[F[T]]]
+                  }
+
+                  override protected def getName = typaram.toString
+                }
+            }
           case typaram =>
             elemFromType(typaram, elemMap, baseType)
         }
@@ -501,32 +525,29 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
           }
       }
 
-  def getElemsMapFromInstanceElem(e: Elem[_], tpe: Type): Map[Symbol, TypeDesc] = {
-    val kvs = tpe.typeSymbol.asType.typeParams.collect {
-      case sym if sym.isParameter =>
-        if (sym.asType.typeParams.size > 0) {
-          // FIXME hardcoding - naming convention is assumed to be consistent with ScalanCodegen
-          val methodName = "c" + sym.name.toString
-          val value = try {
-            val res = invokeMethod(e, methodName).asInstanceOf[SomeCont]
-            scala.Right[Elem[_], SomeCont](res)
-          } catch {
-            case _: Throwable => null
+  // TODO Combine with extractElems
+  private def getElemsMapFromInstanceElem(e: Elem[_], tpe: Type): Map[Symbol, TypeDesc] = {
+    val kvs = tpe.typeSymbol.asType.typeParams.map {
+      case sym =>
+        val res = Try {
+          if (sym.asType.typeParams.nonEmpty) {
+            // FIXME hardcoding - naming convention is assumed to be consistent with ScalanCodegen
+            val methodName = "c" + sym.name.toString
+            val cont = invokeMethod(e, methodName).asInstanceOf[SomeCont]
+            (scala.Right[Elem[_], SomeCont](cont), Map.empty[Symbol, TypeDesc])
+          } else {
+            val methodName = "e" + sym.name.toString
+            val elem = invokeMethod(e, methodName).asInstanceOf[Elem[_]]
+            val map1 = getElemsMapFromInstanceElem(elem, tpeFromElem(elem))
+            (scala.Left[Elem[_], SomeCont](elem), map1)
           }
-          (sym -> value)
         }
-        else {
-          val methodName = "e" + sym.name.toString
-          val value = try {
-            val res = invokeMethod(e, methodName).asInstanceOf[Elem[_]]
-            scala.Left[Elem[_], SomeCont](res)
-          } catch {
-            case _: Throwable => null
-          }
-          (sym -> value)
-        }
+        (sym, res)
     }
-    kvs.filter { case (k,v) => v != null }.toMap
+    val successes = kvs.collect { case (k, Success((desc, map))) => (k, desc, map) }
+    val maps = successes.map(_._3)
+    val map0 = successes.map { case (k, desc, _) => (k, desc) }.toMap
+    maps.fold(map0)(_ ++ _)
   }
 
   private def invokeMethod(obj: AnyRef, methodName: String): AnyRef = {
@@ -584,11 +605,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   protected def getResultElem(receiver: Exp[_], m: Method, args: List[AnyRef]): Elem[_] = {
     val e = receiver.elem
-    val tag = e match {
-      case extE: BaseElemEx[_,_] => extE.getWrapperElem.tag
-      case _ => e.tag
-    }
-    val tpe = tag.tpe
+    val tpe = tpeFromElem(e)
     val instanceElemMap = getElemsMapFromInstanceElem(e, tpe)
     val scalaMethod = findScalaMethod(tpe, m)
 
@@ -653,6 +670,14 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       case _ =>
         !!!(s"Return type of method $m should be a Rep, but is $returnType")
     }
+  }
+
+  private def tpeFromElem(e: Elem[_]): Type = {
+    val tag = e match {
+      case extE: BaseElemEx[_, _] => extE.getWrapperElem.tag
+      case _ => e.tag
+    }
+    tag.tpe
   }
 
   private object Symbols {

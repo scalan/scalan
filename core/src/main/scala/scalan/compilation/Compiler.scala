@@ -21,7 +21,7 @@ trait Compiler extends BaseExp with Passes {
 
   // see comment for buildInitialGraph
   // TODO sequence may depend on input or intermediate graphs, use a state monad instead
-  def graphPasses(compilerConfig: CompilerConfig): Seq[PGraph => GraphPass]
+  def graphPasses(compilerConfig: CompilerConfig): Seq[PGraph => GraphPass] = Seq()
 
   // Can it return ProgramGraph[Ctx] for some other Ctx?
   // If so, may want to add Ctx as type argument or type member
