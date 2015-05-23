@@ -116,7 +116,7 @@ object ScalanBuild extends Build {
 
   // name to make this the default project
   lazy val root = Project("scalan", file("."))
-    .aggregate(common, meta, core, ce)
+    .aggregate(common, meta, core, ce, lmsBackend)
     .withTestConfigsAndCommonSettings
     .settings(crossCompilation)
     .settings(publishArtifact := false)
