@@ -10,6 +10,7 @@ import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl/*, Excepti
 
 trait Scalan
   extends Base
+  with Debugging
   with Elems
   with Containers
   with TypeWrappers
