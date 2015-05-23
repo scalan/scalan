@@ -462,7 +462,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |    }
         |
         |    def convert$entityName(x : Rep[${e.entityType}]): Rep[To] = {
-        |      assert(x.selfType1 match { case _: $wildcardElem => true; case _ => false })
+        |      assert(x.selfType1${e.t.isHighKind.opt(".asInstanceOf[Element[_]]")} match { case _: $wildcardElem => true; case _ => false })
         |      x.asRep[To]
         |    }
         |    override def getDefaultRep: Rep[To] = ???
@@ -482,7 +482,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
 
       val companionSql = entityCompOpt.opt(comp => extractSqlQueries(comp.body))
       val companionAbs = s"""
-        |  implicit object ${companionName}Elem extends CompanionElem[${companionName}Abs] {
+        |  implicit case object ${companionName}Elem extends CompanionElem[${companionName}Abs] {
         |    lazy val tag = weakTypeTag[${companionName}Abs]
         |    protected def getDefaultRep = $entityName
         |  }
@@ -648,7 +648,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         |    proxyOps[${className}CompanionAbs](p)
         |  }
         |
-        |  implicit object ${className}CompanionElem extends CompanionElem[${className}CompanionAbs] {
+        |  implicit case object ${className}CompanionElem extends CompanionElem[${className}CompanionAbs] {
         |    lazy val tag = weakTypeTag[${className}CompanionAbs]
         |    protected def getDefaultRep = $className
         |  }

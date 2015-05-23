@@ -40,7 +40,7 @@ trait IOsAbs extends IOs with Scalan {
   implicit def iOElement[A](implicit eA: Elem[A]): Elem[IO[A]] =
     new IOElem[A, IO[A]]
 
-  implicit object IOCompanionElem extends CompanionElem[IOCompanionAbs] {
+  implicit case object IOCompanionElem extends CompanionElem[IOCompanionAbs] {
     lazy val tag = weakTypeTag[IOCompanionAbs]
     protected def getDefaultRep = IO
   }
@@ -95,7 +95,7 @@ trait IOsAbs extends IOs with Scalan {
     proxyOps[ReadFileCompanionAbs](p)
   }
 
-  implicit object ReadFileCompanionElem extends CompanionElem[ReadFileCompanionAbs] {
+  implicit case object ReadFileCompanionElem extends CompanionElem[ReadFileCompanionAbs] {
     lazy val tag = weakTypeTag[ReadFileCompanionAbs]
     protected def getDefaultRep = ReadFile
   }
@@ -158,7 +158,7 @@ trait IOsAbs extends IOs with Scalan {
     proxyOps[WriteFileCompanionAbs](p)
   }
 
-  implicit object WriteFileCompanionElem extends CompanionElem[WriteFileCompanionAbs] {
+  implicit case object WriteFileCompanionElem extends CompanionElem[WriteFileCompanionAbs] {
     lazy val tag = weakTypeTag[WriteFileCompanionAbs]
     protected def getDefaultRep = WriteFile
   }

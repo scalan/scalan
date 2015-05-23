@@ -40,7 +40,7 @@ trait AuthenticationsAbs extends Authentications with Scalan {
   implicit def authElement[A](implicit eA: Elem[A]): Elem[Auth[A]] =
     new AuthElem[A, Auth[A]]
 
-  implicit object AuthCompanionElem extends CompanionElem[AuthCompanionAbs] {
+  implicit case object AuthCompanionElem extends CompanionElem[AuthCompanionAbs] {
     lazy val tag = weakTypeTag[AuthCompanionAbs]
     protected def getDefaultRep = Auth
   }
@@ -96,7 +96,7 @@ trait AuthenticationsAbs extends Authentications with Scalan {
     proxyOps[LoginCompanionAbs](p)
   }
 
-  implicit object LoginCompanionElem extends CompanionElem[LoginCompanionAbs] {
+  implicit case object LoginCompanionElem extends CompanionElem[LoginCompanionAbs] {
     lazy val tag = weakTypeTag[LoginCompanionAbs]
     protected def getDefaultRep = Login
   }
@@ -159,7 +159,7 @@ trait AuthenticationsAbs extends Authentications with Scalan {
     proxyOps[HasPermissionCompanionAbs](p)
   }
 
-  implicit object HasPermissionCompanionElem extends CompanionElem[HasPermissionCompanionAbs] {
+  implicit case object HasPermissionCompanionElem extends CompanionElem[HasPermissionCompanionAbs] {
     lazy val tag = weakTypeTag[HasPermissionCompanionAbs]
     protected def getDefaultRep = HasPermission
   }

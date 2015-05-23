@@ -321,7 +321,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   type TypeDesc = Elem[_] | SomeCont
   import Symbols._
 
-  def elemFromType(tpe: Type, elemMap: Map[Symbol, TypeDesc], baseType: Type): Elem[_] = tpe.normalize match {
+  def elemFromType(tpe: Type, elemMap: Map[Symbol, TypeDesc], baseType: Type): Elem[_] = tpe.dealias match {
     case TypeRef(_, classSymbol, params) => classSymbol match {
       case UnitSym => UnitElement
       case BooleanSym => BoolElement
@@ -352,7 +352,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       case ListSym =>
         val eItem = elemFromType(params(0), elemMap, baseType)
         listElement(eItem)
-      case _ if classSymbol.asType.isAbstractType =>
+      case _ if classSymbol.asType.isParameter =>
         elemMap.getOrElse(
           classSymbol,
           elemMap.collectFirst { case (sym, desc) if sym.name == classSymbol.name => desc }.getOrElse {
@@ -463,10 +463,10 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       val elem1 = elem.asInstanceOf[ListElem[_]]
       List(scala.Left(elem1.eItem) -> params(0))
     case _ if classSymbol.isClass =>
-      val declarations = classSymbol.asClass.selfType.declarations
+      val declarations = classSymbol.asClass.selfType.decls
       val res = declarations.flatMap {
         case member if member.isMethod =>
-          val memberTpe = member.asMethod.returnType.normalize
+          val memberTpe = member.asMethod.returnType.dealias
           memberTpe match {
             // member returning Elem, such as eItem
             case TypeRef(_, ElementSym, params) =>
@@ -498,9 +498,9 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         case Nil =>
           knownParams
         case (scala.Left(elem), tpe) :: rest =>
-          tpe.normalize match {
+          tpe.dealias match {
             case TypeRef(_, classSymbol, params) => classSymbol match {
-              case _ if classSymbol.asType.isAbstractType =>
+              case _ if classSymbol.asType.isParameter =>
                 extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, scala.Left(elem)))
               case _ =>
                 val elemParts = extractParts(elem, classSymbol, params, tpe)
@@ -510,13 +510,13 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               !!!(s"$tpe was not a TypeRef")
           }
         case (scala.Right(cont), tpe) :: rest =>
-          val classSymbol = tpe.normalize match {
+          val classSymbol = tpe.dealias match {
             case TypeRef(_, classSymbol, _) => classSymbol
             case PolyType(_, TypeRef(_, classSymbol, _)) => classSymbol
             case _ => !!!(s"Failed to extract symbol from $tpe")
           }
 
-          if (classSymbol.asType.isAbstractType)
+          if (classSymbol.asType.isParameter)
             extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, scala.Right(cont)))
           else {
 //            val elem = cont.lift(UnitElement)
@@ -567,7 +567,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   private def findScalaMethod(tpe: Type, m: Method) = {
-    val scalaMethod0 = tpe.member(newTermName(m.getName))
+    val scalaMethod0 = tpe.member(TermName(m.getName))
     if (scalaMethod0.isTerm) {
       val overloads = scalaMethod0.asTerm.alternatives
       val scalaMethod1 = (if (overloads.length == 1) {
@@ -581,7 +581,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         overloads.find { sym =>
           !isSupertypeOfDef(sym.owner) && {
             val scalaOverloadId = ReflectionUtil.annotation[OverloadId](sym).map { sAnnotation =>
-              val LiteralArgument(Constant(sOverloadId)) = sAnnotation.javaArgs.head._2
+              val annotationArgs = sAnnotation.tree.children.tail
+              val AssignOrNamedArg(_, Literal(Constant(sOverloadId))) = annotationArgs.head
               sOverloadId
             }
             scalaOverloadId == javaOverloadId
@@ -595,7 +596,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       if (scalaMethod1.returnType.typeSymbol != definitions.NothingClass) {
         scalaMethod1
       } else {
-        scalaMethod1.allOverriddenSymbols.find(_.asMethod.returnType.typeSymbol != definitions.NothingClass).getOrElse {
+        scalaMethod1.overrides.find(_.asMethod.returnType.typeSymbol != definitions.NothingClass).getOrElse {
           !!!(s"Method $scalaMethod1 on type $tpe and all overridden methods return Nothing")
         }.asMethod
       }
@@ -610,11 +611,11 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val scalaMethod = findScalaMethod(tpe, m)
 
     // http://stackoverflow.com/questions/29256896/get-precise-return-type-from-a-typetag-and-a-method
-    val returnType = scalaMethod.returnType.asSeenFrom(tpe, scalaMethod.owner).normalize
+    val returnType = scalaMethod.returnType.asSeenFrom(tpe, scalaMethod.owner).dealias
     returnType match {
       // FIXME can't figure out proper comparison with RepType here
       case TypeRef(_, sym, List(tpe1)) if sym.name.toString == "Rep" =>
-        val paramTypes = scalaMethod.paramss.flatten.map(_.typeSignature.asSeenFrom(tpe, scalaMethod.owner).normalize)
+        val paramTypes = scalaMethod.paramLists.flatten.map(_.typeSignature.asSeenFrom(tpe, scalaMethod.owner).dealias)
         // reverse to let implicit elem parameters be first
         val elemsWithTypes: List[(TypeDesc, Type)] = args.zip(paramTypes).reverse.flatMap {
           case (e: Exp[_], TypeRef(_, sym, List(tpeE))) if sym.name.toString == "Rep" =>
@@ -627,8 +628,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
           case (_: Function0[_] | _: Function1[_, _] | _: Function2[_, _, _] | _: Numeric[_] | _: Ordering[_], _) => Nil
           case (obj, tpeObj) =>
             tpeObj.members.flatMap {
-              case method: MethodSymbol if method.paramss.isEmpty =>
-                method.returnType.normalize match {
+              case method: MethodSymbol if method.paramLists.isEmpty =>
+                method.returnType.dealias match {
                   case TypeRef(_, ElementSym | ContSym, List(tpeElemOrCont)) =>
                     // TODO this doesn't work in InteractAuthExamplesTests.crossDomainStaged
                     // due to an apparent bug in scala-reflect. Test again after updating to 2.11
@@ -692,7 +693,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     val FloatSym = typeOf[Float].typeSymbol
     val DoubleSym = typeOf[Double].typeSymbol
     val StringSym = typeOf[String].typeSymbol
-    val PredefStringSym = definitions.PredefModule.moduleClass.asType.toType.member(newTypeName("String"))
+    val PredefStringSym = definitions.PredefModule.moduleClass.asType.toType.member(TypeName("String"))
     val CharSym = typeOf[Char].typeSymbol
 
     val Tuple2Sym = typeOf[(_, _)].typeSymbol

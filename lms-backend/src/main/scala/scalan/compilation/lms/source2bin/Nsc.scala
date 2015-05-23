@@ -37,7 +37,7 @@ object Nsc {
     S.println(s"${settings.classpath}\n")
     for(row <- reporter.infos) {
       S.println(s"${row.severity}: ${row.msg}")
-      S.println(s"|${row.pos.source.path}:${row.pos.safeLine}")
+      S.println(s"|${row.pos.source.path}:${row.pos.line}")
       S.println(s"|${row.pos.lineContent}")
       S.println("|"+" "*(row.pos.column-1) + "^")
     }

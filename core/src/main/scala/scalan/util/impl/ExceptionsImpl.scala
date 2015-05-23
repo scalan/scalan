@@ -48,7 +48,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
       lazy val eTo = element[SThrowableImpl]
     }
 
-  implicit object SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs] {
+  implicit case object SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs] {
     lazy val tag = weakTypeTag[SThrowableCompanionAbs]
     protected def getDefaultRep = SThrowable
   }
@@ -116,7 +116,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     proxyOps[SThrowableImplCompanionAbs](p)
   }
 
-  implicit object SThrowableImplCompanionElem extends CompanionElem[SThrowableImplCompanionAbs] {
+  implicit case object SThrowableImplCompanionElem extends CompanionElem[SThrowableImplCompanionAbs] {
     lazy val tag = weakTypeTag[SThrowableImplCompanionAbs]
     protected def getDefaultRep = SThrowableImpl
   }
@@ -178,7 +178,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
     proxyOps[SExceptionCompanionAbs](p)
   }
 
-  implicit object SExceptionCompanionElem extends CompanionElem[SExceptionCompanionAbs] {
+  implicit case object SExceptionCompanionElem extends CompanionElem[SExceptionCompanionAbs] {
     lazy val tag = weakTypeTag[SExceptionCompanionAbs]
     protected def getDefaultRep = SException
   }

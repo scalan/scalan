@@ -40,7 +40,7 @@ trait StatesAbs extends States with Scalan {
   implicit def state0Element[S, A](implicit eS: Elem[S], eA: Elem[A]): Elem[State0[S, A]] =
     new State0Elem[S, A, State0[S, A]]
 
-  implicit object State0CompanionElem extends CompanionElem[State0CompanionAbs] {
+  implicit case object State0CompanionElem extends CompanionElem[State0CompanionAbs] {
     lazy val tag = weakTypeTag[State0CompanionAbs]
     protected def getDefaultRep = State0
   }
@@ -96,7 +96,7 @@ trait StatesAbs extends States with Scalan {
     proxyOps[StateBaseCompanionAbs](p)
   }
 
-  implicit object StateBaseCompanionElem extends CompanionElem[StateBaseCompanionAbs] {
+  implicit case object StateBaseCompanionElem extends CompanionElem[StateBaseCompanionAbs] {
     lazy val tag = weakTypeTag[StateBaseCompanionAbs]
     protected def getDefaultRep = StateBase
   }

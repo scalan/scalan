@@ -56,9 +56,10 @@ trait LmsBridge { self: ScalanCtxExp =>
 
     def mirrorDefs(fromGraph: AstGraph, defs: Seq[TableEntry[_]]): LmsMirror = {
       val finalMirror = defs.foldLeft(withoutLastExp) { (m, t) =>
-        m.symMirror.get(t.sym) match {
+        val s = t.sym
+        m.symMirror.get(s) match {
           case Some(lmsExp) => m.withLastExp(lmsExp)
-          case None => transformDef(m, fromGraph, t.sym, t.rhs)
+          case None => transformDef(m, fromGraph, s, t.rhs)
         }
       }
       finalMirror

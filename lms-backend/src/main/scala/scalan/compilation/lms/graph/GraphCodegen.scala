@@ -290,7 +290,7 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
 
   override def emitFatBlock(rhs: List[Block[Any]]): Unit = {
     val results = rhs.map(getBlockResultFull)
-    val exp =Combine(results)
+    val exp: Exp[Any] = Combine(results)
     val block = Block(exp)
     emitBlock(block) // TODO: find another way
   }

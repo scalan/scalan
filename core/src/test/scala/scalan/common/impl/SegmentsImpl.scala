@@ -38,7 +38,7 @@ trait SegmentsAbs extends Segments with Scalan {
   implicit def segmentElement: Elem[Segment] =
     new SegmentElem[Segment]
 
-  implicit object SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs] {
+  implicit case object SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs] {
     lazy val tag = weakTypeTag[SegmentCompanionAbs]
     protected def getDefaultRep = Segment
   }
@@ -93,7 +93,7 @@ trait SegmentsAbs extends Segments with Scalan {
     proxyOps[IntervalCompanionAbs](p)
   }
 
-  implicit object IntervalCompanionElem extends CompanionElem[IntervalCompanionAbs] {
+  implicit case object IntervalCompanionElem extends CompanionElem[IntervalCompanionAbs] {
     lazy val tag = weakTypeTag[IntervalCompanionAbs]
     protected def getDefaultRep = Interval
   }
@@ -155,7 +155,7 @@ trait SegmentsAbs extends Segments with Scalan {
     proxyOps[SliceCompanionAbs](p)
   }
 
-  implicit object SliceCompanionElem extends CompanionElem[SliceCompanionAbs] {
+  implicit case object SliceCompanionElem extends CompanionElem[SliceCompanionAbs] {
     lazy val tag = weakTypeTag[SliceCompanionAbs]
     protected def getDefaultRep = Slice
   }
@@ -218,7 +218,7 @@ trait SegmentsAbs extends Segments with Scalan {
     proxyOps[CenteredCompanionAbs](p)
   }
 
-  implicit object CenteredCompanionElem extends CompanionElem[CenteredCompanionAbs] {
+  implicit case object CenteredCompanionElem extends CompanionElem[CenteredCompanionAbs] {
     lazy val tag = weakTypeTag[CenteredCompanionAbs]
     protected def getDefaultRep = Centered
   }

@@ -130,8 +130,8 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
   }
 
   object IsSumMapLambda {
-    def unapply[A,B](f: Rep[A => B]): Option[SumMap[_,_,_,_]] = f match {
-      case Def(Lambda(_, _, x, Def(m: SumMap[_,_,_,_]))) if x == m.sum => Some(m)
+    def unapply[A,B](lam: Lambda[A, B]): Option[SumMap[_,_,_,_]] = lam.y match {
+      case Def(m: SumMap[_,_,_,_]) if lam.x == m.sum => Some(m)
       case _ => None
     }
   }

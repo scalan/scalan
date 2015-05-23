@@ -6,13 +6,11 @@ package scalan.meta
 
 import java.io.File
 
-import scala.reflect.{ClassTag,classTag}
-import scala.tools.nsc.interactive.Global
+import scala.tools.nsc.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
 import scala.language.implicitConversions
-import scala.reflect.internal.util.RangePosition
-import scala.reflect.internal.util.OffsetPosition
+import scala.reflect.internal.util.{SourceFile, RangePosition, OffsetPosition}
 
 trait ScalanParsers extends ScalanAst {
   val settings = new Settings
@@ -23,6 +21,9 @@ trait ScalanParsers extends ScalanAst {
 
   import compiler._
   implicit def nameToString(name: compiler.Name): String = name.toString
+
+  // has to be created for parser to work
+  val run = new Run
 
   implicit class OptionListOps[A](opt: Option[List[A]]) {
     def flatList: List[A] = opt.toList.flatten
@@ -57,9 +58,13 @@ trait ScalanParsers extends ScalanAst {
 
   def config: CodegenConfig
 
+  def parseFile(source: SourceFile): Tree = {
+    compiler.newUnitParser(new compiler.CompilationUnit(source)).parse()
+  }
+
   def parseEntityModule(file: File) = {
     val source = compiler.getSourceFile(file.getPath)
-    val tree = compiler.parseTree(source)
+    val tree = parseFile(source)
     tree match {
       case pd: PackageDef =>
         entityModule(pd)

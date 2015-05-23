@@ -42,7 +42,7 @@ trait CollectionsAbs extends Collections with Scalan {
   implicit def collectionElement[A](implicit eItem: Elem[A]): Elem[Collection[A]] =
     new CollectionElem[A, Collection[A]]
 
-  implicit object CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs] {
+  implicit case object CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionCompanionAbs]
     protected def getDefaultRep = Collection
   }
@@ -151,7 +151,7 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[UnitCollectionCompanionAbs](p)
   }
 
-  implicit object UnitCollectionCompanionElem extends CompanionElem[UnitCollectionCompanionAbs] {
+  implicit case object UnitCollectionCompanionElem extends CompanionElem[UnitCollectionCompanionAbs] {
     lazy val tag = weakTypeTag[UnitCollectionCompanionAbs]
     protected def getDefaultRep = UnitCollection
   }
@@ -213,7 +213,7 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[CollectionOverArrayCompanionAbs](p)
   }
 
-  implicit object CollectionOverArrayCompanionElem extends CompanionElem[CollectionOverArrayCompanionAbs] {
+  implicit case object CollectionOverArrayCompanionElem extends CompanionElem[CollectionOverArrayCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionOverArrayCompanionAbs]
     protected def getDefaultRep = CollectionOverArray
   }
@@ -275,7 +275,7 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[CollectionOverListCompanionAbs](p)
   }
 
-  implicit object CollectionOverListCompanionElem extends CompanionElem[CollectionOverListCompanionAbs] {
+  implicit case object CollectionOverListCompanionElem extends CompanionElem[CollectionOverListCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionOverListCompanionAbs]
     protected def getDefaultRep = CollectionOverList
   }
@@ -337,7 +337,7 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[CollectionOverSeqCompanionAbs](p)
   }
 
-  implicit object CollectionOverSeqCompanionElem extends CompanionElem[CollectionOverSeqCompanionAbs] {
+  implicit case object CollectionOverSeqCompanionElem extends CompanionElem[CollectionOverSeqCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionOverSeqCompanionAbs]
     protected def getDefaultRep = CollectionOverSeq
   }
@@ -401,7 +401,7 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[PairCollectionSOACompanionAbs](p)
   }
 
-  implicit object PairCollectionSOACompanionElem extends CompanionElem[PairCollectionSOACompanionAbs] {
+  implicit case object PairCollectionSOACompanionElem extends CompanionElem[PairCollectionSOACompanionAbs] {
     lazy val tag = weakTypeTag[PairCollectionSOACompanionAbs]
     protected def getDefaultRep = PairCollectionSOA
   }
@@ -464,7 +464,7 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[PairCollectionAOSCompanionAbs](p)
   }
 
-  implicit object PairCollectionAOSCompanionElem extends CompanionElem[PairCollectionAOSCompanionAbs] {
+  implicit case object PairCollectionAOSCompanionElem extends CompanionElem[PairCollectionAOSCompanionAbs] {
     lazy val tag = weakTypeTag[PairCollectionAOSCompanionAbs]
     protected def getDefaultRep = PairCollectionAOS
   }
@@ -527,7 +527,7 @@ trait CollectionsAbs extends Collections with Scalan {
     proxyOps[NestedCollectionFlatCompanionAbs](p)
   }
 
-  implicit object NestedCollectionFlatCompanionElem extends CompanionElem[NestedCollectionFlatCompanionAbs] {
+  implicit case object NestedCollectionFlatCompanionElem extends CompanionElem[NestedCollectionFlatCompanionAbs] {
     lazy val tag = weakTypeTag[NestedCollectionFlatCompanionAbs]
     protected def getDefaultRep = NestedCollectionFlat
   }

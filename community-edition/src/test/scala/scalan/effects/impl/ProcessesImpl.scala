@@ -31,7 +31,7 @@ trait ProcessesAbs extends Processes with Scalan {
     }
 
     def convertProcess(x : Rep[Process[F, O]]): Rep[To] = {
-      assert(x.selfType1 match { case _: ProcessElem[_, _, _] => true; case _ => false })
+      assert(x.selfType1.asInstanceOf[Element[_]] match { case _: ProcessElem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -40,7 +40,7 @@ trait ProcessesAbs extends Processes with Scalan {
   implicit def processElement[F[_], O](implicit cF: Cont[F], eO: Elem[O]): Elem[Process[F, O]] =
     new ProcessElem[F, O, Process[F, O]]
 
-  implicit object ProcessCompanionElem extends CompanionElem[ProcessCompanionAbs] {
+  implicit case object ProcessCompanionElem extends CompanionElem[ProcessCompanionAbs] {
     lazy val tag = weakTypeTag[ProcessCompanionAbs]
     protected def getDefaultRep = Process
   }
@@ -98,7 +98,7 @@ trait ProcessesAbs extends Processes with Scalan {
     proxyOps[AwaitCompanionAbs](p)
   }
 
-  implicit object AwaitCompanionElem extends CompanionElem[AwaitCompanionAbs] {
+  implicit case object AwaitCompanionElem extends CompanionElem[AwaitCompanionAbs] {
     lazy val tag = weakTypeTag[AwaitCompanionAbs]
     protected def getDefaultRep = Await
   }
@@ -162,7 +162,7 @@ trait ProcessesAbs extends Processes with Scalan {
     proxyOps[EmitCompanionAbs](p)
   }
 
-  implicit object EmitCompanionElem extends CompanionElem[EmitCompanionAbs] {
+  implicit case object EmitCompanionElem extends CompanionElem[EmitCompanionAbs] {
     lazy val tag = weakTypeTag[EmitCompanionAbs]
     protected def getDefaultRep = Emit
   }
@@ -225,7 +225,7 @@ trait ProcessesAbs extends Processes with Scalan {
     proxyOps[HaltCompanionAbs](p)
   }
 
-  implicit object HaltCompanionElem extends CompanionElem[HaltCompanionAbs] {
+  implicit case object HaltCompanionElem extends CompanionElem[HaltCompanionAbs] {
     lazy val tag = weakTypeTag[HaltCompanionAbs]
     protected def getDefaultRep = Halt
   }

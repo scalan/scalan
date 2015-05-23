@@ -30,7 +30,7 @@ trait CoproductsAbs extends Coproducts with Scalan {
     }
 
     def convertCoproduct(x : Rep[Coproduct[F, G, A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: CoproductElem[_, _, _, _] => true; case _ => false })
+      assert(x.selfType1.asInstanceOf[Element[_]] match { case _: CoproductElem[_, _, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -39,7 +39,7 @@ trait CoproductsAbs extends Coproducts with Scalan {
   implicit def coproductElement[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Elem[Coproduct[F, G, A]] =
     new CoproductElem[F, G, A, Coproduct[F, G, A]]
 
-  implicit object CoproductCompanionElem extends CompanionElem[CoproductCompanionAbs] {
+  implicit case object CoproductCompanionElem extends CompanionElem[CoproductCompanionAbs] {
     lazy val tag = weakTypeTag[CoproductCompanionAbs]
     protected def getDefaultRep = Coproduct
   }
@@ -94,7 +94,7 @@ trait CoproductsAbs extends Coproducts with Scalan {
     proxyOps[CoproductImplCompanionAbs](p)
   }
 
-  implicit object CoproductImplCompanionElem extends CompanionElem[CoproductImplCompanionAbs] {
+  implicit case object CoproductImplCompanionElem extends CompanionElem[CoproductImplCompanionAbs] {
     lazy val tag = weakTypeTag[CoproductImplCompanionAbs]
     protected def getDefaultRep = CoproductImpl
   }

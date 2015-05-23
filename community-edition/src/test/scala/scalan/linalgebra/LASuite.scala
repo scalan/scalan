@@ -12,8 +12,8 @@ import scalan.{ScalanCommunityDslSeq, BaseShouldTests, ScalanCtxExp, ScalanCtxSe
 
 class LASuite extends BaseShouldTests {
 
-  lazy val vector1 = Array(Pair(0, 1.0), Pair(1, 2.0), Pair(2, 3.0), Pair(3, 4.0), Pair(4, 5.0))
-  lazy val vector2 = Array(Pair(0, 1.0), Pair(2, 3.0), Pair(3, 4.0))
+  lazy val vector1 = Array((0, 1.0), (1, 2.0), (2, 3.0), (3, 4.0), (4, 5.0))
+  lazy val vector2 = Array((0, 1.0), (2, 3.0), (3, 4.0))
   lazy val len = 5
 
   "in seq context1" should "execute functions" in {

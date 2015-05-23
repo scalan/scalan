@@ -38,7 +38,7 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
   implicit def aStringElement: Elem[AString] =
     new AStringElem[AString]
 
-  implicit object AStringCompanionElem extends CompanionElem[AStringCompanionAbs] {
+  implicit case object AStringCompanionElem extends CompanionElem[AStringCompanionAbs] {
     lazy val tag = weakTypeTag[AStringCompanionAbs]
     protected def getDefaultRep = AString
   }
@@ -92,7 +92,7 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     proxyOps[SStringCompanionAbs](p)
   }
 
-  implicit object SStringCompanionElem extends CompanionElem[SStringCompanionAbs] {
+  implicit case object SStringCompanionElem extends CompanionElem[SStringCompanionAbs] {
     lazy val tag = weakTypeTag[SStringCompanionAbs]
     protected def getDefaultRep = SString
   }
@@ -153,7 +153,7 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     proxyOps[CStringCompanionAbs](p)
   }
 
-  implicit object CStringCompanionElem extends CompanionElem[CStringCompanionAbs] {
+  implicit case object CStringCompanionElem extends CompanionElem[CStringCompanionAbs] {
     lazy val tag = weakTypeTag[CStringCompanionAbs]
     protected def getDefaultRep = CString
   }

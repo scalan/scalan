@@ -11,7 +11,7 @@ class SumTests extends BaseTests { suite =>
       lazy val t1 = fun { x: Rep[Int|Unit] => x.mapSum(l => l + 1, r => r) }
     }
     import ctx._
-    t1 should matchPattern { case IsSumMapLambda(_) => }
+    t1 should matchPattern { case Def(IsSumMapLambda(_)) => }
   }
 
   test("constant propagation from If to SumFold") {

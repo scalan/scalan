@@ -70,7 +70,7 @@ trait SeqsAbs extends Seqs with Scalan {
       lazy val eTo = element[SSeqImpl[A]]
     }
 
-  implicit object SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs] {
+  implicit case object SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs] {
     lazy val tag = weakTypeTag[SSeqCompanionAbs]
     protected def getDefaultRep = SSeq
   }
@@ -184,7 +184,7 @@ trait SeqsAbs extends Seqs with Scalan {
     proxyOps[SSeqImplCompanionAbs](p)
   }
 
-  implicit object SSeqImplCompanionElem extends CompanionElem[SSeqImplCompanionAbs] {
+  implicit case object SSeqImplCompanionElem extends CompanionElem[SSeqImplCompanionAbs] {
     lazy val tag = weakTypeTag[SSeqImplCompanionAbs]
     protected def getDefaultRep = SSeqImpl
   }

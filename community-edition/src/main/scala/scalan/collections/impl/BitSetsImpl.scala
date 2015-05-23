@@ -38,7 +38,7 @@ trait BitSetsAbs extends BitSets with Scalan {
   implicit def bitSetElement: Elem[BitSet] =
     new BitSetElem[BitSet]
 
-  implicit object BitSetCompanionElem extends CompanionElem[BitSetCompanionAbs] {
+  implicit case object BitSetCompanionElem extends CompanionElem[BitSetCompanionAbs] {
     lazy val tag = weakTypeTag[BitSetCompanionAbs]
     protected def getDefaultRep = BitSet
   }
@@ -92,7 +92,7 @@ trait BitSetsAbs extends BitSets with Scalan {
     proxyOps[BoolCollBitSetCompanionAbs](p)
   }
 
-  implicit object BoolCollBitSetCompanionElem extends CompanionElem[BoolCollBitSetCompanionAbs] {
+  implicit case object BoolCollBitSetCompanionElem extends CompanionElem[BoolCollBitSetCompanionAbs] {
     lazy val tag = weakTypeTag[BoolCollBitSetCompanionAbs]
     protected def getDefaultRep = BoolCollBitSet
   }

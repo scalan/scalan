@@ -31,7 +31,7 @@ trait FreeMsAbs extends FreeMs with Scalan {
     }
 
     def convertFreeM(x : Rep[FreeM[F, A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: FreeMElem[_, _, _] => true; case _ => false })
+      assert(x.selfType1.asInstanceOf[Element[_]] match { case _: FreeMElem[_, _, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
@@ -40,7 +40,7 @@ trait FreeMsAbs extends FreeMs with Scalan {
   implicit def freeMElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]): Elem[FreeM[F, A]] =
     new FreeMElem[F, A, FreeM[F, A]]
 
-  implicit object FreeMCompanionElem extends CompanionElem[FreeMCompanionAbs] {
+  implicit case object FreeMCompanionElem extends CompanionElem[FreeMCompanionAbs] {
     lazy val tag = weakTypeTag[FreeMCompanionAbs]
     protected def getDefaultRep = FreeM
   }
@@ -96,7 +96,7 @@ trait FreeMsAbs extends FreeMs with Scalan {
     proxyOps[DoneCompanionAbs](p)
   }
 
-  implicit object DoneCompanionElem extends CompanionElem[DoneCompanionAbs] {
+  implicit case object DoneCompanionElem extends CompanionElem[DoneCompanionAbs] {
     lazy val tag = weakTypeTag[DoneCompanionAbs]
     protected def getDefaultRep = Done
   }
@@ -159,7 +159,7 @@ trait FreeMsAbs extends FreeMs with Scalan {
     proxyOps[MoreCompanionAbs](p)
   }
 
-  implicit object MoreCompanionElem extends CompanionElem[MoreCompanionAbs] {
+  implicit case object MoreCompanionElem extends CompanionElem[MoreCompanionAbs] {
     lazy val tag = weakTypeTag[MoreCompanionAbs]
     protected def getDefaultRep = More
   }
@@ -224,7 +224,7 @@ trait FreeMsAbs extends FreeMs with Scalan {
     proxyOps[FlatMapCompanionAbs](p)
   }
 
-  implicit object FlatMapCompanionElem extends CompanionElem[FlatMapCompanionAbs] {
+  implicit case object FlatMapCompanionElem extends CompanionElem[FlatMapCompanionAbs] {
     lazy val tag = weakTypeTag[FlatMapCompanionAbs]
     protected def getDefaultRep = FlatMap
   }
