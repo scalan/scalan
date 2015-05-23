@@ -3,6 +3,7 @@ package scalan.compilation.lms.common
 import java.util.HashMap
 
 import scala.reflect.SourceContext
+import scala.virtualization.lms.common.{ArrayOpsExp, ScalaGenBase}
 import scala.virtualization.lms.internal.Transforming
 import scalan.compilation.lms.LmsBackendFacade
 
@@ -188,11 +189,10 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
   }
 
   def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]] = {
-    val bu = ArrayBuilder.make[A]
-    for(a <- xs ) {bu += a}
-    bu += value
-    bu.result
+    ArrayAppend(xs, value)
   }
+
+  case class ArrayAppend[A](xs: Rep[Array[A]], value: Rep[A])(implicit val m: Manifest[A]) extends Def[Array[A]]
 
   def array_cons[A: Manifest](value: Rep[A], xs: Rep[Array[A]]): Rep[Array[A]] = {
     xs.insert(0, value)
@@ -207,8 +207,27 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
         ArrayToSeq(f(arr))
       case ArrayIndex(arr, i) =>
         ArrayIndex(f(arr), f(i))
+      case a @ ArrayAppend(arr, v) =>
+        ArrayAppend(f(arr), f(v))(a.m)
       case _ =>
         super.mirrorDef(e,f)
     }).asInstanceOf[Def[A]]
+  }
+}
+
+trait ScalaGenArrayOpsExt extends ScalaGenBase {
+  val IR: ArrayOpsExtExp
+  import IR._
+
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case a @ ArrayAppend(xs, v) =>
+      gen"""val $sym = {
+           |  val len = $xs.length
+           |  val d = new Array[${remap(a.m)}](len + 1)
+           |  System.arraycopy($xs, 0, d, 0, len)
+           |  d(len) = $v
+           |  d
+           |}"""
+    case _ => super.emitNode(sym, rhs)
   }
 }
