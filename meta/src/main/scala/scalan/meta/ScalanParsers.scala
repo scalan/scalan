@@ -84,9 +84,9 @@ trait ScalanParsers {
         case cd @ ClassDef(_,name,_,_) if name.toString == ("Seq" + module.entityOps.name) => cd
       }
     } yield {
-        val cd = seqOpsTrait.impl.body.collect { case item: DefDef => item }
-        seqImplementation(cd, seqOpsTrait)
-      }
+      val cd = seqOpsTrait.impl.body.collect { case item: DefDef => item }
+      seqImplementation(cd, seqOpsTrait)
+    }
 
     module.copy(seqDslImpl = seqExplicitOps.map(SSeqImplementation(_)))
   }

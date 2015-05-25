@@ -73,7 +73,7 @@ class BoilerplateTool extends StrictLogging {
   )
 
   val collectTypeSynonyms = coreTypeSynonyms ++ Map(
-    "Coll" -> "Collection", "PairColl" -> "IPairCollection", "NColl" -> "INestedCollection"
+    "Coll" -> "Collection", "PairColl" -> "PairCollection", "NColl" -> "NestedCollection"
   )
   lazy val ceConfig = CodegenConfig(
     name = "ce",
@@ -166,6 +166,37 @@ class BoilerplateTool extends StrictLogging {
     effectsTypeSynonims
   )
 
+  val effects2TypeSynonims = Map(
+    "RFree"       -> "Free",
+    "RCoproduct"  -> "Coproduct",
+    "RepInteract" -> "Interact",
+    "RepAuth" -> "Auth"
+    // declare your type synonims for User Defined types here (see type PA[A] = Rep[PArray[A]])
+  )
+  lazy val effects2Config = CodegenConfig(
+    name = "effects2",
+    srcPath = "../community-edition/src/test/scala",
+    entityFiles = List(
+      "scalan/effects/IOs.scala",
+      "scalan/effects/Readers.scala",
+      "scalan/effects/States.scala",
+      "scalan/effects/FreeStates.scala",
+      "scalan/effects/FreeMs.scala",
+      "scalan/effects/Processes.scala",
+      "scalan/effects/Frees.scala",
+      "scalan/effects/Coproducts.scala",
+      "scalan/effects/Interactions.scala",
+      "scalan/effects/Auths.scala"
+    ),
+    baseContextTrait = "Scalan",
+    seqContextTrait = "ScalanSeq",
+    stagedContextTrait = "ScalanExp",
+    extraImports = List(
+      "scala.reflect.runtime.universe._", "scala.reflect._",
+      "scalan.common.Default"),
+    effects2TypeSynonims
+  )
+
   lazy val collectionsConfig = CodegenConfig(
     name = "collections",
     srcPath = "../community-edition/src/main/scala",
@@ -237,8 +268,9 @@ class BoilerplateTool extends StrictLogging {
     "mt" -> List(metaTestConfig),
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "ce-all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig),
-    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, eeConfig)
+    "effects2" -> List(effects2Config),
+    "ce-all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config),
+    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config, eeConfig)
   )
 
   def main(args: Array[String]) {

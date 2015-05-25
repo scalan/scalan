@@ -31,7 +31,7 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDS
           val name = conf.funcName.name
           import scala.reflect.runtime.universe._
           val instanceMirror = runtimeMirror(obj.getClass.getClassLoader).reflect(lms)
-          val lmsMethod = instanceMirror.symbol.typeSignature.member(newTermName(name))
+          val lmsMethod = instanceMirror.symbol.typeSignature.member(TermName(name))
           instanceMirror.reflectMethod(lmsMethod.asMethod).apply(obj, createManifest(receiver.elem)).asInstanceOf[lms.Exp[_]]
       }
       case Some(nonScalaFunc) =>
@@ -48,7 +48,7 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDS
   }
 
   override def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
-    case u: scalan.collections.impl.CollectionsExp#ExpBaseCollection[_] =>
+    case u: scalan.collections.impl.CollectionsExp#ExpCollectionOverArray[_] =>
       val exp = Manifest.classType(u.getClass) match {
         case (mA: Manifest[a]) =>
           lms.newObj[a]("scalan.imp.ArrayImp", Seq(m.symMirrorUntyped(u.arr.asInstanceOf[Exp[_]])), true)(mA)

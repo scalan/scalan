@@ -20,23 +20,25 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
   class AStringElem[To <: AString]
     extends EntityElem[To] {
     override def isEntityType = true
-    override def tag = {
+    override lazy val tag = {
       weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = convertAString(x.asRep[AString])
+    override def convert(x: Rep[Reifiable[_]]) = {
+      val conv = fun {x: Rep[AString] =>  convertAString(x) }
+      tryConvert(element[AString], this, x, conv)
+    }
+
     def convertAString(x : Rep[AString]): Rep[To] = {
-      //assert(x.selfType1.isInstanceOf[AStringElem[_]])
+      assert(x.selfType1 match { case _: AStringElem[_] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def aStringElement: Elem[AString] =
-    new AStringElem[AString] {
-    }
+    new AStringElem[AString]
 
-  trait AStringCompanionElem extends CompanionElem[AStringCompanionAbs]
-  implicit lazy val AStringCompanionElem: AStringCompanionElem = new AStringCompanionElem {
+  implicit case object AStringCompanionElem extends CompanionElem[AStringCompanionAbs] {
     lazy val tag = weakTypeTag[AStringCompanionAbs]
     protected def getDefaultRep = AString
   }
@@ -55,7 +57,9 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     with ConcreteElem[SStringData, SString] {
     override def convertAString(x: Rep[AString]) = SString(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      weakTypeTag[SString]
+    }
   }
 
   // state representation type
@@ -69,9 +73,6 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     override def to(p: Rep[String]) = {
       val wrappedValueOfBaseType = p
       SString(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      weakTypeTag[SString]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[SString]](SString(""))
     lazy val eTo = new SStringElem(this)
@@ -91,11 +92,10 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     proxyOps[SStringCompanionAbs](p)
   }
 
-  class SStringCompanionElem extends CompanionElem[SStringCompanionAbs] {
+  implicit case object SStringCompanionElem extends CompanionElem[SStringCompanionAbs] {
     lazy val tag = weakTypeTag[SStringCompanionAbs]
     protected def getDefaultRep = SString
   }
-  implicit lazy val SStringCompanionElem: SStringCompanionElem = new SStringCompanionElem
 
   implicit def proxySString(p: Rep[SString]): SString =
     proxyOps[SString](p)
@@ -118,7 +118,9 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     with ConcreteElem[CStringData, CString] {
     override def convertAString(x: Rep[AString]) = CString(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
-    override lazy val tag = super[ConcreteElem].tag
+    override lazy val tag = {
+      weakTypeTag[CString]
+    }
   }
 
   // state representation type
@@ -132,9 +134,6 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     override def to(p: Rep[String]) = {
       val wrappedValueOfBaseType = p
       CString(wrappedValueOfBaseType)
-    }
-    lazy val tag = {
-      weakTypeTag[CString]
     }
     lazy val defaultRepTo = Default.defaultVal[Rep[CString]](CString(""))
     lazy val eTo = new CStringElem(this)
@@ -154,11 +153,10 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
     proxyOps[CStringCompanionAbs](p)
   }
 
-  class CStringCompanionElem extends CompanionElem[CStringCompanionAbs] {
+  implicit case object CStringCompanionElem extends CompanionElem[CStringCompanionAbs] {
     lazy val tag = weakTypeTag[CStringCompanionAbs]
     protected def getDefaultRep = CString
   }
-  implicit lazy val CStringCompanionElem: CStringCompanionElem = new CStringCompanionElem
 
   implicit def proxyCString(p: Rep[CString]): CString =
     proxyOps[CString](p)
@@ -307,7 +305,7 @@ trait AbstractStringsExp extends AbstractStringsDsl with ScalanExp {
   object AStringCompanionMethods {
     object defaultVal {
       def unapply(d: Def[_]): Option[Unit] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AStringCompanionElem] && method.getName == "defaultVal" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem == AStringCompanionElem && method.getName == "defaultVal" =>
           Some(()).asInstanceOf[Option[Unit]]
         case _ => None
       }
@@ -319,7 +317,7 @@ trait AbstractStringsExp extends AbstractStringsDsl with ScalanExp {
 
     object apply {
       def unapply(d: Def[_]): Option[Rep[String]] = d match {
-        case MethodCall(receiver, method, Seq(msg, _*), _) if receiver.elem.isInstanceOf[AStringCompanionElem] && method.getName == "apply" =>
+        case MethodCall(receiver, method, Seq(msg, _*), _) if receiver.elem == AStringCompanionElem && method.getName == "apply" =>
           Some(msg).asInstanceOf[Option[Rep[String]]]
         case _ => None
       }

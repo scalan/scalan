@@ -3,50 +3,39 @@ package scalan.primitives
 import java.io.File
 import java.lang.reflect.Method
 
+import scala.io.StdIn
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp}
 
 class EffectsTests extends BaseTests { suite =>
-  trait ConsoleDsl extends Scalan {
-    def print(s: Rep[String]): Rep[Unit]
-    def read: Rep[String]
-  }
+//  trait ConsoleDsl extends Scalan {
+//    def print(s: Rep[String]): Rep[Unit]
+//    def read: Rep[String]
+//  }
 
-  trait MyProg extends Scalan with ConsoleDsl {
+  trait MyProg extends Scalan {
     lazy val t1 = fun { (in: Rep[String]) => Thunk {
-        print(in)
+        console_printlnE(in)
     }}
     lazy val t2 = fun { (in: Rep[String]) => Thunk {
-      print(in)
-      print(in + in)
+      console_printlnE(in)
+      console_printlnE(in + in)
     }}
     lazy val t3 = fun { (in: Rep[String]) => Thunk {
-      Thunk { print(in) }
-      print(in + in)
-      print(in + in)
-      print(in + in)
-      print(in + in)
+      Thunk { console_printlnE(in) }
+      console_printlnE(in + in)
+      console_printlnE(in + in)
+      console_printlnE(in + in)
+      console_printlnE(in + in)
     }}
 
+    lazy val t4 = fun { (in: Rep[String]) =>
+      IF (in.contains("abc")) THEN { console_printlnE(in) } ELSE { console_printlnE(in) }
+    }
   }
 
-  abstract class MyProgStaged(testName: String) extends TestContext(this, testName) with  MyProg  with ConsoleDsl {
-
-    def print(s: Rep[String]): Rep[Unit] =
-      reflectEffect(Print(s))
-    def read: Rep[String] =
-      reflectEffect(Read())
-
-    case class Print(s: Rep[String]) extends BaseDef[Unit]  {
-      override def uniqueOpId = name(selfType)
-      override def mirror(t: Transformer) = Print(t(s))
-    }
-
-    case class Read() extends BaseDef[String]  {
-      override def uniqueOpId = name(selfType)
-      override def mirror(t: Transformer) = Read()
-    }
+  abstract class MyProgStaged(testName: String) extends TestCompilerContext(this, testName) with  MyProg with EffectfulCompiler {
   }
 
   test("simpleEffectsStaged") {
@@ -54,8 +43,8 @@ class EffectsTests extends BaseTests { suite =>
       def test() = { }
     }
     ctx.test
-    ctx.emit("t1", ctx.t1)
-    ctx.emit("t2", ctx.t2)
+    ctx.test("t1", ctx.t1)
+    ctx.test("t2", ctx.t2)
   }
 
   test("nestedThunksStaged") {
@@ -63,9 +52,21 @@ class EffectsTests extends BaseTests { suite =>
       def test() = { }
     }
     ctx.test
-    ctx.emit("t3", ctx.t3)
+    ctx.test("t3", ctx.t3)
   }
 
+  test("IfThenElseWithEffectsSimple") {
+    val ctx = new MyProgStaged("IfThenElseWithEffectsSimple") {
+      def test() = {
+        val Def(lam : Lambda[_,_]) = t4
+        val b = lam.branches
+        assert(true)
+
+      }
+    }
+    ctx.test
+    ctx.test("t4", ctx.t4)
+  }
   trait MyDomainProg extends Scalan with SegmentsDsl {
 //    lazy val t1 = fun { (in: Rep[Int]) =>
 //      Thunk { Interval(in, in) }.force.length
@@ -87,17 +88,13 @@ class EffectsTests extends BaseTests { suite =>
       }
     }
     ctx.test
-   // ctx.emit("t1", ctx.t1)
+   // ctx.test("t1", ctx.t1)
   }
 
   test("throwablesSeq") {
     val ctx = new ScalanCtxSeq with  MyProg {
-      def print(s: Rep[String]): Rep[Unit] = print(s)
-      def read: Rep[String] = Console.readLine()
-
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
-
       }
     }
     ctx.test

@@ -9,6 +9,8 @@ import scalan.common.Lazy
 trait Functions { self: Scalan =>
   implicit class LambdaOps[A,B](f: Rep[A => B]) {
     def apply(x: Rep[A]): Rep[B] = mkApply(f, x)
+    def >>[C](g: Rep[B => C]) = compose(g, f)
+    def <<[C](g: Rep[C => A]) = compose(f, g)
   }
   def par[B:Elem](nJobs: Rep[Int], f: Rep[Int=>B]): Arr[B]
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B]
@@ -21,6 +23,9 @@ trait Functions { self: Scalan =>
   //def fun[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = mkLambda(f)
   //def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
   //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C]
+  def identityFun[A: Elem]: Rep[A => A]
+  def constFun[A: Elem, B](x: Rep[B]): Rep[A => B]
+  def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C]
 }
 
 trait FunctionsSeq extends Functions { self: ScalanSeq =>
@@ -42,6 +47,9 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
 //  def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = {
 //    f(letrec(f, mayInline))(_)
 //  }
+  def identityFun[A: Elem]: Rep[A => A] = x => x
+  def constFun[A: Elem, B](x: Rep[B]): Rep[A => B] = _ => x
+  def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = x => f(g(x))
 }
 
 trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: ScalanExp =>
@@ -94,12 +102,25 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   type LambdaData[A,B] = (Lambda[A,B], Option[Exp[A] => Exp[B]], Exp[A], Exp[B])
   object Lambda {
-    def unapply[A,B](d: Def[A => B]): Option[LambdaData[A,B]] = d match {
-      case l: Lambda[_,_] =>
-        val lam = l.asInstanceOf[Lambda[A,B]]
-        Some((lam, lam.f, lam.x, lam.y))
-      case _ => None
+    def unapply[A,B](lam: Lambda[A, B]): Option[LambdaData[A,B]] = lam match {
+      case null => None
+      case _ => Some((lam, lam.f, lam.x, lam.y))
     }
+  }
+
+  object ConstantLambda {
+    // if lam.y depends on lam.x indirectly, lam.schedule must contain the dependency path
+    // and its length will be > 1
+    def unapply[A,B](lam: Lambda[A, B]): Option[Exp[B]] =
+      if (lam.schedule.length <= 1 && !dep(lam.y).contains(lam.x) && lam.y != lam.x)
+        Some(lam.y)
+      else
+        None
+  }
+
+  // matcher version of Lambda.isIdentity
+  object IdentityLambda {
+    def unapply[A,B](lam: Lambda[A, B]): Boolean = lam.isIdentity
   }
 
   case class ParallelExecute[B:Elem](nJobs: Exp[Int], f: Exp[Int => B])  extends Def[Array[B]] {
@@ -186,7 +207,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   def mirrorApply[A,B](f: Exp[A => B], s: Exp[A], subst: MapTransformer = MapTransformer.Empty): Exp[B] = {
     val Def(lam: Lambda[A, B]) = f
     val body = lam.scheduleSyms
-    val (t, _) = DefaultMirror.mirrorSymbols(subst + (lam.x -> s), NoRewriting, body)
+    val (t, _) = DefaultMirror.mirrorSymbols(subst + (lam.x -> s), NoRewriting, lam, body)
     t(lam.y).asRep[B]
   }
 
@@ -201,25 +222,25 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   }
 
   def mkLambda[A,B,C]
-  (fun: Rep[A]=>Rep[B]=>Rep[C])
+  (f: Rep[A]=>Rep[B]=>Rep[C])
   (implicit eA: LElem[A], eB: LElem[B]): Rep[A=>B=>C] = {
     val y = fresh[B]
-    mkLambda((a: Rep[A]) => lambda(y)((b:Rep[B]) => fun(a)(b), true), true)
+    mkLambda((a: Rep[A]) => lambda(y)((b:Rep[B]) => f(a)(b), true), true)
   }
 
-  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = {
+  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = {
     implicit val leAB = Lazy(pairElement(eA.value, eB.value))
     mkLambda({ (p: Rep[(A, B)]) =>
       val (x, y) = unzipPair(p)
-      fun(x, y)
+      f(x, y)
     }, true)
   }
 
-  def lambda[A,B](x: Rep[A])(fun: Exp[A] => Exp[B], mayInline: Boolean): Exp[A=>B] = {
+  def lambda[A,B](x: Rep[A])(f: Exp[A] => Exp[B], mayInline: Boolean): Exp[A=>B] = {
     val res = fresh[A => B](Lazy(
       !!!("should not be called: this symbol should have definition and element should be taken from corresponding lambda"))
     )
-    reifyFunction(fun, x, res, mayInline)
+    reifyFunction(f, x, res, mayInline)
   }
 
   class LambdaStack {
@@ -303,5 +324,31 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def functionSplit[A, B, C](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] =
     fun { (x: Rep[A]) => Pair(f(x), g(x)) }(Lazy(f.elem.eDom))
-}
 
+  private val identityFuns = collection.mutable.Map.empty[Element[_], Exp[_]]
+  def identityFun[A](implicit e: Element[A]) =
+    identityFuns.getOrElseUpdate(e, fun[A, A](x => x)).asRep[A => A]
+
+  private val constFuns = collection.mutable.Map.empty[(Element[_], Exp[_]), Exp[_]]
+  def constFun[A, B](x: Rep[B])(implicit e: Element[A]) =
+    constFuns.getOrElseUpdate((e, x), fun[A, B](_ => x)).asRep[A => B]
+
+  def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = {
+    f match {
+      case Def(IdentityLambda()) => g.asRep[A => C]
+      case _ => g match {
+        case Def(IdentityLambda()) => f.asRep[A => C]
+        case _ =>
+          implicit val eA = g.elem.eDom
+          fun { x => f(g(x)) }
+      }
+    }
+  }
+
+  override def rewriteDef[T](d: Def[T]) = d match {
+    case Apply(f @ Def(l: Lambda[a,b]), x) if l.mayInline => {
+      f(x)
+    }
+    case _ => super.rewriteDef(d)
+  }
+}

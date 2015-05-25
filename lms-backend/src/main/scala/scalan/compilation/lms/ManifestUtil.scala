@@ -8,9 +8,7 @@ trait ManifestUtil {
      * Non-deprecated version of <:<
      */
     def <::<(other: Manifest[_]) = {
-      @deprecated("", "") val isSubtype = manifest <:< other
-
-      isSubtype
+      ManifestUtil.SubTyper.<:<(manifest, other)
     }
 
     def isPrimitive = manifest.isInstanceOf[AnyValManifest[_]]
@@ -19,4 +17,10 @@ trait ManifestUtil {
   }
 }
 
-object ManifestUtil extends ManifestUtil
+object ManifestUtil extends ManifestUtil {
+  @deprecated("trick to avoid deprecation warnings", "") private class SubTyper {
+    @inline
+    def <:<(m1: Manifest[_], m2: Manifest[_]) = m1 <:< m2
+  }
+  private object SubTyper extends SubTyper
+}

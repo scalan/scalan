@@ -48,7 +48,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsersEx {
     }
     val fakeSourceFile = new BatchSourceFile("<no file>", prog1.toCharArray)
     // extract the part corresponding to original prog
-    (kind, compiler.parseTree(fakeSourceFile)) match {
+    (kind, parseFile(fakeSourceFile)) match {
       case (TopLevel, tree) => tree
       case (Member, PackageDef(_, List(ModuleDef(_, _, Template(_, _, List(_, tree)))))) =>
         tree

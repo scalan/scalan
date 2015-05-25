@@ -40,9 +40,9 @@ class RewritingTests extends BaseTests {
       val newLambda = doTransform(mkRight)
       emit("mkRight'", newLambda)
 
-      val Def(lam: Lambda[_, _]) = newLambda
-      val Def(Left(l)) = lam.y
-      assert(lam.x == l)
+      inside(newLambda) { case Def(Lambda(_, _, x, Def(Left(l)))) =>
+        assert(x == l)
+      }
     }
   }
 
@@ -51,7 +51,7 @@ class RewritingTests extends BaseTests {
       val e1 = toLeftSum[Double, Int](1d)
       val e2 = toRightSum[Double, Int](2)
       val iff = __ifThenElse(pp, e1, e2)
-      iff.fold(_ => 10, _ => 100)
+      iff.foldBy(constFun(10), constFun(100))
     }
 
     lazy val ifIfFold = fun2 { (p1: Rep[Boolean], p2: Rep[Boolean]) =>
@@ -62,7 +62,7 @@ class RewritingTests extends BaseTests {
         p1,
         __ifThenElse(p2, e1, e2),
         e3)
-      iff.fold(_ => 10, _ => 100)
+      iff.foldBy(constFun(10), constFun(100))
     }
   }
 
@@ -70,14 +70,12 @@ class RewritingTests extends BaseTests {
 
     def testIfFold(): Unit = {
       emit("ifFold", ifFold)
-      val Def(Lambda(_, _, _, y)) = ifFold
-      val Def(IfThenElse(cond, Def(Const(10)), Def(Const(100)))) = y
+      ifFold.getLambda.y should matchPattern { case Def(IfThenElse(_, Def(Const(10)), Def(Const(100)))) => }
     }
 
     def testIfIfFold(): Unit = {
       emit("ifIfFold", ifIfFold)
-      val Def(Lambda(_, _, _, y)) = ifIfFold
-      val Def(IfThenElse(c1, Def(IfThenElse(c2, Def(Const(10)), Def(Const(100)))), Def(Const(100)))) = y
+      ifIfFold.getLambda.y should matchPattern { case Def(IfThenElse(c1, Def(IfThenElse(c2, Def(Const(10)), Def(Const(100)))), Def(Const(100)))) => }
     }
   }
 

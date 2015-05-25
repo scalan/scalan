@@ -19,7 +19,7 @@ trait Elems extends Base { self: Scalan =>
   type LElem[A] = Lazy[Elem[A]] // lazy element
 
   @implicitNotFound(msg = "No Element available for ${A}.")
-  abstract class Element[A] extends Serializable {
+  abstract class Element[A] extends Serializable { _: scala.Equals =>
     def isEntityType: Boolean
     def isBaseType: Boolean = this.isInstanceOf[BaseElem[_]]
     def tag: WeakTypeTag[A]
@@ -27,24 +27,28 @@ trait Elems extends Base { self: Scalan =>
     // should only be called by defaultRepValue
     protected def getDefaultRep: Rep[A]
     lazy val defaultRepValue = getDefaultRep
-    protected def getName = tag.tpe.toString.
-      replaceAll("[A-Za-z0-9_.]*this.", "").
-      replace("scala.math.Numeric$", "").
-      replace("scala.", "").
-      replace("java.lang.", "").
-      replaceAll("""[^# \[\],>]*[#$]""", "")
+    protected def getName = cleanUpTypeName(tag.tpe)
     lazy val name = getName
 
     override def toString = s"${getClass.getSimpleName}{$name}"
-    override def equals(other: Any) = other match {
-      case e: Element[_] => tag.tpe =:= e.tag.tpe
-      case _ => false
-    }
-    override def hashCode = tag.hashCode
 
     def <:<(e: Element[_]) = tag.tpe <:< e.tag.tpe
     def >:>(e: Element[_]) = e <:< this
+
+    if (isDebug) {
+      debug$ElementCounter(this) += 1
+    }
   }
+
+  private val debug$ElementCounter = counter[Elem[_]]
+
+  def cleanUpTypeName(tpe: Type) = tpe.toString.
+    replaceAll("[A-Za-z0-9_.]*this.", "").
+    replace("scala.math.Numeric$", "").
+    replace("scala.math.Ordering$", "").
+    replace("scala.", "").
+    replace("java.lang.", "").
+    replaceAll("""[^# \[\],>]*[#$]""", "")
 
   def element[A](implicit ea: Elem[A]): Elem[A] = ea
 
@@ -57,9 +61,15 @@ trait Elems extends Base { self: Scalan =>
     }
   }
 
-  class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Element[A] with Serializable {
+  class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Element[A] with Serializable with scala.Equals {
     protected def getDefaultRep = toRep(z.value)(this)
     override def isEntityType = false
+    override def canEqual(other: Any) = other.isInstanceOf[BaseElem[_]]
+    override def equals(other: Any) = other match {
+      case other: BaseElem[_] => other.canEqual(this) && tag.tpe =:= other.tag.tpe
+      case _ => false
+    }
+    override def hashCode = tag.tpe.hashCode
   }
 
   case class PairElem[A, B](eFst: Elem[A], eSnd: Elem[B]) extends Element[(A, B)] {

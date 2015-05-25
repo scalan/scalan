@@ -5,11 +5,13 @@ package cxx
 package sharedptr
 
 import scala.virtualization.lms.common._
-import scalan.compilation.lms.common.{CxxShptrGenJNIExtractor, CxxShptrGenLstOps, JNILmsOpsExp}
+import scalan.compilation.lms.common._
 
-class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self =>
+class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp with PointerLmsOpsExp { self =>
 
-  trait Codegen extends CxxShptrCodegen
+  trait Codegen extends BaseCodegen[self.type]
+  with CxxShptrCodegen
+  with CxxShptrGenVectorOps
   with CLikeGenEqual
   with CLikeGenPrimitiveOps
   with CxxShptrGenStruct
@@ -30,6 +32,8 @@ class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp { self
   with CxxShptrGenListOps
   with CxxShptrGenLstOps
   with CxxShptrGenJNIExtractor
+  with CxxShptrGenStringOps
+  with CxxShptrGenPointer
   {
     override val IR: self.type = self
 

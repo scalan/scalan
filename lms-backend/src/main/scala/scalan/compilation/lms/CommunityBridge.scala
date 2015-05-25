@@ -1,7 +1,6 @@
 package scalan.compilation.lms
 
-import scalan.CommunityMethodMappingDSL
-import scalan.ScalanCommunityDslExp
+import scalan.{CommunityMethodMappingDSL, ScalanCommunityDslExp}
 
 trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with CommunityMethodMappingDSL =>
 
@@ -22,6 +21,32 @@ trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with Comm
               m.addSym(sym, exp)
           }
       }
+//    case Reflect(NumericRand(bound, i), u, es) =>
+//      reflectMirrored(Reflect(ListForeach(f(a),f(x).asInstanceOf[Sym[A]],f(b)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
+    case NumericRand(bound, i) =>
+      val bound_ = m.symMirror[Double](bound)
+      //val i_ = m.symMirror[Int](i)
+      val exp = lms.numeric_Random(bound_)
+
+      m.addSym(sym, exp)//.addFunc(bound_, exp => exp)
+
+    case Reflect(PrintlnE(s), _, _) =>
+      val s1 = m.symMirror[String](s)
+      val exp = lms.println(s1)
+      m.addSym(sym, exp)
+
+    case Reflect(ReadLineE(), _, _) =>
+      val exp = lms.readline
+      m.addSym(sym, exp)
+
+    case Reify(x, u, es) => m
+//    case Reify(x, u, es) =>
+//      createManifest(x.elem) match {
+//        case (mA: Manifest[a]) =>
+//          val x1 = m.symMirror[a](x)
+//          val exp = lms.reify(x1, m.summaryMirror(u), es.map(e => m.symMirror(e)))(mA)
+//          m.addSym(sym, exp)
+//      }
     case _ => super.transformDef(m, g, sym, d)
   }
 }

@@ -29,6 +29,22 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
 
   implicit class ScheduleOps(sch: Schedule) {
     def symbols = sch.map(_.sym)
+    def getEffectfulSyms: Set[Exp[_]] =
+      sch.flatMap(tp => effectSyms(tp.rhs)).toSet
+  }
+
+  def getScope(g: PGraph, vars: List[Exp[_]]): Schedule = {
+    def loop(currScope: immutable.Set[Exp[_]]): Schedule = {
+      val sch = g.scheduleFrom(currScope)
+      val currSch = g.getRootsIfEmpty(sch)
+      val es = currSch.getEffectfulSyms
+      val newEffects = es -- currScope
+      if (newEffects.isEmpty)
+        currSch
+      else
+        loop(currScope ++ newEffects)
+    }
+    loop(vars.toSet)
   }
 
   trait AstGraph { thisGraph =>
@@ -41,6 +57,13 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
       free
     }
 
+    def getRootsIfEmpty(sch: Schedule) =
+      if (sch.isEmpty) {
+        val consts = roots.collect { case DefTableEntry(tp) => tp }
+        consts  // the case when body is consists of consts
+      }
+      else sch
+
     def schedule: Schedule = {
       if (boundVars.isEmpty)
         buildScheduleForResult(roots, _.getDeps)
@@ -48,17 +71,12 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
       if (isIdentity) Nil
       else {
         val g = new PGraph(roots)
-        val sh = g.scheduleFrom(boundVars)
-        if (sh.isEmpty) {
-          val consts = roots.collect { case DefTableEntry(tp) => tp }
-          consts  // the case when body is consists of consts
-        }
-        else
-          sh
+        val scope = getScope(g, boundVars)
+        scope
       }
     }
 
-    def scheduleFrom(x: List[Exp[_]]): Schedule = {
+    def scheduleFrom(x: immutable.Set[Exp[_]]): Schedule = {
       val locals = GraphUtil.depthFirstSetFrom[Exp[_]](x)(sym => usagesOf(sym).filter(domain.contains))
       schedule.filter(locals contains _.sym)
     }
@@ -70,6 +88,7 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     def isIdentity: Boolean = boundVars == roots
     def isLocalDef(s: Exp[_]): Boolean = scheduleSyms contains s
     def isLocalDef[T](tp: TableEntry[T]): Boolean = isLocalDef(tp.sym)
+    def isRoot(s: Exp[_]): Boolean = roots contains s
 
     lazy val scheduleFromProjections =
       buildScheduleForResult(roots, s => if (isLambdaBoundProjection(s)) Nil else s.getDeps)
@@ -84,6 +103,15 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
      * Returns definitions which are not assigned to sub-branches
      */
     def scheduleSingleLevel = schedule.filter(tp => !isAssignedToIfBranch(tp.sym))
+
+    def filterReifyRoots(schedule: Schedule): Schedule = {
+      val filtered = schedule.filter(tp => tp.rhs match {
+        case Reify(_,_,_) if isRoot(tp.sym) =>
+          false
+        case _ => true
+      })
+      filtered
+    }
 
     lazy val lambdaBoundSyms: Set[Exp[_]] = {
       schedule.foldLeft(Set.empty[Exp[_]]) { (acc, tp) =>

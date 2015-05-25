@@ -24,7 +24,7 @@ class FrontTests extends BaseTests { suite =>
       f.set.arr
     }
 
-    lazy val t3 = fun { (in: Rep[List[Int]]) => ListCollection(in).asRep[BaseCollection[Int]].arr }
+    lazy val t3 = fun { (in: Rep[List[Int]]) => CollectionOverList(in).asRep[CollectionOverArray[Int]].arr }
   }
 
   class FrontProgStaged(testName: String) extends TestContext(this, testName) with  FrontProg with GraphsDslExp {

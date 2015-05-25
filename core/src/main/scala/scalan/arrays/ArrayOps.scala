@@ -25,6 +25,7 @@ trait ArrayOps { self: Scalan =>
     def reduce(implicit m: RepMonoid[T]) = array_reduce(xs)
 
     def fold[S: Elem](init: Rep[S], f: Rep[((S, T)) => S]): Rep[S] = array_fold[T, S](xs, init, f)
+    def foldLeft[S: Elem](init: Rep[S])(f: Rep[(S, T)] => Rep[S]): Rep[S] = array_fold[T, S](xs, init, fun(f))
 
     def mapReduceBy[K: Elem, V: Elem](map: Rep[T => (K, V)], reduce: Rep[((V, V)) => V]) = array_map_reduce(xs, map, reduce)
 
@@ -53,6 +54,8 @@ trait ArrayOps { self: Scalan =>
 
     def append(value: Rep[T]) = array_append(xs, value)
 
+    def ::(value: Rep[T]) = array_cons(value, xs)
+
     def updateMany(indexes: Arr[Int], values: Arr[T]) = array_updateMany(xs, indexes, values)
 
     // new functions to support SQL-like queries
@@ -73,6 +76,7 @@ trait ArrayOps { self: Scalan =>
     def sumBy[S: Elem](f: Rep[T => S])(implicit n: Numeric[S]): Rep[S] = array_sum_by(xs, f)
 
     def toList = array_toList(xs)
+    def reverse = array_reverse(xs)
   }
 
   // name to avoid conflict with scala.Array
@@ -151,8 +155,11 @@ trait ArrayOps { self: Scalan =>
 
   def array_empty[T: Elem]: Arr[T]
   def array_toList[T:Elem](xs: Arr[T]): Lst[T]
+  def array_reverse[T:Elem](xs: Arr[T]): Arr[T]
+  def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T]
+  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T]
 
-  def array_binary_search[T](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T]
+  def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double]
 }
 
 trait ArrayOpsSeq extends ArrayOps {
@@ -275,10 +282,20 @@ trait ArrayOpsSeq extends ArrayOps {
   }
 
   def array_empty[T: Elem]: Arr[T] = scala.Array.empty[T]
+  def array_reverse[T:Elem](xs: Arr[T]): Arr[T] = genericArrayOps(xs).reverse
+  def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T] = {
+    val buf = new Array[T](xs.length + 1)
+    buf(0) = value
+    xs.copyToArray(buf, 1)
+    buf
+  }
   def array_toList[T:Elem](xs: Array[T]): Lst[T] = xs.to[List]
   def arrayToClassTag[T](xs: Rep[Array[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 
-  def array_binary_search[T](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = ???
+  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = ???
+
+  def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double] =
+    arr.map(_ => scala.util.Random.nextGaussian() * e + m)
 }
 
 trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
@@ -351,6 +368,12 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArrayAppend[T](xs: Exp[Array[T]], value: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayAppend(t(xs), t(value))
   }
+  case class ArrayCons[T](value: Exp[T], xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ArrayCons(t(value), t(xs))
+  }
+  case class ArrayReverse[T](xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ArrayReverse(t(xs))
+  }
   case class ArrayRangeFrom0(n: Exp[Int]) extends ArrayDef[Int] {
     def eT = element[Int]
     override def mirror(t: Transformer) = ArrayRangeFrom0(t(n))
@@ -402,6 +425,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArrayBinarySearch[T: Elem](i: Exp[T], xs: Exp[Array[T]], o: Ordering[T]) extends Def[T] with ArrayMethod[T] {
     lazy val selfType = xs.elem.eItem
     override def mirror(t: Transformer) = ArrayBinarySearch(t(i), t(xs), o)
+  }
+
+  case class ArrayRandomGaussian[T](m: Exp[T], e: Exp[T], xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ArrayRandomGaussian(t(m), t(e), t(xs))
   }
 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
@@ -480,7 +507,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   def array_toList[T:Elem](xs: Arr[T]): Lst[T] =
     ArrayToList(xs)
 
-  override def array_empty[T: Elem]: Arr[T] = ArrayEmpty[T]()
+  def array_empty[T: Elem]: Arr[T] = ArrayEmpty[T]()
+
+  def array_reverse[T:Elem](xs: Arr[T]): Arr[T] = ArrayReverse(xs)
+
+  def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T] = ArrayCons(value, xs)
 
   def accessOnlyFirst(x: Exp[_], exp: Exp[_]): Boolean = {
     exp match {
@@ -583,9 +614,12 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     toExp(newLam, newSym)
   }
 
-  def array_binary_search[T](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = {
-    implicit val eT = is.elem.eItem
+  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = {
     ArrayBinarySearch(i, is, o)
+  }
+
+  def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double] = {
+    ArrayRandomGaussian(m, e, arr)
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
@@ -657,7 +691,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
         case _ =>
           super.rewriteDef(d)
       }
-    case ArrayMap(xs, Def(l: Lambda[_, _])) if l.isIdentity => xs
+    case ArrayMap(xs, Def(IdentityLambda())) => xs
 
     case ArrayFilter(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b])) if accessOnlyFirst(l.x, l.y) =>
       val xs1 = zip.xs

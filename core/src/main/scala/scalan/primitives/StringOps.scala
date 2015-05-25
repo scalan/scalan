@@ -8,6 +8,7 @@ trait StringOps extends UnBinOps { self: Scalan =>
   implicit class StringOpsCls(lhs: Rep[String]) {
     def toInt = StringToInt().apply(lhs)
     def toDouble = StringToDouble().apply(lhs)
+    def length = string_length(lhs)
     def apply(index: Rep[Int]) = string_apply(lhs, index)
     def substring(start: Rep[Int], end: Rep[Int]) = string_substring(lhs, start, end)
     def +(rhs: Rep[String]) = StringConcat().apply(lhs, rhs)
@@ -21,6 +22,7 @@ trait StringOps extends UnBinOps { self: Scalan =>
     def empty = toRep("")
   }
 
+  def string_length(str: Rep[String]): Rep[Int]
   def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String]
   def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char]
 
@@ -36,8 +38,8 @@ trait StringOps extends UnBinOps { self: Scalan =>
 
 
 trait StringOpsSeq extends StringOps { self: ScalanSeq =>
+  def string_length(str: Rep[String]): Rep[Int] = str.length
   def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String] = str.substring(start, end)
-
   def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char] = str.charAt(index)
 }
 
@@ -48,13 +50,17 @@ trait StringOpsExp extends StringOps with BaseExp { self: ScalanExp =>
     override def mirror(t: Transformer) = StringSubstr(t(str), t(start), t(end))
     lazy val uniqueOpId = name(selfType)
   }
+  case class StringLength(str: Rep[String]) extends BaseDef[Int] {
+    override def mirror(t: Transformer) = StringLength(t(str))
+    lazy val uniqueOpId = name(selfType)
+  }
   case class StringApply(str: Rep[String], index: Rep[Int]) extends BaseDef[Char] {
     override def mirror(t: Transformer) = StringApply(t(str), t(index))
     lazy val uniqueOpId = name(selfType)
   }
 
+  def string_length(str: Rep[String]): Rep[Int] = StringLength(str)
   def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String] = StringSubstr(str, start, end)
-
   def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char] = StringApply(str, index)
 }
 

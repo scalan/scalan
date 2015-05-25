@@ -2,19 +2,18 @@ package scalan.compilation.lms.cxx
 
 import java.io._
 
-import scalan.JNIExtractorOpsExp
-import scalan.ScalanCommunityExp
+import scalan.{PointerOpsExp, JNIExtractorOpsExp, ScalanCommunityExp}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{LmsBridge, LmsCompiler}
 
-trait LmsCompilerCxx extends LmsCompiler with JNIExtractorOpsExp { self: ScalanCommunityExp with LmsBridge =>
+trait LmsCompilerCxx extends LmsCompiler with JNIExtractorOpsExp  with PointerOpsExp { self: ScalanCommunityExp with LmsBridge =>
 
   type CustomCompilerOutput = Unit
 
   type CompilerConfig = Unit
   implicit val defaultCompilerConfig = ()
 
-  def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
+  override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
   override protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
