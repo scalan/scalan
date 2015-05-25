@@ -4,6 +4,7 @@ import java.io.File
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.StoreReporter
+import scala.reflect.internal.util.SourceFile
 
 trait ScalanParsersEx extends ScalanParsers {
   type Compiler = scala.tools.nsc.interactive.Global
@@ -18,5 +19,9 @@ trait ScalanParsersEx extends ScalanParsers {
     val tree = compiler.parseTree(source)
 
     parse(file.getPath, tree)
+  }
+
+  def parseFile(source: SourceFile): compiler.Tree = {
+    compiler.newUnitParser(new compiler.CompilationUnit(source)).parse()
   }
 }
