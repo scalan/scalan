@@ -82,7 +82,7 @@ class BoilerplateTool extends StrictLogging {
        "scalan/collections/HashSets.scala"
       , "scalan/collections/Seqs.scala"
       , "scalan/collections/MultiMap.scala"
-      , "scalan/collections/BitSets.scala"
+//      , "scalan/collections/BitSets.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -147,15 +147,15 @@ class BoilerplateTool extends StrictLogging {
   )
   lazy val effectsConfig = CodegenConfig(
     name = "effects",
-    srcPath = "../../scalan-effects/src/main/scala",
+    srcPath = "../community-edition/src/test/scala/scalan/effects",
     entityFiles = List(
-      "scalan/monads/Frees.scala",
-      "scalan/monads/Coproducts.scala",
-      "scalan/examples/Interactions.scala",
-      "scalan/examples/Auths.scala",
-      "scalan/examples/IOs.scala",
-      "scalan/monads/Readers.scala",
-      "scalan/stream/Processes.scala"
+      "Frees.scala",
+      "Coproducts.scala",
+      "Interactions.scala",
+      "Auths.scala",
+      "IOs.scala",
+      "Readers.scala",
+      "Processes.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -175,18 +175,18 @@ class BoilerplateTool extends StrictLogging {
   )
   lazy val effects2Config = CodegenConfig(
     name = "effects2",
-    srcPath = "../community-edition/src/test/scala",
+    srcPath = "../community-edition/src/test/scala/",
     entityFiles = List(
-      "scalan/effects/IOs.scala",
-      "scalan/effects/Readers.scala",
-      "scalan/effects/States.scala",
-      "scalan/effects/FreeStates.scala",
-      "scalan/effects/FreeMs.scala",
-      "scalan/effects/Processes.scala",
-      "scalan/effects/Frees.scala",
-      "scalan/effects/Coproducts.scala",
-      "scalan/effects/Interactions.scala",
-      "scalan/effects/Auths.scala"
+//      "scalan/effects/IOs.scala",
+//      "scalan/effects/Readers.scala",
+//      "scalan/effects/States.scala",
+////      "scalan/effects/FreeStates.scala",
+      "scalan/effects/FreeMs.scala"
+//      "scalan/effects/Processes.scala",
+////      "scalan/effects/Frees.scala",
+//      "scalan/effects/Coproducts.scala",
+//      "scalan/effects/Interactions.scala",
+//      "scalan/effects/Auths.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -256,21 +256,19 @@ class BoilerplateTool extends StrictLogging {
     }.distinct
 
   val configsMap = Map(
-    "scalan" -> List(scalanConfig),
+//    "scalan" -> List(scalanConfig),
     "core" -> List(coreConfig),
     "coretests" -> List(coreTestsConfig),
-    "core" -> List(coreConfig),
-    "core-test" -> List(coreTestsConfig),
     "ce" -> List(ceConfig),
-    "collections" -> List(collectionsConfig),
-    "la" -> List(laConfig),
+//    "collections" -> List(collectionsConfig),
+//    "la" -> List(laConfig),
     "graphs" -> List(graphConfig),
-    "mt" -> List(metaTestConfig),
-    "ee" -> List(eeConfig),
+//    "mt" -> List(metaTestConfig),
+//    "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "effects2" -> List(effects2Config),
-    "ce-all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config),
-    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config, eeConfig)
+    "effects2" -> List(effects2Config)
+//    "ce-all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config),
+//    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config, eeConfig)
   )
 
   def main(args: Array[String]) {
