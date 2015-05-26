@@ -1,4 +1,4 @@
-val ver = "0.2.8-SNAPSHOT"
+val ver = "0.2.9-SNAPSHOT"
 
 enablePlugins(GitVersioning)
 
