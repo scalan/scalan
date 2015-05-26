@@ -341,6 +341,7 @@ trait ScalanParsers {
     case SingletonTypeTree(ref) => STpeSingleton(parseExpr(ref))
     case SelectFromTypeTree(qualifier, TypeName(name)) => STpeSelectFromTT(tpeExpr(qualifier), name)
     case tq"$tpt forSome { ..$defns }" => STpeExistential(tpeExpr(tpt), defns.flatMap(defn => optBodyItem(defn, None)))
+    case Bind(TypeName(name), body) => STpeBind(name, tpeExpr(body))
     case tree => ???(tree)
   }
 

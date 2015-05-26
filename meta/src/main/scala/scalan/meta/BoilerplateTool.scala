@@ -100,8 +100,8 @@ class BoilerplateTool extends StrictLogging {
     name = "la",
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
-        "scalan/linalgebra/Vectors.scala"
-      , "scalan/linalgebra/Matrices.scala"
+//        "scalan/linalgebra/Vectors.scala"
+//      , "scalan/linalgebra/Matrices.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -177,16 +177,16 @@ class BoilerplateTool extends StrictLogging {
     name = "effects2",
     srcPath = "../community-edition/src/test/scala/",
     entityFiles = List(
-//      "scalan/effects/IOs.scala",
-//      "scalan/effects/Readers.scala",
-//      "scalan/effects/States.scala",
-////      "scalan/effects/FreeStates.scala",
-      "scalan/effects/FreeMs.scala"
-//      "scalan/effects/Processes.scala",
-////      "scalan/effects/Frees.scala",
-//      "scalan/effects/Coproducts.scala",
-//      "scalan/effects/Interactions.scala",
-//      "scalan/effects/Auths.scala"
+      "scalan/effects/IOs.scala",
+      "scalan/effects/Readers.scala",
+      "scalan/effects/States.scala",
+//      "scalan/effects/FreeStates.scala",
+      "scalan/effects/FreeMs.scala",
+      "scalan/effects/Processes.scala",
+      "scalan/effects/Frees.scala",
+      "scalan/effects/Coproducts.scala",
+      "scalan/effects/Interactions.scala",
+      "scalan/effects/Auths.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -256,19 +256,19 @@ class BoilerplateTool extends StrictLogging {
     }.distinct
 
   val configsMap = Map(
-//    "scalan" -> List(scalanConfig),
+    "scalan" -> List(scalanConfig),
     "core" -> List(coreConfig),
     "coretests" -> List(coreTestsConfig),
     "ce" -> List(ceConfig),
-//    "collections" -> List(collectionsConfig),
-//    "la" -> List(laConfig),
+    "collections" -> List(collectionsConfig),
+    "la" -> List(laConfig),
     "graphs" -> List(graphConfig),
-//    "mt" -> List(metaTestConfig),
-//    "ee" -> List(eeConfig),
+    "mt" -> List(metaTestConfig),
+    "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
-    "effects2" -> List(effects2Config)
-//    "ce-all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config),
-//    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config, eeConfig)
+    "effects2" -> List(effects2Config),
+    "ce-all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config),
+    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config, eeConfig)
   )
 
   def main(args: Array[String]) {

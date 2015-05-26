@@ -97,9 +97,13 @@ object ScalanAst {
   }
   case class STpeAnnotated(tpt: STpeExpr, annot: String) extends STpeExpr {
     def name = "Annotated"
+    override def toString = tpt.toString + " @ " + annot
   }
   case class STpeExistential(tpt: STpeExpr, items: List[SBodyItem]) extends STpeExpr {
     def name = "Existential"
+  }
+  case class STpeBind(tname: String, texpr: STpeExpr) extends STpeExpr {
+    def name = "TypedBind"
   }
 
   // SAnnotation universe --------------------------------------------------------------------------
