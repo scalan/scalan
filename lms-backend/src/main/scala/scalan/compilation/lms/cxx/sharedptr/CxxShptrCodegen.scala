@@ -13,6 +13,7 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
 
   trait size_t
   trait SharedPtr[T]
+  trait auto_t
 
   var headerFiles: collection.mutable.HashSet[String] = collection.mutable.HashSet.empty
 
@@ -49,21 +50,23 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
   }
 
   final override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
-    if( !isVoidType(tpe) ) {
-        stream.println(src"${remap(tpe)} $sym = $rhs;")
-    }
+      stream.println(src"${remap(tpe)} $sym = $rhs;")
   }
 
   override def remap[A](m: Manifest[A]) : String = {
     m match {
       case _ if m.runtimeClass == classOf[SharedPtr[_]] =>
         s"std::shared_ptr<${remap(m.typeArguments(0))}>"
+      case _ if m.runtimeClass == classOf[auto_t] =>
+        "auto"
       case _ if m.runtimeClass == classOf[size_t] =>
         "size_t"
       case _ if m.runtimeClass == classOf[scala.Tuple2[_,_]] =>
         val mA = m.typeArguments(0)
         val mB = m.typeArguments(1)
         src"std::pair<${remap(mA)},${remap(mB)}>"
+      case _ if m.runtimeClass == classOf[Unit] ⇒
+        "boost::blank"
       case _ if m.isPrimitive =>
         super[CLikeCodegen].remap(m)
       case _ =>
@@ -92,6 +95,10 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
       case _ =>
         stream.println(s"${remap(newTp)} ${quote(sym)} = ${remap(newTp)}(${args.mkString(",")});")
     }
+  }
+  override def quote(x: Exp[Any]) = x match {
+    case Const(s: Unit) => "scalan::unit_value"
+    case _ => super.quote(x)
   }
 
   override def emitSource[A: Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
