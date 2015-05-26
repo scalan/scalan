@@ -17,7 +17,7 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
 
   var headerFiles: collection.mutable.HashSet[String] = collection.mutable.HashSet.empty
 
-  headerFiles ++= Seq("memory")
+  headerFiles ++= Seq("memory", "scalan/common.hpp")
 
   def toShptrManifest(m: Manifest[_]): Manifest[_] = {
     if( m.runtimeClass == classOf[SharedPtr[_]] )
@@ -50,7 +50,13 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
   }
 
   final override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
-      stream.println(src"${remap(tpe)} $sym = $rhs;")
+      val cv = tpe match {
+        case mU: Manifest[_] if mU.runtimeClass == classOf[Unit] =>
+          "const "
+        case _ =>
+          ""
+      }
+      stream.println(src"$cv${remap(tpe)} $sym = $rhs;")
   }
 
   override def remap[A](m: Manifest[A]) : String = {
@@ -108,6 +114,12 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
     //      val staticData = getFreeDataBlock(body)
 
     withStream(out) {
+      stream.println(
+        "#if __cplusplus < 201103L\n" +
+        "#error C++11 support required\n" +
+        "#endif\n"
+      )
+
       headerFiles.map {fn => s"#include <${fn}>"} map ( stream.println _ )
       stream.println(
           "/*****************************************\n" +

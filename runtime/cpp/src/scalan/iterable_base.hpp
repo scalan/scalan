@@ -4,12 +4,11 @@
 #include <functional>
 #include <memory>
 #include <utility>
-#include <boost/blank.hpp>
 #include <boost/variant/variant.hpp>
+#include <scalan/common.hpp>
 
 namespace scalan
 {
-const boost::blank unit_value;
 
 using std::function;
 using std::pair;
