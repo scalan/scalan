@@ -105,6 +105,9 @@ object ScalanAst {
   case class STpeBind(tname: String, texpr: STpeExpr) extends STpeExpr {
     def name = "TypedBind"
   }
+  case class STpeCompound(parents: List[STpeExpr], items: List[SBodyItem]) extends STpeExpr {
+    def name = "Compound Type Tree"
+  }
 
   // SAnnotation universe --------------------------------------------------------------------------
   trait SAnnotation {
