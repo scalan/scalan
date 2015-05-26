@@ -407,12 +407,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[T => R]) forSome {type T; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[T => R]) forSome {type T; type R}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[T => R]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -638,12 +638,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[T => R]) forSome {type T; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[T => R]) forSome {type T; type R}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[T => R]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -905,12 +905,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[T => R]) forSome {type T; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[T => R]) forSome {type T; type R}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[T => R]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1195,12 +1195,12 @@ trait VectorsExp extends VectorsDsl with ScalanExp {
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T => R]) forSome {type T; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T => R]) forSome {type T; type R}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T => R]) forSome {type T; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T => R @ uncheckedVariance]) forSome {type T; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

@@ -82,7 +82,7 @@ class BoilerplateTool extends StrictLogging {
        "scalan/collections/HashSets.scala"
       , "scalan/collections/Seqs.scala"
       , "scalan/collections/MultiMap.scala"
-//      , "scalan/collections/BitSets.scala"
+      , "scalan/collections/BitSets.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -100,8 +100,8 @@ class BoilerplateTool extends StrictLogging {
     name = "la",
     srcPath = "../community-edition/src/main/scala",
     entityFiles = List(
-//        "scalan/linalgebra/Vectors.scala"
-//      , "scalan/linalgebra/Matrices.scala"
+        "scalan/linalgebra/Vectors.scala"
+      , "scalan/linalgebra/Matrices.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
