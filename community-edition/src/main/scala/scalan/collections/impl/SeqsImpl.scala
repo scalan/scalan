@@ -570,6 +570,11 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
   override def rewriteDef[T](d: Def[T]) = d match {
     case SSeqMethods.map(xs, Def(IdentityLambda())) => xs
 
+    case view1@ViewSSeq(Def(view2@ViewSSeq(arr))) =>
+      val compIso = composeIso(view1.innerIso, view2.innerIso)
+      implicit val eAB = compIso.eTo
+      ViewSSeq(arr)(SSeqIso(compIso))
+
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSSeqImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
       val resultElem = mc.selfType
@@ -602,10 +607,6 @@ trait SeqsExp extends SeqsDsl with ScalanExp {
       case _ =>
         super.rewriteDef(d)
     }
-    case view1@ViewSSeq(Def(view2@ViewSSeq(arr))) =>
-      val compIso = composeIso(view1.innerIso, view2.innerIso)
-      implicit val eAB = compIso.eTo
-      ViewSSeq(arr)(SSeqIso(compIso))
 
     case _ => super.rewriteDef(d)
   }

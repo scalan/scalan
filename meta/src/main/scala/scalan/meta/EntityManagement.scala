@@ -5,22 +5,11 @@
 package scalan.meta
 
 import java.io.File
-
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import scalan.util.FileUtil
+import ScalanAst._
 
-case class CodegenConfig(
-  name: String,
-  srcPath: String,
-  entityFiles: List[String],
-  baseContextTrait: String,
-  seqContextTrait: String,
-  stagedContextTrait: String,
-  extraImports: List[String],
-  entityTypeSynonyms: Map[String, String]
-)
-
-class EntityManagement(val config: CodegenConfig) extends ScalanCodegen with LazyLogging { ctx =>
+class EntityManagement(val config: CodegenConfig) extends ScalanParsersEx with LazyLogging {
 
   case class EntityManager(name: String, file: File, entityDef: SEntityModuleDef, config: CodegenConfig)
 
@@ -39,7 +28,7 @@ class EntityManagement(val config: CodegenConfig) extends ScalanCodegen with Laz
   def generateAll() = {
     entities.foreach { m =>
       println(s"  generating ${m.file}")
-      val g = new EntityFileGenerator(m.entityDef, m.config)
+      val g = new ScalanCodegen.EntityFileGenerator(m.entityDef, m.config)
       val implCode = g.getImplFile
       saveEntity(m.file, implCode)
     }

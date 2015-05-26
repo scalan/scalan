@@ -1,9 +1,11 @@
 package scalan.meta
-
 /**
  * Created by knizhnik on 1/14/15.
  */
-trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
+import ScalanAst._
+import SqlAST._
+
+trait SqlCompiler extends SqlParser {
   case class Scope(var ctx: Context, outer: Option[Scope], nesting: Int, name: String) {
     def lookup(col: ColumnRef): Binding = {
       ctx.resolve(col.table, col.name) match {
@@ -46,7 +48,7 @@ trait SqlCompiler extends SqlAST with ScalanAst with SqlParser {
 
   def generateQuery(m: SMethodDef): String = {
     val args = m.allArgs.map(arg => arg.name + ": " + arg.tpe).mkString(", ")
-    val sql = m.body.get.asInstanceOf[SApply].args(0).asInstanceOf[SLiteral].value
+    val sql = m.body.get.asInstanceOf[SApply].argss(0)(0).asInstanceOf[SLiteral].value
     val select = parseSelect(sql)
     val op = select.operator
     currMethod = m
