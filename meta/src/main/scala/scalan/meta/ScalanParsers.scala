@@ -402,7 +402,7 @@ trait ScalanParsers {
     case q"$expr[..$tpts](...$exprss)" => SApply(parseExpr(expr), tpts.map(tpeExpr), exprss.map(_.map(parseExpr)))
     case bi => optBodyItem(bi, None) match {
       case Some(item) => item
-      case None => print("Error parsing of " + showRaw(bi)); SDefaultExpr("Error parsing")
+      case None => throw new NotImplementedError(s"parseExpr: Error parsing of ${showRaw(bi)}")
     }
   }
 

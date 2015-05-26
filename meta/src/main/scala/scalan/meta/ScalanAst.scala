@@ -143,8 +143,6 @@ object ScalanAst {
   case class SThis(typeName: String) extends SExpr
   case class SSuper(name: String, qual: String, field: String) extends SExpr
   case class SLiteral(value: String) extends SExpr
-  case class SDefaultExpr(expr: String) extends SExpr
-  //case class SExternalExpr(ext: AnyRef) extends SExpr
   case class SAnnotated(expr: SExpr, annot: String) extends SExpr
   case class STuple(exprs: List[SExpr]) extends SExpr
   case class SCase(pat: SPattern, guard: SExpr, body: SExpr) extends SExpr

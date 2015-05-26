@@ -106,7 +106,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsersEx {
 
   describe("SMethodDef") {
     testSMethod("def f: Int", MD("f", Nil, Nil, Some(INT), false, false, None, Nil, None))
-    testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, false, Some("a"), L(SMethodAnnotation("OverloadId",List(SDefaultExpr("\"a\"")))), None))
+    testSMethod("@OverloadId(\"a\") implicit def f: Int", MD("f", Nil, Nil, Some(INT), true, false, Some("a"), L(SMethodAnnotation("OverloadId",List(SConst("a")))), None))
     testSMethod(
       "def f(x: Int): Int",
       MD("f", Nil, L(MAs(List(MA(false, false, "x", INT, None)))), Some(INT), false, false, None, Nil, None))
@@ -153,7 +153,7 @@ class ScalanParsersTests extends BaseTests with ScalanParsersEx {
         IS("scalan._"),
         STpeDef("Rep", L(STpeArg("A", None, Nil)), TC("A", Nil)),
         MD("f", Nil, Nil, Some(T(L(INT, TC("A", Nil)))), false, false, None, Nil, None),
-        MD("g", Nil, L(MAs(L(MA(false, false, "x", BOOL, None)))), Some(TC("A", Nil)), false, false, Some("b"), L(SMethodAnnotation("OverloadId",List(SDefaultExpr("\"b\"")))), None)), None, None))
+        MD("g", Nil, L(MAs(L(MA(false, false, "x", BOOL, None)))), Some(TC("A", Nil)), false, false, Some("b"), L(SMethodAnnotation("OverloadId",List(SConst("b")))), None)), None, None))
 
   }
 
