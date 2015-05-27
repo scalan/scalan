@@ -82,7 +82,7 @@ trait LmsCompilerUni
 
     val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
     Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, scalaFile, jarFile.getAbsolutePath)
-    Gcc.compile(executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
+    Gcc.compile(scalan.Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
     CustomCompilerOutput(jarFile.toURI.toURL)
 
     /*
