@@ -498,7 +498,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
 
 class CoreLmsBackend extends CoreLmsBackendBase { self =>
 
-  trait Codegen extends BaseCodegen[self.type] with ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
+  trait Codegen extends BaseCodegen[self.type] with ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenArrayOpsExt with ScalaGenListOps
   with ScalaGenLstOps with ScalaGenNumericOps with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps
   with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
   with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenArrayMutation with ScalaGenIfThenElseFat with LoopFusionOpt
