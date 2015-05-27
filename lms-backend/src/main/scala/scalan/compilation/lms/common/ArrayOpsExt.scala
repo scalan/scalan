@@ -242,7 +242,7 @@ trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
       emitNode(sym, ArrayNew(Const(0)))
       gen"""$sym->resize($xs->size() + 1);
            |std::copy($xs->begin(), $xs->end(), $sym->begin());
-           |$sym->push_back(v);"""
+           |$sym->push_back($v);"""
     case _ =>
       super.emitNode(sym, rhs)
   }
