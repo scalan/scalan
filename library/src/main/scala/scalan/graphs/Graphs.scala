@@ -69,6 +69,8 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
 
     def nodes: Coll[Vertex[V, E]]
 
+    def simpleNodes = vertexValues zip links
+
     def edges: Coll[EdgeType]
 
     def inNeighbors(v: Rep[Int]): Coll[Int]
@@ -113,7 +115,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
     def makeEdgeFrom(v: Rep[Int], iE: Rep[Int]): Rep[AdjEdge[V, E]] = AdjEdge(v, iE, thisGraph)
     def makeEdgeFromTo(v1: Rep[Int], v2: Rep[Int]): Rep[AdjEdge[V, E]] = ???
 
-    def nodes: Coll[Vertex[V, E]] = ???
+    def nodes: Coll[Vertex[V, E]] = Collection.indexRange(vertexNum).map(i => SVertex(i, this))
     def edges: Coll[AdjEdge[V, E]] = ???
 
     def outEdges(vs: Coll[Int], predicate: Rep[Edge[V, E] => Boolean]): Coll[Edge[V, E]] = {
