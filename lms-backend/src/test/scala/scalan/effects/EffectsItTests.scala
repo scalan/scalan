@@ -163,13 +163,20 @@ class EffectsJniItTests extends BaseItTests with ItTestsUtilLmsCxx {
     }
   }
 
-  test("jniZipAll") {
+  test("jniZipArrayWithIndex") {
     val progcxx = new EffectsExpCxx {}
-
     generate(progcxx)(progcxx.jniZipArrayWithIndexW,"jniZipArrayWithIndex")(progcxx.defaultCompilerConfig)
+  }
+  test("jniZipCollectionWithIndex") {
+    val progcxx = new EffectsExpCxx {}
     generate(progcxx)(progcxx.jniZipCollectionWithIndexW,"jniZipCollectionWithIndex")(progcxx.defaultCompilerConfig)
+  }
+  test("jniZipCollectionWithIndex2") {
+    val progcxx = new EffectsExpCxx {}
     generate(progcxx)(progcxx.jniZipCollectionWithIndexW2,"jniZipCollectionWithIndex2")(progcxx.defaultCompilerConfig)
+  }
+  test("jniZipCollectionWithIndex3") {
+    val progcxx = new EffectsExpCxx {}
     generate(progcxx)(progcxx.jniZipCollectionWithIndexW3,"jniZipCollectionWithIndex3")(progcxx.defaultCompilerConfig)
-
   }
 }
