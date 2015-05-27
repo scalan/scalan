@@ -240,7 +240,10 @@ trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case a @ ArrayAppend(xs, v) =>
       emitNode(sym, ArrayNew(Const(0)))
-      gen"""$sym->resize($xs->size() + 1);
+      val xsLen = s"${quote(xs)}_len"
+      gen"""size_t $xsLen = $xs->size();
+           |$sym->reserve($xsLen + 1);
+           |$sym->resize($xsLen);
            |std::copy($xs->begin(), $xs->end(), $sym->begin());
            |$sym->push_back($v);"""
     case _ =>
