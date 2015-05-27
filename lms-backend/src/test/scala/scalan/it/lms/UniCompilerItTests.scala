@@ -60,7 +60,7 @@ class UniCompilerItTests  extends CommunitySmokeItTests {
     compareOutputWithSequential(progStaged)(progSeqU.ddmvm, progStaged.ddmvm, "ddmvm", in)
   }
 
-  ignore("test00_nop") {
+  test("test00_nop") {
     val in = 5.0
     compareOutputWithSequential(progStaged)(progSeqU.test00_nop, progStaged.test00_nop, "test00_nop", in)
   }
