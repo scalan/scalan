@@ -123,8 +123,6 @@ trait LmsCompilerUni
   protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
     val (cls, method) = loadMethod(compilerOutput)
     val instance = cls.newInstance()
-    println("java.library.path: " + System.getenv("java.library.path"))
-    println("user.dir: " + System.getenv("user.dir"))
 
     val result = method.invoke(instance, input.asInstanceOf[AnyRef])
     result.asInstanceOf[B]
