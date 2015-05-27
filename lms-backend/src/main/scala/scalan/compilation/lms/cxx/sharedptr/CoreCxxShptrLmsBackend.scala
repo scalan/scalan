@@ -26,6 +26,7 @@ class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp with P
   with CxxShptrGenArrayOpsBoost
   with CxxShptrGenVariables
   with CxxShptrGenArrayBuilderOps
+  with CxxShptrGenArrayOpsExt
   with CxxShptrGenRangeOps
   with CLikeGenWhile
   with CLikeGenNumericOps

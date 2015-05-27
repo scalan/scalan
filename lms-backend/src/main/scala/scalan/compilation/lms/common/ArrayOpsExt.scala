@@ -6,6 +6,7 @@ import scala.reflect.SourceContext
 import scala.virtualization.lms.common.{ArrayOpsExp, ScalaGenBase}
 import scala.virtualization.lms.internal.Transforming
 import scalan.compilation.lms.LmsBackendFacade
+import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
 
@@ -229,5 +230,20 @@ trait ScalaGenArrayOpsExt extends ScalaGenBase {
            |  d
            |}"""
     case _ => super.emitNode(sym, rhs)
+  }
+}
+
+trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
+  val IR: ArrayOpsExtExp with ArrayOpsExp
+  import IR._
+
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case a @ ArrayAppend(xs, v) =>
+      emitNode(sym, ArrayNew(Const(0)))
+      gen"""$sym->resize($xs->size() + 1);
+           |std::copy($xs->begin(), $xs->end(), $sym->begin());
+           |$sym->push_back(v);"""
+    case _ =>
+      super.emitNode(sym, rhs)
   }
 }

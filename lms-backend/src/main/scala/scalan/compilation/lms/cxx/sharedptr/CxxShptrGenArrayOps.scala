@@ -124,6 +124,8 @@ trait CxxShptrGenArrayOpsBoost extends CxxShptrGenArrayOps {
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case a@ArrayNew(Const(0)) =>
+      emitConstruct(sym, "0", "boost::container::default_init")
     case a@ArrayNew(n) =>
       emitConstruct(sym, src"$n", "boost::container::default_init")
     case _ =>
