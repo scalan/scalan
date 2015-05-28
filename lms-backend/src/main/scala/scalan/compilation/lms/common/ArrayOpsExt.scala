@@ -239,9 +239,9 @@ trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case a @ ArrayAppend(xs, v) =>
-      emitNode(sym, ArrayNew(Const(0)))
 /////////////////////////////////////////////////////
 // Creates new array, copies values to it from xs and adds new element
+//      emitNode(sym, ArrayNew(Const(0)))
 //      val xsLen = src"${xs}_len"
 //      gen"""size_t $xsLen = $xs->size();
 //           |$sym->resize($xsLen + 1);
