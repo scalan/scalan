@@ -1,6 +1,7 @@
 package scalan.effects
 
 import scalan.compilation.lms.cxx.LmsCompilerCxx
+import scalan.compilation.lms.uni.LmsCompilerUni
 import scalan.examples.{AuthenticationsDslExp, AuthenticationsDslSeq, InteractionsDslSeq, InteractionsDslExp}
 import scalan.it.lms.ItTestsUtilLmsCxx
 import scalan.monads.MonadsDslExp
@@ -20,10 +21,10 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
     val lms = new CommunityLmsBackend
 
   }
-  trait EffectsExpCxx extends LmsCompilerCxx with CoreBridge
+  trait EffectsExpUni extends LmsCompilerUni with CoreBridge
                       with ScalanCommunityDslExp
                       with EffectfulCompiler {
-    val lms = new CommunityCxxShptrLmsBackend
+    val lms = new CommunityLmsBackend
   }
 
   trait EffectsSeq extends ScalanCommunitySeq with ScalanCommunityDslSeq
@@ -79,52 +80,64 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
     val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
       val State = new State0Manager[Int]
     }
-    val progStagedCxx = new EffectsExpCxx with StateExamples with MonadsDslExp {
-      val State = new State0Manager[Int]
-    }
     //pending
     val in = Array(10.0, 20.0, 30.0)
     val res = getStagedOutputConfig(progStaged)(progStaged.zipArrayWithIndexW, "zipArrayWithIndex", in, progStaged.defaultCompilerConfig)
-    generate(progStagedCxx)(progStagedCxx.zipArrayWithIndexW,"zipArrayWithIndex")(progStagedCxx.defaultCompilerConfig)
+
+    val progStagedU = new EffectsExpUni with StateExamples with MonadsDslExp {
+      val State = new State0Manager[Int]
+    }
+    val resU = getStagedOutputConfig(progStagedU)(progStagedU.zipArrayWithIndexW, "zipArrayWithIndex", in, progStagedU.defaultCompilerConfig)
+
+    assert(res.sameElements(resU))
   }
 
   test("zipCollectionWithIndex")  {
     val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
       val State = new State0Manager[Int]
     }
-    val progStagedCxx = new EffectsExpCxx with StateExamples with MonadsDslExp {
-      val State = new State0Manager[Int]
-    }
     //pending
     val in = Array(10.0, 20.0, 30.0)
     val res = getStagedOutputConfig(progStaged)(progStaged.zipCollectionWithIndexW, "zipCollectionWithIndex", in, progStaged.defaultCompilerConfig)
-    generate(progStagedCxx)(progStagedCxx.zipCollectionWithIndexW,"zipCollectionWithIndex")(progStagedCxx.defaultCompilerConfig)
+
+    val progStagedU = new EffectsExpUni with StateExamples with MonadsDslExp {
+      val State = new State0Manager[Int]
+    }
+    val resU = getStagedOutputConfig(progStagedU)(progStagedU.zipCollectionWithIndexW, "zipCollectionWithIndex", in, progStagedU.defaultCompilerConfig)
+
+    assert(res.sameElements(resU))
   }
 
   test("zipCollectionWithIndex2")  {
     val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
       val State = new State0Manager[Int]
     }
-    val progStagedCxx = new EffectsExpCxx with StateExamples with MonadsDslExp {
-      val State = new State0Manager[Int]
-    }
     //pending
     val in = Array(10.0, 20.0, 30.0)
     val res = getStagedOutputConfig(progStaged)(progStaged.zipCollectionWithIndexW2, "zipCollectionWithIndex2", in, progStaged.defaultCompilerConfig)
-    generate(progStagedCxx)(progStagedCxx.zipCollectionWithIndexW2,"zipCollectionWithIndex2")(progStagedCxx.defaultCompilerConfig)
+
+    val progStagedU = new EffectsExpUni with StateExamples with MonadsDslExp {
+      val State = new State0Manager[Int]
+    }
+    val resU = getStagedOutputConfig(progStagedU)(progStagedU.zipCollectionWithIndexW2, "zipCollectionWithIndex2", in, progStagedU.defaultCompilerConfig)
+
+    assert(res.sameElements(resU))
   }
 
   test("zipCollectionWithIndex3")  {
     val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
       val State = new State0Manager[Int]
     }
-    val progStagedCxx = new EffectsExpCxx with StateExamples with MonadsDslExp {
-      val State = new State0Manager[Int]
-    }
     //pending
     val in = Array(10.0, 20.0, 30.0)
     val res = getStagedOutputConfig(progStaged)(progStaged.zipCollectionWithIndexW3, "zipCollectionWithIndex3", in, progStaged.defaultCompilerConfig)
-    generate(progStagedCxx)(progStagedCxx.zipCollectionWithIndexW3,"zipCollectionWithIndex3")(progStagedCxx.defaultCompilerConfig)
+
+    val progStagedU = new EffectsExpUni with StateExamples with MonadsDslExp {
+      val State = new State0Manager[Int]
+    }
+    val resU = getStagedOutputConfig(progStagedU)(progStagedU.zipCollectionWithIndexW3, "zipCollectionWithIndex3", in, progStagedU.defaultCompilerConfig)
+
+    assert(res.sameElements(resU))
   }
 
   test("zipCollectionWithIndex3_Free")  {
