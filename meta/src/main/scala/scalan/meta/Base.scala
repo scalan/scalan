@@ -3,6 +3,18 @@ package scalan.meta
 import java.util.Properties
 import java.io.FileReader
 
+case class CodegenConfig(
+  name: String,
+  srcPath: String,
+  entityFiles: List[String],
+  baseContextTrait: String,
+  seqContextTrait: String,
+  stagedContextTrait: String,
+  extraImports: List[String],
+  entityTypeSynonyms: Map[String, String],
+  isAlreadyRep: Boolean = true
+)
+
 object Base {
   lazy val config = {
     val prop = new Properties
@@ -18,5 +30,9 @@ object Base {
     }
     prop.putAll(System.getProperties)
     prop
+  }
+
+  def !!!(msg: String) = {
+    throw new IllegalStateException(msg)
   }
 }

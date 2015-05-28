@@ -1,20 +1,29 @@
 package scalan.meta
-
 /**
  * Created by slesarenko on 23/02/15.
  */
-trait ScalanAstExtensions extends ScalanAst {
+import ScalanAst._
+
+trait ScalanAstExtensions {
   import scalan.meta.PrintExtensions._
 
   implicit class SMethodOrClassArgsOps(as: SMethodOrClassArgs) {
     def argNames = as.args.map(a => a.name)
-    def argNamesAndTypes = as.args.map(a => s"${a.name}: ${a.tpe}")
+    def argNamesAndTypes(config: CodegenConfig) = {
+      if (config.isAlreadyRep)
+        as.args.map(a => s"${a.name}: ${a.tpe}")
+      else
+        as.args.map(a => s"${a.name}: Rep[${a.tpe}]")
+    }
 
-    def argUnrepTypes(module: SEntityModuleDef, config: CodegenConfig) =
-      as.args.map(a => a.tpe.unRep(module, config) match {
-        case Some(t) => t
-        case None => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
-      })
+    def argUnrepTypes(module: SEntityModuleDef, config: CodegenConfig) = {
+      if (config.isAlreadyRep) {
+        as.args.map(a => a.tpe.unRep(module, config) match {
+          case Some(t) => t
+          case None => sys.error(s"Invalid field $a. Fields of concrete classes should be of type Rep[T] for some T.")
+        })
+      } else as.args.map(_.tpe)
+    }
   }
 
   implicit class STpeArgsOps(args: STpeArgs) {

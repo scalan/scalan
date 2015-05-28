@@ -2,8 +2,10 @@ package scalan.meta
 
 import scalan.util.{StringUtil, ScalaNameUtil}
 import scala.annotation.tailrec
+import ScalanAst._
 
-trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensions { ctx: EntityManagement =>
+object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
+  import Base.!!!
   import PrintExtensions._
 
   abstract class TemplateData(val module: SEntityModuleDef, val entity: STraitOrClassDef) {
@@ -195,9 +197,10 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         case STpePrimitive(name, _) => name
         case STraitCall(name, args) => mkId(name, args)
         case STpeTuple(items) => mkId("Tuple", items)
-        case STpeSum(items) => mkId("Sum", items)
+        //case STpeSum(items) => mkId("Sum", items)
         case STpeFunc(domain, range) => mkId("Func", Seq(domain, range))
         case STpeTypeBounds(lo, hi) => mkId("Bounds", Seq(lo, hi))
+        case _ => t.name
       }
     }
 
@@ -227,7 +230,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         case None => ms
       }
 
-    def methodArgSection(sec: SMethodArgs) = s"(${sec.argNamesAndTypes.rep()})"
+    def methodArgSection(sec: SMethodArgs) = s"(${sec.argNamesAndTypes(config).rep()})"
 
     def methodArgsUse(sec: SMethodArgs) = {
       s"(${
@@ -344,7 +347,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
           m.body match {
             case Some(call: SApply) =>
               call.fun match {
-                case SLiteral(value) if value == "sql" => call.args(0).asInstanceOf[SLiteral].value
+                case SLiteral(value) if value == "sql" => call.argss(0)(0).asInstanceOf[SLiteral].value
                 case _ => ""
               }
             case _ => ""
@@ -521,7 +524,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         val typesUse = concTemplateData.tpeArgUseString
         val typesWithElems = concTemplateData.boundedTpeArgString(false)
         val fields = c.args.argNames
-        val fieldsWithType = c.args.argNamesAndTypes
+        val fieldsWithType = c.args.argNamesAndTypes(config)
         val fieldTypes = c.args.argUnrepTypes(module, config)
         val implicitArgs = concTemplateData.implicitArgsDecl
         val useImplicits = concTemplateData.implicitArgsUse
@@ -704,7 +707,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val typesUse = templateData.tpeArgUseString
       val typesWithElems = templateData.boundedTpeArgString(false)
       val fields = c.args.argNames
-      val fieldsWithType = c.args.argNamesAndTypes
+      val fieldsWithType = c.args.argNamesAndTypes(config)
       val implicitArgsDecl = templateData.implicitArgsDecl
 
       val externalMethods = module.entityOps.getMethodsWithAnnotation(ExternalAnnotation)
@@ -751,7 +754,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
       val typesUse = d.tpeArgUseString
       val typesWithElems = d.boundedTpeArgString(false)
       val fields = c.args.argNames
-      val fieldsWithType = c.args.argNamesAndTypes
+      val fieldsWithType = c.args.argNamesAndTypes(config)
       val implicitArgsDecl = d.implicitArgsDecl
 
       val parent     = c.ancestors.head
@@ -1005,7 +1008,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         }
 
         def reasonToSkipMethod(m: SMethodDef): Option[String] = {
-          (m.explicitArgs.collect { case SMethodArg(_,_, name, STpeFunc(_, _), _, _) => name} match {
+          (m.explicitArgs.collect { case SMethodArg(_,_, name, STpeFunc(_, _), _, _, _) => name} match {
             case Seq() => None
             case nonEmpty => Some(s"Method has function arguments ${nonEmpty.mkString(", ")}")
           }).orElse {
@@ -1018,7 +1021,7 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
         def methodExtractor(m: SMethodDef) = {
           reasonToSkipMethod(m) match {
             case Some(reason) =>
-              println(s"    WARNING: Cannot generate matcher for method `${e.name}.${m.name}`: $reason")
+              //println(s"    WARNING: Cannot generate matcher for method `${e.name}.${m.name}`: $reason")
               s"    // WARNING: Cannot generate matcher for method `${m.name}`: $reason"
             case _ =>
               // DummyImplicit and Overloaded* are ignored, since
@@ -1033,7 +1036,8 @@ trait ScalanCodegen extends ScalanParsers with SqlCompiler with ScalanAstExtensi
               val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.declaration).toSet
               val returnType = {
                 val receiverType = s"Rep[${e.name + typeArgString(e.tpeArgs.map(_.name))}]"
-                val argTypes = methodArgs.map(_.tpe.toString)
+                val argTypes = if (config.isAlreadyRep) methodArgs.map(_.tpe.toString)
+                               else methodArgs.map("Rep[" + _.tpe.toString + "]")
                 val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
                   case Seq() => "Unit"
                   case Seq(single) => single

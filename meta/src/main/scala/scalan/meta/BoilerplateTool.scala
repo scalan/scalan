@@ -147,15 +147,15 @@ class BoilerplateTool extends StrictLogging {
   )
   lazy val effectsConfig = CodegenConfig(
     name = "effects",
-    srcPath = "../../scalan-effects/src/main/scala",
+    srcPath = "../community-edition/src/test/scala/scalan/effects",
     entityFiles = List(
-      "scalan/monads/Frees.scala",
-      "scalan/monads/Coproducts.scala",
-      "scalan/examples/Interactions.scala",
-      "scalan/examples/Auths.scala",
-      "scalan/examples/IOs.scala",
-      "scalan/monads/Readers.scala",
-      "scalan/stream/Processes.scala"
+      "Frees.scala",
+      "Coproducts.scala",
+      "Interactions.scala",
+      "Auths.scala",
+      "IOs.scala",
+      "Readers.scala",
+      "Processes.scala"
     ),
     baseContextTrait = "Scalan",
     seqContextTrait = "ScalanSeq",
@@ -175,7 +175,7 @@ class BoilerplateTool extends StrictLogging {
   )
   lazy val effects2Config = CodegenConfig(
     name = "effects2",
-    srcPath = "../community-edition/src/test/scala",
+    srcPath = "../community-edition/src/test/scala/",
     entityFiles = List(
       "scalan/effects/IOs.scala",
       "scalan/effects/Readers.scala",
@@ -259,8 +259,6 @@ class BoilerplateTool extends StrictLogging {
     "scalan" -> List(scalanConfig),
     "core" -> List(coreConfig),
     "coretests" -> List(coreTestsConfig),
-    "core" -> List(coreConfig),
-    "core-test" -> List(coreTestsConfig),
     "ce" -> List(ceConfig),
     "collections" -> List(collectionsConfig),
     "la" -> List(laConfig),
