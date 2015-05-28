@@ -125,15 +125,21 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
           "/*****************************************\n" +
           "  Emitting Generated Code                  \n" +
           "*******************************************/")
-      emitFileHeader()
+      //emitFileHeader()
 
       val indargs = scala.Range(0, args.length).zip(args);
       val has = indargs.map(p => p._2.tp.runtimeClass).contains(classOf[JNILmsOps#JNIType[_]]) || resultM.runtimeClass == classOf[JNILmsOps#JNIType[_]]
-      val jniEnv = if (has) "JNIEnv* env, " else ""
-      stream.println(s"${sA} apply_$className(${jniEnv}${indargs.map( p => s"${remap(toShptrManifest(p._2.tp))} ${quote(p._2)}").mkString(", ")} ) {")
+      val jniEnv = if (has) "JNIEnv* env, jobject, " else ""
+      val braceName = if (has) "extern \"C\" " else "namespace scalan"
+      val retType = if (has) s"JNIEXPORT $sA JNICALL" else sA
+
+      stream.println(s"${braceName} {")
+      stream.println(s"${retType} $className(${jniEnv}${indargs.map( p => s"${remap(toShptrManifest(p._2.tp))} ${quote(p._2)}").mkString(", ")} ) {")
 
       emitBlock(body)
       stream.println(s"return ${quote(getBlockResult(body))};")
+
+      stream.println("}")
 
       stream.println("}")
       stream.println("/*****************************************\n" +

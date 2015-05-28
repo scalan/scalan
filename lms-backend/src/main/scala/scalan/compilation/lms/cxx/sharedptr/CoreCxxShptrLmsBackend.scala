@@ -7,21 +7,20 @@ package sharedptr
 import scala.virtualization.lms.common._
 import scalan.compilation.lms.common._
 
-class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp with PointerLmsOpsExp { self =>
-
-  trait Codegen extends BaseCodegen[self.type]
-  with CxxShptrCodegen
-  with CxxShptrGenVectorOps
-  with CLikeGenEqual
-  with CLikeGenPrimitiveOps
-  with CxxShptrGenStruct
-  with CxxShptrGenFatArrayLoopsFusionOpt
-  with LoopFusionOpt
-  with CxxShptrGenCastingOps
-  with CxxShptrGenIfThenElseFat
-  with CLikeGenOrderingOps
-  with CLikeGenBooleanOps
-  with CxxShptrGenFunctions
+class CxxCodegen [BackendCake <: LmsBackendFacade with JNILmsOpsExp ](backend: BackendCake) extends BaseCodegen[BackendCake]
+with CxxShptrCodegen
+with CxxShptrGenPointer //it use PointerLmsOpsExp
+with CxxShptrGenVectorOps
+with CLikeGenEqual
+with CLikeGenPrimitiveOps
+with CxxShptrGenStruct
+with CxxShptrGenFatArrayLoopsFusionOpt
+with LoopFusionOpt
+with CxxShptrGenCastingOps
+with CxxShptrGenIfThenElseFat
+with CLikeGenOrderingOps
+with CLikeGenBooleanOps
+with CxxShptrGenFunctions
 //  with CxxShptrGenArrayOps
   with CxxShptrGenArrayOpsBoost
   with CxxShptrGenVariables
@@ -34,16 +33,23 @@ class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp with P
   with CxxShptrGenLstOps
   with CxxShptrGenJNIExtractor
   with CxxShptrGenStringOps
-  with CxxShptrGenPointer
   with CxxShptrGenEitherOps
   with CxxShptrGenIterableOps
   {
-    override val IR: self.type = self
+    override val IR: BackendCake = backend
+    import IR._
 
-    override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
-//
-//    override def hashCode(): Int = super.hashCode()
-  }
+  //def codeExtension: String = "cxx" -
+  override val kernelFileExt = "cxx"
 
-  override val codegen = new Codegen {}
+
+  override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
+  //
+  //    override def hashCode(): Int = super.hashCode()
+}
+
+
+class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp with PointerLmsOpsExp { self =>
+
+  override val codegen = new CxxCodegen[self.type](self)  {}
 }

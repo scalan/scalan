@@ -13,13 +13,11 @@ trait LmsCompilerCxx extends LmsCompiler with JNIExtractorOpsExp  with PointerOp
   type CompilerConfig = Unit
   implicit val defaultCompilerConfig = ()
 
-  override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
-
   override protected def doBuildExecutable[A,B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
-    emitSource(sourcesDir, "cxx", functionName, graph, eInput, eOutput)
+    emitSource(sourcesDir, functionName, graph, eInput, eOutput)
 //    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
 //      sourceFile.getAbsolutePath
 //

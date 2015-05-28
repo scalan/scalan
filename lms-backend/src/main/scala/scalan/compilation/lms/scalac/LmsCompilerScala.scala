@@ -20,13 +20,11 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL
   case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String])
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
-  override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
-
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     Sbt.prepareDir(executableDir) //todo - check: is it sbt-specific function?
     /* LMS stuff */
-    val sourceFile = emitSource(sourcesDir, "scala", functionName, graph, eInput, eOutput)
+    val sourceFile = emitSource(sourcesDir, functionName, graph, eInput, eOutput)
     val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
     FileUtil.deleteIfExist(jarFile)
     val jarPath = jarFile.getAbsolutePath
