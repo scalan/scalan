@@ -7,7 +7,7 @@ import scalan.{ScalanCtxExp, JNIExtractorOpsExp}
 
 trait JNIBridge extends CoreBridge { self: ScalanCtxExp with MethodMappingDSL with JNIExtractorOpsExp with AbstractStringsDslExp =>
 
-  val lms: CoreLmsBackendBase with JNILmsOpsExp
+  val lms: CoreLmsBackend with JNILmsOpsExp
 
   override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     case el: JNITypeElem[_] =>

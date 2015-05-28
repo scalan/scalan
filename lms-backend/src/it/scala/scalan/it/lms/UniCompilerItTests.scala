@@ -20,6 +20,17 @@ class UniCompilerItTests  extends CommunitySmokeItTests {
     lazy val test01_oneOp = fun { p: Rep[Double] =>
       p+2.0
     }
+
+    lazy val test02_mapArray = fun { p: Rep[Array[Double]] =>  //Rep[(Array[Array[Double]], Array[Double])]
+      val vector = DenseVector(Collection(p))
+      val res = vector.mapBy( fun{ r => r + 2.0 } )
+      res.items.arr
+    }
+
+    /*lazy val multifunc = fun { p: Rep[Array[Double]] =>
+      p+2.0
+    }*/
+
   }
 
   class ProgCommunityExp extends ProgUniTest with ScalanCommunityDslExp with LmsCompilerUni with CommunityBridge with CommunityMethodMappingDSL {
@@ -70,6 +81,10 @@ class UniCompilerItTests  extends CommunitySmokeItTests {
     compareOutputWithSequential(progStaged)(progSeqU.test01_oneOp, progStaged.test01_oneOp, "test01_oneOp", in)
   }
 
+  test("test02_mapArray") {
+    val in = Array(2.0, 3.0)
+    compareOutputWithSequential(progStaged)(progSeqU.test02_mapArray, progStaged.test02_mapArray, "test02_mapArray", in)
+  }
 
 }
 

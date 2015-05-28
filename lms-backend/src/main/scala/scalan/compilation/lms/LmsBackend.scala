@@ -526,7 +526,11 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   }  */
 }
 
-trait CoreLmsBackend extends CoreLmsBackendBase // todo kill this class
+//trait CoreLmsBackendTmp extends CoreLmsBackend // todo kill this class
+
+trait CoreLmsBackend extends LmsBackend with LmsBackendFacade
+
+trait CommunityLmsBackendBase extends CoreLmsBackend with VectorOpsExp with ExtNumOpsExp with SystemOpsExp
 
 class CommunityLmsBackend extends CoreLmsBackend with CommunityLmsBackendBase { self =>
   override val codegen = new ScalaCommunityCodegen[self.type](self)

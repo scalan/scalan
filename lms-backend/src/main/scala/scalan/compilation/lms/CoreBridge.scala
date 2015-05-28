@@ -8,7 +8,7 @@ import scalan.compilation.language.{CoreMethodMappingDSL, MethodMappingDSL, Inte
 
 trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { self: ScalanCtxExp =>
 
-  val lms: CoreLmsBackendBase
+  val lms: CoreLmsBackend
 
   override def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
     case _: CompanionBase[_] =>  //TODO backend

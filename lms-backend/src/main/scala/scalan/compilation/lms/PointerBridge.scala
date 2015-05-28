@@ -6,7 +6,7 @@ import scalan.{ScalanCtxExp, PointerOpsExp}
 
 trait PointerBridge extends CoreBridge { self: ScalanCtxExp with MethodMappingDSL with PointerOpsExp =>
 
-  val lms: CoreLmsBackendBase with PointerLmsOpsExp
+  val lms: CoreLmsBackend with PointerLmsOpsExp
 
   override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     case ScalarElem(eItem) =>

@@ -81,11 +81,6 @@ trait LmsCompilerUni
 
     }
 
-//    val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
-//    Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, scalaFile, jarFile.getAbsolutePath)
-//    Gcc.compile(scalan.Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
-//    CustomCompilerOutput(jarFile.toURI.toURL)
-
     val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
     FileUtil.deleteIfExist(jarFile)
     val jarPath = jarFile.getAbsolutePath
@@ -104,21 +99,6 @@ trait LmsCompilerUni
     Gcc.compile(scalan.Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
     CustomCompilerOutput(jarFile.toURI.toURL, mainClass, output)
   }
-
-
-  //copy-pasted from Scala-compiler, because it should be same
-
-//  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String])
-
-//  implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
-
-//  protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
-//    val (cls, method) = loadMethod(compilerOutput)
-//    val instance = cls.newInstance()
-//
-//    val result = method.invoke(instance, input.asInstanceOf[AnyRef])
-//    result.asInstanceOf[B]
-//  }
 
 
 }
