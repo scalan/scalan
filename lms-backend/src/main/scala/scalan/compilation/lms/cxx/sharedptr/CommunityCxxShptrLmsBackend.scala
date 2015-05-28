@@ -7,4 +7,7 @@ class CommunityCxxShptrLmsBackend  extends CoreCxxShptrLmsBackend with Community
   //override val codegen = new Codegen with CxxShptrGenVectorOps/* with CxxShptrGenSystemOps*/ {
   //  override val IR: self.type = self
   //}
+
+  override val nativeCodegen: CxxCodegen[self.type] = new CxxCodegen(self)
+
 }

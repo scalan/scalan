@@ -22,6 +22,9 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
   override val IR: BackendCake = backend
   import IR._
 
+  //override def codeExtension: String = "_dot_"
+
+
   case class AssignDef[+A:Manifest](id:Int, rhs: Option[Def[_]], withDeclare:Boolean, withMonoid:String = "=") extends Exp[A]  //id - for simplify, evidence$1 - Manifest for extract type
   case class AssignExp[+A:Manifest](id:Int, rhs: Option[Exp[A]], withDeclare:Boolean, withMonoid:String = "=") extends Exp[A]  //id - for simplify, evidence$1 - Manifest for extract type
 
