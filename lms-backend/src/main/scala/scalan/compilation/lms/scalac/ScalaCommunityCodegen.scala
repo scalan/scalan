@@ -33,6 +33,7 @@ class ScalaCommunityCodegen[BackendCake <: LmsBackendFacade](backend: BackendCak
   with ScalaGenRangeOps
   with ScalaGenMiscOps
   with ScalaGenVectorOps with ScalaGenExtNumOps with ScalaGenSystemOps //from scalan.compilation.lms.common
+  with ScalaGenArrayOpsExt
 {
   val IR: BackendCake = backend
   import IR._
