@@ -335,8 +335,6 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
   }
 
   object DoneMethods {
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
-
     object flatMapBy {
       def unapply(d: Def[_]): Option[(Rep[Done[F, A]], Rep[A => FreeM[F,B]]) forSome {type F[_]; type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: DoneElem[_, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
@@ -429,8 +427,6 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
   }
 
   object FlatMapMethods {
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f1
-
     object flatMapBy {
       def unapply(d: Def[_]): Option[(Rep[FlatMap[F, S, B]], Rep[B => FreeM[F,R]]) forSome {type F[_]; type S; type B; type R}] = d match {
         case MethodCall(receiver, method, Seq(f1, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FlatMapElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
@@ -470,8 +466,6 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
   }
 
   object FreeMMethods {
-    // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
-
     object flatMapBy {
       def unapply(d: Def[_]): Option[(Rep[FreeM[F, A]], Rep[A => FreeM[F,B]]) forSome {type F[_]; type A; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeMElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
@@ -495,8 +489,6 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
         case _ => None
       }
     }
-
-    // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
 
     object resume {
       def unapply(d: Def[_]): Option[(Rep[FreeM[F, A]], Functor[F]) forSome {type F[_]; type A}] = d match {
