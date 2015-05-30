@@ -880,6 +880,11 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         s"""
           |    case ${e.name}Methods.map(xs, Def(IdentityLambda())) => xs
           |
+          |    case view1@View${e.name}(Def(view2@View${e.name}(arr))) =>
+          |      val compIso = composeIso(view1.innerIso, view2.innerIso)
+          |      implicit val eAB = compIso.eTo
+          |      View${e.name}(arr)(${e.name}Iso(compIso))
+          |
           |    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
           |    case mc @ MethodCall(Def(wrapper: Exp${e.name}Impl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
           |      val resultElem = mc.selfType
@@ -912,10 +917,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           |      case _ =>
           |        super.rewriteDef(d)
           |    }
-          |    case view1@View${e.name}(Def(view2@View${e.name}(arr))) =>
-          |      val compIso = composeIso(view1.innerIso, view2.innerIso)
-          |      implicit val eAB = compIso.eTo
-          |      View${e.name}(arr)(${e.name}Iso(compIso))
            """.stripMargin
       }
       else ""
