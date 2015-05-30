@@ -27,7 +27,7 @@ trait FreeStates extends Base { self: MonadsDsl =>
 
     def run[S: Elem, A: Elem](t: Rep[FreeState[S, A]], s: Rep[S]): Rep[(A, S)] = {
       t.resume(statefFunctor).fold(
-        l => l match {
+        l => MATCH(l) {
           case Def(g: StateGet[S, FreeState[S, A]] @unchecked) => run(g.f(s), s)
           case Def(p: StatePut[S, FreeState[S, A]] @unchecked) => run(p.a, p.s)
           case _ => patternMatchError(l)
@@ -66,7 +66,7 @@ trait FreeStatesDsl extends impl.FreeStatesAbs { self: MonadsDsl =>
   type FreeState[S,A] = FreeM[({type f[x] = StateF[S,x]})#f, A]
 
   implicit def statefFunctor[S:Elem] = new Functor[({type λ[α] = StateF[S,α]})#λ] {
-    def map[A:Elem,B:Elem](m: Rep[StateF[S, A]])(f: Rep[A] => Rep[B]) = m match {
+    def map[A:Elem,B:Elem](m: Rep[StateF[S, A]])(f: Rep[A] => Rep[B]) = MATCH(m) {
       case Def(g: StateGet[_,_]) => StateGet((s: Rep[S]) => f(g.f.asRep[S=>A](s)))
       case Def(p: StatePut[_,_]) => StatePut(p.s.asRep[S], f(p.a.asRep[A]))
       case _ => patternMatchError(m)

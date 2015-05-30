@@ -30,6 +30,7 @@ trait Scalan
   with IfThenElse
   with Blocks
   with Monoids
+  with PatternMatching
   with Maps
   with ArrayOps
   with ArrayBuffers
@@ -64,6 +65,7 @@ trait ScalanSeq
   with FunctionsSeq
   with IfThenElseSeq
   with BlocksSeq
+  with PatternMatchingSeq
   with MapsSeq
   with MonoidsSeq
   with ArrayOpsSeq
@@ -103,6 +105,7 @@ trait ScalanExp
   with FunctionsExp
   with IfThenElseExp
   with BlocksExp
+  with PatternMatchingExp
   with MapsExp
   with Transforming
   with ArrayOpsExp
