@@ -360,8 +360,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
             cont.lift(paramElem)
         }
       case _ if classSymbol.isClass =>
-        val paramDescs = params.map {
-          case typaram if typaram.takesTypeArgs =>
+        val paramDescs = params.zip(classSymbol.asType.toTypeConstructor.typeParams).map {
+          case (typaram, formalParam) if typaram.takesTypeArgs =>
             // handle high-kind argument
             typaram match {
               case TypeRef(_, classSymbol, _) =>
@@ -381,17 +381,19 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                 type F[A] = A
 
                 new Container[F] {
+                  private val elemMap1 = elemMap + (formalParam -> scala.Right(this.asInstanceOf[SomeCont]))
+
                   def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[F[T]] = ???
                   def lift[T](implicit eT: Elem[T]): Elem[F[T]] = {
                     val tpe1 = appliedType(typaram, List(eT.tag.tpe))
                     // TODO incorrect baseType
-                    elemFromType(tpe1, elemMap, baseType).asInstanceOf[Elem[F[T]]]
+                    elemFromType(tpe1, elemMap1, baseType).asInstanceOf[Elem[F[T]]]
                   }
 
                   override protected def getName = typaram.toString
                 }
             }
-          case typaram =>
+          case (typaram, _) =>
             elemFromType(typaram, elemMap, baseType)
         }
 
@@ -523,10 +525,10 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   // TODO Combine with extractElems
   private def getElemsMapFromInstanceElem(e: Elem[_], tpe: Type): Map[Symbol, TypeDesc] = {
-    val kvs = tpe.typeSymbol.asType.typeParams.map {
+    val kvs = tpe.dealias.typeSymbol.asType.typeParams.map {
       case sym =>
         val res = Try {
-          if (sym.asType.typeParams.nonEmpty) {
+          if (sym.asType.toTypeConstructor.takesTypeArgs) {
             // FIXME hardcoding - naming convention is assumed to be consistent with ScalanCodegen
             val methodName = "c" + sym.name.toString
             val cont = invokeMethod(e, methodName).asInstanceOf[SomeCont]
