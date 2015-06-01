@@ -12,7 +12,7 @@ object Gcc {
     val sourceName = sourceFile.getName
     val targetFile = targetDir+fileSeparator+libFileName(libName)
     val include = s"-I/usr/include $includeJavaFlag $includeRuntimeDirFlag"
-    val command = s"g++ $sourceName $include -fPIC -shared -pthread -std=c++0x -o $targetFile".split(" ").toSeq
+    val command = s"g++ $sourceName $include -fPIC -shared -pthread -std=c++0x -O3 -o $targetFile".split(" ").toSeq
     println("command: " + command.mkString(" "))
     ProcessUtil.launch(sourceDir, command: _*)
 

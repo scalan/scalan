@@ -4,10 +4,11 @@ import java.io.File
 import java.net.{URLClassLoader, URL}
 
 import scalan.common.Lazy
+import scalan.util.FileUtil
 import scalan.{JNIExtractorOpsExp, ScalanCtxExp}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.language.MethodMappingDSL
-import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.compilation.lms.scalac.{LmsCompilerScala, CommunityLmsCompilerScala}
 import scalan.compilation.lms.source2bin.{Gcc, SbtConfig, Nsc, Sbt}
 import scalan.compilation.lms.{JNIBridge, CoreBridge, LmsCompiler}
 import scalan.util.FileUtil._
@@ -16,13 +17,13 @@ import scalan.util.FileUtil._
  * Created by adel on 5/12/15.
  */
 trait LmsCompilerUni
-  extends LmsCompiler
+  extends LmsCompilerScala
   with JNIExtractorOpsExp
   //extends CommunityLmsCompilerScala
   with CoreBridge with MethodMappingDSL with JNIBridge
 { self: ScalanCtxExp =>
 
-  case class CustomCompilerOutput(jar: URL)
+//  case class CustomCompilerOutput(jar: URL)
 
   override protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
@@ -80,12 +81,11 @@ trait LmsCompilerUni
 
     }
 
-    val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
-    Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, scalaFile, jarFile.getAbsolutePath)
-    Gcc.compile(scalan.Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
-    CustomCompilerOutput(jarFile.toURI.toURL)
+//    val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
+//    Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, scalaFile, jarFile.getAbsolutePath)
+//    Gcc.compile(scalan.Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
+//    CustomCompilerOutput(jarFile.toURI.toURL)
 
-    /*
     val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
     FileUtil.deleteIfExist(jarFile)
     val jarPath = jarFile.getAbsolutePath
@@ -96,37 +96,29 @@ trait LmsCompilerUni
     val output: Option[Array[String]] = compilerConfig.scalaVersion match {
       case Some(scalaVersion) =>
         val dependencies:Array[String] = methodReplaceConf.flatMap(conf => conf.dependencies).toArray
-        Some(Sbt.compile(sourcesDir, executableDir, functionName, compilerConfig, dependencies, sourceFile, jarPath))
+        Some(Sbt.compile(sourcesDir, executableDir, functionName, compilerConfig, dependencies, scalaFile, jarPath))
       case None =>
-        Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, sourceFile, jarPath)
+        Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, scalaFile, jarPath)
         None
     }
+    Gcc.compile(scalan.Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
     CustomCompilerOutput(jarFile.toURI.toURL, mainClass, output)
-    */
   }
 
 
   //copy-pasted from Scala-compiler, because it should be same
 
-  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String])
+//  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String])
 
-  implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
+//  implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
-  def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
-    // ensure Scala library is available
-    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), self.getClass.getClassLoader)
-    val cls = classLoader.loadClass(compilerOutput.common.name)
-    val argumentClass = compilerOutput.common.eInput.classTag.runtimeClass
-    (cls, cls.getMethod("apply", argumentClass))
-  }
-
-  protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
-    val (cls, method) = loadMethod(compilerOutput)
-    val instance = cls.newInstance()
-
-    val result = method.invoke(instance, input.asInstanceOf[AnyRef])
-    result.asInstanceOf[B]
-  }
+//  protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
+//    val (cls, method) = loadMethod(compilerOutput)
+//    val instance = cls.newInstance()
+//
+//    val result = method.invoke(instance, input.asInstanceOf[AnyRef])
+//    result.asInstanceOf[B]
+//  }
 
 
 }

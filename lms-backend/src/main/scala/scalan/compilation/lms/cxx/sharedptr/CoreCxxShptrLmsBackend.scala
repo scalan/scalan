@@ -22,21 +22,22 @@ with CLikeGenOrderingOps
 with CLikeGenBooleanOps
 with CxxShptrGenFunctions
 //  with CxxShptrGenArrayOps
-with CxxShptrGenArrayOpsBoost
-with CxxShptrGenVariables
-with CxxShptrGenArrayBuilderOps
-with CxxShptrGenRangeOps
-with CLikeGenWhile
-with CLikeGenNumericOps
-with CxxShptrGenListOps
-with CxxShptrGenLstOps
-with CxxShptrGenJNIExtractor
-with CxxShptrGenStringOps
-//with JNILmsOps
-//with JNILmsOpsExp
-{
-  override val IR: BackendCake = backend
-  import IR._
+  with CxxShptrGenArrayOpsBoost
+  with CxxShptrGenVariables
+  with CxxShptrGenArrayBuilderOps
+  with CxxShptrGenArrayOpsExt
+  with CxxShptrGenRangeOps
+  with CLikeGenWhile
+  with CLikeGenNumericOps
+  with CxxShptrGenListOps
+  with CxxShptrGenLstOps
+  with CxxShptrGenJNIExtractor
+  with CxxShptrGenStringOps
+  with CxxShptrGenEitherOps
+  with CxxShptrGenIterableOps
+  {
+    override val IR: BackendCake = backend
+    import IR._
 
   //def codeExtension: String = "cxx" -
   override val kernelFileExt = "cxx"

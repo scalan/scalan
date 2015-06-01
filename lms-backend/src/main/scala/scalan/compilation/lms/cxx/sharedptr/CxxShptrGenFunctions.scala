@@ -25,7 +25,7 @@ trait CxxShptrGenFunctions extends CLikeGenEffect with BaseGenFunctions with Cxx
 //    stream.println( s"${remap(sym.tp)} ${quote(sym)} = [&](${remap(x.tp)} ${quote(x)}) -> ${remap(z.tp)} {" )
     val newXtp = toShptrManifest(x.tp)
     val newZtp = toShptrManifest(z.tp)
-    emitValDef(sym, src"[&](${remap(newXtp)} ${quote(x)}) -> ${remap(newZtp)} {")
+    emitValDef(quote(sym), manifest[auto_t], src"[=](${remap(newXtp)} ${quote(x)}) -> ${remap(newZtp)} {")
     emitBlock(y)
     if (remap(newZtp) != "void")
       stream.println("return " + quote(z) + ";")

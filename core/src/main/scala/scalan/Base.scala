@@ -150,7 +150,8 @@ object Base {
   val config = {
     val prop = new Properties
     try {
-      val reader = new FileReader("scalan.properties")
+      val scalanPropertiesFileName = System.getProperty("scalan.properties.file", "scalan.properties")
+      val reader = new FileReader(scalanPropertiesFileName)
       try {
         prop.load(reader)
 
