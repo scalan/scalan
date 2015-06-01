@@ -340,7 +340,15 @@ object ScalanAst {
   case class SObjectDef(
                          name: String,
                          ancestors: List[STraitCall],
-                         body: List[SBodyItem]) extends SBodyItem
+                         body: List[SBodyItem]) extends STraitOrClassDef {
+
+    def tpeArgs = Nil
+    def selfType = None
+    def companion = None
+    def isTrait = false
+    def annotations = Nil
+    def implicitArgs = SClassArgs(Nil)
+  }
 
   case class SSeqImplementation(explicitMethods: List[SMethodDef]) {
     def containsMethodDef(m: SMethodDef) = {
