@@ -1,5 +1,4 @@
-resolvers += Resolver.url(
-"sbt-plugin-snapshots", new URL("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots/"))(Resolver.ivyStylePatterns)
+resolvers += Resolver.url("sbt-plugin-snapshots", new URL("http://repo.scala-sbt.org/scalasbt/sbt-plugin-snapshots/"))(Resolver.ivyStylePatterns)
 
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.12.0")
 

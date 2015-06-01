@@ -50,12 +50,7 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
   }
 
   final override def emitValDef(sym: String, tpe: Manifest[_], rhs: String): Unit = {
-      val cv = tpe match {
-        case mU: Manifest[_] if mU.runtimeClass == classOf[Unit] =>
-          "const "
-        case _ =>
-          ""
-      }
+      val cv = if( tpe.runtimeClass == classOf[Unit] ) "const " else ""
       stream.println(src"$cv${remap(tpe)} $sym = $rhs;")
   }
 
