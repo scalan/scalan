@@ -251,6 +251,15 @@ trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
 // Modifies xs adding new element and assigns new symbol to xs
 //      gen"""$xs->push_back($v);"""
 //      emitValDef(sym, src"$xs")
+    case a @ ArrayInsert(xs,i,y) =>
+      emitNode(sym, ArrayNew(Const(0)))
+      val xsLen = src"${xs}_len"
+      gen"""size_t $xsLen = $xs->size();
+           |$sym->resize($xsLen + 1);
+           |std::copy($xs->begin(), $xs->begin() + $i, $sym->begin());
+           |(*$sym)[$i] = $y;
+           |std::copy($xs->begin() + $i, $xs->end(), $sym->begin() + $i + 1);"""
+    case _ =>
       super.emitNode(sym, rhs)
   }
 }
