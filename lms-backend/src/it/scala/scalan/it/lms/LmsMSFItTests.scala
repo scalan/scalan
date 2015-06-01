@@ -125,10 +125,8 @@ abstract class LmsMsfItTests extends BaseItTests {
   lazy val progStaged5 = new ProgExp {}
   lazy val progStaged6 = new ProgExp {}
   lazy val progStaged7 = new ProgExp {}
-}
 
-class LmsMsfPrimeItTests extends LmsMsfItTests {
-  import progSeq._
+
   val graph = Array(
     Array(1, 8),
     Array(0, 2, 8),
@@ -158,6 +156,10 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     Array(2.0, 0.5)
   )
 
+}
+
+class LmsMsfPrimeItTests extends LmsMsfItTests {
+  import progSeq._
   // Commented
 
   test("MSF_adjList") {
