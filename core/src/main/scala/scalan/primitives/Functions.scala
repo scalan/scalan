@@ -21,7 +21,8 @@ trait Functions { self: Scalan =>
   implicit def fun2[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = mkLambda(fun)
   def funGlob[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = mkLambda(f, false)
   //def fun[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = mkLambda(f)
-  //def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
+  def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
+  def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]))(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = funRec(f, false)
   //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C]
   def identityFun[A: Elem]: Rep[A => A]
   def constFun[A: Elem, B](x: Rep[B]): Rep[A => B]
@@ -44,9 +45,9 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
     case (x, y) => fun(x, y)
   }
   //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C] = f
-//  def letrec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = {
-//    f(letrec(f, mayInline))(_)
-//  }
+  def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = {
+    f(funRec(f, mayInline))(_)
+  }
   def identityFun[A: Elem]: Rep[A => A] = x => x
   def constFun[A: Elem, B](x: Rep[B]): Rep[A => B] = _ => x
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = x => f(g(x))
@@ -216,7 +217,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def mkLambda[A,B](f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: LElem[A]): Exp[A=>B] = {
     // in Scalan
-    // letrec[A,B]((f: Exp[A => B]) => fun, mayInline)
+    // funRec[A,B]((f: Exp[A => B]) => fun, mayInline)
     val x = fresh[A]
     lambda(x)(f, mayInline)
   }
@@ -268,24 +269,12 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-//  def letrec[A:Elem,B:Elem](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean): Rep[A=>B] = {
-//    val x = fresh[A]
-//    val res = fresh[A => B]
-//    val fun = f(res)
-//    reifyFunction(fun, x, res, mayInline)
-//  }
-
-//  def reifyFunction[A:Elem, B:Elem](fun: Exp[A] => Exp[B], x: Exp[A], res: Exp[A=>B], mayInline: Boolean): Exp[A=>B] = {
-//    val y = executeFunction(fun, x, res)
-//    val lam = new Lambda(Some(fun), x/*.asSymbol*/, y, mayInline) { override val self = res }
-//    findDefinition(lam) match {
-//      case Some(TableEntry(sym, Lambda(Some(f), _, _, _))) if f == fun =>
-//        sym
-//      case _ =>
-//        createDefinition(res/*.asSymbol*/, lam)
-//        res
-//    }
-//  }
+  def funRec[A:Elem,B:Elem](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean): Rep[A=>B] = {
+    val x = fresh[A]
+    val res = fresh[A => B]
+    val fun = f(res)
+    reifyFunction(fun, x, res, mayInline)
+  }
 
   def reifyFunction[A, B](fun: Exp[A] => Exp[B], x: Exp[A], fSym: Exp[A=>B], mayInline: Boolean): Exp[A=>B] = {
     val Block(y) = reifyEffects(executeFunction(fun, x, fSym))
