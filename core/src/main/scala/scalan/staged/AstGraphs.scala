@@ -361,9 +361,10 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
 
   def buildScheduleForResult(st: Seq[Exp[_]], neighbours: Exp[_] => Seq[Exp[_]]): Schedule = {
     val startNodes = st.flatMap(e => findDefinition(e).toList)
+    val lambdas = startNodes.flatMap(_.lambda).toSet
 
     def succ(tp: TableEntry[_]): Schedule = {
-      val ns = neighbours(tp.sym)
+      val ns = neighbours(tp.sym).filterNot(lambdas.contains)
       ns.flatMap { e =>
         findDefinition(e).toList
       }
