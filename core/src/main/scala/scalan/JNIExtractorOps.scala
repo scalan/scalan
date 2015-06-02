@@ -23,14 +23,13 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
   private implicit val z2:Default[JNIMethodID] = scalan.common.Default.defaultVal[JNIMethodID](null.asInstanceOf[JNIMethodID])
   case object JNIMethodIDElem extends BaseElem[JNIMethodID]
 
-  case class JNITypeElem[T: Elem]() extends Elem[JNIType[T]] {
-    val tElem = element[T]
+  case class JNITypeElem[T](val tElem: Element[T]) extends Elem[JNIType[T]] {
     override val tag = {
-      implicit val ttag = element[T].tag
+      implicit val ttag = tElem.tag
       weakTypeTag[JNIType[T]]
     }
 
-    override def isEntityType: Boolean = element[T].isEntityType
+    override def isEntityType: Boolean = tElem.isEntityType
 
     lazy val getDefaultRep = null.asInstanceOf[Rep[JNIType[T]]]
   }
@@ -50,6 +49,8 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
   case class JNIArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     override def isEntityType = eItem.isEntityType
 
+    override def getName = "JNI-" + cleanUpTypeName(tag.tpe)
+
     lazy val tag = {
       implicit val tag1 = eItem.tag
       weakTypeTag[Array[A]]
@@ -59,7 +60,7 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
     override def canEqual(other: Any) = other.isInstanceOf[JNIArrayElem[_]]
   }
 
-  implicit def JNITypeElement[T: Elem]: Elem[JNIType[T]] = new JNITypeElem[T]
+  implicit def JNITypeElement[T: Elem]: Elem[JNIType[T]] = new JNITypeElem(element[T])
   implicit def JNIClassElement: Elem[JNIClass] = JNIClassElem
   implicit def JNIFieldIDElement: Elem[JNIFieldID] = JNIFieldIDElem
   implicit def JNIMethodIDElement: Elem[JNIMethodID] = JNIMethodIDElem

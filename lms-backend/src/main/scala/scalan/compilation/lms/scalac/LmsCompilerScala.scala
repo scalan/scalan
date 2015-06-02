@@ -7,6 +7,7 @@ import java.io._
 import java.net.{URL, URLClassLoader}
 import scalan.compilation.language.MethodMappingDSL
 import scalan.compilation.lms.source2bin.{Nsc, SbtConfig, Sbt}
+import scalan.compilation.lms.uni.NativeMethodsConfig
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
@@ -16,8 +17,8 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL
    *
    * Otherwise uses SBT to compile with the desired version
    */
-  case class CustomCompilerOutput(jar: URL, mainClass: Option[String] = None, output: Option[Array[String]] = None)
-  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String])
+  case class CustomCompilerOutput(sources:List[String], jar: URL, mainClass: Option[String] = None, output: Option[Array[String]] = None)
+  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String], nativeMethods: NativeMethodsConfig = new NativeMethodsConfig)
   implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
@@ -40,7 +41,7 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL
         Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, sourceFile, jarPath)
         None
     }
-    CustomCompilerOutput(jarFile.toURI.toURL, mainClass, output)
+    CustomCompilerOutput(List(sourceFile.getAbsolutePath), jarFile.toURI.toURL, mainClass, output)
   }
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {

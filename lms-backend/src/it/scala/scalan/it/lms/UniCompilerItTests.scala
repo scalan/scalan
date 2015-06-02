@@ -3,7 +3,7 @@ package scalan.it.lms
 import scalan.graphs.{GraphsDslExp, GraphsDslSeq}
 import scalan.linalgebra.{MatricesDslSeq, LinearAlgebraExamples}
 import scalan.{ScalanCtxExp, ScalanCommunityDslSeq, CommunityMethodMappingDSL, ScalanCommunityDslExp}
-import scalan.compilation.lms.uni.LmsCompilerUni
+import scalan.compilation.lms.uni.{NativeMethodsConfig, LmsCompilerUni}
 import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
 
 /**
@@ -27,6 +27,38 @@ class UniCompilerItTests  extends LmsMsfItTests {
       res.items.arr
     }
 
+    lazy val test03_zipArray = fun {x: Rep[Array[Int]] =>
+      val x1 = x.map {y:Rep[Int] => y+2}
+      x1 zip x
+    }
+
+    lazy val test04_zip2Arrays = fun {x: Rep[(Array[Int], Array[Int])] =>
+      val x1 = x._1
+      val x2 = x._2
+      val x11 = x1.map {y:Rep[Int] => y+2}
+      val x21 = x2.map {y:Rep[Int] => y+3}
+      x11 zip x21
+    }
+
+    lazy val test05_zip3Arrays = fun {x: Rep[(Array[Int], (Array[Int], Array[Int]))] =>
+      val x1 = x._1
+      val x2 = x._2
+      val x3 = x._3
+      val x11 = x1.map {y:Rep[Int] => y+1}
+      val x21 = x2.map {y:Rep[Int] => y+2}
+      val x31 = x3.map {y:Rep[Int] => y+3}
+      x31 zip ( x21 zip x11)
+    }
+
+    lazy val test06_simpleReduce = fun {x: Rep[Array[Int]] =>
+      val x1 = x.reduce
+      x1
+    }
+
+    lazy val test07_reduceFromTuple = fun {x: Rep[(Array[Int], (Array[Int], Array[Int]))] =>
+      val x1 = x._2.reduce
+      x1 + 1
+    }
     /*lazy val multifunc = fun { p: Rep[Array[Double]] =>
       p+2.0
     }*/
@@ -43,25 +75,6 @@ class UniCompilerItTests  extends LmsMsfItTests {
   val progSeqU = new ProgSeq
 
 
-   /*
-  test("expBaseArraysUni") {
-    val in = Array(Array(2, 3), Array(4, 5))
-    compareOutputWithSequential(progStaged)(progSeq.expBaseArrays, progStaged.expBaseArrays, "expBaseArraysUni", in)
-  }
-
-  test("joinMapsUni") {
-    val in = (Array((2, 2.0), (3, 3.0)), Array((1, 1.5), (3, 3.5), (5, 5.5)))
-    compareOutputWithSequential(progStaged)(progSeq.joinMaps, progStaged.joinMaps, "joinMapsUni", in)
-  }
-     */
-
-  /*ignore("seqsSimpleMapUni") {
-    pending
-    val in = Seq(2, 3)
-    compileSource(progStaged)(progStaged.seqsSimpleMap, "seqsSimpleMapUni", progStaged.defaultCompilerConfig)
-    //compareOutputWithSequential(progStaged)(progSeq.seqsSimpleMap, progStaged.seqsSimpleMap, "seqsSimpleMap", in)
-  }*/
-
   test("ddmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = Array(2.0, 3.0)
@@ -69,7 +82,7 @@ class UniCompilerItTests  extends LmsMsfItTests {
     compareOutputWithSequential(progStaged)(progSeqU.ddmvm, progStaged.ddmvm, "ddmvm00", in)
   }
 
-  test("msfFunAdjBase") {
+  ignore("msfFunAdjBase") {
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
@@ -93,6 +106,50 @@ class UniCompilerItTests  extends LmsMsfItTests {
     val in = Array(2.0, 3.0)
     compareOutputWithSequential(progStaged)(progSeqU.test02_mapArray, progStaged.test02_mapArray, "test02_mapArray", in)
   }
+
+  test("test03_zipArray") {
+    val in = Array(2, 3)
+    compareOutputWithSequential(progStaged)(progSeqU.test03_zipArray, progStaged.test03_zipArray, "test03_zipArray", in)
+  }
+
+  test("test04_zip2Arrays") {
+    val in = (Array(2, 3), Array(1, 4))
+    compareOutputWithSequential(progStaged)(progSeqU.test04_zip2Arrays, progStaged.test04_zip2Arrays, "test04_zip2Arrays", in)
+  }
+
+  test("test05_zip3Arrays") {
+    val in = (Array(2, 3), (Array(1, 4), Array(0, 5)))
+    compareOutputWithSequential(progStaged)(progSeqU.test05_zip3Arrays, progStaged.test05_zip3Arrays, "test05_zip3Arrays", in)
+  }
+
+  test("test06_simpleReduce") {
+    val in = Array(2, 3)
+    compareOutputWithSequential(progStaged)(progSeqU.test06_simpleReduce, progStaged.test06_simpleReduce, "test06_simpleReduce", in)
+  }
+
+  test("test07_reduceFromTuple") {
+    val in = (Array(2, 3), (Array(1, 4), Array(0, 5)))
+    compareOutputWithSequential(progStaged)(progSeqU.test07_reduceFromTuple, progStaged.test07_reduceFromTuple, "test07_reduceFromTuple", in)
+  }
+
+  def linesWithNativeDef(fileName:String):List[String] =
+    scala.io.Source.fromFile(fileName).getLines.filter(_.contains("@native def ")).toList
+
+  test("test08_configRoot") {
+    val in = (Array(2, 3), (Array(1, 4), Array(0, 5)))
+
+    val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
+    val nativeRoot = new NativeMethodsConfig(rootIsNative = true)
+    val config = progStaged.defaultCompilerConfig
+    val fileN = compileSource(progStaged)(progStaged.test07_reduceFromTuple, "test08_configN", config.copy(nativeMethods = nativeRoot)).custom.sources.head
+    assert(linesWithNativeDef(fileN).size == 1)
+    val fileNN = compileSource(progStaged)(progStaged.test07_reduceFromTuple, "test08_configNN", config.copy(nativeMethods = noNative)).custom.sources.head
+    assert(linesWithNativeDef(fileNN).size == 0)
+  }
+
+  test("test08_configMarkedAsNativeLambda") {pending}
+  test("test08_configNamedLambda") {pending}
+  test("test08_configMethodCall") {pending}
 
 }
 

@@ -33,36 +33,36 @@ trait LmsCompilerUni
 
   override val lms = new LmsBackendUni
 
-  //var graph2: PGraph = new PGraph
+  val isNativeKey = MetaKey[Boolean]("isNative")
 
   override def buildInitialGraph[A, B](func: Exp[A => B])(compilerConfig: CompilerConfig): PGraph = {
-    val func2 = {
-      val newLam = func match {
-        case Def(lam: Lambda[a, b]) => {
 
-          implicit val eA = lam.eA.asElem[a]
-          val eJNIA =  JNITypeElem()(lam.eA).asElem[JNIType[a]]
+    val conf = compilerConfig.nativeMethods
+    conf.rootIsNative match {
+      case true =>
+        val func2 = func match {
+            case Def(lam: Lambda[a, b]) => {
 
-          fun[JNIType[a], JNIType[b]] { arg: Rep[JNIType[a]] =>
-            JNI_Pack(lam.self(JNI_Extract(arg)))(lam.eB) } (Lazy(eJNIA))
-        }
+              implicit val eA = lam.eA.asElem[a]
+              //val eJNIA =  JNITypeElem(eA).asElem[JNIType[a]]
+              //val newFunc = mkLambda(func, true)()
+              val res = fun[JNIType[a], JNIType[b]] { arg: Rep[JNIType[a]] =>
+                val data = JNI_Extract(arg)
+                val res = lam.self(data)
+                JNI_Pack(res) (lam.eB)
+              } //(Lazy(eJNIA))
+              res
+            }
+            case _ => !!!
+          }
 
-        //case Def(lam: Lambda[a, b]) => fun[a, JNIType[b]] { arg: Rep[a] => JNI_Pack(lam.self(arg))(lam.eB) } (Lazy(lam.eA))
-        case _ => !!!
-      }
+        func2.setMetadata(isNativeKey)(true)
 
-      //implicit val xB = oldRes.elem
-      //val newGraph = new ProgramGraph(List(newLam), graph.mapping)
-      //val newGraph = graph.transformOne(graph.roots.last, newLam)
-      //val jLmsFunc = apply[ja, jb](newGraph)
+        new PGraph(List(func, func2))
 
-      //val finalMirror = LmsMirror.empty.mirrorDefs(newGraph, newGraph.schedule)
-      //val lmsFunc = finalMirror.funcMirror[a, jb](newLam)
-      newLam
+      case _ => //todo check methodCalls
+        new PGraph(func)
     }
-
-    new PGraph(List(func, func2))
-
   }
 
 
@@ -71,57 +71,54 @@ trait LmsCompilerUni
     Sbt.prepareDir(executableDir) //todo - check: is it sbt-specific function?
 
     implicit val eA = eInput
-    val jInput = new JNITypeElem[A]
     implicit val eB = eOutput
-    val jOutput = new JNITypeElem[B]
 
-    /* LMS stuff */
     val jniCallCodegen = lms.jniCallCodegen
     val codegen = lms.nativeCodegen
 
-    val (scalaFile, cxxFile) = {
-      (createManifest(eInput), createManifest(eOutput), createManifest(jInput), createManifest(jOutput)) match {
-        case (mA: Manifest[a], mB: Manifest[b], mjA: Manifest[ja], mjB: Manifest[jb]) =>
+    val scalaFile = {
+      (createManifest(eInput), createManifest(eOutput)) match {
+        case (mA: Manifest[a], mB: Manifest[b]) =>
 
-          //val jniCallCodegen =  new JniCallCodegen(self, lms.nativeCodegen, "")
-          val lmsFunc0 = apply[a, b](graph)
-          val finalMirror = LmsMirror.empty.mirrorDefs(graph, graph.schedule)
-          val lmsFunc = finalMirror.funcMirror[a, b](graph.roots.head)
+          val scalaFile = graph.roots.size match {
+            case 0 => !!!("program graph is empty")
+            case 1 =>  // just generate one scala file
+              // call LmsMirror
+              val lmsFunc = apply[a, b](graph)
+              lms.codegen.createFile(lmsFunc, functionName, sourcesDir)(mA, mB)
 
+            case _ => //generate some c++ files, and then generate scal file with native calls
+              // such as in LmsMirror.apply
+              val finalMirror = LmsMirror.empty.mirrorDefs(graph, graph.schedule)
 
-          val scalaFile = jniCallCodegen.createFile(lmsFunc, functionName, sourcesDir)(mA, mB)
+              val scalanFuncC = graph.roots.filter(_.getMetadata(isNativeKey).getOrElse(false))
+              for( f <- scalanFuncC) {
+                val t = findDefinition(f).getOrElse(!!!("can not find definition for root element") )
+                val (jInput, jOutput) = (t.rhs match {
+                  case Lambda(_, _, x, y) =>
+                    (x.elem, y.elem)
+                }) //.asInstanceOf[(Elem[A], Elem[B])]
+                (createManifest(jInput), createManifest(jOutput)) match {
+                  case (mA: Manifest[a], mB: Manifest[b]) =>
 
-          /*val lmsFunc2 = {
-            val newLam = graph.roots.last match {
-              case Def(lam: Lambda[a, b]) => {
-
-                implicit val eA = lam.eA.asElem[a]
-                implicit val eB = lam.eB.asElem[b]
-
-                fun[JNIType[a], JNIType[b]] { arg: Rep[JNIType[a]] =>
-                  JNI_Pack(lam.self(JNI_Extract(arg)))(eB) }
+                    val lmsFuncC = finalMirror.funcMirror[a, b](f)
+                    val cxxFile = codegen.createFile(lmsFuncC, jniCallCodegen.cppFunctionName(functionName), sourcesDir)(mA, mB)
+                    Gcc.compile(scalan.Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
+                  //todo make one library for all functions
+                }
               }
 
-              //case Def(lam: Lambda[a, b]) => fun[a, JNIType[b]] { arg: Rep[a] => JNI_Pack(lam.self(arg))(lam.eB) } (Lazy(lam.eA))
-              case _ => !!!
-            }
-            //implicit val xB = oldRes.elem
-            //val newGraph = new ProgramGraph(List(newLam), graph.mapping)
-            val newGraph = graph.transformOne(graph.roots.last, newLam)
-            val jLmsFunc = apply[ja, jb](newGraph)
+              val scalanFuncList = graph.roots.filter( ! _.getMetadata(isNativeKey).getOrElse(false))
+              val scalanFunc = scalanFuncList.size match {
+                case 0 => !!!("package not contains main jvm-function")
+                case 1 => scalanFuncList.last
+                case _ => !!!("package should contains only one jvm-function")
+              }
+              val lmsFunc = finalMirror.funcMirror[a, b](scalanFunc)
+              jniCallCodegen.createFile(lmsFunc, functionName, sourcesDir)(mA, mB)
+          }
 
-            //val finalMirror = LmsMirror.empty.mirrorDefs(newGraph, newGraph.schedule)
-            //val lmsFunc = finalMirror.funcMirror[a, jb](newLam)
-            jLmsFunc
-          }*/
-
-          //val lmsFunc2 = JNI_Extract(lmsFunc)
-
-          //val jInput2 = new Elem[JNIType[A]]
-          val lmsFuncC = finalMirror.funcMirror[ja, jb](graph.roots.last)
-
-          val cxxFile = codegen.createFile(lmsFuncC, jniCallCodegen.cppFunctionName(functionName), sourcesDir)(mjA, mjB)
-          (scalaFile, cxxFile)
+          scalaFile
       }
 
     }
@@ -141,8 +138,7 @@ trait LmsCompilerUni
         Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, scalaFile, jarPath)
         None
     }
-    Gcc.compile(scalan.Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
-    CustomCompilerOutput(jarFile.toURI.toURL, mainClass, output)
+    CustomCompilerOutput(List(scalaFile.getAbsolutePath), jarFile.toURI.toURL, mainClass, output)
   }
 
 
