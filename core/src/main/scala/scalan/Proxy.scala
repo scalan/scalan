@@ -349,11 +349,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         val eItem = elemFromType(params(0), elemMap, baseType)
         listElement(eItem)
       case _ if classSymbol.asType.isParameter =>
-        elemMap.getOrElse(
-          classSymbol,
-          elemMap.collectFirst { case (sym, desc) if sym.name == classSymbol.name => desc }.getOrElse {
-            !!!(s"Can't create element for abstract type $tpe")
-          }) match {
+        getDesc(elemMap, classSymbol, s"Can't create element for abstract type $tpe") match {
           case scala.Left(elem) => elem
           case scala.Right(cont) =>
             val paramElem = elemFromType(params(0), elemMap, baseType)
@@ -365,16 +361,11 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
             // handle high-kind argument
             typaram match {
               case TypeRef(_, classSymbol, _) =>
-                // FIXME use better way of lookup other than by names (to avoid name collisions)
-                val optRes = elemMap.find { case (sym, d) => sym.name == classSymbol.name }
-                optRes match {
-                  case Some((_, desc)) => desc match {
-                    case scala.Right(cont) => cont
-                    case scala.Left(elem) =>
-                      !!!(s"Expected a container, got $elem for type argument $typaram of $tpe")
-                  }
-                  case _ =>
-                    !!!(s"Can't find descriptor for type argument $typaram of $tpe")
+                val desc = getDesc(elemMap, classSymbol, s"Can't find descriptor for type argument $typaram of $tpe")
+                desc match {
+                  case scala.Right(cont) => cont
+                  case scala.Left(elem) =>
+                    !!!(s"Expected a container, got $elem for type argument $typaram of $tpe")
                 }
               case PolyType(_, _) =>
                 // fake to make the compiler happy
@@ -441,7 +432,15 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     case _ => !!!(s"Failed to create element from type $tpe")
   }
 
-  def extractParts(elem: Elem[_], classSymbol: Symbol, params: List[Type], tpe: Type) = classSymbol match {
+  private def getDesc(elemMap: Map[Symbol, TypeDesc], sym: Symbol, errorMessage: => String): TypeDesc =
+    elemMap.get(sym).orElse {
+      // For higher-kinded type parameters we may end with unequal symbols here
+      elemMap.collectFirst {
+        case (sym1, d) if sym.name == sym1.name && (internal.isFreeType(sym) || internal.isFreeType(sym1)) => d
+      }
+    }.getOrElse(!!!(errorMessage))
+
+  private def extractParts(elem: Elem[_], classSymbol: Symbol, params: List[Type], tpe: Type) = classSymbol match {
     case UnitSym | BooleanSym | ByteSym | ShortSym | IntSym | LongSym |
          FloatSym | DoubleSym | StringSym | PredefStringSym | CharSym =>
       Nil
