@@ -38,10 +38,10 @@ trait FreeStates extends Base { self: MonadsDsl =>
             //          case Def(p: StatePut[S, FreeState[S, A]] @unchecked) => run(p.a, p.s)
             //          case _ => patternMatchError(l)
             //        },
-            l => patternMatch(l, List(
-              (classOf[StateGet[_, _]], fun { g: Rep[StateGet[S, FreeState[S, A]]] @unchecked => f((g.f(s), s))}),
-              (classOf[StatePut[_, _]], fun { p: Rep[StatePut[S, FreeState[S, A]]] @unchecked => f((p.a, p.s))})
-            ), None),
+            l => patternMatch(l)(
+              MkBranch[StateGet[S, FreeState[S, A]]].make { g => f((g.f(s), s))},
+              MkBranch[StatePut[S, FreeState[S, A]]].make { p => f((p.a, p.s))}
+            )(None),
             r => (r, s))
         }
       }
