@@ -24,6 +24,7 @@ trait Elems extends Base { self: Scalan =>
     def isBaseType: Boolean = this.isInstanceOf[BaseElem[_]]
     def tag: WeakTypeTag[A]
     final def classTag: ClassTag[A] = TagImplicits.typeTagToClassTag(tag)
+    final def runtimeClass: Class[_] = classTag.runtimeClass
     // should only be called by defaultRepValue
     protected def getDefaultRep: Rep[A]
     lazy val defaultRepValue = getDefaultRep
@@ -56,7 +57,7 @@ trait Elems extends Base { self: Scalan =>
     def asElem[T]: Elem[T] = e.asInstanceOf[Elem[T]]
 
     def getMethod(methodName: String, argClasses: Class[_]*): Method = {
-      val m = e.classTag.runtimeClass.getMethod(methodName, argClasses: _*)
+      val m = e.runtimeClass.getMethod(methodName, argClasses: _*)
       m
     }
   }

@@ -36,7 +36,7 @@ trait PatternMatchingSeq { _: ScalanSeq =>
 
   protected def patternMatch[A, B: Elem](selector: Rep[A])(branches: Branch[_ <: A, B]*)(default: Option[Rep[A => B]]) =
     branches.collectFirst {
-      case Branch(elem, guard, f) if elem.classTag.runtimeClass.isInstance(selector) && guard.asInstanceOf[A => Boolean](selector) => f
+      case Branch(elem, guard, f) if elem.runtimeClass.isInstance(selector) && guard.asInstanceOf[A => Boolean](selector) => f
     }.orElse(default.asInstanceOf[Option[_ => B]]) match {
       case Some(f) => f.asInstanceOf[A => B](selector)
       case None => patternMatchError(selector)
@@ -62,14 +62,14 @@ trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
 
   override def rewriteDef[A](d: Def[A]) = d match {
     case Match(selector: Exp[a], branches, defaultOpt) =>
-      val selectorClass = selector.elem.classTag.runtimeClass
+      val selectorClass = selector.elem.runtimeClass
       branches match {
         case Nil => defaultOpt match {
           case Some(default) => default(selector)
           case None => super.rewriteDef(d) // TODO replace with Throw when we have better exceptions/effects support
         }
         // cheap check compared to TypeTag.<:<, we don't care about type arguments
-        case Branch(elem, guard, body) :: branchesTail if elem.classTag.runtimeClass.isAssignableFrom(selectorClass) =>
+        case Branch(elem, guard, body) :: branchesTail if elem.runtimeClass.isAssignableFrom(selectorClass) =>
           IF (guard(selector)) THEN {
             body(selector).asRep[A]
           } ELSE {
@@ -78,7 +78,7 @@ trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
           }
         case _ if selector.elem.isInstanceOf[ConcreteElem[_, _]] =>
           val possibleBranches = branches.filter { case Branch(elem, _, _) =>
-            val branchClass = elem.classTag.runtimeClass
+            val branchClass = elem.runtimeClass
             // could be wrong if we match on mix-ins instead of the main hierarchy; currently they aren't supported
             branchClass.isAssignableFrom(selectorClass) || selectorClass.isAssignableFrom(branchClass)
           }

@@ -30,7 +30,7 @@ trait LmsCompilerCxx extends LmsCompiler with JNIExtractorOpsExp  with PointerOp
 //    // ensure Scala library is available
 //    val classLoader = new URLClassLoader(scala.Array(url), classOf[_ => _].getClassLoader)
 //    val cls = classLoader.loadClass(functionName)
-//    val argumentClass = eInput.classTag.runtimeClass
+//    val argumentClass = eInput.runtimeClass
 //    val method = cls.getMethod("apply", argumentClass)
 //    val result = method.invoke(cls.newInstance(), input.asInstanceOf[AnyRef])
 //    result.asInstanceOf[B]

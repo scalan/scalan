@@ -82,7 +82,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
       case jnie: JNITypeElem[_] =>
         val clazz = jnie.tElem match {
           case el if el <:< AnyRefElement =>
-            el.classTag.runtimeClass
+            el.runtimeClass
           case el =>
             anyval_boxed_class(el)
         }
@@ -95,7 +95,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     val fn = "value"
     val sig = x.elem match {
       case (jnie: JNITypeElem[_]) =>
-        org.objectweb.asm.Type.getType(jnie.tElem.classTag.runtimeClass).getDescriptor
+        org.objectweb.asm.Type.getType(jnie.tElem.runtimeClass).getDescriptor
     }
     val fid = JNI_GetFieldID(clazz, CString(fn), CString(sig))
 
@@ -106,8 +106,8 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     val clazz = find_class_of_obj(x)
     val sig = x.elem match {
       case (jnie: JNITypeElem[_]) =>
-        val argclass = args.map({arg => arg.elem.classTag.runtimeClass})
-        org.objectweb.asm.Type.getMethodDescriptor(jnie.tElem.classTag.runtimeClass.getMethod(mn, argclass:_*))
+        val argclass = args.map({arg => arg.elem.runtimeClass})
+        org.objectweb.asm.Type.getMethodDescriptor(jnie.tElem.runtimeClass.getMethod(mn, argclass:_*))
     }
 
     JNI_GetMethodID(clazz, CString(mn), CString(sig))
@@ -178,7 +178,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
       case el =>
         val jniclazz = find_class(anyval_boxed_class(el))
         val mn = "<init>"
-        val argdescr = org.objectweb.asm.Type.getType(el.classTag.runtimeClass).getDescriptor
+        val argdescr = org.objectweb.asm.Type.getType(el.runtimeClass).getDescriptor
         val sig = s"(${argdescr})V"
 
         val mid = JNI_GetMethodID(jniclazz, CString(mn), CString(sig))
