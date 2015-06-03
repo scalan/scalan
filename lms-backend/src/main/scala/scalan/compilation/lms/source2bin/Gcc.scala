@@ -9,10 +9,10 @@ import scalan.util.ProcessUtil
  */
 object Gcc {
   def compile(targetDir: String, sourceDir: File, sourceFile: File, libName: String): Array[String] = {  //extraCompilerOptions: List[String],
-    val sourceName = sourceFile.getName
+    val sourceName = sourceFile.getAbsolutePath
     val targetFile = targetDir+fileSeparator+libFileName(libName)
-    val include = s"-I/usr/include $includeJavaFlag $includeRuntimeDirFlag"
-    val command = s"g++ $sourceName $include -fPIC -shared -pthread -std=c++0x -O3 -o $targetFile".split(" ").toSeq
+    val include = s"$includeJavaFlag $includeRuntimeDirFlag $includeFlags"
+    val command = s"g++ $sourceName $include -fPIC -shared -pthread $commonFlags $optFlags -o $targetFile".split("\\s+").toSeq
     println("command: " + command.mkString(" "))
     ProcessUtil.launch(sourceDir, command: _*)
 
@@ -22,10 +22,14 @@ object Gcc {
     "-I"+System.getProperty("user.dir") + fileSeparator + scalan.Base.config.getProperty("runtime.include")
   }
 
-  val javaHome = System.getProperty("java.home")+"/.."
-  val includeJavaFlag = s"-I$javaHome/include -I$javaHome/include/linux"
-  val fileSeparator = System.getProperty("file.separator")
-  val osName = System.getProperty("os.name")
+  val javaHome = scalan.Base.config.getProperty("java.home")+"/.."
+  val includeJavaFlag = s"-I$javaHome/include -I$javaHome/include/linux -I$javaHome/include/darwin"
+  val fileSeparator = scalan.Base.config.getProperty("file.separator")
+  val osName = scalan.Base.config.getProperty("os.name")
+  val commonFlags = scalan.Base.config.getProperty("gcc.commonFlags", "-std=c++11 -Wall -pedantic")
+  val includeFlags = scalan.Base.config.getProperty("gcc.includeFlags", "")
+  val optFlags = scalan.Base.config.getProperty("gcc.optFlags", "-O3")
+  val debugFlags = scalan.Base.config.getProperty("gcc.debugFlags", "-g -O0")
   def libFileName(libName:String) = {
     osName match {
       case x if x contains ("Linux") => s"lib${libName}.so"
