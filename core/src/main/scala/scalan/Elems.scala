@@ -4,19 +4,14 @@ import java.lang.reflect.Method
 
 import scalan.common.Default
 import Default._
-import scalan.common.Lazy
 import scalan.staged.BaseExp
 import annotation.implicitNotFound
-import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
-import scalan.util.StringUtil
 
 trait Elems extends Base { self: Scalan =>
 
-
   type Elem[A] = Element[A] // typeclass witnessing that type A can be an element of other data type (i.e. belongs to Family)
-  type LElem[A] = Lazy[Elem[A]] // lazy element
 
   @implicitNotFound(msg = "No Element available for ${A}.")
   abstract class Element[A] extends Serializable { _: scala.Equals =>
@@ -102,7 +97,7 @@ trait Elems extends Base { self: Scalan =>
     }
     protected def getDefaultRep = {
       val defaultB = eRange.defaultRepValue
-      fun[A, B](_ => defaultB)(Lazy(eDom), eRange)
+      fun[A, B](_ => defaultB)(eDom, eRange)
     }
   }
 
@@ -156,8 +151,6 @@ trait Elems extends Base { self: Scalan =>
   implicit def FuncElemExtensions[A, B](eAB: Elem[A => B]): FuncElem[A, B] = eAB.asInstanceOf[FuncElem[A, B]]
   implicit def ArrayElemExtensions[A](eArr: Elem[Array[A]]): ArrayElem[A] = eArr.asInstanceOf[ArrayElem[A]]
   //  implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]
-
-  implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = Lazy(eA)
 
   // used only in TagImplicits, but can't be placed in that scope
   private val ArrayUnitClassTag = scala.reflect.classTag[Array[Unit]]

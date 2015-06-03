@@ -3,8 +3,6 @@ package scalan.compilation.lms.uni
 import java.io.File
 import java.net.{URLClassLoader, URL}
 
-import scalan.common.Lazy
-import scalan.util.FileUtil
 import scalan.{JNIExtractorOpsExp, ScalanCtxExp}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.language.MethodMappingDSL
@@ -87,7 +85,7 @@ trait LmsCompilerUni
 //    CustomCompilerOutput(jarFile.toURI.toURL)
 
     val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
-    FileUtil.deleteIfExist(jarFile)
+    deleteIfExist(jarFile)
     val jarPath = jarFile.getAbsolutePath
     val mainClass : Option[String] = compilerConfig.sbt.mainPack match {
       case Some(mainPack) => Some(mainPack + "." +  functionName)

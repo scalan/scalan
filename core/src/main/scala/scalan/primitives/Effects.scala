@@ -5,7 +5,7 @@ import scala.collection.mutable
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
 import scalan.{ScalanExp, ScalanSeq, Scalan}
-import scalan.common.{Utils, Lazy}
+import scalan.common.Utils
 
 /*
  The code is taken from LMS and is used in Scalan with the same semantics

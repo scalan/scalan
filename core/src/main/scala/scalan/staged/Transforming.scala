@@ -3,7 +3,6 @@ package scalan.staged
 import java.lang.reflect.InvocationTargetException
 
 import scalan.ScalanExp
-import scalan.common.Lazy
 
 trait Transforming { self: ScalanExp =>
 
@@ -109,7 +108,7 @@ trait Transforming { self: ScalanExp =>
 
     // every mirrorXXX method should return a pair (t + (v -> v1), v1)
     protected def mirrorVar[A](t: Ctx, rewriter: Rewriter, v: Exp[A]): (Ctx, Exp[_]) = {
-      val newVar = fresh(Lazy(v.elem))
+      val newVar = fresh(v.elem)
       (t + (v -> newVar), newVar)
     }
 
@@ -125,7 +124,7 @@ trait Transforming { self: ScalanExp =>
       (t1 + (node -> res), res)
     }
 
-    protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Exp[_] = fresh(Lazy(node.elem))
+    protected def getMirroredLambdaSym[A, B](node: Exp[A => B]): Exp[_] = fresh(node.elem)
 
     // require: should be called after oldlam.schedule is mirrored
     private def getMirroredLambdaDef(t: Ctx, newLambdaSym: Exp[_], oldLam: Lambda[_,_], newRoot: Exp[_]): Lambda[_,_] = {
@@ -194,7 +193,7 @@ trait Transforming { self: ScalanExp =>
     }
 
     protected def mirrorThunk[A](t: Ctx, rewriter: Rewriter, node: Exp[Thunk[A]], thunk: ThunkDef[A]): (Ctx, Exp[_]) = {
-      val newThunkSym = fresh(Lazy(node.elem))
+      val newThunkSym = fresh(node.elem)
       val newScope = new ThunkScope(newThunkSym)
 
       thunkStack.push(newScope)

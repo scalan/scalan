@@ -1,6 +1,5 @@
 package scalan.primitives
 
-import scalan.common.Lazy
 import scalan.staged.BaseExp
 import scalan.{ ScalanExp, Scalan, ScalanSeq }
 
@@ -10,8 +9,7 @@ trait Loops { self: Scalan =>
 
   def loopUntilAux[A:Elem](s1: Rep[A])(isMatch: Rep[A] => Rep[Boolean], step: Rep[A] => Rep[A]): Rep[A] = {
     val eA = elemFromRep(s1)
-    val leA = Lazy(eA)
-    loopUntil(s1)(fun(isMatch)(leA, BoolElement), fun(step)(leA, eA))
+    loopUntil(s1)(fun(isMatch)(eA, BoolElement), fun(step)(eA, eA))
   }
 
   def loopUntil2[A:Elem, B:Elem](s1: Rep[A], s2: Rep[B])

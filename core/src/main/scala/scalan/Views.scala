@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException
 import scala.collection.mutable
 import scalan.common.Default
 import scala.language.higherKinds
-import scalan.common.Lazy
 import scala.reflect.runtime.universe._
 import scalan.staged.BaseExp
 import scala.collection.mutable.{Map => MutMap, Seq => MutSeq, ArrayBuffer}
@@ -31,7 +30,7 @@ trait Views extends Elems { self: Scalan =>
     def getConverterFrom[E](eEntity: EntityElem[E]): Option[Conv[E, TClass]] = {
       try {
         val convFun: Rep[E => TClass] =
-          fun({ x: Rep[E] => eClass.convert(x.asRep[Reifiable[_]])})(Lazy(eEntity), eClass)
+          fun({ x: Rep[E] => eClass.convert(x.asRep[Reifiable[_]])})(eEntity, eClass)
         Some(BaseConverter(convFun)(eEntity, eClass))
       }
       catch {
@@ -59,8 +58,8 @@ trait Views extends Elems { self: Scalan =>
     }
     override def hashCode = 41 * eFrom.hashCode + eTo.hashCode
     def isIdentity: Boolean = false
-    lazy val fromFun = fun { x: Rep[To] => from(x) }(Lazy(eTo), eFrom)
-    lazy val toFun = fun { x: Rep[From] => to(x) }(Lazy(eFrom), eTo)
+    lazy val fromFun = fun { x: Rep[To] => from(x) }(eTo, eFrom)
+    lazy val toFun = fun { x: Rep[From] => to(x) }(eFrom, eTo)
 
     if (isDebug) {
       debug$IsoCounter(this) += 1

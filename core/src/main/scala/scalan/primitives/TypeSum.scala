@@ -2,7 +2,6 @@ package scalan.primitives
 
 import scalan.staged.BaseExp
 import scalan.{ ScalanExp, Scalan, ScalanSeq }
-import scalan.common.Lazy
 
 trait TypeSum { self: Scalan =>
 

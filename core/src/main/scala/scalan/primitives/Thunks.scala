@@ -4,7 +4,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.{ViewsExp, ScalanExp, ScalanSeq, Scalan}
-import scalan.common.{Default, Lazy}
+import scalan.common.Default
 import scala.reflect.runtime.universe._
 
 trait Thunks { self: Scalan =>

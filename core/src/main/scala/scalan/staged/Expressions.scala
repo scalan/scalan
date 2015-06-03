@@ -5,7 +5,6 @@ import scala.collection.{TraversableOnce, mutable}
 import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import scalan.{Base, ScalanExp}
-import scalan.common.Lazy
 
 trait BaseExp extends Base { self: ScalanExp =>
   type Rep[+A] = Exp[A]
@@ -79,7 +78,7 @@ trait BaseExp extends Base { self: ScalanExp =>
     def merge(other: Ctx): Ctx = ops.merge(self, other)
   }
 
-  def fresh[T](implicit leT: LElem[T]): Exp[T]
+  def fresh[T](implicit leT: Elem[T]): Exp[T]
   def findDefinition[T](s: Exp[T]): Option[TableEntry[T]]
   def findDefinition[T](thunk: Exp[_], d: Def[T]): Option[TableEntry[T]]
   def createDefinition[T](optScope: Option[ThunkScope], s: Exp[T], d: Def[T]): TableEntry[T]
@@ -93,7 +92,7 @@ trait BaseExp extends Base { self: ScalanExp =>
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T]
   implicit def reifyObject[T](obj: Def[T]): Rep[T] = {
-    toExp(obj, fresh[T](Lazy(obj.selfType)))
+    toExp(obj, fresh[T](obj.selfType))
   }
 
   override def toRep[A](x: A)(implicit eA: Elem[A]):Rep[A] = eA match {
@@ -333,11 +332,11 @@ trait Expressions extends BaseExp { self: ScalanExp =>
    */
   object Sym { private var currId = 0 }
   case class Sym[+T](id: Int = {Sym.currId += 1; Sym.currId})
-                    (implicit et: LElem[T]) extends Exp[T]
+                    (implicit et: Elem[T]) extends Exp[T]
   {
     override def elem: Elem[T @uncheckedVariance] = this match {
       case Def(d) => d.selfType
-      case _ => et.value
+      case _ => et
     }
     def varName = "s" + id
     override def toString = varName
@@ -346,7 +345,7 @@ trait Expressions extends BaseExp { self: ScalanExp =>
     def toStringWithDefinition = toStringWithType + definition.map(d => s" = $d").getOrElse("")
   }
 
-  def fresh[T](implicit et: LElem[T]): Exp[T] = new Sym[T]()
+  def fresh[T](implicit et: Elem[T]): Exp[T] = new Sym[T]()
 
   case class TableEntrySingle[T](sym: Exp[T], rhs: Def[T], lambda: Option[Exp[_]]) extends TableEntry[T]
 

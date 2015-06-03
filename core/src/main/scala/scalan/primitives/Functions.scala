@@ -4,7 +4,6 @@ import scalan.staged.{ProgramGraphs, BaseExp}
 import scalan.{ScalanExp, ScalanSeq, Scalan}
 import collection.mutable
 import scala.language.{implicitConversions}
-import scalan.common.Lazy
 
 trait Functions { self: Scalan =>
   implicit class LambdaOps[A,B](f: Rep[A => B]) {
@@ -14,12 +13,12 @@ trait Functions { self: Scalan =>
   }
   def par[B:Elem](nJobs: Rep[Int], f: Rep[Int=>B]): Arr[B]
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B]
-  def mkLambda[A,B](fun: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B]
-  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C]
-  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C]
-  implicit def fun[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B] = mkLambda(f, true)
-  implicit def fun2[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C] = mkLambda(fun)
-  def funGlob[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B] = mkLambda(f, false)
+  def mkLambda[A,B](fun: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B]
+  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C]
+  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[((A,B))=>C]
+  implicit def fun[A,B](f: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B] = mkLambda(f, true)
+  implicit def fun2[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[((A,B))=>C] = mkLambda(fun)
+  def funGlob[A,B](f: Rep[A] => Rep[B])(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B] = mkLambda(f, false)
   //def fun[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = mkLambda(f)
   def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
   def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]))(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = funRec(f, true)
@@ -39,9 +38,9 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
     scala.concurrent.Await.result(scala.concurrent.Future.sequence(tasks), scala.concurrent.duration.Duration.Inf).toArray
   }
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B] = f(x)
-  def mkLambda[A,B](f: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B] = f
-  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: Elem[B], eC: Elem[C]) = fun
-  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C] = {
+  def mkLambda[A,B](f: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: Elem[A], eB: Elem[B]): Rep[A => B] = f
+  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]) = fun
+  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[((A,B))=>C] = {
     case (x, y) => fun(x, y)
   }
   //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C] = f
@@ -143,12 +142,11 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   case class Apply[A,B]
     (f: Exp[A => B], arg: Exp[A])
-    (implicit eB: LElem[B])   // enforce explicit laziness at call sites to tie recursive knot (see executeFunction)
       extends Def[B]
   {
-    def selfType = eB.value
+    lazy val selfType = f.elem.eRange
     lazy val uniqueOpId = name(arg.elem, selfType)
-    override def mirror(t: Transformer) = Apply(t(f), t(arg))(eB)
+    override def mirror(t: Transformer) = Apply(t(f), t(arg))
   }
 
   implicit class LambdaExtensions[A, B](lam: Lambda[A,B]) {
@@ -177,7 +175,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   def par[B:Elem](nJobs: Rep[Int], f: Rep[Int=>B]): Arr[B] = ParallelExecute(nJobs, f)
 
   def mkApply[A,B](f: Exp[A => B], x: Exp[A]): Exp[B] = {
-    implicit val leB = Lazy(f.elem.eRange)
     if (recursion.valuesIterator.contains(f)) {
       // f is not in Defs table at this time, thus a special case here
       f.isRecursive = true
@@ -226,7 +223,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   //=====================================================================================
   //   Function reification
 
-  def mkLambda[A,B](f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Exp[A=>B] = {
+  def mkLambda[A,B](f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: Elem[A], eB: Elem[B]): Exp[A=>B] = {
     // in Scalan
     // funRec[A,B]((f: Exp[A => B]) => fun, mayInline)
     val x = fresh[A]
@@ -235,21 +232,19 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def mkLambda[A,B,C]
   (f: Rep[A]=>Rep[B]=>Rep[C])
-  (implicit eA: LElem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = {
+  (implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = {
     val y = fresh[B]
     mkLambda((a: Rep[A]) => lambda(y)((b:Rep[B]) => f(a)(b), true), true)
   }
 
-  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C] = {
-    implicit val leAB = Lazy(pairElement(eA.value, eB.value))
+  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[((A,B))=>C] = {
     mkLambda({ (p: Rep[(A, B)]) =>
       val (x, y) = unzipPair(p)
       f(x, y)
     }, true)
   }
 
-  private def lambda[A,B](x: Rep[A])(f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Exp[A=>B] = {
-    implicit val eA1 = eA.value
+  private def lambda[A,B](x: Rep[A])(f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: Elem[A], eB: Elem[B]): Exp[A=>B] = {
     val res = fresh[A => B]
     reifyFunction(f, x, res, mayInline)
   }
@@ -275,7 +270,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         res
       case Some(fs) => // hit recursion call !
         fs.isRecursive = true
-        Apply(fs.asInstanceOf[Exp[A=>B]], x)(Lazy(fSym.elem.eRange))
+        Apply(fs.asInstanceOf[Exp[A=>B]], x)
     }
   }
 
@@ -352,9 +347,8 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case Apply(f @ Def(l: Lambda[a,b]), x) if l.mayInline => {
+    case Apply(f @ Def(l: Lambda[a,b]), x) if l.mayInline =>
       f(x)
-    }
     case _ => super.rewriteDef(d)
   }
 }

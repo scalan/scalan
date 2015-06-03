@@ -1,7 +1,7 @@
 package scalan
 
 import scala.reflect.runtime.universe._
-import scalan.common.{SegmentsDslExp, Lazy}
+import scalan.common.SegmentsDslExp
 //import scalan.monads.{FreesDslExp, MonadsDslExp}
 
 class ProxyTests extends BaseTests { suite =>
@@ -20,7 +20,7 @@ class ProxyTests extends BaseTests { suite =>
       val (paramClasses, realParams) = params.unzip
       val method = clazz.getMethod(name, paramClasses: _*)
       val receiverElem = elemFromType(tpe, Map.empty, definitions.NothingTpe)
-      val receiver = fresh(Lazy(receiverElem))
+      val receiver = fresh(receiverElem)
       val actualResultElem = getResultElem(receiver, method, realParams.toList)
 
       assertResult(expectedResultElem)(actualResultElem)
