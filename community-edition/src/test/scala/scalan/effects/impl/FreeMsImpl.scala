@@ -26,7 +26,8 @@ trait FreeMsAbs extends FreeMs with Scalan {
       weakTypeTag[FreeM[F, A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[FreeM[F, A]] =>  convertFreeM(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[FreeM[F, A]] => convertFreeM(x) }
       tryConvert(element[FreeM[F, A]], this, x, conv)
     }
 
@@ -358,6 +359,18 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object resumeFlatMap {
+      def unapply(d: Def[_]): Option[(Rep[Done[F, A]], Rep[A => FreeM[F,B]], Functor[F]) forSome {type F[_]; type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: DoneElem[_, _] => true; case _ => false }) && method.getName == "resumeFlatMap" =>
+          Some((receiver, f, fF)).asInstanceOf[Option[(Rep[Done[F, A]], Rep[A => FreeM[F,B]], Functor[F]) forSome {type F[_]; type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[Done[F, A]], Rep[A => FreeM[F,B]], Functor[F]) forSome {type F[_]; type A; type B}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object DoneCompanionMethods {
@@ -394,6 +407,18 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[More[F, A]], Functor[F]) forSome {type F[_]; type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object resumeFlatMap {
+      def unapply(d: Def[_]): Option[(Rep[More[F, A]], Rep[A => FreeM[F,B]], Functor[F]) forSome {type F[_]; type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: MoreElem[_, _] => true; case _ => false }) && method.getName == "resumeFlatMap" =>
+          Some((receiver, f, fF)).asInstanceOf[Option[(Rep[More[F, A]], Rep[A => FreeM[F,B]], Functor[F]) forSome {type F[_]; type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[More[F, A]], Rep[A => FreeM[F,B]], Functor[F]) forSome {type F[_]; type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -450,6 +475,18 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
         case _ => None
       }
     }
+
+    object resumeFlatMap {
+      def unapply(d: Def[_]): Option[(Rep[FlatMap[F, S, B]], Rep[B => FreeM[F,C]], Functor[F]) forSome {type F[_]; type S; type B; type C}] = d match {
+        case MethodCall(receiver, method, Seq(g, fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FlatMapElem[_, _, _] => true; case _ => false }) && method.getName == "resumeFlatMap" =>
+          Some((receiver, g, fF)).asInstanceOf[Option[(Rep[FlatMap[F, S, B]], Rep[B => FreeM[F,C]], Functor[F]) forSome {type F[_]; type S; type B; type C}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FlatMap[F, S, B]], Rep[B => FreeM[F,C]], Functor[F]) forSome {type F[_]; type S; type B; type C}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
   }
 
   object FlatMapCompanionMethods {
@@ -497,6 +534,18 @@ trait FreeMsExp extends FreeMsDsl with ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[FreeM[F, A]], Functor[F]) forSome {type F[_]; type A}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object resumeFlatMap {
+      def unapply(d: Def[_]): Option[(Rep[FreeM[F, A]], Rep[A => FreeM[F,B]], Functor[F]) forSome {type F[_]; type A; type B}] = d match {
+        case MethodCall(receiver, method, Seq(f, fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeMElem[_, _, _] => true; case _ => false }) && method.getName == "resumeFlatMap" =>
+          Some((receiver, f, fF)).asInstanceOf[Option[(Rep[FreeM[F, A]], Rep[A => FreeM[F,B]], Functor[F]) forSome {type F[_]; type A; type B}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[FreeM[F, A]], Rep[A => FreeM[F,B]], Functor[F]) forSome {type F[_]; type A; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

@@ -9,9 +9,9 @@ trait TypeSum { self: Scalan =>
   trait SumOps[A, B] {
     def isLeft: Rep[Boolean]
     def isRight: Rep[Boolean]
-    def fold[R](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R]
+    def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R]
     def foldBy[R](l: Rep[A => R], r: Rep[B => R]): Rep[R]
-    def mapSum[C,D](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]): Rep[C|D]
+    def mapSum[C: Elem, D: Elem](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]): Rep[C|D]
     def mapSumBy[C,D](fl: Rep[A => C], fr: Rep[B => D]): Rep[C|D]
   }
 
@@ -54,11 +54,12 @@ trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
   def toRightSum[A: Elem, B](a: Rep[B]): Rep[(A | B)] = Right[A, B](a)
 
   class SeqSumOps[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
-    def fold[R](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = foldBy(l, r)
+    def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = foldBy(l, r)
     def foldBy[R](l: Rep[A => R], r: Rep[B => R]): Rep[R] = s.fold(l, r)
-    def mapSum[C, D](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) = mapSumBy(fl, fr)
-    def mapSumBy[C, D](fl: Rep[A => C], fr: Rep[B => D]) =
+    def mapSum[C: Elem, D: Elem](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) = mapSumBy(fl, fr)
+    def mapSumBy[C, D](fl: Rep[A => C], fr: Rep[B => D]) = {
       s.fold(x => Left(fl(x)), y => Right(fr(y)))
+    }
     def isLeft = s.isLeft
     def isRight = s.isRight
   }
@@ -113,9 +114,9 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
   class SumOpsExp[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
     implicit def eLeft: Elem[A] = s.elem.eLeft
     implicit def eRight: Elem[B] = s.elem.eRight
-    def fold[R](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = foldBy(fun(l), fun(r))
+    def fold[R: Elem](l: Rep[A] => Rep[R], r: Rep[B] => Rep[R]): Rep[R] = foldBy(fun(l), fun(r))
     def foldBy[R](l: Rep[A => R], r: Rep[B => R]): Rep[R] = SumFold(s, l, r)
-    def mapSum[C, D](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) = mapSumBy(fun(fl), fun(fr))
+    def mapSum[C: Elem, D: Elem](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) = mapSumBy(fun(fl), fun(fr))
     def mapSumBy[C, D](l: Rep[A => C], r: Rep[B => D]): Rep[C | D] = SumMap(s, l, r)
     def isLeft = IsLeft(s)
     def isRight = IsRight(s)
@@ -164,11 +165,13 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     // Rule: fold(s, l, r)._1 ==> fold(s, x => l(x)._1, y => r(y)._1)
     case First(Def(foldD: SumFold[a, b, (T, r2)]@unchecked)) =>
       implicit val eRes = foldD.selfType
+      implicit val eT = eRes.eFst
       foldD.sum.foldBy(foldD.left >> fun(_._1), foldD.right >> fun(_._1))
 
     // Rule: fold(s, l, r)._2 ==> fold(s, x => l(x)._2, y => r(y)._2)
     case Second(Def(foldD: SumFold[a, b, (r1, T)]@unchecked)) =>
       implicit val eRes = foldD.selfType
+      implicit val eT = eRes.eSnd
       foldD.sum.foldBy(foldD.left >> fun(_._2), foldD.right >> fun(_._2))
 
     // Rule: Left[A,B](V(a, iso)) ==> V(Left(a), SumIso(iso, iso[B]))
@@ -226,6 +229,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
       case Def(join@IsJoinSum(sum)) =>
         val source = sum.asRep[(a | b) | (a | b)]
         implicit val eRes: Elem[a | b] = source.elem.eLeft
+        implicit val eT = foldD.left.elem.eRange
         val f1 = fun { x: Rep[a | b] => x.foldBy(foldD.left, foldD.right) }
         source.foldBy(f1, f1)
 

@@ -102,7 +102,7 @@ trait Elems extends Base { self: Scalan =>
     }
     protected def getDefaultRep = {
       val defaultB = eRange.defaultRepValue
-      fun[A, B](_ => defaultB)(Lazy(eDom))
+      fun[A, B](_ => defaultB)(Lazy(eDom), eRange)
     }
   }
 

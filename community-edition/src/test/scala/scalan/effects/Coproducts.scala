@@ -52,9 +52,10 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
         }
         def cOut = self.cOut
 
-        def apply[A:Elem](c: Rep[Coproduct[F,H,A]]): Rep[G[A]] =
-          c.run.fold(fa => self(fa),
-                     ha => f(ha))
+        def apply[A:Elem](c: Rep[Coproduct[F,H,A]]): Rep[G[A]] = {
+          implicit val eGA = cOut.lift(element[A])
+          c.run.fold(fa => self(fa), ha => f(ha))
+        }
       }
 
     override def toString = s"${cIn.name} ~> ${cOut.name}"

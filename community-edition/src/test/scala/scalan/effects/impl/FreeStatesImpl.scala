@@ -27,7 +27,8 @@ trait FreeStatesAbs extends FreeStates with Scalan {
       weakTypeTag[StateF[S, A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[StateF[S, A]] =>  convertStateF(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[StateF[S, A]] => convertStateF(x) }
       tryConvert(element[StateF[S, A]], this, x, conv)
     }
 

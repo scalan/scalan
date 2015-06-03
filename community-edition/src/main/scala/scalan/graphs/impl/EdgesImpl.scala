@@ -30,7 +30,8 @@ trait EdgesAbs extends Edges with Scalan {
       weakTypeTag[Edge[V, E]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Edge[V, E]] =>  convertEdge(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Edge[V, E]] => convertEdge(x) }
       tryConvert(element[Edge[V, E]], this, x, conv)
     }
 

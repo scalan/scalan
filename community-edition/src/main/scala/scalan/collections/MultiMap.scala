@@ -80,8 +80,8 @@ trait MultiMaps extends Base { self: ScalanCommunityDsl =>
 
 trait MultiMapsDsl extends ScalanDsl with impl.MultiMapsAbs with MultiMaps { self: ScalanCommunityDsl =>
   implicit class MultiMapExt[K:Elem,V:Elem](map: Rep[MMultiMap[K,V]]) {
-    def reduce[T:Elem](f: Arr[V] => Rep[T]): MM[K, T] = map.reduceBy[T](f)
-    def applyIf[T](key: Rep[K], exists: Rep[ArrayBuffer[V]] => Rep[T], otherwise: () => Rep[T]): Rep[T] =
+    def reduce[T: Elem](f: Arr[V] => Rep[T]): MM[K, T] = map.reduceBy[T](f)
+    def applyIf[T: Elem](key: Rep[K], exists: Rep[ArrayBuffer[V]] => Rep[T], otherwise: () => Rep[T]): Rep[T] =
       map.applyIfBy(key, fun(exists), fun { _: Rep[Unit] => otherwise() })
   }
 }

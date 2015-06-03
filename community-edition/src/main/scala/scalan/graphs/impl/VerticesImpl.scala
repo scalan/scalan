@@ -29,7 +29,8 @@ trait VerticesAbs extends Vertices with Scalan {
       weakTypeTag[Vertex[V, E]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Vertex[V, E]] =>  convertVertex(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Vertex[V, E]] => convertVertex(x) }
       tryConvert(element[Vertex[V, E]], this, x, conv)
     }
 

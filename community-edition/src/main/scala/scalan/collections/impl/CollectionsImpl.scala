@@ -28,7 +28,8 @@ trait CollectionsAbs extends Collections with Scalan {
       weakTypeTag[Collection[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Collection[A]] =>  convertCollection(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Collection[A]] => convertCollection(x) }
       tryConvert(element[Collection[A]], this, x, conv)
     }
 
@@ -69,7 +70,8 @@ trait CollectionsAbs extends Collections with Scalan {
       weakTypeTag[PairCollection[A, B]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[PairCollection[A, B]] =>  convertPairCollection(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[PairCollection[A, B]] => convertPairCollection(x) }
       tryConvert(element[PairCollection[A, B]], this, x, conv)
     }
 
@@ -96,7 +98,8 @@ trait CollectionsAbs extends Collections with Scalan {
       weakTypeTag[NestedCollection[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[NestedCollection[A]] =>  convertNestedCollection(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[NestedCollection[A]] => convertNestedCollection(x) }
       tryConvert(element[NestedCollection[A]], this, x, conv)
     }
 

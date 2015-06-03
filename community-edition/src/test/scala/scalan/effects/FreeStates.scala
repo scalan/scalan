@@ -30,6 +30,8 @@ trait FreeStates extends Base { self: MonadsDsl =>
         freeMElement[({type f[x] = StateF[S,x]})#f, A](stateFCont[S], element[A])
 
       lazy val runFun: Rep[((FreeState[S, A], S)) => (A, S)] = funRec[(FreeState[S, A], S), (A, S)] { (f: Rep[((FreeState[S, A], S)) => (A, S)]) =>
+        val f1 = { g: Rep[StateGet[S, FreeState[S, A]]] => f((g.f(s), s))}
+        val f2 = { p: Rep[StatePut[S, FreeState[S, A]]] => f((p.a, p.s))}
         { p: Rep[(FreeState[S, A], S)] =>
           val Pair(t, s) = p
           t.resume(statefFunctor).fold(
@@ -39,8 +41,8 @@ trait FreeStates extends Base { self: MonadsDsl =>
             //          case _ => patternMatchError(l)
             //        },
             l => patternMatch(l)(
-              MkBranch[StateGet[S, FreeState[S, A]]].make { g => f((g.f(s), s))},
-              MkBranch[StatePut[S, FreeState[S, A]]].make { p => f((p.a, p.s))}
+              MkBranch[StateGet[S, FreeState[S, A]]].make(f1),
+              MkBranch[StatePut[S, FreeState[S, A]]].make(f2)
             )(None),
             r => (r, s))
         }
@@ -100,11 +102,16 @@ trait FreeStatesDsl extends impl.FreeStatesAbs { self: MonadsDsl =>
   type FreeState[S,A] = FreeM[({type f[x] = StateF[S,x]})#f, A]
 
   implicit def statefFunctor[S:Elem] = new Functor[({type λ[α] = StateF[S,α]})#λ] {
-    def map[A:Elem,B:Elem](m: Rep[StateF[S, A]])(f: Rep[A] => Rep[B]) = m match/*MATCH(m)*/ {
-      case Def(g: StateGet[S @unchecked,A @unchecked]) => StateGet((s: Rep[S]) => f(g.f.asRep[S=>A](s)))
-      case Def(p: StatePut[S @unchecked,A @unchecked]) => StatePut(p.s.asRep[S], f(p.a.asRep[A]))
-      case _ => patternMatchError(m)
-    }
+    def map[A:Elem,B:Elem](m: Rep[StateF[S, A]])(f: Rep[A] => Rep[B]) = patternMatch(m)(
+      MkBranch[StateGet[S, A]].make { g => StateGet((s: Rep[S]) => f(g.f.asRep[S=>A](s))) },
+      MkBranch[StatePut[S, A]].make { p => StatePut(p.s.asRep[S], f(p.a.asRep[A])) }
+    )(None)
+
+    //    def map[A:Elem,B:Elem](m: Rep[StateF[S, A]])(f: Rep[A] => Rep[B]) = m match/*MATCH(m)*/ {
+//      case Def(g: StateGet[S @unchecked,A @unchecked]) => StateGet((s: Rep[S]) => f(g.f.asRep[S=>A](s)))
+//      case Def(p: StatePut[S @unchecked,A @unchecked]) => StatePut(p.s.asRep[S], f(p.a.asRep[A]))
+//      case _ => patternMatchError(m)
+//    }
   }
 
   implicit def stateFCont[S:Elem]: Cont[({type f[x] = StateF[S,x]})#f] = new Container[({type f[x] = StateF[S,x]})#f] {

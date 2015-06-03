@@ -26,7 +26,8 @@ trait AuthenticationsAbs extends Authentications with Scalan {
       weakTypeTag[Auth[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Auth[A]] =>  convertAuth(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Auth[A]] => convertAuth(x) }
       tryConvert(element[Auth[A]], this, x, conv)
     }
 

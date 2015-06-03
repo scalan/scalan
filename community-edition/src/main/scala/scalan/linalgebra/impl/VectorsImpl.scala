@@ -28,7 +28,8 @@ trait VectorsAbs extends Vectors with Scalan {
       weakTypeTag[AbstractVector[T]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[AbstractVector[T]] =>  convertAbstractVector(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[AbstractVector[T]] => convertAbstractVector(x) }
       tryConvert(element[AbstractVector[T]], this, x, conv)
     }
 

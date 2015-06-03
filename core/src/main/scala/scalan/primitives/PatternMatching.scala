@@ -15,7 +15,7 @@ trait PatternMatching { _: Scalan =>
 
   protected def patternMatch[A, B: Elem](selector: Rep[A])(branches: Branch[_ <: A, B]*)(default: Option[Rep[A => B]]): Rep[B]
 
-  case class Branch[A, B](elem: Elem[A], guard: Rep[A => Boolean], body: Rep[A => B])
+  case class Branch[A, +B](elem: Elem[A], guard: Rep[A => Boolean], body: Rep[A => B])
 
   object Branch {
     def apply[A, B](elem: Elem[A], body: Rep[A => B]): Branch[A, B] = Branch(elem, constFun(true)(elem), body)
@@ -25,8 +25,8 @@ trait PatternMatching { _: Scalan =>
   case class MkBranch[A]()(implicit elem: Elem[A]) {
     // unfortunately can't be used as MkBranch[A] { block } if named apply, so we write
     // MkBranch[A].make { block } instead
-    def make[B](body: Rep[A] => Rep[B]) = Branch(elem, constFun(true)(elem), fun(body))
-    def make[B](guard: Rep[A] => Rep[Boolean])(body: Rep[A] => Rep[B]) = Branch(elem, fun(guard), fun(body))
+    def make[B: Elem](body: Rep[A] => Rep[B]) = Branch(elem, constFun(true)(elem), fun(body))
+    def make[B: Elem](guard: Rep[A] => Rep[Boolean])(body: Rep[A] => Rep[B]) = Branch(elem, fun(guard), fun(body))
   }
 }
 

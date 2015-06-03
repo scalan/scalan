@@ -14,15 +14,15 @@ trait Functions { self: Scalan =>
   }
   def par[B:Elem](nJobs: Rep[Int], f: Rep[Int=>B]): Arr[B]
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B]
-  def mkLambda[A,B](fun: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A]): Rep[A => B]
-  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[A=>B=>C]
-  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C]
-  implicit def fun[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = mkLambda(f, true)
-  implicit def fun2[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = mkLambda(fun)
-  def funGlob[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A]): Rep[A => B] = mkLambda(f, false)
+  def mkLambda[A,B](fun: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B]
+  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C]
+  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C]
+  implicit def fun[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B] = mkLambda(f, true)
+  implicit def fun2[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C] = mkLambda(fun)
+  def funGlob[A,B](f: Rep[A] => Rep[B])(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B] = mkLambda(f, false)
   //def fun[A,B,C](f: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: Elem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = mkLambda(f)
   def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]), mayInline: Boolean)(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B]
-  def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]))(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = funRec(f, false)
+  def funRec[A,B](f: (Rep[A=>B])=>(Rep[A]=>Rep[B]))(implicit eA: Elem[A], eb:Elem[B]): Rep[A=>B] = funRec(f, true)
   //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C]
   def identityFun[A: Elem]: Rep[A => A]
   def constFun[A: Elem, B](x: Rep[B]): Rep[A => B]
@@ -39,9 +39,9 @@ trait FunctionsSeq extends Functions { self: ScalanSeq =>
     scala.concurrent.Await.result(scala.concurrent.Future.sequence(tasks), scala.concurrent.duration.Duration.Inf).toArray
   }
   def mkApply[A,B](f: Rep[A=>B], x: Rep[A]): Rep[B] = f(x)
-  def mkLambda[A,B](f: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A]): Rep[A => B] = f
-  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]) = fun
-  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = {
+  def mkLambda[A,B](f: Rep[A] => Rep[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Rep[A => B] = f
+  def mkLambda[A,B,C](fun: Rep[A]=>Rep[B]=>Rep[C])(implicit eA: LElem[A], eB: Elem[B], eC: Elem[C]) = fun
+  def mkLambda[A,B,C](fun: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C] = {
     case (x, y) => fun(x, y)
   }
   //def fun[A,B,C]  (f: Rep[A] => Rep[B] => Rep[C])(implicit eA: Elem[A], eB: Elem[B]): Rep[A=>B=>C] = f
@@ -162,8 +162,11 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       case _ => !!!(s"Expected symbol of Lambda node but was $f", f)
     }
 
-    def zip[C](g: Rep[A=>C]): Rep[A=>(B,C)] =
+    def zip[C](g: Rep[A=>C]): Rep[A=>(B,C)] = {
+      implicit val eB = f.elem.eRange
+      implicit val eC = g.elem.eRange
       fun { (x: Rep[A]) => Pair(f(x), g(x)) }
+    }
 
     def argsTree = getLambda.argsTree
   }
@@ -183,8 +186,16 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     } else {
       // not in recursion, so lookup definition
       f match {
-        case Def(lam: Lambda[A, B] @unchecked) if !f.isRecursive && lam.mayInline => // unfold initial non-recursive function
-          unfoldLambda(f, lam, x)
+        case Def(lam: Lambda[A, B] @unchecked) if lam.mayInline => // unfold initial non-recursive function
+          try {
+            unfoldLambda(f, lam, x)
+          } catch {
+            case e: StackOverflowError =>
+              if (f.isRecursive)
+                Apply(f, x)
+              else
+                !!!(s"Stack overflow in applying non-recursive $f($x)", e)
+          }
         case Def(Apply(_, _)) => // function that is a result of Apply (curried application)
           Apply(f, x)
         case _ => // unknown function
@@ -215,7 +226,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   //=====================================================================================
   //   Function reification
 
-  def mkLambda[A,B](f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: LElem[A]): Exp[A=>B] = {
+  def mkLambda[A,B](f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Exp[A=>B] = {
     // in Scalan
     // funRec[A,B]((f: Exp[A => B]) => fun, mayInline)
     val x = fresh[A]
@@ -224,12 +235,12 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   def mkLambda[A,B,C]
   (f: Rep[A]=>Rep[B]=>Rep[C])
-  (implicit eA: LElem[A], eB: LElem[B]): Rep[A=>B=>C] = {
+  (implicit eA: LElem[A], eB: Elem[B], eC: Elem[C]): Rep[A=>B=>C] = {
     val y = fresh[B]
     mkLambda((a: Rep[A]) => lambda(y)((b:Rep[B]) => f(a)(b), true), true)
   }
 
-  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B]): Rep[((A,B))=>C] = {
+  def mkLambda[A,B,C](f: (Rep[A], Rep[B])=>Rep[C])(implicit eA: LElem[A], eB: LElem[B], eC: Elem[C]): Rep[((A,B))=>C] = {
     implicit val leAB = Lazy(pairElement(eA.value, eB.value))
     mkLambda({ (p: Rep[(A, B)]) =>
       val (x, y) = unzipPair(p)
@@ -237,10 +248,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }, true)
   }
 
-  def lambda[A,B](x: Rep[A])(f: Exp[A] => Exp[B], mayInline: Boolean): Exp[A=>B] = {
-    val res = fresh[A => B](Lazy(
-      !!!("should not be called: this symbol should have definition and element should be taken from corresponding lambda"))
-    )
+  private def lambda[A,B](x: Rep[A])(f: Exp[A] => Exp[B], mayInline: Boolean)(implicit eA: LElem[A], eB: Elem[B]): Exp[A=>B] = {
+    implicit val eA1 = eA.value
+    val res = fresh[A => B]
     reifyFunction(f, x, res, mayInline)
   }
 
@@ -253,7 +263,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   protected var recursion = Map.empty[_ => _, Exp[_]]
 
   protected val lambdaStack = new LambdaStack
-  def executeFunction[A, B](f: Exp[A]=>Exp[B], x: Exp[A], fSym: Exp[A => B]): Exp[B] = {
+  private def executeFunction[A, B](f: Exp[A]=>Exp[B], x: Exp[A], fSym: Exp[A => B]): Exp[B] = {
     recursion.get(f) match {
       case None =>
         val saveRecursion = recursion
@@ -311,16 +321,22 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-  def functionSplit[A, B, C](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] =
-    fun { (x: Rep[A]) => Pair(f(x), g(x)) }(Lazy(f.elem.eDom))
+  def functionSplit[A, B, C](f: Rep[A=>B], g: Rep[A=>C]): Rep[A=>(B,C)] = {
+    implicit val eA = f.elem.eDom
+    implicit val eB = f.elem.eRange
+    implicit val eC = g.elem.eRange
+    fun { (x: Rep[A]) => Pair(f(x), g(x)) }
+  }
 
   private val identityFuns = collection.mutable.Map.empty[Element[_], Exp[_]]
   def identityFun[A](implicit e: Element[A]) =
     identityFuns.getOrElseUpdate(e, fun[A, A](x => x)).asRep[A => A]
 
   private val constFuns = collection.mutable.Map.empty[(Element[_], Exp[_]), Exp[_]]
-  def constFun[A, B](x: Rep[B])(implicit e: Element[A]) =
+  def constFun[A, B](x: Rep[B])(implicit e: Element[A]) = {
+    implicit val eB = x.elem
     constFuns.getOrElseUpdate((e, x), fun[A, B](_ => x)).asRep[A => B]
+  }
 
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = {
     f match {
@@ -329,6 +345,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         case Def(IdentityLambda()) => f.asRep[A => C]
         case _ =>
           implicit val eA = g.elem.eDom
+          implicit val eC = f.elem.eRange
           fun { x => f(g(x)) }
       }
     }

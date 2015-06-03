@@ -25,7 +25,8 @@ trait CoproductsAbs extends Coproducts with Scalan {
       weakTypeTag[Coproduct[F, G, A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Coproduct[F, G, A]] =>  convertCoproduct(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Coproduct[F, G, A]] => convertCoproduct(x) }
       tryConvert(element[Coproduct[F, G, A]], this, x, conv)
     }
 

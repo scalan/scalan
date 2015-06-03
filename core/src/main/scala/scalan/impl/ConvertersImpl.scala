@@ -25,7 +25,8 @@ trait ConvertersAbs extends Converters  {
       weakTypeTag[Converter[T, R]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Converter[T, R]] =>  convertConverter(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Converter[T, R]] => convertConverter(x) }
       tryConvert(element[Converter[T, R]], this, x, conv)
     }
 

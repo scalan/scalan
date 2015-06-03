@@ -24,7 +24,8 @@ trait MetaTestsAbs extends MetaTests with Scalan {
       weakTypeTag[MetaTest[T]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[MetaTest[T]] =>  convertMetaTest(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[MetaTest[T]] => convertMetaTest(x) }
       tryConvert(element[MetaTest[T]], this, x, conv)
     }
 

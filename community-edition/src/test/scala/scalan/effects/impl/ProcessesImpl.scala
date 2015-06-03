@@ -26,7 +26,8 @@ trait ProcessesAbs extends Processes with Scalan {
       weakTypeTag[Process[F, O]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Process[F, O]] =>  convertProcess(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Process[F, O]] => convertProcess(x) }
       tryConvert(element[Process[F, O]], this, x, conv)
     }
 

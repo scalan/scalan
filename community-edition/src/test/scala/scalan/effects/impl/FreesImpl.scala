@@ -25,7 +25,8 @@ trait FreesAbs extends Frees with Scalan {
       weakTypeTag[Free[F, A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Free[F, A]] =>  convertFree(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Free[F, A]] => convertFree(x) }
       tryConvert(element[Free[F, A]], this, x, conv)
     }
 
