@@ -6,7 +6,7 @@
 namespace scalan
 {
 
-const boost::blank unit_value;
+const boost::blank unit_value = boost::blank();
 
 } //namespace scalan
 
