@@ -29,39 +29,43 @@ trait LmsCompilerUni
   class LmsBackendUni extends CommunityLmsBackend with JNILmsOpsExp { self =>
     val nativeCodegen: CxxCodegen[self.type] = new CxxCodegen(self)
     val jniCallCodegen: JniCallCodegen[self.type] = new JniCallCodegen(self, nativeCodegen, "")
+    // todo cppFunctionName and cppLibraryName should be moved from jniCallCodegen for use base codegen below (in doBuildExecutable), without information about subtype of codegen (native or jniCall)
   }
 
   override val lms = new LmsBackendUni
 
-  val isNativeKey = MetaKey[Boolean]("isNative")
+  val elector = new ElectorOfCodegen[self.type](self)
 
   override def buildInitialGraph[A, B](func: Exp[A => B])(compilerConfig: CompilerConfig): PGraph = {
 
     val conf = compilerConfig.nativeMethods
-    conf.rootIsNative match {
-      case true =>
-        val func2 = func match {
-            case Def(lam: Lambda[a, b]) => {
+    val needForAdapt = elector.mark(func, elector.defaultCompilationPipelineContext, conf)
 
-              implicit val eA = lam.eA.asElem[a]
-              //val eJNIA =  JNITypeElem(eA).asElem[JNIType[a]]
-              //val newFunc = mkLambda(func, true)()
-              val res = fun[JNIType[a], JNIType[b]] { arg: Rep[JNIType[a]] =>
-                val data = JNI_Extract(arg)
-                val res = lam.self(data)
-                JNI_Pack(res) (lam.eB)
-              } //(Lazy(eJNIA))
-              res
-            }
-            case _ => !!!
+    def adapt(func: Exp[_]):List[Exp[_]] = {
+      func.getMetadata(elector.codegenChangeKey) match {
+        case Some(key) => {
+          val adapter = KnownCodegens.getAdapterByString[self.type](self, key /*"Scala2Cxx"*/)
+          func match {
+            case Def(lam: Lambda[a, b]) =>
+              val (master, slave) = KnownCodegens.pairFromString(key)//BackendCake
+              val lam2 = adapter.adapt[a, b](lam)
+              func.setMetadata(elector.codegenKey)(KnownCodegens.toString(master))
+              lam2.setMetadata(elector.codegenKey)(KnownCodegens.toString(slave))
+              List(lam, lam2)
+            case _ => !!!("I can adapt only functions")
           }
+        }
+        case None => List(func)
+      }
+    }
 
-        func2.setMetadata(isNativeKey)(true)
-
-        new PGraph(List(func, func2))
-
-      case _ => //todo check methodCalls
+    needForAdapt.length match {
+      case 0 =>
         new PGraph(func)
+      case _ => {
+        val rootList = (needForAdapt flatMap ( f => adapt(f)))
+        new PGraph(rootList)
+      }
     }
   }
 
@@ -72,9 +76,6 @@ trait LmsCompilerUni
 
     implicit val eA = eInput
     implicit val eB = eOutput
-
-    val jniCallCodegen = lms.jniCallCodegen
-    val codegen = lms.nativeCodegen
 
     val scalaFile = {
       (createManifest(eInput), createManifest(eOutput)) match {
@@ -91,7 +92,10 @@ trait LmsCompilerUni
               // such as in LmsMirror.apply
               val finalMirror = LmsMirror.empty.mirrorDefs(graph, graph.schedule)
 
-              val scalanFuncC = graph.roots.filter(_.getMetadata(isNativeKey).getOrElse(false))
+              val jniCallCodegen = lms.jniCallCodegen
+              val codegen = lms.nativeCodegen
+
+              val scalanFuncC = graph.roots.filter( _.getMetadata(elector.codegenKey).getOrElse("") == KnownCodegens.Cxx.toString)
               for( f <- scalanFuncC) {
                 val t = findDefinition(f).getOrElse(!!!("can not find definition for root element") )
                 val (jInput, jOutput) = (t.rhs match {
@@ -108,7 +112,7 @@ trait LmsCompilerUni
                 }
               }
 
-              val scalanFuncList = graph.roots.filter( ! _.getMetadata(isNativeKey).getOrElse(false))
+              val scalanFuncList = graph.roots.filter( _.getMetadata(elector.codegenKey).getOrElse("") == KnownCodegens.Scala.toString)
               val scalanFunc = scalanFuncList.size match {
                 case 0 => !!!("package not contains main jvm-function")
                 case 1 => scalanFuncList.last

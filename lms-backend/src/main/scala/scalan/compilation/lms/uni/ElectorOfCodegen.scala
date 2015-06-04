@@ -1,0 +1,63 @@
+package scalan.compilation.lms.uni
+
+import scalan.{ScalanCtxExp, Metadata}
+
+/**
+ * Created by adel on 6/4/15.
+ */
+
+class ElectorOfCodegen[ScalanCake <: ScalanCtxExp](scalan: ScalanCake) {
+  val ScalanIR: ScalanCake = scalan
+  import ScalanIR._
+
+  type CompilationPipelineContext = Unit
+  val defaultCompilationPipelineContext: CompilationPipelineContext = ()
+
+  def mark[A, B](func: Exp[A => B], context: CompilationPipelineContext, config: NativeMethodsConfig):List[Exp[_]] = {
+    config.rootIsNative match {
+      case true =>
+        func.setMetadata(codegenChangeKey)(KnownCodegens.pairToString(KnownCodegens.Scala, KnownCodegens.Cxx))
+        List(func)
+      case _  => {
+        for(sym <- syms(func)) {
+          println("mark: " + sym)
+          findDefinition(sym) match {
+            case Some(t: TableEntry[_]) if t.isLambda => for(s <- syms(t.rhs)) { markSubgraph(s, KnownCodegens.Scala, context, config) }
+            case _ => !!!("ElectorOfCodegen.mark ERROR: lambda in TableEntry expected")
+          }
+        }
+        Nil
+      }
+    }
+
+  }
+
+  protected def markSubgraph[T](exp: Exp[T], from: KnownCodegens.Codegens, context: CompilationPipelineContext, config: NativeMethodsConfig): List[Exp[_]] = {
+    for(sym <- syms(exp)) {
+      //println("subMark: " + sym)
+      findDefinition(sym) match {
+        case Some(t: TableEntry[_]) if t.isLambda => {
+          //println("   subMark for t as lambda: " + t)
+          for (s <- syms(t.rhs)) {
+            markSubgraph(s, from, context, config)
+          }
+        }
+        case Some(t: TableEntry[_]) if !t.isLambda => {
+          //println("   subMark for t as not lambda: " + t)
+          for (s <- syms(t.rhs)) {
+            markSubgraph(s, from, context, config)
+          }
+        }
+        case x => //println("   subMark for ???: " + x)
+      }
+    }
+    Nil
+  }
+
+  val isNativeKey = MetaKey[Boolean]("isNative")
+  val codegenChangeKey = MetaKey[String]("codegenChangeKey")
+  val codegenKey = MetaKey[String]("codegenKey")
+  //val isNivokeDisabled = MetaKey[Boolean]("isNivokeDisabled")
+
+
+}

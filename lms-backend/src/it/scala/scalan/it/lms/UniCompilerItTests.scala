@@ -59,11 +59,29 @@ class UniCompilerItTests  extends LmsMsfItTests {
       val x1 = x._2.reduce
       x1 + 1
     }
-    /*lazy val multifunc = fun { p: Rep[Array[Double]] =>
-      p+2.0
-    }*/
+
+    def test_config_f(y: Rep[Int]):Rep[Int] = y+10
+    def test_config_g(y: Rep[Int]):Rep[Int] = y*2
+    def test_config_h(y: Rep[Int]):Rep[Int] = -y+3
+    def test_config_s(y: Rep[Int]):Rep[Int] = y*y
+
+    lazy val test_config = fun {x: Rep[(Array[Int], (Array[Int], Array[Int]))] =>
+      //combinations: f or g - sipmplest case
+      //              h      - one function 2 times
+      //              f & g  - 2 separate functions
+      //              h      - one function 2 times
+      //              s & g  - superposition of 2 functions
+      //              s & h  - superposition of 2 functions, second function called also directly
+
+      val x1 = x._1.map {y:Rep[Int] => test_config_f(y) + 1} . reduce
+      val x2 = x._2.map {y:Rep[Int] => test_config_s(test_config_g(y)) + 1} . reduce
+      val x3 = x._3.map {y:Rep[Int] => test_config_h(y) + 1} . reduce
+      x1 + x2 + test_config_s(test_config_h(x3))
+    }
 
   }
+
+  val in3Arrays = (Array(2, 3), (Array(1, 4), Array(1, -1)))
 
                  //ProgExp extends CommunityLmsCompilerScala with CommunityBridge
   class ProgCommunityExp extends ProgUniTest with GraphsDslExp with ScalanCtxExp with ScalanCommunityDslExp with LmsCompilerUni with CommunityBridge
@@ -128,28 +146,123 @@ class UniCompilerItTests  extends LmsMsfItTests {
   }
 
   test("test07_reduceFromTuple") {
-    val in = (Array(2, 3), (Array(1, 4), Array(0, 5)))
-    compareOutputWithSequential(progStaged)(progSeqU.test07_reduceFromTuple, progStaged.test07_reduceFromTuple, "test07_reduceFromTuple", in)
+    compareOutputWithSequential(progStaged)(progSeqU.test07_reduceFromTuple, progStaged.test07_reduceFromTuple, "test07_reduceFromTuple", in3Arrays)
   }
+
+  // ===========================
+  // config tests
+  // todo refactoring from "jvm vs native alternative" to "choose codegen" in config
+
 
   def linesWithNativeDef(fileName:String):List[String] =
     scala.io.Source.fromFile(fileName).getLines.filter(_.contains("@native def ")).toList
 
-  test("test08_configRoot") {
+  test("config_OnlyScala") {
+    val in = (Array(2, 3), (Array(1, 4), Array(0, 5)))
+    val config = progStaged.defaultCompilerConfig.copy(nativeMethods = new NativeMethodsConfig(rootIsNative = false, Nil))
+    val file = compileSource(progStaged)(progStaged.test07_reduceFromTuple, "config_OnlyScala", config).custom.sources.head
+    assert(linesWithNativeDef(file).size == 0)
+    compareOutputWithSequentialConfig(progStaged)(progSeqU.test07_reduceFromTuple, progStaged.test07_reduceFromTuple, "config_OnlyScala", in, config)
+  }
+
+  test("config_Root") {
     val in = (Array(2, 3), (Array(1, 4), Array(0, 5)))
 
     val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
     val nativeRoot = new NativeMethodsConfig(rootIsNative = true)
     val config = progStaged.defaultCompilerConfig
-    val fileN = compileSource(progStaged)(progStaged.test07_reduceFromTuple, "test08_configN", config.copy(nativeMethods = nativeRoot)).custom.sources.head
-    assert(linesWithNativeDef(fileN).size == 1)
-    val fileNN = compileSource(progStaged)(progStaged.test07_reduceFromTuple, "test08_configNN", config.copy(nativeMethods = noNative)).custom.sources.head
-    assert(linesWithNativeDef(fileNN).size == 0)
+    val fileJ = compileSource(progStaged)(progStaged.test07_reduceFromTuple, "config_RootJ", config.copy(nativeMethods = noNative)).custom.sources.head
+    assert(linesWithNativeDef(fileJ).size == 0)
+    val fileC = compileSource(progStaged)(progStaged.test07_reduceFromTuple, "config_RootC", config.copy(nativeMethods = nativeRoot)).custom.sources.head
+    assert(linesWithNativeDef(fileC).size == 1)
   }
 
-  test("test08_configMarkedAsNativeLambda") {pending}
-  test("test08_configNamedLambda") {pending}
-  test("test08_configMethodCall") {pending}
+  test("config_MethodCall") {
+    // use ddmvm.
+    pending
+    val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
+    val inV = Array(2.0, 3.0)
+    val in = Tuple2(inM, inV)
+
+    val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
+    val nativeMul = new NativeMethodsConfig(rootIsNative = false)   // todo - set matrix.operator*(vector) as native
+    val config = progStaged.defaultCompilerConfig
+    val fileJ = compileSource(progStaged)(progStaged.ddmvm, "config_MethodCallJ", config.copy(nativeMethods = noNative)).custom.sources.head
+    assert(linesWithNativeDef(fileJ).size == 0)
+    val fileC = compileSource(progStaged)(progStaged.ddmvm, "config_MethodCallC", config.copy(nativeMethods = nativeMul)).custom.sources.head
+    assert(linesWithNativeDef(fileC).size == 1)
+    // todo check, that main method is not native
+    assert(linesWithNativeDef(fileC).size-100 == 1)
+
+    compareOutputWithSequentialConfig(progStaged)(progSeqU.ddmvm, progStaged.ddmvm, "config_MethodCall", in, config.copy(nativeMethods = nativeMul))
+
+  }
+
+  test("config_MarkedAsNativeLambda") {
+    pending
+    val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
+    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_f as native
+    val config = progStaged.defaultCompilerConfig
+
+    //check sources for two variants
+
+    compareOutputWithSequentialConfig(progStaged)(progSeqU.test_config, progStaged.test_config, "config_MarkedAsNativeLambda", in3Arrays, config.copy(nativeMethods = native))
+  }
+
+  test("config_NamedLambda") {
+    pending
+    val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
+    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_g as native
+
+    //check sources for two variants
+
+  }
+
+  test("config_functions2times") {
+    pending
+    val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
+    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_h as native
+
+    //check sources for two variants
+
+  }
+
+  test("config_2Functions") {
+    pending
+    val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
+    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_f and test_config_g as native
+
+    //check sources for two variants
+
+  }
+
+  test("config_SuperposLambda") {
+    pending
+    val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
+    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_s and test_config_g as native
+
+    //check sources for two variants
+
+  }
+
+  test("config_SuperposLambdafrom2Points") {
+    pending
+    val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
+    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_s and test_config_h as native
+
+    //check sources for two variants
+
+  }
+
+  test("config_SuperposWithMethodCall") {
+    pending
+  }
+
+  test("config_SuperposCheckOptimization") {
+    pending
+  }
+
+
 
 }
 
