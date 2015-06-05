@@ -126,8 +126,9 @@ trait ScalanParsers {
 
   def findCompaion(name: String, parentScope: Option[ImplDef]) = parentScope match {
     case Some(scope) => scope.impl.body.collect {
-      case c: ClassDef if c.name.toString == name + "Companion" =>
+      case c: ClassDef if config.isAlreadyRep && c.name.toString == name + "Companion" =>
         if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
+      case m: ModuleDef if !config.isAlreadyRep && m.name.toString == name => objectDef(m)
     }.headOption
     case None => None
   }
@@ -230,7 +231,7 @@ trait ScalanParsers {
         val tpeRes = optTpeExpr(vd.tpt)
         val isImplicit = vd.mods.isImplicit
         val isLazy = vd.mods.isLazy
-        Some(SValDef(vd.name, tpeRes, isImplicit, isLazy, parseExpr(vd.rhs)))
+        Some(SValDef(vd.name, tpeRes, isLazy, isImplicit, parseExpr(vd.rhs)))
       } else
         None
     case EmptyTree =>

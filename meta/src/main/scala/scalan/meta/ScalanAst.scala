@@ -342,7 +342,15 @@ object ScalanAst {
   case class SObjectDef(
                          name: String,
                          ancestors: List[STraitCall],
-                         body: List[SBodyItem]) extends SBodyItem
+                         body: List[SBodyItem]) extends STraitOrClassDef {
+
+    def tpeArgs = Nil
+    def selfType = None
+    def companion = None
+    def isTrait = false
+    def annotations = Nil
+    def implicitArgs = SClassArgs(Nil)
+  }
 
   case class SSeqImplementation(explicitMethods: List[SMethodDef]) {
     def containsMethodDef(m: SMethodDef) = {
@@ -365,7 +373,8 @@ object ScalanAst {
                                methods: List[SMethodDef],
                                selfType: Option[SSelfTypeDef],
                                body: List[SBodyItem] = Nil,
-                               seqDslImpl: Option[SSeqImplementation] = None)
+                               seqDslImpl: Option[SSeqImplementation] = None,
+                               ancestors: List[STraitCall] = List())
   {
     def getEntity(name: String): STraitOrClassDef = {
       entities.find(e => e.name == name) match {
@@ -424,7 +433,9 @@ object ScalanAst {
       }
       val methods = defs.collect { case md: SMethodDef => md }
 
-      SEntityModuleDef(packageName, imports, moduleName, entityRepSynonym, entity, traits, classes, methods, moduleTrait.selfType)
+      SEntityModuleDef(packageName, imports, moduleName,
+        entityRepSynonym, entity, traits, classes, methods,
+        moduleTrait.selfType, Nil, None, moduleTrait.ancestors)
     }
   }
 
