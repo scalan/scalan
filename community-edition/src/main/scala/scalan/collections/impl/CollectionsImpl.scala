@@ -15,33 +15,33 @@ trait CollectionsAbs extends Collections with Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
-  implicit def proxyCollection[A](p: Rep[Collection[A]]): Collection[A] = {
-    proxyOps[Collection[A]](p)(classTag[Collection[A]])
+  implicit def proxyCollection[Item](p: Rep[Collection[Item]]): Collection[Item] = {
+    proxyOps[Collection[Item]](p)(classTag[Collection[Item]])
   }
 
   // familyElem
-  class CollectionElem[A, To <: Collection[A]](implicit val eItem: Elem[A @uncheckedVariance])
+  class CollectionElem[Item, To <: Collection[Item]](implicit val eItem: Elem[Item @uncheckedVariance])
     extends EntityElem[To] {
     override def isEntityType = true
     override lazy val tag = {
-      implicit val tagAnnotatedA = eItem.tag
-      weakTypeTag[Collection[A]].asInstanceOf[WeakTypeTag[To]]
+      implicit val tagAnnotatedItem = eItem.tag
+      weakTypeTag[Collection[Item]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
       implicit val eTo: Elem[To] = this
-      val conv = fun {x: Rep[Collection[A]] => convertCollection(x) }
-      tryConvert(element[Collection[A]], this, x, conv)
+      val conv = fun {x: Rep[Collection[Item]] => convertCollection(x) }
+      tryConvert(element[Collection[Item]], this, x, conv)
     }
 
-    def convertCollection(x : Rep[Collection[A]]): Rep[To] = {
+    def convertCollection(x : Rep[Collection[Item]]): Rep[To] = {
       assert(x.selfType1 match { case _: CollectionElem[_, _] => true; case _ => false })
       x.asRep[To]
     }
     override def getDefaultRep: Rep[To] = ???
   }
 
-  implicit def collectionElement[A](implicit eItem: Elem[A @uncheckedVariance]): Elem[Collection[A]] =
-    new CollectionElem[A, Collection[A]]
+  implicit def collectionElement[Item](implicit eItem: Elem[Item @uncheckedVariance]): Elem[Collection[Item]] =
+    new CollectionElem[Item, Collection[Item]]
 
   implicit case object CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionCompanionAbs]
@@ -175,41 +175,41 @@ trait CollectionsAbs extends Collections with Scalan {
   def unmkUnitCollection(p: Rep[Collection[Unit]]): Option[(Rep[Int])]
 
   // elem for concrete class
-  class CollectionOverArrayElem[A](val iso: Iso[CollectionOverArrayData[A], CollectionOverArray[A]])(implicit eItem: Elem[A])
-    extends CollectionElem[A, CollectionOverArray[A]]
-    with ConcreteElem[CollectionOverArrayData[A], CollectionOverArray[A]] {
-    override def convertCollection(x: Rep[Collection[A]]) = CollectionOverArray(x.arr)
+  class CollectionOverArrayElem[Item](val iso: Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]])(implicit eItem: Elem[Item])
+    extends CollectionElem[Item, CollectionOverArray[Item]]
+    with ConcreteElem[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
+    override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverArray(x.arr)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagA = eItem.tag
-      weakTypeTag[CollectionOverArray[A]]
+      implicit val tagItem = eItem.tag
+      weakTypeTag[CollectionOverArray[Item]]
     }
   }
 
   // state representation type
-  type CollectionOverArrayData[A] = Array[A]
+  type CollectionOverArrayData[Item] = Array[Item]
 
   // 3) Iso for concrete class
-  class CollectionOverArrayIso[A](implicit eItem: Elem[A])
-    extends Iso[CollectionOverArrayData[A], CollectionOverArray[A]] {
-    override def from(p: Rep[CollectionOverArray[A]]) =
+  class CollectionOverArrayIso[Item](implicit eItem: Elem[Item])
+    extends Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
+    override def from(p: Rep[CollectionOverArray[Item]]) =
       p.arr
-    override def to(p: Rep[Array[A]]) = {
+    override def to(p: Rep[Array[Item]]) = {
       val arr = p
       CollectionOverArray(arr)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOverArray[A]]](CollectionOverArray(element[Array[A]].defaultRepValue))
-    lazy val eTo = new CollectionOverArrayElem[A](this)
+    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOverArray[Item]]](CollectionOverArray(element[Array[Item]].defaultRepValue))
+    lazy val eTo = new CollectionOverArrayElem[Item](this)
   }
   // 4) constructor and deconstructor
   abstract class CollectionOverArrayCompanionAbs extends CompanionBase[CollectionOverArrayCompanionAbs] with CollectionOverArrayCompanion {
     override def toString = "CollectionOverArray"
 
-    def apply[A](arr: Rep[Array[A]])(implicit eItem: Elem[A]): Rep[CollectionOverArray[A]] =
+    def apply[Item](arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]] =
       mkCollectionOverArray(arr)
   }
   object CollectionOverArrayMatcher {
-    def unapply[A](p: Rep[Collection[A]]) = unmkCollectionOverArray(p)
+    def unapply[Item](p: Rep[Collection[Item]]) = unmkCollectionOverArray(p)
   }
   def CollectionOverArray: Rep[CollectionOverArrayCompanionAbs]
   implicit def proxyCollectionOverArrayCompanion(p: Rep[CollectionOverArrayCompanionAbs]): CollectionOverArrayCompanionAbs = {
@@ -221,57 +221,57 @@ trait CollectionsAbs extends Collections with Scalan {
     protected def getDefaultRep = CollectionOverArray
   }
 
-  implicit def proxyCollectionOverArray[A](p: Rep[CollectionOverArray[A]]): CollectionOverArray[A] =
-    proxyOps[CollectionOverArray[A]](p)
+  implicit def proxyCollectionOverArray[Item](p: Rep[CollectionOverArray[Item]]): CollectionOverArray[Item] =
+    proxyOps[CollectionOverArray[Item]](p)
 
-  implicit class ExtendedCollectionOverArray[A](p: Rep[CollectionOverArray[A]])(implicit eItem: Elem[A]) {
-    def toData: Rep[CollectionOverArrayData[A]] = isoCollectionOverArray(eItem).from(p)
+  implicit class ExtendedCollectionOverArray[Item](p: Rep[CollectionOverArray[Item]])(implicit eItem: Elem[Item]) {
+    def toData: Rep[CollectionOverArrayData[Item]] = isoCollectionOverArray(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoCollectionOverArray[A](implicit eItem: Elem[A]): Iso[CollectionOverArrayData[A], CollectionOverArray[A]] =
-    new CollectionOverArrayIso[A]
+  implicit def isoCollectionOverArray[Item](implicit eItem: Elem[Item]): Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]] =
+    new CollectionOverArrayIso[Item]
 
   // 6) smart constructor and deconstructor
-  def mkCollectionOverArray[A](arr: Rep[Array[A]])(implicit eItem: Elem[A]): Rep[CollectionOverArray[A]]
-  def unmkCollectionOverArray[A](p: Rep[Collection[A]]): Option[(Rep[Array[A]])]
+  def mkCollectionOverArray[Item](arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]]
+  def unmkCollectionOverArray[Item](p: Rep[Collection[Item]]): Option[(Rep[Array[Item]])]
 
   // elem for concrete class
-  class CollectionOverListElem[A](val iso: Iso[CollectionOverListData[A], CollectionOverList[A]])(implicit eItem: Elem[A])
-    extends CollectionElem[A, CollectionOverList[A]]
-    with ConcreteElem[CollectionOverListData[A], CollectionOverList[A]] {
-    override def convertCollection(x: Rep[Collection[A]]) = CollectionOverList(x.lst)
+  class CollectionOverListElem[Item](val iso: Iso[CollectionOverListData[Item], CollectionOverList[Item]])(implicit eItem: Elem[Item])
+    extends CollectionElem[Item, CollectionOverList[Item]]
+    with ConcreteElem[CollectionOverListData[Item], CollectionOverList[Item]] {
+    override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverList(x.lst)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagA = eItem.tag
-      weakTypeTag[CollectionOverList[A]]
+      implicit val tagItem = eItem.tag
+      weakTypeTag[CollectionOverList[Item]]
     }
   }
 
   // state representation type
-  type CollectionOverListData[A] = List[A]
+  type CollectionOverListData[Item] = List[Item]
 
   // 3) Iso for concrete class
-  class CollectionOverListIso[A](implicit eItem: Elem[A])
-    extends Iso[CollectionOverListData[A], CollectionOverList[A]] {
-    override def from(p: Rep[CollectionOverList[A]]) =
+  class CollectionOverListIso[Item](implicit eItem: Elem[Item])
+    extends Iso[CollectionOverListData[Item], CollectionOverList[Item]] {
+    override def from(p: Rep[CollectionOverList[Item]]) =
       p.lst
-    override def to(p: Rep[List[A]]) = {
+    override def to(p: Rep[List[Item]]) = {
       val lst = p
       CollectionOverList(lst)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOverList[A]]](CollectionOverList(element[List[A]].defaultRepValue))
-    lazy val eTo = new CollectionOverListElem[A](this)
+    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOverList[Item]]](CollectionOverList(element[List[Item]].defaultRepValue))
+    lazy val eTo = new CollectionOverListElem[Item](this)
   }
   // 4) constructor and deconstructor
   abstract class CollectionOverListCompanionAbs extends CompanionBase[CollectionOverListCompanionAbs] with CollectionOverListCompanion {
     override def toString = "CollectionOverList"
 
-    def apply[A](lst: Rep[List[A]])(implicit eItem: Elem[A]): Rep[CollectionOverList[A]] =
+    def apply[Item](lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]] =
       mkCollectionOverList(lst)
   }
   object CollectionOverListMatcher {
-    def unapply[A](p: Rep[Collection[A]]) = unmkCollectionOverList(p)
+    def unapply[Item](p: Rep[Collection[Item]]) = unmkCollectionOverList(p)
   }
   def CollectionOverList: Rep[CollectionOverListCompanionAbs]
   implicit def proxyCollectionOverListCompanion(p: Rep[CollectionOverListCompanionAbs]): CollectionOverListCompanionAbs = {
@@ -283,57 +283,57 @@ trait CollectionsAbs extends Collections with Scalan {
     protected def getDefaultRep = CollectionOverList
   }
 
-  implicit def proxyCollectionOverList[A](p: Rep[CollectionOverList[A]]): CollectionOverList[A] =
-    proxyOps[CollectionOverList[A]](p)
+  implicit def proxyCollectionOverList[Item](p: Rep[CollectionOverList[Item]]): CollectionOverList[Item] =
+    proxyOps[CollectionOverList[Item]](p)
 
-  implicit class ExtendedCollectionOverList[A](p: Rep[CollectionOverList[A]])(implicit eItem: Elem[A]) {
-    def toData: Rep[CollectionOverListData[A]] = isoCollectionOverList(eItem).from(p)
+  implicit class ExtendedCollectionOverList[Item](p: Rep[CollectionOverList[Item]])(implicit eItem: Elem[Item]) {
+    def toData: Rep[CollectionOverListData[Item]] = isoCollectionOverList(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoCollectionOverList[A](implicit eItem: Elem[A]): Iso[CollectionOverListData[A], CollectionOverList[A]] =
-    new CollectionOverListIso[A]
+  implicit def isoCollectionOverList[Item](implicit eItem: Elem[Item]): Iso[CollectionOverListData[Item], CollectionOverList[Item]] =
+    new CollectionOverListIso[Item]
 
   // 6) smart constructor and deconstructor
-  def mkCollectionOverList[A](lst: Rep[List[A]])(implicit eItem: Elem[A]): Rep[CollectionOverList[A]]
-  def unmkCollectionOverList[A](p: Rep[Collection[A]]): Option[(Rep[List[A]])]
+  def mkCollectionOverList[Item](lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]]
+  def unmkCollectionOverList[Item](p: Rep[Collection[Item]]): Option[(Rep[List[Item]])]
 
   // elem for concrete class
-  class CollectionOverSeqElem[A](val iso: Iso[CollectionOverSeqData[A], CollectionOverSeq[A]])(implicit eItem: Elem[A])
-    extends CollectionElem[A, CollectionOverSeq[A]]
-    with ConcreteElem[CollectionOverSeqData[A], CollectionOverSeq[A]] {
-    override def convertCollection(x: Rep[Collection[A]]) = CollectionOverSeq(x.seq)
+  class CollectionOverSeqElem[Item](val iso: Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]])(implicit eItem: Elem[Item])
+    extends CollectionElem[Item, CollectionOverSeq[Item]]
+    with ConcreteElem[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
+    override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverSeq(x.seq)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
-      implicit val tagA = eItem.tag
-      weakTypeTag[CollectionOverSeq[A]]
+      implicit val tagItem = eItem.tag
+      weakTypeTag[CollectionOverSeq[Item]]
     }
   }
 
   // state representation type
-  type CollectionOverSeqData[A] = SSeq[A]
+  type CollectionOverSeqData[Item] = SSeq[Item]
 
   // 3) Iso for concrete class
-  class CollectionOverSeqIso[A](implicit eItem: Elem[A])
-    extends Iso[CollectionOverSeqData[A], CollectionOverSeq[A]] {
-    override def from(p: Rep[CollectionOverSeq[A]]) =
+  class CollectionOverSeqIso[Item](implicit eItem: Elem[Item])
+    extends Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
+    override def from(p: Rep[CollectionOverSeq[Item]]) =
       p.seq
-    override def to(p: Rep[SSeq[A]]) = {
+    override def to(p: Rep[SSeq[Item]]) = {
       val seq = p
       CollectionOverSeq(seq)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOverSeq[A]]](CollectionOverSeq(element[SSeq[A]].defaultRepValue))
-    lazy val eTo = new CollectionOverSeqElem[A](this)
+    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOverSeq[Item]]](CollectionOverSeq(element[SSeq[Item]].defaultRepValue))
+    lazy val eTo = new CollectionOverSeqElem[Item](this)
   }
   // 4) constructor and deconstructor
   abstract class CollectionOverSeqCompanionAbs extends CompanionBase[CollectionOverSeqCompanionAbs] with CollectionOverSeqCompanion {
     override def toString = "CollectionOverSeq"
 
-    def apply[A](seq: Rep[SSeq[A]])(implicit eItem: Elem[A]): Rep[CollectionOverSeq[A]] =
+    def apply[Item](seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]] =
       mkCollectionOverSeq(seq)
   }
   object CollectionOverSeqMatcher {
-    def unapply[A](p: Rep[Collection[A]]) = unmkCollectionOverSeq(p)
+    def unapply[Item](p: Rep[Collection[Item]]) = unmkCollectionOverSeq(p)
   }
   def CollectionOverSeq: Rep[CollectionOverSeqCompanionAbs]
   implicit def proxyCollectionOverSeqCompanion(p: Rep[CollectionOverSeqCompanionAbs]): CollectionOverSeqCompanionAbs = {
@@ -345,20 +345,20 @@ trait CollectionsAbs extends Collections with Scalan {
     protected def getDefaultRep = CollectionOverSeq
   }
 
-  implicit def proxyCollectionOverSeq[A](p: Rep[CollectionOverSeq[A]]): CollectionOverSeq[A] =
-    proxyOps[CollectionOverSeq[A]](p)
+  implicit def proxyCollectionOverSeq[Item](p: Rep[CollectionOverSeq[Item]]): CollectionOverSeq[Item] =
+    proxyOps[CollectionOverSeq[Item]](p)
 
-  implicit class ExtendedCollectionOverSeq[A](p: Rep[CollectionOverSeq[A]])(implicit eItem: Elem[A]) {
-    def toData: Rep[CollectionOverSeqData[A]] = isoCollectionOverSeq(eItem).from(p)
+  implicit class ExtendedCollectionOverSeq[Item](p: Rep[CollectionOverSeq[Item]])(implicit eItem: Elem[Item]) {
+    def toData: Rep[CollectionOverSeqData[Item]] = isoCollectionOverSeq(eItem).from(p)
   }
 
   // 5) implicit resolution of Iso
-  implicit def isoCollectionOverSeq[A](implicit eItem: Elem[A]): Iso[CollectionOverSeqData[A], CollectionOverSeq[A]] =
-    new CollectionOverSeqIso[A]
+  implicit def isoCollectionOverSeq[Item](implicit eItem: Elem[Item]): Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]] =
+    new CollectionOverSeqIso[Item]
 
   // 6) smart constructor and deconstructor
-  def mkCollectionOverSeq[A](seq: Rep[SSeq[A]])(implicit eItem: Elem[A]): Rep[CollectionOverSeq[A]]
-  def unmkCollectionOverSeq[A](p: Rep[Collection[A]]): Option[(Rep[SSeq[A]])]
+  def mkCollectionOverSeq[Item](seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]]
+  def unmkCollectionOverSeq[Item](p: Rep[Collection[Item]]): Option[(Rep[SSeq[Item]])]
 
   // elem for concrete class
   class PairCollectionSOAElem[A, B](val iso: Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]])(implicit eA: Elem[A], eB: Elem[B])
@@ -578,62 +578,62 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
     case _ => None
   }
 
-  case class SeqCollectionOverArray[A]
-      (override val arr: Rep[Array[A]])
-      (implicit eItem: Elem[A])
-    extends CollectionOverArray[A](arr)
-        with UserTypeSeq[CollectionOverArray[A]] {
-    lazy val selfType = element[CollectionOverArray[A]]
+  case class SeqCollectionOverArray[Item]
+      (override val arr: Rep[Array[Item]])
+      (implicit eItem: Elem[Item])
+    extends CollectionOverArray[Item](arr)
+        with UserTypeSeq[CollectionOverArray[Item]] {
+    lazy val selfType = element[CollectionOverArray[Item]]
   }
   lazy val CollectionOverArray = new CollectionOverArrayCompanionAbs with UserTypeSeq[CollectionOverArrayCompanionAbs] {
     lazy val selfType = element[CollectionOverArrayCompanionAbs]
   }
 
-  def mkCollectionOverArray[A]
-      (arr: Rep[Array[A]])(implicit eItem: Elem[A]): Rep[CollectionOverArray[A]] =
-      new SeqCollectionOverArray[A](arr)
-  def unmkCollectionOverArray[A](p: Rep[Collection[A]]) = p match {
-    case p: CollectionOverArray[A] @unchecked =>
+  def mkCollectionOverArray[Item]
+      (arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]] =
+      new SeqCollectionOverArray[Item](arr)
+  def unmkCollectionOverArray[Item](p: Rep[Collection[Item]]) = p match {
+    case p: CollectionOverArray[Item] @unchecked =>
       Some((p.arr))
     case _ => None
   }
 
-  case class SeqCollectionOverList[A]
-      (override val lst: Rep[List[A]])
-      (implicit eItem: Elem[A])
-    extends CollectionOverList[A](lst)
-        with UserTypeSeq[CollectionOverList[A]] {
-    lazy val selfType = element[CollectionOverList[A]]
+  case class SeqCollectionOverList[Item]
+      (override val lst: Rep[List[Item]])
+      (implicit eItem: Elem[Item])
+    extends CollectionOverList[Item](lst)
+        with UserTypeSeq[CollectionOverList[Item]] {
+    lazy val selfType = element[CollectionOverList[Item]]
   }
   lazy val CollectionOverList = new CollectionOverListCompanionAbs with UserTypeSeq[CollectionOverListCompanionAbs] {
     lazy val selfType = element[CollectionOverListCompanionAbs]
   }
 
-  def mkCollectionOverList[A]
-      (lst: Rep[List[A]])(implicit eItem: Elem[A]): Rep[CollectionOverList[A]] =
-      new SeqCollectionOverList[A](lst)
-  def unmkCollectionOverList[A](p: Rep[Collection[A]]) = p match {
-    case p: CollectionOverList[A] @unchecked =>
+  def mkCollectionOverList[Item]
+      (lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]] =
+      new SeqCollectionOverList[Item](lst)
+  def unmkCollectionOverList[Item](p: Rep[Collection[Item]]) = p match {
+    case p: CollectionOverList[Item] @unchecked =>
       Some((p.lst))
     case _ => None
   }
 
-  case class SeqCollectionOverSeq[A]
-      (override val seq: Rep[SSeq[A]])
-      (implicit eItem: Elem[A])
-    extends CollectionOverSeq[A](seq)
-        with UserTypeSeq[CollectionOverSeq[A]] {
-    lazy val selfType = element[CollectionOverSeq[A]]
+  case class SeqCollectionOverSeq[Item]
+      (override val seq: Rep[SSeq[Item]])
+      (implicit eItem: Elem[Item])
+    extends CollectionOverSeq[Item](seq)
+        with UserTypeSeq[CollectionOverSeq[Item]] {
+    lazy val selfType = element[CollectionOverSeq[Item]]
   }
   lazy val CollectionOverSeq = new CollectionOverSeqCompanionAbs with UserTypeSeq[CollectionOverSeqCompanionAbs] {
     lazy val selfType = element[CollectionOverSeqCompanionAbs]
   }
 
-  def mkCollectionOverSeq[A]
-      (seq: Rep[SSeq[A]])(implicit eItem: Elem[A]): Rep[CollectionOverSeq[A]] =
-      new SeqCollectionOverSeq[A](seq)
-  def unmkCollectionOverSeq[A](p: Rep[Collection[A]]) = p match {
-    case p: CollectionOverSeq[A] @unchecked =>
+  def mkCollectionOverSeq[Item]
+      (seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]] =
+      new SeqCollectionOverSeq[Item](seq)
+  def unmkCollectionOverSeq[Item](p: Rep[Collection[Item]]) = p match {
+    case p: CollectionOverSeq[Item] @unchecked =>
       Some((p.seq))
     case _ => None
   }
@@ -903,12 +903,12 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
       None
   }
 
-  case class ExpCollectionOverArray[A]
-      (override val arr: Rep[Array[A]])
-      (implicit eItem: Elem[A])
-    extends CollectionOverArray[A](arr) with UserTypeDef[CollectionOverArray[A]] {
-    lazy val selfType = element[CollectionOverArray[A]]
-    override def mirror(t: Transformer) = ExpCollectionOverArray[A](t(arr))
+  case class ExpCollectionOverArray[Item]
+      (override val arr: Rep[Array[Item]])
+      (implicit eItem: Elem[Item])
+    extends CollectionOverArray[Item](arr) with UserTypeDef[CollectionOverArray[Item]] {
+    lazy val selfType = element[CollectionOverArray[Item]]
+    override def mirror(t: Transformer) = ExpCollectionOverArray[Item](t(arr))
   }
 
   lazy val CollectionOverArray: Rep[CollectionOverArrayCompanionAbs] = new CollectionOverArrayCompanionAbs with UserTypeDef[CollectionOverArrayCompanionAbs] {
@@ -918,156 +918,156 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
   object CollectionOverArrayMethods {
     object lst {
-      def unapply(d: Def[_]): Option[Rep[CollectionOverArray[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[CollectionOverArray[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "lst" =>
-          Some(receiver).asInstanceOf[Option[Rep[CollectionOverArray[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[CollectionOverArray[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CollectionOverArray[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[CollectionOverArray[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object length {
-      def unapply(d: Def[_]): Option[Rep[CollectionOverArray[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[CollectionOverArray[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "length" =>
-          Some(receiver).asInstanceOf[Option[Rep[CollectionOverArray[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[CollectionOverArray[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CollectionOverArray[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[CollectionOverArray[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], Rep[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, i)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], Rep[Int]) forSome {type A}]]
+          Some((receiver, i)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Rep[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object slice {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Int], Rep[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "slice" =>
-          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Rep[Int], Rep[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Int], Rep[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply_many {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], Coll[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Coll[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
-          Some((receiver, indices)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], Coll[Int]) forSome {type A}]]
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Coll[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], Coll[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Coll[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object reduce {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "reduce" =>
-          Some((receiver, m)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}]]
+          Some((receiver, m)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object zip {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], Coll[B]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Coll[B]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "zip" =>
-          Some((receiver, ys)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], Coll[B]) forSome {type A; type B}]]
+          Some((receiver, ys)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Coll[B]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], Coll[B]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Coll[B]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object update {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], Rep[Int], Rep[A]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Int], Rep[Item]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "update" =>
-          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], Rep[Int], Rep[A]) forSome {type A}]]
+          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Rep[Int], Rep[Item]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], Rep[Int], Rep[A]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Int], Rep[Item]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object updateMany {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], Coll[Int], Coll[A]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Coll[Int], Coll[Item]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "updateMany" =>
-          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], Coll[Int], Coll[A]) forSome {type A}]]
+          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Coll[Int], Coll[Item]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], Coll[Int], Coll[A]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Coll[Int], Coll[Item]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object filterBy {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "filterBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object flatMapBy {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "flatMapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object append {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[A]], Rep[A @uncheckedVariance]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[CollectionOverArrayElem[_]] && method.getName == "append" =>
-          Some((receiver, value)).asInstanceOf[Option[(Rep[CollectionOverArray[A]], Rep[A @uncheckedVariance]) forSome {type A}]]
+          Some((receiver, value)).asInstanceOf[Option[(Rep[CollectionOverArray[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[A]], Rep[A @uncheckedVariance]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverArray[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1077,22 +1077,22 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   object CollectionOverArrayCompanionMethods {
   }
 
-  def mkCollectionOverArray[A]
-    (arr: Rep[Array[A]])(implicit eItem: Elem[A]): Rep[CollectionOverArray[A]] =
-    new ExpCollectionOverArray[A](arr)
-  def unmkCollectionOverArray[A](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
-    case _: CollectionOverArrayElem[A] @unchecked =>
-      Some((p.asRep[CollectionOverArray[A]].arr))
+  def mkCollectionOverArray[Item]
+    (arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]] =
+    new ExpCollectionOverArray[Item](arr)
+  def unmkCollectionOverArray[Item](p: Rep[Collection[Item]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: CollectionOverArrayElem[Item] @unchecked =>
+      Some((p.asRep[CollectionOverArray[Item]].arr))
     case _ =>
       None
   }
 
-  case class ExpCollectionOverList[A]
-      (override val lst: Rep[List[A]])
-      (implicit eItem: Elem[A])
-    extends CollectionOverList[A](lst) with UserTypeDef[CollectionOverList[A]] {
-    lazy val selfType = element[CollectionOverList[A]]
-    override def mirror(t: Transformer) = ExpCollectionOverList[A](t(lst))
+  case class ExpCollectionOverList[Item]
+      (override val lst: Rep[List[Item]])
+      (implicit eItem: Elem[Item])
+    extends CollectionOverList[Item](lst) with UserTypeDef[CollectionOverList[Item]] {
+    lazy val selfType = element[CollectionOverList[Item]]
+    override def mirror(t: Transformer) = ExpCollectionOverList[Item](t(lst))
   }
 
   lazy val CollectionOverList: Rep[CollectionOverListCompanionAbs] = new CollectionOverListCompanionAbs with UserTypeDef[CollectionOverListCompanionAbs] {
@@ -1102,156 +1102,156 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
   object CollectionOverListMethods {
     object length {
-      def unapply(d: Def[_]): Option[Rep[CollectionOverList[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[CollectionOverList[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "length" =>
-          Some(receiver).asInstanceOf[Option[Rep[CollectionOverList[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[CollectionOverList[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CollectionOverList[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[CollectionOverList[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], Rep[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Rep[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, i)).asInstanceOf[Option[(Rep[CollectionOverList[A]], Rep[Int]) forSome {type A}]]
+          Some((receiver, i)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Rep[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Rep[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object arr {
-      def unapply(d: Def[_]): Option[Rep[CollectionOverList[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[CollectionOverList[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "arr" =>
-          Some(receiver).asInstanceOf[Option[Rep[CollectionOverList[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[CollectionOverList[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CollectionOverList[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[CollectionOverList[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverList[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object slice {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Rep[Int], Rep[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "slice" =>
-          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[CollectionOverList[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Rep[Int], Rep[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Rep[Int], Rep[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply_many {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], Coll[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Coll[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
-          Some((receiver, indices)).asInstanceOf[Option[(Rep[CollectionOverList[A]], Coll[Int]) forSome {type A}]]
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Coll[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], Coll[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Coll[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object reduce {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "reduce" =>
-          Some((receiver, m)).asInstanceOf[Option[(Rep[CollectionOverList[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}]]
+          Some((receiver, m)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object zip {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], Coll[B]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Coll[B]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "zip" =>
-          Some((receiver, ys)).asInstanceOf[Option[(Rep[CollectionOverList[A]], Coll[B]) forSome {type A; type B}]]
+          Some((receiver, ys)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Coll[B]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], Coll[B]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Coll[B]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object update {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], Rep[Int], Rep[A]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Rep[Int], Rep[Item]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "update" =>
-          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[CollectionOverList[A]], Rep[Int], Rep[A]) forSome {type A}]]
+          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Rep[Int], Rep[Item]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], Rep[Int], Rep[A]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Rep[Int], Rep[Item]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object updateMany {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], Coll[Int], Coll[A]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Coll[Int], Coll[Item]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "updateMany" =>
-          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[CollectionOverList[A]], Coll[Int], Coll[A]) forSome {type A}]]
+          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Coll[Int], Coll[Item]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], Coll[Int], Coll[A]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Coll[Int], Coll[Item]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object filterBy {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "filterBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverList[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object flatMapBy {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "flatMapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverList[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object append {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[A]], Rep[A @uncheckedVariance]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverList[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[CollectionOverListElem[_]] && method.getName == "append" =>
-          Some((receiver, value)).asInstanceOf[Option[(Rep[CollectionOverList[A]], Rep[A @uncheckedVariance]) forSome {type A}]]
+          Some((receiver, value)).asInstanceOf[Option[(Rep[CollectionOverList[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[A]], Rep[A @uncheckedVariance]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverList[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1261,22 +1261,22 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   object CollectionOverListCompanionMethods {
   }
 
-  def mkCollectionOverList[A]
-    (lst: Rep[List[A]])(implicit eItem: Elem[A]): Rep[CollectionOverList[A]] =
-    new ExpCollectionOverList[A](lst)
-  def unmkCollectionOverList[A](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
-    case _: CollectionOverListElem[A] @unchecked =>
-      Some((p.asRep[CollectionOverList[A]].lst))
+  def mkCollectionOverList[Item]
+    (lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]] =
+    new ExpCollectionOverList[Item](lst)
+  def unmkCollectionOverList[Item](p: Rep[Collection[Item]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: CollectionOverListElem[Item] @unchecked =>
+      Some((p.asRep[CollectionOverList[Item]].lst))
     case _ =>
       None
   }
 
-  case class ExpCollectionOverSeq[A]
-      (override val seq: Rep[SSeq[A]])
-      (implicit eItem: Elem[A])
-    extends CollectionOverSeq[A](seq) with UserTypeDef[CollectionOverSeq[A]] {
-    lazy val selfType = element[CollectionOverSeq[A]]
-    override def mirror(t: Transformer) = ExpCollectionOverSeq[A](t(seq))
+  case class ExpCollectionOverSeq[Item]
+      (override val seq: Rep[SSeq[Item]])
+      (implicit eItem: Elem[Item])
+    extends CollectionOverSeq[Item](seq) with UserTypeDef[CollectionOverSeq[Item]] {
+    lazy val selfType = element[CollectionOverSeq[Item]]
+    override def mirror(t: Transformer) = ExpCollectionOverSeq[Item](t(seq))
   }
 
   lazy val CollectionOverSeq: Rep[CollectionOverSeqCompanionAbs] = new CollectionOverSeqCompanionAbs with UserTypeDef[CollectionOverSeqCompanionAbs] {
@@ -1286,168 +1286,168 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
   object CollectionOverSeqMethods {
     object arr {
-      def unapply(d: Def[_]): Option[Rep[CollectionOverSeq[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[CollectionOverSeq[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "arr" =>
-          Some(receiver).asInstanceOf[Option[Rep[CollectionOverSeq[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[CollectionOverSeq[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CollectionOverSeq[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[CollectionOverSeq[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object lst {
-      def unapply(d: Def[_]): Option[Rep[CollectionOverSeq[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[CollectionOverSeq[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "lst" =>
-          Some(receiver).asInstanceOf[Option[Rep[CollectionOverSeq[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[CollectionOverSeq[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CollectionOverSeq[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[CollectionOverSeq[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object length {
-      def unapply(d: Def[_]): Option[Rep[CollectionOverSeq[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[CollectionOverSeq[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "length" =>
-          Some(receiver).asInstanceOf[Option[Rep[CollectionOverSeq[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[CollectionOverSeq[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[CollectionOverSeq[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[CollectionOverSeq[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], Rep[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, i)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], Rep[Int]) forSome {type A}]]
+          Some((receiver, i)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Rep[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object slice {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Int], Rep[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "slice" =>
-          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Rep[Int], Rep[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Int], Rep[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply_many {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], Coll[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Coll[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
-          Some((receiver, indices)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], Coll[Int]) forSome {type A}]]
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Coll[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], Coll[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Coll[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object reduce {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "reduce" =>
-          Some((receiver, m)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}]]
+          Some((receiver, m)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object zip {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], Coll[B]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Coll[B]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "zip" =>
-          Some((receiver, ys)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], Coll[B]) forSome {type A; type B}]]
+          Some((receiver, ys)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Coll[B]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], Coll[B]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Coll[B]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object update {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], Rep[Int], Rep[A]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Int], Rep[Item]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "update" =>
-          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], Rep[Int], Rep[A]) forSome {type A}]]
+          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Rep[Int], Rep[Item]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], Rep[Int], Rep[A]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Int], Rep[Item]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object updateMany {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], Coll[Int], Coll[A]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Coll[Int], Coll[Item]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "updateMany" =>
-          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], Coll[Int], Coll[A]) forSome {type A}]]
+          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Coll[Int], Coll[Item]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], Coll[Int], Coll[A]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Coll[Int], Coll[Item]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object filterBy {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "filterBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object flatMapBy {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "flatMapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object append {
-      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[A]], Rep[A @uncheckedVariance]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[CollectionOverSeqElem[_]] && method.getName == "append" =>
-          Some((receiver, value)).asInstanceOf[Option[(Rep[CollectionOverSeq[A]], Rep[A @uncheckedVariance]) forSome {type A}]]
+          Some((receiver, value)).asInstanceOf[Option[(Rep[CollectionOverSeq[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[A]], Rep[A @uncheckedVariance]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[CollectionOverSeq[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1457,12 +1457,12 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
   object CollectionOverSeqCompanionMethods {
   }
 
-  def mkCollectionOverSeq[A]
-    (seq: Rep[SSeq[A]])(implicit eItem: Elem[A]): Rep[CollectionOverSeq[A]] =
-    new ExpCollectionOverSeq[A](seq)
-  def unmkCollectionOverSeq[A](p: Rep[Collection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
-    case _: CollectionOverSeqElem[A] @unchecked =>
-      Some((p.asRep[CollectionOverSeq[A]].seq))
+  def mkCollectionOverSeq[Item]
+    (seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]] =
+    new ExpCollectionOverSeq[Item](seq)
+  def unmkCollectionOverSeq[Item](p: Rep[Collection[Item]]) = p.elem.asInstanceOf[Elem[_]] match {
+    case _: CollectionOverSeqElem[Item] @unchecked =>
+      Some((p.asRep[CollectionOverSeq[Item]].seq))
     case _ =>
       None
   }
@@ -2127,204 +2127,204 @@ trait CollectionsExp extends CollectionsDsl with ScalanExp {
 
   object CollectionMethods {
     object length {
-      def unapply(d: Def[_]): Option[Rep[Collection[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[Collection[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "length" =>
-          Some(receiver).asInstanceOf[Option[Rep[Collection[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[Collection[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Collection[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Collection[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object arr {
-      def unapply(d: Def[_]): Option[Rep[Collection[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[Collection[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "arr" =>
-          Some(receiver).asInstanceOf[Option[Rep[Collection[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[Collection[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Collection[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Collection[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object lst {
-      def unapply(d: Def[_]): Option[Rep[Collection[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[Collection[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "lst" =>
-          Some(receiver).asInstanceOf[Option[Rep[Collection[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[Collection[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Collection[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Collection[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object seq {
-      def unapply(d: Def[_]): Option[Rep[Collection[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[Collection[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "seq" =>
-          Some(receiver).asInstanceOf[Option[Rep[Collection[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[Collection[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Collection[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Collection[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Rep[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(i, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "apply" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
-          Some((receiver, i)).asInstanceOf[Option[(Rep[Collection[A]], Rep[Int]) forSome {type A}]]
+          Some((receiver, i)).asInstanceOf[Option[(Rep[Collection[Item]], Rep[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Rep[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object apply_many {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Coll[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Coll[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(indices, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "apply" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "many" } =>
-          Some((receiver, indices)).asInstanceOf[Option[(Rep[Collection[A]], Coll[Int]) forSome {type A}]]
+          Some((receiver, indices)).asInstanceOf[Option[(Rep[Collection[Item]], Coll[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Coll[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Coll[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object mapBy {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "mapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[A => B @uncheckedVariance]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Rep[Item => B @uncheckedVariance]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object zip {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Coll[B]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Coll[B]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(ys, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "zip" =>
-          Some((receiver, ys)).asInstanceOf[Option[(Rep[Collection[A]], Coll[B]) forSome {type A; type B}]]
+          Some((receiver, ys)).asInstanceOf[Option[(Rep[Collection[Item]], Coll[B]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Coll[B]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Coll[B]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object slice {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[Int], Rep[Int]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Rep[Int], Rep[Int]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(offset, length, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "slice" =>
-          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[Collection[A]], Rep[Int], Rep[Int]) forSome {type A}]]
+          Some((receiver, offset, length)).asInstanceOf[Option[(Rep[Collection[Item]], Rep[Int], Rep[Int]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[Int], Rep[Int]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Rep[Int], Rep[Int]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object reduce {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(m, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "reduce" =>
-          Some((receiver, m)).asInstanceOf[Option[(Rep[Collection[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}]]
+          Some((receiver, m)).asInstanceOf[Option[(Rep[Collection[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], RepMonoid[A @uncheckedVariance]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], RepMonoid[Item @uncheckedVariance]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object update {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[Int], Rep[A @uncheckedVariance]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Rep[Int], Rep[Item @uncheckedVariance]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(idx, value, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "update" =>
-          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[Collection[A]], Rep[Int], Rep[A @uncheckedVariance]) forSome {type A}]]
+          Some((receiver, idx, value)).asInstanceOf[Option[(Rep[Collection[Item]], Rep[Int], Rep[Item @uncheckedVariance]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[Int], Rep[A @uncheckedVariance]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Rep[Int], Rep[Item @uncheckedVariance]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object updateMany {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Coll[Int], Coll[A @uncheckedVariance]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Coll[Int], Coll[Item @uncheckedVariance]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(idxs, vals, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "updateMany" =>
-          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[Collection[A]], Coll[Int], Coll[A @uncheckedVariance]) forSome {type A}]]
+          Some((receiver, idxs, vals)).asInstanceOf[Option[(Rep[Collection[Item]], Coll[Int], Coll[Item @uncheckedVariance]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Coll[Int], Coll[A @uncheckedVariance]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Coll[Int], Coll[Item @uncheckedVariance]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object indexes {
-      def unapply(d: Def[_]): Option[Rep[Collection[A]] forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[Rep[Collection[Item]] forSome {type Item}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "indexes" =>
-          Some(receiver).asInstanceOf[Option[Rep[Collection[A]] forSome {type A}]]
+          Some(receiver).asInstanceOf[Option[Rep[Collection[Item]] forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[Collection[A]] forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[Collection[Item]] forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object filterBy {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "filterBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[A @uncheckedVariance => Boolean]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Rep[Item @uncheckedVariance => Boolean]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object flatMapBy {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}] = d match {
         case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "flatMapBy" =>
-          Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}]]
+          Some((receiver, f)).asInstanceOf[Option[(Rep[Collection[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[A @uncheckedVariance => Collection[B]]) forSome {type A; type B}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Rep[Item @uncheckedVariance => Collection[B]]) forSome {type Item; type B}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object append {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[A @uncheckedVariance]) forSome {type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}] = d match {
         case MethodCall(receiver, method, Seq(value, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "append" =>
-          Some((receiver, value)).asInstanceOf[Option[(Rep[Collection[A]], Rep[A @uncheckedVariance]) forSome {type A}]]
+          Some((receiver, value)).asInstanceOf[Option[(Rep[Collection[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[A @uncheckedVariance]) forSome {type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Rep[Item @uncheckedVariance]) forSome {type Item}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object foldLeft {
-      def unapply(d: Def[_]): Option[(Rep[Collection[A]], Rep[S], Rep[((S, A)) => S]) forSome {type A; type S}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Collection[Item]], Rep[S], Rep[((S, Item)) => S]) forSome {type Item; type S}] = d match {
         case MethodCall(receiver, method, Seq(init, f, _*), _) if receiver.elem.isInstanceOf[CollectionElem[_, _]] && method.getName == "foldLeft" =>
-          Some((receiver, init, f)).asInstanceOf[Option[(Rep[Collection[A]], Rep[S], Rep[((S, A)) => S]) forSome {type A; type S}]]
+          Some((receiver, init, f)).asInstanceOf[Option[(Rep[Collection[Item]], Rep[S], Rep[((S, Item)) => S]) forSome {type Item; type S}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Collection[A]], Rep[S], Rep[((S, A)) => S]) forSome {type A; type S}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Collection[Item]], Rep[S], Rep[((S, Item)) => S]) forSome {type Item; type S}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
