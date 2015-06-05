@@ -147,19 +147,53 @@ trait Base extends LazyLogging { self: Scalan =>
 }
 
 object Base {
-  lazy val config = {
+  val config = {
     val prop = new Properties
     try {
-      val reader = new FileReader("scalan.properties")
+      val scalanPropertiesFileName = System.getProperty("scalan.properties.file", "scalan.properties")
+      val reader = new FileReader(scalanPropertiesFileName)
       try {
         prop.load(reader)
+
+        val pathToAdd = prop.getProperty("runtime.target")
+        if(pathToAdd != null) {
+          val fullPathToAdd = pathToAdd.charAt(0) match {
+            case '/' => pathToAdd
+            case _ => System.getProperty("user.dir") + "/" + pathToAdd
+          }
+
+          // create the dir if it not exists, and check access to one.
+          val touchFile = scalan.util.FileUtil.file(fullPathToAdd, "touch.tmp")
+          touchFile.getParentFile.mkdirs()
+          touchFile.createNewFile()
+          touchFile.delete()
+
+          val newPath = fullPathToAdd + java.io.File.pathSeparator + System.getProperty("java.library.path")
+                        //System.getProperty("java.library.path") + java.io.File.pathSeparator + fullPathToAdd
+          System.setProperty( "java.library.path", newPath)
+
+          // hack from http://nicklothian.com/blog/2008/11/19/modify-javalibrarypath-at-runtime/ for reload java.library.path
+          val fieldSysPath = classOf[ClassLoader].getDeclaredField( "sys_paths" );
+          fieldSysPath.setAccessible( true );
+          fieldSysPath.set( null, null );
+
+          prop.setProperty( "java.library.path", newPath)
+          prop.setProperty("runtime.target", fullPathToAdd)
+
+        }
+
       } finally {
         reader.close()
       }
     } catch {
-      case _: Throwable => {}
+      case e: Throwable => print("WARNING: config not readed: " + e.toString+"\n")
     }
-    prop.putAll(System.getProperties)
-    prop
+
+    // propSum filled from system, then from user properties for allow user properties to override system properties
+    // separate value prop important for correct replace "java.library.path"
+    val propSum = new Properties
+    propSum.putAll(System.getProperties)
+    propSum.putAll(prop)
+    propSum
   }
 }

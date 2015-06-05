@@ -1,10 +1,16 @@
 package scalan.compilation.lms
 
+import java.io.{File, PrintWriter}
+
 import scala.collection.mutable
 import scala.virtualization.lms.epfl.test8.{ScalaGenArrayMutation, ArrayMutationExp}
 import scala.virtualization.lms.internal.{Effects, NestedBlockTraversal, GenericCodegen}
 import scalan.compilation.lms.common._
+import scalan.compilation.lms.cxx.sharedptr.{CxxCodegen}
 import scalan.compilation.lms.graph.GraphCodegen
+import scalan.compilation.lms.scalac.ScalaCommunityCodegen
+import scalan.compilation.lms.uni.JniCallCodegen
+import scalan.util.FileUtil
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
 import java.util.HashMap
@@ -12,11 +18,32 @@ import java.util.HashMap
 
 trait BaseCodegen[BackendType <: LmsBackendFacade] extends GenericCodegen with NestedBlockTraversal{
   val IR: BackendType
+  import IR._
+
   override def traverseStm(stm: IR.type#Stm) = super.traverseStm(stm)
+
+  def codePackage: Option[String] = None
+
+  def createFile[T : Manifest, R : Manifest](f: Exp[T] => Exp[R], className: String, sourcesDir: File): File = {
+
+    val sourceFile = new File(sourcesDir, s"$className.$kernelFileExt")
+    FileUtil.withFile(sourceFile) { writer =>
+      emitSource[T, R](f, className, writer)
+      //          val s = lms.fresh[a](mA)
+      //          val body = codegen.reifyBlock(facade.apply(s))(mB)
+      //          codegen.emitSource(List(s), body, functionName, writer)(mB)
+      //          val lms.TP(sym,_) = lms.globalDefs.last
+      //          codegen.emitDepGraph( sym, new File( sourcesDir, functionName + "-LMS.dot" ).getAbsolutePath )
+      emitDataStructures(writer)
+    }
+    sourceFile
+
+  }
+
 }
 
 
-trait LmsBackend extends LmsBackendFacade { self =>
+trait LmsBackend extends LmsBackendFacade  with JNILmsOpsExp{ self =>
 
 /*  type Codegen <: GenericCodegen {
     val IR: self.type
@@ -24,6 +51,8 @@ trait LmsBackend extends LmsBackendFacade { self =>
 
   def codegen: BaseCodegen[self.type]
   val graphCodegen: GraphCodegen[self.type] = new GraphCodegen(self)
+  val nativeCodegen: CxxCodegen[self.type] = new CxxCodegen(self)
+  val jniCallCodegen: JniCallCodegen[self.type] = new JniCallCodegen(self, nativeCodegen, "")
 
 }
 
@@ -33,7 +62,8 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   with IfThenElseFatExp with VariablesExpOpt
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
-  with WhileExpExt with ListOpsExpExt with FunctionsExpExt with Effects with MiscOpsExp {
+  with WhileExpExt with ListOpsExpExt with FunctionsExpExt with PointerLmsOpsExp
+  with Effects with MiscOpsExp {
   /*type RepD[T] = Rep[T]
   */
 
@@ -496,43 +526,8 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   }  */
 }
 
-class CoreLmsBackend extends CoreLmsBackendBase { self =>
-
-  trait Codegen extends BaseCodegen[self.type] with ScalaGenObjectOpsExt with ScalaGenArrayOps with ScalaGenListOps
-  with ScalaGenLstOps with ScalaGenNumericOps with ScalaGenPrimitiveOps with ScalaGenEqual with ScalaGenOrderingOps with ScalaGenBooleanOps
-  with ScalaGenStruct with ScalaGenStringOps with ScalaGenEitherOps
-  with ScalaGenTupleOps with ScalaGenFatArrayLoopsFusionOpt with ScalaGenArrayMutation with ScalaGenIfThenElseFat with LoopFusionOpt
-  with ScalaGenCastingOps with ScalaGenMathOps with ScalaGenMethodCallOps with ScalaGenHashMapOps with ScalaGenIterableOps with ScalaGenWhile
-  with ScalaGenIfThenElse with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions with ScalaGenRangeOps
-  with ScalaGenMiscOps
-  {
-    val IR: self.type = self
-    import scalan.compilation.lms.scalac.LmsType
-
-    override def shouldApplyFusion(currentScope: List[Stm])(result: List[Exp[Any]]): Boolean = true
-
-    private def isTuple2(name: String) = name.startsWith("Tuple2")
-
-    override def remap[A](m: Manifest[A]) =
-      if (m.equals(LmsType.wildCard)) "_"
-      else if (isTuple2(m.runtimeClass.getSimpleName)) {
-        if (m.typeArguments.length == 2) s"(${remap(m.typeArguments(0))}, ${remap(m.typeArguments(1))})"
-        else m.toString
-      }
-      else super.remap(m)
-
-    override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-      case Struct(ClassTag(name), elems) if isTuple2(name) =>
-        emitValDef(sym, "(" + elems.map(e => quote(e._2)).mkString(",") + ")")
-      case _ => super.emitNode(sym, rhs)
-    }
-  }
-
-  val codegen = new Codegen {}
-}
+trait CoreLmsBackend extends CoreLmsBackendBase // todo kill this class
 
 class CommunityLmsBackend extends CoreLmsBackend with CommunityLmsBackendBase { self =>
-  override val codegen = new Codegen with ScalaGenVectorOps with ScalaGenExtNumOps with ScalaGenSystemOps {
-    override val IR: self.type = self
-  }
+  override val codegen = new ScalaCommunityCodegen[self.type](self)
 }

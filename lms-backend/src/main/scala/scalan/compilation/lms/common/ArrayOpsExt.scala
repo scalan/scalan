@@ -3,8 +3,10 @@ package scalan.compilation.lms.common
 import java.util.HashMap
 
 import scala.reflect.SourceContext
+import scala.virtualization.lms.common.{ArrayOpsExp, ScalaGenBase}
 import scala.virtualization.lms.internal.Transforming
 import scalan.compilation.lms.LmsBackendFacade
+import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
 
@@ -188,11 +190,10 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
   }
 
   def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]] = {
-    val bu = ArrayBuilder.make[A]
-    for(a <- xs ) {bu += a}
-    bu += value
-    bu.result
+    ArrayAppend(xs, value)
   }
+
+  case class ArrayAppend[A](xs: Rep[Array[A]], value: Rep[A])(implicit val m: Manifest[A]) extends Def[Array[A]]
 
   def array_cons[A: Manifest](value: Rep[A], xs: Rep[Array[A]]): Rep[Array[A]] = {
     xs.insert(0, value)
@@ -207,8 +208,58 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
         ArrayToSeq(f(arr))
       case ArrayIndex(arr, i) =>
         ArrayIndex(f(arr), f(i))
+      case a @ ArrayAppend(arr, v) =>
+        ArrayAppend(f(arr), f(v))(a.m)
       case _ =>
         super.mirrorDef(e,f)
     }).asInstanceOf[Def[A]]
+  }
+}
+
+trait ScalaGenArrayOpsExt extends ScalaGenBase {
+  val IR: ArrayOpsExtExp
+  import IR._
+
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case a @ ArrayAppend(xs, v) =>
+      gen"""val $sym = {
+           |  val len = $xs.length
+           |  val d = new Array[${remap(a.m)}](len + 1)
+           |  System.arraycopy($xs, 0, d, 0, len)
+           |  d(len) = $v
+           |  d
+           |}"""
+    case _ => super.emitNode(sym, rhs)
+  }
+}
+
+trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
+  val IR: ArrayOpsExtExp with ArrayOpsExp
+  import IR._
+
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case a @ ArrayAppend(xs, v) =>
+/////////////////////////////////////////////////////
+// Creates new array, copies values to it from xs and adds new element
+      emitNode(sym, ArrayNew(Const(0)))
+      val xsLen = src"${xs}_len"
+      gen"""size_t $xsLen = $xs->size();
+           |$sym->resize($xsLen + 1);
+           |std::copy($xs->begin(), $xs->end(), $sym->begin());
+           |(*$sym)[$xsLen] = $v;"""
+////////////////////////////////////////////////////
+// Modifies xs adding new element and assigns new symbol to xs
+//      gen"""$xs->push_back($v);"""
+//      emitValDef(sym, src"$xs")
+    case a @ ArrayInsert(xs,i,y) =>
+      emitNode(sym, ArrayNew(Const(0)))
+      val xsLen = src"${xs}_len"
+      gen"""size_t $xsLen = $xs->size();
+           |$sym->resize($xsLen + 1);
+           |std::copy($xs->begin(), $xs->begin() + $i, $sym->begin());
+           |(*$sym)[$i] = $y;
+           |std::copy($xs->begin() + $i, $xs->end(), $sym->begin() + $i + 1);"""
+    case _ =>
+      super.emitNode(sym, rhs)
   }
 }

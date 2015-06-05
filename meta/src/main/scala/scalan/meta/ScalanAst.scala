@@ -96,8 +96,8 @@ object ScalanAst {
     def name = "SelectFromTypeTree"
   }
   case class STpeAnnotated(tpt: STpeExpr, annot: String) extends STpeExpr {
-    def name = "Annotated"
-    override def toString = tpt.toString + " @ " + annot
+    def name = "Annotated" + tpt.name
+    override def toString = tpt.toString + " @" + annot
   }
   case class STpeExistential(tpt: STpeExpr, items: List[SBodyItem]) extends STpeExpr {
     def name = "Existential"
@@ -297,6 +297,8 @@ object ScalanAst {
       val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map { a =>
         val optDef = implicitElems.collectFirst {
           case (methName, elem @ STraitCall(_, List(STraitCall(name, _)))) if name == a.name =>
+            (methName, elem)
+          case (methName, elem @ STraitCall(_, List(STpeAnnotated(STraitCall(name, _), _)))) if name == a.name =>
             (methName, elem)
         }
 
