@@ -524,27 +524,32 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   // TODO Combine with extractElems
   private def getElemsMapFromInstanceElem(e: Elem[_], tpe: Type): Map[Symbol, TypeDesc] = {
-    val kvs = tpe.dealias.typeSymbol.asType.typeParams.map {
-      case sym =>
-        val res = Try {
-          if (sym.asType.toTypeConstructor.takesTypeArgs) {
-            // FIXME hardcoding - naming convention is assumed to be consistent with ScalanCodegen
-            val methodName = "c" + sym.name.toString
-            val cont = invokeMethod(e, methodName).asInstanceOf[SomeCont]
-            (scala.Right[Elem[_], SomeCont](cont), Map.empty[Symbol, TypeDesc])
-          } else {
-            val methodName = "e" + sym.name.toString
-            val elem = invokeMethod(e, methodName).asInstanceOf[Elem[_]]
-            val map1 = getElemsMapFromInstanceElem(elem, tpeFromElem(elem))
-            (scala.Left[Elem[_], SomeCont](elem), map1)
-          }
+    e match {
+      case _: EntityElem[_] =>
+        val kvs = tpe.dealias.typeSymbol.asType.typeParams.map {
+          case sym =>
+            val res = Try {
+              if (sym.asType.toTypeConstructor.takesTypeArgs) {
+                // FIXME hardcoding - naming convention is assumed to be consistent with ScalanCodegen
+                val methodName = "c" + sym.name.toString
+                val cont = invokeMethod(e, methodName).asInstanceOf[SomeCont]
+                (scala.Right[Elem[_], SomeCont](cont), Map.empty[Symbol, TypeDesc])
+              } else {
+                val methodName = "e" + sym.name.toString
+                val elem = invokeMethod(e, methodName).asInstanceOf[Elem[_]]
+                val map1 = getElemsMapFromInstanceElem(elem, tpeFromElem(elem))
+                (scala.Left[Elem[_], SomeCont](elem), map1)
+              }
+            }
+            (sym, res)
         }
-        (sym, res)
+        val successes = kvs.collect { case (k, Success((desc, map))) => (k, desc, map) }
+        val maps = successes.map(_._3)
+        val map0 = successes.map { case (k, desc, _) => (k, desc) }.toMap
+        maps.fold(map0)(_ ++ _)
+      // The above lookup isn't necessary for other elements
+      case _ => Map.empty
     }
-    val successes = kvs.collect { case (k, Success((desc, map))) => (k, desc, map) }
-    val maps = successes.map(_._3)
-    val map0 = successes.map { case (k, desc, _) => (k, desc) }.toMap
-    maps.fold(map0)(_ ++ _)
   }
 
   private def invokeMethod(obj: AnyRef, methodName: String): AnyRef = {
@@ -559,7 +564,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       }
     } catch {
       case _: NoSuchMethodException =>
-        !!!(s"Failed to find method with name $methodName  of object $obj")
+        !!!(s"Failed to find method with name $methodName of object $obj")
     }
   }
 
