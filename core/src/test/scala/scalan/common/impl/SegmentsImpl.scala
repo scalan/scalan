@@ -3,9 +3,7 @@ package impl
 
 import scala.reflect.runtime.universe._
 import scalan._
-import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait SegmentsAbs extends Segments with Scalan {
@@ -75,7 +73,7 @@ trait SegmentsAbs extends Segments with Scalan {
       val Pair(start, end) = p
       Interval(start, end)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Interval]](Interval(0, 0))
+    lazy val defaultRepTo: Rep[Interval] = Interval(0, 0)
     lazy val eTo = new IntervalElem(this)
   }
   // 4) constructor and deconstructor
@@ -137,7 +135,7 @@ trait SegmentsAbs extends Segments with Scalan {
       val Pair(start, length) = p
       Slice(start, length)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Slice]](Slice(0, 0))
+    lazy val defaultRepTo: Rep[Slice] = Slice(0, 0)
     lazy val eTo = new SliceElem(this)
   }
   // 4) constructor and deconstructor
@@ -200,7 +198,7 @@ trait SegmentsAbs extends Segments with Scalan {
       val Pair(center, radius) = p
       Centered(center, radius)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Centered]](Centered(0, 0))
+    lazy val defaultRepTo: Rep[Centered] = Centered(0, 0)
     lazy val eTo = new CenteredElem(this)
   }
   // 4) constructor and deconstructor

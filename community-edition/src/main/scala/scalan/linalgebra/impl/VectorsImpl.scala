@@ -2,13 +2,11 @@ package scalan.linalgebra
 package impl
 
 import scalan._
-import scalan.common.Default
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.tailrec
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait VectorsAbs extends Vectors with Scalan {
@@ -80,7 +78,7 @@ trait VectorsAbs extends Vectors with Scalan {
       val items = p
       DenseVector(items)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[DenseVector[T]]](DenseVector(element[Collection[T]].defaultRepValue))
+    lazy val defaultRepTo: Rep[DenseVector[T]] = DenseVector(element[Collection[T]].defaultRepValue)
     lazy val eTo = new DenseVectorElem[T](this)
   }
   // 4) constructor and deconstructor
@@ -142,7 +140,7 @@ trait VectorsAbs extends Vectors with Scalan {
       val Pair(nonZeroIndices, Pair(nonZeroValues, length)) = p
       SparseVector(nonZeroIndices, nonZeroValues, length)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector[T]]](SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, 0))
+    lazy val defaultRepTo: Rep[SparseVector[T]] = SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, 0)
     lazy val eTo = new SparseVectorElem[T](this)
   }
   // 4) constructor and deconstructor
@@ -205,7 +203,7 @@ trait VectorsAbs extends Vectors with Scalan {
       val Pair(nonZeroItems, length) = p
       SparseVector1(nonZeroItems, length)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector1[T]]](SparseVector1(element[Collection[(Int, T)]].defaultRepValue, 0))
+    lazy val defaultRepTo: Rep[SparseVector1[T]] = SparseVector1(element[Collection[(Int, T)]].defaultRepValue, 0)
     lazy val eTo = new SparseVector1Elem[T](this)
   }
   // 4) constructor and deconstructor

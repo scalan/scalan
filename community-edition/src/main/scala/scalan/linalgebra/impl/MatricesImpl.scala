@@ -3,11 +3,9 @@ package impl
 
 import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
-import scalan.common.Default
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait MatricesAbs extends Matrices with Scalan {
@@ -79,7 +77,7 @@ trait MatricesAbs extends Matrices with Scalan {
       val Pair(rmValues, numColumns) = p
       DenseFlatMatrix(rmValues, numColumns)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[DenseFlatMatrix[T]]](DenseFlatMatrix(element[Collection[T]].defaultRepValue, 0))
+    lazy val defaultRepTo: Rep[DenseFlatMatrix[T]] = DenseFlatMatrix(element[Collection[T]].defaultRepValue, 0)
     lazy val eTo = new DenseFlatMatrixElem[T](this)
   }
   // 4) constructor and deconstructor
@@ -142,7 +140,7 @@ trait MatricesAbs extends Matrices with Scalan {
       val Pair(rows, numColumns) = p
       CompoundMatrix(rows, numColumns)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CompoundMatrix[T]]](CompoundMatrix(element[Collection[AbstractVector[T]]].defaultRepValue, 0))
+    lazy val defaultRepTo: Rep[CompoundMatrix[T]] = CompoundMatrix(element[Collection[AbstractVector[T]]].defaultRepValue, 0)
     lazy val eTo = new CompoundMatrixElem[T](this)
   }
   // 4) constructor and deconstructor

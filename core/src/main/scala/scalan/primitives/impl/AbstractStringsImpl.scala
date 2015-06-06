@@ -5,7 +5,6 @@ import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait AbstractStringsAbs extends AbstractStrings with Scalan {
@@ -75,7 +74,7 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
       val wrappedValueOfBaseType = p
       SString(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SString]](SString(""))
+    lazy val defaultRepTo: Rep[SString] = SString("")
     lazy val eTo = new SStringElem(this)
   }
   // 4) constructor and deconstructor
@@ -136,7 +135,7 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
       val wrappedValueOfBaseType = p
       CString(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CString]](CString(""))
+    lazy val defaultRepTo: Rep[CString] = CString("")
     lazy val eTo = new CStringElem(this)
   }
   // 4) constructor and deconstructor

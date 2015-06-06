@@ -1,10 +1,8 @@
 package scalan.graphs
 
-import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.collections.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scalan.{ScalanSeq, ScalanExp, Scalan}
-import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 
 

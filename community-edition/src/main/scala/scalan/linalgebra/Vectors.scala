@@ -5,7 +5,6 @@ package scalan.linalgebra
  */
 
 import scalan._
-import scalan.common.Default
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.tailrec
 import scala.annotation.unchecked.uncheckedVariance

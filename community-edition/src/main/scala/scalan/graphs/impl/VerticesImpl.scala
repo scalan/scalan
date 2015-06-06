@@ -1,14 +1,11 @@
 package scalan.graphs
 package impl
 
-import scala.annotation.unchecked.uncheckedVariance
 import scalan.collections.CollectionsDsl
-import scalan.common.Default
 import scalan.{Scalan, ScalanExp, ScalanSeq}
 import scalan.ScalanCommunityDsl
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait VerticesAbs extends Vertices with Scalan {
@@ -82,7 +79,7 @@ trait VerticesAbs extends Vertices with Scalan {
       val Pair(id, graph) = p
       SVertex(id, graph)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SVertex[V, E]]](SVertex(0, element[Graph[V,E]].defaultRepValue))
+    lazy val defaultRepTo: Rep[SVertex[V, E]] = SVertex(0, element[Graph[V,E]].defaultRepValue)
     lazy val eTo = new SVertexElem[V, E](this)
   }
   // 4) constructor and deconstructor

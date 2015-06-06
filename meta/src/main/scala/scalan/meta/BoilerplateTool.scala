@@ -16,8 +16,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "",
     stagedContextTrait = "",
     extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     scalanTypeSynonyms
   )
 
@@ -48,8 +47,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     coreTypeSynonyms
   )
 
@@ -67,8 +65,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     coreTestsTypeSynonyms
   )
 
@@ -88,8 +85,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     collectTypeSynonyms
   )
 
@@ -107,8 +103,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     laTypeSynonyms
   )
 
@@ -131,8 +126,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanEnterpriseSeq",
     stagedContextTrait = "ScalanEnterpriseExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     eeTypeSynonyms
   )
 
@@ -161,8 +155,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     effectsTypeSynonims
   )
 
@@ -192,8 +185,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     effects2TypeSynonims
   )
 
@@ -207,8 +199,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     collectTypeSynonyms
   )
 
@@ -226,8 +217,7 @@ class BoilerplateTool extends StrictLogging {
     seqContextTrait = "ScalanSeq",
     stagedContextTrait = "ScalanExp",
     extraImports = List(
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     graphTypeSynonyms
   )
 
@@ -245,8 +235,7 @@ class BoilerplateTool extends StrictLogging {
     stagedContextTrait = "ScalanExp",
     extraImports = List(
       "scalan.{Scalan, ScalanSeq, ScalanExp}",
-      "scala.reflect.runtime.universe._", "scala.reflect._",
-      "scalan.common.Default"),
+      "scala.reflect.runtime.universe._", "scala.reflect._"),
     metaTestTypeSynonyms
   )
 

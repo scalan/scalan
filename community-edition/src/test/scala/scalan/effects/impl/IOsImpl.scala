@@ -4,9 +4,7 @@ package impl
 import scala.reflect.runtime.universe._
 import scalan._
 import scalan.monads._
-import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait IOsAbs extends IOs with Scalan {
@@ -78,7 +76,7 @@ trait IOsAbs extends IOs with Scalan {
       val fileName = p
       ReadFile(fileName)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[ReadFile]](ReadFile(""))
+    lazy val defaultRepTo: Rep[ReadFile] = ReadFile("")
     lazy val eTo = new ReadFileElem(this)
   }
   // 4) constructor and deconstructor
@@ -140,7 +138,7 @@ trait IOsAbs extends IOs with Scalan {
       val Pair(fileName, lines) = p
       WriteFile(fileName, lines)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[WriteFile]](WriteFile("", element[List[String]].defaultRepValue))
+    lazy val defaultRepTo: Rep[WriteFile] = WriteFile("", element[List[String]].defaultRepValue)
     lazy val eTo = new WriteFileElem(this)
   }
   // 4) constructor and deconstructor

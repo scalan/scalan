@@ -2,10 +2,8 @@ package scalan.collections
 package impl
 
 import scalan._
-import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait MultiMapsAbs extends MultiMaps with Scalan {
@@ -79,7 +77,7 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
       val map = p
       HashMMultiMap(map)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[HashMMultiMap[K, V]]](HashMMultiMap(element[MMap[K,ArrayBuffer[V]]].defaultRepValue))
+    lazy val defaultRepTo: Rep[HashMMultiMap[K, V]] = HashMMultiMap(element[MMap[K,ArrayBuffer[V]]].defaultRepValue)
     lazy val eTo = new HashMMultiMapElem[K, V](this)
   }
   // 4) constructor and deconstructor

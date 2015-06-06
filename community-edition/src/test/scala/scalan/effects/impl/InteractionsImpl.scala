@@ -5,9 +5,7 @@ import scala.io.StdIn
 import scala.reflect.runtime.universe._
 import scalan._
 import scalan.monads._
-import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait InteractionsAbs extends Interactions with Scalan {
@@ -79,7 +77,7 @@ trait InteractionsAbs extends Interactions with Scalan {
       val prompt = p
       Ask(prompt)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Ask]](Ask(""))
+    lazy val defaultRepTo: Rep[Ask] = Ask("")
     lazy val eTo = new AskElem(this)
   }
   // 4) constructor and deconstructor
@@ -141,7 +139,7 @@ trait InteractionsAbs extends Interactions with Scalan {
       val msg = p
       Tell(msg)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Tell]](Tell(""))
+    lazy val defaultRepTo: Rep[Tell] = Tell("")
     lazy val eTo = new TellElem(this)
   }
   // 4) constructor and deconstructor

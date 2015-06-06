@@ -5,7 +5,6 @@ import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait ExceptionsAbs extends Exceptions with Scalan {
@@ -99,7 +98,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
       val wrappedValueOfBaseType = p
       SThrowableImpl(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SThrowableImpl]](SThrowableImpl(DefaultOfThrowable.value))
+    lazy val defaultRepTo: Rep[SThrowableImpl] = SThrowableImpl(DefaultOfThrowable.value)
     lazy val eTo = new SThrowableImplElem(this)
   }
   // 4) constructor and deconstructor
@@ -161,7 +160,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
       val wrappedValueOfBaseType = p
       SException(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SException]](SException(DefaultOfThrowable.value))
+    lazy val defaultRepTo: Rep[SException] = SException(DefaultOfThrowable.value)
     lazy val eTo = new SExceptionElem(this)
   }
   // 4) constructor and deconstructor

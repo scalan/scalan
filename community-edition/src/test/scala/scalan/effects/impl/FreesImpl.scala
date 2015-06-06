@@ -3,9 +3,7 @@ package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait FreesAbs extends Frees with Scalan {
@@ -78,7 +76,7 @@ trait FreesAbs extends Frees with Scalan {
       val a = p
       Return(a)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Return[F, A]]](Return(element[A].defaultRepValue))
+    lazy val defaultRepTo: Rep[Return[F, A]] = Return(element[A].defaultRepValue)
     lazy val eTo = new ReturnElem[F, A](this)
   }
   // 4) constructor and deconstructor
@@ -141,7 +139,7 @@ trait FreesAbs extends Frees with Scalan {
       val a = p
       Suspend(a)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Suspend[F, A]]](Suspend(cF.lift(eA).defaultRepValue))
+    lazy val defaultRepTo: Rep[Suspend[F, A]] = Suspend(cF.lift(eA).defaultRepValue)
     lazy val eTo = new SuspendElem[F, A](this)
   }
   // 4) constructor and deconstructor
@@ -205,7 +203,7 @@ trait FreesAbs extends Frees with Scalan {
       val Pair(a, f) = p
       Bind(a, f)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Bind[F, S, B]]](Bind(element[Free[F,S]].defaultRepValue, fun { (x: Rep[S]) => element[Free[F,B]].defaultRepValue }))
+    lazy val defaultRepTo: Rep[Bind[F, S, B]] = Bind(element[Free[F,S]].defaultRepValue, fun { (x: Rep[S]) => element[Free[F,B]].defaultRepValue })
     lazy val eTo = new BindElem[F, S, B](this)
   }
   // 4) constructor and deconstructor

@@ -4,7 +4,6 @@ package impl
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait KindsAbs extends Kinds with Scalan {
@@ -77,7 +76,7 @@ trait KindsAbs extends Kinds with Scalan {
       val a = p
       Return(a)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Return[F, A]]](Return(element[A].defaultRepValue))
+    lazy val defaultRepTo: Rep[Return[F, A]] = Return(element[A].defaultRepValue)
     lazy val eTo = new ReturnElem[F, A](this)
   }
   // 4) constructor and deconstructor
@@ -141,7 +140,7 @@ trait KindsAbs extends Kinds with Scalan {
       val Pair(a, f) = p
       Bind(a, f)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Bind[F, S, B]]](Bind(element[Kind[F,S]].defaultRepValue, fun { (x: Rep[S]) => element[Kind[F,B]].defaultRepValue }))
+    lazy val defaultRepTo: Rep[Bind[F, S, B]] = Bind(element[Kind[F,S]].defaultRepValue, fun { (x: Rep[S]) => element[Kind[F,B]].defaultRepValue })
     lazy val eTo = new BindElem[F, S, B](this)
   }
   // 4) constructor and deconstructor

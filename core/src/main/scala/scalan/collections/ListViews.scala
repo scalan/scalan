@@ -6,7 +6,6 @@ package scalan.collections
 
 import scala.reflect.runtime.universe._
 import scalan._
-import scalan.common.Default
 import scalan.staged.BaseExp
 
 trait ListViews extends ListOps with Views { self: Scalan =>

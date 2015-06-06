@@ -5,7 +5,6 @@ import scalan._
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait BitSetsAbs extends BitSets with Scalan {
@@ -75,7 +74,7 @@ trait BitSetsAbs extends BitSets with Scalan {
       val bits = p
       BoolCollBitSet(bits)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[BoolCollBitSet]](BoolCollBitSet(element[Collection[Boolean]].defaultRepValue))
+    lazy val defaultRepTo: Rep[BoolCollBitSet] = BoolCollBitSet(element[Collection[Boolean]].defaultRepValue)
     lazy val eTo = new BoolCollBitSetElem(this)
   }
   // 4) constructor and deconstructor

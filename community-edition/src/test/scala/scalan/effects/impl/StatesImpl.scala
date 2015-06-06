@@ -3,9 +3,7 @@ package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait StatesAbs extends States with Scalan {
@@ -79,7 +77,7 @@ trait StatesAbs extends States with Scalan {
       val run = p
       StateBase(run)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[StateBase[S, A]]](StateBase(fun { (x: Rep[S]) => Pair(element[A].defaultRepValue, element[S].defaultRepValue) }))
+    lazy val defaultRepTo: Rep[StateBase[S, A]] = StateBase(fun { (x: Rep[S]) => Pair(element[A].defaultRepValue, element[S].defaultRepValue) })
     lazy val eTo = new StateBaseElem[S, A](this)
   }
   // 4) constructor and deconstructor

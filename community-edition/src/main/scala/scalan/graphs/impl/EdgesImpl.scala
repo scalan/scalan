@@ -1,15 +1,11 @@
 package scalan.graphs
 package impl
 
-import scala.annotation.unchecked.uncheckedVariance
+import scalan._
 import scalan.collections.CollectionsDsl
-import scalan.common.Default
 import scalan.ScalanCommunityDsl
-import scalan.{ScalanSeq, ScalanExp, Scalan}
-import scalan.Owner
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait EdgesAbs extends Edges with Scalan {
@@ -83,7 +79,7 @@ trait EdgesAbs extends Edges with Scalan {
       val Pair(fromId, Pair(outIndex, graph)) = p
       AdjEdge(fromId, outIndex, graph)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[AdjEdge[V, E]]](AdjEdge(0, 0, element[Graph[V,E]].defaultRepValue))
+    lazy val defaultRepTo: Rep[AdjEdge[V, E]] = AdjEdge(0, 0, element[Graph[V,E]].defaultRepValue)
     lazy val eTo = new AdjEdgeElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -147,7 +143,7 @@ trait EdgesAbs extends Edges with Scalan {
       val Pair(fromId, Pair(toId, graph)) = p
       IncEdge(fromId, toId, graph)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[IncEdge[V, E]]](IncEdge(0, 0, element[Graph[V,E]].defaultRepValue))
+    lazy val defaultRepTo: Rep[IncEdge[V, E]] = IncEdge(0, 0, element[Graph[V,E]].defaultRepValue)
     lazy val eTo = new IncEdgeElem[V, E](this)
   }
   // 4) constructor and deconstructor

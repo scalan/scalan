@@ -3,7 +3,6 @@ package scalan.collections
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.arrays.ArrayOps
-import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 
 trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>

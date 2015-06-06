@@ -3,9 +3,7 @@ package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait ReadersAbs extends Readers with Scalan {
@@ -79,7 +77,7 @@ trait ReadersAbs extends Readers with Scalan {
       val run = p
       ReaderBase(run)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[ReaderBase[Env, A]]](ReaderBase(fun { (x: Rep[Env]) => element[A].defaultRepValue }))
+    lazy val defaultRepTo: Rep[ReaderBase[Env, A]] = ReaderBase(fun { (x: Rep[Env]) => element[A].defaultRepValue })
     lazy val eTo = new ReaderBaseElem[Env, A](this)
   }
   // 4) constructor and deconstructor

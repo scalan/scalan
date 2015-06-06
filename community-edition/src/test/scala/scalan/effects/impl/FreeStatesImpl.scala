@@ -4,9 +4,7 @@ package impl
 import scalan._
 import scala.reflect.runtime.universe._
 import scalan.monads.{MonadsDslExp, MonadsDslSeq, MonadsDsl}
-import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait FreeStatesAbs extends FreeStates with Scalan {
@@ -81,7 +79,7 @@ trait FreeStatesAbs extends FreeStates with Scalan {
       val f = p
       StateGet(f)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[StateGet[S, A]]](StateGet(fun { (x: Rep[S]) => element[A].defaultRepValue }))
+    lazy val defaultRepTo: Rep[StateGet[S, A]] = StateGet(fun { (x: Rep[S]) => element[A].defaultRepValue })
     lazy val eTo = new StateGetElem[S, A](this)
   }
   // 4) constructor and deconstructor
@@ -145,7 +143,7 @@ trait FreeStatesAbs extends FreeStates with Scalan {
       val Pair(s, a) = p
       StatePut(s, a)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[StatePut[S, A]]](StatePut(element[S].defaultRepValue, element[A].defaultRepValue))
+    lazy val defaultRepTo: Rep[StatePut[S, A]] = StatePut(element[S].defaultRepValue, element[A].defaultRepValue)
     lazy val eTo = new StatePutElem[S, A](this)
   }
   // 4) constructor and deconstructor

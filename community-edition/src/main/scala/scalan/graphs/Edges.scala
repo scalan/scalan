@@ -1,10 +1,8 @@
 package scalan.graphs
 
-import scala.annotation.unchecked.uncheckedVariance
+import scalan._
 import scalan.collections.CollectionsDsl
-import scalan.common.Default
 import scalan.ScalanCommunityDsl
-import scalan.{ScalanSeq, ScalanExp, Scalan}
 import scalan.Owner
 
 trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>

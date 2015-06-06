@@ -1,15 +1,12 @@
 package scalan.graphs
 package impl
 
-import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.collections.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scalan.{ScalanSeq, ScalanExp, Scalan}
-import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait GraphsAbs extends Graphs with Scalan {
@@ -83,7 +80,7 @@ trait GraphsAbs extends Graphs with Scalan {
       val Pair(vertexValues, Pair(edgeValues, links)) = p
       AdjacencyGraph(vertexValues, edgeValues, links)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[AdjacencyGraph[V, E]]](AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue))
+    lazy val defaultRepTo: Rep[AdjacencyGraph[V, E]] = AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue)
     lazy val eTo = new AdjacencyGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -147,7 +144,7 @@ trait GraphsAbs extends Graphs with Scalan {
       val Pair(vertexValues, Pair(incMatrixWithVals, vertexNum)) = p
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[IncidenceGraph[V, E]]](IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0))
+    lazy val defaultRepTo: Rep[IncidenceGraph[V, E]] = IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0)
     lazy val eTo = new IncidenceGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor

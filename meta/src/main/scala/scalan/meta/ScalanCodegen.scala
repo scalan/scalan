@@ -415,7 +415,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    implicit val eB = iso.eTo
         |    def from(x: Rep[${e.name}[B]]) = x.map(iso.from _)
         |    def to(x: Rep[${e.name}[A]]) = x.map(iso.to _)
-        |    lazy val defaultRepTo = Default.defaultVal(${e.name}.empty[B])
+        |    lazy val defaultRepTo = ${e.name}.empty[B]
         |  }
         |""".stripAndTrim
       }
@@ -631,7 +631,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |      val ${pairify(fields)} = p
         |      $className(${fields.rep()})
         |    }
-        |    lazy val defaultRepTo = Default.defaultVal[Rep[$className${typesUse}]]($className(${fieldTypes.rep(zeroSExpr(_))}))
+        |    lazy val defaultRepTo: Rep[$className${typesUse}] = $className(${fieldTypes.rep(zeroSExpr(_))})
         |    lazy val eTo = new ${className}Elem${typesUse}(this)
         |  }
         |  // 4) constructor and deconstructor
@@ -1135,7 +1135,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       |package ${module.packageName}
       |package impl
       |
-      |${(module.imports ++ config.extraImports.map(SImportStat(_))).rep(i => s"import ${i.name}", "\n")}
+      |${(module.imports ++ config.extraImports.map(SImportStat(_))).distinct.rep(i => s"import ${i.name}", "\n")}
       |""".stripAndTrim
     }
 

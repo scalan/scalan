@@ -4,7 +4,6 @@ package impl
 import scalan.{Scalan, ScalanSeq, ScalanExp}
 import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait MetaTestsAbs extends MetaTests with Scalan {
@@ -75,7 +74,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
       val size = p
       MT0(size)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[MT0]](MT0(0))
+    lazy val defaultRepTo: Rep[MT0] = MT0(0)
     lazy val eTo = new MT0Elem(this)
   }
   // 4) constructor and deconstructor
@@ -138,7 +137,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
       val Pair(data, size) = p
       MT1(data, size)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[MT1[T]]](MT1(element[T].defaultRepValue, 0))
+    lazy val defaultRepTo: Rep[MT1[T]] = MT1(element[T].defaultRepValue, 0)
     lazy val eTo = new MT1Elem[T](this)
   }
   // 4) constructor and deconstructor
@@ -203,7 +202,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
       val Pair(indices, Pair(values, size)) = p
       MT2(indices, values, size)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[MT2[T, R]]](MT2(element[T].defaultRepValue, element[R].defaultRepValue, 0))
+    lazy val defaultRepTo: Rep[MT2[T, R]] = MT2(element[T].defaultRepValue, element[R].defaultRepValue, 0)
     lazy val eTo = new MT2Elem[T, R](this)
   }
   // 4) constructor and deconstructor

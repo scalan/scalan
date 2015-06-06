@@ -4,9 +4,7 @@ package impl
 import scala.reflect.runtime.universe._
 import scalan._
 import scalan.monads._
-import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait AuthenticationsAbs extends Authentications with Scalan {
@@ -78,7 +76,7 @@ trait AuthenticationsAbs extends Authentications with Scalan {
       val Pair(user, password) = p
       Login(user, password)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Login]](Login("", ""))
+    lazy val defaultRepTo: Rep[Login] = Login("", "")
     lazy val eTo = new LoginElem(this)
   }
   // 4) constructor and deconstructor
@@ -141,7 +139,7 @@ trait AuthenticationsAbs extends Authentications with Scalan {
       val Pair(user, password) = p
       HasPermission(user, password)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[HasPermission]](HasPermission("", ""))
+    lazy val defaultRepTo: Rep[HasPermission] = HasPermission("", "")
     lazy val eTo = new HasPermissionElem(this)
   }
   // 4) constructor and deconstructor

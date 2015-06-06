@@ -3,9 +3,7 @@ package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scala.reflect.runtime.universe._
 import scala.reflect._
-import scalan.common.Default
 
 // Abs -----------------------------------
 trait CoproductsAbs extends Coproducts with Scalan {
@@ -77,7 +75,7 @@ trait CoproductsAbs extends Coproducts with Scalan {
       val run = p
       CoproductImpl(run)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CoproductImpl[F, G, A]]](CoproductImpl(element[Either[F[A],G[A]]].defaultRepValue))
+    lazy val defaultRepTo: Rep[CoproductImpl[F, G, A]] = CoproductImpl(element[Either[F[A],G[A]]].defaultRepValue)
     lazy val eTo = new CoproductImplElem[F, G, A](this)
   }
   // 4) constructor and deconstructor
