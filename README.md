@@ -13,13 +13,13 @@ Scalan is a framework for creating staged embedded DSLs in Scala. It allows you 
 
 The project consists of several [subprojects](http://www.scala-sbt.org/release/tutorial/Multi-Project.html), including the aggregate project `scalan`.
 
-One of the subprojects, `lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`. If you want to use it, you need to clone and build this dependency first, since it isn't published in a public repository. It also requires a different version of Scala from the one used by the other projects, which is why it isn't a part of the aggregate project. SBT commands such as `test`, `compile`, etc. will not run on it by default; you need to use `lms-backend/whatever-command` or `project lms-backend` and then the commands you want.
+One of the subprojects, `lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`. If you want to use it, you need to clone and build this dependency first, since it isn't published in a public repository.
 
-The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backend included is `lms-backend` and so you need to use `lms-backend/it:test` to run integration tests.
+The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backends available are Scala- and C++-based LMS backends, both defined in the `lms-backend` subproject.
 
 If you want to create your own project depending on Scalan, you have two options:
 
-* use `publishLocal` (and `lms-backend/publishLocal`, if necessary) SBT command to deploy Scalan to your local Ivy repository;
+* use `publishLocal` SBT command to deploy Scalan to your local Ivy repository;
 
 * use a [project reference](http://www.scala-sbt.org/0.12.4/docs/Dormant/Full-Configuration.html#project-references) to Scalan in your build instead of `libraryDependencies`.
 
