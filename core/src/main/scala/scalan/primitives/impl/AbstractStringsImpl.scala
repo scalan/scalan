@@ -3,17 +3,15 @@ package impl
 
 import scalan._
 import scalan.common.Default
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait AbstractStringsAbs extends AbstractStrings with Scalan {
+trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   self: AbstractStringsDsl =>
 
   // single proxy for each type family
   implicit def proxyAString(p: Rep[AString]): AString = {
-    proxyOps[AString](p)(classTag[AString])
+    proxyOps[AString](p)(scala.reflect.classTag[AString])
   }
 
   // familyElem
@@ -75,7 +73,7 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
       val wrappedValueOfBaseType = p
       SString(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SString]](SString(""))
+    lazy val defaultRepTo: Rep[SString] = SString("")
     lazy val eTo = new SStringElem(this)
   }
   // 4) constructor and deconstructor
@@ -136,7 +134,7 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
       val wrappedValueOfBaseType = p
       CString(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CString]](CString(""))
+    lazy val defaultRepTo: Rep[CString] = CString("")
     lazy val eTo = new CStringElem(this)
   }
   // 4) constructor and deconstructor
@@ -176,7 +174,7 @@ trait AbstractStringsAbs extends AbstractStrings with Scalan {
 }
 
 // Seq -----------------------------------
-trait AbstractStringsSeq extends AbstractStringsDsl with ScalanSeq {
+trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
   self: AbstractStringsDslSeq =>
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeSeq[AStringCompanionAbs] {
     lazy val selfType = element[AStringCompanionAbs]
@@ -224,7 +222,7 @@ trait AbstractStringsSeq extends AbstractStringsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait AbstractStringsExp extends AbstractStringsDsl with ScalanExp {
+trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
   self: AbstractStringsDslExp =>
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeDef[AStringCompanionAbs] {
     lazy val selfType = element[AStringCompanionAbs]

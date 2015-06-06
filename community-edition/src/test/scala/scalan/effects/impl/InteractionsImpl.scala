@@ -5,17 +5,15 @@ import scala.io.StdIn
 import scala.reflect.runtime.universe._
 import scalan._
 import scalan.monads._
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait InteractionsAbs extends Interactions with Scalan {
+trait InteractionsAbs extends Interactions with scalan.Scalan {
   self: InteractionsDsl =>
 
   // single proxy for each type family
   implicit def proxyInteract[A](p: Rep[Interact[A]]): Interact[A] = {
-    proxyOps[Interact[A]](p)(classTag[Interact[A]])
+    proxyOps[Interact[A]](p)(scala.reflect.classTag[Interact[A]])
   }
 
   // familyElem
@@ -79,7 +77,7 @@ trait InteractionsAbs extends Interactions with Scalan {
       val prompt = p
       Ask(prompt)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Ask]](Ask(""))
+    lazy val defaultRepTo: Rep[Ask] = Ask("")
     lazy val eTo = new AskElem(this)
   }
   // 4) constructor and deconstructor
@@ -141,7 +139,7 @@ trait InteractionsAbs extends Interactions with Scalan {
       val msg = p
       Tell(msg)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Tell]](Tell(""))
+    lazy val defaultRepTo: Rep[Tell] = Tell("")
     lazy val eTo = new TellElem(this)
   }
   // 4) constructor and deconstructor
@@ -181,7 +179,7 @@ trait InteractionsAbs extends Interactions with Scalan {
 }
 
 // Seq -----------------------------------
-trait InteractionsSeq extends InteractionsDsl with ScalanSeq {
+trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
   self: InteractionsDslSeq =>
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs with UserTypeSeq[InteractCompanionAbs] {
     lazy val selfType = element[InteractCompanionAbs]
@@ -229,7 +227,7 @@ trait InteractionsSeq extends InteractionsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait InteractionsExp extends InteractionsDsl with ScalanExp {
+trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
   self: InteractionsDslExp =>
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs with UserTypeDef[InteractCompanionAbs] {
     lazy val selfType = element[InteractCompanionAbs]

@@ -3,7 +3,6 @@ package scalan.collections
 import scala.collection.immutable.HashSet
 import scalan._
 import scalan.common.Default
-import scala.reflect.runtime.universe._
 
 trait HashSets extends Base with TypeWrappers { self: ScalanCommunityDsl =>
 

@@ -2,21 +2,18 @@ package scalan.linalgebra
 package impl
 
 import scalan._
-import scalan.common.Default
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.tailrec
 import scala.annotation.unchecked.uncheckedVariance
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait VectorsAbs extends Vectors with Scalan {
+trait VectorsAbs extends Vectors with scalan.Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
   implicit def proxyAbstractVector[T](p: Rep[AbstractVector[T]]): AbstractVector[T] = {
-    proxyOps[AbstractVector[T]](p)(classTag[AbstractVector[T]])
+    proxyOps[AbstractVector[T]](p)(scala.reflect.classTag[AbstractVector[T]])
   }
 
   // familyElem
@@ -80,7 +77,7 @@ trait VectorsAbs extends Vectors with Scalan {
       val items = p
       DenseVector(items)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[DenseVector[T]]](DenseVector(element[Collection[T]].defaultRepValue))
+    lazy val defaultRepTo: Rep[DenseVector[T]] = DenseVector(element[Collection[T]].defaultRepValue)
     lazy val eTo = new DenseVectorElem[T](this)
   }
   // 4) constructor and deconstructor
@@ -142,7 +139,7 @@ trait VectorsAbs extends Vectors with Scalan {
       val Pair(nonZeroIndices, Pair(nonZeroValues, length)) = p
       SparseVector(nonZeroIndices, nonZeroValues, length)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector[T]]](SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, 0))
+    lazy val defaultRepTo: Rep[SparseVector[T]] = SparseVector(element[Collection[Int]].defaultRepValue, element[Collection[T]].defaultRepValue, 0)
     lazy val eTo = new SparseVectorElem[T](this)
   }
   // 4) constructor and deconstructor
@@ -205,7 +202,7 @@ trait VectorsAbs extends Vectors with Scalan {
       val Pair(nonZeroItems, length) = p
       SparseVector1(nonZeroItems, length)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SparseVector1[T]]](SparseVector1(element[Collection[(Int, T)]].defaultRepValue, 0))
+    lazy val defaultRepTo: Rep[SparseVector1[T]] = SparseVector1(element[Collection[(Int, T)]].defaultRepValue, 0)
     lazy val eTo = new SparseVector1Elem[T](this)
   }
   // 4) constructor and deconstructor
@@ -246,7 +243,7 @@ trait VectorsAbs extends Vectors with Scalan {
 }
 
 // Seq -----------------------------------
-trait VectorsSeq extends VectorsDsl with ScalanSeq {
+trait VectorsSeq extends VectorsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs with UserTypeSeq[AbstractVectorCompanionAbs] {
     lazy val selfType = element[AbstractVectorCompanionAbs]
@@ -314,7 +311,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait VectorsExp extends VectorsDsl with ScalanExp {
+trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs with UserTypeDef[AbstractVectorCompanionAbs] {
     lazy val selfType = element[AbstractVectorCompanionAbs]

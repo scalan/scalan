@@ -4,17 +4,15 @@ package impl
 import scalan._
 import scala.reflect.runtime.universe._
 import scalan.monads.{MonadsDslExp, MonadsDslSeq, Monads, MonadsDsl}
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait FreeMsAbs extends FreeMs with Scalan {
+trait FreeMsAbs extends FreeMs with scalan.Scalan {
   self: MonadsDsl =>
 
   // single proxy for each type family
   implicit def proxyFreeM[F[_], A](p: Rep[FreeM[F, A]]): FreeM[F, A] = {
-    proxyOps[FreeM[F, A]](p)(classTag[FreeM[F, A]])
+    proxyOps[FreeM[F, A]](p)(scala.reflect.classTag[FreeM[F, A]])
   }
 
   // familyElem
@@ -79,7 +77,7 @@ trait FreeMsAbs extends FreeMs with Scalan {
       val a = p
       Done(a)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Done[F, A]]](Done(element[A].defaultRepValue))
+    lazy val defaultRepTo: Rep[Done[F, A]] = Done(element[A].defaultRepValue)
     lazy val eTo = new DoneElem[F, A](this)
   }
   // 4) constructor and deconstructor
@@ -142,7 +140,7 @@ trait FreeMsAbs extends FreeMs with Scalan {
       val k = p
       More(k)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[More[F, A]]](More(cF.lift(element[FreeM[F,A]]).defaultRepValue))
+    lazy val defaultRepTo: Rep[More[F, A]] = More(cF.lift(element[FreeM[F,A]]).defaultRepValue)
     lazy val eTo = new MoreElem[F, A](this)
   }
   // 4) constructor and deconstructor
@@ -206,7 +204,7 @@ trait FreeMsAbs extends FreeMs with Scalan {
       val Pair(a, f) = p
       FlatMap(a, f)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[FlatMap[F, S, B]]](FlatMap(element[FreeM[F,S]].defaultRepValue, fun { (x: Rep[S]) => element[FreeM[F,B]].defaultRepValue }))
+    lazy val defaultRepTo: Rep[FlatMap[F, S, B]] = FlatMap(element[FreeM[F,S]].defaultRepValue, fun { (x: Rep[S]) => element[FreeM[F,B]].defaultRepValue })
     lazy val eTo = new FlatMapElem[F, S, B](this)
   }
   // 4) constructor and deconstructor
@@ -247,7 +245,7 @@ trait FreeMsAbs extends FreeMs with Scalan {
 }
 
 // Seq -----------------------------------
-trait FreeMsSeq extends FreeMsDsl with ScalanSeq {
+trait FreeMsSeq extends FreeMsDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
   lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs with UserTypeSeq[FreeMCompanionAbs] {
     lazy val selfType = element[FreeMCompanionAbs]
@@ -315,7 +313,7 @@ trait FreeMsSeq extends FreeMsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FreeMsExp extends FreeMsDsl with ScalanExp {
+trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs with UserTypeDef[FreeMCompanionAbs] {
     lazy val selfType = element[FreeMCompanionAbs]

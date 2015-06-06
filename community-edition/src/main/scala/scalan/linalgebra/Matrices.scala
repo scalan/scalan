@@ -6,7 +6,6 @@ package scalan.linalgebra
 
 import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
-import scalan.common.Default
 import scala.annotation.unchecked.uncheckedVariance
 
 trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>

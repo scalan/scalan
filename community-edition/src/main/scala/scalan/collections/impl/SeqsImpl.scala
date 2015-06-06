@@ -5,17 +5,15 @@ import scala.collection.Seq
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait SeqsAbs extends Seqs with Scalan {
+trait SeqsAbs extends Seqs with scalan.Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
   implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] = {
-    proxyOps[SSeq[A]](p)(classTag[SSeq[A]])
+    proxyOps[SSeq[A]](p)(scala.reflect.classTag[SSeq[A]])
   }
 
   // TypeWrapper proxy
@@ -42,7 +40,7 @@ trait SeqsAbs extends Seqs with Scalan {
     implicit val eB = iso.eTo
     def from(x: Rep[SSeq[B]]) = x.map(iso.from _)
     def to(x: Rep[SSeq[A]]) = x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(SSeq.empty[B])
+    lazy val defaultRepTo = SSeq.empty[B]
   }
 
   // familyElem
@@ -167,7 +165,7 @@ trait SeqsAbs extends Seqs with Scalan {
       val wrappedValueOfBaseType = p
       SSeqImpl(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SSeqImpl[A]]](SSeqImpl(DefaultOfSeq[A].value))
+    lazy val defaultRepTo: Rep[SSeqImpl[A]] = SSeqImpl(DefaultOfSeq[A].value)
     lazy val eTo = new SSeqImplElem[A](this)
   }
   // 4) constructor and deconstructor
@@ -207,7 +205,7 @@ trait SeqsAbs extends Seqs with Scalan {
 }
 
 // Seq -----------------------------------
-trait SeqsSeq extends SeqsDsl with ScalanSeq {
+trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeSeq[SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
@@ -282,7 +280,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait SeqsExp extends SeqsDsl with ScalanExp {
+trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeDef[SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]

@@ -1,7 +1,6 @@
 package scalan.collections
 
 import scalan._
-import scalan.common.Default
 import scala.reflect.runtime.universe._
 
 trait ArrayBuffers extends Base { self: Scalan =>
@@ -43,7 +42,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
     implicit val eB = iso.eTo
     def from(x: Rep[ArrayBuffer[B]]) = x.map(iso.from _)
     def to(x: Rep[ArrayBuffer[A]]) = x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(ArrayBuffer.empty[B])
+    lazy val defaultRepTo = ArrayBuffer.empty[B]
   }
 
   case class ArrayBufferElem[A](override val eItem: Elem[A])
@@ -139,7 +138,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
 //      implicit val tB = iso.tag
 //      weakTypeTag[ArrayBuffer[B]]
 //    }
-//    lazy val defaultRepTo = Default.defaultVal(ArrayBuffer.empty[B])
+//    lazy val defaultRepTo = ArrayBuffer.empty[B]
 //  }
 //
 //  def arrayBufferIso[A, B](iso: Iso[A, B]): Iso[ArrayBuffer[A], ArrayBuffer[B]] = {

@@ -3,17 +3,15 @@ package impl
 
 import scala.reflect.runtime.universe._
 import scalan._
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait SegmentsAbs extends Segments with Scalan {
+trait SegmentsAbs extends Segments with scalan.Scalan {
   self: SegmentsDsl =>
 
   // single proxy for each type family
   implicit def proxySegment(p: Rep[Segment]): Segment = {
-    proxyOps[Segment](p)(classTag[Segment])
+    proxyOps[Segment](p)(scala.reflect.classTag[Segment])
   }
 
   // familyElem
@@ -75,7 +73,7 @@ trait SegmentsAbs extends Segments with Scalan {
       val Pair(start, end) = p
       Interval(start, end)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Interval]](Interval(0, 0))
+    lazy val defaultRepTo: Rep[Interval] = Interval(0, 0)
     lazy val eTo = new IntervalElem(this)
   }
   // 4) constructor and deconstructor
@@ -137,7 +135,7 @@ trait SegmentsAbs extends Segments with Scalan {
       val Pair(start, length) = p
       Slice(start, length)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Slice]](Slice(0, 0))
+    lazy val defaultRepTo: Rep[Slice] = Slice(0, 0)
     lazy val eTo = new SliceElem(this)
   }
   // 4) constructor and deconstructor
@@ -200,7 +198,7 @@ trait SegmentsAbs extends Segments with Scalan {
       val Pair(center, radius) = p
       Centered(center, radius)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Centered]](Centered(0, 0))
+    lazy val defaultRepTo: Rep[Centered] = Centered(0, 0)
     lazy val eTo = new CenteredElem(this)
   }
   // 4) constructor and deconstructor
@@ -241,7 +239,7 @@ trait SegmentsAbs extends Segments with Scalan {
 }
 
 // Seq -----------------------------------
-trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
+trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
   self: SegmentsDslSeq =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeSeq[SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]
@@ -309,7 +307,7 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait SegmentsExp extends SegmentsDsl with ScalanExp {
+trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
   self: SegmentsDslExp =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeDef[SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]

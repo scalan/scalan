@@ -1,7 +1,6 @@
 package scalan.collections
 
 import scalan._
-import scalan.common.Default
 
 trait MultiMaps extends Base { self: ScalanCommunityDsl =>
 

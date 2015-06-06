@@ -3,17 +3,15 @@ package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait FreesAbs extends Frees with Scalan {
+trait FreesAbs extends Frees with scalan.Scalan {
   self: MonadsDsl =>
 
   // single proxy for each type family
   implicit def proxyFree[F[_], A](p: Rep[Free[F, A]]): Free[F, A] = {
-    proxyOps[Free[F, A]](p)(classTag[Free[F, A]])
+    proxyOps[Free[F, A]](p)(scala.reflect.classTag[Free[F, A]])
   }
 
   // familyElem
@@ -78,7 +76,7 @@ trait FreesAbs extends Frees with Scalan {
       val a = p
       Return(a)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Return[F, A]]](Return(element[A].defaultRepValue))
+    lazy val defaultRepTo: Rep[Return[F, A]] = Return(element[A].defaultRepValue)
     lazy val eTo = new ReturnElem[F, A](this)
   }
   // 4) constructor and deconstructor
@@ -141,7 +139,7 @@ trait FreesAbs extends Frees with Scalan {
       val a = p
       Suspend(a)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Suspend[F, A]]](Suspend(cF.lift(eA).defaultRepValue))
+    lazy val defaultRepTo: Rep[Suspend[F, A]] = Suspend(cF.lift(eA).defaultRepValue)
     lazy val eTo = new SuspendElem[F, A](this)
   }
   // 4) constructor and deconstructor
@@ -205,7 +203,7 @@ trait FreesAbs extends Frees with Scalan {
       val Pair(a, f) = p
       Bind(a, f)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Bind[F, S, B]]](Bind(element[Free[F,S]].defaultRepValue, fun { (x: Rep[S]) => element[Free[F,B]].defaultRepValue }))
+    lazy val defaultRepTo: Rep[Bind[F, S, B]] = Bind(element[Free[F,S]].defaultRepValue, fun { (x: Rep[S]) => element[Free[F,B]].defaultRepValue })
     lazy val eTo = new BindElem[F, S, B](this)
   }
   // 4) constructor and deconstructor
@@ -246,7 +244,7 @@ trait FreesAbs extends Frees with Scalan {
 }
 
 // Seq -----------------------------------
-trait FreesSeq extends FreesDsl with ScalanSeq {
+trait FreesSeq extends FreesDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
   lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs with UserTypeSeq[FreeCompanionAbs] {
     lazy val selfType = element[FreeCompanionAbs]
@@ -314,7 +312,7 @@ trait FreesSeq extends FreesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FreesExp extends FreesDsl with ScalanExp {
+trait FreesExp extends FreesDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs with UserTypeDef[FreeCompanionAbs] {
     lazy val selfType = element[FreeCompanionAbs]

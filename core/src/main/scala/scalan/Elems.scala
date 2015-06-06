@@ -7,10 +7,8 @@ import Default._
 import scalan.common.Lazy
 import scalan.staged.BaseExp
 import annotation.implicitNotFound
-import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe._
 import scala.reflect.ClassTag
-import scalan.util.StringUtil
 
 trait Elems extends Base { self: Scalan =>
 
@@ -116,7 +114,7 @@ trait Elems extends Base { self: Scalan =>
     implicit val eB = iso.eTo
     def from(x: Arr[B]) = x.map(iso.from _)
     def to(x: Arr[A]) = x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(SArray.empty[B])
+    lazy val defaultRepTo = SArray.empty[B]
   }
 
   abstract class ArrayElem[A](implicit override val eItem: Elem[A])

@@ -1,7 +1,6 @@
 package scalan.collections
 
 import scala.reflect.ClassTag
-import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
 import scalan.staged.BaseExp
 import scalan.{Scalan, ScalanExp, ScalanSeq}
@@ -58,7 +57,7 @@ trait ListOps { self: Scalan =>
     implicit val eB = iso.eTo
     def from(x: Lst[B]) = x.map(iso.from _)
     def to(x: Lst[A]) = x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(SList.empty[B])
+    lazy val defaultRepTo = SList.empty[B]
   }
 
   case class ListElem[A](override val eItem: Elem[A])

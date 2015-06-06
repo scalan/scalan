@@ -7,11 +7,12 @@ case class CodegenConfig(
   name: String,
   srcPath: String,
   entityFiles: List[String],
-  baseContextTrait: String,
-  seqContextTrait: String,
-  stagedContextTrait: String,
-  extraImports: List[String],
   entityTypeSynonyms: Map[String, String],
+  baseContextTrait: String = "scalan.Scalan",
+  seqContextTrait: String = "scalan.ScalanSeq",
+  stagedContextTrait: String = "scalan.ScalanExp",
+  extraImports: List[String] = List(
+    "scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}"),
   isAlreadyRep: Boolean = true
 )
 

@@ -4,17 +4,15 @@ package impl
 import scalan._
 import scala.reflect.runtime.universe._
 import scalan.monads.{MonadsDsl, Monads}
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait ProcessesAbs extends Processes with Scalan {
+trait ProcessesAbs extends Processes with scalan.Scalan {
   self: ProcessesDsl =>
 
   // single proxy for each type family
   implicit def proxyProcess[F[_], O](p: Rep[Process[F, O]]): Process[F, O] = {
-    proxyOps[Process[F, O]](p)(classTag[Process[F, O]])
+    proxyOps[Process[F, O]](p)(scala.reflect.classTag[Process[F, O]])
   }
 
   // familyElem
@@ -80,7 +78,7 @@ trait ProcessesAbs extends Processes with Scalan {
       val Pair(req, recv) = p
       Await(req, recv)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Await[F, A, O]]](Await(cF.lift(element[A]).defaultRepValue, fun { (x: Rep[$bar[Throwable,A]]) => element[Process[F,O]].defaultRepValue }))
+    lazy val defaultRepTo: Rep[Await[F, A, O]] = Await(cF.lift(element[A]).defaultRepValue, fun { (x: Rep[$bar[Throwable,A]]) => element[Process[F,O]].defaultRepValue })
     lazy val eTo = new AwaitElem[F, A, O](this)
   }
   // 4) constructor and deconstructor
@@ -144,7 +142,7 @@ trait ProcessesAbs extends Processes with Scalan {
       val Pair(head, tail) = p
       Emit(head, tail)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Emit[F, O]]](Emit(element[O].defaultRepValue, element[Process[F,O]].defaultRepValue))
+    lazy val defaultRepTo: Rep[Emit[F, O]] = Emit(element[O].defaultRepValue, element[Process[F,O]].defaultRepValue)
     lazy val eTo = new EmitElem[F, O](this)
   }
   // 4) constructor and deconstructor
@@ -208,7 +206,7 @@ trait ProcessesAbs extends Processes with Scalan {
       val err = p
       Halt(err)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Halt[F, O]]](Halt(element[Throwable].defaultRepValue))
+    lazy val defaultRepTo: Rep[Halt[F, O]] = Halt(element[Throwable].defaultRepValue)
     lazy val eTo = new HaltElem[F, O](this)
   }
   // 4) constructor and deconstructor
@@ -248,7 +246,7 @@ trait ProcessesAbs extends Processes with Scalan {
 }
 
 // Seq -----------------------------------
-trait ProcessesSeq extends ProcessesDsl with ScalanSeq {
+trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
   self: ProcessesDslSeq =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with UserTypeSeq[ProcessCompanionAbs] {
     lazy val selfType = element[ProcessCompanionAbs]
@@ -316,7 +314,7 @@ trait ProcessesSeq extends ProcessesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ProcessesExp extends ProcessesDsl with ScalanExp {
+trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
   self: ProcessesDslExp =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with UserTypeDef[ProcessCompanionAbs] {
     lazy val selfType = element[ProcessCompanionAbs]

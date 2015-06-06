@@ -1,22 +1,18 @@
 package scalan.graphs
 package impl
 
-import scala.annotation.unchecked.uncheckedVariance
 import scalan.collections.CollectionsDsl
-import scalan.common.Default
 import scalan.{Scalan, ScalanExp, ScalanSeq}
 import scalan.ScalanCommunityDsl
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait VerticesAbs extends Vertices with Scalan {
+trait VerticesAbs extends Vertices with scalan.Scalan {
   self: GraphsDsl =>
 
   // single proxy for each type family
   implicit def proxyVertex[V, E](p: Rep[Vertex[V, E]]): Vertex[V, E] = {
-    proxyOps[Vertex[V, E]](p)(classTag[Vertex[V, E]])
+    proxyOps[Vertex[V, E]](p)(scala.reflect.classTag[Vertex[V, E]])
   }
 
   // familyElem
@@ -82,7 +78,7 @@ trait VerticesAbs extends Vertices with Scalan {
       val Pair(id, graph) = p
       SVertex(id, graph)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SVertex[V, E]]](SVertex(0, element[Graph[V,E]].defaultRepValue))
+    lazy val defaultRepTo: Rep[SVertex[V, E]] = SVertex(0, element[Graph[V,E]].defaultRepValue)
     lazy val eTo = new SVertexElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -123,7 +119,7 @@ trait VerticesAbs extends Vertices with Scalan {
 }
 
 // Seq -----------------------------------
-trait VerticesSeq extends VerticesDsl with ScalanSeq {
+trait VerticesSeq extends VerticesDsl with scalan.ScalanSeq {
   self: GraphsDslSeq =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeSeq[VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]
@@ -151,7 +147,7 @@ trait VerticesSeq extends VerticesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait VerticesExp extends VerticesDsl with ScalanExp {
+trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeDef[VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]

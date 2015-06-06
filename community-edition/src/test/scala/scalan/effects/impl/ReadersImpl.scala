@@ -3,17 +3,15 @@ package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait ReadersAbs extends Readers with Scalan {
+trait ReadersAbs extends Readers with scalan.Scalan {
   self: MonadsDsl =>
 
   // single proxy for each type family
   implicit def proxyReader[Env, A](p: Rep[Reader[Env, A]]): Reader[Env, A] = {
-    proxyOps[Reader[Env, A]](p)(classTag[Reader[Env, A]])
+    proxyOps[Reader[Env, A]](p)(scala.reflect.classTag[Reader[Env, A]])
   }
 
   // familyElem
@@ -79,7 +77,7 @@ trait ReadersAbs extends Readers with Scalan {
       val run = p
       ReaderBase(run)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[ReaderBase[Env, A]]](ReaderBase(fun { (x: Rep[Env]) => element[A].defaultRepValue }))
+    lazy val defaultRepTo: Rep[ReaderBase[Env, A]] = ReaderBase(fun { (x: Rep[Env]) => element[A].defaultRepValue })
     lazy val eTo = new ReaderBaseElem[Env, A](this)
   }
   // 4) constructor and deconstructor
@@ -119,7 +117,7 @@ trait ReadersAbs extends Readers with Scalan {
 }
 
 // Seq -----------------------------------
-trait ReadersSeq extends ReadersDsl with ScalanSeq {
+trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs with UserTypeSeq[ReaderCompanionAbs] {
     lazy val selfType = element[ReaderCompanionAbs]
@@ -147,7 +145,7 @@ trait ReadersSeq extends ReadersDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ReadersExp extends ReadersDsl with ScalanExp {
+trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs with UserTypeDef[ReaderCompanionAbs] {
     lazy val selfType = element[ReaderCompanionAbs]

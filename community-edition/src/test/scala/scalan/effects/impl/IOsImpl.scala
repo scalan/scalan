@@ -4,17 +4,15 @@ package impl
 import scala.reflect.runtime.universe._
 import scalan._
 import scalan.monads._
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait IOsAbs extends IOs with Scalan {
+trait IOsAbs extends IOs with scalan.Scalan {
   self: IOsDsl =>
 
   // single proxy for each type family
   implicit def proxyIO[A](p: Rep[IO[A]]): IO[A] = {
-    proxyOps[IO[A]](p)(classTag[IO[A]])
+    proxyOps[IO[A]](p)(scala.reflect.classTag[IO[A]])
   }
 
   // familyElem
@@ -78,7 +76,7 @@ trait IOsAbs extends IOs with Scalan {
       val fileName = p
       ReadFile(fileName)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[ReadFile]](ReadFile(""))
+    lazy val defaultRepTo: Rep[ReadFile] = ReadFile("")
     lazy val eTo = new ReadFileElem(this)
   }
   // 4) constructor and deconstructor
@@ -140,7 +138,7 @@ trait IOsAbs extends IOs with Scalan {
       val Pair(fileName, lines) = p
       WriteFile(fileName, lines)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[WriteFile]](WriteFile("", element[List[String]].defaultRepValue))
+    lazy val defaultRepTo: Rep[WriteFile] = WriteFile("", element[List[String]].defaultRepValue)
     lazy val eTo = new WriteFileElem(this)
   }
   // 4) constructor and deconstructor
@@ -181,7 +179,7 @@ trait IOsAbs extends IOs with Scalan {
 }
 
 // Seq -----------------------------------
-trait IOsSeq extends IOsDsl with ScalanSeq {
+trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
   self: IOsDslSeq =>
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs with UserTypeSeq[IOCompanionAbs] {
     lazy val selfType = element[IOCompanionAbs]
@@ -229,7 +227,7 @@ trait IOsSeq extends IOsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait IOsExp extends IOsDsl with ScalanExp {
+trait IOsExp extends IOsDsl with scalan.ScalanExp {
   self: IOsDslExp =>
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs with UserTypeDef[IOCompanionAbs] {
     lazy val selfType = element[IOCompanionAbs]

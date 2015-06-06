@@ -1,23 +1,19 @@
 package scalan.graphs
 package impl
 
-import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.collections.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scalan.{ScalanSeq, ScalanExp, Scalan}
-import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait GraphsAbs extends Graphs with Scalan {
+trait GraphsAbs extends Graphs with scalan.Scalan {
   self: GraphsDsl =>
 
   // single proxy for each type family
   implicit def proxyGraph[V, E](p: Rep[Graph[V, E]]): Graph[V, E] = {
-    proxyOps[Graph[V, E]](p)(classTag[Graph[V, E]])
+    proxyOps[Graph[V, E]](p)(scala.reflect.classTag[Graph[V, E]])
   }
 
   // familyElem
@@ -83,7 +79,7 @@ trait GraphsAbs extends Graphs with Scalan {
       val Pair(vertexValues, Pair(edgeValues, links)) = p
       AdjacencyGraph(vertexValues, edgeValues, links)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[AdjacencyGraph[V, E]]](AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue))
+    lazy val defaultRepTo: Rep[AdjacencyGraph[V, E]] = AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue)
     lazy val eTo = new AdjacencyGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -147,7 +143,7 @@ trait GraphsAbs extends Graphs with Scalan {
       val Pair(vertexValues, Pair(incMatrixWithVals, vertexNum)) = p
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[IncidenceGraph[V, E]]](IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0))
+    lazy val defaultRepTo: Rep[IncidenceGraph[V, E]] = IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0)
     lazy val eTo = new IncidenceGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -188,7 +184,7 @@ trait GraphsAbs extends Graphs with Scalan {
 }
 
 // Seq -----------------------------------
-trait GraphsSeq extends GraphsDsl with ScalanSeq {
+trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
   self: GraphsDslSeq =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeSeq[GraphCompanionAbs] {
     lazy val selfType = element[GraphCompanionAbs]
@@ -236,7 +232,7 @@ trait GraphsSeq extends GraphsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait GraphsExp extends GraphsDsl with ScalanExp {
+trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeDef[GraphCompanionAbs] {
     lazy val selfType = element[GraphCompanionAbs]

@@ -4,18 +4,15 @@ package impl
 import scala.collection.immutable.HashSet
 import scalan._
 import scalan.common.Default
-import scala.reflect.runtime.universe._
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait HashSetsAbs extends HashSets with Scalan {
+trait HashSetsAbs extends HashSets with scalan.Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
   implicit def proxySHashSet[A](p: Rep[SHashSet[A]]): SHashSet[A] = {
-    proxyOps[SHashSet[A]](p)(classTag[SHashSet[A]])
+    proxyOps[SHashSet[A]](p)(scala.reflect.classTag[SHashSet[A]])
   }
 
   // TypeWrapper proxy
@@ -42,7 +39,7 @@ trait HashSetsAbs extends HashSets with Scalan {
     implicit val eB = iso.eTo
     def from(x: Rep[SHashSet[B]]) = x.map(iso.from _)
     def to(x: Rep[SHashSet[A]]) = x.map(iso.to _)
-    lazy val defaultRepTo = Default.defaultVal(SHashSet.empty[B])
+    lazy val defaultRepTo = SHashSet.empty[B]
   }
 
   // familyElem
@@ -127,7 +124,7 @@ trait HashSetsAbs extends HashSets with Scalan {
       val wrappedValueOfBaseType = p
       SHashSetImpl(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SHashSetImpl[A]]](SHashSetImpl(DefaultOfHashSet[A].value))
+    lazy val defaultRepTo: Rep[SHashSetImpl[A]] = SHashSetImpl(DefaultOfHashSet[A].value)
     lazy val eTo = new SHashSetImplElem[A](this)
   }
   // 4) constructor and deconstructor
@@ -167,7 +164,7 @@ trait HashSetsAbs extends HashSets with Scalan {
 }
 
 // Seq -----------------------------------
-trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
+trait HashSetsSeq extends HashSetsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs with UserTypeSeq[SHashSetCompanionAbs] {
     lazy val selfType = element[SHashSetCompanionAbs]
@@ -212,7 +209,7 @@ trait HashSetsSeq extends HashSetsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait HashSetsExp extends HashSetsDsl with ScalanExp {
+trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs with UserTypeDef[SHashSetCompanionAbs] {
     lazy val selfType = element[SHashSetCompanionAbs]

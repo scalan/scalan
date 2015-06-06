@@ -2,18 +2,15 @@ package scalan.collections
 package impl
 
 import scalan._
-import scalan.common.Default
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait MultiMapsAbs extends MultiMaps with Scalan {
+trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
   implicit def proxyMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): MMultiMap[K, V] = {
-    proxyOps[MMultiMap[K, V]](p)(classTag[MMultiMap[K, V]])
+    proxyOps[MMultiMap[K, V]](p)(scala.reflect.classTag[MMultiMap[K, V]])
   }
 
   // familyElem
@@ -79,7 +76,7 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
       val map = p
       HashMMultiMap(map)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[HashMMultiMap[K, V]]](HashMMultiMap(element[MMap[K,ArrayBuffer[V]]].defaultRepValue))
+    lazy val defaultRepTo: Rep[HashMMultiMap[K, V]] = HashMMultiMap(element[MMap[K,ArrayBuffer[V]]].defaultRepValue)
     lazy val eTo = new HashMMultiMapElem[K, V](this)
   }
   // 4) constructor and deconstructor
@@ -119,7 +116,7 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
 }
 
 // Seq -----------------------------------
-trait MultiMapsSeq extends MultiMapsDsl with ScalanSeq {
+trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with UserTypeSeq[MMultiMapCompanionAbs] {
     lazy val selfType = element[MMultiMapCompanionAbs]
@@ -147,7 +144,7 @@ trait MultiMapsSeq extends MultiMapsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait MultiMapsExp extends MultiMapsDsl with ScalanExp {
+trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with UserTypeDef[MMultiMapCompanionAbs] {
     lazy val selfType = element[MMultiMapCompanionAbs]

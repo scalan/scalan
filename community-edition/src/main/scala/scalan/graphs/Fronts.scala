@@ -1,7 +1,5 @@
 package scalan.graphs
-import scala.annotation.unchecked.uncheckedVariance
 import scalan.collections.CollectionsDsl
-import scalan.common.Default
 import scalan._
 
 /**

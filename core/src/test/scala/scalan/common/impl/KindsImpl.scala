@@ -2,17 +2,15 @@ package scalan.common
 package impl
 
 import scalan._
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait KindsAbs extends Kinds with Scalan {
+trait KindsAbs extends Kinds with scalan.Scalan {
   self: KindsDsl =>
 
   // single proxy for each type family
   implicit def proxyKind[F[_], A](p: Rep[Kind[F, A]]): Kind[F, A] = {
-    proxyOps[Kind[F, A]](p)(classTag[Kind[F, A]])
+    proxyOps[Kind[F, A]](p)(scala.reflect.classTag[Kind[F, A]])
   }
 
   // familyElem
@@ -77,7 +75,7 @@ trait KindsAbs extends Kinds with Scalan {
       val a = p
       Return(a)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Return[F, A]]](Return(element[A].defaultRepValue))
+    lazy val defaultRepTo: Rep[Return[F, A]] = Return(element[A].defaultRepValue)
     lazy val eTo = new ReturnElem[F, A](this)
   }
   // 4) constructor and deconstructor
@@ -141,7 +139,7 @@ trait KindsAbs extends Kinds with Scalan {
       val Pair(a, f) = p
       Bind(a, f)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[Bind[F, S, B]]](Bind(element[Kind[F,S]].defaultRepValue, fun { (x: Rep[S]) => element[Kind[F,B]].defaultRepValue }))
+    lazy val defaultRepTo: Rep[Bind[F, S, B]] = Bind(element[Kind[F,S]].defaultRepValue, fun { (x: Rep[S]) => element[Kind[F,B]].defaultRepValue })
     lazy val eTo = new BindElem[F, S, B](this)
   }
   // 4) constructor and deconstructor
@@ -182,7 +180,7 @@ trait KindsAbs extends Kinds with Scalan {
 }
 
 // Seq -----------------------------------
-trait KindsSeq extends KindsDsl with ScalanSeq {
+trait KindsSeq extends KindsDsl with scalan.ScalanSeq {
   self: KindsDslSeq =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs with UserTypeSeq[KindCompanionAbs] {
     lazy val selfType = element[KindCompanionAbs]
@@ -230,7 +228,7 @@ trait KindsSeq extends KindsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait KindsExp extends KindsDsl with ScalanExp {
+trait KindsExp extends KindsDsl with scalan.ScalanExp {
   self: KindsDslExp =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs with UserTypeDef[KindCompanionAbs] {
     lazy val selfType = element[KindCompanionAbs]

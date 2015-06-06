@@ -3,17 +3,15 @@ package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait StatesAbs extends States with Scalan {
+trait StatesAbs extends States with scalan.Scalan {
   self: MonadsDsl =>
 
   // single proxy for each type family
   implicit def proxyState0[S, A](p: Rep[State0[S, A]]): State0[S, A] = {
-    proxyOps[State0[S, A]](p)(classTag[State0[S, A]])
+    proxyOps[State0[S, A]](p)(scala.reflect.classTag[State0[S, A]])
   }
 
   // familyElem
@@ -79,7 +77,7 @@ trait StatesAbs extends States with Scalan {
       val run = p
       StateBase(run)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[StateBase[S, A]]](StateBase(fun { (x: Rep[S]) => Pair(element[A].defaultRepValue, element[S].defaultRepValue) }))
+    lazy val defaultRepTo: Rep[StateBase[S, A]] = StateBase(fun { (x: Rep[S]) => Pair(element[A].defaultRepValue, element[S].defaultRepValue) })
     lazy val eTo = new StateBaseElem[S, A](this)
   }
   // 4) constructor and deconstructor
@@ -119,7 +117,7 @@ trait StatesAbs extends States with Scalan {
 }
 
 // Seq -----------------------------------
-trait StatesSeq extends StatesDsl with ScalanSeq {
+trait StatesSeq extends StatesDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
   lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs with UserTypeSeq[State0CompanionAbs] {
     lazy val selfType = element[State0CompanionAbs]
@@ -147,7 +145,7 @@ trait StatesSeq extends StatesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait StatesExp extends StatesDsl with ScalanExp {
+trait StatesExp extends StatesDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs with UserTypeDef[State0CompanionAbs] {
     lazy val selfType = element[State0CompanionAbs]

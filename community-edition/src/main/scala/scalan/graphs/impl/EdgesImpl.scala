@@ -1,23 +1,19 @@
 package scalan.graphs
 package impl
 
-import scala.annotation.unchecked.uncheckedVariance
+import scalan._
 import scalan.collections.CollectionsDsl
-import scalan.common.Default
 import scalan.ScalanCommunityDsl
-import scalan.{ScalanSeq, ScalanExp, Scalan}
 import scalan.Owner
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait EdgesAbs extends Edges with Scalan {
+trait EdgesAbs extends Edges with scalan.Scalan {
   self: GraphsDsl =>
 
   // single proxy for each type family
   implicit def proxyEdge[V, E](p: Rep[Edge[V, E]]): Edge[V, E] = {
-    proxyOps[Edge[V, E]](p)(classTag[Edge[V, E]])
+    proxyOps[Edge[V, E]](p)(scala.reflect.classTag[Edge[V, E]])
   }
 
   // familyElem
@@ -83,7 +79,7 @@ trait EdgesAbs extends Edges with Scalan {
       val Pair(fromId, Pair(outIndex, graph)) = p
       AdjEdge(fromId, outIndex, graph)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[AdjEdge[V, E]]](AdjEdge(0, 0, element[Graph[V,E]].defaultRepValue))
+    lazy val defaultRepTo: Rep[AdjEdge[V, E]] = AdjEdge(0, 0, element[Graph[V,E]].defaultRepValue)
     lazy val eTo = new AdjEdgeElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -147,7 +143,7 @@ trait EdgesAbs extends Edges with Scalan {
       val Pair(fromId, Pair(toId, graph)) = p
       IncEdge(fromId, toId, graph)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[IncEdge[V, E]]](IncEdge(0, 0, element[Graph[V,E]].defaultRepValue))
+    lazy val defaultRepTo: Rep[IncEdge[V, E]] = IncEdge(0, 0, element[Graph[V,E]].defaultRepValue)
     lazy val eTo = new IncEdgeElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -188,7 +184,7 @@ trait EdgesAbs extends Edges with Scalan {
 }
 
 // Seq -----------------------------------
-trait EdgesSeq extends EdgesDsl with ScalanSeq {
+trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
   self: GraphsDslSeq =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeSeq[EdgeCompanionAbs] {
     lazy val selfType = element[EdgeCompanionAbs]
@@ -236,7 +232,7 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait EdgesExp extends EdgesDsl with ScalanExp {
+trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeDef[EdgeCompanionAbs] {
     lazy val selfType = element[EdgeCompanionAbs]

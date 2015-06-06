@@ -2,9 +2,7 @@ package scalan
 package impl
 
 import scalan.staged.Expressions
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
 trait ConvertersAbs extends Converters  {
@@ -12,7 +10,7 @@ trait ConvertersAbs extends Converters  {
 
   // single proxy for each type family
   implicit def proxyConverter[T, R](p: Rep[Converter[T, R]]): Converter[T, R] = {
-    proxyOps[Converter[T, R]](p)(classTag[Converter[T, R]])
+    proxyOps[Converter[T, R]](p)(scala.reflect.classTag[Converter[T, R]])
   }
 
   // familyElem
@@ -78,7 +76,7 @@ trait ConvertersAbs extends Converters  {
       val convFun = p
       BaseConverter(convFun)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[BaseConverter[T, R]]](BaseConverter(fun { (x: Rep[T]) => element[R].defaultRepValue }))
+    lazy val defaultRepTo: Rep[BaseConverter[T, R]] = BaseConverter(fun { (x: Rep[T]) => element[R].defaultRepValue })
     lazy val eTo = new BaseConverterElem[T, R](this)
   }
   // 4) constructor and deconstructor
@@ -144,7 +142,7 @@ trait ConvertersAbs extends Converters  {
       val Pair(conv1, conv2) = p
       PairConverter(conv1, conv2)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[PairConverter[A1, A2, B1, B2]]](PairConverter(element[Converter[A1,B1]].defaultRepValue, element[Converter[A2,B2]].defaultRepValue))
+    lazy val defaultRepTo: Rep[PairConverter[A1, A2, B1, B2]] = PairConverter(element[Converter[A1,B1]].defaultRepValue, element[Converter[A2,B2]].defaultRepValue)
     lazy val eTo = new PairConverterElem[A1, A2, B1, B2](this)
   }
   // 4) constructor and deconstructor
@@ -211,7 +209,7 @@ trait ConvertersAbs extends Converters  {
       val Pair(conv1, conv2) = p
       SumConverter(conv1, conv2)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SumConverter[A1, A2, B1, B2]]](SumConverter(element[Converter[A1,B1]].defaultRepValue, element[Converter[A2,B2]].defaultRepValue))
+    lazy val defaultRepTo: Rep[SumConverter[A1, A2, B1, B2]] = SumConverter(element[Converter[A1,B1]].defaultRepValue, element[Converter[A2,B2]].defaultRepValue)
     lazy val eTo = new SumConverterElem[A1, A2, B1, B2](this)
   }
   // 4) constructor and deconstructor

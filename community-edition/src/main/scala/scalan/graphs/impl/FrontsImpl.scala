@@ -1,21 +1,17 @@
 package scalan.graphs
 package impl
 
-import scala.annotation.unchecked.uncheckedVariance
 import scalan.collections.CollectionsDsl
-import scalan.common.Default
 import scalan._
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait FrontsAbs extends Fronts with Scalan {
+trait FrontsAbs extends Fronts with scalan.Scalan {
   self: FrontsDsl =>
 
   // single proxy for each type family
   implicit def proxyFront(p: Rep[Front]): Front = {
-    proxyOps[Front](p)(classTag[Front])
+    proxyOps[Front](p)(scala.reflect.classTag[Front])
   }
 
   // familyElem
@@ -78,7 +74,7 @@ trait FrontsAbs extends Fronts with Scalan {
       val Pair(set, bits) = p
       BaseFront(set, bits)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[BaseFront]](BaseFront(element[CollectionOverArray[Int]].defaultRepValue, element[BitSet].defaultRepValue))
+    lazy val defaultRepTo: Rep[BaseFront] = BaseFront(element[CollectionOverArray[Int]].defaultRepValue, element[BitSet].defaultRepValue)
     lazy val eTo = new BaseFrontElem(this)
   }
   // 4) constructor and deconstructor
@@ -141,7 +137,7 @@ trait FrontsAbs extends Fronts with Scalan {
       val Pair(set, bits) = p
       ListFront(set, bits)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[ListFront]](ListFront(element[CollectionOverList[Int]].defaultRepValue, element[BitSet].defaultRepValue))
+    lazy val defaultRepTo: Rep[ListFront] = ListFront(element[CollectionOverList[Int]].defaultRepValue, element[BitSet].defaultRepValue)
     lazy val eTo = new ListFrontElem(this)
   }
   // 4) constructor and deconstructor
@@ -204,7 +200,7 @@ trait FrontsAbs extends Fronts with Scalan {
       val Pair(set, bits) = p
       CollectionFront(set, bits)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionFront]](CollectionFront(element[Collection[Int]].defaultRepValue, element[BitSet].defaultRepValue))
+    lazy val defaultRepTo: Rep[CollectionFront] = CollectionFront(element[Collection[Int]].defaultRepValue, element[BitSet].defaultRepValue)
     lazy val eTo = new CollectionFrontElem(this)
   }
   // 4) constructor and deconstructor
@@ -267,7 +263,7 @@ trait FrontsAbs extends Fronts with Scalan {
       val mmap = p
       MapBasedFront(mmap)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[MapBasedFront]](MapBasedFront(element[MMap[Int,Unit]].defaultRepValue))
+    lazy val defaultRepTo: Rep[MapBasedFront] = MapBasedFront(element[MMap[Int,Unit]].defaultRepValue)
     lazy val eTo = new MapBasedFrontElem(this)
   }
   // 4) constructor and deconstructor
@@ -307,7 +303,7 @@ trait FrontsAbs extends Fronts with Scalan {
 }
 
 // Seq -----------------------------------
-trait FrontsSeq extends FrontsDsl with ScalanSeq {
+trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
   self: FrontsDslSeq =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeSeq[FrontCompanionAbs] {
     lazy val selfType = element[FrontCompanionAbs]
@@ -395,7 +391,7 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FrontsExp extends FrontsDsl with ScalanExp {
+trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
   self: FrontsDslExp =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeDef[FrontCompanionAbs] {
     lazy val selfType = element[FrontCompanionAbs]

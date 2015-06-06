@@ -3,17 +3,15 @@ package impl
 
 import scalan._
 import scalan.common.Default
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait ExceptionsAbs extends Exceptions with Scalan {
+trait ExceptionsAbs extends Exceptions with scalan.Scalan {
   self: ExceptionsDsl =>
 
   // single proxy for each type family
   implicit def proxySThrowable(p: Rep[SThrowable]): SThrowable = {
-    proxyOps[SThrowable](p)(classTag[SThrowable])
+    proxyOps[SThrowable](p)(scala.reflect.classTag[SThrowable])
   }
 
   // TypeWrapper proxy
@@ -99,7 +97,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
       val wrappedValueOfBaseType = p
       SThrowableImpl(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SThrowableImpl]](SThrowableImpl(DefaultOfThrowable.value))
+    lazy val defaultRepTo: Rep[SThrowableImpl] = SThrowableImpl(DefaultOfThrowable.value)
     lazy val eTo = new SThrowableImplElem(this)
   }
   // 4) constructor and deconstructor
@@ -161,7 +159,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
       val wrappedValueOfBaseType = p
       SException(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[SException]](SException(DefaultOfThrowable.value))
+    lazy val defaultRepTo: Rep[SException] = SException(DefaultOfThrowable.value)
     lazy val eTo = new SExceptionElem(this)
   }
   // 4) constructor and deconstructor
@@ -201,7 +199,7 @@ trait ExceptionsAbs extends Exceptions with Scalan {
 }
 
 // Seq -----------------------------------
-trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
+trait ExceptionsSeq extends ExceptionsDsl with scalan.ScalanSeq {
   self: ExceptionsDslSeq =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs with UserTypeSeq[SThrowableCompanionAbs] {
     lazy val selfType = element[SThrowableCompanionAbs]
@@ -270,7 +268,7 @@ trait ExceptionsSeq extends ExceptionsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ExceptionsExp extends ExceptionsDsl with ScalanExp {
+trait ExceptionsExp extends ExceptionsDsl with scalan.ScalanExp {
   self: ExceptionsDslExp =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs with UserTypeDef[SThrowableCompanionAbs] {
     lazy val selfType = element[SThrowableCompanionAbs]

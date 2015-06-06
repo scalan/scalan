@@ -4,7 +4,6 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.{ViewsExp, ScalanExp, ScalanSeq, Scalan}
-import scalan.common.{Default, Lazy}
 import scala.reflect.runtime.universe._
 
 trait Thunks { self: Scalan =>
@@ -30,7 +29,7 @@ trait Thunks { self: Scalan =>
     implicit val eB = iso.eTo
     def from(x: Th[B]) = x.map(fun(iso.from))
     def to(x: Th[A]) = x.map(fun(iso.to))
-    lazy val defaultRepTo = Default.defaultVal(Thunk(eB.defaultRepValue)(eB))
+    lazy val defaultRepTo = Thunk(eB.defaultRepValue)(eB)
   }
 
   case class ThunkElem[A](override val eItem: Elem[A])
@@ -46,9 +45,6 @@ trait Thunks { self: Scalan =>
   implicit def thunkElement[T](implicit eItem: Elem[T]): Elem[Thunk[T]] = new ThunkElem[T](eItem)
   implicit def extendThunkElement[T](elem: Elem[Thunk[T]]): ThunkElem[T] = elem.asInstanceOf[ThunkElem[T]]
 
-  implicit def DefaultOfThunk[A](implicit e: Elem[A]): Default[Rep[Thunk[A]]] = {
-    Default.defaultVal[Rep[Thunk[A]]](Thunk(e.defaultRepValue))
-  }
   def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]]
   def thunk_force[A](t: Th[A]): Rep[A]
 }

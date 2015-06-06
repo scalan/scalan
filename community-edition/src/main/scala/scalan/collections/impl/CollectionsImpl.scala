@@ -4,19 +4,16 @@ package impl
 import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.arrays.ArrayOps
-import scalan.common.Default
 import scalan.common.OverloadHack.Overloaded1
-import scala.reflect.runtime.universe._
-import scala.reflect._
-import scalan.common.Default
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait CollectionsAbs extends Collections with Scalan {
+trait CollectionsAbs extends Collections with scalan.Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
   implicit def proxyCollection[Item](p: Rep[Collection[Item]]): Collection[Item] = {
-    proxyOps[Collection[Item]](p)(classTag[Collection[Item]])
+    proxyOps[Collection[Item]](p)(scala.reflect.classTag[Collection[Item]])
   }
 
   // familyElem
@@ -58,7 +55,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // single proxy for each type family
   implicit def proxyPairCollection[A, B](p: Rep[PairCollection[A, B]]): PairCollection[A, B] = {
-    proxyOps[PairCollection[A, B]](p)(classTag[PairCollection[A, B]])
+    proxyOps[PairCollection[A, B]](p)(scala.reflect.classTag[PairCollection[A, B]])
   }
   // familyElem
   class PairCollectionElem[A, B, To <: PairCollection[A, B]](implicit val eA: Elem[A], val eB: Elem[B])
@@ -87,7 +84,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // single proxy for each type family
   implicit def proxyNestedCollection[A](p: Rep[NestedCollection[A]]): NestedCollection[A] = {
-    proxyOps[NestedCollection[A]](p)(classTag[NestedCollection[A]])
+    proxyOps[NestedCollection[A]](p)(scala.reflect.classTag[NestedCollection[A]])
   }
   // familyElem
   class NestedCollectionElem[A, To <: NestedCollection[A]](implicit val eA: Elem[A])
@@ -136,7 +133,7 @@ trait CollectionsAbs extends Collections with Scalan {
       val length = p
       UnitCollection(length)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[UnitCollection]](UnitCollection(0))
+    lazy val defaultRepTo: Rep[UnitCollection] = UnitCollection(0)
     lazy val eTo = new UnitCollectionElem(this)
   }
   // 4) constructor and deconstructor
@@ -198,7 +195,7 @@ trait CollectionsAbs extends Collections with Scalan {
       val arr = p
       CollectionOverArray(arr)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOverArray[Item]]](CollectionOverArray(element[Array[Item]].defaultRepValue))
+    lazy val defaultRepTo: Rep[CollectionOverArray[Item]] = CollectionOverArray(element[Array[Item]].defaultRepValue)
     lazy val eTo = new CollectionOverArrayElem[Item](this)
   }
   // 4) constructor and deconstructor
@@ -260,7 +257,7 @@ trait CollectionsAbs extends Collections with Scalan {
       val lst = p
       CollectionOverList(lst)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOverList[Item]]](CollectionOverList(element[List[Item]].defaultRepValue))
+    lazy val defaultRepTo: Rep[CollectionOverList[Item]] = CollectionOverList(element[List[Item]].defaultRepValue)
     lazy val eTo = new CollectionOverListElem[Item](this)
   }
   // 4) constructor and deconstructor
@@ -322,7 +319,7 @@ trait CollectionsAbs extends Collections with Scalan {
       val seq = p
       CollectionOverSeq(seq)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[CollectionOverSeq[Item]]](CollectionOverSeq(element[SSeq[Item]].defaultRepValue))
+    lazy val defaultRepTo: Rep[CollectionOverSeq[Item]] = CollectionOverSeq(element[SSeq[Item]].defaultRepValue)
     lazy val eTo = new CollectionOverSeqElem[Item](this)
   }
   // 4) constructor and deconstructor
@@ -385,7 +382,7 @@ trait CollectionsAbs extends Collections with Scalan {
       val Pair(as, bs) = p
       PairCollectionSOA(as, bs)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[PairCollectionSOA[A, B]]](PairCollectionSOA(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue))
+    lazy val defaultRepTo: Rep[PairCollectionSOA[A, B]] = PairCollectionSOA(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue)
     lazy val eTo = new PairCollectionSOAElem[A, B](this)
   }
   // 4) constructor and deconstructor
@@ -449,7 +446,7 @@ trait CollectionsAbs extends Collections with Scalan {
       val coll = p
       PairCollectionAOS(coll)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[PairCollectionAOS[A, B]]](PairCollectionAOS(element[Collection[(A, B)]].defaultRepValue))
+    lazy val defaultRepTo: Rep[PairCollectionAOS[A, B]] = PairCollectionAOS(element[Collection[(A, B)]].defaultRepValue)
     lazy val eTo = new PairCollectionAOSElem[A, B](this)
   }
   // 4) constructor and deconstructor
@@ -511,7 +508,7 @@ trait CollectionsAbs extends Collections with Scalan {
       val Pair(values, segments) = p
       NestedCollectionFlat(values, segments)
     }
-    lazy val defaultRepTo = Default.defaultVal[Rep[NestedCollectionFlat[A]]](NestedCollectionFlat(element[Collection[A]].defaultRepValue, element[PairCollection[Int,Int]].defaultRepValue))
+    lazy val defaultRepTo: Rep[NestedCollectionFlat[A]] = NestedCollectionFlat(element[Collection[A]].defaultRepValue, element[PairCollection[Int,Int]].defaultRepValue)
     lazy val eTo = new NestedCollectionFlatElem[A](this)
   }
   // 4) constructor and deconstructor
@@ -552,7 +549,7 @@ trait CollectionsAbs extends Collections with Scalan {
 }
 
 // Seq -----------------------------------
-trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
+trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeSeq[CollectionCompanionAbs] {
     lazy val selfType = element[CollectionCompanionAbs]
@@ -700,7 +697,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait CollectionsExp extends CollectionsDsl with ScalanExp {
+trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeDef[CollectionCompanionAbs] {
     lazy val selfType = element[CollectionCompanionAbs]
