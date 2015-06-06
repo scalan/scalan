@@ -3,15 +3,15 @@ package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait FreesAbs extends Frees with Scalan {
+trait FreesAbs extends Frees with scalan.Scalan {
   self: MonadsDsl =>
 
   // single proxy for each type family
   implicit def proxyFree[F[_], A](p: Rep[Free[F, A]]): Free[F, A] = {
-    proxyOps[Free[F, A]](p)(classTag[Free[F, A]])
+    proxyOps[Free[F, A]](p)(scala.reflect.classTag[Free[F, A]])
   }
 
   // familyElem
@@ -244,7 +244,7 @@ trait FreesAbs extends Frees with Scalan {
 }
 
 // Seq -----------------------------------
-trait FreesSeq extends FreesDsl with ScalanSeq {
+trait FreesSeq extends FreesDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
   lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs with UserTypeSeq[FreeCompanionAbs] {
     lazy val selfType = element[FreeCompanionAbs]
@@ -312,7 +312,7 @@ trait FreesSeq extends FreesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FreesExp extends FreesDsl with ScalanExp {
+trait FreesExp extends FreesDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs with UserTypeDef[FreeCompanionAbs] {
     lazy val selfType = element[FreeCompanionAbs]

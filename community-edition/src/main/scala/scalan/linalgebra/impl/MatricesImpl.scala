@@ -4,16 +4,15 @@ package impl
 import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
-import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait MatricesAbs extends Matrices with Scalan {
+trait MatricesAbs extends Matrices with scalan.Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
   implicit def proxyAbstractMatrix[T](p: Rep[AbstractMatrix[T]]): AbstractMatrix[T] = {
-    proxyOps[AbstractMatrix[T]](p)(classTag[AbstractMatrix[T]])
+    proxyOps[AbstractMatrix[T]](p)(scala.reflect.classTag[AbstractMatrix[T]])
   }
 
   // familyElem
@@ -181,7 +180,7 @@ trait MatricesAbs extends Matrices with Scalan {
 }
 
 // Seq -----------------------------------
-trait MatricesSeq extends MatricesDsl with ScalanSeq {
+trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with UserTypeSeq[AbstractMatrixCompanionAbs] {
     lazy val selfType = element[AbstractMatrixCompanionAbs]
@@ -229,7 +228,7 @@ trait MatricesSeq extends MatricesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait MatricesExp extends MatricesDsl with ScalanExp {
+trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with UserTypeDef[AbstractMatrixCompanionAbs] {
     lazy val selfType = element[AbstractMatrixCompanionAbs]

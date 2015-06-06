@@ -5,16 +5,15 @@ import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.arrays.ArrayOps
 import scalan.common.OverloadHack.Overloaded1
-import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait CollectionsAbs extends Collections with Scalan {
+trait CollectionsAbs extends Collections with scalan.Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
   implicit def proxyCollection[Item](p: Rep[Collection[Item]]): Collection[Item] = {
-    proxyOps[Collection[Item]](p)(classTag[Collection[Item]])
+    proxyOps[Collection[Item]](p)(scala.reflect.classTag[Collection[Item]])
   }
 
   // familyElem
@@ -56,7 +55,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // single proxy for each type family
   implicit def proxyPairCollection[A, B](p: Rep[PairCollection[A, B]]): PairCollection[A, B] = {
-    proxyOps[PairCollection[A, B]](p)(classTag[PairCollection[A, B]])
+    proxyOps[PairCollection[A, B]](p)(scala.reflect.classTag[PairCollection[A, B]])
   }
   // familyElem
   class PairCollectionElem[A, B, To <: PairCollection[A, B]](implicit val eA: Elem[A], val eB: Elem[B])
@@ -85,7 +84,7 @@ trait CollectionsAbs extends Collections with Scalan {
 
   // single proxy for each type family
   implicit def proxyNestedCollection[A](p: Rep[NestedCollection[A]]): NestedCollection[A] = {
-    proxyOps[NestedCollection[A]](p)(classTag[NestedCollection[A]])
+    proxyOps[NestedCollection[A]](p)(scala.reflect.classTag[NestedCollection[A]])
   }
   // familyElem
   class NestedCollectionElem[A, To <: NestedCollection[A]](implicit val eA: Elem[A])
@@ -550,7 +549,7 @@ trait CollectionsAbs extends Collections with Scalan {
 }
 
 // Seq -----------------------------------
-trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
+trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeSeq[CollectionCompanionAbs] {
     lazy val selfType = element[CollectionCompanionAbs]
@@ -698,7 +697,7 @@ trait CollectionsSeq extends CollectionsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait CollectionsExp extends CollectionsDsl with ScalanExp {
+trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeDef[CollectionCompanionAbs] {
     lazy val selfType = element[CollectionCompanionAbs]

@@ -3,15 +3,15 @@ package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait CoproductsAbs extends Coproducts with Scalan {
+trait CoproductsAbs extends Coproducts with scalan.Scalan {
   self: MonadsDsl =>
 
   // single proxy for each type family
   implicit def proxyCoproduct[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]): Coproduct[F, G, A] = {
-    proxyOps[Coproduct[F, G, A]](p)(classTag[Coproduct[F, G, A]])
+    proxyOps[Coproduct[F, G, A]](p)(scala.reflect.classTag[Coproduct[F, G, A]])
   }
 
   // familyElem
@@ -115,7 +115,7 @@ trait CoproductsAbs extends Coproducts with Scalan {
 }
 
 // Seq -----------------------------------
-trait CoproductsSeq extends CoproductsDsl with ScalanSeq {
+trait CoproductsSeq extends CoproductsDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
   lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs with UserTypeSeq[CoproductCompanionAbs] {
     lazy val selfType = element[CoproductCompanionAbs]
@@ -143,7 +143,7 @@ trait CoproductsSeq extends CoproductsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait CoproductsExp extends CoproductsDsl with ScalanExp {
+trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs with UserTypeDef[CoproductCompanionAbs] {
     lazy val selfType = element[CoproductCompanionAbs]

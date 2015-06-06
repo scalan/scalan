@@ -2,8 +2,7 @@ package scalan
 package impl
 
 import scalan.staged.Expressions
-import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
 trait ConvertersAbs extends Converters  {
@@ -11,7 +10,7 @@ trait ConvertersAbs extends Converters  {
 
   // single proxy for each type family
   implicit def proxyConverter[T, R](p: Rep[Converter[T, R]]): Converter[T, R] = {
-    proxyOps[Converter[T, R]](p)(classTag[Converter[T, R]])
+    proxyOps[Converter[T, R]](p)(scala.reflect.classTag[Converter[T, R]])
   }
 
   // familyElem

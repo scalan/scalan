@@ -1,17 +1,15 @@
 package scalan.common
 package impl
 
-import scalan.{Scalan, ScalanSeq, ScalanExp}
-import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait MetaTestsAbs extends MetaTests with Scalan {
+trait MetaTestsAbs extends MetaTests with scalan.Scalan {
   self: MetaTestsDsl =>
 
   // single proxy for each type family
   implicit def proxyMetaTest[T](p: Rep[MetaTest[T]]): MetaTest[T] = {
-    proxyOps[MetaTest[T]](p)(classTag[MetaTest[T]])
+    proxyOps[MetaTest[T]](p)(scala.reflect.classTag[MetaTest[T]])
   }
 
   // familyElem
@@ -243,7 +241,7 @@ trait MetaTestsAbs extends MetaTests with Scalan {
 }
 
 // Seq -----------------------------------
-trait MetaTestsSeq extends MetaTestsDsl with ScalanSeq {
+trait MetaTestsSeq extends MetaTestsDsl with scalan.ScalanSeq {
   self: MetaTestsDslSeq =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs with UserTypeSeq[MetaTestCompanionAbs] {
     lazy val selfType = element[MetaTestCompanionAbs]
@@ -311,7 +309,7 @@ trait MetaTestsSeq extends MetaTestsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait MetaTestsExp extends MetaTestsDsl with ScalanExp {
+trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
   self: MetaTestsDslExp =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs with UserTypeDef[MetaTestCompanionAbs] {
     lazy val selfType = element[MetaTestCompanionAbs]

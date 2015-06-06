@@ -4,16 +4,15 @@ package impl
 import scalan.collections.CollectionsDsl
 import scalan.{Scalan, ScalanExp, ScalanSeq}
 import scalan.ScalanCommunityDsl
-import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait VerticesAbs extends Vertices with Scalan {
+trait VerticesAbs extends Vertices with scalan.Scalan {
   self: GraphsDsl =>
 
   // single proxy for each type family
   implicit def proxyVertex[V, E](p: Rep[Vertex[V, E]]): Vertex[V, E] = {
-    proxyOps[Vertex[V, E]](p)(classTag[Vertex[V, E]])
+    proxyOps[Vertex[V, E]](p)(scala.reflect.classTag[Vertex[V, E]])
   }
 
   // familyElem
@@ -120,7 +119,7 @@ trait VerticesAbs extends Vertices with Scalan {
 }
 
 // Seq -----------------------------------
-trait VerticesSeq extends VerticesDsl with ScalanSeq {
+trait VerticesSeq extends VerticesDsl with scalan.ScalanSeq {
   self: GraphsDslSeq =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeSeq[VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]
@@ -148,7 +147,7 @@ trait VerticesSeq extends VerticesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait VerticesExp extends VerticesDsl with ScalanExp {
+trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeDef[VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]

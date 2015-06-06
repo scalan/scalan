@@ -2,16 +2,15 @@ package scalan.common
 package impl
 
 import scalan._
-import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait KindsAbs extends Kinds with Scalan {
+trait KindsAbs extends Kinds with scalan.Scalan {
   self: KindsDsl =>
 
   // single proxy for each type family
   implicit def proxyKind[F[_], A](p: Rep[Kind[F, A]]): Kind[F, A] = {
-    proxyOps[Kind[F, A]](p)(classTag[Kind[F, A]])
+    proxyOps[Kind[F, A]](p)(scala.reflect.classTag[Kind[F, A]])
   }
 
   // familyElem
@@ -181,7 +180,7 @@ trait KindsAbs extends Kinds with Scalan {
 }
 
 // Seq -----------------------------------
-trait KindsSeq extends KindsDsl with ScalanSeq {
+trait KindsSeq extends KindsDsl with scalan.ScalanSeq {
   self: KindsDslSeq =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs with UserTypeSeq[KindCompanionAbs] {
     lazy val selfType = element[KindCompanionAbs]
@@ -229,7 +228,7 @@ trait KindsSeq extends KindsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait KindsExp extends KindsDsl with ScalanExp {
+trait KindsExp extends KindsDsl with scalan.ScalanExp {
   self: KindsDslExp =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs with UserTypeDef[KindCompanionAbs] {
     lazy val selfType = element[KindCompanionAbs]

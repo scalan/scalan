@@ -4,15 +4,15 @@ package impl
 import scalan._
 import scala.reflect.runtime.universe._
 import scalan.monads.{MonadsDslExp, MonadsDslSeq, MonadsDsl}
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait FreeStatesAbs extends FreeStates with Scalan {
+trait FreeStatesAbs extends FreeStates with scalan.Scalan {
   self: MonadsDsl =>
 
   // single proxy for each type family
   implicit def proxyStateF[S, A](p: Rep[StateF[S, A]]): StateF[S, A] = {
-    proxyOps[StateF[S, A]](p)(classTag[StateF[S, A]])
+    proxyOps[StateF[S, A]](p)(scala.reflect.classTag[StateF[S, A]])
   }
 
   // familyElem
@@ -184,7 +184,7 @@ trait FreeStatesAbs extends FreeStates with Scalan {
 }
 
 // Seq -----------------------------------
-trait FreeStatesSeq extends FreeStatesDsl with ScalanSeq {
+trait FreeStatesSeq extends FreeStatesDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
   lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs with UserTypeSeq[StateFCompanionAbs] {
     lazy val selfType = element[StateFCompanionAbs]
@@ -232,7 +232,7 @@ trait FreeStatesSeq extends FreeStatesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FreeStatesExp extends FreeStatesDsl with ScalanExp {
+trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs with UserTypeDef[StateFCompanionAbs] {
     lazy val selfType = element[StateFCompanionAbs]

@@ -4,15 +4,15 @@ package impl
 import scalan._
 import scala.reflect.runtime.universe._
 import scalan.monads.{MonadsDsl, Monads}
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait ProcessesAbs extends Processes with Scalan {
+trait ProcessesAbs extends Processes with scalan.Scalan {
   self: ProcessesDsl =>
 
   // single proxy for each type family
   implicit def proxyProcess[F[_], O](p: Rep[Process[F, O]]): Process[F, O] = {
-    proxyOps[Process[F, O]](p)(classTag[Process[F, O]])
+    proxyOps[Process[F, O]](p)(scala.reflect.classTag[Process[F, O]])
   }
 
   // familyElem
@@ -246,7 +246,7 @@ trait ProcessesAbs extends Processes with Scalan {
 }
 
 // Seq -----------------------------------
-trait ProcessesSeq extends ProcessesDsl with ScalanSeq {
+trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
   self: ProcessesDslSeq =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with UserTypeSeq[ProcessCompanionAbs] {
     lazy val selfType = element[ProcessCompanionAbs]
@@ -314,7 +314,7 @@ trait ProcessesSeq extends ProcessesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ProcessesExp extends ProcessesDsl with ScalanExp {
+trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
   self: ProcessesDslExp =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with UserTypeDef[ProcessCompanionAbs] {
     lazy val selfType = element[ProcessCompanionAbs]

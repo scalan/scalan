@@ -4,15 +4,15 @@ package impl
 import scalan._
 import scala.reflect.runtime.universe._
 import scalan.monads.{MonadsDslExp, MonadsDslSeq, Monads, MonadsDsl}
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait FreeMsAbs extends FreeMs with Scalan {
+trait FreeMsAbs extends FreeMs with scalan.Scalan {
   self: MonadsDsl =>
 
   // single proxy for each type family
   implicit def proxyFreeM[F[_], A](p: Rep[FreeM[F, A]]): FreeM[F, A] = {
-    proxyOps[FreeM[F, A]](p)(classTag[FreeM[F, A]])
+    proxyOps[FreeM[F, A]](p)(scala.reflect.classTag[FreeM[F, A]])
   }
 
   // familyElem
@@ -245,7 +245,7 @@ trait FreeMsAbs extends FreeMs with Scalan {
 }
 
 // Seq -----------------------------------
-trait FreeMsSeq extends FreeMsDsl with ScalanSeq {
+trait FreeMsSeq extends FreeMsDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
   lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs with UserTypeSeq[FreeMCompanionAbs] {
     lazy val selfType = element[FreeMCompanionAbs]
@@ -313,7 +313,7 @@ trait FreeMsSeq extends FreeMsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FreeMsExp extends FreeMsDsl with ScalanExp {
+trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs with UserTypeDef[FreeMCompanionAbs] {
     lazy val selfType = element[FreeMCompanionAbs]

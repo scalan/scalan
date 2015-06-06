@@ -4,15 +4,15 @@ package impl
 import scala.reflect.runtime.universe._
 import scalan._
 import scalan.monads._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait AuthenticationsAbs extends Authentications with Scalan {
+trait AuthenticationsAbs extends Authentications with scalan.Scalan {
   self: AuthenticationsDsl =>
 
   // single proxy for each type family
   implicit def proxyAuth[A](p: Rep[Auth[A]]): Auth[A] = {
-    proxyOps[Auth[A]](p)(classTag[Auth[A]])
+    proxyOps[Auth[A]](p)(scala.reflect.classTag[Auth[A]])
   }
 
   // familyElem
@@ -180,7 +180,7 @@ trait AuthenticationsAbs extends Authentications with Scalan {
 }
 
 // Seq -----------------------------------
-trait AuthenticationsSeq extends AuthenticationsDsl with ScalanSeq {
+trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
   self: AuthenticationsDslSeq =>
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs with UserTypeSeq[AuthCompanionAbs] {
     lazy val selfType = element[AuthCompanionAbs]
@@ -228,7 +228,7 @@ trait AuthenticationsSeq extends AuthenticationsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait AuthenticationsExp extends AuthenticationsDsl with ScalanExp {
+trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
   self: AuthenticationsDslExp =>
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs with UserTypeDef[AuthCompanionAbs] {
     lazy val selfType = element[AuthCompanionAbs]

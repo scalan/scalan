@@ -3,16 +3,15 @@ package impl
 
 import scalan._
 import scalan.common.OverloadHack.Overloaded1
-import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait BitSetsAbs extends BitSets with Scalan {
+trait BitSetsAbs extends BitSets with scalan.Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
   implicit def proxyBitSet(p: Rep[BitSet]): BitSet = {
-    proxyOps[BitSet](p)(classTag[BitSet])
+    proxyOps[BitSet](p)(scala.reflect.classTag[BitSet])
   }
 
   // familyElem
@@ -114,7 +113,7 @@ trait BitSetsAbs extends BitSets with Scalan {
 }
 
 // Seq -----------------------------------
-trait BitSetsSeq extends BitSetsDsl with ScalanSeq {
+trait BitSetsSeq extends BitSetsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeSeq[BitSetCompanionAbs] {
     lazy val selfType = element[BitSetCompanionAbs]
@@ -142,7 +141,7 @@ trait BitSetsSeq extends BitSetsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait BitSetsExp extends BitSetsDsl with ScalanExp {
+trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeDef[BitSetCompanionAbs] {
     lazy val selfType = element[BitSetCompanionAbs]

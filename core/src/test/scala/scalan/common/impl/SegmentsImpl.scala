@@ -3,15 +3,15 @@ package impl
 
 import scala.reflect.runtime.universe._
 import scalan._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait SegmentsAbs extends Segments with Scalan {
+trait SegmentsAbs extends Segments with scalan.Scalan {
   self: SegmentsDsl =>
 
   // single proxy for each type family
   implicit def proxySegment(p: Rep[Segment]): Segment = {
-    proxyOps[Segment](p)(classTag[Segment])
+    proxyOps[Segment](p)(scala.reflect.classTag[Segment])
   }
 
   // familyElem
@@ -239,7 +239,7 @@ trait SegmentsAbs extends Segments with Scalan {
 }
 
 // Seq -----------------------------------
-trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
+trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
   self: SegmentsDslSeq =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeSeq[SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]
@@ -307,7 +307,7 @@ trait SegmentsSeq extends SegmentsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait SegmentsExp extends SegmentsDsl with ScalanExp {
+trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
   self: SegmentsDslExp =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeDef[SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]

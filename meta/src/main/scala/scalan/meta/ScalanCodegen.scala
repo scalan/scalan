@@ -323,7 +323,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
         |  // single proxy for each type family
         |  implicit def proxy$entityName${typesDecl}(p: Rep[${e.entityType}]): ${e.entityType} = {
-        |    proxyOps[${e.entityType}](p)(classTag[${e.entityType}])
+        |    proxyOps[${e.entityType}](p)(scala.reflect.classTag[${e.entityType}])
         |  }
         |""".stripAndTrim
     }

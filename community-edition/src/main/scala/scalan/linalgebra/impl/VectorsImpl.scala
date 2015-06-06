@@ -5,16 +5,15 @@ import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.tailrec
 import scala.annotation.unchecked.uncheckedVariance
-import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait VectorsAbs extends Vectors with Scalan {
+trait VectorsAbs extends Vectors with scalan.Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
   implicit def proxyAbstractVector[T](p: Rep[AbstractVector[T]]): AbstractVector[T] = {
-    proxyOps[AbstractVector[T]](p)(classTag[AbstractVector[T]])
+    proxyOps[AbstractVector[T]](p)(scala.reflect.classTag[AbstractVector[T]])
   }
 
   // familyElem
@@ -244,7 +243,7 @@ trait VectorsAbs extends Vectors with Scalan {
 }
 
 // Seq -----------------------------------
-trait VectorsSeq extends VectorsDsl with ScalanSeq {
+trait VectorsSeq extends VectorsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs with UserTypeSeq[AbstractVectorCompanionAbs] {
     lazy val selfType = element[AbstractVectorCompanionAbs]
@@ -312,7 +311,7 @@ trait VectorsSeq extends VectorsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait VectorsExp extends VectorsDsl with ScalanExp {
+trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs with UserTypeDef[AbstractVectorCompanionAbs] {
     lazy val selfType = element[AbstractVectorCompanionAbs]

@@ -5,15 +5,15 @@ import scala.collection.Seq
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait SeqsAbs extends Seqs with Scalan {
+trait SeqsAbs extends Seqs with scalan.Scalan {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
   implicit def proxySSeq[A](p: Rep[SSeq[A]]): SSeq[A] = {
-    proxyOps[SSeq[A]](p)(classTag[SSeq[A]])
+    proxyOps[SSeq[A]](p)(scala.reflect.classTag[SSeq[A]])
   }
 
   // TypeWrapper proxy
@@ -205,7 +205,7 @@ trait SeqsAbs extends Seqs with Scalan {
 }
 
 // Seq -----------------------------------
-trait SeqsSeq extends SeqsDsl with ScalanSeq {
+trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeSeq[SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]
@@ -280,7 +280,7 @@ trait SeqsSeq extends SeqsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait SeqsExp extends SeqsDsl with ScalanExp {
+trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeDef[SSeqCompanionAbs] {
     lazy val selfType = element[SSeqCompanionAbs]

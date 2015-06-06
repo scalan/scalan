@@ -3,16 +3,15 @@ package impl
 
 import scalan.collections.CollectionsDsl
 import scalan._
-import scala.reflect.runtime.universe._
-import scala.reflect._
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait FrontsAbs extends Fronts with Scalan {
+trait FrontsAbs extends Fronts with scalan.Scalan {
   self: FrontsDsl =>
 
   // single proxy for each type family
   implicit def proxyFront(p: Rep[Front]): Front = {
-    proxyOps[Front](p)(classTag[Front])
+    proxyOps[Front](p)(scala.reflect.classTag[Front])
   }
 
   // familyElem
@@ -304,7 +303,7 @@ trait FrontsAbs extends Fronts with Scalan {
 }
 
 // Seq -----------------------------------
-trait FrontsSeq extends FrontsDsl with ScalanSeq {
+trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
   self: FrontsDslSeq =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeSeq[FrontCompanionAbs] {
     lazy val selfType = element[FrontCompanionAbs]
@@ -392,7 +391,7 @@ trait FrontsSeq extends FrontsDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FrontsExp extends FrontsDsl with ScalanExp {
+trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
   self: FrontsDslExp =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeDef[FrontCompanionAbs] {
     lazy val selfType = element[FrontCompanionAbs]

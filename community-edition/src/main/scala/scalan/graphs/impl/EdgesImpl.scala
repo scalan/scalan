@@ -4,16 +4,16 @@ package impl
 import scalan._
 import scalan.collections.CollectionsDsl
 import scalan.ScalanCommunityDsl
-import scala.reflect.runtime.universe._
-import scala.reflect._
+import scalan.Owner
+import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
 // Abs -----------------------------------
-trait EdgesAbs extends Edges with Scalan {
+trait EdgesAbs extends Edges with scalan.Scalan {
   self: GraphsDsl =>
 
   // single proxy for each type family
   implicit def proxyEdge[V, E](p: Rep[Edge[V, E]]): Edge[V, E] = {
-    proxyOps[Edge[V, E]](p)(classTag[Edge[V, E]])
+    proxyOps[Edge[V, E]](p)(scala.reflect.classTag[Edge[V, E]])
   }
 
   // familyElem
@@ -184,7 +184,7 @@ trait EdgesAbs extends Edges with Scalan {
 }
 
 // Seq -----------------------------------
-trait EdgesSeq extends EdgesDsl with ScalanSeq {
+trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
   self: GraphsDslSeq =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeSeq[EdgeCompanionAbs] {
     lazy val selfType = element[EdgeCompanionAbs]
@@ -232,7 +232,7 @@ trait EdgesSeq extends EdgesDsl with ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait EdgesExp extends EdgesDsl with ScalanExp {
+trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeDef[EdgeCompanionAbs] {
     lazy val selfType = element[EdgeCompanionAbs]
