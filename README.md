@@ -13,15 +13,46 @@ Scalan is a framework for creating staged embedded DSLs in Scala. It allows you 
 
 The project consists of several [subprojects](http://www.scala-sbt.org/release/tutorial/Multi-Project.html), including the aggregate project `scalan`.
 
-One of the subprojects, `lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`. If you want to use it, you need to clone and build this dependency first, since it isn't published in a public repository. It also requires a different version of Scala from the one used by the other projects, which is why it isn't a part of the aggregate project. SBT commands such as `test`, `compile`, etc. will not run on it by default; you need to use `lms-backend/whatever-command` or `project lms-backend` and then the commands you want.
+One of the subprojects, `lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`. If you want to use it, you need to clone and build this dependency first, since it isn't published in a public repository.
 
-The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backend included is `lms-backend` and so you need to use `lms-backend/it:test` to run integration tests.
+The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backends available are Scala- and C++-based LMS backends, both defined in the `lms-backend` subproject.
 
-If you want to create your own project depending on Scalan, you have two options:
+If you want to create your own project depending on Scalan, you should use `publishLocal` SBT command to publish Scalan artifacts to your local Ivy repository and add dependencies as usual:
 
-* use `publishLocal` (and `lms-backend/publishLocal`, if necessary) SBT command to deploy Scalan to your local Ivy repository;
+~~~scala
+// at the moment, there's no stable version for Scala 2.11
+def liteDependency(name: String) = "com.huawei.scalan" %% name % "0.2.9-SNAPSHOT"
 
-* use a [project reference](http://www.scala-sbt.org/0.12.4/docs/Dormant/Full-Configuration.html#project-references) to Scalan in your build instead of `libraryDependencies`.
+lazy val core = liteDependency("core")
+lazy val ce = liteDependency("community-edition")
+lazy val meta = liteDependency("meta")
+
+lazy val myProject = Project(...).settings(
+  // or core, core % "test" classifier "tests" if you only need scalan-core
+  libraryDependencies ++= Seq(ce, ce % "test" classifier "tests")
+)
+
+lazy val myMeta = Project(...).settings(libraryDependencies += meta)
+~~~
+
+`"test"` dependencies allow reuse of Scalan's existing test infrastructure and aren't necessary if you don't need it. See [Extending Scalan](#extending-scalan) below for an explanation of `myMeta`. 
+
+If you also need to depend on `lms-backend`, you have to add [Scala-Virtualized](https://github.com/tiarkrompf/scala-virtualized) to the `settings` block above. See [Maven Repository](http://mvnrepository.com/artifact/org.scala-lang.virtualized) for the latest Scala-Virtualized version; as of this writing, 2.11.2 is the only version which can be used:
+
+~~~scala
+settings(...,
+  libraryDependencies += liteDependency("lms-backend"), 
+  scalaVersion := "2.11.2",
+  scalaOrganization := "org.scala-lang.virtualized")
+~~~
+
+<!-- TODO how best to make sure virtualized scala-{library/compiler/reflect}.jar are first in the classpath -->
+
+Alternately, you can use [project references](http://www.scala-sbt.org/0.12.4/docs/Dormant/Full-Configuration.html#project-references) to Scalan in your build instead of `libraryDependencies` if you want changes to Scalan to be immediately visible to your project without a `publishLocal` step.
+
+### Stability
+
+Currently we are quite far from 1.0 and breaking changes can happen.
 
 ## Writing programs
 
@@ -224,7 +255,7 @@ trait PointsDsl extends impl.PointsAbs
 trait PointsDslSeq extends impl.PointsSeq
 trait PointsDslExp extends impl.PointsExp
 ~~~
-This obviously doesn't compile yet, because of references to non-existent classes in the `impl` package. They are boilerplate code which must be generated using the `meta` subproject (see [its documentation](meta/README.md)). It will have to be regenerated if `Point` or `PointImpl` are renamed or deleted, or if new implementations of `Point` are added.
+This obviously doesn't compile yet, because of references to non-existent classes in the `impl` package. They are boilerplate code which must be generated using the `meta` subproject. Currently this unfortunately has to be done manually by running SBT command `meta/run <configurations>`, where `<configurations>` is one or more configuration defined in [BoilerplateTool.scala](src/main/scala/scalan/meta/BoilerplateTool.scala). This has to be done when a DSL file is added or changed, or after changes in the `meta` subproject itself. Projects which depend on Scalan and add their own DSLs will normally also have a `meta` subproject with a dependency on `scalan-meta`.
 
 Note that methods in `Point` must have `Rep` in argument types and return value type. If `Point` had a type parameter, it would also have methods asserting existence of `Element` instances. It may seem some of these empty traits are unnecessary, but they serve as extension points. E.g. any methods added to `PointCompanion` will be available on `Point` companion objects.
 
