@@ -218,7 +218,8 @@ class ScalanParsersTests extends BaseTests with ScalanParsersEx {
         List(entity),
         L(obsImpl1, obsImpl2),
         Nil,
-        None))
+        None,
+        ancestors = L(STraitCall("ScalanDsl", Nil))))
   }
 
   val testModule =
