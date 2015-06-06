@@ -17,11 +17,42 @@ One of the subprojects, `lms-backend` currently depends on a fork of [LMS](https
 
 The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backends available are Scala- and C++-based LMS backends, both defined in the `lms-backend` subproject.
 
-If you want to create your own project depending on Scalan, you have two options:
+If you want to create your own project depending on Scalan, you should use `publishLocal` SBT command to publish Scalan artifacts to your local Ivy repository and add dependencies as usual:
 
-* use `publishLocal` SBT command to deploy Scalan to your local Ivy repository;
+~~~scala
+// at the moment, there's no stable version for Scala 2.11
+def liteDependency(name: String) = "com.huawei.scalan" %% name % "0.2.9-SNAPSHOT"
 
-* use a [project reference](http://www.scala-sbt.org/0.12.4/docs/Dormant/Full-Configuration.html#project-references) to Scalan in your build instead of `libraryDependencies`.
+lazy val core = liteDependency("core")
+lazy val ce = liteDependency("community-edition")
+lazy val meta = liteDependency("meta")
+
+lazy val myProject = Project(...).settings(
+  // or core, core % "test" classifier "tests" if you only need scalan-core
+  libraryDependencies ++= Seq(ce, ce % "test" classifier "tests")
+)
+
+lazy val myMeta = Project(...).settings(libraryDependencies += meta)
+~~~
+
+`"test"` dependencies allow reuse of Scalan's existing test infrastructure and aren't necessary if you don't need it. See [Extending Scalan](#extending-scalan) below for an explanation of `myMeta`. 
+
+If you also need to depend on `lms-backend`, you have to add [Scala-Virtualized](https://github.com/tiarkrompf/scala-virtualized) to the `settings` block above. See [Maven Repository](http://mvnrepository.com/artifact/org.scala-lang.virtualized) for the latest Scala-Virtualized version; as of this writing, 2.11.2 is the only version which can be used:
+
+~~~scala
+settings(...,
+  libraryDependencies += liteDependency("lms-backend"), 
+  scalaVersion := "2.11.2",
+  scalaOrganization := "org.scala-lang.virtualized")
+~~~
+
+<!-- TODO how best to make sure virtualized scala-{library/compiler/reflect}.jar are first in the classpath -->
+
+Alternately, you can use [project references](http://www.scala-sbt.org/0.12.4/docs/Dormant/Full-Configuration.html#project-references) to Scalan in your build instead of `libraryDependencies` if you want changes to Scalan to be immediately visible to your project without a `publishLocal` step.
+
+### Stability
+
+Currently we are quite far from 1.0 and breaking changes can happen.
 
 ## Writing programs
 
