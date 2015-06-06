@@ -224,7 +224,7 @@ trait PointsDsl extends impl.PointsAbs
 trait PointsDslSeq extends impl.PointsSeq
 trait PointsDslExp extends impl.PointsExp
 ~~~
-This obviously doesn't compile yet, because of references to non-existent classes in the `impl` package. They are boilerplate code which must be generated using the `meta` subproject (see [its documentation](meta/README.md)). It will have to be regenerated if `Point` or `PointImpl` are renamed or deleted, or if new implementations of `Point` are added.
+This obviously doesn't compile yet, because of references to non-existent classes in the `impl` package. They are boilerplate code which must be generated using the `meta` subproject. Currently this unfortunately has to be done manually by running SBT command `meta/run <configurations>`, where `<configurations>` is one or more configuration defined in [BoilerplateTool.scala](src/main/scala/scalan/meta/BoilerplateTool.scala). This has to be done when a DSL file is added or changed, or after changes in the `meta` subproject itself. Projects which depend on Scalan and add their own DSLs will normally also have a `meta` subproject with a dependency on `scalan-meta`.
 
 Note that methods in `Point` must have `Rep` in argument types and return value type. If `Point` had a type parameter, it would also have methods asserting existence of `Element` instances. It may seem some of these empty traits are unnecessary, but they serve as extension points. E.g. any methods added to `PointCompanion` will be available on `Point` companion objects.
 
