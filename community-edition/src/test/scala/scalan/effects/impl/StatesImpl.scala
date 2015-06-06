@@ -26,7 +26,8 @@ trait StatesAbs extends States with Scalan {
       weakTypeTag[State0[S, A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[State0[S, A]] =>  convertState0(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[State0[S, A]] => convertState0(x) }
       tryConvert(element[State0[S, A]], this, x, conv)
     }
 

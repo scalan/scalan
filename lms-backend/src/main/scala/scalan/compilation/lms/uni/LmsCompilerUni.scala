@@ -52,10 +52,10 @@ trait LmsCompilerUni
               case Def(lam: Lambda[a, b]) => {
 
                 implicit val eA = lam.eA.asElem[a]
-                val eJNIA =  JNITypeElem()(lam.eA).asElem[JNIType[a]]
+                implicit val eB = lam.eB.asElem[b]
 
                 fun[JNIType[a], JNIType[b]] { arg: Rep[JNIType[a]] =>
-                  JNI_Pack(lam.self(JNI_Extract(arg)))(lam.eB) } (Lazy(eJNIA))
+                  JNI_Pack(lam.self(JNI_Extract(arg)))(lam.eB) }
               }
 
               //case Def(lam: Lambda[a, b]) => fun[a, JNIType[b]] { arg: Rep[a] => JNI_Pack(lam.self(arg))(lam.eB) } (Lazy(lam.eA))

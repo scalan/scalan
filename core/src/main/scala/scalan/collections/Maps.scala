@@ -19,7 +19,7 @@ trait Maps extends  Base  { self: Scalan =>
     def isEmpty: Rep[Boolean] = (size === 0)
     def contains(k: Rep[K]): Rep[Boolean]
     def apply(key: Rep[K]): Rep[V]
-    def applyIf[T](key: Rep[K], exists: Rep[V] => Rep[T], otherwise: () => Rep[T]): Rep[T] =
+    def applyIf[T: Elem](key: Rep[K], exists: Rep[V] => Rep[T], otherwise: () => Rep[T]): Rep[T] =
       applyIfBy(key, fun(exists), fun { _: Rep[Unit] => otherwise() })
     def applyIfBy[T](key: Rep[K], exists: Rep[V => T], otherwise: Rep[Unit => T]): Rep[T]
     def update(key: Rep[K], value: Rep[V]): Rep[Unit]

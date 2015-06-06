@@ -26,7 +26,8 @@ trait IOsAbs extends IOs with Scalan {
       weakTypeTag[IO[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[IO[A]] =>  convertIO(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[IO[A]] => convertIO(x) }
       tryConvert(element[IO[A]], this, x, conv)
     }
 

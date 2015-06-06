@@ -27,7 +27,8 @@ trait InteractionsAbs extends Interactions with Scalan {
       weakTypeTag[Interact[A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Interact[A]] =>  convertInteract(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Interact[A]] => convertInteract(x) }
       tryConvert(element[Interact[A]], this, x, conv)
     }
 

@@ -26,7 +26,8 @@ trait ReadersAbs extends Readers with Scalan {
       weakTypeTag[Reader[Env, A]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Reader[Env, A]] =>  convertReader(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Reader[Env, A]] => convertReader(x) }
       tryConvert(element[Reader[Env, A]], this, x, conv)
     }
 

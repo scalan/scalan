@@ -52,7 +52,7 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL
         case _ => compilerOutput.common.name
       }
     )
-    val argumentClass = compilerOutput.common.eInput.classTag.runtimeClass
+    val argumentClass = compilerOutput.common.eInput.runtimeClass
     (cls, cls.getMethod("apply", argumentClass))
   }
 

@@ -31,7 +31,7 @@ trait Views extends Elems { self: Scalan =>
     def getConverterFrom[E](eEntity: EntityElem[E]): Option[Conv[E, TClass]] = {
       try {
         val convFun: Rep[E => TClass] =
-          fun({ x: Rep[E] => eClass.convert(x.asRep[Reifiable[_]])})(Lazy(eEntity))
+          fun({ x: Rep[E] => eClass.convert(x.asRep[Reifiable[_]])})(Lazy(eEntity), eClass)
         Some(BaseConverter(convFun)(eEntity, eClass))
       }
       catch {
@@ -59,8 +59,8 @@ trait Views extends Elems { self: Scalan =>
     }
     override def hashCode = 41 * eFrom.hashCode + eTo.hashCode
     def isIdentity: Boolean = false
-    lazy val fromFun = fun { x: Rep[To] => from(x) }(Lazy(eTo))
-    lazy val toFun = fun { x: Rep[From] => to(x) }
+    lazy val fromFun = fun { x: Rep[To] => from(x) }(Lazy(eTo), eFrom)
+    lazy val toFun = fun { x: Rep[From] => to(x) }(Lazy(eFrom), eTo)
 
     if (isDebug) {
       debug$IsoCounter(this) += 1
@@ -516,6 +516,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
     // Rule: ParExec(nJobs, f @ i => ... V(_, iso)) ==> V(ParExec(nJobs, f >> iso.from), ArrayIso(iso))
     case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[a, b])))) =>
+      implicit val ea = iso.eFrom
       val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
       ViewArray(parRes)(ArrayIso(iso))
 

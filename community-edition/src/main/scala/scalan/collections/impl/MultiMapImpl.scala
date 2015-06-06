@@ -26,7 +26,8 @@ trait MultiMapsAbs extends MultiMaps with Scalan {
       weakTypeTag[MMultiMap[K, V]].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[MMultiMap[K, V]] =>  convertMMultiMap(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[MMultiMap[K, V]] => convertMMultiMap(x) }
       tryConvert(element[MMultiMap[K, V]], this, x, conv)
     }
 

@@ -8,27 +8,27 @@ import scalan.common.OverloadHack.Overloaded1
 
 trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
-  type Coll[+A] = Rep[Collection[A]]
-  trait Collection[@uncheckedVariance +A] extends Reifiable[Collection[A @uncheckedVariance]] {
-    implicit def eItem: Elem[A @uncheckedVariance]
+  type Coll[+Item] = Rep[Collection[Item]]
+  trait Collection[@uncheckedVariance +Item] extends Reifiable[Collection[Item @uncheckedVariance]] {
+    implicit def eItem: Elem[Item @uncheckedVariance]
     def length: Rep[Int]
-    def arr: Rep[Array[A @uncheckedVariance]]
-    def lst: Rep[List[A @uncheckedVariance]]
-    def seq: Rep[SSeq[A] @uncheckedVariance] = SSeq(arr)
-    def apply(i: Rep[Int]): Rep[A]
+    def arr: Rep[Array[Item @uncheckedVariance]]
+    def lst: Rep[List[Item @uncheckedVariance]]
+    def seq: Rep[SSeq[Item] @uncheckedVariance] = SSeq(arr)
+    def apply(i: Rep[Int]): Rep[Item]
     @OverloadId("many")
-    def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[A]
-    def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): Coll[B] //= Collection(arr.mapBy(f))
-    def zip[B: Elem](ys: Coll[B]): PairColl[A @uncheckedVariance, B] // = PairCollectionSOA(self, ys)
-    def slice(offset: Rep[Int], length: Rep[Int]): Coll[A]
-    def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] //= arr.reduce(m)
-    def update (idx: Rep[Int], value: Rep[A @uncheckedVariance]): Coll[A]
-    def updateMany (idxs: Coll[Int], vals: Coll[A @uncheckedVariance]): Coll[A]
+    def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[Item]
+    def mapBy[B: Elem](f: Rep[Item => B @uncheckedVariance]): Coll[B] //= Collection(arr.mapBy(f))
+    def zip[B: Elem](ys: Coll[B]): PairColl[Item @uncheckedVariance, B] // = PairCollectionSOA(self, ys)
+    def slice(offset: Rep[Int], length: Rep[Int]): Coll[Item]
+    def reduce(implicit m: RepMonoid[Item @uncheckedVariance]): Rep[Item] //= arr.reduce(m)
+    def update (idx: Rep[Int], value: Rep[Item @uncheckedVariance]): Coll[Item]
+    def updateMany (idxs: Coll[Int], vals: Coll[Item @uncheckedVariance]): Coll[Item]
     def indexes: Coll[Int] = Collection.indexRange(length)
-    def filterBy(f: Rep[A @uncheckedVariance => Boolean]): Coll[A]
-    def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] // = Collection(arr.flatMap {in => f(in).arr} )
-    def append(value: Rep[A @uncheckedVariance]): Coll[A]  // = Collection(arr.append(value))
-    def foldLeft[S: Elem](init: Rep[S], f: Rep[((S, A)) => S]): Rep[S] = arr.fold(init, f)
+    def filterBy(f: Rep[Item @uncheckedVariance => Boolean]): Coll[Item]
+    def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] // = Collection(arr.flatMap {in => f(in).arr} )
+    def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  // = Collection(arr.append(value))
+    def foldLeft[S: Elem](init: Rep[S], f: Rep[((S, Item)) => S]): Rep[S] = arr.fold(init, f)
     /*def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(Collection[A], A)] = {
       val arrScan = arr.scan(m)
       (Collection(arrScan._1), arrScan._2)
@@ -139,64 +139,64 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   }
   trait UnitCollectionCompanion extends ConcreteClass0[UnitCollection]
 
-  abstract class CollectionOverArray[A](val arr: Rep[Array[A]])(implicit val eItem: Elem[A]) extends Collection[A] {
+  abstract class CollectionOverArray[Item](val arr: Rep[Array[Item]])(implicit val eItem: Elem[Item]) extends Collection[Item] {
     def lst = arr.toList
     def length = arr.length
     def apply(i: Rep[Int]) = arr(i)
-    def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))
+    def mapBy[B: Elem](f: Rep[Item => B @uncheckedVariance]): Coll[B] = Collection(arr.mapBy(f))
     def slice(offset: Rep[Int], length: Rep[Int]) = {
       val sl = arr.slice(offset, length)
       CollectionOverArray(sl)
     }
     @OverloadId("many")
-    def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[A] = CollectionOverArray(arr(indices.arr))
-    def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] = arr.reduce(m)
-    def zip[B: Elem](ys: Coll[B]): PairColl[A, B] = PairCollectionSOA(self, ys)
-    def update (idx: Rep[Int], value: Rep[A]): Coll[A] = CollectionOverArray(arr.update(idx, value))
-    def updateMany (idxs: Coll[Int], vals: Coll[A]): Coll[A] = CollectionOverArray(arr.updateMany(idxs.arr, vals.arr))
-    def filterBy(f: Rep[A @uncheckedVariance => Boolean]): Coll[A] = CollectionOverArray(arr.filterBy(f))
-    def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr})
-    def append(value: Rep[A @uncheckedVariance]): Coll[A]  = CollectionOverArray(arr.append(value))
+    def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[Item] = CollectionOverArray(arr(indices.arr))
+    def reduce(implicit m: RepMonoid[Item @uncheckedVariance]): Rep[Item] = arr.reduce(m)
+    def zip[B: Elem](ys: Coll[B]): PairColl[Item, B] = PairCollectionSOA(self, ys)
+    def update (idx: Rep[Int], value: Rep[Item]): Coll[Item] = CollectionOverArray(arr.update(idx, value))
+    def updateMany (idxs: Coll[Int], vals: Coll[Item]): Coll[Item] = CollectionOverArray(arr.updateMany(idxs.arr, vals.arr))
+    def filterBy(f: Rep[Item @uncheckedVariance => Boolean]): Coll[Item] = CollectionOverArray(arr.filterBy(f))
+    def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr})
+    def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = CollectionOverArray(arr.append(value))
   }
   trait CollectionOverArrayCompanion extends ConcreteClass1[CollectionOverArray]
 
-  abstract class CollectionOverList[A](val lst: Rep[List[A]])(implicit val eItem: Elem[A]) extends Collection[A] {
+  abstract class CollectionOverList[Item](val lst: Rep[List[Item]])(implicit val eItem: Elem[Item]) extends Collection[Item] {
     def length = lst.length
     def apply(i: Rep[Int]) = lst(i)
     def arr = lst.toArray
-    def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): Coll[B] = CollectionOverList(lst.mapBy(f))
+    def mapBy[B: Elem](f: Rep[Item => B @uncheckedVariance]): Coll[B] = CollectionOverList(lst.mapBy(f))
     def slice(offset: Rep[Int], length: Rep[Int]) = CollectionOverList(lst.slice(offset, length))
     @OverloadId("many")
-    def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[A] = CollectionOverList(lst(indices.arr))
-    def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] = lst.reduce(m)
-    def zip[B: Elem](ys: Coll[B]): PairColl[A, B] = PairCollectionSOA(self, ys)
-    def update (idx: Rep[Int], value: Rep[A]): Coll[A] = ???
-    def updateMany (idxs: Coll[Int], vals: Coll[A]): Coll[A] = ???
-    def filterBy(f: Rep[A @uncheckedVariance => Boolean]): Coll[A] = CollectionOverList(lst.filterBy(f))
-    def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] =
+    def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[Item] = CollectionOverList(lst(indices.arr))
+    def reduce(implicit m: RepMonoid[Item @uncheckedVariance]): Rep[Item] = lst.reduce(m)
+    def zip[B: Elem](ys: Coll[B]): PairColl[Item, B] = PairCollectionSOA(self, ys)
+    def update (idx: Rep[Int], value: Rep[Item]): Coll[Item] = ???
+    def updateMany (idxs: Coll[Int], vals: Coll[Item]): Coll[Item] = ???
+    def filterBy(f: Rep[Item @uncheckedVariance => Boolean]): Coll[Item] = CollectionOverList(lst.filterBy(f))
+    def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] =
       CollectionOverList(lst.flatMap { in => f(in).lst } )
-    def append(value: Rep[A @uncheckedVariance]): Coll[A]  = CollectionOverList(value :: lst)
+    def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = CollectionOverList(value :: lst)
   }
   trait CollectionOverListCompanion extends ConcreteClass1[CollectionOverList]
 
-  abstract class CollectionOverSeq[A](override val seq: Rep[SSeq[A]])(implicit val eItem: Elem[A]) extends Collection[A] {
+  abstract class CollectionOverSeq[Item](override val seq: Rep[SSeq[Item]])(implicit val eItem: Elem[Item]) extends Collection[Item] {
     def arr = seq.toArray
     def lst = seq.toList
     def length = seq.size
     def apply(i: Rep[Int]) = seq(i)
     def slice(offset: Rep[Int], length: Rep[Int]) = CollectionOverSeq(seq.slice(offset, offset + length))
     @OverloadId("many")
-    def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[A] = {
+    def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[Item] = {
       CollectionOverSeq(SSeq(indices.arr.map(i => seq(i))))
     }
-    def mapBy[B: Elem](f: Rep[A => B @uncheckedVariance]): Coll[B] = ???
-    def reduce(implicit m: RepMonoid[A @uncheckedVariance]): Rep[A] = ???
-    def zip[B: Elem](ys: Coll[B]): PairColl[A, B] = ???
-    def update (idx: Rep[Int], value: Rep[A]): Coll[A] = ???
-    def updateMany (idxs: Coll[Int], vals: Coll[A]): Coll[A] = ???
-    def filterBy(f: Rep[A @uncheckedVariance => Boolean]): Coll[A] = ???
-    def flatMapBy[B: Elem](f: Rep[A @uncheckedVariance => Collection[B]]): Coll[B] = ???
-    def append(value: Rep[A @uncheckedVariance]): Coll[A]  = ???
+    def mapBy[B: Elem](f: Rep[Item => B @uncheckedVariance]): Coll[B] = ???
+    def reduce(implicit m: RepMonoid[Item @uncheckedVariance]): Rep[Item] = ???
+    def zip[B: Elem](ys: Coll[B]): PairColl[Item, B] = ???
+    def update (idx: Rep[Int], value: Rep[Item]): Coll[Item] = ???
+    def updateMany (idxs: Coll[Int], vals: Coll[Item]): Coll[Item] = ???
+    def filterBy(f: Rep[Item @uncheckedVariance => Boolean]): Coll[Item] = ???
+    def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] = ???
+    def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = ???
   }
   trait CollectionOverSeqCompanion extends ConcreteClass1[CollectionOverSeq]
 

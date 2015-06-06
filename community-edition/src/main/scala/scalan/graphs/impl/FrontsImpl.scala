@@ -26,7 +26,8 @@ trait FrontsAbs extends Fronts with Scalan {
       weakTypeTag[Front].asInstanceOf[WeakTypeTag[To]]
     }
     override def convert(x: Rep[Reifiable[_]]) = {
-      val conv = fun {x: Rep[Front] =>  convertFront(x) }
+      implicit val eTo: Elem[To] = this
+      val conv = fun {x: Rep[Front] => convertFront(x) }
       tryConvert(element[Front], this, x, conv)
     }
 

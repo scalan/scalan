@@ -107,7 +107,7 @@ trait TypeWrappersExp extends TypeWrappers with GraphVizExport { scalan: ScalanE
     val eUnwrappedReceiver = unwrappedReceiver.elem
     val newArgs = unwrapSyms(mc.args)
     val argClasses = newArgs.map {
-      case a: Rep[a] => a.elem.classTag.runtimeClass
+      case a: Rep[a] => a.elem.runtimeClass
       case a => a.getClass
     }
 

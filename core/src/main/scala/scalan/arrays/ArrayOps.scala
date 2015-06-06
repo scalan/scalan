@@ -802,12 +802,13 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
         case _ =>
           super.rewriteDef(d)
       }
-    case mr@ArrayMapReduce(Def(map1: ArrayMap[x, y]@unchecked), map2, reduce) =>
+    case mr@ArrayMapReduce(Def(map1: ArrayMap[x, y]@unchecked), map2: Rep[Function1[_, (k, v)]], reduce) =>
       val xs = map1.xs.asRep[Array[x]]
       implicit val eX = xs.elem.eItem
-      implicit val eK = mr.elemKey
-      implicit val eV = mr.elemValue
-      xs.mapReduceBy(fun { e => map2(map1.f(e)) }, reduce)(eK, eV)
+      implicit val eY = map1.elem.eItem
+      implicit val eK = mr.elemKey.asElem[k]
+      implicit val eV = mr.elemValue.asElem[v]
+      xs.mapReduceBy[k, v](fun { e => map2.asRep[y => (k, v)](map1.f(e)) }, reduce.asRep[((v, v)) => v])
     case ArrayZip(Def(ArrayReplicate(len, v1: Rep[a])), Def(ArrayReplicate(_, v2: Rep[b]))) =>
       implicit val eA = v1.elem
       implicit val eB = v2.elem

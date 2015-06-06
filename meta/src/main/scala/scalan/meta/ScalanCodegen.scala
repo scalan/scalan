@@ -460,7 +460,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |      weakTypeTag[${e.entityType}].asInstanceOf[WeakTypeTag[To]]
         |    }
         |    override def convert(x: Rep[Reifiable[_]]) = {
-        |      val conv = fun {x: Rep[${e.entityType}] =>  convert$entityName(x) }
+        |      implicit val eTo: Elem[To] = this
+        |      val conv = fun {x: Rep[${e.entityType}] => convert$entityName(x) }
         |      tryConvert(element[${e.entityType}], this, x, conv)
         |    }
         |

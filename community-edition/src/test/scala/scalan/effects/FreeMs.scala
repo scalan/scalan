@@ -11,25 +11,33 @@ trait FreeMs extends Base { self: MonadsDsl =>
     implicit def eA: Elem[A]
     implicit def cF: Cont[F]
 
-    def flatMap[B:Elem](f: Rep[A] => Rep[FreeM[F,B]]): Rep[FreeM[F,B]] = flatMapBy(fun(f))
     def flatMapBy[B:Elem](f: Rep[A => FreeM[F,B]]): Rep[FreeM[F,B]] = FlatMap(self, f)
 
     def mapBy[B:Elem](f: Rep[A => B]): Rep[FreeM[F,B]] =
-      flatMap(a => Done(f(a)))
-
-    def map[B:Elem](f: Rep[A] => Rep[B]): Rep[FreeM[F,B]] = mapBy(fun(f))
+      self.flatMap(a => Done(f(a)))
 
     def resume(implicit fF: Functor[F]): Rep[F[FreeM[F,A]] | A]
+
+    private[FreeMs] def resumeFlatMap[B: Elem](f: Rep[A => FreeM[F,B]])(implicit fF: Functor[F]): Rep[F[FreeM[F,B]] | B]
   }
   trait FreeMCompanion
+
+  implicit class FreeMExtensions[F[_], A](x: RFreeM[F, A]) {
+    private implicit def eA = x.selfType1.asInstanceOf[FreeMElem[F, A, _]].eA
+    private implicit def cF = x.selfType1.asInstanceOf[FreeMElem[F, A, _]].cF
+
+    def flatMap[B:Elem](f: Rep[A] => Rep[FreeM[F,B]]): Rep[FreeM[F,B]] = x.flatMapBy(fun(f))
+
+    def map[B:Elem](f: Rep[A] => Rep[B]): Rep[FreeM[F,B]] = x.mapBy(fun(f))
+  }
 
   abstract class Done[F[_], A]
         (val a: Rep[A])
         (implicit val eA: Elem[A], val cF: Cont[F]) extends FreeM[F,A]
   {
-    override def flatMap[B:Elem](f: Rep[A] => Rep[FreeM[F,B]]): Rep[FreeM[F,B]] = f(a)
     override def flatMapBy[B:Elem](f: Rep[A => FreeM[F,B]]): Rep[FreeM[F,B]] = f(a)
     def resume(implicit fF: Functor[F]): Rep[F[FreeM[F,A]] | A] = a.asRight[F[FreeM[F,A]]]
+    private[FreeMs] def resumeFlatMap[B: Elem](f: Rep[A => FreeM[F,B]])(implicit fF: Functor[F]): Rep[F[FreeM[F,B]] | B] = f(a).resume
   }
   trait DoneCompanion
 
@@ -38,6 +46,8 @@ trait FreeMs extends Base { self: MonadsDsl =>
         (implicit val eA: Elem[A], val cF: Cont[F]) extends FreeM[F, A] {
 
     def resume(implicit fF: Functor[F]): Rep[F[FreeM[F,A]] | A] = k.asLeft[A]
+    private[FreeMs] def resumeFlatMap[B: Elem](f: Rep[A => FreeM[F,B]])(implicit fF: Functor[F]): Rep[F[FreeM[F,B]] | B] =
+      fF.map(k)(fs => fs.flatMapBy(f)).asLeft[B]
   }
   trait MoreCompanion
 
@@ -45,18 +55,13 @@ trait FreeMs extends Base { self: MonadsDsl =>
         (val a: Rep[FreeM[F, S]], val f: Rep[S => FreeM[F,B]])
         (implicit val eS: Elem[S], val eA: Elem[B], val cF: Cont[F]) extends FreeM[F,B] {
 
-    override def flatMap[R:Elem](f1: Rep[B] => Rep[FreeM[F,R]]): Rep[FreeM[F,R]] =
-      a.flatMap((s: Rep[S]) => f(s).flatMap(f1))
     override def flatMapBy[R:Elem](f1: Rep[B => FreeM[F,R]]): Rep[FreeM[F,R]] =
       a.flatMap((s: Rep[S]) => f(s).flatMapBy(f1))
 
-    def resume(implicit fF: Functor[F]): Rep[F[FreeM[F,B]] | B] = a.selfType1.asInstanceOf[FreeMElem[F, _, _]] match {
-      case r: DoneElem[F,S] => f(a.asRep[Done[F,S]].a).resume
-      case s: MoreElem[F,S] => fF.map(a.asRep[More[F,S]].k)(fs => fs.flatMapBy(f)).asLeft[B]
-      case fm: FlatMapElem[F,s,S] =>
-        val fm = a.asRep[FlatMap[F,s,S]]
-        fm.a.flatMap((x: Rep[s]) => fm.f(x) flatMapBy f).resume
-    }
+    def resume(implicit fF: Functor[F]): Rep[F[FreeM[F,B]] | B] = a.resumeFlatMap(f)
+
+    private[FreeMs] def resumeFlatMap[C: Elem](g: Rep[B => FreeM[F,C]])(implicit fF: Functor[F]): Rep[F[FreeM[F,C]] | C] =
+      a.flatMap((x: Rep[S]) => f(x) flatMapBy g).resume
   }
   trait FlatMapCompanion
 
