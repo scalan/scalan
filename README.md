@@ -1,49 +1,46 @@
 [![Stories in Ready](https://badge.waffle.io/scalan/scalan.png?label=ready&title=Ready)](https://waffle.io/scalan/scalan)
-# Scalan Community Edition
+# Scalan Compilation Framework
 
 ## Intro
 
-Scalan is a framework for creating staged embedded DSLs in Scala. It allows you to write high-level Scala programs and compile them to efficient low-level code (in the language determined by the used backend) and to develop new abstractions which can be used in such programs.
+Scalan is a framework for domain-specific compilation in Scala. It allows you to write high-level Scala programs and compile them to efficient low-level code (in any language supported by the existing backends) by applying domain-specific compilation techniques.
 
-Scalan is based on [Polymorphic Embedding](http://dl.acm.org/citation.cfm?id=1449935) technique and [LMS-like](http://scala-lms.github.io/) staging. However, is contrast to LMS, Scalan doesn't rely on `Scala-virtualized` and works with `Scala 2.10+` compiler.
+Scalan is based on [Polymorphic Embedding](http://dl.acm.org/citation.cfm?id=1449935) and [LMS-like](http://scala-lms.github.io/) staging. However, is contrast to LMS, Scalan doesn't rely on `Scala-virtualized` and works with `Scala 2.10+` compiler.
 
-As the consequence, staged evaluation in Scalan is first-class and can be redefined and customized for the needs of a particular domain.
+In conjunction with [Scalanizer](https://github.com/scalan/scalanizer) Scalan can be used to develop domain-specific JIT compilers for hot-spot optimization in Scala.
 
-Scalan, in conjunction with [Scalanizer](https://github.com/scalan/scalanizer), can be used to develop domain-specific JIT compilers for hot-spot optimization.
+One of the distinguishing feature of Scalan is [Isomorphic Specialization](http://dl.acm.org/citation.cfm?id=2633632) a new specialization algorithm and technique which allows to perform cross-domain translations of programs. Thus it is possible to construct compilation pipelines with gradual lowering of domain-specific abstractions.
 
-One of the key features of Scalan is [Isomorphic Specialization](http://dl.acm.org/citation.cfm?id=2633632) a new specialization algorithm and technique which allow to perform cross-domain translations of programs. Thus it is possible to construct compilation pipelines with gradual lowering of domain-specific abstractions.
-
-[Scalan Google Group](https://groups.google.com/forum/#!forum/scalan) is used for Scalan-related discussions. See also [Contributions](#contributions) below.
+Please visit [Scalan Google Group](https://groups.google.com/forum/#!forum/scalan) for Scalan-related discussions. See also [Contributions](#contributions) below and get involved.
 
 ### Building the project and running tests
 
-[SBT](http://www.scala-sbt.org/) is required to build Scalan. See linked documentation for installing and using SBT itself. There is also [an improved runner](https://github.com/paulp/sbt-extras) which takes care of downloading correct SBT version and adds some extra features.
+[SBT](http://www.scala-sbt.org/) is required to build Scalan. See SBT documentation for installation and usage instructions. There is also [an improved runner](https://github.com/paulp/sbt-extras) which takes care of downloading correct SBT version and adds some extra features.
 
 The project consists of several [subprojects](http://www.scala-sbt.org/release/tutorial/Multi-Project.html), including the aggregate project `scalan`.
 
 One of the subprojects, `lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`. If you want to use it, you need to clone and build this dependency first, since it isn't published in a public repository.
 
-The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backends available are Scala- and C++-based LMS backends, both defined in the `lms-backend` subproject.
+The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backends(codegens) available are Scala- and C++-based LMS backends, both defined in the `lms-backend` subproject.
 
 If you want to create your own project depending on Scalan, you should use `publishLocal` SBT command to publish Scalan artifacts to your local Ivy repository and add dependencies as usual:
 
 ~~~scala
-// at the moment, there's no stable version for Scala 2.11
 def liteDependency(name: String) = "com.huawei.scalan" %% name % "0.2.9-SNAPSHOT"
 
 lazy val core = liteDependency("core")
 lazy val ce = liteDependency("community-edition")
 lazy val meta = liteDependency("meta")
 
-lazy val myProject = Project(...).settings(
+lazy val myProject = Project("myProjectName").settings(
   // or core, core % "test" classifier "tests" if you only need scalan-core
   libraryDependencies ++= Seq(ce, ce % "test" classifier "tests")
 )
 
-lazy val myMeta = Project(...).settings(libraryDependencies += meta)
+lazy val myMeta = Project("myMetaProjectName").settings(libraryDependencies += meta)
 ~~~
 
-`"test"` dependencies allow reuse of Scalan's existing test infrastructure and aren't necessary if you don't need it. See [Extending Scalan](#extending-scalan) below for an explanation of `myMeta`. 
+`"test"` dependencies allow reuse of Scalan's existing test infrastructure and aren't necessary if you don't need it. See [Extending Scalan](#extending-scalan) below for an explanation of `myMeta`.
 
 If you also need to depend on `lms-backend`, you have to add [Scala-Virtualized](https://github.com/tiarkrompf/scala-virtualized) to the `settings` block above. See [Maven Repository](http://mvnrepository.com/artifact/org.scala-lang.virtualized) for the latest Scala-Virtualized version; as of this writing, 2.11.2 is the only version which can be used:
 
@@ -60,30 +57,35 @@ Alternately, you can use [project references](http://www.scala-sbt.org/0.12.4/do
 
 ### Stability
 
-Currently we are quite far from 1.0 and breaking changes can happen.
+Currently we are quite far from 1.0 and breaking changes can happen. In such a case we usually publish a new release.
 
 ## Writing programs
+With the introduction of [Scalanizer](https://github.com/scalan/scalanizer) as a new frontend, the role of Scalan is shifted one level down in the middle part of the compilation pipeline, but it still can be used for development of new EDSLs without Scalanizer.
 
-Scalan is embedded into Scala, so all standard rules of Scala syntax apply and knowledge of Scala is assumed in this manual. However, it only supports a limited subset of types and operations. Note that if you write a program which is legal Scala, but not legal Scalan, there are currently no error messages or warnings. This is planned to be changed in the future.
+Scalan is a library in Scala, so all standard rules of Scala syntax apply and knowledge of Scala is assumed in this manual. However, Scalan supports only a limited subset of Scala types and operations. This is not a conceptual limitation and will improve overtime especially with the help of Scalanizer plugin.
+
+Note that if you write a program which is legal Scala, but not legal Scalan, there are currently no error messages or warnings. This is one of the reasons and rationale for creating Scalanizer.
 
 ### Types
 
 All Scalan values have type `Rep[A]` for some Scala type `A`. Currently `A` can be one of the following types:
 
-1. Base types: `Boolean`, `Byte`, `Int`, `Long`, `Float`, `Double`. `String` will be added soon.
-2. Pairs `(A, B)`. Larger tuples are are represented as pairs nested to the right, so e.g. instead of `Rep[(Int, Int, Boolean)]` you write `Rep[(Int, (Int, Boolean))]`.
+1. Base types: `Boolean`, `Byte`, `Int`, `Long`, `Float`, `Double`, `String`.
+2. Pairs `(A, B)`. Larger tuples are are represented as pairs nested to the right, so e.g. instead of `Rep[(Int, Int, Boolean)]` you write `Rep[(Int, (Int, Boolean))]`. This might look a bit annoying for a DSL front-end, but it actually pays-off at middle-end where generic transformations are implemented.
 3. Sums `Either[A, B]` (can also be written as `A | B`).
 4. Functions `A => B`. Functions with multiple arguments are emulated by functions taking a tuple (or by currying), such as `Rep[((A, B)) => C]` (note double parentheses).
 5. Arrays `Array[A]` (in `community-edition` subproject).
-6. Traits and classes added by DSL developers (see "Extending Scalan" section below).
+6. Traits and classes added by DSL developers (see [Extending Scalan](#extending-scalan) section below).
 
-Note that nested `Rep` is not allowed. There are type aliases for some `Rep` types, such as `type IntRep = Rep[Int]`, `type Arr[A] = Rep[Array[A]]`, etc.
+Note that nested `Rep` is not allowed (i.e. you cannot write something like this `Rep[(Rep[Int], Double)]`), but it is possible to nest `Rep` in user defined classes (see [Extending Scalan](#extending-scalan)).
 
-Scala values of type `A` can be converted to `Rep[A]` implicitly (or explicitly using `toRep` method if desired). However, it's impossible to convert from `Rep[A]` to `A`.
+There are type aliases for some `Rep` types, such as `type IntRep = Rep[Int]`, `type Arr[A] = Rep[Array[A]]`, etc. You can use aliases freely and the only rule for type aliases is that they don't violate Scalan's typing constraints.
+
+Scala values of type `A` can be converted to `Rep[A]` implicitly (or explicitly using `toRep` method if desired). Like in LMS they become constants of the next stage. (`Const[A]` nodes of intermediate representation, IR). However, in current version it's not possible to convert from `Rep[A]` to `A` as it would mean running the corresponding IR.
 
 ### Operations
 
-Scalan supports the usual arithmetic, logical, ordering, etc. operations. They are added by implicit conversions on `Rep`, so e.g. `y + x` where `x: Rep[Int]` and `y: Int` doesn't compile; write `toRep(y) + x` or `x + y` instead. There are currently no implicit widening conversions from `Rep[Int]` to `Rep[Long]`, from `Rep[Float]` to `Rep[Double]`, etc. Methods like `toInt` and `toDouble` should be used instead.
+Scalan supports the usual arithmetic, logical, ordering, etc. operations. They are added by implicit conversions on `Rep`. Note that `x + y` where `x: Int` and `y: Rep[Int]` doesn't compile; write `toRep(x) + y` or `y + x` instead. There are currently no implicit widening conversions from `Rep[Int]` to `Rep[Long]`, from `Rep[Float]` to `Rep[Double]`, etc. Methods like `toInt` and `toDouble` should be used instead.
 ~~~scala
 val x: Rep[Int] = 1
 
@@ -91,9 +93,9 @@ x + 3
 ~~~
 As in Scala, arithmetical operations on `Rep[T]` require an implicit `Numeric[T]` (`Fractional[T]` for `/`) to be in scope, and ordering operations require an `Ordering[T]`.
 
-Equality is written `===` and inequality `!==`. Note that accidental use of `==` or `!=` will likely compile (since `Boolean` can be implicitly converted to `Rep[Boolean]`) but produce wrong results!
+Equality is written `===` and inequality `!==`. Note that accidental use of `==` or `!=` will likely compile (since `Boolean` can be implicitly converted to `Rep[Boolean]`) but produce wrong results! Unfortunately this is a deficiency of polymorphic embedding and can only be cured by Scalanizer with automatic virtualization.
 
-Conditional expression is `IF (cond) THEN branch1 ELSE branch2`, where `cond: Rep[Boolean`. `THEN` is optional, and `ELSEIF` can be used in place of `ELSE`. Because `IF`, `THEN` and `ELSE` are methods, they are parsed differently from normal Scala conditionals `if`, `then` and `else`. Namely, `THEN` and `ELSE` shouldn't start new lines, e.g.
+Conditional expression is `IF (cond) THEN branch1 ELSE branch2`, where `cond: Rep[Boolean]`. `THEN` is optional, and `ELSEIF` can be used in place of `ELSE`. Because `IF`, `THEN` and `ELSE` are methods, they are parsed differently from normal Scala conditionals `if`, `then` and `else`. Namely, `THEN` and `ELSE` shouldn't start new lines, e.g.
 ~~~scala
 IF (true)
   THEN true
@@ -125,9 +127,17 @@ val c2 = tuple._3
 ~~~
 Currently tuples up to size 8 are supported.
 
-Scalan function values must be pure (support for limited side effects is planned). They can be obtained from pure Scala functions which take and return `Rep` by an implicit conversion `fun`. If a function shouldn't be inlined, `funGlob` method can be used instead.
+Scalan function values can be pure or they can have effectful operations. Effectful operation are reified in the IR using LMS style `Reflect/Reify` nodes.
+
+Scalan function values are of type `Rep[A=>B]` and are not the same as Scala functions (or lambdas) of type `Rep[A] => Rep[B]`. They can be obtained from pure Scala functions which take and return `Rep` by an implicit conversion `fun`.
+
+By default if you apply Scalan function like `val y = f(x)` the function is inlined in the point of application. If the function shouldn't be inlined, `funGlob` method can be used instead.
+
 ~~~scala
-val f: Rep[Int => Int] = { x: Rep[Int] => x + 1 } // or val f = fun { x: Rep[Int] => x + 1 } or val f = fun((_: Rep[Int]) + 1)
+val f: Rep[Int => Int] = { x: Rep[Int] => x + 1 } // implicit conversion
+val f1 = fun { x: Rep[Int] => x + 1 } // explicit conversion
+val f2 = fun((_: Rep[Int]) + 1) // using underscore
+val f3 = funGlob({ x: Rep[Int] => x + 1 })
 ~~~
 
 Loops can be written as `from(startingState).until(isMatch)(step)`, where `isMatch` and `step` are pure Scala functions which take the same number and types of arguments as passed to `from` and return `Rep[Boolean]` and a tuple as above respectively.
@@ -139,7 +149,9 @@ Methods can be defined using `def` keyword, as usual. Normally all arguments and
 
 ### User types
 
-User types (abstract like `Vector[T]` and concrete like `DenseVector[T]`) are introduced as part of a DSL (`VectorsDsl`). For these types `T` there is an implicit conversion from `Rep[T]` to `T`, so all methods/fields of `T` are available on `Rep[T]`. If you need to add your own types see "Extending Scalan" below. It's possible to create classes with `Rep` fields, but you won't be able to stage these classes directly (i.e. obtain a `Rep[MyClass]`).
+User-Defined Types, UDTs, (abstractions like `Vector[T]` and concrete implementations like `DenseVector[T]`) are introduced as part of a module - logical group of Scala traits usually in a single file. Such modules in Scalan are also called DSLs to emphasise their domain specificity (`VectorsDsl`, `MatricesDsl`, etc). For such user defined types (like `Vector[T]`) there is an implicit conversion from `Rep[Vector[T]]` to `Vector[T]`, so all methods/fields of `Vector[T]` are available on `Rep[Vector[T]]`. This is of cause true for other user defined types not only for `Vector`. If you need to add your own types see [Extending Scalan](#extending-scalan) below.
+
+There are certain rules how to declare UDTs that should be obeyed in order to make UDTs first-class citizens in Scalan framework. It's also possible to create regular Scala classes with `Rep` fields, but you won't be able to stage these classes directly (i.e. obtain a `Rep[MyClass]`) because necessary boilerplate will not be generated by `scalan-meta` for such declarations.
 
 ### Program structure and example
 
@@ -159,6 +171,7 @@ trait HelloScalan extends ScalanCommunityDsl {
   val input = (matrix, vector)
 }
 ~~~
+
 It can be seen to be very close to a usual Scala program, except for use of `Rep` type constructor and `fun` method. Note that `run` takes core types as argument and returns core types, not matrices and vectors themselves.
 
 This example is available [in the repository](lms-backend/src/test/scala/HelloScalan.scala). Please raise an issue if you find it isn't up-to-date!
@@ -287,4 +300,6 @@ If you want to start working on an issue (existing or one you just raised), plea
 -->
 ## See also
 
-* [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) is a source of many ideas in Scalan and is used as one of the backends.
+[Scalanizer](https://github.com/scalan/scalanizer) - a Scala plugin which allows to capture Scala ASTs and translate it into Scalan.
+
+[Scalanizer Demo](https://github.com/scalan/scalanizer-demo) - a simple project that demonstrates how to use Scalanizer, declare hot-spot regions and generate efficient kernels for JVM and native execution.
