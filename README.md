@@ -5,6 +5,14 @@
 
 Scalan is a framework for creating staged embedded DSLs in Scala. It allows you to write high-level Scala programs and compile them to efficient low-level code (in the language determined by the used backend) and to develop new abstractions which can be used in such programs.
 
+Scalan is based on [Polymorphic Embedding](http://dl.acm.org/citation.cfm?id=1449935) technique and [LMS-like](http://scala-lms.github.io/) staging. However, is contrast to LMS, Scalan doesn't rely on `Scala-virtualized` and works with `Scala 2.10+` compiler.
+
+As the consequence, staged evaluation in Scalan is first-class and can be redefined and customized for the needs of a particular domain.
+
+Scalan, in conjunction with [Scalanizer](https://github.com/scalan/scalanizer), can be used to develop domain-specific JIT compilers for hot-spot optimization.
+
+One of the key features of Scalan is [Isomorphic Specialization](http://dl.acm.org/citation.cfm?id=2633632) a new specialization algorithm and technique which allow to perform cross-domain translations of programs. Thus it is possible to construct compilation pipelines with gradual lowering of domain-specific abstractions.
+
 [Scalan Google Group](https://groups.google.com/forum/#!forum/scalan) is used for Scalan-related discussions. See also [Contributions](#contributions) below.
 
 ### Building the project and running tests
