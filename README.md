@@ -1,4 +1,4 @@
-[![Stories in Ready](https://badge.waffle.io/scalan/scalan-ce.png?label=ready&title=Ready)](https://waffle.io/scalan/scalan-ce)
+[![Stories in Ready](https://badge.waffle.io/scalan/scalan.png?label=ready&title=Ready)](https://waffle.io/scalan/scalan)
 # Scalan Community Edition
 
 ## Intro
