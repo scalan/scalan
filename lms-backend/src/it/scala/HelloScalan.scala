@@ -23,7 +23,7 @@ trait HelloScalan extends ScalanCommunityDsl {
   val input = (matrix, vector)
 }
 
-// to run: lms-backend/test:runMain HelloScalanSeq
+// to run: scalan-lms-backend/test:runMain HelloScalanSeq
 object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
   def result = run(input)
 
@@ -32,7 +32,7 @@ object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
   }
 }
 
-// to run: lms-backend/test:runMain HelloScalanExp
+// to run: scalan-lms-backend/test:runMain HelloScalanExp
 object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with CommunityLmsCompilerScala with CommunityBridge {
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
