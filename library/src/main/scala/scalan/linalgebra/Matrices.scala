@@ -53,7 +53,9 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     @OverloadId("matrix")
     def *(matrix: Matrix[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T]
     def +^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T]
+    @OverloadId("matrix")
     def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T]
+    def *^^(value: Rep[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T]
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep
 
     def companion: Rep[AbstractMatrixCompanion]
@@ -113,6 +115,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       companion((rows zip other.rows).flatMap { case Pair(v1, v2) => (v1 +^ v2).items }, numColumns)
     }
 
+    @OverloadId("matrix")
     def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       other match {
         case DenseFlatMatrixMatcher(rmValues1, _) =>
@@ -122,6 +125,10 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
         case _ =>
           other *^^ self
       }
+    }
+
+    def *^^(value: Rep[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T] = {
+      DenseFlatMatrix(rmValues.map(x => x * value), numColumns)
     }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
@@ -166,6 +173,25 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def *(matrix: Matrix[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T] = {
       val mT = matrix.companion.fromRows(matrix.columns, matrix.numRows)
       companion(self.rows.map(row => mT * row), matrix.numColumns)
+      /*matrix match {
+        case CompoundMatrixMatcher(rowsB, numColumnsB) =>
+          val rowsNew = rows.map { vA =>
+            CompoundMatrix((vA.items zip rowsB).map { case Pair(a, vB) => vB *^ a }, numColumnsB).reduceByColumns
+          }
+          CompoundMatrix(rowsNew, numColumnsB)
+        case DenseFlatMatrixMatcher(rmValuesB, numColumnsB) =>
+          val rowsNew = rows.map { vA =>
+            val itemsA = vA.items.flatMap(a => Collection.replicate(numColumnsB, a))
+            DenseFlatMatrix((itemsA zip rmValuesB).map { case Pair(v1, v2) => v1 * v2 }, numColumnsB).reduceByColumns
+          }
+          CompoundMatrix(rowsNew, numColumnsB)
+        case _ =>
+          /*val rowsNew = rows.map { vA =>
+            CompoundMatrix((vA.items zip matrix.rows).map { case Pair(a, vB) => vB *^ a }, matrix.numColumns).reduceByColumns
+          }
+          CompoundMatrix(rowsNew, numColumnsB)*/
+          ???
+      }*/
     }
 
     def +^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
@@ -179,8 +205,13 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       }
     }
 
+    @OverloadId("matrix")
     def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
       companion((rows zip other.rows).map { case Pair(v1, v2) => v1 *^ v2 }, numColumns)
+    }
+
+    def *^^(value: Rep[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T] = {
+      CompoundMatrix(rows.map(row => row *^ value), numColumns)
     }
 
     def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
