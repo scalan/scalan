@@ -28,13 +28,13 @@ If you want to create your own project depending on Scalan, you should use `publ
 ~~~scala
 def liteDependency(name: String) = "com.huawei.scalan" %% name % "0.2.9-SNAPSHOT"
 
-lazy val core = liteDependency("core")
-lazy val ce = liteDependency("community-edition")
-lazy val meta = liteDependency("meta")
+lazy val core = liteDependency("scalan-core")
+lazy val library = liteDependency("scalan-library")
+lazy val meta = liteDependency("scalan-meta")
 
 lazy val myProject = Project("myProjectName").settings(
   // or core, core % "test" classifier "tests" if you only need scalan-core
-  libraryDependencies ++= Seq(ce, ce % "test" classifier "tests")
+  libraryDependencies ++= Seq(library, library % "test" classifier "tests")
 )
 
 lazy val myMeta = Project("myMetaProjectName").settings(libraryDependencies += meta)
@@ -46,7 +46,7 @@ If you also need to depend on `lms-backend`, you have to add [Scala-Virtualized]
 
 ~~~scala
 settings(...,
-  libraryDependencies += liteDependency("lms-backend"), 
+  libraryDependencies += liteDependency("lms-backend"),
   scalaVersion := "2.11.2",
   scalaOrganization := "org.scala-lang.virtualized")
 ~~~
@@ -174,7 +174,7 @@ trait HelloScalan extends ScalanCommunityDsl {
 
 It can be seen to be very close to a usual Scala program, except for use of `Rep` type constructor and `fun` method. Note that `run` takes core types as argument and returns core types, not matrices and vectors themselves.
 
-This example is available [in the repository](lms-backend/src/test/scala/HelloScalan.scala). Please raise an issue if you find it isn't up-to-date!
+This example is available [in the repository](lms-backend/src/it/scala/HelloScalan.scala). Please raise an issue if you find it isn't up-to-date!
 
 Now, there are two ways in which Scalan can work with this program:
 
@@ -182,7 +182,7 @@ Now, there are two ways in which Scalan can work with this program:
 
 Run it without optimizations in order to ensure it works as desired and debug if necessary. This is done by mixing in `ScalanCommunityDslSeq` (and `Seq` versions of any additional DSLs used by your program):
 ~~~scala
-// to run: lms-backend/test:runMain HelloScalanSeq
+// to run: lms-backend/it:runMain HelloScalanSeq
 object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
   def result = run(input)
 
@@ -197,7 +197,7 @@ In this mode, Scalan's behavior is very simple: `Rep[A]` is the same type as `A`
 
 Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a compiler trait.
 ~~~scala
-// to run: lms-backend/test:runMain HelloScalanExp
+// to run: lms-backend/it:runMain HelloScalanExp
 object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCompilerScala with CommunityBridge {
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
@@ -237,9 +237,9 @@ Scalan aggressively applies optimizations such as dead code elimination, common 
 
 Scalan uses a variant of [cake pattern](http://www.cakesolutions.net/teamblogs/2011/12/19/cake-pattern-in-depth) for code organization. Namely, it is composed of a set of traits such as `Base`, `Elems`, etc. which define a component API (and helper methods using this API). Each component has two implementations `ComponentNameSeq` and `ComponentNameExp` which are used in sequential and staged mode respectively. There is a trait combining all components called `Scalan`, and corresponding `ScalanSeq` and `ScalanExp` traits. These traits are used as self-types for the components and their implementations, which allows each component to depend on all others. There are also `ScalanCtxSeq` and `ScalanCtxExp` which extend `ScalanSeq` and `ScalanExp` with implementations.
 
-`community-edition` subproject adds more components. Their combination with `Scalan` is called `ScalanCommunity` (also with `Seq` and `Exp` versions). It also defines some DSLs which work the same as components, and `ScalanCommunityDsl` combines `ScalanCommunity` and all DSLs.
+`scalan-library` subproject adds more components. Their combination with `Scalan` is called `ScalanCommunity` (also with `Seq` and `Exp` versions). It also defines some DSLs which work the same as components, and `ScalanCommunityDsl` combines `ScalanCommunity` and all DSLs.
 
-Important types to understand are: 
+Important types to understand are:
 
 * `Element[A]` is a reified type representation. For all legal Scalan types `Rep[A]` an `Element[A]` instance exists and should be available implicitly.
 * `Exp[A]` is `Rep[A]` in staged mode. As said above, it represents a staged value (i.e. a value in generated code) of type `A` or, more strictly speaking, an identifier of such a value.
@@ -292,8 +292,8 @@ Issues with the `low-hanging fruit` label should be easy to fix if you want some
 
 If you want to start working on an issue (existing or one you just raised), please leave a comment to avoid effort duplication. Issues that someone is already working on are labelled `in progress`.
 
-<!--* [Triaging our open tickets](TODO)
-
+<!--
+* [Triaging our open tickets](TODO)
 * [Helping with the current Milestone](TODO)
 * Sending an unsolicited pull request with a new feature
 * Telling your co-workers!
