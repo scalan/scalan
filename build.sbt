@@ -58,7 +58,7 @@ lazy val library = Project("scalan-library", file("library"))
   .dependsOn(core % allConfigDependency)
   .settings(commonSettings)
 
-lazy val backend = Project("lms-backend", file("lms-backend"))
+lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
   .dependsOn(library % "compile->compile;it->test")
   .configs(IntegrationTest)
   .settings(commonSettings, Defaults.itSettings,

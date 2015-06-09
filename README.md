@@ -19,9 +19,9 @@ Please visit [Scalan Google Group](https://groups.google.com/forum/#!forum/scala
 
 The project consists of several [subprojects](http://www.scala-sbt.org/release/tutorial/Multi-Project.html), including the aggregate project `scalan`.
 
-One of the subprojects, `lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`. If you want to use it, you need to clone and build this dependency first, since it isn't published in a public repository.
+One of the subprojects, `scalan-lms-backend` currently depends on a fork of [LMS](https://github.com/TiarkRompf/virtualization-lms-core/) located at <http://github.com/scalan/virtualization-lms-core>, branch `scalan-develop`. If you want to use it, you need to clone and build this dependency first, since it isn't published in a public repository.
 
-The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backends(codegens) available are Scala- and C++-based LMS backends, both defined in the `lms-backend` subproject.
+The tests are split into unit tests (which can be run with the usual `test` SBT command) and integration tests (`it:test`) which actually generate a program (using some backend) and test the generated code. As of this writing, the only backends(codegens) available are Scala- and C++-based LMS backends, both defined in the `scalan-lms-backend` subproject.
 
 If you want to create your own project depending on Scalan, you should use `publishLocal` SBT command to publish Scalan artifacts to your local Ivy repository and add dependencies as usual:
 
@@ -42,11 +42,11 @@ lazy val myMeta = Project("myMetaProjectName").settings(libraryDependencies += m
 
 `"test"` dependencies allow reuse of Scalan's existing test infrastructure and aren't necessary if you don't need it. See [Extending Scalan](#extending-scalan) below for an explanation of `myMeta`.
 
-If you also need to depend on `lms-backend`, you have to add [Scala-Virtualized](https://github.com/tiarkrompf/scala-virtualized) to the `settings` block above. See [Maven Repository](http://mvnrepository.com/artifact/org.scala-lang.virtualized) for the latest Scala-Virtualized version; as of this writing, 2.11.2 is the only version which can be used:
+If you also need to depend on `scalan-lms-backend`, you have to add [Scala-Virtualized](https://github.com/tiarkrompf/scala-virtualized) to the `settings` block above. See [Maven Repository](http://mvnrepository.com/artifact/org.scala-lang.virtualized) for the latest Scala-Virtualized version; as of this writing, 2.11.2 is the only version which can be used:
 
 ~~~scala
 settings(...,
-  libraryDependencies += liteDependency("lms-backend"),
+  libraryDependencies += liteDependency("scalan-lms-backend"),
   scalaVersion := "2.11.2",
   scalaOrganization := "org.scala-lang.virtualized")
 ~~~
@@ -182,7 +182,7 @@ Now, there are two ways in which Scalan can work with this program:
 
 Run it without optimizations in order to ensure it works as desired and debug if necessary. This is done by mixing in `ScalanCommunityDslSeq` (and `Seq` versions of any additional DSLs used by your program):
 ~~~scala
-// to run: lms-backend/it:runMain HelloScalanSeq
+// to run: scalan-lms-backend/it:runMain HelloScalanSeq
 object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
   def result = run(input)
 
@@ -197,7 +197,7 @@ In this mode, Scalan's behavior is very simple: `Rep[A]` is the same type as `A`
 
 Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a compiler trait.
 ~~~scala
-// to run: lms-backend/it:runMain HelloScalanExp
+// to run: scalan-lms-backend/it:runMain HelloScalanExp
 object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCompilerScala with CommunityBridge {
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
