@@ -64,7 +64,7 @@ With the introduction of [Scalanizer](https://github.com/scalan/scalanizer) as a
 
 Scalan is a library in Scala, so all standard rules of Scala syntax apply and knowledge of Scala is assumed in this manual. However, Scalan supports only a limited subset of Scala types and operations. This is not a conceptual limitation and will improve overtime especially with the help of Scalanizer plugin.
 
-Note that if you write a program which is legal Scala, but not legal Scalan, there are currently no error messages or warnings. This is one of the reasons and rationale for creating Scalanizer.
+Note that if you write a program which is legal Scala, but not legal Scalan, there are currently no error messages or warnings. This is one of the reasons and rationale for creating Scalanizer where such errors can easily be handled.
 
 ### Types
 
@@ -79,7 +79,7 @@ All Scalan values have type `Rep[A]` for some Scala type `A`. Currently `A` can 
 
 Note that nested `Rep` is not allowed (i.e. you cannot write something like this `Rep[(Rep[Int], Double)]`), but it is possible to nest `Rep` in user defined classes (see [Extending Scalan](#extending-scalan)).
 
-There are type aliases for some `Rep` types, such as `type IntRep = Rep[Int]`, `type Arr[A] = Rep[Array[A]]`, etc. You can use aliases freely and the only rule for type aliases is that they don't violate Scalan's typing constraints.
+There are type aliases for some `Rep` types, such as `type IntRep = Rep[Int]`, `type Arr[A] = Rep[Array[A]]`, etc. You can use aliases freely and the only rule for type aliases is that they don't introduce nested `Rep`s described above.
 
 Scala values of type `A` can be converted to `Rep[A]` implicitly (or explicitly using `toRep` method if desired). Like in LMS they become constants of the next stage. (`Const[A]` nodes of intermediate representation, IR). However, in current version it's not possible to convert from `Rep[A]` to `A` as it would mean running the corresponding IR.
 
