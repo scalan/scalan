@@ -154,6 +154,11 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
         case mA: Manifest[a_t] =>
           jni_new_primitive_array[a_t](f(len))(mA)
       }
+    case res@NewObjectArray(len, clazz) =>
+      res.tp.typeArguments(0).typeArguments(0) match {
+        case mA: Manifest[a_t] =>
+          jni_new_object_array[a_t](f(len), f(clazz))(mA)
+      }
     case res@NewPrimitive(x) =>
       x.tp match {
         case mA: Manifest[a_t] =>
