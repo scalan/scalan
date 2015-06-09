@@ -3,7 +3,6 @@ package impl
 
 import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
-import scala.annotation.tailrec
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 

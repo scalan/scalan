@@ -6,7 +6,6 @@ package scalan.linalgebra
 
 import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
-import scala.annotation.tailrec
 import scala.annotation.unchecked.uncheckedVariance
 
 trait Vectors { self: ScalanCommunityDsl =>
@@ -166,7 +165,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
         case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
+            (x: Rep[T], y: Rep[T]) => x + y), length)
         case _ =>
           other +^ self
       }
@@ -181,7 +181,8 @@ trait Vectors { self: ScalanCommunityDsl =>
       // TODO: I don't like constructing items in this method
       other match {
         case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
+            (x: Rep[T], y: Rep[T]) => x + y), length)
         case DenseVectorMatcher(items) =>
           val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
           DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
@@ -197,7 +198,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
         case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(innerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+          SparseVector(innerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
+            (x: Rep[T], y: Rep[T]) => x * y), length)
         case _ =>
           other *^ self
       }
@@ -255,7 +257,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
         case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
+            (x: Rep[T], y: Rep[T]) => x + y), length)
         case _ =>
           other +^ self
       }
@@ -270,7 +273,8 @@ trait Vectors { self: ScalanCommunityDsl =>
       // TODO: I don't like constructing items in this method
       other match {
         case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
+            (x: Rep[T], y: Rep[T]) => x + y), length)
         case DenseVectorMatcher(items) =>
           val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
           DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
@@ -286,7 +290,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
         case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(innerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1), length)
+          SparseVector(innerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
+            (x: Rep[T], y: Rep[T]) => x * y), length)
         case _ =>
           other *^ self
       }
@@ -374,11 +379,13 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
     (xItems(yIndices) zip yValues).map { case Pair(x, y) => x * y }.reduce
   }
 
-  def innerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
-                        (implicit n: Numeric[T]): PairColl[Int, T]
+  def innerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T],
+                         f: Rep[((T, T)) => T])(implicit n: Numeric[T]): PairColl[Int, T] =
+    pairColl_innerJoin(xIndices zip xValues, yIndices zip yValues, f)
 
-  def outerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
-                        (implicit n: Numeric[T]): PairColl[Int, T]
+  def outerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T],
+                         f: Rep[((T, T)) => T])(implicit n: Numeric[T]): PairColl[Int, T] =
+    pairColl_outerJoin(xIndices zip xValues, yIndices zip yValues, f, (x: Rep[T]) => x.asRep[T], (y: Rep[T]) => y.asRep[T])
 
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep
 
@@ -408,7 +415,7 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
     }
   }
 
-  //TODO: need to implement innerJoin and outerJoin, preferable in Collections DSL
+  /*//TODO: need to implement innerJoin and outerJoin, preferable in Collections DSL
   def innerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
                         (implicit n: Numeric[T]): PairColl[Int, T] = ???/*{
     var result = n.zero
@@ -432,7 +439,7 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
           case None => (0, n.zero)
         }
     }
-  }*/
+  }*/*/
 
   def pairArray_innerJoin[T](xs: Coll[(Int, T)], ys: Coll[(Int, T)], f: Rep[((T, T)) => T])
                                  (implicit ordK: Ordering[Int], eR: Elem[T]): Coll[(Int, T)] = ???/*{
