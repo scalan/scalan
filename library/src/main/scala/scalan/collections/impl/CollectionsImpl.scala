@@ -6,6 +6,10 @@ import scalan._
 import scalan.arrays.ArrayOps
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scala.collection.mutable
+import scala.annotation.tailrec
+import scala.reflect._
+import scalan.common.Default
 
 // Abs -----------------------------------
 trait CollectionsAbs extends Collections with scalan.Scalan {

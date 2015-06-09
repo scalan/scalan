@@ -4,6 +4,8 @@ import scala.annotation.unchecked.uncheckedVariance
 import scalan._
 import scalan.arrays.ArrayOps
 import scalan.common.OverloadHack.Overloaded1
+import scala.collection.mutable
+import scala.annotation.tailrec
 
 trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
@@ -367,13 +369,145 @@ trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl =>
     def singleton[T: Elem](v: Rep[T]): Coll[T]
     def indexRange(l: Rep[Int]): Coll[Int]
   }
+
+  def pairColl_innerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R])
+                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R]
+
+  def pairColl_outerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R], f1: Rep[V1 => R], f2: Rep[V2 => R])
+                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R]
 }
 
-trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSeq => }
+trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSeq =>
+
+  def pairColl_innerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R])
+                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R] = {
+    implicit val eK: Elem[K] = xs.eItem.eFst
+
+    val xIter = xs.arr.iterator
+    val yIter = ys.arr.iterator
+
+    val buffer = mutable.ArrayBuffer[(K, R)]()
+
+    @tailrec
+    def go(keyX: K, keyY: K, valueX: V1, valueY: V2) {
+      val cmp = ordK.compare(keyX, keyY)
+      if (cmp == 0) {
+        // keyX == keyY
+        val value = f((valueX, valueY))
+        buffer.append((keyX, value))
+        if (xIter.hasNext && yIter.hasNext) {
+          val (keyX1, valueX1) = xIter.next()
+          val (keyY1, valueY1) = yIter.next()
+          go(keyX1, keyY1, valueX1, valueY1)
+        }
+      } else if (cmp < 0) {
+        // keyX < keyY
+        if (xIter.hasNext) {
+          val (keyX1, valueX1) = xIter.next()
+          go(keyX1, keyY, valueX1, valueY)
+        }
+      } else {
+        // keyY < keyX
+        if (yIter.hasNext) {
+          val (keyY1, valueY1) = yIter.next()
+          go(keyX, keyY1, valueX, valueY1)
+        }
+      }
+    }
+    if (xIter.hasNext && yIter.hasNext) {
+      val (keyX1, valueX1) = xIter.next()
+      val (keyY1, valueY1) = yIter.next()
+      go(keyX1, keyY1, valueX1, valueY1)
+    }
+    PairCollectionAOS(Collection.fromArray(buffer.toArray)(pairElement(eK, eR)))
+  }
+
+  def pairColl_outerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R], f1: Rep[V1 => R], f2: Rep[V2 => R])
+                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R] = {
+    implicit val eK: Elem[K] = xs.eItem.eFst
+
+    val xIter = xs.arr.iterator
+    val yIter = ys.arr.iterator
+
+    val buffer = mutable.ArrayBuffer[(K, R)]()
+
+    // called only when yIter is empty
+    def finishX() {
+      xIter.foreach { kv => buffer.append((kv._1, f1(kv._2))) }
+    }
+
+    // called only when xIter is empty
+    def finishY() {
+      yIter.foreach { kv => buffer.append((kv._1, f2(kv._2))) }
+    }
+
+    @tailrec
+    def go(keyX: K, keyY: K, valueX: V1, valueY: V2) {
+      val cmp = ordK.compare(keyX, keyY)
+      if (cmp == 0) {
+        // keyX == keyY
+        val value = f((valueX, valueY))
+        buffer.append((keyX, value))
+        (xIter.hasNext, yIter.hasNext) match {
+          case (true, true) =>
+            val (keyX1, valueX1) = xIter.next()
+            val (keyY1, valueY1) = yIter.next()
+            go(keyX1, keyY1, valueX1, valueY1)
+          case (true, false) =>
+            finishX()
+          case (false, true) =>
+            finishY()
+          case _ => {}
+        }
+      } else if (cmp < 0) {
+        // keyX < keyY
+        val value = f1(valueX)
+        buffer.append((keyX, value))
+        if (xIter.hasNext) {
+          val (keyX1, valueX1) = xIter.next()
+          go(keyX1, keyY, valueX1, valueY)
+        } else {
+          buffer.append((keyY, f2(valueY)))
+          finishY()
+        }
+      } else {
+        // keyY < keyX
+        val value = f2(valueY)
+        buffer.append((keyY, value))
+        if (yIter.hasNext) {
+          val (keyY1, valueY1) = yIter.next()
+          go(keyX, keyY1, valueX, valueY1)
+        } else {
+          buffer.append((keyX, f1(valueX)))
+          finishX()
+        }
+      }
+    }
+    (xIter.hasNext, yIter.hasNext) match {
+      case (true, true) =>
+        val (keyX1, valueX1) = xIter.next()
+        val (keyY1, valueY1) = yIter.next()
+        go(keyX1, keyY1, valueX1, valueY1)
+      case (true, false) =>
+        finishX()
+      case (false, true) =>
+        finishY()
+      case _ => {}
+    }
+    PairCollectionAOS(Collection.fromArray(buffer.toArray)(pairElement(eK, eR)))
+  }
+}
 
 trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslExp =>
+
   override def rewriteDef[T](d: Def[T]) = d match {
     case ExpPairCollectionAOS(pairColl @ Def(_: PairCollection[_, _])) => pairColl
     case _ => super.rewriteDef(d)
   }
+
+  def pairColl_innerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R])
+                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R] = ???
+
+  def pairColl_outerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R], f1: Rep[V1 => R], f2: Rep[V2 => R])
+                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R] = ???
 }
