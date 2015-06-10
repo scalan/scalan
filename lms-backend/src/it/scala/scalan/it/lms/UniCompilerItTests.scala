@@ -57,7 +57,7 @@ class UniCompilerItTests  extends CommunitySmokeItTests {
     val inV = Array(2.0, 3.0)
     val in = Tuple2(inM, inV)
     val out = Array(5.0, 3.0)
-    compareOutputWithSequential(progStaged)(progSeqU.ddmvm, progStaged.ddmvm, "ddmvm", in)
+    compareOutputWithSequential(progStaged)(progSeqU.ddmvm, progStaged.ddmvm, "ddmvm00", in)
   }
 
   test("test00_nop") {
