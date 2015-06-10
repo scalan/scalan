@@ -116,6 +116,7 @@ class jni_array
 public:
     typedef typename jni_type<T>::type jni_t;
     typedef typename jni_type<T>::array_type jni_array_t;
+    typedef const T* const_iterator;
 
     jni_array() : env(nullptr), jniArray(nullptr), raw_array(nullptr), sz(0)
     {}
@@ -146,6 +147,10 @@ public:
         }
     }
 
+    const_iterator begin() const { return raw_array; }
+
+    const_iterator end() const { return raw_array + this->sz; }
+
     int32_t size() const { return this->sz; }
 
     const T& operator[]( size_t idx ) const
@@ -165,6 +170,8 @@ public:
         anArray.reset();
         return *this;
     }
+
+
 
 private:
     const JNIEnv* env;
