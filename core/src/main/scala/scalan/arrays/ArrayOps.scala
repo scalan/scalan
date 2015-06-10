@@ -157,7 +157,7 @@ trait ArrayOps { self: Scalan =>
   def array_toList[T:Elem](xs: Arr[T]): Lst[T]
   def array_reverse[T:Elem](xs: Arr[T]): Arr[T]
   def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T]
-  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T]
+  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[Int]
 
   def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double]
 }
@@ -292,7 +292,18 @@ trait ArrayOpsSeq extends ArrayOps {
   def array_toList[T:Elem](xs: Array[T]): Lst[T] = xs.to[List]
   def arrayToClassTag[T](xs: Rep[Array[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 
-  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = ???
+  def array_binary_search[T:Elem](i: T, is: Array[T])(implicit o: Ordering[T]): Rep[Int] = {
+    element[T] match {
+      case IntElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Int]], i.asInstanceOf[Int])
+      case DoubleElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Double]], i.asInstanceOf[Double])
+      case AnyRefElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[AnyRef]], i.asInstanceOf[AnyRef])
+      case _ =>
+        !!!(s"binarySearch must be explicitly implemented for ${element[T]}")
+    }
+  }
 
   def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double] =
     arr.map(_ => scala.util.Random.nextGaussian() * e + m)
@@ -422,8 +433,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     override def mirror(t: Transformer) = ArrayToList(t(xs))
   }
 
-  case class ArrayBinarySearch[T: Elem](i: Exp[T], xs: Exp[Array[T]], o: Ordering[T]) extends Def[T] with ArrayMethod[T] {
-    lazy val selfType = xs.elem.eItem
+  case class ArrayBinarySearch[T: Elem](i: Exp[T], xs: Exp[Array[T]], o: Ordering[T]) extends Def[Int] with ArrayMethod[T] {
+    lazy val selfType = element[Int]
     override def mirror(t: Transformer) = ArrayBinarySearch(t(i), t(xs), o)
   }
 
@@ -614,7 +625,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     toExp(newLam, newSym)
   }
 
-  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = {
+  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[Int] = {
     ArrayBinarySearch(i, is, o)
   }
 
