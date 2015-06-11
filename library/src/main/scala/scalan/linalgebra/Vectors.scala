@@ -50,6 +50,8 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def *(mat: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]] = ???
 
+    def ^(other: Rep[Int])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
+
     def euclideanNorm(implicit num: Numeric[T]): Rep[Double]
 
     def reduce(implicit m: RepMonoid[T]): Rep[T]
@@ -118,6 +120,10 @@ trait Vectors { self: ScalanCommunityDsl =>
     @OverloadId("elementwise_mult_value")
     def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       DenseVector(items.map(v => v * other))
+    }
+
+    def ^(order: Rep[Int])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      DenseVector(items.map(v => Collection.replicate(order, v).reduce(numericMultMonoid)))
     }
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
@@ -207,6 +213,10 @@ trait Vectors { self: ScalanCommunityDsl =>
     @OverloadId("elementwise_mult_value")
     def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       SparseVector(nonZeroIndices, nonZeroValues.map(v => v * other), length)
+    }
+
+    def ^(order: Rep[Int])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      SparseVector(nonZeroIndices, nonZeroValues.map(v => Collection.replicate(order, v).reduce(numericMultMonoid)), length)
     }
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)  //TODO: it's inefficient
@@ -299,6 +309,10 @@ trait Vectors { self: ScalanCommunityDsl =>
     @OverloadId("elementwise_mult_value")
     def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       SparseVector(nonZeroIndices, nonZeroValues.map(v => v * other), length)
+    }
+
+    def ^(order: Rep[Int])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      SparseVector1(nonZeroIndices zip nonZeroValues.map(v => Collection.replicate(order, v).reduce(numericMultMonoid)), length)
     }
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)  //TODO: it's inefficient
