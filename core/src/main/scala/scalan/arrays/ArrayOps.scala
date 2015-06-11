@@ -294,14 +294,24 @@ trait ArrayOpsSeq extends ArrayOps {
 
   def array_binary_search[T:Elem](i: T, is: Array[T])(implicit o: Ordering[T]): Rep[Int] = {
     element[T] match {
+      case ByteElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Byte]], i.asInstanceOf[Byte])
+      case CharElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Char]], i.asInstanceOf[Char])
+      case ShortElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Short]], i.asInstanceOf[Short])
       case IntElement =>
         java.util.Arrays.binarySearch(is.asInstanceOf[Array[Int]], i.asInstanceOf[Int])
+      case LongElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Long]], i.asInstanceOf[Long])
+      case FloatElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Float]], i.asInstanceOf[Float])
       case DoubleElement =>
         java.util.Arrays.binarySearch(is.asInstanceOf[Array[Double]], i.asInstanceOf[Double])
       case AnyRefElement =>
         java.util.Arrays.binarySearch(is.asInstanceOf[Array[AnyRef]], i.asInstanceOf[AnyRef])
       case _ =>
-        !!!(s"binarySearch must be explicitly implemented for ${element[T]}")
+        !!!(s"binarySearch isn't defined for array of ${element[T]}")
     }
   }
 
