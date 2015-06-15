@@ -73,7 +73,6 @@ class CxxShptrLmsSmokeItTests extends SmokeItTests {
     //    compareOutputWithSequential(progStaged)(progSeq.lambdaApply, progStaged.lambdaApply, "lambdaApply", (x, f))
   }
   test("lambdaConst") {
-    pending
     val in = 7
     val functionName = "lambdaConst"
     val dir = new File(prefix, functionName)
