@@ -102,6 +102,7 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
   test("lambdaConst") {
     val in = 7
     getStagedOutput(progStaged)(progStaged.lambdaConst, "lambdaConst", in).isInstanceOf[Right[_, _]]
+//TODO: implement JNI extract/pack for Ether[A,B]
 //    getStagedOutput(progStagedU)(progStagedU.lambdaConst, "lambdaConst", in).isInstanceOf[Right[_, _]]
   }
   test("logicalOps") {
