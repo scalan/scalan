@@ -191,6 +191,16 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
         case mT: Manifest[t_t] =>
           jni_box_primitive[t_t](f(x).asInstanceOf[Exp[JNIType[t_t]]])(mT)
       }
+      case res@GetArrayLength(xs) =>
+        xs.tp.typeArguments(0).typeArguments(0) match {
+          case mT: Manifest[t_t] =>
+            jni_get_array_length[t_t](f(xs).asInstanceOf[Exp[JNIType[Array[t_t]]]])(mT)
+        }
+    case res@ExtractObjectArray(xs) =>
+      xs.tp.typeArguments(0).typeArguments(0) match {
+        case mT: Manifest[t_t] =>
+          jni_extract_object_array[t_t](f(xs).asInstanceOf[Exp[JNIType[Array[t_t]]]])(mT)
+      }
     case _ =>
       super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
@@ -251,6 +261,7 @@ trait JNIExtractorOpsCxxGenBase extends GenericCodegen with ManifestUtil {
     case Manifest.Byte => "jbyte"
     case Manifest.Int => "jint"
     case Manifest.Double => "jdouble"
+    case Manifest.Boolean => "jboolean"
     case _ if m.isClass => "jobject"
     case _ =>
       throw new GenerationFailedException(s"JNIExtractorOpsCxxGenBase.remapSimpleType(m) : Type ${m} cannot be remapped.")
