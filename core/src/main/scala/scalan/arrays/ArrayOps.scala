@@ -294,6 +294,8 @@ trait ArrayOpsSeq extends ArrayOps {
 
   def array_binary_search[T:Elem](i: T, is: Array[T])(implicit o: Ordering[T]): Rep[Int] = {
     element[T] match {
+      case BoolElement =>
+        !!!(s"binarySearch isn't defined for array of ${element[T]}")
       case ByteElement =>
         java.util.Arrays.binarySearch(is.asInstanceOf[Array[Byte]], i.asInstanceOf[Byte])
       case CharElement =>
@@ -308,10 +310,8 @@ trait ArrayOpsSeq extends ArrayOps {
         java.util.Arrays.binarySearch(is.asInstanceOf[Array[Float]], i.asInstanceOf[Float])
       case DoubleElement =>
         java.util.Arrays.binarySearch(is.asInstanceOf[Array[Double]], i.asInstanceOf[Double])
-      case AnyRefElement =>
+      case _ => // all others are AnyRef ancestors
         java.util.Arrays.binarySearch(is.asInstanceOf[Array[AnyRef]], i.asInstanceOf[AnyRef])
-      case _ =>
-        !!!(s"binarySearch isn't defined for array of ${element[T]}")
     }
   }
 
