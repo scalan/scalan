@@ -11,7 +11,9 @@ trait Metadata { self: Scalan =>
    * Key for metadata of type `A`.
    */
   case class MetaKey[A](name: String)(implicit e: Elem[A]) {
-    if (metaKeyNames.contains(name)) {
+    if (name == null)
+      !!!(s"Metadata key is null")
+    else if (metaKeyNames.contains(name)) {
       !!!(s"Duplicate metadata key: $name")
     } else {
       metaKeyNames += name

@@ -54,9 +54,9 @@ class ElectorOfCodegen[ScalanCake <: ScalanCtxExp](scalan: ScalanCake) {
     Nil
   }
 
-  val isNativeKey = MetaKey[Boolean]("isNative")
-  val codegenChangeKey = MetaKey[String]("codegenChangeKey")
-  val codegenKey = MetaKey[String]("codegenKey")
+  lazy val isNativeKey = MetaKey[Boolean]("isNative")
+  lazy val codegenChangeKey = MetaKey[String]("codegenChangeKey")
+  lazy val codegenKey = MetaKey[String]("codegenKey")
   //val isNivokeDisabled = MetaKey[Boolean]("isNivokeDisabled")
 
 
