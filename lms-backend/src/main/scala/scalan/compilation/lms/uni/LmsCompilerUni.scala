@@ -55,7 +55,7 @@ trait LmsCompilerUni
                 implicit val eB = lam.eB.asElem[b]
 
                 fun[JNIType[a], JNIType[b]] { arg: Rep[JNIType[a]] =>
-                  JNI_Pack(lam.self(JNI_Extract(arg)))(lam.eB) }
+                  JNI_Pack(lam.self(JNI_Extract(arg)))(eB) }
               }
 
               //case Def(lam: Lambda[a, b]) => fun[a, JNIType[b]] { arg: Rep[a] => JNI_Pack(lam.self(arg))(lam.eB) } (Lazy(lam.eA))

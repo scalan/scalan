@@ -61,6 +61,8 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   override def boundSyms(e: Any): List[Sym[Any]] = e match {
     case JNIArrayElem(x,y) =>
       effectSyms(y)
+    case JArrayElem(x,y) =>
+      effectSyms(y)
     case _ =>
       super.boundSyms(e)
   }
@@ -68,7 +70,9 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   def jni_box_primitive[A: Manifest](x: Rep[JNIType[A]]): Rep[JNIType[A]] = BoxPrimitive[A](x)
   def jni_new_primitive[A: Manifest](x: Rep[A]): Rep[JNIType[A]] = NewPrimitive[A](x)
   def jni_new_primitive_array[A: Manifest](len: Rep[Int]): Rep[JNIType[Array[A]]] = NewPrimitiveArray[A](len)
+  def jni_new_primitive_array_var[A: Manifest](len: Rep[Int]): Rep[JNIType[Array[A]]] = reflectMutable(NewPrimitiveArray[A](len))
   def jni_new_object_array[A: Manifest](len: Rep[Int], clazz: Rep[JNIClass]): Rep[JNIType[Array[A]]] = NewObjectArray[A](len, clazz)
+  def jni_new_object_array_var[A: Manifest](len: Rep[Int], clazz: Rep[JNIClass]): Rep[JNIType[Array[A]]] = reflectMutable(NewObjectArray[A](len, clazz))
   def jni_extract_primitive[T: Manifest](x: Rep[JNIType[T]]): Rep[T] = ExtractPrimitive(x)
   def jni_extract_primitive_array[T: Manifest](x: Rep[JNIType[Array[T]]]): Rep[JNIArray[T]] = ExtractPrimitiveArray(x)
   def jni_extract_primitive_array_var[T: Manifest](x: Rep[JNIType[Array[T]]]): Rep[JNIArray[T]] = reflectMutable(ExtractPrimitiveArray(x))
@@ -85,7 +89,7 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   def jni_return_first_arg[A: Manifest](ret: Rep[JNIType[A]], ignore: Rep[Any]): Rep[JNIType[A]] = ReturnFirstArg[A](ret, ignore)
 
   def jni_map_array[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[B]): Exp[JNIType[Array[B]]] = {
-    val jArray = jni_new_primitive_array[B](a.length)
+    val jArray = jni_new_primitive_array_var[B](a.length)
     val jniArray = jni_extract_primitive_array_var(jArray)
     val f1 = {i:Rep[Int] => f(a.at(i))}
     val x = fresh[Int]
@@ -97,7 +101,7 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   def jni_map_object_array[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[JNIType[B]]): Exp[JNIType[Array[B]]] = {
     val clazzName = org.objectweb.asm.Type.getType(manifest[A].runtimeClass).getDescriptor
     val clazz = jni_find_class(JNIStringConst(clazzName))
-    val jArray = jni_new_object_array[B](a.length, clazz)
+    val jArray = jni_new_object_array_var[B](a.length, clazz)
     val f1 = {i:Rep[Int] => f(a.at(i))}
     val x = fresh[Int]
     val y = reifyEffects(f1(x))
@@ -113,8 +117,14 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
     case Reflect(SimpleLoop(s,v,body: JNIArrayElem[A]), u, es) =>
       reflectMirrored(Reflect(SimpleLoop(f(s),f(v).asInstanceOf[Sym[Int]],mirrorFatDef(body,f)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
+    case Reflect(SimpleLoop(s,v,body: JArrayElem[A]), u, es) =>
+      reflectMirrored(Reflect(SimpleLoop(f(s),f(v).asInstanceOf[Sym[Int]],mirrorFatDef(body,f)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case res@Reflect(ExtractPrimitiveArray(x), u, es) =>
       reflectMirrored(Reflect(ExtractPrimitiveArray(f(x)), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
+    case res@Reflect(arr@NewObjectArray(len, clazz), u, es) =>
+      reflectMirrored(Reflect(NewObjectArray(f(len), f(clazz))(arr.mA), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
+    case res@Reflect(arr@NewPrimitiveArray(len), u, es) =>
+      reflectMirrored(Reflect(NewPrimitiveArray(f(len))(arr.mA), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
     case GetObjectArrayItem(x, i) =>
       x.tp.typeArguments(0).typeArguments(0) match {
         case(mA: Manifest[a_t]) =>
@@ -154,6 +164,11 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
         case mA: Manifest[a_t] =>
           jni_new_primitive_array[a_t](f(len))(mA)
       }
+    case res@NewObjectArray(len, clazz) =>
+      res.tp.typeArguments(0).typeArguments(0) match {
+        case mA: Manifest[a_t] =>
+          jni_new_object_array[a_t](f(len), f(clazz))(mA)
+      }
     case res@NewPrimitive(x) =>
       x.tp match {
         case mA: Manifest[a_t] =>
@@ -179,6 +194,15 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
     case _ =>
       super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
+
+  override def mirrorDef[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = {
+    (e match {
+      case ReturnFirstArg(ret, ignore) =>
+        ReturnFirstArg(f(ret),f(ignore))
+      case _ =>
+        super.mirrorDef(e, f)
+    }).asInstanceOf[Def[A]]
+  }
 
   override def mirrorFatDef[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Def[A] = (e match {
     case JNIArrayElem(x,y) => JNIArrayElem(f(x),f(y))
