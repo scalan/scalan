@@ -157,7 +157,7 @@ trait ArrayOps { self: Scalan =>
   def array_toList[T:Elem](xs: Arr[T]): Lst[T]
   def array_reverse[T:Elem](xs: Arr[T]): Arr[T]
   def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T]
-  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T]
+  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[Int]
 
   def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double]
 }
@@ -292,7 +292,28 @@ trait ArrayOpsSeq extends ArrayOps {
   def array_toList[T:Elem](xs: Array[T]): Lst[T] = xs.to[List]
   def arrayToClassTag[T](xs: Rep[Array[T]]): ClassTag[T] = ClassTag(xs.getClass.getComponentType)
 
-  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = ???
+  def array_binary_search[T:Elem](i: T, is: Array[T])(implicit o: Ordering[T]): Rep[Int] = {
+    element[T] match {
+      case BoolElement =>
+        !!!(s"binarySearch isn't defined for array of ${element[T]}")
+      case ByteElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Byte]], i.asInstanceOf[Byte])
+      case CharElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Char]], i.asInstanceOf[Char])
+      case ShortElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Short]], i.asInstanceOf[Short])
+      case IntElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Int]], i.asInstanceOf[Int])
+      case LongElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Long]], i.asInstanceOf[Long])
+      case FloatElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Float]], i.asInstanceOf[Float])
+      case DoubleElement =>
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[Double]], i.asInstanceOf[Double])
+      case _ => // all others are AnyRef ancestors
+        java.util.Arrays.binarySearch(is.asInstanceOf[Array[AnyRef]], i.asInstanceOf[AnyRef])
+    }
+  }
 
   def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double] =
     arr.map(_ => scala.util.Random.nextGaussian() * e + m)
@@ -422,8 +443,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     override def mirror(t: Transformer) = ArrayToList(t(xs))
   }
 
-  case class ArrayBinarySearch[T: Elem](i: Exp[T], xs: Exp[Array[T]], o: Ordering[T]) extends Def[T] with ArrayMethod[T] {
-    lazy val selfType = xs.elem.eItem
+  case class ArrayBinarySearch[T: Elem](i: Exp[T], xs: Exp[Array[T]], o: Ordering[T]) extends Def[Int] with ArrayMethod[T] {
+    lazy val selfType = element[Int]
     override def mirror(t: Transformer) = ArrayBinarySearch(t(i), t(xs), o)
   }
 
@@ -614,7 +635,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
     toExp(newLam, newSym)
   }
 
-  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[T] = {
+  def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[Int] = {
     ArrayBinarySearch(i, is, o)
   }
 

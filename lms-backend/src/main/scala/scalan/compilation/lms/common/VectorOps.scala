@@ -95,6 +95,8 @@ trait CxxShptrGenVectorOps extends CxxShptrCodegen {
   val IR: VectorOpsExp
   import IR._
 
+  headerFiles ++= Seq("scalan/algorithm.hpp")
+
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ds @ ArrayDotProdSparse(idxs1, vals1, idxs2, vals2) =>
       // TODO use proper source quasiquoter
@@ -121,6 +123,8 @@ trait CxxShptrGenVectorOps extends CxxShptrCodegen {
       stream.println("\t\t}")
       stream.println("\t};")
       stream.println("}")
+    case ds @ ArrayBinarySearch(i, is) =>
+      emitValDef(sym, src"scalan::binary_search($is->begin(), $is->end(), $i);")
     case _ => super.emitNode(sym, rhs)
   }
 

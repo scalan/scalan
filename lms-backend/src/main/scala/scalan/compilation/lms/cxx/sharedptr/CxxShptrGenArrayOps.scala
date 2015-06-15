@@ -73,7 +73,7 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
       emitBlock(block)
       gen"""}
            |}/*end: ${sym} = ${rhs.toString}*/"""
-    //      stream.println(s"")
+      emitValDef(sym, "scalan::unit_value")
     case ArrayCopy(src,srcPos,dest,destPos,len) =>
       stream.println(s"{/*start: ${rhs.toString}*/")
       stream.println(src"const auto srcBegin = ${src}->begin();")
