@@ -99,9 +99,15 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   }
 
   def jni_map_object_array[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[JNIType[B]]): Exp[JNIType[Array[B]]] = {
-    val clazzName = org.objectweb.asm.Type.getType(manifest[A].runtimeClass).getDescriptor
-    val clazz = jni_find_class(JNIStringConst(clazzName))
-    val jArray = jni_new_object_array_var[B](a.length, clazz)
+    val clazz = manifest[A].runtimeClass match {
+      case c if c == classOf[JNIArray[_]] =>
+        classOf[Array[_]]
+      case c =>
+        c
+    }
+    val clazzName = org.objectweb.asm.Type.getType(clazz).getDescriptor
+    val jniclazz = jni_find_class(JNIStringConst(clazzName))
+    val jArray = jni_new_object_array_var[B](a.length, jniclazz)
     val f1 = {i:Rep[Int] => f(a.at(i))}
     val x = fresh[Int]
     val y = reifyEffects(f1(x))
@@ -191,6 +197,16 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
         case mT: Manifest[t_t] =>
           jni_box_primitive[t_t](f(x).asInstanceOf[Exp[JNIType[t_t]]])(mT)
       }
+      case res@GetArrayLength(xs) =>
+        xs.tp.typeArguments(0).typeArguments(0) match {
+          case mT: Manifest[t_t] =>
+            jni_get_array_length[t_t](f(xs).asInstanceOf[Exp[JNIType[Array[t_t]]]])(mT)
+        }
+    case res@ExtractObjectArray(xs) =>
+      xs.tp.typeArguments(0).typeArguments(0) match {
+        case mT: Manifest[t_t] =>
+          jni_extract_object_array[t_t](f(xs).asInstanceOf[Exp[JNIType[Array[t_t]]]])(mT)
+      }
     case _ =>
       super.mirror(e,f)
   }).asInstanceOf[Exp[A]]
@@ -251,6 +267,7 @@ trait JNIExtractorOpsCxxGenBase extends GenericCodegen with ManifestUtil {
     case Manifest.Byte => "jbyte"
     case Manifest.Int => "jint"
     case Manifest.Double => "jdouble"
+    case Manifest.Boolean => "jboolean"
     case _ if m.isClass => "jobject"
     case _ =>
       throw new GenerationFailedException(s"JNIExtractorOpsCxxGenBase.remapSimpleType(m) : Type ${m} cannot be remapped.")

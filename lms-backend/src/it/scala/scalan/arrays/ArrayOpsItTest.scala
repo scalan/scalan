@@ -38,10 +38,11 @@ class ArrayOpsItTests extends BaseItTests {
 
     val invoke: A => B = invokeMethod[A,B](method, instance, _:A)
 
-    var i = 0
+    var i = -1
     inputs.foreach {in =>
       i += 1
-      assert(invoke(in) == fSeq(in), s"(staged != seq at input $i)")
+      println(s"${getClass.getName}: checking input $i")
+      comparator(invoke(in), fSeq(in))
     }
   }
 
