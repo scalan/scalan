@@ -99,9 +99,15 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   }
 
   def jni_map_object_array[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[JNIType[B]]): Exp[JNIType[Array[B]]] = {
-    val clazzName = org.objectweb.asm.Type.getType(manifest[A].runtimeClass).getDescriptor
-    val clazz = jni_find_class(JNIStringConst(clazzName))
-    val jArray = jni_new_object_array_var[B](a.length, clazz)
+    val clazz = manifest[A].runtimeClass match {
+      case c if c == classOf[JNIArray[_]] =>
+        classOf[Array[_]]
+      case c =>
+        c
+    }
+    val clazzName = org.objectweb.asm.Type.getType(clazz).getDescriptor
+    val jniclazz = jni_find_class(JNIStringConst(clazzName))
+    val jArray = jni_new_object_array_var[B](a.length, jniclazz)
     val f1 = {i:Rep[Int] => f(a.at(i))}
     val x = fresh[Int]
     val y = reifyEffects(f1(x))
