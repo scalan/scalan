@@ -7,6 +7,7 @@ import scala.language.reflectiveCalls
 import scalan.compilation.lms._
 import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.it.smoke.CommunitySmokeItTests
 import scalan.linalgebra.MatricesDslExp
 import scalan.util.FileUtil
 import scalan.{CommunityMethodMappingDSL, ScalanCommunityDslExp, ScalanCommunityExp, ScalanCtxExp}
@@ -14,7 +15,7 @@ import scalan.{CommunityMethodMappingDSL, ScalanCommunityDslExp, ScalanCommunity
 /**
  * Created by adel on 4/10/15.
  */
-class EmitGraphItTests extends LmsCommunityItTests with BeforeAndAfterAll {
+class EmitGraphItTests extends CommunitySmokeItTests with BeforeAndAfterAll {
 
   trait Prog extends ProgCommunity {
 
@@ -23,6 +24,10 @@ class EmitGraphItTests extends LmsCommunityItTests with BeforeAndAfterAll {
       IF(x) THEN y ELSE z
     }}
 
+  }
+
+  class ProgCommunityExp extends ProgCommunity with ScalanCommunityDslExp with CommunityBridge with CommunityMethodMappingDSL {
+    val lms = new CommunityLmsBackend
   }
 
   class ProgSeq extends ProgCommunitySeq with Prog  {}
