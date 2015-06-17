@@ -55,6 +55,8 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
       weakTypeTag[Array[A]]
     }
     lazy val getDefaultRep: Rep[Array[A]] = null.asInstanceOf[Rep[Array[A]]]
+
+    override def canEqual(other: Any) = other.isInstanceOf[JNIArrayElem[_]]
   }
 
   implicit def JNITypeElement[T: Elem]: Elem[JNIType[T]] = new JNITypeElem[T]
