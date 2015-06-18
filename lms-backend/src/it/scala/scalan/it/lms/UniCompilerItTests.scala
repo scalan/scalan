@@ -13,7 +13,7 @@ import scalan.it.smoke.CommunitySmokeItTests
 
 class UniCompilerItTests  extends CommunitySmokeItTests {
 
-  trait ProgUniTest extends ProgCommunity with LinearAlgebraExamples with CommunityMethodMappingDSL {
+  trait ProgUniTest extends ProgCommunity with LinearAlgebraExamples {
     lazy val test00_nop = fun { p: Rep[Double] =>
       p
     }
@@ -22,7 +22,7 @@ class UniCompilerItTests  extends CommunitySmokeItTests {
     }
   }
 
-  class ProgCommunityExp extends ProgUniTest with ScalanCommunityDslExp with LmsCompilerUni with CommunityBridge {
+  class ProgCommunityExp extends ProgUniTest with ScalanCommunityDslExp with LmsCompilerUni with CommunityBridge with CommunityMethodMappingDSL {
     val lms = new CommunityLmsBackend
   }
 
