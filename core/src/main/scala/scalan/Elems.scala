@@ -129,6 +129,8 @@ trait Elems extends Base { self: Scalan =>
     }
     protected def getDefaultRep =
       SArray.empty(eItem)
+
+    override def canEqual(other: Any) = other.isInstanceOf[ScalaArrayElem[_]]
   }
 
   val AnyRefElement: Elem[AnyRef] = new BaseElem[AnyRef]()(typeTag[AnyRef], Default.OfAnyRef)
