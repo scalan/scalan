@@ -178,8 +178,8 @@ class UniCompilerItTests  extends LmsMsfItTests {
   }
 
   test("config_MethodCall") {
-    // use ddmvm.
     pending
+    // todo make as native MethodCall pointed in config
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = Array(2.0, 3.0)
     val in = Tuple2(inM, inV)
@@ -200,6 +200,7 @@ class UniCompilerItTests  extends LmsMsfItTests {
 
   test("config_MarkedAsNativeLambda") {
     pending
+    // todo make as native lambda, marked in code
     val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
     val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_f as native
     val config = progStaged.defaultCompilerConfig
@@ -211,8 +212,9 @@ class UniCompilerItTests  extends LmsMsfItTests {
 
   test("config_NamedLambda") {
     pending
+    // todo - set test_config_g as native
     val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
-    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_g as native
+    val native = new NativeMethodsConfig(rootIsNative = false)
 
     //check sources for two variants
 
@@ -220,8 +222,9 @@ class UniCompilerItTests  extends LmsMsfItTests {
 
   test("config_functions2times") {
     pending
+    // todo - set test_config_h as native
     val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
-    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_h as native
+    val native = new NativeMethodsConfig(rootIsNative = false)
 
     //check sources for two variants
 
@@ -229,8 +232,9 @@ class UniCompilerItTests  extends LmsMsfItTests {
 
   test("config_2Functions") {
     pending
+    // todo - set test_config_f and test_config_g as native
     val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
-    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_f and test_config_g as native
+    val native = new NativeMethodsConfig(rootIsNative = false)
 
     //check sources for two variants
 
@@ -238,8 +242,9 @@ class UniCompilerItTests  extends LmsMsfItTests {
 
   test("config_SuperposLambda") {
     pending
+    // todo - set test_config_s and test_config_g as native
     val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
-    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_s and test_config_g as native
+    val native = new NativeMethodsConfig(rootIsNative = false)
 
     //check sources for two variants
 
@@ -247,8 +252,9 @@ class UniCompilerItTests  extends LmsMsfItTests {
 
   test("config_SuperposLambdafrom2Points") {
     pending
+    // todo - set test_config_s and test_config_h as native
     val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
-    val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_s and test_config_h as native
+    val native = new NativeMethodsConfig(rootIsNative = false)
 
     //check sources for two variants
 
@@ -256,10 +262,12 @@ class UniCompilerItTests  extends LmsMsfItTests {
 
   test("config_SuperposWithMethodCall") {
     pending
+    // todo - SuperposWithMethodCall
   }
 
   test("config_SuperposCheckOptimization") {
     pending
+    // todo - check that f(g(x)) not used connvertion of g(x) to scala nnd then from scala
   }
 
 

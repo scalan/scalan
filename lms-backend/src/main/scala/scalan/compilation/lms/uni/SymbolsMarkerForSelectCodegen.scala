@@ -6,7 +6,7 @@ import scalan.{ScalanCtxExp, Metadata}
  * Created by adel on 6/4/15.
  */
 
-class ElectorOfCodegen[ScalanCake <: ScalanCtxExp](scalan: ScalanCake) {
+class SymbolsMarkerForSelectCodegen[ScalanCake <: ScalanCtxExp](scalan: ScalanCake) {
   val ScalanIR: ScalanCake = scalan
   import ScalanIR._
 

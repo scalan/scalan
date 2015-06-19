@@ -59,10 +59,7 @@ trait LmsBridge { self: ScalanCtxExp =>
         val s = t.sym
         m.symMirror.get(s) match {
           case Some(lmsExp) => m.withLastExp(lmsExp)
-          case None => {
-            //println("s.elem X t.rhs.selfType: " + s.toStringWithType + " XXX " + t.rhs)
-            transformDef(m, fromGraph, s, t.rhs)
-          }
+          case None => transformDef(m, fromGraph, s, t.rhs)
         }
       }
       finalMirror

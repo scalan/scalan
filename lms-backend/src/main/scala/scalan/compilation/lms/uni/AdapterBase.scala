@@ -10,9 +10,8 @@ import scalan.compilation.lms.common.JNILmsOpsExp
  */
 abstract class AdapterBase [ScalanCake <: ScalanCtxExp](scalan: ScalanCake) {
   val ScalanIR: ScalanCake = scalan
-  import ScalanIR._
 
-  def adapt[A, B](func: Exp[A => B]): Exp[_]
+  def adapt[A, B](func: ScalanIR.Exp[A => B]): ScalanIR.Exp[_]
 
 }
 
