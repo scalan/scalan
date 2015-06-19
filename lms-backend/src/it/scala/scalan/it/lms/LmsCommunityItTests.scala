@@ -23,10 +23,28 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
     compareOutputWithSequentialConfig(progStagedU)(progSeq.expBaseArrays, progStagedU.expBaseArrays, "expBaseArrays", in, cC)
   }
 
+  test("seqsEmpty") {
+    val in = -11
+    compareOutputWithSequential(progStaged)(progSeq.seqsEmpty, progStaged.seqsEmpty, "seqsEmpty", in)
+  }
+
+  test("seqsSingle") {
+    val in = -11
+    compareOutputWithSequential(progStaged)(progSeq.seqsSingle, progStaged.seqsSingle, "seqsSingle", in)
+  }
+
   test("seqsSimpleMap") {
-    pending
     val in = Seq(2, 3)
-    compileSource(progStaged)(progStaged.seqsSimpleMap, "seqsSimpleMap", progStaged.defaultCompilerConfig)
-    //compareOutputWithSequential(progStaged)(progSeq.seqsSimpleMap, progStaged.seqsSimpleMap, "seqsSimpleMap", in)
+    compareOutputWithSequential(progStaged)(progSeq.seqsSimpleMap, progStaged.seqsSimpleMap, "seqsSimpleMap", in)
+  }
+
+  test("seqsArrayMap") {
+    val in = Array(Array(2, 3))
+    compareOutputWithSequential(progStaged)(progSeq.seqsArrayMap, progStaged.seqsArrayMap, "seqsArrayMap", in)
+  }
+
+  test("seqsFromArray") {
+    val in = Array(2, 3)
+    compareOutputWithSequential(progStaged)(progSeq.seqsFromArray, progStaged.seqsFromArray, "seqsFromArray", in)
   }
 }
