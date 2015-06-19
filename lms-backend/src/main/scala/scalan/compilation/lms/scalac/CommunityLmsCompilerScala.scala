@@ -8,7 +8,7 @@ import scalan.ScalanCommunityDslExp
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.CommunityBridgeScala
 
-trait CommunityLmsCompilerScala extends LmsCompilerScala with CommunityBridgeScala { self: ScalanCommunityDslExp =>
+trait CommunityLmsCompilerScala extends LmsCompilerScala with CommunityBridgeScala with ScalanCommunityDslExp { self: ScalanCommunityDslExp =>
 
   import scala.language.reflectiveCalls
 
