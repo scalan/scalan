@@ -7,7 +7,7 @@ import scalan.{ScalanCommunityDslExp, CommunityMethodMappingDSL}
 
 trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDSL with ScalaInterpreter { self: ScalanCommunityDslExp =>
 
-  override def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] = {
+  override def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] = {
     import lms.EffectId._
 
     mappedFunc(method) match {
@@ -17,11 +17,15 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDS
             case true => Seq(m.symMirrorUntyped(receiver))
             case false => Seq.empty[lms.Exp[_]]
           }
-          val methodName = conf.funcName.name match {
+          val methodName:String = conf.funcName.name match {
             case n: String if n.isEmpty => n
-            case _ => e.pack + "." + conf.funcName.name
+            case _ =>
+              e.pack match {
+                case p if p.isEmpty => conf.funcName.name
+                case p => p + "." + conf.funcName.name
+              }
           }
-          Manifest.classType(method.getDeclaringClass) match {
+          createManifest(returnType) match {
             case (mA: Manifest[a]) =>
               val lmsArgs = param ++ args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }
               lms.scalaMethod[a](null, PURE, methodName, List.empty, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
@@ -38,7 +42,7 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDS
         !!!(s"$nonScalaFunc is not a ScalaMappingDSL#ScalaFunc")
       case None =>
         val obj = m.symMirrorUntyped(receiver)
-        Manifest.classType(method.getDeclaringClass) match {
+        createManifest(returnType) match {
           case (mA: Manifest[a]) => lms.scalaMethod[a](obj, PURE, method.getName,
             args.collect { case elem: Element[_] => elem.tag },
             /* filter out implicit ClassTag params */

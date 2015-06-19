@@ -15,9 +15,21 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
       // ignore companion objects
       m
 
-    case MethodCall(receiver, method, args, _) =>
-      val exp = transformMethodCall(m, receiver, method, args)
-      m.addSym(sym, exp)
+    case mc@MethodCall(receiver, method, args, _) =>
+      val isWr = receiver.elem match {
+        case el: WrapperElem[_,_] => true
+        case el: WrapperElem1[_,_,_,_] => true
+        case _ => false
+      }
+
+      isWr match {
+        case true if method.getName == "wrappedValueOfBaseType" =>
+          val _argexp = m.symMirror(receiver)
+          m.addSym(sym, _argexp)
+        case _ =>
+          val exp = transformMethodCall[T](m, receiver, method, args, mc.selfType.asInstanceOf[Elem[T]])
+          m.addSym(sym, exp)
+      }
 
     case lr@NewObject(aClass, args, _) =>
       Manifest.classType(aClass) match { //TODO backend: better manifest construction
@@ -1186,7 +1198,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
     case _ => super.transformDef(m, g, sym, d)
   }
 
-  def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] =
+  def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] =
     !!!(s"Don't know how to transform method call: $method")
   def newObj[A: Manifest](m: LmsMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = !!!("Don't know how to create new object")
 }

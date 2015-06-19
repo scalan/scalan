@@ -82,6 +82,10 @@ trait LmsBridge { self: ScalanCtxExp =>
   }
 
   def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
+    case el: WrapperElem[_,_] =>
+      createManifest(el.baseElem)
+    case el: WrapperElem1[_,_,_,_] =>
+      createManifest(el.baseElem)
     case el: ArrayBufferElem[_] => Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
     case PairElem(eFst, eSnd) =>
       Manifest.classType(classOf[(_, _)], createManifest(eFst), createManifest(eSnd))

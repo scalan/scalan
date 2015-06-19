@@ -63,7 +63,7 @@ trait ScalaGenMethodCallOps extends ScalaGenBase {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ScalaMethod(caller, methodName, types, args) =>
-      stream.print("val " + quote(sym) + " = ")
+      stream.print( src"val $sym:${sym.tp} = " )
       caller match {
         case c: Rep[_] => stream.print(quote(caller))
         case _ =>
@@ -79,10 +79,10 @@ trait ScalaGenMethodCallOps extends ScalaGenBase {
         case c: String => stream.print(methodName)
         case _ =>
       }
-      types.isEmpty match {
-        case true =>
-        case _ => stream.print(s"[${types map(t => remap(tagToManifest(t)))  mkString ","}]")
-      }
+//      types.isEmpty match {
+//        case true =>
+//        case _ => stream.print(s"[${types map(t => remap(tagToManifest(t)))  mkString ","}]")
+//      }
       args.isEmpty match {
         case true =>
         case _ => stream.print(s"(${args map quote mkString ","})")
