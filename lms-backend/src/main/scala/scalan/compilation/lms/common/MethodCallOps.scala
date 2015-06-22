@@ -79,10 +79,6 @@ trait ScalaGenMethodCallOps extends ScalaGenBase {
         case c: String => stream.print(methodName)
         case _ =>
       }
-//      types.isEmpty match {
-//        case true =>
-//        case _ => stream.print(s"[${types map(t => remap(tagToManifest(t)))  mkString ","}]")
-//      }
       args.isEmpty match {
         case true =>
         case _ => stream.print(s"(${args map quote mkString ","})")
