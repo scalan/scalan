@@ -16,6 +16,13 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
   override val progStaged = new ProgExp with CommunityLmsCompilerScala
   val progStagedU = new ProgExp with LmsCompilerUni
 
+  test("applyLambda2Array") {
+    pending //FIXME: applying lambda to Array don't compile in Uni compiler (see issue #50)
+    val in = Array(1,2,3,4)
+    compareOutputWithSequential(progStaged)(progSeq.applyLambda2Array, progStaged.applyLambda2Array, "applyLambda2Array", in)
+    compareOutputWithSequential(progStagedU)(progSeq.applyLambda2Array, progStagedU.applyLambda2Array, "applyLambda2Array", in)
+  }
+
   test ("convertPairCollectionSOA")  {
     val in = Array(Array((1,2.0),(2,3.0)), Array((3,4.0), (5,6.0)))
     compareOutputWithSequential(progStaged)(progSeq.convertPairCollectionSOA, progStaged.convertPairCollectionSOA, "convertPairCollectionSOA", in)
