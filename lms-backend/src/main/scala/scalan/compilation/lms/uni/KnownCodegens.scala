@@ -8,25 +8,25 @@ import scalan.{JNIExtractorOpsExp, ScalanCtxExp}
 /**
  * Created by adel on 6/8/15.
  */
-object KnownCodegens  extends Enumeration {
-  type Codegens = Value
-  val Scala, Cxx = Value //maybe Cuda
+object KnownCodegens {
+  sealed abstract class CodegenType(val id: Int, val name:String)
 
-  //alternative is add Element for this type
-  def fromString(x:String): Codegens = x match {
-    case "Scala" => Scala
-    case "Cxx" => Cxx
-  }
-  def toString(x:Codegens):String = x match {
-    case Scala => "Scala"
-    case Cxx => "Cxx"
-  }
+  case object Scala extends CodegenType(1, "Scala")
+  case object Cxx extends CodegenType(2, "Cxx")
 
-  def pairFromString(x:String): (Codegens, Codegens) = x match {
+  //import EnumerationMacros._ - not supported in sthis ersion of Scala
+  //val codegens: Set[CodegenType] = sealedInstancesOf[CodegenType]
+  val codegens: Set[CodegenType] = Set(Cxx, Scala)
+
+  def fromString(x:String): CodegenType = codegens.filter(_.name == x).head
+
+  def toString(x:CodegenType):String = x.name
+
+  def pairFromString(x:String): (CodegenType, CodegenType) = x match {
     case "Scala2Cxx" => (Scala, Cxx)
     case _ => throw new UnsupportedOperationException(s"Codegens: unknown converter '$x'")
   }
-  def pairToString(x:Codegens, y: Codegens): String = (x, y) match {
+  def pairToString(x:CodegenType, y: CodegenType): String = (x, y) match {
     case (Scala, Cxx) =>  "Scala2Cxx"
     case _ => throw new UnsupportedOperationException(s"Codegens: unknown converter from '$x' to '$y'")
   }
@@ -38,7 +38,7 @@ object KnownCodegens  extends Enumeration {
 
   //[ScalanCake <: ScalanCtxExp, BackendCake <: LmsBackendFacade]
   def getAdapter[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp with JNIBridge]
-                (sc: ScalanCake, xy: (Codegens, Codegens)): AdapterBase[ScalanCake] = {
+                (sc: ScalanCake, xy: (CodegenType, CodegenType)): AdapterBase[ScalanCake] = {
     xy match {
       case (Scala, Cxx) =>  new AdapterScala2Cxx(sc)
       case _ => throw new UnsupportedOperationException(s"Codegens: adapter for pair '$xy' not implemended yet")
@@ -49,7 +49,7 @@ object KnownCodegens  extends Enumeration {
 
   //[ScalanCake <: ScalanCtxExp, BackendCake <: LmsBackendFacade]
   def getCodegen[BackendCake <: LmsBackendFacade with JNILmsOpsExp]
-                  (bc: BackendCake, codegen: Codegens): BaseCodegen[BackendCake] = {
+                  (bc: BackendCake, codegen: CodegenType): BaseCodegen[BackendCake] = {
     codegen match {
       case Cxx   =>  new CxxCodegen(bc)
       case Scala =>  new JniCallCodegen(bc, null, "")

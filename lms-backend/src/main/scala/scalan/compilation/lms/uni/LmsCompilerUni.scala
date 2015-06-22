@@ -98,10 +98,10 @@ trait LmsCompilerUni
               val scalanFuncC = graph.roots.filter( _.getMetadata(marker.codegenKey).getOrElse("") == KnownCodegens.Cxx.toString)
               for( f <- scalanFuncC) {
                 val t = findDefinition(f).getOrElse(!!!("can not find definition for root element") )
-                val (jInput, jOutput) = (t.rhs match {
+                val (jInput, jOutput) = t.rhs match {
                   case Lambda(_, _, x, y) =>
                     (x.elem, y.elem)
-                }) //.asInstanceOf[(Elem[A], Elem[B])]
+                } //.asInstanceOf[(Elem[A], Elem[B])]
                 (createManifest(jInput), createManifest(jOutput)) match {
                   case (mA: Manifest[a], mB: Manifest[b]) =>
 

@@ -19,20 +19,21 @@ class SymbolsMarkerForSelectCodegen[ScalanCake <: ScalanCtxExp](scalan: ScalanCa
         func.setMetadata(codegenChangeKey)(KnownCodegens.pairToString(KnownCodegens.Scala, KnownCodegens.Cxx))
         List(func)
       case _  => {
-        for(sym <- syms(func)) {
+        val res = for(sym <- syms(func)) yield {
           println("mark: " + sym)
-          findDefinition(sym) match {
-            case Some(t: TableEntry[_]) if t.isLambda => for(s <- syms(t.rhs)) { markSubgraph(s, KnownCodegens.Scala, context, config) }
-            case _ => !!!("ElectorOfCodegen.mark ERROR: lambda in TableEntry expected")
+          val sub = findDefinition(sym) match {
+            case Some(t: TableEntry[_]) if t.isLambda => for(s <- syms(t.rhs)) yield { markSubgraph(s, KnownCodegens.Scala, context, config) }
+            case _ => !!!("SymbolsMarkerForSelectCodegen.mark ERROR: lambda in TableEntry expected")
           }
+          sub.flatten
         }
-        Nil
+        res.flatten
       }
     }
 
   }
 
-  protected def markSubgraph[T](exp: Exp[T], from: KnownCodegens.Codegens, context: CompilationPipelineContext, config: NativeMethodsConfig): List[Exp[_]] = {
+  protected def markSubgraph[T](exp: Exp[T], from: KnownCodegens.CodegenType, context: CompilationPipelineContext, config: NativeMethodsConfig): List[Exp[_]] = {
     for(sym <- syms(exp)) {
       //println("subMark: " + sym)
       findDefinition(sym) match {
@@ -51,7 +52,7 @@ class SymbolsMarkerForSelectCodegen[ScalanCake <: ScalanCtxExp](scalan: ScalanCa
         case x => //println("   subMark for ???: " + x)
       }
     }
-    Nil
+    Nil //todo - return set of lambdas, marked for using some codegen
   }
 
   lazy val isNativeKey = MetaKey[Boolean]("isNative")

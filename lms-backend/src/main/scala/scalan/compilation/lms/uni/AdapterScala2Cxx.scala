@@ -27,7 +27,7 @@ class AdapterScala2Cxx[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp with J
         } //(Lazy(eJNIA))
         res
       }
-      case _ => !!!
+      case _ => !!! ("Error in AdapterScala2Cxx.adapt: function was not mached to 'Def(lam: Lambda[a, b])'")
     }
 
   }

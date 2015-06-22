@@ -101,6 +101,7 @@ class UniCompilerItTests  extends LmsMsfItTests {
   }
 
   ignore("msfFunAdjBase") {
+    // todo should be checked after fix error #50 -Applying lambda to Array not worked correctly. See test("applyLambda2Array") in LmsSmokeItTests.scala
     val links = graph.flatMap( i=> i)
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
