@@ -15,8 +15,12 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
       // ignore companion objects
       m
 
-    case MethodCall(receiver, method, args, _) =>
-      val exp = transformMethodCall(m, receiver, method, args)
+    case mc@MethodCall(receiver, method, args, _) =>
+      val exp = ( isWrapperElem(receiver.elem) && isValueAccessor(method) ) match {
+        case true  => m.symMirror(receiver)
+        case false => transformMethodCall[T](m, receiver, method, args, mc.selfType.asInstanceOf[Elem[T]])
+      }
+
       m.addSym(sym, exp)
 
     case lr@NewObject(aClass, args, _) =>
@@ -1186,7 +1190,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
     case _ => super.transformDef(m, g, sym, d)
   }
 
-  def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef]): lms.Exp[_] =
+  def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] =
     !!!(s"Don't know how to transform method call: $method")
   def newObj[A: Manifest](m: LmsMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = !!!("Don't know how to create new object")
 }

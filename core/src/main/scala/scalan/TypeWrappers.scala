@@ -50,6 +50,12 @@ trait TypeWrappers extends Base { self: Scalan =>
   final val ContainerApply = "ContainerApply"
 
   def isValueAccessor(m: Method) = m.getName == "wrappedValueOfBaseType"
+
+  def isWrapperElem(el: Elem[_]) = el match {
+    case el: WrapperElem[_,_] => true
+    case el: WrapperElem1[_,_,_,_] => true
+    case _ => false
+  }
 }
 
 trait TypeWrappersSeq extends TypeWrappers { scalan: ScalanSeq =>
