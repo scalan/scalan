@@ -27,6 +27,7 @@ trait Vectors { self: ScalanCommunityDsl =>
     def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T]
 
     def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R]
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vector[T]
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T]
     @OverloadId("elementwise_sum_collection")
@@ -78,6 +79,7 @@ trait Vectors { self: ScalanCommunityDsl =>
     def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = DenseVector(items(is))
 
     def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R] = DenseVector(items.mapBy(f))
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vector[T] = DenseVector(items.map(v => IF (f(v)) THEN v ELSE zeroValue))
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
@@ -166,6 +168,10 @@ trait Vectors { self: ScalanCommunityDsl =>
       } ELSE {
         ???
       }
+    }
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vector[T] = {
+      val filteredItems = nonZeroItems.filter { v => f(v._2) }
+      SparseVector(filteredItems.as, filteredItems.bs, length)
     }
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
@@ -262,6 +268,10 @@ trait Vectors { self: ScalanCommunityDsl =>
       } ELSE {
         ???
       }
+    }
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vector[T] = {
+      val filteredItems = nonZeroItems.filter { v => f(v._2) }
+      SparseVector1(filteredItems, length)
     }
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
@@ -408,7 +418,7 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
 
     def map[R: Elem](f: Rep[T] => Rep[R]): Vector[R] = vector.mapBy(fun(f))
 
-    //def filter(f: Rep[T] => Rep[Boolean]): Matrix[T] = matrix.filterBy(fun(f))
+    def filter(f: Rep[T] => Rep[Boolean]): Vector[T] = vector.filterBy(fun(f))
 
     //def flatMap[R: Elem](f: Rep[T] => Coll[R]): Matrix[R] = matrix.flatMapBy(fun(f))
   }
