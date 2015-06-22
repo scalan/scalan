@@ -16,20 +16,12 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
       m
 
     case mc@MethodCall(receiver, method, args, _) =>
-      val isWr = receiver.elem match {
-        case el: WrapperElem[_,_] => true
-        case el: WrapperElem1[_,_,_,_] => true
-        case _ => false
+      val exp = ( isWrapperElem(receiver.elem) && isValueAccessor(method) ) match {
+        case true  => m.symMirror(receiver)
+        case false => transformMethodCall[T](m, receiver, method, args, mc.selfType.asInstanceOf[Elem[T]])
       }
 
-      isWr match {
-        case true if method.getName == "wrappedValueOfBaseType" =>
-          val _argexp = m.symMirror(receiver)
-          m.addSym(sym, _argexp)
-        case _ =>
-          val exp = transformMethodCall[T](m, receiver, method, args, mc.selfType.asInstanceOf[Elem[T]])
-          m.addSym(sym, exp)
-      }
+      m.addSym(sym, exp)
 
     case lr@NewObject(aClass, args, _) =>
       Manifest.classType(aClass) match { //TODO backend: better manifest construction
