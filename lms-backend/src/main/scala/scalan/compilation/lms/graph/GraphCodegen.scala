@@ -186,7 +186,7 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
 
     private def exportNode[T](blockName: String, node: Exp[T], shape:String, prevNodeName:String)(implicit stream: PrintWriter, config: GraphVizConfig): String = {
       def printControlEdge(x:String, y:String) = {
-        edgesCollector.enqueue(s"$x -> $y " + "[weight=1 color=\"#CCCCCC\" width=5 arrowhead=obox label=\" \"]")
+        edgesCollector.enqueue(s"$x -> $y " + "[weight=2 color=\"#CCCCCC\" width=5 arrowhead=obox label=\" \"]")
         y
       }
       val name = node match {
@@ -199,7 +199,7 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
 
     private def exportNode[T](blockName: String, node: Exp[T], shape:String)(implicit stream: PrintWriter, config: GraphVizConfig): String = {
       def printDependenceEdge(x:String, y:String) = {
-        edgesCollector.enqueue(s"$x -> $y " + "[weight=0 color = \"#333333\"]")
+        edgesCollector.enqueue(s"$x -> $y " + "[weight=1 color = \"#333333\"]")
         y
       }
 

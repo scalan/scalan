@@ -49,7 +49,7 @@ with CxxShptrGenFunctions
 }
 
 
-class CoreCxxShptrLmsBackend extends CoreLmsBackendBase with JNILmsOpsExp with PointerLmsOpsExp { self =>
+class CoreCxxShptrLmsBackend extends CoreLmsBackend with JNILmsOpsExp with PointerLmsOpsExp { self =>
 
   override val codegen = new CxxCodegen[self.type](self)  {}
 }

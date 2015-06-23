@@ -19,13 +19,11 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
                       with ScalanCommunityDslExp
                       with EffectfulCompiler {
     val lms = new CommunityLmsBackend
-
   }
+
   trait EffectsExpUni extends LmsCompilerUni with CoreBridge
                       with ScalanCommunityDslExp
-                      with EffectfulCompiler {
-    val lms = new CommunityLmsBackend
-  }
+                      with EffectfulCompiler
 
   trait EffectsSeq extends ScalanCommunitySeq with ScalanCommunityDslSeq
                       with MultiMapsDslSeq

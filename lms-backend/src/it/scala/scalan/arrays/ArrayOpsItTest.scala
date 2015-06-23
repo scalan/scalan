@@ -17,9 +17,7 @@ class ArrayOpsItTests extends BaseItTests {
   class ProgExp extends Prog with ScalanCommunityDslExp with CommunityLmsCompilerScala {
     val lms = new CommunityLmsBackend
   }
-  class ProgExpU extends Prog with ScalanCommunityDslExp with LmsCompilerUni {
-    val lms = new CommunityLmsBackend
-  }
+  class ProgExpU extends Prog with ScalanCommunityDslExp with LmsCompilerUni
 
   val progSeq = new ProgSeq
   val progStagedScala = new ProgExp

@@ -50,6 +50,8 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
   case class JNIArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     override def isEntityType = eItem.isEntityType
 
+    override def getName = "JNI-" + cleanUpTypeName(tag.tpe)
+
     lazy val tag = {
       implicit val tag1 = eItem.tag
       weakTypeTag[Array[A]]

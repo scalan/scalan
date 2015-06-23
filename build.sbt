@@ -73,6 +73,7 @@ lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
       "org.scalatest" %% "scalatest" % "2.2.4" % "it"),
     // we know we use LMS snapshot here, ignore it
     releaseSnapshotDependencies := Seq.empty,
+    javaOptions in IntegrationTest ++= Seq("-XX:PermSize=300M", "-XX:MaxPermSize=300M"),   //"-Xms128M",-Xmx128M"
     fork in IntegrationTest := true)
 
 lazy val root = Project("scalan", file("."))

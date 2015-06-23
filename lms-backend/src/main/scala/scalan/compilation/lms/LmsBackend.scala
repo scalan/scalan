@@ -1,15 +1,13 @@
 package scalan.compilation.lms
 
-import java.io.{File, PrintWriter}
+import java.io.File
 
 import scala.collection.mutable
-import scala.virtualization.lms.epfl.test8.{ScalaGenArrayMutation, ArrayMutationExp}
+import scala.virtualization.lms.epfl.test8.ArrayMutationExp
 import scala.virtualization.lms.internal.{Effects, NestedBlockTraversal, GenericCodegen}
 import scalan.compilation.lms.common._
-import scalan.compilation.lms.cxx.sharedptr.{CxxCodegen}
 import scalan.compilation.lms.graph.GraphCodegen
 import scalan.compilation.lms.scalac.ScalaCommunityCodegen
-import scalan.compilation.lms.uni.JniCallCodegen
 import scalan.util.FileUtil
 import virtualization.lms.common._
 import virtualization.lms.epfl.test7._
@@ -51,8 +49,6 @@ trait LmsBackend extends LmsBackendFacade  with JNILmsOpsExp{ self =>
 
   def codegen: BaseCodegen[self.type]
   val graphCodegen: GraphCodegen[self.type] = new GraphCodegen(self)
-  val nativeCodegen: CxxCodegen[self.type] = new CxxCodegen(self)
-  val jniCallCodegen: JniCallCodegen[self.type] = new JniCallCodegen(self, nativeCodegen, "")
 
 }
 
@@ -526,7 +522,11 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   }  */
 }
 
-trait CoreLmsBackend extends CoreLmsBackendBase // todo kill this class
+//trait CoreLmsBackendTmp extends CoreLmsBackend // todo kill this class
+
+trait CoreLmsBackend extends LmsBackend with LmsBackendFacade
+
+trait CommunityLmsBackendBase extends CoreLmsBackend with VectorOpsExp with ExtNumOpsExp with SystemOpsExp
 
 class CommunityLmsBackend extends CoreLmsBackend with CommunityLmsBackendBase { self =>
   override val codegen = new ScalaCommunityCodegen[self.type](self)
