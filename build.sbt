@@ -1,5 +1,5 @@
 lazy val buildSettings = Seq(
-  scalaVersion := "2.11.6",
+  scalaVersion := "2.11.7",
   organization := "com.huawei.scalan",
   scalacOptions ++= Seq(
     "-encoding", "UTF-8",
@@ -17,8 +17,8 @@ lazy val buildSettings = Seq(
 
 lazy val testSettings = Seq(
   libraryDependencies ++= Seq(
-    "org.scalatest" %% "scalatest" % "2.2.4" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.12.2" % Test,
+    "org.scalatest" %% "scalatest" % "2.2.5" % Test,
+    "org.scalacheck" %% "scalacheck" % "1.12.3" % Test,
     "com.github.axel22" %% "scalameter" % "0.5-M2" % Test),
   parallelExecution in Test := false,
   publishArtifact in Test := true,
@@ -37,7 +37,7 @@ lazy val common = Project("scalan-common", file("common"))
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2",
     // otherwise scala-logging-slf4j pulls 2.11.0
     "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-    "ch.qos.logback" % "logback-classic" % "1.1.2"))
+    "ch.qos.logback" % "logback-classic" % "1.1.3"))
 
 lazy val meta = Project("scalan-meta", file("meta"))
   .dependsOn(common % allConfigDependency)
@@ -50,7 +50,7 @@ lazy val core = Project("scalan-core", file("core"))
   .dependsOn(common % allConfigDependency)
   .settings(commonSettings,
     libraryDependencies ++= Seq(
-      "com.chuusai" %% "shapeless" % "2.0.0",
+      "com.chuusai" %% "shapeless" % "2.2.3",
       "cglib" % "cglib" % "3.1",
       "org.objenesis" % "objenesis" % "2.1"))
 
@@ -70,7 +70,7 @@ lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
       "EPFL" %% "lms_local" % "0.3-SNAPSHOT" classifier "tests" exclude("org.scalatest", "scalatest_2.11"),
       "org.scala-lang.virtualized" % "scala-library" % scalaVersion.value,
       "org.scala-lang.virtualized" % "scala-compiler" % scalaVersion.value,
-      "org.scalatest" %% "scalatest" % "2.2.4" % "it"),
+      "org.scalatest" %% "scalatest" % "2.2.5" % "it"),
     // we know we use LMS snapshot here, ignore it
     releaseSnapshotDependencies := Seq.empty,
     javaOptions in IntegrationTest ++= Seq("-XX:PermSize=300M", "-XX:MaxPermSize=300M"),   //"-Xms128M",-Xmx128M"
