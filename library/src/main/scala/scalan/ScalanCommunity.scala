@@ -34,3 +34,7 @@ trait ScalanCommunityDslExp extends ScalanCommunityExp with ScalanCommunityDsl
   with MultiMapsDslExp
   with HashSetsDslExp
   with SeqsDslExp
+
+
+trait ScalanCommunityScalaCompiler extends ScalanCommunityDslExp
+  with SeqsScalaMethodMapping
