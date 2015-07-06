@@ -248,10 +248,10 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     (arrI zip arrV, offs zip lens)
   }
 
-  lazy val narrayVectReplicateFilter = fun { xss: Rep[Array[Array[Int]]] =>
-    val vs = xss.map(xs => DenseVector(CollectionOverArray(xs)))
-    val vss = vs.map(vect => SArray.replicate(5, vect))
-    val vssFilt = vss.filter(arrVect => arrVect.length > 0)
-    vssFilt.map(arrVect => arrVect.map(vect => vect.items.arr))
+  lazy val collReplicateFilter = fun { xs: Rep[Array[Int]] =>
+    val c = Collection(xs)
+    val cs = SArray.replicate(5, c)
+    val csFilt = cs.filter(coll => coll.length > 0)
+    csFilt.map(coll => coll.arr)
   }
 }
