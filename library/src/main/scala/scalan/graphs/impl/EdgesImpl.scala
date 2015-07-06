@@ -1,7 +1,6 @@
 package scalan.graphs
 package impl
 
-import scalan._
 import scalan.collections.CollectionsDsl
 import scalan.ScalanCommunityDsl
 import scalan.Owner

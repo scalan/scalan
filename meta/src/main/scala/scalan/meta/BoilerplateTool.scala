@@ -60,9 +60,9 @@ class BoilerplateTool extends StrictLogging {
   val collectTypeSynonyms = coreTypeSynonyms ++ Map(
     "Coll" -> "Collection", "PairColl" -> "PairCollection", "NColl" -> "NestedCollection"
   )
-  lazy val ceConfig = CodegenConfig(
-    name = "ce",
-    srcPath = "../community-edition/src/main/scala",
+  lazy val libConfig = CodegenConfig(
+    name = "lib",
+    srcPath = "../library/src/main/scala",
     entityFiles = List(
        "scalan/collections/HashSets.scala"
       , "scalan/collections/Seqs.scala"
@@ -77,7 +77,7 @@ class BoilerplateTool extends StrictLogging {
   )
   lazy val laConfig = CodegenConfig(
     name = "la",
-    srcPath = "../community-edition/src/main/scala",
+    srcPath = "../library/src/main/scala",
     entityFiles = List(
         "scalan/linalgebra/Vectors.scala"
       , "scalan/linalgebra/Matrices.scala"
@@ -116,7 +116,7 @@ class BoilerplateTool extends StrictLogging {
   )
   lazy val effectsConfig = CodegenConfig(
     name = "effects",
-    srcPath = "../community-edition/src/test/scala/scalan/effects",
+    srcPath = "../library/src/test/scala/scalan/effects",
     entityFiles = List(
       "Frees.scala",
       "Coproducts.scala",
@@ -137,7 +137,7 @@ class BoilerplateTool extends StrictLogging {
   )
   lazy val effects2Config = CodegenConfig(
     name = "effects2",
-    srcPath = "../community-edition/src/test/scala/",
+    srcPath = "../library/src/test/scala/",
     entityFiles = List(
       "scalan/effects/IOs.scala",
       "scalan/effects/Readers.scala",
@@ -155,7 +155,7 @@ class BoilerplateTool extends StrictLogging {
 
   lazy val collectionsConfig = CodegenConfig(
     name = "collections",
-    srcPath = "../community-edition/src/main/scala",
+    srcPath = "../library/src/main/scala",
     entityFiles = List(
       "scalan/collections/Collections.scala"
      ),
@@ -165,7 +165,7 @@ class BoilerplateTool extends StrictLogging {
   val graphTypeSynonyms = collectTypeSynonyms ++ Map("PG" -> "Graph", "REdge" -> "EdgeType")
   lazy val graphConfig = CodegenConfig(
     name = "graphs",
-    srcPath = "../community-edition/src/main/scala",
+    srcPath = "../library/src/main/scala",
     entityFiles = List(
       "scalan/graphs/Graphs.scala",
       "scalan/graphs/Vertices.scala",
@@ -196,7 +196,7 @@ class BoilerplateTool extends StrictLogging {
     "scalan" -> List(scalanConfig),
     "core" -> List(coreConfig),
     "coretests" -> List(coreTestsConfig),
-    "ce" -> List(ceConfig),
+    "lib" -> List(libConfig),
     "collections" -> List(collectionsConfig),
     "la" -> List(laConfig),
     "graphs" -> List(graphConfig),
@@ -204,8 +204,8 @@ class BoilerplateTool extends StrictLogging {
     "ee" -> List(eeConfig),
     "effects" -> List(effectsConfig),
     "effects2" -> List(effects2Config),
-    "ce-all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config),
-    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, ceConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config, eeConfig)
+    "lib-all" -> List(scalanConfig, coreConfig, coreTestsConfig, libConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config),
+    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, libConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config, eeConfig)
   )
 
   def main(args: Array[String]) {
