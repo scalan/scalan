@@ -247,4 +247,11 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     val offs = lens.scanLeft(0)((x, y) => x + y).take(lens.length)
     (arrI zip arrV, offs zip lens)
   }
+
+  lazy val collReplicateFilter = fun { xs: Rep[Array[Int]] =>
+    val c = Collection(xs)
+    val cs = SArray.replicate(5, c)
+    val csFilt = cs.filter(coll => coll.length > 0)
+    csFilt.map(coll => coll.arr)
+  }
 }

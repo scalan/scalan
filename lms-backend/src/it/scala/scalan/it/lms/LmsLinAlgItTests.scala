@@ -288,4 +288,9 @@ class VectorMethodsItTests extends LmsLinAlgItTests {
 
     compareOutputWithSequential(progStaged)(progSeq.funZipMapViewRight, progStaged.funZipMapViewRight, "funZipMapViewRight", in)
   }
+
+  test("collReplicateFilter") {
+    val in = Array(1, 2, 4)
+    compareOutputWithSequential(progStaged)(progSeq.collReplicateFilter, progStaged.collReplicateFilter, "collReplicateFilter", in)
+  }
 }

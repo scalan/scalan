@@ -162,6 +162,11 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       implicit val eB = view.innerIso.eTo
       val res = view.innerIso.to(view.source(i))
       res
+    case ArrayReplicate(len: Exp[Int], HasViews(source2, iso2: Iso[a, _])) =>
+      implicit val eA = iso2.eFrom
+      val s = ArrayReplicate(len, source2.asRep[a])
+      val res = ViewArray(s)(ArrayIso(iso2))
+      res
     /*
       case ArrayUpdate(Def(view: ViewArray[a, b]), i, Def(UnpackableDef(value, iso2: Iso[c, d]))) if view.innerIso == iso2 =>
         implicit val eA = view.innerIso.eFrom
