@@ -1,13 +1,27 @@
+sudo: false
+
+# These directories are cached to S3 at the end of the build
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.ivy2/local
+    - $HOME/.sbt/boot/
+
 language: scala
 
 jdk:
-  - oraclejdk7
+  - oraclejdk8
 
+# Install LMS if not installed
 install:
-  - git clone https://github.com/scalan/virtualization-lms-core.git &&
+  - test ! -d "$HOME/.ivy2/local/EPFL" &&
+    git clone "https://github.com/scalan/virtualization-lms-core.git" &&
     (cd virtualization-lms-core && sbt publishLocal)
 
 script:
   - sbt test
 
-sudo: false
+# Tricks to avoid unnecessary cache updates
+after_script:
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
