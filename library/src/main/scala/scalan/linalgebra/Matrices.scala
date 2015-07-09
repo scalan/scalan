@@ -196,7 +196,16 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
             CompoundMatrix((vA.items zip matrix.rows).map { case Pair(a, vB) => vB *^ a }, matrix.numColumns).reduceByColumns
           }
           CompoundMatrix(rowsNew, numColumnsB)*/
-          ???
+          // TODO: remove on implementation of pattern-matching in staged evaluation
+          val rowsB = matrix.rows
+          val numColumnsB = matrix.numColumns
+          val rowsNew = rows.map { vA =>
+            val (is, vs) = (vA.nonZeroIndices, vA.nonZeroValues)
+            val res = CompoundMatrix((vs zip rowsB(is)).map { case Pair(a, vB) => vB *^ a }, numColumnsB).reduceByColumns
+            // TODO: find a proper way to carry over type of vector (Sparse or Dense)
+            res//.convertTo(vA.element)
+          }
+          CompoundMatrix(rowsNew, numColumnsB)
       }
     }
 
