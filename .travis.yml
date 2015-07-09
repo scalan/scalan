@@ -16,13 +16,14 @@ cache:
 addons:
   apt:
     sources:
+      - boost-latest
       - ubuntu-toolchain-r-test
     packages:
       - build-essential
       - gcc-4.8
       - g++-4.8
       - libstdc++6-4.6-dev
-      - libboost-all-dev
+      - libboost1.55-dev
 
 env:
   global:
@@ -38,9 +39,10 @@ jdk:
   - oraclejdk8
 
 install:
-  - test ! -d "$HOME/.ivy2/local/EPFL" &&
-    git clone "https://github.com/scalan/virtualization-lms-core.git" &&
-    (cd virtualization-lms-core && sbt publishLocal)
+  - if test ! -d "$HOME/.ivy2/local/EPFL"; then
+      git clone "https://github.com/scalan/virtualization-lms-core.git" &&
+      (cd virtualization-lms-core && sbt publishLocal);
+    fi
 
 script:
   - sbt $TEST_SUITE
