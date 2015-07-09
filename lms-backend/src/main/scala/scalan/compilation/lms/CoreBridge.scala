@@ -167,6 +167,10 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL { 
               case Manifest.Long => lms.LongToIntExt(arg1_.asInstanceOf[lms.Exp[Long]])
               case Manifest.Int => arg1_
             }
+            case NumericToLong(n) => mA match {
+              case Manifest.Int => lms.IntToLong(arg1_.asInstanceOf[lms.Exp[Int]])
+              case Manifest.Long => arg1_
+            }
             case NumericToString() => lms.ToString(arg1_)
             case HashCode() => lms.hashCode(arg1_)
             case StringToInt() => lms.stringToInt(arg1_.asInstanceOf[lms.Exp[String]])

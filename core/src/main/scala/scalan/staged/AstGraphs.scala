@@ -142,9 +142,33 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
       defMap
     }
 
+    lazy val allNodes: Map[Exp[_], GraphNode] = {
+      var defMap: Map[Exp[_], GraphNode] = (scheduleAll.map {
+        case TableEntry(s, d) => (s, GraphNode(this, s, Some(d), List.empty[Exp[_]]))
+      }).toMap
+
+      def addUsage(usedSym: Exp[_], referencingSym: Exp[_]) = {
+        val newNode = defMap.getOrElse(usedSym, GraphNode(this, usedSym, None, List.empty)).addUsage(referencingSym)
+        defMap += usedSym -> newNode
+      }
+
+      for (TableEntry(s, d) <- scheduleAll) {
+        val usedSymbols = d.getDeps
+        usedSymbols.foreach(us => addUsage(us, s))
+      }
+      defMap
+    }
+
     lazy val domain: Set[Exp[_]] = scheduleSyms.toSet
 
     def node(s: Exp[_]): Option[AstNode] = nodes.get(s)
+
+    def globalUsagesOf(s: Exp[_]) = allNodes.get(s) match {
+      case Some(node) => node.outSyms
+      case None => List()
+    }
+
+    def hasManyUsagesGlobal(s: Exp[_]): Boolean = globalUsagesOf(s).lengthCompare(1) > 0
 
     def usagesOf(s: Exp[_]) = node(s) match {
       case Some(node) => node.outSyms

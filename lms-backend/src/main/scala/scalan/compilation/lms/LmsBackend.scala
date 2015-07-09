@@ -91,6 +91,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     arg.toFloat
   }
 
+  def IntToLong(arg: Exp[Int]) = {
+    arg.toLong
+  }
+
   def sumLeft[A: Manifest, B: Manifest](a: Exp[A]): Exp[Either[A, B]] = make_left[A, B](a)
   def sumRight[A: Manifest, B: Manifest](b: Exp[B]): Exp[Either[A, B]] = make_right[A, B](b)
 
