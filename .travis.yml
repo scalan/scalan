@@ -1,0 +1,13 @@
+language: scala
+
+jdk:
+  - oraclejdk7
+
+install:
+  - git clone https://github.com/scalan/virtualization-lms-core.git &&
+    (cd virtualization-lms-core && sbt publishLocal)
+
+script:
+  - sbt test
+
+sudo: false

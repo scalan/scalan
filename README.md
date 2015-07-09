@@ -1,5 +1,7 @@
-[![Stories in Ready](https://badge.waffle.io/scalan/scalan.png?label=ready&title=Ready)](https://waffle.io/scalan/scalan)
 # Scalan Compilation Framework
+
+[![Build Status](https://travis-ci.org/scalan/scalan.svg?branch=master)](https://travis-ci.org/scalan/scalan)
+[![Stories in Ready](https://badge.waffle.io/scalan/scalan.png?label=ready&title=Ready)](https://waffle.io/scalan/scalan)
 
 ## Intro
 
