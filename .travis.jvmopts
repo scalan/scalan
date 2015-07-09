@@ -1,3 +1,2 @@
--Xmx2g
--Xms2g
+-Xmx1536m
 -XX:ReservedCodeCacheSize=256m

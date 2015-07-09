@@ -210,8 +210,9 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
     override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, invokeEnabler("skip_length_method") { (o, m) => !m.getName.equals("length")})
   }
 
+  // TODO: Slow test
   test("Class Mapping") {
-    if (isOnTeamCity) {
+    if (isCI) {
       // takes extremely long to run on TeamCity
       pending
     }
@@ -267,8 +268,9 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
     }
   }
 
+  // TODO: Slow test
   test("Mapping Method From Jar") {
-    if (isOnTeamCity) {
+    if (isCI) {
       // takes extremely long to run on TeamCity
       pending
     }

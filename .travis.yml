@@ -45,4 +45,4 @@ install:
     fi
 
 script:
-  - sbt $TEST_SUITE
+  - sbt -jvm-opts .travis.jvmopts $TEST_SUITE
