@@ -415,6 +415,18 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
       }
     }
 
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object +^ {
       def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
         case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "$plus$up" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
@@ -653,6 +665,18 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[T => R @uncheckedVariance]) forSome {type T; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -932,6 +956,18 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[T => R @uncheckedVariance]) forSome {type T; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1234,6 +1270,18 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
         case _ => None
       }
       def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T => R @uncheckedVariance]) forSome {type T; type R}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object filterBy {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(f, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "filterBy" =>
+          Some((receiver, f)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[T @uncheckedVariance => Boolean]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

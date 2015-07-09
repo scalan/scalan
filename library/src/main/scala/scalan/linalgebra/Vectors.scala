@@ -177,8 +177,11 @@ trait Vectors { self: ScalanCommunityDsl =>
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
         case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
-            (x: Rep[T], y: Rep[T]) => x + y), length)
+          val newItems = (nonZeroIndices zip nonZeroValues) outerSum (nonZeroIndices1 zip nonZeroValues1)
+          SparseVector(newItems.as, newItems.bs, length)
+        case SparseVector1Matcher(nonZeroItems1, _) =>
+          val newItems = (nonZeroIndices zip nonZeroValues) outerSum (nonZeroItems1.as zip nonZeroItems1.bs)
+          SparseVector(newItems.as, newItems.bs, length)
         case _ =>
           other +^ self
       }
@@ -193,8 +196,8 @@ trait Vectors { self: ScalanCommunityDsl =>
       // TODO: I don't like constructing items in this method
       other match {
         case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
-            (x: Rep[T], y: Rep[T]) => x + y), length)
+          val newItems = (nonZeroIndices zip nonZeroValues) outerSubtr (nonZeroIndices1 zip nonZeroValues1)
+          SparseVector(newItems.as, newItems.bs, length)
         case DenseVectorMatcher(items) =>
           val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
           DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
@@ -210,8 +213,8 @@ trait Vectors { self: ScalanCommunityDsl =>
     def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
         case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(innerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
-            (x: Rep[T], y: Rep[T]) => x * y), length)
+          val newItems = (nonZeroIndices zip nonZeroValues) innerMult (nonZeroIndices1 zip nonZeroValues1)
+          SparseVector(newItems.as, newItems.bs, length)
         case _ =>
           other *^ self
       }
@@ -222,10 +225,13 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
 
     def ^(order: Rep[Int])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
-      SparseVector(nonZeroIndices, nonZeroValues.map(v => Collection.replicate(order, v).reduce(numericMultMonoid)), length)
+      //SparseVector(nonZeroIndices, nonZeroValues.map(v => Collection.replicate(order, v).reduce(numericMultMonoid)), length)
+      SparseVector(nonZeroIndices, nonZeroValues.map(v => Math.pow(v.toDouble, order.toDouble).asInstanceOf[Rep[T]]), length)
     }
 
-    def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)  //TODO: it's inefficient
+    def reduce(implicit m: RepMonoid[T]): Rep[T] = {
+      if (m.zero == zeroValue) nonZeroValues.reduce(m) else items.reduce(m)
+    }  //TODO: it's inefficient
 
     def dot(other: Rep[AbstractVector[T]])(implicit n: Numeric[T]): Rep[T] = {
       other match {
@@ -276,9 +282,9 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
-        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
-            (x: Rep[T], y: Rep[T]) => x + y), length)
+        case SparseVector1Matcher(nonZeroItems1, _) =>
+          val newItems = (nonZeroIndices zip nonZeroValues) outerSum (nonZeroItems1.as zip nonZeroItems1.bs)
+          SparseVector1(newItems, length)
         case _ =>
           other +^ self
       }
@@ -292,9 +298,9 @@ trait Vectors { self: ScalanCommunityDsl =>
     def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       // TODO: I don't like constructing items in this method
       other match {
-        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(outerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
-            (x: Rep[T], y: Rep[T]) => x + y), length)
+        case SparseVector1Matcher(nonZeroItems1, _) =>
+          val newItems = (nonZeroIndices zip nonZeroValues) outerSubtr (nonZeroItems1.as zip nonZeroItems1.bs)
+          SparseVector1(newItems, length)
         case DenseVectorMatcher(items) =>
           val nonZeroValuesNew = (nonZeroValues zip items(nonZeroIndices)).map { case Pair(v1, v2) => v1 - v2 }
           DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
@@ -309,20 +315,21 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
       other match {
-        case SparseVectorMatcher(nonZeroIndices1, nonZeroValues1, _) =>
-          SparseVector(innerJoin(nonZeroIndices, nonZeroValues, nonZeroIndices1, nonZeroValues1,
-            (x: Rep[T], y: Rep[T]) => x * y), length)
+        case SparseVector1Matcher(nonZeroItems1, _) =>
+          val newItems = (nonZeroIndices zip nonZeroValues) innerMult (nonZeroItems1.as zip nonZeroItems1.bs)
+          SparseVector1(newItems, length)
         case _ =>
           other *^ self
       }
     }
     @OverloadId("elementwise_mult_value")
     def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
-      SparseVector(nonZeroIndices, nonZeroValues.map(v => v * other), length)
+      SparseVector1(nonZeroIndices zip nonZeroValues.map(v => v * other), length)
     }
 
     def ^(order: Rep[Int])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
-      SparseVector1(nonZeroIndices zip nonZeroValues.map(v => Collection.replicate(order, v).reduce(numericMultMonoid)), length)
+      //SparseVector1(nonZeroIndices zip nonZeroValues.map(v => Collection.replicate(order, v).reduce(numericMultMonoid)), length)
+      SparseVector1(nonZeroIndices zip nonZeroValues.map(v => Math.pow(v.toDouble, order.toDouble).asInstanceOf[Rep[T]]), length)
     }
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)  //TODO: it's inefficient
@@ -403,13 +410,13 @@ trait VectorsDsl extends impl.VectorsAbs { self: ScalanCommunityDsl =>
     (xItems(yIndices) zip yValues).map { case Pair(x, y) => x * y }.reduce
   }
 
-  def innerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T],
+  /*def innerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T],
                          f: Rep[((T, T)) => T])(implicit n: Numeric[T]): PairColl[Int, T] =
-    pairColl_innerJoin(xIndices zip xValues, yIndices zip yValues, f)
+    (xIndices zip xValues).innerJoin(yIndices zip yValues, f)
 
   def outerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T],
                          f: Rep[((T, T)) => T])(implicit n: Numeric[T]): PairColl[Int, T] =
-    pairColl_outerJoin(xIndices zip xValues, yIndices zip yValues, f, (x: Rep[T]) => x.asRep[T], (y: Rep[T]) => y.asRep[T])
+     (xIndices zip xValues).outerJoin(yIndices zip yValues, f)*/
 
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep
 
@@ -438,154 +445,6 @@ trait VectorsDslSeq extends impl.VectorsSeq { self: ScalanCommunityDslSeq =>
       }
     }
   }
-
-  /*//TODO: need to implement innerJoin and outerJoin, preferable in Collections DSL
-  def innerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
-                        (implicit n: Numeric[T]): PairColl[Int, T] = ???/*{
-    var result = n.zero
-    val yMap = (yIndices.arr zip yValues.arr).toMap
-    (xIndices.arr zip xValues.arr).foldLeft(n.zero) {
-      case (acc, (i, x)) =>
-        yMap.get(i) match {
-          case Some(y) => acc + x * y
-          case None => acc
-        }
-    }
-  }*/
-
-  def outerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
-                        (implicit n: Numeric[T]): PairColl[Int, T] = ???/*{
-    val yMap = (yIndices.arr zip yValues.arr).toMap
-    (xIndices.arr zip xValues.arr) {
-      case (i, x) =>
-        yMap.get(i) match {
-          case Some(y) => x * y
-          case None => (0, n.zero)
-        }
-    }
-  }*/*/
-
-  def pairArray_innerJoin[T](xs: Coll[(Int, T)], ys: Coll[(Int, T)], f: Rep[((T, T)) => T])
-                                 (implicit ordK: Ordering[Int], eR: Elem[T]): Coll[(Int, T)] = ???/*{
-    //implicit val eK: Elem[Int] = xs.eItem.eFst
-
-    val xIter = xs.arr.iterator
-    val yIter = ys.arr.iterator
-
-    val buffer = mutable.ArrayBuffer[(Int, T)]()
-
-    @tailrec
-    def go(keyX: Int, keyY: Int, valueX: T, valueY: T) {
-      val cmp = ordK.compare(keyX, keyY)
-      if (cmp == 0) {
-        // keyX == keyY
-        val value = f((valueX, valueY))
-        buffer.append((keyX, value))
-        if (xIter.hasNext && yIter.hasNext) {
-          val (keyX1, valueX1) = xIter.next()
-          val (keyY1, valueY1) = yIter.next()
-          go(keyX1, keyY1, valueX1, valueY1)
-        }
-      } else if (cmp < 0) {
-        // keyX < keyY
-        if (xIter.hasNext) {
-          val (keyX1, valueX1) = xIter.next()
-          go(keyX1, keyY, valueX1, valueY)
-        }
-      } else {
-        // keyY < keyX
-        if (yIter.hasNext) {
-          val (keyY1, valueY1) = yIter.next()
-          go(keyX, keyY1, valueX, valueY1)
-        }
-      }
-    }
-
-    if (xIter.hasNext && yIter.hasNext) {
-      val (keyX1, valueX1) = xIter.next()
-      val (keyY1, valueY1) = yIter.next()
-      go(keyX1, keyY1, valueX1, valueY1)
-    }
-
-    fromArray(buffer.toArray)(pairElement(eK, eR))
-  }*/
-
-  def pairArray_outerJoin[T](xs: Coll[(Int, T)], ys: Coll[(Int, T)], f: Rep[((T, T)) => T], f1: Rep[T => T], f2: Rep[T => T])
-                                 (implicit ordK: Ordering[Int], eR: Elem[T]): Coll[(Int, T)] = ???/*{
-    implicit val eK: Elem[K] = xs.eItem.eFst
-
-    val xIter = xs.toArray.iterator
-    val yIter = ys.toArray.iterator
-
-    val buffer = mutable.ArrayBuffer[(K, R)]()
-
-    // called only when yIter is empty
-    def finishX() {
-      xIter.foreach { kv => buffer.append((kv._1, f1(kv._2))) }
-    }
-
-    // called only when xIter is empty
-    def finishY() {
-      yIter.foreach { kv => buffer.append((kv._1, f2(kv._2))) }
-    }
-
-    @tailrec
-    def go(keyX: K, keyY: K, valueX: V1, valueY: V2) {
-      val cmp = ordK.compare(keyX, keyY)
-      if (cmp == 0) {
-        // keyX == keyY
-        val value = f((valueX, valueY))
-        buffer.append((keyX, value))
-        (xIter.hasNext, yIter.hasNext) match {
-          case (true, true) =>
-            val (keyX1, valueX1) = xIter.next()
-            val (keyY1, valueY1) = yIter.next()
-            go(keyX1, keyY1, valueX1, valueY1)
-          case (true, false) =>
-            finishX()
-          case (false, true) =>
-            finishY()
-          case _ => {}
-        }
-      } else if (cmp < 0) {
-        // keyX < keyY
-        val value = f1(valueX)
-        buffer.append((keyX, value))
-        if (xIter.hasNext) {
-          val (keyX1, valueX1) = xIter.next()
-          go(keyX1, keyY, valueX1, valueY)
-        } else {
-          buffer.append((keyY, f2(valueY)))
-          finishY()
-        }
-      } else {
-        // keyY < keyX
-        val value = f2(valueY)
-        buffer.append((keyY, value))
-        if (yIter.hasNext) {
-          val (keyY1, valueY1) = yIter.next()
-          go(keyX, keyY1, valueX, valueY1)
-        } else {
-          buffer.append((keyX, f1(valueX)))
-          finishX()
-        }
-      }
-    }
-
-    (xIter.hasNext, yIter.hasNext) match {
-      case (true, true) =>
-        val (keyX1, valueX1) = xIter.next()
-        val (keyY1, valueY1) = yIter.next()
-        go(keyX1, keyY1, valueX1, valueY1)
-      case (true, false) =>
-        finishX()
-      case (false, true) =>
-        finishY()
-      case _ => {}
-    }
-
-    fromArray(buffer.toArray)(pairElement(eK, eR))
-  }*/
 
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep = {
     val zero = 0
@@ -618,12 +477,6 @@ trait VectorsDslExp extends impl.VectorsExp { self: ScalanCommunityDslExp =>
     override def mirror(f: Transformer) = DotSparse(f(xIndices), f(xValues), f(yIndices), f(yValues))
     def uniqueOpId = name(selfType)
   }
-
-  def innerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
-                        (implicit n: Numeric[T]): PairColl[Int, T] = ???
-
-  def outerJoin[T: Elem](xIndices: Coll[Int], xValues: Coll[T], yIndices: Coll[Int], yValues: Coll[T])
-                        (implicit n: Numeric[T]): PairColl[Int, T] = ???
 
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep = array_binary_search(index, indices.arr)
 }
