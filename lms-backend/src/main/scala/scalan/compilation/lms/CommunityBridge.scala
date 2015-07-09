@@ -21,14 +21,18 @@ trait CommunityBridge extends CoreBridge { self: ScalanCommunityDslExp with Comm
               m.addSym(sym, exp)
           }
       }
-//    case Reflect(NumericRand(bound, i), u, es) =>
-//      reflectMirrored(Reflect(ListForeach(f(a),f(x).asInstanceOf[Sym[A]],f(b)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
-    case NumericRand(bound, i) =>
-      val bound_ = m.symMirror[Double](bound)
-      //val i_ = m.symMirror[Int](i)
-      val exp = lms.numeric_Random(bound_)
 
-      m.addSym(sym, exp)//.addFunc(bound_, exp => exp)
+    case ArrayBinarySearch(i, xs, o) =>
+      xs.elem match {
+        case el: ArrayElem[_] =>
+          createManifest(el.eItem) match {
+            case (mA: Manifest[a]) =>
+              val idxs = m.symMirror[Array[Int]](xs)
+              val index = m.symMirror[Int](i)
+              val exp = lms.array_binarySearch[a](index, idxs)(mA)
+              m.addSym(sym, exp)
+          }
+      }
 
     case Reflect(PrintlnE(s), _, _) =>
       val s1 = m.symMirror[String](s)
