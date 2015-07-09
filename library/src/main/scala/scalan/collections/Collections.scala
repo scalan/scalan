@@ -209,6 +209,17 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     @OverloadId("many")
     override def apply(indices: Coll[Int])(implicit o: Overloaded1): Rep[PairCollection[A, B]]
     def coll: Coll[(A, B)]
+    def innerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R])(implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]): PairColl[A, R]
+    def outerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])(implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]): PairColl[A, R]
+    def innerMult(other: PairColl[A, B])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
+      innerJoin[B, B](other, (b1: Rep[(B, B)]) => b1._1 + b1._2)
+    }
+    def outerSum(other: PairColl[A, B])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
+      outerJoin[B, B](other, (b1: Rep[(B, B)]) => b1._1 + b1._2, (b: Rep[B]) => b, (b: Rep[B]) => b)
+    }
+    def outerSubtr(other: PairColl[A, B])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
+      outerJoin[B, B](other, (b1: Rep[(B, B)]) => b1._1 - b1._2, (b: Rep[B]) => b, (b: Rep[B]) => b)
+    }
   }
   type PairColl[A, B] = Rep[PairCollection[A, B]]
 
@@ -236,6 +247,16 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] =
       Collection(arr.flatMap {in => f(in).arr})
     def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = PairCollectionSOA(as.append(value._1), bs.append(value._2))
+    def innerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R])
+                       (implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]): PairColl[A, R] = {
+      val innerJoined = Collection(pairColl_innerJoin[A, B, C, R](this, other, f))
+      PairCollectionSOA(innerJoined.as, innerJoined.bs)
+    }
+    def outerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])
+                       (implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]) = {
+      val outerJoined = Collection(pairColl_outerJoin[A, B, C, R](this, other, f, f1, f2))
+      PairCollectionSOA(outerJoined.as, outerJoined.bs)
+    }
   }
 
   trait PairCollectionSOACompanion extends ConcreteClass2[PairCollectionSOA]
@@ -263,6 +284,14 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def filterBy(f: Rep[(A,B) @uncheckedVariance => Boolean]) = coll.filterBy(f)
     def flatMapBy[C: Elem](f: Rep[(A,B) @uncheckedVariance => Collection[C]]): Coll[C] = coll.flatMapBy(f)
     def append(value: Rep[(A,B) @uncheckedVariance]): Coll[(A,B)]  = PairCollectionAOS(coll.append(value))
+    def innerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R])
+                       (implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]) = {
+      PairCollectionAOS.fromArray(pairColl_innerJoin[A, B, C, R](this, other, f))
+    }
+    def outerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])
+                       (implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]) = {
+      PairCollectionAOS.fromArray(pairColl_outerJoin[A, B, C, R](this, other, f, f1, f2))
+    }
   }
   trait PairCollectionAOSCompanion extends ConcreteClass2[PairCollectionAOS] {
     def fromArray[A: Elem, B: Elem](arr: Arr[(A, B)]) = PairCollectionAOS(CollectionOverArray(arr))
@@ -370,18 +399,20 @@ trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl =>
     def indexRange(l: Rep[Int]): Coll[Int]
   }
 
-  def pairColl_innerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R])
-                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R]
+  def pairColl_innerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R])
+                                    (implicit ordK: Ordering[K], selfType: Elem[Array[(K, R)]],
+                                     eK: Elem[K], eR: Elem[R], eB: Elem[B], eC: Elem[C]): Rep[Array[(K, R)]]
 
-  def pairColl_outerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R], f1: Rep[V1 => R], f2: Rep[V2 => R])
-                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R]
+  def pairColl_outerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])
+                                    (implicit ordK: Ordering[K], selfType: Elem[Array[(K, R)]],
+                                     eK: Elem[K], eR: Elem[R], eB: Elem[B], eC: Elem[C]): Rep[Array[(K, R)]]
 }
 
 trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSeq =>
 
-  def pairColl_innerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R])
-                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R] = {
-    implicit val eK: Elem[K] = xs.eItem.eFst
+  def pairColl_innerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R])
+                                    (implicit ordK: Ordering[K], selfType: Elem[Array[(K, R)]],
+                                     eK: Elem[K], eR: Elem[R], eB: Elem[B], eC: Elem[C]): Rep[Array[(K, R)]] = {
 
     val xIter = xs.arr.iterator
     val yIter = ys.arr.iterator
@@ -389,7 +420,7 @@ trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSe
     val buffer = mutable.ArrayBuffer[(K, R)]()
 
     @tailrec
-    def go(keyX: K, keyY: K, valueX: V1, valueY: V2) {
+    def go(keyX: K, keyY: K, valueX: B, valueY: C) {
       val cmp = ordK.compare(keyX, keyY)
       if (cmp == 0) {
         // keyX == keyY
@@ -419,13 +450,12 @@ trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSe
       val (keyY1, valueY1) = yIter.next()
       go(keyX1, keyY1, valueX1, valueY1)
     }
-    PairCollectionAOS(Collection.fromArray(buffer.toArray)(pairElement(eK, eR)))
+    buffer.toArray
   }
 
-  def pairColl_outerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R], f1: Rep[V1 => R], f2: Rep[V2 => R])
-                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R] = {
-    implicit val eK: Elem[K] = xs.eItem.eFst
-
+  def pairColl_outerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])
+                                    (implicit ordK: Ordering[K], selfType: Elem[Array[(K, R)]],
+                                     eK: Elem[K], eR: Elem[R], eB: Elem[B], eC: Elem[C]): Rep[Array[(K, R)]] = {
     val xIter = xs.arr.iterator
     val yIter = ys.arr.iterator
 
@@ -442,7 +472,7 @@ trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSe
     }
 
     @tailrec
-    def go(keyX: K, keyY: K, valueX: V1, valueY: V2) {
+    def go(keyX: K, keyY: K, valueX: B, valueY: C) {
       val cmp = ordK.compare(keyX, keyY)
       if (cmp == 0) {
         // keyX == keyY
@@ -494,7 +524,7 @@ trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSe
         finishY()
       case _ => {}
     }
-    PairCollectionAOS(Collection.fromArray(buffer.toArray)(pairElement(eK, eR)))
+    buffer.toArray
   }
 }
 
@@ -505,9 +535,31 @@ trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslEx
     case _ => super.rewriteDef(d)
   }
 
-  def pairColl_innerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R])
-                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R] = ???
+  def pairColl_innerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R])
+                                    (implicit ordK: Ordering[K], selfType: Elem[Array[(K, R)]],
+                                     eK: Elem[K], eR: Elem[R], eB: Elem[B], eC: Elem[C]): Rep[Array[(K, R)]] = {
+    ArrayInnerJoin(xs.arr, ys.arr, f)
+  }
 
-  def pairColl_outerJoin[K, V1, V2, R](xs: PairColl[K, V1], ys: PairColl[K, V2], f: Rep[((V1, V2)) => R], f1: Rep[V1 => R], f2: Rep[V2 => R])
-                                       (implicit ordK: Ordering[K], eR: Elem[R]): PairColl[K, R] = ???
+  def pairColl_outerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])
+                                    (implicit ordK: Ordering[K], selfType: Elem[Array[(K, R)]], eK: Elem[K], eR: Elem[R], eB: Elem[B], eC: Elem[C]): Rep[Array[(K, R)]] = {
+    ArrayOuterJoin(xs.arr, ys.arr, f, f1, f2)
+  }
+
+  case class ArrayInnerJoin[K, B, C, R](xs: Exp[Array[(K, B)]], ys: Exp[Array[(K, C)]], f: Exp[((B, C)) => R])
+                                       (implicit val ordK: Ordering[K], val selfType: Elem[Array[(K, R)]],
+                                        val eK: Elem[K], val eR: Elem[R], val eB: Elem[B], val eC: Elem[C])
+    extends Def[Array[(K, R)]] {
+    override def mirror(t: Transformer) = ArrayInnerJoin(t(xs), t(ys), t(f))
+    def uniqueOpId: String = name(selfType)
+  }
+
+  case class ArrayOuterJoin[K, B, C, R](xs: Exp[Array[(K, B)]], ys: Exp[Array[(K, C)]], f: Rep[((B, C)) => R],
+                                        f1: Rep[B => R], f2: Rep[C => R])
+                                       (implicit val ordK: Ordering[K], val selfType: Elem[Array[(K, R)]],
+                                        val eK: Elem[K], val eR: Elem[R], val eB: Elem[B], val eC: Elem[C])
+    extends Def[Array[(K, R)]] {
+    override def mirror(t: Transformer) = ArrayOuterJoin(t(xs), t(ys), t(f), t(f1), t(f2))
+    def uniqueOpId: String = name(selfType)
+  }
 }
