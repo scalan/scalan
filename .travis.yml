@@ -1,5 +1,10 @@
 sudo: false
 
+# Tricks to avoid unnecessary cache updates
+before_cache:
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+
 # These directories are cached to S3 at the end of the build
 cache:
   directories:
@@ -7,21 +12,30 @@ cache:
     - $HOME/.ivy2/local
     - $HOME/.sbt/boot/
 
+# dependencies for integration tests
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - build-essential
+    - gcc-4.8
+    - libstdc++6-4.6-dev
+    - libboost-dev
+
+env:
+  - TEST_SUITE=test
+  - TEST_SUITE=it:test
+
 language: scala
 
 jdk:
   - oraclejdk8
 
-# Install LMS if not installed
 install:
   - test ! -d "$HOME/.ivy2/local/EPFL" &&
     git clone "https://github.com/scalan/virtualization-lms-core.git" &&
     (cd virtualization-lms-core && sbt publishLocal)
 
 script:
-  - sbt test
-
-# Tricks to avoid unnecessary cache updates
-after_script:
-  - find $HOME/.sbt -name "*.lock" | xargs rm
-  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+  - sbt $TEST_SUITE
