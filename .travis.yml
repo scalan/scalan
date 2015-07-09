@@ -10,22 +10,27 @@ cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.ivy2/local
-    - $HOME/.sbt/boot/
+    - $HOME/.sbt/boot
 
 # dependencies for integration tests
 addons:
   apt:
     sources:
-    - ubuntu-toolchain-r-test
+      - ubuntu-toolchain-r-test
     packages:
-    - build-essential
-    - gcc-4.8
-    - libstdc++6-4.6-dev
-    - libboost-dev
+      - build-essential
+      - gcc-4.8
+      - g++-4.8
+      - libstdc++6-4.6-dev
+      - libboost-all-dev
 
 env:
-  - TEST_SUITE=test
-  - TEST_SUITE=it:test
+  global:
+    - CXX="g++-4.8"
+    - CC="gcc-4.8"
+  matrix:
+    - TEST_SUITE=test
+    - TEST_SUITE=it:test
 
 language: scala
 
