@@ -15,7 +15,9 @@ trait Vertices extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl 
 
     def id: Rep[Int]
     def value: Rep[V] = this.graph.vertexValues(id)
-    def outNbrs: Coll[Vertex[V,E]] = ???
+    def outNbrs: Coll[Vertex[V,E]] = {
+      this.graph.nodes(this.graph.links(id))
+    }
     def outEdges: Coll[AdjEdge[V,E]] = ???
     def hasEdgeTo(v: Rep[Vertex[V,E]]):Rep[Boolean] = graph.hasEdgeTo(id, v.id)
     def numOutNbrs: Rep[Int] = graph.outDegrees(id)

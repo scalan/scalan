@@ -1,6 +1,7 @@
 package scalan
 
 import scalan.staged.Expressions
+import scalan.common.Lazy
 
 trait Converters extends Views { self: Scalan =>
 
@@ -121,6 +122,13 @@ trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: Scala
     // Rule: convert(eFrom, eTo, x, conv) if x.elem <:< eFrom  ==>  conv(x)
     case Convert(eFrom: Elem[from], eTo: Elem[to], x,  conv) if x.elem <:< eFrom =>
       conv(x)
+
+    case Convert(eFrom: Elem[from], eTo: Elem[to], HasViews(_x, _iso: Iso[Reifiable[_], _] @unchecked),  _conv) =>
+      val iso = _iso.asInstanceOf[Iso[Reifiable[_], from]]
+      val conv = _conv.asRep[from => to]
+      val x = _x.asRep[Reifiable[_]]
+      tryConvert(x.elem, eTo, x, fun({ s: Rep[Reifiable[_]] => conv(iso.to(s)) })(Lazy(iso.eFrom), eTo))
+
     case _ => super.rewriteDef(d)
   }
 }

@@ -44,7 +44,10 @@ trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDS
         val obj = m.symMirrorUntyped(receiver)
         createManifest(returnType) match {
           case (mA: Manifest[a]) => lms.scalaMethod[a](obj, PURE, method.getName,
-            args.collect { case elem: Element[_] => elem.tag },
+            args.collect { arg => arg match {
+              case el: WrapperElem1[_,_,_,_] => el.baseElem.tag
+              case elem: Element[_] => elem.tag
+            }},
             /* filter out implicit ClassTag params */
             args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }: _*)(mA.asInstanceOf[Manifest[a]])
         }

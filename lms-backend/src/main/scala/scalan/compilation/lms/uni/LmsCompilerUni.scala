@@ -19,9 +19,9 @@ import scalan.util.FileUtil._
  * Created by adel on 5/12/15.
  */
 trait LmsCompilerUni
-  extends LmsCompilerScala
-  with JNIExtractorOpsExp
-  //extends CommunityLmsCompilerScala
+  extends /*LmsCompilerScala
+  with*/ JNIExtractorOpsExp
+  with CommunityLmsCompilerScala
   with CoreBridge with MethodMappingDSL with JNIBridge
 { self: ScalanCtxExp =>
 

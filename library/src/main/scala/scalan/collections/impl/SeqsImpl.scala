@@ -606,6 +606,11 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
       case _ =>
         super.rewriteDef(d)
     }
+    case SSeqCompanionMethods.apply(HasViews(source, arrIso: ArrayIso[a,b])) => {
+      val iso = arrIso.iso
+      implicit val eA = iso.eFrom
+      ViewSSeq(SSeq[a](source.asRep[Array[a]])(eA))(SSeqIso(iso))
+    }
 
     case _ => super.rewriteDef(d)
   }
