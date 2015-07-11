@@ -75,12 +75,12 @@ trait RewriteRuleSuite[A,B,C,D] extends BaseShouldTests {
     ctx.emitDepGraph(List(withoutRule, withRule), new File(folder, "LemmaRule/ruleRewriting.dot"))(GraphVizConfig.default)
 
     val expectedResult = fun(expected)
-    withRule.alphaEqual(expectedResult) should be(true)
-    withoutRule.alphaEqual(expectedResult) should be(false)
+    alphaEqual(withRule, expectedResult) should be(true)
+    alphaEqual(withoutRule, expectedResult) should be(false)
 
     val afterRemoval = fun(test)
     ctx.emitDepGraph(List(withoutRule, withRule, afterRemoval), new File(folder, "LemmaRule/ruleRewriting.dot"))(GraphVizConfig.default)
-    afterRemoval.alphaEqual(withoutRule) should be(true)
+    alphaEqual(afterRemoval, withoutRule) should be(true)
   }
 
 }

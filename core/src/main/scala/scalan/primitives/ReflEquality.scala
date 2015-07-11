@@ -131,8 +131,8 @@ trait ReflEqualityExp extends ReflEquality with BaseExp with ExpInductiveGraphs 
 
         val lLamSym = fresh[A => B]
         val rLamSym = fresh[A => B]
-        val lLam: Exp[A => B] = new Lambda(None, lam.x, lhs, lLamSym, false)
-        val rLam: Exp[A => B] = new Lambda(None, lam.x, rhs, rLamSym, false)
+        val lLam: Exp[A => B] = new Lambda(None, lam.x, lhs, lLamSym, true)
+        val rLam: Exp[A => B] = new Lambda(None, lam.x, rhs, rLamSym, true)
 
         LemmaRule(lam, lLam, rLam)
     }

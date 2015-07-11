@@ -67,14 +67,14 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       toExp(newLam, newSym)
     }
 
-    // structural equality pattern implementation
-    override lazy val hashCode: Int = 41 * (41 + x.hashCode) + y.hashCode
+    // ensure all lambdas of the same type have the same hashcode,
+    // so they are tested for alpha-equivalence
+    override lazy val hashCode: Int = 41 * (41 + x.elem.hashCode) + y.elem.hashCode
     override def equals(other: Any) =
       other match {
         case that: Lambda[_,_] =>
           (that canEqual this) &&
-          (this.x equals that.x) &&
-          (this.y equals that.y)
+            alphaEqual(this.y, that.y, Map(this.x -> that.x))
         case _ => false
       }
     override def toString = s"Lambda(${if (f.isDefined) "f is Some" else "f is None"}, $x => $y})"
@@ -169,17 +169,41 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
 
     def argsTree = getLambda.argsTree
-    
-    def alphaEqual(g: Exp[A=>B]): Boolean = {
-      import graphs._
-      val F = new FuncMatcher(f)
-      g match {
-        case F(res, subst) => res == SimilarityEmbeded || res == SimilarityEqual
+  }
+
+  def alphaEqual(s1: Exp[_], s2: Exp[_]): Boolean = alphaEqual(s1, s2, Map.empty)
+
+  private def alphaEqual(s1: Exp[_], s2: Exp[_], subst: Map[Exp[_], Exp[_]]): Boolean = s1 match {
+    case Def(d1) => d1 match {
+      case lam1: Lambda[_, _] => s2 match {
+        case Def(lam2: Lambda[_, _]) =>
+          alphaEqual(lam1.y, lam2.y, subst + (lam1.x -> lam2.x))
+        case _ => false
+      }
+      case _ => s2 match {
+        case Def(d2) =>
+          d1.getClass == d2.getClass && d1.productArity == d2.productArity && {
+            val len = d1.productArity
+            var i = 0
+            var result = true
+            while (result && i < len) {
+              result = (d1.productElement(i), d2.productElement(i)) match {
+                case (s1i: Exp[_], s2i: Exp[_]) =>
+                  alphaEqual(s1i, s2i, subst)
+                case (s1i, s2i) => s1i == s2i
+              }
+              i += 1
+            }
+            result
+          } && d1.selfType.name == d2.selfType.name
         case _ => false
       }
     }
+    case _ => s2 match {
+      case Def(_) => false
+      case _ => subst.get(s1) == Some(s2)
+    }
   }
-
   //=====================================================================================
   //   Function application
 
@@ -197,7 +221,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       f match {
         case Def(lam: Lambda[A, B] @unchecked) if lam.mayInline => // unfold initial non-recursive function
           try {
-            unfoldLambda(f, lam, x)
+            unfoldLambda(lam, x)
           } catch {
             case e: StackOverflowError =>
               if (f.isRecursive)
@@ -213,22 +237,21 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-  def unfoldLambda[A,B](f: Exp[A=>B], lam: Lambda[A,B], x: Exp[A]): Exp[B] = {
+  def unfoldLambda[A,B](lam: Lambda[A,B], x: Exp[A]): Exp[B] = {
     lam.f match {
       case Some(g) => g(x) // unfold initial non-recursive function
-      case None => mirrorApply(f, x)  // f is mirrored, unfold it by mirroring
+      case None => mirrorApply(lam, x)  // f is mirrored, unfold it by mirroring
     }
   }
 
   def unfoldLambda[A,B](f: Exp[A=>B], x: Exp[A]): Exp[B] = {
     val lam = f.getLambda
-    unfoldLambda(f, lam, x)
+    unfoldLambda(lam, x)
   }
 
-  def mirrorApply[A,B](f: Exp[A => B], s: Exp[A], subst: MapTransformer = MapTransformer.Empty): Exp[B] = {
-    val Def(lam: Lambda[A, B]) = f
+  def mirrorApply[A,B](lam: Lambda[A, B], s: Exp[A]): Exp[B] = {
     val body = lam.scheduleSyms
-    val (t, _) = DefaultMirror.mirrorSymbols(subst + (lam.x -> s), NoRewriting, lam, body)
+    val (t, _) = DefaultMirror.mirrorSymbols(new MapTransformer(lam.x -> s), NoRewriting, lam, body)
     t(lam.y).asRep[B]
   }
 
@@ -300,33 +323,19 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     val lam = new Lambda(Some(fun), x, y, fSym, mayInline)
 
     val optScope = thunkStack.top
-    optScope match {
+    val optSym = optScope match {
       case Some(scope) =>
-        scope.findDef(lam) match {
-          case Some(TableEntry(sym, Lambda(_, Some(f), _, _))) =>
-            if (f equals fun) sym.asRep[A=>B]
-            else {
-              val te = createDefinition(optScope, fSym, lam)
-              fSym
-            }
-          case None =>
-            val te = createDefinition(optScope, fSym, lam)
-            te.sym
-        }
+        scope.findDef(lam)
       case None =>
-        findDefinition(globalThunkSym, lam) match {
-          case Some(TableEntry(sym, Lambda(_, Some(f), _, _))) => {
-            f equals fun match {
-              case true => sym.asRep[A=>B]
-              case false =>
-                createDefinition(None, fSym, lam)
-                fSym
-            }
-          }
-          case None =>
-            createDefinition(None, fSym, lam)
-            fSym
-        }
+        findDefinition(globalThunkSym, lam)
+    }
+
+    optSym match {
+      case Some(TableEntry(sym, _)) =>
+        sym.asRep[A=>B]
+      case None =>
+        val te = createDefinition(optScope, fSym, lam)
+        te.sym
     }
   }
 

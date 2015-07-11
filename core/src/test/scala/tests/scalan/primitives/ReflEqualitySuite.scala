@@ -92,11 +92,11 @@ class ReflEqualitySuite extends BaseShouldTests {
     ctx.emitDepGraph(List(withoutRule, withRule), new File(prefix, "LemmaRule/ruleRewriting.dot"))(GraphVizConfig.default)
     
     val expected = fun[Int,Int] {x => x * 30}
-    withRule.alphaEqual(expected) should be(true)
-    withoutRule.alphaEqual(expected) should be(false)
+    alphaEqual(withRule, expected) should be(true)
+    alphaEqual(withoutRule, expected) should be(false)
 
     val afterRemoval = fun(test)
     ctx.emitDepGraph(List(withoutRule, withRule, afterRemoval), new File(prefix, "LemmaRule/ruleRewriting.dot"))(GraphVizConfig.default)
-    afterRemoval.alphaEqual(withoutRule) should be(true)
+    alphaEqual(afterRemoval, withoutRule) should be(true)
   }
 }

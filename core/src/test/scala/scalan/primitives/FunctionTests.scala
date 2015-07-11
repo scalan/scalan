@@ -59,4 +59,33 @@ class FunctionTests extends BaseTests { suite =>
     fun[Int, Int] { x => (x + 1) * 2 } shouldNot matchPattern { case Def(ConstantLambda(_)) => }
   }
 
+  test("Alpha-equivalence works") {
+    val ctx = new TestContext(suite, "alphaEquivalence") {
+      lazy val idInt1 = fun[Int, Int] { x => x }
+      lazy val idInt2 = fun[Int, Int] { y => y }
+      lazy val idDouble = fun[Double, Double] { x => x }
+      lazy val f1_1 = fun { x: Rep[Int] => fun { y: Rep[Int] => x } }
+      lazy val f1_2 = fun { y: Rep[Int] => fun { x: Rep[Int] => y } }
+      lazy val f2_1 = fun { y: Rep[Int] => fun { x: Rep[Int] => x } }
+      lazy val f2_2 = fun { x: Rep[Int] => fun { y: Rep[Int] => y } }
+      lazy val f3_1 = fun { x: Rep[Int] => x + 1 }
+      lazy val f3_2 = fun { y: Rep[Int] => y + 1 }
+      lazy val f4 = fun { x: Rep[Int] => x + 2 }
+    }
+    import ctx._
+
+    alphaEqual(idInt1, idInt2) should be(true)
+    alphaEqual(f1_1, f1_2) should be(true)
+    alphaEqual(f2_1, f2_2) should be(true)
+    alphaEqual(f3_1, f3_2) should be(true)
+    alphaEqual(idInt1, f3_1) should be(false)
+    alphaEqual(f1_1, f2_1) should be(false)
+    alphaEqual(f3_1, f4) should be(false)
+
+    // alpha-equivalence implies equality for lambdas
+    idInt1 shouldEqual idInt2
+    f1_1 shouldEqual f1_2
+    f2_1 shouldEqual f2_2
+    f3_1 shouldEqual f3_2
+  }
 }

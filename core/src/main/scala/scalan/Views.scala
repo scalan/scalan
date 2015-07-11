@@ -540,7 +540,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
       implicit val eB = iso.eTo
       val step1 = fun { (p: Rep[(a,t)]) =>
         val x_viewed = (iso.to(p._1), p._2)
-        val res_viewed = mirrorApply(step.asRep[((b,t)) => b], x_viewed)
+        val res_viewed = step.asRep[((b,t)) => b](x_viewed)
         val res = iso.from(res_viewed)
         res
       }
