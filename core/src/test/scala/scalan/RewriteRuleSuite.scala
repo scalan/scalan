@@ -2,12 +2,20 @@ package scalan
 
 import java.io.File
 
-import scalan.compilation.GraphVizConfig
+import scalan.compilation.{GraphVizExport, GraphVizConfig}
 
-trait RewriteRuleSuite[A,B,C,D] extends BaseShouldTests {
+trait RewriteRuleSuite[A] extends BaseShouldTests {
   lazy val folder = new File(prefix, suiteName)
 
-  def getCtx: TestCtx[A,B,C,D]
+  def getCtx: TestCtx
+
+  trait TestCtx extends ScalanCtxExp {
+    def testLemma: EqLemma[A]
+    def testExpr(): Exp[A]
+    def expected: Exp[A]
+
+    lazy val rule = rewriteRuleFromEqLemma(testLemma)
+  }
 
   "ScalanCtx" should "stage Lemma" in {
     val ctx = getCtx
@@ -17,35 +25,21 @@ trait RewriteRuleSuite[A,B,C,D] extends BaseShouldTests {
   it should "create LemmaRule" in {
     val ctx = getCtx
     import ctx._
-    ctx.emitDepGraph(List(testLemma, rule.pattern, rule.rhs), new File(folder, "testRule.dot"))(GraphVizConfig.default)
+    ctx.emitDepGraph(List(testLemma, rule.lhs, rule.rhs), new File(folder, "testRule.dot"))(GraphVizConfig.default)
   }
 
   it should "create ProjectionTree in pattern" in {
     val ctx = getCtx
     import ctx._
-    val tree = rule.pattern.argsTree
-    println(tree)
-    ctx.emitDepGraph(List(rule.pattern, rule.rhs), new File(folder, "testPatternAndRhs.dot"))(GraphVizConfig.default)
-  }
-
-  "LemmaRule" should "build PatternGraph" in {
-    val ctx = getCtx
-    import ctx.graphs._
-    ctx.emitDepGraph(List(ctx.rule.pattern), new File(folder, "testPattern.dot"))(GraphVizConfig.default)
-    val dot = Graph.asDot(ctx.patGraph)
-    ctx.emitDot(dot, new File(folder, "PatternGraph.dot"))(GraphVizConfig.default)
+    ctx.emitDepGraph(List(rule.lhs, rule.rhs), new File(folder, "testPatternAndRhs.dot"))(GraphVizConfig.default)
   }
 
   it should "recognize pattern" in {
     val ctx = getCtx
     import ctx._
-    val lam = testFunc.getLambda
-    ctx.emitDepGraph(List(rule.pattern, testFunc), new File(folder, "LemmaRule/patternAndTestFunc.dot"))(GraphVizConfig.default)
-    rule.matchWith(lam.y) match {
-      case Some((res, subst)) =>
-        res should be(graphs.SimilarityEmbeded)
+    patternMatch(rule.lhs, testExpr()) match {
+      case Some(subst) =>
         subst should not be(Map.empty)
-
       case _ =>
         fail("should recognize pattern")
     }
@@ -55,11 +49,11 @@ trait RewriteRuleSuite[A,B,C,D] extends BaseShouldTests {
   it should "apply pattern" in {
     val ctx = getCtx
     import ctx._
-    val lam = testFunc.getLambda
-    val rewritten = rule(lam.y)
+    val test = testExpr()
+    val rewritten = rule(test)
     rewritten match {
       case Some(res) =>
-        ctx.emitDepGraph(List(Pair(lam.y, res)), new File(folder, "LemmaRule/originalAndRewritten.dot"))(GraphVizConfig.default)
+        ctx.emitDepGraph(List(Pair(test, res)), new File(folder, "LemmaRule/originalAndRewritten.dot"))(GraphVizConfig.default)
       case _ =>
         fail("should apply pattern")
     }
@@ -68,17 +62,17 @@ trait RewriteRuleSuite[A,B,C,D] extends BaseShouldTests {
   it should "rewrite when registered" in {
     val ctx = getCtx
     import ctx._
-    val withoutRule = testFunc
+    val withoutRule = testExpr()
     addRewriteRules(rule)
-    val withRule = fun(test)
+    val withRule = testExpr()
     removeRewriteRules(rule)
     ctx.emitDepGraph(List(withoutRule, withRule), new File(folder, "LemmaRule/ruleRewriting.dot"))(GraphVizConfig.default)
 
-    val expectedResult = fun(expected)
+    val expectedResult = expected
     alphaEqual(withRule, expectedResult) should be(true)
     alphaEqual(withoutRule, expectedResult) should be(false)
 
-    val afterRemoval = fun(test)
+    val afterRemoval = testExpr()
     ctx.emitDepGraph(List(withoutRule, withRule, afterRemoval), new File(folder, "LemmaRule/ruleRewriting.dot"))(GraphVizConfig.default)
     alphaEqual(afterRemoval, withoutRule) should be(true)
   }

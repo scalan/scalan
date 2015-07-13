@@ -15,7 +15,6 @@ class ReflEqualitySuite extends BaseShouldTests {
     override def isInvokeEnabled(d: Def[_], m: Method) = true
     lazy val testLemma = postulate[Int, Int, Int, Int]((x, y, z) => x * y + x * z <=> x * (y + z))
     lazy val rule = rewriteRuleFromEqLemma(testLemma)
-    lazy val patGraph = rule.patternGraph 
 
     lazy val test = {(x: IntRep) => x * 10 + x * 20}
     lazy val testFunc = fun(test)
@@ -32,22 +31,7 @@ class ReflEqualitySuite extends BaseShouldTests {
   it should "create LemmaRule" in {
     val ctx = getCtx
     import ctx._
-    ctx.emitDepGraph(Seq[Exp[_]](testLemma, rule.pattern, rule.rhs), new File(prefix, "testRule.dot"))(GraphVizConfig.default)
-  }
-
-  it should "create ProjectionTree in pattern" in {
-    val ctx = getCtx
-    import ctx._
-    val tree = rule.pattern.argsTree
-    ctx.emitDepGraph(Seq[Exp[_]](rule.pattern, rule.rhs), new File(prefix, "testPatternAndRhs.dot"))(GraphVizConfig.default)
-  }
-
-  "LemmaRule" should "build PatternGraph" in {
-    val ctx = getCtx
-    import ctx._
-    import ctx.graphs.Graph
-    ctx.emitDepGraph(ctx.rule.pattern, new File(prefix, "testPattern.dot"))(GraphVizConfig.default)
-    ctx.emitDot(Graph.asDot(patGraph), new File(prefix, "patternGraph.dot"))(GraphVizConfig.default)
+    ctx.emitDepGraph(Seq[Exp[_]](testLemma, rule.lhs, rule.rhs), new File(prefix, "testRule.dot"))(GraphVizConfig.default)
   }
 
   it should "recognize pattern" in {
@@ -55,12 +39,10 @@ class ReflEqualitySuite extends BaseShouldTests {
     import ctx._
     import ctx.graphs._
     val lam = testFunc.getLambda
-    ctx.emitDepGraph(List(rule.pattern, testFunc), new File(prefix, "LemmaRule/patternAndTestFunc.dot"))(GraphVizConfig.default)
-    rule.matchWith(lam.y) match {
-      case Some((res, subst)) => 
-        res should be(SimilarityEmbeded)
+    ctx.emitDepGraph(List(rule.lhs, testFunc), new File(prefix, "LemmaRule/patternAndTestFunc.dot"))(GraphVizConfig.default)
+    patternMatch(rule.lhs, lam.y) match {
+      case Some(subst) =>
         subst should not be(Map.empty)
-        
       case _ => 
         fail("should recognize pattern")
     }

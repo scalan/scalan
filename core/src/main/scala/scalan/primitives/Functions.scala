@@ -74,7 +74,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       other match {
         case that: Lambda[_,_] =>
           (that canEqual this) &&
-            alphaEqual(this.y, that.y, Map(this.x -> that.x))
+            matchExps(this.y, that.y, false, Map(this.x -> that.x)).isDefined
         case _ => false
       }
     override def toString = s"Lambda(${if (f.isDefined) "f is Some" else "f is None"}, $x => $y})"
@@ -171,39 +171,65 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     def argsTree = getLambda.argsTree
   }
 
-  def alphaEqual(s1: Exp[_], s2: Exp[_]): Boolean = alphaEqual(s1, s2, Map.empty)
+  type Subst = Map[Exp[_], Exp[_]]
 
-  private def alphaEqual(s1: Exp[_], s2: Exp[_], subst: Map[Exp[_], Exp[_]]): Boolean = s1 match {
-    case Def(d1) => d1 match {
-      case lam1: Lambda[_, _] => s2 match {
-        case Def(lam2: Lambda[_, _]) =>
-          alphaEqual(lam1.y, lam2.y, subst + (lam1.x -> lam2.x))
-        case _ => false
-      }
-      case _ => s2 match {
-        case Def(d2) =>
-          d1.getClass == d2.getClass && d1.productArity == d2.productArity && {
-            val len = d1.productArity
-            var i = 0
-            var result = true
-            while (result && i < len) {
-              result = (d1.productElement(i), d2.productElement(i)) match {
-                case (s1i: Exp[_], s2i: Exp[_]) =>
-                  alphaEqual(s1i, s2i, subst)
-                case (s1i, s2i) => s1i == s2i
-              }
-              i += 1
-            }
-            result
-          } && d1.selfType.name == d2.selfType.name
-        case _ => false
-      }
+  def alphaEqual(s1: Exp[_], s2: Exp[_]): Boolean = matchExps(s1, s2, false, Map.empty).isDefined
+
+  def patternMatch(s1: Exp[_], s2: Exp[_]): Option[Subst] = matchExps(s1, s2, true, Map.empty)
+
+  protected def matchExps(s1: Exp[_], s2: Exp[_], allowInexactMatch: Boolean, subst: Subst): Option[Subst] = s1 match {
+    case Def(d1) => s2 match {
+      case Def(d2) =>
+        matchDefs(d1, d2, allowInexactMatch, subst)
+      case _ => None
     }
-    case _ => s2 match {
-      case Def(_) => false
-      case _ => subst.get(s1) == Some(s2)
-    }
+    case _ =>
+      if (allowInexactMatch)
+        Some(subst + (s1 -> s2))
+      else
+        s2 match {
+          case Def(_) => None
+          case _ => if (subst.get(s1) == Some(s2)) Some(subst) else None
+        }
   }
+
+  protected def matchDefs(d1: Def[_], d2: Def[_], allowInexactMatch: Boolean, subst: Subst): Option[Subst] = d1 match {
+    case lam1: Lambda[_, _] => d2 match {
+      case lam2: Lambda[_, _] =>
+        matchExps(lam1.y, lam2.y, allowInexactMatch, subst + (lam1.x -> lam2.x))
+      case _ => None
+    }
+    case _ =>
+      if (d1.getClass == d2.getClass && d1.productArity == d2.productArity && d1.selfType.name == d2.selfType.name) {
+        matchIterators(d1.productIterator, d2.productIterator, allowInexactMatch, subst)
+      } else
+        None
+  }
+
+  // generalize to Seq or Iterable if we get nodes with deps of these types
+  protected def matchIterators(i1: Iterator[_], i2: Iterator[_], allowInexactMatch: Boolean, subst: Subst): Option[Subst] =
+    if (i1.hasNext) {
+      if (i2.hasNext) {
+        matchAny(i1.next(), i2.next(), allowInexactMatch, subst).flatMap(matchIterators(i1, i2, allowInexactMatch, _))
+      } else None
+    } else {
+      if (i2.hasNext) None else Some(subst)
+    }
+
+  protected def matchAny(a1: Any, a2: Any, allowInexactMatch: Boolean, subst: Subst): Option[Subst] = a1 match {
+    case s1: Exp[_] => a2 match {
+      case s2: Exp[_] =>
+        matchExps(s1, s2, allowInexactMatch, subst)
+      case _ => None
+    }
+    case l1: Iterable[_] => a2 match {
+      case l2: Iterable[_] =>
+        matchIterators(l1.iterator, l2.iterator, allowInexactMatch, subst)
+      case _ => None
+    }
+    case _ => if (a1 == a2) Some(subst) else None
+  }
+
   //=====================================================================================
   //   Function application
 
