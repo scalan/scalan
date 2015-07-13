@@ -7,7 +7,7 @@ import scalan.compilation.lms.scalac.LmsCompilerScala
 import scalan.util.FileUtil._
 import scalan.util.{FileUtil, ExtensionFilter, ProcessUtil, StringUtil}
 
-object Sbt { 
+object Sbt {
 
   val lib = "lib"
 

@@ -42,7 +42,8 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
     val actual = getStagedOutputConfig(progStaged)(progStaged.runApp2W, "runInteract2", in, progStaged.defaultCompilerConfig)
   }
 
-  test("runCrossDomain")  {
+  // TODO: Slow test
+  ignore("runCrossDomain")  {
     val progSeq = new EffectsSeq with CrossDomainExample
       with InteractionsDslSeq with AuthenticationsDslSeq
     val progStaged = new EffectsExp with CrossDomainExample
@@ -138,8 +139,8 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
     assert(res.sameElements(resU))
   }
 
-  // TODO takes a very long time due to the problems with higher-kinded types
-  test("zipCollectionWithIndex3_Free")  {
+  // TODO: Slow test, takes a very long time due to the problems with higher-kinded types
+  ignore("zipCollectionWithIndex3_Free")  {
     val progStaged = new EffectsExp with StateExamples with MonadsDslExp {
       val State = new FreeStateManager[Int]
     }

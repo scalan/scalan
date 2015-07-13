@@ -12,7 +12,7 @@ object Gcc {
     val sourceName = sourceFile.getAbsolutePath
     val targetFile = targetDir+fileSeparator+libFileName(libName)
     val include = s"$includeJavaFlag $includeRuntimeDirFlag $includeFlags"
-    val command = s"g++ $sourceName $include -fPIC -shared -pthread $commonFlags $optFlags -o $targetFile".split("\\s+").toSeq
+    val command = s"$cxx $sourceName $include -fPIC -shared -pthread $commonFlags $optFlags -o $targetFile".split("\\s+").toSeq
     println("command: " + command.mkString(" "))
     ProcessUtil.launch(sourceDir, command: _*)
 
@@ -26,6 +26,7 @@ object Gcc {
   val includeJavaFlag = s"-I$javaHome/include -I$javaHome/include/linux -I$javaHome/include/darwin"
   val fileSeparator = scalan.Base.config.getProperty("file.separator")
   val osName = scalan.Base.config.getProperty("os.name")
+  val cxx = sys.env.getOrElse("CXX", "g++")
   val commonFlags = scalan.Base.config.getProperty("gcc.commonFlags", "-std=c++11 -Wall -pedantic")
   val includeFlags = scalan.Base.config.getProperty("gcc.includeFlags", "")
   val optFlags = scalan.Base.config.getProperty("gcc.optFlags", "-O3")
