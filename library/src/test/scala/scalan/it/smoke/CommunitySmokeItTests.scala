@@ -155,6 +155,16 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       }.arr
     }
 
+    lazy val pairIf = fun { in: Rep[(Int, Array[Int])] =>
+      val rs = IF (in._1 > 0) THEN {
+        val red = in._2.reduce
+        (red + 1, red - 1)
+      } ELSE {
+        (0,0)
+      }
+      rs._1 + rs._2
+    }
+
   }
 
 class ProgCommunitySeq extends ProgCommunity with ScalanCommunitySeq with ScalanCommunityDslSeq with MultiMapsDslSeq {

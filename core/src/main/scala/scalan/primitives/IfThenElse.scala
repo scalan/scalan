@@ -178,6 +178,8 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     case Tup(Def(IfThenElse(c1, t1, e1)), Def(IfThenElse(c2, t2, e2))) if c1 == c2 =>
       IF (c1) THEN { Pair(t1, t2) } ELSE { Pair(e1, e2) }
 
+    // These two rules are commented now. Seem to be inefficient (see test37pairIf test in LmsSmokeItTests )
+    /*
     // Rule: (if (c) t else e)._1 ==> if (c) t._1 else e._1
     case First(Def(IfThenElse(cond, thenp: Rep[(a, b)] @unchecked, elsep))) =>
       implicit val (eA, eB) = (thenp.elem.eFst, thenp.elem.eSnd)
@@ -187,6 +189,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     case Second(Def(IfThenElse(cond, thenp: Rep[(a, b)] @unchecked, elsep))) =>
       implicit val (eA, eB) = (thenp.elem.eFst, thenp.elem.eSnd)
       IfThenElse[b](cond, Second(thenp), Second(elsep.asRep[(a, b)]))
+    */
 
     // Rule: (if (c) t else e)(arg) ==> if (c) t(arg) else e(arg)
     case apply: Apply[a, b] => apply.f match {

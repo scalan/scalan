@@ -82,6 +82,11 @@ trait LmsBridge { self: ScalanCtxExp =>
   }
 
   def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
+    case el: ExpBaseElemEx1[_,_,_] => {
+      val tag = el.cont.tag
+      val cls = tag.mirror.runtimeClass(tag.tpe)
+      Manifest.classType(cls, createManifest(el.eItem))
+    }
     case el: WrapperElem[_,_] =>
       createManifest(el.baseElem)
     case el: WrapperElem1[_,_,_,_] =>
