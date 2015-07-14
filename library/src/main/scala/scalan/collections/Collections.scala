@@ -30,6 +30,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] // = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  // = Collection(arr.append(value))
     def foldLeft[S: Elem](init: Rep[S], f: Rep[((S, Item)) => S]): Rep[S] = arr.fold(init, f)
+    def sortBy[O: Elem](by: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item]
     /*def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(Collection[A], A)] = {
       val arrScan = arr.scan(m)
       (Collection(arrScan._1), arrScan._2)
@@ -137,6 +138,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def filterBy(f: Rep[Unit => Boolean]): Coll[Unit] = Collection(arr.filterBy(f))
     def flatMapBy[B: Elem](f: Rep[Unit => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[Unit]): Coll[Unit]  = Collection(arr.append(value))
+    def sortBy[O: Elem](by: Rep[Unit => O])(implicit o: Ordering[O]): Coll[Unit] = ???
   }
   trait UnitCollectionCompanion extends ConcreteClass0[UnitCollection]
 
@@ -158,6 +160,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def filterBy(f: Rep[Item @uncheckedVariance => Boolean]): Coll[Item] = CollectionOverArray(arr.filterBy(f))
     def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr})
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = CollectionOverArray(arr.append(value))
+    def sortBy[O: Elem](means: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item] = CollectionOverArray(arr.sortBy(means))
   }
   trait CollectionOverArrayCompanion extends ConcreteClass1[CollectionOverArray]
 
@@ -177,6 +180,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] =
       CollectionOverList(lst.flatMap { in => f(in).lst } )
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = CollectionOverList(value :: lst)
+    def sortBy[O: Elem](by: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item] = ???
   }
   trait CollectionOverListCompanion extends ConcreteClass1[CollectionOverList]
 
@@ -198,6 +202,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def filterBy(f: Rep[Item @uncheckedVariance => Boolean]): Coll[Item] = ???
     def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] = ???
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = ???
+    def sortBy[O: Elem](by: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item] = ???
   }
   trait CollectionOverSeqCompanion extends ConcreteClass1[CollectionOverSeq]
 
@@ -257,6 +262,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       val outerJoined = Collection(pairColl_outerJoin[A, B, C, R](this, other, f, f1, f2))
       PairCollectionSOA(outerJoined.as, outerJoined.bs)
     }
+    def sortBy[O: Elem](by: Rep[((A, B)) => O])(implicit o: Ordering[O]): PairColl[A, B] = ???
   }
 
   trait PairCollectionSOACompanion extends ConcreteClass2[PairCollectionSOA]
@@ -292,6 +298,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
                        (implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]) = {
       PairCollectionAOS.fromArray(pairColl_outerJoin[A, B, C, R](this, other, f, f1, f2))
     }
+    def sortBy[O: Elem](by: Rep[((A, B)) => O])(implicit o: Ordering[O]): PairColl[A, B] = ???
   }
   trait PairCollectionAOSCompanion extends ConcreteClass2[PairCollectionAOS] {
     def fromArray[A: Elem, B: Elem](arr: Arr[(A, B)]) = PairCollectionAOS(CollectionOverArray(arr))
@@ -346,6 +353,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def filterBy(f: Rep[Collection[A @uncheckedVariance] => Boolean]): NColl[A] = ???
     def flatMapBy[B: Elem](f: Rep[Collection[A @uncheckedVariance] => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[Collection[A @uncheckedVariance]]): NColl[A]  = ??? //Collection(arr.append(value))
+    def sortBy[O: Elem](by: Rep[Collection[A] => O])(implicit o: Ordering[O]): NColl[A] = ???
   }
   trait NestedCollectionFlatCompanion extends ConcreteClass1[NestedCollectionFlat] {
     def fromJuggedArray[T: Elem](arr: Rep[Array[Array[T]]]): Rep[NestedCollectionFlat[T]] = {

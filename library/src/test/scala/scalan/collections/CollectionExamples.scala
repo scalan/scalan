@@ -123,4 +123,8 @@ trait CollectionExamples extends ScalanCommunityDsl with PrimitiveExamples {
     (xs zip xs).map(x => x._1 + x._2).arr
   }
 
+  lazy val sort = fun { xs: Arr[Int] =>
+    val res = Collection(xs).sortBy((x: Rep[Int]) => x)
+    res.arr
+  }
 }

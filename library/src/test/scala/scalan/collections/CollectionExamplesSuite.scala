@@ -68,4 +68,5 @@ class CollectionExamplesSuite extends BaseShouldTests {
   whenStaged should "nestedListPairInIf" beArgFor { testMethod(_) }
   whenStaged should "nestedListPairInIfSpec" beArgFor { testMethod(_) }
   whenStaged should "listCollectionPairZipWith" beArgFor { testMethod(_) }
+  whenStaged should "sort" beArgFor { testMethod(_) }
 }
