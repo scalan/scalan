@@ -272,7 +272,10 @@ trait Views extends Elems { self: Scalan =>
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
 
-  def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = ComposeIso(iso2, iso1)
+  def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = iso2 match {
+    case IdentityIso(_) => iso1.asInstanceOf[Iso[A,C]]
+    case _ => ComposeIso(iso2, iso1)
+  }
 
   case class FuncIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D])
     extends Iso[A => C, B => D]()(funcElement(iso1.eFrom, iso2.eFrom)) {
@@ -507,6 +510,15 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     // Rule: PairView(source, _, iso2)._2  ==> iso2.to(source._2)
     case Second(Def(view@PairView(source))) =>
       view.iso2.to(source._2)
+
+    // Rule: PairView(PairView(source, i2), i1)  ==> PairView(source, PairIso(composeIso(i1.iso1, i2.iso1), composeIso(i1.iso2, i2.iso2)))
+    case v1@PairView(Def(v2@PairView(source))) => {
+      val i1 = v1.iso.asInstanceOf[PairIso[Any,Any,Any,Any]]
+      val i2 = v2.iso.asInstanceOf[PairIso[Any,Any,Any,Any]]
+      val pIso1 = composeIso(i1.iso1,i2.iso1)
+      val pIso2 = composeIso(i1.iso2, i2.iso2)
+      PairView(source)(pIso1, pIso2)
+    }
 
     // Rule: UnpackView(V(source, iso))  ==> source
     case UnpackView(Def(UnpackableDef(source, iso))) => source
