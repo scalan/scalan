@@ -272,8 +272,9 @@ trait Views extends Elems { self: Scalan =>
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
 
-  def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = iso2 match {
-    case IdentityIso(_) => iso1.asInstanceOf[Iso[A,C]]
+  def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = (iso2, iso1) match {
+    case (IdentityIso(_),_) => iso1.asInstanceOf[Iso[A,C]]
+    case (PairIso(iso21, iso22), PairIso(iso11, iso12)) => pairIso(composeIso(iso21, iso11), composeIso(iso22, iso12)).asInstanceOf[Iso[A,C]]
     case _ => ComposeIso(iso2, iso1)
   }
 
