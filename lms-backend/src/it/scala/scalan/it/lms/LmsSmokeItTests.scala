@@ -264,4 +264,12 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
     val stgOut = getStagedOutput(progStaged)(progStaged.emptyNestedUnitArray, "emptyNestedUnitArray", in)
     println(stgOut)
   }
+  test("test37pairIf") {
+    val in = (1, Array(1,2,3))
+    compareOutputWithSequential(progStaged)(progSeq.pairIf, progStaged.pairIf, "pairIf", in)
+  }
+  test("test38ifSpecialize") {
+    val in = Array(1,2,3)
+    compareOutputWithSequential(progStaged)(progSeq.ifSpecialize, progStaged.ifSpecialize, "ifSpecialize", in)
+  }
 }

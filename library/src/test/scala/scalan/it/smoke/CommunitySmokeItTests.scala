@@ -155,6 +155,42 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       }.arr
     }
 
+    lazy val pairIf = fun { in: Rep[(Int, Array[Int])] =>
+      val rs = IF (in._1 > 0) THEN {
+        val red = in._2.reduce
+        (red + 1, red - 1)
+      } ELSE {
+        (0,0)
+      }
+      rs._1 + rs._2
+    }
+
+    lazy val ifSpecialize = fun { in: Rep[Array[Int]] =>
+
+      def trainStep(state: Rep[(Collection[Int], Collection[Int])]) : Rep[(Collection[Int], Collection[Int])] = {
+        val Pair(v1, v2) = state
+        val cond = v1.arr.reduce
+        IF (cond > 0) THEN {
+          val v: Rep[Collection[Int]] = Collection(array_replicate(cond,0))
+          Pair(v, v2)
+        } ELSE {
+          Pair(v1, v2)
+        }
+      }
+
+      def trainStop(in: Rep[(Collection[Int], Collection[Int])] ) = {
+        val Pair(v1, v2) = in
+        (v1.arr.reduce === 0)
+      }
+
+      val v: Rep[Collection[Int]] = Collection(in)
+      val start = Pair(v,v)
+
+      val res = from(start).until(trainStop)(trainStep)
+      val Tuple(v1, v2) = res
+
+      v1.arr(0) + v2.arr(0)
+      }
   }
 
 class ProgCommunitySeq extends ProgCommunity with ScalanCommunitySeq with ScalanCommunityDslSeq with MultiMapsDslSeq {
