@@ -262,7 +262,10 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       val outerJoined = Collection(pairColl_outerJoin[A, B, C, R](this, other, f, f1, f2))
       PairCollectionSOA(outerJoined.as, outerJoined.bs)
     }
-    def sortBy[O: Elem](by: Rep[((A, B)) => O])(implicit o: Ordering[O]): PairColl[A, B] = ???
+    def sortBy[O: Elem](means: Rep[((A, B)) => O])(implicit o: Ordering[O]): PairColl[A, B] = {
+      val sorted = Collection(arr.sortBy(means))
+      PairCollectionSOA(sorted.as, sorted.bs)
+    }
   }
 
   trait PairCollectionSOACompanion extends ConcreteClass2[PairCollectionSOA]
@@ -298,7 +301,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
                        (implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]) = {
       PairCollectionAOS.fromArray(pairColl_outerJoin[A, B, C, R](this, other, f, f1, f2))
     }
-    def sortBy[O: Elem](by: Rep[((A, B)) => O])(implicit o: Ordering[O]): PairColl[A, B] = ???
+    def sortBy[O: Elem](means: Rep[((A, B)) => O])(implicit o: Ordering[O]): PairColl[A, B] = PairCollectionAOS(Collection(arr.sortBy(means)))
   }
   trait PairCollectionAOSCompanion extends ConcreteClass2[PairCollectionAOS] {
     def fromArray[A: Elem, B: Elem](arr: Arr[(A, B)]) = PairCollectionAOS(CollectionOverArray(arr))

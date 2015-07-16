@@ -51,7 +51,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def *(mat: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]] = ???
 
-    def ^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
 
     def euclideanNorm(implicit num: Numeric[T]): Rep[Double]
 
@@ -124,7 +124,7 @@ trait Vectors { self: ScalanCommunityDsl =>
       DenseVector(items.map(v => v * other))
     }
 
-    def ^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       DenseVector(items.map(v => Math.pow(v.toDouble, order).asRep[T]))
     }
 
@@ -224,7 +224,7 @@ trait Vectors { self: ScalanCommunityDsl =>
       SparseVector(nonZeroIndices, nonZeroValues.map(v => v * other), length)
     }
 
-    def ^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       SparseVector(nonZeroIndices, nonZeroValues.map(v => Math.pow(v.toDouble, order).asRep[T]), length)
     }
 
@@ -326,7 +326,7 @@ trait Vectors { self: ScalanCommunityDsl =>
       SparseVector1(nonZeroIndices zip nonZeroValues.map(v => v * other), length)
     }
 
-    def ^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
       SparseVector1(nonZeroIndices zip nonZeroValues.map(v => Math.pow(v.toDouble, order).asRep[T]), length)
     }
 
