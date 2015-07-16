@@ -16,7 +16,10 @@ trait TestsUtil {
     FileUtil.file(testOutDir, pathComponents: _*)
   }
 
-  def isOnTeamCity = System.getenv("TEAMCITY_VERSION") != null
+  /* if runs in continious integration environment */
+  def isCI = sys.env.get("CI").flatMap(toBoolean).getOrElse(false)
+  private def toBoolean(s: String): Option[Boolean] =
+    scala.util.Try(s.toBoolean).toOption
 }
 
 // TODO switch to FunSpec and eliminate duplication in test names (e.g. RewriteSuite)

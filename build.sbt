@@ -18,7 +18,7 @@ lazy val buildSettings = Seq(
 lazy val testSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "2.2.5" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.12.3" % Test,
+    "org.scalacheck" %% "scalacheck" % "1.12.4" % Test,
     "com.github.axel22" %% "scalameter" % "0.5-M2" % Test),
   parallelExecution in Test := false,
   publishArtifact in Test := true,
@@ -50,7 +50,7 @@ lazy val core = Project("scalan-core", file("core"))
   .dependsOn(common % allConfigDependency)
   .settings(commonSettings,
     libraryDependencies ++= Seq(
-      "com.chuusai" %% "shapeless" % "2.2.3",
+      "com.chuusai" %% "shapeless" % "2.2.4",
       "cglib" % "cglib" % "3.1",
       "org.objenesis" % "objenesis" % "2.1"))
 
@@ -61,7 +61,7 @@ lazy val library = Project("scalan-library", file("library"))
 lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
   .dependsOn(library % "compile->compile;it->test")
   .configs(IntegrationTest)
-  .settings(commonSettings, Defaults.itSettings,
+  .settings(buildSettings, Defaults.itSettings,
     scalaVersion := sys.env.getOrElse("SCALA_VIRTUALIZED_VERSION", "2.11.2"),
     scalaOrganization := "org.scala-lang.virtualized",
     libraryDependencies ++= Seq(
@@ -73,7 +73,8 @@ lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
       "org.scalatest" %% "scalatest" % "2.2.5" % "it"),
     // we know we use LMS snapshot here, ignore it
     releaseSnapshotDependencies := Seq.empty,
-    javaOptions in IntegrationTest ++= Seq("-XX:PermSize=300M", "-XX:MaxPermSize=300M"),   //"-Xms128M",-Xmx128M"
+    javaOptions in IntegrationTest ++= Seq("-Xmx1g", "-XX:PermSize=384m", "-XX:MaxPermSize=384m", "-XX:ReservedCodeCacheSize=256m"),
+    parallelExecution in IntegrationTest := false,
     fork in IntegrationTest := true)
 
 lazy val root = Project("scalan", file("."))

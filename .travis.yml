@@ -1,13 +1,48 @@
+sudo: false
+
+# Tricks to avoid unnecessary cache updates
+before_cache:
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+
+# These directories are cached to S3 at the end of the build
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.ivy2/local
+    - $HOME/.sbt/boot
+
+# dependencies for integration tests
+addons:
+  apt:
+    sources:
+      - boost-latest
+      - ubuntu-toolchain-r-test
+    packages:
+      - build-essential
+      - gcc-4.8
+      - g++-4.8
+      - libstdc++6-4.6-dev
+      - libboost1.55-dev
+
+env:
+  global:
+    - CXX="g++-4.8"
+    - CC="gcc-4.8"
+  matrix:
+    - TEST_SUITE=test
+    - TEST_SUITE=it:test
+
 language: scala
 
 jdk:
-  - oraclejdk7
+  - oraclejdk8
 
 install:
-  - git clone https://github.com/scalan/virtualization-lms-core.git &&
-    (cd virtualization-lms-core && sbt publishLocal)
+  - if test ! -d "$HOME/.ivy2/local/EPFL"; then
+      git clone "https://github.com/scalan/virtualization-lms-core.git" &&
+      (cd virtualization-lms-core && sbt publishLocal);
+    fi
 
 script:
-  - sbt test
-
-sudo: false
+  - sbt -jvm-opts .travis.jvmopts $TEST_SUITE

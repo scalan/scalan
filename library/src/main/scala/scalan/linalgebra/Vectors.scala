@@ -51,7 +51,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
     def *(mat: Rep[AbstractMatrix[T]])(implicit n: Numeric[T], o: Overloaded1): Rep[AbstractMatrix[T]] = ???
 
-    def ^(other: Rep[Int])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T]
 
     def euclideanNorm(implicit num: Numeric[T]): Rep[Double]
 
@@ -124,8 +124,8 @@ trait Vectors { self: ScalanCommunityDsl =>
       DenseVector(items.map(v => v * other))
     }
 
-    def ^(order: Rep[Int])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
-      DenseVector(items.map(v => Collection.replicate(order, v).reduce(numericMultMonoid)))
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      DenseVector(items.map(v => Math.pow(v.toDouble, order).asRep[T]))
     }
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
@@ -224,9 +224,8 @@ trait Vectors { self: ScalanCommunityDsl =>
       SparseVector(nonZeroIndices, nonZeroValues.map(v => v * other), length)
     }
 
-    def ^(order: Rep[Int])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
-      //SparseVector(nonZeroIndices, nonZeroValues.map(v => Collection.replicate(order, v).reduce(numericMultMonoid)), length)
-      SparseVector(nonZeroIndices, nonZeroValues.map(v => Math.pow(v.toDouble, order.toDouble).asInstanceOf[Rep[T]]), length)
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      SparseVector(nonZeroIndices, nonZeroValues.map(v => Math.pow(v.toDouble, order).asRep[T]), length)
     }
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = {
@@ -327,9 +326,8 @@ trait Vectors { self: ScalanCommunityDsl =>
       SparseVector1(nonZeroIndices zip nonZeroValues.map(v => v * other), length)
     }
 
-    def ^(order: Rep[Int])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
-      //SparseVector1(nonZeroIndices zip nonZeroValues.map(v => Collection.replicate(order, v).reduce(numericMultMonoid)), length)
-      SparseVector1(nonZeroIndices zip nonZeroValues.map(v => Math.pow(v.toDouble, order.toDouble).asInstanceOf[Rep[T]]), length)
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      SparseVector1(nonZeroIndices zip nonZeroValues.map(v => Math.pow(v.toDouble, order).asRep[T]), length)
     }
 
     def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)  //TODO: it's inefficient
