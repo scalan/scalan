@@ -35,6 +35,9 @@ trait Containers { self: Scalan =>
 
   implicit def containerElem[F[_]:Cont, A:Elem]: Elem[F[A]] = container[F].lift(element[A])
 
+  trait Functor[F[_]] {
+    def map[A:Elem,B:Elem](a: Rep[F[A]])(f: Rep[A] => Rep[B]): Rep[F[B]]
+  }
 }
 
 trait ContainersSeq extends Containers with Scalan { self: ScalanSeq =>

@@ -12,10 +12,6 @@ import language.higherKinds // Disable warnings for type constructor polymorphis
 
 trait Monads extends Base  with ListOps { self: MonadsDsl =>
 
-  trait Functor[F[_]] {
-    def map[A:Elem,B:Elem](a: Rep[F[A]])(f: Rep[A] => Rep[B]): Rep[F[B]]
-  }
-
   trait Monad[F[_]] extends Functor[F] {
     implicit def cF: Cont[F]
     def unit[A:Elem](a: Rep[A]): Rep[F[A]]
