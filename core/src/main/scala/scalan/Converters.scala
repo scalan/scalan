@@ -19,7 +19,7 @@ trait Converters extends Views { self: Scalan =>
     def apply(x: Rep[T]): Rep[R] = convFun(x)
     override def toString: String = s"${eT.name} --> ${eR.name}"
     override def equals(other: Any): Boolean = other match {
-      case c: Converters#Converter[_, _] => eT == c.eT && eR == c.eR
+      case c: Converters#Converter[_, _] => eT == c.eT && eR == c.eR && convFun == c.convFun
       case _ => false
     }
   }
@@ -48,6 +48,24 @@ trait Converters extends Views { self: Scalan =>
     lazy val convFun = fun { x: Rep[(A1 | A2)] => apply(x) }
   }
   trait SumConverterCompanion
+
+  abstract class FunctorConverter[A,B,F[_]]
+      (val itemConv: Rep[A => B])
+      (implicit val eA: Elem[A], val eB: Elem[B], val cF: Cont[F], val F: Functor[F])
+    extends Converter[F[A], F[B]] {
+    def convFun = fun { xs: Rep[F[A]] => apply(xs) }
+    def apply(xs: Rep[F[A]]): Rep[F[B]] = F.map(xs){ x => itemConv(x) }
+
+    val eT = cF.lift(eA)
+    val eR = cF.lift(eB)
+    override def toString: String = s"${eT.name} --> ${eR.name}"
+    override def equals(other: Any): Boolean = other match {
+      case c: Converters#FunctorConverter[_, _, _] => eT == c.eT && eR == c.eR && itemConv == c.itemConv
+      case _ => false
+    }
+  }
+  trait FunctorConverterCompanion
+
 }
 
 trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
