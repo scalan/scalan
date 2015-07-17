@@ -394,6 +394,7 @@ trait ScalanParsers {
     case tq"..$parents { ..$defns }" => STpeCompound(parents.map(tpeExpr), defns.flatMap(defn => optBodyItem(defn, None)))
     case tq"$tpt forSome { ..$defns }" => STpeExistential(tpeExpr(tpt), defns.flatMap(defn => optBodyItem(defn, None)))
     case Bind(TypeName(name), body) => STpeBind(name, tpeExpr(body))
+    case tt: TypeTree => parseTypeTree(tt)
     case tree => ???(tree)
   }
 
@@ -485,5 +486,9 @@ trait ScalanParsers {
     case Select(qual, name) => SSelPattern(parseExpr(qual), name.toString)
     case Alternative(alts) => SAltPattern(alts.map(parsePattern))
     case _ => throw new NotImplementedError(s"parsePattern: ${showRaw(pat)}")
+  }
+
+  def parseTypeTree(typeTree: TypeTree): STpeExpr = typeTree.tpe match {
+    case tpe => throw new NotImplementedError(showRaw(tpe, printTypes = Some(true)))
   }
 }
