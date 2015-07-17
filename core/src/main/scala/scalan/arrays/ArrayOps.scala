@@ -160,6 +160,10 @@ trait ArrayOps { self: Scalan =>
   def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[Int]
 
   def array_randomGaussian(m: Rep[Double], e: Rep[Double], arr: Arr[Double]): Arr[Double]
+
+  implicit val arrayFunctor = new Functor[Array] {
+    def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
+  }
 }
 
 trait ArrayOpsSeq extends ArrayOps {

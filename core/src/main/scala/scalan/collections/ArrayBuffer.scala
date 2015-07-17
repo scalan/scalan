@@ -64,6 +64,10 @@ trait ArrayBuffers extends Base { self: Scalan =>
   def initArrayBuffer[T: Elem](v: Rep[T]): Rep[ArrayBuffer[T]]
   def makeArrayBuffer[T](name: Rep[String])(implicit e:Elem[T]): Rep[ArrayBuffer[T]]
   def createArrayBuffer[T: Elem](count: Rep[Int], f:Rep[Int=>T]): Rep[ArrayBuffer[T]]
+
+  implicit val arrayBufferFunctor = new Functor[ArrayBuffer] {
+    def map[A:Elem,B:Elem](xs: Rep[ArrayBuffer[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
+  }
 }
   
 trait ArrayBuffersSeq extends ArrayBuffers { self: ScalanSeq =>

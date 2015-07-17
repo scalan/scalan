@@ -41,6 +41,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   type Segments1 = PairCollection[Int, Int]
 
   trait CollectionCompanion extends TypeFamily1[Collection] with CollectionManager {
+
     def manager: CollectionManager = this
     def apply[T: Elem](arr: Rep[Array[T]]): Coll[T] = fromArray(arr)
 
@@ -120,6 +121,10 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       }
     }
     def indexRange(l: Rep[Int]): Coll[Int] = CollectionOverArray(array_rangeFrom0(l))
+  }
+
+  implicit val collectionFunctor = new Functor[Collection] {
+    def map[A:Elem,B:Elem](xs: Rep[Collection[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
 
   abstract class UnitCollection(val length: Rep[Int]) extends Collection[Unit] {

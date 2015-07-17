@@ -134,6 +134,9 @@ trait ListOps { self: Scalan =>
 //  // require: forall i -> indexes(i) in xs.indices && indexes.length == values.length
 //  // provide: res.length == xs.length
 //  def list_updateMany[T](xs: Lst[T], indexes: Lst[Int], values: Lst[T]): Lst[T] = ???
+  implicit val listFunctor = new Functor[List] {
+    def map[A:Elem,B:Elem](xs: Rep[List[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
+  }
 }
 
 trait ListOpsSeq extends ListOps { self: ScalanSeq =>

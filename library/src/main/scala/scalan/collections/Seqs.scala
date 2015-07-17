@@ -66,6 +66,10 @@ trait Seqs extends Base with TypeWrappers { self: ScalanCommunityDsl =>
   }
 
   def DefaultOfSeq[A: Elem]: Default[Seq[A]] = Default.defaultVal(Seq.empty[A])
+
+  implicit val sseqFunctor = new Functor[SSeq] {
+    def map[A:Elem,B:Elem](xs: Rep[SSeq[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
+  }
 }
 
 trait SeqsDsl extends impl.SeqsAbs { self: ScalanCommunityDsl =>
