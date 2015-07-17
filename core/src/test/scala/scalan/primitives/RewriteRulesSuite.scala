@@ -1,20 +1,17 @@
-package tests.scalan.primitives
+package scalan.primitives
 
 import java.io.File
 import java.lang.reflect.Method
 
-import scalan.compilation.GraphVizExport
-import scalan.{BaseShouldTests, ScalanCtxExp}
-
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.{BaseShouldTests, ScalanCtxExp}
 
-class ReflEqualitySuite extends BaseShouldTests {
+class RewriteRulesSuite extends BaseShouldTests {
 
   class Ctx extends ScalanCtxExp with GraphVizExport {
     override def isInvokeEnabled(d: Def[_], m: Method) = true
     lazy val testLemma = postulate[Int, Int, Int, Int]((x, y, z) => x * y + x * z <=> x * (y + z))
-    lazy val rule = rewriteRuleFromEqLemma(testLemma)
+    lazy val rule = patternRewriteRule(testLemma)
 
     lazy val test = {(x: IntRep) => x * 10 + x * 20}
     lazy val testFunc = fun(test)
@@ -24,7 +21,6 @@ class ReflEqualitySuite extends BaseShouldTests {
 
   "ScalanStaged" should "created Lemma" in {
     val ctx = getCtx
-    import ctx._
     ctx.emitDepGraph(ctx.testLemma, new File(prefix, "testLemma.dot"))(GraphVizConfig.default)
   }
 
@@ -37,7 +33,6 @@ class ReflEqualitySuite extends BaseShouldTests {
   it should "recognize pattern" in {
     val ctx = getCtx
     import ctx._
-    import ctx.graphs._
     val lam = testFunc.getLambda
     ctx.emitDepGraph(List(rule.lhs, testFunc), new File(prefix, "LemmaRule/patternAndTestFunc.dot"))(GraphVizConfig.default)
     patternMatch(rule.lhs, lam.y) match {
@@ -52,7 +47,6 @@ class ReflEqualitySuite extends BaseShouldTests {
   it should "apply pattern" in {
     val ctx = getCtx
     import ctx._
-    import ctx.graphs._
     val lam = testFunc.getLambda
     val rewritten = rule(lam.y)
     rewritten match {
@@ -66,7 +60,6 @@ class ReflEqualitySuite extends BaseShouldTests {
   it should "rewrite when registered" in {
     val ctx = getCtx
     import ctx._
-    import ctx.graphs._
     val withoutRule = testFunc
     addRewriteRules(rule)
     val withRule = fun(test)

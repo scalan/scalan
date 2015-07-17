@@ -5,7 +5,7 @@ import scalan.primitives._
 import scalan.collections._
 import scalan.arrays._
 import scalan.seq.BaseSeq
-import scalan.staged.{ExpInductiveGraphs, BaseExp, Expressions, Transforming}
+import scalan.staged.{BaseExp, Expressions, Transforming}
 import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl/*, Exceptions*/}
 
 trait Scalan
@@ -120,8 +120,7 @@ trait ScalanExp
   with ListViewsExp
   with ConvertersDslExp
   with EffectfulExp
-  with ExpInductiveGraphs
-  with ReflEqualityExp
+  with RewriteRulesExp
 
 trait ScalanCtxExp
 extends ScalanDsl

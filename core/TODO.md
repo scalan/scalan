@@ -13,13 +13,8 @@
             - commits from Internal are pushed to Public
 
 4. TODO ICFP prepare Internal and Public repositories so that no code occasionally disclosed in history
-    - remove Iters
-    - remove InductiveGraphs
-    - remove Refl and rewriting rules
     - add Option[T] to primitives
-    - add SumIso, ViewSum and corresponding rewriting rules
     - finish View/UserTypeDef/UserTypeSym structure
-
 
 4. Implement Iters using Options[T]
     - extend set of primitives (use Haskell streams as inspiration)

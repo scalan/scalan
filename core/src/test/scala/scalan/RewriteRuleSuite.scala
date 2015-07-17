@@ -4,17 +4,20 @@ import java.io.File
 
 import scalan.compilation.{GraphVizExport, GraphVizConfig}
 
+/**
+ * Base trait for testing specific rewrite rules
+ */
 trait RewriteRuleSuite[A] extends BaseShouldTests {
   lazy val folder = new File(prefix, suiteName)
 
   def getCtx: TestCtx
 
   trait TestCtx extends ScalanCtxExp {
-    def testLemma: EqLemma[A]
+    def testLemma: RRewrite[A]
     def testExpr(): Exp[A]
     def expected: Exp[A]
 
-    lazy val rule = rewriteRuleFromEqLemma(testLemma)
+    lazy val rule = patternRewriteRule(testLemma)
   }
 
   "ScalanCtx" should "stage Lemma" in {

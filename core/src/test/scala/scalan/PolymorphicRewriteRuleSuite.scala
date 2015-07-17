@@ -6,7 +6,7 @@ class PolymorphicRewriteRuleSuite extends BaseShouldTests {
 
   class Ctx extends ScalanCtxExp with GraphVizExport {
     //    lazy val testLemma = postulate[Int, Int, Int, Int]((x, y, z) => x * y + x * z <=> x * (y + z))
-    //    lazy val rule = rewriteRuleFromEqLemma(testLemma)
+    //    lazy val rule = patternRewriteRule(testLemma)
     //    lazy val patGraph = rule.patternGraph
     //
     //    lazy val test = {(x: IntRep) => x * 10 + x * 20}
