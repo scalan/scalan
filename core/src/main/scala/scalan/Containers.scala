@@ -29,13 +29,14 @@ trait Containers { self: Scalan =>
     lazy val name = getName
 
     override def toString = s"${getClass.getSimpleName}{$name}"
+    def isFunctor = this.isInstanceOf[Functor[F]]
   }
 
   def container[F[_]: Cont] = implicitly[Cont[F]]
 
   implicit def containerElem[F[_]:Cont, A:Elem]: Elem[F[A]] = container[F].lift(element[A])
 
-  trait Functor[F[_]] {
+  trait Functor[F[_]] extends Container[F] {
     def map[A:Elem,B:Elem](a: Rep[F[A]])(f: Rep[A] => Rep[B]): Rep[F[B]]
   }
 }

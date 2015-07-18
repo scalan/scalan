@@ -31,9 +31,10 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     def lift[A](implicit evA: Elem[A]) = element[Seq[A]]
   }
 
-  implicit val containerSSeq: Cont[SSeq] = new Container[SSeq] {
+  implicit val containerSSeq: Cont[SSeq] with Functor[SSeq] = new Container[SSeq] with Functor[SSeq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SSeq[A]]
     def lift[A](implicit evA: Elem[A]) = element[SSeq[A]]
+    def map[A:Elem,B:Elem](xs: Rep[SSeq[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))
   }
   case class SSeqIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SSeq](iso) {
     implicit val eA = iso.eFrom

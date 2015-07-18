@@ -13,7 +13,7 @@ import language.higherKinds // Disable warnings for type constructor polymorphis
 trait Monads extends Base  with ListOps { self: MonadsDsl =>
 
   trait Monad[F[_]] extends Functor[F] {
-    implicit def cF: Cont[F]
+    implicit private def thisCont: Cont[F] = this
     def unit[A:Elem](a: Rep[A]): Rep[F[A]]
 
     def flatMap[A:Elem,B:Elem](ma: Rep[F[A]])(f: Rep[A] => Rep[F[B]]): Rep[F[B]] =
@@ -108,7 +108,7 @@ trait Monads extends Base  with ListOps { self: MonadsDsl =>
         h(x)
       }
 
-    override def toString = s"Monad[${cF.name}}]"
+    override def toString = s"Monad[${name}}]"
 
     // syntax
     implicit def toMonadic[A:Elem](a: Rep[F[A]]): Monadic[F,A] =
@@ -139,26 +139,24 @@ trait Monads extends Base  with ListOps { self: MonadsDsl =>
 
   type Id[A] = A
 
-  implicit val idCont: Cont[Id] = new Container[Id] {
+  trait IdContainer extends Container[Id] {
     def tag[T](implicit tT: WeakTypeTag[T]) = tT
     def lift[T](implicit eT: Elem[T]) = eT
   }
 
-  implicit val identityMonad: Monad[Id] = new Monad[Id] {
-    def cF = container[Id]
+  implicit val identityMonad: Monad[Id] = new Monad[Id] with IdContainer {
     def unit[A:Elem](a: Rep[A]) = a
     override def flatMap[A:Elem,B:Elem](a: Rep[A])(f: Rep[A] => Rep[B]) = f(a)
   }
 
   type Oper[A] = Int => (Int, A)
 
-  implicit val operCont: Cont[Oper] = new Container[Oper] {
+  trait OperContainer extends Container[Oper] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Oper[T]]
     def lift[T](implicit eT: Elem[T]) = funcElement(element[Int], element[(Int,T)])
   }
 
-  implicit val operationMonad: Monad[Oper] = new Monad[Oper] {
-    def cF = operCont
+  implicit val operationMonad: Monad[Oper] = new Monad[Oper] with OperContainer {
     def unit[A:Elem](a: Rep[A]) = fun {i => (i, a)}
 
     override def flatMap[A:Elem,B:Elem](op: Rep[Oper[A]])(f: Rep[A] => Rep[Oper[B]]) =

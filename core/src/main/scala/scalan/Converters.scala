@@ -50,14 +50,14 @@ trait Converters extends Views { self: Scalan =>
   trait SumConverterCompanion
 
   abstract class FunctorConverter[A,B,F[_]]
-      (val itemConv: Rep[A => B])
-      (implicit val eA: Elem[A], val eB: Elem[B], val cF: Cont[F], val F: Functor[F])
+      (val itemConv: Conv[A, B])
+      (implicit val eA: Elem[A], val eB: Elem[B], val F: Functor[F])
     extends Converter[F[A], F[B]] {
     def convFun = fun { xs: Rep[F[A]] => apply(xs) }
     def apply(xs: Rep[F[A]]): Rep[F[B]] = F.map(xs){ x => itemConv(x) }
 
-    val eT = cF.lift(eA)
-    val eR = cF.lift(eB)
+    val eT = F.lift(eA)
+    val eR = F.lift(eB)
     override def toString: String = s"${eT.name} --> ${eR.name}"
     override def equals(other: Any): Boolean = other match {
       case c: Converters#FunctorConverter[_, _, _] => eT == c.eT && eR == c.eR && itemConv == c.itemConv
@@ -129,6 +129,14 @@ trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: Scala
           c2 <- hasConverter(ea2, eb2)
         }
         yield SumConverter(c1, c2)
+      case (e1: EntityElem1[a1,to1,_], e2: EntityElem1[a2,to2,_])
+          if e1.cont.name == e2.cont.name && e1.cont.isFunctor =>
+        implicit val ea1 = e1.eItem
+        implicit val ea2 = e2.eItem
+        type F[T] = T
+        val F = e1.cont.asInstanceOf[Functor[F]]
+        for { c <- hasConverter(ea1, ea2) }
+        yield FunctorConverter(c)(ea1, ea2, F).asRep[Converter[A,B]]
       case (eEntity: EntityElem[_], eClass: ConcreteElem[tData,tClass]) =>
         val convOpt = eClass.getConverterFrom(eEntity)
         convOpt

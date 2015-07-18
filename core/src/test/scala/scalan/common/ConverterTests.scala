@@ -6,6 +6,8 @@ import scalan._
 class ConverterTests extends BaseTests { suite =>
 
   trait ConvProg extends CommonExamples {
+  //TODO uncomment after convertTo works not only for Reifiable[_]
+//    lazy val t20 = fun { in: Rep[Array[Interval]] => in.convertTo[Array[Slice]] }
   }
 
   class ConvProgStaged(testName: String) extends TestContext(this, testName) with  ConvProg with SegmentsDslExp {
@@ -63,4 +65,32 @@ class ConverterTests extends BaseTests { suite =>
     ctx.emit("t13", ctx.t13)
   }
 
+  def testConverter[A,B](ctx: ConvProgStaged, name: String, shouldConvert: Boolean = true)(implicit eA: ctx.Elem[A], eB: ctx.Elem[B]) = {
+    import ctx._
+    val conv = hasConverter(eA,eB)
+    if (shouldConvert) {
+      assert(conv.isDefined, s"no converter $eA --> $eB")
+      ctx.emit(name, conv.get)
+    } else {
+      if (conv.isDefined)
+        ctx.emit("unexpected_" + name, conv.get)
+      assert(!conv.isDefined, s"unexpected converter $eA --> $eB")
+    }
+  }
+
+  test("convertFunctor") {
+    val ctx = new ConvProgStaged("convertFunctor")
+    import ctx._
+    testConverter[Int, Int](ctx, "convInt")
+    testConverter[Int, Double](ctx, "convIntToDouble",false)
+    testConverter[(Int,Int), (Int,Int)](ctx, "convPairOfInt")
+    testConverter[Interval, Interval](ctx, "convEntityItself")
+    testConverter[Interval, Slice](ctx, "convIsoEntities")
+    testConverter[(Interval,Slice), (Slice,Interval)](ctx, "convPairOfIsoEntities")
+    testConverter[Array[Interval], Array[Slice]](ctx, "convArray")
+    testConverter[(Array[Interval],Array[Slice]), (Array[Slice],Array[Interval])](ctx, "convPairOfArrays")
+    testConverter[Array[Array[Interval]], Array[Array[Slice]]](ctx, "convNArray")
+    testConverter[Array[Array[Interval]], Array[Slice]](ctx, "convNArrayToArray", false)
+
+  }
 }
