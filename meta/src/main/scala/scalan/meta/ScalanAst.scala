@@ -125,6 +125,7 @@ object ScalanAst {
   final val ExternalAnnotation = "External"
   final val ArgListAnnotation = "ArgList"
   final val ContainerTypeAnnotation = "ContainerType"
+  final val FunctorTypeAnnotation = "FunctorType"
 
   // SExpr universe --------------------------------------------------------------------------
   trait SExpr

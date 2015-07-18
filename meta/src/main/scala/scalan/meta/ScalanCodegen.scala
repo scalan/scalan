@@ -37,6 +37,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     }
 
     def isContainer1 = tpeArgs.length == 1 && entity.hasAnnotation(ContainerTypeAnnotation)
+    def isFunctor = tpeArgs.length == 1 && entity.hasAnnotation(FunctorTypeAnnotation)
 
     def isWrapper = firstAncestorType match {
       case Some(STraitCall("TypeWrapper", _)) => true
@@ -406,9 +407,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |
         |  $btContainer
         |
-        |  implicit val container${e.name}: Cont[${e.name}] = new Container[${e.name}] {
+        |  implicit val container${e.name}: Cont[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} = new Container[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} {
         |    def tag${typesDecl}${e.tpeArgsImplicitDecl("WeakTypeTag")} = weakTypeTag[${e.entityType}]
         |    def lift${typesDecl}${e.tpeArgsImplicitDecl("Elem")} = element[${e.entityType}]
+        |    ${e.isFunctor.opt(s"def map[A:Elem,B:Elem](xs: Rep[${e.name}[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
         |  }
         |  case class ${e.name}Iso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ${e.name}](iso) {
         |    implicit val eA = iso.eFrom
