@@ -24,7 +24,7 @@ trait LogicalOpsExp extends LogicalOps with BaseExp { self: ScalanExp =>
   override def rewriteDef[A](d: Def[A]) = d match {
     case ApplyBinOp(op, lhs, rhs) =>
       op.asInstanceOf[BinOp[_, _]] match {
-        case _: Equals[_] if lhs.elem == BoolElement && rhs.elem == BoolElement =>
+        case _: Equals[_] if lhs.elem == BooleanElement && rhs.elem == BooleanElement =>
           matchBoolConsts(d, lhs, rhs, x => x, x => !x.asRep[Boolean])
         case And =>
           matchBoolConsts(d, lhs, rhs, x => x, _ => false)

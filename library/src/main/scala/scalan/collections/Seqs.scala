@@ -9,7 +9,7 @@ trait Seqs extends Base with TypeWrappers { self: ScalanCommunityDsl =>
   type RSeq[A] = Rep[SSeq[A]]
 
   /** Iterable collection that have a defined order of elements. */
-  @ContainerType
+  @ContainerType @FunctorType
   trait SSeq[A] extends TypeWrapper[Seq[A], SSeq[A]] { self =>
     implicit def eA: Elem[A]
     def wrappedValueOfBaseType: Rep[Seq[A]]

@@ -47,9 +47,13 @@ trait ListOps { self: Scalan =>
     def empty[T: Elem] = replicate(0, element[T].defaultRepValue)
   }
 
-  implicit val listContainer: Cont[List] = new Container[List] {
+  trait ListContainer extends Container[List] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[List[T]]
     def lift[T](implicit eT: Elem[T]) = element[List[T]]
+  }
+
+  implicit val listFunctor = new Functor[List] with ListContainer {
+    def map[A:Elem,B:Elem](xs: Rep[List[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
 
   case class ListIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, List](iso) {
@@ -62,6 +66,7 @@ trait ListOps { self: Scalan =>
 
   case class ListElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, List[A], List](eItem, container[List]) {
+    def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
 
     lazy val tag = {

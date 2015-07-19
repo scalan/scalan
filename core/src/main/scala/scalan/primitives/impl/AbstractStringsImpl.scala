@@ -17,6 +17,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   // familyElem
   class AStringElem[To <: AString]
     extends EntityElem[To] {
+    val parent: Option[Elem[_]] = None
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
@@ -54,6 +55,8 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   class SStringElem(val iso: Iso[SStringData, SString])
     extends AStringElem[SString]
     with ConcreteElem[SStringData, SString] {
+    override val parent: Option[Elem[_]] = Some(aStringElement)
+
     override def convertAString(x: Rep[AString]) = SString(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -115,6 +118,8 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   class CStringElem(val iso: Iso[CStringData, CString])
     extends AStringElem[CString]
     with ConcreteElem[CStringData, CString] {
+    override val parent: Option[Elem[_]] = Some(aStringElement)
+
     override def convertAString(x: Rep[AString]) = CString(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {

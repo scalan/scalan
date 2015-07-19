@@ -106,13 +106,13 @@ class SumSpecTests extends BaseTests {
         sum[IdFree](idFreeM)(n)((r: RFree[Id,Int]) => {
           emit("runSum-r", r)
           r.run[Oper](IdOper)(operationMonad)(0)._2
-        })(freeCont[Id])
+        })(freeMonad[Id])
       }
       lazy val runSum2 = fun {(n: Rep[Int]) =>
         sum2[IdFree](idFreeM)(n)((r: RFree[Id,Int]) => {
           emit("runSum2-r", r)
           r.run[Oper](IdOper)(operationMonad)(0)._2
-        })(freeCont[Id])
+        })(freeMonad[Id])
       }
     }
     ctx.emit("runSum", ctx.runSum)
@@ -128,13 +128,13 @@ class SumSpecTests extends BaseTests {
         sum[OperFree](operFreeM)(n)((r: RFree[Oper,Int]) => {
           emit("runSum", r)
           r.run[Oper](OperOper)(operationMonad)(0)._2
-        })(freeCont[Oper])
+        })(freeMonad[Oper])
       }
       lazy val runSum2 = fun {(n: Rep[Int]) =>
         sum2[OperFree](operFreeM)(n)((r: RFree[Oper,Int]) => {
           emit("runSum-r", r)
           r.run[Oper](OperOper)(operationMonad)(0)._2
-        })(freeCont[Oper])
+        })(freeMonad[Oper])
       }
     }
     ctx.emit("runSum", ctx.runSum)

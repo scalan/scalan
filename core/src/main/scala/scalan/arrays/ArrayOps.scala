@@ -4,6 +4,7 @@ import scala.reflect.ClassTag
 import scalan.common.OverloadHack.Overloaded1
 import scalan.staged.BaseExp
 import scalan.{Scalan, ScalanExp, ScalanSeq}
+import scala.reflect.runtime.universe._
 
 trait ArrayOps { self: Scalan =>
   type Arr[T] = Rep[Array[T]]
@@ -87,6 +88,40 @@ trait ArrayOps { self: Scalan =>
     def repeat[T: Elem](n: Rep[Int])(f: Rep[Int => T]): Arr[T] = rangeFrom0(n).mapBy(f)
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = array_replicate(len, v)
     def empty[T: Elem] = array_empty[T]
+  }
+
+  trait ArrayContainer extends Container[Array] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Array[T]]
+    def lift[T](implicit eT: Elem[T]) = element[Array[T]]
+  }
+
+  implicit val arrayFunctor = new Functor[Array] with ArrayContainer {
+    def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
+  }
+
+  case class ArrayIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Array](iso) {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    def from(x: Arr[B]) = x.map(iso.from _)
+    def to(x: Arr[A]) = x.map(iso.to _)
+    lazy val defaultRepTo = SArray.empty[B]
+  }
+
+  abstract class ArrayElem[A](implicit override val eItem: Elem[A])
+    extends EntityElem1[A, Array[A], Array](eItem, container[Array]) {
+  }
+
+  case class ScalaArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
+    def parent: Option[Elem[_]] = Some(arrayElement(eItem))
+    override def isEntityType = eItem.isEntityType
+    lazy val tag = {
+      implicit val tag1 = eItem.tag
+      weakTypeTag[Array[A]]
+    }
+    protected def getDefaultRep =
+      SArray.empty(eItem)
+
+    override def canEqual(other: Any) = other.isInstanceOf[ScalaArrayElem[_]]
   }
 
   // require: n in xs.indices
@@ -294,7 +329,7 @@ trait ArrayOpsSeq extends ArrayOps {
 
   def array_binary_search[T:Elem](i: T, is: Array[T])(implicit o: Ordering[T]): Rep[Int] = {
     element[T] match {
-      case BoolElement =>
+      case BooleanElement =>
         !!!(s"binarySearch isn't defined for array of ${element[T]}")
       case ByteElement =>
         java.util.Arrays.binarySearch(is.asInstanceOf[Array[Byte]], i.asInstanceOf[Byte])

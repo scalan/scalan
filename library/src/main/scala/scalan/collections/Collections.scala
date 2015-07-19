@@ -6,6 +6,7 @@ import scalan.arrays.ArrayOps
 import scalan.common.OverloadHack.Overloaded1
 import scala.collection.mutable
 import scala.annotation.tailrec
+import scala.reflect.runtime.universe._
 
 trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
@@ -41,6 +42,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   type Segments1 = PairCollection[Int, Int]
 
   trait CollectionCompanion extends TypeFamily1[Collection] with CollectionManager {
+
     def manager: CollectionManager = this
     def apply[T: Elem](arr: Rep[Array[T]]): Coll[T] = fromArray(arr)
 
@@ -120,6 +122,12 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       }
     }
     def indexRange(l: Rep[Int]): Coll[Int] = CollectionOverArray(array_rangeFrom0(l))
+  }
+
+  implicit val collectionFunctor = new Container[Collection] with Functor[Collection] {
+    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Collection[A]]
+    def lift[A](implicit evA: Elem[A]) = element[Collection[A]]
+    def map[A:Elem,B:Elem](xs: Rep[Collection[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
 
   abstract class UnitCollection(val length: Rep[Int]) extends Collection[Unit] {

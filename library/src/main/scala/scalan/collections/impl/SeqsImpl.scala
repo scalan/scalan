@@ -31,9 +31,10 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     def lift[A](implicit evA: Elem[A]) = element[Seq[A]]
   }
 
-  implicit val containerSSeq: Cont[SSeq] = new Container[SSeq] {
+  implicit val containerSSeq: Cont[SSeq] with Functor[SSeq] = new Container[SSeq] with Functor[SSeq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SSeq[A]]
     def lift[A](implicit evA: Elem[A]) = element[SSeq[A]]
+    def map[A:Elem,B:Elem](xs: Rep[SSeq[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))
   }
   case class SSeqIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SSeq](iso) {
     implicit val eA = iso.eFrom
@@ -46,6 +47,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   // familyElem
   abstract class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
     extends WrapperElem1[A, To, Seq, SSeq]()(eA, container[Seq], container[SSeq]) {
+    val parent: Option[Elem[_]] = None
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -144,6 +146,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   class SSeqImplElem[A](val iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit eA: Elem[A])
     extends SSeqElem[A, SSeqImpl[A]]
     with ConcreteElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
+    override val parent: Option[Elem[_]] = Some(sSeqElement(element[A]))
     lazy val eTo = this
     override def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem1].getDefaultRep
@@ -605,11 +608,6 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
         source.asRep[SSeq[a]].map(fun { x => f1(iso.to(x)) })
       case _ =>
         super.rewriteDef(d)
-    }
-    case SSeqCompanionMethods.apply(HasViews(source, arrIso: ArrayIso[a,b])) => {
-      val iso = arrIso.iso
-      implicit val eA = iso.eFrom
-      ViewSSeq(SSeq[a](source.asRep[Array[a]])(eA))(SSeqIso(iso))
     }
 
     case _ => super.rewriteDef(d)

@@ -19,6 +19,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   // familyElem
   class GraphElem[V, E, To <: Graph[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
+    val parent: Option[Elem[_]] = None
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -58,6 +59,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
     with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
+    override val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -122,6 +125,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, IncidenceGraph[V, E]]
     with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
+    override val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -1017,6 +1022,18 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
     object nodes {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "nodes" =>
+          Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object simpleNodes {
+      def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "simpleNodes" =>
           Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
         case _ => None
       }

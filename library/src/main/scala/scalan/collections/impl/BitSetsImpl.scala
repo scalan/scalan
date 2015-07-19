@@ -17,6 +17,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   // familyElem
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
+    val parent: Option[Elem[_]] = None
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
@@ -54,6 +55,8 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])
     extends BitSetElem[BoolCollBitSet]
     with ConcreteElem[BoolCollBitSetData, BoolCollBitSet] {
+    override val parent: Option[Elem[_]] = Some(bitSetElement)
+
     override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {

@@ -32,9 +32,13 @@ trait ArrayBuffers extends Base { self: Scalan =>
 
   implicit def arrayBufferToArray[T:Elem](buf: Rep[ArrayBuffer[T]]): Arr[T] = buf.toArray
 
-  implicit val arrayBufferContainer: Cont[ArrayBuffer] = new Container[ArrayBuffer] {
+  trait ArrayBufferContainer extends Container[ArrayBuffer] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[ArrayBuffer[T]]
     def lift[T](implicit eT: Elem[T]) = element[ArrayBuffer[T]]
+  }
+
+  implicit val arrayBufferFunctor = new Functor[ArrayBuffer] with ArrayBufferContainer {
+    def map[A:Elem,B:Elem](xs: Rep[ArrayBuffer[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
 
   case class ArrayBufferIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ArrayBuffer](iso) {
@@ -47,6 +51,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
 
   case class ArrayBufferElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, ArrayBuffer[A], ArrayBuffer](eItem, container[ArrayBuffer]) {
+    def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
     lazy val tag = {
       implicit val tag1 = eItem.tag
@@ -65,7 +70,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
   def makeArrayBuffer[T](name: Rep[String])(implicit e:Elem[T]): Rep[ArrayBuffer[T]]
   def createArrayBuffer[T: Elem](count: Rep[Int], f:Rep[Int=>T]): Rep[ArrayBuffer[T]]
 }
-  
+
 trait ArrayBuffersSeq extends ArrayBuffers { self: ScalanSeq =>
   implicit class SeqArrayBuffer[T](val impl: scala.collection.mutable.ArrayBuffer[T])(implicit val elem: Elem[T]) extends ArrayBuffer[T] {
     def apply(i: Rep[Int]): Rep[T] = impl.apply(i)

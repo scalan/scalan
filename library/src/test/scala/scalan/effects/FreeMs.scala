@@ -69,17 +69,17 @@ trait FreeMs extends Base { self: MonadsDsl =>
 
 trait FreeMsDsl extends ScalanDsl with impl.FreeMsAbs with FreeMs with Monads { self: MonadsDsl =>
 
-  implicit def freeMCont[F[_]:Cont]: Cont[({type f[x] = FreeM[F,x]})#f] = new Container[({type f[x] = FreeM[F,x]})#f] {
+  trait FreeMContainer[F[_]] extends Container[({type f[x] = FreeM[F,x]})#f] {
+    implicit def cF: Cont[F]
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[FreeM[F,T]]
     def lift[T](implicit eT: Elem[T]) = element[FreeM[F,T]]
   }
 
-  def freeMMonad[F[_]:Cont]: Monad[({type f[a] = FreeM[F,a]})#f] =
-    new Monad[({type f[a] = FreeM[F,a]})#f] {
+  implicit def freeMMonad[F[_]:Cont]: FreeMContainer[F] with Monad[({type f[a] = FreeM[F,a]})#f] =
+    new FreeMContainer[F] with Monad[({type f[a] = FreeM[F,a]})#f] {
+      def cF = container[F]
       // suppress implicit resolution of this method (as it leads to stackoverflow)
       override def toMonadic[A: Elem](a: Rep[FreeM[F, A]]) = super.toMonadic(a)
-
-      def cF = freeMCont
       def unit[A:Elem](a: Rep[A]) = Done(a)
       override def flatMap[A:Elem,B:Elem](fa: Rep[FreeM[F, A]])(f: Rep[A] => Rep[FreeM[F, B]]) = fa flatMap f
     }
