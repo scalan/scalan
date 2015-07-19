@@ -29,14 +29,18 @@ object ScalanAst {
 
   val STpePrimitives = Map(
     "Any" -> STpePrimitive("Any", ""),
+    "AnyRef" -> STpePrimitive("AnyRef", "null"),
     "Nothing" -> STpePrimitive("Nothing", ""),
+    "Unit" -> STpePrimitive("Unit", "()"),
+    "Short" -> STpePrimitive("Short", "0"),
     "Int" -> STpePrimitive("Int", "0"),
     "Long" -> STpePrimitive("Long", "0l"),
     "Byte" -> STpePrimitive("Byte", "0.toByte"),
     "Boolean" -> STpePrimitive("Boolean", "false"),
     "Float" -> STpePrimitive("Float", "0.0f"),
     "Double" -> STpePrimitive("Double", "0.0"),
-    "String" -> STpePrimitive("String", "\"\"")
+    "String" -> STpePrimitive("String", "\"\""),
+    "Char" -> STpePrimitive("Char", "0.toChar")
   )
 
   case class STpeTuple(override val tpeSExprs: List[STpeExpr]) extends STpeExpr {

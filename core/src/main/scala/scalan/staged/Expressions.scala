@@ -43,6 +43,7 @@ trait BaseExp extends Base { self: ScalanExp =>
     def name: String = getClass.getSimpleName
     def name[A](eA: Elem[A]): String = s"$name[${eA.name}]"
     def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.name},${eB.name}]"
+    def name[A,B,C](eA: Elem[A], eB: Elem[B], eC: Elem[C]): String = s"$name[${eA.name},${eB.name},${eC.name}]"
     def uniqueOpId: String
     def mirror(f: Transformer): Rep[T]
   }

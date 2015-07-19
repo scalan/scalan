@@ -34,6 +34,7 @@ trait Thunks { self: Scalan =>
 
   case class ThunkElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
+    def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
     lazy val tag = {
       implicit val rt = eItem.tag

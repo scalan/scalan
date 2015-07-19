@@ -320,7 +320,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   def elemFromType(tpe: Type, elemMap: Map[Symbol, TypeDesc], baseType: Type): Elem[_] = tpe.dealias match {
     case TypeRef(_, classSymbol, params) => classSymbol match {
       case UnitSym => UnitElement
-      case BooleanSym => BoolElement
+      case BooleanSym => BooleanElement
       case ByteSym => ByteElement
       case ShortSym => ShortElement
       case IntSym => IntElement

@@ -66,6 +66,7 @@ trait ListOps { self: Scalan =>
 
   case class ListElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, List[A], List](eItem, container[List]) {
+    def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
 
     lazy val tag = {

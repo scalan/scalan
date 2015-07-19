@@ -18,6 +18,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   // familyElem
   class AbstractMatrixElem[T, To <: AbstractMatrix[T]](implicit val eT: Elem[T])
     extends EntityElem[To] {
+    val parent: Option[Elem[_]] = None
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = eT.tag
@@ -56,6 +57,8 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, DenseFlatMatrix[T]]
     with ConcreteElem[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
+    override val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
+
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = DenseFlatMatrix(x.rmValues, x.numColumns)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -119,6 +122,8 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   class CompoundMatrixElem[T](val iso: Iso[CompoundMatrixData[T], CompoundMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, CompoundMatrix[T]]
     with ConcreteElem[CompoundMatrixData[T], CompoundMatrix[T]] {
+    override val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
+
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = CompoundMatrix(x.rows, x.numColumns)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {

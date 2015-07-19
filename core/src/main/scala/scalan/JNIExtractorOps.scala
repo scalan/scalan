@@ -48,6 +48,7 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
 //  }
 
   case class JNIArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
+    def parent: Option[Elem[_]] = Some(arrayElement(eItem))
     override def isEntityType = eItem.isEntityType
 
     override def getName = "JNI-" + cleanUpTypeName(tag.tpe)
@@ -165,7 +166,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   }
 
   private def anyval_boxed_class[T]: PartialFunction[Elem[T],Class[_]] = {
-    case BoolElement => classOf[java.lang.Boolean]
+    case BooleanElement => classOf[java.lang.Boolean]
     case ByteElement => classOf[java.lang.Byte]
     case ShortElement => classOf[java.lang.Short]
     case IntElement => classOf[java.lang.Integer]
