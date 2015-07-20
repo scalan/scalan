@@ -516,7 +516,8 @@ trait ScalanParsers {
     STpePrimitives.get(tref.sym.nameString) match {
       case Some(prim) => prim
       case None =>
-        val name = tref.sym.fullNameString
+//        val name = tref.sym.fullNameString
+        val name = tref.sym.nameString // TODO: better to have full names
         val args = tref.args map parseType
 
         STraitCall(name, args)
