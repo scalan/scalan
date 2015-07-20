@@ -250,6 +250,10 @@ trait ScalanParsers {
       STraitCall(select.name, List())
     case AppliedTypeTree(tpt, args) =>
       STraitCall(tpt.toString, args.map(tpeExpr))
+    case tt: TypeTree =>
+      val parsedType = parseType(tt.tpe)
+      if (parsedType.isInstanceOf[STraitCall]) parsedType.asInstanceOf[STraitCall]
+      else throw new IllegalArgumentException(parsedType.toString)
     case tree => ???(tree)
   }
 
