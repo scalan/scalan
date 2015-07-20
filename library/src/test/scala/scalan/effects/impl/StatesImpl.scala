@@ -117,6 +117,8 @@ trait StatesAbs extends States with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkStateBase[S, A](run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]]
   def unmkStateBase[S, A](p: Rep[State0[S, A]]): Option[(Rep[S => (A, S)])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(States_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -260,3 +262,10 @@ trait StatesExp extends StatesDsl with scalan.ScalanExp {
     }
   }
 }
+
+object States_Module {
+  val packageName = "scalan.monads"
+  val name = "States"
+  val dump = "H4sIAAAAAAAAALVWPWwcRRSe27N93jsTh1CgECUO1pEoiNxZEVIKS6CLcyZBF9vyukCXKNHc7txlwu7MZGbO2qOIKPnpIhqEEEqfIhIFBTUSoqCKAImKgiqARAREFCBmZv9trwlCuWJ0M/P2/Xzf997u3Z/BtODghHChD0krQBK2HPO/I2TT6RKJ5eQS9cY+Oo+G9z67d+209crYAnM9YEPiIiEpFxI83zMO2i71feRKTEkbB8FYwoGP2j0s5HIPTA2oN7kJboFKDxx0KXE5kshZ8aEQSMTns0gHxOneNvvJOstikLZOsp1LcotDLFV2KsbByH4TMWdCKJkEEhyIU1tnOi1lU8MBo1wmIWrK3XXqJdspAtUBONS7AbdhW4UYtR3JMRmpJxsMum/CEVpTJtp8SiUskD/cmjCzr/ZAXaCb54V/MWC+OQmZQveMyaCVgdNKwWlpcJoO4hj6+C2oLzc4DScg+lWqABgXL/2Li8QD6hKv+d4V9/IjpxFY+uFQ51Ez5c0oRwslTBseFIhfbt4WD1+7c9YC9T6oY9EZCMmhK/N8x1A1ICFUmpxT9CAfKaoWy6gyUTrKZocebJcGDBLlKcZxTpHkYxdLbazP5mJqSnCvSYYS00rIKmm9x0vqNaJZgb6/8eDw6Rd+6r5hAasYwlYunW7IeOJUghlHlYuWYud6nZeg4mQI623HbPVih9la2yeXFJWTD37xvlgCV6wUyzj049GnXEyL775p3D/1qgVm+0bpqz4c9RWcouujYJ2vUCL7YJZuIx7d1Lahr//tSWfNQ0M49mUMch6dqkJHguOlPcmQhm45ZFrFCQCNSMVrlKDm6kbzD+erD+5qkXIwF91ETfo3PvvX9weG0uhXgiofkwTdqmrtFIxjZdwytDom7v2LHz4zf/TaD4bZGY8GEBt5HemBaa4a25RyJAY3R2Q5ysrx1pj56OXP/7z6ztsXmOFpl052yKNTlIezpzwykdQjJBwaoKcXH+Krd96XJkwlLE6l9cENNQmWzXPH9ss5no6/95es3w5/+4kFbCWAAZYBZM2lx2zrJ9iqoAjXfNRiK/kgObRq6bKglHHIGJ+DAhXsFzLEn815f66SSNEYSWAhJwk7pdtjz76OYpc56OznYPckkMBOUzY+Ui0fLZecAuv25RMX+K8fvWtpQKcHdEy8BH31JpUolOeSs0oRfYU25DBI0M7gKQ6u1wsXuxPPVXZmB2P2JsJDrN9ExfP/MSzzXBvTdhy5KIFUB3uJJiomG9p5uHdX/B+g0OtGZhMbRlHUu++phEhKoCfi7DlYLOHXiZtDdeitRx+vvfj1pz+aeVXXbabmJEk/VDJWd44Y+5KJpb47cskqSerGM4n+AyHVFY3mCQAA"
+}
+

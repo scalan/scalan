@@ -186,6 +186,8 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkStatePut[S, A](s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]]
   def unmkStatePut[S, A](p: Rep[StateF[S, A]]): Option[(Rep[S], Rep[A])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(FreeStates_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -355,3 +357,10 @@ trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
     }
   }
 }
+
+object FreeStates_Module {
+  val packageName = "scalan.effects"
+  val name = "FreeStates"
+  val dump = "H4sIAAAAAAAAANVWzW8bRRSf3Xw4tqOkhQMqVZsSmSIqYkdceogEMqldKrlJlO0BuRXVeD02U3ZntjPjaM2h4grcKi4IIdR7D5U48BcgIQ6cKkDixIFTAYkK6AnEm9kP7ybeENRywIeRZ/bN+/j9fu/t3v0ZzUmBzkoXe5jVfaJw3TH/m1LVnBZTVI0v8/7IIxfI4N7n966v2a+MbLTYQWXMXCIVF1Kh5zrGQcPlnkdcRTlrUN8fKdzzSKNDpdrooNke749volvI6qBjLmeuIIo4mx6Wksj4fIHogDTdl81+vB1MYrCGTrKRSfKKwFRBdhDjWGS/SwJnzDgb+wotxaltBzotsClRP+BCJSFK4O4t3k+2swzDAXqqcwPv4QaEGDYcJSgbws1qgN238ZBsgYk2n4WEJfEGV8aB2c90UEWSmxekd8kPPHMSBoDuyyaD+gScegpOXYNTc4ig2KPvYP1wR/BwjKKfNYOQcfHSP7hIPJAW69fev+ZefeRUfVtfDnUeJVPePDhaKWDa8AAgfrl7Wz68eOe8jSpdVKGy2ZNKYFdl+Y6hqmLGuDI5p+hhMQSqVouoMlGaYLNPD2WX+wFm4CnGcRFI8qhLlTbWZ4sxNQW4l1RAElMrDKy03jMF9RrRbGLP23lwYu35n1pv2MjOhyiDS6cVBiJxqtC8A+WSduxcr8sKWc4EYb1tmq1eyuFkLR2SS4rKCw9+6X+xjq7ZKZZx6KPRBy7m5HffVO+/+KqNFrpG6W0PD7sAp2x5xN8Wm5ypLlrge0RET0p72NP/ptJZ6pMBHnkqBjmLzgygo9CZwp4MiIZuIwy0ihMAqpGKtzgjtfZO7Q/nqw/vapEKtBg9iZr0L3r+z++XBsroFxAdJNjOQGOnUJwuYjYg7RFz71/66OnlU9d/MLzO97mPqRHXyQ6aE9DWppCTMbT/isZKlKvDfXJ89SF9884HyhBmhfm5sd27Ab26Ye6dPoS7ZH793l23fzvx7ac2KgNFPap8HNTWj9h4/2Ezobzel6Mm2MwGyeBUSpcV4O64Mb5IVM58ZQL1Mxnnz1qJVoyRQjZxkqizWr9TGy8KXeSgeZiDgxwrtJBkbFykajtVrDaA6vbVs6+LXz9+z9ZwzvX4iPUT7OFNp0ioXkvOrDz2gDUW2E+wnqCTV2Qr96C5v/Cqla/ssQbVAVrQPlQtOaUhi0k5cB0fcv2wpM6Zde3x9bgz+r/pETLO6vGgJI6klUxq81OxLO8SOqD6q+KJ6SnLQo7FPDkpQ9PojIqZvICfGBR6fXdiExtW2oIQEwm+ZZbixieDAUxzGZcg0GrBQHDiWQoD/dajT7bOff3Zj+YVVNFTGV58LP3ynIyBcF8XlC9zhvsSPiQzGYNk9Jw22f4NOWuVArcLAAA="
+}
+

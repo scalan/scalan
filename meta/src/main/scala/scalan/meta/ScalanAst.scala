@@ -188,7 +188,7 @@ object ScalanAst {
                       isLazy: Boolean,
                       isImplicit: Boolean,
                       expr: SExpr) extends SBodyItem
-  case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
+  case class STpeDef(name: String, tpeArgs: List[STpeArg], rhs: STpeExpr) extends SBodyItem
 
   case class STpeArg(
                       name: String,
@@ -419,6 +419,8 @@ object ScalanAst {
       val _concreteSClasses = concreteSClasses.map(_.clean)
       val _entityOps = _entities.headOption.get
       copy(
+        imports = Nil,
+        entityRepSynonym = None,
         entityOps = _entityOps,
         entities = _entities,
         concreteSClasses = _concreteSClasses,

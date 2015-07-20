@@ -115,6 +115,8 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkCoproductImpl[F[_], G[_], A](run: Rep[Either[F[A],G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]]
   def unmkCoproductImpl[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]): Option[(Rep[Either[F[A],G[A]]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Coproducts_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -199,3 +201,10 @@ trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
   object CoproductCompanionMethods {
   }
 }
+
+object Coproducts_Module {
+  val packageName = "scalan.monads"
+  val name = "Coproducts"
+  val dump = "H4sIAAAAAAAAALVWz48bNRR2JrvNTrKUtgeklajYXYUiEE1WILWHlUBpmg1I6e5qpxJVWrFyJk7q4rGntrOa9NB74VZxqyrUew+VOPAXICEOnBAgceZUQKICeqLCduZnmsnuoZ2DNbafv/f8fe+9mYd/gEXBwRnhQgJpzUMS1hzz3hCy6rSoxHJ8ifVHBF1Eg0ffPNo/a30wssByB9iQukhIxoUEax0DUHcZIciVmNE69ryRhD2C6h0s5GYHLPRYf3wT3AaFDjjhMupyJJHTJFAIJML1JaQd4nhum/l4x0980LoOsp4K8jKHWKrolI8TE/s95DtjyujYk+B4GNqOr8NSNiXs+YzLyEVJwV1n/Wi6QKFaAKc6N+ABrCsXw7ojOaZDdbLiQ/czOETbykSbL6iABSKDy2PfzIsdUBbo5kVBPvZ8YlYCX7H7nomglpBTi8mpaXKqDuIYEnwL6s1dzoIxmDyFIgAG4t1DICIE1KL96ufX3KtPnYpn6cOBjqNkrndMAb2Ro7TRQZH43d5d8aT94LwFyl1QxqLRE5JDV6b1DqmqQEqZNDHH7EE+VFKt50llvDSUzVQ+2C7zfEgVUsjjshKJYBdLbazXlkNpcngvSR9FpoXAL8T3Xc25r0maJiRk9/HK2Td/b12xgJV1YStIpxX4PAKVwG4yn6ticGWIr8dXJShsJSTraTs7bZipHuwgGUtzoot5euvxn/1vN8A1K2Y3DOZogiqIRfHLT5Uf3/7QAktdk/tbBA67imDRIsjb4U1GZRcssQPEJzulA0j020yBS300gCMiQ9rTfBUVXxKs5lapjzSZm4Gv8zoioDLJ621GUXVrt/qv8/2XD3XacrA82ZmU7TN8/r9fjw+kyWgJinxEI3aLqtizahxrYXkd8WmJpuZpURLh5hjNHvUlypNQHeahk+tP8KcPvpBGr0KQbSQ7vRuqeDfNudU50kUN7Z/uhvX3ys9fWcBWCvWw9KBf3ThiJb7E6gIxK8mwpmR5LS4P3f+aaadrSUWspDh+vRDlgjGSwHK3IvIXdGbOrLOUaDMA2vMA2ocDoEYMoCvk0IyQ4JXMvQ1OXJ6n8zQ2jN69euYj/te9O5ZmfbHHRrQfSaS+kBIF8kK0VshKpCSBHHqRJAnHU6m+l9nZn75+drs9+6AePpl/8nlaUlDnQJZEew/hAdbfrqn1F9lew/JMTN8PY8lJ3lOx8xmJm+n9aYGfZyKH/CNw+CLZ1+N+FkMZlhOCVdZGmcko7IuQIg7WcxLWCVuC6ku3n97ffueHr38zn8yybi6qfdP4jypJ02CqM9uXjC/1g5QKWNWZbjcm2P8B6LvXyI8KAAA="
+}
+

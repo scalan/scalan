@@ -53,11 +53,12 @@ lazy val core = Project("scalan-core", file("core"))
     libraryDependencies ++= Seq(
       "com.chuusai" %% "shapeless" % "2.2.4",
       "cglib" % "cglib" % "3.1",
-      "org.objenesis" % "objenesis" % "2.1"))
+      "org.objenesis" % "objenesis" % "2.1"),
+      fork in Test := true)
 
 lazy val library = Project("scalan-library", file("library"))
   .dependsOn(core % allConfigDependency)
-  .settings(commonSettings)
+  .settings(commonSettings, fork in Test := true)
 
 lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
   .dependsOn(library % "compile->compile;it->test")

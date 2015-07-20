@@ -185,6 +185,8 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkIncEdge[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]]
   def unmkIncEdge[V, E](p: Rep[Edge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V,E]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Edges_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -519,3 +521,10 @@ trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
     }
   }
 }
+
+object Edges_Module {
+  val packageName = "scalan.graphs"
+  val name = "Edges"
+  val dump = "H4sIAAAAAAAAANVWS2wbRRie3dhxbIeQ9lK1EqQEtwhE7agSqlAQKLhOsWSSKFsCcivQeHfsTtid2c6OozWH3oFbxQ1VqPceKnHggMQFISEOnBAgcebUgqACegIxM/v0Y900ag71YeSZ+ed/fN/3z+yt30DeY+C0Z0IbkqqDOKwa6v+axytGg3DMB29Sq2+j86h7+4vb753RX+3rYL4FipCYyOOUeRw801IOaia1bWRyTEkNO06fw46Nai3s8dUWyHWoNbgKrgGtBRZNSkyGODLqNvQ85IXrc0gGxPG8qOaDTTeJQWoyyVoqyYsMYi6yEzEWA/tt5BoDQsnA4WAhTG3TlWkJmwJ2XMp4FKIg3F2hVjTNESgWwNHWLtyDNRGiVzM4w6QnTpZdaL4Pe2hDmEjznEjYQ3b34sBV85kWKHno6nnPbjqurVZ8V6B7VmVQTcCpxuBUJTgVAzEMbfwBlJtbjPoDEPy0GQCUixcf4CLygBrEqnx02bx03yg7ujzsyzwKqrxZ4Wgpg2nFgwDx2+3r3r0LN8/poNQGJeytdTzOoMnTfIdQlSEhlKucY/Qg6wmqlrOoUlHWhM2IHoomdVxIhKcQx3lBko1NzKWxXJsPqcnAvcBdFJlqvqvF9Z7MqFeJpg5te+vO8TOn7jbe0YE+HKIoXBoN32WRUw5yDauHQtdyfJIDbSfBV04baiqHop+MhSmZxJg8d+d365sVcFmPkQwD74884SLv/fxj+YfnX9PBXFvpfN2GvbYA02vYyNlkdUp4G8zRPcSCncIetOW/iWQWLNSFfZuHEKexmRHYcHAysyNdJIFb9V2p4QiAcqDhDUpQZX2r8o/x3Se3pEQZmA92ghb9D5/795eFLlfq5WC2y6jTtCKAZ0Rvx3g8m0Wui7YYdsRNsode+vrLt/74aiOv+D0alrQD7T4K+jqsKKlOBtVWRKQm4QGDKt6JuBQ5LHEBY583iYX88dTkcGra2XyPQffKhJrClfyFeP8hlZborRSAalAHHVm+h9+9+TFXytL84etts7MrrpRVde7pKSKLrtm/2yv6X8d/+kwHRaGlDuYOdCsr+7wfDrHnwTBcC/XwiVHNcXZ4UzXy5E5NaBI6WFyzdqVpPZ3qUsLDsZTbE9oIyTraSeKJ/ptIZ1ol4w4a0xyMC4CDQpiw8hD3yVPZfSIAvH7p9Bvsz08/1CXI+Q7tEytiRDzTHPn89WhNG2ZEMAAZdCIGEnCG1fr20EZjtO6yNoGcg92yY5yMNl7mbfLAls1xeqBzh9/qcnxZja8cSg80ifl49UCYcLoHxmW4L32mMpudiHBxG+Eulp9hj0jDaQamMFuW9+A6dLA9OCCtT2Rw6qZcPBL05HgjsQkN8wogkUZ4NQVdElbMwHLGjWWET4B4h67dv7Hxwvef/6oe9pJ8TMSHBYm/69MP+ghnQceJz/RUrqJq+byoPP8HKf3fUxUNAAA="
+}
+

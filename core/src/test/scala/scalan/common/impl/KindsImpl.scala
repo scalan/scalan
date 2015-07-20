@@ -182,6 +182,8 @@ trait KindsAbs extends Kinds with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkBind[F[_], S, B](a: Rep[Kind[F,S]], f: Rep[S => Kind[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]
   def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]): Option[(Rep[Kind[F,S]], Rep[S => Kind[F,B]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Kinds_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -319,3 +321,10 @@ trait KindsExp extends KindsDsl with scalan.ScalanExp {
   object KindCompanionMethods {
   }
 }
+
+object Kinds_Module {
+  val packageName = "scalan.common"
+  val name = "Kinds"
+  val dump = "H4sIAAAAAAAAALWWz28bRRTHxxsnju3QFDigUpWUyAQFUTvi0kOkIse1oapJomwPyK2IxrtjM2V3djs7jtYcegduEReEEOq9h0oc+AuQEAdOFSBx4sCpgERV6AnEm/H+tL2uW1QfRp4f+96bz3vfmbn9O1r0ONrwDGxhVrWJwFVd/a97oqI3maBi+I5jDixykfTufH3n8Jx2YaChlTYqYmYQTzjcE+jltjJQMxzLIoagDqtR2x4I3LVIrU09sd1G+a5jDm+gmyjXRicNhxmcCKI3LOx5xAvGl4l0SKN+UfWHe27sg9VkkLVEkFc4pgKiAx8nR+sPiKsPmcOGtkAngtD2XBkWrClQ23W4CF0UwNz7jhl28wzDAHqufR0f4Rq46Nd0wSnrw5dlFxsf4D7ZhSVyeR4C9ojVuzJ0VX+hjUoeuXHRsy7ZrqVGfBfovqEiqMZwqhGcqoRT0Qmn2KIfYjm5zx1/iEa/3AJCysTrjzARWiBNZlY+vmZcfaiXbU1+7Ms4Cmp7S2BoLSPTKg8A8duDY+/+W7fOa6jUQSXq1bue4NgQyXwHqMqYMUeomCN6mPchVetZqVJe6rBmrB6KhmO7mIGlgOMKJMmiBhVysRxbCVKTwb0gXBIuzfluLtrv2Yz9qqJpYMvav3fq3Cu/Nd/VkJZ2UQSTetN3eWhUoPxlyszAtGxXBcq1Yr6yW1dd2RT9uC3MiCRi8uq9P8xvttA1LSIZOJ4veWBi0fvph/LdzTc1tNxRdd6ycL8DML2mRew93nCY6KBl54jw0UzhCFvy39RkFkzSwwNLBIiTbBaAjUBnMxXpEglu23dlDYcAyqMa3nUYqbT2K3/r3316W5YoRyujmZFE/6Xn//n5RE+o6gWiOGS7ALIeg59NuzQyqTs2eXb9Pn3v1idCcc35aXHvda+DoLbVdy/NQBweMn91trQHp378UkNFINmlwsZuZWtOdTzFikcRibhZA3yrB0QMOGskva3FJftCAuiLuTBZapFAGqmHpPOygGbAzzBgtCIDsvamSieZPYGWRvEqA1Hdn8lKikJwfHXjbf7n5x9pEtNi1xkwM2QK14wgvtgJx3JppsAQc2yHDGM2MrhEsBdSM4fj+05PT2Ap59L7nuMU2cmo64mUoTHis9Qyh199wm+Gm94UNxwElJmn1oAZdy999vzqmcNf1FG7ZDo2pirRpyFtHMSo0nI6OO/icP43tyS9DdVuZsnlmR3w8YRi0WeJJUn2idS282gDj6+2vNxuUmuT5ZyhA9k0Zgshkb30xGSWEj42UTru4gGhPSofOo9dzdNvh6Aa5i+Jy9NLInwPPC1806M/TtuAhYsKBMQZiA8uFju4czZAk+sZmtSD6wTutJsPv9h97fuvflW6LMmLCa5oFr2Q4xPTHztRlpVreO8mQgUq8qZSYf4HSwSuDl4MAAA="
+}
+

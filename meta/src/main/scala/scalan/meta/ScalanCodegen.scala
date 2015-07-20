@@ -1,6 +1,7 @@
 package scalan.meta
 
 import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
+import java.util.zip.{GZIPInputStream,GZIPOutputStream}
 
 import scalan.util.{StringUtil, ScalaNameUtil}
 import scala.annotation.tailrec
@@ -146,20 +147,41 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
   def serialize(obj: Any): String = {
     val bos = new ByteArrayOutputStream()
-    val objOut = new ObjectOutputStream(bos)
-    objOut.writeObject(obj)
-    objOut.close()
-    val str = javax.xml.bind.DatatypeConverter.printBase64Binary(bos.toByteArray)
-    str
+    try {
+      val gzip = new GZIPOutputStream(bos)
+      try {
+        val objOut = new ObjectOutputStream(gzip)
+        try {
+          objOut.writeObject(obj)
+          objOut.close()
+          gzip.close
+          bos.close
+          val str = javax.xml.bind.DatatypeConverter.printBase64Binary(bos.toByteArray)
+          str
+        }
+        finally objOut.close()
+      }
+      finally gzip.close()
+    }
+    finally bos.close()
   }
 
   def loadModule(obj: String): SEntityModuleDef = {
     val bytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(obj)
     val bis = new ByteArrayInputStream(bytes)
-    val objIn = new ObjectInputStream(bis)
-    val module = objIn.readObject().asInstanceOf[SEntityModuleDef]
-    objIn.close()
-    module
+    try {
+      val gzip = new GZIPInputStream(bis)
+      try {
+        val objIn = new ObjectInputStream(gzip)
+        try {
+          val module = objIn.readObject().asInstanceOf[SEntityModuleDef]
+          module
+        }
+        finally objIn.close()
+      }
+      finally gzip.close
+    }
+    finally bis.close
   }
 
   class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) extends MatcherGenerator {

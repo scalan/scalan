@@ -163,6 +163,8 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkSHashSetImpl[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]]
   def unmkSHashSetImpl[A](p: Rep[SHashSet[A]]): Option[(Rep[HashSet[A]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(HashSets_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -394,3 +396,10 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
     case _ => super.rewriteDef(d)
   }
 }
+
+object HashSets_Module {
+  val packageName = "scalan.collections"
+  val name = "HashSets"
+  val dump = "H4sIAAAAAAAAALVWz48URRSu6d2ld34ILEEjiRtxM2A07MxiosRsohlmBzGOOxuaqBmIpqanZiiorm6qatYeD9zVG+FmjOHOgcSDf4GJ8eDJqIlnvYAmEJCTxlfVXT09K8PCwT1Upqpevx/f971Xe+MPtCAFOip9zDCvBUThmmd+N6Sqei2uqBq/G/ZHjGyQwc1vbn606rwxclCljYqY+0SqUEiFXmgbB3U/ZIz4ioa8ToNgpHCPkXqbSrXeRvO9sD++jK6gQhvt90PuC6KI12RYSiLT80WiA9JsXzT7cSeaxOB1nWQ9l+RZgamC7CDG/sT+DIm8MQ/5OFBob5paJ9JpgY1LgygUyoZwwd2FsG+38xzDATrQvoi3cR1CDOueEpQP4ctyhP1LeEg2wUSbz0PCkrDB2XFk9nNtVJLk8oZkbwcRMydxBOi+YjKoTcCpZeDUNDhVjwiKGf0E68stEcZjlPwV5hAyLo7t4sJ6IC3er3523j/3wCsHjv441nm4prw94Oj5GUwbHgDE785clXffun7CQaUuKlHZ6EklsK/yfKdQlTHnoTI5Z+hhMQSqVmZRZaI0wGaHHop+GESYg6cUxwqQxKhPlTbWZ5WUmhm4uyoi1rQQR4Ws3sMz6jWiaWLGtm4dWj1yu/WBg5zpEEVw6bXiSFinCi16p7G84BGVutfrPoUKDYOxXorxZHUfET4D4sVbf/a/XUPnnQy+NNrjMQYuFuQvP5V/fOlNBy12jbhPMTzsAoKyxUjQEc2Qqy5aDLeJSG7cbcz0r4cy6PbJAI+YSnHNAzIHgCh0eGYbRkSjtR5HWrgWgHIi3M2Qk+qprepf3vfXbmhdClRJbpK+/Iee+PvXvQNlJKvQMx8LHEWk/x5mI9IZnMSSaLIt4HPQ4NMUuE9CTEqPXpaN6dO5z54t2OzNvUIOaVh/8xrRXUMoVLE6sXNgOWNzeZYejX6vnjt6Wtz54lNH473QC0e8bxsCJqYisTppzwrT5EADYIEDqx4TNMvs4H9y3FVddqje76459w79/JWDiiCiHlUBjqprjzkN/scOR9M0lLXl+0Y0SUZ79LJir5+scXPwrD4KHugt04NZ4bR67PXfN669Y2bJvgkgxiytK9/jCj2luxNTToQtNZeN7p9S0iVeGJCllbv0w+ufKzMqCvH0I9XpXYSHYd1895zx/+oOiCqtuGk5OD59lcHz8Dk26QbIeMnaNvOEJlozslvK9scnPl6bFqQLMS0jUEcK8uR1S9DagPpXZhDgpeoAiV558OXmyz98/ZtBvaR1BsOGZw/8RFTxjqFxIPEHhQQjDv82wMOdAwDaXUvQJP4vWAqg/ScJAAA="
+}
+

@@ -248,6 +248,8 @@ trait FreesAbs extends Frees with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkBind[F[_], S, B](a: Rep[Free[F,S]], f: Rep[S => Free[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]
   def unmkBind[F[_], S, B](p: Rep[Free[F, B]]): Option[(Rep[Free[F,S]], Rep[S => Free[F,B]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Frees_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -591,3 +593,10 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
   object FreeCompanionMethods {
   }
 }
+
+object Frees_Module {
+  val packageName = "scalan.monads"
+  val name = "Frees"
+  val dump = "H4sIAAAAAAAAANWXTWwbRRTHxxsnju3QBDigUpWUyAQFUTvi0kOkIse1oZKbRNkekFsRjXfHZsruzHZmHK059A7cKi4IIdR7D5U4cEeqVPXQUwVInDhwKiBRAT2BmBnvlz/WTVt8wIeR52Pfe/N7/zc7e/NXMM8ZWOcWdCApu0jAsqn/V7komXUisOhfoHbPQedQ59Y3tw5OG2d7BlhqgjwkFuKCMi7Aq01toGJRx0GWwJRUsOv2BGw7qNLEXGw1QbZN7f5VcA1kmmDFosRiSCCz5kDOEQ/GF5FyiKN+Xvf7u17sg1RUkJVEkBcZxEJGJ32sDNbvI8/sE0r6rgDHgtB2PRWWXJPDrkeZCF3kpLkPqB12swTKAfBC8wo8hBXpolsxBcOkK58setD6EHbRjlyilmdlwBw5nYt9T/fnmqDA0dVz3Dnveo4e8T1J9y0dQTmGU47glBWckokYhg7+CKrJPUb9Phj8MnMAaBNvPsZEaAHViV365LJ16ZFZdA31sK/iyOntLUhDqymZ1nmQEO/sX+cP37lxxgCFFihgXm1zwaAlkvkOUBUhIVTomCN6kHVlqtbSUqW9VOWaET3kLep6kEhLAcclmSQHW1ioxWpsKUhNCvec8FC4NON7mWi/p1L2q0VTg46z9+D46dd+qb9nAGPYRV6aNOu+x0KjAmQbDKHAtGqXBcg0Yr6qW9Vd1eT9uM1NiSRi8vqD3+zbm+CyEZEMHB8tedLEPP/hu+L9jbcNsNjSOm84sNuSMHndQe4uq1EiWmCRHiI2mMkdQkf9m5jMnI06sOeIAHGSzZxkI8Cp1Ir0kAK35XtKwyGA4kDDO5SgUmOv9Jd597ObSqIMLA1mBiX6Dz7z94/HOkKrVxKFIds5WdYj8NNpFwYmTeqi59ce4vdvfCo014w/XNy77SuyoLb0c69MQRweMn+2No0/jn//lQHykmQbCxd6pc0jVscMFQ8iEnGzKvEt7yPRY6SW9LYaS/alBNCXM2Gy9CIBDFQNSWeVgKbATzFgNSIDSnsTSyeZPQEWBvFqA5HuT6YlRSO4fmn9Xfb7Fx8bCtN8m/aIHTKVrxmBfLEdjmWGmUqGkEE3ZBizUcElgj07NHMwuu/h6TEsxczwvp/hFBlLGRghPrVaGlMSONnXum430sS1Yva4h4j9v1FXLgg4Ka/xDKakXjW12ed+exa5P4Jfc8xvipvOBDdMHp6pNdroEev++c9fXD558JN+zS7Y1IVYq+WELFkmD2JdkieCd10czjNzewI1P7eNn1rK5jQpJ8k+VS1sP97Ak9dCVm13VoWQyN7wxHiWEj42wHDc+X2EO1hdcv+jEzRQw9EloRxNkER4F5wVvsnRfztsQy6c1yBknGHxUQJtHuyMgbWUmjSDq4S8z1x79OXOG/e+/lnXZUFdSuT1jERfR/Hb0h85UfIXtC/5sZOIVWJR1xQd57+GLkHNWw4AAA=="
+}
+

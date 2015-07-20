@@ -321,6 +321,8 @@ trait ConvertersAbs extends Converters  {
   // 6) smart constructor and deconstructor
   def mkFunctorConverter[A, B, F[_]](itemConv: Conv[A,B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]]
   def unmkFunctorConverter[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]): Option[(Rep[Converter[A,B]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Converters_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -628,3 +630,10 @@ trait ConvertersExp extends ConvertersDsl  {
   object ConverterCompanionMethods {
   }
 }
+
+object Converters_Module {
+  val packageName = "scalan"
+  val name = "Converters"
+  val dump = "H4sIAAAAAAAAAO1YO2wcRRieXft8vgeJCQJkosTBOoKwsM85IaWwBLp1ziTSYVu3LpATxZrbG5sJ+8rsnHVHEVHy6CIahBBKnyISBQU1EqKgigCJioIqAYkIiChAzMzt+3UHFgVSXKxudv755v+///tWM779Eyg4BJx1NKhDc8VAFK6o4nfToTW1ZVJMh69Zvb6OLqD9O5/d2VuWX+7LoNoGJWhqyKEWcSh4ti0A6pql60ij2DLr2DD6FHZ1VG9jh661wXTX6g2vgxtAaoM5zTI1gihS13XoOMhx388iviH2xyUxHm7ZwR5mnSdZDyW5QyCmLDu2x9wovoNsdWha5tCg4Jib2pbN02IxRWzYFqHeFkUG94bV84bTJmQvwIn2NXgI62yLg7pKCTYP2MqKDbU34QHaZCE8fJol7CB9f2doi/FUG5QddP2Co18ybF28GdiM3YbIYCUgZ8UnZ4WTU1MRwVDHb0E+uU2swRCM/qQpAATEi2MgPATUMnu1965olx+qFUPmiwc8j6Iob4YBLWR0WvSBkfhl56bz4NVb52VQ3gVl7DS7DiVQo+F+u1RVoGlaVOTsswfJAWvVYlarxC5NFhPTQ0mzDBuaDMnlscqapGMNUx7M31Xd1mTwXqQ28kKlgS359Z7JqFeIZh3q+va9+eXn7rdel4Ec3aLEINXWwCYeKAWldcs8RIQi4uLz53EKpJ2AZD7siCF/lAbBs5iTjk/M8/d+7n2xCq7IPp3u7pN1kEEUnO++qdx94RUZzO4KsW/o8GCXMeq0dGRsEVYD3QWzFitkNFM8hDr/ldrRYg/tw75OXZ7DBE0xgig4k2lLG3H21gY2F7JHQGUk5E3LRLWN7drv6lcf3OY6JaA6mhn59C98/s/vj+1TIWEKiux7cbjRNz2Gp5jDfUJOZ7XYRmyJdvfSh08cP7X3g2jwTM8yIBYqO9kGBcL8Lco56RL8j5pZHmWsWgZ6fPEBvnrrfSraJg2iH5Ct7jVm2jWx7nROB70P2W+7q/Kv899+IoMSa1QXUwPatdUJHfgfugr4TASPBdadpxToIN8a6+FNFwIunw555hnJk4QIokBGOx7h01ymqf4asZ8F0MkDSDaRgsciaQscX1OnsjXFCLl5+exF8stH78qctELX6ps9j2EmVIoGVPHeSVGGGaOQQMNjNKAoqjslMtGJV1+RouUlvks5GrPRTt/W0Uuf/3H1nbcv2kKwiU9dFF5unotYQm424hm1YyuU2AolvCLppYQ+QKy9Bf4BOOd3mNc7Jkc3g7BmUkEbuaCNicoYBSyJ53KmS7YhJkdzyRRqBhwkVe5xkOcTBtHIhUi0NgVCyc0ihfkUiNwsUnhmfo0QGPZrwjIRNcRmGlkzSuYaJUHKWAd6xdW6kKR3KYfyjIWPTJUw1ZNq33jkqX/vqWqYv/+HpaSN2LiZYp9EkHI0q8xiigxfy+nCdhMZs+VEsp7nB1d20DvqoaqZdyZK8JYCoOQBKGMB3Daw4KJbUbyXKZqcixefq8sw69EJJWtiIxNrL0MloQXLICbTDsL7mF/EJ5TvRNcLVysTC+ZEnlIiN9d8Mic6g/pPaSmIcQPLQdmU7SAOnm4BBCxmHEpV99rB7j43Hn68ufT1pz+K21qZX2DYTdH0/1sTnKXjh9SZEV4oTSZafp8RKf4NPgV+legSAAA="
+}
+

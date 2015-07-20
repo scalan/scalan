@@ -182,6 +182,8 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkHasPermission(user: Rep[String], password: Rep[String]): Rep[HasPermission]
   def unmkHasPermission(p: Rep[Auth[Boolean]]): Option[(Rep[String], Rep[String])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Authentications_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -349,3 +351,10 @@ trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
   object AuthCompanionMethods {
   }
 }
+
+object Authentications_Module {
+  val packageName = "scalan.examples"
+  val name = "Authentications"
+  val dump = "H4sIAAAAAAAAAL1WPYwbRRQe753PZ/vywxWRghRxGF8giNinSCjFSSDn4hAkc2duE4ScCDRej51JZmc2M+NjTZEe6CI6hFD6FJEoKJBoEBKioEKARE0VQEkEpALxZvbHP5e9XEO2GO28ffN+vu+9t3P7d5RXEh1XHmaY13yicc217w2lq26Ta6pHb4jekJGzpH/nizvvnnReGTpoqYWKmHtEaSGVRs+2rIG6JxgjnqaC16nvDzXuMlJvUaXXW2i+K3qj6+gGyrXQYU9wTxJN3A2GlSIqli8S45Cm+6Ldj7aCsQ9eN0HWJ4K8IDHVEB34OBzpb5PAHXHBR75GB+PQtgITFugUqB8IqRMXBTB3RfSS7TzHIEDLrat4B9fBxaDuakn5AE6WA+xdwwOyCSpGfR4CVoT1L4wCu59roZIi188q9rofMCsJA0D3lI2gNganloJTM+BUXSIpZvR9bD62pQhHKHpycwhZEy89xkRigTR5r/rhZe/SQ7fsO+ZwaOIo2PQWwNAzGUxbHgDEb7dvqgev3TrtoFIHlahqdJWW2NOTfMdQlTHnQtuYU/SwHABVlSyqrJcG6MzUQ9ETfoA5WIpxXAKSGPWoNspGthRTk4F7QQckUc2FQS7NdyUjX1s0G5ix9t2jJ1d/a77tIGfaRRFMus0wkIlRjeYbQ30lNm3WQyCqdrFMvT2X5S0gbUl9KO0d8vLXX16899Vm3jpc7pE+HjL9FmZDEhVa7H4civHsvHACfF3kNKrbIyCpVDRaGB8phrNrYY/0UyKev/tH75s1dNlJ6Yuz3V/FgIm8+vnH8g8nXnXQYsc21zmGBx1gUDUZ8bfkhuC6gxbFDpHRl8IOZubtkRVUiAGJeZ0kZA4I0WglcwwExLC1HgamcRIAylHjbApOqufa1b/d7z6+bfpCoqXoSzQX/qWn//nlYF/blgGkh4rIhOI5GCcRGmZ5OgLYClZST2ZZ1WgxAEzeE7K359lpikpRHK7wyVOVB/SdWx9pS0YunB5DW92r0Prr9lx1D16ScfhXZ8358+hPnzmoCPB3qfZxUF3bZx//j72JUsDGy2pgBrUYUL4x6Wx1PLuO2VeN8lZr5mM5N9OUM30K7ZLvY6agfApnhGAE891MWC8Th3aR++SKwqx1u57KQuvIeazaRPpUKQDrcagdmNIeK02EvRD7m0ayuE1on5rfzN4IgyjXmDC5K6d9J3bAWH5EPsn4tZJ0OB3LHrhQcjcvHT8v73/ygWPKMt8VQ95LahguIJqE+kwiy03XMNQslthPanYcRmaeb06jCoqHTLjmQuJFvQWSOFoSYmghomI8JKpkpOHGnQTtfOPhp5svfv/5r/a3UTI9CSONp9eYyd/FNC/LM2HA9WQiAUDVtKsN/j8YxgfODQoAAA=="
+}
+

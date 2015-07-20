@@ -245,6 +245,8 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkMT2[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]]
   def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]): Option[(Rep[T], Rep[R], Rep[Int])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(MetaTests_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -532,3 +534,10 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
   object MetaTestCompanionMethods {
   }
 }
+
+object MetaTests_Module {
+  val packageName = "scalan.common"
+  val name = "MetaTests"
+  val dump = "H4sIAAAAAAAAALVWPYwbRRSe3fPF5x/yW6AgwYXD5MiJ2M4JlOIk0HFxSCTfj7wOipwoaLweOxN2Zye7Y8umiCj5aVBEhxBKnyISBUUkGoSEKKgQIFFTBRBEkIgCxJvx7nrt2/VZRHEx8sy8/d573/vezNz+Fc17LjrumdjCrGgTgYuG+r/uiYJRYYKKwabT6lrkDGnf+fzOmyf1V7o6yldRBjOTeMJxPYGerSqAkulYFjEFdViJ2nZX4KZFSlXqibUqSjWd1uA6uoG0KjpoOsx0iSDGhoU9j3j++gKRDmk4z6j5YJuPfLCSDLIUCbLuYiogOvBxcGhfI9wYMIcNbIH2+6FtcxkW2KSpzR1XBC7SAHfVaQXTFMOwgA5Xr+EeLoGLTskQLmUd+DLHsfkW7pAtMJHmKQjYI1a7PuBqPldFWY9cP+NZ521uqZU+B3ZXVQTFETnFkJyiJKdgEJdii76N5eaO6/QHaPjT5hBSEC/uAREgkAprFd6/bF56aORsXX7cl3GkVXr7AGgxodKqDkDi17Wb3v3Xb53WUbaBstRbb3rCxaaI1tunKocZc4SKOWQPux0o1VJSqZSXdbCZ0EPGdGyOGSD5POahSBY1qZDGci3vlyaB97TgJDDV+lwL8z2WkK8SzQa2rJ17R08+/0vloo70cRcZgDQqfe4GoAItbAJKHUgI4Z9Lgudkx6U2aLlHXv7y7oXfv9iaVx4Ot0gbdy3xBra6ZKgs39/It3Slv3BCoNQFRoVcyvRHY3pKViG/y/d+a31VRpf1sCp+ErMJASDmvR+/z3134lUdLTRUz5y1cKcBhfEqFrG33Q2HiQZacHrEHe6ke9iS/2KFkfbT9ssV5XkOeBboWGJ3cyKLsNbnsh8CAnLDfthyGCmc3Sk8ML756LaUu4vyw51hu/9LT//z0/62UJ0AfHrQISqkAwLNwSnhsyHHIwJpZVg9z2IZzw5hDccmh5bu0yu3PhCKW60/flhsN69Bg66p756ZQnNwaP3VKOt/Hv3hUx1lgM0mFTbmhfKM3fYYOwipxMeHRaAwv1kvb0RdLY7OlyfVX+AQbCa2clqE6gO7O8lf1uqhs/ECKPiI7VOhGJQjKG0LC5xQ2kngBIR4ccihEB/QshpXplB1KpGqaC7aZCQEOiyIJFUJJtNYUqSfUt+HHf508tkEhb556fg594+P39OlGOabTpe1AuXA5SxIX7wWrGnjygGlYBfbgVJGmcXRvFfhp3QIJ/Uut8hLd/++8u4757hqt12Hciwz4bQWK6eZRZWmrEWhDR9JV/t68qifhlHbE+NxaHP1f2lTJ/VZlZkEUJsGsLtiStqrUWnLsRYju5iN3XARjBU07jxTI7RN5ZvqUQ4rvwozl+JQgB5Tj+ibYxYGJqP4cGTjG2bCXAR6wu88uDps/1ZZhoZcSmhIw78w4Na68fCTrZVvP/tZPWmy8uqBi5iFb+roU2acs3zoHl7JkZClxAFehfsfoRfFQZQMAAA="
+}
+

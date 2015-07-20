@@ -186,6 +186,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkIncidenceGraph[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]]
   def unmkIncidenceGraph[V, E](p: Rep[Graph[V, E]]): Option[(Rep[Collection[V]], Rep[Collection[E]], Rep[Int])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Graphs_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -1167,3 +1169,10 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
   object GraphCompanionMethods {
   }
 }
+
+object Graphs_Module {
+  val packageName = "scalan.graphs"
+  val name = "Graphs"
+  val dump = "H4sIAAAAAAAAANVWTWwbRRidXcdx/ENoe6laCVyCKQJROwqCCkUCBdcpkVwnyqYBuRVovDt2Jt2d3c6OozWH3oFbhcQBIdR7D5U4cEDigpAQB04IkDj3VEC0AnoCMTP741177RgRDvgw8uzOvO+b9973zd7+GWRdCs66OjQhqVqIwaom/6+5rKI1CMNscMk2+ia6gLp3Pr3z1jn15b4KSk2Qh0RHLrOpy8ATTQlQ023TRDrDNqlhy+oz2DFRrYldttoEcx3bGFwHN4DSBMd0m+gUMaTVTei6yA2eLyAREEfzvJwPNp1hDFITSdZiSe5QiBnPjsc45q/fRo42IDYZWAwsBqltOiItviaHLcemLAyR43B7thFO5wjkD8CJ5j48gDUeolfTGMWkx3cWHahfgz3U4kvE8jmesIvM7s7AkfNMExRcdP2Ca25YjimfeA5nd0VmUB2SU43IqQpyKhqiGJr4bSheblHbGwD/p2QAkBDPHQIRIqAGMSrvXtWvPNSKlio2eyKPnDzePAcqT1Ba6sBJ/Gr7pvvg4q3zKii0QQG7ax2XUaizuN4BVUVIiM1kzhF7kPa4VEuTpJJR1viaET/kddtyIOFIAY8lLpKJdczEYvGsFEgzgfccc1C4VPEcJTrvmQnnlaapQ9Pcunfq3FM/Nd5QgZoMkeeQWsNzaAjKQPYihc5egC3GRxlQdocEi2lDTsWQ94ZjbkoqESlP3/vF+HIZXFUjKoPIs6nHIbLuD98Vv33mFRUstKXR103Ya3M23YaJrE1atwlrgwX7AFH/Te4AmuJfqpo5A3Vh32QBx3FyMpwcBs5MLEkHCeZWPUeYOCSg6Ju4ZRNUWd+q/KF9/f5t4VEKSv4bv0b/wuf//HGxy6R9GSjxZBnydqHZR25I81ydV0KqED7n8uHpKLgYygwUkNFDSaBsKwWpcShS1sTkWjoIBU9O8pyDtii2eIM7QC988dnlXz9vZaXtTgREy9T8dhPwPORcUKEsM5DZICzNXQWfQs220PGlB/jNW+8x6SPFS3azzc4+7yCrct/jUywVdtXf28vqb6e+/1gFee6cDmYWdCrLM7aD/7DEQVKzxXpwo8hSWBl5uWbsQx0RfSALOL1Ch/Jypk8md9TjuZeHBX8yFue0MuIRFe1GdhXld6hdxwEa0wDGO03qScuRLx+b7EtO7M0rZ1+j9z98RxXkZzt2nxihUvy25hXIXg2fKUmluDKQQitUZshRsjvuJF6M1VhRSZ7v3zTbMW1G6/cIm8pxTPRLkBet9zpmexxxKt7hrSXvp9bqW+GmDP+e8WHE8Hz6cV+U40v/qCw2iI4NbhY0c1kkd/x/ymL8pOXYtqQzZ7JsLMH5VObz2wh3sfhAOypbxwWZInlR9Mx1aGFzsJIWegaZFyep68RBjoRBMX4wXBMsnPdJYuCRoGX15Dw4NQVLEzqZFlwZ/N668fCj1rPffHJXXrAFcfnwzw4SffbHL9YR4fzY/Cs+liy3mriOZKJ/A6CAJ1U0DQAA"
+}
+
