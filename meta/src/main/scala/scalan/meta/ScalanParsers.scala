@@ -177,7 +177,7 @@ trait ScalanParsers {
   }
 
   // exclude default parent
-  def ancestors(trees: List[Tree]) = trees.map(traitCall).filter(_.name != "AnyRef")
+  def ancestors(trees: List[Tree]) = trees.map(traitCall).filter(tr => !Set("AnyRef", "scala.AnyRef").contains(tr.name))
 
   def findCompanion(name: String, parentScope: Option[ImplDef]) = parentScope match {
     case Some(scope) => scope.impl.body.collect {
