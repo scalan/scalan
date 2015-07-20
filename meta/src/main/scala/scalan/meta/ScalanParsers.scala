@@ -512,9 +512,13 @@ trait ScalanParsers {
   }
 
   def parseTypeRef(tref: TypeRef): STpeExpr = {
-    val name = tref.sym.fullNameString
-    val args = tref.args map parseType
+    STpePrimitives.get(tref.sym.nameString) match {
+      case Some(prim) => prim
+      case None =>
+        val name = tref.sym.fullNameString
+        val args = tref.args map parseType
 
-    STraitCall(name, args)
+        STraitCall(name, args)
+    }
   }
 }
