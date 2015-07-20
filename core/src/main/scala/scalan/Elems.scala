@@ -162,6 +162,20 @@ trait Elems extends Base { self: Scalan =>
 
   def assertEqualElems[A](e1: Elem[A], e2: Elem[A], m: => String) =
     assert(e1 == e2, s"Element $e1 != $e2: $m")
+
+  import scalan.meta.ScalanAst
+  import ScalanAst._
+
+  private var modules: Map[String, SEntityModuleDef] = Map()
+  def getModules = modules
+
+  def registerModule(m: SEntityModuleDef) = {
+    if (modules.contains(m.name))
+      !!!(s"Module ${m.name} already defined")
+    else {
+      modules += (m.name -> m)
+    }
+  }
 }
 
 trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>

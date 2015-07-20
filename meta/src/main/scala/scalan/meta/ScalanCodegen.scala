@@ -1,5 +1,7 @@
 package scalan.meta
 
+import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
+
 import scalan.util.{StringUtil, ScalaNameUtil}
 import scala.annotation.tailrec
 import ScalanAst._
@@ -140,6 +142,24 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |  ${declaration(module)}$body
         |""".stripAndTrim
     }
+  }
+
+  def serialize(obj: Any): String = {
+    val bos = new ByteArrayOutputStream()
+    val objOut = new ObjectOutputStream(bos)
+    objOut.writeObject(obj)
+    objOut.close()
+    val str = javax.xml.bind.DatatypeConverter.printBase64Binary(bos.toByteArray)
+    str
+  }
+
+  def loadModule(obj: String): SEntityModuleDef = {
+    val bytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(obj)
+    val bis = new ByteArrayInputStream(bytes)
+    val objIn = new ObjectInputStream(bis)
+    val module = objIn.readObject().asInstanceOf[SEntityModuleDef]
+    objIn.close()
+    module
   }
 
   class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) extends MatcherGenerator {
@@ -727,6 +747,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |${subEntities.mkString("\n\n")}
        |
        |${concreteClasses.mkString("\n\n")}
+       |
+       |  registerModule(scalan.meta.ScalanCodegen.loadModule(${module.name}_Module.dump))
        |}
        |""".stripAndTrim
     }
@@ -1169,12 +1191,23 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       |""".stripAndTrim
     }
 
+    def emitModuleSerialization = {
+      s"""
+       |object ${module.name + "_"}Module {
+       |  val packageName = "${module.packageName}"
+       |  val name = "${module.name}"
+       |  val dump = "${serialize(module.clean)}"
+       |}
+       """.stripMargin
+    }
+
     def getImplFile: String = {
       val topLevel = List(
         getFileHeader,
         getTraitAbs,
         getTraitSeq,
-        getTraitExp
+        getTraitExp,
+        emitModuleSerialization
       )
       topLevel.mkString("", "\n\n", "\n").
         // clean empty lines

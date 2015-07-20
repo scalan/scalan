@@ -22,7 +22,8 @@ lazy val testSettings = Seq(
     "com.github.axel22" %% "scalameter" % "0.5-M2" % Test),
   parallelExecution in Test := false,
   publishArtifact in Test := true,
-  publishArtifact in(Test, packageDoc) := false,
+  publishArtifact in (Test, packageSrc) := true,
+  publishArtifact in (Test, packageDoc) := false,
   test in assembly := {})
 
 lazy val commonSettings = buildSettings ++ testSettings
@@ -47,7 +48,7 @@ lazy val meta = Project("scalan-meta", file("meta"))
     fork in run := true)
 
 lazy val core = Project("scalan-core", file("core"))
-  .dependsOn(common % allConfigDependency)
+  .dependsOn(common % allConfigDependency, meta % allConfigDependency)
   .settings(commonSettings,
     libraryDependencies ++= Seq(
       "com.chuusai" %% "shapeless" % "2.2.4",
