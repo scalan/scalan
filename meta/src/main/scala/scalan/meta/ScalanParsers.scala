@@ -165,7 +165,10 @@ trait ScalanParsers {
             None
           else
             optTpeExpr(high)
-        case tt: TypeTree => Some(parseType(tt.tpe)) // TODO: Extract high bound
+        case tt: TypeTree => parseType(tt.tpe) match {
+          case STpeTypeBounds(_, hi) if hi.toString == "scala.Any" => Some(hi)
+          case _ => ???(tdTree)
+        }
         case _ => ???(tdTree)
       }
       val contextBounds = evidenceTypes.collect {
@@ -505,9 +508,9 @@ trait ScalanParsers {
   }
 
   def parseTypeRef(tref: TypeRef): STpeExpr = {
-    val pre = tref.prefixString
+    val name = tref.sym.fullNameString
     val args = tref.args map parseType
 
-    STraitCall(pre, args)
+    STraitCall(name, args)
   }
 }
