@@ -166,8 +166,9 @@ trait ScalanParsers {
           else
             optTpeExpr(high)
         case tt: TypeTree => parseType(tt.tpe) match {
-          case STpeTypeBounds(_, hi) if hi.toString == "scala.Any" => Some(hi)
-          case _ => ???(tdTree)
+          case STpeTypeBounds(_, STpePrimitive("Any", _)) => None
+          case STpeTypeBounds(_, hi) => Some(hi)
+          case tpe => ???(tdTree)
         }
         case _ => ???(tdTree)
       }
