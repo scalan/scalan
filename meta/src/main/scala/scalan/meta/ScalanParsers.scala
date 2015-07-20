@@ -385,6 +385,19 @@ trait ScalanParsers {
     }
   }
 
+  def formAppliedTypeTree(fullName: String, shortName: String, argTpeExprs: List[STpeExpr]) = {
+    if (fullName.contains("scala.Tuple"))
+      STpeTuple(argTpeExprs)
+    else if (fullName.contains("scala.Function")) {
+      val domainTpeExpr = argTpeExprs.length match {
+        case 2 => argTpeExprs(0)
+        case n => STpeTuple(argTpeExprs.init)
+      }
+      STpeFunc(domainTpeExpr, argTpeExprs.last)
+    } else
+      STraitCall(shortName, argTpeExprs)
+  }
+
   def tpeExpr(tree: Tree): STpeExpr = tree match {
     case EmptyTree => STpeEmpty()
     case ident: Ident =>
@@ -395,16 +408,7 @@ trait ScalanParsers {
     case AppliedTypeTree(tpt, args) =>
       val argTpeExprs = args.map(tpeExpr)
       val genericTypeString = tpt.toString
-      if (genericTypeString.contains("scala.Tuple"))
-        STpeTuple(argTpeExprs)
-      else if (genericTypeString.contains("scala.Function")) {
-        val domainTpeExpr = argTpeExprs.length match {
-          case 2 => argTpeExprs(0)
-          case n => STpeTuple(argTpeExprs.init)
-        }
-        STpeFunc(domainTpeExpr, argTpeExprs.last)
-      } else
-        STraitCall(tpt.toString, argTpeExprs)
+      formAppliedTypeTree(genericTypeString, genericTypeString, argTpeExprs)
     case tq"$tpt @$annot" => STpeAnnotated(tpeExpr(tpt), annot.toString)
     case TypeBoundsTree(lo, hi) => STpeTypeBounds(tpeExpr(lo), tpeExpr(hi))
     case SingletonTypeTree(ref) => STpeSingleton(parseExpr(ref))
@@ -516,11 +520,11 @@ trait ScalanParsers {
     STpePrimitives.get(tref.sym.nameString) match {
       case Some(prim) => prim
       case None =>
-//        val name = tref.sym.fullNameString
-        val name = tref.sym.nameString // TODO: better to have full names
+        val fullName = tref.sym.fullNameString
+        val shortName = tref.sym.nameString
         val args = tref.args map parseType
 
-        STraitCall(name, args)
+        formAppliedTypeTree(fullName, shortName, args)
     }
   }
 }
