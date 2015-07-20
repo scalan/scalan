@@ -183,7 +183,7 @@ trait ScalanParsers {
     case Some(scope) => scope.impl.body.collect {
       case c: ClassDef if config.isAlreadyRep && c.name.toString == name + "Companion" =>
         if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
-      case m: ModuleDef if !config.isAlreadyRep && m.name.toString == name => objectDef(m)
+      case m: ModuleDef if !config.isAlreadyRep && !m.mods.isSynthetic && m.name.toString == name => objectDef(m)
     }.headOption
     case None => None
   }
@@ -258,11 +258,19 @@ trait ScalanParsers {
     case tree => ???(tree)
   }
 
+  def isExplicitMethod(md: DefDef): Boolean = {
+    if (nme.isConstructorName(md.name)) false
+    else if (md.mods.isSynthetic) false
+    else if (md.mods.isCaseAccessor) false
+    else if (md.mods.isParamAccessor) false
+    else true
+  }
+
   def optBodyItem(tree: Tree, parentScope: Option[ImplDef]): Option[SBodyItem] = tree match {
     case i: Import =>
       Some(importStat(i))
     case md: DefDef =>
-      if (!nme.isConstructorName(md.name))
+      if (isExplicitMethod(md))
         md.tpt match {
           case AppliedTypeTree(tpt, _) if tpt.toString == "Elem" || tpt.toString == "Element" =>
             Some(methodDef(md, true))
