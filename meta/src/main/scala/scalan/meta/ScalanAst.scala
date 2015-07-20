@@ -472,11 +472,16 @@ object ScalanAst {
                                hasDslExp: Boolean = false,
                                ancestors: List[STraitCall] = List())
   {
+    def getFullName(shortName: String): String = s"$packageName.$name.$shortName"
+    def isEqualName(shortName: String, fullName: String): Boolean =
+      if (fullName == getFullName(shortName)) true
+      else shortName == fullName
+
     def getEntity(name: String): STraitOrClassDef = {
-      entities.find(e => e.name == name) match {
+      entities.find(e => isEqualName(e.name, name)) match {
         case Some(e) => e
         case _ =>
-          concreteSClasses.find(e => e.name == name) match {
+          concreteSClasses.find(e => isEqualName(e.name, name)) match {
             case Some(e) => e
             case _ =>
               sys.error(s"Cannot find entity with name $name: available entities ${entities.map(_.name)}")
