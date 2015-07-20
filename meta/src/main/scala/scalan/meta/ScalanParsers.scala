@@ -157,6 +157,7 @@ trait ScalanParsers {
             None
           else
             optTpeExpr(high)
+        case tt: TypeTree => Some(parseType(tt.tpe)) // TODO: Extract high bound
         case _ => ???(tdTree)
       }
       val contextBounds = evidenceTypes.collect {
@@ -394,7 +395,7 @@ trait ScalanParsers {
     case tq"..$parents { ..$defns }" => STpeCompound(parents.map(tpeExpr), defns.flatMap(defn => optBodyItem(defn, None)))
     case tq"$tpt forSome { ..$defns }" => STpeExistential(tpeExpr(tpt), defns.flatMap(defn => optBodyItem(defn, None)))
     case Bind(TypeName(name), body) => STpeBind(name, tpeExpr(body))
-    case tt: TypeTree => parseTypeTree(tt)
+    case tt: TypeTree => parseType(tt.tpe)
     case tree => ???(tree)
   }
 
@@ -488,7 +489,16 @@ trait ScalanParsers {
     case _ => throw new NotImplementedError(s"parsePattern: ${showRaw(pat)}")
   }
 
-  def parseTypeTree(typeTree: TypeTree): STpeExpr = typeTree.tpe match {
+  def parseType(tpe: Type): STpeExpr = tpe match {
+    case tref: TypeRef => parseTypeRef(tref)
+    case TypeBounds(lo, hi) => STpeTypeBounds(parseType(lo), parseType(hi))
     case tpe => throw new NotImplementedError(showRaw(tpe, printTypes = Some(true)))
+  }
+
+  def parseTypeRef(tref: TypeRef): STpeExpr = {
+    val pre = tref.prefixString
+    val args = tref.args map parseType
+
+    STraitCall(pre, args)
   }
 }
