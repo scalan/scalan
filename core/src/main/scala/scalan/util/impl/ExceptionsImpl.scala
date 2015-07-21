@@ -199,6 +199,8 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkSException(wrappedValueOfBaseType: Rep[Throwable]): Rep[SException]
   def unmkSException(p: Rep[SThrowable]): Option[(Rep[Throwable])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Exceptions_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -413,3 +415,10 @@ trait ExceptionsExp extends ExceptionsDsl with scalan.ScalanExp {
     }
   }
 }
+
+object Exceptions_Module {
+  val packageName = "scalan.util"
+  val name = "Exceptions"
+  val dump = "H4sIAAAAAAAAALVVTW9TORR1XgtpPoaPIpDaDZ0qzAgESdVNkSqBSglopExT8SpmFCqQ8+IEFz/b2E55YcEPgN1otgixZ4HEYn7BSCMWrBAgsWbFwAIxwwqE7feZqoGyIAsr9rvv3nPPOdfvwRuwSwrwk/QggbTqIwWrrv2/JFXFrVOF1eBX1ukTdBZ1H/718MoJ51TfAeUGKEDqIamYkAr82LAJah4jBHkKM1rDvt9XsE1QrYGlWmyA8TbrDK6DWyDXAPs8Rj2BFHKXCZQSyeh8ApmCONkX7H7Q5GkNWjMgaxmQawJipdHpGvvC+AuIuwPK6MBXYE8ErckNLB2Txz5nQsUl8jrdVdaJt+MU6gMw2diAm7CmS/RqrhKY9vSbJQ69a7CHVnSICR/XgCUi3bUBt/uxBihKdP2sJL/4nNiTgGt25y2CakpONSGnasipuEhgSPBNaB6uChYMQPjLjQFgUxz/Soo4A6rTTuX2unfpg1vyHfNyYHDkbXu7daLDI5S2OmgS/7nwh3x3/v6CA4otUMRyqS2VgJ7K6h1RVYKUMmUxJ+xB0dNSzY6SylZZ0jFb/FDwmM8h1ZkiHstaJII9rEywOStH0ozgPa84ikNzAc8l/c6M6NeaZhkSsvp66sSRf+u/O8AZLlHQKd16wEWcVIGiu3ZVsBuGdcuqWQoRwaNLJU3//Ppt5+85sO4kVEWZd6aOTrFLvnhWenr0tAMmWtbI5wjstTRbsk6Q3xTLjKoWmGCbSIRP8puQmH/bqpXvoC7sExVxmG1+TDevwMzIkePIMLMYcGPSmIBSaNIVRlHl3Grlf/fxnw+MBwUoh0/CGfyEFz6+3NNV1p4KHLohIOeocxGSPmp2z0CJjLAW5F4FxvQwR/xEJ4VRIkRSmGXaBk/avb4DUt3iyZxOx6KUG87/JZVt1kz4waR/m/SbuzHLzPZtaEKLIW0u89H+2Xf48v07ynonFwzfUM32hr4VFu17U1+wUXxT/teac95PPb/ngIJ2SxsrH/LK3A5H/DuOLUiYSJdpbZEDeg49ZM2znK2YETGWupiGphEhqxne58Gw5CWD6TerXNj7brMc/rojMpYLcdS2zV+uBwnwuR3qv4WBBME2DHCz7t/ar1lPDh8aghJ+9EVdiozSV5hE8AWYHeEeN9JOG+jWh7srx548emUvzaJxgZ55mnxTU8mDLbP7Q1pdfyYzYBUYN96wcD8Dc0T5iJUIAAA="
+}
+

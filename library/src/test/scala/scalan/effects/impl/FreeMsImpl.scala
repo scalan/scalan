@@ -249,6 +249,8 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkFlatMap[F[_], S, B](a: Rep[FreeM[F,S]], f: Rep[S => FreeM[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]]
   def unmkFlatMap[F[_], S, B](p: Rep[FreeM[F, B]]): Option[(Rep[FreeM[F,S]], Rep[S => FreeM[F,B]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(FreeMs_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -560,3 +562,10 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   object FreeMCompanionMethods {
   }
 }
+
+object FreeMs_Module {
+  val packageName = "scalan.effects"
+  val name = "FreeMs"
+  val dump = "H4sIAAAAAAAAANWXz28bRRTHZzc/HNshTekBlaqkRCYoqLWjXnqIVOQ4NlSykyjbA3KrRuP12Gy7O7OdHUdrDr0Dt4oLQgj13kMlDvwFCMSBUwVInDhwKiBRFXoC9c14d73+sW6aNkj4MPLszL735vO+b2b27u9oxuNoxTOxjWneIQLnDfW/6ImcUabCEt0aa3Zsskla9766t3dOv9jR0XwVpTE1iScY9wR6vaoMFExm28QUFqMFy3E6AjdsUqhanlivoukGa3ZvoltIq6JFk1GTE0GMko09j3jB8zkiHVpRP6363W2374MWZJCFWJCXObYERAc+Fnvzd4lrdCmjXUeghSC0bVeGBXNSluMyLkIXKTD3PmuG3WmK4QF6uXod7+MCuGgXDMEt2oY3sy42b+A22YIpcvo0BOwRu3W566r+VBVlPHJz07MvOa6tnvgu0D2vIsj34eQjOHkJJ2cQbmHb+gDLwR3O/C7q/bQphJSJs08xEVogZdrMfXTVvPLYyDq6fNmXcaTU8mbB0FJCplUeAOK3u7e9h+/cuaCjTB1lLK/Y8ATHpojnO0CVxZQyoWKO6GHehlQtJ6VKeSnCnCE9pE3muJiCpYDjPCTJtkxLyMny2XyQmgTuKeGScKrmu1q03jMJ61WiKWHb3nlw8twbv5Xf05E+6CINJo2y7/LQqEAzFU5ILbAt22MCaZU+YNktqq5s0n6/TU0IJYLy5oM/ml+voat6hDLwfLDsgYkZ76cfsvdX39bRXF0JvWLjdh1oemWbONu8xKioozm2T3hvJLWPbflvbDZTTdLCHVsEjONwpgCOQGcSS9Ilkty670oRhwCyPRFvMUpylZ3c38Z3n9yVGuVovjfSq9F/rQv//LzQEkq+QBSHbKegrofgJ9PO9EwazCHHlx9a1+58LBRXzR+s7u3GdaiodfXeaxMQh7vMX/U1/dHJH7/QURpINizhYDe3dsDyOELJo4hEv1kCfC9tAu5S3NdSX7CvxHC+qoWpUpME0kkx5Dwt5TMBfYIBsxIZkMobWzjx3ME8Ga16PdL86aSEqOXfvrLyLv/zsw91iWimwTq0GfKEM0YQX2yEz7RBnsAPc+yE/PpkZGixUC8OjOwNr3pweARKVhtc9fNsISMZQ0PAtRsTSqXyogIZDWpFtauJEqwx/j+SoIw2LsHRLCfIQzal/0AfG4fWx4St9CCOjRHHCX5aY/xw2F4TK7nSoeb9S5+eOHZ67xd1Es82mYMtJZZTUNgctmqVlFPBadgP5/nJPYOUF+GwFDXsHlLNxiQ1x+keqhw2nm7g2cshFaz4qCoilsTBgdFcxXysosHQ07vEalnyOvxid7nUgZWxoDyN0UV0bzwqguPj/2bQBkyc7bGAUIM6JK0WXH28YHUcLSfUpxFcPOD2c+vx51tvff/lr6pGM/IKA+c1jT6m+uerP7S9pGuM4qYH30axaEGF8lKjIn0CpEM2j4oOAAA="
+}
+

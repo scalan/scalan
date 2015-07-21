@@ -205,6 +205,8 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkSSeqImpl[A](wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]]
   def unmkSSeqImpl[A](p: Rep[SSeq[A]]): Option[(Rep[Seq[A]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Seqs_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -613,3 +615,10 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
     case _ => super.rewriteDef(d)
   }
 }
+
+object Seqs_Module {
+  val packageName = "scalan.collections"
+  val name = "Seqs"
+  val dump = "H4sIAAAAAAAAALVWS29bRRQeXzt1/KAvAaJSI0pkWoEaO0WCCkUCuY4DCBNHvVVbuVXR+Hpspp07czMzDtcsui/squ4QQt13UYkFvwAJsWCFAIk1bFqQqPpYFfXM3IfttG6yIYuRZ+bMeXzfd87Nrb/RnJLoqPIww7zqE42rrv1dV7riNrmmevSJ6A0ZWSX929/f/nTJeW/ooHILFTD3iNJCKo1ea1kHNU8wRjxNBa9R3x9q3GWk1qJKr7RQrit6o010FWVaaL8nuCeJJm6DYaWIis/niQlI033B7kftYByD10yStYkkz0hMNWQHMfZH9qdJ4I644CNfo71xau3ApAU2eeoHQuokRB7cfSZ6yTbHMRygg63LeAvXIMSg5mpJ+QBelgLsXcEDsg4mxjwHCSvC+mdGgd1nW6ioyOaqYh/5AbMnYQDovmUzqI7BqabgVA04FZdIihn9ApvLDSnCEYr+MlmErIvjO7hIPJAm71W+vOhdeOSWfMc8Dk0eeVveHnD06gymLQ8A4o+nr6t7H9w86aBiBxWpqneVltjTk3zHUJUw50LbnFP0sBwAVYuzqLJR6mCzTQ8FT/gB5uApxrEMJDHqUW2MzVk5pmYG7nkdkMQ0EwaZtN4jM+q1omlgxjbuHFp6/W7zvIOc6RAFcOk2w0AmTjXKuS7ZjF2bdZ9GmbrF1yyFcLzmnxM6BeHYnX96Pyyji04KXRxpd2yBizn1+6+lX95430HzHSvsNYYHHUBPNRnx27IhuO6gebFFZHST38LM/Home/ke6eMh0zGmk2BkAQyNjsxswYAYpFbCwIg2AaAUiXZdcFJZ26g8dH+6cctoUqJydBP15H/05OM/9va1latGL38ucRCQ3lnMhqTdP4UVMUQngGehuacpyO6WlJgasyxY05cmnr2SSTK39xo5pJ74yxk0dwyh0bzRR9L7CymLC7M0aDV7/cLRD+W/X19zDM5zXTHkvaQJYEpqEupTyVlmmhQQPZbYT1Rjg6ZZvfhUfjuqKhmkDzrLzv1Dv33roAKIp0u1j4PK8i4nwP/Y1WiagpKxPGfFEmW0xyyLKWm7btYJaJaeBw30k+27tGhaOf7uX6s3PrazY98YDGsW1zTZ1xq9YDoSU05kUmY0mutQztqQewBuejE9TYpRy7jCJwcW79FLN7/Sdm5kwumvVbt7Gb4QK/bdYev77W24lZthIyHmxPSVxezZA23cGqYMY9eYZDcSntXggXR/Yvz+nWl15k0soAdyjxEff9oi6Nag5sUZbLixTECrVx99s/7mz9/9aSkoGsHBtOHp132srnDb1DgY+YMi/CGH/xngqz1ROKRntGiTfgLvYchvJAkAAA=="
+}
+

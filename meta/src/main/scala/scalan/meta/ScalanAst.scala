@@ -188,7 +188,7 @@ object ScalanAst {
                       isLazy: Boolean,
                       isImplicit: Boolean,
                       expr: SExpr) extends SBodyItem
-  case class STpeDef(name: String, tpeArgs: STpeArgs, rhs: STpeExpr) extends SBodyItem
+  case class STpeDef(name: String, tpeArgs: List[STpeArg], rhs: STpeExpr) extends SBodyItem
 
   case class STpeArg(
                       name: String,
@@ -282,6 +282,7 @@ object ScalanAst {
     def getAnnotation(annotName: String) = annotations.find(a => a.annotationClass == annotName)
 
     def hasAnnotation(annotName: String) = getAnnotation(annotName).isDefined
+    def clean: STraitOrClassDef
   }
 
   case class STraitDef(
@@ -319,6 +320,13 @@ object ScalanAst {
         println/*sys.error*/(s"implicit def eA: Elem[A] should be declared for all type parameters of ${name}: missing ${missingElems.mkString(", ")}")
       SClassArgs(args.flatMap(a => a.fold(_ => Nil, List(_))))
     }
+    def clean = {
+      val _companion = companion.map(_.clean)
+      copy(
+        body = Nil,
+        companion = _companion
+      )
+    }
   }
 
   final val BaseTypeTraitName = "TypeWrapper"
@@ -342,6 +350,13 @@ object ScalanAst {
                         isAbstract: Boolean,
                         annotations: List[STraitOrClassAnnotation] = Nil) extends STraitOrClassDef {
     def isTrait = false
+    def clean = {
+      val _companion = companion.map(_.clean)
+      copy(
+        body = Nil,
+        companion = _companion
+      )
+    }
   }
 
   case class SObjectDef(
@@ -355,6 +370,11 @@ object ScalanAst {
     def isTrait = false
     def annotations = Nil
     def implicitArgs = SClassArgs(Nil)
+    def clean = {
+      copy(
+        body = Nil
+      )
+    }
   }
 
   case class SSeqImplementation(explicitMethods: List[SMethodDef]) {
@@ -394,6 +414,22 @@ object ScalanAst {
     }
 
     def isEntity(name: String) = entities.exists(e => e.name == name)
+    def clean = {
+      val _entities = entities.map(_.clean)
+      val _concreteSClasses = concreteSClasses.map(_.clean)
+      val _entityOps = _entities.headOption.get
+      copy(
+        imports = Nil,
+        entityRepSynonym = None,
+        entityOps = _entityOps,
+        entities = _entities,
+        concreteSClasses = _concreteSClasses,
+        methods = Nil,
+        body = Nil,
+        seqDslImpl = None,
+        ancestors = Nil
+      )
+    }
   }
 
   object SEntityModuleDef {

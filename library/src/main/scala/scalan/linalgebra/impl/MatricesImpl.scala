@@ -182,6 +182,8 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkCompoundMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]]
   def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]], Rep[Int])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Matrices_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -1102,3 +1104,10 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
     }
   }
 }
+
+object Matrices_Module {
+  val packageName = "scalan.linalgebra"
+  val name = "Matrices"
+  val dump = "H4sIAAAAAAAAAL1WTWwbRRSe3Tj1X5S2kVBTCYsSTBGI2AaEeogECo4DkdwkyqYVcivQeD02U2Znt7PjYHOouAK3ihtCqPceKnHggMQFISEOnBAgcebUgqAq9ATizeyPd107acOPDyPvzpv3833fe7PXf0azvkCnfRszzCsOkbhi6f+rvixbDS6pHJ51O31G1kj3xqc3Xl82X+ibaK6J8pjbxJeu8CV6tKkdVG2XMWJL6vIqdZy+xG1Gqk3qy5UmyrTdzvAyuoKMJjpmu9wWRBKrzrDvEz98nyMqII2f8/p5uOWNYvCqSrKaSHJXYCohO4hxLLDfIZ415C4fOhLNh6lteSotsMlSx3OFjEJkwd0bbid6zHAML9BC8xLew1UI0ataUlDeg5NFD9tv4h7ZBBNlnoGEfcK6u0NPP880UcEnl9d8tuF4TL8ZeIDuszqDygicSgxORYFTtoigmNG3sdrcFu5giIKfMYOQdvH0AS4iD6TBO+X3LtoX7lpFx1SHByqPrC7vCDh6ZArTmgcA8audq/7tl6+dMVGhhQrUX237UmBbJvkOoSpizl2pc47Rw6IHVC1No0pHWQWbMT3kbdfxMAdPIY5zQBKjNpXKWL2bC6mZgntWeiQyNQaeEdd7akq9WjR1zNj2zZPLj99qvGoiMx0iDy6txsATkVPQUoTGWQyaGIRB1HpUImNXI62W/GC0ZvdJIobjiZu/dL6soYtmDGIY8/54Axez/g/fFb998kUT5Vpa4usM91qAo99gxNkSdZfLFsq5e0QEO9k9zNS/iTxmO6SL+0yG6CZhmQFYJDo1tRk9ojBbGXhKvhEAxUC+my4n5fXt8h/W1x9cV+oUaC7YCbrzL3rmzx/nu1ILV6KccM5j1id+BPEMNHYa9EI97ogD2dBbi3FaaimBB953wEnf4ZPCCPTYNAF5ZFtQB6bVHnn+i8/O/fr55qzW0EKInU49mB0hdCMYVXVGDSJtcDlJMIUAFct1yPGl2/S1a+9LLQ1jkB5NW+1LUPyKPvfwPiqJRuTvrZp55+T3H5soD2JoU+lgr1y7z97+D/sVpcmbr4fXg1b3M+nNo2uE+wSkG3ZhgufI5ES6T+vJZBOSyI50AHwsjvlNnSqNpuhDiXQWjTE1mWQ3SiKjGu9AUU6upxTLrzRdfoDf1QunXxG/ffiuqTCebbt93okIgRtWkoF8KXpnpAkBArDATkTAqMaxLLVB0Rjj51Bz8B7wxlsxI9y3DtPrcTrnYTfU8EHpHGocqGV5cmE1vT73IEKeVwpT9Py7Oj6Rdvt/yXhCNaXEsY2pCkuUfGQiiPkdQrtUfer8cxUmAduHt6IaVevYoWw4Tlo66GSpp/nYh8QAkHu/LB4UPbW+M7IJDXPamRrs6Hg4RhjlmPVIW+CweoGWpkwYK5zYcG1cufvR5lPffPKTvt8KavbDRc7jT+jkvZZGayHwBzU7fQ4f5vBpnMgdxKWuBZ33392UH7iJDAAA"
+}
+

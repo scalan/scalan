@@ -116,6 +116,8 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkHashMMultiMap[K, V](map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]]
   def unmkHashMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): Option[(Rep[MMap[K,ArrayBuffer[V]]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(MultiMaps_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -581,3 +583,10 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
     }
   }
 }
+
+object MultiMaps_Module {
+  val packageName = "scalan.collections"
+  val name = "MultiMaps"
+  val dump = "H4sIAAAAAAAAALVWQW8bRRQerxOctUMoOYCKBC6RKQJRO+TSQyRQ6joU1U6ibFQht2o1Xo/dKbOz25lxtMuhd+BWcUMI9d5DJQ78AiTEgRMCJM6cCkhUlJ5AvBnvrncdOy1C+DDyzLx975vv+97s3v0VLUqBTksXM8zrHlG47pj/W1LVnBZXVEUdvz9i5DwZ3Pvy3rUz1lsjCy23kY25S6TyhVTo5bZJ0HB9xoirqM8b1PNGCvcYabSpVJtttNDz+9FNdAsV2uiE63NXEEWcJsNSEhmvLxFdkKZz28yj3WBSgzc0yEYG5IHAVAE6qHFiHL9PAifiPo88hVZiaLuBhgUxJeoFvlBJiRKku+73k+kCx7CAVts38CFuQIlhw1GC8iE8WQmw+z4ekh0I0eELAFgSNjiIAjMvtlFZkpvnJXvXC5hZCQNgd8MgqE/Iqafk1DU5NYcIihn9AOvNPeGHERr/CkWETIo3HpMiyUBavF/76Ip7+ZFT8Sz9cKhxlMzxnoJE1TlKGx2AxK/3b8sH79w5a6FyF5Wp3OpJJbCrsnrHVFUw574ymFP2sBiCVGvzpDJVtiBmyg+263sB5pAp5nEZRGLUpUoH67XlWJo5vJdUQJLQQhgU0vOemnNeY5omZmzv/skzr/zSes9CVr6EDSmdVhiIJKlCdqczYop2cBDn1+MzChUuTkjW00tmqgc7nIylY+CkxLx6/7f+V+voipXSGVd/MgUhxaL88fvKd6+9baGlrjH7NsPDLjAqW4x4u6Lpc9VFS/4hEeOd0iFm+t9MRUt9MsBw6JjnLEFFIEihU3PbMiCavc0w0EZOCKiMjbzjc1Lb3qv96XzzyV3tU4GWxzvjPv2bnv3rp5WBMhZWqOjFlAO7RejuPP0LnccpUtkSAkfnRoMBEVOBs7Wa1q08Buf4Hnl27QG9eudjZRQqhPm7Yrd3A/pz0zz30jFiJXfWw+669cfJHz63kA2a9KiCg9bWn7DZ/scGQnmWVprxfW1MtpHffPoCltfTzsjQmQSsppvNLMoM6aV0qILaz+US5p6pTmR9PoPihUJiMROkUImA1y+SKLWI9v5Mi2SgHsli6yyXMBuR4/IcddAsTqppA784zxNGgduXT18Qv3/6oaVVWuz5I95PJIWXpiKhOpesFfKSgoRYYC+RcEJXvh12chtHwWdO9+aUDex9QgdUv3Sm1v/TvZi1gAmtzyxe0W7dxh5l0ca88rPv3Zy55phxTEgwnayaqZQn7l8wqseDSUwcaKecAajYEpP3u4yZEGhtjl2cuIHhFrn16LOd17/94mfzDivrqwCuV55+4kxMEk4JtDrOB0x4Iw4fTvDpkkEPdte3hEH+D28uIaQpCgAA"
+}
+

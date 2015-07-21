@@ -1,5 +1,8 @@
 package scalan.meta
 
+import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
+import java.util.zip.{GZIPInputStream,GZIPOutputStream}
+
 import scalan.util.{StringUtil, ScalaNameUtil}
 import scala.annotation.tailrec
 import ScalanAst._
@@ -140,6 +143,45 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |  ${declaration(module)}$body
         |""".stripAndTrim
     }
+  }
+
+  def serialize(obj: Any): String = {
+    val bos = new ByteArrayOutputStream()
+    try {
+      val gzip = new GZIPOutputStream(bos)
+      try {
+        val objOut = new ObjectOutputStream(gzip)
+        try {
+          objOut.writeObject(obj)
+          objOut.close()
+          gzip.close
+          bos.close
+          val str = javax.xml.bind.DatatypeConverter.printBase64Binary(bos.toByteArray)
+          str
+        }
+        finally objOut.close()
+      }
+      finally gzip.close()
+    }
+    finally bos.close()
+  }
+
+  def loadModule(obj: String): SEntityModuleDef = {
+    val bytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(obj)
+    val bis = new ByteArrayInputStream(bytes)
+    try {
+      val gzip = new GZIPInputStream(bis)
+      try {
+        val objIn = new ObjectInputStream(gzip)
+        try {
+          val module = objIn.readObject().asInstanceOf[SEntityModuleDef]
+          module
+        }
+        finally objIn.close()
+      }
+      finally gzip.close
+    }
+    finally bis.close
   }
 
   class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) extends MatcherGenerator {
@@ -727,6 +769,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |${subEntities.mkString("\n\n")}
        |
        |${concreteClasses.mkString("\n\n")}
+       |
+       |  registerModule(scalan.meta.ScalanCodegen.loadModule(${module.name}_Module.dump))
        |}
        |""".stripAndTrim
     }
@@ -1169,12 +1213,23 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       |""".stripAndTrim
     }
 
+    def emitModuleSerialization = {
+      s"""
+       |object ${module.name + "_"}Module {
+       |  val packageName = "${module.packageName}"
+       |  val name = "${module.name}"
+       |  val dump = "${serialize(module.clean)}"
+       |}
+       """.stripMargin
+    }
+
     def getImplFile: String = {
       val topLevel = List(
         getFileHeader,
         getTraitAbs,
         getTraitSeq,
-        getTraitExp
+        getTraitExp,
+        emitModuleSerialization
       )
       topLevel.mkString("", "\n\n", "\n").
         // clean empty lines

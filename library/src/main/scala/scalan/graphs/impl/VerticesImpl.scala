@@ -119,6 +119,8 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkSVertex[V, E](id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]
   def unmkSVertex[V, E](p: Rep[Vertex[V, E]]): Option[(Rep[Int], Rep[Graph[V,E]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Vertices_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -311,3 +313,10 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   object VertexCompanionMethods {
   }
 }
+
+object Vertices_Module {
+  val packageName = "scalan.graphs"
+  val name = "Vertices"
+  val dump = "H4sIAAAAAAAAALVWTWwbRRSe3cR1bIc07aVqJXAJpgjU2mkE6iESKLhOqGRiK9tGyK1ajddjd8rs7HR2HK059A7cKm4Iod57qMSBAxIXhIQ4cEKAxJlTKYIK6KmImdn/xJsGED6MPDNv38/3fe/t3n0ACh4HpzwbEkjrDhKwbun/a56oWS0qsJi86Q7GBJ1Hw3uf3rt2xnx1bIL5NihBaiNPuNwT4Nm2dtCwXUKQLbBLG9hxxgL2CWq0sSdW22C27w4mN8EtYLTBou1SmyOBrCaBnoe88HwOqYA43pf0ftJhSQzaUEk2Ukle5BALmZ2MsRjYbyFmTahLJ44AC2FqHabSkjZF7DCXiyhEUbq77g6i7SyF8gAcbd+AO7AhQ4waluCYjuSTFQbtt+EIbUoTZT4rE/YQGV6cML2faYOyh26e98gFhxF94jOJ7orOoJ6AU4/BqStwahbiGBL8DlSXXe76ExD8jBkAtIvTT3AReUAtOqi9d8W+/MiqOKZ62Fd5FHV5h6Sjag7TmgcJ4ldbt72HG3fOmaDcA2XsrfU9waEt0nyHUFUgpa7QOcfoQT6SVC3lUaWjrEmbXXoo2a7DIJWeQhznJUkE21goY3U2H1KTg3tRMBSZGj4z4npP5tSrRdOEhHTvHz/z/M+tt0xgZkOUpEur5TMeORXg0DbiAvmhc7UeFsDYThBW25beqqXkJ2txn1xiVF64/8vgy2VwxYyxDEMfjD7pouD98F3l2xdfM8FcTyt9ncBRT8LptQhyOrzpUtEDc+4O4sFNcQcS9W8qncUBGsIxESHIaXRmJDoCnMztSYYUdKs+UyqOAKgEKt50Kaqtd2t/Wl9/cFeJlIP54CZo0r/wucc/LgyF1q8AJh5E4M7Izo6xeC6PWoa6HDtyjuygV7747NKvn28WNLtHw3K2IRmjoKvDapLKVEBjWUa6QEXAno53Ii5DLVUBCiMO2fUoL7O78W9FUQ4qt1wHHVl6iK/eeV9o+g0/O4U6/Ruy81f1c8/so4RoGv7RWzZ/P/79xyYoScL7WDiQ1ZYP2Mb/Y2uCLFALzfBNoBW8kr0sWkHDTQcvoUNythiaNtPZVhMSjqU8nzB2kWmi7SjkrOqTqVym1bDXQWs/B3vZz9ZWjTX9dL6mJYa3L596g//24bumwrnQd8d0EJEiX6jSmXg9OjOypEgSIIdOREICTlaqnczF3rRTdb28i8jSFsJDrF5I2fP/MDPTPGvTs1MjV5TY1qGDyWRlauwDyOdwrnpYxk01FSAL1j9AUa2XEpvQcE5Fwao3wVOhCoIZE5bOwVKOOKyw4WTX33r00eZL33zyk553ZdW6ctbS+GMnPed20behY8lvl1S6Us2qmXWqfwO55Vz/KgoAAA=="
+}
+
