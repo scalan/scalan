@@ -3,6 +3,7 @@ package scalan.collections
 import scalan._
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -17,7 +18,11 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   // familyElem
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("BitSets")
+      module.entities.find(_.name == "BitSet").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
@@ -54,7 +59,11 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])
     extends BitSetElem[BoolCollBitSet]
     with ConcreteElem[BoolCollBitSetData, BoolCollBitSet] {
-    override val parent: Option[Elem[_]] = Some(bitSetElement)
+    override lazy val parent: Option[Elem[_]] = Some(bitSetElement)
+    override lazy val entityDef = {
+      val module = getModules("BitSets")
+      module.concreteSClasses.find(_.name == "BoolCollBitSet").get
+    }
 
     override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

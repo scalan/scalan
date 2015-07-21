@@ -4,6 +4,7 @@ import scala.collection.immutable.HashSet
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -45,7 +46,11 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   // familyElem
   abstract class SHashSetElem[A, To <: SHashSet[A]](implicit val eA: Elem[A])
     extends WrapperElem1[A, To, HashSet, SHashSet]()(eA, container[HashSet], container[SHashSet]) {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("HashSets")
+      module.entities.find(_.name == "SHashSet").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -103,7 +108,11 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   class SHashSetImplElem[A](val iso: Iso[SHashSetImplData[A], SHashSetImpl[A]])(implicit eA: Elem[A])
     extends SHashSetElem[A, SHashSetImpl[A]]
     with ConcreteElem1[A, SHashSetImplData[A], SHashSetImpl[A], SHashSet] {
-    override val parent: Option[Elem[_]] = Some(sHashSetElement(element[A]))
+    override lazy val parent: Option[Elem[_]] = Some(sHashSetElement(element[A]))
+    override lazy val entityDef = {
+      val module = getModules("HashSets")
+      module.concreteSClasses.find(_.name == "SHashSetImpl").get
+    }
     lazy val eTo = this
     override def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem1].getDefaultRep

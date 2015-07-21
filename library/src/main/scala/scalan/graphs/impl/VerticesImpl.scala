@@ -4,6 +4,7 @@ import scalan.collections.CollectionsDsl
 import scalan.{Scalan, ScalanExp, ScalanSeq}
 import scalan.ScalanCommunityDsl
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -18,7 +19,11 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   // familyElem
   class VertexElem[V, E, To <: Vertex[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Vertices")
+      module.entities.find(_.name == "Vertex").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -57,7 +62,11 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends VertexElem[V, E, SVertex[V, E]]
     with ConcreteElem[SVertexData[V, E], SVertex[V, E]] {
-    override val parent: Option[Elem[_]] = Some(vertexElement(element[V], element[E]))
+    override lazy val parent: Option[Elem[_]] = Some(vertexElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Vertices")
+      module.concreteSClasses.find(_.name == "SVertex").get
+    }
 
     override def convertVertex(x: Rep[Vertex[V, E]]) = SVertex(x.id, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

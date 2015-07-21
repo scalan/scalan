@@ -8,6 +8,7 @@ import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -22,7 +23,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   // familyElem
   class CollectionElem[Item, To <: Collection[Item]](implicit val eItem: Elem[Item @uncheckedVariance])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Collections")
+      module.entities.find(_.name == "Collection").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagAnnotatedItem = eItem.tag
@@ -63,7 +68,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   // familyElem
   class PairCollectionElem[A, B, To <: PairCollection[A, B]](implicit val eA: Elem[A], val eB: Elem[B])
     extends CollectionElem[(A, B), To] {
-    override val parent: Option[Elem[_]] = Some(collectionElement(pairElement(element[A],element[B])))
+    override lazy val parent: Option[Elem[_]] = Some(collectionElement(pairElement(element[A],element[B])))
+    override lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Collections")
+      module.entities.find(_.name == "PairCollection").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -93,7 +102,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   // familyElem
   class NestedCollectionElem[A, To <: NestedCollection[A]](implicit val eA: Elem[A])
     extends CollectionElem[Collection[A], To] {
-    override val parent: Option[Elem[_]] = Some(collectionElement(collectionElement(element[A])))
+    override lazy val parent: Option[Elem[_]] = Some(collectionElement(collectionElement(element[A])))
+    override lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Collections")
+      module.entities.find(_.name == "NestedCollection").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -119,7 +132,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   class UnitCollectionElem(val iso: Iso[UnitCollectionData, UnitCollection])
     extends CollectionElem[Unit, UnitCollection]
     with ConcreteElem[UnitCollectionData, UnitCollection] {
-    override val parent: Option[Elem[_]] = Some(collectionElement(UnitElement))
+    override lazy val parent: Option[Elem[_]] = Some(collectionElement(UnitElement))
+    override lazy val entityDef = {
+      val module = getModules("Collections")
+      module.concreteSClasses.find(_.name == "UnitCollection").get
+    }
 
     override def convertCollection(x: Rep[Collection[Unit]]) = UnitCollection(x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -182,7 +199,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   class CollectionOverArrayElem[Item](val iso: Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]])(implicit eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverArray[Item]]
     with ConcreteElem[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
-    override val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
+    override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
+    override lazy val entityDef = {
+      val module = getModules("Collections")
+      module.concreteSClasses.find(_.name == "CollectionOverArray").get
+    }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverArray(x.arr)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -246,7 +267,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   class CollectionOverListElem[Item](val iso: Iso[CollectionOverListData[Item], CollectionOverList[Item]])(implicit eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverList[Item]]
     with ConcreteElem[CollectionOverListData[Item], CollectionOverList[Item]] {
-    override val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
+    override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
+    override lazy val entityDef = {
+      val module = getModules("Collections")
+      module.concreteSClasses.find(_.name == "CollectionOverList").get
+    }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverList(x.lst)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -310,7 +335,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   class CollectionOverSeqElem[Item](val iso: Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]])(implicit eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverSeq[Item]]
     with ConcreteElem[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
-    override val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
+    override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
+    override lazy val entityDef = {
+      val module = getModules("Collections")
+      module.concreteSClasses.find(_.name == "CollectionOverSeq").get
+    }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverSeq(x.seq)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -374,7 +403,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   class PairCollectionSOAElem[A, B](val iso: Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]])(implicit eA: Elem[A], eB: Elem[B])
     extends PairCollectionElem[A, B, PairCollectionSOA[A, B]]
     with ConcreteElem[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] {
-    override val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
+    override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
+    override lazy val entityDef = {
+      val module = getModules("Collections")
+      module.concreteSClasses.find(_.name == "PairCollectionSOA").get
+    }
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionSOA(x.as, x.bs)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -440,7 +473,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   class PairCollectionAOSElem[A, B](val iso: Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]])(implicit eA: Elem[A], eB: Elem[B])
     extends PairCollectionElem[A, B, PairCollectionAOS[A, B]]
     with ConcreteElem[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] {
-    override val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
+    override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
+    override lazy val entityDef = {
+      val module = getModules("Collections")
+      module.concreteSClasses.find(_.name == "PairCollectionAOS").get
+    }
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionAOS(x.coll)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -505,7 +542,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   class NestedCollectionFlatElem[A](val iso: Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]])(implicit eA: Elem[A])
     extends NestedCollectionElem[A, NestedCollectionFlat[A]]
     with ConcreteElem[NestedCollectionFlatData[A], NestedCollectionFlat[A]] {
-    override val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
+    override lazy val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
+    override lazy val entityDef = {
+      val module = getModules("Collections")
+      module.concreteSClasses.find(_.name == "NestedCollectionFlat").get
+    }
 
     override def convertNestedCollection(x: Rep[NestedCollection[A]]) = NestedCollectionFlat(x.values, x.segments)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

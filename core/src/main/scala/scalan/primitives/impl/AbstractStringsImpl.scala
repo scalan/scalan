@@ -3,6 +3,7 @@ package scalan.primitives
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -17,7 +18,11 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   // familyElem
   class AStringElem[To <: AString]
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("AbstractStrings")
+      module.entities.find(_.name == "AString").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
@@ -54,7 +59,11 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   class SStringElem(val iso: Iso[SStringData, SString])
     extends AStringElem[SString]
     with ConcreteElem[SStringData, SString] {
-    override val parent: Option[Elem[_]] = Some(aStringElement)
+    override lazy val parent: Option[Elem[_]] = Some(aStringElement)
+    override lazy val entityDef = {
+      val module = getModules("AbstractStrings")
+      module.concreteSClasses.find(_.name == "SString").get
+    }
 
     override def convertAString(x: Rep[AString]) = SString(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -117,7 +126,11 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   class CStringElem(val iso: Iso[CStringData, CString])
     extends AStringElem[CString]
     with ConcreteElem[CStringData, CString] {
-    override val parent: Option[Elem[_]] = Some(aStringElement)
+    override lazy val parent: Option[Elem[_]] = Some(aStringElement)
+    override lazy val entityDef = {
+      val module = getModules("AbstractStrings")
+      module.concreteSClasses.find(_.name == "CString").get
+    }
 
     override def convertAString(x: Rep[AString]) = CString(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

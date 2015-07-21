@@ -5,6 +5,7 @@ import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -47,7 +48,11 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   // familyElem
   abstract class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
     extends WrapperElem1[A, To, Seq, SSeq]()(eA, container[Seq], container[SSeq]) {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Seqs")
+      module.entities.find(_.name == "SSeq").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -145,7 +150,11 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   class SSeqImplElem[A](val iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit eA: Elem[A])
     extends SSeqElem[A, SSeqImpl[A]]
     with ConcreteElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
-    override val parent: Option[Elem[_]] = Some(sSeqElement(element[A]))
+    override lazy val parent: Option[Elem[_]] = Some(sSeqElement(element[A]))
+    override lazy val entityDef = {
+      val module = getModules("Seqs")
+      module.concreteSClasses.find(_.name == "SSeqImpl").get
+    }
     lazy val eTo = this
     override def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem1].getDefaultRep

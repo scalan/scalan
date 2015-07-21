@@ -3,6 +3,7 @@ package scalan.monads
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -17,7 +18,11 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   // familyElem
   class CoproductElem[F[_], G[_], A, To <: Coproduct[F, G, A]](implicit val cF: Cont[F], val cG: Cont[G], val eA: Elem[A])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Coproducts")
+      module.entities.find(_.name == "Coproduct").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -55,7 +60,11 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   class CoproductImplElem[F[_], G[_], A](val iso: Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
     extends CoproductElem[F, G, A, CoproductImpl[F, G, A]]
     with ConcreteElem[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
-    override val parent: Option[Elem[_]] = Some(coproductElement(container[F], container[G], element[A]))
+    override lazy val parent: Option[Elem[_]] = Some(coproductElement(container[F], container[G], element[A]))
+    override lazy val entityDef = {
+      val module = getModules("Coproducts")
+      module.concreteSClasses.find(_.name == "CoproductImpl").get
+    }
 
     override def convertCoproduct(x: Rep[Coproduct[F, G, A]]) = CoproductImpl(x.run)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

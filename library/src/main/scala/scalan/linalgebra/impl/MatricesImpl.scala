@@ -4,6 +4,7 @@ import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -18,7 +19,11 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   // familyElem
   class AbstractMatrixElem[T, To <: AbstractMatrix[T]](implicit val eT: Elem[T])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Matrices")
+      module.entities.find(_.name == "AbstractMatrix").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = eT.tag
@@ -56,7 +61,11 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, DenseFlatMatrix[T]]
     with ConcreteElem[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
-    override val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Matrices")
+      module.concreteSClasses.find(_.name == "DenseFlatMatrix").get
+    }
 
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = DenseFlatMatrix(x.rmValues, x.numColumns)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -121,7 +130,11 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   class CompoundMatrixElem[T](val iso: Iso[CompoundMatrixData[T], CompoundMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, CompoundMatrix[T]]
     with ConcreteElem[CompoundMatrixData[T], CompoundMatrix[T]] {
-    override val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Matrices")
+      module.concreteSClasses.find(_.name == "CompoundMatrix").get
+    }
 
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = CompoundMatrix(x.rows, x.numColumns)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

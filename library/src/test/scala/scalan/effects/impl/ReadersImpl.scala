@@ -3,6 +3,7 @@ package scalan.monads
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -17,7 +18,11 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   // familyElem
   class ReaderElem[Env, A, To <: Reader[Env, A]](implicit val eEnv: Elem[Env], val eA: Elem[A])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Readers")
+      module.entities.find(_.name == "Reader").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagEnv = eEnv.tag
@@ -56,7 +61,11 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   class ReaderBaseElem[Env, A](val iso: Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]])(implicit eEnv: Elem[Env], eA: Elem[A])
     extends ReaderElem[Env, A, ReaderBase[Env, A]]
     with ConcreteElem[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
-    override val parent: Option[Elem[_]] = Some(readerElement(element[Env], element[A]))
+    override lazy val parent: Option[Elem[_]] = Some(readerElement(element[Env], element[A]))
+    override lazy val entityDef = {
+      val module = getModules("Readers")
+      module.concreteSClasses.find(_.name == "ReaderBase").get
+    }
 
     override def convertReader(x: Rep[Reader[Env, A]]) = ReaderBase(x.run)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

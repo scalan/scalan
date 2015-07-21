@@ -3,6 +3,7 @@ package scalan.util
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -25,7 +26,11 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
   // familyElem
   abstract class SThrowableElem[To <: SThrowable]
     extends WrapperElem[Throwable, To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Exceptions")
+      module.entities.find(_.name == "SThrowable").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[To]]
@@ -77,7 +82,11 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
   class SThrowableImplElem(val iso: Iso[SThrowableImplData, SThrowableImpl])
     extends SThrowableElem[SThrowableImpl]
     with ConcreteElem[SThrowableImplData, SThrowableImpl] {
-    override val parent: Option[Elem[_]] = Some(sThrowableElement)
+    override lazy val parent: Option[Elem[_]] = Some(sThrowableElement)
+    override lazy val entityDef = {
+      val module = getModules("Exceptions")
+      module.concreteSClasses.find(_.name == "SThrowableImpl").get
+    }
     lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SThrowableImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -140,7 +149,11 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
   class SExceptionElem(val iso: Iso[SExceptionData, SException])
     extends SThrowableElem[SException]
     with ConcreteElem[SExceptionData, SException] {
-    override val parent: Option[Elem[_]] = Some(sThrowableElement)
+    override lazy val parent: Option[Elem[_]] = Some(sThrowableElement)
+    override lazy val entityDef = {
+      val module = getModules("Exceptions")
+      module.concreteSClasses.find(_.name == "SException").get
+    }
     lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SException(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

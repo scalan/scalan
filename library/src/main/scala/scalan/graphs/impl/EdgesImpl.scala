@@ -4,6 +4,7 @@ import scalan.collections.CollectionsDsl
 import scalan.ScalanCommunityDsl
 import scalan.Owner
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -18,7 +19,11 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   // familyElem
   class EdgeElem[V, E, To <: Edge[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Edges")
+      module.entities.find(_.name == "Edge").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -57,7 +62,11 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   class AdjEdgeElem[V, E](val iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends EdgeElem[V, E, AdjEdge[V, E]]
     with ConcreteElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
-    override val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
+    override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Edges")
+      module.concreteSClasses.find(_.name == "AdjEdge").get
+    }
 
     override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -123,7 +132,11 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   class IncEdgeElem[V, E](val iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends EdgeElem[V, E, IncEdge[V, E]]
     with ConcreteElem[IncEdgeData[V, E], IncEdge[V, E]] {
-    override val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
+    override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Edges")
+      module.concreteSClasses.find(_.name == "IncEdge").get
+    }
 
     override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

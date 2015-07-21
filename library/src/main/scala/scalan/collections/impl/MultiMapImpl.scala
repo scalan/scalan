@@ -2,6 +2,7 @@ package scalan.collections
 
 import scalan._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -16,7 +17,11 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   // familyElem
   class MMultiMapElem[K, V, To <: MMultiMap[K, V]](implicit val elemKey: Elem[K], val elemValue: Elem[V])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("MultiMaps")
+      module.entities.find(_.name == "MMultiMap").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagK = elemKey.tag
@@ -55,7 +60,11 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   class HashMMultiMapElem[K, V](val iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]])(implicit elemKey: Elem[K], elemValue: Elem[V])
     extends MMultiMapElem[K, V, HashMMultiMap[K, V]]
     with ConcreteElem[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
-    override val parent: Option[Elem[_]] = Some(mMultiMapElement(element[K], element[V]))
+    override lazy val parent: Option[Elem[_]] = Some(mMultiMapElement(element[K], element[V]))
+    override lazy val entityDef = {
+      val module = getModules("MultiMaps")
+      module.concreteSClasses.find(_.name == "HashMMultiMap").get
+    }
 
     override def convertMMultiMap(x: Rep[MMultiMap[K, V]]) = HashMMultiMap(x.map)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

@@ -4,6 +4,7 @@ import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -18,7 +19,11 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   // familyElem
   class AbstractVectorElem[T, To <: AbstractVector[T]](implicit val eT: Elem[T])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Vectors")
+      module.entities.find(_.name == "AbstractVector").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = eT.tag
@@ -56,7 +61,11 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit eT: Elem[T])
     extends AbstractVectorElem[T, DenseVector[T]]
     with ConcreteElem[DenseVectorData[T], DenseVector[T]] {
-    override val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Vectors")
+      module.concreteSClasses.find(_.name == "DenseVector").get
+    }
 
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = DenseVector(x.items)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -120,7 +129,11 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit eT: Elem[T])
     extends AbstractVectorElem[T, SparseVector[T]]
     with ConcreteElem[SparseVectorData[T], SparseVector[T]] {
-    override val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Vectors")
+      module.concreteSClasses.find(_.name == "SparseVector").get
+    }
 
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -185,7 +198,11 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   class SparseVector1Elem[T](val iso: Iso[SparseVector1Data[T], SparseVector1[T]])(implicit eT: Elem[T])
     extends AbstractVectorElem[T, SparseVector1[T]]
     with ConcreteElem[SparseVector1Data[T], SparseVector1[T]] {
-    override val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Vectors")
+      module.concreteSClasses.find(_.name == "SparseVector1").get
+    }
 
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector1(x.nonZeroItems, x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

@@ -5,6 +5,7 @@ import scalan.collections.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scalan.{ScalanSeq, ScalanExp, Scalan}
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -19,7 +20,11 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   // familyElem
   class GraphElem[V, E, To <: Graph[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Graphs")
+      module.entities.find(_.name == "Graph").get
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -58,7 +63,11 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
     with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
-    override val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+    override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Graphs")
+      module.concreteSClasses.find(_.name == "AdjacencyGraph").get
+    }
 
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -124,7 +133,11 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, IncidenceGraph[V, E]]
     with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
-    override val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+    override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Graphs")
+      module.concreteSClasses.find(_.name == "IncidenceGraph").get
+    }
 
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep

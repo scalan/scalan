@@ -53,6 +53,7 @@ trait ArrayBuffers extends Base { self: Scalan =>
     extends EntityElem1[A, ArrayBuffer[A], ArrayBuffer](eItem, container[ArrayBuffer]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
+    override def entityDef = !!!("not supported")
     lazy val tag = {
       implicit val tag1 = eItem.tag
       weakTypeTag[ArrayBuffer[A]]
