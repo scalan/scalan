@@ -23,6 +23,9 @@ trait StatesAbs extends States with scalan.Scalan {
       val module = getModules("States")
       module.entities.find(_.name == "State0").get
     }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("S" -> Left(eS), "A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagS = eS.tag
@@ -65,6 +68,9 @@ trait StatesAbs extends States with scalan.Scalan {
     override lazy val entityDef = {
       val module = getModules("States")
       module.concreteSClasses.find(_.name == "StateBase").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("S" -> Left(eS), "A" -> Left(eA))
     }
 
     override def convertState0(x: Rep[State0[S, A]]) = StateBase(x.run)
@@ -274,7 +280,7 @@ trait StatesExp extends StatesDsl with scalan.ScalanExp {
 object States_Module {
   val packageName = "scalan.monads"
   val name = "States"
-  val dump = "H4sIAAAAAAAAALVWTWwbRRQer5M4a4emlAMqVZsSmSIQ2FGFVKQckJs4tMhNomwOyK2KxutxMmF3ZjMzjmwOFUd+xKXighBCPXDrjSNnJMSBU0WROHHgVIpEBVQcQLyZ/U+yoQjhw2hn5u37+b7vvfXt+2hSCnROutjDrOEThRuOeW5JVXfaTFE1vsL7Q48sk8Hyzt2XxWfbH1hotoumtrFcll4X2eFDexQkzw7Z7SAbM5dIxYVU6OmOidB0uecRV1HOmtT3hwr3PNLsUKkWO2iix/vjXXQDlTrouMuZK4gizpKHpSQyOp8mOiOa7G2zH68FaQzW1FU0M1VsCkwVpA8xjof2GyRwxoyzsa/QsSi1tUCnBTYV6gdcqDhEBdxt8368nWAYDtCJzg7ew00IsdV0lKBsC96sBdh9E2+RVTDR5hOQsCTeYHMcmH25g6qS7AJAl/3AMyejACEEDJw3STRSfBoJPg2NT90hgmKPvoX15brgozEKf6UyQqMAXLzwDy5iD6TN+vX3rrlXHzo139Ivj3QqFVPhFDiaK1CDoQJw/Grjpnzw6q0LFqp2UZXKVk8qgV2VpTxCq4YZ48rknACIxRawNV/ElonSApt9krBd7geYgacIyhngyaMuVdpYn81E7BRAX1EBiU1Lo6CU1Hu2oF6jmyXseev3Tr74zE/t1y1k5UPY4NIB4YvYqUJTDpRLFiLnep1VqOSkCOtty2z1Yo/StXJELgkqz977uf/lArpmJVhGoR+NPnAxKb/7tnbnuVcsNN01Yl/x8FYX4JRtj/hrYokz1UXTfI+I8Kayhz39dCidlT4Z4KGnIpCz6JQBHYXOFrZlQDR0i6YFSjEAtVDFq5yR+sp6/Xfn6w9va5EKNBPehH36F73w5/fHBsroV6GyGLIY3TJ0dwLGmSJuA7IyZO6dyx89MXv6jR8Ms1N97mNq5HWqgyYF9LYp5VQEbobIYpTB8eYw8MhLX/xx/Z23LwWGpwM62SePVl4ezqHySEVSDZFwuE8en39Ar996X5kwpVF+MK31dmASLJr3zhyVczQgf+suWL+evPuphWwQQI8qHwf1hUds6/+xVVEertmwxZayQTJoVZJlDpRxwhhfxJLk7OdSxJ/MeH+qFEvRGClkEScOO6Hb49C+DmMXOWgd5eDgJFDITlI2PhItny6WHIB18+q5S+KXj9+1NKCTPT5k/Rh9+JgqMlIX47NSHn1AGwvsx2in8OQH12u5i4OJZyo7v48xe4PQAdVfovz5fxiWWa6NaTOKnJdAooPDRBMWkw7tLNwHK/4XUOh1PbWJDMMo8O17LCaSM9yXUfYCzRfw60TNAR164+Enq89/8/mPZl5VdZvBnGTJf5WU1f0jxr5iYsFfj0yyIEndeCbRvwHIheMPCgoAAA=="
+  val dump = "H4sIAAAAAAAAALVWTWwbRRQer5M4a4emFAlUqjYlMkUgsKMKqYcckJM6tMj5UTYH5FZF4/XYnbI7s5kZRzaHCnHi51ZxQQih3nvjgsQZCXHgVAESJw6cCkhUQMUBxJvZ/yQbihA+jHZm3r6f7/veW9/5CU1Lgc5JF3uYNXyicMMxzy2p6k6bKaom67w/8shFMnjr8U/ddbYiLTTfRTPXsbwovS6yw4f2OEieHbLbQTZmLpGKC6nQUx0ToelyzyOuopw1qe+PFO55pNmhUi130FSP9ye76CYqddBxlzNXEEWcVQ9LSWR0Pkt0RjTZ22Y/2QzSGKypq2hmqtgRmCpIH2IcD+23SeBMGGcTX6FjUWqbgU4LbCrUD7hQcYgKuLvO+/F2imE4QCc6N/AebkKIYdNRgrIhvFkLsPs6HpINMNHmU5CwJN5gZxKYfbmDqpLsAkCX/cAzJ+MAIQQMnDdJNFJ8Ggk+DY1P3SGCYo++gfXlluDjCQp/pTJC4wBcPP8PLmIPpM369XevulceODXf0i+PdSoVU+EMOFooUIOhAnD8YvuWvP/y7QsWqnZRlcpWTyqBXZWlPEKrhhnjyuScAIjFENhaLGLLRGmBzT5J2C73A8zAUwTlHPDkUZcqbazP5iJ2CqCvqIDEpqVxUErqPVtQr9HNKva8rXsnX3j6x/arFrLyIWxw6YDwRexUoRkHyiVLkXO9zitUclKE9bZltnqxx+laOSKXBJVn7v3c/3wJXbUSLKPQD0cfuJiW335du/vsSxaa7Rqxr3l42AU4Zdsj/qZY5Ux10SzfIyK8qexhTz8dSmelTwZ45KkI5Cw6ZUBHobOFbRkQDd2yaYFSDEAtVPEGZ6S+tlX/3fny/TtapALNhTdhn/5FL/z53bGBMvpVqCxGLEa3DN2dgHGmiNuArI2Ye/fyB4/Nn37te8PsTJ/7mBp5neqgaQG9bUo5FYGbIbIYZXC8Mwo88uJnf1x7+81LgeHpgE72yaOVl4dzqDxSkVRDJBzuk0cX79Nrt99TJkxpnB9Mm70bMAmWzXtnjso5GpC/dZesX09+87GFbBBAjyofB/Wlh2zr/7FVUR6u+bDFVrNBMmhVkmUBlHHCGK9gSXL2CyniT2S8P1mKpWiMFLKIE4ed0u1xaF+HsYsctI5ycHASKGQnKRsfiZZPF0sOwLp15dwl8cuH71ga0OkeH7F+jD58TBUZq5X4rJRHH9DGAvsx2ik8+cH1Su7iYOKZys7vY8zeJnRA9Zcof/4fhmWWa2PajCLnJZDo4DDRhMWkQzsL98GK/wUUet1KbSLDMAp8+x6JieQM92WUvUCLBfw6UXNAh9588NHGc1998oOZV1XdZjAnWfJfJWV1/4ix100s+OuRSRYkqRvPJPo3DxranwoKAAA="
 }
 }
 

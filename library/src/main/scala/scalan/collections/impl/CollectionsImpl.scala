@@ -28,6 +28,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val module = getModules("Collections")
       module.entities.find(_.name == "Collection").get
     }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("Item" -> Left(eItem))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagAnnotatedItem = eItem.tag
@@ -73,6 +76,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val module = getModules("Collections")
       module.entities.find(_.name == "PairCollection").get
     }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA), "B" -> Left(eB))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -107,6 +113,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val module = getModules("Collections")
       module.entities.find(_.name == "NestedCollection").get
     }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -136,6 +145,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     override lazy val entityDef = {
       val module = getModules("Collections")
       module.concreteSClasses.find(_.name == "UnitCollection").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
     }
 
     override def convertCollection(x: Rep[Collection[Unit]]) = UnitCollection(x.length)
@@ -203,6 +215,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     override lazy val entityDef = {
       val module = getModules("Collections")
       module.concreteSClasses.find(_.name == "CollectionOverArray").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("Item" -> Left(eItem))
     }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverArray(x.arr)
@@ -272,6 +287,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val module = getModules("Collections")
       module.concreteSClasses.find(_.name == "CollectionOverList").get
     }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("Item" -> Left(eItem))
+    }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverList(x.lst)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -340,6 +358,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val module = getModules("Collections")
       module.concreteSClasses.find(_.name == "CollectionOverSeq").get
     }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("Item" -> Left(eItem))
+    }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverSeq(x.seq)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -407,6 +428,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     override lazy val entityDef = {
       val module = getModules("Collections")
       module.concreteSClasses.find(_.name == "PairCollectionSOA").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA), "B" -> Left(eB))
     }
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionSOA(x.as, x.bs)
@@ -478,6 +502,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val module = getModules("Collections")
       module.concreteSClasses.find(_.name == "PairCollectionAOS").get
     }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA), "B" -> Left(eB))
+    }
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionAOS(x.coll)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -546,6 +573,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     override lazy val entityDef = {
       val module = getModules("Collections")
       module.concreteSClasses.find(_.name == "NestedCollectionFlat").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA))
     }
 
     override def convertNestedCollection(x: Rep[NestedCollection[A]]) = NestedCollectionFlat(x.values, x.segments)
@@ -2626,7 +2656,7 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
 object Collections_Module {
   val packageName = "scalan.collections"
   val name = "Collections"
-  val dump = "H4sIAAAAAAAAANVYS2wbRRie3dhxbEdpkiJVbSkprWlpVeK0AhUpQshxEhrJjaNsWiE3qjRej51Nd2c3s+PI5lDBjYd6qbghhHrg1luPlbggJMSBE6JInDmVIqiAigOImdmHd22vY4cmgA+j2Xn8j+///t8zc/cRiNsEnLJVqEM8bSAKpxXRz9k0oyxgqtHmZbNS19E8qs5vPniVfLpxSwYHSmB4A9rztl4CSaez0LD8voK2CiAJsYpsahKbgucLQkNWNXUdqVQzcVYzjDqFZR1lC5pNZwsgVjYrzS1wE0gFMK6aWCWIIiWvQ9tGtjs+grhFmv+dFN/NotXSgbPci2zAizUCNcrMZzrGnfWryFKa2MRNg4Ix17Sixc1iaxKaYZmEeioSTNyGWfE+YxiyATBZ2ITbMMtU1LIKJRqusZ1pC6o3YA0tsyV8eYwZbCO9uta0xPdQAaRstMUAWjIsXYw0LAAAi8AFYcR0C59pH59pjk9GQUSDuvYW5JMrxGw0gfOThgBoWEzEuR1EeBLQAq5k3l9Xrz1R0obMNze4KQnh4TATNBXBBhEKhuOXq7ftx2/cuSiDVAmkNDtXtimBKg2G3EUrDTE2qbDZBxCSGovWiahoCS05tqaNEknVNCyImSQXylEWJ11TNcoX87FRNzoR0CeohbylUsOSfH+PR/greJOHur7y8PBLL/y48KYM5LCKJBOpMOITTygFqbyPv6/gZJQCC60QzWCE3kavfH7/ys+fLceFjskKqsK6Tq9CvY4cerkaW9q5MvnFMxTErmCN8qFko9UmevjlI3z64U+VL2bAuuzHxXWjPyowEXH7u2/T35x5XQYjJZE4izqslVho7AUdGUWSNzEtgRFzGxFnJrENdd7rSo2E67YbsCDSQwxpCo5HpriFeBhmRTpJHgBpJyOWTYwyiyuZ35WvPrzLCU/AqDPj5Pxf2sU/vx+rUpELFAzrCNfohjDqAAVDrFi4ePD2IAXSDBtdwl0xTzmCFdNAEycea9fvfEAFulIjXDOK5U1Gklmx77keQHu167fSjPzr4QefyCDJ8Cxr1IBWZqbPjNvDLAIBaBhYY3m3bguCzLRNcqK20kNA1oGh30yxUBwK78gHbZ9qFa1DottVQWBVWgqb05mp7kRsiSKju3WOusDyIz7fhDZGDEhIBHXYSDxHCGz2qy6o9LRoz/bE+3x48mDLwSJLQKG6D9Cf7bItEvkgFFIbFHHEPfPd5BWhH8+jDZ/y69Kx6IrKyHn72qlL5JeP3pM5geNls44rHtvZuYKiBp3zxqQw2xm7IYGGx+6Wt53G7iendJtGcyrG/9z3iVKT4chwzX0w6mjnrv0lVITZU4Hd6/+VWLMDYo9YK4o7vfexngiDxhT3EeojHZv2N9Ldjf5ngR5bgRqJCraUa7nEP+d2G3iZRSAy7pFcc9UH9UWIL+9KfHd3BmXWhTZmhQFVip1OdGFWx6ZdMUtGuR60CsEZJWCul4BOwKL8jSRlkFLhibl26/4dqsb4HXMQNvU431porW7p6OX7f1x/9+1Lljgsd1yrduPHXjA1V1QGZyrb9H9lquvvXjB1fJldW1BlgLrWJzmHt/ml2S92sbzH1V7QtQtht56agTD1xYx4wDiieJPxm6fyd/tMOyDsmtzP4epYt317TTiPL5FG70SZoJjA0nbEkqtIq2r8CWvnEtPjlSXn3IlR5eS9dx69Vj53S7yyxMVVmW93HhhE9yh/ApioY3UDqTdQ5Sokmrhie8DsdNraiQNpfpdehIamN89H+tTOz/Bp7DLEsIZImxVhVgSuUF24YHVoG+yE1O5U1/ODJO++bIedaftXe1olqS8vBj19RfnQUe8GzRKO6FprjbswHTCN3XPcFGi9AdsuFQk4EZEeivu+M4+qN598vHz263s/iOxI8ZciE/MiyEVI4bfHMA6TjjzGNKOONdqct/WA/YxE/BFJ2P43yR1xIXEYAAA="
+  val dump = "H4sIAAAAAAAAANVYS2wbRRie3dhxbEdpkiKqtpSU1LS0KnFagXqIEHKchFZy4iibVsiNKo3XY2fb3dnN7DiyOVTAiYe4VNwQQr331gtSJS4ICXHgVAESZ06lCCqg4gBiZvbhXdvr2KEJ4MNodh7/4/u///fM3HkI4jYBJ20V6hDPGIjCGUX0czbNKIuYarS5bFbqOlpA1bef/lRdxvO2DA6UwPAmtBdsvQSSTmexYfl9BW0VQBJiFdnUJDYFzxWEhqxq6jpSqWbirGYYdQrLOsoWNJvOFUCsbFaaW+AmkApgXDWxShBFSl6Hto1sd3wEcYs0/zspvptFq6UDZ7kX2YAX6wRqlJnPdIw769eQpTSxiZsGBWOuaUWLm8XWJDTDMgn1VCSYuE2z4n3GMGQDYLJwHW7DLFNRyyqUaLjGdqYtqN6ANbTClvDlMWawjfTqetMS30MFkLLRFgPokmHpYqRhAQBYBM4LI2Za+Mz4+MxwfDIKIhrUtTcgn1wlZqMJnJ80BEDDYiLO7iDCk4AWcSXz3oZ69bGSNmS+ucFNSQgPh5mgqQg2iFAwHL9cu2U/eu32BRmkSiCl2bmyTQlUaTDkLlppiLFJhc0+gJDUWLSmo6IltOTYmjZKJFXTsCBmklwoR1mcdE3VKF/Mx0bd6ERAn6AW8pZKDUvy/T0e4a/gTR7q+uqDwy8+/+Pi6zKQwyqSTKTCiE88oRSk8j7+voITUQostEo0gxF6G738+b3LP3+2Ehc6JiuoCus6vQL1OnLo5WpsaefK5BdOUxC7jDXKh5KNVpvo4ZeP8KkHP1W+mAUbsh8X143+qMBExO3vvknfP/2qDEZKInGWdFgrsdDYizoyiiRvYloCI+Y2Is5MYhvqvNeVGgnXbTdgQaSHGNIUHI9McQvxMMyJdJI8ANJORqyYGGWWVjO/K199eIcTnoBRZ8bJ+b+0C39+P1alIhcoGNYRrtFNYdQBCoZYsXDx4O1BCqRZNnoJd8U85QhWTANNTD/Srt1+nwp0pUa4ZhTL1xlJ5sS+Z3sA7dWu30qz8q+Hv/1EBkmGZ1mjBrQys31m3B5mEQhAw8Aay7t1WxBktm2SE7WVHgKyDgz9ZoqF4lB4Rz5o+1SraB0S3a4KAqvSUticzkx1J2KXKDK6W+eoCyw/4vNNaGPEgIREUIeNxHOEwGa/6oJKT4n2TE+8z4UnD7YcLLIEFKr7AP2ZLtsikQ9CIbVBEUfcM99NXhH68Tza8Cm/Lh2LrqiMnLeunrxIfvnoXZkTOF4267jisZ2dKyhq0HlvTAqznbEbEmh47G5522nsfnJKt2k0p2L8z32fKDUZjgzX3Aejjnbu2l9CRZg9Fdi98V+JNTsg9oi1orjTex/riTBoTHEfoT7SsWl/I93d6H8W6LFVqJGoYEu5lkv8c363gZdZBCLjHsk1V31QX4T48q7Ed3dnUGadb2NWGFCl2OlEF2Z1bNoVs2SU60GrEJxRAuZ7CegELMrfSFIGKRWemG+37t+haozfMQdhU4/zrYXW65aOXrr3x7V33rxoicNyx7VqN37sBVNzRWVwprJN/1emuv7uBVPHV9i1BVUGqGt9knN4m1+a/WIXy3tc7QVduxB266kZCFNfzIgHjCOKNxm/eSJ/t0+1A8Kuyf0cro5127fXhPP4Emn0TpQJigksbUcsuYa0qsafsHYuMT1eWXLOnRhVTtx96+Er5bMfiFeWuLgq8+3OA4PoHuVPABN1rG4i9QaqXIFEE1dsD5idTls7cSDN79JL0ND05rlIn9r5GT6NLUMMa4i0WRFmReAK1YULVoe2wU5I7U51PT9I8u7LdtiZtn+1J1WS+vJi0NNXlA8d9W7QLOGIrrfWuAvTAdPYPcdNgdYbsO1SkYDpiPRQ3PedBVS9+fjjlTNf3/1BZEeKvxSZmBdBLkIKvz2GcZh05DGmGXWs0eaCrQfsZyTij0jC9r8BYv1rX3EYAAA="
 }
 }
 

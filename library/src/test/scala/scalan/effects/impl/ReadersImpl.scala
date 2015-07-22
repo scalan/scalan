@@ -23,6 +23,9 @@ trait ReadersAbs extends Readers with scalan.Scalan {
       val module = getModules("Readers")
       module.entities.find(_.name == "Reader").get
     }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("Env" -> Left(eEnv), "A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagEnv = eEnv.tag
@@ -65,6 +68,9 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     override lazy val entityDef = {
       val module = getModules("Readers")
       module.concreteSClasses.find(_.name == "ReaderBase").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("Env" -> Left(eEnv), "A" -> Left(eA))
     }
 
     override def convertReader(x: Rep[Reader[Env, A]]) = ReaderBase(x.run)
@@ -226,7 +232,7 @@ trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
 object Readers_Module {
   val packageName = "scalan.monads"
   val name = "Readers"
-  val dump = "H4sIAAAAAAAAALVWz28bRRR+3jhx7ISm0AMqVZsSmVatqB1xKVIOyEkcWslNomwPyK1A492xs2F3ZjMztmwOvQPiUnFBCKEeuPXG34CEOHCqKBInDpwKSFSUnkC8mf1lF29ohfBhtDPz9v34vu+99d1fYFYKOCcd4hNWC6giNds8N6Sq2k2mPDW6xt2+Tzdpd/Pg/uvii/2PLFhqw9w+kZvSb0M5emgOw/TZpoctKBPmUKm4kApebpkIdYf7PnWUx1ndC4K+Ih2f1lueVGstKHa4OzqEW1BowXGHM0dQRe0Nn0hJZXw+T3VGXrovm/1oJ8xisLquoj5WxXVBPIXpY4zjkf0eDe0R42wUKDgWp7YT6rTQpuQFIRcqCVFCd/vcTbZFRvAAXmgdkAGpY4he3VbCYz18cyEkzrukR7fRRJsXMWFJ/e71UWj2My2oSHqIAF0NQt+cDEMAQAZeM0nUMnxqKT41jU/VpsIjvvce0Ze7gg9HEP0KMwDDEF28+i8uEg+0ydzqBzedG4/thcDSLw91KiVT4Rw6Ws5Rg6ECcfx677Z8+OadyxZU2lDxZKMjlSCOGqc8RmuBMMaVyTkFkIgesrWSx5aJ0kCbJyRRdngQEoaeYigXkSffczyljfXZYsxODvQlFdLEtDAMC2m9Z3PqNbrZIL6/++DkpVd+br5lgTUZoowubRS+SJwqmNujxKUidq7XJQUzTTbIMMaDQsNs9VIeZmvpiGxSXM4/+NX9ahVuWimacfCnIxBdzMrvv1u4d+ENC+bbRu5bPum1EVDZ9GmwIzY4U22Y5wMqopvSgPj6aSqhJZd2Sd9XMczj+MwgPgrO5jZmSDV4a6YJCgkAC5GOtzmj1a3d6h/2Nx/f1TIVsBjdRJ36l3f5zx+OdZVRMEIs+iyFG/s7BeNMHrsh3eoz597VT04snX7nR8PtnMsD4hmBnWrBrMDuNqWcisF9RiorUb42D+jzKw+9t+98qAxpheHkANnpHGDHrpn3zhzBXzLIHrVXrd9P3v/cgjLS1PFUQMLq6lO23//YUpAikS3LyM2JqCfWiaQb4xGXMyBfHGuYlwqJGoyRgiKOrEGCd1FrNKe9IvinO7Fo4wgXU1hUUMnyNk5STZ3O1xTCcfvGuSvit0/ftzRksx3eZ26CL37WFB2q9eSsMIkv4kkECRI8M4ye1N36+NWU3MeKuwSTlZb3qNf19Fdh8vw/Da5Y85npxTh2jiKWomBT1JCN0HHI/1Hzs8Gh1yuZTWxYiitW8FzCJ2fElXEBAlZyaLbjLsBWvPX4s+2L3375kxkfFd1POLZY+uchIzcdzwkN10ws/C8wli1KU3eYyfRvymkdMpsJAAA="
+  val dump = "H4sIAAAAAAAAALVWvY8bRRR/3vOdz/aRC0QChSi5cDJBRMQ+pUlxBfJdfCSS70O3KZATgca7Y2eS3dm9mbFlU6SgA7qIBiGE0qej4R9AQhRUESBRUVAFkIiAVCDezH7ZwXskiuJitDPz9n38fr/31nd/hXkp4Ix0iEd43aeK1G3z3JSqZre4Ymq8HbgDj16kvfdf/NLZ5hvSguUOLFwn8qL0OlCOHlqjMH226UEbyoQ7VKpASAWvtE2EhhN4HnUUC3iD+f5Aka5HG20m1Xobit3AHR/ALSi04agTcEdQRe1Nj0hJZXy+SHVGLN2XzX68G2YxeENX0Zio4oogTGH6GONoZL9PQ3vMAz72FRyJU9sNdVpoU2J+GAiVhCihu+uBm2yLnOABvNC+QYakgSH6DVsJxvv4ZjUkzk3Spztoos2LmLCkXu/KODT7uTZUJD1AgC77oWdORiEAIAPnTRL1DJ96ik9d41OzqWDEY+8RfbkngtEYol9hDmAUoos3/sdF4oG2uFv78Jpz9aFd9S398kinUjIVLqCjlRw1GCoQx6/3b8sHb925YEGlAxUmm12pBHHUJOUxWlXCeaBMzimARPSRrdU8tkyUJto8IomyE/gh4egphnIJefKYw5Q21mdLMTs50JdUSBPTwigspPWezqnX6GaTeN7e/ePnXv2l9bYF1nSIMrq0UfgicapgYZ8Sl4rYuV6XFcy1+DDDGA8KTbPVS3mUraVDsklxee3+b+5Xa3DNStGMgz8egehiXv7wXfXe629asNgxct/ySL+DgMqWR/1dsRlw1YHFYEhFdFMaEk8/zSS05NIeGXgqhnkSnznER8Hp3MYMqQZv3TRBIQGgGul4J+C0trVX+8v+5uO7WqYClqKbqFP/YRf+/vFITxkFI8RiwFO4sb9TME7lsRvSrQF37l3+5NjyyXd/MtwuuIFPmBHYiTbMC+xuU8qJGNwnpLIS5WsHPn1+9QF7585HypBWGE0PkN3uDezYdfPeqUP4SwbZn50164/j339uQRlp6jLlk7C29pjt9wxbClIksmUFuTkW9cQGkXRzMuJKBuRLEw3zciFRgzFSUMSRNUzwLmqN5rRXBP9sJxZtHuJiBosKKlnexkmqqZP5mkI4bl89c0n8/ukHloZsvhsMuJvgi581RUdqIzkrTOOLeBJB/ATPDKNHdbcxeTUj94nizsF0peV9ynpMfxWmz59qcMWaz0zPxrFzFLEcBZuhhmyETkL+n5qfDA69XspsYsNSXLGC5xI+A05cGRcgYDWHZjvuAmzFWw8/2zn77Rc/m/FR0f2EY4unfx4yctPxnNCwbWLhf4GJbFGausNMpv8C7wFaq5sJAAA="
 }
 }
 

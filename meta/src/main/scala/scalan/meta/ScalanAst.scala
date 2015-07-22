@@ -249,6 +249,7 @@ object ScalanAst {
     def tpe = components.mkString(" with ")
   }
 
+  type Module = SEntityModuleDef
   abstract class STraitOrClassDef extends SBodyItem {
     def name: String
     def tpeArgs: List[STpeArg]
@@ -385,6 +386,7 @@ object ScalanAst {
       }
   }
 
+  type Entity = STraitOrClassDef
   case class SEntityModuleDef(
                                packageName: String,
                                imports: List[SImportStat],
@@ -415,6 +417,9 @@ object ScalanAst {
     }
 
     def isEntity(name: String) = entities.exists(e => e.name == name)
+
+    def allEntities = entities ++ concreteSClasses
+
     def clean = {
       val _entities = entities.map(_.clean)
       val _concreteSClasses = concreteSClasses.map(_.clean)

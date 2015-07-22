@@ -37,6 +37,9 @@ trait Thunks { self: Scalan =>
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
     override def entityDef = !!!("not supported")
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eItem))
+    }
     lazy val tag = {
       implicit val rt = eItem.tag
       weakTypeTag[Thunk[A]]

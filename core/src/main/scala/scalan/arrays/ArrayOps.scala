@@ -115,6 +115,9 @@ trait ArrayOps { self: Scalan =>
     def parent: Option[Elem[_]] = Some(arrayElement(eItem))
     override def isEntityType = eItem.isEntityType
     override def entityDef = !!!("not supported")
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eItem))
+    }
     lazy val tag = {
       implicit val tag1 = eItem.tag
       weakTypeTag[Array[A]]

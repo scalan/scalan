@@ -11,6 +11,9 @@ trait PointerOps { self: Scalan =>
   case class PointerElem[A: Elem, To <: Pointer[A]](eItem: Elem[A]) extends EntityElem[To] {
     def parent: Option[Elem[_]] = None
     override def entityDef = !!!("not supported")
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eItem))
+    }
     override lazy val tag = {
       implicit val ttag = eItem.tag
       weakTypeTag[Pointer[A]].asInstanceOf[WeakTypeTag[To]]
@@ -25,6 +28,9 @@ trait PointerOps { self: Scalan =>
   case class ScalarElem[A: Elem, To <: Scalar[A]](eItem: Elem[A]) extends EntityElem[To] {
     def parent: Option[Elem[_]] = None
     override def entityDef = !!!("not supported")
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eItem))
+    }
     override lazy val tag = {
       implicit val ttag = eItem.tag
       weakTypeTag[Scalar[A]].asInstanceOf[WeakTypeTag[To]]

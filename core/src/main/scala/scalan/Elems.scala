@@ -170,6 +170,8 @@ trait Elems extends Base { self: Scalan =>
   private var modules: Map[String, SEntityModuleDef] = Map()
   def getModules = modules
 
+  def allEntities = getModules.values.flatMap(m => m.allEntities)
+
   def registerModule(m: SEntityModuleDef) = {
     if (modules.contains(m.name))
       !!!(s"Module ${m.name} already defined")

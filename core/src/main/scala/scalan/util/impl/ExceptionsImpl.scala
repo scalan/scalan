@@ -31,6 +31,9 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
       val module = getModules("Exceptions")
       module.entities.find(_.name == "SThrowable").get
     }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
+    }
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[SThrowable].asInstanceOf[WeakTypeTag[To]]
@@ -86,6 +89,9 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     override lazy val entityDef = {
       val module = getModules("Exceptions")
       module.concreteSClasses.find(_.name == "SThrowableImpl").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
     }
     lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SThrowableImpl(x.wrappedValueOfBaseType)
@@ -153,6 +159,9 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     override lazy val entityDef = {
       val module = getModules("Exceptions")
       module.concreteSClasses.find(_.name == "SException").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
     }
     lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SException(x.wrappedValueOfBaseType)
@@ -431,7 +440,7 @@ trait ExceptionsExp extends ExceptionsDsl with scalan.ScalanExp {
 object Exceptions_Module {
   val packageName = "scalan.util"
   val name = "Exceptions"
-  val dump = "H4sIAAAAAAAAALVVz28bRRR+3qRxbIemLQIpuTREBtqq2FEurZQDComLkNw46kYFmarSeD12NszuTmbG6ZpDDxxBvVRcEfTALTf+hkoVB06IInHmVOBQAT2BeDP701G2TQ/4MNoZv33ve9/3vdnD3+GUFPCWdAgjfsOjijRs87wuVd1u+cpV4+tBf8ToJh1s7j2+Kr7dvWfBfBdmdonclKwLleihFfL02ab7bagQ36FSBUIqeKNtKjSdgDHqKDfwm67njRTpMdpsu1KttWG6F/TH+3AXSm044wS+I6ii9gYjUlIZn89SjchN9xWzH3d4VsNv6i6auS52BHEVwscaZ6L4G5TbYz/wx56C0zG0DtewMKbsejwQKilRxnS7QT/ZTvsED+Bce48ckCaWGDZtJVx/iG/WOHE+IUO6hSE6fBoBS8oGO2Nu9lNtqEq6jwR94HFmTkIOAKjAqgHRyPhppPw0ND91mwqXMPdTov/cFkE4huhXmgIIOaa4/IIUSQba8vv1z285Hz+za56lXw41lLLpcAYTnS9wg5ECeXx04758+v6DKxZUu1B15XpPKkEclZc8ZqtGfD9QBnNKIBFDVGu5SC1TZR1jjlii4gQeJz5miqmcQ52Y67hKB+uzuVidAurLitMktBTyUtrvUkG/xjcbhLHtJwvvvPlb6yMLrMkSFUxpo/FFklRB1d7ZFcEdzbphVS+VmODiUmnTbz/5o/9wBW5ZKVVx5pOpgylOyZ9/qv148V0LZrvGy9cYGXaRLdli1OuIjcBXXZgNDqiI/ikfEKafjlWr3KcDMmIq5jDf/BQ2r2CpcOo41cysGYeXEgJqkUm3Ap/Wr23X/7a///JQe1DAXPRPNIb/ulf++eX0QBl7Knj9jiCc0/5Nwka0M3iPSKqFNSDnFUzhPMf8xCeVIhFiKfSyaILPmT1eA5luyXAuZmNRK03mf57KJmsu/LW0f5P0pbvRy9LxbSCh1Yg2O/Do2eWn7u0HXyjjnVI4eUl1ent4K6yZ9xaeY6Pksvyru2L9ufD4awsq6JaeqzzC6ysnHPH/cWwhZSJbFtEir+IcOtSYZyNfMSdiInU1C80iIlZzvK/CpOQ1jelDo1zU+4xezr/YETnLRTiax+afa4Up8JUT6n+EgRTBMQxwvZ492q9er04eaoJSfvCirsVGGSmXxfAFLBe4x461QwPdffbV1qUfvvvVXJpV7QKceT/9rGaSh0dm95WsOn4pc2AVTGtvpCAuFILY1yNMPSxnfPkZ3DzcXP3GM4MxT8PIf9dz3/XQ0FP+Dxn+TmEPCQAA"
+  val dump = "H4sIAAAAAAAAALVVz28bRRR+3qRxbIemLWql5NIQmR+tih3lUqQcqjRxEZITR92oIFNVGq/HzpbZ2cnOOF330EOP5Ya4Iug9Ny78A0iIAycESJw5FThUQE8g3sz+dJRt00N9GO2M3773ve/73uzhH3BKBvCWdAgjvOFRRRq2eV6Xqm63uHLVeMvvjxjdpIOHF75xtvh1acF8F2b2iNyUrAuV6KEVivTZpvttqBDuUKn8QCp4o20qNB2fMeoo1+dN1/NGivQYbbZdqdbaMN3z++N9eAClNpxxfO4EVFF7gxEpqYzPZ6lG5Kb7itmPOyKrwZu6i2aui92AuArhY40zUfxNKuwx9/nYU3A6htYRGhbGlF1P+IFKSpQx3Z7fT7bTnOABnGvfJQekiSWGTVsFLh/imzVBnE/IkG5jiA6fRsCSssHuWJj9VBuqku4jQR94gpmTUAAAKrBqQDQyfhopPw3NT92mgUuYe5/oP3cCPxxD9CtNAYQCU1x5QYokA23xfv3RbefjZ3bNs/TLoYZSNh3OYKKLBW4wUiCP3938TD59//FVC6pdqLpyvSdVQByVlzxmq0Y495XBnBJIgiGqtVyklqmyjjFHLFFxfE8QjpliKudQJ+Y6rtLB+mwuVqeA+rISNAkthaKU9rtU0K/xzQZhbOfJwrtv/t76yAJrskQFU9po/CBJqqBq7+4F/j3NumFVL5WY4OJSadNvP/mz/+0K3LZSquLMJ1MHU5ySv/xU+/HSNQtmu8bLNxgZdpEt2WLU6wQbPlddmPUPaBD9Uz4gTD8dq1a5TwdkxFTMYb75KWxewVLh1AmqmVkzDi8lBNQik277nNZv7NT/sb///FB7MIC56J9oDP9zr/776+mBMvZUcOFeQISg/VuEjWhncJ1IqoU1IOcVTOE8x/zEJ5UiEWIp9LJogs+ZPV4DmW7JcC5mY1ErTeZ/nsomay78fNq/SfrS3ehl6fg2kNBqRJvte/Ts8lP3zuNPlfFOKZy8pDq9u3grrJn3Fp5jo+Sy/Lu7Yv218POXFlTQLT1XeUTUV0444q9wbCFlIlsW0SKv4xw61JhnI18xJ2IidTULzSIiVnO8r8Kk5DWN6UOjXNT7jF4uvtgROctFOJrH5p9rhSnwlRPqf4SBFMExDAi9nj3ar17fmzzUBKX84EVdi40yUi6L4QewXOAeO9YODfTg2Rfbl3/4+jdzaVa1C3DmefpZzSQPj8zua1l1/FLmwCqY1t5IQbxTCGJfjzD1sJzx5UO4dbi5+pVnBmOehpH/tnLf9dDQU/4fDrhzWA8JAAA="
 }
 }
 
