@@ -28,12 +28,6 @@ trait Exceptions extends Base with TypeWrappers { self: ExceptionsDsl =>
 
 }
 
-trait ExceptionsDsl extends impl.ExceptionsAbs {
-}
-
 trait ExceptionsDslSeq extends impl.ExceptionsSeq {
   trait SeqSThrowable
-}
-
-trait ExceptionsDslExp extends impl.ExceptionsExp {
 }

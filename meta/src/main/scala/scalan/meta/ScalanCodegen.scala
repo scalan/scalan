@@ -409,6 +409,9 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       }.mkString("\n\n")
     }
 
+    def selfTypeString(suffix: String) =
+      module.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
+
     def getTraitAbs = {
       val sqlDDL = module.methods.map(m =>
         if (!m.tpeRes.isDefined) {
@@ -754,7 +757,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
        |// Abs -----------------------------------
        |trait ${module.name}Abs extends ${module.name} ${config.baseContextTrait.opt(t => "with " + t)} {
-       |  ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
+       |  ${selfTypeString("")}
        |
        |${entityProxy(templateData)}
        |
@@ -921,7 +924,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
        |// Seq -----------------------------------
        |trait ${module.name}Seq extends ${module.name}Dsl ${config.seqContextTrait.opt(t => "with " + t)} {
-       |  ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
+       |  ${selfTypeString("Seq")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    $companionMethods
@@ -1054,7 +1057,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
        |// Exp -----------------------------------
        |trait ${module.name}Exp extends ${module.name}Dsl ${config.stagedContextTrait.opt(t => "with " + t)} {
-       |  ${module.selfType.opt(t => s"self: ${t.tpe}Exp =>")}
+       |  ${selfTypeString("Exp")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this
@@ -1212,10 +1215,22 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     def getFileHeader = {
       s"""
       |package ${module.packageName}
-      |package impl
       |
       |${(module.imports ++ config.extraImports.map(SImportStat(_))).distinct.rep(i => s"import ${i.name}", "\n")}
+      |
+      |package impl {
+      |
       |""".stripAndTrim
+    }
+
+    def getDslTraits = {
+      Seq(
+        (module.hasDsl, "", "Abs"),
+        (module.hasDslSeq, "Seq", "Seq"),
+        (module.hasDslExp, "Exp", "Exp")).collect {
+        case (hasDslTrait, dslTraitSuffix, traitSuffix) if !hasDslTrait =>
+          s"trait ${module.name}Dsl${dslTraitSuffix} extends impl.${module.name}${traitSuffix} {${selfTypeString(dslTraitSuffix)}}"
+      }.mkString("\n")
     }
 
     def emitModuleSerialization = {
@@ -1234,7 +1249,9 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         getTraitAbs,
         getTraitSeq,
         getTraitExp,
-        emitModuleSerialization
+        emitModuleSerialization,
+        "}", // closing brace for `package impl {`
+        getDslTraits
       )
       topLevel.mkString("", "\n\n", "\n").
         // clean empty lines

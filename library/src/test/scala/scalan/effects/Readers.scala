@@ -41,9 +41,3 @@ trait ReadersDsl extends impl.ReadersAbs { self: MonadsDsl =>
   }
 
 }
-
-trait ReadersDslSeq extends impl.ReadersSeq { self: MonadsDslSeq =>
-}
-
-trait ReadersDslExp extends impl.ReadersExp { self: MonadsDslExp =>
-}

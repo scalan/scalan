@@ -39,11 +39,4 @@ trait MetaTests { self: MetaTestsDsl =>
   }
 }
 
-trait MetaTestsDsl extends impl.MetaTestsAbs {
-}
-
-trait MetaTestsDslSeq extends impl.MetaTestsSeq {
-}
-
-trait MetaTestsDslExp extends impl.MetaTestsExp {
-}
+trait MetaTestsDsl extends impl.MetaTestsAbs

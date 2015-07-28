@@ -378,13 +378,11 @@ object ScalanAst {
   }
 
   case class SSeqImplementation(explicitMethods: List[SMethodDef]) {
-    def containsMethodDef(m: SMethodDef) = {
-      val equalSignature = for {
-        eq <- explicitMethods.filter(em => em.name == m.name)
-        if eq.allArgs == m.allArgs && eq.tpeArgs == m.tpeArgs
-      } yield eq
-      equalSignature.length > 0
-    }
+    def containsMethodDef(m: SMethodDef) =
+      explicitMethods.exists { em =>
+        em.name == m.name && em.allArgs == m.allArgs &&
+          em.tpeArgs == m.tpeArgs
+      }
   }
 
   case class SEntityModuleDef(
@@ -399,6 +397,9 @@ object ScalanAst {
                                selfType: Option[SSelfTypeDef],
                                body: List[SBodyItem] = Nil,
                                seqDslImpl: Option[SSeqImplementation] = None,
+                               hasDsl: Boolean = false,
+                               hasDslSeq: Boolean = false,
+                               hasDslExp: Boolean = false,
                                ancestors: List[STraitCall] = List())
   {
     def getEntity(name: String): STraitOrClassDef = {
@@ -426,57 +427,11 @@ object ScalanAst {
         concreteSClasses = _concreteSClasses,
         methods = Nil,
         body = Nil,
-        seqDslImpl = None,
+        hasDsl = false,
+        hasDslSeq = false,
+        hasDslExp = false,
         ancestors = Nil
       )
-    }
-  }
-
-  object SEntityModuleDef {
-
-    def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
-
-    def apply(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
-      val moduleName = moduleTrait.name
-      val defs = moduleTrait.body
-
-      val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
-
-      val traits = defs.collect { case t: STraitDef if !t.name.endsWith("Companion") => t }
-      val entity = traits.headOption.getOrElse {
-        throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
-      }
-
-      val classes = entity.optBaseType match {
-        case Some(bt) =>
-          val entityName = entity.name
-          val entityImplName = entityName + "Impl"
-          val typeUseExprs = entity.tpeArgs.map(tpeUseExpr(_))
-          val defaultBTImpl = SClassDef(
-            name = entityImplName,
-            tpeArgs = entity.tpeArgs,
-            args = SClassArgs(List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None))),
-            implicitArgs = entity.implicitArgs,
-            ancestors = List(STraitCall(entity.name, typeUseExprs)),
-            body = List(
-
-            ),
-            selfType = None,
-            companion = None,
-            //            companion = defs.collectFirst {
-            //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
-            //            },
-            true, Nil
-
-          )
-          defaultBTImpl :: moduleTrait.getConcreteClasses
-        case None => moduleTrait.getConcreteClasses
-      }
-      val methods = defs.collect { case md: SMethodDef => md }
-
-      SEntityModuleDef(packageName, imports, moduleName,
-        entityRepSynonym, entity, traits, classes, methods,
-        moduleTrait.selfType, Nil, None, moduleTrait.ancestors)
     }
   }
 
