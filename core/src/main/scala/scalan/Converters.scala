@@ -70,25 +70,6 @@ trait Converters extends Views { self: Scalan =>
 
 trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
   def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To]
-}
-
-trait ConvertersDslSeq extends impl.ConvertersSeq { self: ScalanSeq =>
-  def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To] = conv(x.asRep[From])
-}
-
-trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: ScalanExp =>
-
-  case class Convert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To])
-    extends BaseDef[To]()(eTo) {
-    def mirror(f: Transformer): Rep[To] = Convert(eFrom, eTo, f(x), f(conv))
-  }
-
-  def tryConvert[From, To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To] = {
-    if (x.elem <:< eFrom)
-      conv(x.asRep[From])
-    else
-      Convert(eFrom, eTo, x, conv)
-  }
 
   object HasConv {
     def unapply[A,B](elems: (Elem[A], Elem[B])): Option[Conv[A,B]] = hasConverter(elems._1, elems._2)
@@ -100,7 +81,7 @@ trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: Scala
         c1 <- HasConv.unapply(elems)
         c2 <- HasConv.unapply(elems.swap)
       }
-      yield (c1, c2)
+        yield (c1, c2)
   }
 
   def hasConverter[A,B](eA: Elem[A], eB: Elem[B]): Option[Conv[A,B]] = {
@@ -117,7 +98,7 @@ trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: Scala
           c1 <- hasConverter(ea1, eb1)
           c2 <- hasConverter(ea2, eb2)
         }
-        yield PairConverter(c1, c2)
+          yield PairConverter(c1, c2)
       case (pA: SumElem[a1,a2], pB: SumElem[b1,b2]) =>
         implicit val ea1 = pA.eLeft
         implicit val eb1 = pB.eLeft
@@ -127,20 +108,40 @@ trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: Scala
           c1 <- hasConverter(ea1, eb1)
           c2 <- hasConverter(ea2, eb2)
         }
-        yield SumConverter(c1, c2)
+          yield SumConverter(c1, c2)
       case (e1: EntityElem1[a1,to1,_], e2: EntityElem1[a2,to2,_])
-          if e1.cont.name == e2.cont.name && e1.cont.isFunctor =>
+        if e1.cont.name == e2.cont.name && e1.cont.isFunctor =>
         implicit val ea1 = e1.eItem
         implicit val ea2 = e2.eItem
         type F[T] = T
         val F = e1.cont.asInstanceOf[Functor[F]]
         for { c <- hasConverter(ea1, ea2) }
-        yield FunctorConverter(c)(ea1, ea2, F).asRep[Converter[A,B]]
+          yield FunctorConverter(c)(ea1, ea2, F).asRep[Converter[A,B]]
       case (eEntity: EntityElem[_], eClass: ConcreteElem[tData,tClass]) =>
         val convOpt = eClass.getConverterFrom(eEntity)
         convOpt
       case _ => None
     }
+  }
+}
+
+trait ConvertersDslSeq extends impl.ConvertersSeq { self: ScalanSeq =>
+  def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To] = conv(x.asRep[From])
+}
+
+trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: ScalanExp =>
+
+  case class Convert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To])
+    extends BaseDef[To]()(eTo) {
+    def uniqueOpId: String = name(eFrom, eTo)
+    def mirror(f: Transformer): Rep[To] = Convert(eFrom, eTo, f(x), f(conv))
+  }
+
+  def tryConvert[From, To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To] = {
+    if (x.elem <:< eFrom)
+      conv(x.asRep[From])
+    else
+      Convert(eFrom, eTo, x, conv)
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {

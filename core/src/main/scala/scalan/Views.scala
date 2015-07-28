@@ -333,8 +333,8 @@ trait Views extends Elems { self: Scalan =>
   }
 
 
-  implicit class RepReifiableViewOps[T <: Reifiable[_]](x: Rep[T]) {
-    def convertTo[R <: Reifiable[_]: Elem]: Rep[R] = repReifiable_convertTo[T,R](x)
+  implicit class RepReifiableViewOps[T](x: Rep[T]) {
+    def convertTo[R: Elem]: Rep[R] = repReifiable_convertTo(x.asRep[Reifiable[T]])(element[R].asElem[Reifiable[R]]).asRep[R]
   }
 
   def repReifiable_convertTo[T <: Reifiable[_], R <: Reifiable[_]]
