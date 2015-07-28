@@ -49,9 +49,8 @@ trait IOsAbs extends IOs with scalan.Scalan {
     override def toString = "IO"
   }
   def IO: Rep[IOCompanionAbs]
-  implicit def proxyIOCompanion(p: Rep[IOCompanion]): IOCompanion = {
+  implicit def proxyIOCompanion(p: Rep[IOCompanion]): IOCompanion =
     proxyOps[IOCompanion](p)
-  }
 
   // elem for concrete class
   class ReadFileElem(val iso: Iso[ReadFileData, ReadFile])

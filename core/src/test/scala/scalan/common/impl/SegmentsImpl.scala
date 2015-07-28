@@ -47,9 +47,8 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     override def toString = "Segment"
   }
   def Segment: Rep[SegmentCompanionAbs]
-  implicit def proxySegmentCompanion(p: Rep[SegmentCompanion]): SegmentCompanion = {
+  implicit def proxySegmentCompanion(p: Rep[SegmentCompanion]): SegmentCompanion =
     proxyOps[SegmentCompanion](p)
-  }
 
   // elem for concrete class
   class IntervalElem(val iso: Iso[IntervalData, Interval])

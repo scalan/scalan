@@ -47,9 +47,8 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     override def toString = "Kind"
   }
   def Kind: Rep[KindCompanionAbs]
-  implicit def proxyKindCompanion(p: Rep[KindCompanion]): KindCompanion = {
+  implicit def proxyKindCompanion(p: Rep[KindCompanion]): KindCompanion =
     proxyOps[KindCompanion](p)
-  }
 
   // elem for concrete class
   class ReturnElem[F[_], A](val iso: Iso[ReturnData[F, A], Return[F, A]])(implicit eA: Elem[A], cF: Cont[F])

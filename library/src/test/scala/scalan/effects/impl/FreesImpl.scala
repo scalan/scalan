@@ -48,9 +48,8 @@ trait FreesAbs extends Frees with scalan.Scalan {
     override def toString = "Free"
   }
   def Free: Rep[FreeCompanionAbs]
-  implicit def proxyFreeCompanion(p: Rep[FreeCompanion]): FreeCompanion = {
+  implicit def proxyFreeCompanion(p: Rep[FreeCompanion]): FreeCompanion =
     proxyOps[FreeCompanion](p)
-  }
 
   // elem for concrete class
   class ReturnElem[F[_], A](val iso: Iso[ReturnData[F, A], Return[F, A]])(implicit eA: Elem[A], cF: Cont[F])

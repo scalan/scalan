@@ -49,9 +49,8 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     override def toString = "Reader"
   }
   def Reader: Rep[ReaderCompanionAbs]
-  implicit def proxyReaderCompanion(p: Rep[ReaderCompanion]): ReaderCompanion = {
+  implicit def proxyReaderCompanion(p: Rep[ReaderCompanion]): ReaderCompanion =
     proxyOps[ReaderCompanion](p)
-  }
 
   // elem for concrete class
   class ReaderBaseElem[Env, A](val iso: Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]])(implicit eEnv: Elem[Env], eA: Elem[A])

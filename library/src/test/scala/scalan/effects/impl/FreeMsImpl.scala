@@ -49,9 +49,8 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
     override def toString = "FreeM"
   }
   def FreeM: Rep[FreeMCompanionAbs]
-  implicit def proxyFreeMCompanion(p: Rep[FreeMCompanion]): FreeMCompanion = {
+  implicit def proxyFreeMCompanion(p: Rep[FreeMCompanion]): FreeMCompanion =
     proxyOps[FreeMCompanion](p)
-  }
 
   // elem for concrete class
   class DoneElem[F[_], A](val iso: Iso[DoneData[F, A], Done[F, A]])(implicit eA: Elem[A], cF: Cont[F])

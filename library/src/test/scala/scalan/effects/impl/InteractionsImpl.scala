@@ -50,9 +50,8 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
     override def toString = "Interact"
   }
   def Interact: Rep[InteractCompanionAbs]
-  implicit def proxyInteractCompanion(p: Rep[InteractCompanion]): InteractCompanion = {
+  implicit def proxyInteractCompanion(p: Rep[InteractCompanion]): InteractCompanion =
     proxyOps[InteractCompanion](p)
-  }
 
   // elem for concrete class
   class AskElem(val iso: Iso[AskData, Ask])

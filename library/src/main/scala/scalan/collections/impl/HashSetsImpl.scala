@@ -78,9 +78,8 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     override def toString = "SHashSet"
   }
   def SHashSet: Rep[SHashSetCompanionAbs]
-  implicit def proxySHashSetCompanion(p: Rep[SHashSetCompanion]): SHashSetCompanion = {
+  implicit def proxySHashSetCompanion(p: Rep[SHashSetCompanion]): SHashSetCompanion =
     proxyOps[SHashSetCompanion](p)
-  }
 
   // default wrapper implementation
   abstract class SHashSetImpl[A](val wrappedValueOfBaseType: Rep[HashSet[A]])(implicit val eA: Elem[A]) extends SHashSet[A] {
@@ -130,7 +129,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     lazy val eTo = new SHashSetImplElem[A](this)
   }
   // 4) constructor and deconstructor
-  abstract class SHashSetImplCompanionAbs extends CompanionBase[SHashSetImplCompanionAbs] with SHashSetImplCompanion {
+  abstract class SHashSetImplCompanionAbs extends CompanionBase[SHashSetImplCompanionAbs] {
     override def toString = "SHashSetImpl"
 
     def apply[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =

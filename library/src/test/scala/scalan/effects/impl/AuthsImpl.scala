@@ -49,9 +49,8 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
     override def toString = "Auth"
   }
   def Auth: Rep[AuthCompanionAbs]
-  implicit def proxyAuthCompanion(p: Rep[AuthCompanion]): AuthCompanion = {
+  implicit def proxyAuthCompanion(p: Rep[AuthCompanion]): AuthCompanion =
     proxyOps[AuthCompanion](p)
-  }
 
   // elem for concrete class
   class LoginElem(val iso: Iso[LoginData, Login])

@@ -48,9 +48,8 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     override def toString = "MMultiMap"
   }
   def MMultiMap: Rep[MMultiMapCompanionAbs]
-  implicit def proxyMMultiMapCompanion(p: Rep[MMultiMapCompanion]): MMultiMapCompanion = {
+  implicit def proxyMMultiMapCompanion(p: Rep[MMultiMapCompanion]): MMultiMapCompanion =
     proxyOps[MMultiMapCompanion](p)
-  }
 
   // elem for concrete class
   class HashMMultiMapElem[K, V](val iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]])(implicit elemKey: Elem[K], elemValue: Elem[V])

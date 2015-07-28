@@ -53,9 +53,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     override def toString = "Collection"
   }
   def Collection: Rep[CollectionCompanionAbs]
-  implicit def proxyCollectionCompanion(p: Rep[CollectionCompanion]): CollectionCompanion = {
+  implicit def proxyCollectionCompanion(p: Rep[CollectionCompanion]): CollectionCompanion =
     proxyOps[CollectionCompanion](p)
-  }
 
   // single proxy for each type family
   implicit def proxyPairCollection[A, B](p: Rep[PairCollection[A, B]]): PairCollection[A, B] = {

@@ -49,9 +49,8 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     override def toString = "Process"
   }
   def Process: Rep[ProcessCompanionAbs]
-  implicit def proxyProcessCompanion(p: Rep[ProcessCompanion]): ProcessCompanion = {
+  implicit def proxyProcessCompanion(p: Rep[ProcessCompanion]): ProcessCompanion =
     proxyOps[ProcessCompanion](p)
-  }
 
   // elem for concrete class
   class AwaitElem[F[_], A, O](val iso: Iso[AwaitData[F, A, O], Await[F, A, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])

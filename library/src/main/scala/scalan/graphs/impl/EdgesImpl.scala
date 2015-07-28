@@ -50,9 +50,8 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     override def toString = "Edge"
   }
   def Edge: Rep[EdgeCompanionAbs]
-  implicit def proxyEdgeCompanion(p: Rep[EdgeCompanion]): EdgeCompanion = {
+  implicit def proxyEdgeCompanion(p: Rep[EdgeCompanion]): EdgeCompanion =
     proxyOps[EdgeCompanion](p)
-  }
 
   // elem for concrete class
   class AdjEdgeElem[V, E](val iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])

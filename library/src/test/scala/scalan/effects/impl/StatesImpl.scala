@@ -49,9 +49,8 @@ trait StatesAbs extends States with scalan.Scalan {
     override def toString = "State0"
   }
   def State0: Rep[State0CompanionAbs]
-  implicit def proxyState0Companion(p: Rep[State0Companion]): State0Companion = {
+  implicit def proxyState0Companion(p: Rep[State0Companion]): State0Companion =
     proxyOps[State0Companion](p)
-  }
 
   // elem for concrete class
   class StateBaseElem[S, A](val iso: Iso[StateBaseData[S, A], StateBase[S, A]])(implicit eS: Elem[S], eA: Elem[A])

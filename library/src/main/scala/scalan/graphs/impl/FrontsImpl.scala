@@ -47,9 +47,8 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     override def toString = "Front"
   }
   def Front: Rep[FrontCompanionAbs]
-  implicit def proxyFrontCompanion(p: Rep[FrontCompanion]): FrontCompanion = {
+  implicit def proxyFrontCompanion(p: Rep[FrontCompanion]): FrontCompanion =
     proxyOps[FrontCompanion](p)
-  }
 
   // elem for concrete class
   class BaseFrontElem(val iso: Iso[BaseFrontData, BaseFront])

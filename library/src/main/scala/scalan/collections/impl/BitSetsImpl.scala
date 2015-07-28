@@ -47,9 +47,8 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
     override def toString = "BitSet"
   }
   def BitSet: Rep[BitSetCompanionAbs]
-  implicit def proxyBitSetCompanion(p: Rep[BitSetCompanion]): BitSetCompanion = {
+  implicit def proxyBitSetCompanion(p: Rep[BitSetCompanion]): BitSetCompanion =
     proxyOps[BitSetCompanion](p)
-  }
 
   // elem for concrete class
   class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])

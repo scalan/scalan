@@ -49,9 +49,8 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     override def toString = "AbstractMatrix"
   }
   def AbstractMatrix: Rep[AbstractMatrixCompanionAbs]
-  implicit def proxyAbstractMatrixCompanion(p: Rep[AbstractMatrixCompanion]): AbstractMatrixCompanion = {
+  implicit def proxyAbstractMatrixCompanion(p: Rep[AbstractMatrixCompanion]): AbstractMatrixCompanion =
     proxyOps[AbstractMatrixCompanion](p)
-  }
 
   // elem for concrete class
   class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit eT: Elem[T])

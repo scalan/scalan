@@ -47,9 +47,8 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     override def toString = "AString"
   }
   def AString: Rep[AStringCompanionAbs]
-  implicit def proxyAStringCompanion(p: Rep[AStringCompanion]): AStringCompanion = {
+  implicit def proxyAStringCompanion(p: Rep[AStringCompanion]): AStringCompanion =
     proxyOps[AStringCompanion](p)
-  }
 
   // elem for concrete class
   class SStringElem(val iso: Iso[SStringData, SString])

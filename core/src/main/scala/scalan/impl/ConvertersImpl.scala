@@ -49,9 +49,8 @@ trait ConvertersAbs extends Converters  {
     override def toString = "Converter"
   }
   def Converter: Rep[ConverterCompanionAbs]
-  implicit def proxyConverterCompanion(p: Rep[ConverterCompanion]): ConverterCompanion = {
+  implicit def proxyConverterCompanion(p: Rep[ConverterCompanion]): ConverterCompanion =
     proxyOps[ConverterCompanion](p)
-  }
 
   // elem for concrete class
   class BaseConverterElem[T, R](val iso: Iso[BaseConverterData[T, R], BaseConverter[T, R]])(implicit eT: Elem[T], eR: Elem[R])

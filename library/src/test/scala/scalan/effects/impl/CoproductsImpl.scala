@@ -48,9 +48,8 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
     override def toString = "Coproduct"
   }
   def Coproduct: Rep[CoproductCompanionAbs]
-  implicit def proxyCoproductCompanion(p: Rep[CoproductCompanion]): CoproductCompanion = {
+  implicit def proxyCoproductCompanion(p: Rep[CoproductCompanion]): CoproductCompanion =
     proxyOps[CoproductCompanion](p)
-  }
 
   // elem for concrete class
   class CoproductImplElem[F[_], G[_], A](val iso: Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])

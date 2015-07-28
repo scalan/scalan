@@ -80,9 +80,8 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     override def toString = "SSeq"
   }
   def SSeq: Rep[SSeqCompanionAbs]
-  implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion = {
+  implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion =
     proxyOps[SSeqCompanion](p)
-  }
 
   // default wrapper implementation
   abstract class SSeqImpl[A](val wrappedValueOfBaseType: Rep[Seq[A]])(implicit val eA: Elem[A]) extends SSeq[A] {
@@ -172,7 +171,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     lazy val eTo = new SSeqImplElem[A](this)
   }
   // 4) constructor and deconstructor
-  abstract class SSeqImplCompanionAbs extends CompanionBase[SSeqImplCompanionAbs] with SSeqImplCompanion {
+  abstract class SSeqImplCompanionAbs extends CompanionBase[SSeqImplCompanionAbs] {
     override def toString = "SSeqImpl"
 
     def apply[A](wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =

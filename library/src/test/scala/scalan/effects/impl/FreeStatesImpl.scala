@@ -50,9 +50,8 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
     override def toString = "StateF"
   }
   def StateF: Rep[StateFCompanionAbs]
-  implicit def proxyStateFCompanion(p: Rep[StateFCompanion]): StateFCompanion = {
+  implicit def proxyStateFCompanion(p: Rep[StateFCompanion]): StateFCompanion =
     proxyOps[StateFCompanion](p)
-  }
 
   // elem for concrete class
   class StateGetElem[S, A](val iso: Iso[StateGetData[S, A], StateGet[S, A]])(implicit eS: Elem[S], eA: Elem[A])

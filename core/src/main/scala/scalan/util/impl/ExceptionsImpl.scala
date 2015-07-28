@@ -57,9 +57,8 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     override def toString = "SThrowable"
   }
   def SThrowable: Rep[SThrowableCompanionAbs]
-  implicit def proxySThrowableCompanion(p: Rep[SThrowableCompanion]): SThrowableCompanion = {
+  implicit def proxySThrowableCompanion(p: Rep[SThrowableCompanion]): SThrowableCompanion =
     proxyOps[SThrowableCompanion](p)
-  }
 
   // default wrapper implementation
   abstract class SThrowableImpl(val wrappedValueOfBaseType: Rep[Throwable]) extends SThrowable {
@@ -103,7 +102,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     lazy val eTo = new SThrowableImplElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class SThrowableImplCompanionAbs extends CompanionBase[SThrowableImplCompanionAbs] with SThrowableImplCompanion {
+  abstract class SThrowableImplCompanionAbs extends CompanionBase[SThrowableImplCompanionAbs] {
     override def toString = "SThrowableImpl"
 
     def apply(wrappedValueOfBaseType: Rep[Throwable]): Rep[SThrowableImpl] =

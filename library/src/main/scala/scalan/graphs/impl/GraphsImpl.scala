@@ -51,9 +51,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     override def toString = "Graph"
   }
   def Graph: Rep[GraphCompanionAbs]
-  implicit def proxyGraphCompanion(p: Rep[GraphCompanion]): GraphCompanion = {
+  implicit def proxyGraphCompanion(p: Rep[GraphCompanion]): GraphCompanion =
     proxyOps[GraphCompanion](p)
-  }
 
   // elem for concrete class
   class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])

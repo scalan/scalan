@@ -49,9 +49,8 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     override def toString = "AbstractVector"
   }
   def AbstractVector: Rep[AbstractVectorCompanionAbs]
-  implicit def proxyAbstractVectorCompanion(p: Rep[AbstractVectorCompanion]): AbstractVectorCompanion = {
+  implicit def proxyAbstractVectorCompanion(p: Rep[AbstractVectorCompanion]): AbstractVectorCompanion =
     proxyOps[AbstractVectorCompanion](p)
-  }
 
   // elem for concrete class
   class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit eT: Elem[T])

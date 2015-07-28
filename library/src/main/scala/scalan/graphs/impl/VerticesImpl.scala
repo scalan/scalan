@@ -50,9 +50,8 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     override def toString = "Vertex"
   }
   def Vertex: Rep[VertexCompanionAbs]
-  implicit def proxyVertexCompanion(p: Rep[VertexCompanion]): VertexCompanion = {
+  implicit def proxyVertexCompanion(p: Rep[VertexCompanion]): VertexCompanion =
     proxyOps[VertexCompanion](p)
-  }
 
   // elem for concrete class
   class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit eV: Elem[V], eE: Elem[E])

@@ -435,6 +435,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         } else false).map(m => generateQuery(m)).mkString("\n\n")
 
       val entityCompOpt = module.entityOps.companion
+      val hasCompanion = entityCompOpt.isDefined
       val companionName = s"${entityName}Companion"
       val proxyBT = optBT.opt(bt => {
         s"""
@@ -561,15 +562,18 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    protected def getDefaultRep = $entityName
         |  }
         |
-        |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs] with ${companionName} {
+        |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs]${hasCompanion.opt(s" with ${companionName}")} {
         |    override def toString = "$entityName"
         |    $companionSql
         |  }
         |  def $entityName: Rep[${companionName}Abs]
-        |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} = {
-        |    proxyOps[${companionName}](p)
-        |  }
-        |""".stripAndTrim
+        |${hasCompanion.opt
+        s"""
+           |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} =
+           |    proxyOps[${companionName}](p)
+           |""".stripAndTrim
+      }
+          |""".stripAndTrim
 
       val subEntities = for { entity <- module.entities.drop(1) } yield {
         val templateData = EntityTemplateData(module, entity)
@@ -670,6 +674,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val fullParentType = if (parentType == "") emptyType else parentType
         val wildcardElem = s"${className}Elem${c.tpeArgs.opt(_.map(_ => "_").mkString("[", ", ", "]"))}"
         val parentElem = tpeToElement(parent, concTemplateData.tpeArgs)
+        val hasCompanion = c.companion.isDefined
 
         s"""
         |$defaultImpl
@@ -707,7 +712,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    lazy val eTo = new ${className}Elem${typesUse}(this)
         |  }
         |  // 4) constructor and deconstructor
-        |  abstract class ${className}CompanionAbs extends CompanionBase[${className}CompanionAbs] with ${className}Companion {
+        |  abstract class ${className}CompanionAbs extends CompanionBase[${className}CompanionAbs]${hasCompanion.opt(s" with ${className}Companion")} {
         |    override def toString = "$className"
         |${(fields.length != 1).opt(s"""
         |    def apply${typesDecl}(p: Rep[${className}Data${typesUse}])${implicitArgs}: Rep[$className${typesUse}] =
