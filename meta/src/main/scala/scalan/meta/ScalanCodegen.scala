@@ -409,6 +409,9 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       }.mkString("\n\n")
     }
 
+    def selfTypeString(suffix: String) =
+      module.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
+
     def getTraitAbs = {
       val sqlDDL = module.methods.map(m =>
         if (!m.tpeRes.isDefined) {
@@ -435,6 +438,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         } else false).map(m => generateQuery(m)).mkString("\n\n")
 
       val entityCompOpt = module.entityOps.companion
+      val hasCompanion = entityCompOpt.isDefined
       val companionName = s"${entityName}Companion"
       val proxyBT = optBT.opt(bt => {
         s"""
@@ -561,15 +565,18 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    protected def getDefaultRep = $entityName
         |  }
         |
-        |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs] with ${companionName} {
+        |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs]${hasCompanion.opt(s" with ${companionName}")} {
         |    override def toString = "$entityName"
         |    $companionSql
         |  }
         |  def $entityName: Rep[${companionName}Abs]
-        |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} = {
-        |    proxyOps[${companionName}](p)
-        |  }
-        |""".stripAndTrim
+        |${hasCompanion.opt
+        s"""
+           |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} =
+           |    proxyOps[${companionName}](p)
+           |""".stripAndTrim
+      }
+          |""".stripAndTrim
 
       val subEntities = for { entity <- module.entities.drop(1) } yield {
         val templateData = EntityTemplateData(module, entity)
@@ -670,6 +677,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val fullParentType = if (parentType == "") emptyType else parentType
         val wildcardElem = s"${className}Elem${c.tpeArgs.opt(_.map(_ => "_").mkString("[", ", ", "]"))}"
         val parentElem = tpeToElement(parent, concTemplateData.tpeArgs)
+        val hasCompanion = c.companion.isDefined
 
         s"""
         |$defaultImpl
@@ -707,7 +715,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    lazy val eTo = new ${className}Elem${typesUse}(this)
         |  }
         |  // 4) constructor and deconstructor
-        |  abstract class ${className}CompanionAbs extends CompanionBase[${className}CompanionAbs] with ${className}Companion {
+        |  abstract class ${className}CompanionAbs extends CompanionBase[${className}CompanionAbs]${hasCompanion.opt(s" with ${className}Companion")} {
         |    override def toString = "$className"
         |${(fields.length != 1).opt(s"""
         |    def apply${typesDecl}(p: Rep[${className}Data${typesUse}])${implicitArgs}: Rep[$className${typesUse}] =
@@ -749,7 +757,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
        |// Abs -----------------------------------
        |trait ${module.name}Abs extends ${module.name} ${config.baseContextTrait.opt(t => "with " + t)} {
-       |  ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
+       |  ${selfTypeString("")}
        |
        |${entityProxy(templateData)}
        |
@@ -916,7 +924,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
        |// Seq -----------------------------------
        |trait ${module.name}Seq extends ${module.name}Dsl ${config.seqContextTrait.opt(t => "with " + t)} {
-       |  ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
+       |  ${selfTypeString("Seq")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    $companionMethods
@@ -1049,7 +1057,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
        |// Exp -----------------------------------
        |trait ${module.name}Exp extends ${module.name}Dsl ${config.stagedContextTrait.opt(t => "with " + t)} {
-       |  ${module.selfType.opt(t => s"self: ${t.tpe}Exp =>")}
+       |  ${selfTypeString("Exp")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this
@@ -1207,10 +1215,22 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     def getFileHeader = {
       s"""
       |package ${module.packageName}
-      |package impl
       |
       |${(module.imports ++ config.extraImports.map(SImportStat(_))).distinct.rep(i => s"import ${i.name}", "\n")}
+      |
+      |package impl {
+      |
       |""".stripAndTrim
+    }
+
+    def getDslTraits = {
+      Seq(
+        (module.hasDsl, "", "Abs"),
+        (module.hasDslSeq, "Seq", "Seq"),
+        (module.hasDslExp, "Exp", "Exp")).collect {
+        case (hasDslTrait, dslTraitSuffix, traitSuffix) if !hasDslTrait =>
+          s"trait ${module.name}Dsl${dslTraitSuffix} extends impl.${module.name}${traitSuffix} {${selfTypeString(dslTraitSuffix)}}"
+      }.mkString("\n")
     }
 
     def emitModuleSerialization = {
@@ -1229,7 +1249,9 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         getTraitAbs,
         getTraitSeq,
         getTraitExp,
-        emitModuleSerialization
+        emitModuleSerialization,
+        "}", // closing brace for `package impl {`
+        getDslTraits
       )
       topLevel.mkString("", "\n\n", "\n").
         // clean empty lines

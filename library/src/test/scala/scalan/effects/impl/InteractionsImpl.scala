@@ -1,5 +1,4 @@
 package scalan.examples
-package impl
 
 import scala.io.StdIn
 import scala.reflect.runtime.universe._
@@ -7,6 +6,7 @@ import scalan._
 import scalan.monads._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait InteractionsAbs extends Interactions with scalan.Scalan {
   self: InteractionsDsl =>
@@ -50,9 +50,8 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
     override def toString = "Interact"
   }
   def Interact: Rep[InteractCompanionAbs]
-  implicit def proxyInteractCompanion(p: Rep[InteractCompanion]): InteractCompanion = {
+  implicit def proxyInteractCompanion(p: Rep[InteractCompanion]): InteractCompanion =
     proxyOps[InteractCompanion](p)
-  }
 
   // elem for concrete class
   class AskElem(val iso: Iso[AskData, Ask])
@@ -342,6 +341,7 @@ trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
 object Interactions_Module {
   val packageName = "scalan.examples"
   val name = "Interactions"
-  val dump = "H4sIAAAAAAAAALVWTWwbRRQeb5w6/qFpCxIqEqQYt6GI2hES6iESyKQuVDJJlE0r5Fag8Xpspp2d2c6MozWH3oFbxQ0h1HsPlThwQOKCkBAHTgiQOHNqQVABPYF4M/vjdZptcsGH0c7M2/e9973vvfXtX9G8kuiU8jDDvOkTjZuufW4r3XA7XFM9eVMMxoycI8M7n99554zzythBtS4qY+4RpYVUGj3btQ5anmCMeJoK3qK+P9a4z0irS5Ve7aJiXwwm19ENVOiiI57gniSauGsMK0VUfL5ADCBN92W7n2wEUwzeMkG2MkFuS0w1RAcYRyL7LRK4Ey74xNfocBzaRmDCApsS9QMhdQJRAnfvikGyLXIMB+hY9yrewS2AGLVcLSkfwZvVAHvX8Iisg4kxL0LAirDh9iSw+7kuqihy/ZxiF/yA2ZMwAHZfshE0p+Q0U3KahpyGSyTFjL6HzeWmFOEERb/CHELWxYv7uEg8kA4fND644l1+4FZ9x7wcmjhKNr1D4Ggpp9K2DkDiN1s31f3Xb511UKWHKlS1+0pL7OlsvWOqqphzoW3MKXtYjqBU9bxSWZQ22OzSQ9kTfoA5eIp5rEGRGPWoNsbmrBaXJof3kg5IYloIg0Ka74mcfK1o1jBjm3ePnzl5r/OWg5xZiDK4dDthIBOnGi1c4JoYNlL3z+W5D8impD5oeYe8/NUXF3//cn3eIhwbkCEeM30JszGJlBXjTbENlFOva3RoalAOp2vpEXmlDC/f/W3w9Qq64qR1idM4mBTAxbz66Yfq96dfddBCz3bNeYZHPSiN6jDib8g1wXUPLYgdIqOb0g5m5mlPaZTixOOCZZmeA6Y1OpHb3wExZVgNA9MRCQHVqCPWBSeN85uNv91vP7ptBC9RLbqJGv5fevafnw8Pte0FYDSQoLSofosazcGkiPgwyxN7EV2JvLnCJ0fr9+nbtz7UltJCODslNvpXoTNX7XvPPILdZFr91Vtx/jz+46cOKgOJfap9HDRWDthm/2PrIJv47LIEzNXa6tpaFmppOlietI9AJ9jsuqomrRgzvruFzPo4yP350xoVL3KqH66BRciYP5XKwGIBrK9GB66oWRt2Xc5L9bFtwth+uRaN0fQugshEuYxmEy9vETqkZmDvTwgcF9oZtw9lceBUjibe90gnO9DsaToZns6faqCUm5dPvSH/+Ph9x6hpvi/GfJBIDz7rmoT6teSsMCs9kBqW2E+kNg0lN9/2LMNgWEtCNv2g0WIcKgkxyJ6omBSJ6jk5uLH6oQVvPPhk/YXvPvvFDuaK6SMYJjz9Z5AdyLPFWczGAJ/7TOggDNNfNuz/AD82IlhdCQAA"
+  val dump = "H4sIAAAAAAAAALVWTWwbRRQeb5w4/qFpSyVUJEgxbkMR2FElVKQckElcqGSSKJtWlVshjddjZ9LZ2c3MOFpz6B2qXipuCKEeuPXGEYkLQkIcOCGKxJlTAUEF7Ymqb2Z/vE6zTS74MJqdefve+773vbe++wealgKdkQ5mmNddonDdNvumVDW7xRVVow+83pCRFdJf2b73tvhy65aF5jpoZgvLFck6qBhuWoGf7G2y00ZFzB0ilSekQq+0TYSG4zFGHEU93qCuO1S4y0ijTaVaaqN81+uNdtANlGujo47HHUEUsZcZlpLI6HyW6Ixo8lw0z6M1fxyDNzSKRgrFpsBUQfoQ42hov0F8e8Q9PnIVOhKltubrtMCmQF3fEyoOUQB3W14vfsxzDAfoeHsb7+IGhBg0bCUoH8CbZR871/GArIKJNs9DwpKw/ubIN89TbVSSZAcIuuj6zJwEPkIIKnDOJFEf81NP+Klrfmo2ERQz+hHWl+vCC0Yo/OWmEAp8cPHGAS5iD6TFe7VPrjlXH9ll19IvBzqVgkE4A47mM9RgSgE8fr9xWz547855C5U6qERlsyuVwI5Klzxiq4w595TJOSEQiwFUq5pVLROlCTZ7JFF0PNfHHDxFVFagTow6VGljfVaJqpNBfUH5JDbNBX4uwXsqA6/RzTJmbP3+yTdP/966YiFrMkQRXNogfBE7VWj2IldEs5G4fzXLvU/WBXVBzrvkrW+/vvTXN6vTJsLxHunjIVOXMRuSUFxRvHFsHcqqVhWaGRsUg/FaeAauhOGF+3/2vltE16ykLhGMw0kBXEzLX34u/3T2HQvNdkzjXGB40IHSyBYj7ppY9rjqoFlvl4jwprCLmd7tK41CBDwqWJrpKWBaoVOZLe4TXYYl0065mIBy2BGrHie1C+u1h/YPn97VgheoEt6EPf+Ynv/v1yN9ZXoBGPUFKC2s35xCUzAsQj70cmI/okuhN9tzybHqA/rhnZvKUJoLJgfFWncbOnPJvPfyM9iNB9a/nUXrn5P3vrBQEUjsUuViv7Z4yDb7H1sHGeCTyzwwV2nK68vpUPPjwfKC2QKdYLPnqhy3YsT43hbS6/Mg99fOKpS/xKl6ugYmQsr8xUQGJhaEdeXg0BXVa82sC1lQn9skjB2ENa+NxndhiFSWC2gSeHGD0D7VA/tgQuA410y5fQrFoaEci73vAyc90MxpMhleyp5qoJTbV8+8L/7+7GNLq2m66w15L5YefNkVCdS78VluUnogNSywG0ttnEom3uYkw2BYiVPW/aDQXJQqCTDInsiIFIGqGRjsSP3Qgjcefb76+o9f/WYGc0n3EQwTnvw5SA/kyeLMpXOAL34qdRCG7i+T9hP6nLt8gQkAAA=="
+}
 }
 

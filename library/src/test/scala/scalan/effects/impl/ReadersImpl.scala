@@ -1,10 +1,10 @@
 package scalan.monads
-package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait ReadersAbs extends Readers with scalan.Scalan {
   self: MonadsDsl =>
@@ -49,9 +49,8 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     override def toString = "Reader"
   }
   def Reader: Rep[ReaderCompanionAbs]
-  implicit def proxyReaderCompanion(p: Rep[ReaderCompanion]): ReaderCompanion = {
+  implicit def proxyReaderCompanion(p: Rep[ReaderCompanion]): ReaderCompanion =
     proxyOps[ReaderCompanion](p)
-  }
 
   // elem for concrete class
   class ReaderBaseElem[Env, A](val iso: Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]])(implicit eEnv: Elem[Env], eA: Elem[A])
@@ -218,6 +217,9 @@ trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
 object Readers_Module {
   val packageName = "scalan.monads"
   val name = "Readers"
-  val dump = "H4sIAAAAAAAAALWWz28bRRTHxxsnju3QFHpApWpTItOKitgRlx4igZzUoZXcJMr2gNyq1Xh37E7ZndnOjK01h96BW8UFIYR676ESB/4CJMSBUwVInDhwKiBRUXoC8Wb2p4s3tEL1YeSZfft+fL7vjX33VzQvBTolHexh1vSJwk3bfG9L1bA7TFE1ucjdkUfOkcG9L+9dW7PeGlloqYuqmDlEKi6kQq92jYOWwz2POIpy1qK+P1K475FWl0q10UXlPncnN9EtVOqiww5njiCK2FselpLI+HyR6IA03VfNfrIbZDFYSyfZyiV5SWCqIDuIcTiy3yeBPWGcTXyFDsWp7QY6LbCpUD/gQiUhKuDuOneTbZlhOEAvdW/gMW5BiGHLVoKyIbxZD7DzHh6SHTDR5mVIWBJvcGkSmP1cF9UkuXlOehf8wDMnYQB03zQZNDM4zRROU8Np2ERQ7NH3sX64J3g4QdGnNIeQcfHGf7hIPJAOcxsfXnEuP7brvqVfDnUeFVPeAjhaKVDa6AAQv96/LR++c+eshWo9VKOy3ZdKYEfl9Y5R1TFjXJmcU3pYDEGq1SKpTJQ22DzRD1WH+wFm4CnmuAQiedShShvrs6VYmgLuFRWQxLQUBqW03pMF9Zqm2cKet/fg6Nprv3TetZA1HaIKLu1OGIjEqUIL+wS7RMTO9bqs0FyHjTPGcFBqm61eqmG2Vg7IJuVy+sFv7lfr6IqV0oyDP52A4GJe/vBd/f7rb1tosWd6fdvDwx4AlR2P+LtiizPVQ4t8TET0pDLGnv42U9CKSwZ45KkYc57PHPBR6GThVAZEw9sIA93HCYB61Mc7nJHG9l7jT/ubj+/qNhVoKXoSjenf9OxfPx4aKNPBgFiMWIobhjuFcaJI3YBsj5hz/8InR5aPX/vJaLvgch9T02DHumhewGibUo7FcJ9RylqUr8198uLqQ3r1zkfKiFYKp2+P3f4NmNgN896JA/RLbrFHvXXrj6Pff26hKsjUp8rHQWP9KcfvOY4USklkywpocySaiU0syVY+4koG8uXcwLxSSrrBGClUhitrnPAu6x4tGK8I/2wnFmkf4GKGigrVsryNk7Snjhf3FOC4ffnUefH7px9YGtl8n4+Ym/CF3zRFQrWZnJWm+QJPLLCf8MwYPdl3m/lHM3LPFbeGpiut7hM6oPpXYfr8f11ccc9npmfi2AUdsRwFm9EN2RWaR/6vmp8Nh17PZzaxYSWuWKEXEj05w66MCxBotUBmO54CGMVbjz/bOfPtFz+b66Om5wmuLZb+c8jETa/nRIaLJhb8EchlC62pJ8xk+g/nQqGrdwkAAA=="
+  val dump = "H4sIAAAAAAAAALVWz28bRRR+3jhx7ISm0AMqVZsSmVatqB1xKVIOyEkcWslNomwPyK1A492xs2F3ZjMztmwOvQPiUnFBCKEeuPXG34CEOHCqKBInDpwKSFSUnkC8mf1lF29ohfBhtDPz9v34vu+99d1fYFYKOCcd4hNWC6giNds8N6Sq2k2mPDW6xt2+Tzdpd/Pg/uvii/2PLFhqw9w+kZvSb0M5emgOw/TZpoctKBPmUKm4kApebpkIdYf7PnWUx1ndC4K+Ih2f1lueVGstKHa4OzqEW1BowXGHM0dQRe0Nn0hJZXw+T3VGXrovm/1oJ8xisLquoj5WxXVBPIXpY4zjkf0eDe0R42wUKDgWp7YT6rTQpuQFIRcqCVFCd/vcTbZFRvAAXmgdkAGpY4he3VbCYz18cyEkzrukR7fRRJsXMWFJ/e71UWj2My2oSHqIAF0NQt+cDEMAQAZeM0nUMnxqKT41jU/VpsIjvvce0Ze7gg9HEP0KMwDDEF28+i8uEg+0ydzqBzedG4/thcDSLw91KiVT4Rw6Ws5Rg6ECcfx677Z8+OadyxZU2lDxZKMjlSCOGqc8RmuBMMaVyTkFkIgesrWSx5aJ0kCbJyRRdngQEoaeYigXkSffczyljfXZYsxODvQlFdLEtDAMC2m9Z3PqNbrZIL6/++DkpVd+br5lgTUZoowubRS+SJwqmNujxKUidq7XJQUzTTbIMMaDQsNs9VIeZmvpiGxSXM4/+NX9ahVuWimacfCnIxBdzMrvv1u4d+ENC+bbRu5bPum1EVDZ9GmwIzY4U22Y5wMqopvSgPj6aSqhJZd2Sd9XMczj+MwgPgrO5jZmSDV4a6YJCgkAC5GOtzmj1a3d6h/2Nx/f1TIVsBjdRJ36l3f5zx+OdZVRMEIs+iyFG/s7BeNMHrsh3eoz597VT04snX7nR8PtnMsD4hmBnWrBrMDuNqWcisF9RiorUb42D+jzKw+9t+98qAxpheHkANnpHGDHrpn3zhzBXzLIHrVXrd9P3v/cgjLS1PFUQMLq6lO23//YUpAikS3LyM2JqCfWiaQb4xGXMyBfHGuYlwqJGoyRgiKOrEGCd1FrNKe9IvinO7Fo4wgXU1hUUMnyNk5STZ3O1xTCcfvGuSvit0/ftzRksx3eZ26CL37WFB2q9eSsMIkv4kkECRI8M4ye1N36+NWU3MeKuwSTlZb3qNf19Fdh8vw/Da5Y85npxTh2jiKWomBT1JCN0HHI/1Hzs8Gh1yuZTWxYiitW8FzCJ2fElXEBAlZyaLbjLsBWvPX4s+2L3375kxkfFd1POLZY+uchIzcdzwkN10ws/C8wli1KU3eYyfRvymkdMpsJAAA="
+}
 }
 
+trait ReadersDslSeq extends impl.ReadersSeq {self: MonadsDslSeq =>}
+trait ReadersDslExp extends impl.ReadersExp {self: MonadsDslExp =>}

@@ -92,7 +92,3 @@ trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
 
   trait MapBasedFrontCompanion extends ConcreteClass0[Front]
 }
-
-trait FrontsDsl extends impl.FrontsAbs
-trait FrontsDslSeq extends impl.FrontsSeq
-trait FrontsDslExp extends impl.FrontsExp

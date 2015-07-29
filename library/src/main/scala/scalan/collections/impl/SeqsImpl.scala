@@ -1,5 +1,4 @@
 package scalan.collections
-package impl
 
 import scala.collection.Seq
 import scalan._
@@ -7,6 +6,7 @@ import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait SeqsAbs extends Seqs with scalan.Scalan {
   self: ScalanCommunityDsl =>
@@ -80,9 +80,8 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     override def toString = "SSeq"
   }
   def SSeq: Rep[SSeqCompanionAbs]
-  implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion = {
+  implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion =
     proxyOps[SSeqCompanion](p)
-  }
 
   // default wrapper implementation
   abstract class SSeqImpl[A](val wrappedValueOfBaseType: Rep[Seq[A]])(implicit val eA: Elem[A]) extends SSeq[A] {
@@ -172,7 +171,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     lazy val eTo = new SSeqImplElem[A](this)
   }
   // 4) constructor and deconstructor
-  abstract class SSeqImplCompanionAbs extends CompanionBase[SSeqImplCompanionAbs] with SSeqImplCompanion {
+  abstract class SSeqImplCompanionAbs extends CompanionBase[SSeqImplCompanionAbs] {
     override def toString = "SSeqImpl"
 
     def apply[A](wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
@@ -619,6 +618,8 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
 object Seqs_Module {
   val packageName = "scalan.collections"
   val name = "Seqs"
-  val dump = "H4sIAAAAAAAAALVWS29bRRQeXzt1/KAvAaJSI0pkWoEaO0WCCkUCuY4DCBNHvVVbuVXR+Hpspp07czMzDtcsui/squ4QQt13UYkFvwAJsWCFAIk1bFqQqPpYFfXM3IfttG6yIYuRZ+bMeXzfd87Nrb/RnJLoqPIww7zqE42rrv1dV7riNrmmevSJ6A0ZWSX929/f/nTJeW/ooHILFTD3iNJCKo1ea1kHNU8wRjxNBa9R3x9q3GWk1qJKr7RQrit6o010FWVaaL8nuCeJJm6DYaWIis/niQlI033B7kftYByD10yStYkkz0hMNWQHMfZH9qdJ4I644CNfo71xau3ApAU2eeoHQuokRB7cfSZ6yTbHMRygg63LeAvXIMSg5mpJ+QBelgLsXcEDsg4mxjwHCSvC+mdGgd1nW6ioyOaqYh/5AbMnYQDovmUzqI7BqabgVA04FZdIihn9ApvLDSnCEYr+MlmErIvjO7hIPJAm71W+vOhdeOSWfMc8Dk0eeVveHnD06gymLQ8A4o+nr6t7H9w86aBiBxWpqneVltjTk3zHUJUw50LbnFP0sBwAVYuzqLJR6mCzTQ8FT/gB5uApxrEMJDHqUW2MzVk5pmYG7nkdkMQ0EwaZtN4jM+q1omlgxjbuHFp6/W7zvIOc6RAFcOk2w0AmTjXKuS7ZjF2bdZ9GmbrF1yyFcLzmnxM6BeHYnX96Pyyji04KXRxpd2yBizn1+6+lX95430HzHSvsNYYHHUBPNRnx27IhuO6gebFFZHST38LM/Home/ke6eMh0zGmk2BkAQyNjsxswYAYpFbCwIg2AaAUiXZdcFJZ26g8dH+6cctoUqJydBP15H/05OM/9va1latGL38ucRCQ3lnMhqTdP4UVMUQngGehuacpyO6WlJgasyxY05cmnr2SSTK39xo5pJ74yxk0dwyh0bzRR9L7CymLC7M0aDV7/cLRD+W/X19zDM5zXTHkvaQJYEpqEupTyVlmmhQQPZbYT1Rjg6ZZvfhUfjuqKhmkDzrLzv1Dv33roAKIp0u1j4PK8i4nwP/Y1WiagpKxPGfFEmW0xyyLKWm7btYJaJaeBw30k+27tGhaOf7uX6s3PrazY98YDGsW1zTZ1xq9YDoSU05kUmY0mutQztqQewBuejE9TYpRy7jCJwcW79FLN7/Sdm5kwumvVbt7Gb4QK/bdYev77W24lZthIyHmxPSVxezZA23cGqYMY9eYZDcSntXggXR/Yvz+nWl15k0soAdyjxEff9oi6Nag5sUZbLixTECrVx99s/7mz9/9aSkoGsHBtOHp132srnDb1DgY+YMi/CGH/xngqz1ROKRntGiTfgLvYchvJAkAAA=="
+  val dump = "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"
+}
 }
 
+trait SeqsDsl extends impl.SeqsAbs {self: ScalanCommunityDsl =>}

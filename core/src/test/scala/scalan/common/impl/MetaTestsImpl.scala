@@ -1,8 +1,8 @@
 package scalan.common
-package impl
 
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait MetaTestsAbs extends MetaTests with scalan.Scalan {
   self: MetaTestsDsl =>
@@ -46,9 +46,8 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
     override def toString = "MetaTest"
   }
   def MetaTest: Rep[MetaTestCompanionAbs]
-  implicit def proxyMetaTestCompanion(p: Rep[MetaTestCompanion]): MetaTestCompanion = {
+  implicit def proxyMetaTestCompanion(p: Rep[MetaTestCompanion]): MetaTestCompanion =
     proxyOps[MetaTestCompanion](p)
-  }
 
   // elem for concrete class
   class MT0Elem(val iso: Iso[MT0Data, MT0])
@@ -144,7 +143,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
     lazy val eTo = new MT1Elem[T](this)
   }
   // 4) constructor and deconstructor
-  abstract class MT1CompanionAbs extends CompanionBase[MT1CompanionAbs] with MT1Companion {
+  abstract class MT1CompanionAbs extends CompanionBase[MT1CompanionAbs] {
     override def toString = "MT1"
     def apply[T](p: Rep[MT1Data[T]])(implicit elem: Elem[T]): Rep[MT1[T]] =
       isoMT1(elem).to(p)
@@ -211,7 +210,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
     lazy val eTo = new MT2Elem[T, R](this)
   }
   // 4) constructor and deconstructor
-  abstract class MT2CompanionAbs extends CompanionBase[MT2CompanionAbs] with MT2Companion {
+  abstract class MT2CompanionAbs extends CompanionBase[MT2CompanionAbs] {
     override def toString = "MT2"
     def apply[T, R](p: Rep[MT2Data[T, R]])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
       isoMT2(eT, eR).to(p)
@@ -428,9 +427,6 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
     }
   }
 
-  object MT1CompanionMethods {
-  }
-
   def mkMT1[T]
     (data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
     new ExpMT1[T](data, size)
@@ -478,9 +474,6 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
         case _ => None
       }
     }
-  }
-
-  object MT2CompanionMethods {
   }
 
   def mkMT2[T, R]
@@ -538,6 +531,9 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
 object MetaTests_Module {
   val packageName = "scalan.common"
   val name = "MetaTests"
-  val dump = "H4sIAAAAAAAAALVWPYwbRRSe3fPF5x/yW6AgwYXD5MiJ2M4JlOIk0HFxSCTfj7wOipwoaLweOxN2Zye7Y8umiCj5aVBEhxBKnyISBUUkGoSEKKgQIFFTBRBEkIgCxJvx7nrt2/VZRHEx8sy8/d573/vezNz+Fc17LjrumdjCrGgTgYuG+r/uiYJRYYKKwabT6lrkDGnf+fzOmyf1V7o6yldRBjOTeMJxPYGerSqAkulYFjEFdViJ2nZX4KZFSlXqibUqSjWd1uA6uoG0KjpoOsx0iSDGhoU9j3j++gKRDmk4z6j5YJuPfLCSDLIUCbLuYiogOvBxcGhfI9wYMIcNbIH2+6FtcxkW2KSpzR1XBC7SAHfVaQXTFMOwgA5Xr+EeLoGLTskQLmUd+DLHsfkW7pAtMJHmKQjYI1a7PuBqPldFWY9cP+NZ521uqZU+B3ZXVQTFETnFkJyiJKdgEJdii76N5eaO6/QHaPjT5hBSEC/uAREgkAprFd6/bF56aORsXX7cl3GkVXr7AGgxodKqDkDi17Wb3v3Xb53WUbaBstRbb3rCxaaI1tunKocZc4SKOWQPux0o1VJSqZSXdbCZ0EPGdGyOGSD5POahSBY1qZDGci3vlyaB97TgJDDV+lwL8z2WkK8SzQa2rJ17R08+/0vloo70cRcZgDQqfe4GoAItbAJKHUgI4Z9Lgudkx6U2aLlHXv7y7oXfv9iaVx4Ot0gbdy3xBra6ZKgs39/It3Slv3BCoNQFRoVcyvRHY3pKViG/y/d+a31VRpf1sCp+ErMJASDmvR+/z3134lUdLTRUz5y1cKcBhfEqFrG33Q2HiQZacHrEHe6ke9iS/2KFkfbT9ssV5XkOeBboWGJ3cyKLsNbnsh8CAnLDfthyGCmc3Sk8ML756LaUu4vyw51hu/9LT//z0/62UJ0AfHrQISqkAwLNwSnhsyHHIwJpZVg9z2IZzw5hDccmh5bu0yu3PhCKW60/flhsN69Bg66p756ZQnNwaP3VKOt/Hv3hUx1lgM0mFTbmhfKM3fYYOwipxMeHRaAwv1kvb0RdLY7OlyfVX+AQbCa2clqE6gO7O8lf1uqhs/ECKPiI7VOhGJQjKG0LC5xQ2kngBIR4ccihEB/QshpXplB1KpGqaC7aZCQEOiyIJFUJJtNYUqSfUt+HHf508tkEhb556fg594+P39OlGOabTpe1AuXA5SxIX7wWrGnjygGlYBfbgVJGmcXRvFfhp3QIJ/Uut8hLd/++8u4757hqt12Hciwz4bQWK6eZRZWmrEWhDR9JV/t68qifhlHbE+NxaHP1f2lTJ/VZlZkEUJsGsLtiStqrUWnLsRYju5iN3XARjBU07jxTI7RN5ZvqUQ4rvwozl+JQgB5Tj+ibYxYGJqP4cGTjG2bCXAR6wu88uDps/1ZZhoZcSmhIw78w4Na68fCTrZVvP/tZPWmy8uqBi5iFb+roU2acs3zoHl7JkZClxAFehfsfoRfFQZQMAAA="
+  val dump = "H4sIAAAAAAAAALVWTYzbRBQee7ObzQ/dthxQkWDLErq0giRUoCLtAS27Ka2U/VGcIpRWlSbOJDuLPfbakyjhUHGEIi4VN4RQD9x641iJC0JCHDghisS5pwJqK6DiAOLN+Dc/zkaq6oPlGT9/773vfe95bv2O5l0HnXJ1bGBWNAnHRU0+r7u8oFUYp3ywZbW6Btkk7c39O286X+19qqKlBlrYw+6mazRQxnuo9O3wWSMHVZTBTCcutxyXoxeq0kNJtwyD6JxarERNs8tx0yClKnX5WhWlmlZrcICuIaWKjuoW0x3CibZhYNclrr+/SERENFxn5HqwY0c+WElkUYplUXcw5RA++Djq2deIrQ2YxQYmR0f80HZsERbYpKlpWw4PXKQBbs9qBcsUw7CBjlf3cQ+XwEWnpHGHsg58mbOx/j7ukG0wEeYpCNglRrs+sOV6roqyLjkAgi6atiF3+jZCCCpwVgZRjPgphvwUBT8FjTgUG/QDLF7uOlZ/gLxLmUOobwPEK4dABAikwlqF61f0y4+0nKmKj/silLTMcAGAlhPUIEsBPH5fu+E+fOfmORVlGyhL3fWmyx2s83jJfbZymDGLy5hDArHTgWqtJFVLelkHmxFJZHTLtDEDJJ/KPNTJoDrlwljs5f3qJFCf5jYJTJW+rYT5nkzIV+pmAxvG7r0Tr770W+U9FanDLjIAqYHwnQCUo8UtQKkDCSH8i0nwNtl1qAly7pE3vr196f432/PSw/EWaeOuwd/FRpd44vL9Rb6FK/Xl0xylLjHKxVamH93TU7IK+V2990fruzK6ooZV8ZOYTQgAMe/+8nPup9NvqWixIdvmvIE7DSiMWzGIueNsWIw30KLVI473Jt3DhniaKIy0n7ZfrjjPc8AzRycTG9wmoghrspmUgICc1w/bFiOF87uFv7UfPrsl5O6gvPfG6/j/6Ll/fz3S5rITgE8XOkSGtMTRHAwKnw1xf5ojpQy7F9lExrMerGaZ5NjKQ3r15idccqv0h+fFTnMfGnRNfvf8FJqDufVXo6z+eeLOlyrKAJtNyk1sF8ozdtsT7CAkEx++LQOF+a16eSPuajmaL8/IR+AQbEZe5ZQY1UvjneRvK/XQ2XABJHzM9tlQDNIRlLaFOU4o7ShwAsJkcYhbYSwg+c14VMooJoFeCTBTlWAxLV9J32sRvujV55KnDJTsxuVTF5wHn3+sirLON60uawUagD8tJ33+drCnDGsAao4dbAY1j2o2ibDDSjhF6zapd22DvH77n6sffXjBlo0zNl4nMhMuaxOFMbM80pS1KDTUYylkoSeG9jSM2qEYT0JlKqnPqrEkgNo0gHHupUjPxkUq7jsTBDThxThcDOMMGnaeqRHapuKc8zgDJManF9Gq7yzajviAKXcsQJ8w6uLngFkYGI3iemTjG2bCXDh6yu8hGOemP+lXobVWElpL84c4/EmuPfpi+8yPX9+Vx4ys+B3Az5GFR9348WKYs3zoHg6vsZCFWAFehvs/7LJD0EwMAAA="
+}
 }
 
+trait MetaTestsDslSeq extends impl.MetaTestsSeq {self: MetaTestsDslSeq =>}
+trait MetaTestsDslExp extends impl.MetaTestsExp {self: MetaTestsDslExp =>}

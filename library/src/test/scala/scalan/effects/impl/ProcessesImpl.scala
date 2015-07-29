@@ -1,11 +1,11 @@
 package scalan.stream
-package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
 import scalan.monads.{MonadsDsl, Monads}
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait ProcessesAbs extends Processes with scalan.Scalan {
   self: ProcessesDsl =>
@@ -49,9 +49,8 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     override def toString = "Process"
   }
   def Process: Rep[ProcessCompanionAbs]
-  implicit def proxyProcessCompanion(p: Rep[ProcessCompanion]): ProcessCompanion = {
+  implicit def proxyProcessCompanion(p: Rep[ProcessCompanion]): ProcessCompanion =
     proxyOps[ProcessCompanion](p)
-  }
 
   // elem for concrete class
   class AwaitElem[F[_], A, O](val iso: Iso[AwaitData[F, A, O], Await[F, A, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
@@ -500,6 +499,7 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
 object Processes_Module {
   val packageName = "scalan.stream"
   val name = "Processes"
-  val dump = "H4sIAAAAAAAAANVXTW8bRRger+04/mga4IDaqk2JTCsQtSOE1EOkIJPatJKJo2wOyG2JxuuxM2W/MjtO1xx6B24VF4QQ6r2HShz4BUgICU4VIHHiwKmARAXtqYh3xvtpZ52IllT1YeT52Od993med2b29u8o6zB0xtGwjs2KQTiuqPJ/zeFltW5yyofvWN2BTi6Q3p2v7mydU1YGCio1UR6bGnG4xRyOXmpKgKpm6TrROLXMKjWMAccdnVSb1OHLTZTpWN3hDrqBUk00r1mmxggn6qqOHYc43vgsEQFp0M/L/rBlhzHMqkiyGklyk2HKITuIMT9av0FsdWha5tDgaM5LrWWLtGBNjhq2xbgfIgdw21bX72ZMDAPo+eY1vIurEKJfVTmjZh+eLNpYex/3yRosEcszkLBD9N7m0Jb9dBMVHLJzwdEvGbYuR1wb2H1dZlAJyakE5FQEOWWVMIp1+gEWk+vMcodo9EulEZIQr+0D4SOQutktf3RFu/xQLRqKeNgVeeTk680A0EKC0lIHIPGbjZvO/bdvnVdQoY0K1Kl1HM6wxqN6e1QVsWlaXOYcsIdZH6RaTJJKRqnBmjE/5DXLsLEJSB6PJRBJpxrlYrEYK3nSJPCe4zbxl6ZcOxW87+mE95WmWcW6vn7v2LmXf6u/qyAlHiIPkGrdtZkPylEOtAEOHA9dtEc5SjVCikW3Jbuiybthm5uSTEDL2Xt/dL9eQleUgEwv9sH0A4is89MPxbuvvKmg2ba0ekPH/Tbw6dR1YrTYqmXyNpq1dgkbzeR2sS7+7alnrkt6eKBzj+UoPWmgh6PTiUVpE8HdsmsLG/sEFEc2XrNMUm6slx+o335yW7iUodJoZlSl/9Dzj36e63FpYI7SjOz47KahtsfpH+vXJviXU8eDRESzwFGGEW13D1yGTiWZxiaNgandvfTpC0dPbv0iLTPTtQxMpW9PNFGWwY4hKTrhiQbYmXIHs3iS+c1tZl0X5Rv3TjR3f/BxXBd6rzAiWLUM8tziffrerY+5dFnKje92rc412GGW5XOnphjO33X/bi8pfx378QsF5cFXHcoNbJeXDrhd/I9bAAr4CJsFMNNc7bqo/GiwhZDJFyMkH0+NGUYhtUBSUU1TfJcE0JoG0NofQGsEAKKS97REVH2OsvJ95fOBv08m+xsYvHn5zEX252cfKoLlbMcamF1fEji2OXH5W/5YKi4JSIAZNnwJQm7HqvRqbGZr/LXj07VQnfjEBF3FVJyPx9uuJ+wwsX9sE9ydsi9NyjmBwDHVkxGeROGLdkW2taSKOFI3/nNBHL6fMyLbqJ0njZFgNdF0pnvtaVsqTRhL8oNo3pgCvJ/KF7H+DKkssj0MlSOLZjwCx07qDUJ7VJzUT7w4D6zdvBdrD/kit9LDo0u038UxYGHeywNOfXTEO2Hg44F4B8IKHDyLCQeP6h3lcJ+48fDztVe///JXebkqiEsBXBbN4HMtPG7csd2yFISHD7BIymAmcVOQ6f4LW+uJ2O8OAAA="
+  val dump = "H4sIAAAAAAAAANVXzW8bRRSfXdtxbKdJgANqqzYlMkUgsCOEVKRIRSaxaSUTR9kckFuoxuuxM2G/MjtO1xx6B8Sl4oIQQj1w642/AQkhwamiSJw4cCogUQE9gXgz3k8760S0BLGH0c7Hvvfm9/u9N7O3f0Y5l6Hzro4NbFVMwnFFk+81l5e1usUpH75udwcGWSe99d27L7PPdj5Q0UIbzexgd9012qgweql7Tviukb0mKmBLJy63mcvRU03poarbhkF0Tm2rSk1zwHHHINUmdflqE2U7dne4h24gpYkWddvSGeFEWzOw6xLXH58lIiIa9guyP2w5kQ+rKnZRje1im2HKIXzwsThav0UcbWjZ1tDkaN4PreWIsGBNnpqOzXjgIg/mduxu0M1aGAbQ481dvI+r4KJf1TijVh++LDlYfxv3yQYsEcuzELBLjN720JH9TBMVXbIHAF02HUOOeA5CCBh4UQZRifCphPhUBD5ljTCKDfoOFpObzPaGaPQoGYQ8B0w8f4iJwAKpW93ye1f1Kw+0kqmKjz0RSl7ucAYMLaWoQVIBOH65ddO9/9qtCyoqtlGRurWOyxnWeZxyH60Stiyby5hDADHrA1vLaWxJLzVYMyaJgm6bDrbAkg/lHPBkUJ1ysViMzfnspECf5w4Jliqeo4T7PZeyX6mbNWwYm/dOvvD0T/U3VKQmXRTApAbCZ4FRjvLADWDg+tZFu8CR0oggFt2W7Iqm4EVtfkowISzP3Pul+8UKuqqGYPq+j8YfmMi5331buvPsKyqabUu1NwzcbwOebt0gZout2RZvo1l7n7DRTH4fG+LtQD7zXdLDA4P7KMfhyQA8HJ1LzUuHCOxWZQ4oAQClkYw3bIuUG5vlP7SvPrwtVMrQ3GhmlKh/0Qt/fj/f41LAHGUY2QvQzUB6j8M/1q9N4C+nToWBiGaJoywj+v4Bdhk6myYahzQGln7n8kdPLJy59oOUzEzXNjGVuj3dRDkGRUNCdNonDWxnyx3MkkEWtneYfV2kb1I78diDwYdRXaS94ghgzTbJY8v36Vu33udSZYqXLHitzi5UmFX53dkpggsK7+/tFfW3k3c/VVEBdNWh3MROeeWI5eJfLAEoxCNqlkBM87XrIvPjzpYiJJ+MgXxKGROMSmohpSKbpuguzUBrmoHW4Qb0RmhAZPKBkoizz1FO7ld+H+r7TLq+AcGbV85fYr9+/K4qUM517IHVDSiBk5sTj78ajClJSoACzLAZUBBhO5albyZmro1vOzldi9hJTkzAVVKSeDxcuZ6Qw0T92CG4O6UuTdI5YYFjaqRbeBSJL9qLsq2lZcSJuvmPE+L49ZwV0cblPCmMFKmJpjNda/+1pDKEsTQ9iOalKYYPY/kSNv5HLItoj4Pl2KIZH8Cxk3qL0B4VJ/UjT84jc7fo+zqAvtit9PjgEu3XSRuwsODHAac+OuGfMPDzQPwD4SIcPMspB4/mH+Vwn7jx4JON5775/Ed5uSqKSwFcFq3wjy06bryxajkXuod/sFjIICZxU5Dh/g3H4of0Ew8AAA=="
+}
 }
 

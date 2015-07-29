@@ -1,11 +1,11 @@
 package scalan.examples
-package impl
 
 import scala.reflect.runtime.universe._
 import scalan._
 import scalan.monads._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait IOsAbs extends IOs with scalan.Scalan {
   self: IOsDsl =>
@@ -49,9 +49,8 @@ trait IOsAbs extends IOs with scalan.Scalan {
     override def toString = "IO"
   }
   def IO: Rep[IOCompanionAbs]
-  implicit def proxyIOCompanion(p: Rep[IOCompanion]): IOCompanion = {
+  implicit def proxyIOCompanion(p: Rep[IOCompanion]): IOCompanion =
     proxyOps[IOCompanion](p)
-  }
 
   // elem for concrete class
   class ReadFileElem(val iso: Iso[ReadFileData, ReadFile])
@@ -342,6 +341,7 @@ trait IOsExp extends IOsDsl with scalan.ScalanExp {
 object IOs_Module {
   val packageName = "scalan.examples"
   val name = "IOs"
-  val dump = "H4sIAAAAAAAAALVWTWwbRRQer+M4tqP+5AAqUkVrTEMrakdIqIdIoJA6EMnEUbYF5Fag8XpspszObmfG0ZpD78Ct4oYQ6r2HShw4IHFBSIgDJwRInDkVKqiAnkC8mf3xbuINvuDDaGf2zXvf+977nvfur6gkBTonHcwwb7pE4aZtnjekathtrqiavOoNxoxcJsN7n91766L1wthCyx1UwdwhUnlCKnS2Yxy0HI8x4ijq8RZ13bHCfUZaHSrVegct9L3B5Ca6hQoddMLxuCOIIvYmw1ISGZ0vER2QJvuK2U+6/jQGb2mQrRTIKwJTBeggxonQfo/49oR7fOIqdCyC1vU1LLApU9f3hIpDlMHd294g3i5wDAdopXMD7+MWhBi1bCUoH8HNmo+dd/CI7ICJNl8AwJKw4ZWJb/bFDqpKcvOyZNuuz8xJ4AO7zxkEzSk5zYScpianYRNBMaPvYv1yV3jBBIW/QhEh4+LZ/3AReyBtPmi8f9259siuuZa+HGgcZZPeIjh6MqfSpg5A4td7t+XDl+9cslC1h6pUbvSlEthR6XpHVNUw554ymBP2sBhBqep5pTJRNsDmQD9UHM/1MQdPEY/LUCRGHaq0sT5bjkqTw3tZ+SQ2LQR+Icn3TE6+pmk2MWO7909dfPqX9hsWsrIhKuDSbge+iJ0qZG13I8d6Pa7ADLhPYj2VF8snu4K60Nj75PkvP7/62xc7JRNuZUCGeMzUa5iNSdhmUfApEBO3XldocWpQCQ6u5SNSTUhfvf9g8NUaum4lpYoym687wEVJ/vh97bvzL1poqWeEtMXwqAfVkm1G3K7Y9LjqoSVvn4jwTXkfM/00s1vKUfpRDdPkF4F8hc7kSt4nujLrga9FEhNQC0Wy43HS2Npt/GV/8+FdrQGBlsM34Qz4h176+6djQ2XkodDSkDIj6bioRRgfISN6eXwW1dXQn+255GT9IX3zzgfKkFoIsqOj278Bcl03984ewW88wv7srVl/nPrhEwtVgMY+VS72G2tzau9/1BMyiWeXOnB3co/gwRbwt5mOV5+OnCfMI5AcGx54XytkBZVV2GNw8Mx5kNlVTtXhOpgAKfPTSTOYKPOWdvbdEqOcyMMXZ0h/ZpukQa6a9UIeiyuvC6rIPDRWEsupQSqJxShOFmllj9Ah1X8VR3ENB4WNlMNDmcydTm27OyOPcHyafTJuTucPTGi+29fOvSJ+/+g9Szdoqe+N+SDuZvh8UCRQL8VnhWw3Q/digd24e6cgcnPsZPkEwyKwo9DxCCEJMAgo6odVgF7PgW5HOgIx33r08c6Fbz/92Yz6qlYkDCaefHikR3y2DosQGj4iUkCh3bRADch/AXN4aqazCQAA"
+  val dump = "H4sIAAAAAAAAALVWTWwbRRQer+M4tqOmzQFUpIrWmIZWYEdIqEg5oJA4EMnEUbYF5FZI4/XYmTA7u5kZR2sOvQPiUnFDCPXArTeOSFwQEuLACVEkzpwKCCqgJxBvZn+8TrzBF3wY7cy+eT/f+77nvfcLKkiBLksHM8zrLlG4bpvndalqdpMrqkaveb0hI5ukv3lw/0Xx6f4HFlrqoPl9LDcl66BS+NAM/OTZJoctVMLcIVJ5Qip0qWUiNByPMeIo6vEGdd2hwl1GGi0q1VoLzXW93ugQ3Ua5FjrreNwRRBF7g2EpiYzOF4jOiCb7ktmP2v44Bm/oKhqpKq4LTBWkDzHOhvZ7xLdH3OMjV6EzUWptX6cFNkXq+p5QcYgiuNv3evF2jmM4QMutA3yEGxBi0LCVoHwANys+dt7GA7IDJtp8DhKWhPWvj3yzz7dQWZJDAGjb9Zk5CXyEEHTgeZNEfYxPPcGnrvGp2URQzOg7WL/cFV4wQuEvl0co8MHFs//hIvZAmrxXe++Wc/ORXXEtfTnQqRRNhfPg6MkMNphWAI5f792RD1+5e81C5Q4qU7nelUpgR6VbHqFVwZx7yuScAIjFALpVzeqWibIONscoUXI818ccPEVQLkKfGHWo0sb6bDHqTgb0ReWT2DQX+Lmk3osZ9RrebGDGdh+cf+7pn5tvWsiaDFEClzYQX8ROFbK225FjvS4pMAPsk1hPZcXyya6gLnD7iLzw5ec3fvtip2DCLfdIHw+Zeh2zIQmZFgUfJ2LiVqsKzY8NSsHxtXhKqQnoKw9+7X21im5ZSauiymZjB7goyB++r3x35SULLXSMlrYYHnSgW7LJiNsWGx5XHbTgHRERvikeYaafprKlGJUf9TANfh7AV+hipup9ojuzZhSWiwGohCLZ8Tipbe3W/rK/+fCe1oBAi+GbcAz8Q6/9/eOZvjLyUGihT5lRddzUPEyQEBG9PD4N6nLoz/Zccq76kL51931lQM0Fk9Oj3T0Aua6Ze5dOwTeeYn92Vq0/zt//xEIlgLFLlYv92uqM2vsf9YRM4ZNLFbA7t0dwbwvw20jHq45HzhPmEUCODY+9r+QmBTWpsMfg4JkrILMbnKqTfTABUuYXEjKYKLO2dvrdAqOcyJMXp0h/Kk3SSa6Y9WoWistvCKrILDCWEsuxQaqI+SjOZKalPUL7VP9VnIY1HOTWUw5PVDJzOZXt9pQ6wvFp9sm4uZA9MIF8d25eflX8/tG7liZooesNeS9mM3xBKBKol+Oz3CSbgb1YYDdm7ziJzBpbk3iCYR7QUWgpypAEGAQU8WEFUq9mpG5HOgIx33708c7Vbz/7yYz6slYkDCaefHukR/xkH+YhNHxHpBIFummBmiT/BYrf/RXXCQAA"
+}
 }
 

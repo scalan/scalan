@@ -1,11 +1,11 @@
 package scalan.graphs
-package impl
 
 import scalan.collections.CollectionsDsl
 import scalan.{Scalan, ScalanExp, ScalanSeq}
 import scalan.ScalanCommunityDsl
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait VerticesAbs extends Vertices with scalan.Scalan {
   self: GraphsDsl =>
@@ -50,9 +50,8 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     override def toString = "Vertex"
   }
   def Vertex: Rep[VertexCompanionAbs]
-  implicit def proxyVertexCompanion(p: Rep[VertexCompanion]): VertexCompanion = {
+  implicit def proxyVertexCompanion(p: Rep[VertexCompanion]): VertexCompanion =
     proxyOps[VertexCompanion](p)
-  }
 
   // elem for concrete class
   class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit eV: Elem[V], eE: Elem[E])
@@ -317,6 +316,10 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
 object Vertices_Module {
   val packageName = "scalan.graphs"
   val name = "Vertices"
-  val dump = "H4sIAAAAAAAAALVWTWwbRRSe3cR1bIc07aVqJXAJpgjU2mkE6iESKLhOqGRiK9tGyK1ajddjd8rs7HR2HK059A7cKm4Iod57qMSBAxIXhIQ4cEKAxJlTKYIK6KmImdn/xJsGED6MPDNv38/3fe/t3n0ACh4HpzwbEkjrDhKwbun/a56oWS0qsJi86Q7GBJ1Hw3uf3rt2xnx1bIL5NihBaiNPuNwT4Nm2dtCwXUKQLbBLG9hxxgL2CWq0sSdW22C27w4mN8EtYLTBou1SmyOBrCaBnoe88HwOqYA43pf0ftJhSQzaUEk2Ukle5BALmZ2MsRjYbyFmTahLJ44AC2FqHabSkjZF7DCXiyhEUbq77g6i7SyF8gAcbd+AO7AhQ4waluCYjuSTFQbtt+EIbUoTZT4rE/YQGV6cML2faYOyh26e98gFhxF94jOJ7orOoJ6AU4/BqStwahbiGBL8DlSXXe76ExD8jBkAtIvTT3AReUAtOqi9d8W+/MiqOKZ62Fd5FHV5h6Sjag7TmgcJ4ldbt72HG3fOmaDcA2XsrfU9waEt0nyHUFUgpa7QOcfoQT6SVC3lUaWjrEmbXXoo2a7DIJWeQhznJUkE21goY3U2H1KTg3tRMBSZGj4z4npP5tSrRdOEhHTvHz/z/M+tt0xgZkOUpEur5TMeORXg0DbiAvmhc7UeFsDYThBW25beqqXkJ2txn1xiVF64/8vgy2VwxYyxDEMfjD7pouD98F3l2xdfM8FcTyt9ncBRT8LptQhyOrzpUtEDc+4O4sFNcQcS9W8qncUBGsIxESHIaXRmJDoCnMztSYYUdKs+UyqOAKgEKt50Kaqtd2t/Wl9/cFeJlIP54CZo0r/wucc/LgyF1q8AJh5E4M7Izo6xeC6PWoa6HDtyjuygV7747NKvn28WNLtHw3K2IRmjoKvDapLKVEBjWUa6QEXAno53Ii5DLVUBCiMO2fUoL7O78W9FUQ4qt1wHHVl6iK/eeV9o+g0/O4U6/Ruy81f1c8/so4RoGv7RWzZ/P/79xyYoScL7WDiQ1ZYP2Mb/Y2uCLFALzfBNoBW8kr0sWkHDTQcvoUNythiaNtPZVhMSjqU8nzB2kWmi7SjkrOqTqVym1bDXQWs/B3vZz9ZWjTX9dL6mJYa3L596g//24bumwrnQd8d0EJEiX6jSmXg9OjOypEgSIIdOREICTlaqnczF3rRTdb28i8jSFsJDrF5I2fP/MDPTPGvTs1MjV5TY1qGDyWRlauwDyOdwrnpYxk01FSAL1j9AUa2XEpvQcE5Fwao3wVOhCoIZE5bOwVKOOKyw4WTX33r00eZL33zyk553ZdW6ctbS+GMnPed20behY8lvl1S6Us2qmXWqfwO55Vz/KgoAAA=="
+  val dump = "H4sIAAAAAAAAALVWTWwbRRSe3cRxbIck9IJaCVyCaQUCO0SgIuWAguOESia2sm2E3AppvB47E2ZnN7PjyObQOyAuFTeEUA/ceuOIxAUhIQ6cEEXizKlQQQXtiYo3sz/eTeyQtsKH0c7M2/fzfd9765u/o4wv0DnfxgzzskMkLlv6ec2XJavGJZXDt91On5F10l3fu/W6+GL3YxMttNDMLvbXfdZCueChNvDiZ4vs11EOc5v40hW+RM/WdYSK7TJGbEldXqGO05e4zUilTn25WkfTbbcz3EfXkFFHi7bLbUEksaoM+z7xw/NZojKi8T6n98OGN4rBK6qKSqKKSwJTCelDjMXAfpt41pC7fOhINB+m1vBUWmCTpY7nChmFyIK7XbcTbac5hgN0qr6HD3AFQvQqlhSU9+DNgoft93CPbIGJMp+GhH3CupeGnt5P1VHeJ/sA0EXHY/pk4CGEgIEVnUR5hE85xqes8ClZRFDM6PtYXTaFOxii4GdMITTwwMVL/+Ei8kBqvFP68Kp95b5VcEz18kClktUVzoCj4gQ1aCoAx++2r/t3N29cMFG+hfLUX2v7UmBbJikP0Spgzl2pc44BxKIHbC1NYktHWQObQ5LI2a7jYQ6eQijngCdGbSqVsTqbC9mZAH1WeiQyNQaeEdd7dkK9WjdVzFjz9umXn/+t9o6JzHSIHLi0QPgicirRzA4RkgxC52pdkMjYGSGstjW9VUtuMFqzx+QSo3L+9p3Ot8voqhljGYY+GX3gIuP//FPhxxfeMNFsS4t9g+FeC+D0a4w4DVF1uWyhWfeAiOAme4CZehpLZ7ZDurjPZAhyEp0pQEeisxPb0iMKulXdAkYEQCFQ8ZbLSWmjWbpnff/JTSVSgeaCm6BPH9AL//wy35VavxKZtBOBOwXNHWPx3CRqPdIU1IFRckBe++ary398vZXR7J4Ky9nBrE+Cxg6rGVWmAhrLEOkilwF7Ot6ZuAy1FCXK9AT2dqO8zObmo4oiH1RuuQ55cukufffGR1LTbwzSg6jR3oPOX9XvPXOMEqKB+Hdr2fzr9K3PTZQDwttUOtgrLZ+wjf/H1kRpoOar4cdAK3glfZm1goYbD96IDuBsMTStJrMtjkh4KuH5jHGITJPsRCGnVZ+M5TKphqMOasc5OMp+urZirOmnJ2saMLx+5dxb4s9PPzAVzpm22+ediBT4poIz+WZ0ZqRJARKwwE5EwgictFQbqYujaSfqevUQkbltQrtUfZDS548xM5M8a9NXxkYuKLFtYIey4crY2CeQz8JE9XgpN8VEgDRYD4GiWi+PbELDWRWFqt5ET4QqCGZMWLpASxPEYYUNB11/7f5nWy/+8OWvet7lVevCrOXx/53knDtE36aOBX9fEumCmlUz61T/BZbqux1OCgAA"
+}
 }
 
+trait VerticesDsl extends impl.VerticesAbs {self: GraphsDsl =>}
+trait VerticesDslSeq extends impl.VerticesSeq {self: GraphsDslSeq =>}
+trait VerticesDslExp extends impl.VerticesExp {self: GraphsDslExp =>}

@@ -20,12 +20,3 @@ trait AbstractStrings extends Base with TypeWrappers { self: AbstractStringsDsl 
   abstract class CString(val wrappedValueOfBaseType: Rep[String]) extends AString
   trait CStringCompanion
 }
-
-trait AbstractStringsDsl extends impl.AbstractStringsAbs {
-}
-
-trait AbstractStringsDslSeq extends impl.AbstractStringsSeq {
-}
-
-trait AbstractStringsDslExp extends impl.AbstractStringsExp {
-}

@@ -29,7 +29,6 @@ trait MetaTests { self: MetaTestsDsl =>
     def test: RMetaTest[T] = ???
     def give: Rep[T] = ???
   }
-  trait MT1Companion
 
   abstract class MT2[T, R](val indices: Rep[T], val values: Rep[R], val size: Rep[Int])
                           (implicit val eT: Elem[T], implicit val eR: Elem[R]) extends MetaTest[(T, R)] {
@@ -38,14 +37,6 @@ trait MetaTests { self: MetaTestsDsl =>
     def give: Rep[(T, R)] = ???
     lazy val elem = element[(T, R)]
   }
-  trait MT2Companion
 }
 
-trait MetaTestsDsl extends impl.MetaTestsAbs {
-}
-
-trait MetaTestsDslSeq extends impl.MetaTestsSeq {
-}
-
-trait MetaTestsDslExp extends impl.MetaTestsExp {
-}
+trait MetaTestsDsl extends impl.MetaTestsAbs

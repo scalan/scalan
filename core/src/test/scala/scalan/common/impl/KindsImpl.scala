@@ -1,9 +1,9 @@
 package scalan.common
-package impl
 
 import scalan._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait KindsAbs extends Kinds with scalan.Scalan {
   self: KindsDsl =>
@@ -47,9 +47,8 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     override def toString = "Kind"
   }
   def Kind: Rep[KindCompanionAbs]
-  implicit def proxyKindCompanion(p: Rep[KindCompanion]): KindCompanion = {
+  implicit def proxyKindCompanion(p: Rep[KindCompanion]): KindCompanion =
     proxyOps[KindCompanion](p)
-  }
 
   // elem for concrete class
   class ReturnElem[F[_], A](val iso: Iso[ReturnData[F, A], Return[F, A]])(implicit eA: Elem[A], cF: Cont[F])
@@ -325,6 +324,10 @@ trait KindsExp extends KindsDsl with scalan.ScalanExp {
 object Kinds_Module {
   val packageName = "scalan.common"
   val name = "Kinds"
-  val dump = "H4sIAAAAAAAAALWWz28bRRTHxxsnju3QFDigUpWUyAQFUTvi0kOkIse1oapJomwPyK2IxrtjM2V3djs7jtYcegduEReEEOq9h0oc+AuQEAdOFSBx4sCpgERV6AnEm/H+tL2uW1QfRp4f+96bz3vfmbn9O1r0ONrwDGxhVrWJwFVd/a97oqI3maBi+I5jDixykfTufH3n8Jx2YaChlTYqYmYQTzjcE+jltjJQMxzLIoagDqtR2x4I3LVIrU09sd1G+a5jDm+gmyjXRicNhxmcCKI3LOx5xAvGl4l0SKN+UfWHe27sg9VkkLVEkFc4pgKiAx8nR+sPiKsPmcOGtkAngtD2XBkWrClQ23W4CF0UwNz7jhl28wzDAHqufR0f4Rq46Nd0wSnrw5dlFxsf4D7ZhSVyeR4C9ojVuzJ0VX+hjUoeuXHRsy7ZrqVGfBfovqEiqMZwqhGcqoRT0Qmn2KIfYjm5zx1/iEa/3AJCysTrjzARWiBNZlY+vmZcfaiXbU1+7Ms4Cmp7S2BoLSPTKg8A8duDY+/+W7fOa6jUQSXq1bue4NgQyXwHqMqYMUeomCN6mPchVetZqVJe6rBmrB6KhmO7mIGlgOMKJMmiBhVysRxbCVKTwb0gXBIuzfluLtrv2Yz9qqJpYMvav3fq3Cu/Nd/VkJZ2UQSTetN3eWhUoPxlyszAtGxXBcq1Yr6yW1dd2RT9uC3MiCRi8uq9P8xvttA1LSIZOJ4veWBi0fvph/LdzTc1tNxRdd6ycL8DML2mRew93nCY6KBl54jw0UzhCFvy39RkFkzSwwNLBIiTbBaAjUBnMxXpEglu23dlDYcAyqMa3nUYqbT2K3/r3316W5YoRyujmZFE/6Xn//n5RE+o6gWiOGS7ALIeg59NuzQyqTs2eXb9Pn3v1idCcc35aXHvda+DoLbVdy/NQBweMn91trQHp378UkNFINmlwsZuZWtOdTzFikcRibhZA3yrB0QMOGskva3FJftCAuiLuTBZapFAGqmHpPOygGbAzzBgtCIDsvamSieZPYGWRvEqA1Hdn8lKikJwfHXjbf7n5x9pEtNi1xkwM2QK14wgvtgJx3JppsAQc2yHDGM2MrhEsBdSM4fj+05PT2Ap59L7nuMU2cmo64mUoTHis9Qyh199wm+Gm94UNxwElJmn1oAZdy999vzqmcNf1FG7ZDo2pirRpyFtHMSo0nI6OO/icP43tyS9DdVuZsnlmR3w8YRi0WeJJUn2idS282gDj6+2vNxuUmuT5ZyhA9k0Zgshkb30xGSWEj42UTru4gGhPSofOo9dzdNvh6Aa5i+Jy9NLInwPPC1806M/TtuAhYsKBMQZiA8uFju4czZAk+sZmtSD6wTutJsPv9h97fuvflW6LMmLCa5oFr2Q4xPTHztRlpVreO8mQgUq8qZSYf4HSwSuDl4MAAA="
+  val dump = "H4sIAAAAAAAAALWWz28bRRTHZzdOHNuhKXBApSopkQkKAjviUqRIIMexoapJomwPlVtRjddjZ8Lu7GZ2HK059A6IS8QFIYR64NYbfwMS4sCpokicOHAqIFEVeqLizXh3vWt7Xbeoexjt/Nj33nze+87srT/QvMfRmmdiC7OSTQQuGeq94omiUWOCiv77TrtnkW3S2T688xb/5uAzHS030cIB9rY9q4lyg5ea70bvBjlqoBxmJvGEwz2BXm4oD2XTsSxiCuqwMrXtnsAti5Qb1BObDZRpOe3+EbqBtAY6bTrM5EQQo2phzyNeML5IZEQ06udUv7/rDn2wstxFObaLyxxTAeGDj9OD9fvENfrMYX1boFNBaLuuDAvWZKntOlyELrJg7sBph90MwzCAnmsc4mNcBhfdsiE4ZV34suBi80PcJTuwRC7PQMAesTqX+67qzzVQ3iNHAOii7VpqxHcRQpCBN1UQpSGfUsSnJPkUDcIptuhHWE7uccfvo8GjzSHku2Di9UeYCC2QGmsXP7lmXn1gFGxdfuzLULJqhwtgaCWlGlQqgOP3+yfevXdvXtBRvony1Ku0PMGxKeIpD2gVMGOOUDFHADHvQrZW07KlvFRgzUhJ5EzHdjEDSwHKJciTRU0q5GI5thRkJwV9VrgkXKr5rhbt93zKflXdVLFl7d0988Yrv9eu6EhPusiBSQMKn4dGBcpcoqwdmJbtskBafchXdiuqK5ucP2yzUyKJmLx698/2dxvomh6RDBzPljwwMe/9/FPh9vo7OlpsqlKvW7jbBJhezSL2Lq86TDTRonNM+GAme4wt+TYxmdk26eCeJQLEcTZzwEag86midIkEt6kEoIUACoMa3nEYKdb3iv8YP3x+S5YoR0uDmYFKH9IL//5yqiNU9QJRHLKdA2WPwE+nnR+YNBybPLt6j35w81OhuGp+Ut+7rUMQ1Kb67qUpiMNz5u/mhn7/zJ2vdZQDki0qbOwWN2ZUx1OseBSRGDYrgG95n4geZ9W4t5Vhyb4QA/qiFiZLLRJIJ5WQdEYW0BT4KQbMemRA1t5E6cSzJ9DCIF5lIKr7c2lJUQhOrq69x//68mNdYppvOT3WDpnCTSOIL7bCMS3JFBhiju2Q4ZCNDC4W7NuJmeuj+05Oj2EpaMl9z3CKbKXU9VjK0AjxaWqZwa8x5jfFTWeCGw4CSs1TvcfM2xe/eH753PVf1VG70HZsTFWiz0LaOIhRpeVscN4Nw/nf3OL01lS7niaXZ7bAxxOKxZgmljjZJ1Lb1qMNPL7aMnK7ca2Nl3OKDmRTnS6EWPaSE+NZivlYR8m4c/uEdqj80Xnsap58OwTVMHtJXJpcEuH/wNPCNzn6k6QNWDivQECcgfjgYrGDO2cNNLmaokkjuE7gTrvx4Kud13789jely7y8mOCKZtFP8vDE9EdOlEXlGn55Y6ECFXlTqTD/A54RDxGCDAAA"
+}
 }
 
+trait KindsDsl extends impl.KindsAbs {self: KindsDsl =>}
+trait KindsDslSeq extends impl.KindsSeq {self: KindsDslSeq =>}
+trait KindsDslExp extends impl.KindsExp {self: KindsDslExp =>}

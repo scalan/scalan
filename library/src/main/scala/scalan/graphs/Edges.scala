@@ -72,7 +72,3 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
   trait IncEdgeCompanion extends ConcreteClass2[Edge]
 
 }
-
-trait EdgesDsl extends impl.EdgesAbs { self: GraphsDsl => }
-trait EdgesDslSeq extends impl.EdgesSeq { self: GraphsDslSeq => }
-trait EdgesDslExp extends impl.EdgesExp { self: GraphsDslExp => }

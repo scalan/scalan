@@ -1,10 +1,10 @@
 package scalan.collections
-package impl
 
 import scalan._
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait BitSetsAbs extends BitSets with scalan.Scalan {
   self: ScalanCommunityDsl =>
@@ -47,9 +47,8 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
     override def toString = "BitSet"
   }
   def BitSet: Rep[BitSetCompanionAbs]
-  implicit def proxyBitSetCompanion(p: Rep[BitSetCompanion]): BitSetCompanion = {
+  implicit def proxyBitSetCompanion(p: Rep[BitSetCompanion]): BitSetCompanion =
     proxyOps[BitSetCompanion](p)
-  }
 
   // elem for concrete class
   class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])
@@ -298,6 +297,10 @@ trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
 object BitSets_Module {
   val packageName = "scalan.collections"
   val name = "BitSets"
-  val dump = "H4sIAAAAAAAAALVVz2sUSRSu6SROZiZonMuSXNQ4Ki5mJgiLh8BKnEwWYUxCWkVGUSo9NWO51VVtV02Y8eAf4N4WryLePQh78CB4EWHZw54WFTx78gci/jjtsq+qa7qng61e7EPTVf36ve993/eq775GEzJEB6WHGeZVnyhcdc3zklQVt8EVVYNTot1jZJl07t2/d2ne+bnnoKkmKmDuEalEKBXa1zQJap5gjHiKCl6jvt9TeJORWpNKtdhE45uiPbiKrqNcE017gnshUcStMywlkXZ/kuiCNF4XzHqwFiQ1eE2DrI2APB1iqgAd1JiO4jdI4A644ANfoZ0W2lqgYUFMnvqBCNWwRB7SXRbt4XKcY9hA5eYVvIVrUKJbc1VIeRe+LAXY+xV3ySqE6PBxACwJ65weBGY91kRFSa4uS3bSD5jZ6QfA7lGDoJqQU43JqWpyKi4JKWb0GtYv10PRH6Doyo0hZFIc+UqKYQbS4O3KjQve+U9uyXf0x32NI2/a2wGJ9mQobXQAEv/c+F2+++XOMQcVW6hI5dKmVCH21KjelqoS5lwogzlmD4ddkGouSypTZQlitvmh4Ak/wBwyWR6nQCRGPap0sN6bstJk8J5XARmG5vpBLu53b0a/xjR1zNj6y5n5A68a5xzkpEsUIKXb6AfhMKlCO05QYFoZRvWtYMnNLhM3fOjlm/bjBXTBiWmyWb9NGUgxIZ89Kf1z+LiDJlvGxCsMd1vAlGww4q+FdcFVC02KLRJGb/JbmOmnzyqVb5MO7jFl+RttfAwaV2hv5rgFRLOy2A+0QYcElCKDrgpOKivrlY/uXzfvav+FaCp6E83ff/TYv893dpSxpgIPUCUNpF0KjcHYWjbsTrEe+z2maX+WoAFZD6kPp8cW+enRgzNvH65OGE3LttOzmPVINMu20aRpjWWig5mExvMnhGAE80Tg0bvutRh15Aqf7J57Ry/e+U0ZWXP99MGxtnkFwC+a72a+oPDwAPvQWnDezzy97aACCAnU+DioLHzj5H3HaUKx4ZPbLDD2g2ZKSxSNRX206mxy7JTNI5zE6fAkKmJ3RPrDKO2DwgahHaoPu/T+5+fRCpUAOGiTZrSxKxN+euRnt9WppTfz2jomGE7AspU6ObClhRKiuQwbuFYEcML1T7dWf/z7jxfGwEUtJ8wVV6mflDVumpFylA968Xsc/oTwLxpBDQOnlTa4/wdfJkfo+gcAAA=="
+  val dump = "H4sIAAAAAAAAALVVz28bRRR+3vxwbEdN6wtKLi3BLSoqdoSEipQDSh0XIZkkyhaETFVpsh47E2ZnNjvjyObQP6CIS8UVoR649cYRiQtCQhw4IYrEuacCQhXQExVvZse73qpLe2EPq9nZt+997/u+N3v3N1hQMVxQAeFENEOqSdO36y2lG35HaKYn78j+iNNtOtg+uvdG/MXhJx6s9GDxkKhtxXtQSRadcZSufXrchQoRAVVaxkrDi11boRVIzmmgmRQtFoYjTQ44bXWZ0ptdmD+Q/ckx3IRSF04HUgQx1dRvc6IUVW5/iRpELH2u2OfJbpTVEC3TRWumi2sxYRrhY43TSfw+jfyJkGISajjloO1GBhbGlFkYyVhPS5Qx3aHsTx/nBcENqHePyAlpYYlhy9cxE0P8shaR4EMypDsYYsLnEbCifHBtEtnnuS5UFT1Ggt4OI253xhEAoAKvWRDNjJ9myk/T8NPwacwIZx8R83IvluMJJFdpDmAcYYpLz0gxzUA7ot+4dT344JFfCz3z8dhAKdsOFzHR2QI3WCmQx+/2b6uHb9257EG1B1Wmtg6UjkmgZyV3bNWIEFJbzCmBJB6iWutFatkqWxjzhCUqgQwjIjCTo3IZdeIsYNoEm71lp04B9WUd0WloaRyV0n7PFfRrfdMmnO89WH31/K+d9z3w8iUqmNJH48fTpBoWrzBkWltGza3iyC0ukzb88oPf+99uwHUvpcllfT5lMMWC+vmn2o8X3/RgqWd9fJWTYQ+ZUh1Ow924LYXuwZI8oXHypnxCuFk9Valynw7IiGvH32zjc9i4hnOFExdRw8qmdXdpSkAtMeiOFLRxda/xt//9p3eN/2JYTt4kI/iYXf7nl1MDba2p0QNMKwtpRcMcTq5jw+1U26nfU5peKhI0onsxC/EAOaGvf/PVu398vbNgNa27Tt8jfESTcXaNZk0bLAsDwhU2Xr4iJadEZALP3k2v1aQjX4b0zPpDduPOx9rKWhrnz47dgyMEv2m/W/0Phadn2F+9De/P1Xufe1BBIZGakESNjeecvP9xmiA1fHZbQ8ZeMEwZiZKxaM9WXcuOnbpd4mGcD8+iEnZnpL8IeR9U9ikbMHPY5fefPo9OqAzABZe0oI2VQvj5kV97ok4rv1k21rHBeALWndTZga0clBjWC2zgOxHQCTcffbbzyg9f3rcGrho5ca6Ezv2nnHHzjNSTfNhLOBL4M8Tf0QxqHDijtMX9L3i6bOAeCAAA"
+}
 }
 
+trait BitSetsDsl extends impl.BitSetsAbs {self: ScalanCommunityDsl =>}
+trait BitSetsDslSeq extends impl.BitSetsSeq {self: ScalanCommunityDslSeq =>}
+trait BitSetsDslExp extends impl.BitSetsExp {self: ScalanCommunityDslExp =>}

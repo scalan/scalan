@@ -1,11 +1,11 @@
 package scalan.effects
-package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
 import scalan.monads.{MonadsDslExp, MonadsDslSeq, MonadsDsl}
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait FreeStatesAbs extends FreeStates with scalan.Scalan {
   self: MonadsDsl =>
@@ -50,9 +50,8 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
     override def toString = "StateF"
   }
   def StateF: Rep[StateFCompanionAbs]
-  implicit def proxyStateFCompanion(p: Rep[StateFCompanion]): StateFCompanion = {
+  implicit def proxyStateFCompanion(p: Rep[StateFCompanion]): StateFCompanion =
     proxyOps[StateFCompanion](p)
-  }
 
   // elem for concrete class
   class StateGetElem[S, A](val iso: Iso[StateGetData[S, A], StateGet[S, A]])(implicit eS: Elem[S], eA: Elem[A])
@@ -361,6 +360,7 @@ trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
 object FreeStates_Module {
   val packageName = "scalan.effects"
   val name = "FreeStates"
-  val dump = "H4sIAAAAAAAAANVWzW8bRRSf3Xw4tqOkhQMqVZsSmSIqYkdceogEMqldKrlJlO0BuRXVeD02U3ZntjPjaM2h4grcKi4IIdR7D5U48BcgIQ6cKkDixIFTAYkK6AnEm9kP7ybeENRywIeRZ/bN+/j9fu/t3v0ZzUmBzkoXe5jVfaJw3TH/m1LVnBZTVI0v8/7IIxfI4N7n966v2a+MbLTYQWXMXCIVF1Kh5zrGQcPlnkdcRTlrUN8fKdzzSKNDpdrooNke749volvI6qBjLmeuIIo4mx6Wksj4fIHogDTdl81+vB1MYrCGTrKRSfKKwFRBdhDjWGS/SwJnzDgb+wotxaltBzotsClRP+BCJSFK4O4t3k+2swzDAXqqcwPv4QaEGDYcJSgbws1qgN238ZBsgYk2n4WEJfEGV8aB2c90UEWSmxekd8kPPHMSBoDuyyaD+gScegpOXYNTc4ig2KPvYP1wR/BwjKKfNYOQcfHSP7hIPJAW69fev+ZefeRUfVtfDnUeJVPePDhaKWDa8AAgfrl7Wz68eOe8jSpdVKGy2ZNKYFdl+Y6hqmLGuDI5p+hhMQSqVouoMlGaYLNPD2WX+wFm4CnGcRFI8qhLlTbWZ4sxNQW4l1RAElMrDKy03jMF9RrRbGLP23lwYu35n1pv2MjOhyiDS6cVBiJxqtC8A+WSduxcr8sKWc4EYb1tmq1eyuFkLR2SS4rKCw9+6X+xjq7ZKZZx6KPRBy7m5HffVO+/+KqNFrpG6W0PD7sAp2x5xN8Wm5ypLlrge0RET0p72NP/ptJZ6pMBHnkqBjmLzgygo9CZwp4MiIZuIwy0ihMAqpGKtzgjtfZO7Q/nqw/vapEKtBg9iZr0L3r+z++XBsroFxAdJNjOQGOnUJwuYjYg7RFz71/66OnlU9d/MLzO97mPqRHXyQ6aE9DWppCTMbT/isZKlKvDfXJ89SF9884HyhBmhfm5sd27Ab26Ye6dPoS7ZH793l23fzvx7ac2KgNFPap8HNTWj9h4/2Ezobzel6Mm2MwGyeBUSpcV4O64Mb5IVM58ZQL1Mxnnz1qJVoyRQjZxkqizWr9TGy8KXeSgeZiDgxwrtJBkbFykajtVrDaA6vbVs6+LXz9+z9ZwzvX4iPUT7OFNp0ioXkvOrDz2gDUW2E+wnqCTV2Qr96C5v/Cqla/ssQbVAVrQPlQtOaUhi0k5cB0fcv2wpM6Zde3x9bgz+r/pETLO6vGgJI6klUxq81OxLO8SOqD6q+KJ6SnLQo7FPDkpQ9PojIqZvICfGBR6fXdiExtW2oIQEwm+ZZbixieDAUxzGZcg0GrBQHDiWQoD/dajT7bOff3Zj+YVVNFTGV58LP3ynIyBcF8XlC9zhvsSPiQzGYNk9Jw22f4NOWuVArcLAAA="
+  val dump = "H4sIAAAAAAAAANVWz28bRRSe3SR2bEdJCwdUqjYlMq2oqB1xKVIOyCR2qeQmUbYH5FZU4/XY2bA7s5kZR2sOFVdAXCouCCHUA7fe+BuQEAdOFUXixIFTAYkK6AnEm9kf3k28JqjlwB5GO7tv3o/v+97bvfczmhMcnRc2djGteUTimqXvG0JWrSaVjhxdY72hSzZIf2Pvwav8890PTbTUQYVdLDaE20Gl8KYZ+Mm9RfbbqISpTYRkXEj0QltHqNvMdYktHUbrjucNJe66pN52hFxro9ku64320W1ktNEJm1GbE0msdRcLQUT0fJ6ojJxkX9L70ZY/jkHrqop6qorrHDsS0ocYJ0L7HeJbI8royJNoMUpty1dpgU3R8XzGZRyiCO52WS/ezlIMD9Az7T18gOsQYlC3JHfoAE5WfGy/jQdkE0yU+SwkLIjbvz7y9X6mjcqC7ANAVz3f1U8CHyEEDLyik6iN8akl+NQUPlWLcAe7zjtYvdzmLBih8DJmEAp8cPHyP7iIPZAm7VXfv2nfeGxVPFMdDlQqRV1hARwt56hBUwE4frVzRzy6cveyicodVHZEoyskx7ZMUx6hVcGUMqlzTgDEfABsreSxpaM0wOaQJEo283xMwVME5QLw5Dq2I5WxerYQsZMDfVH6JDY1At9I6j2XU6/WzTp23e2Hpy69+FPzTROZ2RAlcGmB8HnsVKKCBeWSVuRcrUsSGdYYYbVt6K1aSsF4LU7JJUHlwsNfel+uoptmgmUU+nj0gYs58d23lfsvvWai+Y4We8vFgw7AKZou8bb4OqOyg+bZAeHhm+IBdtXdRDqLPdLHQ1dGIKfRmQF0JDqX25Y+UdCt6RYwYgAqoYo3GSXV1nb1D+vrj+4pkXK0EL4J+/Qv5/Kf3y/2pdYvINqPsZ2B3k6gOJvHrE9aQ2rfv/rxs0tnbv2geS30mIcdLa7TbTTHobN1IacjaP8VjeUwV4t55OTKI+etux9ITZgRZEfHVncPenVNnzs7hbt4hP3eWTV/O/XgMxOVgKKuIz3sV1eP2Xj/YTOhrN6XwiZYTwdJ4VRMlmXg7qQ2vkJkxnx5DPVzKefPG7FWtJFEJrHiqLNKvxMbLwyd56AxzcFRjiWajzPWLhK1nclXG0B158b5N/ivn7xnKjjnumxIezH28LGTJJCvx8+MLPaANebYi7Eeo5NVZDPzonG48IqRreyJBtURWtAhVA0xoSHzSTlyHE85Pi2pi3q99OR63B7+3/QIGaf1eFQSx9JKKrXCRCxLO8TpO+qv4qnpKc1ChsUsOQlDk+gMixl/gJ8aFGp9d2wTGZZbnBAdCf5lFqPGJ/0+THMRlcDRSs5AsKJZCgP99uNPNy9+88WP+hNUVlMZPnw0+fkcj4HgUBeUrjGKe+pnO5UxSEbNaZ3t389wHdPbCwAA"
+}
 }
 

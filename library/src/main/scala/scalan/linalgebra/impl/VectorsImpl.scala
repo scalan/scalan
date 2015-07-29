@@ -1,11 +1,11 @@
 package scalan.linalgebra
-package impl
 
 import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait VectorsAbs extends Vectors with scalan.Scalan {
   self: ScalanCommunityDsl =>
@@ -49,9 +49,8 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     override def toString = "AbstractVector"
   }
   def AbstractVector: Rep[AbstractVectorCompanionAbs]
-  implicit def proxyAbstractVectorCompanion(p: Rep[AbstractVectorCompanion]): AbstractVectorCompanion = {
+  implicit def proxyAbstractVectorCompanion(p: Rep[AbstractVectorCompanion]): AbstractVectorCompanion =
     proxyOps[AbstractVectorCompanion](p)
-  }
 
   // elem for concrete class
   class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit eT: Elem[T])
@@ -1531,6 +1530,7 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
 object Vectors_Module {
   val packageName = "scalan.linalgebra"
   val name = "Vectors"
-  val dump = "H4sIAAAAAAAAANWXTWwbRRTHx5s4jj8a2ogClYgowbSionaKQD1EAoLj0EgmibJuhdyqaLweu1NmZ7ez48jmUHHk41ZxQwj13kMFBw6VuCAkxIETKkicORUQVC0VBxBvZj+8TmzHEVAVH0be3bfvvfm9/5uZvfYzSnoCHfEszDAv2ETigqn/L3kyb5a5pLL7mtNoM7JMmtc/u/7GcePFtoFyFZTG3CKedIQn0ZMV7aBoOYwRS1KHF6lttyWuM1KsUE8uVtBk3Wl0L6HLKFFB+y2HW4JIYpYY9jziBfeniQpIo+u0vu6uu70YvKiSLMaSrApMJWQHMfb79pvENbvc4V1bopkgtXVXpQU2KWq7jpBhiBS4u+A0wstJjuEGmq1cxFu4CCFaRVMKylvwZtbF1pu4RdbARJlPQsIeYc1q19XXExWU8cilZY+t2i7Tdzou0H1OZ1DowSlEcAoKTt4kgmJG38Lq4YZwOl3k/xITCGkXz+7iIvRAyryRf++cdfaembUN9XJH5ZHS05sCR08MqbSuA0D8avOKd/vVqycNlKmhDPWW6p4U2JLxegeosphzR+qcI3pYtKBU88NKpaMsgc02PaQtx3YxB08BxxwUiVGLSmWs7uWC0gzhnpIuCU0THTcRzffwkPlq0ZQwYxu3Dh1/+qfy6wYy+kOkwaVZ7rgidApaCmmcgSIEIKb0+JBEiaomrYZ0pzemRiQR4Th665fGlwvonBFBDGKOVzdwkfS+v5n99pmXDDRd0xJfYbhVA45emRF7XZQcLmto2tkiwn+S2sJM/RtYx1SDNHGbyYBuHMsEYJHo8NBmdIlitthxlXxDAFlfvmsOJ/mVjfzv5tcfXFPqFCjnP/G78y968s8fZppSC1eiJJXE9kK+E9DV/cQzpagdxipFryAZP6rp2OTA/G16/ur7UqNPdPpbf71+Efwv6vceH1GFcAm6W1sw7hz67mMDpQF2nUobu/mFMXvnP+wH1M9nphQsv1o9J7Y97Bd5jGRo8Wi/RSmeawx6KhrmoJgPLxPukQFvzPUWqIOxTB5LhPrRRhIZpBomMKk0vWvJJcrGYmovUTvNDSukxnbl7JFT4rcP3zUU2mTdafNGWAfYuCTpyFfCe4n+OgB3LLAdcu/Nb1uG2iCbGEl+zOVlBzi0DdwM7IQ1IpxV3qCgwr30k0BPDQe1IagNm/UWeeGLG6d//XwtqZfQ2WDpOINZm/hbZ8Cmx0k1d2IBUljlMj6hwfnvC/LXHv+l5WBwpClGeEte2BlCDacHoz+qx2MPQIcdNEF797vFcvGg8R5T48sPhP5zof73upuMWO9dUm27jDx/44/z77x9ytWbx44DQ0w7u+5Mg1JXg/U/FeMjcV2cuF9q3NcXdXw5xiY8NRBhepPQJlXH7X8u2TiuEVXLqu18BduUdccu2bBqjCqhD2Tn6Xav9NT4Sc8mMEwFYCQ6EPQSoxyzFqkLHExeoPkhbWYGhxo4WV2+99HasW8+/VHvMRl1PIKzJI++4uJ7Sz+sWd8fTNluc/g2hK+zWOogLXVy0mn/DcJKdzQMDwAA"
+  val dump = "H4sIAAAAAAAAANWXTWwbRRTHZzeJHX80bSMKVCKiBNOKCuIUgYqUAwQnoZFMEmXTCrlVpfF67EyYnd3MjiObQ8WRD3GpuCGEeuDWExwrcUFIiAMnRJE4cypUpQIqDiDezH54ndiOI6AqPoz24+17b37v/2bG139GY75AJ30bM8xnHCLxjKWv531ZsBa5pLL9mltrMrJA6gtbN18Un2y+b6LDFZTaxP6CzyooE1wstrz42iLbZZTB3Ca+dIUv0RNlHaFou4wRW1KXF6njNCWuMlIsU1/OldFo1a21t9EVZJTREdvltiCSWCWGfZ/44fNxojKi8X1G37dXvU4MXlSzKCZmsSEwlZA+xDgS2K8Tz2pzl7cdiSbC1FY9lRbYpKnjuUJGIdLgbtOtRbejHMMDNFnewju4CCEaRUsKyhvwZc7D9hu4QVbARJmPQsI+YfWNtqfvR8oo65NtALTseEw/aXkIIajAczqJmQ6fmZjPjOJTsIigmNE3sXq5JtxWGwU/YwShlgcuntnHReSBLPJa4d1L9sV7Vs4x1cctlUpazzAFjh7vowZdCuD41fpV/+6r186aKFtBWerPV30psC2TJQ9p5TDnrtQ5xwCxaEC1pvtVS0eZB5tdksjYruNhDp5ClHmoE6M2lcpYPcuH1emDPi09EpkaLc+I53uiz3y1bkqYsbVbx5996qfF101kdofIgEsLhC8ipyCniMYFKEIIIqXHwxIZG5q0GjKtzpgekESM49St27UvZ9ElM4YYxhyubuBizP/+u9y3T79kovGKVvkSw40KcPQXGXFWRcnlsoLG3R0igjfpHczUVc86pmukjptMhnSTWEYAi0Qn+vajRxSzOa19IwKQC+S74nJSWFor/G59/cF1pU6B8sGboEH/omf//GGiLrVwJRqjkjh+xHcEGrubeLYUt8NQpegUJBtEtVyHHJ2+Sy9fe09q9Earu/tXq1vgf05/99iAKkSr0G+VWfPX4zc/NlEGYFepdLBXmB2yd/7DfkDdfCZK4Qqs1XNm18tukSdIRhaPdFuUkrkmoKfjYQqK+dAC4T7p8cVUZ4E6lsjkUSPSjzaSyCQbUQKjStP7llyiXCKm9hK301S/QmpsVy+ePCd++fAdU6Edq7pNXovqAHuXJC35SvTM6K4DcMcCOxH3zvx2ZagNcsZA8kMuL3vAoV3gJmAzrBDhLvMaBRUepJ8EerI/qDVBHdivd8gLX9w4f+fzlTG9hE6GS8cFzJok2D1DNh1OqrmNWUhhmcvkhHrnfyjMX3v8l5aD3pFSjPCG3NwbQg3ne6M/pcfTD0CHHbNAe/e7xfLJoMkeU+PLD4T+85H+D7qbDFjvPbLR9Bh5/sYfl99+65ynN489B4aEdvbdmXqlrgb7fyrGh5O6OHO/1HioK+rwckxMONUTYWad0DpVx+1/LtkkrgFVy6ntfAk7lLWHLlm/agwqYQBk7+n2oPTU+GnHJjRMh2AkOhr2EqMcswapChxOXqDpPm1mhYcaOFlduffRyulvPvtR7zFZdTyCsySP/8gl95ZuWJOBP5iy0+Tw9xD+oCVSB2mpk5NO+29xiMYkMA8AAA=="
+}
 }
 

@@ -1,5 +1,4 @@
 package scalan.graphs
-package impl
 
 import scalan._
 import scalan.collections.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
@@ -7,6 +6,7 @@ import scalan.{ScalanSeq, ScalanExp, Scalan}
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
 
+package impl {
 // Abs -----------------------------------
 trait GraphsAbs extends Graphs with scalan.Scalan {
   self: GraphsDsl =>
@@ -51,9 +51,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     override def toString = "Graph"
   }
   def Graph: Rep[GraphCompanionAbs]
-  implicit def proxyGraphCompanion(p: Rep[GraphCompanion]): GraphCompanion = {
+  implicit def proxyGraphCompanion(p: Rep[GraphCompanion]): GraphCompanion =
     proxyOps[GraphCompanion](p)
-  }
 
   // elem for concrete class
   class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
@@ -1173,6 +1172,7 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
 object Graphs_Module {
   val packageName = "scalan.graphs"
   val name = "Graphs"
-  val dump = "H4sIAAAAAAAAANVWTWwbRRidXcdx/ENoe6laCVyCKQJROwqCCkUCBdcpkVwnyqYBuRVovDt2Jt2d3c6OozWH3oFbhcQBIdR7D5U4cEDigpAQB04IkDj3VEC0AnoCMTP741177RgRDvgw8uzOvO+b9973zd7+GWRdCs66OjQhqVqIwaom/6+5rKI1CMNscMk2+ia6gLp3Pr3z1jn15b4KSk2Qh0RHLrOpy8ATTQlQ023TRDrDNqlhy+oz2DFRrYldttoEcx3bGFwHN4DSBMd0m+gUMaTVTei6yA2eLyAREEfzvJwPNp1hDFITSdZiSe5QiBnPjsc45q/fRo42IDYZWAwsBqltOiItviaHLcemLAyR43B7thFO5wjkD8CJ5j48gDUeolfTGMWkx3cWHahfgz3U4kvE8jmesIvM7s7AkfNMExRcdP2Ca25YjimfeA5nd0VmUB2SU43IqQpyKhqiGJr4bSheblHbGwD/p2QAkBDPHQIRIqAGMSrvXtWvPNSKlio2eyKPnDzePAcqT1Ba6sBJ/Gr7pvvg4q3zKii0QQG7ax2XUaizuN4BVUVIiM1kzhF7kPa4VEuTpJJR1viaET/kddtyIOFIAY8lLpKJdczEYvGsFEgzgfccc1C4VPEcJTrvmQnnlaapQ9Pcunfq3FM/Nd5QgZoMkeeQWsNzaAjKQPYihc5egC3GRxlQdocEi2lDTsWQ94ZjbkoqESlP3/vF+HIZXFUjKoPIs6nHIbLuD98Vv33mFRUstKXR103Ya3M23YaJrE1atwlrgwX7AFH/Te4AmuJfqpo5A3Vh32QBx3FyMpwcBs5MLEkHCeZWPUeYOCSg6Ju4ZRNUWd+q/KF9/f5t4VEKSv4bv0b/wuf//HGxy6R9GSjxZBnydqHZR25I81ydV0KqED7n8uHpKLgYygwUkNFDSaBsKwWpcShS1sTkWjoIBU9O8pyDtii2eIM7QC988dnlXz9vZaXtTgREy9T8dhPwPORcUKEsM5DZICzNXQWfQs220PGlB/jNW+8x6SPFS3azzc4+7yCrct/jUywVdtXf28vqb6e+/1gFee6cDmYWdCrLM7aD/7DEQVKzxXpwo8hSWBl5uWbsQx0RfSALOL1Ch/Jypk8md9TjuZeHBX8yFue0MuIRFe1GdhXld6hdxwEa0wDGO03qScuRLx+b7EtO7M0rZ1+j9z98RxXkZzt2nxihUvy25hXIXg2fKUmluDKQQitUZshRsjvuJF6M1VhRSZ7v3zTbMW1G6/cIm8pxTPRLkBet9zpmexxxKt7hrSXvp9bqW+GmDP+e8WHE8Hz6cV+U40v/qCw2iI4NbhY0c1kkd/x/ymL8pOXYtqQzZ7JsLMH5VObz2wh3sfhAOypbxwWZInlR9Mx1aGFzsJIWegaZFyep68RBjoRBMX4wXBMsnPdJYuCRoGX15Dw4NQVLEzqZFlwZ/N668fCj1rPffHJXXrAFcfnwzw4SffbHL9YR4fzY/Cs+liy3mriOZKJ/A6CAJ1U0DQAA"
+  val dump = "H4sIAAAAAAAAANVWTWwbRRSeXcdxbIf051K1EqQEUwQCOwqCgnJAwXFKJNeJsiEgt0Iar8f2pLuzm9lxZHPoHRCXCokDQqgHbr1xROKCkBAHTogiceZUQFABPYF4M/vj3fgnRoQDexjt/L335vu+92bu/ITSHkeXPBNbmBVtInDRUP9rnigYFSao6F91ml2LrJPW+v7dF/jHnXd1dKqOZjvYW/esOsr6P5WeG/0b5KCKspiZxBMO9wR6tKo8lEzHsogpqMNK1La7AjcsUqpST6xW0UzDafYP0E2kVdFp02EmJ4IYZQt7HvGC8TkiI6JRP6v6/S134IOV5ClKsVPsckwFhA8+Tvvrd4hr9JnD+rZAC0FoW64MC9ZkqO06XIQuMmCu4zTD7gzDMIDOVvfxIS6Bi3bJEJyyNuzMu9i8gdukBkvk8hkI2CNWa7fvqn6qinIeOQCANm3XUiM9FyEEDKyoIIoDfIoRPkWJT8EgnGKLvonl5DZ3en3kf1oKoZ4LJp4+xkRogVRYs/D2dfPaAyNv63JzT4aSUSecBUOLY9SgqAAcv9y55d2/cvuyjnJ1lKPeWsMTHJsiTnmAVh4z5ggVcwQg5m1ga2kcW8rLGqw5Ioms6dguZmApgHIeeLKoSYVcLMfmA3bGQJ8RLgmXaj1Xi857ccx5lW7K2LK2751/5vEfK6/rSE+6yIJJA4TPQ6MCpa9w7HYC27I9JZC2NwBYdiuqK5tsb9BmJoQSgfLEvZ+bXyyj63oEZeB5OvbARNr77tv8N0++pKO5utL6hoXbdUDTq1jE3uJlh4k6mnMOCfdnMofYkn8j2cw0SQt3LRFgHAcnBeAIdHFsVrpEIreqMkALAcj7Iq45jBQ2tgt/GF+9d0dqlKN5f8ZP07/o5T+/X2gJJV+B5iFYQXp72OoSL4R5pgyZMJIIH3M1eCFyLptFgXKk2SZJQ+naCEuVYy2lLcpujDbC0WPjNOeSbU5tqHGH5LnPP331l89qaSW7swHQKjS/4gQ4DzCXUGjLAqU2mRilrpwPoeHY5MzSffrG7XeE0pHWSxa0rcY+VJBVte+RCZIKC+vv9WX9t/N3P9JRFpTToMLGbmF5ynLwH6Y4SnK2UA4uFZUKK0cm15r72CTM7KsEHp2hA3oB6XPJHeV47IuDhD8X83NBO6IRnexFcpXpd6xchw1UJhkYrjQjT7oY6fLh8boEYG9du/QK//WDt3QJfrrhdFkzZAoubMhA8XI4piWZAmYwx3bIzACjZHXcTUwM5VheS57v3xTbIW6O5u8JFpUzlJlXMSRt7zUqOmBxor3jS0vWD63WtcNNKXjS+GZk8+zo4z6v2hf/UVpsMpM2QSxk6rRI7vj/pMXwSRdj25LKnEqysQBnRyKf3SG0ReUD7aRkHSdkAuV5WTM3sE2t/soo11PQvDCOXTdu5EQQlO37gzXBwlkfJIEeCkpWW/WDU3O0NKaSGcGVAffWzQcf1p76+pMf1AWbk5cPPDtY9PKPX6xHiPN9w0M+FixITV5HKtC/ASDq26dYDQAA"
+}
 }
 
