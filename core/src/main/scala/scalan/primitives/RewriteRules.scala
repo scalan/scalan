@@ -43,14 +43,18 @@ trait RewriteRulesExp extends RewriteRules with BaseExp { self: ScalanExp =>
 
   override def rewrite[T](s: Exp[T]): Exp[_] = {
     val eT = s.elem
-    for (rule <- rewriteRules if rule.eA >:> eT) {
-      rule.asInstanceOf[RewriteRule[T]](s) match {
-        case Some(s1) => return s1
-        case None =>
-      }
+
+    val iterator = rewriteRules.iterator
+    var result: Option[Exp[_]] = None
+    while (iterator.hasNext && result.isEmpty) {
+      val rule = iterator.next()
+      if (rule.eA >:> eT)
+        result = rule.asInstanceOf[RewriteRule[T]](s)
     }
 
-    super.rewrite(s)
+    result.getOrElse {
+      super.rewrite(s)
+    }
   }
 
   var rewriteRules = List[RewriteRule[_]]()
