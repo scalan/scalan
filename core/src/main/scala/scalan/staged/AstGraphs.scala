@@ -90,9 +90,6 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
     def isLocalDef[T](tp: TableEntry[T]): Boolean = isLocalDef(tp.sym)
     def isRoot(s: Exp[_]): Boolean = roots contains s
 
-    lazy val scheduleFromProjections =
-      buildScheduleForResult(roots, s => if (isLambdaBoundProjection(s)) Nil else s.getDeps)
-
     lazy val scheduleAll: Schedule =
       schedule.flatMap {
         case tp @ TableEntry(_, subgraph: AstGraph) => subgraph.scheduleAll :+ tp
@@ -111,14 +108,6 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
         case _ => true
       })
       filtered
-    }
-
-    lazy val lambdaBoundSyms: Set[Exp[_]] = {
-      schedule.foldLeft(Set.empty[Exp[_]]) { (acc, tp) =>
-        val deps = nodes(tp.sym).inputSyms
-        val bound = deps.filter(_.isVar)
-        acc ++ bound
-      }
     }
 
     /**
@@ -194,24 +183,12 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
 
     def buildLocalScheduleFrom(sym: ExpAny): Schedule = buildLocalScheduleFrom(sym, (_: ExpAny).getDeps)
 
-
     def projectionTreeFrom(root: Exp[_]): ProjectionTree = {
       ProjectionTree(root, s => {
         val usages = usagesOf(s).collect { case u @ TupleProjection(i) => (i, u) }
         usages.sortBy(_._1).map(_._2)
       })
     }
-
-    lazy val lambdaBoundProjections: Set[ExpAny] = {
-      val leaves = for {
-        v <- lambdaBoundSyms
-        t = projectionTreeFrom(v)
-        (p, s) <- t.paths
-      } yield s
-      leaves
-    }
-
-    def isLambdaBoundProjection(s: ExpAny): Boolean = lambdaBoundProjections contains s
 
     /** Keeps immutable maps describing branching structure of this lambda
       */
