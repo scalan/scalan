@@ -372,27 +372,17 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     fun { (x: Rep[A]) => Pair(f(x), g(x)) }
   }
 
-  private val identityFuns = collection.mutable.Map.empty[Element[_], Exp[_]]
-  def identityFun[A](implicit e: Element[A]) =
-    identityFuns.getOrElseUpdate(e, fun[A, A](x => x)).asRep[A => A]
+  def identityFun[A](implicit e: Element[A]) = fun[A, A](x => x)
 
-  private val constFuns = collection.mutable.Map.empty[(Element[_], Exp[_]), Exp[_]]
   def constFun[A, B](x: Rep[B])(implicit e: Element[A]) = {
     implicit val eB = x.elem
-    constFuns.getOrElseUpdate((e, x), fun[A, B](_ => x)).asRep[A => B]
+    fun[A, B](_ => x)
   }
 
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = {
-    f match {
-      case Def(IdentityLambda()) => g.asRep[A => C]
-      case _ => g match {
-        case Def(IdentityLambda()) => f.asRep[A => C]
-        case _ =>
-          implicit val eA = g.elem.eDom
-          implicit val eC = f.elem.eRange
-          fun { x => f(g(x)) }
-      }
-    }
+    implicit val eA = g.elem.eDom
+    implicit val eC = f.elem.eRange
+    fun { x => f(g(x)) }
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
