@@ -745,6 +745,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
           super.rewriteDef(d)
       }
     case ArrayMap(xs, Def(IdentityLambda())) => xs
+    case ArrayMap(xs: Rep[Array[a]], Def(ConstantLambda(v))) =>
+      val xs1 = xs.asRep[Array[a]]
+      implicit val eA = xs1.elem.eItem
+      SArray.replicate(xs1.length, v)(v.elem)
 
     case ArrayFilter(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b])) if accessOnlyFirst(l.x, l.y) =>
       val xs1 = zip.xs
