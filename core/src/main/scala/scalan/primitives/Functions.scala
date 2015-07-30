@@ -71,8 +71,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     override def equals(other: Any) =
       other match {
         case that: Lambda[_,_] =>
-          (that canEqual this) &&
-            matchExps(this.y, that.y, false, Map(this.x -> that.x)).isDefined
+          (that canEqual this) && matchLambdas(this, that, false, Map.empty).isDefined
         case _ => false
       }
     override def toString = s"Lambda(${if (f.isDefined) "f is Some" else "f is None"}, $x => $y})"
@@ -189,10 +188,17 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         }
   }
 
+  @inline
+  private def matchLambdas(lam1: Lambda[_, _], lam2: Lambda[_, _], allowInexactMatch: Boolean, subst: Subst) =
+    if (lam1.x.elem == lam2.x.elem)
+      matchExps(lam1.y, lam2.y, allowInexactMatch, subst + (lam1.x -> lam2.x))
+    else
+      None
+
   protected def matchDefs(d1: Def[_], d2: Def[_], allowInexactMatch: Boolean, subst: Subst): Option[Subst] = d1 match {
     case lam1: Lambda[_, _] => d2 match {
       case lam2: Lambda[_, _] =>
-        matchExps(lam1.y, lam2.y, allowInexactMatch, subst + (lam1.x -> lam2.x))
+        matchLambdas(lam1, lam2, allowInexactMatch, subst)
       case _ => None
     }
     case _ =>
