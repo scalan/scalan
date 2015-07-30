@@ -58,8 +58,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   class Lambda[A, B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B], self0: Rep[A=>B], val mayInline: Boolean)
                     (implicit val eA: Elem[A] = x.elem, val eB: Elem[B] = y.elem)
     extends BaseDef[A => B] with AstGraph with Product { thisLambda =>
-    lazy val uniqueOpId = s"Lambda[${eA.name},${eB.name}]"
-
     override lazy val self = self0
     override def mirror(t: Transformer) = {
       val newSym = fresh[A=>B]
@@ -126,7 +124,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   case class ParallelExecute[B:Elem](nJobs: Exp[Int], f: Exp[Int => B])  extends Def[Array[B]] {
     def selfType = element[Array[B]]
-    def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = ParallelExecute(t(nJobs), t(f))
     /* Added only for debugging
     override def equals(other: Any) = {
@@ -147,7 +144,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       extends Def[B]
   {
     def selfType = eB.value
-    lazy val uniqueOpId = name(arg.elem, selfType)
     override def mirror(t: Transformer) = Apply(t(f), t(arg))(eB)
   }
 

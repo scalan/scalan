@@ -204,15 +204,11 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
   trait ListDef[T] extends Def[List[T]] {
     implicit def eT: Elem[T]
     lazy val selfType = element[List[T]]
-    lazy val uniqueOpId = name(eT)
   }
   trait ListMethod[T] {
-    def name[A](e: Elem[A]): String
     def xs: Exp[List[T]]
-    lazy val uniqueOpId = withElemOfList(xs) { name(_) }
   }
   case class ListHead[T](xs: Exp[List[T]]) extends Def[T] {
-    def uniqueOpId = name(xs.elem.eItem)
     def selfType = xs.elem.eItem
     override def mirror(t: Transformer) = ListHead(t(xs))
   }
@@ -272,7 +268,6 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
   }
 
   case class ListApply[T](xs: Exp[List[T]], n: Exp[Int])(implicit val eT: Elem[T]) extends Def[T] {
-    def uniqueOpId = name(xs.elem.eItem)
     def selfType = xs.elem.eItem
     override def mirror(t: Transformer) = ListApply(t(xs), t(n))
   }

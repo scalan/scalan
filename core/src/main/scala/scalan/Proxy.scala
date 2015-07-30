@@ -91,7 +91,6 @@ trait ProxySeq extends Proxy { self: ScalanSeq =>
 trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp =>
   // call mkMethodCall instead of constructor
   case class MethodCall private[ProxyExp] (receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean)(val selfType: Elem[Any]) extends Def[Any] {
-    def uniqueOpId = s"$name:${method.getName}"
     override def mirror(t: Transformer) = {
       val args1 = args.map {
         case a: Exp[_] => t(a)
@@ -136,7 +135,6 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   case class NewObject[T](clazz: Class[T] , args: List[AnyRef], neverInvoke: Boolean)(implicit selfType: Elem[T]) extends BaseDef[T] {
-    def uniqueOpId = s"new $name"
     override def mirror(t: Transformer) = {
       val args1 = args.map {
         case a: Exp[_] => t(a)

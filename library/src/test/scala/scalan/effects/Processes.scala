@@ -163,7 +163,6 @@ trait ProcessesDslExp extends ProcessesDsl with impl.ProcessesExp with ScalanExp
 //  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun { i => Eval(i, v) }
 
 //  case class Eval[A:Elem](i: Rep[Int], v: Rep[A]) extends BaseDef[(Int, A)]  {
-//    override def uniqueOpId = name(selfType)
 //    override def mirror(t: Transformer) = Eval(t(i), t(v))
 //  }
   def tryCatch[A](t: Th[A], c: (Rep[Throwable]) => Rep[A]) = ???

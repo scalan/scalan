@@ -30,27 +30,22 @@ trait EffectfulExp extends Effectful with Expressions { self: ScalanExp =>
   def console_readlineE(): Rep[String] = reflectEffect(ReadLineE())
 
   case class Println(i: Rep[Int], s: Rep[String]) extends BaseDef[(Int, Unit)]  {
-    override def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = Println(t(i), t(s))
   }
 
   case class ReadLine(i: Rep[Int]) extends BaseDef[(Int, String)]  {
-    override def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = ReadLine(t(i))
   }
 
   case class Eval[A:Elem](i: Rep[Int], v: Rep[A]) extends BaseDef[(Int, A)]  {
-    override def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = Eval(t(i), t(v))
   }
 
   case class PrintlnE(s: Rep[String]) extends BaseDef[Unit]  {
-    override def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = PrintlnE(t(s))
   }
 
   case class ReadLineE() extends BaseDef[String]  {
-    override def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = ReadLineE()
   }
 

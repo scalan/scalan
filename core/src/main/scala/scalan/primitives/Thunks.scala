@@ -60,7 +60,6 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
   case class ThunkDef[A](val root: Exp[A], override val schedule: Schedule)
                         (implicit val eA: Elem[A] = root.elem)
     extends BaseDef[Thunk[A]] with AstGraph with Product {
-    lazy val uniqueOpId = s"Thunk[${eA.name}]"
 
     override def mirror(t: Transformer) = {
       val newSym = fresh[Thunk[A]]
@@ -191,7 +190,6 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
   case class ThunkForce[A](thunk: Exp[Thunk[A]]) extends Def[A]
   {
     implicit def selfType = thunk.elem.eItem
-    lazy val uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = ThunkForce(t(thunk))
   }
 

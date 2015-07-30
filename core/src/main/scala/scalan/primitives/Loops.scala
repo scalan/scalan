@@ -116,7 +116,6 @@ trait LoopsExp extends Loops with BaseExp { self: ScalanExp =>
   case class LoopUntil[A:Elem](s1: Rep[A], step: Rep[A => A], isMatch: Rep[A => Boolean]) extends BaseDef[A] {
     override def mirror(f: Transformer) = LoopUntil(f(s1), f(step), f(isMatch))
     override def productIterator = List(step, isMatch, s1).toIterator
-    lazy val uniqueOpId = name(element[A])
     //    override def decompose = {
     //      val states = generate(s1)(step)
     //      Some(states.withFilter(isMatch).first)

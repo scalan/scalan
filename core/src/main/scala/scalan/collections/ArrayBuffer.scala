@@ -252,8 +252,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
 
   abstract class ArrayBufferDef[T](implicit val elem: Elem[T]) extends ArrayBuffer[T] with Def[ArrayBuffer[T]] {
     def selfType = element[ArrayBuffer[T]] 
-    lazy val uniqueOpId = name(elem)
-    
+
     def apply(i: Rep[Int]): Rep[T] = ArrayBufferApply(this, i)
     def length : Rep[Int] = ArrayBufferLength(this)
     def map[R:Elem](f: Rep[T] => Rep[R]): Rep[ArrayBuffer[R]] = ArrayBufferMap(this, f)
@@ -304,12 +303,10 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
 
   case class ArrayBufferApply[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int]) extends BaseDef[T] {
     override def mirror(t: Transformer) = ArrayBufferApply(t(buf), t(i))
-    def uniqueOpId = name(selfType)
   }
 
   case class ArrayBufferLength[T: Elem](buf: Rep[ArrayBuffer[T]]) extends BaseDef[Int] {
     override def mirror(t: Transformer) = ArrayBufferLength(t(buf))
-    def uniqueOpId = name(selfType)
   }
 
   case class ArrayBufferMap[T: Elem, R:Elem](buf: Rep[ArrayBuffer[T]], f: Rep[T => R]) extends ArrayBufferDef[R] { 
@@ -342,7 +339,6 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
 
   case class ArrayBufferToArray[T: Elem](buf: Rep[ArrayBuffer[T]]) extends Def[Array[T]] { 
     def selfType = element[Array[T]]
-    def uniqueOpId = name(selfType)
     override def mirror(t:Transformer) = ArrayBufferToArray(t(buf))
   }  
 

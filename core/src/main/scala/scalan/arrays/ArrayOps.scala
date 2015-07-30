@@ -363,12 +363,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   trait ArrayDef[T] extends Def[Array[T]] {
     implicit def eT: Elem[T]
     lazy val selfType = element[Array[T]]
-    lazy val uniqueOpId = name(eT)
   }
   trait ArrayMethod[T] {
-    def name[A](e: Elem[A]): String
     def xs: Exp[Array[T]]
-    lazy val uniqueOpId = withElemOfArray(xs) { name(_) }
   }
   case class ArrayLength[T](xs: Exp[Array[T]]) extends Def[Int] with ArrayMethod[T] {
     def selfType = element[Int]

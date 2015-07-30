@@ -375,7 +375,6 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   def shouldUnpack(e: Elem[_]) = unpackTesters.exists(_(e))
 
   trait UserTypeDef[T] extends Def[T] {
-    def uniqueOpId = selfType.name
   }
 
   object HasViews {
@@ -458,13 +457,11 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     implicit def selfType = iso.eTo
     def copy(source: Rep[From]): View[From, To]
     def mirror(t: Transformer) = copy(t(source))
-    lazy val uniqueOpId = name(iso.eFrom, iso.eTo)
   }
 
   case class UnpackView[A, B](view: Rep[B])(implicit iso: Iso[A, B]) extends Def[A] {
     implicit def selfType = iso.eFrom
     override def mirror(f: Transformer) = UnpackView[A, B](f(view))
-    lazy val uniqueOpId = name(selfType, view.elem)
   }
 
   abstract class View1[A, B, C[_]](val iso: Iso1[A,B,C]) extends View[C[A], C[B]] {
