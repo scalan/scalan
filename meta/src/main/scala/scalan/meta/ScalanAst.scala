@@ -372,7 +372,7 @@ object ScalanAst {
           case None =>
             Left(a)
           case Some((name, tyElem)) =>
-            Right(SClassArg(true, false, true, name, tyElem, None))
+            Right(SClassArg(true, false, true, name, tyElem, None, Nil, true))
         }
       }
       val missingElems = args.filter(_.isLeft)
@@ -491,7 +491,6 @@ object ScalanAst {
 
     def isEntity(name: String) = entities.exists(e => e.name == name)
     def isClass(name: String) = concreteSClasses.exists(c => c.name == name)
-
     def allEntities = entities ++ concreteSClasses
 
     private def hasDeclaredImplFor(traitName: String, decls: Option[SDeclaredImplementations]) = {
@@ -500,6 +499,7 @@ object ScalanAst {
         case None => false
       }
     }
+
     def hasStdImplFor(traitName: String) = hasDeclaredImplFor(traitName, stdDslImpls)
     def hasExpImplFor(traitName: String) = hasDeclaredImplFor(traitName, expDslImpls)
 
@@ -521,18 +521,64 @@ object ScalanAst {
         ancestors = Nil
       )
     }
-  }
 
-  def printAst(ast: SEntityModuleDef): Unit = {
-    val entityNames = ast.entities.map(_.name).mkString(",")
-    val concreteClassNames = ast.concreteSClasses.map(_.name).mkString(",")
+    def printAst(ast: SEntityModuleDef): Unit = {
+      val entityNames = ast.entities.map(_.name).mkString(",")
+      val concreteClassNames = ast.concreteSClasses.map(_.name).mkString(",")
 
-    print(
-      s"""
-         | Package name: ${ast.packageName}
-         | Module name: ${ast.name}
-         | Entity: $entityNames
-         | Concrete Classes: $concreteClassNames
+      print(
+        s"""
+          | Package name: ${ast.packageName}
+          | Module name: ${ast.name}
+          | Entity: $entityNames
+          | Concrete Classes: $concreteClassNames
       """)
+    }
   }
+
+  object SEntityModuleDef {
+
+    def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
+
+    def wrapperImpl(entity: STraitDef, bt: STpeExpr): SClassDef = {
+      val entityName = entity.name
+      val entityImplName = entityName + "Impl"
+      val typeUseExprs = entity.tpeArgs.map(tpeUseExpr(_))
+
+      SClassDef(
+        name = entityImplName,
+        tpeArgs = entity.tpeArgs,
+        args = SClassArgs(List(SClassArg(false, false, true, "wrappedValueOfBaseType", bt, None))),
+        implicitArgs = entity.implicitArgs,
+        ancestors = List(STraitCall(entity.name, typeUseExprs)),
+        body = List(
+
+        ),
+        selfType = None,
+        companion = None,
+        //            companion = defs.collectFirst {
+        //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
+        //            },
+        true, Nil
+
+      )
+    }
+
+//    def apply(packageName: String, imports: List[SImportStat], moduleTrait: STraitDef, config: CodegenConfig): SEntityModuleDef = {
+//      val moduleName = moduleTrait.name
+//      val defs = moduleTrait.body
+//      val classes = entity.optBaseType match {
+//        case Some(bt) =>
+//          val repBaseType = STraitCall("Rep", List(bt))
+//          wrapperImpl(entity, repBaseType) :: moduleTrait.getConcreteClasses
+//        case None => moduleTrait.getConcreteClasses
+//      }
+//      val methods = defs.collect { case md: SMethodDef => md }
+//
+//      SEntityModuleDef(packageName, imports, moduleName,
+//        entityRepSynonym, entity, traits, classes, methods,
+//        moduleTrait.selfType, Nil, None, moduleTrait.ancestors)
+//    }
+  }
+
 }

@@ -220,6 +220,33 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
        |""".stripMargin
   }
 
+// from Scalanizer:
+//  def externalMethod(md: SMethodDef) = {
+//    val msgExplicitRetType = "External methods should be declared with explicit type of returning value (result type)"
+//    lazy val msgRepRetType = s"Invalid method $md. External methods should have return type of type Rep[T] for some T."
+//    val allArgs = md.allArgs
+//    val returnType = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
+//    val typesDecl = md.tpeArgs.getBoundedTpeArgString(false)
+//    val unreppedReturnType = returnType.unRep(module, config).getOrElse(!!!(msgRepRetType))
+//    val argClassesStr = allArgs.rep(a => s", classOf[AnyRef]", "")
+//    val elemClassesStr = (for {
+//      a <- md.tpeArgs
+//      cb <- a.contextBound
+//    } yield s", classOf[$cb[${a.name}]]").rep()
+//    val elemArgs = (for {
+//      a <- md.tpeArgs
+//      cb <- a.contextBound
+//    } yield s"${if (cb == "Elem") "element" else "weakTypeTag"}[${a.name}]")
+//    val compoundArgs = !(allArgs.isEmpty || elemArgs.isEmpty)
+//
+//    s"""
+//      |    ${if (md.body.isDefined) "override def" else "def"} ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unreppedReturnType.toString}] =
+//      |      methodCallEx[$unreppedReturnType](self,
+//      |        this.getClass.getMethod("${md.name}"$argClassesStr$elemClassesStr),
+//      |        List(${allArgs.rep(a => s"${a.name}.asInstanceOf[AnyRef]")}${compoundArgs.opt(", ")}${elemArgs.rep()}))
+//      |""".stripMargin
+//  }
+
   def externalConstructor(md: SMethodDef) = {
     val allArgs = md.allArgs
     s"""
@@ -335,7 +362,6 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
       }
 
       val entityElem = e.elemTypeUse()
-
       s"""
          |  implicit def cast${e.name}Element${e.tpeArgsDecl}(elem: Elem[${e.typeUse}]): $entityElem =
          |    elem.asInstanceOf[$entityElem]
