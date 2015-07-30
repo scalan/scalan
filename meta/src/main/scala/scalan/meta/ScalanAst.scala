@@ -318,7 +318,7 @@ object ScalanAst {
           case None =>
             Left(a)
           case Some((name, tyElem)) =>
-            Right(SClassArg(true, false, true, name, tyElem, None))
+            Right(SClassArg(true, false, true, name, tyElem, None, Nil, true))
         }
       }
       val missingElems = args.filter(_.isLeft)
