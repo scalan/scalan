@@ -84,7 +84,6 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
   // --- class defs
 
   case class Reflect[+A:Elem](x: Def[A], summary: Summary, deps: List[Exp[Any]]) extends BaseDef[A] {
-    def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = {
       val Def(mx) = x.mirror(t).asRep[A]
       reflectMirrored(Reflect(mx, mapOver(t, summary), t(deps).toList))
@@ -92,7 +91,6 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
   }
 
   case class Reify[A:Elem](x: Exp[A], summary: Summary, effects: List[Exp[Any]]) extends BaseDef[A] {
-    def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = Reify(t(x), mapOver(t,summary), t(effects).toList)
   }
 

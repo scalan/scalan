@@ -172,17 +172,14 @@ trait TuplesExp extends Tuples with BaseExp { self: ScalanExp =>
   case class Tup[A:Elem, B:Elem](a: Exp[A], b: Exp[B]) extends Def[(A, B)] {
     override def mirror(t: Transformer) = Tup(t(a), t(b))
     lazy val selfType = element[(A,B)]
-    lazy val uniqueOpId = name(element[A], element[B])
   }
 
   case class First[A, B](pair: Exp[(A, B)])(implicit val selfType: Elem[A]) extends Def[A] {
     override def mirror(t: Transformer) = First(t(pair))
-    lazy val uniqueOpId = name(selfType, pair.elem.eSnd)
   }
 
   case class Second[A, B](pair: Exp[(A, B)])(implicit val selfType: Elem[B]) extends Def[B] {
     override def mirror(t: Transformer) = Second(t(pair))
-    lazy val uniqueOpId = name(pair.elem.eFst, selfType)
   }
 
   object TupleProjection {

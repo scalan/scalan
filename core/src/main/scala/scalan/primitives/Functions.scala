@@ -58,8 +58,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
   class Lambda[A, B](val f: Option[Exp[A] => Exp[B]], val x: Exp[A], val y: Exp[B], self0: Rep[A=>B], val mayInline: Boolean)
                     (implicit val eA: Elem[A] = x.elem, val eB: Elem[B] = y.elem)
     extends BaseDef[A => B] with AstGraph with Product { thisLambda =>
-    lazy val uniqueOpId = s"Lambda[${eA.name},${eB.name}]"
-
     override lazy val self = self0
     override def mirror(t: Transformer) = {
       val newSym = fresh[A=>B]
@@ -67,14 +65,13 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       toExp(newLam, newSym)
     }
 
-    // structural equality pattern implementation
-    override lazy val hashCode: Int = 41 * (41 + x.hashCode) + y.hashCode
+    // ensure all lambdas of the same type have the same hashcode,
+    // so they are tested for alpha-equivalence
+    override lazy val hashCode: Int = 41 * (41 + x.elem.hashCode) + y.elem.hashCode
     override def equals(other: Any) =
       other match {
         case that: Lambda[_,_] =>
-          (that canEqual this) &&
-          (this.x equals that.x) &&
-          (this.y equals that.y)
+          (that canEqual this) && matchLambdas(this, that, false, Map.empty).isDefined
         case _ => false
       }
     override def toString = s"Lambda(${if (f.isDefined) "f is Some" else "f is None"}, $x => $y})"
@@ -126,7 +123,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   case class ParallelExecute[B:Elem](nJobs: Exp[Int], f: Exp[Int => B])  extends Def[Array[B]] {
     def selfType = element[Array[B]]
-    def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = ParallelExecute(t(nJobs), t(f))
     /* Added only for debugging
     override def equals(other: Any) = {
@@ -147,7 +143,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       extends Def[B]
   {
     def selfType = eB.value
-    lazy val uniqueOpId = name(arg.elem, selfType)
     override def mirror(t: Transformer) = Apply(t(f), t(arg))(eB)
   }
 
@@ -171,6 +166,72 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     def argsTree = getLambda.argsTree
   }
 
+  type Subst = Map[Exp[_], Exp[_]]
+
+  def alphaEqual(s1: Exp[_], s2: Exp[_]): Boolean = matchExps(s1, s2, false, Map.empty).isDefined
+
+  def patternMatch(s1: Exp[_], s2: Exp[_]): Option[Subst] = matchExps(s1, s2, true, Map.empty)
+
+  protected def matchExps(s1: Exp[_], s2: Exp[_], allowInexactMatch: Boolean, subst: Subst): Option[Subst] = s1 match {
+    case Def(d1) => s2 match {
+      case Def(d2) =>
+        matchDefs(d1, d2, allowInexactMatch, subst)
+      case _ => None
+    }
+    case _ =>
+      if (allowInexactMatch)
+        Some(subst + (s1 -> s2))
+      else
+        s2 match {
+          case Def(_) => None
+          case _ => if (subst.get(s1) == Some(s2)) Some(subst) else None
+        }
+  }
+
+  @inline
+  private def matchLambdas(lam1: Lambda[_, _], lam2: Lambda[_, _], allowInexactMatch: Boolean, subst: Subst) =
+    if (lam1.x.elem == lam2.x.elem)
+      matchExps(lam1.y, lam2.y, allowInexactMatch, subst + (lam1.x -> lam2.x))
+    else
+      None
+
+  protected def matchDefs(d1: Def[_], d2: Def[_], allowInexactMatch: Boolean, subst: Subst): Option[Subst] = d1 match {
+    case lam1: Lambda[_, _] => d2 match {
+      case lam2: Lambda[_, _] =>
+        matchLambdas(lam1, lam2, allowInexactMatch, subst)
+      case _ => None
+    }
+    case _ =>
+      if (d1.getClass == d2.getClass && d1.productArity == d2.productArity && d1.selfType.name == d2.selfType.name) {
+        matchIterators(d1.productIterator, d2.productIterator, allowInexactMatch, subst)
+      } else
+        None
+  }
+
+  // generalize to Seq or Iterable if we get nodes with deps of these types
+  protected def matchIterators(i1: Iterator[_], i2: Iterator[_], allowInexactMatch: Boolean, subst: Subst): Option[Subst] =
+    if (i1.hasNext) {
+      if (i2.hasNext) {
+        matchAny(i1.next(), i2.next(), allowInexactMatch, subst).flatMap(matchIterators(i1, i2, allowInexactMatch, _))
+      } else None
+    } else {
+      if (i2.hasNext) None else Some(subst)
+    }
+
+  protected def matchAny(a1: Any, a2: Any, allowInexactMatch: Boolean, subst: Subst): Option[Subst] = a1 match {
+    case s1: Exp[_] => a2 match {
+      case s2: Exp[_] =>
+        matchExps(s1, s2, allowInexactMatch, subst)
+      case _ => None
+    }
+    case l1: Iterable[_] => a2 match {
+      case l2: Iterable[_] =>
+        matchIterators(l1.iterator, l2.iterator, allowInexactMatch, subst)
+      case _ => None
+    }
+    case _ => if (a1 == a2) Some(subst) else None
+  }
+
   //=====================================================================================
   //   Function application
 
@@ -188,7 +249,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       f match {
         case Def(lam: Lambda[A, B] @unchecked) if lam.mayInline => // unfold initial non-recursive function
           try {
-            unfoldLambda(f, lam, x)
+            unfoldLambda(lam, x)
           } catch {
             case e: StackOverflowError =>
               if (f.isRecursive)
@@ -204,22 +265,21 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
-  def unfoldLambda[A,B](f: Exp[A=>B], lam: Lambda[A,B], x: Exp[A]): Exp[B] = {
+  def unfoldLambda[A,B](lam: Lambda[A,B], x: Exp[A]): Exp[B] = {
     lam.f match {
       case Some(g) => g(x) // unfold initial non-recursive function
-      case None => mirrorApply(f, x)  // f is mirrored, unfold it by mirroring
+      case None => mirrorApply(lam, x)  // f is mirrored, unfold it by mirroring
     }
   }
 
   def unfoldLambda[A,B](f: Exp[A=>B], x: Exp[A]): Exp[B] = {
     val lam = f.getLambda
-    unfoldLambda(f, lam, x)
+    unfoldLambda(lam, x)
   }
 
-  def mirrorApply[A,B](f: Exp[A => B], s: Exp[A], subst: MapTransformer = MapTransformer.Empty): Exp[B] = {
-    val Def(lam: Lambda[A, B]) = f
+  def mirrorApply[A,B](lam: Lambda[A, B], s: Exp[A]): Exp[B] = {
     val body = lam.scheduleSyms
-    val (t, _) = DefaultMirror.mirrorSymbols(subst + (lam.x -> s), NoRewriting, lam, body)
+    val (t, _) = DefaultMirror.mirrorSymbols(new MapTransformer(lam.x -> s), NoRewriting, lam, body)
     t(lam.y).asRep[B]
   }
 
@@ -291,33 +351,19 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     val lam = new Lambda(Some(fun), x, y, fSym, mayInline)
 
     val optScope = thunkStack.top
-    optScope match {
+    val optSym = optScope match {
       case Some(scope) =>
-        scope.findDef(lam) match {
-          case Some(TableEntry(sym, Lambda(_, Some(f), _, _))) =>
-            if (f equals fun) sym.asRep[A=>B]
-            else {
-              val te = createDefinition(optScope, fSym, lam)
-              fSym
-            }
-          case None =>
-            val te = createDefinition(optScope, fSym, lam)
-            te.sym
-        }
+        scope.findDef(lam)
       case None =>
-        findDefinition(globalThunkSym, lam) match {
-          case Some(TableEntry(sym, Lambda(_, Some(f), _, _))) => {
-            f equals fun match {
-              case true => sym.asRep[A=>B]
-              case false =>
-                createDefinition(None, fSym, lam)
-                fSym
-            }
-          }
-          case None =>
-            createDefinition(None, fSym, lam)
-            fSym
-        }
+        findDefinition(globalThunkSym, lam)
+    }
+
+    optSym match {
+      case Some(TableEntry(sym, _)) =>
+        sym.asRep[A=>B]
+      case None =>
+        val te = createDefinition(optScope, fSym, lam)
+        te.sym
     }
   }
 
@@ -328,27 +374,17 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     fun { (x: Rep[A]) => Pair(f(x), g(x)) }
   }
 
-  private val identityFuns = collection.mutable.Map.empty[Element[_], Exp[_]]
-  def identityFun[A](implicit e: Element[A]) =
-    identityFuns.getOrElseUpdate(e, fun[A, A](x => x)).asRep[A => A]
+  def identityFun[A](implicit e: Element[A]) = fun[A, A](x => x)
 
-  private val constFuns = collection.mutable.Map.empty[(Element[_], Exp[_]), Exp[_]]
   def constFun[A, B](x: Rep[B])(implicit e: Element[A]) = {
     implicit val eB = x.elem
-    constFuns.getOrElseUpdate((e, x), fun[A, B](_ => x)).asRep[A => B]
+    fun[A, B](_ => x)
   }
 
   def compose[A, B, C](f: Rep[B => C], g: Rep[A => B]): Rep[A => C] = {
-    f match {
-      case Def(IdentityLambda()) => g.asRep[A => C]
-      case _ => g match {
-        case Def(IdentityLambda()) => f.asRep[A => C]
-        case _ =>
-          implicit val eA = g.elem.eDom
-          implicit val eC = f.elem.eRange
-          fun { x => f(g(x)) }
-      }
-    }
+    implicit val eA = g.elem.eDom
+    implicit val eC = f.elem.eRange
+    fun { x => f(g(x)) }
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {

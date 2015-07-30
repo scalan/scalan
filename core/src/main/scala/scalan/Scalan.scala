@@ -120,6 +120,7 @@ trait ScalanExp
   with ListViewsExp
   with ConvertersDslExp
   with EffectfulExp
+  with RewriteRulesExp
 
 trait ScalanCtxExp
 extends ScalanDsl

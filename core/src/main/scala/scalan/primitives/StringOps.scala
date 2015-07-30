@@ -48,15 +48,12 @@ trait StringOpsExp extends StringOps with BaseExp { self: ScalanExp =>
 
   case class StringSubstr(str: Rep[String], start: Rep[Int], end: Rep[Int]) extends BaseDef[String] {
     override def mirror(t: Transformer) = StringSubstr(t(str), t(start), t(end))
-    lazy val uniqueOpId = name(selfType)
   }
   case class StringLength(str: Rep[String]) extends BaseDef[Int] {
     override def mirror(t: Transformer) = StringLength(t(str))
-    lazy val uniqueOpId = name(selfType)
   }
   case class StringApply(str: Rep[String], index: Rep[Int]) extends BaseDef[Char] {
     override def mirror(t: Transformer) = StringApply(t(str), t(index))
-    lazy val uniqueOpId = name(selfType)
   }
 
   def string_length(str: Rep[String]): Rep[Int] = StringLength(str)

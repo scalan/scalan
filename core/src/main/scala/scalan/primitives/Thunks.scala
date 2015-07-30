@@ -55,12 +55,11 @@ trait ThunksSeq extends Thunks { self: ScalanSeq =>
   def thunk_force[A](t: Th[A]): Rep[A] = t.value
 }
 
-trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
+trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
 
   case class ThunkDef[A](val root: Exp[A], override val schedule: Schedule)
                         (implicit val eA: Elem[A] = root.elem)
     extends BaseDef[Thunk[A]] with AstGraph with Product {
-    lazy val uniqueOpId = s"Thunk[${eA.name}]"
 
     override def mirror(t: Transformer) = {
       val newSym = fresh[Thunk[A]]
@@ -191,15 +190,24 @@ trait ThunksExp extends ViewsExp with Thunks with GraphVizExport with EffectsExp
   case class ThunkForce[A](thunk: Exp[Thunk[A]]) extends Def[A]
   {
     implicit def selfType = thunk.elem.eItem
-    lazy val uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = ThunkForce(t(thunk))
   }
-
 
   override def effectSyms(x: Any): List[Exp[Any]] = x match {
 //    case ThunkDef(_, sch) =>
 //      flatMapIterable(sch.map(_.sym), effectSyms)
     case _ => super.effectSyms(x)
+  }
+
+  override protected def matchDefs(d1: Def[_], d2: Def[_], allowInexactMatch: Boolean, subst: Subst): Option[Subst] = d1 match {
+    case ThunkDef(root1, sch1) => d2 match {
+      case ThunkDef(root2, sch2) =>
+        matchExps(root1, root2, allowInexactMatch, subst).
+          flatMap(matchIterators(sch1.iterator, sch2.iterator, allowInexactMatch, _))
+      case _ => None
+    }
+    case _ =>
+      super.matchDefs(d1, d2, allowInexactMatch, subst)
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {

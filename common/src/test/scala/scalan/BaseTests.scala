@@ -1,5 +1,6 @@
 package scalan
 
+import org.scalatest._
 import org.scalatest.words.ResultOfStringPassedToVerb
 import org.scalatest.{FlatSpec, FunSuite, Inside, Matchers}
 

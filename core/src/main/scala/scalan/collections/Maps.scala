@@ -130,7 +130,6 @@ trait MapsSeq extends Maps { self: ScalanSeq =>
 trait MapsExp extends Maps { self: ScalanExp =>
   abstract class MMapDef[K, V](implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMap[K, V] with Def[MMap[K, V]] {
     def selfType = element[MMap[K, V]]
-    lazy val uniqueOpId = name(elemKey, elemValue)
 
     def union(that: MM[K, V]): MM[K, V] = MapUnion(this, that)
     def difference(that: MM[K, V]): MM[K, V] = MapDifference(this, that)
@@ -211,44 +210,36 @@ trait MapsExp extends Maps { self: ScalanExp =>
 
   case class MapContains[K: Elem, V: Elem](map: MM[K, V], key: Rep[K]) extends BaseDef[Boolean] {
     override def mirror(t: Transformer) = MapContains(t(map), t(key))
-    def uniqueOpId = name(selfType)
   }
 
   case class MapApply[K: Elem, V: Elem](map: MM[K, V], key: Rep[K]) extends BaseDef[V] {
     override def mirror(t: Transformer) = MapApply(t(map), t(key))
-    def uniqueOpId = name(selfType)
   }
 
   case class MapApplyIf[K: Elem, V: Elem, T: Elem](map: MM[K, V], key: Rep[K], exists:Rep[V=>T], otherwise: Rep[Unit=>T]) extends BaseDef[T] {
     override def mirror(t: Transformer) = MapApplyIf(t(map), t(key), t(exists), t(otherwise))
-    def uniqueOpId = name(selfType)
   }
 
   case class MapUpdate[K: Elem, V: Elem](map: MM[K, V], key: Rep[K], value: Rep[V]) extends BaseDef[Unit] {
     override def mirror(t: Transformer) = MapUpdate(t(map), t(key), t(value))
-    def uniqueOpId = name(selfType)
   }
 
   case class MapSize[K: Elem, V: Elem](map: MM[K, V]) extends BaseDef[Int] {
     override def mirror(t: Transformer) = MapSize(t(map))
-    def uniqueOpId = name(selfType)
   }
 
   case class MapToArray[K: Elem, V: Elem](map: MM[K, V]) extends Def[Array[(K, V)]] {
     def selfType = element[Array[(K, V)]]
-    def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = MapToArray(t(map))
   }
 
   case class MapKeys[K: Elem, V: Elem](map: MM[K, V]) extends Def[Array[K]] {
     def selfType = element[Array[K]]
-    def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = MapKeys(t(map))
   }
 
   case class MapValues[K: Elem, V: Elem](map: MM[K, V]) extends Def[Array[V]] {
     def selfType = element[Array[V]]
-    def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = MapValues(t(map))
   }
 

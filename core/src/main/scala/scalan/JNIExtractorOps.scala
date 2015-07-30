@@ -232,7 +232,6 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   
   case class JNI_NewObject[T: Elem](clazz: Rep[JNIClass], mid: Rep[JNIMethodID], args: Rep[JNIType[_]]*) extends Def[JNIType[T]] {
     override def selfType = element[JNIType[T]]
-    override def uniqueOpId = "JNI_NewObject"
     override def mirror(t: Transformer) = {
       val _args = for(arg <- args) yield t(arg)
       JNI_NewObject[T](t(clazz), t(mid), _args:_*)
@@ -242,64 +241,54 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   case class JNI_NewPrimitive[T: Elem](x: Rep[T]) extends Def[JNIType[T]] {
     require( !(element[T] <:< AnyRefElement), "!(" + element[T] + " <:< " + AnyRefElement + ") isn't true")
     override def selfType = element[JNIType[T]]
-    override def uniqueOpId = "JNI_NewPrimitive"
     override def mirror(t: Transformer) = JNI_NewPrimitive[T](t(x))
   }
 
   case class JNI_MapPrimitiveArray[A: Elem, B: Elem](x: Rep[Array[A]], f: Rep[A => B]) extends Def[JNIType[Array[B]]] {
     require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
     override def selfType = element[JNIType[Array[B]]]
-    override def uniqueOpId = "JNI_MapPrimitiveArray"
     override def mirror(t: Transformer) = JNI_MapPrimitiveArray[A,B](t(x), t(f))
   }
 
   case class JNI_MapObjectArray[A: Elem, B: Elem](x: Rep[Array[A]], f: Rep[A => JNIType[B]]) extends Def[JNIType[Array[B]]] {
     require( (element[A] <:< AnyRefElement), "(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
     override def selfType = element[JNIType[Array[B]]]
-    override def uniqueOpId = "JNI_MapObjectArray"
     override def mirror(t: Transformer) = JNI_MapObjectArray[A,B](t(x), t(f))
   }
 
   case class JNI_FindClass(className: Rep[CString]) extends Def[JNIClass] {
     override def selfType = element[JNIClass]
-    override def uniqueOpId = "JNI_FindClass"
     override def mirror(t: Transformer) = JNI_FindClass(t(className))
   }
 
   case class JNI_GetObjectClass[T: Elem](x: Rep[JNIType[T]]) extends Def[JNIClass] {
     override def selfType = element[JNIClass]
-    override def uniqueOpId = "JNI_GetObjectClass"
     override def mirror(t: Transformer) = JNI_GetObjectClass(t(x))
   }
 
   case class JNI_GetFieldID(clazz: Rep[JNIClass], fname: Rep[CString], sig: Rep[CString]) extends Def[JNIFieldID] {
     override def selfType = element[JNIFieldID]
-    override def uniqueOpId = "JNI_GetFieldID"
     override def mirror(t: Transformer) = JNI_GetFieldID(t(clazz), t(fname), t(sig))
   }
 
   case class JNI_GetMethodID(clazz: Rep[JNIClass], mname: Rep[CString], sig: Rep[CString]) extends Def[JNIMethodID] {
     override def selfType = element[JNIMethodID]
-    override def uniqueOpId = "JNI_GetMethodID"
     override def mirror(t: Transformer) = JNI_GetMethodID(t(clazz), t(mname), t(sig))
   }
 
   case class JNI_GetObjectFieldValue[A: Elem, T: Elem](fid: Rep[JNIFieldID], x: Rep[JNIType[T]]) extends Def[JNIType[A]] {
     override def selfType = element[JNIType[A]]
-    override def uniqueOpId = "JNI_GetObjectFieldValue"
     override def mirror(t: Transformer) = JNI_GetObjectFieldValue[A,T](t(fid), t(x))
   }
 
   case class JNI_GetPrimitiveFieldValue[A: Elem,T: Elem](fid: Rep[JNIFieldID], tup: Rep[JNIType[T]]) extends Def[A] {
     require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
     override def selfType = element[A]
-    override def uniqueOpId = "JNI_GetPrimitiveFieldValue"
     override def mirror(t: Transformer) = JNI_GetPrimitiveFieldValue[A,T](t(fid), t(tup))
   }
 
   case class JNI_CallObjectMethod[A: Elem, T: Elem](x: Rep[JNIType[T]], mid: Rep[JNIMethodID], args: Rep[Any]*) extends Def[JNIType[A]] {
     override def selfType = element[JNIType[A]]
-    override def uniqueOpId = "JNI_CallObjectMethod"
     override def mirror(t: Transformer) = {
       val _args = for(arg <- args) yield t(arg)
       JNI_CallObjectMethod[A,T](t(x), t(mid), _args:_*)
@@ -309,7 +298,6 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   case class JNI_CallPrimitiveMethod[A: Elem, T: Elem](mid: Rep[JNIMethodID], x: Rep[JNIType[T]], args: Rep[Any]*) extends Def[JNIType[A]] {
     require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
     override def selfType = element[JNIType[A]]
-    override def uniqueOpId = "JNI_CallPrimitiveMethod"
     override def mirror(t: Transformer) = {
       val _args = for(arg <- args) yield t(arg)
       JNI_CallPrimitiveMethod[A,T](t(mid), t(x), _args:_*)
@@ -319,41 +307,35 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   case class JNI_ExtractPrimitive[A: Elem](x: Rep[JNIType[A]]) extends Def[A] {
     require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
     override def selfType = element[A]
-    override def uniqueOpId = "JNI_ExtractPrimitive"
     override def mirror(t: Transformer) = JNI_ExtractPrimitive[A](t(x))
   }
 
   case class JNI_GetArrayLength[A: Elem](arr: Rep[JNIType[Array[A]]]) extends Def[Int] {
     override def selfType = IntElement
-    override def uniqueOpId = "JNI_GetArrayLength"
     override def mirror(t: Transformer) = JNI_GetArrayLength(t(arr))
   }
 
   case class JNI_ExtractObjectArray[A: Elem](x: Rep[JNIType[Array[A]]]) extends Def[Array[JNIType[A]]] {
     require( element[A] <:< AnyRefElement, element[A] + " <:< " + AnyRefElement + " isn't true")
     override def selfType = element[Array[JNIType[A]]]
-    override def uniqueOpId = "JNI_ExtractObjectArray"
     override def mirror(t: Transformer) = JNI_ExtractObjectArray(t(x))
   }
 
   case class JNI_GetObjectArrayItem[A: Elem](arr: Rep[Array[JNIType[A]]], i: Rep[Int] ) extends Def[JNIType[A]] {
     require( element[A] <:< AnyRefElement, element[A] + " <:< " + AnyRefElement + " isn't true")
     override def selfType = element[JNIType[A]]
-    override def uniqueOpId = "JNI_GetObjectArrayItem"
     override def mirror(t: Transformer) = JNI_GetObjectArrayItem(t(arr), t(i))
   }
 
   case class JNI_ExtractPrimitiveArray[A: Elem](x: Rep[JNIType[Array[A]]]) extends Def[Array[A]] {
     require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
     override def selfType = JNIArrayElem(element[A])
-    override def uniqueOpId = "JNI_ExtractPrimitiveArray"
     override def mirror(t: Transformer) = JNI_ExtractPrimitiveArray[A](t(x))
   }
 
   case class JNI_NewPrimitiveArray[A: Elem](len: Rep[Int]) extends Def[JNIType[Array[A]]] {
     require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
     override def selfType = element[JNIType[Array[A]]]
-    override def uniqueOpId = "JNI_ExtractPrimitiveArray"
     override def mirror(t: Transformer) = JNI_NewPrimitiveArray[A](t(len))
   }
 }

@@ -46,7 +46,6 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
   }
 
   case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit override val selfType: Elem[T]) extends AbstractIfThenElse[T] {
-    def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = IfThenElse(t(cond), t(thenp), t(elsep))
   }
 

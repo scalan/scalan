@@ -70,12 +70,10 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
   case class Left[A, B](left: Exp[A])(implicit val eRight: Elem[B]) extends BaseDef[(A | B)]()(sumElement(left.elem, eRight)) {
     override def mirror(t: Transformer) = Left[A, B](t(left))
-    lazy val uniqueOpId = name(selfType)
   }
 
   case class Right[A, B](right: Exp[B])(implicit val eLeft: Elem[A]) extends BaseDef[(A | B)]()(sumElement(eLeft, right.elem)) {
     override def mirror(t: Transformer) = Right[A, B](t(right))
-    lazy val uniqueOpId = name(selfType)
   }
 
   def toLeftSum[A, B: Elem](a: Rep[A]): Rep[(A | B)] = withElemOf(a) { implicit e => Left[A, B](a) }
@@ -85,14 +83,12 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     override def mirror(t: Transformer) = IsLeft(t(sum))
     // removing leads to compilation error
     override val selfType = BooleanElement
-    lazy val uniqueOpId = name(sum.elem.eLeft, sum.elem.eRight)
   }
 
   case class IsRight[A, B](sum: Exp[(A | B)]) extends BaseDef[Boolean] {
     override def mirror(t: Transformer) = IsRight(t(sum))
     // removing leads to compilation error
     override val selfType = BooleanElement
-    lazy val uniqueOpId = name(sum.elem.eLeft, sum.elem.eRight)
   }
 
   case class SumFold[A, B, R](sum: Exp[(A | B)], left: Exp[A => R], right: Exp[B => R])
@@ -100,7 +96,6 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     override def mirror(t: Transformer) = SumFold(t(sum), t(left), t(right))
     lazy val eA = sum.elem.eLeft
     lazy val eB = sum.elem.eRight
-    lazy val uniqueOpId = name(eA, eB)
   }
 
   case class SumMap[A, B, C, D](sum: Exp[(A | B)], left: Exp[A => C], right: Exp[B => D])
@@ -108,7 +103,6 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     override def mirror(t: Transformer) = SumMap(t(sum), t(left), t(right))
     lazy val eA = sum.elem.eLeft
     lazy val eB = sum.elem.eRight
-    lazy val uniqueOpId = name(left.elem, right.elem)
   }
 
   class SumOpsExp[A, B](s: Rep[(A | B)]) extends SumOps[A, B] {
