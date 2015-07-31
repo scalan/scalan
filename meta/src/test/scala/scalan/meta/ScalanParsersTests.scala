@@ -1,7 +1,6 @@
-package tests.scalan.meta
+package scalan.meta
 
-import tests.BaseTests
-import scalan.meta.{ScalanParsersEx, BoilerplateToolRun}
+import scalan.BaseTests
 import scala.reflect.internal.util.BatchSourceFile
 import scalan.meta.ScalanAst._
 

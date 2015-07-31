@@ -19,43 +19,45 @@ abstract class AbstractElemTests extends BaseTests {
 class ElemTests extends AbstractElemTests {
   class Ctx extends super.Ctx with KindsExamples with KindsDslExp
 
-  test("Element equality works as expected") {
-    val ctx = new Ctx
-    import ctx._
+  describe("Equality works as expected") {
+    test("for elements") {
+      val ctx = new Ctx
+      import ctx._
 
-    elementsShouldBeEqual[Int, Int]
-    elementsShouldBeEqual[Double, Double]
-    elementsShouldNotBeEqual[Int, Double]
+      elementsShouldBeEqual[Int, Int]
+      elementsShouldBeEqual[Double, Double]
+      elementsShouldNotBeEqual[Int, Double]
 
-    elementsShouldBeEqual[Array[Int], Array[Int]]
-    elementsShouldNotBeEqual[Array[Int], Array[Double]]
-    elementsShouldNotBeEqual[Array[Int], List[Int]]
+      elementsShouldBeEqual[Array[Int], Array[Int]]
+      elementsShouldNotBeEqual[Array[Int], Array[Double]]
+      elementsShouldNotBeEqual[Array[Int], List[Int]]
 
-    elementsShouldBeEqual[Double => Int, Double => Int]
-    elementsShouldNotBeEqual[Int => Double, Double => Int]
+      elementsShouldBeEqual[Double => Int, Double => Int]
+      elementsShouldNotBeEqual[Int => Double, Double => Int]
 
-    elementsShouldBeEqual[(Int, Double), (Int, Double)]
-    elementsShouldNotBeEqual[(Int, Double), (Double, Double)]
+      elementsShouldBeEqual[(Int, Double), (Int, Double)]
+      elementsShouldNotBeEqual[(Int, Double), (Double, Double)]
 
-    elementsShouldBeEqual[Int | Int, Int | Int]
-    elementsShouldNotBeEqual[Int | Int, Int]
+      elementsShouldBeEqual[Int | Int, Int | Int]
+      elementsShouldNotBeEqual[Int | Int, Int]
 
-    elementsShouldBeEqual[AString, AString]
-    elementsShouldNotBeEqual[String, AString]
-    elementsShouldBeEqual[CString, CString]
-    elementsShouldNotBeEqual[AString, CString]
-    elementsShouldBeEqual[SThrowable, SThrowable]
-    elementsShouldBeEqual[SException, SException]
-    elementsShouldBeEqual[Thunk[Int], Thunk[Int]]
-  }
+      elementsShouldBeEqual[AString, AString]
+      elementsShouldNotBeEqual[String, AString]
+      elementsShouldBeEqual[CString, CString]
+      elementsShouldNotBeEqual[AString, CString]
+      elementsShouldBeEqual[SThrowable, SThrowable]
+      elementsShouldBeEqual[SException, SException]
+      elementsShouldBeEqual[Thunk[Int], Thunk[Int]]
+    }
 
-  test("Container equality works as expected") {
-    val ctx = new Ctx
-    import ctx._
+    test("for containers") {
+      val ctx = new Ctx
+      import ctx._
 
-    containersShouldBeEqual[ArrayBuffer, ArrayBuffer]
-    containersShouldBeEqual[Array, Array]
-    containersShouldBeEqual[Id, Id]
-    containersShouldNotBeEqual[Array, ArrayBuffer]
+      containersShouldBeEqual[ArrayBuffer, ArrayBuffer]
+      containersShouldBeEqual[Array, Array]
+      containersShouldBeEqual[Id, Id]
+      containersShouldNotBeEqual[Array, ArrayBuffer]
+    }
   }
 }
