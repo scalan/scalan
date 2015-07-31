@@ -3,10 +3,49 @@ package scalan
 import scala.language.reflectiveCalls
 import scalan.common.{SegmentsDslExp, CommonExamples, ViewExamples}
 
-class ViewTests extends BaseTests { suite =>
+abstract class BaseViewTests extends BaseCtxTests {
+  class ViewTestsCtx(testName: String) extends TestContext(testName) {
+    def testLambdaResultHasViewsWithDataType[A,B](msg: String, f: Rep[A => B], expectedDataElem: Elem[_]) =
+      _testLambdaResultHasViews(msg, f, Some(expectedDataElem))
+
+    def testLambdaResultHasViews[A,B](msg: String, f: Rep[A => B]) =
+      _testLambdaResultHasViews(msg, f, None)
+
+    private def _testLambdaResultHasViews[A,B](msg: String, f: Rep[A => B], expectedDataElem: Option[Elem[_]]) = {
+      val ok = f match {
+        case LambdaResultHasViews(f, iso) =>
+          expectedDataElem.isDefined && expectedDataElem.get == iso.eFrom
+        case _ =>
+          !expectedDataElem.isDefined
+      }
+      assert(ok, msg)
+    }
+
+    def testGetIso[From, To](e: Elem[To], eFromExpected: Elem[From]) = {
+      val iso = getIsoByElem(e)
+      assertResult(eFromExpected)(iso.eFrom)
+    }
+
+    def testHasViews[T](s: Rep[T], eExpected: Elem[_]) = {
+      val HasViews(source, iso) = s
+      assertResult(eExpected)(iso.eFrom)
+      assertResult(eExpected)(source.elem)
+    }
+
+    def testNoViews[T](s: Rep[T]) = {
+      s match {
+        case HasViews(source, iso) =>
+          assert(false, s"no views expected, but found ($source, $iso)")
+        case _ => // ok
+      }
+    }
+  }
+}
+
+class ViewTests extends BaseViewTests {
 
   test("LambdaResultHasViews") {
-    val ctx = new ViewTestsCtx(this, "LambdaResultHasViews")
+    val ctx = new ViewTestsCtx("LambdaResultHasViews")
                    with ViewExamples with CommonExamples with SegmentsDslExp
     import ctx._
     testLambdaResultHasViewsWithDataType("t1", t1, element[(Int,Int)])
@@ -28,7 +67,7 @@ class ViewTests extends BaseTests { suite =>
   }
 
   test("LambdaResultHasViews_Sums") {
-    val ctx = new ViewTestsCtx(this, "LambdaResultHasViews_Sums")
+    val ctx = new ViewTestsCtx("LambdaResultHasViews_Sums")
                    with SegmentsDslExp {
       lazy val v1 = fun { (in: Rep[Unit]) => in.asLeft[Slice] }
       lazy val v2 = fun { (in: Rep[(Int,Int)]) => SumView(in.asRight[Unit])(identityIso[Unit], isoSlice) }
@@ -41,7 +80,7 @@ class ViewTests extends BaseTests { suite =>
 
 
   test("getIsoByElem") {
-    val ctx = new ViewTestsCtx(this, "LambdaResultHasViews_Sums") with SegmentsDslExp
+    val ctx = new ViewTestsCtx("LambdaResultHasViews_Sums") with SegmentsDslExp
     import ctx._
 
     testGetIso(element[Int], element[Int])

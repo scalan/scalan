@@ -4,13 +4,13 @@ import java.io.File
 import java.lang.reflect.Method
 
 import scala.language.reflectiveCalls
-import scalan.{TestContext, BaseTests, ScalanCtxExp}
+import scalan.{BaseCtxTests, ScalanCtxExp}
 
 /**
  * User: Alexander Slesarenko   
  * Date: 8/3/14
  */
-class ReaderTests extends BaseTests {
+class ReaderTests extends BaseCtxTests {
 
   trait MyProg extends MonadsDsl { self =>
     type Env = (Int,String)
@@ -99,14 +99,14 @@ class ReaderTests extends BaseTests {
   }
 
   test("readerStaged") {
-    val ctx = new TestContext(this, "readerStaged") with MonadsDslExp with MyProg {
+    val ctx = new TestContext("readerStaged") with MonadsDslExp with MyProg {
       override def isInvokeEnabled(d: Def[_], m: Method) = true
     }
     ctx.emit("prg", ctx.prg)
   }
 
   test("readerSequence") {
-    val ctx = new TestContext(this, "readerSequence") with OptRules with MyProg
+    val ctx = new TestContext("readerSequence") with OptRules with MyProg
     ctx.emit("seq", ctx.seq)
     ctx.emit("mapped", ctx.mapped)
     ctx.emit("mappedRun1", ctx.mappedRun1)
@@ -114,7 +114,7 @@ class ReaderTests extends BaseTests {
   }
 
   test("readerReplicateM") {
-    val ctx = new TestContext(this, "readerReplicateM") with OptRules with MyProg
+    val ctx = new TestContext("readerReplicateM") with OptRules with MyProg
     ctx.emit("mappedRun3", ctx.mappedRun3)
   }
 

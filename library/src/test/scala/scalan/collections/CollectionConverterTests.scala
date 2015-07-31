@@ -3,7 +3,7 @@ package scalan.collections
 import scala.language.reflectiveCalls
 import scalan._
 
-class CollectionConverterTests extends BaseTests { suite =>
+class CollectionConverterTests extends BaseCtxTests {
 
   trait ConvProg extends Scalan with ScalanCommunityDsl {
     lazy val t1 = fun { (in: Rep[PairCollectionSOA[Int,Double]]) => in.convertTo[PairCollectionAOS[Int, Double]] }
@@ -27,9 +27,9 @@ class CollectionConverterTests extends BaseTests { suite =>
     }
   }
 
-  class ConvProgStaged(testName: String) extends TestContext(this, testName) with  ConvProg with ScalanCommunityDslExp {
+  class ConvProgStaged(testName: String) extends TestContext(testName) with ConvProg with ScalanCommunityDslExp {
   }
-  class ConvProgSeq(testName: String) extends ScalanCtxSeq with  ConvProg with ScalanCommunityDslSeq {
+  class ConvProgSeq(testName: String) extends ScalanCtxSeq with ConvProg with ScalanCommunityDslSeq {
   }
 
   test("convert") {

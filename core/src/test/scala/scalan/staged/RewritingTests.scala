@@ -4,7 +4,7 @@ package staged
 import scala.language.reflectiveCalls
 import scalan.compilation.Passes
 
-class RewritingTests extends BaseTests {
+class RewritingTests extends BaseCtxTests {
 
   trait TestTransform { self: ScalanExp with Passes =>
     val pass = GraphTransformPass("testTransformPass", DefaultMirror, NoRewriting)
@@ -34,7 +34,7 @@ class RewritingTests extends BaseTests {
     }
   }
 
-  val p0 = new TestContext(this, "RewritingRootLambda") with Prog0 with Passes with TestTransform {
+  val p0 = new TestContext("RewritingRootLambda") with Prog0 with Passes with TestTransform {
     def testMkRight(): Unit = {
       emit("mkRight", mkRight)
       val newLambda = doTransform(mkRight)
@@ -66,7 +66,7 @@ class RewritingTests extends BaseTests {
     }
   }
 
-  val p = new TestContext(this, "RewritingRules") with Prog with Passes with TestTransform {
+  val p = new TestContext("RewritingRules") with Prog with Passes with TestTransform {
 
     def testIfFold(): Unit = {
       emit("ifFold", ifFold)

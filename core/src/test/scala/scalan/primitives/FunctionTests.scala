@@ -2,12 +2,12 @@ package scalan.primitives
 
 import scala.language.reflectiveCalls
 import scalan.common.SegmentsDslExp
-import scalan.{BaseTests, TestContext}
+import scalan.BaseCtxTests
 
-class FunctionTests extends BaseTests { suite =>
+class FunctionTests extends BaseCtxTests {
 
   test("identity functions equality works") {
-    val ctx = new TestContext(suite, "identityFuns") with SegmentsDslExp {
+    val ctx = new TestContext("identityFuns") with SegmentsDslExp {
       lazy val t1 = identityFun[Int]
       lazy val t2 = identityFun[Int]
       lazy val t3 = identityFun[Double]
@@ -18,7 +18,7 @@ class FunctionTests extends BaseTests { suite =>
   }
 
   test("IdentityLambda matcher works") {
-    val ctx = new TestContext(suite, "identityFuns2") {
+    val ctx = new TestContext("identityFuns2") {
       lazy val t1 = constFun[Int, Int](1)
       lazy val t2 = fun { x: Rep[Int] => fun { y: Rep[Int] => x } }
     }
@@ -33,7 +33,7 @@ class FunctionTests extends BaseTests { suite =>
   }
 
   test("const functions equality works") {
-    val ctx = new TestContext(suite, "constFuns1") {
+    val ctx = new TestContext("constFuns1") {
       lazy val t1 = constFun[Int, Int](1)
       lazy val t2 = constFun[Int, Int](1)
       lazy val t3 = constFun[Double, Int](1)
@@ -45,7 +45,7 @@ class FunctionTests extends BaseTests { suite =>
   }
 
   test("ConstantLambda matcher works") {
-    val ctx = new TestContext(suite, "constFuns2") {
+    val ctx = new TestContext("constFuns2") {
       lazy val t1 = constFun[Int, Int](1)
       lazy val t2 = fun { x: Rep[Int] => fun { y: Rep[Int] => x } }
     }
@@ -60,7 +60,7 @@ class FunctionTests extends BaseTests { suite =>
   }
 
   test("Alpha-equivalence works") {
-    val ctx = new TestContext(suite, "alphaEquivalence") {
+    val ctx = new TestContext("alphaEquivalence") {
       lazy val idInt1 = fun[Int, Int] { x => x }
       lazy val idInt2 = fun[Int, Int] { y => y }
       lazy val idDouble = fun[Double, Double] { x => x }

@@ -3,11 +3,11 @@ package scalan.common
 import scala.language.reflectiveCalls
 import scalan._
 
-class KindsTests extends BaseTests { suite =>
+class KindsTests extends BaseCtxTests {
 
-  class ConvProgStaged(testName: String) extends TestContext(this, testName) with KindsExamples with KindsDslExp {
+  class ConvProgStaged(testName: String) extends TestContext(testName) with KindsExamples with KindsDslExp {
   }
-  class ConvProgSeq(testName: String) extends ScalanCtxSeq with  KindsExamples with KindsDslSeq {
+  class ConvProgSeq(testName: String) extends ScalanCtxSeq with KindsExamples with KindsDslSeq {
   }
 
   test("simple kinds tests") {

@@ -6,7 +6,7 @@ import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDslExp, SegmentsDsl}
 
-class ThunkTests extends BaseTests { suite =>
+class ThunkTests extends BaseCtxTests {
   trait MyProg extends Scalan {
     lazy val t1 = fun { (in: Rep[Int]) =>
       Thunk { in }
@@ -55,7 +55,7 @@ class ThunkTests extends BaseTests { suite =>
   }
 
   test("thunksWithoutInlining") {
-    val ctx = new TestContext(this, "thunksWithoutInlining") with  MyProg {
+    val ctx = new TestContext("thunksWithoutInlining") with MyProg {
       def test() = {
         assert(!isInlineThunksOnForce, "precondition for tests")
 
@@ -105,7 +105,7 @@ class ThunkTests extends BaseTests { suite =>
   }
 
   test("thunksWithInlining") {
-    val ctx = new TestContext(this, "thunksWithInlining") with  MyProg {
+    val ctx = new TestContext("thunksWithInlining") with MyProg {
       isInlineThunksOnForce = true
 
       def test() = {
@@ -148,7 +148,7 @@ class ThunkTests extends BaseTests { suite =>
   }
 
   test("thunksOfDomainTypes") {
-    val ctx = new TestContext(this, "thunksOfDomainTypes") with SegmentsDslExp with MyDomainProg {
+    val ctx = new TestContext("thunksOfDomainTypes") with SegmentsDslExp with MyDomainProg {
       isInlineThunksOnForce = false
 
       def test() = {
@@ -171,7 +171,7 @@ class ThunkTests extends BaseTests { suite =>
   }
 
   test("thunksOfDomainTypesWithoutIsoLifting") {
-    val ctx = new TestContext(this, "thunksOfDomainTypesWithoutIsoLifting") with SegmentsDslExp with MyDomainProg {
+    val ctx = new TestContext("thunksOfDomainTypesWithoutIsoLifting") with SegmentsDslExp with MyDomainProg {
       isInlineThunksOnForce = false
       override def isInvokeEnabled(d: Def[_], m: Method) = true
       override def shouldUnpack(e: Elem[_]) = false

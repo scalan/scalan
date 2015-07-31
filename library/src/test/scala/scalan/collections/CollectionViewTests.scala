@@ -2,13 +2,14 @@ package scalan.collections
 
 import scala.language.reflectiveCalls
 import scalan.common.SegmentsDslExp
-import scalan.{ScalanCommunityDslExp, ViewTestsCtx, BaseTests}
+import scalan.{ScalanCommunityDslExp, BaseViewTests}
 
-class CollectionViewTests extends BaseTests { suite =>
+class CollectionViewTests extends BaseViewTests {
+  class Ctx(name: String) extends
+    ViewTestsCtx(name) with CollectionsDslExp with ScalanCommunityDslExp with SegmentsDslExp
 
   test("LambdaResultHasViews") {
-    val ctx = new ViewTestsCtx(this, "LambdaResultHasViews")
-                  with CollectionsDslExp with ScalanCommunityDslExp {
+    val ctx = new Ctx("LambdaResultHasViews") {
       lazy val t1 = fun { (in: Rep[Array[Int]]) => CollectionOverArray(in) }
       lazy val t2 = fun { (in: Rep[Array[Int]]) => (CollectionOverArray(in), in.length) }
       lazy val t3 = fun { (in: Rep[Array[Int]]) => (CollectionOverArray(in), in) }
@@ -22,8 +23,7 @@ class CollectionViewTests extends BaseTests { suite =>
   }
 
   test("getIsoByElem") {
-    val ctx = new ViewTestsCtx(this, "LambdaResultHasViews_Sums")
-                  with CollectionsDslExp with ScalanCommunityDslExp with SegmentsDslExp
+    val ctx = new Ctx("LambdaResultHasViews_Sums")
     import ctx._
 
     testGetIso(element[Collection[Int]], element[Collection[Int]])

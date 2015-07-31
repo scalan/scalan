@@ -4,10 +4,9 @@ import scalan._
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
 import scalan.graphs.{GraphsDslExp, GraphsDslSeq, GraphExamples, MST_example}
-import scalan.it.BaseItTests
+import scalan.it.BaseCtxItTests
 
-
-abstract class LmsMsfItTests extends BaseItTests {
+abstract class LmsMsfItTests extends BaseCtxItTests {
 
   trait MsfFuncs extends GraphExamples {
     lazy val msfFunAdjBase = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
@@ -280,12 +279,12 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
   }
 
   test("fallingTestWithLists") {
-    val ctx = new TestContext(this, "fallingTestWithLists") with ProgExp
+    val ctx = new TestContext("fallingTestWithLists") with ProgExp
     ctx.emit("funFallingTestWithLists", ctx.funFallingTestWithLists)
   }
 
   test("fallingTestWithArrays") {
-    val ctx = new TestContext(this, "fallingTestWithArrays") with ProgExp
+    val ctx = new TestContext("fallingTestWithArrays") with ProgExp
     ctx.emit("funFallingTestWithArrays", ctx.funFallingTestWithArrays)
   }
 }

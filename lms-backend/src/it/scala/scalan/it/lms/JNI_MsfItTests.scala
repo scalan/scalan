@@ -28,30 +28,17 @@ class JNI_MsfItTests extends LmsMsfItTests {
     }
   }
 
+  class Ctx extends ScalanCtxExp with ProgExp {
+    def generate[A,B](name: String, f: Exp[A => B]): Unit = {
+      val dir = new File(prefix, "MSF_JNI-cxx")
+      buildExecutable(dir, dir, name, f, GraphVizConfig.default)
+    }
+  }
+
   test("MSF_JNI") {
-    val ctx1 = new ScalanCtxExp with ProgExp with FirstProg {
-      override def subfolder: String = "MSF_JNI-cxx"
-      def test() = {
+    val ctx1 = new Ctx
 
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
-
-    val ctx2 = new ScalanCtxExp with ProgExp with FirstProg {
-      override def subfolder: String = "MSF_JNI-cxx"
-      def test() = {
-
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
+    val ctx2 = new Ctx
 
     ctx1.generate("MSF_JNI_adjlist", ctx1.MSF_JNI_adjlist)
     ctx2.generate("MSF_JNI_adjmatrix", ctx2 .MSF_JNI_adjmatrix)

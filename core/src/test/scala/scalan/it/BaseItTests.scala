@@ -1,6 +1,6 @@
 package scalan.it
 
-import scalan.BaseTests
+import scalan.{BaseTests, TestContexts, BaseCtxTests}
 
 abstract class BaseItTests extends BaseTests with ItTestsUtil {
 /*
@@ -23,3 +23,5 @@ abstract class BaseItTests extends BaseTests with ItTestsUtil {
 
 */
 }
+
+abstract class BaseCtxItTests extends BaseItTests with TestContexts

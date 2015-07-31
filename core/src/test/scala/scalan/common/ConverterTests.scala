@@ -3,16 +3,16 @@ package scalan.common
 import scala.language.reflectiveCalls
 import scalan._
 
-class ConverterTests extends BaseTests { suite =>
+class ConverterTests extends BaseCtxTests {
 
   trait ConvProg extends CommonExamples {
   //TODO uncomment after convertTo works not only for Reifiable[_]
 //    lazy val t20 = fun { in: Rep[Array[Interval]] => in.convertTo[Array[Slice]] }
   }
 
-  class ConvProgStaged(testName: String) extends TestContext(this, testName) with  ConvProg with SegmentsDslExp {
+  class ConvProgStaged(testName: String) extends TestContext(testName) with ConvProg with SegmentsDslExp {
   }
-  class ConvProgSeq(testName: String) extends ScalanCtxSeq with  ConvProg with SegmentsDslSeq {
+  class ConvProgSeq(testName: String) extends ScalanCtxSeq with ConvProg with SegmentsDslSeq {
   }
 
   test("simple converter tests") {

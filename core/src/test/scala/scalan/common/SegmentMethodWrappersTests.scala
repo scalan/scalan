@@ -17,9 +17,9 @@ trait SegmentMethodWrappers extends Scalan with SegmentsDsl {
   lazy val Slice_shift = fun { (in: Rep[(SliceData, Int)]) => val Pair(i, o) = in; Slice(i).shift(o) }
 }
 
-class SegmentMethodWrappersTests extends BaseTests { suite =>
+class SegmentMethodWrappersTests extends BaseCtxTests {
 
-  class SegmentMethodWrappersStaged(testName: String) extends TestContext(this, testName) with  SegmentMethodWrappers with SegmentsDslExp {
+  class SegmentMethodWrappersStaged(testName: String) extends TestContext(testName) with SegmentMethodWrappers with SegmentsDslExp {
   }
 
   test("Interval_start") {

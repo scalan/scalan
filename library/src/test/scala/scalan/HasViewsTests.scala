@@ -3,10 +3,10 @@ package scalan
 import scala.language.reflectiveCalls
 import scalan.common.SegmentsDslExp
 
-class HasViewsTests extends BaseTests { suite =>
+class HasViewsTests extends BaseViewTests {
 
   test("HasViews") {
-    val ctx = new ViewTestsCtx(this, "HasViews") with SegmentsDslExp with ScalanCommunityDslExp
+    val ctx = new ViewTestsCtx("HasViews") with SegmentsDslExp with ScalanCommunityDslExp
     import ctx._
 
     testNoViews(10)
