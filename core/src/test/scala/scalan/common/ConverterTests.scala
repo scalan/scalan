@@ -78,14 +78,16 @@ class ConverterTests extends BaseTests { suite =>
     }
   }
 
-  test("convertFunctor") {
-    val ctx = new ConvProgStaged("convertFunctor")
+  test("hasConverter") {
+    val ctx = new ConvProgStaged("hasConverter")
     import ctx._
     testConverter[Int, Int](ctx, "convInt")
     testConverter[Int, Double](ctx, "convIntToDouble",false)
     testConverter[(Int,Int), (Int,Int)](ctx, "convPairOfInt")
     testConverter[Interval, Interval](ctx, "convEntityItself")
     testConverter[Interval, Slice](ctx, "convIsoEntities")
+    testConverter[Interval, Segment](ctx, "convToSuperType")
+    testConverter[Segment, Interval](ctx, "convFromSuperType")
     testConverter[(Interval,Slice), (Slice,Interval)](ctx, "convPairOfIsoEntities")
     testConverter[Array[Interval], Array[Slice]](ctx, "convArray")
     testConverter[(Array[Interval],Array[Slice]), (Array[Slice],Array[Interval])](ctx, "convPairOfArrays")
