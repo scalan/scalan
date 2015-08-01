@@ -120,8 +120,8 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
       case (eEntity: EntityElem[_], eClass: ConcreteElem[tData,tClass]) =>
         val convOpt = eClass.getConverterFrom(eEntity)
         convOpt
-//      case (eClass: ConcreteElem[tData,tClass], eEntity: EntityElem[_]) if eClass <:< eEntity =>
-//        Some(BaseConverter(identityFun(eClass))(eClass,eClass).asRep[Converter[A,B]])
+      case (eClass: ConcreteElem[tData,tClass], eEntity: EntityElem[_]) if eClass <:< eEntity =>
+        Some(BaseConverter(identityFun(eClass))(eClass,eClass).asRep[Converter[A,B]])
       case _ => None
     }
   }
