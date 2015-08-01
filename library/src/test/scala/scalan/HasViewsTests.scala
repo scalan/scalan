@@ -19,17 +19,23 @@ class HasViewsTests extends BaseTests { suite =>
 
     testHasViews(toRep(10).asLeft[Interval], element[Int | (Int, Int)])
     testHasViews(toRep(10).asRight[Interval], element[(Int, Int) | Int])
+    testNoViews(toRep(10).asRight[Segment])
+    testHasViews(Interval(10,10).asRight[Segment], element[Segment | (Int, Int)])
 
     testHasViews(Interval(10,10), element[(Int, Int)])
+    testHasViews(Pair(Interval(10,10), 1), element[((Int, Int),Int)])
     testHasViews(SArray.empty[Interval], element[Array[(Int, Int)]])
 
     // Lambda argument tests
     fun { x: Rep[Segment] =>
       testNoViews(x)
+      testHasViews(Pair(Interval(10,10), x), element[((Int, Int),Segment)])
       x
     }
-    fun { x: Rep[Interval] =>
+    fun { in: Rep[(Interval,Segment)] =>
+      val Pair(x,y) = in
       testHasViews(x, element[(Int, Int)])
+      testHasViews(in, element[((Int, Int), Segment)])
       x
     }
 
