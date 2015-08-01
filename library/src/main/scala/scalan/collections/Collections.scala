@@ -553,7 +553,7 @@ trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSe
 trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslExp =>
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case ExpPairCollectionAOS(pairColl @ Def(_: PairCollection[_, _])) => pairColl
+//    case ExpPairCollectionAOS(pairColl @ Def(_: PairCollection[_, _])) => pairColl
     case _ => super.rewriteDef(d)
   }
 
