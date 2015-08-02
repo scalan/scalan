@@ -165,7 +165,7 @@ trait ScalanParsers {
         case _ => None
       }.flatten
       val tparams = tdTree.tparams.map(tpeArg)
-      STpeArg(tdTree.name, bound, contextBounds, tparams)
+      STpeArg(tdTree.name, bound, contextBounds, tparams, tdTree.mods.flags)
     }
 
     typeParams.map(tpeArg)
