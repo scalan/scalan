@@ -2,6 +2,7 @@ package scalan.collections
 
 import scalan._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -16,7 +17,14 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   // familyElem
   class MMultiMapElem[K, V, To <: MMultiMap[K, V]](implicit val elemKey: Elem[K], val elemValue: Elem[V])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("MultiMaps")
+      module.entities.find(_.name == "MMultiMap").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("K" -> Left(elemKey), "V" -> Left(elemValue))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagK = elemKey.tag
@@ -55,7 +63,14 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   class HashMMultiMapElem[K, V](val iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]])(implicit elemKey: Elem[K], elemValue: Elem[V])
     extends MMultiMapElem[K, V, HashMMultiMap[K, V]]
     with ConcreteElem[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
-    override val parent: Option[Elem[_]] = Some(mMultiMapElement(element[K], element[V]))
+    override lazy val parent: Option[Elem[_]] = Some(mMultiMapElement(element[K], element[V]))
+    override lazy val entityDef = {
+      val module = getModules("MultiMaps")
+      module.concreteSClasses.find(_.name == "HashMMultiMap").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("K" -> Left(elemKey), "V" -> Left(elemValue))
+    }
 
     override def convertMMultiMap(x: Rep[MMultiMap[K, V]]) = HashMMultiMap(x.map)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -586,7 +601,7 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
 object MultiMaps_Module {
   val packageName = "scalan.collections"
   val name = "MultiMaps"
-  val dump = "H4sIAAAAAAAAALVWz28bRRQer5M6a4e05AAqErhEpogK7JBLkXJAqeNQVDuJslGF3KrSeD12Jsz+yMw42uXQOyAuFTeEUA/ceuNvQEIcOCGKxJlTAYkK2hOIN7M/vOvYaRFiD6OdmTfvvfm+773de7+iecHRRWFjht26QySuW/p9Q8ia1XIllWHH648Y2SSDzcP7b/EvDz4x0NkuOnOAxaZgXWRGL63AT98tctRGJnZtIqTHhUQvt3WEhu0xRmxJPbdBHWckcY+RRpsKud5Gcz2vHx6h26jQRudsz7U5kcRqMiwEEfH6AlEZ0XRu6nm4449juA11i0bmFvscUwnpQ4xzkf0e8a3Q9dzQkWgpTm3HV2mBTYk6vsdlEqIE7g68fjKdczEsoOX2IT7GDQgxbFiSU3cIJys+tt/HQ7INJsp8DhIWhA32Q1/Pi21UFuQIAHrX8ZleCXyEEDCwppOoj/Gpp/jUFT41i3CKGf0Aq81d7gUhip5CEaHABxevP8FF4oG03H7to5v2jcdWxTHU4UClUtI3PAOOqjPUoKkAHL/ZuyMevnP3soHKXVSmYqMnJMe2zFIeo1XBrutJnXMKIOZDYGtlFls6ygbYTEjCtD3Hxy54iqFcBJ4YtalUxmptMWZnBvQl6ZPEtBD4hfS+F2bcV+umiRnbfXD+jVd+ab1nICMfwgSXFgifJ04lMjudEZO0g/3YvxrPSlS4NgZZTa/rqRrMYDyWTkknBebVB7/1v15FN40Uzjj60zEILubFjz9Uvn/tbQMtdLXetxgedgFR0WLE2eFNz5VdtOAdEx7tlI4xU29TGS31yQDDpWOcswAVASCJLsysTJ8o9NZ1FRQSACqRkLc9l9S2dmuPrG8/vad0ytFitBOV6t/08l8/LQ2klrBERSeGHNAtQoHn4Z/rPImRygbnOLwyGgwInzCcztUkb+UoOctzyLMrD+mtux9LzVAhyLeLnd4h1Oe6PvfSKWQlbevP7qrxx/n7XxjIBE56VMJFa6tPWWz/YwGhPEpLzbhla5Gt5TefuYrFQVoZGTgTg+V0s5nNMgN6KR2qwPZzOYe5M9Uxrc9nsnihkEhMG0lUIqD1ayRMJaK0P1UimVRPeDGVl+uYjchpfk4qaBom1bSAX5ylCc3AnRsXr/LfP/vQUCzN97yR208ohe+mJIG8kqwV8pQChZhjJ6FwDFe+HLZzGyeTz9zuzQkZmHuEDqj66Eys/6e+mJWANq1PDV5Rat3CDmXh2qzw0/tuTlwzxBgB4k86q2Yi5YH7F4iqcX9sExuaKWaQVCyJ8fddxEhwtDJDLlZcwNBFbj/+fPvSd1/9rL9hZdUKoL266V/OWCTBBEHLkT9Awhm58O8Efy+Z7EHuqkvozP8BphVU+00KAAA="
+  val dump = "H4sIAAAAAAAAALVWTWwbRRQer+M6a4e0RCioSOAQGRAI7JBLDzlUievwUzuJslGFTIU0Xo+dKbOzm51xtMuhB45wQ1wR6r03Lpy4ISEOnBAgceZUyqECegLxZvbHu46dViD2MNqZefN+vu97s3v3PioJH70obMwwbzhE4oal37eFrFttLqkMu+5gzMg1Mvxw9Uu7y3eEgS720IVjLK4J1kNm9NIOvPTdIicdZGJuEyFdX0j0fEdHaNouY8SW1OVN6jhjifuMNDtUyK0OWui7g/AE3UaFDrpku9z2iSRWi2EhiIjXF4nKiKZzU8/DfW8SgzdVFc1MFUc+phLShxiXIvtD4lkhd3noSLQcp7bvqbTApkwdz/VlEqIM7o7dQTJd4BgW0ErnFj7FTQgxalrSp3wEJ6sett/HI7IHJsp8ARIWhA2PQk/Pix1UEeQEAHrL8ZheCTyEEDCwqZNoTPBppPg0FD51i/gUM/oBVpsHvhuEKHoKRYQCD1y8+ggXiQfS5oP6Rzftdx9aVcdQhwOVSllXeAEc1eaoQVMBOH5z+Il48MadKwaq9FCFiu2+kD62ZZbyGK0q5tyVOucUQOyPgK31eWzpKNtgMyUJ03YdD3PwFEO5BDwxalOpjNXaUszOHOjL0iOJaSHwCmm9a3Pq1bppYcYO7l1+7YVf2+8YyMiHMMGlBcL3E6cSmd3umEnaxV7sX40XJSpcn4Cspjf0VA1mMBnL56STAvPSvd8GX2+gm0YKZxz98RgEFyXx0w/V71++aqDFntb7LsOjHiAq2ow4+37L5bKHFt1T4kc75VPM1NtMRssDMsRQdIxzFqAiACTR2tzO9IhCb0t3QSEBoBoJec/lpL57UP/T+vbTu0qnPlqKdqJW/Zte+evn5aHUEpao6MSQA7pFaPA8/AvdRzFS3fZ9HO6Mh0PiTxnO5mqat0qUnOU65Mn1B/S9Ox9LzVAhyF8X+/1b0J9b+txz55CVXFt/9DaM3y//+LmBTOCkTyUUWt94zGb7HxsI5VFabsVXthbZZn7ziTexOE47IwNnYrCSbrayWWZAL6dDDdhezTnMnalNaH06k8UzhURi2kiiMgGtXydhKhGl/ZkSyaR6xoupvNzAbEzO83NWQbMwqaUN/Ow8TWgGVg87T7H7V78yUOltVBpCX4oOKvXdMR8k1ML3U5JA7iRrhTy1QCX2sZNSqZ81NIEv3x57Mw3OFpWp+vUpeZiHhA6p+hhNrf+n+zIrDW3amBm8qlS8ix3Kws154WffxznRzRFpBIg37ayWiTQbwH+BsBqPJjaxoZliCEnG0pn8B4gYGR+tz5GVFTc63Da3H36298p3X/yiv3UVdWXANczTv6GJiIIpwlYif4CMM+bwjwV/OZnsoS3UbaIz/wdvyXOPdQoAAA=="
 }
 }
 

@@ -53,6 +53,7 @@ trait Elems extends Base { self: Scalan =>
 
   implicit class ElemForSomeExtension(e: Elem[_]) {
     def asElem[T]: Elem[T] = e.asInstanceOf[Elem[T]]
+    def asEntityElem[T]: EntityElem[T] = e.asInstanceOf[EntityElem[T]]
 
     def getMethod(methodName: String, argClasses: Class[_]*): Method = {
       val m = e.runtimeClass.getMethod(methodName, argClasses: _*)
@@ -168,6 +169,8 @@ trait Elems extends Base { self: Scalan =>
 
   private var modules: Map[String, SEntityModuleDef] = Map()
   def getModules = modules
+
+  def allEntities = getModules.values.flatMap(m => m.allEntities)
 
   def registerModule(m: SEntityModuleDef) = {
     if (modules.contains(m.name))

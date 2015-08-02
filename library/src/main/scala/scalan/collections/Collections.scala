@@ -202,9 +202,12 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[Item] = {
       CollectionOverSeq(SSeq(indices.arr.map(i => seq(i))))
     }
-    def mapBy[B: Elem](f: Rep[Item => B @uncheckedVariance]): Coll[B] = ???
-    def reduce(implicit m: RepMonoid[Item @uncheckedVariance]): Rep[Item] = ???
-    def zip[B: Elem](ys: Coll[B]): PairColl[Item, B] = ???
+    def mapBy[B: Elem](f: Rep[Item => B @uncheckedVariance]): Coll[B] = CollectionOverSeq(seq.map(f))
+    def reduce(implicit m: RepMonoid[Item @uncheckedVariance]): Rep[Item] = {
+      val r = fun { p: Rep[(Item,Item)] => val Pair(x,y) = p; m.append(x,y) }
+      seq.reduce(r)
+    }
+    def zip[B: Elem](ys: Coll[B]): PairColl[Item, B] = PairCollectionSOA(CollectionOverSeq(seq), ys)
     def update (idx: Rep[Int], value: Rep[Item]): Coll[Item] = ???
     def updateMany (idxs: Coll[Int], vals: Coll[Item]): Coll[Item] = ???
     def filterBy(f: Rep[Item @uncheckedVariance => Boolean]): Coll[Item] = ???
@@ -550,7 +553,7 @@ trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSe
 trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslExp =>
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case ExpPairCollectionAOS(pairColl @ Def(_: PairCollection[_, _])) => pairColl
+//    case ExpPairCollectionAOS(pairColl @ Def(_: PairCollection[_, _])) => pairColl
     case _ => super.rewriteDef(d)
   }
 

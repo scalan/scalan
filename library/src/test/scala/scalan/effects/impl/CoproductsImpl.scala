@@ -3,6 +3,7 @@ package scalan.monads
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -17,7 +18,14 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   // familyElem
   class CoproductElem[F[_], G[_], A, To <: Coproduct[F, G, A]](implicit val cF: Cont[F], val cG: Cont[G], val eA: Elem[A])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Coproducts")
+      module.entities.find(_.name == "Coproduct").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("F" -> Right(cF.asInstanceOf[SomeCont]), "G" -> Right(cG.asInstanceOf[SomeCont]), "A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -55,7 +63,14 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   class CoproductImplElem[F[_], G[_], A](val iso: Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
     extends CoproductElem[F, G, A, CoproductImpl[F, G, A]]
     with ConcreteElem[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
-    override val parent: Option[Elem[_]] = Some(coproductElement(container[F], container[G], element[A]))
+    override lazy val parent: Option[Elem[_]] = Some(coproductElement(container[F], container[G], element[A]))
+    override lazy val entityDef = {
+      val module = getModules("Coproducts")
+      module.concreteSClasses.find(_.name == "CoproductImpl").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("F" -> Right(cF.asInstanceOf[SomeCont]), "G" -> Right(cG.asInstanceOf[SomeCont]), "A" -> Left(eA))
+    }
 
     override def convertCoproduct(x: Rep[Coproduct[F, G, A]]) = CoproductImpl(x.run)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -204,7 +219,7 @@ trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
 object Coproducts_Module {
   val packageName = "scalan.monads"
   val name = "Coproducts"
-  val dump = "H4sIAAAAAAAAALVWzW8bRRR/Xidx1g79OiBFApFEpggEdgQSRcoBGccxSG4SZStRuRXVeD12JuzObmbG0ZpD74C4VNwQQj1w642/AQlx4IQoEmdOBSQqoCcQM+P9dL1ODq0Po/l4896b3+/33vre77DIGVzmNnIQrblYoJql5w0uqlaLCiLGV73+yMHbeLB9dP8t9vXhZwac78LSIeLb3OmCOZm0Aj+eW/i4AyaiNubCY1zAekdHqNue42BbEI/WieuOBOo5uN4hXGx1YKHn9cfHcBsKHbhge9RmWGCr6SDOMQ/3l7HKiMRrU6/He34Sg9bVK+qpV1xjiAiZvoxxYWJ/gH1rTD06dgWcC1Pb81Va0qZEXN9jIgpRku4OvX60XKBIbsClzhE6QXUZYli3BCN0KG9WfGR/iIZ4V5oo8wWZMMfO4NrY1+tiB8ocH0uA3nN9R+8EPgBIBl7XSdQSfGoxPjWFT9XCjCCHfITU4T7zgjFMfoUiQOBLF6+e4iLygFu0X/3kpn3jkVVxDXU5UKmU9AuXpKMXctSgqZA4fndwhz9s371iQLkLZcIbPS4YskWa8hCtCqLUEzrnGEDEhpKtjTy2dJSGtJmShGl7ro+o9BRCuSJ5cohNhDJWeyshOznQl4SPI9NC4Bfi967lvFfrpokcZ//B6msv/ta6boCRDWFKl5YUPoucCjCbns9kwdgi9K/G8wIKOwnIatnOLht6qQYzSMbSnOxinF568Ef/2024acTohsmcjVDpYpH//FPlx5ffNmC5q+W/46BhVwLMWw5291jTo6ILy94JZpOT0gly1GwmwaU+HqCRI0LY03gVJV4C1nIL1ccKzC1dFIUIgMpE17sexdWd/eo/1vef31OyZbAyOZlU7n/kyr+/nBsIrWgBRTaiEbpFWe9ZNpZaRBxiNk3R1DpNSkLcHKPZo3pEeZKq5bn44sZD8sHdT4XmqxBke8le70gW75a+tzaHuqin/d3dNP5avf+VAaZkqEeEi/zq5hkr8SlWF8SoJMO6pOXZuDxUC2ymg64nFbGawvi5QqQFbSTAsHci8BeUMmfWWYq0GQ7a8xy0T3eAG7EDVSGnKkLAM5l3az9xeT6fx7FG9M6Ny++yP7/42FCoL/a8Ee1HFMmPpMCBeCfaK2QpkpQghtyIkgTjKakfZE5uTT8/e9yefVEN78+/+TgsKVdvQhZE8wCTAVHfrqn9J9lew/JMTN8Ic8kR76U4+AzhZnp/muDHkcgB/wwYPkn01Xgr60MalhOApWojZXoU9XkIEYONHMFaYUuQfen2oy93X/nhm1/1J7Osmots3zT+U5XINJjqzOZVHUv+R0olLOtMtRud7P/jMZolswoAAA=="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+Xp/Pt/aRhAiddBKIu5MBgcA+gUSKKyLH8Vkg34+8kYhMRDRej30Tdmf2ZsanNUUKSugQLULp09FQ0SEhCioESNRUIRQRkArEzHj/bOy7QyIuRjuzb7/35vveN+P7D6EgOLwoXOQhWvWxRFXHPNeFrDhNKokc77H+yMPX8eDDtS/dPXpNWHCxC8tHSFwXXhfsyUMzDJJnBx+3wUbUxUIyLiRstk2Gmss8D7uSMFojvj+SqOfhWpsIudOGpR7rj4/hLuTacMll1OVYYqfhISGwiNZXsK6IJHPbzMcHQZqD1vQuapld3OCISFW+ynFpEt/BgTOmjI59CRei0g4CXZaKKRI/YFzGKYoK7oj14+kSRWoBLrfvoBNUUymGNUdyQofqy3KA3PfREO+rEB2+pAoW2BvcGAdmnm9DSeBjRdBbfuCZlTAAAKXA66aIaspPNeGnqvmpOJgT5JEPkH55yFk4hskvlwcIAwXx6hkQMQJu0n7lo1vuu4+dsm/pj0NdStHscFkBPb+gG4wUisdvOp+IR617VywodaFERL0nJEeuzEoesVVGlDJpak4IRHyo1NpapJbJUlcxMy1hu8wPEFVIEZWrSiePuETqYL22GqmzgPqiDHAcmguDXLLfjQX7NX3TQJ53+GD9tRd+bd60wJpOYStIRzU+j0El2A0WcGUYV0b4erwoIbebkqynrelp3Uz1YIfpWDyluoSnlx781v96G25ZCbtRMecTVEEUxE8/lL9/+aoFK13T/rseGnYVwaLpYf+ANxiVXVhhJ5hP3hRPkKef5gpc7OMBGnkyoj3LV17xJWFjoVEDrMncMabIxQSUJ329zyiu7B5W/nS+/fS+blsOq5M3E+f+Ta789fOFgTQdLSHPRzRmN6/8Pq3GcpPII8xnJZqZZ0VJhTslaP6oN1GalOowHz+99Yi8d+9jafTKhdNnyUHvjjLvjvlu4xTp4jPtj+629fv6j59bYCuFekT6KKhsn9OJT9BdkLCSDptKlrXEHvoIbGSTbqaOWM9w/Gwu7gUTJMFyd2Pyl3RnzvVZRrQ5AK3TAFpnA+B6AqAdcmZHSHhqat8GJ7Hnc4s0NoyuddrPeA+vfmVB4W0oDJTrRBsKPTai/VgqdVlKHMpr8VpuWiolDeLIT6Qxvw1IOZ9p/c7ciNuztMwPa50OpId3zof0bxoz0G/CNOl2B5MB0XfdzPr/eRxHdk5D34hqWdDsl5Pkcxp96q7INsRiRs4Q6T9w+yRV0uPtaSwVWEqFUG6IO55R1BcRlRy2FhjBiY4add7dffzZ/ivfffGLuYpL+tBS1wJN/qylbR/OnPj2nsml/ntlClb+1ceYKfYfX2yV/AsLAAA="
 }
 }
 

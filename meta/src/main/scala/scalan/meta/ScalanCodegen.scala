@@ -53,6 +53,15 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       tpeArgs.opt(args =>
         s"(implicit ${args.rep(t => s"ev${t.name}: $typeClass[${t.name}]")})")
     }
+
+    def getImplicitArgName(tyArgName: String): Either[String,String] = {
+      val imp = implicitArgs.collect(a => a.tpe match {
+        case STraitCall("Elem",List(STpeAnnotated(STraitCall(`tyArgName`,_),_))) => Left(a.name)
+        case STraitCall("Elem",List(STraitCall(`tyArgName`,_))) => Left(a.name)
+        case STraitCall(_,List(STraitCall(`tyArgName`,_))) => Right(a.name)
+      }).headOption.get
+      imp
+    }
   }
 
   case class EntityTemplateData(m: SEntityModuleDef, t: STraitDef) extends TemplateData(m, t)
@@ -518,12 +527,23 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           case p => !!!(s"Unsupported parent type $p of the entity ${e.name}")
         }
         val parentElem = s"$parentElemName$parentTyArgs$parentArgs"
+        val tpeSubst = e.tpeArgs.map(a => {
+          val name = e.getImplicitArgName(a.name)
+          (a.name, name)
+        })
 
         s"""
         |  // familyElem
         |  ${isW.opt("abstract ")}class ${e.name}Elem[${e.typesDeclPref}To <: ${e.entityType}]${e.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")}
         |    extends $parentElem {
-        |    ${optParent.opt(_ => "override ")}val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
+        |    ${optParent.opt(_ => "override ")}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
+        |    ${optParent.opt(_ => "override ")}lazy val entityDef: STraitOrClassDef = {
+        |      val module = getModules("${module.name}")
+        |      module.entities.find(_.name == "${e.name}").get
+        |    }
+        |    ${optParent.opt(_ => "override ")}lazy val tyArgSubst: Map[String, TypeDesc] = {
+        |      Map(${tpeSubst.rep({ case (n,v) => "\"" + n + "\" -> " + v.fold(l => s"Left($l)", r => s"Right($r.asInstanceOf[SomeCont])") })})
+        |    }
         |    override def isEntityType = true
         |    override lazy val tag = {
         |${e.implicitArgs.flatMap(arg => arg.tpe match {
@@ -678,6 +698,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val wildcardElem = s"${className}Elem${c.tpeArgs.opt(_.map(_ => "_").mkString("[", ", ", "]"))}"
         val parentElem = tpeToElement(parent, concTemplateData.tpeArgs)
         val hasCompanion = c.companion.isDefined
+        val tpeSubst = concTemplateData.tpeArgs.map(a => {
+          val name = concTemplateData.getImplicitArgName(a.name)
+          (a.name, name)
+        })
 
         s"""
         |$defaultImpl
@@ -685,7 +709,14 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |  class ${className}Elem${typesDecl}(val iso: Iso[${className}Data${typesUse}, $className${typesUse}])$implicitArgs
         |    extends ${parent.name}Elem[${parentArgsStr}$className${typesUse}]
         |    with ConcreteElem${isCont.opt("1")}[${isCont.opt(parentArgsStr)}${className}Data${typesUse}, $className${typesUse}${isCont.opt(s", ${parent.name}")}] {
-        |    override val parent: Option[Elem[_]] = Some(${parentElem})
+        |    override lazy val parent: Option[Elem[_]] = Some(${parentElem})
+        |    override lazy val entityDef = {
+        |      val module = getModules("${module.name}")
+        |      module.concreteSClasses.find(_.name == "$className").get
+        |    }
+        |    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+        |      Map(${tpeSubst.rep({ case (n,v) => "\"" + n + "\" -> " + v.fold(l => s"Left($l)", r => s"Right($r.asInstanceOf[SomeCont])") })})
+        |    }
         |    ${templateData.isWrapper.opt("lazy val eTo = this")}
         |    override def convert${parent.name}(x: Rep[${parent.name}${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.getEntity(parent.name), c)}
         |    override def getDefaultRep = super[ConcreteElem${isCont.opt("1")}].getDefaultRep

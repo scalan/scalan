@@ -3,6 +3,7 @@ package scalan.monads
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -17,7 +18,14 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   // familyElem
   class ReaderElem[Env, A, To <: Reader[Env, A]](implicit val eEnv: Elem[Env], val eA: Elem[A])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Readers")
+      module.entities.find(_.name == "Reader").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("Env" -> Left(eEnv), "A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagEnv = eEnv.tag
@@ -56,7 +64,14 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   class ReaderBaseElem[Env, A](val iso: Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]])(implicit eEnv: Elem[Env], eA: Elem[A])
     extends ReaderElem[Env, A, ReaderBase[Env, A]]
     with ConcreteElem[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
-    override val parent: Option[Elem[_]] = Some(readerElement(element[Env], element[A]))
+    override lazy val parent: Option[Elem[_]] = Some(readerElement(element[Env], element[A]))
+    override lazy val entityDef = {
+      val module = getModules("Readers")
+      module.concreteSClasses.find(_.name == "ReaderBase").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("Env" -> Left(eEnv), "A" -> Left(eA))
+    }
 
     override def convertReader(x: Rep[Reader[Env, A]]) = ReaderBase(x.run)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -217,7 +232,7 @@ trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
 object Readers_Module {
   val packageName = "scalan.monads"
   val name = "Readers"
-  val dump = "H4sIAAAAAAAAALVWz28bRRR+3jhx7ISm0AMqVZsSmVatqB1xKVIOyEkcWslNomwPyK1A492xs2F3ZjMztmwOvQPiUnFBCKEeuPXG34CEOHCqKBInDpwKSFSUnkC8mf1lF29ohfBhtDPz9v34vu+99d1fYFYKOCcd4hNWC6giNds8N6Sq2k2mPDW6xt2+Tzdpd/Pg/uvii/2PLFhqw9w+kZvSb0M5emgOw/TZpoctKBPmUKm4kApebpkIdYf7PnWUx1ndC4K+Ih2f1lueVGstKHa4OzqEW1BowXGHM0dQRe0Nn0hJZXw+T3VGXrovm/1oJ8xisLquoj5WxXVBPIXpY4zjkf0eDe0R42wUKDgWp7YT6rTQpuQFIRcqCVFCd/vcTbZFRvAAXmgdkAGpY4he3VbCYz18cyEkzrukR7fRRJsXMWFJ/e71UWj2My2oSHqIAF0NQt+cDEMAQAZeM0nUMnxqKT41jU/VpsIjvvce0Ze7gg9HEP0KMwDDEF28+i8uEg+0ydzqBzedG4/thcDSLw91KiVT4Rw6Ws5Rg6ECcfx677Z8+OadyxZU2lDxZKMjlSCOGqc8RmuBMMaVyTkFkIgesrWSx5aJ0kCbJyRRdngQEoaeYigXkSffczyljfXZYsxODvQlFdLEtDAMC2m9Z3PqNbrZIL6/++DkpVd+br5lgTUZoowubRS+SJwqmNujxKUidq7XJQUzTTbIMMaDQsNs9VIeZmvpiGxSXM4/+NX9ahVuWimacfCnIxBdzMrvv1u4d+ENC+bbRu5bPum1EVDZ9GmwIzY4U22Y5wMqopvSgPj6aSqhJZd2Sd9XMczj+MwgPgrO5jZmSDV4a6YJCgkAC5GOtzmj1a3d6h/2Nx/f1TIVsBjdRJ36l3f5zx+OdZVRMEIs+iyFG/s7BeNMHrsh3eoz597VT04snX7nR8PtnMsD4hmBnWrBrMDuNqWcisF9RiorUb42D+jzKw+9t+98qAxpheHkANnpHGDHrpn3zhzBXzLIHrVXrd9P3v/cgjLS1PFUQMLq6lO23//YUpAikS3LyM2JqCfWiaQb4xGXMyBfHGuYlwqJGoyRgiKOrEGCd1FrNKe9IvinO7Fo4wgXU1hUUMnyNk5STZ3O1xTCcfvGuSvit0/ftzRksx3eZ26CL37WFB2q9eSsMIkv4kkECRI8M4ye1N36+NWU3MeKuwSTlZb3qNf19Fdh8vw/Da5Y85npxTh2jiKWomBT1JCN0HHI/1Hzs8Gh1yuZTWxYiitW8FzCJ2fElXEBAlZyaLbjLsBWvPX4s+2L3375kxkfFd1POLZY+uchIzcdzwkN10ws/C8wli1KU3eYyfRvymkdMpsJAAA="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+3vOdz/aRCwQFhSi542RARMQ+0aS4IvJdfBDk+5E3BTIRaLw7dibszuztjC2bIgUldIiGAqH06Wio6JAQBVUESFQUVCEUEZAKxJvZPzvyHgHEFqOd2bfv5/u+93bv3IdFGcIL0iEe4XWfKlK3zX1Tqprd4oqpyZ5whx69Qvvvnf7c2ePb0oLVLizdIPKK9LpQjm5a4yC9t+lRG8qEO1QqEUoFz7VNhIYjPI86igneYL4/VKTn0UabSbXVhmJPuJMjuAWFNpx0BHdCqqi94xEpqYzPl6nOiKX7stlPDoIsBm/oKhpTVVwLCVOYPsY4Gdl3aGBPuOATX8GJOLWDQKeFNiXmByJUSYgSursh3GRb5AQP4Kn2TTIiDQwxaNgqZHyAb1YD4rxDBnQfTbR5EROW1OtfmwRmv9CGiqRHCNBVP/DMyTgAAGTgFZNEPcOnnuJT1/jUbBoy4rF3iX54GIrxBKKrsAAwDtDFy3/jIvFAW9ytvX/defOhXfUt/fJYp1IyFS6ho7UcNRgqEMevOh/KB6/evmRBpQsVJps9qULiqGnKY7SqhHOhTM4pgCQcIFsbeWyZKE20eUQSZUf4AeHoKYZyBXnymMOUNtZnKzE7OdCXVEAT08I4KKT1rufUa3SzQzzv8N6Zi8//3HrDAms2RBld2ij8MHGqYKlDiUvD2LleVxUstPgowxgPCk2z1Ut5nK2lY7JJcXnx3i/ul5tw3UrRjIM/HoHoYlF+/2317kuXLVjuGrnvemTQRUBly6P+QbgjuOrCshjRMHpSGhFP380ltOTSPhl6KoZ5Gp8FxEfBem5jBlSDt2WaoJAAUI10vC84re0e1n63v/7ojpZpCCvRk6hT/2SX/vjhRF8ZBSPE4ZCncGN/p2Ccz2M3oLtD7ty9+vGp1XNv/2i4XXKFT5gR2Nk2LIbY3aaUszG4/5DKSpSvLXz65MYD9tbtD5QhrTCeHSAHvZvYsVvmvfPH8JcMst+6m9avZ7771IIy0tRjyidBbfMx2+9/bClIkciWNeTmVNQT20TSnemIaxmQz0w1zLOFRA3GSEERR9YowbuoNZrTXhH8851YtHmMizksKqhkeRsnqabO5WsK4TjdaT/t3b/8hQWLr8NiH/tGoph6YsjdBGf8vCk6VtvJWWEWZ8SVhMRPcTXXOmSYParD7Xkmc2qaKvoizCJQ7lDWZ/prMXv+nwZa3AuZ6YU4do5SVqNgc1SSjdZpKnJr/3fw6PW1zCY2LMUIKHgi4V1w4sq4oBA2cuRgx92CLXvr4Sf7F7757CczZiq673C88fQnIyM/HeMJLXsmFv4zTGWLEtadaDL9C4zVXGfDCQAA"
 }
 }
 

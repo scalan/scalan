@@ -2,6 +2,7 @@ package scalan
 
 import scala.language.higherKinds
 import scalan.common.Lazy
+import scalan.meta.ScalanAst.STraitOrClassDef
 import scalan.staged.BaseExp
 import scala.collection.mutable.{Map => MutMap, Seq => MutSeq, ArrayBuffer}
 
@@ -11,6 +12,8 @@ trait Views extends Elems { self: Scalan =>
   }
   abstract class EntityElem[A] extends Elem[A] with Convertible[A] with scala.Equals {
     def parent: Option[Elem[_]]
+    def entityDef: STraitOrClassDef
+    def tyArgSubst: Map[String, TypeDesc]
     //def getConverterTo[B](eB: Elem[B]): Conv[A,B] = !!!  //TODO make it abstract
     // TODO generate code for this in implementations
     def canEqual(other: Any) = other.isInstanceOf[EntityElem[_]]
@@ -195,6 +198,23 @@ trait Views extends Elems { self: Scalan =>
     case _ => !!!(s"Don't know how to build iso for element $e")
   }).asInstanceOf[Iso[_,T]]
 
+  def isConcreteElem[T](e: Elem[T]): Boolean = e match {
+    case e: PairElem[_, _] => e.eFst.isConcrete && e.eSnd.isConcrete
+    case e: SumElem[_, _] => e.eLeft.isConcrete && e.eRight.isConcrete
+    case e: FuncElem[_, _] => e.eDom.isConcrete && e.eRange.isConcrete
+    case e: ArrayElem[_] => e.eItem.isConcrete
+    case e: ListElem[_] => e.eItem.isConcrete
+    case e: ArrayBufferElem[_] => e.eItem.isConcrete
+    case _: ViewElem[_,_] => true
+    case _: EntityElem[_] => false
+    case _: BaseElem[_] => true
+    case _ => !!!(s"isConcrete is not defined for Elem $e")
+  }
+
+  implicit class ElemOps[T](e: Elem[T]) {
+    def isConcrete = isConcreteElem(e)
+    def getDataIso = getIsoByElem(e)
+  }
   trait CompanionElem[T] extends Elem[T] { _: scala.Equals =>
     override def isEntityType = false
   }
@@ -330,8 +350,8 @@ trait Views extends Elems { self: Scalan =>
   }
 
 
-  implicit class RepReifiableViewOps[T <: Reifiable[_]](x: Rep[T]) {
-    def convertTo[R <: Reifiable[_]: Elem]: Rep[R] = repReifiable_convertTo[T,R](x)
+  implicit class RepReifiableViewOps[T](x: Rep[T]) {
+    def convertTo[R: Elem]: Rep[R] = repReifiable_convertTo(x.asRep[Reifiable[T]])(element[R].asElem[Reifiable[R]]).asRep[R]
   }
 
   def repReifiable_convertTo[T <: Reifiable[_], R <: Reifiable[_]]

@@ -3,6 +3,7 @@ package scalan.collections
 import scalan._
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -17,7 +18,14 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   // familyElem
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("BitSets")
+      module.entities.find(_.name == "BitSet").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
+    }
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
@@ -54,7 +62,14 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])
     extends BitSetElem[BoolCollBitSet]
     with ConcreteElem[BoolCollBitSetData, BoolCollBitSet] {
-    override val parent: Option[Elem[_]] = Some(bitSetElement)
+    override lazy val parent: Option[Elem[_]] = Some(bitSetElement)
+    override lazy val entityDef = {
+      val module = getModules("BitSets")
+      module.concreteSClasses.find(_.name == "BoolCollBitSet").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
+    }
 
     override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -297,7 +312,7 @@ trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
 object BitSets_Module {
   val packageName = "scalan.collections"
   val name = "BitSets"
-  val dump = "H4sIAAAAAAAAALVVz28bRRR+3vxwbEdN6wtKLi3BLSoqdoSEipQDSh0XIZkkyhaETFVpsh47E2ZnNjvjyObQP6CIS8UVoR649cYRiQtCQhw4IYrEuacCQhXQExVvZse73qpLe2EPq9nZt+997/u+N3v3N1hQMVxQAeFENEOqSdO36y2lG35HaKYn78j+iNNtOtg+uvdG/MXhJx6s9GDxkKhtxXtQSRadcZSufXrchQoRAVVaxkrDi11boRVIzmmgmRQtFoYjTQ44bXWZ0ptdmD+Q/ckx3IRSF04HUgQx1dRvc6IUVW5/iRpELH2u2OfJbpTVEC3TRWumi2sxYRrhY43TSfw+jfyJkGISajjloO1GBhbGlFkYyVhPS5Qx3aHsTx/nBcENqHePyAlpYYlhy9cxE0P8shaR4EMypDsYYsLnEbCifHBtEtnnuS5UFT1Ggt4OI253xhEAoAKvWRDNjJ9myk/T8NPwacwIZx8R83IvluMJJFdpDmAcYYpLz0gxzUA7ot+4dT344JFfCz3z8dhAKdsOFzHR2QI3WCmQx+/2b6uHb9257EG1B1Wmtg6UjkmgZyV3bNWIEFJbzCmBJB6iWutFatkqWxjzhCUqgQwjIjCTo3IZdeIsYNoEm71lp04B9WUd0WloaRyV0n7PFfRrfdMmnO89WH31/K+d9z3w8iUqmNJH48fTpBoWrzBkWltGza3iyC0ukzb88oPf+99uwHUvpcllfT5lMMWC+vmn2o8X3/RgqWd9fJWTYQ+ZUh1Ow924LYXuwZI8oXHypnxCuFk9Valynw7IiGvH32zjc9i4hnOFExdRw8qmdXdpSkAtMeiOFLRxda/xt//9p3eN/2JYTt4kI/iYXf7nl1MDba2p0QNMKwtpRcMcTq5jw+1U26nfU5peKhI0onsxC/EAOaGvf/PVu398vbNgNa27Tt8jfESTcXaNZk0bLAsDwhU2Xr4iJadEZALP3k2v1aQjX4b0zPpDduPOx9rKWhrnz47dgyMEv2m/W/0Phadn2F+9De/P1Xufe1BBIZGakESNjeecvP9xmiA1fHZbQ8ZeMEwZiZKxaM9WXcuOnbpd4mGcD8+iEnZnpL8IeR9U9ikbMHPY5fefPo9OqAzABZe0oI2VQvj5kV97ok4rv1k21rHBeALWndTZga0clBjWC2zgOxHQCTcffbbzyg9f3rcGrho5ca6Ezv2nnHHzjNSTfNhLOBL4M8Tf0QxqHDijtMX9L3i6bOAeCAAA"
+  val dump = "H4sIAAAAAAAAALVVPYwbRRR+3vvx2T7lEhdBdw3hMEGJiH1CilJcge4cB0Vy7k63ASETRZpbj50JszN7O+OTnSJFyqRDtAilT0cTCYkGISEKKgRI1FSBKIqAVCDezI53vVEW0rDFanb27Xvf+77vzT74DRZUDKdVQDgRzZBq0vTtekvpht8RmunJFdkfcXqRDu6cfBhcEdvKg5UeLN4g6qLiPagki844Stc+PexChYiAKi1jpeG1rq3QCiTnNNBMihYLw5EmB5y2ukzpzS7MH8j+5BBuQ6kLxwMpgphq6rc5UYoqt79EDSKWPlfs82Q3ymqIlumiNdPF1ZgwjfCxxvEkfp9G/kRIMQk1HHPQdiMDC2PKLIxkrKclypjuhuxPH+cFwQ2od2+SI9LCEsOWr2MmhvhlLSLBR2RIdzDEhM8jYEX54Ookss9zXagqeogEXQ4jbnfGEQCgAm9bEM2Mn2bKT9Pw0/BpzAhnt4h5uRfL8QSSqzQHMI4wxVv/kWKagXZEv3H3WvDhM78WeubjsYFSth0uYqJXC9xgpUAev9n/WD199/4FD6o9qDK1daB0TAI9K7ljq0aEkNpiTgkk8RDVWi9Sy1bZwpjnLFEJZBgRgZkclcuoE2cB0ybY7C07dQqoL+uITkNL46iU9nuqoF/rmzbhfO/R6rk3fu184IGXL1HBlD4aP54m1bC4zZBpbRk1t4ojt7hM2vCbjx73v96Aa15Kk8v6cspgigX10w+178+848FSz/r4EifDHjKlOpyGu3FbCt2DJXlE4+RN+Yhws3qhUuU+HZAR146/2cbnsHENpwonLqKGlU3r7tKUgFpi0B0paOPSXuNP/9tPHhj/xbCcvElG8G924a+fjw20taZGDzCtLKQVDXM4uY4Nt1Ntp35PaXq9SNCI7sUsxAPkiJ7/6ov3nny5s2A1rbtO3yd8RJNxdo1mTRssCwPCFTZe3paSUyIygWfvptdq0pEvQ3pi/Sm7fv+etrKWxvmzY/fgJoLftN+t/ovC0zPsj96G9/vqj595UEEhkZqQRI2Nl5y8/3GaIDV8dltDxl4xTBmJkrFoz1Zdy46dul3iYZwPz6ISdmekPwN5H1T2KRswc9jl9188j06oDMBpl7SgjZVC+PmRX3uuTiu/WTbWscF4Atad1NmBrRyUGNYLbOA7EdAJt599unP2u89/sQauGjlxroTO/aeccfOM1JN82Es4EvgzxN/RDGocOKO0xf0PEPyDcR4IAAA="
 }
 }
 

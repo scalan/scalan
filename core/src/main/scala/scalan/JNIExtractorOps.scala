@@ -50,7 +50,10 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
   case class JNIArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     def parent: Option[Elem[_]] = Some(arrayElement(eItem))
     override def isEntityType = eItem.isEntityType
-
+    override def entityDef = !!!("not supported")
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eItem))
+    }
     override def getName = "JNI-" + cleanUpTypeName(tag.tpe)
 
     lazy val tag = {

@@ -4,6 +4,7 @@ import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -18,7 +19,14 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   // familyElem
   class AbstractVectorElem[T, To <: AbstractVector[T]](implicit val eT: Elem[T])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Vectors")
+      module.entities.find(_.name == "AbstractVector").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = eT.tag
@@ -56,7 +64,14 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit eT: Elem[T])
     extends AbstractVectorElem[T, DenseVector[T]]
     with ConcreteElem[DenseVectorData[T], DenseVector[T]] {
-    override val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Vectors")
+      module.concreteSClasses.find(_.name == "DenseVector").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
 
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = DenseVector(x.items)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -120,7 +135,14 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit eT: Elem[T])
     extends AbstractVectorElem[T, SparseVector[T]]
     with ConcreteElem[SparseVectorData[T], SparseVector[T]] {
-    override val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Vectors")
+      module.concreteSClasses.find(_.name == "SparseVector").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
 
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -185,7 +207,14 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   class SparseVector1Elem[T](val iso: Iso[SparseVector1Data[T], SparseVector1[T]])(implicit eT: Elem[T])
     extends AbstractVectorElem[T, SparseVector1[T]]
     with ConcreteElem[SparseVector1Data[T], SparseVector1[T]] {
-    override val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Vectors")
+      module.concreteSClasses.find(_.name == "SparseVector1").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
 
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector1(x.nonZeroItems, x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -1530,7 +1559,7 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
 object Vectors_Module {
   val packageName = "scalan.linalgebra"
   val name = "Vectors"
-  val dump = "H4sIAAAAAAAAANWXTWwbRRTHZzeJHX80bSMKVCKiBNOKCuIUgYqUAwQnoZFMEmXTCrlVpfF67EyYnd3MjiObQ8WRD3GpuCGEeuDWExwrcUFIiAMnRJE4cypUpQIqDiDezH54ndiOI6AqPoz24+17b37v/2bG139GY75AJ30bM8xnHCLxjKWv531ZsBa5pLL9mltrMrJA6gtbN18Un2y+b6LDFZTaxP6CzyooE1wstrz42iLbZZTB3Ca+dIUv0RNlHaFou4wRW1KXF6njNCWuMlIsU1/OldFo1a21t9EVZJTREdvltiCSWCWGfZ/44fNxojKi8X1G37dXvU4MXlSzKCZmsSEwlZA+xDgS2K8Tz2pzl7cdiSbC1FY9lRbYpKnjuUJGIdLgbtOtRbejHMMDNFnewju4CCEaRUsKyhvwZc7D9hu4QVbARJmPQsI+YfWNtqfvR8oo65NtALTseEw/aXkIIajAczqJmQ6fmZjPjOJTsIigmNE3sXq5JtxWGwU/YwShlgcuntnHReSBLPJa4d1L9sV7Vs4x1cctlUpazzAFjh7vowZdCuD41fpV/+6r186aKFtBWerPV30psC2TJQ9p5TDnrtQ5xwCxaEC1pvtVS0eZB5tdksjYruNhDp5ClHmoE6M2lcpYPcuH1emDPi09EpkaLc+I53uiz3y1bkqYsbVbx5996qfF101kdofIgEsLhC8ipyCniMYFKEIIIqXHwxIZG5q0GjKtzpgekESM49St27UvZ9ElM4YYxhyubuBizP/+u9y3T79kovGKVvkSw40KcPQXGXFWRcnlsoLG3R0igjfpHczUVc86pmukjptMhnSTWEYAi0Qn+vajRxSzOa19IwKQC+S74nJSWFor/G59/cF1pU6B8sGboEH/omf//GGiLrVwJRqjkjh+xHcEGrubeLYUt8NQpegUJBtEtVyHHJ2+Sy9fe09q9Earu/tXq1vgf05/99iAKkSr0G+VWfPX4zc/NlEGYFepdLBXmB2yd/7DfkDdfCZK4Qqs1XNm18tukSdIRhaPdFuUkrkmoKfjYQqK+dAC4T7p8cVUZ4E6lsjkUSPSjzaSyCQbUQKjStP7llyiXCKm9hK301S/QmpsVy+ePCd++fAdU6Edq7pNXovqAHuXJC35SvTM6K4DcMcCOxH3zvx2ZagNcsZA8kMuL3vAoV3gJmAzrBDhLvMaBRUepJ8EerI/qDVBHdivd8gLX9w4f+fzlTG9hE6GS8cFzJok2D1DNh1OqrmNWUhhmcvkhHrnfyjMX3v8l5aD3pFSjPCG3NwbQg3ne6M/pcfTD0CHHbNAe/e7xfLJoMkeU+PLD4T+85H+D7qbDFjvPbLR9Bh5/sYfl99+65ynN489B4aEdvbdmXqlrgb7fyrGh5O6OHO/1HioK+rwckxMONUTYWad0DpVx+1/LtkkrgFVy6ntfAk7lLWHLlm/agwqYQBk7+n2oPTU+GnHJjRMh2AkOhr2EqMcswapChxOXqDpPm1mhYcaOFlduffRyulvPvtR7zFZdTyCsySP/8gl95ZuWJOBP5iy0+Tw9xD+oCVSB2mpk5NO+29xiMYkMA8AAA=="
+  val dump = "H4sIAAAAAAAAANVXTWwbRRSe3cRxbKdpG7WBSkSEYKioIE4RqIccSuokEOQmUdatkKkqjddjZ8rs7GZnHNkcKsQJwQ1xRaj3nuCCVKkXhIQ4cEKAxJlTKUIVUHEA8Wb2x+vEdhx+qrKH0e7s2/fefN/35s3evItSwkdPCxszzOcdIvG8pe+XhMxbK1xS2b7o1pqMLJP629Of2hf5BWGioxU0to3FsmAVlAluVlpefG+RnRLKYG4TIV1fSPRESUco2C5jxJbU5QXqOE2Jq4wUSlTIxRIarbq19g66jowSOma73PaJJFaRYSGICOfHicqIxs8Z/dze8DoxeEGtopBYRdnHVEL6EONYYL9FPKvNXd52JJoMU9vwVFpgk6aO5/oyCpEGd9tuLXoc5Rgm0FTpGt7FBQjRKFjSp7wBX+Y8bL+BG2QdTJT5KCQsCKuX255+HimhrCA7ANCa4zE90/IQQsDA8zqJ+Q4+8zE+8wqfvEV8ihl9E6uXm77baqPgMkYQanng4tkDXEQeyAqv5d+9Yr9+38o5pvq4pVJJ6xWOgaPH+6hBUwE4frH1vrj38o1zJspWUJaKpaqQPrZlkvIQrRzm3JU65xhA7DeArbl+bOkoS2CzRxIZ23U8zMFTCOUE8MSoTaUyVnMTITt9oE9Lj0SmRssz4vXO9lmv1k0RM7Z559RzT/248pqJzO4QGXBpgfD9yCnIKULjMpAQAjGmx6MSGWWNtBoyrc6YHpBEDMfpOz/VPl9AV8wYxDDmcLyBi5T47pvc18+cN9F4Rat8leFGBXAUK4w4G37R5bKCxt1d4gdv0ruYqbuePKZrpI6bTIboJmEZAVgkmu1bjx5RmC1q7RsRALlAvusuJ/nVzfxv1pcf3FTq9NFE8CYo0D/puT++n6xLLVyJUlQSR0T4jkBhdyOeLcblMBQVHUKyQVTLdcjxuXv06o33pIbeaHVX/0b1Gvhf1N89NoCFaBf6tbJg/nLq249MlAGwq1Q62MsvDFk7/2E9oG58JovhDqzVc3bPy26RJ5CMLB7ptigmc02Ano6HGSDzxDLhgvT4YqazQZ1MZPKoEelHG0lkknKUwKjS9IGUS5RLxNRe4nKa6Uekhm16q3SC3T1/20SpV1GqDlUiSihVdZu8FvEBPUySlrwQzRndfAD+2MdOjL++ZlFnvXsy1oY5YyATQ243+4BEe4CchOZYIb67xmsUVHmY+vLRk/2B2/SpA/17l7z42a1LP99eT+ktdSrcSi5j1iRBNw0x6uClit1YgBTWuEwuqHf+R8L8tcd/aXvoHWmMEd6Q2/tDqOFSb+hP6/HMQ1BxJy3Q4IMuuYlk0GTNqfGlh6oOJqI6OGyXGdAHPFJueoy8cOv3q++89Yqnm8q+g0RCQwd2rF6pq8H+n4pyOqmPsw9KlUe6oh5elomFj/WEMrNFaJ2q4/g/l24StgHs5VS7X8UOZe2hqevHyiAqA0D2n37/Lopq/LhjExqmQ4AkOh7WFqMcswap+jgEwUdzfcrOCg8/cAK7fv/D9TNfffKD7j1ZdYyCMyePf/iSPacbtKnAHyzdaXL4jYQfuUTqIDV1wtJp/wVmCBuyWA8AAA=="
 }
 }
 

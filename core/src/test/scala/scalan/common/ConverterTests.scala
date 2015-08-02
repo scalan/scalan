@@ -46,12 +46,14 @@ class ConverterTests extends BaseTests { suite =>
     ctx.emit("t8", ctx.t8)
   }
 
-  test("converIfThenElseWithOption") {
-    val ctx = new ConvProgStaged("converIfThenElseWithSum")
+  test("convertIfThenElseWithOption") {
+    val ctx = new ConvProgStaged("convertIfThenElseWithOption")
     ctx.emit("t10", ctx.t10)
     ctx.emit("t10_1", ctx.t10_1)
     ctx.emit("t10_2", ctx.t10_2)
     ctx.emit("t10_3", ctx.t10_3)
+    ctx.emit("t10_4", ctx.t10_4)
+    ctx.emit("t10_5", ctx.t10_5)
   }
 
   test("converIfThenElseWithSum") {
@@ -78,14 +80,16 @@ class ConverterTests extends BaseTests { suite =>
     }
   }
 
-  test("convertFunctor") {
-    val ctx = new ConvProgStaged("convertFunctor")
+  test("hasConverter") {
+    val ctx = new ConvProgStaged("hasConverter")
     import ctx._
     testConverter[Int, Int](ctx, "convInt")
     testConverter[Int, Double](ctx, "convIntToDouble",false)
     testConverter[(Int,Int), (Int,Int)](ctx, "convPairOfInt")
     testConverter[Interval, Interval](ctx, "convEntityItself")
     testConverter[Interval, Slice](ctx, "convIsoEntities")
+    testConverter[Interval, Segment](ctx, "convToSuperType")
+    testConverter[Segment, Interval](ctx, "convFromSuperType")
     testConverter[(Interval,Slice), (Slice,Interval)](ctx, "convPairOfIsoEntities")
     testConverter[Array[Interval], Array[Slice]](ctx, "convArray")
     testConverter[(Array[Interval],Array[Slice]), (Array[Slice],Array[Interval])](ctx, "convPairOfArrays")

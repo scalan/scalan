@@ -1,5 +1,7 @@
 package scalan.meta
 
+import scala.reflect.internal.ModifierFlags
+
 object ScalanAst {
   // STpe universe --------------------------------------------------------------------------
 
@@ -194,9 +196,12 @@ object ScalanAst {
                       name: String,
                       bound: Option[STpeExpr],
                       contextBound: List[String],
-                      tparams: List[STpeArg] = Nil)
+                      tparams: List[STpeArg] = Nil,
+                      flags: Long = ModifierFlags.PARAM)
   {
     def isHighKind = !tparams.isEmpty
+    def isCovariant = hasFlag(ModifierFlags.COVARIANT)
+    def hasFlag(flag: Long) = (flag & flags) != 0L
     def declaration: String =
       if (isHighKind) {
         val params = tparams.map(_.declaration).mkString(",")
@@ -249,6 +254,7 @@ object ScalanAst {
     def tpe = components.mkString(" with ")
   }
 
+  type Module = SEntityModuleDef
   abstract class STraitOrClassDef extends SBodyItem {
     def name: String
     def tpeArgs: List[STpeArg]
@@ -385,6 +391,7 @@ object ScalanAst {
       }
   }
 
+  type Entity = STraitOrClassDef
   case class SEntityModuleDef(
                                packageName: String,
                                imports: List[SImportStat],
@@ -415,6 +422,9 @@ object ScalanAst {
     }
 
     def isEntity(name: String) = entities.exists(e => e.name == name)
+
+    def allEntities = entities ++ concreteSClasses
+
     def clean = {
       val _entities = entities.map(_.clean)
       val _concreteSClasses = concreteSClasses.map(_.clean)

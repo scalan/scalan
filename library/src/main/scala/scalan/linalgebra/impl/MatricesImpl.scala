@@ -4,6 +4,7 @@ import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -18,7 +19,14 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   // familyElem
   class AbstractMatrixElem[T, To <: AbstractMatrix[T]](implicit val eT: Elem[T])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Matrices")
+      module.entities.find(_.name == "AbstractMatrix").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = eT.tag
@@ -56,7 +64,14 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, DenseFlatMatrix[T]]
     with ConcreteElem[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
-    override val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Matrices")
+      module.concreteSClasses.find(_.name == "DenseFlatMatrix").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
 
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = DenseFlatMatrix(x.rmValues, x.numColumns)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -121,7 +136,14 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   class CompoundMatrixElem[T](val iso: Iso[CompoundMatrixData[T], CompoundMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, CompoundMatrix[T]]
     with ConcreteElem[CompoundMatrixData[T], CompoundMatrix[T]] {
-    override val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
+    override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Matrices")
+      module.concreteSClasses.find(_.name == "CompoundMatrix").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
 
     override def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]) = CompoundMatrix(x.rows, x.numColumns)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -1107,7 +1129,7 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
 object Matrices_Module {
   val packageName = "scalan.linalgebra"
   val name = "Matrices"
-  val dump = "H4sIAAAAAAAAAL1WTWwbRRSe3fw4tqOkjYSaSliUYFqBqG1AqEg5oOAkEMlNomyokFshjdcTZ8Ls7GZ2HNYcKq6AuFTcEEI9cOuNIxIXhIQ4cEIUiTOnFgQVpScQb2Z/vOvaSRt+9jDa3Xn7fr7ve2/2xs9owhforG9jhnnFIRJXLH2/5MuytcIllb2LbrvLyDLZWd67+aL4dPcDE8020eQu9pd91kT58GYl8JJ7i+w3UB5zm/jSFb5Ejzd0hKrtMkZsSV1epY7TlbjFSLVBfbnYQOMtt93bR1eR0UAnbJfbgkhi1Rn2feJH76eIyogmz3n93Nvw+jF4VVVRTVWxLTCVkD7EOBHabxHP6nGX9xyJZqLUNjyVFtjkqOO5QsYhcuBu123Hj+Mcwws019jDB7gKITpVSwrKO/Bl0cP2m7hD1sFEmY9Dwj5hO9s9Tz+PNVDBJ/sA0JrjMf0m8BBCwMBzOolKH59Kgk9F4VO2iKCY0bex2twUbtBD4WWMIRR44OKZI1zEHsgKb5ffu2JfvmcVHVN9HKhUcrrCSXD02Ag1aCoAx6+3rvl3Xrl+wUSFJipQf6nlS4FtmaY8QquIOXelzjkBEIsOsLUwii0dZQlsBiSRt13Hwxw8RVBOA0+M2lQqY/VuOmJnBPQ56ZHY1Ag8I6n3zIh6tW7qmLHNW6fPP3l75XUTmdkQeXBpgfBF7BTkFKNxEYMsgiiIWmclMrY10mrJB/01d0gSCRznbv3S/qqGrpgJiFHMB+MNXEz4P3xf/O6pl0w01dQqX2W40wQc/RVGnA1Rd7lsoin3gIhwJ3eAmbobymOuTXZwl8kI3TQsYwCLRGdG9qNHFGaLWvtGDEAxlO+6y0l5dbP8h/XNhzeUOgWaDnfCBv2LXvjzx5kdqYUr0ZRwLmHWJX4M8Rj0dhb0Qj3piCPZ0FvzSVpqKYEH3nXASdfhw8II9MQoAXlkU1AHBtYBeeHLz1/79Yv1Ca2huQg7nXo4PiLo+jCq6owaRFrjcphgCiEqluuQkwt36BvX35daGkaQnU4brT0oflF/9+ghKomn5N1mzfz99M1PTJQHMbSodLBXrj1gb/+H/Yqy5M3UoxNCq/vZ7ObsMuE+AelGXZjiOTY5le3TejrZlCRyfR0AH/MDfjNflfpT9JFUOvPGgJpMsh0nMa4a70hRDq+nlMivNFp+gN+1y2dfFb999K6pMJ5ouV3ejgmBQ1aSQL4cvzOyhAABWGAnJqBf40CW2qBoDPBzrDl4H3iDrTgu3LeO0+tJOpdgN9LwUekcaxyo5fzwwmp6ff5hhDyjFKbo+Xd1fCrr9v+S8ZBqSqnP1kYqLFXy5FAQ81uE7lD1q/PPVZgG7BDeimpUrWKHst4gadmgw6We5eMQEkNA7v+zeFj01PpO3yYynNLO1GBHJ6MxwijHrENaAkfVC7QwYsJY0cSGY+PqvY/Xn/72s5/0+VZQsx8Ocp78RafPtSxac6E/qNnpcvg3h7/jVO4gLnUs6Lz/Bu5Kfc+tDAAA"
+  val dump = "H4sIAAAAAAAAAL1WTWwbRRSe3cRxbEdJG0GbSkSEYEAgGgcQ6iGHKnUSFOT8KBsqZCqk8XrsTpmd3cyMg82hQhzhhrgi1HtvXJCQekFIiAMnBEicOZVWqAJ6AvFm9se7rp2U8LOH0e7O2/fzfd97szfvoJwU6GnpYob5kkcUXnLM/apUZWedK6p6W36zw8gaab135jN3i1+SNpqpo4mrWK5JVkeF8Ga9GyT3DjmooQLmLpHKF1KhJ2omQsX1GSOuoj6vUM/rKNxgpFKjUq3U0HjDb/YO0HVk1dAp1+euIIo4VYalJDJ6P0l0RjR5Lpjn3k7Qj8EruopKqop9gamC9CHGqdB+jwROj/u85yk0HaW2E+i0wCZPvcAXKg6RB3dX/Wb8OM4xvECztWv4EFcgRLviKEF5G74sBdh9C7fJNpho83FIWBLW2u8F5nmshoqSHABAm17AzJtugBACBl40SSz18VlK8FnS+JQdIihm9B2sN3eF3+2h8LLGEOoG4OL5Y1zEHsg6b5bfv+K+cd8pebb+uKtTyZsKJ8DR4yPUYKgAHL/a+1Dee+XGBRsV66hI5WpDKoFdlaY8QquEOfeVyTkBEIs2sLU4ii0TZRVsBiRRcH0vwBw8RVBOAU+MulRpY/1uKmJnBPR5FZDY1OoGVlLvwoh6jW6qmLHd2+fOP/Xz+us2srMhCuDSAeGL2CnIKUZjC4MsulEQvc4oZO0bpPVS6PbX/BFJJHA8c/tu88tldMVOQIxiPhxv4CInf/iu9O2zF200WTcq32C4XQcc5Toj3o6o+lzV0aR/SES4kz/ETN8N5THfJC3cYSpCNw3LGMCi0MLIfgyIxmzFaN+KASiF8t32OSlv7JZ/d77+6KZWp0BT4U7YoH/SC3/8ON1SRrgKTQrvMmYdImOIx6C3s6AXq0lHHMuG2ZpL0tLLPHjgHQ+cdDw+LIxAT44SUEB2BfVgYB2Sl7/4/LVfbm3njIZmI+xM6uH4iKDrw6irs5Yh0iZXwwRTDFFxfI+cXrxH37zxgTLSsLrZ6bTTuAbFr5jvHjtCJfGU/K2+bP967vtPbFQAMTSo8nBQXn7I3v4P+xVlyZuuRieEUfcL2c2ZNcIlAelGXZjiOTY5m+3TajrZlCTyfR0AH3MDfjNfzfen6KOpdOasATXZZD9OYlw33rGiHF7PfCK/+dHyA/zO7NUeYXcu3rJR7lWUa0E7yxrKNfwOb8bEwGGrSFddit9ZWWKACCywlxBhrgXUr3kga2NYsgb4OtFcfADMwdYcF/7bJ+n9JJ3LsBtp+rh0TjQe9HJ+eGHLZn3p7wh7WitO0/Tv6vps1u3/Jesh1cynPts8Vmmp0ieGglnYI7RF9S/QP1djGrgj+CvpEbaBPcp6g+Rlgw6XfJaXI8gMAXnwj+OkKOr13b5NZDhpnOrBj05HY4ZRjlmbNASOUBBoccQEcqKJDsfK9fsfbz/3zac/mfOvqM8GOOh58pedPveyqM2G/qB2r8Ph3x3+nlO5g9j0sWHy/gvlF/7PzQwAAA=="
 }
 }
 

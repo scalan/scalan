@@ -3,6 +3,7 @@ package scalan.primitives
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -17,7 +18,14 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   // familyElem
   class AStringElem[To <: AString]
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("AbstractStrings")
+      module.entities.find(_.name == "AString").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
+    }
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
@@ -54,7 +62,14 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   class SStringElem(val iso: Iso[SStringData, SString])
     extends AStringElem[SString]
     with ConcreteElem[SStringData, SString] {
-    override val parent: Option[Elem[_]] = Some(aStringElement)
+    override lazy val parent: Option[Elem[_]] = Some(aStringElement)
+    override lazy val entityDef = {
+      val module = getModules("AbstractStrings")
+      module.concreteSClasses.find(_.name == "SString").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
+    }
 
     override def convertAString(x: Rep[AString]) = SString(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -117,7 +132,14 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   class CStringElem(val iso: Iso[CStringData, CString])
     extends AStringElem[CString]
     with ConcreteElem[CStringData, CString] {
-    override val parent: Option[Elem[_]] = Some(aStringElement)
+    override lazy val parent: Option[Elem[_]] = Some(aStringElement)
+    override lazy val entityDef = {
+      val module = getModules("AbstractStrings")
+      module.concreteSClasses.find(_.name == "CString").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
+    }
 
     override def convertAString(x: Rep[AString]) = CString(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -337,7 +359,7 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
 object AbstractStrings_Module {
   val packageName = "scalan.primitives"
   val name = "AbstractStrings"
-  val dump = "H4sIAAAAAAAAALVVzW8bRRR/3jhxbEdNGgmk5EJwTRBVa0dIqJVSCbmOi5BMHGULQm5VabweOxNmZyczk2D30D8AxAVxRagHbr1xROKCkBAHTogiceZUQKgCegIxM/vhtdst4cAeRrOzM+/9Pt6bvfcLzEsBm9JDFLGajxWquXbekKrqtpgiavxG0D+meAcPdg7vXxafHnzgwHIXFg6Q3JG0C8Vw0hrxZO7iozYUEfOwVIGQCp5v2wx1L6AUe4oErE58/1ihHsX1NpFquw35XtAfH8EdyLVhxQuYJ7DCbpMiKbGM1hexQUSS96J9H3f4JAerGxb1FIvrAhGl4escK+H+fczdMQvY2FdwJoLW4QaW3lMgPg+EilMUdLiDoB+/5hnSC7DaPkQnqK5TDOuuEoQN9ckyR947aIh39RazPa8BS0wH18fcvs+1oSTxkRbodZ9TuzLiAKAdeNmCqE30qSX61Iw+VRcLgii5jczHPRGMxhA+uTmAEdchLvxLiDgCbrF+9b2b3o1Hbtl3zOGRgVKwDBd0oOcyqsFaoXX8ev9D+fC1u5ccKHWhRGSjJ5VAnkpbHqlVRowFymJOBERiqN2qZLllszT0npmSKHqBzxHTkSIpl7RPlHhEmc1mbSlyJ0P6guI43pob8VzCdyODr62bJqJ078HaxRd+br3tgDOdoqhDurrwRRxUQaERloOV1AzFSN3sPAnjFx/82v9qC246iU5R2NNZo0PMyx++L3/30qsOLHZtIV+jaNjVUskWxX5HNAOmurAYnGARfimcIGpmT7Sq0McDdExVJGCa+ZxmrmAjs+U4NrJs2/LOxQKUwwrdDRiuXtur/ul+89E9U4AClsIvYQ/+TS799eOZgbK1qeDZdwXiHPffQvQYdwZXkcTGVQtyWcGcbuZEn3NZVnK8J4ivr44T/MqXn7/52xe789bN1YiiDT5xLp9ma0A4lYqChcmG0NWJt6WQgBv4+GzlIbl1931lXcyNpu+KTu9QN+e2Pbf2FEPjO+uP7pbz+9r9Txwoat96RPmIV7dO2Wn/Y/dAUt+TYV3rtOKGGjXT6dYn98uqneo2cSdapj6X466MzM3sJhsrtfeZpM5sxP9QNWbYeNxSM56z42Ym1+YpuTZnuYaJUvA3YZp3cR+TATFX96n0iEA/jnz69FJrlGDdehr7aZqNTJoz9936DKwr04taiuX4XxEe0v+Bs1ED8Lg9ZURAQCWjN9yoMnV73Hn08e75bz/7yfZyydS4vltY8u9O9/C0FKszQPQ/OQVeQd6Uv4X/D06DM/4jCQAA"
+  val dump = "H4sIAAAAAAAAALVVT4hbRRj/8ja72SRLd7vQwu7FNY0rFk2WQulhCyVNUxHSzbKvisRSmLxM0mnnzZudmd0mPfTgUW/iVaT33rwIghcRxIMnUcGzp6pIUXtq6cy8P3lJ+9r14DsM8+bNfN/vz/fNu/8HzEsBm9JDFLGajxWquXbekKrqtpgianwl6B9QfAkPPjz5pXeFXZQOLHdh4QaSlyTtQjGctEY8mbt4vw1FxDwsVSCkglfbNkPdCyjFniIBqxPfP1CoR3G9TaTabkO+F/TH+3AXcm1Y8QLmCayw26RISiyj9UVsEJHkvWjfxx0+ycHqhkU9xeKqQERp+DrHSrh/D3N3zAI29hUci6B1uIGl9xSIzwOh4hQFHe5G0I9f8wzpBVht30SHqK5TDOuuEoQN9ckyR94tNMQ7eovZnteAJaaDq2Nu3+faUJJ4Xwv0js+pXRlxANAOnLEgahN9aok+NaNP1cWCIEruIPNxVwSjMYRPbg5gxHWIN18SIo6AW6xf/eia98Ejt+w75vDIQClYhgs60CsZ1WCt0Dp+t/eJfPj2vXMOlLpQIrLRk0ogT6Utj9QqI8YCZTEnAiIx1G5VstyyWRp6z0xJFL3A54jpSJGUS9onSjyizGazthS5kyF9QXEcb82NeC7hu5HB19ZNE1G6+2Dtrdd+b73vgDOdoqhDurrwRRxUQaERloOV1AzFSN3sPAnj1x/82f92C645iU5R2KNZo0PMy19+Kv/4xgUHFru2kC9TNOxqqWSLYr8jmgFTXVgMDrEIvxQOETWz51pV6OMBOqAqEjDNfE4zV7CR2XIcG1m2bXnnYgHKYYXuBAxXL+9W/3W///S+KUABS+GXsAefkHOPfz02ULY2FZy8LRDnuP8eoge4M7iIJDauWpDLCuZ0Myf6nMqykuNdQXx9dRzis9989e5fX+/MWzdXI4o2+MS5fJqtAeFUKgoWJhtCVyfelkICbuDj45WH5Pq9j5V1MTeavis6vZu6ObftubUXGBrfWf90t5y/137+3IGi9q1HlI94deuInfY/dg8k9T0Z1rVOK26oUTOdbn1yv6zaqW4Td6Jl6nM57srI3MxusrFSe08kdWYj/oeqMcPGs5aa8ZQdNzO5No/ItTnLNUyUgr8J07yLe5gMiLm6j6RHBPpZ5NOnl1qjBOvWi9hP02xk0py579ZnYJ2fXtRSLMf/ivCQ/g8cjxqAx+0pIwICKhm94UaVqdvj7qPPdk7/8MVvtpdLpsb13cKSf3e6h6elWJ0Bov/JKfAK8qb8LfynWm1v9yMJAAA="
 }
 }
 

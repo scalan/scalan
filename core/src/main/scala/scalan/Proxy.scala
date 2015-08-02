@@ -310,9 +310,6 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   protected var methodCallReceivers = Set.empty[Exp[_]]
 
-  type SomeF[X] = F[X] forSome { type F[_] }
-  type SomeCont = Cont[SomeF]
-  type TypeDesc = Elem[_] | SomeCont
   import Symbols._
 
   def elemFromType(tpe: Type, elemMap: Map[Symbol, TypeDesc], baseType: Type): Elem[_] = tpe.dealias match {

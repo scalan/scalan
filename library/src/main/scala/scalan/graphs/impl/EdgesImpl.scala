@@ -4,6 +4,7 @@ import scalan.collections.CollectionsDsl
 import scalan.ScalanCommunityDsl
 import scalan.Owner
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -18,7 +19,14 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   // familyElem
   class EdgeElem[V, E, To <: Edge[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Edges")
+      module.entities.find(_.name == "Edge").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -57,7 +65,14 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   class AdjEdgeElem[V, E](val iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends EdgeElem[V, E, AdjEdge[V, E]]
     with ConcreteElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
-    override val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
+    override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Edges")
+      module.concreteSClasses.find(_.name == "AdjEdge").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
 
     override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -123,7 +138,14 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   class IncEdgeElem[V, E](val iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends EdgeElem[V, E, IncEdge[V, E]]
     with ConcreteElem[IncEdgeData[V, E], IncEdge[V, E]] {
-    override val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
+    override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Edges")
+      module.concreteSClasses.find(_.name == "IncEdge").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
 
     override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -524,7 +546,7 @@ trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
 object Edges_Module {
   val packageName = "scalan.graphs"
   val name = "Edges"
-  val dump = "H4sIAAAAAAAAANVWS2wbRRie3dhxbIc09IJaCVKCWwQCO6qECgoSCo5TLJkkypaA3AppvDt2JszObmbH0ZpD74C4VNxQhXrg1htHJC4ICXHghCgSZ04FBBXQE4iZ2acf64aoObCH0c7Mv//j+/5vZm//AvIeAxc8ExJIqzbisGqo9zWPV4wG5ZgPXnesPkHrqLu+f+dF9unehzo41Qaze9Bb90gbFIOXhu/G7wY6aIEipCbyuMM8Dp5sqQg10yEEmRw7tIZtu89hh6BaC3t8tQVyHccaHIDrQGuBRdOhJkMcGXUCPQ954fockhnheF5U88GWm8SgNVlFLVXFFQYxF+mLGIuB/Q5yjQF16MDmYCFMbcuVaQmbArZdh/EoREG423OsaJqjUCyA0619eAhrIkSvZnCGaU98WXah+Q7soU1hIs1zImEPke6VgavmMy1Q8tCBAKhpu0St+C4AQDBwUSVRTfCpxvhUJT4VAzEMCX4Xys1t5vgDEDzaDAC+K1w89wAXkQfUoFbl/Wvm1ftG2dblx75MpaAqnBWOljK6QVEhcPx654Z37/KtSzootUEJe2sdjzNo8jTlIVplSKnDVc4xgJD1BFvLWWypKGvCZqQliqZju5AKTyGU84Ingk3MpbFcmw/ZyYC+wF0UmWq+q8X1nsuoV/VNHRKyfffM8+d/brylA304RFG4NETjs8gpB7mG1UOhazme4kDbTfCV04aayqHoJ2NhSiYxJk/f/dX6agVc02Mkw8BHI0+4yHs/fF/+7plXdDDXVq2+QWCvLcD0GgTZW6zuUN4Gc84hYsFO4RAS+TaRzIKFurBPeAhxGpsZgQ0H5zJF6SIJ3KoSgBYBUA56eNOhqLKxXfnL+Oaj27JFGZgPdgKV/oMv/f3jQper7uVgtsscu2lFAM8Iecd4PJVFrou2GbbFYXKIXvjy8zd++2Izr/g9HZa0C0kfBdIOK0qqk0G1FRGpSXnAoIp3Ni5FDktcwNjnTWohfzw1OZyf9m2+x6C7N6GmcCV/Od7/j52W9FspANVwbPTo8j389q0PuOoszR8+4bY6++JIWVXfPTGlyaKT9s/2iv7HmTuf6KAoeqmDuQ3dysoRz4cT1DwYhmuhHt4yShwXhzeVkCcrNaFJ9MHimrUvTevpVJcSHh5LuT2rjZCso90kntDfRDrTXTLuoDHNwXgDcFAIE1YeYp08nq0TAeCNqxdeY79//J4uQc53nD61IkbETc2Rz1+N1rRhRgQDkEE7YiABZ7hb3xzaaIzWXdYmkHO8U3aMk1HhZZ4mD5RsjjvH+u7kpS7Hl9T48olooEnN/5cGwoTTGhhvwyP1Zyqz2YkIF3cQ7mL5G/aQejjNwBRmy/Ic3IA2JoNj0vpIBqduysVDQU+ONxOb0DCvABJphEdToJKwYgaWM04sI7wCxD10/f7NzWe//ewndbGX5GUifixo/GufvtBHOAsUJ/7UU7mKquX1ovL8F59Ct1M5DQAA"
+  val dump = "H4sIAAAAAAAAANVXTWwbRRSe3dhxbIc0VKiolSAhuCAQ2FElVKEgVanrVEZuEmXbgEyFNN4dOxN2Zzc748jm0ANHuCGuFeq9Ny5ISL0gJMSBEwIkzpxKEaqAnqh4M/vrxOu2ETngw2hn5s37+b733oxv30N57qOXuIltzKoOEbhqqO9VLipGgwkqhldcq2+TS6T70akvzSvsItfRiTaa3sH8ErfbqBh8NAZe/G2QvRYqYmYSLlyfC/RCS1moma5tE1NQl9Wo4/QF7tik1qJcrLRQruNawz10A2ktNG+6zPSJIEbdxpwTHq7PEOkRjedFNR9ueIkNVpNR1FJRXPUxFeA+2JgP5LeIZwyZy4aOQHOhaxuedAtkCtTxXF9EJgqgbse1ommOYVhAJ1u7eB/XwESvZgifsh6cLHvY/AD3yDqISPEcOMyJ3b069NR8qoVKnOwBQE3Hs9XKwEMIAQPnlBPVBJ9qjE9V4lMxiE+xTT/EcnPTdwdDFPy0KYQGHqh47REqIg2kwazKx9fN9x4YZUeXhwfSlYKKcBoULWRkg6ICcPx261N+//Kt8zoqtVGJ8tUOFz42RZryEK0yZswVyucYQOz3gK2lLLaUlVWQOZASRdN1PMxAUwjlLPBkU5MKKSzXZkN2MqAvCI9EotrA0+J4FzPiVXlTx7a9eff062d/a7yrI33URBFUGpD4fqRUoFzD6pFQtRxPCKRtJ/jKaUNN5VAcJGNhgicxJi/f/d36Zhld12MkQ8OPRx6oyPOffyz/8MoFHc20Vaqv2bjXBjB5wybOhl93mWijGXef+MFOYR/b8mssmQWLdHHfFiHEaWymABuBFjOL0iMSuBVVAFoEQDnI4XWXkcraZuVv47vPbssU9dFssBNU6UN6/p9f5rpCZa9A013fdZpWBPAUlHeMx4tZ5Hpk06cONJN98sbXX1374856XvF7MgxpG9t9EpR2GFESnTSqLYOlJhMBg8remTgUOSwIgLEvmswig8OuyeHspLP5no+9nTExhSv5y/H+E2Zakm+lAFTDdcjTS/fp+7c+ESqztMFoh9vo7EJLWVHnnp+QZFGn/au9rP95+qfPdVSEXOpQ4WCvsvyY/eEYax6NwjVXD28ZVRznRjdVIY+v1IQmyIP5VWtXitbTri4kPDybUntGO0CyTrYTe1B/Y+lMZ8lhBY1JCg4ngECF0GGlIa6T57LrBAA8tdV6xr534Y6O8m+jfBfaAW+hfMftMytiBm5sQQbiYrSmjTIDTGAfOzET6reIErBGs/edsQKNg3iUtTGkHa37HuLqYEFmdplHlnJOuEc6d/wtQI5vqvGtY6mNJjP/X7UROpyujex0fKJ8TXk6PRbx4hahXSqfa/9RTqcZmcB0WfbLNexQe3hEmp/K4NhLqTgWNOV4M5EJBfMKMHArbGlBFYUI+Ggpo9MZ4dUB99eNBzfXX/3+i1/Vg6AkLyF4kLD4L0H6IXCAw6Ai4YWf8hVQkNeS8vNfRdcRhXENAAA="
 }
 }
 

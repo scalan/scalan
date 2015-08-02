@@ -5,6 +5,7 @@ import scalan.collections.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scalan.{ScalanSeq, ScalanExp, Scalan}
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -19,7 +20,14 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   // familyElem
   class GraphElem[V, E, To <: Graph[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Graphs")
+      module.entities.find(_.name == "Graph").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -58,7 +66,14 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
     with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
-    override val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+    override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Graphs")
+      module.concreteSClasses.find(_.name == "AdjacencyGraph").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
 
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -124,7 +139,14 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, IncidenceGraph[V, E]]
     with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
-    override val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+    override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Graphs")
+      module.concreteSClasses.find(_.name == "IncidenceGraph").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
 
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -1172,7 +1194,7 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
 object Graphs_Module {
   val packageName = "scalan.graphs"
   val name = "Graphs"
-  val dump = "H4sIAAAAAAAAANVWTWwbRRSeXcdxbIf051K1EqQEUwQCOwqCgnJAwXFKJNeJsiEgt0Iar8f2pLuzm9lxZHPoHRCXCokDQqgHbr1xROKCkBAHTogiceZUQFABPYF4M/vj3fgnRoQDexjt/L335vu+92bu/ITSHkeXPBNbmBVtInDRUP9rnigYFSao6F91ml2LrJPW+v7dF/jHnXd1dKqOZjvYW/esOsr6P5WeG/0b5KCKspiZxBMO9wR6tKo8lEzHsogpqMNK1La7AjcsUqpST6xW0UzDafYP0E2kVdFp02EmJ4IYZQt7HvGC8TkiI6JRP6v6/S134IOV5ClKsVPsckwFhA8+Tvvrd4hr9JnD+rZAC0FoW64MC9ZkqO06XIQuMmCu4zTD7gzDMIDOVvfxIS6Bi3bJEJyyNuzMu9i8gdukBkvk8hkI2CNWa7fvqn6qinIeOQCANm3XUiM9FyEEDKyoIIoDfIoRPkWJT8EgnGKLvonl5DZ3en3kf1oKoZ4LJp4+xkRogVRYs/D2dfPaAyNv63JzT4aSUSecBUOLY9SgqAAcv9y55d2/cvuyjnJ1lKPeWsMTHJsiTnmAVh4z5ggVcwQg5m1ga2kcW8rLGqw5Ioms6dguZmApgHIeeLKoSYVcLMfmA3bGQJ8RLgmXaj1Xi857ccx5lW7K2LK2751/5vEfK6/rSE+6yIJJA4TPQ6MCpa9w7HYC27I9JZC2NwBYdiuqK5tsb9BmJoQSgfLEvZ+bXyyj63oEZeB5OvbARNr77tv8N0++pKO5utL6hoXbdUDTq1jE3uJlh4k6mnMOCfdnMofYkn8j2cw0SQt3LRFgHAcnBeAIdHFsVrpEIreqMkALAcj7Iq45jBQ2tgt/GF+9d0dqlKN5f8ZP07/o5T+/X2gJJV+B5iFYQXp72OoSL4R5pgyZMJIIH3M1eCFyLptFgXKk2SZJQ+naCEuVYy2lLcpujDbC0WPjNOeSbU5tqHGH5LnPP331l89qaSW7swHQKjS/4gQ4DzCXUGjLAqU2mRilrpwPoeHY5MzSffrG7XeE0pHWSxa0rcY+VJBVte+RCZIKC+vv9WX9t/N3P9JRFpTToMLGbmF5ynLwH6Y4SnK2UA4uFZUKK0cm15r72CTM7KsEHp2hA3oB6XPJHeV47IuDhD8X83NBO6IRnexFcpXpd6xchw1UJhkYrjQjT7oY6fLh8boEYG9du/QK//WDt3QJfrrhdFkzZAoubMhA8XI4piWZAmYwx3bIzACjZHXcTUwM5VheS57v3xTbIW6O5u8JFpUzlJlXMSRt7zUqOmBxor3jS0vWD63WtcNNKXjS+GZk8+zo4z6v2hf/UVpsMpM2QSxk6rRI7vj/pMXwSRdj25LKnEqysQBnRyKf3SG0ReUD7aRkHSdkAuV5WTM3sE2t/soo11PQvDCOXTdu5EQQlO37gzXBwlkfJIEeCkpWW/WDU3O0NKaSGcGVAffWzQcf1p76+pMf1AWbk5cPPDtY9PKPX6xHiPN9w0M+FixITV5HKtC/ASDq26dYDQAA"
+  val dump = "H4sIAAAAAAAAANVXTWwbRRSe3cRxbIf0R6hVK4FDcEEgiKMgqFAOVeo6VZDjRNkQkKmQxuuxM+ns7GZnHNkceuAIN4TECaHee+OChNQLQkIcOCFA4sypLUIVtCcQb2Z/vE7WSSraAz6MdmbfvPfm+773Zn3rHsoIH70gbMwwn3OIxHOWfl4SsmRVuaSyv+q2uoxcIe0Pz3xlr/LLwkQnGmhiG4srgjVQLnio9rz42SK7NZTD3CZCur6Q6LmajlC2XcaILanLy9RxuhI3GSnXqJCLNTTedFv9XXQDGTV00na57RNJrArDQhARrk8SlRGN5zk97695gxi8rE5RTpxi08dUQvoQ42Rgv0E8q89d3nckmg5TW/NUWmCTpY7n+jIKkQV3224rmo5zDAvodG0H7+EyhOiULelT3oGdBQ/b13GH1MFEmY9DwoKw9mbf0/OxGsoLsgsArTge0ys9DyEEDCzoJOYG+MzF+MwpfEoW8Slm9AOsXq77bq+Pgp8xhlDPAxevHOEi8kCqvFX66Jr93kOr4Jhqc0+lktUnnABHxRFq0FQAjt9tfCLuX7150UT5BspTsdQU0se2TFIeolXAnLtS5xwDiP0OsDU7ii0dZQls9kkiZ7uOhzl4CqGcAp4YtalUxmptKmRnBPRZ6ZHI1Oh5RnzemRHn1bqpYMbW75x79cLd6rsmModD5MClBcL3I6cSZa762NsOfavxhETG1gBgNa3qqRpyvcGYPSSVGJQX7/ze+nYeXTNjKMPIx2MPXGTELz8VfnzpkokmG1rrywx3GoCmqDLirPkVl8sGmnT3iB+8ye5hpp5S2cy2SBt3mQwxToIzBuBINDOyKj2ikFvUFWBEABQCEdddTkrL66UH1vef3lIa9dFU8CYo03/oxb9/nW5LLV+JpiBZSXpbmHWJiGAer0AlpBIRYK4Xz8fB1VCUKE9aHTLsKFNP8VQ90lOGUX493YmPnh+lOY+s+9SBHrdHXv/m67f/uF3PaNmdDoHWqQUdJ8R5gLmCwpiXaGyFyzR15QMILdchp2bv0/dvfiy1jozecENba+5AB1nU+549RFJRY/2rMW/+ee7nL0yUA+U0qXSwV5o/Zjt4giWOhjmbroSXii6FhX0vl1o72Cbc7usCTq/QAb2A9NnhHZVk7sVBwZ9NxDlv7NOISbZiuaryO1KuBx1UD3NwsNOknrQY6/KZ0boEYM9s1J5m9y7dNlHmLZRpQ1MQNZRpul3eihiDixsqUV6O1oxhxoAh7GMnZkj/ZtAAs+FuuZlqcKD2Csbwuf9LEz7A2f66fozN5hTl9iqGYu69Q+U2eDzU39EtJxekVu860aYx+NQJ3KjhtfTjvqHHNx+pXFa4TVsgInLschne8f8pl4MnLSa2pSv0kSScSHgilYncBqFtqj7kHpfMkwQdIoGC6q3L2KGsv5AW+hi0T49i20s6eSKIqvGzgU1oOBGAJtFTYavr6HmIgo9mR3RAK7xq4L678fDz+ss/fPmbvpjz6tKCzxUe/2NIXsj7iAxiwx+ARLIgRXWN6UT/BbXHWAiQDQAA"
 }
 }
 

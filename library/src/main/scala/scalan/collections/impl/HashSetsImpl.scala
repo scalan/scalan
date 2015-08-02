@@ -4,6 +4,7 @@ import scala.collection.immutable.HashSet
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -45,7 +46,14 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   // familyElem
   abstract class SHashSetElem[A, To <: SHashSet[A]](implicit val eA: Elem[A])
     extends WrapperElem1[A, To, HashSet, SHashSet]()(eA, container[HashSet], container[SHashSet]) {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("HashSets")
+      module.entities.find(_.name == "SHashSet").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -103,7 +111,14 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   class SHashSetImplElem[A](val iso: Iso[SHashSetImplData[A], SHashSetImpl[A]])(implicit eA: Elem[A])
     extends SHashSetElem[A, SHashSetImpl[A]]
     with ConcreteElem1[A, SHashSetImplData[A], SHashSetImpl[A], SHashSet] {
-    override val parent: Option[Elem[_]] = Some(sHashSetElement(element[A]))
+    override lazy val parent: Option[Elem[_]] = Some(sHashSetElement(element[A]))
+    override lazy val entityDef = {
+      val module = getModules("HashSets")
+      module.concreteSClasses.find(_.name == "SHashSetImpl").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA))
+    }
     lazy val eTo = this
     override def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem1].getDefaultRep
@@ -399,7 +414,7 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
 object HashSets_Module {
   val packageName = "scalan.collections"
   val name = "HashSets"
-  val dump = "H4sIAAAAAAAAALVWTYwURRSu6dnd2dlZWUD8wbAKmxFEYWchKhoOuj8DbBh2NjSgDgSt6a7Zbei/qa7BHhORGDUR4gUJiRiDHPDEzYOJRxMTI4mJhoiJcvCgB0GjRCVGUV9Vd/VMD9u7YOIcerq6q9/P933vvTr3I+r2KFrtadjE9rBFGB5Wxf2ox/Jq0WYGa+5w9IZJJkht4sDFx+jZ2TcUNFBBPbPYm/DMCsoGN0Xfje5VUi+hLLY14jGHegytKgkPBc0xTaIxw7ELhmU1GK6apFAyPLa5hLqqjt6so8MoVUKLNcfWKGFEHTex5xEvfN5LeERGtM6KdbPstnzYBZ5FoS2LXRQbDMIHH4uD/TuJqzZtx25aDC0KQyu7PCzYkzEs16FMusiAuVlHl8suG8MDtLR0AB/CBXAxU1AZNewZ+DLnYu0gniFTsIVv74KAPWLWdjVdsU6XUJ9H6gDQpOWa4onvIoSAgY0iiOEWPsMRPsMcn7xKqIFN4wXMX05Tx2+i4JdKI+S7YGLdAiakBVK09fzRfdrea2rOUvjHPg8lIzLsAUP3JahBUAE4frLzuHd165lNCuqroD7DG616jGKNtVMeopXDtu0wEXMEIKYzwNZQElvCyyjs6ZBEVnMsF9tgKYSyH3gyDc1gfDN/1h+ykwB9hrlEbk35birKd2VCvkI349g0py8vX3//leLTClLiLrJgUgXhU2mUoV51G/ZmVcJC8/w6wFBqVGDML1m/dc3M4z4CYs3ln/SPR9A+JYIv9HZzjIGJbu+rL3MX1j6hoN6K0PcWE89UAEGvaBKrTMcdm1VQr3OI0OBN5hA2+d2cDGZ0UsMNk4W4tgOSBkAYWplYiS7haG0Wqk9JAHKBcKccm+S3TOd/Vz89cY7rkqL+4E1Qmn8bm65/vajGhGQZuvN5il2X6Huw2SDl2hj2CCdbAp6GGo9TkLkVYkJ6+GVQbL2j7bO7UzJ68Z4hhYxKe10c0QVdMNQvdSJbwWDE5mCSHoV+j+9dvY3+8vbrCse7u+o0bF0WBDRNRnw2Jp+l4uRAAWCKLake4TSKbNkNMS6oLtlXf6uMKL8uv3haQVkQUdVgFnbzIzfZDf7HCkdxGnJ851NCNEFEPfwyJF/fWuG2wbN+PnigtkQNRokb+XWPfz9xYrvoJQMtQMS2MK/2GmfoNl6d2LAJlam2RcPrpy+oEtWxyJKhq8b+M8eYaBUpPz6nytUDMBg2i+9WCPuPdEDUX/THJQcb4q8ieObuY61qgIiXyL3j7YQGWhOyWxKtN7RsPBoXZAZ8SkYgjxDk1nQL0JqA/IcSCFBDdYBED197Z+rBz97/TqDex3UGzcaOZnxLVH5H01ga2INErIYNJweY3W0AQLlzCUaRPJAYSZ2XObHAp2D7ZbTn3MTGdy3B0wDxA5nvaDtptHX3pAERbIfsLj1Tr38w8tAiMZA7mjrM58mwisSiDD2eGjqZsxpzIDw1hLezQDs6fR8fFqaD9UnZfmLVV0I9sNwZtOPglNNiNsJrRUJmY6ajHdy9/odafdnD14OpawD6MiQoFcbQYNKUCUeMLI8kJ4CPx+7Zsezz6vaZo0HBaPybojhN3RUUFW3AgdEiw2OOT/TdEAN778Wtg1fOnwqnUE+eB5aPSzdo5fuiESeJXDUvkRy7tR+tObm/8eGx5FE/vxjARvqbf86/Sb20gjI3M+v/y4Tnt8vjnMIQTNXmmL0U3Zs8zbY0bO3C5Fu3Dww++61guUd3LOh0wj4MNwpdSzrr6MfRcmy+9jyfxkZd12y+Ult7+otTf72k8DS7Od4SgnStIeJ4roQU1sFC69qMPUl2NqlD5a9ZevbPn7MXy0pny+F/diz45EMANDUo0Nwlg5An/3g1qA3oHzSMtZt1trIjiUclIAom9dxz/8gcJxSx67WWwIO0N7Y9CI8/sjnGyAkJuVEiC8zfJIL/BWQKWwi7DgAA"
+  val dump = "H4sIAAAAAAAAALVWT2wUVRh/O9vtdruVAla0htXSrFaUdgtRieGA/bNgZcuSDqCuBH0787YdmH8787bOmoiEqAe4KTGRxCAHPXHzoPHgwcTESGKiIWKiHDzoQcAYohKjqN97M292Z+m0YOIeZufNvPn+/H6/7/ve2Sso5TroflfBOjbHDELxmMzvJ1yal4sm1Whz1lIbOpkmtWPrPlRmzUlXQv0V1L2A3WlXr6CMf1P07PBeJvUSymBTIS61HJeiDSXuoaBYuk4UqllmQTOMBsVVnRRKmku3lVBX1VKbdXQEJUpotWKZikMokad07LrEDZ73EBaRFq4zfN0s2y0fZoFlUWjLYq+DNQrhg4/V/v45YstN0zKbBkWrgtDKNgsL9qQ1w7YcKlykwdyCpYpll4nhAVpbOoQXcQFczBdk6mjmPHyZtbFyGM+T3bCFbe+CgF2i1/Y2bb5OllCvS+oA0Ixh6/yJZyOEgIEtPIixFj5jIT5jDJ+8TBwN69qLmL3c41heE/m/RBIhzwYTm1YwISyQoqnmjx9Qnr0mZw2JfeyxUNI8w24wdG+MGjgVgONnc6+7V3ee2Sqh3grq1dyJqksdrNB2ygO0stg0LcpjDgHEzjywNRzHFvcyAXs6JJFRLMPGJlgKoOwDnnRN0SjbzJ71BezEQJ+mNhFbE56dCPMdismX62YK6/qeS4Oj910uPi0hKeoiAyZlEL4jjFLUIz+B3QWZ0MA8u/ZTlJjgGLNLxmtd08u4D4EYufSz+uk4OiCF8AXebo4xMJFyv/k6e37jdgn1VLi+d+h4vgIIukWdGGVnyjJpBfVYi8Tx36QXsc7ulmQwrZIabug0wLUdkCQAQtFQbCXahKG1jas+IQDI+sLdbZkkv2NP/nf585NnmS4d1Oe/8Uvzb23r9W9X1SiXLEXrXnCwbRN1P9YbpFybxC5hZAvAk1DjUQrSt0JMQA+75PjWO9o+uyshoufvKZLIhLDXxRBd0QVFfUInohXkQjZzcXrk+l03VxrQr2z/WEKpJ1GqBiS5JZSqWg1TFYUBzZMSj06KZ4koSVAI2MGGUJHfRoYQDyKMdOCGmFdUm+izv1XGpV8HL5yWUAZEVdWoge38+E12h/+x4lGUlizb+RQXkR9RN7sMi9e3Vsht8IwuBw/UGq/JMHEtv+mxH6dP7uK9pb8FCN8W5NVe8xTdxqoVayZxRKpt0bB66vWrRrYMsmb4qnbwzAnKW0fCi86tcvUQDIpt/Lv13P4jHRD1Fb0pwcHm6KsQnqX7Wqs6IOI1Yu9UO6G+1mx2XROuN7dsPBoVZBp8CkYgjwDk1rTz0ZqG/IdjCJADdYBEj1x7e/eDX7z/A0e9l+kMmo8ZzvyWqLyOJrLWtweJGA0TThIwy9sAgPJnEgwjeSA2kjore2KAT872MbT/7PSWdwzOUz/xfJnPtp082rp93MDwt0N2F5+p1z8Yf2gVH9AdTR7m9UxQRXxRhp7vaCpZshqzIDw5gLezQDs6fy8bHrqF1RnRhiLVV0LdsJzz27N/6mkxG+K1PiazSd1SDu8b/alWH3j4uj+FNUBfhASlQinKxU2dYOSI8ohzAvi49O7ZgS+ru+aP+wWjsG+K/HR1p19UTgMOkAYZm7Q8ou6DGOh7L+3MXT53KphK3XkWWD4qXb+1HwhHniByw7JEMuw2fjLy5sHGRyfiR//yYgAbye/+OfeG4yYllL6Z2f9fJj67HYxyCkMxUVtiFjvonvjptqNhKudn3rq9P/fc95zlbtUyoNNx+zDkHOhawllHPw6Xk8u15+U0NmHbevOV2sbTX53662WJpZlieAsIkrUGj+P5EpJoBwutazPyJN7ZjAqVP7L23T9/yVwoS50th/2ZkeDjDwXQ1KBAsxc1Qh7/41W/NqB/OEGsKdrZyo7GHp2AKJjUS8/9o0ucWPiu11oC99PeEjlP+C+CY5FokhGSAmJulMoKcziO6H8BgV27HNMOAAA="
 }
 }
 

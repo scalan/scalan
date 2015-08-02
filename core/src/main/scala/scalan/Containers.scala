@@ -6,6 +6,9 @@ import scala.reflect.runtime.universe._
 trait Containers { self: Scalan =>
 
   type Cont[F[_]] = Container[F]
+  type SomeF[X] = F[X] forSome { type F[_] }
+  type SomeCont = Cont[SomeF]
+  type TypeDesc = Elem[_] | SomeCont
 
   @implicitNotFound(msg = "No Container available for ${F}.")
   trait Container[F[_]] {

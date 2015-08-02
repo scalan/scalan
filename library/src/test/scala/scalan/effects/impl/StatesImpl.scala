@@ -3,6 +3,7 @@ package scalan.monads
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
@@ -17,7 +18,14 @@ trait StatesAbs extends States with scalan.Scalan {
   // familyElem
   class State0Elem[S, A, To <: State0[S, A]](implicit val eS: Elem[S], val eA: Elem[A])
     extends EntityElem[To] {
-    val parent: Option[Elem[_]] = None
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("States")
+      module.entities.find(_.name == "State0").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("S" -> Left(eS), "A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagS = eS.tag
@@ -56,7 +64,14 @@ trait StatesAbs extends States with scalan.Scalan {
   class StateBaseElem[S, A](val iso: Iso[StateBaseData[S, A], StateBase[S, A]])(implicit eS: Elem[S], eA: Elem[A])
     extends State0Elem[S, A, StateBase[S, A]]
     with ConcreteElem[StateBaseData[S, A], StateBase[S, A]] {
-    override val parent: Option[Elem[_]] = Some(state0Element(element[S], element[A]))
+    override lazy val parent: Option[Elem[_]] = Some(state0Element(element[S], element[A]))
+    override lazy val entityDef = {
+      val module = getModules("States")
+      module.concreteSClasses.find(_.name == "StateBase").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("S" -> Left(eS), "A" -> Left(eA))
+    }
 
     override def convertState0(x: Rep[State0[S, A]]) = StateBase(x.run)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
@@ -265,7 +280,7 @@ trait StatesExp extends StatesDsl with scalan.ScalanExp {
 object States_Module {
   val packageName = "scalan.monads"
   val name = "States"
-  val dump = "H4sIAAAAAAAAALVWTWwbRRQer5M4a4emlAMqVZsSmSIQ2FGFVKQckJs4tMhNomwOyK2KxutxMmF3ZjMzjmwOFUd+xKXighBCPXDrjSNnJMSBU0WROHHgVIpEBVQcQLyZ/U+yoQjhw2hn5u37+b7vvfXt+2hSCnROutjDrOEThRuOeW5JVXfaTFE1vsL7Q48sk8Hyzt2XxWfbH1hotoumtrFcll4X2eFDexQkzw7Z7SAbM5dIxYVU6OmOidB0uecRV1HOmtT3hwr3PNLsUKkWO2iix/vjXXQDlTrouMuZK4gizpKHpSQyOp8mOiOa7G2zH68FaQzW1FU0M1VsCkwVpA8xjof2GyRwxoyzsa/QsSi1tUCnBTYV6gdcqDhEBdxt8368nWAYDtCJzg7ew00IsdV0lKBsC96sBdh9E2+RVTDR5hOQsCTeYHMcmH25g6qS7AJAl/3AMyejACEEDJw3STRSfBoJPg2NT90hgmKPvoX15brgozEKf6UyQqMAXLzwDy5iD6TN+vX3rrlXHzo139Ivj3QqFVPhFDiaK1CDoQJw/Grjpnzw6q0LFqp2UZXKVk8qgV2VpTxCq4YZ48rknACIxRawNV/ElonSApt9krBd7geYgacIyhngyaMuVdpYn81E7BRAX1EBiU1Lo6CU1Hu2oF6jmyXseev3Tr74zE/t1y1k5UPY4NIB4YvYqUJTDpRLFiLnep1VqOSkCOtty2z1Yo/StXJELgkqz977uf/lArpmJVhGoR+NPnAxKb/7tnbnuVcsNN01Yl/x8FYX4JRtj/hrYokz1UXTfI+I8Kayhz39dCidlT4Z4KGnIpCz6JQBHYXOFrZlQDR0i6YFSjEAtVDFq5yR+sp6/Xfn6w9va5EKNBPehH36F73w5/fHBsroV6GyGLIY3TJ0dwLGmSJuA7IyZO6dyx89MXv6jR8Ms1N97mNq5HWqgyYF9LYp5VQEbobIYpTB8eYw8MhLX/xx/Z23LwWGpwM62SePVl4ezqHySEVSDZFwuE8en39Ar996X5kwpVF+MK31dmASLJr3zhyVczQgf+suWL+evPuphWwQQI8qHwf1hUds6/+xVVEertmwxZayQTJoVZJlDpRxwhhfxJLk7OdSxJ/MeH+qFEvRGClkEScOO6Hb49C+DmMXOWgd5eDgJFDITlI2PhItny6WHIB18+q5S+KXj9+1NKCTPT5k/Rh9+JgqMlIX47NSHn1AGwvsx2in8OQH12u5i4OJZyo7v48xe4PQAdVfovz5fxiWWa6NaTOKnJdAooPDRBMWkw7tLNwHK/4XUOh1PbWJDMMo8O17LCaSM9yXUfYCzRfw60TNAR164+Enq89/8/mPZl5VdZvBnGTJf5WU1f0jxr5iYsFfj0yyIEndeCbRvwHIheMPCgoAAA=="
+  val dump = "H4sIAAAAAAAAALVWTWwbRRR+Xsdx1g5NKaioVG1CZEAgsKMKqYccKid1oJXzo2wOlamKxuuxu2V3ZrMzjmwOFeKE4Ia4cECo9964ICFxQ0IcOFWAxIkDp9IeKqDiQMWb2V8n2VCB2MNoZ/bt+/m+773d2/egJAJ4QdjEJazuUUnqlr5vClmzWkw6crzOe0OXXqT9905+Ya+zFWHAXAemrxNxUbgdMMOb1shP7i262waTMJsKyQMh4bm2jtCwuetSWzqcNRzPG0rSdWmj7Qi53IapLu+Nd+EmFNpw3ObMDqik1qpLhKAiOp+hKiMn2Zt6P9700xisoapoZKrYCYgjMX2McTy036a+NWacjT0Jx6LUNn2VFtqUHc/ngYxDlNHddd6Lt1OM4AGcaN8ge6SBIQYNSwYOG+CbVZ/Yb5MB3UATZT6FCQvq9nfGvt4X21ARdBcBuuT5rj4Z+QCADJzTSdRTfOoJPnWFT82igUNc5x2iHm4FfDSG8CoUAUY+unjlH1zEHmiL9WofXLXffGhVPUO9PFKplHWF0+hoPkcNmgrE8Zvtj8SD12+dN6DSgYojml0hA2LLLOURWlXCGJc65wRAEgyQrcU8tnSUJtrsk4Rpc88nDD1FUM4iT65jO1IZq7PZiJ0c6MvSp7FpYeQXknoXcurVulklrrt199Srz//aumKAMRnCRJcWCj+InUqYtrBcuhQ5V+uchIKVIqy2Tb1VizlK1/IRuSSovHj3fu/rJbhqJFhGoR+PPnRREj9+X73z0gUDZjpa7GsuGXQQTtFyqbcZrHImOzDD92gQPinvEVfdHUpnuUf7ZOjKCOQsOkVER8JCblv6VEG3rFugEANQDVW8wRmtrW3V/rC+/fi2EmkAs+GTsE8fOef/+ulYX2r9SigGQxajW8TuTsA4m8etT9eGzL5z6ZOn5s689bNmdrrHPeJoeZ1uQynA3talnI7AzRCZjzI63hn6Ln3tyz+vvf/uG77m6YBO9smjOSkP61B5pCKphEhY3KNPLj5wrt36UOowhdHkYNrs3sBJsKzfO3tUztGA/L2zZPx26ofPDDBRAF1HesSvLT1mW/+PrQqTcM2FLbaaDZJBq5ws86iME9p4hQg6YT+fIv5MxvuzhViK2kiCQa047JRqj0P7Ooyd56B5lIODk0CCmaSsfSRaPpMvOQTr5Hb7affeha8MKF2GUh/7VaCIu3zIejEL+FGVdCRX4rPCJAuIOgmIl6CurwVI4ZocZJcPNThYUKbic/uYNLep03fUF2ry/D8M0awGtGkjijwpjUQfh4kpLCYd5lka8iv/F9CodSu1iQzDqPiNfCImnDPSE1E1ASzm6MCKmgg7+ebDTzde/u7zX/Rcq6h2xHnKkn+alPX9o8hc17HwFyWTLEpXNahO9G+6x9XYMgoAAA=="
 }
 }
 
