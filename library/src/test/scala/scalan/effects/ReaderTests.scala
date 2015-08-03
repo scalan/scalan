@@ -99,14 +99,14 @@ class ReaderTests extends BaseCtxTests {
   }
 
   test("readerStaged") {
-    val ctx = new TestContext("readerStaged") with MonadsDslExp with MyProg {
+    val ctx = new TestContext with MonadsDslExp with MyProg {
       override def isInvokeEnabled(d: Def[_], m: Method) = true
     }
     ctx.emit("prg", ctx.prg)
   }
 
   test("readerSequence") {
-    val ctx = new TestContext("readerSequence") with OptRules with MyProg
+    val ctx = new TestContext with OptRules with MyProg
     ctx.emit("seq", ctx.seq)
     ctx.emit("mapped", ctx.mapped)
     ctx.emit("mappedRun1", ctx.mappedRun1)
@@ -114,7 +114,7 @@ class ReaderTests extends BaseCtxTests {
   }
 
   test("readerReplicateM") {
-    val ctx = new TestContext("readerReplicateM") with OptRules with MyProg
+    val ctx = new TestContext with OptRules with MyProg
     ctx.emit("mappedRun3", ctx.mappedRun3)
   }
 

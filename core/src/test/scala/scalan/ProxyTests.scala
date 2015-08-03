@@ -5,7 +5,7 @@ import scalan.common.{SegmentsDslExp, Lazy}
 //import scalan.monads.{FreesDslExp, MonadsDslExp}
 
 class ProxyTests extends BaseCtxTests {
-  class Ctx(testName: String) extends TestContext(testName) with SegmentsDslExp /*with FreesDslExp with MonadsDslExp*/ {
+  class Ctx extends TestContext with SegmentsDslExp /*with FreesDslExp with MonadsDslExp*/ {
     def testElemFromType(tpe: Type, elemMap: Map[Symbol, TypeDesc], expected: Elem[_]) = {
       assertResult(expected)(elemFromType(tpe, elemMap, definitions.NothingTpe))
     }
@@ -28,7 +28,7 @@ class ProxyTests extends BaseCtxTests {
   }
 
   test("getResultElem") {
-    val ctx = new Ctx("getResultElem")
+    val ctx = new Ctx
     import ctx._
 
     testResultElem[Segment, Int]("start")

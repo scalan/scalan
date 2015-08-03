@@ -55,7 +55,7 @@ class ThunkTests extends BaseCtxTests {
   }
 
   test("thunksWithoutInlining") {
-    val ctx = new TestContext("thunksWithoutInlining") with MyProg {
+    val ctx = new TestContext with MyProg {
       def test() = {
         assert(!isInlineThunksOnForce, "precondition for tests")
 
@@ -105,7 +105,7 @@ class ThunkTests extends BaseCtxTests {
   }
 
   test("thunksWithInlining") {
-    val ctx = new TestContext("thunksWithInlining") with MyProg {
+    val ctx = new TestContext with MyProg {
       isInlineThunksOnForce = true
 
       def test() = {
@@ -148,7 +148,7 @@ class ThunkTests extends BaseCtxTests {
   }
 
   test("thunksOfDomainTypes") {
-    val ctx = new TestContext("thunksOfDomainTypes") with SegmentsDslExp with MyDomainProg {
+    val ctx = new TestContext with SegmentsDslExp with MyDomainProg {
       isInlineThunksOnForce = false
 
       def test() = {
@@ -171,13 +171,13 @@ class ThunkTests extends BaseCtxTests {
   }
 
   test("thunksOfDomainTypesWithoutIsoLifting") {
-    val ctx = new TestContext("thunksOfDomainTypesWithoutIsoLifting") with SegmentsDslExp with MyDomainProg {
+    val ctx = new TestContext with SegmentsDslExp with MyDomainProg {
       isInlineThunksOnForce = false
       override def isInvokeEnabled(d: Def[_], m: Method) = true
       override def shouldUnpack(e: Elem[_]) = false
 
       def test() = {
-        assert(!isInlineThunksOnForce, ": precondition for tests");
+        assert(!isInlineThunksOnForce, ": precondition for tests")
 
       }
     }

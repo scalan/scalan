@@ -9,11 +9,11 @@ import scalan.{BaseCtxTests, ScalanCtxExp}
 class StateTests extends BaseCtxTests {
 
   test("zipWithIndex") {
-    val ctx = new TestContext("zipWithIndex") with MonadsDslExp with StateExamples {
+    val ctx = new TestContext with MonadsDslExp with StateExamples {
       val State = new State0Manager[Int]
       override def isInvokeEnabled(d: Def[_], m: Method) = true
     }
-    ctx.emit("zipWithIndex", ctx.zipArrayWithIndexW)
+    ctx.emit(ctx.zipArrayWithIndexW)
   }
 
 

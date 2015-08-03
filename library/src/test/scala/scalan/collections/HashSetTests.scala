@@ -24,7 +24,7 @@ class HashSetTests extends BaseCtxTests {
   }
 
   test("simpleHashsetStaged") {
-    val ctx = new TestContext("simpleHashsetStaged") with HashSetSimple with ScalanCommunityDslExp {
+    val ctx = new TestContext with HashSetSimple with ScalanCommunityDslExp {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {

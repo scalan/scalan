@@ -5,21 +5,20 @@ import scalan._
 
 class KindsTests extends BaseCtxTests {
 
-  class ConvProgStaged(testName: String) extends TestContext(testName) with KindsExamples with KindsDslExp {
+  class ConvProgStaged extends TestContext with KindsExamples with KindsDslExp {
   }
-  class ConvProgSeq(testName: String) extends ScalanCtxSeq with KindsExamples with KindsDslSeq {
+  class ConvProgSeq extends ScalanCtxSeq with KindsExamples with KindsDslSeq {
   }
 
   test("simple kinds tests") {
-    val ctx = new ConvProgStaged("simple kinds tests")
+    val ctx = new ConvProgStaged
     ctx.emit("t1", ctx.t1)
   }
 
   test("kindMap") {
     //pending
-    val name = "kindMap"
-    val ctx = new ConvProgStaged(name)
-    ctx.emit(name, ctx.kindMap)
+    val ctx = new ConvProgStaged
+    ctx.emit("kindMap", ctx.kindMap)
   }
 
 }

@@ -44,7 +44,7 @@ class SumSpecTests extends BaseCtxTests {
   }
 
   test("identityMonad") {
-    val ctx = new TestContext("identityMonad") with MyProgExp {
+    val ctx = new TestContext with MyProgExp {
       lazy val runSum = fun {(n: Rep[Int]) =>
         sum(Monad[Id])(n)(r => r)
       }
@@ -53,7 +53,7 @@ class SumSpecTests extends BaseCtxTests {
   }
 
   test("readerMonad") {
-    val ctx = new TestContext("readerMonad") with MyProgExp with MonadsDslExp {
+    val ctx = new TestContext with MyProgExp with MonadsDslExp {
       override def rewriteDef[T](d: Def[T]) = d match {
         //TODO this rule works only for this particular tests, but can be generalized
         case ListFoldLeft(
@@ -90,7 +90,7 @@ class SumSpecTests extends BaseCtxTests {
   }
 
   test("operMonad") {
-    val ctx = new TestContext("operMonad") with MyProgExp {
+    val ctx = new TestContext with MyProgExp {
       lazy val runSum = fun {(n: Rep[Int]) =>
         sum(Monad[Oper])(n)(r => r(0)._2)
       }
@@ -99,7 +99,7 @@ class SumSpecTests extends BaseCtxTests {
   }
 
   test("freeIdMonad") {
-    val ctx = new TestContext("freeIdMonad") with MyProgExp {
+    val ctx = new TestContext with MyProgExp {
       val idFreeM = freeMonad[Id]
       type IdFree[A] = Free[Id,A]
       lazy val runSum = fun {(n: Rep[Int]) =>
@@ -121,7 +121,7 @@ class SumSpecTests extends BaseCtxTests {
 
 
   test("freeOperMonad") {
-    val ctx = new TestContext("freeOperMonad") with MyProgExp {
+    val ctx = new TestContext with MyProgExp {
       val operFreeM = freeMonad[Oper]
       type OperFree[A] = Free[Oper,A]
       lazy val runSum = fun {(n: Rep[Int]) =>

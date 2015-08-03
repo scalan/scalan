@@ -46,7 +46,7 @@ class SeqsTests extends BaseCtxTests {
   }
 
   test("basicTests") {
-    val ctx = new TestContext("basicTests") with SeqSimple with ScalanCommunityDslExp with SegmentsDslExp {
+    val ctx = new TestContext with SeqSimple with ScalanCommunityDslExp with SegmentsDslExp {
       def test() = { }
     }
     ctx.test
@@ -57,7 +57,7 @@ class SeqsTests extends BaseCtxTests {
   }
 
   test("Seq_of_domain_type") {
-    val ctx = new TestContext("Seq_of_domain_type") with SeqSimple with ScalanCommunityDslExp with SegmentsDslExp {
+    val ctx = new TestContext with SeqSimple with ScalanCommunityDslExp with SegmentsDslExp {
       def test() = { }
     }
     ctx.test
@@ -73,7 +73,7 @@ class SeqsTests extends BaseCtxTests {
   }
 
   test("IsosForSeq") {
-    val ctx = new TestContext("IsosForSeq") with SeqSimple with ScalanCommunityDslExp with SegmentsDslExp {
+    val ctx = new TestContext with SeqSimple with ScalanCommunityDslExp with SegmentsDslExp {
       def test() = { }
     }
     ctx.emit("t7", ctx.t7)

@@ -6,7 +6,7 @@ import scalan.common.SegmentsDslExp
 class HasViewsTests extends BaseViewTests {
 
   test("HasViews") {
-    val ctx = new ViewTestsCtx("HasViews") with SegmentsDslExp with ScalanCommunityDslExp
+    val ctx = new ViewTestsCtx with SegmentsDslExp with ScalanCommunityDslExp
     import ctx._
 
     testNoViews(10)

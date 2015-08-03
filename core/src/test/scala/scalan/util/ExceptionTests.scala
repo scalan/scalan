@@ -25,7 +25,7 @@ class ExceptionTests extends BaseCtxTests {
   }
 
   test("throwablesStaged") {
-    val ctx = new TestContext("throwablesStaged") with ThrowableExamples {
+    val ctx = new TestContext with ThrowableExamples {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {
@@ -45,7 +45,7 @@ class ExceptionTests extends BaseCtxTests {
   }
 
   test("createThrowableStaged") {
-    val ctx = new TestContext("createThrowableStaged") with ThrowableExamples {
+    val ctx = new TestContext with ThrowableExamples {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {

@@ -4,7 +4,7 @@ import scala.language.reflectiveCalls
 import scalan.common.{SegmentsDslExp, CommonExamples, ViewExamples}
 
 abstract class BaseViewTests extends BaseCtxTests {
-  class ViewTestsCtx(testName: String) extends TestContext(testName) {
+  class ViewTestsCtx extends TestContext {
     def testLambdaResultHasViewsWithDataType[A,B](msg: String, f: Rep[A => B], expectedDataElem: Elem[_]) =
       _testLambdaResultHasViews(msg, f, Some(expectedDataElem))
 
@@ -45,8 +45,7 @@ abstract class BaseViewTests extends BaseCtxTests {
 class ViewTests extends BaseViewTests {
 
   test("LambdaResultHasViews") {
-    val ctx = new ViewTestsCtx("LambdaResultHasViews")
-                   with ViewExamples with CommonExamples with SegmentsDslExp
+    val ctx = new ViewTestsCtx with ViewExamples with CommonExamples with SegmentsDslExp
     import ctx._
     testLambdaResultHasViewsWithDataType("t1", t1, element[(Int,Int)])
     testLambdaResultHasViewsWithDataType("t2", t2, element[(Int,Int)])
@@ -67,8 +66,7 @@ class ViewTests extends BaseViewTests {
   }
 
   test("LambdaResultHasViews_Sums") {
-    val ctx = new ViewTestsCtx("LambdaResultHasViews_Sums")
-                   with SegmentsDslExp {
+    val ctx = new ViewTestsCtx with SegmentsDslExp {
       lazy val v1 = fun { (in: Rep[Unit]) => in.asLeft[Slice] }
       lazy val v2 = fun { (in: Rep[(Int,Int)]) => SumView(in.asRight[Unit])(identityIso[Unit], isoSlice) }
     }
@@ -80,7 +78,7 @@ class ViewTests extends BaseViewTests {
 
 
   test("getIsoByElem") {
-    val ctx = new ViewTestsCtx("LambdaResultHasViews_Sums") with SegmentsDslExp
+    val ctx = new ViewTestsCtx with SegmentsDslExp
     import ctx._
 
     testGetIso(element[Int], element[Int])

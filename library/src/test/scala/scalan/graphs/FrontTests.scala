@@ -27,19 +27,19 @@ class FrontTests extends BaseCtxTests {
     lazy val t3 = fun { (in: Rep[List[Int]]) => CollectionOverList(in).asRep[CollectionOverArray[Int]].arr }
   }
 
-  class FrontProgStaged(testName: String) extends TestContext(testName) with FrontProg with GraphsDslExp {
+  class FrontProgStaged extends TestContext with FrontProg with GraphsDslExp {
   }
-  class FrontProgSeq(testName: String) extends ScalanCtxSeq with FrontProg with GraphsDslSeq {
+  class FrontProgSeq extends ScalanCtxSeq with FrontProg with GraphsDslSeq {
   }
 
   test("deepSpec") {
-    val ctx = new FrontProgStaged("deepSpec")
+    val ctx = new FrontProgStaged
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
   }
 
   test("autoSuper") {
-    val ctx = new FrontProgStaged("autoSuper")
+    val ctx = new FrontProgStaged
     ctx.emit("t3", ctx.t3)
   }
 

@@ -5,11 +5,10 @@ import scalan.common.SegmentsDslExp
 import scalan.{ScalanCommunityDslExp, BaseViewTests}
 
 class CollectionViewTests extends BaseViewTests {
-  class Ctx(name: String) extends
-    ViewTestsCtx(name) with CollectionsDslExp with ScalanCommunityDslExp with SegmentsDslExp
+  class Ctx extends ViewTestsCtx with CollectionsDslExp with ScalanCommunityDslExp with SegmentsDslExp
 
   test("LambdaResultHasViews") {
-    val ctx = new Ctx("LambdaResultHasViews") {
+    val ctx = new Ctx {
       lazy val t1 = fun { (in: Rep[Array[Int]]) => CollectionOverArray(in) }
       lazy val t2 = fun { (in: Rep[Array[Int]]) => (CollectionOverArray(in), in.length) }
       lazy val t3 = fun { (in: Rep[Array[Int]]) => (CollectionOverArray(in), in) }
@@ -23,7 +22,7 @@ class CollectionViewTests extends BaseViewTests {
   }
 
   test("getIsoByElem") {
-    val ctx = new Ctx("LambdaResultHasViews_Sums")
+    val ctx = new Ctx
     import ctx._
 
     testGetIso(element[Collection[Int]], element[Collection[Int]])

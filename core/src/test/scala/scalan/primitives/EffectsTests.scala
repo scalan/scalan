@@ -71,7 +71,7 @@ class EffectsTests extends BaseCtxTests {
   }
 
   test("simpleEffectsWithIsoLiftingStaged") {
-    val ctx = new TestContext("simpleEffectsWithIsoLiftingStaged") with SegmentsDslExp with MyDomainProg {
+    val ctx = new TestContext with SegmentsDslExp with MyDomainProg {
       isInlineThunksOnForce = false
 
       def test() = {

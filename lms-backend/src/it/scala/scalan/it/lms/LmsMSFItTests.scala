@@ -279,12 +279,12 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
   }
 
   test("fallingTestWithLists") {
-    val ctx = new TestContext("fallingTestWithLists") with ProgExp
+    val ctx = new TestContext with ProgExp
     ctx.emit("funFallingTestWithLists", ctx.funFallingTestWithLists)
   }
 
   test("fallingTestWithArrays") {
-    val ctx = new TestContext("fallingTestWithArrays") with ProgExp
+    val ctx = new TestContext with ProgExp
     ctx.emit("funFallingTestWithArrays", ctx.funFallingTestWithArrays)
   }
 }

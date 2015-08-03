@@ -97,10 +97,10 @@ trait PackProg extends FirstProg {
 
 class JNIExtractorTests extends BaseCtxTests {
 
-  class Ctx(testName: String) extends TestContext(testName) with JNIExtractorOpsExp
+  class Ctx extends TestContext with JNIExtractorOpsExp
 
   test("simple") {
-    val ctx = new Ctx("firstprog") with FirstProg
+    val ctx = new Ctx with FirstProg
 
     ctx.emit("extractDouble", ctx.extractDouble)
     ctx.emit("extractArray", ctx.extractArray)
@@ -114,7 +114,7 @@ class JNIExtractorTests extends BaseCtxTests {
   }
 
   test("simplePack") {
-    val ctx = new Ctx("testprog") with PackProg
+    val ctx = new Ctx with PackProg
 
     ctx.emit("packArray", ctx.packArray)
   }

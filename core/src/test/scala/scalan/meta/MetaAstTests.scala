@@ -7,8 +7,7 @@ import scalan._
 class MetaAstTests extends BaseCtxTests {
 
   test("EntityElem.entityDef") {
-    val ctx = new TestContext("EntityElem.entityDef")
-                   with ViewExamples with CommonExamples with SegmentsDslExp with KindsDslExp
+    val ctx = new TestContext with ViewExamples with CommonExamples with SegmentsDslExp with KindsDslExp
     import ctx._
     {
       val e = element[Segment].asEntityElem[Segment]
