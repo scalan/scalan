@@ -53,18 +53,15 @@ class LmsJNIExtractorItTests extends BaseItTests {
     }
   }
 
-  test("MST_JNI") {
-    val ctx = new ScalanCtxExp with ProgExp with FirstProg {
-      override def subfolder: String = "MST_JNI-cxx"
-      def test() = {
-
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
+  class Ctx(subfolder: String) extends ScalanCtxExp with ProgExp {
+    def generate[A,B](name: String, f: Exp[A => B]): Unit = {
+      val dir = new File(prefix, subfolder)
+      buildExecutable(dir, dir, name, f, GraphVizConfig.default)
     }
+  }
+
+  test("MST_JNI") {
+    val ctx = new Ctx("firstprog-cxx") with FirstProg
 
 //    ctx.generate("MST_JNI_adjlist", ctx.MST_JNI_adjlist)
 //    ctx.generate("MST_JNI_adjmatrix", ctx.MST_JNI_adjmatrix)
@@ -75,17 +72,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
   }
 
   test("simpleGenCxx") {
-    val ctx = new ScalanCtxExp with ProgExp with FirstProg {
-      override def subfolder: String = super.subfolder + "-cxx"
-      def test() = {
-
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
+    val ctx = new Ctx("firstprog-cxx") with FirstProg
 
     ctx.generate("extractDouble", ctx.extractDouble)
     ctx.generate("extractArray", ctx.extractArray)
@@ -99,17 +86,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
   }
 
   test("simplePackGenCxx") {
-    val ctx = new ScalanCtxExp with ProgExp with PackProg {
-      override def subfolder: String = super.subfolder + "-cxx"
-      def test() = {
-
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
+    val ctx = new Ctx("packprog-cxx") with PackProg
 
 //    ctx.generate("opyt", ctx.opyt)
 //    ctx.generate("packArray", ctx.packArray)
@@ -118,17 +95,7 @@ class LmsJNIExtractorItTests extends BaseItTests {
   }
 
   test("mvm") {
-    val ctx = new ScalanCtxExp with ProgExp with PackProg {
-      override def subfolder: String = super.subfolder + "-cxx"
-      def test() = {
-
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
+    val ctx = new Ctx("packprog-cxx") with PackProg
 
 //    ctx.generate("opyt", ctx.opyt)
     ctx.generate("ddmvm", ctx.ddmvm)

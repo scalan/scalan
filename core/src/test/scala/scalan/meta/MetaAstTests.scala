@@ -4,11 +4,10 @@ import scala.language.reflectiveCalls
 import scalan.common._
 import scalan._
 
-class MetaAstTests extends BaseTests { suite =>
+class MetaAstTests extends BaseCtxTests {
 
   test("EntityElem.entityDef") {
-    val ctx = new TestContext(this, "EntityElem.entityDef")
-                   with ViewExamples with CommonExamples with SegmentsDslExp with KindsDslExp
+    val ctx = new TestContext with ViewExamples with CommonExamples with SegmentsDslExp with KindsDslExp
     import ctx._
     {
       val e = element[Segment].asEntityElem[Segment]

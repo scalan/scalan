@@ -3,20 +3,20 @@ package scalan.common
 import scala.language.reflectiveCalls
 import scalan._
 
-class ConverterTests extends BaseTests { suite =>
+class ConverterTests extends BaseCtxTests {
 
   trait ConvProg extends CommonExamples {
   //TODO uncomment after convertTo works not only for Reifiable[_]
 //    lazy val t20 = fun { in: Rep[Array[Interval]] => in.convertTo[Array[Slice]] }
   }
 
-  class ConvProgStaged(testName: String) extends TestContext(this, testName) with  ConvProg with SegmentsDslExp {
+  class ConvProgStaged extends TestContext with ConvProg with SegmentsDslExp {
   }
-  class ConvProgSeq(testName: String) extends ScalanCtxSeq with  ConvProg with SegmentsDslSeq {
+  class ConvProgSeq extends ScalanCtxSeq with ConvProg with SegmentsDslSeq {
   }
 
   test("simple converter tests") {
-    val ctx = new ConvProgStaged("simple converter tests")
+    val ctx = new ConvProgStaged
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
     ctx.emit("t3", ctx.t3)
@@ -25,29 +25,29 @@ class ConverterTests extends BaseTests { suite =>
   }
 
   ignore("convertToCentered") {
-    val ctx = new ConvProgStaged("convertToCentered")
+    val ctx = new ConvProgStaged
     ctx.emit("t6", ctx.t6)
   }
 
   test("convertSeq") {
-    val ctx = new ConvProgSeq("convertSeq")
+    val ctx = new ConvProgSeq
     val res = ctx.t4((10,20))
     assertResult((10,30))(res)
   }
 
   test("converIfThenElse") {
-    val ctx = new ConvProgStaged("converIfThenElse")
+    val ctx = new ConvProgStaged
     ctx.emit("t7", ctx.t7)
     ctx.emit("t9", ctx.t9)
   }
 
   test("converIfThenElseWithPair") {
-    val ctx = new ConvProgStaged("converIfThenElseWithPair")
+    val ctx = new ConvProgStaged
     ctx.emit("t8", ctx.t8)
   }
 
   test("convertIfThenElseWithOption") {
-    val ctx = new ConvProgStaged("convertIfThenElseWithOption")
+    val ctx = new ConvProgStaged
     ctx.emit("t10", ctx.t10)
     ctx.emit("t10_1", ctx.t10_1)
     ctx.emit("t10_2", ctx.t10_2)
@@ -56,14 +56,14 @@ class ConverterTests extends BaseTests { suite =>
     ctx.emit("t10_5", ctx.t10_5)
   }
 
-  test("converIfThenElseWithSum") {
-    val ctx = new ConvProgStaged("converIfThenElseWithSum")
+  test("convertIfThenElseWithSum") {
+    val ctx = new ConvProgStaged
     ctx.emit("t11", ctx.t11)
     ctx.emit("t12", ctx.t12)
   }
 
   test("convertSumFold") {
-    val ctx = new ConvProgStaged("converIfThenElseWithSum")
+    val ctx = new ConvProgStaged
     ctx.emit("t13", ctx.t13)
   }
 
@@ -81,7 +81,7 @@ class ConverterTests extends BaseTests { suite =>
   }
 
   test("hasConverter") {
-    val ctx = new ConvProgStaged("hasConverter")
+    val ctx = new ConvProgStaged
     import ctx._
     testConverter[Int, Int](ctx, "convInt")
     testConverter[Int, Double](ctx, "convIntToDouble",false)
@@ -95,6 +95,5 @@ class ConverterTests extends BaseTests { suite =>
     testConverter[(Array[Interval],Array[Slice]), (Array[Slice],Array[Interval])](ctx, "convPairOfArrays")
     testConverter[Array[Array[Interval]], Array[Array[Slice]]](ctx, "convNArray")
     testConverter[Array[Array[Interval]], Array[Slice]](ctx, "convNArrayToArray", false)
-
   }
 }

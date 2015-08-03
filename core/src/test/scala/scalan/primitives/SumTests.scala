@@ -1,13 +1,13 @@
 package scalan.primitives
 
 import scala.language.reflectiveCalls
-import scalan.{TestContext, BaseTests}
+import scalan.BaseCtxTests
 import scalan.common.{CommonExamples, SegmentsDslExp, ViewExamples}
 
-class SumTests extends BaseTests { suite =>
+class SumTests extends BaseCtxTests {
 
   test("IsSumMapLambda") {
-    val ctx = new TestContext(this, "IsSumMapLambda") with SegmentsDslExp {
+    val ctx = new TestContext with SegmentsDslExp {
       lazy val t1 = fun { x: Rep[Int|Unit] => x.mapSum(l => l + 1, r => r) }
     }
     import ctx._
@@ -15,7 +15,7 @@ class SumTests extends BaseTests { suite =>
   }
 
   test("constant propagation from If to SumFold") {
-    val ctx = new TestContext(this, "fromIfToSumFold") with SegmentsDslExp {
+    val ctx = new TestContext("fromIfToSumFold") with SegmentsDslExp {
       lazy val t1 = fun { x: Rep[Int] =>
         val s = IF (x > 0) THEN { (x + 1).asLeft[Int] } ELSE { (x + 2).asRight[Int] }
         s.fold(l => l + 1, r => r - 2)
@@ -31,7 +31,7 @@ class SumTests extends BaseTests { suite =>
   }
 
   test("SumMap(Right(x)) rewriting") {
-    val ctx = new TestContext(this, "SumMapRightRewriting") {
+    val ctx = new TestContext("SumMapRightRewriting") {
       lazy val t1 = fun { x: Rep[Int] =>
         x.asRight[Int].mapSum(_ + 1, _ - 1)
       }
@@ -43,7 +43,7 @@ class SumTests extends BaseTests { suite =>
   }
 
   test("SumMap(Left(x)) rewriting") {
-    val ctx = new TestContext(this, "SumMapLeftRewriting") {
+    val ctx = new TestContext("SumMapLeftRewriting") {
       lazy val t1 = fun { x: Rep[Int] =>
         x.asLeft[Int].mapSum(_ + 1, _ - 1)
       }

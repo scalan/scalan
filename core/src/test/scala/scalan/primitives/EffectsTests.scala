@@ -1,14 +1,10 @@
 package scalan.primitives
 
-import java.io.File
-import java.lang.reflect.Method
-
-import scala.io.StdIn
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp}
 
-class EffectsTests extends BaseTests { suite =>
+class EffectsTests extends BaseCtxTests {
 //  trait ConsoleDsl extends Scalan {
 //    def print(s: Rep[String]): Rep[Unit]
 //    def read: Rep[String]
@@ -35,7 +31,7 @@ class EffectsTests extends BaseTests { suite =>
     }
   }
 
-  abstract class MyProgStaged(testName: String) extends TestCompilerContext(this, testName) with  MyProg with EffectfulCompiler {
+  abstract class MyProgStaged(testName: String) extends TestCompilerContext(testName) with MyProg with EffectfulCompiler {
   }
 
   test("simpleEffectsStaged") {
@@ -75,7 +71,7 @@ class EffectsTests extends BaseTests { suite =>
   }
 
   test("simpleEffectsWithIsoLiftingStaged") {
-    val ctx = new TestContext(this, "simpleEffectsWithIsoLiftingStaged") with SegmentsDslExp with MyDomainProg {
+    val ctx = new TestContext with SegmentsDslExp with MyDomainProg {
       isInlineThunksOnForce = false
 
       def test() = {
@@ -92,7 +88,7 @@ class EffectsTests extends BaseTests { suite =>
   }
 
   test("throwablesSeq") {
-    val ctx = new ScalanCtxSeq with  MyProg {
+    val ctx = new ScalanCtxSeq with MyProg {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
       }

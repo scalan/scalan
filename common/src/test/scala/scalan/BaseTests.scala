@@ -2,7 +2,7 @@ package scalan
 
 import org.scalatest._
 import org.scalatest.words.ResultOfStringPassedToVerb
-import org.scalatest.{FlatSpec, FunSuite, Inside, Matchers}
+import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scalan.util.FileUtil
 
@@ -17,14 +17,21 @@ trait TestsUtil {
     FileUtil.file(testOutDir, pathComponents: _*)
   }
 
-  /* if runs in continious integration environment */
+  /* if runs in continuous integration environment */
   def isCI = sys.env.get("CI").flatMap(toBoolean).getOrElse(false)
   private def toBoolean(s: String): Option[Boolean] =
     scala.util.Try(s.toBoolean).toOption
 }
 
-// TODO switch to FunSpec and eliminate duplication in test names (e.g. RewriteSuite)
-abstract class BaseTests extends FunSuite with Matchers with Inside with TestsUtil
+/**
+ * Standard base class for most test suites.
+ *
+ * See <a>http://www.scalatest.org/getting_started_with_fun_spec</a>.
+ */
+abstract class BaseTests extends FunSpec with Matchers with Inside with TestsUtil {
+  /** Alias for <code>it</code> for tests outside <code>describe</code> blocks. */
+  def test(name: String, tags: Tag*)(testFun: => Unit) = it(name, tags: _*)(testFun)
+}
 
 abstract class BaseShouldTests extends FlatSpec with Matchers with TestsUtil {
   protected final class InAndIgnoreMethods2(resultOfStringPassedToVerb: ResultOfStringPassedToVerb) {

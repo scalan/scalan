@@ -13,8 +13,6 @@ import scalan.util.FileUtil
  */
 trait FirstProg { self: Scalan with JNIExtractorOps with ArrayOps =>
 
-  def subfolder = "/firstprog"
-
   lazy val extractDouble = fun { (in: Rep[JNIType[Double]]) =>
     JNI_Extract(in)
   }
@@ -65,8 +63,6 @@ trait FirstProg { self: Scalan with JNIExtractorOps with ArrayOps =>
 trait PackProg extends FirstProg {
   self: Scalan with JNIExtractorOps with ArrayOps =>
 
-  override def subfolder = "/packprog"
-
 //  lazy val packDouble = fun { (in: Rep[JNIType[Double]]) =>
 //    JNI_Extract(in)
 //  }
@@ -99,24 +95,13 @@ trait PackProg extends FirstProg {
   }
 }
 
-class JNIExtractorTests extends BaseTests {
+class JNIExtractorTests extends BaseCtxTests {
 
-  trait TestContext extends ScalanCtxExp with JNIExtractorOpsExp {
-    override def isInvokeEnabled(d: Def[_], m: Method) = true
-    override def shouldUnpack(e: Elem[_]) = true
-    def subfolder: String
-    def emit(name: String, ss: Exp[_]*) =
-      emitDepGraph(ss.toList, FileUtil.file(prefix, subfolder, s"/$name.dot") )(GraphVizConfig.default)
-  }
+  class Ctx extends TestContext with JNIExtractorOpsExp
 
   test("simple") {
-    val ctx = new TestContext with FirstProg {
-      def test() = {
+    val ctx = new Ctx with FirstProg
 
-      }
-    }
-
-    ctx.test
     ctx.emit("extractDouble", ctx.extractDouble)
     ctx.emit("extractArray", ctx.extractArray)
     ctx.emit("extractDM", ctx.extractDM)
@@ -129,12 +114,8 @@ class JNIExtractorTests extends BaseTests {
   }
 
   test("simplePack") {
-    val ctx = new TestContext with PackProg {
-      def test() = {
+    val ctx = new Ctx with PackProg
 
-      }
-    }
-    ctx.test
     ctx.emit("packArray", ctx.packArray)
   }
 }

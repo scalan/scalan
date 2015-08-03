@@ -17,36 +17,42 @@ trait SegmentMethodWrappers extends Scalan with SegmentsDsl {
   lazy val Slice_shift = fun { (in: Rep[(SliceData, Int)]) => val Pair(i, o) = in; Slice(i).shift(o) }
 }
 
-class SegmentMethodWrappersTests extends BaseTests { suite =>
+class SegmentMethodWrappersTests extends BaseCtxTests {
 
-  class SegmentMethodWrappersStaged(testName: String) extends TestContext(this, testName) with  SegmentMethodWrappers with SegmentsDslExp {
-  }
-
-  test("Interval_start") {
-    val ctx = new SegmentMethodWrappersStaged("start")
-    ctx.emit("Interval_start", ctx.Interval_start)
-  }
-  test("Slice_start") {
-    val ctx = new SegmentMethodWrappersStaged("start")
-    ctx.emit("Slice_start", ctx.Slice_start)
+  class SegmentMethodWrappersStaged(testName: String) extends TestContext(testName) with SegmentMethodWrappers with SegmentsDslExp {
   }
 
-  test("Interval_length") {
-    val ctx = new SegmentMethodWrappersStaged("length")
-    ctx.emit("Interval_length", ctx.Interval_length)
-  }
-  test("Slice_length") {
-    val ctx = new SegmentMethodWrappersStaged("length")
-    ctx.emit("Slice_length", ctx.Slice_length)
+  describe("Start") {
+    test("interval") {
+      val ctx = new SegmentMethodWrappersStaged("start")
+      ctx.emit("Interval_start", ctx.Interval_start)
+    }
+    test("slice") {
+      val ctx = new SegmentMethodWrappersStaged("start")
+      ctx.emit("Slice_start", ctx.Slice_start)
+    }
   }
 
-  test("Interval_end") {
-    val ctx = new SegmentMethodWrappersStaged("end")
-    ctx.emit("Interval_end", ctx.Interval_end)
+  describe("Length") {
+    test("interval") {
+      val ctx = new SegmentMethodWrappersStaged("length")
+      ctx.emit("Interval_length", ctx.Interval_length)
+    }
+    test("slice") {
+      val ctx = new SegmentMethodWrappersStaged("length")
+      ctx.emit("Slice_length", ctx.Slice_length)
+    }
   }
-  test("Slice_end") {
-    val ctx = new SegmentMethodWrappersStaged("end")
-    ctx.emit("Slice_end", ctx.Slice_end)
+
+  describe("End") {
+    test("interval") {
+      val ctx = new SegmentMethodWrappersStaged("end")
+      ctx.emit("Interval_end", ctx.Interval_end)
+    }
+    test("slice") {
+      val ctx = new SegmentMethodWrappersStaged("end")
+      ctx.emit("Slice_end", ctx.Slice_end)
+    }
   }
 
   test("Interval_shift") {

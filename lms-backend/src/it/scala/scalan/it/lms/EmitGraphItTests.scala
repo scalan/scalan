@@ -31,7 +31,7 @@ class EmitGraphItTests extends CommunitySmokeItTests with BeforeAndAfterAll {
   }
 
   class ProgSeq extends ProgCommunitySeq with Prog  {}
-  class ProgStaged extends ProgCommunityExp with  Prog with CommunityLmsCompilerScala {}
+  class ProgStaged extends ProgCommunityExp with Prog with CommunityLmsCompilerScala {}
 
   override val progSeq = new ProgSeq
   override val progStaged = new ProgStaged
