@@ -1,40 +1,34 @@
 package scalan.compilation.lms.uni
 
 import java.io.File
-import java.net.{URLClassLoader, URL}
 
-import scalan.common.Lazy
+import scalan.compilation.GraphVizConfig
+import scalan.compilation.lms._
 import scalan.compilation.lms.common.JNILmsOpsExp
 import scalan.compilation.lms.cxx.sharedptr.CxxCodegen
+import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.compilation.lms.source2bin.{Gcc, Nsc, Sbt}
 import scalan.util.FileUtil
-import scalan.{JNIExtractorOpsExp, ScalanCtxExp}
-import scalan.compilation.GraphVizConfig
-import scalan.compilation.language.MethodMappingDSL
-import scalan.compilation.lms.scalac.{LmsCompilerScala, CommunityLmsCompilerScala}
-import scalan.compilation.lms.source2bin.{Gcc, SbtConfig, Nsc, Sbt}
-import scalan.compilation.lms._
 import scalan.util.FileUtil._
+import scalan.{Base, JNIExtractorOpsExp, ScalanCommunityDslExp}
+
+//  case class CustomCompilerOutput(jar: URL)
+class LmsBackendUni extends CommunityLmsBackend with JNILmsOpsExp { self =>
+  val nativeCodegen: CxxCodegen[self.type] = new CxxCodegen(self)
+  val jniCallCodegen: JniCallCodegen[self.type] = new JniCallCodegen(self, nativeCodegen, "")
+  // todo cppFunctionName and cppLibraryName should be moved from jniCallCodegen for use base codegen below (in doBuildExecutable), without information about subtype of codegen (native or jniCall)
+}
 
 /**
  * Created by adel on 5/12/15.
  */
-trait LmsCompilerUni
-  extends /*LmsCompilerScala
-  with*/ JNIExtractorOpsExp
-  with CommunityLmsCompilerScala
-  with CoreBridge with MethodMappingDSL with JNIBridge
-{ self: ScalanCtxExp =>
+trait LmsCompilerUni extends CommunityLmsCompilerScala with JNIBridge {
+  override val scalan: ScalanCommunityDslExp with JNIExtractorOpsExp
+  import scalan._
 
-//  case class CustomCompilerOutput(jar: URL)
-  class LmsBackendUni extends CommunityLmsBackend with JNILmsOpsExp { self =>
-    val nativeCodegen: CxxCodegen[self.type] = new CxxCodegen(self)
-    val jniCallCodegen: JniCallCodegen[self.type] = new JniCallCodegen(self, nativeCodegen, "")
-    // todo cppFunctionName and cppLibraryName should be moved from jniCallCodegen for use base codegen below (in doBuildExecutable), without information about subtype of codegen (native or jniCall)
-  }
+  val lms: LmsBackendUni
 
-  override val lms = new LmsBackendUni
-
-  val marker = new SymbolsMarkerForSelectCodegen[self.type](self)
+  lazy val marker = new SymbolsMarkerForSelectCodegen[scalan.type](scalan)
 
   override def buildInitialGraph[A, B](func: Exp[A => B])(compilerConfig: CompilerConfig): PGraph = {
 
@@ -44,7 +38,7 @@ trait LmsCompilerUni
     def adapt(func: Exp[_]):List[Exp[_]] = {
       func.getMetadata(marker.codegenChangeKey) match {
         case Some(key) => {
-          val adapter = KnownCodegens.getAdapterByString[self.type](self, key /*"Scala2Cxx"*/)
+          val adapter = KnownCodegens.getAdapterByString[scalan.type](scalan, key /*"Scala2Cxx"*/)
           func match {
             case Def(lam: Lambda[a, b]) =>
               val (master, slave) = KnownCodegens.pairFromString(key)//BackendCake
@@ -107,7 +101,7 @@ trait LmsCompilerUni
 
                     val lmsFuncC = finalMirror.funcMirror[a, b](f)
                     val cxxFile = codegen.createFile(lmsFuncC, jniCallCodegen.cppFunctionName(functionName), sourcesDir)(mA, mB)
-                    Gcc.compile(scalan.Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
+                    Gcc.compile(Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
                   //todo make one library for all functions
                 }
               }

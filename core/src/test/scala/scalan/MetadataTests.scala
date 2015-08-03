@@ -14,12 +14,15 @@ class MetadataTests extends BaseTests {
     main.setMetadata(functionNameKey)(mainStr)
   }
 
-  class ProgExp extends ScalanCtxExp with Prog with DummyCompilerWithPasses
+  class ProgExp extends ScalanCtxExp with Prog
 
   describe("Metadata") {
     it("survives compilation passes") {
-      val progExp = new ProgExp
-      import progExp._
+      val compiler = new DummyCompilerWithPasses {
+        override val scalan = new ProgExp
+      }
+      import compiler._
+      import compiler.scalan._
 
       val graph = buildGraph(FileUtil.currentWorkingDir, mainStr, main, GraphVizConfig.none)(defaultCompilerConfig)
 
@@ -29,7 +32,11 @@ class MetadataTests extends BaseTests {
     }
 
     it("can be changed by mirror") {
-      val progExp = new ProgExp {
+      val compiler = new DummyCompilerWithPasses {
+        override val scalan = new ProgExp
+
+        import scalan._
+
         val functionNameMirror = new Mirror[MapTransformer] {
           override protected def mirrorMetadata[A, B](t: MapTransformer, old: Exp[A], mirrored: Exp[B]) = {
             val newMeta = old.allMetadata.updateIfExists(functionNameKey)(_ + "1")
@@ -40,7 +47,9 @@ class MetadataTests extends BaseTests {
         override def graphPasses(compilerConfig: CompilerConfig) =
           super.graphPasses(compilerConfig) :+ constantPass(GraphTransformPass("functionNameMirror", functionNameMirror, NoRewriting))
       }
-      import progExp._
+
+      import compiler._
+      import compiler.scalan._
 
       val graph = buildGraph(FileUtil.currentWorkingDir, mainStr, main, GraphVizConfig.none)(defaultCompilerConfig)
 

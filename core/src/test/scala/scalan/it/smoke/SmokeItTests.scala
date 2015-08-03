@@ -278,10 +278,10 @@ abstract class SmokeItTests extends BaseItTests {
 //    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
   }
 
-  val progStaged: Prog with ScalanCtxExp with Compiler
-  val progSeq: Prog with ScalanCtxSeq = new ProgSeq()
-
-  import progSeq._
+//  val progStaged: Prog with ScalanCtxExp
+//  val progSeq: Prog with ScalanCtxSeq = new ProgSeq()
+//
+//  import progSeq._
 
 //  test("test00simpleConst") {
 //    val (in, out) = Array(0) -> Array(1)

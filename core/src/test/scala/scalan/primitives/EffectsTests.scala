@@ -3,6 +3,7 @@ package scalan.primitives
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp}
+import scalan.compilation.DummyCompiler
 
 class EffectsTests extends BaseCtxTests {
 //  trait ConsoleDsl extends Scalan {
@@ -31,38 +32,43 @@ class EffectsTests extends BaseCtxTests {
     }
   }
 
-  abstract class MyProgStaged(testName: String) extends TestCompilerContext(testName) with MyProg with EffectfulCompiler {
+  class Ctx(testName: String) extends TestCompilerContext(testName) {
+    override val compiler = new DummyCompiler with EffectfulCompiler {
+      override val scalan = new ScalanCtxExp with MyProg
+    }
   }
 
   test("simpleEffectsStaged") {
-    val ctx = new MyProgStaged("simpleEffectsStaged") {
-      def test() = { }
+    val ctx = new Ctx("simpleEffectsStaged") {
+      import compiler.scalan._
+      test("t1", t1)
+      test("t2", t2)
     }
-    ctx.test
-    ctx.test("t1", ctx.t1)
-    ctx.test("t2", ctx.t2)
   }
 
   test("nestedThunksStaged") {
-    val ctx = new MyProgStaged("nestedThunksStaged") {
-      def test() = { }
+    val ctx = new Ctx("nestedThunksStaged") {
+      import compiler.scalan._
+      test("t3", t3)
     }
-    ctx.test
-    ctx.test("t3", ctx.t3)
   }
 
   test("IfThenElseWithEffectsSimple") {
-    val ctx = new MyProgStaged("IfThenElseWithEffectsSimple") {
+    val ctx = new Ctx("IfThenElseWithEffectsSimple") {
+      import compiler.scalan._
+
       def test() = {
         val Def(lam : Lambda[_,_]) = t4
         val b = lam.branches
         assert(true)
-
       }
+
+      test()
+
+      test("t4", t4)
     }
-    ctx.test
-    ctx.test("t4", ctx.t4)
   }
+
   trait MyDomainProg extends Scalan with SegmentsDsl {
 //    lazy val t1 = fun { (in: Rep[Int]) =>
 //      Thunk { Interval(in, in) }.force.length
@@ -83,7 +89,7 @@ class EffectsTests extends BaseCtxTests {
 
       }
     }
-    ctx.test
+    ctx.test()
    // ctx.test("t1", ctx.t1)
   }
 
@@ -93,7 +99,7 @@ class EffectsTests extends BaseCtxTests {
         //assert(!isInlineThunksOnForce, "precondition for tests")
       }
     }
-    ctx.test
+    ctx.test()
 //    val res = ctx.t1(new Throwable("test"))
 //    assertResult("test")(res)
   }

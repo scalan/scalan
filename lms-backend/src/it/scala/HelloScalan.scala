@@ -33,16 +33,23 @@ object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
 }
 
 // to run: scalan-lms-backend/test:runMain HelloScalanExp
-object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with CommunityLmsCompilerScala with CommunityBridge {
+object HelloScalanExp {
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
 
-  val lms = new CommunityLmsBackend
+  val program = new HelloScalan with ScalanCommunityDslExp
+
+  val compiler = new CommunityLmsCompilerScala {
+    val scalan = program
+    val lms = new CommunityLmsBackend
+  }
+  import compiler._
+  import compiler.scalan._
 
   def result = {
     // output directory
     val dir = new File("it-out")
-    val compiled = buildExecutable(
+    val compiled = compiler.buildExecutable(
       dir,
       // generated class name
       "HelloScalan1",

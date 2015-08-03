@@ -32,12 +32,12 @@ object KnownCodegens {
   }
 
 
-  def getAdapterByString[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp with JNIBridge]
+  def getAdapterByString[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp]
                 (sc: ScalanCake, xy: String): AdapterBase[ScalanCake] =
     getAdapter(sc, pairFromString(xy))
 
   //[ScalanCake <: ScalanCtxExp, BackendCake <: LmsBackendFacade]
-  def getAdapter[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp with JNIBridge]
+  def getAdapter[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp]
                 (sc: ScalanCake, xy: (CodegenType, CodegenType)): AdapterBase[ScalanCake] = {
     xy match {
       case (Scala, Cxx) =>  new AdapterScala2Cxx(sc)

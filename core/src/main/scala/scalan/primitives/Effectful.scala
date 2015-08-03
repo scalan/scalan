@@ -51,7 +51,9 @@ trait EffectfulExp extends Effectful with Expressions { self: ScalanExp =>
 
 }
 
-trait EffectfulCompiler extends EffectfulExp with Expressions with Compiler { self: ScalanExp =>
+trait EffectfulCompiler extends Compiler {
+  override val scalan: ScalanExp with EffectfulExp
+  import scalan._
 
   object EffectfulRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {

@@ -1,12 +1,14 @@
 package scalan.compilation.lms
 
 import scalan.ScalanCtxExp
+import scalan.compilation.Passes
 import scalan.compilation.lms.scalac.LmsManifestUtil
 import LmsManifestUtil._
 
-trait LmsBridge { self: ScalanCtxExp =>
-
+trait LmsBridge extends Passes {
   val lms: LmsBackend
+
+  import scalan._
 
   type LmsFunction = (lms.Exp[A] => lms.Exp[B]) forSome {type A; type B}
 

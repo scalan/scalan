@@ -4,7 +4,9 @@ import scalan.compilation.language.MethodMappingDSL
 import scalan.compilation.lms.common.{PointerLmsOps, PointerLmsOpsExp}
 import scalan.{ScalanCtxExp, PointerOpsExp}
 
-trait PointerBridge extends CoreBridge { self: ScalanCtxExp with MethodMappingDSL with PointerOpsExp =>
+trait PointerBridge extends CoreBridge {
+  override val scalan: ScalanCtxExp with PointerOpsExp
+  import scalan._
 
   val lms: CoreLmsBackend with PointerLmsOpsExp
 

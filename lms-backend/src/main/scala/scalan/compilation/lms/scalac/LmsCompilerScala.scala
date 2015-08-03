@@ -11,7 +11,9 @@ import scalan.compilation.lms.uni.NativeMethodsConfig
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
-trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL { self: ScalanCtxExp =>
+trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL {
+  override val scalan: ScalanCtxExp
+  import scalan._
   /**
    * If scalaVersion is None, uses scala-compiler.jar
    *
@@ -46,7 +48,7 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
     // ensure Scala library is available
-    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), self.getClass.getClassLoader)
+    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), getClass.getClassLoader)
     val cls = classLoader.loadClass(
       compilerOutput.custom.mainClass match {
         case Some(mainClass) => mainClass

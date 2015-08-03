@@ -384,5 +384,5 @@ class ProgCommunitySeq extends ProgCommunity with ScalanCommunitySeq with Scalan
 ////    checkRun(progSeq, progStaged)(expandScaledRangesFun, progStaged.expandScaledRangesFun)("simple26_expandScaledRanges", in, progSeq.fromArray(out))
 ////  }
 
-  override val progSeq: ProgCommunitySeq = new ProgCommunitySeq
+  // override val progSeq: ProgCommunitySeq = new ProgCommunitySeq
 }

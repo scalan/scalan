@@ -6,7 +6,9 @@ import scalan.{PointerOpsExp, JNIExtractorOpsExp, ScalanCommunityExp}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{LmsBridge, LmsCompiler}
 
-trait LmsCompilerCxx extends LmsCompiler with JNIExtractorOpsExp  with PointerOpsExp { self: ScalanCommunityExp with LmsBridge =>
+trait LmsCompilerCxx extends LmsCompiler {
+  //override val scalan: ScalanCommunityExp with JNIExtractorOpsExp with PointerOpsExp
+  import scalan._
 
   type CustomCompilerOutput = Unit
 

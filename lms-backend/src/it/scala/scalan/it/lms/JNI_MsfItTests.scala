@@ -12,8 +12,7 @@ import scalan.graphs.GraphsDslExp
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
 class JNI_MsfItTests extends LmsMsfItTests {
-  trait ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCxx with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
-    val lms = new CoreCxxShptrLmsBackend
+  trait ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with GraphsDslExp with MsfFuncs {
 
     lazy val MSF_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
       val data = JNI_Extract(in)
@@ -28,10 +27,10 @@ class JNI_MsfItTests extends LmsMsfItTests {
     }
   }
 
-  class Ctx extends ScalanCtxExp with ProgExp {
-    def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-      val dir = new File(prefix, "MSF_JNI-cxx")
-      buildExecutable(dir, dir, name, f, GraphVizConfig.default)
+  class Ctx extends TestCompilerContext("MSF_JNI-cxx") {
+    val compiler = new LmsCompilerCxx with JNIBridge {
+      val scalan = new ProgExp {}
+      val lms = new CoreCxxShptrLmsBackend
     }
   }
 
@@ -40,7 +39,7 @@ class JNI_MsfItTests extends LmsMsfItTests {
 
     val ctx2 = new Ctx
 
-    ctx1.generate("MSF_JNI_adjlist", ctx1.MSF_JNI_adjlist)
-    ctx2.generate("MSF_JNI_adjmatrix", ctx2 .MSF_JNI_adjmatrix)
+    ctx1.test("MSF_JNI_adjlist", ctx1.compiler.scalan.MSF_JNI_adjlist)
+    ctx2.test("MSF_JNI_adjmatrix", ctx2.compiler.scalan.MSF_JNI_adjmatrix)
   }
 }

@@ -1,14 +1,11 @@
 package scalan.compilation.lms.uni
 
 import scalan.{JNIExtractorOpsExp, ScalanCtxExp}
-import scalan.compilation.lms.{JNIBridge, LmsBackendFacade}
-import scalan.compilation.lms.common.JNILmsOpsExp
-import scalan.compilation.lms.cxx.sharedptr.CxxCodegen
 
 /**
  * Created by adel on 6/8/15.
  */
-class AdapterScala2Cxx[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp with JNIBridge](sc: ScalanCake)
+class AdapterScala2Cxx[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp](sc: ScalanCake)
   extends AdapterBase [ScalanCake](sc){
 
   override val ScalanIR: ScalanCake = sc

@@ -2,12 +2,12 @@ package scalan.compilation
 
 import java.io.File
 
-import scalan.ScalanExp
-
 /**
  * Trivial compiler used for tests
  */
-trait DummyCompiler extends ScalanExp with Compiler with GraphVizExport {
+trait DummyCompiler extends Compiler {
+  import scalan._
+
   type CompilerConfig = Unit
 
   def defaultCompilerConfig = ()

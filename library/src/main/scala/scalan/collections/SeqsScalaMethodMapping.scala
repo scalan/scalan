@@ -2,7 +2,8 @@ package scalan.collections
 
 import scalan.{ScalanCommunityDslExp, CommunityMethodMappingDSL}
 
-trait SeqsScalaMethodMapping extends SeqsDslExp with CommunityMethodMappingDSL { self: ScalanCommunityDslExp =>
+// FIXME doesn't fall into correct hierarchy, since it's both in the MethodMapping cake and in the Scalan cake
+trait SeqsScalaMethodMapping extends CommunityMethodMappingDSL { self: ScalanCommunityDslExp =>
   import scala.language.reflectiveCalls
   import scala.reflect.runtime.universe._
 

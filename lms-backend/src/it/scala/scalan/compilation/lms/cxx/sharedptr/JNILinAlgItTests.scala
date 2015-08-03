@@ -10,8 +10,7 @@ import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslExp, VectorsDslExp}
 
 class JNILinAlgItTests extends BaseItTests{
-  class ProgExp extends LinearAlgebraExamples with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCxx with JNIBridge with CommunityBridge with CommunityMethodMappingDSL with VectorsDslExp with MatricesDslExp { self =>
-    val lms = new CommunityCxxShptrLmsBackend
+  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with GraphVizExport with VectorsDslExp with MatricesDslExp with JNIExtractorOpsExp {
 
     lazy val ddmvm_jni = fun { p: Rep[JNIType[(Array[Array[Double]], Array[Double])]] =>
       JNI_Pack(ddmvm(JNI_Extract(p)))
@@ -39,26 +38,29 @@ class JNILinAlgItTests extends BaseItTests{
   }
 
   val subfolder = "mvm-cxx"
-  val prog = new ProgExp
+  val prog = new LmsCompilerCxx with JNIBridge with CommunityBridge with CommunityMethodMappingDSL {
+    val scalan = new ProgExp
+    val lms = new CommunityCxxShptrLmsBackend
+  }
   implicit val cfg = prog.defaultCompilerConfig
   val dir = new File(prefix, subfolder)
 
   test("ddmvm_jni") {
-    prog.buildExecutable(dir, dir, "ddmvm", prog.ddmvm_jni, GraphVizConfig.default)
+    prog.buildExecutable(dir, dir, "ddmvm", prog.scalan.ddmvm_jni, GraphVizConfig.default)
   }
   test("dsmvm_jni") {
-    prog.buildExecutable(dir, dir, "dsmvm", prog.dsmvm_jni, GraphVizConfig.default)
+    prog.buildExecutable(dir, dir, "dsmvm", prog.scalan.dsmvm_jni, GraphVizConfig.default)
   }
   test("sdmvm_jni") {
-    prog.buildExecutable(dir, dir, "sdmvm", prog.sdmvm_jni, GraphVizConfig.default)
+    prog.buildExecutable(dir, dir, "sdmvm", prog.scalan.sdmvm_jni, GraphVizConfig.default)
   }
   test("ssmvm_jni") {
-    prog.buildExecutable(dir, dir, "ssmvm", prog.ssmvm_jni, GraphVizConfig.default)
+    prog.buildExecutable(dir, dir, "ssmvm", prog.scalan.ssmvm_jni, GraphVizConfig.default)
   }
   test("fdmvm_jni") {
-    prog.buildExecutable(dir, dir, "fdmvm", prog.fdmvm_jni, GraphVizConfig.default)
+    prog.buildExecutable(dir, dir, "fdmvm", prog.scalan.fdmvm_jni, GraphVizConfig.default)
   }
   test("fsmvm_jni") {
-    prog.buildExecutable(dir, dir, "fsmvm", prog.fsmvm_jni, GraphVizConfig.default)
+    prog.buildExecutable(dir, dir, "fsmvm", prog.scalan.fsmvm_jni, GraphVizConfig.default)
   }
 }
