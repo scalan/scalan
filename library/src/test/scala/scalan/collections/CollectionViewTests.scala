@@ -27,7 +27,6 @@ class CollectionViewTests extends BaseViewTests {
 
     testGetIso(element[Collection[Int]], element[Collection[Int]])
     testGetIso(element[Collection[Segment]], element[Collection[Segment]])
-    //testGetIso(element[Collection[Interval]], element[Collection[(Int,Int)]])  // TODO Iso
 
     testGetIso(element[CollectionOverArray[Int]], element[Array[Int]])
     testGetIso(element[CollectionOverList[Int]], element[List[Int]])
@@ -39,17 +38,27 @@ class CollectionViewTests extends BaseViewTests {
     testGetIso(element[Seq[Int]], element[Seq[Int]])
     testGetIso(element[Seq[(Int,Int)]], element[Seq[(Int, Int)]])
     testGetIso(element[Seq[Segment]], element[Seq[Segment]])
-    //testGetIso(element[Seq[Interval]], element[Seq[(Int, Int)]])
 
     testGetIso(element[SSeq[Int]], element[Seq[Int]])
     testGetIso(element[SSeq[(Int,Int)]], element[Seq[(Int, Int)]])
     testGetIso(element[SSeq[Segment]], element[Seq[Segment]])
-    //testGetIso(element[SSeq[Interval]], element[Seq[(Int, Int)]])
 
     testGetIso(element[SSeqImpl[Int]], element[Seq[Int]])
 
     testGetIso(element[Throwable], element[Throwable])
     testGetIso(element[SThrowable], element[Throwable])
     testGetIso(element[SThrowableImpl], element[Throwable])
+  }
+
+  // TODO fix these cases
+  test("Failing getIsoByElem tests") {
+    pending
+
+    val ctx = new Ctx
+    import ctx._
+
+    testGetIso(element[Collection[Interval]], element[Collection[(Int,Int)]])
+    testGetIso(element[Seq[Interval]], element[Seq[(Int, Int)]])
+    testGetIso(element[SSeq[Interval]], element[Seq[(Int, Int)]])
   }
 }
