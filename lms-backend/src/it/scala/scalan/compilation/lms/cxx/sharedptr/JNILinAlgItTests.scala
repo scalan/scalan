@@ -40,7 +40,6 @@ class JNILinAlgItTests extends BaseItTests{
   val subfolder = "mvm-cxx"
   val prog = new LmsCompilerCxx with JNIBridge with CommunityBridge with CommunityMethodMappingDSL {
     val scalan = new ProgExp
-    val lms = new CommunityCxxShptrLmsBackend
   }
   implicit val cfg = prog.defaultCompilerConfig
   val dir = new File(prefix, subfolder)

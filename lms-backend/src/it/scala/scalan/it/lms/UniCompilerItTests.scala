@@ -87,7 +87,6 @@ class UniCompilerItTests  extends LmsMsfItTests {
 
   val progStaged = new LmsCompilerUni with CommunityBridge {
     val scalan = new ProgCommunityExp
-    val lms = new LmsBackendUni
   }
 
   class ProgSeq extends ProgUniTest with GraphsDslSeq with MatricesDslSeq with ScalanCommunityDslSeq

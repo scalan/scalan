@@ -43,7 +43,6 @@ class PointerItTests extends BaseItTests {
 
   val progExp = new LmsCompilerCxx with PointerBridge with CommunityMethodMappingDSL {
     val scalan = new ProgExp
-    val lms = new CoreCxxShptrLmsBackend
   }
   implicit val cfg = progExp.defaultCompilerConfig
 

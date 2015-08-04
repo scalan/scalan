@@ -7,7 +7,7 @@ import java.io.File
 import scalan.compilation.language.{CoreMethodMappingDSL, MethodMappingDSL}
 import scalan.util.FileUtil
 
-trait LmsCompiler extends Compiler with LmsBridge with CoreMethodMappingDSL {
+abstract class LmsCompiler extends Compiler with LmsBridge with CoreMethodMappingDSL {
   override val scalan: ScalanCtxExp
   import scalan._
 

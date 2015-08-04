@@ -53,7 +53,6 @@ class LmsJNIExtractorItTests extends BaseCtxItTests {
 
   class Ctx[T <: ProgExp](val _scalan: T) extends TestCompilerContext {
     val compiler = new LmsCompilerCxx with JNIBridge {
-      val lms = new CoreCxxShptrLmsBackend
       val scalan: _scalan.type = _scalan
     }
   }

@@ -22,11 +22,11 @@ class LmsBackendUni extends CommunityLmsBackend with JNILmsOpsExp { self =>
 /**
  * Created by adel on 5/12/15.
  */
-trait LmsCompilerUni extends CommunityLmsCompilerScala with JNIBridge {
+abstract class LmsCompilerUni extends CommunityLmsCompilerScala with JNIBridge {
   override val scalan: ScalanCommunityDslExp with JNIExtractorOpsExp
   import scalan._
 
-  val lms: LmsBackendUni
+  override val lms = new LmsBackendUni
 
   lazy val marker = new SymbolsMarkerForSelectCodegen[scalan.type](scalan)
 

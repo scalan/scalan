@@ -19,11 +19,9 @@ class ArrayOpsItTests extends BaseItTests {
   val progSeq = new ProgSeq
   val comp1 = new CommunityLmsCompilerScala {
     val scalan = new ProgExp
-    val lms = new CommunityLmsBackend
   }
   val comp2 = new LmsCompilerUni {
     val scalan = new ProgExp
-    val lms = new LmsBackendUni
   }
 
   def invokeMethod[A,B]( m: java.lang.reflect.Method, instance: AnyRef, in: A): B = {

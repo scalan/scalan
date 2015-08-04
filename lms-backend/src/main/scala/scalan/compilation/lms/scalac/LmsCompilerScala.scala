@@ -11,7 +11,7 @@ import scalan.compilation.lms.uni.NativeMethodsConfig
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
-trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL {
+abstract class LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL {
   override val scalan: ScalanCtxExp
   import scalan._
   /**

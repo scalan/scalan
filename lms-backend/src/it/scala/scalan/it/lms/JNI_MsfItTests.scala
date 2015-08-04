@@ -12,7 +12,7 @@ import scalan.graphs.GraphsDslExp
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
 class JNI_MsfItTests extends LmsMsfItTests {
-  trait ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with GraphsDslExp with MsfFuncs {
+  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with GraphsDslExp with MsfFuncs {
 
     lazy val MSF_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
       val data = JNI_Extract(in)
@@ -29,8 +29,7 @@ class JNI_MsfItTests extends LmsMsfItTests {
 
   class Ctx extends TestCompilerContext("MSF_JNI-cxx") {
     val compiler = new LmsCompilerCxx with JNIBridge {
-      val scalan = new ProgExp {}
-      val lms = new CoreCxxShptrLmsBackend
+      val scalan = new ProgExp
     }
   }
 

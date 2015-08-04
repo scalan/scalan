@@ -12,11 +12,9 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
 
   val progStaged = new CommunityLmsCompilerScala with CommunityBridge with CommunityMethodMappingDSL {
     val scalan = new ProgCommunityExp
-    val lms = new CommunityLmsBackend
   }
   val progStagedU = new LmsCompilerUni with CommunityBridge with CommunityMethodMappingDSL {
     val scalan = new ProgCommunityExp
-    val lms = new LmsBackendUni
   }
   val progSeq = new ProgCommunity with ScalanCommunityDslSeq
 

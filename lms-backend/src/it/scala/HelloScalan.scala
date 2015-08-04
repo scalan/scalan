@@ -41,7 +41,6 @@ object HelloScalanExp {
 
   val compiler = new CommunityLmsCompilerScala {
     val scalan = program
-    val lms = new CommunityLmsBackend
   }
   import compiler._
   import compiler.scalan._

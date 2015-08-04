@@ -1,5 +1,7 @@
 package scalan.compilation.lms.scalac
 
-import scalan.compilation.lms.CommunityBridgeScala
+import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridgeScala}
 
-trait CommunityLmsCompilerScala extends LmsCompilerScala with CommunityBridgeScala
+abstract class CommunityLmsCompilerScala extends LmsCompilerScala with CommunityBridgeScala {
+  val lms = new CommunityLmsBackend
+}

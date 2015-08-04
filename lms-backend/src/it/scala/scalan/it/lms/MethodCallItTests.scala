@@ -89,7 +89,6 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
   override val progSeq = new ProgSeq
   override val progStaged = new CommunityLmsCompilerScala with CommunityBridge {
     val scalan = new ProgStaged
-    val lms = new CommunityLmsBackend
   }
 
   test("emptyIfTrue") {
@@ -145,11 +144,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 //    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIfGt, progStaged.scalan.mapWithLambdaIfGt, "mapWithLambdaIfGt", in)
 //  }
 
-  trait TestLmsCompiler extends CommunityLmsCompilerScala with CommunityBridge {
-    val lms = new CommunityLmsBackend
-  }
-
-  val exceptionTestExp = new TestLmsCompiler {
+  val exceptionTestExp = new CommunityLmsCompilerScala {
     val scalan = new ScalanCommunityDslExp {
       lazy val tElem = element[Throwable]
       lazy val defaultRep = tElem.defaultRepValue
@@ -192,7 +187,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 //    text5 should equal("some text")
 //  }
 
-  val matricesExp = new TestLmsCompiler {
+  val matricesExp = new CommunityLmsCompilerScala {
     override val scalan = new ScalanCommunityDslExp {
       lazy val arrayLength = fun { v: Rep[Array[Int]] =>
         Collection(v).length
@@ -205,7 +200,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
     length should equal(3)
   }
 
-  val replaceMethExp = new TestLmsCompiler with CommunityMethodMappingDSL {
+  val replaceMethExp = new CommunityLmsCompilerScala with CommunityMethodMappingDSL {
     override val scalan = new ScalanCommunityDslExp {
       lazy val arrayLength = fun { v: Rep[Array[Int]] =>
         Collection(v).length
@@ -228,7 +223,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
     length should equal(3)
   }
 
-  val jarReplaceExp = new TestLmsCompiler {
+  val jarReplaceExp = new CommunityLmsCompilerScala {
     val scalan = new ScalanCommunityDslExp {
       lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
     }

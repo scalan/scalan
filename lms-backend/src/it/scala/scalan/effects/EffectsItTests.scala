@@ -21,12 +21,10 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
 
   val progInteractScala = new CommunityLmsCompilerScala with CoreBridge with EffectfulCompiler {
     val scalan = new ScalanCommunityDslExp with InteractExample with InteractionsDslExp
-    val lms = new CommunityLmsBackend
   }
 
   val progInteractUni = new LmsCompilerUni with CoreBridge with EffectfulCompiler {
     val scalan = new ScalanCommunityDslExp with InteractExample with InteractionsDslExp with JNIExtractorOpsExp
-    val lms = new LmsBackendUni
   }
 
   test("runInteract")  {
@@ -50,7 +48,6 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
     val progStaged =
       new CommunityLmsCompilerScala with CoreBridge with EffectfulCompiler {
         val scalan = new ScalanCommunityDslExp with CrossDomainExample with InteractionsDslExp with AuthenticationsDslExp
-        val lms = new CommunityLmsBackend
       }
     val in = 10
     val actual = getStagedOutputConfig(progStaged)(progStaged.scalan.runAppW, "runCrossDomain", in, progStaged.defaultCompilerConfig)
@@ -74,7 +71,6 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
   test("ifBranches")  {
     val progStaged = new CommunityLmsCompilerScala with CoreBridge with EffectfulCompiler {
       val scalan = new ScalanCommunityDslExp with IfBranchesExamples
-      val lms = new CommunityLmsBackend
     }
     //pending
     val in = "abc"
@@ -86,14 +82,12 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
     val scalan = new ScalanCommunityDslExp with StateExamples with MonadsDslExp {
       val State = new State0Manager[Int]
     }
-    val lms = new CommunityLmsBackend
   }
 
   val progState0Uni = new LmsCompilerUni with CoreBridge with EffectfulCompiler {
     val scalan = new ScalanCommunityDslExp with StateExamples with MonadsDslExp with JNIExtractorOpsExp {
       val State = new State0Manager[Int]
     }
-    val lms = new LmsBackendUni
   }
 
   test("zipArrayWithIndex")  {
@@ -141,7 +135,6 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
       val scalan = new ScalanCommunityDslExp with StateExamples with MonadsDslExp {
         val State = new FreeStateManager[Int]
       }
-      val lms = new CommunityLmsBackend
     }
 
     val in = Array(10.0, 20.0, 30.0)
@@ -174,7 +167,6 @@ class EffectsJniItTests extends BaseItTests with ItTestsUtilLmsCxx {
   }
   val progcxx = new LmsCompilerCxx with CoreBridge with JNIBridge with EffectfulCompiler {
     val scalan = new EffectsExpCxx
-    val lms = new CommunityCxxShptrLmsBackend
   }
 
   test("jniZipArrayWithIndex") {

@@ -2,7 +2,7 @@ package scalan.compilation
 
 import java.io.File
 
-trait Compiler extends Passes {
+abstract class Compiler extends Passes {
   import scalan._
 
   type CompilerConfig
