@@ -5,10 +5,11 @@ import org.scalatest.BeforeAndAfterAll
 import scala.language.reflectiveCalls
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.it.smoke.CommunitySmokeItTests
 import scalan.util.{Exceptions, FileUtil}
 import scalan._
 
-class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
+class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
 
   override def beforeAll() = {
     FileUtil.deleteIfExist(prefix)
@@ -84,10 +85,8 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
   class ProgSeq extends ProgCommunitySeq with Prog {}
   class ProgStaged extends ProgCommunityExp with Prog {}
 
-  override val progSeq = new ProgSeq
-  override val progStaged = new CommunityLmsCompilerScala {
-    lazy val scalan = new ProgStaged
-  }
+  val progSeq = new ProgSeq
+  val progStaged = new CommunityLmsCompilerScala(new ProgStaged)
 
   test("emptyIfTrue") {
     val in = (true, (5.0, 7.7))
@@ -142,34 +141,32 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 //    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIfGt, progStaged.scalan.mapWithLambdaIfGt, "mapWithLambdaIfGt", in)
 //  }
 
-  val exceptionTestExp = new CommunityLmsCompilerScala {
-    lazy val scalan = new ScalanCommunityDslExp {
-      lazy val tElem = element[Throwable]
-      lazy val defaultRep = tElem.defaultRepValue
+  val exceptionTestExp = new CommunityLmsCompilerScala(new ScalanCommunityDslExp {
+    lazy val tElem = element[Throwable]
+    lazy val defaultRep = tElem.defaultRepValue
 
-      lazy val message = fun { (t: Rep[SThrowable]) => t.getMessage}
+    lazy val message = fun { (t: Rep[SThrowable]) => t.getMessage}
 
-      lazy val initCause = fun { (p: Rep[(SThrowable, SThrowable)]) =>
-        val Pair(t1, t2) = p
-        t1.initCause(t2).getMessage
-      }
-
-      lazy val initCause2 = fun { (p: Rep[(SThrowable, (SThrowable, (SThrowable, (SThrowable, SThrowable))))]) =>
-        val Pair(t1, Pair(t2, Pair(t3, Pair(t4, t5)))) = p
-        t1.initCause(t2.initCause(t3.initCause(t4.initCause(t5)))).getMessage
-      }
-
-      lazy val withIfFalse = fun { (p: Rep[(SThrowable, SThrowable)]) =>
-        val Pair(t1, t2) = p
-        IF(false) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
-      }
-
-      lazy val withIfTrue = fun { (p: Rep[(SThrowable, SThrowable)]) =>
-        val Pair(t1, t2) = p
-        IF(true) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
-      }
+    lazy val initCause = fun { (p: Rep[(SThrowable, SThrowable)]) =>
+      val Pair(t1, t2) = p
+      t1.initCause(t2).getMessage
     }
-  }
+
+    lazy val initCause2 = fun { (p: Rep[(SThrowable, (SThrowable, (SThrowable, (SThrowable, SThrowable))))]) =>
+      val Pair(t1, Pair(t2, Pair(t3, Pair(t4, t5)))) = p
+      t1.initCause(t2.initCause(t3.initCause(t4.initCause(t5)))).getMessage
+    }
+
+    lazy val withIfFalse = fun { (p: Rep[(SThrowable, SThrowable)]) =>
+      val Pair(t1, t2) = p
+      IF(false) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
+    }
+
+    lazy val withIfTrue = fun { (p: Rep[(SThrowable, SThrowable)]) =>
+      val Pair(t1, t2) = p
+      IF(true) THEN t2.getMessage ELSE t1.initCause(t2).getMessage
+    }
+  })
 
 //  test("Throwable Method Call") {
 //    val originalText = "Exception message"
@@ -185,26 +182,20 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 //    text5 should equal("some text")
 //  }
 
-  val matricesExp = new CommunityLmsCompilerScala {
-    override lazy val scalan = new ScalanCommunityDslExp {
-      lazy val arrayLength = fun { v: Rep[Array[Int]] =>
-        Collection(v).length
-      }
+  class ArrayLengthProg extends ScalanCommunityDslExp {
+    lazy val arrayLength = fun { v: Rep[Array[Int]] =>
+      Collection(v).length
     }
   }
+
+  val matricesExp = new CommunityLmsCompilerScala(new ArrayLengthProg)
 
   test("LMS Method Call") {
     val length = getStagedOutputConfig(matricesExp)(matricesExp.scalan.arrayLength, "LMSMethodCall", Array(2, 5, 6), matricesExp.defaultCompilerConfig)
     length should equal(3)
   }
 
-  val replaceMethExp = new CommunityLmsCompilerScala with CommunityMethodMappingDSL {
-    override lazy val scalan = new ScalanCommunityDslExp {
-      lazy val arrayLength = fun { v: Rep[Array[Int]] =>
-        Collection(v).length
-      }
-    }
-
+  val replaceMethExp = new CommunityLmsCompilerScala(new ArrayLengthProg) with CommunityMethodMappingDSL {
     override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, invokeEnabler("skip_length_method") { (o, m) => !m.getName.equals("length")})
   }
 
@@ -221,11 +212,11 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
     length should equal(3)
   }
 
-  val jarReplaceExp = new CommunityLmsCompilerScala {
-    lazy val scalan = new ScalanCommunityDslExp {
-      lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
-    }
+  class ThrowableMessageProg extends ScalanCommunityDslExp {
+    lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
+  }
 
+  val jarReplaceExp = new CommunityLmsCompilerScala(new ThrowableMessageProg) {
     import scala.reflect.runtime.universe.typeOf
     val tyThrowable = typeOf[Throwable]
 

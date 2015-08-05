@@ -2,7 +2,9 @@ package scalan.compilation
 
 import java.io.File
 
-abstract class Compiler extends Passes {
+import scalan.ScalanCtxExp
+
+abstract class Compiler[ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) extends Passes {
   import scalan._
 
   type CompilerConfig

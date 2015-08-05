@@ -11,13 +11,9 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
   class ProgExp extends ProgCommunity with SimpleMapProg with ScalanCommunityDslExp with JNIExtractorOpsExp
 
   val progSeq = new ProgCommunitySeq with SimpleMapProg
-  val progStaged = new CommunityLmsCompilerScala with CommunityBridge {
-    lazy val scalan = new ProgExp
-  }
+  val progStaged = new CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
 
-  val progStagedU = new LmsCompilerUni with CommunityBridge with CommunityMethodMappingDSL {
-    lazy val scalan = new ProgExp
-  }
+  val progStagedU = new LmsCompilerUni(new ProgExp) with CommunityBridge with CommunityMethodMappingDSL
 
   test("applyLambda2Array") {
     pending //FIXME: applying lambda to Array don't compile in Uni compiler (see issue #50)

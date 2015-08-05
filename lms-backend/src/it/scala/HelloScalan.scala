@@ -39,9 +39,7 @@ object HelloScalanExp {
 
   val program = new HelloScalan with ScalanCommunityDslExp
 
-  val compiler = new CommunityLmsCompilerScala {
-    lazy val scalan = program
-  }
+  val compiler = new CommunityLmsCompilerScala(program)
   import compiler._
   import compiler.scalan._
 

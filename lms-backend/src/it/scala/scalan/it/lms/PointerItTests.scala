@@ -41,9 +41,7 @@ class PointerItTests extends BaseItTests {
     }
   }
 
-  val progExp = new LmsCompilerCxx with PointerBridge with CommunityMethodMappingDSL {
-    lazy val scalan = new ProgExp
-  }
+  val progExp = new LmsCompilerCxx(new ProgExp) with PointerBridge with CommunityMethodMappingDSL
   implicit val cfg = progExp.defaultCompilerConfig
 
   def commonTestScenario[A, B](functionName: String, func: progExp.Exp[A => B]): Unit = {

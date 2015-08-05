@@ -3,11 +3,11 @@ package scalan.compilation.lms.cxx
 import java.io._
 
 import scalan.compilation.lms.cxx.sharedptr.{CommunityCxxShptrLmsBackend, CoreCxxShptrLmsBackend}
-import scalan.{PointerOpsExp, JNIExtractorOpsExp, ScalanCommunityExp}
+import scalan.{ScalanCtxExp, PointerOpsExp, JNIExtractorOpsExp, ScalanCommunityExp}
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{LmsBridge, LmsCompiler}
 
-trait LmsCompilerCxx extends LmsCompiler {
+class LmsCompilerCxx[ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) {
   //override val scalan: ScalanCommunityExp with JNIExtractorOpsExp with PointerOpsExp
   import scalan._
   val lms = new CommunityCxxShptrLmsBackend

@@ -8,14 +8,8 @@ import scalan.it.smoke.CommunitySmokeItTests
 
 class LmsCommunityItTests extends CommunitySmokeItTests {
 
-  class ProgCommunityExp extends ProgCommunity with ScalanCommunityDslExp with JNIExtractorOpsExp
-
-  val progStaged = new CommunityLmsCompilerScala with CommunityBridge with CommunityMethodMappingDSL {
-    lazy val scalan = new ProgCommunityExp
-  }
-  val progStagedU = new LmsCompilerUni with CommunityBridge with CommunityMethodMappingDSL {
-    lazy val scalan = new ProgCommunityExp
-  }
+  val progStaged = new CommunityLmsCompilerScala(new ProgCommunityExp) with CommunityBridge with CommunityMethodMappingDSL
+  val progStagedU = new LmsCompilerUni(new ProgCommunityExp) with CommunityBridge with CommunityMethodMappingDSL
   val progSeq = new ProgCommunity with ScalanCommunityDslSeq
 
   val cC = progStagedU.defaultCompilerConfig.copy(scalaVersion = Some("2.11.2"))

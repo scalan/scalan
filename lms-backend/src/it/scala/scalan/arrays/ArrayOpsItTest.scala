@@ -4,7 +4,7 @@ import scalan.compilation.lms.CommunityLmsBackend
 import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
 import scalan.compilation.lms.uni.{LmsCompilerUni, LmsBackendUni}
 import scalan.it.BaseItTests
-import scalan.{JNIExtractorOpsExp, ScalanCommunityDslExp, ScalanCtxSeq, ScalanDsl}
+import scalan._
 
 class ArrayOpsItTests extends BaseItTests {
   trait Prog extends ScalanDsl {
@@ -17,18 +17,14 @@ class ArrayOpsItTests extends BaseItTests {
   class ProgExp extends Prog with ScalanCommunityDslExp with JNIExtractorOpsExp
 
   val progSeq = new ProgSeq
-  val comp1 = new CommunityLmsCompilerScala {
-    lazy val scalan = new ProgExp
-  }
-  val comp2 = new LmsCompilerUni {
-    lazy val scalan = new ProgExp
-  }
+  val comp1 = new CommunityLmsCompilerScala(new ProgExp)
+  val comp2 = new LmsCompilerUni(new ProgExp)
 
   def invokeMethod[A,B]( m: java.lang.reflect.Method, instance: AnyRef, in: A): B = {
     m.invoke(instance, in.asInstanceOf[AnyRef]).asInstanceOf[B]
   }
 
-  def compareOutputWithSequential[A, B](back: LmsCompilerScala)
+  def compareOutputWithSequential[A, B](back: LmsCompilerScala[_ <: ScalanCtxExp])
                                        (fSeq: A => B, f: back.Exp[A => B], functionName: String, inputs: A*)
                                        (implicit comparator: (B, B) => Unit) {
     val compiled = compileSource(back)(f, functionName, back.defaultCompilerConfig)

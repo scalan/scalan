@@ -22,8 +22,7 @@ class LmsBackendUni extends CommunityLmsBackend with JNILmsOpsExp { self =>
 /**
  * Created by adel on 5/12/15.
  */
-abstract class LmsCompilerUni extends CommunityLmsCompilerScala with JNIBridge {
-  override val scalan: ScalanCommunityDslExp with JNIExtractorOpsExp
+class LmsCompilerUni[ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsExp](_scalan: ScalanCake) extends CommunityLmsCompilerScala[ScalanCake](_scalan) with JNIBridge {
   import scalan._
 
   override val lms = new LmsBackendUni

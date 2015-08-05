@@ -18,9 +18,7 @@ class MetadataTests extends BaseTests {
 
   describe("Metadata") {
     it("survives compilation passes") {
-      val compiler = new DummyCompilerWithPasses {
-        override lazy val scalan = new ProgExp
-      }
+      val compiler = new DummyCompilerWithPasses(new ProgExp)
       import compiler._
       import compiler.scalan._
 
@@ -32,9 +30,7 @@ class MetadataTests extends BaseTests {
     }
 
     it("can be changed by mirror") {
-      val compiler = new DummyCompilerWithPasses {
-        override lazy val scalan = new ProgExp
-
+      val compiler = new DummyCompilerWithPasses(new ProgExp) {
         import scalan._
 
         val functionNameMirror = new Mirror[MapTransformer] {

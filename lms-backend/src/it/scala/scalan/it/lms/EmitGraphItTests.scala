@@ -32,9 +32,7 @@ class EmitGraphItTests extends CommunitySmokeItTests with BeforeAndAfterAll {
   class ProgStaged extends ProgCommunityExp with Prog {}
 
   val progSeq = new ProgSeq
-  val progStaged = new CommunityLmsCompilerScala with CommunityBridge with CommunityMethodMappingDSL {
-    lazy val scalan = new ProgStaged
-  }
+  val progStaged = new CommunityLmsCompilerScala(new ProgStaged) with CommunityBridge with CommunityMethodMappingDSL
   //val progGStaged = new ProgGStaged
 
   test("emptyIfTrue") {

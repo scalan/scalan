@@ -33,9 +33,7 @@ class EffectsTests extends BaseCtxTests {
   }
 
   class Ctx(testName: String) extends TestCompilerContext(testName) {
-    override val compiler = new DummyCompiler with EffectfulCompiler {
-      override lazy val scalan = new ScalanCtxExp with MyProg
-    }
+    override val compiler = new DummyCompiler(new ScalanCtxExp with MyProg) with EffectfulCompiler[ScalanCtxExp with MyProg]
   }
 
   test("simpleEffectsStaged") {

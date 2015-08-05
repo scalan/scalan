@@ -22,9 +22,7 @@ class CxxShptrLmsSmokeItTests extends SmokeItTests {
     lazy val testStringDuplicate = fun {str:Rep[String] => (str + str + "duplicate").startsWith("hello")}
   }
 
-  val progStaged = new LmsCompilerCxx with CoreBridge {
-    override lazy val scalan = new ProgExp
-  }
+  val progStaged = new LmsCompilerCxx(new ProgExp) with CoreBridge
   import progStaged.defaultCompilerConfig
 
   test("testStringDuplicate") {

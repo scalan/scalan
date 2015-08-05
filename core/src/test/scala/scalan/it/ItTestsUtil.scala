@@ -4,7 +4,7 @@ import java.io.File
 
 import org.scalatest.{Matchers, Suite}
 
-import scalan.TestsUtil
+import scalan.{ScalanExp, TestsUtil}
 import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
@@ -21,15 +21,15 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
 
   // there are bad interactions between path-dependent types and default parameters, so
   // we can't simply make config a default parameter
-  def getStagedOutput[A, B](back: Compiler)(f: back.scalan.Exp[A => B], functionName: String, input: A): B =
+  def getStagedOutput[A, B](back: Compiler[_ <: ScalanExp])(f: back.scalan.Exp[A => B], functionName: String, input: A): B =
     getStagedOutputConfig(back)(f, functionName, input, back.defaultCompilerConfig)
 
-  def getStagedOutputConfig[A, B](back: Compiler)(f: back.scalan.Exp[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig): B = {
+  def getStagedOutputConfig[A, B](back: Compiler[_ <: ScalanExp])(f: back.scalan.Exp[A => B], functionName: String, input: A, compilerConfig: back.CompilerConfig): B = {
     val compiled = compileSource(back)(f, functionName, compilerConfig)
     back.execute(compiled, input)
   }
 
-  def compileSource[A, B](back: Compiler)(f: back.scalan.Exp[A => B], functionName: String, compilerConfig: back.CompilerConfig) : back.CompilerOutput[A, B] = {
+  def compileSource[A, B](back: Compiler[_ <: ScalanExp])(f: back.scalan.Exp[A => B], functionName: String, compilerConfig: back.CompilerConfig) : back.CompilerOutput[A, B] = {
     back.buildExecutable(file(prefix, functionName), functionName, f, graphVizConfig)(compilerConfig)
   }
 
@@ -37,25 +37,25 @@ trait ItTestsUtil extends TestsUtil { self: Suite with Matchers =>
     actual should equal(expected)
   }
 
-  def compareOutputWithSequential[A, B](back: Compiler)
+  def compareOutputWithSequential[A, B](back: Compiler[_ <: ScalanExp])
                                        (fSeq: A => B, f: back.scalan.Exp[A => B], functionName: String, input: A)
                                        (implicit comparator: (B, B) => Unit) {
     compareOutputWithSequentialConfig(back)(fSeq, f, functionName, input, back.defaultCompilerConfig)
   }
 
-  def compareOutputWithSequentialConfig[A, B](back: Compiler)
+  def compareOutputWithSequentialConfig[A, B](back: Compiler[_ <: ScalanExp])
                                        (fSeq: A => B, f: back.scalan.Exp[A => B], functionName: String, input: A, config: back.CompilerConfig)
                                        (implicit comparator: (B, B) => Unit) {
     compareOutputWithExpectedConfig(back)(fSeq(input), f, functionName, input, config)
   }
 
-  def compareOutputWithExpected[A, B](back: Compiler)
+  def compareOutputWithExpected[A, B](back: Compiler[_ <: ScalanExp])
                                      (expected: B, f: back.scalan.Exp[A => B], functionName: String, input: A)
                                      (implicit comparator: (B, B) => Unit) {
     compareOutputWithExpectedConfig(back)(expected, f, functionName, input, back.defaultCompilerConfig)
   }
 
-  def compareOutputWithExpectedConfig[A, B](back: Compiler)
+  def compareOutputWithExpectedConfig[A, B](back: Compiler[_ <: ScalanExp])
                                      (expected: B, f: back.scalan.Exp[A => B], functionName: String, input: A, config: back.CompilerConfig)
                                      (implicit comparator: (B, B) => Unit) {
     val actual = getStagedOutputConfig(back)(f, functionName, input, config)

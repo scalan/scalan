@@ -11,8 +11,9 @@ import scalan.compilation.lms.uni.NativeMethodsConfig
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
-abstract class LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL {
-  override val scalan: ScalanCtxExp
+case class LmsCompilerScalaConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String], nativeMethods: NativeMethodsConfig = new NativeMethodsConfig)
+
+abstract class LmsCompilerScala[ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreBridge with MethodMappingDSL {
   import scalan._
   /**
    * If scalaVersion is None, uses scala-compiler.jar
@@ -20,8 +21,8 @@ abstract class LmsCompilerScala extends LmsCompiler with CoreBridge with MethodM
    * Otherwise uses SBT to compile with the desired version
    */
   case class CustomCompilerOutput(sources:List[String], jar: URL, mainClass: Option[String] = None, output: Option[Array[String]] = None)
-  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String], nativeMethods: NativeMethodsConfig = new NativeMethodsConfig)
-  implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
+  type CompilerConfig = LmsCompilerScalaConfig
+  implicit val defaultCompilerConfig = LmsCompilerScalaConfig(None, Seq.empty)
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
