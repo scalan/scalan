@@ -29,7 +29,7 @@ class JNI_MsfItTests extends LmsMsfItTests {
 
   class Ctx extends TestCompilerContext("MSF_JNI-cxx") {
     val compiler = new LmsCompilerCxx with JNIBridge {
-      val scalan = new ProgExp
+      lazy val scalan = new ProgExp
     }
   }
 

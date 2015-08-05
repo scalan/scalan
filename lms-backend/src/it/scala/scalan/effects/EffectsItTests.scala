@@ -20,11 +20,11 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
                       with MultiMapsDslSeq
 
   val progInteractScala = new CommunityLmsCompilerScala with CoreBridge with EffectfulCompiler {
-    val scalan = new ScalanCommunityDslExp with InteractExample with InteractionsDslExp
+    lazy val scalan = new ScalanCommunityDslExp with InteractExample with InteractionsDslExp
   }
 
   val progInteractUni = new LmsCompilerUni with CoreBridge with EffectfulCompiler {
-    val scalan = new ScalanCommunityDslExp with InteractExample with InteractionsDslExp with JNIExtractorOpsExp
+    lazy val scalan = new ScalanCommunityDslExp with InteractExample with InteractionsDslExp with JNIExtractorOpsExp
   }
 
   test("runInteract")  {
@@ -47,7 +47,7 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
       with InteractionsDslSeq with AuthenticationsDslSeq
     val progStaged =
       new CommunityLmsCompilerScala with CoreBridge with EffectfulCompiler {
-        val scalan = new ScalanCommunityDslExp with CrossDomainExample with InteractionsDslExp with AuthenticationsDslExp
+        lazy val scalan = new ScalanCommunityDslExp with CrossDomainExample with InteractionsDslExp with AuthenticationsDslExp
       }
     val in = 10
     val actual = getStagedOutputConfig(progStaged)(progStaged.scalan.runAppW, "runCrossDomain", in, progStaged.defaultCompilerConfig)
@@ -70,7 +70,7 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
 
   test("ifBranches")  {
     val progStaged = new CommunityLmsCompilerScala with CoreBridge with EffectfulCompiler {
-      val scalan = new ScalanCommunityDslExp with IfBranchesExamples
+      lazy val scalan = new ScalanCommunityDslExp with IfBranchesExamples
     }
     //pending
     val in = "abc"
@@ -79,13 +79,13 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
   }
 
   val progState0Scala = new CommunityLmsCompilerScala with CoreBridge with EffectfulCompiler {
-    val scalan = new ScalanCommunityDslExp with StateExamples with MonadsDslExp {
+    lazy val scalan = new ScalanCommunityDslExp with StateExamples with MonadsDslExp {
       val State = new State0Manager[Int]
     }
   }
 
   val progState0Uni = new LmsCompilerUni with CoreBridge with EffectfulCompiler {
-    val scalan = new ScalanCommunityDslExp with StateExamples with MonadsDslExp with JNIExtractorOpsExp {
+    lazy val scalan = new ScalanCommunityDslExp with StateExamples with MonadsDslExp with JNIExtractorOpsExp {
       val State = new State0Manager[Int]
     }
   }
@@ -132,7 +132,7 @@ class EffectsItTests extends BaseItTests with ItTestsUtilLmsCxx
   // TODO: Slow test, takes a very long time due to the problems with higher-kinded types
   ignore("zipCollectionWithIndex3_Free")  {
     val progStaged = new CommunityLmsCompilerScala with CoreBridge with EffectfulCompiler {
-      val scalan = new ScalanCommunityDslExp with StateExamples with MonadsDslExp {
+      lazy val scalan = new ScalanCommunityDslExp with StateExamples with MonadsDslExp {
         val State = new FreeStateManager[Int]
       }
     }
@@ -166,7 +166,7 @@ class EffectsJniItTests extends BaseItTests with ItTestsUtilLmsCxx {
     }
   }
   val progcxx = new LmsCompilerCxx with CoreBridge with JNIBridge with EffectfulCompiler {
-    val scalan = new EffectsExpCxx
+    lazy val scalan = new EffectsExpCxx
   }
 
   test("jniZipArrayWithIndex") {

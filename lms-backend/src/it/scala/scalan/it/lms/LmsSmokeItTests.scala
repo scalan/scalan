@@ -12,11 +12,11 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
 
   val progSeq = new ProgCommunitySeq with SimpleMapProg
   val progStaged = new CommunityLmsCompilerScala with CommunityBridge {
-    val scalan = new ProgExp
+    lazy val scalan = new ProgExp
   }
 
   val progStagedU = new LmsCompilerUni with CommunityBridge with CommunityMethodMappingDSL {
-    val scalan = new ProgExp
+    lazy val scalan = new ProgExp
   }
 
   test("applyLambda2Array") {

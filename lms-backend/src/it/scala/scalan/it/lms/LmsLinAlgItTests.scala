@@ -14,11 +14,11 @@ abstract class LmsLinAlgItTests extends BaseItTests {
   class ProgSeq extends LinearAlgebraExamples with MatricesDslSeq with ScalanCommunityDslSeq
 
   val progStaged = new CommunityLmsCompilerScala with CommunityBridge {
-    val scalan = new ProgExp
+    lazy val scalan = new ProgExp
   }
 
   val progStagedU = new LmsCompilerUni with CommunityBridge with CommunityMethodMappingDSL {
-    val scalan = new ProgExp
+    lazy val scalan = new ProgExp
   }
 
   val progSeq = new ProgSeq

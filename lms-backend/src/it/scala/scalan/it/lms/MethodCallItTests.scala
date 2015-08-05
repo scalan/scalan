@@ -2,11 +2,9 @@ package scalan.it.lms
 
 import org.scalatest.BeforeAndAfterAll
 
-import scala.collection.mutable
 import scala.language.reflectiveCalls
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
-import scalan.linalgebra.MatricesDslExp
 import scalan.util.{Exceptions, FileUtil}
 import scalan._
 
@@ -87,8 +85,8 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
   class ProgStaged extends ProgCommunityExp with Prog {}
 
   override val progSeq = new ProgSeq
-  override val progStaged = new CommunityLmsCompilerScala with CommunityBridge {
-    val scalan = new ProgStaged
+  override val progStaged = new CommunityLmsCompilerScala {
+    lazy val scalan = new ProgStaged
   }
 
   test("emptyIfTrue") {
@@ -145,7 +143,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 //  }
 
   val exceptionTestExp = new CommunityLmsCompilerScala {
-    val scalan = new ScalanCommunityDslExp {
+    lazy val scalan = new ScalanCommunityDslExp {
       lazy val tElem = element[Throwable]
       lazy val defaultRep = tElem.defaultRepValue
 
@@ -188,7 +186,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
 //  }
 
   val matricesExp = new CommunityLmsCompilerScala {
-    override val scalan = new ScalanCommunityDslExp {
+    override lazy val scalan = new ScalanCommunityDslExp {
       lazy val arrayLength = fun { v: Rep[Array[Int]] =>
         Collection(v).length
       }
@@ -201,7 +199,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
   }
 
   val replaceMethExp = new CommunityLmsCompilerScala with CommunityMethodMappingDSL {
-    override val scalan = new ScalanCommunityDslExp {
+    override lazy val scalan = new ScalanCommunityDslExp {
       lazy val arrayLength = fun { v: Rep[Array[Int]] =>
         Collection(v).length
       }
@@ -224,7 +222,7 @@ class MethodCallItTests extends LmsCommunityItTests with BeforeAndAfterAll{
   }
 
   val jarReplaceExp = new CommunityLmsCompilerScala {
-    val scalan = new ScalanCommunityDslExp {
+    lazy val scalan = new ScalanCommunityDslExp {
       lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
     }
 

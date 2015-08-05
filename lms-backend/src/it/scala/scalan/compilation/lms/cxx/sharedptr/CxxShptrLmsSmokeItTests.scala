@@ -23,7 +23,7 @@ class CxxShptrLmsSmokeItTests extends SmokeItTests {
   }
 
   val progStaged = new LmsCompilerCxx with CoreBridge {
-    override val scalan = new ProgExp
+    override lazy val scalan = new ProgExp
   }
   import progStaged.defaultCompilerConfig
 

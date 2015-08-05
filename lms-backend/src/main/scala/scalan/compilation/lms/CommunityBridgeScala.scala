@@ -2,11 +2,12 @@ package scalan.compilation.lms
 
 import java.lang.reflect.Method
 
+import scalan.collections.SeqsScalaMethodMapping
 import scalan.collections.impl.CollectionsExp
 import scalan.compilation.language.ScalaInterpreter
-import scalan.{ScalanCommunityDslExp, CommunityMethodMappingDSL}
+import scalan.CommunityMethodMappingDSL
 
-trait CommunityBridgeScala extends CommunityBridge with CommunityMethodMappingDSL with ScalaInterpreter {
+trait CommunityBridgeScala extends CommunityBridge with SeqsScalaMethodMapping with ScalaInterpreter {
   import scalan._
 
   override def newObj[A: Manifest](m: LmsMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = {

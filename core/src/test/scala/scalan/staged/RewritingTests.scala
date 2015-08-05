@@ -9,7 +9,7 @@ class RewritingTests extends BaseCtxTests {
   trait TestTransform extends Passes {
     import scalan._
 
-    val pass = GraphTransformPass("testTransformPass", DefaultMirror, NoRewriting)
+    lazy val pass = GraphTransformPass("testTransformPass", DefaultMirror, NoRewriting)
 
     def doTransform[A](e: Exp[A]): Exp[_] = {
       val g0 = new PGraph(e)
@@ -74,7 +74,7 @@ class RewritingTests extends BaseCtxTests {
 
   val p = new TestContext("RewritingRules") with Prog { self =>
     val compiler = new DummyCompiler with TestTransform {
-      override val scalan = self
+      override lazy val scalan = self
     }
 
     def testIfFold(): Unit = {

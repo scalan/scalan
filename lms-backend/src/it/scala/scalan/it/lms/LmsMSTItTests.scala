@@ -17,11 +17,11 @@ abstract class LmsMstItTests extends BaseItTests {
   class ProgSeq extends MST_example with ScalanCtxSeq
 
   val progStaged = new CommunityLmsCompilerScala with CommunityBridge {
-    val scalan = new MST_example with ScalanCommunityDslExp
+    lazy val scalan = new MST_example with ScalanCommunityDslExp
   }
 
   val progStagedCxx = new LmsCompilerCxx with CoreBridge {
-    val scalan = new MST_example with ScalanCommunityDslExp
+    lazy val scalan = new MST_example with ScalanCommunityDslExp
   }
 
   val progSeq = new ProgSeq

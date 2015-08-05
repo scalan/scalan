@@ -11,10 +11,10 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
   class ProgCommunityExp extends ProgCommunity with ScalanCommunityDslExp with JNIExtractorOpsExp
 
   val progStaged = new CommunityLmsCompilerScala with CommunityBridge with CommunityMethodMappingDSL {
-    val scalan = new ProgCommunityExp
+    lazy val scalan = new ProgCommunityExp
   }
   val progStagedU = new LmsCompilerUni with CommunityBridge with CommunityMethodMappingDSL {
-    val scalan = new ProgCommunityExp
+    lazy val scalan = new ProgCommunityExp
   }
   val progSeq = new ProgCommunity with ScalanCommunityDslSeq
 

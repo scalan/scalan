@@ -114,7 +114,7 @@ abstract class LmsMsfItTests extends BaseCtxItTests {
 
   class ProgSeq extends GraphsDslSeq with MsfFuncs with ScalanCommunityDslSeq
   class CompExp extends CommunityLmsCompilerScala with CommunityBridge {
-    val scalan = new ProgExp
+    lazy val scalan = new ProgExp
   }
 
   val progSeq = new ProgSeq
