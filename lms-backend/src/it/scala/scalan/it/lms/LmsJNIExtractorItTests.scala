@@ -14,41 +14,17 @@ import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
 class LmsJNIExtractorItTests extends BaseCtxItTests {
   trait ProgExp extends MST_example with ScalanCommunityDslExp with JNIExtractorOpsExp {
-    lazy val MST_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
-      val data = JNI_Extract(in)
-      val res = MST_adjlist(data)
-      JNI_Pack(res)
-    }
+    lazy val MST_JNI_adjlist = JNI_Wrap(MST_adjlist)
 
-    lazy val MST_JNI_adjmatrix = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
-      val data = JNI_Extract(in)
-      val res = MST_adjmatrix(data)
-      JNI_Pack(res)
-    }
+    lazy val MST_JNI_adjmatrix = JNI_Wrap(MST_adjmatrix)
 
-    lazy val MSF_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
-      val data = JNI_Extract(in)
-      val res = MSF_adjlist(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjlist = JNI_Wrap(MSF_adjlist)
 
-    lazy val MSF_JNI_adjmatrix = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
-      val data = JNI_Extract(in)
-      val res = MSF_adjmatrix(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjmatrix = JNI_Wrap(MSF_adjmatrix)
 
-    lazy val MSF_JNI_adjlistList = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
-      val data = JNI_Extract(in)
-      val res = MSF_adjlistList(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjlistList = JNI_Wrap(MSF_adjlistList)
 
-    lazy val MSF_JNI_adjmatrixList = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
-      val data = JNI_Extract(in)
-      val res = MSF_adjmatrixList(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjmatrixList = JNI_Wrap(MSF_adjmatrixList)
   }
 
   class Ctx[T <: ProgExp](val _scalan: T) extends TestCompilerContext {

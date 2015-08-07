@@ -68,13 +68,17 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
   implicit def JNIFieldIDElement: Elem[JNIFieldID] = JNIFieldIDElem
   implicit def JNIMethodIDElement: Elem[JNIMethodID] = JNIMethodIDElem
 
-  def JNI_Extract[I: Elem](x: Rep[JNIType[I]]): Rep[I]
-  def JNI_Pack[T: Elem](x: Rep[T]): Rep[JNIType[T]]
+  def JNI_Extract[I](x: Rep[JNIType[I]]): Rep[I]
+  def JNI_Pack[T](x: Rep[T]): Rep[JNIType[T]]
+
+  def JNI_Wrap[A, B](f: Rep[A => B]): Rep[JNIType[A] => JNIType[B]]
 }
 
 trait JNIExtractorOpsSeq extends JNIExtractorOps { self: ScalanSeq with AbstractStringsDslSeq =>
-  def JNI_Extract[I: Elem](x: Rep[JNIType[I]]): Rep[I] = ???
-  def JNI_Pack[T: Elem](x: Rep[T]): Rep[JNIType[T]] = ???
+  def JNI_Extract[I](x: Rep[JNIType[I]]): Rep[I] = ???
+  def JNI_Pack[T](x: Rep[T]): Rep[JNIType[T]] = ???
+  def JNI_Wrap[A, B](f: Rep[A => B]) =
+    x => JNI_Pack(f(JNI_Extract(x)))
 }
 
 trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with AbstractStringsDslExp =>
@@ -129,8 +133,9 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     JNI_CallObjectMethod[A,T](x, mid, args:_*)
   }
 
-  def JNI_Extract[I: Elem](x: Rep[JNIType[I]]): Rep[I] = {
-    element[I] match {
+  def JNI_Extract[I](x: Rep[JNIType[I]]): Rep[I] = {
+    implicit val eI = x.elem.asInstanceOf[JNITypeElem[I]].eT
+    eI match {
           case elem if !(elem <:< AnyRefElement) =>
             JNI_ExtractPrimitive[I](x)
 
@@ -203,20 +208,20 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   }
 
 
-  def JNI_Pack[T: Elem](x: Rep[T]): Rep[JNIType[T]] = {
-    element[T] match {
+  def JNI_Pack[T](x: Rep[T]): Rep[JNIType[T]] = {
+    x.elem match {
       case el: PairElem[a,b] =>
         val p = x.asInstanceOf[Rep[(a,b)]]
         implicit val eA = el.eFst
         implicit val eB = el.eSnd
         make_pair[a,b]( box( JNI_Pack[a](p._1) ), box( JNI_Pack[b](p._2) ) )
-      case el: ScalaArrayElem[a] =>
+      case el: ArrayElem[a] =>
         implicit val eA = el.eItem
         el.eItem match {
           case eI if eI <:< AnyRefElement =>
-            JNI_MapObjectArray[a,a](x, {xi:Rep[a] => JNI_Pack(xi)})
+            JNI_MapObjectArray[a,a](x, JNI_Pack(_: Rep[a]))
           case _ =>
-            JNI_MapPrimitiveArray[a,a](x, {xi:Rep[a] => xi})
+            JNI_MapPrimitiveArray[a,a](x, identityFun[a])
         }
       case el: BaseElem[_] =>
         el match {
@@ -230,6 +235,16 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     }
   }
 
+  def JNI_Wrap[A, B](f: Rep[A => B]) = {
+    implicit val eA = f.elem.eDom
+    implicit val eB = f.elem.eRange
+
+    fun[JNIType[A], JNIType[B]] { x =>
+      val unpackedX = JNI_Extract(x)
+      val unpackedY = f(unpackedX)
+      JNI_Pack(unpackedY)
+    }
+  }
 
   case class JNI_NewObject[T: Elem](clazz: Rep[JNIClass], mid: Rep[JNIMethodID], args: Rep[JNIType[_]]*) extends BaseDef[JNIType[T]] {
     override def mirror(t: Transformer) = {

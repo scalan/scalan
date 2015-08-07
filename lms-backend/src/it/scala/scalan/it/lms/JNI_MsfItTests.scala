@@ -14,17 +14,9 @@ import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 class JNI_MsfItTests extends LmsMsfItTests {
   class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with GraphsDslExp with MsfFuncs {
 
-    lazy val MSF_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
-      val data = JNI_Extract(in)
-      val res = msfFunAdjBase(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjlist = JNI_Wrap(msfFunAdjBase)
 
-    lazy val MSF_JNI_adjmatrix = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
-      val data = JNI_Extract(in)
-      val res = msfFunIncBase(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjmatrix = JNI_Wrap(msfFunIncBase)
   }
 
   class Ctx extends TestCompilerContext("MSF_JNI-cxx") {
