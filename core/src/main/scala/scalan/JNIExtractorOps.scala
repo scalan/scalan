@@ -9,7 +9,7 @@ import scalan.primitives.{AbstractStringsDslExp, AbstractStringsDslSeq, Abstract
  */
 trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
 
-  class JNIType[T: Elem]
+  class JNIType[T]
   class JNIClass
   class JNIFieldID
   class JNIMethodID
@@ -23,20 +23,18 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
   private implicit val z2:Default[JNIMethodID] = scalan.common.Default.defaultVal[JNIMethodID](null.asInstanceOf[JNIMethodID])
   case object JNIMethodIDElem extends BaseElem[JNIMethodID]
 
-  case class JNITypeElem[T: Elem]() extends Elem[JNIType[T]] {
-    val tElem = element[T]
+  case class JNITypeElem[T](eT: Elem[T]) extends Elem[JNIType[T]] {
     override val tag = {
-      implicit val ttag = element[T].tag
+      implicit val ttag = eT.tag
       weakTypeTag[JNIType[T]]
     }
 
-    override def isEntityType: Boolean = element[T].isEntityType
+    override def isEntityType: Boolean = eT.isEntityType
 
     lazy val getDefaultRep = null.asInstanceOf[Rep[JNIType[T]]]
   }
 
-//  case class JNIFieldIDElem[T: Elem]() extends Elem[JNIFieldID[T]] {
-//    val tElem = element[T]
+//  case class JNIFieldIDElem[T](eT: Elem[T]) extends Elem[JNIFieldID[T]] {
 //    override val tag = {
 //      implicit val ttag = element[T].tag
 //      weakTypeTag[JNIFieldID[T]]
@@ -65,7 +63,7 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
     override def canEqual(other: Any) = other.isInstanceOf[JNIArrayElem[_]]
   }
 
-  implicit def JNITypeElement[T: Elem]: Elem[JNIType[T]] = new JNITypeElem[T]
+  implicit def JNITypeElement[T: Elem]: Elem[JNIType[T]] = new JNITypeElem(element[T])
   implicit def JNIClassElement: Elem[JNIClass] = JNIClassElem
   implicit def JNIFieldIDElement: Elem[JNIFieldID] = JNIFieldIDElem
   implicit def JNIMethodIDElement: Elem[JNIMethodID] = JNIMethodIDElem
@@ -88,7 +86,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
 
   private def find_class_of_obj[T: Elem](x: Rep[JNIType[T]]): Rep[JNIClass] = x.elem match {
       case jnie: JNITypeElem[_] =>
-        val clazz = jnie.tElem match {
+        val clazz = jnie.eT match {
           case el if el <:< AnyRefElement =>
             el.runtimeClass
           case el =>
@@ -103,7 +101,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     val fn = "value"
     val sig = x.elem match {
       case (jnie: JNITypeElem[_]) =>
-        org.objectweb.asm.Type.getType(jnie.tElem.runtimeClass).getDescriptor
+        org.objectweb.asm.Type.getType(jnie.eT.runtimeClass).getDescriptor
     }
     val fid = JNI_GetFieldID(clazz, CString(fn), CString(sig))
 
@@ -115,7 +113,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     val sig = x.elem match {
       case (jnie: JNITypeElem[_]) =>
         val argclass = args.map({arg => arg.elem.runtimeClass})
-        org.objectweb.asm.Type.getMethodDescriptor(jnie.tElem.runtimeClass.getMethod(mn, argclass:_*))
+        org.objectweb.asm.Type.getMethodDescriptor(jnie.eT.runtimeClass.getMethod(mn, argclass:_*))
     }
 
     JNI_GetMethodID(clazz, CString(mn), CString(sig))
@@ -132,9 +130,9 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   }
 
   def JNI_Extract[I: Elem](x: Rep[JNIType[I]]): Rep[I] = {
-    element[JNIType[I]].asInstanceOf[JNITypeElem[I]].tElem match {
+    element[I] match {
           case elem if !(elem <:< AnyRefElement) =>
-            JNI_ExtractPrimitive[I] (x)
+            JNI_ExtractPrimitive[I](x)
 
           case (pe: PairElem[a,b]) =>
             implicit val ae = pe.eFst
@@ -143,12 +141,12 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
             val a1 = if( !(ae <:< AnyRefElement) )
               unbox( call_object_method(x, "_1")(ae,pe) )(ae)
             else
-              JNI_Extract( call_object_method(x, "_1")(ae,pe) )(ae)
+              JNI_Extract( call_object_method(x, "_1")(ae,pe) )
 
             val b1 = if( !(be <:< AnyRefElement) )
               unbox( call_object_method(x, "_2")(be,pe) )(be)
             else
-              JNI_Extract( call_object_method(x, "_2")(be,pe) )(be)
+              JNI_Extract( call_object_method(x, "_2")(be,pe) )
 
             Pair(a1, b1)
           case (earr: ArrayElem[a]) =>
