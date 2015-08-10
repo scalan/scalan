@@ -23,7 +23,7 @@ object Nsc {
     settings.usejavacp.value = true
     // necessary to lauch compiler
     // see http://stackoverflow.com/questions/27934282/object-scala-in-compiler-mirror-not-found-running-scala-compiler-programatical
-    settings.embeddedDefaults[LmsCompilerScala]
+    settings.embeddedDefaults[LmsCompilerScala[_]]
     val compilerOptions = "-d" :: jarPath :: extraCompilerOptions
     settings.processArguments(compilerOptions, processAll = false)
     val reporter = new StoreReporter

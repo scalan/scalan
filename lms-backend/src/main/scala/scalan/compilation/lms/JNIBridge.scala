@@ -5,7 +5,9 @@ import scalan.compilation.lms.common.{JNILmsOps, JNILmsOpsExp}
 import scalan.primitives.AbstractStringsDslExp
 import scalan.{ScalanCtxExp, JNIExtractorOpsExp}
 
-trait JNIBridge extends CoreBridge { self: ScalanCtxExp with MethodMappingDSL with JNIExtractorOpsExp with AbstractStringsDslExp =>
+trait JNIBridge extends CoreBridge {
+  override val scalan: ScalanCtxExp with JNIExtractorOpsExp with AbstractStringsDslExp
+  import scalan._
 
   val lms: CoreLmsBackend with JNILmsOpsExp
 

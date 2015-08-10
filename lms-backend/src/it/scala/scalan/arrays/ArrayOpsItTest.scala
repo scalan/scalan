@@ -1,10 +1,10 @@
 package scalan.arrays
 
 import scalan.compilation.lms.CommunityLmsBackend
-import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala,LmsCompilerScala}
-import scalan.compilation.lms.uni.LmsCompilerUni
+import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
+import scalan.compilation.lms.uni.{LmsCompilerUni, LmsBackendUni}
 import scalan.it.BaseItTests
-import scalan.{ScalanCommunityDslExp, ScalanCtxSeq, ScalanDsl}
+import scalan._
 
 class ArrayOpsItTests extends BaseItTests {
   trait Prog extends ScalanDsl {
@@ -14,20 +14,17 @@ class ArrayOpsItTests extends BaseItTests {
   }
 
   class ProgSeq extends Prog with ScalanCtxSeq
-  class ProgExp extends Prog with ScalanCommunityDslExp with CommunityLmsCompilerScala {
-    val lms = new CommunityLmsBackend
-  }
-  class ProgExpU extends Prog with ScalanCommunityDslExp with LmsCompilerUni
+  class ProgExp extends Prog with ScalanCommunityDslExp with JNIExtractorOpsExp
 
   val progSeq = new ProgSeq
-  val progStagedScala = new ProgExp
-  val progStagedU = new ProgExpU
+  val comp1 = new CommunityLmsCompilerScala(new ProgExp)
+  val comp2 = new LmsCompilerUni(new ProgExp)
 
   def invokeMethod[A,B]( m: java.lang.reflect.Method, instance: AnyRef, in: A): B = {
     m.invoke(instance, in.asInstanceOf[AnyRef]).asInstanceOf[B]
   }
 
-  def compareOutputWithSequential[A, B](back: LmsCompilerScala)
+  def compareOutputWithSequential[A, B](back: LmsCompilerScala[_ <: ScalanCtxExp])
                                        (fSeq: A => B, f: back.Exp[A => B], functionName: String, inputs: A*)
                                        (implicit comparator: (B, B) => Unit) {
     val compiled = compileSource(back)(f, functionName, back.defaultCompilerConfig)
@@ -50,8 +47,8 @@ class ArrayOpsItTests extends BaseItTests {
 
     val vals: Array[Int] = Array(1, 4, 9, 1024, 0, -1024)
     val ins = vals map {v => (arr,v)}
-    compareOutputWithSequential(progStagedScala)(progSeq.arrayBinarySearch, progStagedScala.arrayBinarySearch, "arrayBinarySearch", ins:_*)
-    compareOutputWithSequential(progStagedU)(progSeq.arrayBinarySearch, progStagedU.arrayBinarySearch, "arrayBinarySearch", ins:_*)
+    compareOutputWithSequential(comp1)(progSeq.arrayBinarySearch, comp1.scalan.arrayBinarySearch, "arrayBinarySearch", ins:_*)
+    compareOutputWithSequential(comp2)(progSeq.arrayBinarySearch, comp2.scalan.arrayBinarySearch, "arrayBinarySearch", ins:_*)
   }
 
 }

@@ -2,12 +2,10 @@ package scalan.compilation
 
 import java.io.File
 
-import scalan.ScalanExp
-import scalan.staged.BaseExp
-import scalan.util.FileUtil
+import scalan.ScalanCtxExp
 
-trait Compiler extends BaseExp with Passes {
-  self: ScalanExp with GraphVizExport =>
+abstract class Compiler[ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) extends Passes {
+  import scalan._
 
   type CompilerConfig
 

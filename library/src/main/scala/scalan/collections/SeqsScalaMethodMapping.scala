@@ -2,9 +2,10 @@ package scalan.collections
 
 import scalan.{ScalanCommunityDslExp, CommunityMethodMappingDSL}
 
-trait SeqsScalaMethodMapping extends SeqsDslExp with CommunityMethodMappingDSL { self: ScalanCommunityDslExp =>
+trait SeqsScalaMethodMapping extends CommunityMethodMappingDSL { self: { val scalan: ScalanCommunityDslExp } =>
   import scala.language.reflectiveCalls
   import scala.reflect.runtime.universe._
+  import scalan._
 
   new ScalaMappingDSL with MappingTags {
 

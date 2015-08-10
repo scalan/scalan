@@ -1,7 +1,6 @@
 package scalan.it.smoke
 
 import scalan._
-import scalan.JNIExtractorOps
 
 //import scalan.community._
 import scalan.collections._
@@ -193,8 +192,8 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       }
   }
 
-class ProgCommunitySeq extends ProgCommunity with ScalanCommunitySeq with ScalanCommunityDslSeq with MultiMapsDslSeq {
-}
+  class ProgCommunitySeq extends ProgCommunity with ScalanCommunityDslSeq
+  class ProgCommunityExp extends ProgCommunity with ScalanCommunityDslExp with JNIExtractorOpsExp
 
 // TODO
 //  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with Compiler
@@ -384,5 +383,5 @@ class ProgCommunitySeq extends ProgCommunity with ScalanCommunitySeq with Scalan
 ////    checkRun(progSeq, progStaged)(expandScaledRangesFun, progStaged.expandScaledRangesFun)("simple26_expandScaledRanges", in, progSeq.fromArray(out))
 ////  }
 
-  override val progSeq: ProgCommunitySeq = new ProgCommunitySeq
+  // override val progSeq: ProgCommunitySeq = new ProgCommunitySeq
 }

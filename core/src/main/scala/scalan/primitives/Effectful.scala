@@ -2,7 +2,7 @@ package scalan.primitives
 
 import scala.io.StdIn
 import scalan.staged.Expressions
-import scalan.{ScalanExp, ScalanSeq, Scalan}
+import scalan.{ScalanCtxExp, ScalanExp, ScalanSeq, Scalan}
 import scalan.compilation.Compiler
 
 trait Effectful { self: Scalan =>
@@ -51,7 +51,8 @@ trait EffectfulExp extends Effectful with Expressions { self: ScalanExp =>
 
 }
 
-trait EffectfulCompiler extends EffectfulExp with Expressions with Compiler { self: ScalanExp =>
+trait EffectfulCompiler[ScalanCake <: ScalanCtxExp with EffectfulExp] extends Compiler[ScalanCake] {
+  import scalan._
 
   object EffectfulRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {

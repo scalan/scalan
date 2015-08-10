@@ -7,7 +7,8 @@ import java.io.File
 import scalan.compilation.language.{CoreMethodMappingDSL, MethodMappingDSL}
 import scalan.util.FileUtil
 
-trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxExp with LmsBridge =>
+abstract class LmsCompiler[ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends Compiler(_scalan) with LmsBridge with CoreMethodMappingDSL {
+  import scalan._
 
   override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 

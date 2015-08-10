@@ -3,7 +3,8 @@ package scalan.compilation.lms.source2bin
 import java.io.File
 import java.io.File.separator
 
-import scalan.compilation.lms.scalac.LmsCompilerScala
+import scalan.ScalanCtxExp
+import scalan.compilation.lms.scalac.LmsCompilerScalaConfig
 import scalan.util.FileUtil._
 import scalan.util.{FileUtil, ExtensionFilter, ProcessUtil, StringUtil}
 
@@ -18,7 +19,7 @@ object Sbt {
     dir.foreach(f => FileUtil.copyToDir(f, executableLibsDir))
   }
 
-  def compile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: LmsCompilerScala#CompilerConfig, dependencies: Array[String], sourceFile: File, jarPath: String): Array[String] = {
+  def compile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: LmsCompilerScalaConfig, dependencies: Array[String], sourceFile: File, jarPath: String): Array[String] = {
     val scalaVersion = compilerConfig.scalaVersion.getOrElse {
       throw new Exception(s"You must define compilerConfig.scalaVersion for use Sbt.compile method")
     }

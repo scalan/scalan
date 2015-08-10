@@ -26,20 +26,18 @@ class EmitGraphItTests extends CommunitySmokeItTests with BeforeAndAfterAll {
 
   }
 
-  class ProgCommunityExp extends ProgCommunity with ScalanCommunityDslExp with CommunityBridge with CommunityMethodMappingDSL {
-    val lms = new CommunityLmsBackend
-  }
+  class ProgCommunityExp extends ProgCommunity with ScalanCommunityDslExp
 
   class ProgSeq extends ProgCommunitySeq with Prog  {}
-  class ProgStaged extends ProgCommunityExp with Prog with CommunityLmsCompilerScala {}
+  class ProgStaged extends ProgCommunityExp with Prog {}
 
-  override val progSeq = new ProgSeq
-  override val progStaged = new ProgStaged
+  val progSeq = new ProgSeq
+  val progStaged = new CommunityLmsCompilerScala(new ProgStaged) with CommunityBridge with CommunityMethodMappingDSL
   //val progGStaged = new ProgGStaged
 
   test("emptyIfTrue") {
     val in = (true, (5.0, 7.7))
-    compareOutputWithSequential(progStaged)(progSeq.emptyIf, progStaged.emptyIf, "emptyIfTrue", in)
+    compareOutputWithSequential(progStaged)(progSeq.emptyIf, progStaged.scalan.emptyIf, "emptyIfTrue", in)
     //todo - open and check last (LMS) graph
   }
 

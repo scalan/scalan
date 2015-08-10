@@ -11,15 +11,18 @@ import scalan.compilation.lms.uni.NativeMethodsConfig
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
-trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL { self: ScalanCtxExp =>
+case class LmsCompilerScalaConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String], nativeMethods: NativeMethodsConfig = new NativeMethodsConfig)
+
+abstract class LmsCompilerScala[ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreBridge with MethodMappingDSL {
+  import scalan._
   /**
    * If scalaVersion is None, uses scala-compiler.jar
    *
    * Otherwise uses SBT to compile with the desired version
    */
   case class CustomCompilerOutput(sources:List[String], jar: URL, mainClass: Option[String] = None, output: Option[Array[String]] = None)
-  case class CompilerConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String], nativeMethods: NativeMethodsConfig = new NativeMethodsConfig)
-  implicit val defaultCompilerConfig = CompilerConfig(None, Seq.empty)
+  type CompilerConfig = LmsCompilerScalaConfig
+  implicit val defaultCompilerConfig = LmsCompilerScalaConfig(None, Seq.empty)
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
@@ -46,7 +49,7 @@ trait LmsCompilerScala extends LmsCompiler with CoreBridge with MethodMappingDSL
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
     // ensure Scala library is available
-    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), self.getClass.getClassLoader)
+    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), getClass.getClassLoader)
     val cls = classLoader.loadClass(
       compilerOutput.custom.mainClass match {
         case Some(mainClass) => mainClass

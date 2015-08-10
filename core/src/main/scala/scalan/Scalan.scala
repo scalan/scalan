@@ -121,11 +121,11 @@ trait ScalanExp
   with ConvertersDslExp
   with EffectfulExp
   with RewriteRulesExp
+  with GraphVizExport
 
 trait ScalanCtxExp
 extends ScalanDsl
   with ScalanExp
   with Expressions
-  with GraphVizExport
   with ExceptionsDslExp
   with AbstractStringsDslExp

@@ -4,7 +4,7 @@ import java.lang.reflect.Method
 
 import org.scalatest.Suite
 
-import scalan.compilation.{GraphVizConfig, DummyCompilerWithPasses}
+import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
 
 trait TestContexts extends Suite with TestsUtil {
@@ -33,13 +33,20 @@ trait TestContexts extends Suite with TestsUtil {
     testName.replaceAll("""[ /\\]""", "_")
   }
 
-  abstract class TestCompilerContext(testName: String) extends TestContext(testName) with DummyCompilerWithPasses {
+  abstract class TestCompilerContext(testName: String) {
     def this() = this(defaultContextName)
+
+    val compiler: Compiler[_ <: ScalanExp]
+    import compiler._
 
     def test[A,B](functionName: String, f: Exp[A => B]): CompilerOutput[A, B] = {
       buildExecutable(FileUtil.file(prefix, functionName), functionName, f, GraphVizConfig.default)(defaultCompilerConfig)
     }
     def test[A,B](f: Exp[A => B]): CompilerOutput[A, B] = test(testName, f)
+
+    def emit(name: String, ss: Exp[_]*): Unit =
+      scalan.emitDepGraph(ss, FileUtil.file(prefix, testName, s"$name.dot"))(scalan.defaultGraphVizConfig)
+    def emit(ss: Exp[_]*): Unit = emit(testName, ss: _*)
   }
 }
 
