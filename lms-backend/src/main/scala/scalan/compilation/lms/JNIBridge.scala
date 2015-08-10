@@ -13,7 +13,7 @@ trait JNIBridge extends CoreBridge {
 
   override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
     case el: JNITypeElem[_] =>
-      Manifest.classType(classOf[JNILmsOps#JNIType[_]], createManifest(el.tElem))
+      Manifest.classType(classOf[JNILmsOps#JNIType[_]], createManifest(el.eT))
     case el: JNIArrayElem[arr_t] =>
       el.eItem match {
         case ei: Elem[a_t] =>
@@ -31,7 +31,7 @@ trait JNIBridge extends CoreBridge {
     case res@JNI_ExtractPrimitive(x) =>
       x.elem match {
         case (jnie: JNITypeElem[jni_a_t]) =>
-          createManifest(jnie.tElem) match {
+          createManifest(jnie.eT) match {
             case (mA: Manifest[a_t]) =>
               val _x = m.symMirror[lms.JNIType[a_t]](x)
               val exp = lms.jni_extract_primitive[a_t](_x)(mA)
@@ -41,7 +41,7 @@ trait JNIBridge extends CoreBridge {
     case res@JNI_ExtractPrimitiveArray(x) =>
       x.elem match {
         case (jnie: JNITypeElem[jni_arr_a_t]) =>
-          createManifest(jnie.tElem) match {
+          createManifest(jnie.eT) match {
             case (mA: Manifest[arr_a_t]) =>
               mA.typeArguments(0) match {
                 case(mItem: Manifest[a_t]) =>
@@ -54,7 +54,7 @@ trait JNIBridge extends CoreBridge {
     case res@JNI_GetArrayLength(x) =>
       x.elem match {
         case (jnie: JNITypeElem[jni_arr_a_t]) =>
-          createManifest(jnie.tElem) match {
+          createManifest(jnie.eT) match {
             case (mA: Manifest[arr_a_t]) =>
               mA.typeArguments(0) match {
                 case (mItem: Manifest[a_t]) =>
@@ -67,7 +67,7 @@ trait JNIBridge extends CoreBridge {
     case res@JNI_ExtractObjectArray(x) =>
       x.elem match {
         case (jnie: JNITypeElem[jni_arr_a_t]) =>
-          createManifest(jnie.tElem) match {
+          createManifest(jnie.eT) match {
             case (mA: Manifest[arr_a_t]) =>
               mA.typeArguments(0) match {
                 case mItem: Manifest[a_t] =>
@@ -82,7 +82,7 @@ trait JNIBridge extends CoreBridge {
         case arrel: ArrayElem[arr_jni_a_t] =>
           arrel.eItem match {
             case (jnie: JNITypeElem[jni_a_t]) =>
-              createManifest(jnie.tElem) match {
+              createManifest(jnie.eT) match {
                 case (mA: Manifest[a_t]) =>
                   val _x = m.symMirror[Array[lms.JNIType[a_t]]](x)
                   val _i = m.symMirror[Int](i)
@@ -94,7 +94,7 @@ trait JNIBridge extends CoreBridge {
     case res@JNI_GetObjectClass(x) =>
       x.elem match {
         case (jnie: JNITypeElem[jni_a_t]) =>
-          createManifest(jnie.tElem) match {
+          createManifest(jnie.eT) match {
             case (mA: Manifest[a_t]) =>
               val _x = m.symMirror[lms.JNIType[a_t]](x)
               val exp = lms.jni_get_object_class(_x)(mA)
@@ -114,8 +114,8 @@ trait JNIBridge extends CoreBridge {
     case res@JNI_GetObjectFieldValue(fid, x) =>
       (res.selfType, x.elem) match {
         case (jnife: JNITypeElem[jni_A_t], jnie: JNITypeElem[jni_T_t]) =>
-          val mA = createManifest(jnife.tElem)
-          val mT = createManifest(jnie.tElem)
+          val mA = createManifest(jnife.eT)
+          val mT = createManifest(jnie.eT)
           (mA,mT) match {
             case (ma: Manifest[a_t], mt: Manifest[t_t]) =>
               val _x = m.symMirror[lms.JNIType[t_t]](x)
@@ -128,7 +128,7 @@ trait JNIBridge extends CoreBridge {
       (res.selfType, x.elem) match {
         case (rese: Element[jnifid_A_t], jnie: JNITypeElem[jni_T_t]) =>
           val mA = createManifest(rese)
-          val mT = createManifest(jnie.tElem)
+          val mT = createManifest(jnie.eT)
           (mA,mT) match {
             case (ma: Manifest[a_t], mt: Manifest[t_t]) =>
               val _x = m.symMirror[lms.JNIType[t_t]](x)
@@ -146,7 +146,7 @@ trait JNIBridge extends CoreBridge {
     case res@JNI_MapPrimitiveArray(x, fSym@Def(f: Lambda[_, _])) =>
       (res.selfType, x.elem) match {
         case (rese: JNITypeElem[jniarr_t], xe: ArrayElem[_]) =>
-          rese.tElem match {
+          rese.eT match {
             case be: ArrayElem[_] =>
               (createManifest(xe.eItem),createManifest(be.eItem)) match {
                 case (mA: Manifest[a], mB: Manifest[b]) =>
@@ -160,7 +160,7 @@ trait JNIBridge extends CoreBridge {
     case res@JNI_MapObjectArray(x, fSym@Def(f: Lambda[_, _])) =>
       (res.selfType, x.elem) match {
         case (rese: JNITypeElem[_], xe: ArrayElem[_]) =>
-          rese.tElem match {
+          rese.eT match {
             case be: ArrayElem[_] =>
               (createManifest(xe.eItem),createManifest(be.eItem)) match {
                 case (mA: Manifest[a], mB: Manifest[b]) =>
@@ -180,7 +180,7 @@ trait JNIBridge extends CoreBridge {
       }
     case res@JNI_NewObject(clazz,mid,args@_*) => res.selfType match {
       case el: JNITypeElem[_] =>
-        createManifest(el.tElem) match {
+        createManifest(el.eT) match {
           case mA: Manifest[a_t] =>
             val _clazz = m.symMirror[lms.JNIClass](clazz)
             val _mid = m.symMirror[lms.JNIMethodID](mid)
@@ -191,7 +191,7 @@ trait JNIBridge extends CoreBridge {
     }
     case res@JNI_CallObjectMethod(x,mid,args@_*) => (res.selfType, x.elem) match {
       case (resel: JNITypeElem[_], xel: JNITypeElem[_]) =>
-        (createManifest(resel.tElem), createManifest(xel.tElem)) match {
+        (createManifest(resel.eT), createManifest(xel.eT)) match {
           case (mR: Manifest[r_t], mA: Manifest[a_t]) =>
             val _x = m.symMirror[lms.JNIType[a_t]](x)
             val _mid = m.symMirror[lms.JNIMethodID](mid)

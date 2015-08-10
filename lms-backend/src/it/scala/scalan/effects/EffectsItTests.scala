@@ -139,21 +139,13 @@ class EffectsJniItTests extends BaseItTests with ItTestsUtilLmsCxx {
 
     override val State = new State0Manager[Int]
 
-    lazy val jniZipArrayWithIndexW = fun {arr: Rep[JNIType[Array[Double]]] =>
-      JNI_Pack( zipArrayWithIndexW( JNI_Extract(arr) ) )
-    }
+    lazy val jniZipArrayWithIndexW = JNI_Wrap(zipArrayWithIndexW)
 
-    lazy val jniZipCollectionWithIndexW = fun {arr: Rep[JNIType[Array[Double]]] =>
-      JNI_Pack( zipCollectionWithIndexW( JNI_Extract(arr) ) )
-    }
+    lazy val jniZipCollectionWithIndexW = JNI_Wrap(zipCollectionWithIndexW)
 
-    lazy val jniZipCollectionWithIndexW2 = fun {arr: Rep[JNIType[Array[Double]]] =>
-      JNI_Pack( zipCollectionWithIndexW2( JNI_Extract(arr) ) )
-    }
+    lazy val jniZipCollectionWithIndexW2 = JNI_Wrap(zipCollectionWithIndexW2)
 
-    lazy val jniZipCollectionWithIndexW3 = fun {arr: Rep[JNIType[Array[Double]]] =>
-      JNI_Pack( zipCollectionWithIndexW3( JNI_Extract(arr) ) )
-    }
+    lazy val jniZipCollectionWithIndexW3 = JNI_Wrap(zipCollectionWithIndexW3)
   }
   val progcxx = new LmsCompilerCxx(new EffectsExpCxx) with CoreBridge with JNIBridge with EffectfulCompiler[EffectsExpCxx]
 

@@ -8,25 +8,8 @@ import scalan.{JNIExtractorOpsExp, ScalanCtxExp}
 class AdapterScala2Cxx[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp](sc: ScalanCake)
   extends AdapterBase [ScalanCake](sc){
 
-  override val ScalanIR: ScalanCake = sc
-  import ScalanIR._
+  import scalanIR._
 
-  def adapt[A, B](func: Exp[A => B]): Exp[_] = {
-    func match {
-      case Def(lam: Lambda[a, b]) => {
-        implicit val eA = lam.eA.asElem[a]
-        implicit val eB = lam.eB.asElem[b]
-
-        val res = fun[JNIType[a], JNIType[b]] { arg: Rep[JNIType[a]] =>
-          val data = JNI_Extract(arg)
-          val res = lam.self(data)
-          JNI_Pack(res) (eB) // (lam.eB???)
-        } //(Lazy(eJNIA))
-        res
-      }
-      case _ => !!! ("Error in AdapterScala2Cxx.adapt: function was not mached to 'Def(lam: Lambda[a, b])'")
-    }
-
-  }
+  def adapt[A, B](func: Exp[A => B]): Exp[_] = JNI_Wrap(func)
 
 }
