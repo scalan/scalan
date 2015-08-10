@@ -8,8 +8,7 @@ import scalan.{JNIExtractorOpsExp, ScalanCtxExp}
 class AdapterScala2Cxx[ScalanCake <: ScalanCtxExp with JNIExtractorOpsExp](sc: ScalanCake)
   extends AdapterBase [ScalanCake](sc){
 
-  override val ScalanIR: ScalanCake = sc
-  import ScalanIR._
+  import scalanIR._
 
   def adapt[A, B](func: Exp[A => B]): Exp[_] = JNI_Wrap(func)
 
