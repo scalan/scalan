@@ -14,6 +14,11 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
 
   val cC = progStagedU.defaultCompilerConfig.copy(scalaVersion = Some("2.11.2"))
 
+  test("listRangeFrom0") {
+    val in = 3
+    compareOutputWithSequential(progStaged)(progSeq.listRangeFrom0, progStaged.scalan.listRangeFrom0, "listRangeFrom0", in)
+  }
+
   test("expBaseArrays") {
     val in = Array(Array(2, 3), Array(4, 5))
     compareOutputWithSequential(progStaged)(progSeq.expBaseArrays, progStaged.scalan.expBaseArrays, "expBaseArrays", in)

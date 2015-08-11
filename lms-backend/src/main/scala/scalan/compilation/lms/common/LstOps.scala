@@ -90,7 +90,7 @@ trait ScalaGenLstOps extends ScalaNestedCodegen {
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ListReplicate(len, x) => emitValDef(sym, src"List.fill($len)($x)")
     case ListCreateAndFill(length, elem) => emitValDef(sym, src"List.fill(${quote(length)})(${quote(elem)})")
-    case ListRangeFrom0Lms(length) => emitValDef(sym, src"List((for(i <- 0 to ${quote(length)}) yield i ) : _*)")
+    case ListRangeFrom0Lms(length) => emitValDef(sym, src"List((for(i <- 0 until ${quote(length)}) yield i ) : _*)")
     case ListForeach(a,x,block) =>
       gen"""val $sym = $a.foreach{ $x =>
            |${nestedBlock(block)}
