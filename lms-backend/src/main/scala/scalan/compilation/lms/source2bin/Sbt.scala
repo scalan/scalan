@@ -38,7 +38,8 @@ object Sbt {
         addHeader(f, s"package $mainPack")
         def scalaSource(className: String) = className.replaceAll("\\.", separator)  + ".scala"
 
-        val mainClass = scalaSource(mainPack + "." + compilerConfig.sbt.mainClassSimpleName)
+        val mainClassFullName = mainPack + "." + compilerConfig.sbt.mainClassSimpleName
+        val mainClass = scalaSource(mainClassFullName)
         val mainDest = file(src, mainClass)
         try {
           copyFromClassPath(mainClass, mainDest)
@@ -64,7 +65,7 @@ object Sbt {
               |scalaVersion := "$scalaVersion"
               |${dependencies.map(d => s"libraryDependencies += $d").mkString("\n")}
               |assemblyJarName in assembly := "$jar"
-              |mainClass in assembly := Some("${mainPack + "." + compilerConfig.sbt.mainClassSimpleName}")
+              |mainClass in assembly := Some("$mainClassFullName")
               |version := "1"
               |artifactPath in Compile in packageBin := file("$jarPath")
               |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})

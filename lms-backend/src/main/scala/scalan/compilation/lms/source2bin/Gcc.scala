@@ -10,7 +10,7 @@ import scalan.util.ProcessUtil
 object Gcc {
   def compile(targetDir: String, sourceDir: File, sourceFile: File, libName: String): Array[String] = {  //extraCompilerOptions: List[String],
     val sourceName = sourceFile.getAbsolutePath
-    val targetFile = targetDir+fileSeparator+libFileName(libName)
+    val targetFile = targetDir+fileSeparator+System.mapLibraryName(libName)
     val include = s"$includeJavaFlag $includeRuntimeDirFlag $includeFlags"
     val command = s"$cxx $sourceName $include -fPIC -shared -pthread $commonFlags $optFlags -o $targetFile".split("\\s+").toSeq
     println("command: " + command.mkString(" "))
@@ -31,15 +31,4 @@ object Gcc {
   val includeFlags = scalan.Base.config.getProperty("gcc.includeFlags", "")
   val optFlags = scalan.Base.config.getProperty("gcc.optFlags", "-O3")
   val debugFlags = scalan.Base.config.getProperty("gcc.debugFlags", "-g -O0")
-  def libFileName(libName:String) = {
-    osName match {
-      case x if x contains ("Linux") => s"lib${libName}.so"
-      case x if x contains ("OS X") => s"lib${libName}.dylib"
-      case x if x contains ("Windows") => s"${libName}.dll"
-      case _ =>
-        println("WARNING: OS not detected, try to generate library name for Linux")
-        s"lib${libName}.so"
-    }
-
-  }
 }

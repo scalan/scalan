@@ -20,7 +20,9 @@ abstract class LmsCompilerScala[ScalanCake <: ScalanCtxExp](_scalan: ScalanCake)
    *
    * Otherwise uses SBT to compile with the desired version
    */
-  case class CustomCompilerOutput(sources:List[String], jar: URL, mainClass: Option[String] = None, output: Option[Array[String]] = None)
+  case class CustomCompilerOutput(sources: List[File], jar: File, mainClass: String, output: Option[Array[String]]) {
+    def jarUrl = jar.toURI.toURL
+  }
   type CompilerConfig = LmsCompilerScalaConfig
   implicit val defaultCompilerConfig = LmsCompilerScalaConfig(None, Seq.empty)
 
@@ -32,10 +34,7 @@ abstract class LmsCompilerScala[ScalanCake <: ScalanCtxExp](_scalan: ScalanCake)
     val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
     FileUtil.deleteIfExist(jarFile)
     val jarPath = jarFile.getAbsolutePath
-    val mainClass : Option[String] = compilerConfig.sbt.mainPack match {
-      case Some(mainPack) => Some(mainPack + "." +  functionName)
-      case _ =>  None
-    }
+    val mainClass = mainClassName(functionName, compilerConfig)
     val output: Option[Array[String]] = compilerConfig.scalaVersion match {
       case Some(scalaVersion) =>
         val dependencies:Array[String] = methodReplaceConf.flatMap(conf => conf.dependencies).toArray
@@ -44,21 +43,25 @@ abstract class LmsCompilerScala[ScalanCake <: ScalanCtxExp](_scalan: ScalanCake)
         Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, sourceFile, jarPath)
         None
     }
-    CustomCompilerOutput(List(sourceFile.getAbsolutePath), jarFile.toURI.toURL, mainClass, output)
+    CustomCompilerOutput(List(sourceFile), jarFile, mainClass, output)
   }
+
+  def mainClassName(functionName: String, compilerConfig: LmsCompilerScalaConfig): String =
+    compilerConfig.sbt.mainPack match {
+      case Some(mainPack) => mainPack + "." + functionName
+      case None => functionName
+    }
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
     // ensure Scala library is available
-    val classLoader = new URLClassLoader(Array(compilerOutput.custom.jar), getClass.getClassLoader)
-    val cls = classLoader.loadClass(
-      compilerOutput.custom.mainClass match {
-        case Some(mainClass) => mainClass
-        case _ => compilerOutput.common.name
-      }
-    )
+    val classLoader = getClassLoader(compilerOutput)
+    val cls = classLoader.loadClass(compilerOutput.custom.mainClass)
     val argumentClass = compilerOutput.common.eInput.runtimeClass
     (cls, cls.getMethod("apply", argumentClass))
   }
+
+  def getClassLoader(compilerOutput: CompilerOutput[_, _]): ClassLoader =
+    new URLClassLoader(Array(compilerOutput.custom.jarUrl), getClass.getClassLoader)
 
   protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
     val (cls, method) = loadMethod(compilerOutput)

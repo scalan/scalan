@@ -1,6 +1,7 @@
 package scalan.compilation.lms.uni
 
 import java.io.File
+import java.net.URLClassLoader
 
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms._
@@ -62,6 +63,10 @@ class LmsCompilerUni[ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsExp
     }
   }
 
+  val runtimeTargetDir = Base.config.getProperty("runtime.target")
+
+  override def getClassLoader(compilerOutput: CompilerOutput[_, _]): ClassLoader =
+    new NativeCopyLoader(Seq.empty, Seq(new File(runtimeTargetDir)), Array(compilerOutput.custom.jarUrl), getClass.getClassLoader)
 
   override protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
@@ -100,7 +105,7 @@ class LmsCompilerUni[ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsExp
 
                     val lmsFuncC = finalMirror.funcMirror[a, b](f)
                     val cxxFile = codegen.createFile(lmsFuncC, jniCallCodegen.cppFunctionName(functionName), sourcesDir)(mA, mB)
-                    Gcc.compile(Base.config.getProperty("runtime.target"), executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
+                    Gcc.compile(runtimeTargetDir, executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
                   //todo make one library for all functions
                 }
               }
@@ -123,10 +128,7 @@ class LmsCompilerUni[ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsExp
     val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
     FileUtil.deleteIfExist(jarFile)
     val jarPath = jarFile.getAbsolutePath
-    val mainClass : Option[String] = compilerConfig.sbt.mainPack match {
-      case Some(mainPack) => Some(mainPack + "." +  functionName)
-      case _ =>  None
-    }
+    val mainClass = mainClassName(functionName, compilerConfig)
     val output: Option[Array[String]] = compilerConfig.scalaVersion match {
       case Some(scalaVersion) =>
         val dependencies:Array[String] = methodReplaceConf.flatMap(conf => conf.dependencies).toArray
@@ -135,7 +137,7 @@ class LmsCompilerUni[ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsExp
         Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, scalaFile, jarPath)
         None
     }
-    CustomCompilerOutput(List(scalaFile.getAbsolutePath), jarFile.toURI.toURL, mainClass, output)
+    CustomCompilerOutput(List(scalaFile), jarFile, mainClass, output)
   }
 
 
