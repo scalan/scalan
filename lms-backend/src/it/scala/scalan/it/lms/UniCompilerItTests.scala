@@ -1,6 +1,8 @@
 package scalan.it.lms
 
-import scalan.graphs.{GraphsDslExp, GraphsDslSeq}
+import java.io.File
+
+import scalan.graphs.{GraphsDslSeq, GraphsDslExp}
 import scalan.linalgebra.{MatricesDslSeq, LinearAlgebraExamples}
 import scalan._
 import scalan.compilation.lms.uni.{LmsBackendUni, NativeMethodsConfig, LmsCompilerUni}
@@ -154,8 +156,8 @@ class UniCompilerItTests  extends LmsMsfItTests {
   // todo refactoring from "jvm vs native alternative" to "choose codegen" in config
 
 
-  def linesWithNativeDef(fileName:String):List[String] =
-    scala.io.Source.fromFile(fileName).getLines.filter(_.contains("@native def ")).toList
+  def linesWithNativeDef(file: File):List[String] =
+    scala.io.Source.fromFile(file).getLines.filter(_.contains("@native def ")).toList
 
   test("config_OnlyScala") {
     val in = (Array(2, 3), (Array(1, 4), Array(0, 5)))
