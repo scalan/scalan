@@ -24,20 +24,21 @@ class ArrayOpsItTests extends BaseItTests {
     m.invoke(instance, in.asInstanceOf[AnyRef]).asInstanceOf[B]
   }
 
-  def compareOutputWithSequential[A, B](back: LmsCompilerScala[_ <: ScalanCtxExp])
-                                       (fSeq: A => B, f: back.Exp[A => B], functionName: String, inputs: A*)
+  def compareOutputWithSequential[S <: Scalan, A, B](back: LmsCompilerScala[S with ScalanCtxExp], forth: S with ScalanCtxSeq)
+                                       (f: S => S#Rep[A => B], functionName: String, inputs: A*)
                                        (implicit comparator: (B, B) => Unit) {
-    val compiled = compileSource(back)(f, functionName, back.defaultCompilerConfig)
+    val compiled = compileSource[S](back)(f, functionName, back.defaultCompilerConfig)
     val (cls, method) = back.loadMethod(compiled)
     val instance = cls.newInstance().asInstanceOf[AnyRef]
 
-    val invoke: A => B = invokeMethod[A,B](method, instance, _:A)
+    val invokeExp: A => B = invokeMethod[A,B](method, instance, _:A)
+    val invokeSeq = f(forth).asInstanceOf[A => B]
 
     var i = -1
     inputs.foreach {in =>
       i += 1
       println(s"${getClass.getName}: checking input $i")
-      comparator(invoke(in), fSeq(in))
+      comparator(invokeExp(in), invokeSeq(in))
     }
   }
 
@@ -47,8 +48,8 @@ class ArrayOpsItTests extends BaseItTests {
 
     val vals: Array[Int] = Array(1, 4, 9, 1024, 0, -1024)
     val ins = vals map {v => (arr,v)}
-    compareOutputWithSequential(comp1)(progSeq.arrayBinarySearch, comp1.scalan.arrayBinarySearch, "arrayBinarySearch", ins:_*)
-    compareOutputWithSequential(comp2)(progSeq.arrayBinarySearch, comp2.scalan.arrayBinarySearch, "arrayBinarySearch", ins:_*)
+    compareOutputWithSequential(comp1, progSeq)(_.arrayBinarySearch, "arrayBinarySearch", ins:_*)
+    compareOutputWithSequential(comp2, progSeq)(_.arrayBinarySearch, "arrayBinarySearch", ins:_*)
   }
 
 }

@@ -37,7 +37,7 @@ class EmitGraphItTests extends CommunitySmokeItTests with BeforeAndAfterAll {
 
   test("emptyIfTrue") {
     val in = (true, (5.0, 7.7))
-    compareOutputWithSequential(progStaged)(progSeq.emptyIf, progStaged.scalan.emptyIf, "emptyIfTrue", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.emptyIf, "emptyIfTrue", in)
     //todo - open and check last (LMS) graph
   }
 

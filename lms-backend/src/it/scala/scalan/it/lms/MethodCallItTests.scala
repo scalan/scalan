@@ -90,12 +90,12 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
 
   test("emptyIfTrue") {
     val in = (true, (5.0, 7.7))
-    compareOutputWithSequential(progStaged)(progSeq.emptyIf, progStaged.scalan.emptyIf, "emptyIfTrue", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.emptyIf, "emptyIfTrue", in)
   }
 
   test("emptyIfFalse") {
     val in = (false, (5.0, 7.7))
-    compareOutputWithSequential(progStaged)(progSeq.emptyIf, progStaged.scalan.emptyIf, "emptyIfFalse", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.emptyIf, "emptyIfFalse", in)
   }
 
 //  ignore("exceptionWithIfTrue") {
@@ -170,15 +170,15 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
 
 //  test("Throwable Method Call") {
 //    val originalText = "Exception message"
-//    val text = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.message, "ThrowableMethodCall", new Exception(originalText), exceptionTestExp.defaultCompilerConfig)
+//    val text = getStagedOutput(exceptionTestExp)(exceptionTestExp.message, "ThrowableMethodCall", new Exception(originalText))
 //    text should equal(originalText)
-//    val text2 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.initCause, "ThrowableInitCauseMethodCall", (new Exception(originalText), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
+//    val text2 = getStagedOutput(exceptionTestExp)(exceptionTestExp.initCause, "ThrowableInitCauseMethodCall", (new Exception(originalText), new Exception("some text")))
 //    text2 should equal(originalText)
-//    val text3 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.initCause2, "ThrowableManyInitCauseMethodCall", (new Exception(originalText), (new Exception("some text"), (new Exception("some text"), (new Exception("some text"), new Exception("some text"))))), exceptionTestExp.defaultCompilerConfig)
+//    val text3 = getStagedOutput(exceptionTestExp)(exceptionTestExp.initCause2, "ThrowableManyInitCauseMethodCall", (new Exception(originalText), (new Exception("some text"), (new Exception("some text"), (new Exception("some text"), new Exception("some text"))))))
 //    text3 should equal(originalText)
-//    val text4 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfFalse, "IfFalseMethodCall", (new Exception("Exception message"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
+//    val text4 = getStagedOutput(exceptionTestExp)(exceptionTestExp.withIfFalse, "IfFalseMethodCall", (new Exception("Exception message"), new Exception("some text")))
 //    text4 should equal(originalText)
-//    val text5 = getStagedOutputConfig(exceptionTestExp)(exceptionTestExp.withIfTrue, "IfTrueMethodCall", (new Exception("Exception message"), new Exception("some text")), exceptionTestExp.defaultCompilerConfig)
+//    val text5 = getStagedOutput(exceptionTestExp)(exceptionTestExp.withIfTrue, "IfTrueMethodCall", (new Exception("Exception message"), new Exception("some text")))
 //    text5 should equal("some text")
 //  }
 
@@ -191,7 +191,7 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
   val matricesExp = new CommunityLmsCompilerScala(new ArrayLengthProg)
 
   test("LMS Method Call") {
-    val length = getStagedOutputConfig(matricesExp)(matricesExp.scalan.arrayLength, "LMSMethodCall", Array(2, 5, 6), matricesExp.defaultCompilerConfig)
+    val length = getStagedOutput(matricesExp)(_.arrayLength, "LMSMethodCall", Array(2, 5, 6))
     length should equal(3)
   }
 
@@ -206,7 +206,7 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
       pending
     }
     val conf = replaceMethExp.defaultCompilerConfig
-    val length = getStagedOutputConfig(replaceMethExp)(replaceMethExp.scalan.arrayLength, "ClassMapping", Array(5, 9, 2),
+    val length = getStagedOutput(replaceMethExp)(_.arrayLength, "ClassMapping", Array(5, 9, 2),
       conf.copy(scalaVersion = Some("2.11.6"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
         extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("package"))))
     length should equal(3)
@@ -264,7 +264,7 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
       pending
     }
     val conf = jarReplaceExp.defaultCompilerConfig
-    val messageFromTestMethod = getStagedOutputConfig(jarReplaceExp)(jarReplaceExp.scalan.message, "MappingMethodFromJar", "Original message",
+    val messageFromTestMethod = getStagedOutput(jarReplaceExp)(_.message, "MappingMethodFromJar", "Original message",
       conf.copy(scalaVersion = Some("2.11.6"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
         extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("package"))))
     messageFromTestMethod should equal("Test Message")
