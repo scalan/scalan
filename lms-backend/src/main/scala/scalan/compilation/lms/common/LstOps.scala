@@ -8,25 +8,25 @@ import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 trait LstOps extends Base {
 
   def list_replicate[A: Manifest](len: Rep[Int], x: Rep[A])(implicit pos: SourceContext): Rep[List[A]]
-  def listCreateAndFill[A: Manifest](length: Rep[Int], elem: Rep[A]): Rep[A]
-  def listRangeFrom0[A: Manifest](length: Rep[Int]): Rep[Int]
+  def listCreateAndFill[A: Manifest](length: Rep[Int], elem: Rep[A]): Rep[List[A]]
+  def listRangeFrom0(length: Rep[Int]): Rep[List[Int]]
 
 }
 
 trait LstOpsExp extends LstOps with BaseExp with EffectExp with TupleOps {
 
-  case class ListCreateAndFill[A: Manifest](length: Rep[Int], elem: Rep[A]) extends Def[A] {
+  case class ListCreateAndFill[A: Manifest](length: Rep[Int], elem: Rep[A]) extends Def[List[A]] {
     val m = manifest[A]
   }
 
-  case class ListRangeFrom0Lms[A: Manifest](length: Rep[Int]) extends Def[Int]
+  case class ListRangeFrom0Lms(length: Rep[Int]) extends Def[List[Int]]
 
 
-  def listCreateAndFill[A: Manifest](length: Rep[Int], elem: Rep[A]): Exp[A] = {
+  def listCreateAndFill[A: Manifest](length: Rep[Int], elem: Rep[A]): Exp[List[A]] = {
     ListCreateAndFill(length, elem)
   }
 
-  def listRangeFrom0[A: Manifest](length: Rep[Int]): Exp[Int] = {
+  def listRangeFrom0(length: Rep[Int]): Exp[List[Int]] = {
     ListRangeFrom0Lms(length)
   }
 
