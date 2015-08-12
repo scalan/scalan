@@ -8,23 +8,13 @@ import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 trait LstOps extends Base {
 
   def list_replicate[A: Manifest](len: Rep[Int], x: Rep[A])(implicit pos: SourceContext): Rep[List[A]]
-  def listCreateAndFill[A: Manifest](length: Rep[Int], elem: Rep[A]): Rep[List[A]]
   def listRangeFrom0(length: Rep[Int]): Rep[List[Int]]
 
 }
 
 trait LstOpsExp extends LstOps with BaseExp with EffectExp with TupleOps {
 
-  case class ListCreateAndFill[A: Manifest](length: Rep[Int], elem: Rep[A]) extends Def[List[A]] {
-    val m = manifest[A]
-  }
-
   case class ListRangeFrom0Lms(length: Rep[Int]) extends Def[List[Int]]
-
-
-  def listCreateAndFill[A: Manifest](length: Rep[Int], elem: Rep[A]): Exp[List[A]] = {
-    ListCreateAndFill(length, elem)
-  }
 
   def listRangeFrom0(length: Rep[Int]): Exp[List[Int]] = {
     ListRangeFrom0Lms(length)
@@ -60,7 +50,6 @@ trait LstOpsExp extends LstOps with BaseExp with EffectExp with TupleOps {
 //  }
 
   override def mirror[A: Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-    case ListCreateAndFill(length, elem) => listCreateAndFill(f(length), f(elem))(mtype(manifest[A]))
     case Reflect(ListForeach(a,x,b), u, es) =>
       reflectMirrored(Reflect(ListForeach(f(a),f(x).asInstanceOf[Sym[A]],f(b)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case _ => super.mirror(e, f)
@@ -89,7 +78,6 @@ trait ScalaGenLstOps extends ScalaNestedCodegen {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ListReplicate(len, x) => emitValDef(sym, src"List.fill($len)($x)")
-    case ListCreateAndFill(length, elem) => emitValDef(sym, src"List.fill(${quote(length)})(${quote(elem)})")
     case ListRangeFrom0Lms(length) => emitValDef(sym, src"List((for(i <- 0 until ${quote(length)}) yield i ) : _*)")
     case ListForeach(a,x,block) =>
       gen"""val $sym = $a.foreach{ $x =>
@@ -107,7 +95,6 @@ trait CxxShptrGenLstOps extends CxxShptrCodegen {
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ListReplicate(len, x) =>
       emitConstruct(sym, src"$len", src"$x")
-//    case ListCreateAndFill(length, elem) => emitValDef(sym, src"List.fill(${quote(length)})(${quote(elem)})")
 //    case ListRangeFrom0Lms(length) => emitValDef(sym, src"List((for(i <- 0 to ${quote(length)}) yield i ) : _*)")
     case _ => super.emitNode(sym, rhs)
   }
