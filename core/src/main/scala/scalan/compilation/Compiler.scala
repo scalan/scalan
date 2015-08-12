@@ -4,7 +4,7 @@ import java.io.File
 
 import scalan.ScalanCtxExp
 
-abstract class Compiler[ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) extends Passes {
+abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) extends Passes {
   import scalan._
 
   type CompilerConfig
