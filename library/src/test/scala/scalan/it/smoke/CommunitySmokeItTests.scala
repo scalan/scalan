@@ -12,6 +12,8 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
 
   trait ProgCommunity extends Prog with ScalanCommunity with CollectionExamples with ScalanCommunityDsl  {
 
+    lazy val listRangeFrom0 = fun { n: Rep[Int] => SList.rangeFrom0(n) }
+
     lazy val applyLambda2Array = fun {arr: Rep[Array[Int]] =>
       def isMatch(arr: Rep[Array[Int]]) = arr.length > 3
       def step(arr: Rep[Array[Int]]): Rep[Array[Int]] = arr map {a => a + 2}

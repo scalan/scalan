@@ -1089,11 +1089,8 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       }
 
     case lr@ListRangeFrom0(len) =>
-      createManifest(lr.eT) match {
-        case mA: Manifest[a] =>
-          val exp = lms.listRangeFrom0[a](m.symMirror[Int](len))(mA)
-          m.addSym(sym, exp)
-      }
+      val exp = lms.listRangeFrom0(m.symMirror(len))
+      m.addSym(sym, exp)
 
     case ListHead(xs) =>
       createManifest(xs.elem.eItem) match {
