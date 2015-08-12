@@ -1,16 +1,12 @@
 package scalan.compilation.lms.uni
 
 import java.io.File
-import java.net.URLClassLoader
 
-import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms._
 import scalan.compilation.lms.common.JNILmsOpsExp
 import scalan.compilation.lms.cxx.sharedptr.CxxCodegen
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
-import scalan.compilation.lms.source2bin.{Gcc, Nsc, Sbt}
-import scalan.util.FileUtil
-import scalan.util.FileUtil._
+import scalan.compilation.lms.source2bin.Gcc
 import scalan.{Base, JNIExtractorOpsExp, ScalanCommunityDslExp}
 
 //  case class CustomCompilerOutput(jar: URL)
@@ -40,13 +36,12 @@ class LmsCompilerUni[ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsExp
         case Some(key) => {
           val adapter = KnownCodegens.getAdapterByString[scalan.type](scalan, key /*"Scala2Cxx"*/)
           func match {
-            case Def(lam: Lambda[a, b]) =>
+            case func: scalan.Exp[Function1[a, b] @unchecked] =>
               val (master, slave) = KnownCodegens.pairFromString(key)//BackendCake
-              val lam2 = adapter.adapt[a, b](lam)
+              val adapted = adapter.adapt(func)
               func.setMetadata(marker.codegenKey)(KnownCodegens.toString(master))
-              lam2.setMetadata(marker.codegenKey)(KnownCodegens.toString(slave))
-              List(lam, lam2)
-            case _ => !!!("I can adapt only functions")
+              adapted.setMetadata(marker.codegenKey)(KnownCodegens.toString(slave))
+              List(func, adapted)
           }
         }
         case None => List(func)
@@ -68,77 +63,51 @@ class LmsCompilerUni[ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsExp
   override def getClassLoader(compilerOutput: CompilerOutput[_, _]): ClassLoader =
     new NativeCopyLoader(Seq.empty, Seq(new File(runtimeTargetDir)), Array(compilerOutput.custom.jarUrl), getClass.getClassLoader)
 
-  override protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
-                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
-    Sbt.prepareDir(executableDir) //todo - check: is it sbt-specific function?
+  override def emitSource[A, B](sourcesDir: File, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B]) = {
+    (createManifest(eInput), createManifest(eOutput)) match {
+      case (mA: Manifest[a], mB: Manifest[b]) =>
+        graph.roots.size match {
+          case 0 => !!!("program graph is empty")
+          case 1 => // just generate one scala file
+            // call LmsMirror
+            val lmsFunc = apply[a, b](graph)
+            lms.codegen.createFile(lmsFunc, functionName, sourcesDir)(mA, mB)
 
-    implicit val eA = eInput
-    implicit val eB = eOutput
+          case _ => //generate some c++ files, and then generate scala file with native calls
+            // such as in LmsMirror.apply
+            val finalMirror = LmsMirror.empty.mirrorDefs(graph, graph.schedule)
 
-    val scalaFile = {
-      (createManifest(eInput), createManifest(eOutput)) match {
-        case (mA: Manifest[a], mB: Manifest[b]) =>
+            val cxxFunctions = findRootsForCodegen(graph, KnownCodegens.Cxx)
+            for (f <- cxxFunctions) {
+              emitCSource(sourcesDir, functionName, finalMirror, f)
+            }
 
-          val scalaFile = graph.roots.size match {
-            case 0 => !!!("program graph is empty")
-            case 1 =>  // just generate one scala file
-              // call LmsMirror
-              val lmsFunc = apply[a, b](graph)
-              lms.codegen.createFile(lmsFunc, functionName, sourcesDir)(mA, mB)
-
-            case _ => //generate some c++ files, and then generate scala file with native calls
-              // such as in LmsMirror.apply
-              val finalMirror = LmsMirror.empty.mirrorDefs(graph, graph.schedule)
-
-              val jniCallCodegen = lms.jniCallCodegen
-              val codegen = lms.nativeCodegen
-
-              val scalanFuncC = graph.roots.filter( _.getMetadata(marker.codegenKey).getOrElse("") == KnownCodegens.Cxx.toString)
-              for( f <- scalanFuncC) {
-                val t = findDefinition(f).getOrElse(!!!("can not find definition for root element") )
-                val (jInput, jOutput) = t.rhs match {
-                  case Lambda(_, _, x, y) =>
-                    (x.elem, y.elem)
-                } //.asInstanceOf[(Elem[A], Elem[B])]
-                (createManifest(jInput), createManifest(jOutput)) match {
-                  case (mA: Manifest[a], mB: Manifest[b]) =>
-
-                    val lmsFuncC = finalMirror.funcMirror[a, b](f)
-                    val cxxFile = codegen.createFile(lmsFuncC, jniCallCodegen.cppFunctionName(functionName), sourcesDir)(mA, mB)
-                    Gcc.compile(runtimeTargetDir, executableDir, cxxFile, jniCallCodegen.cppLibraryName(functionName))
-                  //todo make one library for all functions
-                }
-              }
-
-              val scalanFuncList = graph.roots.filter( _.getMetadata(marker.codegenKey).getOrElse("") == KnownCodegens.Scala.toString)
-              val scalanFunc = scalanFuncList.size match {
-                case 0 => !!!("package not contains main jvm-function")
-                case 1 => scalanFuncList.last
-                case _ => !!!("package should contains only one jvm-function")
-              }
-              val lmsFunc = finalMirror.funcMirror[a, b](scalanFunc)
-              jniCallCodegen.createFile(lmsFunc, functionName, sourcesDir)(mA, mB)
-          }
-
-          scalaFile
-      }
-
+            val scalaFunctions = findRootsForCodegen(graph, KnownCodegens.Scala)
+            scalaFunctions match {
+              case Seq(scalaFunction) =>
+                val lmsFunc = finalMirror.funcMirror[a, b](scalaFunction)
+                lms.jniCallCodegen.createFile(lmsFunc, functionName, sourcesDir)(mA, mB)
+              case Seq() => !!!("There are no function marked for JVM code generation")
+              case _ => !!!("There must be exactly one function marked for JVM code generation")
+            }
+        }
     }
-
-    val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
-    FileUtil.deleteIfExist(jarFile)
-    val jarPath = jarFile.getAbsolutePath
-    val mainClass = mainClassName(functionName, compilerConfig)
-    val output: Option[Array[String]] = compilerConfig.scalaVersion match {
-      case Some(scalaVersion) =>
-        val dependencies:Array[String] = methodReplaceConf.flatMap(conf => conf.dependencies).toArray
-        Some(Sbt.compile(sourcesDir, executableDir, functionName, compilerConfig, dependencies, scalaFile, jarPath))
-      case None =>
-        Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, scalaFile, jarPath)
-        None
-    }
-    CustomCompilerOutput(List(scalaFile), jarFile, mainClass, output)
   }
 
+  private def findRootsForCodegen(graph: PGraph, codegen: KnownCodegens.CodegenType) =
+    graph.roots.filter(_.getMetadata(marker.codegenKey).getOrElse("") == codegen.toString)
 
+  private def emitCSource(sourcesDir: File, functionName: String, finalMirror: LmsMirror, f: scalan.Exp[_]) = {
+    val (jInput, jOutput) = f match {
+      case Def(lam: Lambda[_, _]) => (lam.x.elem, lam.y.elem)
+    }
+    (createManifest(jInput), createManifest(jOutput)) match {
+      case (mA: Manifest[a], mB: Manifest[b]) =>
+
+        val lmsFuncC = finalMirror.funcMirror[a, b](f)
+        val cxxFile = lms.nativeCodegen.createFile(lmsFuncC, lms.jniCallCodegen.cppFunctionName(functionName), sourcesDir)(mA, mB)
+        Gcc.compile(runtimeTargetDir, sourcesDir, cxxFile, lms.jniCallCodegen.cppLibraryName(functionName))
+      //todo make one library for all functions
+    }
+  }
 }
