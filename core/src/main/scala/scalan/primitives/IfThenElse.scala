@@ -39,13 +39,13 @@ trait IfThenElseSeq extends IfThenElse { self: ScalanSeq =>
 
 trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: ScalanExp =>
 
-  abstract class AbstractIfThenElse[+T](implicit override val selfType: Elem[T @uncheckedVariance]) extends BaseDef[T] {
+  abstract class AbstractIfThenElse[+T](implicit selfType: Elem[T @uncheckedVariance]) extends BaseDef[T] {
     val cond: Exp[Boolean]
     val thenp: Exp[T]
     val elsep: Exp[T]
   }
 
-  case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit override val selfType: Elem[T]) extends AbstractIfThenElse[T] {
+  case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit selfType: Elem[T]) extends AbstractIfThenElse[T] {
     override def mirror(t: Transformer) = IfThenElse(t(cond), t(thenp), t(elsep))
   }
 
