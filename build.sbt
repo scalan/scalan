@@ -25,8 +25,7 @@ lazy val buildSettings = Seq(
 lazy val testSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "2.2.5" % Test,
-    "org.scalacheck" %% "scalacheck" % "1.12.4" % Test,
-    "com.github.axel22" %% "scalameter" % "0.5-M2" % Test),
+    "com.storm-enroute" %% "scalameter" % "0.6" % Test),
   parallelExecution in Test := false,
   publishArtifact in Test := true,
   publishArtifact in (Test, packageSrc) := true,
@@ -58,9 +57,9 @@ lazy val core = Project("scalan-core", file("core"))
   .dependsOn(common % allConfigDependency, meta % allConfigDependency)
   .settings(commonSettings,
     libraryDependencies ++= Seq(
-      "com.chuusai" %% "shapeless" % "2.2.4",
+      "com.chuusai" %% "shapeless" % "2.2.5",
       "cglib" % "cglib" % "3.1",
-      "org.objenesis" % "objenesis" % "2.1"),
+      "org.objenesis" % "objenesis" % "2.2"),
       fork in Test := true)
 
 lazy val library = Project("scalan-library", file("library"))
