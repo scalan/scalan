@@ -79,14 +79,6 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
   def toLeftSum[A, B: Elem](a: Rep[A]): Rep[(A | B)] = withElemOf(a) { implicit e => Left[A, B](a) }
   def toRightSum[A: Elem, B](b: Rep[B]): Rep[(A | B)] = withElemOf(b) { implicit e => Right[A, B](b) }
 
-  case class IsLeft[A, B](sum: Exp[(A | B)]) extends BaseDef[Boolean] {
-    override def mirror(t: Transformer) = IsLeft(t(sum))
-  }
-
-  case class IsRight[A, B](sum: Exp[(A | B)]) extends BaseDef[Boolean] {
-    override def mirror(t: Transformer) = IsRight(t(sum))
-  }
-
   case class SumFold[A, B, R](sum: Exp[(A | B)], left: Exp[A => R], right: Exp[B => R])
     extends BaseDef[R]()(left.elem.eRange) {
     override def mirror(t: Transformer) = SumFold(t(sum), t(left), t(right))
@@ -108,10 +100,24 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
     def foldBy[R](l: Rep[A => R], r: Rep[B => R]): Rep[R] = SumFold(s, l, r)
     def mapSum[C: Elem, D: Elem](fl: Rep[A] => Rep[C], fr: Rep[B] => Rep[D]) = mapSumBy(fun(fl), fun(fr))
     def mapSumBy[C, D](l: Rep[A => C], r: Rep[B => D]): Rep[C | D] = SumMap(s, l, r)
-    def isLeft = IsLeft(s)
-    def isRight = IsRight(s)
+    def isLeft = foldBy(constFun(true), constFun(false))
+    def isRight = foldBy(constFun(false), constFun(true))
   }
   implicit def pimpSum[A, B](s: Rep[(A | B)]): SumOps[A, B] = new SumOpsExp[A, B](s)
+
+  object IsLeft {
+    def unapply(b: Def[_]): Option[Exp[_ | _]] = b match {
+      case SumFold(sum, Def(VeryConstantLambda(true)), Def(VeryConstantLambda(false))) => Some(sum)
+      case _ => None
+    }
+  }
+
+  object IsRight {
+    def unapply(b: Def[_]): Option[Exp[_ | _]] = b match {
+      case SumFold(sum, Def(VeryConstantLambda(false)), Def(VeryConstantLambda(true))) => Some(sum)
+      case _ => None
+    }
+  }
 
   object IsJoinSum {
     def unapply[T](d: Def[T]): Option[Rep[Source] forSome { type Source }] = d match {
@@ -260,10 +266,6 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
       )
     }
 
-    case IsLeft(Def(Left(_))) => true
-    case IsLeft(Def(Right(_))) => false
-    case IsRight(Def(Left(_))) => false
-    case IsRight(Def(Right(_))) => true
     case _ => super.rewriteDef(d)
   }
 

@@ -54,4 +54,17 @@ class SumTests extends BaseCtxTests {
     t1.getLambda.y should matchPattern { case Def(Left(_)) => }
   }
 
+  test("isLeft and isRight work") {
+    val ctx = new TestContext() {
+      lazy val isLeftFun = fun { x: Rep[Int | Double] => x.isLeft }
+      lazy val isRightFun = fun { x: Rep[Int | Double] => x.isRight }
+
+      lazy val shouldBeTrue = toRep(10).asLeft[Double].isLeft
+    }
+    import ctx._
+
+    isLeftFun.getLambda.y should matchPattern { case Def(IsLeft(_)) => }
+    isRightFun.getLambda.y should matchPattern { case Def(IsRight(_)) => }
+    shouldBeTrue shouldEqual toRep(true)
+  }
 }
