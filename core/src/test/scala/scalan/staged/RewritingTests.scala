@@ -26,7 +26,7 @@ class RewritingTests extends BaseCtxTests {
       // rewrite fun(x => Right(_)) to fun(x => Left(x))
       case lam: Lambda[a, |[_, b]] @unchecked =>
         lam.y match {
-          case Def(r @ Right(_)) =>
+          case Def(r @ SRight(_)) =>
             implicit val eA = r.eLeft.asInstanceOf[Elem[b]]
             fun { x: Rep[b] => x.asLeft[b] }
           case _ => super.rewriteDef(d)
@@ -46,7 +46,7 @@ class RewritingTests extends BaseCtxTests {
       val newLambda = passes.doTransform(mkRightFun)
       emit("mkRightFun'", newLambda)
 
-      inside(newLambda) { case Def(Lambda(_, _, x, Def(Left(l)))) =>
+      inside(newLambda) { case Def(Lambda(_, _, x, Def(SLeft(l)))) =>
         assert(x == l)
       }
     }

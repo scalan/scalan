@@ -39,7 +39,7 @@ class SumTests extends BaseCtxTests {
     import ctx._
 
     emit("t1", t1)
-    t1.getLambda.y should matchPattern { case Def(Right(_)) => }
+    t1.getLambda.y should matchPattern { case Def(SRight(_)) => }
   }
 
   test("SumMap(Left(x)) rewriting") {
@@ -51,7 +51,7 @@ class SumTests extends BaseCtxTests {
     import ctx._
 
     emit("t1", t1)
-    t1.getLambda.y should matchPattern { case Def(Left(_)) => }
+    t1.getLambda.y should matchPattern { case Def(SLeft(_)) => }
   }
 
   test("isLeft and isRight work") {

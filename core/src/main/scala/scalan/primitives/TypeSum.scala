@@ -81,17 +81,17 @@ trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
 
 trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
-  case class Left[A, B](left: Exp[A])(implicit val eRight: Elem[B]) extends BaseDef[A | B]()(sumElement(left.elem, eRight)) {
-    override def mirror(t: Transformer) = Left[A, B](t(left))
+  case class SLeft[A, B](left: Exp[A])(implicit val eRight: Elem[B]) extends BaseDef[A | B]()(sumElement(left.elem, eRight)) {
+    override def mirror(t: Transformer) = SLeft[A, B](t(left))
   }
 
-  case class Right[A, B](right: Exp[B])(implicit val eLeft: Elem[A]) extends BaseDef[A | B]()(sumElement(eLeft, right.elem)) {
-    override def mirror(t: Transformer) = Right[A, B](t(right))
+  case class SRight[A, B](right: Exp[B])(implicit val eLeft: Elem[A]) extends BaseDef[A | B]()(sumElement(eLeft, right.elem)) {
+    override def mirror(t: Transformer) = SRight[A, B](t(right))
   }
 
-  def mkLeft[A, B: Elem](a: Rep[A]): Rep[A | B] = Left[A, B](a)(element[B])
+  def mkLeft[A, B: Elem](a: Rep[A]): Rep[A | B] = SLeft[A, B](a)(element[B])
 
-  def mkRight[A: Elem, B](b: Rep[B]): Rep[A | B] = Right[A, B](b)(element[A])
+  def mkRight[A: Elem, B](b: Rep[B]): Rep[A | B] = SRight[A, B](b)(element[A])
 
   case class SumFold[A, B, R](sum: Exp[A | B], left: Exp[A => R], right: Exp[B => R])
     extends BaseDef[R]()(left.elem.eRange) {
@@ -188,7 +188,7 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
       foldD.sum.foldBy(foldD.left >> fun(_._2), foldD.right >> fun(_._2))
 
     // Rule: Left[A,B](V(a, iso)) ==> V(Left(a), SumIso(iso, iso[B]))
-    case l@Left(HasViews(a, iso: Iso[a1, b1])) =>
+    case l@SLeft(HasViews(a, iso: Iso[a1, b1])) =>
       val eR = l.eRight
       getIsoByElem(eR) match {
         case iso1: Iso[a2, b2] =>
@@ -196,17 +196,17 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
       }
 
     // Rule: Right[A,B](V(a, iso)) ==> V(Right(a), SumIso(iso[A], iso))
-    case r@Right(HasViews(a, iso: Iso[a1, b1])) =>
+    case r@SRight(HasViews(a, iso: Iso[a1, b1])) =>
       val eL = r.eLeft
       getIsoByElem(eL) match {
         case iso1: Iso[a2, b2] =>
           SumView(a.asRep[a1].asRight(iso1.eFrom))(iso1, iso).self
       }
 
-    case SumMap(Def(Right(x)), f: Rep[Function1[_, b]] @unchecked, g) =>
+    case SumMap(Def(SRight(x)), f: Rep[Function1[_, b]] @unchecked, g) =>
       g(x).asRight[b](f.elem.eRange)
 
-    case SumMap(Def(Left(x)), f, g: Rep[Function1[_, d]] @unchecked) =>
+    case SumMap(Def(SLeft(x)), f, g: Rep[Function1[_, d]] @unchecked) =>
       f(x).asLeft[d](g.elem.eRange)
 
     case m1@SumMap(Def(f: SumFold[a0, b0, _]), left, right) =>
@@ -242,12 +242,12 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
         source.foldBy(f1, f1)
 
       // Rule: fold(Left(left), l, r) ==> l(left)
-      case Def(Left(left: Rep[a])) =>
+      case Def(SLeft(left: Rep[a])) =>
         implicit val eLeft = left.elem
         foldD.left(left)
 
       // Rule: fold(Right(right), l, r) ==> r(right)
-      case Def(Right(right: Rep[a])) =>
+      case Def(SRight(right: Rep[a])) =>
         implicit val eRight = right.elem
         foldD.right(right)
 
