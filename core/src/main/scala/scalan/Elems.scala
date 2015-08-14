@@ -82,14 +82,14 @@ trait Elems extends Base { self: Scalan =>
     protected def getDefaultRep = Pair(eFst.defaultRepValue, eSnd.defaultRepValue)
   }
 
-  case class SumElem[A, B](eLeft: Elem[A], eRight: Elem[B]) extends Element[(A | B)] {
+  case class SumElem[A, B](eLeft: Elem[A], eRight: Elem[B]) extends Element[A | B] {
     override def isEntityType = eLeft.isEntityType || eRight.isEntityType
     lazy val tag = {
       implicit val tA = eLeft.tag
       implicit val tB = eRight.tag
       weakTypeTag[A | B]
     }
-    protected def getDefaultRep = toLeftSum[A, B](eLeft.defaultRepValue)(eRight)
+    protected def getDefaultRep = mkLeft[A, B](eLeft.defaultRepValue)(eRight)
   }
 
   case class FuncElem[A, B](eDom: Elem[A], eRange: Elem[B]) extends Element[A => B] {
@@ -118,13 +118,13 @@ trait Elems extends Base { self: Scalan =>
   implicit val CharElement: Elem[Char] = new BaseElem[Char]
 
   implicit def pairElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A, B)] = new PairElem[A, B](ea, eb)
-  implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A | B)] = new SumElem[A, B](ea, eb)
+  implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A | B] = new SumElem[A, B](ea, eb)
   implicit def funcElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A => B] = new FuncElem[A, B](ea, eb)
   implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = new ScalaArrayElem[A](eA)
   ///implicit def elemElement[A](implicit ea: Elem[A]): Elem[Elem[A]]
 
   implicit def PairElemExtensions[A, B](eAB: Elem[(A, B)]): PairElem[A, B] = eAB.asInstanceOf[PairElem[A, B]]
-  implicit def SumElemExtensions[A, B](eAB: Elem[(A | B)]): SumElem[A, B] = eAB.asInstanceOf[SumElem[A, B]]
+  implicit def SumElemExtensions[A, B](eAB: Elem[A | B]): SumElem[A, B] = eAB.asInstanceOf[SumElem[A, B]]
   implicit def FuncElemExtensions[A, B](eAB: Elem[A => B]): FuncElem[A, B] = eAB.asInstanceOf[FuncElem[A, B]]
   implicit def ArrayElemExtensions[A](eArr: Elem[Array[A]]): ArrayElem[A] = eArr.asInstanceOf[ArrayElem[A]]
   //  implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]

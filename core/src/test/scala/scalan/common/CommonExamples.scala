@@ -27,12 +27,12 @@ trait CommonExamples extends Scalan with SegmentsDsl {
   }
   lazy val t10 = fun { (in: Rep[IntervalData]) =>
     val Pair(s, l) = in
-    val res = IF (s < 0) THEN { toRight(Interval(in):RSeg) } ELSE { toRight(Slice(0, l):RSeg) }
+    val res = IF (s < 0) THEN { (Interval(in): RSeg).asRight[Unit] } ELSE { (Slice(0, l): RSeg).asRight[Unit] }
     res.fold(_ => 0, s => s.length)
   }
   lazy val t10_1 = fun { (in: Rep[IntervalData]) =>
     val Pair(s, l) = in
-    val res = IF (s < 0) THEN { toLeft(Interval(in):RSeg) } ELSE { toLeft(Slice(0, l):RSeg) }
+    val res = IF (s < 0) THEN { (Interval(in): RSeg).asLeft[Unit] } ELSE { (Slice(0, l): RSeg).asLeft[Unit] }
     res.fold(s => s.length, _ => 0)
   }
   lazy val t10_2 = fun { (in: Rep[IntervalData]) =>

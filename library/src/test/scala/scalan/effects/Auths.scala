@@ -23,7 +23,7 @@ trait Authentications { self: AuthenticationsDsl =>
         cond <- eval(user === "john.snow" && password === "Ghost")
       } yield
         IF (cond) {
-          toRight("john.snow")
+          SOption.some("john.snow")
         } ELSE {
           SOption.none[String]
         }

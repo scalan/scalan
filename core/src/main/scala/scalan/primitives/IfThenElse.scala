@@ -109,7 +109,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     val ea = iso1.eFrom
     val eb = iso2.eFrom
     implicit val ec = iso1.eTo
-    val source = IF (cond) THEN { toLeftSum(a)(eb) } ELSE { toRightSum(b)(ea) }
+    val source = IF (cond) THEN { mkLeft(a)(eb) } ELSE { mkRight(b)(ea) }
     val res = SumView(source)(iso1, iso2).self.joinSum
     res
   }

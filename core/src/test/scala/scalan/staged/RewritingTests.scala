@@ -20,7 +20,7 @@ class RewritingTests extends BaseCtxTests {
 
   trait Prog0 extends ScalanExp {
 
-    lazy val mkRight = fun { x: Rep[Int] => toRightSum[Int, Int](x) }
+    lazy val mkRightFun = fun { x: Rep[Int] => x.asRight[Int] }
 
     override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
       // rewrite fun(x => Right(_)) to fun(x => Left(x))
@@ -28,7 +28,7 @@ class RewritingTests extends BaseCtxTests {
         lam.y match {
           case Def(r @ Right(_)) =>
             implicit val eA = r.eLeft.asInstanceOf[Elem[b]]
-            fun { x: Rep[b] => toLeftSum[b, b](x) }
+            fun { x: Rep[b] => x.asLeft[b] }
           case _ => super.rewriteDef(d)
         }
       case _ =>
@@ -42,9 +42,9 @@ class RewritingTests extends BaseCtxTests {
     }
 
     def testMkRight(): Unit = {
-      emit("mkRight", mkRight)
-      val newLambda = passes.doTransform(mkRight)
-      emit("mkRight'", newLambda)
+      emit("mkRightFun", mkRightFun)
+      val newLambda = passes.doTransform(mkRightFun)
+      emit("mkRightFun'", newLambda)
 
       inside(newLambda) { case Def(Lambda(_, _, x, Def(Left(l)))) =>
         assert(x == l)
@@ -54,16 +54,16 @@ class RewritingTests extends BaseCtxTests {
 
   trait Prog extends ScalanExp {
     lazy val ifFold = fun { pp: Rep[Boolean] =>
-      val e1 = toLeftSum[Double, Int](1d)
-      val e2 = toRightSum[Double, Int](2)
+      val e1 = toRep(1.0).asLeft[Int]
+      val e2 = toRep(2).asRight[Double]
       val iff = __ifThenElse(pp, e1, e2)
       iff.foldBy(constFun(10), constFun(100))
     }
 
     lazy val ifIfFold = fun2 { (p1: Rep[Boolean], p2: Rep[Boolean]) =>
-      val e1 = toLeftSum[Double, Int](1d)
-      val e2 = toRightSum[Double, Int](2)
-      val e3 = toRightSum[Double, Int](3)
+      val e1 = toRep(1.0).asLeft[Int]
+      val e2 = toRep(2).asRight[Double]
+      val e3 = toRep(3).asRight[Double]
       val iff = __ifThenElse(
         p1,
         __ifThenElse(p2, e1, e2),

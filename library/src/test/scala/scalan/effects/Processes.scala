@@ -64,9 +64,9 @@ trait Processes extends Base with Containers { self: ProcessesDsl =>
       (implicit val eA: Elem[A], val eO: Elem[O], val cF: Cont[F]) extends Process[F,O] {
 
     override def map[O2: Elem](f: (Rep[O]) => Rep[O2]) =
-      Await(req, fun { in: Rep[(Throwable | A)] => recv(in).map(f) })
+      Await(req, fun { in: Rep[Throwable | A] => recv(in).map(f) })
     def onHalt(f: Rep[Throwable] => RProc[F,O]): RProc[F,O] =
-      Await(req, fun { in: Rep[(Throwable | A)] => recv(in).onHalt(f) })
+      Await(req, fun { in: Rep[Throwable | A] => recv(in).onHalt(f) })
 
 //    override def flatMap[R:Elem](f1: Rep[B] => Rep[Process[F,R]]): Rep[Process[F,R]] = {
 //      a.flatMap((s: Rep[S]) => f(s).flatMap(f1))
