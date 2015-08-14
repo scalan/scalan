@@ -63,7 +63,7 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
 
   sealed trait Inject[F[_],G[_]] {
     def inj[A:Elem](sub: Rep[F[A]]): Rep[G[A]]
-    def prj[A:Elem](sup: Rep[G[A]]): Rep[Unit | F[A]]
+    def prj[A:Elem](sup: Rep[G[A]]): Rep[SOption[F[A]]]
   }
 
   object Inject {

@@ -35,16 +35,29 @@ trait TypeSum { self: Scalan =>
     def joinSum: Rep[A] = sum.foldBy(identityFun, identityFun)
   }
 
-  implicit class OptionOps[A: Elem](opt: Rep[Unit | A]) {
-    def map[B: Elem](f: Rep[A] => Rep[B]): Rep[Unit | B] =
-      opt.mapSumBy(identityFun, fun(f))
+  implicit class OptionOps[A: Elem](opt: ROption[A]) {
+    def map[B: Elem](f: Rep[A] => Rep[B]): ROption[B] =
+      mapBy(fun(f))
 
-    def flatMap[B: Elem](f: Rep[A] => Rep[Unit | B]): Rep[Unit | B] =
-      opt.foldBy(constFun(SOption.none[B]), fun(f))
+    def mapBy[B](f: Rep[A => B]): ROption[B] =
+      opt.mapSumBy(identityFun, f)
+
+    def flatMap[B: Elem](f: Rep[A] => ROption[B]): ROption[B] =
+      flatMapBy(fun(f))
+
+    def flatMapBy[B: Elem](f: Rep[A => SOption[B]]): ROption[B] =
+      opt.foldBy(constFun(SOption.none[B]), f)
 
     def getOrElse[B >: A : Elem](default: Rep[B]): Rep[B] =
       opt.foldBy(constFun(default), identityFun)
+
+    def isEmpty = opt.isLeft
+
+    def isDefined = opt.isRight
   }
+
+  type SOption[A] = Unit | A
+  type ROption[A] = Rep[SOption[A]]
 
   object SOption {
     def none[A: Elem] = mkLeft[Unit, A](())
@@ -52,6 +65,8 @@ trait TypeSum { self: Scalan =>
     def some[A](x: Rep[A]) = mkRight[Unit, A](x)
   }
 
+  // TODO used by generated code; ideally should be unnecessary
+  def sOptionElement[A: Elem] = element[SOption[A]]
 }
 
 trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
