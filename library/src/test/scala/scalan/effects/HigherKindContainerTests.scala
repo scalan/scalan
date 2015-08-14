@@ -6,7 +6,7 @@ import scalan.monads.MonadsDslExp
 class HigherKindContainerTests extends AbstractElemTests {
   class Ctx extends super.Ctx with MonadsDslExp
 
-  test("Equality works as expected on containers with higher-kind type variables") {
+  it("Equality works as expected on containers with higher-kind type variables") {
     // this doesn't currently work
     pending
 

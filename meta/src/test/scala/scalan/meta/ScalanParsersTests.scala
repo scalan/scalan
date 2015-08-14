@@ -1,10 +1,10 @@
 package scalan.meta
 
-import scalan.BaseTests
+import scalan.BaseNestedTests
 import scala.reflect.internal.util.BatchSourceFile
 import scalan.meta.ScalanAst._
 
-class ScalanParsersTests extends BaseTests with ScalanParsersEx {
+class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
   val ast: this.type = this
   import scalan.meta.ScalanAst.
   {

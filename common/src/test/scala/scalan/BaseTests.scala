@@ -6,7 +6,7 @@ import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scalan.util.FileUtil
 
-trait TestsUtil {
+trait TestsUtil extends Matchers with Inside {
   def testOutDir = "test-out"
 
   def testSuffixes = Seq("Suite", "Tests", "It", "_")
@@ -24,16 +24,23 @@ trait TestsUtil {
 }
 
 /**
- * Standard base class for most test suites.
+ * Standard base class for most test suites. See BaseNestedTests and BaseShouldTests for alternatives
  *
- * See <a>http://www.scalatest.org/getting_started_with_fun_spec</a>.
+ * See <a>http://doc.scalatest.org/2.2.4/#org.scalatest.FunSuite</a>.
  */
-abstract class BaseTests extends FunSpec with Matchers with Inside with TestsUtil {
-  /** Alias for <code>it</code> for tests outside <code>describe</code> blocks. */
-  def test(name: String, tags: Tag*)(testFun: => Unit) = it(name, tags: _*)(testFun)
-}
+abstract class BaseTests extends FunSuite with TestsUtil
 
-abstract class BaseShouldTests extends FlatSpec with Matchers with TestsUtil {
+/**
+ * Standard base class for test suites with nested tests.
+ *
+ * See <a>http://doc.scalatest.org/2.2.4/#org.scalatest.FunSpec</a>.
+ */
+abstract class BaseNestedTests extends FunSpec with TestsUtil
+
+/**
+ * See <a>http://doc.scalatest.org/2.2.4/#org.scalatest.FlatSpec</a>.
+ */
+abstract class BaseShouldTests extends FlatSpec with TestsUtil {
   protected final class InAndIgnoreMethods2(resultOfStringPassedToVerb: ResultOfStringPassedToVerb) {
 
     import resultOfStringPassedToVerb.rest

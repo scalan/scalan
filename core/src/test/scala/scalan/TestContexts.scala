@@ -52,4 +52,6 @@ trait TestContexts extends Suite with TestsUtil {
 
 abstract class BaseCtxTests extends BaseTests with TestContexts
 
+abstract class BaseNestedCtxTests extends BaseNestedTests with TestContexts
+
 abstract class BaseShouldCtxTests extends BaseShouldTests with TestContexts
