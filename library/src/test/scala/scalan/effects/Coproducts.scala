@@ -63,19 +63,19 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
 
   sealed trait Inject[F[_],G[_]] {
     def inj[A:Elem](sub: Rep[F[A]]): Rep[G[A]]
-    def prj[A:Elem](sup: Rep[G[A]]): Rep[Unit | F[A]]
+    def prj[A:Elem](sup: Rep[G[A]]): Rep[SOption[F[A]]]
   }
 
   object Inject {
     implicit def injRefl[F[_]] = new Inject[F,F] {
       def inj[A:Elem](sub: Rep[F[A]]) = sub
-      def prj[A:Elem](sup: Rep[F[A]]) = toRight(sup)
+      def prj[A:Elem](sup: Rep[F[A]]) = SOption.some(sup)
     }
 
     implicit def injLeft[F[_]:Cont,G[_]:Cont] = new Inject[F,({type λ[α] = Coproduct[F,G,α]})#λ] {
       def inj[A:Elem](sub: Rep[F[A]]) = CoproductImpl(sub.asLeft[G[A]])
       def prj[A:Elem](sup: Rep[Coproduct[F,G,A]]) =
-        sup.run.foldBy(fun { fa => toRight(fa) },
+        sup.run.foldBy(fun { fa => SOption.some(fa) },
                        constFun(SOption.none[F[A]]))
     }
 

@@ -414,7 +414,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
           val (sv2, iso2) = opt2.getOrElse(trivialUnapply(s2))
           Some((Pair(sv1, sv2), pairIso(iso1, iso2)))
       }
-    case Def(l @ Left(s)) =>
+    case Def(l @ SLeft(s)) =>
       (unapplyViews(s), UnpackableElem.unapply(l.eRight)) match {
         case (None, None) => None
         case (opt1, opt2) =>
@@ -422,7 +422,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
           val iso2 = opt2.getOrElse(identityIso(l.eRight))
           Some((sv1.asLeft(iso2.eFrom), sumIso(iso1, iso2)))
       }
-    case Def(r @ Right(s)) =>
+    case Def(r @ SRight(s)) =>
       (UnpackableElem.unapply(r.eLeft), unapplyViews(s)) match {
         case (None, None) => None
         case (opt1, opt2) =>

@@ -104,7 +104,7 @@ trait BaseExp extends Base { self: ScalanExp =>
       val x1 = x.asInstanceOf[a | b]
       implicit val eA = se.eLeft
       implicit val eB = se.eRight
-      x1.fold(l => Left[a, b](l), r => Right[a, b](r))
+      x1.fold(l => SLeft[a, b](l), r => SRight[a, b](r))
     case _ =>
       x match {
         // this may be called instead of reifyObject implicit in some cases

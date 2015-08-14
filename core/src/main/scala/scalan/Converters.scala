@@ -45,7 +45,7 @@ trait Converters extends Views { self: Scalan =>
     val eT = sumElement(eA1, eA2)
     val eR = sumElement(eB1, eB2)
     def apply(x: Rep[(A1|A2)]) = { x.mapSumBy(conv1.convFun, conv2.convFun) }
-    lazy val convFun = fun { x: Rep[(A1 | A2)] => apply(x) }
+    lazy val convFun = fun { x: Rep[A1 | A2] => apply(x) }
   }
   trait SumConverterCompanion
 

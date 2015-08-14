@@ -56,7 +56,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
           m.addSym(sym, exp)
       }
 
-    case d@Left(l) =>
+    case d@SLeft(l) =>
       (createManifest(d.selfType.eLeft), createManifest(d.selfType.eRight)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
           implicit val (imA, imB) = (mA, mB)
@@ -65,7 +65,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
           m.addSym(sym, exp)
       }
 
-    case d@Right(r) =>
+    case d@SRight(r) =>
       (createManifest(d.selfType.eLeft), createManifest(d.selfType.eRight)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
           implicit val (imA, imB) = (mA, mB)
@@ -75,7 +75,8 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       }
 
     case IsLeft(s) =>
-      (createManifest(s.elem.eLeft), createManifest(s.elem.eRight)) match {
+      val sumElem = s.elem.asInstanceOf[SumElem[_, _]]
+      (createManifest(sumElem.eLeft), createManifest(sumElem.eRight)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
           implicit val (imA, imB) = (mA, mB)
           val sum = m.symMirror[Either[a, b]](s)
@@ -84,7 +85,8 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       }
 
     case IsRight(s) =>
-      (createManifest(s.elem.eLeft), createManifest(s.elem.eRight)) match {
+      val sumElem = s.elem.asInstanceOf[SumElem[_, _]]
+      (createManifest(sumElem.eLeft), createManifest(sumElem.eRight)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
           implicit val (imA, imB) = (mA, mB)
           val sum = m.symMirror[Either[a, b]](s)
