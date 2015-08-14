@@ -52,7 +52,10 @@ class FunctionTests extends BaseCtxTests {
     import ctx._
 
     t1 should matchPattern { case Def(ConstantLambda(_)) => }
+    t1 should matchPattern { case Def(VeryConstantLambda(_)) => }
+
     t2.getLambda.y should matchPattern { case Def(ConstantLambda(_)) => }
+    t2.getLambda.y shouldNot matchPattern { case Def(VeryConstantLambda(_)) => }
 
     identityFun[Int] shouldNot matchPattern { case Def(ConstantLambda(_)) => }
     fun[Int, Int] { x => x + 1 } shouldNot matchPattern { case Def(ConstantLambda(_)) => }

@@ -2,7 +2,7 @@ package scalan
 
 import scalan.common.{KindsDslExp, KindsExamples}
 
-abstract class AbstractElemTests extends BaseTests {
+abstract class AbstractElemTests extends BaseNestedTests {
   class Ctx extends ScalanCtxExp {
     def elementsShouldBeEqual[A: Elem, B: Elem] =
       assert(element[A] == element[B])
@@ -17,13 +17,13 @@ abstract class AbstractElemTests extends BaseTests {
 }
 
 class ElemTests extends AbstractElemTests {
-  class Ctx extends super.Ctx with KindsExamples with KindsDslExp
+  class Ctx extends super.Ctx with KindsExamples with KindsDslExp with JNIExtractorOpsExp
+
+  val ctx = new Ctx
+  import ctx._
 
   describe("Equality works as expected") {
-    test("for elements") {
-      val ctx = new Ctx
-      import ctx._
-
+    it("for elements") {
       elementsShouldBeEqual[Int, Int]
       elementsShouldBeEqual[Double, Double]
       elementsShouldNotBeEqual[Int, Double]
@@ -50,10 +50,11 @@ class ElemTests extends AbstractElemTests {
       elementsShouldBeEqual[Thunk[Int], Thunk[Int]]
     }
 
-    test("for containers") {
-      val ctx = new Ctx
-      import ctx._
+    it("for JNI types") {
+      elementsShouldNotBeEqual(JNIArrayElem(element[Int]), element[Array[Int]])
+    }
 
+    it("for containers") {
       containersShouldBeEqual[ArrayBuffer, ArrayBuffer]
       containersShouldBeEqual[Array, Array]
       containersShouldBeEqual[Id, Id]

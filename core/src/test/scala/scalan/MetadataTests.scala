@@ -3,7 +3,7 @@ package scalan
 import scalan.compilation.{GraphVizConfig, DummyCompilerWithPasses}
 import scalan.util.FileUtil
 
-class MetadataTests extends BaseTests {
+class MetadataTests extends BaseNestedTests {
   private val mainStr = "main"
 
   trait Prog extends Scalan {

@@ -81,14 +81,10 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
   case class IsLeft[A, B](sum: Exp[(A | B)]) extends BaseDef[Boolean] {
     override def mirror(t: Transformer) = IsLeft(t(sum))
-    // removing leads to compilation error
-    override val selfType = BooleanElement
   }
 
   case class IsRight[A, B](sum: Exp[(A | B)]) extends BaseDef[Boolean] {
     override def mirror(t: Transformer) = IsRight(t(sum))
-    // removing leads to compilation error
-    override val selfType = BooleanElement
   }
 
   case class SumFold[A, B, R](sum: Exp[(A | B)], left: Exp[A => R], right: Exp[B => R])

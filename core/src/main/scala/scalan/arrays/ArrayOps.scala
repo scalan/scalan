@@ -107,7 +107,7 @@ trait ArrayOps { self: Scalan =>
     lazy val defaultRepTo = SArray.empty[B]
   }
 
-  abstract class ArrayElem[A](implicit override val eItem: Elem[A])
+  abstract class ArrayElem[A](implicit eItem: Elem[A])
     extends EntityElem1[A, Array[A], Array](eItem, container[Array]) {
   }
 

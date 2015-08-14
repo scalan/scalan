@@ -79,7 +79,7 @@ trait MethodMappingDSL {
     }
 
     trait Fun {
-      val lib: Fn = null
+      def lib: Fn
     }
 
     abstract class Mapping[TC <: MappingTags](languageId: LANGUAGE_ID)(implicit val l: TC) {
@@ -125,7 +125,7 @@ trait MethodMappingDSL {
 
     case class CppArg(ty: CppType, name: String)
 
-    case class CppFunc(funcName: String, args: CppArg*)(implicit override val lib: CppLib) extends Fun
+    case class CppFunc(funcName: String, args: CppArg*)(implicit val lib: CppLib) extends Fun
 
     abstract class CppMapping extends Mapping(CPP) {
       type Func = CppFunc
@@ -144,7 +144,7 @@ trait MethodMappingDSL {
 
     case class ScalaArg(ty: ScalaType, name: Symbol)
 
-    case class ScalaFunc(funcName: Symbol, args: ScalaArg*)(val wrapper : Boolean = false)(implicit override val lib: Fn) extends Fun
+    case class ScalaFunc(funcName: Symbol, args: ScalaArg*)(val wrapper: Boolean = false)(implicit val lib: Fn) extends Fun
 
     abstract class ScalaMapping extends Mapping(SCALA) {
       type Func = ScalaFunc

@@ -84,7 +84,7 @@ object Sbt {
             |addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.12.0")
           """.stripMargin)
 
-        write(file(sourcesDir, "project", "build.properties"), "sbt.version=0.13.7")
+        write(file(sourcesDir, "project", "build.properties"), "sbt.version=0.13.9")
 
         compilerConfig.sbt.commands.dropRight(1).foreach(com => ProcessUtil.launch(sourcesDir, "sbt", com))
         val output: Array[String] = ProcessUtil.launch(sourcesDir, "sbt", compilerConfig.sbt.commands.last)

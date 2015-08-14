@@ -106,6 +106,10 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
+  /**
+   * Matcher for lambdas which don't depend on their arguments
+   * (but can close over other expressions, unlike VeryConstantLambda).
+   */
   object ConstantLambda {
     // if lam.y depends on lam.x indirectly, lam.schedule must contain the dependency path
     // and its length will be > 1
@@ -114,6 +118,17 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
         Some(lam.y)
       else
         None
+  }
+
+  /**
+   * Matcher for lambdas which return staging-time constants.
+   * VeryConstantLambda(x) should be equivalent to ConstantLambda(Def(Const(x)))
+   */
+  object VeryConstantLambda {
+    def unapply[A,B](lam: Lambda[A, B]): Option[B] = lam.y match {
+      case Def(Const(y)) => Some(y)
+      case _ => None
+    }
   }
 
   // matcher version of Lambda.isIdentity
