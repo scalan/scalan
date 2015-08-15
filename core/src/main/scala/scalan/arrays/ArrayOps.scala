@@ -181,7 +181,7 @@ trait ArrayOps { self: Scalan =>
 
   // require: forall i -> indexes(i) in xs.indices && indexes.length == values.length
   // provide: res.length == xs.length
-  def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = ???
+  def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T]
 
   def array_sum[T:Elem](xs: Arr[T])(implicit n: Numeric[T]): Rep[T]
   def array_max[T:Elem](xs: Arr[T])(implicit o: Ordering[T]): Rep[T]
@@ -232,6 +232,12 @@ trait ArrayOpsSeq extends ArrayOps {
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val ct = arrayToClassTag(xs)
     xs.update(index, value)
+    xs
+  }
+
+  def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = {
+    implicit val ct = arrayToClassTag(xs)
+    (0 to indexes.length).foreach(i => xs.update(indexes(i), values(i)))
     xs
   }
 
@@ -422,6 +428,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArrayUpdate[T](xs: Exp[Array[T]], index: Exp[Int], value: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayUpdate(t(xs), t(index), t(value))
   }
+  case class ArrayUpdateMany[T](xs: Exp[Array[T]], indexes: Exp[Array[Int]], values: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ArrayUpdateMany(t(xs), t(indexes), t(values))
+  }
   case class ArrayAppend[T](xs: Exp[Array[T]], value: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayAppend(t(xs), t(value))
   }
@@ -491,6 +500,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val eT = xs.elem.eItem
     ArrayUpdate(xs, index, value)
+  }
+
+  def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = {
+    implicit val eT = xs.elem.eItem
+    ArrayUpdateMany(xs, indexes, values)
   }
 
   def array_append[T](xs: Arr[T], value: Rep[T]): Arr[T] = {
