@@ -167,13 +167,6 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       val s = ArrayReplicate(len, source2.asRep[a])
       val res = ViewArray(s)(ArrayIso(iso2))
       res
-    /*
-      case ArrayUpdate(Def(view: ViewArray[a, b]), i, Def(UnpackableDef(value, iso2: Iso[c, d]))) if view.innerIso == iso2 =>
-        implicit val eA = view.innerIso.eFrom
-        implicit val eB = view.innerIso.eTo
-        val res = ViewArray(view.source.update(i, value.asRep[a]))(view.innerIso)
-        res
-        */
     case ArrayUpdate(HasViews(source, iso: ArrayIso[a, b]), i, HasViews(value, iso2: Iso[c, d])) if iso.innerIso == iso2 =>
       implicit val eA = iso.innerIso.eFrom
       implicit val eB = iso.innerIso.eTo
@@ -183,6 +176,29 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       implicit val eA = iso.innerIso.eFrom
       implicit val eB = iso.innerIso.eTo
       ViewArray(xs.asRep[Array[a]].updateMany(is, vs.asRep[Array[a]]))(iso)
+
+    case ArrayAppend(HasViews(source, iso: ArrayIso[a, b]), HasViews(value, iso2: Iso[c, d])) if iso.innerIso == iso2 =>
+      implicit val eA = iso.innerIso.eFrom
+      implicit val eB = iso.innerIso.eTo
+      ViewArray(source.asRep[Array[a]].append(value.asRep[a]))(iso)
+
+    case ArrayCons(HasViews(value, iso2: Iso[c, d]), HasViews(source, iso: ArrayIso[a, b])) if iso.innerIso == iso2 =>
+      implicit val eA = iso.innerIso.eFrom
+      implicit val eB = iso.innerIso.eTo
+      ViewArray(value.asRep[a] :: source.asRep[Array[a]])(iso)
+
+    case ArrayReverse(HasViews(source, iso: ArrayIso[a, b])) =>
+      implicit val eA = iso.innerIso.eFrom
+      implicit val eB = iso.innerIso.eTo
+      ViewArray(source.asRep[Array[a]].reverse)(iso)
+
+    case ArrayFlatten(HasViews(xss, iso: ArrayIso[_,_])) if iso.innerIso.isInstanceOf[ArrayIso[_,_]]  =>
+      iso.innerIso match {
+        case iso: ArrayIso[a,b] =>
+          implicit val eA = iso.innerIso.eFrom
+          implicit val eB = iso.innerIso.eTo
+          ViewArray(xss.asRep[Array[Array[a]]].flatten)(iso)
+      }
 
     case ArrayFold(Def(view: ViewArray[_,_]), init, f) =>
       foldUnderlyingArray(view, init, f)
