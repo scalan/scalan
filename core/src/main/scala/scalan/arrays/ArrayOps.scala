@@ -80,6 +80,10 @@ trait ArrayOps { self: Scalan =>
     def reverse = array_reverse(xs)
   }
 
+  implicit class RepNArrayOps[T: Elem](xss: Arr[Array[T]]) {
+    def flatten = array_flatten(xss)
+  }
+
   // name to avoid conflict with scala.Array
   object SArray {
     def rangeFrom0(n: Rep[Int]) = array_rangeFrom0(n)
@@ -195,6 +199,7 @@ trait ArrayOps { self: Scalan =>
   def array_empty[T: Elem]: Arr[T]
   def array_toList[T:Elem](xs: Arr[T]): Lst[T]
   def array_reverse[T:Elem](xs: Arr[T]): Arr[T]
+  def array_flatten[T:Elem](xs: Arr[Array[T]]): Arr[T]
   def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T]
   def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[Int]
 
@@ -328,6 +333,7 @@ trait ArrayOpsSeq extends ArrayOps {
 
   def array_empty[T: Elem]: Arr[T] = scala.Array.empty[T]
   def array_reverse[T:Elem](xs: Arr[T]): Arr[T] = genericArrayOps(xs).reverse
+  def array_flatten[T:Elem](xs: Arr[Array[T]]): Arr[T] = genericArrayOps(xs).flatten
   def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T] = {
     val buf = new Array[T](xs.length + 1)
     buf(0) = value
@@ -439,6 +445,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   }
   case class ArrayReverse[T](xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayReverse(t(xs))
+  }
+  case class ArrayFlatten[T](xss: Arr[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ArrayFlatten(t(xss))
   }
   case class ArrayRangeFrom0(n: Exp[Int]) extends ArrayDef[Int] {
     def eT = element[Int]
@@ -581,6 +590,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   def array_empty[T: Elem]: Arr[T] = ArrayEmpty[T]()
 
   def array_reverse[T:Elem](xs: Arr[T]): Arr[T] = ArrayReverse(xs)
+
+  def array_flatten[T:Elem](xs: Arr[Array[T]]): Arr[T] = ArrayFlatten(xs)
 
   def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T] = ArrayCons(value, xs)
 
