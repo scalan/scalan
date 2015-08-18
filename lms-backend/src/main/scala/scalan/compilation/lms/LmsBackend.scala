@@ -69,86 +69,28 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     case _ => ""
   })
 
-  def Not(arg: Exp[Boolean]) = {
-    !arg
-  }
+  def tuple2[A: Manifest, B: Manifest](a: Exp[A], b: Exp[B]): Exp[(A, B)] = make_tuple2(a -> b)
 
-  def Neg[T: Manifest](arg: Exp[T])(implicit n: Numeric[T]) = {
+  def num_negate[T: Manifest](arg: Exp[T])(implicit n: Numeric[T]) = {
     n.zero - arg
   }
 
-  def DoubleToInt(arg: Exp[Double]) = {
-    arg.toInt
+  def boolean_to_int(bool: Exp[Boolean]) = if (bool) 1 else 0
+
+  // TODO implement for all types and contribute upstream
+  def integral_mod[A: Integral: Manifest](arg1: Exp[A], arg2: Exp[A]) = manifest[A] match {
+    case Manifest.Int =>
+      int_mod(arg1.asInstanceOf[Exp[Int]], arg2.asInstanceOf[Exp[Int]])
+    case mA =>
+      throw new IllegalStateException(s"LMS only supports mod operation for Int, got $mA instead")
   }
 
-  def LongToIntExt(arg: Exp[Long]) = {
-    long_toint(arg)
-  }
-
-  def DoubleToFloat(arg: Exp[Double]) = {
-    arg.toFloat
-  }
-
-  def IntToDouble(arg: Exp[Int]) = {
-    arg.toDouble
-  }
-
-  def IntToFloat(arg: Exp[Int]) = {
-    arg.toFloat
-  }
-
-  def IntToLong(arg: Exp[Int]) = {
-    arg.toLong
-  }
-
-  def sumLeft[A: Manifest, B: Manifest](a: Exp[A]): Exp[Either[A, B]] = make_left[A, B](a)
-  def sumRight[A: Manifest, B: Manifest](b: Exp[B]): Exp[Either[A, B]] = make_right[A, B](b)
-
-
-  def FloatToDouble(arg: Exp[Float]) = {
-    arg.toDouble
-  }
-
-  def FloatToInt(arg: Exp[Float]) = {
-    arg.toInt
-  }
-
-  def ToString(arg: Exp[_]) = {
-    String.valueOf(arg)
-  }
-
-  def And(left: Exp[Boolean], right: Exp[Boolean]) = {
-    left && right
-  }
-
-  def Or(left: Exp[Boolean], right: Exp[Boolean]) = {
-    left || right
-  }
-
-  def GT[A: Manifest](left: Exp[A], right: Exp[A])(implicit ord: Ordering[A]) = {
-    left > right
-  }
-
-  def GTEQ[A: Manifest](left: Exp[A], right: Exp[A])(implicit ord: Ordering[A]) = {
-    left >= right
-  }
-
-  def LT[A: Manifest](left: Exp[A], right: Exp[A])(implicit ord: Ordering[A]) = {
-    left < right
-  }
-
-  def LTEQ[A: Manifest](left: Exp[A], right: Exp[A])(implicit ord: Ordering[A]) = {
-    left <= right
-  }
-
-  def block[A: Manifest, B: Manifest](left: Exp[A], right: Exp[B]) = {
+  def semicolon[A, B: Manifest](left: Exp[A], right: Exp[B]) = {
     val l = left
     right
   }
 
-  def throwException(msg: Exp[String]) = fatal(msg)
-
-  def loopUntil[A: Manifest](init: Exp[A], cond: Rep[A] => Rep[Boolean], step: Rep[A] => Rep[A]): Exp[A] = {
+  def loop_until[A: Manifest](init: Exp[A], step: Rep[A] => Rep[A], cond: Rep[A] => Rep[Boolean]): Exp[A] = {
     // TODO check correctness
     var state = init
     while (!cond(state)) state = step(state)
@@ -164,10 +106,6 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
       buf += f(i)
     }
     buf
-  }
-
-  def emptyArrayBuffer[T: Manifest](): Exp[mutable.ArrayBuilder[T]] = {
-    ArrayBuilder.make[T]
   }
 
   def arrayBufferFromElem[T: Manifest](elem: Exp[T]): Exp[mutable.ArrayBuilder[T]] = {
@@ -206,18 +144,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     buf
   }
 
-  def arrayBufferToArray[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]]): Exp[Array[T]] = {
-    buf.result
-  }
-
   //
   // Map
   //
-  def emptyMap[K: Manifest, V: Manifest](): Exp[HashMap[K, V]] = {
-    HashMap[K, V]()
-  }
-
-  def mapUsingFunc[K: Manifest, V: Manifest](count: Rep[Int], f: Exp[Int] => Exp[(K, V)]): Exp[HashMap[K, V]] = {
+  def map_usingFunc[K: Manifest, V: Manifest](count: Rep[Int], f: Exp[Int] => Exp[(K, V)]): Exp[HashMap[K, V]] = {
     val h = HashMap[K, V]()
     for (i <- 0 until count) {
       val pair = f(i)
@@ -226,7 +156,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     h
   }
 
-  def multiMapAppend[K: Manifest, V: Manifest](map: Exp[HashMap[K, mutable.ArrayBuilder[V]]], key: Exp[K], value: Exp[V]): Exp[HashMap[K, mutable.ArrayBuilder[V]]] = {
+  def multiMap_append[K: Manifest, V: Manifest](map: Exp[HashMap[K, mutable.ArrayBuilder[V]]], key: Exp[K], value: Exp[V]): Exp[HashMap[K, mutable.ArrayBuilder[V]]] = {
     if (map.contains(key)) {
       map(key) += value
       map
@@ -236,14 +166,14 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     }
   }
 
-  def mapUnion[K: Manifest, V: Manifest](left: Exp[HashMap[K, V]], right: Exp[HashMap[K, V]]): Exp[HashMap[K, V]] = {
+  def map_union[K: Manifest, V: Manifest](left: Exp[HashMap[K, V]], right: Exp[HashMap[K, V]]): Exp[HashMap[K, V]] = {
     for (k <- right.keys) {
       left.update(k, right(k))
     }
     left
   }
 
-  def mapDifference[K: Manifest, V: Manifest](left: Exp[HashMap[K, V]], right: Exp[HashMap[K, V]]): Exp[HashMap[K, V]] = {
+  def map_difference[K: Manifest, V: Manifest](left: Exp[HashMap[K, V]], right: Exp[HashMap[K, V]]): Exp[HashMap[K, V]] = {
     val h = HashMap[K, V]()
     for (k <- left.keys) {
       if (!right.contains(k)) h.update(k, left(k))
@@ -251,7 +181,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     h
   }
 
-  def mapReduce[K: Manifest, V: Manifest](left: Exp[HashMap[K, V]], right: Exp[HashMap[K, V]], reduce: Rep[(V, V)] => Rep[V]): Exp[HashMap[K, V]] = {
+  def map_reduce[K: Manifest, V: Manifest](left: Exp[HashMap[K, V]], right: Exp[HashMap[K, V]], reduce: Rep[(V, V)] => Rep[V]): Exp[HashMap[K, V]] = {
     val res = HashMap[K, V]()
     for (k <- left.keys) {
       res.update(k, if (right.contains(k)) reduce((left(k), right(k))) else left(k))
@@ -262,7 +192,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     res
   }
 
-  def mapTransformValues[K: Manifest, V: Manifest, T: Manifest](in: Exp[HashMap[K, V]], f: Rep[V] => Rep[T]): Exp[HashMap[K, T]] = {
+  def map_transformValues[K: Manifest, V: Manifest, T: Manifest](in: Exp[HashMap[K, V]], f: Rep[V] => Rep[T]): Exp[HashMap[K, T]] = {
     val out = HashMap[K, T]()
     for (k <- in.keys) {
       out.update(k, f(in(k)))
@@ -270,7 +200,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     out
   }
 
-  def mapJoin[K: Manifest, V1: Manifest, V2: Manifest](left: Exp[HashMap[K, V1]], right: Exp[HashMap[K, V2]]): Exp[HashMap[K, (V1, V2)]] = {
+  def map_join[K: Manifest, V1: Manifest, V2: Manifest](left: Exp[HashMap[K, V1]], right: Exp[HashMap[K, V2]]): Exp[HashMap[K, (V1, V2)]] = {
     val h = HashMap[K, (V1, V2)]()
     for (k <- left.keys) {
       if (right.contains(k)) h.update(k, (left(k), right(k)))
@@ -278,140 +208,26 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     h
   }
 
-  def mapContains[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]], key: Exp[K]): Exp[Boolean] = {
-    map.contains(key)
-  }
-
-  def mapApply[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]], key: Exp[K]): Exp[V] = {
-    map(key)
-  }
-
-  def mapApplyIf[K: Manifest, V: Manifest, T: Manifest](map: Exp[HashMap[K, V]], key: Exp[K], exists: Exp[V] => Exp[T], otherwise: Exp[Unit] => Exp[T]): Exp[T] = {
+  def map_applyIf[K: Manifest, V: Manifest, T: Manifest](map: Exp[HashMap[K, V]], key: Exp[K], exists: Exp[V] => Exp[T], otherwise: Exp[Unit] => Exp[T]): Exp[T] = {
     if (map.contains(key)) exists(map(key)) else otherwise(())
   }
 
-  def mapUpdate[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]], key: Exp[K], value: Exp[V]): Exp[HashMap[K, V]] = {
+  def map_update[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]], key: Exp[K], value: Exp[V]): Exp[HashMap[K, V]] = {
     map.update(key, value)
     map
   }
 
-  def mapSize[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Int] = {
-    map.size
+  def map_toArray[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Array[(K, V)]] = {
+    arrayMap[K, (K, V)](map.keys.toArray, key => (key, map(key)))
   }
 
-  def mapToArray[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Array[(K, V)]] = {
-    mapArray[K, (K, V)](map.keys.toArray, key => (key, map(key)))
-  }
-
-  def mapKeys[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Array[K]] = {
+  def map_keys[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Array[K]] = {
     map.keys.toArray
   }
 
-  def mapValues[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Array[V]] = {
+  def map_values[K: Manifest, V: Manifest](map: Exp[HashMap[K, V]]): Exp[Array[V]] = {
     map.values.toArray
   }
-
-  def tuple[A: Manifest, B: Manifest](a: Exp[A], b: Exp[B]): Exp[(A, B)] = {
-    Tuple2(a, b)
-  }
-
-  def first[A: Manifest, B: Manifest](tup: Exp[(A, B)]): Exp[A] = {
-    tup._1
-  }
-
-  def second[A: Manifest, B: Manifest](tup: Exp[(A, B)]): Exp[B] = {
-    tup._2
-  }
-
-  def opPlus[A: Numeric : Manifest](a: Exp[A], b: Exp[A]): Exp[A] = {
-    a + b
-  }
-
-  def opMinus[A: Numeric : Manifest](a: Exp[A], b: Exp[A]): Exp[A] = {
-    a - b
-  }
-
-  def opMult[A: Numeric : Manifest](a: Exp[A], b: Exp[A]): Exp[A] = {
-    a * b
-  }
-
-  def opDiv[A: Numeric : Manifest](a: Exp[A], b: Exp[A]): Exp[A] = {
-    a / b
-  }
-
-  def opMod(a: Exp[Int], b: Exp[Int]): Exp[Int] = a % b
-
-  def opEq[A: Manifest](a: Exp[A], b: Exp[A]): Exp[Boolean] = {
-    equals(a, b)
-  }
-
-  def Max[A: Manifest](left: Exp[A], right: Exp[A])(implicit ord: Ordering[A]) = {
-    left.max(right)
-  }
-
-  def Pow(x: Exp[Double], y: Exp[Double]) : Exp[Double] = {
-    math_pow(x, y)
-  }
-
-  def Sin(v: Exp[Double]) : Exp[Double] = {
-    math_sin(v)
-  }
-
-  def Sqrt(v: Exp[Double]) : Exp[Double] = {
-    math_sqrt(v)
-  }
-
-  def Exp(v: Exp[Double]) : Exp[Double] = {
-    math_exp(v)
-  }
-
-  def intToDouble(v: Exp[Int]) : Exp[Double] = {
-    int_to_double(v)
-  }
-
-  def Min[A: Manifest](left: Exp[A], right: Exp[A])(implicit ord: Ordering[A]) = {
-    left.min(right)
-  }
-
-  def stringConcat(a: Exp[String], b: Exp[String]): Exp[String] = {
-    a + b
-  }
-
-  def stringContains(a: Exp[String], b: Exp[String]): Exp[Boolean] = {
-    a.contains(b)
-  }
-
-  def stringStartsWith(a: Exp[String], b: Exp[String]): Exp[Boolean] = {
-    a.startsWith(b)
-  }
-
-  def stringEndsWith(a: Exp[String], b: Exp[String]): Exp[Boolean] = {
-    a.endsWith(b)
-  }
-
-  def stringMatches(a: Exp[String], b: Exp[String]): Exp[Boolean] = {
-    string_matches(a, b)
-  }
-
-  def substring(str: Exp[String], start: Exp[Int], end: Exp[Int]) = {
-    str.substring(start, end)
-  }
-
-  def stringLength(str: Exp[String]): Exp[Int] = {
-    string_length(str)
-  }
-
-  def charAt(str: Exp[String], index: Exp[Int]) = str.charAt(index)
-
-  def stringToInt(str: Exp[String]) = str.toInt
-
-  def stringToDouble(str: Exp[String]) = str.toDouble
-
-  def booleanToInt(bool: Exp[Boolean]) = if (bool) 1 else 0
-
-  def Log(x: Exp[Double]) = math_log(x)
-
-  def Abs[T:Manifest: Numeric](x: Exp[T]) = math_abs(x)
 
   def arrayMapReduce[T: Manifest, K: Manifest, V: Manifest](in: Exp[Array[T]], map: Rep[T] => Rep[(K, V)], reduce: Rep[(V, V)] => Rep[V]): Exp[HashMap[K, V]] = {
     val result = HashMap[K, V]()
@@ -462,9 +278,6 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     result
   }
 
-  def lambda[A: Manifest, B: Manifest](f: Rep[A] => Rep[B]) = fun(f)
-
-
   //def arraySortBy[A: Manifest, B: Manifest](a: Exp[Array[A]], by: Rep[A] => Rep[B])(implicit o: Ordering[B]): Exp[Array[A]]
     //mapArray[(B,A),A](mapArray[A,(B,A)](a, x => (by(x), x)).sort, p => p._2)
     //a.map(x => (by(x), x)).sort.map(p => p._2)
@@ -488,32 +301,8 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     result
   }
 
-  def opDotProductSV[A: Manifest](i1: Exp[Array[Int]], v1: Exp[Array[A]], i2: Exp[Array[Int]], v2: Exp[Array[A]]): Exp[A] = {
-    array_dotProductSparse(i1, v1, i2, v2)
-  }
-
-  def parallelExecute[T: Manifest](nJobs: Exp[Int], f: Exp[Int] => Exp[T]): Exp[Array[T]] = {
-    parallel_execute(nJobs, f)
-  }
-
-  def hashCode[T](obj: Exp[T]) : Exp[Int] = {
-    hash_code(obj)
-  }
-
-  def listMap[A: Manifest, B: Manifest](l: Rep[List[A]], f:Rep[A] => Rep[B]) = {
-    list_map[A, B] (l, f)
-  }
-
-  def listFlatMap[A: Manifest, B: Manifest](l: Rep[List[A]], f:Rep[A] => Rep[List[B]]) = {
-    list_flatMap(l, f)
-  }
-
-  def listLength[A:Manifest](l: Rep[List[A]]) = {
+  def list_length[A:Manifest](l: Rep[List[A]]) = {
     list_toarray[A](l).length      // TODO optimize
-  }
-
-  def listFilter[A: Manifest](l: Rep[List[A]], f: Rep[A] => Rep[Boolean]) = {
-    list_filter[A] (l, f)
   }
 
   def ifThenElse[A:Manifest](cond: Exp[Boolean], iftrue: () => Exp[A], iffalse: () => Exp[A]) = {
@@ -524,12 +313,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     toAtom(Reify(x, u, effects))
   }
 
-  //def printlnD(s: Exp[Any])  = println(s)
-  def unitD[T:Manifest](x: T) = unit[T](x)
-  /*
-  def mkStringD[A:Manifest](a: Exp[DeliteArray[A]]) : Exp[String] = {
-    a mkString unitD(" ")
-  }  */
+  def unitD[T: Manifest](x: T) = unit[T](x)
 }
 
 //trait CoreLmsBackendTmp extends CoreLmsBackend // todo kill this class

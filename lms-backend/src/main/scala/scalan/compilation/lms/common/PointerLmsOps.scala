@@ -21,17 +21,17 @@ trait PointerLmsOpsExp
 
   // note: m: Manifest[A] need to distinct objects CreateScalar[Int](0) and CreateScalar[Double](0.0), when 0 == 0.0
   case class CreateScalar[A](source: Exp[A], m: Manifest[A]) extends Def[Scalar[A]]
-  def createScalar[A: Manifest](source: Exp[A]): Exp[Scalar[A]] = CreateScalar(source, manifest[A])
+  def create_scalar[A: Manifest](source: Exp[A]): Exp[Scalar[A]] = CreateScalar(source, manifest[A])
 
   // note: m: Manifest[A] need to distinct objects NullPtr[Int] and NullPtr[Double] to be correct type for result pointer
   case class NullPtr[A](m: Manifest[A]) extends Def[Pointer[A]]
-  def nullPtr[A: Manifest]: Exp[Pointer[A]] = NullPtr(manifest[A])
+  def null_ptr[A: Manifest]: Exp[Pointer[A]] = NullPtr(manifest[A])
 
   case class ScalarPtr[A: Manifest](xScalar: Exp[Scalar[A]]) extends Def[Pointer[A]]
-  def scalarPtr[A: Manifest](xScalar: Exp[Scalar[A]]): Exp[Pointer[A]] = ScalarPtr(xScalar)
+  def scalar_ptr[A: Manifest](xScalar: Exp[Scalar[A]]): Exp[Pointer[A]] = ScalarPtr(xScalar)
 
   case class ArrayPtr[A: Manifest](xs: Rep[Array[A]]) extends Def[Pointer[A]]
-  def arrayPtr[A: Manifest](xs: Exp[Array[A]]): Exp[Pointer[A]] = ArrayPtr(xs)
+  def array_ptr[A: Manifest](xs: Exp[Array[A]]): Exp[Pointer[A]] = ArrayPtr(xs)
 }
 
 trait CxxShptrGenPointer extends CxxShptrCodegen {

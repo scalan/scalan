@@ -2,14 +2,88 @@ package scalan
 package compilation.lms
 
 import java.lang.reflect.Method
-import java.util.HashMap
+import scala.reflect.SourceContext
+import scala.reflect.runtime.universe._
 
-import scalan.compilation.language.{CoreMethodMappingDSL, MethodMappingDSL, Interpreter}
+import scalan.compilation.language.{CoreMethodMappingDSL, Interpreter}
+import scalan.util.StringUtil
 
 trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
   import scalan._
 
   val lms: CoreLmsBackend
+
+  override protected def lmsMethodName(d: Def[_], primitiveName: String): String = d match {
+    case _: Const[_] => "unitD"
+    case _: Apply[_, _] => "doApply"
+    case _: SLeft[_, _] => "either_left"
+    case _: SRight[_, _] => "either_right"
+    case _: SumFold[_, _, _] => "either_fold"
+    case _: SumMap[_, _, _, _] => "either_map"
+    case _: Tup[_, _] => "tuple2"
+    case _: First[_, _] => "tuple2_get1"
+    case _: Second[_, _] => "tuple2_get2"
+    case _: ArrayBufferEmpty[_] => "arraybuilder_make"
+    case _: MakeArrayBuffer[_] => "arraybuilder_make"
+    case _: ArrayBufferToArray[_] => "arraybuilder_result"
+    case _: MakeMap[_, _] => "emptyMap"
+    case _: ListToArray[_] => "list_toarray"
+    case _: EmptyMap[_, _] => "hashmap_new"
+    case _: AppendMultiMap[_, _] => "multiMap_append"
+    case _: MapContains[_, _] => "hashmap_contains"
+    case _: MapApply[_, _] => "hashmap_apply"
+    case _: MapSize[_, _] => "hashmap_size"
+    // covered by the below case
+//    case s if s.startsWith("ArrayBuffer") =>
+//      StringUtil.lowerCaseFirst(s)
+    // See comment in ArrayOpsExt
+    case _ if primitiveName.startsWith("Array") =>
+      StringUtil.lowerCaseFirst(primitiveName)
+    case _ => super.lmsMethodName(d, primitiveName)
+  }
+
+  override protected def extractParams(d: Def[_], fieldMirrors: List[FieldMirror]) = d match {
+    case Apply(f, x) =>
+      List(f, x, x.elem, f.elem.eRange)
+    case d@SLeft(l) =>
+      List(l, d.selfType.eLeft, d.selfType.eRight)
+    case d@SRight(r) =>
+      List(r, d.selfType.eLeft, d.selfType.eRight)
+    case SumFold(s, l, r) =>
+      List(s, l, r, s.elem.eLeft, s.elem.eRight, l.elem.eRange)
+    case First(pair) =>
+      List(pair, pair.elem.eFst)
+    case Second(pair) =>
+      List(pair, pair.elem.eSnd)
+    case ArrayMap(xs, f) =>
+      List(xs, f, xs.elem.eItem, f.elem.eRange)
+    case ArrayFlatMap(xs, f) =>
+      List(xs, f, xs.elem.eItem, f.elem.eRange.eItem)
+    case x@ArrayApply(xs, i) =>
+      List(xs, i, x.selfType)
+    case ArrayApplyMany(xs, is) =>
+      List(xs, is, xs.elem.eItem)
+    case ArrayLength(xs) =>
+      List(xs, xs.elem.eItem)
+    case ArrayFind(xs, f) =>
+      List(xs, f, xs.elem.eItem)
+    case ArraySort(xs, _) =>
+      List(xs, xs.elem.eItem)
+    case ArraySortBy(xs, f, _) =>
+      List(xs, f, f.elem.eDom, f.elem.eRange)
+    case ArrayAvg(xs, n) =>
+      List(xs, n, xs.elem.eItem)
+    case ArrayFold(xs, init, f) =>
+      List(xs, init, f, xs.elem.eItem, init.elem)
+    case ListMap(xs, f) =>
+      List(xs, f, xs.elem.eItem, f.elem.eRange)
+    case ListFlatMap(xs, f) =>
+      List(xs, f, xs.elem.eItem, f.elem.eRange.eItem)
+    case map@MakeMap(_) =>
+      val mapElem = map.selfType.asInstanceOf[MMapElem[_, _]]
+      List(mapElem.eKey, mapElem.eValue)
+    case _ => super.extractParams(d, fieldMirrors)
+  }
 
   override protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
     case _: CompanionBase[_] =>  //TODO backend
@@ -18,7 +92,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
 
     case mc@MethodCall(receiver, method, args, _) =>
       val exp = ( isWrapperElem(receiver.elem) && isValueAccessor(method) ) match {
-        case true  => m.symMirror(receiver)
+        case true  => m.symMirror[T](receiver)
         case false => transformMethodCall[T](m, receiver, method, args, mc.selfType.asInstanceOf[Elem[T]])
       }
 
@@ -38,49 +112,12 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       val fun = lms.fun(f)(mA, mB)
       m.addFuncAndSym(sym, f, fun)
 
-    case Apply(f, x) =>
-      (createManifest(f.elem.eDom), createManifest(f.elem.eRange)) match {
-        case (mA: Manifest[a], mB: Manifest[b]) =>
-          implicit val (imA, imB) = (mA, mB)
-          val fun = m.symMirror[a => b](f)
-          val arg = m.symMirror[a](x)
-          val exp = lms.doApply[a, b](fun, arg)
-          m.addSym(sym, exp)
-      }
-
-    case c@Const(_) =>
-      createManifest(c.selfType) match {
-        case mA: Manifest[a] =>
-          val x = c.x.asInstanceOf[a]
-          val exp = lms.unitD(x)(mA)
-          m.addSym(sym, exp)
-      }
-
-    case d@SLeft(l) =>
-      (createManifest(d.selfType.eLeft), createManifest(d.selfType.eRight)) match {
-        case (mA: Manifest[a], mB: Manifest[b]) =>
-          implicit val (imA, imB) = (mA, mB)
-          val left = m.symMirror[a](l)
-          val exp = lms.make_left[a, b](left)
-          m.addSym(sym, exp)
-      }
-
-    case d@SRight(r) =>
-      (createManifest(d.selfType.eLeft), createManifest(d.selfType.eRight)) match {
-        case (mA: Manifest[a], mB: Manifest[b]) =>
-          implicit val (imA, imB) = (mA, mB)
-          val right = m.symMirror[b](r)
-          val exp = lms.make_right[a, b](right)
-          m.addSym(sym, exp)
-      }
-
     case IsLeft(s) =>
       val sumElem = s.elem.asInstanceOf[SumElem[_, _]]
       (createManifest(sumElem.eLeft), createManifest(sumElem.eRight)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
-          implicit val (imA, imB) = (mA, mB)
           val sum = m.symMirror[Either[a, b]](s)
-          val exp = lms.make_isLeft(sum)
+          val exp = lms.either_isLeft(sum)(mA, mB, implicitly[SourceContext])
           m.addSym(sym, exp)
       }
 
@@ -88,194 +125,18 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       val sumElem = s.elem.asInstanceOf[SumElem[_, _]]
       (createManifest(sumElem.eLeft), createManifest(sumElem.eRight)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
-          implicit val (imA, imB) = (mA, mB)
           val sum = m.symMirror[Either[a, b]](s)
-          val exp = lms.make_isRight(sum)
+          val exp = lms.either_isRight(sum)(mA, mB, implicitly[SourceContext])
           m.addSym(sym, exp)
       }
 
-    case SumFold(s, l, r) =>
-      (createManifest(s.elem.eLeft), createManifest(s.elem.eRight), createManifest(l.elem.eRange)) match {
-        case (mA: Manifest[a], mB: Manifest[b], mR: Manifest[r]) =>
-          implicit val (imA, imB, imR) = (mA, mB, mR)
-          val sum = m.symMirror[Either[a, b]](s)
-          val left = m.symMirror[a => r](l)
-          val right = m.symMirror[b => r](r)
-          val exp = lms.make_fold(sum, left, right)
-          m.addSym(sym, exp)
-      }
-
-    case SumMap(s, l, r) =>
-      (createManifest(s.elem.eLeft), createManifest(s.elem.eRight), createManifest(l.elem.eRange), createManifest(r.elem.eRange)) match {
-        case (mA: Manifest[a], mB: Manifest[b], mC: Manifest[c], mD: Manifest[d]) =>
-          implicit val (imA, imB, imC, imD) = (mA, mB, mC, mD)
-          val sum = m.symMirror[Either[a, b]](s)
-          val left = m.symMirror[a => c](l)
-          val right = m.symMirror[b => d](r)
-          val exp = lms.make_map(sum, left, right)
-          m.addSym(sym, exp)
-      }
-
-    case Tup(fst, snd) =>
-      (createManifest(fst.elem), createManifest(snd.elem)) match {
-        case (mA: Manifest[a], mB: Manifest[b]) =>
-          val first = m.symMirror[a](fst)
-          val second = m.symMirror[b](snd)
-          val exp = lms.tuple[a, b](first, second)(mA, mB)
-          m.addSym(sym, exp)
-      }
-
-    case First(tuple) =>
-      tuple.elem match {
-        case pe: PairElem[_, _] =>
-          (createManifest(pe.eFst), createManifest(pe.eSnd)) match {
-            case (mA: Manifest[a], mB: Manifest[b]) =>
-              val tup = m.symMirror[(a, b)](tuple)
-              val exp = lms.first[a, b](tup)(mA, mB)
-              m.addSym(sym, exp)
-          }
-      }
-
-    case Second(tuple) =>
-      tuple.elem match {
-        case pe: PairElem[_, _] =>
-          (createManifest(pe.eFst), createManifest(pe.eSnd)) match {
-            case (mA: Manifest[a], mB: Manifest[b]) =>
-              val tup = m.symMirror[(a, b)](tuple)
-              val exp = lms.second[a, b](tup)(mA, mB)
-              m.addSym(sym, exp)
-          }
-      }
-
-    case ApplyUnOp(op, arg1) =>
-      createManifest(arg1.elem) match {
-        case (mA: Manifest[a]) =>
-          val arg1_ = m.symMirror[a](arg1)
-          val exp: lms.Exp[_] = op.asInstanceOf[UnOp[a, _]] match {
-            case Not => lms.Not(arg1_.asInstanceOf[lms.Exp[Boolean]])
-            case NumericNegate(n) => lms.Neg(arg1_)(mA, n.asInstanceOf[Numeric[a]])
-            case NumericToDouble(n) => mA match {
-              case Manifest.Int => lms.IntToDouble(arg1_.asInstanceOf[lms.Exp[Int]])
-              case Manifest.Float => lms.FloatToDouble(arg1_.asInstanceOf[lms.Exp[Float]])
-              case Manifest.Double => arg1_
-            }
-            case NumericToFloat(n) => mA match {
-              case Manifest.Int => lms.IntToFloat(arg1_.asInstanceOf[lms.Exp[Int]])
-              case Manifest.Double => lms.DoubleToFloat(arg1_.asInstanceOf[lms.Exp[Double]])
-              case Manifest.Float => arg1_
-            }
-            case NumericToInt(n) => mA match {
-              case Manifest.Float => lms.FloatToInt(arg1_.asInstanceOf[lms.Exp[Float]])
-              case Manifest.Double => lms.DoubleToInt(arg1_.asInstanceOf[lms.Exp[Double]])
-              case Manifest.Long => lms.LongToIntExt(arg1_.asInstanceOf[lms.Exp[Long]])
-              case Manifest.Int => arg1_
-            }
-            case NumericToLong(n) => mA match {
-              case Manifest.Int => lms.IntToLong(arg1_.asInstanceOf[lms.Exp[Int]])
-              case Manifest.Long => arg1_
-            }
-            case NumericToString() => lms.ToString(arg1_)
-            case HashCode() => lms.hashCode(arg1_)
-            case StringToInt() => lms.stringToInt(arg1_.asInstanceOf[lms.Exp[String]])
-            case BooleanToInt => lms.booleanToInt(arg1_.asInstanceOf[lms.Exp[Boolean]])
-            case StringToDouble() => lms.stringToDouble(arg1_.asInstanceOf[lms.Exp[String]])
-            case MathExp => lms.Exp(arg1_.asInstanceOf[lms.Exp[Double]])
-            case MathSin => lms.Sin(arg1_.asInstanceOf[lms.Exp[Double]])
-            case MathSqrt => lms.Sqrt(arg1_.asInstanceOf[lms.Exp[Double]])
-            case MathLog => lms.Log(arg1_.asInstanceOf[lms.Exp[Double]])
-            case MathAbs(n) => lms.Abs(arg1_)(mA, n.asInstanceOf[Numeric[a]])
-          }
-          m.addSym(sym, exp)
-      }
-
-    case StringSubstr(str, start, end) =>
-      val str_ = m.symMirror[String](str)
-      val start_ = m.symMirror[Int](start)
-      val end_ = m.symMirror[Int](end)
-      val exp = lms.substring(str_, start_, end_)
-      m.addSym(sym, exp)
-
-    case StringLength(str) =>
-      val str_ = m.symMirror[String](str)
-      val exp = lms.stringLength(str_)
-      m.addSym(sym, exp)
-
-    case StringApply(str, index) =>
-      val str_ = m.symMirror[String](str)
-      val index_ = m.symMirror[Int](index)
-      val exp = lms.charAt(str_, index_)
+    case ApplyUnOp(op, arg) =>
+      val exp = transformUnOp(m, op, arg)
       m.addSym(sym, exp)
 
     case ApplyBinOp(op, arg1, arg2) =>
-      createManifest(arg1.elem) match {
-        case (mA: Manifest[a]) =>
-          val arg1_ = m.symMirror[a](arg1)
-          val arg2_ = m.symMirror[a](arg2)
-          val exp = op.asInstanceOf[BinOp[a, _]] match {
-            case NumericTimes(n) =>
-              lms.opMult(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
-            case NumericPlus(n) =>
-              lms.opPlus(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
-            case NumericMinus(n) =>
-              lms.opMinus(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
-            case IntegralDivide(n) =>
-              lms.opDiv(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
-            case IntegralMod(n) =>
-              mA match {
-                case Manifest.Int =>
-                  lms.opMod(arg1_.asInstanceOf[lms.Exp[Int]], arg2_.asInstanceOf[lms.Exp[Int]])
-                case _ =>
-                  throw new IllegalStateException(s"LMS only supports mod operation for Int, got $mA instead")
-              }
-            case FractionalDivide(n) =>
-              lms.opDiv(arg1_, arg2_)(n.asInstanceOf[Numeric[a]], mA)
-            case Equals() =>
-              lms.opEq[a](arg1_, arg2_)(mA)
-            case OrderingLT(ord) =>
-              lms.LT[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
-            case OrderingLTEQ(ord) =>
-              lms.LTEQ[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
-            case OrderingGT(ord) =>
-              lms.GT[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
-            case OrderingGTEQ(ord) =>
-              lms.GTEQ[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
-            case OrderingMax(ord) =>
-              lms.Max[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
-            case OrderingMin(ord) =>
-              lms.Min[a](arg1_, arg2_)(mA, ord.asInstanceOf[Ordering[a]])
-            case And =>
-              lms.And(arg1_.asInstanceOf[lms.Exp[Boolean]], arg2_.asInstanceOf[lms.Exp[Boolean]])
-            case Or =>
-              lms.Or(arg1_.asInstanceOf[lms.Exp[Boolean]], arg2_.asInstanceOf[lms.Exp[Boolean]])
-            case StringConcat() =>
-              lms.stringConcat(arg1_.asInstanceOf[lms.Exp[String]], arg2_.asInstanceOf[lms.Exp[String]])
-            case StringContains() =>
-              lms.stringContains(arg1_.asInstanceOf[lms.Exp[String]], arg2_.asInstanceOf[lms.Exp[String]])
-            case StringStartsWith() =>
-              lms.stringStartsWith(arg1_.asInstanceOf[lms.Exp[String]], arg2_.asInstanceOf[lms.Exp[String]])
-            case StringEndsWith() =>
-              lms.stringEndsWith(arg1_.asInstanceOf[lms.Exp[String]], arg2_.asInstanceOf[lms.Exp[String]])
-            case StringMatches() =>
-              lms.stringMatches(arg1_.asInstanceOf[lms.Exp[String]], arg2_.asInstanceOf[lms.Exp[String]])
-            case MathPow =>
-              lms.Pow(arg1_.asInstanceOf[lms.Exp[Double]], arg2_.asInstanceOf[lms.Exp[Double]])
-          }
-          m.addSym(sym, exp)
-      }
-
-    case ThrowException(msg) =>
-      val msg_ = m.symMirror[String](msg)
-      val exp = lms.throwException(msg_)
+      val exp = transformBinOp(m, op, arg1, arg2)
       m.addSym(sym, exp)
-
-    case Semicolon(left, right) =>
-      (createManifest(left.elem), createManifest(right.elem)) match {
-        case (mA: Manifest[a], mB: Manifest[b]) =>
-          val left_ = m.symMirror[a](left)
-          val right_ = m.symMirror[b](right)
-          val exp = lms.block(left_, right_)(mA, mB)
-          m.addSym(sym, exp)
-      }
 
     case i@IfThenElse(cond, ifTrue, ifFalse) =>
       createManifest(i.selfType) match {
@@ -296,189 +157,13 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
           }
       }
 
-    case loop@LoopUntil(state, stepSym@Def(step: Lambda[_, _]), condSym@Def(cond: Lambda[_, _])) =>
-      createManifest(loop.selfType) match {
-        case (mA: Manifest[a]) =>
-          val cond_ = m.mirrorLambda[a, Boolean](cond.asInstanceOf[Lambda[a, Boolean]])
-          val step_ = m.mirrorLambda[a, a](step.asInstanceOf[Lambda[a, a]])
-          val state_ = m.symMirror[a](state)
-          val exp = lms.loopUntil[a](state_, cond_, step_)(mA)
-          m.addSym(sym, exp).addFunc(condSym, cond_).addFunc(stepSym, step_)
-      }
-    //
-    // Array Buffer
-    //
-    case buf@ArrayBufferEmpty() =>
-      buf.selfType match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val exp = lms.emptyArrayBuffer[t]()(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case buf@MakeArrayBuffer(ctx) =>
-      buf.selfType match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val exp = lms.emptyArrayBuffer[t]()(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case buf@ArrayBufferFromElem(e) =>
-      buf.selfType match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val v = m.symMirror[t](e)
-              val exp = lms.arrayBufferFromElem(v)(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case ArrayBufferApply(buf, i) =>
-      buf.elem match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[t]](buf)
-              val i_ = m.symMirror[Int](i)
-              val exp = lms.arrayBufferApply(b_, i_)(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case ArrayBufferLength(buf) =>
-      buf.elem match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[t]](buf)
-              val exp = lms.arrayBufferLength(b_)(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case res@ArrayBufferMap(buf, lambdaSym@Def(lambda: Lambda[_, _])) =>
-      (res.selfType, buf.elem) match {
-        case (from: ArrayBufferElem[a], to: ArrayBufferElem[b]) =>
-          (createManifest(from.eItem), createManifest(to.eItem)) match {
-            case (mA: Manifest[a], mB: Manifest[b]) =>
-              val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[a]](buf)
-              val f_ = m.mirrorLambda[a, b](lambda.asInstanceOf[Lambda[a, b]])
-              val exp = lms.arrayBufferMap(b_, f_)(mA, mB)
-              m.addSym(sym, exp).addFunc(lambdaSym, f_)
-          }
-      }
-    case ArrayBufferUpdate(buf, i, v) =>
-      buf.elem match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[t]](buf)
-              val i_ = m.symMirror[Int](i)
-              val v_ = m.symMirror[t](v)
-              val exp = lms.arrayBufferUpdate(b_, i_, v_)(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case ArrayBufferInsert(buf, i, v) =>
-      buf.elem match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[t]](buf)
-              val i_ = m.symMirror[Int](i)
-              val v_ = m.symMirror[t](v)
-              val exp = lms.arrayBufferInsert(b_, i_, v_)(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case ArrayBufferAppend(buf, v) =>
-      buf.elem match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[t]](buf)
-              val v_ = m.symMirror[t](v)
-              val exp = lms.arrayBufferAppend(b_, v_)(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case ArrayBufferAppendArray(buf, a) =>
-      buf.elem match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[t]](buf)
-              val a_ = m.symMirror[Array[t]](a)
-              val exp = lms.arrayBufferAppendArray(b_, a_)(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case ArrayBufferRemove(buf, i, n) =>
-      buf.elem match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[t]](buf)
-              val i_ = m.symMirror[Int](i)
-              val n_ = m.symMirror[Int](n)
-              val exp = lms.arrayBufferRemove(b_, i_, n_)(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case ArrayBufferReset(buf) =>
-      buf.elem match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[t]](buf)
-              val exp = lms.arrayBufferReset(b_)(mT)
-              m.addSym(sym, exp)
-          }
-      }
-    case ArrayBufferToArray(buf) =>
-      buf.elem match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val b_ = m.symMirror[scala.collection.mutable.ArrayBuilder[t]](buf)
-              val exp = lms.arrayBufferToArray(b_)(mT)
-              m.addSym(sym, exp)
-          }
-      }
     case ab@ArrayBufferRep(buf) =>
       ab.selfType match {
         case elem: ArrayBufferElem[t] =>
           val exp = m.symMirror[scala.collection.mutable.ArrayBuilder[t]](buf)
           m.addSym(sym, exp)
       }
-    case buf@ArrayBufferUsingFunc(count, lambdaSym@Def(lambda: Lambda[_, _])) =>
-      buf.selfType match {
-        case elem: ArrayBufferElem[t] =>
-          createManifest(elem.eItem) match {
-            case mT: Manifest[t] =>
-              val n = m.symMirror[Int](count)
-              val f = m.mirrorLambda[Int, t](lambda.asInstanceOf[Lambda[Int, t]])
-              val exp = lms.arrayBufferUsingFunc(n, f)(mT)
-              m.addSym(sym, exp).addFunc(lambdaSym, f)
-          }
-      }
 
-    //
-    // Map
-    //
-    case AppendMultiMap(map, key, value) =>
-      (key.elem, value.elem) match {
-        case (eK: Elem[k], eV: Elem[v]) =>
-          (createManifest(eK), createManifest(eV)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val map_ = m.symMirror[HashMap[k, scala.collection.mutable.ArrayBuilder[v]]](map)
-              val key_ = m.symMirror[k](key)
-              val value_ = m.symMirror[v](value)
-              val exp = lms.multiMapAppend(map_, key_, value_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
     case pm@VarMM(map) =>
       pm.selfType match {
         case elem: MMapElem[k, v] =>
@@ -486,367 +171,6 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
           m.addSym(sym, exp)
       }
 
-    case map@MapFromArray(arr) =>
-      map.selfType match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val arr_ = m.symMirror[Array[(k, v)]](arr)
-              val exp = lms.mapFromArray[k, v](arr_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case map@MapUsingFunc(count, lambdaSym@Def(lambda: Lambda[_, _])) =>
-      map.selfType match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val n = m.symMirror[Int](count)
-              val f = m.mirrorLambda[Int, (k, v)](lambda.asInstanceOf[Lambda[Int, (k, v)]])
-              val exp = lms.mapUsingFunc[k, v](n, f)(mK, mV)
-              m.addSym(sym, exp).addFunc(lambdaSym, f)
-          }
-      }
-    case map@EmptyMap() =>
-      map.selfType match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val exp = lms.emptyMap[k, v]()(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case map@MakeMap(ctx) =>
-      map.selfType match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val exp = lms.emptyMap[k, v]()(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case MapUnion(left, right) =>
-      left.elem match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val left_ = m.symMirror[HashMap[k, v]](left)
-              val right_ = m.symMirror[HashMap[k, v]](right)
-              val exp = lms.mapUnion[k, v](left_, right_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case MapDifference(left, right) =>
-      left.elem match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val left_ = m.symMirror[HashMap[k, v]](left)
-              val right_ = m.symMirror[HashMap[k, v]](right)
-              val exp = lms.mapDifference[k, v](left_, right_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case tk@MapTransformValues(map, lamSym@Def(lambda: Lambda[_, _])) =>
-      (map.elem, tk.selfType) match {
-        case (in: MMapElem[k, v], out: MMapElem[_, t]) =>
-          (createManifest(in.eKey), createManifest(in.eValue), createManifest(out.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v], mT: Manifest[t]) =>
-              val map_ = m.symMirror[HashMap[k, v]](map)
-              val f = m.mirrorLambda[v, t](lambda.asInstanceOf[Lambda[v, t]])
-              val exp = lms.mapTransformValues[k, v, t](map_, f)(mK, mV, mT)
-              m.addSym(sym, exp).addFunc(lamSym, f)
-          }
-      }
-    case MapReduce(left, right, reduceSym@Def(reduce: Lambda[_, _])) =>
-      left.elem match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val left_ = m.symMirror[HashMap[k, v]](left)
-              val right_ = m.symMirror[HashMap[k, v]](right)
-              val reduce_ = m.mirrorLambda[(v, v), v](reduce.asInstanceOf[Lambda[(v, v), v]])
-              val exp = lms.mapReduce[k, v](left_, right_, reduce_)(mK, mV)
-              m.addSym(sym, exp).addFunc(reduceSym, reduce_)
-          }
-      }
-    case MapJoin(left, right) =>
-      (left.elem, right.elem) match {
-        case (e1: MMapElem[k1, v1], e2: MMapElem[k2, v2]) =>
-          (createManifest(e1.eKey), createManifest(e1.eValue), createManifest(e2.eValue)) match {
-            case (mK: Manifest[k1], mV1: Manifest[v1], mV2: Manifest[v2]) =>
-              val left_ = m.symMirror[HashMap[k1, v1]](left)
-              val right_ = m.symMirror[HashMap[k1, v2]](right)
-              val exp = lms.mapJoin[k1, v1, v2](left_, right_)(mK, mV1, mV2)
-              m.addSym(sym, exp)
-          }
-      }
-    case MapContains(map, key) =>
-      map.elem match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val map_ = m.symMirror[HashMap[k, v]](map)
-              val key_ = m.symMirror[k](key)
-              val exp = lms.mapContains[k, v](map_, key_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case MapApply(map, key) =>
-      map.elem match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val map_ = m.symMirror[HashMap[k, v]](map)
-              val key_ = m.symMirror[k](key)
-              val exp = lms.mapApply[k, v](map_, key_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case maf@MapApplyIf(map, key, s1@Def(exists: Lambda[_, _]), s2@Def(otherwise: Lambda[_, _])) =>
-      (maf.selfType, map.elem) match {
-        case (eT: Elem[t], eM: MMapElem[k, v]) =>
-          (createManifest(eT), createManifest(eM.eKey), createManifest(eM.eValue)) match {
-            case (mT: Manifest[t], mK: Manifest[k], mV: Manifest[v]) =>
-              val map_ = m.symMirror[HashMap[k, v]](map)
-              val key_ = m.symMirror[k](key)
-              val exists_ = m.mirrorLambda[v, t](exists.asInstanceOf[Lambda[v, t]])
-              val otherwise_ = m.mirrorLambda[Unit, t](otherwise.asInstanceOf[Lambda[Unit, t]])
-              val exp = lms.mapApplyIf[k, v, t](map_, key_, exists_, otherwise_)(mK, mV, mT)
-              m.addSym(sym, exp).addFunc(s1, exists_).addFunc(s2, otherwise_)
-          }
-      }
-    case MapUpdate(map, key, value) =>
-      map.elem match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val map_ = m.symMirror[HashMap[k, v]](map)
-              val key_ = m.symMirror[k](key)
-              val value_ = m.symMirror[v](value)
-              val exp = lms.mapUpdate[k, v](map_, key_, value_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case MapSize(map) =>
-      map.elem match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val map_ = m.symMirror[HashMap[k, v]](map)
-              val exp = lms.mapSize[k, v](map_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case MapToArray(map) =>
-      map.elem match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val map_ = m.symMirror[HashMap[k, v]](map)
-              val exp = lms.mapToArray[k, v](map_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case MapKeys(map) =>
-      map.elem match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val map_ = m.symMirror[HashMap[k, v]](map)
-              val exp = lms.mapKeys[k, v](map_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-    case MapValues(map) =>
-      map.elem match {
-        case elem: MMapElem[k, v] =>
-          (createManifest(elem.eKey), createManifest(elem.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val map_ = m.symMirror[HashMap[k, v]](map)
-              val exp = lms.mapValues[k, v](map_)(mK, mV)
-              m.addSym(sym, exp)
-          }
-      }
-
-    case apply@ArrayApply(xs, ind) =>
-      createManifest(apply.selfType) match {
-        case (mA: Manifest[a]) =>
-          val xs_ = m.symMirror[Array[a]](xs)
-          val ind_ = m.symMirror[Int](ind)
-          val exp = lms.arrayGet[a](xs_, ind_)(mA)
-          m.addSym(sym, exp)
-      }
-
-    case ArrayApplyMany(xs, idxs) =>
-      xs.elem match {
-        case el: ArrayElem[_] =>
-          createManifest(el.eItem) match {
-            case (mA: Manifest[a]) =>
-              val xs_ = m.symMirror[Array[a]](xs)
-              val idxs_ = m.symMirror[Array[Int]](idxs)
-              val exp = lms.arrayGather[a](xs_, idxs_)(mA)
-              m.addSym(sym, exp)
-          }
-      }
-
-    case ArrayLength(xs) =>
-      createManifest(xs.elem) match {
-        case mA: Manifest[a] =>
-          val xs_ = m.symMirror[Array[a]](xs)
-          val exp = lms.arrayLength[a](xs_)(mA)
-          m.addSym(sym, exp)
-      }
-
-    case ArrayRangeFrom0(n) =>
-      val n_ = m.symMirror[Int](n)
-      val exp = lms.indexRangeArray(n_)
-      m.addSym(sym, exp)
-
-    case ArraySort(arg, o) =>
-      arg.elem match {
-        case (el: ArrayElem[_]) =>
-          createManifest(el.eItem) match {
-            case (mA: Manifest[a]) =>
-              val arg_ = m.symMirror[Array[a]](arg)
-              val exp = lms.arraySort[a](arg_)(mA)
-              m.addSym(sym, exp)
-          }
-      }
-    case ArrayReverse(arg) =>
-      arg.elem match {
-        case (el: ArrayElem[_]) =>
-          createManifest(el.eItem) match {
-            case (mA: Manifest[a]) =>
-              val arg_ = m.symMirror[Array[a]](arg)
-              val exp = lms.arrayReverse[a](arg_)(mA)
-              m.addSym(sym, exp)
-          }
-      }
-    case sort@ArraySortBy(arg, lambdaSym@Def(by: Lambda[_, b]), o) =>
-      sort.selfType match {
-        case (el: ArrayElem[a]) =>
-          (createManifest(el.eItem), createManifest(by.eB)) match {
-            case (mA: Manifest[a], mB: Manifest[b]) =>
-              val by_ = m.mirrorLambda[a, b](by.asInstanceOf[Lambda[a, b]])
-              val arg_ = m.symMirror[Array[a]](arg)
-              val exp = lms.arraySortBy[a, b](arg_, by_)(mA, mB)
-              m.addSym(sym, exp).addFunc(lambdaSym, by_)
-          }
-      }
-    case gby@ArrayGroupBy(arg, lambdaSym@Def(by: Lambda[_, _])) =>
-      (arg.elem, gby.selfType) match {
-        case (ae: ArrayElem[a], me: MMapElem[k, v]) =>
-          (createManifest(ae.eItem), createManifest(me.eKey)) match {
-            case (mA: Manifest[a], mK: Manifest[k]) =>
-              val by_ = m.mirrorLambda[a, k](by.asInstanceOf[Lambda[a, k]])
-              val arg_ = m.symMirror[Array[a]](arg)
-              val exp = lms.arrayGroupBy[a, k](arg_, by_)(mA, mK)
-              m.addSym(sym, exp).addFunc(lambdaSym, by_)
-          }
-      }
-    case sum@ArraySum(xs, n) =>
-      createManifest(sum.selfType) match {
-        case (mA: Manifest[a]) =>
-          val xs_ = m.symMirror[Array[a]](xs)
-          val exp = lms.arraySum[a](xs_)(mA, n.asInstanceOf[Numeric[a]])
-          m.addSym(sym, exp)
-      }
-    case min@ArrayMin(xs, o) =>
-      createManifest(min.selfType) match {
-        case (mA: Manifest[a]) =>
-          val xs_ = m.symMirror[Array[a]](xs)
-          val exp = lms.arrayMin[a](xs_)(mA, o.asInstanceOf[Ordering[a]])
-          m.addSym(sym, exp)
-      }
-    case max@ArrayMax(xs, o) =>
-      createManifest(max.selfType) match {
-        case (mA: Manifest[a]) =>
-          val xs_ = m.symMirror[Array[a]](xs)
-          val exp = lms.arrayMax[a](xs_)(mA, o.asInstanceOf[Ordering[a]])
-          m.addSym(sym, exp)
-      }
-    case ArrayAvg(xs, n) =>
-      xs.elem match {
-        case (el: ArrayElem[a]) =>
-          createManifest(el.eItem) match {
-            case (mA: Manifest[a]) =>
-              val xs_ = m.symMirror[Array[a]](xs)
-              val exp = lms.arrayAvg[a](xs_)(mA, n.asInstanceOf[Numeric[a]])
-              m.addSym(sym, exp)
-          }
-      }
-
-    case ArrayZip(arg1, arg2) =>
-      (arg1.elem, arg2.elem) match {
-        case (el1: ArrayElem[_], el2: ArrayElem[_]) =>
-          (createManifest(el1.eItem), createManifest(el2.eItem)) match {
-            case (mA: Manifest[a], mB: Manifest[b]) =>
-              val arg1_ = m.symMirror[Array[a]](arg1)
-              val arg2_ = m.symMirror[Array[b]](arg2)
-              val exp = lms.arrayZip[a, b](arg1_, arg2_)(mA, mB)
-              m.addSym(sym, exp)
-          }
-      }
-
-    case map@ArrayMap(source, lambdaSym@Def(lam: Lambda[_, _])) =>
-      (source.elem, map.selfType) match {
-        case (el: ArrayElem[_], el1: ArrayElem[_]) =>
-          (createManifest(el.eItem), createManifest(el1.eItem)) match {
-            case (mA: Manifest[a], mB: Manifest[b]) =>
-              val f = m.mirrorLambda[a, b](lam.asInstanceOf[Lambda[a, b]]) //(mA, mB)
-            val lmsSource = m.symMirror[Array[a]](source)
-              val exp = lms.mapArray[a, b](lmsSource, f)(mA, mB)
-              m.addSym(sym, exp).addFunc(lambdaSym, f)
-          }
-      }
-
-    case map@ArrayFlatMap(source, lambdaSym@Def(lam: Lambda[_, _])) =>
-      (source.elem, map.selfType) match {
-        case (el: ArrayElem[_], el1: ArrayElem[_]) =>
-          (createManifest(el.eItem), createManifest(el1.eItem)) match {
-            case (mA: Manifest[a], mB: Manifest[b]) =>
-              val f = m.mirrorLambda[a, Array[b]](lam.asInstanceOf[Lambda[a, Array[b]]]) //(mA, mB)
-              val lmsSource = m.symMirror[Array[a]](source)
-              val exp = lms.flatMapArray[a, b](lmsSource, f)(mA, mB)
-              m.addSym(sym, exp).addFunc(lambdaSym, f)
-          }
-      }
-
-    case filter@ArrayFilter(source, lambdaSym@Def(lam: Lambda[_, _])) =>
-      filter.selfType match {
-        case el: ArrayElem[_] =>
-          createManifest(el.eItem) match {
-            case mA: Manifest[a] =>
-              val f = m.mirrorLambda[a, Boolean](lam.asInstanceOf[Lambda[a, Boolean]]) //(mA, mB)
-              val lmsSource = m.symMirror[Array[a]](source)
-              val exp = lms.filterArray[a](lmsSource, f)(mA)
-              m.addSym(sym, exp).addFunc(lambdaSym, f)
-          }
-      }
-
-    case find@ArrayFind(source, lambdaSym@Def(lam: Lambda[_, _])) =>
-      (source.elem) match {
-        case (el: ArrayElem[_]) =>
-          (createManifest(el.eItem)) match {
-            case (mA: Manifest[a]) =>
-              val f = m.mirrorLambda[a, Boolean](lam.asInstanceOf[Lambda[a, Boolean]]) //(mA, mB)
-              val lmsSource = m.symMirror[Array[a]](source)
-              val exp = lms.findArray[a](lmsSource, f)(mA)
-              m.addSym(sym, exp).addFunc(lambdaSym, f)
-          }
-      }
-    case ArrayCount(source, lambdaSym@Def(lam: Lambda[_, _])) =>
-      (source.elem) match {
-        case (el: ArrayElem[_]) =>
-          (createManifest(el.eItem)) match {
-            case (mA: Manifest[a]) =>
-              val f = m.mirrorLambda[a, Boolean](lam.asInstanceOf[Lambda[a, Boolean]]) //(mA, mB)
-              val lmsSource = m.symMirror[Array[a]](source)
-              val exp = lms.countArray[a](lmsSource, f)(mA)
-              m.addSym(sym, exp).addFunc(lambdaSym, f)
-          }
-      }
     case mr@ArrayMapReduce(source, map, reduce) =>
       (source.elem, mr.selfType) match {
         case (ae: ArrayElem[a], me: MMapElem[k, v]) =>
@@ -858,7 +182,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
 
           val exp = source match {
             case Def(range: ArrayRangeFrom0) =>
-              val n_ = m.symMirror(range.n)
+              val n_ = m.symMirror[Int](range.n)
               lms.rangeMapReduce(n_, map_, reduce_)(mK, mV)
             case Def(ArrayFilter(Def(ArrayMap(Def(range: ArrayRangeFrom0), map1)), filter)) =>
               map1.elem.eRange match {
@@ -880,268 +204,35 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
 
           m.addSym(sym, exp)
       }
-    case f@ArrayFold(source, init, stepSym@Def(step: Lambda[_, _])) =>
-      (f.selfType, source.elem) match {
-        case (e: Elem[s], ae: ArrayElem[a]) =>
-          (createManifest(e), createManifest(ae.eItem)) match {
-            case (mS: Manifest[s], mA: Manifest[a]) =>
-              val src = m.symMirror[Array[a]](source)
-              val state = m.symMirror[s](init)
-              val func = m.mirrorLambda[(s, a), s](step.asInstanceOf[Lambda[(s, a), s]])
-              val exp = lms.foldArray[a, s](src, state, func)(mA, mS)
-              m.addSym(sym, exp).addFunc(stepSym, func)
-          }
-      }
-    case sum@ArraySumBy(source, lamSym@Def(f: Lambda[_, _]), n) =>
-      (sum.selfType, source.elem) match {
-        case (e: Elem[s], ae: ArrayElem[a]) =>
-          (createManifest(e), createManifest(ae.eItem)) match {
-            case (mS: Manifest[s], mA: Manifest[a]) =>
-              val src = m.symMirror[Array[a]](source)
-              val func = m.mirrorLambda[a, s](f.asInstanceOf[Lambda[a, s]])
-              val exp = lms.sumArrayBy[a, s](src, func)(mA, mS, n.asInstanceOf[Numeric[s]])
-              m.addSym(sym, exp).addFunc(lamSym, func)
-          }
-      }
-    case ParallelExecute(nJobs, lamSym@Def(f: Lambda[_, _])) =>
-      f.eB match {
-        case el: Elem[b] =>
-          createManifest(el) match {
-            case (mB: Manifest[b]) =>
-              val n = m.symMirror[Int](nJobs)
-              val func = m.mirrorLambda[Int, b](f.asInstanceOf[Lambda[Int, b]])
-              val exp = lms.parallelExecute[b](n, func)(mB)
-              m.addSym(sym, exp).addFunc(lamSym, func)
-          }
-      }
-
-    case ArrayUpdate(xs, index, value) =>
-      xs.elem match {
-        case el: ArrayElem[a] =>
-          val mA = createManifest(el.eItem).asInstanceOf[Manifest[a]]
-          val lmsXs = m.symMirror[Array[a]](xs)
-          val lmsIndex = m.symMirror[Int](index)
-          val lmsValue = m.symMirror[a](value)
-          val exp = lms.updateArray(lmsXs, lmsIndex, lmsValue)(mA)
-          m.addSym(sym, exp)
-      }
-
-    case ArrayUpdateMany(xs, indexes, values) =>
-      xs.elem match {
-        case el: ArrayElem[a] =>
-          val mA = createManifest(el.eItem).asInstanceOf[Manifest[a]]
-          val lmsXs = m.symMirror[Array[a]](xs)
-          val lmsIndex = m.symMirror[Array[Int]](indexes)
-          val lmsValue = m.symMirror[Array[a]](values)
-          val exp = lms.updateArrayMany(lmsXs, lmsIndex, lmsValue)(mA)
-          m.addSym(sym, exp)
-      }
 
     case ArrayReduce(source, monoid) =>
-      source.elem match {
-        case el: ArrayElem[_] =>
-          createManifest(el.eItem) match {
-            case (mA: Manifest[a]) =>
-              val src = m.symMirror[Array[a]](source)
-              monoid.opName match {
-                case "+" =>
-                  val exp = lms.sumArray[a](src)(mA)
-                  m.addSym(sym, exp)
-                case _ =>
-                  val (m1, zero, op) = m.mirrorMonoid(monoid.asInstanceOf[RepMonoid[a]])
-                  val exp = lms.reduceArray(src, zero, op)(mA)
-                  m1.addSym(sym, exp)
-              }
+      createManifest(source.elem.eItem) match {
+        case (mA: Manifest[a]) =>
+          val src = m.symMirror[Array[a]](source)
+          monoid.opName match {
+            case "+" =>
+              val exp = lms.sumArray[a](src)(mA)
+              m.addSym(sym, exp)
+            case _ =>
+              val (m1, zero, op) = m.mirrorMonoid(monoid.asInstanceOf[RepMonoid[a]])
+              val exp = lms.reduceArray(src, zero, op)(mA)
+              m1.addSym(sym, exp)
           }
       }
 
     case ArrayScan(source, monoid) =>
-      source.elem match {
-        case el: ArrayElem[_] =>
-          createManifest(el.eItem) match {
-            case (mA: Manifest[a]) =>
-              val src = m.symMirror[Array[a]](source)
-              monoid.opName match {
-                //case "+" =>
-                //  val exp = lms.sum[a](src)(mA)
-                //  m.addSym(sym, exp)
-                case _ =>
-                  val (m1, zero, op) = m.mirrorMonoid(monoid.asInstanceOf[RepMonoid[a]])
-                  val exp = lms.scanArray(src, zero, op)(mA)
-                  m1.addSym(sym, exp)
-              }
-          }
-      }
-
-    case ArrayStride(xs, start, length, stride) =>
-      xs.elem match {
-        case el: ArrayElem[a] =>
-          val mA = createManifest(el.eItem).asInstanceOf[Manifest[a]]
-          val lmsXs = m.symMirror[Array[a]](xs)
-          val lmsStart = m.symMirror[Int](start)
-          val lmsLength = m.symMirror[Int](length)
-          val lmsStride = m.symMirror[Int](stride)
-          val exp = lms.strideArray(lmsXs, lmsStart, lmsLength, lmsStride)(mA)
-          m.addSym(sym, exp)
-      }
-
-    case r@ArrayReplicate(len, value) =>
-      createManifest(r.eT) match {
-        case mA: Manifest[a_t] =>
-          val _len = m.symMirror[Int](len)
-          val _value = m.symMirror[a_t](value)
-          val exp = lms.arrayReplicate[a_t](_len, _value)(mA)
-          m.addSym(sym, exp)
-      }
-
-    case res@ArrayEmpty() =>
-        createManifest(res.eT) match {
-          case mA: Manifest[a_t] =>
-            val zero = lms.Const(0)
-            val exp = lms.array_new[a_t](zero)(mA)
-            m.addSym(sym, exp)
-        }
-
-    case ArrayAppend(xs, value) =>
-      xs.elem match {
-        case el: ArrayElem[a] =>
-          val mA = createManifest(el.eItem).asInstanceOf[Manifest[a]]
-          val lmsXs = m.symMirror[Array[a]](xs)
-          val lmsValue = m.symMirror[a](value)
-          val exp = lms.array_append(lmsXs, lmsValue)(mA)
-          m.addSym(sym, exp)
-      }
-
-    case ArrayCons(value, xs) =>
-      xs.elem match {
-        case el: ArrayElem[a] =>
-          val mA = createManifest(el.eItem).asInstanceOf[Manifest[a]]
-          val lmsXs = m.symMirror[Array[a]](xs)
-          val lmsValue = m.symMirror[a](value)
-          val exp = lms.array_cons(lmsValue, lmsXs)(mA)
-          m.addSym(sym, exp)
-      }
-
-    case ArrayToList(xs) =>
-      createManifest(xs.elem.eItem) match {
-        case mA: Manifest[a] =>
-          val lmsXs = m.symMirror[Array[a]](xs)
-          val exp = lms.arrayToList(lmsXs)(mA)
-          m.addSym(sym, exp)
-      }
-
-    case ArrayBinarySearch(i, xs, o) =>
-      xs.elem match {
-        case el: ArrayElem[_] =>
-          createManifest(el.eItem) match {
-            case (mA: Manifest[a]) =>
-              val idxs = m.symMirror[Array[Int]](xs)
-              val index = m.symMirror[Int](i)
-              val exp = lms.array_binarySearch[a](index, idxs)(mA)
-              m.addSym(sym, exp)
-          }
-      }
-
-    case lr@ListMap(list, lamSym@Def(lam: Lambda[_, _])) =>
-      (createManifest(list.elem.eItem), createManifest(lam.eB)) match {
-      case (mA: Manifest[a], mB: Manifest[b]) =>
-        val lambdaF = m.mirrorLambda[a, b](lam.asInstanceOf[Lambda[a, b]])
-        val exp = lms.listMap[a, b](m.symMirror[List[a]](list), lambdaF)(mA, mB)
-        m.addSym(sym, exp).addFunc(lamSym, lambdaF)
-    }
-
-    case lr@ListFlatMap(list, lamSym@Def(lam: Lambda[_, _])) =>
-      lam.eB match {
-        case el: ListElem[_] =>
-          (createManifest(list.elem.eItem), createManifest(el.eItem)) match {
-            case (mA: Manifest[a], mB: Manifest[b]) =>
-              val lambdaF = m.mirrorLambda[a, List[b]](lam.asInstanceOf[Lambda[a, List[b]]])
-              val exp = lms.listFlatMap[a, b](m.symMirror[List[a]](list), lambdaF)(mA, mB)
-              m.addSym(sym, exp).addFunc(lamSym, lambdaF)
-          }
-      }
-
-//    case lr@ListFoldLeft(list: Lst[a], init: Exp[s], lamSym @ Def(lam: Lambda[_, _])) =>
-//      (createManifest(list.elem.eItem), createManifest(init.elem)) match {
-//        case (mA: Manifest[a], mS: Manifest[s]) =>
-//          val lambdaF = m.mirrorLambda[(s,a), s](lam.asInstanceOf[Lambda[(s,a), s]])
-//          val exp = lms.listFlatMap[a, b](m.symMirror[List[a]](list), lambdaF)(mA, mB)
-//          m.addSym(sym, exp).addFunc(lamSym, lambdaF)
-//      }
-
-    case lr@ListLength(list) =>
-      createManifest(list.elem.eItem) match {
+      createManifest(source.elem.eItem) match {
         case (mA: Manifest[a]) =>
-          val exp = lms.listLength[a](m.symMirror[List[a]](list))(mA)
-          m.addSym(sym, exp)
-      }
-
-    case lr@ListFilter(list, lamSym @ Def(lam: Lambda[_, _])) =>
-      createManifest(list.elem.eItem) match {
-        case mA: Manifest[a] =>
-          val lambdaF = m.mirrorLambda[a, Boolean](lam.asInstanceOf[Lambda[a, Boolean]])
-          val exp = lms.listFilter[a](m.symMirror[List[a]](list), lambdaF)(mA)
-          m.addSym(sym, exp).addFunc(lamSym, lambdaF)
-      }
-
-    case lr@ListRangeFrom0(len) =>
-      val exp = lms.listRangeFrom0(m.symMirror(len))
-      m.addSym(sym, exp)
-
-    case ListHead(xs) =>
-      createManifest(xs.elem.eItem) match {
-        case mA: Manifest[a] =>
-          implicit val imA = mA
-          val ls = m.symMirror[List[a]](xs)
-          val exp = lms.list_head[a](ls)
-          m.addSym(sym, exp)
-      }
-
-    case ListTail(xs) =>
-      createManifest(xs.elem.eItem) match {
-        case mA: Manifest[a] =>
-          implicit val imA = mA
-          val ls = m.symMirror[List[a]](xs)
-          val exp = lms.list_tail[a](ls)
-          m.addSym(sym, exp)
-      }
-
-    case ListCons(x, xs) ⇒
-      createManifest(xs.elem.eItem) match {
-        case mA: Manifest[a] ⇒
-          implicit val imA = mA
-          val l = m.symMirror[a](x)
-          val ls = m.symMirror[List[a]](xs)
-          val exp = lms.list_prepend[a](ls, l)
-          m.addSym(sym, exp)
-      }
-
-    case ListConcat(xs, ys) =>
-      createManifest(xs.elem.eItem) match {
-        case mA: Manifest[a] =>
-          implicit val imA = mA
-          val ls = m.symMirror[List[a]](xs)
-          val ks = m.symMirror[List[a]](ys)
-          val exp = lms.list_concat[a](ls, ks)
-          m.addSym(sym, exp)
-      }
-    case ListToArray(xs) =>
-      createManifest(xs.elem.eItem) match {
-        case mA: Manifest[a] =>
-          implicit val imA = mA
-          val ls = m.symMirror[List[a]](xs)
-          val exp = lms.list_toarray[a](ls)
-          m.addSym(sym, exp)
-      }
-
-    case ListReplicate(l, x) =>
-      createManifest(x.elem) match {
-        case mA: Manifest[a] =>
-          implicit val imA = mA
-          val len = m.symMirror[Int](l)
-          val el = m.symMirror[a](x)
-          val exp = lms.list_replicate(len, el)
-          m.addSym(sym, exp)
+          val src = m.symMirror[Array[a]](source)
+          monoid.opName match {
+            //case "+" =>
+            //  val exp = lms.sum[a](src)(mA)
+            //  m.addSym(sym, exp)
+            case _ =>
+              val (m1, zero, op) = m.mirrorMonoid(monoid.asInstanceOf[RepMonoid[a]])
+              val exp = lms.scanArray(src, zero, op)(mA)
+              m1.addSym(sym, exp)
+          }
       }
 
     case ListReduce(source, monoid) =>
@@ -1151,10 +242,11 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
           // may want to special-case e.g. sum and product if sumList can be implemented generically
           // (see comment there and implementation for ArrayReduce above)
           val (m1, zero, op) = m.mirrorMonoid(monoid.asInstanceOf[RepMonoid[a]])
-          val exp = lms.reduceList(src, zero, op)(mA)
+          val exp = lms.list_reduce(src, zero, op)(mA)
           m1.addSym(sym, exp)
       }
 
+    // TODO can we make generic version for Reflect?
     case Reflect(PrintlnE(s), _, _) =>
       val s1 = m.symMirror[String](s)
       val exp = lms.println(s1)
@@ -1176,7 +268,113 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
     case _ => super.transformDef(m, g, sym, d)
   }
 
+  protected def transformUnOp[A, B](m: LmsMirror, op: UnOp[A, B], arg: Exp[A]): lms.Exp[_] = {
+    implicit val mA = createManifest(arg.elem).asInstanceOf[Manifest[A]]
+    val _arg = m.symMirror(arg)
+    op match {
+      case Not => lms.boolean_negate(_arg)
+      case NumericNegate(n) =>
+        implicit val n1 = n.asInstanceOf[Numeric[A]]
+        lms.num_negate(_arg)
+      case NumericToDouble(n) => mA match {
+        case Manifest.Int => lms.int_to_double(_arg)
+        case Manifest.Float => lms.float_to_double(_arg)
+        case Manifest.Double => _arg
+      }
+      case NumericToFloat(n) => mA match {
+        case Manifest.Int => lms.int_to_float(_arg)
+        case Manifest.Double => lms.double_to_float(_arg)
+        case Manifest.Float => _arg
+      }
+      case NumericToInt(n) => mA match {
+        case Manifest.Float => lms.float_to_int(_arg)
+        case Manifest.Double => lms.double_to_int(_arg)
+        case Manifest.Long => lms.long_toint(_arg)
+        case Manifest.Int => _arg
+      }
+      case NumericToLong(n) => mA match {
+        case Manifest.Int => lms.int_tolong(_arg)
+        case Manifest.Long => _arg
+      }
+      case NumericToString() => lms.String.valueOf(_arg)
+      case HashCode() => lms.hash_code(_arg)
+      case StringToInt => lms.string_toint(_arg)
+      case BooleanToInt => lms.boolean_to_int(_arg)
+      case StringToDouble => lms.string_todouble(_arg)
+      case MathExp => lms.math_exp(_arg)
+      case MathSin => lms.math_sin(_arg)
+      case MathSqrt => lms.math_sqrt(_arg)
+      case MathLog => lms.math_log(_arg)
+      case MathAbs(n) =>
+        implicit val n1 = n.asInstanceOf[Numeric[A]]
+        lms.math_abs(_arg)
+    }
+  }
+
+  def transformBinOp[A, B](m: LmsMirror, op: BinOp[A, B], arg1: Exp[A], arg2: Exp[A]): lms.Exp[_] = {
+    implicit val mA = createManifest(arg1.elem).asInstanceOf[Manifest[A]]
+    val _arg1 = m.symMirror(arg1)
+    val _arg2 = m.symMirror(arg2)
+
+    op match {
+      case NumericTimes(n) =>
+        implicit val n1 = n.asInstanceOf[Numeric[A]]
+        lms.numeric_times(_arg1, _arg2)
+      case NumericPlus(n) =>
+        implicit val n1 = n.asInstanceOf[Numeric[A]]
+        lms.numeric_plus(_arg1, _arg2)
+      case NumericMinus(n) =>
+        implicit val n1 = n.asInstanceOf[Numeric[A]]
+        lms.numeric_minus(_arg1, _arg2)
+      case IntegralDivide(n) =>
+        implicit val n1 = n.asInstanceOf[Numeric[A]]
+        lms.numeric_divide(_arg1, _arg2)
+      case IntegralMod(n) =>
+        implicit val n1 = n.asInstanceOf[Integral[A]]
+        lms.integral_mod(_arg1, _arg2)
+      case FractionalDivide(n) =>
+        implicit val n1 = n.asInstanceOf[Numeric[A]]
+        lms.numeric_divide(_arg1, _arg2)
+      case Equals() =>
+        lms.equals(_arg1, _arg2)
+      case OrderingLT(ord) =>
+        implicit val ord1 = ord.asInstanceOf[Ordering[A]]
+        lms.ordering_lt(_arg1, _arg2)
+      case OrderingLTEQ(ord) =>
+        implicit val ord1 = ord.asInstanceOf[Ordering[A]]
+        lms.ordering_lteq(_arg1, _arg2)
+      case OrderingGT(ord) =>
+        implicit val ord1 = ord.asInstanceOf[Ordering[A]]
+        lms.ordering_gt(_arg1, _arg2)
+      case OrderingGTEQ(ord) =>
+        implicit val ord1 = ord.asInstanceOf[Ordering[A]]
+        lms.ordering_gteq(_arg1, _arg2)
+      case OrderingMax(ord) =>
+        implicit val ord1 = ord.asInstanceOf[Ordering[A]]
+        lms.ordering_max(_arg1, _arg2)
+      case OrderingMin(ord) =>
+        implicit val ord1 = ord.asInstanceOf[Ordering[A]]
+        lms.ordering_min(_arg1, _arg2)
+      case And =>
+        lms.boolean_and(_arg1, _arg2)
+      case Or =>
+        lms.boolean_or(_arg1, _arg2)
+      case StringConcat =>
+        lms.string_plus(_arg1, _arg2)
+      case StringContains =>
+        lms.string_contains(_arg1, _arg2)
+      case StringStartsWith =>
+        lms.string_startswith(_arg1, _arg2)
+      case StringEndsWith =>
+        lms.string_endsWith(_arg1, _arg2)
+      case StringMatches =>
+        lms.string_matches(_arg1, _arg2)
+      case MathPow =>
+        lms.math_pow(_arg1, _arg2)
+    }
+  }
+
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] =
     !!!(s"Don't know how to transform method call: $method")
-  def newObj[A: Manifest](m: LmsMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = !!!("Don't know how to create new object")
+  def newObj[A: Manifest](m: LmsMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = !!!(s"Don't know how to create new object of class $aClass")
 }

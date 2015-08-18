@@ -6,34 +6,34 @@ import scalan.Scalan
 
 trait StringOps extends UnBinOps { self: Scalan =>
   implicit class StringOpsCls(lhs: Rep[String]) {
-    def toInt = StringToInt().apply(lhs)
-    def toDouble = StringToDouble().apply(lhs)
+    def toInt = StringToInt(lhs)
+    def toDouble = StringToDouble(lhs)
     def length = string_length(lhs)
     def apply(index: Rep[Int]) = string_apply(lhs, index)
     def substring(start: Rep[Int], end: Rep[Int]) = string_substring(lhs, start, end)
-    def +(rhs: Rep[String]) = StringConcat().apply(lhs, rhs)
-    def startsWith(rhs: Rep[String]) = StringStartsWith().apply(lhs, rhs)
-    def endsWith(rhs: Rep[String]) = StringEndsWith().apply(lhs, rhs)
-    def contains(rhs: Rep[String]) = StringContains().apply(lhs, rhs)
-    def matches(rhs: Rep[String]) = StringMatches().apply(lhs, rhs)
+    def +(rhs: Rep[String]) = StringConcat(lhs, rhs)
+    def startsWith(rhs: Rep[String]) = StringStartsWith(lhs, rhs)
+    def endsWith(rhs: Rep[String]) = StringEndsWith(lhs, rhs)
+    def contains(rhs: Rep[String]) = StringContains(lhs, rhs)
+    def matches(rhs: Rep[String]) = StringMatches(lhs, rhs)
   }
 
   object StringObject {
-    def empty = toRep("")
+    lazy val empty = toRep("")
   }
 
   def string_length(str: Rep[String]): Rep[Int]
   def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String]
   def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char]
 
-  case class StringToInt() extends UnOp[String, Int]("toInt", _.toInt)
-  case class StringToDouble() extends UnOp[String, Double]("toDouble", _.toDouble)
+  val StringToInt = new UnOp[String, Int]("toInt", _.toInt)
+  val StringToDouble = new UnOp[String, Double]("toDouble", _.toDouble)
 
-  case class StringConcat() extends EndoBinOp[String]("+", _ + _)
-  case class StringContains() extends BinOp[String, Boolean]("contains", _.contains(_))
-  case class StringStartsWith() extends BinOp[String, Boolean]("startsWith", _.startsWith(_))
-  case class StringEndsWith() extends BinOp[String, Boolean]("endsWith", _.endsWith(_))
-  case class StringMatches() extends BinOp[String, Boolean]("matches", _.matches(_))
+  val StringConcat = new EndoBinOp[String]("+", _ + _)
+  val StringContains = new BinOp[String, Boolean]("contains", _.contains(_))
+  val StringStartsWith = new BinOp[String, Boolean]("startsWith", _.startsWith(_))
+  val StringEndsWith = new BinOp[String, Boolean]("endsWith", _.endsWith(_))
+  val StringMatches = new BinOp[String, Boolean]("matches", _.matches(_))
 }
 
 
@@ -46,18 +46,18 @@ trait StringOpsSeq extends StringOps { self: ScalanSeq =>
 
 trait StringOpsExp extends StringOps with BaseExp { self: ScalanExp =>
 
-  case class StringSubstr(str: Rep[String], start: Rep[Int], end: Rep[Int]) extends BaseDef[String] {
-    override def mirror(t: Transformer) = StringSubstr(t(str), t(start), t(end))
+  case class StringSubstring(str: Rep[String], start: Rep[Int], end: Rep[Int]) extends BaseDef[String] {
+    override def mirror(t: Transformer) = StringSubstring(t(str), t(start), t(end))
   }
   case class StringLength(str: Rep[String]) extends BaseDef[Int] {
     override def mirror(t: Transformer) = StringLength(t(str))
   }
-  case class StringApply(str: Rep[String], index: Rep[Int]) extends BaseDef[Char] {
-    override def mirror(t: Transformer) = StringApply(t(str), t(index))
+  case class StringCharAt(str: Rep[String], index: Rep[Int]) extends BaseDef[Char] {
+    override def mirror(t: Transformer) = StringCharAt(t(str), t(index))
   }
 
   def string_length(str: Rep[String]): Rep[Int] = StringLength(str)
-  def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String] = StringSubstr(str, start, end)
-  def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char] = StringApply(str, index)
+  def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String] = StringSubstring(str, start, end)
+  def string_apply(str: Rep[String], index: Rep[Int]): Rep[Char] = StringCharAt(str, index)
 }
 

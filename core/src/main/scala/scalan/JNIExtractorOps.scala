@@ -288,7 +288,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     override def mirror(t: Transformer) = JNI_GetObjectFieldValue[A,T](t(fid), t(x))
   }
 
-  case class JNI_GetPrimitiveFieldValue[A: Elem,T: Elem](fid: Rep[JNIFieldID], tup: Rep[JNIType[T]]) extends BaseDef[A] {
+  case class JNI_GetPrimitiveFieldValue[A: Elem, T: Elem](fid: Rep[JNIFieldID], tup: Rep[JNIType[T]]) extends BaseDef[A] {
     require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
     override def mirror(t: Transformer) = JNI_GetPrimitiveFieldValue[A,T](t(fid), t(tup))
   }

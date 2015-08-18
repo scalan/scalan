@@ -463,7 +463,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArraySortBy[T, O:Elem](xs: Exp[Array[T]], f: Exp[T => O], o: Ordering[O])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArraySortBy(t(xs), t(f), o)
   }
-  case class ArrayGroupBy[T, G:Elem](xs: Exp[Array[T]], by: Exp[T => G])(implicit val eT: Elem[T]) extends MMapDef[G, ArrayBuffer[T]] {
+  case class ArrayGroupBy[T:Elem, G:Elem](xs: Exp[Array[T]], by: Exp[T => G]) extends MMapDef[G, ArrayBuffer[T]] {
     override def mirror(t: Transformer) = ArrayGroupBy(t(xs), t(by))
   }
   case class ArraySum[T: Elem](xs: Exp[Array[T]], n: Numeric[T]) extends Def[T] with ArrayMethod[T] {

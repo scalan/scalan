@@ -88,7 +88,7 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
   def jni_get_primitive_field_value[A: Manifest, T: Manifest](fid: Rep[JNIFieldID], x: Rep[JNIType[T]]): Rep[A] = GetPrimitiveFieldValue[A,T](fid, x)
   def jni_return_first_arg[A: Manifest](ret: Rep[JNIType[A]], ignore: Rep[Any]): Rep[JNIType[A]] = ReturnFirstArg[A](ret, ignore)
 
-  def jni_map_array[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[B]): Exp[JNIType[Array[B]]] = {
+  def jni_map_primitive_array[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[B]): Exp[JNIType[Array[B]]] = {
     val jArray = jni_new_primitive_array_var[B](a.length)
     val jniArray = jni_extract_primitive_array_var(jArray)
     val f1 = {i:Rep[Int] => f(a.at(i))}
