@@ -60,8 +60,14 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt with PointerLmsOpsExp
   with Effects with MiscOpsExp {
-  /*type RepD[T] = Rep[T]
-  */
+  def toStringWithDefinition(x: Exp[_]) = s"$x: ${x.tp}" + (x match {
+    case sym: Sym[_] =>
+      findDefinition(sym) match {
+        case Some(d) => " = " + infix_rhs(d)
+        case _ => " (no definition)"
+      }
+    case _ => ""
+  })
 
   def Not(arg: Exp[Boolean]) = {
     !arg

@@ -19,7 +19,7 @@ trait PointerBridge extends CoreBridge {
       super.createManifest(el)
   }
 
-  override def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = {
+  override protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = {
     def itemElem(sourceElem: Elem[_]) = sourceElem match {
       case ScalaArrayElem(eItem) => eItem
       case ScalarElem(eItem) => eItem

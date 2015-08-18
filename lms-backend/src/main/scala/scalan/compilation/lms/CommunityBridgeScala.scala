@@ -65,7 +65,7 @@ trait CommunityBridgeScala extends CommunityBridge with SeqsScalaMethodMapping w
     }
   }
 
-  override def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
+  override protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
     case u: CollectionsExp#ExpCollectionOverArray[_] =>
       val exp = Manifest.classType(u.getClass) match {
         case (mA: Manifest[a]) =>

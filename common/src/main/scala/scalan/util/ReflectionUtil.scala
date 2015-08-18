@@ -11,4 +11,31 @@ object ReflectionUtil {
   }
 
   def methodToJava(sym: MethodSymbol) = ReflectionUtil0.methodToJava(sym)
+
+  def primaryConstructor(tpe: Type) = {
+    val constructorSymbol = tpe.decl(termNames.CONSTRUCTOR)
+    constructorSymbol match {
+      case ctorTermSymbol: TermSymbol =>
+        if (ctorTermSymbol.isOverloaded) {
+          val constructors = ctorTermSymbol.alternatives
+          constructors.collectFirst {
+            case c: MethodSymbol if c.isPrimaryConstructor => c
+          }
+        } else {
+          Some(ctorTermSymbol.asMethod)
+        }
+      case NoSymbol => None
+    }
+  }
+
+  def classToSymbol(clazz: Class[_]) =
+    runtimeMirror(clazz.getClassLoader).classSymbol(clazz)
+
+  def simplifyType(tpe: Type) = {
+    val tpe1 = tpe match {
+      case NullaryMethodType(returnTpe) => returnTpe
+      case _ => tpe
+    }
+    tpe1.dealias
+  }
 }

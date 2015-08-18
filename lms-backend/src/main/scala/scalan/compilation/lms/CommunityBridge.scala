@@ -8,7 +8,7 @@ trait CommunityBridge extends CoreBridge with CommunityMethodMappingDSL {
 
   val lms: CommunityLmsBackendBase
 
-  override def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
+  override protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
     case DotSparse(i1, v1, i2, v2) =>
       v1.elem match {
         case el: ArrayElem[_] =>

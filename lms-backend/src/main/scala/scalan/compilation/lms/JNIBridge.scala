@@ -24,7 +24,7 @@ trait JNIBridge extends CoreBridge {
       super.createManifest(el)
   }
 
-  override def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
+  override protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
     case res@ExpCString(Def(s: Const[_])) =>
       val exp = lms.JNIStringConst(s.x)
       m.addSym(sym, exp)
