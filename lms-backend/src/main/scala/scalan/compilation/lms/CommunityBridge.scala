@@ -23,36 +23,6 @@ trait CommunityBridge extends CoreBridge with CommunityMethodMappingDSL {
               m.addSym(sym, exp)
           }
       }
-
-    case ArrayBinarySearch(i, xs, o) =>
-      xs.elem match {
-        case el: ArrayElem[_] =>
-          createManifest(el.eItem) match {
-            case (mA: Manifest[a]) =>
-              val idxs = m.symMirror[Array[Int]](xs)
-              val index = m.symMirror[Int](i)
-              val exp = lms.array_binarySearch[a](index, idxs)(mA)
-              m.addSym(sym, exp)
-          }
-      }
-
-    case Reflect(PrintlnE(s), _, _) =>
-      val s1 = m.symMirror[String](s)
-      val exp = lms.println(s1)
-      m.addSym(sym, exp)
-
-    case Reflect(ReadLineE(), _, _) =>
-      val exp = lms.readline
-      m.addSym(sym, exp)
-
-    case Reify(x, u, es) => m
-//    case Reify(x, u, es) =>
-//      createManifest(x.elem) match {
-//        case (mA: Manifest[a]) =>
-//          val x1 = m.symMirror[a](x)
-//          val exp = lms.reify(x1, m.summaryMirror(u), es.map(e => m.symMirror(e)))(mA)
-//          m.addSym(sym, exp)
-//      }
     case _ => super.transformDef(m, g, sym, d)
   }
 }
