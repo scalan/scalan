@@ -83,7 +83,7 @@ trait LmsBridge extends Passes {
     lmsFunc(x)
   }
 
-  def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
+  def createManifest[T](elem: Elem[T]): Manifest[_] = elem match {
     case el: ExpBaseElemEx1[_,_,_] => {
       val tag = el.cont.tag
       val cls = tag.mirror.runtimeClass(tag.tpe)

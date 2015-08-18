@@ -10,7 +10,7 @@ trait PointerBridge extends CoreBridge {
 
   val lms: CoreLmsBackend with PointerLmsOpsExp
 
-  override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
+  override def createManifest[T](elem: Elem[T]): Manifest[_] = elem match {
     case ScalarElem(eItem) =>
       Manifest.classType(classOf[PointerLmsOps#Scalar[_]], createManifest(eItem))
     case PointerElem(eItem) =>

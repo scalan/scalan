@@ -11,7 +11,7 @@ trait JNIBridge extends CoreBridge {
 
   val lms: CoreLmsBackend with JNILmsOpsExp
 
-  override def createManifest[T]: PartialFunction[Elem[T], Manifest[_]] = {
+  override def createManifest[T](elem: Elem[T]): Manifest[_] = elem match {
     case el: JNITypeElem[_] =>
       Manifest.classType(classOf[JNILmsOps#JNIType[_]], createManifest(el.eT))
     case el: JNIArrayElem[arr_t] =>
