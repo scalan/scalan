@@ -34,6 +34,7 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
       emitValDef(sym, src"$x->size()")
     case ArrayUpdate(x,n,y) =>
       stream.println(src"(*$x)[$n] = $y; /*${rhs.toString }*/")
+      emitValDef(sym,"scalan::unit_value")
     //    case ArraySlice(x,s,e) =>
     //      val tp=remap(x.tp.typeArguments(0))
     //      emitValDef(sym, src"({ size_t sz=sizeof("+tp+")*($e-$s); "+tp+"* r = ("+tp+"*)malloc(sz); memcpy(r,(("+tp+"*)$x)+$s,sz); r; })")
@@ -42,7 +43,7 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
     case a@ArrayNew(n) =>
       emitConstruct(sym, src"$n")
     case ArrayMutable(a) =>
-      emitValDef(sym, src"$a /* clone */")
+      emitConstruct(sym, src"$a->begin()", src"$a->end()")
     //    case e@ArrayFromSeq(xs) => {
     //      emitData(sym, xs)
     //      emitValDef(sym,

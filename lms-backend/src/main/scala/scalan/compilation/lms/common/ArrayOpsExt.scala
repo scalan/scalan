@@ -103,6 +103,14 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     newArr.update(index, value)
     newArr
   }
+
+  def updateArrayMany[A: Manifest](xs: Exp[Array[A]], indexes: Exp[Array[Int]], values: Exp[Array[A]]) = {
+    val newArr =  xs.mutable
+    for(i <- 0 until indexes.length) {
+      newArr.update(indexes(i), values(i))
+    }
+    newArr
+  }
 //  def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
 //    val newArr =  array_obj_new(xs.length)
 //    array_copy(xs, 0, newArr, 0, xs.length)

@@ -947,6 +947,17 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
           m.addSym(sym, exp)
       }
 
+    case ArrayUpdateMany(xs, indexes, values) =>
+      xs.elem match {
+        case el: ArrayElem[a] =>
+          val mA = createManifest(el.eItem).asInstanceOf[Manifest[a]]
+          val lmsXs = m.symMirror[Array[a]](xs)
+          val lmsIndex = m.symMirror[Array[Int]](indexes)
+          val lmsValue = m.symMirror[Array[a]](values)
+          val exp = lms.updateArrayMany(lmsXs, lmsIndex, lmsValue)(mA)
+          m.addSym(sym, exp)
+      }
+
     case ArrayReduce(source, monoid) =>
       source.elem match {
         case el: ArrayElem[_] =>

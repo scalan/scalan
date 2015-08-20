@@ -242,7 +242,7 @@ trait ArrayOpsSeq extends ArrayOps {
 
   def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = {
     implicit val ct = arrayToClassTag(xs)
-    (0 to indexes.length).foreach(i => xs.update(indexes(i), values(i)))
+    (0 until indexes.length).foreach(i => xs.update(indexes(i), values(i)))
     xs
   }
 

@@ -271,4 +271,12 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
     val in = Array(1,2,3)
     compareOutputWithSequential(progStaged)(progSeq.ifSpecialize, progStaged.scalan.ifSpecialize, "ifSpecialize", in)
   }
+
+  test("arrayUpdateMany") {
+    val arr = Array(1,2,3)
+    val idx = Array(0,2)
+    val vls = Array(11, 33)
+    compareOutputWithSequential(progStaged)(progSeq.arrayUpdateMany, progStaged.scalan.arrayUpdateMany, "arrayUpdateMany", (arr,(idx,vls)))
+    compareOutputWithSequential(progStagedU)(progSeq.arrayUpdateMany, progStagedU.scalan.arrayUpdateMany, "arrayUpdateManyU", (arr,(idx,vls)))
+  }
 }
