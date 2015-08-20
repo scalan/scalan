@@ -3,7 +3,7 @@ package scalan.meta
 import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
 import java.util.zip.{GZIPInputStream,GZIPOutputStream}
 
-import scalan.util.{StringUtil, ScalaNameUtil}
+import scalan.util.{ThreadContextClassLoaderObjectInputStream, StringUtil, ScalaNameUtil}
 import scala.annotation.tailrec
 import ScalanAst._
 
@@ -181,16 +181,18 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     try {
       val gzip = new GZIPInputStream(bis)
       try {
-        val objIn = new ObjectInputStream(gzip)
+        // required instead of ObjectInputStream to work correctly from SBT, see
+        // www.scala-sbt.org/0.13/docs/Running-Project-Code.html
+        val objIn = new ThreadContextClassLoaderObjectInputStream(gzip)
         try {
           val module = objIn.readObject().asInstanceOf[SEntityModuleDef]
           module
         }
         finally objIn.close()
       }
-      finally gzip.close
+      finally gzip.close()
     }
-    finally bis.close
+    finally bis.close()
   }
 
   class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) extends MatcherGenerator {
