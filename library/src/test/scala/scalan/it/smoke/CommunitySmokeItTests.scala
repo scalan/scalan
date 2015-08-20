@@ -12,6 +12,8 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
 
   trait ProgCommunity extends Prog with ScalanCommunity with CollectionExamples with ScalanCommunityDsl  {
 
+    lazy val arrayUpdateMany = fun { in: Rep[(Array[Int], (Array[Int], Array[Int]))] => array_updateMany(in._1, in._2, in._3) }
+
     lazy val listRangeFrom0 = fun { n: Rep[Int] => SList.rangeFrom0(n) }
 
     lazy val applyLambda2Array = fun {arr: Rep[Array[Int]] =>
