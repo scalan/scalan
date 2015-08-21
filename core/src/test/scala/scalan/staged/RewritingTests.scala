@@ -56,7 +56,7 @@ class RewritingTests extends BaseCtxTests {
     lazy val ifFold = fun { pp: Rep[Boolean] =>
       val e1 = toRep(1.0).asLeft[Int]
       val e2 = toRep(2).asRight[Double]
-      val iff = __ifThenElse(pp, e1, e2)
+      val iff = ifThenElse(pp, e1, e2)
       iff.foldBy(constFun(10), constFun(100))
     }
 
@@ -64,9 +64,9 @@ class RewritingTests extends BaseCtxTests {
       val e1 = toRep(1.0).asLeft[Int]
       val e2 = toRep(2).asRight[Double]
       val e3 = toRep(3).asRight[Double]
-      val iff = __ifThenElse(
+      val iff = ifThenElse(
         p1,
-        __ifThenElse(p2, e1, e2),
+        ifThenElse(p2, e1, e2),
         e3)
       iff.foldBy(constFun(10), constFun(100))
     }

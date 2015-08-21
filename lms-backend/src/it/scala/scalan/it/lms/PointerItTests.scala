@@ -32,7 +32,7 @@ class PointerItTests extends BaseItTests {
       val iPtr = intPtr(i)
       val yPtr = valuePtr(i)
       val int0: Rep[Int] = 0
-      val ifPtr = __ifThenElse(i === int0, iPtr, yPtr)
+      val ifPtr = ifThenElse(i === int0, iPtr, yPtr)
       ifPtr
     }
 
