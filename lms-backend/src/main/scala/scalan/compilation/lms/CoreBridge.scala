@@ -969,13 +969,9 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
                   val exp = lms.sumArray[a](src)(mA)
                   m.addSym(sym, exp)
                 case _ =>
-                  monoid.append match {
-                    case opSym@Def(lambda: Lambda[_, _]) =>
-                      val zero = m.symMirror[a](monoid.zero)
-                      val op = m.mirrorLambda[(a, a), a](lambda.asInstanceOf[Lambda[(a, a), a]])
-                      val exp = lms.reduceArray[a](src, zero, op)(mA)
-                      m.addSym(sym, exp).addFunc(opSym, op)
-                  }
+                  val (m1, zero, op) = m.mirrorMonoid(monoid.asInstanceOf[RepMonoid[a]])
+                  val exp = lms.reduceArray(src, zero, op)(mA)
+                  m1.addSym(sym, exp)
               }
           }
       }
@@ -991,13 +987,9 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
                 //  val exp = lms.sum[a](src)(mA)
                 //  m.addSym(sym, exp)
                 case _ =>
-                  monoid.append match {
-                    case opSym@Def(lambda: Lambda[_, _]) =>
-                      val zero = m.symMirror[a](monoid.zero)
-                      val op = m.mirrorLambda[(a, a), a](lambda.asInstanceOf[Lambda[(a, a), a]])
-                      val exp = lms.scanArray[a](src, zero, op)(mA)
-                      m.addSym(sym, exp).addFunc(opSym, op)
-                  }
+                  val (m1, zero, op) = m.mirrorMonoid(monoid.asInstanceOf[RepMonoid[a]])
+                  val exp = lms.scanArray(src, zero, op)(mA)
+                  m1.addSym(sym, exp)
               }
           }
       }
@@ -1179,14 +1171,9 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
           val src = m.symMirror[List[a]](source)
           // may want to special-case e.g. sum and product if sumList can be implemented generically
           // (see comment there and implementation for ArrayReduce above)
-          monoid.append match {
-            case opSym@Def(lambda: Lambda[_, _]) =>
-              val zero = monoid.zero
-              val lmsZero = m.symMirror[a](zero)
-              val op = m.mirrorLambda[(a, a), a](lambda.asInstanceOf[Lambda[(a, a), a]])
-              val exp = lms.reduceList[a](src, lmsZero, op)(mA)
-              m.addSym(zero, lmsZero).addSym(sym, exp).addFunc(opSym, op)
-          }
+          val (m1, zero, op) = m.mirrorMonoid(monoid.asInstanceOf[RepMonoid[a]])
+          val exp = lms.reduceList(src, zero, op)(mA)
+          m1.addSym(sym, exp)
       }
 
     case Reflect(PrintlnE(s), _, _) =>

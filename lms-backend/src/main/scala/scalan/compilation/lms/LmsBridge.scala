@@ -49,6 +49,16 @@ trait LmsBridge extends Passes {
       f
     }
 
+    def mirrorMonoid[A](monoid: RepMonoid[A]): (LmsMirror, lms.Exp[A], lms.Exp[(A, A)] => lms.Exp[A]) = {
+      monoid.append match {
+        case opSym@Def(lambda: Lambda[(A, A), A] @unchecked) =>
+          val op = mirrorLambda(lambda)
+          // TODO insert if not yet in the mirror
+          val zero = symMirror[A](monoid.zero)
+          (/*addSym(monoid.zero, zero).*/addFunc(opSym, op), zero, op)
+      }
+    }
+
     def mirrorBlock[R](block: ThunkDef[_], dflt: Rep[_]): () => lms.Exp[R] = { () =>
       val sched = block.filterReifyRoots(block.scheduleSingleLevel)
       val finalMirror = mirrorDefs(block, sched)
