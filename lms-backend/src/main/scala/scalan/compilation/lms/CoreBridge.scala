@@ -847,59 +847,38 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
               m.addSym(sym, exp).addFunc(lambdaSym, f)
           }
       }
-    case mr@ArrayMapReduce(Def(range: ArrayRangeFrom0), mapSym@Def(map: Lambda[_, _]), reduceSym@Def(reduce: Lambda[_, _])) =>
-      (mr.selfType) match {
-        case (me: MMapElem[k, v]) =>
-          (createManifest(me.eKey), createManifest(me.eValue)) match {
-            case (mK: Manifest[k], mV: Manifest[v]) =>
-              val n_ = m.symMirror[Int](range.n)
-              val map_ = m.mirrorLambda[Int, (k, v)](map.asInstanceOf[Lambda[Int, (k, v)]])
-              val reduce_ = m.mirrorLambda[(v, v), v](reduce.asInstanceOf[Lambda[(v, v), v]])
-              val exp = lms.rangeMapReduce(n_, map_, reduce_)(mK, mV)
-              m.addSym(sym, exp).addFunc(mapSym, map_).addFunc(reduceSym, reduce_)
-          }
-      }
-    case mr@ArrayMapReduce(Def(ArrayFilter(Def(ArrayMap(Def(range: ArrayRangeFrom0), map1Sym@Def(map1: Lambda[_, _]))), filterSym@Def(filter: Lambda[_, _]))),
-    map2Sym@Def(map2: Lambda[_, _]), reduceSym@Def(reduce: Lambda[_, _])) =>
-      (map1.eB, mr.selfType) match {
-        case (ma: Elem[a], me: MMapElem[k, v]) =>
-          (createManifest(ma), createManifest(me.eKey), createManifest(me.eValue)) match {
-            case (mA: Manifest[a], mK: Manifest[k], mV: Manifest[v]) =>
-              val n_ = m.symMirror[Int](range.n)
-              val map1_ = m.mirrorLambda[Int, a](map1.asInstanceOf[Lambda[Int, a]])
-              val filter_ = m.mirrorLambda[a, Boolean](filter.asInstanceOf[Lambda[a, Boolean]])
-              val map2_ = m.mirrorLambda[a, (k, v)](map2.asInstanceOf[Lambda[a, (k, v)]])
-              val reduce_ = m.mirrorLambda[(v, v), v](reduce.asInstanceOf[Lambda[(v, v), v]])
-              val exp = lms.rangeFilterMapReduce(n_, map1_, filter_, map2_, reduce_)(mA, mK, mV)
-              m.addSym(sym, exp).addFunc(map1Sym, map1_).addFunc(map2Sym, map2_).
-                addFunc(filterSym, filter_).addFunc(reduceSym, reduce_)
-          }
-      }
-    case mr@ArrayMapReduce(Def(ArrayFilter(source, filterSym@Def(filter: Lambda[_, _]))), mapSym@Def(map: Lambda[_, _]), reduceSym@Def(reduce: Lambda[_, _])) =>
+    case mr@ArrayMapReduce(source, map, reduce) =>
       (source.elem, mr.selfType) match {
         case (ae: ArrayElem[a], me: MMapElem[k, v]) =>
-          (createManifest(ae.eItem), createManifest(me.eKey), createManifest(me.eValue)) match {
-            case (mA: Manifest[a], mK: Manifest[k], mV: Manifest[v]) =>
+          val mA = createManifest(ae.eItem).asInstanceOf[Manifest[a]]
+          val mK = createManifest(me.eKey).asInstanceOf[Manifest[k]]
+          val mV = createManifest(me.eValue).asInstanceOf[Manifest[v]]
+          val map_ = m.funcMirror[a, (k, v)](map)
+          val reduce_ = m.funcMirror[(v, v), v](reduce)
+
+          val exp = source match {
+            case Def(range: ArrayRangeFrom0) =>
+              val n_ = m.symMirror(range.n)
+              lms.rangeMapReduce(n_, map_, reduce_)(mK, mV)
+            case Def(ArrayFilter(Def(ArrayMap(Def(range: ArrayRangeFrom0), map1)), filter)) =>
+              map1.elem.eRange match {
+                case ma: Elem[b] =>
+                  val mA = createManifest(ma).asInstanceOf[Manifest[b]]
+                  val n_ = m.symMirror[Int](range.n)
+                  val map1_ = m.funcMirror[Int, b](map1)
+                  val filter_ = m.funcMirror[b, Boolean](filter)
+                  lms.rangeFilterMapReduce(n_, map1_, filter_, map_, reduce_)(mA, mK, mV)
+              }
+            case Def(ArrayFilter(source, filter)) =>
               val source_ = m.symMirror[Array[a]](source)
-              val filter_ = m.mirrorLambda[a, Boolean](filter.asInstanceOf[Lambda[a, Boolean]])
-              val map_ = m.mirrorLambda[a, (k, v)](map.asInstanceOf[Lambda[a, (k, v)]])
-              val reduce_ = m.mirrorLambda[(v, v), v](reduce.asInstanceOf[Lambda[(v, v), v]])
-              val exp = lms.filterMapReduce(source_, filter_, map_, reduce_)(mA, mK, mV)
-              m.addSym(sym, exp).addFunc(mapSym, map_).
-                addFunc(filterSym, filter_).addFunc(reduceSym, reduce_)
-          }
-      }
-    case mr@ArrayMapReduce(source, mapSym@Def(map: Lambda[_, _]), reduceSym@Def(reduce: Lambda[_, _])) =>
-      (source.elem, mr.selfType) match {
-        case (ae: ArrayElem[a], me: MMapElem[k, v]) =>
-          (createManifest(ae.eItem), createManifest(me.eKey), createManifest(me.eValue)) match {
-            case (mA: Manifest[a], mK: Manifest[k], mV: Manifest[v]) =>
+              val filter_ = m.funcMirror[a, Boolean](filter)
+              lms.filterMapReduce(source_, filter_, map_, reduce_)(mA, mK, mV)
+            case _ =>
               val source_ = m.symMirror[Array[a]](source)
-              val map_ = m.mirrorLambda[a, (k, v)](map.asInstanceOf[Lambda[a, (k, v)]])
-              val reduce_ = m.mirrorLambda[(v, v), v](reduce.asInstanceOf[Lambda[(v, v), v]])
-              val exp = lms.arrayMapReduce(source_, map_, reduce_)(mA, mK, mV)
-              m.addSym(sym, exp).addFunc(mapSym, map_).addFunc(reduceSym, reduce_)
+              lms.arrayMapReduce(source_, map_, reduce_)(mA, mK, mV)
           }
+
+          m.addSym(sym, exp)
       }
     case f@ArrayFold(source, init, stepSym@Def(step: Lambda[_, _])) =>
       (f.selfType, source.elem) match {
