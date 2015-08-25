@@ -36,7 +36,7 @@ trait CommunityBridgeScala extends CommunityBridge with SeqsScalaMethodMapping w
                 case p => p + "." + conf.funcName.name
               }
           }
-          createManifest(returnType) match {
+          elemToManifest(returnType) match {
             case (mA: Manifest[a]) =>
               val lmsArgs = param ++ args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }
               lms.scalaMethod[a](null, PURE, methodName, List.empty, lmsArgs: _*)(mA.asInstanceOf[Manifest[a]])
@@ -47,13 +47,13 @@ trait CommunityBridgeScala extends CommunityBridge with SeqsScalaMethodMapping w
           import scala.reflect.runtime.universe._
           val instanceMirror = runtimeMirror(obj.getClass.getClassLoader).reflect(lms)
           val lmsMethod = instanceMirror.symbol.typeSignature.member(TermName(name))
-          instanceMirror.reflectMethod(lmsMethod.asMethod).apply(obj, createManifest(receiver.elem)).asInstanceOf[lms.Exp[_]]
+          instanceMirror.reflectMethod(lmsMethod.asMethod).apply(obj, elemToManifest(receiver.elem)).asInstanceOf[lms.Exp[_]]
       }
       case Some(nonScalaFunc) =>
         !!!(s"$nonScalaFunc is not a ScalaMappingDSL#ScalaFunc")
       case None =>
         val obj = m.symMirrorUntyped(receiver)
-        createManifest(returnType) match {
+        elemToManifest(returnType) match {
           case (mA: Manifest[a]) => lms.scalaMethod[a](obj, PURE, method.getName,
             args.collect { arg => arg match {
               case el: WrapperElem1[_,_,_,_] => el.baseElem.tag

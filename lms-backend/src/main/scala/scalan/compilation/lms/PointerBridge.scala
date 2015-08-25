@@ -15,12 +15,6 @@ trait PointerBridge extends CoreBridge {
     case _ => super.lmsMethodName(d, primitiveName)
   }
 
-  override def createManifest[T](elem: Elem[T]): Manifest[_] = elem match {
-    case ScalarElem(eItem) =>
-      Manifest.classType(classOf[PointerLmsOps#Scalar[_]], createManifest(eItem))
-    case PointerElem(eItem) =>
-      Manifest.classType(classOf[PointerLmsOps#Pointer[_]], createManifest(eItem))
-    case el =>
-      super.createManifest(el)
-  }
+  registerElemClass[ScalarElem[_, _], PointerLmsOps#Scalar[_]]
+  registerElemClass[PointerElem[_, _], PointerLmsOps#Scalar[_]]
 }

@@ -11,18 +11,8 @@ trait JNIBridge extends CoreBridge {
 
   val lms: CoreLmsBackend with JNILmsOpsExp
 
-  override def createManifest[T](elem: Elem[T]): Manifest[_] = elem match {
-    case el: JNITypeElem[_] =>
-      Manifest.classType(classOf[JNILmsOps#JNIType[_]], createManifest(el.eT))
-    case el: JNIArrayElem[arr_t] =>
-      el.eItem match {
-        case ei: Elem[a_t] =>
-          val mItem = createManifest(ei)
-          Manifest.classType(classOf[JNILmsOps#JNIArray[a_t]], mItem)
-      }
-    case el =>
-      super.createManifest(el)
-  }
+  registerElemClass[JNITypeElem[_], JNILmsOps#JNIType[_]]
+  registerElemClass[JNIArrayElem[_], JNILmsOps#JNIArray[_]]
 
   override protected def lmsMethodName(d: Def[_], primitiveName: String): String = d match {
     case _: JNI_GetFieldID => "jni_get_field_id"

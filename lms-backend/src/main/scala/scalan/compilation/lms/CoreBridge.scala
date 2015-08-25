@@ -106,15 +106,15 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       }
 
     case lam: Lambda[a, b] =>
-      val mA = createManifest(lam.eA).asInstanceOf[Manifest[a]]
-      val mB = createManifest(lam.eB).asInstanceOf[Manifest[b]]
+      val mA = elemToManifest(lam.eA).asInstanceOf[Manifest[a]]
+      val mB = elemToManifest(lam.eB).asInstanceOf[Manifest[b]]
       val f = m.mirrorLambda[a, b](lam)
       val fun = lms.fun(f)(mA, mB)
       m.addFuncAndSym(sym, f, fun)
 
     case IsLeft(s) =>
       val sumElem = s.elem.asInstanceOf[SumElem[_, _]]
-      (createManifest(sumElem.eLeft), createManifest(sumElem.eRight)) match {
+      (elemToManifest(sumElem.eLeft), elemToManifest(sumElem.eRight)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
           val sum = m.symMirror[Either[a, b]](s)
           val exp = lms.either_isLeft(sum)(mA, mB, implicitly[SourceContext])
@@ -123,7 +123,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
 
     case IsRight(s) =>
       val sumElem = s.elem.asInstanceOf[SumElem[_, _]]
-      (createManifest(sumElem.eLeft), createManifest(sumElem.eRight)) match {
+      (elemToManifest(sumElem.eLeft), elemToManifest(sumElem.eRight)) match {
         case (mA: Manifest[a], mB: Manifest[b]) =>
           val sum = m.symMirror[Either[a, b]](s)
           val exp = lms.either_isRight(sum)(mA, mB, implicitly[SourceContext])
@@ -139,7 +139,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       m.addSym(sym, exp)
 
     case i@IfThenElse(cond, ifTrue, ifFalse) =>
-      createManifest(i.selfType) match {
+      elemToManifest(i.selfType) match {
         case (mA: Manifest[a]) =>
           val cond_ = m.symMirror[Boolean](cond)
 
@@ -174,9 +174,9 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
     case mr@ArrayMapReduce(source, map, reduce) =>
       (source.elem, mr.selfType) match {
         case (ae: ArrayElem[a], me: MMapElem[k, v]) =>
-          val mA = createManifest(ae.eItem).asInstanceOf[Manifest[a]]
-          val mK = createManifest(me.eKey).asInstanceOf[Manifest[k]]
-          val mV = createManifest(me.eValue).asInstanceOf[Manifest[v]]
+          val mA = elemToManifest(ae.eItem).asInstanceOf[Manifest[a]]
+          val mK = elemToManifest(me.eKey).asInstanceOf[Manifest[k]]
+          val mV = elemToManifest(me.eValue).asInstanceOf[Manifest[v]]
           val map_ = m.funcMirror[a, (k, v)](map)
           val reduce_ = m.funcMirror[(v, v), v](reduce)
 
@@ -187,7 +187,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
             case Def(ArrayFilter(Def(ArrayMap(Def(range: ArrayRangeFrom0), map1)), filter)) =>
               map1.elem.eRange match {
                 case ma: Elem[b] =>
-                  val mA = createManifest(ma).asInstanceOf[Manifest[b]]
+                  val mA = elemToManifest(ma).asInstanceOf[Manifest[b]]
                   val n_ = m.symMirror[Int](range.n)
                   val map1_ = m.funcMirror[Int, b](map1)
                   val filter_ = m.funcMirror[b, Boolean](filter)
@@ -206,7 +206,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       }
 
     case ArrayReduce(source, monoid) =>
-      createManifest(source.elem.eItem) match {
+      elemToManifest(source.elem.eItem) match {
         case (mA: Manifest[a]) =>
           val src = m.symMirror[Array[a]](source)
           monoid.opName match {
@@ -221,7 +221,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       }
 
     case ArrayScan(source, monoid) =>
-      createManifest(source.elem.eItem) match {
+      elemToManifest(source.elem.eItem) match {
         case (mA: Manifest[a]) =>
           val src = m.symMirror[Array[a]](source)
           monoid.opName match {
@@ -236,7 +236,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       }
 
     case ListReduce(source, monoid) =>
-      createManifest(monoid.eA) match {
+      elemToManifest(monoid.eA) match {
         case (mA: Manifest[a]) =>
           val src = m.symMirror[List[a]](source)
           // may want to special-case e.g. sum and product if sumList can be implemented generically
@@ -269,7 +269,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
   }
 
   protected def transformUnOp[A, B](m: LmsMirror, op: UnOp[A, B], arg: Exp[A]): lms.Exp[_] = {
-    implicit val mA = createManifest(arg.elem).asInstanceOf[Manifest[A]]
+    implicit val mA = elemToManifest(arg.elem).asInstanceOf[Manifest[A]]
     val _arg = m.symMirror(arg)
     op match {
       case Not => lms.boolean_negate(_arg)
@@ -312,7 +312,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
   }
 
   def transformBinOp[A, B](m: LmsMirror, op: BinOp[A, B], arg1: Exp[A], arg2: Exp[A]): lms.Exp[_] = {
-    implicit val mA = createManifest(arg1.elem).asInstanceOf[Manifest[A]]
+    implicit val mA = elemToManifest(arg1.elem).asInstanceOf[Manifest[A]]
     val _arg1 = m.symMirror(arg1)
     val _arg2 = m.symMirror(arg2)
 

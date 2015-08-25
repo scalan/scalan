@@ -64,7 +64,7 @@ class LmsCompilerUni[ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsExp
     new NativeCopyLoader(Seq.empty, Seq(new File(runtimeTargetDir)), Array(compilerOutput.custom.jarUrl), getClass.getClassLoader)
 
   override def emitSource[A, B](sourcesDir: File, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B]) = {
-    (createManifest(eInput), createManifest(eOutput)) match {
+    (elemToManifest(eInput), elemToManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
         graph.roots.size match {
           case 0 => !!!("program graph is empty")
@@ -101,7 +101,7 @@ class LmsCompilerUni[ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsExp
     val (jInput, jOutput) = f match {
       case Def(lam: Lambda[_, _]) => (lam.x.elem, lam.y.elem)
     }
-    (createManifest(jInput), createManifest(jOutput)) match {
+    (elemToManifest(jInput), elemToManifest(jOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
 
         val lmsFuncC = finalMirror.funcMirror[a, b](f)

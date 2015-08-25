@@ -1,12 +1,10 @@
 package scalan.compilation.lms
 
-import scala.reflect.SourceContext
+import scala.reflect.{classTag, ClassTag, SourceContext}
 import scala.reflect.runtime.universe._
 
 import scalan.compilation.Passes
-import scalan.compilation.lms.scalac.LmsManifestUtil
 import scalan.util.{ReflectionUtil, StringUtil}
-import LmsManifestUtil._
 
 trait LmsBridge extends Passes {
   val lms: LmsBackend
@@ -133,33 +131,7 @@ trait LmsBridge extends Passes {
     // assert(clazz.isInstance(d.asInstanceOf[AnyRef]))
     val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(d)
 
-    val tpe = ReflectionUtil.classToSymbol(clazz).toType
-    val constructor = ReflectionUtil.primaryConstructor(tpe).getOrElse {
-      !!!(s"Primary constructor for class $clazz not found")
-    }
-    val ctorParams = constructor.paramLists.flatten
-    val selfType = ReflectionUtil.simplifyType(selfTypeSym.typeSignatureIn(tpe))
-    val fieldMirrors = ctorParams.map { sym =>
-      val fieldSym = tpe.decl(sym.name).asTerm
-      val fieldType = ReflectionUtil.simplifyType(fieldSym.typeSignature)
-      // workaround for http://stackoverflow.com/questions/32118877/compiler-doesnt-generate-a-field-for-implicit-val-when-an-implicit-val-with-the
-      // this would be handled by below try-catch as well, but is common
-      // enough to handle specially
-      val fieldSym1 = if (fieldType != selfType) fieldSym else selfTypeSym
-
-      try {
-        instanceMirror.reflectField(fieldSym1)
-      } catch {
-        case e: Exception =>
-          // this is represented by a real field in a supertype, find it
-          val realFieldSym = tpe.members.collectFirst {
-            case f: TermSymbol if f.isGetter && ReflectionUtil.simplifyType(f.typeSignatureIn(tpe)) == fieldType => f.accessed.asTerm
-          }.getOrElse {
-            !!!(s"Failed to find the field corresponding to ${tpe}.${sym.name}")
-          }
-          instanceMirror.reflectField(realFieldSym)
-      }
-    }
+    val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, selfTypeSym)
     val paramsLength = fieldMirrors.length
 
     val lmsMethodName = this.lmsMethodName(d, clazz.getSimpleName)
@@ -200,7 +172,7 @@ trait LmsBridge extends Passes {
 
   private[this] def mapParam(m: LmsMirror, x: Any, isFunction: Boolean): Any = x match {
     case e: Exp[_] => if (isFunction) m.funcMirrorUntyped(e) else m.symMirrorUntyped(e)
-    case elem: Element[_] => createManifest(elem)
+    case elem: Element[_] => elemToManifest(elem)
     case seq: Seq[_] => seq.map(mapParam(m, _, isFunction))
     case arr: Array[_] => arr.map(mapParam(m, _, isFunction))
     case x => x
@@ -213,6 +185,9 @@ trait LmsBridge extends Passes {
    * [[Manifest]] automatically).
    */
   protected def extractParams(d: Def[_], fieldMirrors: List[FieldMirror]): List[Any] =
+    extractParamsByReflection(d, fieldMirrors)
+
+  private[this] def extractParamsByReflection(d: Any, fieldMirrors: List[FieldMirror]): List[Any] =
     fieldMirrors.map(_.bind(d).get)
 
   /**
@@ -249,35 +224,69 @@ trait LmsBridge extends Passes {
     lmsFunc(x)
   }
 
-  def createManifest[T](elem: Elem[T]): Manifest[_] = elem match {
+  case class ReflectedElement(clazz: Class[_], fieldMirrors: List[FieldMirror])
+  private[this] val elements = collection.mutable.Map.empty[Class[_], ReflectedElement]
+  private[this] val elementClassTranslations = collection.mutable.Map.empty[Class[_], Class[_]]
+
+  def registerElemClass[E: ClassTag, C: ClassTag] =
+    elementClassTranslations += (classTag[E].runtimeClass -> classTag[C].runtimeClass)
+
+  private[this] lazy val eItemSym =
+    ReflectionUtil.classToSymbol(classOf[EntityElem1[_, _, C] forSome { type C[_] }]).toType.decl(TermName("eItem")).asTerm
+
+  private[this] def reflectElement(clazz: Class[_], elem: Element[_]) = {
+    val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(elem)
+
+    val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, eItemSym)
+
+    val lmsClass = elementClassTranslations.getOrElse(clazz, elem.runtimeClass)
+
+    ReflectedElement(lmsClass, fieldMirrors)
+  }
+
+  registerElemClass[ArrayBufferElem[_], scala.collection.mutable.ArrayBuilder[_]]
+  registerElemClass[MMapElem[_, _], java.util.HashMap[_,_]]
+
+  def elemToManifest[T](elem: Elem[T]): Manifest[_] = elem match {
     case el: ExpBaseElemEx1[_,_,_] => {
       val tag = el.cont.tag
       val cls = tag.mirror.runtimeClass(tag.tpe)
-      Manifest.classType(cls, createManifest(el.eItem))
+      Manifest.classType(cls, elemToManifest(el.eItem))
     }
     case el: WrapperElem[_,_] =>
-      createManifest(el.baseElem)
+      elemToManifest(el.baseElem)
     case el: WrapperElem1[_,_,_,_] =>
-      createManifest(el.baseElem)
-    case el: ArrayBufferElem[_] => Manifest.classType(classOf[scala.collection.mutable.ArrayBuilder[_]], createManifest(el.eItem))
-    case PairElem(eFst, eSnd) =>
-      Manifest.classType(classOf[(_, _)], createManifest(eFst), createManifest(eSnd))
-    case SumElem(eLeft, eRight) =>
-      Manifest.classType(classOf[Either[_, _]], createManifest(eLeft), createManifest(eRight))
-    case el: FuncElem[_, _] =>
-      Manifest.classType(classOf[_ => _], createManifest(el.eDom), createManifest(el.eRange))
+      elemToManifest(el.baseElem)
+
     case el: ArrayElem[_] =>
       // see Scala bug https://issues.scala-lang.org/browse/SI-8183 (won't fix)
       val m = el.eItem match {
         case UnitElement => manifest[scala.runtime.BoxedUnit]
-        case _ => createManifest(el.eItem)
+        case _ => elemToManifest(el.eItem)
       }
       Manifest.arrayType(m)
-    case el: ListElem[_] =>
-      Manifest.classType(classOf[List[_]], createManifest(el.eItem))
-    case el: MMapElem[_,_] =>
-      Manifest.classType(classOf[java.util.HashMap[_,_]], createManifest(el.eKey), createManifest(el.eValue))
-    case el: Element[_] => tagToManifest[T](el.tag)
-    case el => ???(s"Don't know how to create manifest for $el")
+
+    case UnitElement => Manifest.Unit
+    case BooleanElement => Manifest.Boolean
+    case ByteElement => Manifest.Byte
+    case ShortElement => Manifest.Short
+    case IntElement => Manifest.Int
+    case CharElement => Manifest.Char
+    case LongElement => Manifest.Long
+    case FloatElement => Manifest.Float
+    case DoubleElement => Manifest.Double
+    case StringElement => manifest[String]
+
+    case _ =>
+      val clazz = elem.getClass
+      val ReflectedElement(lmsClass, fieldMirrors) = elements.getOrElseUpdate(clazz, reflectElement(clazz, elem))
+
+      val elemParams = extractParamsByReflection(elem, fieldMirrors)
+      val manifestParams = elemParams.map(e => elemToManifest(e.asInstanceOf[Elem[_]]))
+
+      manifestParams match {
+        case Nil => Manifest.classType(lmsClass)
+        case h :: t => Manifest.classType(lmsClass, h, t: _*)
+      }
   }
 }
