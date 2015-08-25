@@ -150,10 +150,10 @@ object Base {
   val config = {
     val prop = new Properties
     try {
-      val scalanPropertiesFileName = System.getProperty("scalan.properties.file", "scalan.properties")
-      val reader = new FileReader(scalanPropertiesFileName)
+      val propertiesFileName = System.getProperty("scalan.properties.file", "scalan.properties")
+      val propertiesStreams = util.FileUtil.getResources(propertiesFileName)
       try {
-        prop.load(reader)
+        propertiesStreams.foreach(prop.load)
 
         val pathToAdd = prop.getProperty("runtime.target")
         if(pathToAdd != null) {
@@ -183,7 +183,7 @@ object Base {
         }
 
       } finally {
-        reader.close()
+        propertiesStreams.foreach(_.close())
       }
     } catch {
       case e: Throwable => print("WARNING: config not readed: " + e.toString+"\n")
