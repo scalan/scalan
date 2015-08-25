@@ -12,6 +12,8 @@ object LanguageId extends Enumeration {
 }
 
 trait MethodMappingDSL {
+  // be explicit to avoid errors if scala.reflect.runtime.universe.Symbol will be imported later
+  implicit def symbolToString(s: scala.Symbol): String = s.name
 
   import LanguageId._
 
@@ -50,19 +52,19 @@ trait MethodMappingDSL {
 
     case class Pack(pack: String)(implicit val lib: Library) extends Implicit[Pack]
 
-    case class Family(familyName: Symbol)(implicit val pack: Pack = null) extends Implicit[Family]
+    case class Family(familyName: String)(implicit val pack: Pack = null) extends Implicit[Family]
 
     trait Ty {
-      def name: Symbol
+      def name: String
     }
 
-    case class BaseTy(name: Symbol) extends Ty
+    case class BaseTy(name: String) extends Ty
 
-    case class TyArg(name: Symbol)
+    case class TyArg(name: String)
 
     trait DomainType extends Ty
 
-    case class ClassType(name: Symbol, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]{
+    case class ClassType(name: String, tyArgs: TyArg*)(implicit val family: Family = null, val pack: Pack = null) extends DomainType with Implicit[ClassType]{
       override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[ClassType] && {
         val m = obj.asInstanceOf[ClassType]
         m.name == name && m.tyArgs == tyArgs && m.family == family && m.pack == pack
@@ -71,7 +73,7 @@ trait MethodMappingDSL {
 
     case class MethodArg(name: Type)
 
-    case class Method(name: Symbol, tyRes: Type, args: MethodArg*)(implicit val theType: ClassType){
+    case class Method(name: String, tyRes: Type, args: MethodArg*)(implicit val theType: ClassType){
       override def equals(obj: scala.Any): Boolean = obj.isInstanceOf[Method] && {
        val m = obj.asInstanceOf[Method]
         m.name == name && m.tyRes == tyRes && m.args == args && m.theType == theType
@@ -79,6 +81,7 @@ trait MethodMappingDSL {
     }
 
     trait Fun {
+      def name: String
       def lib: Fn
     }
 
@@ -106,13 +109,13 @@ trait MethodMappingDSL {
       // To simplify config usage, data are transformed to Backend representation. Direct link to LanguageConf is never used
       lazy val methodMap: Map[(String, String), Option[Func]] = functionMap.map { case (m, f) =>
         (((m.theType.family match {
-          case f: Family => f.pack.pack + "." + f.familyName.name + "$"
+          case f: Family => f.pack.pack + "." + f.familyName + "$"
           case _ =>
             m.theType.pack match {
               case p: Pack => p.pack + "."
               case _ => ""
             }
-        }) + m.theType.name.name, m.name.name), Some(f))
+        }) + m.theType.name, m.name), Some(f))
       }
     }
   }
@@ -125,7 +128,7 @@ trait MethodMappingDSL {
 
     case class CppArg(ty: CppType, name: String)
 
-    case class CppFunc(funcName: String, args: CppArg*)(implicit val lib: CppLib) extends Fun
+    case class CppFunc(name: String, args: CppArg*)(implicit val lib: CppLib) extends Fun
 
     abstract class CppMapping extends Mapping(CPP) {
       type Func = CppFunc
@@ -140,11 +143,11 @@ trait MethodMappingDSL {
 
     case class EmbeddedObject(name: String) extends Fn with Implicit[EmbeddedObject]
 
-    case class ScalaType(name: Symbol)
+    case class ScalaType(name: String)
 
-    case class ScalaArg(ty: ScalaType, name: Symbol)
+    case class ScalaArg(ty: ScalaType, name: String)
 
-    case class ScalaFunc(funcName: Symbol, args: ScalaArg*)(val wrapper: Boolean = false)(implicit val lib: Fn) extends Fun
+    case class ScalaFunc(name: String, args: ScalaArg*)(val wrapper: Boolean = false)(implicit val lib: Fn) extends Fun
 
     abstract class ScalaMapping extends Mapping(SCALA) {
       type Func = ScalaFunc

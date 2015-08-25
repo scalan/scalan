@@ -376,5 +376,10 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
 
   def transformMethodCall[T](m: LmsMirror, receiver: Exp[_], method: Method, args: List[AnyRef], returnType: Elem[T]): lms.Exp[_] =
     !!!(s"Don't know how to transform method call: $method")
-  def newObj[A: Manifest](m: LmsMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = !!!(s"Don't know how to create new object of class $aClass")
+  def newObj[A: Manifest](m: LmsMirror, aClass: Class[_], args: Seq[Rep[_]], newKeyWord: Boolean): lms.Exp[A] = {
+    val name = mappedClassName(aClass).getOrElse(aClass.getName)
+
+    lms.newObj[A](name, args.map(v => m.symMirrorUntyped(v)), newKeyWord)
+  }
+
 }

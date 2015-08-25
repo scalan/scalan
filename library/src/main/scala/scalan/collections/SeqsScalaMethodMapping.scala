@@ -23,9 +23,9 @@ trait SeqsScalaMethodMapping extends CommunityMethodMappingDSL { self: { val sca
     }
 
     val scala_collection_Seq = new ScalaLib() {
-      val arrayToList = ScalaFunc(Symbol("(new AnyRef {def apply[T](arr: Array[T]):List[T] = arr.toList})"))(false)
-      val single = ScalaFunc(Symbol("scala.collection.Seq"))(false)
-      val empty = ScalaFunc(Symbol("Seq.empty"))(false)
+      val arrayToList = ScalaFunc("(new AnyRef {def apply[T](arr: Array[T]):List[T] = arr.toList})")(false)
+      val single = ScalaFunc("scala.collection.Seq")(false)
+      val empty = ScalaFunc("Seq.empty")(false)
     }
 
     val mapping = new ScalaMapping {

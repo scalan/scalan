@@ -64,14 +64,14 @@ class MethodMappingDSLTest extends BaseTests {
 
   test("Scala Method") {
     val m = TestMethodMappingDSL$.methodReplaceConf.head.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMappingDSL#ScalaMappingDSL#ScalaFunc]
-    "arrayLength" should equal(m.funcName.name)
+    "arrayLength" should equal(m.name)
     m.args.size should equal(0)
   }
 
   test("C++ Method") {
     implicit def defaultLanguage: LANGUAGE_ID = CPP
     val m = TestMethodMappingDSL$.methodReplaceConf.head.get("scalan.collections.Collections$Collection", "length").get.asInstanceOf[MethodMappingDSL#CppMappingDSL#CppFunc]
-    "invertMatrix" should equal(m.funcName)
+    "invertMatrix" should equal(m.name)
     m.args.size should equal(2)
   }
 }
