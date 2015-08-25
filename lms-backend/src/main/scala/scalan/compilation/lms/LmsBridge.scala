@@ -118,7 +118,7 @@ trait LmsBridge extends Passes {
   private[this] lazy val lmsTpe =
     ReflectionUtil.classToSymbol(lms.getClass).toType
   // mirror in the scala-reflect sense, not the class LmsMirror sense
-  private[this] lazy val lmsMirror =
+  protected lazy val lmsMirror =
     runtimeMirror(lms.getClass.getClassLoader).reflect(lms)
   private[this] lazy val selfTypeSym =
     ReflectionUtil.classToSymbol(classOf[BaseDef[_]]).toType.decl(TermName("selfType")).asTerm
@@ -170,7 +170,7 @@ trait LmsBridge extends Passes {
 
   private[this] val primitives = collection.mutable.Map.empty[Class[_], ReflectedPrimitive]
 
-  private[this] def mapParam(m: LmsMirror, x: Any, isFunction: Boolean): Any = x match {
+  protected def mapParam(m: LmsMirror, x: Any, isFunction: Boolean): Any = x match {
     case e: Exp[_] => if (isFunction) m.funcMirrorUntyped(e) else m.symMirrorUntyped(e)
     case elem: Element[_] => elemToManifest(elem)
     case seq: Seq[_] => seq.map(mapParam(m, _, isFunction))

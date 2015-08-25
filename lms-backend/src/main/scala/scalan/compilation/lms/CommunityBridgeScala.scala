@@ -35,10 +35,8 @@ trait CommunityBridgeScala extends CommunityBridge with SeqsScalaMethodMapping w
         case e: ScalaMappingDSL#EmbeddedObject if e.name == "lms" =>
           val obj = m.symMirrorUntyped(receiver)
           val name = func.name
-          import scala.reflect.runtime.universe._
-          val instanceMirror = runtimeMirror(obj.getClass.getClassLoader).reflect(lms)
-          val lmsMethod = instanceMirror.symbol.typeSignature.member(TermName(name))
-          instanceMirror.reflectMethod(lmsMethod.asMethod).apply(obj, elemToManifest(receiver.elem)).asInstanceOf[lms.Exp[_]]
+          val lmsMethod = lmsMemberByName(name).asMethod
+          lmsMirror.reflectMethod(lmsMethod).apply(obj, elemToManifest(receiver.elem)).asInstanceOf[lms.Exp[_]]
       }
       case Some(nonScalaFunc) =>
         !!!(s"$nonScalaFunc is not a ScalaMappingDSL#ScalaFunc")
