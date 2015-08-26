@@ -53,9 +53,13 @@ trait ArrayOps { self: Scalan =>
 
     def update(index: Rep[Int], value: Rep[T]) = array_update(xs, index, value)
 
+    def :+(value: Rep[T]) = array_append(xs, value)
+
     def append(value: Rep[T]) = array_append(xs, value)
 
-    def ::(value: Rep[T]) = array_cons(value, xs)
+    def +:(value: Rep[T]) = array_cons(value, xs)
+
+    def prepend(value: Rep[T]) = array_cons(value, xs)
 
     def updateMany(indexes: Arr[Int], values: Arr[T]) = array_updateMany(xs, indexes, values)
 

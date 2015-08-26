@@ -180,12 +180,12 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     case ArrayAppend(HasViews(source, iso: ArrayIso[a, b]), HasViews(value, iso2: Iso[c, d])) if iso.innerIso == iso2 =>
       implicit val eA = iso.innerIso.eFrom
       implicit val eB = iso.innerIso.eTo
-      ViewArray(source.asRep[Array[a]].append(value.asRep[a]))(iso)
+      ViewArray(source.asRep[Array[a]] :+ value.asRep[a])(iso)
 
     case ArrayCons(HasViews(value, iso2: Iso[c, d]), HasViews(source, iso: ArrayIso[a, b])) if iso.innerIso == iso2 =>
       implicit val eA = iso.innerIso.eFrom
       implicit val eB = iso.innerIso.eTo
-      ViewArray(value.asRep[a] :: source.asRep[Array[a]])(iso)
+      ViewArray(value.asRep[a] +: source.asRep[Array[a]])(iso)
 
     case ArrayReverse(HasViews(source, iso: ArrayIso[a, b])) =>
       implicit val eA = iso.innerIso.eFrom
