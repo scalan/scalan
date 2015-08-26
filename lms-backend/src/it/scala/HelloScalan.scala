@@ -32,10 +32,10 @@ object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
   }
 }
 
-// to run: scalan-lms-backend/test:runMain HelloScalanExp
+// to run: scalan-lms-backend/it:runMain HelloScalanExp
 object HelloScalanExp {
   // allows use of standard Scala library, commented out to make tests faster
-  // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
+  // override val defaultCompilerConfig = CompilerConfig(Some("2.11.7"), Seq.empty)
 
   val program = new HelloScalan with ScalanCommunityDslExp
 
