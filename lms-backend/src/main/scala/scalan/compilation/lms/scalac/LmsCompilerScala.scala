@@ -11,9 +11,9 @@ import scalan.compilation.lms.uni.NativeMethodsConfig
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
-case class LmsCompilerScalaConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt : SbtConfig = SbtConfig(), traits : Seq[String] = Seq.empty[String], nativeMethods: NativeMethodsConfig = new NativeMethodsConfig)
+case class LmsCompilerScalaConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt: SbtConfig = SbtConfig(), traits: Seq[String] = Seq.empty[String], nativeMethods: NativeMethodsConfig = new NativeMethodsConfig)
 
-abstract class LmsCompilerScala[ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreBridge with MethodMappingDSL {
+abstract class LmsCompilerScala[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreBridge with MethodMappingDSL {
   import scalan._
   /**
    * If scalaVersion is None, uses scala-compiler.jar
