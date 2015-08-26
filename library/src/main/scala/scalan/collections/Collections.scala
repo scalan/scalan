@@ -409,6 +409,8 @@ trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl =>
     def filter(f: Rep[A] => Rep[Boolean]): Coll[A] = coll.filterBy(fun(f))
 
     def flatMap[B: Elem](f: Rep[A] => Coll[B]): Coll[B] = coll.flatMapBy(fun(f))
+
+    def :+(x: Rep[A]) = coll.append(x)
   }
 
   trait CollectionManager {
