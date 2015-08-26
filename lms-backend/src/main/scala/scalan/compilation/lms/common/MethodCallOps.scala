@@ -2,7 +2,6 @@ package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
 import scala.virtualization.lms.common._
-import scalan.compilation.lms.scalac.LmsManifestUtil.tagToManifest
 
 trait MethodCallOps extends Base {
   import scala.reflect.runtime.universe.WeakTypeTag

@@ -8,7 +8,7 @@ import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 trait LstOps extends Base {
 
   def list_replicate[A: Manifest](len: Rep[Int], x: Rep[A])(implicit pos: SourceContext): Rep[List[A]]
-  def listRangeFrom0(length: Rep[Int]): Rep[List[Int]]
+  def list_rangeFrom0(length: Rep[Int]): Rep[List[Int]]
 
 }
 
@@ -16,7 +16,7 @@ trait LstOpsExp extends LstOps with BaseExp with EffectExp with TupleOps {
 
   case class ListRangeFrom0Lms(length: Rep[Int]) extends Def[List[Int]]
 
-  def listRangeFrom0(length: Rep[Int]): Exp[List[Int]] = {
+  def list_rangeFrom0(length: Rep[Int]): Exp[List[Int]] = {
     ListRangeFrom0Lms(length)
   }
 
@@ -25,7 +25,7 @@ trait LstOpsExp extends LstOps with BaseExp with EffectExp with TupleOps {
   def list_replicate[A: Manifest](len: Rep[Int], x: Rep[A])(implicit pos: SourceContext): Rep[List[A]] =
     ListReplicate(len, x)
 
-  def reduceList[A: Manifest](xs: Exp[List[A]], zero: Exp[A], accumulate: Exp[(A, A)] => Exp[A]): Exp[A] = {
+  def list_reduce[A: Manifest](xs: Exp[List[A]], zero: Exp[A], accumulate: Exp[(A, A)] => Exp[A]): Exp[A] = {
     var state = zero
     list_foreach(xs) { x =>
       state = accumulate((state, x))

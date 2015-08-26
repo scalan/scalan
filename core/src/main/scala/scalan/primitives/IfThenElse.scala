@@ -5,7 +5,7 @@ import scalan.staged.{BaseExp}
 import scalan.{ScalanExp, ScalanSeq, Base, Scalan}
 
 trait IfThenElse extends Base { self: Scalan =>
-  def __ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T]
+  def ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T]
 
   def IF(cond: Rep[Boolean]): IfBranch = new IfBranch(cond)
   
@@ -24,17 +24,17 @@ trait IfThenElse extends Base { self: Scalan =>
   }
   
   class ThenBranch[T](cond: Rep[Boolean], thenp: => Rep[T]) {
-    def ELSE(elsep: => Rep[T]): Rep[T] = __ifThenElse(cond, thenp, elsep)
+    def ELSE(elsep: => Rep[T]): Rep[T] = ifThenElse(cond, thenp, elsep)
     
     def elseIf(cond1: => Rep[Boolean], thenp1: => Rep[T], elsep1: => Rep[T]) = 
-      ELSE(__ifThenElse(cond1, thenp1, elsep1))
+      ELSE(ifThenElse(cond1, thenp1, elsep1))
     
     def ELSEIF(cond1: => Rep[Boolean]) = new ElseIfBranch[T](cond1, this)
   }
 }
 
 trait IfThenElseSeq extends IfThenElse { self: ScalanSeq =>
-  def __ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T] = if(cond) thenp else elsep
+  def ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T] = if(cond) thenp else elsep
 }
 
 trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: ScalanExp =>
@@ -54,7 +54,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     res
   }
 
-  override def __ifThenElse[T](cond: Exp[Boolean], thenp: => Exp[T], elsep: => Exp[T]): Exp[T] = {
+  override def ifThenElse[T](cond: Exp[Boolean], thenp: => Exp[T], elsep: => Exp[T]): Exp[T] = {
     val t = reifyBranch(thenp)
     val e = reifyBranch(elsep)
     implicit val eT = t.elem

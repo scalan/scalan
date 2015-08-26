@@ -6,12 +6,12 @@ import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait EitherOps extends Base {
 
-  def make_left[A: Manifest, B: Manifest](l: Rep[A])(implicit pos: SourceContext): Rep[Either[A, B]]
-  def make_right[A: Manifest, B: Manifest](r: Rep[B])(implicit pos: SourceContext): Rep[Either[A, B]]
-  def make_isLeft[A: Manifest, B: Manifest](sum: Rep[Either[A, B]])(implicit pos: SourceContext): Rep[Boolean]
-  def make_isRight[A: Manifest, B: Manifest](sum: Rep[Either[A, B]])(implicit pos: SourceContext): Rep[Boolean]
-  def make_fold[A: Manifest, B: Manifest, R: Manifest](sum: Rep[Either[A, B]], left: Rep[A => R], right: Rep[B => R])(implicit pos: SourceContext): Rep[R]
-  def make_map[A: Manifest, B: Manifest, C: Manifest, D:Manifest](sum: Rep[Either[A, B]], left: Rep[A => C], right: Rep[B => D])(implicit pos: SourceContext): Rep[Either[C, D]]
+  def either_left[A: Manifest, B: Manifest](l: Rep[A])(implicit pos: SourceContext): Rep[Either[A, B]]
+  def either_right[A: Manifest, B: Manifest](r: Rep[B])(implicit pos: SourceContext): Rep[Either[A, B]]
+  def either_isLeft[A: Manifest, B: Manifest](sum: Rep[Either[A, B]])(implicit pos: SourceContext): Rep[Boolean]
+  def either_isRight[A: Manifest, B: Manifest](sum: Rep[Either[A, B]])(implicit pos: SourceContext): Rep[Boolean]
+  def either_fold[A: Manifest, B: Manifest, R: Manifest](sum: Rep[Either[A, B]], left: Rep[A => R], right: Rep[B => R])(implicit pos: SourceContext): Rep[R]
+  def either_map[A: Manifest, B: Manifest, C: Manifest, D:Manifest](sum: Rep[Either[A, B]], left: Rep[A => C], right: Rep[B => D])(implicit pos: SourceContext): Rep[Either[C, D]]
 }
 
 trait EitherOpsExp extends EitherOps with FunctionsExp with IfThenElseExp with BaseExp {
@@ -36,29 +36,29 @@ trait EitherOpsExp extends EitherOps with FunctionsExp with IfThenElseExp with B
   case class EitherGetLeft[A: Manifest, B: Manifest](sum: Rep[Either[A,B]]) extends Def[A]
   case class EitherGetRight[A: Manifest, B: Manifest](sum: Rep[Either[A,B]]) extends Def[B]
 
-  def make_left[A: Manifest, B: Manifest](l: Rep[A])(implicit pos: SourceContext): Rep[Either[A, B]] =
+  def either_left[A: Manifest, B: Manifest](l: Rep[A])(implicit pos: SourceContext): Rep[Either[A, B]] =
     EitherLeft[A, B](l, manifest[A], manifest[B])
 
-  def make_right[A: Manifest, B: Manifest](r: Rep[B])(implicit pos: SourceContext): Rep[Either[A, B]] =
+  def either_right[A: Manifest, B: Manifest](r: Rep[B])(implicit pos: SourceContext): Rep[Either[A, B]] =
     EitherRight[A, B](r, manifest[A], manifest[B])
 
-  def make_isLeft[A: Manifest, B: Manifest](sum: Rep[Either[A, B]])(implicit pos: SourceContext): Rep[Boolean] =
+  def either_isLeft[A: Manifest, B: Manifest](sum: Rep[Either[A, B]])(implicit pos: SourceContext): Rep[Boolean] =
     EitherIsLeft(sum)
 
-  def make_isRight[A: Manifest, B: Manifest](sum: Rep[Either[A, B]])(implicit pos: SourceContext): Rep[Boolean] =
+  def either_isRight[A: Manifest, B: Manifest](sum: Rep[Either[A, B]])(implicit pos: SourceContext): Rep[Boolean] =
     EitherIsRight(sum)
 
-  def make_fold[A, B, R](sum: Rep[Either[A, B]], left: Rep[A => R], right: Rep[B => R])(implicit mA: Manifest[A], mB: Manifest[B], mR: Manifest[R], pos: SourceContext): Rep[R] = {
+  def either_fold[A, B, R](sum: Rep[Either[A, B]], left: Rep[A => R], right: Rep[B => R])(implicit mA: Manifest[A], mB: Manifest[B], mR: Manifest[R], pos: SourceContext): Rep[R] = {
     //EitherFold(sum, left, right)
     val x = get_left(sum)(mA,mB)
     val l = reifyEffects(left(x))
     val x1 = get_right(sum)(mA,mB)
     val r = reifyEffects(right(x1))
 
-    ifThenElse( make_isLeft(sum), l, r )
+    ifThenElse( either_isLeft(sum), l, r )
   }
 
-  def make_map[A, B, C, D](sum: Rep[Either[A, B]], left: Rep[A => C], right: Rep[B => D])(implicit mA: Manifest[A], mB: Manifest[B], mC: Manifest[C], mD: Manifest[D], pos: SourceContext): Rep[Either[C, D]] =
+  def either_map[A, B, C, D](sum: Rep[Either[A, B]], left: Rep[A => C], right: Rep[B => D])(implicit mA: Manifest[A], mB: Manifest[B], mC: Manifest[C], mD: Manifest[D], pos: SourceContext): Rep[Either[C, D]] =
     EitherMap(sum, left, right)
 
   def get_left[A: Manifest, B: Manifest](sum: Rep[Either[A,B]]): Rep[A] = EitherGetLeft(sum)
@@ -69,12 +69,12 @@ trait EitherOpsExp extends EitherOps with FunctionsExp with IfThenElseExp with B
     case EitherGetLeft(sum) => get_left(t(sum))
     case EitherGetRight(Def(EitherRight(b, _, _))) => t(b)
     case EitherGetRight(sum) => get_right(t(sum))
-    case EitherLeft(a, mA, mB) => make_left(t(a))(mA, mB, pos)
-    case EitherRight(b, mA, mB) => make_right(t(b))(mA, mB, pos)
-    case e @ EitherIsLeft(s) => make_isLeft(t(s))(e.mA, e.mB, pos)
-    case e @ EitherIsRight(s) => make_isRight(t(s))(e.mA, e.mB, pos)
-    case e @ EitherFold(s, l, r) => make_fold(t(s), t(l), t(r))(e.mA, e.mB, mtype(e.mR), pos)
-    case e @ EitherMap(s, l, r) => make_map(t(s), t(l), t(r))(e.mA, e.mB, e.mC, e.mD, pos)
+    case EitherLeft(a, mA, mB) => either_left(t(a))(mA, mB, pos)
+    case EitherRight(b, mA, mB) => either_right(t(b))(mA, mB, pos)
+    case e @ EitherIsLeft(s) => either_isLeft(t(s))(e.mA, e.mB, pos)
+    case e @ EitherIsRight(s) => either_isRight(t(s))(e.mA, e.mB, pos)
+    case e @ EitherFold(s, l, r) => either_fold(t(s), t(l), t(r))(e.mA, e.mB, mtype(e.mR), pos)
+    case e @ EitherMap(s, l, r) => either_map(t(s), t(l), t(r))(e.mA, e.mB, e.mC, e.mD, pos)
     case _ => super.mirror(e, t)
   }).asInstanceOf[Exp[A]]
 }

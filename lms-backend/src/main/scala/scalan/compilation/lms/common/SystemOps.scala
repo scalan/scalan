@@ -9,8 +9,6 @@ trait SystemOps extends Base {
   def parallel_execute[T:Manifest](nJobs: Rep[Int], f: Rep[Int] => Rep[T]): Rep[Array[T]]
   def hash_code[T](obj: Rep[T]): Rep[Int]
 
-  def arraySortBy[A: Manifest, B: Manifest](a: Rep[Array[A]], by: Rep[A] => Rep[B]): Rep[Array[A]] 
-
   def string_matches(str: Rep[String], pattern: Rep[String]): Rep[Boolean]
 }
 
@@ -24,27 +22,16 @@ trait SystemOpsExp extends BaseExp with Functions with EffectExp {
   case class HashCode[T](val obj: Exp[T]) extends Def[Int] {
   }
 
-  case class ArraySortBy[A: Manifest, B: Manifest](a: Exp[Array[A]], by: Exp[A => B]) extends Def[Array[A]] {
-    val mA = manifest[A]
-    val mB = manifest[B]
-  }
-
   case class StringMatches(val str: Exp[String], val pattern: Exp[String]) extends Def[Boolean] {
   }
 
- def parallel_execute[T:Manifest](nJobs: Rep[Int], f: Rep[Int] => Rep[T]) = {
-    ParallelExecute (nJobs, f)
-  }
+ def parallel_execute[T:Manifest](nJobs: Rep[Int], f: Rep[Int] => Rep[T]): Exp[Array[T]] =
+    ParallelExecute(nJobs, f)
 
-  def hash_code[T](obj: Exp[T]) = {
+  def hash_code[T](obj: Exp[T]): Exp[Int] =
     HashCode(obj)
-  }
 
-  def arraySortBy[A: Manifest, B: Manifest](a: Exp[Array[A]], by: Rep[A] => Rep[B]): Exp[Array[A]] = ArraySortBy(a, by)
-
-  def sortBy[A: Manifest, B: Manifest](a: Exp[Array[A]], by: Rep[A => B]): Exp[Array[A]] = ArraySortBy(a, by)
-
-  def string_matches(str: Exp[String], pattern: Exp[String]) = {
+  def string_matches(str: Exp[String], pattern: Exp[String]): Exp[Boolean] = {
     StringMatches(str, pattern)
   }
 
@@ -53,8 +40,6 @@ trait SystemOpsExp extends BaseExp with Functions with EffectExp {
       case ParallelExecute(nJobs, job) => ParallelExecute(f(nJobs), f(job))(mtype(manifest[A]))
       case StringMatches(str, pattern) => StringMatches(f(str), f(pattern))
       case HashCode(obj) => HashCode(f(obj))
-      case a@ArraySortBy(arr, by) => sortBy(f(arr), f(by))(a.mA, a.mB)
-      case Reflect(a@ArraySortBy(arr, by), u, es) => reflectMirrored(Reflect(ArraySortBy(f(arr), f(by))(a.mA, a.mB), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
       case _ => super.mirror(e, f)
     }).asInstanceOf[Exp[A]] // why??
   }
@@ -79,8 +64,6 @@ trait ScalaGenSystemOps extends ScalaGenBase {
       stream.println("val " + quote(sym) + " = " + quote(str) + ".matches(" + quote(pattern) + ")")
     case HashCode(obj) =>
       stream.println("val " + quote(sym) + " = " + quote(obj) + ".hashCode")
-    case a@ArraySortBy(arr, by) =>
-      stream.println("val " + quote(sym) + " = " + quote(arr) + ".sortBy(" + quote(by)+ ")")
     case _ => super.emitNode(sym, rhs)
   }
 

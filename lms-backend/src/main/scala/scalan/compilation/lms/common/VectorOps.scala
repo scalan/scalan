@@ -10,31 +10,29 @@ import scalan.compilation.lms.LmsBackendFacade
 
 trait VectorOps extends Variables {
 
-  def array_dotProductSparse[A: Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]): Rep[A]
-  def array_binarySearch[A: Manifest](idx: Rep[Int], idxs: Rep[Array[Int]]): Rep[Int]
+  def array_dotProductSparse[A: Numeric: Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]): Rep[A]
+  def arrayBinarySearch[A: Ordering: Manifest](idx: Rep[Int], idxs: Rep[Array[A]]): Rep[Int]
 }
 
 trait VectorOpsExp extends VectorOps with EffectExp with VariablesExp with Transforming { self: LmsBackendFacade =>
 
-  case class ArrayDotProdSparse[A:Manifest](idxs1: Exp[Array[Int]], vals1: Exp[Array[A]], idxs2: Exp[Array[Int]], vals2: Exp[Array[A]])
-    extends Def[A] {
-    val m = manifest[A]
-  }
+  case class ArrayDotProdSparse[A](idxs1: Exp[Array[Int]], vals1: Exp[Array[A]], idxs2: Exp[Array[Int]], vals2: Exp[Array[A]])
+                                  (implicit val num: Numeric[A], val m: Manifest[A]) extends Def[A]
 
-  case class ArrayBinarySearch[A:Manifest](idx: Exp[Int], idxs: Exp[Array[Int]])
+  case class ArrayBinarySearch[A](idx: Exp[Int], idxs: Exp[Array[A]])(implicit val ordA: Ordering[A], val mA: Manifest[A])
     extends Def[Int] {
     val m = manifest[Int]
   }
 
-  def array_dotProductSparse[A:Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]) =
+  def array_dotProductSparse[A: Numeric: Manifest](idxs1: Rep[Array[Int]], vals1: Rep[Array[A]], idxs2: Rep[Array[Int]], vals2: Rep[Array[A]]) =
     ArrayDotProdSparse(idxs1, vals1, idxs2, vals2)
 
-  def array_binarySearch[A:Manifest](idx: Rep[Int], idxs: Rep[Array[Int]]): Rep[Int] =
+  def arrayBinarySearch[A: Ordering: Manifest](idx: Rep[Int], idxs: Rep[Array[A]]): Rep[Int] =
     ArrayBinarySearch(idx, idxs)
 
   override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = e match {
-    case ArrayDotProdSparse(i1, v1,i2, v2) => array_dotProductSparse(f(i1), f(v1), f(i2), f(v2))(mtype(manifest[A]))
-    case ArrayBinarySearch(i, is) => array_binarySearch(f(i), f(is))(mtype(manifest[Int])).asInstanceOf[Exp[A]] // TODO: is this hack valid?
+    case dp @ ArrayDotProdSparse(i1, v1,i2, v2) => array_dotProductSparse(f(i1), f(v1), f(i2), f(v2))(dp.num, mtype(dp.m))
+    case bs @ ArrayBinarySearch(i, is) => arrayBinarySearch(f(i), f(is))(bs.ordA, mtype(bs.mA))
     case _ => super.mirror(e,f)
   }
 }
@@ -45,6 +43,7 @@ trait ScalaGenVectorOps extends ScalaGenBase {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ds @ ArrayDotProdSparse(idxs1, vals1, idxs2, vals2) =>
+      // existence of implicit Numeric[A] ensures we can have + and *
       // TODO use proper source quasiquoter
       stream.println("// generating dot product")
       stream.println("val " + quote(sym) + " ={")
@@ -90,6 +89,7 @@ trait CxxShptrGenVectorOps extends CxxShptrCodegen {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ds @ ArrayDotProdSparse(idxs1, vals1, idxs2, vals2) =>
+      // += and * operators are assumed to be defined, since A is a numeric type
       // TODO use proper source quasiquoter
       stream.println("// generating dot product")
       emitConstruct(sym)

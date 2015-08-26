@@ -247,7 +247,7 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
       }
 
       val main = new ScalaLib() {
-        val throwableImp = ScalaFunc(Symbol("scalan.imp.ThrowableImp"))(true)
+        val throwableImp = ScalaFunc("scalan.imp.ThrowableImp")(true)
       }
 
       val mapping = new ScalaMapping {
