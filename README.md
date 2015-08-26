@@ -163,9 +163,10 @@ Your program needs to extends `Scalan` trait (along with any traits describing t
 trait HelloScalan extends ScalanCommunityDsl {
   lazy val run = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matr[Double] = RowMajorMatrix(PArray(m.map { r: Arr[Double] => DenseVector(PArray(r))}))
-    val vector: Vec[Double] = DenseVector(PArray(v))
-    (matrix * vector).coords.arr
+    val width = m(0).length
+    val matrix: Matrix[Double] = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r))}), width)
+    val vector: Vector[Double] = DenseVector(Collection(v))
+    (matrix * vector).items.arr
   }
   // example input
   val matrix = Array(Array(1.0, 2.0), Array(3.0, 5.0))
@@ -200,16 +201,20 @@ In this mode, Scalan's behavior is very simple: `Rep[A]` is the same type as `A`
 Compile it to produce optimized code by mixing in `ScalanCommunityDslExp` (and `Exp` versions of any additional DSLs) and a compiler trait.
 ~~~scala
 // to run: scalan-lms-backend/it:runMain HelloScalanExp
-object HelloScalanExp extends HelloScalan with ScalanCommunityDslExp with LmsCompilerScala with CommunityBridge {
+object HelloScalanExp {
   // allows use of standard Scala library, commented out to make tests faster
-  // override val defaultCompilerConfig = CompilerConfig(Some("2.10.4"), Seq.empty)
+  // override val defaultCompilerConfig = CompilerConfig(Some("2.11.7"), Seq.empty)
 
-  val lms = new CommunityLmsBackend
+  val program = new HelloScalan with ScalanCommunityDslExp
+
+  val compiler = new CommunityLmsCompilerScala(program)
+  import compiler._
+  import compiler.scalan._
 
   def result = {
     // output directory
     val dir = new File("it-out")
-    val compiled = buildExecutable(
+    val compiled = compiler.buildExecutable(
       dir,
       // generated class name
       "HelloScalan1",
