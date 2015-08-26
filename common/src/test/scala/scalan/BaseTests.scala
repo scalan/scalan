@@ -1,11 +1,12 @@
 package scalan
 
+import org.scalatest._
 import org.scalatest.words.ResultOfStringPassedToVerb
-import org.scalatest.{FlatSpec, FunSuite, Inside, Matchers}
+import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scalan.util.FileUtil
 
-trait TestsUtil {
+trait TestsUtil extends Matchers with Inside {
   def testOutDir = "test-out"
 
   def testSuffixes = Seq("Suite", "Tests", "It", "_")
@@ -16,13 +17,30 @@ trait TestsUtil {
     FileUtil.file(testOutDir, pathComponents: _*)
   }
 
-  def isOnTeamCity = System.getenv("TEAMCITY_VERSION") != null
+  /* if runs in continuous integration environment */
+  def isCI = sys.env.get("CI").flatMap(toBoolean).getOrElse(false)
+  private def toBoolean(s: String): Option[Boolean] =
+    scala.util.Try(s.toBoolean).toOption
 }
 
-// TODO switch to FunSpec and eliminate duplication in test names (e.g. RewriteSuite)
-abstract class BaseTests extends FunSuite with Matchers with Inside with TestsUtil
+/**
+ * Standard base class for most test suites. See BaseNestedTests and BaseShouldTests for alternatives
+ *
+ * See <a>http://doc.scalatest.org/2.2.4/#org.scalatest.FunSuite</a>.
+ */
+abstract class BaseTests extends FunSuite with TestsUtil
 
-abstract class BaseShouldTests extends FlatSpec with Matchers with TestsUtil {
+/**
+ * Standard base class for test suites with nested tests.
+ *
+ * See <a>http://doc.scalatest.org/2.2.4/#org.scalatest.FunSpec</a>.
+ */
+abstract class BaseNestedTests extends FunSpec with TestsUtil
+
+/**
+ * See <a>http://doc.scalatest.org/2.2.4/#org.scalatest.FlatSpec</a>.
+ */
+abstract class BaseShouldTests extends FlatSpec with TestsUtil {
   protected final class InAndIgnoreMethods2(resultOfStringPassedToVerb: ResultOfStringPassedToVerb) {
 
     import resultOfStringPassedToVerb.rest

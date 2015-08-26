@@ -3,7 +3,7 @@ package scalan
 import scalan.compilation.{GraphVizConfig, DummyCompilerWithPasses}
 import scalan.util.FileUtil
 
-class MetadataTests extends BaseTests {
+class MetadataTests extends BaseNestedTests {
   private val mainStr = "main"
 
   trait Prog extends Scalan {
@@ -14,39 +14,46 @@ class MetadataTests extends BaseTests {
     main.setMetadata(functionNameKey)(mainStr)
   }
 
-  class ProgExp extends ScalanCtxExp with Prog with DummyCompilerWithPasses
+  class ProgExp extends ScalanCtxExp with Prog
 
-  test("Metadata survives") {
-    val progExp = new ProgExp
-    import progExp._
+  describe("Metadata") {
+    it("survives compilation passes") {
+      val compiler = new DummyCompilerWithPasses(new ProgExp)
+      import compiler._
+      import compiler.scalan._
 
-    val graph = buildGraph(FileUtil.currentWorkingDir, mainStr, main, GraphVizConfig.none)(defaultCompilerConfig)
+      val graph = buildGraph(FileUtil.currentWorkingDir, mainStr, main, GraphVizConfig.none)(defaultCompilerConfig)
 
-    val finalMain = graph.roots.head
+      val finalMain = graph.roots.head
 
-    finalMain.getMetadata(functionNameKey) shouldEqual Some(mainStr)
-  }
+      finalMain.getMetadata(functionNameKey) shouldEqual Some(mainStr)
+    }
 
-  test("Metadata can be changed by mirror") {
-    val progExp = new ProgExp {
-      val functionNameMirror = new Mirror[MapTransformer] {
-        override protected def mirrorMetadata[A, B](t: MapTransformer, old: Exp[A], mirrored: Exp[B]) = {
-          val newMeta = old.allMetadata.updateIfExists(functionNameKey)(_ + "1")
-          (t, newMeta)
+    it("can be changed by mirror") {
+      val compiler = new DummyCompilerWithPasses(new ProgExp) {
+        import scalan._
+
+        val functionNameMirror = new Mirror[MapTransformer] {
+          override protected def mirrorMetadata[A, B](t: MapTransformer, old: Exp[A], mirrored: Exp[B]) = {
+            val newMeta = old.allMetadata.updateIfExists(functionNameKey)(_ + "1")
+            (t, newMeta)
+          }
         }
+
+        override def graphPasses(compilerConfig: CompilerConfig) =
+          super.graphPasses(compilerConfig) :+ constantPass(GraphTransformPass("functionNameMirror", functionNameMirror, NoRewriting))
       }
 
-      override def graphPasses(compilerConfig: CompilerConfig) =
-        super.graphPasses(compilerConfig) :+ constantPass(GraphTransformPass("functionNameMirror", functionNameMirror, NoRewriting))
+      import compiler._
+      import compiler.scalan._
+
+      val graph = buildGraph(FileUtil.currentWorkingDir, mainStr, main, GraphVizConfig.none)(defaultCompilerConfig)
+
+      val finalMain = graph.roots.head
+
+      main.getMetadata(functionNameKey) shouldEqual Some(mainStr)
+
+      finalMain.getMetadata(functionNameKey) shouldEqual Some(mainStr + "1")
     }
-    import progExp._
-
-    val graph = buildGraph(FileUtil.currentWorkingDir, mainStr, main, GraphVizConfig.none)(defaultCompilerConfig)
-
-    val finalMain = graph.roots.head
-
-    main.getMetadata(functionNameKey) shouldEqual Some(mainStr)
-
-    finalMain.getMetadata(functionNameKey) shouldEqual Some(mainStr + "1")
   }
 }

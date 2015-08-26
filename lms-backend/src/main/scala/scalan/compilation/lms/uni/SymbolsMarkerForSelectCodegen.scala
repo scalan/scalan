@@ -6,9 +6,8 @@ import scalan.{ScalanCtxExp, Metadata}
  * Created by adel on 6/4/15.
  */
 
-class SymbolsMarkerForSelectCodegen[ScalanCake <: ScalanCtxExp](scalan: ScalanCake) {
-  val ScalanIR: ScalanCake = scalan
-  import ScalanIR._
+class SymbolsMarkerForSelectCodegen[ScalanCake <: ScalanCtxExp](val scalanIR: ScalanCake) {
+  import scalanIR._
 
   type CompilationPipelineContext = Unit
   val defaultCompilationPipelineContext: CompilationPipelineContext = ()

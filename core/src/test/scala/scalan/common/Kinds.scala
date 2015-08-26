@@ -34,16 +34,3 @@ trait Kinds extends Base { self: KindsDsl =>
   }
   trait BindCompanion
 }
-
-trait KindsDsl extends impl.KindsAbs {
-}
-
-
-trait KindsDslSeq extends impl.KindsSeq  {
-
-}
-
-trait KindsDslExp extends impl.KindsExp {
-
-
-}

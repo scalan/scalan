@@ -32,7 +32,8 @@ class BoilerplateTool extends StrictLogging {
     "CharRep" -> "Char",
     "LongRep" -> "Long",
     "FloatRep" -> "Float",
-    "DoubleRep" -> "Double"
+    "DoubleRep" -> "Double",
+    "ROption" -> "SOption"
   )
   lazy val coreConfig = CodegenConfig(
     name = "core",

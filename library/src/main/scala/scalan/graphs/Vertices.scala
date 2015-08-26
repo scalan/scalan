@@ -30,7 +30,3 @@ trait Vertices extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl 
   abstract class SVertex[V,E] (val id: Rep[Int], val graph: PG[V, E]) (implicit val eV: Elem[V], val eE: Elem[E]) extends Vertex[V,E]{}
   trait SVertexCompanion extends ConcreteClass2[SVertex]
 }
-
-trait VerticesDsl extends impl.VerticesAbs { self: GraphsDsl => }
-trait VerticesDslSeq extends impl.VerticesSeq { self: GraphsDslSeq => }
-trait VerticesDslExp extends impl.VerticesExp { self: GraphsDslExp => }

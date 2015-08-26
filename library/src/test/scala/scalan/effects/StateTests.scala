@@ -4,16 +4,16 @@ import java.lang.reflect.Method
 
 import scala.language.reflectiveCalls
 import scalan.monads.{MonadsDslExp, MonadsDsl}
-import scalan.{BaseTests, ScalanCtxExp, TestContext}
+import scalan.{BaseCtxTests, ScalanCtxExp}
 
-class StateTests extends BaseTests {
+class StateTests extends BaseCtxTests {
 
   test("zipWithIndex") {
-    val ctx = new TestContext(this, "zipWithIndex") with MonadsDslExp with StateExamples {
+    val ctx = new TestContext with MonadsDslExp with StateExamples {
       val State = new State0Manager[Int]
       override def isInvokeEnabled(d: Def[_], m: Method) = true
     }
-    ctx.emit("zipWithIndex", ctx.zipArrayWithIndexW)
+    ctx.emit(ctx.zipArrayWithIndexW)
   }
 
 

@@ -9,130 +9,68 @@ import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.graphs.MST_example
-import scalan.it.BaseItTests
+import scalan.it.BaseCtxItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
-class LmsJNIExtractorItTests extends BaseItTests {
-  trait ProgExp extends MST_example with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCxx with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
-    val lms = new CoreCxxShptrLmsBackend
-    
-    lazy val MST_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
-      val data = JNI_Extract(in)
-      val res = MST_adjlist(data)
-      JNI_Pack(res)
-    }
+class LmsJNIExtractorItTests extends BaseCtxItTests {
+  trait ProgExp extends MST_example with ScalanCommunityDslExp with JNIExtractorOpsExp {
+    lazy val MST_JNI_adjlist = JNI_Wrap(MST_adjlist)
 
-    lazy val MST_JNI_adjmatrix = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
-      val data = JNI_Extract(in)
-      val res = MST_adjmatrix(data)
-      JNI_Pack(res)
-    }
+    lazy val MST_JNI_adjmatrix = JNI_Wrap(MST_adjmatrix)
 
-    lazy val MSF_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
-      val data = JNI_Extract(in)
-      val res = MSF_adjlist(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjlist = JNI_Wrap(MSF_adjlist)
 
-    lazy val MSF_JNI_adjmatrix = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
-      val data = JNI_Extract(in)
-      val res = MSF_adjmatrix(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjmatrix = JNI_Wrap(MSF_adjmatrix)
 
-    lazy val MSF_JNI_adjlistList = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
-      val data = JNI_Extract(in)
-      val res = MSF_adjlistList(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjlistList = JNI_Wrap(MSF_adjlistList)
 
-    lazy val MSF_JNI_adjmatrixList = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
-      val data = JNI_Extract(in)
-      val res = MSF_adjmatrixList(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjmatrixList = JNI_Wrap(MSF_adjmatrixList)
+  }
+
+  class Ctx[T <: ProgExp](val _scalan: T) extends TestCompilerContext {
+    val compiler = new LmsCompilerCxx[_scalan.type](_scalan) with JNIBridge
   }
 
   test("MST_JNI") {
-    val ctx = new ScalanCtxExp with ProgExp with FirstProg {
-      override def subfolder: String = "MST_JNI-cxx"
-      def test() = {
+    val ctx = new Ctx(new ProgExp with FirstProg)
 
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
-
-//    ctx.generate("MST_JNI_adjlist", ctx.MST_JNI_adjlist)
-//    ctx.generate("MST_JNI_adjmatrix", ctx.MST_JNI_adjmatrix)
-    ctx.generate("MSF_JNI_adjlist", ctx.MSF_JNI_adjlist)
-    ctx.generate("MSF_JNI_adjmatrix", ctx.MSF_JNI_adjmatrix)
-    ctx.generate("MSF_JNI_adjlistList", ctx.MSF_JNI_adjlistList)
-    ctx.generate("MSF_JNI_adjmatrixList", ctx.MSF_JNI_adjmatrixList)
+//    ctx.test("MST_JNI_adjlist", ctx.MST_JNI_adjlist)
+//    ctx.test("MST_JNI_adjmatrix", ctx.MST_JNI_adjmatrix)
+    ctx.test("MSF_JNI_adjlist", ctx._scalan.MSF_JNI_adjlist)
+    ctx.test("MSF_JNI_adjmatrix", ctx._scalan.MSF_JNI_adjmatrix)
+    ctx.test("MSF_JNI_adjlistList", ctx._scalan.MSF_JNI_adjlistList)
+    ctx.test("MSF_JNI_adjmatrixList", ctx._scalan.MSF_JNI_adjmatrixList)
   }
 
   test("simpleGenCxx") {
-    val ctx = new ScalanCtxExp with ProgExp with FirstProg {
-      override def subfolder: String = super.subfolder + "-cxx"
-      def test() = {
+    val ctx = new Ctx(new ProgExp with FirstProg)
 
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
-
-    ctx.generate("extractDouble", ctx.extractDouble)
-    ctx.generate("extractArray", ctx.extractArray)
-    ctx.generate("extractDM", ctx.extractDM)
-    ctx.generate("extractPair", ctx.extractPair)
-    ctx.generate("extractPairUse1", ctx.extractPairUse1)
-    ctx.generate("extractPairUse2", ctx.extractPairUse2)
-    ctx.generate("extractSM", ctx.extractSM)
-    ctx.generate("ddmvm", ctx.ddmvm)
-    ctx.generate("sdmvm", ctx.sdmvm)
+    ctx.test("extractDouble", ctx._scalan.extractDouble)
+    ctx.test("extractArray", ctx._scalan.extractArray)
+    ctx.test("extractDM", ctx._scalan.extractDM)
+    ctx.test("extractPair", ctx._scalan.extractPair)
+    ctx.test("extractPairUse1", ctx._scalan.extractPairUse1)
+    ctx.test("extractPairUse2", ctx._scalan.extractPairUse2)
+    ctx.test("extractSM", ctx._scalan.extractSM)
+    ctx.test("ddmvm", ctx._scalan.ddmvm)
+    ctx.test("sdmvm", ctx._scalan.sdmvm)
   }
 
   test("simplePackGenCxx") {
-    val ctx = new ScalanCtxExp with ProgExp with PackProg {
-      override def subfolder: String = super.subfolder + "-cxx"
-      def test() = {
+    val ctx = new Ctx(new ProgExp with PackProg)
 
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
-
-//    ctx.generate("opyt", ctx.opyt)
-//    ctx.generate("packArray", ctx.packArray)
-    ctx.generate("extractAndPack", ctx.extractAndPack)
-    ctx.generate("packPair", ctx.packPair)
+//    ctx.test("opyt", ctx.opyt)
+//    ctx.test("packArray", ctx.packArray)
+    ctx.test("extractAndPack", ctx._scalan.extractAndPack)
+    ctx.test("packPair", ctx._scalan.packPair)
   }
 
   test("mvm") {
-    val ctx = new ScalanCtxExp with ProgExp with PackProg {
-      override def subfolder: String = super.subfolder + "-cxx"
-      def test() = {
+    val ctx = new Ctx(new ProgExp with PackProg)
 
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
-
-//    ctx.generate("opyt", ctx.opyt)
-    ctx.generate("ddmvm", ctx.ddmvm)
-    ctx.generate("sdmvm", ctx.sdmvm)
-//    ctx.generate("packPair", ctx.packPair)
+//    ctx.test("opyt", ctx.opyt)
+    ctx.test("ddmvm", ctx._scalan.ddmvm)
+    ctx.test("sdmvm", ctx._scalan.sdmvm)
+//    ctx.test("packPair", ctx.packPair)
   }
 }

@@ -6,6 +6,7 @@ import scalan.arrays.ArrayOps
 import scalan.common.OverloadHack.Overloaded1
 import scala.collection.mutable
 import scala.annotation.tailrec
+import scala.reflect.runtime.universe._
 
 trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
@@ -30,6 +31,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] // = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  // = Collection(arr.append(value))
     def foldLeft[S: Elem](init: Rep[S], f: Rep[((S, Item)) => S]): Rep[S] = arr.fold(init, f)
+    def sortBy[O: Elem](by: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item]
     /*def scan(implicit m: RepMonoid[A @uncheckedVariance]): Rep[(Collection[A], A)] = {
       val arrScan = arr.scan(m)
       (Collection(arrScan._1), arrScan._2)
@@ -40,6 +42,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
   type Segments1 = PairCollection[Int, Int]
 
   trait CollectionCompanion extends TypeFamily1[Collection] with CollectionManager {
+
     def manager: CollectionManager = this
     def apply[T: Elem](arr: Rep[Array[T]]): Coll[T] = fromArray(arr)
 
@@ -121,6 +124,12 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def indexRange(l: Rep[Int]): Coll[Int] = CollectionOverArray(array_rangeFrom0(l))
   }
 
+  implicit val collectionFunctor = new Container[Collection] with Functor[Collection] {
+    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Collection[A]]
+    def lift[A](implicit evA: Elem[A]) = element[Collection[A]]
+    def map[A:Elem,B:Elem](xs: Rep[Collection[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
+  }
+
   abstract class UnitCollection(val length: Rep[Int]) extends Collection[Unit] {
     def eItem = UnitElement
     def arr = SArray.replicate(length, ())
@@ -137,6 +146,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def filterBy(f: Rep[Unit => Boolean]): Coll[Unit] = Collection(arr.filterBy(f))
     def flatMapBy[B: Elem](f: Rep[Unit => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[Unit]): Coll[Unit]  = Collection(arr.append(value))
+    def sortBy[O: Elem](by: Rep[Unit => O])(implicit o: Ordering[O]): Coll[Unit] = ???
   }
   trait UnitCollectionCompanion extends ConcreteClass0[UnitCollection]
 
@@ -158,6 +168,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def filterBy(f: Rep[Item @uncheckedVariance => Boolean]): Coll[Item] = CollectionOverArray(arr.filterBy(f))
     def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr})
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = CollectionOverArray(arr.append(value))
+    def sortBy[O: Elem](means: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item] = CollectionOverArray(arr.sortBy(means))
   }
   trait CollectionOverArrayCompanion extends ConcreteClass1[CollectionOverArray]
 
@@ -177,6 +188,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] =
       CollectionOverList(lst.flatMap { in => f(in).lst } )
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = CollectionOverList(value :: lst)
+    def sortBy[O: Elem](by: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item] = ???
   }
   trait CollectionOverListCompanion extends ConcreteClass1[CollectionOverList]
 
@@ -190,14 +202,18 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def apply(indices: Coll[Int])(implicit o: Overloaded1): Coll[Item] = {
       CollectionOverSeq(SSeq(indices.arr.map(i => seq(i))))
     }
-    def mapBy[B: Elem](f: Rep[Item => B @uncheckedVariance]): Coll[B] = ???
-    def reduce(implicit m: RepMonoid[Item @uncheckedVariance]): Rep[Item] = ???
-    def zip[B: Elem](ys: Coll[B]): PairColl[Item, B] = ???
+    def mapBy[B: Elem](f: Rep[Item => B @uncheckedVariance]): Coll[B] = CollectionOverSeq(seq.map(f))
+    def reduce(implicit m: RepMonoid[Item @uncheckedVariance]): Rep[Item] = {
+      val r = fun { p: Rep[(Item,Item)] => val Pair(x,y) = p; m.append(x,y) }
+      seq.reduce(r)
+    }
+    def zip[B: Elem](ys: Coll[B]): PairColl[Item, B] = PairCollectionSOA(CollectionOverSeq(seq), ys)
     def update (idx: Rep[Int], value: Rep[Item]): Coll[Item] = ???
     def updateMany (idxs: Coll[Int], vals: Coll[Item]): Coll[Item] = ???
     def filterBy(f: Rep[Item @uncheckedVariance => Boolean]): Coll[Item] = ???
     def flatMapBy[B: Elem](f: Rep[Item @uncheckedVariance => Collection[B]]): Coll[B] = ???
     def append(value: Rep[Item @uncheckedVariance]): Coll[Item]  = ???
+    def sortBy[O: Elem](by: Rep[Item => O])(implicit o: Ordering[O]): Coll[Item] = ???
   }
   trait CollectionOverSeqCompanion extends ConcreteClass1[CollectionOverSeq]
 
@@ -257,6 +273,10 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
       val outerJoined = Collection(pairColl_outerJoin[A, B, C, R](this, other, f, f1, f2))
       PairCollectionSOA(outerJoined.as, outerJoined.bs)
     }
+    def sortBy[O: Elem](means: Rep[((A, B)) => O])(implicit o: Ordering[O]): PairColl[A, B] = {
+      val sorted = Collection(arr.sortBy(means))
+      PairCollectionSOA(sorted.as, sorted.bs)
+    }
   }
 
   trait PairCollectionSOACompanion extends ConcreteClass2[PairCollectionSOA]
@@ -292,6 +312,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
                        (implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]) = {
       PairCollectionAOS.fromArray(pairColl_outerJoin[A, B, C, R](this, other, f, f1, f2))
     }
+    def sortBy[O: Elem](means: Rep[((A, B)) => O])(implicit o: Ordering[O]): PairColl[A, B] = PairCollectionAOS(Collection(arr.sortBy(means)))
   }
   trait PairCollectionAOSCompanion extends ConcreteClass2[PairCollectionAOS] {
     def fromArray[A: Elem, B: Elem](arr: Arr[(A, B)]) = PairCollectionAOS(CollectionOverArray(arr))
@@ -346,6 +367,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def filterBy(f: Rep[Collection[A @uncheckedVariance] => Boolean]): NColl[A] = ???
     def flatMapBy[B: Elem](f: Rep[Collection[A @uncheckedVariance] => Collection[B]]): Coll[B] = Collection(arr.flatMap {in => f(in).arr} )
     def append(value: Rep[Collection[A @uncheckedVariance]]): NColl[A]  = ??? //Collection(arr.append(value))
+    def sortBy[O: Elem](by: Rep[Collection[A] => O])(implicit o: Ordering[O]): NColl[A] = ???
   }
   trait NestedCollectionFlatCompanion extends ConcreteClass1[NestedCollectionFlat] {
     def fromJuggedArray[T: Elem](arr: Rep[Array[Array[T]]]): Rep[NestedCollectionFlat[T]] = {
@@ -387,6 +409,8 @@ trait CollectionsDsl extends impl.CollectionsAbs { self: ScalanCommunityDsl =>
     def filter(f: Rep[A] => Rep[Boolean]): Coll[A] = coll.filterBy(fun(f))
 
     def flatMap[B: Elem](f: Rep[A] => Coll[B]): Coll[B] = coll.flatMapBy(fun(f))
+
+    def :+(x: Rep[A]) = coll.append(x)
   }
 
   trait CollectionManager {
@@ -531,7 +555,7 @@ trait CollectionsDslSeq extends impl.CollectionsSeq { self: ScalanCommunityDslSe
 trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslExp =>
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case ExpPairCollectionAOS(pairColl @ Def(_: PairCollection[_, _])) => pairColl
+//    case ExpPairCollectionAOS(pairColl @ Def(_: PairCollection[_, _])) => pairColl
     case _ => super.rewriteDef(d)
   }
 
@@ -551,7 +575,6 @@ trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslEx
                                         val eK: Elem[K], val eR: Elem[R], val eB: Elem[B], val eC: Elem[C])
     extends Def[Array[(K, R)]] {
     override def mirror(t: Transformer) = ArrayInnerJoin(t(xs), t(ys), t(f))
-    def uniqueOpId: String = name(selfType)
   }
 
   case class ArrayOuterJoin[K, B, C, R](xs: Exp[Array[(K, B)]], ys: Exp[Array[(K, C)]], f: Rep[((B, C)) => R],
@@ -560,6 +583,5 @@ trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslEx
                                         val eK: Elem[K], val eR: Elem[R], val eB: Elem[B], val eC: Elem[C])
     extends Def[Array[(K, R)]] {
     override def mirror(t: Transformer) = ArrayOuterJoin(t(xs), t(ys), t(f), t(f1), t(f2))
-    def uniqueOpId: String = name(selfType)
   }
 }

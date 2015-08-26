@@ -91,7 +91,6 @@ trait ProxySeq extends Proxy { self: ScalanSeq =>
 trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp =>
   // call mkMethodCall instead of constructor
   case class MethodCall private[ProxyExp] (receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean)(val selfType: Elem[Any]) extends Def[Any] {
-    def uniqueOpId = s"$name:${method.getName}"
     override def mirror(t: Transformer) = {
       val args1 = args.map {
         case a: Exp[_] => t(a)
@@ -136,7 +135,6 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   case class NewObject[T](clazz: Class[T] , args: List[AnyRef], neverInvoke: Boolean)(implicit selfType: Elem[T]) extends BaseDef[T] {
-    def uniqueOpId = s"new $name"
     override def mirror(t: Transformer) = {
       val args1 = args.map {
         case a: Exp[_] => t(a)
@@ -312,15 +310,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   // stack of receivers for which MethodCall nodes should be created by InvocationHandler
   protected var methodCallReceivers = Set.empty[Exp[_]]
 
-  type SomeF[X] = F[X] forSome { type F[_] }
-  type SomeCont = Cont[SomeF]
-  type TypeDesc = Elem[_] | SomeCont
   import Symbols._
 
   def elemFromType(tpe: Type, elemMap: Map[Symbol, TypeDesc], baseType: Type): Elem[_] = tpe.dealias match {
     case TypeRef(_, classSymbol, params) => classSymbol match {
       case UnitSym => UnitElement
-      case BooleanSym => BoolElement
+      case BooleanSym => BooleanElement
       case ByteSym => ByteElement
       case ShortSym => ShortElement
       case IntSym => IntElement
@@ -350,8 +345,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         listElement(eItem)
       case _ if classSymbol.asType.isParameter =>
         getDesc(elemMap, classSymbol, s"Can't create element for abstract type $tpe") match {
-          case scala.Left(elem) => elem
-          case scala.Right(cont) =>
+          case Left(elem) => elem
+          case Right(cont) =>
             val paramElem = elemFromType(params(0), elemMap, baseType)
             cont.lift(paramElem)
         }
@@ -363,8 +358,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               case TypeRef(_, classSymbol, _) =>
                 val desc = getDesc(elemMap, classSymbol, s"Can't find descriptor for type argument $typaram of $tpe")
                 desc match {
-                  case scala.Right(cont) => cont
-                  case scala.Left(elem) =>
+                  case Right(cont) => cont
+                  case Left(elem) =>
                     !!!(s"Expected a container, got $elem for type argument $typaram of $tpe")
                 }
               case PolyType(_, _) =>
@@ -372,7 +367,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                 type F[A] = A
 
                 new Container[F] {
-                  private val elemMap1 = elemMap + (formalParam -> scala.Right(this.asInstanceOf[SomeCont]))
+                  private val elemMap1 = elemMap + (formalParam -> Right(this.asInstanceOf[SomeCont]))
 
                   def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[F[T]] = ???
                   def lift[T](implicit eT: Elem[T]): Elem[F[T]] = {
@@ -446,19 +441,19 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       Nil
     case Tuple2Sym =>
       val elem1 = elem.asInstanceOf[PairElem[_, _]]
-      List(scala.Left(elem1.eFst) -> params(0), scala.Left(elem1.eSnd) -> params(1))
+      List(Left(elem1.eFst) -> params(0), Left(elem1.eSnd) -> params(1))
     case EitherSym =>
       val elem1 = elem.asInstanceOf[SumElem[_, _]]
-      List(scala.Left(elem1.eLeft) -> params(0), scala.Left(elem1.eRight) -> params(1))
+      List(Left(elem1.eLeft) -> params(0), Left(elem1.eRight) -> params(1))
     case Function1Sym =>
       val elem1 = elem.asInstanceOf[FuncElem[_, _]]
-      List(scala.Left(elem1.eDom) -> params(0), scala.Left(elem1.eRange) -> params(1))
+      List(Left(elem1.eDom) -> params(0), Left(elem1.eRange) -> params(1))
     case ArraySym =>
       val elem1 = elem.asInstanceOf[ArrayElem[_]]
-      List(scala.Left(elem1.eItem) -> params(0))
+      List(Left(elem1.eItem) -> params(0))
     case ListSym =>
       val elem1 = elem.asInstanceOf[ListElem[_]]
-      List(scala.Left(elem1.eItem) -> params(0))
+      List(Left(elem1.eItem) -> params(0))
     case _ if classSymbol.isClass =>
       val declarations = classSymbol.asClass.selfType.decls
       val res = declarations.flatMap {
@@ -471,13 +466,13 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               // There should be a method with the same name on the corresponding element class
               val correspondingElemMethod = elem.getClass.getMethod(member.name.toString)
               val elem1 = correspondingElemMethod.invoke(elem).asInstanceOf[Elem[_]]
-              List(scala.Left[Elem[_], SomeCont](elem1) -> param)
+              List(Left[Elem[_], SomeCont](elem1) -> param)
             case TypeRef(_, ContSym, params) =>
               val param = params(0).asSeenFrom(tpe, classSymbol)
               // There should be a method with the same name on the corresponding element class
               val correspondingElemMethod = elem.getClass.getMethod(member.name.toString)
               val cont1 = correspondingElemMethod.invoke(elem).asInstanceOf[SomeCont]
-              List(scala.Right[Elem[_], SomeCont](cont1) -> param)
+              List(Right[Elem[_], SomeCont](cont1) -> param)
             case _ => Nil
           }
       }.toList
@@ -494,11 +489,11 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       elemsWithTypes match {
         case Nil =>
           knownParams
-        case (scala.Left(elem), tpe) :: rest =>
+        case (Left(elem), tpe) :: rest =>
           tpe.dealias match {
             case TypeRef(_, classSymbol, params) => classSymbol match {
               case _ if classSymbol.asType.isParameter =>
-                extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, scala.Left(elem)))
+                extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, Left(elem)))
               case _ =>
                 val elemParts = extractParts(elem, classSymbol, params, tpe)
                 extractElems(elemParts ++ rest, unknownParams, knownParams)
@@ -506,7 +501,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
             case _ =>
               !!!(s"$tpe was not a TypeRef")
           }
-        case (scala.Right(cont), tpe) :: rest =>
+        case (Right(cont), tpe) :: rest =>
           val classSymbol = tpe.dealias match {
             case TypeRef(_, classSymbol, _) => classSymbol
             case PolyType(_, TypeRef(_, classSymbol, _)) => classSymbol
@@ -514,7 +509,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
           }
 
           if (classSymbol.asType.isParameter)
-            extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, scala.Right(cont)))
+            extractElems(rest, unknownParams - classSymbol, knownParams.updated(classSymbol, Right(cont)))
           else {
 //            val elem = cont.lift(UnitElement)
 //            val elemParts = extractParts(elem, classSymbol, List(typeOf[Unit]), tpe)
@@ -533,12 +528,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                 // FIXME hardcoding - naming convention is assumed to be consistent with ScalanCodegen
                 val methodName = "c" + sym.name.toString
                 val cont = invokeMethod(e, methodName).asInstanceOf[SomeCont]
-                (scala.Right[Elem[_], SomeCont](cont), Map.empty[Symbol, TypeDesc])
+                (Right[Elem[_], SomeCont](cont), Map.empty[Symbol, TypeDesc])
               } else {
                 val methodName = "e" + sym.name.toString
                 val elem = invokeMethod(e, methodName).asInstanceOf[Elem[_]]
                 val map1 = getElemsMapFromInstanceElem(elem, tpeFromElem(elem))
-                (scala.Left[Elem[_], SomeCont](elem), map1)
+                (Left[Elem[_], SomeCont](elem), map1)
               }
             }
             (sym, res)
@@ -621,11 +616,11 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
         // reverse to let implicit elem parameters be first
         val elemsWithTypes: List[(TypeDesc, Type)] = args.zip(paramTypes).reverse.flatMap {
           case (e: Exp[_], TypeRef(_, sym, List(tpeE))) if sym.name.toString == "Rep" =>
-            List(scala.Left[Elem[_], SomeCont](e.elem) -> tpeE)
+            List(Left[Elem[_], SomeCont](e.elem) -> tpeE)
           case (elem: Elem[_], TypeRef(_, ElementSym, List(tpeElem))) =>
-            List(scala.Left[Elem[_], SomeCont](elem) -> tpeElem)
+            List(Left[Elem[_], SomeCont](elem) -> tpeElem)
           case (cont: SomeCont @unchecked, TypeRef(_, ContSym, List(tpeCont))) =>
-            List(scala.Right[Elem[_], SomeCont](cont) -> tpeCont)
+            List(Right[Elem[_], SomeCont](cont) -> tpeCont)
           // below cases can be safely skipped without doing reflection
           case (_: Function0[_] | _: Function1[_, _] | _: Function2[_, _, _] | _: Numeric[_] | _: Ordering[_], _) => Nil
           case (obj, tpeObj) =>
@@ -641,9 +636,9 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                     val jMethod = ReflectionUtil.methodToJava(method)
                     jMethod.invoke(obj) /* methodMirror.apply() */ match {
                       case elem: Elem[_] =>
-                        List(scala.Left[Elem[_], SomeCont](elem) -> tpeElemOrCont.asSeenFrom(tpeObj, method.owner))
+                        List(Left[Elem[_], SomeCont](elem) -> tpeElemOrCont.asSeenFrom(tpeObj, method.owner))
                       case cont: SomeCont @unchecked =>
-                        List(scala.Right[Elem[_], SomeCont](cont) -> tpeElemOrCont.asSeenFrom(tpeObj, method.owner))
+                        List(Right[Elem[_], SomeCont](cont) -> tpeElemOrCont.asSeenFrom(tpeObj, method.owner))
                       case x =>
                         !!!(s"$tpeObj.$method must return Elem or Cont but returned $x")
                     }

@@ -25,13 +25,14 @@ trait Readers extends Base { self: MonadsDsl =>
 
 trait ReadersDsl extends impl.ReadersAbs { self: MonadsDsl =>
 
-  implicit def readerCont[R:Elem]: Cont[({type f[x] = Reader[R,x]})#f] = new Container[({type f[x] = Reader[R,x]})#f] {
+  trait ReaderContainer[R] extends Container[({type f[x] = Reader[R,x]})#f] {
+    implicit def eR: Elem[R]
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Reader[R,T]]
     def lift[T](implicit eT: Elem[T]) = element[Reader[R,T]] //.asElem[Reader[R,T]]
   }
 
-  implicit def readerMonad[R:Elem]: Monad[({type f[x] = Reader[R,x]})#f] = new Monad[({type f[x] = Reader[R,x]})#f] {
-    def cF = readerCont
+  implicit def readerMonad[R:Elem]: Monad[({type f[x] = Reader[R,x]})#f] = new ReaderContainer[R] with Monad[({type f[x] = Reader[R,x]})#f] {
+    def eR = element[R]
     def unit[A:Elem](a: Rep[A]): RepReader[R, A] = {
       ReaderBase(fun {_ => a})
     }
@@ -39,10 +40,4 @@ trait ReadersDsl extends impl.ReadersAbs { self: MonadsDsl =>
       ReaderBase(fun {r => f(st.run(r)).run(r)})
   }
 
-}
-
-trait ReadersDslSeq extends impl.ReadersSeq { self: MonadsDslSeq =>
-}
-
-trait ReadersDslExp extends impl.ReadersExp { self: MonadsDslExp =>
 }

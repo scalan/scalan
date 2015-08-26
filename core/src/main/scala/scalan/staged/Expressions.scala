@@ -40,17 +40,12 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   trait Def[+T] extends Reifiable[T] {
     lazy val self: Rep[T] = reifyObject(this)
-    def name: String = getClass.getSimpleName
-    def name[A](eA: Elem[A]): String = s"$name[${eA.name}]"
-    def name[A,B](eA: Elem[A], eB: Elem[B]): String = s"$name[${eA.name},${eB.name}]"
-    def uniqueOpId: String
     def mirror(f: Transformer): Rep[T]
   }
 
   abstract class BaseDef[+T](implicit val selfType: Elem[T @uncheckedVariance]) extends Def[T]
 
   case class Const[T: Elem](x: T) extends BaseDef[T] {
-    def uniqueOpId = toString
     override def mirror(t: Transformer) = self   //TODO this leads to duplication of constants when mirroring
   }
 
@@ -109,7 +104,7 @@ trait BaseExp extends Base { self: ScalanExp =>
       val x1 = x.asInstanceOf[a | b]
       implicit val eA = se.eLeft
       implicit val eB = se.eRight
-      x1.fold(l => Left[a, b](l), r => Right[a, b](r))
+      x1.fold(l => SLeft[a, b](l), r => SRight[a, b](r))
     case _ =>
       x match {
         // this may be called instead of reifyObject implicit in some cases
@@ -311,7 +306,7 @@ trait BaseExp extends Base { self: ScalanExp =>
     }
   }
 
-  final def rewrite[T](s: Exp[T]): Exp[_] = s match {
+  def rewrite[T](s: Exp[T]): Exp[_] = s match {
     case Def(d) => rewriteDef(d)
     case _ => rewriteVar(s)
   }

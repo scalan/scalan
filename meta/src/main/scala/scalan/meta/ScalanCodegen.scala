@@ -1,6 +1,9 @@
 package scalan.meta
 
-import scalan.util.{StringUtil, ScalaNameUtil}
+import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
+import java.util.zip.{GZIPInputStream,GZIPOutputStream}
+
+import scalan.util.{ThreadContextClassLoaderObjectInputStream, StringUtil, ScalaNameUtil}
 import scala.annotation.tailrec
 import ScalanAst._
 
@@ -37,6 +40,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     }
 
     def isContainer1 = tpeArgs.length == 1 && entity.hasAnnotation(ContainerTypeAnnotation)
+    def isFunctor = tpeArgs.length == 1 && entity.hasAnnotation(FunctorTypeAnnotation)
 
     def isWrapper = firstAncestorType match {
       case Some(STraitCall("TypeWrapper", _)) => true
@@ -48,6 +52,15 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     def tpeArgsImplicitDecl(typeClass: String) = {
       tpeArgs.opt(args =>
         s"(implicit ${args.rep(t => s"ev${t.name}: $typeClass[${t.name}]")})")
+    }
+
+    def getImplicitArgName(tyArgName: String): Either[String,String] = {
+      val imp = implicitArgs.collect(a => a.tpe match {
+        case STraitCall("Elem",List(STpeAnnotated(STraitCall(`tyArgName`,_),_))) => Left(a.name)
+        case STraitCall("Elem",List(STraitCall(`tyArgName`,_))) => Left(a.name)
+        case STraitCall(_,List(STraitCall(`tyArgName`,_))) => Right(a.name)
+      }).headOption.get
+      imp
     }
   }
 
@@ -141,6 +154,47 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     }
   }
 
+  def serialize(obj: Any): String = {
+    val bos = new ByteArrayOutputStream()
+    try {
+      val gzip = new GZIPOutputStream(bos)
+      try {
+        val objOut = new ObjectOutputStream(gzip)
+        try {
+          objOut.writeObject(obj)
+          objOut.close()
+          gzip.close
+          bos.close
+          val str = javax.xml.bind.DatatypeConverter.printBase64Binary(bos.toByteArray)
+          str
+        }
+        finally objOut.close()
+      }
+      finally gzip.close()
+    }
+    finally bos.close()
+  }
+
+  def loadModule(obj: String): SEntityModuleDef = {
+    val bytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(obj)
+    val bis = new ByteArrayInputStream(bytes)
+    try {
+      val gzip = new GZIPInputStream(bis)
+      try {
+        // required instead of ObjectInputStream to work correctly from SBT, see
+        // www.scala-sbt.org/0.13/docs/Running-Project-Code.html
+        val objIn = new ThreadContextClassLoaderObjectInputStream(gzip)
+        try {
+          val module = objIn.readObject().asInstanceOf[SEntityModuleDef]
+          module
+        }
+        finally objIn.close()
+      }
+      finally gzip.close()
+    }
+    finally bis.close()
+  }
+
   class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) extends MatcherGenerator {
 
     //import InternalFunctions._
@@ -202,6 +256,31 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         case STpeTypeBounds(lo, hi) => mkId("Bounds", Seq(lo, hi))
         case _ => t.name
       }
+    }
+
+    def entityElemMethodName(name: String) = StringUtil.lowerCaseFirst(name) + "Element"
+
+    def tpeToElement(t: STpeExpr, env: List[STpeArg]): String = t match {
+      case STpePrimitive(name,_) => name + "Element"
+      case STpeTuple(List(a, b)) => s"pairElement(${tpeToElement(a, env)},${tpeToElement(b, env)})"
+      case STpeFunc(a, b) => s"funcElement(${tpeToElement(a, env)},${tpeToElement(b, env)})"
+      case STraitCall("$bar", List(a,b)) => s"sumElement(${tpeToElement(a, env)},${tpeToElement(b, env)})"
+      case STraitCall(name, Nil) if STpePrimitives.contains(name) => name + "Element"
+//      case STraitCall(name, Nil)  => s"element[$name]"
+      case STraitCall(name, args) if env.exists(_.name == name) =>
+        val a = env.find(_.name == name).get
+        if (a.tparams.isEmpty)
+          s"element[$t]"
+        else
+          if (args.isEmpty)
+            s"container[$t]"
+          else
+            s"element[$t]"
+      case STraitCall(name, args) =>
+        val method = entityElemMethodName(name)
+        val argsStr = args.rep(tpeToElement(_, env))
+        method + args.opt(_ => s"($argsStr)")
+      case _ => sys.error(s"Don't know how to construct Element for type $t")
     }
 
     val templateData = EntityTemplateData(module, module.entityOps)
@@ -341,6 +420,9 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       }.mkString("\n\n")
     }
 
+    def selfTypeString(suffix: String) =
+      module.selfType.opt(t => s"self: ${t.tpe}${suffix} =>")
+
     def getTraitAbs = {
       val sqlDDL = module.methods.map(m =>
         if (!m.tpeRes.isDefined) {
@@ -367,6 +449,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         } else false).map(m => generateQuery(m)).mkString("\n\n")
 
       val entityCompOpt = module.entityOps.companion
+      val hasCompanion = entityCompOpt.isDefined
       val companionName = s"${entityName}Companion"
       val proxyBT = optBT.opt(bt => {
         s"""
@@ -406,9 +489,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |
         |  $btContainer
         |
-        |  implicit val container${e.name}: Cont[${e.name}] = new Container[${e.name}] {
+        |  implicit val container${e.name}: Cont[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} = new Container[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} {
         |    def tag${typesDecl}${e.tpeArgsImplicitDecl("WeakTypeTag")} = weakTypeTag[${e.entityType}]
         |    def lift${typesDecl}${e.tpeArgsImplicitDecl("Elem")} = element[${e.entityType}]
+        |    ${e.isFunctor.opt(s"def map[A:Elem,B:Elem](xs: Rep[${e.name}[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
         |  }
         |  case class ${e.name}Iso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ${e.name}](iso) {
         |    implicit val eA = iso.eFrom
@@ -426,30 +510,42 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val cont = e.isContainer1
         val wildcardElem = s"${e.name}Elem[${"_, " * e.tpeArgDecls.length}_]"
         val isW = e.isWrapper
-        val (parentName, parentTyArgs, parentArgs) = e.firstAncestorType match {
+        val (optParent, parentElemName, parentTyArgs, parentArgs) = e.firstAncestorType match {
           case Some(STraitCall("Reifiable", _)) =>
-            (s"EntityElem${cont.opt("1")}",
+            (None, s"EntityElem${cont.opt("1")}",
              s"[${cont.opt(e.typesUsePref)}To${cont.opt(s", $entityName")}]",
              s"${cont.opt(s"(${e.tpeArgs.map("e" + _.name + ",").mkString("")}container[$entityName])")}")
           case Some(STraitCall("TypeWrapper", _)) =>
-            (s"WrapperElem${cont.opt("1")}",
+            (None, s"WrapperElem${cont.opt("1")}",
              if (cont)
                s"[${cont.opt(e.typesUsePref)}To${cont.opt(s", ${e.entityNameBT}, $entityName")}]"
              else
                s"[${e.entityNameBT}${e.tpeArgUseString}, To]",
              s"${cont.opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.entityNameBT}], container[$entityName])")}")
-          case Some(STraitCall(parentName, parentTypes)) =>
-            (s"${parentName}Elem",
+          case Some(parent @ STraitCall(parentName, parentTypes)) =>
+            (Some(parent), s"${parentName}Elem",
              s"[${parentTypes.map(_.toString + ", ").mkString("")}To]",
              "")
           case p => !!!(s"Unsupported parent type $p of the entity ${e.name}")
         }
-        val parentElem = s"$parentName$parentTyArgs$parentArgs"
+        val parentElem = s"$parentElemName$parentTyArgs$parentArgs"
+        val tpeSubst = e.tpeArgs.map(a => {
+          val name = e.getImplicitArgName(a.name)
+          (a.name, name)
+        })
 
         s"""
         |  // familyElem
         |  ${isW.opt("abstract ")}class ${e.name}Elem[${e.typesDeclPref}To <: ${e.entityType}]${e.implicitArgs.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")}
         |    extends $parentElem {
+        |    ${optParent.opt(_ => "override ")}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
+        |    ${optParent.opt(_ => "override ")}lazy val entityDef: STraitOrClassDef = {
+        |      val module = getModules("${module.name}")
+        |      module.entities.find(_.name == "${e.name}").get
+        |    }
+        |    ${optParent.opt(_ => "override ")}lazy val tyArgSubst: Map[String, TypeDesc] = {
+        |      Map(${tpeSubst.rep({ case (n,v) => "\"" + n + "\" -> " + v.fold(l => s"Left($l)", r => s"Right($r.asInstanceOf[SomeCont])") })})
+        |    }
         |    override def isEntityType = true
         |    override lazy val tag = {
         |${e.implicitArgs.flatMap(arg => arg.tpe match {
@@ -472,11 +568,11 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    override def getDefaultRep: Rep[To] = ???
         |  }
         |${
-          val elemMethodName = StringUtil.lowerCaseFirst(e.name) + "Element"
-          if (!module.methods.exists(_.name == elemMethodName)) {
+          val elemMethod = entityElemMethodName(e.name)
+          if (!module.methods.exists(_.name == elemMethod)) {
             val tyArgs = e.tpeArgDecls.opt(args => s"[${args.mkString(", ")}]")
             s"""
-               |  implicit def $elemMethodName$tyArgs${e.implicitArgsDecl}: Elem[${e.entityType}] =
+               |  implicit def $elemMethod$tyArgs${e.implicitArgsDecl}: Elem[${e.entityType}] =
                |    new ${e.name}Elem[${e.typesUsePref}${e.entityType}] ${e.isWrapper.opt(s"{\n      lazy val eTo = element[${e.name}Impl${e.tpeArgUseString}]\n    }")}
                |""".stripMargin
           } else ""
@@ -491,15 +587,18 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    protected def getDefaultRep = $entityName
         |  }
         |
-        |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs] with ${companionName} {
+        |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs]${hasCompanion.opt(s" with ${companionName}")} {
         |    override def toString = "$entityName"
         |    $companionSql
         |  }
         |  def $entityName: Rep[${companionName}Abs]
-        |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} = {
-        |    proxyOps[${companionName}](p)
-        |  }
-        |""".stripAndTrim
+        |${hasCompanion.opt
+        s"""
+           |  implicit def proxy$companionName(p: Rep[${companionName}]): ${companionName} =
+           |    proxyOps[${companionName}](p)
+           |""".stripAndTrim
+      }
+          |""".stripAndTrim
 
       val subEntities = for { entity <- module.entities.drop(1) } yield {
         val templateData = EntityTemplateData(module, entity)
@@ -599,6 +698,12 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val emptyType = ""
         val fullParentType = if (parentType == "") emptyType else parentType
         val wildcardElem = s"${className}Elem${c.tpeArgs.opt(_.map(_ => "_").mkString("[", ", ", "]"))}"
+        val parentElem = tpeToElement(parent, concTemplateData.tpeArgs)
+        val hasCompanion = c.companion.isDefined
+        val tpeSubst = concTemplateData.tpeArgs.map(a => {
+          val name = concTemplateData.getImplicitArgName(a.name)
+          (a.name, name)
+        })
 
         s"""
         |$defaultImpl
@@ -606,6 +711,14 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |  class ${className}Elem${typesDecl}(val iso: Iso[${className}Data${typesUse}, $className${typesUse}])$implicitArgs
         |    extends ${parent.name}Elem[${parentArgsStr}$className${typesUse}]
         |    with ConcreteElem${isCont.opt("1")}[${isCont.opt(parentArgsStr)}${className}Data${typesUse}, $className${typesUse}${isCont.opt(s", ${parent.name}")}] {
+        |    override lazy val parent: Option[Elem[_]] = Some(${parentElem})
+        |    override lazy val entityDef = {
+        |      val module = getModules("${module.name}")
+        |      module.concreteSClasses.find(_.name == "$className").get
+        |    }
+        |    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+        |      Map(${tpeSubst.rep({ case (n,v) => "\"" + n + "\" -> " + v.fold(l => s"Left($l)", r => s"Right($r.asInstanceOf[SomeCont])") })})
+        |    }
         |    ${templateData.isWrapper.opt("lazy val eTo = this")}
         |    override def convert${parent.name}(x: Rep[${parent.name}${parentArgs.opt("[" + _.rep() + "]")}]) = ${converterBody(module.getEntity(parent.name), c)}
         |    override def getDefaultRep = super[ConcreteElem${isCont.opt("1")}].getDefaultRep
@@ -635,7 +748,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    lazy val eTo = new ${className}Elem${typesUse}(this)
         |  }
         |  // 4) constructor and deconstructor
-        |  abstract class ${className}CompanionAbs extends CompanionBase[${className}CompanionAbs] with ${className}Companion {
+        |  abstract class ${className}CompanionAbs extends CompanionBase[${className}CompanionAbs]${hasCompanion.opt(s" with ${className}Companion")} {
         |    override def toString = "$className"
         |${(fields.length != 1).opt(s"""
         |    def apply${typesDecl}(p: Rep[${className}Data${typesUse}])${implicitArgs}: Rep[$className${typesUse}] =
@@ -677,7 +790,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
        |// Abs -----------------------------------
        |trait ${module.name}Abs extends ${module.name} ${config.baseContextTrait.opt(t => "with " + t)} {
-       |  ${module.selfType.opt(t => s"self: ${t.tpe} =>")}
+       |  ${selfTypeString("")}
        |
        |${entityProxy(templateData)}
        |
@@ -697,6 +810,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |${subEntities.mkString("\n\n")}
        |
        |${concreteClasses.mkString("\n\n")}
+       |
+       |  registerModule(scalan.meta.ScalanCodegen.loadModule(${module.name}_Module.dump))
        |}
        |""".stripAndTrim
     }
@@ -842,7 +957,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
        |// Seq -----------------------------------
        |trait ${module.name}Seq extends ${module.name}Dsl ${config.seqContextTrait.opt(t => "with " + t)} {
-       |  ${module.selfType.opt(t => s"self: ${t.tpe}Seq =>")}
+       |  ${selfTypeString("Seq")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeSeq[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    $companionMethods
@@ -975,7 +1090,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
        |// Exp -----------------------------------
        |trait ${module.name}Exp extends ${module.name}Dsl ${config.stagedContextTrait.opt(t => "with " + t)} {
-       |  ${module.selfType.opt(t => s"self: ${t.tpe}Exp =>")}
+       |  ${selfTypeString("Exp")}
        |  lazy val $entityName: Rep[${entityName}CompanionAbs] = new ${entityName}CompanionAbs with UserTypeDef[${entityName}CompanionAbs] {
        |    lazy val selfType = element[${entityName}CompanionAbs]
        |    override def mirror(t: Transformer) = this
@@ -1133,10 +1248,32 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     def getFileHeader = {
       s"""
       |package ${module.packageName}
-      |package impl
       |
       |${(module.imports ++ config.extraImports.map(SImportStat(_))).distinct.rep(i => s"import ${i.name}", "\n")}
+      |
+      |package impl {
+      |
       |""".stripAndTrim
+    }
+
+    def getDslTraits = {
+      Seq(
+        (module.hasDsl, "", "Abs"),
+        (module.hasDslSeq, "Seq", "Seq"),
+        (module.hasDslExp, "Exp", "Exp")).collect {
+        case (hasDslTrait, dslTraitSuffix, traitSuffix) if !hasDslTrait =>
+          s"trait ${module.name}Dsl${dslTraitSuffix} extends impl.${module.name}${traitSuffix} {${selfTypeString(dslTraitSuffix)}}"
+      }.mkString("\n")
+    }
+
+    def emitModuleSerialization = {
+      s"""
+       |object ${module.name + "_"}Module {
+       |  val packageName = "${module.packageName}"
+       |  val name = "${module.name}"
+       |  val dump = "${serialize(module.clean)}"
+       |}
+       """.stripMargin
     }
 
     def getImplFile: String = {
@@ -1144,7 +1281,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         getFileHeader,
         getTraitAbs,
         getTraitSeq,
-        getTraitExp
+        getTraitExp,
+        emitModuleSerialization,
+        "}", // closing brace for `package impl {`
+        getDslTraits
       )
       topLevel.mkString("", "\n\n", "\n").
         // clean empty lines

@@ -17,7 +17,7 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 
   class BaseElemEx[TBase, TExt](extE: =>Elem[TExt])
-                               (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
+                               (implicit tag: WeakTypeTag[TBase], z: Default[TBase])
     extends BaseElem[TBase] { self =>
     def getWrapperElem = extE
     override protected def getName = s"BT[${super.getName},${getWrapperElem.name}]"
@@ -60,7 +60,7 @@ trait TypeWrappers extends Base { self: Scalan =>
 
 trait TypeWrappersSeq extends TypeWrappers { scalan: ScalanSeq =>
    class SeqBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
-                                (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
+                                (implicit tag: WeakTypeTag[TBase], z: Default[TBase])
      extends BaseElemEx[TBase, TExt](extE) {
      override protected def getDefaultRep = {
        val defaultOfWrapper = getWrapperElem.defaultRepValue.asInstanceOf[TypeWrapper[TBase, TExt]]
@@ -69,9 +69,7 @@ trait TypeWrappersSeq extends TypeWrappers { scalan: ScalanSeq =>
    }
    class SeqBaseElemEx1[A, TExt, CBase[_]]
        (extE: =>Elem[TExt])
-       (implicit override val eItem: Elem[A],
-                 override val cont: Cont[CBase],
-                              z: Default[CBase[A]])
+       (implicit eItem: Elem[A], cont: Cont[CBase], z: Default[CBase[A]])
      extends BaseElemEx1[A, TExt, CBase](extE) {
      override protected def getDefaultRep = {
        val defaultOfWrapper = getWrapperElem.defaultRepValue.asInstanceOf[TypeWrapper[CBase[A], TExt]]
@@ -82,15 +80,13 @@ trait TypeWrappersSeq extends TypeWrappers { scalan: ScalanSeq =>
 
 trait TypeWrappersExp extends TypeWrappers with GraphVizExport { scalan: ScalanExp =>
   class ExpBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
-                                  (implicit override val tag: WeakTypeTag[TBase], z: Default[TBase])
+                                  (implicit tag: WeakTypeTag[TBase], z: Default[TBase])
     extends BaseElemEx[TBase, TExt](extE) {
     override protected def getDefaultRep = getWrapperElem.defaultRepValue.asInstanceOf[Rep[TBase]]
   }
   class ExpBaseElemEx1[A, TExt, CBase[_]]
     (extE: =>Elem[TExt])
-    (implicit override val eItem: Elem[A],
-               override val cont: Cont[CBase],
-                               z: Default[CBase[A]])
+    (implicit eItem: Elem[A], cont: Cont[CBase], z: Default[CBase[A]])
     extends BaseElemEx1[A, TExt, CBase](extE)
   {
     override protected def getDefaultRep = getWrapperElem.defaultRepValue.asInstanceOf[Rep[CBase[A]]]

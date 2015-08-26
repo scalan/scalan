@@ -64,9 +64,9 @@ trait Processes extends Base with Containers { self: ProcessesDsl =>
       (implicit val eA: Elem[A], val eO: Elem[O], val cF: Cont[F]) extends Process[F,O] {
 
     override def map[O2: Elem](f: (Rep[O]) => Rep[O2]) =
-      Await(req, fun { in: Rep[(Throwable | A)] => recv(in).map(f) })
+      Await(req, fun { in: Rep[Throwable | A] => recv(in).map(f) })
     def onHalt(f: Rep[Throwable] => RProc[F,O]): RProc[F,O] =
-      Await(req, fun { in: Rep[(Throwable | A)] => recv(in).onHalt(f) })
+      Await(req, fun { in: Rep[Throwable | A] => recv(in).onHalt(f) })
 
 //    override def flatMap[R:Elem](f1: Rep[B] => Rep[Process[F,R]]): Rep[Process[F,R]] = {
 //      a.flatMap((s: Rep[S]) => f(s).flatMap(f1))
@@ -163,7 +163,6 @@ trait ProcessesDslExp extends ProcessesDsl with impl.ProcessesExp with ScalanExp
 //  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun { i => Eval(i, v) }
 
 //  case class Eval[A:Elem](i: Rep[Int], v: Rep[A]) extends BaseDef[(Int, A)]  {
-//    override def uniqueOpId = name(selfType)
 //    override def mirror(t: Transformer) = Eval(t(i), t(v))
 //  }
   def tryCatch[A](t: Th[A], c: (Rep[Throwable]) => Rep[A]) = ???

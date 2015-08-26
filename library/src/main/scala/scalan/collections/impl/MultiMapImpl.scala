@@ -1,9 +1,10 @@
 package scalan.collections
-package impl
 
 import scalan._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
+package impl {
 // Abs -----------------------------------
 trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   self: ScalanCommunityDsl =>
@@ -16,6 +17,14 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   // familyElem
   class MMultiMapElem[K, V, To <: MMultiMap[K, V]](implicit val elemKey: Elem[K], val elemValue: Elem[V])
     extends EntityElem[To] {
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("MultiMaps")
+      module.entities.find(_.name == "MMultiMap").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("K" -> Left(elemKey), "V" -> Left(elemValue))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagK = elemKey.tag
@@ -47,14 +56,22 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     override def toString = "MMultiMap"
   }
   def MMultiMap: Rep[MMultiMapCompanionAbs]
-  implicit def proxyMMultiMapCompanion(p: Rep[MMultiMapCompanion]): MMultiMapCompanion = {
+  implicit def proxyMMultiMapCompanion(p: Rep[MMultiMapCompanion]): MMultiMapCompanion =
     proxyOps[MMultiMapCompanion](p)
-  }
 
   // elem for concrete class
   class HashMMultiMapElem[K, V](val iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]])(implicit elemKey: Elem[K], elemValue: Elem[V])
     extends MMultiMapElem[K, V, HashMMultiMap[K, V]]
     with ConcreteElem[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
+    override lazy val parent: Option[Elem[_]] = Some(mMultiMapElement(element[K], element[V]))
+    override lazy val entityDef = {
+      val module = getModules("MultiMaps")
+      module.concreteSClasses.find(_.name == "HashMMultiMap").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("K" -> Left(elemKey), "V" -> Left(elemValue))
+    }
+
     override def convertMMultiMap(x: Rep[MMultiMap[K, V]]) = HashMMultiMap(x.map)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -113,6 +130,8 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkHashMMultiMap[K, V](map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]]
   def unmkHashMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): Option[(Rep[MMap[K,ArrayBuffer[V]]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(MultiMaps_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -578,3 +597,11 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
     }
   }
 }
+
+object MultiMaps_Module {
+  val packageName = "scalan.collections"
+  val name = "MultiMaps"
+  val dump = "H4sIAAAAAAAAALVWTWwbRRQer+M6a4e0RCioSOAQGRAI7JBLDzlUievwUzuJslGFTIU0Xo+dKbOzm51xtMuhB45wQ1wR6r03Lpy4ISEOnBAgceZUyqECegLxZvbHu46dViD2MNqZefN+vu97s3v3PioJH70obMwwbzhE4oal37eFrFttLqkMu+5gzMg1Mvxw9Uu7y3eEgS720IVjLK4J1kNm9NIOvPTdIicdZGJuEyFdX0j0fEdHaNouY8SW1OVN6jhjifuMNDtUyK0OWui7g/AE3UaFDrpku9z2iSRWi2EhiIjXF4nKiKZzU8/DfW8SgzdVFc1MFUc+phLShxiXIvtD4lkhd3noSLQcp7bvqbTApkwdz/VlEqIM7o7dQTJd4BgW0ErnFj7FTQgxalrSp3wEJ6sett/HI7IHJsp8ARIWhA2PQk/Pix1UEeQEAHrL8ZheCTyEEDCwqZNoTPBppPg0FD51i/gUM/oBVpsHvhuEKHoKRYQCD1y8+ggXiQfS5oP6Rzftdx9aVcdQhwOVSllXeAEc1eaoQVMBOH5z+Il48MadKwaq9FCFiu2+kD62ZZbyGK0q5tyVOucUQOyPgK31eWzpKNtgMyUJ03YdD3PwFEO5BDwxalOpjNXaUszOHOjL0iOJaSHwCmm9a3Pq1bppYcYO7l1+7YVf2+8YyMiHMMGlBcL3E6cSmd3umEnaxV7sX40XJSpcn4Cspjf0VA1mMBnL56STAvPSvd8GX2+gm0YKZxz98RgEFyXx0w/V71++aqDFntb7LsOjHiAq2ow4+37L5bKHFt1T4kc75VPM1NtMRssDMsRQdIxzFqAiACTR2tzO9IhCb0t3QSEBoBoJec/lpL57UP/T+vbTu0qnPlqKdqJW/Zte+evn5aHUEpao6MSQA7pFaPA8/AvdRzFS3fZ9HO6Mh0PiTxnO5mqat0qUnOU65Mn1B/S9Ox9LzVAhyF8X+/1b0J9b+txz55CVXFt/9DaM3y//+LmBTOCkTyUUWt94zGb7HxsI5VFabsVXthbZZn7ziTexOE47IwNnYrCSbrayWWZAL6dDDdhezTnMnalNaH06k8UzhURi2kiiMgGtXydhKhGl/ZkSyaR6xoupvNzAbEzO83NWQbMwqaUN/Ow8TWgGVg87T7H7V78yUOltVBpCX4oOKvXdMR8k1ML3U5JA7iRrhTy1QCX2sZNSqZ81NIEv3x57Mw3OFpWp+vUpeZiHhA6p+hhNrf+n+zIrDW3amBm8qlS8ix3Kws154WffxznRzRFpBIg37ayWiTQbwH+BsBqPJjaxoZliCEnG0pn8B4gYGR+tz5GVFTc63Da3H36298p3X/yiv3UVdWXANczTv6GJiIIpwlYif4CMM+bwjwV/OZnsoS3UbaIz/wdvyXOPdQoAAA=="
+}
+}
+

@@ -64,7 +64,7 @@ trait MST_example extends Scalan with ListOps {
         val from = minEdge._2
         val to = minEdge._3
 
-        val newFront = front.append(to)
+        val newFront = front :+ to
         val newVisited = visited.update(to, toRep(true))
         val newOut = out.update(to, from)
 
@@ -154,7 +154,7 @@ trait MST_example extends Scalan with ListOps {
         val from = minEdge._2
         val to = minEdge._3
 
-        val newFront = front.append(to)
+        val newFront = front :+ to
         val newVisited = visited.update(to, toRep(true))
         val newOut = out.update(to, from)
 

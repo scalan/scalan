@@ -48,6 +48,10 @@ trait GraphVizExport { self: ScalanExp =>
         case _ => y.toString
       }
       s"${l.x} => $bodyStr"
+    /*case v: View[_,_] =>
+      val viewStr = d.toString
+      val isoStr = v.iso.toString
+      s"$viewStr (iso: $isoStr)" */
     case Apply(f, arg) => s"$f($arg)"
     case Tup(a, b) => s"($a, $b)"
     case First(pair) => s"$pair._1"
@@ -64,16 +68,16 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => d.toString
   }
 
-  private def emitDeps(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
-    def emitDepList(list: List[Exp[_]], params: String) =
+  private def emitEdges(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
+    def emitEdgesTo(list: List[Exp[_]], params: String) =
       list.foreach { dep => stream.println(s"${StringUtil.quote(dep)} -> ${StringUtil.quote(sym)} $params") }
 
     val (deps, lambdaVars) = rhs match {
       case l: Lambda[_, _] => lambdaDeps(l)
       case _ => (dep(rhs), Nil)
     }
-    emitDepList(lambdaVars, "[style=dashed, color=lightgray, weight=0]")
-    emitDepList(deps, "[style=solid]")
+    emitEdgesTo(lambdaVars, "[style=dashed, color=lightgray, weight=0]")
+    emitEdgesTo(deps, "[style=solid]")
   }
 
   // can be overridden if desired
@@ -85,18 +89,21 @@ trait GraphVizExport { self: ScalanExp =>
   def emitDepGraph(start: Exp[_], file: File)(implicit config: GraphVizConfig): Unit =
     emitDepGraph(List(start), file)(config)
   def emitDepGraph(ss: Seq[Exp[_]], file: File)(implicit config: GraphVizConfig): Unit =
-    if (config.emitGraphs) {
-      FileUtil.withFile(file) {
-        emitDepGraph(file.getName, ss)(_, config)
-      }
-    }
+    emitDepGraph(new PGraph(ss.toList), file)(config)
   def emitGraphOnException(contextName: String, ss: Exp[_]*) =
     emitDepGraph(ss, FileUtil.file("test-out", "exceptions", s"${contextName}_context.dot"))(defaultGraphVizConfig)
-  // this can be made the main method in the future
-  // to avoid potential inconsistencies in schedules
-  // or to add information accessible from the graph
   def emitDepGraph(graph: AstGraph, file: File)(implicit config: GraphVizConfig): Unit =
-    emitDepGraph(graph.roots, file)(config)
+    if (config.emitGraphs) {
+      FileUtil.withFile(file) {
+        emitDepGraph(graph, file.getName)(_, config)
+      }
+    }
+  def emitDot(dotText: String, file: File)(implicit config: GraphVizConfig): Unit =
+    if (config.emitGraphs) {
+      FileUtil.withFile(file) {
+        _.println(dotText)
+      }
+    }
 
   private def lambdaDeps(l: Lambda[_, _]): (List[Exp[_]], List[Exp[_]]) = l.y match {
     case Def(l1: Lambda[_, _]) =>
@@ -106,9 +113,10 @@ trait GraphVizExport { self: ScalanExp =>
   }
 
   protected def clusterColor(g: AstGraph) = g match {
-    case _: Lambda[_, _] => "#FFCCFF"
-    case _: ThunkDef[_] => "#FFCCCC"
-    case _ => "lightgray"
+    case _: ProgramGraph[_] => None
+    case _: Lambda[_, _] => Some("#FFCCFF")
+    case _: ThunkDef[_] => Some("#FFCCCC")
+    case _ => Some("lightgray")
   }
 
   protected def clusterSchedule(g: AstGraph) = g match {
@@ -121,59 +129,51 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => true
   }
 
-  private def emitClusters(schedule: Schedule, emitted: Set[Exp[_]])(implicit stream: PrintWriter, config: GraphVizConfig): Set[Exp[_]] = {
-    schedule.foldRight(emitted) {
-      case (TableEntry(s, d), emitted1) =>
-        if (!emitted1.contains(s)) {
-          d match {
-            case g: AstGraph if shouldEmitCluster(g) =>
-              if (config.subgraphClusters) {
-                stream.println(s"subgraph cluster_$s {")
-                stream.println(s"style=dashed; color=${StringUtil.quote(clusterColor(g))}")
-              }
-              emitNode(s, d)
-              // for lambdas, do we want lambdaDeps instead?
-              val sources = g.boundVars
-              if (config.subgraphClusters && sources.nonEmpty) {
-                stream.println(s"{rank=source; ${sources.mkString("; ")}}")
-              }
-              val schedule1 = clusterSchedule(g)
-              val emitted2 = emitClusters(schedule1, emitted1 + s)
-              if (config.subgraphClusters) {
-                stream.println(s"{rank=sink; $s}")
-                stream.println("}")
-              }
-              emitted2
-            case _ =>
-              emitNode(s, d)
-              emitted1 + s
+  // This function accumulates all emitted nodes so that dependency edges are placed outside any clusters.
+  // Otherwise dot will incorrectly show nodes inside clusters they don't belong to.
+  private def emitCluster(g: AstGraph, acc: Map[Exp[_], Def[_]])(implicit stream: PrintWriter, config: GraphVizConfig): Map[Exp[_], Def[_]] = {
+    val schedule = clusterSchedule(g)
+
+    schedule.foldLeft(acc) { case (acc1, TableEntry(s, d)) =>
+      val acc2 = acc1 + (s -> d)
+      d match {
+        case g: AstGraph if shouldEmitCluster(g) =>
+          if (config.subgraphClusters) {
+            stream.println(s"subgraph cluster_$s {")
+            clusterColor(g).foreach { color =>
+              stream.println(s"style=dashed; color=${StringUtil.quote(color)}")
+            }
           }
-        } else {
-          emitted1
-        }
+          emitNode(s, d)
+          // for lambdas, do we want lambdaDeps instead?
+          val sources = g.boundVars
+          if (config.subgraphClusters && sources.nonEmpty) {
+            stream.println(s"{rank=source; ${sources.mkString("; ")}}")
+          }
+          val acc3 = emitCluster(g, acc2)
+          if (config.subgraphClusters) {
+            stream.println(s"{rank=sink; $s}")
+            stream.println("}")
+          }
+          acc3
+        case _ =>
+          emitNode(s, d)
+          acc2
+      }
     }
   }
 
-  private def emitDepGraph(name: String, ss: Seq[Exp[_]])(implicit stream: PrintWriter, config: GraphVizConfig): Unit = {
+  private def emitDepGraph(graph: AstGraph, name: String)(implicit stream: PrintWriter, config: GraphVizConfig): Unit = {
     stream.println(s"""digraph "${name}" {""")
 
     stream.println("concentrate=true")
     stream.println(config.orientationString)
 
-    val deflist = buildScheduleForResult(ss, dep)
+    val nodes = emitCluster(graph, Map.empty)
 
-    val lambdaBodies: Set[Exp[_]] = deflist.collect {
-      case TableEntry(_, lam: Lambda[_, _]) => lam.y
-    }.toSet
-
-    val deflist1 = deflist.filterNot(tp => lambdaBodies.contains(tp.sym))
-
-    emitClusters(deflist1, Set.empty)
-
-    deflist1.foreach {
-      case TableEntry(sym, rhs) => emitDeps(sym, rhs)
+    nodes.foreach { case (sym, rhs) =>
+      emitEdges(sym, rhs)
     }
-
     stream.println("}")
     stream.close()
   }

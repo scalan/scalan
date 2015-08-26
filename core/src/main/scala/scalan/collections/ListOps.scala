@@ -47,9 +47,13 @@ trait ListOps { self: Scalan =>
     def empty[T: Elem] = replicate(0, element[T].defaultRepValue)
   }
 
-  implicit val listContainer: Cont[List] = new Container[List] {
+  trait ListContainer extends Container[List] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[List[T]]
     def lift[T](implicit eT: Elem[T]) = element[List[T]]
+  }
+
+  implicit val listFunctor = new Functor[List] with ListContainer {
+    def map[A:Elem,B:Elem](xs: Rep[List[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
 
   case class ListIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, List](iso) {
@@ -62,8 +66,12 @@ trait ListOps { self: Scalan =>
 
   case class ListElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, List[A], List](eItem, container[List]) {
+    def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-
+    override def entityDef = !!!("not supported")
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eItem))
+    }
     lazy val tag = {
       implicit val rt = eItem.tag
       weakTypeTag[List[A]]
@@ -199,15 +207,11 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
   trait ListDef[T] extends Def[List[T]] {
     implicit def eT: Elem[T]
     lazy val selfType = element[List[T]]
-    lazy val uniqueOpId = name(eT)
   }
   trait ListMethod[T] {
-    def name[A](e: Elem[A]): String
     def xs: Exp[List[T]]
-    lazy val uniqueOpId = withElemOfList(xs) { name(_) }
   }
   case class ListHead[T](xs: Exp[List[T]]) extends Def[T] {
-    def uniqueOpId = name(xs.elem.eItem)
     def selfType = xs.elem.eItem
     override def mirror(t: Transformer) = ListHead(t(xs))
   }
@@ -267,7 +271,6 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
   }
 
   case class ListApply[T](xs: Exp[List[T]], n: Exp[Int])(implicit val eT: Elem[T]) extends Def[T] {
-    def uniqueOpId = name(xs.elem.eItem)
     def selfType = xs.elem.eItem
     override def mirror(t: Transformer) = ListApply(t(xs), t(n))
   }
@@ -356,6 +359,11 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
       Const(List.fill(len)(c.x))
     }
     case ListMap(xs, Def(IdentityLambda())) => xs
+    case ListMap(xs: Rep[List[a]], Def(ConstantLambda(v))) =>
+      val xs1 = xs.asRep[List[a]]
+      implicit val eA = xs1.elem.eItem
+      SList.replicate(xs1.length, v)(v.elem)
+
     case ListMap(Def(d2), f: Rep[Function1[a, b]]@unchecked) =>
       d2.asDef[List[a]] match {
         case ListMap(xs: Rep[List[c]]@unchecked, g) =>

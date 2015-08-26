@@ -23,11 +23,9 @@ trait HashSets extends Base with TypeWrappers { self: ScalanCommunityDsl =>
   def DefaultOfHashSet[A:Elem]: Default[HashSet[A]] = Default.defaultVal(HashSet.empty[A]) //SHashSet.defaultVal
 }
 
-trait HashSetsDsl extends impl.HashSetsAbs { self: ScalanCommunityDsl => }
 trait HashSetsDslSeq extends impl.HashSetsSeq { self: ScalanCommunityDslSeq =>
   trait SeqSHashSet[A] extends SHashSetImpl[A] {
     override def map[B:Elem](f: Rep[A => B]): Rep[SHashSet[B]] = SHashSetImpl(wrappedValueOfBaseType.map(f))
     //override def +(elem: Rep[A]): Rep[HashSet[A]] = value + elem
   }
 }
-trait HashSetsDslExp extends impl.HashSetsExp { self: ScalanCommunityDslExp => }

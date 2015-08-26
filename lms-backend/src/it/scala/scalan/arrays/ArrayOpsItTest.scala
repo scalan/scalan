@@ -1,10 +1,10 @@
 package scalan.arrays
 
 import scalan.compilation.lms.CommunityLmsBackend
-import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala,LmsCompilerScala}
-import scalan.compilation.lms.uni.LmsCompilerUni
+import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
+import scalan.compilation.lms.uni.{LmsCompilerUni, LmsBackendUni}
 import scalan.it.BaseItTests
-import scalan.{ScalanCommunityDslExp, ScalanCtxSeq, ScalanDsl}
+import scalan._
 
 class ArrayOpsItTests extends BaseItTests {
   trait Prog extends ScalanDsl {
@@ -14,33 +14,31 @@ class ArrayOpsItTests extends BaseItTests {
   }
 
   class ProgSeq extends Prog with ScalanCtxSeq
-  class ProgExp extends Prog with ScalanCommunityDslExp with CommunityLmsCompilerScala {
-    val lms = new CommunityLmsBackend
-  }
-  class ProgExpU extends Prog with ScalanCommunityDslExp with LmsCompilerUni
+  class ProgExp extends Prog with ScalanCommunityDslExp with JNIExtractorOpsExp
 
   val progSeq = new ProgSeq
-  val progStagedScala = new ProgExp
-  val progStagedU = new ProgExpU
+  val comp1 = new CommunityLmsCompilerScala(new ProgExp)
+  val comp2 = new LmsCompilerUni(new ProgExp)
 
   def invokeMethod[A,B]( m: java.lang.reflect.Method, instance: AnyRef, in: A): B = {
     m.invoke(instance, in.asInstanceOf[AnyRef]).asInstanceOf[B]
   }
 
-  def compareOutputWithSequential[A, B](back: LmsCompilerScala)
-                                       (fSeq: A => B, f: back.Exp[A => B], functionName: String, inputs: A*)
+  def compareOutputWithSequential[S <: Scalan, A, B](back: LmsCompilerScala[S with ScalanCtxExp], forth: S with ScalanCtxSeq)
+                                       (f: S => S#Rep[A => B], functionName: String, inputs: A*)
                                        (implicit comparator: (B, B) => Unit) {
-    val compiled = compileSource(back)(f, functionName, back.defaultCompilerConfig)
+    val compiled = compileSource[S](back)(f, functionName, back.defaultCompilerConfig)
     val (cls, method) = back.loadMethod(compiled)
     val instance = cls.newInstance().asInstanceOf[AnyRef]
 
-    val invoke: A => B = invokeMethod[A,B](method, instance, _:A)
+    val invokeExp: A => B = invokeMethod[A,B](method, instance, _:A)
+    val invokeSeq = f(forth).asInstanceOf[A => B]
 
     var i = -1
     inputs.foreach {in =>
       i += 1
       println(s"${getClass.getName}: checking input $i")
-      comparator(invoke(in), fSeq(in))
+      comparator(invokeExp(in), invokeSeq(in))
     }
   }
 
@@ -50,8 +48,8 @@ class ArrayOpsItTests extends BaseItTests {
 
     val vals: Array[Int] = Array(1, 4, 9, 1024, 0, -1024)
     val ins = vals map {v => (arr,v)}
-    compareOutputWithSequential(progStagedScala)(progSeq.arrayBinarySearch, progStagedScala.arrayBinarySearch, "arrayBinarySearch", ins:_*)
-    compareOutputWithSequential(progStagedU)(progSeq.arrayBinarySearch, progStagedU.arrayBinarySearch, "arrayBinarySearch", ins:_*)
+    compareOutputWithSequential(comp1, progSeq)(_.arrayBinarySearch, "arrayBinarySearch", ins:_*)
+    compareOutputWithSequential(comp2, progSeq)(_.arrayBinarySearch, "arrayBinarySearch", ins:_*)
   }
 
 }

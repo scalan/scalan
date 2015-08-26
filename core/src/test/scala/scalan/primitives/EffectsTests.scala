@@ -1,14 +1,11 @@
 package scalan.primitives
 
-import java.io.File
-import java.lang.reflect.Method
-
-import scala.io.StdIn
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp}
+import scalan.compilation.DummyCompiler
 
-class EffectsTests extends BaseTests { suite =>
+class EffectsTests extends BaseCtxTests {
 //  trait ConsoleDsl extends Scalan {
 //    def print(s: Rep[String]): Rep[Unit]
 //    def read: Rep[String]
@@ -35,38 +32,41 @@ class EffectsTests extends BaseTests { suite =>
     }
   }
 
-  abstract class MyProgStaged(testName: String) extends TestCompilerContext(this, testName) with  MyProg with EffectfulCompiler {
+  class Ctx(testName: String) extends TestCompilerContext(testName) {
+    override val compiler = new DummyCompiler(new ScalanCtxExp with MyProg) with EffectfulCompiler[ScalanCtxExp with MyProg]
   }
 
   test("simpleEffectsStaged") {
-    val ctx = new MyProgStaged("simpleEffectsStaged") {
-      def test() = { }
+    val ctx = new Ctx("simpleEffectsStaged") {
+      import compiler.scalan._
+      test("t1", t1)
+      test("t2", t2)
     }
-    ctx.test
-    ctx.test("t1", ctx.t1)
-    ctx.test("t2", ctx.t2)
   }
 
   test("nestedThunksStaged") {
-    val ctx = new MyProgStaged("nestedThunksStaged") {
-      def test() = { }
+    val ctx = new Ctx("nestedThunksStaged") {
+      import compiler.scalan._
+      test("t3", t3)
     }
-    ctx.test
-    ctx.test("t3", ctx.t3)
   }
 
   test("IfThenElseWithEffectsSimple") {
-    val ctx = new MyProgStaged("IfThenElseWithEffectsSimple") {
+    val ctx = new Ctx("IfThenElseWithEffectsSimple") {
+      import compiler.scalan._
+
       def test() = {
         val Def(lam : Lambda[_,_]) = t4
         val b = lam.branches
         assert(true)
-
       }
+
+      test()
+
+      test("t4", t4)
     }
-    ctx.test
-    ctx.test("t4", ctx.t4)
   }
+
   trait MyDomainProg extends Scalan with SegmentsDsl {
 //    lazy val t1 = fun { (in: Rep[Int]) =>
 //      Thunk { Interval(in, in) }.force.length
@@ -75,7 +75,7 @@ class EffectsTests extends BaseTests { suite =>
   }
 
   test("simpleEffectsWithIsoLiftingStaged") {
-    val ctx = new TestContext(this, "simpleEffectsWithIsoLiftingStaged") with SegmentsDslExp with MyDomainProg {
+    val ctx = new TestContext with SegmentsDslExp with MyDomainProg {
       isInlineThunksOnForce = false
 
       def test() = {
@@ -87,17 +87,17 @@ class EffectsTests extends BaseTests { suite =>
 
       }
     }
-    ctx.test
+    ctx.test()
    // ctx.test("t1", ctx.t1)
   }
 
   test("throwablesSeq") {
-    val ctx = new ScalanCtxSeq with  MyProg {
+    val ctx = new ScalanCtxSeq with MyProg {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
       }
     }
-    ctx.test
+    ctx.test()
 //    val res = ctx.t1(new Throwable("test"))
 //    assertResult("test")(res)
   }

@@ -1,10 +1,11 @@
 package scalan.monads
-package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
+package impl {
 // Abs -----------------------------------
 trait StatesAbs extends States with scalan.Scalan {
   self: MonadsDsl =>
@@ -17,6 +18,14 @@ trait StatesAbs extends States with scalan.Scalan {
   // familyElem
   class State0Elem[S, A, To <: State0[S, A]](implicit val eS: Elem[S], val eA: Elem[A])
     extends EntityElem[To] {
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("States")
+      module.entities.find(_.name == "State0").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("S" -> Left(eS), "A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagS = eS.tag
@@ -48,14 +57,22 @@ trait StatesAbs extends States with scalan.Scalan {
     override def toString = "State0"
   }
   def State0: Rep[State0CompanionAbs]
-  implicit def proxyState0Companion(p: Rep[State0Companion]): State0Companion = {
+  implicit def proxyState0Companion(p: Rep[State0Companion]): State0Companion =
     proxyOps[State0Companion](p)
-  }
 
   // elem for concrete class
   class StateBaseElem[S, A](val iso: Iso[StateBaseData[S, A], StateBase[S, A]])(implicit eS: Elem[S], eA: Elem[A])
     extends State0Elem[S, A, StateBase[S, A]]
     with ConcreteElem[StateBaseData[S, A], StateBase[S, A]] {
+    override lazy val parent: Option[Elem[_]] = Some(state0Element(element[S], element[A]))
+    override lazy val entityDef = {
+      val module = getModules("States")
+      module.concreteSClasses.find(_.name == "StateBase").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("S" -> Left(eS), "A" -> Left(eA))
+    }
+
     override def convertState0(x: Rep[State0[S, A]]) = StateBase(x.run)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -114,6 +131,8 @@ trait StatesAbs extends States with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkStateBase[S, A](run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]]
   def unmkStateBase[S, A](p: Rep[State0[S, A]]): Option[(Rep[S => (A, S)])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(States_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -257,3 +276,11 @@ trait StatesExp extends StatesDsl with scalan.ScalanExp {
     }
   }
 }
+
+object States_Module {
+  val packageName = "scalan.monads"
+  val name = "States"
+  val dump = "H4sIAAAAAAAAALVWTWwbRRR+Xsdx1g5NKaioVG1CZEAgsKMKqYccKid1oJXzo2wOlamKxuuxu2V3ZrMzjmwOFeKE4Ia4cECo9964ICFxQ0IcOFWAxIkDp9IeKqDiQMWb2V8n2VCB2MNoZ/bt+/m+773d2/egJAJ4QdjEJazuUUnqlr5vClmzWkw6crzOe0OXXqT9905+Ya+zFWHAXAemrxNxUbgdMMOb1shP7i262waTMJsKyQMh4bm2jtCwuetSWzqcNRzPG0rSdWmj7Qi53IapLu+Nd+EmFNpw3ObMDqik1qpLhKAiOp+hKiMn2Zt6P9700xisoapoZKrYCYgjMX2McTy036a+NWacjT0Jx6LUNn2VFtqUHc/ngYxDlNHddd6Lt1OM4AGcaN8ge6SBIQYNSwYOG+CbVZ/Yb5MB3UATZT6FCQvq9nfGvt4X21ARdBcBuuT5rj4Z+QCADJzTSdRTfOoJPnWFT82igUNc5x2iHm4FfDSG8CoUAUY+unjlH1zEHmiL9WofXLXffGhVPUO9PFKplHWF0+hoPkcNmgrE8Zvtj8SD12+dN6DSgYojml0hA2LLLOURWlXCGJc65wRAEgyQrcU8tnSUJtrsk4Rpc88nDD1FUM4iT65jO1IZq7PZiJ0c6MvSp7FpYeQXknoXcurVulklrrt199Srz//aumKAMRnCRJcWCj+InUqYtrBcuhQ5V+uchIKVIqy2Tb1VizlK1/IRuSSovHj3fu/rJbhqJFhGoR+PPnRREj9+X73z0gUDZjpa7GsuGXQQTtFyqbcZrHImOzDD92gQPinvEVfdHUpnuUf7ZOjKCOQsOkVER8JCblv6VEG3rFugEANQDVW8wRmtrW3V/rC+/fi2EmkAs+GTsE8fOef/+ulYX2r9SigGQxajW8TuTsA4m8etT9eGzL5z6ZOn5s689bNmdrrHPeJoeZ1uQynA3talnI7AzRCZjzI63hn6Ln3tyz+vvf/uG77m6YBO9smjOSkP61B5pCKphEhY3KNPLj5wrt36UOowhdHkYNrs3sBJsKzfO3tUztGA/L2zZPx26ofPDDBRAF1HesSvLT1mW/+PrQqTcM2FLbaaDZJBq5ws86iME9p4hQg6YT+fIv5MxvuzhViK2kiCQa047JRqj0P7Ooyd56B5lIODk0CCmaSsfSRaPpMvOQTr5Hb7affeha8MKF2GUh/7VaCIu3zIejEL+FGVdCRX4rPCJAuIOgmIl6CurwVI4ZocZJcPNThYUKbic/uYNLep03fUF2ry/D8M0awGtGkjijwpjUQfh4kpLCYd5lka8iv/F9CodSu1iQzDqPiNfCImnDPSE1E1ASzm6MCKmgg7+ebDTzde/u7zX/Rcq6h2xHnKkn+alPX9o8hc17HwFyWTLEpXNahO9G+6x9XYMgoAAA=="
+}
+}
+

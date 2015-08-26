@@ -268,15 +268,19 @@ trait Points { self: PointsDsl =>
     def y: Rep[Double]
     def distance(other: Rep[Point]): Rep[Double] = Math.sqrt((x - other.x)*(x - other.x) + (y - other.y)*(y - other.y))
   }
-  trait PointCompanion
+  // trait PointCompanion // uncomment to add methods for companion object
 
   abstract class PointImpl(val x: Rep[Double], val y: Rep[Double]) extends Point
-  trait PointImplCompanion
+  // trait PointImplCompanion
 }
 
-trait PointsDsl extends impl.PointsAbs
-trait PointsDslSeq extends impl.PointsSeq
-trait PointsDslExp extends impl.PointsExp
+// generated automatically if absent;
+// you can add methods which shouldn't be staged or which have different
+// implementations in Seq and Exp contexts here
+
+// trait PointsDsl extends impl.PointsAbs
+// trait PointsDslSeq extends impl.PointsSeq
+// trait PointsDslExp extends impl.PointsExp
 ~~~
 This obviously doesn't compile yet, because of references to non-existent classes in the `impl` package. They are boilerplate code which must be generated using the `meta` subproject. Currently this unfortunately has to be done manually by running SBT command `meta/run <configurations>`, where `<configurations>` is one or more configuration defined in [BoilerplateTool.scala](src/main/scala/scalan/meta/BoilerplateTool.scala). This has to be done when a DSL file is added or changed, or after changes in the `meta` subproject itself. Projects which depend on Scalan and add their own DSLs will normally also have a `meta` subproject with a dependency on `scalan-meta`.
 

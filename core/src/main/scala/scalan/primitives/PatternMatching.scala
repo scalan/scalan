@@ -55,7 +55,6 @@ trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
     def mirror(f: Transformer) = Match[A, B](f(selector),
       branches.map { case Branch(elem, guard, body) => Branch(elem, f(guard), f(body)) },
       default.map(f.apply(_)))
-    def uniqueOpId = "match"
   }
 
   private def eDom(branchBody: Exp[_ => _]) = branchBody.elem.asInstanceOf[FuncElem[_, _]].eDom
@@ -98,7 +97,7 @@ trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
       val branchString = branches.map { case Branch(_, guard, body) =>
         val e = eDom(body)
         val guardString = guard match {
-          case Def(ConstantLambda(Def(Const(true)))) => ""
+          case Def(VeryConstantLambda(true)) => ""
           case _ => s"if $guard"
         }
         // Doesn't quite correspond to Scala code, but should be clear enough

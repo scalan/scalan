@@ -4,9 +4,9 @@ import java.io.File
 import java.lang.reflect.Method
 
 import scala.language.reflectiveCalls
-import scalan.{TestContext, BaseTests, ScalanCtxExp}
+import scalan.{BaseCtxTests, ScalanCtxExp}
 
-class SumSpecTests extends BaseTests {
+class SumSpecTests extends BaseCtxTests {
 
   trait MyProg extends MonadsDsl {
       def sum[F[_]:Cont](F: Monad[F])(n: Rep[Int])(f: Rep[F[Int]] => Rep[Int]): Rep[Int] = {
@@ -44,7 +44,7 @@ class SumSpecTests extends BaseTests {
   }
 
   test("identityMonad") {
-    val ctx = new TestContext(this, "identityMonad") with MyProgExp {
+    val ctx = new TestContext with MyProgExp {
       lazy val runSum = fun {(n: Rep[Int]) =>
         sum(Monad[Id])(n)(r => r)
       }
@@ -53,7 +53,7 @@ class SumSpecTests extends BaseTests {
   }
 
   test("readerMonad") {
-    val ctx = new TestContext(this, "readerMonad") with MyProgExp with MonadsDslExp {
+    val ctx = new TestContext with MyProgExp with MonadsDslExp {
       override def rewriteDef[T](d: Def[T]) = d match {
         //TODO this rule works only for this particular tests, but can be generalized
         case ListFoldLeft(
@@ -90,7 +90,7 @@ class SumSpecTests extends BaseTests {
   }
 
   test("operMonad") {
-    val ctx = new TestContext(this, "operMonad") with MyProgExp {
+    val ctx = new TestContext with MyProgExp {
       lazy val runSum = fun {(n: Rep[Int]) =>
         sum(Monad[Oper])(n)(r => r(0)._2)
       }
@@ -99,20 +99,20 @@ class SumSpecTests extends BaseTests {
   }
 
   test("freeIdMonad") {
-    val ctx = new TestContext(this, "freeIdMonad") with MyProgExp {
+    val ctx = new TestContext with MyProgExp {
       val idFreeM = freeMonad[Id]
       type IdFree[A] = Free[Id,A]
       lazy val runSum = fun {(n: Rep[Int]) =>
         sum[IdFree](idFreeM)(n)((r: RFree[Id,Int]) => {
           emit("runSum-r", r)
           r.run[Oper](IdOper)(operationMonad)(0)._2
-        })(freeCont[Id])
+        })(freeMonad[Id])
       }
       lazy val runSum2 = fun {(n: Rep[Int]) =>
         sum2[IdFree](idFreeM)(n)((r: RFree[Id,Int]) => {
           emit("runSum2-r", r)
           r.run[Oper](IdOper)(operationMonad)(0)._2
-        })(freeCont[Id])
+        })(freeMonad[Id])
       }
     }
     ctx.emit("runSum", ctx.runSum)
@@ -121,20 +121,20 @@ class SumSpecTests extends BaseTests {
 
 
   test("freeOperMonad") {
-    val ctx = new TestContext(this, "freeOperMonad") with MyProgExp {
+    val ctx = new TestContext with MyProgExp {
       val operFreeM = freeMonad[Oper]
       type OperFree[A] = Free[Oper,A]
       lazy val runSum = fun {(n: Rep[Int]) =>
         sum[OperFree](operFreeM)(n)((r: RFree[Oper,Int]) => {
           emit("runSum", r)
           r.run[Oper](OperOper)(operationMonad)(0)._2
-        })(freeCont[Oper])
+        })(freeMonad[Oper])
       }
       lazy val runSum2 = fun {(n: Rep[Int]) =>
         sum2[OperFree](operFreeM)(n)((r: RFree[Oper,Int]) => {
           emit("runSum-r", r)
           r.run[Oper](OperOper)(operationMonad)(0)._2
-        })(freeCont[Oper])
+        })(freeMonad[Oper])
       }
     }
     ctx.emit("runSum", ctx.runSum)

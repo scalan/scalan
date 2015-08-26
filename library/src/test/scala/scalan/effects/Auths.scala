@@ -15,15 +15,15 @@ trait Authentications { self: AuthenticationsDsl =>
   }
   trait AuthCompanion
 
-  abstract class Login(val user: Rep[String], val password: Rep[String]) extends Auth[Unit | String] {
-    val eA = element[Unit | String]
+  abstract class Login(val user: Rep[String], val password: Rep[String]) extends Auth[SOption[String]] {
+    val eA = element[SOption[String]]
 
     def toOper = {
       for {
         cond <- eval(user === "john.snow" && password === "Ghost")
       } yield
         IF (cond) {
-          toRight("john.snow")
+          SOption.some("john.snow")
         } ELSE {
           SOption.none[String]
         }
@@ -48,7 +48,7 @@ trait AuthenticationsDsl extends ScalanDsl with impl.AuthenticationsAbs with Aut
   }
 
   class Auths[F[_]:Cont](implicit I: Inject[Auth,F]) {
-    def login(u: Rep[String], p: Rep[String]): Rep[Free[F,Unit | String]] = lift(Login(u, p))
+    def login(u: Rep[String], p: Rep[String]): Rep[Free[F, SOption[String]]] = lift(Login(u, p))
     def hasPermission(u: Rep[String], p: Rep[String]): Rep[Free[F,Boolean]] = lift(HasPermission(u, p))
   }
   object Auths {

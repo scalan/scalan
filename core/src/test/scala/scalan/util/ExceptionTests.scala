@@ -7,7 +7,7 @@ import scala.language.reflectiveCalls
 import scalan.common.{SegmentsDsl, SegmentsDslExp}
 import scalan._
 
-class ExceptionTests extends BaseTests { suite =>
+class ExceptionTests extends BaseCtxTests {
   trait ThrowableExamples extends ScalanDsl {
     lazy val tElem = element[Throwable]
 
@@ -25,7 +25,7 @@ class ExceptionTests extends BaseTests { suite =>
   }
 
   test("throwablesStaged") {
-    val ctx = new TestContext(this, "throwablesStaged") with  ThrowableExamples {
+    val ctx = new TestContext with ThrowableExamples {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {
@@ -45,7 +45,7 @@ class ExceptionTests extends BaseTests { suite =>
   }
 
   test("createThrowableStaged") {
-    val ctx = new TestContext(this, "createThrowableStaged") with  ThrowableExamples {
+    val ctx = new TestContext with ThrowableExamples {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {
@@ -62,7 +62,7 @@ class ExceptionTests extends BaseTests { suite =>
   }
 
   test("throwablesSeq") {
-    val ctx = new ScalanCtxSeq with  ThrowableExamples {
+    val ctx = new ScalanCtxSeq with ThrowableExamples {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
 

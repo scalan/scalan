@@ -1,7 +1,6 @@
 package scalan.it.smoke
 
 import scalan._
-import scalan.JNIExtractorOps
 
 //import scalan.community._
 import scalan.collections._
@@ -12,6 +11,10 @@ import scalan.collections._
 abstract class CommunitySmokeItTests extends SmokeItTests {
 
   trait ProgCommunity extends Prog with ScalanCommunity with CollectionExamples with ScalanCommunityDsl  {
+
+    lazy val arrayUpdateMany = fun { in: Rep[(Array[Int], (Array[Int], Array[Int]))] => array_updateMany(in._1, in._2, in._3) }
+
+    lazy val listRangeFrom0 = fun { n: Rep[Int] => SList.rangeFrom0(n) }
 
     lazy val applyLambda2Array = fun {arr: Rep[Array[Int]] =>
       def isMatch(arr: Rep[Array[Int]]) = arr.length > 3
@@ -155,10 +158,46 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       }.arr
     }
 
+    lazy val pairIf = fun { in: Rep[(Int, Array[Int])] =>
+      val rs = IF (in._1 > 0) THEN {
+        val red = in._2.reduce
+        (red + 1, red - 1)
+      } ELSE {
+        (0,0)
+      }
+      rs._1 + rs._2
+    }
+
+    lazy val ifSpecialize = fun { in: Rep[Array[Int]] =>
+
+      def trainStep(state: Rep[(Collection[Int], Collection[Int])]) : Rep[(Collection[Int], Collection[Int])] = {
+        val Pair(v1, v2) = state
+        val cond = v1.arr.reduce
+        IF (cond > 0) THEN {
+          val v: Rep[Collection[Int]] = Collection(array_replicate(cond,0))
+          Pair(v, v2)
+        } ELSE {
+          Pair(v1, v2)
+        }
+      }
+
+      def trainStop(in: Rep[(Collection[Int], Collection[Int])] ) = {
+        val Pair(v1, v2) = in
+        (v1.arr.reduce === 0)
+      }
+
+      val v: Rep[Collection[Int]] = Collection(in)
+      val start = Pair(v,v)
+
+      val res = from(start).until(trainStop)(trainStep)
+      val Tuple(v1, v2) = res
+
+      v1.arr(0) + v2.arr(0)
+      }
   }
 
-class ProgCommunitySeq extends ProgCommunity with ScalanCommunitySeq with ScalanCommunityDslSeq with MultiMapsDslSeq {
-}
+  class ProgCommunitySeq extends ProgCommunity with ScalanCommunityDslSeq
+  class ProgCommunityExp extends ProgCommunity with ScalanCommunityDslExp with JNIExtractorOpsExp
 
 // TODO
 //  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with Compiler
@@ -348,5 +387,5 @@ class ProgCommunitySeq extends ProgCommunity with ScalanCommunitySeq with Scalan
 ////    checkRun(progSeq, progStaged)(expandScaledRangesFun, progStaged.expandScaledRangesFun)("simple26_expandScaledRanges", in, progSeq.fromArray(out))
 ////  }
 
-  override val progSeq: ProgCommunitySeq = new ProgCommunitySeq
+  // override val progSeq: ProgCommunitySeq = new ProgCommunitySeq
 }

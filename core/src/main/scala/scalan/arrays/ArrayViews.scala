@@ -155,29 +155,51 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
-    case ArrayLength(Def(ViewArray(arr: Arr[a] @unchecked))) =>
-      array_length(arr)
-    case ArrayApply(Def(view: ViewArray[a, b]), i) =>
-      implicit val eA = view.innerIso.eFrom
-      implicit val eB = view.innerIso.eTo
-      val res = view.innerIso.to(view.source(i))
+    case ArrayLength(HasViews(arr, iso: ArrayIso[a, b])) =>
+      array_length(arr.asRep[Array[a]])
+    case ArrayApply(HasViews(arr, iso: ArrayIso[a, b]), i) =>
+      implicit val eA = iso.innerIso.eFrom
+      implicit val eB = iso.innerIso.eTo
+      val res = iso.innerIso.to(arr.asRep[Array[a]](i))
       res
     case ArrayReplicate(len: Exp[Int], HasViews(source2, iso2: Iso[a, _])) =>
       implicit val eA = iso2.eFrom
       val s = ArrayReplicate(len, source2.asRep[a])
       val res = ViewArray(s)(ArrayIso(iso2))
       res
-    /*
-      case ArrayUpdate(Def(view: ViewArray[a, b]), i, Def(UnpackableDef(value, iso2: Iso[c, d]))) if view.innerIso == iso2 =>
-        implicit val eA = view.innerIso.eFrom
-        implicit val eB = view.innerIso.eTo
-        val res = ViewArray(view.source.update(i, value.asRep[a]))(view.innerIso)
-        res
-        */
-    case ArrayUpdate(Def(view: ViewArray[a, b]), i, HasViews(value, iso2: Iso[c, d])) if view.innerIso == iso2 =>
-      implicit val eA = view.innerIso.eFrom
-      implicit val eB = view.innerIso.eTo
-      ViewArray(view.source.update(i, value.asRep[a]))(view.iso)
+    case ArrayUpdate(HasViews(source, iso: ArrayIso[a, b]), i, HasViews(value, iso2: Iso[c, d])) if iso.innerIso == iso2 =>
+      implicit val eA = iso.innerIso.eFrom
+      implicit val eB = iso.innerIso.eTo
+      ViewArray(source.asRep[Array[a]].update(i, value.asRep[a]))(iso)
+
+    case ArrayUpdateMany(HasViews(xs, iso: ArrayIso[a, b]), is, HasViews(vs, iso2: ArrayIso[c, d])) if iso.innerIso == iso2.innerIso =>
+      implicit val eA = iso.innerIso.eFrom
+      implicit val eB = iso.innerIso.eTo
+      ViewArray(xs.asRep[Array[a]].updateMany(is, vs.asRep[Array[a]]))(iso)
+
+    case ArrayAppend(HasViews(source, iso: ArrayIso[a, b]), HasViews(value, iso2: Iso[c, d])) if iso.innerIso == iso2 =>
+      implicit val eA = iso.innerIso.eFrom
+      implicit val eB = iso.innerIso.eTo
+      ViewArray(source.asRep[Array[a]] :+ value.asRep[a])(iso)
+
+    case ArrayCons(HasViews(value, iso2: Iso[c, d]), HasViews(source, iso: ArrayIso[a, b])) if iso.innerIso == iso2 =>
+      implicit val eA = iso.innerIso.eFrom
+      implicit val eB = iso.innerIso.eTo
+      ViewArray(value.asRep[a] +: source.asRep[Array[a]])(iso)
+
+    case ArrayReverse(HasViews(source, iso: ArrayIso[a, b])) =>
+      implicit val eA = iso.innerIso.eFrom
+      implicit val eB = iso.innerIso.eTo
+      ViewArray(source.asRep[Array[a]].reverse)(iso)
+
+    case ArrayFlatten(HasViews(xss, iso: ArrayIso[_,_])) if iso.innerIso.isInstanceOf[ArrayIso[_,_]]  =>
+      iso.innerIso match {
+        case iso: ArrayIso[a,b] =>
+          implicit val eA = iso.innerIso.eFrom
+          implicit val eB = iso.innerIso.eTo
+          ViewArray(xss.asRep[Array[Array[a]]].flatten)(iso)
+      }
+
     case ArrayFold(Def(view: ViewArray[_,_]), init, f) =>
       foldUnderlyingArray(view, init, f)
     case ArrayApplyMany(Def(view: ViewArray[a, b]), is) =>
@@ -214,13 +236,13 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       ViewArray(zipped)(pIso)
 
     // Rule: ???
-    case ArrayUpdate(arr, i, HasViews(srcValue, iso: Iso[a,b]))  =>
-      val value = srcValue.asRep[a]
-      implicit val eA = iso.eFrom
-      implicit val eB = iso.eTo
-      val arrIso = ArrayIso[a,b](iso)
-      val srcBuf = arrIso.from(arr.asRep[Array[b]])
-      ViewArray(srcBuf.update(i, value))(arrIso)
+//    case ArrayUpdate(arr, i, HasViews(srcValue, iso: Iso[a,b]))  =>
+//      val value = srcValue.asRep[a]
+//      implicit val eA = iso.eFrom
+//      implicit val eB = iso.eTo
+//      val arrIso = ArrayIso[a,b](iso)
+//      val srcBuf = arrIso.from(arr.asRep[Array[b]])
+//      ViewArray(srcBuf.update(i, value))(arrIso)
 
     case ArrayMap(xs: Arr[a] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[c, b])))) =>
       val f1 = f.asRep[a => b]

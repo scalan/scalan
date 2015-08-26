@@ -3,10 +3,10 @@ package scalan
 import scala.language.reflectiveCalls
 import scalan.common.SegmentsDslExp
 
-class HasViewsTests extends BaseTests { suite =>
+class HasViewsTests extends BaseViewTests {
 
   test("HasViews") {
-    val ctx = new ViewTestsCtx(this, "HasViews") with SegmentsDslExp with ScalanCommunityDslExp
+    val ctx = new ViewTestsCtx with SegmentsDslExp with ScalanCommunityDslExp
     import ctx._
 
     testNoViews(10)
@@ -19,17 +19,24 @@ class HasViewsTests extends BaseTests { suite =>
 
     testHasViews(toRep(10).asLeft[Interval], element[Int | (Int, Int)])
     testHasViews(toRep(10).asRight[Interval], element[(Int, Int) | Int])
+    testNoViews(toRep(10).asRight[Segment])
+    testHasViews(Interval(10,10).asRight[Segment], element[Segment | (Int, Int)])
 
     testHasViews(Interval(10,10), element[(Int, Int)])
+    testHasViews(Pair(Interval(10,10), 1), element[((Int, Int),Int)])
     testHasViews(SArray.empty[Interval], element[Array[(Int, Int)]])
+    testHasViews(SArray.empty[Array[Interval]], element[Array[Array[(Int, Int)]]])
 
     // Lambda argument tests
     fun { x: Rep[Segment] =>
       testNoViews(x)
+      testHasViews(Pair(Interval(10,10), x), element[((Int, Int),Segment)])
       x
     }
-    fun { x: Rep[Interval] =>
+    fun { in: Rep[(Interval,Segment)] =>
+      val Pair(x,y) = in
       testHasViews(x, element[(Int, Int)])
+      testHasViews(in, element[((Int, Int), Segment)])
       x
     }
 

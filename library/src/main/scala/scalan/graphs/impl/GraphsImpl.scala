@@ -1,12 +1,13 @@
 package scalan.graphs
-package impl
 
 import scalan._
 import scalan.collections.{CollectionsDslExp, CollectionsDslSeq, CollectionsDsl}
 import scalan.{ScalanSeq, ScalanExp, Scalan}
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
+package impl {
 // Abs -----------------------------------
 trait GraphsAbs extends Graphs with scalan.Scalan {
   self: GraphsDsl =>
@@ -19,6 +20,14 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   // familyElem
   class GraphElem[V, E, To <: Graph[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Graphs")
+      module.entities.find(_.name == "Graph").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -50,14 +59,22 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     override def toString = "Graph"
   }
   def Graph: Rep[GraphCompanionAbs]
-  implicit def proxyGraphCompanion(p: Rep[GraphCompanion]): GraphCompanion = {
+  implicit def proxyGraphCompanion(p: Rep[GraphCompanion]): GraphCompanion =
     proxyOps[GraphCompanion](p)
-  }
 
   // elem for concrete class
   class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
     with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
+    override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Graphs")
+      module.concreteSClasses.find(_.name == "AdjacencyGraph").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
+
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -122,6 +139,15 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, IncidenceGraph[V, E]]
     with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
+    override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Graphs")
+      module.concreteSClasses.find(_.name == "IncidenceGraph").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
+
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -181,6 +207,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkIncidenceGraph[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]]
   def unmkIncidenceGraph[V, E](p: Rep[Graph[V, E]]): Option[(Rep[Collection[V]], Rep[Collection[E]], Rep[Int])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Graphs_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -1026,6 +1054,18 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
       }
     }
 
+    object simpleNodes {
+      def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "simpleNodes" =>
+          Some(receiver).asInstanceOf[Option[Rep[Graph[V, E]] forSome {type V; type E}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object edges {
       def unapply(d: Def[_]): Option[Rep[Graph[V, E]] forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "edges" =>
@@ -1150,3 +1190,11 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
   object GraphCompanionMethods {
   }
 }
+
+object Graphs_Module {
+  val packageName = "scalan.graphs"
+  val name = "Graphs"
+  val dump = "H4sIAAAAAAAAANVXTWwbRRSe3cRxbIf0R6hVK4FDcEEgiKMgqFAOVeo6VZDjRNkQkKmQxuuxM+ns7GZnHNkceuAIN4TECaHee+OChNQLQkIcOCFA4sypLUIVtCcQb2Z/vE7WSSraAz6MdmbfvPfm+773Zn3rHsoIH70gbMwwn3OIxHOWfl4SsmRVuaSyv+q2uoxcIe0Pz3xlr/LLwkQnGmhiG4srgjVQLnio9rz42SK7NZTD3CZCur6Q6LmajlC2XcaILanLy9RxuhI3GSnXqJCLNTTedFv9XXQDGTV00na57RNJrArDQhARrk8SlRGN5zk97695gxi8rE5RTpxi08dUQvoQ42Rgv0E8q89d3nckmg5TW/NUWmCTpY7n+jIKkQV3224rmo5zDAvodG0H7+EyhOiULelT3oGdBQ/b13GH1MFEmY9DwoKw9mbf0/OxGsoLsgsArTge0ys9DyEEDCzoJOYG+MzF+MwpfEoW8Slm9AOsXq77bq+Pgp8xhlDPAxevHOEi8kCqvFX66Jr93kOr4Jhqc0+lktUnnABHxRFq0FQAjt9tfCLuX7150UT5BspTsdQU0se2TFIeolXAnLtS5xwDiP0OsDU7ii0dZQls9kkiZ7uOhzl4CqGcAp4YtalUxmptKmRnBPRZ6ZHI1Oh5RnzemRHn1bqpYMbW75x79cLd6rsmModD5MClBcL3I6cSZa762NsOfavxhETG1gBgNa3qqRpyvcGYPSSVGJQX7/ze+nYeXTNjKMPIx2MPXGTELz8VfnzpkokmG1rrywx3GoCmqDLirPkVl8sGmnT3iB+8ye5hpp5S2cy2SBt3mQwxToIzBuBINDOyKj2ikFvUFWBEABQCEdddTkrL66UH1vef3lIa9dFU8CYo03/oxb9/nW5LLV+JpiBZSXpbmHWJiGAer0AlpBIRYK4Xz8fB1VCUKE9aHTLsKFNP8VQ90lOGUX493YmPnh+lOY+s+9SBHrdHXv/m67f/uF3PaNmdDoHWqQUdJ8R5gLmCwpiXaGyFyzR15QMILdchp2bv0/dvfiy1jozecENba+5AB1nU+549RFJRY/2rMW/+ee7nL0yUA+U0qXSwV5o/Zjt4giWOhjmbroSXii6FhX0vl1o72Cbc7usCTq/QAb2A9NnhHZVk7sVBwZ9NxDlv7NOISbZiuaryO1KuBx1UD3NwsNOknrQY6/KZ0boEYM9s1J5m9y7dNlHmLZRpQ1MQNZRpul3eihiDixsqUV6O1oxhxoAh7GMnZkj/ZtAAs+FuuZlqcKD2Csbwuf9LEz7A2f66fozN5hTl9iqGYu69Q+U2eDzU39EtJxekVu860aYx+NQJ3KjhtfTjvqHHNx+pXFa4TVsgInLschne8f8pl4MnLSa2pSv0kSScSHgilYncBqFtqj7kHpfMkwQdIoGC6q3L2KGsv5AW+hi0T49i20s6eSKIqvGzgU1oOBGAJtFTYavr6HmIgo9mR3RAK7xq4L678fDz+ss/fPmbvpjz6tKCzxUe/2NIXsj7iAxiwx+ARLIgRXWN6UT/BbXHWAiQDQAA"
+}
+}
+

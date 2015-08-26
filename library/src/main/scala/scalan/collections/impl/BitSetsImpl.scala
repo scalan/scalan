@@ -1,10 +1,11 @@
 package scalan.collections
-package impl
 
 import scalan._
 import scalan.common.OverloadHack.Overloaded1
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
+package impl {
 // Abs -----------------------------------
 trait BitSetsAbs extends BitSets with scalan.Scalan {
   self: ScalanCommunityDsl =>
@@ -17,6 +18,14 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   // familyElem
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("BitSets")
+      module.entities.find(_.name == "BitSet").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
+    }
     override def isEntityType = true
     override lazy val tag = {
       weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
@@ -46,14 +55,22 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
     override def toString = "BitSet"
   }
   def BitSet: Rep[BitSetCompanionAbs]
-  implicit def proxyBitSetCompanion(p: Rep[BitSetCompanion]): BitSetCompanion = {
+  implicit def proxyBitSetCompanion(p: Rep[BitSetCompanion]): BitSetCompanion =
     proxyOps[BitSetCompanion](p)
-  }
 
   // elem for concrete class
   class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])
     extends BitSetElem[BoolCollBitSet]
     with ConcreteElem[BoolCollBitSetData, BoolCollBitSet] {
+    override lazy val parent: Option[Elem[_]] = Some(bitSetElement)
+    override lazy val entityDef = {
+      val module = getModules("BitSets")
+      module.concreteSClasses.find(_.name == "BoolCollBitSet").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map()
+    }
+
     override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -110,6 +127,8 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkBoolCollBitSet(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet]
   def unmkBoolCollBitSet(p: Rep[BitSet]): Option[(Rep[Collection[Boolean]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(BitSets_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -289,3 +308,14 @@ trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
     }
   }
 }
+
+object BitSets_Module {
+  val packageName = "scalan.collections"
+  val name = "BitSets"
+  val dump = "H4sIAAAAAAAAALVVPYwbRRR+3vvx2T7lEhdBdw3hMEGJiH1CilJcge4cB0Vy7k63ASETRZpbj50JszN7O+OTnSJFyqRDtAilT0cTCYkGISEKKgRI1FSBKIqAVCDezI53vVEW0rDFanb27Xvf+77vzT74DRZUDKdVQDgRzZBq0vTtekvpht8RmunJFdkfcXqRDu6cfBhcEdvKg5UeLN4g6qLiPagki844Stc+PexChYiAKi1jpeG1rq3QCiTnNNBMihYLw5EmB5y2ukzpzS7MH8j+5BBuQ6kLxwMpgphq6rc5UYoqt79EDSKWPlfs82Q3ymqIlumiNdPF1ZgwjfCxxvEkfp9G/kRIMQk1HHPQdiMDC2PKLIxkrKclypjuhuxPH+cFwQ2od2+SI9LCEsOWr2MmhvhlLSLBR2RIdzDEhM8jYEX54Ookss9zXagqeogEXQ4jbnfGEQCgAm9bEM2Mn2bKT9Pw0/BpzAhnt4h5uRfL8QSSqzQHMI4wxVv/kWKagXZEv3H3WvDhM78WeubjsYFSth0uYqJXC9xgpUAev9n/WD199/4FD6o9qDK1daB0TAI9K7ljq0aEkNpiTgkk8RDVWi9Sy1bZwpjnLFEJZBgRgZkclcuoE2cB0ybY7C07dQqoL+uITkNL46iU9nuqoF/rmzbhfO/R6rk3fu184IGXL1HBlD4aP54m1bC4zZBpbRk1t4ojt7hM2vCbjx73v96Aa15Kk8v6cspgigX10w+178+848FSz/r4EifDHjKlOpyGu3FbCt2DJXlE4+RN+Yhws3qhUuU+HZAR146/2cbnsHENpwonLqKGlU3r7tKUgFpi0B0paOPSXuNP/9tPHhj/xbCcvElG8G924a+fjw20taZGDzCtLKQVDXM4uY4Nt1Ntp35PaXq9SNCI7sUsxAPkiJ7/6ov3nny5s2A1rbtO3yd8RJNxdo1mTRssCwPCFTZe3paSUyIygWfvptdq0pEvQ3pi/Sm7fv+etrKWxvmzY/fgJoLftN+t/ovC0zPsj96G9/vqj595UEEhkZqQRI2Nl5y8/3GaIDV8dltDxl4xTBmJkrFoz1Zdy46dul3iYZwPz6ISdmekPwN5H1T2KRswc9jl9188j06oDMBpl7SgjZVC+PmRX3uuTiu/WTbWscF4Atad1NmBrRyUGNYLbOA7EdAJt599unP2u89/sQauGjlxroTO/aeccfOM1JN82Es4EvgzxN/RDGocOKO0xf0PEPyDcR4IAAA="
+}
+}
+
+trait BitSetsDsl extends impl.BitSetsAbs {self: ScalanCommunityDsl =>}
+trait BitSetsDslSeq extends impl.BitSetsSeq {self: ScalanCommunityDslSeq =>}
+trait BitSetsDslExp extends impl.BitSetsExp {self: ScalanCommunityDslExp =>}

@@ -1,11 +1,12 @@
 package scalan.linalgebra
-package impl
 
 import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
+package impl {
 // Abs -----------------------------------
 trait VectorsAbs extends Vectors with scalan.Scalan {
   self: ScalanCommunityDsl =>
@@ -18,6 +19,14 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   // familyElem
   class AbstractVectorElem[T, To <: AbstractVector[T]](implicit val eT: Elem[T])
     extends EntityElem[To] {
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Vectors")
+      module.entities.find(_.name == "AbstractVector").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagT = eT.tag
@@ -48,14 +57,22 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     override def toString = "AbstractVector"
   }
   def AbstractVector: Rep[AbstractVectorCompanionAbs]
-  implicit def proxyAbstractVectorCompanion(p: Rep[AbstractVectorCompanion]): AbstractVectorCompanion = {
+  implicit def proxyAbstractVectorCompanion(p: Rep[AbstractVectorCompanion]): AbstractVectorCompanion =
     proxyOps[AbstractVectorCompanion](p)
-  }
 
   // elem for concrete class
   class DenseVectorElem[T](val iso: Iso[DenseVectorData[T], DenseVector[T]])(implicit eT: Elem[T])
     extends AbstractVectorElem[T, DenseVector[T]]
     with ConcreteElem[DenseVectorData[T], DenseVector[T]] {
+    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Vectors")
+      module.concreteSClasses.find(_.name == "DenseVector").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
+
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = DenseVector(x.items)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -118,6 +135,15 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   class SparseVectorElem[T](val iso: Iso[SparseVectorData[T], SparseVector[T]])(implicit eT: Elem[T])
     extends AbstractVectorElem[T, SparseVector[T]]
     with ConcreteElem[SparseVectorData[T], SparseVector[T]] {
+    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Vectors")
+      module.concreteSClasses.find(_.name == "SparseVector").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
+
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector(x.nonZeroIndices, x.nonZeroValues, x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -181,6 +207,15 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   class SparseVector1Elem[T](val iso: Iso[SparseVector1Data[T], SparseVector1[T]])(implicit eT: Elem[T])
     extends AbstractVectorElem[T, SparseVector1[T]]
     with ConcreteElem[SparseVector1Data[T], SparseVector1[T]] {
+    override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
+    override lazy val entityDef = {
+      val module = getModules("Vectors")
+      module.concreteSClasses.find(_.name == "SparseVector1").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("T" -> Left(eT))
+    }
+
     override def convertAbstractVector(x: Rep[AbstractVector[T]]) = SparseVector1(x.nonZeroItems, x.length)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -239,6 +274,8 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkSparseVector1[T](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]]
   def unmkSparseVector1[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[(Int, T)]], Rep[Int])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Vectors_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -499,13 +536,13 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
       }
     }
 
-    object ^ {
-      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(order, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "$up" =>
-          Some((receiver, order, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[Int], Numeric[T]) forSome {type T}]]
+    object pow_^ {
+      def unapply(d: Def[_]): Option[(Rep[DenseVector[T]], Rep[Double], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(order, n, _*), _) if receiver.elem.isInstanceOf[DenseVectorElem[_]] && method.getName == "pow_$up" =>
+          Some((receiver, order, n)).asInstanceOf[Option[(Rep[DenseVector[T]], Rep[Double], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[DenseVector[T]], Rep[Double], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -754,13 +791,13 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
       }
     }
 
-    object ^ {
-      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(order, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "$up" =>
-          Some((receiver, order, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[Int], Numeric[T]) forSome {type T}]]
+    object pow_^ {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector[T]], Rep[Double], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(order, n, _*), _) if receiver.elem.isInstanceOf[SparseVectorElem[_]] && method.getName == "pow_$up" =>
+          Some((receiver, order, n)).asInstanceOf[Option[(Rep[SparseVector[T]], Rep[Double], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector[T]], Rep[Double], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1045,13 +1082,13 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
       }
     }
 
-    object ^ {
-      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(order, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "$up" =>
-          Some((receiver, order, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[Int], Numeric[T]) forSome {type T}]]
+    object pow_^ {
+      def unapply(d: Def[_]): Option[(Rep[SparseVector1[T]], Rep[Double], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(order, n, _*), _) if receiver.elem.isInstanceOf[SparseVector1Elem[_]] && method.getName == "pow_$up" =>
+          Some((receiver, order, n)).asInstanceOf[Option[(Rep[SparseVector1[T]], Rep[Double], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[SparseVector1[T]], Rep[Double], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1419,13 +1456,13 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
       }
     }
 
-    object ^ {
-      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[Int], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(other, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "$up" =>
-          Some((receiver, other, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[Int], Numeric[T]) forSome {type T}]]
+    object pow_^ {
+      def unapply(d: Def[_]): Option[(Rep[AbstractVector[T]], Rep[Double], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(order, n, _*), _) if receiver.elem.isInstanceOf[AbstractVectorElem[_, _]] && method.getName == "pow_$up" =>
+          Some((receiver, order, n)).asInstanceOf[Option[(Rep[AbstractVector[T]], Rep[Double], Numeric[T]) forSome {type T}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[Int], Numeric[T]) forSome {type T}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[AbstractVector[T]], Rep[Double], Numeric[T]) forSome {type T}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1518,3 +1555,11 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
     }
   }
 }
+
+object Vectors_Module {
+  val packageName = "scalan.linalgebra"
+  val name = "Vectors"
+  val dump = "H4sIAAAAAAAAANVXTWwbRRSe3cRxbKdpG7WBSkSEYKioIE4RqIccSuokEOQmUdatkKkqjddjZ8rs7GZnHNkcKsQJwQ1xRaj3nuCCVKkXhIQ4cEKAxJlTKUIVUHEA8Wb2x+vEdhx+qrKH0e7s2/fefN/35s3evItSwkdPCxszzOcdIvG8pe+XhMxbK1xS2b7o1pqMLJP629Of2hf5BWGioxU0to3FsmAVlAluVlpefG+RnRLKYG4TIV1fSPRESUco2C5jxJbU5QXqOE2Jq4wUSlTIxRIarbq19g66jowSOma73PaJJFaRYSGICOfHicqIxs8Z/dze8DoxeEGtopBYRdnHVEL6EONYYL9FPKvNXd52JJoMU9vwVFpgk6aO5/oyCpEGd9tuLXoc5Rgm0FTpGt7FBQjRKFjSp7wBX+Y8bL+BG2QdTJT5KCQsCKuX255+HimhrCA7ANCa4zE90/IQQsDA8zqJ+Q4+8zE+8wqfvEV8ihl9E6uXm77baqPgMkYQanng4tkDXEQeyAqv5d+9Yr9+38o5pvq4pVJJ6xWOgaPH+6hBUwE4frH1vrj38o1zJspWUJaKpaqQPrZlkvIQrRzm3JU65xhA7DeArbl+bOkoS2CzRxIZ23U8zMFTCOUE8MSoTaUyVnMTITt9oE9Lj0SmRssz4vXO9lmv1k0RM7Z559RzT/248pqJzO4QGXBpgfD9yCnIKULjMpAQAjGmx6MSGWWNtBoyrc6YHpBEDMfpOz/VPl9AV8wYxDDmcLyBi5T47pvc18+cN9F4Rat8leFGBXAUK4w4G37R5bKCxt1d4gdv0ruYqbuePKZrpI6bTIboJmEZAVgkmu1bjx5RmC1q7RsRALlAvusuJ/nVzfxv1pcf3FTq9NFE8CYo0D/puT++n6xLLVyJUlQSR0T4jkBhdyOeLcblMBQVHUKyQVTLdcjxuXv06o33pIbeaHVX/0b1Gvhf1N89NoCFaBf6tbJg/nLq249MlAGwq1Q62MsvDFk7/2E9oG58JovhDqzVc3bPy26RJ5CMLB7ptigmc02Ano6HGSDzxDLhgvT4YqazQZ1MZPKoEelHG0lkknKUwKjS9IGUS5RLxNRe4nKa6Uekhm16q3SC3T1/20SpV1GqDlUiSihVdZu8FvEBPUySlrwQzRndfAD+2MdOjL++ZlFnvXsy1oY5YyATQ243+4BEe4CchOZYIb67xmsUVHmY+vLRk/2B2/SpA/17l7z42a1LP99eT+ktdSrcSi5j1iRBNw0x6uClit1YgBTWuEwuqHf+R8L8tcd/aXvoHWmMEd6Q2/tDqOFSb+hP6/HMQ1BxJy3Q4IMuuYlk0GTNqfGlh6oOJqI6OGyXGdAHPFJueoy8cOv3q++89Yqnm8q+g0RCQwd2rF6pq8H+n4pyOqmPsw9KlUe6oh5elomFj/WEMrNFaJ2q4/g/l24StgHs5VS7X8UOZe2hqevHyiAqA0D2n37/Lopq/LhjExqmQ4AkOh7WFqMcswap+jgEwUdzfcrOCg8/cAK7fv/D9TNfffKD7j1ZdYyCMyePf/iSPacbtKnAHyzdaXL4jYQfuUTqIDV1wtJp/wVmCBuyWA8AAA=="
+}
+}
+

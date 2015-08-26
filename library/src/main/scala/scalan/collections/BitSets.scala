@@ -33,10 +33,3 @@ trait BitSets  { self: ScalanCommunityDsl =>
   }
   trait BoolCollBitSetCompanion
 }
-
-trait BitSetsDsl extends impl.BitSetsAbs { self: ScalanCommunityDsl => }
-trait BitSetsDslSeq extends impl.BitSetsSeq { self: ScalanCommunityDslSeq => }
-trait BitSetsDslExp extends impl.BitSetsExp { self: ScalanCommunityDslExp => }
-
-
-

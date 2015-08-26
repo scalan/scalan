@@ -5,7 +5,7 @@ import scalan.staged.{BaseExp}
 import scalan.{ScalanExp, ScalanSeq, Base, Scalan}
 
 trait IfThenElse extends Base { self: Scalan =>
-  def __ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T]
+  def ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T]
 
   def IF(cond: Rep[Boolean]): IfBranch = new IfBranch(cond)
   
@@ -24,29 +24,28 @@ trait IfThenElse extends Base { self: Scalan =>
   }
   
   class ThenBranch[T](cond: Rep[Boolean], thenp: => Rep[T]) {
-    def ELSE(elsep: => Rep[T]): Rep[T] = __ifThenElse(cond, thenp, elsep)
+    def ELSE(elsep: => Rep[T]): Rep[T] = ifThenElse(cond, thenp, elsep)
     
     def elseIf(cond1: => Rep[Boolean], thenp1: => Rep[T], elsep1: => Rep[T]) = 
-      ELSE(__ifThenElse(cond1, thenp1, elsep1))
+      ELSE(ifThenElse(cond1, thenp1, elsep1))
     
     def ELSEIF(cond1: => Rep[Boolean]) = new ElseIfBranch[T](cond1, this)
   }
 }
 
 trait IfThenElseSeq extends IfThenElse { self: ScalanSeq =>
-  def __ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T] = if(cond) thenp else elsep
+  def ifThenElse[T](cond: Rep[Boolean], thenp: => Rep[T], elsep: => Rep[T]): Rep[T] = if(cond) thenp else elsep
 }
 
 trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: ScalanExp =>
 
-  abstract class AbstractIfThenElse[+T](implicit override val selfType: Elem[T @uncheckedVariance]) extends BaseDef[T] {
+  abstract class AbstractIfThenElse[+T](implicit selfType: Elem[T @uncheckedVariance]) extends BaseDef[T] {
     val cond: Exp[Boolean]
     val thenp: Exp[T]
     val elsep: Exp[T]
   }
 
-  case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit override val selfType: Elem[T]) extends AbstractIfThenElse[T] {
-    def uniqueOpId = name(selfType)
+  case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit selfType: Elem[T]) extends AbstractIfThenElse[T] {
     override def mirror(t: Transformer) = IfThenElse(t(cond), t(thenp), t(elsep))
   }
 
@@ -55,7 +54,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     res
   }
 
-  override def __ifThenElse[T](cond: Exp[Boolean], thenp: => Exp[T], elsep: => Exp[T]): Exp[T] = {
+  override def ifThenElse[T](cond: Exp[Boolean], thenp: => Exp[T], elsep: => Exp[T]): Exp[T] = {
     val t = reifyBranch(thenp)
     val e = reifyBranch(elsep)
     implicit val eT = t.elem
@@ -110,7 +109,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     val ea = iso1.eFrom
     val eb = iso2.eFrom
     implicit val ec = iso1.eTo
-    val source = IF (cond) THEN { toLeftSum(a)(eb) } ELSE { toRightSum(b)(ea) }
+    val source = IF (cond) THEN { mkLeft(a)(eb) } ELSE { mkRight(b)(ea) }
     val res = SumView(source)(iso1, iso2).self.joinSum
     res
   }
@@ -145,13 +144,14 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
         case _ => None
       }
       optHasViews match {
-        case Some((c, a, b, iso1: Iso[a,c], iso2: Iso[b,d])) =>
+        case Some((c, a, b, iso1: Iso[a,c], iso2: Iso[b,d]))
+              if iso1.eTo.isConcrete && iso2.eTo.isConcrete =>
           (iso1.eTo, iso2.eTo) match {
             case IsConvertible(cTo, cFrom) =>
               Some((c, a.asRep[a], b.asRep[b], iso1, iso2, cTo, cFrom))
             case _ => None
           }
-        case None => None
+        case _ => None
       }
     }
   }
@@ -178,6 +178,8 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     case Tup(Def(IfThenElse(c1, t1, e1)), Def(IfThenElse(c2, t2, e2))) if c1 == c2 =>
       IF (c1) THEN { Pair(t1, t2) } ELSE { Pair(e1, e2) }
 
+    // These two rules are commented now. Seem to be inefficient (see test37pairIf test in LmsSmokeItTests )
+    /*
     // Rule: (if (c) t else e)._1 ==> if (c) t._1 else e._1
     case First(Def(IfThenElse(cond, thenp: Rep[(a, b)] @unchecked, elsep))) =>
       implicit val (eA, eB) = (thenp.elem.eFst, thenp.elem.eSnd)
@@ -187,6 +189,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     case Second(Def(IfThenElse(cond, thenp: Rep[(a, b)] @unchecked, elsep))) =>
       implicit val (eA, eB) = (thenp.elem.eFst, thenp.elem.eSnd)
       IfThenElse[b](cond, Second(thenp), Second(elsep.asRep[(a, b)]))
+    */
 
     // Rule: (if (c) t else e)(arg) ==> if (c) t(arg) else e(arg)
     case apply: Apply[a, b] => apply.f match {

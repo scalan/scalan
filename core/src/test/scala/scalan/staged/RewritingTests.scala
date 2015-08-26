@@ -2,12 +2,14 @@ package scalan
 package staged
 
 import scala.language.reflectiveCalls
-import scalan.compilation.Passes
+import scalan.compilation.{DummyCompiler, Passes}
 
-class RewritingTests extends BaseTests {
+class RewritingTests extends BaseCtxTests {
 
-  trait TestTransform { self: ScalanExp with Passes =>
-    val pass = GraphTransformPass("testTransformPass", DefaultMirror, NoRewriting)
+  trait TestTransform extends Passes {
+    import scalan._
+
+    lazy val pass = GraphTransformPass("testTransformPass", DefaultMirror, NoRewriting)
 
     def doTransform[A](e: Exp[A]): Exp[_] = {
       val g0 = new PGraph(e)
@@ -18,15 +20,15 @@ class RewritingTests extends BaseTests {
 
   trait Prog0 extends ScalanExp {
 
-    lazy val mkRight = fun { x: Rep[Int] => toRightSum[Int, Int](x) }
+    lazy val mkRightFun = fun { x: Rep[Int] => x.asRight[Int] }
 
     override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
-      // rewrite fun(x => Right) to fun(x => Left(x))
+      // rewrite fun(x => Right(_)) to fun(x => Left(x))
       case lam: Lambda[a, |[_, b]] @unchecked =>
         lam.y match {
-          case Def(r @ Right(_)) =>
+          case Def(r @ SRight(_)) =>
             implicit val eA = r.eLeft.asInstanceOf[Elem[b]]
-            fun { x: Rep[b] => toLeftSum[b, b](x) }
+            fun { x: Rep[b] => x.asLeft[b] }
           case _ => super.rewriteDef(d)
         }
       case _ =>
@@ -34,13 +36,17 @@ class RewritingTests extends BaseTests {
     }
   }
 
-  val p0 = new TestContext(this, "RewritingRootLambda") with Prog0 with Passes with TestTransform {
-    def testMkRight(): Unit = {
-      emit("mkRight", mkRight)
-      val newLambda = doTransform(mkRight)
-      emit("mkRight'", newLambda)
+  val p0 = new TestContext("RewritingRootLambda") with Prog0 { p0 =>
+    val passes = new TestTransform {
+      val scalan: p0.type = p0
+    }
 
-      inside(newLambda) { case Def(Lambda(_, _, x, Def(Left(l)))) =>
+    def testMkRight(): Unit = {
+      emit("mkRightFun", mkRightFun)
+      val newLambda = passes.doTransform(mkRightFun)
+      emit("mkRightFun'", newLambda)
+
+      inside(newLambda) { case Def(Lambda(_, _, x, Def(SLeft(l)))) =>
         assert(x == l)
       }
     }
@@ -48,25 +54,27 @@ class RewritingTests extends BaseTests {
 
   trait Prog extends ScalanExp {
     lazy val ifFold = fun { pp: Rep[Boolean] =>
-      val e1 = toLeftSum[Double, Int](1d)
-      val e2 = toRightSum[Double, Int](2)
-      val iff = __ifThenElse(pp, e1, e2)
+      val e1 = toRep(1.0).asLeft[Int]
+      val e2 = toRep(2).asRight[Double]
+      val iff = ifThenElse(pp, e1, e2)
       iff.foldBy(constFun(10), constFun(100))
     }
 
     lazy val ifIfFold = fun2 { (p1: Rep[Boolean], p2: Rep[Boolean]) =>
-      val e1 = toLeftSum[Double, Int](1d)
-      val e2 = toRightSum[Double, Int](2)
-      val e3 = toRightSum[Double, Int](3)
-      val iff = __ifThenElse(
+      val e1 = toRep(1.0).asLeft[Int]
+      val e2 = toRep(2).asRight[Double]
+      val e3 = toRep(3).asRight[Double]
+      val iff = ifThenElse(
         p1,
-        __ifThenElse(p2, e1, e2),
+        ifThenElse(p2, e1, e2),
         e3)
       iff.foldBy(constFun(10), constFun(100))
     }
   }
 
-  val p = new TestContext(this, "RewritingRules") with Prog with Passes with TestTransform {
+  val p = new TestCompilerContext("RewritingRules") {
+    val compiler = new DummyCompiler(new ScalanCtxExp with Prog) with TestTransform
+    import compiler.scalan._
 
     def testIfFold(): Unit = {
       emit("ifFold", ifFold)

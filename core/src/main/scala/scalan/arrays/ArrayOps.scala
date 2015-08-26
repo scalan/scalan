@@ -4,6 +4,7 @@ import scala.reflect.ClassTag
 import scalan.common.OverloadHack.Overloaded1
 import scalan.staged.BaseExp
 import scalan.{Scalan, ScalanExp, ScalanSeq}
+import scala.reflect.runtime.universe._
 
 trait ArrayOps { self: Scalan =>
   type Arr[T] = Rep[Array[T]]
@@ -52,9 +53,13 @@ trait ArrayOps { self: Scalan =>
 
     def update(index: Rep[Int], value: Rep[T]) = array_update(xs, index, value)
 
+    def :+(value: Rep[T]) = array_append(xs, value)
+
     def append(value: Rep[T]) = array_append(xs, value)
 
-    def ::(value: Rep[T]) = array_cons(value, xs)
+    def +:(value: Rep[T]) = array_cons(value, xs)
+
+    def prepend(value: Rep[T]) = array_cons(value, xs)
 
     def updateMany(indexes: Arr[Int], values: Arr[T]) = array_updateMany(xs, indexes, values)
 
@@ -79,6 +84,10 @@ trait ArrayOps { self: Scalan =>
     def reverse = array_reverse(xs)
   }
 
+  implicit class RepNArrayOps[T: Elem](xss: Arr[Array[T]]) {
+    def flatten = array_flatten(xss)
+  }
+
   // name to avoid conflict with scala.Array
   object SArray {
     def rangeFrom0(n: Rep[Int]) = array_rangeFrom0(n)
@@ -87,6 +96,44 @@ trait ArrayOps { self: Scalan =>
     def repeat[T: Elem](n: Rep[Int])(f: Rep[Int => T]): Arr[T] = rangeFrom0(n).mapBy(f)
     def replicate[T: Elem](len: Rep[Int], v: Rep[T]) = array_replicate(len, v)
     def empty[T: Elem] = array_empty[T]
+  }
+
+  trait ArrayContainer extends Container[Array] {
+    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Array[T]]
+    def lift[T](implicit eT: Elem[T]) = element[Array[T]]
+  }
+
+  implicit val arrayFunctor = new Functor[Array] with ArrayContainer {
+    def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
+  }
+
+  case class ArrayIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Array](iso) {
+    implicit val eA = iso.eFrom
+    implicit val eB = iso.eTo
+    def from(x: Arr[B]) = x.map(iso.from _)
+    def to(x: Arr[A]) = x.map(iso.to _)
+    lazy val defaultRepTo = SArray.empty[B]
+  }
+
+  abstract class ArrayElem[A](implicit eItem: Elem[A])
+    extends EntityElem1[A, Array[A], Array](eItem, container[Array]) {
+  }
+
+  case class ScalaArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
+    def parent: Option[Elem[_]] = Some(arrayElement(eItem))
+    override def isEntityType = eItem.isEntityType
+    override def entityDef = !!!("not supported")
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eItem))
+    }
+    lazy val tag = {
+      implicit val tag1 = eItem.tag
+      weakTypeTag[Array[A]]
+    }
+    protected def getDefaultRep =
+      SArray.empty(eItem)
+
+    override def canEqual(other: Any) = other.isInstanceOf[ScalaArrayElem[_]]
   }
 
   // require: n in xs.indices
@@ -142,7 +189,7 @@ trait ArrayOps { self: Scalan =>
 
   // require: forall i -> indexes(i) in xs.indices && indexes.length == values.length
   // provide: res.length == xs.length
-  def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = ???
+  def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T]
 
   def array_sum[T:Elem](xs: Arr[T])(implicit n: Numeric[T]): Rep[T]
   def array_max[T:Elem](xs: Arr[T])(implicit o: Ordering[T]): Rep[T]
@@ -156,6 +203,7 @@ trait ArrayOps { self: Scalan =>
   def array_empty[T: Elem]: Arr[T]
   def array_toList[T:Elem](xs: Arr[T]): Lst[T]
   def array_reverse[T:Elem](xs: Arr[T]): Arr[T]
+  def array_flatten[T:Elem](xs: Arr[Array[T]]): Arr[T]
   def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T]
   def array_binary_search[T:Elem](i: Rep[T], is: Arr[T])(implicit o: Ordering[T]): Rep[Int]
 
@@ -193,6 +241,12 @@ trait ArrayOpsSeq extends ArrayOps {
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val ct = arrayToClassTag(xs)
     xs.update(index, value)
+    xs
+  }
+
+  def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = {
+    implicit val ct = arrayToClassTag(xs)
+    (0 until indexes.length).foreach(i => xs.update(indexes(i), values(i)))
     xs
   }
 
@@ -283,6 +337,7 @@ trait ArrayOpsSeq extends ArrayOps {
 
   def array_empty[T: Elem]: Arr[T] = scala.Array.empty[T]
   def array_reverse[T:Elem](xs: Arr[T]): Arr[T] = genericArrayOps(xs).reverse
+  def array_flatten[T:Elem](xs: Arr[Array[T]]): Arr[T] = genericArrayOps(xs).flatten
   def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T] = {
     val buf = new Array[T](xs.length + 1)
     buf(0) = value
@@ -294,7 +349,7 @@ trait ArrayOpsSeq extends ArrayOps {
 
   def array_binary_search[T:Elem](i: T, is: Array[T])(implicit o: Ordering[T]): Rep[Int] = {
     element[T] match {
-      case BoolElement =>
+      case BooleanElement =>
         !!!(s"binarySearch isn't defined for array of ${element[T]}")
       case ByteElement =>
         java.util.Arrays.binarySearch(is.asInstanceOf[Array[Byte]], i.asInstanceOf[Byte])
@@ -328,12 +383,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   trait ArrayDef[T] extends Def[Array[T]] {
     implicit def eT: Elem[T]
     lazy val selfType = element[Array[T]]
-    lazy val uniqueOpId = name(eT)
   }
   trait ArrayMethod[T] {
-    def name[A](e: Elem[A]): String
     def xs: Exp[Array[T]]
-    lazy val uniqueOpId = withElemOfArray(xs) { name(_) }
   }
   case class ArrayLength[T](xs: Exp[Array[T]]) extends Def[Int] with ArrayMethod[T] {
     def selfType = element[Int]
@@ -386,6 +438,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArrayUpdate[T](xs: Exp[Array[T]], index: Exp[Int], value: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayUpdate(t(xs), t(index), t(value))
   }
+  case class ArrayUpdateMany[T](xs: Exp[Array[T]], indexes: Exp[Array[Int]], values: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ArrayUpdateMany(t(xs), t(indexes), t(values))
+  }
   case class ArrayAppend[T](xs: Exp[Array[T]], value: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayAppend(t(xs), t(value))
   }
@@ -394,6 +449,9 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   }
   case class ArrayReverse[T](xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArrayReverse(t(xs))
+  }
+  case class ArrayFlatten[T](xss: Arr[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
+    override def mirror(t: Transformer) = ArrayFlatten(t(xss))
   }
   case class ArrayRangeFrom0(n: Exp[Int]) extends ArrayDef[Int] {
     def eT = element[Int]
@@ -409,7 +467,7 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   case class ArraySortBy[T, O:Elem](xs: Exp[Array[T]], f: Exp[T => O], o: Ordering[O])(implicit val eT: Elem[T]) extends ArrayDef[T] {
     override def mirror(t: Transformer) = ArraySortBy(t(xs), t(f), o)
   }
-  case class ArrayGroupBy[T, G:Elem](xs: Exp[Array[T]], by: Exp[T => G])(implicit val eT: Elem[T]) extends MMapDef[G, ArrayBuffer[T]] {
+  case class ArrayGroupBy[T:Elem, G:Elem](xs: Exp[Array[T]], by: Exp[T => G]) extends MMapDef[G, ArrayBuffer[T]] {
     override def mirror(t: Transformer) = ArrayGroupBy(t(xs), t(by))
   }
   case class ArraySum[T: Elem](xs: Exp[Array[T]], n: Numeric[T]) extends Def[T] with ArrayMethod[T] {
@@ -455,6 +513,11 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val eT = xs.elem.eItem
     ArrayUpdate(xs, index, value)
+  }
+
+  def array_updateMany[T](xs: Arr[T], indexes: Arr[Int], values: Arr[T]): Arr[T] = {
+    implicit val eT = xs.elem.eItem
+    ArrayUpdateMany(xs, indexes, values)
   }
 
   def array_append[T](xs: Arr[T], value: Rep[T]): Arr[T] = {
@@ -531,6 +594,8 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
   def array_empty[T: Elem]: Arr[T] = ArrayEmpty[T]()
 
   def array_reverse[T:Elem](xs: Arr[T]): Arr[T] = ArrayReverse(xs)
+
+  def array_flatten[T:Elem](xs: Arr[Array[T]]): Arr[T] = ArrayFlatten(xs)
 
   def array_cons[T:Elem](value: Rep[T], xs: Arr[T]): Arr[T] = ArrayCons(value, xs)
 
@@ -713,6 +778,10 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
           super.rewriteDef(d)
       }
     case ArrayMap(xs, Def(IdentityLambda())) => xs
+    case ArrayMap(xs: Rep[Array[a]], Def(ConstantLambda(v))) =>
+      val xs1 = xs.asRep[Array[a]]
+      implicit val eA = xs1.elem.eItem
+      SArray.replicate(xs1.length, v)(v.elem)
 
     case ArrayFilter(Def(zip: ArrayZip[x, y]), Def(l: Lambda[a, b])) if accessOnlyFirst(l.x, l.y) =>
       val xs1 = zip.xs

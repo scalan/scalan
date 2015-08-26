@@ -4,10 +4,9 @@ import scalan._
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
 import scalan.graphs.{GraphsDslExp, GraphsDslSeq, GraphExamples, MST_example}
-import scalan.it.BaseItTests
+import scalan.it.BaseCtxItTests
 
-
-abstract class LmsMsfItTests extends BaseItTests {
+abstract class LmsMsfItTests extends BaseCtxItTests {
 
   trait MsfFuncs extends GraphExamples {
     lazy val msfFunAdjBase = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
@@ -111,21 +110,10 @@ abstract class LmsMsfItTests extends BaseItTests {
     }
   }
 
-  trait ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityDslExp with ScalanCtxExp with CommunityLmsCompilerScala with CommunityBridge { self =>
-    val lms = new CommunityLmsBackend
-  }
+  class ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityDslExp
 
   class ProgSeq extends GraphsDslSeq with MsfFuncs with ScalanCommunityDslSeq
-
-  val progSeq = new ProgSeq
-  lazy val progStaged1 = new ProgExp {}
-  lazy val progStaged2 = new ProgExp {}
-  lazy val progStaged3 = new ProgExp {}
-  lazy val progStaged4 = new ProgExp {}
-  lazy val progStaged5 = new ProgExp {}
-  lazy val progStaged6 = new ProgExp {}
-  lazy val progStaged7 = new ProgExp {}
-
+  class CompExp extends CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
 
   val graph = Array(
     Array(1, 8),
@@ -159,8 +147,14 @@ abstract class LmsMsfItTests extends BaseItTests {
 }
 
 class LmsMsfPrimeItTests extends LmsMsfItTests {
-  import progSeq._
-  // Commented
+  val progSeq = new ProgSeq
+  lazy val progStaged1 = new CompExp
+  lazy val progStaged2 = new CompExp
+  lazy val progStaged3 = new CompExp
+  lazy val progStaged4 = new CompExp
+  lazy val progStaged5 = new CompExp
+  lazy val progStaged6 = new CompExp
+  lazy val progStaged7 = new CompExp
 
   test("MSF_adjList") {
     val links = graph.flatMap( i=> i)
@@ -170,7 +164,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val input = (links, (edgeVals, (offs, lens)))
     val resSeq = progSeq.msfFunAdjBase(input)
     println("Seq: " + resSeq.mkString(" , "))
-    val resStaged = getStagedOutputConfig(progStaged1)(progStaged1.msfFunAdjBase, "MSF_adjList", input, progStaged1.defaultCompilerConfig)
+    val resStaged = getStagedOutput(progStaged1)(_.msfFunAdjBase, "MSF_adjList", input)
     println("Staged: " + resStaged.mkString(","))
   }
   test("MSF_adjMatrix") {
@@ -187,7 +181,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val input = (incMatrix, vertexNum)
     val resSeq = progSeq.msfFunIncBase(input)
     println("Seq: " + resSeq.mkString(" , "))
-    val resStaged = getStagedOutputConfig(progStaged2)(progStaged2.msfFunIncBase, "MSF_adjMatrix", input, progStaged2.defaultCompilerConfig)
+    val resStaged = getStagedOutput(progStaged2)(_.msfFunIncBase, "MSF_adjMatrix", input)
     println("Staged: " + resStaged.mkString(","))
   }
 
@@ -199,7 +193,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val input = (links, (edgeVals, (offs, lens)))
     val resSeq = progSeq.msfFunAdjMap(input)
     println("Seq: " + resSeq.mkString(" , "))
-    val resStaged = getStagedOutputConfig(progStaged3)(progStaged3.msfFunAdjMap, "MSF_adjListMap", input, progStaged3.defaultCompilerConfig)
+    val resStaged = getStagedOutput(progStaged3)(_.msfFunAdjMap, "MSF_adjListMap", input)
     println("Staged: " + resStaged.mkString(","))
   }
   test("MSF_adjMatrixMap") {
@@ -216,7 +210,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val input = (incMatrix, vertexNum)
     val resSeq = progSeq.msfFunIncMap(input)
     println("Seq: " + resSeq.mkString(" , "))
-    val resStaged = getStagedOutputConfig(progStaged4)(progStaged4.msfFunIncMap, "MSF_adjMatrixMap", input, progStaged4.defaultCompilerConfig)
+    val resStaged = getStagedOutput(progStaged4)(_.msfFunIncMap, "MSF_adjMatrixMap", input)
     println("Staged: " + resStaged.mkString(","))
   }
 
@@ -231,7 +225,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val input = (links, (edgeVals, (offs, lens)))
     val resSeq = progSeq.msfFunAdjList(input)
     println("Seq: " + resSeq.mkString(" , "))
-    val resStaged = getStagedOutputConfig(progStaged5)(progStaged5.msfFunAdjList, "MSF_adjListList", input, progStaged5.defaultCompilerConfig)
+    val resStaged = getStagedOutput(progStaged5)(_.msfFunAdjList, "MSF_adjListList", input)
     println("Staged: " + resStaged.mkString(","))
   }
 
@@ -244,7 +238,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val input = (links, (edgeVals, (offs, lens)))
     val resSeq = progSeq.msfFunAdjColl(input)
     println("Seq: " + resSeq.mkString(" , "))
-    val resStaged = getStagedOutputConfig(progStaged5)(progStaged5.msfFunAdjColl, "MSF_adjListColl", input, progStaged5.defaultCompilerConfig)
+    val resStaged = getStagedOutput(progStaged5)(_.msfFunAdjColl, "MSF_adjListColl", input)
     println("Staged: " + resStaged.mkString(","))
   }
 
@@ -263,7 +257,7 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val input = (incMatrix, vertexNum)
     val resSeq = progSeq.msfFunIncList(input)
     println("Seq: " + resSeq.mkString(" , "))
-    val resStaged = getStagedOutputConfig(progStaged6)(progStaged6.msfFunIncList, "MSF_adjMatrixList", input, progStaged6.defaultCompilerConfig)
+    val resStaged = getStagedOutput(progStaged6)(_.msfFunIncList, "MSF_adjMatrixList", input)
     println("Staged: " + resStaged.mkString(","))
   }
 
@@ -275,17 +269,8 @@ class LmsMsfPrimeItTests extends LmsMsfItTests {
     val input = (links, (edgeVals, (offs, lens)))
     val resSeq = progSeq.funFallingTestWithLists(input)
     println("Seq: " + resSeq.mkString(" , "))
-    val resStaged = getStagedOutputConfig(progStaged7)(progStaged7.funFallingTestWithLists, "fallingTest", input, progStaged7.defaultCompilerConfig)
+    val resStaged = getStagedOutput(progStaged7)(_.funFallingTestWithLists, "fallingTest", input)
     println("Staged: " + resStaged.mkString(","))
   }
 
-  test("fallingTestWithLists") {
-    val ctx = new TestContext(this, "fallingTestWithLists") with ProgExp
-    ctx.emit("funFallingTestWithLists", ctx.funFallingTestWithLists)
-  }
-
-  test("fallingTestWithArrays") {
-    val ctx = new TestContext(this, "fallingTestWithArrays") with ProgExp
-    ctx.emit("funFallingTestWithArrays", ctx.funFallingTestWithArrays)
-  }
 }

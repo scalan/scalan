@@ -11,7 +11,7 @@ trait Loops { self: Scalan =>
   def loopUntilAux[A:Elem](s1: Rep[A])(isMatch: Rep[A] => Rep[Boolean], step: Rep[A] => Rep[A]): Rep[A] = {
     val eA = elemFromRep(s1)
     val leA = Lazy(eA)
-    loopUntil(s1)(fun(isMatch)(leA, BoolElement), fun(step)(leA, eA))
+    loopUntil(s1)(fun(isMatch)(leA, BooleanElement), fun(step)(leA, eA))
   }
 
   def loopUntil2[A:Elem, B:Elem](s1: Rep[A], s2: Rep[B])
@@ -116,7 +116,6 @@ trait LoopsExp extends Loops with BaseExp { self: ScalanExp =>
   case class LoopUntil[A:Elem](s1: Rep[A], step: Rep[A => A], isMatch: Rep[A => Boolean]) extends BaseDef[A] {
     override def mirror(f: Transformer) = LoopUntil(f(s1), f(step), f(isMatch))
     override def productIterator = List(step, isMatch, s1).toIterator
-    lazy val uniqueOpId = name(element[A])
     //    override def decompose = {
     //      val states = generate(s1)(step)
     //      Some(states.withFilter(isMatch).first)

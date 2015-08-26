@@ -12,48 +12,23 @@ import scalan.graphs.GraphsDslExp
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
 class JNI_MsfItTests extends LmsMsfItTests {
-  trait ProgExp extends GraphsDslExp with MsfFuncs with ScalanCommunityExp with ScalanCommunityDslExp with GraphVizExport with LmsCompilerCxx with JNIBridge with VectorsDslExp with MatricesDslExp { self =>
-    val lms = new CoreCxxShptrLmsBackend
+  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with GraphsDslExp with MsfFuncs {
 
-    lazy val MSF_JNI_adjlist = fun {in:Rep[JNIType[(Array[Int], (Array[Double], (Array[Int], Array[Int])))]] =>
-      val data = JNI_Extract(in)
-      val res = msfFunAdjBase(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjlist = JNI_Wrap(msfFunAdjBase)
 
-    lazy val MSF_JNI_adjmatrix = fun {in:Rep[JNIType[(Array[Double], Int)]] =>
-      val data = JNI_Extract(in)
-      val res = msfFunIncBase(data)
-      JNI_Pack(res)
-    }
+    lazy val MSF_JNI_adjmatrix = JNI_Wrap(msfFunIncBase)
+  }
+
+  class Ctx extends TestCompilerContext("MSF_JNI-cxx") {
+    val compiler = new LmsCompilerCxx(new ProgExp) with JNIBridge
   }
 
   test("MSF_JNI") {
-    val ctx1 = new ScalanCtxExp with ProgExp with FirstProg {
-      override def subfolder: String = "MSF_JNI-cxx"
-      def test() = {
+    val ctx1 = new Ctx
 
-      }
+    val ctx2 = new Ctx
 
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
-
-    val ctx2 = new ScalanCtxExp with ProgExp with FirstProg {
-      override def subfolder: String = "MSF_JNI-cxx"
-      def test() = {
-
-      }
-
-      def generate[A,B](name: String, f: Exp[A => B]): Unit = {
-        val dir = new File(prefix, subfolder)
-        buildExecutable(dir, dir, name, f, GraphVizConfig.default)
-      }
-    }
-
-    ctx1.generate("MSF_JNI_adjlist", ctx1.MSF_JNI_adjlist)
-    ctx2.generate("MSF_JNI_adjmatrix", ctx2 .MSF_JNI_adjmatrix)
+    ctx1.test("MSF_JNI_adjlist", ctx1.compiler.scalan.MSF_JNI_adjlist)
+    ctx2.test("MSF_JNI_adjmatrix", ctx2.compiler.scalan.MSF_JNI_adjmatrix)
   }
 }

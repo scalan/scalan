@@ -140,6 +140,26 @@ object FileUtil {
     case null => Array.empty
     case array => array
   }
+
+  /**
+    * Read resource from classpath
+    */
+  def getResource(file: String): InputStream =
+    getResource(file, getClass.getClassLoader)
+
+  def getResource(file: String, cl: ClassLoader): InputStream =
+    cl.getResourceAsStream(file)
+
+  /**
+    * Read multiple resources from classpath
+    */
+  def getResources(file: String): Seq[InputStream] =
+    getResources(file, getClass.getClassLoader)
+
+  def getResources(file: String, cl: ClassLoader): Seq[InputStream] = {
+    import collection.JavaConverters._
+    cl.getResources(file).asScala.map(_.openStream()).toSeq.reverse
+  }
 }
 
 case class ExtensionFilter(extension: String) extends FilenameFilter {

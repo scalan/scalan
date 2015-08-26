@@ -1,12 +1,13 @@
 package scalan.collections
-package impl
 
 import scala.collection.Seq
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
+package impl {
 // Abs -----------------------------------
 trait SeqsAbs extends Seqs with scalan.Scalan {
   self: ScalanCommunityDsl =>
@@ -31,9 +32,10 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     def lift[A](implicit evA: Elem[A]) = element[Seq[A]]
   }
 
-  implicit val containerSSeq: Cont[SSeq] = new Container[SSeq] {
+  implicit val containerSSeq: Cont[SSeq] with Functor[SSeq] = new Container[SSeq] with Functor[SSeq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SSeq[A]]
     def lift[A](implicit evA: Elem[A]) = element[SSeq[A]]
+    def map[A:Elem,B:Elem](xs: Rep[SSeq[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))
   }
   case class SSeqIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SSeq](iso) {
     implicit val eA = iso.eFrom
@@ -46,6 +48,14 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   // familyElem
   abstract class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
     extends WrapperElem1[A, To, Seq, SSeq]()(eA, container[Seq], container[SSeq]) {
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Seqs")
+      module.entities.find(_.name == "SSeq").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -78,9 +88,8 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     override def toString = "SSeq"
   }
   def SSeq: Rep[SSeqCompanionAbs]
-  implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion = {
+  implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion =
     proxyOps[SSeqCompanion](p)
-  }
 
   // default wrapper implementation
   abstract class SSeqImpl[A](val wrappedValueOfBaseType: Rep[Seq[A]])(implicit val eA: Elem[A]) extends SSeq[A] {
@@ -144,6 +153,14 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   class SSeqImplElem[A](val iso: Iso[SSeqImplData[A], SSeqImpl[A]])(implicit eA: Elem[A])
     extends SSeqElem[A, SSeqImpl[A]]
     with ConcreteElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
+    override lazy val parent: Option[Elem[_]] = Some(sSeqElement(element[A]))
+    override lazy val entityDef = {
+      val module = getModules("Seqs")
+      module.concreteSClasses.find(_.name == "SSeqImpl").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA))
+    }
     lazy val eTo = this
     override def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem1].getDefaultRep
@@ -169,7 +186,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     lazy val eTo = new SSeqImplElem[A](this)
   }
   // 4) constructor and deconstructor
-  abstract class SSeqImplCompanionAbs extends CompanionBase[SSeqImplCompanionAbs] with SSeqImplCompanion {
+  abstract class SSeqImplCompanionAbs extends CompanionBase[SSeqImplCompanionAbs] {
     override def toString = "SSeqImpl"
 
     def apply[A](wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
@@ -202,6 +219,8 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkSSeqImpl[A](wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]]
   def unmkSSeqImpl[A](p: Rep[SSeq[A]]): Option[(Rep[Seq[A]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Seqs_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -606,12 +625,16 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
       case _ =>
         super.rewriteDef(d)
     }
-    case SSeqCompanionMethods.apply(HasViews(source, arrIso: ArrayIso[a,b])) => {
-      val iso = arrIso.iso
-      implicit val eA = iso.eFrom
-      ViewSSeq(SSeq[a](source.asRep[Array[a]])(eA))(SSeqIso(iso))
-    }
 
     case _ => super.rewriteDef(d)
   }
 }
+
+object Seqs_Module {
+  val packageName = "scalan.collections"
+  val name = "Seqs"
+  val dump = "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"
+}
+}
+
+trait SeqsDsl extends impl.SeqsAbs {self: ScalanCommunityDsl =>}

@@ -53,6 +53,7 @@ trait Elems extends Base { self: Scalan =>
 
   implicit class ElemForSomeExtension(e: Elem[_]) {
     def asElem[T]: Elem[T] = e.asInstanceOf[Elem[T]]
+    def asEntityElem[T]: EntityElem[T] = e.asInstanceOf[EntityElem[T]]
 
     def getMethod(methodName: String, argClasses: Class[_]*): Method = {
       val m = e.runtimeClass.getMethod(methodName, argClasses: _*)
@@ -81,14 +82,14 @@ trait Elems extends Base { self: Scalan =>
     protected def getDefaultRep = Pair(eFst.defaultRepValue, eSnd.defaultRepValue)
   }
 
-  case class SumElem[A, B](eLeft: Elem[A], eRight: Elem[B]) extends Element[(A | B)] {
+  case class SumElem[A, B](eLeft: Elem[A], eRight: Elem[B]) extends Element[A | B] {
     override def isEntityType = eLeft.isEntityType || eRight.isEntityType
     lazy val tag = {
       implicit val tA = eLeft.tag
       implicit val tB = eRight.tag
       weakTypeTag[A | B]
     }
-    protected def getDefaultRep = toLeftSum[A, B](eLeft.defaultRepValue)(eRight)
+    protected def getDefaultRep = mkLeft[A, B](eLeft.defaultRepValue)(eRight)
   }
 
   case class FuncElem[A, B](eDom: Elem[A], eRange: Elem[B]) extends Element[A => B] {
@@ -104,37 +105,8 @@ trait Elems extends Base { self: Scalan =>
     }
   }
 
-  implicit val arrayContainer: Cont[Array] = new Container[Array] {
-    def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Array[T]]
-    def lift[T](implicit eT: Elem[T]) = element[Array[T]]
-  }
-
-  case class ArrayIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Array](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Arr[B]) = x.map(iso.from _)
-    def to(x: Arr[A]) = x.map(iso.to _)
-    lazy val defaultRepTo = SArray.empty[B]
-  }
-
-  abstract class ArrayElem[A](implicit override val eItem: Elem[A])
-    extends EntityElem1[A, Array[A], Array](eItem, container[Array]) {
-  }
-
-  case class ScalaArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
-    override def isEntityType = eItem.isEntityType
-    lazy val tag = {
-      implicit val tag1 = eItem.tag
-      weakTypeTag[Array[A]]
-    }
-    protected def getDefaultRep =
-      SArray.empty(eItem)
-
-    override def canEqual(other: Any) = other.isInstanceOf[ScalaArrayElem[_]]
-  }
-
   val AnyRefElement: Elem[AnyRef] = new BaseElem[AnyRef]()(typeTag[AnyRef], Default.OfAnyRef)
-  implicit val BoolElement: Elem[Boolean] = new BaseElem[Boolean]
+  implicit val BooleanElement: Elem[Boolean] = new BaseElem[Boolean]
   implicit val ByteElement: Elem[Byte] = new BaseElem[Byte]
   implicit val ShortElement: Elem[Short] = new BaseElem[Short]
   implicit val IntElement: Elem[Int] = new BaseElem[Int]
@@ -146,13 +118,13 @@ trait Elems extends Base { self: Scalan =>
   implicit val CharElement: Elem[Char] = new BaseElem[Char]
 
   implicit def pairElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A, B)] = new PairElem[A, B](ea, eb)
-  implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A | B)] = new SumElem[A, B](ea, eb)
+  implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A | B] = new SumElem[A, B](ea, eb)
   implicit def funcElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A => B] = new FuncElem[A, B](ea, eb)
   implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = new ScalaArrayElem[A](eA)
   ///implicit def elemElement[A](implicit ea: Elem[A]): Elem[Elem[A]]
 
   implicit def PairElemExtensions[A, B](eAB: Elem[(A, B)]): PairElem[A, B] = eAB.asInstanceOf[PairElem[A, B]]
-  implicit def SumElemExtensions[A, B](eAB: Elem[(A | B)]): SumElem[A, B] = eAB.asInstanceOf[SumElem[A, B]]
+  implicit def SumElemExtensions[A, B](eAB: Elem[A | B]): SumElem[A, B] = eAB.asInstanceOf[SumElem[A, B]]
   implicit def FuncElemExtensions[A, B](eAB: Elem[A => B]): FuncElem[A, B] = eAB.asInstanceOf[FuncElem[A, B]]
   implicit def ArrayElemExtensions[A](eArr: Elem[Array[A]]): ArrayElem[A] = eArr.asInstanceOf[ArrayElem[A]]
   //  implicit def ElemElemExtensions[A](eeA: Elem[Elem[A]]): ElemElem[A] = eeA.asInstanceOf[ElemElem[A]]
@@ -191,6 +163,22 @@ trait Elems extends Base { self: Scalan =>
 
   def assertEqualElems[A](e1: Elem[A], e2: Elem[A], m: => String) =
     assert(e1 == e2, s"Element $e1 != $e2: $m")
+
+  import scalan.meta.ScalanAst
+  import ScalanAst._
+
+  private var modules: Map[String, SEntityModuleDef] = Map()
+  def getModules = modules
+
+  def allEntities = getModules.values.flatMap(m => m.allEntities)
+
+  def registerModule(m: SEntityModuleDef) = {
+    if (modules.contains(m.name))
+      !!!(s"Module ${m.name} already defined")
+    else {
+      modules += (m.name -> m)
+    }
+  }
 }
 
 trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>

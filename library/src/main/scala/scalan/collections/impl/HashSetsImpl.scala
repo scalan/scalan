@@ -1,11 +1,12 @@
 package scalan.collections
-package impl
 
 import scala.collection.immutable.HashSet
 import scalan._
 import scalan.common.Default
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
+package impl {
 // Abs -----------------------------------
 trait HashSetsAbs extends HashSets with scalan.Scalan {
   self: ScalanCommunityDsl =>
@@ -45,6 +46,14 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   // familyElem
   abstract class SHashSetElem[A, To <: SHashSet[A]](implicit val eA: Elem[A])
     extends WrapperElem1[A, To, HashSet, SHashSet]()(eA, container[HashSet], container[SHashSet]) {
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("HashSets")
+      module.entities.find(_.name == "SHashSet").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagA = eA.tag
@@ -77,9 +86,8 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     override def toString = "SHashSet"
   }
   def SHashSet: Rep[SHashSetCompanionAbs]
-  implicit def proxySHashSetCompanion(p: Rep[SHashSetCompanion]): SHashSetCompanion = {
+  implicit def proxySHashSetCompanion(p: Rep[SHashSetCompanion]): SHashSetCompanion =
     proxyOps[SHashSetCompanion](p)
-  }
 
   // default wrapper implementation
   abstract class SHashSetImpl[A](val wrappedValueOfBaseType: Rep[HashSet[A]])(implicit val eA: Elem[A]) extends SHashSet[A] {
@@ -103,6 +111,14 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   class SHashSetImplElem[A](val iso: Iso[SHashSetImplData[A], SHashSetImpl[A]])(implicit eA: Elem[A])
     extends SHashSetElem[A, SHashSetImpl[A]]
     with ConcreteElem1[A, SHashSetImplData[A], SHashSetImpl[A], SHashSet] {
+    override lazy val parent: Option[Elem[_]] = Some(sHashSetElement(element[A]))
+    override lazy val entityDef = {
+      val module = getModules("HashSets")
+      module.concreteSClasses.find(_.name == "SHashSetImpl").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eA))
+    }
     lazy val eTo = this
     override def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
     override def getDefaultRep = super[ConcreteElem1].getDefaultRep
@@ -128,7 +144,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     lazy val eTo = new SHashSetImplElem[A](this)
   }
   // 4) constructor and deconstructor
-  abstract class SHashSetImplCompanionAbs extends CompanionBase[SHashSetImplCompanionAbs] with SHashSetImplCompanion {
+  abstract class SHashSetImplCompanionAbs extends CompanionBase[SHashSetImplCompanionAbs] {
     override def toString = "SHashSetImpl"
 
     def apply[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]] =
@@ -161,6 +177,8 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkSHashSetImpl[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]]
   def unmkSHashSetImpl[A](p: Rep[SHashSet[A]]): Option[(Rep[HashSet[A]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(HashSets_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -392,3 +410,13 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
     case _ => super.rewriteDef(d)
   }
 }
+
+object HashSets_Module {
+  val packageName = "scalan.collections"
+  val name = "HashSets"
+  val dump = "H4sIAAAAAAAAALVWT2wUVRh/O9vtdruVAla0htXSrFaUdgtRieGA/bNgZcuSDqCuBH0787YdmH8787bOmoiEqAe4KTGRxCAHPXHzoPHgwcTESGKiIWKiHDzoQcAYohKjqN97M292Z+m0YOIeZufNvPn+/H6/7/ve2Sso5TroflfBOjbHDELxmMzvJ1yal4sm1Whz1lIbOpkmtWPrPlRmzUlXQv0V1L2A3WlXr6CMf1P07PBeJvUSymBTIS61HJeiDSXuoaBYuk4UqllmQTOMBsVVnRRKmku3lVBX1VKbdXQEJUpotWKZikMokad07LrEDZ73EBaRFq4zfN0s2y0fZoFlUWjLYq+DNQrhg4/V/v45YstN0zKbBkWrgtDKNgsL9qQ1w7YcKlykwdyCpYpll4nhAVpbOoQXcQFczBdk6mjmPHyZtbFyGM+T3bCFbe+CgF2i1/Y2bb5OllCvS+oA0Ixh6/yJZyOEgIEtPIixFj5jIT5jDJ+8TBwN69qLmL3c41heE/m/RBIhzwYTm1YwISyQoqnmjx9Qnr0mZw2JfeyxUNI8w24wdG+MGjgVgONnc6+7V3ee2Sqh3grq1dyJqksdrNB2ygO0stg0LcpjDgHEzjywNRzHFvcyAXs6JJFRLMPGJlgKoOwDnnRN0SjbzJ71BezEQJ+mNhFbE56dCPMdismX62YK6/qeS4Oj910uPi0hKeoiAyZlEL4jjFLUIz+B3QWZ0MA8u/ZTlJjgGLNLxmtd08u4D4EYufSz+uk4OiCF8AXebo4xMJFyv/k6e37jdgn1VLi+d+h4vgIIukWdGGVnyjJpBfVYi8Tx36QXsc7ulmQwrZIabug0wLUdkCQAQtFQbCXahKG1jas+IQDI+sLdbZkkv2NP/nf585NnmS4d1Oe/8Uvzb23r9W9X1SiXLEXrXnCwbRN1P9YbpFybxC5hZAvAk1DjUQrSt0JMQA+75PjWO9o+uyshoufvKZLIhLDXxRBd0QVFfUInohXkQjZzcXrk+l03VxrQr2z/WEKpJ1GqBiS5JZSqWg1TFYUBzZMSj06KZ4koSVAI2MGGUJHfRoYQDyKMdOCGmFdUm+izv1XGpV8HL5yWUAZEVdWoge38+E12h/+x4lGUlizb+RQXkR9RN7sMi9e3Vsht8IwuBw/UGq/JMHEtv+mxH6dP7uK9pb8FCN8W5NVe8xTdxqoVayZxRKpt0bB66vWrRrYMsmb4qnbwzAnKW0fCi86tcvUQDIpt/Lv13P4jHRD1Fb0pwcHm6KsQnqX7Wqs6IOI1Yu9UO6G+1mx2XROuN7dsPBoVZBp8CkYgjwDk1rTz0ZqG/IdjCJADdYBEj1x7e/eDX7z/A0e9l+kMmo8ZzvyWqLyOJrLWtweJGA0TThIwy9sAgPJnEgwjeSA2kjore2KAT872MbT/7PSWdwzOUz/xfJnPtp082rp93MDwt0N2F5+p1z8Yf2gVH9AdTR7m9UxQRXxRhp7vaCpZshqzIDw5gLezQDs6fy8bHrqF1RnRhiLVV0LdsJzz27N/6mkxG+K1PiazSd1SDu8b/alWH3j4uj+FNUBfhASlQinKxU2dYOSI8ohzAvi49O7ZgS+ru+aP+wWjsG+K/HR1p19UTgMOkAYZm7Q8ou6DGOh7L+3MXT53KphK3XkWWD4qXb+1HwhHniByw7JEMuw2fjLy5sHGRyfiR//yYgAbye/+OfeG4yYllL6Z2f9fJj67HYxyCkMxUVtiFjvonvjptqNhKudn3rq9P/fc95zlbtUyoNNx+zDkHOhawllHPw6Xk8u15+U0NmHbevOV2sbTX53662WJpZlieAsIkrUGj+P5EpJoBwutazPyJN7ZjAqVP7L23T9/yVwoS50th/2ZkeDjDwXQ1KBAsxc1Qh7/41W/NqB/OEGsKdrZyo7GHp2AKJjUS8/9o0ucWPiu11oC99PeEjlP+C+CY5FokhGSAmJulMoKcziO6H8BgV27HNMOAAA="
+}
+}
+
+trait HashSetsDsl extends impl.HashSetsAbs {self: ScalanCommunityDsl =>}
+trait HashSetsDslExp extends impl.HashSetsExp {self: ScalanCommunityDslExp =>}

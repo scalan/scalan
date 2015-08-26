@@ -1,10 +1,11 @@
 package scalan.monads
-package impl
 
 import scalan._
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
+package impl {
 // Abs -----------------------------------
 trait ReadersAbs extends Readers with scalan.Scalan {
   self: MonadsDsl =>
@@ -17,6 +18,14 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   // familyElem
   class ReaderElem[Env, A, To <: Reader[Env, A]](implicit val eEnv: Elem[Env], val eA: Elem[A])
     extends EntityElem[To] {
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Readers")
+      module.entities.find(_.name == "Reader").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("Env" -> Left(eEnv), "A" -> Left(eA))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagEnv = eEnv.tag
@@ -48,14 +57,22 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     override def toString = "Reader"
   }
   def Reader: Rep[ReaderCompanionAbs]
-  implicit def proxyReaderCompanion(p: Rep[ReaderCompanion]): ReaderCompanion = {
+  implicit def proxyReaderCompanion(p: Rep[ReaderCompanion]): ReaderCompanion =
     proxyOps[ReaderCompanion](p)
-  }
 
   // elem for concrete class
   class ReaderBaseElem[Env, A](val iso: Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]])(implicit eEnv: Elem[Env], eA: Elem[A])
     extends ReaderElem[Env, A, ReaderBase[Env, A]]
     with ConcreteElem[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
+    override lazy val parent: Option[Elem[_]] = Some(readerElement(element[Env], element[A]))
+    override lazy val entityDef = {
+      val module = getModules("Readers")
+      module.concreteSClasses.find(_.name == "ReaderBase").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("Env" -> Left(eEnv), "A" -> Left(eA))
+    }
+
     override def convertReader(x: Rep[Reader[Env, A]]) = ReaderBase(x.run)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -114,6 +131,8 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkReaderBase[Env, A](run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]]
   def unmkReaderBase[Env, A](p: Rep[Reader[Env, A]]): Option[(Rep[Env => A])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Readers_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -209,3 +228,13 @@ trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
     }
   }
 }
+
+object Readers_Module {
+  val packageName = "scalan.monads"
+  val name = "Readers"
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+3vOdz/aRCwQFhSi542RARMQ+0aS4IvJdfBDk+5E3BTIRaLw7dibszuztjC2bIgUldIiGAqH06Wio6JAQBVUESFQUVCEUEZAKxJvZPzvyHgHEFqOd2bfv5/u+93bv3IdFGcIL0iEe4XWfKlK3zX1Tqprd4oqpyZ5whx69Qvvvnf7c2ePb0oLVLizdIPKK9LpQjm5a4yC9t+lRG8qEO1QqEUoFz7VNhIYjPI86igneYL4/VKTn0UabSbXVhmJPuJMjuAWFNpx0BHdCqqi94xEpqYzPl6nOiKX7stlPDoIsBm/oKhpTVVwLCVOYPsY4Gdl3aGBPuOATX8GJOLWDQKeFNiXmByJUSYgSursh3GRb5AQP4Kn2TTIiDQwxaNgqZHyAb1YD4rxDBnQfTbR5EROW1OtfmwRmv9CGiqRHCNBVP/DMyTgAAGTgFZNEPcOnnuJT1/jUbBoy4rF3iX54GIrxBKKrsAAwDtDFy3/jIvFAW9ytvX/defOhXfUt/fJYp1IyFS6ho7UcNRgqEMevOh/KB6/evmRBpQsVJps9qULiqGnKY7SqhHOhTM4pgCQcIFsbeWyZKE20eUQSZUf4AeHoKYZyBXnymMOUNtZnKzE7OdCXVEAT08I4KKT1rufUa3SzQzzv8N6Zi8//3HrDAms2RBld2ij8MHGqYKlDiUvD2LleVxUstPgowxgPCk2z1Ut5nK2lY7JJcXnx3i/ul5tw3UrRjIM/HoHoYlF+/2317kuXLVjuGrnvemTQRUBly6P+QbgjuOrCshjRMHpSGhFP380ltOTSPhl6KoZ5Gp8FxEfBem5jBlSDt2WaoJAAUI10vC84re0e1n63v/7ojpZpCCvRk6hT/2SX/vjhRF8ZBSPE4ZCncGN/p2Ccz2M3oLtD7ty9+vGp1XNv/2i4XXKFT5gR2Nk2LIbY3aaUszG4/5DKSpSvLXz65MYD9tbtD5QhrTCeHSAHvZvYsVvmvfPH8JcMst+6m9avZ7771IIy0tRjyidBbfMx2+9/bClIkciWNeTmVNQT20TSnemIaxmQz0w1zLOFRA3GSEERR9YowbuoNZrTXhH8851YtHmMizksKqhkeRsnqabO5WsK4TjdaT/t3b/8hQWLr8NiH/tGoph6YsjdBGf8vCk6VtvJWWEWZ8SVhMRPcTXXOmSYParD7Xkmc2qaKvoizCJQ7lDWZ/prMXv+nwZa3AuZ6YU4do5SVqNgc1SSjdZpKnJr/3fw6PW1zCY2LMUIKHgi4V1w4sq4oBA2cuRgx92CLXvr4Sf7F7757CczZiq673C88fQnIyM/HeMJLXsmFv4zTGWLEtadaDL9C4zVXGfDCQAA"
+}
+}
+
+trait ReadersDslSeq extends impl.ReadersSeq {self: MonadsDslSeq =>}
+trait ReadersDslExp extends impl.ReadersExp {self: MonadsDslExp =>}

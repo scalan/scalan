@@ -7,9 +7,10 @@ import scala.reflect.runtime.universe._
 trait KindsExamples extends Scalan with KindsDsl {
   type Id[A] = A
 
-  implicit val containerId: Cont[Id] = new Container[Id] {
+  implicit val functorId: Functor[Id] = new Functor[Id] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Id[A]]
     def lift[A](implicit evA: Elem[A]) = evA
+    def map[A: Elem, B: Elem](a: Rep[Id[A]])(f: (Rep[A]) => Rep[B]) = f(a)
   }
 
   lazy val t1 = fun { (in: Rep[Kind[Id,Int]]) => in }

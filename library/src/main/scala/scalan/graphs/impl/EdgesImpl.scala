@@ -1,11 +1,12 @@
 package scalan.graphs
-package impl
 
 import scalan.collections.CollectionsDsl
 import scalan.ScalanCommunityDsl
 import scalan.Owner
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
+package impl {
 // Abs -----------------------------------
 trait EdgesAbs extends Edges with scalan.Scalan {
   self: GraphsDsl =>
@@ -18,6 +19,14 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   // familyElem
   class EdgeElem[V, E, To <: Edge[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Edges")
+      module.entities.find(_.name == "Edge").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -49,14 +58,22 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     override def toString = "Edge"
   }
   def Edge: Rep[EdgeCompanionAbs]
-  implicit def proxyEdgeCompanion(p: Rep[EdgeCompanion]): EdgeCompanion = {
+  implicit def proxyEdgeCompanion(p: Rep[EdgeCompanion]): EdgeCompanion =
     proxyOps[EdgeCompanion](p)
-  }
 
   // elem for concrete class
   class AdjEdgeElem[V, E](val iso: Iso[AdjEdgeData[V, E], AdjEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends EdgeElem[V, E, AdjEdge[V, E]]
     with ConcreteElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
+    override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Edges")
+      module.concreteSClasses.find(_.name == "AdjEdge").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
+
     override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -121,6 +138,15 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   class IncEdgeElem[V, E](val iso: Iso[IncEdgeData[V, E], IncEdge[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends EdgeElem[V, E, IncEdge[V, E]]
     with ConcreteElem[IncEdgeData[V, E], IncEdge[V, E]] {
+    override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Edges")
+      module.concreteSClasses.find(_.name == "IncEdge").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
+
     override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -180,6 +206,8 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkIncEdge[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]]
   def unmkIncEdge[V, E](p: Rep[Edge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V,E]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Edges_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -514,3 +542,14 @@ trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
     }
   }
 }
+
+object Edges_Module {
+  val packageName = "scalan.graphs"
+  val name = "Edges"
+  val dump = "H4sIAAAAAAAAANVXTWwbRRSe3dhxbIc0VKiolSAhuCAQ2FElVKEgVanrVEZuEmXbgEyFNN4dOxN2Zzc748jm0ANHuCGuFeq9Ny5ISL0gJMSBEwIkzpxKEaqAnqh4M/vrxOu2ETngw2hn5s37+b733oxv30N57qOXuIltzKoOEbhqqO9VLipGgwkqhldcq2+TS6T70akvzSvsItfRiTaa3sH8ErfbqBh8NAZe/G2QvRYqYmYSLlyfC/RCS1moma5tE1NQl9Wo4/QF7tik1qJcrLRQruNawz10A2ktNG+6zPSJIEbdxpwTHq7PEOkRjedFNR9ueIkNVpNR1FJRXPUxFeA+2JgP5LeIZwyZy4aOQHOhaxuedAtkCtTxXF9EJgqgbse1ommOYVhAJ1u7eB/XwESvZgifsh6cLHvY/AD3yDqISPEcOMyJ3b069NR8qoVKnOwBQE3Hs9XKwEMIAQPnlBPVBJ9qjE9V4lMxiE+xTT/EcnPTdwdDFPy0KYQGHqh47REqIg2kwazKx9fN9x4YZUeXhwfSlYKKcBoULWRkg6ICcPx261N+//Kt8zoqtVGJ8tUOFz42RZryEK0yZswVyucYQOz3gK2lLLaUlVWQOZASRdN1PMxAUwjlLPBkU5MKKSzXZkN2MqAvCI9EotrA0+J4FzPiVXlTx7a9eff062d/a7yrI33URBFUGpD4fqRUoFzD6pFQtRxPCKRtJ/jKaUNN5VAcJGNhgicxJi/f/d36Zhld12MkQ8OPRx6oyPOffyz/8MoFHc20Vaqv2bjXBjB5wybOhl93mWijGXef+MFOYR/b8mssmQWLdHHfFiHEaWymABuBFjOL0iMSuBVVAFoEQDnI4XWXkcraZuVv47vPbssU9dFssBNU6UN6/p9f5rpCZa9A013fdZpWBPAUlHeMx4tZ5Hpk06cONJN98sbXX1374856XvF7MgxpG9t9EpR2GFESnTSqLYOlJhMBg8remTgUOSwIgLEvmswig8OuyeHspLP5no+9nTExhSv5y/H+E2Zakm+lAFTDdcjTS/fp+7c+ESqztMFoh9vo7EJLWVHnnp+QZFGn/au9rP95+qfPdVSEXOpQ4WCvsvyY/eEYax6NwjVXD28ZVRznRjdVIY+v1IQmyIP5VWtXitbTri4kPDybUntGO0CyTrYTe1B/Y+lMZ8lhBY1JCg4ngECF0GGlIa6T57LrBAA8tdV6xr534Y6O8m+jfBfaAW+hfMftMytiBm5sQQbiYrSmjTIDTGAfOzET6reIErBGs/edsQKNg3iUtTGkHa37HuLqYEFmdplHlnJOuEc6d/wtQI5vqvGtY6mNJjP/X7UROpyujex0fKJ8TXk6PRbx4hahXSqfa/9RTqcZmcB0WfbLNexQe3hEmp/K4NhLqTgWNOV4M5EJBfMKMHArbGlBFYUI+Ggpo9MZ4dUB99eNBzfXX/3+i1/Vg6AkLyF4kLD4L0H6IXCAw6Ai4YWf8hVQkNeS8vNfRdcRhXENAAA="
+}
+}
+
+trait EdgesDsl extends impl.EdgesAbs {self: GraphsDsl =>}
+trait EdgesDslSeq extends impl.EdgesSeq {self: GraphsDslSeq =>}
+trait EdgesDslExp extends impl.EdgesExp {self: GraphsDslExp =>}

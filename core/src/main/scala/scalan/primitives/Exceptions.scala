@@ -12,7 +12,6 @@ trait ExceptionsSeq extends Exceptions { self: ScalanSeq =>
 
 trait ExceptionsExp extends Exceptions { self: ScalanExp =>
   case class ThrowException(msg: Rep[String]) extends BaseDef[Unit] {
-    def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = ThrowException(t(msg))
   }
   def THROW(msg: Rep[String]): Rep[Unit] = ThrowException(msg)    

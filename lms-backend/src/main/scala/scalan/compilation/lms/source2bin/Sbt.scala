@@ -3,11 +3,12 @@ package scalan.compilation.lms.source2bin
 import java.io.File
 import java.io.File.separator
 
-import scalan.compilation.lms.scalac.LmsCompilerScala
+import scalan.ScalanCtxExp
+import scalan.compilation.lms.scalac.LmsCompilerScalaConfig
 import scalan.util.FileUtil._
 import scalan.util.{FileUtil, ExtensionFilter, ProcessUtil, StringUtil}
 
-object Sbt { 
+object Sbt {
 
   val lib = "lib"
 
@@ -18,7 +19,7 @@ object Sbt {
     dir.foreach(f => FileUtil.copyToDir(f, executableLibsDir))
   }
 
-  def compile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: LmsCompilerScala#CompilerConfig, dependencies: Array[String], sourceFile: File, jarPath: String): Array[String] = {
+  def compile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: LmsCompilerScalaConfig, dependencies: Array[String], sourceFile: File, jarPath: String): Array[String] = {
     val scalaVersion = compilerConfig.scalaVersion.getOrElse {
       throw new Exception(s"You must define compilerConfig.scalaVersion for use Sbt.compile method")
     }
@@ -37,7 +38,8 @@ object Sbt {
         addHeader(f, s"package $mainPack")
         def scalaSource(className: String) = className.replaceAll("\\.", separator)  + ".scala"
 
-        val mainClass = scalaSource(mainPack + "." + compilerConfig.sbt.mainClassSimpleName)
+        val mainClassFullName = mainPack + "." + compilerConfig.sbt.mainClassSimpleName
+        val mainClass = scalaSource(mainClassFullName)
         val mainDest = file(src, mainClass)
         try {
           copyFromClassPath(mainClass, mainDest)
@@ -63,7 +65,7 @@ object Sbt {
               |scalaVersion := "$scalaVersion"
               |${dependencies.map(d => s"libraryDependencies += $d").mkString("\n")}
               |assemblyJarName in assembly := "$jar"
-              |mainClass in assembly := Some("${mainPack + "." + compilerConfig.sbt.mainClassSimpleName}")
+              |mainClass in assembly := Some("$mainClassFullName")
               |version := "1"
               |artifactPath in Compile in packageBin := file("$jarPath")
               |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
@@ -82,7 +84,7 @@ object Sbt {
             |addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.12.0")
           """.stripMargin)
 
-        write(file(sourcesDir, "project", "build.properties"), "sbt.version=0.13.7")
+        write(file(sourcesDir, "project", "build.properties"), "sbt.version=0.13.9")
 
         compilerConfig.sbt.commands.dropRight(1).foreach(com => ProcessUtil.launch(sourcesDir, "sbt", com))
         val output: Array[String] = ProcessUtil.launch(sourcesDir, "sbt", compilerConfig.sbt.commands.last)

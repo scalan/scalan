@@ -8,11 +8,15 @@ import scala.virtualization.lms.internal.Transforming
 import scalan.compilation.lms.LmsBackendFacade
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
+// Naming convention is e.g. `arrayNew` instead of `array_new` to
+// avoid conflict with ArrayOps; these methods are based on
+// ArrayLoops instead
 trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
 
-  def array_new[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
+  def arrayNew[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
+  def arrayEmpty[A: Manifest] = arrayNew[A](0)
 
-  def mapFromArray[K: Manifest, V: Manifest](arr: Exp[Array[(K, V)]]): Exp[HashMap[K, V]] = {
+  def map_fromArray[K: Manifest, V: Manifest](arr: Exp[Array[(K, V)]]): Exp[HashMap[K, V]] = {
     val h = HashMap[K, V]()
     for (pair <- arr) {
       h.update(pair._1, pair._2)
@@ -20,11 +24,11 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     h
   }
 
-  def arrayGet[A: Manifest](a: Exp[Array[A]], i: Exp[Int]): Exp[A] = {
+  def arrayApply[A: Manifest](a: Exp[Array[A]], i: Exp[Int]): Exp[A] = {
     a.at(i)
   }
 
-  def arrayGather[A: Manifest](a: Exp[Array[A]], idxs: Exp[Array[Int]]): Exp[Array[A]] = {
+  def arrayApplyMany[A: Manifest](a: Exp[Array[A]], idxs: Exp[Array[Int]]): Exp[Array[A]] = {
     array(idxs.length)(i => a.at(idxs.at(i)))
   }
 
@@ -32,7 +36,7 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     a.length
   }
 
-  def mapArray[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[B]): Exp[Array[B]] = {
+  def arrayMap[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[B]): Exp[Array[B]] = {
     //    a.map(f)
     array(a.length)(i => f(a.at(i)))
   }
@@ -40,7 +44,7 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
 //  def flatMapArray[A: Manifest, B: Manifest](arr: Exp[Array[A]], f: Rep[A] => Rep[Array[B]]): Exp[Array[B]] = {
 //    flatten(arr.length)(i => f(arr.at(i)))
 //  }
-  def flatMapArray[A: Manifest, B: Manifest](arr: Exp[Array[A]], f: Rep[A] => Rep[Array[B]]): Exp[Array[B]] = {
+  def arrayFlatMap[A: Manifest, B: Manifest](arr: Exp[Array[A]], f: Rep[A] => Rep[Array[B]]): Exp[Array[B]] = {
     val buf = ArrayBuilder.make[B]
     for (x <- arr; y <- f(x)) {
       buf += y
@@ -48,15 +52,15 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     buf.result
   }
 
-  def findArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Array[Int]] = {
+  def arrayFind[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Array[Int]] = {
     arrayIf(a.length) { i => (f(a.at(i)), i)}
   }
 
-  def filterArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Array[A]] = {
+  def arrayFilter[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Array[A]] = {
     arrayIf(a.length) { i => { val item = a.at(i); (f(item), item) }}
   }
 
-  def countArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Int] = {
+  def arrayCount[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Int] = {
     sumIfInt(a.length)(i => (f(a.at(i)), 1))
   }
 //  def countArray[A: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[Boolean]): Exp[Int] = {
@@ -71,7 +75,7 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     array(length)(i => v)
   }
 
-  def indexRangeArray(length: Exp[Int]): Exp[Array[Int]] = {
+  def arrayRangeFrom0(length: Exp[Int]): Exp[Array[Int]] = {
     array(length)(i => i)
   }
 
@@ -93,14 +97,22 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     a.reverse
   }
 
-  def strideArray[A: Manifest](xs: Exp[Array[A]], start: Exp[Int], length: Exp[Int], stride: Exp[Int]) =
+  def arrayStride[A: Manifest](xs: Exp[Array[A]], start: Exp[Int], length: Exp[Int], stride: Exp[Int]) =
     array(length) { i =>
       xs.at(start + i * stride)
     }
 
-  def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
+  def arrayUpdate[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
     val newArr =  xs.mutable
     newArr.update(index, value)
+    newArr
+  }
+
+  def arrayUpdateMany[A: Manifest](xs: Exp[Array[A]], indexes: Exp[Array[Int]], values: Exp[Array[A]]) = {
+    val newArr =  xs.mutable
+    for(i <- 0 until indexes.length) {
+      newArr.update(indexes(i), values(i))
+    }
     newArr
   }
 //  def updateArray[A: Manifest](xs: Exp[Array[A]], index: Exp[Int], value: Exp[A]) = {
@@ -114,25 +126,25 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
 ////    xs
 //  }
 
-  def arraySum[A: Manifest](xs: Exp[Array[A]])(implicit n: Numeric[A]): Exp[A] = {
+  def arraySum[A](xs: Exp[Array[A]])(implicit n: Numeric[A], m: Manifest[A]): Exp[A] = {
     var sum = n.zero
     for (x <- xs) sum += x
     sum
   }
 
-  def arrayMax[A: Manifest](xs: Exp[Array[A]])(implicit o: Ordering[A]): Exp[A] = {
+  def arrayMax[A](xs: Exp[Array[A]])(implicit o: Ordering[A], m: Manifest[A]): Exp[A] = {
     var max = xs.at(0) // we need Optional type to correctly implement min/max, but it is abselnt in CE
     for (x <- xs) if (x > max) max = x
     max
   }
 
-  def arrayMin[A: Manifest](xs: Exp[Array[A]])(implicit o: Ordering[A]): Exp[A] = {
+  def arrayMin[A](xs: Exp[Array[A]])(implicit o: Ordering[A], m: Manifest[A]): Exp[A] = {
     var min = xs.at(0) // we need Optional type to correctly implement min/max, but it is abselnt in CE
     for (x <- xs) if (x < min) min = x
     min
   }
 
-  def arrayAvg[A: Manifest](xs: Exp[Array[A]])(implicit n: Numeric[A]): Exp[Double] = {
+  def arrayAvg[A](xs: Exp[Array[A]])(implicit n: Numeric[A], m: Manifest[A]): Exp[Double] = {
     var sum = n.zero
     for (x <- xs) sum += x
     sum.AsInstanceOf[Double] / xs.length
@@ -173,7 +185,7 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
 //    Tuple2(arr1, accumulate((arr1.at(a.length - 1), a.at(a.length - 1))))
 //  }
 
-  def foldArray[A: Manifest, S: Manifest](a: Exp[Array[A]], init: Exp[S], func: Rep[(S, A)] => Rep[S]): Exp[S] = {
+  def arrayFold[A: Manifest, S: Manifest](a: Exp[Array[A]], init: Exp[S], func: Rep[(S, A)] => Rep[S]): Exp[S] = {
     var state = init
     for (x <- a) {
       state = func((state.AsInstanceOf[S], x))
@@ -181,7 +193,7 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     state
   }
 
-  def sumArrayBy[A: Manifest, S: Manifest](a: Exp[Array[A]], func: Rep[A] => Rep[S])(implicit n: Numeric[S]): Exp[S] = {
+  def arraySumBy[A: Manifest, S: Manifest](a: Exp[Array[A]], func: Rep[A] => Rep[S])(implicit n: Numeric[S]): Exp[S] = {
     var sum = n.zero
     for (x <- a) {
       sum += func(x)
@@ -189,13 +201,21 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
     sum
   }
 
-  def array_append[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]] = {
+  def arrayAppend[A: Manifest](xs: Rep[Array[A]], value: Rep[A]): Rep[Array[A]] = {
     ArrayAppend(xs, value)
   }
 
   case class ArrayAppend[A](xs: Rep[Array[A]], value: Rep[A])(implicit val m: Manifest[A]) extends Def[Array[A]]
 
-  def array_cons[A: Manifest](value: Rep[A], xs: Rep[Array[A]]): Rep[Array[A]] = {
+  def arraySortBy[A: Manifest, B: Manifest](a: Exp[Array[A]], by: Rep[A] => Rep[B]): Exp[Array[A]] = ArraySortBy(a, by)
+  private[this] def arraySortBy1[A: Manifest, B: Manifest](a: Exp[Array[A]], by: Rep[A => B]): Exp[Array[A]] = ArraySortBy(a, by)
+
+  case class ArraySortBy[A: Manifest, B: Manifest](a: Exp[Array[A]], by: Exp[A => B]) extends Def[Array[A]] {
+    val mA = manifest[A]
+    val mB = manifest[B]
+  }
+
+  def arrayCons[A: Manifest](value: Rep[A], xs: Rep[Array[A]]): Rep[Array[A]] = {
     xs.insert(0, value)
   }
 
@@ -210,6 +230,8 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
         ArrayIndex(f(arr), f(i))
       case a @ ArrayAppend(arr, v) =>
         ArrayAppend(f(arr), f(v))(a.m)
+      case a @ ArraySortBy(arr, by) => arraySortBy1(f(arr), f(by))(a.mA, a.mB)
+      case Reflect(a @ ArraySortBy(arr, by), u, es) => reflectMirrored(Reflect(ArraySortBy(f(arr), f(by))(a.mA, a.mB), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
       case _ =>
         super.mirrorDef(e,f)
     }).asInstanceOf[Def[A]]
@@ -229,6 +251,8 @@ trait ScalaGenArrayOpsExt extends ScalaGenBase {
            |  d(len) = $v
            |  d
            |}"""
+    case a@ArraySortBy(arr, by) =>
+      stream.println("val " + quote(sym) + " = " + quote(arr) + ".sortBy(" + quote(by)+ ")")
     case _ => super.emitNode(sym, rhs)
   }
 }
@@ -259,6 +283,7 @@ trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
            |std::copy($xs->begin(), $xs->begin() + $i, $sym->begin());
            |(*$sym)[$i] = $y;
            |std::copy($xs->begin() + $i, $xs->end(), $sym->begin() + $i + 1);"""
+    // TODO implement for ArraySortBy
     case _ =>
       super.emitNode(sym, rhs)
   }

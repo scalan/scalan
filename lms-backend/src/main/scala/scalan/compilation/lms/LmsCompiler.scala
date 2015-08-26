@@ -7,12 +7,13 @@ import java.io.File
 import scalan.compilation.language.{CoreMethodMappingDSL, MethodMappingDSL}
 import scalan.util.FileUtil
 
-trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxExp with LmsBridge =>
+abstract class LmsCompiler[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends Compiler(_scalan) with LmsBridge with CoreMethodMappingDSL {
+  import scalan._
 
   override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
   def emitSource[A, B](sourcesDir: File, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B]): File = {
-    (createManifest(eInput), createManifest(eOutput)) match {
+    (elemToManifest(eInput), elemToManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
 
         // ***$$$*** transform graph in lms start
@@ -47,7 +48,7 @@ trait LmsCompiler extends Compiler with CoreMethodMappingDSL { self: ScalanCtxEx
 
     func.elem match {
       case f: FuncElem[a, b] =>
-        (createManifest(f.eDom), createManifest(f.eRange)) match {
+        (elemToManifest(f.eDom), elemToManifest(f.eRange)) match {
           case (mA: Manifest[a], mB: Manifest[b]) =>
             val codegen = lms.graphCodegen
             val lmsFunc = apply[a, b](graph)

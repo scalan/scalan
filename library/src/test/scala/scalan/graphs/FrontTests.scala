@@ -3,7 +3,7 @@ package scalan.graphs
 import scala.language.reflectiveCalls
 import scalan._
 
-class FrontTests extends BaseTests { suite =>
+class FrontTests extends BaseCtxTests {
 
   trait FrontProg extends Scalan with GraphsDsl {
     lazy val example = fun { (in: Rep[(Int, Front)]) =>
@@ -27,19 +27,19 @@ class FrontTests extends BaseTests { suite =>
     lazy val t3 = fun { (in: Rep[List[Int]]) => CollectionOverList(in).asRep[CollectionOverArray[Int]].arr }
   }
 
-  class FrontProgStaged(testName: String) extends TestContext(this, testName) with  FrontProg with GraphsDslExp {
+  class FrontProgStaged extends TestContext with FrontProg with GraphsDslExp {
   }
-  class FrontProgSeq(testName: String) extends ScalanCtxSeq with  FrontProg with GraphsDslSeq {
+  class FrontProgSeq extends ScalanCtxSeq with FrontProg with GraphsDslSeq {
   }
 
   test("deepSpec") {
-    val ctx = new FrontProgStaged("deepSpec")
+    val ctx = new FrontProgStaged
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
   }
 
   test("autoSuper") {
-    val ctx = new FrontProgStaged("autoSuper")
+    val ctx = new FrontProgStaged
     ctx.emit("t3", ctx.t3)
   }
 

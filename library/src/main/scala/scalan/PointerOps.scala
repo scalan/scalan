@@ -9,6 +9,11 @@ trait PointerOps { self: Scalan =>
   def nullPtr[A: Elem]: Rep[Pointer[A]]
 
   case class PointerElem[A: Elem, To <: Pointer[A]](eItem: Elem[A]) extends EntityElem[To] {
+    def parent: Option[Elem[_]] = None
+    override def entityDef = !!!("not supported")
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eItem))
+    }
     override lazy val tag = {
       implicit val ttag = eItem.tag
       weakTypeTag[Pointer[A]].asInstanceOf[WeakTypeTag[To]]
@@ -21,6 +26,11 @@ trait PointerOps { self: Scalan =>
     new PointerElem[A, Pointer[A]](eItem)
   
   case class ScalarElem[A: Elem, To <: Scalar[A]](eItem: Elem[A]) extends EntityElem[To] {
+    def parent: Option[Elem[_]] = None
+    override def entityDef = !!!("not supported")
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("A" -> Left(eItem))
+    }
     override lazy val tag = {
       implicit val ttag = eItem.tag
       weakTypeTag[Scalar[A]].asInstanceOf[WeakTypeTag[To]]
@@ -37,7 +47,6 @@ trait PointerOpsExp extends PointerOps { self: ScalanExp =>
 
   case class NullPtr[A: Elem]() extends Def[Pointer[A]] {
     override def selfType = element[Pointer[A]]
-    override def uniqueOpId = "NullPtr"
     override def mirror(t: Transformer) = NullPtr[A]()
   }
   def nullPtr[A: Elem]: Exp[Pointer[A]] = NullPtr[A]()
@@ -45,13 +54,11 @@ trait PointerOpsExp extends PointerOps { self: ScalanExp =>
   // type Scalar for case when Exp[A] is a value and no pointer can be applied
   case class CreateScalar[A: Elem](source: Exp[A]) extends Def[Scalar[A]] {
     override def selfType = element[Scalar[A]]
-    override def uniqueOpId = "Scalar"
     override def mirror(t: Transformer) = CreateScalar[A](t(source))
   }
 
   case class ScalarPtr[A: Elem](xScalar: Exp[Scalar[A]]) extends Def[Pointer[A]] {
     override def selfType = element[Pointer[A]]
-    override def uniqueOpId = "ScalarPtr"
     override def mirror(t: Transformer) = ScalarPtr[A](t(xScalar))
   }
   def scalarPtr[A: Elem](source: Exp[A]): Exp[Pointer[A]] = {
@@ -63,7 +70,6 @@ trait PointerOpsExp extends PointerOps { self: ScalanExp =>
 
   case class ArrayPtr[A: Elem](xs: Exp[Array[A]]) extends Def[Pointer[A]] {
     override def selfType = element[Pointer[A]]
-    override def uniqueOpId = "ArrayPtr"
     override def mirror(t: Transformer) = ArrayPtr(t(xs))
   }
   def arrayPtr[A: Elem](xs: Exp[Array[A]]): Exp[Pointer[A]] = ArrayPtr(xs)

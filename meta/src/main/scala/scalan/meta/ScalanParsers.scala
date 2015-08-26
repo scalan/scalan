@@ -55,8 +55,10 @@ trait ScalanParsers {
 
   def config: CodegenConfig
 
-  def seqImplementation(methods: List[DefDef], parent: Tree): List[SMethodDef] = {
-    methods.map(methodDef(_))
+  def seqImplementation(traitTree: ClassDef) = {
+    val methods = traitTree.impl.body.collect { case item: DefDef => item }
+
+    SSeqImplementation(methods.map(methodDef(_)))
   }
 
   def entityModule(fileTree: PackageDef) = {
@@ -71,24 +73,72 @@ trait ScalanParsers {
       case Seq(only) => only
       case seq => !!!(s"There must be exactly one module trait in file, found ${seq.length}")
     }
-    val moduleTraitDef = traitDef(moduleTraitTree, Some(moduleTraitTree))
-    val module = SEntityModuleDef(packageName, imports, moduleTraitDef, config)
-    val moduleName = moduleTraitDef.name
+    val moduleTrait = traitDef(moduleTraitTree, Some(moduleTraitTree))
+    val moduleName = moduleTrait.name
 
-    val dslSeq = fileTree.stats.collectFirst {
-      case cd @ ClassDef(_,name,_,_) if name.toString == (moduleName + "DslSeq") => cd
-    }
-    val seqExplicitOps = for {
-      seqImpl <- dslSeq
-      seqOpsTrait <- seqImpl.impl.body.collectFirst {
-        case cd @ ClassDef(_,name,_,_) if name.toString == ("Seq" + module.entityOps.name) => cd
+    def findClassDefByName(trees: List[Tree], name: String) =
+      trees.collectFirst {
+        case cd: ClassDef if cd.name.toString == name => cd
       }
-    } yield {
-      val cd = seqOpsTrait.impl.body.collect { case item: DefDef => item }
-      seqImplementation(cd, seqOpsTrait)
+
+    val hasDsl =
+      findClassDefByName(fileTree.stats, moduleName + "Dsl").isDefined
+    
+    val dslSeqOpt = findClassDefByName(fileTree.stats, moduleName + "DslSeq")
+    val hasDslSeq = dslSeqOpt.isDefined
+
+    val hasDslExp =
+      findClassDefByName(fileTree.stats, moduleName + "DslExp").isDefined
+
+    val defs = moduleTrait.body
+
+    val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
+
+    val traits = defs.collect { case t: STraitDef if !t.name.endsWith("Companion") => t }
+    val entity = traits.headOption.getOrElse {
+      throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
     }
 
-    module.copy(seqDslImpl = seqExplicitOps.map(SSeqImplementation(_)))
+    def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
+
+    val classes = entity.optBaseType match {
+      case Some(bt) =>
+        val entityName = entity.name
+        val entityImplName = entityName + "Impl"
+        val typeUseExprs = entity.tpeArgs.map(tpeUseExpr(_))
+        val defaultBTImpl = SClassDef(
+          name = entityImplName,
+          tpeArgs = entity.tpeArgs,
+          args = SClassArgs(List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None))),
+          implicitArgs = entity.implicitArgs,
+          ancestors = List(STraitCall(entity.name, typeUseExprs)),
+          body = List(
+
+          ),
+          selfType = None,
+          companion = None,
+          //            companion = defs.collectFirst {
+          //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
+          //            },
+          true, Nil
+
+        )
+        defaultBTImpl :: moduleTrait.getConcreteClasses
+      case None => moduleTrait.getConcreteClasses
+    }
+    val methods = defs.collect { case md: SMethodDef => md }
+
+    val seqImplementation = for {
+      dslSeq <- dslSeqOpt
+      seqOpsTrait <- findClassDefByName(dslSeq.impl.body, "Seq" + entity.name)
+    } yield {
+      this.seqImplementation(seqOpsTrait)
+    }
+
+    SEntityModuleDef(packageName, imports, moduleName,
+      entityRepSynonym, entity, traits, classes, methods,
+      moduleTrait.selfType, Nil, seqImplementation,
+      hasDsl, hasDslSeq, hasDslExp, moduleTrait.ancestors)
   }
 
   def importStat(i: Import): SImportStat = {
@@ -115,7 +165,7 @@ trait ScalanParsers {
         case _ => None
       }.flatten
       val tparams = tdTree.tparams.map(tpeArg)
-      STpeArg(tdTree.name, bound, contextBounds, tparams)
+      STpeArg(tdTree.name, bound, contextBounds, tparams, tdTree.mods.flags)
     }
 
     typeParams.map(tpeArg)
@@ -124,7 +174,7 @@ trait ScalanParsers {
   // exclude default parent
   def ancestors(trees: List[Tree]) = trees.map(traitCall).filter(_.name != "AnyRef")
 
-  def findCompaion(name: String, parentScope: Option[ImplDef]) = parentScope match {
+  def findCompanion(name: String, parentScope: Option[ImplDef]) = parentScope match {
     case Some(scope) => scope.impl.body.collect {
       case c: ClassDef if config.isAlreadyRep && c.name.toString == name + "Companion" =>
         if (c.mods.isTrait) traitDef(c, parentScope) else classDef(c, parentScope)
@@ -139,7 +189,7 @@ trait ScalanParsers {
     val body = td.impl.body.flatMap(optBodyItem(_, Some(td)))
     val selfType = this.selfType(td.impl.self)
     val name = td.name.toString
-    val companion = findCompaion(name, parentScope)
+    val companion = findCompanion(name, parentScope)
     val annotations = parseAnnotations(td)((n,as) => STraitOrClassAnnotation(n,as.map(parseExpr)))
     STraitDef(name, tpeArgs, ancestors, body, selfType, companion, annotations)
   }
@@ -167,7 +217,7 @@ trait ScalanParsers {
     val selfType = this.selfType(cd.impl.self)
     val isAbstract = cd.mods.hasAbstractFlag
     val name = cd.name.toString
-    val companion = findCompaion(name, parentScope)
+    val companion = findCompanion(name, parentScope)
     val annotations = parseAnnotations(cd)((n,as) => STraitOrClassAnnotation(n,as.map(parseExpr)))
     SClassDef(cd.name, tpeArgs, args, implicitArgs, ancestors, body, selfType, companion, isAbstract, annotations)
   }

@@ -2,7 +2,13 @@ package scalan.compilation
 
 import scalan.ScalanExp
 
-trait Passes { self: ScalanExp =>
+trait Passes {
+  val scalan: ScalanExp
+  import scalan._
+
+  // to avoid need to import compiler.scalan.Exp in many places
+  type Exp[+T] = scalan.Exp[T]
+
   trait Pass {
     def name: String
 

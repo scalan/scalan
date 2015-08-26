@@ -9,7 +9,7 @@ trait Seqs extends Base with TypeWrappers { self: ScalanCommunityDsl =>
   type RSeq[A] = Rep[SSeq[A]]
 
   /** Iterable collection that have a defined order of elements. */
-  @ContainerType
+  @ContainerType @FunctorType
   trait SSeq[A] extends TypeWrapper[Seq[A], SSeq[A]] { self =>
     implicit def eA: Elem[A]
     def wrappedValueOfBaseType: Rep[Seq[A]]
@@ -68,9 +68,6 @@ trait Seqs extends Base with TypeWrappers { self: ScalanCommunityDsl =>
   def DefaultOfSeq[A: Elem]: Default[Seq[A]] = Default.defaultVal(Seq.empty[A])
 }
 
-trait SeqsDsl extends impl.SeqsAbs { self: ScalanCommunityDsl =>
-}
-
 trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
   trait SeqSSeq[A] extends SSeqImpl[A] {
     override def map[B:Elem](f: Rep[A => B]): Rep[SSeq[B]] = SSeqImpl(wrappedValueOfBaseType.map(f))
@@ -106,37 +103,4 @@ trait SeqsDslExp extends impl.SeqsExp { self: ScalanCommunityDslExp =>
     case _ => super.rewriteDef(d)
   }
 
-}
-
-trait SeqsScalaMethodMapping extends SeqsDslExp with CommunityMethodMappingDSL { self: ScalanCommunityDslExp =>
-  import scala.reflect.runtime.universe._
-  import scala.language.reflectiveCalls
-
-  new ScalaMappingDSL with MappingTags {
-
-    val scalan_collections_SSeq = {
-      val sseqClass = findDefinition(SSeq) match {
-        case Some(TableEntry(sym, rhs)) =>
-          rhs.getClass
-      }
-
-      new ClassType(Symbol(sseqClass.getName)) {
-        val apply = Method('apply, typeOf[Seq[_]], MethodArg(typeOf[Array[_]]))
-        val single = Method('single, typeOf[Seq[_]])
-        val empty = Method('empty, typeOf[Seq[_]])
-      }
-    }
-
-    val scala_collection_Seq = new ScalaLib() {
-      val arrayToList = ScalaFunc(Symbol("(new AnyRef {def apply[T](arr: Array[T]):List[T] = arr.toList})"))(false)
-      val single = ScalaFunc(Symbol("scala.collection.Seq"))(false)
-      val empty = ScalaFunc(Symbol("Seq.empty"))(false)
-    }
-
-    val mapping = new ScalaMapping {
-      val functionMap = Map( scalan_collections_SSeq.apply -> scala_collection_Seq.arrayToList
-        , scalan_collections_SSeq.empty -> scala_collection_Seq.empty
-        , scalan_collections_SSeq.single -> scala_collection_Seq.single)
-    }
-  }
 }

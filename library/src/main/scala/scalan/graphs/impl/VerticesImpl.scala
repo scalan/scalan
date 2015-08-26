@@ -1,11 +1,12 @@
 package scalan.graphs
-package impl
 
 import scalan.collections.CollectionsDsl
 import scalan.{Scalan, ScalanExp, ScalanSeq}
 import scalan.ScalanCommunityDsl
 import scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}
+import scalan.meta.ScalanAst._
 
+package impl {
 // Abs -----------------------------------
 trait VerticesAbs extends Vertices with scalan.Scalan {
   self: GraphsDsl =>
@@ -18,6 +19,14 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   // familyElem
   class VertexElem[V, E, To <: Vertex[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
     extends EntityElem[To] {
+    lazy val parent: Option[Elem[_]] = None
+    lazy val entityDef: STraitOrClassDef = {
+      val module = getModules("Vertices")
+      module.entities.find(_.name == "Vertex").get
+    }
+    lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
     override def isEntityType = true
     override lazy val tag = {
       implicit val tagV = eV.tag
@@ -49,14 +58,22 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     override def toString = "Vertex"
   }
   def Vertex: Rep[VertexCompanionAbs]
-  implicit def proxyVertexCompanion(p: Rep[VertexCompanion]): VertexCompanion = {
+  implicit def proxyVertexCompanion(p: Rep[VertexCompanion]): VertexCompanion =
     proxyOps[VertexCompanion](p)
-  }
 
   // elem for concrete class
   class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends VertexElem[V, E, SVertex[V, E]]
     with ConcreteElem[SVertexData[V, E], SVertex[V, E]] {
+    override lazy val parent: Option[Elem[_]] = Some(vertexElement(element[V], element[E]))
+    override lazy val entityDef = {
+      val module = getModules("Vertices")
+      module.concreteSClasses.find(_.name == "SVertex").get
+    }
+    override lazy val tyArgSubst: Map[String, TypeDesc] = {
+      Map("V" -> Left(eV), "E" -> Left(eE))
+    }
+
     override def convertVertex(x: Rep[Vertex[V, E]]) = SVertex(x.id, x.graph)
     override def getDefaultRep = super[ConcreteElem].getDefaultRep
     override lazy val tag = {
@@ -116,6 +133,8 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   // 6) smart constructor and deconstructor
   def mkSVertex[V, E](id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]
   def unmkSVertex[V, E](p: Rep[Vertex[V, E]]): Option[(Rep[Int], Rep[Graph[V,E]])]
+
+  registerModule(scalan.meta.ScalanCodegen.loadModule(Vertices_Module.dump))
 }
 
 // Seq -----------------------------------
@@ -308,3 +327,14 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   object VertexCompanionMethods {
   }
 }
+
+object Vertices_Module {
+  val packageName = "scalan.graphs"
+  val name = "Vertices"
+  val dump = "H4sIAAAAAAAAALVWTWwbRRR+u4nj2A5JqFBRK4FDMCAQ2CEC9ZBDlbpOVOTGVraNkKmQxuuxM2V2djMzjmwOPXCEG+KKUO+9cUFC6gUhIQ6cECBx5lSKqgroCcTM7I/XiR2iIvYw2pl9+36+73tv9859yAgOLwoXUcTKHpao7Jj7TSFLTo1JIodX/U6f4su4+8HZL9yr7JKwYakFc/tIXBa0BbnwpjYIknsHH9Qhh5iLhfS5kPBc3USouD6l2JXEZxXieX2J2hRX6kTIjTrMtv3O8ABugVWHZddnLscSO1WKhMAiOp/HOiOS7HNmP2wEoxisoquopKq4xhGRKn0VYzm038WBM2Q+G3oSFqPUGoFOS9lkiRf4XMYhssrdvt+Jt7MMqQM4U7+JDlFFhehVHMkJ66k3CwFy30M9vKNMtPmsSlhg2r02DMx+pg55gQ8UQFe8gJqTQQAAioF1k0R5hE85waes8Sk5mBNEyftIP2xyfzCE8LJmAAaBcvHqv7iIPeAa65Q+vOG+88gpeLZ+eaBTyZoK55Sj4hQ1GCoUjt/sfiwebt++YEO+BXkiNttCcuTKNOURWgXEmC9NzgmAiPcUW6vT2DJRNpXNEUnkXN8LEFOeIigXFE+UuERqY322ELEzBfqsDHBsag0CK6l3ZUq9RjdVRGnz3rnXXvi19rYN9niInHLpKOHz2KmEuT3MJR5EzvW6JMHaGyGstzWz1UtuMFqzJ+SSoPLSvd86X6/BDTvBMgp9OvqUi4z46YfC9y9ftGG+ZcS+RVGvpeAUNYq9Bq/6TLZg3j/EPHySPURU302kM9vBXdSnMgI5jc6MQkfCytS2DLCGbsO0gBUDUAhVvOMzXNpqlv50vv3kjhYph4XwSdinf5MLf/282JVGvxJs0onBnVHNnWDx/DRqA9zkxFOj5BC/+dWX1x/c3ckYds9E5ewh2sdhY0fVjCrTAa01FekKkyF7Jt75pAy9FCVkehwF+3FednP7cUWRDyt3fA8/ufqQvHv7I2notwbjg6jRvqk6f8O89+wJSogH4h+tNfv3cz9+ZkNOEd4m0kNBae2Ubfw/tiaMA7VYjT4GRsHr4w+zTthwk8Eb0aE4W45Mq+lsiyMSnk55Pm8dIdPGe3HIWd0nE7lMq+G4g9pJDo6zP15bMdH0M9M1rTA8u1t/it6/eNeGzFuQ6aq2FXXItP0+68TkqG+rciovxWfWODmKDMSRl5BhrhUYgTUu3cZEg+PlpOp94wjBuV1MukR/qMbP/8MsTfNvTF+fGLmgRbiFPEKH6xNjn0JWS1NVFYy5KaYCTAbtMVDV6/WRTWQ4r6MS3cPwRKSWcBZFUHBYnSIiJ2pMNR1uPfp055XvPv/FzMW8bnE1k1nyX5Seh0fo3Dax1G9OKl2let30JtV/ANIphAl2CgAA"
+}
+}
+
+trait VerticesDsl extends impl.VerticesAbs {self: GraphsDsl =>}
+trait VerticesDslSeq extends impl.VerticesSeq {self: GraphsDslSeq =>}
+trait VerticesDslExp extends impl.VerticesExp {self: GraphsDslExp =>}

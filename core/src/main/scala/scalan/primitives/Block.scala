@@ -17,7 +17,6 @@ trait BlocksSeq extends Blocks { self: ScalanSeq =>
 
 trait BlocksExp extends Blocks { self: ScalanExp =>
   case class Semicolon[A,B](left: Exp[A], right: Exp[B])(implicit selfType: Elem[B]) extends BaseDef[B] {
-    def uniqueOpId = name(selfType)
     override def mirror(t: Transformer) = Semicolon(t(left), t(right))
   }
 

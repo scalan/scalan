@@ -12,7 +12,8 @@ case class CodegenConfig(
   seqContextTrait: String = "scalan.ScalanSeq",
   stagedContextTrait: String = "scalan.ScalanExp",
   extraImports: List[String] = List(
-    "scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}"),
+    "scala.reflect.runtime.universe.{WeakTypeTag, weakTypeTag}",
+    "scalan.meta.ScalanAst._"),
   isAlreadyRep: Boolean = true
 )
 
