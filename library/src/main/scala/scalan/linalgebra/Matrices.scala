@@ -4,6 +4,7 @@ package scalan.linalgebra
   * Created by Victor Smirnov on 3/12/15.
   */
 
+
 import scalan._
 import scalan.common.OverloadHack.{Overloaded2, Overloaded1}
 import scala.annotation.unchecked.uncheckedVariance
@@ -235,6 +236,82 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     }
   }
 
+  abstract class DiagonalMatrix[T](val diagonalValues: Rep[Collection[T]])
+                                   (implicit val eT: Elem[T]) extends AbstractMatrix[T] {
+
+    def numColumns: Rep[Int] = diagonalValues.length
+    def numRows: Rep[Int] = numColumns
+    def rmValues : Rep[Collection[T]] = SparseVector1(
+      Collection.indexRange(numColumns).map { i : Rep[Int] =>  (i * i, diagonalValues(i))},
+      numColumns * numColumns
+    ).items
+    def items = rmValues
+    def companion = DiagonalMatrix
+
+    def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = Collection.indexRange(numColumns).map { i =>
+      SparseVector(Collection.replicate(i, 1), diagonalValues.slice(i, 1), numColumns)
+    }
+    def rows: Coll[AbstractVector[T]] = Collection.indexRange(numColumns).map { i =>
+      SparseVector(Collection.replicate(i, 1), diagonalValues.slice(i, 1), numRows)
+    }
+
+    @OverloadId("rows")
+    def apply(iRows: Coll[Int])(implicit o: Overloaded1): Matrix[T] = {
+      companion(iRows.map(i => diagonalValues(i)))
+    }
+    @OverloadId("row")
+    def apply(row: Rep[Int]): Vector[T] = SparseVector(Collection.replicate(row, 1), diagonalValues.slice(row, 1), numColumns)
+    def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = if (row == column) diagonalValues(row) else eT.defaultRepValue
+
+    def mapBy[R: Elem](f: Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]): Matrix[R] = {
+      DenseFlatMatrix.fromRows(rows.mapBy(f), numColumns)
+    }
+
+    def fromCellIndex(iCell: Rep[Int]): Rep[(Int, Int)] = Pair(iCell /! numColumns, iCell % numColumns)
+    def toCellIndex(iRow: Rep[Int], iCol: Rep[Int]): Rep[Int] = numColumns * iRow + iCol
+
+    def transpose(implicit n: Numeric[T]): Matrix[T] = self
+
+    def reduceByColumns(implicit m: RepMonoid[T], n: Numeric[T]): Vector[T] = DenseVector(diagonalValues)
+
+    @OverloadId("matrix")
+    def *(matrix: Matrix[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T] = {
+      matrix match {
+        case DiagonalMatrixMatcher(diagonalValues1) =>
+          DiagonalMatrix((DenseVector(diagonalValues) *^ DenseVector(diagonalValues1)).items)
+        case _ =>
+          DenseFlatMatrix(items, numColumns) * matrix
+      }
+    }
+
+    def +^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
+      other match {
+        case DiagonalMatrixMatcher(diagonalValues1) =>
+          DiagonalMatrix((DenseVector(diagonalValues) +^ DenseVector(diagonalValues1)).items)
+        case _ =>
+          other +^^ DenseFlatMatrix(items, numColumns)
+      }
+    }
+
+    @OverloadId("matrix")
+    def *^^(other: Matrix[T])(implicit n: Numeric[T]): Matrix[T] = {
+      other match {
+        case DiagonalMatrixMatcher(diagonalValues1) =>
+          DiagonalMatrix((DenseVector(diagonalValues) *^ DenseVector(diagonalValues1)).items)
+        case _ =>
+          other *^^ DenseFlatMatrix(items, numColumns)
+      }
+    }
+
+    def *^^(value: Rep[T])(implicit n: Numeric[T], o: Overloaded1): Matrix[T] = {
+      companion(diagonalValues.map(x => x * value))
+    }
+
+    def average(implicit f: Fractional[T], m: RepMonoid[T]): DoubleRep = {
+      diagonalValues.reduce.toDouble / diagonalValues.length.toDouble
+    }
+  }
+
   trait AbstractMatrixCompanion extends TypeFamily1[AbstractMatrix] {
 
     def fromColumns[T: Elem](cols: Rep[Collection[AbstractVector[T]]]): Matrix[T] = {
@@ -285,6 +362,17 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       CompoundMatrix(rows, length)
     }
   }
+
+  trait DiagonalMatrixCompanion extends ConcreteClass1[DiagonalMatrix] with AbstractMatrixCompanion {
+    override def fromColumns[T: Elem](cols: Coll[AbstractVector[T]]): Matrix[T] = ???
+    override def fromNColl[T](items: NColl[(Int, T)], numColumns: Rep[Int])
+                             (implicit elem: Elem[T], o: Overloaded1): Matrix[T] = ???
+    @OverloadId("dense")
+    override def fromNColl[T](items: NColl[T], numColumns: Rep[Int])
+                             (implicit elem: Elem[T], o: Overloaded2): Matrix[T] = ???
+    override def fromRows[T: Elem](rows: Coll[AbstractVector[T]], length: IntRep): Matrix[T] = ???
+  }
+
 }
 
 trait MatricesDsl extends impl.MatricesAbs with VectorsDsl { self: ScalanCommunityDsl =>
