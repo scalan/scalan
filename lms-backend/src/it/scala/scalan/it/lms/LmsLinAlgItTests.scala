@@ -88,6 +88,42 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     compareOutputWithSequential(progStagedU, progSeq)(_.fsmvm, "fsmvm", in)
   }
 
+  test("cdmvm") {
+    val inM = (3.0, (2, 2))
+    val inV = Array(2.0, 3.0)
+    val in = Pair(inM, inV)
+    val out = Array(15.0, 15.0)
+    compareOutputWithExpected(progStaged)(out, _.cdmvm, "cdmvm_out", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.cdmvm, "cdmvm", in)
+  }
+
+  test("csmvm") {
+    val inM = (3.0, (2, 2))
+    val inV = sparseVectorData(Array(2.0, 3.0))
+    val in = Pair(inM, inV)
+    val out = Array(15.0, 15.0)
+    compareOutputWithExpected(progStaged)(out, _.csmvm, "csmvm_out", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.csmvm, "csmvm", in)
+  }
+
+  test("dcmvm") {
+    val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
+    val inV = (2.0, 2)
+    val in = Pair(inM, inV)
+    val out = Array(4.0, 2.0)
+    compareOutputWithExpected(progStaged)(out, _.dcmvm, "dcmvm_out", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.dcmvm, "dcmvm", in)
+  }
+
+  test("ccmvm") {
+    val inM = (3.0, (2, 2))
+    val inV = (2.0, 2)
+    val in = Pair(inM, inV)
+    val out = Array(12.0, 12.0)
+    compareOutputWithExpected(progStaged)(out, _.ccmvm, "ccmvm_out", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.ccmvm, "ccmvm", in)
+  }
+
   test("ddmvm0") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = Array(2.0, 3.0)
@@ -175,6 +211,25 @@ class LmsMmmItTests extends LmsLinAlgItTests {
     compareOutputWithSequential(progStaged, progSeq)(_.ffmmm, "ffmmm", in)
     compareOutputWithSequential(progStagedU, progSeq)(_.ffmmm, "ffmmm", in)
   }
+
+  test("ccmmm") {
+    val inM1 = (3.0, (2, 2))
+    val inM2 = (2.0, (2, 2))
+    val in = Pair(inM1, inM2)
+    val out = Array(Array(12.0, 12.0), Array(12.0, 12.0))
+    compareOutputWithExpected(progStaged)(out, _.ccmmm, "ccmmm", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.ccmmm, "ccmmm", in)
+  }
+
+  test("cfmmm") {
+    val inM1 = (3.0, (2, 2))
+    val inM2 = (Array(1.0, 1.0, 0.0, 1.0), 2)
+    val in = Pair(inM1, inM2)
+    val out = Array(Array(3.0, 6.0), Array(3.0, 6.0))
+    compareOutputWithExpected(progStaged)(out, _.cfmmm, "cfmmm", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.cfmmm, "cfmmm", in)
+  }
+
 }
 
 class AbstractElemItTests extends LmsLinAlgItTests {
@@ -291,4 +346,5 @@ class VectorMethodsItTests extends LmsLinAlgItTests {
     val in = Array(1, 2, 4)
     compareOutputWithSequential(progStaged, progSeq)(_.collReplicateFilter, "collReplicateFilter", in)
   }
+
 }

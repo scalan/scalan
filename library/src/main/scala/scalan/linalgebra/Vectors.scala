@@ -143,6 +143,85 @@ trait Vectors { self: ScalanCommunityDsl =>
     def companion = DenseVector
   }
 
+  abstract class ConstVector[T](val item: Rep[T], val length: Rep[Int])
+                               (implicit val eT: Elem[T])
+    extends AbstractVector[T] {
+
+    def items: Rep[Collection[T]] = Collection.replicate(length, item)
+    def nonZeroIndices: Rep[Collection[Int]] = IF (item !== zeroValue) THEN Collection.indexRange(length) ELSE Collection.empty[Int]
+    def nonZeroValues:  Rep[Collection[T]] =  IF (item !== zeroValue) THEN items ELSE Collection.empty[T]
+    def nonZeroItems:   Rep[Collection[(Int, T)]] = nonZeroIndices zip nonZeroValues
+
+    def apply(i: Rep[Int]): Rep[T] = item
+    @OverloadId("apply_by_collection")
+    def apply(is: Coll[Int])(implicit o: Overloaded1): Vector[T] = ConstVector(item, is.length)
+
+    def mapBy[R: Elem](f: Rep[T => R @uncheckedVariance]): Vector[R] = ConstVector(f(item), length)
+    def filterBy(f: Rep[T @uncheckedVariance => Boolean]): Vector[T] = IF (f(item)) THEN ConstVector(item, length) ELSE ConstVector(item, 0)
+
+    def +^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+      other match {
+        case ConstVectorMatcher(otherItem, _) =>
+          ConstVector(item + otherItem, length)
+        case SparseVectorMatcher(nonZeroIndices, nonZeroValues, _) =>
+          val nonZeroValuesNew = nonZeroValues.map { v => v + item }
+          DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
+        case _ =>
+          DenseVector(other.items.map { v => v + item })
+      }
+    }
+
+    @OverloadId("elementwise_sum_value")
+    def +^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      ConstVector(item + other, length)
+    }
+
+    def -^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+      other match {
+        case ConstVectorMatcher(otherItem, _) =>
+          ConstVector(item - otherItem, length)
+        case SparseVectorMatcher(nonZeroIndices, nonZeroValues, _) =>
+          val nonZeroValuesNew = nonZeroValues.map { v => v - item }
+          DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
+        case _ =>
+          DenseVector(other.items.map { v => v - item })
+      }
+    }
+    @OverloadId("elementwise_diff_value")
+    def -^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      ConstVector(item - other, length)
+    }
+
+    def *^(other: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+      other match {
+        case ConstVectorMatcher(otherItem, _) =>
+          ConstVector(item * otherItem, length)
+        case SparseVectorMatcher(nonZeroIndices, nonZeroValues, _) =>
+          val nonZeroValuesNew = nonZeroValues.map { v => v * item }
+          DenseVector(items.updateMany(nonZeroIndices, nonZeroValuesNew))
+        case _ =>
+          DenseVector(other.items.map { v => v * item })
+      }
+    }
+    @OverloadId("elementwise_mult_value")
+    def *^(other: Rep[T])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      ConstVector(item * other, length)
+    }
+
+    def pow_^(order: Rep[Double])(implicit n: Numeric[T], o: Overloaded2): Vector[T] = {
+      ConstVector(Math.pow(item.toDouble, order).asRep[T], length)
+    }
+
+    def reduce(implicit m: RepMonoid[T]): Rep[T] = items.reduce(m)
+    def dot(other: Vector[T])(implicit n: Numeric[T]): Rep[T] = {
+      (other *^ item).reduce
+    }
+
+    def euclideanNorm(implicit num: Numeric[T]): Rep[Double] = Math.sqrt(items.map(v => v * v).reduce.asRep[Double])
+
+    def companion = ConstVector
+  }
+
   abstract class SparseVector[T](val nonZeroIndices: Rep[Collection[Int]],
                                  val nonZeroValues: Rep[Collection[T]],
                                  val length: Rep[Int])(implicit val eT: Elem[T])
@@ -361,6 +440,15 @@ trait Vectors { self: ScalanCommunityDsl =>
     }
     override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
                                 nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vector[T] = ???
+  }
+
+  trait ConstVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
+    override def zero[T: Elem](len: Rep[Int]): Vector[T] = {
+      val zeroV = element[T].defaultRepValue
+      ConstVector(zeroV, len)
+    }
+    override def fromSparseData[T: Elem](nonZeroIndices: Rep[Collection[Int]],
+                                         nonZeroValues: Rep[Collection[T]], length: Rep[Int]): Vector[T] = ???
   }
 
   trait SparseVectorCompanion extends ConcreteClass1[AbstractVector] with AbstractVectorCompanion {
