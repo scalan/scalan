@@ -928,6 +928,18 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   }
 
   object ConstMatrixMethods {
+    object zeroValue {
+      def unapply(d: Def[_]): Option[Rep[ConstMatrix[T]] forSome {type T}] = d match {
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ConstMatrixElem[_]] && method.getName == "zeroValue" =>
+          Some(receiver).asInstanceOf[Option[Rep[ConstMatrix[T]] forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[Rep[ConstMatrix[T]] forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object companion {
       def unapply(d: Def[_]): Option[Rep[ConstMatrix[T]] forSome {type T}] = d match {
         case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[ConstMatrixElem[_]] && method.getName == "companion" =>
@@ -1084,9 +1096,33 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
       }
     }
 
+    object countNonZeroesByColumns {
+      def unapply(d: Def[_]): Option[(Rep[ConstMatrix[T]], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(n, _*), _) if receiver.elem.isInstanceOf[ConstMatrixElem[_]] && method.getName == "countNonZeroesByColumns" =>
+          Some((receiver, n)).asInstanceOf[Option[(Rep[ConstMatrix[T]], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ConstMatrix[T]], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
+    object * {
+      def unapply(d: Def[_]): Option[(Rep[ConstMatrix[T]], Vector[T], Numeric[T]) forSome {type T}] = d match {
+        case MethodCall(receiver, method, Seq(vector, n, _*), _) if receiver.elem.isInstanceOf[ConstMatrixElem[_]] && method.getName == "$times" && method.getAnnotation(classOf[scalan.OverloadId]) == null =>
+          Some((receiver, vector, n)).asInstanceOf[Option[(Rep[ConstMatrix[T]], Vector[T], Numeric[T]) forSome {type T}]]
+        case _ => None
+      }
+      def unapply(exp: Exp[_]): Option[(Rep[ConstMatrix[T]], Vector[T], Numeric[T]) forSome {type T}] = exp match {
+        case Def(d) => unapply(d)
+        case _ => None
+      }
+    }
+
     object matrix_* {
       def unapply(d: Def[_]): Option[(Rep[ConstMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}] = d match {
-        case MethodCall(receiver, method, Seq(matrix, n, _*), _) if receiver.elem.isInstanceOf[ConstMatrixElem[_]] && method.getName == "$times" =>
+        case MethodCall(receiver, method, Seq(matrix, n, _*), _) if receiver.elem.isInstanceOf[ConstMatrixElem[_]] && method.getName == "$times" && { val ann = method.getAnnotation(classOf[scalan.OverloadId]); ann != null && ann.value == "matrix" } =>
           Some((receiver, matrix, n)).asInstanceOf[Option[(Rep[ConstMatrix[T]], Matrix[T], Numeric[T]) forSome {type T}]]
         case _ => None
       }

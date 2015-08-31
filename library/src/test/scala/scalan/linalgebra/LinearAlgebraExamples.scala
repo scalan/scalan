@@ -64,6 +64,35 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     (matrix * vector).items.arr
   }
 
+  lazy val cdmvm = fun { p: Rep[((Double, (Int, Int)), Array[Double])] =>
+    val Pair(m, v) = p
+    val matrix: Matrix[Double] = ConstMatrix(m._1, m._2, m._3)
+    val vector: Vector[Double] = DenseVector(Collection(v))
+    (matrix * vector).items.arr
+  }
+
+  lazy val csmvm = fun { p: Rep[((Double, (Int, Int)), (Array[Int], (Array[Double], Int)))] =>
+    val Tuple(m, vIs, vVs, vL) = p
+    val matrix: Matrix[Double] = ConstMatrix(m._1, m._2, m._3)
+    val vector: Vector[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
+    (matrix * vector).items.arr
+  }
+
+  lazy val dcmvm = fun { p: Rep[(Array[Array[Double]], (Double, Int))] =>
+    val Pair(m, v) = p
+    val width = m(0).length
+    val matrix: Matrix[Double] = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
+    val vector: Vector[Double] = ConstVector(v._1, v._2)
+    (matrix * vector).items.arr
+  }
+
+  lazy val ccmvm = fun { p: Rep[((Double, (Int, Int)), (Double, Int))] =>
+    val Pair(m, v) = p
+    val matrix: Matrix[Double] = ConstMatrix(m._1, m._2, m._3)
+    val vector: Vector[Double] = ConstVector(v._1, v._2)
+    (matrix * vector).items.arr
+  }
+
   lazy val ddmvm0 = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0).length
@@ -135,6 +164,20 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
   lazy val ffmmm = fun { p: Rep[((Array[Double], Int), (Array[Double], Int))] =>
     val Pair(m1, m2) = p
     val matrix1 = DenseFlatMatrix(Collection(m1._1), m1._2)
+    val matrix2 = DenseFlatMatrix(Collection(m2._1), m2._2)
+    (matrix1 * matrix2).rows.arr.map(_.items.arr)
+  }
+
+  lazy val ccmmm = fun { p: Rep[((Double, (Int, Int)), (Double, (Int, Int)))] =>
+    val Pair(m1, m2) = p
+    val matrix1 = ConstMatrix(m1._1, m1._2, m1._3)
+    val matrix2 = ConstMatrix(m2._1, m2._2, m2._3)
+    (matrix1 * matrix2).rows.arr.map(_.items.arr)
+  }
+
+  lazy val cfmmm = fun { p: Rep[((Double, (Int, Int)), (Array[Double], Int))] =>
+    val Pair(m1, m2) = p
+    val matrix1 = ConstMatrix(m1._1, m1._2, m1._3)
     val matrix2 = DenseFlatMatrix(Collection(m2._1), m2._2)
     (matrix1 * matrix2).rows.arr.map(_.items.arr)
   }
@@ -254,4 +297,19 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     val csFilt = cs.filter(coll => coll.length > 0)
     csFilt.map(coll => coll.arr)
   }
+
+  lazy val denseVector = fun { p: Rep[Array[Double]] =>
+    DenseVector(Collection(p))
+  }
+  lazy val constVector = fun { p: Rep[(Double, Int)] =>
+    ConstVector(p._1, p._2)
+  }
+
+  lazy val flatMatrix = fun { p: Rep[(Array[Double], Int)] =>
+    DenseFlatMatrix(Collection(p._1), p._2)
+  }
+  lazy val constMatrix = fun { p: Rep[(Double, (Int, Int))] =>
+    ConstMatrix(p._1, p._2, p._3)
+  }
+
 }

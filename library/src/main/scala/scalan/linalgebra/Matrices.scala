@@ -237,16 +237,16 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
   abstract class ConstMatrix[T](val item: Rep[T], val numColumns: Rep[Int], val numRows: Rep[Int])
                                    (implicit val eT: Elem[T]) extends AbstractMatrix[T] {
+
+    def zeroValue = eT.defaultRepValue
     def companion = ConstMatrix
     def rmValues: Rep[Collection[T]] = Collection.replicate(numColumns*numRows, item)
     def items = rmValues
     def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = {
-      Collection.indexRange(numColumns).map { i =>
-        DenseVector(Collection.replicate(numRows, item))}
+      Collection.indexRange(numColumns).map { i => ConstVector(item, numRows) }
     }
-    def rows: Coll[DenseVector[T]] = {
-      Collection.indexRange(numRows).map { i =>
-        DenseVector(Collection.replicate(numColumns, item))}
+    def rows: Coll[ConstVector[T]] = {
+      Collection.indexRange(numRows).map { i => ConstVector(item, numColumns) }
     }
 
     @OverloadId("rows")
@@ -254,7 +254,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
       companion(item, numColumns, iRows.length)
     }
     @OverloadId("row")
-    def apply(row: Rep[Int]): Vector[T] = DenseVector(Collection.replicate(numColumns, item))
+    def apply(row: Rep[Int]): Vector[T] = ConstVector(item, numColumns)
     def apply(row: Rep[Int], column: Rep[Int]): Rep[T] = item
 
     def mapBy[R: Elem](f: Rep[AbstractVector[T] => AbstractVector[R] @uncheckedVariance]): Matrix[R] = {
@@ -271,6 +271,15 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
         Collection.indexRange(numRows).map { row => item }.reduce
       }
       DenseVector(coll)
+    }
+
+    override def countNonZeroesByColumns(implicit n: Numeric[T]): Vector[Int] = {
+      ConstVector(IF (item !== zeroValue) THEN numRows ELSE 0, numColumns)
+    }
+
+    override def *(vector: Vector[T])(implicit n: Numeric[T]): Vector[T] = {
+      val dot = vector.reduce * item
+      ConstVector(dot, numRows)
     }
 
     @OverloadId("matrix")
