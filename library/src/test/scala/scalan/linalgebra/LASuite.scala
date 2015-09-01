@@ -67,4 +67,27 @@ class LASuite extends BaseShouldTests {
 
   }
 
+  "DiagonalMatrix" should "return same results as DenseFlatMatrix" in {
+    val ctx = new ScalanCtxSeq with ScalanCommunityDslSeq with LinearAlgebraExamples {}
+    val dm = ctx.diagonalMatrix(Array(1.0, 2.0, 3.0, 4.0))
+    val fm = ctx.flatMatrix((Array(1.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 4.0), 4))
+    val dv = ctx.denseVector(Array(2.0, 3.0, 4.0, 5.0))
+
+    dm.numColumns should be(fm.numColumns)
+    dm.numRows should be(fm.numRows)
+    dm.rmValues should be(fm.rmValues)
+    dm.apply(1).items should be(fm.apply(1).items)
+    dm.apply(2).items should be(fm.apply(2).items)
+    dm.rows(2).items should be(fm.rows(2).items)
+    dm.apply(1, 1) should be(fm.apply(1, 1))
+    dm.apply(1, 2) should be(fm.apply(1, 2))
+    dm.countNonZeroesByColumns.items should be(fm.countNonZeroesByColumns.items)
+    dm.*(dv).items should be(fm.*(dv).items)
+    dm.*(fm.transpose).rmValues should be(fm.*(dm.transpose).rmValues)
+    dm.+^^(fm).rmValues should be(fm.+^^(dm).rmValues)
+    dm.*^^(fm).rmValues should be(fm.*^^(dm).rmValues)
+    dm.*^^(2.0).rmValues should be(fm.*^^(2.0).rmValues)
+
+  }
+
 }

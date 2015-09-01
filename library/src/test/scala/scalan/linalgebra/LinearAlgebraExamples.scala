@@ -93,6 +93,27 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     (matrix * vector).items.arr
   }
 
+  lazy val dgdmvm = fun { p: Rep[(Array[Double], Array[Double])] =>
+    val Pair(m, v) = p
+    val matrix: Matrix[Double] = DiagonalMatrix(Collection(m))
+    val vector: Vector[Double] = DenseVector(Collection(v))
+    (matrix * vector).items.arr
+  }
+
+  lazy val dgsmvm = fun { p: Rep[(Array[Double], (Array[Int], (Array[Double], Int)))] =>
+    val Tuple(m, vIs, vVs, vL) = p
+    val matrix: Matrix[Double] = DiagonalMatrix(Collection(m))
+    val vector: Vector[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
+    (matrix * vector).items.arr
+  }
+
+  lazy val dgcmvm = fun { p: Rep[(Array[Double], (Double, Int))] =>
+    val Pair(m, v) = p
+    val matrix: Matrix[Double] = DiagonalMatrix(Collection(m))
+    val vector: Vector[Double] = ConstVector(v._1, v._2)
+    (matrix * vector).items.arr
+  }
+
   lazy val ddmvm0 = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0).length
@@ -179,6 +200,20 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
     val Pair(m1, m2) = p
     val matrix1 = ConstMatrix(m1._1, m1._2, m1._3)
     val matrix2 = DenseFlatMatrix(Collection(m2._1), m2._2)
+    (matrix1 * matrix2).rows.arr.map(_.items.arr)
+  }
+
+  lazy val dgfmmm = fun { p: Rep[(Array[Double], (Array[Double], Int))] =>
+    val Pair(m1, m2) = p
+    val matrix1 = DiagonalMatrix(Collection(m1))
+    val matrix2 = DenseFlatMatrix(Collection(m2._1), m2._2)
+    (matrix1 * matrix2).rows.arr.map(_.items.arr)
+  }
+
+  lazy val dgdgmmm = fun { p: Rep[(Array[Double], Array[Double])] =>
+    val Pair(m1, m2) = p
+    val matrix1 = DiagonalMatrix(Collection(m1))
+    val matrix2 = DiagonalMatrix(Collection(m2))
     (matrix1 * matrix2).rows.arr.map(_.items.arr)
   }
 
@@ -310,6 +345,10 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
   }
   lazy val constMatrix = fun { p: Rep[(Double, (Int, Int))] =>
     ConstMatrix(p._1, p._2, p._3)
+  }
+
+  lazy val diagonalMatrix = fun { p: Rep[Array[Double]] =>
+    DiagonalMatrix(Collection(p))
   }
 
 }
