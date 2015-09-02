@@ -124,6 +124,33 @@ class LmsMvmItTests extends LmsLinAlgItTests {
     compareOutputWithSequential(progStaged, progSeq)(_.ccmvm, "ccmvm", in)
   }
 
+  test("dgdmvm") {
+    val inM = Array(1.0, 2.0, 3.0)
+    val inV = Array(2.0, 4.0, 6.0)
+    val in = Pair(inM, inV)
+    val out = Array(2.0, 8.0, 18.0)
+    compareOutputWithExpected(progStaged)(out, _.dgdmvm, "dgdmvm_out", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.dgdmvm, "dgdmvm", in)
+  }
+
+  test("dgsmvm") {
+    val inM = Array(1.0, 2.0, 3.0)
+    val inV = sparseVectorData(Array(2.0, 4.0, 6.0))
+    val in = Pair(inM, inV)
+    val out = Array(2.0, 8.0, 18.0)
+    compareOutputWithExpected(progStaged)(out, _.dgsmvm, "dgsmvm_out", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.dgsmvm, "dgsmvm", in)
+  }
+
+  test("dgcmvm") {
+    val inM = Array(1.0, 2.0, 3.0)
+    val inV = (2.0, 3)
+    val in = Pair(inM, inV)
+    val out = Array(2.0, 4.0, 6.0)
+    compareOutputWithExpected(progStaged)(out, _.dgcmvm, "dgcmvm_out", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.dgcmvm, "dgcmvm", in)
+  }
+
   test("ddmvm0") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = Array(2.0, 3.0)
@@ -228,6 +255,24 @@ class LmsMmmItTests extends LmsLinAlgItTests {
     val out = Array(Array(3.0, 6.0), Array(3.0, 6.0))
     compareOutputWithExpected(progStaged)(out, _.cfmmm, "cfmmm", in)
     compareOutputWithSequential(progStaged, progSeq)(_.cfmmm, "cfmmm", in)
+  }
+
+  test("dgfmmm") {
+    val inM1 = Array(2.0, 3.0)
+    val inM2 = (Array(1.0, 1.0, 0.0, 1.0), 2)
+    val in = Pair(inM1, inM2)
+    val out = Array(Array(2.0, 2.0), Array(0.0, 3.0))
+    compareOutputWithExpected(progStaged)(out, _.dgfmmm, "dgfmmm", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.dgfmmm, "dgfmmm", in)
+  }
+
+  test("dgdgmmm") {
+    val inM1 = Array(2.0, 3.0)
+    val inM2 = Array(2.0, 3.0)
+    val in = Pair(inM1, inM2)
+    val out = Array(Array(4.0, 0.0), Array(0.0, 9.0))
+    compareOutputWithExpected(progStaged)(out, _.dgdgmmm, "dgdgmmm", in)
+    compareOutputWithSequential(progStaged, progSeq)(_.dgdgmmm, "dgdgmmm", in)
   }
 
 }
