@@ -927,8 +927,14 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           |""".stripAndTrim
       }
       else {
+        val weakTagsForTpeArgs = templateData.tpeArgUses.map{argName =>
+          s"implicit val w$argName = element[$argName].tag;"
+        }.reduce(_ + _)
         s"""
-          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] = new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
+          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] = {
+          |     $weakTagsForTpeArgs
+          |     new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
+          |  }
           |""".stripAndTrim
       })
 
