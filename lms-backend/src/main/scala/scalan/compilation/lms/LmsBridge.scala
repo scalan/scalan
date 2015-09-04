@@ -151,8 +151,9 @@ trait LmsBridge extends Passes {
 
     val lmsMethodMirror = lmsMirror.reflectMethod(lmsMethod)
 
-    val areParamsFunctions = lmsMethod.paramLists.flatten.map {
-      _.asTerm.typeSignature match {
+    // need to filter out SourceContext parameter
+    val areParamsFunctions = for (param <- lmsMethod.paramLists.flatten; if(param.asTerm.typeSignature != typeOf[SourceContext])) yield {
+      param.asTerm.typeSignature match {
         // we only check it's a function here, could check argument/result types if necessary
         case TypeRef(_, FunctionSym, _) => true
         case _ => false
