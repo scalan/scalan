@@ -1173,8 +1173,12 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
               val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.declaration).toSet
               val returnType = {
                 val receiverType = s"Rep[${e.name + typeArgString(e.tpeArgs.map(_.name))}]"
-                val argTypes = if (config.isAlreadyRep) methodArgs.map(_.tpe.toString)
-                               else methodArgs.map("Rep[" + _.tpe.toString + "]")
+                val argTypes = methodArgs.map{ arg =>
+                    if (config.isAlreadyRep || arg.isElemOrCont)
+                      arg.tpe.toString
+                    else
+                      "Rep[" + arg.tpe.toString + "]"
+                  }
                 val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
                   case Seq() => "Unit"
                   case Seq(single) => single
