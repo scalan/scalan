@@ -1024,18 +1024,50 @@ class EntityFileGenerator(val codegen: MetaCodegen, module: SEntityModuleDef, co
         }
       }
 
-      def methodExtractor(m: SMethodDef) = {
-        reasonToSkipMethod(m) match {
-          case Some(reason) =>
-            s"    // WARNING: Cannot generate matcher for method `${m.name}`: $reason"
-          case _ =>
-            // DummyImplicit and Overloaded* are ignored, since
-            // their values are never useful
-            val methodArgs = m.allArgs.takeWhile { arg =>
-              arg.tpe match {
-                case STraitCall(name, _) =>
-                  !(name == "DummyImplicit" || name.startsWith("Overloaded"))
-                case _ => true
+        def methodExtractor(m: SMethodDef) = {
+          reasonToSkipMethod(m) match {
+            case Some(reason) =>
+              //println(s"    WARNING: Cannot generate matcher for method `${e.name}.${m.name}`: $reason")
+              s"    // WARNING: Cannot generate matcher for method `${m.name}`: $reason"
+            case _ =>
+              // DummyImplicit and Overloaded* are ignored, since
+              // their values are never useful
+              val methodArgs = m.allArgs.takeWhile { arg =>
+                arg.tpe match {
+                  case STraitCall(name, _) =>
+                    !(name == "DummyImplicit" || name.startsWith("Overloaded"))
+                  case _ => true
+                }
+              }
+              val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.declaration).toSet
+              val returnType = {
+                val receiverType = s"Rep[${e.name + typeArgString(e.tpeArgs.map(_.name))}]"
+                val argTypes = methodArgs.map{ arg =>
+                    if (config.isAlreadyRep || arg.isElemOrCont)
+                      arg.tpe.toString
+                    else
+                      "Rep[" + arg.tpe.toString + "]"
+                  }
+                val receiverAndArgTypes = ((if (isCompanion) Nil else List(receiverType)) ++ argTypes) match {
+                  case Seq() => "Unit"
+                  case Seq(single) => single
+                  case many => many.mkString("(", ", ", ")")
+                }
+                s"Option[$receiverAndArgTypes${typeVars.opt(typeVars => s" forSome {${typeVars.map("type " + _).mkString("; ")}}")}]"
+              }
+              val overloadId = m.overloadId
+              val cleanedMethodName = ScalaNameUtil.cleanScalaName(m.name)
+              val matcherName = {
+                overloadId match {
+                  case None => cleanedMethodName
+                  case Some(id) =>
+                    // make a legal identifier containing overload id
+                    if (ScalaNameUtil.isOpName(cleanedMethodName)) {
+                      id + "_" + cleanedMethodName
+                    } else {
+                      cleanedMethodName + "_" + id
+                    }
+                }
               }
             }
             val typeVars = (e.tpeArgs ++ m.tpeArgs).map(_.declaration).toSet

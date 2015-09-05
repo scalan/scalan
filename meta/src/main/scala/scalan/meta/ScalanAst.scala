@@ -235,6 +235,7 @@ object ScalanAst {
     def default: Option[SExpr]
     def annotations: List[SArgAnnotation]
     def isArgList = annotations.exists(a => a.annotationClass == ArgListAnnotation)
+    def isElemOrCont: Boolean
   }
 
   case class SMethodArg(
