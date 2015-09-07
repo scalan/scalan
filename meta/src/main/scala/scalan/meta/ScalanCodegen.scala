@@ -324,6 +324,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
             s"scala.Function.untupled(${a.name})"
           else if (a.isArgList)
             s"${a.name}: _*"
+          else if (a.isElemOrCont)
+            s"${a.name}.classTag"
           else
             s"${a.name}"
         })

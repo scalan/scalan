@@ -424,7 +424,11 @@ trait ScalanParsers {
     val default = optExpr(vd.rhs)
     val annotations = parseAnnotations(vd)((n,as) => new SArgAnnotation(n, as.map(parseExpr)))
     val isOverride = vd.mods.isAnyOverride
-    SMethodArg(vd.mods.isImplicit, isOverride, vd.name, tpe, default, annotations)
+    val isElemOrCont = tpe match {
+      case STraitCall(tname, _) if tname == "Elem" || tname == "Cont" => true
+      case _ => false
+    }
+    SMethodArg(vd.mods.isImplicit, isOverride, vd.name, tpe, default, annotations, isElemOrCont)
   }
 
   def selfType(vd: ValDef): Option[SSelfTypeDef] = {
