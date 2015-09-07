@@ -309,7 +309,13 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         case None => ms
       }
 
-    def methodArgSection(sec: SMethodArgs) = s"(${sec.argNamesAndTypes(config).rep()})"
+    def methodArgSection(sec: SMethodArgs) = {
+      val implicitKeyWord = sec.args.headOption match {
+        case Some(arg) if arg.impFlag => "implicit "
+        case _ => ""
+      }
+      s"($implicitKeyWord${sec.argNamesAndTypes(config).rep()})"
+    }
 
     def methodArgsUse(sec: SMethodArgs) = {
       s"(${
