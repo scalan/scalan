@@ -329,7 +329,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       lazy val msgRepRetType = s"Invalid method $md. External methods should have return type of type Rep[T] for some T."
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
       val allArgs = md.argSections.flatMap(_.args)
-      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false)
+      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
       val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))
       val argClassesStr = allArgs.rep(a => s", classOf[AnyRef]", "")
       val elemClassesStr = (for {
@@ -356,7 +356,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
       val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))
       val allArgs = md.argSections.flatMap(_.args)
-      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false)
+      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
       s"""
         |    def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unrepRet.toString}] =
         |      newObjEx(classOf[$entityName${typesUse}], List(${allArgs.rep(a => s"${a.name}.asRep[Any]")}))
@@ -367,7 +367,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val msgExplicitRetType = "External methods should be declared with explicit type of returning value (result type)"
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
       val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgExplicitRetType))
-      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false)
+      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
       val typesUse = md.tpeArgs.getTpeArgUseString
       val methodHeader =
         s"""override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unrepRet.toString}] =
@@ -391,7 +391,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val msgExplicitRetType = "External constructors should be declared with explicit type of returning value (result type)"
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
       val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgExplicitRetType))
-      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false)
+      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
       s"""
         |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unrepRet.toString}] =
         |      ${entityName}Impl(new $entityNameBT${typesUse}${md.argSections.rep(methodArgsUse(_), "")})

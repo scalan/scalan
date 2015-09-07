@@ -35,10 +35,24 @@ trait ScalanAstExtensions {
     def getTpeArgDeclString = getTpeArgDecls.opt(tyArgs => s"[${tyArgs.rep(t => t)}]")
     def getTpeArgUseString = getTpeArgUse.opt(tyArgs => s"[${tyArgs.rep(t => t)}]")
 
-    def getBoundedTpeArgString(withTags: Boolean = false) =
+    def getBoundedTpeArgString(withTags: Boolean = false, methodArgs: List[SMethodArgs] = Nil) = {
+      def getElem(tpeArg: STpeArg) = {
+        if (tpeArg.hasElemBound(methodArgs)) s"${tpeArg.name}"
+        else s"${tpeArg.name}:Elem"
+      }
+      def getCont(tpeArg: STpeArg) = {
+        if (tpeArg.hasContBound(methodArgs)) s"${tpeArg.declaration}"
+        else s"${tpeArg.declaration}:Cont"
+      }
+      def getWeakTypeTag(tpeArg: STpeArg) = {
+        if (tpeArg.hasWeakTypeTagBound(methodArgs)) ""
+        else withTags.opt(":WeakTypeTag")
+      }
       args.opt(args =>
-        s"[${args.rep(t => (if (t.isHighKind) s"${t.declaration}:Cont" else s"${t.name}:Elem") +
-          withTags.opt(":WeakTypeTag"))}]")
+        s"[${
+          args.rep(t => (if (t.isHighKind) s"${t.declaration}:Cont" else getElem(t)) + getWeakTypeTag(t))
+        }]")
+    }
   }
 
   implicit class STpeDefOps(td: STpeDef) {
