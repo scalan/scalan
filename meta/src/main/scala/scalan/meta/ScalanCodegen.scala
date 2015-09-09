@@ -358,20 +358,25 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |""".stripMargin
     }
 
-    def externalConstructor(md: SMethodDef) = {
-      val msgExplicitRetType = "External constructors should be declared with explicit type of returning value (result type)"
-      lazy val msgRepRetType = s"Invalid constructor declaration $md. External constructors should have return type of type Rep[T] for some T."
-      val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
-      val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))
-      val allArgs = md.argSections.flatMap(_.args)
-      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
-      s"""
+    def externalConstructor(method: SMethodDef) = {
+      def genConstr(md: SMethodDef) = {
+        val msgExplicitRetType = "External constructors should be declared with explicit type of returning value (result type)"
+        lazy val msgRepRetType = s"Invalid constructor declaration $md. External constructors should have return type of type Rep[T] for some T."
+        val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
+        val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgRepRetType))
+        val allArgs = md.argSections.flatMap(_.args)
+        val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
+        s"""
         |    def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unrepRet.toString}] =
         |      newObjEx(classOf[$entityName${typesUse}], List(${allArgs.rep(a => s"${a.name}.asRep[Any]")}))
         |""".stripMargin
+      }
+      genConstr(method.copy(argSections = method.cleanedArgs))
     }
 
-    def externalSeqMethod(md: SMethodDef, isInstance: Boolean) = {
+    def
+    externalSeqMethod(
+                       md: SMethodDef, isInstance: Boolean) = {
       val msgExplicitRetType = "External methods should be declared with explicit type of returning value (result type)"
       val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
       val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgExplicitRetType))
