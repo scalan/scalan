@@ -368,7 +368,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
         s"""
         |    def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unrepRet.toString}] =
-        |      newObjEx(classOf[$entityName${typesUse}], List(${allArgs.rep(a => s"${a.name}.asRep[Any]")}))
+        |      newObjEx(classOf[$entityName${typesUse}], List(${allArgs.rep(a => if (a.isElemOrCont) s"${a.name}" else s"${a.name}.asRep[Any]")}))
         |""".stripMargin
       }
       genConstr(method.copy(argSections = method.cleanedArgs))

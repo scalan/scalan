@@ -32,7 +32,7 @@ trait Proxy { self: Scalan =>
   }
 
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
-  def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
+  def newObjEx[A](c: Class[A], args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
@@ -79,12 +79,12 @@ trait ProxySeq extends Proxy { self: ScalanSeq =>
   }
 
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
-    m.invoke(receiver, args.map(_.asInstanceOf[AnyRef]): _*).asInstanceOf[A]
+    m.invoke(receiver, args: _*).asInstanceOf[A]
 
-  def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
+  def newObjEx[A](c: Class[A], args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] = {
     val types = args.map(a => a.getClass)
     val constr = c.getConstructor(types: _*)
-    constr.newInstance(args.map(_.asInstanceOf[AnyRef]): _*) //.asInstanceOf[Rep[A]]
+    constr.newInstance(args: _*) //.asInstanceOf[Rep[A]]
   }
 }
 
@@ -134,7 +134,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       }
   }
 
-  case class NewObject[T](clazz: Class[T] , args: List[AnyRef], neverInvoke: Boolean)(implicit selfType: Elem[T]) extends BaseDef[T] {
+  case class NewObject[T](clazz: Class[T], args: List[AnyRef], neverInvoke: Boolean)(implicit selfType: Elem[T]) extends BaseDef[T] {
     override def mirror(t: Transformer) = {
       val args1 = args.map {
         case a: Exp[_] => t(a)
@@ -191,7 +191,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
     mkMethodCall(receiver, m, args, true).asRep[A]
 
-  def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
+  def newObjEx[A](c: Class[A], args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] = {
     new NewObject[A](c, args, true)
   }
 
