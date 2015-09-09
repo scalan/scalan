@@ -395,20 +395,26 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       methodHeader + methodBody
     }
 
-    def externalSeqConstructor(md: SMethodDef) = {
-      val msgExplicitRetType = "External constructors should be declared with explicit type of returning value (result type)"
-      val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
-      val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgExplicitRetType))
-      val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
-      s"""
+    def externalSeqConstructor(method: SMethodDef) = {
+      def genConstr(md: SMethodDef) = {
+        val msgExplicitRetType = "External constructors should be declared with explicit type of returning value (result type)"
+        val tyRet = md.tpeRes.getOrElse(!!!(msgExplicitRetType))
+        val unrepRet = tyRet.unRep(module, config).getOrElse(!!!(msgExplicitRetType))
+        val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
+
+        s"""
         |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unrepRet.toString}] =
         |      ${entityName}Impl(new $entityNameBT${typesUse}${md.argSections.rep(methodArgsUse(_), "")})
         |""".stripMargin
+      }
+
+      genConstr(method.copy(argSections = method.cleanedArgs))
     }
 
     def entityProxy(e: EntityTemplateData) = {
       val entityName = e.name
-      val typesDecl = e.tpeArgDeclString
+      val typesDecl = e.
+        tpeArgDeclString
       val typesUse = e.tpeArgUseString
       s"""
         |  // single proxy for each type family

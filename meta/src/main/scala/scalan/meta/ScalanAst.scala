@@ -183,6 +183,38 @@ object ScalanAst {
     def externalOpt: Option[SMethodAnnotation] = annotations.filter(a => a.annotationClass == "External").headOption
     def explicitArgs = argSections.flatMap(_.args.filterNot(_.impFlag))
     def allArgs = argSections.flatMap(_.args)
+    def getOriginal: Option[SMethodDef] = {
+      annotations.collectFirst {
+        case mannot @ SMethodAnnotation("Constructor", _) => mannot.args collectFirst {
+          case SAssign(SIdent("original"), origMethod: SMethodDef) => origMethod
+        }
+      }.flatten
+    }
+    def cleanedArgs: List[SMethodArgs] = getOriginal match {
+      case Some(method) =>
+        def splitArgSections(sections: List[SMethodArgs]): (List[SMethodArgs], List[SMethodArgs]) = {
+          sections partition  { _ match {
+            case SMethodArgs((arg : SMethodArg) :: _) => arg.impFlag
+            case _ => false
+          }}
+        }
+        def existsClassTag(tpeArgs: List[STpeExpr]): Boolean = {
+          val relatedClassTag = (getOriginal map (_.argSections map (_.args))).toList.flatten.flatten collectFirst {
+            case marg @ SMethodArg(_,_,_,STraitCall("ClassTag", origTpeArgs),_,_,_) if origTpeArgs == tpeArgs => marg
+          }
+
+          !relatedClassTag.isEmpty
+        }
+        val (currImp, currNonImp) = splitArgSections(argSections)
+        def isAdded(arg: SMethodArg): Boolean = arg match {
+          case SMethodArg(_,_,_,STraitCall("Elem" | "Cont", tpeArgs),_,_,_) => !existsClassTag(tpeArgs)
+          case _ => false
+        }
+        val newCurrImp = currImp map {s => s.copy(args = s.args.filterNot(isAdded(_)))} filter {!_.args.isEmpty}
+
+        currNonImp ++ newCurrImp
+      case None => argSections
+    }
   }
   case class SValDef(
                       name: String,
