@@ -1323,7 +1323,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val topLevel = List(
         getFileHeader,
         getTraitAbs,
-        getTraitSeq,
+        if (config.isSeqEnabled) getTraitSeq else "",
         getTraitExp,
         emitModuleSerialization,
         "}", // closing brace for `package impl {`
