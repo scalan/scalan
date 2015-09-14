@@ -108,10 +108,8 @@ trait ArrayOps { self: Scalan =>
   }
 
   case class ArrayIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Array](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Arr[B]) = x.map(iso.from _)
-    def to(x: Arr[A]) = x.map(iso.to _)
+    def from(x: Arr[B]) = x.mapBy(iso.fromFun)
+    def to(x: Arr[A]) = x.mapBy(iso.toFun)
     lazy val defaultRepTo = SArray.empty[B]
   }
 

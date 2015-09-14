@@ -15,8 +15,9 @@ trait ListOps { self: Scalan =>
     def apply(ns: Arr[Int])(implicit o: Overloaded1): Lst[T] = list_applyMany(xs, ns)
 
     def length = list_length(xs)
-    def mapBy[R: Elem](f: Rep[T => R]) = list_map(xs, f)
+    def mapBy[R](f: Rep[T => R]) = list_map(xs, f)
     def map[R: Elem](f: Rep[T] => Rep[R]) = list_map(xs, fun(f))
+    def flatMapBy[R](f: Rep[T => List[R]]) = list_flatMap(xs, f)
     def flatMap[R:Elem](f: Rep[T] => Lst[R]) = list_flatMap(xs, fun(f))
     def reduce(implicit m: RepMonoid[T]) = list_reduce(xs)
 
@@ -57,10 +58,8 @@ trait ListOps { self: Scalan =>
   }
 
   case class ListIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, List](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Lst[B]) = x.map(iso.from _)
-    def to(x: Lst[A]) = x.map(iso.to _)
+    def from(x: Lst[B]) = x.mapBy(iso.fromFun)
+    def to(x: Lst[A]) = x.mapBy(iso.toFun)
     lazy val defaultRepTo = SList.empty[B]
   }
 
@@ -92,8 +91,8 @@ trait ListOps { self: Scalan =>
   def list_length[T](xs: Lst[T]): Rep[Int]
 
   // provide: xs.length == res.length
-  def list_map[T, R: Elem](xs: Lst[T], f: Rep[T => R]): Lst[R]
-  def list_flatMap[T, R: Elem](xs: Lst[T], f: Rep[T => List[R]]): Lst[R]
+  def list_map[T, R](xs: Lst[T], f: Rep[T => R]): Lst[R]
+  def list_flatMap[T, R](xs: Lst[T], f: Rep[T => List[R]]): Lst[R]
   
   def list_reduce[T](xs: Lst[T])(implicit m: RepMonoid[T]): Rep[T]
   def list_foldLeft[T,S:Elem](xs: Lst[T], init:Rep[S], f:Rep[((S,T))=>S]): Rep[S]
@@ -150,8 +149,8 @@ trait ListOpsSeq extends ListOps { self: ScalanSeq =>
   def list_tail[T: Elem](xs: Lst[T]): Lst[T] = xs.tail
 
   def list_length[T](a: Lst[T]): Rep[Int] = a.length
-  def list_map[T, R: Elem](xs: List[T], f: T => R) = xs.map(f)
-  def list_flatMap[T, R: Elem](xs: List[T], f: T => List[R]) = xs.flatMap(f)
+  def list_map[T, R](xs: List[T], f: T => R) = xs.map(f)
+  def list_flatMap[T, R](xs: List[T], f: T => List[R]) = xs.flatMap(f)
   def list_reduce[T](xs: Lst[T])(implicit m: RepMonoid[T]) = xs.fold(m.zero)(m.append)
   def list_foldLeft[T, S: Elem](xs: Lst[T], init: Rep[S], f: Rep[((S, T)) => S]): Rep[S] = {
     var state = init
@@ -287,8 +286,8 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
   def list_tail[T: Elem](xs: Lst[T]): Lst[T] = ListTail(xs)
 
   def list_length[T](a: Exp[List[T]]): Rep[Int] = ListLength(a)
-  def list_map[T, R: Elem](xs: Exp[List[T]], f: Exp[T => R]) = ListMap(xs, f)
-  def list_flatMap[T, R: Elem](xs: Exp[List[T]], f: Exp[T => List[R]]) = ListFlatMap(xs, f)
+  def list_map[T, R](xs: Exp[List[T]], f: Exp[T => R]) = ListMap(xs, f)
+  def list_flatMap[T, R](xs: Exp[List[T]], f: Exp[T => List[R]]) = ListFlatMap(xs, f)
 
   def list_reduce[T](xs: Lst[T])(implicit m: RepMonoid[T]) =
     withElemOfList(xs) { implicit eT => ListReduce(xs, m) }

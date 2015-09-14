@@ -5,9 +5,11 @@ import scala.reflect.runtime.universe._
 
 trait ArrayBuffers extends Base { self: Scalan =>
   trait ArrayBuffer[T] {
+    implicit val eItem: Elem[T]
     def apply(i: Rep[Int]): Rep[T] 
     def length : Rep[Int]
-    def map[R:Elem](f: Rep[T] => Rep[R]): Rep[ArrayBuffer[R]]
+    def mapBy[R: Elem](f: Rep[T => R]): Rep[ArrayBuffer[R]]
+    def map[R: Elem](f: Rep[T] => Rep[R]): Rep[ArrayBuffer[R]] = mapBy(fun(f))
     def update(i: Rep[Int], v: Rep[T]): Rep[ArrayBuffer[T]]
     def insert(i: Rep[Int], v: Rep[T]): Rep[ArrayBuffer[T]]
     def +=(v: Rep[T]): Rep[ArrayBuffer[T]]
@@ -38,14 +40,12 @@ trait ArrayBuffers extends Base { self: Scalan =>
   }
 
   implicit val arrayBufferFunctor = new Functor[ArrayBuffer] with ArrayBufferContainer {
-    def map[A:Elem,B:Elem](xs: Rep[ArrayBuffer[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
+    def map[A:Elem,B:Elem](xs: Rep[ArrayBuffer[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
   }
 
   case class ArrayBufferIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ArrayBuffer](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Rep[ArrayBuffer[B]]) = x.map(iso.from _)
-    def to(x: Rep[ArrayBuffer[A]]) = x.map(iso.to _)
+    def from(x: Rep[ArrayBuffer[B]]) = x.mapBy(iso.fromFun)
+    def to(x: Rep[ArrayBuffer[A]]) = x.mapBy(iso.toFun)
     lazy val defaultRepTo = ArrayBuffer.empty[B]
   }
 
@@ -76,17 +76,17 @@ trait ArrayBuffers extends Base { self: Scalan =>
 }
 
 trait ArrayBuffersSeq extends ArrayBuffers { self: ScalanSeq =>
-  implicit class SeqArrayBuffer[T](val impl: scala.collection.mutable.ArrayBuffer[T])(implicit val elem: Elem[T]) extends ArrayBuffer[T] {
+  implicit class SeqArrayBuffer[T](val impl: scala.collection.mutable.ArrayBuffer[T])(implicit val eItem: Elem[T]) extends ArrayBuffer[T] {
     def apply(i: Rep[Int]): Rep[T] = impl.apply(i)
     def length : Rep[Int] = impl.length
-    def map[R:Elem](f: Rep[T] => Rep[R]): Rep[ArrayBuffer[R]] = new SeqArrayBuffer[R](impl.map(f))
+    def mapBy[R: Elem](f: Rep[T => R]): Rep[ArrayBuffer[R]] = new SeqArrayBuffer[R](impl.map(f))
     def update(i: Rep[Int], v: Rep[T]): Rep[ArrayBuffer[T]] = { impl.update(i, v); this }
     def insert(i: Rep[Int], v: Rep[T]): Rep[ArrayBuffer[T]] = { impl.insert(i, v); this }
     def +=(v: Rep[T]): Rep[ArrayBuffer[T]] = { impl += v; this }
     def ++=(a: Arr[T]): Rep[ArrayBuffer[T]] = { impl ++= a; this }
     def remove(i: Rep[Int], n: Rep[Int]): Rep[ArrayBuffer[T]] = { impl.remove(i, n); this }
-    def reset():  Rep[ArrayBuffer[T]] = {    impl.clear(); this }  
-    def toArray: Arr[T] = impl.toArray(elem.classTag)
+    def reset():  Rep[ArrayBuffer[T]] = { impl.clear(); this }
+    def toArray: Arr[T] = impl.toArray(eItem.classTag)
   }  
 
   implicit def resolveArrayBuffer[T: Elem](buf: Rep[ArrayBuffer[T]]): ArrayBuffer[T] = buf
@@ -254,12 +254,12 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
       super.rewriteDef(d)
   }
 
-  abstract class ArrayBufferDef[T](implicit val elem: Elem[T]) extends ArrayBuffer[T] with Def[ArrayBuffer[T]] {
-    def selfType = element[ArrayBuffer[T]] 
+  abstract class ArrayBufferDef[T](implicit val eItem: Elem[T]) extends ArrayBuffer[T] with Def[ArrayBuffer[T]] {
+    lazy val selfType = element[ArrayBuffer[T]]
 
     def apply(i: Rep[Int]): Rep[T] = ArrayBufferApply(this, i)
     def length : Rep[Int] = ArrayBufferLength(this)
-    def map[R:Elem](f: Rep[T] => Rep[R]): Rep[ArrayBuffer[R]] = ArrayBufferMap(this, f)
+    def mapBy[R: Elem](f: Rep[T => R]): Rep[ArrayBuffer[R]] = ArrayBufferMap(this, f)
     def update(i: Rep[Int], v: Rep[T]): Rep[ArrayBuffer[T]] = ArrayBufferUpdate(this, i, v)
     def insert(i: Rep[Int], v: Rep[T]): Rep[ArrayBuffer[T]] = ArrayBufferInsert(this, i, v)
     def +=(v: Rep[T]): Rep[ArrayBuffer[T]] = ArrayBufferAppend(this, v)
@@ -356,7 +356,6 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
       val elem = s.elem
       elem match { 
         case ae: ArrayBufferElem[_] => ArrayBufferRep(sym)(ae.asInstanceOf[ArrayBufferElem[T]].eItem)
-	      case _ => ArrayBufferRep(sym)(elem.asInstanceOf[Elem[T]])
       }
     }
     case _ => ???("cannot resolve ReifiableObject for symbol:", sym)

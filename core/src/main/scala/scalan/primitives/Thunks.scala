@@ -25,10 +25,8 @@ trait Thunks { self: Scalan =>
   }
 
   case class ThunkIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Thunk](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Th[B]) = x.map(fun(iso.from))
-    def to(x: Th[A]) = x.map(fun(iso.to))
+    def from(x: Th[B]) = x.map(iso.fromFun)
+    def to(x: Th[A]) = x.map(iso.toFun)
     lazy val defaultRepTo = Thunk(eB.defaultRepValue)(eB)
   }
 

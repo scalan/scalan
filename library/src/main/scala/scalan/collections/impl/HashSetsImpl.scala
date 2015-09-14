@@ -36,10 +36,8 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
   }
   case class SHashSetIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SHashSet](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Rep[SHashSet[B]]) = x.map(iso.from _)
-    def to(x: Rep[SHashSet[A]]) = x.map(iso.to _)
+    def from(x: Rep[SHashSet[B]]) = x.map(iso.fromFun)
+    def to(x: Rep[SHashSet[A]]) = x.map(iso.toFun)
     lazy val defaultRepTo = SHashSet.empty[B]
   }
 

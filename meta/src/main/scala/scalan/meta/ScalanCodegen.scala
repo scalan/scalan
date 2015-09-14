@@ -495,10 +495,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    ${e.isFunctor.opt(s"def map[A:Elem,B:Elem](xs: Rep[${e.name}[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
         |  }
         |  case class ${e.name}Iso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ${e.name}](iso) {
-        |    implicit val eA = iso.eFrom
-        |    implicit val eB = iso.eTo
-        |    def from(x: Rep[${e.name}[B]]) = x.map(iso.from _)
-        |    def to(x: Rep[${e.name}[A]]) = x.map(iso.to _)
+        |    def from(x: Rep[${e.name}[B]]) = x.map(iso.fromFun)
+        |    def to(x: Rep[${e.name}[A]]) = x.map(iso.toFun)
         |    lazy val defaultRepTo = ${e.name}.empty[B]
         |  }
         |""".stripAndTrim

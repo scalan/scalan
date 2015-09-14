@@ -72,6 +72,8 @@ trait Views extends Elems { self: Scalan =>
 
   abstract class Iso1[A, B, C[_]](val innerIso: Iso[A,B])(implicit cC: Cont[C])
     extends Iso[C[A], C[B]]()(cC.lift(innerIso.eFrom)) {
+    implicit val eA = innerIso.eFrom
+    implicit val eB = innerIso.eTo
     lazy val eTo = cC.lift(innerIso.eTo)
     override def isIdentity = innerIso.isIdentity
   }
@@ -325,6 +327,8 @@ trait Views extends Elems { self: Scalan =>
     def eTo = convTo.eR
     def to(a: Rep[A]) = convTo(a)
     def from(b: Rep[B]) = convFrom(b)
+    override lazy val toFun = convTo.convFun
+    override lazy val fromFun = convFrom.convFun
     def defaultRepTo = eTo.defaultRepValue
     override def isIdentity = false
   }

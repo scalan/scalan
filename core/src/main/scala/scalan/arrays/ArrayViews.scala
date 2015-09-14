@@ -124,7 +124,6 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
     val zeroNew = iso.from(m.zero)
-    //val appendNew = { (x: Rep[A],y: Rep[A]) => iso.from(m.append(iso.to(x), iso.to(y))) }
     val newMonoid = new RepMonoid(m.opName, zeroNew, fun { p: Rep[(A, A)] => iso.from(m.append(iso.to(p._1), iso.to(p._2)))}, m.isCommutative)(eA)
     view.source.reduce( newMonoid)
   }
