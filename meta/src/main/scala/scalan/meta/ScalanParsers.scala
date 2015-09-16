@@ -521,6 +521,10 @@ trait ScalanParsers {
   def parseType(tpe: Type): STpeExpr = tpe match {
     case tref: TypeRef => parseTypeRef(tref)
     case TypeBounds(lo, hi) => STpeTypeBounds(parseType(lo), parseType(hi))
+    case ExistentialType(quant, under) =>
+      val quantified = quant map(q => STpeDef(q.nameString, Nil, STpeEmpty()))
+      val underlying = parseType(under)
+      STpeExistential(underlying, quantified)
     case tpe => throw new NotImplementedError(showRaw(tpe, printTypes = Some(true)))
   }
 
