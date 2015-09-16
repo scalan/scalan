@@ -45,6 +45,8 @@ trait TypeWrappers extends Base { self: Scalan =>
   trait ExCompanion1[TBase[_]] {
     //def defaultVal[A]: Default[TBase[A]]
   }
+  trait ExCompanion2[TBase[_,_]]
+  trait ExCompanion3[TBase[_,_,_]]
 
   final val ContainerLength = "ContainerLength"
   final val ContainerApply = "ContainerApply"
