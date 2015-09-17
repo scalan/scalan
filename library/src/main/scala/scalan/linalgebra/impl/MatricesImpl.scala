@@ -126,7 +126,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDenseFlatMatrix[T](implicit eT: Elem[T]): Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]] =
-    new DenseFlatMatrixIso[T]
+    cachedIso[DenseFlatMatrixIso[T]](eT)
 
   // 6) smart constructor and deconstructor
   def mkDenseFlatMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]]
@@ -198,7 +198,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCompoundMatrix[T](implicit eT: Elem[T]): Iso[CompoundMatrixData[T], CompoundMatrix[T]] =
-    new CompoundMatrixIso[T]
+    cachedIso[CompoundMatrixIso[T]](eT)
 
   // 6) smart constructor and deconstructor
   def mkCompoundMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]]
@@ -271,7 +271,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoConstMatrix[T](implicit eT: Elem[T]): Iso[ConstMatrixData[T], ConstMatrix[T]] =
-    new ConstMatrixIso[T]
+    cachedIso[ConstMatrixIso[T]](eT)
 
   // 6) smart constructor and deconstructor
   def mkConstMatrix[T](item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]]
@@ -343,7 +343,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDiagonalMatrix[T](implicit eT: Elem[T]): Iso[DiagonalMatrixData[T], DiagonalMatrix[T]] =
-    new DiagonalMatrixIso[T]
+    cachedIso[DiagonalMatrixIso[T]](eT)
 
   // 6) smart constructor and deconstructor
   def mkDiagonalMatrix[T](diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]]

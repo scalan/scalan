@@ -90,16 +90,12 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     case Def(view: ViewArray[a, b]) =>
       Some((view.source, view.iso))
     case UserTypeArray(iso: Iso[a, b]) =>
-      val newIso = ArrayIso(iso)
+      val newIso = arrayIso(iso)
       val repr = reifyObject(UnpackView(s.asRep[Array[b]])(newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
-
-
-//  def ArrayIso[A, B](iso: Iso[A, B]): Iso[Array[A], Array[B]] =
-//    ArrayIso(iso)
 
   private def flatMapUnderlyingArray[A,B,C](view: ViewArray[A,B], f: Rep[B=>Array[C]]): Arr[C] = {
     val iso = view.innerIso
@@ -150,7 +146,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
     val filtered = view.source.filter { x => f(iso.to(x)) }
-    ViewArray(filtered)(ArrayIso(iso))
+    ViewArray(filtered)(arrayIso(iso))
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {
@@ -164,7 +160,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     case ArrayReplicate(len: Exp[Int], HasViews(source2, iso2: Iso[a, _])) =>
       implicit val eA = iso2.eFrom
       val s = ArrayReplicate(len, source2.asRep[a])
-      val res = ViewArray(s)(ArrayIso(iso2))
+      val res = ViewArray(s)(arrayIso(iso2))
       res
     case ArrayUpdate(HasViews(source, iso: ArrayIso[a, b]), i, HasViews(value, iso2: Iso[c, d])) if iso.innerIso == iso2 =>
       implicit val eA = iso.innerIso.eFrom
@@ -220,7 +216,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       implicit val eA = v1.source.elem.eItem
       implicit val eB = arr2.elem.eItem
       val iso2 = identityIso(eB)
-      val pIso = ArrayIso(pairIso(v1.innerIso, iso2))
+      val pIso = arrayIso(pairIso(v1.innerIso, iso2))
       implicit val eAB = pIso.eTo
       implicit val eBA = pIso.eFrom
       val zipped = v1.source zip arr2
@@ -229,7 +225,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     case pa @ ArrayZip(arr1: Arr[a] @unchecked, Def(v2:ViewArray[_,_])) =>
       implicit val eA = arr1.elem.eItem
       val iso2 = identityIso(eA)
-      val pIso = ArrayIso(pairIso(iso2, v2.innerIso))
+      val pIso = arrayIso(pairIso(iso2, v2.innerIso))
       implicit val eAB = pIso.eTo
       val zipped = arr1 zip v2.source
       ViewArray(zipped)(pIso)
@@ -239,7 +235,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
 //      val value = srcValue.asRep[a]
 //      implicit val eA = iso.eFrom
 //      implicit val eB = iso.eTo
-//      val arrIso = ArrayIso[a,b](iso)
+//      val arrIso = arrayIso[a,b](iso)
 //      val srcBuf = arrIso.from(arr.asRep[Array[b]])
 //      ViewArray(srcBuf.update(i, value))(arrIso)
 
@@ -255,7 +251,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
         iso.from(tmp)
         // UnpackView(f1(x))(iso)
       }
-      val res = ViewArray(s)(ArrayIso(iso))
+      val res = ViewArray(s)(arrayIso(iso))
       // val res = ViewArray(s.values)(iso).nestBy(s.segments)
       res
     case ArrayFlatMap(xs: Arr[a] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, arrIso: ArrayIso[c, b])))) =>
@@ -268,7 +264,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
         val tmp = f1(x)
         arrIso.from(tmp)
       }
-      val res = ViewArray(s)(ArrayIso(arrIso.iso))
+      val res = ViewArray(s)(arrayIso(arrIso.iso))
       res
 
       /*
@@ -285,12 +281,12 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     case ArrayToList(Def(view: ViewArray[a, b])) =>
       val iso = view.innerIso
       implicit val eA: Elem[a] = iso.eFrom
-      ViewList(view.source.toList)(ListIso(iso))
+      ViewList(view.source.toList)(listIso(iso))
     case view1@ViewArray(Def(view2@ViewArray(arr))) =>
       //println(view1)
       val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
-      ViewArray(arr)(ArrayIso(compIso))
+      ViewArray(arr)(arrayIso(compIso))
     case _ =>
       super.rewriteDef(d)
   }

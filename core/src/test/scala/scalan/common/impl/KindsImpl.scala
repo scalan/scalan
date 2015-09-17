@@ -124,7 +124,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReturn[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[ReturnData[F, A], Return[F, A]] =
-    new ReturnIso[F, A]
+    cachedIso[ReturnIso[F, A]](eA, cF)
 
   // 6) smart constructor and deconstructor
   def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
@@ -198,7 +198,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBind[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[BindData[F, S, B], Bind[F, S, B]] =
-    new BindIso[F, S, B]
+    cachedIso[BindIso[F, S, B]](eS, eA, cF)
 
   // 6) smart constructor and deconstructor
   def mkBind[F[_], S, B](a: Rep[Kind[F,S]], f: Rep[S => Kind[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]

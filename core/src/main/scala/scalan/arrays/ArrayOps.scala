@@ -113,6 +113,8 @@ trait ArrayOps { self: Scalan =>
     lazy val defaultRepTo = SArray.empty[B]
   }
 
+  def arrayIso[A,B](iso: Iso[A, B]) = cachedIso[ArrayIso[A, B]](iso)
+
   abstract class ArrayElem[A](implicit eItem: Elem[A])
     extends EntityElem1[A, Array[A], Array](eItem, container[Array]) {
   }

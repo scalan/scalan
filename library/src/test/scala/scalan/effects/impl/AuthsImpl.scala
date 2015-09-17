@@ -126,7 +126,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoLogin: Iso[LoginData, Login] =
-    new LoginIso
+    cachedIso[LoginIso]()
 
   // 6) smart constructor and deconstructor
   def mkLogin(user: Rep[String], password: Rep[String]): Rep[Login]
@@ -198,7 +198,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoHasPermission: Iso[HasPermissionData, HasPermission] =
-    new HasPermissionIso
+    cachedIso[HasPermissionIso]()
 
   // 6) smart constructor and deconstructor
   def mkHasPermission(user: Rep[String], password: Rep[String]): Rep[HasPermission]

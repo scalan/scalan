@@ -63,6 +63,8 @@ trait ListOps { self: Scalan =>
     lazy val defaultRepTo = SList.empty[B]
   }
 
+  def listIso[A,B](iso: Iso[A, B]) = cachedIso[ListIso[A, B]](iso)
+
   case class ListElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, List[A], List](eItem, container[List]) {
     def parent: Option[Elem[_]] = None

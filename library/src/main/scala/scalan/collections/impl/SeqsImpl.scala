@@ -212,7 +212,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSSeqImpl[A](implicit eA: Elem[A]): Iso[SSeqImplData[A], SSeqImpl[A]] =
-    new SSeqImplIso[A]
+    cachedIso[SSeqImplIso[A]](eA)
 
   // 6) smart constructor and deconstructor
   def mkSSeqImpl[A](wrappedValueOfBaseType: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]]

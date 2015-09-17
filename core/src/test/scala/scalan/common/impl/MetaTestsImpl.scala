@@ -121,7 +121,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMT0: Iso[MT0Data, MT0] =
-    new MT0Iso
+    cachedIso[MT0Iso]()
 
   // 6) smart constructor and deconstructor
   def mkMT0(size: Rep[Int]): Rep[MT0]
@@ -194,7 +194,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMT1[T](implicit elem: Elem[T]): Iso[MT1Data[T], MT1[T]] =
-    new MT1Iso[T]
+    cachedIso[MT1Iso[T]](elem)
 
   // 6) smart constructor and deconstructor
   def mkMT1[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]]
@@ -268,7 +268,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMT2[T, R](implicit eT: Elem[T], eR: Elem[R]): Iso[MT2Data[T, R], MT2[T, R]] =
-    new MT2Iso[T, R]
+    cachedIso[MT2Iso[T, R]](eT, eR)
 
   // 6) smart constructor and deconstructor
   def mkMT2[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]]

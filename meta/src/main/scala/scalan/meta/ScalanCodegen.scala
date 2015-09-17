@@ -626,6 +626,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val fieldTypes = c.args.argUnrepTypes(module, config)
         val implicitArgs = concTemplateData.implicitArgsDecl
         val useImplicits = concTemplateData.implicitArgsUse
+        val useImplicitsOrParens = if (useImplicits.nonEmpty) useImplicits else "()"
         val implicitArgsWithVals = c.implicitArgs.args.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")
         val parent     = c.ancestors.head
         val parentArgs = parent.tpeSExprs.map(_.toString)
@@ -777,7 +778,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |
         |  // 5) implicit resolution of Iso
         |  implicit def iso$className${typesDecl}${implicitArgs}: Iso[${className}Data${typesUse}, $className${typesUse}] =
-        |    new ${className}Iso${typesUse}
+        |    cachedIso[${className}Iso${typesUse}]$useImplicitsOrParens
         |
         |  // 6) smart constructor and deconstructor
         |  def mk$className${typesDecl}(${fieldsWithType.rep()})${implicitArgs}: Rep[$className${typesUse}]

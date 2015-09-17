@@ -145,7 +145,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSThrowableImpl: Iso[SThrowableImplData, SThrowableImpl] =
-    new SThrowableImplIso
+    cachedIso[SThrowableImplIso]()
 
   // 6) smart constructor and deconstructor
   def mkSThrowableImpl(wrappedValueOfBaseType: Rep[Throwable]): Rep[SThrowableImpl]
@@ -215,7 +215,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSException: Iso[SExceptionData, SException] =
-    new SExceptionIso
+    cachedIso[SExceptionIso]()
 
   // 6) smart constructor and deconstructor
   def mkSException(wrappedValueOfBaseType: Rep[Throwable]): Rep[SException]

@@ -125,7 +125,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoHashMMultiMap[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]): Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] =
-    new HashMMultiMapIso[K, V]
+    cachedIso[HashMMultiMapIso[K, V]](elemKey, elemValue)
 
   // 6) smart constructor and deconstructor
   def mkHashMMultiMap[K, V](map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]]

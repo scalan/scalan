@@ -125,7 +125,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDenseVector[T](implicit eT: Elem[T]): Iso[DenseVectorData[T], DenseVector[T]] =
-    new DenseVectorIso[T]
+    cachedIso[DenseVectorIso[T]](eT)
 
   // 6) smart constructor and deconstructor
   def mkDenseVector[T](items: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DenseVector[T]]
@@ -198,7 +198,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoConstVector[T](implicit eT: Elem[T]): Iso[ConstVectorData[T], ConstVector[T]] =
-    new ConstVectorIso[T]
+    cachedIso[ConstVectorIso[T]](eT)
 
   // 6) smart constructor and deconstructor
   def mkConstVector[T](item: Rep[T], length: Rep[Int])(implicit eT: Elem[T]): Rep[ConstVector[T]]
@@ -270,7 +270,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSparseVector[T](implicit eT: Elem[T]): Iso[SparseVectorData[T], SparseVector[T]] =
-    new SparseVectorIso[T]
+    cachedIso[SparseVectorIso[T]](eT)
 
   // 6) smart constructor and deconstructor
   def mkSparseVector[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector[T]]
@@ -342,7 +342,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSparseVector1[T](implicit eT: Elem[T]): Iso[SparseVector1Data[T], SparseVector1[T]] =
-    new SparseVector1Iso[T]
+    cachedIso[SparseVector1Iso[T]](eT)
 
   // 6) smart constructor and deconstructor
   def mkSparseVector1[T](nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]]

@@ -128,7 +128,7 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSVertex[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[SVertexData[V, E], SVertex[V, E]] =
-    new SVertexIso[V, E]
+    cachedIso[SVertexIso[V, E]](eV, eE)
 
   // 6) smart constructor and deconstructor
   def mkSVertex[V, E](id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]

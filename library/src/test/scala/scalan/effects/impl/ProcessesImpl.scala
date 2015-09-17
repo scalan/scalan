@@ -128,7 +128,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAwait[F[_], A, O](implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Iso[AwaitData[F, A, O], Await[F, A, O]] =
-    new AwaitIso[F, A, O]
+    cachedIso[AwaitIso[F, A, O]](eA, eO, cF)
 
   // 6) smart constructor and deconstructor
   def mkAwait[F[_], A, O](req: Rep[F[A]], recv: Rep[$bar[Throwable,A] => Process[F,O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]]
@@ -201,7 +201,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoEmit[F[_], O](implicit eO: Elem[O], cF: Cont[F]): Iso[EmitData[F, O], Emit[F, O]] =
-    new EmitIso[F, O]
+    cachedIso[EmitIso[F, O]](eO, cF)
 
   // 6) smart constructor and deconstructor
   def mkEmit[F[_], O](head: Rep[O], tail: Rep[Process[F,O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]]
@@ -273,7 +273,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoHalt[F[_], O](implicit eO: Elem[O], cF: Cont[F]): Iso[HaltData[F, O], Halt[F, O]] =
-    new HaltIso[F, O]
+    cachedIso[HaltIso[F, O]](eO, cF)
 
   // 6) smart constructor and deconstructor
   def mkHalt[F[_], O](err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]]

@@ -30,6 +30,8 @@ trait Thunks { self: Scalan =>
     lazy val defaultRepTo = Thunk(eB.defaultRepValue)(eB)
   }
 
+  def thunkIso[A,B](iso: Iso[A, B]) = cachedIso[ThunkIso[A, B]](iso)
+
   case class ThunkElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
     def parent: Option[Elem[_]] = None
@@ -113,13 +115,6 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
     case _ =>
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
-
-
-//  def thunkIso[A, B](iso: Iso[A, B]): Iso[Thunk[A], Thunk[B]] = {
-//    implicit val eA = iso.eFrom
-//    implicit val eB = iso.eTo
-//    ThunkIso(iso)
-//  }
 
   class ThunkScope(val thunkSym: Exp[Any], val body: ListBuffer[TableEntry[Any]] = ListBuffer.empty) {
     def +=(te: TableEntry[_]) =
@@ -217,7 +212,7 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
       val newTh = Thunk { iso.from(forceThunkDefByMirror(th)) }   // execute original th as part of new thunk
-      ThunkView(newTh)(ThunkIso(iso))
+      ThunkView(newTh)(thunkIso(iso))
     }
     case ThunkForce(HasViews(srcTh, iso: ThunkIso[a,b])) => {
       implicit val eA = iso.iso.eFrom

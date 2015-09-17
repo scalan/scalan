@@ -39,7 +39,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
     case Def(view: ViewList[_, _]) =>
       Some((view.source, view.iso))
     case UserTypeList(iso: Iso[a, b]) =>
-      val newIso = ListIso(iso)
+      val newIso = listIso(iso)
       val repr = reifyObject(UnpackView(s.asRep[List[b]])(newIso))
       Some((repr, newIso))
     case _ =>
@@ -59,7 +59,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
           val tmp = f1(x)
           iso.from(tmp)
         }
-        val res = ViewList(s)(ListIso(iso))
+        val res = ViewList(s)(listIso(iso))
         res
       }
       case (Def(view: ViewList[a, b]), _) => {
@@ -104,12 +104,12 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
       val filtered = view.source.filter { x => f(iso.to(x))}
-      ViewList(filtered)(ListIso(iso))
+      ViewList(filtered)(listIso(iso))
     }
     case view1@ViewList(Def(view2@ViewList(arr))) => {
       val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
-      ViewList(arr)(ListIso(compIso))
+      ViewList(arr)(listIso(compIso))
     }
     case ListFoldLeft(xs, init, step) => (xs, init, step) match {
       case (Def(view: ViewList[a, b]), init: Rep[s], step) => {
@@ -157,7 +157,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
       val v = valueWithoutView.asRep[a]
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
-      ViewList(SList.replicate(len, v))(ListIso(iso))
+      ViewList(SList.replicate(len, v))(listIso(iso))
     }
     case _ =>
       super.rewriteDef(d)

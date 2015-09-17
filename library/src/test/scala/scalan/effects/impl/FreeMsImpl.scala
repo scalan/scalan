@@ -126,7 +126,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDone[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[DoneData[F, A], Done[F, A]] =
-    new DoneIso[F, A]
+    cachedIso[DoneIso[F, A]](eA, cF)
 
   // 6) smart constructor and deconstructor
   def mkDone[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]]
@@ -198,7 +198,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMore[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[MoreData[F, A], More[F, A]] =
-    new MoreIso[F, A]
+    cachedIso[MoreIso[F, A]](eA, cF)
 
   // 6) smart constructor and deconstructor
   def mkMore[F[_], A](k: Rep[F[FreeM[F,A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]]
@@ -272,7 +272,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoFlatMap[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[FlatMapData[F, S, B], FlatMap[F, S, B]] =
-    new FlatMapIso[F, S, B]
+    cachedIso[FlatMapIso[F, S, B]](eS, eA, cF)
 
   // 6) smart constructor and deconstructor
   def mkFlatMap[F[_], S, B](a: Rep[FreeM[F,S]], f: Rep[S => FreeM[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]]

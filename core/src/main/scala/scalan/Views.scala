@@ -1,10 +1,11 @@
 package scalan
 
 import scala.language.higherKinds
+import scala.collection.mutable.{Map => MutMap}
+import scala.reflect.ClassTag
 import scalan.common.Lazy
 import scalan.meta.ScalanAst.STraitOrClassDef
 import scalan.staged.BaseExp
-import scala.collection.mutable.{Map => MutMap, Seq => MutSeq, ArrayBuffer}
 
 trait Views extends Elems { self: Scalan =>
   trait Convertible[A] {
@@ -55,7 +56,7 @@ trait Views extends Elems { self: Scalan =>
     def to(p: Rep[From]): Rep[To]
     override def toString = s"${eFrom.name} <-> ${eTo.name}"
     override def equals(other: Any) = other match {
-      case i: Iso[_, _] => eFrom == i.eFrom && eTo == i.eTo
+      case i: Iso[_, _] => (this eq i) || (eFrom == i.eFrom && eTo == i.eTo)
       case _ => false
     }
     override def hashCode = 41 * eFrom.hashCode + eTo.hashCode
@@ -69,6 +70,23 @@ trait Views extends Elems { self: Scalan =>
   }
 
   private val debug$IsoCounter = counter[Iso[_, _]]
+
+  private val isoCache = MutMap.empty[(Class[_], Seq[AnyRef]), AnyRef]
+
+  def cachedIso[I <: Iso[_, _]](args: AnyRef*)(implicit tag: ClassTag[I]) = {
+    val clazz = tag.runtimeClass
+    isoCache.getOrElseUpdate(
+      (clazz, args), {
+        val constructors = clazz.getDeclaredConstructors()
+        if (constructors.length != 1) {
+          !!!(s"Iso class $clazz has ${constructors.length} constructors, 1 expected")
+        } else {
+          val constructor = constructors(0)
+          val constructorArgs = self +: args
+          constructor.newInstance(constructorArgs: _*).asInstanceOf[Iso[_, _]]
+        }
+      }).asInstanceOf[I]
+  }
 
   abstract class Iso1[A, B, C[_]](val innerIso: Iso[A,B])(implicit cC: Cont[C])
     extends Iso[C[A], C[B]]()(cC.lift(innerIso.eFrom)) {
@@ -163,16 +181,16 @@ trait Views extends Elems { self: Scalan =>
       funcIso(iso1,iso2)
     case ae: ArrayElem[_] =>
       val iso = getIsoByElem(ae.eItem)
-      ArrayIso(iso)
+      arrayIso(iso)
     case ae: ListElem[_] =>
       val iso = getIsoByElem(ae.eItem)
-      ListIso(iso)
+      listIso(iso)
     case ae: ArrayBufferElem[_] =>
       val iso = getIsoByElem(ae.eItem)
-      ArrayBufferIso(iso)
+      arrayBufferIso(iso)
     case ae: ThunkElem[_] =>
       val iso = getIsoByElem(ae.eItem)
-      ThunkIso(iso)
+      thunkIso(iso)
     case me: MMapElem[_,_] =>
       identityIso(me)
 
@@ -237,7 +255,7 @@ trait Views extends Elems { self: Scalan =>
     def to(x: Rep[A]) = x
     override def isIdentity = true
   }
-  def identityIso[A](implicit elem: Elem[A]): Iso[A, A] = IdentityIso[A](elem)
+  def identityIso[A](implicit elem: Elem[A]): Iso[A, A] = cachedIso[IdentityIso[A]](elem)
 
   case class PairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
     extends Iso[(A1, A2), (B1, B2)]()(pairElement(iso1.eFrom, iso2.eFrom)) {
@@ -269,9 +287,10 @@ trait Views extends Elems { self: Scalan =>
     def defaultRepTo = eTo.defaultRepValue
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
-  def pairIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[(A1, A2), (B1, B2)] = PairIso(iso1, iso2)
+  def pairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[(A1, A2), (B1, B2)] = 
+    cachedIso[PairIso[A1, A2, B1, B2]](iso1, iso2)
 
-  case class SumIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
+  case class SumIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
     extends Iso[A1 | A2, B1 | B2]()(sumElement(iso1.eFrom, iso2.eFrom)) {
 //    implicit val eA1 = iso1.eFrom
 //    implicit val eA2 = iso2.eFrom
@@ -285,7 +304,8 @@ trait Views extends Elems { self: Scalan =>
     def defaultRepTo = eTo.defaultRepValue
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
-  def sumIso[A1, B1, A2, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[A1 | A2, B1 | B2] = SumIso(iso1, iso2)
+  def sumIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[A1 | A2, B1 | B2] =
+    cachedIso[SumIso[A1, A2, B1, B2]](iso1, iso2)
 
   case class ComposeIso[A,B,C](iso2: Iso[B, C], iso1: Iso[A, B]) extends Iso[A, C]()(iso1.eFrom) {
     def eTo = iso2.eTo
@@ -296,12 +316,13 @@ trait Views extends Elems { self: Scalan =>
   }
 
   def composeIso[A, B, C](iso2: Iso[B, C], iso1: Iso[A, B]): Iso[A, C] = {
-    (iso2, iso1) match {
-      case (IdentityIso(_), _) => iso1.asInstanceOf[Iso[A, C]]
-      case (_, IdentityIso(_)) => iso2.asInstanceOf[Iso[A, C]]
-      case (PairIso(iso21, iso22), PairIso(iso11, iso12)) => pairIso(composeIso(iso21, iso11), composeIso(iso22, iso12)).asInstanceOf[Iso[A, C]]
-      case _ => ComposeIso(iso2, iso1)
-    }
+    ((iso2, iso1) match {
+      case (IdentityIso(_), _) => iso1
+      case (_, IdentityIso(_)) => iso2
+      case (PairIso(iso21, iso22), PairIso(iso11, iso12)) => 
+        pairIso(composeIso(iso21, iso11), composeIso(iso22, iso12))
+      case _ => cachedIso[ComposeIso[A, B, C]](iso2, iso1)
+    }).asInstanceOf[Iso[A, C]]
   }
 
   case class FuncIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D])
@@ -320,7 +341,8 @@ trait Views extends Elems { self: Scalan =>
     def defaultRepTo = eTo.defaultRepValue
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
-  def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] = FuncIso(iso1, iso2)
+  def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] =
+    cachedIso[FuncIso[A, B, C, D]](iso1, iso2)
 
   case class ConverterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A])
     extends Iso[A,B]()(convTo.eT) {
@@ -332,27 +354,25 @@ trait Views extends Elems { self: Scalan =>
     def defaultRepTo = eTo.defaultRepValue
     override def isIdentity = false
   }
-  def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso[A,B] = ConverterIso(convTo, convFrom)
+  def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso[A,B] =
+    cachedIso[ConverterIso[A, B]](convTo.asInstanceOf[AnyRef], convFrom.asInstanceOf[AnyRef])
 
   def convertBeforeIso[A, B, C](convTo: Conv[A,B], convFrom: Conv[B,A], iso: Iso[B,C]): Iso[A, C] = composeIso(iso, converterIso(convTo, convFrom))
 
   def convertAfterIso[A,B,C](iso: Iso[A,B], convTo: Conv[B,C], convFrom: Conv[C,B]): Iso[A, C] = composeIso(converterIso(convTo, convFrom), iso)
 
   def unifyIsos[A,B,C,D](iso1: Iso[A,C], iso2: Iso[B,D],
-                         toD: Conv[C,D], toC: Conv[D,C]): (Iso[A,C], Iso[B,C]) =
-  {
+                         toD: Conv[C,D], toC: Conv[D,C]): (Iso[A,C], Iso[B,C]) = {
     val ea = iso1.eFrom
     val eb = iso2.eFrom
     implicit val ec = iso1.eTo
     val (i1, i2) =
       if (ec == iso2.eTo)
         (iso1, iso2.asInstanceOf[Iso[B,C]])
-      else {
+      else
         (iso1, convertAfterIso(iso2, toC, toD))
-      }
     (i1, i2)
   }
-
 
   implicit class RepReifiableViewOps[T](x: Rep[T]) {
     def convertTo[R: Elem]: Rep[R] = repReifiable_convertTo(x.asRep[Reifiable[T]])(element[R].asElem[Reifiable[R]]).asRep[R]
@@ -547,11 +567,11 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     // Rule: UnpackView(V(source, iso))  ==> source
     case UnpackView(Def(UnpackableDef(source, iso))) => source
 
-    // Rule: ParExec(nJobs, f @ i => ... V(_, iso)) ==> V(ParExec(nJobs, f >> iso.from), ArrayIso(iso))
+    // Rule: ParExec(nJobs, f @ i => ... V(_, iso)) ==> V(ParExec(nJobs, f >> iso.from), arrayIso(iso))
     case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[a, b])))) =>
       implicit val ea = iso.eFrom
       val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
-      ViewArray(parRes)(ArrayIso(iso))
+      ViewArray(parRes)(arrayIso(iso))
 
     // Rule: ArrayFold(xs, V(init, iso), step) ==> iso.to(ArrayFold(xs, init, p => iso.from(step(iso.to(p._1), p._2)) ))
     case ArrayFold(xs: Rep[Array[t]] @unchecked, HasViews(init, iso: Iso[a, b]), step) =>

@@ -128,7 +128,7 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoStateGet[S, A](implicit eS: Elem[S], eA: Elem[A]): Iso[StateGetData[S, A], StateGet[S, A]] =
-    new StateGetIso[S, A]
+    cachedIso[StateGetIso[S, A]](eS, eA)
 
   // 6) smart constructor and deconstructor
   def mkStateGet[S, A](f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateGet[S, A]]
@@ -202,7 +202,7 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoStatePut[S, A](implicit eS: Elem[S], eA: Elem[A]): Iso[StatePutData[S, A], StatePut[S, A]] =
-    new StatePutIso[S, A]
+    cachedIso[StatePutIso[S, A]](eS, eA)
 
   // 6) smart constructor and deconstructor
   def mkStatePut[S, A](s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]]

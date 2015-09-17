@@ -170,7 +170,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSHashSetImpl[A](implicit eA: Elem[A]): Iso[SHashSetImplData[A], SHashSetImpl[A]] =
-    new SHashSetImplIso[A]
+    cachedIso[SHashSetImplIso[A]](eA)
 
   // 6) smart constructor and deconstructor
   def mkSHashSetImpl[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]]

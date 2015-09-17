@@ -122,7 +122,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSString: Iso[SStringData, SString] =
-    new SStringIso
+    cachedIso[SStringIso]()
 
   // 6) smart constructor and deconstructor
   def mkSString(wrappedValueOfBaseType: Rep[String]): Rep[SString]
@@ -192,7 +192,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCString: Iso[CStringData, CString] =
-    new CStringIso
+    cachedIso[CStringIso]()
 
   // 6) smart constructor and deconstructor
   def mkCString(wrappedValueOfBaseType: Rep[String]): Rep[CString]

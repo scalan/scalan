@@ -126,7 +126,7 @@ trait StatesAbs extends States with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoStateBase[S, A](implicit eS: Elem[S], eA: Elem[A]): Iso[StateBaseData[S, A], StateBase[S, A]] =
-    new StateBaseIso[S, A]
+    cachedIso[StateBaseIso[S, A]](eS, eA)
 
   // 6) smart constructor and deconstructor
   def mkStateBase[S, A](run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]]

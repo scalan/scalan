@@ -126,7 +126,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAsk: Iso[AskData, Ask] =
-    new AskIso
+    cachedIso[AskIso]()
 
   // 6) smart constructor and deconstructor
   def mkAsk(prompt: Rep[String]): Rep[Ask]
@@ -197,7 +197,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoTell: Iso[TellData, Tell] =
-    new TellIso
+    cachedIso[TellIso]()
 
   // 6) smart constructor and deconstructor
   def mkTell(msg: Rep[String]): Rep[Tell]
