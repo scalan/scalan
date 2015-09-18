@@ -459,6 +459,7 @@ trait ScalanParsers {
       Some(parseExpr(tree))
   }
 
+  var __counter = 0
   def parseExpr(tree: Tree): SExpr = tree match {
     case EmptyTree => SEmpty()
     case Literal(Constant(c)) => SConst(c)
@@ -481,7 +482,10 @@ trait ScalanParsers {
     case TypeApply(fun: Tree, args: List[Tree]) => STypeApply(parseExpr(fun), args.map(tpeExpr))
     case q"$expr match { case ..$cases } " => parseMatch(expr, cases)
     case q"{ case ..$cases }" => parseMatch(EmptyTree, cases)
-    case q"$expr[..$tpts](...$exprss)" => SApply(parseExpr(expr), tpts.map(tpeExpr), exprss.map(_.map(parseExpr)))
+    case Apply(TypeApply(fun, targs), args) =>
+      SApply(parseExpr(fun), targs.map(tpeExpr), List(args.map(parseExpr)))
+    case Apply(fun, args) =>
+      SApply(parseExpr(fun), Nil, List(args.map(parseExpr)))
     case bi => optBodyItem(bi, None) match {
       case Some(item) => item
       case None => throw new NotImplementedError(s"parseExpr: Error parsing of ${showRaw(bi)}")
