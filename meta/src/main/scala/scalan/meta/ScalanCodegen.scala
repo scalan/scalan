@@ -25,7 +25,9 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     val implicitArgsDecl = implicitArgs.opt(args => s"(implicit ${args.rep(a => s"${a.name}: ${a.tpe}")})")
     val implicitArgsUse = implicitArgs.opt(args => s"(${args.rep(_.name)})")
     val optBT = entity.optBaseType
-    val entityNameBT = optBT.map(_.name).getOrElse(name)
+//    val entityNameBT = optBT.map(_.name).getOrElse(name)
+    val baseTypeName = entity.baseTypeName
+    val baseInstanceName = entity.baseInstanceName
     val firstAncestorType = entity.ancestors.headOption
     val entityRepSynonimOpt = module.entityRepSynonym
 
@@ -211,8 +213,9 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       case f :: fs => s"Pair($f, ${pairify(fs)})"
     }
 
-    def getDefaultOfBT(tc: STpeExpr) =
-      s"DefaultOf${tc.name}" + tc.tpeSExprs.opt(args => s"[${args.rep()}]")
+    def getDefaultOfBT(tc: STpeExpr) = {
+      s"DefaultOf${baseInstanceName}" + tc.tpeSExprs.opt(args => s"[${args.rep()}]")
+    }
 
     def zeroSExpr(t: STpeExpr): String = t match {
       case STpePrimitive(_, defaultValueString) => defaultValueString
@@ -286,8 +289,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     val templateData = EntityTemplateData(module, module.entityOps)
     val optBT = templateData.optBT
     val entityName = templateData.name
-    val entityNameBT = optBT.map(_.name).getOrElse(templateData.name)
-    val entityNameBT1 = optBT.getOrElse(templateData.name)
+    val baseTypeName = templateData.baseTypeName
+    val baseInstanceName = templateData.baseInstanceName
+//    val entityNameBT = optBT.map(_.name).getOrElse(templateData.name)
+//    val entityNameBT1 = optBT.getOrElse(templateData.name)
     val tyArgsDecl = templateData.tpeArgDecls
     val tyArgsUse = templateData.tpeArgUses
     val typesDecl = templateData.tpeArgDeclString
@@ -386,7 +391,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         s"""override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unrepRet.toString}] =
         |""".stripMargin
 
-      val obj = if (isInstance) "wrappedValueOfBaseType" else entityNameBT
+      val obj = if (isInstance) "wrappedValueOfBaseType" else baseInstanceName
 
       val methodBody = tyRet.unRep(module, config) match {
         case Some(STraitCall(name, _)) if name == entityName =>
@@ -409,7 +414,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
         s"""
         |    override def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unrepRet.toString}] =
-        |      ${entityName}Impl(new $entityNameBT${typesUse}${md.argSections.rep(methodArgsUse(_), "")})
+        |      ${entityName}Impl(new $baseInstanceName${typesUse}${md.argSections.rep(methodArgsUse(_), "")})
         |""".stripMargin
       }
 
@@ -476,24 +481,24 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val proxyBT = optBT.opt(bt => {
         s"""
         |  // TypeWrapper proxy
-        |  //implicit def proxy$entityNameBT${typesWithElems}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
+        |  //implicit def proxy$baseInstanceName${typesWithElems}(p: Rep[$baseTypeName${typesUse}]): $entityName$typesUse =
         |  //  proxyOps[$entityName${typesUse}](p.asRep[$entityName${typesUse}])
         |
-        |  implicit def unwrapValueOf$entityName${typesDecl}(w: Rep[$entityName${typesUse}]): Rep[$entityNameBT${typesUse}] = w.wrappedValueOfBaseType
+        |  implicit def unwrapValueOf$entityName${typesDecl}(w: Rep[$entityName${typesUse}]): Rep[$baseTypeName${typesUse}] = w.wrappedValueOfBaseType
         |""".stripAndTrim
       })
 
-      val baseTypeElem = optBT.opt(bt =>
+      val baseTypeElem =
         if (tyArgsDecl.isEmpty) {
           s"""
-          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element: Elem[${bt.name}]
+          |  implicit def ${StringUtil.lowerCaseFirst(baseInstanceName)}Element: Elem[${baseTypeName}]
           |""".stripAndTrim
         }
         else {
           s"""
-          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}]
+          |  implicit def ${StringUtil.lowerCaseFirst(baseInstanceName)}Element${typesWithElems}: Elem[$baseTypeName${typesUse}]
           |""".stripAndTrim
-        })
+        }
 
       def familyContainer(e: EntityTemplateData) = {
         val typesDecl = e.tpeArgDeclString
@@ -538,10 +543,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           case Some(STraitCall("TypeWrapper", _)) =>
             (None, s"WrapperElem${cont.opt("1")}",
              if (cont)
-               s"[${cont.opt(e.typesUsePref)}To${cont.opt(s", ${e.entityNameBT}, $entityName")}]"
+               s"[${cont.opt(e.typesUsePref)}To${cont.opt(s", ${e.baseTypeName}, $entityName")}]"
              else
-               s"[${e.entityNameBT}${e.tpeArgUseString}, To]",
-             s"${cont.opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.entityNameBT}], container[$entityName])")}")
+               s"[${e.baseTypeName}${e.tpeArgUseString}, To]",
+             s"${cont.opt(s"()(${e.tpeArgs.map("e" + _.name + ", ").mkString("")}container[${e.baseTypeName}], container[$entityName])")}")
           case Some(parent @ STraitCall(parentName, parentTypes)) =>
             (Some(parent), s"${parentName}Elem",
              s"[${parentTypes.map(_.toString + ", ").mkString("")}To]",
@@ -669,7 +674,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           else {
             s"""
             |  // default wrapper implementation
-            |  abstract class ${entityName}Impl${typesDecl}(val wrappedValueOfBaseType: Rep[${entityNameBT}${typesUse}])${implicitArgsWithVals} extends ${entityName}${typesUse} {
+            |  abstract class ${entityName}Impl${typesDecl}(val wrappedValueOfBaseType: Rep[${baseTypeName}${typesUse}])${implicitArgsWithVals} extends ${entityName}${typesUse} {
             |    $externalMethodsStr
             |  }
             |  trait ${entityName}ImplCompanion
@@ -947,16 +952,16 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     def baseTypeElem(ctx: String) = optBT.opt(bt =>
       if (tyArgsDecl.isEmpty) {
         s"""
-          |  implicit lazy val ${StringUtil.lowerCaseFirst(bt.name)}Element: Elem[${bt.name}] =
-          |    new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])(weakTypeTag[${bt.name}], ${getDefaultOfBT(bt)})
+          |  implicit lazy val ${StringUtil.lowerCaseFirst(baseInstanceName)}Element: Elem[${baseTypeName}] =
+          |    new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])(weakTypeTag[${baseTypeName}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       }
       else if (templateData.isContainer1) {
         val elems = templateData.tpeArgUses.rep(ty => s"element[$ty]")
         s"""
-          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] =
-          |    new ${ctx}BaseElemEx1[${templateData.typesUsePref}$entityName${typesUse}, $entityNameBT](element[$entityName${typesUse}])(
-          |      $elems, container[${bt.name}], ${getDefaultOfBT(bt)})
+          |  implicit def ${StringUtil.lowerCaseFirst(baseInstanceName)}Element${typesWithElems}: Elem[$baseTypeName${typesUse}] =
+          |    new ${ctx}BaseElemEx1[${templateData.typesUsePref}$entityName${typesUse}, $baseTypeName](element[$entityName${typesUse}])(
+          |      $elems, container[${baseTypeName}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       }
       else {
@@ -964,9 +969,9 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           s"implicit val w$argName = element[$argName].tag;"
         }.reduce(_ + _)
         s"""
-          |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] = {
-          |    $weakTagsForTpeArgs
-          |    new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
+          |  implicit def ${StringUtil.lowerCaseFirst(baseInstanceName)}Element${typesWithElems}: Elem[$baseTypeName${typesUse}] = {
+          |     $weakTagsForTpeArgs
+          |     new ${ctx}BaseElemEx[$baseTypeName${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$baseTypeName${typesUse}], ${getDefaultOfBT(bt)})
           |  }
           |""".stripAndTrim
       })
@@ -978,13 +983,13 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val proxyBTSeq = optBT.opt(bt =>
         s"""
          |  // override proxy if we deal with TypeWrapper
-         |  //override def proxy$entityNameBT${typesWithElems}(p: Rep[$entityNameBT${typesUse}]): $entityName$typesUse =
-         |  //  proxyOpsEx[$entityNameBT${typesUse},$entityName${typesUse}, Seq${entityName}Impl$typesUse](p, bt => Seq${entityName}Impl(bt))
+         |  //override def proxy$baseInstanceName${typesWithElems}(p: Rep[$baseTypeName${typesUse}]): $entityName$typesUse =
+         |  //  proxyOpsEx[$baseTypeName${typesUse},$entityName${typesUse}, Seq${entityName}Impl$typesUse](p, bt => Seq${entityName}Impl(bt))
          |""".stripAndTrim
       )
       val baseTypeToWrapperConvertionSeq = optBT.opt(bt =>
         s"""
-         |  implicit def wrap${entityNameBT}To$entityName${typesWithElems}(v: $entityNameBT${typesUse}): $entityName$typesUse = ${entityName}Impl(v)
+         |  implicit def wrap${baseInstanceName}To$entityName${typesWithElems}(v: $baseTypeName${typesUse}): $entityName$typesUse = ${entityName}Impl(v)
          |""".stripAndTrim
       )
 
