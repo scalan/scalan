@@ -159,64 +159,67 @@ trait Views extends Elems { self: Scalan =>
 //    case sum: SumIso[]
 //  }
 
-  def getIsoByElem[T](e: Elem[T]): Iso[_, T] = (e match {
-    case ve: ViewElem[_,_] =>
-      val eFrom = ve.iso.eFrom
-      val deepIso = getIsoByElem(eFrom)
-      if (deepIso.isIdentity)
-        ve.iso
-      else
-        composeIso(ve.iso, deepIso)
-    case pe: PairElem[a,b] =>
-      val iso1 = getIsoByElem(pe.eFst)
-      val iso2 = getIsoByElem(pe.eSnd)
-      pairIso(iso1,iso2)
-    case pe: SumElem[a,b] =>
-      val iso1 = getIsoByElem(pe.eLeft)
-      val iso2 = getIsoByElem(pe.eRight)
-      sumIso(iso1,iso2)
-    case fe: FuncElem[a,b] =>
-      val iso1 = getIsoByElem(fe.eDom)
-      val iso2 = getIsoByElem(fe.eRange)
-      funcIso(iso1,iso2)
-    case ae: ArrayElem[_] =>
-      val iso = getIsoByElem(ae.eItem)
-      arrayIso(iso)
-    case ae: ListElem[_] =>
-      val iso = getIsoByElem(ae.eItem)
-      listIso(iso)
-    case ae: ArrayBufferElem[_] =>
-      val iso = getIsoByElem(ae.eItem)
-      arrayBufferIso(iso)
-    case ae: ThunkElem[_] =>
-      val iso = getIsoByElem(ae.eItem)
-      thunkIso(iso)
-    case me: MMapElem[_,_] =>
-      identityIso(me)
+  def getIsoByElem[T](e: Elem[T]): Iso[_, T] = isoCache.getOrElseUpdate(
+    (classOf[Iso[_, _]], Seq(e)), 
+    e match {
+      case ve: ViewElem[_,_] =>
+        val eFrom = ve.iso.eFrom
+        val deepIso = getIsoByElem(eFrom)
+        if (deepIso.isIdentity)
+          ve.iso
+        else
+          composeIso(ve.iso, deepIso)
+      case pe: PairElem[a,b] =>
+        val iso1 = getIsoByElem(pe.eFst)
+        val iso2 = getIsoByElem(pe.eSnd)
+        pairIso(iso1,iso2)
+      case pe: SumElem[a,b] =>
+        val iso1 = getIsoByElem(pe.eLeft)
+        val iso2 = getIsoByElem(pe.eRight)
+        sumIso(iso1,iso2)
+      case fe: FuncElem[a,b] =>
+        val iso1 = getIsoByElem(fe.eDom)
+        val iso2 = getIsoByElem(fe.eRange)
+        funcIso(iso1,iso2)
+      case ae: ArrayElem[_] =>
+        val iso = getIsoByElem(ae.eItem)
+        arrayIso(iso)
+      case ae: ListElem[_] =>
+        val iso = getIsoByElem(ae.eItem)
+        listIso(iso)
+      case ae: ArrayBufferElem[_] =>
+        val iso = getIsoByElem(ae.eItem)
+        arrayBufferIso(iso)
+      case ae: ThunkElem[_] =>
+        val iso = getIsoByElem(ae.eItem)
+        thunkIso(iso)
+      case me: MMapElem[_,_] =>
+        identityIso(me)
 
-    case we: WrapperElem1[a, Reifiable[ext], cbase, cw] @unchecked =>
-      implicit val ea = we.eItem
-      implicit val eBase = we.baseElem
-      implicit val eExt = we.eTo
-      val iso = getIsoByElem(eExt)
-      iso
+      case we: WrapperElem1[a, Reifiable[ext], cbase, cw] @unchecked =>
+        implicit val ea = we.eItem
+        implicit val eBase = we.baseElem
+        implicit val eExt = we.eTo
+        val iso = getIsoByElem(eExt)
+        iso
 
-    case we: WrapperElem[Reifiable[base],Reifiable[ext]] @unchecked =>
-      implicit val eBase = we.baseElem
-      implicit val eExt = we.eTo
-      val iso = getIsoByElem(eExt)
-      iso
+      case we: WrapperElem[Reifiable[base],Reifiable[ext]] @unchecked =>
+        implicit val eBase = we.baseElem
+        implicit val eExt = we.eTo
+        val iso = getIsoByElem(eExt)
+        iso
 
-    //    case ee1: EntityElem1[_,_,_] =>
-    //      val iso = getIsoByElem(ee1.eItem)
-    //      TODO implement using ContainerIso
+      //    case ee1: EntityElem1[_,_,_] =>
+      //      val iso = getIsoByElem(ee1.eItem)
+      //      TODO implement using ContainerIso
 
-    case ee: EntityElem[_] =>
-      identityIso(ee)
-    case be: BaseElem[_] =>
-      identityIso(be)
-    case _ => !!!(s"Don't know how to build iso for element $e")
-  }).asInstanceOf[Iso[_,T]]
+      case ee: EntityElem[_] =>
+        identityIso(ee)
+      case be: BaseElem[_] =>
+        identityIso(be)
+      case _ => !!!(s"Don't know how to build iso for element $e")
+    }
+  ).asInstanceOf[Iso[_,T]]
 
   def isConcreteElem[T](e: Elem[T]): Boolean = e match {
     case e: PairElem[_, _] => e.eFst.isConcrete && e.eSnd.isConcrete
