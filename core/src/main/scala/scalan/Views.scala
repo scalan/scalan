@@ -160,7 +160,7 @@ trait Views extends Elems { self: Scalan =>
 //  }
 
   def getIsoByElem[T](e: Elem[T]): Iso[_, T] = isoCache.getOrElseUpdate(
-    (classOf[Iso[_, _]], Seq(e)), 
+    (classOf[Iso[_, _]], Seq(e)),
     e match {
       case ve: ViewElem[_,_] =>
         val eFrom = ve.iso.eFrom
@@ -197,15 +197,12 @@ trait Views extends Elems { self: Scalan =>
         identityIso(me)
 
       case we: WrapperElem1[a, Reifiable[ext], cbase, cw] @unchecked =>
-        implicit val ea = we.eItem
-        implicit val eBase = we.baseElem
-        implicit val eExt = we.eTo
+        val eExt = we.eTo
         val iso = getIsoByElem(eExt)
         iso
 
       case we: WrapperElem[Reifiable[base],Reifiable[ext]] @unchecked =>
-        implicit val eBase = we.baseElem
-        implicit val eExt = we.eTo
+        val eExt = we.eTo
         val iso = getIsoByElem(eExt)
         iso
 
