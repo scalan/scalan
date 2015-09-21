@@ -317,7 +317,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     override def toString = "SparseVector1"
     def apply[T](p: Rep[SparseVector1Data[T]])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
       isoSparseVector1(eT).to(p)
-    def apply[T](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
+    def apply[T](nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
       mkSparseVector1(nonZeroItems, length)
   }
   object SparseVector1Matcher {
@@ -345,7 +345,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     new SparseVector1Iso[T]
 
   // 6) smart constructor and deconstructor
-  def mkSparseVector1[T](nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]]
+  def mkSparseVector1[T](nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]]
   def unmkSparseVector1[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[(Int, T)]], Rep[Int])]
 
   registerModule(scalan.meta.ScalanCodegen.loadModule(Vectors_Module.dump))
@@ -419,7 +419,7 @@ trait VectorsSeq extends VectorsDsl with scalan.ScalanSeq {
   }
 
   case class SeqSparseVector1[T]
-      (override val nonZeroItems: Rep[Collection[(Int, T)]], override val length: Rep[Int])
+      (override val nonZeroItems: Coll[(Int, T)], override val length: Rep[Int])
       (implicit eT: Elem[T])
     extends SparseVector1[T](nonZeroItems, length)
         with UserTypeSeq[SparseVector1[T]] {
@@ -430,7 +430,7 @@ trait VectorsSeq extends VectorsDsl with scalan.ScalanSeq {
   }
 
   def mkSparseVector1[T]
-      (nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
+      (nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
       new SeqSparseVector1[T](nonZeroItems, length)
   def unmkSparseVector1[T](p: Rep[AbstractVector[T]]) = p match {
     case p: SparseVector1[T] @unchecked =>
@@ -1285,7 +1285,7 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
   }
 
   case class ExpSparseVector1[T]
-      (override val nonZeroItems: Rep[Collection[(Int, T)]], override val length: Rep[Int])
+      (override val nonZeroItems: Coll[(Int, T)], override val length: Rep[Int])
       (implicit eT: Elem[T])
     extends SparseVector1[T](nonZeroItems, length) with UserTypeDef[SparseVector1[T]] {
     lazy val selfType = element[SparseVector1[T]]
@@ -1566,7 +1566,7 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
   }
 
   def mkSparseVector1[T]
-    (nonZeroItems: Rep[Collection[(Int, T)]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
+    (nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]] =
     new ExpSparseVector1[T](nonZeroItems, length)
   def unmkSparseVector1[T](p: Rep[AbstractVector[T]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SparseVector1Elem[T] @unchecked =>
@@ -1931,7 +1931,7 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
 object Vectors_Module {
   val packageName = "scalan.linalgebra"
   val name = "Vectors"
-  val dump = "H4sIAAAAAAAAAN1YTWwbRRQeb+I4ttO0jdpAJSJCMFRUEKcI1EMOJXUcCHKTKGsqMFWl8XrsTJmd3eyMI5tDhTghuCGuCPXeGxekSr0gJMSBEwKkStw4lSJUARUHEG9mf7yOf5IArSJ8GO3P2/fefN/33r71jbsoKTz0tLAww3zeJhLPm/p4ScicWeSSyvZFp9ZkZJnU353+zLrILwgDHa2gsS0slgWroLR/UGy50bFJtksojblFhHQ8IdETJR0hbzmMEUtSh+epbTclrjKSL1EhF0totOrU2tvoGkqU0DHL4ZZHJDELDAtBRHB9nKiMaHSe1uftdbcTg+fVLvKxXZQ9TCWkDzGO+fabxDXb3OFtW6LJILV1V6UFNilqu44nwxApcLfl1MLTUY7hApoqXcU7OA8hGnlTepQ34Mmsi623cIOsgYkyH4WEBWH1ctvV5yMllBFkGwBatV2mr7RchBAw8LxOYr6Dz3yEz7zCJ2cSj2JG38bq5obntNrI/yVGEGq54OLZPVyEHkiR13LvX7bevG9mbUM93FKppPQOx8DR4wPUoKkAHL/c/FDce/n6OQNlKihDxVJVSA9bMk55gFYWc+5InXMEIPYawNbcILZ0lCWw2SWJtOXYLubgKYByAnhi1KJSGatrEwE7A6BPSZeEpomWm4j2Oztgv1o3BczYxp1Tzz31U/F1AxndIdLg0gThe6FTkFOIxiUgIQBiTK9HJUqUNdJqSbc6a2pIEhEcp+/8XPtiAV02IhCDmPvjDVwkxfffZr955ryBxita5SsMNyqAoygyYq97BYfLChp3dojn30ntYKaO+vKYqpE6bjIZoBuHZQRgkWh2YD26RGG2qLWfCAHI+vJdczjJrWzkfje/+uiGUqeHJvw7foH+Rc/9eXuyLrVwJUpSSWwR4jsChd2NeKYQlcO+qOgQkvGjmo5Njs/do1eufyA19IlWd/WvV6+C/0X93GNDWAi70G+VBePXU999YqA0gF2l0sZubmGftfMA6wF14zNZCDqwVs/ZXTe7RR5DMrR4pNuiEM81BnoqWmaAzBPLhAvS54mZToM6Gcvk0USoH20kkUHKYQKjStN7Ui5RNhZTe4nKaWYQkRq26c3SCXb3/C0DJV9FyTpUiSihZNVp8lrIB7zDJGnJC+G1RDcfgD/2sB3hr3+zqLPfXRlrw2xiKBP7bDc9QKJdQI7qshpYVb159XgYY4Q35FYfHx56cjCyGx614QW/Q178/OZrv9xaS+qeOxX0mkuYNYn/ug1A7ACqukFiASKtctl/x6f1euYwCB1iin5PPEihx2LGha7Wlw6V+CZhMqsQz1nlNQot8QDNXS1vxCP2D3AkCKDl9B+9PPpFUku5131PlodRoidN6E4PuxlPxIMebpFOhCI96PwxZEJwSbnpMvLCzT+uvPfOK64eN3pGzJiG9pxl/m+inI7r4+zDUuWRrqgHl2Vs42N9oUxvElqn6kPt30s3DtsQ9rJqEFzBNmXtfVM3iJVhVPqA9H4X/VMU1fpDxyYwTAUASXQ8qC1GOWYNUvVwAIKH5gaUnRmMxTCbX7v/8dqZrz/9UQ8dGTVgw9cIj/4KiA8b3aBN+f5g63aTU9mGT/xY6iA1NXvrtP8GXdsZ0nIRAAA="
+  val dump = "H4sIAAAAAAAAAOVXTWwbRRSe3dhxbKdpG7WBSkSEYqioIE4RqIccSuokEOQmUdZUYKpK4/XYmTI7u9kZRzaHCnFCcENcEeq9Ny5IlXpBSIgDJwRIPfdUilAFVBxAvJn98Tq2kxRoFYk9jPbn7Xtvvu97b99ev4vSwkfPChszzGcdIvGspc8XhCxYS1xS2bng1luMLJLG+1Nf2Bf4eWGiw1U0uonFomBVlA1OltpefG6RrTLKYm4TIV1fSPRUWUco2i5jxJbU5UXqOC2Ja4wUy1TI+TJK1dx6ZwtdRUYZHbFdbvtEEqvEsBBEhPfHiMqIxtdZfd1Z87oxeFHtopjYRcXHVEL6EONIYL9BPKvDXd5xJJoIU1vzVFpgk6GO5/oyCpEBd5tuPbpMcQw30GT5Ct7GRQjRLFrSp7wJb+Y9bL+Dm2QVTJR5ChIWhDUqHU9fj5RRTpAtAGjF8Zi+0/YQQsDAizqJ2S4+szE+swqfgkV8ihl9F6uH677b7qDgMEYQanvg4vk9XEQeyBKvFz68ZL9938o7pnq5rVLJ6B2OgqMnh6hBUwE4fr3xsbj36rWzJspVUY6KhZqQPrZlkvIQrTzm3JU65xhA7DeBrZPD2NJRFsBmhySytut4mIOnEMpx4IlRm0plrO6Nh+wMgT4jPRKZGm3PiPc7M2S/WjclzNj6nRMvPPPT0psmMntDZMGlBcL3I6cgpwiNi0BCCMSoXg9LZFQ00mrJtrtrZpckYjhO3fm5/tUcumTGIIYx98cbuEiLH7/Pf/fcORONVbXKlxluVgFHscSIs+aXXC6raMzdJn7wJLONmTobyGOmThq4xWSIbhKWEYBFopmh9egRhdm81r4RAZAP5LvqclJYXi/8bn3zyXWlTh+NB0+CAv2Lnv3z1kRDauFKlKaSOCLCdwQKuxfxXCkuh31R0SUkF0S1XIccPXmPXr72kdTQG+3e6l+rXQH/8/q9J3ZhIepCv1XnzF9P/PCZibIAdo1KB3uFuX3WzkOsB9SLz0Qp7MBaPWd2POwVeQLJyOKxXotSMtcE6Jl4mQYyjy0SLsiAN6a7Dep4IpPHjUg/2kgik1SiBFJK03tSLlE+EVN7ictpehiRGrapjfIxdvfcTROlX0fpBlSJKKN0zW3xesQHfMMkacvz0T2jlw/AH/vYifHXxwzq7ndHxtowb+zKxD7bTR+QaAeQKV1WQ6uqP68+D6OM8KbcHODDR08PR3bdpw584LfJy1/eeOOXm6tp3XMnw15zEbMWCT63IYhdQFU3MOYg0gqXg3d8Sq+nD4LQIaYY9MbDFHoiZlLoan3lQIlvAiazKvHdFV6n0BIfoLmr5a1kxMEBDoUBtJz+o4/HoEhqqfS778vyIEr0uAXd6VE34/Fk0IMt0vFIpMn5I6UEs+c8Bm2u0vIYeenGH5c/eO81T48VfaNkQiv/I9lNJRVw5lHp7lBP1AcXXmLjowOhzG4Q2qDqV+zfizMJ2y7s5dWot4wdyjr7pm4YK7tRGQDS/+fzT1FU662uTWiYCQGS6GhYVYxyzJqk5uMQBB+dHFJwVjj4wvR99f6nq6e//fy2HityaoSG/w0e/+wnx4le0CYDf7B1p8Wp7MBPfCJ1kJqarnXafwPwrHw5VBEAAA=="
 }
 }
 
