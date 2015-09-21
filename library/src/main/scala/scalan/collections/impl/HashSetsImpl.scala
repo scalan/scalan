@@ -26,12 +26,12 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
 
   implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, SHashSet[A]] = elem.asInstanceOf[SHashSetElem[A, SHashSet[A]]]
 
-  implicit val containerHashSet: Cont[HashSet] = new Container[HashSet] {
+  implicit lazy val containerHashSet: Cont[HashSet] = new Container[HashSet] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[HashSet[A]]
     def lift[A](implicit evA: Elem[A]) = element[HashSet[A]]
   }
 
-  implicit val containerSHashSet: Cont[SHashSet] = new Container[SHashSet] {
+  implicit lazy val containerSHashSet: Cont[SHashSet] = new Container[SHashSet] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SHashSet[A]]
     def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
   }

@@ -478,7 +478,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val entityElemType = s"${entityName}Elem[${e.typesUsePref}${e.entityType}]"
         val btContainer = optBT.opt(bt =>
           s"""
-             |  implicit val container${bt.name}: Cont[${bt.name}] = new Container[${bt.name}] {
+             |  implicit lazy val container${bt.name}: Cont[${bt.name}] = new Container[${bt.name}] {
              |    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[${bt.name}[A]]
              |    def lift[A](implicit evA: Elem[A]) = element[${bt.name}[A]]
              |  }
@@ -489,7 +489,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |
         |  $btContainer
         |
-        |  implicit val container${e.name}: Cont[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} = new Container[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} {
+        |  implicit lazy val container${e.name}: Cont[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} = new Container[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} {
         |    def tag${typesDecl}${e.tpeArgsImplicitDecl("WeakTypeTag")} = weakTypeTag[${e.entityType}]
         |    def lift${typesDecl}${e.tpeArgsImplicitDecl("Elem")} = element[${e.entityType}]
         |    ${e.isFunctor.opt(s"def map[A:Elem,B:Elem](xs: Rep[${e.name}[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
