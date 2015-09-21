@@ -52,9 +52,11 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
   }
 
   implicit def sThrowableElement: Elem[SThrowable] =
-    new SThrowableElem[SThrowable] {
-      lazy val eTo = element[SThrowableImpl]
-    }
+    elemCache.getOrElseUpdate(
+      (classOf[SThrowableElem[SThrowable]], Nil),
+      new SThrowableElem[SThrowable] {
+        lazy val eTo = element[SThrowableImpl]
+      }).asInstanceOf[Elem[SThrowable]]
 
   implicit case object SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs] {
     lazy val tag = weakTypeTag[SThrowableCompanionAbs]
@@ -238,7 +240,8 @@ trait ExceptionsSeq extends ExceptionsDsl with scalan.ScalanSeq {
   //override def proxyThrowable(p: Rep[Throwable]): SThrowable =
   //  proxyOpsEx[Throwable,SThrowable, SeqSThrowableImpl](p, bt => SeqSThrowableImpl(bt))
 
-    implicit lazy val throwableElement: Elem[Throwable] = new SeqBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
+  implicit lazy val throwableElement: Elem[Throwable] =
+    new SeqBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
 
   case class SeqSThrowableImpl
       (override val wrappedValueOfBaseType: Rep[Throwable])
@@ -304,7 +307,8 @@ trait ExceptionsExp extends ExceptionsDsl with scalan.ScalanExp {
       newObjEx(classOf[SThrowable], List(msg.asRep[Any]))
   }
 
-  implicit lazy val throwableElement: Elem[Throwable] = new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
+  implicit lazy val throwableElement: Elem[Throwable] =
+    new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
 
   case class ExpSThrowableImpl
       (override val wrappedValueOfBaseType: Rep[Throwable])

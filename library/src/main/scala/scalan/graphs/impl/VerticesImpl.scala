@@ -47,7 +47,7 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   }
 
   implicit def vertexElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Vertex[V, E]] =
-    new VertexElem[V, E, Vertex[V, E]]
+    cachedElem[VertexElem[V, E, Vertex[V, E]]](eV, eE)
 
   implicit case object VertexCompanionElem extends CompanionElem[VertexCompanionAbs] {
     lazy val tag = weakTypeTag[VertexCompanionAbs]

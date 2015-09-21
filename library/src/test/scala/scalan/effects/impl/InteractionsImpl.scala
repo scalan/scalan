@@ -47,7 +47,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
   }
 
   implicit def interactElement[A](implicit eA: Elem[A]): Elem[Interact[A]] =
-    new InteractElem[A, Interact[A]]
+    cachedElem[InteractElem[A, Interact[A]]](eA)
 
   implicit case object InteractCompanionElem extends CompanionElem[InteractCompanionAbs] {
     lazy val tag = weakTypeTag[InteractCompanionAbs]

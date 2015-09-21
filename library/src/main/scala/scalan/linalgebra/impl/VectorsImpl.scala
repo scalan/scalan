@@ -46,7 +46,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   }
 
   implicit def abstractVectorElement[T](implicit eT: Elem[T]): Elem[AbstractVector[T]] =
-    new AbstractVectorElem[T, AbstractVector[T]]
+    cachedElem[AbstractVectorElem[T, AbstractVector[T]]](eT)
 
   implicit case object AbstractVectorCompanionElem extends CompanionElem[AbstractVectorCompanionAbs] {
     lazy val tag = weakTypeTag[AbstractVectorCompanionAbs]

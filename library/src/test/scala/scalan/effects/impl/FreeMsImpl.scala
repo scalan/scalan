@@ -46,7 +46,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   }
 
   implicit def freeMElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]): Elem[FreeM[F, A]] =
-    new FreeMElem[F, A, FreeM[F, A]]
+    cachedElem[FreeMElem[F, A, FreeM[F, A]]](cF, eA)
 
   implicit case object FreeMCompanionElem extends CompanionElem[FreeMCompanionAbs] {
     lazy val tag = weakTypeTag[FreeMCompanionAbs]

@@ -45,7 +45,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   }
 
   implicit def mMultiMapElement[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]): Elem[MMultiMap[K, V]] =
-    new MMultiMapElem[K, V, MMultiMap[K, V]]
+    cachedElem[MMultiMapElem[K, V, MMultiMap[K, V]]](elemKey, elemValue)
 
   implicit case object MMultiMapCompanionElem extends CompanionElem[MMultiMapCompanionAbs] {
     lazy val tag = weakTypeTag[MMultiMapCompanionAbs]

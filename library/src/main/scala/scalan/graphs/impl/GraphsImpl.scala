@@ -48,7 +48,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   }
 
   implicit def graphElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Graph[V, E]] =
-    new GraphElem[V, E, Graph[V, E]]
+    cachedElem[GraphElem[V, E, Graph[V, E]]](eV, eE)
 
   implicit case object GraphCompanionElem extends CompanionElem[GraphCompanionAbs] {
     lazy val tag = weakTypeTag[GraphCompanionAbs]

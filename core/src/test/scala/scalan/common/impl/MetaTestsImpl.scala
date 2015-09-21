@@ -43,7 +43,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
   }
 
   implicit def metaTestElement[T](implicit elem: Elem[T]): Elem[MetaTest[T]] =
-    new MetaTestElem[T, MetaTest[T]]
+    cachedElem[MetaTestElem[T, MetaTest[T]]](elem)
 
   implicit case object MetaTestCompanionElem extends CompanionElem[MetaTestCompanionAbs] {
     lazy val tag = weakTypeTag[MetaTestCompanionAbs]

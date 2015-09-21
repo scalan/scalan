@@ -44,7 +44,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   }
 
   implicit def frontElement: Elem[Front] =
-    new FrontElem[Front]
+    cachedElem[FrontElem[Front]]()
 
   implicit case object FrontCompanionElem extends CompanionElem[FrontCompanionAbs] {
     lazy val tag = weakTypeTag[FrontCompanionAbs]

@@ -63,10 +63,11 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
     override def canEqual(other: Any) = other.isInstanceOf[JNIArrayElem[_]]
   }
 
-  implicit def JNITypeElement[T: Elem]: Elem[JNIType[T]] = new JNITypeElem(element[T])
+  implicit def JNITypeElement[T: Elem]: Elem[JNIType[T]] = cachedElem[JNITypeElem[T]](element[T])
   implicit def JNIClassElement: Elem[JNIClass] = JNIClassElem
   implicit def JNIFieldIDElement: Elem[JNIFieldID] = JNIFieldIDElem
   implicit def JNIMethodIDElement: Elem[JNIMethodID] = JNIMethodIDElem
+  def jniArrayElem[A](eItem: Elem[A]) = cachedElem[JNIArrayElem[A]](eItem)
 
   def JNI_Extract[I](x: Rep[JNIType[I]]): Rep[I]
   def JNI_Pack[T](x: Rep[T]): Rep[JNIType[T]]
@@ -329,7 +330,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
 
   case class JNI_ExtractPrimitiveArray[A: Elem](x: Rep[JNIType[Array[A]]]) extends Def[Array[A]] {
     require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
-    override def selfType = JNIArrayElem(element[A])
+    override def selfType = jniArrayElem(element[A])
     override def mirror(t: Transformer) = JNI_ExtractPrimitiveArray[A](t(x))
   }
 

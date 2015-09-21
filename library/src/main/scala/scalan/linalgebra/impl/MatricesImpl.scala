@@ -46,7 +46,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   }
 
   implicit def abstractMatrixElement[T](implicit eT: Elem[T]): Elem[AbstractMatrix[T]] =
-    new AbstractMatrixElem[T, AbstractMatrix[T]]
+    cachedElem[AbstractMatrixElem[T, AbstractMatrix[T]]](eT)
 
   implicit case object AbstractMatrixCompanionElem extends CompanionElem[AbstractMatrixCompanionAbs] {
     lazy val tag = weakTypeTag[AbstractMatrixCompanionAbs]

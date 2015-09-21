@@ -47,7 +47,8 @@ trait Thunks { self: Scalan =>
     protected def getDefaultRep = Thunk(eItem.defaultRepValue)(eItem)
   }
 
-  implicit def thunkElement[T](implicit eItem: Elem[T]): Elem[Thunk[T]] = new ThunkElem[T](eItem)
+  implicit def thunkElement[T](implicit eItem: Elem[T]): Elem[Thunk[T]] =
+    cachedElem[ThunkElem[T]](eItem)
   implicit def extendThunkElement[T](elem: Elem[Thunk[T]]): ThunkElem[T] = elem.asInstanceOf[ThunkElem[T]]
 
   def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]]

@@ -44,7 +44,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   }
 
   implicit def bitSetElement: Elem[BitSet] =
-    new BitSetElem[BitSet]
+    cachedElem[BitSetElem[BitSet]]()
 
   implicit case object BitSetCompanionElem extends CompanionElem[BitSetCompanionAbs] {
     lazy val tag = weakTypeTag[BitSetCompanionAbs]

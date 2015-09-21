@@ -46,7 +46,7 @@ trait ConvertersAbs extends Converters  {
   }
 
   implicit def converterElement[T, R](implicit eT: Elem[T], eR: Elem[R]): Elem[Converter[T, R]] =
-    new ConverterElem[T, R, Converter[T, R]]
+    cachedElem[ConverterElem[T, R, Converter[T, R]]](eT, eR)
 
   implicit case object ConverterCompanionElem extends CompanionElem[ConverterCompanionAbs] {
     lazy val tag = weakTypeTag[ConverterCompanionAbs]

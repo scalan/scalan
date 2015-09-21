@@ -46,7 +46,7 @@ trait StatesAbs extends States with scalan.Scalan {
   }
 
   implicit def state0Element[S, A](implicit eS: Elem[S], eA: Elem[A]): Elem[State0[S, A]] =
-    new State0Elem[S, A, State0[S, A]]
+    cachedElem[State0Elem[S, A, State0[S, A]]](eS, eA)
 
   implicit case object State0CompanionElem extends CompanionElem[State0CompanionAbs] {
     lazy val tag = weakTypeTag[State0CompanionAbs]

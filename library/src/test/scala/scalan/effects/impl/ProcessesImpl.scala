@@ -46,7 +46,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
   }
 
   implicit def processElement[F[_], O](implicit cF: Cont[F], eO: Elem[O]): Elem[Process[F, O]] =
-    new ProcessElem[F, O, Process[F, O]]
+    cachedElem[ProcessElem[F, O, Process[F, O]]](cF, eO)
 
   implicit case object ProcessCompanionElem extends CompanionElem[ProcessCompanionAbs] {
     lazy val tag = weakTypeTag[ProcessCompanionAbs]

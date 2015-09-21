@@ -571,7 +571,14 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
             val tyArgs = e.tpeArgDecls.opt(args => s"[${args.mkString(", ")}]")
             s"""
                |  implicit def $elemMethod$tyArgs${e.implicitArgsDecl}: Elem[${e.entityType}] =
-               |    new ${e.name}Elem[${e.typesUsePref}${e.entityType}] ${e.isWrapper.opt(s"{\n      lazy val eTo = element[${e.name}Impl${e.tpeArgUseString}]\n    }")}
+               |${if (e.isWrapper)
+            s"""    elemCache.getOrElseUpdate(
+               |      (classOf[${e.name}Elem[${e.typesUsePref}${e.entityType}]], ${e.implicitArgsUse.opt(x => s"Seq$x", "Nil")}),
+               |      new ${e.name}Elem[${e.typesUsePref}${e.entityType}] {
+               |        lazy val eTo = element[${e.name}Impl${e.tpeArgUseString}]
+               |      }).asInstanceOf[Elem[${e.entityType}]]"""
+                else
+              s"    cachedElem[${e.name}Elem[${e.typesUsePref}${e.entityType}]]${e.implicitArgsUse.opt(x => x, "()")}"}
                |""".stripMargin
           } else ""
         }
@@ -704,6 +711,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           (a.name, name)
         })
 
+        // note: ${className}Iso.eTo doesn't call cachedElem because
+        // they are already cached via Isos + lazy val and this would lead to stack overflow
         s"""
         |$defaultImpl
         |  // elem for concrete class
@@ -911,28 +920,31 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""$userTypeNodeDefs\n\n$constrDefs"""
     }
 
+    // note: currently can't cache them properly due to cyclical dependency between
+    // baseType elem and wrapper elem
     def baseTypeElem(ctx: String) = optBT.opt(bt =>
       if (tyArgsDecl.isEmpty) {
         s"""
-          |  implicit lazy val ${StringUtil.lowerCaseFirst(bt.name)}Element: Elem[${bt.name}] = new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])(weakTypeTag[${bt.name}], ${getDefaultOfBT(bt)})
+          |  implicit lazy val ${StringUtil.lowerCaseFirst(bt.name)}Element: Elem[${bt.name}] =
+          |    new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])(weakTypeTag[${bt.name}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       }
       else if (templateData.isContainer1) {
         val elems = templateData.tpeArgUses.rep(ty => s"element[$ty]")
         s"""
           |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] =
-          |      new ${ctx}BaseElemEx1[${templateData.typesUsePref}$entityName${typesUse}, $entityNameBT](
-          |           element[$entityName${typesUse}])($elems, container[${bt.name}], ${getDefaultOfBT(bt)})
+          |    new ${ctx}BaseElemEx1[${templateData.typesUsePref}$entityName${typesUse}, $entityNameBT](element[$entityName${typesUse}])(
+          |      $elems, container[${bt.name}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       }
       else {
-        val weakTagsForTpeArgs = templateData.tpeArgUses.map{argName =>
+        val weakTagsForTpeArgs = templateData.tpeArgUses.map { argName =>
           s"implicit val w$argName = element[$argName].tag;"
         }.reduce(_ + _)
         s"""
           |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] = {
-          |     $weakTagsForTpeArgs
-          |     new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
+          |    $weakTagsForTpeArgs
+          |    new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
           |  }
           |""".stripAndTrim
       })
@@ -970,7 +982,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |
        |  $proxyBTSeq
        |
-       |  ${baseTypeElem("Seq")}
+       |${baseTypeElem("Seq")}
        |
        |${classesSeq.mkString("\n\n")}
        |

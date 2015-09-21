@@ -44,7 +44,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
   }
 
   implicit def kindElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]): Elem[Kind[F, A]] =
-    new KindElem[F, A, Kind[F, A]]
+    cachedElem[KindElem[F, A, Kind[F, A]]](cF, eA)
 
   implicit case object KindCompanionElem extends CompanionElem[KindCompanionAbs] {
     lazy val tag = weakTypeTag[KindCompanionAbs]

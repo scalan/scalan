@@ -44,7 +44,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   }
 
   implicit def aStringElement: Elem[AString] =
-    new AStringElem[AString]
+    cachedElem[AStringElem[AString]]()
 
   implicit case object AStringCompanionElem extends CompanionElem[AStringCompanionAbs] {
     lazy val tag = weakTypeTag[AStringCompanionAbs]

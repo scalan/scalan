@@ -46,7 +46,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   }
 
   implicit def readerElement[Env, A](implicit eEnv: Elem[Env], eA: Elem[A]): Elem[Reader[Env, A]] =
-    new ReaderElem[Env, A, Reader[Env, A]]
+    cachedElem[ReaderElem[Env, A, Reader[Env, A]]](eEnv, eA)
 
   implicit case object ReaderCompanionElem extends CompanionElem[ReaderCompanionAbs] {
     lazy val tag = weakTypeTag[ReaderCompanionAbs]

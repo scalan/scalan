@@ -46,7 +46,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
   }
 
   implicit def authElement[A](implicit eA: Elem[A]): Elem[Auth[A]] =
-    new AuthElem[A, Auth[A]]
+    cachedElem[AuthElem[A, Auth[A]]](eA)
 
   implicit case object AuthCompanionElem extends CompanionElem[AuthCompanionAbs] {
     lazy val tag = weakTypeTag[AuthCompanionAbs]

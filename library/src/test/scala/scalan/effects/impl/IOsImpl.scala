@@ -46,7 +46,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
   }
 
   implicit def iOElement[A](implicit eA: Elem[A]): Elem[IO[A]] =
-    new IOElem[A, IO[A]]
+    cachedElem[IOElem[A, IO[A]]](eA)
 
   implicit case object IOCompanionElem extends CompanionElem[IOCompanionAbs] {
     lazy val tag = weakTypeTag[IOCompanionAbs]

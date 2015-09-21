@@ -50,7 +50,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   }
 
   implicit def collectionElement[Item](implicit eItem: Elem[Item @uncheckedVariance]): Elem[Collection[Item]] =
-    new CollectionElem[Item, Collection[Item]]
+    cachedElem[CollectionElem[Item, Collection[Item]]](eItem)
 
   implicit case object CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionCompanionAbs]
@@ -99,7 +99,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   }
 
   implicit def pairCollectionElement[A, B](implicit eA: Elem[A], eB: Elem[B]): Elem[PairCollection[A, B]] =
-    new PairCollectionElem[A, B, PairCollection[A, B]]
+    cachedElem[PairCollectionElem[A, B, PairCollection[A, B]]](eA, eB)
 
   // single proxy for each type family
   implicit def proxyNestedCollection[A](p: Rep[NestedCollection[A]]): NestedCollection[A] = {
@@ -135,7 +135,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   }
 
   implicit def nestedCollectionElement[A](implicit eA: Elem[A]): Elem[NestedCollection[A]] =
-    new NestedCollectionElem[A, NestedCollection[A]]
+    cachedElem[NestedCollectionElem[A, NestedCollection[A]]](eA)
 
   // elem for concrete class
   class UnitCollectionElem(val iso: Iso[UnitCollectionData, UnitCollection])

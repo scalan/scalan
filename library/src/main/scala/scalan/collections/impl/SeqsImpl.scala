@@ -73,9 +73,11 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   }
 
   implicit def sSeqElement[A](implicit eA: Elem[A]): Elem[SSeq[A]] =
-    new SSeqElem[A, SSeq[A]] {
-      lazy val eTo = element[SSeqImpl[A]]
-    }
+    elemCache.getOrElseUpdate(
+      (classOf[SSeqElem[A, SSeq[A]]], Seq(eA)),
+      new SSeqElem[A, SSeq[A]] {
+        lazy val eTo = element[SSeqImpl[A]]
+      }).asInstanceOf[Elem[SSeq[A]]]
 
   implicit case object SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs] {
     lazy val tag = weakTypeTag[SSeqCompanionAbs]
@@ -243,9 +245,9 @@ trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
   //override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
   //  proxyOpsEx[Seq[A],SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
 
-    implicit def seqElement[A:Elem]: Elem[Seq[A]] =
-      new SeqBaseElemEx1[A, SSeq[A], Seq](
-           element[SSeq[A]])(element[A], container[Seq], DefaultOfSeq[A])
+  implicit def seqElement[A:Elem]: Elem[Seq[A]] =
+    new SeqBaseElemEx1[A, SSeq[A], Seq](element[SSeq[A]])(
+      element[A], container[Seq], DefaultOfSeq[A])
 
   case class SeqSSeqImpl[A]
       (override val wrappedValueOfBaseType: Rep[Seq[A]])
@@ -335,8 +337,8 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
   }
 
   implicit def seqElement[A:Elem]: Elem[Seq[A]] =
-      new ExpBaseElemEx1[A, SSeq[A], Seq](
-           element[SSeq[A]])(element[A], container[Seq], DefaultOfSeq[A])
+    new ExpBaseElemEx1[A, SSeq[A], Seq](element[SSeq[A]])(
+      element[A], container[Seq], DefaultOfSeq[A])
 
   case class ExpSSeqImpl[A]
       (override val wrappedValueOfBaseType: Rep[Seq[A]])

@@ -44,7 +44,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   }
 
   implicit def segmentElement: Elem[Segment] =
-    new SegmentElem[Segment]
+    cachedElem[SegmentElem[Segment]]()
 
   implicit case object SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs] {
     lazy val tag = weakTypeTag[SegmentCompanionAbs]

@@ -47,7 +47,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   }
 
   implicit def edgeElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Edge[V, E]] =
-    new EdgeElem[V, E, Edge[V, E]]
+    cachedElem[EdgeElem[V, E, Edge[V, E]]](eV, eE)
 
   implicit case object EdgeCompanionElem extends CompanionElem[EdgeCompanionAbs] {
     lazy val tag = weakTypeTag[EdgeCompanionAbs]

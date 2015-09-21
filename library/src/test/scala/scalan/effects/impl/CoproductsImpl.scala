@@ -45,7 +45,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   }
 
   implicit def coproductElement[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Elem[Coproduct[F, G, A]] =
-    new CoproductElem[F, G, A, Coproduct[F, G, A]]
+    cachedElem[CoproductElem[F, G, A, Coproduct[F, G, A]]](cF, cG, eA)
 
   implicit case object CoproductCompanionElem extends CompanionElem[CoproductCompanionAbs] {
     lazy val tag = weakTypeTag[CoproductCompanionAbs]
