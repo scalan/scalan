@@ -249,6 +249,11 @@ trait LmsBridge extends Passes {
   registerElemClass[MMapElem[_, _], java.util.HashMap[_,_]]
 
   def elemToManifest[T](elem: Elem[T]): Manifest[_] = elem match {
+    case el: ExpBaseElemEx[_,_] => {
+      val tag = el.tag
+      val cls = tag.mirror.runtimeClass(tag.tpe)
+      Manifest.classType(cls)
+    }
     case el: ExpBaseElemEx1[_,_,_] => {
       val tag = el.cont.tag
       val cls = tag.mirror.runtimeClass(tag.tpe)
