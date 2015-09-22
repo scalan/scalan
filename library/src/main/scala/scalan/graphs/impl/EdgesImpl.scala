@@ -47,7 +47,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   }
 
   implicit def edgeElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Edge[V, E]] =
-    new EdgeElem[V, E, Edge[V, E]]
+    cachedElem[EdgeElem[V, E, Edge[V, E]]](eV, eE)
 
   implicit case object EdgeCompanionElem extends CompanionElem[EdgeCompanionAbs] {
     lazy val tag = weakTypeTag[EdgeCompanionAbs]
@@ -128,7 +128,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAdjEdge[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[AdjEdgeData[V, E], AdjEdge[V, E]] =
-    new AdjEdgeIso[V, E]
+    cachedIso[AdjEdgeIso[V, E]](eV, eE)
 
   // 6) smart constructor and deconstructor
   def mkAdjEdge[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]]
@@ -201,7 +201,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoIncEdge[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[IncEdgeData[V, E], IncEdge[V, E]] =
-    new IncEdgeIso[V, E]
+    cachedIso[IncEdgeIso[V, E]](eV, eE)
 
   // 6) smart constructor and deconstructor
   def mkIncEdge[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V,E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]]

@@ -46,7 +46,7 @@ trait ConvertersAbs extends Converters  {
   }
 
   implicit def converterElement[T, R](implicit eT: Elem[T], eR: Elem[R]): Elem[Converter[T, R]] =
-    new ConverterElem[T, R, Converter[T, R]]
+    cachedElem[ConverterElem[T, R, Converter[T, R]]](eT, eR)
 
   implicit case object ConverterCompanionElem extends CompanionElem[ConverterCompanionAbs] {
     lazy val tag = weakTypeTag[ConverterCompanionAbs]
@@ -126,7 +126,7 @@ trait ConvertersAbs extends Converters  {
 
   // 5) implicit resolution of Iso
   implicit def isoBaseConverter[T, R](implicit eT: Elem[T], eR: Elem[R]): Iso[BaseConverterData[T, R], BaseConverter[T, R]] =
-    new BaseConverterIso[T, R]
+    cachedIso[BaseConverterIso[T, R]](eT, eR)
 
   // 6) smart constructor and deconstructor
   def mkBaseConverter[T, R](convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]]
@@ -202,7 +202,7 @@ trait ConvertersAbs extends Converters  {
 
   // 5) implicit resolution of Iso
   implicit def isoPairConverter[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] =
-    new PairConverterIso[A1, A2, B1, B2]
+    cachedIso[PairConverterIso[A1, A2, B1, B2]](eA1, eA2, eB1, eB2)
 
   // 6) smart constructor and deconstructor
   def mkPairConverter[A1, A2, B1, B2](conv1: Conv[A1,B1], conv2: Conv[A2,B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]]
@@ -278,7 +278,7 @@ trait ConvertersAbs extends Converters  {
 
   // 5) implicit resolution of Iso
   implicit def isoSumConverter[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] =
-    new SumConverterIso[A1, A2, B1, B2]
+    cachedIso[SumConverterIso[A1, A2, B1, B2]](eA1, eA2, eB1, eB2)
 
   // 6) smart constructor and deconstructor
   def mkSumConverter[A1, A2, B1, B2](conv1: Conv[A1,B1], conv2: Conv[A2,B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]]
@@ -351,7 +351,7 @@ trait ConvertersAbs extends Converters  {
 
   // 5) implicit resolution of Iso
   implicit def isoFunctorConverter[A, B, F[_]](implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] =
-    new FunctorConverterIso[A, B, F]
+    cachedIso[FunctorConverterIso[A, B, F]](eA, eB, F)
 
   // 6) smart constructor and deconstructor
   def mkFunctorConverter[A, B, F[_]](itemConv: Conv[A,B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]]

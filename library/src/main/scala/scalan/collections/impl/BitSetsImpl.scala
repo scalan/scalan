@@ -44,7 +44,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   }
 
   implicit def bitSetElement: Elem[BitSet] =
-    new BitSetElem[BitSet]
+    cachedElem[BitSetElem[BitSet]]()
 
   implicit case object BitSetCompanionElem extends CompanionElem[BitSetCompanionAbs] {
     lazy val tag = weakTypeTag[BitSetCompanionAbs]
@@ -122,7 +122,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBoolCollBitSet: Iso[BoolCollBitSetData, BoolCollBitSet] =
-    new BoolCollBitSetIso
+    cachedIso[BoolCollBitSetIso]()
 
   // 6) smart constructor and deconstructor
   def mkBoolCollBitSet(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet]

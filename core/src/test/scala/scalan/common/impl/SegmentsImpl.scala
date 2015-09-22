@@ -44,7 +44,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   }
 
   implicit def segmentElement: Elem[Segment] =
-    new SegmentElem[Segment]
+    cachedElem[SegmentElem[Segment]]()
 
   implicit case object SegmentCompanionElem extends CompanionElem[SegmentCompanionAbs] {
     lazy val tag = weakTypeTag[SegmentCompanionAbs]
@@ -123,7 +123,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoInterval: Iso[IntervalData, Interval] =
-    new IntervalIso
+    cachedIso[IntervalIso]()
 
   // 6) smart constructor and deconstructor
   def mkInterval(start: Rep[Int], end: Rep[Int]): Rep[Interval]
@@ -194,7 +194,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSlice: Iso[SliceData, Slice] =
-    new SliceIso
+    cachedIso[SliceIso]()
 
   // 6) smart constructor and deconstructor
   def mkSlice(start: Rep[Int], length: Rep[Int]): Rep[Slice]
@@ -266,7 +266,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCentered: Iso[CenteredData, Centered] =
-    new CenteredIso
+    cachedIso[CenteredIso]()
 
   // 6) smart constructor and deconstructor
   def mkCentered(center: Rep[Int], radius: Rep[Int]): Rep[Centered]

@@ -41,6 +41,23 @@ trait Elems extends Base { self: Scalan =>
 
   private val debug$ElementCounter = counter[Elem[_]]
 
+  protected val elemCache = collection.mutable.Map.empty[(Class[_], Seq[AnyRef]), AnyRef]
+
+  def cachedElem[E <: Elem[_]](args: AnyRef*)(implicit tag: ClassTag[E]) = {
+    val clazz = tag.runtimeClass
+    elemCache.getOrElseUpdate(
+      (clazz, args), {
+        val constructors = clazz.getDeclaredConstructors()
+        if (constructors.length != 1) {
+          !!!(s"Element class $clazz has ${constructors.length} constructors, 1 expected")
+        } else {
+          val constructor = constructors(0)
+          val constructorArgs = self +: args
+          constructor.newInstance(constructorArgs: _*).asInstanceOf[Elem[_]]
+        }
+      }).asInstanceOf[E]
+  }
+
   def cleanUpTypeName(tpe: Type) = tpe.toString.
     replaceAll("[A-Za-z0-9_.]*this.", "").
     replace("scala.math.Numeric$", "").
@@ -66,7 +83,7 @@ trait Elems extends Base { self: Scalan =>
     override def isEntityType = false
     override def canEqual(other: Any) = other.isInstanceOf[BaseElem[_]]
     override def equals(other: Any) = other match {
-      case other: BaseElem[_] => other.canEqual(this) && tag.tpe =:= other.tag.tpe
+      case other: BaseElem[_] => (this eq other) || (other.canEqual(this) && tag.tpe =:= other.tag.tpe)
       case _ => false
     }
     override def hashCode = tag.tpe.hashCode
@@ -117,10 +134,14 @@ trait Elems extends Base { self: Scalan =>
   implicit val StringElement: Elem[String] = new BaseElem[String]
   implicit val CharElement: Elem[Char] = new BaseElem[Char]
 
-  implicit def pairElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A, B)] = new PairElem[A, B](ea, eb)
-  implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A | B] = new SumElem[A, B](ea, eb)
-  implicit def funcElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A => B] = new FuncElem[A, B](ea, eb)
-  implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] = new ScalaArrayElem[A](eA)
+  implicit def pairElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[(A, B)] =
+    cachedElem[PairElem[A, B]](ea, eb)
+  implicit def sumElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A | B] =
+    cachedElem[SumElem[A, B]](ea, eb)
+  implicit def funcElement[A, B](implicit ea: Elem[A], eb: Elem[B]): Elem[A => B] =
+    cachedElem[FuncElem[A, B]](ea, eb)
+  implicit def arrayElement[A](implicit eA: Elem[A]): Elem[Array[A]] =
+    cachedElem[ScalaArrayElem[A]](eA)
   ///implicit def elemElement[A](implicit ea: Elem[A]): Elem[Elem[A]]
 
   implicit def PairElemExtensions[A, B](eAB: Elem[(A, B)]): PairElem[A, B] = eAB.asInstanceOf[PairElem[A, B]]

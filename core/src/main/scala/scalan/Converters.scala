@@ -154,7 +154,7 @@ trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: Scala
       val iso = _iso.asInstanceOf[Iso[Reifiable[_], from]]
       val conv = _conv.asRep[from => to]
       val x = _x.asRep[Reifiable[_]]
-      tryConvert(x.elem, eTo, x, fun({ s: Rep[Reifiable[_]] => conv(iso.to(s)) })(Lazy(iso.eFrom), eTo))
+      tryConvert(x.elem, eTo, x, iso.toFun >> conv)
 
     case _ => super.rewriteDef(d)
   }

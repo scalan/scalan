@@ -46,7 +46,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
   }
 
   implicit def iOElement[A](implicit eA: Elem[A]): Elem[IO[A]] =
-    new IOElem[A, IO[A]]
+    cachedElem[IOElem[A, IO[A]]](eA)
 
   implicit case object IOCompanionElem extends CompanionElem[IOCompanionAbs] {
     lazy val tag = weakTypeTag[IOCompanionAbs]
@@ -125,7 +125,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReadFile: Iso[ReadFileData, ReadFile] =
-    new ReadFileIso
+    cachedIso[ReadFileIso]()
 
   // 6) smart constructor and deconstructor
   def mkReadFile(fileName: Rep[String]): Rep[ReadFile]
@@ -197,7 +197,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoWriteFile: Iso[WriteFileData, WriteFile] =
-    new WriteFileIso
+    cachedIso[WriteFileIso]()
 
   // 6) smart constructor and deconstructor
   def mkWriteFile(fileName: Rep[String], lines: Rep[List[String]]): Rep[WriteFile]

@@ -48,7 +48,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   }
 
   implicit def graphElement[V, E](implicit eV: Elem[V], eE: Elem[E]): Elem[Graph[V, E]] =
-    new GraphElem[V, E, Graph[V, E]]
+    cachedElem[GraphElem[V, E, Graph[V, E]]](eV, eE)
 
   implicit case object GraphCompanionElem extends CompanionElem[GraphCompanionAbs] {
     lazy val tag = weakTypeTag[GraphCompanionAbs]
@@ -129,7 +129,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAdjacencyGraph[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] =
-    new AdjacencyGraphIso[V, E]
+    cachedIso[AdjacencyGraphIso[V, E]](eV, eE)
 
   // 6) smart constructor and deconstructor
   def mkAdjacencyGraph[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]]
@@ -202,7 +202,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoIncidenceGraph[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]] =
-    new IncidenceGraphIso[V, E]
+    cachedIso[IncidenceGraphIso[V, E]](eV, eE)
 
   // 6) smart constructor and deconstructor
   def mkIncidenceGraph[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]]

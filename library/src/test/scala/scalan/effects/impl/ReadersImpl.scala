@@ -46,7 +46,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   }
 
   implicit def readerElement[Env, A](implicit eEnv: Elem[Env], eA: Elem[A]): Elem[Reader[Env, A]] =
-    new ReaderElem[Env, A, Reader[Env, A]]
+    cachedElem[ReaderElem[Env, A, Reader[Env, A]]](eEnv, eA)
 
   implicit case object ReaderCompanionElem extends CompanionElem[ReaderCompanionAbs] {
     lazy val tag = weakTypeTag[ReaderCompanionAbs]
@@ -126,7 +126,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReaderBase[Env, A](implicit eEnv: Elem[Env], eA: Elem[A]): Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]] =
-    new ReaderBaseIso[Env, A]
+    cachedIso[ReaderBaseIso[Env, A]](eEnv, eA)
 
   // 6) smart constructor and deconstructor
   def mkReaderBase[Env, A](run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]]

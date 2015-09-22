@@ -26,20 +26,18 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
 
   implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, SHashSet[A]] = elem.asInstanceOf[SHashSetElem[A, SHashSet[A]]]
 
-  implicit val containerHashSet: Cont[HashSet] = new Container[HashSet] {
+  implicit lazy val containerHashSet: Cont[HashSet] = new Container[HashSet] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[HashSet[A]]
     def lift[A](implicit evA: Elem[A]) = element[HashSet[A]]
   }
 
-  implicit val containerSHashSet: Cont[SHashSet] = new Container[SHashSet] {
+  implicit lazy val containerSHashSet: Cont[SHashSet] = new Container[SHashSet] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SHashSet[A]]
     def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
   }
   case class SHashSetIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SHashSet](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Rep[SHashSet[B]]) = x.map(iso.from _)
-    def to(x: Rep[SHashSet[A]]) = x.map(iso.to _)
+    def from(x: Rep[SHashSet[B]]) = x.map(iso.fromFun)
+    def to(x: Rep[SHashSet[A]]) = x.map(iso.toFun)
     lazy val defaultRepTo = SHashSet.empty[B]
   }
 
@@ -73,9 +71,11 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   }
 
   implicit def sHashSetElement[A](implicit eA: Elem[A]): Elem[SHashSet[A]] =
-    new SHashSetElem[A, SHashSet[A]] {
-      lazy val eTo = element[SHashSetImpl[A]]
-    }
+    elemCache.getOrElseUpdate(
+      (classOf[SHashSetElem[A, SHashSet[A]]], Seq(eA)),
+      new SHashSetElem[A, SHashSet[A]] {
+        lazy val eTo = element[SHashSetImpl[A]]
+      }).asInstanceOf[Elem[SHashSet[A]]]
 
   implicit case object SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs] {
     lazy val tag = weakTypeTag[SHashSetCompanionAbs]
@@ -172,7 +172,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSHashSetImpl[A](implicit eA: Elem[A]): Iso[SHashSetImplData[A], SHashSetImpl[A]] =
-    new SHashSetImplIso[A]
+    cachedIso[SHashSetImplIso[A]](eA)
 
   // 6) smart constructor and deconstructor
   def mkSHashSetImpl[A](wrappedValueOfBaseType: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]]
@@ -194,9 +194,9 @@ trait HashSetsSeq extends HashSetsDsl with scalan.ScalanSeq {
   //override def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
   //  proxyOpsEx[HashSet[A],SHashSet[A], SeqSHashSetImpl[A]](p, bt => SeqSHashSetImpl(bt))
 
-    implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] =
-      new SeqBaseElemEx1[A, SHashSet[A], HashSet](
-           element[SHashSet[A]])(element[A], container[HashSet], DefaultOfHashSet[A])
+  implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] =
+    new SeqBaseElemEx1[A, SHashSet[A], HashSet](element[SHashSet[A]])(
+      element[A], container[HashSet], DefaultOfHashSet[A])
 
   case class SeqSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])
@@ -250,8 +250,8 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
   }
 
   implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] =
-      new ExpBaseElemEx1[A, SHashSet[A], HashSet](
-           element[SHashSet[A]])(element[A], container[HashSet], DefaultOfHashSet[A])
+    new ExpBaseElemEx1[A, SHashSet[A], HashSet](element[SHashSet[A]])(
+      element[A], container[HashSet], DefaultOfHashSet[A])
 
   case class ExpSHashSetImpl[A]
       (override val wrappedValueOfBaseType: Rep[HashSet[A]])

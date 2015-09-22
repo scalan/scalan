@@ -50,7 +50,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   }
 
   implicit def collectionElement[Item](implicit eItem: Elem[Item @uncheckedVariance]): Elem[Collection[Item]] =
-    new CollectionElem[Item, Collection[Item]]
+    cachedElem[CollectionElem[Item, Collection[Item]]](eItem)
 
   implicit case object CollectionCompanionElem extends CompanionElem[CollectionCompanionAbs] {
     lazy val tag = weakTypeTag[CollectionCompanionAbs]
@@ -99,7 +99,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   }
 
   implicit def pairCollectionElement[A, B](implicit eA: Elem[A], eB: Elem[B]): Elem[PairCollection[A, B]] =
-    new PairCollectionElem[A, B, PairCollection[A, B]]
+    cachedElem[PairCollectionElem[A, B, PairCollection[A, B]]](eA, eB)
 
   // single proxy for each type family
   implicit def proxyNestedCollection[A](p: Rep[NestedCollection[A]]): NestedCollection[A] = {
@@ -135,7 +135,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   }
 
   implicit def nestedCollectionElement[A](implicit eA: Elem[A]): Elem[NestedCollection[A]] =
-    new NestedCollectionElem[A, NestedCollection[A]]
+    cachedElem[NestedCollectionElem[A, NestedCollection[A]]](eA)
 
   // elem for concrete class
   class UnitCollectionElem(val iso: Iso[UnitCollectionData, UnitCollection])
@@ -201,7 +201,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoUnitCollection: Iso[UnitCollectionData, UnitCollection] =
-    new UnitCollectionIso
+    cachedIso[UnitCollectionIso]()
 
   // 6) smart constructor and deconstructor
   def mkUnitCollection(length: Rep[Int]): Rep[UnitCollection]
@@ -272,7 +272,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionOverArray[Item](implicit eItem: Elem[Item]): Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]] =
-    new CollectionOverArrayIso[Item]
+    cachedIso[CollectionOverArrayIso[Item]](eItem)
 
   // 6) smart constructor and deconstructor
   def mkCollectionOverArray[Item](arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]]
@@ -343,7 +343,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionOverList[Item](implicit eItem: Elem[Item]): Iso[CollectionOverListData[Item], CollectionOverList[Item]] =
-    new CollectionOverListIso[Item]
+    cachedIso[CollectionOverListIso[Item]](eItem)
 
   // 6) smart constructor and deconstructor
   def mkCollectionOverList[Item](lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]]
@@ -414,7 +414,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionOverSeq[Item](implicit eItem: Elem[Item]): Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]] =
-    new CollectionOverSeqIso[Item]
+    cachedIso[CollectionOverSeqIso[Item]](eItem)
 
   // 6) smart constructor and deconstructor
   def mkCollectionOverSeq[Item](seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]]
@@ -487,7 +487,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoPairCollectionSOA[A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] =
-    new PairCollectionSOAIso[A, B]
+    cachedIso[PairCollectionSOAIso[A, B]](eA, eB)
 
   // 6) smart constructor and deconstructor
   def mkPairCollectionSOA[A, B](as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]]
@@ -559,7 +559,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoPairCollectionAOS[A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] =
-    new PairCollectionAOSIso[A, B]
+    cachedIso[PairCollectionAOSIso[A, B]](eA, eB)
 
   // 6) smart constructor and deconstructor
   def mkPairCollectionAOS[A, B](coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]]
@@ -631,7 +631,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoNestedCollectionFlat[A](implicit eA: Elem[A]): Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]] =
-    new NestedCollectionFlatIso[A]
+    cachedIso[NestedCollectionFlatIso[A]](eA)
 
   // 6) smart constructor and deconstructor
   def mkNestedCollectionFlat[A](values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]]

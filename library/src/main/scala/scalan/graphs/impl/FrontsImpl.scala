@@ -44,7 +44,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   }
 
   implicit def frontElement: Elem[Front] =
-    new FrontElem[Front]
+    cachedElem[FrontElem[Front]]()
 
   implicit case object FrontCompanionElem extends CompanionElem[FrontCompanionAbs] {
     lazy val tag = weakTypeTag[FrontCompanionAbs]
@@ -124,7 +124,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBaseFront: Iso[BaseFrontData, BaseFront] =
-    new BaseFrontIso
+    cachedIso[BaseFrontIso]()
 
   // 6) smart constructor and deconstructor
   def mkBaseFront(set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet]): Rep[BaseFront]
@@ -196,7 +196,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoListFront: Iso[ListFrontData, ListFront] =
-    new ListFrontIso
+    cachedIso[ListFrontIso]()
 
   // 6) smart constructor and deconstructor
   def mkListFront(set: Rep[CollectionOverList[Int]], bits: Rep[BitSet]): Rep[ListFront]
@@ -268,7 +268,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionFront: Iso[CollectionFrontData, CollectionFront] =
-    new CollectionFrontIso
+    cachedIso[CollectionFrontIso]()
 
   // 6) smart constructor and deconstructor
   def mkCollectionFront(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront]
@@ -339,7 +339,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMapBasedFront: Iso[MapBasedFrontData, MapBasedFront] =
-    new MapBasedFrontIso
+    cachedIso[MapBasedFrontIso]()
 
   // 6) smart constructor and deconstructor
   def mkMapBasedFront(mmap: Rep[MMap[Int,Unit]]): Rep[MapBasedFront]

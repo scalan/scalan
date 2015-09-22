@@ -22,7 +22,8 @@ trait RewriteRules { self: Scalan =>
     def isEntityType = eA.isEntityType
   }
 
-  implicit def rewrElement[A](implicit eA: Elem[A]): Elem[Rewrite[A]] = RewriteElem[A](eA)
+  implicit def rewrElement[A](implicit eA: Elem[A]): Elem[Rewrite[A]] =
+    cachedElem[RewriteElem[A]](eA)
 
   def rewr[A:Elem](x: Rep[A], y: Rep[A]): Rep[Rewrite[A]] = RewriteOp[A].apply(x, y)
 

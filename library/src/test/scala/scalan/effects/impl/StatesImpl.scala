@@ -46,7 +46,7 @@ trait StatesAbs extends States with scalan.Scalan {
   }
 
   implicit def state0Element[S, A](implicit eS: Elem[S], eA: Elem[A]): Elem[State0[S, A]] =
-    new State0Elem[S, A, State0[S, A]]
+    cachedElem[State0Elem[S, A, State0[S, A]]](eS, eA)
 
   implicit case object State0CompanionElem extends CompanionElem[State0CompanionAbs] {
     lazy val tag = weakTypeTag[State0CompanionAbs]
@@ -126,7 +126,7 @@ trait StatesAbs extends States with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoStateBase[S, A](implicit eS: Elem[S], eA: Elem[A]): Iso[StateBaseData[S, A], StateBase[S, A]] =
-    new StateBaseIso[S, A]
+    cachedIso[StateBaseIso[S, A]](eS, eA)
 
   // 6) smart constructor and deconstructor
   def mkStateBase[S, A](run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]]

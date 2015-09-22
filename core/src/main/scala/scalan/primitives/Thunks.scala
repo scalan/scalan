@@ -25,12 +25,12 @@ trait Thunks { self: Scalan =>
   }
 
   case class ThunkIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Thunk](iso) {
-    implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    def from(x: Th[B]) = x.map(fun(iso.from))
-    def to(x: Th[A]) = x.map(fun(iso.to))
+    def from(x: Th[B]) = x.map(iso.fromFun)
+    def to(x: Th[A]) = x.map(iso.toFun)
     lazy val defaultRepTo = Thunk(eB.defaultRepValue)(eB)
   }
+
+  def thunkIso[A,B](iso: Iso[A, B]) = cachedIso[ThunkIso[A, B]](iso)
 
   case class ThunkElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
@@ -47,7 +47,8 @@ trait Thunks { self: Scalan =>
     protected def getDefaultRep = Thunk(eItem.defaultRepValue)(eItem)
   }
 
-  implicit def thunkElement[T](implicit eItem: Elem[T]): Elem[Thunk[T]] = new ThunkElem[T](eItem)
+  implicit def thunkElement[T](implicit eItem: Elem[T]): Elem[Thunk[T]] =
+    cachedElem[ThunkElem[T]](eItem)
   implicit def extendThunkElement[T](elem: Elem[Thunk[T]]): ThunkElem[T] = elem.asInstanceOf[ThunkElem[T]]
 
   def thunk_create[A:Elem](block: => Rep[A]): Rep[Thunk[A]]
@@ -115,13 +116,6 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
     case _ =>
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
-
-
-//  def thunkIso[A, B](iso: Iso[A, B]): Iso[Thunk[A], Thunk[B]] = {
-//    implicit val eA = iso.eFrom
-//    implicit val eB = iso.eTo
-//    ThunkIso(iso)
-//  }
 
   class ThunkScope(val thunkSym: Exp[Any], val body: ListBuffer[TableEntry[Any]] = ListBuffer.empty) {
     def +=(te: TableEntry[_]) =
@@ -219,7 +213,7 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
       val newTh = Thunk { iso.from(forceThunkDefByMirror(th)) }   // execute original th as part of new thunk
-      ThunkView(newTh)(ThunkIso(iso))
+      ThunkView(newTh)(thunkIso(iso))
     }
     case ThunkForce(HasViews(srcTh, iso: ThunkIso[a,b])) => {
       implicit val eA = iso.iso.eFrom

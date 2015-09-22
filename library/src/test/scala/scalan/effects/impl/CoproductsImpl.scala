@@ -45,7 +45,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   }
 
   implicit def coproductElement[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Elem[Coproduct[F, G, A]] =
-    new CoproductElem[F, G, A, Coproduct[F, G, A]]
+    cachedElem[CoproductElem[F, G, A, Coproduct[F, G, A]]](cF, cG, eA)
 
   implicit case object CoproductCompanionElem extends CompanionElem[CoproductCompanionAbs] {
     lazy val tag = weakTypeTag[CoproductCompanionAbs]
@@ -124,7 +124,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCoproductImpl[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] =
-    new CoproductImplIso[F, G, A]
+    cachedIso[CoproductImplIso[F, G, A]](cF, cG, eA)
 
   // 6) smart constructor and deconstructor
   def mkCoproductImpl[F[_], G[_], A](run: Rep[Either[F[A],G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]]

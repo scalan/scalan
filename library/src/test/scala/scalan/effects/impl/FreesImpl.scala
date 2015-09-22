@@ -45,7 +45,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
   }
 
   implicit def freeElement[F[_], A](implicit cF: Cont[F], eA: Elem[A]): Elem[Free[F, A]] =
-    new FreeElem[F, A, Free[F, A]]
+    cachedElem[FreeElem[F, A, Free[F, A]]](cF, eA)
 
   implicit case object FreeCompanionElem extends CompanionElem[FreeCompanionAbs] {
     lazy val tag = weakTypeTag[FreeCompanionAbs]
@@ -125,7 +125,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReturn[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[ReturnData[F, A], Return[F, A]] =
-    new ReturnIso[F, A]
+    cachedIso[ReturnIso[F, A]](eA, cF)
 
   // 6) smart constructor and deconstructor
   def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
@@ -197,7 +197,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSuspend[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[SuspendData[F, A], Suspend[F, A]] =
-    new SuspendIso[F, A]
+    cachedIso[SuspendIso[F, A]](eA, cF)
 
   // 6) smart constructor and deconstructor
   def mkSuspend[F[_], A](a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]]
@@ -271,7 +271,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBind[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[BindData[F, S, B], Bind[F, S, B]] =
-    new BindIso[F, S, B]
+    cachedIso[BindIso[F, S, B]](eS, eA, cF)
 
   // 6) smart constructor and deconstructor
   def mkBind[F[_], S, B](a: Rep[Free[F,S]], f: Rep[S => Free[F,B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]

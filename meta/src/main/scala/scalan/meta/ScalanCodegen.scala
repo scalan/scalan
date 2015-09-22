@@ -478,7 +478,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val entityElemType = s"${entityName}Elem[${e.typesUsePref}${e.entityType}]"
         val btContainer = optBT.opt(bt =>
           s"""
-             |  implicit val container${bt.name}: Cont[${bt.name}] = new Container[${bt.name}] {
+             |  implicit lazy val container${bt.name}: Cont[${bt.name}] = new Container[${bt.name}] {
              |    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[${bt.name}[A]]
              |    def lift[A](implicit evA: Elem[A]) = element[${bt.name}[A]]
              |  }
@@ -489,16 +489,14 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |
         |  $btContainer
         |
-        |  implicit val container${e.name}: Cont[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} = new Container[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} {
+        |  implicit lazy val container${e.name}: Cont[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} = new Container[${e.name}]${e.isFunctor.opt(s" with Functor[${e.name}]")} {
         |    def tag${typesDecl}${e.tpeArgsImplicitDecl("WeakTypeTag")} = weakTypeTag[${e.entityType}]
         |    def lift${typesDecl}${e.tpeArgsImplicitDecl("Elem")} = element[${e.entityType}]
         |    ${e.isFunctor.opt(s"def map[A:Elem,B:Elem](xs: Rep[${e.name}[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
         |  }
         |  case class ${e.name}Iso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ${e.name}](iso) {
-        |    implicit val eA = iso.eFrom
-        |    implicit val eB = iso.eTo
-        |    def from(x: Rep[${e.name}[B]]) = x.map(iso.from _)
-        |    def to(x: Rep[${e.name}[A]]) = x.map(iso.to _)
+        |    def from(x: Rep[${e.name}[B]]) = x.map(iso.fromFun)
+        |    def to(x: Rep[${e.name}[A]]) = x.map(iso.toFun)
         |    lazy val defaultRepTo = ${e.name}.empty[B]
         |  }
         |""".stripAndTrim
@@ -573,7 +571,14 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
             val tyArgs = e.tpeArgDecls.opt(args => s"[${args.mkString(", ")}]")
             s"""
                |  implicit def $elemMethod$tyArgs${e.implicitArgsDecl}: Elem[${e.entityType}] =
-               |    new ${e.name}Elem[${e.typesUsePref}${e.entityType}] ${e.isWrapper.opt(s"{\n      lazy val eTo = element[${e.name}Impl${e.tpeArgUseString}]\n    }")}
+               |${if (e.isWrapper)
+            s"""    elemCache.getOrElseUpdate(
+               |      (classOf[${e.name}Elem[${e.typesUsePref}${e.entityType}]], ${e.implicitArgsUse.opt(x => s"Seq$x", "Nil")}),
+               |      new ${e.name}Elem[${e.typesUsePref}${e.entityType}] {
+               |        lazy val eTo = element[${e.name}Impl${e.tpeArgUseString}]
+               |      }).asInstanceOf[Elem[${e.entityType}]]"""
+                else
+              s"    cachedElem[${e.name}Elem[${e.typesUsePref}${e.entityType}]]${e.implicitArgsUse.opt(x => x, "()")}"}
                |""".stripMargin
           } else ""
         }
@@ -628,6 +633,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val fieldTypes = c.args.argUnrepTypes(module, config)
         val implicitArgs = concTemplateData.implicitArgsDecl
         val useImplicits = concTemplateData.implicitArgsUse
+        val useImplicitsOrParens = if (useImplicits.nonEmpty) useImplicits else "()"
         val implicitArgsWithVals = c.implicitArgs.args.opt(args => s"(implicit ${args.rep(a => s"val ${a.name}: ${a.tpe}")})")
         val parent     = c.ancestors.head
         val parentArgs = parent.tpeSExprs.map(_.toString)
@@ -705,6 +711,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           (a.name, name)
         })
 
+        // note: ${className}Iso.eTo doesn't call cachedElem because
+        // they are already cached via Isos + lazy val and this would lead to stack overflow
         s"""
         |$defaultImpl
         |  // elem for concrete class
@@ -779,7 +787,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |
         |  // 5) implicit resolution of Iso
         |  implicit def iso$className${typesDecl}${implicitArgs}: Iso[${className}Data${typesUse}, $className${typesUse}] =
-        |    new ${className}Iso${typesUse}
+        |    cachedIso[${className}Iso${typesUse}]$useImplicitsOrParens
         |
         |  // 6) smart constructor and deconstructor
         |  def mk$className${typesDecl}(${fieldsWithType.rep()})${implicitArgs}: Rep[$className${typesUse}]
@@ -912,28 +920,31 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""$userTypeNodeDefs\n\n$constrDefs"""
     }
 
+    // note: currently can't cache them properly due to cyclical dependency between
+    // baseType elem and wrapper elem
     def baseTypeElem(ctx: String) = optBT.opt(bt =>
       if (tyArgsDecl.isEmpty) {
         s"""
-          |  implicit lazy val ${StringUtil.lowerCaseFirst(bt.name)}Element: Elem[${bt.name}] = new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])(weakTypeTag[${bt.name}], ${getDefaultOfBT(bt)})
+          |  implicit lazy val ${StringUtil.lowerCaseFirst(bt.name)}Element: Elem[${bt.name}] =
+          |    new ${ctx}BaseElemEx[${bt.name}, $entityName](element[$entityName])(weakTypeTag[${bt.name}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       }
       else if (templateData.isContainer1) {
         val elems = templateData.tpeArgUses.rep(ty => s"element[$ty]")
         s"""
           |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] =
-          |      new ${ctx}BaseElemEx1[${templateData.typesUsePref}$entityName${typesUse}, $entityNameBT](
-          |           element[$entityName${typesUse}])($elems, container[${bt.name}], ${getDefaultOfBT(bt)})
+          |    new ${ctx}BaseElemEx1[${templateData.typesUsePref}$entityName${typesUse}, $entityNameBT](element[$entityName${typesUse}])(
+          |      $elems, container[${bt.name}], ${getDefaultOfBT(bt)})
           |""".stripAndTrim
       }
       else {
-        val weakTagsForTpeArgs = templateData.tpeArgUses.map{argName =>
+        val weakTagsForTpeArgs = templateData.tpeArgUses.map { argName =>
           s"implicit val w$argName = element[$argName].tag;"
         }.reduce(_ + _)
         s"""
           |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$entityNameBT${typesUse}] = {
-          |     $weakTagsForTpeArgs
-          |     new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
+          |    $weakTagsForTpeArgs
+          |    new ${ctx}BaseElemEx[$entityNameBT${typesUse}, $entityName${typesUse}](element[$entityName${typesUse}])(weakTypeTag[$entityNameBT${typesUse}], ${getDefaultOfBT(bt)})
           |  }
           |""".stripAndTrim
       })
@@ -971,7 +982,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |
        |  $proxyBTSeq
        |
-       |  ${baseTypeElem("Seq")}
+       |${baseTypeElem("Seq")}
        |
        |${classesSeq.mkString("\n\n")}
        |
