@@ -488,7 +488,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |""".stripAndTrim
       })
 
-      val baseTypeElem =
+      val baseTypeElem = optBT.opt(bt =>
         if (tyArgsDecl.isEmpty) {
           s"""
           |  implicit def ${StringUtil.lowerCaseFirst(baseInstanceName)}Element: Elem[${baseTypeName}]
@@ -498,7 +498,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           s"""
           |  implicit def ${StringUtil.lowerCaseFirst(baseInstanceName)}Element${typesWithElems}: Elem[$baseTypeName${typesUse}]
           |""".stripAndTrim
-        }
+        })
 
       def familyContainer(e: EntityTemplateData) = {
         val typesDecl = e.tpeArgDeclString
