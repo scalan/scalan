@@ -439,7 +439,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         m.body match {
           case Some(call: SApply) =>
             call.fun match {
-              case SLiteral(value) if value == "sql" => generateQuery(m)
+              case lit: SLiteral if lit.value == "sql" => generateQuery(m)
               case _ => ""
             }
           case _ => ""
@@ -456,7 +456,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           m.body match {
             case Some(call: SApply) =>
               call.fun match {
-                case SLiteral(value) if value == "sql" => call.argss(0)(0).asInstanceOf[SLiteral].value
+                case lit: SLiteral if lit.value == "sql" => call.argss(0)(0).asInstanceOf[SLiteral].value
                 case _ => ""
               }
             case _ => ""
@@ -468,7 +468,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           m.body match {
             case Some(call: SApply) =>
               call.fun match {
-                case SLiteral(value) if value == "sql" => true
+                case lit:SLiteral if lit.value == "sql" => true
                 case _ => false
               }
             case _ => false
