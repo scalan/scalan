@@ -20,18 +20,12 @@ class ArrayOpsItTests extends BaseItTests {
   val comp1 = new CommunityLmsCompilerScala(new ProgExp)
   val comp2 = new LmsCompilerUni(new ProgExp)
 
-  def invokeMethod[A,B]( m: java.lang.reflect.Method, instance: AnyRef, in: A): B = {
-    m.invoke(instance, in.asInstanceOf[AnyRef]).asInstanceOf[B]
-  }
-
   def compareOutputWithSequential[S <: Scalan, A, B](back: LmsCompilerScala[S with ScalanCtxExp], forth: S with ScalanCtxSeq)
                                        (f: S => S#Rep[A => B], functionName: String, inputs: A*)
                                        (implicit comparator: (B, B) => Unit) {
-    val compiled = compileSource[S](back)(f, functionName, back.defaultCompilerConfig)
-    val (cls, method) = back.loadMethod(compiled)
-    val instance = cls.newInstance().asInstanceOf[AnyRef]
+    val out = compileSource[S](back)(f, functionName, back.defaultCompilerConfig)
 
-    val invokeExp: A => B = invokeMethod[A,B](method, instance, _:A)
+    val invokeExp: A => B = back.execute(out, _)
     val invokeSeq = f(forth).asInstanceOf[A => B]
 
     var i = -1

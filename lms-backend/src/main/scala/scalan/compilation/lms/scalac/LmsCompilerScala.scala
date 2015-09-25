@@ -4,7 +4,8 @@ package lms
 package scalac
 
 import java.io._
-import java.net.URLClassLoader
+import java.lang.reflect.Method
+import java.net.{URL, URLClassLoader}
 import scalan.compilation.language.MethodMappingDSL
 import scalan.compilation.lms.source2bin.{SbtConfig, Nsc, Sbt}
 import scalan.compilation.lms.uni.NativeMethodsConfig
@@ -17,7 +18,12 @@ case class LmsCompilerScalaConfig(extraCompilerOptions: Seq[String] = Seq.empty,
 
 abstract class LmsCompilerScala[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreBridge with MethodMappingDSL {
   import scalan._
-  case class CustomCompilerOutput(sources: List[File], jar: File, mainClass: String, output: Option[Array[String]]) {
+
+  class ObjMethodPair(instance: AnyRef, method: Method) {
+    def invoke(args: AnyRef*) = method.invoke(instance, args: _*)
+  }
+
+  case class CustomCompilerOutput(objMethod: ObjMethodPair, sources: List[File], jar: File, mainClass: String, output: Option[Array[String]]) {
     def jarUrl = jar.toURI.toURL
   }
   type CompilerConfig = LmsCompilerScalaConfig
@@ -40,27 +46,31 @@ abstract class LmsCompilerScala[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake
         Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, sourceFile, jarPath)
         None
     }
-    CustomCompilerOutput(List(sourceFile), jarFile, mainClass, output)
+    val objMethod = loadMethod(jarFile, eInput.runtimeClass, mainClass)
+
+    CustomCompilerOutput(objMethod, List(sourceFile), jarFile, mainClass, output)
   }
 
   def mainClassName(functionName: String, compilerConfig: LmsCompilerScalaConfig): String =
-    compilerConfig.sbtConfigOpt.flatMap(_.mainPack).map(_ + ".") + functionName
+    compilerConfig.sbtConfigOpt.flatMap(_.mainPack) match {
+      case None => functionName
+      case Some(mainPackage) => s"$mainPackage.$functionName"
+    }
 
-  def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
-    // ensure Scala library is available
-    val classLoader = getClassLoader(compilerOutput)
-    val cls = classLoader.loadClass(compilerOutput.custom.mainClass)
-    val argumentClass = compilerOutput.common.eInput.runtimeClass
-    (cls, cls.getMethod("apply", argumentClass))
+  def loadMethod(jarFile: File, argumentClass: Class[_], className: String) = {
+    val jarUrl = jarFile.toURI.toURL
+    val classLoader = getClassLoader(Array(jarUrl))
+    val cls = classLoader.loadClass(className)
+    val instance = cls.newInstance().asInstanceOf[AnyRef]
+    val method = cls.getMethod("apply", argumentClass)
+    new ObjMethodPair(instance, method)
   }
 
-  def getClassLoader(compilerOutput: CompilerOutput[_, _]): ClassLoader =
-    new URLClassLoader(Array(compilerOutput.custom.jarUrl), getClass.getClassLoader)
+  def getClassLoader(jarUrls: Array[URL]): ClassLoader =
+    new URLClassLoader(jarUrls, getClass.getClassLoader)
 
   protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B = {
-    val (cls, method) = loadMethod(compilerOutput)
-    val instance = cls.newInstance()
-    val result = method.invoke(instance, input.asInstanceOf[AnyRef])
+    val result = compilerOutput.custom.objMethod.invoke(input.asInstanceOf[AnyRef])
     result.asInstanceOf[B]
   }
 }
