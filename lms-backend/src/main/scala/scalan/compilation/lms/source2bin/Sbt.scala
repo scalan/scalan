@@ -10,25 +10,25 @@ import scalan.util.{FileUtil, ExtensionFilter, ProcessUtil, StringUtil}
 
 object Sbt {
 
-  val lib = "lib"
+  def libDir(base: File) = new File(base, "lib")
 
   def prepareDir(executableDir: File) = {
-    val libDir = FileUtil.file(FileUtil.currentWorkingDir, lib)
-    val executableLibsDir = FileUtil.file(executableDir, lib)
-    val dir = FileUtil.listFiles(libDir, ExtensionFilter("jar"))
+    val workingLibDir = libDir(FileUtil.currentWorkingDir)
+    val executableLibsDir = libDir(executableDir)
+    val dir = FileUtil.listFiles(workingLibDir, ExtensionFilter("jar"))
     dir.foreach(f => FileUtil.copyToDir(f, executableLibsDir))
   }
 
-  def compile(sourcesDir: File, executableDir: File, functionName: String, compilerConfig: LmsCompilerScalaConfig, dependencies: Array[String], sourceFile: File, jarPath: String): Array[String] = {
-    val scalaVersion = compilerConfig.scalaVersion.getOrElse {
-      throw new Exception(s"You must define compilerConfig.scalaVersion for use Sbt.compile method")
-    }
+  def compile(sourcesDir: File, executableDir: File, functionName: String, extraCompilerOptions: Seq[String], sbtConfig: SbtConfig, dependencies: Array[String], sourceFile: File, jarPath: String): Array[String] = {
     val buildSbtFile = new File(sourcesDir, "build.sbt")
-    val libsDir = file(currentWorkingDir, lib)
-    val executableLibsDir = file(executableDir, lib)
+    val libsDir = libDir(currentWorkingDir)
+    val executableLibsDir = libDir(executableDir)
+    def writeSbtVersion(): Unit = {
+      write(file(sourcesDir, "project", "build.properties"), "sbt.version=0.13.9")
+    }
 
     listFiles(libsDir, ExtensionFilter("jar")).foreach(f => copyToDir(f, executableLibsDir))
-    compilerConfig.sbt.mainPack match {
+    sbtConfig.mainPack match {
       case Some(mainPack) =>
         val jar = s"$functionName.jar"
         val src = file(executableDir, "src", "main", "scala")
@@ -36,39 +36,39 @@ object Sbt {
         val f = file(src, mainPack.replaceAll("\\.", separator), s"$functionName.scala")
         move(sourceFile, f)
         addHeader(f, s"package $mainPack")
-        def scalaSource(className: String) = className.replaceAll("\\.", separator)  + ".scala"
+        def scalaSourceFileName(className: String) = className.replaceAll("\\.", separator) + ".scala"
 
-        val mainClassFullName = mainPack + "." + compilerConfig.sbt.mainClassSimpleName
-        val mainClass = scalaSource(mainClassFullName)
-        val mainDest = file(src, mainClass)
+        val mainClassFullName = mainPack + "." + sbtConfig.mainClassSimpleName
+        val mainClassFileName = scalaSourceFileName(mainClassFullName)
+        val mainSourceFile = file(src, mainClassFileName)
         try {
-          copyFromClassPath(mainClass, mainDest)
+          copyFromClassPath(mainClassFileName, mainSourceFile)
         } catch {
           case _: NullPointerException =>
-            write(mainDest,
+            write(mainSourceFile,
               s"""package $mainPack
-                  |object ${compilerConfig.sbt.mainClassSimpleName} {
+                  |object ${sbtConfig.mainClassSimpleName} {
                   | def main(args: Array[String]): Unit = {
                   |  println("Main function isn't implemented for program '$functionName'")
                   | }
                   |}
           """.stripMargin)
         }
-        for (c <- compilerConfig.sbt.extraClasses) {
-          val scalaFile = scalaSource(c)
-          copyFromClassPath(scalaFile, file(src, scalaFile))
+        for (c <- sbtConfig.extraClasses) {
+          val scalaFileName = scalaSourceFileName(c)
+          copyFromClassPath(scalaFileName, file(src, scalaFileName))
         }
-        for (c <- compilerConfig.sbt.resources) copyFromClassPath(c, file(resources, c))
+        for (c <- sbtConfig.resources) copyFromClassPath(c, file(resources, c))
 
         write(file(sourcesDir, "build.sbt"),
           s"""name := "$functionName"
-              |scalaVersion := "$scalaVersion"
+              |scalaVersion := "${sbtConfig.scalaVersion}"
               |${dependencies.map(d => s"libraryDependencies += $d").mkString("\n")}
               |assemblyJarName in assembly := "$jar"
               |mainClass in assembly := Some("$mainClassFullName")
               |version := "1"
               |artifactPath in Compile in packageBin := file("$jarPath")
-              |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
+              |scalacOptions ++= Seq(${extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
               |assemblyMergeStrategy in assembly := {
               |  case PathList("javax", "servlet", xs @ _*)         => MergeStrategy.first
               |  case PathList(ps @ _*) if ps.last endsWith ".html" => MergeStrategy.first
@@ -84,12 +84,12 @@ object Sbt {
             |addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.12.0")
           """.stripMargin)
 
-        write(file(sourcesDir, "project", "build.properties"), "sbt.version=0.13.9")
+        writeSbtVersion()
 
-        compilerConfig.sbt.commands.dropRight(1).foreach(com => ProcessUtil.launch(sourcesDir, "sbt", com))
-        val output: Array[String] = ProcessUtil.launch(sourcesDir, "sbt", compilerConfig.sbt.commands.last)
+        sbtConfig.commands.dropRight(1).foreach(com => ProcessUtil.launch(sourcesDir, "sbt", com))
+        val output: Array[String] = ProcessUtil.launch(sourcesDir, "sbt", sbtConfig.commands.last)
 
-        val jarFile = file(executableDir, "target", s"scala-${scalaVersion.substring(0, scalaVersion.lastIndexOf("."))}", jar)
+        val jarFile = file(executableDir, "target", s"scala-${sbtConfig.scalaBinaryVersion}", jar)
         jarFile.exists() match {
           case true => move(jarFile, file(executableDir, jar))
           case false =>
@@ -100,12 +100,14 @@ object Sbt {
         write(buildSbtFile,
           s"""name := "$functionName"
               |
-              |scalaVersion := "$scalaVersion"
+              |scalaVersion := "${sbtConfig.scalaVersion}"
               |
               |artifactPath in Compile in packageBin := file("$jarPath")
               |
-              |scalacOptions ++= Seq(${compilerConfig.extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
+              |scalacOptions ++= Seq(${extraCompilerOptions.map(StringUtil.quote).mkString(", ")})
               |""".stripMargin)
+        writeSbtVersion()
+
         val command = Seq("sbt", "package")
         ProcessUtil.launch(sourcesDir, command: _*)
     }

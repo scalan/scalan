@@ -4,27 +4,24 @@ package lms
 package scalac
 
 import java.io._
-import java.net.{URL, URLClassLoader}
+import java.net.URLClassLoader
 import scalan.compilation.language.MethodMappingDSL
-import scalan.compilation.lms.source2bin.{Nsc, SbtConfig, Sbt}
+import scalan.compilation.lms.source2bin.{SbtConfig, Nsc, Sbt}
 import scalan.compilation.lms.uni.NativeMethodsConfig
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
-case class LmsCompilerScalaConfig(scalaVersion: Option[String], extraCompilerOptions: Seq[String], sbt: SbtConfig = SbtConfig(), traits: Seq[String] = Seq.empty[String], nativeMethods: NativeMethodsConfig = new NativeMethodsConfig)
+case class LmsCompilerScalaConfig(extraCompilerOptions: Seq[String] = Seq.empty, sbtConfigOpt: Option[SbtConfig] = None, traits: Seq[String] = Seq.empty[String], nativeMethods: NativeMethodsConfig = new NativeMethodsConfig) {
+  def withSbtConfig(sbtConfig: SbtConfig) = copy(sbtConfigOpt = Some(sbtConfig))
+}
 
 abstract class LmsCompilerScala[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends LmsCompiler(_scalan) with CoreBridge with MethodMappingDSL {
   import scalan._
-  /**
-   * If scalaVersion is None, uses scala-compiler.jar
-   *
-   * Otherwise uses SBT to compile with the desired version
-   */
   case class CustomCompilerOutput(sources: List[File], jar: File, mainClass: String, output: Option[Array[String]]) {
     def jarUrl = jar.toURI.toURL
   }
   type CompilerConfig = LmsCompilerScalaConfig
-  implicit val defaultCompilerConfig = LmsCompilerScalaConfig(None, Seq.empty)
+  implicit val defaultCompilerConfig = LmsCompilerScalaConfig()
 
   protected def doBuildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, graph: PGraph, graphVizConfig: GraphVizConfig)
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
@@ -35,10 +32,10 @@ abstract class LmsCompilerScala[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake
     FileUtil.deleteIfExist(jarFile)
     val jarPath = jarFile.getAbsolutePath
     val mainClass = mainClassName(functionName, compilerConfig)
-    val output: Option[Array[String]] = compilerConfig.scalaVersion match {
-      case Some(scalaVersion) =>
+    val output: Option[Array[String]] = compilerConfig.sbtConfigOpt match {
+      case Some(sbtConfig) =>
         val dependencies:Array[String] = methodReplaceConf.flatMap(conf => conf.dependencies).toArray
-        Some(Sbt.compile(sourcesDir, executableDir, functionName, compilerConfig, dependencies, sourceFile, jarPath))
+        Some(Sbt.compile(sourcesDir, executableDir, functionName, compilerConfig.extraCompilerOptions, sbtConfig, dependencies, sourceFile, jarPath))
       case None =>
         Nsc.compile(executableDir, functionName, compilerConfig.extraCompilerOptions.toList, sourceFile, jarPath)
         None
@@ -47,10 +44,7 @@ abstract class LmsCompilerScala[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake
   }
 
   def mainClassName(functionName: String, compilerConfig: LmsCompilerScalaConfig): String =
-    compilerConfig.sbt.mainPack match {
-      case Some(mainPack) => mainPack + "." + functionName
-      case None => functionName
-    }
+    compilerConfig.sbtConfigOpt.flatMap(_.mainPack).map(_ + ".") + functionName
 
   def loadMethod(compilerOutput: CompilerOutput[_, _]) = {
     // ensure Scala library is available

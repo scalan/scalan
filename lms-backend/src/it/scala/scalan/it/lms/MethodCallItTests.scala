@@ -5,6 +5,7 @@ import org.scalatest.BeforeAndAfterAll
 import scala.language.reflectiveCalls
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.compilation.lms.source2bin.SbtConfig
 import scalan.it.smoke.CommunitySmokeItTests
 import scalan.util.{Exceptions, FileUtil}
 import scalan._
@@ -205,10 +206,10 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
       // takes extremely long to run on TeamCity
       pending
     }
-    val conf = replaceMethExp.defaultCompilerConfig
-    val length = getStagedOutput(replaceMethExp)(_.arrayLength, "ClassMapping", Array(5, 9, 2),
-      conf.copy(scalaVersion = Some("2.11.6"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
-        extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("package"))))
+    val sbtConfig = SbtConfig(scalaVersion = "2.11.7", mainPack = Some("scalan.imp"),
+      extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("package"))
+    val conf = replaceMethExp.defaultCompilerConfig.withSbtConfig(sbtConfig)
+    val length = getStagedOutput(replaceMethExp)(_.arrayLength, "ClassMapping", Array(5, 9, 2), conf)
     length should equal(3)
   }
 
@@ -263,10 +264,10 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
       // takes extremely long to run on TeamCity
       pending
     }
-    val conf = jarReplaceExp.defaultCompilerConfig
-    val messageFromTestMethod = getStagedOutput(jarReplaceExp)(_.message, "MappingMethodFromJar", "Original message",
-      conf.copy(scalaVersion = Some("2.11.6"), sbt = conf.sbt.copy(mainPack = Some("scalan.imp"),
-        extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("package"))))
+    val sbtConfig = SbtConfig(scalaVersion = "2.11.7", mainPack = Some("scalan.imp"),
+      extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("package"))
+    val conf = jarReplaceExp.defaultCompilerConfig.withSbtConfig(sbtConfig)
+    val messageFromTestMethod = getStagedOutput(jarReplaceExp)(_.message, "MappingMethodFromJar", "Original message", conf)
     messageFromTestMethod should equal("Test Message")
   }
 }

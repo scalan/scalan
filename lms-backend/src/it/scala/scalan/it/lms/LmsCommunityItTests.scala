@@ -1,8 +1,9 @@
 package scalan.it.lms
 
+import scalan.compilation.lms.source2bin.SbtConfig
 import scalan.{JNIExtractorOpsExp, CommunityMethodMappingDSL, ScalanCommunityDslExp, ScalanCommunityDslSeq}
 import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.compilation.lms.scalac.{LmsCompilerScalaConfig, CommunityLmsCompilerScala}
 import scalan.compilation.lms.uni.{LmsBackendUni, LmsCompilerUni}
 import scalan.it.smoke.CommunitySmokeItTests
 
@@ -12,7 +13,7 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
   val progStagedU = new LmsCompilerUni(new ProgCommunityExp) with CommunityBridge with CommunityMethodMappingDSL
   val progSeq = new ProgCommunity with ScalanCommunityDslSeq
 
-  val cC = progStagedU.defaultCompilerConfig.copy(scalaVersion = Some("2.11.2"))
+  val cC = LmsCompilerScalaConfig().withSbtConfig(SbtConfig(scalaVersion = "2.11.2"))
 
   test("listRangeFrom0") {
     val in = 3

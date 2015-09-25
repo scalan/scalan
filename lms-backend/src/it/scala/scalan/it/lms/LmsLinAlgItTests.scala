@@ -1,10 +1,11 @@
 package scalan.it.lms
 
 import scalan._
-import scalan.compilation.lms.uni._
 import scalan.util.FileUtil._
 import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
+import scalan.compilation.lms.scalac.{LmsCompilerScalaConfig, CommunityLmsCompilerScala}
+import scalan.compilation.lms.source2bin.SbtConfig
+import scalan.compilation.lms.uni._
 import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
 
@@ -19,7 +20,7 @@ abstract class LmsLinAlgItTests extends BaseItTests {
 
   val progSeq = new ProgSeq
 
-  val compilerConfigU = progStagedU.defaultCompilerConfig.copy(scalaVersion = Some("2.11.2"))
+  val compilerConfigU = LmsCompilerScalaConfig().withSbtConfig(SbtConfig(scalaVersion = "2.11.2"))
   
   def sparseVectorData(arr: Array[Double]) = (0.until(arr.length).toArray, (arr, arr.length))
 }
