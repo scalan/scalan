@@ -3,8 +3,6 @@ package scalan.effects
 import scalan.examples.InteractionsDsl
 
 trait InteractExample extends InteractionsDsl {
-  val OperM = Monad[Oper]
-
   def prg[F[_]:Cont](implicit I: Interacts[F]) = { import I._;
     for {
       uid <- ask("What's your user ID?")

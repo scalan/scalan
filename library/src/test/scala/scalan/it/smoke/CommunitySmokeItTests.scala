@@ -10,7 +10,7 @@ import scalan.collections._
  */
 abstract class CommunitySmokeItTests extends SmokeItTests {
 
-  trait ProgCommunity extends Prog with ScalanCommunity with CollectionExamples with ScalanCommunityDsl  {
+  trait Prog extends super.Prog with ScalanCommunity with CollectionExamples with ScalanCommunityDsl  {
 
     lazy val arrayUpdateMany = fun { in: Rep[(Array[Int], (Array[Int], Array[Int]))] => array_updateMany(in._1, in._2, in._3) }
 
@@ -196,8 +196,8 @@ abstract class CommunitySmokeItTests extends SmokeItTests {
       }
   }
 
-  class ProgCommunitySeq extends ProgCommunity with ScalanCommunityDslSeq
-  class ProgCommunityExp extends ProgCommunity with ScalanCommunityDslExp with JNIExtractorOpsExp
+  class ProgCommunitySeq extends Prog with ScalanCommunityDslSeq
+  class ProgCommunityExp extends Prog with ScalanCommunityDslExp with JNIExtractorOpsExp
 
 // TODO
 //  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with Compiler

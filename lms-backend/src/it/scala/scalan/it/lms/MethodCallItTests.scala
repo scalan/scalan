@@ -10,13 +10,13 @@ import scalan.it.smoke.CommunitySmokeItTests
 import scalan.util.{Exceptions, FileUtil}
 import scalan._
 
-class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
+class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll {
 
   override def beforeAll() = {
     FileUtil.deleteIfExist(prefix)
   }
 
-  trait Prog extends ProgCommunity  {
+  trait Prog extends super.Prog {
 
     lazy val emptyIf = fun { (in: Rep[(Boolean, (Double, Double))]) =>
       val Pair(x, Pair(y, z)) = in
@@ -81,6 +81,12 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
 
       m.reduce
     }
+
+    lazy val arrayLength = fun { v: Rep[Array[Int]] =>
+      Collection(v).length
+    }
+
+    lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
   }
 
   class ProgSeq extends ProgCommunitySeq with Prog {}
@@ -88,58 +94,59 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
 
   val progSeq = new ProgSeq
   val progStaged = new CommunityLmsCompilerScala(new ProgStaged)
+  val defaultCompilers = compilers(progStaged)
 
   test("emptyIfTrue") {
     val in = (true, (5.0, 7.7))
-    compareOutputWithSequential(progStaged, progSeq)(_.emptyIf, "emptyIfTrue", in)
+    compareOutputWithSequential(_.emptyIf, "emptyIfTrue")(in)
   }
 
   test("emptyIfFalse") {
     val in = (false, (5.0, 7.7))
-    compareOutputWithSequential(progStaged, progSeq)(_.emptyIf, "emptyIfFalse", in)
+    compareOutputWithSequential(_.emptyIf, "emptyIfFalse")(in)
   }
 
 //  ignore("exceptionWithIfTrue") {
 //    //val in = Array(Array(2, 3), Array(4, 5))
 //    import progSeq._
 //    val in = (1, (SThrowable("branch true exception"), SThrowable("branch false exception") ))
-//    compareOutputWithSequential(progStaged)(progSeq.exceptionWithIfTrue, progStaged.scalan.exceptionWithIfTrue, "exceptionWithIfTrue", in)
+//    compareOutputWithSequential(progStaged)(progSeq.exceptionWithIfTrue, progStaged.scalan.exceptionWithIfTrue, "exceptionWithIfTrue")(in)
 //  }
 //
 //  test("exceptionWithIfFalse") {
 //    //val in = Array(Array(2, 3), Array(4, 5))
 //    val in = (1, (new Exception("branch true exception"), new Exception("branch false exception") ))
-//    compareOutputWithSequential(progStaged)(progSeq.exceptionWithIfFalse, progStaged.scalan.exceptionWithIfFalse, "exceptionWithIfFalse", in)
+//    compareOutputWithSequential(progStaged)(progSeq.exceptionWithIfFalse, progStaged.scalan.exceptionWithIfFalse, "exceptionWithIfFalse")(in)
 //  }
 //
 //  test("arrayLengthFun") {
 //    val in = Array(4, 5, 6)
-//    compareOutputWithSequential(progStaged)(progSeq.arrayLengthFun, progStaged.scalan.arrayLengthFun, "arrayLengthFun", in)
+//    compareOutputWithSequential(progStaged)(progSeq.arrayLengthFun, progStaged.scalan.arrayLengthFun, "arrayLengthFun")(in)
 //  }
 //
 //  test("arrayOneArg") {
 //    val in = (Array(4.4, 5.0, 6.1), 2)
-//    compareOutputWithSequential(progStaged)(progSeq.arrayOneArg, progStaged.scalan.arrayOneArg, "arrayOneArg", in)
+//    compareOutputWithSequential(progStaged)(progSeq.arrayOneArg, progStaged.scalan.arrayOneArg, "arrayOneArg")(in)
 //  }
 //
 //  test("easyMap") {
 //    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
-//    compareOutputWithSequential(progStaged)(progSeq.easyMap, progStaged.scalan.easyMap, "easyMap", in)
+//    compareOutputWithSequential(progStaged)(progSeq.easyMap, progStaged.scalan.easyMap, "easyMap")(in)
 //  }
 //
 //  test("mapWithLambda") {
 //    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
-//    compareOutputWithSequential(progStaged)(progSeq.mapWithLambda, progStaged.scalan.mapWithLambda, "mapWithLambda", in)
+//    compareOutputWithSequential(progStaged)(progSeq.mapWithLambda, progStaged.scalan.mapWithLambda, "mapWithLambda")(in)
 //  }
 //
 //  test("mapWithLambdaIf") {
 //    val in = (Array(4.4, 5.0, 6.1), (5.0, 7.7))
-//    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIf, progStaged.scalan.mapWithLambdaIf, "mapWithLambdaIf", in)
+//    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIf, progStaged.scalan.mapWithLambdaIf, "mapWithLambdaIf")(in)
 //  }
 //
 //  test("mapWithLambdaIfGt") {
 //    val in = (Array(4.4, 5.0, 6.1), (5.5, 7.7))
-//    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIfGt, progStaged.scalan.mapWithLambdaIfGt, "mapWithLambdaIfGt", in)
+//    compareOutputWithSequential(progStaged)(progSeq.mapWithLambdaIfGt, progStaged.scalan.mapWithLambdaIfGt, "mapWithLambdaIfGt")(in)
 //  }
 
   val exceptionTestExp = new CommunityLmsCompilerScala(new ScalanCommunityDslExp {
@@ -183,20 +190,13 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
 //    text5 should equal("some text")
 //  }
 
-  class ArrayLengthProg extends ScalanCommunityDslExp {
-    lazy val arrayLength = fun { v: Rep[Array[Int]] =>
-      Collection(v).length
-    }
-  }
-
-  val matricesExp = new CommunityLmsCompilerScala(new ArrayLengthProg)
+  val matricesExp = new CommunityLmsCompilerScala(new ProgStaged)
 
   test("LMS Method Call") {
-    val length = getStagedOutput(matricesExp)(_.arrayLength, "LMSMethodCall", Array(2, 5, 6))
-    length should equal(3)
+    compareOutputWithExpected(_.arrayLength, "LMSMthodCall", compilers(matricesExp))(Array(2, 5, 6) -> 3)
   }
 
-  val replaceMethExp = new CommunityLmsCompilerScala(new ArrayLengthProg) with CommunityMethodMappingDSL {
+  val replaceMethExp = new CommunityLmsCompilerScala(new ProgStaged) with CommunityMethodMappingDSL {
     override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, invokeEnabler("skip_length_method") { (o, m) => !m.getName.equals("length")})
   }
 
@@ -209,15 +209,10 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
     val sbtConfig = SbtConfig(scalaVersion = "2.11.7", mainPack = Some("scalan.imp"),
       extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("package"))
     val conf = replaceMethExp.defaultCompilerConfig.withSbtConfig(sbtConfig)
-    val length = getStagedOutput(replaceMethExp)(_.arrayLength, "ClassMapping", Array(5, 9, 2), conf)
-    length should equal(3)
+    compareOutputWithExpected(_.arrayLength, "ClassMapping", compilers(cwc(matricesExp)(conf)))(Array(5, 9, 2) -> 3)
   }
 
-  class ThrowableMessageProg extends ScalanCommunityDslExp {
-    lazy val message = fun { (t: Rep[String]) => SThrowable(t).getMessage}
-  }
-
-  val jarReplaceExp = new CommunityLmsCompilerScala(new ThrowableMessageProg) {
+  val jarReplaceExp = new CommunityLmsCompilerScala(new ProgStaged) {
     import scala.reflect.runtime.universe.typeOf
     val tyThrowable = typeOf[Throwable]
 
@@ -267,7 +262,6 @@ class MethodCallItTests extends CommunitySmokeItTests with BeforeAndAfterAll{
     val sbtConfig = SbtConfig(scalaVersion = "2.11.7", mainPack = Some("scalan.imp"),
       extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("package"))
     val conf = jarReplaceExp.defaultCompilerConfig.withSbtConfig(sbtConfig)
-    val messageFromTestMethod = getStagedOutput(jarReplaceExp)(_.message, "MappingMethodFromJar", "Original message", conf)
-    messageFromTestMethod should equal("Test Message")
+    compareOutputWithExpected(_.message, "MappingMethodFromJar", compilers(cwc(jarReplaceExp)(conf)))("Original message" -> "Test Message")
   }
 }

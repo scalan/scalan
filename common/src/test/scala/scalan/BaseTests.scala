@@ -1,12 +1,13 @@
 package scalan
 
+import org.scalactic.TripleEquals
 import org.scalatest._
 import org.scalatest.words.ResultOfStringPassedToVerb
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scalan.util.FileUtil
 
-trait TestsUtil extends Matchers with Inside {
+trait TestsUtil extends Matchers with Inside with TripleEquals {
   def testOutDir = "test-out"
 
   def testSuffixes = Seq("Suite", "Tests", "It", "_")

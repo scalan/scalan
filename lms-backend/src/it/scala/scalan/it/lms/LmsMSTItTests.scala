@@ -13,16 +13,21 @@ import scalan.util.FileUtil
 
 abstract class LmsMstItTests extends BaseItTests {
 
-  class ProgDslSeq extends GraphsDslSeq with GraphExamples with ScalanCtxSeq
-  class ProgSeq extends MST_example with ScalanCtxSeq
+  type Prog = MST_example
 
-  val progStaged = new CommunityLmsCompilerScala(new MST_example with ScalanCommunityDslExp) with CommunityBridge
+  class ProgSeq extends ScalanCtxSeq with MST_example
+  class ProgExp extends ScalanCommunityDslExp with MST_example
 
-  val progStagedCxx = new LmsCompilerCxx(new MST_example with ScalanCommunityDslExp) with CoreBridge
+  val progStaged = new CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
+
+  val progStagedCxx = new LmsCompilerCxx(new ProgExp) with CoreBridge
 
   val progSeq = new ProgSeq
 
   def sparseVectorData(arr: Array[Double]) = (0.until(arr.length).toArray, (arr, arr.length))
+
+  // LmsCompilerCxx doesn't produce output yet
+  val defaultCompilers = compilers(progStaged/*, progStagedCxx*/)
 }
 
 class LmsMstPrimeItTests extends LmsMstItTests {
@@ -62,7 +67,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
     val input = (links, (edgeVals, (offs, lens)))
     val res = progSeq.MST_adjlist(input)
-    compareOutputWithSequential(progStaged, progSeq)(_.MST_adjlist, "MST_adjList", input)
+    compareOutputWithSequential(_.MST_adjlist, "MST_adjList")(input)
     val dir = FileUtil.file(prefix, "MST_adjList")
     progStagedCxx.buildExecutable(dir,dir,"MST_adjList", progStagedCxx.scalan.MST_adjlist, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
     println(res.mkString(" , "))
@@ -91,11 +96,9 @@ class LmsMstPrimeItTests extends LmsMstItTests {
       zero
     })
     val input = (incMatrix, vertexNum)
-    val res = progSeq.MST_adjmatrix(input)
-    compareOutputWithSequential(progStaged, progSeq)(_.MST_adjmatrix, "MST_adjMatrix", input)
+    compareOutputWithSequential(_.MST_adjmatrix, "MST_adjMatrix")(input)
     val dir = FileUtil.file(prefix, "MST_adjMatrix")
     progStagedCxx.buildExecutable(dir,dir,"MST_adjMatrix", progStagedCxx.scalan.MST_adjmatrix, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
-    println(res.mkString(" , "))
   }
   test("MSF_adjMatrix") {
     val vertexNum = graph.length
@@ -122,7 +125,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val input = (links, (edgeVals, (offs, lens)))
     val resSeq = progSeq.MSF_adjlistMap(input)
     println(resSeq.mkString(" , "))
-    val resStaged = getStagedOutput(progStaged)(_.MSF_adjlistMap, "MSF_adjlistMap", input)
+    val resStaged = getStagedOutput(progStaged)((_: ProgExp).MSF_adjlistMap, "MSF_adjlistMap", input)
     println("Staged: " + resStaged.mkString(","))
 //    val dir = FileUtil.file(prefix, "MSF_adjlistMap")
 //    progStagedCxx.buildExecutable(dir,dir,"MSF_adjlistMap", progStagedCxx.scalan.MSF_adjlistMap, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
@@ -140,7 +143,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val input = (incMatrix, vertexNum)
     val resSeq = progSeq.MSF_adjmatrixMap(input)
     println(resSeq.mkString(" , "))
-    val resStaged = getStagedOutput(progStaged)(_.MSF_adjmatrixMap, "MSF_adjmatrixMap", input)
+    val resStaged = getStagedOutput(progStaged)((_: ProgExp).MSF_adjmatrixMap, "MSF_adjmatrixMap", input)
     println("Staged: " + resStaged.mkString(","))
   }
   test("MST_adjListMap") {
@@ -151,7 +154,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val input = (links, (edgeVals, (offs, lens)))
     val resSeq = progSeq.MST_adjlistMap(input)
     println(resSeq.mkString(" , "))
-    val resStaged = getStagedOutput(progStaged)(_.MST_adjlistMap, "MST_adjlistMap", input)
+    val resStaged = getStagedOutput(progStaged)((_: ProgExp).MST_adjlistMap, "MST_adjlistMap", input)
     println("Staged: " + resStaged.mkString(","))
 //    val dir = FileUtil.file(prefix, "MST_adjlistMap")
 //    progStagedCxx.buildExecutable(dir,dir,"MST_adjlistMap", progStagedCxx.scalan.MST_adjlistMap, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
@@ -168,7 +171,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val input = (incMatrix, vertexNum)
     val resSeq = progSeq.MST_adjmatrixMap(input)
     println(resSeq.mkString(" , "))
-    val resStaged = getStagedOutput(progStaged)(_.MST_adjmatrixMap, "MST_adjmatrixMap", input)
+    val resStaged = getStagedOutput(progStaged)((_: ProgExp).MST_adjmatrixMap, "MST_adjmatrixMap", input)
     println("Staged: " + resStaged.mkString(","))
   }
 
@@ -180,7 +183,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val input = (links, (edgeVals, (offs, lens)))
     val resSeq = progSeq.MSF_adjlistList(input)
     println(resSeq.mkString(" , "))
-    val resStaged = getStagedOutput(progStaged)(_.MSF_adjlistList, "MSF_adjlistList", input)
+    val resStaged = getStagedOutput(progStaged)((_: ProgExp).MSF_adjlistList, "MSF_adjlistList", input)
     println("Staged: " + resStaged.mkString(","))
     val dir = FileUtil.file(prefix, "MSF_adjlistList")
     progStagedCxx.buildExecutable(dir,dir,"MSF_adjlistList", progStagedCxx.scalan.MSF_adjlistList, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
@@ -198,7 +201,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val input = (incMatrix, vertexNum)
     val resSeq = progSeq.MSF_adjmatrixList(input)
     println(resSeq.mkString(" , "))
-    val resStaged = getStagedOutput(progStaged)(_.MSF_adjmatrixList, "MSF_adjmatrixList", input)
+    val resStaged = getStagedOutput(progStaged)((_: ProgExp).MSF_adjmatrixList, "MSF_adjmatrixList", input)
     println("Staged: " + resStaged.mkString(","))
     val dir = FileUtil.file(prefix, "MSF_adjmatrixList")
     progStagedCxx.buildExecutable(dir,dir,"MSF_adjmatrixList", progStagedCxx.scalan.MSF_adjmatrixList, GraphVizConfig.default)(progStagedCxx.defaultCompilerConfig)
@@ -216,7 +219,7 @@ class LmsMstPrimeItTests extends LmsMstItTests {
     val input = (incMatrix, vertexNum)
     val resSeq = progSeq.MST_adjmatrixList(input)
     println(resSeq.mkString(" , "))
-    val resStaged = getStagedOutput(progStaged)(_.MST_adjmatrixList, "MST_adjmatrixList", input)
+    val resStaged = getStagedOutput(progStaged)((_: ProgExp).MST_adjmatrixList, "MST_adjmatrixList", input)
     println("Staged: " + resStaged.mkString(","))
   }
 

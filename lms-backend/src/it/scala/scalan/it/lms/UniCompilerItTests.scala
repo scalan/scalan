@@ -15,7 +15,7 @@ import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
 class UniCompilerItTests extends LmsMsfItTests {
 
   //trait ProgUniTest extends ProgCommunity with MsfFuncs with LinearAlgebraExamples with CommunityMethodMappingDSL {
-  trait ProgUniTest extends MsfFuncs with LinearAlgebraExamples with CommunityMethodMappingDSL {
+  trait Prog extends MsfFuncs with LinearAlgebraExamples {
     lazy val test00_nop = fun { p: Rep[Double] =>
       p
     }
@@ -85,19 +85,23 @@ class UniCompilerItTests extends LmsMsfItTests {
 
   val in3Arrays = (Array(2, 3), (Array(1, 4), Array(1, -1)))
 
-  class ProgCommunityExp extends ProgUniTest with GraphsDslExp with ScalanCommunityDslExp with JNIExtractorOpsExp
-
-  val progStaged = new LmsCompilerUni(new ProgCommunityExp) with CommunityBridge
-
-  class ProgSeq extends ProgUniTest with GraphsDslSeq with MatricesDslSeq with ScalanCommunityDslSeq
+  class ProgSeq extends Prog with GraphsDslSeq with ScalanCommunityDslSeq
 
   val progSeq = new ProgSeq
+
+  class ProgExp extends Prog with GraphsDslExp with ScalanCommunityDslExp with JNIExtractorOpsExp
+
+  val progStaged = new LmsCompilerUni(new ProgExp) with CommunityBridge
+
+  val defaultCompilers = compilers(progStaged)
+
+  def progStagedWC(config: progStaged.CompilerConfig) = compilers(cwc(progStaged)(config))
 
   test("ddmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = Array(2.0, 3.0)
     val in = Tuple2(inM, inV)
-    compareOutputWithSequential(progStaged, progSeq)(_.ddmvm, "ddmvm00", in)
+    compareOutputWithSequential(_.ddmvm, "ddmvm00")(in)
   }
 
   ignore("msfFunAdjBase") {
@@ -106,48 +110,48 @@ class UniCompilerItTests extends LmsMsfItTests {
     val edgeVals = graphValues.flatMap(i => i)
     val lens = graph.map(i => i.length)
     val offs = Array(0,2,5,9,12,14,18,21,24,28,30,32) //(Array(0) :+ lens.scan.slice(lens.length-1)
-    val input = (links, (edgeVals, (offs, lens)))
+    val in = (links, (edgeVals, (offs, lens)))
 
-    compareOutputWithSequential(progStaged, progSeq)(_.msfFunAdjBase, "msfFunAdjBase", input)
+    compareOutputWithSequential(_.msfFunAdjBase, "msfFunAdjBase")(in)
   }
 
   test("test00_nop") {
     val in = 5.0
-    compareOutputWithSequential(progStaged, progSeq)(_.test00_nop, "test00_nop", in)
+    compareOutputWithSequential(_.test00_nop, "test00_nop")(in)
   }
 
   test("test01_oneOp") {
     val in = 5.0
-    compareOutputWithSequential(progStaged, progSeq)(_.test01_oneOp, "test01_oneOp", in)
+    compareOutputWithSequential(_.test01_oneOp, "test01_oneOp")(in)
   }
 
   test("test02_mapArray") {
     val in = Array(2.0, 3.0)
-    compareOutputWithSequential(progStaged, progSeq)(_.test02_mapArray, "test02_mapArray", in)
+    compareOutputWithSequential(_.test02_mapArray, "test02_mapArray")(in)
   }
 
   test("test03_zipArray") {
     val in = Array(2, 3)
-    compareOutputWithSequential(progStaged, progSeq)(_.test03_zipArray, "test03_zipArray", in)
+    compareOutputWithSequential(_.test03_zipArray, "test03_zipArray")(in)
   }
 
   test("test04_zip2Arrays") {
     val in = (Array(2, 3), Array(1, 4))
-    compareOutputWithSequential(progStaged, progSeq)(_.test04_zip2Arrays, "test04_zip2Arrays", in)
+    compareOutputWithSequential(_.test04_zip2Arrays, "test04_zip2Arrays")(in)
   }
 
   test("test05_zip3Arrays") {
     val in = (Array(2, 3), (Array(1, 4), Array(0, 5)))
-    compareOutputWithSequential(progStaged, progSeq)(_.test05_zip3Arrays, "test05_zip3Arrays", in)
+    compareOutputWithSequential(_.test05_zip3Arrays, "test05_zip3Arrays")(in)
   }
 
   test("test06_simpleReduce") {
     val in = Array(2, 3)
-    compareOutputWithSequential(progStaged, progSeq)(_.test06_simpleReduce, "test06_simpleReduce", in)
+    compareOutputWithSequential(_.test06_simpleReduce, "test06_simpleReduce")(in)
   }
 
   test("test07_reduceFromTuple") {
-    compareOutputWithSequential(progStaged, progSeq)(_.test07_reduceFromTuple, "test07_reduceFromTuple", in3Arrays)
+    compareOutputWithSequential(_.test07_reduceFromTuple, "test07_reduceFromTuple")(in3Arrays)
   }
 
   // ===========================
@@ -163,18 +167,18 @@ class UniCompilerItTests extends LmsMsfItTests {
     val config = progStaged.defaultCompilerConfig.copy(nativeMethods = new NativeMethodsConfig(rootIsNative = false, Nil))
     val file = compileSource(progStaged)(_.test07_reduceFromTuple, "config_OnlyScala", config).custom.sources.head
     assert(linesWithNativeDef(file).size == 0)
-    compareOutputWithSequential(progStaged, progSeq)(_.test07_reduceFromTuple, "config_OnlyScala", in, config)
+    compareOutputWithSequential(_.test07_reduceFromTuple, "config_OnlyScala", progStagedWC(config))(in)
   }
 
   test("config_Root") {
     val in = (Array(2, 3), (Array(1, 4), Array(0, 5)))
 
-    val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
-    val nativeRoot = new NativeMethodsConfig(rootIsNative = true)
     val config = progStaged.defaultCompilerConfig
-    val fileJ = compileSource(progStaged)(_.test07_reduceFromTuple, "config_RootJ", config.copy(nativeMethods = noNative)).custom.sources.head
+    val noNative = config.copy(nativeMethods = new NativeMethodsConfig(rootIsNative = false, Nil))
+    val nativeRoot = config.copy(nativeMethods = new NativeMethodsConfig(rootIsNative = true))
+    val fileJ = compileSource(progStaged)(_.test07_reduceFromTuple, "config_RootJ", noNative).custom.sources.head
     assert(linesWithNativeDef(fileJ).size == 0)
-    val fileC = compileSource(progStaged)(_.test07_reduceFromTuple, "config_RootC", config.copy(nativeMethods = nativeRoot)).custom.sources.head
+    val fileC = compileSource(progStaged)(_.test07_reduceFromTuple, "config_RootC", nativeRoot).custom.sources.head
     assert(linesWithNativeDef(fileC).size == 1)
   }
 
@@ -185,18 +189,17 @@ class UniCompilerItTests extends LmsMsfItTests {
     val inV = Array(2.0, 3.0)
     val in = Tuple2(inM, inV)
 
-    val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
-    val nativeMul = new NativeMethodsConfig(rootIsNative = false)   // todo - set matrix.operator*(vector) as native
     val config = progStaged.defaultCompilerConfig
-    val fileJ = compileSource(progStaged)(_.ddmvm, "config_MethodCallJ", config.copy(nativeMethods = noNative)).custom.sources.head
+    val noNative = config.copy(nativeMethods = new NativeMethodsConfig(rootIsNative = false, Nil))
+    val fileJ = compileSource(progStaged)(_.ddmvm, "config_MethodCallJ", noNative).custom.sources.head
     assert(linesWithNativeDef(fileJ).size == 0)
-    val fileC = compileSource(progStaged)(_.ddmvm, "config_MethodCallC", config.copy(nativeMethods = nativeMul)).custom.sources.head
+    val nativeMul = config.copy(nativeMethods = new NativeMethodsConfig(rootIsNative = false))   // todo - set matrix.operator*(vector) as native
+    val fileC = compileSource(progStaged)(_.ddmvm, "config_MethodCallC", nativeMul).custom.sources.head
     assert(linesWithNativeDef(fileC).size == 1)
     // todo check, that main method is not native
     assert(linesWithNativeDef(fileC).size-100 == 1)
 
-    compareOutputWithSequential(progStaged, progSeq)(_.ddmvm, "config_MethodCall", in, config.copy(nativeMethods = nativeMul))
-
+    compareOutputWithSequential(_.ddmvm, "config_MethodCall", progStagedWC(nativeMul))(in)
   }
 
   test("config_MarkedAsNativeLambda") {
@@ -204,11 +207,11 @@ class UniCompilerItTests extends LmsMsfItTests {
     // todo make as native lambda, marked in code
     val noNative = new NativeMethodsConfig(rootIsNative = false, Nil)
     val native = new NativeMethodsConfig(rootIsNative = false)   // todo - set test_config_f as native
-    val config = progStaged.defaultCompilerConfig
+    val config = progStaged.defaultCompilerConfig.copy(nativeMethods = native)
 
     //check sources for two variants
 
-    compareOutputWithSequential(progStaged, progSeq)(_.test_config, "config_MarkedAsNativeLambda", in3Arrays, config.copy(nativeMethods = native))
+    compareOutputWithSequential(_.test_config, "config_MarkedAsNativeLambda", progStagedWC(config))(in3Arrays)
   }
 
   test("config_NamedLambda") {
@@ -258,7 +261,6 @@ class UniCompilerItTests extends LmsMsfItTests {
     val native = new NativeMethodsConfig(rootIsNative = false)
 
     //check sources for two variants
-
   }
 
   test("config_SuperposWithMethodCall") {
@@ -271,7 +273,4 @@ class UniCompilerItTests extends LmsMsfItTests {
     // todo - check that f(g(x)) not used connvertion of g(x) to scala nnd then from scala
   }
 
-
-
 }
-

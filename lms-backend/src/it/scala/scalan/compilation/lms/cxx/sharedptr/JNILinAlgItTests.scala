@@ -10,8 +10,7 @@ import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslExp, VectorsDslExp}
 
 class JNILinAlgItTests extends BaseItTests{
-  class ProgExp extends LinearAlgebraExamples with ScalanCommunityDslExp with GraphVizExport with VectorsDslExp with MatricesDslExp with JNIExtractorOpsExp {
-
+  abstract class Prog extends LinearAlgebraExamples with ScalanCommunityDsl with JNIExtractorOps {
     lazy val ddmvm_jni = JNI_Wrap(ddmvm)
 
     lazy val dsmvm_jni = JNI_Wrap(dsmvm)
@@ -25,13 +24,19 @@ class JNILinAlgItTests extends BaseItTests{
     lazy val fsmvm_jni = JNI_Wrap(fsmvm)
   }
 
-  val subfolder = "mvm-cxx"
+  class ProgExp extends Prog with ScalanCommunityDslExp with JNIExtractorOpsExp
+
   val prog = new LmsCompilerCxx(new ProgExp) with JNIBridge with CommunityBridge with CommunityMethodMappingDSL
+  val defaultCompilers = compilers(prog)
+  // unused
+  lazy val progSeq = ???
 
   implicit val cfg = prog.defaultCompilerConfig
-  val dir = new File(prefix, subfolder)
+  val dir = new File(prefix, "mvm-cxx")
 
   test("ddmvm_jni") {
+    // doesn't compile yet (similar below)
+    // compileSource(_.ddmvm_jni, "ddmvm")
     prog.buildExecutable(dir, dir, "ddmvm", prog.scalan.ddmvm_jni, GraphVizConfig.default)
   }
   test("dsmvm_jni") {

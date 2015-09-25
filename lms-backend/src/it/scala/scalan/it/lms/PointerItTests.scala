@@ -2,7 +2,7 @@ package scalan.it.lms
 
 import java.io.File
 
-import scalan.{PointerOpsExp, CommunityMethodMappingDSL, ScalanCommunityDslExp, ScalanCommunityExp}
+import scalan._
 import scalan.compilation.lms.PointerBridge
 import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
@@ -10,8 +10,7 @@ import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.it.BaseItTests
 
 class PointerItTests extends BaseItTests {
-
-  class ProgExp extends ScalanCommunityDslExp with PointerOpsExp {
+  trait Prog extends ScalanCommunityDsl with PointerOps {
     lazy val intPtr = fun { i: Rep[Int] =>
       val iPtr = scalarPtr(i)
       iPtr
@@ -41,7 +40,11 @@ class PointerItTests extends BaseItTests {
     }
   }
 
+  class ProgExp extends ScalanCommunityDslExp with PointerOpsExp with Prog
+
+  lazy val progSeq = ???
   val progExp = new LmsCompilerCxx(new ProgExp) with PointerBridge with CommunityMethodMappingDSL
+  val defaultCompilers = compilers(progExp)
   implicit val cfg = progExp.defaultCompilerConfig
 
   def commonTestScenario[A, B](functionName: String, func: progExp.Exp[A => B]): Unit = {

@@ -4,7 +4,7 @@ import scalan.examples.{AuthenticationsDsl, InteractionsDsl}
 import scala.language.reflectiveCalls
 
 trait CrossDomainExample extends InteractionsDsl with AuthenticationsDsl {
-  val OperM = Monad[Oper]
+  override lazy val OperM: Monad[Oper] = Monad[Oper]
   val KnowSecret = "KnowSecret"
 
   def prg[F[_]:Cont](implicit I: Interacts[F], A: Auths[F]) = {

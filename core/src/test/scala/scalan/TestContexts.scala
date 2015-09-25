@@ -33,6 +33,7 @@ trait TestContexts extends Suite with TestsUtil {
     testName.replaceAll("""[ /\\]""", "_")
   }
 
+  // TODO change API to use defaultCompilers here! See JNI_MsfItTests and others
   abstract class TestCompilerContext(testName: String) {
     def this() = this(defaultContextName)
 
