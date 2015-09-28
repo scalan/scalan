@@ -228,7 +228,7 @@ trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
     def innerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R])(implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]): PairColl[A, R]
     def outerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])(implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]): PairColl[A, R]
     def innerMult(other: PairColl[A, B])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
-      innerJoin[B, B](other, (b1: Rep[(B, B)]) => b1._1 + b1._2)
+      innerJoin[B, B](other, (b1: Rep[(B, B)]) => b1._1 * b1._2)
     }
     def outerSum(other: PairColl[A, B])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
       outerJoin[B, B](other, (b1: Rep[(B, B)]) => b1._1 + b1._2, (b: Rep[B]) => b, (b: Rep[B]) => b)
