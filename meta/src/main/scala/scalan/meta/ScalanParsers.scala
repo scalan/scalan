@@ -536,9 +536,10 @@ trait ScalanParsers {
   }
 
   def parseMethodType(tparams: List[Symbol], m: MethodType): STpeMethod = {
+    val method = uncurry.transformInfo(m.typeSymbol, m)
     val typeParams = tparams.map(_.nameString)
-    val params = m.params.map(param => parseType(param.tpe))
-    val res = parseType(m.resultType)
+    val params = method.params.map(param => parseType(param.tpe))
+    val res = parseType(method.resultType)
 
     STpeMethod(typeParams, params, res)
   }
