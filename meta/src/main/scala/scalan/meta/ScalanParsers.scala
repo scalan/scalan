@@ -4,6 +4,8 @@
  */
 package scalan.meta
 
+import java.util.regex.Pattern
+
 import scala.language.implicitConversions
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
@@ -385,12 +387,16 @@ trait ScalanParsers {
   }
 
   def formAppliedTypeTree(fullName: String, shortName: String, argTpeExprs: List[STpeExpr]) = {
-    if (fullName.contains("scala.Tuple"))
+    val tuplePattern = """^(_root_.)?scala.Tuple(\d+)$"""
+    val funcPattern = """^(_root_.)?scala.Function(\d+)$"""
+
+    if (Pattern.matches(tuplePattern, fullName))
       STpeTuple(argTpeExprs)
-    else if (fullName.contains("scala.Function")) {
+    else if (Pattern.matches(funcPattern, fullName)) {
       val domainTpeExpr = argTpeExprs.length match {
         case 2 => argTpeExprs(0)
-        case n => STpeTuple(argTpeExprs.init)
+        case n if n > 2 => STpeTuple(argTpeExprs.init)
+        case _ => !!!(s"fullName=$fullName shortName=$shortName argTpeExprs=$argTpeExprs")
       }
       STpeFunc(domainTpeExpr, argTpeExprs.last)
     } else
@@ -477,7 +483,7 @@ trait ScalanParsers {
       SIf(parseExpr(cond), parseExpr(th), parseExpr(el), tree2Type(tree))
     case q"$expr: $tpt" => SAscr(parseExpr(expr), tpeExpr(tpt), tree2Type(tree))
     case q"(..$params) => $expr" =>
-      SFunc(params.map(param => parseExpr(param).asInstanceOf[SValDef]), parseExpr(expr), Some(parseType(tree.tpe)))
+      SFunc(params.map(param => parseExpr(param).asInstanceOf[SValDef]), parseExpr(expr), tree2Type(tree))
     case q"$tpname.this" => SThis(tpname, tree2Type(tree))
     case q"$expr: @$annot" => SAnnotated(parseExpr(expr), annot.toString, tree2Type(tree))
     case TypeApply(fun: Tree, args: List[Tree]) =>
