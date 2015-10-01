@@ -151,19 +151,25 @@ trait LmsBridge extends Passes {
 
     val lmsMethodMirror = lmsMirror.reflectMethod(lmsMethod)
 
+    // assume LMS method has at least one parameter list, and the
+    // last of them is non-empty
+    val needsSourceContext = {
+      val lastParam = lmsMethod.paramLists.last.last.asTerm
+      lastParam.typeSignature =:= typeOf[SourceContext]
+    }
+
     // need to filter out SourceContext parameter
-    val areParamsFunctions = for (param <- lmsMethod.paramLists.flatten; if(param.asTerm.typeSignature != typeOf[SourceContext])) yield {
+    val lmsParamsWithoutSC = {
+      val lmsParams = lmsMethod.paramLists.flatten
+      if (needsSourceContext) lmsParams.init else lmsParams
+    }
+
+    val areParamsFunctions = for (param <- lmsParamsWithoutSC) yield {
       param.asTerm.typeSignature match {
         // we only check it's a function here, could check argument/result types if necessary
         case TypeRef(_, FunctionSym, _) => true
         case _ => false
       }
-    }
-    // assume LMS method has at least one parameter list, and the
-    // last of them is non-empty
-    val needsSourceContext = {
-      val lastParam = lmsMethod.paramLists.last.last.asTerm
-      lastParam.typeSignature == typeOf[SourceContext]
     }
 
     ReflectedPrimitive(lmsMethodMirror, fieldMirrors, areParamsFunctions, needsSourceContext)
