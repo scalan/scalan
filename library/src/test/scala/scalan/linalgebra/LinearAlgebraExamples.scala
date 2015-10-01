@@ -339,6 +339,14 @@ trait LinearAlgebraExamples extends MatricesDsl { self: ScalanCommunityDsl =>
   lazy val constVector = fun { p: Rep[(Double, Int)] =>
     ConstVector(p._1, p._2)
   }
+  lazy val sparseVector = fun { p: Rep[(Array[Int], (Array[Double], Int))] =>
+    val Tuple(is, vs, n) = p
+    SparseVector(Collection(is), Collection(vs), n)
+  }
+  lazy val sparseVector1 = fun { p: Rep[(Array[(Int, Double)], Int)] =>
+    val Tuple(arr, n) = p
+    SparseVector1(Collection(arr), n)
+  }
 
   lazy val flatMatrix = fun { p: Rep[(Array[Double], Int)] =>
     DenseFlatMatrix(Collection(p._1), p._2)

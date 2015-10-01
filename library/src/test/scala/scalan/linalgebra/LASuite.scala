@@ -29,6 +29,8 @@ class LASuite extends BaseShouldTests {
     val ctx = new ScalanCtxSeq with ScalanCommunityDslSeq with LinearAlgebraExamples {}
     val cv = ctx.constVector((2.0, 3))
     val dv = ctx.denseVector(Array(2.0, 2.0, 2.0))
+    val sv = ctx.sparseVector((Array(0, 1, 2), (Array(2.0, 2.0, 2.0), 3)))
+    val sv1 = ctx.sparseVector1((Array((0, 2.0), (1, 2.0), (2, 2.0)), 3))
 
     cv.length should be(dv.length)
     cv.items should be(dv.items)
@@ -39,12 +41,16 @@ class LASuite extends BaseShouldTests {
     cv.filterBy( x => x>0 ).items should be(dv.filterBy( x => x>0 ).items)
     cv.+^(2.0).items should be(dv.+^(2.0).items)
     cv.+^(dv) should be(dv.+^(cv))
+    cv.+^(sv) should be(sv.+^(cv))
+    cv.+^(sv1) should be(sv1.+^(cv))
     cv.-^(2.0).items should be(dv.-^(2.0).items)
     cv.-^(dv) should be(dv.-^(cv))
     cv.*^(2.0).items should be(dv.*^(2.0).items)
     cv.*^(dv) should be(dv.*^(cv))
     cv.pow_^(2).items should be(dv.pow_^(2).items)
     cv.dot(dv) should be(dv.dot(dv))
+    cv.dot(sv) should be(sv.dot(sv))
+    cv.dot(sv1) should be(sv1.dot(sv1))
     cv.euclideanNorm should be(dv.euclideanNorm)
   }
 

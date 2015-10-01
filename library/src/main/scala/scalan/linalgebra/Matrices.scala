@@ -17,7 +17,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def numRows: Rep[Int]
     implicit def eT: Elem[T]
     def rows: Rep[Collection[AbstractVector[T]]]
-    def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]]
+    def columns: Rep[Collection[AbstractVector[T]]]
     def rmValues: Rep[Collection[T]]
 
     @OverloadId("rowsByVector")
@@ -67,7 +67,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def items = rmValues
     def companion = DenseFlatMatrix
     def numRows: Rep[Int] = rmValues.length /! numColumns
-    def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = {
+    def columns: Rep[Collection[AbstractVector[T]]] = {
       Collection.indexRange(numColumns).map { i =>
         DenseVector(Collection(rmValues.arr.stride(i, numRows, numColumns)))}
     }
@@ -140,7 +140,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
                                   (implicit val eT: Elem[T]) extends AbstractMatrix[T] {
 
     def companion = CompoundMatrix
-    def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = {
+    def columns: Rep[Collection[AbstractVector[T]]] = {
       Collection(SArray.tabulate(numColumns) { j => DenseVector(rows.map(_(j)))})
     }
     def numRows = rows.length
@@ -242,7 +242,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def companion = ConstMatrix
     def rmValues: Rep[Collection[T]] = Collection.replicate(numColumns*numRows, item)
     def items = rmValues
-    def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = {
+    def columns: Rep[Collection[AbstractVector[T]]] = {
       Collection.indexRange(numColumns).map { i => ConstVector(item, numRows) }
     }
     def rows: Coll[ConstVector[T]] = {
@@ -335,7 +335,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
     def items = rmValues
     def companion = DiagonalMatrix
 
-    def columns(implicit n: Numeric[T]): Rep[Collection[AbstractVector[T]]] = Collection.indexRange(numColumns).map { i =>
+    def columns: Rep[Collection[AbstractVector[T]]] = Collection.indexRange(numColumns).map { i =>
       SparseVector(Collection.replicate(1, i), diagonalValues.slice(i, 1), numColumns)
     }
     def rows: Coll[AbstractVector[T]] = Collection.indexRange(numColumns).map { i =>
