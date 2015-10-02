@@ -543,6 +543,7 @@ trait ScalanParsers {
       STpeExistential(underlying, quantified)
     case m: MethodType => parseMethodType(Nil, m)
     case PolyType(tparams, m: MethodType) => parseMethodType(tparams, m)
+    case annot: AnnotatedType => parseType(annot.underlying)
     case tpe => throw new NotImplementedError(showRaw(tpe, printTypes = Some(true)))
   }
 
