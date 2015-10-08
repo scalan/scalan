@@ -488,17 +488,14 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |""".stripAndTrim
       })
 
-      val baseTypeElem = optBT.opt(bt =>
-        if (tyArgsDecl.isEmpty) {
-          s"""
-          |  implicit def ${StringUtil.lowerCaseFirst(baseInstanceName)}Element: Elem[${baseTypeName}]
-          |""".stripAndTrim
-        }
-        else {
-          s"""
-          |  implicit def ${StringUtil.lowerCaseFirst(baseInstanceName)}Element${typesWithElems}: Elem[$baseTypeName${typesUse}]
-          |""".stripAndTrim
-        })
+      val baseTypeElem = optBT.opt { bt =>
+        // hack to work around arrayElement being defined in Scalan and arrays being wrapped in scalanizer-demo
+        val overrideOpt = if (baseInstanceName == "Array") "override " else ""
+
+        s"""
+        |  implicit def $overrideOpt${StringUtil.lowerCaseFirst(baseInstanceName)}Element${typesWithElems}: Elem[$baseTypeName${typesUse}]
+        |""".stripAndTrim
+      }
 
       def familyContainer(e: EntityTemplateData) = {
         val typesDecl = e.tpeArgDeclString
