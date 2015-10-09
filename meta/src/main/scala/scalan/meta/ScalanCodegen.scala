@@ -359,7 +359,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    ${if (md.body.isDefined) "override def" else "def"} ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unrepRet.toString}] =
         |      methodCallEx[$unrepRet](self,
         |        this.getClass.getMethod("${md.name}"$argClassesStr$elemClassesStr),
-        |        List(${allArgs.rep(a => s"${a.name}.asInstanceOf[AnyRef]")}${compoundArgs.opt(", ")}${elemArgs.rep()}))
+        |        List(${allArgs.rep(_.name)}${compoundArgs.opt(", ")}${elemArgs.rep()}))
         |""".stripMargin
     }
 
@@ -373,7 +373,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val typesDecl = md.tpeArgs.getBoundedTpeArgString(false, md.argSections)
         s"""
         |    def ${md.name}$typesDecl${md.argSections.rep(methodArgSection(_), "")}: Rep[${unrepRet.toString}] =
-        |      newObjEx(classOf[$entityName${typesUse}], List(${allArgs.rep(a => if (a.isElemOrCont) s"${a.name}" else s"${a.name}.asRep[Any]")}))
+        |      newObjEx(classOf[$entityName${typesUse}], List(${allArgs.rep(_.name)}))
         |""".stripMargin
       }
       genConstr(method.copy(argSections = method.cleanedArgs))

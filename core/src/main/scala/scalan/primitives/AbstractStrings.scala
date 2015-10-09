@@ -11,7 +11,7 @@ trait AbstractStrings extends Base with TypeWrappers { self: AbstractStringsDsl 
   }
   trait AStringCompanion extends ExCompanion0[String]  {
     def defaultVal = Default.defaultVal("")
-    def apply(msg: Rep[String]): Rep[String] = newObjEx(classOf[String], List(msg.asRep[AnyRef]))
+    def apply(msg: Rep[String]): Rep[String] = newObjEx(classOf[String], List(msg))
   }
 
   abstract class SString(val wrappedValueOfBaseType: Rep[String]) extends AString

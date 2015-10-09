@@ -80,7 +80,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     def initCause(cause: Rep[SThrowable]): Rep[SThrowable] =
       methodCallEx[SThrowable](self,
         this.getClass.getMethod("initCause", classOf[AnyRef]),
-        List(cause.asInstanceOf[AnyRef]))
+        List(cause))
   }
   trait SThrowableImplCompanion
   // elem for concrete class
@@ -304,7 +304,7 @@ trait ExceptionsExp extends ExceptionsDsl with scalan.ScalanExp {
     override def mirror(t: Transformer) = this
 
     def apply(msg: Rep[String]): Rep[SThrowable] =
-      newObjEx(classOf[SThrowable], List(msg.asRep[Any]))
+      newObjEx(classOf[SThrowable], List(msg))
   }
 
   implicit lazy val throwableElement: Elem[Throwable] =

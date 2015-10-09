@@ -31,8 +31,8 @@ trait Proxy { self: Scalan =>
     f.invoke(this).asInstanceOf[Rep[_]]
   }
 
-  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
-  def newObjEx[A](c: Class[A], args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[Any])(implicit eA: Elem[A]): Rep[A]
+  def newObjEx[A](c: Class[A], args: List[Any])(implicit eA: Elem[A]): Rep[A]
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
@@ -78,13 +78,15 @@ trait ProxySeq extends Proxy { self: ScalanSeq =>
     }
   }
 
-  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
-    m.invoke(receiver, args: _*).asInstanceOf[A]
+  // Note: cast of args is safe because List[Any] is actually List[AnyRef] at runtime
+  // same below and in ProxyExp implementations
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[Any])(implicit eA: Elem[A]): Rep[A] =
+    m.invoke(receiver, args.asInstanceOf[List[AnyRef]]: _*).asInstanceOf[A]
 
-  def newObjEx[A](c: Class[A], args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] = {
+  def newObjEx[A](c: Class[A], args: List[Any])(implicit eA: Elem[A]): Rep[A] = {
     val types = args.map(a => a.getClass)
     val constr = c.getConstructor(types: _*)
-    constr.newInstance(args: _*) //.asInstanceOf[Rep[A]]
+    constr.newInstance(args.asInstanceOf[List[AnyRef]]: _*) //.asInstanceOf[Rep[A]]
   }
 }
 
@@ -188,11 +190,11 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     case _ => super.formatDef(d)
   }
 
-  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] =
-    mkMethodCall(receiver, m, args, true).asRep[A]
+  def methodCallEx[A](receiver: Rep[_], m: Method, args: List[Any])(implicit eA: Elem[A]): Rep[A] =
+    mkMethodCall(receiver, m, args.asInstanceOf[List[AnyRef]], true).asRep[A]
 
-  def newObjEx[A](c: Class[A], args: List[AnyRef])(implicit eA: Elem[A]): Rep[A] = {
-    new NewObject[A](c, args, true)
+  def newObjEx[A](c: Class[A], args: List[Any])(implicit eA: Elem[A]): Rep[A] = {
+    new NewObject[A](c, args.asInstanceOf[List[AnyRef]], true)
   }
 
   private val proxies = scala.collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]

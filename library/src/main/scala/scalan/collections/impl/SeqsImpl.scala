@@ -101,12 +101,12 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     def apply(idx: Rep[Int]): Rep[A] =
       methodCallEx[A](self,
         this.getClass.getMethod("apply", classOf[AnyRef]),
-        List(idx.asInstanceOf[AnyRef]))
+        List(idx))
 
     def slice(unc_from: Rep[Int], unc_until: Rep[Int]): Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("slice", classOf[AnyRef], classOf[AnyRef]),
-        List(unc_from.asInstanceOf[AnyRef], unc_until.asInstanceOf[AnyRef]))
+        List(unc_from, unc_until))
 
     def isEmpty: Rep[Boolean] =
       methodCallEx[Boolean](self,
@@ -116,27 +116,27 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     def map[B:Elem](f: Rep[A => B]): Rep[SSeq[B]] =
       methodCallEx[SSeq[B]](self,
         this.getClass.getMethod("map", classOf[AnyRef], classOf[Elem[B]]),
-        List(f.asInstanceOf[AnyRef], element[B]))
+        List(f, element[B]))
 
     def reduce(op: Rep[((A, A)) => A]): Rep[A] =
       methodCallEx[A](self,
         this.getClass.getMethod("reduce", classOf[AnyRef]),
-        List(op.asInstanceOf[AnyRef]))
+        List(op))
 
     def filter(p: Rep[A => Boolean]): Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("filter", classOf[AnyRef]),
-        List(p.asInstanceOf[AnyRef]))
+        List(p))
 
     def $plus$colon(elem: Rep[A]): Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("$plus$colon", classOf[AnyRef]),
-        List(elem.asInstanceOf[AnyRef]))
+        List(elem))
 
     def diff(that: Rep[SSeq[A]]): Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("diff", classOf[AnyRef]),
-        List(that.asInstanceOf[AnyRef]))
+        List(that))
 
     def toArray: Rep[Array[A]] =
       methodCallEx[Array[A]](self,
@@ -308,7 +308,7 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
     def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("apply", classOf[AnyRef], classOf[Elem[A]]),
-        List(arr.asInstanceOf[AnyRef], element[A]))
+        List(arr, element[A]))
 
     def empty[A:Elem]: Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,
@@ -318,12 +318,12 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
     def single[A:Elem](elem: Rep[A]): Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("single", classOf[AnyRef], classOf[Elem[A]]),
-        List(elem.asInstanceOf[AnyRef], element[A]))
+        List(elem, element[A]))
 
     def fromList[A:Elem](list: Rep[List[A]]): Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("fromList", classOf[AnyRef], classOf[Elem[A]]),
-        List(list.asInstanceOf[AnyRef], element[A]))
+        List(list, element[A]))
   }
 
   case class ViewSSeq[A, B](source: Rep[SSeq[A]])(iso: Iso1[A, B, SSeq])

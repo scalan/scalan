@@ -94,17 +94,17 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     def $plus(elem: Rep[A]): Rep[SHashSet[A]] =
       methodCallEx[SHashSet[A]](self,
         this.getClass.getMethod("$plus", classOf[AnyRef]),
-        List(elem.asInstanceOf[AnyRef]))
+        List(elem))
 
     def map[B:Elem](f: Rep[A => B]): Rep[SHashSet[B]] =
       methodCallEx[SHashSet[B]](self,
         this.getClass.getMethod("map", classOf[AnyRef], classOf[Elem[B]]),
-        List(f.asInstanceOf[AnyRef], element[B]))
+        List(f, element[B]))
 
     def fold(z: Rep[A])(f: Rep[((A, A)) => A]): Rep[A] =
       methodCallEx[A](self,
         this.getClass.getMethod("fold", classOf[AnyRef], classOf[AnyRef]),
-        List(z.asInstanceOf[AnyRef], f.asInstanceOf[AnyRef]))
+        List(z, f))
   }
   trait SHashSetImplCompanion
   // elem for concrete class
