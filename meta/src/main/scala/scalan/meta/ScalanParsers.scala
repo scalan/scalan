@@ -63,6 +63,31 @@ trait ScalanParsers {
     SSeqImplementation(methods.map(methodDef(_)))
   }
 
+  def wrapperImpl(entity: STraitDef, bt: STpeExpr): SClassDef = {
+    def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr))
+
+    val entityName = entity.name
+    val entityImplName = entityName + "Impl"
+    val typeUseExprs = entity.tpeArgs.map(tpeUseExpr)
+    SClassDef(
+      name = entityImplName,
+      tpeArgs = entity.tpeArgs,
+      args = SClassArgs(List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None))),
+      implicitArgs = entity.implicitArgs,
+      ancestors = List(STraitCall(entity.name, typeUseExprs)),
+      body = List(
+
+      ),
+      selfType = None,
+      companion = None,
+      //            companion = defs.collectFirst {
+      //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
+      //            },
+      true, Nil
+
+    )
+  }
+
   def entityModule(fileTree: PackageDef) = {
     val packageName = fileTree.pid.toString
     val statements = fileTree.stats
@@ -101,31 +126,9 @@ trait ScalanParsers {
       throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
     }
 
-    def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
-
     val classes = entity.optBaseType match {
       case Some(bt) =>
-        val entityName = entity.name
-        val entityImplName = entityName + "Impl"
-        val typeUseExprs = entity.tpeArgs.map(tpeUseExpr(_))
-        val defaultBTImpl = SClassDef(
-          name = entityImplName,
-          tpeArgs = entity.tpeArgs,
-          args = SClassArgs(List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None))),
-          implicitArgs = entity.implicitArgs,
-          ancestors = List(STraitCall(entity.name, typeUseExprs)),
-          body = List(
-
-          ),
-          selfType = None,
-          companion = None,
-          //            companion = defs.collectFirst {
-          //              case c: STraitOrClassDef if c.name.toString == entityImplName + "Companion" => c
-          //            },
-          true, Nil
-
-        )
-        defaultBTImpl :: moduleTrait.getConcreteClasses
+        wrapperImpl(entity, bt) :: moduleTrait.getConcreteClasses
       case None => moduleTrait.getConcreteClasses
     }
     val methods = defs.collect { case md: SMethodDef => md }
