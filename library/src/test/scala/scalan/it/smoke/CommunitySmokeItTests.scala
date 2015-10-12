@@ -1,207 +1,108 @@
 package scalan.it.smoke
 
 import scalan._
+import scalan.it.BaseItTests
 
 //import scalan.community._
 import scalan.collections._
 
+trait CommunitySmokeProg extends ScalanCommunityDsl with CollectionExamples {
+
+  lazy val simpleConst = fun { x: Coll[Int] =>
+    Collection.singleton(1)
+  }
+
+  lazy val seqsEmpty = fun {ignore: Rep[Int] => SSeq.empty[Int].wrappedValueOfBaseType}
+
+  lazy val seqsSingle = fun {v:Rep[Int] => SSeq.single(v).wrappedValueOfBaseType}
+
+  lazy val seqsFromArray = fun {arr: Rep[Array[Int]] =>
+    SSeq(arr).wrappedValueOfBaseType
+  }
+
+  lazy val seqsArrayMap = fun {(arr: Rep[Array[Array[Int]]]) =>
+    val f = {s: Rep[Array[Int]] => (SSeq(s).+:(10)).wrappedValueOfBaseType}
+    arr.map(f)
+  }
+
+  def sSeqMap(x: Rep[SSeq[Int]]) = {
+    x.map({i: Rep[Int] => i+1})
+  }
+  lazy val seqsSimpleMap = fun { x: Rep[Seq[Int]] =>
+    val seqImp = SSeqImpl(x)
+    val res = sSeqMap(seqImp)
+    res.wrappedValueOfBaseType
+  }
+  lazy val expBaseArrays = fun { xss: Arr[Array[Int]] =>
+    val pss1: Arr[Collection[Int]] = xss.map { xs: Rep[Array[Int]] => Collection(xs)}
+    val res = pss1.map { ps: Coll[Int] =>
+      ps.arr
+    }
+    res
+  }
+
+  //def componentAccess(t: Rep[((Int,Double),(String,Long))]): Rep[String] = t._2._1
+  lazy val ifTest = fun { in: Rep[(Int, Double)] =>
+    val map = MMap.empty[Int, Double]
+    IF(map.contains(in._1)) THEN {
+      THROW("Key already exists")
+    } ELSE {
+      map.update(in._1, in._2)
+    }
+  }
+
+  lazy val unionMultiMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
+    val map1 = MMultiMap.fromArray[Int, Double](in._1)
+    val map2 = MMultiMap.fromArray[Int, Double](in._2)
+    map1.union(map2).toArray.map(p => (p._1, p._2.toArray.sum)).sortBy(fun { p => p._1})
+  }
+
+  lazy val convertPairCollectionSOA = fun { in: Rep[Array[Array[(Int, Double)]]] =>
+    val items = NestedCollectionFlat.fromJuggedArray(in)
+    items.map { coll =>
+      // FIXME: convertTo does nor work
+      val collPair = coll.convertTo[PairCollectionSOA[Int, Double]]
+      (coll.as.reduce, coll.bs.reduce)
+    }.arr
+  }
+
+  lazy val ifSpecialize = fun { in: Rep[Array[Int]] =>
+
+    def trainStep(state: Rep[(Collection[Int], Collection[Int])]) : Rep[(Collection[Int], Collection[Int])] = {
+      val Pair(v1, v2) = state
+      val cond = v1.arr.reduce
+      IF (cond > 0) THEN {
+        val v: Rep[Collection[Int]] = Collection(array_replicate(cond,0))
+        Pair(v, v2)
+      } ELSE {
+        Pair(v1, v2)
+      }
+    }
+
+    def trainStop(in: Rep[(Collection[Int], Collection[Int])] ) = {
+      val Pair(v1, v2) = in
+      (v1.arr.reduce === 0)
+    }
+
+    val v: Rep[Collection[Int]] = Collection(in)
+    val start = Pair(v,v)
+
+    val res = from(start).until(trainStop)(trainStep)
+    val Tuple(v1, v2) = res
+
+    v1.arr(0) + v2.arr(0)
+  }
+}
+
 /**
  *  Tests that very simple examples are run correctly
  */
-abstract class CommunitySmokeItTests extends SmokeItTests {
+abstract class CommunitySmokeItTests extends BaseItTests[CommunitySmokeProg](new ScalanCommunityDslSeq with CommunitySmokeProg) {
 
-  trait Prog extends super.Prog with ScalanCommunity with CollectionExamples with ScalanCommunityDsl  {
-
-    lazy val arrayUpdateMany = fun { in: Rep[(Array[Int], (Array[Int], Array[Int]))] => array_updateMany(in._1, in._2, in._3) }
-
-    lazy val listRangeFrom0 = fun { n: Rep[Int] => SList.rangeFrom0(n) }
-
-    lazy val applyLambda2Array = fun {arr: Rep[Array[Int]] =>
-      def isMatch(arr: Rep[Array[Int]]) = arr.length > 3
-      def step(arr: Rep[Array[Int]]): Rep[Array[Int]] = arr map {a => a + 2}
-
-      from(arr).until(isMatch)(step)
-    }
-
-    lazy val simpleConst = fun { x: Coll[Int] =>
-      Collection.singleton(1)
-    }
-
-    lazy val seqsEmpty = fun {ignore: Rep[Int] => SSeq.empty[Int].wrappedValueOfBaseType}
-
-    lazy val seqsSingle = fun {v:Rep[Int] => SSeq.single(v).wrappedValueOfBaseType}
-
-    lazy val seqsFromArray = fun {arr: Rep[Array[Int]] =>
-      SSeq(arr).wrappedValueOfBaseType
-    }
-
-    lazy val seqsArrayMap = fun {(arr: Rep[Array[Array[Int]]]) =>
-      val f = {s: Rep[Array[Int]] => (SSeq(s).+:(10)).wrappedValueOfBaseType}
-      arr.map(f)
-    }
-
-    def sSeqMap(x: Rep[SSeq[Int]]) = {
-      x.map({i: Rep[Int] => i+1})
-    }
-    lazy val seqsSimpleMap = fun { x: Rep[Seq[Int]] =>
-      val seqImp = SSeqImpl(x)
-      val res = sSeqMap(seqImp)
-      res.wrappedValueOfBaseType
-    }
-    lazy val expBaseArrays = fun { xss: Arr[Array[Int]] =>
-      val pss1: Arr[Collection[Int]] = xss.map { xs: Rep[Array[Int]] => Collection(xs)}
-      val res = pss1.map { ps: Coll[Int] =>
-        ps.arr
-      }
-      res
-    }
-
-   //def componentAccess(t: Rep[((Int,Double),(String,Long))]): Rep[String] = t._2._1
-  lazy val arrayEmpty = fun { _:Rep[Int] => SArray.empty[Int]}
-
-    lazy val arrayReplicate = fun {in:Rep[(Int,Double)] =>
-      SArray.replicate(in._1, in._2)
-    }
-
-    lazy val emptyNestedUnitArray = fun {_ : Rep[Int] => array_empty[Array[Unit]]}
-
-
-    lazy val reuseTest = fun { len: Rep[Int] =>
-      val matrix: Rep[Array[Array[Int]]] = SArray.tabulate[Array[Int]](len) { n => SArray.tabulate[Int](n) { i => i}}
-      matrix.map(row => row.reduce) zip matrix.map(row => row.reduce * 2)
-    }
-
-    lazy val ifTest = fun { in: Rep[(Int, Double)] =>
-      val map = MMap.empty[Int, Double]
-      IF(map.contains(in._1)) THEN {
-        THROW("Key already exists")
-      } ELSE {
-        map.update(in._1, in._2)
-      }
-    }
-
-    lazy val unionMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
-      val map1 = MMap.fromArray[Int, Double](in._1)
-      val map2 = MMap.fromArray[Int, Double](in._2)
-      map1.union(map2).toArray.sort
-    }
-    lazy val differenceMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
-      val map1 = MMap.fromArray[Int, Double](in._1)
-      val map2 = MMap.fromArray[Int, Double](in._2)
-      map1.difference(map2).toArray.sort
-    }
-    lazy val joinMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
-      val map1 = MMap.fromArray[Int, Double](in._1)
-      val map2 = MMap.fromArray[Int, Double](in._2)
-      map1.join(map2).toArray.sort
-    }
-    lazy val reduceMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
-      val map1 = MMap.fromArray[Int, Double](in._1)
-      val map2 = MMap.fromArray[Int, Double](in._2)
-      map1.reduce(map2, fun2 { (a, b) => a + b}).toArray.sort
-    }
-    lazy val iterateMap = fun { in: Rep[Array[(Int, Double)]] =>
-      val map = MMap.fromArray[Int, Double](in)
-      loopUntil2(1, 0.0)(
-      { (i, sum) => (!map.contains(i) && i > map.size)}, { (i, sum) => (i + 1, sum + map(i))}
-      )
-    }
-    lazy val mapReduceByKey = fun { in: Rep[Array[Int]] =>
-      in.mapReduce[Int, Int](a => (a, toRep(1)), (s1, s2) => s1 + s2).toArray.sort
-    }
-    lazy val filterCompound = fun { in: Rep[Array[(Int, (Int, Int))]] =>
-      in.filter(x => x._1 >= 20 && x._2 >= x._1 && x._3 < 30)
-    }
-    /*
-    lazy val filterCompoundPArray = fun {in: Rep[Array[(Int, (Int, Int))]] =>
-      val pa = PArray(in)
-      pa.filter(x => x._1 >= 20 && x._2 >= x._1 && x._3 < 30)
-    }
-    */
-    lazy val aggregates = fun { in: Rep[Array[Int]] =>
-      (in.min, in.max, in.sum, in.avg)
-    }
-    lazy val sortBy = fun { in: Rep[Array[(Int, Int)]] =>
-      in.sortBy(fun { p => p._1})
-    }
-    lazy val groupByCount = fun { in: Rep[Array[(Int, Int)]] =>
-      in.groupBy(fun { p => p._1}).mapValues(g => g.length).toArray.sortBy(fun { p => p._1})
-    }
-    lazy val groupBySum = fun { in: Rep[Array[(Int, Int)]] =>
-      in.groupBy(fun { p => p._1}).mapValues(g => g.toArray.map(p => p._2).sum).toArray.sortBy(fun { p => p._1})
-    }
-    lazy val compoundMapKey = fun { in: Rep[(Array[(Int, Double)], Array[Int])] =>
-      val map = MMap.fromArray[(Int, Double), Int](in._1 zip in._2)
-      loopUntil2(0, 0)(
-      { (i, sum) => (i >= map.size)}, { (i, sum) => (i + 1, sum + map(in._1(i)))}
-      )
-    }
-    lazy val compoundMapValue = fun { in: Rep[(Array[String], Array[(Int, Double)])] =>
-      val map = MMap.fromArray[String, (Int, Double)](in._1 zip in._2)
-      map("two")._2
-    }
-    lazy val fillArrayBuffer = fun { in: Rep[Array[Int]] =>
-      in.fold(ArrayBuffer.empty[Int], (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
-    }
-    lazy val unionMultiMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
-      val map1 = MMultiMap.fromArray[Int, Double](in._1)
-      val map2 = MMultiMap.fromArray[Int, Double](in._2)
-      map1.union(map2).toArray.map(p => (p._1, p._2.toArray.sum)).sortBy(fun { p => p._1})
-    }
-
-    lazy val convertPairCollectionSOA = fun { in: Rep[Array[Array[(Int, Double)]]] =>
-      val items = NestedCollectionFlat.fromJuggedArray(in)
-      items.map { coll =>
-        // FIXME: convertTo does nor work
-        val collPair = coll.convertTo[PairCollectionSOA[Int, Double]]
-        (coll.as.reduce, coll.bs.reduce)
-      }.arr
-    }
-
-    lazy val pairIf = fun { in: Rep[(Int, Array[Int])] =>
-      val rs = IF (in._1 > 0) THEN {
-        val red = in._2.reduce
-        (red + 1, red - 1)
-      } ELSE {
-        (0,0)
-      }
-      rs._1 + rs._2
-    }
-
-    lazy val ifSpecialize = fun { in: Rep[Array[Int]] =>
-
-      def trainStep(state: Rep[(Collection[Int], Collection[Int])]) : Rep[(Collection[Int], Collection[Int])] = {
-        val Pair(v1, v2) = state
-        val cond = v1.arr.reduce
-        IF (cond > 0) THEN {
-          val v: Rep[Collection[Int]] = Collection(array_replicate(cond,0))
-          Pair(v, v2)
-        } ELSE {
-          Pair(v1, v2)
-        }
-      }
-
-      def trainStop(in: Rep[(Collection[Int], Collection[Int])] ) = {
-        val Pair(v1, v2) = in
-        (v1.arr.reduce === 0)
-      }
-
-      val v: Rep[Collection[Int]] = Collection(in)
-      val start = Pair(v,v)
-
-      val res = from(start).until(trainStop)(trainStep)
-      val Tuple(v1, v2) = res
-
-      v1.arr(0) + v2.arr(0)
-      }
-  }
-
-  class ProgCommunitySeq extends Prog with ScalanCommunityDslSeq
-  class ProgCommunityExp extends Prog with ScalanCommunityDslExp with JNIExtractorOpsExp
+  class ProgCommunityExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with CommunitySmokeProg
 
 // TODO
 //  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with Compiler
-//  override val progSeq = new ProgCommunitySeq()
 
   //  test("test00simpleConst") {
 //    val (in, out) = Array(0) -> Array(1)

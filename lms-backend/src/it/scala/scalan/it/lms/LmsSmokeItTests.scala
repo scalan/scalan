@@ -1,18 +1,15 @@
 package scalan
 package it.lms
 
-import scalan.collections.SimpleMapTests
+import scalan.collections.{SimpleMapProg, MapItTests}
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.compilation.lms.uni.{LmsBackendUni, LmsCompilerUni}
-import scalan.it.smoke.CommunitySmokeItTests
+import scalan.it.smoke.{SmokeProg, SmokeItTests, CommunitySmokeItTests}
 
-class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
-  trait Prog extends super.Prog with SimpleMapProg
+class LmsSmokeItTests extends SmokeItTests {
+  class ProgExp extends ScalanCommunityDslExp with SmokeProg with JNIExtractorOpsExp
 
-  class ProgExp extends ProgCommunityExp with Prog
-
-  val progSeq = new ProgCommunitySeq with Prog
   val progStaged = new CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
 
   val progStagedU = new LmsCompilerUni(new ProgExp) with CommunityBridge with CommunityMethodMappingDSL
@@ -20,28 +17,6 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
   val defaultCompilers = compilers(progStaged, progStagedU)
   val progStagedOnly = compilers(progStaged)
 
-  test("applyLambda2Array") {
-    //FIXME: applying lambda to Array don't compile in Uni compiler (see issue #50)
-    val in = Array(1,2,3,4)
-    compareOutputWithSequential(_.applyLambda2Array, "applyLambda2Array", progStagedOnly)(in)
-  }
-
-  test ("convertPairCollectionSOA")  {
-    val in = Array(Array((1,2.0),(2,3.0)), Array((3,4.0), (5,6.0)))
-    compareOutputWithSequential(_.convertPairCollectionSOA, "convertPairCollectionSOA")(in)
-  }
-
-  test("mapPutContains") {
-    val in = (314,3.14)
-    // TODO: lack of maps support in LMS C++ backend
-    compareOutputWithSequential(_.mapPutContains, "mapPutContains", progStagedOnly)(in)
-  }
-  test("mapAsSet") {
-    val in = 314
-    compareOutputWithSequential(_.mapAsSet, "mapAsSet", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.mapAsSet, "mapAsSet")(in)
-  }
   test("simpleArith") {
     val in = 2
     compareOutputWithSequential(_.simpleArith, "simpleArith")(in)
@@ -81,7 +56,7 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
   test("simpleSum") {
     //pending
     val in = 7
-    compareOutputWithSequential((_: Prog).simpleSum, "simpleSum", progStagedOnly)(in)
+    compareOutputWithSequential((_: SmokeProg).simpleSum, "simpleSum", progStagedOnly)(in)
 //TODO: lack of Either[A,B] support in JNIExtractorOps
 //    compareOutputWithSequential(progStagedU, progSeq)(_.simpleSum, "simpleSum")(in)
   }
@@ -104,37 +79,13 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
   }
   test("lambdaConst") {
     val in = 7
-    getStagedOutput((_: Prog).lambdaConst, "lambdaConst", progStagedOnly)(in).head.isInstanceOf[Right[_, _]]
+    getStagedOutput((_: SmokeProg).lambdaConst, "lambdaConst", progStagedOnly)(in).head.isInstanceOf[Right[_, _]]
 //TODO: lack of Either[A,B] support in JNIExtractorOps
 //    getStagedOutput(progStagedU)(_.lambdaConst, "lambdaConst")(in).isInstanceOf[Right[_, _]]
   }
   test("logicalOps") {
     val in = (true, false)
     compareOutputWithSequential(_.logicalOps, "logicalOps")(in)
-  }
-  test("test9unionMaps") {
-    val in = (Array((1, 1.1), (2, 2.2), (3, 3.3), (4, 4.4), (5, 5.5)), Array((0, 0.0), (2, 2.0), (4, 4.0), (6, 6.0)))
-    compareOutputWithSequential(_.unionMaps, "unionMaps", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.unionMaps, "unionMaps")(in)
-  }
-  test("test10differenceMaps") {
-    val in = (Array((1, 1.1), (2, 2.2), (3, 3.3), (4, 4.4), (5, 5.5)), Array((0, 0.0), (2, 2.0), (4, 4.0), (6, 6.0)))
-    compareOutputWithSequential(_.differenceMaps, "differenceMaps", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.differenceMaps, "differenceMaps")(in)
-  }
-  test("test11iterateMap") {
-    val in = Array((1, 1.1), (2, 2.2), (3, 3.3))
-    compareOutputWithSequential(_.iterateMap, "iterateMap", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.iterateMap, "iterateMap")(in)
-  }
-  test("test12mapReduce") {
-    val in = Array(1, 2, 1, 1, 2, 3, 4, 1, 5, 4, 3, 2, 5, 2, 1)
-    compareOutputWithSequential(_.mapReduceByKey, "mapReduce", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.mapReduceByKey, "mapReduce")(in)
   }
   test("test13filterCompound") {
     val in = Array((11, (12, 13)), (21, (22, 23)), (31, (32, 33)))
@@ -156,59 +107,17 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
 //TODO: ArraySortBy is unsupported in CxxShptrCodegen
 //    compareOutputWithSequential(progStagedU, progSeq)(_.sortBy, "sortBy")(in)
   }
-  test("test15join") {
-    val in = (Array((1, 1.1), (2, 2.2), (3, 3.3), (4, 4.4), (5, 5.5)), Array((0, 0.0), (2, 2.0), (4, 4.0), (6, 6.0)))
-    compareOutputWithSequential(_.joinMaps, "joinMaps", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.joinMaps, "joinMaps")(in)
-  }
-  test("test16compoundMapKey") {
-    val in = (Array((2, 1.0), (3, 2.0), (1, 3.0), (5, 4.0), (4, 5.0)), Array(1, 2, 3, 4, 5))
-    compareOutputWithSequential(_.compoundMapKey, "compoundMapKey", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.compoundMapKey, "compoundMapKey")(in)
-  }
-  test("test17reduceMaps") {
-    val in = (Array((1, 1.1), (2, 2.2), (3, 3.3), (4, 4.4), (5, 5.5)), Array((0, 0.0), (2, 2.0), (4, 4.0), (6, 6.0)))
-    compareOutputWithSequential(_.reduceMaps, "reduceMaps", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.reduceMaps, "reduceMaps")(in)
-  }
-  test("test18groupByCount") {
-    val in = Array((2, 1), (3, 2), (2, 5), (1, 3), (5, 4), (1, 3), (4, 5), (2, 4))
-    compareOutputWithSequential(_.groupByCount, "groupByCount", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.groupByCount, "groupByCount")(in)
-  }
-  test("test19groupBySum") {
-    val in = Array((2, 1), (3, 2), (2, 5), (1, 3), (5, 4), (1, 3), (4, 5), (2, 4))
-    compareOutputWithSequential(_.groupBySum, "groupBySum", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.groupBySum, "groupBySum")(in)
-  }
   /*
   test("test20filterCompoundPArray") { 
     val in = Array((11, (12, 13)), (21, (22, 23)), (31, (32, 33)))
     compareOutputWithSequential(_.filterCompoundPArray, "filterCompoundPArray", progStagedOnly)(in)
   }
   */
-  test("test21compoundMapValue") {
-    val in = (Array("one", "two", "three"), Array((1, 1.1), (2, 2.2), (3, 3.3)))
-    compareOutputWithSequential(_.compoundMapValue, "compoundMapValue", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.compoundMapValue, "compoundMapValue")(in)
-  }
   test("test22fillArrayBuffer") {
     val in = Array(1, 2, 3, 4, 5, 6, 7, 8, 9)
     compareOutputWithSequential(_.fillArrayBuffer, "fillArrayBuffer", progStagedOnly)(in)
     //fixme error http://10.122.85.33:81/scalan-lite/scalan-lite-public/issues/49
     //compareOutputWithSequential(progStagedU, progSeq)(_.fillArrayBuffer, "fillArrayBuffer")(in)
-  }
-  test("test23unionMultiMaps") {
-    val in = (Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5)), Array((0, 0.0), (2, 2.0), (1, 4.0), (1, 6.0)))
-    compareOutputWithSequential(_.unionMultiMaps, "unionMultiMaps", progStagedOnly)(in)
-//TODO: lack of maps support in LMS C++ backend
-//    compareOutputWithSequential(progStagedU, progSeq)(_.unionMultiMaps, "unionMultiMaps")(in)
   }
   test("test33reuseTest") {
     val in = 5
@@ -253,10 +162,6 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
     val in = (1, Array(1,2,3))
     compareOutputWithSequential(_.pairIf, "pairIf", progStagedOnly)(in)
   }
-  test("test38ifSpecialize") {
-    val in = Array(1,2,3)
-    compareOutputWithSequential(_.ifSpecialize, "ifSpecialize", progStagedOnly)(in)
-  }
 
   test("arrayUpdateMany") {
     val arr = Array(1,2,3)
@@ -264,4 +169,16 @@ class LmsSmokeItTests extends CommunitySmokeItTests with SimpleMapTests {
     val vls = Array(11, 33)
     compareOutputWithSequential(_.arrayUpdateMany, "arrayUpdateMany", progStagedOnly)((arr,(idx,vls)))
   }
+
+  test("applyLambda2Array") {
+    //FIXME: applying lambda to Array don't compile in Uni compiler (see issue #50)
+    val in = Array(1,2,3,4)
+    compareOutputWithSequential(_.applyLambda2Array, "applyLambda2Array", progStagedOnly)(in)
+  }
+
+  test("listRangeFrom0") {
+    val in = 3
+    compareOutputWithSequential(_.listRangeFrom0, "listRangeFrom0", progStagedOnly)(in)
+  }
+
 }

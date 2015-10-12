@@ -4,111 +4,111 @@ import scalan._
 import scalan.compilation.lms._
 import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScala}
 import scalan.graphs._
-import scalan.it.BaseCtxItTests
+import scalan.it.{BaseItTests, BaseCtxItTests}
 
-abstract class LmsMsfItTests extends BaseCtxItTests {
+trait MsfFuncs extends GraphExamples {
+  lazy val msfFunAdjBase = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
+    val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
+    val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
 
-  trait MsfFuncs extends GraphExamples {
-    lazy val msfFunAdjBase = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
-      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
-
-      val vertex_vals = UnitCollection(segments.length)
-      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
-      val startFront = Front.emptyBaseFront(graph.vertexNum)
-      val res = MSF_prime(graph, startFront)
-      res.arr
-    }
-    lazy val msfFunIncBase = fun { in: Rep[(Array[Double], Int)] =>
-      val incMatrix = Collection.fromArray(in._1)
-      val vertex_vals = UnitCollection(in._2)
-      val graph = IncidenceGraph.fromAdjacencyMatrix(vertex_vals, incMatrix, in._2)
-      val out_in = Collection.replicate(graph.vertexNum, UNVISITED).update(0, NO_PARENT)
-      val startFront = Front.emptyBaseFront(graph.vertexNum)
-      val res = MSF_prime(graph, startFront)
-      res.arr
-    }
-    lazy val msfFunAdjMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
-      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
-
-      val vertex_vals = UnitCollection(segments.length)
-      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
-      val startFront = Front.emptyMapBasedFront(graph.vertexNum)
-      val res = MSF_prime(graph, startFront)
-      res.arr
-    }
-    lazy val msfFunIncMap = fun { in: Rep[(Array[Double], Int)] =>
-      val incMatrix = Collection.fromArray(in._1)
-      val vertex_vals = UnitCollection(in._2)
-      val graph = IncidenceGraph.fromAdjacencyMatrix(vertex_vals, incMatrix, in._2)
-      val out_in = Collection.replicate(graph.vertexNum, UNVISITED).update(0, NO_PARENT)
-      val startFront = Front.emptyMapBasedFront(graph.vertexNum)
-      val res = MSF_prime(graph, startFront)
-      res.arr
-    }
-
-    lazy val msfFunAdjList = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
-      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
-
-      val vertex_vals = UnitCollection(segments.length)
-      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
-      val startFront = Front.emptyListBasedFront(graph.vertexNum)
-      val res = MSF_prime(graph, startFront)
-      res.arr
-    }
-
-    lazy val msfFunAdjColl = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
-      val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
-      val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
-      val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
-
-      val vertex_vals = UnitCollection(segments.length)
-      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
-      val startFront = Front.emptyCollBasedFront(graph.vertexNum)
-      val res = MSF_prime(graph, startFront)
-      res.arr
-    }
-
-    lazy val msfFunIncList = fun { in: Rep[(Array[Double], Int)] =>
-      val incMatrix = Collection.fromArray(in._1)
-      val vertex_vals = UnitCollection(in._2)
-      val graph = IncidenceGraph.fromAdjacencyMatrix(vertex_vals, incMatrix, in._2)
-      val out_in = Collection.replicate(graph.vertexNum, UNVISITED).update(0, NO_PARENT)
-      val startFront = Front.emptyListBasedFront(graph.vertexNum)
-      val res = MSF_prime(graph, startFront)
-      res.arr
-    }
-
-    def createGraph(links: Arr[Int], evalues: Rep[Array[Double]], ofs: Arr[Int], lens: Arr[Int]) = {
-      val segments = Collection.fromArray(ofs) zip Collection.fromArray(lens)
-      val linksColl = NestedCollectionFlat(Collection.fromArray(links), segments)
-      val edge_vals = NestedCollectionFlat(Collection.fromArray(evalues), segments)
-
-      val vertex_vals = UnitCollection(segments.length)
-      val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, linksColl)
-      graph
-    }
-
-    lazy val funFallingTestWithLists = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
-      val Pair(links, Pair(evalues, Pair(ofs, lens))) = in
-      val graph = createGraph(links, evalues, ofs, lens)
-      val startFront = Front.emptyListBasedFront(graph.vertexNum)
-      val res = fallingTest(graph, startFront)
-      res.arr
-    }
-    lazy val funFallingTestWithArrays = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
-      val Pair(links, Pair(evalues, Pair(ofs, lens))) = in
-      val graph = createGraph(links, evalues, ofs, lens)
-      val startFront = Front.emptyBaseFront(graph.vertexNum)
-      val res = fallingTest(graph, startFront)
-      res.arr
-    }
+    val vertex_vals = UnitCollection(segments.length)
+    val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+    val startFront = Front.emptyBaseFront(graph.vertexNum)
+    val res = MSF_prime(graph, startFront)
+    res.arr
   }
+  lazy val msfFunIncBase = fun { in: Rep[(Array[Double], Int)] =>
+    val incMatrix = Collection.fromArray(in._1)
+    val vertex_vals = UnitCollection(in._2)
+    val graph = IncidenceGraph.fromAdjacencyMatrix(vertex_vals, incMatrix, in._2)
+    val out_in = Collection.replicate(graph.vertexNum, UNVISITED).update(0, NO_PARENT)
+    val startFront = Front.emptyBaseFront(graph.vertexNum)
+    val res = MSF_prime(graph, startFront)
+    res.arr
+  }
+  lazy val msfFunAdjMap = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
+    val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
+    val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
+
+    val vertex_vals = UnitCollection(segments.length)
+    val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+    val startFront = Front.emptyMapBasedFront(graph.vertexNum)
+    val res = MSF_prime(graph, startFront)
+    res.arr
+  }
+  lazy val msfFunIncMap = fun { in: Rep[(Array[Double], Int)] =>
+    val incMatrix = Collection.fromArray(in._1)
+    val vertex_vals = UnitCollection(in._2)
+    val graph = IncidenceGraph.fromAdjacencyMatrix(vertex_vals, incMatrix, in._2)
+    val out_in = Collection.replicate(graph.vertexNum, UNVISITED).update(0, NO_PARENT)
+    val startFront = Front.emptyMapBasedFront(graph.vertexNum)
+    val res = MSF_prime(graph, startFront)
+    res.arr
+  }
+
+  lazy val msfFunAdjList = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
+    val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
+    val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
+
+    val vertex_vals = UnitCollection(segments.length)
+    val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+    val startFront = Front.emptyListBasedFront(graph.vertexNum)
+    val res = MSF_prime(graph, startFront)
+    res.arr
+  }
+
+  lazy val msfFunAdjColl = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val segments = Collection.fromArray(in._3) zip Collection.fromArray(in._4)
+    val links = NestedCollectionFlat(Collection.fromArray(in._1), segments)
+    val edge_vals = NestedCollectionFlat(Collection.fromArray(in._2), segments)
+
+    val vertex_vals = UnitCollection(segments.length)
+    val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, links)
+    val startFront = Front.emptyCollBasedFront(graph.vertexNum)
+    val res = MSF_prime(graph, startFront)
+    res.arr
+  }
+
+  lazy val msfFunIncList = fun { in: Rep[(Array[Double], Int)] =>
+    val incMatrix = Collection.fromArray(in._1)
+    val vertex_vals = UnitCollection(in._2)
+    val graph = IncidenceGraph.fromAdjacencyMatrix(vertex_vals, incMatrix, in._2)
+    val out_in = Collection.replicate(graph.vertexNum, UNVISITED).update(0, NO_PARENT)
+    val startFront = Front.emptyListBasedFront(graph.vertexNum)
+    val res = MSF_prime(graph, startFront)
+    res.arr
+  }
+
+  def createGraph(links: Arr[Int], evalues: Rep[Array[Double]], ofs: Arr[Int], lens: Arr[Int]) = {
+    val segments = Collection.fromArray(ofs) zip Collection.fromArray(lens)
+    val linksColl = NestedCollectionFlat(Collection.fromArray(links), segments)
+    val edge_vals = NestedCollectionFlat(Collection.fromArray(evalues), segments)
+
+    val vertex_vals = UnitCollection(segments.length)
+    val graph = AdjacencyGraph.fromAdjacencyList(vertex_vals, edge_vals, linksColl)
+    graph
+  }
+
+  lazy val funFallingTestWithLists = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val Pair(links, Pair(evalues, Pair(ofs, lens))) = in
+    val graph = createGraph(links, evalues, ofs, lens)
+    val startFront = Front.emptyListBasedFront(graph.vertexNum)
+    val res = fallingTest(graph, startFront)
+    res.arr
+  }
+  lazy val funFallingTestWithArrays = fun { in: Rep[(Array[Int], (Array[Double], (Array[Int], Array[Int])))] =>
+    val Pair(links, Pair(evalues, Pair(ofs, lens))) = in
+    val graph = createGraph(links, evalues, ofs, lens)
+    val startFront = Front.emptyBaseFront(graph.vertexNum)
+    val res = fallingTest(graph, startFront)
+    res.arr
+  }
+}
+
+trait LmsMsfItTestInputs {
 
   val graph = Array(
     Array(1, 8),
@@ -141,15 +141,11 @@ abstract class LmsMsfItTests extends BaseCtxItTests {
 
 }
 
-class LmsMsfPrimeItTests extends LmsMsfItTests {
-  trait Prog extends ScalanCommunityDsl with GraphsDsl with MsfFuncs
-
-  class ProgExp extends ScalanCommunityDslExp with GraphsDslExp with Prog
-  class ProgSeq extends ScalanCommunityDslSeq with GraphsDslSeq with Prog
+class LmsMsfPrimeItTests extends BaseItTests[MsfFuncs](new ScalanCommunityDslSeq with GraphsDslSeq with MsfFuncs) with LmsMsfItTestInputs {
+  class ProgExp extends ScalanCommunityDslExp with GraphsDslExp with MsfFuncs
 
   class CompExp extends CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
 
-  val progSeq = new ProgSeq
   val progStaged = new CompExp
   val defaultCompilers = compilers(progStaged)
 

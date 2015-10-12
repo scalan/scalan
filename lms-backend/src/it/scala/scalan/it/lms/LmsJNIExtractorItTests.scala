@@ -12,23 +12,22 @@ import scalan.graphs.MST_example
 import scalan.it.BaseCtxItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
-class LmsJNIExtractorItTests extends BaseCtxItTests {
-  trait Prog extends ScalanCommunityDsl with MST_example with JNIExamples with JNIExtractorOps {
-    lazy val MST_JNI_adjlist = JNI_Wrap(MST_adjlist)
+trait JNIMst extends ScalanCommunityDsl with MST_example with JNIExamples with JNIExtractorOps {
+  lazy val MST_JNI_adjlist = JNI_Wrap(MST_adjlist)
 
-    lazy val MST_JNI_adjmatrix = JNI_Wrap(MST_adjmatrix)
+  lazy val MST_JNI_adjmatrix = JNI_Wrap(MST_adjmatrix)
 
-    lazy val MSF_JNI_adjlist = JNI_Wrap(MSF_adjlist)
+  lazy val MSF_JNI_adjlist = JNI_Wrap(MSF_adjlist)
 
-    lazy val MSF_JNI_adjmatrix = JNI_Wrap(MSF_adjmatrix)
+  lazy val MSF_JNI_adjmatrix = JNI_Wrap(MSF_adjmatrix)
 
-    lazy val MSF_JNI_adjlistList = JNI_Wrap(MSF_adjlistList)
+  lazy val MSF_JNI_adjlistList = JNI_Wrap(MSF_adjlistList)
 
-    lazy val MSF_JNI_adjmatrixList = JNI_Wrap(MSF_adjmatrixList)
-  }
-  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with Prog
+  lazy val MSF_JNI_adjmatrixList = JNI_Wrap(MSF_adjmatrixList)
+}
 
-  lazy val progSeq = ???
+class LmsJNIExtractorItTests extends BaseCtxItTests[JNIMst](???) {
+  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with JNIMst
 
   val compiler = new LmsCompilerCxx(new ProgExp) with JNIBridge
 

@@ -64,11 +64,8 @@ object HelloScalanExp {
   }
 }
 
-class ReadmeExampleItTests extends BaseItTests {
-  type Prog = HelloScalan
-
+class ReadmeExampleItTests extends BaseItTests[HelloScalan](HelloScalanSeq) {
   val defaultCompilers = compilers(HelloScalanExp.compiler)
-  val progSeq = HelloScalanSeq
 
   test("Examples from README run") {
     HelloScalanExp.result shouldEqual HelloScalanSeq.result

@@ -9,29 +9,29 @@ import java.io.File
 import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslExp, VectorsDslExp}
 
-class JNILinAlgItTests extends BaseItTests{
-  abstract class Prog extends LinearAlgebraExamples with ScalanCommunityDsl with JNIExtractorOps {
-    lazy val ddmvm_jni = JNI_Wrap(ddmvm)
+abstract class JNILinAlgProg extends LinearAlgebraExamples with ScalanCommunityDsl with JNIExtractorOps {
+  lazy val ddmvm_jni = JNI_Wrap(ddmvm)
 
-    lazy val dsmvm_jni = JNI_Wrap(dsmvm)
+  lazy val dsmvm_jni = JNI_Wrap(dsmvm)
 
-    lazy val sdmvm_jni = JNI_Wrap(sdmvm)
+  lazy val sdmvm_jni = JNI_Wrap(sdmvm)
 
-    lazy val ssmvm_jni = JNI_Wrap(ssmvm)
+  lazy val ssmvm_jni = JNI_Wrap(ssmvm)
 
-    lazy val fdmvm_jni = JNI_Wrap(fdmvm)
+  lazy val fdmvm_jni = JNI_Wrap(fdmvm)
 
-    lazy val fsmvm_jni = JNI_Wrap(fsmvm)
-  }
+  lazy val fsmvm_jni = JNI_Wrap(fsmvm)
+}
 
-  class ProgExp extends Prog with ScalanCommunityDslExp with JNIExtractorOpsExp
+class JNILinAlgItTests extends BaseItTests[JNILinAlgProg](???) {
+
+  class ProgExp extends JNILinAlgProg with ScalanCommunityDslExp with JNIExtractorOpsExp
 
   val prog = new LmsCompilerCxx(new ProgExp) with JNIBridge with CommunityBridge with CommunityMethodMappingDSL
-  val defaultCompilers = compilers(prog)
-  // unused
-  lazy val progSeq = ???
-
   implicit val cfg = prog.defaultCompilerConfig
+
+  val defaultCompilers = compilers(prog)
+
   val dir = new File(prefix, "mvm-cxx")
 
   test("ddmvm_jni") {

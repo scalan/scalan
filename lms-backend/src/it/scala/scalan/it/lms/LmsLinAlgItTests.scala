@@ -9,18 +9,14 @@ import scalan.compilation.lms.uni._
 import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslSeq}
 
-abstract class LmsLinAlgItTests extends BaseItTests {
-  trait Prog extends ScalanCommunityDsl with LinearAlgebraExamples
+trait LinAlgProg extends ScalanCommunityDsl with LinearAlgebraExamples
 
-  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with Prog
-
-  class ProgSeq extends ScalanCommunityDslSeq with Prog
+abstract class LmsLinAlgItTests extends BaseItTests[LinAlgProg](new ScalanCommunityDslSeq with LinAlgProg) {
+  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with LinAlgProg
 
   val progStaged = new CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
 
   val progStagedU = new LmsCompilerUni(new ProgExp) with CommunityBridge with CommunityMethodMappingDSL
-
-  val progSeq = new ProgSeq
 
   val compilerConfigU = LmsCompilerScalaConfig().withSbtConfig(SbtConfig(scalaVersion = "2.11.2"))
   

@@ -11,16 +11,15 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
 
   val progStaged = new CommunityLmsCompilerScala(new ProgCommunityExp) with CommunityBridge with CommunityMethodMappingDSL
   val progStagedU = new LmsCompilerUni(new ProgCommunityExp) with CommunityBridge with CommunityMethodMappingDSL
-  val progSeq = new ProgCommunitySeq
 
   val cC = LmsCompilerScalaConfig().withSbtConfig(SbtConfig(scalaVersion = "2.11.2"))
 
   val defaultCompilers = compilers(progStaged, cwc(progStagedU)(cC))
   val progStagedOnly = compilers(progStaged)
 
-  test("listRangeFrom0") {
-    val in = 3
-    compareOutputWithSequential(_.listRangeFrom0, "listRangeFrom0", progStagedOnly)(in)
+  test ("convertPairCollectionSOA")  {
+    val in = Array(Array((1,2.0),(2,3.0)), Array((3,4.0), (5,6.0)))
+    compareOutputWithSequential(_.convertPairCollectionSOA, "convertPairCollectionSOA")(in)
   }
 
   test("expBaseArrays") {
@@ -51,5 +50,15 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
   test("seqsFromArray") {
     val in = Array(2, 3)
     compareOutputWithSequential(_.seqsFromArray, "seqsFromArray", progStagedOnly)(in)
+  }
+  test("test23unionMultiMaps") {
+    val in = (Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5)), Array((0, 0.0), (2, 2.0), (1, 4.0), (1, 6.0)))
+    compareOutputWithSequential(_.unionMultiMaps, "unionMultiMaps", progStagedOnly)(in)
+    //TODO: lack of maps support in LMS C++ backend
+    //    compareOutputWithSequential(progStagedU, progSeq)(_.unionMultiMaps, "unionMultiMaps")(in)
+  }
+  test("test38ifSpecialize") {
+    val in = Array(1,2,3)
+    compareOutputWithSequential(_.ifSpecialize, "ifSpecialize", progStagedOnly)(in)
   }
 }

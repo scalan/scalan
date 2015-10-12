@@ -8,13 +8,11 @@ import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
 // extracted so it can be used with different suite styles
-trait ItTestsUtil extends TestsUtil { self: Suite =>
+trait ItTestsUtil[Prog <: Scalan] extends TestsUtil { self: Suite =>
   override def testOutDir = "it-out"
 
   // can be overridden
   def defaultGraphVizConfig = GraphVizConfig.default
-
-  type Prog <: Scalan
 
   type ProgCompiler = Compiler[_ <: Prog with ScalanCtxExp]
 

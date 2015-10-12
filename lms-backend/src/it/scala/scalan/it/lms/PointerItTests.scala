@@ -3,46 +3,45 @@ package scalan.it.lms
 import java.io.File
 
 import scalan._
+import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.PointerBridge
 import scalan.compilation.lms.cxx.LmsCompilerCxx
-import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
-import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.it.BaseItTests
 
-class PointerItTests extends BaseItTests {
-  trait Prog extends ScalanCommunityDsl with PointerOps {
-    lazy val intPtr = fun { i: Rep[Int] =>
-      val iPtr = scalarPtr(i)
-      iPtr
-    }
-
-    lazy val valuePtr = fun { i: Rep[Int] =>  // input not used
-      val yPtr = scalarPtr(2)   // note: in cpp we cannot take address of const: &2, here we use scalar pointer
-      yPtr
-    }
-
-    lazy val pairPtrIntDoubleSame = fun { i: Rep[Int] => // not used
-      val int0Ptr = scalarPtr[Int](0)
-      val double0Ptr = scalarPtr[Double](0.0)
-      (int0Ptr, double0Ptr)
-    }
-
-    lazy val intIfPtr = fun { i: Rep[Int] =>
-      val iPtr = intPtr(i)
-      val yPtr = valuePtr(i)
-      val int0: Rep[Int] = 0
-      val ifPtr = ifThenElse(i === int0, iPtr, yPtr)
-      ifPtr
-    }
-
-    lazy val xsArrayPtr = fun { xs: Rep[Array[Int]] =>
-      arrayPtr(xs)
-    }
+trait PointerProg extends ScalanCommunityDsl with PointerOps {
+  lazy val intPtr = fun { i: Rep[Int] =>
+    val iPtr = scalarPtr(i)
+    iPtr
   }
 
-  class ProgExp extends ScalanCommunityDslExp with PointerOpsExp with Prog
+  lazy val valuePtr = fun { i: Rep[Int] =>  // input not used
+    val yPtr = scalarPtr(2)   // note: in cpp we cannot take address of const: &2, here we use scalar pointer
+    yPtr
+  }
 
-  lazy val progSeq = ???
+  lazy val pairPtrIntDoubleSame = fun { i: Rep[Int] => // not used
+    val int0Ptr = scalarPtr[Int](0)
+    val double0Ptr = scalarPtr[Double](0.0)
+    (int0Ptr, double0Ptr)
+  }
+
+  lazy val intIfPtr = fun { i: Rep[Int] =>
+    val iPtr = intPtr(i)
+    val yPtr = valuePtr(i)
+    val int0: Rep[Int] = 0
+    val ifPtr = ifThenElse(i === int0, iPtr, yPtr)
+    ifPtr
+  }
+
+  lazy val xsArrayPtr = fun { xs: Rep[Array[Int]] =>
+    arrayPtr(xs)
+  }
+}
+
+class PointerItTests extends BaseItTests[PointerProg](???) {
+
+  class ProgExp extends ScalanCommunityDslExp with PointerOpsExp with PointerProg
+
   val progExp = new LmsCompilerCxx(new ProgExp) with PointerBridge with CommunityMethodMappingDSL
   val defaultCompilers = compilers(progExp)
   implicit val cfg = progExp.defaultCompilerConfig
@@ -58,7 +57,7 @@ class PointerItTests extends BaseItTests {
    * .../scalan-lite-public/lms-backend/src/test/cpp/pointerItTestsCheck$ . check
    */
 
-  type Pointer[T] = progExp.scalan.Pointer[T]
+  import progExp.scalan.Pointer
 
   test("intPtr") { commonTestScenario[Int, Pointer[Int]]("intPtr", progExp.scalan.intPtr) }
 

@@ -1,24 +1,71 @@
 package scalan.collections
 
-import scalan.Scalan
+import scalan.{ScalanCtxSeq, Scalan}
+import scalan.it.BaseItTests
 import scalan.primitives.Functions
 
-trait SimpleMapTests {
-  trait SimpleMapProg extends Maps with Functions { self: Scalan =>
-    lazy val mapEmpty = fun {_:Rep[Int] =>
-      MMap.empty[Int,Int]
-    }
-
-    lazy val mapPutContains = fun { p:Rep[(Int,Double)] =>
-      val m = MMap.empty[Int,Double]
-      val m1 = m.update(p._1, p._2)|m
-      m1.contains(p._1)
-    }
-
-    lazy val mapAsSet = fun {in:Rep[Int] =>
-      val m = MMap.empty[Int,Unit]
-      val m1 = m.update(in,())|m
-      m1.contains(in)
-    }
+trait SimpleMapProg extends Scalan {
+  lazy val mapEmpty = fun {_:Rep[Int] =>
+    MMap.empty[Int,Int]
   }
+
+  lazy val mapPutContains = fun { p:Rep[(Int,Double)] =>
+    val m = MMap.empty[Int,Double]
+    val m1 = m.update(p._1, p._2) | m
+    m1.contains(p._1)
+  }
+
+  lazy val mapAsSet = fun {in:Rep[Int] =>
+    val m = MMap.empty[Int,Unit]
+    val m1 = m.update(in,()) | m
+    m1.contains(in)
+  }
+  lazy val unionMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
+    val map1 = MMap.fromArray[Int, Double](in._1)
+    val map2 = MMap.fromArray[Int, Double](in._2)
+    map1.union(map2).toArray.sort
+  }
+  lazy val differenceMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
+    val map1 = MMap.fromArray[Int, Double](in._1)
+    val map2 = MMap.fromArray[Int, Double](in._2)
+    map1.difference(map2).toArray.sort
+  }
+  lazy val joinMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
+    val map1 = MMap.fromArray[Int, Double](in._1)
+    val map2 = MMap.fromArray[Int, Double](in._2)
+    map1.join(map2).toArray.sort
+  }
+  lazy val reduceMaps = fun { in: Rep[(Array[(Int, Double)], Array[(Int, Double)])] =>
+    val map1 = MMap.fromArray[Int, Double](in._1)
+    val map2 = MMap.fromArray[Int, Double](in._2)
+    map1.reduce(map2, fun2 { (a, b) => a + b}).toArray.sort
+  }
+  lazy val iterateMap = fun { in: Rep[Array[(Int, Double)]] =>
+    val map = MMap.fromArray[Int, Double](in)
+    loopUntil2(1, 0.0)(
+    { (i, sum) => (!map.contains(i) && i > map.size)}, { (i, sum) => (i + 1, sum + map(i))}
+    )
+  }
+  lazy val mapReduceByKey = fun { in: Rep[Array[Int]] =>
+    in.mapReduce[Int, Int](a => (a, toRep(1)), (s1, s2) => s1 + s2).toArray.sort
+  }
+  lazy val compoundMapKey = fun { in: Rep[(Array[(Int, Double)], Array[Int])] =>
+    val map = MMap.fromArray[(Int, Double), Int](in._1 zip in._2)
+    loopUntil2(0, 0)(
+    { (i, sum) => (i >= map.size)}, { (i, sum) => (i + 1, sum + map(in._1(i)))}
+    )
+  }
+  lazy val compoundMapValue = fun { in: Rep[(Array[String], Array[(Int, Double)])] =>
+    val map = MMap.fromArray[String, (Int, Double)](in._1 zip in._2)
+    map("two")._2
+  }
+  lazy val groupByCount = fun { in: Rep[Array[(Int, Int)]] =>
+    in.groupBy(fun { p => p._1}).mapValues(g => g.length).toArray.sortBy(fun { p => p._1})
+  }
+  lazy val groupBySum = fun { in: Rep[Array[(Int, Int)]] =>
+    in.groupBy(fun { p => p._1}).mapValues(g => g.toArray.map(p => p._2).sum).toArray.sortBy(fun { p => p._1})
+  }
+
 }
+
+abstract class MapItTests extends BaseItTests[SimpleMapProg](new ScalanCtxSeq with SimpleMapProg)

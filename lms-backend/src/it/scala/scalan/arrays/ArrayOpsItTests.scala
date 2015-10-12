@@ -5,17 +5,16 @@ import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
 import scalan.compilation.lms.uni.LmsCompilerUni
 import scalan.it.BaseItTests
 
-class ArrayOpsItTests extends BaseItTests {
-  trait Prog extends ScalanDsl {
-    lazy val arrayBinarySearch = fun2 {(arr: Rep[Array[Int]], v: Rep[Int]) =>
-      array_binary_search(v, arr)
-    }
+trait ArrayOpsProg extends ScalanDsl {
+  lazy val arrayBinarySearch = fun2 {(arr: Rep[Array[Int]], v: Rep[Int]) =>
+    array_binary_search(v, arr)
   }
+}
 
-  class ProgSeq extends Prog with ScalanCtxSeq
-  class ProgExp extends Prog with ScalanCommunityDslExp with JNIExtractorOpsExp
+class ArrayOpsItTests extends BaseItTests[ArrayOpsProg](new ArrayOpsProg with ScalanCtxSeq) {
 
-  val progSeq = new ProgSeq
+  class ProgExp extends ArrayOpsProg with ScalanCommunityDslExp with JNIExtractorOpsExp
+
   val comp1 = new CommunityLmsCompilerScala(new ProgExp)
   val comp2 = new LmsCompilerUni(new ProgExp)
 

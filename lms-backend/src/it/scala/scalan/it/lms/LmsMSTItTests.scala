@@ -10,19 +10,13 @@ import scalan.graphs.{GraphExamples, GraphsDslExp, GraphsDslSeq, MST_example}
 import scalan.it.BaseItTests
 import scalan.util.FileUtil
 
+abstract class LmsMstItTests extends BaseItTests[MST_example](new ScalanCtxSeq with MST_example) {
 
-abstract class LmsMstItTests extends BaseItTests {
-
-  type Prog = MST_example
-
-  class ProgSeq extends ScalanCtxSeq with MST_example
   class ProgExp extends ScalanCommunityDslExp with MST_example
 
   val progStaged = new CommunityLmsCompilerScala(new ProgExp) with CommunityBridge
 
   val progStagedCxx = new LmsCompilerCxx(new ProgExp) with CoreBridge
-
-  val progSeq = new ProgSeq
 
   def sparseVectorData(arr: Array[Double]) = (0.until(arr.length).toArray, (arr, arr.length))
 

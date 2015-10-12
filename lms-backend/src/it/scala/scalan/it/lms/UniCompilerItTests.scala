@@ -2,94 +2,91 @@ package scalan.it.lms
 
 import java.io.File
 
-import scalan.graphs.{GraphsDslSeq, GraphsDslExp}
-import scalan.linalgebra.{MatricesDslSeq, LinearAlgebraExamples}
 import scalan._
-import scalan.compilation.lms.uni.{LmsBackendUni, NativeMethodsConfig, LmsCompilerUni}
-import scalan.compilation.lms.{CommunityLmsBackend, CommunityBridge}
+import scalan.compilation.lms.CommunityBridge
+import scalan.compilation.lms.uni.{LmsCompilerUni, NativeMethodsConfig}
+import scalan.graphs.{GraphsDslExp, GraphsDslSeq}
+import scalan.it.BaseItTests
+import scalan.linalgebra.LinearAlgebraExamples
 
 /**
  * Created by adel on 5/15/15.
  */
 
-class UniCompilerItTests extends LmsMsfItTests {
-
-  //trait ProgUniTest extends ProgCommunity with MsfFuncs with LinearAlgebraExamples with CommunityMethodMappingDSL {
-  trait Prog extends MsfFuncs with LinearAlgebraExamples {
-    lazy val test00_nop = fun { p: Rep[Double] =>
-      p
-    }
-    lazy val test01_oneOp = fun { p: Rep[Double] =>
-      p+2.0
-    }
-
-    lazy val test02_mapArray = fun { p: Rep[Array[Double]] =>  //Rep[(Array[Array[Double]], Array[Double])]
-      val vector = DenseVector(Collection(p))
-      val res = vector.mapBy( fun{ r => r + 2.0 } )
-      res.items.arr
-    }
-
-    lazy val test03_zipArray = fun {x: Rep[Array[Int]] =>
-      val x1 = x.map {y:Rep[Int] => y+2}
-      x1 zip x
-    }
-
-    lazy val test04_zip2Arrays = fun {x: Rep[(Array[Int], Array[Int])] =>
-      val x1 = x._1
-      val x2 = x._2
-      val x11 = x1.map {y:Rep[Int] => y+2}
-      val x21 = x2.map {y:Rep[Int] => y+3}
-      x11 zip x21
-    }
-
-    lazy val test05_zip3Arrays = fun {x: Rep[(Array[Int], (Array[Int], Array[Int]))] =>
-      val x1 = x._1
-      val x2 = x._2
-      val x3 = x._3
-      val x11 = x1.map {y:Rep[Int] => y+1}
-      val x21 = x2.map {y:Rep[Int] => y+2}
-      val x31 = x3.map {y:Rep[Int] => y+3}
-      x31 zip ( x21 zip x11)
-    }
-
-    lazy val test06_simpleReduce = fun {x: Rep[Array[Int]] =>
-      val x1 = x.reduce
-      x1
-    }
-
-    lazy val test07_reduceFromTuple = fun {x: Rep[(Array[Int], (Array[Int], Array[Int]))] =>
-      val x1 = x._2.reduce
-      x1 + 1
-    }
-
-    def test_config_f(y: Rep[Int]):Rep[Int] = y+10
-    def test_config_g(y: Rep[Int]):Rep[Int] = y*2
-    def test_config_h(y: Rep[Int]):Rep[Int] = -y+3
-    def test_config_s(y: Rep[Int]):Rep[Int] = y*y
-
-    lazy val test_config = fun {x: Rep[(Array[Int], (Array[Int], Array[Int]))] =>
-      //combinations: f or g - sipmplest case
-      //              h      - one function 2 times
-      //              f & g  - 2 separate functions
-      //              h      - one function 2 times
-      //              s & g  - superposition of 2 functions
-      //              s & h  - superposition of 2 functions, second function called also directly
-
-      val x1 = x._1.map {y:Rep[Int] => test_config_f(y) + 1} . reduce
-      val x2 = x._2.map {y:Rep[Int] => test_config_s(test_config_g(y)) + 1} . reduce
-      val x3 = x._3.map {y:Rep[Int] => test_config_h(y) + 1} . reduce
-      x1 + x2 + test_config_s(test_config_h(x3))
-    }
-
+//trait ProgUniTest extends ProgCommunity with MsfFuncs with LinearAlgebraExamples with CommunityMethodMappingDSL {
+trait UniCompilerTestProg extends MsfFuncs with LinearAlgebraExamples {
+  lazy val test00_nop = fun { p: Rep[Double] =>
+    p
   }
+  lazy val test01_oneOp = fun { p: Rep[Double] =>
+    p+2.0
+  }
+
+  lazy val test02_mapArray = fun { p: Rep[Array[Double]] =>  //Rep[(Array[Array[Double]], Array[Double])]
+    val vector = DenseVector(Collection(p))
+    val res = vector.mapBy( fun{ r => r + 2.0 } )
+    res.items.arr
+  }
+
+  lazy val test03_zipArray = fun {x: Rep[Array[Int]] =>
+    val x1 = x.map {y:Rep[Int] => y+2}
+    x1 zip x
+  }
+
+  lazy val test04_zip2Arrays = fun {x: Rep[(Array[Int], Array[Int])] =>
+    val x1 = x._1
+    val x2 = x._2
+    val x11 = x1.map {y:Rep[Int] => y+2}
+    val x21 = x2.map {y:Rep[Int] => y+3}
+    x11 zip x21
+  }
+
+  lazy val test05_zip3Arrays = fun {x: Rep[(Array[Int], (Array[Int], Array[Int]))] =>
+    val x1 = x._1
+    val x2 = x._2
+    val x3 = x._3
+    val x11 = x1.map {y:Rep[Int] => y+1}
+    val x21 = x2.map {y:Rep[Int] => y+2}
+    val x31 = x3.map {y:Rep[Int] => y+3}
+    x31 zip ( x21 zip x11)
+  }
+
+  lazy val test06_simpleReduce = fun {x: Rep[Array[Int]] =>
+    val x1 = x.reduce
+    x1
+  }
+
+  lazy val test07_reduceFromTuple = fun {x: Rep[(Array[Int], (Array[Int], Array[Int]))] =>
+    val x1 = x._2.reduce
+    x1 + 1
+  }
+
+  def test_config_f(y: Rep[Int]):Rep[Int] = y+10
+  def test_config_g(y: Rep[Int]):Rep[Int] = y*2
+  def test_config_h(y: Rep[Int]):Rep[Int] = -y+3
+  def test_config_s(y: Rep[Int]):Rep[Int] = y*y
+
+  lazy val test_config = fun {x: Rep[(Array[Int], (Array[Int], Array[Int]))] =>
+    //combinations: f or g - sipmplest case
+    //              h      - one function 2 times
+    //              f & g  - 2 separate functions
+    //              h      - one function 2 times
+    //              s & g  - superposition of 2 functions
+    //              s & h  - superposition of 2 functions, second function called also directly
+
+    val x1 = x._1.map {y:Rep[Int] => test_config_f(y) + 1} . reduce
+    val x2 = x._2.map {y:Rep[Int] => test_config_s(test_config_g(y)) + 1} . reduce
+    val x3 = x._3.map {y:Rep[Int] => test_config_h(y) + 1} . reduce
+    x1 + x2 + test_config_s(test_config_h(x3))
+  }
+
+}
+
+class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new UniCompilerTestProg with GraphsDslSeq with ScalanCommunityDslSeq) with LmsMsfItTestInputs {
 
   val in3Arrays = (Array(2, 3), (Array(1, 4), Array(1, -1)))
 
-  class ProgSeq extends Prog with GraphsDslSeq with ScalanCommunityDslSeq
-
-  val progSeq = new ProgSeq
-
-  class ProgExp extends Prog with GraphsDslExp with ScalanCommunityDslExp with JNIExtractorOpsExp
+  class ProgExp extends UniCompilerTestProg with GraphsDslExp with ScalanCommunityDslExp with JNIExtractorOpsExp
 
   val progStaged = new LmsCompilerUni(new ProgExp) with CommunityBridge
 

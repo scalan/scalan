@@ -9,24 +9,24 @@ import scalan.compilation.lms.cxx.LmsCompilerCxx
 import scalan.compilation.lms.cxx.sharedptr.CoreCxxShptrLmsBackend
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.graphs.{GraphsDslSeq, GraphsDsl, GraphsDslExp}
+import scalan.it.BaseCtxItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
-class JNI_MsfItTests extends LmsMsfItTests {
-  trait Prog extends ScalanCommunityDsl with JNIExtractorOps with GraphsDsl with MsfFuncs {
-    lazy val MSF_JNI_adjlist = JNI_Wrap(msfFunAdjBase)
+trait JNIMsfProg extends JNIExtractorOps with MsfFuncs {
+  lazy val MSF_JNI_adjlist = JNI_Wrap(msfFunAdjBase)
 
-    lazy val MSF_JNI_adjmatrix = JNI_Wrap(msfFunIncBase)
-  }
+  lazy val MSF_JNI_adjmatrix = JNI_Wrap(msfFunIncBase)
+}
 
-  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with GraphsDslExp with Prog
+class JNI_MsfItTests extends BaseCtxItTests[JNIMsfProg](new ScalanCommunityDslSeq with JNIExtractorOpsSeq with GraphsDslSeq with JNIMsfProg) {
+
+  class ProgExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with GraphsDslExp with JNIMsfProg
 
   val compiler = new LmsCompilerCxx(new ProgExp) with JNIBridge
 
   class Ctx extends TestCompilerContext("MSF_JNI-cxx") {
     val compiler = JNI_MsfItTests.this.compiler
   }
-
-  val progSeq = new ScalanCommunityDslSeq with JNIExtractorOpsSeq with GraphsDslSeq with Prog
 
   lazy val defaultCompilers = compilers(compiler)
 

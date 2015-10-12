@@ -4,284 +4,295 @@ import scalan.{ScalanCtxSeq, ScalanCtxExp, ScalanDsl}
 import scalan.it.BaseItTests
 import scalan.compilation.Compiler
 
+trait SmokeProg extends ScalanDsl {
+
+  lazy val simpleArith = fun {x: Rep[Int] => x*x + 2}
+
+  lazy val simpleArrGet = fun {in: Rep[(Array[Int], Int)] =>
+    val arr = in._1
+    val ind = in._2
+    arr(ind)
+  }
+  lazy val simpleMap = fun {x: Rep[Array[Int]] =>
+    val x1 = x.map {y:Rep[Int] => y+1}
+    x1
+  }
+  lazy val simpleMapNested = fun {x: Rep[(Array[Array[Double]], Int)] =>
+    val x1 = x._1.map {y:Rep[Array[Double]] => y(x._2)}
+    x1
+  }
+  lazy val simpleZip = fun {x: Rep[Array[Int]] =>
+    val x1 = x.map {y:Rep[Int] => y+2}
+    x1 zip x
+  }
+  lazy val simpleZipWith = fun {x: Rep[Array[Int]] =>
+    val x1 = x.map {y:Rep[Int] => y+3}
+    val x2 = x1 zip x
+    val x3 = x2.map {y:Rep[(Int,Int)] => y._1 * y._2}
+    x3
+  }
+
+  lazy val simpleReduce = fun {x: Rep[Array[Int]] =>
+    val x1 = x.reduce
+    x1
+  }
+  lazy val mvMul = fun { in:Rep[(Array[Array[Int]], Array[Int])] =>
+    val mat = in._1
+    val vec = in._2
+    val res = mat map {row: Rep[Array[Int]] =>
+      val x1 = row zip vec
+      val x2 = x1.map {y:Rep[(Int,Int)] => y._1 * y._2}
+      x2.reduce
+    }
+    res
+  }
+
+  lazy val simpleIf = fun { in: Rep[(Array[Double], Double)] =>
+    val res = IF (in._2 === 0.0) THEN { in._1 map (x => x/2.0) } ELSE { IF ( in._2 < 0.0) THEN { in._1 map (x => (x*(-1.0))/in._2) } ELSE {in._1 map (x => x/in._2) } }
+    res.reduce
+  }
+
+  lazy val simpleSum = fun { x: Rep[Int] =>
+    val l = x.asLeft[Unit].mapSum(_ + 7, identity)
+    val r = x.asRight[Unit].mapSum(identity, _ + 3)
+    (l, r)
+  }
+
+  lazy val sumOps = fun { x: Rep[Either[Unit, Int]] =>
+    x.fold(_ => x.isLeft, _ => x.isRight)
+  }
+
+  lazy val optionOps = fun { x: Rep[Int] =>
+    val d = 19
+    val l = SOption.none[Int].map(_ + 3)
+    val r = SOption.some(x).map(_ + 7).flatMap(x => SOption.some(x * 2))
+    (l.getOrElse(d), r.getOrElse(d))
+  }
+
+  lazy val lambdaApply = fun2 { (x: Rep[Int], f: Rep[Int => Int]) =>
+    f(x)
+  }
+
+  lazy val lambdaConst = fun { x: Rep[Int] =>
+    val f = fun { x: Rep[Int] => true }
+    SOption.some(f)
+  }
+
+  lazy val logicalOps = fun2 { (x: Rep[Boolean], y: Rep[Boolean]) =>
+    val a = !x && y
+    val b = x || !y
+    (a, b)
+  }
+
+  lazy val arrayUpdate = fun {in: Rep[Array[Int]] => val f = {a:Rep[Array[Int]] => a.update(0,1)}; f(in)}
+
+  lazy val filterCompound = fun { in: Rep[Array[(Int, (Int, Int))]] =>
+    in.filter(x => x._1 >= 20 && x._2 >= x._1 && x._3 < 30)
+  }
+
+  lazy val aggregates = fun { in: Rep[Array[Int]] =>
+    (in.min, in.max, in.sum, in.avg)
+  }
+
+  lazy val sortBy = fun { in: Rep[Array[(Int, Int)]] =>
+    in.sortBy(fun { p => p._1})
+  }
+
+  lazy val reuseTest = fun { len: Rep[Int] =>
+    val matrix: Rep[Array[Array[Int]]] = SArray.tabulate[Array[Int]](len) { n => SArray.tabulate[Int](n) { i => i}}
+    matrix.map(row => row.reduce) zip matrix.map(row => row.reduce * 2)
+  }
+
+  lazy val arrayEmpty = fun { _:Rep[Int] => SArray.empty[Int]}
+
+  lazy val arrayReplicate = fun {in:Rep[(Int,Double)] =>
+    SArray.replicate(in._1, in._2)
+  }
+
+  lazy val emptyNestedUnitArray = fun {_ : Rep[Int] => array_empty[Array[Unit]]}
+
+
+  lazy val pairIf = fun { in: Rep[(Int, Array[Int])] =>
+    val rs = IF (in._1 > 0) THEN {
+      val red = in._2.reduce
+      (red + 1, red - 1)
+    } ELSE {
+      (0,0)
+    }
+    rs._1 + rs._2
+  }
+
+  lazy val arrayUpdateMany = fun { in: Rep[(Array[Int], (Array[Int], Array[Int]))] => array_updateMany(in._1, in._2, in._3) }
+
+  lazy val listRangeFrom0 = fun { n: Rep[Int] => SList.rangeFrom0(n) }
+
+  lazy val applyLambda2Array = fun {arr: Rep[Array[Int]] =>
+    def isMatch(arr: Rep[Array[Int]]) = arr.length > 3
+    def step(arr: Rep[Array[Int]]): Rep[Array[Int]] = arr map {a => a + 2}
+
+    from(arr).until(isMatch)(step)
+  }
+
+  lazy val fillArrayBuffer = fun { in: Rep[Array[Int]] =>
+    in.fold(ArrayBuffer.empty[Int], (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
+  }
+  //    lazy val absTest = fun {x: Rep[Float] =>
+  //      x.abs
+  //    }
+  //
+  //    lazy val logTest = fun {x: Rep[(Double, Double)] =>
+  //      Pair(Math.log(x._1), Math.log(x._2))
+  //    }
+  //
+  //    // sums elements of an array in imperative way
+  //    lazy val simpleLoop = fun {x: PA[Int] =>
+  //      val s = loopUntil((0, 0)) (
+  //      {s: Rep[(Int, Int)] => s._2 >= x.length},
+  //      {s: Rep[(Int, Int)] => (s._1 + x(s._2), s._2 + 1): Rep[(Int, Int)]}
+  //      )
+  //      singleton(s._1)
+  //    }
+  //
+  //    lazy val simpleFirstElement = fun {x: PA[Int] =>
+  //      singleton(x(0))
+  //    }
+  //
+  //    lazy val simpleLoop2 = fun {x: PA[Int] =>
+  //      val res = loopUntil(0) (
+  //        {s: Rep[Int] => s >= x.length},
+  //        {s: Rep[Int] => s + 1}
+  //      )
+  //      singleton(res)
+  //    }
+  //
+  //    // appends two arrays
+  //    def appendPA[A:Elem](xs: PA[A], ys: PA[A]): PA[A] =
+  //      tabulate(xs.length + ys.length) { i => IF (i < xs.length) {xs(i)} ELSE ys(i - xs.length)}
+  //
+  //    def appendPA2[A:Elem](xs: PA[A], ys: PA[A]): PA[A] = {
+  //      val tmp = replicate(2, xs)
+  //      val z: NA[A] = (tmp <<- (1, ys))
+  //      z.values
+  //    }
+  //
+  //
+  //    lazy val simpleAppend = fun { x: PA[Int] =>
+  //      appendPA(x, x)
+  //    }
+  //
+  //    lazy val simpleAppend2 = fun { x: PA[Int] =>
+  //      appendPA2(x, x)
+  //    }
+  //
+  //    lazy val idPA = fun { x: PA[Int] => x}
+  //
+  //    lazy val curredPlusMap = fun { xs: PA[Int] => xs.map { x => curred(x)(x) }}
+  //
+  //    lazy val isEven = fun { x: Rep[Int] => (x % 2) === 0 }
+  //
+  //    lazy val filterEven = fun {xs: PA[Int] => xs.filter(x => isEven(x)) }
+  //
+  //    lazy val filterPositive = fun {xs: PA[Int] => xs.filter(x => x > 0)}
+  //
+  //    lazy val div2Reduce = fun {xs: PA[Int] =>
+  //      implicit val DivBy2Monoid: Monoid[Rep[Int]] = new Monoid[Rep[Int]] {
+  //        val zero: Rep[Int] = 0
+  //        def append(x: Rep[Int], y: =>Rep[Int]): Rep[Int] = (x + y) % 2
+  //        def opName = "myMonoid"
+  //        def isInfix = true
+  //      }
+  //      val res = xs.reduce(DivBy2Monoid)
+  //      singleton(res)
+  //    }
+  //
+  //    lazy val simpleFor = fun {xs: PA[Int] =>
+  //      for {x <- xs if x > 2} yield x
+  //    }
+  //
+  //    lazy val reverse = fun { xs: PA[Int] =>
+  //      loopUntil2(0, xs)(
+  //        {(i, ys)  => i >= xs.length},
+  //        { (i, ys) => (i + 1, ys <<- (i, xs(xs.length - 1 - i)))  }
+  //      )._2
+  //    }
+  //
+  //    lazy val toFromArray = fun { xs: PA[Int] =>
+  //      fromArray(xs.toArray)
+  //    }
+  //
+  //    lazy val flatMap1 = fun { xs: PA[Int] =>
+  //      xs.flatMap{x: Rep[Int] => replicate(x, x)}
+  //    }
+  //
+  //    lazy val flatMap2 = fun { xs: PA[Int] =>
+  //      xs.flatMap{x: Rep[Int] => replicate(x, x).flatMap{x: Rep[Int] => replicate(x, x)}}
+  //    }
+  //
+  //    lazy val pairToArray = fun { p: Rep[(Int, Int)] =>
+  //      val a: PA[Int] = replicate(2, p._1)
+  //      a <<- (1, p._2)
+  //    }
+  //
+  //    lazy val doubleSwap = fun { p: Rep[(Double, Double)] =>
+  //      Pair(p._2, p._1)
+  //    }
+  //
+  //    lazy val doubleFloatArray = fun { p: PA[Float] =>
+  //      p |+| p
+  //    }
+  //
+  //    lazy val doubleArray = fun { p: PA[Double] =>
+  //      p |+| p
+  //    }
+  //
+  //    lazy val valuesOfNA = fun { p: NA[Int] => p.values}
+  //    lazy val valuesOfNA2 = fun { p: Rep[PArray[PArray[PArray[Int]]]] => p.values.values}
+  //
+  //    def sVecDVecDot(sv: PA[(Int, Float)], dv: PA[Float]): Rep[Float] = {
+  //      val p = unzip(sv)
+  //      val v2 =p._2 |*| dv.backPermute(p._1)
+  //      sum(v2)
+  //    }
+  //
+  //    lazy val sMatDVecMul = fun {p : Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] =>
+  //      val m = p._1
+  //      val v = p._2
+  //      m.map {row => sVecDVecDot(row, v)}
+  //    }
+  //
+  //
+  //    lazy val fusion = fun {r: Rep[(PArray[Int], PArray[Int])] =>
+  //      val a1 = r._1
+  //      val a2 = a1.map{x => x * 2}
+  //      val a3 = a2.map{x => x * 2}
+  //      val a4 = a2.map{x => x + 3}
+  //      val a5 = a1.zip(a3)
+  //
+  //      val a6 = a5.zip(a4)
+  //      val a7 = a6.map{p => (p._1, p._2 + 13)}
+  //
+  //      a3.zip(a7)
+  //    }
+  //
+  //    lazy val fusion1 = fun {a1: Rep[PArray[Int]] =>
+  //      val a2 = a1.map{x => x * 2}
+  //      val a3 = a2.map{x => x * 2}
+  //      a3
+  //    }
+  //
+  ////    lazy val expandScaledRangesFun = fun {in: Rep[(PArray[Int],Int)] =>
+  ////      val Pair(is, scale) = in
+  ////      expandScaledRanges(is, scale)
+  ////    }
+  //
+}
+
 /**
  *  Tests that very simple examples are run correctly
  */
-abstract class SmokeItTests extends BaseItTests {
-  trait Prog extends ScalanDsl {
-
-    lazy val simpleArith = fun {x: Rep[Int] => x*x + 2}
-
-    lazy val simpleArrGet = fun {in: Rep[(Array[Int], Int)] =>
-      val arr = in._1
-      val ind = in._2
-      arr(ind)
-    }
-    lazy val simpleMap = fun {x: Rep[Array[Int]] =>
-      val x1 = x.map {y:Rep[Int] => y+1}
-      x1
-    }
-    lazy val simpleMapNested = fun {x: Rep[(Array[Array[Double]], Int)] =>
-      val x1 = x._1.map {y:Rep[Array[Double]] => y(x._2)}
-      x1
-    }
-    lazy val simpleZip = fun {x: Rep[Array[Int]] =>
-      val x1 = x.map {y:Rep[Int] => y+2}
-      x1 zip x
-    }
-    lazy val simpleZipWith = fun {x: Rep[Array[Int]] =>
-      val x1 = x.map {y:Rep[Int] => y+3}
-      val x2 = x1 zip x
-      val x3 = x2.map {y:Rep[(Int,Int)] => y._1 * y._2}
-      x3
-    }
-
-    lazy val simpleReduce = fun {x: Rep[Array[Int]] =>
-      val x1 = x.reduce
-      x1
-    }
-    lazy val mvMul = fun { in:Rep[(Array[Array[Int]], Array[Int])] =>
-      val mat = in._1
-      val vec = in._2
-      val res = mat map {row: Rep[Array[Int]] =>
-        val x1 = row zip vec
-        val x2 = x1.map {y:Rep[(Int,Int)] => y._1 * y._2}
-        x2.reduce
-      }
-      res
-    }
-
-    lazy val simpleIf = fun { in: Rep[(Array[Double], Double)] =>
-      val res = IF (in._2 === 0.0) THEN { in._1 map (x => x/2.0) } ELSE { IF ( in._2 < 0.0) THEN { in._1 map (x => (x*(-1.0))/in._2) } ELSE {in._1 map (x => x/in._2) } }
-      res.reduce
-    }
-
-    lazy val simpleSum = fun { x: Rep[Int] =>
-      val l = x.asLeft[Unit].mapSum(_ + 7, identity)
-      val r = x.asRight[Unit].mapSum(identity, _ + 3)
-      (l, r)
-    }
-
-    lazy val sumOps = fun { x: Rep[Either[Unit, Int]] =>
-      x.fold(_ => x.isLeft, _ => x.isRight)
-    }
-
-    lazy val optionOps = fun { x: Rep[Int] =>
-      val d = 19
-      val l = SOption.none[Int].map(_ + 3)
-      val r = SOption.some(x).map(_ + 7).flatMap(x => SOption.some(x * 2))
-      (l.getOrElse(d), r.getOrElse(d))
-    }
-
-    lazy val lambdaApply = fun2 { (x: Rep[Int], f: Rep[Int => Int]) =>
-      f(x)
-    }
-
-    lazy val lambdaConst = fun { x: Rep[Int] =>
-      val f = fun { x: Rep[Int] => true }
-      SOption.some(f)
-    }
-
-    lazy val logicalOps = fun2 { (x: Rep[Boolean], y: Rep[Boolean]) =>
-      val a = !x && y
-      val b = x || !y
-      (a, b)
-    }
-
-    lazy val arrayUpdate = fun {in: Rep[Array[Int]] => val f = {a:Rep[Array[Int]] => a.update(0,1)}; f(in)}
-
-//    lazy val simpleMap = fun {x: PA[Int] =>
-//      x.map(y => y + 1)
-//    }
-//
-//    lazy val absTest = fun {x: Rep[Float] =>
-//      x.abs
-//    }
-//
-//    lazy val logTest = fun {x: Rep[(Double, Double)] =>
-//      Pair(Math.log(x._1), Math.log(x._2))
-//    }
-//
-//    // sums elements of an array in imperative way
-//    lazy val simpleLoop = fun {x: PA[Int] =>
-//      val s = loopUntil((0, 0)) (
-//      {s: Rep[(Int, Int)] => s._2 >= x.length},
-//      {s: Rep[(Int, Int)] => (s._1 + x(s._2), s._2 + 1): Rep[(Int, Int)]}
-//      )
-//      singleton(s._1)
-//    }
-//
-//    lazy val simpleFirstElement = fun {x: PA[Int] =>
-//      singleton(x(0))
-//    }
-//
-//    lazy val simpleLoop2 = fun {x: PA[Int] =>
-//      val res = loopUntil(0) (
-//        {s: Rep[Int] => s >= x.length},
-//        {s: Rep[Int] => s + 1}
-//      )
-//      singleton(res)
-//    }
-//
-//    // appends two arrays
-//    def appendPA[A:Elem](xs: PA[A], ys: PA[A]): PA[A] =
-//      tabulate(xs.length + ys.length) { i => IF (i < xs.length) {xs(i)} ELSE ys(i - xs.length)}
-//
-//    def appendPA2[A:Elem](xs: PA[A], ys: PA[A]): PA[A] = {
-//      val tmp = replicate(2, xs)
-//      val z: NA[A] = (tmp <<- (1, ys))
-//      z.values
-//    }
-//
-//
-//    lazy val simpleAppend = fun { x: PA[Int] =>
-//      appendPA(x, x)
-//    }
-//
-//    lazy val simpleAppend2 = fun { x: PA[Int] =>
-//      appendPA2(x, x)
-//    }
-//
-//    lazy val idPA = fun { x: PA[Int] => x}
-//
-//    lazy val curredPlusMap = fun { xs: PA[Int] => xs.map { x => curred(x)(x) }}
-//
-//    lazy val isEven = fun { x: Rep[Int] => (x % 2) === 0 }
-//
-//    lazy val filterEven = fun {xs: PA[Int] => xs.filter(x => isEven(x)) }
-//
-//    lazy val filterPositive = fun {xs: PA[Int] => xs.filter(x => x > 0)}
-//
-//    lazy val div2Reduce = fun {xs: PA[Int] =>
-//      implicit val DivBy2Monoid: Monoid[Rep[Int]] = new Monoid[Rep[Int]] {
-//        val zero: Rep[Int] = 0
-//        def append(x: Rep[Int], y: =>Rep[Int]): Rep[Int] = (x + y) % 2
-//        def opName = "myMonoid"
-//        def isInfix = true
-//      }
-//      val res = xs.reduce(DivBy2Monoid)
-//      singleton(res)
-//    }
-//
-//    lazy val simpleFor = fun {xs: PA[Int] =>
-//      for {x <- xs if x > 2} yield x
-//    }
-//
-//    lazy val reverse = fun { xs: PA[Int] =>
-//      loopUntil2(0, xs)(
-//        {(i, ys)  => i >= xs.length},
-//        { (i, ys) => (i + 1, ys <<- (i, xs(xs.length - 1 - i)))  }
-//      )._2
-//    }
-//
-//    lazy val toFromArray = fun { xs: PA[Int] =>
-//      fromArray(xs.toArray)
-//    }
-//
-//    lazy val flatMap1 = fun { xs: PA[Int] =>
-//      xs.flatMap{x: Rep[Int] => replicate(x, x)}
-//    }
-//
-//    lazy val flatMap2 = fun { xs: PA[Int] =>
-//      xs.flatMap{x: Rep[Int] => replicate(x, x).flatMap{x: Rep[Int] => replicate(x, x)}}
-//    }
-//
-//    lazy val pairToArray = fun { p: Rep[(Int, Int)] =>
-//      val a: PA[Int] = replicate(2, p._1)
-//      a <<- (1, p._2)
-//    }
-//
-//    lazy val doubleSwap = fun { p: Rep[(Double, Double)] =>
-//      Pair(p._2, p._1)
-//    }
-//
-//    lazy val doubleFloatArray = fun { p: PA[Float] =>
-//      p |+| p
-//    }
-//
-//    lazy val doubleArray = fun { p: PA[Double] =>
-//      p |+| p
-//    }
-//
-//    lazy val valuesOfNA = fun { p: NA[Int] => p.values}
-//    lazy val valuesOfNA2 = fun { p: Rep[PArray[PArray[PArray[Int]]]] => p.values.values}
-//
-//    def sVecDVecDot(sv: PA[(Int, Float)], dv: PA[Float]): Rep[Float] = {
-//      val p = unzip(sv)
-//      val v2 =p._2 |*| dv.backPermute(p._1)
-//      sum(v2)
-//    }
-//
-//    lazy val sMatDVecMul = fun {p : Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] =>
-//      val m = p._1
-//      val v = p._2
-//      m.map {row => sVecDVecDot(row, v)}
-//    }
-//
-//
-//    lazy val fusion = fun {r: Rep[(PArray[Int], PArray[Int])] =>
-//      val a1 = r._1
-//      val a2 = a1.map{x => x * 2}
-//      val a3 = a2.map{x => x * 2}
-//      val a4 = a2.map{x => x + 3}
-//      val a5 = a1.zip(a3)
-//
-//      val a6 = a5.zip(a4)
-//      val a7 = a6.map{p => (p._1, p._2 + 13)}
-//
-//      a3.zip(a7)
-//    }
-//
-//    lazy val fusion1 = fun {a1: Rep[PArray[Int]] =>
-//      val a2 = a1.map{x => x * 2}
-//      val a3 = a2.map{x => x * 2}
-//      a3
-//    }
-//
-////    lazy val expandScaledRangesFun = fun {in: Rep[(PArray[Int],Int)] =>
-////      val Pair(is, scale) = in
-////      expandScaledRanges(is, scale)
-////    }
-//
-  }
-
-  class ProgSeq extends Prog with ScalanCtxSeq {
-//    lazy val intRep: Rep[Int] = 1
-//    lazy val intPair: Rep[(Int, Int)] = (1, 2)
-//    lazy val nestedIntPair: Rep[((Int, Int), (Int, Int))] = ((1, 2), (3, 4))
-//    lazy val intArray: PA[Int] = fromArray(Array(1,2,3,4))
-//    lazy val pairsOfArrays: Rep[(PA[Int], PA[Int])] = (fromArray(Array(1,2)), fromArray(Array(3,4)))
-//    lazy val arraysOfPairs: PA[(Int, Int)] = fromArray(Array((1, 3), (2, 4)))
-//    lazy val nestedArray1: NA[Int] = fromJuggedArray(Array(Array(1), Array(2,3), Array(4, 5, 6)))
-//    lazy val nestedArray2: NA[Int] = fromJuggedArray(Array(Array(7), Array(8,9), Array(10, 11, 12)))
-//
-//    lazy val nestedArray3 = {
-//      val z = replicate(2, nestedArray1)
-//      z <<- (1, nestedArray2)
-//    }
-//
-//    lazy val in1: Rep[(Double, Double)] = (1, 2)
-//    lazy val out1: Rep[(Double, Double)] = (0, 0.693147f)
-//
-//    lazy val in2: Rep[(Double, Double)] = (1.5, 2.5)
-//    lazy val out2: Rep[(Double, Double)] = (2.5, 1.5)
-//
-//    val sm = fromJuggedArray(Array[Array[(Int, Float)]](
-//      Array((0, 3.0f), (2, 7.0f), (4, 5.0f)),
-//      Array((1, 11.0f), (2, 13.0f)),
-//      Array((0, 17.0f), (1, 19.0f)),
-//      Array((0, 23.0f), (3, 29.0f), (4, 31.0f)),
-//      Array((2, 37.0f))
-//    ))
-//
-//    val dv = fromArray(Array(-3.0f, 5.0f, -7.0f, 11.0f, -13.0f))
-//    val smdv: Rep[(PArray[PArray[(Int, Float)]], PArray[Float])] = (sm, dv)
-  }
+abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanCtxSeq with SmokeProg) {
 
 //  val progStaged: Prog with ScalanCtxExp
-//  val progSeq: Prog with ScalanCtxSeq = new ProgSeq()
-//
-//  import progSeq._
 
 //  test("test00simpleConst") {
 //    val (in, out) = Array(0) -> Array(1)

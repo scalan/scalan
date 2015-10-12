@@ -4,29 +4,28 @@ package lms
 package cxx
 package sharedptr
 
-import java.io.File
+import scalan.it.BaseItTests
+import scalan.it.smoke.SmokeProg
 
-import scalan.it.smoke.SmokeItTests
-
-class CxxShptrLmsSmokeItTests extends SmokeItTests {
-  trait Prog extends super.Prog {
-    lazy val arrayForeach = fun {arr:Rep[Array[Double]] =>
-      arr.fold(arr, {p:Rep[(Array[Double],Double)] => p._1.update(0, p._1(0) + p._2 + 1.0)})
-    }
-
-    lazy val testList = fun {in:Rep[List[Array[Double]]] =>
-      in.map{a => a.map({v => v*2.0})}
-    }
-
-    lazy val testStringDuplicate = fun {str:Rep[String] => (str + str + "duplicate").startsWith("hello")}
+trait CxxShptrTestProg extends SmokeProg {
+  lazy val arrayForeach = fun {arr:Rep[Array[Double]] =>
+    arr.fold(arr, {p:Rep[(Array[Double],Double)] => p._1.update(0, p._1(0) + p._2 + 1.0)})
   }
-  class ProgExp extends Prog with ScalanCommunityExp
 
-  val progSeq = new Prog with ScalanCommunitySeq
+  lazy val testList = fun {in:Rep[List[Array[Double]]] =>
+    in.map{a => a.map({v => v*2.0})}
+  }
+
+  lazy val testStringDuplicate = fun {str:Rep[String] => (str + str + "duplicate").startsWith("hello")}
+}
+
+class CxxShptrLmsSmokeItTests extends BaseItTests[CxxShptrTestProg](new ScalanCommunitySeq with CxxShptrTestProg) {
+  class ProgExp extends ScalanCommunityExp with CxxShptrTestProg
+
   val progStaged = new LmsCompilerCxx(new ProgExp) with CoreBridge
   val defaultCompilers = compilers(progStaged)
 
-  import progStaged.scalan.{|, SOption}
+  import progStaged.scalan.{SOption, |}
 
   test("testStringDuplicate") {
     val in = "word_"
