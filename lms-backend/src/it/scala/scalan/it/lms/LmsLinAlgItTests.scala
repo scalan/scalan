@@ -20,7 +20,7 @@ abstract class LmsLinAlgItTests extends BaseItTests[LinAlgProg](new ScalanCommun
 
   val compilerConfigU = LmsCompilerScalaConfig().withSbtConfig(SbtConfig(scalaVersion = "2.11.2"))
   
-  def sparseVectorData(arr: Array[Double]) = (0.until(arr.length).toArray, (arr, arr.length))
+  def sparseVectorData(arr: Array[Double]) = (arr.indices.toArray, (arr, arr.length))
 
   val defaultCompilers = compilers(progStaged, cwc(progStagedU)(compilerConfigU))
   val progStagedOnly = compilers(progStaged)
@@ -32,161 +32,122 @@ class LmsMvmItTests extends LmsLinAlgItTests {
   test("ddmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = Array(2.0, 3.0)
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.ddmvm, "ddmvm")(in)
+    compareOutputWithSequential(_.ddmvm)(Pair(inM, inV))
   }
 
-  test("ddmvmList(scala)") {
+  test("ddmvmList") {
     val inM = List(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = Array(2.0, 3.0)
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.ddmvmList, "ddmvmList", progStagedOnly)(in)
+    // TODO List support in LmsCompilerUni
+    compareOutputWithSequential(_.ddmvmList, progStagedOnly)(Pair(inM, inV))
   }
 
   test("dsmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = sparseVectorData(Array(2.0, 3.0))
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.dsmvm, "dsmvm")(in)
+    compareOutputWithSequential(_.dsmvm)(Pair(inM, inV))
   }
 
   test("sdmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
     val inV = Array(2.0, 3.0)
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.sdmvm, "sdmvm")(in)
+    compareOutputWithSequential(_.sdmvm)(Pair(inM, inV))
   }
 
   test("ssmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
     val inV = sparseVectorData(Array(2.0, 3.0))
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.ssmvm, "ssmvm")(in)
+    compareOutputWithSequential(_.ssmvm)(Pair(inM, inV))
   }
 
   test("fdmvm") {
     val inM = (Array(1.0, 1.0, 0.0, 1.0), 2)
     val inV = Array(2.0, 3.0)
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.fdmvm, "fdmvm", progStagedOnly)(in)
+    compareOutputWithSequential(_.fdmvm, progStagedOnly)(Pair(inM, inV))
   }
 
   test("fsmvm") {
     val inM = (Array(1.0, 1.0, 0.0, 1.0), 2)
     val inV = sparseVectorData(Array(2.0, 3.0))
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.fsmvm, "fsmvm")(in)
+    compareOutputWithSequential(_.fsmvm)(Pair(inM, inV))
   }
 
   test("cdmvm") {
     val inM = (3.0, (2, 2))
     val inV = Array(2.0, 3.0)
-    val in = Pair(inM, inV)
-    val out = Array(15.0, 15.0)
-    compareOutputWithSequential(_.cdmvm, "cdmvm", progStagedOnly)(in)
+    compareOutputWithSequential(_.cdmvm, progStagedOnly)(Pair(inM, inV))
   }
 
   test("csmvm") {
     val inM = (3.0, (2, 2))
     val inV = sparseVectorData(Array(2.0, 3.0))
-    val in = Pair(inM, inV)
-    val out = Array(15.0, 15.0)
-    compareOutputWithSequential(_.csmvm, "csmvm", progStagedOnly)(in)
+    compareOutputWithSequential(_.csmvm, progStagedOnly)(Pair(inM, inV))
   }
 
   test("dcmvm") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = (2.0, 2)
-    val in = Pair(inM, inV)
-    val out = Array(4.0, 2.0)
-    compareOutputWithSequential(_.dcmvm, "dcmvm", progStagedOnly)(in)
+    compareOutputWithSequential(_.dcmvm, progStagedOnly)(Pair(inM, inV))
   }
 
   test("ccmvm") {
     val inM = (3.0, (2, 2))
     val inV = (2.0, 2)
-    val in = Pair(inM, inV)
-    val out = Array(12.0, 12.0)
-    compareOutputWithSequential(_.ccmvm, "ccmvm", progStagedOnly)(in)
+    compareOutputWithSequential(_.ccmvm, progStagedOnly)(Pair(inM, inV))
   }
 
   test("dgdmvm") {
     val inM = Array(1.0, 2.0, 3.0)
     val inV = Array(2.0, 4.0, 6.0)
-    val in = Pair(inM, inV)
-    val out = Array(2.0, 8.0, 18.0)
-    compareOutputWithSequential(_.dgdmvm, "dgdmvm", progStagedOnly)(in)
+    compareOutputWithSequential(_.dgdmvm, progStagedOnly)(Pair(inM, inV))
   }
 
   test("dgsmvm") {
     val inM = Array(1.0, 2.0, 3.0)
     val inV = sparseVectorData(Array(2.0, 4.0, 6.0))
-    val in = Pair(inM, inV)
-    val out = Array(2.0, 8.0, 18.0)
-    compareOutputWithSequential(_.dgsmvm, "dgsmvm", progStagedOnly)(in)
+    compareOutputWithSequential(_.dgsmvm, progStagedOnly)(Pair(inM, inV))
   }
 
   test("dgcmvm") {
     val inM = Array(1.0, 2.0, 3.0)
     val inV = (2.0, 3)
-    val in = Pair(inM, inV)
-    val out = Array(2.0, 4.0, 6.0)
-    compareOutputWithSequential(_.dgcmvm, "dgcmvm", progStagedOnly)(in)
+    compareOutputWithSequential(_.dgcmvm, progStagedOnly)(Pair(inM, inV))
   }
 
   test("ddmvm0") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = Array(2.0, 3.0)
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.ddmvm0, "ddmvm0")(in)
+    compareOutputWithSequential(_.ddmvm0)(Pair(inM, inV))
   }
 
   test("dsmvm0") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inV = sparseVectorData(Array(2.0, 3.0))
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.dsmvm0, "dsmvm0")(in)
+    compareOutputWithSequential(_.dsmvm0)(Pair(inM, inV))
   }
 
   test("sdmvm0") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
     val inV = Array(2.0, 3.0)
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.sdmvm0, "sdmvm0")(in)
+    compareOutputWithSequential(_.sdmvm0)(Pair(inM, inV))
   }
 
   test("ssmvm0") {
     val inM = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
     val inV = sparseVectorData(Array(2.0, 3.0))
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.ssmvm0, "ssmvm0")(in)
+    compareOutputWithSequential(_.ssmvm0)(Pair(inM, inV))
   }
 
   test("fdmvm0") {
     val inM = (Array(1.0, 1.0, 0.0, 1.0), 2)
     val inV = Array(2.0, 3.0)
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.fdmvm0, "fdmvm0")(in)
+    compareOutputWithSequential(_.fdmvm0)(Pair(inM, inV))
   }
 
   test("fsmvm0") {
     val inM = (Array(1.0, 1.0, 0.0, 1.0), 2)
     val inV = sparseVectorData(Array(2.0, 3.0))
-    val in = Pair(inM, inV)
-    val out = Array(5.0, 3.0)
-    compareOutputWithSequential(_.fsmvm0, "fsmvm0")(in)
+    compareOutputWithSequential(_.fsmvm0)(Pair(inM, inV))
   }
 }
 
@@ -196,58 +157,44 @@ class LmsMmmItTests extends LmsLinAlgItTests {
   test("ddmmm") {
     val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
     val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0))
-    val in = Pair(inM1, inM2)
-    val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
-    compareOutputWithSequential(_.ddmmm, "ddmmm")(in)
+    compareOutputWithSequential(_.ddmmm)(Pair(inM1, inM2))
   }
 
   test("ssmmm") {
     //pending
     val inM1 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
     val inM2 = Array(Array(1.0, 1.0), Array(0.0, 1.0)).map(sparseVectorData)
-    val in = Pair(inM1, inM2)
-    val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
-    compareOutputWithSequential(_.ssmmm, "ssmmm")(in)
+    compareOutputWithSequential(_.ssmmm)(Pair(inM1, inM2))
   }
 
   test("ffmmm") {
     val inM1 = (Array(1.0, 1.0, 0.0, 1.0), 2)
     val inM2 = (Array(1.0, 1.0, 0.0, 1.0), 2)
-    val in = Pair(inM1, inM2)
-    val out = Array(Array(1.0, 2.0), Array(0.0, 1.0))
-    compareOutputWithSequential(_.ffmmm, "ffmmm")(in)
+    compareOutputWithSequential(_.ffmmm)(Pair(inM1, inM2))
   }
 
   test("ccmmm") {
     val inM1 = (3.0, (2, 2))
     val inM2 = (2.0, (2, 2))
-    val in = Pair(inM1, inM2)
-    val out = Array(Array(12.0, 12.0), Array(12.0, 12.0))
-    compareOutputWithSequential(_.ccmmm, "ccmmm", progStagedOnly)(in)
+    compareOutputWithSequential(_.ccmmm, progStagedOnly)(Pair(inM1, inM2))
   }
 
   test("cfmmm") {
     val inM1 = (3.0, (2, 2))
     val inM2 = (Array(1.0, 1.0, 0.0, 1.0), 2)
-    val in = Pair(inM1, inM2)
-    val out = Array(Array(3.0, 6.0), Array(3.0, 6.0))
-    compareOutputWithSequential(_.cfmmm, "cfmmm", progStagedOnly)(in)
+    compareOutputWithSequential(_.cfmmm, progStagedOnly)(Pair(inM1, inM2))
   }
 
   test("dgfmmm") {
     val inM1 = Array(2.0, 3.0)
     val inM2 = (Array(1.0, 1.0, 0.0, 1.0), 2)
-    val in = Pair(inM1, inM2)
-    val out = Array(Array(2.0, 2.0), Array(0.0, 3.0))
-    compareOutputWithSequential(_.dgfmmm, "dgfmmm", progStagedOnly)(in)
+    compareOutputWithSequential(_.dgfmmm, progStagedOnly)(Pair(inM1, inM2))
   }
 
   test("dgdgmmm") {
     val inM1 = Array(2.0, 3.0)
     val inM2 = Array(2.0, 3.0)
-    val in = Pair(inM1, inM2)
-    val out = Array(Array(4.0, 0.0), Array(0.0, 9.0))
-    compareOutputWithSequential(_.dgdgmmm, "dgdgmmm", progStagedOnly)(in)
+    compareOutputWithSequential(_.dgdgmmm, progStagedOnly)(Pair(inM1, inM2))
   }
 
 }
@@ -269,19 +216,14 @@ class AbstractElemItTests extends LmsLinAlgItTests {
     val arrTrain = Array((0, 5.0), (1, 3.0), (1, 4.0))
     lazy val width = 5
 
-    val in = Tuple(width, arrTrain)
-    getStagedOutput(_.dotWithAbstractElem, "patternMatchAbstract", progStagedOnly)(in)
+    getStagedOutput(_.dotWithAbstractElem, progStagedOnly)(Tuple(width, arrTrain))
   }
 
   test("elems divergence in if_then_else branches") {
     // Different branches of if_then_else operator produce different elems.
     // This causes Sums and SumViews to appear.
     // The test verifies iso lifting in this case (see IfThenElse.rewriteDef)
-    val matrix = Array(Array(0, 5), Array(1, 3), Array(1, 4))
-    val vector = Array(1,2)
-
-    val in = Tuple(matrix, vector)
-    progStaged.buildGraph(file(prefix, "simpleSum"), "simpleSum", progStaged.scalan.funSimpleSum, defaultGraphVizConfig)(progStaged.defaultCompilerConfig)
+    buildGraphs(_.funSimpleSum, progStagedOnly)
   }
 
 }
@@ -294,75 +236,48 @@ class VectorMethodsItTests extends LmsLinAlgItTests {
   lazy val vector2 = Array(Pair(0, 1.0), Pair(7, 3.0), Pair(12, 5.0))
 
   test("applySparseVector1") {
-
-    //val progStaged = new ProgExp
-
-    lazy val len = 5
+    val len = 5
     val i = 2
-    val in = Tuple(vector1, len, i)
-    val out = 3
-    compareOutputWithSequential(_.applySparseVector, "applySparseVector1e", progStagedOnly)(in)
+    compareOutputWithSequential(_.applySparseVector, progStagedOnly)(Tuple(vector1, len, i))
   }
 
   test("applySparseVector2") {
-
-    //val progStaged = new ProgExp
-
-    lazy val len = 12
+    val len = 12
     val i = 12
-    val in = Tuple(vector2, len, i)
-    val out = 5
-    compareOutputWithSequential(_.applySparseVector, "applySparseVector2", progStagedOnly)(in)
+    compareOutputWithSequential(_.applySparseVector, progStagedOnly)(Tuple(vector2, len, i))
   }
 
   test("transpose") {
     val nItems = 2
     val (arrTrain, segsTrain) = progSeq.getNArrayWithSegmentsFromJaggedArray(progSeq.jArrTrain2x2)
-    val in = progSeq.Tuple(arrTrain, segsTrain, nItems)
 
-    compareOutputWithSequential(_.transpose, "transpose", progStagedOnly)(in)
+    compareOutputWithSequential(_.transpose, progStagedOnly)(Tuple(arrTrain, segsTrain, nItems))
   }
 
   // the below two tests are ignored because they can fail due to randomness
   // we could also just decrease the chance of this significantly
   ignore("random") {
-    val c = 1.0
-    val in = c
-
-    compareOutputWithSequential(_.funRandom.asRep[Any => Any], "random", progStagedOnly)(in)
+    compareOutputWithSequential(_.funRandom.asRep[Any => Any], progStagedOnly)(1.0)
   }
 
   ignore("randomArray") {
-    val c = 1000
-    val in = c
-
-    compareOutputWithSequential(_.funRandomArray, "randomArray", progStagedOnly)(in)
+    compareOutputWithSequential(_.funRandomArray, progStagedOnly)(1000)
   }
 
   test("ZipMapViewBoth") {
-    val c = 10
-    val in = c
-
-    compareOutputWithSequential(_.funZipMapViewBoth, "ZipMapViewBoth", progStagedOnly)(in)
+    compareOutputWithSequential(_.funZipMapViewBoth, progStagedOnly)(10)
   }
 
   test("ZipMapViewLeft") {
-    val c = 10
-    val in = c
-
-    compareOutputWithSequential(_.funZipMapViewLeft, "funZipMapViewLeft", progStagedOnly)(in)
+    compareOutputWithSequential(_.funZipMapViewLeft, progStagedOnly)(10)
   }
 
   test("ZipMapViewRight") {
-    val c = 10
-    val in = c
-
-    compareOutputWithSequential(_.funZipMapViewRight, "funZipMapViewRight", progStagedOnly)(in)
+    compareOutputWithSequential(_.funZipMapViewRight, progStagedOnly)(10)
   }
 
   test("collReplicateFilter") {
-    val in = Array(1, 2, 4)
-    compareOutputWithSequential(_.collReplicateFilter, "collReplicateFilter", progStagedOnly)(in)
+    compareOutputWithSequential(_.collReplicateFilter, progStagedOnly)(Array(1, 2, 4))
   }
 
 }

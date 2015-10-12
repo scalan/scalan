@@ -1,14 +1,12 @@
 package scalan.it
 
-import org.scalatest.Suite
-
 import scalan._
 import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
 import scalan.util.FileUtil.file
 
 // extracted so it can be used with different suite styles
-trait ItTestsUtil[Prog <: Scalan] extends TestsUtil { self: Suite =>
+trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
   override def testOutDir = "it-out"
 
   // can be overridden
@@ -41,25 +39,28 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil { self: Suite =>
   def assertFileContentCheck(name: String): Unit =
     FileUtil.read(file(prefix, name)) should be(FileUtil.read(file(prefix, name + ".check")))
 
-  def buildGraphs[A, B](f: Prog => Prog#Rep[A => B], functionName: String,
-                       compilers: Seq[CompilerWithConfig] = defaultCompilers,
-                       graphVizConfig: GraphVizConfig = defaultGraphVizConfig) =
+  def buildGraphs[A, B](f: Prog => Prog#Rep[A => B],
+                        compilers: Seq[CompilerWithConfig] = defaultCompilers,
+                        graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
+                        functionName: String = currentTestNameAsFileName) =
     defaultCompilers.foreach { cwc =>
       cwc.compiler.buildGraph(sourceDir(functionName), functionName,
         f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]], graphVizConfig)(cwc.config)
     }
 
-  def compileSource[A, B](f: Prog => Prog#Rep[A => B], functionName: String,
+  def compileSource[A, B](f: Prog => Prog#Rep[A => B],
                           compilers: Seq[CompilerWithConfig] = defaultCompilers,
-                          graphVizConfig: GraphVizConfig = defaultGraphVizConfig) =
+                          graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
+                          functionName: String = currentTestNameAsFileName) =
     defaultCompilers.map { cwc =>
       cwc.compiler.buildExecutable(sourceDir(functionName), functionName,
         f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]], graphVizConfig)(cwc.config)
     }
 
-  def getStagedOutput[A, B](f: Prog => Prog#Rep[A => B], functionName: String,
+  def getStagedOutput[A, B](f: Prog => Prog#Rep[A => B],
                             compilers: Seq[CompilerWithConfig] = defaultCompilers,
-                            graphVizConfig: GraphVizConfig = defaultGraphVizConfig)(inputs: A*) = {
+                            graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
+                            functionName: String = currentTestNameAsFileName)(inputs: A*) = {
     val compiled = compilers.map { cwc =>
       val fExp = f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]]
       val out = cwc.compiler.buildExecutable(sourceDir(functionName), functionName, fExp, graphVizConfig)(cwc.config)
@@ -73,17 +74,19 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil { self: Suite =>
     }
   }
 
-  def compareOutputWithSequential[A, B](f: Prog => Prog#Rep[A => B], functionName: String,
+  def compareOutputWithSequential[A, B](f: Prog => Prog#Rep[A => B],
                                         compilers: Seq[CompilerWithConfig] = defaultCompilers,
-                                        graphVizConfig: GraphVizConfig = defaultGraphVizConfig)(inputs: A*) = {
+                                        graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
+                                        functionName: String = currentTestNameAsFileName)(inputs: A*) = {
     val fSeq = f(progSeq).asInstanceOf[A => B]
     val inputsOutputs = inputs.map { x => (x, fSeq(x)) }
-    compareOutputWithExpected(f, functionName, compilers, graphVizConfig)(inputsOutputs: _*)
+    compareOutputWithExpected(f, compilers, graphVizConfig, functionName)(inputsOutputs: _*)
   }
 
-  def compareOutputWithExpected[A, B](f: Prog => Prog#Rep[A => B], functionName: String,
+  def compareOutputWithExpected[A, B](f: Prog => Prog#Rep[A => B],
                                       compilers: Seq[CompilerWithConfig] = defaultCompilers,
-                                      graphVizConfig: GraphVizConfig = defaultGraphVizConfig)(inputsOutputs: (A, B)*) = {
+                                      graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
+                                      functionName: String = currentTestNameAsFileName)(inputsOutputs: (A, B)*) = {
     val compiled = compilers.map { cwc =>
       val fExp = f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]]
       val out = cwc.compiler.buildExecutable(sourceDir(functionName), functionName, fExp, graphVizConfig)(cwc.config)

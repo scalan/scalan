@@ -7,18 +7,10 @@ import org.scalatest.Suite
 import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
 
-trait TestContexts extends Suite with TestsUtil {
-  private val currentTestName = new ThreadLocal[String]
-
-  override def withFixture(test: NoArgTest) = {
-    currentTestName.set(test.name)
-    val outcome = super.withFixture(test)
-    currentTestName.set(null)
-    outcome
-  }
+trait TestContexts extends TestsUtil {
 
   abstract class TestContext(testName: String) extends ScalanCtxExp {
-    def this() = this(defaultContextName)
+    def this() = this(currentTestNameAsFileName)
 
     override def isInvokeEnabled(d: Def[_], m: Method) = true
     override def shouldUnpack(e: Elem[_]) = true
@@ -27,15 +19,9 @@ trait TestContexts extends Suite with TestsUtil {
     def emit(ss: Exp[_]*): Unit = emit(testName, ss: _*)
   }
 
-  protected def defaultContextName: String = {
-    val testName = currentTestName.get()
-    assert(testName != null, "defaultContextName called outside a test")
-    testName.replaceAll("""[ /\\]""", "_")
-  }
-
   // TODO change API to use defaultCompilers here! See JNI_MsfItTests and others
   abstract class TestCompilerContext(testName: String) {
-    def this() = this(defaultContextName)
+    def this() = this(currentTestNameAsFileName)
 
     val compiler: Compiler[_ <: ScalanExp]
     import compiler._

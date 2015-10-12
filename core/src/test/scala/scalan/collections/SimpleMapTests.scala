@@ -68,4 +68,51 @@ trait SimpleMapProg extends Scalan {
 
 }
 
-abstract class MapItTests extends BaseItTests[SimpleMapProg](new ScalanCtxSeq with SimpleMapProg)
+abstract class MapItTests extends BaseItTests[SimpleMapProg](new ScalanCtxSeq with SimpleMapProg) {
+  test("mapPutContains") {
+    compareOutputWithSequential(_.mapPutContains)(Tuple2(314,3.14))
+  }
+  test("mapAsSet") {
+    compareOutputWithSequential(_.mapAsSet)(314)
+  }
+  test("unionMaps") {
+    val in = (Array((1, 1.1), (2, 2.2), (3, 3.3), (4, 4.4), (5, 5.5)), Array((0, 0.0), (2, 2.0), (4, 4.0), (6, 6.0)))
+    compareOutputWithSequential(_.unionMaps)(in)
+  }
+  test("differenceMaps") {
+    val in = (Array((1, 1.1), (2, 2.2), (3, 3.3), (4, 4.4), (5, 5.5)), Array((0, 0.0), (2, 2.0), (4, 4.0), (6, 6.0)))
+    compareOutputWithSequential(_.differenceMaps)(in)
+  }
+  test("iterateMap") {
+    val in = Array((1, 1.1), (2, 2.2), (3, 3.3))
+    compareOutputWithSequential(_.iterateMap)(in)
+  }
+  test("mapReduce") {
+    val in = Array(1, 2, 1, 1, 2, 3, 4, 1, 5, 4, 3, 2, 5, 2, 1)
+    compareOutputWithSequential(_.mapReduceByKey)(in)
+  }
+  test("joinMaps") {
+    val in = (Array((1, 1.1), (2, 2.2), (3, 3.3), (4, 4.4), (5, 5.5)), Array((0, 0.0), (2, 2.0), (4, 4.0), (6, 6.0)))
+    compareOutputWithSequential(_.joinMaps)(in)
+  }
+  test("compoundMapKey") {
+    val in = (Array((2, 1.0), (3, 2.0), (1, 3.0), (5, 4.0), (4, 5.0)), Array(1, 2, 3, 4, 5))
+    compareOutputWithSequential(_.compoundMapKey)(in)
+  }
+  test("reduceMaps") {
+    val in = (Array((1, 1.1), (2, 2.2), (3, 3.3), (4, 4.4), (5, 5.5)), Array((0, 0.0), (2, 2.0), (4, 4.0), (6, 6.0)))
+    compareOutputWithSequential(_.reduceMaps)(in)
+  }
+  test("groupByCount") {
+    val in = Array((2, 1), (3, 2), (2, 5), (1, 3), (5, 4), (1, 3), (4, 5), (2, 4))
+    compareOutputWithSequential(_.groupByCount)(in)
+  }
+  test("groupBySum") {
+    val in = Array((2, 1), (3, 2), (2, 5), (1, 3), (5, 4), (1, 3), (4, 5), (2, 4))
+    compareOutputWithSequential(_.groupBySum)(in)
+  }
+  test("compoundMapValue") {
+    val in = (Array("one", "two", "three"), Array((1, 1.1), (2, 2.2), (3, 3.3)))
+    compareOutputWithSequential(_.compoundMapValue)(in)
+  }
+}

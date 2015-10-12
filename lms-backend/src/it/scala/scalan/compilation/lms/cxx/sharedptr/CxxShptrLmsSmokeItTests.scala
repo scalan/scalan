@@ -29,45 +29,45 @@ class CxxShptrLmsSmokeItTests extends BaseItTests[CxxShptrTestProg](new ScalanCo
 
   test("testStringDuplicate") {
     val in = "word_"
-    compileSource(_.testStringDuplicate, "testStringDuplicate")
+    compileSource(_.testStringDuplicate)
   }
 
   test("testList") {
     val in = 2
-    compileSource(_.testList, "testList")
+    compileSource(_.testList)
   }
 
   test("arrayForeach") {
     val in = 2
-    compileSource(_.arrayForeach, "arrayForeach")
+    compileSource(_.arrayForeach)
     //    compareOutputWithSequential(progStaged)(progSeq.simpleArith, progStaged.simpleArith, "simpleArith", in)
   }
 
   test("test10simpleSum") {
     val in = 7
-    compileSource[Int, (Int | Unit, Unit | Int)](_.simpleSum, "simpleSum")
+    compileSource[Int, (Int | Unit, Unit | Int)](_.simpleSum)
     //    compareOutputWithSequential(progStaged)(progSeq.simpleSum, progStaged.simpleSum, "simpleSum", in)
   }
   test("test11optionOps") {
     val in = 7
-    compileSource(_.optionOps, "optionOps")
+    compileSource(_.optionOps)
     //    compareOutputWithSequential(progStaged)(progSeq.simpleOptionOps, progStaged.simpleOptionOps, "simpleOptionOps", in)
   }
   test("lambdaApply") {
     val x = 7
     val f = (_: Int) * 2
-    compileSource(_.lambdaApply, "lambdaApply")
+    compileSource(_.lambdaApply)
     //    compareOutputWithSequential(progStaged)(progSeq.lambdaApply, progStaged.lambdaApply, "lambdaApply", (x, f))
   }
   test("lambdaConst") {
     val in = 7
-    compileSource[Int, SOption[Int => Boolean]](_.lambdaConst, "lambdaConst")
+    compileSource[Int, SOption[Int => Boolean]](_.lambdaConst)
     //    getStagedOutput(progStaged)(progStaged.lambdaConst, "lambdaConst", in).isInstanceOf[Right[_, _]]
   }
 
   test("arrayUpdate") {
     val in = Array(0, 0)
-    compileSource(_.arrayUpdate, "arrayUpdate")
+    compileSource(_.arrayUpdate)
     //    compareOutputWithSequential(progStaged)(progSeq.arrayUpdate, progStaged.arrayUpdate, "arrayUpdate", in)
   }
 }

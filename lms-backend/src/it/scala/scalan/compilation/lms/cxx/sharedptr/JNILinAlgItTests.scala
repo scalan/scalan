@@ -36,7 +36,7 @@ class JNILinAlgItTests extends BaseItTests[JNILinAlgProg](???) {
 
   test("ddmvm_jni") {
     // doesn't compile yet (similar below)
-    // compileSource(_.ddmvm_jni, "ddmvm")
+    // compileSource(_.ddmvm_jni)
     prog.buildExecutable(dir, dir, "ddmvm", prog.scalan.ddmvm_jni, GraphVizConfig.default)
   }
   test("dsmvm_jni") {

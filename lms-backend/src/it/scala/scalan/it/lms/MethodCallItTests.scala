@@ -97,12 +97,12 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new ScalanCommun
 
   test("emptyIfTrue") {
     val in = (true, (5.0, 7.7))
-    compareOutputWithSequential(_.emptyIf, "emptyIfTrue")(in)
+    compareOutputWithSequential(_.emptyIf)(in)
   }
 
   test("emptyIfFalse") {
     val in = (false, (5.0, 7.7))
-    compareOutputWithSequential(_.emptyIf, "emptyIfFalse")(in)
+    compareOutputWithSequential(_.emptyIf)(in)
   }
 
 //  ignore("exceptionWithIfTrue") {
@@ -192,7 +192,7 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new ScalanCommun
   val matricesExp = new CommunityLmsCompilerScala(new ProgStaged)
 
   test("LMS Method Call") {
-    compareOutputWithExpected(_.arrayLength, "LMSMthodCall", compilers(matricesExp))(Array(2, 5, 6) -> 3)
+    compareOutputWithExpected(_.arrayLength, compilers(matricesExp))(Array(2, 5, 6) -> 3)
   }
 
   val replaceMethExp = new CommunityLmsCompilerScala(new ProgStaged) with CommunityMethodMappingDSL {
@@ -208,7 +208,7 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new ScalanCommun
     val sbtConfig = SbtConfig(scalaVersion = "2.11.7", mainPack = Some("scalan.imp"),
       extraClasses = Seq("scalan.imp.ArrayImp"), commands = Seq("package"))
     val conf = replaceMethExp.defaultCompilerConfig.withSbtConfig(sbtConfig)
-    compareOutputWithExpected(_.arrayLength, "ClassMapping", compilers(cwc(matricesExp)(conf)))(Array(5, 9, 2) -> 3)
+    compareOutputWithExpected(_.arrayLength, compilers(cwc(matricesExp)(conf)))(Array(5, 9, 2) -> 3)
   }
 
   val jarReplaceExp = new CommunityLmsCompilerScala(new ProgStaged) {
@@ -261,6 +261,6 @@ class MethodCallItTests extends BaseItTests[MethodCallTestProg](new ScalanCommun
     val sbtConfig = SbtConfig(scalaVersion = "2.11.7", mainPack = Some("scalan.imp"),
       extraClasses = Seq("scalan.imp.ThrowableImp", "scalan.it.lms.MappingMethodFromJar.TestMethod"), commands = Seq("package"))
     val conf = jarReplaceExp.defaultCompilerConfig.withSbtConfig(sbtConfig)
-    compareOutputWithExpected(_.message, "MappingMethodFromJar", compilers(cwc(jarReplaceExp)(conf)))("Original message" -> "Test Message")
+    compareOutputWithExpected(_.message, compilers(cwc(jarReplaceExp)(conf)))("Original message" -> "Test Message")
   }
 }

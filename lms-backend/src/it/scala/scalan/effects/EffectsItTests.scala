@@ -27,13 +27,11 @@ class EffectsItTests extends BaseItTests[EffectsProg](new ScalanCommunityDslSeq 
   val defaultCompilers = compilers(progInteractScala/*, progInteractUni*/)
 
   test("runInteract") {
-    val in = 10
-    val actual = getStagedOutput(_.runAppW, "runInteract")(in)
+    getStagedOutput(_.runAppW)(10)
   }
 
   test("runInteract2") {
-    val in = 10
-    val actual = getStagedOutput(_.runApp2W, "runInteract2")(in)
+    getStagedOutput(_.runApp2W)(10)
   }
 }
 
@@ -51,33 +49,30 @@ class StateItTests extends BaseItTests[State0Prog](???) {
 
   val defaultCompilers = compilers(progState0Scala, progState0Uni)
 
+  val in = Array(10.0, 20.0, 30.0)
+
   test("zipArrayWithIndex")  {
-    val in = Array(10.0, 20.0, 30.0)
-    val Seq(Seq(res, resU)) = getStagedOutput(_.zipArrayWithIndexW, "zipArrayWithIndex")(in)
+    val Seq(Seq(res, resU)) = getStagedOutput(_.zipArrayWithIndexW)(in)
 
     assert(res.sameElements(resU))
   }
 
   test("zipCollectionWithIndex")  {
-    //pending
-    val in = Array(10.0, 20.0, 30.0)
-    val Seq(Seq(res, resU)) = getStagedOutput(_.zipCollectionWithIndexW, "zipCollectionWithIndex")(in)
+    val Seq(Seq(res, resU)) = getStagedOutput(_.zipCollectionWithIndexW)(in)
 
     assert(res.sameElements(resU))
   }
 
   test("zipCollectionWithIndex2")  {
     //pending
-    val in = Array(10.0, 20.0, 30.0)
-    val Seq(Seq(res, resU)) = getStagedOutput(_.zipCollectionWithIndexW2, "zipCollectionWithIndex2")(in)
+    val Seq(Seq(res, resU)) = getStagedOutput(_.zipCollectionWithIndexW2)(in)
 
     assert(res.sameElements(resU))
   }
 
   test("zipCollectionWithIndex3")  {
     //pending
-    val in = Array(10.0, 20.0, 30.0)
-    val Seq(Seq(res, resU)) = getStagedOutput(_.zipCollectionWithIndexW3, "zipCollectionWithIndex3")(in)
+    val Seq(Seq(res, resU)) = getStagedOutput(_.zipCollectionWithIndexW3)(in)
 
     assert(res.sameElements(resU))
   }
@@ -90,7 +85,6 @@ class StateItTests extends BaseItTests[State0Prog](???) {
 
     val progStaged = new CommunityLmsCompilerScala(new ScalanStateF) with CoreBridge with EffectfulCompiler[ScalanStateF]
 
-    val in = Array(10.0, 20.0, 30.0)
     // TODO move into a separate ScalanStateFItTests?
     val res = getStagedOutput(progStaged)((_: ScalanStateF).zipCollectionWithIndexW3, "zipCollectionWithIndex3_Free", in)
   }
@@ -119,8 +113,8 @@ class IfBranchesItTests extends BaseItTests[IfBranchesProg](new ScalanCommunityD
   test("ifBranches")  {
     //pending
     val in = "abc"
-    //val actual = getStagedOutput(_.t1, "t1")(in)
-    val actual2 = getStagedOutput(_.t2, "t2")(in)
+    //val actual = getStagedOutput(_.t1)(in)
+    val actual2 = getStagedOutput(_.t2)(in)
   }
 }
 
@@ -137,7 +131,7 @@ class CrossDomainItTests extends BaseItTests[CrossDomainProg](new ScalanCommunit
   // TODO: Slow test
   ignore("runCrossDomain")  {
     val in = 10
-    val actual = getStagedOutput(_.runAppW, "runCrossDomain")(in)
+    val actual = getStagedOutput(_.runAppW)(in)
   }
 }
 

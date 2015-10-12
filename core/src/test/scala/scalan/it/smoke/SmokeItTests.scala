@@ -291,6 +291,58 @@ trait SmokeProg extends ScalanDsl {
  *  Tests that very simple examples are run correctly
  */
 abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanCtxSeq with SmokeProg) {
+  test("simpleArith") {
+    compareOutputWithSequential(_.simpleArith)(2)
+  }
+  test("simpleArrGet") {
+    val in = (Array(2,3), 1)
+    compareOutputWithSequential(_.simpleArrGet)(in)
+  }
+  test("simpleMap") {
+    compareOutputWithSequential(_.simpleMap)(Array(2,3))
+  }
+  test("simpleMapNested") {
+    val in = (Array(Array(2.0,3.0), Array(3.0,4.0)), 1)
+    compareOutputWithSequential(_.simpleMapNested)(in)
+  }
+  test("simpleZip") {
+    compareOutputWithSequential(_.simpleZip)(Array(2,3))
+  }
+  test("simpleZipWith") {
+    compareOutputWithSequential(_.simpleZipWith)(Array(2,3))
+  }
+  test("simpleReduce") {
+    compareOutputWithSequential(_.simpleReduce)(Array(2,3))
+  }
+  test("mvMul") {
+    val in = (Array(Array(2,3), Array(4,5)), Array(6,7))
+    compareOutputWithSequential(_.mvMul)(in)
+  }
+  test("simpleIf") {
+    val in = (Array(2.0,3.0), 4.0)
+    compareOutputWithSequential(_.simpleIf)(in)
+  }
+  test("optionOps") {
+    compareOutputWithSequential(_.optionOps)(7)
+  }
+  test("logicalOps") {
+    val in = (true, false)
+    compareOutputWithSequential(_.logicalOps)(in)
+  }
+  test("filterCompound") {
+    val in = Array((11, (12, 13)), (21, (22, 23)), (31, (32, 33)))
+    compareOutputWithSequential(_.filterCompound)(in)
+  }
+  test("reuseTest") {
+    compareOutputWithSequential(_.reuseTest)(5)
+  }
+  test("arrayEmpty") {
+    compareOutputWithSequential(_.arrayEmpty)(0)
+  }
+  test("arrayReplicate") {
+    val in = (3, 3.14)
+    compareOutputWithSequential(_.arrayReplicate)(in)
+  }
 
 //  val progStaged: Prog with ScalanCtxExp
 

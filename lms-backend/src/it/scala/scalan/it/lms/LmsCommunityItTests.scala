@@ -17,48 +17,30 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
   val defaultCompilers = compilers(progStaged, cwc(progStagedU)(cC))
   val progStagedOnly = compilers(progStaged)
 
-  test ("convertPairCollectionSOA")  {
-    val in = Array(Array((1,2.0),(2,3.0)), Array((3,4.0), (5,6.0)))
-    compareOutputWithSequential(_.convertPairCollectionSOA, "convertPairCollectionSOA")(in)
-  }
-
-  test("expBaseArrays") {
-    val in = Array(Array(2, 3), Array(4, 5))
-    compareOutputWithSequential(_.expBaseArrays, "expBaseArrays")(in)
-  }
-
   test("seqsEmpty") {
-    val in = -11
-    compareOutputWithSequential(_.seqsEmpty, "seqsEmpty", progStagedOnly)(in)
+    compareOutputWithSequential(_.seqsEmpty, progStagedOnly)(-11)
   }
 
   test("seqsSingle") {
-    val in = -11
-    compareOutputWithSequential(_.seqsSingle, "seqsSingle", progStagedOnly)(in)
+    compareOutputWithSequential(_.seqsSingle, progStagedOnly)(-11)
   }
 
   test("seqsSimpleMap") {
-    val in = Seq(2, 3)
-    compareOutputWithSequential(_.seqsSimpleMap, "seqsSimpleMap", progStagedOnly)(in)
+    compareOutputWithSequential(_.seqsSimpleMap, progStagedOnly)(Seq(2, 3))
   }
 
   test("seqsArrayMap") {
-    val in = Array(Array(2, 3))
-    compareOutputWithSequential(_.seqsArrayMap, "seqsArrayMap", progStagedOnly)(in)
+    compareOutputWithSequential(_.seqsArrayMap, progStagedOnly)(Array(Array(2, 3)))
   }
 
   test("seqsFromArray") {
-    val in = Array(2, 3)
-    compareOutputWithSequential(_.seqsFromArray, "seqsFromArray", progStagedOnly)(in)
+    compareOutputWithSequential(_.seqsFromArray, progStagedOnly)(Array(2, 3))
   }
-  test("test23unionMultiMaps") {
+  test("unionMultiMaps") {
     val in = (Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5)), Array((0, 0.0), (2, 2.0), (1, 4.0), (1, 6.0)))
-    compareOutputWithSequential(_.unionMultiMaps, "unionMultiMaps", progStagedOnly)(in)
-    //TODO: lack of maps support in LMS C++ backend
-    //    compareOutputWithSequential(progStagedU, progSeq)(_.unionMultiMaps, "unionMultiMaps")(in)
+    compareOutputWithSequential(_.unionMultiMaps, progStagedOnly)(in)
   }
-  test("test38ifSpecialize") {
-    val in = Array(1,2,3)
-    compareOutputWithSequential(_.ifSpecialize, "ifSpecialize", progStagedOnly)(in)
+  test("ifSpecialize") {
+    compareOutputWithSequential(_.ifSpecialize, progStagedOnly)(Array(1, 2, 3))
   }
 }

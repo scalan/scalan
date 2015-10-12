@@ -3,7 +3,6 @@ package scalan.it.smoke
 import scalan._
 import scalan.it.BaseItTests
 
-//import scalan.community._
 import scalan.collections._
 
 trait CommunitySmokeProg extends ScalanCommunityDsl with CollectionExamples {
@@ -101,9 +100,17 @@ abstract class CommunitySmokeItTests extends BaseItTests[CommunitySmokeProg](new
 
   class ProgCommunityExp extends ScalanCommunityDslExp with JNIExtractorOpsExp with CommunitySmokeProg
 
-// TODO
-//  override val progStaged: ProgCommunity with PArraysDslExp with ScalanCommunityExp with Compiler
+  test ("convertPairCollectionSOA")  {
+    val in = Array(Array((1,2.0),(2,3.0)), Array((3,4.0), (5,6.0)))
+    compareOutputWithSequential(_.convertPairCollectionSOA)(in)
+  }
 
+  test("expBaseArrays") {
+    val in = Array(Array(2, 3), Array(4, 5))
+    compareOutputWithSequential(_.expBaseArrays)(in)
+  }
+
+  // TODO
   //  test("test00simpleConst") {
 //    val (in, out) = Array(0) -> Array(1)
 //    progSeq.simpleConst(progSeq.PArray.fromArray(in)).arr should be(out)

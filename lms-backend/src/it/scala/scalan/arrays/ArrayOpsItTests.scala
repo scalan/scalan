@@ -25,8 +25,7 @@ class ArrayOpsItTests extends BaseItTests[ArrayOpsProg](new ArrayOpsProg with Sc
 
     val vals: Array[Int] = Array(1, 4, 9, 1024, 0, -1024)
     val ins = vals map {v => (arr,v)}
-    compareOutputWithSequential(_.arrayBinarySearch, "arrayBinarySearch")(ins: _*)
-    compareOutputWithSequential(_.arrayBinarySearch, "arrayBinarySearch")(ins: _*)
+    compareOutputWithSequential(_.arrayBinarySearch)(ins: _*)
   }
 
 }
