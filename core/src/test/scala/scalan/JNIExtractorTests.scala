@@ -11,7 +11,7 @@ import scalan.util.FileUtil
 /**
  * Created by zotov on 1/17/15.
  */
-trait FirstProg { self: Scalan with JNIExtractorOps with ArrayOps =>
+trait JNIExamples { self: Scalan with JNIExtractorOps with ArrayOps =>
 
   lazy val extractDouble = fun { (in: Rep[JNIType[Double]]) =>
     JNI_Extract(in)
@@ -58,14 +58,9 @@ trait FirstProg { self: Scalan with JNIExtractorOps with ArrayOps =>
     JNI_Pack(res)
   }
 
-}
-
-trait PackProg extends FirstProg {
-  self: Scalan with JNIExtractorOps with ArrayOps =>
-
-//  lazy val packDouble = fun { (in: Rep[JNIType[Double]]) =>
-//    JNI_Extract(in)
-//  }
+  //  lazy val packDouble = fun { (in: Rep[JNIType[Double]]) =>
+  //    JNI_Extract(in)
+  //  }
 
   lazy val packArray = fun { (in: Rep[JNIType[Array[Double]]]) =>
     val v = JNI_Extract(in)
@@ -80,10 +75,10 @@ trait PackProg extends FirstProg {
     JNI_Pack(in)
   }
 
-//  lazy val extractAndPack = fun {in: Rep[JNIType[(Int,Array[Int])]] =>
-//  lazy val extractAndPack = fun {in: Rep[JNIType[(Byte,(Int,Double))]] =>
-//  lazy val extractAndPack = fun {in: Rep[JNIType[Array[Double]]] =>
-//  lazy val extractAndPack = fun {in: Rep[JNIType[(Int,Double)]] =>
+  //  lazy val extractAndPack = fun {in: Rep[JNIType[(Int,Array[Int])]] =>
+  //  lazy val extractAndPack = fun {in: Rep[JNIType[(Byte,(Int,Double))]] =>
+  //  lazy val extractAndPack = fun {in: Rep[JNIType[Array[Double]]] =>
+  //  lazy val extractAndPack = fun {in: Rep[JNIType[(Int,Double)]] =>
   lazy val extractAndPack = fun {in: Rep[JNIType[( Array[( Array[Int], (Array[Double],Int))], Array[Double])]] =>
     JNI_Pack( JNI_Extract(in) )
   }
@@ -100,7 +95,7 @@ class JNIExtractorTests extends BaseCtxTests {
   class Ctx extends TestContext with JNIExtractorOpsExp
 
   test("simple") {
-    val ctx = new Ctx with FirstProg
+    val ctx = new Ctx with JNIExamples
 
     ctx.emit("extractDouble", ctx.extractDouble)
     ctx.emit("extractArray", ctx.extractArray)
@@ -114,7 +109,7 @@ class JNIExtractorTests extends BaseCtxTests {
   }
 
   test("simplePack") {
-    val ctx = new Ctx with PackProg
+    val ctx = new Ctx with JNIExamples
 
     ctx.emit("packArray", ctx.packArray)
   }

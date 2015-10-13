@@ -6,7 +6,7 @@ import scalan._
 import scalan.monads._
 
 trait Interactions { self: InteractionsDsl =>
-  val OperM: Monad[Oper]
+  lazy val OperM: Monad[Oper] = Monad[Oper]
   import OperM.toMonadic
 
   type RepInteract[A] = Rep[Interact[A]]

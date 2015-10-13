@@ -5,7 +5,7 @@ import scalan._
 import scalan.monads._
 
 trait Authentications { self: AuthenticationsDsl =>
-  val OperM: Monad[Oper]
+  lazy val OperM: Monad[Oper] = Monad[Oper]
   import OperM.toMonadic
 
   type RepAuth[A] = Rep[Auth[A]]

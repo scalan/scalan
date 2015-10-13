@@ -1,12 +1,13 @@
 package scalan
 
+import org.scalactic.TripleEquals
 import org.scalatest._
 import org.scalatest.words.ResultOfStringPassedToVerb
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
 import scalan.util.FileUtil
 
-trait TestsUtil extends Matchers with Inside {
+trait TestsUtil extends Suite with Matchers with Inside with TripleEquals {
   def testOutDir = "test-out"
 
   def testSuffixes = Seq("Suite", "Tests", "It", "_")
@@ -21,6 +22,24 @@ trait TestsUtil extends Matchers with Inside {
   def isCI = sys.env.get("CI").flatMap(toBoolean).getOrElse(false)
   private def toBoolean(s: String): Option[Boolean] =
     scala.util.Try(s.toBoolean).toOption
+
+  private val _currentTestName = new ThreadLocal[String]
+
+  override def withFixture(test: NoArgTest) = {
+    _currentTestName.set(test.name)
+    val outcome = super.withFixture(test)
+    _currentTestName.set(null)
+    outcome
+  }
+
+  protected def currentTestName: String = {
+    val testName = _currentTestName.get()
+    assert(testName != null, "currentTestName called outside a test")
+    testName
+  }
+
+  protected def currentTestNameAsFileName: String =
+    currentTestName.replaceAll("""[ /\\.:;]""", "_").replaceAll("""['"]""", "")
 }
 
 /**

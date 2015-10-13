@@ -7,6 +7,8 @@ trait PointerOps { self: Scalan =>
   class Scalar[A: Elem]
 
   def nullPtr[A: Elem]: Rep[Pointer[A]]
+  def scalarPtr[A: Elem](source: Rep[A]): Rep[Pointer[A]]
+  def arrayPtr[A: Elem](xs: Rep[Array[A]]): Rep[Pointer[A]]
 
   case class PointerElem[A: Elem, To <: Pointer[A]](eItem: Elem[A]) extends EntityElem[To] {
     def parent: Option[Elem[_]] = None

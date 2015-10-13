@@ -1,52 +1,46 @@
 package scalan.it.lms
 
-import scalan.{JNIExtractorOpsExp, CommunityMethodMappingDSL, ScalanCommunityDslExp, ScalanCommunityDslSeq}
+import scalan.CommunityMethodMappingDSL
 import scalan.compilation.lms._
-import scalan.compilation.lms.scalac.CommunityLmsCompilerScala
-import scalan.compilation.lms.uni.{LmsBackendUni, LmsCompilerUni}
+import scalan.compilation.lms.scalac.{CommunityLmsCompilerScala, LmsCompilerScalaConfig}
+import scalan.compilation.lms.source2bin.SbtConfig
+import scalan.compilation.lms.uni.LmsCompilerUni
 import scalan.it.smoke.CommunitySmokeItTests
 
 class LmsCommunityItTests extends CommunitySmokeItTests {
 
   val progStaged = new CommunityLmsCompilerScala(new ProgCommunityExp) with CommunityBridge with CommunityMethodMappingDSL
   val progStagedU = new LmsCompilerUni(new ProgCommunityExp) with CommunityBridge with CommunityMethodMappingDSL
-  val progSeq = new ProgCommunity with ScalanCommunityDslSeq
 
-  val cC = progStagedU.defaultCompilerConfig.copy(scalaVersion = Some("2.11.2"))
+  val cC = LmsCompilerScalaConfig().withSbtConfig(SbtConfig(scalaVersion = "2.11.2"))
 
-  test("listRangeFrom0") {
-    val in = 3
-    compareOutputWithSequential(progStaged, progSeq)(_.listRangeFrom0, "listRangeFrom0", in)
-  }
-
-  test("expBaseArrays") {
-    val in = Array(Array(2, 3), Array(4, 5))
-    compareOutputWithSequential(progStaged, progSeq)(_.expBaseArrays, "expBaseArrays", in)
-    compareOutputWithSequential(progStagedU, progSeq)(_.expBaseArrays, "expBaseArrays", in, cC)
-  }
+  val defaultCompilers = compilers(progStaged, cwc(progStagedU)(cC))
+  val progStagedOnly = compilers(progStaged)
 
   test("seqsEmpty") {
-    val in = -11
-    compareOutputWithSequential(progStaged, progSeq)(_.seqsEmpty, "seqsEmpty", in)
+    compareOutputWithSequential(_.seqsEmpty, progStagedOnly)(-11)
   }
 
   test("seqsSingle") {
-    val in = -11
-    compareOutputWithSequential(progStaged, progSeq)(_.seqsSingle, "seqsSingle", in)
+    compareOutputWithSequential(_.seqsSingle, progStagedOnly)(-11)
   }
 
   test("seqsSimpleMap") {
-    val in = Seq(2, 3)
-    compareOutputWithSequential(progStaged, progSeq)(_.seqsSimpleMap, "seqsSimpleMap", in)
+    compareOutputWithSequential(_.seqsSimpleMap, progStagedOnly)(Seq(2, 3))
   }
 
   test("seqsArrayMap") {
-    val in = Array(Array(2, 3))
-    compareOutputWithSequential(progStaged, progSeq)(_.seqsArrayMap, "seqsArrayMap", in)
+    compareOutputWithSequential(_.seqsArrayMap, progStagedOnly)(Array(Array(2, 3)))
   }
 
   test("seqsFromArray") {
-    val in = Array(2, 3)
-    compareOutputWithSequential(progStaged, progSeq)(_.seqsFromArray, "seqsFromArray", in)
+    compareOutputWithSequential(_.seqsFromArray, progStagedOnly)(Array(2, 3))
+  }
+  test("unionMultiMaps") {
+    val in = (Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5)), Array((0, 0.0), (2, 2.0), (1, 4.0), (1, 6.0)))
+    compareOutputWithSequential(_.unionMultiMaps, progStagedOnly)(in)
+  }
+  test("ifSpecialize") {
+    compareOutputWithSequential(_.ifSpecialize, progStagedOnly)(Array(1, 2, 3))
   }
 }

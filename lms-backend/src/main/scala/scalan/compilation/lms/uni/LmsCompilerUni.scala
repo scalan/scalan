@@ -1,6 +1,7 @@
 package scalan.compilation.lms.uni
 
 import java.io.File
+import java.net.URL
 
 import scalan.compilation.lms._
 import scalan.compilation.lms.common.JNILmsOpsExp
@@ -60,8 +61,8 @@ class LmsCompilerUni[+ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsEx
 
   val runtimeTargetDir = Base.config.getProperty("runtime.target")
 
-  override def getClassLoader(compilerOutput: CompilerOutput[_, _]): ClassLoader =
-    new NativeCopyLoader(Seq.empty, Seq(new File(runtimeTargetDir)), Array(compilerOutput.custom.jarUrl), getClass.getClassLoader)
+  override def getClassLoader(jarUrls: Array[URL]): ClassLoader =
+    new NativeCopyLoader(Seq.empty, Seq(new File(runtimeTargetDir)), jarUrls, getClass.getClassLoader)
 
   override def emitSource[A, B](sourcesDir: File, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B]) = {
     (elemToManifest(eInput), elemToManifest(eOutput)) match {
