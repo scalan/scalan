@@ -25,19 +25,21 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
 
   implicit def seqElement[A:Elem]: Elem[Seq[A]]
 
-  implicit def castSSeqElement[A](elem: Elem[SSeq[A]]): SSeqElem[A, SSeq[A]] = elem.asInstanceOf[SSeqElem[A, SSeq[A]]]
+  implicit def castSSeqElement[A](elem: Elem[SSeq[A]]): SSeqElem[A, SSeq[A]] =
+    elem.asInstanceOf[SSeqElem[A, SSeq[A]]]
 
-  implicit lazy val containerSeq: Cont[Seq] = new Container[Seq] {
+  implicit lazy val containerSeq: Container[Seq] = new Container[Seq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Seq[A]]
     def lift[A](implicit evA: Elem[A]) = element[Seq[A]]
   }
 
-  implicit lazy val containerSSeq: Cont[SSeq] with Functor[SSeq] = new Container[SSeq] with Functor[SSeq] {
+  implicit lazy val containerSSeq: Container[SSeq] with Functor[SSeq] = new Container[SSeq] with Functor[SSeq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SSeq[A]]
     def lift[A](implicit evA: Elem[A]) = element[SSeq[A]]
     def map[A:Elem,B:Elem](xs: Rep[SSeq[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))
   }
-  case class SSeqIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SSeq](iso) {
+
+  case class SSeqIso[A, B](iso: Iso[A, B]) extends Iso1[A, B, SSeq](iso) {
     def from(x: Rep[SSeq[B]]) = x.map(iso.fromFun)
     def to(x: Rep[SSeq[A]]) = x.map(iso.toFun)
   }
@@ -65,9 +67,11 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
       tryConvert(element[SSeq[A]], this, x, conv)
     }
 
-    def convertSSeq(x : Rep[SSeq[A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: SSeqElem[_, _] => true; case _ => false })
-      x.asRep[To]
+    def convertSSeq(x: Rep[SSeq[A]]): Rep[To] = {
+      x.selfType1 match {
+        case _: SSeqElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have SSeqElem[_, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }
@@ -242,7 +246,7 @@ trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
 
     // override proxy if we deal with TypeWrapper
   //override def proxySeq[A:Elem](p: Rep[Seq[A]]): SSeq[A] =
-  //  proxyOpsEx[Seq[A],SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
+  //  proxyOpsEx[Seq[A], SSeq[A], SeqSSeqImpl[A]](p, bt => SeqSSeqImpl(bt))
 
   implicit def seqElement[A:Elem]: Elem[Seq[A]] =
     new SeqBaseElemEx1[A, SSeq[A], Seq](element[SSeq[A]])(

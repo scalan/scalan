@@ -39,9 +39,11 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
       tryConvert(element[MMultiMap[K, V]], this, x, conv)
     }
 
-    def convertMMultiMap(x : Rep[MMultiMap[K, V]]): Rep[To] = {
-      assert(x.selfType1 match { case _: MMultiMapElem[_, _, _] => true; case _ => false })
-      x.asRep[To]
+    def convertMMultiMap(x: Rep[MMultiMap[K, V]]): Rep[To] = {
+      x.selfType1 match {
+        case _: MMultiMapElem[_, _, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have MMultiMapElem[_, _, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }
@@ -75,7 +77,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     }
 
     override def convertMMultiMap(x: Rep[MMultiMap[K, V]]) = HashMMultiMap(x.map)
-    override def getDefaultRep = HashMMultiMap(element[MMap[K,ArrayBuffer[V]]].defaultRepValue)
+    override def getDefaultRep = HashMMultiMap(element[MMap[K, ArrayBuffer[V]]].defaultRepValue)
     override lazy val tag = {
       implicit val tagK = elemKey.tag
       implicit val tagV = elemValue.tag
@@ -84,14 +86,14 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   }
 
   // state representation type
-  type HashMMultiMapData[K, V] = MMap[K,ArrayBuffer[V]]
+  type HashMMultiMapData[K, V] = MMap[K, ArrayBuffer[V]]
 
   // 3) Iso for concrete class
   class HashMMultiMapIso[K, V](implicit elemKey: Elem[K], elemValue: Elem[V])
     extends Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
     override def from(p: Rep[HashMMultiMap[K, V]]) =
       p.map
-    override def to(p: Rep[MMap[K,ArrayBuffer[V]]]) = {
+    override def to(p: Rep[MMap[K, ArrayBuffer[V]]]) = {
       val map = p
       HashMMultiMap(map)
     }
@@ -101,7 +103,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   abstract class HashMMultiMapCompanionAbs extends CompanionBase[HashMMultiMapCompanionAbs] with HashMMultiMapCompanion {
     override def toString = "HashMMultiMap"
 
-    def apply[K, V](map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
+    def apply[K, V](map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
       mkHashMMultiMap(map)
   }
   object HashMMultiMapMatcher {
@@ -129,8 +131,8 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     cachedIso[HashMMultiMapIso[K, V]](elemKey, elemValue)
 
   // 6) smart constructor and deconstructor
-  def mkHashMMultiMap[K, V](map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]]
-  def unmkHashMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): Option[(Rep[MMap[K,ArrayBuffer[V]]])]
+  def mkHashMMultiMap[K, V](map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]]
+  def unmkHashMMultiMap[K, V](p: Rep[MMultiMap[K, V]]): Option[(Rep[MMap[K, ArrayBuffer[V]]])]
 
   registerModule(scalan.meta.ScalanCodegen.loadModule(MultiMaps_Module.dump))
 }
@@ -143,7 +145,7 @@ trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
   }
 
   case class SeqHashMMultiMap[K, V]
-      (override val map: Rep[MMap[K,ArrayBuffer[V]]])
+      (override val map: Rep[MMap[K, ArrayBuffer[V]]])
       (implicit elemKey: Elem[K], elemValue: Elem[V])
     extends HashMMultiMap[K, V](map)
         with UserTypeSeq[HashMMultiMap[K, V]] {
@@ -154,7 +156,7 @@ trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
   }
 
   def mkHashMMultiMap[K, V]
-      (map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
+      (map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
       new SeqHashMMultiMap[K, V](map)
   def unmkHashMMultiMap[K, V](p: Rep[MMultiMap[K, V]]) = p match {
     case p: HashMMultiMap[K, V] @unchecked =>
@@ -172,7 +174,7 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
   }
 
   case class ExpHashMMultiMap[K, V]
-      (override val map: Rep[MMap[K,ArrayBuffer[V]]])
+      (override val map: Rep[MMap[K, ArrayBuffer[V]]])
       (implicit elemKey: Elem[K], elemValue: Elem[V])
     extends HashMMultiMap[K, V](map) with UserTypeDef[HashMMultiMap[K, V]] {
     lazy val selfType = element[HashMMultiMap[K, V]]
@@ -186,12 +188,12 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
 
   object HashMMultiMapMethods {
     object union {
-      def unapply(d: Def[_]): Option[(Rep[HashMMultiMap[K, V]], Rep[MMultiMap[K,V]]) forSome {type K; type V}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[HashMMultiMap[K, V]], Rep[MMultiMap[K, V]]) forSome {type K; type V}] = d match {
         case MethodCall(receiver, method, Seq(that, _*), _) if receiver.elem.isInstanceOf[HashMMultiMapElem[_, _]] && method.getName == "union" =>
-          Some((receiver, that)).asInstanceOf[Option[(Rep[HashMMultiMap[K, V]], Rep[MMultiMap[K,V]]) forSome {type K; type V}]]
+          Some((receiver, that)).asInstanceOf[Option[(Rep[HashMMultiMap[K, V]], Rep[MMultiMap[K, V]]) forSome {type K; type V}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[HashMMultiMap[K, V]], Rep[MMultiMap[K,V]]) forSome {type K; type V}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[HashMMultiMap[K, V]], Rep[MMultiMap[K, V]]) forSome {type K; type V}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -369,7 +371,7 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
   }
 
   def mkHashMMultiMap[K, V]
-    (map: Rep[MMap[K,ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
+    (map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
     new ExpHashMMultiMap[K, V](map)
   def unmkHashMMultiMap[K, V](p: Rep[MMultiMap[K, V]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: HashMMultiMapElem[K, V] @unchecked =>
@@ -392,12 +394,12 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
     }
 
     object union {
-      def unapply(d: Def[_]): Option[(Rep[MMultiMap[K, V]], Rep[MMultiMap[K,V]]) forSome {type K; type V}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[MMultiMap[K, V]], Rep[MMultiMap[K, V]]) forSome {type K; type V}] = d match {
         case MethodCall(receiver, method, Seq(that, _*), _) if receiver.elem.isInstanceOf[MMultiMapElem[_, _, _]] && method.getName == "union" =>
-          Some((receiver, that)).asInstanceOf[Option[(Rep[MMultiMap[K, V]], Rep[MMultiMap[K,V]]) forSome {type K; type V}]]
+          Some((receiver, that)).asInstanceOf[Option[(Rep[MMultiMap[K, V]], Rep[MMultiMap[K, V]]) forSome {type K; type V}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[MMultiMap[K, V]], Rep[MMultiMap[K,V]]) forSome {type K; type V}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[MMultiMap[K, V]], Rep[MMultiMap[K, V]]) forSome {type K; type V}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -586,12 +588,12 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
     }
 
     object fromMap {
-      def unapply(d: Def[_]): Option[Rep[MMap[K,ArrayBuffer[V]]] forSome {type K; type V}] = d match {
+      def unapply(d: Def[_]): Option[Rep[MMap[K, ArrayBuffer[V]]] forSome {type K; type V}] = d match {
         case MethodCall(receiver, method, Seq(map, _*), _) if receiver.elem == MMultiMapCompanionElem && method.getName == "fromMap" =>
-          Some(map).asInstanceOf[Option[Rep[MMap[K,ArrayBuffer[V]]] forSome {type K; type V}]]
+          Some(map).asInstanceOf[Option[Rep[MMap[K, ArrayBuffer[V]]] forSome {type K; type V}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[Rep[MMap[K,ArrayBuffer[V]]] forSome {type K; type V}] = exp match {
+      def unapply(exp: Exp[_]): Option[Rep[MMap[K, ArrayBuffer[V]]] forSome {type K; type V}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

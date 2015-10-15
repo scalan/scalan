@@ -41,9 +41,11 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
       tryConvert(element[Vertex[V, E]], this, x, conv)
     }
 
-    def convertVertex(x : Rep[Vertex[V, E]]): Rep[To] = {
-      assert(x.selfType1 match { case _: VertexElem[_, _, _] => true; case _ => false })
-      x.asRep[To]
+    def convertVertex(x: Rep[Vertex[V, E]]): Rep[To] = {
+      x.selfType1 match {
+        case _: VertexElem[_, _, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have VertexElem[_, _, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }
@@ -77,7 +79,7 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     }
 
     override def convertVertex(x: Rep[Vertex[V, E]]) = SVertex(x.id, x.graph)
-    override def getDefaultRep = SVertex(0, element[Graph[V,E]].defaultRepValue)
+    override def getDefaultRep = SVertex(0, element[Graph[V, E]].defaultRepValue)
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -86,14 +88,14 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   }
 
   // state representation type
-  type SVertexData[V, E] = (Int, Graph[V,E])
+  type SVertexData[V, E] = (Int, Graph[V, E])
 
   // 3) Iso for concrete class
   class SVertexIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[SVertexData[V, E], SVertex[V, E]]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Graph[V,E]]])) {
+    extends Iso[SVertexData[V, E], SVertex[V, E]]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Graph[V, E]]])) {
     override def from(p: Rep[SVertex[V, E]]) =
       (p.id, p.graph)
-    override def to(p: Rep[(Int, Graph[V,E])]) = {
+    override def to(p: Rep[(Int, Graph[V, E])]) = {
       val Pair(id, graph) = p
       SVertex(id, graph)
     }
@@ -104,7 +106,7 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     override def toString = "SVertex"
     def apply[V, E](p: Rep[SVertexData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       isoSVertex(eV, eE).to(p)
-    def apply[V, E](id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
+    def apply[V, E](id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       mkSVertex(id, graph)
   }
   object SVertexMatcher {
@@ -132,8 +134,8 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     cachedIso[SVertexIso[V, E]](eV, eE)
 
   // 6) smart constructor and deconstructor
-  def mkSVertex[V, E](id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]
-  def unmkSVertex[V, E](p: Rep[Vertex[V, E]]): Option[(Rep[Int], Rep[Graph[V,E]])]
+  def mkSVertex[V, E](id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]
+  def unmkSVertex[V, E](p: Rep[Vertex[V, E]]): Option[(Rep[Int], Rep[Graph[V, E]])]
 
   registerModule(scalan.meta.ScalanCodegen.loadModule(Vertices_Module.dump))
 }
@@ -146,7 +148,7 @@ trait VerticesSeq extends VerticesDsl with scalan.ScalanSeq {
   }
 
   case class SeqSVertex[V, E]
-      (override val id: Rep[Int], override val graph: PG[V,E])
+      (override val id: Rep[Int], override val graph: PG[V, E])
       (implicit eV: Elem[V], eE: Elem[E])
     extends SVertex[V, E](id, graph)
         with UserTypeSeq[SVertex[V, E]] {
@@ -157,7 +159,7 @@ trait VerticesSeq extends VerticesDsl with scalan.ScalanSeq {
   }
 
   def mkSVertex[V, E]
-      (id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
+      (id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       new SeqSVertex[V, E](id, graph)
   def unmkSVertex[V, E](p: Rep[Vertex[V, E]]) = p match {
     case p: SVertex[V, E] @unchecked =>
@@ -175,7 +177,7 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   }
 
   case class ExpSVertex[V, E]
-      (override val id: Rep[Int], override val graph: PG[V,E])
+      (override val id: Rep[Int], override val graph: PG[V, E])
       (implicit eV: Elem[V], eE: Elem[E])
     extends SVertex[V, E](id, graph) with UserTypeDef[SVertex[V, E]] {
     lazy val selfType = element[SVertex[V, E]]
@@ -194,7 +196,7 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   }
 
   def mkSVertex[V, E]
-    (id: Rep[Int], graph: PG[V,E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
+    (id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
     new ExpSVertex[V, E](id, graph)
   def unmkSVertex[V, E](p: Rep[Vertex[V, E]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SVertexElem[V, E] @unchecked =>
@@ -265,12 +267,12 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
     }
 
     object hasEdgeTo {
-      def unapply(d: Def[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V,E]]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V, E]]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[VertexElem[_, _, _]] && method.getName == "hasEdgeTo" =>
-          Some((receiver, v)).asInstanceOf[Option[(Rep[Vertex[V, E]], Rep[Vertex[V,E]]) forSome {type V; type E}]]
+          Some((receiver, v)).asInstanceOf[Option[(Rep[Vertex[V, E]], Rep[Vertex[V, E]]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V,E]]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V, E]]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -301,24 +303,24 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
     }
 
     object commonNbrs {
-      def unapply(d: Def[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V,E]]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V, E]]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[VertexElem[_, _, _]] && method.getName == "commonNbrs" =>
-          Some((receiver, v)).asInstanceOf[Option[(Rep[Vertex[V, E]], Rep[Vertex[V,E]]) forSome {type V; type E}]]
+          Some((receiver, v)).asInstanceOf[Option[(Rep[Vertex[V, E]], Rep[Vertex[V, E]]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V,E]]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V, E]]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object commonNbrsNum {
-      def unapply(d: Def[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V,E]]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V, E]]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(v, _*), _) if receiver.elem.isInstanceOf[VertexElem[_, _, _]] && method.getName == "commonNbrsNum" =>
-          Some((receiver, v)).asInstanceOf[Option[(Rep[Vertex[V, E]], Rep[Vertex[V,E]]) forSome {type V; type E}]]
+          Some((receiver, v)).asInstanceOf[Option[(Rep[Vertex[V, E]], Rep[Vertex[V, E]]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V,E]]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Vertex[V, E]], Rep[Vertex[V, E]]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

@@ -39,9 +39,11 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
       tryConvert(element[AbstractMatrix[T]], this, x, conv)
     }
 
-    def convertAbstractMatrix(x : Rep[AbstractMatrix[T]]): Rep[To] = {
-      assert(x.selfType1 match { case _: AbstractMatrixElem[_, _] => true; case _ => false })
-      x.asRep[To]
+    def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]): Rep[To] = {
+      x.selfType1 match {
+        case _: AbstractMatrixElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have AbstractMatrixElem[_, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }

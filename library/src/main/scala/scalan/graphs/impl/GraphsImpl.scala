@@ -42,9 +42,11 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
       tryConvert(element[Graph[V, E]], this, x, conv)
     }
 
-    def convertGraph(x : Rep[Graph[V, E]]): Rep[To] = {
-      assert(x.selfType1 match { case _: GraphElem[_, _, _] => true; case _ => false })
-      x.asRep[To]
+    def convertGraph(x: Rep[Graph[V, E]]): Rep[To] = {
+      x.selfType1 match {
+        case _: GraphElem[_, _, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have GraphElem[_, _, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }
@@ -402,12 +404,12 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
     }
 
     object outEdges {
-      def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vs, predicate, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphElem[_, _]] && method.getName == "outEdges" =>
-          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}]]
+          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -693,12 +695,12 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
     }
 
     object outEdges {
-      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vs, predicate, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "outEdges" =>
-          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}]]
+          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1139,12 +1141,12 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
     }
 
     object outEdges {
-      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vs, predicate, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "outEdges" =>
-          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}]]
+          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

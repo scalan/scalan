@@ -39,9 +39,11 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
       tryConvert(element[Auth[A]], this, x, conv)
     }
 
-    def convertAuth(x : Rep[Auth[A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: AuthElem[_, _] => true; case _ => false })
-      x.asRep[To]
+    def convertAuth(x: Rep[Auth[A]]): Rep[To] = {
+      x.selfType1 match {
+        case _: AuthElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have AuthElem[_, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }

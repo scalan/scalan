@@ -7,6 +7,8 @@ object PrintExtensions {
       if (it.isEmpty) default else show(it)
 
     def rep(show: A => String = _.toString, sep: String = ", "): String = it.map(show).mkString(sep)
+    def asTypeParams(show: A => String = _.toString) =
+      if (it.nonEmpty) it.map(show).mkString("[", ", ", "]") else ""
 
     def enumTypes(show: Int => String) = (1 to it.size).map(show)
   }
@@ -16,6 +18,7 @@ object PrintExtensions {
       case None => default
       case Some(a) => show(a)
     }
+    def ifDefined(value: String): String = if (opt.isDefined) value else ""
   }
 
   implicit class BooleanExtensions(val opt: Boolean) extends AnyVal {
@@ -27,4 +30,9 @@ object PrintExtensions {
     def opt(show: String => String = _.toString, default: String = ""): String =
       (!str.isEmpty).opt(show(str), default)
   }
+
+  def join(xs: Any*) = xs.map {
+    case x: Iterable[_] => x.rep()
+    case x => x.toString
+  }.filter(_.nonEmpty).rep()
 }

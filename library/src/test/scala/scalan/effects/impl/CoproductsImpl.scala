@@ -40,9 +40,11 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
       tryConvert(element[Coproduct[F, G, A]], this, x, conv)
     }
 
-    def convertCoproduct(x : Rep[Coproduct[F, G, A]]): Rep[To] = {
-      assert(x.selfType1.asInstanceOf[Element[_]] match { case _: CoproductElem[_, _, _, _] => true; case _ => false })
-      x.asRep[To]
+    def convertCoproduct(x: Rep[Coproduct[F, G, A]]): Rep[To] = {
+      x.selfType1.asInstanceOf[Element[_]] match {
+        case _: CoproductElem[_, _, _, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have CoproductElem[_, _, _, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }
@@ -76,7 +78,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
     }
 
     override def convertCoproduct(x: Rep[Coproduct[F, G, A]]) = CoproductImpl(x.run)
-    override def getDefaultRep = CoproductImpl(element[Either[F[A],G[A]]].defaultRepValue)
+    override def getDefaultRep = CoproductImpl(element[Either[F[A], G[A]]].defaultRepValue)
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[CoproductImpl[F, G, A]]
@@ -84,14 +86,14 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   }
 
   // state representation type
-  type CoproductImplData[F[_], G[_], A] = Either[F[A],G[A]]
+  type CoproductImplData[F[_], G[_], A] = Either[F[A], G[A]]
 
   // 3) Iso for concrete class
   class CoproductImplIso[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
     extends Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
     override def from(p: Rep[CoproductImpl[F, G, A]]) =
       p.run
-    override def to(p: Rep[Either[F[A],G[A]]]) = {
+    override def to(p: Rep[Either[F[A], G[A]]]) = {
       val run = p
       CoproductImpl(run)
     }
@@ -101,7 +103,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   abstract class CoproductImplCompanionAbs extends CompanionBase[CoproductImplCompanionAbs] with CoproductImplCompanion {
     override def toString = "CoproductImpl"
 
-    def apply[F[_], G[_], A](run: Rep[Either[F[A],G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
+    def apply[F[_], G[_], A](run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
       mkCoproductImpl(run)
   }
   object CoproductImplMatcher {
@@ -129,8 +131,8 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
     cachedIso[CoproductImplIso[F, G, A]](cF, cG, eA)
 
   // 6) smart constructor and deconstructor
-  def mkCoproductImpl[F[_], G[_], A](run: Rep[Either[F[A],G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]]
-  def unmkCoproductImpl[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]): Option[(Rep[Either[F[A],G[A]]])]
+  def mkCoproductImpl[F[_], G[_], A](run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]]
+  def unmkCoproductImpl[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]): Option[(Rep[Either[F[A], G[A]]])]
 
   registerModule(scalan.meta.ScalanCodegen.loadModule(Coproducts_Module.dump))
 }
@@ -143,7 +145,7 @@ trait CoproductsSeq extends CoproductsDsl with scalan.ScalanSeq {
   }
 
   case class SeqCoproductImpl[F[_], G[_], A]
-      (override val run: Rep[Either[F[A],G[A]]])
+      (override val run: Rep[Either[F[A], G[A]]])
       (implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
     extends CoproductImpl[F, G, A](run)
         with UserTypeSeq[CoproductImpl[F, G, A]] {
@@ -154,7 +156,7 @@ trait CoproductsSeq extends CoproductsDsl with scalan.ScalanSeq {
   }
 
   def mkCoproductImpl[F[_], G[_], A]
-      (run: Rep[Either[F[A],G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
+      (run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
       new SeqCoproductImpl[F, G, A](run)
   def unmkCoproductImpl[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]) = p match {
     case p: CoproductImpl[F, G, A] @unchecked =>
@@ -172,7 +174,7 @@ trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
   }
 
   case class ExpCoproductImpl[F[_], G[_], A]
-      (override val run: Rep[Either[F[A],G[A]]])
+      (override val run: Rep[Either[F[A], G[A]]])
       (implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
     extends CoproductImpl[F, G, A](run) with UserTypeDef[CoproductImpl[F, G, A]] {
     lazy val selfType = element[CoproductImpl[F, G, A]]
@@ -191,7 +193,7 @@ trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
   }
 
   def mkCoproductImpl[F[_], G[_], A]
-    (run: Rep[Either[F[A],G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
+    (run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
     new ExpCoproductImpl[F, G, A](run)
   def unmkCoproductImpl[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CoproductImplElem[F, G, A] @unchecked =>

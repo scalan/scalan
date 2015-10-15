@@ -39,9 +39,11 @@ trait IOsAbs extends IOs with scalan.Scalan {
       tryConvert(element[IO[A]], this, x, conv)
     }
 
-    def convertIO(x : Rep[IO[A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: IOElem[_, _] => true; case _ => false })
-      x.asRep[To]
+    def convertIO(x: Rep[IO[A]]): Rep[To] = {
+      x.selfType1 match {
+        case _: IOElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have IOElem[_, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }

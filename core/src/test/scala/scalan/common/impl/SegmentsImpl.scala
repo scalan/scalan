@@ -36,9 +36,11 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
       tryConvert(element[Segment], this, x, conv)
     }
 
-    def convertSegment(x : Rep[Segment]): Rep[To] = {
-      assert(x.selfType1 match { case _: SegmentElem[_] => true; case _ => false })
-      x.asRep[To]
+    def convertSegment(x: Rep[Segment]): Rep[To] = {
+      x.selfType1 match {
+        case _: SegmentElem[_] => x.asRep[To]
+        case e => !!!(s"Expected $x to have SegmentElem[_], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }

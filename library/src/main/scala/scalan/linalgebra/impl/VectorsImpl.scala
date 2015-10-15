@@ -39,9 +39,11 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
       tryConvert(element[AbstractVector[T]], this, x, conv)
     }
 
-    def convertAbstractVector(x : Rep[AbstractVector[T]]): Rep[To] = {
-      assert(x.selfType1 match { case _: AbstractVectorElem[_, _] => true; case _ => false })
-      x.asRep[To]
+    def convertAbstractVector(x: Rep[AbstractVector[T]]): Rep[To] = {
+      x.selfType1 match {
+        case _: AbstractVectorElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have AbstractVectorElem[_, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }

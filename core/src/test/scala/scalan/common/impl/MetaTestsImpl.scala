@@ -36,9 +36,11 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
       tryConvert(element[MetaTest[T]], this, x, conv)
     }
 
-    def convertMetaTest(x : Rep[MetaTest[T]]): Rep[To] = {
-      assert(x.selfType1 match { case _: MetaTestElem[_, _] => true; case _ => false })
-      x.asRep[To]
+    def convertMetaTest(x: Rep[MetaTest[T]]): Rep[To] = {
+      x.selfType1 match {
+        case _: MetaTestElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have MetaTestElem[_, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }

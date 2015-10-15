@@ -24,18 +24,20 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
 
   implicit def hashSetElement[A:Elem]: Elem[HashSet[A]]
 
-  implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, SHashSet[A]] = elem.asInstanceOf[SHashSetElem[A, SHashSet[A]]]
+  implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, SHashSet[A]] =
+    elem.asInstanceOf[SHashSetElem[A, SHashSet[A]]]
 
-  implicit lazy val containerHashSet: Cont[HashSet] = new Container[HashSet] {
+  implicit lazy val containerHashSet: Container[HashSet] = new Container[HashSet] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[HashSet[A]]
     def lift[A](implicit evA: Elem[A]) = element[HashSet[A]]
   }
 
-  implicit lazy val containerSHashSet: Cont[SHashSet] = new Container[SHashSet] {
+  implicit lazy val containerSHashSet: Container[SHashSet] = new Container[SHashSet] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SHashSet[A]]
     def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
   }
-  case class SHashSetIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SHashSet](iso) {
+
+  case class SHashSetIso[A, B](iso: Iso[A, B]) extends Iso1[A, B, SHashSet](iso) {
     def from(x: Rep[SHashSet[B]]) = x.map(iso.fromFun)
     def to(x: Rep[SHashSet[A]]) = x.map(iso.toFun)
   }
@@ -63,9 +65,11 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
       tryConvert(element[SHashSet[A]], this, x, conv)
     }
 
-    def convertSHashSet(x : Rep[SHashSet[A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: SHashSetElem[_, _] => true; case _ => false })
-      x.asRep[To]
+    def convertSHashSet(x: Rep[SHashSet[A]]): Rep[To] = {
+      x.selfType1 match {
+        case _: SHashSetElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have SHashSetElem[_, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }
@@ -191,7 +195,7 @@ trait HashSetsSeq extends HashSetsDsl with scalan.ScalanSeq {
 
     // override proxy if we deal with TypeWrapper
   //override def proxyHashSet[A:Elem](p: Rep[HashSet[A]]): SHashSet[A] =
-  //  proxyOpsEx[HashSet[A],SHashSet[A], SeqSHashSetImpl[A]](p, bt => SeqSHashSetImpl(bt))
+  //  proxyOpsEx[HashSet[A], SHashSet[A], SeqSHashSetImpl[A]](p, bt => SeqSHashSetImpl(bt))
 
   implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] =
     new SeqBaseElemEx1[A, SHashSet[A], HashSet](element[SHashSet[A]])(

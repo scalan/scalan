@@ -36,9 +36,11 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
       tryConvert(element[AString], this, x, conv)
     }
 
-    def convertAString(x : Rep[AString]): Rep[To] = {
-      assert(x.selfType1 match { case _: AStringElem[_] => true; case _ => false })
-      x.asRep[To]
+    def convertAString(x: Rep[AString]): Rep[To] = {
+      x.selfType1 match {
+        case _: AStringElem[_] => x.asRep[To]
+        case e => !!!(s"Expected $x to have AStringElem[_], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }

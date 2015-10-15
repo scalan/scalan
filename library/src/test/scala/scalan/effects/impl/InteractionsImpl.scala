@@ -40,9 +40,11 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
       tryConvert(element[Interact[A]], this, x, conv)
     }
 
-    def convertInteract(x : Rep[Interact[A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: InteractElem[_, _] => true; case _ => false })
-      x.asRep[To]
+    def convertInteract(x: Rep[Interact[A]]): Rep[To] = {
+      x.selfType1 match {
+        case _: InteractElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have InteractElem[_, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }

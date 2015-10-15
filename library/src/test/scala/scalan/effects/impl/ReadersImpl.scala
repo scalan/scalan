@@ -40,9 +40,11 @@ trait ReadersAbs extends Readers with scalan.Scalan {
       tryConvert(element[Reader[Env, A]], this, x, conv)
     }
 
-    def convertReader(x : Rep[Reader[Env, A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: ReaderElem[_, _, _] => true; case _ => false })
-      x.asRep[To]
+    def convertReader(x: Rep[Reader[Env, A]]): Rep[To] = {
+      x.selfType1 match {
+        case _: ReaderElem[_, _, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have ReaderElem[_, _, _], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }
@@ -76,7 +78,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     }
 
     override def convertReader(x: Rep[Reader[Env, A]]) = ReaderBase(x.run)
-    override def getDefaultRep = ReaderBase(fun { (x: Rep[Env]) => element[A].defaultRepValue })
+    override def getDefaultRep = ReaderBase(constFun[Env, A](element[A].defaultRepValue))
     override lazy val tag = {
       implicit val tagEnv = eEnv.tag
       implicit val tagA = eA.tag

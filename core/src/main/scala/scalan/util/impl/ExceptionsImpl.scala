@@ -44,9 +44,11 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
       tryConvert(element[SThrowable], this, x, conv)
     }
 
-    def convertSThrowable(x : Rep[SThrowable]): Rep[To] = {
-      assert(x.selfType1 match { case _: SThrowableElem[_] => true; case _ => false })
-      x.asRep[To]
+    def convertSThrowable(x: Rep[SThrowable]): Rep[To] = {
+      x.selfType1 match {
+        case _: SThrowableElem[_] => x.asRep[To]
+        case e => !!!(s"Expected $x to have SThrowableElem[_], but got $e")
+      }
     }
     override def getDefaultRep: Rep[To] = ???
   }
@@ -236,10 +238,11 @@ trait ExceptionsSeq extends ExceptionsDsl with scalan.ScalanSeq {
 
     // override proxy if we deal with TypeWrapper
   //override def proxyThrowable(p: Rep[Throwable]): SThrowable =
-  //  proxyOpsEx[Throwable,SThrowable, SeqSThrowableImpl](p, bt => SeqSThrowableImpl(bt))
+  //  proxyOpsEx[Throwable, SThrowable, SeqSThrowableImpl](p, bt => SeqSThrowableImpl(bt))
 
-  implicit lazy val throwableElement: Elem[Throwable] =
+  implicit lazy val throwableElement: Elem[Throwable] = {
     new SeqBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
+  }
 
   case class SeqSThrowableImpl
       (override val wrappedValueOfBaseType: Rep[Throwable])
@@ -305,8 +308,9 @@ trait ExceptionsExp extends ExceptionsDsl with scalan.ScalanExp {
       newObjEx(classOf[SThrowable], List(msg.asRep[Any]))
   }
 
-  implicit lazy val throwableElement: Elem[Throwable] =
+  implicit lazy val throwableElement: Elem[Throwable] = {
     new ExpBaseElemEx[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
+  }
 
   case class ExpSThrowableImpl
       (override val wrappedValueOfBaseType: Rep[Throwable])
