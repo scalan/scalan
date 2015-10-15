@@ -16,8 +16,11 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   }
 
   // familyElem
-  class CoproductElem[F[_], G[_], A, To <: Coproduct[F, G, A]](implicit val cF: Cont[F], val cG: Cont[G], val eA: Elem[A])
+  class CoproductElem[F[_], G[_], A, To <: Coproduct[F, G, A]](implicit _cF: Cont[F], _cG: Cont[G], _eA: Elem[A])
     extends EntityElem[To] {
+    def cF = _cF
+    def cG = _cG
+    def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Coproducts")
@@ -73,7 +76,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
     }
 
     override def convertCoproduct(x: Rep[Coproduct[F, G, A]]) = CoproductImpl(x.run)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = CoproductImpl(element[Either[F[A],G[A]]].defaultRepValue)
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[CoproductImpl[F, G, A]]
@@ -92,7 +95,6 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
       val run = p
       CoproductImpl(run)
     }
-    lazy val defaultRepTo: Rep[CoproductImpl[F, G, A]] = CoproductImpl(element[Either[F[A],G[A]]].defaultRepValue)
     lazy val eTo = new CoproductImplElem[F, G, A](this)
   }
   // 4) constructor and deconstructor

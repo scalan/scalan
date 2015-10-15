@@ -17,8 +17,10 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   }
 
   // familyElem
-  class VertexElem[V, E, To <: Vertex[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
+  class VertexElem[V, E, To <: Vertex[V, E]](implicit _eV: Elem[V], _eE: Elem[E])
     extends EntityElem[To] {
+    def eV = _eV
+    def eE = _eE
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Vertices")
@@ -75,7 +77,7 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     }
 
     override def convertVertex(x: Rep[Vertex[V, E]]) = SVertex(x.id, x.graph)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = SVertex(0, element[Graph[V,E]].defaultRepValue)
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -95,7 +97,6 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
       val Pair(id, graph) = p
       SVertex(id, graph)
     }
-    lazy val defaultRepTo: Rep[SVertex[V, E]] = SVertex(0, element[Graph[V,E]].defaultRepValue)
     lazy val eTo = new SVertexElem[V, E](this)
   }
   // 4) constructor and deconstructor

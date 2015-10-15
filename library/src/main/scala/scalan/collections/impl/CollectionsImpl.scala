@@ -21,8 +21,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   }
 
   // familyElem
-  class CollectionElem[Item, To <: Collection[Item]](implicit val eItem: Elem[Item @uncheckedVariance])
+  class CollectionElem[Item, To <: Collection[Item]](implicit _eItem: Elem[Item @uncheckedVariance])
     extends EntityElem[To] {
+    def eItem = _eItem
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Collections")
@@ -69,8 +70,10 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     proxyOps[PairCollection[A, B]](p)(scala.reflect.classTag[PairCollection[A, B]])
   }
   // familyElem
-  class PairCollectionElem[A, B, To <: PairCollection[A, B]](implicit val eA: Elem[A], val eB: Elem[B])
+  class PairCollectionElem[A, B, To <: PairCollection[A, B]](implicit _eA: Elem[A], _eB: Elem[B])
     extends CollectionElem[(A, B), To] {
+    def eA = _eA
+    def eB = _eB
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(pairElement(element[A],element[B])))
     override lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Collections")
@@ -106,8 +109,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     proxyOps[NestedCollection[A]](p)(scala.reflect.classTag[NestedCollection[A]])
   }
   // familyElem
-  class NestedCollectionElem[A, To <: NestedCollection[A]](implicit val eA: Elem[A])
+  class NestedCollectionElem[A, To <: NestedCollection[A]](implicit _eA: Elem[A])
     extends CollectionElem[Collection[A], To] {
+    def eA = _eA
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(collectionElement(element[A])))
     override lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Collections")
@@ -151,7 +155,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertCollection(x: Rep[Collection[Unit]]) = UnitCollection(x.length)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = UnitCollection(0)
     override lazy val tag = {
       weakTypeTag[UnitCollection]
     }
@@ -169,7 +173,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val length = p
       UnitCollection(length)
     }
-    lazy val defaultRepTo: Rep[UnitCollection] = UnitCollection(0)
     lazy val eTo = new UnitCollectionElem(this)
   }
   // 4) constructor and deconstructor
@@ -221,7 +224,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverArray(x.arr)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = CollectionOverArray(element[Array[Item]].defaultRepValue)
     override lazy val tag = {
       implicit val tagItem = eItem.tag
       weakTypeTag[CollectionOverArray[Item]]
@@ -240,7 +243,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val arr = p
       CollectionOverArray(arr)
     }
-    lazy val defaultRepTo: Rep[CollectionOverArray[Item]] = CollectionOverArray(element[Array[Item]].defaultRepValue)
     lazy val eTo = new CollectionOverArrayElem[Item](this)
   }
   // 4) constructor and deconstructor
@@ -292,7 +294,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverList(x.lst)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = CollectionOverList(element[List[Item]].defaultRepValue)
     override lazy val tag = {
       implicit val tagItem = eItem.tag
       weakTypeTag[CollectionOverList[Item]]
@@ -311,7 +313,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val lst = p
       CollectionOverList(lst)
     }
-    lazy val defaultRepTo: Rep[CollectionOverList[Item]] = CollectionOverList(element[List[Item]].defaultRepValue)
     lazy val eTo = new CollectionOverListElem[Item](this)
   }
   // 4) constructor and deconstructor
@@ -363,7 +364,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverSeq(x.seq)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = CollectionOverSeq(element[SSeq[Item]].defaultRepValue)
     override lazy val tag = {
       implicit val tagItem = eItem.tag
       weakTypeTag[CollectionOverSeq[Item]]
@@ -382,7 +383,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val seq = p
       CollectionOverSeq(seq)
     }
-    lazy val defaultRepTo: Rep[CollectionOverSeq[Item]] = CollectionOverSeq(element[SSeq[Item]].defaultRepValue)
     lazy val eTo = new CollectionOverSeqElem[Item](this)
   }
   // 4) constructor and deconstructor
@@ -434,7 +434,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionSOA(x.as, x.bs)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = PairCollectionSOA(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue)
     override lazy val tag = {
       implicit val tagA = eA.tag
       implicit val tagB = eB.tag
@@ -454,7 +454,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val Pair(as, bs) = p
       PairCollectionSOA(as, bs)
     }
-    lazy val defaultRepTo: Rep[PairCollectionSOA[A, B]] = PairCollectionSOA(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue)
     lazy val eTo = new PairCollectionSOAElem[A, B](this)
   }
   // 4) constructor and deconstructor
@@ -507,7 +506,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionAOS(x.coll)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = PairCollectionAOS(element[Collection[(A, B)]].defaultRepValue)
     override lazy val tag = {
       implicit val tagA = eA.tag
       implicit val tagB = eB.tag
@@ -527,7 +526,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val coll = p
       PairCollectionAOS(coll)
     }
-    lazy val defaultRepTo: Rep[PairCollectionAOS[A, B]] = PairCollectionAOS(element[Collection[(A, B)]].defaultRepValue)
     lazy val eTo = new PairCollectionAOSElem[A, B](this)
   }
   // 4) constructor and deconstructor
@@ -579,7 +577,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertNestedCollection(x: Rep[NestedCollection[A]]) = NestedCollectionFlat(x.values, x.segments)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = NestedCollectionFlat(element[Collection[A]].defaultRepValue, element[PairCollection[Int,Int]].defaultRepValue)
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[NestedCollectionFlat[A]]
@@ -598,7 +596,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val Pair(values, segments) = p
       NestedCollectionFlat(values, segments)
     }
-    lazy val defaultRepTo: Rep[NestedCollectionFlat[A]] = NestedCollectionFlat(element[Collection[A]].defaultRepValue, element[PairCollection[Int,Int]].defaultRepValue)
     lazy val eTo = new NestedCollectionFlatElem[A](this)
   }
   // 4) constructor and deconstructor

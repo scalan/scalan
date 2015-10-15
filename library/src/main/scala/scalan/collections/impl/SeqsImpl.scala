@@ -40,12 +40,12 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   case class SSeqIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SSeq](iso) {
     def from(x: Rep[SSeq[B]]) = x.map(iso.fromFun)
     def to(x: Rep[SSeq[A]]) = x.map(iso.toFun)
-    lazy val defaultRepTo = SSeq.empty[B]
   }
 
   // familyElem
-  abstract class SSeqElem[A, To <: SSeq[A]](implicit val eA: Elem[A])
-    extends WrapperElem1[A, To, Seq, SSeq]()(eA, container[Seq], container[SSeq]) {
+  abstract class SSeqElem[A, To <: SSeq[A]](implicit _eA: Elem[A])
+    extends WrapperElem1[A, To, Seq, SSeq]()(_eA, container[Seq], container[SSeq]) {
+    def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Seqs")
@@ -76,7 +76,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     elemCache.getOrElseUpdate(
       (classOf[SSeqElem[A, SSeq[A]]], Seq(eA)),
       new SSeqElem[A, SSeq[A]] {
-        lazy val eTo = element[SSeqImpl[A]]
+        lazy val eTo = new SSeqImplElem[A](isoSSeqImpl(eA))(eA)
       }).asInstanceOf[Elem[SSeq[A]]]
 
   implicit case object SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs] {
@@ -163,7 +163,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     }
     lazy val eTo = this
     override def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ConcreteElem1].getDefaultRep
+    override def getDefaultRep = SSeqImpl(DefaultOfSeq[A].value)
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[SSeqImpl[A]]
@@ -182,7 +182,6 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
       val wrappedValueOfBaseType = p
       SSeqImpl(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo: Rep[SSeqImpl[A]] = SSeqImpl(DefaultOfSeq[A].value)
     lazy val eTo = new SSeqImplElem[A](this)
   }
   // 4) constructor and deconstructor

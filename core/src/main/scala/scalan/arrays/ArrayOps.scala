@@ -110,7 +110,6 @@ trait ArrayOps { self: Scalan =>
   case class ArrayIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Array](iso) {
     def from(x: Arr[B]) = x.mapBy(iso.fromFun)
     def to(x: Arr[A]) = x.mapBy(iso.toFun)
-    lazy val defaultRepTo = SArray.empty[B]
   }
 
   def arrayIso[A,B](iso: Iso[A, B]) = cachedIso[ArrayIso[A, B]](iso)

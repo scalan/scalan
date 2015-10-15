@@ -15,8 +15,10 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   }
 
   // familyElem
-  class MMultiMapElem[K, V, To <: MMultiMap[K, V]](implicit val elemKey: Elem[K], val elemValue: Elem[V])
+  class MMultiMapElem[K, V, To <: MMultiMap[K, V]](implicit _elemKey: Elem[K], _elemValue: Elem[V])
     extends EntityElem[To] {
+    def elemKey = _elemKey
+    def elemValue = _elemValue
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("MultiMaps")
@@ -73,7 +75,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     }
 
     override def convertMMultiMap(x: Rep[MMultiMap[K, V]]) = HashMMultiMap(x.map)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = HashMMultiMap(element[MMap[K,ArrayBuffer[V]]].defaultRepValue)
     override lazy val tag = {
       implicit val tagK = elemKey.tag
       implicit val tagV = elemValue.tag
@@ -93,7 +95,6 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
       val map = p
       HashMMultiMap(map)
     }
-    lazy val defaultRepTo: Rep[HashMMultiMap[K, V]] = HashMMultiMap(element[MMap[K,ArrayBuffer[V]]].defaultRepValue)
     lazy val eTo = new HashMMultiMapElem[K, V](this)
   }
   // 4) constructor and deconstructor

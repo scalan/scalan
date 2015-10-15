@@ -299,7 +299,6 @@ trait MapViewsExp extends MapsExp with ViewsExp with BaseExp { self: ScalanExp =
         implicit val tV = iso2.tag
         typeTag[MMap[K2, V2]]
       }
-      lazy val defaultRepTo = emptyMap[K2, V2](k2, v2)
     }
   }
 

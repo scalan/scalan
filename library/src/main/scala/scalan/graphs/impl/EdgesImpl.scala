@@ -17,8 +17,10 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   }
 
   // familyElem
-  class EdgeElem[V, E, To <: Edge[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
+  class EdgeElem[V, E, To <: Edge[V, E]](implicit _eV: Elem[V], _eE: Elem[E])
     extends EntityElem[To] {
+    def eV = _eV
+    def eE = _eE
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Edges")
@@ -75,7 +77,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     }
 
     override def convertEdge(x: Rep[Edge[V, E]]) = AdjEdge(x.fromId, x.outIndex, x.graph)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = AdjEdge(0, 0, element[Graph[V,E]].defaultRepValue)
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -95,7 +97,6 @@ trait EdgesAbs extends Edges with scalan.Scalan {
       val Pair(fromId, Pair(outIndex, graph)) = p
       AdjEdge(fromId, outIndex, graph)
     }
-    lazy val defaultRepTo: Rep[AdjEdge[V, E]] = AdjEdge(0, 0, element[Graph[V,E]].defaultRepValue)
     lazy val eTo = new AdjEdgeElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -148,7 +149,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     }
 
     override def convertEdge(x: Rep[Edge[V, E]]) = IncEdge(x.fromId, x.toId, x.graph)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = IncEdge(0, 0, element[Graph[V,E]].defaultRepValue)
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -168,7 +169,6 @@ trait EdgesAbs extends Edges with scalan.Scalan {
       val Pair(fromId, Pair(toId, graph)) = p
       IncEdge(fromId, toId, graph)
     }
-    lazy val defaultRepTo: Rep[IncEdge[V, E]] = IncEdge(0, 0, element[Graph[V,E]].defaultRepValue)
     lazy val eTo = new IncEdgeElem[V, E](this)
   }
   // 4) constructor and deconstructor

@@ -14,7 +14,7 @@ trait Exceptions extends Base with TypeWrappers { self: ExceptionsDsl =>
   trait SThrowableCompanion extends ExCompanion0[Throwable]  {
     @Constructor def apply(msg: Rep[String]): Rep[SThrowable]
   }
-  def DefaultOfThrowable = Default.defaultVal(new Throwable("default exception"))
+  lazy val DefaultOfThrowable = Default.defaultVal(new Throwable("default exception"))
 
   abstract class SException(val wrappedValueOfBaseType: Rep[Throwable]) extends SThrowable {
     def getMessage: Rep[String] =

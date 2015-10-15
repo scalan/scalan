@@ -60,7 +60,6 @@ trait ListOps { self: Scalan =>
   case class ListIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, List](iso) {
     def from(x: Lst[B]) = x.mapBy(iso.fromFun)
     def to(x: Lst[A]) = x.mapBy(iso.toFun)
-    lazy val defaultRepTo = SList.empty[B]
   }
 
   def listIso[A,B](iso: Iso[A, B]) = cachedIso[ListIso[A, B]](iso)

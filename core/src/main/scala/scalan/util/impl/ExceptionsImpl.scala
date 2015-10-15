@@ -55,7 +55,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     elemCache.getOrElseUpdate(
       (classOf[SThrowableElem[SThrowable]], Nil),
       new SThrowableElem[SThrowable] {
-        lazy val eTo = element[SThrowableImpl]
+        lazy val eTo = new SThrowableImplElem(isoSThrowableImpl)
       }).asInstanceOf[Elem[SThrowable]]
 
   implicit case object SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs] {
@@ -97,7 +97,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     }
     lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SThrowableImpl(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = SThrowableImpl(DefaultOfThrowable.value)
     override lazy val tag = {
       weakTypeTag[SThrowableImpl]
     }
@@ -115,7 +115,6 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
       val wrappedValueOfBaseType = p
       SThrowableImpl(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo: Rep[SThrowableImpl] = SThrowableImpl(DefaultOfThrowable.value)
     lazy val eTo = new SThrowableImplElem(this)
   }
   // 4) constructor and deconstructor
@@ -167,7 +166,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     }
     lazy val eTo = this
     override def convertSThrowable(x: Rep[SThrowable]) = SException(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = SException(DefaultOfThrowable.value)
     override lazy val tag = {
       weakTypeTag[SException]
     }
@@ -185,7 +184,6 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
       val wrappedValueOfBaseType = p
       SException(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo: Rep[SException] = SException(DefaultOfThrowable.value)
     lazy val eTo = new SExceptionElem(this)
   }
   // 4) constructor and deconstructor

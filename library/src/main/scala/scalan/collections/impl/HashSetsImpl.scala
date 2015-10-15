@@ -38,12 +38,12 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   case class SHashSetIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, SHashSet](iso) {
     def from(x: Rep[SHashSet[B]]) = x.map(iso.fromFun)
     def to(x: Rep[SHashSet[A]]) = x.map(iso.toFun)
-    lazy val defaultRepTo = SHashSet.empty[B]
   }
 
   // familyElem
-  abstract class SHashSetElem[A, To <: SHashSet[A]](implicit val eA: Elem[A])
-    extends WrapperElem1[A, To, HashSet, SHashSet]()(eA, container[HashSet], container[SHashSet]) {
+  abstract class SHashSetElem[A, To <: SHashSet[A]](implicit _eA: Elem[A])
+    extends WrapperElem1[A, To, HashSet, SHashSet]()(_eA, container[HashSet], container[SHashSet]) {
+    def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("HashSets")
@@ -74,7 +74,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     elemCache.getOrElseUpdate(
       (classOf[SHashSetElem[A, SHashSet[A]]], Seq(eA)),
       new SHashSetElem[A, SHashSet[A]] {
-        lazy val eTo = element[SHashSetImpl[A]]
+        lazy val eTo = new SHashSetImplElem[A](isoSHashSetImpl(eA))(eA)
       }).asInstanceOf[Elem[SHashSet[A]]]
 
   implicit case object SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs] {
@@ -121,7 +121,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     }
     lazy val eTo = this
     override def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ConcreteElem1].getDefaultRep
+    override def getDefaultRep = SHashSetImpl(DefaultOfHashSet[A].value)
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[SHashSetImpl[A]]
@@ -140,7 +140,6 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
       val wrappedValueOfBaseType = p
       SHashSetImpl(wrappedValueOfBaseType)
     }
-    lazy val defaultRepTo: Rep[SHashSetImpl[A]] = SHashSetImpl(DefaultOfHashSet[A].value)
     lazy val eTo = new SHashSetImplElem[A](this)
   }
   // 4) constructor and deconstructor

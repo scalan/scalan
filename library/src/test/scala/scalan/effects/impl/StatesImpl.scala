@@ -16,8 +16,10 @@ trait StatesAbs extends States with scalan.Scalan {
   }
 
   // familyElem
-  class State0Elem[S, A, To <: State0[S, A]](implicit val eS: Elem[S], val eA: Elem[A])
+  class State0Elem[S, A, To <: State0[S, A]](implicit _eS: Elem[S], _eA: Elem[A])
     extends EntityElem[To] {
+    def eS = _eS
+    def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("States")
@@ -74,7 +76,7 @@ trait StatesAbs extends States with scalan.Scalan {
     }
 
     override def convertState0(x: Rep[State0[S, A]]) = StateBase(x.run)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = StateBase(fun { (x: Rep[S]) => Pair(element[A].defaultRepValue, element[S].defaultRepValue) })
     override lazy val tag = {
       implicit val tagS = eS.tag
       implicit val tagA = eA.tag
@@ -94,7 +96,6 @@ trait StatesAbs extends States with scalan.Scalan {
       val run = p
       StateBase(run)
     }
-    lazy val defaultRepTo: Rep[StateBase[S, A]] = StateBase(fun { (x: Rep[S]) => Pair(element[A].defaultRepValue, element[S].defaultRepValue) })
     lazy val eTo = new StateBaseElem[S, A](this)
   }
   // 4) constructor and deconstructor

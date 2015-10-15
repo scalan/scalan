@@ -16,8 +16,10 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   }
 
   // familyElem
-  class ReaderElem[Env, A, To <: Reader[Env, A]](implicit val eEnv: Elem[Env], val eA: Elem[A])
+  class ReaderElem[Env, A, To <: Reader[Env, A]](implicit _eEnv: Elem[Env], _eA: Elem[A])
     extends EntityElem[To] {
+    def eEnv = _eEnv
+    def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Readers")
@@ -74,7 +76,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     }
 
     override def convertReader(x: Rep[Reader[Env, A]]) = ReaderBase(x.run)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = ReaderBase(fun { (x: Rep[Env]) => element[A].defaultRepValue })
     override lazy val tag = {
       implicit val tagEnv = eEnv.tag
       implicit val tagA = eA.tag
@@ -94,7 +96,6 @@ trait ReadersAbs extends Readers with scalan.Scalan {
       val run = p
       ReaderBase(run)
     }
-    lazy val defaultRepTo: Rep[ReaderBase[Env, A]] = ReaderBase(fun { (x: Rep[Env]) => element[A].defaultRepValue })
     lazy val eTo = new ReaderBaseElem[Env, A](this)
   }
   // 4) constructor and deconstructor

@@ -28,7 +28,8 @@ trait TypeWrappers extends Base { self: Scalan =>
     extends BaseElemEx[CBase[A], TExt](extE)(cont.tag(eItem.tag), z) {
   }
 
-  abstract class WrapperElem[TBase, TExt](implicit val baseElem: Elem[TBase]) extends EntityElem[TExt] {
+  abstract class WrapperElem[TBase, TExt](implicit _baseElem: Elem[TBase]) extends EntityElem[TExt] {
+    def baseElem = _baseElem
     def eTo: Elem[_]
   }
 

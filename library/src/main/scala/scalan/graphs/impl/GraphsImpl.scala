@@ -18,8 +18,10 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   }
 
   // familyElem
-  class GraphElem[V, E, To <: Graph[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
+  class GraphElem[V, E, To <: Graph[V, E]](implicit _eV: Elem[V], _eE: Elem[E])
     extends EntityElem[To] {
+    def eV = _eV
+    def eE = _eE
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Graphs")
@@ -76,7 +78,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     }
 
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue)
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -96,7 +98,6 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
       val Pair(vertexValues, Pair(edgeValues, links)) = p
       AdjacencyGraph(vertexValues, edgeValues, links)
     }
-    lazy val defaultRepTo: Rep[AdjacencyGraph[V, E]] = AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue)
     lazy val eTo = new AdjacencyGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -149,7 +150,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     }
 
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0)
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -169,7 +170,6 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
       val Pair(vertexValues, Pair(incMatrixWithVals, vertexNum)) = p
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }
-    lazy val defaultRepTo: Rep[IncidenceGraph[V, E]] = IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0)
     lazy val eTo = new IncidenceGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor
