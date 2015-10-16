@@ -74,85 +74,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     val elemTypeUse = name + "Elem" + tpeArgsUse
   }
 
-  trait MatcherGenerator {
-
-    object InternalFunctions {
-
-      def whitespaces(title: String) = " " * (title.length + 2)
-      def returnType(entity: STraitDef) = {
-        val types = entity.tpeArgs.decls
-        types.lastOption match {
-          case None => "R"
-          case Some(tpe) => tpe + "1"
-        }
-      }
-      def genericSignature(entity: STraitDef) = {
-        (entity.tpeArgs.decls :+ returnType(entity)).asTypeParams()
-      }
-      def typesBraces(entity: STraitDef) = {
-        entity.tpeArgs.asTypeParams()
-      }
-      def title(entity: STraitDef) = s"def match${entity.name}${genericSignature(entity)}"
-      def lambdas(module: SEntityModuleDef, whitespace: String) = {
-        val entity = module.entityOps
-        val classes = module.concreteSClasses
-        val types = typesBraces(entity)
-        val retType = returnType(entity)
-        classes.zipWithIndex.map { case (c, i) =>
-          s"\n$whitespace(f$i: Rep[${c.name}$types] => Rep[$retType])"
-        }.opt(specs => s"${specs.rep()}") + s"\n$whitespace(fb: Rep[${entity.name}$types] => Rep[$retType])"
-      }
-      def fallback = s"      case _ => fb(x)"
-      def declaration(module: SEntityModuleDef) = {
-        val entity = module.entityOps
-        val name = entity.name
-        val types = typesBraces(entity)
-        val titleDef = title(module.entityOps)
-        s"""\n
-          |  ${title(entity)}(x: Rep[$name$types])${lambdas(module, whitespaces(titleDef))}: Rep[${returnType(entity)}]
-          |""".stripAndTrim
-      }
-    }
-    import InternalFunctions.{declaration, fallback}
-
-    def entityMatcherAbs(module: SEntityModuleDef) = {
-      declaration(module)
-    }
-    def entityMatcherSeq(module: SEntityModuleDef) = {
-      val classes = module.concreteSClasses
-      val anyType = module.entityOps.tpeArgs.map(_ => "_").mkString(", ")
-      val cases = classes.zipWithIndex.map { case (c, i) =>
-        s"      case x$i: ${c.name}$anyType => f$i(x$i)"
-      }.opt(specs => s"${specs.rep(sep = "\n")}")
-      val body = s""" = {
-        |    x match {
-        |$cases
-        |$fallback
-        |    }
-        |  }"""
-      s"""\n
-        |  ${declaration(module)}$body
-        |""".stripAndTrim
-    }
-    def entityMatcherExp(module: SEntityModuleDef) = {
-      val classes = module.concreteSClasses
-      val types = module.entityOps.tpeArgs.declString
-      val anyType = module.entityOps.tpeArgs.map(_ => "_").mkString(", ")
-      val cases = classes.zipWithIndex.map { case (c, i) =>
-        s"      case _: ${c.name}Elem$anyType => f$i(x.asRep[${c.name}$types])"
-      }.opt(_.rep(sep = "\n"))
-      val body = s""" = {
-        |    x.elem.asInstanceOf[Elem[_]] match {
-        |$cases
-        |$fallback
-        |    }
-        |  }"""
-      s"""\n
-        |  ${declaration(module)}$body
-        |""".stripAndTrim
-    }
-  }
-
   def serialize(obj: Any): String = {
     val bos = new ByteArrayOutputStream()
     try {
@@ -186,9 +107,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     } finally bis.close()
   }
 
-  class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) extends MatcherGenerator {
-
-    //import InternalFunctions._
+  class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) {
 
     def dataType(ts: List[STpeExpr]): String = ts match {
       case Nil => "Unit"
