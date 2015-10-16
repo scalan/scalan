@@ -12,28 +12,32 @@ import scalan.compilation.{GraphVizConfig, GraphVizExport}
 
 trait TypeWrappers extends Base { self: Scalan =>
 
-  trait TypeWrapper[TBase, TExt] extends Reifiable[TExt] {
-    def wrappedValueOfBaseType: Rep[TBase]
+  trait TypeWrapper[TBase, TWrapper] extends Reifiable[TWrapper] {
+    def wrappedValue: Rep[TBase]
   }
 
-  class BaseElemEx[TBase, TExt](extE: =>Elem[TExt])
-                               (implicit tag: WeakTypeTag[TBase], z: Default[TBase])
+  class BaseTypeElem[TBase, TWrapper <: TypeWrapper[TBase, TWrapper]]
+    (extE: =>Elem[TWrapper])(implicit tag: WeakTypeTag[TBase], z: Default[TBase])
     extends BaseElem[TBase] { self =>
-    def getWrapperElem = extE
-    override protected def getName = s"BT[${super.getName},${getWrapperElem.name}]"
+    lazy val wrapperElem = extE
+    override protected def getDefaultRep = {
+      val wrapperDefaultValue = wrapperElem.defaultRepValue
+      unwrapTypeWrapperRep(wrapperDefaultValue)
+    }
+    override protected def getName = s"${super.getName}{base type, wrapper: ${wrapperElem.name}}"
   }
 
-  class BaseElemEx1[A, TExt, CBase[_]]
-    (extE: =>Elem[TExt])(implicit val eItem: Elem[A], val cont: Cont[CBase], z: Default[CBase[A]])
-    extends BaseElemEx[CBase[A], TExt](extE)(cont.tag(eItem.tag), z) {
-  }
+  class BaseTypeElem1[A, CBase[_], TWrapper <: TypeWrapper[CBase[A], TWrapper]]
+    (extE: =>Elem[TWrapper])(implicit val eItem: Elem[A], val cont: Cont[CBase], z: Default[CBase[A]])
+    extends BaseTypeElem[CBase[A], TWrapper](extE)(cont.tag(eItem.tag), z)
 
-  abstract class WrapperElem[TBase, TExt](implicit _baseElem: Elem[TBase]) extends EntityElem[TExt] {
-    def baseElem = _baseElem
+  protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase]
+
+  abstract class WrapperElem[TBase, TWrapper](val baseElem: Elem[TBase]) extends EntityElem[TWrapper] {
     def eTo: Elem[_]
   }
 
-  abstract class WrapperElem1[A, Abs, CBase[_], CW[_]](implicit eA: Elem[A], val contBase: Cont[CBase], contW: Cont[CW])
+  abstract class WrapperElem1[A, Abs, CBase[_], CW[_]](eA: Elem[A], contBase: Cont[CBase], contW: Cont[CW])
     extends EntityElem1[A, Abs, CW](eA, contW) {
     def baseElem: Elem[CBase[A]] = contBase.lift(eA)
     def eTo: Elem[_]
@@ -50,7 +54,7 @@ trait TypeWrappers extends Base { self: Scalan =>
   final val ContainerLength = "ContainerLength"
   final val ContainerApply = "ContainerApply"
 
-  def isValueAccessor(m: Method) = m.getName == "wrappedValueOfBaseType"
+  def isValueAccessor(m: Method) = m.getName == "wrappedValue"
 
   def isWrapperElem(el: Elem[_]) = el match {
     case el: WrapperElem[_,_] => true
@@ -60,41 +64,16 @@ trait TypeWrappers extends Base { self: Scalan =>
 }
 
 trait TypeWrappersSeq extends TypeWrappers { scalan: ScalanSeq =>
-   class SeqBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
-                                (implicit tag: WeakTypeTag[TBase], z: Default[TBase])
-     extends BaseElemEx[TBase, TExt](extE) {
-     override protected def getDefaultRep = {
-       val defaultOfWrapper = getWrapperElem.defaultRepValue.asInstanceOf[TypeWrapper[TBase, TExt]]
-       defaultOfWrapper.wrappedValueOfBaseType
-     }
-   }
-   class SeqBaseElemEx1[A, TExt, CBase[_]]
-       (extE: =>Elem[TExt])
-       (implicit eItem: Elem[A], cont: Cont[CBase], z: Default[CBase[A]])
-     extends BaseElemEx1[A, TExt, CBase](extE) {
-     override protected def getDefaultRep = {
-       val defaultOfWrapper = getWrapperElem.defaultRepValue.asInstanceOf[TypeWrapper[CBase[A], TExt]]
-       defaultOfWrapper.wrappedValueOfBaseType
-     }
-   }
+  protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase] =
+    x.wrappedValue
  }
 
 trait TypeWrappersExp extends TypeWrappers with GraphVizExport { scalan: ScalanExp =>
-  class ExpBaseElemEx[TBase, TExt](extE: =>Elem[TExt])
-                                  (implicit tag: WeakTypeTag[TBase], z: Default[TBase])
-    extends BaseElemEx[TBase, TExt](extE) {
-    override protected def getDefaultRep = getWrapperElem.defaultRepValue.asInstanceOf[Rep[TBase]]
-  }
-  class ExpBaseElemEx1[A, TExt, CBase[_]]
-    (extE: =>Elem[TExt])
-    (implicit eItem: Elem[A], cont: Cont[CBase], z: Default[CBase[A]])
-    extends BaseElemEx1[A, TExt, CBase](extE)
-  {
-    override protected def getDefaultRep = getWrapperElem.defaultRepValue.asInstanceOf[Rep[CBase[A]]]
-  }
+  protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase] =
+    x.asInstanceOf[Rep[TBase]]
 
   override protected def nodeColor(sym: Exp[_])(implicit config: GraphVizConfig) = sym.elem match {
-    case _: BaseElemEx[_, _] => "blue"
+    case _: BaseTypeElem[_, _] => "blue"
     case _ => super.nodeColor(sym)
   }
 

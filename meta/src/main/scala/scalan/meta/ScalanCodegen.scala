@@ -260,7 +260,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val methodNameAndArgs = md.name + md.tpeArgs.useString + methodArgsUse(md)
       val methodHeader = s"${md.declaration(config, true)} =\n"
 
-      val obj = if (isInstance) "wrappedValueOfBaseType" else baseTypeName
+      val obj = if (isInstance) "wrappedValue" else baseTypeName
 
       val methodBody = {
         val methodCall = s"$obj.$methodNameAndArgs"
@@ -344,14 +344,33 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |  //implicit def proxy$baseTypeName${typesWithElems}(p: Rep[$baseTypeUse]): $typeUse =
         |  //  proxyOps[$typeUse](p.asRep[$typeUse])
         |
-        |  implicit def unwrapValueOf$typeDecl(w: Rep[$typeUse]): Rep[$baseTypeUse] = w.wrappedValueOfBaseType
+        |  implicit def unwrapValueOf$typeDecl(w: Rep[$typeUse]): Rep[$baseTypeUse] = w.wrappedValue
         |""".stripAndTrim
       }
 
+      // note: currently can't cache them properly due to cyclical dependency between
+      // baseType elem and wrapper elem
       val baseTypeElem = optBaseType.opt { bt =>
-        s"""
-        |  implicit def ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$baseTypeUse]
-        |""".stripAndTrim
+        val defOrVal = if (e.tpeArgs.isEmpty) "lazy val" else "def"
+        val declaration = s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$baseTypeUse]"
+        if (e.isContainer) {
+          val elems = e.tpeArgNames.rep(ty => s"element[$ty]")
+          s"""
+             |  $declaration =
+             |    new BaseTypeElem1[${join(e.tpeArgNames, baseTypeName, typeUse)}](element[$typeUse])(
+             |      $elems, container[${bt.name}], ${getDefaultOfBT(bt)})
+             |""".stripAndTrim
+        } else {
+          val weakTagsForTpeArgs = e.tpeArgNames.map { argName =>
+            s"implicit val w$argName = element[$argName].tag"
+          }.mkString("\n")
+          s"""
+             |  $declaration = {
+             |    $weakTagsForTpeArgs
+             |    new BaseTypeElem[$baseTypeUse, $typeUse](element[$typeUse])(weakTypeTag[$baseTypeUse], ${getDefaultOfBT(bt)})
+             |  }
+             |""".stripAndTrim
+        }
       }
 
       def familyContainer(e: EntityTemplateData) = {
@@ -404,9 +423,9 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           case Some(STraitCall("TypeWrapper", _)) =>
             val parentElem =
               if (isContainer) {
-                s"WrapperElem1[${join(e.tpeArgNames, "To", e.baseTypeName, e.name)}]()(${e.tpeArgNames.rep("_e" + _)}, container[${e.baseTypeName}], container[${e.name}])"
+                s"WrapperElem1[${join(e.tpeArgNames, "To", e.baseTypeName, e.name)}](${e.tpeArgNames.rep("_e" + _)}, container[${e.baseTypeName}], container[${e.name}])"
               } else {
-                s"WrapperElem[${e.baseTypeUse}, To]"
+                s"WrapperElem[${e.baseTypeUse}, To](element[${e.baseTypeUse}])"
               }
             (None, parentElem)
           case Some(parent @ STraitCall(parentName, parentTpeArgs)) =>
@@ -521,7 +540,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
             val implicitArgsWithVals = c.implicitArgsDecl("val ")
             s"""
             |  // default wrapper implementation
-            |  abstract class ${e.name}Impl${tpeArgsDecl}(val wrappedValueOfBaseType: Rep[$baseTypeUse])${implicitArgsWithVals} extends $typeUse {
+            |  abstract class ${e.name}Impl${tpeArgsDecl}(val wrappedValue: Rep[$baseTypeUse])${implicitArgsWithVals} extends $typeUse {
             |    $externalMethodsStr
             |  }
             |  trait ${e.name}ImplCompanion
@@ -772,31 +791,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""$userTypeNodeDefs\n\n$constrDefs"""
     }
 
-    // note: currently can't cache them properly due to cyclical dependency between
-    // baseType elem and wrapper elem
-    def baseTypeElem(ctx: String) = optBaseType.opt { bt =>
-      val defOrVal = if (e.tpeArgs.isEmpty) "lazy val" else "def"
-      val declaration = s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$baseTypeUse]"
-      if (e.isContainer) {
-        val elems = e.tpeArgNames.rep(ty => s"element[$ty]")
-        s"""
-          |  $declaration =
-          |    new ${ctx}BaseElemEx1[${join(e.tpeArgNames, typeUse, baseTypeName)}](element[$typeUse])(
-          |      $elems, container[${bt.name}], ${getDefaultOfBT(bt)})
-          |""".stripAndTrim
-      } else {
-        val weakTagsForTpeArgs = e.tpeArgNames.map { argName =>
-          s"implicit val w$argName = element[$argName].tag"
-        }.mkString("\n")
-        s"""
-          |  $declaration = {
-          |    $weakTagsForTpeArgs
-          |    new ${ctx}BaseElemEx[$baseTypeUse, $typeUse](element[$typeUse])(weakTypeTag[$baseTypeUse], ${getDefaultOfBT(bt)})
-          |  }
-          |""".stripAndTrim
-      }
-    }
-
     def getTraitSeq = {
       val classesSeq = classes.map(getSClassSeq)
       val proxyBTSeq = optBaseType.opt(bt =>
@@ -827,8 +821,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |  }
        |
        |  $proxyBTSeq
-       |
-       |${baseTypeElem("Seq")}
        |
        |${classesSeq.mkString("\n\n")}
        |
@@ -868,7 +860,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           |      wrapperIso match {
           |        case iso: Iso[base,ext] =>
           |          val eRes = iso.eFrom
-          |          val newCall = unwrapMethodCall(mc, wrapper.wrappedValueOfBaseType, eRes)
+          |          val newCall = unwrapMethodCall(mc, wrapper.wrappedValue, eRes)
           |          iso.to(newCall)
           |      }
           |
@@ -954,8 +946,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |  }
        |
        |${if (e.isContainer) familyView(e) else ""}
-       |
-       |${baseTypeElem("Exp")}
        |
        |${concreteClassesString.mkString("\n\n")}
        |

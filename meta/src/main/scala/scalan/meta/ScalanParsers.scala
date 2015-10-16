@@ -103,7 +103,7 @@ trait ScalanParsers {
       case Some(bt) =>
         val entityName = entity.name
         val entityImplName = entityName + "Impl"
-        val wrappedValueArg = SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None)
+        val wrappedValueArg = SClassArg(false, false, true, "wrappedValue", STraitCall("Rep", List(bt)), None)
         val parent = STraitCall(entity.name, entity.tpeArgs.map(_.toTraitCall))
         val defaultBTImpl = SClassDef(
           name = entityImplName,

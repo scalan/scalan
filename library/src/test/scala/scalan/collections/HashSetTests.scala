@@ -28,7 +28,7 @@ class HashSetTests extends BaseCtxTests {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {
-//TODO make this work (recognizer should deal with BaseElemEx)
+//TODO make this work (recognizer should deal with BaseTypeElem)
 //          val Def(Lambda(_, _, x, SThrowableMethods.getMessage(obj))) = t1
 //          assert(x == obj)
         }
