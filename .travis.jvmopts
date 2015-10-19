@@ -1,4 +1,4 @@
--Xmx1536m
+-Xmx1g
 -Xss2m
 -XX:+CMSClassUnloadingEnabled
 -XX:+UseConcMarkSweepGC
