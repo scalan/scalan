@@ -42,6 +42,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
         case e => !!!(s"Expected $x to have BitSetElem[_], but got $e")
       }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 

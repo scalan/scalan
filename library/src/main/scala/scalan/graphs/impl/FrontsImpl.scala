@@ -42,6 +42,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
         case e => !!!(s"Expected $x to have FrontElem[_], but got $e")
       }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 

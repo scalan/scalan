@@ -45,6 +45,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
         case e => !!!(s"Expected $x to have AuthElem[_, _], but got $e")
       }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 

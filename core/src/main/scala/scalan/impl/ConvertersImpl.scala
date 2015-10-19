@@ -46,6 +46,7 @@ trait ConvertersAbs extends Converters  {
         case e => !!!(s"Expected $x to have ConverterElem[_, _, _], but got $e")
       }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 

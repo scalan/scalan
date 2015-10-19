@@ -23,8 +23,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   implicit def unwrapValueOfSHashSet[A](w: Rep[SHashSet[A]]): Rep[HashSet[A]] = w.wrappedValue
 
   implicit def hashSetElement[A:Elem]: Elem[HashSet[A]] =
-    new BaseTypeElem1[A, HashSet, SHashSet[A]](element[SHashSet[A]])(
-      element[A], container[HashSet], DefaultOfHashSet[A])
+    element[SHashSet[A]].asInstanceOf[WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }].baseElem.asInstanceOf[Elem[HashSet[A]]]
 
   implicit def castSHashSetElement[A](elem: Elem[SHashSet[A]]): SHashSetElem[A, SHashSet[A]] =
     elem.asInstanceOf[SHashSetElem[A, SHashSet[A]]]
@@ -45,7 +44,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
   }
 
   // familyElem
-  abstract class SHashSetElem[A, To <: SHashSet[A]](implicit _eA: Elem[A])
+  class SHashSetElem[A, To <: SHashSet[A]](implicit _eA: Elem[A])
     extends WrapperElem1[A, To, HashSet, SHashSet](_eA, container[HashSet], container[SHashSet]) {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
@@ -73,15 +72,17 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
         case e => !!!(s"Expected $x to have SHashSetElem[_, _], but got $e")
       }
     }
+    lazy val baseElem =
+      new BaseTypeElem1[A, HashSet, SHashSet[A]](this.asInstanceOf[Element[SHashSet[A]]])(
+        element[A], container[HashSet], DefaultOfHashSet[A])
+    lazy val eTo: Elem[_] = new SHashSetImplElem[A](isoSHashSetImpl(eA))(eA)
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def sHashSetElement[A](implicit eA: Elem[A]): Elem[SHashSet[A]] =
     elemCache.getOrElseUpdate(
       (classOf[SHashSetElem[A, SHashSet[A]]], Seq(eA)),
-      new SHashSetElem[A, SHashSet[A]] {
-        lazy val eTo = new SHashSetImplElem[A](isoSHashSetImpl(eA))(eA)
-      }).asInstanceOf[Elem[SHashSet[A]]]
+      new SHashSetElem[A, SHashSet[A]]).asInstanceOf[Elem[SHashSet[A]]]
 
   implicit case object SHashSetCompanionElem extends CompanionElem[SHashSetCompanionAbs] {
     lazy val tag = weakTypeTag[SHashSetCompanionAbs]
@@ -125,7 +126,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }
-    lazy val eTo = this
+    override lazy val eTo: Elem[_] = this
     override def convertSHashSet(x: Rep[SHashSet[A]]) = SHashSetImpl(x.wrappedValue)
     override def getDefaultRep = SHashSetImpl(DefaultOfHashSet[A].value)
     override lazy val tag = {

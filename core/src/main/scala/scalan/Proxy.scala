@@ -672,7 +672,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   private def tpeFromElem(e: Elem[_]): Type = {
     val tag = e match {
-      case extE: BaseTypeElem[_, _] => extE.wrapperElem.tag
+      case baseTypeElem: BaseTypeElem[_, _] => baseTypeElem.wrapperElem.tag
       case _ => e.tag
     }
     tag.tpe

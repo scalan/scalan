@@ -45,6 +45,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
         case e => !!!(s"Expected $x to have AbstractMatrixElem[_, _], but got $e")
       }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 

@@ -352,25 +352,16 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       // baseType elem and wrapper elem
       val baseTypeElem = optBaseType.opt { bt =>
         val defOrVal = if (e.tpeArgs.isEmpty) "lazy val" else "def"
-        val declaration = s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$baseTypeUse]"
-        if (e.isContainer) {
-          val elems = e.tpeArgNames.rep(ty => s"element[$ty]")
-          s"""
-             |  $declaration =
-             |    new BaseTypeElem1[${join(e.tpeArgNames, baseTypeName, typeUse)}](element[$typeUse])(
-             |      $elems, container[${bt.name}], ${getDefaultOfBT(bt)})
-             |""".stripAndTrim
-        } else {
-          val weakTagsForTpeArgs = e.tpeArgNames.map { argName =>
-            s"implicit val w$argName = element[$argName].tag"
-          }.mkString("\n")
-          s"""
-             |  $declaration = {
-             |    $weakTagsForTpeArgs
-             |    new BaseTypeElem[$baseTypeUse, $typeUse](element[$typeUse])(weakTypeTag[$baseTypeUse], ${getDefaultOfBT(bt)})
-             |  }
-             |""".stripAndTrim
-        }
+        val declaration =
+          s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$baseTypeUse]"
+        val wrapperElemType = if (e.isContainer)
+          "WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }"
+        else
+          "WrapperElem[_, _]"
+        s"""
+           |  $declaration =
+           |    element[$typeUse].asInstanceOf[$wrapperElemType].baseElem.asInstanceOf[Elem[$baseTypeUse]]
+           |""".stripAndTrim
       }
 
       def familyContainer(e: EntityTemplateData) = {
@@ -409,12 +400,11 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       }).mkString("\n")
 
       def familyElem(e: EntityTemplateData) = {
-        import e.{module => _, _}
         val wildcardElem = s"${e.name}Elem[${Array.fill(e.tpeArgs.length + 1)("_").mkString(", ")}]"
         val (optParent, parentElem) = e.firstAncestorType match {
           case Some(STraitCall("Reifiable", _)) =>
             val parentElem =
-              if (isContainer) {
+              if (e.isContainer) {
                 s"EntityElem1[${e.tpeArgsUse}, To, ${e.name}](${e.tpeArgNames.rep("e" + _)}, container[${e.name}])"
               } else {
                 "EntityElem[To]"
@@ -422,10 +412,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
             (None, parentElem)
           case Some(STraitCall("TypeWrapper", _)) =>
             val parentElem =
-              if (isContainer) {
+              if (e.isContainer) {
                 s"WrapperElem1[${join(e.tpeArgNames, "To", e.baseTypeName, e.name)}](${e.tpeArgNames.rep("_e" + _)}, container[${e.baseTypeName}], container[${e.name}])"
               } else {
-                s"WrapperElem[${e.baseTypeUse}, To](element[${e.baseTypeUse}])"
+                s"WrapperElem[${e.baseTypeUse}, To]"
               }
             (None, parentElem)
           case Some(parent @ STraitCall(parentName, parentTpeArgs)) =>
@@ -439,13 +429,11 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           if (!module.methods.exists(_.name == elemMethodName)) {
             val elemType = e.elemTypeUse()
             val elemMethodBody =
-              if (e.isWrapper)
+              if (e.isWrapper) {
                 s"""    elemCache.getOrElseUpdate(
                    |      (classOf[$elemType], ${e.implicitArgsUse.opt(x => s"Seq$x", "Nil")}),
-                   |      new $elemType {
-                   |        lazy val eTo = new ${e.name}ImplElem${e.tpeArgsUse}(iso${e.name}Impl${e.implicitArgsUse})${e.implicitArgsUse}
-                   |      }).asInstanceOf[Elem[${e.typeUse}]]"""
-              else
+                   |      new $elemType).asInstanceOf[Elem[${e.typeUse}]]"""
+              } else
                 s"    cachedElem[$elemType]${e.implicitArgsOrParens}"
             s"""
                |  implicit def $elemMethodName${e.tpeArgsDecl}${e.implicitArgsDecl()}: Elem[${e.typeUse}] =
@@ -454,9 +442,34 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           } else ""
         }
 
+        val baseTypeElem = optBaseType.opt { bt =>
+          val thisElem = s"this.asInstanceOf[Element[$typeUse]]"
+          if (e.isContainer) {
+            val elems = e.tpeArgNames.rep(ty => s"element[$ty]")
+            s"""
+               |    lazy val baseElem =
+               |      new BaseTypeElem1[${join(e.tpeArgNames, baseTypeName, typeUse)}]($thisElem)(
+               |        $elems, container[${bt.name}], ${getDefaultOfBT(bt)})
+               |""".stripAndTrim
+          } else {
+            val weakTagsForTpeArgs = e.tpeArgNames.map { argName =>
+              s"      implicit val w$argName = element[$argName].tag"
+            }.mkString("\n")
+            s"""
+               |    lazy val baseElem = {
+               |      $weakTagsForTpeArgs
+               |      new BaseTypeElem[$baseTypeUse, $typeUse]($thisElem)(weakTypeTag[$baseTypeUse], ${getDefaultOfBT(bt)})
+               |    }
+               |""".stripAndTrim
+          }
+        }
+
+        val eTo =
+          s"    lazy val eTo: Elem[_] = new ${e.name}ImplElem${e.tpeArgsUse}(iso${e.name}Impl${e.implicitArgsUse})${e.implicitArgsUse}"
+
         s"""
         |  // familyElem
-        |  ${isWrapper.opt("abstract ")}class ${e.elemTypeDecl}${e.implicitArgsDecl("_")}
+        |  class ${e.elemTypeDecl}${e.implicitArgsDecl("_")}
         |    extends $parentElem {
         |${e.implicitArgs.opt(_.rep(a => s"    def ${a.name} = _${a.name}", "\n"))}
         |    ${overrideIfHasParent}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
@@ -484,6 +497,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e")
         |      }
         |    }
+        |${e.isWrapper.opt(baseTypeElem)}
+        |${e.isWrapper.opt(eTo)}
         |    override def getDefaultRep: Rep[To] = ???
         |  }
         |$elemMethodDefinition
@@ -600,6 +615,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           }
         }
 
+        // TODO is the eTo override needed?
+
         // note: ${className}Iso.eTo doesn't call cachedElem because
         // they are already cached via Isos + lazy val and this would lead to stack overflow
         s"""
@@ -616,7 +633,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    override lazy val tyArgSubst: Map[String, TypeDesc] = {
         |      Map(${c.tpeSubstStr})
         |    }
-        |    ${e.isWrapper.opt("lazy val eTo = this")}
+        |    ${e.isWrapper.opt("override lazy val eTo: Elem[_] = this")}
         |    override def convert${parent.name}(x: Rep[$parent]) = $converterBody
         |    override def getDefaultRep = $className(${fieldTypes.rep(zeroSExpr(_))})
         |    override lazy val tag = {

@@ -17,9 +17,8 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 
   class BaseTypeElem[TBase, TWrapper <: TypeWrapper[TBase, TWrapper]]
-    (extE: =>Elem[TWrapper])(implicit tag: WeakTypeTag[TBase], z: Default[TBase])
+    (val wrapperElem: Elem[TWrapper])(implicit tag: WeakTypeTag[TBase], z: Default[TBase])
     extends BaseElem[TBase] { self =>
-    lazy val wrapperElem = extE
     override protected def getDefaultRep = {
       val wrapperDefaultValue = wrapperElem.defaultRepValue
       unwrapTypeWrapperRep(wrapperDefaultValue)
@@ -28,18 +27,19 @@ trait TypeWrappers extends Base { self: Scalan =>
   }
 
   class BaseTypeElem1[A, CBase[_], TWrapper <: TypeWrapper[CBase[A], TWrapper]]
-    (extE: =>Elem[TWrapper])(implicit val eItem: Elem[A], val cont: Cont[CBase], z: Default[CBase[A]])
-    extends BaseTypeElem[CBase[A], TWrapper](extE)(cont.tag(eItem.tag), z)
+    (wrapperElem: Elem[TWrapper])(implicit val eItem: Elem[A], val cont: Cont[CBase], z: Default[CBase[A]])
+    extends BaseTypeElem[CBase[A], TWrapper](wrapperElem)(cont.tag(eItem.tag), z)
 
   protected def unwrapTypeWrapperRep[TBase, TWrapper](x: Rep[TypeWrapper[TBase, TWrapper]]): Rep[TBase]
 
-  abstract class WrapperElem[TBase, TWrapper](val baseElem: Elem[TBase]) extends EntityElem[TWrapper] {
+  abstract class WrapperElem[TBase, TWrapper] extends EntityElem[TWrapper] {
+    val baseElem: Elem[TBase]
     def eTo: Elem[_]
   }
 
   abstract class WrapperElem1[A, Abs, CBase[_], CW[_]](eA: Elem[A], contBase: Cont[CBase], contW: Cont[CW])
     extends EntityElem1[A, Abs, CW](eA, contW) {
-    def baseElem: Elem[CBase[A]] = contBase.lift(eA)
+    val baseElem: Elem[CBase[A]]
     def eTo: Elem[_]
   }
 

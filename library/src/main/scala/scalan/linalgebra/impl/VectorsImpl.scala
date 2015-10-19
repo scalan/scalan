@@ -45,6 +45,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
         case e => !!!(s"Expected $x to have AbstractVectorElem[_, _], but got $e")
       }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 

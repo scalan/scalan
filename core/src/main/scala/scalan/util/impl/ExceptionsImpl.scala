@@ -21,13 +21,12 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
 
   implicit def unwrapValueOfSThrowable(w: Rep[SThrowable]): Rep[Throwable] = w.wrappedValue
 
-  implicit lazy val throwableElement: Elem[Throwable] = {
-    new BaseTypeElem[Throwable, SThrowable](element[SThrowable])(weakTypeTag[Throwable], DefaultOfThrowable)
-  }
+  implicit lazy val throwableElement: Elem[Throwable] =
+    element[SThrowable].asInstanceOf[WrapperElem[_, _]].baseElem.asInstanceOf[Elem[Throwable]]
 
   // familyElem
-  abstract class SThrowableElem[To <: SThrowable]
-    extends WrapperElem[Throwable, To](element[Throwable]) {
+  class SThrowableElem[To <: SThrowable]
+    extends WrapperElem[Throwable, To] {
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Exceptions")
@@ -52,15 +51,17 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
         case e => !!!(s"Expected $x to have SThrowableElem[_], but got $e")
       }
     }
+    lazy val baseElem = {
+      new BaseTypeElem[Throwable, SThrowable](this.asInstanceOf[Element[SThrowable]])(weakTypeTag[Throwable], DefaultOfThrowable)
+    }
+    lazy val eTo: Elem[_] = new SThrowableImplElem(isoSThrowableImpl)
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def sThrowableElement: Elem[SThrowable] =
     elemCache.getOrElseUpdate(
       (classOf[SThrowableElem[SThrowable]], Nil),
-      new SThrowableElem[SThrowable] {
-        lazy val eTo = new SThrowableImplElem(isoSThrowableImpl)
-      }).asInstanceOf[Elem[SThrowable]]
+      new SThrowableElem[SThrowable]).asInstanceOf[Elem[SThrowable]]
 
   implicit case object SThrowableCompanionElem extends CompanionElem[SThrowableCompanionAbs] {
     lazy val tag = weakTypeTag[SThrowableCompanionAbs]
@@ -99,7 +100,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
-    lazy val eTo = this
+    override lazy val eTo: Elem[_] = this
     override def convertSThrowable(x: Rep[SThrowable]) = SThrowableImpl(x.wrappedValue)
     override def getDefaultRep = SThrowableImpl(DefaultOfThrowable.value)
     override lazy val tag = {
@@ -168,7 +169,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
-    lazy val eTo = this
+    override lazy val eTo: Elem[_] = this
     override def convertSThrowable(x: Rep[SThrowable]) = SException(x.wrappedValue)
     override def getDefaultRep = SException(DefaultOfThrowable.value)
     override lazy val tag = {

@@ -24,8 +24,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   implicit def unwrapValueOfSSeq[A](w: Rep[SSeq[A]]): Rep[Seq[A]] = w.wrappedValue
 
   implicit def seqElement[A:Elem]: Elem[Seq[A]] =
-    new BaseTypeElem1[A, Seq, SSeq[A]](element[SSeq[A]])(
-      element[A], container[Seq], DefaultOfSeq[A])
+    element[SSeq[A]].asInstanceOf[WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }].baseElem.asInstanceOf[Elem[Seq[A]]]
 
   implicit def castSSeqElement[A](elem: Elem[SSeq[A]]): SSeqElem[A, SSeq[A]] =
     elem.asInstanceOf[SSeqElem[A, SSeq[A]]]
@@ -47,7 +46,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   }
 
   // familyElem
-  abstract class SSeqElem[A, To <: SSeq[A]](implicit _eA: Elem[A])
+  class SSeqElem[A, To <: SSeq[A]](implicit _eA: Elem[A])
     extends WrapperElem1[A, To, Seq, SSeq](_eA, container[Seq], container[SSeq]) {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
@@ -75,15 +74,17 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
         case e => !!!(s"Expected $x to have SSeqElem[_, _], but got $e")
       }
     }
+    lazy val baseElem =
+      new BaseTypeElem1[A, Seq, SSeq[A]](this.asInstanceOf[Element[SSeq[A]]])(
+        element[A], container[Seq], DefaultOfSeq[A])
+    lazy val eTo: Elem[_] = new SSeqImplElem[A](isoSSeqImpl(eA))(eA)
     override def getDefaultRep: Rep[To] = ???
   }
 
   implicit def sSeqElement[A](implicit eA: Elem[A]): Elem[SSeq[A]] =
     elemCache.getOrElseUpdate(
       (classOf[SSeqElem[A, SSeq[A]]], Seq(eA)),
-      new SSeqElem[A, SSeq[A]] {
-        lazy val eTo = new SSeqImplElem[A](isoSSeqImpl(eA))(eA)
-      }).asInstanceOf[Elem[SSeq[A]]]
+      new SSeqElem[A, SSeq[A]]).asInstanceOf[Elem[SSeq[A]]]
 
   implicit case object SSeqCompanionElem extends CompanionElem[SSeqCompanionAbs] {
     lazy val tag = weakTypeTag[SSeqCompanionAbs]
@@ -167,7 +168,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }
-    lazy val eTo = this
+    override lazy val eTo: Elem[_] = this
     override def convertSSeq(x: Rep[SSeq[A]]) = SSeqImpl(x.wrappedValue)
     override def getDefaultRep = SSeqImpl(DefaultOfSeq[A].value)
     override lazy val tag = {

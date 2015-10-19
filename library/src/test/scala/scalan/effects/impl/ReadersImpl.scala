@@ -46,6 +46,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
         case e => !!!(s"Expected $x to have ReaderElem[_, _, _], but got $e")
       }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 
