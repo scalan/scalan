@@ -13,10 +13,10 @@ class ExceptionTests extends BaseCtxTests {
 
     lazy val t1 = fun { (t: Rep[SThrowable]) => t.getMessage }
     lazy val t2 = fun { (t: Rep[SThrowable]) => t.getMessage }
-    lazy val t3 = fun { (t: Rep[SThrowable]) => SException(t.wrappedValueOfBaseType)}
-    lazy val t4 = fun { (t: Rep[SThrowable]) => SException(t.wrappedValueOfBaseType).wrappedValueOfBaseType}
-    lazy val t5 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.wrappedValueOfBaseType)}
-    lazy val t6 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.wrappedValueOfBaseType).wrappedValueOfBaseType}
+    lazy val t3 = fun { (t: Rep[SThrowable]) => SException(t.wrappedValue)}
+    lazy val t4 = fun { (t: Rep[SThrowable]) => SException(t.wrappedValue).wrappedValue}
+    lazy val t5 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.wrappedValue)}
+    lazy val t6 = fun { (t: Rep[SThrowable]) => SThrowableImpl(t.wrappedValue).wrappedValue}
 
     lazy val t7 = fun { (msg: Rep[String]) => SThrowable(msg)}
     lazy val t8 = fun { (msg: Rep[String]) => SThrowable(msg).getMessage }
@@ -29,7 +29,7 @@ class ExceptionTests extends BaseCtxTests {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {
-//TODO make this work (recognizer should deal with BaseElemEx)
+//TODO make this work (recognizer should deal with BaseTypeElem)
 //          val Def(Lambda(_, _, x, SThrowableMethods.getMessage(obj))) = t1
 //          assert(x == obj)
         }
@@ -49,7 +49,7 @@ class ExceptionTests extends BaseCtxTests {
       def test() = {
         //assert(!isInlineThunksOnForce, "precondition for tests")
         {
-//TODO make this work (recognizer should deal with BaseElemEx)
+//TODO make this work (recognizer should deal with BaseTypeElem)
 //          val Def(Lambda(_, _, x, SThrowableMethods.getMessage(obj))) = t1
 //          assert(x == obj)
         }

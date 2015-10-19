@@ -11,16 +11,16 @@ trait CommunitySmokeProg extends ScalanCommunityDsl with CollectionExamples {
     Collection.singleton(1)
   }
 
-  lazy val seqsEmpty = fun {ignore: Rep[Int] => SSeq.empty[Int].wrappedValueOfBaseType}
+  lazy val seqsEmpty = fun {ignore: Rep[Int] => SSeq.empty[Int].wrappedValue}
 
-  lazy val seqsSingle = fun {v:Rep[Int] => SSeq.single(v).wrappedValueOfBaseType}
+  lazy val seqsSingle = fun {v:Rep[Int] => SSeq.single(v).wrappedValue}
 
   lazy val seqsFromArray = fun {arr: Rep[Array[Int]] =>
-    SSeq(arr).wrappedValueOfBaseType
+    SSeq(arr).wrappedValue
   }
 
   lazy val seqsArrayMap = fun {(arr: Rep[Array[Array[Int]]]) =>
-    val f = {s: Rep[Array[Int]] => (SSeq(s).+:(10)).wrappedValueOfBaseType}
+    val f = {s: Rep[Array[Int]] => (SSeq(s).+:(10)).wrappedValue}
     arr.map(f)
   }
 
@@ -30,7 +30,7 @@ trait CommunitySmokeProg extends ScalanCommunityDsl with CollectionExamples {
   lazy val seqsSimpleMap = fun { x: Rep[Seq[Int]] =>
     val seqImp = SSeqImpl(x)
     val res = sSeqMap(seqImp)
-    res.wrappedValueOfBaseType
+    res.wrappedValue
   }
   lazy val expBaseArrays = fun { xss: Arr[Array[Int]] =>
     val pss1: Arr[Collection[Int]] = xss.map { xs: Rep[Array[Int]] => Collection(xs)}

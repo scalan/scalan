@@ -1,6 +1,7 @@
 package scalan.meta
 
 import scala.reflect.internal.ModifierFlags
+import PrintExtensions._
 
 object ScalanAst {
   // STpe universe --------------------------------------------------------------------------
@@ -17,7 +18,7 @@ object ScalanAst {
   }
   /** Invocation of a trait with arguments */
   case class STraitCall(val name: String, override val tpeSExprs: List[STpeExpr]) extends STpeExpr {
-    override def toString = name + (if (tpeSExprs.isEmpty) "" else tpeSExprs.mkString("[", ",", "]"))
+    override def toString = name + tpeSExprs.asTypeParams()
   }
 
   case class STpePrimitive(val name: String, defaultValueString: String) extends STpeExpr {
@@ -180,7 +181,7 @@ object ScalanAst {
                          body: Option[SExpr] = None,
                          isElemOrCont: Boolean = false)
     extends SBodyItem {
-    def externalOpt: Option[SMethodAnnotation] = annotations.filter(a => a.annotationClass == "External").headOption
+    def externalOpt: Option[SMethodAnnotation] = annotations.find(_.annotationClass == "External")
     def explicitArgs = argSections.flatMap(_.args.filterNot(_.impFlag))
     def allArgs = argSections.flatMap(_.args)
   }
@@ -199,12 +200,12 @@ object ScalanAst {
                       tparams: List[STpeArg] = Nil,
                       flags: Long = ModifierFlags.PARAM)
   {
-    def isHighKind = !tparams.isEmpty
+    def isHighKind = tparams.nonEmpty
     def isCovariant = hasFlag(ModifierFlags.COVARIANT)
     def hasFlag(flag: Long) = (flag & flags) != 0L
     def declaration: String =
       if (isHighKind) {
-        val params = tparams.map(_.declaration).mkString(",")
+        val params = tparams.rep(_.declaration)
         s"$name[$params]"
       }
       else name

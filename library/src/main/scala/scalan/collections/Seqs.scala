@@ -12,7 +12,7 @@ trait Seqs extends Base with TypeWrappers { self: ScalanCommunityDsl =>
   @ContainerType @FunctorType
   trait SSeq[A] extends TypeWrapper[Seq[A], SSeq[A]] { self =>
     implicit def eA: Elem[A]
-    def wrappedValueOfBaseType: Rep[Seq[A]]
+    def wrappedValue: Rep[Seq[A]]
 
     /** The size of this sequence. */
     @External @Semantics(name = ContainerLength)
@@ -70,8 +70,8 @@ trait Seqs extends Base with TypeWrappers { self: ScalanCommunityDsl =>
 
 trait SeqsDslSeq extends impl.SeqsSeq { self: ScalanCommunityDslSeq =>
   trait SeqSSeq[A] extends SSeqImpl[A] {
-    override def map[B:Elem](f: Rep[A => B]): Rep[SSeq[B]] = SSeqImpl(wrappedValueOfBaseType.map(f))
-    override def toArray = wrappedValueOfBaseType.toArray[A](eA.classTag)
+    override def map[B:Elem](f: Rep[A => B]): Rep[SSeq[B]] = SSeqImpl(wrappedValue.map(f))
+    override def toArray = wrappedValue.toArray[A](eA.classTag)
   }
   implicit class SeqOps(s: Seq.type) {
     def single[A](elem: A): Seq[A] = Seq(elem)

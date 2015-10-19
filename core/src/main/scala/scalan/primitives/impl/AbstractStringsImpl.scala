@@ -36,10 +36,13 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
       tryConvert(element[AString], this, x, conv)
     }
 
-    def convertAString(x : Rep[AString]): Rep[To] = {
-      assert(x.selfType1 match { case _: AStringElem[_] => true; case _ => false })
-      x.asRep[To]
+    def convertAString(x: Rep[AString]): Rep[To] = {
+      x.selfType1 match {
+        case _: AStringElem[_] => x.asRep[To]
+        case e => !!!(s"Expected $x to have AStringElem[_], but got $e")
+      }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -71,8 +74,8 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
       Map()
     }
 
-    override def convertAString(x: Rep[AString]) = SString(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def convertAString(x: Rep[AString]) = SString(x.wrappedValue)
+    override def getDefaultRep = SString("")
     override lazy val tag = {
       weakTypeTag[SString]
     }
@@ -85,20 +88,19 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   class SStringIso
     extends Iso[SStringData, SString] {
     override def from(p: Rep[SString]) =
-      p.wrappedValueOfBaseType
+      p.wrappedValue
     override def to(p: Rep[String]) = {
-      val wrappedValueOfBaseType = p
-      SString(wrappedValueOfBaseType)
+      val wrappedValue = p
+      SString(wrappedValue)
     }
-    lazy val defaultRepTo: Rep[SString] = SString("")
     lazy val eTo = new SStringElem(this)
   }
   // 4) constructor and deconstructor
   abstract class SStringCompanionAbs extends CompanionBase[SStringCompanionAbs] with SStringCompanion {
     override def toString = "SString"
 
-    def apply(wrappedValueOfBaseType: Rep[String]): Rep[SString] =
-      mkSString(wrappedValueOfBaseType)
+    def apply(wrappedValue: Rep[String]): Rep[SString] =
+      mkSString(wrappedValue)
   }
   object SStringMatcher {
     def unapply(p: Rep[AString]) = unmkSString(p)
@@ -125,7 +127,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     cachedIso[SStringIso]()
 
   // 6) smart constructor and deconstructor
-  def mkSString(wrappedValueOfBaseType: Rep[String]): Rep[SString]
+  def mkSString(wrappedValue: Rep[String]): Rep[SString]
   def unmkSString(p: Rep[AString]): Option[(Rep[String])]
 
   // elem for concrete class
@@ -141,8 +143,8 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
       Map()
     }
 
-    override def convertAString(x: Rep[AString]) = CString(x.wrappedValueOfBaseType)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def convertAString(x: Rep[AString]) = CString(x.wrappedValue)
+    override def getDefaultRep = CString("")
     override lazy val tag = {
       weakTypeTag[CString]
     }
@@ -155,20 +157,19 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   class CStringIso
     extends Iso[CStringData, CString] {
     override def from(p: Rep[CString]) =
-      p.wrappedValueOfBaseType
+      p.wrappedValue
     override def to(p: Rep[String]) = {
-      val wrappedValueOfBaseType = p
-      CString(wrappedValueOfBaseType)
+      val wrappedValue = p
+      CString(wrappedValue)
     }
-    lazy val defaultRepTo: Rep[CString] = CString("")
     lazy val eTo = new CStringElem(this)
   }
   // 4) constructor and deconstructor
   abstract class CStringCompanionAbs extends CompanionBase[CStringCompanionAbs] with CStringCompanion {
     override def toString = "CString"
 
-    def apply(wrappedValueOfBaseType: Rep[String]): Rep[CString] =
-      mkCString(wrappedValueOfBaseType)
+    def apply(wrappedValue: Rep[String]): Rep[CString] =
+      mkCString(wrappedValue)
   }
   object CStringMatcher {
     def unapply(p: Rep[AString]) = unmkCString(p)
@@ -195,7 +196,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     cachedIso[CStringIso]()
 
   // 6) smart constructor and deconstructor
-  def mkCString(wrappedValueOfBaseType: Rep[String]): Rep[CString]
+  def mkCString(wrappedValue: Rep[String]): Rep[CString]
   def unmkCString(p: Rep[AString]): Option[(Rep[String])]
 
   registerModule(scalan.meta.ScalanCodegen.loadModule(AbstractStrings_Module.dump))
@@ -209,9 +210,9 @@ trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
   }
 
   case class SeqSString
-      (override val wrappedValueOfBaseType: Rep[String])
+      (override val wrappedValue: Rep[String])
 
-    extends SString(wrappedValueOfBaseType)
+    extends SString(wrappedValue)
         with UserTypeSeq[SString] {
     lazy val selfType = element[SString]
   }
@@ -220,18 +221,18 @@ trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
   }
 
   def mkSString
-      (wrappedValueOfBaseType: Rep[String]): Rep[SString] =
-      new SeqSString(wrappedValueOfBaseType)
+      (wrappedValue: Rep[String]): Rep[SString] =
+      new SeqSString(wrappedValue)
   def unmkSString(p: Rep[AString]) = p match {
     case p: SString @unchecked =>
-      Some((p.wrappedValueOfBaseType))
+      Some((p.wrappedValue))
     case _ => None
   }
 
   case class SeqCString
-      (override val wrappedValueOfBaseType: Rep[String])
+      (override val wrappedValue: Rep[String])
 
-    extends CString(wrappedValueOfBaseType)
+    extends CString(wrappedValue)
         with UserTypeSeq[CString] {
     lazy val selfType = element[CString]
   }
@@ -240,11 +241,11 @@ trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
   }
 
   def mkCString
-      (wrappedValueOfBaseType: Rep[String]): Rep[CString] =
-      new SeqCString(wrappedValueOfBaseType)
+      (wrappedValue: Rep[String]): Rep[CString] =
+      new SeqCString(wrappedValue)
   def unmkCString(p: Rep[AString]) = p match {
     case p: CString @unchecked =>
-      Some((p.wrappedValueOfBaseType))
+      Some((p.wrappedValue))
     case _ => None
   }
 }
@@ -258,11 +259,11 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
   }
 
   case class ExpSString
-      (override val wrappedValueOfBaseType: Rep[String])
+      (override val wrappedValue: Rep[String])
 
-    extends SString(wrappedValueOfBaseType) with UserTypeDef[SString] {
+    extends SString(wrappedValue) with UserTypeDef[SString] {
     lazy val selfType = element[SString]
-    override def mirror(t: Transformer) = ExpSString(t(wrappedValueOfBaseType))
+    override def mirror(t: Transformer) = ExpSString(t(wrappedValue))
   }
 
   lazy val SString: Rep[SStringCompanionAbs] = new SStringCompanionAbs with UserTypeDef[SStringCompanionAbs] {
@@ -277,21 +278,21 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
   }
 
   def mkSString
-    (wrappedValueOfBaseType: Rep[String]): Rep[SString] =
-    new ExpSString(wrappedValueOfBaseType)
+    (wrappedValue: Rep[String]): Rep[SString] =
+    new ExpSString(wrappedValue)
   def unmkSString(p: Rep[AString]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: SStringElem @unchecked =>
-      Some((p.asRep[SString].wrappedValueOfBaseType))
+      Some((p.asRep[SString].wrappedValue))
     case _ =>
       None
   }
 
   case class ExpCString
-      (override val wrappedValueOfBaseType: Rep[String])
+      (override val wrappedValue: Rep[String])
 
-    extends CString(wrappedValueOfBaseType) with UserTypeDef[CString] {
+    extends CString(wrappedValue) with UserTypeDef[CString] {
     lazy val selfType = element[CString]
-    override def mirror(t: Transformer) = ExpCString(t(wrappedValueOfBaseType))
+    override def mirror(t: Transformer) = ExpCString(t(wrappedValue))
   }
 
   lazy val CString: Rep[CStringCompanionAbs] = new CStringCompanionAbs with UserTypeDef[CStringCompanionAbs] {
@@ -306,19 +307,19 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
   }
 
   def mkCString
-    (wrappedValueOfBaseType: Rep[String]): Rep[CString] =
-    new ExpCString(wrappedValueOfBaseType)
+    (wrappedValue: Rep[String]): Rep[CString] =
+    new ExpCString(wrappedValue)
   def unmkCString(p: Rep[AString]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: CStringElem @unchecked =>
-      Some((p.asRep[CString].wrappedValueOfBaseType))
+      Some((p.asRep[CString].wrappedValue))
     case _ =>
       None
   }
 
   object AStringMethods {
-    object wrappedValueOfBaseType {
+    object wrappedValue {
       def unapply(d: Def[_]): Option[Rep[AString]] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AStringElem[_]] && method.getName == "wrappedValueOfBaseType" =>
+        case MethodCall(receiver, method, _, _) if receiver.elem.isInstanceOf[AStringElem[_]] && method.getName == "wrappedValue" =>
           Some(receiver).asInstanceOf[Option[Rep[AString]]]
         case _ => None
       }
@@ -359,7 +360,7 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
 object AbstractStrings_Module {
   val packageName = "scalan.primitives"
   val name = "AbstractStrings"
-  val dump = "H4sIAAAAAAAAALVVT4hbRRj/8ja72SRLd7vQwu7FNY0rFk2WQulhCyVNUxHSzbKvisRSmLxM0mnnzZudmd0mPfTgUW/iVaT33rwIghcRxIMnUcGzp6pIUXtq6cy8P3lJ+9r14DsM8+bNfN/vz/fNu/8HzEsBm9JDFLGajxWquXbekKrqtpgianwl6B9QfAkPPjz5pXeFXZQOLHdh4QaSlyTtQjGctEY8mbt4vw1FxDwsVSCkglfbNkPdCyjFniIBqxPfP1CoR3G9TaTabkO+F/TH+3AXcm1Y8QLmCayw26RISiyj9UVsEJHkvWjfxx0+ycHqhkU9xeKqQERp+DrHSrh/D3N3zAI29hUci6B1uIGl9xSIzwOh4hQFHe5G0I9f8wzpBVht30SHqK5TDOuuEoQN9ckyR94tNMQ7eovZnteAJaaDq2Nu3+faUJJ4Xwv0js+pXRlxANAOnLEgahN9aok+NaNP1cWCIEruIPNxVwSjMYRPbg5gxHWIN18SIo6AW6xf/eia98Ejt+w75vDIQClYhgs60CsZ1WCt0Dp+t/eJfPj2vXMOlLpQIrLRk0ogT6Utj9QqI8YCZTEnAiIx1G5VstyyWRp6z0xJFL3A54jpSJGUS9onSjyizGazthS5kyF9QXEcb82NeC7hu5HB19ZNE1G6+2Dtrdd+b73vgDOdoqhDurrwRRxUQaERloOV1AzFSN3sPAnj1x/82f92C645iU5R2KNZo0PMy19+Kv/4xgUHFru2kC9TNOxqqWSLYr8jmgFTXVgMDrEIvxQOETWz51pV6OMBOqAqEjDNfE4zV7CR2XIcG1m2bXnnYgHKYYXuBAxXL+9W/3W///S+KUABS+GXsAefkHOPfz02ULY2FZy8LRDnuP8eoge4M7iIJDauWpDLCuZ0Myf6nMqykuNdQXx9dRzis9989e5fX+/MWzdXI4o2+MS5fJqtAeFUKgoWJhtCVyfelkICbuDj45WH5Pq9j5V1MTeavis6vZu6ObftubUXGBrfWf90t5y/137+3IGi9q1HlI94deuInfY/dg8k9T0Z1rVOK26oUTOdbn1yv6zaqW4Td6Jl6nM57srI3MxusrFSe08kdWYj/oeqMcPGs5aa8ZQdNzO5No/ItTnLNUyUgr8J07yLe5gMiLm6j6RHBPpZ5NOnl1qjBOvWi9hP02xk0py579ZnYJ2fXtRSLMf/ivCQ/g8cjxqAx+0pIwICKhm94UaVqdvj7qPPdk7/8MVvtpdLpsb13cKSf3e6h6elWJ0Bov/JKfAK8qb8LfynWm1v9yMJAAA="
+  val dump = "H4sIAAAAAAAAALVVTWwbRRR+3jhx/KMmjQRSciG4JggEdoSEeggSMq6LkNwkyhaETIU0Xo/dKbOzk51JsDn0wBFuiCtCvffGBQmJC0JCHDghQOLMqYBQBfRUxJvZH69dts2FPYzm58177/u+92Zv/wbLKoQd5RFORNOnmjRdO28r3XC7QjM9vRIMTzi9REfvP/65d0W8ohxY68PKdaIuKd6HcjTpTmQ6d+lxD8pEeFTpIFQanuzZCC0v4Jx6mgWixXz/RJMBp60eU3qvB8VBMJwew00o9GDdC4QXUk3dDidKURXvr1KTEUvXZbueHshZDNEyKFoZFFdDwjSmjzHWI/sjKt2pCMTU13AuTu1AmrTQpsR8GYQ6CVFCd9eDYbIsCoIbsNG7QU5JC0OMW64OmRjjzaok3jtkTPfRxJgXMWFF+ejqVNr1Ug8qih4jQa/5ktudiQQAVOAFm0Rzxk8z5adp+Gm4NGSEs/eIOTwMg8kUoq+wBDCR6OK5R7hIPNCuGDY+uOa9dc+t+o65PDGplCzCFXT0RE41WCmQx2+OPlJ3X7110YFKHypMtQdKh8TTWcljtqpEiEDbnFMCSThGtep5atkobbRZKImyF/iSCPQUU1lDnTjzmDbGZq8Wq5NDfUlLmpgWJrKQ4t3OwWvrpkM4P7yz+fxTv3bfdMCZD1FGly4Wfpg41VBqR+VgKTVDOWY3P06K+Ok7vw+/3oVrTspT7PZs0qCLZfXTD9Xvn3nZgdW+LeTLnIz7SJXqcuofhJ1A6D6sBqc0jE5Kp4Sb2X9KVRrSETnhOiYwi3wJkWvYzm05SQ0te7a8CwkB1ahC9wNBG5cPG3+733582xRgCLXoJOrBf9jF+z+fG2lbmxpq74ZESjp8g/CTqPHXNCxhC6esXMgTUNLDkPn4YJzSF7/64vU/vtxfthpuxMCsy5lexSxGE9qp1zWszAwiLWeKVqK03cCn5+t32du3PtRWu8Jk/oU4GNzAltyz9zYfImPyUv3V33X+3PzxUwfKqNaAaZ/Ixu4Z++t/7BlIq3o2bCFP627EUScbbmv2qmzYKTaHO+Myc1xNejEWN7eHrK+M7WNpdVmPj6wVM2w/KKQZL9hxJxdh54wIO4sIo0CZpHdgHm35iLIRM8/0mViIk34w8/nbte4kzXX3YejnYbZzYS68bVsLab00v4lUrCX/hegSvvnn47KXSVOqGEAI9ZyOcON6xKa4ee+T/We/++wX28EVU9n4joj0P53t3HkqNhYSwf9vJnkNRVP0Nv1/AZD40HUPCQAA"
 }
 }
 

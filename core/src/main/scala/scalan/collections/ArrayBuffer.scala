@@ -46,7 +46,6 @@ trait ArrayBuffers extends Base { self: Scalan =>
   case class ArrayBufferIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, ArrayBuffer](iso) {
     def from(x: Rep[ArrayBuffer[B]]) = x.mapBy(iso.fromFun)
     def to(x: Rep[ArrayBuffer[A]]) = x.mapBy(iso.toFun)
-    lazy val defaultRepTo = ArrayBuffer.empty[B]
   }
 
   def arrayBufferIso[A,B](iso: Iso[A, B]) = cachedIso[ArrayBufferIso[A, B]](iso)
@@ -149,7 +148,6 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
 //      implicit val tB = iso.tag
 //      weakTypeTag[ArrayBuffer[B]]
 //    }
-//    lazy val defaultRepTo = ArrayBuffer.empty[B]
 //  }
 //
 //  def arrayBufferIso[A, B](iso: Iso[A, B]): Iso[ArrayBuffer[A], ArrayBuffer[B]] = {

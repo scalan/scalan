@@ -51,7 +51,6 @@ trait Views extends Elems { self: Scalan =>
     def eTo: Elem[To]
     // ideally this could be replaced by eTo.getDefaultRep and all implementations
     // moved to the corresponding *Elem class, but this leads to ambiguous implicits
-    def defaultRepTo: Rep[To]
     def from(p: Rep[To]): Rep[From]
     def to(p: Rep[From]): Rep[To]
     override def toString = s"${eFrom.name} <-> ${eTo.name}"
@@ -101,7 +100,6 @@ trait Views extends Elems { self: Scalan =>
   trait ViewElem[From, To] extends Elem[To] { _: scala.Equals =>
     def iso: Iso[From, To]
     override def isEntityType = shouldUnpack(this)
-    protected def getDefaultRep = iso.defaultRepTo
   }
 
   object ViewElem {
@@ -250,7 +248,6 @@ trait Views extends Elems { self: Scalan =>
   trait ConcreteClass4[T[_, _, _, _]]
 
   case class IdentityIso[A](eTo: Elem[A]) extends Iso[A, A]()(eTo) {
-    def defaultRepTo = eTo.defaultRepValue
     def from(x: Rep[A]) = x
     def to(x: Rep[A]) = x
     override def isIdentity = true
@@ -284,7 +281,6 @@ trait Views extends Elems { self: Scalan =>
       }
       toCacheValue.get
     }
-    def defaultRepTo = eTo.defaultRepValue
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
   def pairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[(A1, A2), (B1, B2)] = 
@@ -301,7 +297,6 @@ trait Views extends Elems { self: Scalan =>
       b.mapSumBy(iso1.fromFun, iso2.fromFun)
     def to(a: Rep[A1 | A2]) =
       a.mapSumBy(iso1.toFun, iso2.toFun)
-    def defaultRepTo = eTo.defaultRepValue
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
   def sumIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[A1 | A2, B1 | B2] =
@@ -311,7 +306,6 @@ trait Views extends Elems { self: Scalan =>
     def eTo = iso2.eTo
     def from(c: Rep[C]) = iso1.from(iso2.from(c))
     def to(a: Rep[A]) = iso2.to(iso1.to(a))
-    def defaultRepTo = iso2.defaultRepTo
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
 
@@ -338,7 +332,6 @@ trait Views extends Elems { self: Scalan =>
     def to(f: Rep[A => C]): Rep[B => D] = {
       fun { a => iso2.to(f(iso1.from(a))) }
     }
-    def defaultRepTo = eTo.defaultRepValue
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
   }
   def funcIso[A, B, C, D](iso1: Iso[A, B], iso2: Iso[C, D]): Iso[A => C, B => D] =
@@ -351,7 +344,6 @@ trait Views extends Elems { self: Scalan =>
     def from(b: Rep[B]) = convFrom(b)
     override lazy val toFun = convTo.convFun
     override lazy val fromFun = convFrom.convFun
-    def defaultRepTo = eTo.defaultRepValue
     override def isIdentity = false
   }
   def converterIso[A, B](convTo: Conv[A,B], convFrom: Conv[B,A]): Iso[A,B] =

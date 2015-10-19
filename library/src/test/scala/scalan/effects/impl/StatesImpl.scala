@@ -16,8 +16,10 @@ trait StatesAbs extends States with scalan.Scalan {
   }
 
   // familyElem
-  class State0Elem[S, A, To <: State0[S, A]](implicit val eS: Elem[S], val eA: Elem[A])
+  class State0Elem[S, A, To <: State0[S, A]](implicit _eS: Elem[S], _eA: Elem[A])
     extends EntityElem[To] {
+    def eS = _eS
+    def eA = _eA
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("States")
@@ -38,10 +40,13 @@ trait StatesAbs extends States with scalan.Scalan {
       tryConvert(element[State0[S, A]], this, x, conv)
     }
 
-    def convertState0(x : Rep[State0[S, A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: State0Elem[_, _, _] => true; case _ => false })
-      x.asRep[To]
+    def convertState0(x: Rep[State0[S, A]]): Rep[To] = {
+      x.selfType1 match {
+        case _: State0Elem[_, _, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have State0Elem[_, _, _], but got $e")
+      }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -74,7 +79,7 @@ trait StatesAbs extends States with scalan.Scalan {
     }
 
     override def convertState0(x: Rep[State0[S, A]]) = StateBase(x.run)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = StateBase(constFun[S, (A, S)](Pair(element[A].defaultRepValue, element[S].defaultRepValue)))
     override lazy val tag = {
       implicit val tagS = eS.tag
       implicit val tagA = eA.tag
@@ -94,7 +99,6 @@ trait StatesAbs extends States with scalan.Scalan {
       val run = p
       StateBase(run)
     }
-    lazy val defaultRepTo: Rep[StateBase[S, A]] = StateBase(fun { (x: Rep[S]) => Pair(element[A].defaultRepValue, element[S].defaultRepValue) })
     lazy val eTo = new StateBaseElem[S, A](this)
   }
   // 4) constructor and deconstructor
@@ -252,24 +256,24 @@ trait StatesExp extends StatesDsl with scalan.ScalanExp {
     }
 
     object run {
-      def unapply(d: Def[_]): Option[(Rep[State0[S,A]], Rep[S]) forSome {type S; type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[State0[S, A]], Rep[S]) forSome {type S; type A}] = d match {
         case MethodCall(receiver, method, Seq(t, s, _*), _) if receiver.elem == State0CompanionElem && method.getName == "run" =>
-          Some((t, s)).asInstanceOf[Option[(Rep[State0[S,A]], Rep[S]) forSome {type S; type A}]]
+          Some((t, s)).asInstanceOf[Option[(Rep[State0[S, A]], Rep[S]) forSome {type S; type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[State0[S,A]], Rep[S]) forSome {type S; type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[State0[S, A]], Rep[S]) forSome {type S; type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object eval {
-      def unapply(d: Def[_]): Option[(Rep[State0[S,A]], Rep[S]) forSome {type S; type A}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[State0[S, A]], Rep[S]) forSome {type S; type A}] = d match {
         case MethodCall(receiver, method, Seq(t, s, _*), _) if receiver.elem == State0CompanionElem && method.getName == "eval" =>
-          Some((t, s)).asInstanceOf[Option[(Rep[State0[S,A]], Rep[S]) forSome {type S; type A}]]
+          Some((t, s)).asInstanceOf[Option[(Rep[State0[S, A]], Rep[S]) forSome {type S; type A}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[State0[S,A]], Rep[S]) forSome {type S; type A}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[State0[S, A]], Rep[S]) forSome {type S; type A}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

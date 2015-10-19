@@ -21,8 +21,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   }
 
   // familyElem
-  class CollectionElem[Item, To <: Collection[Item]](implicit val eItem: Elem[Item @uncheckedVariance])
+  class CollectionElem[Item, To <: Collection[Item]](implicit _eItem: Elem[Item @uncheckedVariance])
     extends EntityElem[To] {
+    def eItem = _eItem
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Collections")
@@ -42,10 +43,13 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       tryConvert(element[Collection[Item]], this, x, conv)
     }
 
-    def convertCollection(x : Rep[Collection[Item]]): Rep[To] = {
-      assert(x.selfType1 match { case _: CollectionElem[_, _] => true; case _ => false })
-      x.asRep[To]
+    def convertCollection(x: Rep[Collection[Item]]): Rep[To] = {
+      x.selfType1 match {
+        case _: CollectionElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have CollectionElem[_, _], but got $e")
+      }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -69,8 +73,10 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     proxyOps[PairCollection[A, B]](p)(scala.reflect.classTag[PairCollection[A, B]])
   }
   // familyElem
-  class PairCollectionElem[A, B, To <: PairCollection[A, B]](implicit val eA: Elem[A], val eB: Elem[B])
+  class PairCollectionElem[A, B, To <: PairCollection[A, B]](implicit _eA: Elem[A], _eB: Elem[B])
     extends CollectionElem[(A, B), To] {
+    def eA = _eA
+    def eB = _eB
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(pairElement(element[A],element[B])))
     override lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Collections")
@@ -91,10 +97,13 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       tryConvert(element[PairCollection[A, B]], this, x, conv)
     }
 
-    def convertPairCollection(x : Rep[PairCollection[A, B]]): Rep[To] = {
-      assert(x.selfType1 match { case _: PairCollectionElem[_, _, _] => true; case _ => false })
-      x.asRep[To]
+    def convertPairCollection(x: Rep[PairCollection[A, B]]): Rep[To] = {
+      x.selfType1 match {
+        case _: PairCollectionElem[_, _, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have PairCollectionElem[_, _, _], but got $e")
+      }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -106,8 +115,9 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     proxyOps[NestedCollection[A]](p)(scala.reflect.classTag[NestedCollection[A]])
   }
   // familyElem
-  class NestedCollectionElem[A, To <: NestedCollection[A]](implicit val eA: Elem[A])
+  class NestedCollectionElem[A, To <: NestedCollection[A]](implicit _eA: Elem[A])
     extends CollectionElem[Collection[A], To] {
+    def eA = _eA
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(collectionElement(element[A])))
     override lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Collections")
@@ -127,10 +137,13 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       tryConvert(element[NestedCollection[A]], this, x, conv)
     }
 
-    def convertNestedCollection(x : Rep[NestedCollection[A]]): Rep[To] = {
-      assert(x.selfType1 match { case _: NestedCollectionElem[_, _] => true; case _ => false })
-      x.asRep[To]
+    def convertNestedCollection(x: Rep[NestedCollection[A]]): Rep[To] = {
+      x.selfType1 match {
+        case _: NestedCollectionElem[_, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have NestedCollectionElem[_, _], but got $e")
+      }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -151,7 +164,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertCollection(x: Rep[Collection[Unit]]) = UnitCollection(x.length)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = UnitCollection(0)
     override lazy val tag = {
       weakTypeTag[UnitCollection]
     }
@@ -169,7 +182,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val length = p
       UnitCollection(length)
     }
-    lazy val defaultRepTo: Rep[UnitCollection] = UnitCollection(0)
     lazy val eTo = new UnitCollectionElem(this)
   }
   // 4) constructor and deconstructor
@@ -221,7 +233,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverArray(x.arr)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = CollectionOverArray(element[Array[Item]].defaultRepValue)
     override lazy val tag = {
       implicit val tagItem = eItem.tag
       weakTypeTag[CollectionOverArray[Item]]
@@ -240,7 +252,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val arr = p
       CollectionOverArray(arr)
     }
-    lazy val defaultRepTo: Rep[CollectionOverArray[Item]] = CollectionOverArray(element[Array[Item]].defaultRepValue)
     lazy val eTo = new CollectionOverArrayElem[Item](this)
   }
   // 4) constructor and deconstructor
@@ -292,7 +303,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverList(x.lst)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = CollectionOverList(element[List[Item]].defaultRepValue)
     override lazy val tag = {
       implicit val tagItem = eItem.tag
       weakTypeTag[CollectionOverList[Item]]
@@ -311,7 +322,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val lst = p
       CollectionOverList(lst)
     }
-    lazy val defaultRepTo: Rep[CollectionOverList[Item]] = CollectionOverList(element[List[Item]].defaultRepValue)
     lazy val eTo = new CollectionOverListElem[Item](this)
   }
   // 4) constructor and deconstructor
@@ -363,7 +373,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertCollection(x: Rep[Collection[Item]]) = CollectionOverSeq(x.seq)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = CollectionOverSeq(element[SSeq[Item]].defaultRepValue)
     override lazy val tag = {
       implicit val tagItem = eItem.tag
       weakTypeTag[CollectionOverSeq[Item]]
@@ -382,7 +392,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val seq = p
       CollectionOverSeq(seq)
     }
-    lazy val defaultRepTo: Rep[CollectionOverSeq[Item]] = CollectionOverSeq(element[SSeq[Item]].defaultRepValue)
     lazy val eTo = new CollectionOverSeqElem[Item](this)
   }
   // 4) constructor and deconstructor
@@ -434,7 +443,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionSOA(x.as, x.bs)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = PairCollectionSOA(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue)
     override lazy val tag = {
       implicit val tagA = eA.tag
       implicit val tagB = eB.tag
@@ -454,7 +463,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val Pair(as, bs) = p
       PairCollectionSOA(as, bs)
     }
-    lazy val defaultRepTo: Rep[PairCollectionSOA[A, B]] = PairCollectionSOA(element[Collection[A]].defaultRepValue, element[Collection[B]].defaultRepValue)
     lazy val eTo = new PairCollectionSOAElem[A, B](this)
   }
   // 4) constructor and deconstructor
@@ -507,7 +515,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertPairCollection(x: Rep[PairCollection[A, B]]) = PairCollectionAOS(x.coll)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = PairCollectionAOS(element[Collection[(A, B)]].defaultRepValue)
     override lazy val tag = {
       implicit val tagA = eA.tag
       implicit val tagB = eB.tag
@@ -527,7 +535,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       val coll = p
       PairCollectionAOS(coll)
     }
-    lazy val defaultRepTo: Rep[PairCollectionAOS[A, B]] = PairCollectionAOS(element[Collection[(A, B)]].defaultRepValue)
     lazy val eTo = new PairCollectionAOSElem[A, B](this)
   }
   // 4) constructor and deconstructor
@@ -579,7 +586,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     }
 
     override def convertNestedCollection(x: Rep[NestedCollection[A]]) = NestedCollectionFlat(x.values, x.segments)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = NestedCollectionFlat(element[Collection[A]].defaultRepValue, element[PairCollection[Int, Int]].defaultRepValue)
     override lazy val tag = {
       implicit val tagA = eA.tag
       weakTypeTag[NestedCollectionFlat[A]]
@@ -587,18 +594,17 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   }
 
   // state representation type
-  type NestedCollectionFlatData[A] = (Collection[A], PairCollection[Int,Int])
+  type NestedCollectionFlatData[A] = (Collection[A], PairCollection[Int, Int])
 
   // 3) Iso for concrete class
   class NestedCollectionFlatIso[A](implicit eA: Elem[A])
-    extends Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]]()(pairElement(implicitly[Elem[Collection[A]]], implicitly[Elem[PairCollection[Int,Int]]])) {
+    extends Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]]()(pairElement(implicitly[Elem[Collection[A]]], implicitly[Elem[PairCollection[Int, Int]]])) {
     override def from(p: Rep[NestedCollectionFlat[A]]) =
       (p.values, p.segments)
-    override def to(p: Rep[(Collection[A], PairCollection[Int,Int])]) = {
+    override def to(p: Rep[(Collection[A], PairCollection[Int, Int])]) = {
       val Pair(values, segments) = p
       NestedCollectionFlat(values, segments)
     }
-    lazy val defaultRepTo: Rep[NestedCollectionFlat[A]] = NestedCollectionFlat(element[Collection[A]].defaultRepValue, element[PairCollection[Int,Int]].defaultRepValue)
     lazy val eTo = new NestedCollectionFlatElem[A](this)
   }
   // 4) constructor and deconstructor
@@ -606,7 +612,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     override def toString = "NestedCollectionFlat"
     def apply[A](p: Rep[NestedCollectionFlatData[A]])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
       isoNestedCollectionFlat(eA).to(p)
-    def apply[A](values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
+    def apply[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
       mkNestedCollectionFlat(values, segments)
   }
   object NestedCollectionFlatMatcher {
@@ -634,8 +640,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     cachedIso[NestedCollectionFlatIso[A]](eA)
 
   // 6) smart constructor and deconstructor
-  def mkNestedCollectionFlat[A](values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]]
-  def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[A]], Rep[PairCollection[Int,Int]])]
+  def mkNestedCollectionFlat[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]]
+  def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[A]], Rep[PairCollection[Int, Int]])]
 
   registerModule(scalan.meta.ScalanCodegen.loadModule(Collections_Module.dump))
 }
@@ -768,7 +774,7 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   }
 
   case class SeqNestedCollectionFlat[A]
-      (override val values: Coll[A], override val segments: PairColl[Int,Int])
+      (override val values: Coll[A], override val segments: PairColl[Int, Int])
       (implicit eA: Elem[A])
     extends NestedCollectionFlat[A](values, segments)
         with UserTypeSeq[NestedCollectionFlat[A]] {
@@ -779,7 +785,7 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   }
 
   def mkNestedCollectionFlat[A]
-      (values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
+      (values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
       new SeqNestedCollectionFlat[A](values, segments)
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]) = p match {
     case p: NestedCollectionFlat[A] @unchecked =>
@@ -1799,24 +1805,24 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
     }
 
     object innerJoin {
-      def unapply(d: Def[_]): Option[(Rep[PairCollectionSOA[A, B]], PairColl[A,C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[PairCollectionSOA[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = d match {
         case MethodCall(receiver, method, Seq(other, f, ordK, eR, eB, eC, _*), _) if receiver.elem.isInstanceOf[PairCollectionSOAElem[_, _]] && method.getName == "innerJoin" =>
-          Some((receiver, other, f, ordK, eR, eB, eC)).asInstanceOf[Option[(Rep[PairCollectionSOA[A, B]], PairColl[A,C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}]]
+          Some((receiver, other, f, ordK, eR, eB, eC)).asInstanceOf[Option[(Rep[PairCollectionSOA[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairCollectionSOA[A, B]], PairColl[A,C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollectionSOA[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object outerJoin {
-      def unapply(d: Def[_]): Option[(Rep[PairCollectionSOA[A, B]], PairColl[A,C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[PairCollectionSOA[A, B]], PairColl[A, C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = d match {
         case MethodCall(receiver, method, Seq(other, f, f1, f2, ordK, eR, eB, eC, _*), _) if receiver.elem.isInstanceOf[PairCollectionSOAElem[_, _]] && method.getName == "outerJoin" =>
-          Some((receiver, other, f, f1, f2, ordK, eR, eB, eC)).asInstanceOf[Option[(Rep[PairCollectionSOA[A, B]], PairColl[A,C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}]]
+          Some((receiver, other, f, f1, f2, ordK, eR, eB, eC)).asInstanceOf[Option[(Rep[PairCollectionSOA[A, B]], PairColl[A, C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairCollectionSOA[A, B]], PairColl[A,C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollectionSOA[A, B]], PairColl[A, C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -2067,24 +2073,24 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
     }
 
     object innerJoin {
-      def unapply(d: Def[_]): Option[(Rep[PairCollectionAOS[A, B]], PairColl[A,C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[PairCollectionAOS[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = d match {
         case MethodCall(receiver, method, Seq(other, f, ordK, eR, eB, eC, _*), _) if receiver.elem.isInstanceOf[PairCollectionAOSElem[_, _]] && method.getName == "innerJoin" =>
-          Some((receiver, other, f, ordK, eR, eB, eC)).asInstanceOf[Option[(Rep[PairCollectionAOS[A, B]], PairColl[A,C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}]]
+          Some((receiver, other, f, ordK, eR, eB, eC)).asInstanceOf[Option[(Rep[PairCollectionAOS[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairCollectionAOS[A, B]], PairColl[A,C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollectionAOS[A, B]], PairColl[A, C], Rep[((B, C)) => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
     }
 
     object outerJoin {
-      def unapply(d: Def[_]): Option[(Rep[PairCollectionAOS[A, B]], PairColl[A,C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[PairCollectionAOS[A, B]], PairColl[A, C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = d match {
         case MethodCall(receiver, method, Seq(other, f, f1, f2, ordK, eR, eB, eC, _*), _) if receiver.elem.isInstanceOf[PairCollectionAOSElem[_, _]] && method.getName == "outerJoin" =>
-          Some((receiver, other, f, f1, f2, ordK, eR, eB, eC)).asInstanceOf[Option[(Rep[PairCollectionAOS[A, B]], PairColl[A,C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}]]
+          Some((receiver, other, f, f1, f2, ordK, eR, eB, eC)).asInstanceOf[Option[(Rep[PairCollectionAOS[A, B]], PairColl[A, C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[PairCollectionAOS[A, B]], PairColl[A,C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[PairCollectionAOS[A, B]], PairColl[A, C], Rep[((B, C)) => R], Rep[B => R], Rep[C => R], Ordering[A], Elem[R], Elem[B], Elem[C]) forSome {type A; type B; type C; type R}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -2128,7 +2134,7 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   }
 
   case class ExpNestedCollectionFlat[A]
-      (override val values: Coll[A], override val segments: PairColl[Int,Int])
+      (override val values: Coll[A], override val segments: PairColl[Int, Int])
       (implicit eA: Elem[A])
     extends NestedCollectionFlat[A](values, segments) with UserTypeDef[NestedCollectionFlat[A]] {
     lazy val selfType = element[NestedCollectionFlat[A]]
@@ -2337,7 +2343,7 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   }
 
   def mkNestedCollectionFlat[A]
-    (values: Coll[A], segments: PairColl[Int,Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
+    (values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
     new ExpNestedCollectionFlat[A](values, segments)
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]) = p.elem.asInstanceOf[Elem[_]] match {
     case _: NestedCollectionFlatElem[A] @unchecked =>

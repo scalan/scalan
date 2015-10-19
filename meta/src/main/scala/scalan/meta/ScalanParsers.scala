@@ -99,19 +99,18 @@ trait ScalanParsers {
       throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
     }
 
-    def tpeUseExpr(arg: STpeArg): STpeExpr = STraitCall(arg.name, arg.tparams.map(tpeUseExpr(_)))
-
     val classes = entity.optBaseType match {
       case Some(bt) =>
         val entityName = entity.name
         val entityImplName = entityName + "Impl"
-        val typeUseExprs = entity.tpeArgs.map(tpeUseExpr(_))
+        val wrappedValueArg = SClassArg(false, false, true, "wrappedValue", STraitCall("Rep", List(bt)), None)
+        val parent = STraitCall(entity.name, entity.tpeArgs.map(_.toTraitCall))
         val defaultBTImpl = SClassDef(
           name = entityImplName,
           tpeArgs = entity.tpeArgs,
-          args = SClassArgs(List(SClassArg(false, false, true, "wrappedValueOfBaseType", STraitCall("Rep", List(bt)), None))),
+          args = SClassArgs(List(wrappedValueArg)),
           implicitArgs = entity.implicitArgs,
-          ancestors = List(STraitCall(entity.name, typeUseExprs)),
+          ancestors = List(parent),
           body = List(
 
           ),

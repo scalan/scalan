@@ -18,8 +18,10 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   }
 
   // familyElem
-  class GraphElem[V, E, To <: Graph[V, E]](implicit val eV: Elem[V], val eE: Elem[E])
+  class GraphElem[V, E, To <: Graph[V, E]](implicit _eV: Elem[V], _eE: Elem[E])
     extends EntityElem[To] {
+    def eV = _eV
+    def eE = _eE
     lazy val parent: Option[Elem[_]] = None
     lazy val entityDef: STraitOrClassDef = {
       val module = getModules("Graphs")
@@ -40,10 +42,13 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
       tryConvert(element[Graph[V, E]], this, x, conv)
     }
 
-    def convertGraph(x : Rep[Graph[V, E]]): Rep[To] = {
-      assert(x.selfType1 match { case _: GraphElem[_, _, _] => true; case _ => false })
-      x.asRep[To]
+    def convertGraph(x: Rep[Graph[V, E]]): Rep[To] = {
+      x.selfType1 match {
+        case _: GraphElem[_, _, _] => x.asRep[To]
+        case e => !!!(s"Expected $x to have GraphElem[_, _, _], but got $e")
+      }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -76,7 +81,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     }
 
     override def convertGraph(x: Rep[Graph[V, E]]) = AdjacencyGraph(x.vertexValues, x.edgeValues, x.links)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue)
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -96,7 +101,6 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
       val Pair(vertexValues, Pair(edgeValues, links)) = p
       AdjacencyGraph(vertexValues, edgeValues, links)
     }
-    lazy val defaultRepTo: Rep[AdjacencyGraph[V, E]] = AdjacencyGraph(element[Collection[V]].defaultRepValue, element[NestedCollection[E]].defaultRepValue, element[NestedCollection[Int]].defaultRepValue)
     lazy val eTo = new AdjacencyGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -149,7 +153,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     }
 
     override def convertGraph(x: Rep[Graph[V, E]]) = IncidenceGraph(x.vertexValues, x.incMatrixWithVals, x.vertexNum)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0)
     override lazy val tag = {
       implicit val tagV = eV.tag
       implicit val tagE = eE.tag
@@ -169,7 +173,6 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
       val Pair(vertexValues, Pair(incMatrixWithVals, vertexNum)) = p
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }
-    lazy val defaultRepTo: Rep[IncidenceGraph[V, E]] = IncidenceGraph(element[Collection[V]].defaultRepValue, element[Collection[E]].defaultRepValue, 0)
     lazy val eTo = new IncidenceGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor
@@ -402,12 +405,12 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
     }
 
     object outEdges {
-      def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vs, predicate, _*), _) if receiver.elem.isInstanceOf[AdjacencyGraphElem[_, _]] && method.getName == "outEdges" =>
-          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}]]
+          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[AdjacencyGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -693,12 +696,12 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
     }
 
     object outEdges {
-      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vs, predicate, _*), _) if receiver.elem.isInstanceOf[IncidenceGraphElem[_, _]] && method.getName == "outEdges" =>
-          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}]]
+          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[IncidenceGraph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }
@@ -1139,12 +1142,12 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
     }
 
     object outEdges {
-      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = d match {
+      def unapply(d: Def[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = d match {
         case MethodCall(receiver, method, Seq(vs, predicate, _*), _) if receiver.elem.isInstanceOf[GraphElem[_, _, _]] && method.getName == "outEdges" =>
-          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}]]
+          Some((receiver, vs, predicate)).asInstanceOf[Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}]]
         case _ => None
       }
-      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V,E] => Boolean]) forSome {type V; type E}] = exp match {
+      def unapply(exp: Exp[_]): Option[(Rep[Graph[V, E]], Coll[Int], Rep[Edge[V, E] => Boolean]) forSome {type V; type E}] = exp match {
         case Def(d) => unapply(d)
         case _ => None
       }

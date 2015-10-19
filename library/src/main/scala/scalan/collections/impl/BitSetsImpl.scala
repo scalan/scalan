@@ -36,10 +36,13 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
       tryConvert(element[BitSet], this, x, conv)
     }
 
-    def convertBitSet(x : Rep[BitSet]): Rep[To] = {
-      assert(x.selfType1 match { case _: BitSetElem[_] => true; case _ => false })
-      x.asRep[To]
+    def convertBitSet(x: Rep[BitSet]): Rep[To] = {
+      x.selfType1 match {
+        case _: BitSetElem[_] => x.asRep[To]
+        case e => !!!(s"Expected $x to have BitSetElem[_], but got $e")
+      }
     }
+
     override def getDefaultRep: Rep[To] = ???
   }
 
@@ -72,7 +75,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
     }
 
     override def convertBitSet(x: Rep[BitSet]) = BoolCollBitSet(x.bits)
-    override def getDefaultRep = super[ConcreteElem].getDefaultRep
+    override def getDefaultRep = BoolCollBitSet(element[Collection[Boolean]].defaultRepValue)
     override lazy val tag = {
       weakTypeTag[BoolCollBitSet]
     }
@@ -90,7 +93,6 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
       val bits = p
       BoolCollBitSet(bits)
     }
-    lazy val defaultRepTo: Rep[BoolCollBitSet] = BoolCollBitSet(element[Collection[Boolean]].defaultRepValue)
     lazy val eTo = new BoolCollBitSetElem(this)
   }
   // 4) constructor and deconstructor
