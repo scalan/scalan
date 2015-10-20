@@ -171,7 +171,6 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with UserTypeDef[MMultiMapCompanionAbs] {
     lazy val selfType = element[MMultiMapCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpHashMMultiMap[K, V]
@@ -179,12 +178,10 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
       (implicit elemKey: Elem[K], elemValue: Elem[V])
     extends HashMMultiMap[K, V](map) with UserTypeDef[HashMMultiMap[K, V]] {
     lazy val selfType = element[HashMMultiMap[K, V]]
-    override def mirror(t: Transformer) = ExpHashMMultiMap[K, V](t(map))
   }
 
   lazy val HashMMultiMap: Rep[HashMMultiMapCompanionAbs] = new HashMMultiMapCompanionAbs with UserTypeDef[HashMMultiMapCompanionAbs] {
     lazy val selfType = element[HashMMultiMapCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object HashMMultiMapMethods {

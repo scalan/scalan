@@ -267,7 +267,6 @@ trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs with UserTypeDef[StateFCompanionAbs] {
     lazy val selfType = element[StateFCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpStateGet[S, A]
@@ -275,12 +274,10 @@ trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
       (implicit eS: Elem[S], eA: Elem[A])
     extends StateGet[S, A](f) with UserTypeDef[StateGet[S, A]] {
     lazy val selfType = element[StateGet[S, A]]
-    override def mirror(t: Transformer) = ExpStateGet[S, A](t(f))
   }
 
   lazy val StateGet: Rep[StateGetCompanionAbs] = new StateGetCompanionAbs with UserTypeDef[StateGetCompanionAbs] {
     lazy val selfType = element[StateGetCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object StateGetMethods {
@@ -304,12 +301,10 @@ trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
       (implicit eS: Elem[S], eA: Elem[A])
     extends StatePut[S, A](s, a) with UserTypeDef[StatePut[S, A]] {
     lazy val selfType = element[StatePut[S, A]]
-    override def mirror(t: Transformer) = ExpStatePut[S, A](t(s), t(a))
   }
 
   lazy val StatePut: Rep[StatePutCompanionAbs] = new StatePutCompanionAbs with UserTypeDef[StatePutCompanionAbs] {
     lazy val selfType = element[StatePutCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object StatePutMethods {

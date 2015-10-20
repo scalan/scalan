@@ -348,7 +348,6 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
   self: SegmentsDslExp =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeDef[SegmentCompanionAbs] {
     lazy val selfType = element[SegmentCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpInterval
@@ -356,12 +355,10 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
 
     extends Interval(start, end) with UserTypeDef[Interval] {
     lazy val selfType = element[Interval]
-    override def mirror(t: Transformer) = ExpInterval(t(start), t(end))
   }
 
   lazy val Interval: Rep[IntervalCompanionAbs] = new IntervalCompanionAbs with UserTypeDef[IntervalCompanionAbs] {
     lazy val selfType = element[IntervalCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object IntervalMethods {
@@ -420,12 +417,10 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
 
     extends Slice(start, length) with UserTypeDef[Slice] {
     lazy val selfType = element[Slice]
-    override def mirror(t: Transformer) = ExpSlice(t(start), t(length))
   }
 
   lazy val Slice: Rep[SliceCompanionAbs] = new SliceCompanionAbs with UserTypeDef[SliceCompanionAbs] {
     lazy val selfType = element[SliceCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object SliceMethods {
@@ -484,12 +479,10 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
 
     extends Centered(center, radius) with UserTypeDef[Centered] {
     lazy val selfType = element[Centered]
-    override def mirror(t: Transformer) = ExpCentered(t(center), t(radius))
   }
 
   lazy val Centered: Rep[CenteredCompanionAbs] = new CenteredCompanionAbs with UserTypeDef[CenteredCompanionAbs] {
     lazy val selfType = element[CenteredCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object CenteredMethods {

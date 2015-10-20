@@ -75,8 +75,11 @@ trait NumericOpsSeq extends NumericOps { self: ScalanSeq =>
 }
 
 trait NumericOpsExp extends NumericOps with BaseExp { self: ScalanExp =>
-  case class NumericRand[T](bound: Exp[T], id: Int = IdSupply.nextId)(implicit eT: Elem[T]) extends BaseDef[T] {
-    override def mirror(t: Transformer) = NumericRand(t(bound))(eT)
+  case class NumericRand[T](bound: Exp[T], id: Int = IdSupply.nextId)(implicit eT: Elem[T]) extends BaseDef[T]
+
+  override def transformDef[A](d: Def[A], t: Transformer) = d match {
+    case NumericRand(bound, _) => NumericRand(t(bound))(d.selfType)
+    case _ => super.transformDef(d, t)
   }
 
   def random[T](bound: Rep[T])(implicit n: Numeric[T], et: Elem[T]): Rep[T] =

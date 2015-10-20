@@ -172,7 +172,6 @@ trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs with UserTypeDef[ReaderCompanionAbs] {
     lazy val selfType = element[ReaderCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpReaderBase[Env, A]
@@ -180,12 +179,10 @@ trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
       (implicit eEnv: Elem[Env], eA: Elem[A])
     extends ReaderBase[Env, A](run) with UserTypeDef[ReaderBase[Env, A]] {
     lazy val selfType = element[ReaderBase[Env, A]]
-    override def mirror(t: Transformer) = ExpReaderBase[Env, A](t(run))
   }
 
   lazy val ReaderBase: Rep[ReaderBaseCompanionAbs] = new ReaderBaseCompanionAbs with UserTypeDef[ReaderBaseCompanionAbs] {
     lazy val selfType = element[ReaderBaseCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object ReaderBaseMethods {

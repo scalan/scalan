@@ -444,7 +444,6 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs with UserTypeDef[AbstractVectorCompanionAbs] {
     lazy val selfType = element[AbstractVectorCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpDenseVector[T]
@@ -452,12 +451,10 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
       (implicit eT: Elem[T])
     extends DenseVector[T](items) with UserTypeDef[DenseVector[T]] {
     lazy val selfType = element[DenseVector[T]]
-    override def mirror(t: Transformer) = ExpDenseVector[T](t(items))
   }
 
   lazy val DenseVector: Rep[DenseVectorCompanionAbs] = new DenseVectorCompanionAbs with UserTypeDef[DenseVectorCompanionAbs] {
     lazy val selfType = element[DenseVectorCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object DenseVectorMethods {
@@ -731,12 +728,10 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
       (implicit eT: Elem[T])
     extends ConstVector[T](item, length) with UserTypeDef[ConstVector[T]] {
     lazy val selfType = element[ConstVector[T]]
-    override def mirror(t: Transformer) = ExpConstVector[T](t(item), t(length))
   }
 
   lazy val ConstVector: Rep[ConstVectorCompanionAbs] = new ConstVectorCompanionAbs with UserTypeDef[ConstVectorCompanionAbs] {
     lazy val selfType = element[ConstVectorCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object ConstVectorMethods {
@@ -1010,12 +1005,10 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
       (implicit eT: Elem[T])
     extends SparseVector[T](nonZeroIndices, nonZeroValues, length) with UserTypeDef[SparseVector[T]] {
     lazy val selfType = element[SparseVector[T]]
-    override def mirror(t: Transformer) = ExpSparseVector[T](t(nonZeroIndices), t(nonZeroValues), t(length))
   }
 
   lazy val SparseVector: Rep[SparseVectorCompanionAbs] = new SparseVectorCompanionAbs with UserTypeDef[SparseVectorCompanionAbs] {
     lazy val selfType = element[SparseVectorCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object SparseVectorMethods {
@@ -1289,12 +1282,10 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
       (implicit eT: Elem[T])
     extends SparseVector1[T](nonZeroItems, length) with UserTypeDef[SparseVector1[T]] {
     lazy val selfType = element[SparseVector1[T]]
-    override def mirror(t: Transformer) = ExpSparseVector1[T](t(nonZeroItems), t(length))
   }
 
   lazy val SparseVector1: Rep[SparseVector1CompanionAbs] = new SparseVector1CompanionAbs with UserTypeDef[SparseVector1CompanionAbs] {
     lazy val selfType = element[SparseVector1CompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object SparseVector1Methods {

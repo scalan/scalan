@@ -171,7 +171,6 @@ trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs with UserTypeDef[CoproductCompanionAbs] {
     lazy val selfType = element[CoproductCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpCoproductImpl[F[_], G[_], A]
@@ -179,12 +178,10 @@ trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
       (implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
     extends CoproductImpl[F, G, A](run) with UserTypeDef[CoproductImpl[F, G, A]] {
     lazy val selfType = element[CoproductImpl[F, G, A]]
-    override def mirror(t: Transformer) = ExpCoproductImpl[F, G, A](t(run))
   }
 
   lazy val CoproductImpl: Rep[CoproductImplCompanionAbs] = new CoproductImplCompanionAbs with UserTypeDef[CoproductImplCompanionAbs] {
     lazy val selfType = element[CoproductImplCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object CoproductImplMethods {

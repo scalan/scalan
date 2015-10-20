@@ -108,7 +108,6 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
   case class ViewArrayBuffer[A, B](source: Rep[ArrayBuffer[A]])(iso: Iso1[A, B, ArrayBuffer])
     extends View1[A, B, ArrayBuffer](iso) {
     //lazy val iso = arrayBufferIso(innerIso)
-    def copy(source: Rep[ArrayBuffer[A]]) = ViewArrayBuffer(source)(iso)
     override def toString = s"ViewArrayBuffer[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewArrayBuffer[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -282,73 +281,35 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
         case _ => false
       }
     }
-    override def mirror(t:Transformer) = ArrayBufferEmpty[T]()
   }
 
-  case class MakeArrayBuffer[T](ctx: Rep[String])(implicit e:Elem[T]) extends ArrayBufferDef[T] {
-    /*
-    override def equals(other:Any) = {
-      other match {
-        case that:MakeArrayBuffer[_] => (this.selfType equals that.selfType) && (this.ctx equals that.ctx)
-        case _ => false
-      }
-    }
-    */
-    override def mirror(t:Transformer) = MakeArrayBuffer[T](t(ctx))(e)
-  }
+  case class MakeArrayBuffer[T](ctx: Rep[String])(implicit e: Elem[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferFromElem[T: Elem](v: Rep[T]) extends ArrayBufferDef[T] {
-    override def mirror(t:Transformer) = ArrayBufferFromElem(t(v))
-  }
+  case class ArrayBufferFromElem[T: Elem](v: Rep[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferUsingFunc[T: Elem](count: Rep[Int], f: Rep[Int=>T]) extends ArrayBufferDef[T] {
-    override def mirror(t:Transformer) = ArrayBufferUsingFunc(t(count), t(f))
-  }
+  case class ArrayBufferUsingFunc[T: Elem](count: Rep[Int], f: Rep[Int=>T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferApply[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int]) extends BaseDef[T] {
-    override def mirror(t: Transformer) = ArrayBufferApply(t(buf), t(i))
-  }
+  case class ArrayBufferApply[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int]) extends BaseDef[T]
 
-  case class ArrayBufferLength[T: Elem](buf: Rep[ArrayBuffer[T]]) extends BaseDef[Int] {
-    override def mirror(t: Transformer) = ArrayBufferLength(t(buf))
-  }
+  case class ArrayBufferLength[T](buf: Rep[ArrayBuffer[T]])(implicit val eT: Elem[T]) extends BaseDef[Int]
 
-  case class ArrayBufferMap[T: Elem, R:Elem](buf: Rep[ArrayBuffer[T]], f: Rep[T => R]) extends ArrayBufferDef[R] { 
-    override def mirror(t:Transformer) = ArrayBufferMap(t(buf), t(f))
-  }
+  case class ArrayBufferMap[T, R](buf: Rep[ArrayBuffer[T]], f: Rep[T => R])(implicit val eT: Elem[T], eR: Elem[R]) extends ArrayBufferDef[R]
 
-  case class ArrayBufferUpdate[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int], v: Rep[T]) extends ArrayBufferDef[T] { 
-    override def mirror(t:Transformer) = ArrayBufferUpdate(t(buf), t(i), t(v))
-  }
+  case class ArrayBufferUpdate[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int], v: Rep[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferInsert[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int], v: Rep[T]) extends ArrayBufferDef[T] { 
-    override def mirror(t:Transformer) = ArrayBufferInsert(t(buf), t(i), t(v))
-  }
+  case class ArrayBufferInsert[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int], v: Rep[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferAppend[T: Elem](buf: Rep[ArrayBuffer[T]], v: Rep[T]) extends ArrayBufferDef[T] { 
-    override def mirror(t:Transformer) = ArrayBufferAppend(t(buf), t(v))
-  }
+  case class ArrayBufferAppend[T: Elem](buf: Rep[ArrayBuffer[T]], v: Rep[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferAppendArray[T: Elem](buf: Rep[ArrayBuffer[T]], a: Arr[T]) extends ArrayBufferDef[T] { 
-    override def mirror(t:Transformer) = ArrayBufferAppendArray(t(buf), t(a))
-  }
+  case class ArrayBufferAppendArray[T: Elem](buf: Rep[ArrayBuffer[T]], a: Arr[T]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferRemove[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int], n: Rep[Int]) extends ArrayBufferDef[T] { 
-    override def mirror(t:Transformer) = ArrayBufferRemove(t(buf), t(i), t(n))
-  }
+  case class ArrayBufferRemove[T: Elem](buf: Rep[ArrayBuffer[T]], i: Rep[Int], n: Rep[Int]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferReset[T: Elem](buf: Rep[ArrayBuffer[T]]) extends ArrayBufferDef[T] { 
-    override def mirror(t:Transformer) = ArrayBufferReset(t(buf))
-  }
+  case class ArrayBufferReset[T: Elem](buf: Rep[ArrayBuffer[T]]) extends ArrayBufferDef[T]
 
-  case class ArrayBufferToArray[T: Elem](buf: Rep[ArrayBuffer[T]]) extends Def[Array[T]] { 
-    def selfType = element[Array[T]]
-    override def mirror(t:Transformer) = ArrayBufferToArray(t(buf))
-  }  
+  case class ArrayBufferToArray[T: Elem](buf: Rep[ArrayBuffer[T]]) extends ArrayDef[T]
 
-  case class ArrayBufferRep[T: Elem](buf: Rep[ArrayBuffer[T]]) extends ArrayBufferDef[T] {
-    override def mirror(t: Transformer) = ArrayBufferRep(t(buf))
-  }
+  case class ArrayBufferRep[T: Elem](buf: Rep[ArrayBuffer[T]]) extends ArrayBufferDef[T]
 
   implicit def resolveArrayBuffer[T: Elem](sym: Rep[ArrayBuffer[T]]): ArrayBuffer[T] = sym match  {
     case Def(d: ArrayBufferDef[_]) => d.asInstanceOf[ArrayBuffer[T]]

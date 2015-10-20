@@ -233,7 +233,6 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs with UserTypeDef[SHashSetCompanionAbs] {
     lazy val selfType = element[SHashSetCompanionAbs]
-    override def mirror(t: Transformer) = this
 
     def empty[A:Elem]: Rep[SHashSet[A]] =
       methodCallEx[SHashSet[A]](self,
@@ -243,7 +242,6 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
 
   case class ViewSHashSet[A, B](source: Rep[SHashSet[A]])(iso: Iso1[A, B, SHashSet])
     extends View1[A, B, SHashSet](iso) {
-    def copy(source: Rep[SHashSet[A]]) = ViewSHashSet(source)(iso)
     override def toString = s"ViewSHashSet[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewSHashSet[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -256,12 +254,10 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
       (implicit eA: Elem[A])
     extends SHashSetImpl[A](wrappedValue) with UserTypeDef[SHashSetImpl[A]] {
     lazy val selfType = element[SHashSetImpl[A]]
-    override def mirror(t: Transformer) = ExpSHashSetImpl[A](t(wrappedValue))
   }
 
   lazy val SHashSetImpl: Rep[SHashSetImplCompanionAbs] = new SHashSetImplCompanionAbs with UserTypeDef[SHashSetImplCompanionAbs] {
     lazy val selfType = element[SHashSetImplCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object SHashSetImplMethods {

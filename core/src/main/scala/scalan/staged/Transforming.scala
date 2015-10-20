@@ -7,19 +7,6 @@ import scalan.common.Lazy
 
 trait Transforming { self: ScalanExp =>
 
-  def mirror[A](d: Def[A], f: Transformer): Exp[_] = d.mirror(f)
-
-  implicit class DefMirroringExtensions[A](d: Def[A]) {
-    def mirrorWith(newArgs: Exp[_]*) = {
-      val args: List[Exp[_]] = dep(d)
-      if (newArgs.length != args.length) throw !!!(s"invalid mirroring of $d: different number of args")
-
-      val subst = (args, newArgs).zipped.toMap
-      val t = new MapTransformer(subst)
-      mirror(d, t)
-    }
-  }
-
   class MapTransformer(private val subst: Map[Exp[_], Exp[_]]) extends Transformer {
     def this(substPairs: (Exp[_], Exp[_])*) {
       this(substPairs.toMap)
@@ -105,7 +92,7 @@ trait Transforming { self: ScalanExp =>
   }
 
   abstract class Mirror[Ctx <: Transformer : TransformerOps] {
-    def apply[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = (t, d.mirror(t))
+    def apply[A](t: Ctx, rewriter: Rewriter, node: Exp[A], d: Def[A]): (Ctx, Exp[_]) = (t, transformDef(d, t))
 
     // every mirrorXXX method should return a pair (t + (v -> v1), v1)
     protected def mirrorVar[A](t: Ctx, rewriter: Rewriter, v: Exp[A]): (Ctx, Exp[_]) = {

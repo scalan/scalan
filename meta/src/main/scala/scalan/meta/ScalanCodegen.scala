@@ -781,12 +781,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
          |      ${implicitArgsDecl()}
          |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")} with UserTypeDef[${c.typeUse}] {
          |    lazy val selfType = element[${c.typeUse}]
-         |    override def mirror(t: Transformer) = Exp${c.typeUse}(${fields.rep(f => s"t($f)")})
          |  }
          |
          |  lazy val ${c.name}: Rep[${c.companionAbsName}] = new ${c.companionAbsName} with UserTypeDef[${c.companionAbsName}] {
          |    lazy val selfType = element[${c.companionAbsName}]
-         |    override def mirror(t: Transformer) = this
          |  }
          |
          |${methodExtractorsString(clazz)}
@@ -850,7 +848,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       s"""
         |  case class View${e.name}[A, B](source: Rep[${e.name}[A]])(iso: Iso1[A, B, ${e.name}])
         |    extends View1[A, B, ${e.name}](iso) {
-        |    def copy(source: Rep[${e.name}[A]]) = View${e.name}(source)(iso)
         |    override def toString = s"View${e.name}[$${innerIso.eTo.name}]($$source)"
         |    override def equals(other: Any) = other match {
         |      case v: View${e.name}[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -958,7 +955,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |  ${selfTypeString("Exp")}
        |  lazy val ${e.name}: Rep[$companionAbsName] = new $companionAbsName with UserTypeDef[$companionAbsName] {
        |    lazy val selfType = element[$companionAbsName]
-       |    override def mirror(t: Transformer) = this
        |    $companionMethods
        |  }
        |

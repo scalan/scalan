@@ -69,11 +69,7 @@ trait InteractionsDslExp extends InteractionsDsl with impl.InteractionsExp with 
   def println(s: Rep[String]): Rep[Oper[Unit]] = fun { i => Println(i, s) }
   def readLine: Rep[Oper[String]] = fun { (i: Rep[Int]) => ReadLine(i) }
 
-//  case class Println(i: Rep[Int], s: Rep[String]) extends BaseDef[(Int, Unit)]  {
-//    override def mirror(t: Transformer) = Println(t(i), t(s))
-//  }
+//  case class Println(i: Rep[Int], s: Rep[String]) extends BaseDef[(Int, Unit)]
 //
-//  case class ReadLine(i: Rep[Int]) extends BaseDef[(Int, String)]  {
-//    override def mirror(t: Transformer) = ReadLine(t(i))
-//  }
+//  case class ReadLine(i: Rep[Int]) extends BaseDef[(Int, String)]
 }

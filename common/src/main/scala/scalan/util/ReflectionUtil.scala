@@ -61,12 +61,29 @@ object ReflectionUtil {
       } catch {
         case e: Exception =>
           // this is represented by a real field in a supertype, find it
-          val realFieldSym = tpe.members.collectFirst {
-            case f: TermSymbol if f.isGetter && ReflectionUtil.simplifyType(f.typeSignatureIn(tpe)) == fieldType => f.accessed.asTerm
-          }.getOrElse {
-            throw new ScalaReflectionException(s"Failed to find the field corresponding to ${tpe}.${sym.name}")
+          val superTypeFieldSyms = tpe.members.flatMap {
+            case f: TermSymbol if f.isGetter && ReflectionUtil.simplifyType(f.typeSignatureIn(tpe)) =:= fieldType =>
+              (f :: f.overrides).map { case f: TermSymbol => if (f.isGetter) f.accessed else NoSymbol }
+            case _ => Nil
           }
-          instanceMirror.reflectField(realFieldSym)
+
+          if (superTypeFieldSyms.isEmpty) {
+            throw new ScalaReflectionException(s"Failed to find the field corresponding to ${tpe}.${sym.name}")
+          } else {
+            val fieldMirrorsIterator = superTypeFieldSyms.iterator.flatMap { fieldSym =>
+              try {
+                List(instanceMirror.reflectField(fieldSym.asTerm))
+              } catch {
+                case e: Exception => Nil
+              }
+            }
+            if (fieldMirrorsIterator.hasNext) {
+              fieldMirrorsIterator.next()
+            } else {
+              throw new ScalaReflectionException(s"No fields in supertypes corresponding to ${tpe}.${sym.name} correspond to Java fields")
+            }
+          }
+
       }
     }
   }

@@ -172,7 +172,6 @@ trait StatesExp extends StatesDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs with UserTypeDef[State0CompanionAbs] {
     lazy val selfType = element[State0CompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpStateBase[S, A]
@@ -180,12 +179,10 @@ trait StatesExp extends StatesDsl with scalan.ScalanExp {
       (implicit eS: Elem[S], eA: Elem[A])
     extends StateBase[S, A](run) with UserTypeDef[StateBase[S, A]] {
     lazy val selfType = element[StateBase[S, A]]
-    override def mirror(t: Transformer) = ExpStateBase[S, A](t(run))
   }
 
   lazy val StateBase: Rep[StateBaseCompanionAbs] = new StateBaseCompanionAbs with UserTypeDef[StateBaseCompanionAbs] {
     lazy val selfType = element[StateBaseCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object StateBaseMethods {

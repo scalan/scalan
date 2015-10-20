@@ -90,6 +90,7 @@ trait Elems extends Base { self: Scalan =>
   }
 
   case class PairElem[A, B](eFst: Elem[A], eSnd: Elem[B]) extends Element[(A, B)] {
+    assert(eFst != null && eSnd != null)
     override def isEntityType = eFst.isEntityType || eSnd.isEntityType
     lazy val tag = {
       implicit val tA = eFst.tag

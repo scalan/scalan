@@ -351,7 +351,6 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
   self: MetaTestsDslExp =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs with UserTypeDef[MetaTestCompanionAbs] {
     lazy val selfType = element[MetaTestCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpMT0
@@ -359,12 +358,10 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
 
     extends MT0(size) with UserTypeDef[MT0] {
     lazy val selfType = element[MT0]
-    override def mirror(t: Transformer) = ExpMT0(t(size))
   }
 
   lazy val MT0: Rep[MT0CompanionAbs] = new MT0CompanionAbs with UserTypeDef[MT0CompanionAbs] {
     lazy val selfType = element[MT0CompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object MT0Methods {
@@ -423,12 +420,10 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
       (implicit elem: Elem[T])
     extends MT1[T](data, size) with UserTypeDef[MT1[T]] {
     lazy val selfType = element[MT1[T]]
-    override def mirror(t: Transformer) = ExpMT1[T](t(data), t(size))
   }
 
   lazy val MT1: Rep[MT1CompanionAbs] = new MT1CompanionAbs with UserTypeDef[MT1CompanionAbs] {
     lazy val selfType = element[MT1CompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object MT1Methods {
@@ -472,12 +467,10 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
       (implicit eT: Elem[T], eR: Elem[R])
     extends MT2[T, R](indices, values, size) with UserTypeDef[MT2[T, R]] {
     lazy val selfType = element[MT2[T, R]]
-    override def mirror(t: Transformer) = ExpMT2[T, R](t(indices), t(values), t(size))
   }
 
   lazy val MT2: Rep[MT2CompanionAbs] = new MT2CompanionAbs with UserTypeDef[MT2CompanionAbs] {
     lazy val selfType = element[MT2CompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object MT2Methods {

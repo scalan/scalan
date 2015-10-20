@@ -166,7 +166,6 @@ trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeDef[BitSetCompanionAbs] {
     lazy val selfType = element[BitSetCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpBoolCollBitSet
@@ -174,12 +173,10 @@ trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
 
     extends BoolCollBitSet(bits) with UserTypeDef[BoolCollBitSet] {
     lazy val selfType = element[BoolCollBitSet]
-    override def mirror(t: Transformer) = ExpBoolCollBitSet(t(bits))
   }
 
   lazy val BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs] = new BoolCollBitSetCompanionAbs with UserTypeDef[BoolCollBitSetCompanionAbs] {
     lazy val selfType = element[BoolCollBitSetCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object BoolCollBitSetMethods {

@@ -45,9 +45,7 @@ trait IfThenElseExp extends IfThenElse with BaseExp with EffectsExp { self: Scal
     val elsep: Exp[T]
   }
 
-  case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit selfType: Elem[T]) extends AbstractIfThenElse[T] {
-    override def mirror(t: Transformer) = IfThenElse(t(cond), t(thenp), t(elsep))
-  }
+  case class IfThenElse[T](cond: Exp[Boolean], thenp: Exp[T], elsep: Exp[T])(implicit selfType: Elem[T]) extends AbstractIfThenElse[T]
 
   def reifyBranch[T](b: => Exp[T]): Exp[T] = {
     val Block(res) = reifyEffects(b)

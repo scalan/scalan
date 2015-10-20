@@ -262,7 +262,6 @@ trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
   self: AuthenticationsDslExp =>
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs with UserTypeDef[AuthCompanionAbs] {
     lazy val selfType = element[AuthCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpLogin
@@ -270,12 +269,10 @@ trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
 
     extends Login(user, password) with UserTypeDef[Login] {
     lazy val selfType = element[Login]
-    override def mirror(t: Transformer) = ExpLogin(t(user), t(password))
   }
 
   lazy val Login: Rep[LoginCompanionAbs] = new LoginCompanionAbs with UserTypeDef[LoginCompanionAbs] {
     lazy val selfType = element[LoginCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object LoginMethods {
@@ -310,12 +307,10 @@ trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
 
     extends HasPermission(user, password) with UserTypeDef[HasPermission] {
     lazy val selfType = element[HasPermission]
-    override def mirror(t: Transformer) = ExpHasPermission(t(user), t(password))
   }
 
   lazy val HasPermission: Rep[HasPermissionCompanionAbs] = new HasPermissionCompanionAbs with UserTypeDef[HasPermissionCompanionAbs] {
     lazy val selfType = element[HasPermissionCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object HasPermissionMethods {

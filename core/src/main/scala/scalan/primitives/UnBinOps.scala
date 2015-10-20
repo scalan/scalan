@@ -42,12 +42,10 @@ trait UnBinOpsExp extends BaseExp with UnBinOps { self: ScalanExp =>
 
   case class ApplyUnOp[A, R](op: UnOp[A, R], arg: Exp[A]) extends BaseDef[R]()(op.eResult) {
     override def toString = s"$op($arg)"
-    override def mirror(t: Transformer) = ApplyUnOp(op, t(arg))
   }
 
   case class ApplyBinOp[A, R](op: BinOp[A, R], lhs: Exp[A], rhs: Exp[A]) extends BaseDef[R]()(op.eResult) {
     override def toString = s"$op($lhs, $rhs)"
-    override def mirror(t: Transformer) = ApplyBinOp(op, t(lhs), t(rhs))
   }
 
   def applyUnOp[A, R](op: UnOp[A, R], arg: Rep[A]): Rep[R] = ApplyUnOp(op, arg)

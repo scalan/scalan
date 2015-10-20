@@ -445,7 +445,6 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with UserTypeDef[AbstractMatrixCompanionAbs] {
     lazy val selfType = element[AbstractMatrixCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpDenseFlatMatrix[T]
@@ -453,12 +452,10 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
       (implicit eT: Elem[T])
     extends DenseFlatMatrix[T](rmValues, numColumns) with UserTypeDef[DenseFlatMatrix[T]] {
     lazy val selfType = element[DenseFlatMatrix[T]]
-    override def mirror(t: Transformer) = ExpDenseFlatMatrix[T](t(rmValues), t(numColumns))
   }
 
   lazy val DenseFlatMatrix: Rep[DenseFlatMatrixCompanionAbs] = new DenseFlatMatrixCompanionAbs with UserTypeDef[DenseFlatMatrixCompanionAbs] {
     lazy val selfType = element[DenseFlatMatrixCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object DenseFlatMatrixMethods {
@@ -756,12 +753,10 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
       (implicit eT: Elem[T])
     extends CompoundMatrix[T](rows, numColumns) with UserTypeDef[CompoundMatrix[T]] {
     lazy val selfType = element[CompoundMatrix[T]]
-    override def mirror(t: Transformer) = ExpCompoundMatrix[T](t(rows), t(numColumns))
   }
 
   lazy val CompoundMatrix: Rep[CompoundMatrixCompanionAbs] = new CompoundMatrixCompanionAbs with UserTypeDef[CompoundMatrixCompanionAbs] {
     lazy val selfType = element[CompoundMatrixCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object CompoundMatrixMethods {
@@ -1011,12 +1006,10 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
       (implicit eT: Elem[T])
     extends ConstMatrix[T](item, numColumns, numRows) with UserTypeDef[ConstMatrix[T]] {
     lazy val selfType = element[ConstMatrix[T]]
-    override def mirror(t: Transformer) = ExpConstMatrix[T](t(item), t(numColumns), t(numRows))
   }
 
   lazy val ConstMatrix: Rep[ConstMatrixCompanionAbs] = new ConstMatrixCompanionAbs with UserTypeDef[ConstMatrixCompanionAbs] {
     lazy val selfType = element[ConstMatrixCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object ConstMatrixMethods {
@@ -1338,12 +1331,10 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
       (implicit eT: Elem[T])
     extends DiagonalMatrix[T](diagonalValues) with UserTypeDef[DiagonalMatrix[T]] {
     lazy val selfType = element[DiagonalMatrix[T]]
-    override def mirror(t: Transformer) = ExpDiagonalMatrix[T](t(diagonalValues))
   }
 
   lazy val DiagonalMatrix: Rep[DiagonalMatrixCompanionAbs] = new DiagonalMatrixCompanionAbs with UserTypeDef[DiagonalMatrixCompanionAbs] {
     lazy val selfType = element[DiagonalMatrixCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object DiagonalMatrixMethods {

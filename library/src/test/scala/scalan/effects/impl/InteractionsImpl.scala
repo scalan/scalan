@@ -261,7 +261,6 @@ trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
   self: InteractionsDslExp =>
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs with UserTypeDef[InteractCompanionAbs] {
     lazy val selfType = element[InteractCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpAsk
@@ -269,12 +268,10 @@ trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
 
     extends Ask(prompt) with UserTypeDef[Ask] {
     lazy val selfType = element[Ask]
-    override def mirror(t: Transformer) = ExpAsk(t(prompt))
   }
 
   lazy val Ask: Rep[AskCompanionAbs] = new AskCompanionAbs with UserTypeDef[AskCompanionAbs] {
     lazy val selfType = element[AskCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object AskMethods {
@@ -309,12 +306,10 @@ trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
 
     extends Tell(msg) with UserTypeDef[Tell] {
     lazy val selfType = element[Tell]
-    override def mirror(t: Transformer) = ExpTell(t(msg))
   }
 
   lazy val Tell: Rep[TellCompanionAbs] = new TellCompanionAbs with UserTypeDef[TellCompanionAbs] {
     lazy val selfType = element[TellCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object TellMethods {

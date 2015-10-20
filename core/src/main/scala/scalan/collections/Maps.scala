@@ -129,7 +129,7 @@ trait MapsSeq extends Maps { self: ScalanSeq =>
 
 trait MapsExp extends Maps { self: ScalanExp =>
   abstract class MMapDef[K, V](implicit val elemKey: Elem[K], val elemValue: Elem[V]) extends MMap[K, V] with Def[MMap[K, V]] {
-    def selfType = element[MMap[K, V]]
+    lazy val selfType = element[MMap[K, V]]
 
     def union(that: MM[K, V]): MM[K, V] = MapUnion(this, that)
     def difference(that: MM[K, V]): MM[K, V] = MapDifference(this, that)
@@ -156,100 +156,51 @@ trait MapsExp extends Maps { self: ScalanExp =>
   def makeMap[K: Elem, V: Elem](name: Rep[String]): MM[K, V] = MakeMap[K,V](name)
 
 
-  case class AppendMultiMap[K:Elem, V:Elem](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V])
+  case class AppendMultiMap[K, V](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V])(implicit eK: Elem[K], eV: Elem[V])
     extends MMapDef[K,ArrayBuffer[V]]
-  {
-    override def mirror(t: Transformer) = AppendMultiMap(t(map), t(key), t(value))
-  }
 
-  case class EmptyMap[K: Elem, V: Elem]() extends MMapDef[K, V] {
+  case class EmptyMap[K, V]()(implicit eK: Elem[K], eV: Elem[V]) extends MMapDef[K, V] {
     override def equals(other:Any) = {
       other match {
         case that:EmptyMap[_,_] => (this.selfType equals that.selfType)
         case _ => false
       }
     }
-    override def mirror(t:Transformer) = EmptyMap[K,V]()
   }
 
-  case class MapFromArray[K: Elem, V: Elem](arr: Arr[(K, V)]) extends MMapDef[K, V] {
-    override def mirror(t: Transformer) = MapFromArray(t(arr))
-  }
+  case class MapFromArray[K: Elem, V: Elem](arr: Arr[(K, V)]) extends MMapDef[K, V]
 
-  case class MapUsingFunc[K: Elem, V: Elem](count:Rep[Int], f:Rep[Int=>(K,V)]) extends MMapDef[K, V] {
-    override def mirror(t: Transformer) = MapUsingFunc(t(count), t(f))
-  }
+  case class MapUsingFunc[K: Elem, V: Elem](count:Rep[Int], f:Rep[Int=>(K,V)]) extends MMapDef[K, V]
 
-  case class MakeMap[K: Elem, V: Elem](ctx: Rep[String]) extends MMapDef[K, V] {
-    /*
-    override def equals(other:Any) = {
-      other match {
-        case that:MakeMap[_,_] => (this.selfType equals that.selfType) && (this.ctx equals that.ctx) && super.equals(that)
-        case _ => false
-      }
-    }
-    */
-    override def mirror(t: Transformer) = MakeMap[K,V](t(ctx))
-  }
+  case class MakeMap[K: Elem, V: Elem](ctx: Rep[String]) extends MMapDef[K, V]
 
-  case class MapUnion[K: Elem, V: Elem](left: MM[K, V], right: MM[K, V]) extends MMapDef[K, V] {
-    override def mirror(t: Transformer) = MapUnion(t(left), t(right))
-  }
+  case class MapUnion[K: Elem, V: Elem](left: MM[K, V], right: MM[K, V]) extends MMapDef[K, V]
 
-  case class MapDifference[K: Elem, V: Elem](left: MM[K, V], right: MM[K, V]) extends MMapDef[K, V] {
-    override def mirror(t: Transformer) = MapDifference(t(left), t(right))
-  }
+  case class MapDifference[K: Elem, V: Elem](left: MM[K, V], right: MM[K, V]) extends MMapDef[K, V]
 
-  case class MapJoin[K: Elem, V1: Elem, V2: Elem](left: MM[K, V1], right: MM[K, V2]) extends MMapDef[K, (V1, V2)] {
-    override def mirror(t: Transformer) = MapJoin(t(left), t(right))
-  }
+  case class MapJoin[K, V1, V2](left: MM[K, V1], right: MM[K, V2])(implicit eK: Elem[K], val eV1: Elem[V1], val eV2: Elem[V2]) extends MMapDef[K, (V1, V2)]
 
-  case class MapReduce[K: Elem, V: Elem](left: MM[K, V], right: MM[K, V], f:Rep[((V, V))=>V]) extends MMapDef[K, V] {
-    override def mirror(t: Transformer) = MapReduce(t(left), t(right), t(f))
-  }
+  case class MapReduce[K: Elem, V: Elem](left: MM[K, V], right: MM[K, V], f:Rep[((V, V))=>V]) extends MMapDef[K, V]
 
-  case class MapContains[K: Elem, V: Elem](map: MM[K, V], key: Rep[K]) extends BaseDef[Boolean] {
-    override def mirror(t: Transformer) = MapContains(t(map), t(key))
-  }
+  case class MapContains[K, V](map: MM[K, V], key: Rep[K])(implicit val eK: Elem[K], val eV: Elem[V]) extends BaseDef[Boolean]
 
-  case class MapApply[K: Elem, V: Elem](map: MM[K, V], key: Rep[K]) extends BaseDef[V] {
-    override def mirror(t: Transformer) = MapApply(t(map), t(key))
-  }
+  case class MapApply[K, V](map: MM[K, V], key: Rep[K])(implicit val eK: Elem[K], eV: Elem[V]) extends BaseDef[V]
 
-  case class MapApplyIf[K: Elem, V: Elem, T: Elem](map: MM[K, V], key: Rep[K], exists:Rep[V=>T], otherwise: Rep[Unit=>T]) extends BaseDef[T] {
-    override def mirror(t: Transformer) = MapApplyIf(t(map), t(key), t(exists), t(otherwise))
-  }
+  case class MapApplyIf[K, V, T](map: MM[K, V], key: Rep[K], exists:Rep[V=>T], otherwise: Rep[Unit=>T])(implicit val eK: Elem[K], val eV: Elem[V], selfType: Elem[T]) extends BaseDef[T]
 
-  case class MapUpdate[K: Elem, V: Elem](map: MM[K, V], key: Rep[K], value: Rep[V]) extends BaseDef[Unit] {
-    override def mirror(t: Transformer) = MapUpdate(t(map), t(key), t(value))
-  }
+  case class MapUpdate[K, V](map: MM[K, V], key: Rep[K], value: Rep[V])(implicit val eK: Elem[K], val eV: Elem[V]) extends BaseDef[Unit]
 
-  case class MapSize[K: Elem, V: Elem](map: MM[K, V]) extends BaseDef[Int] {
-    override def mirror(t: Transformer) = MapSize(t(map))
-  }
+  case class MapSize[K, V](map: MM[K, V])(implicit val eK: Elem[K], val eV: Elem[V]) extends BaseDef[Int]
 
-  case class MapToArray[K: Elem, V: Elem](map: MM[K, V]) extends Def[Array[(K, V)]] {
-    def selfType = element[Array[(K, V)]]
-    override def mirror(t: Transformer) = MapToArray(t(map))
-  }
+  case class MapToArray[K, V](map: MM[K, V])(implicit val eK: Elem[K], val eV: Elem[V]) extends ArrayDef[(K, V)]
 
-  case class MapKeys[K: Elem, V: Elem](map: MM[K, V]) extends Def[Array[K]] {
-    def selfType = element[Array[K]]
-    override def mirror(t: Transformer) = MapKeys(t(map))
-  }
+  case class MapKeys[K, V](map: MM[K, V])(implicit val eK: Elem[K], val eV: Elem[V]) extends ArrayDef[K]
 
-  case class MapValues[K: Elem, V: Elem](map: MM[K, V]) extends Def[Array[V]] {
-    def selfType = element[Array[V]]
-    override def mirror(t: Transformer) = MapValues(t(map))
-  }
+  case class MapValues[K, V](map: MM[K, V])(implicit val eK: Elem[K], val eV: Elem[V]) extends ArrayDef[V]
 
-  case class MapTransformValues[K: Elem, V: Elem, T: Elem](map: MM[K, V], f:Rep[V=>T]) extends MMapDef[K, T] {
-    override def mirror(t: Transformer) = MapTransformValues(t(map), t(f))
-  }
+  case class MapTransformValues[K, V, T](map: MM[K, V], f: Rep[V => T])(implicit eK: Elem[K], val eV: Elem[V], eT: Elem[T]) extends MMapDef[K, T]
 
-  case class VarMM[K: Elem, V: Elem](map: MM[K, V]) extends MMapDef[K, V] {
-    override def mirror(t: Transformer) = VarMM(t(map))
-  }
+  case class VarMM[K: Elem, V: Elem](map: MM[K, V]) extends MMapDef[K, V]
 
   implicit def resolveMMap[K: Elem, V: Elem](sym: MM[K, V]): MMap[K, V] = sym match  {
     case Def(d: MMapDef[_, _]) => d.asInstanceOf[MMap[K, V]]

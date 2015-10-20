@@ -174,7 +174,6 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeDef[VertexCompanionAbs] {
     lazy val selfType = element[VertexCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpSVertex[V, E]
@@ -182,12 +181,10 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
       (implicit eV: Elem[V], eE: Elem[E])
     extends SVertex[V, E](id, graph) with UserTypeDef[SVertex[V, E]] {
     lazy val selfType = element[SVertex[V, E]]
-    override def mirror(t: Transformer) = ExpSVertex[V, E](t(id), t(graph))
   }
 
   lazy val SVertex: Rep[SVertexCompanionAbs] = new SVertexCompanionAbs with UserTypeDef[SVertexCompanionAbs] {
     lazy val selfType = element[SVertexCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object SVertexMethods {

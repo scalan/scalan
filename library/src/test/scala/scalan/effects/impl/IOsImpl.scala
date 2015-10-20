@@ -261,7 +261,6 @@ trait IOsExp extends IOsDsl with scalan.ScalanExp {
   self: IOsDslExp =>
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs with UserTypeDef[IOCompanionAbs] {
     lazy val selfType = element[IOCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpReadFile
@@ -269,12 +268,10 @@ trait IOsExp extends IOsDsl with scalan.ScalanExp {
 
     extends ReadFile(fileName) with UserTypeDef[ReadFile] {
     lazy val selfType = element[ReadFile]
-    override def mirror(t: Transformer) = ExpReadFile(t(fileName))
   }
 
   lazy val ReadFile: Rep[ReadFileCompanionAbs] = new ReadFileCompanionAbs with UserTypeDef[ReadFileCompanionAbs] {
     lazy val selfType = element[ReadFileCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object ReadFileMethods {
@@ -309,12 +306,10 @@ trait IOsExp extends IOsDsl with scalan.ScalanExp {
 
     extends WriteFile(fileName, lines) with UserTypeDef[WriteFile] {
     lazy val selfType = element[WriteFile]
-    override def mirror(t: Transformer) = ExpWriteFile(t(fileName), t(lines))
   }
 
   lazy val WriteFile: Rep[WriteFileCompanionAbs] = new WriteFileCompanionAbs with UserTypeDef[WriteFileCompanionAbs] {
     lazy val selfType = element[WriteFileCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object WriteFileMethods {

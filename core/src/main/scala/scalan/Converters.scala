@@ -134,9 +134,7 @@ trait ConvertersDslSeq extends impl.ConvertersSeq { self: ScalanSeq =>
 trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: ScalanExp =>
 
   case class Convert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To])
-    extends BaseDef[To]()(eTo) {
-    def mirror(f: Transformer): Rep[To] = Convert(eFrom, eTo, f(x), f(conv))
-  }
+    extends BaseDef[To]()(eTo)
 
   def tryConvert[From, To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To] = {
     if (x.elem <:< eFrom)

@@ -263,7 +263,6 @@ trait KindsExp extends KindsDsl with scalan.ScalanExp {
   self: KindsDslExp =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs with UserTypeDef[KindCompanionAbs] {
     lazy val selfType = element[KindCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpReturn[F[_], A]
@@ -271,12 +270,10 @@ trait KindsExp extends KindsDsl with scalan.ScalanExp {
       (implicit eA: Elem[A], cF: Cont[F])
     extends Return[F, A](a) with UserTypeDef[Return[F, A]] {
     lazy val selfType = element[Return[F, A]]
-    override def mirror(t: Transformer) = ExpReturn[F, A](t(a))
   }
 
   lazy val Return: Rep[ReturnCompanionAbs] = new ReturnCompanionAbs with UserTypeDef[ReturnCompanionAbs] {
     lazy val selfType = element[ReturnCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object ReturnMethods {
@@ -301,12 +298,10 @@ trait KindsExp extends KindsDsl with scalan.ScalanExp {
       (implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends Bind[F, S, B](a, f) with UserTypeDef[Bind[F, S, B]] {
     lazy val selfType = element[Bind[F, S, B]]
-    override def mirror(t: Transformer) = ExpBind[F, S, B](t(a), t(f))
   }
 
   lazy val Bind: Rep[BindCompanionAbs] = new BindCompanionAbs with UserTypeDef[BindCompanionAbs] {
     lazy val selfType = element[BindCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object BindMethods {

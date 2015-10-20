@@ -491,13 +491,10 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     def source: Rep[From]
     def iso: Iso[From, To]
     implicit def selfType = iso.eTo
-    def copy(source: Rep[From]): View[From, To]
-    def mirror(t: Transformer) = copy(t(source))
   }
 
   case class UnpackView[A, B](view: Rep[B])(implicit iso: Iso[A, B]) extends Def[A] {
     implicit def selfType = iso.eFrom
-    override def mirror(f: Transformer) = UnpackView[A, B](f(view))
   }
 
   abstract class View1[A, B, C[_]](val iso: Iso1[A,B,C]) extends View[C[A], C[B]] {
@@ -508,12 +505,10 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
   case class PairView[A1, A2, B1, B2](source: Rep[(A1, A2)])(implicit iso1: Iso[A1, B1], iso2: Iso[A2, B2]) extends View2[A1, A2, B1, B2, Tuple2] {
     lazy val iso = pairIso(iso1, iso2)
-    def copy(source: Rep[(A1, A2)]) = PairView(source)
   }
 
   case class SumView[A1, A2, B1, B2](source: Rep[A1|A2])(implicit iso1: Iso[A1, B1], iso2: Iso[A2, B2]) extends View2[A1, A2, B1, B2, | ] {
     lazy val iso = sumIso(iso1, iso2)
-    def copy(source: Rep[A1|A2]) = SumView(source)
   }
 
   override def rewriteDef[T](d: Def[T]) = d match {

@@ -255,7 +255,6 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
   self: AbstractStringsDslExp =>
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeDef[AStringCompanionAbs] {
     lazy val selfType = element[AStringCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpSString
@@ -263,12 +262,10 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
 
     extends SString(wrappedValue) with UserTypeDef[SString] {
     lazy val selfType = element[SString]
-    override def mirror(t: Transformer) = ExpSString(t(wrappedValue))
   }
 
   lazy val SString: Rep[SStringCompanionAbs] = new SStringCompanionAbs with UserTypeDef[SStringCompanionAbs] {
     lazy val selfType = element[SStringCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object SStringMethods {
@@ -292,12 +289,10 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
 
     extends CString(wrappedValue) with UserTypeDef[CString] {
     lazy val selfType = element[CString]
-    override def mirror(t: Transformer) = ExpCString(t(wrappedValue))
   }
 
   lazy val CString: Rep[CStringCompanionAbs] = new CStringCompanionAbs with UserTypeDef[CStringCompanionAbs] {
     lazy val selfType = element[CStringCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object CStringMethods {

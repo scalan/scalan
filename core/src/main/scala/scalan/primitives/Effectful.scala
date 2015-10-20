@@ -29,26 +29,15 @@ trait EffectfulExp extends Effectful with Expressions { self: ScalanExp =>
   def console_printlnE(s: Rep[String]): Rep[Unit] = reflectEffect(PrintlnE(s))
   def console_readlineE(): Rep[String] = reflectEffect(ReadLineE())
 
-  case class Println(i: Rep[Int], s: Rep[String]) extends BaseDef[(Int, Unit)]  {
-    override def mirror(t: Transformer) = Println(t(i), t(s))
-  }
+  case class Println(i: Rep[Int], s: Rep[String]) extends BaseDef[(Int, Unit)]
 
-  case class ReadLine(i: Rep[Int]) extends BaseDef[(Int, String)]  {
-    override def mirror(t: Transformer) = ReadLine(t(i))
-  }
+  case class ReadLine(i: Rep[Int]) extends BaseDef[(Int, String)]
 
-  case class Eval[A:Elem](i: Rep[Int], v: Rep[A]) extends BaseDef[(Int, A)]  {
-    override def mirror(t: Transformer) = Eval(t(i), t(v))
-  }
+  case class Eval[A:Elem](i: Rep[Int], v: Rep[A]) extends BaseDef[(Int, A)]
 
-  case class PrintlnE(s: Rep[String]) extends BaseDef[Unit]  {
-    override def mirror(t: Transformer) = PrintlnE(t(s))
-  }
+  case class PrintlnE(s: Rep[String]) extends BaseDef[Unit]
 
-  case class ReadLineE() extends BaseDef[String]  {
-    override def mirror(t: Transformer) = ReadLineE()
-  }
-
+  case class ReadLineE() extends BaseDef[String]
 }
 
 trait EffectfulCompiler[ScalanCake <: ScalanCtxExp with EffectfulExp] extends Compiler[ScalanCake] {

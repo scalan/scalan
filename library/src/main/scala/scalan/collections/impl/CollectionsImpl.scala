@@ -799,7 +799,6 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeDef[CollectionCompanionAbs] {
     lazy val selfType = element[CollectionCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpUnitCollection
@@ -807,12 +806,10 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
 
     extends UnitCollection(length) with UserTypeDef[UnitCollection] {
     lazy val selfType = element[UnitCollection]
-    override def mirror(t: Transformer) = ExpUnitCollection(t(length))
   }
 
   lazy val UnitCollection: Rep[UnitCollectionCompanionAbs] = new UnitCollectionCompanionAbs with UserTypeDef[UnitCollectionCompanionAbs] {
     lazy val selfType = element[UnitCollectionCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object UnitCollectionMethods {
@@ -1015,12 +1012,10 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
       (implicit eItem: Elem[Item])
     extends CollectionOverArray[Item](arr) with UserTypeDef[CollectionOverArray[Item]] {
     lazy val selfType = element[CollectionOverArray[Item]]
-    override def mirror(t: Transformer) = ExpCollectionOverArray[Item](t(arr))
   }
 
   lazy val CollectionOverArray: Rep[CollectionOverArrayCompanionAbs] = new CollectionOverArrayCompanionAbs with UserTypeDef[CollectionOverArrayCompanionAbs] {
     lazy val selfType = element[CollectionOverArrayCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object CollectionOverArrayMethods {
@@ -1211,12 +1206,10 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
       (implicit eItem: Elem[Item])
     extends CollectionOverList[Item](lst) with UserTypeDef[CollectionOverList[Item]] {
     lazy val selfType = element[CollectionOverList[Item]]
-    override def mirror(t: Transformer) = ExpCollectionOverList[Item](t(lst))
   }
 
   lazy val CollectionOverList: Rep[CollectionOverListCompanionAbs] = new CollectionOverListCompanionAbs with UserTypeDef[CollectionOverListCompanionAbs] {
     lazy val selfType = element[CollectionOverListCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object CollectionOverListMethods {
@@ -1407,12 +1400,10 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
       (implicit eItem: Elem[Item])
     extends CollectionOverSeq[Item](seq) with UserTypeDef[CollectionOverSeq[Item]] {
     lazy val selfType = element[CollectionOverSeq[Item]]
-    override def mirror(t: Transformer) = ExpCollectionOverSeq[Item](t(seq))
   }
 
   lazy val CollectionOverSeq: Rep[CollectionOverSeqCompanionAbs] = new CollectionOverSeqCompanionAbs with UserTypeDef[CollectionOverSeqCompanionAbs] {
     lazy val selfType = element[CollectionOverSeqCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object CollectionOverSeqMethods {
@@ -1615,12 +1606,10 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
       (implicit eA: Elem[A], eB: Elem[B])
     extends PairCollectionSOA[A, B](as, bs) with UserTypeDef[PairCollectionSOA[A, B]] {
     lazy val selfType = element[PairCollectionSOA[A, B]]
-    override def mirror(t: Transformer) = ExpPairCollectionSOA[A, B](t(as), t(bs))
   }
 
   lazy val PairCollectionSOA: Rep[PairCollectionSOACompanionAbs] = new PairCollectionSOACompanionAbs with UserTypeDef[PairCollectionSOACompanionAbs] {
     lazy val selfType = element[PairCollectionSOACompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object PairCollectionSOAMethods {
@@ -1859,12 +1848,10 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
       (implicit eA: Elem[A], eB: Elem[B])
     extends PairCollectionAOS[A, B](coll) with UserTypeDef[PairCollectionAOS[A, B]] {
     lazy val selfType = element[PairCollectionAOS[A, B]]
-    override def mirror(t: Transformer) = ExpPairCollectionAOS[A, B](t(coll))
   }
 
   lazy val PairCollectionAOS: Rep[PairCollectionAOSCompanionAbs] = new PairCollectionAOSCompanionAbs with UserTypeDef[PairCollectionAOSCompanionAbs] {
     lazy val selfType = element[PairCollectionAOSCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object PairCollectionAOSMethods {
@@ -2138,12 +2125,10 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
       (implicit eA: Elem[A])
     extends NestedCollectionFlat[A](values, segments) with UserTypeDef[NestedCollectionFlat[A]] {
     lazy val selfType = element[NestedCollectionFlat[A]]
-    override def mirror(t: Transformer) = ExpNestedCollectionFlat[A](t(values), t(segments))
   }
 
   lazy val NestedCollectionFlat: Rep[NestedCollectionFlatCompanionAbs] = new NestedCollectionFlatCompanionAbs with UserTypeDef[NestedCollectionFlatCompanionAbs] {
     lazy val selfType = element[NestedCollectionFlatCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object NestedCollectionFlatMethods {

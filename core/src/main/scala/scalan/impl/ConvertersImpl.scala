@@ -454,7 +454,6 @@ trait ConvertersExp extends ConvertersDsl  {
   self: ScalanExp =>
   lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs with UserTypeDef[ConverterCompanionAbs] {
     lazy val selfType = element[ConverterCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpBaseConverter[T, R]
@@ -462,12 +461,10 @@ trait ConvertersExp extends ConvertersDsl  {
       (implicit eT: Elem[T], eR: Elem[R])
     extends BaseConverter[T, R](convFun) with UserTypeDef[BaseConverter[T, R]] {
     lazy val selfType = element[BaseConverter[T, R]]
-    override def mirror(t: Transformer) = ExpBaseConverter[T, R](t(convFun))
   }
 
   lazy val BaseConverter: Rep[BaseConverterCompanionAbs] = new BaseConverterCompanionAbs with UserTypeDef[BaseConverterCompanionAbs] {
     lazy val selfType = element[BaseConverterCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object BaseConverterMethods {
@@ -506,12 +503,10 @@ trait ConvertersExp extends ConvertersDsl  {
       (implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends PairConverter[A1, A2, B1, B2](conv1, conv2) with UserTypeDef[PairConverter[A1, A2, B1, B2]] {
     lazy val selfType = element[PairConverter[A1, A2, B1, B2]]
-    override def mirror(t: Transformer) = ExpPairConverter[A1, A2, B1, B2](t(conv1), t(conv2))
   }
 
   lazy val PairConverter: Rep[PairConverterCompanionAbs] = new PairConverterCompanionAbs with UserTypeDef[PairConverterCompanionAbs] {
     lazy val selfType = element[PairConverterCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object PairConverterMethods {
@@ -546,12 +541,10 @@ trait ConvertersExp extends ConvertersDsl  {
       (implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends SumConverter[A1, A2, B1, B2](conv1, conv2) with UserTypeDef[SumConverter[A1, A2, B1, B2]] {
     lazy val selfType = element[SumConverter[A1, A2, B1, B2]]
-    override def mirror(t: Transformer) = ExpSumConverter[A1, A2, B1, B2](t(conv1), t(conv2))
   }
 
   lazy val SumConverter: Rep[SumConverterCompanionAbs] = new SumConverterCompanionAbs with UserTypeDef[SumConverterCompanionAbs] {
     lazy val selfType = element[SumConverterCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object SumConverterMethods {
@@ -586,12 +579,10 @@ trait ConvertersExp extends ConvertersDsl  {
       (implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
     extends FunctorConverter[A, B, F](itemConv) with UserTypeDef[FunctorConverter[A, B, F]] {
     lazy val selfType = element[FunctorConverter[A, B, F]]
-    override def mirror(t: Transformer) = ExpFunctorConverter[A, B, F](t(itemConv))
   }
 
   lazy val FunctorConverter: Rep[FunctorConverterCompanionAbs] = new FunctorConverterCompanionAbs with UserTypeDef[FunctorConverterCompanionAbs] {
     lazy val selfType = element[FunctorConverterCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object FunctorConverterMethods {

@@ -1,13 +1,17 @@
 package scalan.staged
 
+import java.lang.reflect.Constructor
+
 import scala.annotation.unchecked.uncheckedVariance
 import scala.collection.{TraversableOnce, mutable}
 import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
+import scala.reflect.runtime.universe._
+import scalan.util.ReflectionUtil
 import scalan.{Base, ScalanExp}
 import scalan.common.Lazy
 
-trait BaseExp extends Base { self: ScalanExp =>
+trait BaseExp extends Base { scalan: ScalanExp =>
   type Rep[+A] = Exp[A]
 
   /**
@@ -40,14 +44,11 @@ trait BaseExp extends Base { self: ScalanExp =>
 
   trait Def[+T] extends Reifiable[T] {
     lazy val self: Rep[T] = reifyObject(this)
-    def mirror(f: Transformer): Rep[T]
   }
 
   abstract class BaseDef[+T](implicit val selfType: Elem[T @uncheckedVariance]) extends Def[T]
 
-  case class Const[T: Elem](x: T) extends BaseDef[T] {
-    override def mirror(t: Transformer) = self   //TODO this leads to duplication of constants when mirroring
-  }
+  case class Const[T: Elem](x: T) extends BaseDef[T]
 
   abstract class Transformer {
     def apply[A](x: Rep[A]): Rep[A]
@@ -72,6 +73,52 @@ trait BaseExp extends Base { self: ScalanExp =>
     def +[A](kv: (Rep[A], Rep[A])) = ops.add(self, kv)
     def ++(kvs: Map[Rep[A], Rep[A]] forSome {type A}) = kvs.foldLeft(self)((ctx, kv) => ops.add(ctx, kv))
     def merge(other: Ctx): Ctx = ops.merge(self, other)
+  }
+
+  private[this] case class ReflectedDefClass(constructor: Constructor[_], paramFieldMirrors: List[FieldMirror])
+
+  private[this] val selfTypeSym =
+    ReflectionUtil.classToSymbol(classOf[BaseDef[_]]).toType.decl(TermName("selfType")).asTerm
+
+  private[this] def reflectDefClass(clazz: Class[_], d: Def[_]) = {
+    val javaMirror = runtimeMirror(clazz.getClassLoader)
+
+    val classSymbol = ReflectionUtil.classToSymbol(clazz)
+    val tpe = classSymbol.toType
+
+    val constructors = clazz.getDeclaredConstructors
+    assert(constructors.length == 1, s"Every class extending Def must have one constructor, $clazz has ${constructors.length}")
+    val constructor = constructors(0)
+
+    val instanceMirror = javaMirror.reflect(d)
+    val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, selfTypeSym)
+
+    ReflectedDefClass(constructor, fieldMirrors)
+  }
+
+  private[this] val defClasses = collection.mutable.Map.empty[Class[_], ReflectedDefClass]
+
+  def transformDef[A](d: Def[A], t: Transformer): Exp[A] = d match {
+    case c: Const[A] => c.self
+    case comp: CompanionBase[_] => comp.self
+    case _ =>
+      def transformParam(x: Any): Any = x match {
+        case e: Exp[_] => t(e)
+        case seq: Seq[_] => seq.map(transformParam)
+        case arr: Array[_] => arr.map(transformParam)
+        case opt: Option[_] => opt.map(transformParam)
+        case x => x
+      }
+
+      val clazz = d.getClass
+      val ReflectedDefClass(constructor, fieldMirrors) =
+        defClasses.getOrElseUpdate(clazz, reflectDefClass(clazz, d))
+
+      val dParams = fieldMirrors.map(_.bind(d).get)
+      val transformedParams = dParams.map(transformParam)
+      val finalParams = (scalan :: transformedParams).asInstanceOf[List[AnyRef]]
+      val transformedD = constructor.newInstance(finalParams: _*).asInstanceOf[Def[A]]
+      reifyObject(transformedD)
   }
 
   def fresh[T](implicit leT: LElem[T]): Exp[T]
@@ -322,7 +369,7 @@ trait BaseExp extends Base { self: ScalanExp =>
  *
  * @since 0.1
  */
-trait Expressions extends BaseExp { self: ScalanExp =>
+trait Expressions extends BaseExp { scalan: ScalanExp =>
   /**
    * A Sym is a symbolic reference used internally to refer to expressions.
    */

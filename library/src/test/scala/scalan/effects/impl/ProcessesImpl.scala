@@ -357,7 +357,6 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
   self: ProcessesDslExp =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with UserTypeDef[ProcessCompanionAbs] {
     lazy val selfType = element[ProcessCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpAwait[F[_], A, O]
@@ -365,12 +364,10 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
       (implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
     extends Await[F, A, O](req, recv) with UserTypeDef[Await[F, A, O]] {
     lazy val selfType = element[Await[F, A, O]]
-    override def mirror(t: Transformer) = ExpAwait[F, A, O](t(req), t(recv))
   }
 
   lazy val Await: Rep[AwaitCompanionAbs] = new AwaitCompanionAbs with UserTypeDef[AwaitCompanionAbs] {
     lazy val selfType = element[AwaitCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object AwaitMethods {
@@ -397,12 +394,10 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
       (implicit eO: Elem[O], cF: Cont[F])
     extends Emit[F, O](head, tail) with UserTypeDef[Emit[F, O]] {
     lazy val selfType = element[Emit[F, O]]
-    override def mirror(t: Transformer) = ExpEmit[F, O](t(head), t(tail))
   }
 
   lazy val Emit: Rep[EmitCompanionAbs] = new EmitCompanionAbs with UserTypeDef[EmitCompanionAbs] {
     lazy val selfType = element[EmitCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object EmitMethods {
@@ -429,12 +424,10 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
       (implicit eO: Elem[O], cF: Cont[F])
     extends Halt[F, O](err) with UserTypeDef[Halt[F, O]] {
     lazy val selfType = element[Halt[F, O]]
-    override def mirror(t: Transformer) = ExpHalt[F, O](t(err))
   }
 
   lazy val Halt: Rep[HaltCompanionAbs] = new HaltCompanionAbs with UserTypeDef[HaltCompanionAbs] {
     lazy val selfType = element[HaltCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object HaltMethods {

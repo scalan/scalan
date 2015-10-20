@@ -356,7 +356,6 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
   lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs with UserTypeDef[FreeMCompanionAbs] {
     lazy val selfType = element[FreeMCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpDone[F[_], A]
@@ -364,12 +363,10 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
       (implicit eA: Elem[A], cF: Cont[F])
     extends Done[F, A](a) with UserTypeDef[Done[F, A]] {
     lazy val selfType = element[Done[F, A]]
-    override def mirror(t: Transformer) = ExpDone[F, A](t(a))
   }
 
   lazy val Done: Rep[DoneCompanionAbs] = new DoneCompanionAbs with UserTypeDef[DoneCompanionAbs] {
     lazy val selfType = element[DoneCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object DoneMethods {
@@ -428,12 +425,10 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
       (implicit eA: Elem[A], cF: Cont[F])
     extends More[F, A](k) with UserTypeDef[More[F, A]] {
     lazy val selfType = element[More[F, A]]
-    override def mirror(t: Transformer) = ExpMore[F, A](t(k))
   }
 
   lazy val More: Rep[MoreCompanionAbs] = new MoreCompanionAbs with UserTypeDef[MoreCompanionAbs] {
     lazy val selfType = element[MoreCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object MoreMethods {
@@ -480,12 +475,10 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
       (implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends FlatMap[F, S, B](a, f) with UserTypeDef[FlatMap[F, S, B]] {
     lazy val selfType = element[FlatMap[F, S, B]]
-    override def mirror(t: Transformer) = ExpFlatMap[F, S, B](t(a), t(f))
   }
 
   lazy val FlatMap: Rep[FlatMapCompanionAbs] = new FlatMapCompanionAbs with UserTypeDef[FlatMapCompanionAbs] {
     lazy val selfType = element[FlatMapCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object FlatMapMethods {

@@ -267,7 +267,6 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeDef[GraphCompanionAbs] {
     lazy val selfType = element[GraphCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   case class ExpAdjacencyGraph[V, E]
@@ -275,12 +274,10 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjacencyGraph[V, E](vertexValues, edgeValues, links) with UserTypeDef[AdjacencyGraph[V, E]] {
     lazy val selfType = element[AdjacencyGraph[V, E]]
-    override def mirror(t: Transformer) = ExpAdjacencyGraph[V, E](t(vertexValues), t(edgeValues), t(links))
   }
 
   lazy val AdjacencyGraph: Rep[AdjacencyGraphCompanionAbs] = new AdjacencyGraphCompanionAbs with UserTypeDef[AdjacencyGraphCompanionAbs] {
     lazy val selfType = element[AdjacencyGraphCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object AdjacencyGraphMethods {
@@ -530,12 +527,10 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
       (implicit eV: Elem[V], eE: Elem[E])
     extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) with UserTypeDef[IncidenceGraph[V, E]] {
     lazy val selfType = element[IncidenceGraph[V, E]]
-    override def mirror(t: Transformer) = ExpIncidenceGraph[V, E](t(vertexValues), t(incMatrixWithVals), t(vertexNum))
   }
 
   lazy val IncidenceGraph: Rep[IncidenceGraphCompanionAbs] = new IncidenceGraphCompanionAbs with UserTypeDef[IncidenceGraphCompanionAbs] {
     lazy val selfType = element[IncidenceGraphCompanionAbs]
-    override def mirror(t: Transformer) = this
   }
 
   object IncidenceGraphMethods {
