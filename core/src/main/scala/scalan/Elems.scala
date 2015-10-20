@@ -152,21 +152,10 @@ trait Elems extends Base { self: Scalan =>
 
   implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = Lazy(eA)
 
-  // used only in TagImplicits, but can't be placed in that scope
-  private val ArrayUnitClassTag = scala.reflect.classTag[Array[Unit]]
   object TagImplicits {
-    val ArrayUnitTypeTag = typeTag[Array[Unit]]
-
-    // See https://issues.scala-lang.org/browse/SI-9252; remove hacks if fixed
-    implicit def elemToClassTag[A](implicit elem: Element[A]): ClassTag[A] = elem match {
-      case ae: ArrayElem[_] if ae.eItem == UnitElement => ArrayUnitClassTag.asInstanceOf[ClassTag[A]]
-      case _ => elem.classTag
-    }
-    implicit def typeTagToClassTag[A](implicit tag: WeakTypeTag[A]): ClassTag[A] = tag match {
-      case ArrayUnitTypeTag => ArrayUnitClassTag.asInstanceOf[ClassTag[A]]
-      case _ => ClassTag(tag.mirror.runtimeClass(tag.tpe))
-    }
-
+    implicit def elemToClassTag[A](implicit elem: Element[A]): ClassTag[A] = elem.classTag
+    implicit def typeTagToClassTag[A](implicit tag: WeakTypeTag[A]): ClassTag[A] =
+      ClassTag(tag.mirror.runtimeClass(tag.tpe))
   }
 
   def elemFromRep[A](x: Rep[A])(implicit eA: Elem[A]): Elem[A] = eA match {
