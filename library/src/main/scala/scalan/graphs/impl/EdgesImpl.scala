@@ -35,7 +35,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
       implicit val tagE = eE.tag
       weakTypeTag[Edge[V, E]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Edge[V, E]] => convertEdge(x) }
       tryConvert(element[Edge[V, E]], this, x, conv)
@@ -59,7 +59,8 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     protected def getDefaultRep = Edge
   }
 
-  abstract class EdgeCompanionAbs extends CompanionBase[EdgeCompanionAbs] with EdgeCompanion {
+  abstract class EdgeCompanionAbs extends CompanionDef[EdgeCompanionAbs] with EdgeCompanion {
+    def selfType = EdgeCompanionElem
     override def toString = "Edge"
   }
   def Edge: Rep[EdgeCompanionAbs]
@@ -103,7 +104,8 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     lazy val eTo = new AdjEdgeElem[V, E](this)
   }
   // 4) constructor and deconstructor
-  abstract class AdjEdgeCompanionAbs extends CompanionBase[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
+  class AdjEdgeCompanionAbs extends CompanionDef[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
+    def selfType = AdjEdgeCompanionElem
     override def toString = "AdjEdge"
     def apply[V, E](p: Rep[AdjEdgeData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]] =
       isoAdjEdge(eV, eE).to(p)
@@ -113,7 +115,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   object AdjEdgeMatcher {
     def unapply[V, E](p: Rep[Edge[V, E]]) = unmkAdjEdge(p)
   }
-  def AdjEdge: Rep[AdjEdgeCompanionAbs]
+  lazy val AdjEdge: Rep[AdjEdgeCompanionAbs] = new AdjEdgeCompanionAbs
   implicit def proxyAdjEdgeCompanion(p: Rep[AdjEdgeCompanionAbs]): AdjEdgeCompanionAbs = {
     proxyOps[AdjEdgeCompanionAbs](p)
   }
@@ -175,7 +177,8 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     lazy val eTo = new IncEdgeElem[V, E](this)
   }
   // 4) constructor and deconstructor
-  abstract class IncEdgeCompanionAbs extends CompanionBase[IncEdgeCompanionAbs] with IncEdgeCompanion {
+  class IncEdgeCompanionAbs extends CompanionDef[IncEdgeCompanionAbs] with IncEdgeCompanion {
+    def selfType = IncEdgeCompanionElem
     override def toString = "IncEdge"
     def apply[V, E](p: Rep[IncEdgeData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]] =
       isoIncEdge(eV, eE).to(p)
@@ -185,7 +188,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   object IncEdgeMatcher {
     def unapply[V, E](p: Rep[Edge[V, E]]) = unmkIncEdge(p)
   }
-  def IncEdge: Rep[IncEdgeCompanionAbs]
+  lazy val IncEdge: Rep[IncEdgeCompanionAbs] = new IncEdgeCompanionAbs
   implicit def proxyIncEdgeCompanion(p: Rep[IncEdgeCompanionAbs]): IncEdgeCompanionAbs = {
     proxyOps[IncEdgeCompanionAbs](p)
   }
@@ -216,19 +219,15 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 // Seq -----------------------------------
 trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
   self: GraphsDslSeq =>
-  lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeSeq[EdgeCompanionAbs] {
-    lazy val selfType = element[EdgeCompanionAbs]
+  lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with Def[EdgeCompanionAbs] {
   }
 
   case class SeqAdjEdge[V, E]
       (override val fromId: Rep[Int], override val outIndex: Rep[Int], override val graph: Rep[Graph[V, E]])
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjEdge[V, E](fromId, outIndex, graph)
-        with UserTypeSeq[AdjEdge[V, E]] {
+        with Def[AdjEdge[V, E]] {
     lazy val selfType = element[AdjEdge[V, E]]
-  }
-  lazy val AdjEdge = new AdjEdgeCompanionAbs with UserTypeSeq[AdjEdgeCompanionAbs] {
-    lazy val selfType = element[AdjEdgeCompanionAbs]
   }
 
   def mkAdjEdge[V, E]
@@ -244,11 +243,8 @@ trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
       (override val fromId: Rep[Int], override val toId: Rep[Int], override val graph: Rep[Graph[V, E]])
       (implicit eV: Elem[V], eE: Elem[E])
     extends IncEdge[V, E](fromId, toId, graph)
-        with UserTypeSeq[IncEdge[V, E]] {
+        with Def[IncEdge[V, E]] {
     lazy val selfType = element[IncEdge[V, E]]
-  }
-  lazy val IncEdge = new IncEdgeCompanionAbs with UserTypeSeq[IncEdgeCompanionAbs] {
-    lazy val selfType = element[IncEdgeCompanionAbs]
   }
 
   def mkIncEdge[V, E]
@@ -264,19 +260,14 @@ trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
-  lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with UserTypeDef[EdgeCompanionAbs] {
-    lazy val selfType = element[EdgeCompanionAbs]
+  lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs with Def[EdgeCompanionAbs] {
   }
 
   case class ExpAdjEdge[V, E]
       (override val fromId: Rep[Int], override val outIndex: Rep[Int], override val graph: Rep[Graph[V, E]])
       (implicit eV: Elem[V], eE: Elem[E])
-    extends AdjEdge[V, E](fromId, outIndex, graph) with UserTypeDef[AdjEdge[V, E]] {
+    extends AdjEdge[V, E](fromId, outIndex, graph) with Def[AdjEdge[V, E]] {
     lazy val selfType = element[AdjEdge[V, E]]
-  }
-
-  lazy val AdjEdge: Rep[AdjEdgeCompanionAbs] = new AdjEdgeCompanionAbs with UserTypeDef[AdjEdgeCompanionAbs] {
-    lazy val selfType = element[AdjEdgeCompanionAbs]
   }
 
   object AdjEdgeMethods {
@@ -357,12 +348,8 @@ trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
   case class ExpIncEdge[V, E]
       (override val fromId: Rep[Int], override val toId: Rep[Int], override val graph: Rep[Graph[V, E]])
       (implicit eV: Elem[V], eE: Elem[E])
-    extends IncEdge[V, E](fromId, toId, graph) with UserTypeDef[IncEdge[V, E]] {
+    extends IncEdge[V, E](fromId, toId, graph) with Def[IncEdge[V, E]] {
     lazy val selfType = element[IncEdge[V, E]]
-  }
-
-  lazy val IncEdge: Rep[IncEdgeCompanionAbs] = new IncEdgeCompanionAbs with UserTypeDef[IncEdgeCompanionAbs] {
-    lazy val selfType = element[IncEdgeCompanionAbs]
   }
 
   object IncEdgeMethods {
@@ -544,7 +531,7 @@ trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
 object Edges_Module {
   val packageName = "scalan.graphs"
   val name = "Edges"
-  val dump = "H4sIAAAAAAAAANVXTWwbRRSe3dhxbIc0VKiolSAhuCAQ2FElVKEgVanrVEZuEmXbgEyFNN4dOxN2Zzc748jm0ANHuCGuFeq9Ny5ISL0gJMSBEwIkzpxKEaqAnqh4M/vrxOu2ETngw2hn5s37+b733oxv30N57qOXuIltzKoOEbhqqO9VLipGgwkqhldcq2+TS6T70akvzSvsItfRiTaa3sH8ErfbqBh8NAZe/G2QvRYqYmYSLlyfC/RCS1moma5tE1NQl9Wo4/QF7tik1qJcrLRQruNawz10A2ktNG+6zPSJIEbdxpwTHq7PEOkRjedFNR9ueIkNVpNR1FJRXPUxFeA+2JgP5LeIZwyZy4aOQHOhaxuedAtkCtTxXF9EJgqgbse1ommOYVhAJ1u7eB/XwESvZgifsh6cLHvY/AD3yDqISPEcOMyJ3b069NR8qoVKnOwBQE3Hs9XKwEMIAQPnlBPVBJ9qjE9V4lMxiE+xTT/EcnPTdwdDFPy0KYQGHqh47REqIg2kwazKx9fN9x4YZUeXhwfSlYKKcBoULWRkg6ICcPx261N+//Kt8zoqtVGJ8tUOFz42RZryEK0yZswVyucYQOz3gK2lLLaUlVWQOZASRdN1PMxAUwjlLPBkU5MKKSzXZkN2MqAvCI9EotrA0+J4FzPiVXlTx7a9eff062d/a7yrI33URBFUGpD4fqRUoFzD6pFQtRxPCKRtJ/jKaUNN5VAcJGNhgicxJi/f/d36Zhld12MkQ8OPRx6oyPOffyz/8MoFHc20Vaqv2bjXBjB5wybOhl93mWijGXef+MFOYR/b8mssmQWLdHHfFiHEaWymABuBFjOL0iMSuBVVAFoEQDnI4XWXkcraZuVv47vPbssU9dFssBNU6UN6/p9f5rpCZa9A013fdZpWBPAUlHeMx4tZ5Hpk06cONJN98sbXX1374856XvF7MgxpG9t9EpR2GFESnTSqLYOlJhMBg8remTgUOSwIgLEvmswig8OuyeHspLP5no+9nTExhSv5y/H+E2Zakm+lAFTDdcjTS/fp+7c+ESqztMFoh9vo7EJLWVHnnp+QZFGn/au9rP95+qfPdVSEXOpQ4WCvsvyY/eEYax6NwjVXD28ZVRznRjdVIY+v1IQmyIP5VWtXitbTri4kPDybUntGO0CyTrYTe1B/Y+lMZ8lhBY1JCg4ngECF0GGlIa6T57LrBAA8tdV6xr534Y6O8m+jfBfaAW+hfMftMytiBm5sQQbiYrSmjTIDTGAfOzET6reIErBGs/edsQKNg3iUtTGkHa37HuLqYEFmdplHlnJOuEc6d/wtQI5vqvGtY6mNJjP/X7UROpyujex0fKJ8TXk6PRbx4hahXSqfa/9RTqcZmcB0WfbLNexQe3hEmp/K4NhLqTgWNOV4M5EJBfMKMHArbGlBFYUI+Ggpo9MZ4dUB99eNBzfXX/3+i1/Vg6AkLyF4kLD4L0H6IXCAw6Ai4YWf8hVQkNeS8vNfRdcRhXENAAA="
+  val dump = "H4sIAAAAAAAAANVXQWwbRRSdXdtxbIc0VKiolSAhuCAQ2FElVKEgVanrVEZuEmXbgEyFNN4dOxtmZzc742jNoQeOcENcK9R7b1yQkHpBSIgDJwRInDmVIlQBPVHxZ3a9u068aRuRAz6Mdmb//P/nvff/rG/fQwXuo5e4iSlmNYcIXDPU8woXVaPJhC2GV1xrQMkl0vvo1JfmFXaR6+hEB01tY36J0w4qhQ/NwIufDbLbRiXMTMKF63OBXmirCHXTpZSYwnZZ3XacgcBdSuptm4vlNsp3XWu4i24grY3mTJeZPhHEaFDMOeHR+jSRGdnxvKTmw3UvicHq8hT11Cmu+tgWkD7EmAvtN4lnDJnLho5As1Fq655MC2yKtuO5vhiFKIK7bdcaTfMMwwI62d7Be7gOIfp1Q/g268POiofND3CfrIGJNM9DwpzQ3tWhp+a5NipzsgsAtRyPqpXAQwgBA+dUErUEn1qMT03iUzWIb2Nqf4jlyw3fDYYo/Gk5hAIPXLz2CBcjD6TJrOrH1833HhgVR5ebA5lKUZ1wChzNZ6hBUQE4frv5Kb9/+dZ5HZU7qGzzlS4XPjZFmvIIrQpmzBUq5xhA7PeBrcUstlSUFbDZJ4mS6ToeZuApgnIGeKK2aQtpLNdmInYyoC8Kj4xMtcDT4vMuZJxX6aaBKd24e/r1s78139WRPh6iBC4NEL4/cipQvmn1SeRajicE0rYSfOW0qaZyKAXJWDwkkxiTl+/+bn2zhK7rMZJR4McjD1wU+M8/Vn545YKOpjtK6qsU9zsAJm9S4qz7DZeJDpp294gfvinuYSqfJpJZtEgPD6iIIE5jkwNsBFrILEqPSOCWVQFoIwAqoYbXXEaqqxvVv43vPrstJeqjmfBNWKUP7fP//DLbE0q9Ak31fNdpWSOAc1DeMR4vZpHrkQ3fdqCZ7JE3vv7q2h931gqK35PRkbYwHZCwtKMTJaeTQbUliNRiImRQxTsTH0UO8wJgHIgWs0hwMDU5nD1sb6HvY297wpmilcLl+P0TKi3RWzkE1XAd8vTiffv9W58IpSwtGO9w690daCnLat/zh4hs1Gn/6izpf57+6XMdlUBLXVs42KsuPWZ/OMaaR+NwzTaiW0YVx7nxl6qQJ1dqQhPoYG7F2pGmjXSq8wkPz6bcntH2kayTrSQe1N9EOtMqOeigeZiDgwIQqBglrDzEdfJcdp0AgKc228/Qexfu6KjwNir0oB3wNip03QGzRszAjS1IIC6O1rRxZoAJ7GMnZkL9FlAC1rh635lo0NyPR0WbQNrRuu8BrvYXZGaXeWQp54V7pH3H3wLk+KYa3zqW2mgx8/9VG1HC6drIluMT6TWV6dRExHPQOP8jNae5OITjiuyUq9ix6fCIBD+Vwa6XcnEsOMrxZmITGRYUYJBW1MzC+okQ8NFiRo8zoksDCLjx4Obaq99/8av6FCjL6wc+RVj8ZyD9CTCOWCmsRfi2T+UKKMgLSeX5LxrjsBprDQAA"
 }
 }
 

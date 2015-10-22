@@ -12,7 +12,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
   type Vector[T] = Rep[AbstractVector[T]]
 
-  trait AbstractVector[T] extends Reifiable[AbstractVector[T]] {
+  trait AbstractVector[T] extends Def[AbstractVector[T]] {
 
     def length: Rep[Int]
     def items: Rep[Collection[T]]

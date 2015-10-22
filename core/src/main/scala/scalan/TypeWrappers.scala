@@ -12,7 +12,7 @@ import scalan.compilation.{GraphVizConfig, GraphVizExport}
 
 trait TypeWrappers extends Base { self: Scalan =>
 
-  trait TypeWrapper[TBase, TWrapper] extends Reifiable[TWrapper] {
+  trait TypeWrapper[TBase, TWrapper] extends Def[TWrapper] {
     def wrappedValue: Rep[TBase]
   }
 
@@ -43,13 +43,9 @@ trait TypeWrappers extends Base { self: Scalan =>
     def eTo: Elem[_]
   }
 
-  trait ExCompanion0[TBase] {
-    //def defaultVal: Default[TBase]
-  }
+  trait ExCompanion0[TBase]
 
-  trait ExCompanion1[TBase[_]] {
-    //def defaultVal[A]: Default[TBase[A]]
-  }
+  trait ExCompanion1[TBase[_]]
 
   final val ContainerLength = "ContainerLength"
   final val ContainerApply = "ContainerApply"

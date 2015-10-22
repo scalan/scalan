@@ -10,7 +10,7 @@ trait Interactions { self: InteractionsDsl =>
   import OperM.toMonadic
 
   type RepInteract[A] = Rep[Interact[A]]
-  trait Interact[A] extends Reifiable[Interact[A]] {
+  trait Interact[A] extends Def[Interact[A]] {
     implicit def eA: Elem[A]
     def toOper: Rep[Oper[A]]
   }

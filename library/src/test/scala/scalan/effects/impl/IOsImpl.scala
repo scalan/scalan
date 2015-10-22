@@ -33,7 +33,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[IO[A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[IO[A]] => convertIO(x) }
       tryConvert(element[IO[A]], this, x, conv)
@@ -57,7 +57,8 @@ trait IOsAbs extends IOs with scalan.Scalan {
     protected def getDefaultRep = IO
   }
 
-  abstract class IOCompanionAbs extends CompanionBase[IOCompanionAbs] with IOCompanion {
+  abstract class IOCompanionAbs extends CompanionDef[IOCompanionAbs] with IOCompanion {
+    def selfType = IOCompanionElem
     override def toString = "IO"
   }
   def IO: Rep[IOCompanionAbs]
@@ -100,7 +101,8 @@ trait IOsAbs extends IOs with scalan.Scalan {
     lazy val eTo = new ReadFileElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class ReadFileCompanionAbs extends CompanionBase[ReadFileCompanionAbs] with ReadFileCompanion {
+  class ReadFileCompanionAbs extends CompanionDef[ReadFileCompanionAbs] with ReadFileCompanion {
+    def selfType = ReadFileCompanionElem
     override def toString = "ReadFile"
 
     def apply(fileName: Rep[String]): Rep[ReadFile] =
@@ -109,7 +111,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
   object ReadFileMatcher {
     def unapply(p: Rep[IO[List[String]]]) = unmkReadFile(p)
   }
-  def ReadFile: Rep[ReadFileCompanionAbs]
+  lazy val ReadFile: Rep[ReadFileCompanionAbs] = new ReadFileCompanionAbs
   implicit def proxyReadFileCompanion(p: Rep[ReadFileCompanionAbs]): ReadFileCompanionAbs = {
     proxyOps[ReadFileCompanionAbs](p)
   }
@@ -170,7 +172,8 @@ trait IOsAbs extends IOs with scalan.Scalan {
     lazy val eTo = new WriteFileElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class WriteFileCompanionAbs extends CompanionBase[WriteFileCompanionAbs] with WriteFileCompanion {
+  class WriteFileCompanionAbs extends CompanionDef[WriteFileCompanionAbs] with WriteFileCompanion {
+    def selfType = WriteFileCompanionElem
     override def toString = "WriteFile"
     def apply(p: Rep[WriteFileData]): Rep[WriteFile] =
       isoWriteFile.to(p)
@@ -180,7 +183,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
   object WriteFileMatcher {
     def unapply(p: Rep[IO[Unit]]) = unmkWriteFile(p)
   }
-  def WriteFile: Rep[WriteFileCompanionAbs]
+  lazy val WriteFile: Rep[WriteFileCompanionAbs] = new WriteFileCompanionAbs
   implicit def proxyWriteFileCompanion(p: Rep[WriteFileCompanionAbs]): WriteFileCompanionAbs = {
     proxyOps[WriteFileCompanionAbs](p)
   }
@@ -211,19 +214,15 @@ trait IOsAbs extends IOs with scalan.Scalan {
 // Seq -----------------------------------
 trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
   self: IOsDslSeq =>
-  lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs with UserTypeSeq[IOCompanionAbs] {
-    lazy val selfType = element[IOCompanionAbs]
+  lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs with Def[IOCompanionAbs] {
   }
 
   case class SeqReadFile
       (override val fileName: Rep[String])
 
     extends ReadFile(fileName)
-        with UserTypeSeq[ReadFile] {
+        with Def[ReadFile] {
     lazy val selfType = element[ReadFile]
-  }
-  lazy val ReadFile = new ReadFileCompanionAbs with UserTypeSeq[ReadFileCompanionAbs] {
-    lazy val selfType = element[ReadFileCompanionAbs]
   }
 
   def mkReadFile
@@ -239,11 +238,8 @@ trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
       (override val fileName: Rep[String], override val lines: Rep[List[String]])
 
     extends WriteFile(fileName, lines)
-        with UserTypeSeq[WriteFile] {
+        with Def[WriteFile] {
     lazy val selfType = element[WriteFile]
-  }
-  lazy val WriteFile = new WriteFileCompanionAbs with UserTypeSeq[WriteFileCompanionAbs] {
-    lazy val selfType = element[WriteFileCompanionAbs]
   }
 
   def mkWriteFile
@@ -259,19 +255,14 @@ trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait IOsExp extends IOsDsl with scalan.ScalanExp {
   self: IOsDslExp =>
-  lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs with UserTypeDef[IOCompanionAbs] {
-    lazy val selfType = element[IOCompanionAbs]
+  lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs with Def[IOCompanionAbs] {
   }
 
   case class ExpReadFile
       (override val fileName: Rep[String])
 
-    extends ReadFile(fileName) with UserTypeDef[ReadFile] {
+    extends ReadFile(fileName) with Def[ReadFile] {
     lazy val selfType = element[ReadFile]
-  }
-
-  lazy val ReadFile: Rep[ReadFileCompanionAbs] = new ReadFileCompanionAbs with UserTypeDef[ReadFileCompanionAbs] {
-    lazy val selfType = element[ReadFileCompanionAbs]
   }
 
   object ReadFileMethods {
@@ -304,12 +295,8 @@ trait IOsExp extends IOsDsl with scalan.ScalanExp {
   case class ExpWriteFile
       (override val fileName: Rep[String], override val lines: Rep[List[String]])
 
-    extends WriteFile(fileName, lines) with UserTypeDef[WriteFile] {
+    extends WriteFile(fileName, lines) with Def[WriteFile] {
     lazy val selfType = element[WriteFile]
-  }
-
-  lazy val WriteFile: Rep[WriteFileCompanionAbs] = new WriteFileCompanionAbs with UserTypeDef[WriteFileCompanionAbs] {
-    lazy val selfType = element[WriteFileCompanionAbs]
   }
 
   object WriteFileMethods {
@@ -360,7 +347,7 @@ trait IOsExp extends IOsDsl with scalan.ScalanExp {
 object IOs_Module {
   val packageName = "scalan.examples"
   val name = "IOs"
-  val dump = "H4sIAAAAAAAAALVWTWwbRRSeXcd2bEdNG6GgIlWkxhBagR0hoR5yqNLUQUHbOPK2FJkKabweu1NmZzc742jNoQeOcENcEeq9Ny5ISL0gJMSBEwIkzpxKEaoKPYH6dvbHu4k3+IIPo53ZN+/ne9/3vPcfoaLw0CvCwgzzpk0kbprqeUvIhtnmksrJNWcwZuQqGX60+pV1jV8ROlruodJtLK4K1kOV8KHtu8mzSQ4MVMHcIkI6npDovKEitCyHMWJJ6vAWte2xxH1GWgYVctNAC31nMDlAd5FmoNOWwy2PSGJuMywEEdH5Igkyosm+ovaTjjuNwVtBFa1UFdc9TCWkDzFOh/Zd4poT7vCJLdGpKLWOG6QFNmVqu44n4xBlcHfbGcTbBY7hAK0Yd/AhbkGIUcuUHuUjuFlzsfUBHpE9MAnMFyBhQdjw+sRV+4KBqoIcAEC7tsvUie8ihKADb6gkmlN8mgk+zQCfhkk8ihn9EAcv9z3Hn6DwpxUQ8l1w8dp/uIg9kDYfND6+Zb331KzZenDZD1IpqwpL4OjFHDaoVgCO33U/FY/fundJR9UeqlKx1RfSw5ZMtzxCq4Y5d6TKOQEQeyPoVj2vWyrKFtgcoUTFcmwXc/AUQbkEfWLUojIwDs6Wou7kQF+WLolNNd/VknrXcupVvNnGjO0/PPv6y7+339WRng1RAZcmEN+LnUqk73Yix8G6LMEMsE9ivZQXyyX7HrWB24fkzW++vvHng72iCrcyIEM8ZvIdzMYkZFoUfJqIiluvS1SaGlT8o2v5hFIT0Ncf/jH4dgPd0pNWRZXNxw5wURS//FT78cJlHS32lJZ2GB71oFuizYjd8bYdLnto0TkkXvimfIhZ8DSTLeWo/KiHafALAL5Ea7mqd0nQmU2lMC0GoBaKZM/hpLGz3/jb/P6z+4EGPLQUvgnHwL/00j+/nhpKJQ+JFoeUKVXHTS3ABAkRCZbnZ0FdDf2Zjk3O1B/T9+99IhWomp+dHp3+HZDrprp3/gR84yn2V29Df3L25y90VAEY+1Ta2G1szKm9/1FPSBWeXeqA3ZkuwYMdwG87Ha8+HTkvqEcAOTY88r6mZQWVVdgqHLx6AWR2g1N5vA8qQMr8XEIGFWXe1s6+W2SUE3H84gzpz6RJOsl1tV7MQ3HlpkclmQfGSmI5NUgVUYriZDOtdAkd0uCv4iSs4UDbSjk8Vsnc5dR2OzPqCMen2ifj5lz+wATyrXaN59ijyw90VHwbFYcwRYSBin1nzAcxq+FLQhJfXonPtCyrgcXYw3bCYvVbQ9Okcms2sviCYQHQkmg5ypj4GAQV8WMdSqnnlGJGugJx3336+d7FH778TY3+aqBQGFQ8+RZJj/xsX0oQGr4rUokC/QLBqiSfAW8PMmrnCQAA"
+  val dump = "H4sIAAAAAAAAALVWTWwbRRR+Xsd2bEdNG6GgIlWkxhBagR0hoR5yqNLUQUFuHGVbikyFNF6P3Smzs5udcbTm0ANHuCGuCPXeGxckpF4QEuLACQESZ06lCFWFnkB9O/vjdeINubCH0c7sm/fzve972vuPoCA9eEVahBPRsKkiDVO/b0hVN1tCMTW+5vRHnF6lg4+Wv7KuiSvSgMUuFG8TeVXyLpTDl5bvJu8m3W9DmQiLSuV4UsH5to7QtBzOqaWYI5rMtkeK9DhttplU622Y6zn98T7chVwbTluOsDyqqLnJiZRURufzNMiIJfuy3o877iSGaAZVNFNVXPcIU5g+xjgd2u9R1xwLR4xtBaei1DpukBbalJjtOp6KQ5TQ3W2nH2/nBMEDWGrfIQekiSGGTVN5TAzxZtUl1gdkSHfQJDCfw4Ql5YPrY1fv822oSLqPAG3bLtcnvgsA2IE3dBKNCT6NBJ9GgE/dpB4jnH1Igo+7nuOPIXxyeQDfRRev/YeL2ANtiX7941vWe0/Nqm0El/0glZKusIiOXsxgg24F4vjd3qfy8Vv3LhlQ6UKFyY2eVB6xVLrlEVpVIoSjdM4JgMQbYrdqWd3SUTbQ5hAlypZju0SgpwjKBewTZxZTgXFwthB1JwP6knJpbJrz3VxS70pGvZo3m4Tz3YdnX3/599a7BhjTIcro0kTie7FTBcZ2J3IcrIsKzRD7JNZLWbFcuusxG7l9QN/85usbfz7YKehwS306ICOu3iF8REOmRcEniei4tZqC4sSg7B9eS8eUmoC++vCP/rdrcMtIWhVVdjJ2oIuC/OWn6o8XLhsw39Va2uJk2MVuyRandsfbdITqwrxzQL3wS+mA8OBtJltKUflRD9Pg5xF8BSuZqndp0Jl1rbBcDEA1FMmOI2h9a7f+t/n9Z/cDDXiwEH4Jx8C/7NI/v54aKC0PBfMDxrWq46bmcYKEiATL87OgroT+TMemZ2qP2fv3PlEa1Jw/PT06vTso13V97/wx+MZT7K/umvHk7M9fGFBGGHtM2cStr51Qe/+jnkAXPr3UELsze5T0txC/zXS82mTkvKBfEeTY8ND3am5aUNMKW8aDVy+gzG4Ipo72QQdImZ9LyKCjnLS1s+8WOBNUHr04Q/ozaZJOclWvF7NQXLrpMUVPAmM5sZwYpIooRnGmM80jsY5DGQ9yGylXR2o4cSHV7c6MCsLBqffJoDmXPSqRdst77ef4o8sPDCi8DYUBzg/ZhkLPGYl+zGf8h1DUV1fis9w0n5G/xCN2wl/9rMAkqcya29PIomEe0VKwGGVMfYJSipixiqXUMkoxI0Uh+neffr5z8Ycvf9NDvxJoE0eUSP5C0sN+ui9FDI1/FKlEkXiBVHWSzwAxoWhf4QkAAA=="
 }
 }
 

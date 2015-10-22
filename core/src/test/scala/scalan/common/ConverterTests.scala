@@ -6,7 +6,7 @@ import scalan._
 class ConverterTests extends BaseCtxTests {
 
   trait ConvProg extends CommonExamples {
-  //TODO uncomment after convertTo works not only for Reifiable[_]
+  //TODO uncomment after convertTo works not only for Def[_]
 //    lazy val t20 = fun { in: Rep[Array[Interval]] => in.convertTo[Array[Slice]] }
   }
 

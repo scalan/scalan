@@ -402,7 +402,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       def familyElem(e: EntityTemplateData) = {
         val wildcardElem = s"${e.name}Elem[${Array.fill(e.tpeArgs.length + 1)("_").mkString(", ")}]"
         val (optParent, parentElem) = e.firstAncestorType match {
-          case Some(STraitCall("Reifiable", _)) =>
+          case Some(STraitCall("Def", _)) =>
             val parentElem =
               if (e.isContainer) {
                 s"EntityElem1[${e.tpeArgsUse}, To, ${e.name}](${e.tpeArgNames.rep("e" + _)}, container[${e.name}])"
@@ -421,7 +421,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           case Some(parent @ STraitCall(parentName, parentTpeArgs)) =>
             (Some(parent), s"${parentName}Elem[${join(parentTpeArgs, "To")}]")
           case Some(p) => !!!(s"Unsupported parent type $p of the entity ${e.name}")
-          case None => !!!(s"Entity ${e.name} must extend Reifiable, TypeWrapper, or another entity")
+          case None => !!!(s"Entity ${e.name} must extend Def, TypeWrapper, or another entity")
         }
         val overrideIfHasParent = optParent.ifDefined("override ")
         val elemMethodDefinition = {
@@ -485,7 +485,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |${implicitTagsFromElems(e)}
         |      weakTypeTag[${e.typeUse}].asInstanceOf[WeakTypeTag[To]]
         |    }
-        |    override def convert(x: Rep[Reifiable[_]]) = {
+        |    override def convert(x: Rep[Def[_]]) = {
         |      implicit val eTo: Elem[To] = this
         |      val conv = fun {x: Rep[${e.typeUse}] => convert${e.name}(x) }
         |      tryConvert(element[${e.typeUse}], this, x, conv)
@@ -507,16 +507,17 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
       val companionSql = entityCompOpt.opt(comp => extractSqlQueries(comp.body))
       val companionAbs = s"""
-        |  implicit case object ${companionName}Elem extends CompanionElem[${companionName}Abs] {
-        |    lazy val tag = weakTypeTag[${companionName}Abs]
+        |  implicit case object ${companionName}Elem extends CompanionElem[$companionAbsName] {
+        |    lazy val tag = weakTypeTag[$companionAbsName]
         |    protected def getDefaultRep = ${e.name}
         |  }
         |
-        |  abstract class ${companionName}Abs extends CompanionBase[${companionName}Abs]${hasCompanion.opt(s" with ${companionName}")} {
+        |  abstract class $companionAbsName extends CompanionDef[$companionAbsName]${hasCompanion.opt(s" with ${companionName}")} {
+        |    def selfType = ${companionName}Elem
         |    override def toString = "${e.name}"
         |    $companionSql
         |  }
-        |  def ${e.name}: Rep[${companionName}Abs]
+        |  def ${e.name}: Rep[$companionAbsName]
         |${hasCompanion.opt
         s"""
            |  implicit def proxy$companionName(p: Rep[$companionName]): $companionName =
@@ -657,7 +658,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    lazy val eTo = new ${c.elemTypeUse}(this)
         |  }
         |  // 4) constructor and deconstructor
-        |  abstract class ${c.companionAbsName} extends CompanionBase[${c.companionAbsName}]${hasCompanion.opt(s" with ${className}Companion")} {
+        |  class ${c.companionAbsName} extends CompanionDef[${c.companionAbsName}]${hasCompanion.opt(s" with ${className}Companion")} {
+        |    def selfType = ${className}CompanionElem
         |    override def toString = "$className"
         |${(fields.length != 1).opt(s"""
         |    def apply${tpeArgsDecl}(p: Rep[$dataTpe])${implicitArgsDecl}: Rep[${c.typeUse}] =
@@ -669,7 +671,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |  object ${className}Matcher {
         |    def unapply${tpeArgsDecl}(p: Rep[$parent]) = unmk$className(p)
         |  }
-        |  def $className: Rep[${c.companionAbsName}]
+        |  lazy val ${c.name}: Rep[${c.companionAbsName}] = new ${c.companionAbsName}
         |  implicit def proxy${className}Companion(p: Rep[${c.companionAbsName}]): ${c.companionAbsName} = {
         |    proxyOps[${c.companionAbsName}](p)
         |  }
@@ -736,7 +738,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       val externalMethodsStr = filterByExplicitDeclaration(externalMethods).rep(md => externalSeqMethod(md, true), "\n    ")
 
       val parent     = clazz.ancestors.head
-      val companionAbs = c.companionAbsName
 
       val userTypeDefs =
         s"""
@@ -744,13 +745,11 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
          |      (${fieldsWithType.rep(f => s"override val $f")})
          |      ${implicitArgsDecl}
          |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")}
-         |       ${module.seqDslImpl.ifDefined(s"with Seq$typeUse")} with UserTypeSeq[${c.typeUse}] {
+         |       ${module.seqDslImpl.ifDefined(s"with Seq$typeUse")} with Def[${c.typeUse}] {
          |    lazy val selfType = element[${c.typeUse}]
          |    $externalMethodsStr
          |  }
-         |  lazy val $className = new $companionAbs with UserTypeSeq[$companionAbs] {
-         |    lazy val selfType = element[$companionAbs]
-         |  }""".stripAndTrim
+         |""".stripAndTrim
 
       val constrDefs =
         s"""
@@ -779,12 +778,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
          |  case class Exp${c.typeDecl}
          |      (${fieldsWithType.rep(f => s"override val $f")})
          |      ${implicitArgsDecl()}
-         |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")} with UserTypeDef[${c.typeUse}] {
+         |    extends ${c.typeUse}(${fields.rep()})${clazz.selfType.opt(t => s" with ${t.tpe}")} with Def[${c.typeUse}] {
          |    lazy val selfType = element[${c.typeUse}]
-         |  }
-         |
-         |  lazy val ${c.name}: Rep[${c.companionAbsName}] = new ${c.companionAbsName} with UserTypeDef[${c.companionAbsName}] {
-         |    lazy val selfType = element[${c.companionAbsName}]
          |  }
          |
          |${methodExtractorsString(clazz)}
@@ -830,8 +825,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |// Seq -----------------------------------
        |trait ${module.name}Seq extends ${module.name}Dsl ${config.seqContextTrait.opt(t => "with " + t)} {
        |  ${selfTypeString("Seq")}
-       |  lazy val ${e.name}: Rep[$companionAbsName] = new $companionAbsName with UserTypeSeq[$companionAbsName] {
-       |    lazy val selfType = element[$companionAbsName]
+       |  lazy val ${e.name}: Rep[$companionAbsName] = new $companionAbsName with Def[$companionAbsName] {
        |    $companionMethods
        |  }
        |
@@ -953,8 +947,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |// Exp -----------------------------------
        |trait ${module.name}Exp extends ${module.name}Dsl ${config.stagedContextTrait.opt(t => "with " + t)} {
        |  ${selfTypeString("Exp")}
-       |  lazy val ${e.name}: Rep[$companionAbsName] = new $companionAbsName with UserTypeDef[$companionAbsName] {
-       |    lazy val selfType = element[$companionAbsName]
+       |  lazy val ${e.name}: Rep[$companionAbsName] = new $companionAbsName with Def[$companionAbsName] {
        |    $companionMethods
        |  }
        |

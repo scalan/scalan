@@ -7,7 +7,7 @@ import scalan.monads.{MonadsDslExp, MonadsDslSeq, MonadsDsl}
 trait FreeStates extends Base { self: MonadsDsl =>
 
   type RepStateF[S,A] = Rep[StateF[S,A]]
-  trait StateF[S, A] extends Reifiable[StateF[S, A]] {
+  trait StateF[S, A] extends Def[StateF[S, A]] {
     implicit def eS: Elem[S]
     implicit def eA: Elem[A]
   }

@@ -9,7 +9,7 @@ trait Authentications { self: AuthenticationsDsl =>
   import OperM.toMonadic
 
   type RepAuth[A] = Rep[Auth[A]]
-  trait Auth[A] extends Reifiable[Auth[A]] { self =>
+  trait Auth[A] extends Def[Auth[A]] { self =>
     implicit def eA: Elem[A]
     def toOper: Rep[Oper[A]]
   }

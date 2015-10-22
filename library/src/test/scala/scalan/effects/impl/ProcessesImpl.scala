@@ -34,7 +34,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
       implicit val tagO = eO.tag
       weakTypeTag[Process[F, O]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Process[F, O]] => convertProcess(x) }
       tryConvert(element[Process[F, O]], this, x, conv)
@@ -58,7 +58,8 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     protected def getDefaultRep = Process
   }
 
-  abstract class ProcessCompanionAbs extends CompanionBase[ProcessCompanionAbs] with ProcessCompanion {
+  abstract class ProcessCompanionAbs extends CompanionDef[ProcessCompanionAbs] with ProcessCompanion {
+    def selfType = ProcessCompanionElem
     override def toString = "Process"
   }
   def Process: Rep[ProcessCompanionAbs]
@@ -103,7 +104,8 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     lazy val eTo = new AwaitElem[F, A, O](this)
   }
   // 4) constructor and deconstructor
-  abstract class AwaitCompanionAbs extends CompanionBase[AwaitCompanionAbs] with AwaitCompanion {
+  class AwaitCompanionAbs extends CompanionDef[AwaitCompanionAbs] with AwaitCompanion {
+    def selfType = AwaitCompanionElem
     override def toString = "Await"
     def apply[F[_], A, O](p: Rep[AwaitData[F, A, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]] =
       isoAwait(eA, eO, cF).to(p)
@@ -113,7 +115,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
   object AwaitMatcher {
     def unapply[F[_], A, O](p: Rep[Process[F, O]]) = unmkAwait(p)
   }
-  def Await: Rep[AwaitCompanionAbs]
+  lazy val Await: Rep[AwaitCompanionAbs] = new AwaitCompanionAbs
   implicit def proxyAwaitCompanion(p: Rep[AwaitCompanionAbs]): AwaitCompanionAbs = {
     proxyOps[AwaitCompanionAbs](p)
   }
@@ -175,7 +177,8 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     lazy val eTo = new EmitElem[F, O](this)
   }
   // 4) constructor and deconstructor
-  abstract class EmitCompanionAbs extends CompanionBase[EmitCompanionAbs] with EmitCompanion {
+  class EmitCompanionAbs extends CompanionDef[EmitCompanionAbs] with EmitCompanion {
+    def selfType = EmitCompanionElem
     override def toString = "Emit"
     def apply[F[_], O](p: Rep[EmitData[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]] =
       isoEmit(eO, cF).to(p)
@@ -185,7 +188,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
   object EmitMatcher {
     def unapply[F[_], O](p: Rep[Process[F, O]]) = unmkEmit(p)
   }
-  def Emit: Rep[EmitCompanionAbs]
+  lazy val Emit: Rep[EmitCompanionAbs] = new EmitCompanionAbs
   implicit def proxyEmitCompanion(p: Rep[EmitCompanionAbs]): EmitCompanionAbs = {
     proxyOps[EmitCompanionAbs](p)
   }
@@ -247,7 +250,8 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     lazy val eTo = new HaltElem[F, O](this)
   }
   // 4) constructor and deconstructor
-  abstract class HaltCompanionAbs extends CompanionBase[HaltCompanionAbs] with HaltCompanion {
+  class HaltCompanionAbs extends CompanionDef[HaltCompanionAbs] with HaltCompanion {
+    def selfType = HaltCompanionElem
     override def toString = "Halt"
 
     def apply[F[_], O](err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]] =
@@ -256,7 +260,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
   object HaltMatcher {
     def unapply[F[_], O](p: Rep[Process[F, O]]) = unmkHalt(p)
   }
-  def Halt: Rep[HaltCompanionAbs]
+  lazy val Halt: Rep[HaltCompanionAbs] = new HaltCompanionAbs
   implicit def proxyHaltCompanion(p: Rep[HaltCompanionAbs]): HaltCompanionAbs = {
     proxyOps[HaltCompanionAbs](p)
   }
@@ -287,19 +291,15 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 // Seq -----------------------------------
 trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
   self: ProcessesDslSeq =>
-  lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with UserTypeSeq[ProcessCompanionAbs] {
-    lazy val selfType = element[ProcessCompanionAbs]
+  lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with Def[ProcessCompanionAbs] {
   }
 
   case class SeqAwait[F[_], A, O]
       (override val req: Rep[F[A]], override val recv: Rep[$bar[Throwable, A] => Process[F, O]])
       (implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
     extends Await[F, A, O](req, recv)
-        with UserTypeSeq[Await[F, A, O]] {
+        with Def[Await[F, A, O]] {
     lazy val selfType = element[Await[F, A, O]]
-  }
-  lazy val Await = new AwaitCompanionAbs with UserTypeSeq[AwaitCompanionAbs] {
-    lazy val selfType = element[AwaitCompanionAbs]
   }
 
   def mkAwait[F[_], A, O]
@@ -315,11 +315,8 @@ trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
       (override val head: Rep[O], override val tail: Rep[Process[F, O]])
       (implicit eO: Elem[O], cF: Cont[F])
     extends Emit[F, O](head, tail)
-        with UserTypeSeq[Emit[F, O]] {
+        with Def[Emit[F, O]] {
     lazy val selfType = element[Emit[F, O]]
-  }
-  lazy val Emit = new EmitCompanionAbs with UserTypeSeq[EmitCompanionAbs] {
-    lazy val selfType = element[EmitCompanionAbs]
   }
 
   def mkEmit[F[_], O]
@@ -335,11 +332,8 @@ trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
       (override val err: Rep[Throwable])
       (implicit eO: Elem[O], cF: Cont[F])
     extends Halt[F, O](err)
-        with UserTypeSeq[Halt[F, O]] {
+        with Def[Halt[F, O]] {
     lazy val selfType = element[Halt[F, O]]
-  }
-  lazy val Halt = new HaltCompanionAbs with UserTypeSeq[HaltCompanionAbs] {
-    lazy val selfType = element[HaltCompanionAbs]
   }
 
   def mkHalt[F[_], O]
@@ -355,19 +349,14 @@ trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
   self: ProcessesDslExp =>
-  lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with UserTypeDef[ProcessCompanionAbs] {
-    lazy val selfType = element[ProcessCompanionAbs]
+  lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with Def[ProcessCompanionAbs] {
   }
 
   case class ExpAwait[F[_], A, O]
       (override val req: Rep[F[A]], override val recv: Rep[$bar[Throwable, A] => Process[F, O]])
       (implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
-    extends Await[F, A, O](req, recv) with UserTypeDef[Await[F, A, O]] {
+    extends Await[F, A, O](req, recv) with Def[Await[F, A, O]] {
     lazy val selfType = element[Await[F, A, O]]
-  }
-
-  lazy val Await: Rep[AwaitCompanionAbs] = new AwaitCompanionAbs with UserTypeDef[AwaitCompanionAbs] {
-    lazy val selfType = element[AwaitCompanionAbs]
   }
 
   object AwaitMethods {
@@ -392,12 +381,8 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
   case class ExpEmit[F[_], O]
       (override val head: Rep[O], override val tail: Rep[Process[F, O]])
       (implicit eO: Elem[O], cF: Cont[F])
-    extends Emit[F, O](head, tail) with UserTypeDef[Emit[F, O]] {
+    extends Emit[F, O](head, tail) with Def[Emit[F, O]] {
     lazy val selfType = element[Emit[F, O]]
-  }
-
-  lazy val Emit: Rep[EmitCompanionAbs] = new EmitCompanionAbs with UserTypeDef[EmitCompanionAbs] {
-    lazy val selfType = element[EmitCompanionAbs]
   }
 
   object EmitMethods {
@@ -422,12 +407,8 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
   case class ExpHalt[F[_], O]
       (override val err: Rep[Throwable])
       (implicit eO: Elem[O], cF: Cont[F])
-    extends Halt[F, O](err) with UserTypeDef[Halt[F, O]] {
+    extends Halt[F, O](err) with Def[Halt[F, O]] {
     lazy val selfType = element[Halt[F, O]]
-  }
-
-  lazy val Halt: Rep[HaltCompanionAbs] = new HaltCompanionAbs with UserTypeDef[HaltCompanionAbs] {
-    lazy val selfType = element[HaltCompanionAbs]
   }
 
   object HaltMethods {
@@ -523,7 +504,7 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
 object Processes_Module {
   val packageName = "scalan.stream"
   val name = "Processes"
-  val dump = "H4sIAAAAAAAAANVXTWwbRRR+XttxbKdJ+FFRW7UJkQsCgR0hpB4itXJTB4rcOMrmgEyhGq/Hzpb9y8w4tTn0wBFuiAsHhHrvjQsnbkgICU4VIHHiwKmUQwX0BOqb8e56/bNORAsRPox2Zt++9+b7vvdmfPsepDmD57hBLOIUbSpIUVfPZS4KesURpuhdcZsdi16irfePf2FccS5yDRbqMLNL+CVu1SHbf6h0vfBZp3tVyBLHoFy4jAt4tqoilAzXsqghTNcpmbbdEaRh0VLV5GKtCqmG2+ztwU1IVGHRcB2DUUH1dYtwTrm/PktlRmY4z6p5r+YNYjgluYtSZBc7jJgC08cYi337berpPcd1eraAeT+1mifTQpuMaXsuE0GIDLrbdZvBNOUQXIAnq9fJPilhiHZJF8x02vhl3iPGu6RNN9FEmqcwYU6t1k7PU/NkFXKc7iFAl23PUitdDwCQgVdUEsUBPsUQn6LEp6BTZhLLfI/Il1vM7fag/0skAboeunjpABeBB1pxmoUPrhpvPdDztiY/7spUMmqHM+hoKUYNigrE8evtj/j9126d0yBXh5zJyw0uGDFElHIfrTxxHFeonEMACWsjWytxbKkoZbQZkUTWcG2POOjJh3IOebJMwxTSWK7N+ezEQJ8RHg1ME10vEe53OWa/SjfrxLK27p54+eyvlTc10IZDZNGljsJngVMBGeQGMeC+dzkuCEhsDCCW05qayiHbHYyZKcmEsDx/97fmV6twVQvB9GMfjj90keY/fp+/88IFDWbrSu0bFmnXEU9esahdY+uuI+ow6+5T1n+T2SeWfJrIZ6ZJW6RjCR/lKDxJhEfAcmxdelRit6ZqIBEAkO/LeNN1aGFjq/Cn/s3Ht6VKGcz13/QL9W/z3F8/zbeEErCAJKN7AbpJLO9R+Efm5TH81auTYSJyWBKQYtTYn+CXwZk40Xh0o+MYdy5/8tTC6Ws/K8nMNF2bmEq3p6qQZtg0FESnfNLQd6rQIGw4yezOLnNvyPId1k4092DxUVQ30F6uD7Du2vSJlfvmO7c+FEplie5ww6s1rmOHWVPfnZkiuKDx/lFf1X4/8cNnGmRRVw1T2MQrrB6yXfyLLQBCPAbDEoppvnxDVn402NIAyWciIJ9MjAhGo+WQUllNU3QX56A2zUHtYAfGRuhAVvJESUTZF5BW+1Xfh/o+Ha9vRPD4dvVp696FLzVIvwHpFvYGjsJuuB2nGVCDJ7igXXExWEsMU4NUEEbskAr1W4YB1iNV+/ZEi2ujcEw2Kw/Ym2wwBms+MYzbo7X1MdmM9ZldSppT+tc47WMeBDGteA+Po0HI8bway3GVc6xi/+PC+e91n5LZRmUfL5ADpCiHxuG0eNRSS1LG4nQih1enOD6I/deJ9T9iX2Z7lOxHjGd8YEduANvUbJnyBvDYi/nQnC76sSbQGrntHj2Mcvx22BcaZv388JYBx/wTDf+sUP/gOY8H3UrMQaf7Vwe8v9x88Onmi999/ou6zOXkJQQvp074D3FwrHVHuu5cGB7/80VSRvHJm4lK9yENTfhfgw8AAA=="
+  val dump = "H4sIAAAAAAAAANVXTWwbRRR+XttxbKdJ+FFRW7UJkQsCgR0hpB4itXJTG4rcOMrmgEyhGq8nzpb9y8w4tTn0wBFuiAsHhHrvjQsnbkgICU4VIHHiwKmUQwX0BOqb8e56/bNORAsRPox2Zt++9+b7vvdmfPsepDmD57hBLOIUbSpIUVfPZS4KesURpuhdcVsdi16iO+8f/8K44lzkGiw0YGaX8EvcakC2/1DpeuGzTvdqkCWOQblwGRfwbE1FKBmuZVFDmK5TMm27I0jToqWaycVaDVJNt9Xbg5uQqMGi4ToGo4Lq6xbhnHJ/fZbKjMxwnlXzXt0bxHBKchelyC62GTEFpo8xFvv2W9TTe47r9GwB835qdU+mhTYZ0/ZcJoIQGXS367aCacohuABP1q6TfVLCEO2SLpjptPHLvEeMd0mbbqCJNE9hwpxaO9s9T82TNchxuocAXbY9S610PQBABl5RSRQH+BRDfIoSn4JOmUks8z0iX24yt9uD/i+RBOh66OKlA1wEHmjFaRU+uGq89UDP25r8uCtTyagdzqCjpRg1KCoQx6+3PuL3X7t1ToNcA3ImLze5YMQQUcp9tPLEcVyhcg4BJKyNbK3EsaWilNFmRBJZw7U94qAnH8o55MkyDVNIY7k257MTA31GeDQwTXS9RLjf5Zj9Kt2sE8vavHvi5bO/Vt7UQBsOkUWXOgqfBU4FZJAbxID73uW4ICBRHUAsp3U1lUO2OxgzU5IJYXn+7m+tr1bhqhaC6cc+HH/oIs1//D5/54ULGsw2lNqrFmk3EE9esahdZ+uuIxow6+5T1n+T2SeWfJrIZ6ZFd0jHEj7KUXiSCI+A5di69KjEbk3VQCIAIN+X8Ybr0EJ1s/Cn/s3Ht6VKGcz13/QL9W/z3F8/ze8IJWABSUb3AnSTWN6j8I/My2P4q1cnw0TksCQgxaixP8EvgzNxovFoteMYdy5/8tTC6Ws/K8nMtFybmEq3p2qQZtg0FESnfNLQd6rQJGw4yez2LnNvyPId1k4092DxUVQ30F6uD7Du2vSJlfvmO7c+FEplie5ww6s3r2OHWVPfnZkiuKDx/tFY1X4/8cNnGmRRV01T2MQrrB6yXfyLLQBCPAbDEoppvnxDVn402NIAyWciIJ9MjAhGo+WQUllNU3QX56A+zUH9YAdGNXQgK3miJKLsC0ir/arvQ32fjtc3Inh8q/a0de/Clxqk34D0DvYGjsJuuh2nFVCDJ7igXXExWEsMU4NUEEbskAr1W4YB1iNV+/ZEi2ujcEw2Kw/Ym2wwBms+MYzbo7X1MdmM9ZldSlpT+tc47WMeBDGteA+Po0HI8bway3GVc6xi/+PC+e91n5LZRmUfL5ADpCiH5uG0eNRSS1LG4nQih1enOD6I/deJ9T9iX2Z7lOxHjGd8YIfTTuLZ+djL+NBsLvqxJhAauecePYBy/HbYFxpm/fzwfgHH/LMM/6ZQ/8g5j0fcSswRp/uXBkT/5oNPN1787vNf1DUuJ68feC11wv+GgwOtO9Jv58Lw+G8vkjLKTt5JVLoPAVB50Th9DwAA"
 }
 }
 

@@ -36,7 +36,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
       implicit val tagE = eE.tag
       weakTypeTag[Graph[V, E]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Graph[V, E]] => convertGraph(x) }
       tryConvert(element[Graph[V, E]], this, x, conv)
@@ -60,7 +60,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     protected def getDefaultRep = Graph
   }
 
-  abstract class GraphCompanionAbs extends CompanionBase[GraphCompanionAbs] with GraphCompanion {
+  abstract class GraphCompanionAbs extends CompanionDef[GraphCompanionAbs] with GraphCompanion {
+    def selfType = GraphCompanionElem
     override def toString = "Graph"
   }
   def Graph: Rep[GraphCompanionAbs]
@@ -104,7 +105,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     lazy val eTo = new AdjacencyGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor
-  abstract class AdjacencyGraphCompanionAbs extends CompanionBase[AdjacencyGraphCompanionAbs] with AdjacencyGraphCompanion {
+  class AdjacencyGraphCompanionAbs extends CompanionDef[AdjacencyGraphCompanionAbs] with AdjacencyGraphCompanion {
+    def selfType = AdjacencyGraphCompanionElem
     override def toString = "AdjacencyGraph"
     def apply[V, E](p: Rep[AdjacencyGraphData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
       isoAdjacencyGraph(eV, eE).to(p)
@@ -114,7 +116,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   object AdjacencyGraphMatcher {
     def unapply[V, E](p: Rep[Graph[V, E]]) = unmkAdjacencyGraph(p)
   }
-  def AdjacencyGraph: Rep[AdjacencyGraphCompanionAbs]
+  lazy val AdjacencyGraph: Rep[AdjacencyGraphCompanionAbs] = new AdjacencyGraphCompanionAbs
   implicit def proxyAdjacencyGraphCompanion(p: Rep[AdjacencyGraphCompanionAbs]): AdjacencyGraphCompanionAbs = {
     proxyOps[AdjacencyGraphCompanionAbs](p)
   }
@@ -176,7 +178,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     lazy val eTo = new IncidenceGraphElem[V, E](this)
   }
   // 4) constructor and deconstructor
-  abstract class IncidenceGraphCompanionAbs extends CompanionBase[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {
+  class IncidenceGraphCompanionAbs extends CompanionDef[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {
+    def selfType = IncidenceGraphCompanionElem
     override def toString = "IncidenceGraph"
     def apply[V, E](p: Rep[IncidenceGraphData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
       isoIncidenceGraph(eV, eE).to(p)
@@ -186,7 +189,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   object IncidenceGraphMatcher {
     def unapply[V, E](p: Rep[Graph[V, E]]) = unmkIncidenceGraph(p)
   }
-  def IncidenceGraph: Rep[IncidenceGraphCompanionAbs]
+  lazy val IncidenceGraph: Rep[IncidenceGraphCompanionAbs] = new IncidenceGraphCompanionAbs
   implicit def proxyIncidenceGraphCompanion(p: Rep[IncidenceGraphCompanionAbs]): IncidenceGraphCompanionAbs = {
     proxyOps[IncidenceGraphCompanionAbs](p)
   }
@@ -217,19 +220,15 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 // Seq -----------------------------------
 trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
   self: GraphsDslSeq =>
-  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeSeq[GraphCompanionAbs] {
-    lazy val selfType = element[GraphCompanionAbs]
+  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with Def[GraphCompanionAbs] {
   }
 
   case class SeqAdjacencyGraph[V, E]
       (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])
       (implicit eV: Elem[V], eE: Elem[E])
     extends AdjacencyGraph[V, E](vertexValues, edgeValues, links)
-        with UserTypeSeq[AdjacencyGraph[V, E]] {
+        with Def[AdjacencyGraph[V, E]] {
     lazy val selfType = element[AdjacencyGraph[V, E]]
-  }
-  lazy val AdjacencyGraph = new AdjacencyGraphCompanionAbs with UserTypeSeq[AdjacencyGraphCompanionAbs] {
-    lazy val selfType = element[AdjacencyGraphCompanionAbs]
   }
 
   def mkAdjacencyGraph[V, E]
@@ -245,11 +244,8 @@ trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
       (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])
       (implicit eV: Elem[V], eE: Elem[E])
     extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
-        with UserTypeSeq[IncidenceGraph[V, E]] {
+        with Def[IncidenceGraph[V, E]] {
     lazy val selfType = element[IncidenceGraph[V, E]]
-  }
-  lazy val IncidenceGraph = new IncidenceGraphCompanionAbs with UserTypeSeq[IncidenceGraphCompanionAbs] {
-    lazy val selfType = element[IncidenceGraphCompanionAbs]
   }
 
   def mkIncidenceGraph[V, E]
@@ -265,19 +261,14 @@ trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
-  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with UserTypeDef[GraphCompanionAbs] {
-    lazy val selfType = element[GraphCompanionAbs]
+  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with Def[GraphCompanionAbs] {
   }
 
   case class ExpAdjacencyGraph[V, E]
       (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])
       (implicit eV: Elem[V], eE: Elem[E])
-    extends AdjacencyGraph[V, E](vertexValues, edgeValues, links) with UserTypeDef[AdjacencyGraph[V, E]] {
+    extends AdjacencyGraph[V, E](vertexValues, edgeValues, links) with Def[AdjacencyGraph[V, E]] {
     lazy val selfType = element[AdjacencyGraph[V, E]]
-  }
-
-  lazy val AdjacencyGraph: Rep[AdjacencyGraphCompanionAbs] = new AdjacencyGraphCompanionAbs with UserTypeDef[AdjacencyGraphCompanionAbs] {
-    lazy val selfType = element[AdjacencyGraphCompanionAbs]
   }
 
   object AdjacencyGraphMethods {
@@ -525,12 +516,8 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
   case class ExpIncidenceGraph[V, E]
       (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])
       (implicit eV: Elem[V], eE: Elem[E])
-    extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) with UserTypeDef[IncidenceGraph[V, E]] {
+    extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) with Def[IncidenceGraph[V, E]] {
     lazy val selfType = element[IncidenceGraph[V, E]]
-  }
-
-  lazy val IncidenceGraph: Rep[IncidenceGraphCompanionAbs] = new IncidenceGraphCompanionAbs with UserTypeDef[IncidenceGraphCompanionAbs] {
-    lazy val selfType = element[IncidenceGraphCompanionAbs]
   }
 
   object IncidenceGraphMethods {
@@ -1192,7 +1179,7 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
 object Graphs_Module {
   val packageName = "scalan.graphs"
   val name = "Graphs"
-  val dump = "H4sIAAAAAAAAANVXTWwbRRSe3cRxbIf0R6hVK4FDcEEgiKMgqFAOVeo6VZDjRNkQkKmQxuuxM+ns7GZnHNkceuAIN4TECaHee+OChNQLQkIcOCFA4sypLUIVtCcQb2Z/vE7WSSraAz6MdmbfvPfm+773Zn3rHsoIH70gbMwwn3OIxHOWfl4SsmRVuaSyv+q2uoxcIe0Pz3xlr/LLwkQnGmhiG4srgjVQLnio9rz42SK7NZTD3CZCur6Q6LmajlC2XcaILanLy9RxuhI3GSnXqJCLNTTedFv9XXQDGTV00na57RNJrArDQhARrk8SlRGN5zk97695gxi8rE5RTpxi08dUQvoQ42Rgv0E8q89d3nckmg5TW/NUWmCTpY7n+jIKkQV3224rmo5zDAvodG0H7+EyhOiULelT3oGdBQ/b13GH1MFEmY9DwoKw9mbf0/OxGsoLsgsArTge0ys9DyEEDCzoJOYG+MzF+MwpfEoW8Slm9AOsXq77bq+Pgp8xhlDPAxevHOEi8kCqvFX66Jr93kOr4Jhqc0+lktUnnABHxRFq0FQAjt9tfCLuX7150UT5BspTsdQU0se2TFIeolXAnLtS5xwDiP0OsDU7ii0dZQls9kkiZ7uOhzl4CqGcAp4YtalUxmptKmRnBPRZ6ZHI1Oh5RnzemRHn1bqpYMbW75x79cLd6rsmModD5MClBcL3I6cSZa762NsOfavxhETG1gBgNa3qqRpyvcGYPSSVGJQX7/ze+nYeXTNjKMPIx2MPXGTELz8VfnzpkokmG1rrywx3GoCmqDLirPkVl8sGmnT3iB+8ye5hpp5S2cy2SBt3mQwxToIzBuBINDOyKj2ikFvUFWBEABQCEdddTkrL66UH1vef3lIa9dFU8CYo03/oxb9/nW5LLV+JpiBZSXpbmHWJiGAer0AlpBIRYK4Xz8fB1VCUKE9aHTLsKFNP8VQ90lOGUX493YmPnh+lOY+s+9SBHrdHXv/m67f/uF3PaNmdDoHWqQUdJ8R5gLmCwpiXaGyFyzR15QMILdchp2bv0/dvfiy1jozecENba+5AB1nU+549RFJRY/2rMW/+ee7nL0yUA+U0qXSwV5o/Zjt4giWOhjmbroSXii6FhX0vl1o72Cbc7usCTq/QAb2A9NnhHZVk7sVBwZ9NxDlv7NOISbZiuaryO1KuBx1UD3NwsNOknrQY6/KZ0boEYM9s1J5m9y7dNlHmLZRpQ1MQNZRpul3eihiDixsqUV6O1oxhxoAh7GMnZkj/ZtAAs+FuuZlqcKD2Csbwuf9LEz7A2f66fozN5hTl9iqGYu69Q+U2eDzU39EtJxekVu860aYx+NQJ3KjhtfTjvqHHNx+pXFa4TVsgInLschne8f8pl4MnLSa2pSv0kSScSHgilYncBqFtqj7kHpfMkwQdIoGC6q3L2KGsv5AW+hi0T49i20s6eSKIqvGzgU1oOBGAJtFTYavr6HmIgo9mR3RAK7xq4L678fDz+ss/fPmbvpjz6tKCzxUe/2NIXsj7iAxiwx+ARLIgRXWN6UT/BbXHWAiQDQAA"
+  val dump = "H4sIAAAAAAAAANVXTWwbRRSeXcdxbIf0R6hVK4FDcEEgiKMgqFAOVeo6VZDjRNkQkKmQxuuJM+ns7GZnHNkceuAIN4TECaHee+OChNQLQkIcOCFA4sypLUIVtCcQb2Z/vE7WSSraAz6MdmbfvPfm+773Zn3rHsoKH70gbMwwn3WIxLOWfl4UsmzVuKSyv+K2u4xcIVsfnvnKXuGXhYlONNH4NhZXBGuifPBQ63nxs0V26yiPuU2EdH0h0XN1HaFiu4wRW1KXV6jjdCVuMVKpUyEX6mis5bb7u+gGMuropO1y2yeSWFWGhSAiXJ8gKiMaz/N63l/1BjF4RZ2ikjjFho+phPQhxsnAfp14Vp+7vO9INBWmtuqptMAmRx3P9WUUIgfutt12NB3jGBbQ6foO3sMVCNGpWNKnvAM7ix62r+MOaYCJMh+DhAVhWxt9T88zdVQQZBcAWnY8pld6HkIIGJjXScwO8JmN8ZlV+JQt4lPM6AdYvVzz3V4fBT8jg1DPAxevHOEi8kBqvF3+6Jr93kOr6Jhqc0+lktMnHAdHpRFq0FQAjt+tfyLuX7150USFJipQsdgS0se2TFIeolXEnLtS5xwDiP0OsDUzii0dZRFs9kkib7uOhzl4CqGcBJ4YtalUxmptMmRnBPQ56ZHI1Oh5Rnze6RHn1bqpYsbW7px79cLd2rsmModD5MGlBcL3I6cSZa/62NsOfavxhETG5gBgNa3pqRryvcGYOySVGJQX7/ze/nYOXTNjKMPIx2MPXGTFLz8Vf3zpkokmmlrrSwx3moCmqDHirPpVl8smmnD3iB+8ye1hpp5S2cy1yRbuMhlinAQnA+BIND2yKj2ikFvQFWBEABQDETdcTspLa+UH1vef3lIa9dFk8CYo03/oxb9/ndqSWr4STUKykvQ2MesSEcE8VoVKSCUiwFwvno+Dq6EkUYG0O2TYUbaR4ql2pKcso/x6uhMfPT9Kcx5Z86kDPW6PvP7N12//cbuR1bI7HQKtUws6TojzAHMFhTEnUWaZyzR1FQIILdchp2bu0/dvfiy1jozecENbbe1AB1nQ+549RFJRY/2rOWf+ee7nL0yUB+W0qHSwV547Zjt4giWOhjmbqoaXii6F+X0vF9s72Cbc7usCTq/QAb2A9NnhHdVk7qVBwZ9NxDlv7NOISTZjuaryO1KuBx3UDnNwsNOknrQU6/KZ0boEYM+s159m9y7dNlH2LZTdgqYg6ijbcru8HTEGFzdUorwcrRnDjAFD2MdOzJD+TaMBZsPdciPV4EDtFY3hc/+XJnyAs/11/RibzSnK7RUMxdx7h8pt8Hiov6NbTj5IrdF1ok0Z+NQJ3KjhtfTjvqHHNx+pXJa5TdsgInLschne8f8pl4MnLSW2pSv0kSScSHg8lYkM9NjHJfAkNYeQX1RddQk7lPXn00Ifg/CpUTx7SSdPBEs1fjawCQ3HA9Akeipsch09D1Hw0cyI3meFlwywcOPh542Xf/jyN30lF9R1BR8qPP6vkLyKh1HLB7Hh0z+RLIhQXWA60X8BHFvJdIoNAAA="
 }
 }
 

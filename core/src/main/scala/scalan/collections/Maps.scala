@@ -208,7 +208,7 @@ trait MapsExp extends Maps { self: ScalanExp =>
       val pmElem = s.elem.asInstanceOf[MMapElem[K, V]]
       VarMM(sym)(pmElem.eKey, pmElem.eValue)
     }
-    case _ => ???("cannot resolve ReifiableObject for symbol:", sym)
+    case _ => ???("cannot resolve DefObject for symbol:", sym)
   }
 }
 /*

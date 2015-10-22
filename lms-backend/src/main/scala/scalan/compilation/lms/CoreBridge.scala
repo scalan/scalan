@@ -88,7 +88,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
   }
 
   override protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
-    case _: CompanionBase[_] =>  //TODO backend
+    case _: CompanionDef[_] =>  //TODO backend
       // ignore companion objects
       m
 

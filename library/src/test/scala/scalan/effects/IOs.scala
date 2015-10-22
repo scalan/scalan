@@ -7,7 +7,7 @@ import scalan.monads._
 trait IOs { self: IOsDsl =>
 
   type RepIO[A] = Rep[IO[A]]
-  trait IO[A] extends Reifiable[IO[A]] {
+  trait IO[A] extends Def[IO[A]] {
     implicit def eA: Elem[A]
     def toOper: Rep[Oper[A]]
   }

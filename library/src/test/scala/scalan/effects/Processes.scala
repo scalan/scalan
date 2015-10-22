@@ -12,7 +12,7 @@ trait Processes extends Base with Containers { self: ProcessesDsl =>
   implicit def defaultProcessElem[F[_]:Cont, O:Elem]: Elem[Process[F,O]] =
     element[Emit[F,O]].asElem[Process[F,O]]
 
-  sealed trait Process[F[_], O] extends Reifiable[Process[F,O]] {
+  sealed trait Process[F[_], O] extends Def[Process[F,O]] {
     implicit def eO: Elem[O]
     implicit def cF: Cont[F]
     def map[O2:Elem](f: Rep[O] => Rep[O2]): RProc[F,O2]

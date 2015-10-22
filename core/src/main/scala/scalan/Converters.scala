@@ -6,7 +6,7 @@ import scalan.common.Lazy
 trait Converters extends Views { self: Scalan =>
 
   type Conv[T,R] = Rep[Converter[T,R]]
-  trait Converter[T,R] extends Reifiable[Converter[T,R]] {
+  trait Converter[T,R] extends Def[Converter[T,R]] {
     implicit def eT: Elem[T]
     implicit def eR: Elem[R]
     def convFun: Rep[T => R]
@@ -69,7 +69,7 @@ trait Converters extends Views { self: Scalan =>
 }
 
 trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
-  def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To]
+  def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Def[_]], conv: Rep[From => To]): Rep[To]
 
   object HasConv {
     def unapply[A,B](elems: (Elem[A], Elem[B])): Option[Conv[A,B]] = hasConverter(elems._1, elems._2)
@@ -128,15 +128,15 @@ trait ConvertersDsl extends impl.ConvertersAbs { self: Scalan =>
 }
 
 trait ConvertersDslSeq extends impl.ConvertersSeq { self: ScalanSeq =>
-  def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To] = conv(x.asRep[From])
+  def tryConvert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Def[_]], conv: Rep[From => To]): Rep[To] = conv(x.asRep[From])
 }
 
 trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: ScalanExp =>
 
-  case class Convert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To])
+  case class Convert[From,To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Def[_]], conv: Rep[From => To])
     extends BaseDef[To]()(eTo)
 
-  def tryConvert[From, To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Reifiable[_]], conv: Rep[From => To]): Rep[To] = {
+  def tryConvert[From, To](eFrom: Elem[From], eTo: Elem[To], x: Rep[Def[_]], conv: Rep[From => To]): Rep[To] = {
     if (x.elem <:< eFrom)
       conv(x.asRep[From])
     else
@@ -148,10 +148,10 @@ trait ConvertersDslExp extends impl.ConvertersExp with Expressions { self: Scala
     case Convert(eFrom: Elem[from], eTo: Elem[to], x,  conv) if x.elem <:< eFrom =>
       conv(x)
 
-    case Convert(eFrom: Elem[from], eTo: Elem[to], HasViews(_x, _iso: Iso[Reifiable[_], _] @unchecked),  _conv) =>
-      val iso = _iso.asInstanceOf[Iso[Reifiable[_], from]]
+    case Convert(eFrom: Elem[from], eTo: Elem[to], HasViews(_x, _iso: Iso[Def[_], _] @unchecked),  _conv) =>
+      val iso = _iso.asInstanceOf[Iso[Def[_], from]]
       val conv = _conv.asRep[from => to]
-      val x = _x.asRep[Reifiable[_]]
+      val x = _x.asRep[Def[_]]
       tryConvert(x.elem, eTo, x, iso.toFun >> conv)
 
     case _ => super.rewriteDef(d)

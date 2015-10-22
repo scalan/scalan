@@ -30,7 +30,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     override lazy val tag = {
       weakTypeTag[AString].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[AString] => convertAString(x) }
       tryConvert(element[AString], this, x, conv)
@@ -54,7 +54,8 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     protected def getDefaultRep = AString
   }
 
-  abstract class AStringCompanionAbs extends CompanionBase[AStringCompanionAbs] with AStringCompanion {
+  abstract class AStringCompanionAbs extends CompanionDef[AStringCompanionAbs] with AStringCompanion {
+    def selfType = AStringCompanionElem
     override def toString = "AString"
   }
   def AString: Rep[AStringCompanionAbs]
@@ -96,7 +97,8 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     lazy val eTo = new SStringElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class SStringCompanionAbs extends CompanionBase[SStringCompanionAbs] with SStringCompanion {
+  class SStringCompanionAbs extends CompanionDef[SStringCompanionAbs] with SStringCompanion {
+    def selfType = SStringCompanionElem
     override def toString = "SString"
 
     def apply(wrappedValue: Rep[String]): Rep[SString] =
@@ -105,7 +107,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   object SStringMatcher {
     def unapply(p: Rep[AString]) = unmkSString(p)
   }
-  def SString: Rep[SStringCompanionAbs]
+  lazy val SString: Rep[SStringCompanionAbs] = new SStringCompanionAbs
   implicit def proxySStringCompanion(p: Rep[SStringCompanionAbs]): SStringCompanionAbs = {
     proxyOps[SStringCompanionAbs](p)
   }
@@ -165,7 +167,8 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     lazy val eTo = new CStringElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class CStringCompanionAbs extends CompanionBase[CStringCompanionAbs] with CStringCompanion {
+  class CStringCompanionAbs extends CompanionDef[CStringCompanionAbs] with CStringCompanion {
+    def selfType = CStringCompanionElem
     override def toString = "CString"
 
     def apply(wrappedValue: Rep[String]): Rep[CString] =
@@ -174,7 +177,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   object CStringMatcher {
     def unapply(p: Rep[AString]) = unmkCString(p)
   }
-  def CString: Rep[CStringCompanionAbs]
+  lazy val CString: Rep[CStringCompanionAbs] = new CStringCompanionAbs
   implicit def proxyCStringCompanion(p: Rep[CStringCompanionAbs]): CStringCompanionAbs = {
     proxyOps[CStringCompanionAbs](p)
   }
@@ -205,19 +208,15 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 // Seq -----------------------------------
 trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
   self: AbstractStringsDslSeq =>
-  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeSeq[AStringCompanionAbs] {
-    lazy val selfType = element[AStringCompanionAbs]
+  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with Def[AStringCompanionAbs] {
   }
 
   case class SeqSString
       (override val wrappedValue: Rep[String])
 
     extends SString(wrappedValue)
-        with UserTypeSeq[SString] {
+        with Def[SString] {
     lazy val selfType = element[SString]
-  }
-  lazy val SString = new SStringCompanionAbs with UserTypeSeq[SStringCompanionAbs] {
-    lazy val selfType = element[SStringCompanionAbs]
   }
 
   def mkSString
@@ -233,11 +232,8 @@ trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
       (override val wrappedValue: Rep[String])
 
     extends CString(wrappedValue)
-        with UserTypeSeq[CString] {
+        with Def[CString] {
     lazy val selfType = element[CString]
-  }
-  lazy val CString = new CStringCompanionAbs with UserTypeSeq[CStringCompanionAbs] {
-    lazy val selfType = element[CStringCompanionAbs]
   }
 
   def mkCString
@@ -253,19 +249,14 @@ trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
   self: AbstractStringsDslExp =>
-  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with UserTypeDef[AStringCompanionAbs] {
-    lazy val selfType = element[AStringCompanionAbs]
+  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with Def[AStringCompanionAbs] {
   }
 
   case class ExpSString
       (override val wrappedValue: Rep[String])
 
-    extends SString(wrappedValue) with UserTypeDef[SString] {
+    extends SString(wrappedValue) with Def[SString] {
     lazy val selfType = element[SString]
-  }
-
-  lazy val SString: Rep[SStringCompanionAbs] = new SStringCompanionAbs with UserTypeDef[SStringCompanionAbs] {
-    lazy val selfType = element[SStringCompanionAbs]
   }
 
   object SStringMethods {
@@ -287,12 +278,8 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
   case class ExpCString
       (override val wrappedValue: Rep[String])
 
-    extends CString(wrappedValue) with UserTypeDef[CString] {
+    extends CString(wrappedValue) with Def[CString] {
     lazy val selfType = element[CString]
-  }
-
-  lazy val CString: Rep[CStringCompanionAbs] = new CStringCompanionAbs with UserTypeDef[CStringCompanionAbs] {
-    lazy val selfType = element[CStringCompanionAbs]
   }
 
   object CStringMethods {
@@ -355,7 +342,7 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
 object AbstractStrings_Module {
   val packageName = "scalan.primitives"
   val name = "AbstractStrings"
-  val dump = "H4sIAAAAAAAAALVVTWwbRRR+3jhx/KMmjQRSciG4JggEdoSEeggSMq6LkNwkyhaETIU0Xo/dKbOzk51JsDn0wBFuiCtCvffGBQmJC0JCHDghQOLMqYBQBfRUxJvZH69dts2FPYzm58177/u+92Zv/wbLKoQd5RFORNOnmjRdO28r3XC7QjM9vRIMTzi9REfvP/65d0W8ohxY68PKdaIuKd6HcjTpTmQ6d+lxD8pEeFTpIFQanuzZCC0v4Jx6mgWixXz/RJMBp60eU3qvB8VBMJwew00o9GDdC4QXUk3dDidKURXvr1KTEUvXZbueHshZDNEyKFoZFFdDwjSmjzHWI/sjKt2pCMTU13AuTu1AmrTQpsR8GYQ6CVFCd9eDYbIsCoIbsNG7QU5JC0OMW64OmRjjzaok3jtkTPfRxJgXMWFF+ejqVNr1Ug8qih4jQa/5ktudiQQAVOAFm0Rzxk8z5adp+Gm4NGSEs/eIOTwMg8kUoq+wBDCR6OK5R7hIPNCuGDY+uOa9dc+t+o65PDGplCzCFXT0RE41WCmQx2+OPlJ3X7110YFKHypMtQdKh8TTWcljtqpEiEDbnFMCSThGtep5atkobbRZKImyF/iSCPQUU1lDnTjzmDbGZq8Wq5NDfUlLmpgWJrKQ4t3OwWvrpkM4P7yz+fxTv3bfdMCZD1FGly4Wfpg41VBqR+VgKTVDOWY3P06K+Ok7vw+/3oVrTspT7PZs0qCLZfXTD9Xvn3nZgdW+LeTLnIz7SJXqcuofhJ1A6D6sBqc0jE5Kp4Sb2X9KVRrSETnhOiYwi3wJkWvYzm05SQ0te7a8CwkB1ahC9wNBG5cPG3+733582xRgCLXoJOrBf9jF+z+fG2lbmxpq74ZESjp8g/CTqPHXNCxhC6esXMgTUNLDkPn4YJzSF7/64vU/vtxfthpuxMCsy5lexSxGE9qp1zWszAwiLWeKVqK03cCn5+t32du3PtRWu8Jk/oU4GNzAltyz9zYfImPyUv3V33X+3PzxUwfKqNaAaZ/Ixu4Z++t/7BlIq3o2bCFP627EUScbbmv2qmzYKTaHO+Myc1xNejEWN7eHrK+M7WNpdVmPj6wVM2w/KKQZL9hxJxdh54wIO4sIo0CZpHdgHm35iLIRM8/0mViIk34w8/nbte4kzXX3YejnYbZzYS68bVsLab00v4lUrCX/hegSvvnn47KXSVOqGEAI9ZyOcON6xKa4ee+T/We/++wX28EVU9n4joj0P53t3HkqNhYSwf9vJnkNRVP0Nv1/AZD40HUPCQAA"
+  val dump = "H4sIAAAAAAAAALVVTWwbRRR+Xjtx/KMmjQRSciG4JggEdoSEeggSMq6LkNwk6haETIU0Xk/cKbOzk51JsDn0wBFuiCtCvffGBQmJC0JCHDghQOLMqYBQBfRUxJvZH6/dbptL9zCanzfvve/73pu99QcsqRC2lUc4ES2fatJy7byjdNPtCc309FIwOub0Aj388MkvvUviNeXA6gCWrxF1QfEBVKJJbyLTuUuP+lAhwqNKB6HS8HTfRmh7AefU0ywQbeb7x5oMOW33mdK7fSgNg9H0CG5AoQ9rXiC8kGrqdjlRiqp4f4WajFi6rtj1dF/OYoi2QdHOoLgSEqYxfYyxFtlfptKdikBMfQ1n4tT2pUkLbcrMl0GokxBldHctGCXLkiC4Aev96+SEtDHEuO3qkIkx3qxJ4r1HxnQPTYx5CRNWlB9emUq7LvahqugREvSGL7ndmUgAQAVeskm0Zvy0Un5ahp+mS0NGOPuAmMODMJhMIfoKRYCJRBcvPMJF4oH2xKj50VXvnbtuzXfM5YlJpWwRLqOjp3KqwUqBPH53+RN15/Wb5x2oDqDKVGeodEg8nZU8ZqtGhAi0zTklkIRjVKuRp5aN0kGbhZKoeIEviUBPMZV11Ikzj2ljbPbqsTo51Je1pIlpYSILKd6tHLy2brqE84PbGy8+83vvbQec+RAVdOli4YeJUw3lTlQOllIzVGJ28+OkiJ+9/efo2x246qQ8xW5PJw26WFK//FT78blXHVgZ2EK+yMl4gFSpHqf+ftgNhB7ASnBCw+ikfEK4mT1QqvKIHpJjrmMCs8iLiFzDVm7LSWpo2bXlXUgIqEUVuhcI2rx40PzX/f7TW6YAQ6hHJ1EP/sfO3/v1zKG2tamh/n5IpKSjtwg/jhp/VUMRWzhl5VyegJIehMzHB+OEvvzNV2/+9fXektVwPQZmXc70KmUxmtBOo6FheWYQaTlTtBql7QY+Pdu4w969+bG22hUm8y/E/vA6tuSuvbfxEBmTl+qfwY7z98bPnztQQbWGTPtENndO2V+PsWcgrerZsIk8rbkRR91suM3Zq7Jup9gc7ozLzHEt6cVY3Nwesr4ytk+k1WU9PrJWzLB1v5BmPGfH7VyE3VMi7C4ijAJlkt6GebRFFPxU+ON07895/na9N0mz3HkY7nmAnVyAC6/a5kJar8xvIgmryR8huoSv/dm44GXSjioGEEIjpxfcuBKRnRt3P9t7/ocvfrO9WzU1jS+ISP/Q2Z6dp2J9IRH882aS11Ay5W7T/x9Ylgs0CQkAAA=="
 }
 }
 

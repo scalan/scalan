@@ -17,7 +17,7 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
   type IncidentMatrix = Collection[Boolean]
   type EdgeList = (Collection[Int], Collection[Int])
 
-  trait Graph[V,E] extends Reifiable[Graph[V, E]]{
+  trait Graph[V,E] extends Def[Graph[V, E]]{
     type Node = Rep[Vertex[V, E]]
     type EdgeType <: Edge[V, E]
     type REdge = Rep[EdgeType]

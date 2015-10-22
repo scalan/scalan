@@ -319,7 +319,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
         case ae: ArrayBufferElem[_] => ArrayBufferRep(sym)(ae.asInstanceOf[ArrayBufferElem[T]].eItem)
       }
     }
-    case _ => ???("cannot resolve ReifiableObject for symbol:", sym)
+    case _ => ???("cannot resolve DefObject for symbol:", sym)
   }
 
 }

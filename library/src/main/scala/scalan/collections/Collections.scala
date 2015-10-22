@@ -11,7 +11,7 @@ import scala.reflect.runtime.universe._
 trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
   type Coll[+Item] = Rep[Collection[Item]]
-  trait Collection[@uncheckedVariance +Item] extends Reifiable[Collection[Item @uncheckedVariance]] {
+  trait Collection[@uncheckedVariance +Item] extends Def[Collection[Item @uncheckedVariance]] {
     implicit def eItem: Elem[Item @uncheckedVariance]
     def length: Rep[Int]
     def arr: Rep[Array[Item @uncheckedVariance]]

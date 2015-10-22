@@ -6,7 +6,7 @@ import scala.reflect.runtime.universe._
 trait Frees extends Base { self: MonadsDsl =>
 
   type RFree[F[_],A] = Rep[Free[F,A]]
-  sealed trait Free[F[_], A] extends Reifiable[Free[F,A]] {
+  sealed trait Free[F[_], A] extends Def[Free[F,A]] {
     implicit def eA: Elem[A]
     implicit def cF: Cont[F]
 

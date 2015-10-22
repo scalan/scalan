@@ -37,7 +37,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       implicit val tagAnnotatedItem = eItem.tag
       weakTypeTag[Collection[Item]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Collection[Item]] => convertCollection(x) }
       tryConvert(element[Collection[Item]], this, x, conv)
@@ -61,7 +61,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     protected def getDefaultRep = Collection
   }
 
-  abstract class CollectionCompanionAbs extends CompanionBase[CollectionCompanionAbs] with CollectionCompanion {
+  abstract class CollectionCompanionAbs extends CompanionDef[CollectionCompanionAbs] with CollectionCompanion {
+    def selfType = CollectionCompanionElem
     override def toString = "Collection"
   }
   def Collection: Rep[CollectionCompanionAbs]
@@ -91,7 +92,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       implicit val tagB = eB.tag
       weakTypeTag[PairCollection[A, B]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[PairCollection[A, B]] => convertPairCollection(x) }
       tryConvert(element[PairCollection[A, B]], this, x, conv)
@@ -131,7 +132,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[NestedCollection[A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[NestedCollection[A]] => convertNestedCollection(x) }
       tryConvert(element[NestedCollection[A]], this, x, conv)
@@ -185,7 +186,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     lazy val eTo = new UnitCollectionElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class UnitCollectionCompanionAbs extends CompanionBase[UnitCollectionCompanionAbs] with UnitCollectionCompanion {
+  class UnitCollectionCompanionAbs extends CompanionDef[UnitCollectionCompanionAbs] with UnitCollectionCompanion {
+    def selfType = UnitCollectionCompanionElem
     override def toString = "UnitCollection"
 
     def apply(length: Rep[Int]): Rep[UnitCollection] =
@@ -194,7 +196,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   object UnitCollectionMatcher {
     def unapply(p: Rep[Collection[Unit]]) = unmkUnitCollection(p)
   }
-  def UnitCollection: Rep[UnitCollectionCompanionAbs]
+  lazy val UnitCollection: Rep[UnitCollectionCompanionAbs] = new UnitCollectionCompanionAbs
   implicit def proxyUnitCollectionCompanion(p: Rep[UnitCollectionCompanionAbs]): UnitCollectionCompanionAbs = {
     proxyOps[UnitCollectionCompanionAbs](p)
   }
@@ -255,7 +257,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     lazy val eTo = new CollectionOverArrayElem[Item](this)
   }
   // 4) constructor and deconstructor
-  abstract class CollectionOverArrayCompanionAbs extends CompanionBase[CollectionOverArrayCompanionAbs] with CollectionOverArrayCompanion {
+  class CollectionOverArrayCompanionAbs extends CompanionDef[CollectionOverArrayCompanionAbs] with CollectionOverArrayCompanion {
+    def selfType = CollectionOverArrayCompanionElem
     override def toString = "CollectionOverArray"
 
     def apply[Item](arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]] =
@@ -264,7 +267,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   object CollectionOverArrayMatcher {
     def unapply[Item](p: Rep[Collection[Item]]) = unmkCollectionOverArray(p)
   }
-  def CollectionOverArray: Rep[CollectionOverArrayCompanionAbs]
+  lazy val CollectionOverArray: Rep[CollectionOverArrayCompanionAbs] = new CollectionOverArrayCompanionAbs
   implicit def proxyCollectionOverArrayCompanion(p: Rep[CollectionOverArrayCompanionAbs]): CollectionOverArrayCompanionAbs = {
     proxyOps[CollectionOverArrayCompanionAbs](p)
   }
@@ -325,7 +328,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     lazy val eTo = new CollectionOverListElem[Item](this)
   }
   // 4) constructor and deconstructor
-  abstract class CollectionOverListCompanionAbs extends CompanionBase[CollectionOverListCompanionAbs] with CollectionOverListCompanion {
+  class CollectionOverListCompanionAbs extends CompanionDef[CollectionOverListCompanionAbs] with CollectionOverListCompanion {
+    def selfType = CollectionOverListCompanionElem
     override def toString = "CollectionOverList"
 
     def apply[Item](lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]] =
@@ -334,7 +338,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   object CollectionOverListMatcher {
     def unapply[Item](p: Rep[Collection[Item]]) = unmkCollectionOverList(p)
   }
-  def CollectionOverList: Rep[CollectionOverListCompanionAbs]
+  lazy val CollectionOverList: Rep[CollectionOverListCompanionAbs] = new CollectionOverListCompanionAbs
   implicit def proxyCollectionOverListCompanion(p: Rep[CollectionOverListCompanionAbs]): CollectionOverListCompanionAbs = {
     proxyOps[CollectionOverListCompanionAbs](p)
   }
@@ -395,7 +399,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     lazy val eTo = new CollectionOverSeqElem[Item](this)
   }
   // 4) constructor and deconstructor
-  abstract class CollectionOverSeqCompanionAbs extends CompanionBase[CollectionOverSeqCompanionAbs] with CollectionOverSeqCompanion {
+  class CollectionOverSeqCompanionAbs extends CompanionDef[CollectionOverSeqCompanionAbs] with CollectionOverSeqCompanion {
+    def selfType = CollectionOverSeqCompanionElem
     override def toString = "CollectionOverSeq"
 
     def apply[Item](seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]] =
@@ -404,7 +409,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   object CollectionOverSeqMatcher {
     def unapply[Item](p: Rep[Collection[Item]]) = unmkCollectionOverSeq(p)
   }
-  def CollectionOverSeq: Rep[CollectionOverSeqCompanionAbs]
+  lazy val CollectionOverSeq: Rep[CollectionOverSeqCompanionAbs] = new CollectionOverSeqCompanionAbs
   implicit def proxyCollectionOverSeqCompanion(p: Rep[CollectionOverSeqCompanionAbs]): CollectionOverSeqCompanionAbs = {
     proxyOps[CollectionOverSeqCompanionAbs](p)
   }
@@ -466,7 +471,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     lazy val eTo = new PairCollectionSOAElem[A, B](this)
   }
   // 4) constructor and deconstructor
-  abstract class PairCollectionSOACompanionAbs extends CompanionBase[PairCollectionSOACompanionAbs] with PairCollectionSOACompanion {
+  class PairCollectionSOACompanionAbs extends CompanionDef[PairCollectionSOACompanionAbs] with PairCollectionSOACompanion {
+    def selfType = PairCollectionSOACompanionElem
     override def toString = "PairCollectionSOA"
     def apply[A, B](p: Rep[PairCollectionSOAData[A, B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]] =
       isoPairCollectionSOA(eA, eB).to(p)
@@ -476,7 +482,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   object PairCollectionSOAMatcher {
     def unapply[A, B](p: Rep[PairCollection[A, B]]) = unmkPairCollectionSOA(p)
   }
-  def PairCollectionSOA: Rep[PairCollectionSOACompanionAbs]
+  lazy val PairCollectionSOA: Rep[PairCollectionSOACompanionAbs] = new PairCollectionSOACompanionAbs
   implicit def proxyPairCollectionSOACompanion(p: Rep[PairCollectionSOACompanionAbs]): PairCollectionSOACompanionAbs = {
     proxyOps[PairCollectionSOACompanionAbs](p)
   }
@@ -538,7 +544,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     lazy val eTo = new PairCollectionAOSElem[A, B](this)
   }
   // 4) constructor and deconstructor
-  abstract class PairCollectionAOSCompanionAbs extends CompanionBase[PairCollectionAOSCompanionAbs] with PairCollectionAOSCompanion {
+  class PairCollectionAOSCompanionAbs extends CompanionDef[PairCollectionAOSCompanionAbs] with PairCollectionAOSCompanion {
+    def selfType = PairCollectionAOSCompanionElem
     override def toString = "PairCollectionAOS"
 
     def apply[A, B](coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]] =
@@ -547,7 +554,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   object PairCollectionAOSMatcher {
     def unapply[A, B](p: Rep[PairCollection[A, B]]) = unmkPairCollectionAOS(p)
   }
-  def PairCollectionAOS: Rep[PairCollectionAOSCompanionAbs]
+  lazy val PairCollectionAOS: Rep[PairCollectionAOSCompanionAbs] = new PairCollectionAOSCompanionAbs
   implicit def proxyPairCollectionAOSCompanion(p: Rep[PairCollectionAOSCompanionAbs]): PairCollectionAOSCompanionAbs = {
     proxyOps[PairCollectionAOSCompanionAbs](p)
   }
@@ -608,7 +615,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     lazy val eTo = new NestedCollectionFlatElem[A](this)
   }
   // 4) constructor and deconstructor
-  abstract class NestedCollectionFlatCompanionAbs extends CompanionBase[NestedCollectionFlatCompanionAbs] with NestedCollectionFlatCompanion {
+  class NestedCollectionFlatCompanionAbs extends CompanionDef[NestedCollectionFlatCompanionAbs] with NestedCollectionFlatCompanion {
+    def selfType = NestedCollectionFlatCompanionElem
     override def toString = "NestedCollectionFlat"
     def apply[A](p: Rep[NestedCollectionFlatData[A]])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
       isoNestedCollectionFlat(eA).to(p)
@@ -618,7 +626,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   object NestedCollectionFlatMatcher {
     def unapply[A](p: Rep[NestedCollection[A]]) = unmkNestedCollectionFlat(p)
   }
-  def NestedCollectionFlat: Rep[NestedCollectionFlatCompanionAbs]
+  lazy val NestedCollectionFlat: Rep[NestedCollectionFlatCompanionAbs] = new NestedCollectionFlatCompanionAbs
   implicit def proxyNestedCollectionFlatCompanion(p: Rep[NestedCollectionFlatCompanionAbs]): NestedCollectionFlatCompanionAbs = {
     proxyOps[NestedCollectionFlatCompanionAbs](p)
   }
@@ -649,19 +657,15 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 // Seq -----------------------------------
 trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeSeq[CollectionCompanionAbs] {
-    lazy val selfType = element[CollectionCompanionAbs]
+  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with Def[CollectionCompanionAbs] {
   }
 
   case class SeqUnitCollection
       (override val length: Rep[Int])
 
     extends UnitCollection(length)
-        with UserTypeSeq[UnitCollection] {
+        with Def[UnitCollection] {
     lazy val selfType = element[UnitCollection]
-  }
-  lazy val UnitCollection = new UnitCollectionCompanionAbs with UserTypeSeq[UnitCollectionCompanionAbs] {
-    lazy val selfType = element[UnitCollectionCompanionAbs]
   }
 
   def mkUnitCollection
@@ -677,11 +681,8 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
       (override val arr: Rep[Array[Item]])
       (implicit eItem: Elem[Item])
     extends CollectionOverArray[Item](arr)
-        with UserTypeSeq[CollectionOverArray[Item]] {
+        with Def[CollectionOverArray[Item]] {
     lazy val selfType = element[CollectionOverArray[Item]]
-  }
-  lazy val CollectionOverArray = new CollectionOverArrayCompanionAbs with UserTypeSeq[CollectionOverArrayCompanionAbs] {
-    lazy val selfType = element[CollectionOverArrayCompanionAbs]
   }
 
   def mkCollectionOverArray[Item]
@@ -697,11 +698,8 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
       (override val lst: Rep[List[Item]])
       (implicit eItem: Elem[Item])
     extends CollectionOverList[Item](lst)
-        with UserTypeSeq[CollectionOverList[Item]] {
+        with Def[CollectionOverList[Item]] {
     lazy val selfType = element[CollectionOverList[Item]]
-  }
-  lazy val CollectionOverList = new CollectionOverListCompanionAbs with UserTypeSeq[CollectionOverListCompanionAbs] {
-    lazy val selfType = element[CollectionOverListCompanionAbs]
   }
 
   def mkCollectionOverList[Item]
@@ -717,11 +715,8 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
       (override val seq: Rep[SSeq[Item]])
       (implicit eItem: Elem[Item])
     extends CollectionOverSeq[Item](seq)
-        with UserTypeSeq[CollectionOverSeq[Item]] {
+        with Def[CollectionOverSeq[Item]] {
     lazy val selfType = element[CollectionOverSeq[Item]]
-  }
-  lazy val CollectionOverSeq = new CollectionOverSeqCompanionAbs with UserTypeSeq[CollectionOverSeqCompanionAbs] {
-    lazy val selfType = element[CollectionOverSeqCompanionAbs]
   }
 
   def mkCollectionOverSeq[Item]
@@ -737,11 +732,8 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
       (override val as: Rep[Collection[A]], override val bs: Rep[Collection[B]])
       (implicit eA: Elem[A], eB: Elem[B])
     extends PairCollectionSOA[A, B](as, bs)
-        with UserTypeSeq[PairCollectionSOA[A, B]] {
+        with Def[PairCollectionSOA[A, B]] {
     lazy val selfType = element[PairCollectionSOA[A, B]]
-  }
-  lazy val PairCollectionSOA = new PairCollectionSOACompanionAbs with UserTypeSeq[PairCollectionSOACompanionAbs] {
-    lazy val selfType = element[PairCollectionSOACompanionAbs]
   }
 
   def mkPairCollectionSOA[A, B]
@@ -757,11 +749,8 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
       (override val coll: Rep[Collection[(A, B)]])
       (implicit eA: Elem[A], eB: Elem[B])
     extends PairCollectionAOS[A, B](coll)
-        with UserTypeSeq[PairCollectionAOS[A, B]] {
+        with Def[PairCollectionAOS[A, B]] {
     lazy val selfType = element[PairCollectionAOS[A, B]]
-  }
-  lazy val PairCollectionAOS = new PairCollectionAOSCompanionAbs with UserTypeSeq[PairCollectionAOSCompanionAbs] {
-    lazy val selfType = element[PairCollectionAOSCompanionAbs]
   }
 
   def mkPairCollectionAOS[A, B]
@@ -777,11 +766,8 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
       (override val values: Coll[A], override val segments: PairColl[Int, Int])
       (implicit eA: Elem[A])
     extends NestedCollectionFlat[A](values, segments)
-        with UserTypeSeq[NestedCollectionFlat[A]] {
+        with Def[NestedCollectionFlat[A]] {
     lazy val selfType = element[NestedCollectionFlat[A]]
-  }
-  lazy val NestedCollectionFlat = new NestedCollectionFlatCompanionAbs with UserTypeSeq[NestedCollectionFlatCompanionAbs] {
-    lazy val selfType = element[NestedCollectionFlatCompanionAbs]
   }
 
   def mkNestedCollectionFlat[A]
@@ -797,19 +783,14 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with UserTypeDef[CollectionCompanionAbs] {
-    lazy val selfType = element[CollectionCompanionAbs]
+  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with Def[CollectionCompanionAbs] {
   }
 
   case class ExpUnitCollection
       (override val length: Rep[Int])
 
-    extends UnitCollection(length) with UserTypeDef[UnitCollection] {
+    extends UnitCollection(length) with Def[UnitCollection] {
     lazy val selfType = element[UnitCollection]
-  }
-
-  lazy val UnitCollection: Rep[UnitCollectionCompanionAbs] = new UnitCollectionCompanionAbs with UserTypeDef[UnitCollectionCompanionAbs] {
-    lazy val selfType = element[UnitCollectionCompanionAbs]
   }
 
   object UnitCollectionMethods {
@@ -1010,12 +991,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   case class ExpCollectionOverArray[Item]
       (override val arr: Rep[Array[Item]])
       (implicit eItem: Elem[Item])
-    extends CollectionOverArray[Item](arr) with UserTypeDef[CollectionOverArray[Item]] {
+    extends CollectionOverArray[Item](arr) with Def[CollectionOverArray[Item]] {
     lazy val selfType = element[CollectionOverArray[Item]]
-  }
-
-  lazy val CollectionOverArray: Rep[CollectionOverArrayCompanionAbs] = new CollectionOverArrayCompanionAbs with UserTypeDef[CollectionOverArrayCompanionAbs] {
-    lazy val selfType = element[CollectionOverArrayCompanionAbs]
   }
 
   object CollectionOverArrayMethods {
@@ -1204,12 +1181,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   case class ExpCollectionOverList[Item]
       (override val lst: Rep[List[Item]])
       (implicit eItem: Elem[Item])
-    extends CollectionOverList[Item](lst) with UserTypeDef[CollectionOverList[Item]] {
+    extends CollectionOverList[Item](lst) with Def[CollectionOverList[Item]] {
     lazy val selfType = element[CollectionOverList[Item]]
-  }
-
-  lazy val CollectionOverList: Rep[CollectionOverListCompanionAbs] = new CollectionOverListCompanionAbs with UserTypeDef[CollectionOverListCompanionAbs] {
-    lazy val selfType = element[CollectionOverListCompanionAbs]
   }
 
   object CollectionOverListMethods {
@@ -1398,12 +1371,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   case class ExpCollectionOverSeq[Item]
       (override val seq: Rep[SSeq[Item]])
       (implicit eItem: Elem[Item])
-    extends CollectionOverSeq[Item](seq) with UserTypeDef[CollectionOverSeq[Item]] {
+    extends CollectionOverSeq[Item](seq) with Def[CollectionOverSeq[Item]] {
     lazy val selfType = element[CollectionOverSeq[Item]]
-  }
-
-  lazy val CollectionOverSeq: Rep[CollectionOverSeqCompanionAbs] = new CollectionOverSeqCompanionAbs with UserTypeDef[CollectionOverSeqCompanionAbs] {
-    lazy val selfType = element[CollectionOverSeqCompanionAbs]
   }
 
   object CollectionOverSeqMethods {
@@ -1604,12 +1573,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   case class ExpPairCollectionSOA[A, B]
       (override val as: Rep[Collection[A]], override val bs: Rep[Collection[B]])
       (implicit eA: Elem[A], eB: Elem[B])
-    extends PairCollectionSOA[A, B](as, bs) with UserTypeDef[PairCollectionSOA[A, B]] {
+    extends PairCollectionSOA[A, B](as, bs) with Def[PairCollectionSOA[A, B]] {
     lazy val selfType = element[PairCollectionSOA[A, B]]
-  }
-
-  lazy val PairCollectionSOA: Rep[PairCollectionSOACompanionAbs] = new PairCollectionSOACompanionAbs with UserTypeDef[PairCollectionSOACompanionAbs] {
-    lazy val selfType = element[PairCollectionSOACompanionAbs]
   }
 
   object PairCollectionSOAMethods {
@@ -1846,12 +1811,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   case class ExpPairCollectionAOS[A, B]
       (override val coll: Rep[Collection[(A, B)]])
       (implicit eA: Elem[A], eB: Elem[B])
-    extends PairCollectionAOS[A, B](coll) with UserTypeDef[PairCollectionAOS[A, B]] {
+    extends PairCollectionAOS[A, B](coll) with Def[PairCollectionAOS[A, B]] {
     lazy val selfType = element[PairCollectionAOS[A, B]]
-  }
-
-  lazy val PairCollectionAOS: Rep[PairCollectionAOSCompanionAbs] = new PairCollectionAOSCompanionAbs with UserTypeDef[PairCollectionAOSCompanionAbs] {
-    lazy val selfType = element[PairCollectionAOSCompanionAbs]
   }
 
   object PairCollectionAOSMethods {
@@ -2123,12 +2084,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   case class ExpNestedCollectionFlat[A]
       (override val values: Coll[A], override val segments: PairColl[Int, Int])
       (implicit eA: Elem[A])
-    extends NestedCollectionFlat[A](values, segments) with UserTypeDef[NestedCollectionFlat[A]] {
+    extends NestedCollectionFlat[A](values, segments) with Def[NestedCollectionFlat[A]] {
     lazy val selfType = element[NestedCollectionFlat[A]]
-  }
-
-  lazy val NestedCollectionFlat: Rep[NestedCollectionFlatCompanionAbs] = new NestedCollectionFlatCompanionAbs with UserTypeDef[NestedCollectionFlatCompanionAbs] {
-    lazy val selfType = element[NestedCollectionFlatCompanionAbs]
   }
 
   object NestedCollectionFlatMethods {
@@ -2647,7 +2604,7 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
 object Collections_Module {
   val packageName = "scalan.collections"
   val name = "Collections"
-  val dump = "H4sIAAAAAAAAANVYTWwbRRSe3dhxbEdpklat2lISUkNpVeK0AvUQocpxEihy4iibVshElcbrsbPt7uxmdxzZHCrghEBcEFeEeu+tF6RKvSAkxIETAiTOnEoQqoCKA4iZ2R/vj9dxrCaAD6vdmXl/3/ve88zc2wVJywQvWDJUIZ7VEIGzEn8vWCQnLWGikPaKXmuqaBHV3zv+ubyCFywRHKmA4S1oLVpqBaTtl6WW4b1LaLsE0hDLyCK6aRHwXIlbyMu6qiKZKDrOK5rWJLCqonxJsch8CSSqeq29De4AoQTGZR3LJiJIKqrQspDljI8g5pHifaf5d7tsdGzgPIsi74tiw4QKoe5TG+P2+nVkSG2s47ZGwJjjWtlgbtE1KUUzdJO4JlJU3ZZecz8TGNIBMFm6BXdgnppo5CViKrhBJbMGlG/DBlqlS9jyBHXYQmp9o23w76ESyFhomwJ0TTNUPtIyAAA0A5e5E7MdfGY9fGYZPjkJmQpUlbchm1wz9VYb2D9hCICWQVVc3EOFqwEt4Vrug035rSdSVhOZcIu5kuIRDlNFUzFs4KmgOH61/rH1+LW7V0SQqYCMYhWqFjGhTPwpd9DKQox1wn32AIRmg2ZrJi5b3EqBrglRIi3rmgEx1eRAOUrzpCqyQthiNjbqZCcG+hQxkLtUaBmCF+90TLycN0WoqmuPTr70/M9Lb4pADJpIU5USJb7pKiUgU/Tw9wycjTNgoDVT0Sihd9ArXzy4/uvD1SS3MVlDddhUyQ2oNpFNL8dixzozJr54noDEdawQNpRudZ6pHnF5CJ979EvtyzmwKXp5ccLojwpURdL64bvst+evimCkwgtnWYWNCk2NtaQirWwWdUwqYETfQaY9k9qBKnvrSo2UE7aTMD/SQxRpAqZjS9xALA3zvJwEF4CsXRGrOka55bXcH9LXn9xjhDfBqD1j1/zfypW/fhyrE14LBAyrCDfIFnfqCAFDtFk4eLDnUQKEOTp6DXfFPGMrlnQNTcw8Vm7e/ZBwdIVWsGeUq7coSea53LM9gHZ71++VOfG3k99/JoI0xbOqEA0aubk+K+4Aqwj4oKFgjRWdvs0JMheaZETtlAeHLIKh95iiqTgRlCj6fZ/qNK0T/LWrAd+qrBB0J1qpzkTiGkFad+9sc77lpzy+cWuUGNA0Y6hDR5IF04Ttfs35jZ7jzws98b4UnDzaCbBMC5Cb7gP0Z7qIxSLvh0IIQZFELDIvTNYR+ok83vEpry+die+olJzH10vH1N2rD0WQfAMk67TdWCWQrOpNXHNZT/cXBLXIgjsmBFlPWQ5NqHks579p0Ik+6vxhcky1SDzHEuzP/pAoNhnMFLPcB8NOR6UOl2Axbk/5pDf/azmnG8ceOZckZ/rgcz4RBI8a7iPlpyJCh5vx7k4/nYSPrUHFjEu6UOiExj4XBiWASDMRm/9Yzjnm/fZi1FcHUt89nP0y7HKIYUFApXI0iC4MiwgNxDARFXrQKwBnnIKFXgqigMXFuyc5/dTqvmAh7O2/Q90EO5Puh1099sMG2mgaKnr5wZ8333/ndYNvriPHsEHiOAjmFsrS/plLhf6vzHXiPQzmjq/SYw+q7aPv9UnW4R126PaaYaLocrcXlGEl9NTU0BAmnpoRFyhbFXvkvMdT+Vs+FgaEHrP72Yyd6SZ30AR0+RPrdL8U8qvziYSRS68jpa6wq7C9W0+P25qCfbZGtbP33919tXrxI35bk+RHbiZuX1Tw19PsKmGiieUtJN9GtRvQVPhR3QVor93ZXlzIsjP5MtQUtX0pNqYwT4O7txWIYQOZIS+C7PAdxbpwwohYi+ZN6GNHFQ6u635DEAdv68GgQv96B9Wy+opqv7u3uJgi/XDQKmJIb3TWOAuzPhfp+ckpkc5ds+VQ1QQzMeUjOfdIi6h+58mnqxe+uf8Tr54Mu5HSMWuWTIUQvOMM4jFp66NM1JpYIe1FS/X5T8nFLqu47/8Av7ZO3dkYAAA="
+  val dump = "H4sIAAAAAAAAANVYTWwbRRSe3dhxbFdpm1at2lISUkNpVeK0AvVQocpxEyhy4qibVshUlcbribPt7uxmdxzZHCrghEBcEFeEeu+tF6RKvSAkxIETAiTOnEoRqoCKA4g3sz/e9XodJ2oC+LDanZn3973vPc/M3Uco7djoBUfFOqYzBmF4RhHvJYcVlHnKNNZZNBstnVwiq+8d+lxdpHOOjPbW0Ogadi45eg1l3Zf5thW8K2S9grKYqsRhpu0w9FxFWCiqpq4TlWkmLWqG0WK4rpNiRXPYhQpK1c1GZx3dRlIF7VNNqtqEEaWsY8chjjc+RrhHWvCdFd+dqtW1QYs8imIoihUbawzcBxv73PVXiKV0qEk7BkPjnmtVi7sFazKaYZk2801kQN2a2fA/UxTDAJqo3MQbuAgmmkWF2RptgmTewuot3CRLsIQvT4HDDtFXVzqW+B6poJxD1gGgy4ali5G2hRCCDJwTTsx08ZkJ8Jnh+BQUYmtY197GfHLZNtsd5P6kEYTaFqg4s4kKXwOZp43CB9fVt54oeUPmwm3uSkZEOAqKJhPYIFIBOH515WPn8Wt3zssoV0M5zSnVHWZjlYVT7qGVx5SaTPgcAIjtJmRrOilbwkoJ1vRQIquahoUpaPKg3AN50jVVY3wxH9vjZScB+gyziL9UaltSEO9UQryCN2Ws68sPj7z0/M/zb8pIjprIgkoFiG/7ShnKlQP8AwMnkgxYZNnWDCD0Bnnli/tXf32wlBY2JhpkFbd0dg3rLeLSy7PYtc6NyS+eYih1lWqMD2Xb3WdmQFwBwicf/tL4chZdl4O8eGEMRwVQkXZ++C7/7amLMhqricJZ0HGzBqlx5nViVO2ySVkNjZkbxHZnMhtY5299qZHxwvYSFkZ6BJBmaCqxxC3C03BBlJPkA5B3K2LJpKSwsFz4Q/n6k7uc8Dba4864Nf+3dv6vH8dXmagFhkZ1QptsTTi1l6ERaBYeHvx5gCFpFkYv076Y51zFimmQ/dOPtRt3PmQCXakd7RnV+k0gyQUh9+wAoP3e9XttVv7tyPefySgLeNY1ZmCrMDtkxe1gFaEQNADWeNnr24Igsz2TnKjd8hCQxTAMHpOQisNRiXLY98lu0zosXvsaCK3KS1F34pXqTaQuM2L09841F1p+NOCbsAbEwLadQB0YSZdsG3eGNRc2elI8Tw/E+2x08kA3wCoUoDA9BOjP9BFLRD4MhdQDRZrwyIIweUcYJvJkxyeDvnQ8uaMCOQ9dqRzUH118IKP0Gyi9Cu3GqaB03WzRhs962F8w0mZz/pgUZT2wHNvYCFguflOoG33c+d3kmO6wZI6l+J/9LlFsIpopbnkIhh2LS+0uwRLcngxJX/+v5Rw2jgNyrije9M7nfH8UPDA8RMqPxoR2N+P9nX46CR9fxpqdlHSp1A2Nf85tlwAyZCIx/4mc88yH7SWor29Lff9wtsqwcz0MiwKqVONB9GFYTGhbDJNJaQC9InAmKZgbpCAOWFK8m5IzTK3+C+Z6vf13qJviZ9KtsGvAftgiKy1LJy/f//PG+++8bonNdewYtp04doK5paqydeaC0P+VuV68u8HcfUtw7CGNLfS9Ick6usEP3UEzTJV97g6CslcJnJqaBqEsUDPmA+Wq4o9C8Hgqf8sHewGBY/Ywm7Hj/eR2moA+fxKdHpZCYXUhkV7kRuAIvXnTGXBPU3JP1aRx4t67j16tn/lI3NOkxWGbi7tXFOL1GL9E2N+i6hpRb5HGNWxr4pDuQ7PZvmwzFuT5aXwBG5reOZsYUy9Do/u2RUxxk9g9XkR5ETqE9WGDFbMWz5g0xF6qN7i+Ow1J3n5DjwbV83+3U81qqKi2um9LiinWCbdbPxzple4ab2E+5CKcnLwS6d4yOx5VbTSdUD6Kd4MENXj7yadLp7+595Oonhy/izIpb5NchRS93YziMeHqAyYaLaqxziVHD/kP5OLXVML3fwBU7ike0xgAAA=="
 }
 }
 

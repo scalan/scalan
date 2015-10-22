@@ -10,7 +10,6 @@ import scala.annotation.unchecked.uncheckedVariance
 trait Base extends LazyLogging { self: Scalan =>
   type |[+A, +B] = Either[A, B]
   type Rep[+A]
-  type Def[+A]
   type IntRep = Rep[Int]
   type BoolRep = Rep[Boolean]
   type UnitRep = Rep[Unit]
@@ -45,15 +44,14 @@ trait Base extends LazyLogging { self: Scalan =>
   def toRep[A](x: A)(implicit eA: Elem[A]): Rep[A] = !!!(s"Don't know how to create Rep for $x with element $eA")
   implicit def liftToRep[A:Elem](x: A): Rep[A] = toRep(x)
 
-  type RReifiable[+T] = Rep[Reifiable[T]]
-  trait Reifiable[+T] extends Product {
+  trait Def[+T] extends Product {
     def selfType: Elem[T @uncheckedVariance]
-    def self: Rep[T]
+    lazy val self: Rep[T] = reifyObject(this)
 
     override def equals(other: Any) = other match {
       // check that nodes correspond to same operation, have the same type, and the same arguments
       // alternative would be to include Elem fields into case class
-      case other: Reifiable[_] =>
+      case other: Def[_] =>
         getClass == other.getClass && productArity == other.productArity && {
           val len = productArity
           var i = 0
@@ -127,23 +125,25 @@ trait Base extends LazyLogging { self: Scalan =>
     }
   }
 
-  abstract class CompanionBase[T] extends Reifiable[T] {
-    override def productArity = 0
-    override def productElement(n: Int) = ???
-    override def canEqual(other: Any) = other.isInstanceOf[CompanionBase[_]]
-  }
-
-  // this is a bit hackish. Better would be to make Elem part of Rep in sequential context
-  implicit class RepReifiable[T <: Reifiable[_]](x: Rep[T]) {
-    def selfType1: Elem[T] = repReifiable_getElem(x)
-  }
-  def repReifiable_getElem[T <: Reifiable[_]](x: Rep[T]): Elem[T]
-
   object Def {
     def unapply[T](e: Rep[T]): Option[Def[T]] = def_unapply(e)
   }
 
   def def_unapply[T](e: Rep[T]): Option[Def[T]]
+
+  abstract class CompanionDef[T] extends Def[T] {
+    override def productArity = 0
+    override def productElement(n: Int) = ???
+    override def canEqual(other: Any) = other.isInstanceOf[CompanionDef[_]]
+  }
+
+  // this is a bit hackish. Better would be to make Elem part of Rep in sequential context
+  implicit class RepDef[T <: Def[_]](x: Rep[T]) {
+    def selfType1: Elem[T] = repDef_getElem(x)
+  }
+  def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T]
+
+  def reifyObject[A](d: Def[A]): Rep[A]
 }
 
 object Base {

@@ -6,7 +6,7 @@ import scalan._
 trait Segments { self: SegmentsDsl =>
 
   type RSeg = Rep[Segment]
-  trait Segment extends Reifiable[Segment] { self =>
+  trait Segment extends Def[Segment] { self =>
     def start: Rep[Int]
     def length: Rep[Int]
     def end: Rep[Int]

@@ -9,7 +9,7 @@ import scalan.staged.BaseExp
 
 trait Views extends Elems { self: Scalan =>
   trait Convertible[A] {
-    def convert(x: Rep[Reifiable[_]]): Rep[A] = !!!("should not be called")
+    def convert(x: Rep[Def[_]]): Rep[A] = !!!("should not be called")
   }
   abstract class EntityElem[A] extends Elem[A] with Convertible[A] with scala.Equals {
     def parent: Option[Elem[_]]
@@ -31,7 +31,7 @@ trait Views extends Elems { self: Scalan =>
     def getConverterFrom[E](eEntity: EntityElem[E]): Option[Conv[E, TClass]] = {
       try {
         val convFun: Rep[E => TClass] =
-          fun({ x: Rep[E] => eClass.convert(x.asRep[Reifiable[_]])})(Lazy(eEntity), eClass)
+          fun({ x: Rep[E] => eClass.convert(x.asRep[Def[_]])})(Lazy(eEntity), eClass)
         Some(BaseConverter(convFun)(eEntity, eClass))
       }
       catch {
@@ -194,12 +194,12 @@ trait Views extends Elems { self: Scalan =>
       case me: MMapElem[_,_] =>
         identityIso(me)
 
-      case we: WrapperElem1[a, Reifiable[ext], cbase, cw] @unchecked =>
+      case we: WrapperElem1[a, Def[ext], cbase, cw] @unchecked =>
         val eExt = we.eTo
         val iso = getIsoByElem(eExt)
         iso
 
-      case we: WrapperElem[Reifiable[base],Reifiable[ext]] @unchecked =>
+      case we: WrapperElem[Def[base],Def[ext]] @unchecked =>
         val eExt = we.eTo
         val iso = getIsoByElem(eExt)
         iso
@@ -366,11 +366,11 @@ trait Views extends Elems { self: Scalan =>
     (i1, i2)
   }
 
-  implicit class RepReifiableViewOps[T](x: Rep[T]) {
-    def convertTo[R: Elem]: Rep[R] = repReifiable_convertTo(x.asRep[Reifiable[T]])(element[R].asElem[Reifiable[R]]).asRep[R]
+  implicit class RepDefViewOps[T](x: Rep[T]) {
+    def convertTo[R: Elem]: Rep[R] = repDef_convertTo(x.asRep[Def[T]])(element[R].asElem[Def[R]]).asRep[R]
   }
 
-  def repReifiable_convertTo[T <: Reifiable[_], R <: Reifiable[_]]
+  def repDef_convertTo[T <: Def[_], R <: Def[_]]
                             (x: Rep[T])(implicit eR: Elem[R]): Rep[R] = {
     eR match {
       case entE: EntityElem[R] @unchecked => entE.convert(x)
@@ -380,10 +380,6 @@ trait Views extends Elems { self: Scalan =>
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
-  trait UserTypeSeq[T] extends Reifiable[T] { thisType: T =>
-    def self = this
-  }
-
   def shouldUnpack(e: Elem[_]) = true
 }
 
@@ -409,9 +405,6 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     unpackTesters -= tester
 
   def shouldUnpack(e: Elem[_]) = unpackTesters.exists(_(e))
-
-  trait UserTypeDef[T] extends Def[T] {
-  }
 
   object HasViews {
     def unapply[T](s: Exp[T]): Option[Unpacked[T]] =
@@ -526,15 +519,15 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
     // Rule: V(a, iso1) ; V(b, iso2)) ==> iso2.to(a ; b)
     case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
-      iso2.to(Semicolon(a.asRep[a], b.asRep[b])(iso2.eFrom))
+      iso2.to(semicolon(a.asRep[a], b.asRep[b]))
 
     // Rule: a ; V(b, iso2)) ==> iso2.to(a ; b)
     case block@Semicolon(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
-      iso2.to(Semicolon(a, b.asRep[b])(iso2.eFrom))
+      iso2.to(semicolon(a, b.asRep[b]))
 
     // Rule: V(a, iso1) ; b ==> a ; b
     case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
-      Semicolon(a.asRep[a], b)(block.selfType.asElem[b])
+      semicolon(a.asRep[a], b)
 
     // Rule: PairView(source, iso1, _)._1  ==> iso1.to(source._1)
     case First(Def(view@PairView(source))) =>

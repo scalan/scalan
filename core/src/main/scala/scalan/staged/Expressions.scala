@@ -42,10 +42,6 @@ trait BaseExp extends Base { scalan: ScalanExp =>
   }
   type ExpAny = Exp[_]
 
-  trait Def[+T] extends Reifiable[T] {
-    lazy val self: Rep[T] = reifyObject(this)
-  }
-
   abstract class BaseDef[+T](implicit val selfType: Elem[T @uncheckedVariance]) extends Def[T]
 
   case class Const[T: Elem](x: T) extends BaseDef[T]
@@ -100,7 +96,7 @@ trait BaseExp extends Base { scalan: ScalanExp =>
 
   def transformDef[A](d: Def[A], t: Transformer): Exp[A] = d match {
     case c: Const[A] => c.self
-    case comp: CompanionBase[_] => comp.self
+    case comp: CompanionDef[_] => comp.self
     case _ =>
       def transformParam(x: Any): Any = x match {
         case e: Exp[_] => t(e)
@@ -134,8 +130,9 @@ trait BaseExp extends Base { scalan: ScalanExp =>
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T]
-  implicit def reifyObject[T](obj: Def[T]): Rep[T] = {
-    toExp(obj, fresh[T](Lazy(obj.selfType)))
+
+  implicit def reifyObject[A](obj: Def[A]): Rep[A] = {
+    toExp(obj, fresh[A](Lazy(obj.selfType)))
   }
 
   override def toRep[A](x: A)(implicit eA: Elem[A]):Rep[A] = eA match {
@@ -155,14 +152,14 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     case _ =>
       x match {
         // this may be called instead of reifyObject implicit in some cases
-        case d: Def[A @unchecked] => reifyObject(d)
+        case d: BaseExp#Def[A @unchecked] => reifyObject(d.asInstanceOf[Def[A]])
         case _ => super.toRep(x)(eA)
       }
   }
 
   def def_unapply[T](e: Exp[T]): Option[Def[T]] = findDefinition(e).map(_.rhs)
 
-  override def repReifiable_getElem[T <: Reifiable[_]](x: Rep[T]): Elem[T] = x.elem
+  override def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T] = x.elem
 
   object Var {
     def unapply[T](e: Exp[T]): Option[Exp[T]] = e match {

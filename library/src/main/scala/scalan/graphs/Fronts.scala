@@ -7,7 +7,7 @@ import scalan._
  */
 
 trait Fronts extends ScalanCommunityDsl { self: FrontsDsl =>
-  trait Front extends Reifiable[Front] {
+  trait Front extends Def[Front] {
     //def total: Rep[Int]
 
     def contains(v: Rep[Int]): Rep[Boolean]

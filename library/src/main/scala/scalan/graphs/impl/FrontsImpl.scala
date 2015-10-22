@@ -30,7 +30,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     override lazy val tag = {
       weakTypeTag[Front].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Front] => convertFront(x) }
       tryConvert(element[Front], this, x, conv)
@@ -54,7 +54,8 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     protected def getDefaultRep = Front
   }
 
-  abstract class FrontCompanionAbs extends CompanionBase[FrontCompanionAbs] with FrontCompanion {
+  abstract class FrontCompanionAbs extends CompanionDef[FrontCompanionAbs] with FrontCompanion {
+    def selfType = FrontCompanionElem
     override def toString = "Front"
   }
   def Front: Rep[FrontCompanionAbs]
@@ -97,7 +98,8 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     lazy val eTo = new BaseFrontElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class BaseFrontCompanionAbs extends CompanionBase[BaseFrontCompanionAbs] with BaseFrontCompanion {
+  class BaseFrontCompanionAbs extends CompanionDef[BaseFrontCompanionAbs] with BaseFrontCompanion {
+    def selfType = BaseFrontCompanionElem
     override def toString = "BaseFront"
     def apply(p: Rep[BaseFrontData]): Rep[BaseFront] =
       isoBaseFront.to(p)
@@ -107,7 +109,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   object BaseFrontMatcher {
     def unapply(p: Rep[Front]) = unmkBaseFront(p)
   }
-  def BaseFront: Rep[BaseFrontCompanionAbs]
+  lazy val BaseFront: Rep[BaseFrontCompanionAbs] = new BaseFrontCompanionAbs
   implicit def proxyBaseFrontCompanion(p: Rep[BaseFrontCompanionAbs]): BaseFrontCompanionAbs = {
     proxyOps[BaseFrontCompanionAbs](p)
   }
@@ -168,7 +170,8 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     lazy val eTo = new ListFrontElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class ListFrontCompanionAbs extends CompanionBase[ListFrontCompanionAbs] with ListFrontCompanion {
+  class ListFrontCompanionAbs extends CompanionDef[ListFrontCompanionAbs] with ListFrontCompanion {
+    def selfType = ListFrontCompanionElem
     override def toString = "ListFront"
     def apply(p: Rep[ListFrontData]): Rep[ListFront] =
       isoListFront.to(p)
@@ -178,7 +181,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   object ListFrontMatcher {
     def unapply(p: Rep[Front]) = unmkListFront(p)
   }
-  def ListFront: Rep[ListFrontCompanionAbs]
+  lazy val ListFront: Rep[ListFrontCompanionAbs] = new ListFrontCompanionAbs
   implicit def proxyListFrontCompanion(p: Rep[ListFrontCompanionAbs]): ListFrontCompanionAbs = {
     proxyOps[ListFrontCompanionAbs](p)
   }
@@ -239,7 +242,8 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     lazy val eTo = new CollectionFrontElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class CollectionFrontCompanionAbs extends CompanionBase[CollectionFrontCompanionAbs] with CollectionFrontCompanion {
+  class CollectionFrontCompanionAbs extends CompanionDef[CollectionFrontCompanionAbs] with CollectionFrontCompanion {
+    def selfType = CollectionFrontCompanionElem
     override def toString = "CollectionFront"
     def apply(p: Rep[CollectionFrontData]): Rep[CollectionFront] =
       isoCollectionFront.to(p)
@@ -249,7 +253,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   object CollectionFrontMatcher {
     def unapply(p: Rep[Front]) = unmkCollectionFront(p)
   }
-  def CollectionFront: Rep[CollectionFrontCompanionAbs]
+  lazy val CollectionFront: Rep[CollectionFrontCompanionAbs] = new CollectionFrontCompanionAbs
   implicit def proxyCollectionFrontCompanion(p: Rep[CollectionFrontCompanionAbs]): CollectionFrontCompanionAbs = {
     proxyOps[CollectionFrontCompanionAbs](p)
   }
@@ -310,7 +314,8 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     lazy val eTo = new MapBasedFrontElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class MapBasedFrontCompanionAbs extends CompanionBase[MapBasedFrontCompanionAbs] with MapBasedFrontCompanion {
+  class MapBasedFrontCompanionAbs extends CompanionDef[MapBasedFrontCompanionAbs] with MapBasedFrontCompanion {
+    def selfType = MapBasedFrontCompanionElem
     override def toString = "MapBasedFront"
 
     def apply(mmap: Rep[MMap[Int, Unit]]): Rep[MapBasedFront] =
@@ -319,7 +324,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   object MapBasedFrontMatcher {
     def unapply(p: Rep[Front]) = unmkMapBasedFront(p)
   }
-  def MapBasedFront: Rep[MapBasedFrontCompanionAbs]
+  lazy val MapBasedFront: Rep[MapBasedFrontCompanionAbs] = new MapBasedFrontCompanionAbs
   implicit def proxyMapBasedFrontCompanion(p: Rep[MapBasedFrontCompanionAbs]): MapBasedFrontCompanionAbs = {
     proxyOps[MapBasedFrontCompanionAbs](p)
   }
@@ -350,19 +355,15 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 // Seq -----------------------------------
 trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
   self: FrontsDslSeq =>
-  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeSeq[FrontCompanionAbs] {
-    lazy val selfType = element[FrontCompanionAbs]
+  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with Def[FrontCompanionAbs] {
   }
 
   case class SeqBaseFront
       (override val set: Rep[CollectionOverArray[Int]], override val bits: Rep[BitSet])
 
     extends BaseFront(set, bits)
-        with UserTypeSeq[BaseFront] {
+        with Def[BaseFront] {
     lazy val selfType = element[BaseFront]
-  }
-  lazy val BaseFront = new BaseFrontCompanionAbs with UserTypeSeq[BaseFrontCompanionAbs] {
-    lazy val selfType = element[BaseFrontCompanionAbs]
   }
 
   def mkBaseFront
@@ -378,11 +379,8 @@ trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
       (override val set: Rep[CollectionOverList[Int]], override val bits: Rep[BitSet])
 
     extends ListFront(set, bits)
-        with UserTypeSeq[ListFront] {
+        with Def[ListFront] {
     lazy val selfType = element[ListFront]
-  }
-  lazy val ListFront = new ListFrontCompanionAbs with UserTypeSeq[ListFrontCompanionAbs] {
-    lazy val selfType = element[ListFrontCompanionAbs]
   }
 
   def mkListFront
@@ -398,11 +396,8 @@ trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
       (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
 
     extends CollectionFront(set, bits)
-        with UserTypeSeq[CollectionFront] {
+        with Def[CollectionFront] {
     lazy val selfType = element[CollectionFront]
-  }
-  lazy val CollectionFront = new CollectionFrontCompanionAbs with UserTypeSeq[CollectionFrontCompanionAbs] {
-    lazy val selfType = element[CollectionFrontCompanionAbs]
   }
 
   def mkCollectionFront
@@ -418,11 +413,8 @@ trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
       (override val mmap: Rep[MMap[Int, Unit]])
 
     extends MapBasedFront(mmap)
-        with UserTypeSeq[MapBasedFront] {
+        with Def[MapBasedFront] {
     lazy val selfType = element[MapBasedFront]
-  }
-  lazy val MapBasedFront = new MapBasedFrontCompanionAbs with UserTypeSeq[MapBasedFrontCompanionAbs] {
-    lazy val selfType = element[MapBasedFrontCompanionAbs]
   }
 
   def mkMapBasedFront
@@ -438,19 +430,14 @@ trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
   self: FrontsDslExp =>
-  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with UserTypeDef[FrontCompanionAbs] {
-    lazy val selfType = element[FrontCompanionAbs]
+  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with Def[FrontCompanionAbs] {
   }
 
   case class ExpBaseFront
       (override val set: Rep[CollectionOverArray[Int]], override val bits: Rep[BitSet])
 
-    extends BaseFront(set, bits) with UserTypeDef[BaseFront] {
+    extends BaseFront(set, bits) with Def[BaseFront] {
     lazy val selfType = element[BaseFront]
-  }
-
-  lazy val BaseFront: Rep[BaseFrontCompanionAbs] = new BaseFrontCompanionAbs with UserTypeDef[BaseFrontCompanionAbs] {
-    lazy val selfType = element[BaseFrontCompanionAbs]
   }
 
   object BaseFrontMethods {
@@ -495,12 +482,8 @@ trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
   case class ExpListFront
       (override val set: Rep[CollectionOverList[Int]], override val bits: Rep[BitSet])
 
-    extends ListFront(set, bits) with UserTypeDef[ListFront] {
+    extends ListFront(set, bits) with Def[ListFront] {
     lazy val selfType = element[ListFront]
-  }
-
-  lazy val ListFront: Rep[ListFrontCompanionAbs] = new ListFrontCompanionAbs with UserTypeDef[ListFrontCompanionAbs] {
-    lazy val selfType = element[ListFrontCompanionAbs]
   }
 
   object ListFrontMethods {
@@ -545,12 +528,8 @@ trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
   case class ExpCollectionFront
       (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
 
-    extends CollectionFront(set, bits) with UserTypeDef[CollectionFront] {
+    extends CollectionFront(set, bits) with Def[CollectionFront] {
     lazy val selfType = element[CollectionFront]
-  }
-
-  lazy val CollectionFront: Rep[CollectionFrontCompanionAbs] = new CollectionFrontCompanionAbs with UserTypeDef[CollectionFrontCompanionAbs] {
-    lazy val selfType = element[CollectionFrontCompanionAbs]
   }
 
   object CollectionFrontMethods {
@@ -595,12 +574,8 @@ trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
   case class ExpMapBasedFront
       (override val mmap: Rep[MMap[Int, Unit]])
 
-    extends MapBasedFront(mmap) with UserTypeDef[MapBasedFront] {
+    extends MapBasedFront(mmap) with Def[MapBasedFront] {
     lazy val selfType = element[MapBasedFront]
-  }
-
-  lazy val MapBasedFront: Rep[MapBasedFrontCompanionAbs] = new MapBasedFrontCompanionAbs with UserTypeDef[MapBasedFrontCompanionAbs] {
-    lazy val selfType = element[MapBasedFrontCompanionAbs]
   }
 
   object MapBasedFrontMethods {
@@ -770,7 +745,7 @@ trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
 object Fronts_Module {
   val packageName = "scalan.graphs"
   val name = "Fronts"
-  val dump = "H4sIAAAAAAAAAN1WTWwbRRgdbxw7a6dJMaIiuVBS81NEbQsJ9ZADSlwHVXLiKNsiZCqkyXrsTNmd3cxMIptDDxzhhjhwQaj33rggIXFBSIgDJwRInDkVEKoKPYH4Zna86zXZYg4BCR9GszOf53vfe29+7vyE5gVHTwsXe5jVfCJxzdH9DSGrTotJKkfbQe/II1dI/61zH7vbbFNYaLmLCgdYXBFeF9lRpzUM475DDtvIxswlQgZcSPRkW2eou4HnEVfSgNWp7x9JvO+RepsKud5G+f2gNzpEt1Cujc66AXM5kcRpelgIIsz4AlGIaPxt6+9RJ0xysLqqoj5RxTWOqQT4kONsFL9HQmfEAjbyJVoy0DqhggUxReqHAZfjFEVY7iDojT/zDMMAqrRv4mNchxSDuiM5ZQP4ZznE7ht4QHYgRIXnAbAgXv/aKNTfc21UEuQQCLrqh54eGYYIIVDgBQ2ilvBTi/mpKX6qDuEUe/RNrCZ3eTAcoeiXm0NoGMISz//NEuMVSIv1qm/fcF974JR9S/15qKAUdYUFWOiJDDdoKYDHL/beFfdevn3ZQqUuKlGxsS8kx66clNywVcaMBVJjjgnEfABqrWWppbNsQMyUJWw38EPMYCVD5SLo5FGXShWsxhaNOhnUF2VIxqG5YZiL6z2fUa/2TRN73u7dlUtP/dh61UJWOoUNSzpgfD5eVKL5LR4wqQlVjW24zc4S1/vM3Z97nzfQDStmySw6mzCwxLz47pvy1xdfstBCV9t4y8ODLhAlWh7xO7wJyLpoITgmPJopHmNP9U4UqtgjfXzkSUPfZN1zULdE5zM3XEgUKeva3LkxAeXInzsBI9Wt3epvzpfv3VH242gxmol24B/08u/fL/WldqZEc4JEW3EZ+rBvDRlm5NFm7PYOVLXBOR7FdF3I0jUku5z6cI4ckxc/++T6L5/uzGtpK6biV7B3RKJdbQpOileYcg3AcjVSORLYHuqsj8X1qmZVgoGpFNnwC5sUtuW0WxLPlCJinMAnj6zdo6/ffkdqd+SG6ROos38TSFjX/1t5iFHGJ+Gv3YZ1f+XbDy1kgx8Ao4/DamPG/XuKexKl6VlqmltAG7yRnjxxoxnqEglArcomFkQHNyfRriaHXkV3JbLjyKmAcm6G3Gatici/2OHhZq6kzazO7ChANRdO2WyqvaTbxumooMqZTYU48j9RoZSo8P9h//GkqJk0WJ6KPyUl8j4cPNmc5be3zXQkgu6uSWQ9exEmrzMqp6v+t/g8B8DUYdGbic0zqegkaMJOhRPB2nuE9ql6wf1DnCkC0vDjGpaysKdeMatTWd5PD0J1BR0LT7oz5tYZcBweCAOBo7WMy8gxVwHcR7cefLDz3Fcf/aBv4ZK6VOCRwOIn+OTtO0VQlBte1BMwwRvqmtFA/wTrZUF+4QwAAA=="
+  val dump = "H4sIAAAAAAAAAN1WTWwbRRQerx07a6dJMaIiuVBS81NEbQsJ9ZADSlwHVXLiqNuiylRIk/XEmbI7u5mZRDaHHjjCDXHgglDvvXFBQuKCkBAHTgiQOHMqIFQVegL1zex412uyxRwCEj6sZmee3/ve930zs3d+RnOCo2eFiz3M6j6RuO7o8bqQNafNJJWjraB/6JFLZO/tM5+4W2xDWGiph4r7WFwSXg/Z0aA9DOOxQw46yMbMJUIGXEj0dEdXaLiB5xFX0oA1qO8fSrzrkUaHCrnWQYXdoD86QLdQroNOuwFzOZHEaXlYCCLM/DxRiGj8buv3UTdMarCG6qIx0cVVjqkE+FDjdBR/hYTOiAVs5Eu0aKB1QwULYkrUDwMuxyVKkG4/6I9fCwzDBKp2buIj3IASg4YjOWUD+GclxO6beEC2IUSFFwCwIN7e1VGo3/MdVBbkAAi67IeenhmGCCFQ4CUNop7wU4/5qSt+ag7hFHv0LawWd3gwHKHol8sjNAwhxYt/k2KcgbRZv/bODff1B07Ft9SfhwpKSXdYhERPZbhBSwE8fnnlPXHv1dsXLVTuoTIV67tCcuzKSckNWxXMWCA15phAzAeg1mqWWrrKOsRMWcJ2Az/EDDIZKhdAJ4+6VKpgNbdg1MmgviRDMg7NDcNc3O/ZjH61b1rY83buLl945qf2dQtZ6RI2pHTA+HycVKK5TR4wqQlVD9twm10l7ve5u7/0v2iiG1bMkkk6mzCQYk58/23lm/OvWGi+p2286eFBD4gSbY/4Xd4CZD00HxwRHq2UjrCnRscKVeqTPXzoSUPfZN956Fuis5kbLiSKlDVt7tyYgErkz+2AkdrmTu1356v37yj7cbQQrUQ78E968Y8fFvekdqZEeUGirbgEY9i3hgwz83grdnsXulrnHI9ius5l6RqSHU59OEeOyMuff3rt18+257S0VdPxa9g7JNGuNg0nzStMuSZguRypHAlsD3XVJ+J+1WNFgoGpFNnwixsUtuW0WxLPlCNinMAnj63eo2/cfldqd+SG6ROou3sTSFjT/1t+hFHGJ+FvvaZ1f/m7jyxkgx8Ao4/DWnPG/XuCexKl6VlsmVtAG7yZXjx2oxnqEglAreoGFkQHtybRriSHXlUPJbLjyKmASm6G2ibXRORf7PBoM1fTZlZndhSgHudO2GzqeUE/myejgmpnNhXiyP9EhXKiwv+H/SeTpmbSYGkq/oSUKPhw8GRzVtjaMsuRCHq4KpH1/HlYvMaonO763+LzDABTh0V/JjZPpaKToAk7FY8Fm4ez+h8iTLWeBh6jX8xCnfp+WZmq8kF6Evoq6lj4mDtl7psBx+G+MBA4Ws24hhxzCUB3tx58uP3C1x//qO/fsrpO4POAxR/fk/dumgg7qg3f0hMwwRXqgtFAHwKhZ94j2wwAAA=="
 }
 }
 

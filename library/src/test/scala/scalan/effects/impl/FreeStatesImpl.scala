@@ -35,7 +35,7 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[StateF[S, A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[StateF[S, A]] => convertStateF(x) }
       tryConvert(element[StateF[S, A]], this, x, conv)
@@ -59,7 +59,8 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
     protected def getDefaultRep = StateF
   }
 
-  abstract class StateFCompanionAbs extends CompanionBase[StateFCompanionAbs] with StateFCompanion {
+  abstract class StateFCompanionAbs extends CompanionDef[StateFCompanionAbs] with StateFCompanion {
+    def selfType = StateFCompanionElem
     override def toString = "StateF"
   }
   def StateF: Rep[StateFCompanionAbs]
@@ -104,7 +105,8 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
     lazy val eTo = new StateGetElem[S, A](this)
   }
   // 4) constructor and deconstructor
-  abstract class StateGetCompanionAbs extends CompanionBase[StateGetCompanionAbs] with StateGetCompanion {
+  class StateGetCompanionAbs extends CompanionDef[StateGetCompanionAbs] with StateGetCompanion {
+    def selfType = StateGetCompanionElem
     override def toString = "StateGet"
 
     def apply[S, A](f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateGet[S, A]] =
@@ -113,7 +115,7 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
   object StateGetMatcher {
     def unapply[S, A](p: Rep[StateF[S, A]]) = unmkStateGet(p)
   }
-  def StateGet: Rep[StateGetCompanionAbs]
+  lazy val StateGet: Rep[StateGetCompanionAbs] = new StateGetCompanionAbs
   implicit def proxyStateGetCompanion(p: Rep[StateGetCompanionAbs]): StateGetCompanionAbs = {
     proxyOps[StateGetCompanionAbs](p)
   }
@@ -176,7 +178,8 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
     lazy val eTo = new StatePutElem[S, A](this)
   }
   // 4) constructor and deconstructor
-  abstract class StatePutCompanionAbs extends CompanionBase[StatePutCompanionAbs] with StatePutCompanion {
+  class StatePutCompanionAbs extends CompanionDef[StatePutCompanionAbs] with StatePutCompanion {
+    def selfType = StatePutCompanionElem
     override def toString = "StatePut"
     def apply[S, A](p: Rep[StatePutData[S, A]])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]] =
       isoStatePut(eS, eA).to(p)
@@ -186,7 +189,7 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
   object StatePutMatcher {
     def unapply[S, A](p: Rep[StateF[S, A]]) = unmkStatePut(p)
   }
-  def StatePut: Rep[StatePutCompanionAbs]
+  lazy val StatePut: Rep[StatePutCompanionAbs] = new StatePutCompanionAbs
   implicit def proxyStatePutCompanion(p: Rep[StatePutCompanionAbs]): StatePutCompanionAbs = {
     proxyOps[StatePutCompanionAbs](p)
   }
@@ -217,19 +220,15 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
 // Seq -----------------------------------
 trait FreeStatesSeq extends FreeStatesDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs with UserTypeSeq[StateFCompanionAbs] {
-    lazy val selfType = element[StateFCompanionAbs]
+  lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs with Def[StateFCompanionAbs] {
   }
 
   case class SeqStateGet[S, A]
       (override val f: Rep[S => A])
       (implicit eS: Elem[S], eA: Elem[A])
     extends StateGet[S, A](f)
-        with UserTypeSeq[StateGet[S, A]] {
+        with Def[StateGet[S, A]] {
     lazy val selfType = element[StateGet[S, A]]
-  }
-  lazy val StateGet = new StateGetCompanionAbs with UserTypeSeq[StateGetCompanionAbs] {
-    lazy val selfType = element[StateGetCompanionAbs]
   }
 
   def mkStateGet[S, A]
@@ -245,11 +244,8 @@ trait FreeStatesSeq extends FreeStatesDsl with scalan.ScalanSeq {
       (override val s: Rep[S], override val a: Rep[A])
       (implicit eS: Elem[S], eA: Elem[A])
     extends StatePut[S, A](s, a)
-        with UserTypeSeq[StatePut[S, A]] {
+        with Def[StatePut[S, A]] {
     lazy val selfType = element[StatePut[S, A]]
-  }
-  lazy val StatePut = new StatePutCompanionAbs with UserTypeSeq[StatePutCompanionAbs] {
-    lazy val selfType = element[StatePutCompanionAbs]
   }
 
   def mkStatePut[S, A]
@@ -265,19 +261,14 @@ trait FreeStatesSeq extends FreeStatesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
-  lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs with UserTypeDef[StateFCompanionAbs] {
-    lazy val selfType = element[StateFCompanionAbs]
+  lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs with Def[StateFCompanionAbs] {
   }
 
   case class ExpStateGet[S, A]
       (override val f: Rep[S => A])
       (implicit eS: Elem[S], eA: Elem[A])
-    extends StateGet[S, A](f) with UserTypeDef[StateGet[S, A]] {
+    extends StateGet[S, A](f) with Def[StateGet[S, A]] {
     lazy val selfType = element[StateGet[S, A]]
-  }
-
-  lazy val StateGet: Rep[StateGetCompanionAbs] = new StateGetCompanionAbs with UserTypeDef[StateGetCompanionAbs] {
-    lazy val selfType = element[StateGetCompanionAbs]
   }
 
   object StateGetMethods {
@@ -299,12 +290,8 @@ trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
   case class ExpStatePut[S, A]
       (override val s: Rep[S], override val a: Rep[A])
       (implicit eS: Elem[S], eA: Elem[A])
-    extends StatePut[S, A](s, a) with UserTypeDef[StatePut[S, A]] {
+    extends StatePut[S, A](s, a) with Def[StatePut[S, A]] {
     lazy val selfType = element[StatePut[S, A]]
-  }
-
-  lazy val StatePut: Rep[StatePutCompanionAbs] = new StatePutCompanionAbs with UserTypeDef[StatePutCompanionAbs] {
-    lazy val selfType = element[StatePutCompanionAbs]
   }
 
   object StatePutMethods {
@@ -380,7 +367,7 @@ trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
 object FreeStates_Module {
   val packageName = "scalan.effects"
   val name = "FreeStates"
-  val dump = "H4sIAAAAAAAAANVWPYwbRRR+u3e2z/bpLgEUFKLkjpMDIiL2iSbFFZFzsaMg349uUyATBY3XY2fD7uzezvi0pogQJXSIhgKh9OloqOiQEAVVBEhUFFQhFBGQCsSb2V/feU2ikIItRjuzb97P931vZu8+gAL34RVuEpuwukMFqRvqvclFzWgxYYnxltsf2fQyHXxw4ktzi13iOix3oXiT8Mvc7kI5fGkFXvJu0P0OlAkzKReuzwW83FERGqZr29QUlssaluOMBOnZtNGxuNjowHzP7Y/34TZoHThmusz0qaDGpk04pzxaX6AyIyuZl9V8vOOlMVhDVtHIVHHNJ5bA9DHGsdB+j3rGmLls7AhYilLb8WRaaFOyHM/1RRyihO5uuv14Os8ILsBznVvkgDQwxLBhCN9iQ9xZ9Yj5LhnSbTSR5vOYMKf24NrYU/O5DlQ43UeArjqerVYCDwCQgTdUEvUUn3qCT13iUzOobxHbeo/Ij7u+G4whfLQ5gMBDF6//i4vYA22xfu3D6+bbj4yqo8vNgUylpCosoqOVHDUoKhDHb/Y+5g+v3LmgQ6ULFYs3e1z4xBRZyiO0qoQxV6icEwCJP0S21vLYUlGaaHNIEmXTdTzC0FME5SLyZFumJaSxXFuM2MmBviQ8Gptqgacl9a7m1Kt0s0lse/f+yfNnf229pYM+GaKMLg0Uvh87FVA0sFzajpzLcVmAZqQIy2lTTeVQDtKxNCOXBJVX7//W/3odrusJllHox6MPXRT4j99X7712UYeFrhJ72ybDLsLJWzZ1dvxNl4kuLLgH1A+/lA6ILd+m0lnq0wEZ2SICOYvOHKIjYDW3LT0qodtQLaDFAFRDFW+7jNbau7U/jW8/uStF6sNi+CXs07+tC3/9tDQQSr+I6CDGdg57O4HiTB6zHm2PmHnv6qfPL59+52fFa7HvOsRS4jrVgYKPna0KORVB+0Q0VsJcDdehx9ceWjfufCQUYVoweXTs9G5hr26ofWdmcBcfYX901/XfT/7wuQ5lpKhnCYd4tfXHbLxn2EwwqfflsAk2s0EyOJWSYQW5O66Mr1AxYb6SQv1ixvlLWqwVZSRAp0YcdV7qd2rjhaHzHDRnOTjKsYCFOGPlIlHb6Xy1IVQn9jov2A8ufqVD4U0oDLCfOMqs545YP+YALz1BA3EpXtMmOUDMiU+cBHP1rEKK1qRCW1MNmocBqWqTFT/VAXaELjiEtsanNGo+WUe2kxnbZyV1To3nn16nu6P/m04x46xO86XxRNrJpFqcim15j1oDS/59/Gf6yrIyweokWQlj0+gNi0kv6mcGjRzfT20iw0rbp1RFxn+gpejAoIMB3gI8KsmHtZyDxIjOYLwIbj/6bPvcd1/8oq6uijzN8cJkyU9remwEh7qkvOUy0pc/6ZmMUVLyfFfZ/gPSuY+8EwwAAA=="
+  val dump = "H4sIAAAAAAAAANVWPYwbRRR+uz7bZ/t0l0AUFKLkjpMDIiL2iSbFFZFzsaMg349uUyATBY3XY2eT3dm9nfFpTREhSugQDQVC6dPRUNEhIQqqCJCoKKhCKCIgVSLezP54fec1iUIKthjt7L55P9/3vbd79wHkuQ+vc5PYhNUcKkjNUPcNLqpGkwlLjDbd3tCml2j/o+Nfm5vsItdhqQOFG4Rf4nYHSuFNM/CSe4PutaFEmEm5cH0u4LW2ilA3XdumprBcVrccZyhI16b1tsXFehvmum5vtAe3QWvDEdNlpk8FNTZswjnl0fN5KjOykn1J7Ufb3jgGq8sq6qkqrvrEEpg+xjgS2u9Szxgxl40cAYtRatueTAttipbjub6IQxTR3Q23F2/nGMEH8FL7JtkndQwxqBvCt9gAT1Y8Yt4iA7qFJtJ8DhPm1O5fHXlqn2tDmdM9BOiK49nqSeABADLwtkqiNsanluBTk/hUDepbxLY+IPLlju8GIwgvLQcQeOjirX9xEXugTdarfnzNfO+RUXF0eTiQqRRVhQV0tJyhBkUF4vjd7qf84eU753Uod6Bs8UaXC5+YIk15hFaFMOYKlXMCIPEHyNZqFlsqSgNtDkiiZLqORxh6iqBcQJ5sy7SENJbPFiJ2MqAvCo/GplrgaUm9Kxn1Kt1sENveuX/i3Jnfm+/qoE+GKKFLA4Xvx04FFAwsl7Yi53JdEqAZY4TltqG2cikF47U4I5cElTfu/9H7dg2u6QmWUeinow9d5PnPP1buvXlBh/mOEnvLJoMOwsmbNnW2/Q2XiQ7Mu/vUD98U94kt76bSWezRPhnaIgI5jU4O0RGwktmWHpXQrasW0GIAKqGKt1xGq62d6t/G95/dlSL1YSF8E/bpE+v8418W+0LpFxHtx9jmsLcTKE5nMevR1pCZ9658/vLSqfd/VbwWeq5DLCWuk23I+9jZqpCTEbTPRGM5zNVwHXp09aF1/c4nQhGmBZOjY7t7E3t1XZ07PYO7eIT91VnT/zzx05c6lJCiriUc4lXXnrLxXmAzwaTel8Im2EgHSeFUTJZl5O6oMr5MxYT58hjqV1LOX9VirSgjATo14qhzUr9TGy8MneWgMcvBYY4FzMcZKxeJ2k5lqw2hOr7bPmY/uPCNDvl3IN/HfuIos647ZL2YA/zoCRqIi/EzbZIDxJz4xEkwV9cKjNGaVGhzqkHjICAVbbLi5xpgh+iCA2hrfEqjZpN16DiZcXxWUmfVeu75dboz/L/pFDNO6zRbGs+knVSqhanY5nBc/WfKSvMxweckTQlX04gNyxh/ol8YKHL9cGwTGZZbPqUqMv79LEajgvb7OP95VJIPqxkjxIimL2J6+9EXW2d/+Oo39dEqyzmOn0qW/K6OB0ZwoD9Kmy4jPfl7nsoYxSQnu8r2H7+C+NQNDAAA"
 }
 }
 

@@ -34,7 +34,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[Interact[A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Interact[A]] => convertInteract(x) }
       tryConvert(element[Interact[A]], this, x, conv)
@@ -58,7 +58,8 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
     protected def getDefaultRep = Interact
   }
 
-  abstract class InteractCompanionAbs extends CompanionBase[InteractCompanionAbs] with InteractCompanion {
+  abstract class InteractCompanionAbs extends CompanionDef[InteractCompanionAbs] with InteractCompanion {
+    def selfType = InteractCompanionElem
     override def toString = "Interact"
   }
   def Interact: Rep[InteractCompanionAbs]
@@ -101,7 +102,8 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
     lazy val eTo = new AskElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class AskCompanionAbs extends CompanionBase[AskCompanionAbs] with AskCompanion {
+  class AskCompanionAbs extends CompanionDef[AskCompanionAbs] with AskCompanion {
+    def selfType = AskCompanionElem
     override def toString = "Ask"
 
     def apply(prompt: Rep[String]): Rep[Ask] =
@@ -110,7 +112,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
   object AskMatcher {
     def unapply(p: Rep[Interact[String]]) = unmkAsk(p)
   }
-  def Ask: Rep[AskCompanionAbs]
+  lazy val Ask: Rep[AskCompanionAbs] = new AskCompanionAbs
   implicit def proxyAskCompanion(p: Rep[AskCompanionAbs]): AskCompanionAbs = {
     proxyOps[AskCompanionAbs](p)
   }
@@ -171,7 +173,8 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
     lazy val eTo = new TellElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class TellCompanionAbs extends CompanionBase[TellCompanionAbs] with TellCompanion {
+  class TellCompanionAbs extends CompanionDef[TellCompanionAbs] with TellCompanion {
+    def selfType = TellCompanionElem
     override def toString = "Tell"
 
     def apply(msg: Rep[String]): Rep[Tell] =
@@ -180,7 +183,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
   object TellMatcher {
     def unapply(p: Rep[Interact[Unit]]) = unmkTell(p)
   }
-  def Tell: Rep[TellCompanionAbs]
+  lazy val Tell: Rep[TellCompanionAbs] = new TellCompanionAbs
   implicit def proxyTellCompanion(p: Rep[TellCompanionAbs]): TellCompanionAbs = {
     proxyOps[TellCompanionAbs](p)
   }
@@ -211,19 +214,15 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 // Seq -----------------------------------
 trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
   self: InteractionsDslSeq =>
-  lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs with UserTypeSeq[InteractCompanionAbs] {
-    lazy val selfType = element[InteractCompanionAbs]
+  lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs with Def[InteractCompanionAbs] {
   }
 
   case class SeqAsk
       (override val prompt: Rep[String])
 
     extends Ask(prompt)
-        with UserTypeSeq[Ask] {
+        with Def[Ask] {
     lazy val selfType = element[Ask]
-  }
-  lazy val Ask = new AskCompanionAbs with UserTypeSeq[AskCompanionAbs] {
-    lazy val selfType = element[AskCompanionAbs]
   }
 
   def mkAsk
@@ -239,11 +238,8 @@ trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
       (override val msg: Rep[String])
 
     extends Tell(msg)
-        with UserTypeSeq[Tell] {
+        with Def[Tell] {
     lazy val selfType = element[Tell]
-  }
-  lazy val Tell = new TellCompanionAbs with UserTypeSeq[TellCompanionAbs] {
-    lazy val selfType = element[TellCompanionAbs]
   }
 
   def mkTell
@@ -259,19 +255,14 @@ trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
   self: InteractionsDslExp =>
-  lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs with UserTypeDef[InteractCompanionAbs] {
-    lazy val selfType = element[InteractCompanionAbs]
+  lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs with Def[InteractCompanionAbs] {
   }
 
   case class ExpAsk
       (override val prompt: Rep[String])
 
-    extends Ask(prompt) with UserTypeDef[Ask] {
+    extends Ask(prompt) with Def[Ask] {
     lazy val selfType = element[Ask]
-  }
-
-  lazy val Ask: Rep[AskCompanionAbs] = new AskCompanionAbs with UserTypeDef[AskCompanionAbs] {
-    lazy val selfType = element[AskCompanionAbs]
   }
 
   object AskMethods {
@@ -304,12 +295,8 @@ trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
   case class ExpTell
       (override val msg: Rep[String])
 
-    extends Tell(msg) with UserTypeDef[Tell] {
+    extends Tell(msg) with Def[Tell] {
     lazy val selfType = element[Tell]
-  }
-
-  lazy val Tell: Rep[TellCompanionAbs] = new TellCompanionAbs with UserTypeDef[TellCompanionAbs] {
-    lazy val selfType = element[TellCompanionAbs]
   }
 
   object TellMethods {
@@ -360,7 +347,7 @@ trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
 object Interactions_Module {
   val packageName = "scalan.examples"
   val name = "Interactions"
-  val dump = "H4sIAAAAAAAAALVWTWwbRRR+3thx/EPTlqqoSJBgDKEI7AgJ9ZBD5aYuKnKTKJtWyFRI4/XYnXZ2drMzjmwOPXCEG+KKUO+9cUFC6gUhIQ6cECBx5lSKUAX0RMWb2R+v02yTCz6MZmfevp/vfd/z3n0ABRnAq9IhnIiGSxVp2Gbfkqput4VianLF6484vUgHH53+yrkiLkgLFrswf4PIi5J3oRRu2mM/2dt0twMlIhwqlRdIBS91TISm43FOHcU80WSuO1Kkx2mzw6Ra60C+5/Unu3Abch047njCCaii9jonUlIZnS9QnRFLnkvmebLpT2OIpq6imapiJyBMYfoY43hov019eyI8MXEVHItS2/R1WmhTZK7vBSoOUUR3N7x+/JgXBA/gZOcm2SNNDDFs2ipgYohvVnzi3CJDuoEm2jyPCUvKBzsT3zzPdaAs6S4CdNn1uTkZ+wCAHXjLJNGY4tNI8GlofOo2DRjh7EOiL7cCbzyB8JebAxj76OKNQ1zEHmhb9OsfX3fef2RXXEu/PNapFE2F8+hoKYMNphWI43fbn8qH79w5Z0G5C2UmWz2pAuKodMsjtCpECE+ZnBMASTDEbtWyumWitNBmHyVKjuf6RKCnCMoq9okzhyltrM+qUXcyoC8qn8amubGfS+pdzqjX8GadcL51/8ybr/zefs8CazZECV3aSPwgdqpg4bJQVKORuH85y71PtwLmIp336NvffH31z3sbBRPhZJ8OyIira4SPaEiuKN40tg5l1WoK5qcGpfF0LT6lrgThlft/9L9dhetW0peojKNRAV0U5C8/VX48e96Cha4RziVOhl1sjWxz6m4G655QXVjw9mgQ3hT3CNe7A6lRjAqPGpZGeg6RVrCcKXGf6jasGTnlYgAqoSI2PEHrl7bq/9jff3ZXEz6AangTav4xO/fvr8cGymgBEfUDZFrYv0UFczgsQjz0cuogoMuhN9tz6YnaQ/bBnU+UgTQ3nh0Um72bqMw1896LT0E3Hlh/d1etv878/IUFJQSxx5RL/PrqEWX2P0oHTOGzyxIiV23JW+vpUEvTwfKc2SKcaLPvqhJLMUJ8v4T0+izS/bWzCvJXBVNP9sBESJk/n9DAxMKwrhweuaN6rZt1JavUZ3Yo54fVmtdG07swRCrLFZgtvLRN2YDpgX04IHica6XcPlHFkUs5EXs/oJz0QDOnyWR4IXuqIVNOb3dO8Qfn71lQeBcKAxS87ECh541EP6Yg/sMrOlYX4rPcLAWRciQgbkI581uGaWqZ9bdmEUfDalyC1oeCxSh1OiYoAyojkAKoZdRkR2pASd5+9PnG6z98+ZsZ1GWtKxwuIvlYSA/o2WYtpnPAL4BU6kgUrTeT9n8hJ6aukQkAAA=="
+  val dump = "H4sIAAAAAAAAALVWTWwbRRR+Xttx/EPTPxUVCRKMIS2idoSEesihclMXFblJlE0rZKpK4/XY3XZ2drMzjtYceuAIN8QVod5744KE1AtCQhw4IUDizKkUoQroiYo3sz9ep9kmF3wYzc68fT/f+763vv8IisKHN4RFGOFNh0rSNPW+LWTD7HBpy8lVdzBm9BIdfnTqK+sqvygMWOjB3C0iLgnWg3K46QResjfpThfKhFtUSNcXEl7t6ggty2WMWtJ2ect2nLEkfUZbXVvI1S4U+u5gsgN3IdeFo5bLLZ9Kaq4xIgQV0fk8VRnZyXNZP082vGkM3lJVtFJVbPvElpg+xjga2m9Rz5xwl08cCUei1DY8lRbalGzHc30Zhyihu1vuIH4scIIHcLx7m+ySFoYYtUzp23yEb1Y9Yt0hI7qOJsq8gAkLyobbE08/57tQEXQHAbrieEyfBB4AYAfe1kk0p/g0E3yaCp+GSX2bMPtDoi43fTeYQPjL5QECD128dYCL2APt8EHj4xvWB0/MqmOolwOVSklXOIeOFjPYoFuBOH639al4/O698wZUelCxRbsvpE8smW55hFaVcO5KnXMCIPFH2K16Vrd0lDba7KFE2XIdj3D0FEFZwz4x27KlMlZntag7GdCXpEdj01zg5ZJ6lzLq1bxZI4xtPjx97vXfO+8bYMyGKKNLE4nvx04lzF/hkio0EvevZbn36KZvO0jnXfrON19f+/PBelFHOD6gQzJm8jphYxqSK4o3ja1CGfW6hLmpQTmYrqXn1JUgvPzwj8G3K3DDSPoSlXE4KqCLovjlp+qPZy8YMN/TwrnMyKiHrREdRp0Nf83lsgfz7i71w5vSLmFqty81SlHhUcPSSOcRaQlLmRL3qGrDqpZTLgagGipi3eW0cXmz8Y/5/Wf3FeF9qIU3oeaf2uf//fXIUGotIKKej0wL+7cgIY/DIsRDLSf3A7oSejNdhx6rP7Zv3vtEakhzweyg2OjfRmWu6vdeeQ668cD6u7di/HX65y8MKCOIfVs6xGusHFJm/6N0QBc+uywicrW2uLOWDrU4HSwv6i3CiTZ7rqqxFCPE90pIrSeQ7mfOSihc47Z8tgc6Qsr8pYQGOhaGdcTo0B1Va0Ovy1mlvrBNGTuo1oIymt6FIVJZLsNs4Xns+cFQ4HGunXL4TP6HLuJY7H2fQtKjTJ8mM+Hl7HmGHDm11T3JHl14YEDxPSgOUeqiC8W+O+aDmHz4bZc0kBfjs9ws+ZBsxCdOQjb9W4Jpapn1t2exRsNaXIJShoSFKHUaEBQAFRFIPtQzajIjHWBj7j75fP3NH778TY/oilIUjhWe/E1Ij+bZZi2kc8Bvfyp1pIhSmk77P7eWrq2LCQAA"
 }
 }
 

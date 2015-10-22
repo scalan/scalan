@@ -33,7 +33,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
       implicit val tagV = elemValue.tag
       weakTypeTag[MMultiMap[K, V]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[MMultiMap[K, V]] => convertMMultiMap(x) }
       tryConvert(element[MMultiMap[K, V]], this, x, conv)
@@ -57,7 +57,8 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     protected def getDefaultRep = MMultiMap
   }
 
-  abstract class MMultiMapCompanionAbs extends CompanionBase[MMultiMapCompanionAbs] with MMultiMapCompanion {
+  abstract class MMultiMapCompanionAbs extends CompanionDef[MMultiMapCompanionAbs] with MMultiMapCompanion {
+    def selfType = MMultiMapCompanionElem
     override def toString = "MMultiMap"
   }
   def MMultiMap: Rep[MMultiMapCompanionAbs]
@@ -101,7 +102,8 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     lazy val eTo = new HashMMultiMapElem[K, V](this)
   }
   // 4) constructor and deconstructor
-  abstract class HashMMultiMapCompanionAbs extends CompanionBase[HashMMultiMapCompanionAbs] with HashMMultiMapCompanion {
+  class HashMMultiMapCompanionAbs extends CompanionDef[HashMMultiMapCompanionAbs] with HashMMultiMapCompanion {
+    def selfType = HashMMultiMapCompanionElem
     override def toString = "HashMMultiMap"
 
     def apply[K, V](map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
@@ -110,7 +112,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   object HashMMultiMapMatcher {
     def unapply[K, V](p: Rep[MMultiMap[K, V]]) = unmkHashMMultiMap(p)
   }
-  def HashMMultiMap: Rep[HashMMultiMapCompanionAbs]
+  lazy val HashMMultiMap: Rep[HashMMultiMapCompanionAbs] = new HashMMultiMapCompanionAbs
   implicit def proxyHashMMultiMapCompanion(p: Rep[HashMMultiMapCompanionAbs]): HashMMultiMapCompanionAbs = {
     proxyOps[HashMMultiMapCompanionAbs](p)
   }
@@ -141,19 +143,15 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 // Seq -----------------------------------
 trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with UserTypeSeq[MMultiMapCompanionAbs] {
-    lazy val selfType = element[MMultiMapCompanionAbs]
+  lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with Def[MMultiMapCompanionAbs] {
   }
 
   case class SeqHashMMultiMap[K, V]
       (override val map: Rep[MMap[K, ArrayBuffer[V]]])
       (implicit elemKey: Elem[K], elemValue: Elem[V])
     extends HashMMultiMap[K, V](map)
-        with UserTypeSeq[HashMMultiMap[K, V]] {
+        with Def[HashMMultiMap[K, V]] {
     lazy val selfType = element[HashMMultiMap[K, V]]
-  }
-  lazy val HashMMultiMap = new HashMMultiMapCompanionAbs with UserTypeSeq[HashMMultiMapCompanionAbs] {
-    lazy val selfType = element[HashMMultiMapCompanionAbs]
   }
 
   def mkHashMMultiMap[K, V]
@@ -169,19 +167,14 @@ trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with UserTypeDef[MMultiMapCompanionAbs] {
-    lazy val selfType = element[MMultiMapCompanionAbs]
+  lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with Def[MMultiMapCompanionAbs] {
   }
 
   case class ExpHashMMultiMap[K, V]
       (override val map: Rep[MMap[K, ArrayBuffer[V]]])
       (implicit elemKey: Elem[K], elemValue: Elem[V])
-    extends HashMMultiMap[K, V](map) with UserTypeDef[HashMMultiMap[K, V]] {
+    extends HashMMultiMap[K, V](map) with Def[HashMMultiMap[K, V]] {
     lazy val selfType = element[HashMMultiMap[K, V]]
-  }
-
-  lazy val HashMMultiMap: Rep[HashMMultiMapCompanionAbs] = new HashMMultiMapCompanionAbs with UserTypeDef[HashMMultiMapCompanionAbs] {
-    lazy val selfType = element[HashMMultiMapCompanionAbs]
   }
 
   object HashMMultiMapMethods {
@@ -602,7 +595,7 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
 object MultiMaps_Module {
   val packageName = "scalan.collections"
   val name = "MultiMaps"
-  val dump = "H4sIAAAAAAAAALVWTWwbRRQer+M6a4e0RCioSOAQGRAI7JBLDzlUievwUzuJslGFTIU0Xo+dKbOzm51xtMuhB45wQ1wR6r03Lpy4ISEOnBAgceZUyqECegLxZvbHu46dViD2MNqZefN+vu97s3v3PioJH70obMwwbzhE4oal37eFrFttLqkMu+5gzMg1Mvxw9Uu7y3eEgS720IVjLK4J1kNm9NIOvPTdIicdZGJuEyFdX0j0fEdHaNouY8SW1OVN6jhjifuMNDtUyK0OWui7g/AE3UaFDrpku9z2iSRWi2EhiIjXF4nKiKZzU8/DfW8SgzdVFc1MFUc+phLShxiXIvtD4lkhd3noSLQcp7bvqbTApkwdz/VlEqIM7o7dQTJd4BgW0ErnFj7FTQgxalrSp3wEJ6sett/HI7IHJsp8ARIWhA2PQk/Pix1UEeQEAHrL8ZheCTyEEDCwqZNoTPBppPg0FD51i/gUM/oBVpsHvhuEKHoKRYQCD1y8+ggXiQfS5oP6Rzftdx9aVcdQhwOVSllXeAEc1eaoQVMBOH5z+Il48MadKwaq9FCFiu2+kD62ZZbyGK0q5tyVOucUQOyPgK31eWzpKNtgMyUJ03YdD3PwFEO5BDwxalOpjNXaUszOHOjL0iOJaSHwCmm9a3Pq1bppYcYO7l1+7YVf2+8YyMiHMMGlBcL3E6cSmd3umEnaxV7sX40XJSpcn4Cspjf0VA1mMBnL56STAvPSvd8GX2+gm0YKZxz98RgEFyXx0w/V71++aqDFntb7LsOjHiAq2ow4+37L5bKHFt1T4kc75VPM1NtMRssDMsRQdIxzFqAiACTR2tzO9IhCb0t3QSEBoBoJec/lpL57UP/T+vbTu0qnPlqKdqJW/Zte+evn5aHUEpao6MSQA7pFaPA8/AvdRzFS3fZ9HO6Mh0PiTxnO5mqat0qUnOU65Mn1B/S9Ox9LzVAhyF8X+/1b0J9b+txz55CVXFt/9DaM3y//+LmBTOCkTyUUWt94zGb7HxsI5VFabsVXthbZZn7ziTexOE47IwNnYrCSbrayWWZAL6dDDdhezTnMnalNaH06k8UzhURi2kiiMgGtXydhKhGl/ZkSyaR6xoupvNzAbEzO83NWQbMwqaUN/Ow8TWgGVg87T7H7V78yUOltVBpCX4oOKvXdMR8k1ML3U5JA7iRrhTy1QCX2sZNSqZ81NIEv3x57Mw3OFpWp+vUpeZiHhA6p+hhNrf+n+zIrDW3amBm8qlS8ix3Kws154WffxznRzRFpBIg37ayWiTQbwH+BsBqPJjaxoZliCEnG0pn8B4gYGR+tz5GVFTc63Da3H36298p3X/yiv3UVdWXANczTv6GJiIIpwlYif4CMM+bwjwV/OZnsoS3UbaIz/wdvyXOPdQoAAA=="
+  val dump = "H4sIAAAAAAAAALVWTWwbRRQer+M6a4e0RCioSOAQGRAI7JBLDzlUievwUzuJslGFTIU0Xo+dLbOzm5lxtMuhB45wQ1wR6r03Lpy4ISEOnBAgceZUyqECegLxZvbHu46dViD2MNqZefN+vu97s3v3PioJjl4UNqaYNVwiccPS79tC1q02k44Mu95gTMk1Mvxw9Uu7y3aEgS720IVjLK4J2kNm9NIO/PTdIicdZGJmEyE9LiR6vqMjNG2PUmJLx2NNx3XHEvcpaXYcIbc6aKHvDcITdBsVOuiS7TGbE0msFsVCEBGvLxKVkZPOTT0P9/1JDNZUVTQzVRxx7EhIH2JciuwPiW+FzGOhK9FynNq+r9ICm7Lj+h6XSYgyuDv2Bsl0gWFYQCudW/gUNyHEqGlJ7rARnKz62H4fj8gemCjzBUhYEDo8Cn09L3ZQRZATAOgt16d6JfARQsDApk6iMcGnkeLTUPjULcIdTJ0PsNo84F4QougpFBEKfHDx6iNcJB5Imw3qH920331oVV1DHQ5UKmVd4QVwVJujBk0F4PjN4SfiwRt3rhio0kMVR2z3heTYllnKY7SqmDFP6pxTADEfAVvr89jSUbbBZkoSpu25PmbgKYZyCXiiju1IZazWlmJ25kBflj5JTAuBX0jrXZtTr9ZNC1N6cO/yay/82n7HQEY+hAkuLRA+T5xKZHa7YyqdLvZj/2q8KFHh+gRkNb2hp2owg8lYPiedFJiX7v02+HoD3TRSOOPoj8cguCiJn36ofv/yVQMt9rTedyke9QBR0abE3ectj8keWvROCY92yqeYqreZjJYHZIih6BjnLEBFAEiitbmd6ROF3pbugkICQDUS8p7HSH33oP6n9e2nd5VOOVqKdqJW/du58tfPy0OpJSxR0Y0hB3SL0OB5+Be6j2Kkus05DnfGwyHhU4azuZrmrRIlZ3kueXL9gfPenY+lZqgQ5K+L/f4t6M8tfe65c8hKrq0/ehvG75d//NxAJnDSdyQUWt94zGb7HxsI5VFabsVXthbZZn7ziTexOE47IwNnYrCSbrayWWZAL6dDDdhezTnMnalNaH06k8UzhURi2kiiMgGtXydhKhGl/ZkSyaR6xoupvNzAdEzO83NWQbMwqaUN/Ow8TWgGVg87T9H7V78yUOltVBpCX4oOKvW9MRsk1ML3U5JA7iRrhTy1QCXm2E2p1M8amsCXb4+9mQZni8pU/fqUPIqg5PzKf7sps6LQpo2ZYatKv7vYdWi4OS/87Js4J7c58oyg8Ked1TKRZkP3L7BV49HEJjY0UwwhyVg0kz8AESPD0focQVlxiwM7tx9+tvfKd1/8or9yFXVZwAXM0v+giXyCKcJWIn+AjDtm8HcF/zeZ7KEh1D2iM/8HeR4yhG8KAAA="
 }
 }
 

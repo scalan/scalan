@@ -5,7 +5,7 @@ import scalan._
 trait Kinds extends Base { self: KindsDsl =>
   type RKind[F[_],A] = Rep[Kind[F,A]]
 
-  sealed trait Kind[F[_], A] extends Reifiable[Kind[F,A]] {
+  sealed trait Kind[F[_], A] extends Def[Kind[F,A]] {
     implicit def eA: Elem[A]
     implicit def cF: Cont[F]
 

@@ -62,7 +62,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[SSeq[A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[SSeq[A]] => convertSSeq(x) }
       tryConvert(element[SSeq[A]], this, x, conv)
@@ -91,7 +91,8 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     protected def getDefaultRep = SSeq
   }
 
-  abstract class SSeqCompanionAbs extends CompanionBase[SSeqCompanionAbs] with SSeqCompanion {
+  abstract class SSeqCompanionAbs extends CompanionDef[SSeqCompanionAbs] with SSeqCompanion {
+    def selfType = SSeqCompanionElem
     override def toString = "SSeq"
   }
   def SSeq: Rep[SSeqCompanionAbs]
@@ -192,7 +193,8 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     lazy val eTo = new SSeqImplElem[A](this)
   }
   // 4) constructor and deconstructor
-  abstract class SSeqImplCompanionAbs extends CompanionBase[SSeqImplCompanionAbs] {
+  class SSeqImplCompanionAbs extends CompanionDef[SSeqImplCompanionAbs] {
+    def selfType = SSeqImplCompanionElem
     override def toString = "SSeqImpl"
 
     def apply[A](wrappedValue: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
@@ -201,7 +203,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   object SSeqImplMatcher {
     def unapply[A](p: Rep[SSeq[A]]) = unmkSSeqImpl(p)
   }
-  def SSeqImpl: Rep[SSeqImplCompanionAbs]
+  lazy val SSeqImpl: Rep[SSeqImplCompanionAbs] = new SSeqImplCompanionAbs
   implicit def proxySSeqImplCompanion(p: Rep[SSeqImplCompanionAbs]): SSeqImplCompanionAbs = {
     proxyOps[SSeqImplCompanionAbs](p)
   }
@@ -232,8 +234,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
 // Seq -----------------------------------
 trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeSeq[SSeqCompanionAbs] {
-    lazy val selfType = element[SSeqCompanionAbs]
+  lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with Def[SSeqCompanionAbs] {
     override def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
       SSeqImpl(Seq.apply[A](arr: _*))
 
@@ -255,7 +256,7 @@ trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
       (override val wrappedValue: Rep[Seq[A]])
       (implicit eA: Elem[A])
     extends SSeqImpl[A](wrappedValue)
-       with SeqSSeq[A] with UserTypeSeq[SSeqImpl[A]] {
+       with SeqSSeq[A] with Def[SSeqImpl[A]] {
     lazy val selfType = element[SSeqImpl[A]]
     override def size: Rep[Int] =
       wrappedValue.size
@@ -284,9 +285,6 @@ trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
     override def toList: Rep[List[A]] =
       wrappedValue.toList
   }
-  lazy val SSeqImpl = new SSeqImplCompanionAbs with UserTypeSeq[SSeqImplCompanionAbs] {
-    lazy val selfType = element[SSeqImplCompanionAbs]
-  }
 
   def mkSSeqImpl[A]
       (wrappedValue: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]] =
@@ -303,9 +301,7 @@ trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with UserTypeDef[SSeqCompanionAbs] {
-    lazy val selfType = element[SSeqCompanionAbs]
-
+  lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs with Def[SSeqCompanionAbs] {
     def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
       methodCallEx[SSeq[A]](self,
         this.getClass.getMethod("apply", classOf[AnyRef], classOf[Elem[A]]),
@@ -339,12 +335,8 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
   case class ExpSSeqImpl[A]
       (override val wrappedValue: Rep[Seq[A]])
       (implicit eA: Elem[A])
-    extends SSeqImpl[A](wrappedValue) with UserTypeDef[SSeqImpl[A]] {
+    extends SSeqImpl[A](wrappedValue) with Def[SSeqImpl[A]] {
     lazy val selfType = element[SSeqImpl[A]]
-  }
-
-  lazy val SSeqImpl: Rep[SSeqImplCompanionAbs] = new SSeqImplCompanionAbs with UserTypeDef[SSeqImplCompanionAbs] {
-    lazy val selfType = element[SSeqImplCompanionAbs]
   }
 
   object SSeqImplMethods {

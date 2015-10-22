@@ -226,7 +226,7 @@ class ScalanParsersTests extends BaseNestedTests with ScalanParsersEx {
       |trait Module extends ScalanDsl {
       |  type Obs[A] = Rep[Observable[A]]
       |  @ContainerType
-      |  trait Cont[A] extends Reifiable[Cont[A]] {
+      |  trait Cont[A] extends Def[Cont[A]] {
       |    implicit def eA: Elem[A]
       |    @External
       |    def map[B:Elem](

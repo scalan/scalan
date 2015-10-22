@@ -8,7 +8,7 @@ import scalan.ScalanCommunityDsl
  * Created by afilippov on 2/16/15.
  */
 trait Vertices extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
-  trait Vertex[V, E] extends Reifiable[Vertex[V, E]]{
+  trait Vertex[V, E] extends Def[Vertex[V, E]]{
     implicit def eV: Elem[V]
     implicit def eE: Elem[E]
     implicit def graph: PG[V, E]  // ?

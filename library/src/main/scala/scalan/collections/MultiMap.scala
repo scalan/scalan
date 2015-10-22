@@ -4,7 +4,7 @@ import scalan._
 
 trait MultiMaps extends Base { self: ScalanCommunityDsl =>
 
-  trait MMultiMap[K, V] extends Reifiable[MMultiMap[K, V]] {
+  trait MMultiMap[K, V] extends Def[MMultiMap[K, V]] {
     implicit def elemKey: Elem[K]
     implicit def elemValue: Elem[V]
     def map: Rep[MMap[K, ArrayBuffer[V]]]

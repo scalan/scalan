@@ -161,14 +161,12 @@ trait Elems extends Base { self: Scalan =>
 
   def elemFromRep[A](x: Rep[A])(implicit eA: Elem[A]): Elem[A] = eA match {
     case ve: ViewElem[_,_] =>
-      x.asRep[Reifiable[_]].selfType1.asInstanceOf[Elem[A]]
+      x.asRep[Def[_]].selfType1.asInstanceOf[Elem[A]]
     case pe: PairElem[a,b] =>
       implicit val ea = pe.eFst
       implicit val eb = pe.eSnd
-      Def.unapply[(a,b)](x) match {
-        case Some(p) => pairElement(elemFromRep(x.asRep[(a,b)]._1)(ea), elemFromRep(x.asRep[(a,b)]._2)(eb))
-        case _ => eA
-      }
+      val pair = x.asRep[(a, b)]
+      pairElement(elemFromRep(pair._1)(ea), elemFromRep(pair._2)(eb))
     case _ => eA
   }
 
