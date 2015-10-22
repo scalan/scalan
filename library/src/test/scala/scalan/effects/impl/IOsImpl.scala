@@ -65,6 +65,11 @@ trait IOsAbs extends IOs with scalan.Scalan {
   implicit def proxyIOCompanion(p: Rep[IOCompanion]): IOCompanion =
     proxyOps[IOCompanion](p)
 
+  abstract class AbsReadFile
+      (fileName: Rep[String])
+    extends ReadFile(fileName) with Def[ReadFile] {
+    lazy val selfType = element[ReadFile]
+  }
   // elem for concrete class
   class ReadFileElem(val iso: Iso[ReadFileData, ReadFile])
     extends IOElem[List[String], ReadFile]
@@ -136,6 +141,11 @@ trait IOsAbs extends IOs with scalan.Scalan {
   def mkReadFile(fileName: Rep[String]): Rep[ReadFile]
   def unmkReadFile(p: Rep[IO[List[String]]]): Option[(Rep[String])]
 
+  abstract class AbsWriteFile
+      (fileName: Rep[String], lines: Rep[List[String]])
+    extends WriteFile(fileName, lines) with Def[WriteFile] {
+    lazy val selfType = element[WriteFile]
+  }
   // elem for concrete class
   class WriteFileElem(val iso: Iso[WriteFileData, WriteFile])
     extends IOElem[Unit, WriteFile]
@@ -214,20 +224,17 @@ trait IOsAbs extends IOs with scalan.Scalan {
 // Seq -----------------------------------
 trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
   self: IOsDslSeq =>
-  lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs with Def[IOCompanionAbs] {
+  lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs {
   }
 
   case class SeqReadFile
       (override val fileName: Rep[String])
-
-    extends ReadFile(fileName)
-        with Def[ReadFile] {
-    lazy val selfType = element[ReadFile]
+    extends AbsReadFile(fileName) {
   }
 
   def mkReadFile
-      (fileName: Rep[String]): Rep[ReadFile] =
-      new SeqReadFile(fileName)
+    (fileName: Rep[String]): Rep[ReadFile] =
+    new SeqReadFile(fileName)
   def unmkReadFile(p: Rep[IO[List[String]]]) = p match {
     case p: ReadFile @unchecked =>
       Some((p.fileName))
@@ -236,15 +243,12 @@ trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
 
   case class SeqWriteFile
       (override val fileName: Rep[String], override val lines: Rep[List[String]])
-
-    extends WriteFile(fileName, lines)
-        with Def[WriteFile] {
-    lazy val selfType = element[WriteFile]
+    extends AbsWriteFile(fileName, lines) {
   }
 
   def mkWriteFile
-      (fileName: Rep[String], lines: Rep[List[String]]): Rep[WriteFile] =
-      new SeqWriteFile(fileName, lines)
+    (fileName: Rep[String], lines: Rep[List[String]]): Rep[WriteFile] =
+    new SeqWriteFile(fileName, lines)
   def unmkWriteFile(p: Rep[IO[Unit]]) = p match {
     case p: WriteFile @unchecked =>
       Some((p.fileName, p.lines))
@@ -255,15 +259,12 @@ trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait IOsExp extends IOsDsl with scalan.ScalanExp {
   self: IOsDslExp =>
-  lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs with Def[IOCompanionAbs] {
+  lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs {
   }
 
   case class ExpReadFile
       (override val fileName: Rep[String])
-
-    extends ReadFile(fileName) with Def[ReadFile] {
-    lazy val selfType = element[ReadFile]
-  }
+    extends AbsReadFile(fileName)
 
   object ReadFileMethods {
     object toOper {
@@ -294,10 +295,7 @@ trait IOsExp extends IOsDsl with scalan.ScalanExp {
 
   case class ExpWriteFile
       (override val fileName: Rep[String], override val lines: Rep[List[String]])
-
-    extends WriteFile(fileName, lines) with Def[WriteFile] {
-    lazy val selfType = element[WriteFile]
-  }
+    extends AbsWriteFile(fileName, lines)
 
   object WriteFileMethods {
     object toOper {

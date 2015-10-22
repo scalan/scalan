@@ -65,6 +65,11 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
   implicit def proxyAuthCompanion(p: Rep[AuthCompanion]): AuthCompanion =
     proxyOps[AuthCompanion](p)
 
+  abstract class AbsLogin
+      (user: Rep[String], password: Rep[String])
+    extends Login(user, password) with Def[Login] {
+    lazy val selfType = element[Login]
+  }
   // elem for concrete class
   class LoginElem(val iso: Iso[LoginData, Login])
     extends AuthElem[SOption[String], Login]
@@ -137,6 +142,11 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
   def mkLogin(user: Rep[String], password: Rep[String]): Rep[Login]
   def unmkLogin(p: Rep[Auth[SOption[String]]]): Option[(Rep[String], Rep[String])]
 
+  abstract class AbsHasPermission
+      (user: Rep[String], password: Rep[String])
+    extends HasPermission(user, password) with Def[HasPermission] {
+    lazy val selfType = element[HasPermission]
+  }
   // elem for concrete class
   class HasPermissionElem(val iso: Iso[HasPermissionData, HasPermission])
     extends AuthElem[Boolean, HasPermission]
@@ -215,20 +225,17 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 // Seq -----------------------------------
 trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
   self: AuthenticationsDslSeq =>
-  lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs with Def[AuthCompanionAbs] {
+  lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }
 
   case class SeqLogin
       (override val user: Rep[String], override val password: Rep[String])
-
-    extends Login(user, password)
-        with Def[Login] {
-    lazy val selfType = element[Login]
+    extends AbsLogin(user, password) {
   }
 
   def mkLogin
-      (user: Rep[String], password: Rep[String]): Rep[Login] =
-      new SeqLogin(user, password)
+    (user: Rep[String], password: Rep[String]): Rep[Login] =
+    new SeqLogin(user, password)
   def unmkLogin(p: Rep[Auth[SOption[String]]]) = p match {
     case p: Login @unchecked =>
       Some((p.user, p.password))
@@ -237,15 +244,12 @@ trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
 
   case class SeqHasPermission
       (override val user: Rep[String], override val password: Rep[String])
-
-    extends HasPermission(user, password)
-        with Def[HasPermission] {
-    lazy val selfType = element[HasPermission]
+    extends AbsHasPermission(user, password) {
   }
 
   def mkHasPermission
-      (user: Rep[String], password: Rep[String]): Rep[HasPermission] =
-      new SeqHasPermission(user, password)
+    (user: Rep[String], password: Rep[String]): Rep[HasPermission] =
+    new SeqHasPermission(user, password)
   def unmkHasPermission(p: Rep[Auth[Boolean]]) = p match {
     case p: HasPermission @unchecked =>
       Some((p.user, p.password))
@@ -256,15 +260,12 @@ trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
   self: AuthenticationsDslExp =>
-  lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs with Def[AuthCompanionAbs] {
+  lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }
 
   case class ExpLogin
       (override val user: Rep[String], override val password: Rep[String])
-
-    extends Login(user, password) with Def[Login] {
-    lazy val selfType = element[Login]
-  }
+    extends AbsLogin(user, password)
 
   object LoginMethods {
     object toOper {
@@ -295,10 +296,7 @@ trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
 
   case class ExpHasPermission
       (override val user: Rep[String], override val password: Rep[String])
-
-    extends HasPermission(user, password) with Def[HasPermission] {
-    lazy val selfType = element[HasPermission]
-  }
+    extends AbsHasPermission(user, password)
 
   object HasPermissionMethods {
     object eA {

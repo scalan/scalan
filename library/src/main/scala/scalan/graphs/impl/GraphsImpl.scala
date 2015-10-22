@@ -68,6 +68,11 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   implicit def proxyGraphCompanion(p: Rep[GraphCompanion]): GraphCompanion =
     proxyOps[GraphCompanion](p)
 
+  abstract class AbsAdjacencyGraph[V, E]
+      (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E])
+    extends AdjacencyGraph[V, E](vertexValues, edgeValues, links) with Def[AdjacencyGraph[V, E]] {
+    lazy val selfType = element[AdjacencyGraph[V, E]]
+  }
   // elem for concrete class
   class AdjacencyGraphElem[V, E](val iso: Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
@@ -141,6 +146,11 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   def mkAdjacencyGraph[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]]
   def unmkAdjacencyGraph[V, E](p: Rep[Graph[V, E]]): Option[(Rep[Collection[V]], Rep[NestedCollection[E]], Rep[NestedCollection[Int]])]
 
+  abstract class AbsIncidenceGraph[V, E]
+      (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E])
+    extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) with Def[IncidenceGraph[V, E]] {
+    lazy val selfType = element[IncidenceGraph[V, E]]
+  }
   // elem for concrete class
   class IncidenceGraphElem[V, E](val iso: Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends GraphElem[V, E, IncidenceGraph[V, E]]
@@ -220,20 +230,17 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 // Seq -----------------------------------
 trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
   self: GraphsDslSeq =>
-  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with Def[GraphCompanionAbs] {
+  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }
 
   case class SeqAdjacencyGraph[V, E]
-      (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])
-      (implicit eV: Elem[V], eE: Elem[E])
-    extends AdjacencyGraph[V, E](vertexValues, edgeValues, links)
-        with Def[AdjacencyGraph[V, E]] {
-    lazy val selfType = element[AdjacencyGraph[V, E]]
+      (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E])
+    extends AbsAdjacencyGraph[V, E](vertexValues, edgeValues, links) {
   }
 
   def mkAdjacencyGraph[V, E]
-      (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
-      new SeqAdjacencyGraph[V, E](vertexValues, edgeValues, links)
+    (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]] =
+    new SeqAdjacencyGraph[V, E](vertexValues, edgeValues, links)
   def unmkAdjacencyGraph[V, E](p: Rep[Graph[V, E]]) = p match {
     case p: AdjacencyGraph[V, E] @unchecked =>
       Some((p.vertexValues, p.edgeValues, p.links))
@@ -241,16 +248,13 @@ trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
   }
 
   case class SeqIncidenceGraph[V, E]
-      (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])
-      (implicit eV: Elem[V], eE: Elem[E])
-    extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
-        with Def[IncidenceGraph[V, E]] {
-    lazy val selfType = element[IncidenceGraph[V, E]]
+      (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E])
+    extends AbsIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) {
   }
 
   def mkIncidenceGraph[V, E]
-      (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
-      new SeqIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
+    (vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]] =
+    new SeqIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
   def unmkIncidenceGraph[V, E](p: Rep[Graph[V, E]]) = p match {
     case p: IncidenceGraph[V, E] @unchecked =>
       Some((p.vertexValues, p.incMatrixWithVals, p.vertexNum))
@@ -261,15 +265,12 @@ trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
-  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs with Def[GraphCompanionAbs] {
+  lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }
 
   case class ExpAdjacencyGraph[V, E]
-      (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])
-      (implicit eV: Elem[V], eE: Elem[E])
-    extends AdjacencyGraph[V, E](vertexValues, edgeValues, links) with Def[AdjacencyGraph[V, E]] {
-    lazy val selfType = element[AdjacencyGraph[V, E]]
-  }
+      (override val vertexValues: Coll[V], override val edgeValues: NColl[E], override val links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E])
+    extends AbsAdjacencyGraph[V, E](vertexValues, edgeValues, links)
 
   object AdjacencyGraphMethods {
     object incMatrix {
@@ -514,11 +515,8 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
   }
 
   case class ExpIncidenceGraph[V, E]
-      (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])
-      (implicit eV: Elem[V], eE: Elem[E])
-    extends IncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum) with Def[IncidenceGraph[V, E]] {
-    lazy val selfType = element[IncidenceGraph[V, E]]
-  }
+      (override val vertexValues: Coll[V], override val incMatrixWithVals: Coll[E], override val vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E])
+    extends AbsIncidenceGraph[V, E](vertexValues, incMatrixWithVals, vertexNum)
 
   object IncidenceGraphMethods {
     object incMatrix {

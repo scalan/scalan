@@ -62,6 +62,11 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   implicit def proxyAStringCompanion(p: Rep[AStringCompanion]): AStringCompanion =
     proxyOps[AStringCompanion](p)
 
+  abstract class AbsSString
+      (wrappedValue: Rep[String])
+    extends SString(wrappedValue) with Def[SString] {
+    lazy val selfType = element[SString]
+  }
   // elem for concrete class
   class SStringElem(val iso: Iso[SStringData, SString])
     extends AStringElem[SString]
@@ -132,6 +137,11 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   def mkSString(wrappedValue: Rep[String]): Rep[SString]
   def unmkSString(p: Rep[AString]): Option[(Rep[String])]
 
+  abstract class AbsCString
+      (wrappedValue: Rep[String])
+    extends CString(wrappedValue) with Def[CString] {
+    lazy val selfType = element[CString]
+  }
   // elem for concrete class
   class CStringElem(val iso: Iso[CStringData, CString])
     extends AStringElem[CString]
@@ -208,20 +218,17 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 // Seq -----------------------------------
 trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
   self: AbstractStringsDslSeq =>
-  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with Def[AStringCompanionAbs] {
+  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs {
   }
 
   case class SeqSString
       (override val wrappedValue: Rep[String])
-
-    extends SString(wrappedValue)
-        with Def[SString] {
-    lazy val selfType = element[SString]
+    extends AbsSString(wrappedValue) {
   }
 
   def mkSString
-      (wrappedValue: Rep[String]): Rep[SString] =
-      new SeqSString(wrappedValue)
+    (wrappedValue: Rep[String]): Rep[SString] =
+    new SeqSString(wrappedValue)
   def unmkSString(p: Rep[AString]) = p match {
     case p: SString @unchecked =>
       Some((p.wrappedValue))
@@ -230,15 +237,12 @@ trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
 
   case class SeqCString
       (override val wrappedValue: Rep[String])
-
-    extends CString(wrappedValue)
-        with Def[CString] {
-    lazy val selfType = element[CString]
+    extends AbsCString(wrappedValue) {
   }
 
   def mkCString
-      (wrappedValue: Rep[String]): Rep[CString] =
-      new SeqCString(wrappedValue)
+    (wrappedValue: Rep[String]): Rep[CString] =
+    new SeqCString(wrappedValue)
   def unmkCString(p: Rep[AString]) = p match {
     case p: CString @unchecked =>
       Some((p.wrappedValue))
@@ -249,15 +253,12 @@ trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
   self: AbstractStringsDslExp =>
-  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs with Def[AStringCompanionAbs] {
+  lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs {
   }
 
   case class ExpSString
       (override val wrappedValue: Rep[String])
-
-    extends SString(wrappedValue) with Def[SString] {
-    lazy val selfType = element[SString]
-  }
+    extends AbsSString(wrappedValue)
 
   object SStringMethods {
   }
@@ -277,10 +278,7 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
 
   case class ExpCString
       (override val wrappedValue: Rep[String])
-
-    extends CString(wrappedValue) with Def[CString] {
-    lazy val selfType = element[CString]
-  }
+    extends AbsCString(wrappedValue)
 
   object CStringMethods {
   }
@@ -313,18 +311,6 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
   }
 
   object AStringCompanionMethods {
-    object defaultVal {
-      def unapply(d: Def[_]): Option[Unit] = d match {
-        case MethodCall(receiver, method, _, _) if receiver.elem == AStringCompanionElem && method.getName == "defaultVal" =>
-          Some(()).asInstanceOf[Option[Unit]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[Unit] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
-
     object apply {
       def unapply(d: Def[_]): Option[Rep[String]] = d match {
         case MethodCall(receiver, method, Seq(msg, _*), _) if receiver.elem == AStringCompanionElem && method.getName == "apply" =>

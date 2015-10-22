@@ -46,7 +46,6 @@ class ElemTests extends AbstractElemTests {
       elementsShouldBeEqual[CString, CString]
       elementsShouldNotBeEqual[AString, CString]
       elementsShouldBeEqual[SThrowable, SThrowable]
-      elementsShouldBeEqual[SException, SException]
       elementsShouldBeEqual[Thunk[Int], Thunk[Int]]
     }
 

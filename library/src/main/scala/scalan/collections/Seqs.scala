@@ -12,7 +12,6 @@ trait Seqs extends Base with TypeWrappers { self: ScalanCommunityDsl =>
   @ContainerType @FunctorType
   trait SSeq[A] extends TypeWrapper[Seq[A], SSeq[A]] { self =>
     implicit def eA: Elem[A]
-    def wrappedValue: Rep[Seq[A]]
 
     /** The size of this sequence. */
     @External @Semantics(name = ContainerLength)

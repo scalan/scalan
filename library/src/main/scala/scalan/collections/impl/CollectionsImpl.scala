@@ -151,6 +151,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   implicit def nestedCollectionElement[A](implicit eA: Elem[A]): Elem[NestedCollection[A]] =
     cachedElem[NestedCollectionElem[A, NestedCollection[A]]](eA)
 
+  abstract class AbsUnitCollection
+      (length: Rep[Int])
+    extends UnitCollection(length) with Def[UnitCollection] {
+    lazy val selfType = element[UnitCollection]
+  }
   // elem for concrete class
   class UnitCollectionElem(val iso: Iso[UnitCollectionData, UnitCollection])
     extends CollectionElem[Unit, UnitCollection]
@@ -221,6 +226,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   def mkUnitCollection(length: Rep[Int]): Rep[UnitCollection]
   def unmkUnitCollection(p: Rep[Collection[Unit]]): Option[(Rep[Int])]
 
+  abstract class AbsCollectionOverArray[Item]
+      (arr: Rep[Array[Item]])(implicit eItem: Elem[Item])
+    extends CollectionOverArray[Item](arr) with Def[CollectionOverArray[Item]] {
+    lazy val selfType = element[CollectionOverArray[Item]]
+  }
   // elem for concrete class
   class CollectionOverArrayElem[Item](val iso: Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]])(implicit eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverArray[Item]]
@@ -292,6 +302,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   def mkCollectionOverArray[Item](arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]]
   def unmkCollectionOverArray[Item](p: Rep[Collection[Item]]): Option[(Rep[Array[Item]])]
 
+  abstract class AbsCollectionOverList[Item]
+      (lst: Rep[List[Item]])(implicit eItem: Elem[Item])
+    extends CollectionOverList[Item](lst) with Def[CollectionOverList[Item]] {
+    lazy val selfType = element[CollectionOverList[Item]]
+  }
   // elem for concrete class
   class CollectionOverListElem[Item](val iso: Iso[CollectionOverListData[Item], CollectionOverList[Item]])(implicit eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverList[Item]]
@@ -363,6 +378,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   def mkCollectionOverList[Item](lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]]
   def unmkCollectionOverList[Item](p: Rep[Collection[Item]]): Option[(Rep[List[Item]])]
 
+  abstract class AbsCollectionOverSeq[Item]
+      (seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item])
+    extends CollectionOverSeq[Item](seq) with Def[CollectionOverSeq[Item]] {
+    lazy val selfType = element[CollectionOverSeq[Item]]
+  }
   // elem for concrete class
   class CollectionOverSeqElem[Item](val iso: Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]])(implicit eItem: Elem[Item])
     extends CollectionElem[Item, CollectionOverSeq[Item]]
@@ -434,6 +454,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   def mkCollectionOverSeq[Item](seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]]
   def unmkCollectionOverSeq[Item](p: Rep[Collection[Item]]): Option[(Rep[SSeq[Item]])]
 
+  abstract class AbsPairCollectionSOA[A, B]
+      (as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B])
+    extends PairCollectionSOA[A, B](as, bs) with Def[PairCollectionSOA[A, B]] {
+    lazy val selfType = element[PairCollectionSOA[A, B]]
+  }
   // elem for concrete class
   class PairCollectionSOAElem[A, B](val iso: Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]])(implicit eA: Elem[A], eB: Elem[B])
     extends PairCollectionElem[A, B, PairCollectionSOA[A, B]]
@@ -507,6 +532,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   def mkPairCollectionSOA[A, B](as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]]
   def unmkPairCollectionSOA[A, B](p: Rep[PairCollection[A, B]]): Option[(Rep[Collection[A]], Rep[Collection[B]])]
 
+  abstract class AbsPairCollectionAOS[A, B]
+      (coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B])
+    extends PairCollectionAOS[A, B](coll) with Def[PairCollectionAOS[A, B]] {
+    lazy val selfType = element[PairCollectionAOS[A, B]]
+  }
   // elem for concrete class
   class PairCollectionAOSElem[A, B](val iso: Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]])(implicit eA: Elem[A], eB: Elem[B])
     extends PairCollectionElem[A, B, PairCollectionAOS[A, B]]
@@ -579,6 +609,11 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   def mkPairCollectionAOS[A, B](coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]]
   def unmkPairCollectionAOS[A, B](p: Rep[PairCollection[A, B]]): Option[(Rep[Collection[(A, B)]])]
 
+  abstract class AbsNestedCollectionFlat[A]
+      (values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A])
+    extends NestedCollectionFlat[A](values, segments) with Def[NestedCollectionFlat[A]] {
+    lazy val selfType = element[NestedCollectionFlat[A]]
+  }
   // elem for concrete class
   class NestedCollectionFlatElem[A](val iso: Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]])(implicit eA: Elem[A])
     extends NestedCollectionElem[A, NestedCollectionFlat[A]]
@@ -657,20 +692,17 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 // Seq -----------------------------------
 trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with Def[CollectionCompanionAbs] {
+  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs {
   }
 
   case class SeqUnitCollection
       (override val length: Rep[Int])
-
-    extends UnitCollection(length)
-        with Def[UnitCollection] {
-    lazy val selfType = element[UnitCollection]
+    extends AbsUnitCollection(length) {
   }
 
   def mkUnitCollection
-      (length: Rep[Int]): Rep[UnitCollection] =
-      new SeqUnitCollection(length)
+    (length: Rep[Int]): Rep[UnitCollection] =
+    new SeqUnitCollection(length)
   def unmkUnitCollection(p: Rep[Collection[Unit]]) = p match {
     case p: UnitCollection @unchecked =>
       Some((p.length))
@@ -678,16 +710,13 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   }
 
   case class SeqCollectionOverArray[Item]
-      (override val arr: Rep[Array[Item]])
-      (implicit eItem: Elem[Item])
-    extends CollectionOverArray[Item](arr)
-        with Def[CollectionOverArray[Item]] {
-    lazy val selfType = element[CollectionOverArray[Item]]
+      (override val arr: Rep[Array[Item]])(implicit eItem: Elem[Item])
+    extends AbsCollectionOverArray[Item](arr) {
   }
 
   def mkCollectionOverArray[Item]
-      (arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]] =
-      new SeqCollectionOverArray[Item](arr)
+    (arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]] =
+    new SeqCollectionOverArray[Item](arr)
   def unmkCollectionOverArray[Item](p: Rep[Collection[Item]]) = p match {
     case p: CollectionOverArray[Item] @unchecked =>
       Some((p.arr))
@@ -695,16 +724,13 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   }
 
   case class SeqCollectionOverList[Item]
-      (override val lst: Rep[List[Item]])
-      (implicit eItem: Elem[Item])
-    extends CollectionOverList[Item](lst)
-        with Def[CollectionOverList[Item]] {
-    lazy val selfType = element[CollectionOverList[Item]]
+      (override val lst: Rep[List[Item]])(implicit eItem: Elem[Item])
+    extends AbsCollectionOverList[Item](lst) {
   }
 
   def mkCollectionOverList[Item]
-      (lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]] =
-      new SeqCollectionOverList[Item](lst)
+    (lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]] =
+    new SeqCollectionOverList[Item](lst)
   def unmkCollectionOverList[Item](p: Rep[Collection[Item]]) = p match {
     case p: CollectionOverList[Item] @unchecked =>
       Some((p.lst))
@@ -712,16 +738,13 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   }
 
   case class SeqCollectionOverSeq[Item]
-      (override val seq: Rep[SSeq[Item]])
-      (implicit eItem: Elem[Item])
-    extends CollectionOverSeq[Item](seq)
-        with Def[CollectionOverSeq[Item]] {
-    lazy val selfType = element[CollectionOverSeq[Item]]
+      (override val seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item])
+    extends AbsCollectionOverSeq[Item](seq) {
   }
 
   def mkCollectionOverSeq[Item]
-      (seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]] =
-      new SeqCollectionOverSeq[Item](seq)
+    (seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]] =
+    new SeqCollectionOverSeq[Item](seq)
   def unmkCollectionOverSeq[Item](p: Rep[Collection[Item]]) = p match {
     case p: CollectionOverSeq[Item] @unchecked =>
       Some((p.seq))
@@ -729,16 +752,13 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   }
 
   case class SeqPairCollectionSOA[A, B]
-      (override val as: Rep[Collection[A]], override val bs: Rep[Collection[B]])
-      (implicit eA: Elem[A], eB: Elem[B])
-    extends PairCollectionSOA[A, B](as, bs)
-        with Def[PairCollectionSOA[A, B]] {
-    lazy val selfType = element[PairCollectionSOA[A, B]]
+      (override val as: Rep[Collection[A]], override val bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B])
+    extends AbsPairCollectionSOA[A, B](as, bs) {
   }
 
   def mkPairCollectionSOA[A, B]
-      (as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]] =
-      new SeqPairCollectionSOA[A, B](as, bs)
+    (as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]] =
+    new SeqPairCollectionSOA[A, B](as, bs)
   def unmkPairCollectionSOA[A, B](p: Rep[PairCollection[A, B]]) = p match {
     case p: PairCollectionSOA[A, B] @unchecked =>
       Some((p.as, p.bs))
@@ -746,16 +766,13 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   }
 
   case class SeqPairCollectionAOS[A, B]
-      (override val coll: Rep[Collection[(A, B)]])
-      (implicit eA: Elem[A], eB: Elem[B])
-    extends PairCollectionAOS[A, B](coll)
-        with Def[PairCollectionAOS[A, B]] {
-    lazy val selfType = element[PairCollectionAOS[A, B]]
+      (override val coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B])
+    extends AbsPairCollectionAOS[A, B](coll) {
   }
 
   def mkPairCollectionAOS[A, B]
-      (coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]] =
-      new SeqPairCollectionAOS[A, B](coll)
+    (coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]] =
+    new SeqPairCollectionAOS[A, B](coll)
   def unmkPairCollectionAOS[A, B](p: Rep[PairCollection[A, B]]) = p match {
     case p: PairCollectionAOS[A, B] @unchecked =>
       Some((p.coll))
@@ -763,16 +780,13 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
   }
 
   case class SeqNestedCollectionFlat[A]
-      (override val values: Coll[A], override val segments: PairColl[Int, Int])
-      (implicit eA: Elem[A])
-    extends NestedCollectionFlat[A](values, segments)
-        with Def[NestedCollectionFlat[A]] {
-    lazy val selfType = element[NestedCollectionFlat[A]]
+      (override val values: Coll[A], override val segments: PairColl[Int, Int])(implicit eA: Elem[A])
+    extends AbsNestedCollectionFlat[A](values, segments) {
   }
 
   def mkNestedCollectionFlat[A]
-      (values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
-      new SeqNestedCollectionFlat[A](values, segments)
+    (values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]] =
+    new SeqNestedCollectionFlat[A](values, segments)
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]) = p match {
     case p: NestedCollectionFlat[A] @unchecked =>
       Some((p.values, p.segments))
@@ -783,15 +797,12 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs with Def[CollectionCompanionAbs] {
+  lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs {
   }
 
   case class ExpUnitCollection
       (override val length: Rep[Int])
-
-    extends UnitCollection(length) with Def[UnitCollection] {
-    lazy val selfType = element[UnitCollection]
-  }
+    extends AbsUnitCollection(length)
 
   object UnitCollectionMethods {
     object eItem {
@@ -989,11 +1000,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   }
 
   case class ExpCollectionOverArray[Item]
-      (override val arr: Rep[Array[Item]])
-      (implicit eItem: Elem[Item])
-    extends CollectionOverArray[Item](arr) with Def[CollectionOverArray[Item]] {
-    lazy val selfType = element[CollectionOverArray[Item]]
-  }
+      (override val arr: Rep[Array[Item]])(implicit eItem: Elem[Item])
+    extends AbsCollectionOverArray[Item](arr)
 
   object CollectionOverArrayMethods {
     object lst {
@@ -1179,11 +1187,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   }
 
   case class ExpCollectionOverList[Item]
-      (override val lst: Rep[List[Item]])
-      (implicit eItem: Elem[Item])
-    extends CollectionOverList[Item](lst) with Def[CollectionOverList[Item]] {
-    lazy val selfType = element[CollectionOverList[Item]]
-  }
+      (override val lst: Rep[List[Item]])(implicit eItem: Elem[Item])
+    extends AbsCollectionOverList[Item](lst)
 
   object CollectionOverListMethods {
     object length {
@@ -1369,11 +1374,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   }
 
   case class ExpCollectionOverSeq[Item]
-      (override val seq: Rep[SSeq[Item]])
-      (implicit eItem: Elem[Item])
-    extends CollectionOverSeq[Item](seq) with Def[CollectionOverSeq[Item]] {
-    lazy val selfType = element[CollectionOverSeq[Item]]
-  }
+      (override val seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item])
+    extends AbsCollectionOverSeq[Item](seq)
 
   object CollectionOverSeqMethods {
     object arr {
@@ -1571,11 +1573,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   }
 
   case class ExpPairCollectionSOA[A, B]
-      (override val as: Rep[Collection[A]], override val bs: Rep[Collection[B]])
-      (implicit eA: Elem[A], eB: Elem[B])
-    extends PairCollectionSOA[A, B](as, bs) with Def[PairCollectionSOA[A, B]] {
-    lazy val selfType = element[PairCollectionSOA[A, B]]
-  }
+      (override val as: Rep[Collection[A]], override val bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B])
+    extends AbsPairCollectionSOA[A, B](as, bs)
 
   object PairCollectionSOAMethods {
     object arr {
@@ -1809,11 +1808,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   }
 
   case class ExpPairCollectionAOS[A, B]
-      (override val coll: Rep[Collection[(A, B)]])
-      (implicit eA: Elem[A], eB: Elem[B])
-    extends PairCollectionAOS[A, B](coll) with Def[PairCollectionAOS[A, B]] {
-    lazy val selfType = element[PairCollectionAOS[A, B]]
-  }
+      (override val coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B])
+    extends AbsPairCollectionAOS[A, B](coll)
 
   object PairCollectionAOSMethods {
     object arr {
@@ -2082,11 +2078,8 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   }
 
   case class ExpNestedCollectionFlat[A]
-      (override val values: Coll[A], override val segments: PairColl[Int, Int])
-      (implicit eA: Elem[A])
-    extends NestedCollectionFlat[A](values, segments) with Def[NestedCollectionFlat[A]] {
-    lazy val selfType = element[NestedCollectionFlat[A]]
-  }
+      (override val values: Coll[A], override val segments: PairColl[Int, Int])(implicit eA: Elem[A])
+    extends AbsNestedCollectionFlat[A](values, segments)
 
   object NestedCollectionFlatMethods {
     object length {

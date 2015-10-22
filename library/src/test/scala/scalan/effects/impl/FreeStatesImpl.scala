@@ -67,6 +67,11 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
   implicit def proxyStateFCompanion(p: Rep[StateFCompanion]): StateFCompanion =
     proxyOps[StateFCompanion](p)
 
+  abstract class AbsStateGet[S, A]
+      (f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A])
+    extends StateGet[S, A](f) with Def[StateGet[S, A]] {
+    lazy val selfType = element[StateGet[S, A]]
+  }
   // elem for concrete class
   class StateGetElem[S, A](val iso: Iso[StateGetData[S, A], StateGet[S, A]])(implicit eS: Elem[S], eA: Elem[A])
     extends StateFElem[S, A, StateGet[S, A]]
@@ -140,6 +145,11 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
   def mkStateGet[S, A](f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateGet[S, A]]
   def unmkStateGet[S, A](p: Rep[StateF[S, A]]): Option[(Rep[S => A])]
 
+  abstract class AbsStatePut[S, A]
+      (s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A])
+    extends StatePut[S, A](s, a) with Def[StatePut[S, A]] {
+    lazy val selfType = element[StatePut[S, A]]
+  }
   // elem for concrete class
   class StatePutElem[S, A](val iso: Iso[StatePutData[S, A], StatePut[S, A]])(implicit eS: Elem[S], eA: Elem[A])
     extends StateFElem[S, A, StatePut[S, A]]
@@ -220,20 +230,17 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
 // Seq -----------------------------------
 trait FreeStatesSeq extends FreeStatesDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs with Def[StateFCompanionAbs] {
+  lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs {
   }
 
   case class SeqStateGet[S, A]
-      (override val f: Rep[S => A])
-      (implicit eS: Elem[S], eA: Elem[A])
-    extends StateGet[S, A](f)
-        with Def[StateGet[S, A]] {
-    lazy val selfType = element[StateGet[S, A]]
+      (override val f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A])
+    extends AbsStateGet[S, A](f) {
   }
 
   def mkStateGet[S, A]
-      (f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateGet[S, A]] =
-      new SeqStateGet[S, A](f)
+    (f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateGet[S, A]] =
+    new SeqStateGet[S, A](f)
   def unmkStateGet[S, A](p: Rep[StateF[S, A]]) = p match {
     case p: StateGet[S, A] @unchecked =>
       Some((p.f))
@@ -241,16 +248,13 @@ trait FreeStatesSeq extends FreeStatesDsl with scalan.ScalanSeq {
   }
 
   case class SeqStatePut[S, A]
-      (override val s: Rep[S], override val a: Rep[A])
-      (implicit eS: Elem[S], eA: Elem[A])
-    extends StatePut[S, A](s, a)
-        with Def[StatePut[S, A]] {
-    lazy val selfType = element[StatePut[S, A]]
+      (override val s: Rep[S], override val a: Rep[A])(implicit eS: Elem[S], eA: Elem[A])
+    extends AbsStatePut[S, A](s, a) {
   }
 
   def mkStatePut[S, A]
-      (s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]] =
-      new SeqStatePut[S, A](s, a)
+    (s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]] =
+    new SeqStatePut[S, A](s, a)
   def unmkStatePut[S, A](p: Rep[StateF[S, A]]) = p match {
     case p: StatePut[S, A] @unchecked =>
       Some((p.s, p.a))
@@ -261,15 +265,12 @@ trait FreeStatesSeq extends FreeStatesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
-  lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs with Def[StateFCompanionAbs] {
+  lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs {
   }
 
   case class ExpStateGet[S, A]
-      (override val f: Rep[S => A])
-      (implicit eS: Elem[S], eA: Elem[A])
-    extends StateGet[S, A](f) with Def[StateGet[S, A]] {
-    lazy val selfType = element[StateGet[S, A]]
-  }
+      (override val f: Rep[S => A])(implicit eS: Elem[S], eA: Elem[A])
+    extends AbsStateGet[S, A](f)
 
   object StateGetMethods {
   }
@@ -288,11 +289,8 @@ trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
   }
 
   case class ExpStatePut[S, A]
-      (override val s: Rep[S], override val a: Rep[A])
-      (implicit eS: Elem[S], eA: Elem[A])
-    extends StatePut[S, A](s, a) with Def[StatePut[S, A]] {
-    lazy val selfType = element[StatePut[S, A]]
-  }
+      (override val s: Rep[S], override val a: Rep[A])(implicit eS: Elem[S], eA: Elem[A])
+    extends AbsStatePut[S, A](s, a)
 
   object StatePutMethods {
   }

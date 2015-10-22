@@ -62,6 +62,11 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
   implicit def proxyMetaTestCompanion(p: Rep[MetaTestCompanion]): MetaTestCompanion =
     proxyOps[MetaTestCompanion](p)
 
+  abstract class AbsMT0
+      (size: Rep[Int])
+    extends MT0(size) with Def[MT0] {
+    lazy val selfType = element[MT0]
+  }
   // elem for concrete class
   class MT0Elem(val iso: Iso[MT0Data, MT0])
     extends MetaTestElem[Unit, MT0]
@@ -132,6 +137,11 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
   def mkMT0(size: Rep[Int]): Rep[MT0]
   def unmkMT0(p: Rep[MetaTest[Unit]]): Option[(Rep[Int])]
 
+  abstract class AbsMT1[T]
+      (data: Rep[T], size: Rep[Int])(implicit elem: Elem[T])
+    extends MT1[T](data, size) with Def[MT1[T]] {
+    lazy val selfType = element[MT1[T]]
+  }
   // elem for concrete class
   class MT1Elem[T](val iso: Iso[MT1Data[T], MT1[T]])(implicit elem: Elem[T])
     extends MetaTestElem[T, MT1[T]]
@@ -205,6 +215,11 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
   def mkMT1[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]]
   def unmkMT1[T](p: Rep[MetaTest[T]]): Option[(Rep[T], Rep[Int])]
 
+  abstract class AbsMT2[T, R]
+      (indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R])
+    extends MT2[T, R](indices, values, size) with Def[MT2[T, R]] {
+    lazy val selfType = element[MT2[T, R]]
+  }
   // elem for concrete class
   class MT2Elem[T, R](val iso: Iso[MT2Data[T, R], MT2[T, R]])(implicit eT: Elem[T], eR: Elem[R])
     extends MetaTestElem[(T, R), MT2[T, R]]
@@ -285,20 +300,17 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 // Seq -----------------------------------
 trait MetaTestsSeq extends MetaTestsDsl with scalan.ScalanSeq {
   self: MetaTestsDslSeq =>
-  lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs with Def[MetaTestCompanionAbs] {
+  lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }
 
   case class SeqMT0
       (override val size: Rep[Int])
-
-    extends MT0(size)
-        with Def[MT0] {
-    lazy val selfType = element[MT0]
+    extends AbsMT0(size) {
   }
 
   def mkMT0
-      (size: Rep[Int]): Rep[MT0] =
-      new SeqMT0(size)
+    (size: Rep[Int]): Rep[MT0] =
+    new SeqMT0(size)
   def unmkMT0(p: Rep[MetaTest[Unit]]) = p match {
     case p: MT0 @unchecked =>
       Some((p.size))
@@ -306,16 +318,13 @@ trait MetaTestsSeq extends MetaTestsDsl with scalan.ScalanSeq {
   }
 
   case class SeqMT1[T]
-      (override val data: Rep[T], override val size: Rep[Int])
-      (implicit elem: Elem[T])
-    extends MT1[T](data, size)
-        with Def[MT1[T]] {
-    lazy val selfType = element[MT1[T]]
+      (override val data: Rep[T], override val size: Rep[Int])(implicit elem: Elem[T])
+    extends AbsMT1[T](data, size) {
   }
 
   def mkMT1[T]
-      (data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
-      new SeqMT1[T](data, size)
+    (data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]] =
+    new SeqMT1[T](data, size)
   def unmkMT1[T](p: Rep[MetaTest[T]]) = p match {
     case p: MT1[T] @unchecked =>
       Some((p.data, p.size))
@@ -323,16 +332,13 @@ trait MetaTestsSeq extends MetaTestsDsl with scalan.ScalanSeq {
   }
 
   case class SeqMT2[T, R]
-      (override val indices: Rep[T], override val values: Rep[R], override val size: Rep[Int])
-      (implicit eT: Elem[T], eR: Elem[R])
-    extends MT2[T, R](indices, values, size)
-        with Def[MT2[T, R]] {
-    lazy val selfType = element[MT2[T, R]]
+      (override val indices: Rep[T], override val values: Rep[R], override val size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R])
+    extends AbsMT2[T, R](indices, values, size) {
   }
 
   def mkMT2[T, R]
-      (indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
-      new SeqMT2[T, R](indices, values, size)
+    (indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]] =
+    new SeqMT2[T, R](indices, values, size)
   def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]) = p match {
     case p: MT2[T, R] @unchecked =>
       Some((p.indices, p.values, p.size))
@@ -343,15 +349,12 @@ trait MetaTestsSeq extends MetaTestsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
   self: MetaTestsDslExp =>
-  lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs with Def[MetaTestCompanionAbs] {
+  lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }
 
   case class ExpMT0
       (override val size: Rep[Int])
-
-    extends MT0(size) with Def[MT0] {
-    lazy val selfType = element[MT0]
-  }
+    extends AbsMT0(size)
 
   object MT0Methods {
     object test {
@@ -405,11 +408,8 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
   }
 
   case class ExpMT1[T]
-      (override val data: Rep[T], override val size: Rep[Int])
-      (implicit elem: Elem[T])
-    extends MT1[T](data, size) with Def[MT1[T]] {
-    lazy val selfType = element[MT1[T]]
-  }
+      (override val data: Rep[T], override val size: Rep[Int])(implicit elem: Elem[T])
+    extends AbsMT1[T](data, size)
 
   object MT1Methods {
     object test {
@@ -448,11 +448,8 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
   }
 
   case class ExpMT2[T, R]
-      (override val indices: Rep[T], override val values: Rep[R], override val size: Rep[Int])
-      (implicit eT: Elem[T], eR: Elem[R])
-    extends MT2[T, R](indices, values, size) with Def[MT2[T, R]] {
-    lazy val selfType = element[MT2[T, R]]
-  }
+      (override val indices: Rep[T], override val values: Rep[R], override val size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R])
+    extends AbsMT2[T, R](indices, values, size)
 
   object MT2Methods {
     object test {

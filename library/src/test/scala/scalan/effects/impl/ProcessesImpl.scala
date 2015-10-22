@@ -66,6 +66,11 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
   implicit def proxyProcessCompanion(p: Rep[ProcessCompanion]): ProcessCompanion =
     proxyOps[ProcessCompanion](p)
 
+  abstract class AbsAwait[F[_], A, O]
+      (req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
+    extends Await[F, A, O](req, recv) with Def[Await[F, A, O]] {
+    lazy val selfType = element[Await[F, A, O]]
+  }
   // elem for concrete class
   class AwaitElem[F[_], A, O](val iso: Iso[AwaitData[F, A, O], Await[F, A, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
     extends ProcessElem[F, O, Await[F, A, O]]
@@ -140,6 +145,11 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
   def mkAwait[F[_], A, O](req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]]
   def unmkAwait[F[_], A, O](p: Rep[Process[F, O]]): Option[(Rep[F[A]], Rep[$bar[Throwable, A] => Process[F, O]])]
 
+  abstract class AbsEmit[F[_], O]
+      (head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F])
+    extends Emit[F, O](head, tail) with Def[Emit[F, O]] {
+    lazy val selfType = element[Emit[F, O]]
+  }
   // elem for concrete class
   class EmitElem[F[_], O](val iso: Iso[EmitData[F, O], Emit[F, O]])(implicit eO: Elem[O], cF: Cont[F])
     extends ProcessElem[F, O, Emit[F, O]]
@@ -213,6 +223,11 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
   def mkEmit[F[_], O](head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]]
   def unmkEmit[F[_], O](p: Rep[Process[F, O]]): Option[(Rep[O], Rep[Process[F, O]])]
 
+  abstract class AbsHalt[F[_], O]
+      (err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F])
+    extends Halt[F, O](err) with Def[Halt[F, O]] {
+    lazy val selfType = element[Halt[F, O]]
+  }
   // elem for concrete class
   class HaltElem[F[_], O](val iso: Iso[HaltData[F, O], Halt[F, O]])(implicit eO: Elem[O], cF: Cont[F])
     extends ProcessElem[F, O, Halt[F, O]]
@@ -291,20 +306,17 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 // Seq -----------------------------------
 trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
   self: ProcessesDslSeq =>
-  lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with Def[ProcessCompanionAbs] {
+  lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs {
   }
 
   case class SeqAwait[F[_], A, O]
-      (override val req: Rep[F[A]], override val recv: Rep[$bar[Throwable, A] => Process[F, O]])
-      (implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
-    extends Await[F, A, O](req, recv)
-        with Def[Await[F, A, O]] {
-    lazy val selfType = element[Await[F, A, O]]
+      (override val req: Rep[F[A]], override val recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
+    extends AbsAwait[F, A, O](req, recv) {
   }
 
   def mkAwait[F[_], A, O]
-      (req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]] =
-      new SeqAwait[F, A, O](req, recv)
+    (req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]] =
+    new SeqAwait[F, A, O](req, recv)
   def unmkAwait[F[_], A, O](p: Rep[Process[F, O]]) = p match {
     case p: Await[F, A, O] @unchecked =>
       Some((p.req, p.recv))
@@ -312,16 +324,13 @@ trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
   }
 
   case class SeqEmit[F[_], O]
-      (override val head: Rep[O], override val tail: Rep[Process[F, O]])
-      (implicit eO: Elem[O], cF: Cont[F])
-    extends Emit[F, O](head, tail)
-        with Def[Emit[F, O]] {
-    lazy val selfType = element[Emit[F, O]]
+      (override val head: Rep[O], override val tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F])
+    extends AbsEmit[F, O](head, tail) {
   }
 
   def mkEmit[F[_], O]
-      (head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]] =
-      new SeqEmit[F, O](head, tail)
+    (head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]] =
+    new SeqEmit[F, O](head, tail)
   def unmkEmit[F[_], O](p: Rep[Process[F, O]]) = p match {
     case p: Emit[F, O] @unchecked =>
       Some((p.head, p.tail))
@@ -329,16 +338,13 @@ trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
   }
 
   case class SeqHalt[F[_], O]
-      (override val err: Rep[Throwable])
-      (implicit eO: Elem[O], cF: Cont[F])
-    extends Halt[F, O](err)
-        with Def[Halt[F, O]] {
-    lazy val selfType = element[Halt[F, O]]
+      (override val err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F])
+    extends AbsHalt[F, O](err) {
   }
 
   def mkHalt[F[_], O]
-      (err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]] =
-      new SeqHalt[F, O](err)
+    (err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]] =
+    new SeqHalt[F, O](err)
   def unmkHalt[F[_], O](p: Rep[Process[F, O]]) = p match {
     case p: Halt[F, O] @unchecked =>
       Some((p.err))
@@ -349,15 +355,12 @@ trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
   self: ProcessesDslExp =>
-  lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs with Def[ProcessCompanionAbs] {
+  lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs {
   }
 
   case class ExpAwait[F[_], A, O]
-      (override val req: Rep[F[A]], override val recv: Rep[$bar[Throwable, A] => Process[F, O]])
-      (implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
-    extends Await[F, A, O](req, recv) with Def[Await[F, A, O]] {
-    lazy val selfType = element[Await[F, A, O]]
-  }
+      (override val req: Rep[F[A]], override val recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
+    extends AbsAwait[F, A, O](req, recv)
 
   object AwaitMethods {
     // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
@@ -379,11 +382,8 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
   }
 
   case class ExpEmit[F[_], O]
-      (override val head: Rep[O], override val tail: Rep[Process[F, O]])
-      (implicit eO: Elem[O], cF: Cont[F])
-    extends Emit[F, O](head, tail) with Def[Emit[F, O]] {
-    lazy val selfType = element[Emit[F, O]]
-  }
+      (override val head: Rep[O], override val tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F])
+    extends AbsEmit[F, O](head, tail)
 
   object EmitMethods {
     // WARNING: Cannot generate matcher for method `map`: Method has function arguments f
@@ -405,11 +405,8 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
   }
 
   case class ExpHalt[F[_], O]
-      (override val err: Rep[Throwable])
-      (implicit eO: Elem[O], cF: Cont[F])
-    extends Halt[F, O](err) with Def[Halt[F, O]] {
-    lazy val selfType = element[Halt[F, O]]
-  }
+      (override val err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F])
+    extends AbsHalt[F, O](err)
 
   object HaltMethods {
     // WARNING: Cannot generate matcher for method `map`: Method has function arguments f

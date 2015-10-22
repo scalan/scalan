@@ -65,6 +65,11 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   implicit def proxyAbstractMatrixCompanion(p: Rep[AbstractMatrixCompanion]): AbstractMatrixCompanion =
     proxyOps[AbstractMatrixCompanion](p)
 
+  abstract class AbsDenseFlatMatrix[T]
+      (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends DenseFlatMatrix[T](rmValues, numColumns) with Def[DenseFlatMatrix[T]] {
+    lazy val selfType = element[DenseFlatMatrix[T]]
+  }
   // elem for concrete class
   class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, DenseFlatMatrix[T]]
@@ -137,6 +142,11 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   def mkDenseFlatMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]]
   def unmkDenseFlatMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[T]], Rep[Int])]
 
+  abstract class AbsCompoundMatrix[T]
+      (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends CompoundMatrix[T](rows, numColumns) with Def[CompoundMatrix[T]] {
+    lazy val selfType = element[CompoundMatrix[T]]
+  }
   // elem for concrete class
   class CompoundMatrixElem[T](val iso: Iso[CompoundMatrixData[T], CompoundMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, CompoundMatrix[T]]
@@ -209,6 +219,11 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   def mkCompoundMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]]
   def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]], Rep[Int])]
 
+  abstract class AbsConstMatrix[T]
+      (item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T])
+    extends ConstMatrix[T](item, numColumns, numRows) with Def[ConstMatrix[T]] {
+    lazy val selfType = element[ConstMatrix[T]]
+  }
   // elem for concrete class
   class ConstMatrixElem[T](val iso: Iso[ConstMatrixData[T], ConstMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, ConstMatrix[T]]
@@ -282,6 +297,11 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   def mkConstMatrix[T](item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]]
   def unmkConstMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[T], Rep[Int], Rep[Int])]
 
+  abstract class AbsDiagonalMatrix[T]
+      (diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T])
+    extends DiagonalMatrix[T](diagonalValues) with Def[DiagonalMatrix[T]] {
+    lazy val selfType = element[DiagonalMatrix[T]]
+  }
   // elem for concrete class
   class DiagonalMatrixElem[T](val iso: Iso[DiagonalMatrixData[T], DiagonalMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, DiagonalMatrix[T]]
@@ -360,20 +380,17 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 // Seq -----------------------------------
 trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with Def[AbstractMatrixCompanionAbs] {
+  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs {
   }
 
   case class SeqDenseFlatMatrix[T]
-      (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
-      (implicit eT: Elem[T])
-    extends DenseFlatMatrix[T](rmValues, numColumns)
-        with Def[DenseFlatMatrix[T]] {
-    lazy val selfType = element[DenseFlatMatrix[T]]
+      (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends AbsDenseFlatMatrix[T](rmValues, numColumns) {
   }
 
   def mkDenseFlatMatrix[T]
-      (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]] =
-      new SeqDenseFlatMatrix[T](rmValues, numColumns)
+    (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]] =
+    new SeqDenseFlatMatrix[T](rmValues, numColumns)
   def unmkDenseFlatMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: DenseFlatMatrix[T] @unchecked =>
       Some((p.rmValues, p.numColumns))
@@ -381,16 +398,13 @@ trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
   }
 
   case class SeqCompoundMatrix[T]
-      (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])
-      (implicit eT: Elem[T])
-    extends CompoundMatrix[T](rows, numColumns)
-        with Def[CompoundMatrix[T]] {
-    lazy val selfType = element[CompoundMatrix[T]]
+      (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends AbsCompoundMatrix[T](rows, numColumns) {
   }
 
   def mkCompoundMatrix[T]
-      (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
-      new SeqCompoundMatrix[T](rows, numColumns)
+    (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
+    new SeqCompoundMatrix[T](rows, numColumns)
   def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: CompoundMatrix[T] @unchecked =>
       Some((p.rows, p.numColumns))
@@ -398,16 +412,13 @@ trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
   }
 
   case class SeqConstMatrix[T]
-      (override val item: Rep[T], override val numColumns: Rep[Int], override val numRows: Rep[Int])
-      (implicit eT: Elem[T])
-    extends ConstMatrix[T](item, numColumns, numRows)
-        with Def[ConstMatrix[T]] {
-    lazy val selfType = element[ConstMatrix[T]]
+      (override val item: Rep[T], override val numColumns: Rep[Int], override val numRows: Rep[Int])(implicit eT: Elem[T])
+    extends AbsConstMatrix[T](item, numColumns, numRows) {
   }
 
   def mkConstMatrix[T]
-      (item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]] =
-      new SeqConstMatrix[T](item, numColumns, numRows)
+    (item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]] =
+    new SeqConstMatrix[T](item, numColumns, numRows)
   def unmkConstMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: ConstMatrix[T] @unchecked =>
       Some((p.item, p.numColumns, p.numRows))
@@ -415,16 +426,13 @@ trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
   }
 
   case class SeqDiagonalMatrix[T]
-      (override val diagonalValues: Rep[Collection[T]])
-      (implicit eT: Elem[T])
-    extends DiagonalMatrix[T](diagonalValues)
-        with Def[DiagonalMatrix[T]] {
-    lazy val selfType = element[DiagonalMatrix[T]]
+      (override val diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T])
+    extends AbsDiagonalMatrix[T](diagonalValues) {
   }
 
   def mkDiagonalMatrix[T]
-      (diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]] =
-      new SeqDiagonalMatrix[T](diagonalValues)
+    (diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]] =
+    new SeqDiagonalMatrix[T](diagonalValues)
   def unmkDiagonalMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: DiagonalMatrix[T] @unchecked =>
       Some((p.diagonalValues))
@@ -435,15 +443,12 @@ trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with Def[AbstractMatrixCompanionAbs] {
+  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs {
   }
 
   case class ExpDenseFlatMatrix[T]
-      (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
-      (implicit eT: Elem[T])
-    extends DenseFlatMatrix[T](rmValues, numColumns) with Def[DenseFlatMatrix[T]] {
-    lazy val selfType = element[DenseFlatMatrix[T]]
-  }
+      (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends AbsDenseFlatMatrix[T](rmValues, numColumns)
 
   object DenseFlatMatrixMethods {
     object items {
@@ -736,11 +741,8 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   }
 
   case class ExpCompoundMatrix[T]
-      (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])
-      (implicit eT: Elem[T])
-    extends CompoundMatrix[T](rows, numColumns) with Def[CompoundMatrix[T]] {
-    lazy val selfType = element[CompoundMatrix[T]]
-  }
+      (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends AbsCompoundMatrix[T](rows, numColumns)
 
   object CompoundMatrixMethods {
     object companion {
@@ -985,11 +987,8 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   }
 
   case class ExpConstMatrix[T]
-      (override val item: Rep[T], override val numColumns: Rep[Int], override val numRows: Rep[Int])
-      (implicit eT: Elem[T])
-    extends ConstMatrix[T](item, numColumns, numRows) with Def[ConstMatrix[T]] {
-    lazy val selfType = element[ConstMatrix[T]]
-  }
+      (override val item: Rep[T], override val numColumns: Rep[Int], override val numRows: Rep[Int])(implicit eT: Elem[T])
+    extends AbsConstMatrix[T](item, numColumns, numRows)
 
   object ConstMatrixMethods {
     object zeroValue {
@@ -1306,11 +1305,8 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   }
 
   case class ExpDiagonalMatrix[T]
-      (override val diagonalValues: Rep[Collection[T]])
-      (implicit eT: Elem[T])
-    extends DiagonalMatrix[T](diagonalValues) with Def[DiagonalMatrix[T]] {
-    lazy val selfType = element[DiagonalMatrix[T]]
-  }
+      (override val diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T])
+    extends AbsDiagonalMatrix[T](diagonalValues)
 
   object DiagonalMatrixMethods {
     object numColumns {

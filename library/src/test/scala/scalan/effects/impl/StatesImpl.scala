@@ -66,6 +66,11 @@ trait StatesAbs extends States with scalan.Scalan {
   implicit def proxyState0Companion(p: Rep[State0Companion]): State0Companion =
     proxyOps[State0Companion](p)
 
+  abstract class AbsStateBase[S, A]
+      (run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A])
+    extends StateBase[S, A](run) with Def[StateBase[S, A]] {
+    lazy val selfType = element[StateBase[S, A]]
+  }
   // elem for concrete class
   class StateBaseElem[S, A](val iso: Iso[StateBaseData[S, A], StateBase[S, A]])(implicit eS: Elem[S], eA: Elem[A])
     extends State0Elem[S, A, StateBase[S, A]]
@@ -144,20 +149,17 @@ trait StatesAbs extends States with scalan.Scalan {
 // Seq -----------------------------------
 trait StatesSeq extends StatesDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs with Def[State0CompanionAbs] {
+  lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs {
   }
 
   case class SeqStateBase[S, A]
-      (override val run: Rep[S => (A, S)])
-      (implicit eS: Elem[S], eA: Elem[A])
-    extends StateBase[S, A](run)
-        with Def[StateBase[S, A]] {
-    lazy val selfType = element[StateBase[S, A]]
+      (override val run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A])
+    extends AbsStateBase[S, A](run) {
   }
 
   def mkStateBase[S, A]
-      (run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]] =
-      new SeqStateBase[S, A](run)
+    (run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]] =
+    new SeqStateBase[S, A](run)
   def unmkStateBase[S, A](p: Rep[State0[S, A]]) = p match {
     case p: StateBase[S, A] @unchecked =>
       Some((p.run))
@@ -168,15 +170,12 @@ trait StatesSeq extends StatesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait StatesExp extends StatesDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
-  lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs with Def[State0CompanionAbs] {
+  lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs {
   }
 
   case class ExpStateBase[S, A]
-      (override val run: Rep[S => (A, S)])
-      (implicit eS: Elem[S], eA: Elem[A])
-    extends StateBase[S, A](run) with Def[StateBase[S, A]] {
-    lazy val selfType = element[StateBase[S, A]]
-  }
+      (override val run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A])
+    extends AbsStateBase[S, A](run)
 
   object StateBaseMethods {
   }

@@ -66,6 +66,11 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   implicit def proxyFreeMCompanion(p: Rep[FreeMCompanion]): FreeMCompanion =
     proxyOps[FreeMCompanion](p)
 
+  abstract class AbsDone[F[_], A]
+      (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends Done[F, A](a) with Def[Done[F, A]] {
+    lazy val selfType = element[Done[F, A]]
+  }
   // elem for concrete class
   class DoneElem[F[_], A](val iso: Iso[DoneData[F, A], Done[F, A]])(implicit eA: Elem[A], cF: Cont[F])
     extends FreeMElem[F, A, Done[F, A]]
@@ -138,6 +143,11 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   def mkDone[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]]
   def unmkDone[F[_], A](p: Rep[FreeM[F, A]]): Option[(Rep[A])]
 
+  abstract class AbsMore[F[_], A]
+      (k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F])
+    extends More[F, A](k) with Def[More[F, A]] {
+    lazy val selfType = element[More[F, A]]
+  }
   // elem for concrete class
   class MoreElem[F[_], A](val iso: Iso[MoreData[F, A], More[F, A]])(implicit eA: Elem[A], cF: Cont[F])
     extends FreeMElem[F, A, More[F, A]]
@@ -210,6 +220,11 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   def mkMore[F[_], A](k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]]
   def unmkMore[F[_], A](p: Rep[FreeM[F, A]]): Option[(Rep[F[FreeM[F, A]]])]
 
+  abstract class AbsFlatMap[F[_], S, B]
+      (a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends FlatMap[F, S, B](a, f) with Def[FlatMap[F, S, B]] {
+    lazy val selfType = element[FlatMap[F, S, B]]
+  }
   // elem for concrete class
   class FlatMapElem[F[_], S, B](val iso: Iso[FlatMapData[F, S, B], FlatMap[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends FreeMElem[F, B, FlatMap[F, S, B]]
@@ -290,20 +305,17 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
 // Seq -----------------------------------
 trait FreeMsSeq extends FreeMsDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs with Def[FreeMCompanionAbs] {
+  lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs {
   }
 
   case class SeqDone[F[_], A]
-      (override val a: Rep[A])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends Done[F, A](a)
-        with Def[Done[F, A]] {
-    lazy val selfType = element[Done[F, A]]
+      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsDone[F, A](a) {
   }
 
   def mkDone[F[_], A]
-      (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]] =
-      new SeqDone[F, A](a)
+    (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]] =
+    new SeqDone[F, A](a)
   def unmkDone[F[_], A](p: Rep[FreeM[F, A]]) = p match {
     case p: Done[F, A] @unchecked =>
       Some((p.a))
@@ -311,16 +323,13 @@ trait FreeMsSeq extends FreeMsDsl with scalan.ScalanSeq {
   }
 
   case class SeqMore[F[_], A]
-      (override val k: Rep[F[FreeM[F, A]]])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends More[F, A](k)
-        with Def[More[F, A]] {
-    lazy val selfType = element[More[F, A]]
+      (override val k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsMore[F, A](k) {
   }
 
   def mkMore[F[_], A]
-      (k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]] =
-      new SeqMore[F, A](k)
+    (k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]] =
+    new SeqMore[F, A](k)
   def unmkMore[F[_], A](p: Rep[FreeM[F, A]]) = p match {
     case p: More[F, A] @unchecked =>
       Some((p.k))
@@ -328,16 +337,13 @@ trait FreeMsSeq extends FreeMsDsl with scalan.ScalanSeq {
   }
 
   case class SeqFlatMap[F[_], S, B]
-      (override val a: Rep[FreeM[F, S]], override val f: Rep[S => FreeM[F, B]])
-      (implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends FlatMap[F, S, B](a, f)
-        with Def[FlatMap[F, S, B]] {
-    lazy val selfType = element[FlatMap[F, S, B]]
+      (override val a: Rep[FreeM[F, S]], override val f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends AbsFlatMap[F, S, B](a, f) {
   }
 
   def mkFlatMap[F[_], S, B]
-      (a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]] =
-      new SeqFlatMap[F, S, B](a, f)
+    (a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]] =
+    new SeqFlatMap[F, S, B](a, f)
   def unmkFlatMap[F[_], S, B](p: Rep[FreeM[F, B]]) = p match {
     case p: FlatMap[F, S, B] @unchecked =>
       Some((p.a, p.f))
@@ -348,15 +354,12 @@ trait FreeMsSeq extends FreeMsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
-  lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs with Def[FreeMCompanionAbs] {
+  lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs {
   }
 
   case class ExpDone[F[_], A]
-      (override val a: Rep[A])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends Done[F, A](a) with Def[Done[F, A]] {
-    lazy val selfType = element[Done[F, A]]
-  }
+      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsDone[F, A](a)
 
   object DoneMethods {
     object flatMapBy {
@@ -410,11 +413,8 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   }
 
   case class ExpMore[F[_], A]
-      (override val k: Rep[F[FreeM[F, A]]])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends More[F, A](k) with Def[More[F, A]] {
-    lazy val selfType = element[More[F, A]]
-  }
+      (override val k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsMore[F, A](k)
 
   object MoreMethods {
     object resume {
@@ -456,11 +456,8 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   }
 
   case class ExpFlatMap[F[_], S, B]
-      (override val a: Rep[FreeM[F, S]], override val f: Rep[S => FreeM[F, B]])
-      (implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends FlatMap[F, S, B](a, f) with Def[FlatMap[F, S, B]] {
-    lazy val selfType = element[FlatMap[F, S, B]]
-  }
+      (override val a: Rep[FreeM[F, S]], override val f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends AbsFlatMap[F, S, B](a, f)
 
   object FlatMapMethods {
     object flatMapBy {

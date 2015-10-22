@@ -65,6 +65,11 @@ trait FreesAbs extends Frees with scalan.Scalan {
   implicit def proxyFreeCompanion(p: Rep[FreeCompanion]): FreeCompanion =
     proxyOps[FreeCompanion](p)
 
+  abstract class AbsReturn[F[_], A]
+      (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends Return[F, A](a) with Def[Return[F, A]] {
+    lazy val selfType = element[Return[F, A]]
+  }
   // elem for concrete class
   class ReturnElem[F[_], A](val iso: Iso[ReturnData[F, A], Return[F, A]])(implicit eA: Elem[A], cF: Cont[F])
     extends FreeElem[F, A, Return[F, A]]
@@ -137,6 +142,11 @@ trait FreesAbs extends Frees with scalan.Scalan {
   def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
   def unmkReturn[F[_], A](p: Rep[Free[F, A]]): Option[(Rep[A])]
 
+  abstract class AbsSuspend[F[_], A]
+      (a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F])
+    extends Suspend[F, A](a) with Def[Suspend[F, A]] {
+    lazy val selfType = element[Suspend[F, A]]
+  }
   // elem for concrete class
   class SuspendElem[F[_], A](val iso: Iso[SuspendData[F, A], Suspend[F, A]])(implicit eA: Elem[A], cF: Cont[F])
     extends FreeElem[F, A, Suspend[F, A]]
@@ -209,6 +219,11 @@ trait FreesAbs extends Frees with scalan.Scalan {
   def mkSuspend[F[_], A](a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]]
   def unmkSuspend[F[_], A](p: Rep[Free[F, A]]): Option[(Rep[F[A]])]
 
+  abstract class AbsBind[F[_], S, B]
+      (a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends Bind[F, S, B](a, f) with Def[Bind[F, S, B]] {
+    lazy val selfType = element[Bind[F, S, B]]
+  }
   // elem for concrete class
   class BindElem[F[_], S, B](val iso: Iso[BindData[F, S, B], Bind[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends FreeElem[F, B, Bind[F, S, B]]
@@ -289,20 +304,17 @@ trait FreesAbs extends Frees with scalan.Scalan {
 // Seq -----------------------------------
 trait FreesSeq extends FreesDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs with Def[FreeCompanionAbs] {
+  lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs {
   }
 
   case class SeqReturn[F[_], A]
-      (override val a: Rep[A])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends Return[F, A](a)
-        with Def[Return[F, A]] {
-    lazy val selfType = element[Return[F, A]]
+      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsReturn[F, A](a) {
   }
 
   def mkReturn[F[_], A]
-      (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
-      new SeqReturn[F, A](a)
+    (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
+    new SeqReturn[F, A](a)
   def unmkReturn[F[_], A](p: Rep[Free[F, A]]) = p match {
     case p: Return[F, A] @unchecked =>
       Some((p.a))
@@ -310,16 +322,13 @@ trait FreesSeq extends FreesDsl with scalan.ScalanSeq {
   }
 
   case class SeqSuspend[F[_], A]
-      (override val a: Rep[F[A]])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends Suspend[F, A](a)
-        with Def[Suspend[F, A]] {
-    lazy val selfType = element[Suspend[F, A]]
+      (override val a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsSuspend[F, A](a) {
   }
 
   def mkSuspend[F[_], A]
-      (a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]] =
-      new SeqSuspend[F, A](a)
+    (a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]] =
+    new SeqSuspend[F, A](a)
   def unmkSuspend[F[_], A](p: Rep[Free[F, A]]) = p match {
     case p: Suspend[F, A] @unchecked =>
       Some((p.a))
@@ -327,16 +336,13 @@ trait FreesSeq extends FreesDsl with scalan.ScalanSeq {
   }
 
   case class SeqBind[F[_], S, B]
-      (override val a: Rep[Free[F, S]], override val f: Rep[S => Free[F, B]])
-      (implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Bind[F, S, B](a, f)
-        with Def[Bind[F, S, B]] {
-    lazy val selfType = element[Bind[F, S, B]]
+      (override val a: Rep[Free[F, S]], override val f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends AbsBind[F, S, B](a, f) {
   }
 
   def mkBind[F[_], S, B]
-      (a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
-      new SeqBind[F, S, B](a, f)
+    (a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
+    new SeqBind[F, S, B](a, f)
   def unmkBind[F[_], S, B](p: Rep[Free[F, B]]) = p match {
     case p: Bind[F, S, B] @unchecked =>
       Some((p.a, p.f))
@@ -347,15 +353,12 @@ trait FreesSeq extends FreesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait FreesExp extends FreesDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
-  lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs with Def[FreeCompanionAbs] {
+  lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs {
   }
 
   case class ExpReturn[F[_], A]
-      (override val a: Rep[A])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends Return[F, A](a) with Def[Return[F, A]] {
-    lazy val selfType = element[Return[F, A]]
-  }
+      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsReturn[F, A](a)
 
   object ReturnMethods {
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
@@ -411,11 +414,8 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
   }
 
   case class ExpSuspend[F[_], A]
-      (override val a: Rep[F[A]])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends Suspend[F, A](a) with Def[Suspend[F, A]] {
-    lazy val selfType = element[Suspend[F, A]]
-  }
+      (override val a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsSuspend[F, A](a)
 
   object SuspendMethods {
     object foldMap {
@@ -457,11 +457,8 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
   }
 
   case class ExpBind[F[_], S, B]
-      (override val a: Rep[Free[F, S]], override val f: Rep[S => Free[F, B]])
-      (implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Bind[F, S, B](a, f) with Def[Bind[F, S, B]] {
-    lazy val selfType = element[Bind[F, S, B]]
-  }
+      (override val a: Rep[Free[F, S]], override val f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends AbsBind[F, S, B](a, f)
 
   object BindMethods {
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f1

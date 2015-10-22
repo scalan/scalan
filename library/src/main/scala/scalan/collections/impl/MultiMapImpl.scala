@@ -65,6 +65,11 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
   implicit def proxyMMultiMapCompanion(p: Rep[MMultiMapCompanion]): MMultiMapCompanion =
     proxyOps[MMultiMapCompanion](p)
 
+  abstract class AbsHashMMultiMap[K, V]
+      (map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V])
+    extends HashMMultiMap[K, V](map) with Def[HashMMultiMap[K, V]] {
+    lazy val selfType = element[HashMMultiMap[K, V]]
+  }
   // elem for concrete class
   class HashMMultiMapElem[K, V](val iso: Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]])(implicit elemKey: Elem[K], elemValue: Elem[V])
     extends MMultiMapElem[K, V, HashMMultiMap[K, V]]
@@ -143,20 +148,17 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 // Seq -----------------------------------
 trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with Def[MMultiMapCompanionAbs] {
+  lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }
 
   case class SeqHashMMultiMap[K, V]
-      (override val map: Rep[MMap[K, ArrayBuffer[V]]])
-      (implicit elemKey: Elem[K], elemValue: Elem[V])
-    extends HashMMultiMap[K, V](map)
-        with Def[HashMMultiMap[K, V]] {
-    lazy val selfType = element[HashMMultiMap[K, V]]
+      (override val map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V])
+    extends AbsHashMMultiMap[K, V](map) {
   }
 
   def mkHashMMultiMap[K, V]
-      (map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
-      new SeqHashMMultiMap[K, V](map)
+    (map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]] =
+    new SeqHashMMultiMap[K, V](map)
   def unmkHashMMultiMap[K, V](p: Rep[MMultiMap[K, V]]) = p match {
     case p: HashMMultiMap[K, V] @unchecked =>
       Some((p.map))
@@ -167,15 +169,12 @@ trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs with Def[MMultiMapCompanionAbs] {
+  lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }
 
   case class ExpHashMMultiMap[K, V]
-      (override val map: Rep[MMap[K, ArrayBuffer[V]]])
-      (implicit elemKey: Elem[K], elemValue: Elem[V])
-    extends HashMMultiMap[K, V](map) with Def[HashMMultiMap[K, V]] {
-    lazy val selfType = element[HashMMultiMap[K, V]]
-  }
+      (override val map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V])
+    extends AbsHashMMultiMap[K, V](map)
 
   object HashMMultiMapMethods {
     object union {

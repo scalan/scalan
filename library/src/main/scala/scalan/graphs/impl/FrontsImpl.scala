@@ -62,6 +62,11 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   implicit def proxyFrontCompanion(p: Rep[FrontCompanion]): FrontCompanion =
     proxyOps[FrontCompanion](p)
 
+  abstract class AbsBaseFront
+      (set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet])
+    extends BaseFront(set, bits) with Def[BaseFront] {
+    lazy val selfType = element[BaseFront]
+  }
   // elem for concrete class
   class BaseFrontElem(val iso: Iso[BaseFrontData, BaseFront])
     extends FrontElem[BaseFront]
@@ -134,6 +139,11 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   def mkBaseFront(set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet]): Rep[BaseFront]
   def unmkBaseFront(p: Rep[Front]): Option[(Rep[CollectionOverArray[Int]], Rep[BitSet])]
 
+  abstract class AbsListFront
+      (set: Rep[CollectionOverList[Int]], bits: Rep[BitSet])
+    extends ListFront(set, bits) with Def[ListFront] {
+    lazy val selfType = element[ListFront]
+  }
   // elem for concrete class
   class ListFrontElem(val iso: Iso[ListFrontData, ListFront])
     extends FrontElem[ListFront]
@@ -206,6 +216,11 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   def mkListFront(set: Rep[CollectionOverList[Int]], bits: Rep[BitSet]): Rep[ListFront]
   def unmkListFront(p: Rep[Front]): Option[(Rep[CollectionOverList[Int]], Rep[BitSet])]
 
+  abstract class AbsCollectionFront
+      (set: Rep[Collection[Int]], bits: Rep[BitSet])
+    extends CollectionFront(set, bits) with Def[CollectionFront] {
+    lazy val selfType = element[CollectionFront]
+  }
   // elem for concrete class
   class CollectionFrontElem(val iso: Iso[CollectionFrontData, CollectionFront])
     extends FrontElem[CollectionFront]
@@ -278,6 +293,11 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   def mkCollectionFront(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront]
   def unmkCollectionFront(p: Rep[Front]): Option[(Rep[Collection[Int]], Rep[BitSet])]
 
+  abstract class AbsMapBasedFront
+      (mmap: Rep[MMap[Int, Unit]])
+    extends MapBasedFront(mmap) with Def[MapBasedFront] {
+    lazy val selfType = element[MapBasedFront]
+  }
   // elem for concrete class
   class MapBasedFrontElem(val iso: Iso[MapBasedFrontData, MapBasedFront])
     extends FrontElem[MapBasedFront]
@@ -355,20 +375,17 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 // Seq -----------------------------------
 trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
   self: FrontsDslSeq =>
-  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with Def[FrontCompanionAbs] {
+  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs {
   }
 
   case class SeqBaseFront
       (override val set: Rep[CollectionOverArray[Int]], override val bits: Rep[BitSet])
-
-    extends BaseFront(set, bits)
-        with Def[BaseFront] {
-    lazy val selfType = element[BaseFront]
+    extends AbsBaseFront(set, bits) {
   }
 
   def mkBaseFront
-      (set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
-      new SeqBaseFront(set, bits)
+    (set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet]): Rep[BaseFront] =
+    new SeqBaseFront(set, bits)
   def unmkBaseFront(p: Rep[Front]) = p match {
     case p: BaseFront @unchecked =>
       Some((p.set, p.bits))
@@ -377,15 +394,12 @@ trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
 
   case class SeqListFront
       (override val set: Rep[CollectionOverList[Int]], override val bits: Rep[BitSet])
-
-    extends ListFront(set, bits)
-        with Def[ListFront] {
-    lazy val selfType = element[ListFront]
+    extends AbsListFront(set, bits) {
   }
 
   def mkListFront
-      (set: Rep[CollectionOverList[Int]], bits: Rep[BitSet]): Rep[ListFront] =
-      new SeqListFront(set, bits)
+    (set: Rep[CollectionOverList[Int]], bits: Rep[BitSet]): Rep[ListFront] =
+    new SeqListFront(set, bits)
   def unmkListFront(p: Rep[Front]) = p match {
     case p: ListFront @unchecked =>
       Some((p.set, p.bits))
@@ -394,15 +408,12 @@ trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
 
   case class SeqCollectionFront
       (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
-
-    extends CollectionFront(set, bits)
-        with Def[CollectionFront] {
-    lazy val selfType = element[CollectionFront]
+    extends AbsCollectionFront(set, bits) {
   }
 
   def mkCollectionFront
-      (set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
-      new SeqCollectionFront(set, bits)
+    (set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront] =
+    new SeqCollectionFront(set, bits)
   def unmkCollectionFront(p: Rep[Front]) = p match {
     case p: CollectionFront @unchecked =>
       Some((p.set, p.bits))
@@ -411,15 +422,12 @@ trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
 
   case class SeqMapBasedFront
       (override val mmap: Rep[MMap[Int, Unit]])
-
-    extends MapBasedFront(mmap)
-        with Def[MapBasedFront] {
-    lazy val selfType = element[MapBasedFront]
+    extends AbsMapBasedFront(mmap) {
   }
 
   def mkMapBasedFront
-      (mmap: Rep[MMap[Int, Unit]]): Rep[MapBasedFront] =
-      new SeqMapBasedFront(mmap)
+    (mmap: Rep[MMap[Int, Unit]]): Rep[MapBasedFront] =
+    new SeqMapBasedFront(mmap)
   def unmkMapBasedFront(p: Rep[Front]) = p match {
     case p: MapBasedFront @unchecked =>
       Some((p.mmap))
@@ -430,15 +438,12 @@ trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
   self: FrontsDslExp =>
-  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs with Def[FrontCompanionAbs] {
+  lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs {
   }
 
   case class ExpBaseFront
       (override val set: Rep[CollectionOverArray[Int]], override val bits: Rep[BitSet])
-
-    extends BaseFront(set, bits) with Def[BaseFront] {
-    lazy val selfType = element[BaseFront]
-  }
+    extends AbsBaseFront(set, bits)
 
   object BaseFrontMethods {
     object contains {
@@ -481,10 +486,7 @@ trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
 
   case class ExpListFront
       (override val set: Rep[CollectionOverList[Int]], override val bits: Rep[BitSet])
-
-    extends ListFront(set, bits) with Def[ListFront] {
-    lazy val selfType = element[ListFront]
-  }
+    extends AbsListFront(set, bits)
 
   object ListFrontMethods {
     object contains {
@@ -527,10 +529,7 @@ trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
 
   case class ExpCollectionFront
       (override val set: Rep[Collection[Int]], override val bits: Rep[BitSet])
-
-    extends CollectionFront(set, bits) with Def[CollectionFront] {
-    lazy val selfType = element[CollectionFront]
-  }
+    extends AbsCollectionFront(set, bits)
 
   object CollectionFrontMethods {
     object contains {
@@ -573,10 +572,7 @@ trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
 
   case class ExpMapBasedFront
       (override val mmap: Rep[MMap[Int, Unit]])
-
-    extends MapBasedFront(mmap) with Def[MapBasedFront] {
-    lazy val selfType = element[MapBasedFront]
-  }
+    extends AbsMapBasedFront(mmap)
 
   object MapBasedFrontMethods {
     object contains {

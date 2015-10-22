@@ -66,6 +66,11 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   implicit def proxyCoproductCompanion(p: Rep[CoproductCompanion]): CoproductCompanion =
     proxyOps[CoproductCompanion](p)
 
+  abstract class AbsCoproductImpl[F[_], G[_], A]
+      (run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
+    extends CoproductImpl[F, G, A](run) with Def[CoproductImpl[F, G, A]] {
+    lazy val selfType = element[CoproductImpl[F, G, A]]
+  }
   // elem for concrete class
   class CoproductImplElem[F[_], G[_], A](val iso: Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
     extends CoproductElem[F, G, A, CoproductImpl[F, G, A]]
@@ -143,20 +148,17 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
 // Seq -----------------------------------
 trait CoproductsSeq extends CoproductsDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs with Def[CoproductCompanionAbs] {
+  lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs {
   }
 
   case class SeqCoproductImpl[F[_], G[_], A]
-      (override val run: Rep[Either[F[A], G[A]]])
-      (implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
-    extends CoproductImpl[F, G, A](run)
-        with Def[CoproductImpl[F, G, A]] {
-    lazy val selfType = element[CoproductImpl[F, G, A]]
+      (override val run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
+    extends AbsCoproductImpl[F, G, A](run) {
   }
 
   def mkCoproductImpl[F[_], G[_], A]
-      (run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
-      new SeqCoproductImpl[F, G, A](run)
+    (run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
+    new SeqCoproductImpl[F, G, A](run)
   def unmkCoproductImpl[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]) = p match {
     case p: CoproductImpl[F, G, A] @unchecked =>
       Some((p.run))
@@ -167,15 +169,12 @@ trait CoproductsSeq extends CoproductsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
-  lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs with Def[CoproductCompanionAbs] {
+  lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs {
   }
 
   case class ExpCoproductImpl[F[_], G[_], A]
-      (override val run: Rep[Either[F[A], G[A]]])
-      (implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
-    extends CoproductImpl[F, G, A](run) with Def[CoproductImpl[F, G, A]] {
-    lazy val selfType = element[CoproductImpl[F, G, A]]
-  }
+      (override val run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
+    extends AbsCoproductImpl[F, G, A](run)
 
   object CoproductImplMethods {
   }

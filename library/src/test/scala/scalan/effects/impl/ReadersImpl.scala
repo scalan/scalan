@@ -66,6 +66,11 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   implicit def proxyReaderCompanion(p: Rep[ReaderCompanion]): ReaderCompanion =
     proxyOps[ReaderCompanion](p)
 
+  abstract class AbsReaderBase[Env, A]
+      (run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A])
+    extends ReaderBase[Env, A](run) with Def[ReaderBase[Env, A]] {
+    lazy val selfType = element[ReaderBase[Env, A]]
+  }
   // elem for concrete class
   class ReaderBaseElem[Env, A](val iso: Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]])(implicit eEnv: Elem[Env], eA: Elem[A])
     extends ReaderElem[Env, A, ReaderBase[Env, A]]
@@ -144,20 +149,17 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 // Seq -----------------------------------
 trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs with Def[ReaderCompanionAbs] {
+  lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
 
   case class SeqReaderBase[Env, A]
-      (override val run: Rep[Env => A])
-      (implicit eEnv: Elem[Env], eA: Elem[A])
-    extends ReaderBase[Env, A](run)
-        with Def[ReaderBase[Env, A]] {
-    lazy val selfType = element[ReaderBase[Env, A]]
+      (override val run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A])
+    extends AbsReaderBase[Env, A](run) {
   }
 
   def mkReaderBase[Env, A]
-      (run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]] =
-      new SeqReaderBase[Env, A](run)
+    (run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]] =
+    new SeqReaderBase[Env, A](run)
   def unmkReaderBase[Env, A](p: Rep[Reader[Env, A]]) = p match {
     case p: ReaderBase[Env, A] @unchecked =>
       Some((p.run))
@@ -168,15 +170,12 @@ trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
-  lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs with Def[ReaderCompanionAbs] {
+  lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
 
   case class ExpReaderBase[Env, A]
-      (override val run: Rep[Env => A])
-      (implicit eEnv: Elem[Env], eA: Elem[A])
-    extends ReaderBase[Env, A](run) with Def[ReaderBase[Env, A]] {
-    lazy val selfType = element[ReaderBase[Env, A]]
-  }
+      (override val run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A])
+    extends AbsReaderBase[Env, A](run)
 
   object ReaderBaseMethods {
   }

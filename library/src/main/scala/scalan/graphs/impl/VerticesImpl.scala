@@ -67,6 +67,11 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   implicit def proxyVertexCompanion(p: Rep[VertexCompanion]): VertexCompanion =
     proxyOps[VertexCompanion](p)
 
+  abstract class AbsSVertex[V, E]
+      (id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E])
+    extends SVertex[V, E](id, graph) with Def[SVertex[V, E]] {
+    lazy val selfType = element[SVertex[V, E]]
+  }
   // elem for concrete class
   class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends VertexElem[V, E, SVertex[V, E]]
@@ -146,20 +151,17 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
 // Seq -----------------------------------
 trait VerticesSeq extends VerticesDsl with scalan.ScalanSeq {
   self: GraphsDslSeq =>
-  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with Def[VertexCompanionAbs] {
+  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs {
   }
 
   case class SeqSVertex[V, E]
-      (override val id: Rep[Int], override val graph: PG[V, E])
-      (implicit eV: Elem[V], eE: Elem[E])
-    extends SVertex[V, E](id, graph)
-        with Def[SVertex[V, E]] {
-    lazy val selfType = element[SVertex[V, E]]
+      (override val id: Rep[Int], override val graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E])
+    extends AbsSVertex[V, E](id, graph) {
   }
 
   def mkSVertex[V, E]
-      (id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
-      new SeqSVertex[V, E](id, graph)
+    (id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
+    new SeqSVertex[V, E](id, graph)
   def unmkSVertex[V, E](p: Rep[Vertex[V, E]]) = p match {
     case p: SVertex[V, E] @unchecked =>
       Some((p.id, p.graph))
@@ -170,15 +172,12 @@ trait VerticesSeq extends VerticesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
-  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with Def[VertexCompanionAbs] {
+  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs {
   }
 
   case class ExpSVertex[V, E]
-      (override val id: Rep[Int], override val graph: PG[V, E])
-      (implicit eV: Elem[V], eE: Elem[E])
-    extends SVertex[V, E](id, graph) with Def[SVertex[V, E]] {
-    lazy val selfType = element[SVertex[V, E]]
-  }
+      (override val id: Rep[Int], override val graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E])
+    extends AbsSVertex[V, E](id, graph)
 
   object SVertexMethods {
   }

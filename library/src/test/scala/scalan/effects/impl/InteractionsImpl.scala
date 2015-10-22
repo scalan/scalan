@@ -66,6 +66,11 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
   implicit def proxyInteractCompanion(p: Rep[InteractCompanion]): InteractCompanion =
     proxyOps[InteractCompanion](p)
 
+  abstract class AbsAsk
+      (prompt: Rep[String])
+    extends Ask(prompt) with Def[Ask] {
+    lazy val selfType = element[Ask]
+  }
   // elem for concrete class
   class AskElem(val iso: Iso[AskData, Ask])
     extends InteractElem[String, Ask]
@@ -137,6 +142,11 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
   def mkAsk(prompt: Rep[String]): Rep[Ask]
   def unmkAsk(p: Rep[Interact[String]]): Option[(Rep[String])]
 
+  abstract class AbsTell
+      (msg: Rep[String])
+    extends Tell(msg) with Def[Tell] {
+    lazy val selfType = element[Tell]
+  }
   // elem for concrete class
   class TellElem(val iso: Iso[TellData, Tell])
     extends InteractElem[Unit, Tell]
@@ -214,20 +224,17 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 // Seq -----------------------------------
 trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
   self: InteractionsDslSeq =>
-  lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs with Def[InteractCompanionAbs] {
+  lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs {
   }
 
   case class SeqAsk
       (override val prompt: Rep[String])
-
-    extends Ask(prompt)
-        with Def[Ask] {
-    lazy val selfType = element[Ask]
+    extends AbsAsk(prompt) {
   }
 
   def mkAsk
-      (prompt: Rep[String]): Rep[Ask] =
-      new SeqAsk(prompt)
+    (prompt: Rep[String]): Rep[Ask] =
+    new SeqAsk(prompt)
   def unmkAsk(p: Rep[Interact[String]]) = p match {
     case p: Ask @unchecked =>
       Some((p.prompt))
@@ -236,15 +243,12 @@ trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
 
   case class SeqTell
       (override val msg: Rep[String])
-
-    extends Tell(msg)
-        with Def[Tell] {
-    lazy val selfType = element[Tell]
+    extends AbsTell(msg) {
   }
 
   def mkTell
-      (msg: Rep[String]): Rep[Tell] =
-      new SeqTell(msg)
+    (msg: Rep[String]): Rep[Tell] =
+    new SeqTell(msg)
   def unmkTell(p: Rep[Interact[Unit]]) = p match {
     case p: Tell @unchecked =>
       Some((p.msg))
@@ -255,15 +259,12 @@ trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
   self: InteractionsDslExp =>
-  lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs with Def[InteractCompanionAbs] {
+  lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs {
   }
 
   case class ExpAsk
       (override val prompt: Rep[String])
-
-    extends Ask(prompt) with Def[Ask] {
-    lazy val selfType = element[Ask]
-  }
+    extends AbsAsk(prompt)
 
   object AskMethods {
     object toOper {
@@ -294,10 +295,7 @@ trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
 
   case class ExpTell
       (override val msg: Rep[String])
-
-    extends Tell(msg) with Def[Tell] {
-    lazy val selfType = element[Tell]
-  }
+    extends AbsTell(msg)
 
   object TellMethods {
     object toOper {

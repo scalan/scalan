@@ -62,6 +62,11 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   implicit def proxySegmentCompanion(p: Rep[SegmentCompanion]): SegmentCompanion =
     proxyOps[SegmentCompanion](p)
 
+  abstract class AbsInterval
+      (start: Rep[Int], end: Rep[Int])
+    extends Interval(start, end) with Def[Interval] {
+    lazy val selfType = element[Interval]
+  }
   // elem for concrete class
   class IntervalElem(val iso: Iso[IntervalData, Interval])
     extends SegmentElem[Interval]
@@ -133,6 +138,11 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   def mkInterval(start: Rep[Int], end: Rep[Int]): Rep[Interval]
   def unmkInterval(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
 
+  abstract class AbsSlice
+      (start: Rep[Int], length: Rep[Int])
+    extends Slice(start, length) with Def[Slice] {
+    lazy val selfType = element[Slice]
+  }
   // elem for concrete class
   class SliceElem(val iso: Iso[SliceData, Slice])
     extends SegmentElem[Slice]
@@ -204,6 +214,11 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   def mkSlice(start: Rep[Int], length: Rep[Int]): Rep[Slice]
   def unmkSlice(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
 
+  abstract class AbsCentered
+      (center: Rep[Int], radius: Rep[Int])
+    extends Centered(center, radius) with Def[Centered] {
+    lazy val selfType = element[Centered]
+  }
   // elem for concrete class
   class CenteredElem(val iso: Iso[CenteredData, Centered])
     extends SegmentElem[Centered]
@@ -282,20 +297,17 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 // Seq -----------------------------------
 trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
   self: SegmentsDslSeq =>
-  lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with Def[SegmentCompanionAbs] {
+  lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }
 
   case class SeqInterval
       (override val start: Rep[Int], override val end: Rep[Int])
-
-    extends Interval(start, end)
-        with Def[Interval] {
-    lazy val selfType = element[Interval]
+    extends AbsInterval(start, end) {
   }
 
   def mkInterval
-      (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
-      new SeqInterval(start, end)
+    (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
+    new SeqInterval(start, end)
   def unmkInterval(p: Rep[Segment]) = p match {
     case p: Interval @unchecked =>
       Some((p.start, p.end))
@@ -304,15 +316,12 @@ trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
 
   case class SeqSlice
       (override val start: Rep[Int], override val length: Rep[Int])
-
-    extends Slice(start, length)
-        with Def[Slice] {
-    lazy val selfType = element[Slice]
+    extends AbsSlice(start, length) {
   }
 
   def mkSlice
-      (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
-      new SeqSlice(start, length)
+    (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
+    new SeqSlice(start, length)
   def unmkSlice(p: Rep[Segment]) = p match {
     case p: Slice @unchecked =>
       Some((p.start, p.length))
@@ -321,15 +330,12 @@ trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
 
   case class SeqCentered
       (override val center: Rep[Int], override val radius: Rep[Int])
-
-    extends Centered(center, radius)
-        with Def[Centered] {
-    lazy val selfType = element[Centered]
+    extends AbsCentered(center, radius) {
   }
 
   def mkCentered
-      (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
-      new SeqCentered(center, radius)
+    (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
+    new SeqCentered(center, radius)
   def unmkCentered(p: Rep[Segment]) = p match {
     case p: Centered @unchecked =>
       Some((p.center, p.radius))
@@ -340,15 +346,12 @@ trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
   self: SegmentsDslExp =>
-  lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with Def[SegmentCompanionAbs] {
+  lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }
 
   case class ExpInterval
       (override val start: Rep[Int], override val end: Rep[Int])
-
-    extends Interval(start, end) with Def[Interval] {
-    lazy val selfType = element[Interval]
-  }
+    extends AbsInterval(start, end)
 
   object IntervalMethods {
     object length {
@@ -403,10 +406,7 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
 
   case class ExpSlice
       (override val start: Rep[Int], override val length: Rep[Int])
-
-    extends Slice(start, length) with Def[Slice] {
-    lazy val selfType = element[Slice]
-  }
+    extends AbsSlice(start, length)
 
   object SliceMethods {
     object end {
@@ -461,10 +461,7 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
 
   case class ExpCentered
       (override val center: Rep[Int], override val radius: Rep[Int])
-
-    extends Centered(center, radius) with Def[Centered] {
-    lazy val selfType = element[Centered]
-  }
+    extends AbsCentered(center, radius)
 
   object CenteredMethods {
     object start {

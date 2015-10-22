@@ -62,6 +62,11 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   implicit def proxyBitSetCompanion(p: Rep[BitSetCompanion]): BitSetCompanion =
     proxyOps[BitSetCompanion](p)
 
+  abstract class AbsBoolCollBitSet
+      (bits: Rep[Collection[Boolean]])
+    extends BoolCollBitSet(bits) with Def[BoolCollBitSet] {
+    lazy val selfType = element[BoolCollBitSet]
+  }
   // elem for concrete class
   class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])
     extends BitSetElem[BoolCollBitSet]
@@ -138,20 +143,17 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
 // Seq -----------------------------------
 trait BitSetsSeq extends BitSetsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with Def[BitSetCompanionAbs] {
+  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs {
   }
 
   case class SeqBoolCollBitSet
       (override val bits: Rep[Collection[Boolean]])
-
-    extends BoolCollBitSet(bits)
-        with Def[BoolCollBitSet] {
-    lazy val selfType = element[BoolCollBitSet]
+    extends AbsBoolCollBitSet(bits) {
   }
 
   def mkBoolCollBitSet
-      (bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
-      new SeqBoolCollBitSet(bits)
+    (bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
+    new SeqBoolCollBitSet(bits)
   def unmkBoolCollBitSet(p: Rep[BitSet]) = p match {
     case p: BoolCollBitSet @unchecked =>
       Some((p.bits))
@@ -162,15 +164,12 @@ trait BitSetsSeq extends BitSetsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with Def[BitSetCompanionAbs] {
+  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs {
   }
 
   case class ExpBoolCollBitSet
       (override val bits: Rep[Collection[Boolean]])
-
-    extends BoolCollBitSet(bits) with Def[BoolCollBitSet] {
-    lazy val selfType = element[BoolCollBitSet]
-  }
+    extends AbsBoolCollBitSet(bits)
 
   object BoolCollBitSetMethods {
   }
