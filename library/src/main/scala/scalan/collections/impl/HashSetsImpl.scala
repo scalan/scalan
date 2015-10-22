@@ -354,7 +354,7 @@ trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
       Some((view.source, view.iso))
     case UserTypeSHashSet(iso: Iso[a, b]) =>
       val newIso = SHashSetIso(iso)
-      val repr = reifyObject(UnpackView(s.asRep[SHashSet[b]])(newIso))
+      val repr = defToRep(UnpackView(s.asRep[SHashSet[b]])(newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)

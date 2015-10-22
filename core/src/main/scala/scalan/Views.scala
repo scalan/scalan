@@ -380,9 +380,7 @@ trait Views extends Elems { self: Scalan =>
 }
 
 trait ViewsSeq extends Views { self: ScalanSeq =>
-  trait UserTypeSeq[T] extends Reifiable[T] { thisType: T =>
-    def self = this
-  }
+  trait UserTypeSeq[T] extends Reifiable[T]
 
   def shouldUnpack(e: Elem[_]) = true
 }
@@ -526,15 +524,15 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
     // Rule: V(a, iso1) ; V(b, iso2)) ==> iso2.to(a ; b)
     case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
-      iso2.to(Semicolon(a.asRep[a], b.asRep[b])(iso2.eFrom))
+      iso2.to(semicolon(a.asRep[a], b.asRep[b]))
 
     // Rule: a ; V(b, iso2)) ==> iso2.to(a ; b)
     case block@Semicolon(a: Rep[a], Def(UnpackableDef(b, iso2: Iso[b, d]))) =>
-      iso2.to(Semicolon(a, b.asRep[b])(iso2.eFrom))
+      iso2.to(semicolon(a, b.asRep[b]))
 
     // Rule: V(a, iso1) ; b ==> a ; b
     case block@Semicolon(Def(UnpackableDef(a, iso1: Iso[a, c])), b: Rep[b]) =>
-      Semicolon(a.asRep[a], b)(block.selfType.asElem[b])
+      semicolon(a.asRep[a], b)
 
     // Rule: PairView(source, iso1, _)._1  ==> iso1.to(source._1)
     case First(Def(view@PairView(source))) =>

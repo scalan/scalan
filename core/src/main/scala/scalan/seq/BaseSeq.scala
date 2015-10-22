@@ -11,5 +11,7 @@ trait BaseSeq extends Base { self: ScalanSeq =>
 
   override def def_unapply[T](e: Rep[T]): Option[Def[T]] = Some(e)
 
+  override def defToRep[A](x: Def[A]): Rep[A] = x
+
   override def repReifiable_getElem[T <: Reifiable[_]](x: Rep[T]): Elem[T] = x.selfType.asElem[T]
 }

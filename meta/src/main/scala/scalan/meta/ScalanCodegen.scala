@@ -924,7 +924,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |      Some((view.source, view.iso))
         |    case UserType${e.name}(iso: Iso[a, b]) =>
         |      val newIso = ${e.name}Iso(iso)
-        |      val repr = reifyObject(UnpackView(s.asRep[${e.name}[b]])(newIso))
+        |      val repr = defToRep(UnpackView(s.asRep[${e.name}[b]])(newIso))
         |      Some((repr, newIso))
         |    case _ =>
         |      super.unapplyViews(s)

@@ -42,9 +42,7 @@ trait BaseExp extends Base { scalan: ScalanExp =>
   }
   type ExpAny = Exp[_]
 
-  trait Def[+T] extends Reifiable[T] {
-    lazy val self: Rep[T] = reifyObject(this)
-  }
+  type Def[+T] = Reifiable[T]
 
   abstract class BaseDef[+T](implicit val selfType: Elem[T @uncheckedVariance]) extends Def[T]
 
@@ -118,7 +116,7 @@ trait BaseExp extends Base { scalan: ScalanExp =>
       val transformedParams = dParams.map(transformParam)
       val finalParams = (scalan :: transformedParams).asInstanceOf[List[AnyRef]]
       val transformedD = constructor.newInstance(finalParams: _*).asInstanceOf[Def[A]]
-      reifyObject(transformedD)
+      defToRep(transformedD)
   }
 
   def fresh[T](implicit leT: LElem[T]): Exp[T]
@@ -134,8 +132,9 @@ trait BaseExp extends Base { scalan: ScalanExp =>
    * @return The symbol of the graph which is semantically(up to rewrites) equivalent to d
    */
   protected[scalan] def toExp[T](d: Def[T], newSym: => Exp[T]): Exp[T]
-  implicit def reifyObject[T](obj: Def[T]): Rep[T] = {
-    toExp(obj, fresh[T](Lazy(obj.selfType)))
+
+  implicit def defToRep[A](obj: Def[A]): Rep[A] = {
+    toExp(obj, fresh[A](Lazy(obj.selfType)))
   }
 
   override def toRep[A](x: A)(implicit eA: Elem[A]):Rep[A] = eA match {
@@ -154,8 +153,8 @@ trait BaseExp extends Base { scalan: ScalanExp =>
       x1.fold(l => SLeft[a, b](l), r => SRight[a, b](r))
     case _ =>
       x match {
-        // this may be called instead of reifyObject implicit in some cases
-        case d: Def[A @unchecked] => reifyObject(d)
+        // this may be called instead of defToRep implicit in some cases
+        case d: Def[A @unchecked] => defToRep(d)
         case _ => super.toRep(x)(eA)
       }
   }

@@ -147,7 +147,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   // prefer calling the above overload
   def mkMethodCall(receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean, resultElem: Elem[_]): Exp[_] = {
-    reifyObject(MethodCall(receiver, method, args, neverInvoke)(resultElem.asElem[Any]))
+    defToRep(MethodCall(receiver, method, args, neverInvoke)(resultElem.asElem[Any]))
   }
 
   @tailrec
@@ -188,7 +188,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     mkMethodCall(receiver, m, args, true).asRep[A]
 
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
-    new NewObject[A](c, args, true)
+    defToRep(new NewObject[A](c, args, true))
   }
 
   private val proxies = scala.collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]

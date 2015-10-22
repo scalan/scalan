@@ -48,7 +48,7 @@ trait Base extends LazyLogging { self: Scalan =>
   type RReifiable[+T] = Rep[Reifiable[T]]
   trait Reifiable[+T] extends Product {
     def selfType: Elem[T @uncheckedVariance]
-    def self: Rep[T]
+    lazy val self: Rep[T] = defToRep(this.asInstanceOf[Def[T]])
 
     override def equals(other: Any) = other match {
       // check that nodes correspond to same operation, have the same type, and the same arguments
@@ -144,6 +144,7 @@ trait Base extends LazyLogging { self: Scalan =>
   }
 
   def def_unapply[T](e: Rep[T]): Option[Def[T]]
+  def defToRep[A](d: Def[A]): Rep[A]
 }
 
 object Base {

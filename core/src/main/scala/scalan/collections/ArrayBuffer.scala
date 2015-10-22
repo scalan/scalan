@@ -133,7 +133,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsExp { self: ScalanExp =>
       Some((view.source, view.iso))
     case UserTypeArrayBuffer(iso: Iso[a, b]) =>
       val newIso = arrayBufferIso(iso)
-      val repr = reifyObject(UnpackView(s.asRep[ArrayBuffer[b]])(newIso))
+      val repr = defToRep(UnpackView(s.asRep[ArrayBuffer[b]])(newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)

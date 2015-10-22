@@ -49,7 +49,7 @@ trait PatternMatchingExp extends BaseExp with GraphVizExport { _: ScalanExp =>
   def patternMatchError(obj: Any): Nothing = throw new DelayInvokeException
 
   protected def patternMatch[A, B: Elem](selector: Rep[A])(branches: Branch[_ <: A, B]*)(default: Option[Rep[A => B]]) =
-    reifyObject(Match[A, B](selector, branches.toList, default))
+    defToRep(Match[A, B](selector, branches.toList, default))
 
   case class Match[A, B: Elem](selector: Exp[A], branches: List[Branch[_ <: A, B]], default: Option[Exp[A => B]]) extends BaseDef[B]
 

@@ -90,7 +90,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       Some((view.source, view.iso))
     case UserTypeArray(iso: Iso[a, b]) =>
       val newIso = arrayIso(iso)
-      val repr = reifyObject(UnpackView(s.asRep[Array[b]])(newIso))
+      val repr = defToRep(UnpackView(s.asRep[Array[b]])(newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)

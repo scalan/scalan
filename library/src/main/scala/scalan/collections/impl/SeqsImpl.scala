@@ -573,7 +573,7 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
       Some((view.source, view.iso))
     case UserTypeSSeq(iso: Iso[a, b]) =>
       val newIso = SSeqIso(iso)
-      val repr = reifyObject(UnpackView(s.asRep[SSeq[b]])(newIso))
+      val repr = defToRep(UnpackView(s.asRep[SSeq[b]])(newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)
