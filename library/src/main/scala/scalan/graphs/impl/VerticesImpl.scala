@@ -22,10 +22,6 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Vertices")
-      module.entities.find(_.name == "Vertex").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("V" -> Left(eV), "E" -> Left(eE))
     }
@@ -77,10 +73,6 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     extends VertexElem[V, E, SVertex[V, E]]
     with ConcreteElem[SVertexData[V, E], SVertex[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(vertexElement(element[V], element[E]))
-    override lazy val entityDef = {
-      val module = getModules("Vertices")
-      module.concreteSClasses.find(_.name == "SVertex").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("V" -> Left(eV), "E" -> Left(eE))
     }

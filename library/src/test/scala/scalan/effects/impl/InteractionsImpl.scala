@@ -22,10 +22,6 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
     extends EntityElem[To] {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Interactions")
-      module.entities.find(_.name == "Interact").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }
@@ -76,10 +72,6 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
     extends InteractElem[String, Ask]
     with ConcreteElem[AskData, Ask] {
     override lazy val parent: Option[Elem[_]] = Some(interactElement(StringElement))
-    override lazy val entityDef = {
-      val module = getModules("Interactions")
-      module.concreteSClasses.find(_.name == "Ask").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -152,10 +144,6 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
     extends InteractElem[Unit, Tell]
     with ConcreteElem[TellData, Tell] {
     override lazy val parent: Option[Elem[_]] = Some(interactElement(UnitElement))
-    override lazy val entityDef = {
-      val module = getModules("Interactions")
-      module.concreteSClasses.find(_.name == "Tell").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }

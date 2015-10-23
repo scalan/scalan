@@ -50,10 +50,6 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     extends WrapperElem1[A, To, Seq, SSeq](_eA, container[Seq], container[SSeq]) {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Seqs")
-      module.entities.find(_.name == "SSeq").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }
@@ -164,10 +160,6 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     extends SSeqElem[A, SSeqImpl[A]]
     with ConcreteElem1[A, SSeqImplData[A], SSeqImpl[A], SSeq] {
     override lazy val parent: Option[Elem[_]] = Some(sSeqElement(element[A]))
-    override lazy val entityDef = {
-      val module = getModules("Seqs")
-      module.concreteSClasses.find(_.name == "SSeqImpl").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }

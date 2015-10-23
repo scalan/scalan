@@ -19,10 +19,6 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   class FrontElem[To <: Front]
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Fronts")
-      module.entities.find(_.name == "Front").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -72,10 +68,6 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     extends FrontElem[BaseFront]
     with ConcreteElem[BaseFrontData, BaseFront] {
     override lazy val parent: Option[Elem[_]] = Some(frontElement)
-    override lazy val entityDef = {
-      val module = getModules("Fronts")
-      module.concreteSClasses.find(_.name == "BaseFront").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -149,10 +141,6 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     extends FrontElem[ListFront]
     with ConcreteElem[ListFrontData, ListFront] {
     override lazy val parent: Option[Elem[_]] = Some(frontElement)
-    override lazy val entityDef = {
-      val module = getModules("Fronts")
-      module.concreteSClasses.find(_.name == "ListFront").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -226,10 +214,6 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     extends FrontElem[CollectionFront]
     with ConcreteElem[CollectionFrontData, CollectionFront] {
     override lazy val parent: Option[Elem[_]] = Some(frontElement)
-    override lazy val entityDef = {
-      val module = getModules("Fronts")
-      module.concreteSClasses.find(_.name == "CollectionFront").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -303,10 +287,6 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     extends FrontElem[MapBasedFront]
     with ConcreteElem[MapBasedFrontData, MapBasedFront] {
     override lazy val parent: Option[Elem[_]] = Some(frontElement)
-    override lazy val entityDef = {
-      val module = getModules("Fronts")
-      module.concreteSClasses.find(_.name == "MapBasedFront").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }

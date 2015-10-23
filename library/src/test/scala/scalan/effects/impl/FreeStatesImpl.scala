@@ -22,10 +22,6 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
     def eS = _eS
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("FreeStates")
-      module.entities.find(_.name == "StateF").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("S" -> Left(eS), "A" -> Left(eA))
     }
@@ -77,10 +73,6 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
     extends StateFElem[S, A, StateGet[S, A]]
     with ConcreteElem[StateGetData[S, A], StateGet[S, A]] {
     override lazy val parent: Option[Elem[_]] = Some(stateFElement(element[S], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("FreeStates")
-      module.concreteSClasses.find(_.name == "StateGet").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("S" -> Left(eS), "A" -> Left(eA))
     }
@@ -155,10 +147,6 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
     extends StateFElem[S, A, StatePut[S, A]]
     with ConcreteElem[StatePutData[S, A], StatePut[S, A]] {
     override lazy val parent: Option[Elem[_]] = Some(stateFElement(element[S], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("FreeStates")
-      module.concreteSClasses.find(_.name == "StatePut").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("S" -> Left(eS), "A" -> Left(eA))
     }

@@ -21,10 +21,6 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     extends EntityElem[To] {
     def eT = _eT
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Vectors")
-      module.entities.find(_.name == "AbstractVector").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -75,10 +71,6 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     extends AbstractVectorElem[T, DenseVector[T]]
     with ConcreteElem[DenseVectorData[T], DenseVector[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Vectors")
-      module.concreteSClasses.find(_.name == "DenseVector").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -151,10 +143,6 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     extends AbstractVectorElem[T, ConstVector[T]]
     with ConcreteElem[ConstVectorData[T], ConstVector[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Vectors")
-      module.concreteSClasses.find(_.name == "ConstVector").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -229,10 +217,6 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     extends AbstractVectorElem[T, SparseVector[T]]
     with ConcreteElem[SparseVectorData[T], SparseVector[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Vectors")
-      module.concreteSClasses.find(_.name == "SparseVector").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -306,10 +290,6 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     extends AbstractVectorElem[T, SparseVector1[T]]
     with ConcreteElem[SparseVector1Data[T], SparseVector1[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractVectorElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Vectors")
-      module.concreteSClasses.find(_.name == "SparseVector1").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }

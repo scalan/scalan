@@ -475,10 +475,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    extends $parentElem {
         |${e.implicitArgs.opt(_.rep(a => s"    def ${a.name} = _${a.name}", "\n"))}
         |    ${overrideIfHasParent}lazy val parent: Option[Elem[_]] = ${optParent.opt(p => s"Some(${tpeToElement(p, e.tpeArgs)})", "None")}
-        |    ${overrideIfHasParent}lazy val entityDef: STraitOrClassDef = {
-        |      val module = getModules("${module.name}")
-        |      module.entities.find(_.name == "${e.name}").get
-        |    }
         |    ${overrideIfHasParent}lazy val tyArgSubst: Map[String, TypeDesc] = {
         |      Map(${e.tpeSubstStr})
         |    }
@@ -636,10 +632,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    extends ${parent.name}Elem[${join(parentTpeArgsStr, c.typeUse)}]
         |    with $concreteElemSuperType {
         |    override lazy val parent: Option[Elem[_]] = Some($parentElem)
-        |    override lazy val entityDef = {
-        |      val module = getModules("${module.name}")
-        |      module.concreteSClasses.find(_.name == "$className").get
-        |    }
         |    override lazy val tyArgSubst: Map[String, TypeDesc] = {
         |      Map(${c.tpeSubstStr})
         |    }

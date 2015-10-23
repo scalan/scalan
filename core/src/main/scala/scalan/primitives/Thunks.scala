@@ -36,7 +36,6 @@ trait Thunks { self: Scalan =>
     extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override def entityDef = !!!("not supported")
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eItem))
     }

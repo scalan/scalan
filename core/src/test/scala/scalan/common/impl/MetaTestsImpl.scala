@@ -18,10 +18,6 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
     extends EntityElem[To] {
     def elem = _elem
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("MetaTests")
-      module.entities.find(_.name == "MetaTest").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(elem))
     }
@@ -72,10 +68,6 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
     extends MetaTestElem[Unit, MT0]
     with ConcreteElem[MT0Data, MT0] {
     override lazy val parent: Option[Elem[_]] = Some(metaTestElement(UnitElement))
-    override lazy val entityDef = {
-      val module = getModules("MetaTests")
-      module.concreteSClasses.find(_.name == "MT0").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -147,10 +139,6 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
     extends MetaTestElem[T, MT1[T]]
     with ConcreteElem[MT1Data[T], MT1[T]] {
     override lazy val parent: Option[Elem[_]] = Some(metaTestElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("MetaTests")
-      module.concreteSClasses.find(_.name == "MT1").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(elem))
     }
@@ -225,10 +213,6 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
     extends MetaTestElem[(T, R), MT2[T, R]]
     with ConcreteElem[MT2Data[T, R], MT2[T, R]] {
     override lazy val parent: Option[Elem[_]] = Some(metaTestElement(pairElement(element[T],element[R])))
-    override lazy val entityDef = {
-      val module = getModules("MetaTests")
-      module.concreteSClasses.find(_.name == "MT2").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT), "R" -> Left(eR))
     }

@@ -21,10 +21,6 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     extends EntityElem[To] {
     def eT = _eT
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Matrices")
-      module.entities.find(_.name == "AbstractMatrix").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -75,10 +71,6 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     extends AbstractMatrixElem[T, DenseFlatMatrix[T]]
     with ConcreteElem[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Matrices")
-      module.concreteSClasses.find(_.name == "DenseFlatMatrix").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -152,10 +144,6 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     extends AbstractMatrixElem[T, CompoundMatrix[T]]
     with ConcreteElem[CompoundMatrixData[T], CompoundMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Matrices")
-      module.concreteSClasses.find(_.name == "CompoundMatrix").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -229,10 +217,6 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     extends AbstractMatrixElem[T, ConstMatrix[T]]
     with ConcreteElem[ConstMatrixData[T], ConstMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Matrices")
-      module.concreteSClasses.find(_.name == "ConstMatrix").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -307,10 +291,6 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     extends AbstractMatrixElem[T, DiagonalMatrix[T]]
     with ConcreteElem[DiagonalMatrixData[T], DiagonalMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Matrices")
-      module.concreteSClasses.find(_.name == "DiagonalMatrix").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }

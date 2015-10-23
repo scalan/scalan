@@ -23,10 +23,6 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Graphs")
-      module.entities.find(_.name == "Graph").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("V" -> Left(eV), "E" -> Left(eE))
     }
@@ -78,10 +74,6 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     extends GraphElem[V, E, AdjacencyGraph[V, E]]
     with ConcreteElem[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
-    override lazy val entityDef = {
-      val module = getModules("Graphs")
-      module.concreteSClasses.find(_.name == "AdjacencyGraph").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("V" -> Left(eV), "E" -> Left(eE))
     }
@@ -156,10 +148,6 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     extends GraphElem[V, E, IncidenceGraph[V, E]]
     with ConcreteElem[IncidenceGraphData[V, E], IncidenceGraph[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(graphElement(element[V], element[E]))
-    override lazy val entityDef = {
-      val module = getModules("Graphs")
-      module.concreteSClasses.find(_.name == "IncidenceGraph").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("V" -> Left(eV), "E" -> Left(eE))
     }

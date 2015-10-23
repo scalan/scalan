@@ -21,10 +21,6 @@ trait StatesAbs extends States with scalan.Scalan {
     def eS = _eS
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("States")
-      module.entities.find(_.name == "State0").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("S" -> Left(eS), "A" -> Left(eA))
     }
@@ -76,10 +72,6 @@ trait StatesAbs extends States with scalan.Scalan {
     extends State0Elem[S, A, StateBase[S, A]]
     with ConcreteElem[StateBaseData[S, A], StateBase[S, A]] {
     override lazy val parent: Option[Elem[_]] = Some(state0Element(element[S], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("States")
-      module.concreteSClasses.find(_.name == "StateBase").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("S" -> Left(eS), "A" -> Left(eA))
     }

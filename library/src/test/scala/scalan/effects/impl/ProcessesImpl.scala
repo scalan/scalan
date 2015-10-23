@@ -22,10 +22,6 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     def cF = _cF
     def eO = _eO
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Processes")
-      module.entities.find(_.name == "Process").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "O" -> Left(eO))
     }
@@ -76,10 +72,6 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     extends ProcessElem[F, O, Await[F, A, O]]
     with ConcreteElem[AwaitData[F, A, O], Await[F, A, O]] {
     override lazy val parent: Option[Elem[_]] = Some(processElement(container[F], element[O]))
-    override lazy val entityDef = {
-      val module = getModules("Processes")
-      module.concreteSClasses.find(_.name == "Await").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA), "O" -> Left(eO))
     }
@@ -155,10 +147,6 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     extends ProcessElem[F, O, Emit[F, O]]
     with ConcreteElem[EmitData[F, O], Emit[F, O]] {
     override lazy val parent: Option[Elem[_]] = Some(processElement(container[F], element[O]))
-    override lazy val entityDef = {
-      val module = getModules("Processes")
-      module.concreteSClasses.find(_.name == "Emit").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "O" -> Left(eO))
     }
@@ -233,10 +221,6 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     extends ProcessElem[F, O, Halt[F, O]]
     with ConcreteElem[HaltData[F, O], Halt[F, O]] {
     override lazy val parent: Option[Elem[_]] = Some(processElement(container[F], element[O]))
-    override lazy val entityDef = {
-      val module = getModules("Processes")
-      module.concreteSClasses.find(_.name == "Halt").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "O" -> Left(eO))
     }

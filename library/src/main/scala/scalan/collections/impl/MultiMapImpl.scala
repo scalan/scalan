@@ -20,10 +20,6 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     def elemKey = _elemKey
     def elemValue = _elemValue
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("MultiMaps")
-      module.entities.find(_.name == "MMultiMap").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("K" -> Left(elemKey), "V" -> Left(elemValue))
     }
@@ -75,10 +71,6 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     extends MMultiMapElem[K, V, HashMMultiMap[K, V]]
     with ConcreteElem[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
     override lazy val parent: Option[Elem[_]] = Some(mMultiMapElement(element[K], element[V]))
-    override lazy val entityDef = {
-      val module = getModules("MultiMaps")
-      module.concreteSClasses.find(_.name == "HashMMultiMap").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("K" -> Left(elemKey), "V" -> Left(elemValue))
     }

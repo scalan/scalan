@@ -25,10 +25,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     extends EntityElem[To] {
     def eItem = _eItem
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Collections")
-      module.entities.find(_.name == "Collection").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("Item" -> Left(eItem))
     }
@@ -79,10 +75,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     def eA = _eA
     def eB = _eB
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(pairElement(element[A],element[B])))
-    override lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Collections")
-      module.entities.find(_.name == "PairCollection").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA), "B" -> Left(eB))
     }
@@ -120,10 +112,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     extends CollectionElem[Collection[A], To] {
     def eA = _eA
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(collectionElement(element[A])))
-    override lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Collections")
-      module.entities.find(_.name == "NestedCollection").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }
@@ -161,10 +149,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     extends CollectionElem[Unit, UnitCollection]
     with ConcreteElem[UnitCollectionData, UnitCollection] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(UnitElement))
-    override lazy val entityDef = {
-      val module = getModules("Collections")
-      module.concreteSClasses.find(_.name == "UnitCollection").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -236,10 +220,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     extends CollectionElem[Item, CollectionOverArray[Item]]
     with ConcreteElem[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
-    override lazy val entityDef = {
-      val module = getModules("Collections")
-      module.concreteSClasses.find(_.name == "CollectionOverArray").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("Item" -> Left(eItem))
     }
@@ -312,10 +292,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     extends CollectionElem[Item, CollectionOverList[Item]]
     with ConcreteElem[CollectionOverListData[Item], CollectionOverList[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
-    override lazy val entityDef = {
-      val module = getModules("Collections")
-      module.concreteSClasses.find(_.name == "CollectionOverList").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("Item" -> Left(eItem))
     }
@@ -388,10 +364,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     extends CollectionElem[Item, CollectionOverSeq[Item]]
     with ConcreteElem[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
     override lazy val parent: Option[Elem[_]] = Some(collectionElement(element[Item]))
-    override lazy val entityDef = {
-      val module = getModules("Collections")
-      module.concreteSClasses.find(_.name == "CollectionOverSeq").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("Item" -> Left(eItem))
     }
@@ -464,10 +436,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     extends PairCollectionElem[A, B, PairCollectionSOA[A, B]]
     with ConcreteElem[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
-    override lazy val entityDef = {
-      val module = getModules("Collections")
-      module.concreteSClasses.find(_.name == "PairCollectionSOA").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA), "B" -> Left(eB))
     }
@@ -542,10 +510,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     extends PairCollectionElem[A, B, PairCollectionAOS[A, B]]
     with ConcreteElem[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] {
     override lazy val parent: Option[Elem[_]] = Some(pairCollectionElement(element[A], element[B]))
-    override lazy val entityDef = {
-      val module = getModules("Collections")
-      module.concreteSClasses.find(_.name == "PairCollectionAOS").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA), "B" -> Left(eB))
     }
@@ -619,10 +583,6 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     extends NestedCollectionElem[A, NestedCollectionFlat[A]]
     with ConcreteElem[NestedCollectionFlatData[A], NestedCollectionFlat[A]] {
     override lazy val parent: Option[Elem[_]] = Some(nestedCollectionElement(element[A]))
-    override lazy val entityDef = {
-      val module = getModules("Collections")
-      module.concreteSClasses.find(_.name == "NestedCollectionFlat").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }

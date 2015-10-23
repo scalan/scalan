@@ -21,10 +21,6 @@ trait IOsAbs extends IOs with scalan.Scalan {
     extends EntityElem[To] {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("IOs")
-      module.entities.find(_.name == "IO").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }
@@ -75,10 +71,6 @@ trait IOsAbs extends IOs with scalan.Scalan {
     extends IOElem[List[String], ReadFile]
     with ConcreteElem[ReadFileData, ReadFile] {
     override lazy val parent: Option[Elem[_]] = Some(iOElement(listElement(StringElement)))
-    override lazy val entityDef = {
-      val module = getModules("IOs")
-      module.concreteSClasses.find(_.name == "ReadFile").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -151,10 +143,6 @@ trait IOsAbs extends IOs with scalan.Scalan {
     extends IOElem[Unit, WriteFile]
     with ConcreteElem[WriteFileData, WriteFile] {
     override lazy val parent: Option[Elem[_]] = Some(iOElement(UnitElement))
-    override lazy val entityDef = {
-      val module = getModules("IOs")
-      module.concreteSClasses.find(_.name == "WriteFile").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }

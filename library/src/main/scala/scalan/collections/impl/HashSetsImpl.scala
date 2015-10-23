@@ -48,10 +48,6 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     extends WrapperElem1[A, To, HashSet, SHashSet](_eA, container[HashSet], container[SHashSet]) {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("HashSets")
-      module.entities.find(_.name == "SHashSet").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }
@@ -122,10 +118,6 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
     extends SHashSetElem[A, SHashSetImpl[A]]
     with ConcreteElem1[A, SHashSetImplData[A], SHashSetImpl[A], SHashSet] {
     override lazy val parent: Option[Elem[_]] = Some(sHashSetElement(element[A]))
-    override lazy val entityDef = {
-      val module = getModules("HashSets")
-      module.concreteSClasses.find(_.name == "SHashSetImpl").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }

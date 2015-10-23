@@ -21,10 +21,6 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     def eEnv = _eEnv
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Readers")
-      module.entities.find(_.name == "Reader").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("Env" -> Left(eEnv), "A" -> Left(eA))
     }
@@ -76,10 +72,6 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     extends ReaderElem[Env, A, ReaderBase[Env, A]]
     with ConcreteElem[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
     override lazy val parent: Option[Elem[_]] = Some(readerElement(element[Env], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("Readers")
-      module.concreteSClasses.find(_.name == "ReaderBase").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("Env" -> Left(eEnv), "A" -> Left(eA))
     }

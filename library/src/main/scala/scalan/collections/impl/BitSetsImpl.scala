@@ -19,10 +19,6 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("BitSets")
-      module.entities.find(_.name == "BitSet").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -72,10 +68,6 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
     extends BitSetElem[BoolCollBitSet]
     with ConcreteElem[BoolCollBitSetData, BoolCollBitSet] {
     override lazy val parent: Option[Elem[_]] = Some(bitSetElement)
-    override lazy val entityDef = {
-      val module = getModules("BitSets")
-      module.concreteSClasses.find(_.name == "BoolCollBitSet").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }

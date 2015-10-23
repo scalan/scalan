@@ -21,10 +21,6 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
     extends EntityElem[To] {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Authentications")
-      module.entities.find(_.name == "Auth").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }
@@ -75,10 +71,6 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
     extends AuthElem[SOption[String], Login]
     with ConcreteElem[LoginData, Login] {
     override lazy val parent: Option[Elem[_]] = Some(authElement(sOptionElement(StringElement)))
-    override lazy val entityDef = {
-      val module = getModules("Authentications")
-      module.concreteSClasses.find(_.name == "Login").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -152,10 +144,6 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
     extends AuthElem[Boolean, HasPermission]
     with ConcreteElem[HasPermissionData, HasPermission] {
     override lazy val parent: Option[Elem[_]] = Some(authElement(BooleanElement))
-    override lazy val entityDef = {
-      val module = getModules("Authentications")
-      module.concreteSClasses.find(_.name == "HasPermission").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }

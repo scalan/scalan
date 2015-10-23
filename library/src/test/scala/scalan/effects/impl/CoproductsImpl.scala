@@ -22,10 +22,6 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
     def cG = _cG
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Coproducts")
-      module.entities.find(_.name == "Coproduct").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "G" -> Right(cG.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -76,10 +72,6 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
     extends CoproductElem[F, G, A, CoproductImpl[F, G, A]]
     with ConcreteElem[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
     override lazy val parent: Option[Elem[_]] = Some(coproductElement(container[F], container[G], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("Coproducts")
-      module.concreteSClasses.find(_.name == "CoproductImpl").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "G" -> Right(cG.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }

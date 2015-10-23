@@ -28,10 +28,6 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
   class SThrowableElem[To <: SThrowable]
     extends WrapperElem[Throwable, To] {
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Exceptions")
-      module.entities.find(_.name == "SThrowable").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -96,10 +92,6 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     extends SThrowableElem[SThrowableImpl]
     with ConcreteElem[SThrowableImplData, SThrowableImpl] {
     override lazy val parent: Option[Elem[_]] = Some(sThrowableElement)
-    override lazy val entityDef = {
-      val module = getModules("Exceptions")
-      module.concreteSClasses.find(_.name == "SThrowableImpl").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }

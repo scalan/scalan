@@ -22,10 +22,6 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
     def cF = _cF
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("FreeMs")
-      module.entities.find(_.name == "FreeM").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -76,10 +72,6 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
     extends FreeMElem[F, A, Done[F, A]]
     with ConcreteElem[DoneData[F, A], Done[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(freeMElement(container[F], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("FreeMs")
-      module.concreteSClasses.find(_.name == "Done").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -153,10 +145,6 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
     extends FreeMElem[F, A, More[F, A]]
     with ConcreteElem[MoreData[F, A], More[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(freeMElement(container[F], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("FreeMs")
-      module.concreteSClasses.find(_.name == "More").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -230,10 +218,6 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
     extends FreeMElem[F, B, FlatMap[F, S, B]]
     with ConcreteElem[FlatMapData[F, S, B], FlatMap[F, S, B]] {
     override lazy val parent: Option[Elem[_]] = Some(freeMElement(container[F], element[B]))
-    override lazy val entityDef = {
-      val module = getModules("FreeMs")
-      module.concreteSClasses.find(_.name == "FlatMap").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "S" -> Left(eS), "B" -> Left(eA))
     }

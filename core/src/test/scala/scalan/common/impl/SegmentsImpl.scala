@@ -19,10 +19,6 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   class SegmentElem[To <: Segment]
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Segments")
-      module.entities.find(_.name == "Segment").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -72,10 +68,6 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     extends SegmentElem[Interval]
     with ConcreteElem[IntervalData, Interval] {
     override lazy val parent: Option[Elem[_]] = Some(segmentElement)
-    override lazy val entityDef = {
-      val module = getModules("Segments")
-      module.concreteSClasses.find(_.name == "Interval").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -148,10 +140,6 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     extends SegmentElem[Slice]
     with ConcreteElem[SliceData, Slice] {
     override lazy val parent: Option[Elem[_]] = Some(segmentElement)
-    override lazy val entityDef = {
-      val module = getModules("Segments")
-      module.concreteSClasses.find(_.name == "Slice").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -224,10 +212,6 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     extends SegmentElem[Centered]
     with ConcreteElem[CenteredData, Centered] {
     override lazy val parent: Option[Elem[_]] = Some(segmentElement)
-    override lazy val entityDef = {
-      val module = getModules("Segments")
-      module.concreteSClasses.find(_.name == "Centered").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }

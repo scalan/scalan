@@ -21,10 +21,6 @@ trait ConvertersAbs extends Converters  {
     def eT = _eT
     def eR = _eR
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Converters")
-      module.entities.find(_.name == "Converter").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT), "R" -> Left(eR))
     }
@@ -76,10 +72,6 @@ trait ConvertersAbs extends Converters  {
     extends ConverterElem[T, R, BaseConverter[T, R]]
     with ConcreteElem[BaseConverterData[T, R], BaseConverter[T, R]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(element[T], element[R]))
-    override lazy val entityDef = {
-      val module = getModules("Converters")
-      module.concreteSClasses.find(_.name == "BaseConverter").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT), "R" -> Left(eR))
     }
@@ -153,10 +145,6 @@ trait ConvertersAbs extends Converters  {
     extends ConverterElem[(A1, A2), (B1, B2), PairConverter[A1, A2, B1, B2]]
     with ConcreteElem[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(pairElement(element[A1],element[A2]), pairElement(element[B1],element[B2])))
-    override lazy val entityDef = {
-      val module = getModules("Converters")
-      module.concreteSClasses.find(_.name == "PairConverter").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A1" -> Left(eA1), "A2" -> Left(eA2), "B1" -> Left(eB1), "B2" -> Left(eB2))
     }
@@ -234,10 +222,6 @@ trait ConvertersAbs extends Converters  {
     extends ConverterElem[$bar[A1, A2], $bar[B1, B2], SumConverter[A1, A2, B1, B2]]
     with ConcreteElem[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(sumElement(element[A1],element[A2]), sumElement(element[B1],element[B2])))
-    override lazy val entityDef = {
-      val module = getModules("Converters")
-      module.concreteSClasses.find(_.name == "SumConverter").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A1" -> Left(eA1), "A2" -> Left(eA2), "B1" -> Left(eB1), "B2" -> Left(eB2))
     }
@@ -315,10 +299,6 @@ trait ConvertersAbs extends Converters  {
     extends ConverterElem[F[A], F[B], FunctorConverter[A, B, F]]
     with ConcreteElem[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(element[F[A]], element[F[B]]))
-    override lazy val entityDef = {
-      val module = getModules("Converters")
-      module.concreteSClasses.find(_.name == "FunctorConverter").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA), "B" -> Left(eB), "F" -> Right(F.asInstanceOf[SomeCont]))
     }

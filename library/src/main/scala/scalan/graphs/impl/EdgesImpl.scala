@@ -22,10 +22,6 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Edges")
-      module.entities.find(_.name == "Edge").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("V" -> Left(eV), "E" -> Left(eE))
     }
@@ -77,10 +73,6 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     extends EdgeElem[V, E, AdjEdge[V, E]]
     with ConcreteElem[AdjEdgeData[V, E], AdjEdge[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
-    override lazy val entityDef = {
-      val module = getModules("Edges")
-      module.concreteSClasses.find(_.name == "AdjEdge").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("V" -> Left(eV), "E" -> Left(eE))
     }
@@ -155,10 +147,6 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     extends EdgeElem[V, E, IncEdge[V, E]]
     with ConcreteElem[IncEdgeData[V, E], IncEdge[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(edgeElement(element[V], element[E]))
-    override lazy val entityDef = {
-      val module = getModules("Edges")
-      module.concreteSClasses.find(_.name == "IncEdge").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("V" -> Left(eV), "E" -> Left(eE))
     }

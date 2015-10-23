@@ -19,10 +19,6 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   class AStringElem[To <: AString]
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("AbstractStrings")
-      module.entities.find(_.name == "AString").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -72,10 +68,6 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     extends AStringElem[SString]
     with ConcreteElem[SStringData, SString] {
     override lazy val parent: Option[Elem[_]] = Some(aStringElement)
-    override lazy val entityDef = {
-      val module = getModules("AbstractStrings")
-      module.concreteSClasses.find(_.name == "SString").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -147,10 +139,6 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     extends AStringElem[CString]
     with ConcreteElem[CStringData, CString] {
     override lazy val parent: Option[Elem[_]] = Some(aStringElement)
-    override lazy val entityDef = {
-      val module = getModules("AbstractStrings")
-      module.concreteSClasses.find(_.name == "CString").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }

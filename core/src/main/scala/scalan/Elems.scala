@@ -34,6 +34,8 @@ trait Elems extends Base { self: Scalan =>
     def <:<(e: Element[_]) = tag.tpe <:< e.tag.tpe
     def >:>(e: Element[_]) = e <:< this
 
+    def asElem[B]: Elem[B] = this.asInstanceOf[Elem[B]]
+
     if (isDebug) {
       debug$ElementCounter(this) += 1
     }
@@ -67,16 +69,6 @@ trait Elems extends Base { self: Scalan =>
     replaceAll("""[^# \[\],>]*[#$]""", "")
 
   def element[A](implicit ea: Elem[A]): Elem[A] = ea
-
-  implicit class ElemForSomeExtension(e: Elem[_]) {
-    def asElem[T]: Elem[T] = e.asInstanceOf[Elem[T]]
-    def asEntityElem[T]: EntityElem[T] = e.asInstanceOf[EntityElem[T]]
-
-    def getMethod(methodName: String, argClasses: Class[_]*): Method = {
-      val m = e.runtimeClass.getMethod(methodName, argClasses: _*)
-      m
-    }
-  }
 
   class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Element[A] with Serializable with scala.Equals {
     protected def getDefaultRep = toRep(z.value)(this)
@@ -175,19 +167,6 @@ trait Elems extends Base { self: Scalan =>
 
   import scalan.meta.ScalanAst
   import ScalanAst._
-
-  private var modules: Map[String, SEntityModuleDef] = Map()
-  def getModules = modules
-
-  def allEntities = getModules.values.flatMap(m => m.allEntities)
-
-  def registerModule(m: SEntityModuleDef) = {
-    if (modules.contains(m.name))
-      !!!(s"Module ${m.name} already defined")
-    else {
-      modules += (m.name -> m)
-    }
-  }
 }
 
 trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>

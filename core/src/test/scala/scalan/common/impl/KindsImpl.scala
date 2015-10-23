@@ -20,10 +20,6 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     def cF = _cF
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Kinds")
-      module.entities.find(_.name == "Kind").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -74,10 +70,6 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     extends KindElem[F, A, Return[F, A]]
     with ConcreteElem[ReturnData[F, A], Return[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(kindElement(container[F], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("Kinds")
-      module.concreteSClasses.find(_.name == "Return").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -151,10 +143,6 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     extends KindElem[F, B, Bind[F, S, B]]
     with ConcreteElem[BindData[F, S, B], Bind[F, S, B]] {
     override lazy val parent: Option[Elem[_]] = Some(kindElement(container[F], element[B]))
-    override lazy val entityDef = {
-      val module = getModules("Kinds")
-      module.concreteSClasses.find(_.name == "Bind").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "S" -> Left(eS), "B" -> Left(eA))
     }
