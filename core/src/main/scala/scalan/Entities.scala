@@ -1,0 +1,107 @@
+package scalan
+
+import scala.collection.mutable.{Map => MutMap}
+import scala.language.higherKinds
+import scalan.common.Lazy
+import scalan.meta.ScalanAst.SEntityModuleDef
+import scalan.util.ReflectionUtil
+
+trait Entities extends Elems { self: Scalan =>
+  abstract class EntityElem[A] extends Elem[A] with scala.Equals {
+    def parent: Option[Elem[_]]
+    def tyArgSubst: Map[String, TypeDesc]
+    def convert(x: Rep[Def[_]]): Rep[A] = !!!("should not be called")
+    //def getConverterTo[B](eB: Elem[B]): Conv[A,B] = !!!  //TODO make it abstract
+    // TODO generate code for this in implementations
+    def canEqual(other: Any) = other.isInstanceOf[EntityElem[_]]
+    override def equals(other: Any) = other match {
+      case other: EntityElem[_] => other.canEqual(this) && tag.tpe =:= other.tag.tpe
+      case _ => false
+    }
+    override def hashCode = tag.tpe.hashCode
+  }
+  abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
+    extends EntityElem[To] {
+  }
+  trait ConcreteElem[TData, TClass] extends EntityElem[TClass] with ViewElem[TData, TClass] { eClass =>
+    def getConverterFrom[E](eEntity: EntityElem[E]): Option[Conv[E, TClass]] = {
+      try {
+        val convFun: Rep[E => TClass] =
+          fun({ x: Rep[E] => eClass.convert(x.asRep[Def[_]])})(Lazy(eEntity), eClass)
+        Some(BaseConverter(convFun)(eEntity, eClass))
+      }
+      catch {
+        case e: RuntimeException => None
+      }
+    }
+  }
+  trait ConcreteElem1[A, TData, TClass, C[_]]
+    extends EntityElem1[A, TClass, C]
+       with ViewElem1[A, TData, TClass, C] { eClass =>
+  }
+
+  implicit class EntityElemExtensions[A <: Def[_]](e: Elem[A]) {
+    def asEntityElem = e.asInstanceOf[EntityElem[A]]
+  }
+
+  private[this] val modules = MutMap.empty[String, SEntityModuleDef]
+
+  def allEntities = modules.values.flatMap(_.allEntities)
+
+  def registerModule(m: SEntityModuleDef) = {
+    if (modules.contains(m.name))
+      !!!(s"Module ${m.name} already defined")
+    else {
+      modules += (m.name -> m)
+    }
+  }
+
+  def entityDef(e: EntityElem[_]) = {
+    val elemClassSymbol = ReflectionUtil.classToSymbol(e.getClass)
+    val moduleName = elemClassSymbol.owner.name.toString.stripSuffix("Abs")
+    val module = modules.getOrElse(moduleName, !!!(s"Module $moduleName not found"))
+    val entityName = elemClassSymbol.name.toString.stripSuffix("Elem")
+    module.entities.find(_.name == entityName).getOrElse {
+      !!!(s"Entity $entityName not found in module $moduleName")
+    }
+  }
+
+  def isConcreteElem[T](e: Elem[T]): Boolean = e match {
+    case e: PairElem[_, _] => e.eFst.isConcrete && e.eSnd.isConcrete
+    case e: SumElem[_, _] => e.eLeft.isConcrete && e.eRight.isConcrete
+    case e: FuncElem[_, _] => e.eDom.isConcrete && e.eRange.isConcrete
+    case e: ArrayElem[_] => e.eItem.isConcrete
+    case e: ListElem[_] => e.eItem.isConcrete
+    case e: ArrayBufferElem[_] => e.eItem.isConcrete
+    case _: ViewElem[_,_] => true
+    case _: EntityElem[_] => false
+    case _: BaseElem[_] => true
+    case _ => !!!(s"isConcrete is not defined for Elem $e")
+  }
+
+  implicit class ElemOps[T](e: Elem[T]) {
+    def isConcrete = isConcreteElem(e)
+    def getDataIso = getIsoByElem(e)
+  }
+  trait CompanionElem[T] extends Elem[T] { _: scala.Equals =>
+    override def isEntityType = false
+  }
+
+  trait TypeFamily1[F[_]]
+  trait TypeFamily2[F[_, _]]
+  trait TypeFamily3[F[_, _, _]]
+
+  trait ConcreteClass0[C]
+  trait ConcreteClass1[C[_]]
+  trait ConcreteClass2[C[_, _]]
+  trait ConcreteClass3[T[_, _, _]]
+  trait ConcreteClass4[T[_, _, _, _]]
+
+  implicit class RepDefViewOps[T <: Def[_]](x: Rep[T]) {
+    def convertTo[R <: Def[_]](implicit eR: Elem[R]): Rep[R] =
+      eR match {
+        case entE: EntityElem[R] @unchecked => entE.convert(x)
+        case _ => !!!(s"Cannot convert $x to a value of type ${eR.name}: EntityElem expected but ${eR.getClass.getSimpleName} found")
+      }
+  }
+}
