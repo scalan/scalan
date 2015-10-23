@@ -48,9 +48,10 @@ trait Entities extends Elems { self: Scalan =>
 
   def allEntities = modules.values.flatMap(_.allEntities)
 
-  def registerModule(m: SEntityModuleDef) = {
+  def registerModule(moduleInfo: ModuleInfo) = {
+    val m = moduleInfo.moduleDef
     if (modules.contains(m.name))
-      !!!(s"Module ${m.name} already defined")
+      !!!(s"Module ${m.name} already registered")
     else {
       modules += (m.name -> m)
     }

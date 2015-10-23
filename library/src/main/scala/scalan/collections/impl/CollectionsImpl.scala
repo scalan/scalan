@@ -646,7 +646,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
   def mkNestedCollectionFlat[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]]
   def unmkNestedCollectionFlat[A](p: Rep[NestedCollection[A]]): Option[(Rep[Collection[A]], Rep[PairCollection[Int, Int]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Collections_Module.dump))
+  registerModule(Collections_Module)
 }
 
 // Seq -----------------------------------
@@ -2554,9 +2554,7 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
   }
 }
 
-object Collections_Module {
-  val packageName = "scalan.collections"
-  val name = "Collections"
+object Collections_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAANVYTWwbRRSe3dhxbFdpm1at2lISUkNpVeK0AvVQocpxEyhy4qibVshUlcbribPt7uxmdxzZHCrghEBcEFeEeu+tF6RKvSAkxIETAiTOnEoRqoCKA4g3sz/e9XodJ2oC+LDanZn3973vPc/M3Uco7djoBUfFOqYzBmF4RhHvJYcVlHnKNNZZNBstnVwiq+8d+lxdpHOOjPbW0Ogadi45eg1l3Zf5thW8K2S9grKYqsRhpu0w9FxFWCiqpq4TlWkmLWqG0WK4rpNiRXPYhQpK1c1GZx3dRlIF7VNNqtqEEaWsY8chjjc+RrhHWvCdFd+dqtW1QYs8imIoihUbawzcBxv73PVXiKV0qEk7BkPjnmtVi7sFazKaYZk2801kQN2a2fA/UxTDAJqo3MQbuAgmmkWF2RptgmTewuot3CRLsIQvT4HDDtFXVzqW+B6poJxD1gGgy4ali5G2hRCCDJwTTsx08ZkJ8Jnh+BQUYmtY197GfHLZNtsd5P6kEYTaFqg4s4kKXwOZp43CB9fVt54oeUPmwm3uSkZEOAqKJhPYIFIBOH515WPn8Wt3zssoV0M5zSnVHWZjlYVT7qGVx5SaTPgcAIjtJmRrOilbwkoJ1vRQIquahoUpaPKg3AN50jVVY3wxH9vjZScB+gyziL9UaltSEO9UQryCN2Ws68sPj7z0/M/zb8pIjprIgkoFiG/7ShnKlQP8AwMnkgxYZNnWDCD0Bnnli/tXf32wlBY2JhpkFbd0dg3rLeLSy7PYtc6NyS+eYih1lWqMD2Xb3WdmQFwBwicf/tL4chZdl4O8eGEMRwVQkXZ++C7/7amLMhqricJZ0HGzBqlx5nViVO2ySVkNjZkbxHZnMhtY5299qZHxwvYSFkZ6BJBmaCqxxC3C03BBlJPkA5B3K2LJpKSwsFz4Q/n6k7uc8Dba4864Nf+3dv6vH8dXmagFhkZ1QptsTTi1l6ERaBYeHvx5gCFpFkYv076Y51zFimmQ/dOPtRt3PmQCXakd7RnV+k0gyQUh9+wAoP3e9XttVv7tyPefySgLeNY1ZmCrMDtkxe1gFaEQNADWeNnr24Igsz2TnKjd8hCQxTAMHpOQisNRiXLY98lu0zosXvsaCK3KS1F34pXqTaQuM2L09841F1p+NOCbsAbEwLadQB0YSZdsG3eGNRc2elI8Tw/E+2x08kA3wCoUoDA9BOjP9BFLRD4MhdQDRZrwyIIweUcYJvJkxyeDvnQ8uaMCOQ9dqRzUH118IKP0Gyi9Cu3GqaB03WzRhs962F8w0mZz/pgUZT2wHNvYCFguflOoG33c+d3kmO6wZI6l+J/9LlFsIpopbnkIhh2LS+0uwRLcngxJX/+v5Rw2jgNyrije9M7nfH8UPDA8RMqPxoR2N+P9nX46CR9fxpqdlHSp1A2Nf85tlwAyZCIx/4mc88yH7SWor29Lff9wtsqwcz0MiwKqVONB9GFYTGhbDJNJaQC9InAmKZgbpCAOWFK8m5IzTK3+C+Z6vf13qJviZ9KtsGvAftgiKy1LJy/f//PG+++8bonNdewYtp04doK5paqydeaC0P+VuV68u8HcfUtw7CGNLfS9Ick6usEP3UEzTJV97g6CslcJnJqaBqEsUDPmA+Wq4o9C8Hgqf8sHewGBY/Ywm7Hj/eR2moA+fxKdHpZCYXUhkV7kRuAIvXnTGXBPU3JP1aRx4t67j16tn/lI3NOkxWGbi7tXFOL1GL9E2N+i6hpRb5HGNWxr4pDuQ7PZvmwzFuT5aXwBG5reOZsYUy9Do/u2RUxxk9g9XkR5ETqE9WGDFbMWz5g0xF6qN7i+Ow1J3n5DjwbV83+3U81qqKi2um9LiinWCbdbPxzple4ab2E+5CKcnLwS6d4yOx5VbTSdUD6Kd4MENXj7yadLp7+595Oonhy/izIpb5NchRS93YziMeHqAyYaLaqxziVHD/kP5OLXVML3fwBU7ike0xgAAA=="
 }
 }

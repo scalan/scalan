@@ -278,7 +278,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
   def mkMT2[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]]
   def unmkMT2[T, R](p: Rep[MetaTest[(T, R)]]): Option[(Rep[T], Rep[R], Rep[Int])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(MetaTests_Module.dump))
+  registerModule(MetaTests_Module)
 }
 
 // Seq -----------------------------------
@@ -513,9 +513,7 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
   }
 }
 
-object MetaTests_Module {
-  val packageName = "scalan.common"
-  val name = "MetaTests"
+object MetaTests_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVWTYzbRBQeO8lm80O3LaioSLDLElhaQRIqUA97qLbbFIqym1WcIhSqShNnkrrYY69nsko4VIgTKjfEFaHee+OCVKkXhIQ4cEKAxLmnUoSqlooDiDfj3/w4u6iqDyPP+Pl7733ve8++eQ9lmIteYTo2MS1bhOOyJu83GC9pNcoNPtqyuwOTnCO9T459o2/Rs0xFS220cAWzc8xso5x3Uxs64b1Gdusoh6lOGLddxtGLdemhotumSXRu2LRiWNaA445JKnWD8fU6Snfs7mgXXUNKHR3Wbaq7hBNt08SMEeafLxIRkRHuc3I/ajiRD1oRWVRiWbRcbHAIH3wc9uybxNFG1KYji6NDfmgNR4QFNlnDcmyXBy6yAHfF7gbbNMVwgI7Wr+I9XAEX/YrGXYP24c2Cg/UPcZ9sg4kwT0PAjJi91siR+1Qd5RnZBYIuWI4pT4YOQggqcEoGUY74KYf8lAU/JY24BjaNj7B4uOPawxHyLiWF0NABiNf2gQgQSI12S9cv6R880gqWKl4eilCyMsMFAFpOUIMsBfD4ffNzdv/tG6dVlG+jvME2Ooy7WOfxkvtsFTClNpcxhwRitw/VWk2qlvSyATYTksjptuVgCkg+lUWok2noBhfG4qzoVyeB+ix3SGCqDB0lzHclIV+pm01smjt3j7/+8u+191WkjrvIAaQGwncDUI4WtwClBSSE8C8lwTtkxzUskPMeeevbWxf/vL2dkR6OdkkPD0z+HjYHxBOX7y/yLVypr57gKH2RGlwc5YbRmp2TVcjv2t0/ut9V0SU1rIqfxMGEABAZ9uvPhZ9OnFHRYlu2zXkT99tQGFYzidVwN23K22jR3iOu9yS7h01xN1MYWT9tv1xxnlPAM0criQ3uEFGEddlMSkBAweuHbZuS0vmd0l/aD1/cFHJ3UdF74nX8v8bpf3471OOyE4BPBh0iQ1riKAWDwmdDrE9zpFTh9AKdyXjeg9VsixxZvW9cvvEZl9wqw/F50ehchQZdl++9MIfmYG49bFfVB8d/+UpFOWCzY3ALO6XqAbvtCXYQkomPL8tAYXGrVd2Mu1qO5suz8hY4BJuJRwUlRvXSdCf5x0ordDZeAAkfs30uFIN0BKXtYo4TSjsJnIAwWxxiKU0FJN+ZjkqZxCTQKwFmuhZs5uUr6Xsjwhe9+nzylIGSHWvWnzHvnbmtosy7KNODFmR1lOnYA9oNtABfXE6G/GxwpoxrAWqPXWyFtZfXCopqOIvA/Uo6R/sOaQ0ck7x56+/Ln378jiMbaWrczmQq3DZnCuXAcskatGtAgz2WYhb2xBCfh9HcF+NJqE4lrYNqLgmgOQ9gmnsp2lNx0Yq1MUdIcwym4WOYJ9F4MCmYoY8zWmLMejGt+W6i44gZmH9HAvQZQzD+h/B/uJiM5npk4xvmwpw4esrvKhj4lv8tWINmW01oNs0f88DTtUdfbp/88es78kckLz4Y8Pmk4c9w/AdknLti6B5+b2MhC/kCvAz3P1iiu31uDAAA"
 }
 }

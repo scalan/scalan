@@ -212,7 +212,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
   def mkIncidenceGraph[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]]
   def unmkIncidenceGraph[V, E](p: Rep[Graph[V, E]]): Option[(Rep[Collection[V]], Rep[Collection[E]], Rep[Int])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Graphs_Module.dump))
+  registerModule(Graphs_Module)
 }
 
 // Seq -----------------------------------
@@ -1162,9 +1162,7 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
   }
 }
 
-object Graphs_Module {
-  val packageName = "scalan.graphs"
-  val name = "Graphs"
+object Graphs_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAANVXTWwbRRSeXcdxbIf0R6hVK4FDcEEgiKMgqFAOVeo6VZDjRNkQkKmQxuuJM+ns7GZnHNkceuAIN4TECaHee+OChNQLQkIcOCFA4sypLUIVtCcQb2Z/vE7WSSraAz6MdmbfvPfm+773Zn3rHsoKH70gbMwwn3WIxLOWfl4UsmzVuKSyv+K2u4xcIVsfnvnKXuGXhYlONNH4NhZXBGuifPBQ63nxs0V26yiPuU2EdH0h0XN1HaFiu4wRW1KXV6jjdCVuMVKpUyEX6mis5bb7u+gGMuropO1y2yeSWFWGhSAiXJ8gKiMaz/N63l/1BjF4RZ2ikjjFho+phPQhxsnAfp14Vp+7vO9INBWmtuqptMAmRx3P9WUUIgfutt12NB3jGBbQ6foO3sMVCNGpWNKnvAM7ix62r+MOaYCJMh+DhAVhWxt9T88zdVQQZBcAWnY8pld6HkIIGJjXScwO8JmN8ZlV+JQt4lPM6AdYvVzz3V4fBT8jg1DPAxevHOEi8kBqvF3+6Jr93kOr6Jhqc0+lktMnHAdHpRFq0FQAjt+tfyLuX7150USFJipQsdgS0se2TFIeolXEnLtS5xwDiP0OsDUzii0dZRFs9kkib7uOhzl4CqGcBJ4YtalUxmptMmRnBPQ56ZHI1Oh5Rnze6RHn1bqpYsbW7px79cLd2rsmModD5MGlBcL3I6cSZa/62NsOfavxhETG5gBgNa3pqRryvcGYOySVGJQX7/ze/nYOXTNjKMPIx2MPXGTFLz8Vf3zpkokmmlrrSwx3moCmqDHirPpVl8smmnD3iB+8ye1hpp5S2cy1yRbuMhlinAQnA+BIND2yKj2ikFvQFWBEABQDETdcTspLa+UH1vef3lIa9dFk8CYo03/oxb9/ndqSWr4STUKykvQ2MesSEcE8VoVKSCUiwFwvno+Dq6EkUYG0O2TYUbaR4ql2pKcso/x6uhMfPT9Kcx5Z86kDPW6PvP7N12//cbuR1bI7HQKtUws6TojzAHMFhTEnUWaZyzR1FQIILdchp2bu0/dvfiy1jozecENbbe1AB1nQ+549RFJRY/2rOWf+ee7nL0yUB+W0qHSwV547Zjt4giWOhjmbqoaXii6F+X0vF9s72Cbc7usCTq/QAb2A9NnhHdVk7qVBwZ9NxDlv7NOISTZjuaryO1KuBx3UDnNwsNOknrQU6/KZ0boEYM+s159m9y7dNlH2LZTdgqYg6ijbcru8HTEGFzdUorwcrRnDjAFD2MdOzJD+TaMBZsPdciPV4EDtFY3hc/+XJnyAs/11/RibzSnK7RUMxdx7h8pt8Hiov6NbTj5IrdF1ok0Z+NQJ3KjhtfTjvqHHNx+pXJa5TdsgInLschne8f8pl4MnLSW2pSv0kSScSHg8lYkM9NjHJfAkNYeQX1RddQk7lPXn00Ifg/CpUTx7SSdPBEs1fjawCQ3HA9Akeipsch09D1Hw0cyI3meFlwywcOPh542Xf/jyN30lF9R1BR8qPP6vkLyKh1HLB7Hh0z+RLIhQXWA60X8BHFvJdIoNAAA="
 }
 }

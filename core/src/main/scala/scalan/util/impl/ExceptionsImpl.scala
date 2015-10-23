@@ -154,7 +154,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
   def mkSThrowableImpl(wrappedValue: Rep[Throwable]): Rep[SThrowableImpl]
   def unmkSThrowableImpl(p: Rep[SThrowable]): Option[(Rep[Throwable])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Exceptions_Module.dump))
+  registerModule(Exceptions_Module)
 }
 
 // Seq -----------------------------------
@@ -257,9 +257,7 @@ trait ExceptionsExp extends ExceptionsDsl with scalan.ScalanExp {
   }
 }
 
-object Exceptions_Module {
-  val packageName = "scalan.util"
-  val name = "Exceptions"
+object Exceptions_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVVv28cRRR+t3Z8vh/ESZAiOU2MdSEQhTsrTQoXkTlfENL5h7JWQJcIaW5vfJ4wOzPemXP2KFKkhA7RIkjvjoZ/AAlRUCFAoqYKUERAKlDezO7e7VlskoYtRjszb9/73vd9M3v8O5zSEbyuA8KJaIbUkKbv3je0afgdYZgZb8nBiNNNuv/w/NfBlnhbe7DUg4UDojc170EleenEavLu08MuVIgIqDYy0gZe67oKrUByTgPDpGixMBwZ0ue01WXarHdhvi8H40N4AKUunAmkCCJqqN/mRGuq0/VFahGxybzi5uMdNa0hWraLVq6LvYgwg/Cxxpkk/hZV/lhIMQ4NnE6h7SgLC2PKLFQyMlmJMqY7kINsOi8ILsC57j1yRFpYYtjyTcTEEL+sKRJ8SIZ0G0Ns+DwC1pTv742Vm891oarpIRL0bqi4W4kVAKAC1xyI5pSf5oSfpuWn4dOIEc4+InZzN5LxGJKnNAcQK0xx9QUpsgy0IwaNj+8Gd576tdCzH8cWStl1uICJLha4wUmBPH5761P95J1H1z2o9qDK9EZfm4gEJi95ylaNCCGNwzwhkERDVGu1SC1XZQNjTliiEshQEYGZUirrqBNnATM22K7VU3UKqC8bRbPQUqxKk35XCvp1vmkTzncfL7916bfO+x54syUqmNJH40dZUgNVf+8gkvct645VO1RSgotLTZq+/PiPwTdrcNebUJVmfjl1MMUp/fOPtR/evOHBYs95+SYnwx6ypTuchjtRWwrTg0V5RKNkp3xEuH37T7XKA7pPRtykHOabn8PmDawUnjpFLTPrzuGljIBaYtJtKWjj5m7jb/+7z46tByOoJzvJMfyXXf/nl9P7xtnTQP1+RJSig9uEj5Kzv2RgDk9xykq6UimiPhXADhdc8Dk3x8M/VSs7khdy376Q9Oxq+au35v25/NMXHlSQ2z4zIVGNtZc8EP+jyWGWoJqNfM9xmSBasMPFbLvYuzkCrYrVRCtfhvTs6hP2waNPjDNsKZ69GXf69/AqWncfL7sqjROI6p24nbW8lt+yw8pzUDip0BqvTjG389wlMio7nj0pqx0vzS6iF6qdOKDOfXg91VLBR4ZxB+gqtr1a4AI/1QCN8ODp59tXvv/qV3dVVK2a6HRhZv4eTrr4hHdfmVbH/0MOrIF5q/EExBuFIA6thWmI5Zy/HsLt481rX4ZOmSUaJz7ayv3NYkdP+Rm79/3MBQgAAA=="
 }
 }

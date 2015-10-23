@@ -208,7 +208,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
   def mkBind[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]
   def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]): Option[(Rep[Kind[F, S]], Rep[S => Kind[F, B]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Kinds_Module.dump))
+  registerModule(Kinds_Module)
 }
 
 // Seq -----------------------------------
@@ -314,9 +314,7 @@ trait KindsExp extends KindsDsl with scalan.ScalanExp {
   }
 }
 
-object Kinds_Module {
-  val packageName = "scalan.common"
-  val name = "Kinds"
+object Kinds_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAAL2WPYwbRRTH367t89k+cuFDQSEKd5zMoUNgn2hSnERkOzYKce5OtykiJyIar8fOht3ZvZ3xyaZIQQldREOBUPp0NFR0SIiCKgIkKgqqEIoISAXizXh3vb7z+pwg2GK0s/v2vTe/9/4ze+8hZLgP69wkNmElhwpSMtR9hYuiUWfCEsPLbqdv0wu0++GpL83LrMp1WG7Bwk3CL3C7BbnRTX3gRfcG3W9CjjCTcuH6XMArTRWhbLq2TU1huaxsOU5fkLZNy02Li60mpNtuZ7gPt0FrwknTZaZPBTVqNuGc8uD5IpUZWdE8p+bDHW8cg5XlKsqxVVzxiSUwfYxxcmS/Rz1jyFw2dAScCFLb8WRaaJO1HM/1RRgii+5uup1wmmYEH8BzzVvkgJQxRK9sCN9iPfyy4BHzfdKj22gizdOYMKd298rQU/NUE/Kc7iOgi45nqycDDwCwAm+pJEpjPqWIT0nyKRrUt4htfUDky13fHQxhdGkpgIGHLt44xkXogdZZp/jRdfPaY6Pg6PLjgUwlq1a4gI5WErpBlQI5frN3hz965+45HfItyFu80ubCJ6aIlzygVSCMuULlHAEkfg+rtZZULRWlgjaHWiJnuo5HGHoKUC5hnWzLtIQ0ls+WguokoM8Kj4am2sDTovWuJqxX9U2N2Pbug9Nvvvpr/aoO+mSIHLo0sPH90KmA9CWLdQLXclwWoDXGfOW0oqZyyA3GY3ZGJhGT1x781vl6E67rEckg8HzFQxcZ/uP3hfsb53VYbKlWb9ik10KYvG5TZ8evuUy0YNE9oP7oTfaA2PJuajGzHdolfVsEiONsUshGwGqiKD0qwW0pAWghgMKoh7ddRouN3eKfxref3JMt6sPS6M1IpX9b5/766URXqO5FoiRkm0JlH4KfTDs/cmm4Dn127ZH13t2PheKqDSb1vdO+hYLaUt+9PANxuM/80drUfz/9w+c65JBk2xIO8Yqbc6rjP+x4iEiMhxXEt7xHRd9ntXi0lXHLvhgD+pIWFksZCdBpJSSdlg00A36CA7MROZC9N1U68eoJWBjlqxxEfX82qSgKwam95gv2w/Nf6ZB5FzJdbGfehEzb7bNOyBZPHEEHoho+0ybZIkviEydiqa5VGLOSycaSf3uqxY3DPKabHcFW0Ca5zLHLVBP6/khJ4VBFZqlpjrjGkbgJYbpTwvgosMQ6NvrMvH/x0+eXz974WW3FCx3XIZZqhDNYTh/Fqsp1JtgPx+n8a25xeutq3EiS0zNVjPGUYjJmiSlO9qnUWD3ewZOrMS2XG9diclsfow851OYTSKyq0w2OVjEWewMm15XCTfuJ+3z6uRL0yfzNcml6s4R/Ev832OmrujPpCw0zChDmH8gVjyonOMXWUcVrCSo2ggMKgd9+/Nn269998YtScl4edXjos+i3e7z3Dg7tQYsqNP5Ex1JFWvLsU2n+Awjq5/zUDAAA"
 }
 }

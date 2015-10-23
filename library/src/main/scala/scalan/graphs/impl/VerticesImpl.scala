@@ -137,7 +137,7 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   def mkSVertex[V, E](id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]
   def unmkSVertex[V, E](p: Rep[Vertex[V, E]]): Option[(Rep[Int], Rep[Graph[V, E]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Vertices_Module.dump))
+  registerModule(Vertices_Module)
 }
 
 // Seq -----------------------------------
@@ -313,9 +313,7 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   }
 }
 
-object Vertices_Module {
-  val packageName = "scalan.graphs"
-  val name = "Vertices"
+object Vertices_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVWTWwbRRR+u47j2A5JqFBRK4FDMCBQa4cI1EMOVeo6UZEbW9k2QqZCGq/HzpTZ2c3OOLI59MARbogrQr33xgUJqReEhDhwQoDEmVMpqiqgJxAzsz/eTewQteoeRvPz9v183/dm9859yHIfXuU2oohVHCxQxdLzDS7KVp0JIkZX3e6A4su499Hpr+yr7BI3YbENs3uIX+a0DflgUh968dzC+w3II2ZjLlyfC3ipoSNUbZdSbAvisipxnIFAHYqrDcLFegNmOm53tA+3wGjAku0y28cCWzWKOMc83J/DKiMSr/N6PWp64xisqqqoJqq45iMiZPoyxlJgv4M9a8RcNnIELISpNT2VlrTJEcdzfRGFyEl3e243Ws4wJDfgVOMmOkBVGaJftYRPWF++WfSQ/QHq421posxnZMIc0961kafXmQYUON6XAF1xPKp3hh4ASAbWdBKVMT6VGJ+KwqdsYZ8gSj5E6rDlu8MRBI+RARh60sW5/3ERecB11i1/fMN+75FVdEz18lClktMVzkpHpSlq0FRIHL/b+ZQ/3Lp9wYRCGwqEb3S48JEtkpSHaBURY67QOccAIr8v2VqZxpaOsiFtDkkib7uOh5j0FEI5L3mixCZCGau9+ZCdKdDnhIcjU2PoGXG9y1Pq1bqpIUpb986cf+X3+rsmmOkQeenSksL3I6cCZnexL/AwdK7GRQHG7hhhtazrpRryw/GYOyaXGJXX7v3R/XYVbpgxlmHok9EnXWT5Lz8Vf3z9oglzbS32TYr6bQknr1PsNP2ay0Qb5twD7AcnuQNE1Wwinbku7qEBFSHISXQyEh0By1Pb0sMKunXdAkYEQDFQ8bbLcHmzVf7b+v6zO0qkPswHJ0Gf/ksu/PPrQk9o/QowSTcCNyObO8bi5WnUerjlE0deJQf47W++vv7g7nZWs3sqLGcX0QEOGjusZlyZCmisykhXmAjY0/HOxmWooSQg2/eRtxflZba2HlcUhaByy3XwsysPyfu3PxGafmOYvoianZuy89f1ey8eo4ToQvyrvWr+eebnL0zIS8I7RDjIK6+esI2fYmtCGqiFWvgx0ApeSx/mrKDhJoM3pkNythSa1pLZlsYkPJ/wfNY4RKaJd6OQM6pPJnKZVMNRB/XjHBxlP11bKdb0C9M1LTE8vdN4jt6/eNeE7DuQ7cm25Q3IdtwB60bkyG+rdCouRXtGmhxJBvKRE5Ohn2UYg5WWbnOiwdFyEvW+dYjgjNRieucJbtEk89r0zYkxi0p+m8ghdLQ2MfYJBLU4VU9eyk0pEWAyXI+Bpxqvj21CwzkVlajuhWdCnQS3UAiFDytT5GOFLSm5uPXo8+03fvjyN30jFlRzy9uYxX9EyZswDV1+S8eSPziJdKXeVbvrVP8DqK+WhHAKAAA="
 }
 }

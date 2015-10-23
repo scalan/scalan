@@ -212,7 +212,7 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
   def mkStatePut[S, A](s: Rep[S], a: Rep[A])(implicit eS: Elem[S], eA: Elem[A]): Rep[StatePut[S, A]]
   def unmkStatePut[S, A](p: Rep[StateF[S, A]]): Option[(Rep[S], Rep[A])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(FreeStates_Module.dump))
+  registerModule(FreeStates_Module)
 }
 
 // Seq -----------------------------------
@@ -350,9 +350,7 @@ trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
   }
 }
 
-object FreeStates_Module {
-  val packageName = "scalan.effects"
-  val name = "FreeStates"
+object FreeStates_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAANVWPYwbRRR+uz7bZ/t0l0AUFKLkjpMDIiL2iSbFFZFzsaMg349uUyATBY3XY2eT3dm9nfFpTREhSugQDQVC6dPRUNEhIQqqCJCoKKhCKCIgVSLezP54fec1iUIKthjt7L55P9/3vbd79wHkuQ+vc5PYhNUcKkjNUPcNLqpGkwlLjDbd3tCml2j/o+Nfm5vsItdhqQOFG4Rf4nYHSuFNM/CSe4PutaFEmEm5cH0u4LW2ilA3XdumprBcVrccZyhI16b1tsXFehvmum5vtAe3QWvDEdNlpk8FNTZswjnl0fN5KjOykn1J7Ufb3jgGq8sq6qkqrvrEEpg+xjgS2u9Szxgxl40cAYtRatueTAttipbjub6IQxTR3Q23F2/nGMEH8FL7JtkndQwxqBvCt9gAT1Y8Yt4iA7qFJtJ8DhPm1O5fHXlqn2tDmdM9BOiK49nqSeABADLwtkqiNsanluBTk/hUDepbxLY+IPLlju8GIwgvLQcQeOjirX9xEXugTdarfnzNfO+RUXF0eTiQqRRVhQV0tJyhBkUF4vjd7qf84eU753Uod6Bs8UaXC5+YIk15hFaFMOYKlXMCIPEHyNZqFlsqSgNtDkiiZLqORxh6iqBcQJ5sy7SENJbPFiJ2MqAvCo/GplrgaUm9Kxn1Kt1sENveuX/i3Jnfm+/qoE+GKKFLA4Xvx04FFAwsl7Yi53JdEqAZY4TltqG2cikF47U4I5cElTfu/9H7dg2u6QmWUeinow9d5PnPP1buvXlBh/mOEnvLJoMOwsmbNnW2/Q2XiQ7Mu/vUD98U94kt76bSWezRPhnaIgI5jU4O0RGwktmWHpXQrasW0GIAKqGKt1xGq62d6t/G95/dlSL1YSF8E/bpE+v8418W+0LpFxHtx9jmsLcTKE5nMevR1pCZ9658/vLSqfd/VbwWeq5DLCWuk23I+9jZqpCTEbTPRGM5zNVwHXp09aF1/c4nQhGmBZOjY7t7E3t1XZ07PYO7eIT91VnT/zzx05c6lJCiriUc4lXXnrLxXmAzwaTel8Im2EgHSeFUTJZl5O6oMr5MxYT58hjqV1LOX9VirSgjATo14qhzUr9TGy8MneWgMcvBYY4FzMcZKxeJ2k5lqw2hOr7bPmY/uPCNDvl3IN/HfuIos647ZL2YA/zoCRqIi/EzbZIDxJz4xEkwV9cKjNGaVGhzqkHjICAVbbLi5xpgh+iCA2hrfEqjZpN16DiZcXxWUmfVeu75dboz/L/pFDNO6zRbGs+knVSqhanY5nBc/WfKSvMxweckTQlX04gNyxh/ol8YKHL9cGwTGZZbPqUqMv79LEajgvb7OP95VJIPqxkjxIimL2J6+9EXW2d/+Oo39dEqyzmOn0qW/K6OB0ZwoD9Kmy4jPfl7nsoYxSQnu8r2H7+C+NQNDAAA"
 }
 }

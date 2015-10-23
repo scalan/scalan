@@ -282,7 +282,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
   def mkBind[F[_], S, B](a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]
   def unmkBind[F[_], S, B](p: Rep[Free[F, B]]): Option[(Rep[Free[F, S]], Rep[S => Free[F, B]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Frees_Module.dump))
+  registerModule(Frees_Module)
 }
 
 // Seq -----------------------------------
@@ -579,9 +579,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
   }
 }
 
-object Frees_Module {
-  val packageName = "scalan.monads"
-  val name = "Frees"
+object Frees_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAANWXPYwbRRTHn9f2+WwfueNDQSEKd5ycoENgn2hSnERkOzYK8n3oNgVyIqLxeuxs2J3d2xmfbIoUlNAhGgqE0qejoaJAQkIUVBEgUVFQhVBEgVQg3ox312uf13dJyEm4GO3svn3vze/938z69j1Icw/OcYNYhBVtKkhRV9dlLgp6jQlTDDadds+iF2nnw5NfGZuswjVYbMLcdcIvcqsJ2eFFre+G1zrda0CWMINy4XhcwCsNFaFkOJZFDWE6rGTadk+QlkVLDZOLjQakWk57sAc3IdGAJcNhhkcF1asW4Zxy//48lRmZ4Tyr5oNtdxSDleQqSpFVXPaIKTB9jLE0tN+lrj5gDhvYAk74qW27Mi20yZi263giCJFBd9eddjBNMYI34LnGDbJPShiiW9KFZ7Iuvpl3ifE+6dItNJHmKUyYU6tzeeCqebIBOU73ENAl27XUnb4LAFiBN1USxRGfYsinKPkUdOqZxDI/IPLhjuf0BzD8JZIAfRddvH6Ii8ADrbF24aOrxpWHet7W5Mt9mUpGrXAOHS3HqEGVAjl+t/sJv//2rfMa5JqQM3m5xYVHDBEtuU8rTxhzhMo5BEi8LlZrNa5aKkoZbSYkkTUc2yUMPfkoF7BOlmmYQhrLewt+dWLQZ4RLA9NE302E612JWa/STZVY1s7dU2+c/b32rgbaeIgsutRR+F7gVECq7lHqu5bjooBEfcRXTstqKodsfzRmZmQSMnn17h/tb9fhqhaS9AMfrXjoIs1//jF/Z+2CBvNNJfW6RbpNhMlrFrW3varDRBPmnX3qDZ9k9oklr6YWM9OmHdKzhI84yiaJbASsxDalSyW4DdUAiQBAfqjhLYfRQn2n8Jf+/ae3pUQ9WBg+GXbpP+b5v3850RFKvUiUBGyT2NkT8ONp54Yudcemz67eN9+79bFQXBP98f7ebt3AhtpQ7708A3Gwz/zZXNcenPrpCw2ySLJlCpu4hfUjdsdTVDyEJEbDMuJb3KWi57FqNNrySLIvRoC+lAiKpYwEaLQckE5JAc2AH+PAqIcOpPamtk60egLmhvkqB6Huz8QVRSE4udt4wbp34WsN0u9AuoNy5g1It5weawds8cQRtC8qwb3EOFtkSTxihyzVbwVGrGSykeTfmmpxbZLHdLMD2PKJcS5PsMscKClMVGRmN9VnFHh6rHNqXIsT35Le4y5l7f+N+jJ+wlH5xVfyEEnIoXp8mqg8DU0cIa5+IG5MmM6UMB5uurG9Xe8x486lz55fPHPtV3U8z7Udm5hKRaexxT3cwFULn/bPyFE6T8ztEVT+TMV8bInrsyQeJftYPVI53MGj90hKLve4GyRS1ekGB6sYib0G4+tK4kH+H+25vk6OLhYZaIpYgq/L4wY7fVXfjPtCw7QChPkH7eow0ub+ij1Yjeli3f9oQeA3H36+9doPX/6mOjknP3/wQ5CFf8VG53F/Yg/KbqpY+M8qkivikh9EKs9/AehEmQPpDgAA"
 }
 }

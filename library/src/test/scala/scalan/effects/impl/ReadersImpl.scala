@@ -135,7 +135,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   def mkReaderBase[Env, A](run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]]
   def unmkReaderBase[Env, A](p: Rep[Reader[Env, A]]): Option[(Rep[Env => A])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Readers_Module.dump))
+  registerModule(Readers_Module)
 }
 
 // Seq -----------------------------------
@@ -214,9 +214,7 @@ trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
   }
 }
 
-object Readers_Module {
-  val packageName = "scalan.monads"
-  val name = "Readers"
+object Readers_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVWPYwbRRR+3rPPZ/vIBYKCQpTccXJARMQ+0aS4IvJdfBDk+9FtCuREoPHu2NmwO7M3M7ZsihSU0CEaCoTSp6OhokNCFFQRIFFRUIVQREAqEG9m/3wn7xFAuBjNzL59P9/3vee99xBKUsCL0iE+YY2AKtKwzb4lVd1uM+WpyTZ3hz69Svvvnf7c2WYb0oKlLszfIvKq9LtQiTbtcZjubXrQgQphDpWKC6nghY6J0HS471NHeZw1vSAYKtLzabPjSbXegWKPu5MDuAOFDpx0OHMEVdTe9ImUVMb3C1Rn5KXnijlPdsMsBmvqKppTVVwXxFOYPsY4Gdnv09CeMM4mgYITcWq7oU4LbcpeEHKhkhBldHeLu8mxyAhewDOd22REmhhi0LSV8NgA36yFxHmHDOgOmmjzIiYsqd+/PgnNea4DVUkPEKBrQeibm3EIAMjAqyaJRoZPI8WnofGp21R4xPfeJfrhnuDjCUS/whzAOEQXr/yNi8QDbTO3/v5N58ZjuxZY+uWxTqVsKpxHR8s5ajBUII5f7X8oH71297IF1S5UPdnqSSWIo6Ypj9GqEca4MjmnABIxQLZW89gyUVpoc0QSFYcHIWHoKYZyEXnyPcdT2ljfLcbs5EBfViFNTAvjsJDWu5JTr9HNJvH9vQdnLl34uf2mBdbhEBV0aaPwReJUwfw+JS4VsXO9LimYa7NRhjFeFFrmqJfKOFvLx2ST4vLSg1/cL9fgppWiGQd/MgLRRUl+/23t/stXLFjoGrlv+WTQRUBl26fBrtjkTHVhgY+oiJ6UR8TXu5mEll3aJ0NfxTBP4zOH+ChYyW3MkGrw1k0TFBIAapGOdzij9a29+u/21x/d0zIVsBg9iTr1T+/yHz+c6CujYIRYDFkKN/Z3Csb5PHZDujVkzv1rH59aOvf2j4bbeZcHxDMCO9uBksDuNqWcjcH9h1RWo3xtHtCnVx95b939QBnSCuPDA2S3dxs7dt28d/4Y/pJB9lt3zfr1zHefWlBBmnqeCkhYX3vC9vsfWwpSJLJlGbk5FfXEBpF0czricgbkc1MN83whUYMxUlDEkTVK8C5qjea0VwT/bCcWbR3jYgaLCqpZ3sZJqqlz+ZpCOE7vd571H175woLSG1DqY99IFFOPD5mb4Ix/b4qO1UZyVziMM+JKBAlSXM1vBTLMjupwY5bJjJqmir4ER0BEYR2++U+jLO6CzPRiHDVHI0tRsBn6yIbqNAm5Vf87YPT6emYTG5ZjBBQ8lTDOGXFlXJCA1Rwh2HGfIKZ3Hn+yc/Gbz34yA6aqOw4HG0s/LzLa0wEeA1vZNrHwa2EqWxSv7kGT6V+6KQ2ovQkAAA=="
 }
 }

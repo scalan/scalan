@@ -200,7 +200,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
   def mkCString(wrappedValue: Rep[String]): Rep[CString]
   def unmkCString(p: Rep[AString]): Option[(Rep[String])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(AbstractStrings_Module.dump))
+  registerModule(AbstractStrings_Module)
 }
 
 // Seq -----------------------------------
@@ -313,9 +313,7 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
   }
 }
 
-object AbstractStrings_Module {
-  val packageName = "scalan.primitives"
-  val name = "AbstractStrings"
+object AbstractStrings_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVVTWwbRRR+Xjtx/KMmjQRSciG4JggEdoSEeggSMq6LkNwk6haETIU0Xk/cKbOzk51JsDn0wBFuiCtCvffGBQmJC0JCHDghQOLMqYBQBfRUxJvZH6/dbptL9zCanzfvve/73pu99QcsqRC2lUc4ES2fatJy7byjdNPtCc309FIwOub0Aj388MkvvUviNeXA6gCWrxF1QfEBVKJJbyLTuUuP+lAhwqNKB6HS8HTfRmh7AefU0ywQbeb7x5oMOW33mdK7fSgNg9H0CG5AoQ9rXiC8kGrqdjlRiqp4f4WajFi6rtj1dF/OYoi2QdHOoLgSEqYxfYyxFtlfptKdikBMfQ1n4tT2pUkLbcrMl0GokxBldHctGCXLkiC4Aev96+SEtDHEuO3qkIkx3qxJ4r1HxnQPTYx5CRNWlB9emUq7LvahqugREvSGL7ndmUgAQAVeskm0Zvy0Un5ahp+mS0NGOPuAmMODMJhMIfoKRYCJRBcvPMJF4oH2xKj50VXvnbtuzXfM5YlJpWwRLqOjp3KqwUqBPH53+RN15/Wb5x2oDqDKVGeodEg8nZU8ZqtGhAi0zTklkIRjVKuRp5aN0kGbhZKoeIEviUBPMZV11Ikzj2ljbPbqsTo51Je1pIlpYSILKd6tHLy2brqE84PbGy8+83vvbQec+RAVdOli4YeJUw3lTlQOllIzVGJ28+OkiJ+9/efo2x246qQ8xW5PJw26WFK//FT78blXHVgZ2EK+yMl4gFSpHqf+ftgNhB7ASnBCw+ikfEK4mT1QqvKIHpJjrmMCs8iLiFzDVm7LSWpo2bXlXUgIqEUVuhcI2rx40PzX/f7TW6YAQ6hHJ1EP/sfO3/v1zKG2tamh/n5IpKSjtwg/jhp/VUMRWzhl5VyegJIehMzHB+OEvvzNV2/+9fXektVwPQZmXc70KmUxmtBOo6FheWYQaTlTtBql7QY+Pdu4w969+bG22hUm8y/E/vA6tuSuvbfxEBmTl+qfwY7z98bPnztQQbWGTPtENndO2V+PsWcgrerZsIk8rbkRR91suM3Zq7Jup9gc7ozLzHEt6cVY3Nwesr4ytk+k1WU9PrJWzLB1v5BmPGfH7VyE3VMi7C4ijAJlkt6GebRFFPxU+ON07895/na9N0mz3HkY7nmAnVyAC6/a5kJar8xvIgmryR8huoSv/dm44GXSjioGEEIjpxfcuBKRnRt3P9t7/ocvfrO9WzU1jS+ISP/Q2Z6dp2J9IRH882aS11Ay5W7T/x9Ylgs0CQkAAA=="
 }
 }

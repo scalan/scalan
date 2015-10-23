@@ -275,7 +275,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   def mkCentered(center: Rep[Int], radius: Rep[Int]): Rep[Centered]
   def unmkCentered(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Segments_Module.dump))
+  registerModule(Segments_Module)
 }
 
 // Seq -----------------------------------
@@ -588,9 +588,7 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
   }
 }
 
-object Segments_Module {
-  val packageName = "scalan.common"
-  val name = "Segments"
+object Segments_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVWTWwbRRQerxM7tkOaRAIpuRCCoYW2doSEesgBBddFldwk6haE3AppvDtxpszObmbGkc2hB45wQ1wR6r03LkhIXBAS4sAJARJnTgWEKmhPoL6ZnV2v0yyxqtaH0ezM2/fzfe976zt/oFkp0MvSwwzzRkAUbrhmvyVV3W1zRdXoSugPGLlI9j587kvvCn9TOuhUF5X2sbwoWRdV4k17GKV7lxx0UAVzj0gVCqnQCx0ToemFjBFP0ZA3aRAMFO4x0uxQqTY7aKYX+qMDdAsVOmjRC7kniCJui2EpibTnc0RnRNPninke7UTjGLypq2hmqrgmMFWQPsRYjO2vksgd8ZCPAoUWbGo7kU4LbMo0iEKhkhBlcLcf+snjDMdwgJY7N/EhbkKIftNVgvI+vFmLsPc+7pNtMNHmM5CwJGzv2igyz8UOqkpyAABdDiJmToYRQggYeM0k0Rjj00jxaWh86i4RFDP6AdaXuyIcjlD8KxQRGkbg4twJLhIPpM39+kc3vOsP3Frg6JeHOpWyqbAEjp7P6QZDBeD43dVP5L23bl9wULWLqlRu9aQS2FNZyi1aNcx5qEzOKYBY9IGt9Ty2TJQtsDnSEhUvDCLMwZOFch54YtSjShvrs3nLTg70ZRWRxLQwjAppvWs59Zq+aWHGdu+unH/p9/a7DnImQ1TApQuNLxKnCpVd0g+gywykeqlYdPPjpBWfvvun/+0GuuGkOFm301EDLmblLz/VfnzlDQfNdU0jX2K43wWoZJuRYEe0Qq66aC48JCK+KR9ipnfHUlX2yR4eMGUBzFZehMoVWsuVXEQ0LJumvQsJALW4Q7dDTuqXduv33e8/vaMbUKD5+CbW4H/0wr+/Luwp05sKBpTCVo6nFCqCdlM4XsxjLiK7ggYwKQ7J69989fZfX2/PGvKWbUXvYDYgsW5tQePidMzCBkS6HLNYGZp4z6aV6GUV7gn3H81KL2tj3sfsV+MS3TAgS+v36Hu3P1aG58Jwcprs9G6CfDfNeyv/Q3ky1f7pbjh/r/z8uYMqwGyPqgBH9Y0ptfgU9YVSrMbLKkC7BLASAW3XysZbHY+gZbNVaC4xPHJfS5Rrsc9VnHGWsX2EwbzOynB4/IslRnhf7U/Nvl7PmPVsHiwLLmBNTsJk1lg9NUBKHtGYPw4iAvt0IJ8kIkstkwzxT2yUxHB8n0m1ZKNMYlQE5UyFmk146qwXrZtjkj7ydVg9Eun65KEuzFrD5/IZOwVApIHV7xkYDus5w8G10oQqbz34bPvVH774zcy/qhY5jF+e/r3Jzr1JQGpJdPi/kklVoRktfJPsQ7OM1Ys/CgAA"
 }
 }

@@ -206,7 +206,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
   def mkWriteFile(fileName: Rep[String], lines: Rep[List[String]]): Rep[WriteFile]
   def unmkWriteFile(p: Rep[IO[Unit]]): Option[(Rep[String], Rep[List[String]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(IOs_Module.dump))
+  registerModule(IOs_Module)
 }
 
 // Seq -----------------------------------
@@ -330,9 +330,7 @@ trait IOsExp extends IOsDsl with scalan.ScalanExp {
   }
 }
 
-object IOs_Module {
-  val packageName = "scalan.examples"
-  val name = "IOs"
+object IOs_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVWTWwbRRR+Xsd2bEdNG6GgIlWkxhBagR0hoR5yqNLUQUFuHGVbikyFNF6P3Smzs5udcbTm0ANHuCGuCPXeGxckpF4QEuLACQESZ06lCFWFnkB9O/vjdeINubCH0c7sm/fzve972vuPoCA9eEVahBPRsKkiDVO/b0hVN1tCMTW+5vRHnF6lg4+Wv7KuiSvSgMUuFG8TeVXyLpTDl5bvJu8m3W9DmQiLSuV4UsH5to7QtBzOqaWYI5rMtkeK9DhttplU622Y6zn98T7chVwbTluOsDyqqLnJiZRURufzNMiIJfuy3o877iSGaAZVNFNVXPcIU5g+xjgd2u9R1xwLR4xtBaei1DpukBbalJjtOp6KQ5TQ3W2nH2/nBMEDWGrfIQekiSGGTVN5TAzxZtUl1gdkSHfQJDCfw4Ql5YPrY1fv822oSLqPAG3bLtcnvgsA2IE3dBKNCT6NBJ9GgE/dpB4jnH1Igo+7nuOPIXxyeQDfRRev/YeL2ANtiX7941vWe0/Nqm0El/0glZKusIiOXsxgg24F4vjd3qfy8Vv3LhlQ6UKFyY2eVB6xVLrlEVpVIoSjdM4JgMQbYrdqWd3SUTbQ5hAlypZju0SgpwjKBewTZxZTgXFwthB1JwP6knJpbJrz3VxS70pGvZo3m4Tz3YdnX3/599a7BhjTIcro0kTie7FTBcZ2J3IcrIsKzRD7JNZLWbFcuusxG7l9QN/85usbfz7YKehwS306ICOu3iF8REOmRcEniei4tZqC4sSg7B9eS8eUmoC++vCP/rdrcMtIWhVVdjJ2oIuC/OWn6o8XLhsw39Va2uJk2MVuyRandsfbdITqwrxzQL3wS+mA8OBtJltKUflRD9Pg5xF8BSuZqndp0Jl1rbBcDEA1FMmOI2h9a7f+t/n9Z/cDDXiwEH4Jx8C/7NI/v54aKC0PBfMDxrWq46bmcYKEiATL87OgroT+TMemZ2qP2fv3PlEa1Jw/PT06vTso13V97/wx+MZT7K/umvHk7M9fGFBGGHtM2cStr51Qe/+jnkAXPr3UELsze5T0txC/zXS82mTkvKBfEeTY8ND3am5aUNMKW8aDVy+gzG4Ipo72QQdImZ9LyKCjnLS1s+8WOBNUHr04Q/ozaZJOclWvF7NQXLrpMUVPAmM5sZwYpIooRnGmM80jsY5DGQ9yGylXR2o4cSHV7c6MCsLBqffJoDmXPSqRdst77ef4o8sPDCi8DYUBzg/ZhkLPGYl+zGf8h1DUV1fis9w0n5G/xCN2wl/9rMAkqcya29PIomEe0VKwGGVMfYJSipixiqXUMkoxI0Uh+neffr5z8Ycvf9NDvxJoE0eUSP5C0sN+ui9FDI1/FKlEkXiBVHWSzwAxoWhf4QkAAA=="
 }
 }

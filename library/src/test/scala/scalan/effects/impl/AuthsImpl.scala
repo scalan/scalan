@@ -207,7 +207,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
   def mkHasPermission(user: Rep[String], password: Rep[String]): Rep[HasPermission]
   def unmkHasPermission(p: Rep[Auth[Boolean]]): Option[(Rep[String], Rep[String])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Authentications_Module.dump))
+  registerModule(Authentications_Module)
 }
 
 // Seq -----------------------------------
@@ -343,9 +343,7 @@ trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
   }
 }
 
-object Authentications_Module {
-  val packageName = "scalan.examples"
-  val name = "Authentications"
+object Authentications_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAAL1WTWwbRRQer+M4ttOmRCioSBWpMSBQsSMk1EMOlZO6/Mh1rGxBlamQxuuxM2V2ZjMzDmsOPXCEG+KKUO+9cUFC6gUhIQ6cECBx5lSKUAX0BOqb2R//JE5zgT2MZt++eT/f997buXMf5ZREzysPM8yrPtG46tp9XemK2+Ca6tFV0Rsycpn0P1z70rvKt5SDVjpocQ+ry4p1UCHaNMIg3btkv4kKmHtEaSGVRueb1kPNE4wRT1PBa9T3hxp3Gak1qdKbTbTQFb3RPrqFMk10xhPck0QTd5thpYiK5UvERETT94J9H+0EYx+8ZrKoTWRxTWKqIXzwcSbS3yWBO+KCj3yNTseh7QQmLNDJUz8QUicu8mBuT/SS1wWOQYBWmzfxAa6Bi0HN1ZLyAZwsBdh7Dw9IC1SM+gIErAjrXxsF9j3bREVF9gGgN/yAWUkYIISAgVdsENUxPtUUn6rBp+ISSTGjH2DzsS1FOELRk8kiFAZg4sJjTCQWSIP3Kh/d8N556JZ8xxwOTSh5m+EiGHpmTjVYKgDHb3c/UQ9eu33RQcUOKlJV7yotsacnKY/RKmHOhbYxpwBiOQC2yvPYsl7qoDNTEgVP+AHmYCmGchl4YtSj2igb2XLMzhzo8zogiWomDDJpvutz8rV1s40Za987+/JzvzWuO8iZdlEAky4UvkyMarRQH+q92LRZVzTKu1FtpQ6fnecwIG1JfSjwA/Lq11+99cfdVs76XO2RPh4y/TZmQxKVWxzBOBrj3CmXNVocKxTC2TV/TL4p8i/c+733zQa64aR8xemdrETARE79/GPphxcvOWipYxvqCsODDlCmGoz4O3JbcN1BS+KAyOhL/gAzszuyZPJx+jGRkwxkgQGN1ue2fkAMPZu2zTIJAKWoU1qCk8qVduVv97tP75hGkGg5+hLx9S+9+M8vp/va9ggwO1REJpxmYYREaJjlqQhgKziXejIL8LEUACbvC9k79uw0RcUoDlf45InyA/ru7Y+1JSMTTo+ene5N6PVNe+78MbwkI/Cvzobz59mfPndQAeDvUu3joLJxwsb9D5sRpYCNl3JghrMYUL496aw8HlZP261GOas187GUme7C2cZcg3N9zBSUT35LCEYwP8yE9TJx6BC5/19RmPWCXWvz0Fp7Has2kT5VCsB6HGqnprTHShNhL8b+ppHMQiEdjy2IMvUJY4eyOXFKp4zlIzJJJq2VpGPp3PzBCsW2ttt8kt2/dNdBuTeBe5g2qolyXTHkvaSK4dqhSai3EllmuoqharHEflq19llH47Dm5t2axhcUV0z45jriRV0Gkjh6EmJoJqJifCQkeHRabtxTwMeth5+1Xvr+i1/t76JouhOGG08vMZO/iWmeVmfCgMvJRAKAsmlcG/wjz6+u9iwKAAA="
 }
 }

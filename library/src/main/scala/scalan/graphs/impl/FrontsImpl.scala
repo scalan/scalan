@@ -349,7 +349,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
   def mkMapBasedFront(mmap: Rep[MMap[Int, Unit]]): Rep[MapBasedFront]
   def unmkMapBasedFront(p: Rep[Front]): Option[(Rep[MMap[Int, Unit]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Fronts_Module.dump))
+  registerModule(Fronts_Module)
 }
 
 // Seq -----------------------------------
@@ -718,9 +718,7 @@ trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
   }
 }
 
-object Fronts_Module {
-  val packageName = "scalan.graphs"
-  val name = "Fronts"
+object Fronts_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAAN1WTWwbRRQerx07a6dJMaIiuVBS81NEbQsJ9ZADSlwHVXLiqNuiylRIk/XEmbI7u5mZRDaHHjjCDXHgglDvvXFBQuKCkBAHTgiQOHMqIFQVegL1zex412uyxRwCEj6sZmee3/ve930zs3d+RnOCo2eFiz3M6j6RuO7o8bqQNafNJJWjraB/6JFLZO/tM5+4W2xDWGiph4r7WFwSXg/Z0aA9DOOxQw46yMbMJUIGXEj0dEdXaLiB5xFX0oA1qO8fSrzrkUaHCrnWQYXdoD86QLdQroNOuwFzOZHEaXlYCCLM/DxRiGj8buv3UTdMarCG6qIx0cVVjqkE+FDjdBR/hYTOiAVs5Eu0aKB1QwULYkrUDwMuxyVKkG4/6I9fCwzDBKp2buIj3IASg4YjOWUD+GclxO6beEC2IUSFFwCwIN7e1VGo3/MdVBbkAAi67IeenhmGCCFQ4CUNop7wU4/5qSt+ag7hFHv0LawWd3gwHKHol8sjNAwhxYt/k2KcgbRZv/bODff1B07Ft9SfhwpKSXdYhERPZbhBSwE8fnnlPXHv1dsXLVTuoTIV67tCcuzKSckNWxXMWCA15phAzAeg1mqWWrrKOsRMWcJ2Az/EDDIZKhdAJ4+6VKpgNbdg1MmgviRDMg7NDcNc3O/ZjH61b1rY83buLl945qf2dQtZ6RI2pHTA+HycVKK5TR4wqQlVD9twm10l7ve5u7/0v2iiG1bMkkk6mzCQYk58/23lm/OvWGi+p2286eFBD4gSbY/4Xd4CZD00HxwRHq2UjrCnRscKVeqTPXzoSUPfZN956Fuis5kbLiSKlDVt7tyYgErkz+2AkdrmTu1356v37yj7cbQQrUQ78E968Y8fFvekdqZEeUGirbgEY9i3hgwz83grdnsXulrnHI9ius5l6RqSHU59OEeOyMuff3rt18+257S0VdPxa9g7JNGuNg0nzStMuSZguRypHAlsD3XVJ+J+1WNFgoGpFNnwixsUtuW0WxLPlCNinMAnj63eo2/cfldqd+SG6ROou3sTSFjT/1t+hFHGJ+FvvaZ1f/m7jyxkgx8Ao4/DWnPG/XuCexKl6VlsmVtAG7yZXjx2oxnqEglAreoGFkQHtybRriSHXlUPJbLjyKmASm6G2ibXRORf7PBoM1fTZlZndhSgHudO2GzqeUE/myejgmpnNhXiyP9EhXKiwv+H/SeTpmbSYGkq/oSUKPhw8GRzVtjaMsuRCHq4KpH1/HlYvMaonO763+LzDABTh0V/JjZPpaKToAk7FY8Fm4ez+h8iTLWeBh6jX8xCnfp+WZmq8kF6Evoq6lj4mDtl7psBx+G+MBA4Ws24hhxzCUB3tx58uP3C1x//qO/fsrpO4POAxR/fk/dumgg7qg3f0hMwwRXqgtFAHwKhZ94j2wwAAA=="
 }
 }

@@ -354,7 +354,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   def mkDiagonalMatrix[T](diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]]
   def unmkDiagonalMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[T]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Matrices_Module.dump))
+  registerModule(Matrices_Module)
 }
 
 // Seq -----------------------------------
@@ -1895,9 +1895,7 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   }
 }
 
-object Matrices_Module {
-  val packageName = "scalan.linalgebra"
-  val name = "Matrices"
+object Matrices_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAAM1XS2wbRRieXcdxbEdJG5U2lYgIwYBANA4g1EMOVeokKMh5KBsqZCqk8XriTpmd3eyMg82hB45wQ1wR6r03LkhIvSAkxIETAiTEkVNphSqgJxD/zD6869hJG0xUH0a78/gf3/f9439v3UVZ4aPnhI0Z5vMOkXje0s9LQpasFS6p7Ky7jRYjy2T3g7Nf2Ov8sjDRZA2NXsNiWbAaygcPK20vfrbIXhXlMbeJkK4vJHq6qj2UbZcxYkvq8jJ1nJbEdUbKVSrkYhWN1N1GZw/dQEYVnbJdbvtEEqvCsBBEhPNjREVE4/e8fu9sel0fvKyyKCey2PExlRA++DgV7N8mntXhLu84Ek2EoW16KizYk6OO5/oycpEDc9fcRvQ6wjFMoKnqdbyPy+CiWbakT3kTThY9bL+Lm2QDtqjtIxCwIGx3p+Pp90wVFQTZA4DWHI/pmbaHEAIGXtFBzHfxmY/xmVf4lCziU8zo+1gtbvluu4OCn5FBqO2BiZeOMBFZICu8Ufrwqv32A6vomOpwW4WS0xmOgqGnBqhBUwE4frP9sbj/+s2LJirUUIGKpbqQPrZlkvIQrSLm3JU65hhA7DeBrblBbGkvS7CnRxJ523U8zMFSCOU48MSoTaXarObGQ3YGQJ+THom2Gm3PiPOdHZCv1k0FM7Z15/yFZ39bectEZtpFHkxaIHw/MgpyitBYxyCLduhEjZMSGTsaaTXk290xd0gQMRzP37nX+HoBXTVjEEOfD8cbmMiKn34ofv/CJRON1bTKVxlu1gBHscKIs+lXXC5raMzdJ36wktvHTD315THXILu4xWSIbhKWDMAi0ezAevSIwmxRa9+IACgG8t1wOSmtbpX+sr795JZSp4/Gg5WgQP+hF//+eWJXauFKNOY7VzBrERFBnIHaToNeqMQVcSQbemk6DksNM2CBtxww0nJ4Pzc+emaQgDyy5VMHLqx98tpXX775++2NrNbQVIidDj24PkLoujCq7IwF8LTGZT/BFAJULNchp+fu03dufiS1NIx2+nbarF+H5Bf1uScPUUl0S/5ZWzD/OP/jZybKgxjqVDrYKy08ZG3/j/WK0uRNVMJ/CK3ul9OLk8uECwLSDaswwXO05Vy6TivJYBOSyHV1AHxM99hNnZrp3qJPJMKZNnrUZJKdKIgRVXhHirJ/PjOx/GYGyw/wO7tdPcPuXrptouwbKLsL5SyqKFt3W7wREQN/tpK05eVozkgTA0RgHzsxEfo3i7o590StNxaNHr6OdS8eALO3NEd8973j1H4czhVYDTV9VDjHuh7UcKF/Ygt6fPVRhD2hFKdoGq6uz6XNnpSs+2Qzkzi29ngpjcowqb5KOxjXsXXS/3QOTm/3FftwJVaERTHke/NMwuZJias3j8dXWRMNipsux2yYncwwLpvlMK4hXzZpsyd22RzM5tEkkUh9tC+YGeie/rtgkpAdwlxRdUqr2KGs00tb2ml/VaYZOYTGAIqDHzbHxU+Nv3T3hBvHtFHVX6LTYTfDKHDVJHUfhyj4aG5Ao2OFjSPgf+PBpxsvfvf5r7rNLqgWFL4nePwxn2yv06hNBfYgd6fFqezAR3oidpCZ6k513P8CAWcH/zQRAAA="
 }
 }

@@ -284,7 +284,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
   def mkHalt[F[_], O](err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]]
   def unmkHalt[F[_], O](p: Rep[Process[F, O]]): Option[(Rep[Throwable])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Processes_Module.dump))
+  registerModule(Processes_Module)
 }
 
 // Seq -----------------------------------
@@ -482,9 +482,7 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
   }
 }
 
-object Processes_Module {
-  val packageName = "scalan.stream"
-  val name = "Processes"
+object Processes_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAANVXTWwbRRR+XttxbKdJ+FFRW7UJkQsCgR0hpB4itXJTG4rcOMrmgEyhGq8nzpb9y8w4tTn0wBFuiAsHhHrvjQsnbkgICU4VIHHiwKmUQwX0BOqb8e56/bNORAsRPox2Zt++9+b7vvdmfPsepDmD57hBLOIUbSpIUVfPZS4KesURpuhdcVsdi16iO+8f/8K44lzkGiw0YGaX8EvcakC2/1DpeuGzTvdqkCWOQblwGRfwbE1FKBmuZVFDmK5TMm27I0jToqWaycVaDVJNt9Xbg5uQqMGi4ToGo4Lq6xbhnHJ/fZbKjMxwnlXzXt0bxHBKchelyC62GTEFpo8xFvv2W9TTe47r9GwB835qdU+mhTYZ0/ZcJoIQGXS367aCacohuABP1q6TfVLCEO2SLpjptPHLvEeMd0mbbqCJNE9hwpxaO9s9T82TNchxuocAXbY9S610PQBABl5RSRQH+BRDfIoSn4JOmUks8z0iX24yt9uD/i+RBOh66OKlA1wEHmjFaRU+uGq89UDP25r8uCtTyagdzqCjpRg1KCoQx6+3PuL3X7t1ToNcA3ImLze5YMQQUcp9tPLEcVyhcg4BJKyNbK3EsaWilNFmRBJZw7U94qAnH8o55MkyDVNIY7k257MTA31GeDQwTXS9RLjf5Zj9Kt2sE8vavHvi5bO/Vt7UQBsOkUWXOgqfBU4FZJAbxID73uW4ICBRHUAsp3U1lUO2OxgzU5IJYXn+7m+tr1bhqhaC6cc+HH/oIs1//D5/54ULGsw2lNqrFmk3EE9esahdZ+uuIxow6+5T1n+T2SeWfJrIZ6ZFd0jHEj7KUXiSCI+A5di69KjEbk3VQCIAIN+X8Ybr0EJ1s/Cn/s3Ht6VKGcz13/QL9W/z3F8/ze8IJWABSUb3AnSTWN6j8I/My2P4q1cnw0TksCQgxaixP8EvgzNxovFoteMYdy5/8tTC6Ws/K8nMtFybmEq3p2qQZtg0FESnfNLQd6rQJGw4yez2LnNvyPId1k4092DxUVQ30F6uD7Du2vSJlfvmO7c+FEplie5ww6s3r2OHWVPfnZkiuKDx/tFY1X4/8cNnGmRRV01T2MQrrB6yXfyLLQBCPAbDEoppvnxDVn402NIAyWciIJ9MjAhGo+WQUllNU3QX56A+zUH9YAdGNXQgK3miJKLsC0ir/arvQ32fjtc3Inh8q/a0de/Clxqk34D0DvYGjsJuuh2nFVCDJ7igXXExWEsMU4NUEEbskAr1W4YB1iNV+/ZEi2ujcEw2Kw/Ym2wwBms+MYzbo7X1MdmM9ZldSlpT+tc47WMeBDGteA+Po0HI8bway3GVc6xi/+PC+e91n5LZRmUfL5ADpCiH5uG0eNRSS1LG4nQih1enOD6I/deJ9T9iX2Z7lOxHjGd8YIfTTuLZ+djL+NBsLvqxJhAauecePYBy/HbYFxpm/fzwfgHH/LMM/6ZQ/8g5j0fcSswRp/uXBkT/5oNPN1787vNf1DUuJ68feC11wv+GgwOtO9Jv58Lw+G8vkjLKTt5JVLoPAVB50Th9DwAA"
 }
 }

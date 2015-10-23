@@ -1,13 +1,10 @@
 package scalan.meta
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectOutputStream}
-import java.util.zip.{GZIPInputStream, GZIPOutputStream}
-
 import scala.annotation.tailrec
 import scalan.meta.Base.!!!
 import scalan.meta.PrintExtensions._
 import scalan.meta.ScalanAst._
-import scalan.util.{ScalaNameUtil, StringUtil, ThreadContextClassLoaderObjectInputStream}
+import scalan.util.{Serialization, ScalaNameUtil, StringUtil}
 
 object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
@@ -72,39 +69,6 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
   case class ConcreteClassTemplateData(m: SEntityModuleDef, c: SClassDef) extends TemplateData(m, c) {
     val elemTypeDecl = name + "Elem" + tpeArgsDecl
     val elemTypeUse = name + "Elem" + tpeArgsUse
-  }
-
-  def serialize(obj: Any): String = {
-    val bos = new ByteArrayOutputStream()
-    try {
-      val gzip = new GZIPOutputStream(bos)
-      try {
-        val objOut = new ObjectOutputStream(gzip)
-        try {
-          objOut.writeObject(obj)
-          objOut.close()
-          val str = javax.xml.bind.DatatypeConverter.printBase64Binary(bos.toByteArray)
-          str
-        } finally objOut.close()
-      } finally gzip.close()
-    } finally bos.close()
-  }
-
-  def loadModule(obj: String): SEntityModuleDef = {
-    val bytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(obj)
-    val bis = new ByteArrayInputStream(bytes)
-    try {
-      val gzip = new GZIPInputStream(bis)
-      try {
-        // required instead of ObjectInputStream to work correctly from SBT, see
-        // www.scala-sbt.org/0.13/docs/Running-Project-Code.html
-        val objIn = new ThreadContextClassLoaderObjectInputStream(gzip)
-        try {
-          val module = objIn.readObject().asInstanceOf[SEntityModuleDef]
-          module
-        } finally objIn.close()
-      } finally gzip.close()
-    } finally bis.close()
   }
 
   class EntityFileGenerator(module: SEntityModuleDef, config: CodegenConfig) {
@@ -723,7 +687,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |
        |${concreteClasses.mkString("\n\n")}
        |
-       |  registerModule(scalan.meta.ScalanCodegen.loadModule(${module.name}_Module.dump))
+       |  registerModule(${module.name}_Module)
        |}
        |""".stripAndTrim
     }
@@ -1105,10 +1069,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
     def emitModuleSerialization = {
       s"""
-       |object ${module.name + "_"}Module {
-       |  val packageName = "${module.packageName}"
-       |  val name = "${module.name}"
-       |  val dump = "${serialize(module.clean)}"
+       |object ${module.name}_Module extends scalan.ModuleInfo {
+       |  val dump = "${Serialization.save(module.clean)}"
        |}
        """.stripMargin
     }

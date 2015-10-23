@@ -134,7 +134,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   def mkCoproductImpl[F[_], G[_], A](run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]]
   def unmkCoproductImpl[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]): Option[(Rep[Either[F[A], G[A]]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Coproducts_Module.dump))
+  registerModule(Coproducts_Module)
 }
 
 // Seq -----------------------------------
@@ -202,9 +202,7 @@ trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
   }
 }
 
-object Coproducts_Module {
-  val packageName = "scalan.monads"
-  val name = "Coproducts"
+object Coproducts_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVWPYwbRRR+Xp/PZ/tIQoROOgnE3cmAQGCfQCLFFZHj+CyQ70e3kYhMRDRej30bdmf3ZsanNUUKSugQLULp09FQ0SEhCioESNRUIRQRkArEm/H+Gtt3SGSL0c7s2++9+b73ze79h1AQHF4UFnEIq7lUkpqp7xtCVs0Wk7Yc73n9kUOv08GHa19ae+yaMOBiF5aPibgunC6UJjetwI/vTXrSgRJhFhXS40LCZkdnqFue41BL2h6r2647kqTn0HrHFnKnA0s9rz8+gbuQ68Aly2MWp5KaTYcIQUW4vkJVRXY8L+n5+MBPcrC62kU9tYsbnNgSy8cclybxR9Q3x8xjY1fChbC0A1+VhTFF2/U9LqMURYQ79vrRdIkRXIDLnTvklNQxxbBuSm6zIb5Z8Yn1PhnSfQxR4UtYsKDO4MbY1/N8B8qCniBBb7m+o1cCHwBQgdd1EbWEn1rMT03xUzUpt4ljf0DUw0PuBWOYXLk8QOAjxKtnQEQItMX61Y9uWe8+NiuuoV4OVClFvcNlBHp+TjdoKZDHb44+EY/a964YUO5C2RaNnpCcWDItechWhTDmSV1zTCDhQ1Rra55aOksDY6ZaomR5rk8YIoVUrqJOjm3ZUgWrtdVQnTnUF6VPo9Bc4Ofi/W7M2a/umyZxnMMH66+98GvrpgFGNkUJIU1sfB6BSig1PZ+jYSwZ4qvxooTcbkKymraz04aeqqEUJGNxQXUxTy89+K3/9TbcMmJ2w2LOJyhCFMRPP1S+f/mqAStd3f67Dhl2kWDRcqh7wJsek11Y8U4pnzwpnhJH3c0UuNinAzJyZEh7mq888iVhY65RfarI3NGmyEUEVCZ9ve8xWt09rP5pfvvpfdW2HFYnTybO/du+8tfPFwZSd7SEPB+xiN08+j2rxnLLlseUT0s0NU+Lkgi3IGj2qDZRnpRqei59euuR/d69j6XWKxdkz5KD3h00745+b2OBdNGZ9kd32/h9/cfPDSihQj1busSvbp/TiU/QXRCzkgybKMtabA91BDbTSTcTR6ynOH42F/WCDpJgWLsR+UuqM2f6LCXaDID2IoD22QC0EQMoh5zZERKeyuxb48T2fG6exprRtaPOM87Dq18ZUHgbCgN0nehAoeeNWD+SCj+WkgbyWrSWy0qF0hBO3FgafW1AwvlU6x/NjLg9TcvssPZiIDW8cz6kf9OYgn4TsqTn0QvZlf/1IA6NnIS+EVYxp80vx8lntHjmK5FuhflcnCHPf2D1SeqjxttZLAwsJ0KgD6Je9xjpi5BKDltzLGCGhwyqe/fxZ/uvfPfFL/ojXFbHFX4QWPybljR8MHXWl/Z0LvzrShWMzlUHmC72H/cLHqkFCwAA"
 }
 }

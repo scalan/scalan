@@ -353,7 +353,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
   def mkSparseVector1[T](nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]]
   def unmkSparseVector1[T](p: Rep[AbstractVector[T]]): Option[(Rep[Collection[(Int, T)]], Rep[Int])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Vectors_Module.dump))
+  registerModule(Vectors_Module)
 }
 
 // Seq -----------------------------------
@@ -1870,9 +1870,7 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
   }
 }
 
-object Vectors_Module {
-  val packageName = "scalan.linalgebra"
-  val name = "Vectors"
+object Vectors_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAAOVXTWwbRRSe3dhxbKdpG7WBSkSEYKioIE4RqIccSuokEOQmUdZUYKpK4/XEmTI7u9kZRzaHCnFCcENcEeq9Ny5IlXpBSIgDJwRIPfdUilDVUnEA8Wb2x+vYTlKgVST2MNqft++9+b7vvX177Q5KCx89L2zMMJ9xiMQzlj6fF7JgLXJJZfu8W28yskA2Ppz4yj7PzwkTHa6i4U0sFgSromxwstjy4nOLbJVRFnObCOn6QqJnyjpC0XYZI7akLi9Sx2lKXGOkWKZCzpVRqubW21voCjLK6IjtctsnklglhoUgIrw/QlRGNL7O6uv2qteJwYtqF8XELio+phLShxhHAvt14llt7vK2I9FYmNqqp9ICmwx1PNeXUYgMuNt069FlimO4gcbLl/E2LkKIRtGSPuUNeDPvYfs93CArYKLMU5CwIGyj0vb09VAZ5QTZAoCWHY/pOy0PIQQMvKyTmOngMxPjM6PwKVjEp5jR97F6uOa7rTYKDmMIoZYHLl7cw0XkgSzyeuHji/a7D6y8Y6qXWyqVjN7hMDh6eoAaNBWA47frn4q7r189Y6JcFeWomK8J6WNbJikP0cpjzl2pc44BxH4D2JoexJaOMg82OySRtV3Hwxw8hVCOAk+M2lQqY3VvNGRnAPQZ6ZHI1Gh5RrzfqQH71bopYcbWbp946blfFt82kdkdIgsuLRC+HzkFOUVoXAASQiCG9XpYIqOikVZLttVZM7skEcNx8vav9W9m0UUzBjGMuT/ewEVa/Pxj/ocXzppopKpVvsRwowo4ikVGnFW/5HJZRSPuNvGDJ5ltzNRZXx4zdbKBm0yG6CZhGQJYJJoaWI8eUZjNae0bEQD5QL4rLieFpbXC79Z3n11T6vTRaPAkKNC/6Jk/b45tSC1cidJUEkdE+A5BYXcjnivF5bAvKjqE5IKoluuQo9N36aWrn0gNvdHqrv7V2mXwP6ffe2oXFqIudL86a9478dMXJsoC2DUqHewVZvdZO4+wHlA3PmOlsANr9Zze8bBb5AkkI4snui1KyVwToGfiZRLIPLZAuCB93pjsNKjjiUyeNCL9aCOJTFKJEkgpTe9JuUT5REztJS6nyUFEatgm1svH2J2zN0yUfhOlN6BKRBmla26T1yM+4BsmSUuei+4Z3XwA/tjHToy/PqZQZ787MtaGeWNXJvbZbnqARDuATOmyGlhVvXn1eBhmhDfkZh8fPnp2MLJrPnXgA79NXv36+lu/3VhJ6547HvaaC5g1SfC5DUHsAKq6gTELkZa57L/jk3o9dRCEDjFFvzcepdATMZNCV+trB0p8YzCZVYnvLvM6hZb4EM1dLe8kI/YPcCgMoOX0H308+kVSS6XXfU+WB1Gixy3oTo+7GY8mgx5skY5GIk3OHyklmD3nMWhzlabHyCvX/7j00QdveHqs6BklE1r5H8luIqmA049Ld4e6oj688BIbH+4L5RAMfv9elknAduEtr4a8JexQ1t43aYP42I3EAIref55/ip9ab3ZsQsNMCJBER8N6YpRj1iA1H4cg+Gh6QKlZ4cgL8F958PnKqe+/vKUHipwanuFPg8e/+clBohu08cAfbN1pcirb8PueSB1EpuZqnfbfBghEoE4RAAA="
 }
 }

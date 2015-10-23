@@ -135,7 +135,7 @@ trait StatesAbs extends States with scalan.Scalan {
   def mkStateBase[S, A](run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]]
   def unmkStateBase[S, A](p: Rep[State0[S, A]]): Option[(Rep[S => (A, S)])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(States_Module.dump))
+  registerModule(States_Module)
 }
 
 // Seq -----------------------------------
@@ -262,9 +262,7 @@ trait StatesExp extends StatesDsl with scalan.ScalanExp {
   }
 }
 
-object States_Module {
-  val packageName = "scalan.monads"
-  val name = "States"
+object States_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVWTWwbRRR+XsdxbIemFFRUqjYhMiAqsKMKqYccKid1oJXzo2wOlamKxuuxu2V2drMzjmwOFeKE4Ia4cECo9964ICFxQ0IcOFWAxIkDp9IeKmjVAxVvZn+deENVxB5GO7Nv38/3fe/t3roLBeHDK8IijPCaQyWpmfq+IWTVbHJpy9G62x0weoH2Pjz+tbXOV4QBc22YvkbEBcHaUApumkMvvjfpbgtKhFtUSNcXEl5q6Qh1y2WMWtJ2ed12nIEkHUbrLVvI5RZMddzuaBduQK4FRy2XWz6V1FxlRAgqwvMZqjKy431J70ebXhKD11UV9VQVOz6xJaaPMY4G9tvUM0fc5SNHwpEwtU1PpYU2RdvxXF9GIYro7prbjbZTnOABHGtdJ3ukjiH6dVP6Nu/jmxWPWO+RPt1AE2U+hQkLyno7I0/v8y0oC7qLAF10PKZPhh4AIANndRK1BJ9ajE9N4VM1qW8TZr9P1MMt3x2OILhyeYChhy5e/xcXkQfa5N3qx1esdx6aFcdQLw9VKkVd4TQ6ms9Qg6YCcfx++1Nx/62b5wwot6Fsi0ZHSJ9YMk15iFaFcO5KnXMMIPH7yNZiFls6SgNt9kmiZLmORzh6CqGcRZ6YbdlSGauz2ZCdDOiL0qORaW7o5eJ6FzLq1bpZJYxt3Tnxxst/NC8bYIyHKKFLE4XvR04lTJtYLl0Knat1TkLOTBBW24beqqU0TNbiIbnEqLx65173uyW4YsRYhqGfjD50URC//FS5/dp5A2baWuxrjPTbCKdoMups+qsul22YcfeoHzwp7hGm7ibSWezSHhkwGYKcRieP6EhYyGxLjyrolnUL5CIAKoGKN1xOq2tb1QfmD5/dUiL1YTZ4EvTpY/vc378e6UmtXwl5f8AjdPPY3TEYp7O49ejagFu3L37+3Nypd3/TzE53XYfYWl4nW1Dwsbd1KSdDcFNEZqOMjncGHqNvfvPo6kcfvO1png7oZJ88GuPyMCfKIxFJOUDCdB367OJ9++rNT6QOkxuOD6bNznWcBMv6vdOH5RwOyL/aS8afJ37+0oASCqBjS4d41aUnbOv/sVVhHK65oMVW00FSaBXjZR6VcUwbrxBBx+znE8RfSHl/MRdJURtJMKgZhZ1S7TGxr4PYWQ4ahzk4OAkklOKUtY9Yy6eyJYdgHd9uPc/unv/WgMIlKPSwXwWKuOMOeDdiAT+qkg7lSnSWG2cBUSc+cWLU9bUACVzjg+zSRIODBaUqPruPyTyKbvzkP4zPNPvatB7GHBdFrIxJMgrKSMZ4moDsmp8CFLVuJTahYRAVv47PRFS7nHRFWI0PixkKMMP2QThvPPxi48yPX/2uJ1pZNSJOUh7/zSR87x9CpXUdC39OUsmiaFVr6kT/AfsglOMsCgAA"
 }
 }

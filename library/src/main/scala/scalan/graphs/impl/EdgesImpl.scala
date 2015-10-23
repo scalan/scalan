@@ -211,7 +211,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
   def mkIncEdge[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]]
   def unmkIncEdge[V, E](p: Rep[Edge[V, E]]): Option[(Rep[Int], Rep[Int], Rep[Graph[V, E]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Edges_Module.dump))
+  registerModule(Edges_Module)
 }
 
 // Seq -----------------------------------
@@ -514,9 +514,7 @@ trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
   }
 }
 
-object Edges_Module {
-  val packageName = "scalan.graphs"
-  val name = "Edges"
+object Edges_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAANVXQWwbRRSdXdtxbIc0VKiolSAhuCAQ2FElVKEgVanrVEZuEmXbgEyFNN4dOxtmZzc742jNoQeOcENcK9R7b1yQkHpBSIgDJwRInDmVIlQBPVHxZ3a9u068aRuRAz6Mdmb//P/nvff/rG/fQwXuo5e4iSlmNYcIXDPU8woXVaPJhC2GV1xrQMkl0vvo1JfmFXaR6+hEB01tY36J0w4qhQ/NwIufDbLbRiXMTMKF63OBXmirCHXTpZSYwnZZ3XacgcBdSuptm4vlNsp3XWu4i24grY3mTJeZPhHEaFDMOeHR+jSRGdnxvKTmw3UvicHq8hT11Cmu+tgWkD7EmAvtN4lnDJnLho5As1Fq655MC2yKtuO5vhiFKIK7bdcaTfMMwwI62d7Be7gOIfp1Q/g268POiofND3CfrIGJNM9DwpzQ3tWhp+a5NipzsgsAtRyPqpXAQwgBA+dUErUEn1qMT03iUzWIb2Nqf4jlyw3fDYYo/Gk5hAIPXLz2CBcjD6TJrOrH1833HhgVR5ebA5lKUZ1wChzNZ6hBUQE4frv5Kb9/+dZ5HZU7qGzzlS4XPjZFmvIIrQpmzBUq5xhA7PeBrcUstlSUFbDZJ4mS6ToeZuApgnIGeKK2aQtpLNdmInYyoC8Kj4xMtcDT4vMuZJxX6aaBKd24e/r1s78139WRPh6iBC4NEL4/cipQvmn1SeRajicE0rYSfOW0qaZyKAXJWDwkkxiTl+/+bn2zhK7rMZJR4McjD1wU+M8/Vn545YKOpjtK6qsU9zsAJm9S4qz7DZeJDpp294gfvinuYSqfJpJZtEgPD6iIIE5jkwNsBFrILEqPSOCWVQFoIwAqoYbXXEaqqxvVv43vPrstJeqjmfBNWKUP7fP//DLbE0q9Ak31fNdpWSOAc1DeMR4vZpHrkQ3fdqCZ7JE3vv7q2h931gqK35PRkbYwHZCwtKMTJaeTQbUliNRiImRQxTsTH0UO8wJgHIgWs0hwMDU5nD1sb6HvY297wpmilcLl+P0TKi3RWzkE1XAd8vTiffv9W58IpSwtGO9w690daCnLat/zh4hs1Gn/6izpf57+6XMdlUBLXVs42KsuPWZ/OMaaR+NwzTaiW0YVx7nxl6qQJ1dqQhPoYG7F2pGmjXSq8wkPz6bcntH2kayTrSQe1N9EOtMqOeigeZiDgwIQqBglrDzEdfJcdp0AgKc228/Qexfu6KjwNir0oB3wNip03QGzRszAjS1IIC6O1rRxZoAJ7GMnZkL9FlAC1rh635lo0NyPR0WbQNrRuu8BrvYXZGaXeWQp54V7pH3H3wLk+KYa3zqW2mgx8/9VG1HC6drIluMT6TWV6dRExHPQOP8jNae5OITjiuyUq9ix6fCIBD+Vwa6XcnEsOMrxZmITGRYUYJBW1MzC+okQ8NFiRo8zoksDCLjx4Obaq99/8av6FCjL6wc+RVj8ZyD9CTCOWCmsRfi2T+UKKMgLSeX5LxrjsBprDQAA"
 }
 }

@@ -206,7 +206,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
   def mkTell(msg: Rep[String]): Rep[Tell]
   def unmkTell(p: Rep[Interact[Unit]]): Option[(Rep[String])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Interactions_Module.dump))
+  registerModule(Interactions_Module)
 }
 
 // Seq -----------------------------------
@@ -330,9 +330,7 @@ trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
   }
 }
 
-object Interactions_Module {
-  val packageName = "scalan.examples"
-  val name = "Interactions"
+object Interactions_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVWTWwbRRR+Xttx/EPTPxUVCRKMIS2idoSEesihclMXFblJlE0rZKpK4/XY3XZ2drMzjtYceuAIN8QVod5744KE1AtCQhw4IUDizKkUoQroiYo3sz9ep9kmF3wYzc68fT/f+763vv8IisKHN4RFGOFNh0rSNPW+LWTD7HBpy8lVdzBm9BIdfnTqK+sqvygMWOjB3C0iLgnWg3K46QResjfpThfKhFtUSNcXEl7t6ggty2WMWtJ2ect2nLEkfUZbXVvI1S4U+u5gsgN3IdeFo5bLLZ9Kaq4xIgQV0fk8VRnZyXNZP082vGkM3lJVtFJVbPvElpg+xjga2m9Rz5xwl08cCUei1DY8lRbalGzHc30Zhyihu1vuIH4scIIHcLx7m+ySFoYYtUzp23yEb1Y9Yt0hI7qOJsq8gAkLyobbE08/57tQEXQHAbrieEyfBB4AYAfe1kk0p/g0E3yaCp+GSX2bMPtDoi43fTeYQPjL5QECD128dYCL2APt8EHj4xvWB0/MqmOolwOVSklXOIeOFjPYoFuBOH639al4/O698wZUelCxRbsvpE8smW55hFaVcO5KnXMCIPFH2K16Vrd0lDba7KFE2XIdj3D0FEFZwz4x27KlMlZntag7GdCXpEdj01zg5ZJ6lzLq1bxZI4xtPjx97vXfO+8bYMyGKKNLE4nvx04lzF/hkio0EvevZbn36KZvO0jnXfrON19f+/PBelFHOD6gQzJm8jphYxqSK4o3ja1CGfW6hLmpQTmYrqXn1JUgvPzwj8G3K3DDSPoSlXE4KqCLovjlp+qPZy8YMN/TwrnMyKiHrREdRp0Nf83lsgfz7i71w5vSLmFqty81SlHhUcPSSOcRaQlLmRL3qGrDqpZTLgagGipi3eW0cXmz8Y/5/Wf3FeF9qIU3oeaf2uf//fXIUGotIKKej0wL+7cgIY/DIsRDLSf3A7oSejNdhx6rP7Zv3vtEakhzweyg2OjfRmWu6vdeeQ668cD6u7di/HX65y8MKCOIfVs6xGusHFJm/6N0QBc+uywicrW2uLOWDrU4HSwv6i3CiTZ7rqqxFCPE90pIrSeQ7mfOSihc47Z8tgc6Qsr8pYQGOhaGdcTo0B1Va0Ovy1mlvrBNGTuo1oIymt6FIVJZLsNs4Xns+cFQ4HGunXL4TP6HLuJY7H2fQtKjTJ8mM+Hl7HmGHDm11T3JHl14YEDxPSgOUeqiC8W+O+aDmHz4bZc0kBfjs9ws+ZBsxCdOQjb9W4Jpapn1t2exRsNaXIJShoSFKHUaEBQAFRFIPtQzajIjHWBj7j75fP3NH778TY/oilIUjhWe/E1Ij+bZZi2kc8Bvfyp1pIhSmk77P7eWrq2LCQAA"
 }
 }

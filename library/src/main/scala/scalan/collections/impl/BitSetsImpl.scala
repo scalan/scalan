@@ -129,7 +129,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   def mkBoolCollBitSet(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet]
   def unmkBoolCollBitSet(p: Rep[BitSet]): Option[(Rep[Collection[Boolean]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(BitSets_Module.dump))
+  registerModule(BitSets_Module)
 }
 
 // Seq -----------------------------------
@@ -292,9 +292,7 @@ trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
   }
 }
 
-object BitSets_Module {
-  val packageName = "scalan.collections"
-  val name = "BitSets"
+object BitSets_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAALVVPYwbRRR+Xt+dz/YpF1yA7hrCYYISgX1CQimuQHeOE0Vy7k7ZgJCJIs2tx86E2Zm9nfHJpkhBCV2UFqH06dJEQqJBSIiCCgESNVUgiiIgFYg3s+Ndb5QlabLFanb27Xvv+3mzd/6ARRXDSRUQTkQrpJq0fLveVrrpd4VmenpRDsacnqXDT1++F1wUO8qD1T4sXSPqrOJ9qCaL7iRK1z497EGViIAqLWOl4bWerdAOJOc00EyKNgvDsSYHnLZ7TOmtHiwcyMH0EG5AqQfHAymCmGrqdzhRiiq3v0xNRyx9rtrn6V6U1RBtg6I9h+JyTJjG9rHG8ST+Eo38qZBiGmo45lrbi0xbGFNhYSRjPStRwXTX5GD2uCAIbkCjd50ckTaWGLV9HTMxwi/rEQk+JiO6iyEmfAEbVpQPL08j+1zuQU3RQyToQhhxuzOJAAAVeMc20cr4aaX8tAw/TZ/GjHD2CTEv92M5mUJylcoAkwhTvPWMFLMMtCsGzc+uBB899uuhZz6emFYqFuESJnq1wA1WCuTxu0s31aPzt894UOtDjantA6VjEuh5yR1bdSKE1LbnlEASj1CtjSK1bJVtjHnCEtVAhhERmMlRuYI6cRYwbYLN3opTp4D6io7oLLQ0iUop3hMFeK1vOoTz/ftrb7/xe/dDD7x8iSqm9NH48SyphqUdhkxry6i5VR25xWVSwG/efzD4dhOueClNLuvzKYMpFtUvP9V/PPWeB8t96+NznIz6yJTqchruxR0pdB+W5RGNkzeVI8LN6qlKVQZ0SMZcO/7mgZcRuIYThRMXUcPKlnV3aUZAPTHorhS0eW6/+bf//a07xn8xrCRvkhH8l53559djQ22tqdEDTCvb0qqGMk6uY8Pt1Dqp31OaXi8SNKL7MQvxADmi737z1fsPv95dtJo2HNIPCB/TZJwd0Ay06WVxSLhC4JUdKTklIhN4/m6w1hJEvgzpSxuP2NXbn2sra2mSPzv2Dq5j81v2u7X/UXh2hv3V3/T+XPv5Sw+qKCRSE5Koufmck/cCpwlSw2e3dWTsFcOUkSgZi8581fXs2GnYJR7G+fAsKmF3TvpTkPdBGcnJ7zx9Ep1EWemTLl0BgNXCxvPDvv5EnXZ+s2JMY4Px7Gs4kbOjWrlWYtgoMIDv6EeYNx5/sXv6h7u/WevWjJA4UULn/lDOsnlGGkk+xBKOBf4G8Uc01zWOmtHY9v0fyE6spRgIAAA="
 }
 }

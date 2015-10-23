@@ -283,7 +283,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   def mkFlatMap[F[_], S, B](a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]]
   def unmkFlatMap[F[_], S, B](p: Rep[FreeM[F, B]]): Option[(Rep[FreeM[F, S]], Rep[S => FreeM[F, B]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(FreeMs_Module.dump))
+  registerModule(FreeMs_Module)
 }
 
 // Seq -----------------------------------
@@ -548,9 +548,7 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   }
 }
 
-object FreeMs_Module {
-  val packageName = "scalan.effects"
-  val name = "FreeMs"
+object FreeMs_Module extends scalan.ModuleInfo {
   val dump = "H4sIAAAAAAAAANWXTWwbRRTHZ9dxHNshCR8qKlVJiExRENgRlx4iUTmOjYrsJMr2gExFNV6P0213Zzcz42jNoQeOcENcOCDUe29cOHFDIA6cKkDixIFTKYcK6AnEm/Huev2xTpqWSPiw2tl9+96b3/u/mfGd+yjNGbrATWxjWnSIwEVD3Ze5KBhVKizRa7jtrk22SOeDM1+aDbrJdbTYRLPXMd/idhNl+zdV34vuDXJQR1lMTcKFy7hAL9VVhJLp2jYxheXSkuU4XYFbNinVLS426mim5bZ7B+gW0upoyXSpyYggRsXGnBMePJ8jMiMrGmfVuLfjDWLQkpxFKTaLKwxbAtKHGEt9+z3iGT3q0p4j0EKQ2o4n0wKbjOV4LhNhiAy4u+62w+EMxfAAPVO/gQ9xCULslwzBLLoPX+Y9bN7E+2QbTKT5DCTMid250vPUOFVHOU4OANBlx7PVE99DCEEF3lBJFAd8ihGfouRTMAizsG29j+XLXeb6PdT/aSmEfA9cvHaEi9ADqdJ24cOr5rsPjbyjy499mUpGzXAWHC0nqEGVAjh+u/cxf/DW7Ys6yjVRzuLlFhcMmyJe8oBWHlPqCpVzBBCzfajWalK1VJQy2IxIImu6jocpeApQzkOdbMu0hDSWz+aD6iSgzwiPhKaa72nRfFcS5qt0U8G2vXvv7Osv/1Z9R0f6cIgsuDRA+Cx0KlC6xghpBL7ldVEgrTYALIdlNZSXrD+4ZqakEkF55d7v7a/X0VU9QhlEPl71wEWa//RD/u7aJR3NNZXWazbebwJNXrWJs8MqLhVNNOceEtZ/kznEtrybWM1Mm3Rw1xYB4zicFMARaCWxKz0iyW2oDtBCAPm+iLddSgq13cJfxnef3JEaZWi+/6bfpv9YF//+eaEjlHyBKA7ZpqC1R+An0871XRquQ55efWC9d/sjobhq/nCD77RuQEdtqO9enII4XGj+bK7rf5z98XMdZYFkyxIO9grrx2yP/1DyKCIxuCwDvqe2AHclHmt5INjnYzhf0MJSKSOBdFIOOc9I+UxBn+DArEUOpPImNk68dmAns1WfR5o/n1QQNf0ze/Xn7PuXvtJR+m2U7oCUeR2lW26XtkOusN0I4ovN8Jk2zBU4YoadiKP6raABKZlqLPU3J1pcG6Ux2WwMWl4bpvI4S8xYRdFIQbSbU1qp9qQSGU/qgrquJUq04bL/kURltnGJJlf7CNnIS+UUdbN5Yt1MWYKPE9gYC5wQpzMhDoNlOXEFqHWpeffyp88unr/2i9rBZ9uugy0lonOwEDBY4lWxzgW76CCdxyf3CBJfgk1WNLB3QpUb01Qep3uiNtk82sGjt0kmmPFpd0qsuJMNxmsZi72GhqeWgh3/ya6LmWNrZkFFmqCY6CR62mwnz+ubYV9gONtnBFMIOpd0OnDI4sGsGVpN6GgjOOIA9VsPP9t+9fsvflVdnZOHJTgZ0Oif22AH90cWpGzDpbgt/6nGsgXdyuOTyvRfwxhFexgPAAA="
 }
 }
