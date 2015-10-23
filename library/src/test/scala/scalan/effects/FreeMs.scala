@@ -7,7 +7,7 @@ import scalan.monads.{MonadsDslExp, MonadsDslSeq, Monads, MonadsDsl}
 trait FreeMs extends Base { self: MonadsDsl =>
 
   type RFreeM[F[_],A] = Rep[FreeM[F,A]]
-  sealed trait FreeM[F[_], A] extends Reifiable[FreeM[F,A]] {
+  sealed trait FreeM[F[_], A] extends Def[FreeM[F,A]] {
     implicit def eA: Elem[A]
     implicit def cF: Cont[F]
 

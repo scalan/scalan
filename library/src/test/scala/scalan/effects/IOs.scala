@@ -7,7 +7,7 @@ import scalan.monads._
 trait IOs { self: IOsDsl =>
 
   type RepIO[A] = Rep[IO[A]]
-  trait IO[A] extends Reifiable[IO[A]] {
+  trait IO[A] extends Def[IO[A]] {
     implicit def eA: Elem[A]
     def toOper: Rep[Oper[A]]
   }
@@ -64,11 +64,7 @@ trait IOsDslExp extends IOsDsl with impl.IOsExp with ScalanExp with MonadsDslExp
   def writeFileIO(s: Rep[String], lines: Rep[List[String]]): Rep[Oper[Unit]] =
     fun { (i: Rep[Int]) => WriteF(i, s, lines) }
 
-  case class ReadF(i: Rep[Int], fileName: Rep[String]) extends BaseDef[(Int, List[String])]  {
-    override def mirror(t: Transformer) = ReadF(t(i), t(fileName))
-  }
+  case class ReadF(i: Rep[Int], fileName: Rep[String]) extends BaseDef[(Int, List[String])]
 
-  case class WriteF(i: Rep[Int], file: Rep[String], lines: Rep[List[String]]) extends BaseDef[(Int, Unit)]  {
-    override def mirror(t: Transformer) = WriteF(t(i), t(file), t(lines))
-  }
+  case class WriteF(i: Rep[Int], file: Rep[String], lines: Rep[List[String]]) extends BaseDef[(Int, Unit)]
 }

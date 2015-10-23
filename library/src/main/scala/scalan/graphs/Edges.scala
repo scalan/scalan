@@ -9,7 +9,7 @@ trait Edges extends ScalanCommunityDsl with CollectionsDsl { self : GraphsDsl =>
   /**
    * Created by afilippov on 2/16/15.
    */
-  trait Edge[V, E] extends Reifiable[Edge[V,E]]{
+  trait Edge[V, E] extends Def[Edge[V,E]]{
     implicit def eV: Elem[V]
 
     implicit def eE: Elem[E]

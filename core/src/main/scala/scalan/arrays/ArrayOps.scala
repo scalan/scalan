@@ -98,13 +98,10 @@ trait ArrayOps { self: Scalan =>
     def empty[T: Elem] = array_empty[T]
   }
 
-  trait ArrayContainer extends Container[Array] {
+  implicit val arrayFunctor: Functor[Array] = new Functor[Array] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Array[T]]
     def lift[T](implicit eT: Elem[T]) = element[Array[T]]
-  }
-
-  implicit val arrayFunctor = new Functor[Array] with ArrayContainer {
-    def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
+    def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
   }
 
   case class ArrayIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Array](iso) {
@@ -121,7 +118,6 @@ trait ArrayOps { self: Scalan =>
   case class ScalaArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     def parent: Option[Elem[_]] = Some(arrayElement(eItem))
     override def isEntityType = eItem.isEntityType
-    override def entityDef = !!!("not supported")
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eItem))
     }
@@ -379,135 +375,50 @@ trait ArrayOpsExp extends ArrayOps with BaseExp { self: ScalanExp =>
       block(eTArr.eItem)
     }
 
-  trait ArrayDef[T] extends Def[Array[T]] {
-    implicit def eT: Elem[T]
+  abstract class ArrayDef[T](implicit val eItem: Elem[T]) extends Def[Array[T]] {
     lazy val selfType = element[Array[T]]
   }
-  trait ArrayMethod[T] {
-    def xs: Exp[Array[T]]
-  }
-  case class ArrayLength[T](xs: Exp[Array[T]]) extends Def[Int] with ArrayMethod[T] {
-    def selfType = element[Int]
-    override def mirror(t: Transformer) = ArrayLength(t(xs))
-  }
-  case class ArrayApply[T](xs: Exp[Array[T]], index: Exp[Int]) extends Def[T] with ArrayMethod[T] {
+  case class ArrayLength[T](xs: Exp[Array[T]]) extends BaseDef[Int]
+  case class ArrayApply[T](xs: Exp[Array[T]], index: Exp[Int]) extends Def[T] {
     lazy val selfType = xs.elem.eItem
-    override def mirror(t: Transformer) = ArrayApply(t(xs), t(index))
   }
-  case class ArrayApplyMany[T](xs: Exp[Array[T]], indices: Exp[Array[Int]]) extends ArrayDef[T] {
-    lazy val eT = xs.elem.eItem
-    override def mirror(t: Transformer) = ArrayApplyMany(t(xs), t(indices))
-  }
-  case class ArrayMap[T, R](xs: Exp[Array[T]], f: Exp[T => R]) extends ArrayDef[R] {
-    implicit lazy val eT = withResultElem(f) { e => e }
-    override def mirror(t: Transformer) = ArrayMap(t(xs), t(f))
-  }
-  case class ArrayFlatMap[T, R](xs: Exp[Array[T]], f: Exp[T => Array[R]]) extends ArrayDef[R] {
-    implicit lazy val eT = withResultElem(f) { e => e.asInstanceOf[ArrayElem[R]].eItem }
-    override def mirror(t: Transformer) = ArrayFlatMap(t(xs), t(f))
-  }
-  case class ArrayReduce[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T]) extends Def[T] with ArrayMethod[T] {
+  case class ArrayApplyMany[T](xs: Exp[Array[T]], indices: Exp[Array[Int]]) extends ArrayDef[T]()(xs.elem.eItem)
+  case class ArrayMap[T, R](xs: Exp[Array[T]], f: Exp[T => R]) extends ArrayDef[R]()(f.elem.eRange)
+  case class ArrayFlatMap[T, R](xs: Exp[Array[T]], f: Exp[T => Array[R]]) extends ArrayDef[R]()(f.elem.eRange.eItem)
+  case class ArrayReduce[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T]) extends Def[T] {
     def selfType = xs.elem.eItem
-    override def mirror(t: Transformer) = ArrayReduce[T](t(xs), new RepMonoid[T](m.opName, t(m.zero), t(m.append), m.isCommutative)(selfType))
   }
-  case class ArrayFold[T,S:Elem](xs: Exp[Array[T]], init:Exp[S], f:Exp[((S,T))=>S]) extends BaseDef[S] with ArrayMethod[T] {
-    override def mirror(t: Transformer) = ArrayFold(t(xs), t(init), t(f))
-  }
-  case class ArrayScan[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T])(implicit val selfType: Elem[(Array[T], T)]) extends Def[(Array[T], T)] with ArrayMethod[T] {
-    override def mirror(t: Transformer) = ArrayScan[T](t(xs), m)
-  }
-  case class ArraySort[T: Elem](xs: Exp[Array[T]], implicit val o:Ordering[T]) extends ArrayDef[T] {
-    lazy val eT = element[T]
-    override def mirror(t: Transformer) = ArraySort(t(xs), o)
-  }
-  case class ArrayZip[T: Elem, U: Elem](xs: Exp[Array[T]], ys: Exp[Array[U]]) extends ArrayDef[(T, U)] {
-    lazy val eT = element[(T, U)]
-    override def mirror(t: Transformer) = ArrayZip(t(xs), t(ys))
-  }
-  case class ArrayMapReduce[T,K:Elem,V:Elem](in: Exp[Array[T]], map:Exp[T=>(K,V)], reduce:Exp[((V,V))=>V]) extends MMapDef[K,V] {
-    override def mirror(t: Transformer) = ArrayMapReduce(t(in), t(map), t(reduce))
-  }
+  case class ArrayFold[T,S](xs: Exp[Array[T]], init:Exp[S], f:Exp[((S,T))=>S])(implicit val eS: Elem[S]) extends BaseDef[S]
+  case class ArrayScan[T](xs: Exp[Array[T]], implicit val m: RepMonoid[T])(implicit val eT: Elem[T]) extends BaseDef[(Array[T], T)]
+  case class ArraySort[T](xs: Exp[Array[T]], implicit val o:Ordering[T])(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayZip[T, U](xs: Exp[Array[T]], ys: Exp[Array[U]])(implicit val eT: Elem[T], val eU: Elem[U]) extends ArrayDef[(T, U)]
+  case class ArrayMapReduce[T,K,V](in: Exp[Array[T]], map:Exp[T=>(K,V)], reduce:Exp[((V,V))=>V])(implicit val eK: Elem[K], val eV: Elem[V]) extends MMapDef[K,V]
 
-  case class ArrayReplicate[T](len: Exp[Int], v: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayReplicate(t(len), t(v))
-  }
-  case class ArrayStride[T](xs: Exp[Array[T]], start: Exp[Int], length: Exp[Int], stride: Exp[Int])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayStride(t(xs), t(start), t(length), t(stride))
-  }
-  case class ArrayUpdate[T](xs: Exp[Array[T]], index: Exp[Int], value: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayUpdate(t(xs), t(index), t(value))
-  }
-  case class ArrayUpdateMany[T](xs: Exp[Array[T]], indexes: Exp[Array[Int]], values: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayUpdateMany(t(xs), t(indexes), t(values))
-  }
-  case class ArrayAppend[T](xs: Exp[Array[T]], value: Exp[T])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayAppend(t(xs), t(value))
-  }
-  case class ArrayCons[T](value: Exp[T], xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayCons(t(value), t(xs))
-  }
-  case class ArrayReverse[T](xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayReverse(t(xs))
-  }
-  case class ArrayFlatten[T](xss: Arr[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayFlatten(t(xss))
-  }
-  case class ArrayRangeFrom0(n: Exp[Int]) extends ArrayDef[Int] {
-    def eT = element[Int]
-    override def mirror(t: Transformer) = ArrayRangeFrom0(t(n))
-  }
-  case class ArrayFilter[T](xs: Exp[Array[T]], f: Exp[T => Boolean])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayFilter(t(xs), t(f))
-  }
-  case class ArrayFind[T](xs: Exp[Array[T]], f: Exp[T => Boolean]) extends ArrayDef[Int] {
-    lazy val eT = element[Int]
-    override def mirror(t: Transformer) = ArrayFind(t(xs), t(f))
-  }
-  case class ArraySortBy[T, O:Elem](xs: Exp[Array[T]], f: Exp[T => O], o: Ordering[O])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArraySortBy(t(xs), t(f), o)
-  }
-  case class ArrayGroupBy[T:Elem, G:Elem](xs: Exp[Array[T]], by: Exp[T => G]) extends MMapDef[G, ArrayBuffer[T]] {
-    override def mirror(t: Transformer) = ArrayGroupBy(t(xs), t(by))
-  }
-  case class ArraySum[T: Elem](xs: Exp[Array[T]], n: Numeric[T]) extends Def[T] with ArrayMethod[T] {
-    def selfType = element[T]
-    override def mirror(t: Transformer) = ArraySum(t(xs), n)
-  }
-  case class ArraySumBy[T: Elem,S:Elem](xs: Exp[Array[T]], f: Exp[T => S], n: Numeric[S]) extends Def[S] with ArrayMethod[T] {
-    def selfType = element[S]
-    override def mirror(t: Transformer) = ArraySumBy(t(xs), t(f), n)
-  }
-  case class ArrayMax[T: Elem](xs: Exp[Array[T]], o: Ordering[T]) extends Def[T] with ArrayMethod[T] {
-    def selfType = element[T]
-    override def mirror(t: Transformer) = ArrayMax(t(xs), o)
-  }
-  case class ArrayMin[T: Elem](xs: Exp[Array[T]], o: Ordering[T]) extends Def[T] with ArrayMethod[T] {
-    def selfType = element[T]
-    override def mirror(t: Transformer) = ArrayMin(t(xs), o)
-  }
-  case class ArrayAvg[T](xs: Exp[Array[T]], n: Numeric[T]) extends Def[Double] with ArrayMethod[T] {
-    def selfType = element[Double]
-    override def mirror(t: Transformer) = ArrayAvg(t(xs), n)
-  }
-  case class ArrayCount[T](xs: Exp[Array[T]], f: Exp[T => Boolean])(implicit val eT: Elem[T]) extends Def[Int] with ArrayMethod[T] {
-    def selfType = element[Int]
-    override def mirror(t: Transformer) = ArrayCount(t(xs), t(f))
-  }
-  case class ArrayEmpty[T]()(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayEmpty[T]()
-  }
-  case class ArrayToList[T](xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
-    override def mirror(t: Transformer) = ArrayToList(t(xs))
-  }
+  case class ArrayReplicate[T](len: Exp[Int], v: Exp[T])(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayStride[T](xs: Exp[Array[T]], start: Exp[Int], length: Exp[Int], stride: Exp[Int])(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayUpdate[T](xs: Exp[Array[T]], index: Exp[Int], value: Exp[T])(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayUpdateMany[T](xs: Exp[Array[T]], indexes: Exp[Array[Int]], values: Exp[Array[T]])(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayAppend[T](xs: Exp[Array[T]], value: Exp[T])(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayCons[T](value: Exp[T], xs: Exp[Array[T]])(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayReverse[T](xs: Exp[Array[T]])(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayFlatten[T](xss: Arr[Array[T]])(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayRangeFrom0(n: Exp[Int]) extends ArrayDef[Int]
+  case class ArrayFilter[T](xs: Exp[Array[T]], f: Exp[T => Boolean])(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayFind[T](xs: Exp[Array[T]], f: Exp[T => Boolean]) extends ArrayDef[Int]
+  case class ArraySortBy[T, O](xs: Exp[Array[T]], f: Exp[T => O], o: Ordering[O])(implicit eItem: Elem[T], val eO: Elem[O]) extends ArrayDef[T]
+  case class ArrayGroupBy[T, G](xs: Exp[Array[T]], by: Exp[T => G])(implicit val eT: Elem[T], val eG: Elem[G]) extends MMapDef[G, ArrayBuffer[T]]
+  case class ArraySum[T](xs: Exp[Array[T]], n: Numeric[T])(implicit val eT: Elem[T]) extends BaseDef[T]
+  case class ArraySumBy[T, S](xs: Exp[Array[T]], f: Exp[T => S], n: Numeric[S])(implicit val eT: Elem[T], val eS: Elem[S]) extends BaseDef[S]
+  case class ArrayMax[T](xs: Exp[Array[T]], o: Ordering[T])(implicit val eT: Elem[T]) extends BaseDef[T]
+  case class ArrayMin[T](xs: Exp[Array[T]], o: Ordering[T])(implicit val eT: Elem[T]) extends BaseDef[T]
+  case class ArrayAvg[T](xs: Exp[Array[T]], n: Numeric[T]) extends BaseDef[Double]
+  case class ArrayCount[T](xs: Exp[Array[T]], f: Exp[T => Boolean])(implicit val eT: Elem[T]) extends BaseDef[Int]
+  case class ArrayEmpty[T]()(implicit eItem: Elem[T]) extends ArrayDef[T]
+  case class ArrayToList[T](xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ListDef[T]
 
-  case class ArrayBinarySearch[T: Elem](i: Exp[T], xs: Exp[Array[T]], o: Ordering[T]) extends Def[Int] with ArrayMethod[T] {
-    lazy val selfType = element[Int]
-    override def mirror(t: Transformer) = ArrayBinarySearch(t(i), t(xs), o)
-  }
+  case class ArrayBinarySearch[T](i: Exp[T], xs: Exp[Array[T]], o: Ordering[T])(implicit val eT: Elem[T]) extends BaseDef[Int]
 
-  case class ArrayRandomGaussian[T](m: Exp[T], e: Exp[T], xs: Exp[Array[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ArrayRandomGaussian(t(m), t(e), t(xs))
-  }
+  case class ArrayRandomGaussian[T](m: Exp[T], e: Exp[T], xs: Exp[Array[T]])(implicit eItem: Elem[T]) extends ArrayDef[T]
 
   def array_update[T](xs: Arr[T], index: Rep[Int], value: Rep[T]): Arr[T] = {
     implicit val eT = xs.elem.eItem

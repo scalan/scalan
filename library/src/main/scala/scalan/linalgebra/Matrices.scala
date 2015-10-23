@@ -12,7 +12,7 @@ trait Matrices extends Vectors with Math { self: ScalanCommunityDsl =>
 
   type Matrix[T] = Rep[AbstractMatrix[T]]
 
-  trait AbstractMatrix[T] extends Reifiable[AbstractMatrix[T]] {
+  trait AbstractMatrix[T] extends Def[AbstractMatrix[T]] {
     def numColumns: Rep[Int]
     def numRows: Rep[Int]
     implicit def eT: Elem[T]

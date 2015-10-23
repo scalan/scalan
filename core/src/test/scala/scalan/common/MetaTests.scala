@@ -7,7 +7,7 @@ package scalan.common
 trait MetaTests { self: MetaTestsDsl =>
 
   type RMetaTest[T] = Rep[MetaTest[T]]
-  trait MetaTest[T] extends Reifiable[MetaTest[T]] { self =>
+  trait MetaTest[T] extends Def[MetaTest[T]] { self =>
 
     def test: RMetaTest[T]
     def give: Rep[T]

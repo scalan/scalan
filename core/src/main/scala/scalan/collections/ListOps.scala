@@ -48,12 +48,9 @@ trait ListOps { self: Scalan =>
     def empty[T: Elem] = replicate(0, element[T].defaultRepValue)
   }
 
-  trait ListContainer extends Container[List] {
+  implicit val listFunctor: Functor[List] = new Functor[List] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[List[T]]
     def lift[T](implicit eT: Elem[T]) = element[List[T]]
-  }
-
-  implicit val listFunctor = new Functor[List] with ListContainer {
     def map[A:Elem,B:Elem](xs: Rep[List[A]])(f: Rep[A] => Rep[B]) = xs.map(f)
   }
 
@@ -68,7 +65,6 @@ trait ListOps { self: Scalan =>
     extends EntityElem1[A, List[A], List](eItem, container[List]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override def entityDef = !!!("not supported")
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eItem))
     }
@@ -204,84 +200,29 @@ trait ListOpsExp extends ListOps with BaseExp { self: ScalanExp =>
       block(eTLst.eItem)
     }
 
-  trait ListDef[T] extends Def[List[T]] {
-    implicit def eT: Elem[T]
+  abstract class ListDef[T](implicit val eItem: Elem[T]) extends Def[List[T]] {
     lazy val selfType = element[List[T]]
   }
-  trait ListMethod[T] {
-    def xs: Exp[List[T]]
-  }
-  case class ListHead[T](xs: Exp[List[T]]) extends Def[T] {
-    def selfType = xs.elem.eItem
-    override def mirror(t: Transformer) = ListHead(t(xs))
-  }
-  case class ListTail[T](xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
-    override def mirror(t: Transformer) = ListTail(t(xs))
-  }
-  case class ListLength[T](xs: Exp[List[T]]) extends Def[Int] with ListMethod[T] {
-    def selfType = element[Int]
-    override def mirror(t: Transformer) = ListLength(t(xs))
-  }
-  case class ListMap[T, R](xs: Exp[List[T]], f: Exp[T => R]) extends ListDef[R] {
-    implicit lazy val eT = withResultElem(f) { e => e }
-    override def mirror(t: Transformer) = ListMap(t(xs), t(f))
-  }
-  case class ListFlatMap[T, R](xs: Exp[List[T]], f: Exp[T => List[R]]) extends ListDef[R] {
-    implicit lazy val eT = withResultElem(f) { e => e.asInstanceOf[ListElem[R]].eItem }
-    override def mirror(t: Transformer) = ListFlatMap(t(xs), t(f))
-  }
-  case class ListReduce[T](xs: Exp[List[T]], implicit val m: RepMonoid[T]) extends Def[T] with ListMethod[T] {
-    def selfType = xs.elem.eItem
-    override def mirror(t: Transformer) = ListReduce[T](t(xs), m)
-  }
-  case class ListFoldLeft[T,S:Elem](xs: Exp[List[T]], init:Exp[S], f:Exp[((S,T))=>S]) extends BaseDef[S] with ListMethod[T] {
-    override def mirror(t: Transformer) = ListFoldLeft(t(xs), t(init), t(f))
-  }
-  case class ListFoldRight[T,S:Elem](xs: Exp[List[T]], init:Exp[S], f:Exp[((T,S))=>S]) extends BaseDef[S] with ListMethod[T] {
-    override def mirror(t: Transformer) = ListFoldRight(t(xs), t(init), t(f))
-  }
-  case class ListScan[T](xs: Exp[List[T]], implicit val m: RepMonoid[T])(implicit val selfType: Elem[(List[T], T)]) extends Def[(List[T], T)] with ListMethod[T] {
-    override def mirror(t: Transformer) = ListScan[T](t(xs), m)
-  }
-  case class ListZip[T: Elem, U: Elem](xs: Exp[List[T]], ys: Exp[List[U]]) extends ListDef[(T, U)] {
-    lazy val eT = element[(T, U)]
-    override def mirror(t: Transformer) = ListZip(t(xs), t(ys))
-  }
-  case class ListReplicate[T](len: Exp[Int], v: Exp[T])(implicit val eT: Elem[T]) extends ListDef[T] {
-    override def mirror(t: Transformer) = ListReplicate(t(len), t(v))
-  }
-  case class ListRangeFrom0(n: Exp[Int]) extends ListDef[Int] {
-    def eT = element[Int]
-    override def mirror(t: Transformer) = ListRangeFrom0(t(n))
-  }
-  case class ListFilter[T](xs: Exp[List[T]], f: Exp[T => Boolean])(implicit val eT: Elem[T]) extends ListDef[T] {
-    override def mirror(t: Transformer) = ListFilter(t(xs), t(f))
-  }
-  case class ListCons[T](x: Exp[T], xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
-    override def mirror(t: Transformer) = ListCons(t(x), t(xs))
-  }
-  case class ListConcat[T](xs: Exp[List[T]], ys: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
-    override def mirror(t: Transformer) = ListConcat(t(xs), t(ys))
-  }
-  case class ListReverse[T](xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ListDef[T] {
-    override def mirror(t: Transformer) = ListReverse(t(xs))
-  }
-  case class ListSlice[T](xs: Exp[List[T]], start: Exp[Int], end: Exp[Int])(implicit val eT: Elem[T]) extends ListDef[T] {
-    override def mirror(t: Transformer) = ListSlice(t(xs), t(start), t(end))
-  }
-
-  case class ListApply[T](xs: Exp[List[T]], n: Exp[Int])(implicit val eT: Elem[T]) extends Def[T] {
-    def selfType = xs.elem.eItem
-    override def mirror(t: Transformer) = ListApply(t(xs), t(n))
-  }
-
-  case class ListApplyMany[T](xs: Exp[List[T]], is: Exp[Array[Int]])(implicit val eT: Elem[T]) extends ListDef[T] {
-    override def mirror(t: Transformer) = ListApplyMany(t(xs), t(is))
-  }
-
-  case class ListToArray[T](xs: Exp[List[T]])(implicit val eT: Elem[T]) extends ArrayDef[T] {
-    override def mirror(t: Transformer) = ListToArray(t(xs))
-  }
+  case class ListHead[T](xs: Exp[List[T]]) extends BaseDef[T]()(xs.elem.eItem)
+  case class ListTail[T](xs: Exp[List[T]])(implicit eItem: Elem[T]) extends ListDef[T]
+  case class ListLength[T](xs: Exp[List[T]]) extends BaseDef[Int]
+  case class ListMap[T, R](xs: Exp[List[T]], f: Exp[T => R]) extends ListDef[R]()(f.elem.eRange)
+  case class ListFlatMap[T, R](xs: Exp[List[T]], f: Exp[T => List[R]]) extends ListDef[R]()(f.elem.eRange.eItem)
+  case class ListReduce[T](xs: Exp[List[T]], implicit val m: RepMonoid[T]) extends BaseDef[T]()(xs.elem.eItem)
+  case class ListFoldLeft[T,S](xs: Exp[List[T]], init:Exp[S], f:Exp[((S,T))=>S])(implicit eS: Elem[S]) extends BaseDef[S]
+  case class ListFoldRight[T,S](xs: Exp[List[T]], init:Exp[S], f:Exp[((T,S))=>S])(implicit eS: Elem[S]) extends BaseDef[S]
+  case class ListScan[T](xs: Exp[List[T]], implicit val m: RepMonoid[T])(implicit val eT: Elem[T]) extends BaseDef[(List[T], T)]
+  case class ListZip[T, U](xs: Exp[List[T]], ys: Exp[List[U]])(implicit val eT: Elem[T], val eU: Elem[U]) extends ListDef[(T, U)]
+  case class ListReplicate[T](len: Exp[Int], v: Exp[T])(implicit eItem: Elem[T]) extends ListDef[T]
+  case class ListRangeFrom0(n: Exp[Int]) extends ListDef[Int]
+  case class ListFilter[T](xs: Exp[List[T]], f: Exp[T => Boolean])(implicit eItem: Elem[T]) extends ListDef[T]
+  case class ListCons[T](x: Exp[T], xs: Exp[List[T]])(implicit eItem: Elem[T]) extends ListDef[T]
+  case class ListConcat[T](xs: Exp[List[T]], ys: Exp[List[T]])(implicit eItem: Elem[T]) extends ListDef[T]
+  case class ListReverse[T](xs: Exp[List[T]])(implicit eItem: Elem[T]) extends ListDef[T]
+  case class ListSlice[T](xs: Exp[List[T]], start: Exp[Int], end: Exp[Int])(implicit eItem: Elem[T]) extends ListDef[T]
+  case class ListApply[T](xs: Exp[List[T]], n: Exp[Int])(implicit val eT: Elem[T]) extends BaseDef[T]
+  case class ListApplyMany[T](xs: Exp[List[T]], is: Exp[Array[Int]])(implicit eItem: Elem[T]) extends ListDef[T]
+  case class ListToArray[T](xs: Exp[List[T]])(implicit eItem: Elem[T]) extends ArrayDef[T]
 
   def list_head[T](xs: Lst[T]): Rep[T] = ListHead(xs)
   def list_tail[T: Elem](xs: Lst[T]): Lst[T] = ListTail(xs)

@@ -83,15 +83,19 @@ trait EffectsExp extends Expressions with Effects with Utils with GraphVizExport
 
   // --- class defs
 
-  case class Reflect[+A:Elem](x: Def[A], summary: Summary, deps: List[Exp[Any]]) extends BaseDef[A] {
-    override def mirror(t: Transformer) = {
-      val Def(mx) = x.mirror(t).asRep[A]
-      reflectMirrored(Reflect(mx, mapOver(t, summary), t(deps).toList))
-    }
-  }
+  case class Reflect[+A:Elem](x: Def[A], summary: Summary, deps: List[Exp[Any]]) extends BaseDef[A]
 
-  case class Reify[A:Elem](x: Exp[A], summary: Summary, effects: List[Exp[Any]]) extends BaseDef[A] {
-    override def mirror(t: Transformer) = Reify(t(x), mapOver(t,summary), t(effects).toList)
+  case class Reify[A:Elem](x: Exp[A], summary: Summary, effects: List[Exp[Any]]) extends BaseDef[A]
+
+  override def transformDef[A](d: Def[A], t: Transformer) = d match {
+    case Reflect(x, summary, deps) =>
+      implicit val eA = x.selfType
+      val Def(mx) = transformDef(x, t).asRep[A]
+      reflectMirrored(Reflect(mx, mapOver(t, summary), t(deps).toList))
+    case Reify(x, summary, effects) =>
+      implicit val eT = x.elem
+      Reify(t(x), mapOver(t,summary), t(effects).toList)
+    case _ => super.transformDef(d, t)
   }
 
   override protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {

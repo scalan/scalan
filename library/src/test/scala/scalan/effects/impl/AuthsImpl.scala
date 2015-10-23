@@ -21,10 +21,6 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
     extends EntityElem[To] {
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Authentications")
-      module.entities.find(_.name == "Auth").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA))
     }
@@ -33,7 +29,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[Auth[A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Auth[A]] => convertAuth(x) }
       tryConvert(element[Auth[A]], this, x, conv)
@@ -57,22 +53,24 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
     protected def getDefaultRep = Auth
   }
 
-  abstract class AuthCompanionAbs extends CompanionBase[AuthCompanionAbs] with AuthCompanion {
+  abstract class AuthCompanionAbs extends CompanionDef[AuthCompanionAbs] with AuthCompanion {
+    def selfType = AuthCompanionElem
     override def toString = "Auth"
   }
   def Auth: Rep[AuthCompanionAbs]
   implicit def proxyAuthCompanion(p: Rep[AuthCompanion]): AuthCompanion =
     proxyOps[AuthCompanion](p)
 
+  abstract class AbsLogin
+      (user: Rep[String], password: Rep[String])
+    extends Login(user, password) with Def[Login] {
+    lazy val selfType = element[Login]
+  }
   // elem for concrete class
   class LoginElem(val iso: Iso[LoginData, Login])
     extends AuthElem[SOption[String], Login]
     with ConcreteElem[LoginData, Login] {
     override lazy val parent: Option[Elem[_]] = Some(authElement(sOptionElement(StringElement)))
-    override lazy val entityDef = {
-      val module = getModules("Authentications")
-      module.concreteSClasses.find(_.name == "Login").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -100,7 +98,8 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
     lazy val eTo = new LoginElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class LoginCompanionAbs extends CompanionBase[LoginCompanionAbs] with LoginCompanion {
+  class LoginCompanionAbs extends CompanionDef[LoginCompanionAbs] with LoginCompanion {
+    def selfType = LoginCompanionElem
     override def toString = "Login"
     def apply(p: Rep[LoginData]): Rep[Login] =
       isoLogin.to(p)
@@ -110,7 +109,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
   object LoginMatcher {
     def unapply(p: Rep[Auth[SOption[String]]]) = unmkLogin(p)
   }
-  def Login: Rep[LoginCompanionAbs]
+  lazy val Login: Rep[LoginCompanionAbs] = new LoginCompanionAbs
   implicit def proxyLoginCompanion(p: Rep[LoginCompanionAbs]): LoginCompanionAbs = {
     proxyOps[LoginCompanionAbs](p)
   }
@@ -135,15 +134,16 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
   def mkLogin(user: Rep[String], password: Rep[String]): Rep[Login]
   def unmkLogin(p: Rep[Auth[SOption[String]]]): Option[(Rep[String], Rep[String])]
 
+  abstract class AbsHasPermission
+      (user: Rep[String], password: Rep[String])
+    extends HasPermission(user, password) with Def[HasPermission] {
+    lazy val selfType = element[HasPermission]
+  }
   // elem for concrete class
   class HasPermissionElem(val iso: Iso[HasPermissionData, HasPermission])
     extends AuthElem[Boolean, HasPermission]
     with ConcreteElem[HasPermissionData, HasPermission] {
     override lazy val parent: Option[Elem[_]] = Some(authElement(BooleanElement))
-    override lazy val entityDef = {
-      val module = getModules("Authentications")
-      module.concreteSClasses.find(_.name == "HasPermission").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -171,7 +171,8 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
     lazy val eTo = new HasPermissionElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class HasPermissionCompanionAbs extends CompanionBase[HasPermissionCompanionAbs] with HasPermissionCompanion {
+  class HasPermissionCompanionAbs extends CompanionDef[HasPermissionCompanionAbs] with HasPermissionCompanion {
+    def selfType = HasPermissionCompanionElem
     override def toString = "HasPermission"
     def apply(p: Rep[HasPermissionData]): Rep[HasPermission] =
       isoHasPermission.to(p)
@@ -181,7 +182,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
   object HasPermissionMatcher {
     def unapply(p: Rep[Auth[Boolean]]) = unmkHasPermission(p)
   }
-  def HasPermission: Rep[HasPermissionCompanionAbs]
+  lazy val HasPermission: Rep[HasPermissionCompanionAbs] = new HasPermissionCompanionAbs
   implicit def proxyHasPermissionCompanion(p: Rep[HasPermissionCompanionAbs]): HasPermissionCompanionAbs = {
     proxyOps[HasPermissionCompanionAbs](p)
   }
@@ -206,30 +207,23 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
   def mkHasPermission(user: Rep[String], password: Rep[String]): Rep[HasPermission]
   def unmkHasPermission(p: Rep[Auth[Boolean]]): Option[(Rep[String], Rep[String])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Authentications_Module.dump))
+  registerModule(Authentications_Module)
 }
 
 // Seq -----------------------------------
 trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
   self: AuthenticationsDslSeq =>
-  lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs with UserTypeSeq[AuthCompanionAbs] {
-    lazy val selfType = element[AuthCompanionAbs]
+  lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }
 
   case class SeqLogin
       (override val user: Rep[String], override val password: Rep[String])
-
-    extends Login(user, password)
-        with UserTypeSeq[Login] {
-    lazy val selfType = element[Login]
-  }
-  lazy val Login = new LoginCompanionAbs with UserTypeSeq[LoginCompanionAbs] {
-    lazy val selfType = element[LoginCompanionAbs]
+    extends AbsLogin(user, password) {
   }
 
   def mkLogin
-      (user: Rep[String], password: Rep[String]): Rep[Login] =
-      new SeqLogin(user, password)
+    (user: Rep[String], password: Rep[String]): Rep[Login] =
+    new SeqLogin(user, password)
   def unmkLogin(p: Rep[Auth[SOption[String]]]) = p match {
     case p: Login @unchecked =>
       Some((p.user, p.password))
@@ -238,18 +232,12 @@ trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
 
   case class SeqHasPermission
       (override val user: Rep[String], override val password: Rep[String])
-
-    extends HasPermission(user, password)
-        with UserTypeSeq[HasPermission] {
-    lazy val selfType = element[HasPermission]
-  }
-  lazy val HasPermission = new HasPermissionCompanionAbs with UserTypeSeq[HasPermissionCompanionAbs] {
-    lazy val selfType = element[HasPermissionCompanionAbs]
+    extends AbsHasPermission(user, password) {
   }
 
   def mkHasPermission
-      (user: Rep[String], password: Rep[String]): Rep[HasPermission] =
-      new SeqHasPermission(user, password)
+    (user: Rep[String], password: Rep[String]): Rep[HasPermission] =
+    new SeqHasPermission(user, password)
   def unmkHasPermission(p: Rep[Auth[Boolean]]) = p match {
     case p: HasPermission @unchecked =>
       Some((p.user, p.password))
@@ -260,23 +248,12 @@ trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
   self: AuthenticationsDslExp =>
-  lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs with UserTypeDef[AuthCompanionAbs] {
-    lazy val selfType = element[AuthCompanionAbs]
-    override def mirror(t: Transformer) = this
+  lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }
 
   case class ExpLogin
       (override val user: Rep[String], override val password: Rep[String])
-
-    extends Login(user, password) with UserTypeDef[Login] {
-    lazy val selfType = element[Login]
-    override def mirror(t: Transformer) = ExpLogin(t(user), t(password))
-  }
-
-  lazy val Login: Rep[LoginCompanionAbs] = new LoginCompanionAbs with UserTypeDef[LoginCompanionAbs] {
-    lazy val selfType = element[LoginCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+    extends AbsLogin(user, password)
 
   object LoginMethods {
     object toOper {
@@ -307,16 +284,7 @@ trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
 
   case class ExpHasPermission
       (override val user: Rep[String], override val password: Rep[String])
-
-    extends HasPermission(user, password) with UserTypeDef[HasPermission] {
-    lazy val selfType = element[HasPermission]
-    override def mirror(t: Transformer) = ExpHasPermission(t(user), t(password))
-  }
-
-  lazy val HasPermission: Rep[HasPermissionCompanionAbs] = new HasPermissionCompanionAbs with UserTypeDef[HasPermissionCompanionAbs] {
-    lazy val selfType = element[HasPermissionCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+    extends AbsHasPermission(user, password)
 
   object HasPermissionMethods {
     object eA {
@@ -375,10 +343,8 @@ trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
   }
 }
 
-object Authentications_Module {
-  val packageName = "scalan.examples"
-  val name = "Authentications"
-  val dump = "H4sIAAAAAAAAAL1WTWwbRRQeb+I4ttOmjVBQkSpSY0CgYkdIqIccKid1+ZHrWNmCKlMhjddjZ8rszGZmHNYceuAIN8QVod5744KE1AtCQhw4IUDizKkUoQroqVXfzP74J3GaS9nDaPbtm/fzfe+9ndv3UFZJ9JLyMMO84hONK67d15Quu3WuqR5eEd0BI5dI75PVb7wrfFM5aLmNFnaxuqRYG+WjTT0M0r1L9hooj7lHlBZSaXSuYT1UPcEY8TQVvEp9f6Bxh5Fqgyq90UDzHdEd7qGbKNNApzzBPUk0cbcYVoqoWL5ITEQ0fc/b9+F2MPLBqyaL6lgWVyWmGsIHH6ci/R0SuEMu+NDX6GQc2nZgwgKdHPUDIXXiIgfmdkU3eZ3nGARopXED7+MquOhXXS0p78PJYoC9D3GfNEHFqM9DwIqw3tVhYN/nGqigyB4A9LYfMCsJA4QQMPC6DaIywqeS4lMx+JRdIilm9GNsPrakCIcoejJzCIUBmDj/BBOJBVLn3fKn1733H7hF3zGHQxNKzma4AIaen1ENlgrA8Yedz9X9N29dcFChjQpU1TpKS+zpccpjtIqYc6FtzCmAWPaBrdIstqyXGuhMlUTeE36AOViKoVwCnhj1qDbKRrYUszMD+pwOSKKaCYNMmu/ajHxt3Wxhxlp3z7z24p/1aw5yJl3kwaQLhS8ToxrN1wZ6NzZt1mWNcm5UW6nDF2Y5DEhLUh8KfJ+88d237/59p5m1Ple6pIcHTL+H2YBE5RZHMIrGOHdKJY0WRgr5cHrNHZFvivzLd//qfr+OrjspX3F6xysRMJFVv/1S/PmViw5abNuGusxwvw2UqToj/rbcEly30aLYJzL6ktvHzOwOLZlcnH5M5DgDc8CARmszWz8ghp4N22aZBIBi1ClNwUn5cqv8n/vjF7dNI0i0FH2J+HpELzz8/WRP2x4BZgeKyITTORghERpmeTYC2ArOpp7MAnwsBoDJR0J2jzw7SVEhisMVPjlduk8/uPWZtmRkwsnRs925Ab2+Yc+dO4KXZAT+2153/jnz61cOygP8Hap9HJTXj9m4T7EZUQrYaCkFZjiLPuVb485Ko2H1nN1qlLVaUx+LmckunG7MVTjXw0xB+eQ2hWAE84NMWC9jhw6Q+/8VhVnP27U6C63Vt7BqEelTpQCsJ6F2YkJ7pDQW9kLsbxLJ/A6hPWr+K0cjDKJMbczkgZyOndgJY/mQfJJ5ayXpcDo7e7xCya3uNJ5h9y7ecVD2HagAmDmqgbIdMeDdpJbh8qFJqDcTWWaylqF2scR+Wrv2WUOjsGbm3ZxEGRSXTfjmUuJFvQaSOHoSYmgpomJ8JCR4eFpu3FnQ3jcffNl89aev/7A/jYLpURhxPL3KjP8sJnlamQoDrihjCQDKpn1t8I8BMxn3sjIKAAA="
+object Authentications_Module extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAAL1WTWwbRRQer+M4ttOmRCioSBWpMSBQsSMk1EMOlZO6/Mh1rGxBlamQxuuxM2V2ZjMzDmsOPXCEG+KKUO+9cUFC6gUhIQ6cECBx5lSKUAX0BOqb2R//JE5zgT2MZt++eT/f997buXMf5ZREzysPM8yrPtG46tp9XemK2+Ca6tFV0Rsycpn0P1z70rvKt5SDVjpocQ+ry4p1UCHaNMIg3btkv4kKmHtEaSGVRueb1kPNE4wRT1PBa9T3hxp3Gak1qdKbTbTQFb3RPrqFMk10xhPck0QTd5thpYiK5UvERETT94J9H+0EYx+8ZrKoTWRxTWKqIXzwcSbS3yWBO+KCj3yNTseh7QQmLNDJUz8QUicu8mBuT/SS1wWOQYBWmzfxAa6Bi0HN1ZLyAZwsBdh7Dw9IC1SM+gIErAjrXxsF9j3bREVF9gGgN/yAWUkYIISAgVdsENUxPtUUn6rBp+ISSTGjH2DzsS1FOELRk8kiFAZg4sJjTCQWSIP3Kh/d8N556JZ8xxwOTSh5m+EiGHpmTjVYKgDHb3c/UQ9eu33RQcUOKlJV7yotsacnKY/RKmHOhbYxpwBiOQC2yvPYsl7qoDNTEgVP+AHmYCmGchl4YtSj2igb2XLMzhzo8zogiWomDDJpvutz8rV1s40Za987+/JzvzWuO8iZdlEAky4UvkyMarRQH+q92LRZVzTKu1FtpQ6fnecwIG1JfSjwA/Lq11+99cfdVs76XO2RPh4y/TZmQxKVWxzBOBrj3CmXNVocKxTC2TV/TL4p8i/c+733zQa64aR8xemdrETARE79/GPphxcvOWipYxvqCsODDlCmGoz4O3JbcN1BS+KAyOhL/gAzszuyZPJx+jGRkwxkgQGN1ue2fkAMPZu2zTIJAKWoU1qCk8qVduVv97tP75hGkGg5+hLx9S+9+M8vp/va9ggwO1REJpxmYYREaJjlqQhgKziXejIL8LEUACbvC9k79uw0RcUoDlf45InyA/ru7Y+1JSMTTo+ene5N6PVNe+78MbwkI/Cvzobz59mfPndQAeDvUu3joLJxwsb9D5sRpYCNl3JghrMYUL496aw8HlZP261GOas187GUme7C2cZcg3N9zBSUT35LCEYwP8yE9TJx6BC5/19RmPWCXWvz0Fp7Has2kT5VCsB6HGqnprTHShNhL8b+ppHMQiEdjy2IMvUJY4eyOXFKp4zlIzJJJq2VpGPp3PzBCsW2ttt8kt2/dNdBuTeBe5g2qolyXTHkvaSK4dqhSai3EllmuoqharHEflq19llH47Dm5t2axhcUV0z45jriRV0Gkjh6EmJoJqJifCQkeHRabtxTwMeth5+1Xvr+i1/t76JouhOGG08vMZO/iWmeVmfCgMvJRAKAsmlcG/wjz6+u9iwKAAA="
 }
 }
 

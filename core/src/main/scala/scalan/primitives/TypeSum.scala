@@ -96,13 +96,9 @@ trait TypeSumSeq extends TypeSum { self: ScalanSeq =>
 
 trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
-  case class SLeft[A, B](left: Exp[A])(implicit val eRight: Elem[B]) extends BaseDef[A | B]()(sumElement(left.elem, eRight)) {
-    override def mirror(t: Transformer) = SLeft[A, B](t(left))
-  }
+  case class SLeft[A, B](left: Exp[A])(implicit val eRight: Elem[B]) extends BaseDef[A | B]()(sumElement(left.elem, eRight))
 
-  case class SRight[A, B](right: Exp[B])(implicit val eLeft: Elem[A]) extends BaseDef[A | B]()(sumElement(eLeft, right.elem)) {
-    override def mirror(t: Transformer) = SRight[A, B](t(right))
-  }
+  case class SRight[A, B](right: Exp[B])(implicit val eLeft: Elem[A]) extends BaseDef[A | B]()(sumElement(eLeft, right.elem))
 
   def mkLeft[A, B: Elem](a: Rep[A]): Rep[A | B] = SLeft[A, B](a)(element[B])
 
@@ -110,13 +106,10 @@ trait TypeSumExp extends TypeSum with BaseExp { self: ScalanExp =>
 
   case class SumFold[A, B, R](sum: Exp[A | B], left: Exp[A => R], right: Exp[B => R])
     extends BaseDef[R]()(left.elem.eRange) {
-    override def mirror(t: Transformer) = SumFold(t(sum), t(left), t(right))
   }
 
   case class SumMap[A, B, C, D](sum: Exp[A | B], left: Exp[A => C], right: Exp[B => D])
-    extends BaseDef[C | D]()(sumElement(left.elem.eRange, right.elem.eRange)) {
-    override def mirror(t: Transformer) = SumMap(t(sum), t(left), t(right))
-  }
+    extends BaseDef[C | D]()(sumElement(left.elem.eRange, right.elem.eRange))
 
   class SumOpsExp[A, B](s: Rep[A | B]) extends SumOps[A, B] {
     implicit def eLeft: Elem[A] = s.elem.eLeft

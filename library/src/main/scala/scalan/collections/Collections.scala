@@ -11,7 +11,7 @@ import scala.reflect.runtime.universe._
 trait Collections extends ArrayOps with ListOps { self: ScalanCommunityDsl =>
 
   type Coll[+Item] = Rep[Collection[Item]]
-  trait Collection[@uncheckedVariance +Item] extends Reifiable[Collection[Item @uncheckedVariance]] {
+  trait Collection[@uncheckedVariance +Item] extends Def[Collection[Item @uncheckedVariance]] {
     implicit def eItem: Elem[Item @uncheckedVariance]
     def length: Rep[Int]
     def arr: Rep[Array[Item @uncheckedVariance]]
@@ -574,7 +574,6 @@ trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslEx
                                        (implicit val ordK: Ordering[K], val selfType: Elem[Array[(K, R)]],
                                         val eK: Elem[K], val eR: Elem[R], val eB: Elem[B], val eC: Elem[C])
     extends Def[Array[(K, R)]] {
-    override def mirror(t: Transformer) = ArrayInnerJoin(t(xs), t(ys), t(f))
   }
 
   case class ArrayOuterJoin[K, B, C, R](xs: Exp[Array[(K, B)]], ys: Exp[Array[(K, C)]], f: Rep[((B, C)) => R],
@@ -582,6 +581,5 @@ trait CollectionsDslExp extends impl.CollectionsExp { self: ScalanCommunityDslEx
                                        (implicit val ordK: Ordering[K], val selfType: Elem[Array[(K, R)]],
                                         val eK: Elem[K], val eR: Elem[R], val eB: Elem[B], val eC: Elem[C])
     extends Def[Array[(K, R)]] {
-    override def mirror(t: Transformer) = ArrayOuterJoin(t(xs), t(ys), t(f), t(f1), t(f2))
   }
 }

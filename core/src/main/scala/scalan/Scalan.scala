@@ -15,6 +15,7 @@ trait Scalan
   with Containers
   with TypeWrappers
   with Views
+  with Entities
   with Proxy
   with Tuples
   with Loops

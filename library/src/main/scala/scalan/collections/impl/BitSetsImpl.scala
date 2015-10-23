@@ -19,10 +19,6 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   class BitSetElem[To <: BitSet]
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("BitSets")
-      module.entities.find(_.name == "BitSet").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -30,7 +26,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
     override lazy val tag = {
       weakTypeTag[BitSet].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[BitSet] => convertBitSet(x) }
       tryConvert(element[BitSet], this, x, conv)
@@ -54,22 +50,24 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
     protected def getDefaultRep = BitSet
   }
 
-  abstract class BitSetCompanionAbs extends CompanionBase[BitSetCompanionAbs] with BitSetCompanion {
+  abstract class BitSetCompanionAbs extends CompanionDef[BitSetCompanionAbs] with BitSetCompanion {
+    def selfType = BitSetCompanionElem
     override def toString = "BitSet"
   }
   def BitSet: Rep[BitSetCompanionAbs]
   implicit def proxyBitSetCompanion(p: Rep[BitSetCompanion]): BitSetCompanion =
     proxyOps[BitSetCompanion](p)
 
+  abstract class AbsBoolCollBitSet
+      (bits: Rep[Collection[Boolean]])
+    extends BoolCollBitSet(bits) with Def[BoolCollBitSet] {
+    lazy val selfType = element[BoolCollBitSet]
+  }
   // elem for concrete class
   class BoolCollBitSetElem(val iso: Iso[BoolCollBitSetData, BoolCollBitSet])
     extends BitSetElem[BoolCollBitSet]
     with ConcreteElem[BoolCollBitSetData, BoolCollBitSet] {
     override lazy val parent: Option[Elem[_]] = Some(bitSetElement)
-    override lazy val entityDef = {
-      val module = getModules("BitSets")
-      module.concreteSClasses.find(_.name == "BoolCollBitSet").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -96,7 +94,8 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
     lazy val eTo = new BoolCollBitSetElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class BoolCollBitSetCompanionAbs extends CompanionBase[BoolCollBitSetCompanionAbs] with BoolCollBitSetCompanion {
+  class BoolCollBitSetCompanionAbs extends CompanionDef[BoolCollBitSetCompanionAbs] with BoolCollBitSetCompanion {
+    def selfType = BoolCollBitSetCompanionElem
     override def toString = "BoolCollBitSet"
 
     def apply(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
@@ -105,7 +104,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   object BoolCollBitSetMatcher {
     def unapply(p: Rep[BitSet]) = unmkBoolCollBitSet(p)
   }
-  def BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs]
+  lazy val BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs] = new BoolCollBitSetCompanionAbs
   implicit def proxyBoolCollBitSetCompanion(p: Rep[BoolCollBitSetCompanionAbs]): BoolCollBitSetCompanionAbs = {
     proxyOps[BoolCollBitSetCompanionAbs](p)
   }
@@ -130,30 +129,23 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
   def mkBoolCollBitSet(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet]
   def unmkBoolCollBitSet(p: Rep[BitSet]): Option[(Rep[Collection[Boolean]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(BitSets_Module.dump))
+  registerModule(BitSets_Module)
 }
 
 // Seq -----------------------------------
 trait BitSetsSeq extends BitSetsDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeSeq[BitSetCompanionAbs] {
-    lazy val selfType = element[BitSetCompanionAbs]
+  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs {
   }
 
   case class SeqBoolCollBitSet
       (override val bits: Rep[Collection[Boolean]])
-
-    extends BoolCollBitSet(bits)
-        with UserTypeSeq[BoolCollBitSet] {
-    lazy val selfType = element[BoolCollBitSet]
-  }
-  lazy val BoolCollBitSet = new BoolCollBitSetCompanionAbs with UserTypeSeq[BoolCollBitSetCompanionAbs] {
-    lazy val selfType = element[BoolCollBitSetCompanionAbs]
+    extends AbsBoolCollBitSet(bits) {
   }
 
   def mkBoolCollBitSet
-      (bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
-      new SeqBoolCollBitSet(bits)
+    (bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet] =
+    new SeqBoolCollBitSet(bits)
   def unmkBoolCollBitSet(p: Rep[BitSet]) = p match {
     case p: BoolCollBitSet @unchecked =>
       Some((p.bits))
@@ -164,23 +156,12 @@ trait BitSetsSeq extends BitSetsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs with UserTypeDef[BitSetCompanionAbs] {
-    lazy val selfType = element[BitSetCompanionAbs]
-    override def mirror(t: Transformer) = this
+  lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs {
   }
 
   case class ExpBoolCollBitSet
       (override val bits: Rep[Collection[Boolean]])
-
-    extends BoolCollBitSet(bits) with UserTypeDef[BoolCollBitSet] {
-    lazy val selfType = element[BoolCollBitSet]
-    override def mirror(t: Transformer) = ExpBoolCollBitSet(t(bits))
-  }
-
-  lazy val BoolCollBitSet: Rep[BoolCollBitSetCompanionAbs] = new BoolCollBitSetCompanionAbs with UserTypeDef[BoolCollBitSetCompanionAbs] {
-    lazy val selfType = element[BoolCollBitSetCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+    extends AbsBoolCollBitSet(bits)
 
   object BoolCollBitSetMethods {
   }
@@ -311,10 +292,8 @@ trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
   }
 }
 
-object BitSets_Module {
-  val packageName = "scalan.collections"
-  val name = "BitSets"
-  val dump = "H4sIAAAAAAAAALVVPYwbRRR+3vvx2T7lEhdBdw3hMEGJiH1CilJcge4cB0Vy7k63ASETRZpbj50JszN7O+OTnSJFyqRDtAilT0cTCYkGISEKKgRI1FSBKIqAVCDezI53vVEW0rDFanb27Xvf+77vzT74DRZUDKdVQDgRzZBq0vTtekvpht8RmunJFdkfcXqRDu6cfBhcEdvKg5UeLN4g6qLiPagki844Stc+PexChYiAKi1jpeG1rq3QCiTnNNBMihYLw5EmB5y2ukzpzS7MH8j+5BBuQ6kLxwMpgphq6rc5UYoqt79EDSKWPlfs82Q3ymqIlumiNdPF1ZgwjfCxxvEkfp9G/kRIMQk1HHPQdiMDC2PKLIxkrKclypjuhuxPH+cFwQ2od2+SI9LCEsOWr2MmhvhlLSLBR2RIdzDEhM8jYEX54Ookss9zXagqeogEXQ4jbnfGEQCgAm9bEM2Mn2bKT9Pw0/BpzAhnt4h5uRfL8QSSqzQHMI4wxVv/kWKagXZEv3H3WvDhM78WeubjsYFSth0uYqJXC9xgpUAev9n/WD199/4FD6o9qDK1daB0TAI9K7ljq0aEkNpiTgkk8RDVWi9Sy1bZwpjnLFEJZBgRgZkclcuoE2cB0ybY7C07dQqoL+uITkNL46iU9nuqoF/rmzbhfO/R6rk3fu184IGXL1HBlD4aP54m1bC4zZBpbRk1t4ojt7hM2vCbjx73v96Aa15Kk8v6cspgigX10w+178+848FSz/r4EifDHjKlOpyGu3FbCt2DJXlE4+RN+Yhws3qhUuU+HZAR146/2cbnsHENpwonLqKGlU3r7tKUgFpi0B0paOPSXuNP/9tPHhj/xbCcvElG8G924a+fjw20taZGDzCtLKQVDXM4uY4Nt1Ntp35PaXq9SNCI7sUsxAPkiJ7/6ov3nny5s2A1rbtO3yd8RJNxdo1mTRssCwPCFTZe3paSUyIygWfvptdq0pEvQ3pi/Sm7fv+etrKWxvmzY/fgJoLftN+t/ovC0zPsj96G9/vqj595UEEhkZqQRI2Nl5y8/3GaIDV8dltDxl4xTBmJkrFoz1Zdy46dul3iYZwPz6ISdmekPwN5H1T2KRswc9jl9188j06oDMBpl7SgjZVC+PmRX3uuTiu/WTbWscF4Atad1NmBrRyUGNYLbOA7EdAJt599unP2u89/sQauGjlxroTO/aeccfOM1JN82Es4EvgzxN/RDGocOKO0xf0PEPyDcR4IAAA="
+object BitSets_Module extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAALVVPYwbRRR+Xt+dz/YpF1yA7hrCYYISgX1CQimuQHeOE0Vy7k7ZgJCJIs2tx86E2Zm9nfHJpkhBCV2UFqH06dJEQqJBSIiCCgESNVUgiiIgFYg3s+Ndb5QlabLFanb27Xvv+3mzd/6ARRXDSRUQTkQrpJq0fLveVrrpd4VmenpRDsacnqXDT1++F1wUO8qD1T4sXSPqrOJ9qCaL7iRK1z497EGViIAqLWOl4bWerdAOJOc00EyKNgvDsSYHnLZ7TOmtHiwcyMH0EG5AqQfHAymCmGrqdzhRiiq3v0xNRyx9rtrn6V6U1RBtg6I9h+JyTJjG9rHG8ST+Eo38qZBiGmo45lrbi0xbGFNhYSRjPStRwXTX5GD2uCAIbkCjd50ckTaWGLV9HTMxwi/rEQk+JiO6iyEmfAEbVpQPL08j+1zuQU3RQyToQhhxuzOJAAAVeMc20cr4aaX8tAw/TZ/GjHD2CTEv92M5mUJylcoAkwhTvPWMFLMMtCsGzc+uBB899uuhZz6emFYqFuESJnq1wA1WCuTxu0s31aPzt894UOtDjantA6VjEuh5yR1bdSKE1LbnlEASj1CtjSK1bJVtjHnCEtVAhhERmMlRuYI6cRYwbYLN3opTp4D6io7oLLQ0iUop3hMFeK1vOoTz/ftrb7/xe/dDD7x8iSqm9NH48SyphqUdhkxry6i5VR25xWVSwG/efzD4dhOueClNLuvzKYMpFtUvP9V/PPWeB8t96+NznIz6yJTqchruxR0pdB+W5RGNkzeVI8LN6qlKVQZ0SMZcO/7mgZcRuIYThRMXUcPKlnV3aUZAPTHorhS0eW6/+bf//a07xn8xrCRvkhH8l53559djQ22tqdEDTCvb0qqGMk6uY8Pt1Dqp31OaXi8SNKL7MQvxADmi737z1fsPv95dtJo2HNIPCB/TZJwd0Ay06WVxSLhC4JUdKTklIhN4/m6w1hJEvgzpSxuP2NXbn2sra2mSPzv2Dq5j81v2u7X/UXh2hv3V3/T+XPv5Sw+qKCRSE5Koufmck/cCpwlSw2e3dWTsFcOUkSgZi8581fXs2GnYJR7G+fAsKmF3TvpTkPdBGcnJ7zx9Ep1EWemTLl0BgNXCxvPDvv5EnXZ+s2JMY4Px7Gs4kbOjWrlWYtgoMIDv6EeYNx5/sXv6h7u/WevWjJA4UULn/lDOsnlGGkk+xBKOBf4G8Uc01zWOmtHY9v0fyE6spRgIAAA="
 }
 }
 

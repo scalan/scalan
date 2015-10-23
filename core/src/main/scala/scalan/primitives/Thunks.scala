@@ -36,7 +36,6 @@ trait Thunks { self: Scalan =>
     extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
     def parent: Option[Elem[_]] = None
     override def isEntityType = eItem.isEntityType
-    override def entityDef = !!!("not supported")
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eItem))
     }
@@ -66,19 +65,6 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
                         (implicit val eA: Elem[A] = root.elem)
     extends BaseDef[Thunk[A]] with AstGraph with Product {
 
-    override def mirror(t: Transformer) = {
-      val newSym = fresh[Thunk[A]]
-      val newSchedule = for {
-        tp <- schedule
-        res <- t(tp.sym) match {
-          case te@TableEntry(_, _) => List(te)
-          case _ => Nil
-        }
-      } yield res
-      val newThunk = ThunkDef(t(root), newSchedule)
-      toExp(newThunk, newSym)
-    }
-
     // structural equality pattern implementation
     override lazy val hashCode: Int = 41 * (41 + root.hashCode) + schedule.hashCode
     override def equals(other: Any) =
@@ -104,10 +90,25 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
     val roots = List(root)
   }
 
+  override def transformDef[A](d: Def[A], t: Transformer) = d match {
+    case thunk: ThunkDef[a] =>
+      import thunk.eA
+      val newSym = fresh[Thunk[a]]
+      val newSchedule = for {
+        tp <- thunk.schedule
+        res <- t(tp.sym) match {
+          case te@TableEntry(_, _) => List(te)
+          case _ => Nil
+        }
+      } yield res
+      val newThunk = ThunkDef(t(thunk.root), newSchedule)
+      toExp(newThunk, newSym)
+    case _ => super.transformDef(d, t)
+  }
+
   case class ThunkView[A, B](source: Rep[Thunk[A]])(iso: Iso1[A, B, Thunk])
     extends View1[A, B, Thunk](iso) {
     //lazy val iso = thunkIso(i)
-    def copy(source: Rep[Thunk[A]]) = ThunkView(source)(iso)
   }
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
@@ -185,10 +186,8 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
     else
       ThunkForce(t)
 
-  case class ThunkForce[A](thunk: Exp[Thunk[A]]) extends Def[A]
-  {
+  case class ThunkForce[A](thunk: Exp[Thunk[A]]) extends Def[A] {
     implicit def selfType = thunk.elem.eItem
-    override def mirror(t: Transformer) = ThunkForce(t(thunk))
   }
 
   override def effectSyms(x: Any): List[Exp[Any]] = x match {

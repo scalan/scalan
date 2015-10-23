@@ -48,7 +48,6 @@ trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
   case class JNIArrayElem[A](override val eItem: Elem[A]) extends ArrayElem[A]()(eItem) {
     def parent: Option[Elem[_]] = Some(arrayElement(eItem))
     override def isEntityType = eItem.isEntityType
-    override def entityDef = !!!("not supported")
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eItem))
     }
@@ -247,95 +246,62 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     }
   }
 
-  case class JNI_NewObject[T: Elem](clazz: Rep[JNIClass], mid: Rep[JNIMethodID], args: Rep[JNIType[_]]*) extends BaseDef[JNIType[T]] {
-    override def mirror(t: Transformer) = {
-      val _args = for(arg <- args) yield t(arg)
-      JNI_NewObject[T](t(clazz), t(mid), _args:_*)
-    }
+  private[this] def isPrimitive(e: Elem[_]) = !(e <:< AnyRefElement)
+  private[this] def isObject(e: Elem[_]) = e <:< AnyRefElement
+
+  case class JNI_NewObject[T](clazz: Rep[JNIClass], mid: Rep[JNIMethodID], args: Rep[JNIType[_]]*)(implicit val eT: Elem[T]) extends BaseDef[JNIType[T]]
+  case class JNI_NewPrimitive[T](x: Rep[T])(implicit val eT: Elem[T]) extends BaseDef[JNIType[T]] {
+    require(isPrimitive(eT))
   }
 
-  case class JNI_NewPrimitive[T: Elem](x: Rep[T]) extends BaseDef[JNIType[T]] {
-    require( !(element[T] <:< AnyRefElement), "!(" + element[T] + " <:< " + AnyRefElement + ") isn't true")
-    override def mirror(t: Transformer) = JNI_NewPrimitive[T](t(x))
+  case class JNI_MapPrimitiveArray[A, B](x: Rep[Array[A]], f: Rep[A => B])(implicit val eA: Elem[A], val eB: Elem[B]) extends BaseDef[JNIType[Array[B]]] {
+    require(isPrimitive(eA))
   }
 
-  case class JNI_MapPrimitiveArray[A: Elem, B: Elem](x: Rep[Array[A]], f: Rep[A => B]) extends BaseDef[JNIType[Array[B]]] {
-    require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
-    override def mirror(t: Transformer) = JNI_MapPrimitiveArray[A,B](t(x), t(f))
+  case class JNI_MapObjectArray[A, B](x: Rep[Array[A]], f: Rep[A => JNIType[B]])(implicit val eA: Elem[A], val eB: Elem[B]) extends BaseDef[JNIType[Array[B]]] {
+    require(isObject(eA))
   }
 
-  case class JNI_MapObjectArray[A: Elem, B: Elem](x: Rep[Array[A]], f: Rep[A => JNIType[B]]) extends BaseDef[JNIType[Array[B]]] {
-    require( (element[A] <:< AnyRefElement), "(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
-    override def mirror(t: Transformer) = JNI_MapObjectArray[A,B](t(x), t(f))
+  case class JNI_FindClass(className: Rep[CString]) extends BaseDef[JNIClass]
+
+  case class JNI_GetObjectClass[T](x: Rep[JNIType[T]])(implicit val eT: Elem[T]) extends BaseDef[JNIClass]
+
+  case class JNI_GetFieldID(clazz: Rep[JNIClass], fname: Rep[CString], sig: Rep[CString]) extends BaseDef[JNIFieldID]
+
+  case class JNI_GetMethodID(clazz: Rep[JNIClass], mname: Rep[CString], sig: Rep[CString]) extends BaseDef[JNIMethodID]
+
+  case class JNI_GetObjectFieldValue[A, T](fid: Rep[JNIFieldID], x: Rep[JNIType[T]])(implicit val eA: Elem[A], val eT: Elem[T]) extends BaseDef[JNIType[A]]
+
+  case class JNI_GetPrimitiveFieldValue[A, T](fid: Rep[JNIFieldID], tup: Rep[JNIType[T]])(implicit val eA: Elem[A], val eT: Elem[T]) extends BaseDef[A] {
+    require(isPrimitive(eA))
   }
 
-  case class JNI_FindClass(className: Rep[CString]) extends BaseDef[JNIClass] {
-    override def mirror(t: Transformer) = JNI_FindClass(t(className))
+  case class JNI_CallObjectMethod[A, T](x: Rep[JNIType[T]], mid: Rep[JNIMethodID], args: Rep[Any]*)(implicit val eA: Elem[A], val eT: Elem[T]) extends BaseDef[JNIType[A]]
+
+  case class JNI_CallPrimitiveMethod[A, T](mid: Rep[JNIMethodID], x: Rep[JNIType[T]], args: Rep[Any]*)(implicit val eA: Elem[A], val eT: Elem[T]) extends BaseDef[JNIType[A]] {
+    require(isPrimitive(eA))
   }
 
-  case class JNI_GetObjectClass[T: Elem](x: Rep[JNIType[T]]) extends BaseDef[JNIClass] {
-    override def mirror(t: Transformer) = JNI_GetObjectClass(t(x))
+  case class JNI_ExtractPrimitive[A](x: Rep[JNIType[A]])(implicit val eA: Elem[A]) extends BaseDef[A] {
+    require(isPrimitive(eA))
   }
 
-  case class JNI_GetFieldID(clazz: Rep[JNIClass], fname: Rep[CString], sig: Rep[CString]) extends BaseDef[JNIFieldID] {
-    override def mirror(t: Transformer) = JNI_GetFieldID(t(clazz), t(fname), t(sig))
+  case class JNI_GetArrayLength[A](arr: Rep[JNIType[Array[A]]])(implicit val eA: Elem[A]) extends BaseDef[Int]
+
+  case class JNI_ExtractObjectArray[A](x: Rep[JNIType[Array[A]]])(implicit val eA: Elem[A]) extends BaseDef[Array[JNIType[A]]] {
+    require(isObject(eA))
   }
 
-  case class JNI_GetMethodID(clazz: Rep[JNIClass], mname: Rep[CString], sig: Rep[CString]) extends BaseDef[JNIMethodID] {
-    override def mirror(t: Transformer) = JNI_GetMethodID(t(clazz), t(mname), t(sig))
+  case class JNI_GetObjectArrayItem[A](arr: Rep[Array[JNIType[A]]], i: Rep[Int])(implicit val eA: Elem[A]) extends BaseDef[JNIType[A]] {
+    require(isObject(eA))
   }
 
-  case class JNI_GetObjectFieldValue[A: Elem, T: Elem](fid: Rep[JNIFieldID], x: Rep[JNIType[T]]) extends BaseDef[JNIType[A]] {
-    override def mirror(t: Transformer) = JNI_GetObjectFieldValue[A,T](t(fid), t(x))
-  }
-
-  case class JNI_GetPrimitiveFieldValue[A: Elem, T: Elem](fid: Rep[JNIFieldID], tup: Rep[JNIType[T]]) extends BaseDef[A] {
-    require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
-    override def mirror(t: Transformer) = JNI_GetPrimitiveFieldValue[A,T](t(fid), t(tup))
-  }
-
-  case class JNI_CallObjectMethod[A: Elem, T: Elem](x: Rep[JNIType[T]], mid: Rep[JNIMethodID], args: Rep[Any]*) extends BaseDef[JNIType[A]] {
-    override def mirror(t: Transformer) = {
-      val _args = for(arg <- args) yield t(arg)
-      JNI_CallObjectMethod[A,T](t(x), t(mid), _args:_*)
-    }
-  }
-
-  case class JNI_CallPrimitiveMethod[A: Elem, T: Elem](mid: Rep[JNIMethodID], x: Rep[JNIType[T]], args: Rep[Any]*) extends BaseDef[JNIType[A]] {
-    require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
-    override def mirror(t: Transformer) = {
-      val _args = for(arg <- args) yield t(arg)
-      JNI_CallPrimitiveMethod[A,T](t(mid), t(x), _args:_*)
-    }
-  }
-
-  case class JNI_ExtractPrimitive[A: Elem](x: Rep[JNIType[A]]) extends BaseDef[A] {
-    require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
-    override def mirror(t: Transformer) = JNI_ExtractPrimitive[A](t(x))
-  }
-
-  case class JNI_GetArrayLength[A: Elem](arr: Rep[JNIType[Array[A]]]) extends BaseDef[Int] {
-    override def mirror(t: Transformer) = JNI_GetArrayLength(t(arr))
-  }
-
-  case class JNI_ExtractObjectArray[A: Elem](x: Rep[JNIType[Array[A]]]) extends BaseDef[Array[JNIType[A]]] {
-    require( element[A] <:< AnyRefElement, element[A] + " <:< " + AnyRefElement + " isn't true")
-    override def mirror(t: Transformer) = JNI_ExtractObjectArray(t(x))
-  }
-
-  case class JNI_GetObjectArrayItem[A: Elem](arr: Rep[Array[JNIType[A]]], i: Rep[Int]) extends BaseDef[JNIType[A]] {
-    require( element[A] <:< AnyRefElement, element[A] + " <:< " + AnyRefElement + " isn't true")
-    override def mirror(t: Transformer) = JNI_GetObjectArrayItem(t(arr), t(i))
-  }
-
-  case class JNI_ExtractPrimitiveArray[A: Elem](x: Rep[JNIType[Array[A]]]) extends Def[Array[A]] {
-    require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
+  case class JNI_ExtractPrimitiveArray[A](x: Rep[JNIType[Array[A]]])(implicit val eA: Elem[A]) extends Def[Array[A]] {
+    require(isPrimitive(eA))
     override def selfType = jniArrayElem(element[A])
-    override def mirror(t: Transformer) = JNI_ExtractPrimitiveArray[A](t(x))
   }
 
-  case class JNI_NewPrimitiveArray[A: Elem](len: Rep[Int]) extends BaseDef[JNIType[Array[A]]] {
-    require( !(element[A] <:< AnyRefElement), "!(" + element[A] + " <:< " + AnyRefElement + ") isn't true")
-    override def mirror(t: Transformer) = JNI_NewPrimitiveArray[A](t(len))
+  case class JNI_NewPrimitiveArray[A](len: Rep[Int])(implicit val eA: Elem[A]) extends BaseDef[JNIType[Array[A]]] {
+    require(isPrimitive(eA))
   }
 }

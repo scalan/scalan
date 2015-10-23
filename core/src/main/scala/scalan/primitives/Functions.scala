@@ -59,11 +59,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
                     (implicit val eA: Elem[A] = x.elem, val eB: Elem[B] = y.elem)
     extends BaseDef[A => B] with AstGraph with Product { thisLambda =>
     override lazy val self = self0
-    override def mirror(t: Transformer) = {
-      val newSym = fresh[A=>B]
-      val newLam = new Lambda(None, t(x), t(y), newSym, mayInline)
-      toExp(newLam, newSym)
-    }
 
     // ensure all lambdas of the same type have the same hashcode,
     // so they are tested for alpha-equivalence
@@ -106,6 +101,15 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     }
   }
 
+  override def transformDef[A](d: Def[A], t: Transformer) = d match {
+    case l: Lambda[a, b] =>
+      import l.{eA, eB}
+      val newSym = fresh[a => b]
+      val newLam = new Lambda(None, t(l.x), t(l.y), newSym, l.mayInline)
+      toExp(newLam, newSym).asRep[A]
+    case _ => super.transformDef(d, t)
+  }
+
   /**
    * Matcher for lambdas which don't depend on their arguments
    * (but can close over other expressions, unlike VeryConstantLambda).
@@ -138,18 +142,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
 
   case class ParallelExecute[B:Elem](nJobs: Exp[Int], f: Exp[Int => B])  extends Def[Array[B]] {
     def selfType = element[Array[B]]
-    override def mirror(t: Transformer) = ParallelExecute(t(nJobs), t(f))
-    /* Added only for debugging
-    override def equals(other: Any) = {
-      other match {
-        case that: ParallelExecute[_] =>
-          val eqJobs = nJobs == that.nJobs
-          val eqFuncs = f.equals(that.f)
-          eqJobs && eqFuncs
-        case _ => false
-      }
-    }
-    */
   }
 
   case class Apply[A,B]
@@ -158,7 +150,6 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
       extends Def[B]
   {
     def selfType = eB.value
-    override def mirror(t: Transformer) = Apply(t(f), t(arg))(eB)
   }
 
   implicit class LambdaExtensions[A, B](lam: Lambda[A,B]) {

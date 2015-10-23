@@ -34,6 +34,8 @@ trait Elems extends Base { self: Scalan =>
     def <:<(e: Element[_]) = tag.tpe <:< e.tag.tpe
     def >:>(e: Element[_]) = e <:< this
 
+    def asElem[B]: Elem[B] = this.asInstanceOf[Elem[B]]
+
     if (isDebug) {
       debug$ElementCounter(this) += 1
     }
@@ -68,16 +70,6 @@ trait Elems extends Base { self: Scalan =>
 
   def element[A](implicit ea: Elem[A]): Elem[A] = ea
 
-  implicit class ElemForSomeExtension(e: Elem[_]) {
-    def asElem[T]: Elem[T] = e.asInstanceOf[Elem[T]]
-    def asEntityElem[T]: EntityElem[T] = e.asInstanceOf[EntityElem[T]]
-
-    def getMethod(methodName: String, argClasses: Class[_]*): Method = {
-      val m = e.runtimeClass.getMethod(methodName, argClasses: _*)
-      m
-    }
-  }
-
   class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Element[A] with Serializable with scala.Equals {
     protected def getDefaultRep = toRep(z.value)(this)
     override def isEntityType = false
@@ -90,6 +82,7 @@ trait Elems extends Base { self: Scalan =>
   }
 
   case class PairElem[A, B](eFst: Elem[A], eSnd: Elem[B]) extends Element[(A, B)] {
+    assert(eFst != null && eSnd != null)
     override def isEntityType = eFst.isEntityType || eSnd.isEntityType
     lazy val tag = {
       implicit val tA = eFst.tag
@@ -160,14 +153,12 @@ trait Elems extends Base { self: Scalan =>
 
   def elemFromRep[A](x: Rep[A])(implicit eA: Elem[A]): Elem[A] = eA match {
     case ve: ViewElem[_,_] =>
-      x.asRep[Reifiable[_]].selfType1.asInstanceOf[Elem[A]]
+      x.asRep[Def[_]].selfType1.asInstanceOf[Elem[A]]
     case pe: PairElem[a,b] =>
       implicit val ea = pe.eFst
       implicit val eb = pe.eSnd
-      Def.unapply[(a,b)](x) match {
-        case Some(p) => pairElement(elemFromRep(x.asRep[(a,b)]._1)(ea), elemFromRep(x.asRep[(a,b)]._2)(eb))
-        case _ => eA
-      }
+      val pair = x.asRep[(a, b)]
+      pairElement(elemFromRep(pair._1)(ea), elemFromRep(pair._2)(eb))
     case _ => eA
   }
 
@@ -176,19 +167,6 @@ trait Elems extends Base { self: Scalan =>
 
   import scalan.meta.ScalanAst
   import ScalanAst._
-
-  private var modules: Map[String, SEntityModuleDef] = Map()
-  def getModules = modules
-
-  def allEntities = getModules.values.flatMap(m => m.allEntities)
-
-  def registerModule(m: SEntityModuleDef) = {
-    if (modules.contains(m.name))
-      !!!(s"Module ${m.name} already defined")
-    else {
-      modules += (m.name -> m)
-    }
-  }
 }
 
 trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>

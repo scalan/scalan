@@ -69,7 +69,6 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     extends View1[A, B, Array](iso) {
     //def this(source: Arr[A])(iso: Iso[A, B]) = this(source)(ArrayIso(iso))
     //lazy val iso = ArrayIso(innerIso)
-    def copy(source: Arr[A]) = ViewArray(source)(iso)
     override def toString = s"ViewArray[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewArray[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo

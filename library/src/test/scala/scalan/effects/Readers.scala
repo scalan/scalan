@@ -6,7 +6,7 @@ import scala.reflect.runtime.universe._
 trait Readers extends Base { self: MonadsDsl =>
 
   type RepReader[Env,A] = Rep[Reader[Env,A]]
-  trait Reader[Env,A] extends Reifiable[Reader[Env, A]] { self =>
+  trait Reader[Env,A] extends Def[Reader[Env, A]] { self =>
     implicit def eEnv: Elem[Env]
     implicit def eA: Elem[A]
     def run: Rep[Env => A]

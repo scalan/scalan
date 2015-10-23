@@ -22,10 +22,6 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
     def cF = _cF
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("FreeMs")
-      module.entities.find(_.name == "FreeM").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -34,7 +30,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[FreeM[F, A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[FreeM[F, A]] => convertFreeM(x) }
       tryConvert(element[FreeM[F, A]], this, x, conv)
@@ -58,22 +54,24 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
     protected def getDefaultRep = FreeM
   }
 
-  abstract class FreeMCompanionAbs extends CompanionBase[FreeMCompanionAbs] with FreeMCompanion {
+  abstract class FreeMCompanionAbs extends CompanionDef[FreeMCompanionAbs] with FreeMCompanion {
+    def selfType = FreeMCompanionElem
     override def toString = "FreeM"
   }
   def FreeM: Rep[FreeMCompanionAbs]
   implicit def proxyFreeMCompanion(p: Rep[FreeMCompanion]): FreeMCompanion =
     proxyOps[FreeMCompanion](p)
 
+  abstract class AbsDone[F[_], A]
+      (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends Done[F, A](a) with Def[Done[F, A]] {
+    lazy val selfType = element[Done[F, A]]
+  }
   // elem for concrete class
   class DoneElem[F[_], A](val iso: Iso[DoneData[F, A], Done[F, A]])(implicit eA: Elem[A], cF: Cont[F])
     extends FreeMElem[F, A, Done[F, A]]
     with ConcreteElem[DoneData[F, A], Done[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(freeMElement(container[F], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("FreeMs")
-      module.concreteSClasses.find(_.name == "Done").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -102,7 +100,8 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
     lazy val eTo = new DoneElem[F, A](this)
   }
   // 4) constructor and deconstructor
-  abstract class DoneCompanionAbs extends CompanionBase[DoneCompanionAbs] with DoneCompanion {
+  class DoneCompanionAbs extends CompanionDef[DoneCompanionAbs] with DoneCompanion {
+    def selfType = DoneCompanionElem
     override def toString = "Done"
 
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]] =
@@ -111,7 +110,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   object DoneMatcher {
     def unapply[F[_], A](p: Rep[FreeM[F, A]]) = unmkDone(p)
   }
-  def Done: Rep[DoneCompanionAbs]
+  lazy val Done: Rep[DoneCompanionAbs] = new DoneCompanionAbs
   implicit def proxyDoneCompanion(p: Rep[DoneCompanionAbs]): DoneCompanionAbs = {
     proxyOps[DoneCompanionAbs](p)
   }
@@ -136,15 +135,16 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   def mkDone[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]]
   def unmkDone[F[_], A](p: Rep[FreeM[F, A]]): Option[(Rep[A])]
 
+  abstract class AbsMore[F[_], A]
+      (k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F])
+    extends More[F, A](k) with Def[More[F, A]] {
+    lazy val selfType = element[More[F, A]]
+  }
   // elem for concrete class
   class MoreElem[F[_], A](val iso: Iso[MoreData[F, A], More[F, A]])(implicit eA: Elem[A], cF: Cont[F])
     extends FreeMElem[F, A, More[F, A]]
     with ConcreteElem[MoreData[F, A], More[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(freeMElement(container[F], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("FreeMs")
-      module.concreteSClasses.find(_.name == "More").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -173,7 +173,8 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
     lazy val eTo = new MoreElem[F, A](this)
   }
   // 4) constructor and deconstructor
-  abstract class MoreCompanionAbs extends CompanionBase[MoreCompanionAbs] with MoreCompanion {
+  class MoreCompanionAbs extends CompanionDef[MoreCompanionAbs] with MoreCompanion {
+    def selfType = MoreCompanionElem
     override def toString = "More"
 
     def apply[F[_], A](k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]] =
@@ -182,7 +183,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   object MoreMatcher {
     def unapply[F[_], A](p: Rep[FreeM[F, A]]) = unmkMore(p)
   }
-  def More: Rep[MoreCompanionAbs]
+  lazy val More: Rep[MoreCompanionAbs] = new MoreCompanionAbs
   implicit def proxyMoreCompanion(p: Rep[MoreCompanionAbs]): MoreCompanionAbs = {
     proxyOps[MoreCompanionAbs](p)
   }
@@ -207,15 +208,16 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   def mkMore[F[_], A](k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]]
   def unmkMore[F[_], A](p: Rep[FreeM[F, A]]): Option[(Rep[F[FreeM[F, A]]])]
 
+  abstract class AbsFlatMap[F[_], S, B]
+      (a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends FlatMap[F, S, B](a, f) with Def[FlatMap[F, S, B]] {
+    lazy val selfType = element[FlatMap[F, S, B]]
+  }
   // elem for concrete class
   class FlatMapElem[F[_], S, B](val iso: Iso[FlatMapData[F, S, B], FlatMap[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends FreeMElem[F, B, FlatMap[F, S, B]]
     with ConcreteElem[FlatMapData[F, S, B], FlatMap[F, S, B]] {
     override lazy val parent: Option[Elem[_]] = Some(freeMElement(container[F], element[B]))
-    override lazy val entityDef = {
-      val module = getModules("FreeMs")
-      module.concreteSClasses.find(_.name == "FlatMap").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "S" -> Left(eS), "B" -> Left(eA))
     }
@@ -245,7 +247,8 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
     lazy val eTo = new FlatMapElem[F, S, B](this)
   }
   // 4) constructor and deconstructor
-  abstract class FlatMapCompanionAbs extends CompanionBase[FlatMapCompanionAbs] with FlatMapCompanion {
+  class FlatMapCompanionAbs extends CompanionDef[FlatMapCompanionAbs] with FlatMapCompanion {
+    def selfType = FlatMapCompanionElem
     override def toString = "FlatMap"
     def apply[F[_], S, B](p: Rep[FlatMapData[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]] =
       isoFlatMap(eS, eA, cF).to(p)
@@ -255,7 +258,7 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   object FlatMapMatcher {
     def unapply[F[_], S, B](p: Rep[FreeM[F, B]]) = unmkFlatMap(p)
   }
-  def FlatMap: Rep[FlatMapCompanionAbs]
+  lazy val FlatMap: Rep[FlatMapCompanionAbs] = new FlatMapCompanionAbs
   implicit def proxyFlatMapCompanion(p: Rep[FlatMapCompanionAbs]): FlatMapCompanionAbs = {
     proxyOps[FlatMapCompanionAbs](p)
   }
@@ -280,30 +283,23 @@ trait FreeMsAbs extends FreeMs with scalan.Scalan {
   def mkFlatMap[F[_], S, B](a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]]
   def unmkFlatMap[F[_], S, B](p: Rep[FreeM[F, B]]): Option[(Rep[FreeM[F, S]], Rep[S => FreeM[F, B]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(FreeMs_Module.dump))
+  registerModule(FreeMs_Module)
 }
 
 // Seq -----------------------------------
 trait FreeMsSeq extends FreeMsDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs with UserTypeSeq[FreeMCompanionAbs] {
-    lazy val selfType = element[FreeMCompanionAbs]
+  lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs {
   }
 
   case class SeqDone[F[_], A]
-      (override val a: Rep[A])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends Done[F, A](a)
-        with UserTypeSeq[Done[F, A]] {
-    lazy val selfType = element[Done[F, A]]
-  }
-  lazy val Done = new DoneCompanionAbs with UserTypeSeq[DoneCompanionAbs] {
-    lazy val selfType = element[DoneCompanionAbs]
+      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsDone[F, A](a) {
   }
 
   def mkDone[F[_], A]
-      (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]] =
-      new SeqDone[F, A](a)
+    (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Done[F, A]] =
+    new SeqDone[F, A](a)
   def unmkDone[F[_], A](p: Rep[FreeM[F, A]]) = p match {
     case p: Done[F, A] @unchecked =>
       Some((p.a))
@@ -311,19 +307,13 @@ trait FreeMsSeq extends FreeMsDsl with scalan.ScalanSeq {
   }
 
   case class SeqMore[F[_], A]
-      (override val k: Rep[F[FreeM[F, A]]])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends More[F, A](k)
-        with UserTypeSeq[More[F, A]] {
-    lazy val selfType = element[More[F, A]]
-  }
-  lazy val More = new MoreCompanionAbs with UserTypeSeq[MoreCompanionAbs] {
-    lazy val selfType = element[MoreCompanionAbs]
+      (override val k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsMore[F, A](k) {
   }
 
   def mkMore[F[_], A]
-      (k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]] =
-      new SeqMore[F, A](k)
+    (k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F]): Rep[More[F, A]] =
+    new SeqMore[F, A](k)
   def unmkMore[F[_], A](p: Rep[FreeM[F, A]]) = p match {
     case p: More[F, A] @unchecked =>
       Some((p.k))
@@ -331,19 +321,13 @@ trait FreeMsSeq extends FreeMsDsl with scalan.ScalanSeq {
   }
 
   case class SeqFlatMap[F[_], S, B]
-      (override val a: Rep[FreeM[F, S]], override val f: Rep[S => FreeM[F, B]])
-      (implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends FlatMap[F, S, B](a, f)
-        with UserTypeSeq[FlatMap[F, S, B]] {
-    lazy val selfType = element[FlatMap[F, S, B]]
-  }
-  lazy val FlatMap = new FlatMapCompanionAbs with UserTypeSeq[FlatMapCompanionAbs] {
-    lazy val selfType = element[FlatMapCompanionAbs]
+      (override val a: Rep[FreeM[F, S]], override val f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends AbsFlatMap[F, S, B](a, f) {
   }
 
   def mkFlatMap[F[_], S, B]
-      (a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]] =
-      new SeqFlatMap[F, S, B](a, f)
+    (a: Rep[FreeM[F, S]], f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[FlatMap[F, S, B]] =
+    new SeqFlatMap[F, S, B](a, f)
   def unmkFlatMap[F[_], S, B](p: Rep[FreeM[F, B]]) = p match {
     case p: FlatMap[F, S, B] @unchecked =>
       Some((p.a, p.f))
@@ -354,23 +338,12 @@ trait FreeMsSeq extends FreeMsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
-  lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs with UserTypeDef[FreeMCompanionAbs] {
-    lazy val selfType = element[FreeMCompanionAbs]
-    override def mirror(t: Transformer) = this
+  lazy val FreeM: Rep[FreeMCompanionAbs] = new FreeMCompanionAbs {
   }
 
   case class ExpDone[F[_], A]
-      (override val a: Rep[A])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends Done[F, A](a) with UserTypeDef[Done[F, A]] {
-    lazy val selfType = element[Done[F, A]]
-    override def mirror(t: Transformer) = ExpDone[F, A](t(a))
-  }
-
-  lazy val Done: Rep[DoneCompanionAbs] = new DoneCompanionAbs with UserTypeDef[DoneCompanionAbs] {
-    lazy val selfType = element[DoneCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsDone[F, A](a)
 
   object DoneMethods {
     object flatMapBy {
@@ -424,17 +397,8 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   }
 
   case class ExpMore[F[_], A]
-      (override val k: Rep[F[FreeM[F, A]]])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends More[F, A](k) with UserTypeDef[More[F, A]] {
-    lazy val selfType = element[More[F, A]]
-    override def mirror(t: Transformer) = ExpMore[F, A](t(k))
-  }
-
-  lazy val More: Rep[MoreCompanionAbs] = new MoreCompanionAbs with UserTypeDef[MoreCompanionAbs] {
-    lazy val selfType = element[MoreCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val k: Rep[F[FreeM[F, A]]])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsMore[F, A](k)
 
   object MoreMethods {
     object resume {
@@ -476,17 +440,8 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   }
 
   case class ExpFlatMap[F[_], S, B]
-      (override val a: Rep[FreeM[F, S]], override val f: Rep[S => FreeM[F, B]])
-      (implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends FlatMap[F, S, B](a, f) with UserTypeDef[FlatMap[F, S, B]] {
-    lazy val selfType = element[FlatMap[F, S, B]]
-    override def mirror(t: Transformer) = ExpFlatMap[F, S, B](t(a), t(f))
-  }
-
-  lazy val FlatMap: Rep[FlatMapCompanionAbs] = new FlatMapCompanionAbs with UserTypeDef[FlatMapCompanionAbs] {
-    lazy val selfType = element[FlatMapCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val a: Rep[FreeM[F, S]], override val f: Rep[S => FreeM[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends AbsFlatMap[F, S, B](a, f)
 
   object FlatMapMethods {
     object flatMapBy {
@@ -593,10 +548,8 @@ trait FreeMsExp extends FreeMsDsl with scalan.ScalanExp {
   }
 }
 
-object FreeMs_Module {
-  val packageName = "scalan.effects"
-  val name = "FreeMs"
-  val dump = "H4sIAAAAAAAAANWXTWwbRRTHZzdxHNshCR8qKlVJiExRENgRlx4iUTmOjYrsJMr2gExFNV6P3W13Zzcz42jNoQeOcENcOCDUe29cOHFDIA6cKkDixIFTKYcK6AnEm/Huev2xTpqWSPgw2tl9+96b3/u/2fGd+yjFGbrATWxjWnCIwAVDXZe4yBsVKizRq7utrk22SfuDM1+adbrFdbTUQHPXMd/mdgNl+hcV34uuDXJQQxlMTcKFy7hAL9VUhKLp2jYxheXSouU4XYGbNinWLC42a2i26bZ6B+gW0mpo2XSpyYggRtnGnBMe3J8nMiMrmmfUvLfrDWLQolxFMbaKKwxbAtKHGMt9+33iGT3q0p4j0GKQ2q4n0wKbtOV4LhNhiDS4u+62wuksxXADPVO7gQ9xEUJ0ioZgFu3AmzkPmzdxh+yAiTSfhYQ5sdtXep6az9RQlpMDAHTZ8Wx1x/cQQlCBN1QShQGfQsSnIPnkDcIsbFvvY/lwj7l+D/V/2gxCvgcuXjvCReiBVGgr/+FV892HRs7R5cu+TCWtVjgHjlYS1KBKARy/3f+YP3jr9kUdZRsoa/FSkwuGTREveUArhyl1hco5AohZB6q1llQtFaUENiOSyJiu42EKngKUC1An2zItIY3lvYWgOgno08Ijoanme1q03tWE9SrdlLFt7907+/rLv1Xe0ZE+HCIDLg0QPgudCpSqMkLqgW85LgmkVQeA5bSkpnLI+IMxPSWVCMor935vfb2BruoRyiDy8aoHLlL8px9yd9cv6Wi+obRetXGnATR5xSbOLiu7VDTQvHtIWP9J+hDb8mpiNdMt0sZdWwSM43BmAI5Aq4ld6RFJblN1gBYCyPVFvONSkq/u5f8yvvvkjtQoQwv9J/02/ce6+PfPi22h5AtEcch2Blp7BH4y7WzfpeE65Om1B9Z7tz8SiqvmDzf4bvMGdNSmeu/FKYjDjebPxob+x9kfP9dRBkg2LeFgL79xzPb4DyWPIhKDYQXwPbUNuMvxWCsDwT4fw/mCFpZKGQmkk1LIeVbKZwr6BAdmNXIglTexceK1AzuZrXo90vz5pIKo5Z/Zrz1n37/0lY5Sb6NUG6TMayjVdLu0FXKFz40gvtgK72nDXIEjZtiJOKrfKhqQkqnGUn9zosW1URqTzcag5bRhKo+zxYxVFI0URLs5pZWqTyqR8aQuqHE9UaJ1l/2PJCqzjUs0udpHyEYO5VPUzdaJdTNlCz5OYGMscEKc9oQ4DLblxB2g2qXm3cufPrt0/tov6gs+13IdbCkRnYONgMEWr4p1LviKDtJ5fHKPIPFl+MiKOvZOqHJjmsrjdE/UJltHO3j0NkkHKz7tTokVd7LBeC1jsdfR8NIy+8RqW/KY/WR3x/SxlbOoIk3QTXQePW3Ck9f1zbAvMJzrM4IlBP1L2m04avFg1QytJfS1ERx04LR16+FnO69+/8Wvqrez8sgE5wMa/X8bfMf9kW0pU3cpbsn/q7FsQb3yEKUy/Rf2yCz5Hg8AAA=="
+object FreeMs_Module extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAANWXTWwbRRTHZ9dxHNshCR8qKlVJiExRENgRlx4iUTmOjYrsJMr2gExFNV6P0213Zzcz42jNoQeOcENcOCDUe29cOHFDIA6cKkDixIFTKYcK6AnEm/Huev2xTpqWSPiw2tl9+96b3/u/mfGd+yjNGbrATWxjWnSIwEVD3Ze5KBhVKizRa7jtrk22SOeDM1+aDbrJdbTYRLPXMd/idhNl+zdV34vuDXJQR1lMTcKFy7hAL9VVhJLp2jYxheXSkuU4XYFbNinVLS426mim5bZ7B+gW0upoyXSpyYggRsXGnBMePJ8jMiMrGmfVuLfjDWLQkpxFKTaLKwxbAtKHGEt9+z3iGT3q0p4j0EKQ2o4n0wKbjOV4LhNhiAy4u+62w+EMxfAAPVO/gQ9xCULslwzBLLoPX+Y9bN7E+2QbTKT5DCTMid250vPUOFVHOU4OANBlx7PVE99DCEEF3lBJFAd8ihGfouRTMAizsG29j+XLXeb6PdT/aSmEfA9cvHaEi9ADqdJ24cOr5rsPjbyjy499mUpGzXAWHC0nqEGVAjh+u/cxf/DW7Ys6yjVRzuLlFhcMmyJe8oBWHlPqCpVzBBCzfajWalK1VJQy2IxIImu6jocpeApQzkOdbMu0hDSWz+aD6iSgzwiPhKaa72nRfFcS5qt0U8G2vXvv7Osv/1Z9R0f6cIgsuDRA+Cx0KlC6xghpBL7ldVEgrTYALIdlNZSXrD+4ZqakEkF55d7v7a/X0VU9QhlEPl71wEWa//RD/u7aJR3NNZXWazbebwJNXrWJs8MqLhVNNOceEtZ/kznEtrybWM1Mm3Rw1xYB4zicFMARaCWxKz0iyW2oDtBCAPm+iLddSgq13cJfxnef3JEaZWi+/6bfpv9YF//+eaEjlHyBKA7ZpqC1R+An0871XRquQ55efWC9d/sjobhq/nCD77RuQEdtqO9enII4XGj+bK7rf5z98XMdZYFkyxIO9grrx2yP/1DyKCIxuCwDvqe2AHclHmt5INjnYzhf0MJSKSOBdFIOOc9I+UxBn+DArEUOpPImNk68dmAns1WfR5o/n1QQNf0ze/Xn7PuXvtJR+m2U7oCUeR2lW26XtkOusN0I4ovN8Jk2zBU4YoadiKP6raABKZlqLPU3J1pcG6Ux2WwMWl4bpvI4S8xYRdFIQbSbU1qp9qQSGU/qgrquJUq04bL/kURltnGJJlf7CNnIS+UUdbN5Yt1MWYKPE9gYC5wQpzMhDoNlOXEFqHWpeffyp88unr/2i9rBZ9uugy0lonOwEDBY4lWxzgW76CCdxyf3CBJfgk1WNLB3QpUb01Qep3uiNtk82sGjt0kmmPFpd0qsuJMNxmsZi72GhqeWgh3/ya6LmWNrZkFFmqCY6CR62mwnz+ubYV9gONtnBFMIOpd0OnDI4sGsGVpN6GgjOOIA9VsPP9t+9fsvflVdnZOHJTgZ0Oif22AH90cWpGzDpbgt/6nGsgXdyuOTyvRfwxhFexgPAAA="
 }
 }
 

@@ -10,13 +10,13 @@ class MetaAstTests extends BaseCtxTests {
     val ctx = new TestContext with ViewExamples with CommonExamples with SegmentsDslExp with KindsDslExp
     import ctx._
     {
-      val e = element[Segment].asEntityElem[Segment]
-      val d = e.entityDef
+      val e = element[Segment].asEntityElem
+      val d = entityDef(e)
       assert(d.name == "Segment")
     }
     {
-      val e = element[Kind[Array,Int]].asEntityElem[Kind[Array,Int]]
-      val d = e.entityDef
+      val e = element[Kind[Array,Int]].asEntityElem
+      val d = entityDef(e)
       assert(d.name == "Kind")
     }
   }

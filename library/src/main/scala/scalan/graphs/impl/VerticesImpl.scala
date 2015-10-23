@@ -22,10 +22,6 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     def eV = _eV
     def eE = _eE
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Vertices")
-      module.entities.find(_.name == "Vertex").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("V" -> Left(eV), "E" -> Left(eE))
     }
@@ -35,7 +31,7 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
       implicit val tagE = eE.tag
       weakTypeTag[Vertex[V, E]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Vertex[V, E]] => convertVertex(x) }
       tryConvert(element[Vertex[V, E]], this, x, conv)
@@ -59,22 +55,24 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     protected def getDefaultRep = Vertex
   }
 
-  abstract class VertexCompanionAbs extends CompanionBase[VertexCompanionAbs] with VertexCompanion {
+  abstract class VertexCompanionAbs extends CompanionDef[VertexCompanionAbs] with VertexCompanion {
+    def selfType = VertexCompanionElem
     override def toString = "Vertex"
   }
   def Vertex: Rep[VertexCompanionAbs]
   implicit def proxyVertexCompanion(p: Rep[VertexCompanion]): VertexCompanion =
     proxyOps[VertexCompanion](p)
 
+  abstract class AbsSVertex[V, E]
+      (id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E])
+    extends SVertex[V, E](id, graph) with Def[SVertex[V, E]] {
+    lazy val selfType = element[SVertex[V, E]]
+  }
   // elem for concrete class
   class SVertexElem[V, E](val iso: Iso[SVertexData[V, E], SVertex[V, E]])(implicit eV: Elem[V], eE: Elem[E])
     extends VertexElem[V, E, SVertex[V, E]]
     with ConcreteElem[SVertexData[V, E], SVertex[V, E]] {
     override lazy val parent: Option[Elem[_]] = Some(vertexElement(element[V], element[E]))
-    override lazy val entityDef = {
-      val module = getModules("Vertices")
-      module.concreteSClasses.find(_.name == "SVertex").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("V" -> Left(eV), "E" -> Left(eE))
     }
@@ -103,7 +101,8 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
     lazy val eTo = new SVertexElem[V, E](this)
   }
   // 4) constructor and deconstructor
-  abstract class SVertexCompanionAbs extends CompanionBase[SVertexCompanionAbs] with SVertexCompanion {
+  class SVertexCompanionAbs extends CompanionDef[SVertexCompanionAbs] with SVertexCompanion {
+    def selfType = SVertexCompanionElem
     override def toString = "SVertex"
     def apply[V, E](p: Rep[SVertexData[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
       isoSVertex(eV, eE).to(p)
@@ -113,7 +112,7 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   object SVertexMatcher {
     def unapply[V, E](p: Rep[Vertex[V, E]]) = unmkSVertex(p)
   }
-  def SVertex: Rep[SVertexCompanionAbs]
+  lazy val SVertex: Rep[SVertexCompanionAbs] = new SVertexCompanionAbs
   implicit def proxySVertexCompanion(p: Rep[SVertexCompanionAbs]): SVertexCompanionAbs = {
     proxyOps[SVertexCompanionAbs](p)
   }
@@ -138,30 +137,23 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
   def mkSVertex[V, E](id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]
   def unmkSVertex[V, E](p: Rep[Vertex[V, E]]): Option[(Rep[Int], Rep[Graph[V, E]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Vertices_Module.dump))
+  registerModule(Vertices_Module)
 }
 
 // Seq -----------------------------------
 trait VerticesSeq extends VerticesDsl with scalan.ScalanSeq {
   self: GraphsDslSeq =>
-  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeSeq[VertexCompanionAbs] {
-    lazy val selfType = element[VertexCompanionAbs]
+  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs {
   }
 
   case class SeqSVertex[V, E]
-      (override val id: Rep[Int], override val graph: PG[V, E])
-      (implicit eV: Elem[V], eE: Elem[E])
-    extends SVertex[V, E](id, graph)
-        with UserTypeSeq[SVertex[V, E]] {
-    lazy val selfType = element[SVertex[V, E]]
-  }
-  lazy val SVertex = new SVertexCompanionAbs with UserTypeSeq[SVertexCompanionAbs] {
-    lazy val selfType = element[SVertexCompanionAbs]
+      (override val id: Rep[Int], override val graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E])
+    extends AbsSVertex[V, E](id, graph) {
   }
 
   def mkSVertex[V, E]
-      (id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
-      new SeqSVertex[V, E](id, graph)
+    (id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]] =
+    new SeqSVertex[V, E](id, graph)
   def unmkSVertex[V, E](p: Rep[Vertex[V, E]]) = p match {
     case p: SVertex[V, E] @unchecked =>
       Some((p.id, p.graph))
@@ -172,23 +164,12 @@ trait VerticesSeq extends VerticesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   self: GraphsDslExp =>
-  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs with UserTypeDef[VertexCompanionAbs] {
-    lazy val selfType = element[VertexCompanionAbs]
-    override def mirror(t: Transformer) = this
+  lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs {
   }
 
   case class ExpSVertex[V, E]
-      (override val id: Rep[Int], override val graph: PG[V, E])
-      (implicit eV: Elem[V], eE: Elem[E])
-    extends SVertex[V, E](id, graph) with UserTypeDef[SVertex[V, E]] {
-    lazy val selfType = element[SVertex[V, E]]
-    override def mirror(t: Transformer) = ExpSVertex[V, E](t(id), t(graph))
-  }
-
-  lazy val SVertex: Rep[SVertexCompanionAbs] = new SVertexCompanionAbs with UserTypeDef[SVertexCompanionAbs] {
-    lazy val selfType = element[SVertexCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val id: Rep[Int], override val graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E])
+    extends AbsSVertex[V, E](id, graph)
 
   object SVertexMethods {
   }
@@ -332,10 +313,8 @@ trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
   }
 }
 
-object Vertices_Module {
-  val packageName = "scalan.graphs"
-  val name = "Vertices"
-  val dump = "H4sIAAAAAAAAALVWTWwbRRR+u4nj2A5JqFBRK4FDMCAQ2CEC9ZBDlbpOVOTGVraNkKmQxuuxM2V2djMzjmwOPXCEG+KKUO+9cUFC6gUhIQ6cECBx5lSKqgroCcTM7I/XiR2iIvYw2pl9+36+73tv9859yAgOLwoXUcTKHpao7Jj7TSFLTo1JIodX/U6f4su4+8HZL9yr7JKwYakFc/tIXBa0BbnwpjYIknsHH9Qhh5iLhfS5kPBc3USouD6l2JXEZxXieX2J2hRX6kTIjTrMtv3O8ABugVWHZddnLscSO1WKhMAiOp/HOiOS7HNmP2wEoxisoquopKq4xhGRKn0VYzm038WBM2Q+G3oSFqPUGoFOS9lkiRf4XMYhssrdvt+Jt7MMqQM4U7+JDlFFhehVHMkJ66k3CwFy30M9vKNMtPmsSlhg2r02DMx+pg55gQ8UQFe8gJqTQQAAioF1k0R5hE85waes8Sk5mBNEyftIP2xyfzCE8LJmAAaBcvHqv7iIPeAa65Q+vOG+88gpeLZ+eaBTyZoK55Sj4hQ1GCoUjt/sfiwebt++YEO+BXkiNttCcuTKNOURWgXEmC9NzgmAiPcUW6vT2DJRNpXNEUnkXN8LEFOeIigXFE+UuERqY322ELEzBfqsDHBsag0CK6l3ZUq9RjdVRGnz3rnXXvi19rYN9niInHLpKOHz2KmEuT3MJR5EzvW6JMHaGyGstzWz1UtuMFqzJ+SSoPLSvd86X6/BDTvBMgp9OvqUi4z46YfC9y9ftGG+ZcS+RVGvpeAUNYq9Bq/6TLZg3j/EPHySPURU302kM9vBXdSnMgI5jc6MQkfCytS2DLCGbsO0gBUDUAhVvOMzXNpqlv50vv3kjhYph4XwSdinf5MLf/282JVGvxJs0onBnVHNnWDx/DRqA9zkxFOj5BC/+dWX1x/c3ckYds9E5ewh2sdhY0fVjCrTAa01FekKkyF7Jt75pAy9FCVkehwF+3FednP7cUWRDyt3fA8/ufqQvHv7I2notwbjg6jRvqk6f8O89+wJSogH4h+tNfv3cz9+ZkNOEd4m0kNBae2Ubfw/tiaMA7VYjT4GRsHr4w+zTthwk8Eb0aE4W45Mq+lsiyMSnk55Pm8dIdPGe3HIWd0nE7lMq+G4g9pJDo6zP15bMdH0M9M1rTA8u1t/it6/eNeGzFuQ6aq2FXXItP0+68TkqG+rciovxWfWODmKDMSRl5BhrhUYgTUu3cZEg+PlpOp94wjBuV1MukR/qMbP/8MsTfNvTF+fGLmgRbiFPEKH6xNjn0JWS1NVFYy5KaYCTAbtMVDV6/WRTWQ4r6MS3cPwRKSWcBZFUHBYnSIiJ2pMNR1uPfp055XvPv/FzMW8bnE1k1nyX5Seh0fo3Dax1G9OKl2let30JtV/ANIphAl2CgAA"
+object Vertices_Module extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAALVWTWwbRRR+u47j2A5JqFBRK4FDMCBQa4cI1EMOVeo6UZEbW9k2QqZCGq/HzpTZ2c3OOLI59MARbogrQr33xgUJqReEhDhwQoDEmVMpqiqgJxAzsz/eTewQteoeRvPz9v183/dm9859yHIfXuU2oohVHCxQxdLzDS7KVp0JIkZX3e6A4su499Hpr+yr7BI3YbENs3uIX+a0DflgUh968dzC+w3II2ZjLlyfC3ipoSNUbZdSbAvisipxnIFAHYqrDcLFegNmOm53tA+3wGjAku0y28cCWzWKOMc83J/DKiMSr/N6PWp64xisqqqoJqq45iMiZPoyxlJgv4M9a8RcNnIELISpNT2VlrTJEcdzfRGFyEl3e243Ws4wJDfgVOMmOkBVGaJftYRPWF++WfSQ/QHq421posxnZMIc0961kafXmQYUON6XAF1xPKp3hh4ASAbWdBKVMT6VGJ+KwqdsYZ8gSj5E6rDlu8MRBI+RARh60sW5/3ERecB11i1/fMN+75FVdEz18lClktMVzkpHpSlq0FRIHL/b+ZQ/3Lp9wYRCGwqEb3S48JEtkpSHaBURY67QOccAIr8v2VqZxpaOsiFtDkkib7uOh5j0FEI5L3mixCZCGau9+ZCdKdDnhIcjU2PoGXG9y1Pq1bqpIUpb986cf+X3+rsmmOkQeenSksL3I6cCZnexL/AwdK7GRQHG7hhhtazrpRryw/GYOyaXGJXX7v3R/XYVbpgxlmHok9EnXWT5Lz8Vf3z9oglzbS32TYr6bQknr1PsNP2ay0Qb5twD7AcnuQNE1Wwinbku7qEBFSHISXQyEh0By1Pb0sMKunXdAkYEQDFQ8bbLcHmzVf7b+v6zO0qkPswHJ0Gf/ksu/PPrQk9o/QowSTcCNyObO8bi5WnUerjlE0deJQf47W++vv7g7nZWs3sqLGcX0QEOGjusZlyZCmisykhXmAjY0/HOxmWooSQg2/eRtxflZba2HlcUhaByy3XwsysPyfu3PxGafmOYvoianZuy89f1ey8eo4ToQvyrvWr+eebnL0zIS8I7RDjIK6+esI2fYmtCGqiFWvgx0ApeSx/mrKDhJoM3pkNythSa1pLZlsYkPJ/wfNY4RKaJd6OQM6pPJnKZVMNRB/XjHBxlP11bKdb0C9M1LTE8vdN4jt6/eNeE7DuQ7cm25Q3IdtwB60bkyG+rdCouRXtGmhxJBvKRE5Ohn2UYg5WWbnOiwdFyEvW+dYjgjNRieucJbtEk89r0zYkxi0p+m8ghdLQ2MfYJBLU4VU9eyk0pEWAyXI+Bpxqvj21CwzkVlajuhWdCnQS3UAiFDytT5GOFLSm5uPXo8+03fvjyN30jFlRzy9uYxX9EyZswDV1+S8eSPziJdKXeVbvrVP8DqK+WhHAKAAA="
 }
 }
 

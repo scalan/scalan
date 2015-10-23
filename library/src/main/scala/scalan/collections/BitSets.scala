@@ -9,7 +9,7 @@ import scalan.common.OverloadHack.Overloaded1
 
 trait BitSets  { self: ScalanCommunityDsl =>
   type BS = Rep[BitSet]
-  trait BitSet extends Reifiable[BitSet] {
+  trait BitSet extends Def[BitSet] {
     def bits: Rep[Collection[Boolean]]
     def union(that: Rep[BitSet]) = {
       val flags = (bits zip that.bits) map { case Pair(x,y) => x || y }

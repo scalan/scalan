@@ -6,7 +6,7 @@ import scala.reflect.runtime.universe._
 trait States extends Base { self: MonadsDsl =>
 
   type RepState[S,A] = Rep[State0[S,A]]
-  trait State0[S, A] extends Reifiable[State0[S, A]] {
+  trait State0[S, A] extends Def[State0[S, A]] {
     implicit def eS: Elem[S]
     implicit def eA: Elem[A]
     def run: Rep[S => (A, S)]

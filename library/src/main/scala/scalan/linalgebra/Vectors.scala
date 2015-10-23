@@ -12,7 +12,7 @@ trait Vectors { self: ScalanCommunityDsl =>
 
   type Vector[T] = Rep[AbstractVector[T]]
 
-  trait AbstractVector[T] extends Reifiable[AbstractVector[T]] {
+  trait AbstractVector[T] extends Def[AbstractVector[T]] {
 
     def length: Rep[Int]
     def items: Rep[Collection[T]]
@@ -580,9 +580,7 @@ trait VectorsDslExp extends impl.VectorsExp { self: ScalanCommunityDslExp =>
   }
 
   case class DotSparse[T](xIndices: Arr[Int], xValues: Arr[T], yIndices: Arr[Int], yValues: Arr[T])
-                         (implicit val n: Numeric[T], selfType: Elem[T]) extends BaseDef[T] {
-    override def mirror(f: Transformer) = DotSparse(f(xIndices), f(xValues), f(yIndices), f(yValues))
-  }
+                         (implicit val n: Numeric[T], selfType: Elem[T]) extends BaseDef[T]
 
   def binarySearch(index: IntRep, indices: Coll[Int]): IntRep = array_binary_search(index, indices.arr)
 }

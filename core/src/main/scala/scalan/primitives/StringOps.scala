@@ -46,15 +46,9 @@ trait StringOpsSeq extends StringOps { self: ScalanSeq =>
 
 trait StringOpsExp extends StringOps with BaseExp { self: ScalanExp =>
 
-  case class StringSubstring(str: Rep[String], start: Rep[Int], end: Rep[Int]) extends BaseDef[String] {
-    override def mirror(t: Transformer) = StringSubstring(t(str), t(start), t(end))
-  }
-  case class StringLength(str: Rep[String]) extends BaseDef[Int] {
-    override def mirror(t: Transformer) = StringLength(t(str))
-  }
-  case class StringCharAt(str: Rep[String], index: Rep[Int]) extends BaseDef[Char] {
-    override def mirror(t: Transformer) = StringCharAt(t(str), t(index))
-  }
+  case class StringSubstring(str: Rep[String], start: Rep[Int], end: Rep[Int]) extends BaseDef[String]
+  case class StringLength(str: Rep[String]) extends BaseDef[Int]
+  case class StringCharAt(str: Rep[String], index: Rep[Int]) extends BaseDef[Char]
 
   def string_length(str: Rep[String]): Rep[Int] = StringLength(str)
   def string_substring(str: Rep[String], start: Rep[Int], end: Rep[Int]): Rep[String] = StringSubstring(str, start, end)

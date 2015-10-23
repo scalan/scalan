@@ -18,7 +18,6 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsExp with BaseExp 
 
   case class ViewList[A, B](source: Lst[A])(iso: Iso1[A, B, List]) extends View1[A, B, List](iso) {
     //lazy val iso = listIso(innerIso)
-    def copy(source: Lst[A]) = ViewList(source)(iso)
     override def toString = s"ViewList[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewList[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo

@@ -7,7 +7,7 @@ import scalan.monads.{MonadsDslExp, MonadsDslSeq, MonadsDsl}
 trait FreeStates extends Base { self: MonadsDsl =>
 
   type RepStateF[S,A] = Rep[StateF[S,A]]
-  trait StateF[S, A] extends Reifiable[StateF[S, A]] {
+  trait StateF[S, A] extends Def[StateF[S, A]] {
     implicit def eS: Elem[S]
     implicit def eA: Elem[A]
   }
@@ -101,14 +101,9 @@ trait FreeStatesDsl extends impl.FreeStatesAbs { self: MonadsDsl =>
 
   type FreeState[S,A] = FreeM[({type f[x] = StateF[S,x]})#f, A]
 
-  trait StateFCont[S] extends Container[({type f[x] = StateF[S,x]})#f] {
-    implicit def eS: Elem[S]
+  implicit def stateFFunctor[S: Elem]: Functor[({type λ[α] = StateF[S,α]})#λ] = new Functor[({type λ[α] = StateF[S,α]})#λ] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[StateF[S,T]]
     def lift[T](implicit eT: Elem[T]) = element[StateF[S,T]]
-  }
-
-  implicit def stateFFunctor[S:Elem] = new StateFCont[S] with Functor[({type λ[α] = StateF[S,α]})#λ] {
-    def eS = element[S]
     def map[A:Elem,B:Elem](m: Rep[StateF[S, A]])(f: Rep[A] => Rep[B]) = patternMatch(m)(
       MkBranch[StateGet[S, A]].make { g => StateGet((s: Rep[S]) => f(g.f.asRep[S=>A](s))) },
       MkBranch[StatePut[S, A]].make { p => StatePut(p.s.asRep[S], f(p.a.asRep[A])) }

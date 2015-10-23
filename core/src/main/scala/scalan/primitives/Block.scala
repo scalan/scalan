@@ -16,9 +16,7 @@ trait BlocksSeq extends Blocks { self: ScalanSeq =>
 }
 
 trait BlocksExp extends Blocks { self: ScalanExp =>
-  case class Semicolon[A,B](left: Exp[A], right: Exp[B])(implicit selfType: Elem[B]) extends BaseDef[B] {
-    override def mirror(t: Transformer) = Semicolon(t(left), t(right))
-  }
+  case class Semicolon[A,B](left: Exp[A], right: Exp[B])(implicit selfType: Elem[B]) extends BaseDef[B]
 
   def semicolon[A,B](left: Rep[A], right: Rep[B]): Rep[B] = { 
     implicit val eR = right.elem

@@ -21,10 +21,6 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     def eEnv = _eEnv
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Readers")
-      module.entities.find(_.name == "Reader").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("Env" -> Left(eEnv), "A" -> Left(eA))
     }
@@ -34,7 +30,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[Reader[Env, A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Reader[Env, A]] => convertReader(x) }
       tryConvert(element[Reader[Env, A]], this, x, conv)
@@ -58,22 +54,24 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     protected def getDefaultRep = Reader
   }
 
-  abstract class ReaderCompanionAbs extends CompanionBase[ReaderCompanionAbs] with ReaderCompanion {
+  abstract class ReaderCompanionAbs extends CompanionDef[ReaderCompanionAbs] with ReaderCompanion {
+    def selfType = ReaderCompanionElem
     override def toString = "Reader"
   }
   def Reader: Rep[ReaderCompanionAbs]
   implicit def proxyReaderCompanion(p: Rep[ReaderCompanion]): ReaderCompanion =
     proxyOps[ReaderCompanion](p)
 
+  abstract class AbsReaderBase[Env, A]
+      (run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A])
+    extends ReaderBase[Env, A](run) with Def[ReaderBase[Env, A]] {
+    lazy val selfType = element[ReaderBase[Env, A]]
+  }
   // elem for concrete class
   class ReaderBaseElem[Env, A](val iso: Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]])(implicit eEnv: Elem[Env], eA: Elem[A])
     extends ReaderElem[Env, A, ReaderBase[Env, A]]
     with ConcreteElem[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
     override lazy val parent: Option[Elem[_]] = Some(readerElement(element[Env], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("Readers")
-      module.concreteSClasses.find(_.name == "ReaderBase").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("Env" -> Left(eEnv), "A" -> Left(eA))
     }
@@ -102,7 +100,8 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     lazy val eTo = new ReaderBaseElem[Env, A](this)
   }
   // 4) constructor and deconstructor
-  abstract class ReaderBaseCompanionAbs extends CompanionBase[ReaderBaseCompanionAbs] with ReaderBaseCompanion {
+  class ReaderBaseCompanionAbs extends CompanionDef[ReaderBaseCompanionAbs] with ReaderBaseCompanion {
+    def selfType = ReaderBaseCompanionElem
     override def toString = "ReaderBase"
 
     def apply[Env, A](run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]] =
@@ -111,7 +110,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   object ReaderBaseMatcher {
     def unapply[Env, A](p: Rep[Reader[Env, A]]) = unmkReaderBase(p)
   }
-  def ReaderBase: Rep[ReaderBaseCompanionAbs]
+  lazy val ReaderBase: Rep[ReaderBaseCompanionAbs] = new ReaderBaseCompanionAbs
   implicit def proxyReaderBaseCompanion(p: Rep[ReaderBaseCompanionAbs]): ReaderBaseCompanionAbs = {
     proxyOps[ReaderBaseCompanionAbs](p)
   }
@@ -136,30 +135,23 @@ trait ReadersAbs extends Readers with scalan.Scalan {
   def mkReaderBase[Env, A](run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]]
   def unmkReaderBase[Env, A](p: Rep[Reader[Env, A]]): Option[(Rep[Env => A])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Readers_Module.dump))
+  registerModule(Readers_Module)
 }
 
 // Seq -----------------------------------
 trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs with UserTypeSeq[ReaderCompanionAbs] {
-    lazy val selfType = element[ReaderCompanionAbs]
+  lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
 
   case class SeqReaderBase[Env, A]
-      (override val run: Rep[Env => A])
-      (implicit eEnv: Elem[Env], eA: Elem[A])
-    extends ReaderBase[Env, A](run)
-        with UserTypeSeq[ReaderBase[Env, A]] {
-    lazy val selfType = element[ReaderBase[Env, A]]
-  }
-  lazy val ReaderBase = new ReaderBaseCompanionAbs with UserTypeSeq[ReaderBaseCompanionAbs] {
-    lazy val selfType = element[ReaderBaseCompanionAbs]
+      (override val run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A])
+    extends AbsReaderBase[Env, A](run) {
   }
 
   def mkReaderBase[Env, A]
-      (run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]] =
-      new SeqReaderBase[Env, A](run)
+    (run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]] =
+    new SeqReaderBase[Env, A](run)
   def unmkReaderBase[Env, A](p: Rep[Reader[Env, A]]) = p match {
     case p: ReaderBase[Env, A] @unchecked =>
       Some((p.run))
@@ -170,23 +162,12 @@ trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
-  lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs with UserTypeDef[ReaderCompanionAbs] {
-    lazy val selfType = element[ReaderCompanionAbs]
-    override def mirror(t: Transformer) = this
+  lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
 
   case class ExpReaderBase[Env, A]
-      (override val run: Rep[Env => A])
-      (implicit eEnv: Elem[Env], eA: Elem[A])
-    extends ReaderBase[Env, A](run) with UserTypeDef[ReaderBase[Env, A]] {
-    lazy val selfType = element[ReaderBase[Env, A]]
-    override def mirror(t: Transformer) = ExpReaderBase[Env, A](t(run))
-  }
-
-  lazy val ReaderBase: Rep[ReaderBaseCompanionAbs] = new ReaderBaseCompanionAbs with UserTypeDef[ReaderBaseCompanionAbs] {
-    lazy val selfType = element[ReaderBaseCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A])
+    extends AbsReaderBase[Env, A](run)
 
   object ReaderBaseMethods {
   }
@@ -233,10 +214,8 @@ trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
   }
 }
 
-object Readers_Module {
-  val packageName = "scalan.monads"
-  val name = "Readers"
-  val dump = "H4sIAAAAAAAAALVWPYwbRRR+3vOdz/aRCwQFhSi542RARMQ+0aS4IvJdfBDk+5E3BTIRaLw7dibszuztjC2bIgUldIiGAqH06Wio6JAQBVUESFQUVCEUEZAKxJvZPzvyHgHEFqOd2bfv5/u+93bv3IdFGcIL0iEe4XWfKlK3zX1Tqprd4oqpyZ5whx69Qvvvnf7c2ePb0oLVLizdIPKK9LpQjm5a4yC9t+lRG8qEO1QqEUoFz7VNhIYjPI86igneYL4/VKTn0UabSbXVhmJPuJMjuAWFNpx0BHdCqqi94xEpqYzPl6nOiKX7stlPDoIsBm/oKhpTVVwLCVOYPsY4Gdl3aGBPuOATX8GJOLWDQKeFNiXmByJUSYgSursh3GRb5AQP4Kn2TTIiDQwxaNgqZHyAb1YD4rxDBnQfTbR5EROW1OtfmwRmv9CGiqRHCNBVP/DMyTgAAGTgFZNEPcOnnuJT1/jUbBoy4rF3iX54GIrxBKKrsAAwDtDFy3/jIvFAW9ytvX/defOhXfUt/fJYp1IyFS6ho7UcNRgqEMevOh/KB6/evmRBpQsVJps9qULiqGnKY7SqhHOhTM4pgCQcIFsbeWyZKE20eUQSZUf4AeHoKYZyBXnymMOUNtZnKzE7OdCXVEAT08I4KKT1rufUa3SzQzzv8N6Zi8//3HrDAms2RBld2ij8MHGqYKlDiUvD2LleVxUstPgowxgPCk2z1Ut5nK2lY7JJcXnx3i/ul5tw3UrRjIM/HoHoYlF+/2317kuXLVjuGrnvemTQRUBly6P+QbgjuOrCshjRMHpSGhFP380ltOTSPhl6KoZ5Gp8FxEfBem5jBlSDt2WaoJAAUI10vC84re0e1n63v/7ojpZpCCvRk6hT/2SX/vjhRF8ZBSPE4ZCncGN/p2Ccz2M3oLtD7ty9+vGp1XNv/2i4XXKFT5gR2Nk2LIbY3aaUszG4/5DKSpSvLXz65MYD9tbtD5QhrTCeHSAHvZvYsVvmvfPH8JcMst+6m9avZ7771IIy0tRjyidBbfMx2+9/bClIkciWNeTmVNQT20TSnemIaxmQz0w1zLOFRA3GSEERR9YowbuoNZrTXhH8851YtHmMizksKqhkeRsnqabO5WsK4TjdaT/t3b/8hQWLr8NiH/tGoph6YsjdBGf8vCk6VtvJWWEWZ8SVhMRPcTXXOmSYParD7Xkmc2qaKvoizCJQ7lDWZ/prMXv+nwZa3AuZ6YU4do5SVqNgc1SSjdZpKnJr/3fw6PW1zCY2LMUIKHgi4V1w4sq4oBA2cuRgx92CLXvr4Sf7F7757CczZiq673C88fQnIyM/HeMJLXsmFv4zTGWLEtadaDL9C4zVXGfDCQAA"
+object Readers_Module extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+3rPPZ/vIBYKCQpTccXJARMQ+0aS4IvJdfBDk+9FtCuREoPHu2NmwO7M3M7ZsihSU0CEaCoTSp6OhokNCFFQRIFFRUIVQREAqEG9m/3wn7xFAuBjNzL59P9/3vee99xBKUsCL0iE+YY2AKtKwzb4lVd1uM+WpyTZ3hz69Svvvnf7c2WYb0oKlLszfIvKq9LtQiTbtcZjubXrQgQphDpWKC6nghY6J0HS471NHeZw1vSAYKtLzabPjSbXegWKPu5MDuAOFDpx0OHMEVdTe9ImUVMb3C1Rn5KXnijlPdsMsBmvqKppTVVwXxFOYPsY4Gdnv09CeMM4mgYITcWq7oU4LbcpeEHKhkhBldHeLu8mxyAhewDOd22REmhhi0LSV8NgA36yFxHmHDOgOmmjzIiYsqd+/PgnNea4DVUkPEKBrQeibm3EIAMjAqyaJRoZPI8WnofGp21R4xPfeJfrhnuDjCUS/whzAOEQXr/yNi8QDbTO3/v5N58ZjuxZY+uWxTqVsKpxHR8s5ajBUII5f7X8oH71297IF1S5UPdnqSSWIo6Ypj9GqEca4MjmnABIxQLZW89gyUVpoc0QSFYcHIWHoKYZyEXnyPcdT2ljfLcbs5EBfViFNTAvjsJDWu5JTr9HNJvH9vQdnLl34uf2mBdbhEBV0aaPwReJUwfw+JS4VsXO9LimYa7NRhjFeFFrmqJfKOFvLx2ST4vLSg1/cL9fgppWiGQd/MgLRRUl+/23t/stXLFjoGrlv+WTQRUBl26fBrtjkTHVhgY+oiJ6UR8TXu5mEll3aJ0NfxTBP4zOH+ChYyW3MkGrw1k0TFBIAapGOdzij9a29+u/21x/d0zIVsBg9iTr1T+/yHz+c6CujYIRYDFkKN/Z3Csb5PHZDujVkzv1rH59aOvf2j4bbeZcHxDMCO9uBksDuNqWcjcH9h1RWo3xtHtCnVx95b939QBnSCuPDA2S3dxs7dt28d/4Y/pJB9lt3zfr1zHefWlBBmnqeCkhYX3vC9vsfWwpSJLJlGbk5FfXEBpF0czricgbkc1MN83whUYMxUlDEkTVK8C5qjea0VwT/bCcWbR3jYgaLCqpZ3sZJqqlz+ZpCOE7vd571H175woLSG1DqY99IFFOPD5mb4Ix/b4qO1UZyVziMM+JKBAlSXM1vBTLMjupwY5bJjJqmir4ER0BEYR2++U+jLO6CzPRiHDVHI0tRsBn6yIbqNAm5Vf87YPT6emYTG5ZjBBQ8lTDOGXFlXJCA1Rwh2HGfIKZ3Hn+yc/Gbz34yA6aqOw4HG0s/LzLa0wEeA1vZNrHwa2EqWxSv7kGT6V+6KQ2ovQkAAA=="
 }
 }
 

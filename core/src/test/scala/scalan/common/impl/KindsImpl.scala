@@ -20,10 +20,6 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     def cF = _cF
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Kinds")
-      module.entities.find(_.name == "Kind").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -32,7 +28,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[Kind[F, A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Kind[F, A]] => convertKind(x) }
       tryConvert(element[Kind[F, A]], this, x, conv)
@@ -56,22 +52,24 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     protected def getDefaultRep = Kind
   }
 
-  abstract class KindCompanionAbs extends CompanionBase[KindCompanionAbs] with KindCompanion {
+  abstract class KindCompanionAbs extends CompanionDef[KindCompanionAbs] with KindCompanion {
+    def selfType = KindCompanionElem
     override def toString = "Kind"
   }
   def Kind: Rep[KindCompanionAbs]
   implicit def proxyKindCompanion(p: Rep[KindCompanion]): KindCompanion =
     proxyOps[KindCompanion](p)
 
+  abstract class AbsReturn[F[_], A]
+      (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends Return[F, A](a) with Def[Return[F, A]] {
+    lazy val selfType = element[Return[F, A]]
+  }
   // elem for concrete class
   class ReturnElem[F[_], A](val iso: Iso[ReturnData[F, A], Return[F, A]])(implicit eA: Elem[A], cF: Cont[F])
     extends KindElem[F, A, Return[F, A]]
     with ConcreteElem[ReturnData[F, A], Return[F, A]] {
     override lazy val parent: Option[Elem[_]] = Some(kindElement(container[F], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("Kinds")
-      module.concreteSClasses.find(_.name == "Return").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -100,7 +98,8 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     lazy val eTo = new ReturnElem[F, A](this)
   }
   // 4) constructor and deconstructor
-  abstract class ReturnCompanionAbs extends CompanionBase[ReturnCompanionAbs] with ReturnCompanion {
+  class ReturnCompanionAbs extends CompanionDef[ReturnCompanionAbs] with ReturnCompanion {
+    def selfType = ReturnCompanionElem
     override def toString = "Return"
 
     def apply[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
@@ -109,7 +108,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
   object ReturnMatcher {
     def unapply[F[_], A](p: Rep[Kind[F, A]]) = unmkReturn(p)
   }
-  def Return: Rep[ReturnCompanionAbs]
+  lazy val Return: Rep[ReturnCompanionAbs] = new ReturnCompanionAbs
   implicit def proxyReturnCompanion(p: Rep[ReturnCompanionAbs]): ReturnCompanionAbs = {
     proxyOps[ReturnCompanionAbs](p)
   }
@@ -134,15 +133,16 @@ trait KindsAbs extends Kinds with scalan.Scalan {
   def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
   def unmkReturn[F[_], A](p: Rep[Kind[F, A]]): Option[(Rep[A])]
 
+  abstract class AbsBind[F[_], S, B]
+      (a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends Bind[F, S, B](a, f) with Def[Bind[F, S, B]] {
+    lazy val selfType = element[Bind[F, S, B]]
+  }
   // elem for concrete class
   class BindElem[F[_], S, B](val iso: Iso[BindData[F, S, B], Bind[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
     extends KindElem[F, B, Bind[F, S, B]]
     with ConcreteElem[BindData[F, S, B], Bind[F, S, B]] {
     override lazy val parent: Option[Elem[_]] = Some(kindElement(container[F], element[B]))
-    override lazy val entityDef = {
-      val module = getModules("Kinds")
-      module.concreteSClasses.find(_.name == "Bind").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "S" -> Left(eS), "B" -> Left(eA))
     }
@@ -172,7 +172,8 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     lazy val eTo = new BindElem[F, S, B](this)
   }
   // 4) constructor and deconstructor
-  abstract class BindCompanionAbs extends CompanionBase[BindCompanionAbs] with BindCompanion {
+  class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
+    def selfType = BindCompanionElem
     override def toString = "Bind"
     def apply[F[_], S, B](p: Rep[BindData[F, S, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
       isoBind(eS, eA, cF).to(p)
@@ -182,7 +183,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
   object BindMatcher {
     def unapply[F[_], S, B](p: Rep[Kind[F, B]]) = unmkBind(p)
   }
-  def Bind: Rep[BindCompanionAbs]
+  lazy val Bind: Rep[BindCompanionAbs] = new BindCompanionAbs
   implicit def proxyBindCompanion(p: Rep[BindCompanionAbs]): BindCompanionAbs = {
     proxyOps[BindCompanionAbs](p)
   }
@@ -207,30 +208,23 @@ trait KindsAbs extends Kinds with scalan.Scalan {
   def mkBind[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]
   def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]): Option[(Rep[Kind[F, S]], Rep[S => Kind[F, B]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Kinds_Module.dump))
+  registerModule(Kinds_Module)
 }
 
 // Seq -----------------------------------
 trait KindsSeq extends KindsDsl with scalan.ScalanSeq {
   self: KindsDslSeq =>
-  lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs with UserTypeSeq[KindCompanionAbs] {
-    lazy val selfType = element[KindCompanionAbs]
+  lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }
 
   case class SeqReturn[F[_], A]
-      (override val a: Rep[A])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends Return[F, A](a)
-        with UserTypeSeq[Return[F, A]] {
-    lazy val selfType = element[Return[F, A]]
-  }
-  lazy val Return = new ReturnCompanionAbs with UserTypeSeq[ReturnCompanionAbs] {
-    lazy val selfType = element[ReturnCompanionAbs]
+      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsReturn[F, A](a) {
   }
 
   def mkReturn[F[_], A]
-      (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
-      new SeqReturn[F, A](a)
+    (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]] =
+    new SeqReturn[F, A](a)
   def unmkReturn[F[_], A](p: Rep[Kind[F, A]]) = p match {
     case p: Return[F, A] @unchecked =>
       Some((p.a))
@@ -238,19 +232,13 @@ trait KindsSeq extends KindsDsl with scalan.ScalanSeq {
   }
 
   case class SeqBind[F[_], S, B]
-      (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])
-      (implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Bind[F, S, B](a, f)
-        with UserTypeSeq[Bind[F, S, B]] {
-    lazy val selfType = element[Bind[F, S, B]]
-  }
-  lazy val Bind = new BindCompanionAbs with UserTypeSeq[BindCompanionAbs] {
-    lazy val selfType = element[BindCompanionAbs]
+      (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends AbsBind[F, S, B](a, f) {
   }
 
   def mkBind[F[_], S, B]
-      (a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
-      new SeqBind[F, S, B](a, f)
+    (a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]] =
+    new SeqBind[F, S, B](a, f)
   def unmkBind[F[_], S, B](p: Rep[Kind[F, B]]) = p match {
     case p: Bind[F, S, B] @unchecked =>
       Some((p.a, p.f))
@@ -261,23 +249,12 @@ trait KindsSeq extends KindsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait KindsExp extends KindsDsl with scalan.ScalanExp {
   self: KindsDslExp =>
-  lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs with UserTypeDef[KindCompanionAbs] {
-    lazy val selfType = element[KindCompanionAbs]
-    override def mirror(t: Transformer) = this
+  lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }
 
   case class ExpReturn[F[_], A]
-      (override val a: Rep[A])
-      (implicit eA: Elem[A], cF: Cont[F])
-    extends Return[F, A](a) with UserTypeDef[Return[F, A]] {
-    lazy val selfType = element[Return[F, A]]
-    override def mirror(t: Transformer) = ExpReturn[F, A](t(a))
-  }
-
-  lazy val Return: Rep[ReturnCompanionAbs] = new ReturnCompanionAbs with UserTypeDef[ReturnCompanionAbs] {
-    lazy val selfType = element[ReturnCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
+    extends AbsReturn[F, A](a)
 
   object ReturnMethods {
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f
@@ -297,17 +274,8 @@ trait KindsExp extends KindsDsl with scalan.ScalanExp {
   }
 
   case class ExpBind[F[_], S, B]
-      (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])
-      (implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Bind[F, S, B](a, f) with UserTypeDef[Bind[F, S, B]] {
-    lazy val selfType = element[Bind[F, S, B]]
-    override def mirror(t: Transformer) = ExpBind[F, S, B](t(a), t(f))
-  }
-
-  lazy val Bind: Rep[BindCompanionAbs] = new BindCompanionAbs with UserTypeDef[BindCompanionAbs] {
-    lazy val selfType = element[BindCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val a: Rep[Kind[F, S]], override val f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
+    extends AbsBind[F, S, B](a, f)
 
   object BindMethods {
     // WARNING: Cannot generate matcher for method `flatMap`: Method has function arguments f1
@@ -346,10 +314,8 @@ trait KindsExp extends KindsDsl with scalan.ScalanExp {
   }
 }
 
-object Kinds_Module {
-  val packageName = "scalan.common"
-  val name = "Kinds"
-  val dump = "H4sIAAAAAAAAAL2WPYwbRRTH3+7Z57N95MKHgkIU7jiZQ4fAPtGkOInIdmwU4tydvCkiJyIar8fOhN3Zvd3xyaZIQQldREOBUPp0NFR0SIiCKgIkKgqqEIoISAXizXh3vb7z+pwg2GK0s/v2vTe/9/4ze+8hpH0PNnyTWIQXbSpI0VD3ZV8UjBoXTAwvO52+RS/Q7oenvjQv84qvw0oLFm8S/4JvtSA7uqkN3OjeoPsNyBJuUl84ni/glYaKUDIdy6KmYA4vMdvuC9K2aKnBfLHdgFTb6Qz34TZoDThpOtz0qKBG1SK+T/3g+RKVGbFonlXz4a47jsFLchWl2CqueIQJTB9jnBzZN6lrDLnDh7aAE0Fqu65MC20yzHYdT4QhMujuptMJpylO8AE817hFDkgJQ/RKhvAY7+GXeZeY75Me3UETaZ7ChH1qda8MXTVfaEDOp/sI6KLtWurJwAUArMBbKonimE8x4lOUfAoG9Rix2AdEvtzznMEQRpe2ADBw0cUbx7gIPdAa7xQ+um5ee2zkbV1+PJCpZNQKF9HRakI3qFIgx2+ad/xH79w9p0OuBTnml9u+8Igp4iUPaOUJ545QOUcAidfDaq0nVUtFKaPNoZbImo7tEo6eApTLWCeLmUxIY/lsOahOAvqMcGloqg1cLVrvWsJ6Vd9UiWXtPTj95qu/1q7qoE+GyKJLAxvfC50KSF1ivBO4luOKAK0+5iunZTWVQ3YwHjMzMomYvPbgt87XW3Bdj0gGgecrHrpI+z9+n7+/eV6HpZZq9bpFei2E6dcsau96VYeLFiw5B9QbvckcEEveTS1mpkO7pG+JAHGczQKyEbCWKEqXSnDbSgBaCCA/6uEdh9NCfa/wp/HtJ/dki3qwPHozUunf7NxfP53oCtW9SJSEbBdQ2YfgJ9POjVwajk2fXX/E3rv7sVBctcGkvnfbt1BQ2+q7l2cgDveZP1pb+u+nf/hchyySbDNhE7ewNac6/sOOh4jEeFhFfCtNKvoer8ajrY5b9sUY0Je0sFjKSIBOyyHplGygGfATHJj1yIHsvanSiVdPwOIoX+Ug6vuzSUVRCE41Gy9YD89/pUP6XUh3sZ39BqTbTp93QrZ44gg6EJXwmTbJFlkSj9gRS3WtwZiVTDaW/NtTLW4c5jHd7Ai2vDbJZY5dppLQ90dKCocqMktNc8Q1jsRNCNOdEsZDgSXWsd7n5v2Lnz6/cvbGz2orXuw4NmGqEc5gOT0UqyrXmWA/HKfzr7nF6W2ocTNJTs9UMMZTismYJaY42adSY+V4B0+uxpRcblyLyW19jD7kUJ1PILGqTjc4WsVY7E2YXFe2SVmXyR+lJ+726adL0C3zt8yl6S0T/k/833inr+rOpC80TCtAmH8gWjyw7OAs20Atrydo2QiOKTwrbz/+bOf17774Rek5Jw88PPp59PM93oEHh3aiJRUaf6VjqSIteQKqNP8BKrp859oMAAA="
+object Kinds_Module extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAAL2WPYwbRRTH367t89k+cuFDQSEKd5zMoUNgn2hSnERkOzYKce5OtykiJyIar8fOht3ZvZ3xyaZIQQldREOBUPp0NFR0SIiCKgIkKgqqEIoISAXizXh3vb7z+pwg2GK0s/v2vTe/9/4ze+8hZLgP69wkNmElhwpSMtR9hYuiUWfCEsPLbqdv0wu0++GpL83LrMp1WG7Bwk3CL3C7BbnRTX3gRfcG3W9CjjCTcuH6XMArTRWhbLq2TU1huaxsOU5fkLZNy02Li60mpNtuZ7gPt0FrwknTZaZPBTVqNuGc8uD5IpUZWdE8p+bDHW8cg5XlKsqxVVzxiSUwfYxxcmS/Rz1jyFw2dAScCFLb8WRaaJO1HM/1RRgii+5uup1wmmYEH8BzzVvkgJQxRK9sCN9iPfyy4BHzfdKj22gizdOYMKd298rQU/NUE/Kc7iOgi45nqycDDwCwAm+pJEpjPqWIT0nyKRrUt4htfUDky13fHQxhdGkpgIGHLt44xkXogdZZp/jRdfPaY6Pg6PLjgUwlq1a4gI5WErpBlQI5frN3hz965+45HfItyFu80ubCJ6aIlzygVSCMuULlHAEkfg+rtZZULRWlgjaHWiJnuo5HGHoKUC5hnWzLtIQ0ls+WguokoM8Kj4am2sDTovWuJqxX9U2N2Pbug9Nvvvpr/aoO+mSIHLo0sPH90KmA9CWLdQLXclwWoDXGfOW0oqZyyA3GY3ZGJhGT1x781vl6E67rEckg8HzFQxcZ/uP3hfsb53VYbKlWb9ik10KYvG5TZ8evuUy0YNE9oP7oTfaA2PJuajGzHdolfVsEiONsUshGwGqiKD0qwW0pAWghgMKoh7ddRouN3eKfxref3JMt6sPS6M1IpX9b5/766URXqO5FoiRkm0JlH4KfTDs/cmm4Dn127ZH13t2PheKqDSb1vdO+hYLaUt+9PANxuM/80drUfz/9w+c65JBk2xIO8Yqbc6rjP+x4iEiMhxXEt7xHRd9ntXi0lXHLvhgD+pIWFksZCdBpJSSdlg00A36CA7MROZC9N1U68eoJWBjlqxxEfX82qSgKwam95gv2w/Nf6ZB5FzJdbGfehEzb7bNOyBZPHEEHoho+0ybZIkviEydiqa5VGLOSycaSf3uqxY3DPKabHcFW0Ca5zLHLVBP6/khJ4VBFZqlpjrjGkbgJYbpTwvgosMQ6NvrMvH/x0+eXz974WW3FCx3XIZZqhDNYTh/Fqsp1JtgPx+n8a25xeutq3EiS0zNVjPGUYjJmiSlO9qnUWD3ewZOrMS2XG9diclsfow851OYTSKyq0w2OVjEWewMm15XCTfuJ+3z6uRL0yfzNcml6s4R/Ev832OmrujPpCw0zChDmH8gVjyonOMXWUcVrCSo2ggMKgd9+/Nn269998YtScl4edXjos+i3e7z3Dg7tQYsqNP5Ex1JFWvLsU2n+Awjq5/zUDAAA"
 }
 }
 

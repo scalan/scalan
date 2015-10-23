@@ -91,14 +91,6 @@ trait ProxySeq extends Proxy { self: ScalanSeq =>
 trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp =>
   // call mkMethodCall instead of constructor
   case class MethodCall private[ProxyExp] (receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean)(val selfType: Elem[Any]) extends Def[Any] {
-    override def mirror(t: Transformer) = {
-      val args1 = args.map {
-        case a: Exp[_] => t(a)
-        case a => a
-      }
-      val receiver1 = t(receiver)
-      mkMethodCall(receiver1, method, args1, neverInvoke)
-    }
 
     override def toString = {
       val methodStr = method.toString.replace("java.lang.", "").
@@ -134,14 +126,18 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       }
   }
 
-  case class NewObject[T](clazz: Class[T] , args: List[AnyRef], neverInvoke: Boolean)(implicit selfType: Elem[T]) extends BaseDef[T] {
-    override def mirror(t: Transformer) = {
+  case class NewObject[T](clazz: Class[T] , args: List[AnyRef], neverInvoke: Boolean)(implicit selfType: Elem[T]) extends BaseDef[T]
+
+  override def transformDef[A](d: Def[A], t: Transformer) = d match {
+    // not the same as super because mkMethodCall can produce a more precise return type
+    case MethodCall(receiver, method, args, neverInvoke) =>
       val args1 = args.map {
         case a: Exp[_] => t(a)
         case a => a
       }
-      NewObject[T](clazz, args1, neverInvoke)
-    }
+      val receiver1 = t(receiver)
+      mkMethodCall(receiver1, method, args1, neverInvoke).asRep[A]
+    case _ => super.transformDef(d, t)
   }
 
   def mkMethodCall(receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean): Exp[_] = {
@@ -192,7 +188,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     mkMethodCall(receiver, m, args, true).asRep[A]
 
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A] = {
-    new NewObject[A](c, args, true)
+    reifyObject(new NewObject[A](c, args, true))
   }
 
   private val proxies = scala.collection.mutable.Map.empty[(Rep[_], ClassTag[_]), AnyRef]

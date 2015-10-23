@@ -22,10 +22,6 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
     def cG = _cG
     def eA = _eA
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Coproducts")
-      module.entities.find(_.name == "Coproduct").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "G" -> Right(cG.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -34,7 +30,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
       implicit val tagA = eA.tag
       weakTypeTag[Coproduct[F, G, A]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Coproduct[F, G, A]] => convertCoproduct(x) }
       tryConvert(element[Coproduct[F, G, A]], this, x, conv)
@@ -58,22 +54,24 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
     protected def getDefaultRep = Coproduct
   }
 
-  abstract class CoproductCompanionAbs extends CompanionBase[CoproductCompanionAbs] with CoproductCompanion {
+  abstract class CoproductCompanionAbs extends CompanionDef[CoproductCompanionAbs] with CoproductCompanion {
+    def selfType = CoproductCompanionElem
     override def toString = "Coproduct"
   }
   def Coproduct: Rep[CoproductCompanionAbs]
   implicit def proxyCoproductCompanion(p: Rep[CoproductCompanion]): CoproductCompanion =
     proxyOps[CoproductCompanion](p)
 
+  abstract class AbsCoproductImpl[F[_], G[_], A]
+      (run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
+    extends CoproductImpl[F, G, A](run) with Def[CoproductImpl[F, G, A]] {
+    lazy val selfType = element[CoproductImpl[F, G, A]]
+  }
   // elem for concrete class
   class CoproductImplElem[F[_], G[_], A](val iso: Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
     extends CoproductElem[F, G, A, CoproductImpl[F, G, A]]
     with ConcreteElem[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
     override lazy val parent: Option[Elem[_]] = Some(coproductElement(container[F], container[G], element[A]))
-    override lazy val entityDef = {
-      val module = getModules("Coproducts")
-      module.concreteSClasses.find(_.name == "CoproductImpl").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("F" -> Right(cF.asInstanceOf[SomeCont]), "G" -> Right(cG.asInstanceOf[SomeCont]), "A" -> Left(eA))
     }
@@ -101,7 +99,8 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
     lazy val eTo = new CoproductImplElem[F, G, A](this)
   }
   // 4) constructor and deconstructor
-  abstract class CoproductImplCompanionAbs extends CompanionBase[CoproductImplCompanionAbs] with CoproductImplCompanion {
+  class CoproductImplCompanionAbs extends CompanionDef[CoproductImplCompanionAbs] with CoproductImplCompanion {
+    def selfType = CoproductImplCompanionElem
     override def toString = "CoproductImpl"
 
     def apply[F[_], G[_], A](run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
@@ -110,7 +109,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   object CoproductImplMatcher {
     def unapply[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]) = unmkCoproductImpl(p)
   }
-  def CoproductImpl: Rep[CoproductImplCompanionAbs]
+  lazy val CoproductImpl: Rep[CoproductImplCompanionAbs] = new CoproductImplCompanionAbs
   implicit def proxyCoproductImplCompanion(p: Rep[CoproductImplCompanionAbs]): CoproductImplCompanionAbs = {
     proxyOps[CoproductImplCompanionAbs](p)
   }
@@ -135,30 +134,23 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
   def mkCoproductImpl[F[_], G[_], A](run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]]
   def unmkCoproductImpl[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]): Option[(Rep[Either[F[A], G[A]]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Coproducts_Module.dump))
+  registerModule(Coproducts_Module)
 }
 
 // Seq -----------------------------------
 trait CoproductsSeq extends CoproductsDsl with scalan.ScalanSeq {
   self: MonadsDslSeq =>
-  lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs with UserTypeSeq[CoproductCompanionAbs] {
-    lazy val selfType = element[CoproductCompanionAbs]
+  lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs {
   }
 
   case class SeqCoproductImpl[F[_], G[_], A]
-      (override val run: Rep[Either[F[A], G[A]]])
-      (implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
-    extends CoproductImpl[F, G, A](run)
-        with UserTypeSeq[CoproductImpl[F, G, A]] {
-    lazy val selfType = element[CoproductImpl[F, G, A]]
-  }
-  lazy val CoproductImpl = new CoproductImplCompanionAbs with UserTypeSeq[CoproductImplCompanionAbs] {
-    lazy val selfType = element[CoproductImplCompanionAbs]
+      (override val run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
+    extends AbsCoproductImpl[F, G, A](run) {
   }
 
   def mkCoproductImpl[F[_], G[_], A]
-      (run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
-      new SeqCoproductImpl[F, G, A](run)
+    (run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]] =
+    new SeqCoproductImpl[F, G, A](run)
   def unmkCoproductImpl[F[_], G[_], A](p: Rep[Coproduct[F, G, A]]) = p match {
     case p: CoproductImpl[F, G, A] @unchecked =>
       Some((p.run))
@@ -169,23 +161,12 @@ trait CoproductsSeq extends CoproductsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
   self: MonadsDslExp =>
-  lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs with UserTypeDef[CoproductCompanionAbs] {
-    lazy val selfType = element[CoproductCompanionAbs]
-    override def mirror(t: Transformer) = this
+  lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs {
   }
 
   case class ExpCoproductImpl[F[_], G[_], A]
-      (override val run: Rep[Either[F[A], G[A]]])
-      (implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
-    extends CoproductImpl[F, G, A](run) with UserTypeDef[CoproductImpl[F, G, A]] {
-    lazy val selfType = element[CoproductImpl[F, G, A]]
-    override def mirror(t: Transformer) = ExpCoproductImpl[F, G, A](t(run))
-  }
-
-  lazy val CoproductImpl: Rep[CoproductImplCompanionAbs] = new CoproductImplCompanionAbs with UserTypeDef[CoproductImplCompanionAbs] {
-    lazy val selfType = element[CoproductImplCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
+    extends AbsCoproductImpl[F, G, A](run)
 
   object CoproductImplMethods {
   }
@@ -221,10 +202,8 @@ trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
   }
 }
 
-object Coproducts_Module {
-  val packageName = "scalan.monads"
-  val name = "Coproducts"
-  val dump = "H4sIAAAAAAAAALVWPYwbRRR+Xp/Pt/aRhAiddBKIu5MBgcA+gUSKKyLH8Vkg34+8kYhMRDRej30Tdmf2ZsanNUUKSugQLULp09FQ0SEhCioESNRUIRQRkArEzHj/bOy7QyIuRjuzb7/35vveN+P7D6EgOLwoXOQhWvWxRFXHPNeFrDhNKokc77H+yMPX8eDDtS/dPXpNWHCxC8tHSFwXXhfsyUMzDJJnBx+3wUbUxUIyLiRstk2Gmss8D7uSMFojvj+SqOfhWpsIudOGpR7rj4/hLuTacMll1OVYYqfhISGwiNZXsK6IJHPbzMcHQZqD1vQuapld3OCISFW+ynFpEt/BgTOmjI59CRei0g4CXZaKKRI/YFzGKYoK7oj14+kSRWoBLrfvoBNUUymGNUdyQofqy3KA3PfREO+rEB2+pAoW2BvcGAdmnm9DSeBjRdBbfuCZlTAAAKXA66aIaspPNeGnqvmpOJgT5JEPkH55yFk4hskvlwcIAwXx6hkQMQJu0n7lo1vuu4+dsm/pj0NdStHscFkBPb+gG4wUisdvOp+IR617VywodaFERL0nJEeuzEoesVVGlDJpak4IRHyo1NpapJbJUlcxMy1hu8wPEFVIEZWrSiePuETqYL22GqmzgPqiDHAcmguDXLLfjQX7NX3TQJ53+GD9tRd+bd60wJpOYStIRzU+j0El2A0WcGUYV0b4erwoIbebkqynrelp3Uz1YIfpWDyluoSnlx781v96G25ZCbtRMecTVEEUxE8/lL9/+aoFK13T/rseGnYVwaLpYf+ANxiVXVhhJ5hP3hRPkKef5gpc7OMBGnkyoj3LV17xJWFjoVEDrMncMabIxQSUJ329zyiu7B5W/nS+/fS+blsOq5M3E+f+Ta789fOFgTQdLSHPRzRmN6/8Pq3GcpPII8xnJZqZZ0VJhTslaP6oN1GalOowHz+99Yi8d+9jafTKhdNnyUHvjjLvjvlu4xTp4jPtj+629fv6j59bYCuFekT6KKhsn9OJT9BdkLCSDptKlrXEHvoIbGSTbqaOWM9w/Gwu7gUTJMFyd2Pyl3RnzvVZRrQ5AK3TAFpnA+B6AqAdcmZHSHhqat8GJ7Hnc4s0NoyuddrPeA+vfmVB4W0oDJTrRBsKPTai/VgqdVlKHMpr8VpuWiolDeLIT6Qxvw1IOZ9p/c7ciNuztMwPa50OpId3zof0bxoz0G/CNOl2B5MB0XfdzPr/eRxHdk5D34hqWdDsl5Pkcxp96q7INsRiRs4Q6T9w+yRV0uPtaSwVWEqFUG6IO55R1BcRlRy2FhjBiY4add7dffzZ/ivfffGLuYpL+tBS1wJN/qylbR/OnPj2nsml/ntlClb+1ceYKfYfX2yV/AsLAAA="
+object Coproducts_Module extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+Xp/PZ/tIQoROOgnE3cmAQGCfQCLFFZHj+CyQ70e3kYhMRDRej30bdmf3ZsanNUUKSugQLULp09FQ0SEhCioESNRUIRQRkArEm/H+Gtt3SGSL0c7s2++9+b73ze79h1AQHF4UFnEIq7lUkpqp7xtCVs0Wk7Yc73n9kUOv08GHa19ae+yaMOBiF5aPibgunC6UJjetwI/vTXrSgRJhFhXS40LCZkdnqFue41BL2h6r2647kqTn0HrHFnKnA0s9rz8+gbuQ68Aly2MWp5KaTYcIQUW4vkJVRXY8L+n5+MBPcrC62kU9tYsbnNgSy8cclybxR9Q3x8xjY1fChbC0A1+VhTFF2/U9LqMURYQ79vrRdIkRXIDLnTvklNQxxbBuSm6zIb5Z8Yn1PhnSfQxR4UtYsKDO4MbY1/N8B8qCniBBb7m+o1cCHwBQgdd1EbWEn1rMT03xUzUpt4ljf0DUw0PuBWOYXLk8QOAjxKtnQEQItMX61Y9uWe8+NiuuoV4OVClFvcNlBHp+TjdoKZDHb44+EY/a964YUO5C2RaNnpCcWDItechWhTDmSV1zTCDhQ1Rra55aOksDY6ZaomR5rk8YIoVUrqJOjm3ZUgWrtdVQnTnUF6VPo9Bc4Ofi/W7M2a/umyZxnMMH66+98GvrpgFGNkUJIU1sfB6BSig1PZ+jYSwZ4qvxooTcbkKymraz04aeqqEUJGNxQXUxTy89+K3/9TbcMmJ2w2LOJyhCFMRPP1S+f/mqAStd3f67Dhl2kWDRcqh7wJsek11Y8U4pnzwpnhJH3c0UuNinAzJyZEh7mq888iVhY65RfarI3NGmyEUEVCZ9ve8xWt09rP5pfvvpfdW2HFYnTybO/du+8tfPFwZSd7SEPB+xiN08+j2rxnLLlseUT0s0NU+Lkgi3IGj2qDZRnpRqei59euuR/d69j6XWKxdkz5KD3h00745+b2OBdNGZ9kd32/h9/cfPDSihQj1busSvbp/TiU/QXRCzkgybKMtabA91BDbTSTcTR6ynOH42F/WCDpJgWLsR+UuqM2f6LCXaDID2IoD22QC0EQMoh5zZERKeyuxb48T2fG6exprRtaPOM87Dq18ZUHgbCgN0nehAoeeNWD+SCj+WkgbyWrSWy0qF0hBO3FgafW1AwvlU6x/NjLg9TcvssPZiIDW8cz6kf9OYgn4TsqTn0QvZlf/1IA6NnIS+EVYxp80vx8lntHjmK5FuhflcnCHPf2D1SeqjxttZLAwsJ0KgD6Je9xjpi5BKDltzLGCGhwyqe/fxZ/uvfPfFL/ojXFbHFX4QWPybljR8MHXWl/Z0LvzrShWMzlUHmC72H/cLHqkFCwAA"
 }
 }
 

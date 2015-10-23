@@ -21,10 +21,6 @@ trait ConvertersAbs extends Converters  {
     def eT = _eT
     def eR = _eR
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Converters")
-      module.entities.find(_.name == "Converter").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT), "R" -> Left(eR))
     }
@@ -34,7 +30,7 @@ trait ConvertersAbs extends Converters  {
       implicit val tagR = eR.tag
       weakTypeTag[Converter[T, R]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Converter[T, R]] => convertConverter(x) }
       tryConvert(element[Converter[T, R]], this, x, conv)
@@ -58,22 +54,24 @@ trait ConvertersAbs extends Converters  {
     protected def getDefaultRep = Converter
   }
 
-  abstract class ConverterCompanionAbs extends CompanionBase[ConverterCompanionAbs] with ConverterCompanion {
+  abstract class ConverterCompanionAbs extends CompanionDef[ConverterCompanionAbs] with ConverterCompanion {
+    def selfType = ConverterCompanionElem
     override def toString = "Converter"
   }
   def Converter: Rep[ConverterCompanionAbs]
   implicit def proxyConverterCompanion(p: Rep[ConverterCompanion]): ConverterCompanion =
     proxyOps[ConverterCompanion](p)
 
+  abstract class AbsBaseConverter[T, R]
+      (convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R])
+    extends BaseConverter[T, R](convFun) with Def[BaseConverter[T, R]] {
+    lazy val selfType = element[BaseConverter[T, R]]
+  }
   // elem for concrete class
   class BaseConverterElem[T, R](val iso: Iso[BaseConverterData[T, R], BaseConverter[T, R]])(implicit eT: Elem[T], eR: Elem[R])
     extends ConverterElem[T, R, BaseConverter[T, R]]
     with ConcreteElem[BaseConverterData[T, R], BaseConverter[T, R]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(element[T], element[R]))
-    override lazy val entityDef = {
-      val module = getModules("Converters")
-      module.concreteSClasses.find(_.name == "BaseConverter").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT), "R" -> Left(eR))
     }
@@ -102,7 +100,8 @@ trait ConvertersAbs extends Converters  {
     lazy val eTo = new BaseConverterElem[T, R](this)
   }
   // 4) constructor and deconstructor
-  abstract class BaseConverterCompanionAbs extends CompanionBase[BaseConverterCompanionAbs] with BaseConverterCompanion {
+  class BaseConverterCompanionAbs extends CompanionDef[BaseConverterCompanionAbs] with BaseConverterCompanion {
+    def selfType = BaseConverterCompanionElem
     override def toString = "BaseConverter"
 
     def apply[T, R](convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]] =
@@ -111,7 +110,7 @@ trait ConvertersAbs extends Converters  {
   object BaseConverterMatcher {
     def unapply[T, R](p: Rep[Converter[T, R]]) = unmkBaseConverter(p)
   }
-  def BaseConverter: Rep[BaseConverterCompanionAbs]
+  lazy val BaseConverter: Rep[BaseConverterCompanionAbs] = new BaseConverterCompanionAbs
   implicit def proxyBaseConverterCompanion(p: Rep[BaseConverterCompanionAbs]): BaseConverterCompanionAbs = {
     proxyOps[BaseConverterCompanionAbs](p)
   }
@@ -136,15 +135,16 @@ trait ConvertersAbs extends Converters  {
   def mkBaseConverter[T, R](convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]]
   def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]): Option[(Rep[T => R])]
 
+  abstract class AbsPairConverter[A1, A2, B1, B2]
+      (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
+    extends PairConverter[A1, A2, B1, B2](conv1, conv2) with Def[PairConverter[A1, A2, B1, B2]] {
+    lazy val selfType = element[PairConverter[A1, A2, B1, B2]]
+  }
   // elem for concrete class
   class PairConverterElem[A1, A2, B1, B2](val iso: Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends ConverterElem[(A1, A2), (B1, B2), PairConverter[A1, A2, B1, B2]]
     with ConcreteElem[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(pairElement(element[A1],element[A2]), pairElement(element[B1],element[B2])))
-    override lazy val entityDef = {
-      val module = getModules("Converters")
-      module.concreteSClasses.find(_.name == "PairConverter").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A1" -> Left(eA1), "A2" -> Left(eA2), "B1" -> Left(eB1), "B2" -> Left(eB2))
     }
@@ -176,7 +176,8 @@ trait ConvertersAbs extends Converters  {
     lazy val eTo = new PairConverterElem[A1, A2, B1, B2](this)
   }
   // 4) constructor and deconstructor
-  abstract class PairConverterCompanionAbs extends CompanionBase[PairConverterCompanionAbs] with PairConverterCompanion {
+  class PairConverterCompanionAbs extends CompanionDef[PairConverterCompanionAbs] with PairConverterCompanion {
+    def selfType = PairConverterCompanionElem
     override def toString = "PairConverter"
     def apply[A1, A2, B1, B2](p: Rep[PairConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
       isoPairConverter(eA1, eA2, eB1, eB2).to(p)
@@ -186,7 +187,7 @@ trait ConvertersAbs extends Converters  {
   object PairConverterMatcher {
     def unapply[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]) = unmkPairConverter(p)
   }
-  def PairConverter: Rep[PairConverterCompanionAbs]
+  lazy val PairConverter: Rep[PairConverterCompanionAbs] = new PairConverterCompanionAbs
   implicit def proxyPairConverterCompanion(p: Rep[PairConverterCompanionAbs]): PairConverterCompanionAbs = {
     proxyOps[PairConverterCompanionAbs](p)
   }
@@ -211,15 +212,16 @@ trait ConvertersAbs extends Converters  {
   def mkPairConverter[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]]
   def unmkPairConverter[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]): Option[(Rep[Converter[A1, B1]], Rep[Converter[A2, B2]])]
 
+  abstract class AbsSumConverter[A1, A2, B1, B2]
+      (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
+    extends SumConverter[A1, A2, B1, B2](conv1, conv2) with Def[SumConverter[A1, A2, B1, B2]] {
+    lazy val selfType = element[SumConverter[A1, A2, B1, B2]]
+  }
   // elem for concrete class
   class SumConverterElem[A1, A2, B1, B2](val iso: Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
     extends ConverterElem[$bar[A1, A2], $bar[B1, B2], SumConverter[A1, A2, B1, B2]]
     with ConcreteElem[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(sumElement(element[A1],element[A2]), sumElement(element[B1],element[B2])))
-    override lazy val entityDef = {
-      val module = getModules("Converters")
-      module.concreteSClasses.find(_.name == "SumConverter").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A1" -> Left(eA1), "A2" -> Left(eA2), "B1" -> Left(eB1), "B2" -> Left(eB2))
     }
@@ -251,7 +253,8 @@ trait ConvertersAbs extends Converters  {
     lazy val eTo = new SumConverterElem[A1, A2, B1, B2](this)
   }
   // 4) constructor and deconstructor
-  abstract class SumConverterCompanionAbs extends CompanionBase[SumConverterCompanionAbs] with SumConverterCompanion {
+  class SumConverterCompanionAbs extends CompanionDef[SumConverterCompanionAbs] with SumConverterCompanion {
+    def selfType = SumConverterCompanionElem
     override def toString = "SumConverter"
     def apply[A1, A2, B1, B2](p: Rep[SumConverterData[A1, A2, B1, B2]])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
       isoSumConverter(eA1, eA2, eB1, eB2).to(p)
@@ -261,7 +264,7 @@ trait ConvertersAbs extends Converters  {
   object SumConverterMatcher {
     def unapply[A1, A2, B1, B2](p: Rep[Converter[$bar[A1, A2], $bar[B1, B2]]]) = unmkSumConverter(p)
   }
-  def SumConverter: Rep[SumConverterCompanionAbs]
+  lazy val SumConverter: Rep[SumConverterCompanionAbs] = new SumConverterCompanionAbs
   implicit def proxySumConverterCompanion(p: Rep[SumConverterCompanionAbs]): SumConverterCompanionAbs = {
     proxyOps[SumConverterCompanionAbs](p)
   }
@@ -286,15 +289,16 @@ trait ConvertersAbs extends Converters  {
   def mkSumConverter[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]]
   def unmkSumConverter[A1, A2, B1, B2](p: Rep[Converter[$bar[A1, A2], $bar[B1, B2]]]): Option[(Rep[Converter[A1, B1]], Rep[Converter[A2, B2]])]
 
+  abstract class AbsFunctorConverter[A, B, F[_]]
+      (itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
+    extends FunctorConverter[A, B, F](itemConv) with Def[FunctorConverter[A, B, F]] {
+    lazy val selfType = element[FunctorConverter[A, B, F]]
+  }
   // elem for concrete class
   class FunctorConverterElem[A, B, F[_]](val iso: Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
     extends ConverterElem[F[A], F[B], FunctorConverter[A, B, F]]
     with ConcreteElem[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(element[F[A]], element[F[B]]))
-    override lazy val entityDef = {
-      val module = getModules("Converters")
-      module.concreteSClasses.find(_.name == "FunctorConverter").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("A" -> Left(eA), "B" -> Left(eB), "F" -> Right(F.asInstanceOf[SomeCont]))
     }
@@ -324,7 +328,8 @@ trait ConvertersAbs extends Converters  {
     lazy val eTo = new FunctorConverterElem[A, B, F](this)
   }
   // 4) constructor and deconstructor
-  abstract class FunctorConverterCompanionAbs extends CompanionBase[FunctorConverterCompanionAbs] with FunctorConverterCompanion {
+  class FunctorConverterCompanionAbs extends CompanionDef[FunctorConverterCompanionAbs] with FunctorConverterCompanion {
+    def selfType = FunctorConverterCompanionElem
     override def toString = "FunctorConverter"
 
     def apply[A, B, F[_]](itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]] =
@@ -333,7 +338,7 @@ trait ConvertersAbs extends Converters  {
   object FunctorConverterMatcher {
     def unapply[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]) = unmkFunctorConverter(p)
   }
-  def FunctorConverter: Rep[FunctorConverterCompanionAbs]
+  lazy val FunctorConverter: Rep[FunctorConverterCompanionAbs] = new FunctorConverterCompanionAbs
   implicit def proxyFunctorConverterCompanion(p: Rep[FunctorConverterCompanionAbs]): FunctorConverterCompanionAbs = {
     proxyOps[FunctorConverterCompanionAbs](p)
   }
@@ -358,30 +363,23 @@ trait ConvertersAbs extends Converters  {
   def mkFunctorConverter[A, B, F[_]](itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]]
   def unmkFunctorConverter[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]): Option[(Rep[Converter[A, B]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Converters_Module.dump))
+  registerModule(Converters_Module)
 }
 
 // Seq -----------------------------------
 trait ConvertersSeq extends ConvertersDsl  {
   self: ScalanSeq =>
-  lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs with UserTypeSeq[ConverterCompanionAbs] {
-    lazy val selfType = element[ConverterCompanionAbs]
+  lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs {
   }
 
   case class SeqBaseConverter[T, R]
-      (override val convFun: Rep[T => R])
-      (implicit eT: Elem[T], eR: Elem[R])
-    extends BaseConverter[T, R](convFun)
-        with UserTypeSeq[BaseConverter[T, R]] {
-    lazy val selfType = element[BaseConverter[T, R]]
-  }
-  lazy val BaseConverter = new BaseConverterCompanionAbs with UserTypeSeq[BaseConverterCompanionAbs] {
-    lazy val selfType = element[BaseConverterCompanionAbs]
+      (override val convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R])
+    extends AbsBaseConverter[T, R](convFun) {
   }
 
   def mkBaseConverter[T, R]
-      (convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]] =
-      new SeqBaseConverter[T, R](convFun)
+    (convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]] =
+    new SeqBaseConverter[T, R](convFun)
   def unmkBaseConverter[T, R](p: Rep[Converter[T, R]]) = p match {
     case p: BaseConverter[T, R] @unchecked =>
       Some((p.convFun))
@@ -389,19 +387,13 @@ trait ConvertersSeq extends ConvertersDsl  {
   }
 
   case class SeqPairConverter[A1, A2, B1, B2]
-      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])
-      (implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends PairConverter[A1, A2, B1, B2](conv1, conv2)
-        with UserTypeSeq[PairConverter[A1, A2, B1, B2]] {
-    lazy val selfType = element[PairConverter[A1, A2, B1, B2]]
-  }
-  lazy val PairConverter = new PairConverterCompanionAbs with UserTypeSeq[PairConverterCompanionAbs] {
-    lazy val selfType = element[PairConverterCompanionAbs]
+      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
+    extends AbsPairConverter[A1, A2, B1, B2](conv1, conv2) {
   }
 
   def mkPairConverter[A1, A2, B1, B2]
-      (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
-      new SeqPairConverter[A1, A2, B1, B2](conv1, conv2)
+    (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]] =
+    new SeqPairConverter[A1, A2, B1, B2](conv1, conv2)
   def unmkPairConverter[A1, A2, B1, B2](p: Rep[Converter[(A1, A2), (B1, B2)]]) = p match {
     case p: PairConverter[A1, A2, B1, B2] @unchecked =>
       Some((p.conv1, p.conv2))
@@ -409,19 +401,13 @@ trait ConvertersSeq extends ConvertersDsl  {
   }
 
   case class SeqSumConverter[A1, A2, B1, B2]
-      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])
-      (implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends SumConverter[A1, A2, B1, B2](conv1, conv2)
-        with UserTypeSeq[SumConverter[A1, A2, B1, B2]] {
-    lazy val selfType = element[SumConverter[A1, A2, B1, B2]]
-  }
-  lazy val SumConverter = new SumConverterCompanionAbs with UserTypeSeq[SumConverterCompanionAbs] {
-    lazy val selfType = element[SumConverterCompanionAbs]
+      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
+    extends AbsSumConverter[A1, A2, B1, B2](conv1, conv2) {
   }
 
   def mkSumConverter[A1, A2, B1, B2]
-      (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
-      new SeqSumConverter[A1, A2, B1, B2](conv1, conv2)
+    (conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]] =
+    new SeqSumConverter[A1, A2, B1, B2](conv1, conv2)
   def unmkSumConverter[A1, A2, B1, B2](p: Rep[Converter[$bar[A1, A2], $bar[B1, B2]]]) = p match {
     case p: SumConverter[A1, A2, B1, B2] @unchecked =>
       Some((p.conv1, p.conv2))
@@ -429,19 +415,13 @@ trait ConvertersSeq extends ConvertersDsl  {
   }
 
   case class SeqFunctorConverter[A, B, F[_]]
-      (override val itemConv: Conv[A, B])
-      (implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
-    extends FunctorConverter[A, B, F](itemConv)
-        with UserTypeSeq[FunctorConverter[A, B, F]] {
-    lazy val selfType = element[FunctorConverter[A, B, F]]
-  }
-  lazy val FunctorConverter = new FunctorConverterCompanionAbs with UserTypeSeq[FunctorConverterCompanionAbs] {
-    lazy val selfType = element[FunctorConverterCompanionAbs]
+      (override val itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
+    extends AbsFunctorConverter[A, B, F](itemConv) {
   }
 
   def mkFunctorConverter[A, B, F[_]]
-      (itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]] =
-      new SeqFunctorConverter[A, B, F](itemConv)
+    (itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]] =
+    new SeqFunctorConverter[A, B, F](itemConv)
   def unmkFunctorConverter[A, B, F[_]](p: Rep[Converter[F[A], F[B]]]) = p match {
     case p: FunctorConverter[A, B, F] @unchecked =>
       Some((p.itemConv))
@@ -452,23 +432,12 @@ trait ConvertersSeq extends ConvertersDsl  {
 // Exp -----------------------------------
 trait ConvertersExp extends ConvertersDsl  {
   self: ScalanExp =>
-  lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs with UserTypeDef[ConverterCompanionAbs] {
-    lazy val selfType = element[ConverterCompanionAbs]
-    override def mirror(t: Transformer) = this
+  lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs {
   }
 
   case class ExpBaseConverter[T, R]
-      (override val convFun: Rep[T => R])
-      (implicit eT: Elem[T], eR: Elem[R])
-    extends BaseConverter[T, R](convFun) with UserTypeDef[BaseConverter[T, R]] {
-    lazy val selfType = element[BaseConverter[T, R]]
-    override def mirror(t: Transformer) = ExpBaseConverter[T, R](t(convFun))
-  }
-
-  lazy val BaseConverter: Rep[BaseConverterCompanionAbs] = new BaseConverterCompanionAbs with UserTypeDef[BaseConverterCompanionAbs] {
-    lazy val selfType = element[BaseConverterCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R])
+    extends AbsBaseConverter[T, R](convFun)
 
   object BaseConverterMethods {
     object apply {
@@ -502,17 +471,8 @@ trait ConvertersExp extends ConvertersDsl  {
   }
 
   case class ExpPairConverter[A1, A2, B1, B2]
-      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])
-      (implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends PairConverter[A1, A2, B1, B2](conv1, conv2) with UserTypeDef[PairConverter[A1, A2, B1, B2]] {
-    lazy val selfType = element[PairConverter[A1, A2, B1, B2]]
-    override def mirror(t: Transformer) = ExpPairConverter[A1, A2, B1, B2](t(conv1), t(conv2))
-  }
-
-  lazy val PairConverter: Rep[PairConverterCompanionAbs] = new PairConverterCompanionAbs with UserTypeDef[PairConverterCompanionAbs] {
-    lazy val selfType = element[PairConverterCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
+    extends AbsPairConverter[A1, A2, B1, B2](conv1, conv2)
 
   object PairConverterMethods {
     object apply {
@@ -542,17 +502,8 @@ trait ConvertersExp extends ConvertersDsl  {
   }
 
   case class ExpSumConverter[A1, A2, B1, B2]
-      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])
-      (implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends SumConverter[A1, A2, B1, B2](conv1, conv2) with UserTypeDef[SumConverter[A1, A2, B1, B2]] {
-    lazy val selfType = element[SumConverter[A1, A2, B1, B2]]
-    override def mirror(t: Transformer) = ExpSumConverter[A1, A2, B1, B2](t(conv1), t(conv2))
-  }
-
-  lazy val SumConverter: Rep[SumConverterCompanionAbs] = new SumConverterCompanionAbs with UserTypeDef[SumConverterCompanionAbs] {
-    lazy val selfType = element[SumConverterCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val conv1: Conv[A1, B1], override val conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
+    extends AbsSumConverter[A1, A2, B1, B2](conv1, conv2)
 
   object SumConverterMethods {
     object apply {
@@ -582,17 +533,8 @@ trait ConvertersExp extends ConvertersDsl  {
   }
 
   case class ExpFunctorConverter[A, B, F[_]]
-      (override val itemConv: Conv[A, B])
-      (implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
-    extends FunctorConverter[A, B, F](itemConv) with UserTypeDef[FunctorConverter[A, B, F]] {
-    lazy val selfType = element[FunctorConverter[A, B, F]]
-    override def mirror(t: Transformer) = ExpFunctorConverter[A, B, F](t(itemConv))
-  }
-
-  lazy val FunctorConverter: Rep[FunctorConverterCompanionAbs] = new FunctorConverterCompanionAbs with UserTypeDef[FunctorConverterCompanionAbs] {
-    lazy val selfType = element[FunctorConverterCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
+    extends AbsFunctorConverter[A, B, F](itemConv)
 
   object FunctorConverterMethods {
     object convFun {
@@ -667,10 +609,8 @@ trait ConvertersExp extends ConvertersDsl  {
   }
 }
 
-object Converters_Module {
-  val packageName = "scalan"
-  val name = "Converters"
-  val dump = "H4sIAAAAAAAAAO1YTWwbRRSe3cRxbIcmFAgKVZsQGRARiVMLqYccKm+aQJGbRN4ckKlajdfjdMv+ZXcc2RwqxAnBDXHhgFDvvXFBQuKGhDhwqgCJEwdObTlU0KoHEG/G++v9sUvEBdWH1c7um2/e+973rWZ86x7KOTZ62VGwho01nVC8JvP7mkPL8pZBVdq/ZLa7GrlAOh/Mf6VcMiRHRLNNNHUNOxccrYkKg5utnuXfy+SwjgrYUIhDTduh6MU6X6GimJpGFKqaRkXV9S7FLY1U6qpDN+posmW2+4foBhLqaE4xDcUmlMibGnYc4rjPpwnLSPXHBT7u71rBGkaFVVEJVbFvY5VC+rDG3CC+QSy5b5hGX6fohJvarsXSgpi8qlumTb0l8gB3zWx7w0kDwwN0sn4dH+EKLHFQkamtGgcws2Rh5V18QHYghIVPQsIO0Tr7fYuPJ+qo6JBDIOiibmn8Sc9CCEEHqjyJtYCfNZ+fNcZPWSa2ijX1Pcxe7tlmr48GP2ECoZ4FEK+NgPAQyJbRLn90WXnnoVzSRTa5x1LJ8wqnAGgxRQ28FcDjd41PnPtv3DwnomITFVWn1nKojRUabrnLVgkbhkl5zj6B2D6Abi2ndYuvUoOYIUkUFFO3sAFILpUz0CdNVVTKgtmzGbc7KdTnqUW8UKFnCX69Syn1ct1sYk3bu7Ow+tLdrbdFJEaXKACkDMK3PVCKCpumcURsSmwXn11nKRL2A5LZsMGH7FLoBdd8Rjo+Ma/c+b397Tq6LPp0uquP10GAyDk//1i6/ep5EU03ud63NXzQBEadLY3ouzbUQJto2oRCBm/yR1hjd4kdzbdJB3c16vIcJmgCCKJoKdWZFmHsbXAXCB4BpYGQd0yDlLf3yg/k7z+9xXRqo5nBm4FV/1bP/fXLiQ7lEqYoD5+Mo+2u4TE8ASb3CTmT1mKLwBTl9sXPnpk9ffVX3uCptqljlavsVB3lbLA4L+eUS/BjNbM4yFg2dfL08n31ys2PKW+b0It+Q3Zb18G0G3zemYwOet+yP5vr4h8LP30hogI0qqVSHVvl9TEd+B+6CvlMBJdF6M68hB3iW2MzvOhiwOXzIc+8IHiS4EEUiWTfI3ySyTTRXwP20wAaWQDxJlL0VCRtjuNr6nS6poCQ+Ub9We3e+W9ElHsL5TrgHQfE1DK7RttjGgRLSY9K3jMhyjQwi22s+8zy3xIKKIvqUEoMaAyzUhKiZce+Vxnas8h+19LI618/uvLh+29aXMixT2AUXqydjVhFrFWHM6oPzZCGZkjhGXGPxXSDhtqeYx+Gs37nWb0jcnQzCGspEbSaCVodq4xBwAq/rqa6Zw+r9vHcM0FqAQdx9XscZPkHIKqZELHWJkBImVkkMJ8AkZlFAs/g4wiBYR+nWieiipSI6qgIaSSGFCNtpEO94sstbCd3MaMlKROfmC5muufkrv7Ec//eczNh/v4flhO2h8a1BHvFgqTjWWlapUT3tZ4sfDeREUuOJfsFtiGGDeRxN2u1rL1WjLcEACkLQBoJ4LYBgvNuRcO9TNDs3HDxY+k2zH5ygDQqYHvkGldTVBSauIqGZNwgakdlfwCMKe+xjjWulsYW1MksJUVOzOOR/Vh7Xv8qrAQxbmAxoIHCinyj6xZko+WUTbDsHn/gDHbj4ec7Kz98+Rs/NRbZQQpOrIb/x1Gwlx/eFE8N8EJpgsjZuYqn+A+z44sXlBMAAA=="
+object Converters_Module extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAAO1YTWwbRRSeXcdxbIcmFAgKVZsQGRARiVMLqYccKm+aQJGbRN4ckKlajdeTdMv+ZXcc2RwqxAnBDXHhgFDvvXFBQuKGhDhwqgCJEwdObTlU0KoHEG9mf7zr/bFLxAXVh9XO7ptv3vve961mfOseyjs2etlRsIaNVZ1QvCrz+7pDK/KmQVXav2R2uhq5QPY/mPtKuWRIjohmWmjyGnYuOFoLFd2bzZ4V3MvksIGK2FCIQ03boejFBl+hqpiaRhSqmkZV1fUuxW2NVBuqQ9cbaKJtdvqH6AYSGmhWMQ3FJpTIGxp2HOJ4z6cIy0gNxkU+7u9YgzWMKquiGqpiz8YqhfRhjVk3vkksuW+YRl+n6ISX2o7F0oKYgqpbpk39JQoAd83s+MMJA8MDdLJxHR/hKixxUJWprRoHMLNsYeVdfEC2IYSFT0DCDtH29/oWH+caqOSQQyDoom5p/EnPQghBB2o8idUBP6sBP6uMn4pMbBVr6nuYvdy1zV4fuT8hh1DPAojXRkD4CGTT6FQ+uqy881Au6yKb3GOpFHiFkwC0kKIG3grg8bvmJ879N26eE1GphUqqU2871MYKDbfcY6uMDcOkPOeAQGwfQLeW0rrFV6lDzJAkioqpW9gAJI/KaeiTpioqZcHs2bTXnRTqC9QifqjQs4Sg3sWUerluNrCm7d6ZX3np7ubbIhKjSxQBUgbh2z4oRcUN0zgiNiW2h8+uMxQJewOS2bDJh+xS7A2uhYx0AmJeufN759s1dFkM6PRWH6+DAJF3fv6xfPvV8yKaanG9b2n4oAWMOpsa0XdsqIG20JQJhbhvCkdYY3eJHS10yD7uatTjOUxQDgiiaDHVmRZh7K1zFwg+AWVXyNumQSpbu5UH8vef3mI6tdG0+8a16t/qub9+ObFPuYQpKsAn42ira/gM58DkASFn0lpsEZii3L742TMzp6/+yhs82TF1rHKVnWqgvA0W5+Wc8gh+rGaW3IxlUydPL91Xr9z8mPK2Cb3oN2SnfR1Mu87nncnooP8t+7O1Jv4x/9MXIipCo9oq1bFVWRvTgf+hq1DAxOCyAN2Zk7BDAmtshBddGHD5fMgzLwi+JHgQRSLZ8wmfYDJN9JfLfhpAMwsg3kSKnoqkzXECTZ1O1xQQMtdsPKvdO/+NiPJvofw+eMcBMbXNrtHxmQbBUtKjkv9MiDINzGIb6wGz/LeIBpRFdSglBjSHWSkL0bJj36sM7Vlkr2tp5PWvH1358P03LS7k2CcwCi/Wz0asItZrwxk1hmZIQzOk8Iy4x2K6QUNtz7MPw9mg86zeETl6GYS1lAhaywStjVWGG7DMryup7tnFqn089+RIfcBBXP0+B1n+AYhaJkSstQkQUmYWCcwnQGRmkcAz+DhCYNjHqdaJqCIlojYqQhqJIcVIG+lQv/hKG9vJXcxoScrEJ6aLme45uas/8dy/99x0mL//h+WEraFxPcFesSDpeFaaUinRA60nC99LZMSSY8l+nm2IYQN53M1aPWuvFeMtAUDKApBGAnhtgOCCV9FwLxM0Oztc/Fi6DbOfHCCNCtgaucbVFBWFJq6gaIk5OCiMKeyxDjSeisaW0sksDUXOyuPR/Fi73eAqLA9ivMDSgAYKK/ItrleQjZZStr+yd/ABUm88/Hx7+Ycvf+PnxRI7QsFZ1Qj+Mhrs4oe3w5MuXihNkDc7UfEU/wF6WzvPjhMAAA=="
 }
 }
 

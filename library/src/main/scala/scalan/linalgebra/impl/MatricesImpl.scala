@@ -21,10 +21,6 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     extends EntityElem[To] {
     def eT = _eT
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Matrices")
-      module.entities.find(_.name == "AbstractMatrix").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -33,7 +29,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
       implicit val tagT = eT.tag
       weakTypeTag[AbstractMatrix[T]].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[AbstractMatrix[T]] => convertAbstractMatrix(x) }
       tryConvert(element[AbstractMatrix[T]], this, x, conv)
@@ -57,22 +53,24 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     protected def getDefaultRep = AbstractMatrix
   }
 
-  abstract class AbstractMatrixCompanionAbs extends CompanionBase[AbstractMatrixCompanionAbs] with AbstractMatrixCompanion {
+  abstract class AbstractMatrixCompanionAbs extends CompanionDef[AbstractMatrixCompanionAbs] with AbstractMatrixCompanion {
+    def selfType = AbstractMatrixCompanionElem
     override def toString = "AbstractMatrix"
   }
   def AbstractMatrix: Rep[AbstractMatrixCompanionAbs]
   implicit def proxyAbstractMatrixCompanion(p: Rep[AbstractMatrixCompanion]): AbstractMatrixCompanion =
     proxyOps[AbstractMatrixCompanion](p)
 
+  abstract class AbsDenseFlatMatrix[T]
+      (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends DenseFlatMatrix[T](rmValues, numColumns) with Def[DenseFlatMatrix[T]] {
+    lazy val selfType = element[DenseFlatMatrix[T]]
+  }
   // elem for concrete class
   class DenseFlatMatrixElem[T](val iso: Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, DenseFlatMatrix[T]]
     with ConcreteElem[DenseFlatMatrixData[T], DenseFlatMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Matrices")
-      module.concreteSClasses.find(_.name == "DenseFlatMatrix").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -100,7 +98,8 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     lazy val eTo = new DenseFlatMatrixElem[T](this)
   }
   // 4) constructor and deconstructor
-  abstract class DenseFlatMatrixCompanionAbs extends CompanionBase[DenseFlatMatrixCompanionAbs] with DenseFlatMatrixCompanion {
+  class DenseFlatMatrixCompanionAbs extends CompanionDef[DenseFlatMatrixCompanionAbs] with DenseFlatMatrixCompanion {
+    def selfType = DenseFlatMatrixCompanionElem
     override def toString = "DenseFlatMatrix"
     def apply[T](p: Rep[DenseFlatMatrixData[T]])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]] =
       isoDenseFlatMatrix(eT).to(p)
@@ -110,7 +109,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   object DenseFlatMatrixMatcher {
     def unapply[T](p: Rep[AbstractMatrix[T]]) = unmkDenseFlatMatrix(p)
   }
-  def DenseFlatMatrix: Rep[DenseFlatMatrixCompanionAbs]
+  lazy val DenseFlatMatrix: Rep[DenseFlatMatrixCompanionAbs] = new DenseFlatMatrixCompanionAbs
   implicit def proxyDenseFlatMatrixCompanion(p: Rep[DenseFlatMatrixCompanionAbs]): DenseFlatMatrixCompanionAbs = {
     proxyOps[DenseFlatMatrixCompanionAbs](p)
   }
@@ -135,15 +134,16 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   def mkDenseFlatMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]]
   def unmkDenseFlatMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[T]], Rep[Int])]
 
+  abstract class AbsCompoundMatrix[T]
+      (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends CompoundMatrix[T](rows, numColumns) with Def[CompoundMatrix[T]] {
+    lazy val selfType = element[CompoundMatrix[T]]
+  }
   // elem for concrete class
   class CompoundMatrixElem[T](val iso: Iso[CompoundMatrixData[T], CompoundMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, CompoundMatrix[T]]
     with ConcreteElem[CompoundMatrixData[T], CompoundMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Matrices")
-      module.concreteSClasses.find(_.name == "CompoundMatrix").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -171,7 +171,8 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     lazy val eTo = new CompoundMatrixElem[T](this)
   }
   // 4) constructor and deconstructor
-  abstract class CompoundMatrixCompanionAbs extends CompanionBase[CompoundMatrixCompanionAbs] with CompoundMatrixCompanion {
+  class CompoundMatrixCompanionAbs extends CompanionDef[CompoundMatrixCompanionAbs] with CompoundMatrixCompanion {
+    def selfType = CompoundMatrixCompanionElem
     override def toString = "CompoundMatrix"
     def apply[T](p: Rep[CompoundMatrixData[T]])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
       isoCompoundMatrix(eT).to(p)
@@ -181,7 +182,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   object CompoundMatrixMatcher {
     def unapply[T](p: Rep[AbstractMatrix[T]]) = unmkCompoundMatrix(p)
   }
-  def CompoundMatrix: Rep[CompoundMatrixCompanionAbs]
+  lazy val CompoundMatrix: Rep[CompoundMatrixCompanionAbs] = new CompoundMatrixCompanionAbs
   implicit def proxyCompoundMatrixCompanion(p: Rep[CompoundMatrixCompanionAbs]): CompoundMatrixCompanionAbs = {
     proxyOps[CompoundMatrixCompanionAbs](p)
   }
@@ -206,15 +207,16 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   def mkCompoundMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]]
   def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[AbstractVector[T]]], Rep[Int])]
 
+  abstract class AbsConstMatrix[T]
+      (item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T])
+    extends ConstMatrix[T](item, numColumns, numRows) with Def[ConstMatrix[T]] {
+    lazy val selfType = element[ConstMatrix[T]]
+  }
   // elem for concrete class
   class ConstMatrixElem[T](val iso: Iso[ConstMatrixData[T], ConstMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, ConstMatrix[T]]
     with ConcreteElem[ConstMatrixData[T], ConstMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Matrices")
-      module.concreteSClasses.find(_.name == "ConstMatrix").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -243,7 +245,8 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     lazy val eTo = new ConstMatrixElem[T](this)
   }
   // 4) constructor and deconstructor
-  abstract class ConstMatrixCompanionAbs extends CompanionBase[ConstMatrixCompanionAbs] with ConstMatrixCompanion {
+  class ConstMatrixCompanionAbs extends CompanionDef[ConstMatrixCompanionAbs] with ConstMatrixCompanion {
+    def selfType = ConstMatrixCompanionElem
     override def toString = "ConstMatrix"
     def apply[T](p: Rep[ConstMatrixData[T]])(implicit eT: Elem[T]): Rep[ConstMatrix[T]] =
       isoConstMatrix(eT).to(p)
@@ -253,7 +256,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   object ConstMatrixMatcher {
     def unapply[T](p: Rep[AbstractMatrix[T]]) = unmkConstMatrix(p)
   }
-  def ConstMatrix: Rep[ConstMatrixCompanionAbs]
+  lazy val ConstMatrix: Rep[ConstMatrixCompanionAbs] = new ConstMatrixCompanionAbs
   implicit def proxyConstMatrixCompanion(p: Rep[ConstMatrixCompanionAbs]): ConstMatrixCompanionAbs = {
     proxyOps[ConstMatrixCompanionAbs](p)
   }
@@ -278,15 +281,16 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   def mkConstMatrix[T](item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]]
   def unmkConstMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[T], Rep[Int], Rep[Int])]
 
+  abstract class AbsDiagonalMatrix[T]
+      (diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T])
+    extends DiagonalMatrix[T](diagonalValues) with Def[DiagonalMatrix[T]] {
+    lazy val selfType = element[DiagonalMatrix[T]]
+  }
   // elem for concrete class
   class DiagonalMatrixElem[T](val iso: Iso[DiagonalMatrixData[T], DiagonalMatrix[T]])(implicit eT: Elem[T])
     extends AbstractMatrixElem[T, DiagonalMatrix[T]]
     with ConcreteElem[DiagonalMatrixData[T], DiagonalMatrix[T]] {
     override lazy val parent: Option[Elem[_]] = Some(abstractMatrixElement(element[T]))
-    override lazy val entityDef = {
-      val module = getModules("Matrices")
-      module.concreteSClasses.find(_.name == "DiagonalMatrix").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map("T" -> Left(eT))
     }
@@ -315,7 +319,8 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     lazy val eTo = new DiagonalMatrixElem[T](this)
   }
   // 4) constructor and deconstructor
-  abstract class DiagonalMatrixCompanionAbs extends CompanionBase[DiagonalMatrixCompanionAbs] with DiagonalMatrixCompanion {
+  class DiagonalMatrixCompanionAbs extends CompanionDef[DiagonalMatrixCompanionAbs] with DiagonalMatrixCompanion {
+    def selfType = DiagonalMatrixCompanionElem
     override def toString = "DiagonalMatrix"
 
     def apply[T](diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]] =
@@ -324,7 +329,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   object DiagonalMatrixMatcher {
     def unapply[T](p: Rep[AbstractMatrix[T]]) = unmkDiagonalMatrix(p)
   }
-  def DiagonalMatrix: Rep[DiagonalMatrixCompanionAbs]
+  lazy val DiagonalMatrix: Rep[DiagonalMatrixCompanionAbs] = new DiagonalMatrixCompanionAbs
   implicit def proxyDiagonalMatrixCompanion(p: Rep[DiagonalMatrixCompanionAbs]): DiagonalMatrixCompanionAbs = {
     proxyOps[DiagonalMatrixCompanionAbs](p)
   }
@@ -349,30 +354,23 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
   def mkDiagonalMatrix[T](diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]]
   def unmkDiagonalMatrix[T](p: Rep[AbstractMatrix[T]]): Option[(Rep[Collection[T]])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Matrices_Module.dump))
+  registerModule(Matrices_Module)
 }
 
 // Seq -----------------------------------
 trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
   self: ScalanCommunityDslSeq =>
-  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with UserTypeSeq[AbstractMatrixCompanionAbs] {
-    lazy val selfType = element[AbstractMatrixCompanionAbs]
+  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs {
   }
 
   case class SeqDenseFlatMatrix[T]
-      (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
-      (implicit eT: Elem[T])
-    extends DenseFlatMatrix[T](rmValues, numColumns)
-        with UserTypeSeq[DenseFlatMatrix[T]] {
-    lazy val selfType = element[DenseFlatMatrix[T]]
-  }
-  lazy val DenseFlatMatrix = new DenseFlatMatrixCompanionAbs with UserTypeSeq[DenseFlatMatrixCompanionAbs] {
-    lazy val selfType = element[DenseFlatMatrixCompanionAbs]
+      (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends AbsDenseFlatMatrix[T](rmValues, numColumns) {
   }
 
   def mkDenseFlatMatrix[T]
-      (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]] =
-      new SeqDenseFlatMatrix[T](rmValues, numColumns)
+    (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]] =
+    new SeqDenseFlatMatrix[T](rmValues, numColumns)
   def unmkDenseFlatMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: DenseFlatMatrix[T] @unchecked =>
       Some((p.rmValues, p.numColumns))
@@ -380,19 +378,13 @@ trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
   }
 
   case class SeqCompoundMatrix[T]
-      (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])
-      (implicit eT: Elem[T])
-    extends CompoundMatrix[T](rows, numColumns)
-        with UserTypeSeq[CompoundMatrix[T]] {
-    lazy val selfType = element[CompoundMatrix[T]]
-  }
-  lazy val CompoundMatrix = new CompoundMatrixCompanionAbs with UserTypeSeq[CompoundMatrixCompanionAbs] {
-    lazy val selfType = element[CompoundMatrixCompanionAbs]
+      (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends AbsCompoundMatrix[T](rows, numColumns) {
   }
 
   def mkCompoundMatrix[T]
-      (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
-      new SeqCompoundMatrix[T](rows, numColumns)
+    (rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]] =
+    new SeqCompoundMatrix[T](rows, numColumns)
   def unmkCompoundMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: CompoundMatrix[T] @unchecked =>
       Some((p.rows, p.numColumns))
@@ -400,19 +392,13 @@ trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
   }
 
   case class SeqConstMatrix[T]
-      (override val item: Rep[T], override val numColumns: Rep[Int], override val numRows: Rep[Int])
-      (implicit eT: Elem[T])
-    extends ConstMatrix[T](item, numColumns, numRows)
-        with UserTypeSeq[ConstMatrix[T]] {
-    lazy val selfType = element[ConstMatrix[T]]
-  }
-  lazy val ConstMatrix = new ConstMatrixCompanionAbs with UserTypeSeq[ConstMatrixCompanionAbs] {
-    lazy val selfType = element[ConstMatrixCompanionAbs]
+      (override val item: Rep[T], override val numColumns: Rep[Int], override val numRows: Rep[Int])(implicit eT: Elem[T])
+    extends AbsConstMatrix[T](item, numColumns, numRows) {
   }
 
   def mkConstMatrix[T]
-      (item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]] =
-      new SeqConstMatrix[T](item, numColumns, numRows)
+    (item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]] =
+    new SeqConstMatrix[T](item, numColumns, numRows)
   def unmkConstMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: ConstMatrix[T] @unchecked =>
       Some((p.item, p.numColumns, p.numRows))
@@ -420,19 +406,13 @@ trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
   }
 
   case class SeqDiagonalMatrix[T]
-      (override val diagonalValues: Rep[Collection[T]])
-      (implicit eT: Elem[T])
-    extends DiagonalMatrix[T](diagonalValues)
-        with UserTypeSeq[DiagonalMatrix[T]] {
-    lazy val selfType = element[DiagonalMatrix[T]]
-  }
-  lazy val DiagonalMatrix = new DiagonalMatrixCompanionAbs with UserTypeSeq[DiagonalMatrixCompanionAbs] {
-    lazy val selfType = element[DiagonalMatrixCompanionAbs]
+      (override val diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T])
+    extends AbsDiagonalMatrix[T](diagonalValues) {
   }
 
   def mkDiagonalMatrix[T]
-      (diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]] =
-      new SeqDiagonalMatrix[T](diagonalValues)
+    (diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]] =
+    new SeqDiagonalMatrix[T](diagonalValues)
   def unmkDiagonalMatrix[T](p: Rep[AbstractMatrix[T]]) = p match {
     case p: DiagonalMatrix[T] @unchecked =>
       Some((p.diagonalValues))
@@ -443,23 +423,12 @@ trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   self: ScalanCommunityDslExp =>
-  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs with UserTypeDef[AbstractMatrixCompanionAbs] {
-    lazy val selfType = element[AbstractMatrixCompanionAbs]
-    override def mirror(t: Transformer) = this
+  lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs {
   }
 
   case class ExpDenseFlatMatrix[T]
-      (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])
-      (implicit eT: Elem[T])
-    extends DenseFlatMatrix[T](rmValues, numColumns) with UserTypeDef[DenseFlatMatrix[T]] {
-    lazy val selfType = element[DenseFlatMatrix[T]]
-    override def mirror(t: Transformer) = ExpDenseFlatMatrix[T](t(rmValues), t(numColumns))
-  }
-
-  lazy val DenseFlatMatrix: Rep[DenseFlatMatrixCompanionAbs] = new DenseFlatMatrixCompanionAbs with UserTypeDef[DenseFlatMatrixCompanionAbs] {
-    lazy val selfType = element[DenseFlatMatrixCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val rmValues: Rep[Collection[T]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends AbsDenseFlatMatrix[T](rmValues, numColumns)
 
   object DenseFlatMatrixMethods {
     object items {
@@ -752,17 +721,8 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   }
 
   case class ExpCompoundMatrix[T]
-      (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])
-      (implicit eT: Elem[T])
-    extends CompoundMatrix[T](rows, numColumns) with UserTypeDef[CompoundMatrix[T]] {
-    lazy val selfType = element[CompoundMatrix[T]]
-    override def mirror(t: Transformer) = ExpCompoundMatrix[T](t(rows), t(numColumns))
-  }
-
-  lazy val CompoundMatrix: Rep[CompoundMatrixCompanionAbs] = new CompoundMatrixCompanionAbs with UserTypeDef[CompoundMatrixCompanionAbs] {
-    lazy val selfType = element[CompoundMatrixCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val rows: Rep[Collection[AbstractVector[T]]], override val numColumns: Rep[Int])(implicit eT: Elem[T])
+    extends AbsCompoundMatrix[T](rows, numColumns)
 
   object CompoundMatrixMethods {
     object companion {
@@ -1007,17 +967,8 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   }
 
   case class ExpConstMatrix[T]
-      (override val item: Rep[T], override val numColumns: Rep[Int], override val numRows: Rep[Int])
-      (implicit eT: Elem[T])
-    extends ConstMatrix[T](item, numColumns, numRows) with UserTypeDef[ConstMatrix[T]] {
-    lazy val selfType = element[ConstMatrix[T]]
-    override def mirror(t: Transformer) = ExpConstMatrix[T](t(item), t(numColumns), t(numRows))
-  }
-
-  lazy val ConstMatrix: Rep[ConstMatrixCompanionAbs] = new ConstMatrixCompanionAbs with UserTypeDef[ConstMatrixCompanionAbs] {
-    lazy val selfType = element[ConstMatrixCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val item: Rep[T], override val numColumns: Rep[Int], override val numRows: Rep[Int])(implicit eT: Elem[T])
+    extends AbsConstMatrix[T](item, numColumns, numRows)
 
   object ConstMatrixMethods {
     object zeroValue {
@@ -1334,17 +1285,8 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   }
 
   case class ExpDiagonalMatrix[T]
-      (override val diagonalValues: Rep[Collection[T]])
-      (implicit eT: Elem[T])
-    extends DiagonalMatrix[T](diagonalValues) with UserTypeDef[DiagonalMatrix[T]] {
-    lazy val selfType = element[DiagonalMatrix[T]]
-    override def mirror(t: Transformer) = ExpDiagonalMatrix[T](t(diagonalValues))
-  }
-
-  lazy val DiagonalMatrix: Rep[DiagonalMatrixCompanionAbs] = new DiagonalMatrixCompanionAbs with UserTypeDef[DiagonalMatrixCompanionAbs] {
-    lazy val selfType = element[DiagonalMatrixCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+      (override val diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T])
+    extends AbsDiagonalMatrix[T](diagonalValues)
 
   object DiagonalMatrixMethods {
     object numColumns {
@@ -1953,10 +1895,8 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
   }
 }
 
-object Matrices_Module {
-  val packageName = "scalan.linalgebra"
-  val name = "Matrices"
-  val dump = "H4sIAAAAAAAAAM1XTWwbRRSe3cRxbEdJG5U2lYgIwYBANA4g1EMOVeokKMj5UTZUyFRI4/XYnTI7u9kZB5tDDxzhhrgi1HtvXJCQekFIiAMnBEiII6fSClVATyDezP5417GTNpioPox2d2bez/d9b/zm1l2UET56TtiYYb7gEIkXLP28LGTRWuWSys6GW28xskIaH5z9wt7gl4WJpqpo7BoWK4JVUS54WG178bNF9iooh7lNhHR9IdHTFe2hZLuMEVtSl5eo47QkrjFSqlAhlypotObWO3voBjIq6JTtctsnklhlhoUgIvw+TlRENH7P6ffOltf1wUsqi1Iii10fUwnhg49Twfod4lkd7vKOI9FkGNqWp8KCNVnqeK4vIxdZMHfNrUevoxzDBzRduY73cQlcNEuW9Clvws6Ch+13cZNswhK1fBQCFoQ1djuefh+poLwgewDQuuMx/aXtIYSAgVd0EAtdfBZifBYUPkWL+BQz+j5Wk9u+2+6g4GeMINT2wMRLR5iILJBVXi9+eNV++4FVcEy1ua1CyeoMx8DQUwPUoKkAHL/Z+Vjcf/3mRRPlqyhPxXJNSB/bMkl5iFYBc+5KHXMMIPabwNb8ILa0l2VY0yOJnO06HuZgKYRyAnhi1KZSLVbfJkJ2BkCflR6Jlhptz4jznRuQr9ZNGTO2fef8hWd/W33LRGbaRQ5MWiB8PzIKcorQ2MAgi3boRI1TEhm7Gmk15NrdMXtIEDEcz9+5V/96EV01YxBDnw/HG5jIiJ9+KHz/wiUTjVe1ytcYblYBR7HKiLPll10uq2jc3Sd+MJPdx0w99eUxWycN3GIyRDcJywjAItHcwHr0iMJsSWvfiAAoBPLddDkprm0X/7K+/eSWUqePJoKZoED/oRf//nmyIbVwJRr3nSuYtYiIIB6B2k6Dni/HFXEkG3pqJg5LDbNggbccMNJyeD83PnpmkIA8su1TBw6sffLaV1+++fvtzYzW0HSInQ49OD5C6LowquyMRfC0zmU/weQDVCzXIafn79N3bn4ktTSMdvp02qpdh+SX9L4nD1FJdEr+WV00/zj/42cmyoEYalQ62CsuPmRt/4/1itLkTZbDfwit7pfTk1MrhAsC0g2rMMFztORcuk7LyWATksh2dQB8zPTYTe2a7Z6iTyTCmTF61GSS3SiIUVV4R4qyfz6zsfxmB8sP8Du7UznD7l66baLMGyjTgHIWFZSpuS1ej4iBP1tJ2vJy9M1IEwNEYB87MRH6N4e6OfdErRcWjB6+jnUuHgCztzRHffe949R+HM4VmA01fVQ4xzoe1HChf2KLenz1UYQ9qRSnaBqurs+lzZ6UrPtkM5vYtv54KY3KMKm+SjsY17F10n93Fnbv9BX7cCVWgEkx5HPzTMLmSYmrN4/HV1mTdYqbLsdsmJ3MMA6blTCuIR82abMndtgczObRJJFIfawvmLkdQhtU3bf+u2ySwB3CX0H1S2vYoazTS17aaX9tpnk5hMwAkIPXm+OiqMZfumvChePaqOoy0emwp2EUGGuSmo9DFHw0P6DdscL2EXrYGw8+3Xzxu89/1c12XjWicKvg8ZU+2WSnUZsO7EHuTotT2YGreiJ2EJvqUXXc/wJ5WQMkOhEAAA=="
+object Matrices_Module extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAAM1XS2wbRRieXcdxbEdJG5U2lYgIwYBANA4g1EMOVeokKMh5KBsqZCqk8XriTpmd3eyMg82hB45wQ1wR6r03LkhIvSAkxIETAiTEkVNphSqgJxD/zD6869hJG0xUH0a78/gf3/f9439v3UVZ4aPnhI0Z5vMOkXje0s9LQpasFS6p7Ky7jRYjy2T3g7Nf2Ov8sjDRZA2NXsNiWbAaygcPK20vfrbIXhXlMbeJkK4vJHq6qj2UbZcxYkvq8jJ1nJbEdUbKVSrkYhWN1N1GZw/dQEYVnbJdbvtEEqvCsBBEhPNjREVE4/e8fu9sel0fvKyyKCey2PExlRA++DgV7N8mntXhLu84Ek2EoW16KizYk6OO5/oycpEDc9fcRvQ6wjFMoKnqdbyPy+CiWbakT3kTThY9bL+Lm2QDtqjtIxCwIGx3p+Pp90wVFQTZA4DWHI/pmbaHEAIGXtFBzHfxmY/xmVf4lCziU8zo+1gtbvluu4OCn5FBqO2BiZeOMBFZICu8Ufrwqv32A6vomOpwW4WS0xmOgqGnBqhBUwE4frP9sbj/+s2LJirUUIGKpbqQPrZlkvIQrSLm3JU65hhA7DeBrblBbGkvS7CnRxJ523U8zMFSCOU48MSoTaXarObGQ3YGQJ+THom2Gm3PiPOdHZCv1k0FM7Z15/yFZ39bectEZtpFHkxaIHw/MgpyitBYxyCLduhEjZMSGTsaaTXk290xd0gQMRzP37nX+HoBXTVjEEOfD8cbmMiKn34ofv/CJRON1bTKVxlu1gBHscKIs+lXXC5raMzdJ36wktvHTD315THXILu4xWSIbhKWDMAi0ezAevSIwmxRa9+IACgG8t1wOSmtbpX+sr795JZSp4/Gg5WgQP+hF//+eWJXauFKNOY7VzBrERFBnIHaToNeqMQVcSQbemk6DksNM2CBtxww0nJ4Pzc+emaQgDyy5VMHLqx98tpXX775++2NrNbQVIidDj24PkLoujCq7IwF8LTGZT/BFAJULNchp+fu03dufiS1NIx2+nbarF+H5Bf1uScPUUl0S/5ZWzD/OP/jZybKgxjqVDrYKy08ZG3/j/WK0uRNVMJ/CK3ul9OLk8uECwLSDaswwXO05Vy6TivJYBOSyHV1AHxM99hNnZrp3qJPJMKZNnrUZJKdKIgRVXhHirJ/PjOx/GYGyw/wO7tdPcPuXrptouwbKLsL5SyqKFt3W7wREQN/tpK05eVozkgTA0RgHzsxEfo3i7o590StNxaNHr6OdS8eALO3NEd8973j1H4czhVYDTV9VDjHuh7UcKF/Ygt6fPVRhD2hFKdoGq6uz6XNnpSs+2Qzkzi29ngpjcowqb5KOxjXsXXS/3QOTm/3FftwJVaERTHke/NMwuZJias3j8dXWRMNipsux2yYncwwLpvlMK4hXzZpsyd22RzM5tEkkUh9tC+YGeie/rtgkpAdwlxRdUqr2KGs00tb2ml/VaYZOYTGAIqDHzbHxU+Nv3T3hBvHtFHVX6LTYTfDKHDVJHUfhyj4aG5Ao2OFjSPgf+PBpxsvfvf5r7rNLqgWFL4nePwxn2yv06hNBfYgd6fFqezAR3oidpCZ6k513P8CAWcH/zQRAAA="
 }
 }
 

@@ -19,10 +19,6 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   class SegmentElem[To <: Segment]
     extends EntityElem[To] {
     lazy val parent: Option[Elem[_]] = None
-    lazy val entityDef: STraitOrClassDef = {
-      val module = getModules("Segments")
-      module.entities.find(_.name == "Segment").get
-    }
     lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -30,7 +26,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     override lazy val tag = {
       weakTypeTag[Segment].asInstanceOf[WeakTypeTag[To]]
     }
-    override def convert(x: Rep[Reifiable[_]]) = {
+    override def convert(x: Rep[Def[_]]) = {
       implicit val eTo: Elem[To] = this
       val conv = fun {x: Rep[Segment] => convertSegment(x) }
       tryConvert(element[Segment], this, x, conv)
@@ -54,22 +50,24 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     protected def getDefaultRep = Segment
   }
 
-  abstract class SegmentCompanionAbs extends CompanionBase[SegmentCompanionAbs] with SegmentCompanion {
+  abstract class SegmentCompanionAbs extends CompanionDef[SegmentCompanionAbs] with SegmentCompanion {
+    def selfType = SegmentCompanionElem
     override def toString = "Segment"
   }
   def Segment: Rep[SegmentCompanionAbs]
   implicit def proxySegmentCompanion(p: Rep[SegmentCompanion]): SegmentCompanion =
     proxyOps[SegmentCompanion](p)
 
+  abstract class AbsInterval
+      (start: Rep[Int], end: Rep[Int])
+    extends Interval(start, end) with Def[Interval] {
+    lazy val selfType = element[Interval]
+  }
   // elem for concrete class
   class IntervalElem(val iso: Iso[IntervalData, Interval])
     extends SegmentElem[Interval]
     with ConcreteElem[IntervalData, Interval] {
     override lazy val parent: Option[Elem[_]] = Some(segmentElement)
-    override lazy val entityDef = {
-      val module = getModules("Segments")
-      module.concreteSClasses.find(_.name == "Interval").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -96,7 +94,8 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     lazy val eTo = new IntervalElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class IntervalCompanionAbs extends CompanionBase[IntervalCompanionAbs] with IntervalCompanion {
+  class IntervalCompanionAbs extends CompanionDef[IntervalCompanionAbs] with IntervalCompanion {
+    def selfType = IntervalCompanionElem
     override def toString = "Interval"
     def apply(p: Rep[IntervalData]): Rep[Interval] =
       isoInterval.to(p)
@@ -106,7 +105,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   object IntervalMatcher {
     def unapply(p: Rep[Segment]) = unmkInterval(p)
   }
-  def Interval: Rep[IntervalCompanionAbs]
+  lazy val Interval: Rep[IntervalCompanionAbs] = new IntervalCompanionAbs
   implicit def proxyIntervalCompanion(p: Rep[IntervalCompanionAbs]): IntervalCompanionAbs = {
     proxyOps[IntervalCompanionAbs](p)
   }
@@ -131,15 +130,16 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   def mkInterval(start: Rep[Int], end: Rep[Int]): Rep[Interval]
   def unmkInterval(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
 
+  abstract class AbsSlice
+      (start: Rep[Int], length: Rep[Int])
+    extends Slice(start, length) with Def[Slice] {
+    lazy val selfType = element[Slice]
+  }
   // elem for concrete class
   class SliceElem(val iso: Iso[SliceData, Slice])
     extends SegmentElem[Slice]
     with ConcreteElem[SliceData, Slice] {
     override lazy val parent: Option[Elem[_]] = Some(segmentElement)
-    override lazy val entityDef = {
-      val module = getModules("Segments")
-      module.concreteSClasses.find(_.name == "Slice").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -166,7 +166,8 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     lazy val eTo = new SliceElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class SliceCompanionAbs extends CompanionBase[SliceCompanionAbs] with SliceCompanion {
+  class SliceCompanionAbs extends CompanionDef[SliceCompanionAbs] with SliceCompanion {
+    def selfType = SliceCompanionElem
     override def toString = "Slice"
     def apply(p: Rep[SliceData]): Rep[Slice] =
       isoSlice.to(p)
@@ -176,7 +177,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   object SliceMatcher {
     def unapply(p: Rep[Segment]) = unmkSlice(p)
   }
-  def Slice: Rep[SliceCompanionAbs]
+  lazy val Slice: Rep[SliceCompanionAbs] = new SliceCompanionAbs
   implicit def proxySliceCompanion(p: Rep[SliceCompanionAbs]): SliceCompanionAbs = {
     proxyOps[SliceCompanionAbs](p)
   }
@@ -201,15 +202,16 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   def mkSlice(start: Rep[Int], length: Rep[Int]): Rep[Slice]
   def unmkSlice(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
 
+  abstract class AbsCentered
+      (center: Rep[Int], radius: Rep[Int])
+    extends Centered(center, radius) with Def[Centered] {
+    lazy val selfType = element[Centered]
+  }
   // elem for concrete class
   class CenteredElem(val iso: Iso[CenteredData, Centered])
     extends SegmentElem[Centered]
     with ConcreteElem[CenteredData, Centered] {
     override lazy val parent: Option[Elem[_]] = Some(segmentElement)
-    override lazy val entityDef = {
-      val module = getModules("Segments")
-      module.concreteSClasses.find(_.name == "Centered").get
-    }
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
       Map()
     }
@@ -237,7 +239,8 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     lazy val eTo = new CenteredElem(this)
   }
   // 4) constructor and deconstructor
-  abstract class CenteredCompanionAbs extends CompanionBase[CenteredCompanionAbs] with CenteredCompanion {
+  class CenteredCompanionAbs extends CompanionDef[CenteredCompanionAbs] with CenteredCompanion {
+    def selfType = CenteredCompanionElem
     override def toString = "Centered"
     def apply(p: Rep[CenteredData]): Rep[Centered] =
       isoCentered.to(p)
@@ -247,7 +250,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   object CenteredMatcher {
     def unapply(p: Rep[Segment]) = unmkCentered(p)
   }
-  def Centered: Rep[CenteredCompanionAbs]
+  lazy val Centered: Rep[CenteredCompanionAbs] = new CenteredCompanionAbs
   implicit def proxyCenteredCompanion(p: Rep[CenteredCompanionAbs]): CenteredCompanionAbs = {
     proxyOps[CenteredCompanionAbs](p)
   }
@@ -272,30 +275,23 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
   def mkCentered(center: Rep[Int], radius: Rep[Int]): Rep[Centered]
   def unmkCentered(p: Rep[Segment]): Option[(Rep[Int], Rep[Int])]
 
-  registerModule(scalan.meta.ScalanCodegen.loadModule(Segments_Module.dump))
+  registerModule(Segments_Module)
 }
 
 // Seq -----------------------------------
 trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
   self: SegmentsDslSeq =>
-  lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeSeq[SegmentCompanionAbs] {
-    lazy val selfType = element[SegmentCompanionAbs]
+  lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }
 
   case class SeqInterval
       (override val start: Rep[Int], override val end: Rep[Int])
-
-    extends Interval(start, end)
-        with UserTypeSeq[Interval] {
-    lazy val selfType = element[Interval]
-  }
-  lazy val Interval = new IntervalCompanionAbs with UserTypeSeq[IntervalCompanionAbs] {
-    lazy val selfType = element[IntervalCompanionAbs]
+    extends AbsInterval(start, end) {
   }
 
   def mkInterval
-      (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
-      new SeqInterval(start, end)
+    (start: Rep[Int], end: Rep[Int]): Rep[Interval] =
+    new SeqInterval(start, end)
   def unmkInterval(p: Rep[Segment]) = p match {
     case p: Interval @unchecked =>
       Some((p.start, p.end))
@@ -304,18 +300,12 @@ trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
 
   case class SeqSlice
       (override val start: Rep[Int], override val length: Rep[Int])
-
-    extends Slice(start, length)
-        with UserTypeSeq[Slice] {
-    lazy val selfType = element[Slice]
-  }
-  lazy val Slice = new SliceCompanionAbs with UserTypeSeq[SliceCompanionAbs] {
-    lazy val selfType = element[SliceCompanionAbs]
+    extends AbsSlice(start, length) {
   }
 
   def mkSlice
-      (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
-      new SeqSlice(start, length)
+    (start: Rep[Int], length: Rep[Int]): Rep[Slice] =
+    new SeqSlice(start, length)
   def unmkSlice(p: Rep[Segment]) = p match {
     case p: Slice @unchecked =>
       Some((p.start, p.length))
@@ -324,18 +314,12 @@ trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
 
   case class SeqCentered
       (override val center: Rep[Int], override val radius: Rep[Int])
-
-    extends Centered(center, radius)
-        with UserTypeSeq[Centered] {
-    lazy val selfType = element[Centered]
-  }
-  lazy val Centered = new CenteredCompanionAbs with UserTypeSeq[CenteredCompanionAbs] {
-    lazy val selfType = element[CenteredCompanionAbs]
+    extends AbsCentered(center, radius) {
   }
 
   def mkCentered
-      (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
-      new SeqCentered(center, radius)
+    (center: Rep[Int], radius: Rep[Int]): Rep[Centered] =
+    new SeqCentered(center, radius)
   def unmkCentered(p: Rep[Segment]) = p match {
     case p: Centered @unchecked =>
       Some((p.center, p.radius))
@@ -346,23 +330,12 @@ trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
 // Exp -----------------------------------
 trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
   self: SegmentsDslExp =>
-  lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs with UserTypeDef[SegmentCompanionAbs] {
-    lazy val selfType = element[SegmentCompanionAbs]
-    override def mirror(t: Transformer) = this
+  lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }
 
   case class ExpInterval
       (override val start: Rep[Int], override val end: Rep[Int])
-
-    extends Interval(start, end) with UserTypeDef[Interval] {
-    lazy val selfType = element[Interval]
-    override def mirror(t: Transformer) = ExpInterval(t(start), t(end))
-  }
-
-  lazy val Interval: Rep[IntervalCompanionAbs] = new IntervalCompanionAbs with UserTypeDef[IntervalCompanionAbs] {
-    lazy val selfType = element[IntervalCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+    extends AbsInterval(start, end)
 
   object IntervalMethods {
     object length {
@@ -417,16 +390,7 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
 
   case class ExpSlice
       (override val start: Rep[Int], override val length: Rep[Int])
-
-    extends Slice(start, length) with UserTypeDef[Slice] {
-    lazy val selfType = element[Slice]
-    override def mirror(t: Transformer) = ExpSlice(t(start), t(length))
-  }
-
-  lazy val Slice: Rep[SliceCompanionAbs] = new SliceCompanionAbs with UserTypeDef[SliceCompanionAbs] {
-    lazy val selfType = element[SliceCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+    extends AbsSlice(start, length)
 
   object SliceMethods {
     object end {
@@ -481,16 +445,7 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
 
   case class ExpCentered
       (override val center: Rep[Int], override val radius: Rep[Int])
-
-    extends Centered(center, radius) with UserTypeDef[Centered] {
-    lazy val selfType = element[Centered]
-    override def mirror(t: Transformer) = ExpCentered(t(center), t(radius))
-  }
-
-  lazy val Centered: Rep[CenteredCompanionAbs] = new CenteredCompanionAbs with UserTypeDef[CenteredCompanionAbs] {
-    lazy val selfType = element[CenteredCompanionAbs]
-    override def mirror(t: Transformer) = this
-  }
+    extends AbsCentered(center, radius)
 
   object CenteredMethods {
     object start {
@@ -633,10 +588,8 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
   }
 }
 
-object Segments_Module {
-  val packageName = "scalan.common"
-  val name = "Segments"
-  val dump = "H4sIAAAAAAAAALVWQWwbRRQdbxI7a4c0idRKyaUhGFoK2BES6iGHKrguquQmUbYg5FZI492xM2V2drMzjmwOPXCEG+q1qnrvjQsSEheEhDhwQoDEmVMBoQraE1X/zM6u12m2sVDrw2h25u//77/3/1/f+xPNiAi9JlzMMK/5ROKao/ebQladJpdUDq8EXp+Ri6T76amv3Cv8XWGhE21U3MPiomBtZMeb5iBM9w7ZbyEbc5cIGURCopdbOkLdDRgjrqQBr1Pf70vcYaTeokJutNB0J/CG++gmKrTQghtwNyKSOA2GhSDCnM8ShYimz7Z+Hm6Hoxi8rrKoZ7K4GmEqAT7EWIjtd0noDHnAh75E8wbadqhggU2J+mEQySRECdztBV7yOM0xHKCl1g18gOsQold3ZER5D96shNj9GPfIFpgo82kALAjrXh2G+nmqhcqC7ANBl/2Q6ZNBiBACBd7WIGojfmopPzXFT9UhEcWMfoLV5U4UDIYo/hWmEBqE4OLNY1wkHkiTe9XPrrvXHjkV31IvDxSUks6wCI5O51SDlgJ4/H73C/HgvbvnLVRuozIVmx0hI+zKrOSGrQrmPJAac0ogjnqg1lqeWjrKJtgcKgnbDfwQc/BkqJwDnRh1qVTG6mzOqJNDfUmGJDEtDMJCmu9qTr66bhqYsZ37y2+9+kfzQwtZ4yFscOlA4UeJU4lKDun5UGWaUrXYht38OGnGZ+7/5X23jq5bKU/G7WTSgIsZ8evPlZ9ev2Ch2bYu5EsM99pAlWgy4m9HjYDLNpoNDkgU35QOMFO7I6UqeaSL+0waArOZT0HmEq3mtlxIFC0burwLCQGVuEK3Ak6ql3aqD50fbt1TBRihufgm7sHH9Px/v813pa5NCQNKYtOOJySagt5N6XglT7mQ7ETUh0lxQN759uv3//5ma0aLt2Qy+gCzPon71iQ0Sk7FLKxDpMuxivZAxzuZZqKWFbgn3HsalVpWR7qP1C/HKTqBTxbXHtCP7n4utc6Fwfg02e7cgPbd0O8tP0PyZKr92163/ln+5Y6FbFC2Q6WPw+r6hL34AvsLpVyNlhWgdhFoJRGUXSMbb2U0gpb0VqLZxPDQfSXpXMN9bsdpZxnbpxTMq6yMhke/WGSE9+TexOqr9axe38ijZd4BrslxnMxoqxdGSNElivP/w0iEPdoXz5ORxYYGQ7xjCyUxHN1noBZNlHGO7F1Cu1R9GyfizsCeGPuCcXME9EPfiJVDka6NH6r0jDV8NF8yswBa1TddfBZGxFrOiHBMg8KUuPno9ta5H7/8XU/Bsmp1GMI8/ZOTnX7jhFSS6PCvJQNVomnV/hrsE5NwAOFFCgAA"
+object Segments_Module extends scalan.ModuleInfo {
+  val dump = "H4sIAAAAAAAAALVWTWwbRRQerxM7tkOaRAIpuRCCoYW2doSEesgBBddFldwk6haE3AppvDtxpszObmbGkc2hB45wQ1wR6r03LkhIXBAS4sAJARJnTgWEKmhPoL6ZnV2v0yyxqtaH0ezM2/fzfe976zt/oFkp0MvSwwzzRkAUbrhmvyVV3W1zRdXoSugPGLlI9j587kvvCn9TOuhUF5X2sbwoWRdV4k17GKV7lxx0UAVzj0gVCqnQCx0ToemFjBFP0ZA3aRAMFO4x0uxQqTY7aKYX+qMDdAsVOmjRC7kniCJui2EpibTnc0RnRNPninke7UTjGLypq2hmqrgmMFWQPsRYjO2vksgd8ZCPAoUWbGo7kU4LbMo0iEKhkhBlcLcf+snjDMdwgJY7N/EhbkKIftNVgvI+vFmLsPc+7pNtMNHmM5CwJGzv2igyz8UOqkpyAABdDiJmToYRQggYeM0k0Rjj00jxaWh86i4RFDP6AdaXuyIcjlD8KxQRGkbg4twJLhIPpM39+kc3vOsP3Frg6JeHOpWyqbAEjp7P6QZDBeD43dVP5L23bl9wULWLqlRu9aQS2FNZyi1aNcx5qEzOKYBY9IGt9Ty2TJQtsDnSEhUvDCLMwZOFch54YtSjShvrs3nLTg70ZRWRxLQwjAppvWs59Zq+aWHGdu+unH/p9/a7DnImQ1TApQuNLxKnCpVd0g+gywykeqlYdPPjpBWfvvun/+0GuuGkOFm301EDLmblLz/VfnzlDQfNdU0jX2K43wWoZJuRYEe0Qq66aC48JCK+KR9ipnfHUlX2yR4eMGUBzFZehMoVWsuVXEQ0LJumvQsJALW4Q7dDTuqXduv33e8/vaMbUKD5+CbW4H/0wr+/Luwp05sKBpTCVo6nFCqCdlM4XsxjLiK7ggYwKQ7J69989fZfX2/PGvKWbUXvYDYgsW5tQePidMzCBkS6HLNYGZp4z6aV6GUV7gn3H81KL2tj3sfsV+MS3TAgS+v36Hu3P1aG58Jwcprs9G6CfDfNeyv/Q3ky1f7pbjh/r/z8uYMqwGyPqgBH9Y0ptfgU9YVSrMbLKkC7BLASAW3XysZbHY+gZbNVaC4xPHJfS5Rrsc9VnHGWsX2EwbzOynB4/IslRnhf7U/Nvl7PmPVsHiwLLmBNTsJk1lg9NUBKHtGYPw4iAvt0IJ8kIkstkwzxT2yUxHB8n0m1ZKNMYlQE5UyFmk146qwXrZtjkj7ydVg9Eun65KEuzFrD5/IZOwVApIHV7xkYDus5w8G10oQqbz34bPvVH774zcy/qhY5jF+e/r3Jzr1JQGpJdPi/kklVoRktfJPsQ7OM1Ys/CgAA"
 }
 }
 

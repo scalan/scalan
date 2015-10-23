@@ -6,7 +6,7 @@ import scala.reflect.runtime.universe._
 trait Coproducts  { self: MonadsDsl =>
 
   type RCoproduct[F[_],G[_],A] = Rep[Coproduct[F,G,A]]
-  sealed trait Coproduct[F[_], G[_], A] extends Reifiable[Coproduct[F,G,A]] {
+  sealed trait Coproduct[F[_], G[_], A] extends Def[Coproduct[F,G,A]] {
     implicit def cF: Cont[F]
     implicit def cG: Cont[G]
     implicit def eA: Elem[A]
