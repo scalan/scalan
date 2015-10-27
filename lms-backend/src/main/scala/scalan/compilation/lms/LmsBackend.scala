@@ -132,6 +132,10 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
     buf
   }
 
+  def emptyMap[K: Manifest, V: Manifest](): Exp[HashMap[K, V]] = {
+    HashMap[K, V]()
+  }
+
   def arrayBufferAppendArray[T: Manifest](buf: Exp[mutable.ArrayBuilder[T]], a: Exp[Array[T]]): Exp[mutable.ArrayBuilder[T]] = {
     for (x <- a) {
       buf += x

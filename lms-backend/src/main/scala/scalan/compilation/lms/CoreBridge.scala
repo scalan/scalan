@@ -26,7 +26,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
     case _: ArrayBufferEmpty[_] => "arraybuilder_make"
     case _: MakeArrayBuffer[_] => "arraybuilder_make"
     case _: ArrayBufferToArray[_] => "arraybuilder_result"
-    case _: MakeMap[_, _] => "emptyMap"
+    case _: MakeMap[_, _] => "hashmap_new"
     case _: ListToArray[_] => "list_toarray"
     case _: EmptyMap[_, _] => "hashmap_new"
     case _: AppendMultiMap[_, _] => "multiMap_append"
@@ -84,7 +84,10 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
     case map@MakeMap(_) =>
       val mapElem = map.selfType.asInstanceOf[MMapElem[_, _]]
       List(mapElem.eKey, mapElem.eValue)
-    case _ => super.extractParams(d, fieldMirrors)
+    case ab@MakeArrayBuffer(_) =>
+      List(ab.selfType.eItem)
+    case _ =>
+      super.extractParams(d, fieldMirrors)
   }
 
   override protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
@@ -114,6 +117,7 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       val mB = elemToManifest(lam.eB).asInstanceOf[Manifest[b]]
       val f = m.mirrorLambda[a, b](lam)
       val fun = lms.fun(f)(mA, mB)
+
       m.addFuncAndSym(sym, f, fun)
 
     case IsLeft(s) =>

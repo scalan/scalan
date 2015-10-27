@@ -77,7 +77,7 @@ trait MapsSeq extends Maps { self: ScalanSeq =>
         if (right.contains(k)) res.update(k, (v, right(k)))
       }
       res
-    }      
+    }
     def reduce(that: MM[K, V], f:Rep[((V,V))=>V]): MM[K, V] = {
       val res = Map.empty[K, V]
       val left = impl
@@ -89,7 +89,7 @@ trait MapsSeq extends Maps { self: ScalanSeq =>
         if (!left.contains(k)) res.update(k, v)
       }
       res
-    }      
+    }
     def contains(key: Rep[K]): Rep[Boolean] = impl.contains(key)
     def apply(key: Rep[K]): Rep[V] = impl(key)
     def applyIfBy[T](key: Rep[K], exists: Rep[V => T], otherwise: Rep[Unit => T]): Rep[T] = {
@@ -156,7 +156,7 @@ trait MapsExp extends Maps { self: ScalanExp =>
   def makeMap[K: Elem, V: Elem](name: Rep[String]): MM[K, V] = MakeMap[K,V](name)
 
 
-  case class AppendMultiMap[K, V](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V])(implicit eK: Elem[K], eV: Elem[V])
+  case class AppendMultiMap[K, V](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V])(implicit eK: Elem[K], val eV: Elem[V])
     extends MMapDef[K,ArrayBuffer[V]]
 
   case class EmptyMap[K, V]()(implicit eK: Elem[K], eV: Elem[V]) extends MMapDef[K, V] {
