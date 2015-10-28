@@ -40,6 +40,14 @@ class LmsCommunityItTests extends CommunitySmokeItTests {
     val in = (Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5)), Array((0, 0.0), (2, 2.0), (1, 4.0), (1, 6.0)))
     compareOutputWithSequential(_.unionMultiMaps, progStagedOnly)(in)
   }
+  test("appendMultiMap") {
+    val in = Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5))
+    compareOutputWithSequential(_.appendMultiMap, progStagedOnly)(in)
+  }
+  test("makeMap") {
+    val in = Array((1, 1.1), (2, 2.2), (1, 3.3), (1, 4.4), (2, 5.5))
+    compareOutputWithSequential(_.makeMap, progStagedOnly)(in)
+  }
   test("ifSpecialize") {
     compareOutputWithSequential(_.ifSpecialize, progStagedOnly)(Array(1, 2, 3))
   }

@@ -56,6 +56,18 @@ trait CommunitySmokeProg extends ScalanCommunityDsl with CollectionExamples {
     map1.union(map2).toArray.map(p => (p._1, p._2.toArray.sum)).sortBy(fun { p => p._1})
   }
 
+  lazy val appendMultiMap = fun { in: Rep[Array[(Int, Double)]] =>
+    val map = MMultiMap.make[Int, Double]("testMultiMap")
+    val array = in.fold(map, (state: Rep[MMultiMap[Int, Double]], x: Rep[(Int, Double)]) => state.add(x._1, x._2)).toArray
+    array.map(p => (p._1, p._2.toArray.sum)).sortBy(fun { p => p._1})
+  }
+
+  lazy val makeMap = fun { in: Rep[Array[(Int, Double)]] =>
+    val emptyMap = MMap.make[Int, Double]("testMMap")
+    val map1 = MMap.fromArray[Int, Double](in)
+    emptyMap.join(map1).toArray
+  }
+
   lazy val convertPairCollectionSOA = fun { in: Rep[Array[Array[(Int, Double)]]] =>
     val items = NestedCollectionFlat.fromJuggedArray(in)
     items.map { coll =>
