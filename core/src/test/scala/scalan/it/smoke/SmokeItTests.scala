@@ -136,6 +136,10 @@ trait SmokeProg extends ScalanDsl {
   lazy val fillArrayBuffer = fun { in: Rep[Array[Int]] =>
     in.fold(ArrayBuffer.empty[Int], (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
   }
+
+  lazy val makeArrayBuffer = fun { in: Rep[Array[Int]] =>
+    in.fold(ArrayBuffer.make[Int]("testArrayBuffer"), (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
+  }
   //    lazy val absTest = fun {x: Rep[Float] =>
   //      x.abs
   //    }

@@ -47,7 +47,10 @@ class LmsSmokeItTests extends SmokeItTests {
     compareOutputWithSequential(_.fillArrayBuffer, progStagedOnly)(in)
     //fixme error http://10.122.85.33:81/scalan-lite/scalan-lite-public/issues/49
   }
-
+  test("makeArrayBuffer") {
+    val in = Array(1, 2, 3, 4, 5, 6, 7, 8, 9)
+    compareOutputWithSequential(_.makeArrayBuffer, progStagedOnly)(in)
+  }
   test("emptyNestedUnitArray") {
     // Wrong type is generated in SBT/TeamCity, right in IDEA
     pending
