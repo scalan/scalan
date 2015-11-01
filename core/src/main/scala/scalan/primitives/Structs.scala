@@ -120,65 +120,27 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
   override def aliasSyms(e: Any): List[Exp[Any]] = e match {
     case SimpleStruct(tag,elems) => Nil
     case FieldApply(s,x) => Nil
-//    case FieldUpdate(s,x,b) => Nil
     case _ => super.aliasSyms(e)
   }
 
   override def containSyms(e: Any): List[Exp[Any]] = e match {
     case SimpleStruct(tag,elems) => elems.collect { case (k, v: Sym[_]) => v }.toList
     case FieldApply(s,x) => Nil
-//    case FieldUpdate(s,x,b) => syms(b)
     case _ => super.containSyms(e)
   }
 
   override def extractSyms(e: Any): List[Exp[Any]] = e match {
     case SimpleStruct(tag,elems) => Nil
     case FieldApply(s,x) => syms(s)
-//    case FieldUpdate(s,x,b) => Nil
     case _ => super.extractSyms(e)
   }
 
   override def copySyms(e: Any): List[Exp[Any]] = e match {
     case SimpleStruct(tag,elems) => Nil
     case FieldApply(s,x) => Nil
-//    case FieldUpdate(s,x,b) => Nil
     case _ => super.copySyms(e)
   }
 
-
-
-  // TODO: read/write/copy summary
-
-//  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
-//    case SimpleStruct(tag, elems) => struct(tag, elems map { case (k,v) => (k, f(v)) })(mtype(manifest[A]),pos)
-//    case FieldApply(struct, key) => field(f(struct), key)(mtype(manifest[A]),pos)
-//    case Reflect(FieldApply(struct, key), u, es) => reflectMirrored(Reflect(FieldApply(f(struct), key), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
-//    case Reflect(FieldUpdate(struct, key, rhs), u, es) => reflectMirrored(Reflect(FieldUpdate(f(struct), key, f(rhs)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
-//    case Reflect(SimpleStruct(tag, elems), u, es) => reflectMirrored(Reflect(SimpleStruct(tag, elems map { case (k,v) => (k, f(v)) }), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
-//    case _ => super.mirror(e,f)
-//  }).asInstanceOf[Exp[A]]
-
-//  def structName[T](m: Manifest[T]): String = m match {
-//    // FIXME: move to codegen? we should be able to have different policies/naming schemes
-//    case rm: RefinedManifest[_] => "Anon" + math.abs(rm.fields.map(f => f._1.## + f._2.toString.##).sum)
-//    case _ if (m <:< manifest[AnyVal]) => m.toString
-//    case _ if m.erasure.isArray => "ArrayOf" + structName(m.typeArguments.head)
-//    case _ => m.erasure.getSimpleName + m.typeArguments.map(a => structName(a)).mkString("")
-//  }
-
-//  def classTag[T:Manifest] = ClassTag[T](structName(manifest[T]))
-
-//  override def object_tostring(x: Exp[Any]): Exp[String] = x match {
-//    case Def(s@Struct(tag, elems)) => //tag(elem1, elem2, ...)
-//      val e = elems.map(e => string_plus(unit(e._1 + " = "), object_tostring(e._2))).reduceLeft((l,r)=>string_plus(string_plus(l,unit(", ")),r))
-//      string_plus(unit(structName(s.tp)+"("),string_plus(e,unit(")")))
-//    case _ => super.object_tostring(x)
-//  }
-
-//  def registerStruct[T](name: String, elems: Seq[(String, Rep[Any])]) {
-//    encounteredStructs += name -> elems.map(e => (e._1, e._2.tp))
-//  }
-//  val encounteredStructs = new scala.collection.mutable.HashMap[String, Seq[(String, Manifest[_])]]
 }
 
 
