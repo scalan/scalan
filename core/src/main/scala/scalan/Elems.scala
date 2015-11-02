@@ -8,7 +8,8 @@ import scalan.common.Lazy
 import scalan.staged.BaseExp
 import annotation.implicitNotFound
 import scala.reflect.runtime.universe._
-import scala.reflect.ClassTag
+import scala.reflect._
+import scalan.util.ReflectionUtil
 
 trait Elems extends Base { self: Scalan =>
 
@@ -160,6 +161,79 @@ trait Elems extends Base { self: Scalan =>
       val pair = x.asRep[(a, b)]
       pairElement(elemFromRep(pair._1)(ea), elemFromRep(pair._2)(eb))
     case _ => eA
+  }
+
+
+  def extractParamsByReflection(d: Any, fieldMirrors: List[FieldMirror]): List[Any] =
+    fieldMirrors.map(_.bind(d).get)
+
+  case class ReflectedElement(clazz: Class[_], fieldMirrors: List[FieldMirror])
+  private[this] val elements = collection.mutable.Map.empty[Class[_], ReflectedElement]
+  private[this] val elementClassTranslations = collection.mutable.Map.empty[Class[_], Class[_]]
+
+  def registerElemClass[E: ClassTag, C: ClassTag] =
+    elementClassTranslations += (classTag[E].runtimeClass -> classTag[C].runtimeClass)
+
+  private[this] lazy val eItemSym =
+    ReflectionUtil.classToSymbol(classOf[EntityElem1[_, _, C] forSome { type C[_] }]).toType.decl(TermName("eItem")).asTerm
+
+  private[this] def reflectElement(clazz: Class[_], elem: Element[_]) = {
+    val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(elem)
+
+    val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, eItemSym)
+
+    val lmsClass = elementClassTranslations.getOrElse(clazz, elem.runtimeClass)
+
+    ReflectedElement(lmsClass, fieldMirrors)
+  }
+
+  registerElemClass[ArrayBufferElem[_], scala.collection.mutable.ArrayBuilder[_]]
+  registerElemClass[MMapElem[_, _], java.util.HashMap[_,_]]
+
+  def elemToManifest[T](elem: Elem[T]): Manifest[_] = elem match {
+    case el: BaseTypeElem1[_,_,_] =>
+      val tag = el.cont.tag
+      val cls = tag.mirror.runtimeClass(tag.tpe)
+      Manifest.classType(cls, elemToManifest(el.eItem))
+    case el: BaseTypeElem[_,_] =>
+      val tag = el.tag
+      val cls = tag.mirror.runtimeClass(tag.tpe)
+      Manifest.classType(cls)
+    case el: WrapperElem[_,_] =>
+      elemToManifest(el.baseElem)
+    case el: WrapperElem1[_,_,_,_] =>
+      elemToManifest(el.baseElem)
+
+    case el: ArrayElem[_] =>
+      // see Scala bug https://issues.scala-lang.org/browse/SI-8183 (won't fix)
+      val m = el.eItem match {
+        case UnitElement => manifest[scala.runtime.BoxedUnit]
+        case _ => elemToManifest(el.eItem)
+      }
+      Manifest.arrayType(m)
+
+    case UnitElement => Manifest.Unit
+    case BooleanElement => Manifest.Boolean
+    case ByteElement => Manifest.Byte
+    case ShortElement => Manifest.Short
+    case IntElement => Manifest.Int
+    case CharElement => Manifest.Char
+    case LongElement => Manifest.Long
+    case FloatElement => Manifest.Float
+    case DoubleElement => Manifest.Double
+    case StringElement => manifest[String]
+
+    case _ =>
+      val clazz = elem.getClass
+      val ReflectedElement(lmsClass, fieldMirrors) = elements.getOrElseUpdate(clazz, reflectElement(clazz, elem))
+
+      val elemParams = extractParamsByReflection(elem, fieldMirrors)
+      val manifestParams = elemParams.map(e => elemToManifest(e.asInstanceOf[Elem[_]]))
+
+      manifestParams match {
+        case Nil => Manifest.classType(lmsClass)
+        case h :: t => Manifest.classType(lmsClass, h, t: _*)
+      }
   }
 
   def assertEqualElems[A](e1: Elem[A], e2: Elem[A], m: => String) =

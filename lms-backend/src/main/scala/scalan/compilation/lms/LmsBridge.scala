@@ -185,17 +185,6 @@ trait LmsBridge extends Passes {
     case x => x
   }
 
-  /**
-   * Extracts the arguments from d. Default implementation returns the list of constructor parameters,
-   * including implicit ones. Can be overridden if the LMS method expects the arguments in a different
-   * amount or order (Scalan [[Exp]] will be translated to LMS and [[Element]] will be translated to
-   * [[Manifest]] automatically).
-   */
-  protected def extractParams(d: Def[_], fieldMirrors: List[FieldMirror]): List[Any] =
-    extractParamsByReflection(d, fieldMirrors)
-
-  private[this] def extractParamsByReflection(d: Any, fieldMirrors: List[FieldMirror]): List[Any] =
-    fieldMirrors.map(_.bind(d).get)
 
   /**
    * Inserts a Scalan [[Def]] into an [[LmsMirror]].
@@ -231,72 +220,13 @@ trait LmsBridge extends Passes {
     lmsFunc(x)
   }
 
-  case class ReflectedElement(clazz: Class[_], fieldMirrors: List[FieldMirror])
-  private[this] val elements = collection.mutable.Map.empty[Class[_], ReflectedElement]
-  private[this] val elementClassTranslations = collection.mutable.Map.empty[Class[_], Class[_]]
+  /**
+   * Extracts the arguments from d. Default implementation returns the list of constructor parameters,
+   * including implicit ones. Can be overridden if the LMS method expects the arguments in a different
+   * amount or order (Scalan [[Exp]] will be translated to LMS and [[Element]] will be translated to
+   * [[Manifest]] automatically).
+   */
+  protected def extractParams(d: Def[_], fieldMirrors: List[FieldMirror]): List[Any] =
+    extractParamsByReflection(d, fieldMirrors)
 
-  def registerElemClass[E: ClassTag, C: ClassTag] =
-    elementClassTranslations += (classTag[E].runtimeClass -> classTag[C].runtimeClass)
-
-  private[this] lazy val eItemSym =
-    ReflectionUtil.classToSymbol(classOf[EntityElem1[_, _, C] forSome { type C[_] }]).toType.decl(TermName("eItem")).asTerm
-
-  private[this] def reflectElement(clazz: Class[_], elem: Element[_]) = {
-    val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(elem)
-
-    val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, eItemSym)
-
-    val lmsClass = elementClassTranslations.getOrElse(clazz, elem.runtimeClass)
-
-    ReflectedElement(lmsClass, fieldMirrors)
-  }
-
-  registerElemClass[ArrayBufferElem[_], scala.collection.mutable.ArrayBuilder[_]]
-  registerElemClass[MMapElem[_, _], java.util.HashMap[_,_]]
-
-  def elemToManifest[T](elem: Elem[T]): Manifest[_] = elem match {
-    case el: BaseTypeElem1[_,_,_] =>
-      val tag = el.cont.tag
-      val cls = tag.mirror.runtimeClass(tag.tpe)
-      Manifest.classType(cls, elemToManifest(el.eItem))
-    case el: BaseTypeElem[_,_] =>
-      val tag = el.tag
-      val cls = tag.mirror.runtimeClass(tag.tpe)
-      Manifest.classType(cls)
-    case el: WrapperElem[_,_] =>
-      elemToManifest(el.baseElem)
-    case el: WrapperElem1[_,_,_,_] =>
-      elemToManifest(el.baseElem)
-
-    case el: ArrayElem[_] =>
-      // see Scala bug https://issues.scala-lang.org/browse/SI-8183 (won't fix)
-      val m = el.eItem match {
-        case UnitElement => manifest[scala.runtime.BoxedUnit]
-        case _ => elemToManifest(el.eItem)
-      }
-      Manifest.arrayType(m)
-
-    case UnitElement => Manifest.Unit
-    case BooleanElement => Manifest.Boolean
-    case ByteElement => Manifest.Byte
-    case ShortElement => Manifest.Short
-    case IntElement => Manifest.Int
-    case CharElement => Manifest.Char
-    case LongElement => Manifest.Long
-    case FloatElement => Manifest.Float
-    case DoubleElement => Manifest.Double
-    case StringElement => manifest[String]
-
-    case _ =>
-      val clazz = elem.getClass
-      val ReflectedElement(lmsClass, fieldMirrors) = elements.getOrElseUpdate(clazz, reflectElement(clazz, elem))
-
-      val elemParams = extractParamsByReflection(elem, fieldMirrors)
-      val manifestParams = elemParams.map(e => elemToManifest(e.asInstanceOf[Elem[_]]))
-
-      manifestParams match {
-        case Nil => Manifest.classType(lmsClass)
-        case h :: t => Manifest.classType(lmsClass, h, t: _*)
-      }
-  }
 }
