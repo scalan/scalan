@@ -30,12 +30,14 @@ trait Structs extends StructTags { self: Scalan =>
 
   case class StructElem[T](items: Seq[(String, Elem[Any])]) extends Element[T] {
     override def isEntityType = items.exists(_._2.isEntityType)
-    lazy val tag = { ???
-      //      implicit val tA = eFst.tag
-      //      implicit val tB = eSnd.tag
-      //      weakTypeTag[(A, B)]
+    lazy val tag = {
+//      val fieldNames = items.map(_._1).toList
+//      val fieldTypes = items.map { case (fn, fe) => ???/*elemToManifest(fe)*/ }.toList
+//      val parent = manifest[Product]
+//      Manifest.refinedType[T](parent, fieldNames, fieldTypes)
+???
     }
-    protected def getDefaultRep = ???
+    protected def getDefaultRep = struct(items.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
 
     def get(fieldName: String): Option[Elem[Any]] = items.find(_._1 == fieldName).map(_._2)
     override def canEqual(other: Any) = other.isInstanceOf[StructElem[_]]
