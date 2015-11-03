@@ -60,33 +60,33 @@ trait Structs extends StructTags { self: Scalan =>
       override def toString = parent + (fieldNames zip fieldTypes).map{case(n, t) => "val "+ n +" : "+ t}.mkString("{","; ", "}")
     }
 
-  case class StructElem[T](items: Seq[(String, Elem[Any])]) extends Element[T] {
-    override def isEntityType = items.exists(_._2.isEntityType)
+  case class StructElem[T](fields: Seq[(String, Elem[Any])]) extends Element[T] {
+    override def isEntityType = fields.exists(_._2.isEntityType)
     lazy val tag = {
-      val fieldNames = items.map(_._1).toList
-      val fieldTypes = items.map { case (fn, fe) => elemToManifest(fe) }.toList
+      val fieldNames = fields.map(_._1).toList
+      val fieldTypes = fields.map { case (fn, fe) => elemToManifest(fe) }.toList
       val parent = manifest[Product]
       val structManifest = refinedType[T](parent, fieldNames, fieldTypes)
       val tt = manifestToTypeTag(currentMirror, structManifest).asInstanceOf[universe.WeakTypeTag[T]]
       tt
     }
-    protected def getDefaultRep = struct(items.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
+    protected def getDefaultRep = struct(fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
 
-    def get(fieldName: String): Option[Elem[Any]] = items.find(_._1 == fieldName).map(_._2)
+    def get(fieldName: String): Option[Elem[Any]] = fields.find(_._1 == fieldName).map(_._2)
     override def canEqual(other: Any) = other.isInstanceOf[StructElem[_]]
   }
 
-  def structElement[A](items: Seq[(String, Elem[Any])]): Elem[A] =
-    cachedElem[StructElem[A]](items)
+  def structElement[A](fields: Seq[(String, Elem[Any])]): Elem[A] =
+    cachedElem[StructElem[A]](fields)
 
-  def struct[T](elems: (String, Rep[Any])*): Rep[T]
-  def struct[T](tag: StructTag[T], elems: Seq[(String, Rep[Any])]): Rep[T]
+  def struct[T](fields: (String, Rep[Any])*): Rep[T]
+  def struct[T](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T]
   def field[T](struct: Rep[Any], index: String): Rep[T]
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
-  def struct[T](elems: (String, Rep[Any])*): Rep[T] = ???
-  def struct[T](tag: StructTag[T], elems: Seq[(String, Rep[Any])]): Rep[T] = ???
+  def struct[T](fields: (String, Rep[Any])*): Rep[T] = ???
+  def struct[T](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T] = ???
   def field[T](struct: Rep[Any], index: String): Rep[T] = ???
 }
 
@@ -96,8 +96,8 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
 
   abstract class AbstractStruct[T] extends Def[T] {
     def tag: StructTag[T]
-    def elems: Seq[(String, Rep[Any])]
-    lazy val selfType = structElement[T](elems)
+    def fields: Seq[(String, Rep[Any])]
+    lazy val selfType = structElement[T](fields)
   }
 
   abstract class AbstractField[T] extends Def[T] {
@@ -117,7 +117,7 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
   }
 
   def unapplyStruct[T](d: Def[T]): Option[(StructTag[T], Seq[(String, Rep[Any])])] = d match {
-    case s: AbstractStruct[T] => Some((s.tag, s.elems))
+    case s: AbstractStruct[T] => Some((s.tag, s.fields))
     case _ => None
   }
 
@@ -130,12 +130,12 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
     case _ => None
   }
 
-  case class SimpleStruct[T](tag: StructTag[T], elems: Seq[(String, Rep[Any])]) extends AbstractStruct[T]
+  case class SimpleStruct[T](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends AbstractStruct[T]
   case class FieldApply[T](struct: Rep[Any], index: String) extends AbstractField[T]
 
-  def struct[T](elems: (String, Rep[Any])*): Rep[T] = struct[T](SimpleTag("struct"), elems)
-  def struct[T](tag: StructTag[T], elems: (String, Rep[Any])*)(implicit o: Overloaded2): Rep[T] = struct[T](tag, elems)
-  def struct[T](tag: StructTag[T], elems: Seq[(String, Rep[Any])]): Rep[T] = SimpleStruct(tag, elems)
+  def struct[T](fields: (String, Rep[Any])*): Rep[T] = struct[T](SimpleTag("struct"), fields)
+  def struct[T](tag: StructTag[T], fields: (String, Rep[Any])*)(implicit o: Overloaded2): Rep[T] = struct[T](tag, fields)
+  def struct[T](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T] = SimpleStruct(tag, fields)
   def field[T](struct: Rep[Any], index: String): Rep[T] = FieldApply[T](struct, index)
 
   def structElement[A](items: Seq[(String, Rep[Any])])(implicit o1: Overloaded1): Elem[A] = {
@@ -144,17 +144,17 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
   }
 
   override def syms(e: Any): List[Exp[Any]] = e match {
-    case s: AbstractStruct[_] => s.elems.flatMap(e => this.syms(e._2)).toList
+    case s: AbstractStruct[_] => s.fields.flatMap(e => this.syms(e._2)).toList
     case _ => super.syms(e)
   }
 
   override def symsFreq(e: Any): List[(Exp[Any], Double)] = e match {
-    case s: AbstractStruct[_] => s.elems.flatMap(e => symsFreq(e._2)).toList
+    case s: AbstractStruct[_] => s.fields.flatMap(e => symsFreq(e._2)).toList
     case _ => super.symsFreq(e)
   }
 
   override def effectSyms(e: Any): List[Exp[Any]] = e match {
-    case s: AbstractStruct[_] => s.elems.flatMap(e => effectSyms(e._2)).toList
+    case s: AbstractStruct[_] => s.fields.flatMap(e => effectSyms(e._2)).toList
     case _ => super.effectSyms(e)
   }
 
@@ -164,25 +164,25 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
   }
 
   override def aliasSyms(e: Any): List[Exp[Any]] = e match {
-    case SimpleStruct(tag,elems) => Nil
+    case SimpleStruct(tag,fields) => Nil
     case FieldApply(s,x) => Nil
     case _ => super.aliasSyms(e)
   }
 
   override def containSyms(e: Any): List[Exp[Any]] = e match {
-    case SimpleStruct(tag,elems) => elems.collect { case (k, v: Sym[_]) => v }.toList
+    case SimpleStruct(tag,fields) => fields.collect { case (k, v: Sym[_]) => v }.toList
     case FieldApply(s,x) => Nil
     case _ => super.containSyms(e)
   }
 
   override def extractSyms(e: Any): List[Exp[Any]] = e match {
-    case SimpleStruct(tag,elems) => Nil
+    case SimpleStruct(tag,fields) => Nil
     case FieldApply(s,x) => syms(s)
     case _ => super.extractSyms(e)
   }
 
   override def copySyms(e: Any): List[Exp[Any]] = e match {
-    case SimpleStruct(tag,elems) => Nil
+    case SimpleStruct(tag,fields) => Nil
     case FieldApply(s,x) => Nil
     case _ => super.copySyms(e)
   }
