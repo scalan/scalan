@@ -1,7 +1,7 @@
 package scalan.primitives
 
 import scalan.common.Utils
-import scalan.compilation.GraphVizExport
+import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
 import scalan.{ScalanExp, ScalanSeq, Scalan}
 import scalan.common.OverloadHack._
@@ -152,6 +152,15 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
     case SimpleStruct(tag,fields) => Nil
     case FieldApply(s,x) => Nil
     case _ => super.copySyms(e)
+  }
+
+  override protected def formatDef(d: Def[_])(implicit config: GraphVizConfig): String = d match {
+    case SimpleStruct(tag, fields) =>
+      val name = tag match { case SimpleTag(_) => "" case _ => ""}
+      s"$name{${fields.map { case (fn, s) => s"$fn:$s" }.mkString(";")}}"
+
+    case FieldApply(struct, fn) => s"$struct.$fn"
+    case _ => super.formatDef(d)
   }
 
 }

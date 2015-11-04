@@ -13,6 +13,9 @@ class StructTests extends BaseCtxTests {
       struct("in" -> in).asRep[Any]
     })(Lazy(element[Int]), structElement(Seq("in" -> eInt)).asElem[Any])
 
+    lazy val t2 = fun({ (in: Rep[Int]) =>
+      field(struct("in" -> in).asRep[Any], "in").asRep[Int]
+    })
 //    lazy val t2 = fun { (in: Rep[Int]) =>
 //      Thunk { in + 1 }
 //    }
@@ -83,7 +86,7 @@ class StructTests extends BaseCtxTests {
       }
     }
     ctx.test
-    val t1 = ctx.t1
-    ctx.emit("t1", t1)
+    ctx.emit("t1", ctx.t1)
+    ctx.emit("t2", ctx.t2)
   }
 }
