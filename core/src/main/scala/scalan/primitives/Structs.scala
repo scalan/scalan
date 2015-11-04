@@ -23,8 +23,8 @@ import universe.internal._
  */
 
 trait StructTags {
-  abstract class StructTag[+T]
-  case class SimpleTag[T](name: String) extends StructTag[T]
+  abstract class StructTag
+  case class SimpleTag(name: String) extends StructTag
   //  case class NestClassTag[C[_],T](elem: StructTag[T]) extends StructTag[C[T]]
   //  case class AnonTag[T](fields: RefinedManifest[T]) extends StructTag[T]
   //  case class MapTag[T]() extends StructTag[T]
@@ -68,26 +68,27 @@ trait Structs extends StructTags { self: Scalan =>
       val parent = manifest[Product]
       val structManifest = refinedType[T](parent, fieldNames, fieldTypes)
       val tt = manifestToTypeTag(currentMirror, structManifest).asInstanceOf[universe.WeakTypeTag[T]]
+//      val tt = typeTag[Product].asInstanceOf[WeakTypeTag[T]]
       tt
     }
-    protected def getDefaultRep = struct(fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
+    protected def getDefaultRep = struct(fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*).asRep[T]
 
     def get(fieldName: String): Option[Elem[Any]] = fields.find(_._1 == fieldName).map(_._2)
     override def canEqual(other: Any) = other.isInstanceOf[StructElem[_]]
   }
 
-  def structElement[A](fields: Seq[(String, Elem[Any])]): Elem[A] =
-    cachedElem[StructElem[A]](fields)
+  def structElement(fields: Seq[(String, Elem[Any])]): StructElem[_] =
+    cachedElem[StructElem[_]](fields)
 
-  def struct[T](fields: (String, Rep[Any])*): Rep[T]
-  def struct[T](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T]
-  def field[T](struct: Rep[Any], index: String): Rep[T]
+  def struct(fields: (String, Rep[Any])*): Rep[_]
+  def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_]
+  def field(struct: Rep[Any], index: String): Rep[_]
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
-  def struct[T](fields: (String, Rep[Any])*): Rep[T] = ???
-  def struct[T](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T] = ???
-  def field[T](struct: Rep[Any], index: String): Rep[T] = ???
+  def struct(fields: (String, Rep[Any])*): Rep[_] = ???
+  def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_] = ???
+  def field(struct: Rep[Any], index: String): Rep[_] = ???
 }
 
 trait StructsExp extends Expressions with Structs with StructTags with EffectsExp
@@ -95,9 +96,9 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
 
 
   abstract class AbstractStruct[T] extends Def[T] {
-    def tag: StructTag[T]
+    def tag: StructTag
     def fields: Seq[(String, Rep[Any])]
-    lazy val selfType = structElement[T](fields)
+    lazy val selfType = structElement(fields).asElem[T]
   }
 
   abstract class AbstractField[T] extends Def[T] {
@@ -116,7 +117,7 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
     def unapply[T](d: Def[T]) = unapplyStruct(d)
   }
 
-  def unapplyStruct[T](d: Def[T]): Option[(StructTag[T], Seq[(String, Rep[Any])])] = d match {
+  def unapplyStruct[T](d: Def[T]): Option[(StructTag, Seq[(String, Rep[Any])])] = d match {
     case s: AbstractStruct[T] => Some((s.tag, s.fields))
     case _ => None
   }
@@ -130,16 +131,16 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
     case _ => None
   }
 
-  case class SimpleStruct[T](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends AbstractStruct[T]
+  case class SimpleStruct[T](tag: StructTag, fields: Seq[(String, Rep[Any])]) extends AbstractStruct[T]
   case class FieldApply[T](struct: Rep[Any], index: String) extends AbstractField[T]
 
-  def struct[T](fields: (String, Rep[Any])*): Rep[T] = struct[T](SimpleTag("struct"), fields)
-  def struct[T](tag: StructTag[T], fields: (String, Rep[Any])*)(implicit o: Overloaded2): Rep[T] = struct[T](tag, fields)
-  def struct[T](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T] = SimpleStruct(tag, fields)
-  def field[T](struct: Rep[Any], index: String): Rep[T] = FieldApply[T](struct, index)
+  def struct(fields: (String, Rep[Any])*): Rep[_] = struct(SimpleTag("struct"), fields)
+  def struct(tag: StructTag, fields: (String, Rep[Any])*)(implicit o: Overloaded2): Rep[_] = struct(tag, fields)
+  def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_] = reifyObject(SimpleStruct(tag, fields))
+  def field(struct: Rep[Any], index: String): Rep[_] = FieldApply[Any](struct, index)
 
-  def structElement[A](items: Seq[(String, Rep[Any])])(implicit o1: Overloaded1): Elem[A] = {
-    val e = StructElem[A](items.map { case (f, s) => (f, s.elem) })
+  def structElement(items: Seq[(String, Rep[Any])])(implicit o1: Overloaded1): Elem[_] = {
+    val e = StructElem(items.map { case (f, s) => (f, s.elem) })
     e
   }
 

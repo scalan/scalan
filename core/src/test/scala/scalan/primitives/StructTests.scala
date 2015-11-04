@@ -8,10 +8,10 @@ import scalan.common.{SegmentsDsl, SegmentsDslExp, Lazy}
 
 class StructTests extends BaseCtxTests {
   trait MyProg extends Scalan with SegmentsDsl {
-    val eInt = IntElement
+    val eInt = IntElement.asElem[Any]
     lazy val t1 = fun({ (in: Rep[Int]) =>
-      struct("in" -> in)
-    })(Lazy(eInt), structElement(Seq("in" -> eInt.asElem[Any])))
+      struct("in" -> in).asRep[Any]
+    })(Lazy(element[Int]), structElement(Seq("in" -> eInt)).asElem[Any])
 
 //    lazy val t2 = fun { (in: Rep[Int]) =>
 //      Thunk { in + 1 }
@@ -55,7 +55,23 @@ class StructTests extends BaseCtxTests {
 //    }
   }
 
-  test("thunksWithoutInlining") {
+  test("StructElem equality") {
+    val ctx = new TestContext with MyProg with SegmentsDslExp {
+    }
+    import ctx._
+    val e1 = structElement(Seq("a" -> eInt))
+    val e2 = structElement(Seq("a" -> eInt))
+    val e3 = structElement(Seq("b" -> eInt))
+    assert(e1 == e2, "should be equal")
+    assert(e1 != e3, "should not be equal")
+    val t1 = e1.tag
+    val t2 = e2.tag
+    val t3 = e3.tag
+    assert(t1 == t2, "should be equal")
+    assert(t1 != t3, "should not be equal")
+  }
+
+  test("StructElem as result type") {
     val ctx = new TestContext with MyProg with SegmentsDslExp {
       def test() = {
 //        {
@@ -65,6 +81,7 @@ class StructTests extends BaseCtxTests {
       }
     }
     ctx.test
-    ctx.emit("t1", ctx.t1)
+    val t1 = ctx.t1
+    ctx.emit("t1", t1)
   }
 }
