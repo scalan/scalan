@@ -7,7 +7,7 @@ import scalan.{ScalanExp, ScalanSeq, Scalan}
 import scalan.common.OverloadHack._
 import scala.reflect.{Manifest}
 import scala.reflect.runtime._
-import universe.internal._
+import universe._
 
 /**
  The code is taken from LMS and is used in Scalan with the same semantics
@@ -30,49 +30,15 @@ trait StructTags {
   //  case class MapTag[T]() extends StructTag[T]
 }
 
-trait RefinedManifest[T] extends Manifest[T] {
-  override def canEqual(other: Any) = other match {
-    case _: RefinedManifest[_] => true
-    case _                     => false
-  }
-
-  /** Tests whether the type represented by this manifest is equal to
-    * the type represented by `that` manifest, subject to the limitations
-    * described in the header.
-    */
-  override def equals(that: Any): Boolean = that match {
-    case m: RefinedManifest[_] => (m canEqual this) && (this.erasure == m.erasure)
-    case _                     => false
-  }
-  override def hashCode = this.erasure.##
-
-  def fields: List[(String, Manifest[_])]
-}
-
 trait Structs extends StructTags { self: Scalan =>
-  /** Manifest for the refined type
-    * `parent { val fieldNames(0) : fieldTypes(0) ; ... ; val fieldNames(n) : fieldTypes(n) }`.
-    */
-  def refinedType[T](parent: Manifest[_], fieldNames: List[String], fieldTypes: List[Manifest[_]]): Manifest[T] =
-    new RefinedManifest[T] {
-      def runtimeClass = parent.runtimeClass
-      def fields = fieldNames zip fieldTypes
-      override def toString = parent + (fieldNames zip fieldTypes).map{case(n, t) => "val "+ n +" : "+ t}.mkString("{","; ", "}")
-    }
 
   case class StructElem[T](fields: Seq[(String, Elem[Any])]) extends Element[T] {
     override def isEntityType = fields.exists(_._2.isEntityType)
-    lazy val tag = {
-      val fieldNames = fields.map(_._1).toList
-      val fieldTypes = fields.map { case (fn, fe) => elemToManifest(fe) }.toList
-      val parent = manifest[Product]
-      val structManifest = refinedType[T](parent, fieldNames, fieldTypes)
-      val tt = manifestToTypeTag(currentMirror, structManifest).asInstanceOf[universe.WeakTypeTag[T]]
-//      val tt = typeTag[Product].asInstanceOf[WeakTypeTag[T]]
-      tt
+    lazy val tag = typeTag[Product].asInstanceOf[WeakTypeTag[T]]
+    protected def getDefaultRep = {
+      val res = struct(fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
+      res.asRep[T]
     }
-    protected def getDefaultRep = struct(fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*).asRep[T]
-
     def get(fieldName: String): Option[Elem[Any]] = fields.find(_._1 == fieldName).map(_._2)
     override def canEqual(other: Any) = other.isInstanceOf[StructElem[_]]
   }
