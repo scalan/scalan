@@ -48,13 +48,15 @@ trait Structs extends StructTags { self: Scalan =>
 
   def struct(fields: (String, Rep[Any])*): Rep[_]
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_]
-  def field(struct: Rep[Any], index: String): Rep[_]
+  def field(struct: Rep[Any], field: String): Rep[_]
+  def fields(struct: Rep[Any], fields: Seq[String]): Rep[_]
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
   def struct(fields: (String, Rep[Any])*): Rep[_] = ???
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_] = ???
-  def field(struct: Rep[Any], index: String): Rep[_] = ???
+  def field(struct: Rep[Any], field: String): Rep[_] = ???
+  def fields(struct: Rep[Any], fields: Seq[String]): Rep[_] = ???
 }
 
 trait StructsExp extends Expressions with Structs with StructTags with EffectsExp
@@ -69,8 +71,8 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
 
   abstract class AbstractField[T] extends Def[T] {
     def struct: Rep[Any]
-    def index: String
-    lazy val selfType = Struct.getFieldElem(struct, index).asElem[T]
+    def field: String
+    lazy val selfType = Struct.getFieldElem(struct, field).asElem[T]
   }
 
   object Struct {
@@ -93,17 +95,22 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
   }
 
   def unapplyField[T](d: Def[T]): Option[(Rep[Any], String)] = d match {
-    case f: AbstractField[T] => Some((f.struct, f.index))
+    case f: AbstractField[T] => Some((f.struct, f.field))
     case _ => None
   }
 
   case class SimpleStruct[T](tag: StructTag, fields: Seq[(String, Rep[Any])]) extends AbstractStruct[T]
-  case class FieldApply[T](struct: Rep[Any], index: String) extends AbstractField[T]
+  case class FieldApply[T](struct: Rep[Any], field: String) extends AbstractField[T]
+  case class ProjectionStruct[T](struct: Rep[Any], outFields: Seq[String]) extends AbstractStruct[T] {
+    val tag = SimpleTag("struct")
+    val fields = outFields.map(fn => (fn, field(struct, fn).asRep[Any]))
+  }
 
   def struct(fields: (String, Rep[Any])*): Rep[_] = struct(SimpleTag("struct"), fields)
   def struct(tag: StructTag, fields: (String, Rep[Any])*)(implicit o: Overloaded2): Rep[_] = struct(tag, fields)
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_] = reifyObject(SimpleStruct(tag, fields))
-  def field(struct: Rep[Any], index: String): Rep[_] = FieldApply[Any](struct, index)
+  def field(struct: Rep[Any], field: String): Rep[_] = FieldApply[Any](struct, field)
+  def fields(struct: Rep[Any], fields: Seq[String]): Rep[_] = ProjectionStruct[Any](struct, fields)
 
   def structElement(items: Seq[(String, Rep[Any])])(implicit o1: Overloaded1): Elem[_] = {
     val e = StructElem(items.map { case (f, s) => (f, s.elem) })
@@ -111,16 +118,19 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
   }
 
   override def syms(e: Any): List[Exp[Any]] = e match {
+    case s: ProjectionStruct[_] => syms(s.struct)
     case s: AbstractStruct[_] => s.fields.flatMap(e => this.syms(e._2)).toList
     case _ => super.syms(e)
   }
 
   override def symsFreq(e: Any): List[(Exp[Any], Double)] = e match {
+    case s: ProjectionStruct[_] => symsFreq(s.struct)
     case s: AbstractStruct[_] => s.fields.flatMap(e => symsFreq(e._2)).toList
     case _ => super.symsFreq(e)
   }
 
   override def effectSyms(e: Any): List[Exp[Any]] = e match {
+    case s: ProjectionStruct[_] => effectSyms(s.struct)
     case s: AbstractStruct[_] => s.fields.flatMap(e => effectSyms(e._2)).toList
     case _ => super.effectSyms(e)
   }
@@ -159,6 +169,7 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
       val name = tag match { case SimpleTag(_) => "" case _ => ""}
       s"$name{${fields.map { case (fn, s) => s"$fn:$s" }.mkString(";")}}"
 
+    case ProjectionStruct(struct, outs) => s"$struct.${outs.mkString("[",",", "]")}"
     case FieldApply(struct, fn) => s"$struct.$fn"
     case _ => super.formatDef(d)
   }

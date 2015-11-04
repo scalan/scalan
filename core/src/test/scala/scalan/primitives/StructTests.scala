@@ -7,7 +7,7 @@ import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp, Lazy}
 
 class StructTests extends BaseCtxTests {
-  trait MyProg extends Scalan with SegmentsDsl {
+  trait MyProg extends Scalan  {
     val eInt = IntElement.asElem[Any]
     lazy val t1 = fun({ (in: Rep[Int]) =>
       struct("in" -> in).asRep[Any]
@@ -16,46 +16,12 @@ class StructTests extends BaseCtxTests {
     lazy val t2 = fun({ (in: Rep[Int]) =>
       field(struct("in" -> in).asRep[Any], "in").asRep[Int]
     })
-//    lazy val t2 = fun { (in: Rep[Int]) =>
-//      Thunk { in + 1 }
-//    }
-//
-//    lazy val t3 = fun { (in: Rep[Int]) =>
-//      Thunk { in + in + 1 }
-//    }
-//
-//    lazy val t4 = fun { (in: Rep[Int]) =>
-//      Thunk { in + Thunk { in + 1 }.force }
-//    }
-//    lazy val t5 = fun { (in: Rep[Int]) =>
-//      Thunk { in + 1 }.force + Thunk { in + 1 }.force
-//    }
-//    lazy val t6 = fun { (in: Rep[Int]) =>
-//      Thunk { Thunk {in + 1}.force + 1 }.force + 1
-//    }
-//
-//    def f7(x: => Rep[Int]) = Thunk { x }
-//    lazy val t7 = fun { (in: Rep[Int]) =>
-//      f7 {in + 1}
-//    }
-//    def f8(x: Rep[Int]) = Thunk { x }
-//    lazy val t8 = fun { (in: Rep[Int]) =>
-//      f8 {in + 1}
-//    }
-//
-//    lazy val t9 = fun { (in: Rep[Int]) =>
-//      Thunk { (in + 1) + Thunk { in + 1 }.force }
-//    }
-//
-//    lazy val t10 = fun { (in: Rep[Int]) =>
-//      Thunk { Thunk { Thunk { in + 1 }}}.force.force
-//    }
-//
-//    def to(x: Rep[Int]): Rep[Int] = x * x
-//    lazy val t11 = fun { (in: Rep[Int]) =>
-//      val x = Thunk { in + 1 }
-//      Thunk { to(x.force) }              // test for ThunkIso.to
-//    }
+
+    lazy val t3 = fun({ (in: Rep[Int]) =>
+      val b = in + toRep(1)
+      val c = in + in
+      fields(struct("a" -> in, "b" -> b, "c" -> c).asRep[Any], Seq("a", "c")).asRep[Any]
+    })(Lazy(element[Int]), structElement(Seq("a" -> eInt, "c" -> eInt)).asElem[Any])
   }
 
   test("StructElem equality") {
@@ -88,5 +54,14 @@ class StructTests extends BaseCtxTests {
     ctx.test
     ctx.emit("t1", ctx.t1)
     ctx.emit("t2", ctx.t2)
+  }
+
+  test("ProjectionStruct") {
+    val ctx = new TestContext with MyProg with SegmentsDslExp {
+      def test() = {
+      }
+    }
+    ctx.test
+    ctx.emit("t3", ctx.t3)
   }
 }
