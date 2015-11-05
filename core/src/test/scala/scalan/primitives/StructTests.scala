@@ -5,6 +5,7 @@ import java.lang.reflect.Method
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp, Lazy}
+import scalan.compilation.DummyCompiler
 
 class StructTests extends BaseCtxTests {
   trait MyProg extends Scalan  {
@@ -24,10 +25,14 @@ class StructTests extends BaseCtxTests {
     })(Lazy(element[Int]), structElement(Seq("a" -> eInt, "c" -> eInt)).asElem[Any])
   }
 
+  class Ctx extends TestCompilerContext {
+    override val compiler = new DummyCompiler(new ScalanCtxExp with MyProg)
+                           with StructsCompiler[ScalanCtxExp with MyProg]
+  }
+
   test("StructElem equality") {
-    val ctx = new TestContext with MyProg with SegmentsDslExp {
-    }
-    import ctx._
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
     val e1 = structElement(Seq("a" -> eInt))
     val e2 = structElement(Seq("a" -> eInt))
     val e3 = structElement(Seq("b" -> eInt))
@@ -43,7 +48,7 @@ class StructTests extends BaseCtxTests {
   }
 
   test("StructElem as result type") {
-    val ctx = new TestContext with MyProg with SegmentsDslExp {
+    val ctx = new Ctx {
       def test() = {
 //        {
 //          val Def(Lambda(_, _, x, Def(th@ThunkDef(res, sch)))) = t1
@@ -51,17 +56,19 @@ class StructTests extends BaseCtxTests {
 //        }
       }
     }
+    import ctx.compiler.scalan._
     ctx.test
-    ctx.emit("t1", ctx.t1)
-    ctx.emit("t2", ctx.t2)
+    ctx.test("t1", t1)
+    ctx.test("t2", t2)
   }
 
   test("ProjectionStruct") {
-    val ctx = new TestContext with MyProg with SegmentsDslExp {
+    val ctx = new Ctx {
       def test() = {
       }
     }
+    import ctx.compiler.scalan._
     ctx.test
-    ctx.emit("t3", ctx.t3)
+    ctx.test("t3", t3)
   }
 }

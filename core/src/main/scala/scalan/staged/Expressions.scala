@@ -8,7 +8,7 @@ import scala.collection.mutable.ListBuffer
 import scala.language.implicitConversions
 import scala.reflect.runtime.universe._
 import scalan.util.ReflectionUtil
-import scalan.{Base, ScalanExp}
+import scalan.{Base, ScalanExp, Scalan}
 import scalan.common.Lazy
 
 trait BaseExp extends Base { scalan: ScalanExp =>
@@ -71,12 +71,12 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     def merge(other: Ctx): Ctx = ops.merge(self, other)
   }
 
-  private[this] case class ReflectedDefClass(constructor: Constructor[_], paramFieldMirrors: List[FieldMirror])
+  private[this] case class ReflectedProductClass(constructor: Constructor[_], paramFieldMirrors: List[FieldMirror])
 
   private[this] val selfTypeSym =
     ReflectionUtil.classToSymbol(classOf[BaseDef[_]]).toType.decl(TermName("selfType")).asTerm
 
-  private[this] def reflectDefClass(clazz: Class[_], d: Def[_]) = {
+  private[this] def reflectProductClass(clazz: Class[_], d: Product) = {
     val javaMirror = runtimeMirror(clazz.getClassLoader)
 
     val classSymbol = ReflectionUtil.classToSymbol(clazz)
@@ -89,32 +89,46 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     val instanceMirror = javaMirror.reflect(d)
     val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, selfTypeSym)
 
-    ReflectedDefClass(constructor, fieldMirrors)
+    ReflectedProductClass(constructor, fieldMirrors)
   }
 
-  private[this] val defClasses = collection.mutable.Map.empty[Class[_], ReflectedDefClass]
+  private[this] val defClasses = collection.mutable.Map.empty[Class[_], ReflectedProductClass]
 
   def transformDef[A](d: Def[A], t: Transformer): Exp[A] = d match {
-    case c: Const[A] => c.self
+    case c: Const[_] => c.self
     case comp: CompanionDef[_] => comp.self
     case _ =>
-      def transformParam(x: Any): Any = x match {
-        case e: Exp[_] => t(e)
-        case seq: Seq[_] => seq.map(transformParam)
-        case arr: Array[_] => arr.map(transformParam)
-        case opt: Option[_] => opt.map(transformParam)
-        case x => x
-      }
+      val newD = transformProduct(d, t).asInstanceOf[Def[A]]
+      reifyObject(newD)
+  }
+  
+  def transformProduct(p: Product, t: Transformer): Product = {
+    def transformParam(x: Any): Any = x match {
+      case e: Exp[_] => t(e)
+      case seq: Seq[_] => seq.map(transformParam)
+      case arr: Array[_] => arr.map(transformParam)
+      case opt: Option[_] => opt.map(transformParam)
+      case p: Product => transformProduct(p, t)
+      case x => x
+    }
+    def hasScalanParameter[T](c: Constructor[T]) = {
+      val params = c.getParameterTypes
+      params.length > 0 && classOf[Base].isAssignableFrom(params(0))
+    }
 
-      val clazz = d.getClass
-      val ReflectedDefClass(constructor, fieldMirrors) =
-        defClasses.getOrElseUpdate(clazz, reflectDefClass(clazz, d))
+    val clazz = p.getClass
+    val ReflectedProductClass(constructor, fieldMirrors) =
+      defClasses.getOrElseUpdate(clazz, reflectProductClass(clazz, p))
 
-      val dParams = fieldMirrors.map(_.bind(d).get)
-      val transformedParams = dParams.map(transformParam)
-      val finalParams = (scalan :: transformedParams).asInstanceOf[List[AnyRef]]
-      val transformedD = constructor.newInstance(finalParams: _*).asInstanceOf[Def[A]]
-      reifyObject(transformedD)
+    val pParams = fieldMirrors.map(_.bind(p).get)
+    val transformedParams = pParams.map(transformParam)
+    val finalParams =
+      (if (hasScalanParameter(constructor))
+        scalan :: transformedParams
+      else
+        transformedParams).asInstanceOf[List[AnyRef]]
+    val transformedP = constructor.newInstance(finalParams: _*).asInstanceOf[Product]
+    transformedP
   }
 
   def fresh[T](implicit leT: LElem[T]): Exp[T]

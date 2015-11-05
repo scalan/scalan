@@ -3,11 +3,12 @@ package scalan.primitives
 import scalan.common.Utils
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
-import scalan.{ScalanExp, ScalanSeq, Scalan}
+import scalan.{ScalanCtxExp, ScalanExp, ScalanSeq, Scalan, Base}
 import scalan.common.OverloadHack._
 import scala.reflect.{Manifest}
 import scala.reflect.runtime._
 import universe._
+import scalan.compilation.Compiler
 
 /**
  The code is taken from LMS and is used in Scalan with the same semantics
@@ -22,7 +23,7 @@ import universe._
  - mirroring implemented in Scalan way (though consistent with LMS)
  */
 
-trait StructTags {
+trait StructTags extends Base { self: Scalan =>
   abstract class StructTag
   case class SimpleTag(name: String) extends StructTag
   //  case class NestClassTag[C[_],T](elem: StructTag[T]) extends StructTag[C[T]]
@@ -174,6 +175,22 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
     case _ => super.formatDef(d)
   }
 
+}
+
+trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compiler[ScalanCake] {
+  import scalan._
+
+  object StructsRewriter extends Rewriter {
+    def apply[T](x: Exp[T]): Exp[T] = (x match {
+
+      case _ =>
+        x
+    }).asRep[T]
+  }
+
+  override def graphPasses(compilerConfig: CompilerConfig) =
+    super.graphPasses(compilerConfig) :+
+      constantPass(GraphTransformPass("structs", DefaultMirror, StructsRewriter))
 }
 
 
