@@ -2,7 +2,7 @@ package scalan
 
 import scala.reflect.runtime.universe._
 
-trait PointerOps { self: Scalan =>
+trait PointerOps extends Base { self: Scalan =>
   class Pointer[A: Elem]
   class Scalar[A: Elem]
 

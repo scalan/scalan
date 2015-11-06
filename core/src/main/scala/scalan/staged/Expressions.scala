@@ -127,8 +127,20 @@ trait BaseExp extends Base { scalan: ScalanExp =>
         scalan :: transformedParams
       else
         transformedParams).asInstanceOf[List[AnyRef]]
-    val transformedP = constructor.newInstance(finalParams: _*).asInstanceOf[Product]
-    transformedP
+
+    try {
+      val transformedP = constructor.newInstance(finalParams: _*).asInstanceOf[Product]
+      transformedP
+    } catch {
+      case e =>
+        println(
+          s"""
+             | Graph nodes have scalan cake as the first paramenter ($$owner).
+             | Check that the trait where class $clazz is defined extends Base.
+             | Constructor parameter types: $clazz${constructor.getParameterTypes.map(_.getSimpleName).mkString("(", ",", ")")}
+             | """.stripMargin)
+        throw e
+    }
   }
 
   def fresh[T](implicit leT: LElem[T]): Exp[T]
