@@ -44,6 +44,7 @@ trait Scalan
   with ListViews
   with ConvertersDsl
   with Effectful
+  with Structs
 
 trait ScalanDsl
 extends Scalan
@@ -81,6 +82,7 @@ trait ScalanSeq
   with ListViewsSeq
   with ConvertersDslSeq
   with EffectfulSeq
+  with StructsSeq
 
 trait ScalanCtxSeq
 extends ScalanDsl
@@ -121,6 +123,7 @@ trait ScalanExp
   with ListViewsExp
   with ConvertersDslExp
   with EffectfulExp
+  with StructsExp
   with RewriteRulesExp
   with GraphVizExport
 

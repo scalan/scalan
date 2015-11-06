@@ -7,7 +7,7 @@ import scalan.primitives.{AbstractStringsDslExp, AbstractStringsDslSeq, Abstract
 /**
  * Created by zotov on 12/9/14.
  */
-trait JNIExtractorOps { self: Scalan with AbstractStringsDsl =>
+trait JNIExtractorOps extends Base { self: Scalan with AbstractStringsDsl =>
 
   class JNIType[T]
   class JNIClass
