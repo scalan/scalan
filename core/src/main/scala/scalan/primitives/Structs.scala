@@ -182,9 +182,8 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
 
   object StructsRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {
-
-      case _ =>
-        x
+      case Def(Tup(a, b)) => struct("1" -> a, "2" -> b)
+      case _ => x
     }).asRep[T]
   }
 

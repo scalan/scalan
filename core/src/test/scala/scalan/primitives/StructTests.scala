@@ -23,6 +23,13 @@ class StructTests extends BaseCtxTests {
       val c = in + in
       fields(struct("a" -> in, "b" -> b, "c" -> c).asRep[Any], Seq("a", "c")).asRep[Any]
     })(Lazy(element[Int]), structElement(Seq("a" -> eInt, "c" -> eInt)).asElem[Any])
+
+    lazy val t4 = fun({ (in: Rep[Int]) =>
+      Pair(in, in)
+    })
+    lazy val t5 = fun({ (in: Rep[Int]) =>
+      Pair(in, Pair(in, in + 1))
+    })
   }
 
   class Ctx extends TestCompilerContext {
@@ -70,5 +77,16 @@ class StructTests extends BaseCtxTests {
     import ctx.compiler.scalan._
     ctx.test
     ctx.test("t3", t3)
+  }
+
+  test("StructsRewriting") {
+    val ctx = new Ctx {
+      def test() = {
+      }
+    }
+    import ctx.compiler.scalan._
+    ctx.test
+    ctx.test("t4", t4)
+    ctx.test("t5", t5)
   }
 }
