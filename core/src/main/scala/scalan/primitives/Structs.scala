@@ -3,7 +3,7 @@ package scalan.primitives
 import scalan.common.Utils
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
-import scalan.{ScalanCtxExp, ScalanExp, ScalanSeq, Scalan, Base}
+import scalan._
 import scalan.common.OverloadHack._
 import scala.reflect.{Manifest}
 import scala.reflect.runtime._
@@ -47,10 +47,27 @@ trait Structs extends StructTags { self: Scalan =>
   def structElement(fields: Seq[(String, Elem[Any])]): StructElem[_] =
     cachedElem[StructElem[_]](fields)
 
+  def pairStructElement[A:Elem, B:Elem]: StructElem[_] =
+    structElement(Seq("_1" -> element[A].asElem[Any], "_2" -> element[B].asElem[Any]))
+
+  class StructIso[S, A, B](implicit eA: Elem[A], eB: Elem[B])
+    extends Iso[S, (A,B)]()(pairStructElement[A,B].asElem[S]) {
+    override def from(p: Rep[(A,B)]) =
+      pairStruct(p).asRep[S]
+    override def to(struct: Rep[S]) = {
+      (field(struct, "_1").asRep[A], field(struct, "_2").asRep[B])
+    }
+    lazy val eTo = element[(A,B)]
+  }
+
+  def isoStruct[S, A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[S, (A,B)] =
+    cachedIso[StructIso[S,A,B]](eA, eB)
+
   def struct(fields: (String, Rep[Any])*): Rep[_]
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_]
   def field(struct: Rep[Any], field: String): Rep[_]
   def fields(struct: Rep[Any], fields: Seq[String]): Rep[_]
+  def pairStruct[A,B](p: Rep[(A,B)]) = struct("_1" -> p._1, "_2" -> p._2)
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
@@ -60,7 +77,7 @@ trait StructsSeq extends Structs { self: ScalanSeq =>
   def fields(struct: Rep[Any], fields: Seq[String]): Rep[_] = ???
 }
 
-trait StructsExp extends Expressions with Structs with StructTags with EffectsExp
+trait StructsExp extends Expressions with Structs with StructTags with EffectsExp with ViewsExp
     with Utils with GraphVizExport { self: ScalanExp =>
 
 
@@ -175,6 +192,22 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
     case _ => super.formatDef(d)
   }
 
+  case class ViewStruct[A, B](source: Exp[A])(val iso: Iso[A, B])
+    extends View[A, B] {
+    override def toString = s"ViewStruct[${iso.eTo.name}]($source)"
+    override def equals(other: Any) = other match {
+      case v: ViewStruct[_, _] => source == v.source && iso.eTo == v.iso.eTo
+      case _ => false
+    }
+  }
+
+  override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
+    case Def(view: ViewStruct[a, b]) =>
+      Some((view.source, view.iso))
+    case _ =>
+      super.unapplyViews(s)
+  }).asInstanceOf[Option[Unpacked[T]]]
+
 }
 
 trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compiler[ScalanCake] {
@@ -189,7 +222,25 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
 
   override def graphPasses(compilerConfig: CompilerConfig) =
     super.graphPasses(compilerConfig) :+
-      constantPass(GraphTransformPass("structs", DefaultMirror, StructsRewriter))
+      constantPass(StructsPass(DefaultMirror, StructsRewriter))
+
+  case class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
+    def name = "structs"
+    val unpackPred: UnpackTester = e => e match {
+      case pe: PairElem[_,_] => true
+      case _ => false
+    }
+
+    def apply(graph: PGraph): PGraph = {
+      addUnpackTester(unpackPred)
+      graph.transform(mirror, rewriter, MapTransformer.Empty)
+    }
+
+    override def doFinalization(): Unit = {
+      removeUnpackTester(unpackPred)
+    }
+  }
+
 }
 
 

@@ -56,4 +56,12 @@ class HasViewsTests extends BaseViewTests {
     }
     emit("seqsSimpleMap", seqsSimpleMap)
   }
+
+  test("HasViews for structs") {
+    val ctx = new ViewTestsCtx with SegmentsDslExp with ScalanCommunityDslExp
+    import ctx._
+    val source: Rep[Any] = pairStruct(Pair(10,10))
+    testHasViews(ViewStruct(source)(isoStruct[Any, Int, Int]), pairStructElement[Int, Int])
+//    testHasViews(Pair(10,10), pairStructElement[Int, Int])
+  }
 }
