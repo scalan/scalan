@@ -333,8 +333,8 @@ trait SeqsExp extends scalan.ScalanExp with SeqsDsl {
         List(list.asInstanceOf[AnyRef], element[A]))
   }
 
-  case class ViewSSeq[A, B](source: Rep[SSeq[A]])(iso: Iso[A, B])
-    extends View1[A, B, SSeq](sSeqIso(iso)) {
+  case class ViewSSeq[A, B](source: Rep[SSeq[A]], override val innerIso: Iso[A, B])
+    extends View1[A, B, SSeq](sSeqIso(innerIso)) {
     override def toString = s"ViewSSeq[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewSSeq[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -560,7 +560,7 @@ trait SeqsExp extends scalan.ScalanExp with SeqsDsl {
       Some((view.source, view.iso))
     case UserTypeSSeq(iso: Iso[a, b]) =>
       val newIso = sSeqIso(iso)
-      val repr = reifyObject(UnpackView(s.asRep[SSeq[b]])(newIso))
+      val repr = reifyObject(UnpackView(s.asRep[SSeq[b]], newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)
@@ -569,10 +569,10 @@ trait SeqsExp extends scalan.ScalanExp with SeqsDsl {
   override def rewriteDef[T](d: Def[T]) = d match {
     case SSeqMethods.map(xs, Def(IdentityLambda())) => xs
 
-    case view1@ViewSSeq(Def(view2@ViewSSeq(arr))) =>
-      val compIso = composeIso(view1.innerIso, view2.innerIso)
+    case view1@ViewSSeq(Def(view2@ViewSSeq(arr, innerIso2)), innerIso1) =>
+      val compIso = composeIso(innerIso1, innerIso2)
       implicit val eAB = compIso.eTo
-      ViewSSeq(arr)(compIso)
+      ViewSSeq(arr, compIso)
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSSeqImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
@@ -590,7 +590,7 @@ trait SeqsExp extends scalan.ScalanExp with SeqsDsl {
         val f1 = f.asRep[a => c]
         implicit val eB = iso.eFrom
         val s = xs.map(f1 >> iso.fromFun)
-        val res = ViewSSeq(s)(iso)
+        val res = ViewSSeq(s, iso)
         res
       case (HasViews(source, Def(contIso: SSeqIso[a, b])), f: Rep[Function1[_, c] @unchecked]) =>
         val f1 = f.asRep[b => c]

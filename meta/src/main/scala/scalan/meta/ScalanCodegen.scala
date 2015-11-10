@@ -828,8 +828,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
     def familyView(e: EntityTemplateData) = {
       s"""
-        |  case class View${e.name}[A, B](source: Rep[${e.name}[A]])(iso: Iso[A, B])
-        |    extends View1[A, B, ${e.name}](${StringUtil.lowerCaseFirst(e.name)}Iso(iso)) {
+        |  case class View${e.name}[A, B](source: Rep[${e.name}[A]], override val innerIso: Iso[A, B])
+        |    extends View1[A, B, ${e.name}](${StringUtil.lowerCaseFirst(e.name)}Iso(innerIso)) {
         |    override def toString = s"View${e.name}[$${innerIso.eTo.name}]($$source)"
         |    override def equals(other: Any) = other match {
         |      case v: View${e.name}[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -844,10 +844,10 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         s"""
           |    case ${e.name}Methods.map(xs, Def(IdentityLambda())) => xs
           |
-          |    case view1@View${e.name}(Def(view2@View${e.name}(arr))) =>
-          |      val compIso = composeIso(view1.innerIso, view2.innerIso)
+          |    case view1@View${e.name}(Def(view2@View${e.name}(arr, innerIso2)), innerIso1) =>
+          |      val compIso = composeIso(innerIso1, innerIso2)
           |      implicit val eAB = compIso.eTo
-          |      View${e.name}(arr)(compIso)
+          |      View${e.name}(arr, compIso)
           |
           |    // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
           |    case mc @ MethodCall(Def(wrapper: Exp${e.name}Impl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
@@ -865,7 +865,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           |        val f1 = f.asRep[a => c]
           |        implicit val eB = iso.eFrom
           |        val s = xs.map(f1 >> iso.fromFun)
-          |        val res = View${e.name}(s)(iso)
+          |        val res = View${e.name}(s, iso)
           |        res
           |      case (HasViews(source, Def(contIso: ${e.name}Iso[a, b])), f: Rep[Function1[_, c] @unchecked]) =>
           |        val f1 = f.asRep[b => c]
@@ -900,7 +900,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |      Some((view.source, view.iso))
         |    case UserType${e.name}(iso: Iso[a, b]) =>
         |      val newIso = ${StringUtil.lowerCaseFirst(e.name)}Iso(iso)
-        |      val repr = reifyObject(UnpackView(s.asRep[${e.name}[b]])(newIso))
+        |      val repr = reifyObject(UnpackView(s.asRep[${e.name}[b]], newIso))
         |      Some((repr, newIso))
         |    case _ =>
         |      super.unapplyViews(s)

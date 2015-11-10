@@ -246,8 +246,8 @@ trait HashSetsExp extends scalan.ScalanExp with HashSetsDsl {
         List(element[A]))
   }
 
-  case class ViewSHashSet[A, B](source: Rep[SHashSet[A]])(iso: Iso[A, B])
-    extends View1[A, B, SHashSet](sHashSetIso(iso)) {
+  case class ViewSHashSet[A, B](source: Rep[SHashSet[A]], override val innerIso: Iso[A, B])
+    extends View1[A, B, SHashSet](sHashSetIso(innerIso)) {
     override def toString = s"ViewSHashSet[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewSHashSet[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -341,7 +341,7 @@ trait HashSetsExp extends scalan.ScalanExp with HashSetsDsl {
       Some((view.source, view.iso))
     case UserTypeSHashSet(iso: Iso[a, b]) =>
       val newIso = sHashSetIso(iso)
-      val repr = reifyObject(UnpackView(s.asRep[SHashSet[b]])(newIso))
+      val repr = reifyObject(UnpackView(s.asRep[SHashSet[b]], newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)
@@ -350,10 +350,10 @@ trait HashSetsExp extends scalan.ScalanExp with HashSetsDsl {
   override def rewriteDef[T](d: Def[T]) = d match {
     case SHashSetMethods.map(xs, Def(IdentityLambda())) => xs
 
-    case view1@ViewSHashSet(Def(view2@ViewSHashSet(arr))) =>
-      val compIso = composeIso(view1.innerIso, view2.innerIso)
+    case view1@ViewSHashSet(Def(view2@ViewSHashSet(arr, innerIso2)), innerIso1) =>
+      val compIso = composeIso(innerIso1, innerIso2)
       implicit val eAB = compIso.eTo
-      ViewSHashSet(arr)(compIso)
+      ViewSHashSet(arr, compIso)
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSHashSetImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
@@ -371,7 +371,7 @@ trait HashSetsExp extends scalan.ScalanExp with HashSetsDsl {
         val f1 = f.asRep[a => c]
         implicit val eB = iso.eFrom
         val s = xs.map(f1 >> iso.fromFun)
-        val res = ViewSHashSet(s)(iso)
+        val res = ViewSHashSet(s, iso)
         res
       case (HasViews(source, Def(contIso: SHashSetIso[a, b])), f: Rep[Function1[_, c] @unchecked]) =>
         val f1 = f.asRep[b => c]

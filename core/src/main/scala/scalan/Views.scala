@@ -516,7 +516,7 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
     implicit lazy val selfType = iso.eTo
   }
 
-  case class UnpackView[A, B](view: Rep[B])(implicit iso: Iso[A, B]) extends Def[A] {
+  case class UnpackView[A, B](view: Rep[B], iso: Iso[A, B]) extends Def[A] {
     implicit def selfType = iso.eFrom
   }
 
@@ -575,13 +575,13 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
     }
 
     // Rule: UnpackView(V(source, iso))  ==> source
-    case UnpackView(Def(UnpackableDef(source, _))) => source
+    case UnpackView(Def(UnpackableDef(source, _)), _) => source
 
     // Rule: ParExec(nJobs, f @ i => ... V(_, iso)) ==> V(ParExec(nJobs, f >> iso.from), arrayiso(iso))
     case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[a, b])))) =>
       implicit val ea = iso.eFrom
       val parRes = ParallelExecute(nJobs, fun { i => iso.from(f(i)) })(iso.eFrom)
-      ViewArray(parRes)(iso)
+      ViewArray(parRes, iso)
 
     // Rule: ArrayFold(xs, V(init, iso), step) ==> iso.to(ArrayFold(xs, init, p => iso.from(step(iso.to(p._1), p._2)) ))
     case ArrayFold(xs: Rep[Array[t]] @unchecked, HasViews(init, iso: Iso[a, b]), step) =>
