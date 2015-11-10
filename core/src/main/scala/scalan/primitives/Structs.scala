@@ -42,6 +42,7 @@ trait Structs extends StructTags { self: Scalan =>
     }
     def get(fieldName: String): Option[Elem[Any]] = fields.find(_._1 == fieldName).map(_._2)
     override def canEqual(other: Any) = other.isInstanceOf[StructElem[_]]
+    override def toString = s"${getClass.getSimpleName}{${fields.map { case (fn,fe) => s"$fn: $fe"}.mkString(";")}}"
   }
 
   def structElement(fields: Seq[(String, Elem[Any])]): StructElem[_] =
@@ -53,7 +54,7 @@ trait Structs extends StructTags { self: Scalan =>
   class StructIso[S, A, B](implicit eA: Elem[A], eB: Elem[B])
     extends Iso[S, (A,B)]()(pairStructElement[A,B].asElem[S]) {
     override def from(p: Rep[(A,B)]) =
-      pairStruct(p).asRep[S]
+      structFromPair(p).asRep[S]
     override def to(struct: Rep[S]) = {
       (field(struct, "_1").asRep[A], field(struct, "_2").asRep[B])
     }
@@ -67,7 +68,7 @@ trait Structs extends StructTags { self: Scalan =>
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_]
   def field(struct: Rep[Any], field: String): Rep[_]
   def fields(struct: Rep[Any], fields: Seq[String]): Rep[_]
-  def pairStruct[A,B](p: Rep[(A,B)]) = struct("_1" -> p._1, "_2" -> p._2)
+  def structFromPair[A,B](p: Rep[(A,B)]) = struct("_1" -> p._1, "_2" -> p._2)
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
@@ -226,18 +227,9 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
 
   case class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
     def name = "structs"
-    val unpackPred: UnpackTester = e => e match {
-      case pe: PairElem[_,_] => true
-      case _ => false
-    }
 
     def apply(graph: PGraph): PGraph = {
-      addUnpackTester(unpackPred)
       graph.transform(mirror, rewriter, MapTransformer.Empty)
-    }
-
-    override def doFinalization(): Unit = {
-      removeUnpackTester(unpackPred)
     }
   }
 

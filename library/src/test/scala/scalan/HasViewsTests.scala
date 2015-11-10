@@ -2,6 +2,8 @@ package scalan
 
 import scala.language.reflectiveCalls
 import scalan.common.SegmentsDslExp
+import scalan.compilation.DummyCompiler
+import scalan.primitives.StructsCompiler
 
 class HasViewsTests extends BaseViewTests {
 
@@ -57,11 +59,24 @@ class HasViewsTests extends BaseViewTests {
     emit("seqsSimpleMap", seqsSimpleMap)
   }
 
+  class StructsCtx extends TestCompilerContext {
+    class ScalanCake extends ViewTestsCtx with SegmentsDslExp with ScalanCommunityDslExp {
+    }
+    override val compiler = new DummyCompiler(new ScalanCake) with StructsCompiler[ScalanCake]
+  }
+
   test("HasViews for structs") {
-    val ctx = new ViewTestsCtx with SegmentsDslExp with ScalanCommunityDslExp
+    val ctx = new StructsCtx
     import ctx._
-    val source: Rep[Any] = pairStruct(Pair(10,10))
+    import compiler._
+    import scalan._
+    scalan.shouldUnpackTuples = true
+    val s = Pair(10, Pair(10, 10))
+    val source: Rep[Any] = structFromPair(Pair(10,10))
+
+    testNoViews(source)
     testHasViews(ViewStruct(source)(isoStruct[Any, Int, Int]), pairStructElement[Int, Int])
-//    testHasViews(Pair(10,10), pairStructElement[Int, Int])
+    testHasViews(Pair(10,10), pairStructElement[Int, Int])
+    testHasViews(s, pairElement(element[Int], pairStructElement[Int,Int]))
   }
 }

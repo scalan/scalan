@@ -76,18 +76,17 @@ trait Views extends Elems { self: Scalan =>
   }
 
   object UnpackableElem {
-    def unapply(e: Elem[_]) =
-      if (shouldUnpack(e)) {
-        val iso = getIsoByElem(e)
-        if (iso.isIdentity)
-          None
-        else
-          Some(iso)
-      }
-      else None
+    def unapply(e: Elem[_]) = {
+      val iso = getIsoByElem(e)
+      if (iso.isIdentity)
+        None
+      else
+        Some(iso)
+    }
   }
 
   def shouldUnpack(e: Elem[_]): Boolean
+  var shouldUnpackTuples = false
 
   def getIsoByElem[T](e: Elem[T]): Iso[_, T] = isoCache.getOrElseUpdate(
     (classOf[Iso[_, _]], Seq(e)),
@@ -100,9 +99,21 @@ trait Views extends Elems { self: Scalan =>
         else
           composeIso(ve.iso, deepIso)
       case pe: PairElem[a,b] =>
-        val iso1 = getIsoByElem(pe.eFst)
-        val iso2 = getIsoByElem(pe.eSnd)
-        pairIso(iso1,iso2)
+        val iso1 = getIsoByElem(pe.eFst).asInstanceOf[Iso[Any,a]]
+        val iso2 = getIsoByElem(pe.eSnd).asInstanceOf[Iso[Any,b]]
+        if (iso1.isIdentity && iso2.isIdentity) {
+          if (shouldUnpackTuples) {
+            val sIso = isoStruct[Any, a, b](pe.eFst, pe.eSnd)
+            sIso
+          }
+          else
+            pairIso(iso1, iso2)
+        }
+        else {
+          val pIso = pairIso(iso1,iso2)
+          val deepIso = getIsoByElem(pIso.eFrom)
+          composeIso(pIso, deepIso)
+        }
       case pe: SumElem[a,b] =>
         val iso1 = getIsoByElem(pe.eLeft)
         val iso2 = getIsoByElem(pe.eRight)
@@ -144,6 +155,8 @@ trait Views extends Elems { self: Scalan =>
         identityIso(ee)
       case be: BaseElem[_] =>
         identityIso(be)
+      case se: StructElem[_] =>
+        identityIso(se)
       case _ => !!!(s"Don't know how to build iso for element $e")
     }
   ).asInstanceOf[Iso[_,T]]
@@ -286,7 +299,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
   type UnpackTester = Element[_] => Boolean
 
-  private var unpackTesters: Set[UnpackTester] = Set.empty
+  protected var unpackTesters: Set[UnpackTester] = Set.empty
 
   def addUnpackTester(tester: UnpackTester): Unit =
     unpackTesters += tester
@@ -294,6 +307,8 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     unpackTesters -= tester
 
   def shouldUnpack(e: Elem[_]) = unpackTesters.exists(_(e))
+
+  def defaultUnpackTester(e: Elem[_]) = true //e match { case pe: PairElem[_,_] => false case _ => true }
 
   object HasViews {
     def unapply[T](s: Exp[T]): Option[Unpacked[T]] =
@@ -304,14 +319,6 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   protected def trivialUnapply[T](s: Exp[T]) = (s, identityIso(s.elem))
 
   def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
-    case Def(Tup(s1, s2)) =>
-      (unapplyViews(s1), unapplyViews(s2)) match {
-        case (None, None) => None
-        case (opt1, opt2) =>
-          val (sv1, iso1) = opt1.getOrElse(trivialUnapply(s1))
-          val (sv2, iso2) = opt2.getOrElse(trivialUnapply(s2))
-          Some((Pair(sv1, sv2), pairIso(iso1, iso2)))
-      }
     case Def(l @ SLeft(s)) =>
       (unapplyViews(s), UnpackableElem.unapply(l.eRight)) match {
         case (None, None) => None
