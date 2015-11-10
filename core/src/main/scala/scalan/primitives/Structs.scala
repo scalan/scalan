@@ -45,18 +45,23 @@ trait Structs extends StructTags { self: Scalan =>
     override def toString = s"${getClass.getSimpleName}{${fields.map { case (fn,fe) => s"$fn: $fe"}.mkString(";")}}"
   }
 
+  /**
+   * Get tuple field name by index
+   */
+  def fn(fieldIndex: Int) = s"_$fieldIndex"
+
   def structElement(fields: Seq[(String, Elem[Any])]): StructElem[_] =
     cachedElem[StructElem[_]](fields)
 
   def pairStructElement[A:Elem, B:Elem]: StructElem[_] =
-    structElement(Seq("_1" -> element[A].asElem[Any], "_2" -> element[B].asElem[Any]))
+    structElement(Seq(fn(1) -> element[A].asElem[Any], fn(2) -> element[B].asElem[Any]))
 
   class StructIso[S, A, B](implicit eA: Elem[A], eB: Elem[B])
     extends Iso[S, (A,B)]()(pairStructElement[A,B].asElem[S]) {
     override def from(p: Rep[(A,B)]) =
       structFromPair(p).asRep[S]
     override def to(struct: Rep[S]) = {
-      (field(struct, "_1").asRep[A], field(struct, "_2").asRep[B])
+      (field(struct, 1).asRep[A], field(struct, 2).asRep[B])
     }
     lazy val eTo = element[(A,B)]
   }
@@ -67,8 +72,9 @@ trait Structs extends StructTags { self: Scalan =>
   def struct(fields: (String, Rep[Any])*): Rep[_]
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_]
   def field(struct: Rep[Any], field: String): Rep[_]
+  def field(struct: Rep[Any], fieldIndex: Int): Rep[_] = field(struct, fn(fieldIndex))
   def fields(struct: Rep[Any], fields: Seq[String]): Rep[_]
-  def structFromPair[A,B](p: Rep[(A,B)]) = struct("_1" -> p._1, "_2" -> p._2)
+  def structFromPair[A,B](p: Rep[(A,B)]) = struct(fn(1) -> p._1, fn(2) -> p._2)
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
@@ -216,7 +222,7 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
 
   object StructsRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {
-      case Def(Tup(a, b)) => struct("1" -> a, "2" -> b)
+      case Def(Tup(a, b)) => struct(fn(1) -> a, fn(2) -> b)
       case _ => x
     }).asRep[T]
   }
