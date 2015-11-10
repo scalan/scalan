@@ -53,11 +53,17 @@ trait Structs extends StructTags { self: Scalan =>
   def structElement(fields: Seq[(String, Elem[Any])]): StructElem[_] =
     cachedElem[StructElem[_]](fields)
 
-  def pairStructElement[A:Elem, B:Elem]: StructElem[_] =
-    structElement(Seq(fn(1) -> element[A].asElem[Any], fn(2) -> element[B].asElem[Any]))
+  def tupleElem(fields: Seq[Elem[_]]): StructElem[_] =
+    cachedElem[StructElem[_]](fields.zipWithIndex.map { case (f, i) => fn(i + 1) -> f })
+
+  def tupleElem2[A:Elem, B:Elem]: StructElem[_] =
+    tupleElem(Seq(element[A], element[B]))
+
+  def tupleElem3[A:Elem, B:Elem, C:Elem]: StructElem[_] =
+    tupleElem(Seq(element[A], element[B], element[C]))
 
   class StructIso[S, A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends Iso[S, (A,B)]()(pairStructElement[A,B].asElem[S]) {
+    extends Iso[S, (A,B)]()(tupleElem2[A,B].asElem[S]) {
     override def from(p: Rep[(A,B)]) =
       structFromPair(p).asRep[S]
     override def to(struct: Rep[S]) = {
@@ -69,12 +75,16 @@ trait Structs extends StructTags { self: Scalan =>
   def isoStruct[S, A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[S, (A,B)] =
     cachedIso[StructIso[S,A,B]](eA, eB)
 
+  implicit class StructOps(s: Rep[_]) {
+    def apply(iField: Int): Rep[_] = field(s, iField)
+  }
+
   def struct(fields: (String, Rep[Any])*): Rep[_]
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_]
   def field(struct: Rep[Any], field: String): Rep[_]
   def field(struct: Rep[Any], fieldIndex: Int): Rep[_] = field(struct, fn(fieldIndex))
   def fields(struct: Rep[Any], fields: Seq[String]): Rep[_]
-  def structFromPair[A,B](p: Rep[(A,B)]) = struct(fn(1) -> p._1, fn(2) -> p._2)
+  def structFromPair[A,B](p: Rep[(A,B)]): Rep[_] = struct(fn(1) -> p._1, fn(2) -> p._2)
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
@@ -195,7 +205,7 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
       s"$name{${fields.map { case (fn, s) => s"$fn:$s" }.mkString(";")}}"
 
     case ProjectionStruct(struct, outs) => s"$struct.${outs.mkString("[",",", "]")}"
-    case FieldApply(struct, fn) => s"$struct.$fn"
+    case FieldApply(struct, fn) => s"$struct.[$fn]"
     case _ => super.formatDef(d)
   }
 

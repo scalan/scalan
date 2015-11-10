@@ -27,13 +27,46 @@ class StructTests extends BaseCtxTests {
     lazy val t4 = fun({ (in: Rep[Int]) =>
       Pair(in, in)
     })
+
     lazy val t5 = fun({ (in: Rep[Int]) =>
       Pair(in, Pair(in, in + 1))
+    })
+
+    def structWrapper2x2[A:Elem,B:Elem,C:Elem,D:Elem](f: Rep[(A,B)] => Rep[(C,D)]): Rep[Any => Any] = {
+      val eIn = tupleElem2[A,B].asElem[Any]
+      val eOut = tupleElem2[C,D].asElem[Any]
+      val inIso = isoStruct[Any,A,B]
+      val outIso = isoStruct[Any,C,D]
+      fun({ (in: Rep[Any]) =>
+        outIso.from(f(inIso.to(in)))
+      })(Lazy(eIn),eOut)
+    }
+
+    lazy val t6 = structWrapper2x2({ (in: Rep[(Int,Int)]) => in })
+    lazy val t7 = structWrapper2x2({ (in: Rep[(Int,Int)]) =>
+      Pair(in._1 + in._2, in._1 - in._2)
+    })
+    lazy val t8 = structWrapper2x2({ (in: Rep[(Int,Int)]) =>
+      Pair(in._2, in._1)
     })
   }
 
   class Ctx extends TestCompilerContext {
-    override val compiler = new DummyCompiler(new ScalanCtxExp with MyProg)
+    class ScalanCake extends ScalanCtxExp with MyProg {
+
+      def noTuples[A,B](f: Rep[A=>B]): Boolean = f match {
+        case Def(l: Lambda[_,_]) =>
+          !l.scheduleAll.exists(tp => tp.rhs match {
+            case First(_) => true
+            case Second(_) => true
+            case Tup(_,_) => true
+            case _ => false
+          })
+        case _ => !!!("Lambda node expected", f)
+      }
+
+    }
+    override val compiler = new DummyCompiler(new ScalanCake)
                            with StructsCompiler[ScalanCtxExp with MyProg]
   }
 
@@ -88,5 +121,21 @@ class StructTests extends BaseCtxTests {
     ctx.test
     ctx.test("t4", t4)
     ctx.test("t5", t5)
+  }
+
+  test("StructWrapper2x2") {
+    val ctx = new Ctx {
+      import compiler.scalan._
+      def test() = {
+        assert(noTuples(t6))
+        assert(noTuples(t7))
+        assert(noTuples(t8))
+      }
+    }
+    import ctx.compiler.scalan._
+    ctx.test
+    ctx.test("t6", t6)
+    ctx.test("t7", t7)
+    ctx.test("t8", t8)
   }
 }
