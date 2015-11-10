@@ -53,10 +53,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseE
         val f1 = f.asRep[a => c]
         implicit val eA = xs.elem.eItem
         implicit val eB = iso.eFrom
-        val s = xs.map { x =>
-          val tmp = f1(x)
-          iso.from(tmp)
-        }
+        val s = xs.mapBy(f1 >> iso.fromFun)
         val res = ViewList(s, iso)
         res
       }
@@ -64,9 +61,8 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseE
         val iso = view.innerIso
         val ff = lm.f.asRep[b => c]
         implicit val eA = iso.eFrom
-        implicit val eB = iso.eTo
         implicit val eC = ff.elem.eRange
-        view.source.map { x => ff(iso.to(x))}
+        view.source.mapBy(iso.toFun >> ff)
       }
       case _ =>
         super.rewriteDef(d)
@@ -78,10 +74,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseE
         implicit val eA = xs1.elem.eItem
         implicit val eC = listIso.innerIso.eFrom
 
-        val s = xs1.flatMap { x =>
-          val tmp = f1(x)
-          listIso.from(tmp)
-        }
+        val s = xs1.flatMapBy(f1 >> listIso.fromFun)
         val res = ViewList(s, listIso.innerIso)
         res
       }
@@ -89,10 +82,8 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseE
         val iso = view.innerIso
         val f = lm.f.asRep[b => List[c]]
         implicit val eA = iso.eFrom
-        implicit val eB = iso.eTo
-        implicit val eAC: Elem[List[c]] = f.elem.eRange
-        implicit val eC = eAC.eItem
-        view.source.flatMap { x => f(iso.to(x)) }
+        implicit val eC = f.elem.eRange.eItem
+        view.source.flatMapBy(iso.toFun >> f)
       }
       case _ =>
         super.rewriteDef(d)
@@ -101,7 +92,7 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseE
       val iso = view.innerIso
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
-      val filtered = view.source.filter { x => f(iso.to(x))}
+      val filtered = view.source.filterBy(iso.toFun >> f)
       ViewList(filtered, iso)
     }
     case view1@ViewList(Def(view2@ViewList(arr, innerIso2)), innerIso1) => {
@@ -124,7 +115,8 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseE
         implicit val eS1 = iso.eFrom
         implicit val eS2 = iso.eTo
         val res = xs.foldLeft(init)(fun {(p: Rep[(s1,a)]) =>
-          iso.from(step(Pair(iso.to(p._1), p._2)))})
+          iso.from(step(Pair(iso.to(p._1), p._2)))
+        })
         iso.to(res)
       }
       case _ =>
@@ -145,7 +137,8 @@ trait ListViewsExp extends ListViews with ListOpsExp with ViewsDslExp with BaseE
         implicit val eS1 = iso.eFrom
         implicit val eS2 = iso.eTo
         val res = xs.foldRight(init)(fun {(p: Rep[(a,s1)]) =>
-          iso.from(step(Pair(p._1, iso.to(p._2))))})
+          iso.from(step(Pair(p._1, iso.to(p._2))))
+        })
         iso.to(res)
       }
       case _ =>

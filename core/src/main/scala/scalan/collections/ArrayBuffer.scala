@@ -138,9 +138,8 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
   def mapUnderlyingArrayBuffer[A,B,C](view: ViewArrayBuffer[A,B], f: Rep[B=>C]): Arr[C] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
     implicit val eC: Elem[C] = f.elem.eRange
-    view.source.map { x => f(iso.to(x)) }
+    view.source.mapBy(iso.toFun >> f)
   }
 
   def liftArrayBufferViewFromArgs[T](d: Def[T])/*(implicit eT: Elem[T])*/: Option[Exp[_]] = d match {
@@ -216,10 +215,7 @@ trait ArrayBuffersExp extends ArrayBuffers with ViewsDslExp { self: ScalanExp =>
       val xs1 = xs.asRep[ArrayBuffer[a]]
       implicit val eA = xs1.elem.eItem
       implicit val eC = iso.eFrom
-      val s = xs1.map { x =>
-        val tmp = f1(x)
-        iso.from(tmp)
-      }
+      val s = xs1.mapBy(f1 >> iso.fromFun)
       ViewArrayBuffer(s, iso)
     case view1@ViewArrayBuffer(Def(view2@ViewArrayBuffer(arr, innerIso2)), innerIso1) =>
       val compIso = composeIso(innerIso1, innerIso2)

@@ -45,43 +45,37 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsDslExp with Ba
   private def flatMapUnderlyingArray[A,B,C](view: ViewArray[A,B], f: Rep[B=>Array[C]]): Arr[C] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    implicit val eAC: Elem[Array[C]] = f.elem.eRange
-    implicit val eC = eAC.eItem
-    view.source.flatMap { x => f(iso.to(x)) }
+    implicit val eC = f.elem.eRange.eItem
+    view.source.flatMapBy(iso.toFun >> f)
   }
 
   private def mapUnderlyingArray[A,B,C](view: ViewArray[A,B], f: Rep[B=>C]): Arr[C] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
     implicit val eC: Elem[C] = f.elem.eRange
-    view.source.map { x => f(iso.to(x)) }
+    view.source.mapBy(iso.toFun >> f)
   }
 
   private def reduceUnderlyingArray[A,B](view: ViewArray[A,B], m: RepMonoid[B]): Rep[A] = {
     val iso = view.innerIso
     println(iso)
     implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
     val zeroNew = iso.from(m.zero)
     val newMonoid = new RepMonoid(m.opName, zeroNew, fun { p: Rep[(A, A)] => iso.from(m.append(iso.to(p._1), iso.to(p._2)))}, m.isCommutative)(eA)
-    view.source.reduce( newMonoid)
+    view.source.reduce(newMonoid)
   }
 
   private def mapReduceUnderlyingArray[A,B,K,V](view: ViewArray[A,B], map: Rep[B=>(K,V)], reduce: Rep[((V,V))=>V]): MM[K,V] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
     implicit val eK: Elem[K] = map.elem.eRange.eFst
     implicit val eV: Elem[V] = map.elem.eRange.eSnd
-    view.source.mapReduceBy[K,V]( fun { x => map(iso.to(x)) }, reduce)
+    view.source.mapReduceBy[K,V](iso.toFun >> map, reduce)
   }
 
   private def foldUnderlyingArray[A,B,S](view: ViewArray[A,B], init:Rep[_], f: Rep[((S,B)) => S]): Rep[S] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
     implicit val eS = f.elem.eRange
     view.source.fold[S](init.asRep[S], fun { p => f((p._1, iso.to(p._2))) })
   }
@@ -89,8 +83,7 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsDslExp with Ba
   private def filterUnderlyingArray[A, B](view: ViewArray[A, B], f: Rep[B => Boolean]): Arr[B] = {
     val iso = view.innerIso
     implicit val eA = iso.eFrom
-    implicit val eB = iso.eTo
-    val filtered = view.source.filter { x => f(iso.to(x)) }
+    val filtered = view.source.filterBy(iso.toFun >> f)
     ViewArray(filtered, iso)
   }
 
@@ -189,27 +182,16 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsDslExp with Ba
       val f1 = f.asRep[a => b]
       val xs1 = xs.asRep[Array[a]]
       implicit val eA = xs1.elem.eItem
-      // implicit val eB = iso.eTo
       implicit val eC = iso.eFrom
-      // implicit val leA = Lazy(eA)
-      val s = xs1.map { x =>
-        val tmp = f1(x)
-        iso.from(tmp)
-        // UnpackView(f1(x))(iso)
-      }
+      val s = xs1.mapBy(iso.fromFun << f1)
       val res = ViewArray(s, iso)
-      // val res = ViewArray(s.values)(iso).nestBy(s.segments)
       res
     case ArrayFlatMap(xs: Arr[a] @unchecked, f@Def(Lambda(_, _, _, UnpackableExp(_, Def(arrIso: ArrayIso[c, b]))))) =>
       val f1 = f.asRep[a => Array[b]]
       val xs1 = xs.asRep[Array[a]]
       implicit val eA = xs1.elem.eItem
       implicit val eC = arrIso.innerIso.eFrom
-
-      val s = xs1.flatMap { x =>
-        val tmp = f1(x)
-        arrIso.from(tmp)
-      }
+      val s = xs1.flatMapBy(arrIso.fromFun << f1)
       val res = ViewArray(s, arrIso.innerIso)
       res
 
