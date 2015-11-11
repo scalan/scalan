@@ -65,6 +65,12 @@ class StructTests extends BaseCtxTests {
         case _ => !!!("Lambda node expected", f)
       }
 
+      def testFlattening[T](e: StructElem[T], expectedStructFields: Seq[Elem[_]]) = {
+        val iso = flatteningIso(e)
+        val eFrom = iso.eFrom.asInstanceOf[StructElem[_]]
+        assertResult(expectedStructFields)(eFrom.fields.map(_._2))
+        iso
+      }
     }
     override val compiler = new DummyCompiler(new ScalanCake)
                            with StructsCompiler[ScalanCtxExp with MyProg]
@@ -137,5 +143,40 @@ class StructTests extends BaseCtxTests {
     ctx.test("t6", t6)
     ctx.test("t7", t7)
     ctx.test("t8", t8)
+  }
+
+  test("flatteningIso") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
+
+    {
+      val iso = testFlattening(tupleElem2[Int,Int], Seq(element[Int], element[Int]))
+      assert(iso.isIdentity, "when flattening is not necessary should return identity iso")
+    }
+
+    {
+      val iso = testFlattening(tupleElem2(element[Int], tupleElem2[Double,Boolean]),
+        Seq(element[Int], element[Double], element[Boolean]))
+        ctx.test("t1_iso.to", iso.toFun)
+        ctx.test("t1_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(tupleElem2(tupleElem2[Int,Char], tupleElem2[Double,Boolean]),
+        Seq(element[Int], element[Char], element[Double], element[Boolean]))
+        ctx.test("t2_iso.to", iso.toFun)
+        ctx.test("t2_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(tupleElem2(element[Int], tupleElem2(element[Char], tupleElem2(element[Double], element[Boolean]))),
+        Seq(element[Int], element[Char], element[Double], element[Boolean]))
+        ctx.test("t3_iso.to", iso.toFun)
+        ctx.test("t3_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(tupleElem2(tupleElem2(element[Short],element[Int]), tupleElem2(element[Char], tupleElem2(element[Double], element[Boolean]))),
+        Seq(element[Short], element[Int], element[Char], element[Double], element[Boolean]))
+        ctx.test("t4_iso.to", iso.toFun)
+        ctx.test("t4_iso.from", iso.fromFun)
+    }
   }
 }

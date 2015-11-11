@@ -115,6 +115,13 @@ class ViewTests extends BaseViewTests {
 
     testGetIso(element[Thunk[Segment]], element[Thunk[Segment]])
     testGetIso(element[Thunk[Interval]], element[Thunk[(Int,Int)]])
+  }
 
+  test("getIsoByElem for structs") {
+    val ctx = new ViewTestsCtx with SegmentsDslExp
+    import ctx._
+    ctx.shouldUnpackTuples = true
+    testGetIso(element[(Int,Int)], tupleElem2[Int,Int])
+//    testGetIso(element[(Int,(Int,Int))], tupleElem3[Int,Int,Int])
   }
 }

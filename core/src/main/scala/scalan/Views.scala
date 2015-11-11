@@ -101,7 +101,7 @@ trait Views extends Elems { self: Scalan =>
       case pe: PairElem[a,b] =>
         val iso1 = getIsoByElem(pe.eFst).asInstanceOf[Iso[Any,a]]
         val iso2 = getIsoByElem(pe.eSnd).asInstanceOf[Iso[Any,b]]
-        if (iso1.isIdentity && iso2.isIdentity) {
+        val resIso = if (iso1.isIdentity && iso2.isIdentity) {
           if (shouldUnpackTuples) {
             val sIso = isoStruct[Any, a, b](pe.eFst, pe.eSnd)
             sIso
@@ -114,6 +114,8 @@ trait Views extends Elems { self: Scalan =>
           val deepIso = getIsoByElem(pIso.eFrom)
           composeIso(pIso, deepIso)
         }
+        resIso
+
       case pe: SumElem[a,b] =>
         val iso1 = getIsoByElem(pe.eLeft)
         val iso2 = getIsoByElem(pe.eRight)

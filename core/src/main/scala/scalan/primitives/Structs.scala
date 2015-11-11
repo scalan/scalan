@@ -43,18 +43,19 @@ trait Structs extends StructTags { self: Scalan =>
     def get(fieldName: String): Option[Elem[Any]] = fields.find(_._1 == fieldName).map(_._2)
     override def canEqual(other: Any) = other.isInstanceOf[StructElem[_]]
     override def toString = s"${getClass.getSimpleName}{${fields.map { case (fn,fe) => s"$fn: $fe"}.mkString(";")}}"
+    def fieldElems: Seq[Elem[Any]] = fields.map(_._2)
   }
 
   /**
    * Get tuple field name by index
    */
-  def fn(fieldIndex: Int) = s"_$fieldIndex"
+  def tupleFN(fieldIndex: Int) = s"_$fieldIndex"
 
   def structElement(fields: Seq[(String, Elem[Any])]): StructElem[_] =
     cachedElem[StructElem[_]](fields)
 
   def tupleElem(fields: Seq[Elem[_]]): StructElem[_] =
-    cachedElem[StructElem[_]](fields.zipWithIndex.map { case (f, i) => fn(i + 1) -> f })
+    cachedElem[StructElem[_]](fields.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f })
 
   def tupleElem2[A:Elem, B:Elem]: StructElem[_] =
     tupleElem(Seq(element[A], element[B]))
@@ -82,9 +83,84 @@ trait Structs extends StructTags { self: Scalan =>
   def struct(fields: (String, Rep[Any])*): Rep[_]
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_]
   def field(struct: Rep[Any], field: String): Rep[_]
-  def field(struct: Rep[Any], fieldIndex: Int): Rep[_] = field(struct, fn(fieldIndex))
+  def field(struct: Rep[Any], fieldIndex: Int): Rep[_] = field(struct, tupleFN(fieldIndex))
   def fields(struct: Rep[Any], fields: Seq[String]): Rep[_]
-  def structFromPair[A,B](p: Rep[(A,B)]): Rep[_] = struct(fn(1) -> p._1, fn(2) -> p._2)
+  def structFromPair[A,B](p: Rep[(A,B)]): Rep[_] = struct(tupleFN(1) -> p._1, tupleFN(2) -> p._2)
+  def tuple(items: Rep[Any]*): Rep[_] = struct(items.zipWithIndex.map { case (item, i) => tupleFN(i + 1) -> item }: _*)
+
+  case class Link(field: String, nestedField: String, nestedElem: Elem[_], flatIndex: Int)
+
+  class FlatteningIso[T](val eTo: StructElem[T], val flatIsos: Map[String, Iso[Any,Any]], links: Seq[Link])
+      extends Iso[Any,T]()(tupleElem(links.map(_.nestedElem)).asElem[Any]) {
+
+    val groups = links.groupBy(_.field)
+
+    def to(x: Rep[Any]) = {
+      val items = eTo.fields.map { case (fn, fe) =>
+        val g = groups(fn)
+        flatIsos.get(fn) match {
+          case Some(iso) =>
+            val projectedStruct = struct(g.map(link => (link.nestedField -> field(x, link.flatIndex))): _*)
+            val s = iso.to(projectedStruct)
+            (fn -> s)
+          case None =>
+            assert(g.length == 1, s"Many fields $g can't relate to the single field $fn without iso")
+            (fn -> field(x, g(0).flatIndex))
+        }
+      }
+      struct(items: _*).asRep[T]
+    }
+
+    def from(y: Rep[T]) = {
+      val items = eTo.fields.flatMap { case (fn, fe) =>
+        val g = groups(fn)
+        flatIsos.get(fn) match {
+          case Some(iso) =>
+            val nestedStruct = iso.from(field(y, fn))
+            g.map(link =>
+              tupleFN(link.flatIndex) -> field(nestedStruct, link.nestedField))
+          case None =>
+            List(tupleFN(g(0).flatIndex) -> field(y, fn))
+        }
+      }
+      struct(items: _*).asRep[T]
+    }
+  }
+
+  /**
+   * Flattens top level tree of structs in [[eTo]]. Types other than structs are considered as leaves.
+   * @param eTo descriptor of struct type
+   * @return an isomorphism [[i]] in which [[eTo]] is given by param and [[eFrom]] is flattened [[eTo]] preserving
+   *         related order of the components
+   */
+  def flatteningIso[T](eTo: StructElem[T]): Iso[_,T] = {
+    val flatIsos = eTo.fields.collect {
+      case (fn, fe: StructElem[_]) => (fn, flatteningIso(fe).asInstanceOf[Iso[Any,Any]])
+      }.toMap
+
+    if (flatIsos.isEmpty) return identityIso(eTo)
+
+    // relate resulting field types by original field name
+    val fromFields = eTo.fields.flatMap {
+      case (fn, fe) =>
+        flatIsos.get(fn) match {
+          case Some(iso) =>
+            iso.eFrom match {
+              case flatElem: StructElem[_] =>
+                flatElem.fields.map { case (nestedName, nestedE) => (fn, nestedName -> nestedE) }
+              case _ => !!!(s"StructElem is expected as eFrom of flattened Iso $iso")
+            }
+          case None => List((fn, "" -> fe))
+        }
+    }
+
+    val links = fromFields.zipWithIndex.map {
+      case ((fn, (nestedN, nestedE)), i) => Link(fn, nestedN, nestedE, i + 1)
+    }
+
+    val res = new FlatteningIso(eTo, flatIsos, links)
+    res.asInstanceOf[Iso[_,T]]
+  }
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
@@ -232,7 +308,7 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
 
   object StructsRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {
-      case Def(Tup(a, b)) => struct(fn(1) -> a, fn(2) -> b)
+      case Def(Tup(a, b)) => struct(tupleFN(1) -> a, tupleFN(2) -> b)
       case _ => x
     }).asRep[T]
   }
