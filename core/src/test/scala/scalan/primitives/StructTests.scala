@@ -33,10 +33,10 @@ class StructTests extends BaseCtxTests {
     })
 
     def structWrapper2x2[A:Elem,B:Elem,C:Elem,D:Elem](f: Rep[(A,B)] => Rep[(C,D)]): Rep[Any => Any] = {
-      val eIn = tupleElem2[A,B].asElem[Any]
-      val eOut = tupleElem2[C,D].asElem[Any]
-      val inIso = isoStruct[Any,A,B]
-      val outIso = isoStruct[Any,C,D]
+      val eIn = structElem2[A,B].asElem[Any]
+      val eOut = structElem2[C,D].asElem[Any]
+      val inIso = pairStructIso[Any,A,B]
+      val outIso = pairStructIso[Any,C,D]
       fun({ (in: Rep[Any]) =>
         outIso.from(f(inIso.to(in)))
       })(Lazy(eIn),eOut)
@@ -150,30 +150,30 @@ class StructTests extends BaseCtxTests {
     import ctx.compiler.scalan._
 
     {
-      val iso = testFlattening(tupleElem2[Int,Int], Seq(element[Int], element[Int]))
+      val iso = testFlattening(structElem2[Int,Int], Seq(element[Int], element[Int]))
       assert(iso.isIdentity, "when flattening is not necessary should return identity iso")
     }
 
     {
-      val iso = testFlattening(tupleElem2(element[Int], tupleElem2[Double,Boolean]),
+      val iso = testFlattening(structElem2(element[Int], structElem2[Double,Boolean]),
         Seq(element[Int], element[Double], element[Boolean]))
         ctx.test("t1_iso.to", iso.toFun)
         ctx.test("t1_iso.from", iso.fromFun)
     }
     {
-      val iso = testFlattening(tupleElem2(tupleElem2[Int,Char], tupleElem2[Double,Boolean]),
+      val iso = testFlattening(structElem2(structElem2[Int,Char], structElem2[Double,Boolean]),
         Seq(element[Int], element[Char], element[Double], element[Boolean]))
         ctx.test("t2_iso.to", iso.toFun)
         ctx.test("t2_iso.from", iso.fromFun)
     }
     {
-      val iso = testFlattening(tupleElem2(element[Int], tupleElem2(element[Char], tupleElem2(element[Double], element[Boolean]))),
+      val iso = testFlattening(structElem2(element[Int], structElem2(element[Char], structElem2(element[Double], element[Boolean]))),
         Seq(element[Int], element[Char], element[Double], element[Boolean]))
         ctx.test("t3_iso.to", iso.toFun)
         ctx.test("t3_iso.from", iso.fromFun)
     }
     {
-      val iso = testFlattening(tupleElem2(tupleElem2(element[Short],element[Int]), tupleElem2(element[Char], tupleElem2(element[Double], element[Boolean]))),
+      val iso = testFlattening(structElem2(structElem2(element[Short],element[Int]), structElem2(element[Char], structElem2(element[Double], element[Boolean]))),
         Seq(element[Short], element[Int], element[Char], element[Double], element[Boolean]))
         ctx.test("t4_iso.to", iso.toFun)
         ctx.test("t4_iso.from", iso.fromFun)

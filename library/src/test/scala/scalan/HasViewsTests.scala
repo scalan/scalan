@@ -75,8 +75,8 @@ class HasViewsTests extends BaseViewTests {
     val source: Rep[Any] = structFromPair(Pair(10,10))
 
     testNoViews(source)
-    testHasViews(ViewStruct(source)(isoStruct[Any, Int, Int]), tupleElem2[Int, Int])
-    testHasViews(Pair(10,10), tupleElem2[Int, Int])
-    testHasViews(s, pairElement(element[Int], tupleElem2[Int,Int]))
+    testHasViews(ViewStruct(source)(pairStructIso[Any, Int, Int]), structElem2[Int, Int])
+    testHasViews(Pair(10,10), structElem2[Int, Int])
+    testHasViews(s, pairElement(element[Int], structElem2[Int,Int]))
   }
 }

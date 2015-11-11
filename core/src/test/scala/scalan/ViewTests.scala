@@ -121,7 +121,7 @@ class ViewTests extends BaseViewTests {
     val ctx = new ViewTestsCtx with SegmentsDslExp
     import ctx._
     ctx.shouldUnpackTuples = true
-    testGetIso(element[(Int,Int)], tupleElem2[Int,Int])
+    testGetIso(element[(Int,Int)], structElem2[Int,Int])
 //    testGetIso(element[(Int,(Int,Int))], tupleElem3[Int,Int,Int])
   }
 }

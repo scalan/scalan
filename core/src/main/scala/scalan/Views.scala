@@ -103,7 +103,7 @@ trait Views extends Elems { self: Scalan =>
         val iso2 = getIsoByElem(pe.eSnd).asInstanceOf[Iso[Any,b]]
         val resIso = if (iso1.isIdentity && iso2.isIdentity) {
           if (shouldUnpackTuples) {
-            val sIso = isoStruct[Any, a, b](pe.eFst, pe.eSnd)
+            val sIso = pairStructIso[Any, a, b](pe.eFst, pe.eSnd)
             sIso
           }
           else

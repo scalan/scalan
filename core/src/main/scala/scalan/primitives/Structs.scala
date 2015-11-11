@@ -54,17 +54,14 @@ trait Structs extends StructTags { self: Scalan =>
   def structElement(fields: Seq[(String, Elem[Any])]): StructElem[_] =
     cachedElem[StructElem[_]](fields)
 
-  def tupleElem(fields: Seq[Elem[_]]): StructElem[_] =
+  def structElement(fields: Seq[Elem[_]])(implicit o: Overloaded1): StructElem[_] =
     cachedElem[StructElem[_]](fields.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f })
 
-  def tupleElem2[A:Elem, B:Elem]: StructElem[_] =
-    tupleElem(Seq(element[A], element[B]))
+  def structElem2[A:Elem, B:Elem]: StructElem[_] =
+    structElement(Seq(element[A], element[B]))
 
-  def tupleElem3[A:Elem, B:Elem, C:Elem]: StructElem[_] =
-    tupleElem(Seq(element[A], element[B], element[C]))
-
-  class StructIso[S, A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends Iso[S, (A,B)]()(tupleElem2[A,B].asElem[S]) {
+  class PairStructIso[S, A, B](implicit eA: Elem[A], eB: Elem[B])
+    extends Iso[S, (A,B)]()(structElem2[A,B].asElem[S]) {
     override def from(p: Rep[(A,B)]) =
       structFromPair(p).asRep[S]
     override def to(struct: Rep[S]) = {
@@ -73,11 +70,12 @@ trait Structs extends StructTags { self: Scalan =>
     lazy val eTo = element[(A,B)]
   }
 
-  def isoStruct[S, A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[S, (A,B)] =
-    cachedIso[StructIso[S,A,B]](eA, eB)
+  def pairStructIso[S, A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[S, (A,B)] =
+    cachedIso[PairStructIso[S,A,B]](eA, eB)
 
   implicit class StructOps(s: Rep[_]) {
     def apply(iField: Int): Rep[_] = field(s, iField)
+    def apply(fieldName: String): Rep[_] = field(s, fieldName)
   }
 
   def struct(fields: (String, Rep[Any])*): Rep[_]
@@ -91,7 +89,7 @@ trait Structs extends StructTags { self: Scalan =>
   case class Link(field: String, nestedField: String, nestedElem: Elem[_], flatIndex: Int)
 
   class FlatteningIso[T](val eTo: StructElem[T], val flatIsos: Map[String, Iso[Any,Any]], links: Seq[Link])
-      extends Iso[Any,T]()(tupleElem(links.map(_.nestedElem)).asElem[Any]) {
+      extends Iso[Any,T]()(structElement(links.map(_.nestedElem)).asElem[Any]) {
 
     val groups = links.groupBy(_.field)
 
@@ -100,12 +98,12 @@ trait Structs extends StructTags { self: Scalan =>
         val g = groups(fn)
         flatIsos.get(fn) match {
           case Some(iso) =>
-            val projectedStruct = struct(g.map(link => (link.nestedField -> field(x, link.flatIndex))): _*)
+            val projectedStruct = struct(g.map(link => (link.nestedField -> x(link.flatIndex))): _*)
             val s = iso.to(projectedStruct)
             (fn -> s)
           case None =>
             assert(g.length == 1, s"Many fields $g can't relate to the single field $fn without iso")
-            (fn -> field(x, g(0).flatIndex))
+            (fn -> x(g(0).flatIndex))
         }
       }
       struct(items: _*).asRep[T]
@@ -116,11 +114,11 @@ trait Structs extends StructTags { self: Scalan =>
         val g = groups(fn)
         flatIsos.get(fn) match {
           case Some(iso) =>
-            val nestedStruct = iso.from(field(y, fn))
+            val nestedStruct = iso.from(y(fn))
             g.map(link =>
-              tupleFN(link.flatIndex) -> field(nestedStruct, link.nestedField))
+              tupleFN(link.flatIndex) -> nestedStruct(link.nestedField))
           case None =>
-            List(tupleFN(g(0).flatIndex) -> field(y, fn))
+            List(tupleFN(g(0).flatIndex) -> y(fn))
         }
       }
       struct(items: _*).asRep[T]
