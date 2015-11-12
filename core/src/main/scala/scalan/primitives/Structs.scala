@@ -44,6 +44,9 @@ trait Structs extends StructTags { self: Scalan =>
     override def canEqual(other: Any) = other.isInstanceOf[StructElem[_]]
     override def toString = s"${getClass.getSimpleName}{${fields.map { case (fn,fe) => s"$fn: $fe"}.mkString(";")}}"
     def fieldElems: Seq[Elem[Any]] = fields.map(_._2)
+    def isEqualType(tuple: Seq[Elem[_]]) = {
+      fields.length == tuple.length && fields.zip(tuple).forall { case ((fn,fe), e) => fe == e }
+    }
   }
 
   /**
@@ -60,7 +63,7 @@ trait Structs extends StructTags { self: Scalan =>
   def structElem2[A:Elem, B:Elem]: StructElem[_] =
     structElement(Seq(element[A], element[B]))
 
-  class PairStructIso[S, A, B](implicit eA: Elem[A], eB: Elem[B])
+  class StructToPairIso[S, A, B](implicit eA: Elem[A], eB: Elem[B])
     extends Iso[S, (A,B)]()(structElem2[A,B].asElem[S]) {
     override def from(p: Rep[(A,B)]) =
       structFromPair(p).asRep[S]
@@ -70,15 +73,37 @@ trait Structs extends StructTags { self: Scalan =>
     lazy val eTo = element[(A,B)]
   }
 
-  def pairStructIso[S, A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[S, (A,B)] =
-    cachedIso[PairStructIso[S,A,B]](eA, eB)
+  def structToPairIso[S, A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[S, (A,B)] =
+    cachedIso[StructToPairIso[S,A,B]](eA, eB)
+
+  class StructIso[S, T](override val eFrom: StructElem[S], val eTo: StructElem[T], itemIsos: Seq[Iso[_,_]])
+      extends Iso[S, T]()(eFrom) {
+    assert(eFrom.isEqualType(itemIsos.map(_.eFrom)))
+    assert(eTo.isEqualType(itemIsos.map(_.eTo)))
+    
+    override def from(y: Rep[T]) = {
+      val items = eFrom.fields.zip(eTo.fields).zip(itemIsos).map {
+        case (((fnS, feS), (fnT, feT)), iso: Iso[s,t]) =>
+          fnS -> iso.from(y(fnT).asRep[t])
+      }
+      struct(items).asRep[S]
+    } 
+    override def to(x: Rep[S]) = {
+      val items = eFrom.fields.zip(eTo.fields).zip(itemIsos).map {
+        case (((fnS, feS), (fnT, feT)), iso: Iso[s,t]) =>
+          fnT -> iso.to(x(fnS).asRep[s])
+      }
+      struct(items).asRep[T]
+    }
+  }
 
   implicit class StructOps(s: Rep[_]) {
     def apply(iField: Int): Rep[_] = field(s, iField)
     def apply(fieldName: String): Rep[_] = field(s, fieldName)
   }
 
-  def struct(fields: (String, Rep[Any])*): Rep[_]
+  def struct(fields: (String, Rep[Any])*): Rep[_] = struct(fields)
+  def struct(fields: Seq[(String, Rep[Any])])(implicit o: Overloaded1): Rep[_]
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_]
   def field(struct: Rep[Any], field: String): Rep[_]
   def field(struct: Rep[Any], fieldIndex: Int): Rep[_] = field(struct, tupleFN(fieldIndex))
@@ -159,10 +184,12 @@ trait Structs extends StructTags { self: Scalan =>
     val res = new FlatteningIso(eTo, flatIsos, links)
     res.asInstanceOf[Iso[_,T]]
   }
+  
+  
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
-  def struct(fields: (String, Rep[Any])*): Rep[_] = ???
+  def struct(fields: Seq[(String, Rep[Any])])(implicit o: Overloaded1): Rep[_] = ???
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_] = ???
   def field(struct: Rep[Any], field: String): Rep[_] = ???
   def fields(struct: Rep[Any], fields: Seq[String]): Rep[_] = ???
@@ -215,14 +242,14 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
     val fields = outFields.map(fn => (fn, field(struct, fn).asRep[Any]))
   }
 
-  def struct(fields: (String, Rep[Any])*): Rep[_] = struct(SimpleTag("struct"), fields)
+  def struct(fields: Seq[(String, Rep[Any])])(implicit o: Overloaded1): Rep[_] = struct(SimpleTag("struct"), fields)
   def struct(tag: StructTag, fields: (String, Rep[Any])*)(implicit o: Overloaded2): Rep[_] = struct(tag, fields)
   def struct(tag: StructTag, fields: Seq[(String, Rep[Any])]): Rep[_] = reifyObject(SimpleStruct(tag, fields))
   def field(struct: Rep[Any], field: String): Rep[_] = FieldApply[Any](struct, field)
   def fields(struct: Rep[Any], fields: Seq[String]): Rep[_] = ProjectionStruct[Any](struct, fields)
 
-  def structElement(items: Seq[(String, Rep[Any])])(implicit o1: Overloaded1): Elem[_] = {
-    val e = StructElem(items.map { case (f, s) => (f, s.elem) })
+  def structElement(structItems: Seq[(String, Rep[Any])])(implicit o1: Overloaded1): Elem[_] = {
+    val e = StructElem(structItems.map { case (f, s) => (f, s.elem) })
     e
   }
 

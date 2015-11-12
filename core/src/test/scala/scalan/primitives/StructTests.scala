@@ -8,7 +8,7 @@ import scalan.common.{SegmentsDsl, SegmentsDslExp, Lazy}
 import scalan.compilation.DummyCompiler
 
 class StructTests extends BaseCtxTests {
-  trait MyProg extends Scalan  {
+  trait MyProg extends Scalan with SegmentsDsl {
     val eInt = IntElement.asElem[Any]
     lazy val t1 = fun({ (in: Rep[Int]) =>
       struct("in" -> in).asRep[Any]
@@ -35,8 +35,8 @@ class StructTests extends BaseCtxTests {
     def structWrapper2x2[A:Elem,B:Elem,C:Elem,D:Elem](f: Rep[(A,B)] => Rep[(C,D)]): Rep[Any => Any] = {
       val eIn = structElem2[A,B].asElem[Any]
       val eOut = structElem2[C,D].asElem[Any]
-      val inIso = pairStructIso[Any,A,B]
-      val outIso = pairStructIso[Any,C,D]
+      val inIso = structToPairIso[Any,A,B]
+      val outIso = structToPairIso[Any,C,D]
       fun({ (in: Rep[Any]) =>
         outIso.from(f(inIso.to(in)))
       })(Lazy(eIn),eOut)
@@ -52,7 +52,7 @@ class StructTests extends BaseCtxTests {
   }
 
   class Ctx extends TestCompilerContext {
-    class ScalanCake extends ScalanCtxExp with MyProg {
+    class ScalanCake extends ScalanCtxExp with MyProg with SegmentsDslExp {
 
       def noTuples[A,B](f: Rep[A=>B]): Boolean = f match {
         case Def(l: Lambda[_,_]) =>
@@ -179,4 +179,22 @@ class StructTests extends BaseCtxTests {
         ctx.test("t4_iso.from", iso.fromFun)
     }
   }
+
+  test("structIso") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
+
+    {
+      val eFrom = structElement(Seq(element[(Int,Int)], element[Double], element[Boolean]))
+      val eTo = structElement(Seq("a" -> element[Interval].asElem[Any], "b" -> element[Double].asElem[Any], "c" -> element[Boolean].asElem[Any]))
+      val iso = new StructIso(
+          eFrom, eTo,
+          Seq(getIsoByElem(element[Interval]), identityIso[Double], identityIso[Boolean]))
+
+      ctx.test("t5_iso.to", iso.toFun)
+      ctx.test("t5_iso.from", iso.fromFun)
+    }
+  }
+
 }
+
