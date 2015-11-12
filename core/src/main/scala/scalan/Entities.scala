@@ -83,6 +83,17 @@ trait Entities extends Elems { self: Scalan =>
   implicit class ElemOps[T](e: Elem[T]) {
     def isConcrete = isConcreteElem(e)
     def getDataIso = getIsoByElem(e)
+
+    /**
+     * Replaces a tree of PairElem in the given element [[e]] with StructElem.
+     * All other types are considered as leaves.
+     * @return new StructElem if [[e]] is [[PairElem]] otherwise returns [[e]].
+     */
+    def toStructElemShallow: Elem[_] = e match {
+      case pe: PairElem[a,b] =>
+        structElem2(pe.eFst.toStructElem, pe.eSnd.toStructElem)
+      case _ => e
+    }
   }
   trait CompanionElem[T] extends Elem[T] { _: scala.Equals =>
     override def isEntityType = false

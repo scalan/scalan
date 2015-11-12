@@ -148,12 +148,10 @@ class StructTests extends BaseCtxTests {
   test("flatteningIso") {
     val ctx = new Ctx
     import ctx.compiler.scalan._
-
     {
       val iso = testFlattening(structElem2[Int,Int], Seq(element[Int], element[Int]))
       assert(iso.isIdentity, "when flattening is not necessary should return identity iso")
     }
-
     {
       val iso = testFlattening(structElem2(element[Int], structElem2[Double,Boolean]),
         Seq(element[Int], element[Double], element[Boolean]))
@@ -183,7 +181,6 @@ class StructTests extends BaseCtxTests {
   test("structIso") {
     val ctx = new Ctx
     import ctx.compiler.scalan._
-
     {
       val eFrom = structElement(Seq(element[(Int,Int)], element[Double], element[Boolean]))
       val eTo = structElement(Seq("a" -> element[Interval].asElem[Any], "b" -> element[Double].asElem[Any], "c" -> element[Boolean].asElem[Any]))
@@ -193,6 +190,19 @@ class StructTests extends BaseCtxTests {
 
       ctx.test("t5_iso.to", iso.toFun)
       ctx.test("t5_iso.from", iso.fromFun)
+    }
+  }
+
+  test("Elem.toStructElem") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
+    {
+      val eIntInt = structElement(Seq(element[Int], element[Int]))
+      val eDoubleBool = structElement(Seq(element[Double], element[Boolean]))
+      val nested = structElement(Seq(eIntInt, eDoubleBool))
+      val nested2 = structElement(Seq(nested, nested))
+      assertResult(nested)(element[((Int,Int),(Double,Boolean))].toStructElem)
+      assertResult(nested2)(element[(((Int,Int),(Double,Boolean)),((Int,Int),(Double,Boolean)))].toStructElem)
     }
   }
 
