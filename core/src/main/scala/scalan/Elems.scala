@@ -35,6 +35,7 @@ trait Elems extends Base { self: Scalan =>
     def >:>(e: Element[_]) = e <:< this
 
     def asElem[B]: Elem[B] = this.asInstanceOf[Elem[B]]
+    def asStructElem[B]: StructElem[B] = this.asInstanceOf[StructElem[B]]
 
     if (isDebug) {
       debug$ElementCounter(this) += 1

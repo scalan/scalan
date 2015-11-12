@@ -72,7 +72,7 @@ class HasViewsTests extends BaseViewTests {
     import scalan._
     scalan.shouldUnpackTuples = true
     val s = Pair(10, Pair(10, 10))
-    val source: Rep[Any] = structFromPair(Pair(10,10))
+    val source: Rep[Any] = structToPairIso[Any,Int,Int].from(Pair(10,10))
 
     testNoViews(source)
     testHasViews(ViewStruct(source)(structToPairIso[Any, Int, Int]), structElem2[Int, Int])

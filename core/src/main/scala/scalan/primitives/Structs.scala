@@ -63,18 +63,25 @@ trait Structs extends StructTags { self: Scalan =>
   def structElem2[A:Elem, B:Elem]: StructElem[_] =
     structElement(Seq(element[A], element[B]))
 
-  class StructToPairIso[S, A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends Iso[S, (A,B)]()(structElem2[A,B].asElem[S]) {
-    override def from(p: Rep[(A,B)]) =
-      structFromPair(p).asRep[S]
+  case class StructToPairIso[S, A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
+    extends Iso[S, (B1, B2)]()(structElem2(iso1.eFrom, iso2.eFrom).asElem[S]) {
+    implicit def eA1 = iso1.eFrom
+    implicit def eA2 = iso2.eFrom
+    implicit def eB1 = iso1.eTo
+    implicit def eB2 = iso2.eTo
+    lazy val eTo = element[(B1, B2)]
+
+    override def from(p: Rep[(B1, B2)]) =
+      struct(tupleFN(1) -> iso1.from(p._1), tupleFN(2) -> iso2.from(p._2)).asRep[S]
+
     override def to(struct: Rep[S]) = {
-      (field(struct, 1).asRep[A], field(struct, 2).asRep[B])
+      Pair(iso1.to(struct(1).asRep[A1]), iso2.to(struct(2).asRep[A2]))
     }
-    lazy val eTo = element[(A,B)]
   }
 
-  def structToPairIso[S, A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[S, (A,B)] =
-    cachedIso[StructToPairIso[S,A,B]](eA, eB)
+  def structToPairIso[S, A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[S, (B1, B2)] =
+    cachedIso[StructToPairIso[S, A1, A2, B1, B2]](iso1, iso2)
+  def structToPairIso[S, A:Elem,B:Elem] = structToPairIso[S,A,B,A,B](identityIso[A], identityIso[B])
 
   class StructIso[S, T](override val eFrom: StructElem[S], val eTo: StructElem[T], itemIsos: Seq[Iso[_,_]])
       extends Iso[S, T]()(eFrom) {
@@ -108,8 +115,6 @@ trait Structs extends StructTags { self: Scalan =>
   def field(struct: Rep[Any], field: String): Rep[_]
   def field(struct: Rep[Any], fieldIndex: Int): Rep[_] = field(struct, tupleFN(fieldIndex))
   def fields(struct: Rep[Any], fields: Seq[String]): Rep[_]
-  def structFromPair[A,B](p: Rep[(A,B)]): Rep[_] = struct(tupleFN(1) -> p._1, tupleFN(2) -> p._2)
-  def tuple(items: Rep[Any]*): Rep[_] = struct(items.zipWithIndex.map { case (item, i) => tupleFN(i + 1) -> item }: _*)
 
   case class Link(field: String, nestedField: String, nestedElem: Elem[_], flatIndex: Int)
 
@@ -184,8 +189,27 @@ trait Structs extends StructTags { self: Scalan =>
     val res = new FlatteningIso(eTo, flatIsos, links)
     res.asInstanceOf[Iso[_,T]]
   }
-  
-  
+
+  def pairsToStructsIso[T](implicit e: Elem[T]): Iso[_,T] = {
+    val res = e match {
+      case pe: PairElem[a,b] =>
+        val iso1 = pairsToStructsIso(pe.eFst)
+        val iso2 = pairsToStructsIso(pe.eSnd)
+        structToPairIso(iso1, iso2)
+      case _ =>
+        identityIso[T]
+    }
+    res.asInstanceOf[Iso[_,T]]
+  }
+
+  def structWrapperIso[T](e: Elem[T]): Iso[_,T] = {
+    pairsToStructsIso(e) match {
+      case iso: Iso[s,T] @unchecked =>
+        val flatIso = flatteningIso[s](iso.eFrom.asStructElem)
+        composeIso(iso, flatIso)
+    }
+  }
+
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>

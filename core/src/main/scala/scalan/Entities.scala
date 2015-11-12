@@ -85,13 +85,13 @@ trait Entities extends Elems { self: Scalan =>
     def getDataIso = getIsoByElem(e)
 
     /**
-     * Replaces a tree of PairElem in the given element [[e]] with StructElem.
+     * Replaces a root tree of [[PairElem]]s in the given element [[e]] with [[StructElem]]s.
      * All other types are considered as leaves.
      * @return new StructElem if [[e]] is [[PairElem]] otherwise returns [[e]].
      */
     def toStructElemShallow: Elem[_] = e match {
       case pe: PairElem[a,b] =>
-        structElem2(pe.eFst.toStructElem, pe.eSnd.toStructElem)
+        structElem2(pe.eFst.toStructElemShallow, pe.eSnd.toStructElemShallow)
       case _ => e
     }
   }

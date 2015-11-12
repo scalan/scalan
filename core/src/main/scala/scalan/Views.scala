@@ -31,6 +31,9 @@ trait Views extends Elems { self: Scalan =>
       debug$IsoCounter(this) += 1
     }
   }
+  implicit class IsoOps(iso: Iso[_,_]) {
+    def asIso[A,B] = iso.asInstanceOf[Iso[A,B]]
+  }
 
   private val debug$IsoCounter = counter[Iso[_, _]]
 
@@ -103,7 +106,7 @@ trait Views extends Elems { self: Scalan =>
         val iso2 = getIsoByElem(pe.eSnd).asInstanceOf[Iso[Any,b]]
         val resIso = if (iso1.isIdentity && iso2.isIdentity) {
           if (shouldUnpackTuples) {
-            val sIso = structToPairIso[Any, a, b](pe.eFst, pe.eSnd)
+            val sIso = structToPairIso[Any, Any, Any, a, b](iso1, iso2)
             sIso
           }
           else

@@ -35,17 +35,20 @@ class StructTests extends BaseCtxTests {
     def structWrapper2x2[A:Elem,B:Elem,C:Elem,D:Elem](f: Rep[(A,B)] => Rep[(C,D)]): Rep[Any => Any] = {
       val eIn = structElem2[A,B].asElem[Any]
       val eOut = structElem2[C,D].asElem[Any]
-      val inIso = structToPairIso[Any,A,B]
-      val outIso = structToPairIso[Any,C,D]
+      val inIso = pairsToStructsIso(element[(A,B)]).asIso[Any,(A,B)]
+      val outIso = pairsToStructsIso(element[(C,D)]).asIso[Any,(C,D)]
       fun({ (in: Rep[Any]) =>
         outIso.from(f(inIso.to(in)))
       })(Lazy(eIn),eOut)
     }
 
     lazy val t6 = structWrapper2x2({ (in: Rep[(Int,Int)]) => in })
-    lazy val t7 = structWrapper2x2({ (in: Rep[(Int,Int)]) =>
+
+    def t2x2_7(in: Rep[(Int,Int)]) = {
       Pair(in._1 + in._2, in._1 - in._2)
-    })
+    }
+    lazy val t7 = structWrapper2x2(t2x2_7)
+
     lazy val t8 = structWrapper2x2({ (in: Rep[(Int,Int)]) =>
       Pair(in._2, in._1)
     })
@@ -201,8 +204,8 @@ class StructTests extends BaseCtxTests {
       val eDoubleBool = structElement(Seq(element[Double], element[Boolean]))
       val nested = structElement(Seq(eIntInt, eDoubleBool))
       val nested2 = structElement(Seq(nested, nested))
-      assertResult(nested)(element[((Int,Int),(Double,Boolean))].toStructElem)
-      assertResult(nested2)(element[(((Int,Int),(Double,Boolean)),((Int,Int),(Double,Boolean)))].toStructElem)
+      assertResult(nested)(element[((Int,Int),(Double,Boolean))].toStructElemShallow)
+      assertResult(nested2)(element[(((Int,Int),(Double,Boolean)),((Int,Int),(Double,Boolean)))].toStructElemShallow)
     }
   }
 
