@@ -1,7 +1,7 @@
 package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common.FunctionsExp
+import scala.lms.common.FunctionsExp
 import scalan.compilation.lms.LmsBackendFacade
 
 trait FunctionsExpExt extends FunctionsExp { self: LmsBackendFacade =>

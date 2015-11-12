@@ -1,9 +1,9 @@
 package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.epfl.test7.ArrayLoopsExp
-import scala.virtualization.lms.internal.{GenerationFailedException, GenericCodegen}
+import scala.lms.common._
+import scala.lms.epfl.test7.ArrayLoopsExp
+import scala.lms.internal.{GenerationFailedException, GenericCodegen}
 import scalan.compilation.lms.ManifestUtil
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 

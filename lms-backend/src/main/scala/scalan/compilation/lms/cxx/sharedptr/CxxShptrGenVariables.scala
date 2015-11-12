@@ -4,7 +4,7 @@ package lms
 package cxx
 package sharedptr
 
-import scala.virtualization.lms.common.VariablesExp
+import scala.lms.common.VariablesExp
 
 trait CxxShptrGenVariables extends CxxShptrCodegen {
   val IR: VariablesExp

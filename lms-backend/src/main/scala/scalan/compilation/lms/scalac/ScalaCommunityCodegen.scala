@@ -1,8 +1,8 @@
 package scalan.compilation.lms.scalac
 
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.epfl.test7.ScalaGenFatArrayLoopsFusionOpt
-import scala.virtualization.lms.epfl.test8.ScalaGenArrayMutation
+import scala.lms.common._
+import scala.lms.epfl.test7.ScalaGenFatArrayLoopsFusionOpt
+import scala.lms.epfl.test8.ScalaGenArrayMutation
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.{LmsBackendFacade, BaseCodegen}
 
@@ -24,7 +24,7 @@ class ScalaCommunityCodegen[BackendCake <: LmsBackendFacade](backend: BackendCak
   with ScalaGenBooleanOps with ScalaGenStruct with ScalaGenStringOps
   with ScalaGenEitherOps               //from scalan.compilation.lms.common
   with ScalaGenTupleOps
-  with ScalaGenFatArrayLoopsFusionOpt  ////todo may be it is better to copy-paste important part of code from this class, because scala.virtualization.lms.epfl.test7.ScalaGenFatArrayLoopsFusionOpt placed in [unit-]test package
+  with ScalaGenFatArrayLoopsFusionOpt  ////todo may be it is better to copy-paste important part of code from this class, because scala.lms.epfl.test7.ScalaGenFatArrayLoopsFusionOpt placed in [unit-]test package
   with ScalaGenArrayMutation
   with ScalaGenIfThenElseFat with LoopFusionOpt with ScalaGenCastingOps with ScalaGenMathOps
   with ScalaGenMethodCallOps          //from scalan.compilation.lms.common

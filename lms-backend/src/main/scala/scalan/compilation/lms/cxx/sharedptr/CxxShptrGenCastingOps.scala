@@ -1,6 +1,6 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.virtualization.lms.common.CastingOpsExp
+import scala.lms.common.CastingOpsExp
 
 trait CxxShptrGenCastingOps extends CxxShptrCodegen {
   val IR: CastingOpsExp

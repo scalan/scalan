@@ -3,8 +3,8 @@ package scalan.compilation.lms.common
 import java.util.HashMap
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common.{ArrayOpsExp, ScalaGenBase}
-import scala.virtualization.lms.internal.Transforming
+import scala.lms.common.{ArrayOpsExp, ScalaGenBase}
+import scala.lms.internal.Transforming
 import scalan.compilation.lms.LmsBackendFacade
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 

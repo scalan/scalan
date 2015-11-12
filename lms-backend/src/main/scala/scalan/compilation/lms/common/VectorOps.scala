@@ -1,11 +1,11 @@
 package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
+import scala.lms.common._
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 import scala.collection.mutable
 import scala.annotation.tailrec
-import scala.virtualization.lms.internal.Transforming
+import scala.lms.internal.Transforming
 import scalan.compilation.lms.LmsBackendFacade
 
 trait VectorOps extends Variables {

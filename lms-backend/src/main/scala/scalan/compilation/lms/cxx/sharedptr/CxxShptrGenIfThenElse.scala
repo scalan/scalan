@@ -1,6 +1,6 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.virtualization.lms.common._
+import scala.lms.common._
 
 trait CxxShptrGenIfThenElse  extends CxxShptrCodegen with BaseGenIfThenElse with CLikeGenEffect {
   val IR: IfThenElseExp

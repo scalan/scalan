@@ -1,7 +1,7 @@
 package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
+import scala.lms.common._
 
 
 trait SystemOps extends Base {

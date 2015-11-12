@@ -2,7 +2,7 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import java.io.PrintWriter
 
-import scala.virtualization.lms.internal.{CLikeCodegen, Expressions, GenerationFailedException}
+import scala.lms.internal.{CLikeCodegen, Expressions, GenerationFailedException}
 import scalan.compilation.lms.ManifestUtil
 import scalan.compilation.lms.common.{JNILmsOps, PointerLmsOps}
 

@@ -1,7 +1,7 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.epfl.test7.{ArrayLoopsExp, ArrayLoopsFatExp}
+import scala.lms.common._
+import scala.lms.epfl.test7.{ArrayLoopsExp, ArrayLoopsFatExp}
 import scalan.compilation.lms.common.JNILmsOpsExp
 
 trait CxxShptrGenFatArrayLoopsFusionOpt extends CxxShptrGenArrayLoopsFat with LoopFusionOpt {

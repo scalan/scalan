@@ -2,7 +2,7 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import java.io.PrintWriter
 
-import scala.virtualization.lms.common.{BaseGenStruct, Record, StructExp}
+import scala.lms.common.{BaseGenStruct, Record, StructExp}
 
 trait CxxShptrGenStruct  extends CxxShptrCodegen with BaseGenStruct {
   val IR: StructExp

@@ -67,6 +67,8 @@ lazy val library = Project("scalan-library", file("library"))
   .dependsOn(core % allConfigDependency)
   .settings(commonSettings)
 
+lazy val lms = "org.scala-lang.lms" %% "lms-core" % "0.9.1-SNAPSHOT"
+
 lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
   .dependsOn(library % "compile->compile;it->test")
   .configs(IntegrationTest)
@@ -74,9 +76,9 @@ lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
     scalaVersion := sys.env.getOrElse("SCALA_VIRTUALIZED_VERSION", "2.11.2"),
     scalaOrganization := "org.scala-lang.virtualized",
     libraryDependencies ++= Seq(
-      "EPFL" %% "lms_local" % "0.3-SNAPSHOT",
+      lms,
       // old version of ScalaTest used in LMS can lead to ClassCastException
-      "EPFL" %% "lms_local" % "0.3-SNAPSHOT" classifier "tests" exclude("org.scalatest", "scalatest_2.11"),
+      lms classifier "tests" exclude("org.scalatest", "scalatest_2.11"),
       "org.scala-lang.virtualized" % "scala-library" % scalaVersion.value,
       "org.scala-lang.virtualized" % "scala-compiler" % scalaVersion.value,
       "org.scalatest" %% "scalatest" % "2.2.5" % "it"),

@@ -3,14 +3,14 @@ package scalan.compilation.lms
 import java.io.File
 
 import scala.collection.mutable
-import scala.virtualization.lms.epfl.test8.ArrayMutationExp
-import scala.virtualization.lms.internal.{Effects, NestedBlockTraversal, GenericCodegen}
+import scala.lms.common._
+import scala.lms.epfl.test7._
+import scala.lms.epfl.test8.ArrayMutationExp
+import scala.lms.internal.{Effects, NestedBlockTraversal, GenericCodegen}
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.graph.GraphCodegen
 import scalan.compilation.lms.scalac.ScalaCommunityCodegen
 import scalan.util.FileUtil
-import virtualization.lms.common._
-import virtualization.lms.epfl.test7._
 import java.util.HashMap
 
 

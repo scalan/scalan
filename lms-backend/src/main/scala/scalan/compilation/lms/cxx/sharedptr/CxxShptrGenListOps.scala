@@ -1,6 +1,6 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.virtualization.lms.common.{BaseGenListOps, CLikeGenEffect, ListOpsExp}
+import scala.lms.common.{BaseGenListOps, CLikeGenEffect, ListOpsExp}
 import scalan.compilation.lms.common.LstOpsExp
 
 trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeGenEffect {

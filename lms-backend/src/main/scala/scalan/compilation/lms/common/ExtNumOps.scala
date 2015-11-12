@@ -1,8 +1,8 @@
 package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.internal.ScalaNestedCodegen
+import scala.lms.common._
+import scala.lms.internal.ScalaNestedCodegen
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait ExtNumOps extends Base {

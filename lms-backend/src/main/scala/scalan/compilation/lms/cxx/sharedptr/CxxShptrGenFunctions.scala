@@ -1,6 +1,6 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.virtualization.lms.common.{BaseGenFunctions, CLikeGenEffect, FunctionsExp}
+import scala.lms.common.{BaseGenFunctions, CLikeGenEffect, FunctionsExp}
 
 trait CxxShptrGenFunctions extends CLikeGenEffect with BaseGenFunctions with CxxShptrCodegen {
   val IR: FunctionsExp

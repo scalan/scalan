@@ -1,8 +1,8 @@
 package scalan.compilation.lms.common
 
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.epfl.test7.ArrayLoopsExp
-import scala.virtualization.lms.internal.GenerationFailedException
+import scala.lms.common._
+import scala.lms.epfl.test7.ArrayLoopsExp
+import scala.lms.internal.GenerationFailedException
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait PointerLmsOps extends Base {

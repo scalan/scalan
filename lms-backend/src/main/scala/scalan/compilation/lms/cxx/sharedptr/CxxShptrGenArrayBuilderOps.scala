@@ -1,7 +1,7 @@
 package scalan.compilation.lms.cxx.sharedptr
 
 import scala.collection.mutable
-import scala.virtualization.lms.common.{ArrayBuilderOpsExp, BaseGenArrayBuilderOps, CLikeGenEffect}
+import scala.lms.common.{ArrayBuilderOpsExp, BaseGenArrayBuilderOps, CLikeGenEffect}
 
 trait CxxShptrGenArrayBuilderOps  extends CxxShptrCodegen with BaseGenArrayBuilderOps with CLikeGenEffect {
   val IR: ArrayBuilderOpsExp

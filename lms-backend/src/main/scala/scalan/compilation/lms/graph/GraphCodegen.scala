@@ -1,6 +1,6 @@
 package scalan.compilation.lms.graph
 
-import scala.virtualization.lms.common._
+import scala.lms.common._
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{LmsBackendFacade, BaseCodegen}
 import java.io.{File, PrintWriter}
@@ -396,7 +396,7 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
   }
 
 
-  //copy-pasted from scala.virtualization.lms.epfl.test7.ScalaGenFatArrayLoopsFusionOpt - important for fuse can worked
+  //copy-pasted from scala.lms.epfl.test7.ScalaGenFatArrayLoopsFusionOpt - important for fuse can worked
   override def unapplySimpleIndex(e: Def[Any]) = e match {
     case ArrayIndex(a, i) => Some((a,i))
     case _ => super.unapplySimpleIndex(e)

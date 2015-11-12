@@ -4,10 +4,10 @@ package lms
 package cxx
 package sharedptr
 
-import scala.virtualization.lms.common.{BaseGenArrayOps, ArrayOpsExp}
-import scala.virtualization.lms.epfl.test7.ArrayLoopsExp
-import scala.virtualization.lms.epfl.test8.ArrayMutationExp
-import scala.virtualization.lms.internal.Expressions
+import scala.lms.common.{BaseGenArrayOps, ArrayOpsExp}
+import scala.lms.epfl.test7.ArrayLoopsExp
+import scala.lms.epfl.test8.ArrayMutationExp
+import scala.lms.internal.Expressions
 
 trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
   val IR: Expressions with ArrayOpsExp with ArrayLoopsExp with ArrayMutationExp

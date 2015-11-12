@@ -1,6 +1,6 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.virtualization.lms.common.{BaseGenRangeOps, CLikeGenEffect}
+import scala.lms.common.{BaseGenRangeOps, CLikeGenEffect}
 
 trait CxxShptrGenRangeOps extends CxxShptrCodegen with CLikeGenEffect with BaseGenRangeOps {
   import IR._
