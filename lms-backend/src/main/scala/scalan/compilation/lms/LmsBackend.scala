@@ -4,9 +4,8 @@ import java.io.File
 
 import scala.collection.mutable
 import scala.lms.common._
-import scala.lms.epfl.test7._
-import scala.lms.epfl.test8.ArrayMutationExp
 import scala.lms.internal.{Effects, NestedBlockTraversal, GenericCodegen}
+import scalan.compilation.lms.arrays.{ArrayMutationExp, ArrayLoopsFatExp}
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.graph.GraphCodegen
 import scalan.compilation.lms.scalac.ScalaCommunityCodegen

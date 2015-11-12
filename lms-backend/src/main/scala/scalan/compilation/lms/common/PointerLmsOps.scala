@@ -1,8 +1,6 @@
 package scalan.compilation.lms.common
 
 import scala.lms.common._
-import scala.lms.epfl.test7.ArrayLoopsExp
-import scala.lms.internal.GenerationFailedException
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait PointerLmsOps extends Base {
@@ -13,7 +11,6 @@ trait PointerLmsOps extends Base {
 trait PointerLmsOpsExp
   extends PointerLmsOps
   with LoopsFatExp
-  with ArrayLoopsExp
   with IfThenElseExp
   with EqualExpBridge
   with FunctionsExp

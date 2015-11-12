@@ -5,9 +5,8 @@ package cxx
 package sharedptr
 
 import scala.lms.common.{BaseGenArrayOps, ArrayOpsExp}
-import scala.lms.epfl.test7.ArrayLoopsExp
-import scala.lms.epfl.test8.ArrayMutationExp
 import scala.lms.internal.Expressions
+import scalan.compilation.lms.arrays.{ArrayMutationExp, ArrayLoopsExp}
 
 trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
   val IR: Expressions with ArrayOpsExp with ArrayLoopsExp with ArrayMutationExp
