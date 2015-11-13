@@ -381,8 +381,9 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
   }
 
   override def graphPasses(compilerConfig: CompilerConfig) =
-    super.graphPasses(compilerConfig) :+
-      constantPass(StructsPass(DefaultMirror, StructsRewriter))
+    super.graphPasses(compilerConfig) ++
+      Seq(AllInvokeEnabler,
+          constantPass(StructsPass(DefaultMirror, StructsRewriter)))
 
   case class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
     def name = "structs"

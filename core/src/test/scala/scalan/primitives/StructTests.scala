@@ -52,11 +52,15 @@ class StructTests extends BaseCtxTests {
       val i = Interval(x,y)
       Pair(i.length, i.shift(z).toData)
     })
+    lazy val t11 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
+      val Pair(segs, z) = in
+      val intervals = segs.map(Interval(_))
+      Pair(intervals.map(_.length), intervals.length)
+    })
   }
 
   class Ctx extends TestCompilerContext {
     class ScalanCake extends ScalanCtxExp with MyProg with SegmentsDslExp {
-
       def noTuples[A,B](f: Rep[A=>B]): Boolean = f match {
         case Def(l: Lambda[_,_]) =>
           !l.scheduleAll.exists(tp => tp.rhs match {
@@ -137,19 +141,21 @@ class StructTests extends BaseCtxTests {
       import compiler.scalan._
       def test() = {
         assert(noTuples(t6))
-//        assert(noTuples(t7))
-//        assert(noTuples(t8))
-//        assert(noTuples(t9))
-//        assert(noTuples(t10))
+        assert(noTuples(t7))
+        assert(noTuples(t8))
+        assert(noTuples(t9))
+        assert(noTuples(t10))
+        assert(noTuples(t11))
       }
     }
     import ctx.compiler.scalan._
     ctx.test
     ctx.test("t6", t6)
-//    ctx.test("t7", t7)
-//    ctx.test("t8", t8)
-//    ctx.test("t9", t9)
-//    ctx.test("t10", t10)
+    ctx.test("t7", t7)
+    ctx.test("t8", t8)
+    ctx.test("t9", t9)
+    ctx.test("t10", t10)
+    ctx.test("t11", t11)
   }
 
   test("flatteningIso") {
