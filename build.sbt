@@ -74,7 +74,7 @@ lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
     scalaVersion := sys.env.getOrElse("SCALA_VIRTUALIZED_VERSION", "2.11.2"),
     scalaOrganization := "org.scala-lang.virtualized",
     libraryDependencies ++= Seq(
-      "org.scala-lang.lms" %% "lms-core" % "0.9.1-SNAPSHOT",
+      "org.scala-lang.lms" %% "lms-core" % "0.9.0",
       "org.scala-lang.virtualized" % "scala-library" % scalaVersion.value,
       "org.scala-lang.virtualized" % "scala-compiler" % scalaVersion.value,
       "org.scalatest" %% "scalatest" % "2.2.5" % "it"),

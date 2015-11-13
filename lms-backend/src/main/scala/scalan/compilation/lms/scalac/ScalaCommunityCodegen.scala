@@ -24,7 +24,7 @@ class ScalaCommunityCodegen[BackendCake <: LmsBackendFacade](backend: BackendCak
   with ScalaGenHashMapOps  with ScalaGenIterableOps  with ScalaGenWhile with ScalaGenIfThenElse
   with ScalaGenVariables with ScalaGenArrayBuilderOps with ScalaGenExceptionOps with ScalaGenFunctions
   with ScalaGenRangeOps
-  with ScalaGenMiscOps
+  with ScalaGenMiscOpsExt
   with ScalaGenVectorOps with ScalaGenExtNumOps with ScalaGenSystemOps //from scalan.compilation.lms.common
   with ScalaGenArrayOpsExt
 {

@@ -3,16 +3,32 @@ package scalan.compilation.lms.common
 import java.util.HashMap
 
 import scala.reflect.SourceContext
-import scala.lms.common.{ArrayOpsExp, ScalaGenBase}
+import scala.lms.common.{EffectExp, Base, ArrayOpsExp, ScalaGenBase}
 import scala.lms.internal.Transforming
 import scalan.compilation.lms.LmsBackendFacade
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
+trait ArrayOpsExt extends Base {
+  def array_insert[T: Manifest](x: Rep[Array[T]], n: Rep[Int], y: Rep[T])(implicit pos: SourceContext): Rep[Array[T]]
+  def array_reverse[T:Manifest](x: Rep[Array[T]])(implicit pos: SourceContext): Rep[Array[T]]
+  def infix_insert[T: Manifest](x: Rep[Array[T]], n: Rep[Int], y: Rep[T])(implicit pos: SourceContext): Rep[Array[T]] =
+    array_insert(x, n, y)
+  def infix_reverse[T:Manifest](x: Rep[Array[T]])(implicit pos: SourceContext): Rep[Array[T]] =
+    array_reverse(x)
+}
+
 // Naming convention is e.g. `arrayNew` instead of `array_new` to
 // avoid conflict with ArrayOps; these methods are based on
 // ArrayLoops instead
-trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
+trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self: LmsBackendFacade =>
 
+  case class ArrayInsert[T](a: Exp[Array[T]], n: Exp[Int], y: Exp[T])(implicit val m: Manifest[T]) extends Def[Array[T]]
+  case class ArrayReverse[T](x: Exp[Array[T]])(implicit val m: Manifest[T]) extends Def[Array[T]]
+
+  def array_insert[T:Manifest](a: Exp[Array[T]], i: Exp[Int], x: Exp[T])(implicit pos: SourceContext) = ArrayInsert(a,i,x)
+  def array_reverse[T:Manifest](x: Exp[Array[T]])(implicit pos: SourceContext) = ArrayReverse(x)
+
+  // FIXME ArrayNew in LMS released version is buggy!
   def arrayNew[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
   def arrayEmpty[A: Manifest] = arrayNew[A](0)
 
@@ -231,10 +247,36 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
       case a @ ArrayAppend(arr, v) =>
         ArrayAppend(f(arr), f(v))(a.m)
       case a @ ArraySortBy(arr, by) => arraySortBy1(f(arr), f(by))(a.mA, a.mB)
+      case e @ ArrayReverse(x) => ArrayReverse(f(x))(e.m)
+      case ArrayInsert(l,i,r) => ArrayInsert(f(l),f(i),f(r))(mtype(manifest[A]))
       case Reflect(a @ ArraySortBy(arr, by), u, es) => reflectMirrored(Reflect(ArraySortBy(f(arr), f(by))(a.mA, a.mB), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
       case _ =>
         super.mirrorDef(e,f)
     }).asInstanceOf[Def[A]]
+  }
+
+  override def aliasSyms(e: Any): List[Sym[Any]] = e match {
+    case ArrayUpdate(a,i,x) => Nil // syms(a) <-- any use to return a?
+    case ArrayInsert(a,i,x) => Nil // syms(a) <-- any use to return a?
+    case _ => super.aliasSyms(e)
+  }
+
+  override def containSyms(e: Any): List[Sym[Any]] = e match {
+    case ArrayUpdate(a,i,x) => syms(x)
+    case ArrayInsert(a,i,x) => syms(a) ::: syms(x)
+    case _ => super.containSyms(e)
+  }
+
+  override def extractSyms(e: Any): List[Sym[Any]] = e match {
+    case ArrayUpdate(a,i,x) => Nil
+    case ArrayInsert(a,i,x) => Nil
+    case _ => super.extractSyms(e)
+  }
+
+  override def copySyms(e: Any): List[Sym[Any]] = e match {
+    case ArrayUpdate(a,i,x) => Nil //syms(a)
+    case ArrayInsert(a,i,x) => Nil //syms(a)
+    case _ => super.copySyms(e)
   }
 }
 
@@ -253,6 +295,17 @@ trait ScalaGenArrayOpsExt extends ScalaGenBase {
            |}"""
     case a@ArraySortBy(arr, by) =>
       stream.println("val " + quote(sym) + " = " + quote(arr) + ".sortBy(" + quote(by)+ ")")
+    case a @ ArrayInsert(xs,i,y) =>
+      gen"""val $sym = {
+            |  val len = $xs.length
+            |  val d = new Array[${remap(a.m)}](len + 1)
+            |  System.arraycopy($xs, 0, d, 0, $i)
+            |  d($i) = $y
+            |  System.arraycopy($xs, $i, d, $i + 1, len - $i)
+            |  d
+            |}"""
+    case ArrayReverse(x) =>
+      emitValDef(sym, src"$x.reverse")
     case _ => super.emitNode(sym, rhs)
   }
 }
