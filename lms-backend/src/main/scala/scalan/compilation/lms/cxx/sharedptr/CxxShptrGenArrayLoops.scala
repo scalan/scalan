@@ -77,12 +77,12 @@ trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsF
         r match {
           case JArrayElem(x,y) =>
           case JNIArrayElem(x,y) =>
-          case ArrayElem(y) =>
-            emitNode(l, ArrayNew(s))
+          case a @ ArrayElem(y) =>
+            emitNode(l, ArrayNew(s)(a.m))
           case ReduceElem(y) =>
             emitNode(l, NewVar(Const(0.0)))
-          case ArrayIfElem(c,y) =>
-            emitNode(l, ArrayNew(Const(0)))
+          case a @ ArrayIfElem(c,y) =>
+            emitNode(l, ArrayNew(Const(0))(a.m))
           case ReduceIfElem(c,y) =>
             emitNode(l, NewVar(Const(0.0)))
           case ReduceIfIntElem(c,y) =>

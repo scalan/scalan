@@ -1,8 +1,7 @@
-package scala.lms
-package common
+package scala.lms.common
 
 import scala.collection.mutable.ArrayBuilder
-import scala.lms.internal.GenericNestedCodegen
+import scala.lms.internal.GenericCodegen
 import scala.reflect.SourceContext
 
 trait ArrayBuilderOps extends Base {
@@ -58,7 +57,7 @@ trait ArrayBuilderOpsExp extends ArrayBuilderOps with EffectExp {
   }).asInstanceOf[Def[A]] // why??
 }
 
-trait BaseGenArrayBuilderOps extends GenericNestedCodegen {
+trait BaseGenArrayBuilderOps extends GenericCodegen {
   val IR: ArrayBuilderOpsExp
   import IR._
 }

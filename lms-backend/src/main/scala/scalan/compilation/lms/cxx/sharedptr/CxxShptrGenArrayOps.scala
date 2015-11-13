@@ -37,9 +37,9 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
     //    case ArraySlice(x,s,e) =>
     //      val tp=remap(x.tp.typeArguments(0))
     //      emitValDef(sym, src"({ size_t sz=sizeof("+tp+")*($e-$s); "+tp+"* r = ("+tp+"*)malloc(sz); memcpy(r,(("+tp+"*)$x)+$s,sz); r; })")
-    case a@ArrayNew(Const(0)) =>
+    case ArrayNew(Const(0)) =>
       emitConstruct(sym)
-    case a@ArrayNew(n) =>
+    case ArrayNew(n) =>
       emitConstruct(sym, src"$n")
     case ArrayMutable(a) =>
       emitConstruct(sym, src"$a->begin()", src"$a->end()")
@@ -124,7 +124,7 @@ trait CxxShptrGenArrayOpsBoost extends CxxShptrGenArrayOps {
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case a@ArrayNew(n) =>
+    case ArrayNew(n) =>
       emitConstruct(sym, src"$n", "boost::container::default_init")
     case _ =>
       super.emitNode(sym, rhs)

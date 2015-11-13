@@ -3,6 +3,7 @@ package scalan.compilation.lms.arrays
 import java.io.PrintWriter
 
 import scala.lms.common._
+import scalan.compilation.lms.BaseCodegen
 
 class TestMutation extends FileDiffSuite {
 
@@ -18,7 +19,7 @@ class TestMutation extends FileDiffSuite {
   trait Impl extends DSL with ArrayMutationExp with ArithExp with OrderingOpsExp with VariablesExp
                      with IfThenElseExp with WhileExp with RangeOpsExp with PrintExp { self =>
     override val verbosity = 2
-    val codegen = new ScalaGenArrayMutation with ScalaGenArith with ScalaGenOrderingOps
+    val codegen = new BaseCodegen[Impl] with ScalaGenArrayMutation with ScalaGenArith with ScalaGenOrderingOps
                       with ScalaGenVariables with ScalaGenIfThenElse with ScalaGenWhile with ScalaGenRangeOps
                       with ScalaGenPrint { val IR: self.type = self }
     codegen.emitSource(test, "Test", new PrintWriter(System.out))

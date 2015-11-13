@@ -51,7 +51,7 @@ trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeG
 //    case ListMkString2(xs,s) => emitValDef(sym, src"$xs.mkString($s)")
     case ListMap(l,x,blk) =>
       val symM = toShptrManifest(sym.tp)
-      val blkres = getBlockResult(blk);
+      val blkres = getBlockResult(blk)
       val blkresM = toShptrManifest(blkres.tp)
       gen"/*start: ${rhs.toString} */"
       emitConstruct(sym)

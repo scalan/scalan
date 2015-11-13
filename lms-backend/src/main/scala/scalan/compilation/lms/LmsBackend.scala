@@ -4,20 +4,27 @@ import java.io.File
 
 import scala.collection.mutable
 import scala.lms.common._
-import scala.lms.internal.{Effects, NestedBlockTraversal, GenericCodegen}
+import scala.lms.internal.{Expressions, GenericNestedCodegen, Effects}
 import scalan.compilation.lms.arrays.{ArrayMutationExp, ArrayLoopsFatExp}
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.graph.GraphCodegen
+import scalan.compilation.lms.internal.Effects1
 import scalan.compilation.lms.scalac.ScalaCommunityCodegen
 import scalan.util.FileUtil
 import java.util.HashMap
 
 
-trait BaseCodegen[BackendType <: LmsBackendFacade] extends GenericCodegen with NestedBlockTraversal{
+trait BaseCodegen[BackendType <: Expressions with Effects] extends GenericNestedCodegen {
   val IR: BackendType
   import IR._
 
-  override def traverseStm(stm: IR.type#Stm) = super.traverseStm(stm)
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case Reify(s, u, effects) =>
+      emitValDef(sym, quote(s))
+    // FIXME: In LMS it has a comment "just ignore -- effects are accounted for in emitBlock", but
+    // this leads to incorrect code generated in Scalan
+    case _ => super.emitNode(sym, rhs)
+  }
 
   def codePackage: Option[String] = None
 
@@ -58,7 +65,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt with PointerLmsOpsExp
-  with Effects with MiscOpsExtExp {
+  with MiscOpsExtExp with Effects1 {
   def toStringWithDefinition(x: Exp[_]) = s"$x: ${x.tp}" + (x match {
     case sym: Sym[_] =>
       findDefinition(sym) match {

@@ -28,7 +28,7 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
   def array_insert[T:Manifest](a: Exp[Array[T]], i: Exp[Int], x: Exp[T])(implicit pos: SourceContext) = ArrayInsert(a,i,x)
   def array_reverse[T:Manifest](x: Exp[Array[T]])(implicit pos: SourceContext) = ArrayReverse(x)
 
-  // FIXME ArrayNew in LMS released version is buggy!
+  // FIXME Should be array_obj_new instead of ArrayNew, but this is used outside reifyEffects
   def arrayNew[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
   def arrayEmpty[A: Manifest] = arrayNew[A](0)
 
@@ -246,14 +246,21 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
         ArrayIndex(f(arr), f(i))
       case a @ ArrayAppend(arr, v) =>
         ArrayAppend(f(arr), f(v))(a.m)
-      case a @ ArraySortBy(arr, by) => arraySortBy1(f(arr), f(by))(a.mA, a.mB)
+      case a @ ArraySortBy(arr, by) => ArraySortBy(f(arr), f(by))(a.mA, a.mB)
       case e @ ArrayReverse(x) => ArrayReverse(f(x))(e.m)
       case ArrayInsert(l,i,r) => ArrayInsert(f(l),f(i),f(r))(mtype(manifest[A]))
-      case Reflect(a @ ArraySortBy(arr, by), u, es) => reflectMirrored(Reflect(ArraySortBy(f(arr), f(by))(a.mA, a.mB), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
       case _ =>
         super.mirrorDef(e,f)
     }).asInstanceOf[Def[A]]
   }
+
+  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] =
+    (e match {
+      case Reflect(ArrayForeach(a,x,b), u, es) => reflectMirrored(Reflect(ArrayForeach(f(a),f(x).asInstanceOf[Sym[A]],f(b)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
+      case Reflect(a @ ArraySortBy(arr, by), u, es) => reflectMirrored(Reflect(ArraySortBy(f(arr), f(by))(a.mA, a.mB), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
+      case _ =>
+        super.mirror(e,f)
+    }).asInstanceOf[Exp[A]]
 
   override def aliasSyms(e: Any): List[Sym[Any]] = e match {
     case ArrayUpdate(a,i,x) => Nil // syms(a) <-- any use to return a?
@@ -318,7 +325,7 @@ trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
     case a @ ArrayAppend(xs, v) =>
 /////////////////////////////////////////////////////
 // Creates new array, copies values to it from xs and adds new element
-      emitNode(sym, ArrayNew(Const(0)))
+      emitNode(sym, ArrayNew(Const(0))(a.m))
       val xsLen = src"${xs}_len"
       gen"""size_t $xsLen = $xs->size();
            |$sym->resize($xsLen + 1);
@@ -329,7 +336,7 @@ trait CxxShptrGenArrayOpsExt extends CxxShptrCodegen {
 //      gen"""$xs->push_back($v);"""
 //      emitValDef(sym, src"$xs")
     case a @ ArrayInsert(xs,i,y) =>
-      emitNode(sym, ArrayNew(Const(0)))
+      emitNode(sym, ArrayNew(Const(0))(a.m))
       val xsLen = src"${xs}_len"
       gen"""size_t $xsLen = $xs->size();
            |$sym->resize($xsLen + 1);

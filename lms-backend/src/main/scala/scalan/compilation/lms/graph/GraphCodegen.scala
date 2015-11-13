@@ -333,12 +333,12 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
       case SimpleFatLoop(size, v, body) =>
         for ((l,r) <- symList zip body) {
           r match {
-            case ArrayElem(y) =>
-              emitNode(l, ArrayNew(size))
+            case a @ ArrayElem(y) =>
+              emitNode(l, ArrayNew(size)(a.m))
             case ReduceElem(y) =>
               emitNode(l, NewVar(Const(0.0)))
-            case ArrayIfElem(c,y) =>
-              emitNode(l, ArrayNew(Const(0)))
+            case a @ ArrayIfElem(c,y) =>
+              emitNode(l, ArrayNew(Const(0))(a.m))
             case ReduceIfElem(c,y) =>
               emitNode(l, NewVar(Const(0.0)))
             case ReduceIfIntElem(c,y) =>

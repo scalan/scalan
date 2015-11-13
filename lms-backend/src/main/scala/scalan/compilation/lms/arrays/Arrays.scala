@@ -25,11 +25,11 @@ trait ArrayLoops extends ArrayOps with Loops with OverloadHack {
 
 trait ArrayLoopsExp extends ArrayOpsExp with LoopsExp { //A.Filippov - add ArrayOpsExp
 
-  case class ArrayElem[T](y: Block[T]) extends Def[Array[T]]
+  case class ArrayElem[T](y: Block[T])(implicit val m: Manifest[T]) extends Def[Array[T]]
   case class ReduceElem(y: Block[Double]) extends Def[Double]
   case class ReduceIntElem(y: Block[Int]) extends Def[Int]
 
-  case class ArrayIfElem[T](c: Exp[Boolean], y: Block[T]) extends Def[Array[T]]
+  case class ArrayIfElem[T](c: Exp[Boolean], y: Block[T])(implicit val m: Manifest[T]) extends Def[Array[T]]
   case class ReduceIfElem(c: Exp[Boolean], y: Block[Double]) extends Def[Double]
   case class ReduceIfIntElem(c: Exp[Boolean], y: Block[Int]) extends Def[Int]
 
