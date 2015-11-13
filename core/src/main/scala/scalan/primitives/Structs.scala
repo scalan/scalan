@@ -1,6 +1,6 @@
 package scalan.primitives
 
-import scalan.common.Utils
+import scalan.common.{Lazy, Utils}
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
 import scalan.staged.Expressions
 import scalan._
@@ -202,12 +202,20 @@ trait Structs extends StructTags { self: Scalan =>
     res.asInstanceOf[Iso[_,T]]
   }
 
-  def structWrapperIso[T](e: Elem[T]): Iso[_,T] = {
+  def structWrapperIso[T](implicit e: Elem[T]): Iso[_,T] = {
     pairsToStructsIso(e) match {
       case iso: Iso[s,T] @unchecked =>
         val flatIso = flatteningIso[s](iso.eFrom.asStructElem)
         composeIso(iso, flatIso)
     }
+  }
+
+  def structWrapper[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => Any] = {
+    val inIso = structWrapperIso[A].asIso[Any,A]
+    val outIso = structWrapperIso[B].asIso[Any,B]
+    fun({ (in: Rep[Any]) =>
+      outIso.from(f(inIso.to(in)))
+    })(Lazy(inIso.eFrom), outIso.eFrom)
   }
 
 }
@@ -355,9 +363,19 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
 trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compiler[ScalanCake] {
   import scalan._
 
+  object FieldGet {
+    def unapply[T](d: FieldApply[T]): Option[Exp[T]] = d match {
+      case FieldApply(Def(SimpleStruct(_, fs)), fn) =>
+        val optItem = fs.find { case (n, _) => n == fn }
+        optItem.map(_._2.asRep[T])
+      case _ => None
+    }
+  }
+
   object StructsRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {
       case Def(Tup(a, b)) => struct(tupleFN(1) -> a, tupleFN(2) -> b)
+      case Def(FieldGet(v)) => v
       case _ => x
     }).asRep[T]
   }

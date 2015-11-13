@@ -32,25 +32,25 @@ class StructTests extends BaseCtxTests {
       Pair(in, Pair(in, in + 1))
     })
 
-    def structWrapper2x2[A:Elem,B:Elem,C:Elem,D:Elem](f: Rep[(A,B)] => Rep[(C,D)]): Rep[Any => Any] = {
-      val eIn = structElem2[A,B].asElem[Any]
-      val eOut = structElem2[C,D].asElem[Any]
-      val inIso = pairsToStructsIso(element[(A,B)]).asIso[Any,(A,B)]
-      val outIso = pairsToStructsIso(element[(C,D)]).asIso[Any,(C,D)]
-      fun({ (in: Rep[Any]) =>
-        outIso.from(f(inIso.to(in)))
-      })(Lazy(eIn),eOut)
-    }
 
-    lazy val t6 = structWrapper2x2({ (in: Rep[(Int,Int)]) => in })
+    lazy val t6 = structWrapper(fun { (in: Rep[(Int,Int)]) => Interval(in).shift(10).toData })
 
-    def t2x2_7(in: Rep[(Int,Int)]) = {
+    lazy val t2x2_7 = fun { (in: Rep[(Int,Int)]) =>
       Pair(in._1 + in._2, in._1 - in._2)
     }
-    lazy val t7 = structWrapper2x2(t2x2_7)
+    lazy val t7 = structWrapper(t2x2_7)
 
-    lazy val t8 = structWrapper2x2({ (in: Rep[(Int,Int)]) =>
+    lazy val t8 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
       Pair(in._2, in._1)
+    })
+    lazy val t9 = structWrapper(fun { (in: Rep[((Int,Int),Int)]) =>
+      val Pair(Pair(x, y), z) = in
+      Pair(x + y, Pair(x - z, y - z))
+    })
+    lazy val t10 = structWrapper(fun { (in: Rep[((Int,Int),Int)]) =>
+      val Pair(Pair(x, y), z) = in
+      val i = Interval(x,y)
+      Pair(i.length, i.shift(z).toData)
     })
   }
 
@@ -132,20 +132,24 @@ class StructTests extends BaseCtxTests {
     ctx.test("t5", t5)
   }
 
-  test("StructWrapper2x2") {
+  test("structWrapper") {
     val ctx = new Ctx {
       import compiler.scalan._
       def test() = {
         assert(noTuples(t6))
-        assert(noTuples(t7))
-        assert(noTuples(t8))
+//        assert(noTuples(t7))
+//        assert(noTuples(t8))
+//        assert(noTuples(t9))
+//        assert(noTuples(t10))
       }
     }
     import ctx.compiler.scalan._
     ctx.test
     ctx.test("t6", t6)
-    ctx.test("t7", t7)
-    ctx.test("t8", t8)
+//    ctx.test("t7", t7)
+//    ctx.test("t8", t8)
+//    ctx.test("t9", t9)
+//    ctx.test("t10", t10)
   }
 
   test("flatteningIso") {
