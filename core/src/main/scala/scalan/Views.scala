@@ -91,19 +91,23 @@ trait Views extends Elems { self: Scalan =>
   def shouldUnpack(e: Elem[_]): Boolean
   var shouldUnpackTuples = false
 
-  def getIsoByElem[T](e: Elem[T]): Iso[_, T] = isoCache.getOrElseUpdate(
+  type IsoBuilder[T] = Elem[T] => Iso[_,T]
+
+  def getIsoByElem[T](e: Elem[T]): Iso[_, T] = buildIso(e, (e: Elem[T]) => getIsoByElem(e))
+
+  def buildIso[T](e: Elem[T], builder: (IsoBuilder[S]) forSome {type S}): Iso[_, T] = isoCache.getOrElseUpdate(
     (classOf[Iso[_, _]], Seq(e)),
     e match {
       case ve: ViewElem[_,_] =>
         val eFrom = ve.iso.eFrom
-        val deepIso = getIsoByElem(eFrom)
+        val deepIso = buildIso(eFrom, builder)
         if (deepIso.isIdentity)
           ve.iso
         else
           composeIso(ve.iso, deepIso)
       case pe: PairElem[a,b] =>
-        val iso1 = getIsoByElem(pe.eFst).asInstanceOf[Iso[Any,a]]
-        val iso2 = getIsoByElem(pe.eSnd).asInstanceOf[Iso[Any,b]]
+        val iso1 = buildIso(pe.eFst, builder).asInstanceOf[Iso[Any,a]]
+        val iso2 = buildIso(pe.eSnd, builder).asInstanceOf[Iso[Any,b]]
         val resIso = if (iso1.isIdentity && iso2.isIdentity) {
           if (shouldUnpackTuples) {
             val sIso = structToPairIso[Any, Any, Any, a, b](iso1, iso2)
@@ -114,42 +118,42 @@ trait Views extends Elems { self: Scalan =>
         }
         else {
           val pIso = pairIso(iso1,iso2)
-          val deepIso = getIsoByElem(pIso.eFrom)
+          val deepIso = buildIso(pIso.eFrom, builder)
           composeIso(pIso, deepIso)
         }
         resIso
 
       case pe: SumElem[a,b] =>
-        val iso1 = getIsoByElem(pe.eLeft)
-        val iso2 = getIsoByElem(pe.eRight)
+        val iso1 = buildIso(pe.eLeft, builder)
+        val iso2 = buildIso(pe.eRight, builder)
         sumIso(iso1,iso2)
       case fe: FuncElem[a,b] =>
-        val iso1 = getIsoByElem(fe.eDom)
-        val iso2 = getIsoByElem(fe.eRange)
+        val iso1 = buildIso(fe.eDom, builder)
+        val iso2 = buildIso(fe.eRange, builder)
         funcIso(iso1,iso2)
       case ae: ArrayElem[_] =>
-        val iso = getIsoByElem(ae.eItem)
+        val iso = buildIso(ae.eItem, builder)
         arrayIso(iso)
       case ae: ListElem[_] =>
-        val iso = getIsoByElem(ae.eItem)
+        val iso = buildIso(ae.eItem, builder)
         listIso(iso)
       case ae: ArrayBufferElem[_] =>
-        val iso = getIsoByElem(ae.eItem)
+        val iso = buildIso(ae.eItem, builder)
         arrayBufferIso(iso)
       case ae: ThunkElem[_] =>
-        val iso = getIsoByElem(ae.eItem)
+        val iso = buildIso(ae.eItem, builder)
         thunkIso(iso)
       case me: MMapElem[_,_] =>
         identityIso(me)
 
       case we: WrapperElem1[a, Def[ext], cbase, cw] @unchecked =>
         val eExt = we.eTo
-        val iso = getIsoByElem(eExt)
+        val iso = buildIso(eExt, builder)
         iso
 
       case we: WrapperElem[Def[base],Def[ext]] @unchecked =>
         val eExt = we.eTo
-        val iso = getIsoByElem(eExt)
+        val iso = buildIso(eExt, builder)
         iso
 
       //    case ee1: EntityElem1[_,_,_] =>
