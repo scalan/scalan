@@ -31,8 +31,9 @@ trait Views extends Elems { self: Scalan =>
       debug$IsoCounter(this) += 1
     }
   }
-  implicit class IsoOps(iso: Iso[_,_]) {
-    def asIso[A,B] = iso.asInstanceOf[Iso[A,B]]
+  implicit class IsoOps[A,B](iso: Iso[A,B]) {
+    def asIso[C,D] = iso.asInstanceOf[Iso[C,D]]
+    def >>[C](iso2: Iso[B,C]): Iso[A,C] = composeIso(iso2, iso)
   }
 
   private val debug$IsoCounter = counter[Iso[_, _]]
@@ -91,75 +92,119 @@ trait Views extends Elems { self: Scalan =>
   def shouldUnpack(e: Elem[_]): Boolean
   var shouldUnpackTuples = false
 
-  type IsoBuilder[T] = Elem[T] => Iso[_,T]
+  trait IsoBuilder { def apply[T](e: Elem[T]): Iso[_,T] }
 
-  def getIsoByElem[T](e: Elem[T]): Iso[_, T] = buildIso(e, (e: Elem[T]) => getIsoByElem(e))
+  object PairIsos {
+    def fromElem[A,B](pe: PairElem[A,B]) = (getIsoByElem(pe.eFst), getIsoByElem(pe.eSnd))
 
-  def buildIso[T](e: Elem[T], builder: (IsoBuilder[S]) forSome {type S}): Iso[_, T] = isoCache.getOrElseUpdate(
+    def unapply[T](e: Elem[T]): Option[(PairElem[_,_], Iso[_,_], Iso[_,_])] = e match {
+      case pe: PairElem[a,b] =>
+        fromElem(pe) match {
+          case (iso1: Iso[s, a], iso2: Iso[t, b]) => Some((pe, iso1, iso2))
+          case _ => None
+        }
+      case _ => None
+    }
+  }
+
+  def getIsoByElem[T](e: Elem[T]): Iso[_, T] = {
+
+    if (shouldUnpackTuples) {
+      buildIso(e, new IsoBuilder {
+        def apply[S](e: Elem[S]) = {
+          val res = e match {
+            case PairIsos(_, iso1: Iso[s,a], iso2: Iso[t,b]) =>
+              if (iso1.isIdentity && iso2.isIdentity) {
+                // recursion base (structs)
+                val sIso = structToPairIso[Any,s,t,a,b](iso1, iso2)
+                val flatIso = flatteningIso(sIso.eFrom.asStructElem[Any])
+                flatIso >> sIso.asIso[Any,S]
+              }
+              else {
+                val pIso = pairIso(iso1, iso2)
+                val deepIso = getIsoByElem(pIso.eFrom)
+                deepIso >> pIso//.asIso[(s,t),S]
+              }
+            case _ =>
+              getIsoByElem(e)
+          }
+          res.asIso[Any,S]
+        }
+      })
+    }
+    else {
+      buildIso(e, new IsoBuilder {
+        def apply[S](e: Elem[S]) = {
+          val res = e match {
+            case PairIsos(_, iso1: Iso[s,a], iso2: Iso[t,b]) =>
+              if (iso1.isIdentity && iso2.isIdentity) {
+                // recursion base
+                pairIso(iso1, iso2)
+              }
+              else {
+                getIsoByElem(e)
+              }
+            case _ =>
+              getIsoByElem(e)
+          }
+          res.asIso[Any,S]
+        }
+      })
+    }
+  }
+
+  def buildIso[T](e: Elem[T], builder: IsoBuilder): Iso[_, T] = isoCache.getOrElseUpdate(
     (classOf[Iso[_, _]], Seq(e)),
     e match {
       case ve: ViewElem[_,_] =>
         val eFrom = ve.iso.eFrom
-        val deepIso = buildIso(eFrom, builder)
+        val deepIso = builder(eFrom)
         if (deepIso.isIdentity)
           ve.iso
         else
-          composeIso(ve.iso, deepIso)
+          deepIso >> ve.iso
       case pe: PairElem[a,b] =>
-        val iso1 = buildIso(pe.eFst, builder).asInstanceOf[Iso[Any,a]]
-        val iso2 = buildIso(pe.eSnd, builder).asInstanceOf[Iso[Any,b]]
-        val resIso = if (iso1.isIdentity && iso2.isIdentity) {
-          if (shouldUnpackTuples) {
-            val sIso = structToPairIso[Any, Any, Any, a, b](iso1, iso2)
-            sIso
-          }
-          else
-            pairIso(iso1, iso2)
+        (builder(pe.eFst), builder(pe.eSnd)) match {
+          case (iso1: Iso[s,a], iso2: Iso[t,b]) =>
+            val pIso = pairIso(iso1,iso2)
+            val deepIso = builder(pIso.eFrom)
+            deepIso >> pIso
         }
-        else {
-          val pIso = pairIso(iso1,iso2)
-          val deepIso = buildIso(pIso.eFrom, builder)
-          composeIso(pIso, deepIso)
-        }
-        resIso
-
       case pe: SumElem[a,b] =>
-        val iso1 = buildIso(pe.eLeft, builder)
-        val iso2 = buildIso(pe.eRight, builder)
+        val iso1 = builder(pe.eLeft)
+        val iso2 = builder(pe.eRight)
         sumIso(iso1,iso2)
       case fe: FuncElem[a,b] =>
-        val iso1 = buildIso(fe.eDom, builder)
-        val iso2 = buildIso(fe.eRange, builder)
+        val iso1 = builder(fe.eDom)
+        val iso2 = builder(fe.eRange)
         funcIso(iso1,iso2)
       case ae: ArrayElem[_] =>
-        val iso = buildIso(ae.eItem, builder)
+        val iso = builder(ae.eItem)
         arrayIso(iso)
       case ae: ListElem[_] =>
-        val iso = buildIso(ae.eItem, builder)
+        val iso = builder(ae.eItem)
         listIso(iso)
       case ae: ArrayBufferElem[_] =>
-        val iso = buildIso(ae.eItem, builder)
+        val iso = builder(ae.eItem)
         arrayBufferIso(iso)
       case ae: ThunkElem[_] =>
-        val iso = buildIso(ae.eItem, builder)
+        val iso = builder(ae.eItem)
         thunkIso(iso)
       case me: MMapElem[_,_] =>
         identityIso(me)
 
       case we: WrapperElem1[a, Def[ext], cbase, cw] @unchecked =>
         val eExt = we.eTo
-        val iso = buildIso(eExt, builder)
+        val iso = builder(eExt)
         iso
-
       case we: WrapperElem[Def[base],Def[ext]] @unchecked =>
         val eExt = we.eTo
-        val iso = buildIso(eExt, builder)
+        val iso = builder(eExt)
         iso
 
       //    case ee1: EntityElem1[_,_,_] =>
       //      val iso = getIsoByElem(ee1.eItem)
       //      TODO implement using ContainerIso
-
       case ee: EntityElem[_] =>
         identityIso(ee)
       case be: BaseElem[_] =>

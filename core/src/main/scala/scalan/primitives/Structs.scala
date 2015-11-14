@@ -81,7 +81,8 @@ trait Structs extends StructTags { self: Scalan =>
 
   def structToPairIso[S, A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[S, (B1, B2)] =
     cachedIso[StructToPairIso[S, A1, A2, B1, B2]](iso1, iso2)
-  def structToPairIso[S, A:Elem,B:Elem] = structToPairIso[S,A,B,A,B](identityIso[A], identityIso[B])
+  def structToPairIso[S, A:Elem,B:Elem]: Iso[S, (A, B)] = structToPairIso[S,A,B,A,B](identityIso[A], identityIso[B])
+  def structToPairIso[S,A,B](pe: Elem[(A,B)]): Iso[S, (A, B)] = structToPairIso[S,A,B](pe.eFst, pe.eSnd)
 
   class StructIso[S, T](override val eFrom: StructElem[S], val eTo: StructElem[T], itemIsos: Seq[Iso[_,_]])
       extends Iso[S, T]()(eFrom) {

@@ -24,6 +24,13 @@ abstract class BaseViewTests extends BaseCtxTests {
     def testGetIso[From, To](e: Elem[To], eFromExpected: Elem[From]) = {
       val iso = getIsoByElem(e)
       assertResult(eFromExpected)(iso.eFrom)
+      iso
+    }
+
+    def testGetIsoWithEmit[From, To](name: String, e: Elem[To], eFromExpected: Elem[From]) = {
+      val iso = testGetIso(e, eFromExpected)
+      emit(name + ".from", iso.fromFun)
+      emit(name + ".to", iso.toFun)
     }
 
     def testHasViews[T](s: Rep[T], eExpected: Elem[_]) = {
@@ -118,10 +125,23 @@ class ViewTests extends BaseViewTests {
   }
 
   test("getIsoByElem for structs") {
-    val ctx = new ViewTestsCtx with SegmentsDslExp
+    val ctx = new ViewTestsCtx with SegmentsDslExp {
+      override def shouldUnpack(e: Elem[_])  = true
+    }
     import ctx._
-    ctx.shouldUnpackTuples = true
-    testGetIso(element[(Int,Int)], structElem2[Int,Int])
-//    testGetIso(element[(Int,(Int,Int))], tupleElem3[Int,Int,Int])
+    ctx.shouldUnpackTuples = true  // turn on tuple unpacking
+
+    val seIntInt = structElem2[Int, Int]
+    testGetIso(element[(Int,Int)], seIntInt)
+    testGetIsoWithEmit("t1", element[Interval], seIntInt)
+    testGetIsoWithEmit("t2", element[(Int, (Int, Int))], structElement(Seq(element[Int], element[Int], element[Int])))
+    testGetIsoWithEmit("t3", element[(Int, Interval)], structElement(Seq(element[Int], element[Int], element[Int])))
+    testGetIsoWithEmit("t4", element[(Interval, Interval)], structElement(Seq(element[Int], element[Int], element[Int], element[Int])))
+
+    testGetIsoWithEmit("a1", element[Array[(Int,Int)]], arrayElement(seIntInt))
+    testGetIsoWithEmit("a2", element[Array[Interval]], arrayElement(seIntInt))
+    testGetIsoWithEmit("a3", element[Array[(Int, (Int, Int))]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int]))))
+    testGetIsoWithEmit("a4", element[Array[(Int, Interval)]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int]))))
+    testGetIsoWithEmit("a5", element[Array[(Interval, Interval)]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int], element[Int]))))
   }
 }
