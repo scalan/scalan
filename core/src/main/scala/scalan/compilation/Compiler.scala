@@ -37,7 +37,10 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
 
     passes.zipWithIndex.foldLeft(g0) { case (graph, (passFunc, index)) =>
       val pass = passFunc(graph)
+
+      scalan.beginPass(pass)
       val graph1 = pass(graph).withoutContext
+      scalan.endPass(pass)
 
       val indexStr = (index + 1).toString
       val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"

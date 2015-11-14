@@ -388,7 +388,7 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
 
   case class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
     def name = "structs"
-
+    override val config = PassConfig(shouldUnpackTuples = true)
     def apply(graph: PGraph): PGraph = {
       graph.transform(mirror, rewriter, MapTransformer.Empty)
     }

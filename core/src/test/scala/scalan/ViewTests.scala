@@ -127,9 +127,12 @@ class ViewTests extends BaseViewTests {
   test("getIsoByElem for structs") {
     val ctx = new ViewTestsCtx with SegmentsDslExp {
       override def shouldUnpack(e: Elem[_])  = true
+      override val currentPass = new Pass {
+        val name = "test"
+        override val config = PassConfig(true) // turn on tuple unpacking
+      }
     }
     import ctx._
-    ctx.shouldUnpackTuples = true  // turn on tuple unpacking
 
     val seIntInt = structElem2[Int, Int]
     testGetIso(element[(Int,Int)], seIntInt)

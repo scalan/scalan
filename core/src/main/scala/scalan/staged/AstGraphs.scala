@@ -4,7 +4,7 @@ import scala.collection._
 import scalan.ScalanExp
 import scalan.common.GraphUtil
 
-trait AstGraphs extends Transforming { self: ScalanExp =>
+trait AstGraphs extends TransformingExp { self: ScalanExp =>
 
   /**
    * AstNode is created for each symbol of the AstGraph and represents graph linking structure

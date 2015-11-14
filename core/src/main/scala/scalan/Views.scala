@@ -4,7 +4,7 @@ import scala.language.higherKinds
 import scala.collection.mutable.{Map => MutMap}
 import scala.reflect.ClassTag
 import scalan.common.Lazy
-import scalan.staged.BaseExp
+import scalan.staged.{BaseExp,Transforming}
 
 trait Views extends Elems { self: Scalan =>
 
@@ -90,7 +90,6 @@ trait Views extends Elems { self: Scalan =>
   }
 
   def shouldUnpack(e: Elem[_]): Boolean
-  var shouldUnpackTuples = false
 
   trait IsoBuilder { def apply[T](e: Elem[T]): Iso[_,T] }
 
@@ -108,8 +107,7 @@ trait Views extends Elems { self: Scalan =>
   }
 
   def getIsoByElem[T](e: Elem[T]): Iso[_, T] = {
-
-    if (shouldUnpackTuples) {
+    if (currentPass.config.shouldUnpackTuples) {
       buildIso(e, new IsoBuilder {
         def apply[S](e: Elem[S]) = {
           val res = e match {

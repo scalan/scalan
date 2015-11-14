@@ -61,6 +61,10 @@ class HasViewsTests extends BaseViewTests {
 
   class StructsCtx extends TestCompilerContext {
     class ScalanCake extends ViewTestsCtx with SegmentsDslExp with ScalanCommunityDslExp {
+      override val currentPass = new Pass {
+        val name = "test"
+        override val config = PassConfig(true) // turn on tuple unpacking
+      }
     }
     override val compiler = new DummyCompiler(new ScalanCake) with StructsCompiler[ScalanCake]
   }
@@ -70,7 +74,6 @@ class HasViewsTests extends BaseViewTests {
     import ctx._
     import compiler._
     import scalan._
-    scalan.shouldUnpackTuples = true
     val s = Pair(10, Pair(10, 10))
     val source: Rep[Any] = structToPairIso[Any,Int,Int].from(Pair(10,10))
 
