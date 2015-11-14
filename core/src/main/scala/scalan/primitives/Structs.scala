@@ -207,7 +207,7 @@ trait Structs extends StructTags { self: Scalan =>
     pairsToStructsIso(e) match {
       case iso: Iso[s,T] @unchecked =>
         val flatIso = flatteningIso[s](iso.eFrom.asStructElem)
-        composeIso(iso, flatIso)
+        flatIso >> iso
     }
   }
 

@@ -144,6 +144,14 @@ trait Base extends LazyLogging { self: Scalan =>
   def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T]
 
   def reifyObject[A](d: Def[A]): Rep[A]
+
+  /**
+   * Indicate portions of the code which should run with limited rewriting.
+   * This is necessary to avoid infinite recursion in rewrite rules.
+   * (see usage in [[UnpackableDef]] and [[UnpackableExp]] as well as implementation in [[BaseExp]] and [[HasViews]])
+   * @param block which is executed with limited rewriting.
+   */
+  def noRW[T](block: => T): T
 }
 
 object Base {

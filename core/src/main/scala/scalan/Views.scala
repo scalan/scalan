@@ -364,7 +364,10 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
   object HasViews {
     def unapply[T](s: Exp[T]): Option[Unpacked[T]] =
-      unapplyViews(s)
+      if (!okRewrite)
+        None
+      else
+        unapplyViews(s)
   }
 
   // for simplifying unapplyViews
@@ -400,7 +403,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
           val eT = d.selfType
           eT match {
             case UnpackableElem(iso: Iso[a, T @unchecked]) =>
-              Some((iso.from(d.self), iso))
+              Some((noRW { iso.from(d.self) }, iso))
             case _ => None
           }
       }
@@ -414,7 +417,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
           val eT = e.elem
           eT match {
             case UnpackableElem(iso: Iso[a, T @unchecked]) =>
-              Some((iso.from(e), iso))
+              Some((noRW { iso.from(e) }, iso))
             case _ => None
           }
       }
@@ -493,7 +496,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     }
 
     // Rule: UnpackView(V(source, iso))  ==> source
-    case UnpackView(Def(UnpackableDef(source, iso))) => source
+//    case UnpackView(Def(view: View[a, b])) => view.source
 
     // Rule: ParExec(nJobs, f @ i => ... V(_, iso)) ==> V(ParExec(nJobs, f >> iso.from), arrayIso(iso))
     case ParallelExecute(nJobs:Rep[Int], f@Def(Lambda(_, _, _, UnpackableExp(_, iso: Iso[a, b])))) =>

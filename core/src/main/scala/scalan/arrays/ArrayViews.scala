@@ -88,10 +88,11 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
     case Def(view: ViewArray[a, b]) =>
       Some((view.source, view.iso))
-    case UserTypeArray(iso: Iso[a, b]) =>
-      val newIso = arrayIso(iso)
-      val repr = reifyObject(UnpackView(s.asRep[Array[b]])(newIso))
-      Some((repr, newIso))
+//    case UserTypeArray(iso: Iso[a, b]) =>
+//      val newIso = arrayIso(iso)
+////      val repr = reifyObject(UnpackView(s.asRep[Array[b]])(newIso))
+//      val repr = newIso.from(s.asRep[Array[b]])
+//      Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
@@ -105,12 +106,12 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
     view.source.flatMap { x => f(iso.to(x)) }
   }
 
-  private def mapUnderlyingArray[A,B,C](view: ViewArray[A,B], f: Rep[B=>C]): Arr[C] = {
-    val iso = view.innerIso
+  private def mapUnderlyingArray[A,B,C](source: Arr[A], arrIso: ArrayIso[A,B], f: Rep[B=>C]): Arr[C] = {
+    val iso = arrIso.innerIso
     implicit val eA = iso.eFrom
     implicit val eB = iso.eTo
     implicit val eC: Elem[C] = f.elem.eRange
-    view.source.map { x => f(iso.to(x)) }
+    source.map { x => f(iso.to(x)) }
   }
 
   private def reduceUnderlyingArray[A,B](view: ViewArray[A,B], m: RepMonoid[B]): Rep[A] = {
@@ -202,8 +203,8 @@ trait ArrayViewsExp extends ArrayViews with ArrayOpsExp with ViewsExp with BaseE
       ViewArray(view.source(is))(view.iso)
     case ArrayFlatMap(Def(view: ViewArray[_, _]), f) =>
       flatMapUnderlyingArray(view, f)
-    case ArrayMap(Def(view: ViewArray[_, _]), f) =>
-      mapUnderlyingArray(view, f)
+    case ArrayMap(HasViews(source, iso: ArrayIso[a,b]), f) =>
+      mapUnderlyingArray(source.asRep[Array[a]], iso, f)
     case red @ ArrayReduce(Def(view: ViewArray[_, _]), _) =>
       reduceUnderlyingArray(view, red.m)
     case ArrayMapReduce(Def(view: ViewArray[_, _]), map, reduce) =>

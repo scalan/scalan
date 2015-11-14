@@ -135,16 +135,16 @@ class ViewTests extends BaseViewTests {
     import ctx._
 
     val seIntInt = structElem2[Int, Int]
-    testGetIso(element[(Int,Int)], seIntInt)
-    testGetIsoWithEmit("t1", element[Interval], seIntInt)
-    testGetIsoWithEmit("t2", element[(Int, (Int, Int))], structElement(Seq(element[Int], element[Int], element[Int])))
-    testGetIsoWithEmit("t3", element[(Int, Interval)], structElement(Seq(element[Int], element[Int], element[Int])))
-    testGetIsoWithEmit("t4", element[(Interval, Interval)], structElement(Seq(element[Int], element[Int], element[Int], element[Int])))
+//    testGetIso(element[(Int,Int)], seIntInt)
+//    testGetIsoWithEmit("t1", element[Interval], seIntInt)
+//    testGetIsoWithEmit("t2", element[(Int, (Int, Int))], structElement(Seq(element[Int], element[Int], element[Int])))
+//    testGetIsoWithEmit("t3", element[(Int, Interval)], structElement(Seq(element[Int], element[Int], element[Int])))
+//    testGetIsoWithEmit("t4", element[(Interval, Interval)], structElement(Seq(element[Int], element[Int], element[Int], element[Int])))
 
     testGetIsoWithEmit("a1", element[Array[(Int,Int)]], arrayElement(seIntInt))
-    testGetIsoWithEmit("a2", element[Array[Interval]], arrayElement(seIntInt))
-    testGetIsoWithEmit("a3", element[Array[(Int, (Int, Int))]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int]))))
-    testGetIsoWithEmit("a4", element[Array[(Int, Interval)]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int]))))
-    testGetIsoWithEmit("a5", element[Array[(Interval, Interval)]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int], element[Int]))))
+//    testGetIsoWithEmit("a2", element[Array[Interval]], arrayElement(seIntInt))
+//    testGetIsoWithEmit("a3", element[Array[(Int, (Int, Int))]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int]))))
+//    testGetIsoWithEmit("a4", element[Array[(Int, Interval)]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int]))))
+//    testGetIsoWithEmit("a5", element[Array[(Interval, Interval)]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int], element[Int]))))
   }
 }

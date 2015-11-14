@@ -145,12 +145,12 @@ class StructTests extends BaseCtxTests {
       }
     }
     import ctx.compiler.scalan._
-    ctx.test("t6", t6)
-    ctx.test("t7", t7)
-    ctx.test("t8", t8)
-    ctx.test("t9", t9)
-    ctx.test("t10", t10)
-//    ctx.test("t11", t11)
+//    ctx.test("t6", t6)
+//    ctx.test("t7", t7)
+//    ctx.test("t8", t8)
+//    ctx.test("t9", t9)
+//    ctx.test("t10", t10)
+    ctx.test("t11", t11)
   }
 
   test("flatteningIso") {

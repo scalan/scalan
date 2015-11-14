@@ -16,4 +16,6 @@ trait BaseSeq extends Base { self: ScalanSeq =>
   override def reifyObject[A](x: Def[A]): Rep[A] = x.asInstanceOf[A]
 
   override def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T] = x.selfType.asElem[T]
+
+  def noRW[T](block: => T): T = block
 }

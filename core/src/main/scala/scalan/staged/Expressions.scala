@@ -409,6 +409,7 @@ trait Expressions extends BaseExp { scalan: ScalanExp =>
 
     lazy val definition = findDefinition(this).map(_.rhs)
     def toStringWithDefinition = toStringWithType + definition.map(d => s" = $d").getOrElse("")
+    def emitGraph(context: String) = emitGraphOnException(context, this)
   }
 
   def fresh[T](implicit et: LElem[T]): Exp[T] = new Sym[T]()
@@ -494,6 +495,16 @@ trait Expressions extends BaseExp { scalan: ScalanExp =>
           currDef = null
       }
     } while (res != currSym && currDef != null)
+    res
+  }
+
+  var okRewrite = true
+
+  def noRW[T](block: => T): T = {
+    val saved = okRewrite
+    okRewrite = false
+    val res = block
+    okRewrite = saved
     res
   }
 }
