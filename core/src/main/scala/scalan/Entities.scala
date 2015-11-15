@@ -22,6 +22,9 @@ trait Entities extends Elems { self: Scalan =>
   }
   abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
     extends EntityElem[To] {
+    override def getName = {
+      s"${cont.name}[${eItem.name}]"
+    }
   }
   trait ConcreteElem[TData, TClass] extends EntityElem[TClass] with ViewElem[TData, TClass] { eClass =>
     def getConverterFrom[E](eEntity: EntityElem[E]): Option[Conv[E, TClass]] = {
