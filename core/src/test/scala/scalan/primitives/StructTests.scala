@@ -54,6 +54,15 @@ class StructTests extends BaseCtxTests {
     })
     lazy val t11 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
       val Pair(segs, z) = in
+      Pair(segs, segs.length + z)
+    })
+    lazy val t12 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
+      val Pair(segs, z) = in
+      val sums = segs.map(p => p._1 + p._2)
+      Pair(sums, sums.length)
+    })
+    lazy val t13 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
+      val Pair(segs, z) = in
       val intervals = segs.map(Interval(_))
       Pair(intervals.map(_.length), intervals.length)
     })
@@ -71,10 +80,10 @@ class StructTests extends BaseCtxTests {
         })
       }
 
-      def testFlattening[T](e: StructElem[T], expectedStructFields: Seq[Elem[_]]) = {
+      def testFlattening[T](e: Elem[T], expected: Elem[_]) = {
         val iso = flatteningIso(e)
-        val eFrom = iso.eFrom.asInstanceOf[StructElem[_]]
-        assertResult(expectedStructFields)(eFrom.fields.map(_._2))
+        val eFrom = iso.eFrom
+        assertResult(expected)(eFrom)
         iso
       }
     }
@@ -150,39 +159,66 @@ class StructTests extends BaseCtxTests {
     ctx.test("t8", t8)
     ctx.test("t9", t9)
     ctx.test("t10", t10)
-//    ctx.test("t11", t11)
+    ctx.test("t11", t11)
+    ctx.test("t12", t12)
+    ctx.test("t13", t13)
   }
 
   test("flatteningIso") {
     val ctx = new Ctx
     import ctx.compiler.scalan._
     {
-      val iso = testFlattening(structElem2[Int,Int], Seq(element[Int], element[Int]))
+      val iso = testFlattening(structElem2[Int,Int], structElement(Seq(element[Int], element[Int])))
       assert(iso.isIdentity, "when flattening is not necessary should return identity iso")
     }
     {
       val iso = testFlattening(structElem2(element[Int], structElem2[Double,Boolean]),
-        Seq(element[Int], element[Double], element[Boolean]))
+        structElement(Seq(element[Int], element[Double], element[Boolean])))
         ctx.test("t1_iso.to", iso.toFun)
         ctx.test("t1_iso.from", iso.fromFun)
     }
     {
       val iso = testFlattening(structElem2(structElem2[Int,Char], structElem2[Double,Boolean]),
-        Seq(element[Int], element[Char], element[Double], element[Boolean]))
+        structElement(Seq(element[Int], element[Char], element[Double], element[Boolean])))
         ctx.test("t2_iso.to", iso.toFun)
         ctx.test("t2_iso.from", iso.fromFun)
     }
     {
       val iso = testFlattening(structElem2(element[Int], structElem2(element[Char], structElem2(element[Double], element[Boolean]))),
-        Seq(element[Int], element[Char], element[Double], element[Boolean]))
+        structElement(Seq(element[Int], element[Char], element[Double], element[Boolean])))
         ctx.test("t3_iso.to", iso.toFun)
         ctx.test("t3_iso.from", iso.fromFun)
     }
     {
       val iso = testFlattening(structElem2(structElem2(element[Short],element[Int]), structElem2(element[Char], structElem2(element[Double], element[Boolean]))),
-        Seq(element[Short], element[Int], element[Char], element[Double], element[Boolean]))
+        structElement(Seq(element[Short], element[Int], element[Char], element[Double], element[Boolean])))
         ctx.test("t4_iso.to", iso.toFun)
         ctx.test("t4_iso.from", iso.fromFun)
+    }
+    // arrays
+    {
+      val iso = testFlattening(arrayElement(structElem2(element[Int], structElem2[Double,Boolean])),
+        arrayElement(structElement(Seq(element[Int], element[Double], element[Boolean]))))
+      ctx.test("a1_iso.to", iso.toFun)
+      ctx.test("a1_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(arrayElement(structElem2(structElem2[Int,Char], structElem2[Double,Boolean])),
+        arrayElement(structElement(Seq(element[Int], element[Char], element[Double], element[Boolean]))))
+      ctx.test("a2_iso.to", iso.toFun)
+      ctx.test("a2_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(arrayElement(structElem2(element[Int], structElem2(element[Char], structElem2(element[Double], element[Boolean])))),
+        arrayElement(structElement(Seq(element[Int], element[Char], element[Double], element[Boolean]))))
+      ctx.test("a3_iso.to", iso.toFun)
+      ctx.test("a3_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(arrayElement(structElem2(structElem2(element[Short],element[Int]), structElem2(element[Char], structElem2(element[Double], element[Boolean])))),
+        arrayElement(structElement(Seq(element[Short], element[Int], element[Char], element[Double], element[Boolean]))))
+      ctx.test("a4_iso.to", iso.toFun)
+      ctx.test("a4_iso.from", iso.fromFun)
     }
   }
 

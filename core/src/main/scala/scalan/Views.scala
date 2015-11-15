@@ -151,8 +151,9 @@ trait Views extends Elems { self: Scalan =>
     }
   }
 
-  def buildIso[T](e: Elem[T], builder: IsoBuilder): Iso[_, T] = isoCache.getOrElseUpdate(
-    (classOf[Iso[_, _]], Seq(e)),
+  // TODO this caching doesn't work with structs (uncomment and check test("flatteningIso"))
+  def buildIso[T](e: Elem[T], builder: IsoBuilder): Iso[_, T] = //isoCache.getOrElseUpdate(
+    (//classOf[Iso[_, _]], Seq(e)),
     e match {
       case ve: ViewElem[_,_] =>
         val eFrom = ve.iso.eFrom

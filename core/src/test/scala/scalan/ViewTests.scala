@@ -140,6 +140,8 @@ class ViewTests extends BaseViewTests {
     testGetIsoWithEmit("t2", element[(Int, (Int, Int))], structElement(Seq(element[Int], element[Int], element[Int])))
     testGetIsoWithEmit("t3", element[(Int, Interval)], structElement(Seq(element[Int], element[Int], element[Int])))
     testGetIsoWithEmit("t4", element[(Interval, Interval)], structElement(Seq(element[Int], element[Int], element[Int], element[Int])))
+    testGetIsoWithEmit("t5", element[(Int, Array[(Int, Int)])], structElement(Seq(element[Int], arrayElement(seIntInt))))
+    testGetIsoWithEmit("t5", element[(Array[(Int, Int)], Int)], structElement(Seq(arrayElement(seIntInt), element[Int])))
 
     testGetIsoWithEmit("a1", element[Array[(Int,Int)]], arrayElement(seIntInt))
     testGetIsoWithEmit("a2", element[Array[Interval]], arrayElement(seIntInt))
