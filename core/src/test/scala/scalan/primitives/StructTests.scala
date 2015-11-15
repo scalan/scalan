@@ -7,7 +7,7 @@ import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp, Lazy}
 import scalan.compilation.DummyCompiler
 
-class StructTests extends BaseCtxTests {
+class StructTests extends BaseViewTests {
   trait MyProg extends Scalan with SegmentsDsl {
     val eInt = IntElement.asElem[Any]
     lazy val t1 = fun({ (in: Rep[Int]) =>
@@ -65,6 +65,16 @@ class StructTests extends BaseCtxTests {
       val Pair(segs, z) = in
       val intervals = segs.map(Interval(_))
       Pair(intervals.map(_.length), intervals.length)
+    })
+    lazy val t14 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
+      val Pair(x, y) = in
+      IF (x > y) { Pair(x,y) } ELSE { Pair(y,x) }
+    })
+    lazy val t15 = structWrapper(fun { (in: Rep[((Array[(Int,Int)],Array[((Int,Int), Boolean)]),Int)]) =>
+      val Pair(Pair(segs1, segs2), z) = in
+      val intervals1 = segs1.map(Interval(_))
+      val intervals2 = segs2.map(t => IF (t._2) { Interval(t._1).asRep[Segment] } ELSE { Slice(t._1).asRep[Segment]})
+      Pair(intervals1.map(_.length), intervals2.map(_.length))
     })
   }
 
@@ -162,6 +172,16 @@ class StructTests extends BaseCtxTests {
     ctx.test("t11", t11)
     ctx.test("t12", t12)
     ctx.test("t13", t13)
+//    ctx.test("t14", t14)
+//    ctx.test("t15", t15)
+  }
+
+  test("structWrapper_IfThenElse") {
+    val ctx = new CtxForStructs with MyProg {
+    }
+    import ctx._
+    emit("t14", t14)
+    emit("t15", t15)
   }
 
   test("flatteningIso") {

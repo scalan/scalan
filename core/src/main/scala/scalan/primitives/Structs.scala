@@ -47,6 +47,7 @@ trait Structs extends StructTags { self: Scalan =>
     def isEqualType(tuple: Seq[Elem[_]]) = {
       fields.length == tuple.length && fields.zip(tuple).forall { case ((fn,fe), e) => fe == e }
     }
+    override def getName = s"{${fields.map { case (fn,fe) => s"$fn: ${fe.name}"}.mkString(";")}}"
   }
 
   /**
@@ -365,11 +366,6 @@ trait StructsExp extends Expressions with Structs with StructTags with EffectsEx
       super.unapplyViews(s)
   }).asInstanceOf[Option[Unpacked[T]]]
 
-}
-
-trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compiler[ScalanCake] {
-  import scalan._
-
   object FieldGet {
     def unapply[T](d: FieldApply[T]): Option[Exp[T]] = d match {
       case FieldApply(Def(SimpleStruct(_, fs)), fn) =>
@@ -378,6 +374,17 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
       case _ => None
     }
   }
+
+  def shouldUnpackTuples = currentPass.config.shouldUnpackTuples
+
+  override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
+    case FieldGet(v) if shouldUnpackTuples => v
+    case _ => super.rewriteDef(d)
+  }
+}
+
+trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compiler[ScalanCake] {
+  import scalan._
 
   object StructsRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {

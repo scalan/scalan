@@ -47,6 +47,13 @@ abstract class BaseViewTests extends BaseCtxTests {
       }
     }
   }
+  class CtxForStructs extends ViewTestsCtx with SegmentsDslExp {
+    override def shouldUnpack(e: Elem[_])  = true
+    override val currentPass = new Pass {
+      val name = "test"
+      override val config = PassConfig(true) // turn on tuple unpacking
+    }
+  }
 }
 
 class ViewTests extends BaseViewTests {
@@ -125,13 +132,7 @@ class ViewTests extends BaseViewTests {
   }
 
   test("getIsoByElem for structs") {
-    val ctx = new ViewTestsCtx with SegmentsDslExp {
-      override def shouldUnpack(e: Elem[_])  = true
-      override val currentPass = new Pass {
-        val name = "test"
-        override val config = PassConfig(true) // turn on tuple unpacking
-      }
-    }
+    val ctx = new CtxForStructs
     import ctx._
 
     val seIntInt = structElem2[Int, Int]
