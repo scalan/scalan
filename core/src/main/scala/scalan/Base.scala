@@ -144,6 +144,10 @@ trait Base extends LazyLogging { self: Scalan =>
   def repDef_getElem[T <: Def[_]](x: Rep[T]): Elem[T]
 
   def reifyObject[A](d: Def[A]): Rep[A]
+
+  val cacheIsos = true
+  val cacheElems = true
+  val cachePairs = true
 }
 
 object Base {
