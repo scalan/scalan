@@ -22,6 +22,9 @@ trait Entities extends Elems { self: Scalan =>
   }
   abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
     extends EntityElem[To] {
+    override def getName = {
+      s"${cont.name}[${eItem.name}]"
+    }
   }
   trait ConcreteElem[TData, TClass] extends EntityElem[TClass] with ViewElem[TData, TClass] { eClass =>
     def getConverterFrom[E](eEntity: EntityElem[E]): Option[Conv[E, TClass]] = {
@@ -83,6 +86,17 @@ trait Entities extends Elems { self: Scalan =>
   implicit class ElemOps[T](e: Elem[T]) {
     def isConcrete = isConcreteElem(e)
     def getDataIso = getIsoByElem(e)
+
+    /**
+     * Replaces a root tree of [[PairElem]]s in the given element [[e]] with [[StructElem]]s.
+     * All other types are considered as leaves.
+     * @return new StructElem if [[e]] is [[PairElem]] otherwise returns [[e]].
+     */
+    def toStructElemShallow: Elem[_] = e match {
+      case pe: PairElem[a,b] =>
+        structElem2(pe.eFst.toStructElemShallow, pe.eSnd.toStructElemShallow)
+      case _ => e
+    }
   }
   trait CompanionElem[T] extends Elem[T] { _: scala.Equals =>
     override def isEntityType = false

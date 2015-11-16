@@ -4,7 +4,7 @@ import scala.language.higherKinds
 import scala.collection.mutable.{Map => MutMap}
 import scala.reflect.ClassTag
 import scalan.common.Lazy
-import scalan.staged.BaseExp
+import scalan.staged.{BaseExp,Transforming}
 
 trait Views extends Elems { self: Scalan =>
 
@@ -30,6 +30,10 @@ trait Views extends Elems { self: Scalan =>
     if (isDebug) {
       debug$IsoCounter(this) += 1
     }
+  }
+  implicit class IsoOps[A,B](iso: Iso[A,B]) {
+    def asIso[C,D] = iso.asInstanceOf[Iso[C,D]]
+    def >>[C](iso2: Iso[B,C]): Iso[A,C] = composeIso(iso2, iso)
   }
 
   private val debug$IsoCounter = counter[Iso[_, _]]
@@ -76,74 +80,136 @@ trait Views extends Elems { self: Scalan =>
   }
 
   object UnpackableElem {
-    def unapply(e: Elem[_]) =
-      if (shouldUnpack(e)) {
-        val iso = getIsoByElem(e)
-        if (iso.isIdentity)
-          None
-        else
-          Some(iso)
-      }
-      else None
+    def unapply(e: Elem[_]) = {
+      val iso = getIsoByElem(e)
+      if (iso.isIdentity)
+        None
+      else
+        Some(iso)
+    }
   }
 
   def shouldUnpack(e: Elem[_]): Boolean
 
-  def getIsoByElem[T](e: Elem[T]): Iso[_, T] = isoCache.getOrElseUpdate(
-    (classOf[Iso[_, _]], Seq(e)),
+  trait IsoBuilder { def apply[T](e: Elem[T]): Iso[_,T] }
+
+  object PairIsos {
+    def fromElem[A,B](pe: PairElem[A,B]) = (getIsoByElem(pe.eFst), getIsoByElem(pe.eSnd))
+
+    def unapply[T](e: Elem[T]): Option[(PairElem[_,_], Iso[_,_], Iso[_,_])] = e match {
+      case pe: PairElem[a,b] =>
+        fromElem(pe) match {
+          case (iso1: Iso[s, a], iso2: Iso[t, b]) => Some((pe, iso1, iso2))
+          case _ => None
+        }
+      case _ => None
+    }
+  }
+
+  def getIsoByElem[T](e: Elem[T]): Iso[_, T] = {
+    if (currentPass.config.shouldUnpackTuples) {
+      buildIso(e, new IsoBuilder {
+        def apply[S](e: Elem[S]) = {
+          val res = e match {
+            case PairIsos(_, iso1: Iso[s,a], iso2: Iso[t,b]) =>
+              if (iso1.isIdentity && iso2.isIdentity) {
+                // recursion base (structs)
+                val sIso = structToPairIso[Any,s,t,a,b](iso1, iso2)
+                val flatIso = flatteningIso(sIso.eFrom.asStructElem[Any])
+                flatIso >> sIso.asIso[Any,S]
+              }
+              else {
+                val pIso = pairIso(iso1, iso2)
+                val deepIso = getIsoByElem(pIso.eFrom)
+                deepIso >> pIso//.asIso[(s,t),S]
+              }
+            case _ =>
+              getIsoByElem(e)
+          }
+          res.asIso[Any,S]
+        }
+      })
+    }
+    else {
+      buildIso(e, new IsoBuilder {
+        def apply[S](e: Elem[S]) = {
+          val res = e match {
+            case PairIsos(_, iso1: Iso[s,a], iso2: Iso[t,b]) =>
+              if (iso1.isIdentity && iso2.isIdentity) {
+                // recursion base
+                pairIso(iso1, iso2)
+              }
+              else {
+                getIsoByElem(e)
+              }
+            case _ =>
+              getIsoByElem(e)
+          }
+          res.asIso[Any,S]
+        }
+      })
+    }
+  }
+
+  // TODO this caching doesn't work with structs (uncomment and check test("flatteningIso"))
+  def buildIso[T](e: Elem[T], builder: IsoBuilder): Iso[_, T] = //isoCache.getOrElseUpdate(
+    (//classOf[Iso[_, _]], Seq(e)),
     e match {
       case ve: ViewElem[_,_] =>
         val eFrom = ve.iso.eFrom
-        val deepIso = getIsoByElem(eFrom)
+        val deepIso = builder(eFrom)
         if (deepIso.isIdentity)
           ve.iso
         else
-          composeIso(ve.iso, deepIso)
+          deepIso >> ve.iso
       case pe: PairElem[a,b] =>
-        val iso1 = getIsoByElem(pe.eFst)
-        val iso2 = getIsoByElem(pe.eSnd)
-        pairIso(iso1,iso2)
+        (builder(pe.eFst), builder(pe.eSnd)) match {
+          case (iso1: Iso[s,a], iso2: Iso[t,b]) =>
+            val pIso = pairIso(iso1,iso2)
+            val deepIso = builder(pIso.eFrom)
+            deepIso >> pIso
+        }
       case pe: SumElem[a,b] =>
-        val iso1 = getIsoByElem(pe.eLeft)
-        val iso2 = getIsoByElem(pe.eRight)
+        val iso1 = builder(pe.eLeft)
+        val iso2 = builder(pe.eRight)
         sumIso(iso1,iso2)
       case fe: FuncElem[a,b] =>
-        val iso1 = getIsoByElem(fe.eDom)
-        val iso2 = getIsoByElem(fe.eRange)
+        val iso1 = builder(fe.eDom)
+        val iso2 = builder(fe.eRange)
         funcIso(iso1,iso2)
       case ae: ArrayElem[_] =>
-        val iso = getIsoByElem(ae.eItem)
+        val iso = builder(ae.eItem)
         arrayIso(iso)
       case ae: ListElem[_] =>
-        val iso = getIsoByElem(ae.eItem)
+        val iso = builder(ae.eItem)
         listIso(iso)
       case ae: ArrayBufferElem[_] =>
-        val iso = getIsoByElem(ae.eItem)
+        val iso = builder(ae.eItem)
         arrayBufferIso(iso)
       case ae: ThunkElem[_] =>
-        val iso = getIsoByElem(ae.eItem)
+        val iso = builder(ae.eItem)
         thunkIso(iso)
       case me: MMapElem[_,_] =>
         identityIso(me)
 
       case we: WrapperElem1[a, Def[ext], cbase, cw] @unchecked =>
         val eExt = we.eTo
-        val iso = getIsoByElem(eExt)
+        val iso = builder(eExt)
         iso
-
       case we: WrapperElem[Def[base],Def[ext]] @unchecked =>
         val eExt = we.eTo
-        val iso = getIsoByElem(eExt)
+        val iso = builder(eExt)
         iso
 
       //    case ee1: EntityElem1[_,_,_] =>
       //      val iso = getIsoByElem(ee1.eItem)
       //      TODO implement using ContainerIso
-
       case ee: EntityElem[_] =>
         identityIso(ee)
       case be: BaseElem[_] =>
         identityIso(be)
+      case se: StructElem[_] =>
+        identityIso(se)
       case _ => !!!(s"Don't know how to build iso for element $e")
     }
   ).asInstanceOf[Iso[_,T]]
@@ -286,7 +352,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
 
   type UnpackTester = Element[_] => Boolean
 
-  private var unpackTesters: Set[UnpackTester] = Set.empty
+  protected var unpackTesters: Set[UnpackTester] = Set.empty
 
   def addUnpackTester(tester: UnpackTester): Unit =
     unpackTesters += tester
@@ -294,6 +360,8 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
     unpackTesters -= tester
 
   def shouldUnpack(e: Elem[_]) = unpackTesters.exists(_(e))
+
+  def defaultUnpackTester(e: Elem[_]) = true //e match { case pe: PairElem[_,_] => false case _ => true }
 
   object HasViews {
     def unapply[T](s: Exp[T]): Option[Unpacked[T]] =
@@ -304,14 +372,6 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   protected def trivialUnapply[T](s: Exp[T]) = (s, identityIso(s.elem))
 
   def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
-    case Def(Tup(s1, s2)) =>
-      (unapplyViews(s1), unapplyViews(s2)) match {
-        case (None, None) => None
-        case (opt1, opt2) =>
-          val (sv1, iso1) = opt1.getOrElse(trivialUnapply(s1))
-          val (sv2, iso2) = opt2.getOrElse(trivialUnapply(s2))
-          Some((Pair(sv1, sv2), pairIso(iso1, iso2)))
-      }
     case Def(l @ SLeft(s)) =>
       (unapplyViews(s), UnpackableElem.unapply(l.eRight)) match {
         case (None, None) => None

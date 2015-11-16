@@ -7,8 +7,8 @@ import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp, Lazy}
 import scalan.compilation.DummyCompiler
 
-class StructTests extends BaseCtxTests {
-  trait MyProg extends Scalan  {
+class StructTests extends BaseViewTests {
+  trait MyProg extends Scalan with SegmentsDsl {
     val eInt = IntElement.asElem[Any]
     lazy val t1 = fun({ (in: Rep[Int]) =>
       struct("in" -> in).asRep[Any]
@@ -23,10 +23,81 @@ class StructTests extends BaseCtxTests {
       val c = in + in
       fields(struct("a" -> in, "b" -> b, "c" -> c).asRep[Any], Seq("a", "c")).asRep[Any]
     })(Lazy(element[Int]), structElement(Seq("a" -> eInt, "c" -> eInt)).asElem[Any])
+
+    lazy val t4 = fun({ (in: Rep[Int]) =>
+      Pair(in, in)
+    })
+
+    lazy val t5 = fun({ (in: Rep[Int]) =>
+      Pair(in, Pair(in, in + 1))
+    })
+
+
+    lazy val t6 = structWrapper(fun { (in: Rep[(Int,Int)]) => Interval(in).shift(10).toData })
+
+    lazy val t2x2_7 = fun { (in: Rep[(Int,Int)]) =>
+      Pair(in._1 + in._2, in._1 - in._2)
+    }
+    lazy val t7 = structWrapper(t2x2_7)
+
+    lazy val t8 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
+      Pair(in._2, in._1)
+    })
+    lazy val t9 = structWrapper(fun { (in: Rep[((Int,Int),Int)]) =>
+      val Pair(Pair(x, y), z) = in
+      Pair(x + y, Pair(x - z, y - z))
+    })
+    lazy val t10 = structWrapper(fun { (in: Rep[((Int,Int),Int)]) =>
+      val Pair(Pair(x, y), z) = in
+      val i = Interval(x,y)
+      Pair(i.length, i.shift(z).toData)
+    })
+    lazy val t11 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
+      val Pair(segs, z) = in
+      Pair(segs, segs.length + z)
+    })
+    lazy val t12 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
+      val Pair(segs, z) = in
+      val sums = segs.map(p => p._1 + p._2)
+      Pair(sums, sums.length)
+    })
+    lazy val t13 = structWrapper(fun { (in: Rep[(Array[(Int,Int)],Int)]) =>
+      val Pair(segs, z) = in
+      val intervals = segs.map(Interval(_))
+      Pair(intervals.map(_.length), intervals.length)
+    })
+    lazy val t14 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
+      val Pair(x, y) = in
+      IF (x > y) { Pair(x,y) } ELSE { Pair(y,x) }
+    })
+    lazy val t15 = structWrapper(fun { (in: Rep[((Array[(Int,Int)],Array[((Int,Int), Boolean)]),Int)]) =>
+      val Pair(Pair(segs1, segs2), z) = in
+      val intervals1 = segs1.map(Interval(_))
+      val intervals2 = segs2.map(t => IF (t._2) { Interval(t._1).asRep[Segment] } ELSE { Slice(t._1).asRep[Segment]})
+      Pair(intervals1.map(_.length), intervals2.map(_.length))
+    })
   }
 
   class Ctx extends TestCompilerContext {
-    override val compiler = new DummyCompiler(new ScalanCtxExp with MyProg)
+    class ScalanCake extends ScalanCtxExp with MyProg with SegmentsDslExp {
+      def noTuples[A,B](f: Rep[A=>B]): Boolean = {
+        val g = new PGraph(f)
+        !g.scheduleAll.exists(tp => tp.rhs match {
+          case First(_) => true
+          case Second(_) => true
+          case Tup(_,_) => true
+          case _ => false
+        })
+      }
+
+      def testFlattening[T](e: Elem[T], expected: Elem[_]) = {
+        val iso = getFlatteningIso(e)
+        val eFrom = iso.eFrom
+        assertResult(expected)(eFrom)
+        iso
+      }
+    }
+    override val compiler = new DummyCompiler(new ScalanCake)
                            with StructsCompiler[ScalanCtxExp with MyProg]
   }
 
@@ -71,4 +142,133 @@ class StructTests extends BaseCtxTests {
     ctx.test
     ctx.test("t3", t3)
   }
+
+  test("StructsRewriting") {
+    val ctx = new Ctx {
+      def test() = {
+      }
+    }
+    import ctx.compiler.scalan._
+    ctx.test
+    ctx.test("t4", t4)
+    ctx.test("t5", t5)
+  }
+
+  test("structWrapper") {
+    val ctx = new Ctx {
+      import compiler.scalan._
+      override def test[A,B](functionName: String, f: Exp[A => B]): compiler.CompilerOutput[A, B] = {
+        val out = super.test(functionName, f)
+        assert(noTuples(out.common.graph.roots(0).asRep[A => B]))
+        out
+      }
+    }
+    import ctx.compiler.scalan._
+    ctx.test("t6", t6)
+    ctx.test("t7", t7)
+    ctx.test("t8", t8)
+    ctx.test("t9", t9)
+    ctx.test("t10", t10)
+    ctx.test("t11", t11)
+    ctx.test("t12", t12)
+    ctx.test("t13", t13)
+//    ctx.test("t14", t14)
+//    ctx.test("t15", t15)
+  }
+
+  test("structWrapper_IfThenElse") {
+    val ctx = new CtxForStructs with MyProg {
+    }
+    import ctx._
+    emit("t14", t14)
+    emit("t15", t15)
+  }
+
+  test("flatteningIso") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
+    {
+      val iso = testFlattening(structElem2[Int,Int], structElement(Seq(element[Int], element[Int])))
+      assert(iso.isIdentity, "when flattening is not necessary should return identity iso")
+    }
+    {
+      val iso = testFlattening(structElem2(element[Int], structElem2[Double,Boolean]),
+        structElement(Seq(element[Int], element[Double], element[Boolean])))
+        ctx.test("t1_iso.to", iso.toFun)
+        ctx.test("t1_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(structElem2(structElem2[Int,Char], structElem2[Double,Boolean]),
+        structElement(Seq(element[Int], element[Char], element[Double], element[Boolean])))
+        ctx.test("t2_iso.to", iso.toFun)
+        ctx.test("t2_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(structElem2(element[Int], structElem2(element[Char], structElem2(element[Double], element[Boolean]))),
+        structElement(Seq(element[Int], element[Char], element[Double], element[Boolean])))
+        ctx.test("t3_iso.to", iso.toFun)
+        ctx.test("t3_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(structElem2(structElem2(element[Short],element[Int]), structElem2(element[Char], structElem2(element[Double], element[Boolean]))),
+        structElement(Seq(element[Short], element[Int], element[Char], element[Double], element[Boolean])))
+        ctx.test("t4_iso.to", iso.toFun)
+        ctx.test("t4_iso.from", iso.fromFun)
+    }
+    // arrays
+    {
+      val iso = testFlattening(arrayElement(structElem2(element[Int], structElem2[Double,Boolean])),
+        arrayElement(structElement(Seq(element[Int], element[Double], element[Boolean]))))
+      ctx.test("a1_iso.to", iso.toFun)
+      ctx.test("a1_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(arrayElement(structElem2(structElem2[Int,Char], structElem2[Double,Boolean])),
+        arrayElement(structElement(Seq(element[Int], element[Char], element[Double], element[Boolean]))))
+      ctx.test("a2_iso.to", iso.toFun)
+      ctx.test("a2_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(arrayElement(structElem2(element[Int], structElem2(element[Char], structElem2(element[Double], element[Boolean])))),
+        arrayElement(structElement(Seq(element[Int], element[Char], element[Double], element[Boolean]))))
+      ctx.test("a3_iso.to", iso.toFun)
+      ctx.test("a3_iso.from", iso.fromFun)
+    }
+    {
+      val iso = testFlattening(arrayElement(structElem2(structElem2(element[Short],element[Int]), structElem2(element[Char], structElem2(element[Double], element[Boolean])))),
+        arrayElement(structElement(Seq(element[Short], element[Int], element[Char], element[Double], element[Boolean]))))
+      ctx.test("a4_iso.to", iso.toFun)
+      ctx.test("a4_iso.from", iso.fromFun)
+    }
+  }
+
+  test("structIso") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
+    {
+      val eFrom = structElement(Seq(element[(Int,Int)], element[Double], element[Boolean]))
+      val eTo = structElement(Seq("a" -> element[Interval].asElem[Any], "b" -> element[Double].asElem[Any], "c" -> element[Boolean].asElem[Any]))
+      val iso = new StructIso(
+          eFrom, eTo,
+          Seq(getIsoByElem(element[Interval]), identityIso[Double], identityIso[Boolean]))
+
+      ctx.test("t5_iso.to", iso.toFun)
+      ctx.test("t5_iso.from", iso.fromFun)
+    }
+  }
+
+  test("Elem.toStructElem") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
+    {
+      val eIntInt = structElement(Seq(element[Int], element[Int]))
+      val eDoubleBool = structElement(Seq(element[Double], element[Boolean]))
+      val nested = structElement(Seq(eIntInt, eDoubleBool))
+      val nested2 = structElement(Seq(nested, nested))
+      assertResult(nested)(element[((Int,Int),(Double,Boolean))].toStructElemShallow)
+      assertResult(nested2)(element[(((Int,Int),(Double,Boolean)),((Int,Int),(Double,Boolean)))].toStructElemShallow)
+    }
+  }
+
 }
+

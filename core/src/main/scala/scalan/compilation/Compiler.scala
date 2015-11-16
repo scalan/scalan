@@ -13,7 +13,7 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
 
   type CustomCompilerOutput
 
-  case class CommonCompilerOutput[A, B](executableDir: File, name: String, eInput: Elem[A], eOutput: Elem[B])
+  case class CommonCompilerOutput[A, B](graph: PGraph, executableDir: File, name: String, eInput: Elem[A], eOutput: Elem[B])
 
   case class CompilerOutput[A, B](common: CommonCompilerOutput[A, B], custom: CustomCompilerOutput, config: CompilerConfig)
 
@@ -37,7 +37,10 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
 
     passes.zipWithIndex.foldLeft(g0) { case (graph, (passFunc, index)) =>
       val pass = passFunc(graph)
+
+      scalan.beginPass(pass)
       val graph1 = pass(graph).withoutContext
+      scalan.endPass(pass)
 
       val indexStr = (index + 1).toString
       val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"
@@ -56,7 +59,7 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
     val eInput = eFunc.eDom
     val eOutput = eFunc.eRange
     val customOutput = doBuildExecutable(sourcesDir, executableDir, functionName, graph, graphVizConfig)(compilerConfig, eInput, eOutput)
-    val commonOutput = CommonCompilerOutput(executableDir, functionName, eInput, eOutput)
+    val commonOutput = CommonCompilerOutput(graph, executableDir, functionName, eInput, eOutput)
     CompilerOutput(commonOutput, customOutput, compilerConfig)
   }
 

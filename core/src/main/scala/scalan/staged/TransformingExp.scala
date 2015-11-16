@@ -2,10 +2,43 @@ package scalan.staged
 
 import java.lang.reflect.InvocationTargetException
 
-import scalan.ScalanExp
+import scalan.{Scalan, ScalanExp}
 import scalan.common.Lazy
 
-trait Transforming { self: ScalanExp =>
+trait Transforming { self: Scalan =>
+
+  trait Pass {
+    def name: String
+    def config: PassConfig = Pass.defaultPassConfig
+    // TODO what arguments?
+    def doFinalization(): Unit = {}
+  }
+  object Pass {
+    val defaultPassConfig = PassConfig()
+    val defaultPass = DefaultPass
+  }
+
+  case class PassConfig(shouldUnpackTuples: Boolean = false)
+  case object DefaultPass extends Pass {
+    val name = "default"
+  }
+
+  //TODO parallel execution of Compilers
+  // Current design doesn't allow to run through passes i two Compilers in parallel
+  var _currentPass: Pass = Pass.defaultPass
+  def currentPass = _currentPass
+
+  def beginPass(pass: Pass): Unit = {
+    _currentPass = pass
+  }
+  def endPass(pass: Pass): Unit = {
+    _currentPass = DefaultPass
+  }
+
+}
+
+trait TransformingExp extends Transforming { self: ScalanExp =>
+
 
   class MapTransformer(private val subst: Map[Exp[_], Exp[_]]) extends Transformer {
     def this(substPairs: (Exp[_], Exp[_])*) {

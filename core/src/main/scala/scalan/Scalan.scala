@@ -5,7 +5,7 @@ import scalan.primitives._
 import scalan.collections._
 import scalan.arrays._
 import scalan.seq.BaseSeq
-import scalan.staged.{BaseExp, Expressions, Transforming}
+import scalan.staged.{Transforming, BaseExp, Expressions, TransformingExp}
 import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl/*, Exceptions*/}
 
 trait Scalan
@@ -33,6 +33,7 @@ trait Scalan
   with Monoids
   with PatternMatching
   with Maps
+  with Transforming
   with ArrayOps
   with ArrayBuffers
   with Exceptions
@@ -110,7 +111,7 @@ trait ScalanExp
   with BlocksExp
   with PatternMatchingExp
   with MapsExp
-  with Transforming
+  with TransformingExp
   with ArrayOpsExp
   with ArrayBuffersExp
   with ExceptionsExp
