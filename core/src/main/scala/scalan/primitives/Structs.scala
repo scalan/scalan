@@ -56,10 +56,12 @@ trait Structs extends StructTags { self: Scalan =>
   def tupleFN(fieldIndex: Int) = s"_$fieldIndex"
 
   def structElement(fields: Seq[(String, Elem[Any])]): StructElem[_] =
-    cachedElem[StructElem[_]](fields)
+    StructElem(fields)
+  //TODO cache  cachedElem[StructElem[_]](fields)
 
   def structElement(fields: Seq[Elem[_]])(implicit o: Overloaded1): StructElem[_] =
-    cachedElem[StructElem[_]](fields.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f })
+    StructElem(fields.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f.asElem[Any] })
+  //TODO cache  cachedElem[StructElem[_]](fields.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f })
 
   def structElem2[A:Elem, B:Elem]: StructElem[_] =
     structElement(Seq(element[A], element[B]))
@@ -81,7 +83,9 @@ trait Structs extends StructTags { self: Scalan =>
   }
 
   def structToPairIso[S, A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[S, (B1, B2)] =
-    cachedIso[StructToPairIso[S, A1, A2, B1, B2]](iso1, iso2)
+    StructToPairIso[S, A1, A2, B1, B2](iso1, iso2)
+  //TODO cache  cachedIso[StructToPairIso[S, A1, A2, B1, B2]](iso1, iso2)
+
   def structToPairIso[S, A:Elem,B:Elem]: Iso[S, (A, B)] = structToPairIso[S,A,B,A,B](identityIso[A], identityIso[B])
   def structToPairIso[S,A,B](pe: Elem[(A,B)]): Iso[S, (A, B)] = structToPairIso[S,A,B](pe.eFst, pe.eSnd)
 
@@ -164,56 +168,72 @@ trait Structs extends StructTags { self: Scalan =>
    * @return an isomorphism [[i]] in which [[eTo]] is given by param and [[eFrom]] is flattened [[eTo]] preserving
    *         related order of the components
    */
-  def flatteningIso[T](e: Elem[T]): Iso[_,T] = e match {
-    case eTo: StructElem[T] @unchecked =>
-      val flatIsos = eTo.fields.collect {
-        case (fn, fe: StructElem[_]) => (fn, flatteningIso(fe).asInstanceOf[Iso[Any,Any]])
-        }.toMap
-
-      if (flatIsos.isEmpty) return identityIso(eTo)
-
-      // relate resulting field types by original field name
-      val fromFields = eTo.fields.flatMap {
-        case (fn, fe) =>
-          flatIsos.get(fn) match {
-            case Some(iso) =>
-              iso.eFrom match {
-                case flatElem: StructElem[_] =>
-                  flatElem.fields.map { case (nestedName, nestedE) => (fn, nestedName -> nestedE) }
-                case _ => !!!(s"StructElem is expected as eFrom of flattened Iso $iso")
-              }
-            case None => List((fn, "" -> fe))
-          }
+  def getFlatteningIso[T](e: Elem[T]): Iso[_,T] = e match {
+    case se: StructElem[T] @unchecked =>
+      val flatIso = flatteningIso(se)
+      (flatIso.eFrom, flatIso) match {
+        case (eFrom: StructElem[_], idIso: IdentityIso[s] @unchecked) =>
+          flatIso
+        case (eFrom: StructElem[s], flatIso: FlatteningIso[T] @unchecked) =>
+          val isos = eFrom.fields.map { case (fn,fe) => (fn, buildIso(fe, flatteningBuilder)) }
+          val eFromNew = structElement(isos.map { case (fn, iso) => fn -> iso.eFrom.asElem[Any] })
+          val sIso = new StructIso(eFromNew, eFrom, isos.map(_._2))
+          sIso >> flatIso.asInstanceOf[Iso[s,T]]
       }
-
-      val links = fromFields.zipWithIndex.map {
-        case ((fn, (nestedN, nestedE)), i) => Link(fn, nestedN, nestedE, i + 1)
-      }
-
-      val res = new FlatteningIso(eTo, flatIsos, links)
-      res.asInstanceOf[Iso[_,T]]
     case _ =>
-      buildIso(e, new IsoBuilder { def apply[S](e: Elem[S]) = flatteningIso(e) })
+      buildIso(e, flatteningBuilder)
   }
 
-  def getStructToPairsIso[T](implicit e: Elem[T]): Iso[_,T] = buildIso(e, new IsoBuilder {
-    def apply[S](e: Elem[S]) = {
-      val res = e match {
-        case pe: PairElem[a,b] =>
-          val iso1 = getStructToPairsIso(pe.eFst)
-          val iso2 = getStructToPairsIso(pe.eSnd)
-          structToPairIso(iso1, iso2)
-        case _ =>
-          getStructToPairsIso(e)
-      }
-      res.asInstanceOf[Iso[_,S]]
+  val flatteningBuilder = new IsoBuilder { def apply[S](e: Elem[S]) = getFlatteningIso(e) }
+
+  def flatteningIso[T](eTo: StructElem[T]): Iso[_,T] = {
+    val flatIsos = eTo.fields.collect {
+      case (fn, fe: StructElem[_]) => (fn, flatteningIso(fe).asInstanceOf[Iso[Any,Any]])
+      }.toMap
+
+    if (flatIsos.isEmpty) return identityIso(eTo)
+
+    // relate resulting field types by original field name
+    val fromFields = eTo.fields.flatMap {
+      case (fn, fe) =>
+        flatIsos.get(fn) match {
+          case Some(iso) =>
+            iso.eFrom match {
+              case flatElem: StructElem[_] =>
+                flatElem.fields.map { case (nestedName, nestedE) => (fn, nestedName -> nestedE) }
+              case _ => !!!(s"StructElem is expected as eFrom of flattened Iso $iso")
+            }
+          case None => List((fn, "" -> fe))
+        }
     }
-  })
+
+    val links = fromFields.zipWithIndex.map {
+      case ((fn, (nestedN, nestedE)), i) => Link(fn, nestedN, nestedE, i + 1)
+    }
+
+    val res = new FlatteningIso(eTo, flatIsos, links)
+    res.asInstanceOf[Iso[_,T]]
+  }
+
+  def getStructToPairsIso[T](implicit e: Elem[T]): Iso[_,T] = (e match {
+    case pe: PairElem[a,b] =>
+      val iso1 = getStructToPairsIso(pe.eFst)
+      val iso2 = getStructToPairsIso(pe.eSnd)
+      val res = structToPairIso(iso1, iso2)
+      res
+    case _ =>
+      buildIso(e, new IsoBuilder {
+        def apply[S](e: Elem[S]) = {
+          getStructToPairsIso(e)
+        }
+      })
+  }).asInstanceOf[Iso[_,T]]
+
 
   def getStructWrapperIso[T](implicit e: Elem[T]): Iso[_,T] = {
     getStructToPairsIso(e) match {
       case iso: Iso[s,T] @unchecked =>
-        val flatIso = flatteningIso[s](iso.eFrom.asStructElem)
+        val flatIso = getFlatteningIso[s](iso.eFrom)
         flatIso >> iso
     }
   }

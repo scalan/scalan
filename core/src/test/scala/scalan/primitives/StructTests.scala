@@ -91,7 +91,7 @@ class StructTests extends BaseViewTests {
       }
 
       def testFlattening[T](e: Elem[T], expected: Elem[_]) = {
-        val iso = flatteningIso(e)
+        val iso = getFlatteningIso(e)
         val eFrom = iso.eFrom
         assertResult(expected)(eFrom)
         iso
