@@ -200,12 +200,16 @@ trait TuplesExp extends Tuples with BaseExp { self: ScalanExp =>
     case Def(Tup(a, b)) => (a, b)
     case _ => p.elem match {
       case pe: PairElem[_, _] =>
-        if (!tuplesCache.contains(p)) {
-          implicit val eA = pe.eFst
-          implicit val eB = pe.eSnd
-          tuplesCache.update(p, (First(p), Second(p)))
+        implicit val eA = pe.eFst
+        implicit val eB = pe.eSnd
+        if (cachePairs) {
+          if (!tuplesCache.contains(p)) {
+            tuplesCache.update(p, (First(p), Second(p)))
+          }
+          tuplesCache(p).asInstanceOf[(Rep[A], Rep[B])]
         }
-        tuplesCache(p).asInstanceOf[(Rep[A], Rep[B])]
+        else
+          (First(p), Second(p))
       case _ =>
         !!!(s"expected Tup[A,B] or Sym with type (A,B) but got ${p.toStringWithDefinition}")
     }

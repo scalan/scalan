@@ -56,12 +56,16 @@ trait Structs extends StructTags { self: Scalan =>
   def tupleFN(fieldIndex: Int) = s"_$fieldIndex"
 
   def structElement(fields: Seq[(String, Elem[Any])]): StructElem[_] =
-    StructElem(fields)
-  //TODO cache  cachedElem[StructElem[_]](fields)
+    if (cacheElems)
+      cachedElem[StructElem[_]](fields)
+    else
+      StructElem(fields)
 
   def structElement(fields: Seq[Elem[_]])(implicit o: Overloaded1): StructElem[_] =
-    StructElem(fields.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f.asElem[Any] })
-  //TODO cache  cachedElem[StructElem[_]](fields.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f })
+    if (cacheElems)
+      cachedElem[StructElem[_]](fields.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f })
+    else
+      StructElem(fields.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f.asElem[Any] })
 
   def structElem2[A:Elem, B:Elem]: StructElem[_] =
     structElement(Seq(element[A], element[B]))
@@ -83,8 +87,10 @@ trait Structs extends StructTags { self: Scalan =>
   }
 
   def structToPairIso[S, A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[S, (B1, B2)] =
-    StructToPairIso[S, A1, A2, B1, B2](iso1, iso2)
-  //TODO cache  cachedIso[StructToPairIso[S, A1, A2, B1, B2]](iso1, iso2)
+    if (cacheIsos)
+      cachedIso[StructToPairIso[S, A1, A2, B1, B2]](iso1, iso2)
+    else
+      StructToPairIso[S, A1, A2, B1, B2](iso1, iso2)
 
   def structToPairIso[S, A:Elem,B:Elem]: Iso[S, (A, B)] = structToPairIso[S,A,B,A,B](identityIso[A], identityIso[B])
   def structToPairIso[S,A,B](pe: Elem[(A,B)]): Iso[S, (A, B)] = structToPairIso[S,A,B](pe.eFst, pe.eSnd)
@@ -244,6 +250,18 @@ trait Structs extends StructTags { self: Scalan =>
     fun({ (in: Rep[Any]) =>
       outIso.from(f(inIso.to(in)))
     })(Lazy(inIso.eFrom), outIso.eFrom)
+  }
+  def structWrapperIn[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => B] = {
+    val inIso = getStructWrapperIso[A].asIso[Any,A]
+    fun({ (in: Rep[Any]) =>
+      f(inIso.to(in))
+    })(Lazy(inIso.eFrom), element[B])
+  }
+  def structWrapperOut[A:Elem,B:Elem](f: Rep[A => B]): Rep[A => Any] = {
+    val outIso = getStructWrapperIso[B].asIso[Any,B]
+    fun({ (in: Rep[A]) =>
+      outIso.from(f(in))
+    })(Lazy(element[A]), outIso.eFrom)
   }
 
 }
@@ -408,7 +426,6 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
 
   object StructsRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {
-      case Def(Tup(a, b)) => struct(tupleFN(1) -> a, tupleFN(2) -> b)
       case Def(FieldGet(v)) => v
       case _ => x
     }).asRep[T]

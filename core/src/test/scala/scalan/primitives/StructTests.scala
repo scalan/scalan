@@ -66,11 +66,14 @@ class StructTests extends BaseViewTests {
       val intervals = segs.map(Interval(_))
       Pair(intervals.map(_.length), intervals.length)
     })
-    lazy val t14 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
+    lazy val t14 = fun { (in: Rep[Int]) =>
+      Pair(in, in)
+    }
+    lazy val t15 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
       val Pair(x, y) = in
       IF (x > y) { Pair(x,y) } ELSE { Pair(y,x) }
     })
-    lazy val t15 = structWrapper(fun { (in: Rep[((Array[(Int,Int)],Array[((Int,Int), Boolean)]),Int)]) =>
+    lazy val t16 = structWrapper(fun { (in: Rep[((Array[(Int,Int)],Array[((Int,Int), Boolean)]),Int)]) =>
       val Pair(Pair(segs1, segs2), z) = in
       val intervals1 = segs1.map(Interval(_))
       val intervals2 = segs2.map(t => IF (t._2) { Interval(t._1).asRep[Segment] } ELSE { Slice(t._1).asRep[Segment]})
@@ -80,6 +83,10 @@ class StructTests extends BaseViewTests {
 
   class Ctx extends TestCompilerContext {
     class ScalanCake extends ScalanCtxExp with MyProg with SegmentsDslExp {
+      override val cacheElems = false
+//      override val cacheIsos = false
+//      override val cachePairs = false
+
       def noTuples[A,B](f: Rep[A=>B]): Boolean = {
         val g = new PGraph(f)
         !g.scheduleAll.exists(tp => tp.rhs match {
@@ -157,23 +164,28 @@ class StructTests extends BaseViewTests {
   test("structWrapper") {
     val ctx = new Ctx {
       import compiler.scalan._
-      override def test[A,B](functionName: String, f: Exp[A => B]): compiler.CompilerOutput[A, B] = {
+      def testWrapper[A,B](functionName: String,
+                             f: Exp[A => B], expectTuples: Boolean = false): compiler.CompilerOutput[A, B] = {
         val out = super.test(functionName, f)
-        assert(noTuples(out.common.graph.roots(0).asRep[A => B]))
+        val hasTuples = !noTuples(out.common.graph.roots(0).asRep[A => B])
+        assert(expectTuples && hasTuples || (!expectTuples && !hasTuples))
         out
       }
     }
     import ctx.compiler.scalan._
-    ctx.test("t6", t6)
-    ctx.test("t7", t7)
-    ctx.test("t8", t8)
-    ctx.test("t9", t9)
-    ctx.test("t10", t10)
-    ctx.test("t11", t11)
-    ctx.test("t12", t12)
-    ctx.test("t13", t13)
-//    ctx.test("t14", t14)
-//    ctx.test("t15", t15)
+    ctx.testWrapper("t6", t6)
+    ctx.testWrapper("t7", t7)
+    ctx.testWrapper("t8", t8)
+    ctx.testWrapper("t9", t9)
+    ctx.testWrapper("t10", t10)
+    ctx.testWrapper("t11", t11)
+    ctx.testWrapper("t12", t12)
+    ctx.testWrapper("t13", t13)
+    ctx.testWrapper("t14", t14, true)
+    ctx.testWrapper("t14_in", structWrapperIn(t14), true)
+    ctx.testWrapper("t14_inout", structWrapper(t14), false)
+    ctx.testWrapper("t15", t15)
+    ctx.testWrapper("t16", t16)
   }
 
   test("structWrapper_IfThenElse") {
