@@ -206,12 +206,8 @@ trait ScalaGenArrayLoopsFat extends ScalaGenArrayLoops with ScalaGenLoopsFat {
         }
       }
       val ii = x // was: x(i)
-      //      stream.println("var " + quote(ii) + " = 0")
-      //      stream.println("while ("+quote(ii)+" < "+quote(s)+") {")
-      stream.println("for ("+quote(ii)+" <- 0 until "+quote(s)+") {")
-      //      for (jj <- x.drop(1)) {
-      //        stream.println(quote(jj)+" = "+quote(ii))
-      //      }
+      stream.println("var " + quote(ii) + " = 0")
+      stream.println("while ("+quote(ii)+" < "+quote(s)+") {")
       emitFatBlock(syms(rhs).map(Block(_))) // TODO: check this
       for ((l,r) <- sym zip rhs) {
         r match {
@@ -233,7 +229,7 @@ trait ScalaGenArrayLoopsFat extends ScalaGenArrayLoops with ScalaGenLoopsFat {
             stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + "_buf ++= " + quote(getBlockResult(y)))
         }
       }
-      //      stream.println(quote(ii)+" += 1")
+      stream.println(quote(ii)+" += 1")
       stream.println("}")
       for ((l,r) <- sym zip rhs) {
         r match {
