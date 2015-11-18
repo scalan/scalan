@@ -94,7 +94,9 @@ trait ScalanParsers {
 
     val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
 
-    val traits = defs.collect { case t: STraitDef if !t.name.endsWith("Companion") => t }
+    val traits = defs.collect {
+      case t: STraitDef if !(t.name.endsWith("Companion") || t.hasAnnotation("InternalType")) => t
+    }
     val entity = traits.headOption.getOrElse {
       throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
     }
