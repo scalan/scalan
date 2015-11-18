@@ -33,6 +33,17 @@ trait Proxy { self: Scalan =>
 
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
+
+  /**
+   * Can be thrown to prevent invoke
+   */
+  class DelayInvokeException extends Exception
+
+  case class ExternalMethodException(className: String, methodName: String) extends DelayInvokeException
+
+  def externalMethod(className: String, methodName: String) = {
+    throw new ExternalMethodException(className, methodName)
+  }
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
@@ -706,6 +717,9 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   private def isSupertypeOfDef(clazz: Symbol) =
     Symbols.SuperTypesOfDef.contains(clazz)
 
+  val externalClassNameMetaKey = MetaKey[String]("externalClassName")
+  val externalMethodNameMetaKey = MetaKey[String]("externalMethodName")
+
   sealed trait InvokeResult
 
   case class InvokeSuccess(result: Rep[_]) extends InvokeResult
@@ -725,7 +739,13 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               val res = m.invoke(d, args: _*)
               res
             } catch {
-              case e: Exception => !!!("Method invocation failed", baseCause(e))
+              case e: ExternalMethodException =>
+                val res = mkMethodCall(receiver, m, args.toList, neverInvoke = true)
+                res.setMetadata(externalClassNameMetaKey)(e.className)
+                res.setMetadata(externalMethodNameMetaKey)(e.methodName)
+                res
+              case e: Exception =>
+                !!!("Method invocation failed", baseCause(e))
             }
           } else {
             // try to call method m via inherited class or interfaces
@@ -744,9 +764,4 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
       mkMethodCall(receiver, m, args.toList, false)
     }
   }
-
-  /**
-   * Can be thrown to prevent invoke
-   */
-  class DelayInvokeException extends Exception
 }

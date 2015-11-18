@@ -132,7 +132,7 @@ trait BaseExp extends Base { scalan: ScalanExp =>
       val transformedP = constructor.newInstance(finalParams: _*).asInstanceOf[Product]
       transformedP
     } catch {
-      case e =>
+      case e: Throwable =>
         println(
           s"""
              | Graph nodes have scalan cake as the first paramenter ($$owner).

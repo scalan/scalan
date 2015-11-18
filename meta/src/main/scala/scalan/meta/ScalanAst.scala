@@ -284,7 +284,19 @@ object ScalanAst {
       getFieldDefs.map(_.name).toSet ++ getAncestorTraits(module).flatMap(_.getAvailableFields(module))
     }
 
-    def getConcreteClasses = body.collect { case c: SClassDef => c }
+    def getConcreteClasses = body.collect { case c: SClassDef if !c.hasAnnotation("InternalType") => c }
+
+    def getDeclaredElems(module: SEntityModuleDef):  List[(String, STpeExpr)] = {
+      val res = (this :: getAncestorTraits(module))
+        .flatMap(e => {
+          val elems = e.body.collect {
+            case SMethodDef(name, _, _, Some(elemOrCont), true, _, _, _, _, true) =>
+              (name, elemOrCont)
+          }
+          elems
+        })
+      res
+    }
 
     def getAnnotation(annotName: String) = annotations.find(a => a.annotationClass == annotName)
 
@@ -423,6 +435,7 @@ object ScalanAst {
     }
 
     def isEntity(name: String) = entities.exists(e => e.name == name)
+    def isClass(name: String) = concreteSClasses.exists(c => c.name == name)
 
     def allEntities = entities ++ concreteSClasses
 
