@@ -3,7 +3,7 @@ package scalan.compilation.lms.common
 import java.util.HashMap
 
 import scala.reflect.SourceContext
-import scala.lms.common.{EffectExp, Base, ArrayOpsExp, ScalaGenBase}
+import scala.lms.common._
 import scala.lms.internal.Transforming
 import scalan.compilation.lms.LmsBackendFacade
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
@@ -28,9 +28,7 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
   def array_insert[T:Manifest](a: Exp[Array[T]], i: Exp[Int], x: Exp[T])(implicit pos: SourceContext) = ArrayInsert(a,i,x)
   def array_reverse[T:Manifest](x: Exp[Array[T]])(implicit pos: SourceContext) = ArrayReverse(x)
 
-  // FIXME Should be array_obj_new instead of ArrayNew, but this is used outside reifyEffects
-  def arrayNew[A: Manifest](len: Rep[Int]): Rep[Array[A]] = ArrayNew[A](len)
-  def arrayEmpty[A: Manifest] = arrayNew[A](0)
+  def arrayEmpty[A: Manifest] = array_obj_fromseq[A](Seq.empty)
 
   def map_fromArray[K: Manifest, V: Manifest](arr: Exp[Array[(K, V)]]): Exp[HashMap[K, V]] = {
     val h = HashMap[K, V]()

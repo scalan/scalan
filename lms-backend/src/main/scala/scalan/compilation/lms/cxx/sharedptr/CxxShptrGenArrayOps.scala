@@ -43,6 +43,8 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
       emitConstruct(sym, src"$n")
     case ArrayMutable(a) =>
       emitConstruct(sym, src"$a->begin()", src"$a->end()")
+    case e @ ArrayFromSeq(Seq()) =>
+      emitNode(sym, ArrayNew(Const(0))(e.m))
     //    case e@ArrayFromSeq(xs) => {
     //      emitData(sym, xs)
     //      emitValDef(sym,
