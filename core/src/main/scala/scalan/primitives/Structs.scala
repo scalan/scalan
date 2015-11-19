@@ -40,10 +40,10 @@ trait Structs extends StructTags { self: Scalan =>
       val res = struct(fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
       res.asRep[T]
     }
-    def get(fieldName: String): Option[Elem[Any]] = fields.find(_._1 == fieldName).map(_._2)
+    def get(fieldName: String): Option[Elem[Any]] = fields.find(_._1 == fieldName).map(_._2.asElem[Any])
     override def canEqual(other: Any) = other.isInstanceOf[StructElem[_]]
     override def toString = s"${getClass.getSimpleName}{${fields.map { case (fn,fe) => s"$fn: $fe"}.mkString(";")}}"
-    def fieldElems: Seq[Elem[Any]] = fields.map(_._2)
+    def fieldElems: Seq[Elem[Any]] = fields.map(_._2.asElem[Any])
     def isEqualType(tuple: Seq[Elem[_]]) = {
       fields.length == tuple.length && fields.zip(tuple).forall { case ((fn,fe), e) => fe == e }
     }
@@ -55,11 +55,11 @@ trait Structs extends StructTags { self: Scalan =>
    */
   def tupleFN(fieldIndex: Int) = s"_$fieldIndex"
 
-  def structElement(fields: Seq[(String, Elem[Any])]): StructElem[_] =
+  def structElement(fields: Seq[(String, Elem[_])]): StructElem[_] =
     if (cacheElems)
       cachedElem[StructElem[_]](fields)
     else
-      StructElem(fields)
+      StructElem(fields.asInstanceOf[Seq[(String,Elem[Any])]])
 
   def structElement(fields: Seq[Elem[_]])(implicit o: Overloaded1): StructElem[_] =
     if (cacheElems)
