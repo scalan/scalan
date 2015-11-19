@@ -119,6 +119,16 @@ trait Structs extends StructTags { self: Scalan =>
   implicit class StructOps(s: Rep[_]) {
     def apply(iField: Int): Rep[_] = field(s, iField)
     def apply(fieldName: String): Rep[_] = field(s, fieldName)
+    def getChar(fieldName: String): Rep[Char] = field(s, fieldName).asRep[Char]
+    def getFloat(fieldName: String): Rep[Float] = field(s, fieldName).asRep[Float]
+    def getDouble(fieldName: String): Rep[Double] = field(s, fieldName).asRep[Double]
+    def getInt(fieldName: String): Rep[Int] = field(s, fieldName).asRep[Int]
+    def getLong(fieldName: String): Rep[Long] = field(s, fieldName).asRep[Long]
+    def getString(fieldName: String): Rep[String] = field(s, fieldName).asRep[String]
+    def getBoolean(fieldName: String): Rep[Boolean] = field(s, fieldName).asRep[Boolean]
+    def getByte(fieldName: String): Rep[Byte] = field(s, fieldName).asRep[Byte]
+    def getUnit(fieldName: String): Rep[Unit] = field(s, fieldName).asRep[Unit]
+    def getShort(fieldName: String): Rep[Short] = field(s, fieldName).asRep[Short]
   }
 
   def struct(fields: (String, Rep[Any])*): Rep[_] = struct(fields)
