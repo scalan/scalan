@@ -2,6 +2,7 @@ package scalan.meta
 
 import scala.reflect.internal.ModifierFlags
 import PrintExtensions._
+import scalan._
 
 object ScalanAst {
   // STpe universe --------------------------------------------------------------------------
@@ -125,14 +126,11 @@ object ScalanAst {
   case class SMethodAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
   case class SArgAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
 
-  def annotationNameOf(a: java.lang.annotation.Annotation): String = a.getClass.getSimpleName
-
-  //TODO extract this names from the corresponding classed of annotation somehow
-  final val ConstuctorAnnotation = "Constructor"
-  final val ExternalAnnotation = "External"
-  final val ArgListAnnotation = "ArgList"
-  final val ContainerTypeAnnotation = "ContainerType"
-  final val FunctorTypeAnnotation = "FunctorType"
+  final val ConstructorAnnotation = classOf[Constructor].getSimpleName
+  final val ExternalAnnotation = classOf[External].getSimpleName
+  final val ArgListAnnotation = classOf[ArgList].getSimpleName
+  final val ContainerTypeAnnotation = classOf[ContainerType].getSimpleName
+  final val FunctorTypeAnnotation = classOf[FunctorType].getSimpleName
 
   // SExpr universe --------------------------------------------------------------------------
   trait SExpr
