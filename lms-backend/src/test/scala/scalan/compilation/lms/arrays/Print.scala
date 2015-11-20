@@ -27,7 +27,7 @@ trait ScalaGenPrint extends ScalaGenEffect {
   import IR._
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case Print(s) =>  emitValDef(sym, "println(" + quote(s) + ")")
+    case Print(s) =>  emitValDef(sym, src"println($s)")
     case _ => super.emitNode(sym, rhs)
   }
 }

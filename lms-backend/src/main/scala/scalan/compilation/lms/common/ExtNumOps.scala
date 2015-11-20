@@ -54,8 +54,7 @@ trait ScalaGenExtNumOps extends ScalaGenBase {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ds @ NumericRand(n) =>
-      // TODO use proper source quasiquoter
-      stream.println("val " + quote(sym) + " = " + "util.Random.nextDouble() * " + quote(n) + ".asInstanceOf[Double]")
+      stream.println(src"val $sym = util.Random.nextDouble() * $n.asInstanceOf[Double]")
     case _ => super.emitNode(sym, rhs)
   }
 

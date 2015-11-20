@@ -15,7 +15,7 @@ trait CxxShptrGenRangeOps extends CxxShptrCodegen with CLikeGenEffect with BaseG
 //          |$i = $i + 1
 //          |}"""
 
-      emitConstruct(i, s"${quote(start)}")
+      emitConstruct(i, src"$start")
       gen"""while($i < $end) {
            |${nestedBlock(body)}
            |$i += 1;

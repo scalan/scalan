@@ -40,7 +40,7 @@ class ScalaCommunityCodegen[BackendCake <: LmsBackendFacade](backend: BackendCak
   override def remap[A](m: Manifest[A]) =
     if (m.equals(LmsType.wildCard)) "_"
     else if (isTuple2(m.runtimeClass.getSimpleName)) {
-      if (m.typeArguments.length == 2) s"(${remap(m.typeArguments(0))}, ${remap(m.typeArguments(1))})"
+      if (m.typeArguments.length == 2) src"(${m.typeArguments(0)}, ${m.typeArguments(1)})"
       else m.toString
     }
     else super.remap(m)

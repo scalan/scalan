@@ -36,9 +36,8 @@ trait CxxShptrGenPointer extends CxxShptrCodegen {
   import IR._
 
   override def remap[A](m: Manifest[A]): String = {
-    def standartRemap[A](m: Manifest[A]) = remap(m.typeArguments(0))
     m.runtimeClass match {
-      case c if c == classOf[Scalar[_]] => standartRemap(m)
+      case c if c == classOf[Scalar[_]] => remap(m.typeArguments(0))
       case c if c == classOf[Pointer[_]] => s"${remap(m.typeArguments(0))}*"
       case _ =>
         super.remap(m)
@@ -59,10 +58,10 @@ trait CxxShptrGenPointer extends CxxShptrCodegen {
       emitValDef(sym, "nullptr")
 
     case ScalarPtr(xScalar) =>
-      emitValDef(sym, s"std::addressof(${quote(xScalar)})")
+      emitValDef(sym, src"std::addressof($xScalar)")
 
     case ArrayPtr(xs) =>
-      emitValDef(sym, s"std::addressof((*${quote(xs)})[0])")
+      emitValDef(sym, src"std::addressof((*$xs)[0])")
 
     case _ =>
       super.emitNode(sym, rhs)

@@ -21,13 +21,13 @@ trait CxxShptrGenArrayBuilderOps  extends CxxShptrCodegen with BaseGenArrayBuild
     case a@ArrayBuilderMake() =>
       emitVarDecl(sym)
     case ArrayBuilderAppend(l, e) =>
-      stream.println(s"${quote(l)}->push_back(${quote(e)});")
+      stream.println(src"$l->push_back($e);")
       emitValDef(sym, "scalan::unit_value")
     case ArrayBuilderClear(l) =>
-      stream.println(s"${quote(l)}->clear();")
+      stream.println(src"$l->clear();")
       emitValDef(sym, "scalan::unit_value")
     case ArrayBuilderResult(x) =>
-      emitValDef(sym, s"${quote(x)}")
+      emitValDef(sym, src"$x")
     case _ =>
       super.emitNode(sym, rhs)
   }

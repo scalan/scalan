@@ -59,12 +59,12 @@ trait CxxShptrGenIfThenElseFat extends CxxShptrGenIfThenElse with CLikeGenFat wi
     case SimpleFatIfThenElse(c,as,bs) =>
       //declare variables
       symList.foreach( {sym => emitVarDecl(sym)} )
-      stream.println(s"if (${quote(c)}) {")
+      stream.println(src"if ($c) {")
       emitFatBlock(as)
-      (symList zip as.map(getBlockResult)).foreach( {p => emitAssignment(p._1, s"${quote(p._2)}")} )
+      (symList zip as.map(getBlockResult)).foreach { p => emitAssignment(p._1, src"${p._2}") }
       stream.println("} else {")
       emitFatBlock(bs)
-      (symList zip bs.map(getBlockResult)).foreach( {p => emitAssignment(p._1, s"${quote(p._2)}")} )
+      (symList zip bs.map(getBlockResult)).foreach { p => emitAssignment(p._1, src"${p._2}") }
       stream.println("}")
     case _ => super.emitFatNode(symList, rhs)
   }

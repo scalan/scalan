@@ -94,10 +94,10 @@ trait ScalaGenArith extends ScalaGenBase {
   import IR._
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case Plus(a,b) =>  emitValDef(sym, "" + quote(a) + "+" + quote(b))
-    case Minus(a,b) => emitValDef(sym, "" + quote(a) + "-" + quote(b))
-    case Times(a,b) => emitValDef(sym, "" + quote(a) + "*" + quote(b))
-    case Div(a,b) =>   emitValDef(sym, "" + quote(a) + "/" + quote(b))
+    case Plus(a,b) =>  emitValDef(sym, src"$a+$b")
+    case Minus(a,b) => emitValDef(sym, src"$a-$b")
+    case Times(a,b) => emitValDef(sym, src"$a*$b")
+    case Div(a,b) =>   emitValDef(sym, src"$a/$b")
     case _ => super.emitNode(sym, rhs)
   }
 }

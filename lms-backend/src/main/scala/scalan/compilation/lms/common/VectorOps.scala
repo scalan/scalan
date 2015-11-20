@@ -1,12 +1,10 @@
 package scalan.compilation.lms.common
 
-import scala.reflect.SourceContext
 import scala.lms.common._
-import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
-import scala.collection.mutable
-import scala.annotation.tailrec
 import scala.lms.internal.Transforming
+import scala.reflect.SourceContext
 import scalan.compilation.lms.LmsBackendFacade
+import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait VectorOps extends Variables {
 
@@ -44,38 +42,35 @@ trait ScalaGenVectorOps extends ScalaGenBase {
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ds @ ArrayDotProdSparse(idxs1, vals1, idxs2, vals2) =>
       // existence of implicit Numeric[A] ensures we can have + and *
-      // TODO use proper source quasiquoter
-      stream.println("// generating dot product")
-      stream.println("val " + quote(sym) + " ={")
-      stream.println("\tval idxs1 = " + quote(idxs1))
-      stream.println("\tval idxs2 = " + quote(idxs2))
-      stream.println("\tval vals1 = " + quote(vals1))
-      stream.println("\tval vals2 = " + quote(vals2))
-      stream.println("\tvar i1 = 0")
-      stream.println("\tvar i2 = 0")
-      stream.println("\tvar out:" + remap(ds.m) + " = 0")
-      stream.println("\twhile (i1 < idxs1.length && i2 < idxs2.length) {")
-      stream.println("\t\tval ind1 = idxs1(i1)")
-      stream.println("\t\tval ind2 = idxs2(i2)")
-      stream.println("\t\tif (ind1 == ind2) { ")
-      stream.println("\t\t\tout += vals1(i1) * vals2(i2)")
-      stream.println("\t\t\ti1+=1")
-      stream.println("\t\t\ti2+=1")
-      stream.println("\t\t} else if (ind1 < ind2 ) {")
-      stream.println("\t\t\ti1+=1")
-      stream.println("\t\t} else {")
-      stream.println("\t\t\ti2+=1")
-      stream.println("\t\t}")
-      stream.println("\t}")
-      stream.println("\tout")
-      stream.println("}")
+      stream.println(
+        src"""
+           |// generating dot product
+           |val $sym = {
+           |  val idxs1 = $idxs1
+           |  val idxs2 = $idxs2
+           |  val vals1 = $vals1
+           |  val vals2 = $vals2
+           |  var i1 = 0
+           |  var i2 = 0
+           |  var out: ${ds.m} = 0
+           |  while (i1 < idxs1.length && i2 < idxs2.length) {
+           |    val ind1 = idxs1(i1)
+           |    val ind2 = idxs2(i2)
+           |    if (ind1 == ind2) {
+           |      out += vals1(i1) * vals2(i2)
+           |      i1 += 1
+           |      i2 += 1
+           |    } else if (ind1 < ind2) {
+           |      i1 += 1
+           |    } else {
+           |      i2 += 1
+           |    }
+           |  }
+           |  out
+           |}
+           """.stripMargin)
     case ds @ ArrayBinarySearch(i, is) =>
-      // TODO use proper source quasiquoter
-      stream.println("// generating Binary Search in array")
-      stream.println("val " + quote(sym) + " = {")
-      stream.println("\tval out:" + remap(ds.m) + " = java.util.Arrays.binarySearch(" + quote(is) + ", " + quote(i) + ")")
-      stream.println("\tout")
-      stream.println("}")
+      emitValDef(sym, src"java.util.Arrays.binarySearch($is, $i)")
     case _ => super.emitNode(sym, rhs)
   }
 
@@ -90,30 +85,31 @@ trait CxxShptrGenVectorOps extends CxxShptrCodegen {
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ds @ ArrayDotProdSparse(idxs1, vals1, idxs2, vals2) =>
       // += and * operators are assumed to be defined, since A is a numeric type
-      // TODO use proper source quasiquoter
       stream.println("// generating dot product")
       emitConstruct(sym)
-      stream.println("{")
-      stream.println(s"\tauto idxs1 = ${quote(idxs1)};")
-      stream.println(s"\tauto idxs2 = ${quote(idxs2)};")
-      stream.println(s"\tauto vals1 = ${quote(vals1)};")
-      stream.println(s"\tauto vals2 = ${quote(vals2)};")
-      stream.println("\tsize_t i1 = 0;")
-      stream.println("\tsize_t i2 = 0;")
-      stream.println("\twhile (i1 < idxs1->size() && i2 < idxs2->size()) {")
-      stream.println("\t\tauto ind1 = (*idxs1)[i1];")
-      stream.println("\t\tauto ind2 = (*idxs2)[i2];")
-      stream.println("\t\tif (ind1 == ind2) { ")
-      stream.println(s"\t\t\t${quote(sym)} += (*vals1)[i1] * (*vals2)[i2];")
-      stream.println("\t\t\ti1+=1;")
-      stream.println("\t\t\ti2+=1;")
-      stream.println("\t\t} else if (ind1 < ind2 ) {")
-      stream.println("\t\t\ti1+=1;")
-      stream.println("\t\t} else {")
-      stream.println("\t\t\ti2+=1;")
-      stream.println("\t\t}")
-      stream.println("\t};")
-      stream.println("}")
+      stream.println(
+        src""" {
+           |  auto idxs1 = $idxs1;
+           |  auto idxs2 = $idxs2;
+           |  auto vals1 = $vals1;
+           |  auto vals2 = $vals2;
+           |  size_t i1 = 0;
+           |  size_t i2 = 0;
+           |  while (i1 < idxs1->size() && i2 < idxs2->size()) {
+           |    auto ind1 = (*idxs1)[i1];
+           |    auto ind2 = (*idxs2)[i2];
+           |    if (ind1 == ind2) {
+           |      $sym += (*vals1)[i1] * (*vals2)[i2];
+           |      i1 += 1;
+           |      i2 += 1;
+           |    } else if (ind1 < ind2) {
+           |      i1 += 1;
+           |    } else {
+           |      i2 += 1;
+           |    }
+           |  };
+           |}
+           """.stripMargin)
     case ds @ ArrayBinarySearch(i, is) =>
       emitValDef(sym, src"scalan::binary_search($is->begin(), $is->end(), $i);")
     case _ => super.emitNode(sym, rhs)

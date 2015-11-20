@@ -68,13 +68,13 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
       //      stream.println(s"")
       val len = s"${quote(sym)}_len"
       val i = s"${quote(sym)}_i"
-      gen"""{/*start: ${sym} = ${rhs.toString}*/
+      gen"""{/*start: $sym = ${rhs.toString}*/
            |size_t $len = $a->size();
            |for(size_t $i = 0; $i < $len; ++$i) {"""
       emitValDef( x, src"(*$a)[$i]" )
       emitBlock(block)
       gen"""}
-           |}/*end: ${sym} = ${rhs.toString}*/"""
+           |}/*end: $sym = ${rhs.toString}*/"""
       emitValDef(sym, "scalan::unit_value")
     case ArrayCopy(src,srcPos,dest,destPos,len) =>
       stream.println(s"{/*start: ${rhs.toString}*/")

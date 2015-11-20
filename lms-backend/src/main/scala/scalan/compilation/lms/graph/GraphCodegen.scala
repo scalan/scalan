@@ -136,10 +136,10 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
           stream.println("style=dashed; color=\"#FFCCFF\"")  //as lambda
 
           for (arg <- block.args)
-            exportNode(s"${block.name}", arg, "ellipse")
+            exportNode(block.name, arg, "ellipse")
 
           val statements = block.statements.reverse
-          val last = statements.foldLeft(prevNodeName:String)((prevName, node) => exportNode(s"${block.name}", node, "box", prevName))
+          val last = statements.foldLeft(prevNodeName:String)((prevName, node) => exportNode(block.name, node, "box", prevName))
 
           block.name // or last
 
@@ -237,8 +237,8 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
             printDependenceEdge(mapSym2Name.getOrElse(sym.id, s"x${sym.id}"), name)
           name
         case x =>
-          stream.println(StringUtil.quote(s"exp = ${x.toString}"))
-          s"${blockName}__exp = ${x.toString}"
+          stream.println(StringUtil.quote(s"exp = $x"))
+          s"${blockName}__exp = $x"
         //stream.println(StringUtil.quote(x.toString))
       }
     }

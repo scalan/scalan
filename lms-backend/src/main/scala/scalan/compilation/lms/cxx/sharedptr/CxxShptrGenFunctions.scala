@@ -13,7 +13,7 @@ trait CxxShptrGenFunctions extends CLikeGenEffect with BaseGenFunctions with Cxx
       case c if c == classOf[(_ => _)] =>
         val mX = m.typeArguments(0)
         val mY = m.typeArguments(1)
-        s"std::function<${remap(mY)}(${remap(mX)})>"
+        src"std::function<$mY($mX)>"
       case _ =>
         super.remap(m)
     }
@@ -21,14 +21,14 @@ trait CxxShptrGenFunctions extends CLikeGenEffect with BaseGenFunctions with Cxx
 
   def emitLambdaDef(sym: Sym[Any], x: Exp[_], y: Block[Any]): Unit = {
     val z = getBlockResult(y)
-//    stream.println( s"${remap(norefManifest(sym.tp))} ${quote(sym)} = [${freeInScope(scala.List(x), scala.List(z)).map(quote).mkString(",")}](${remap(x.tp)} ${quote(x)}) -> ${remap(z.tp)} {" )
-//    stream.println( s"${remap(sym.tp)} ${quote(sym)} = [&](${remap(x.tp)} ${quote(x)}) -> ${remap(z.tp)} {" )
+//    stream.println( src"${norefManifest(sym.tp)} $sym = [${freeInScope(scala.List(x), scala.List(z))}](${x.tp} $x) -> ${z.tp} {" )
+//    stream.println( src"${sym.tp} $sym = [&](${x.tp} $x) -> ${z.tp} {" )
     val newXtp = toShptrManifest(x.tp)
     val newZtp = toShptrManifest(z.tp)
-    emitValDef(quote(sym), manifest[auto_t], src"[=](${remap(newXtp)} ${quote(x)}) -> ${remap(newZtp)} {")
+    emitValDef(quote(sym), manifest[auto_t], src"[=]($newXtp $x) -> $newZtp {")
     emitBlock(y)
     if (remap(newZtp) != "void")
-      stream.println("return " + quote(z) + ";")
+      stream.println(src"return $z;")
     stream.println("};")
   }
 
@@ -36,7 +36,7 @@ trait CxxShptrGenFunctions extends CLikeGenEffect with BaseGenFunctions with Cxx
     case Lambda(fun, x, y) =>
       emitLambdaDef(sym, x, y)
     case Apply(fun, arg) =>
-      emitValDef(sym, quote(fun) + "(" + quote(arg) + ")")
+      emitValDef(sym, src"$fun($arg)")
     case _ => super.emitNode(sym, rhs)
   }
 }

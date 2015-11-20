@@ -72,7 +72,7 @@ trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsF
 
   override def emitFatNode(sym: List[Sym[Any]], rhs1: FatDef) = rhs1 match {
     case SimpleFatLoop(s,x,rhs) =>
-      stream.println(s"/*start: ${rhs1.toString}*/")
+      stream.println(s"/*start: $rhs1*/")
       for ((l,r) <- sym zip rhs) {
         r match {
           case JArrayElem(x,y) =>
@@ -93,33 +93,33 @@ trait CxxShptrGenArrayLoopsFat extends CxxShptrGenArrayLoops with CLikeGenLoopsF
       }
 
       val ii = x // was: x(i)
-      stream.println(s"for( ${remap(ii.tp)} ${quote(ii)} = 0; ${quote(ii)} < ${quote(s)}; ++${quote(ii)} ) {")
+      stream.println(src"for( ${ii.tp} $ii = 0; $ii < $s; ++$ii ) {")
 
       emitFatBlock(syms(rhs).map(Block(_))) // TODO: check this
       for ((l,r) <- sym zip rhs) {
         r match {
           case JArrayElem(x,y) =>
             val q = getBlockResult(y)
-            stream.println( s"env->SetObjectArrayElement( ${quote(x)}, ${quote(ii)}, ${quote(q)}); /*JArrayElem*/" )
+            stream.println(src"env->SetObjectArrayElement( $x, $ii, $q); /*JArrayElem*/" )
           case JNIArrayElem(x,y) =>
             val q = getBlockResult(y)
             stream.println(src"(*$x)[$ii] = $q; /*JNIArrayElem*/")
           case ArrayElem(y) =>
-            stream.println(src"(*$l)[$ii] = ${quote(getBlockResult(y))};")
+            stream.println(src"(*$l)[$ii] = ${getBlockResult(y)};")
           case ReduceElem(y) =>
-            stream.println(quote(l) + " += " + quote(getBlockResult(y)) + ";")
+            stream.println(src"$l += ${getBlockResult(y)};")
           case ArrayIfElem(c,y) =>
-            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + "->push_back( " + quote(getBlockResult(y)) + " );")
+            stream.println(src"if (${/*getBlockResult*/(c)}) $l->push_back( ${getBlockResult(y)} );")
           case ReduceIfElem(c,y) =>
-            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + " += " + quote(getBlockResult(y)) + ";")
+            stream.println(src"if (${/*getBlockResult*/(c)}) $l += ${getBlockResult(y)};")
           case ReduceIfIntElem(c,y) =>
-            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + " += " + quote(getBlockResult(y)) + ";")
+            stream.println(src"if (${/*getBlockResult*/(c)}) $l += ${getBlockResult(y)};")
 //          case FlattenElem(y) =>
-//            stream.println(quote(l) + " ++= " + quote(getBlockResult(y)))
+//            stream.println(src"$l ++= ${getBlockResult(y)}")
         }
       }
       stream.println("}")
-      stream.println(s"/*end: ${rhs1.toString}*/")
+      stream.println(s"/*end: $rhs1*/")
     case _ => super.emitFatNode(sym, rhs1)
   }
 }

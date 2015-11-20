@@ -110,7 +110,7 @@ trait CxxShptrGenEitherOps extends CxxShptrCodegen {
       case c if c == classOf[scala.util.Either[_,_]] =>
         val mA = m.typeArguments(0)
         val mB = m.typeArguments(1)
-        s"boost::variant<${remap(mA)},${remap(mB)}>"
+        src"boost::variant<$mA,$mB>"
       case _ =>
         super.remap(m)
     }
@@ -118,24 +118,24 @@ trait CxxShptrGenEitherOps extends CxxShptrCodegen {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case EitherGetLeft(sum) =>
-      emitValDef(sym, src"boost::get<${remap(sum.tp.typeArguments(0))}>($sum)")
+      emitValDef(sym, src"boost::get<${sum.tp.typeArguments(0)}>($sum)")
     case EitherGetRight(sum) =>
-      emitValDef(sym, src"boost::get<${remap(sum.tp.typeArguments(1))}>($sum)")
+      emitValDef(sym, src"boost::get<${sum.tp.typeArguments(1)}>($sum)")
     case EitherLeft(a, _, _) =>
-      stream.println(s"${remap(sym.tp)} ${quote(sym)}(${quote(a)});")
+      stream.println(src"${sym.tp} $sym($a);")
     case EitherRight(b, _, _) =>
-      stream.println(s"${remap(sym.tp)} ${quote(sym)}(${quote(b)});")
+      stream.println(src"${sym.tp} $sym($b);")
     case EitherIsLeft(sum) =>
-      emitValDef(sym, s"${quote(sum)}.which() == 0")
+      emitValDef(sym, src"$sum.which() == 0")
     case EitherIsRight(sum) =>
-      emitValDef(sym, s"${quote(sum)}.which() == 1")
+      emitValDef(sym, src"$sum.which() == 1")
     case EitherFold(sum, l, r) =>
-      emitValDef(sym, s"${quote(sum)}.which() == 0 ? ${quote(l)}(boost::get<${remap(l.tp.typeArguments(0))}>(${quote(sum)})) : ${quote(r)}(boost::get<${remap(r.tp.typeArguments(0))}>(${quote(sum)}))")
+      emitValDef(sym, src"$sum.which() == 0 ? $l(boost::get<${l.tp.typeArguments(0)}>($sum)) : $r(boost::get<${r.tp.typeArguments(0)}>($sum))")
     case EitherMap(sum, l, r) =>
       val tpl = remap(sum.tp.typeArguments(0))
       val tpr = remap(sum.tp.typeArguments(1))
       val rtp = remap(sym.tp)
-      emitValDef(sym, src"${quote(sum)}.which() == 0 ? $rtp(${quote(l)}(boost::get<$tpl>(${quote(sum)}))) : $rtp(${quote(r)}(boost::get<$tpr>(${quote(sum)})))")
+      emitValDef(sym, src"$sum.which() == 0 ? $rtp($l(boost::get<$tpl>($sum))) : $rtp($r(boost::get<$tpr>($sum)))")
     case _ =>
       super.emitNode(sym, rhs)
   }

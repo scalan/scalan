@@ -146,30 +146,30 @@ trait ScalaGenArrayLoops extends ScalaGenLoops {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case SimpleLoop(s,x,ArrayElem(y)) =>
-      stream.println("val " + quote(sym) + " = LoopArray("+quote(s)+") { " + quote(x) + " => ")
+      stream.println(src"val $sym = LoopArray($s) { $x => ")
       emitBlock(y)
       stream.println(quote(getBlockResult(y)))
       stream.println("}")
     case SimpleLoop(s,x,ReduceElem(y)) =>
-      stream.println("val " + quote(sym) + " = LoopReduce("+quote(s)+") { " + quote(x) + " => ")
+      stream.println(src"val $sym = LoopReduce($s) { $x => ")
       emitBlock(y)
       stream.println(quote(getBlockResult(y)))
       stream.println("}")
     case SimpleLoop(s,x,ReduceIntElem(y)) =>
-      stream.println("val " + quote(sym) + " = LoopReduce("+quote(s)+") { " + quote(x) + " => ")
+      stream.println(src"val $sym = LoopReduce($s) { $x => ")
       emitBlock(y)
       stream.println(quote(getBlockResult(y)))
       stream.println("}")
     // TODO: conditional variants ...
     case SimpleLoop(s,x,FlattenElem(y)) =>
-      stream.println("val " + quote(sym) + " = LoopFlatten("+quote(s)+") { " + quote(x) + " => ")
+      stream.println(src"val $sym = LoopFlatten($s) { $x => ")
       emitBlock(y)
       stream.println(quote(getBlockResult(y)))
       stream.println("}")
     case ArrayIndex(a,i) =>
-      emitValDef(sym, quote(a) + ".apply(" + quote(i) + ")")
+      emitValDef(sym, src"$a.apply($i)")
     case ArrayLength(a) =>
-      emitValDef(sym, quote(a) + ".length")
+      emitValDef(sym, src"$a.length")
     case _ => super.emitNode(sym, rhs)
   }
 }
@@ -183,62 +183,62 @@ trait ScalaGenArrayLoopsFat extends ScalaGenArrayLoops with ScalaGenLoopsFat {
       for ((l,r) <- sym zip rhs) {
         r match {
           case ArrayElem(y) =>
-            stream.println("var " + quote(l) + " = new Array[" + remap(getBlockResultFull(y).tp) + "]("+quote(s)+")")
+            stream.println(src"var $l = new Array[${getBlockResultFull(y).tp}]($s)")
           // TODO generalize over Monoid
           case ReduceElem(y) =>
-            stream.println("var " + quote(l) + ": " + remap(getBlockResult(y).tp) + " = 0")
+            stream.println(src"var $l: ${getBlockResult(y).tp} = 0")
           case ReduceIntElem(y) =>
-            stream.println("var " + quote(l) + ": " + remap(getBlockResult(y).tp) + " = 0")
+            stream.println(src"var $l: ${getBlockResult(y).tp} = 0")
 
           case ArrayIfElem(c,y) =>
-            stream.println("var " + quote(l) + "_buf = scala.collection.mutable.ArrayBuilder.make[" + remap(getBlockResult(y).tp) + "]")
+            stream.println(src"var ${l}_buf = scala.collection.mutable.ArrayBuilder.make[${getBlockResult(y).tp}]")
           case ReduceIfElem(c,y) =>
-            stream.println("var " + quote(l) + ": " + remap(getBlockResult(y).tp) + " = 0")
+            stream.println(src"var $l: ${getBlockResult(y).tp} = 0")
           case ReduceIfIntElem(c,y) =>
-            stream.println("var " + quote(l) + ": " + remap(getBlockResult(y).tp) + " = 0")
+            stream.println(src"var $l: ${getBlockResult(y).tp} = 0")
           case FlattenElem(y) =>
             val mR = getBlockResult(y).tp
             assert(mR.runtimeClass.isArray)
-            stream.println("var " + quote(l) + "_buf = scala.collection.mutable.ArrayBuilder.make[" + remap(mR.typeArguments(0)) + "]")
+            stream.println(src"var ${l}_buf = scala.collection.mutable.ArrayBuilder.make[${mR.typeArguments(0)}]")
           case FlattenIfElem(c,y) =>
             val mR = getBlockResult(y).tp
-            stream.println("var " + quote(l) + "_buf = scala.collection.mutable.ArrayBuilder.make[" + remap(mR.typeArguments(0)) + "]")
+            stream.println(src"var ${l}_buf = scala.collection.mutable.ArrayBuilder.make[${mR.typeArguments(0)}]")
         }
       }
       val ii = x // was: x(i)
-      stream.println("var " + quote(ii) + " = 0")
-      stream.println("while ("+quote(ii)+" < "+quote(s)+") {")
+      stream.println(src"var $ii = 0")
+      stream.println(src"while ($ii < $s) {")
       emitFatBlock(syms(rhs).map(Block(_))) // TODO: check this
       for ((l,r) <- sym zip rhs) {
         r match {
           case ArrayElem(y) =>
-            stream.println(quote(l) + "("+quote(ii)+") = " + quote(getBlockResult(y)))
+            stream.println(src"$l($ii) = ${getBlockResult(y)}")
           case ReduceElem(y) =>
-            stream.println(quote(l) + " += " + quote(getBlockResult(y)))
+            stream.println(src"$l += ${getBlockResult(y)}")
           case ReduceIntElem(y) =>
-            stream.println(quote(l) + " += " + quote(getBlockResult(y)))
+            stream.println(src"$l += ${getBlockResult(y)}")
           case ArrayIfElem(c,y) =>
-            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + "_buf += " + quote(getBlockResult(y)))
+            stream.println(src"if (${/*getBlockResult*/(c)}) ${l}_buf += ${getBlockResult(y)}")
           case ReduceIfElem(c,y) =>
-            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + " += " + quote(getBlockResult(y)))
+            stream.println(src"if (${/*getBlockResult*/(c)}) $l += ${getBlockResult(y)}")
           case ReduceIfIntElem(c,y) =>
-            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + " += " + quote(getBlockResult(y)))
+            stream.println(src"if (${/*getBlockResult*/(c)}) $l += ${getBlockResult(y)}")
           case FlattenElem(y) =>
-            stream.println(quote(l) + "_buf ++= " + quote(getBlockResult(y)))
+            stream.println(src"${l}_buf ++= ${getBlockResult(y)}")
           case FlattenIfElem(c,y) =>
-            stream.println("if ("+quote(/*getBlockResult*/(c))+") " + quote(l) + "_buf ++= " + quote(getBlockResult(y)))
+            stream.println(src"if (${/*getBlockResult*/(c)}) ${l}_buf ++= ${getBlockResult(y)}")
         }
       }
-      stream.println(quote(ii)+" += 1")
+      stream.println(src"$ii += 1")
       stream.println("}")
       for ((l,r) <- sym zip rhs) {
         r match {
           case ArrayIfElem(_, _) =>
-            stream.println("val " + quote(l) + " = " + quote(l) + "_buf.result")
+            stream.println(src"val $l = ${l}_buf.result")
           case FlattenElem(_) =>
-            stream.println("val " + quote(l) + " = " + quote(l) + "_buf.result")
+            stream.println(src"val $l = ${l}_buf.result")
           case FlattenIfElem(_, _) =>
-            stream.println("val " + quote(l) + " = " + quote(l) + "_buf.result")
+            stream.println(src"val $l = ${l}_buf.result")
           case _ =>
         }
       }
@@ -275,13 +275,13 @@ trait ScalaGenArrays extends ScalaGenEffect {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ArrayZero(n) =>
-      emitValDef(sym, "new Array[Int](" + quote(n) + ")")
+      emitValDef(sym, src"new Array[Int]($n)")
     case ArrayUpdate(a,x,v) =>
-      emitValDef(sym, quote(a) +".clone()")
-      stream.println(quote(sym) + "(" + quote(x) + ") = " + quote(v))
+      emitValDef(sym, src"$a.clone()")
+      stream.println(src"$sym($x) = $v")
     case ArrayPlus(a,b) =>
-      emitValDef(sym, "new Array[Int](" + quote(a) + ".length)")
-      stream.println("arrayPlus("+ quote(sym) + "," + quote(a) + "," + quote(b) + ")")
+      emitValDef(sym, src"new Array[Int]($a.length)")
+      stream.println(src"arrayPlus($sym,$a,$b)")
     case _ => super.emitNode(sym, rhs)
   }
 }

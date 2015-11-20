@@ -299,7 +299,7 @@ trait ScalaGenArrayOpsExt extends ScalaGenBase {
            |  d
            |}"""
     case a@ArraySortBy(arr, by) =>
-      stream.println("val " + quote(sym) + " = " + quote(arr) + ".sortBy(" + quote(by)+ ")")
+      stream.println(src"val $sym = $arr.sortBy($by)")
     case a @ ArrayInsert(xs,i,y) =>
       gen"""val $sym = {
             |  val len = $xs.length

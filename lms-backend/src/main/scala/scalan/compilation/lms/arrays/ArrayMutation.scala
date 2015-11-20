@@ -93,11 +93,11 @@ trait ScalaGenArrayMutation extends ScalaGenArrayLoops {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ArrayMutable(a) =>
-      emitValDef(sym, quote(a) + ".clone // mutable")
+      emitValDef(sym, src"$a.clone // mutable")
     case ArrayClone(a) =>
-      emitValDef(sym, quote(a) + ".clone")
+      emitValDef(sym, src"$a.clone")
     case ArrayUpdate(a,i,x) =>
-      emitValDef(sym, quote(a) + ".update(" + quote(i) + ", " + quote(x) + ")")
+      emitValDef(sym, src"$a.update($i, $x)")
     case _ => super.emitNode(sym, rhs)
   }
 }
