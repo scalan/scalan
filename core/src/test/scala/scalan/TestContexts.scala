@@ -31,9 +31,9 @@ trait TestContexts extends TestsUtil {
     }
     def test[A,B](f: Exp[A => B]): CompilerOutput[A, B] = test(testName, f)
 
-    def emit(name: String, ss: Exp[_]*): Unit =
+    def emit(name: String, ss: scalan.Exp[_]*): Unit =
       scalan.emitDepGraph(ss, FileUtil.file(prefix, testName, s"$name.dot"))(scalan.defaultGraphVizConfig)
-    def emit(ss: Exp[_]*): Unit = emit(testName, ss: _*)
+    def emit(ss: scalan.Exp[_]*): Unit = emit(testName, ss: _*)
   }
 }
 
