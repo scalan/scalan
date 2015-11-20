@@ -10,7 +10,7 @@ trait RewriteRules { self: Scalan =>
 
   type RRewrite[A] = Rep[Rewrite[A]]
 
-  case class RewriteElem[A](eA: Elem[A]) extends Element[Rewrite[A]] {
+  case class RewriteElem[A](eA: Elem[A]) extends Elem[Rewrite[A]] {
     protected def getDefaultRep = {
       val defA = eA.defaultRepValue
       rewr(defA, defA)(eA)

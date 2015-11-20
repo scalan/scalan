@@ -33,7 +33,7 @@ trait StructTags extends Base { self: Scalan =>
 
 trait Structs extends StructTags { self: Scalan =>
 
-  case class StructElem[T](fields: Seq[(String, Elem[Any])]) extends Element[T] {
+  case class StructElem[T](fields: Seq[(String, Elem[Any])]) extends Elem[T] {
     override def isEntityType = fields.exists(_._2.isEntityType)
     lazy val tag = typeTag[Product].asInstanceOf[WeakTypeTag[T]]
     protected def getDefaultRep = {

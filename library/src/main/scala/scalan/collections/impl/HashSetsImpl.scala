@@ -69,7 +69,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
       }
     }
     lazy val baseElem =
-      new BaseTypeElem1[A, HashSet, SHashSet[A]](this.asInstanceOf[Element[SHashSet[A]]])(
+      new BaseTypeElem1[A, HashSet, SHashSet[A]](this.asInstanceOf[Elem[SHashSet[A]]])(
         element[A], container[HashSet], DefaultOfHashSet[A])
     lazy val eTo: Elem[_] = new SHashSetImplElem[A](isoSHashSetImpl(eA))(eA)
     override def getDefaultRep: Rep[To] = ???

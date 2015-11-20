@@ -85,7 +85,7 @@ trait Frees extends Base { self: MonadsDsl =>
       case _ => self
     }
 
-    def resume(implicit fF: Functor[F]): Rep[F[Free[F,B]] | B] = a.selfType1.asInstanceOf[Element[_]] match {
+    def resume(implicit fF: Functor[F]): Rep[F[Free[F,B]] | B] = a.selfType1.asInstanceOf[Elem[_]] match {
       case r: ReturnElem[F,S] => f(a.asRep[Return[F,S]].a).resume
       case s: SuspendElem[F,S] => fF.map(a.asRep[Suspend[F,S]].a)(s => f(s)).asLeft[B]
       case b: BindElem[F,s,S] =>

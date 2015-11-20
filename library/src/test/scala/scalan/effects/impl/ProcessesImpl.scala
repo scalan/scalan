@@ -37,7 +37,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     }
 
     def convertProcess(x: Rep[Process[F, O]]): Rep[To] = {
-      x.selfType1.asInstanceOf[Element[_]] match {
+      x.selfType1.asInstanceOf[Elem[_]] match {
         case _: ProcessElem[_, _, _] => x.asRep[To]
         case e => !!!(s"Expected $x to have ProcessElem[_, _, _], but got $e")
       }
@@ -418,7 +418,7 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
 
     object ++ {
       def unapply(d: Def[_]): Option[(Rep[Process[F, O]], Th[Process[F, O]]) forSome {type F[_]; type O}] = d match {
-        case MethodCall(receiver, method, Seq(p, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: ProcessElem[_, _, _] => true; case _ => false }) && method.getName == "$plus$plus" =>
+        case MethodCall(receiver, method, Seq(p, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: ProcessElem[_, _, _] => true; case _ => false }) && method.getName == "$plus$plus" =>
           Some((receiver, p)).asInstanceOf[Option[(Rep[Process[F, O]], Th[Process[F, O]]) forSome {type F[_]; type O}]]
         case _ => None
       }

@@ -152,7 +152,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val method = entityElemMethodName(name)
         val argsStr = args.rep(tpeToElement(_, env))
         method + args.nonEmpty.opt(s"($argsStr)")
-      case _ => sys.error(s"Don't know how to construct Element for type $t")
+      case _ => sys.error(s"Don't know how to construct Elem for type $t")
     }
 
     val e = EntityTemplateData(module, entity)
@@ -360,7 +360,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       }
 
       def implicitTagsFromElems(t: TemplateData) = t.implicitArgs.flatMap(arg => arg.tpe match {
-        case STraitCall(name, List(tpe)) if name == "Elem" || name == "Element" =>
+        case STraitCall(name, List(tpe)) if name == "Elem" =>
           Some(s"      implicit val tag${typeToIdentifier(tpe)} = ${arg.name}.tag")
         case _ => None
       }).mkString("\n")
@@ -409,7 +409,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         }
 
         val baseTypeElem = optBaseType.opt { bt =>
-          val thisElem = s"this.asInstanceOf[Element[$typeUse]]"
+          val thisElem = s"this.asInstanceOf[Elem[$typeUse]]"
           if (e.isContainer) {
             val elems = e.tpeArgNames.rep(ty => s"element[$ty]")
             s"""
@@ -454,7 +454,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    }
         |
         |    def convert${e.name}(x: Rep[${e.typeUse}]): Rep[To] = {
-        |      x.selfType1${e.t.isHighKind.opt(".asInstanceOf[Element[_]]")} match {
+        |      x.selfType1${e.t.isHighKind.opt(".asInstanceOf[Elem[_]]")} match {
         |        case _: $wildcardElem => x.asRep[To]
         |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e")
         |      }
@@ -1013,7 +1013,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
                   s"receiver.elem == $traitElem"
                 } else if (e.isHighKind) {
                   // same as isInstanceOf[$traitElem], but that won't compile
-                  s"(receiver.elem.asInstanceOf[Element[_]] match { case _: $traitElem => true; case _ => false })"
+                  s"(receiver.elem.asInstanceOf[Elem[_]] match { case _: $traitElem => true; case _ => false })"
                 } else {
                   s"receiver.elem.isInstanceOf[$traitElem]"
                 }

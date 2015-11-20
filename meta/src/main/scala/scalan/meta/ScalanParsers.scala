@@ -256,7 +256,7 @@ trait ScalanParsers {
     case md: DefDef =>
       if (!nme.isConstructorName(md.name))
         md.tpt match {
-          case AppliedTypeTree(tpt, _) if tpt.toString == "Elem" || tpt.toString == "Element" =>
+          case AppliedTypeTree(tpt, _) if tpt.toString == "Elem" =>
             Some(methodDef(md, true))
           case _ =>
             Some(methodDef(md))
@@ -344,7 +344,7 @@ trait ScalanParsers {
       case _ => optExpr(md.rhs)
     }
     val isElemOrCont = md.tpt match {
-      case AppliedTypeTree(tpt, _) if Set("Elem", "Element", "Cont", "Container").contains(tpt.toString) =>
+      case AppliedTypeTree(tpt, _) if Set("Elem", "Cont", "Container").contains(tpt.toString) =>
         true
       case _ =>
         false

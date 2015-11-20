@@ -350,7 +350,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   type Unpacked[T] = (Rep[Source], Iso[Source, T]) forSome { type Source }
   type UnpackedLambdaResult[T,R] = (Rep[T => R], Iso[Source, R]) forSome { type Source }
 
-  type UnpackTester = Element[_] => Boolean
+  type UnpackTester = Elem[_] => Boolean
 
   protected var unpackTesters: Set[UnpackTester] = Set.empty
 

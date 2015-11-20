@@ -48,7 +48,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
       }
     }
     lazy val baseElem = {
-      new BaseTypeElem[Throwable, SThrowable](this.asInstanceOf[Element[SThrowable]])(weakTypeTag[Throwable], DefaultOfThrowable)
+      new BaseTypeElem[Throwable, SThrowable](this.asInstanceOf[Elem[SThrowable]])(weakTypeTag[Throwable], DefaultOfThrowable)
     }
     lazy val eTo: Elem[_] = new SThrowableImplElem(isoSThrowableImpl)
     override def getDefaultRep: Rep[To] = ???

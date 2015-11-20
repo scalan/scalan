@@ -36,7 +36,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
     }
 
     def convertFree(x: Rep[Free[F, A]]): Rep[To] = {
-      x.selfType1.asInstanceOf[Element[_]] match {
+      x.selfType1.asInstanceOf[Elem[_]] match {
         case _: FreeElem[_, _, _] => x.asRep[To]
         case e => !!!(s"Expected $x to have FreeElem[_, _, _], but got $e")
       }
@@ -349,7 +349,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object flatMapBy {
       def unapply(d: Def[_]): Option[(Rep[Return[F, A]], Rep[A => Free[F, B]]) forSome {type F[_]; type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Return[F, A]], Rep[A => Free[F, B]]) forSome {type F[_]; type A; type B}]]
         case _ => None
       }
@@ -361,7 +361,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object foldMap {
       def unapply(d: Def[_]): Option[(Rep[Return[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "foldMap" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "foldMap" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Return[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}]]
         case _ => None
       }
@@ -373,7 +373,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object resume {
       def unapply(d: Def[_]): Option[(Rep[Return[F, A]], Functor[F]) forSome {type F[_]; type A}] = d match {
-        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "resume" =>
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "resume" =>
           Some((receiver, fF)).asInstanceOf[Option[(Rep[Return[F, A]], Functor[F]) forSome {type F[_]; type A}]]
         case _ => None
       }
@@ -404,7 +404,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
   object SuspendMethods {
     object foldMap {
       def unapply(d: Def[_]): Option[(Rep[Suspend[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}] = d match {
-        case MethodCall(receiver, method, Seq(trans, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: SuspendElem[_, _] => true; case _ => false }) && method.getName == "foldMap" =>
+        case MethodCall(receiver, method, Seq(trans, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: SuspendElem[_, _] => true; case _ => false }) && method.getName == "foldMap" =>
           Some((receiver, trans)).asInstanceOf[Option[(Rep[Suspend[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}]]
         case _ => None
       }
@@ -416,7 +416,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object resume {
       def unapply(d: Def[_]): Option[(Rep[Suspend[F, A]], Functor[F]) forSome {type F[_]; type A}] = d match {
-        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: SuspendElem[_, _] => true; case _ => false }) && method.getName == "resume" =>
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: SuspendElem[_, _] => true; case _ => false }) && method.getName == "resume" =>
           Some((receiver, fF)).asInstanceOf[Option[(Rep[Suspend[F, A]], Functor[F]) forSome {type F[_]; type A}]]
         case _ => None
       }
@@ -449,7 +449,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object flatMapBy {
       def unapply(d: Def[_]): Option[(Rep[Bind[F, S, B]], Rep[B => Free[F, R]]) forSome {type F[_]; type S; type B; type R}] = d match {
-        case MethodCall(receiver, method, Seq(f1, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
+        case MethodCall(receiver, method, Seq(f1, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
           Some((receiver, f1)).asInstanceOf[Option[(Rep[Bind[F, S, B]], Rep[B => Free[F, R]]) forSome {type F[_]; type S; type B; type R}]]
         case _ => None
       }
@@ -461,7 +461,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object foldMap {
       def unapply(d: Def[_]): Option[(Rep[Bind[F, S, B]], $tilde$greater[F, G]) forSome {type F[_]; type S; type B; type G[_]}] = d match {
-        case MethodCall(receiver, method, Seq(trans, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "foldMap" =>
+        case MethodCall(receiver, method, Seq(trans, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "foldMap" =>
           Some((receiver, trans)).asInstanceOf[Option[(Rep[Bind[F, S, B]], $tilde$greater[F, G]) forSome {type F[_]; type S; type B; type G[_]}]]
         case _ => None
       }
@@ -473,7 +473,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object resume {
       def unapply(d: Def[_]): Option[(Rep[Bind[F, S, B]], Functor[F]) forSome {type F[_]; type S; type B}] = d match {
-        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "resume" =>
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "resume" =>
           Some((receiver, fF)).asInstanceOf[Option[(Rep[Bind[F, S, B]], Functor[F]) forSome {type F[_]; type S; type B}]]
         case _ => None
       }
@@ -502,7 +502,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object flatMapBy {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], Rep[A => Free[F, B]]) forSome {type F[_]; type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Free[F, A]], Rep[A => Free[F, B]]) forSome {type F[_]; type A; type B}]]
         case _ => None
       }
@@ -514,7 +514,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "mapBy" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "mapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Free[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}]]
         case _ => None
       }
@@ -528,7 +528,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object foldMap {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "foldMap" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "foldMap" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Free[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}]]
         case _ => None
       }
@@ -540,7 +540,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object run {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "run" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "run" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Free[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}]]
         case _ => None
       }
@@ -552,7 +552,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object step {
       def unapply(d: Def[_]): Option[Rep[Free[F, A]] forSome {type F[_]; type A}] = d match {
-        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "step" =>
+        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "step" =>
           Some(receiver).asInstanceOf[Option[Rep[Free[F, A]] forSome {type F[_]; type A}]]
         case _ => None
       }
@@ -564,7 +564,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object resume {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], Functor[F]) forSome {type F[_]; type A}] = d match {
-        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "resume" =>
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "resume" =>
           Some((receiver, fF)).asInstanceOf[Option[(Rep[Free[F, A]], Functor[F]) forSome {type F[_]; type A}]]
         case _ => None
       }

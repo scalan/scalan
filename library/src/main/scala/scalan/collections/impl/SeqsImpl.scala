@@ -71,7 +71,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
       }
     }
     lazy val baseElem =
-      new BaseTypeElem1[A, Seq, SSeq[A]](this.asInstanceOf[Element[SSeq[A]]])(
+      new BaseTypeElem1[A, Seq, SSeq[A]](this.asInstanceOf[Elem[SSeq[A]]])(
         element[A], container[Seq], DefaultOfSeq[A])
     lazy val eTo: Elem[_] = new SSeqImplElem[A](isoSSeqImpl(eA))(eA)
     override def getDefaultRep: Rep[To] = ???
