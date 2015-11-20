@@ -94,7 +94,7 @@ trait Entities extends Elems { self: Scalan =>
      */
     def toStructElemShallow: Elem[_] = e match {
       case pe: PairElem[a,b] =>
-        structElem2(pe.eFst.toStructElemShallow, pe.eSnd.toStructElemShallow)
+        tupleStructElement(pe.eFst.toStructElemShallow, pe.eSnd.toStructElemShallow)
       case _ => e
     }
   }

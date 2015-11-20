@@ -114,9 +114,9 @@ trait Views extends Elems { self: Scalan =>
             case PairIsos(_, iso1: Iso[s,a], iso2: Iso[t,b]) =>
               if (iso1.isIdentity && iso2.isIdentity) {
                 // recursion base (structs)
-                val sIso = structToPairIso[Any,s,t,a,b](iso1, iso2)
-                val flatIso = flatteningIso(sIso.eFrom.asStructElem[Any])
-                flatIso >> sIso.asIso[Any,S]
+                val sIso = structToPairIso[s,t,a,b](iso1, iso2)
+                val flatIso = flatteningIso(sIso.eFrom)
+                flatIso >> sIso.asIso[Struct,S]
               }
               else {
                 val pIso = pairIso(iso1, iso2)

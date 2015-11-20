@@ -135,19 +135,20 @@ class ViewTests extends BaseViewTests {
     val ctx = new CtxForStructs
     import ctx._
 
-    val seIntInt = structElem2[Int, Int]
+    val seIntInt = tuple2StructElement[Int, Int]
+    val seIntIntInt = tuple3StructElement[Int, Int, Int]
     testGetIso(element[(Int,Int)], seIntInt)
     testGetIsoWithEmit("t1", element[Interval], seIntInt)
-    testGetIsoWithEmit("t2", element[(Int, (Int, Int))], structElement(Seq(element[Int], element[Int], element[Int])))
-    testGetIsoWithEmit("t3", element[(Int, Interval)], structElement(Seq(element[Int], element[Int], element[Int])))
-    testGetIsoWithEmit("t4", element[(Interval, Interval)], structElement(Seq(element[Int], element[Int], element[Int], element[Int])))
-    testGetIsoWithEmit("t5", element[(Int, Array[(Int, Int)])], structElement(Seq(element[Int], arrayElement(seIntInt))))
-    testGetIsoWithEmit("t5", element[(Array[(Int, Int)], Int)], structElement(Seq(arrayElement(seIntInt), element[Int])))
+    testGetIsoWithEmit("t2", element[(Int, (Int, Int))], seIntIntInt)
+    testGetIsoWithEmit("t3", element[(Int, Interval)], seIntIntInt)
+    testGetIsoWithEmit("t4", element[(Interval, Interval)], tupleStructElement(element[Int], element[Int], element[Int], element[Int]))
+    testGetIsoWithEmit("t5", element[(Int, Array[(Int, Int)])], tupleStructElement(element[Int], arrayElement(seIntInt)))
+    testGetIsoWithEmit("t5", element[(Array[(Int, Int)], Int)], tupleStructElement(arrayElement(seIntInt), element[Int]))
 
     testGetIsoWithEmit("a1", element[Array[(Int,Int)]], arrayElement(seIntInt))
     testGetIsoWithEmit("a2", element[Array[Interval]], arrayElement(seIntInt))
-    testGetIsoWithEmit("a3", element[Array[(Int, (Int, Int))]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int]))))
-    testGetIsoWithEmit("a4", element[Array[(Int, Interval)]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int]))))
-    testGetIsoWithEmit("a5", element[Array[(Interval, Interval)]], arrayElement(structElement(Seq(element[Int], element[Int], element[Int], element[Int]))))
+    testGetIsoWithEmit("a3", element[Array[(Int, (Int, Int))]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int])))
+    testGetIsoWithEmit("a4", element[Array[(Int, Interval)]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int])))
+    testGetIsoWithEmit("a5", element[Array[(Interval, Interval)]], arrayElement(tupleStructElement(element[Int], element[Int], element[Int], element[Int])))
   }
 }

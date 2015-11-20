@@ -1,7 +1,5 @@
 package scalan.primitives
 
-import java.lang.reflect.Method
-
 import scala.language.reflectiveCalls
 import scalan._
 import scalan.common.{SegmentsDsl, SegmentsDslExp, Lazy}
@@ -9,20 +7,20 @@ import scalan.compilation.DummyCompiler
 
 class StructTests extends BaseViewTests {
   trait MyProg extends Scalan with SegmentsDsl {
-    val eInt = IntElement.asElem[Any]
+    val eInt = IntElement
     lazy val t1 = fun({ (in: Rep[Int]) =>
-      struct("in" -> in).asRep[Any]
-    })(Lazy(element[Int]), structElement(Seq("in" -> eInt)).asElem[Any])
+      struct("in" -> in)
+    })(Lazy(element[Int]), structElement(Seq("in" -> eInt)))
 
     lazy val t2 = fun({ (in: Rep[Int]) =>
-      field(struct("in" -> in).asRep[Any], "in").asRep[Int]
+      field(struct("in" -> in), "in").asRep[Int]
     })
 
     lazy val t3 = fun({ (in: Rep[Int]) =>
       val b = in + toRep(1)
       val c = in + in
-      fields(struct("a" -> in, "b" -> b, "c" -> c).asRep[Any], Seq("a", "c")).asRep[Any]
-    })(Lazy(element[Int]), structElement(Seq("a" -> eInt, "c" -> eInt)).asElem[Any])
+      fields(struct("a" -> in, "b" -> b, "c" -> c), Seq("a", "c"))
+    })(Lazy(element[Int]), structElement(Seq("a" -> eInt, "c" -> eInt)))
 
     lazy val t4 = fun({ (in: Rep[Int]) =>
       Pair(in, in)
@@ -200,55 +198,55 @@ class StructTests extends BaseViewTests {
     val ctx = new Ctx
     import ctx.compiler.scalan._
     {
-      val iso = testFlattening(structElem2[Int,Int], structElement(Seq(element[Int], element[Int])))
+      val iso = testFlattening(tuple2StructElement[Int,Int], tuple2StructElement[Int,Int])
       assert(iso.isIdentity, "when flattening is not necessary should return identity iso")
     }
     {
-      val iso = testFlattening(structElem2(element[Int], structElem2[Double,Boolean]),
-        structElement(Seq(element[Int], element[Double], element[Boolean])))
+      val iso = testFlattening(tupleStructElement(element[Int], tuple2StructElement[Double,Boolean]),
+        tuple3StructElement[Int, Double, Boolean])
         ctx.test("t1_iso.to", iso.toFun)
         ctx.test("t1_iso.from", iso.fromFun)
     }
     {
-      val iso = testFlattening(structElem2(structElem2[Int,Char], structElem2[Double,Boolean]),
-        structElement(Seq(element[Int], element[Char], element[Double], element[Boolean])))
+      val iso = testFlattening(tupleStructElement(tuple2StructElement[Int,Char], tuple2StructElement[Double,Boolean]),
+        tupleStructElement(element[Int], element[Char], element[Double], element[Boolean]))
         ctx.test("t2_iso.to", iso.toFun)
         ctx.test("t2_iso.from", iso.fromFun)
     }
     {
-      val iso = testFlattening(structElem2(element[Int], structElem2(element[Char], structElem2(element[Double], element[Boolean]))),
-        structElement(Seq(element[Int], element[Char], element[Double], element[Boolean])))
+      val iso = testFlattening(tupleStructElement(element[Int], tupleStructElement(element[Char], tupleStructElement(element[Double], element[Boolean]))),
+        tupleStructElement(element[Int], element[Char], element[Double], element[Boolean]))
         ctx.test("t3_iso.to", iso.toFun)
         ctx.test("t3_iso.from", iso.fromFun)
     }
     {
-      val iso = testFlattening(structElem2(structElem2(element[Short],element[Int]), structElem2(element[Char], structElem2(element[Double], element[Boolean]))),
-        structElement(Seq(element[Short], element[Int], element[Char], element[Double], element[Boolean])))
+      val iso = testFlattening(tupleStructElement(tupleStructElement(element[Short],element[Int]), tupleStructElement(element[Char], tupleStructElement(element[Double], element[Boolean]))),
+        tupleStructElement(element[Short], element[Int], element[Char], element[Double], element[Boolean]))
         ctx.test("t4_iso.to", iso.toFun)
         ctx.test("t4_iso.from", iso.fromFun)
     }
     // arrays
     {
-      val iso = testFlattening(arrayElement(structElem2(element[Int], structElem2[Double,Boolean])),
-        arrayElement(structElement(Seq(element[Int], element[Double], element[Boolean]))))
+      val iso = testFlattening(arrayElement(tupleStructElement(element[Int], tuple2StructElement[Double,Boolean])),
+        arrayElement(tupleStructElement(element[Int], element[Double], element[Boolean])))
       ctx.test("a1_iso.to", iso.toFun)
       ctx.test("a1_iso.from", iso.fromFun)
     }
     {
-      val iso = testFlattening(arrayElement(structElem2(structElem2[Int,Char], structElem2[Double,Boolean])),
-        arrayElement(structElement(Seq(element[Int], element[Char], element[Double], element[Boolean]))))
+      val iso = testFlattening(arrayElement(tuple2StructElement(tuple2StructElement[Int,Char], tuple2StructElement[Double,Boolean])),
+        arrayElement(tupleStructElement(element[Int], element[Char], element[Double], element[Boolean])))
       ctx.test("a2_iso.to", iso.toFun)
       ctx.test("a2_iso.from", iso.fromFun)
     }
     {
-      val iso = testFlattening(arrayElement(structElem2(element[Int], structElem2(element[Char], structElem2(element[Double], element[Boolean])))),
-        arrayElement(structElement(Seq(element[Int], element[Char], element[Double], element[Boolean]))))
+      val iso = testFlattening(arrayElement(tupleStructElement(element[Int], tupleStructElement(element[Char], tupleStructElement(element[Double], element[Boolean])))),
+        arrayElement(tupleStructElement(element[Int], element[Char], element[Double], element[Boolean])))
       ctx.test("a3_iso.to", iso.toFun)
       ctx.test("a3_iso.from", iso.fromFun)
     }
     {
-      val iso = testFlattening(arrayElement(structElem2(structElem2(element[Short],element[Int]), structElem2(element[Char], structElem2(element[Double], element[Boolean])))),
-        arrayElement(structElement(Seq(element[Short], element[Int], element[Char], element[Double], element[Boolean]))))
+      val iso = testFlattening(arrayElement(tupleStructElement(tupleStructElement(element[Short],element[Int]), tupleStructElement(element[Char], tupleStructElement(element[Double], element[Boolean])))),
+        arrayElement(tupleStructElement(element[Short], element[Int], element[Char], element[Double], element[Boolean])))
       ctx.test("a4_iso.to", iso.toFun)
       ctx.test("a4_iso.from", iso.fromFun)
     }
@@ -258,9 +256,9 @@ class StructTests extends BaseViewTests {
     val ctx = new Ctx
     import ctx.compiler.scalan._
     {
-      val eFrom = structElement(Seq(element[(Int,Int)], element[Double], element[Boolean]))
-      val eTo = structElement(Seq("a" -> element[Interval].asElem[Any], "b" -> element[Double].asElem[Any], "c" -> element[Boolean].asElem[Any]))
-      val iso = new StructIso(
+      val eFrom = tupleStructElement(element[(Int,Int)], element[Double], element[Boolean])
+      val eTo = structElement(Seq("a" -> element[Interval], "b" -> element[Double], "c" -> element[Boolean]))
+      val iso = new StructIso[Struct, Struct](
           eFrom, eTo,
           Seq(getIsoByElem(element[Interval]), identityIso[Double], identityIso[Boolean]))
 
@@ -273,10 +271,10 @@ class StructTests extends BaseViewTests {
     val ctx = new Ctx
     import ctx.compiler.scalan._
     {
-      val eIntInt = structElement(Seq(element[Int], element[Int]))
-      val eDoubleBool = structElement(Seq(element[Double], element[Boolean]))
-      val nested = structElement(Seq(eIntInt, eDoubleBool))
-      val nested2 = structElement(Seq(nested, nested))
+      val eIntInt = tuple2StructElement[Int, Int]
+      val eDoubleBool = tuple2StructElement[Double, Boolean]
+      val nested = tupleStructElement(eIntInt, eDoubleBool)
+      val nested2 = tupleStructElement(nested, nested)
       assertResult(nested)(element[((Int,Int),(Double,Boolean))].toStructElemShallow)
       assertResult(nested2)(element[(((Int,Int),(Double,Boolean)),((Int,Int),(Double,Boolean)))].toStructElemShallow)
     }
