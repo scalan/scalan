@@ -27,7 +27,7 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
 
   // TODO implement better way to create new Cont for existing UDTs (without code duplication)
   implicit def coproductCont[F[_]:Cont, H[_]:Cont]: Cont[({type f[x] = Coproduct[F,H,x]})#f]
-    = new Container[({type f[x] = Coproduct[F,H,x]})#f] {
+    = new Cont[({type f[x] = Coproduct[F,H,x]})#f] {
         def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[Coproduct[F,H,T]]  = {
           //implicit val tagT = tT
           implicit val tagF = container[F].tag(tT)

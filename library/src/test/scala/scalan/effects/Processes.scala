@@ -115,7 +115,7 @@ trait Processes extends Base with Containers { self: ProcessesDsl =>
 
 trait ProcessesDsl extends ScalanDsl with impl.ProcessesAbs with Processes with MonadsDsl {
 
-  implicit def processCont[F[_]:Cont]: Cont[({type f[x] = Process[F,x]})#f] = new Container[({type f[x] = Process[F,x]})#f] {
+  implicit def processCont[F[_]:Cont]: Cont[({type f[x] = Process[F,x]})#f] = new Cont[({type f[x] = Process[F,x]})#f] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Process[F,T]]
     def lift[T](implicit eT: Elem[T]) = element[Emit[F,T]].asElem[Process[F,T]]
   }

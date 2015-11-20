@@ -203,7 +203,7 @@ trait Views extends Elems { self: Scalan =>
 
       //    case ee1: EntityElem1[_,_,_] =>
       //      val iso = getIsoByElem(ee1.eItem)
-      //      TODO implement using ContainerIso
+      //      TODO implement using ContIso
       case ee: EntityElem[_] =>
         identityIso(ee)
       case be: BaseElem[_] =>

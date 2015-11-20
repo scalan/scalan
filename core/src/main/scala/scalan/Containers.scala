@@ -5,13 +5,12 @@ import scala.reflect.runtime.universe._
 
 trait Containers { self: Scalan =>
 
-  type Cont[F[_]] = Container[F]
   type SomeF[X] = F[X] forSome { type F[_] }
   type SomeCont = Cont[SomeF]
   type TypeDesc = Elem[_] | SomeCont
 
-  @implicitNotFound(msg = "No Container available for ${F}.")
-  trait Container[F[_]] {
+  @implicitNotFound(msg = "No Cont available for ${F}.")
+  trait Cont[F[_]] {
     def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[F[T]]
     def lift[T](implicit eT: Elem[T]): Elem[F[T]]
 
@@ -39,7 +38,7 @@ trait Containers { self: Scalan =>
 
   implicit def containerElem[F[_]:Cont, A:Elem]: Elem[F[A]] = container[F].lift(element[A])
 
-  trait Functor[F[_]] extends Container[F] {
+  trait Functor[F[_]] extends Cont[F] {
     def map[A:Elem,B:Elem](a: Rep[F[A]])(f: Rep[A] => Rep[B]): Rep[F[B]]
   }
 }

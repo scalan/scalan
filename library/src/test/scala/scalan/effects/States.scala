@@ -41,13 +41,13 @@ trait StatesDsl extends impl.StatesAbs { self: MonadsDsl =>
     implicit val monad: Monad[State]
   }
 
-  trait State0Container[S] extends Container[({type f[x] = State0[S,x]})#f] {
+  trait State0Cont[S] extends Cont[({type f[x] = State0[S,x]})#f] {
     implicit def eS: Elem[S]
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[State0[S,T]]
     def lift[T](implicit eT: Elem[T]) = element[State0[S,T]]
   }
 
-  implicit def state0Monad[S:Elem]: Monad[({type f[x] = State0[S,x]})#f] = new State0Container[S] with Monad[({type f[x] = State0[S,x]})#f] {
+  implicit def state0Monad[S:Elem]: Monad[({type f[x] = State0[S,x]})#f] = new State0Cont[S] with Monad[({type f[x] = State0[S,x]})#f] {
     def eS = element[S]
     def unit[A:Elem](a: Rep[A]): Rep[State0[S, A]] = State0.unit(a)
     override def flatMap[A:Elem,B:Elem](st: Rep[State0[S, A]])(f: Rep[A] => Rep[State0[S, B]]): Rep[State0[S, B]] =

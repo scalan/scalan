@@ -344,7 +344,7 @@ trait ScalanParsers {
       case _ => optExpr(md.rhs)
     }
     val isElemOrCont = md.tpt match {
-      case AppliedTypeTree(tpt, _) if Set("Elem", "Cont", "Container").contains(tpt.toString) =>
+      case AppliedTypeTree(tpt, _) if Set("Elem", "Cont").contains(tpt.toString) =>
         true
       case _ =>
         false
