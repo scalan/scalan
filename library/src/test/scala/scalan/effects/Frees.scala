@@ -85,7 +85,7 @@ trait Frees extends Base { self: MonadsDsl =>
       case _ => self
     }
 
-    def resume(implicit fF: Functor[F]): Rep[F[Free[F,B]] | B] = a.selfType1.asInstanceOf[Element[_]] match {
+    def resume(implicit fF: Functor[F]): Rep[F[Free[F,B]] | B] = a.selfType1.asInstanceOf[Elem[_]] match {
       case r: ReturnElem[F,S] => f(a.asRep[Return[F,S]].a).resume
       case s: SuspendElem[F,S] => fF.map(a.asRep[Suspend[F,S]].a)(s => f(s)).asLeft[B]
       case b: BindElem[F,s,S] =>
@@ -99,14 +99,14 @@ trait Frees extends Base { self: MonadsDsl =>
 
 trait FreesDsl extends ScalanDsl with impl.FreesAbs with Frees with Monads { self: MonadsDsl =>
 
-  trait FreeContainer[F[_]] extends Container[({type f[x] = Free[F,x]})#f] {
+  trait FreeCont[F[_]] extends Cont[({type f[x] = Free[F,x]})#f] {
     implicit def cF: Cont[F]
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Free[F,T]]
     def lift[T](implicit eT: Elem[T]) = element[Free[F,T]]
   }
 
   def freeMonad[F[_]:Cont]: Monad[({type f[a] = Free[F,a]})#f] =
-    new Monad[({type f[a] = Free[F,a]})#f] with FreeContainer[F] {
+    new Monad[({type f[a] = Free[F,a]})#f] with FreeCont[F] {
       def cF = container[F]
       // suppress implicit resolution of this method (as it leads to stackoverflow)
       override def toMonadic[A: Elem](a: Rep[Free[F, A]]) = super.toMonadic(a)

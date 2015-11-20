@@ -114,9 +114,9 @@ trait Views extends Elems { self: Scalan =>
             case PairIsos(_, iso1: Iso[s,a], iso2: Iso[t,b]) =>
               if (iso1.isIdentity && iso2.isIdentity) {
                 // recursion base (structs)
-                val sIso = structToPairIso[Any,s,t,a,b](iso1, iso2)
-                val flatIso = flatteningIso(sIso.eFrom.asStructElem[Any])
-                flatIso >> sIso.asIso[Any,S]
+                val sIso = structToPairIso[s,t,a,b](iso1, iso2)
+                val flatIso = flatteningIso(sIso.eFrom)
+                flatIso >> sIso.asIso[Struct,S]
               }
               else {
                 val pIso = pairIso(iso1, iso2)
@@ -203,7 +203,7 @@ trait Views extends Elems { self: Scalan =>
 
       //    case ee1: EntityElem1[_,_,_] =>
       //      val iso = getIsoByElem(ee1.eItem)
-      //      TODO implement using ContainerIso
+      //      TODO implement using ContIso
       case ee: EntityElem[_] =>
         identityIso(ee)
       case be: BaseElem[_] =>
@@ -350,7 +350,7 @@ trait ViewsExp extends Views with BaseExp { self: ScalanExp =>
   type Unpacked[T] = (Rep[Source], Iso[Source, T]) forSome { type Source }
   type UnpackedLambdaResult[T,R] = (Rep[T => R], Iso[Source, R]) forSome { type Source }
 
-  type UnpackTester = Element[_] => Boolean
+  type UnpackTester = Elem[_] => Boolean
 
   protected var unpackTesters: Set[UnpackTester] = Set.empty
 

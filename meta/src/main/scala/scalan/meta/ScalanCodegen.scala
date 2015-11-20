@@ -33,7 +33,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       case None => STpeDef("Rep" + name, tpeArgs, STraitCall("Rep", List(STraitCall(name, tpeArgs.map(_.toTraitCall)))))
     }
 
-    def isContainer = tpeArgs.length == 1 && entity.hasAnnotation(ContainerTypeAnnotation)
+    def isCont = tpeArgs.length == 1 && entity.hasAnnotation(ContainerTypeAnnotation)
     def isFunctor = tpeArgs.length == 1 && entity.hasAnnotation(FunctorTypeAnnotation)
 
     def isWrapper = firstAncestorType match {
@@ -152,7 +152,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val method = entityElemMethodName(name)
         val argsStr = args.rep(tpeToElement(_, env))
         method + args.nonEmpty.opt(s"($argsStr)")
-      case _ => sys.error(s"Don't know how to construct Element for type $t")
+      case _ => sys.error(s"Don't know how to construct Elem for type $t")
     }
 
     val e = EntityTemplateData(module, entity)
@@ -160,7 +160,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     val typesWithElems = e.boundedTpeArgString(false)
 
     def getCompanionMethods = entity.companion.filter(_ => optBaseType.isDefined).map { comp =>
-      val externalConstrs = comp.getMethodsWithAnnotation(ConstuctorAnnotation)
+      val externalConstrs = comp.getMethodsWithAnnotation(ConstructorAnnotation)
       val externalMethods = comp.getMethodsWithAnnotation(ExternalAnnotation)
       (externalConstrs, externalMethods)
     }
@@ -320,7 +320,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val defOrVal = if (e.tpeArgs.isEmpty) "lazy val" else "def"
         val declaration =
           s"implicit $defOrVal ${StringUtil.lowerCaseFirst(bt.name)}Element${typesWithElems}: Elem[$baseTypeUse]"
-        val wrapperElemType = if (e.isContainer)
+        val wrapperElemType = if (e.isCont)
           "WrapperElem1[_, _, CBase, CW] forSome { type CBase[_]; type CW[_] }"
         else
           "WrapperElem[_, _]"
@@ -330,11 +330,11 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
            |""".stripAndTrim
       }
 
-      def familyContainer(e: EntityTemplateData) = {
+      def familyCont(e: EntityTemplateData) = {
         def container(name: String, isFunctor: Boolean) = {
-          val contType = s"Container[$name]${isFunctor.opt(s" with Functor[$name]")}"
+          val contType = if (isFunctor) "Functor" else "Cont"
           s"""\n
-             |  implicit lazy val container$name: $contType = new $contType {
+             |  implicit lazy val container$name: $contType[$name] = new $contType[$name] {
              |    def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[$name[A]]
              |    def lift[A](implicit evA: Elem[A]) = element[$name[A]]
              |    ${isFunctor.opt(s"def map[A:Elem,B:Elem](xs: Rep[$name[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))")}
@@ -360,7 +360,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
       }
 
       def implicitTagsFromElems(t: TemplateData) = t.implicitArgs.flatMap(arg => arg.tpe match {
-        case STraitCall(name, List(tpe)) if name == "Elem" || name == "Element" =>
+        case STraitCall(name, List(tpe)) if name == "Elem" =>
           Some(s"      implicit val tag${typeToIdentifier(tpe)} = ${arg.name}.tag")
         case _ => None
       }).mkString("\n")
@@ -370,7 +370,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val (optParent, parentElem) = e.firstAncestorType match {
           case Some(STraitCall("Def", _)) =>
             val parentElem =
-              if (e.isContainer) {
+              if (e.isCont) {
                 s"EntityElem1[${e.tpeArgsUse}, To, ${e.name}](${e.tpeArgNames.rep("e" + _)}, container[${e.name}])"
               } else {
                 "EntityElem[To]"
@@ -378,7 +378,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
             (None, parentElem)
           case Some(STraitCall("TypeWrapper", _)) =>
             val parentElem =
-              if (e.isContainer) {
+              if (e.isCont) {
                 s"WrapperElem1[${join(e.tpeArgNames, "To", e.baseTypeName, e.name)}](${e.tpeArgNames.rep("_e" + _)}, container[${e.baseTypeName}], container[${e.name}])"
               } else {
                 s"WrapperElem[${e.baseTypeUse}, To]"
@@ -409,8 +409,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         }
 
         val baseTypeElem = optBaseType.opt { bt =>
-          val thisElem = s"this.asInstanceOf[Element[$typeUse]]"
-          if (e.isContainer) {
+          val thisElem = s"this.asInstanceOf[Elem[$typeUse]]"
+          if (e.isCont) {
             val elems = e.tpeArgNames.rep(ty => s"element[$ty]")
             s"""
                |    lazy val baseElem =
@@ -454,7 +454,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    }
         |
         |    def convert${e.name}(x: Rep[${e.typeUse}]): Rep[To] = {
-        |      x.selfType1${e.t.isHighKind.opt(".asInstanceOf[Element[_]]")} match {
+        |      x.selfType1${e.t.isHighKind.opt(".asInstanceOf[Elem[_]]")} match {
         |        case _: $wildcardElem => x.asRep[To]
         |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e")
         |      }
@@ -563,7 +563,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         val parentElem = tpeToElement(parent, c.tpeArgs)
         val hasCompanion = clazz.companion.isDefined
         val dataTpe = s"${className}Data$tpeArgsUse"
-        val concreteElemSuperType = if (e.isContainer)
+        val concreteElemSuperType = if (e.isCont)
           s"ConcreteElem1[${join(parentTpeArgsStr, dataTpe, c.typeUse, parent.name)}]"
         else
           s"ConcreteElem[$dataTpe, ${c.typeUse}]"
@@ -674,7 +674,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |
        |$baseTypeElem
        |
-       |${if (e.isContainer) familyContainer(e) else ""}
+       |${if (e.isCont) familyCont(e) else ""}
        |
        |${familyElem(e)}
        |$sqlSchema
@@ -797,8 +797,8 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |""".stripAndTrim
     }
 
-    def emitContainerRules(e: EntityTemplateData) = {
-      if (e.isContainer) {
+    def emitContRules(e: EntityTemplateData) = {
+      if (e.isCont) {
         s"""
           |    case ${e.name}Methods.map(xs, Def(IdentityLambda())) => xs
           |
@@ -845,7 +845,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
     }
 
     def emitRewriteDef(e: EntityTemplateData) = {
-      if (e.isContainer) {
+      if (e.isCont) {
         s"""
         |  object UserType${e.name} {
         |    def unapply(s: Exp[_]): Option[Iso[_, _]] = {
@@ -873,7 +873,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |  ${e.entityRepSynonymOpt.isEmpty.opt(e.entityRepSynonym.declaration)}
         |
         |  override def rewriteDef[T](d: Def[T]) = d match {
-        |    ${emitContainerRules(e)}
+        |    ${emitContRules(e)}
         |    case _ => super.rewriteDef(d)
         |  }
          """.stripMargin
@@ -897,7 +897,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
        |    $companionMethods
        |  }
        |
-       |${if (e.isContainer) familyView(e) else ""}
+       |${if (e.isCont) familyView(e) else ""}
        |
        |${concreteClassesString.mkString("\n\n")}
        |
@@ -1013,7 +1013,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
                   s"receiver.elem == $traitElem"
                 } else if (e.isHighKind) {
                   // same as isInstanceOf[$traitElem], but that won't compile
-                  s"(receiver.elem.asInstanceOf[Element[_]] match { case _: $traitElem => true; case _ => false })"
+                  s"(receiver.elem.asInstanceOf[Elem[_]] match { case _: $traitElem => true; case _ => false })"
                 } else {
                   s"receiver.elem.isInstanceOf[$traitElem]"
                 }

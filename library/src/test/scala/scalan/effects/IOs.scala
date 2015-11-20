@@ -30,7 +30,7 @@ trait IOs { self: IOsDsl =>
 trait IOsDsl extends ScalanDsl with impl.IOsAbs with IOs
     with MonadsDsl {
 
-  implicit def ioCont: Cont[IO] = new Container[IO] {
+  implicit def ioCont: Cont[IO] = new Cont[IO] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[IO[T]]
     def lift[T](implicit eT: Elem[T]) = element[IO[T]]
   }

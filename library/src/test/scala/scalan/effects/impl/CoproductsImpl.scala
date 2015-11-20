@@ -37,7 +37,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
     }
 
     def convertCoproduct(x: Rep[Coproduct[F, G, A]]): Rep[To] = {
-      x.selfType1.asInstanceOf[Element[_]] match {
+      x.selfType1.asInstanceOf[Elem[_]] match {
         case _: CoproductElem[_, _, _, _] => x.asRep[To]
         case e => !!!(s"Expected $x to have CoproductElem[_, _, _, _], but got $e")
       }
@@ -187,7 +187,7 @@ trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
   object CoproductMethods {
     object run {
       def unapply(d: Def[_]): Option[Rep[Coproduct[F, G, A]] forSome {type F[_]; type G[_]; type A}] = d match {
-        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: CoproductElem[_, _, _, _] => true; case _ => false }) && method.getName == "run" =>
+        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: CoproductElem[_, _, _, _] => true; case _ => false }) && method.getName == "run" =>
           Some(receiver).asInstanceOf[Option[Rep[Coproduct[F, G, A]] forSome {type F[_]; type G[_]; type A}]]
         case _ => None
       }

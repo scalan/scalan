@@ -29,12 +29,12 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   implicit def castSSeqElement[A](elem: Elem[SSeq[A]]): SSeqElem[A, SSeq[A]] =
     elem.asInstanceOf[SSeqElem[A, SSeq[A]]]
 
-  implicit lazy val containerSeq: Container[Seq] = new Container[Seq] {
+  implicit lazy val containerSeq: Cont[Seq] = new Cont[Seq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Seq[A]]
     def lift[A](implicit evA: Elem[A]) = element[Seq[A]]
   }
 
-  implicit lazy val containerSSeq: Container[SSeq] with Functor[SSeq] = new Container[SSeq] with Functor[SSeq] {
+  implicit lazy val containerSSeq: Functor[SSeq] = new Functor[SSeq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SSeq[A]]
     def lift[A](implicit evA: Elem[A]) = element[SSeq[A]]
     def map[A:Elem,B:Elem](xs: Rep[SSeq[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))
@@ -71,7 +71,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
       }
     }
     lazy val baseElem =
-      new BaseTypeElem1[A, Seq, SSeq[A]](this.asInstanceOf[Element[SSeq[A]]])(
+      new BaseTypeElem1[A, Seq, SSeq[A]](this.asInstanceOf[Elem[SSeq[A]]])(
         element[A], container[Seq], DefaultOfSeq[A])
     lazy val eTo: Elem[_] = new SSeqImplElem[A](isoSSeqImpl(eA))(eA)
     override def getDefaultRep: Rep[To] = ???

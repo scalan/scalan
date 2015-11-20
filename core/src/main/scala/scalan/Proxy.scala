@@ -373,7 +373,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                 // fake to make the compiler happy
                 type F[A] = A
 
-                new Container[F] {
+                new Cont[F] {
                   private val elemMap1 = elemMap + (formalParam -> Right(this.asInstanceOf[SomeCont]))
 
                   def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[F[T]] = ???
@@ -708,7 +708,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
     val TypeWrapperSym = typeOf[TypeWrapper[_, _]].typeSymbol
 
-    val ElementSym = typeOf[Element[_]].typeSymbol
+    val ElementSym = typeOf[Elem[_]].typeSymbol
     val ContSym = typeOf[SomeCont].typeSymbol
 
     val SuperTypesOfDef = typeOf[Def[_]].baseClasses.toSet

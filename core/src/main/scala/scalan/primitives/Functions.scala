@@ -380,9 +380,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     fun { (x: Rep[A]) => Pair(f(x), g(x)) }
   }
 
-  def identityFun[A](implicit e: Element[A]) = fun[A, A](x => x)
+  def identityFun[A](implicit e: Elem[A]) = fun[A, A](x => x)
 
-  def constFun[A, B](x: Rep[B])(implicit e: Element[A]) = {
+  def constFun[A, B](x: Rep[B])(implicit e: Elem[A]) = {
     implicit val eB = x.elem
     fun[A, B](_ => x)
   }

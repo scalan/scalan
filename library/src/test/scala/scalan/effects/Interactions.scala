@@ -37,7 +37,7 @@ trait Interactions { self: InteractionsDsl =>
 trait InteractionsDsl extends ScalanDsl with impl.InteractionsAbs with Interactions
     with MonadsDsl {
 
-  implicit def interactCont: Cont[Interact] = new Container[Interact] {
+  implicit def interactCont: Cont[Interact] = new Cont[Interact] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Interact[T]]
     def lift[T](implicit eT: Elem[T]) = element[Interact[T]]
   }

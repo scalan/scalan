@@ -19,7 +19,7 @@ trait Thunks { self: Scalan =>
     def map[R:Elem](f: Rep[T => R]): Th[R] = Thunk { f(t.force) }
   }
 
-  implicit val thunkContainer: Cont[Thunk] = new Container[Thunk] {
+  implicit val thunkCont: Cont[Thunk] = new Cont[Thunk] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Thunk[T]]
     def lift[T](implicit eT: Elem[T]) = element[Thunk[T]]
   }
