@@ -297,9 +297,19 @@ trait Structs { self: Scalan =>
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
-  def struct[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T] = ???
-  def field(struct: Rep[Struct], field: String): Rep[_] = ???
-  def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct] = ???
+  case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends Struct
+
+  def struct[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T] =
+    StructSeq(tag, fields).asRep[T]
+  def field(struct: Rep[Struct], field: String): Rep[_] =
+    struct.asInstanceOf[StructSeq[_]].fields.find(_._1 == field) match {
+      case Some((_, value)) => value
+      case None => !!!(s"Field $field not found in structure $struct")
+    }
+  def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct] = {
+    val StructSeq(tag, fieldsInStruct) = struct
+    StructSeq(tag, fieldsInStruct.filter(fields.contains))
+  }
 }
 
 trait StructsExp extends Expressions with Structs with EffectsExp with ViewsExp
