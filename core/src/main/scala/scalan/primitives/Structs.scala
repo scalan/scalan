@@ -148,6 +148,10 @@ trait Structs { self: Scalan =>
   def struct[T <: Struct](tag: StructTag[T], fields: (String, Rep[Any])*)(implicit o: Overloaded1): Rep[T] =
     struct(tag, fields)
   def struct[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T]
+  def tupleStruct(items: Rep[_]*): Rep[Struct] = {
+    val fields = items.zipWithIndex.map { case (f, i) => tupleFN(i + 1) -> f }
+    struct(defaultStructTag, fields)
+  }
   def field(struct: Rep[Struct], field: String): Rep[_]
   def field(struct: Rep[Struct], fieldIndex: Int): Rep[_] = field(struct, tupleFN(fieldIndex))
   def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct]
