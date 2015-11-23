@@ -39,7 +39,7 @@ jdk:
   - oraclejdk8
 
 install:
-  - if test ! -d "$HOME/.ivy2/local/EPFL"; then
+  - if test ! -d "$HOME/.ivy2/local/org.scala-lang.lms"; then
       git clone "https://github.com/scalan/virtualization-lms-core.git" &&
       (cd virtualization-lms-core && sbt publishLocal);
     fi
