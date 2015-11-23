@@ -8,7 +8,6 @@ import scala.lms.internal.{Expressions, GenericNestedCodegen, Effects}
 import scalan.compilation.lms.arrays.{ArrayMutationExp, ArrayLoopsFatExp}
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.graph.GraphCodegen
-import scalan.compilation.lms.internal.Effects1
 import scalan.compilation.lms.scalac.ScalaCommunityCodegen
 import scalan.util.FileUtil
 import java.util.HashMap
@@ -65,7 +64,7 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt with PointerLmsOpsExp
-  with MiscOpsExtExp with Effects1 {
+  with MiscOpsExtExp with Effects {
   def toStringWithDefinition(x: Exp[_]) = s"$x: ${x.tp}" + (x match {
     case sym: Sym[_] =>
       findDefinition(sym) match {
