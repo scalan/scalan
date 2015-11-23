@@ -140,6 +140,11 @@ trait SmokeProg extends ScalanDsl {
   lazy val makeArrayBuffer = fun { in: Rep[Array[Int]] =>
     in.fold(ArrayBuffer.make[Int]("testArrayBuffer"), (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
   }
+
+  lazy val stringCompare = fun { in: Rep[(String, String)] =>
+    val Pair(a,b) = in
+    a.compare(b)
+  }
   //    lazy val absTest = fun {x: Rep[Float] =>
   //      x.abs
   //    }
@@ -346,6 +351,10 @@ abstract class SmokeItTests extends BaseItTests[SmokeProg](new ScalanCtxSeq with
   test("arrayReplicate") {
     val in = (3, 3.14)
     compareOutputWithSequential(_.arrayReplicate)(in)
+  }
+  test("stringCompare") {
+    val in = ("abc", "abc")
+    compareOutputWithSequential(_.stringCompare)(in)
   }
 
 //  val progStaged: Prog with ScalanCtxExp
