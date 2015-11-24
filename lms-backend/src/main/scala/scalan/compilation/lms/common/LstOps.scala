@@ -3,6 +3,7 @@ package scalan.compilation.lms.common
 import scala.reflect.SourceContext
 import scala.lms.common._
 import scala.lms.internal.ScalaNestedCodegen
+import scalan.compilation.lms.LmsBackendFacade
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait LstOps extends Base {
@@ -12,7 +13,7 @@ trait LstOps extends Base {
 
 }
 
-trait LstOpsExp extends LstOps with BaseExp with EffectExp with TupleOps {
+trait LstOpsExp extends LstOps with BaseExp with EffectExp with TupleOps { self: LmsBackendFacade =>
 
   case class ListRangeFrom0Lms(length: Rep[Int]) extends Def[List[Int]]
 
@@ -28,7 +29,7 @@ trait LstOpsExp extends LstOps with BaseExp with EffectExp with TupleOps {
   def list_reduce[A: Manifest](xs: Exp[List[A]], zero: Exp[A], accumulate: Exp[(A, A)] => Exp[A]): Exp[A] = {
     var state = zero
     list_foreach(xs) { x =>
-      state = accumulate((state, x))
+      state = accumulate((readVar(state), x))
     }
     state
   }

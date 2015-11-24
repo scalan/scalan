@@ -172,7 +172,7 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
   def reduceArray[A: Manifest](a: Exp[Array[A]], zero: Exp[A], accumulate: Rep[(A, A)] => Rep[A]): Exp[A] = {
     var state = zero
     for (x <- a) {
-      state = accumulate((state.AsInstanceOf[A], x))
+      state = accumulate((readVar(state), x))
     }
     state
   }
@@ -193,7 +193,7 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
 //    val arr1 = array(a.length)(i => {
 //      val res = state
 //      val loc = if (i==0) zero else a.at(i-1)
-//      state = accumulate((state.AsInstanceOf[A], loc))
+//      state = accumulate((readVar(state), loc))
 //      res
 //    })
 //    Tuple2(arr1, accumulate((arr1.at(a.length - 1), a.at(a.length - 1))))
@@ -202,7 +202,7 @@ trait ArrayOpsExtExp extends ArrayOpsExt with Transforming with EffectExp { self
   def arrayFold[A: Manifest, S: Manifest](a: Exp[Array[A]], init: Exp[S], func: Rep[(S, A)] => Rep[S]): Exp[S] = {
     var state = init
     for (x <- a) {
-      state = func((state.AsInstanceOf[S], x))
+      state = func((readVar(state), x))
     }
     state
   }

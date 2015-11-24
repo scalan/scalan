@@ -62,6 +62,8 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with ArrayMutationExp with OrderingOpsExp
   with IfThenElseFatExp with VariablesExpOpt
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
+// FIXME using CastingOpsExpOpt instead of CastingOpsExp generates wrong code, perhaps due to LMS bug
+// Without it we get useless casts and more code than should be present
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt with PointerLmsOpsExp
   with MiscOpsExtExp with Effects {

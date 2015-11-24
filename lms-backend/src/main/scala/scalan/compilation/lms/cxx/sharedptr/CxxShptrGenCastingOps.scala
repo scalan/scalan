@@ -8,10 +8,9 @@ trait CxxShptrGenCastingOps extends CxxShptrCodegen {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]): Unit = {
     rhs match {
-      case RepAsInstanceOf(sy, t1, t2) if t1 != t2 =>
-        emitValDef(sym, src"static_cast<$t2>($sy)")
-      case RepAsInstanceOf(sy, _, _) =>
-        emitValDef(sym, quote(sy))
+      case RepAsInstanceOf(sy, t1, t2) =>
+        val rhs1 = if (t1 != t2) src"static_cast<$t2>($sy)" else quote(sy)
+        emitValDef(sym, rhs1)
       case _ => super.emitNode(sym, rhs)
     }
   }
