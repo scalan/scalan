@@ -140,6 +140,16 @@ trait SmokeProg extends ScalanDsl {
   lazy val makeArrayBuffer = fun { in: Rep[Array[Int]] =>
     in.fold(ArrayBuffer.make[Int]("testArrayBuffer"), (state: Rep[ArrayBuffer[Int]], x: Rep[Int]) => state += x).toArray
   }
+
+  lazy val stringCompare = fun { in: Rep[(String, String)] =>
+    val Pair(a,b) = in
+    a.compare(b)
+  }
+
+  lazy val stringMax = fun { in: Rep[(String, String)] =>
+    val Pair(a,b) = in
+    a.max(b)
+  }
   //    lazy val absTest = fun {x: Rep[Float] =>
   //      x.abs
   //    }

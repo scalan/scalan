@@ -363,6 +363,9 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       case OrderingMin(ord) =>
         implicit val ord1 = ord.asInstanceOf[Ordering[A]]
         lms.ordering_min(_arg1, _arg2)
+      case OrderingCompare(ord) =>
+        implicit val ord1 = ord.asInstanceOf[Ordering[A]]
+        lms.ordering_compare(_arg1, _arg2)
       case And =>
         lms.boolean_and(_arg1, _arg2)
       case Or =>
