@@ -83,7 +83,6 @@ class StructTests extends BaseViewTests {
   class Ctx extends TestCompilerContext {
     class ScalanCake extends ScalanCtxExp with MyProg with SegmentsDslExp {
       override val cacheElems = false
-//      override val cacheIsos = false
 //      override val cachePairs = false
 
       def noTuples[A,B](f: Rep[A=>B]): Boolean = {

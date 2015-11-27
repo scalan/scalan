@@ -106,9 +106,6 @@ trait Structs { self: Scalan =>
   }
 
   def structToPairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[Struct, (B1, B2)] =
-//    if (cacheIsos)
-//      cachedIso[StructToPairIso[A1, A2, B1, B2]](iso1, iso2)
-//    else
     reifyObject(StructToPairIso[A1, A2, B1, B2](iso1, iso2))
 
   def structToPairIso[A:Elem,B:Elem]: Iso[Struct, (A, B)] = structToPairIso[A,B,A,B](identityIso[A], identityIso[B])
