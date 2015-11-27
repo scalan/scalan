@@ -58,8 +58,8 @@ trait FreesAbs extends scalan.Scalan with Frees {
     override def toString = "Free"
   }
   def Free: Rep[FreeCompanionAbs]
-  implicit def proxyFreeCompanion(p: Rep[FreeCompanion]): FreeCompanion =
-    proxyOps[FreeCompanion](p)
+  implicit def proxyFreeCompanionAbs(p: Rep[FreeCompanionAbs]): FreeCompanionAbs =
+    proxyOps[FreeCompanionAbs](p)
 
   abstract class AbsReturn[F[_], A]
       (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
@@ -89,14 +89,26 @@ trait FreesAbs extends scalan.Scalan with Frees {
 
   // 3) Iso for concrete class
   class ReturnIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends Iso[ReturnData[F, A], Return[F, A]] {
+    extends IsoUR[ReturnData[F, A], Return[F, A]] with Def[ReturnIso[F, A]] {
     override def from(p: Rep[Return[F, A]]) =
       p.a
     override def to(p: Rep[A]) = {
       val a = p
       Return(a)
     }
-    lazy val eTo = new ReturnElem[F, A](this)
+    lazy val eFrom = element[A]
+    lazy val eTo = new ReturnElem[F, A](self)
+    lazy val selfType = new ReturnIsoElem[F, A](eA, cF)
+    def productArity = 2
+    def productElement(n: Int) = (eA, cF).productElement(n)
+  }
+  case class ReturnIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[ReturnIso[F, A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new ReturnIso[F, A]()(eA, cF))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[ReturnIso[F, A]]
+    }
   }
   // 4) constructor and deconstructor
   class ReturnCompanionAbs extends CompanionDef[ReturnCompanionAbs] with ReturnCompanion {
@@ -128,7 +140,7 @@ trait FreesAbs extends scalan.Scalan with Frees {
 
   // 5) implicit resolution of Iso
   implicit def isoReturn[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[ReturnData[F, A], Return[F, A]] =
-    cachedIso[ReturnIso[F, A]](eA, cF)
+    reifyObject(new ReturnIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
@@ -162,14 +174,26 @@ trait FreesAbs extends scalan.Scalan with Frees {
 
   // 3) Iso for concrete class
   class SuspendIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends Iso[SuspendData[F, A], Suspend[F, A]] {
+    extends IsoUR[SuspendData[F, A], Suspend[F, A]] with Def[SuspendIso[F, A]] {
     override def from(p: Rep[Suspend[F, A]]) =
       p.a
     override def to(p: Rep[F[A]]) = {
       val a = p
       Suspend(a)
     }
-    lazy val eTo = new SuspendElem[F, A](this)
+    lazy val eFrom = element[F[A]]
+    lazy val eTo = new SuspendElem[F, A](self)
+    lazy val selfType = new SuspendIsoElem[F, A](eA, cF)
+    def productArity = 2
+    def productElement(n: Int) = (eA, cF).productElement(n)
+  }
+  case class SuspendIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[SuspendIso[F, A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SuspendIso[F, A]()(eA, cF))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[SuspendIso[F, A]]
+    }
   }
   // 4) constructor and deconstructor
   class SuspendCompanionAbs extends CompanionDef[SuspendCompanionAbs] with SuspendCompanion {
@@ -201,7 +225,7 @@ trait FreesAbs extends scalan.Scalan with Frees {
 
   // 5) implicit resolution of Iso
   implicit def isoSuspend[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[SuspendData[F, A], Suspend[F, A]] =
-    cachedIso[SuspendIso[F, A]](eA, cF)
+    reifyObject(new SuspendIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkSuspend[F[_], A](a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]]
@@ -236,14 +260,27 @@ trait FreesAbs extends scalan.Scalan with Frees {
 
   // 3) Iso for concrete class
   class BindIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Iso[BindData[F, S, B], Bind[F, S, B]]()(pairElement(implicitly[Elem[Free[F, S]]], implicitly[Elem[S => Free[F, B]]])) {
+    extends IsoUR[BindData[F, S, B], Bind[F, S, B]] with Def[BindIso[F, S, B]] {
     override def from(p: Rep[Bind[F, S, B]]) =
       (p.a, p.f)
     override def to(p: Rep[(Free[F, S], S => Free[F, B])]) = {
       val Pair(a, f) = p
       Bind(a, f)
     }
-    lazy val eTo = new BindElem[F, S, B](this)
+    lazy val eFrom = pairElement(element[Free[F, S]], element[S => Free[F, B]])
+    lazy val eTo = new BindElem[F, S, B](self)
+    lazy val selfType = new BindIsoElem[F, S, B](eS, eA, cF)
+    def productArity = 3
+    def productElement(n: Int) = (eS, eA, cF).productElement(n)
+  }
+  case class BindIsoElem[F[_], S, B](eS: Elem[S], eA: Elem[B], cF: Cont[F]) extends Elem[BindIso[F, S, B]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
+    lazy val tag = {
+      implicit val tagS = eS.tag
+      implicit val tagB = eA.tag
+      weakTypeTag[BindIso[F, S, B]]
+    }
   }
   // 4) constructor and deconstructor
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
@@ -276,7 +313,7 @@ trait FreesAbs extends scalan.Scalan with Frees {
 
   // 5) implicit resolution of Iso
   implicit def isoBind[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[BindData[F, S, B], Bind[F, S, B]] =
-    cachedIso[BindIso[F, S, B]](eS, eA, cF)
+    reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkBind[F[_], S, B](a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]
@@ -580,7 +617,7 @@ trait FreesExp extends scalan.ScalanExp with FreesDsl {
 }
 
 object Frees_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANWXz28bRRTHn9d2HNuhCT8EtFVJiExRENiBSw+RqBzXRkVuEmV7QKaiGu+O0y27s5udcWRz6B8AN8SFA4IekXrjxAUhJCTEgVMFSJw4cGrLoQJ6AvFmvLteO14nbWkkfBjt7L59783nfd/M+sYdyHIfTnOD2ISVHSpIWVfXVS5Kep0JS/QvuGbXpudo51n3689e/fzElxrMt2DmCuHnuN2C/OCi3vOia53uNiFPmEG5cH0u4PmmilAxXNumhrBcVrEcpytI26aVpsXFWhMybdfs78I1SDVhwXCZ4VNB9ZpNOKc8uD9LZUZWNM+reX/TG8ZgFbmKSmwVF31iCUwfYywM7Lepp/eZy/qOgGNBapueTAttcpbjub4IQ+TQ3RXXDKcZRvAGPNG8SvZIBUPsVHThW2wH3yx6xHiX7NANNJHmGUyYU7tzse+peboJBU53EdB5x7PVnZ4HAFiB11QS5SGfcsSnLPmUdOpbxLbeI/Lhlu/2+jD4pdIAPQ9dvHyAi9ADrTOz9P4l4+17etHR5Ms9mUpOrXAGHS0mqEGVAjl+t/0hv/vG9TMaFFpQsHi1zYVPDBEveUCrSBhzhco5Akj8HazWclK1VJQq2oxJIm+4jkcYegpQzmGdbMuwhDSW9+aC6iSgzwmPhqapnpeK1ruUsF6lmxqx7a1bx1954Xb9LQ200RB5dKmj8P3QqYBMw6c0cC3HeQGpxpCvnFbVVA753nDMTckkYvLird/Nb1fhkhaRDAIfrnjoIst//rF4c+WsBrMtJfWGTXZaCJPXbeps+jWXiRbMunvUHzzJ7RFbXk0sZs6kHdK1RYA4ziaNbAQsJTalRyW4NdUAqRBAcaDhDZfRUmOr9Jf+/Uc3pER9mBs8GXTpP9aZv3851hFKvUiUhGzT2Nlj8JNpFwYuddehjy/ftd65/oFQXFO90f7ebF/FhlpT7z03BXG4z/zZWtX+OP7TpxrkkWTbEg7xSquH7I5HqHiISAyHRcQ3v01F12e1eLTFoWSfiQE9kQqLpYwEaLQaks5IAU2Bn+DAaEQOpPYmtk68egJmBvkqB5HuTyUVRSF4erv5lH3n7FcaZN+EbAflzJuQbbtdZoZs8cQRtCfWw3upUbbIkvjEiViq3xIMWclkY8m/PtHi8jiPyWb7sBVTo1weYpfZV1IYq8jUbmpMKfDkWKfVuJIkvgW9yz3KzP+N+nJBwnH5JVfyAEnIoXZ0mlh/FJo4RFx9X9yEMJ0JYXzcdBN7u9Flxs3zHz85f+ryr+p4njFdh1hKRSexxX3cwFULnwzOyGE6D83tPlT+2Lr1wBLXp0k8TvaBemT9YAf33yMZudyjbpBYVScb7K9iLPYKjK4rjQf5f7TnBjo5vFhkoAliCb8ujxrs5FV9M+oLDbMKEOYftqvLiMmDFfuwnNDFevDRgsCv3ftk46UfvvhNdXJBfv7ghyCL/ooNz+Pe2B6Uv6Bi4T+rWK6IS34QqTz/BddcC0jpDgAA"
+  val dump = "H4sIAAAAAAAAANVXS2wbRRj+/YpjOzSB8mxVEiJTFAR24dJDDpGT2KjITaJsD8hUROPdsbtld3YzM47WHHrsAW6ICwckKnFB6gVx4oK4VEIcOFUIiRMHTqUI9UBPIGZmH147XudRGgkfRju7//7/P99jZn37PuQYhfNMRxYiFRtzVNHUdY3xslYn3OT9y47Rs/A67jzvfPf5G1+e+SYNsy2YuobYOrNaUPAv6p4bXWt4twkFRHTMuEMZh5eaqkJVdywL69x0SNW07R5HbQtXmybjy03Ith2jvws3INWEOd0hOsUca2sWYgyz4P40lh2Z0byg5v1Nd1CDVOUqqrFVXKHI5KJ9UWPOj9/GrtYnDunbHE4FrW26si0Rkzdt16E8LJEX6a45RjjNEiRuwFPN62gPVUWJblXj1CRd8WbJRfr7qIs3RIgMz4qGGbY6V/qummeaUGR4VwB0yXYtdcdzAUAw8KZqojLApxLhU5H4lDVMTWSZHyD5cIs6Xh/8XyoD4LkixWsHpAgz4Doxyh9e1d99qJXstHzZk63k1QqnRKL5BDUoKgSO329/zB68detiGootKJqs1macIp3HKQ/QKiFCHK56jgBEtCvYWkxiS1WpiZgRSRR0x3YREZkCKGcET5apm1wGy3szATsJ0Oe5i8PQlOemovUuJKxX6WYNWdbWvRdef/n3+jtpSA+XKIiUmhA+DZNyyDYoxkFqOc5ySDUG+MppTU3lUPAGY35CJxEmr9z7w7hzAa6mIySDwocjT6TIsZ9/Kt1dWknDdEtJvWGhbkuAyeoWtjfpmkN4C6adPUz9J/k9ZMmrsWTmDdxBPYsHEMexyQhsOCwkmtLFErhlZYBUCEDJ1/CGQ3C5sVX+S/vhk9tSohRm/Ce+S/8xL/79y6kOV+oViKIQ24xw9gj4yWgX/ZSaY+MnFx+Y7936iCtcU96wvzfb14WhltV7L06AONxnvrp585k/v9g5rfwx3Ta5jdzyhSO4IxTzY1Q/RKj4unxuMJfDvEB1dhvzHiVr8cLzsTdiOJ9JhRyqIA5pXAsJyEpdTeAkIYHeiBJISY51VJxUDlN+vypBZIdzSVwpNJ7dbj5t3V/5Ng25tyHXESpnTci1nR4xQpjFQcSxx1fDe6lhmAWsiCI7glX9FmCAlWw21vzK2IidUTzGh+2DrZQaxuURNp99lMIIIxNN1phA8Pha59W4dAgdzmk95mJi/G+EmA8ajisxmdQD1CGH9ZOTx+rjkMch6mr76iaU6YwpQ8W2nGjzRo/ody99enr23M6v6gCfMhwbmUpFZ4XbqdjilZvPBqfooJ1Hxu14gn9i1Ty22rVJao+DfCy7rB6c4Oh2ycrlnrRXYgSPD9hPaKz2EgyvKyNO/f9oJx4y3IhWjiAhWX6MhMIP1JOGe/xa7wznEoE5BZvoP/SzQ5DBgsVTWEywuRZ86wgabjz8bOPVH7/+TVm9KL+axLckif7NDc5ub2STKlxWtcSfs1ivAi75HaX6/BeWGjW3LA8AAA=="
 }
 }
 

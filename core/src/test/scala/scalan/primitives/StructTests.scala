@@ -41,10 +41,11 @@ class StructTests extends BaseViewTests {
     lazy val t8 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
       Pair(in._2, in._1)
     })
-    lazy val t9 = structWrapper(fun { (in: Rep[((Int,Int),Int)]) =>
+    lazy val t9f = fun { (in: Rep[((Int,Int),Int)]) =>
       val Pair(Pair(x, y), z) = in
       Pair(x + y, Pair(x - z, y - z))
-    })
+    }
+    lazy val t9 = structWrapper(t9f)
     lazy val t10 = structWrapper(fun { (in: Rep[((Int,Int),Int)]) =>
       val Pair(Pair(x, y), z) = in
       val i = Interval(x,y)
@@ -174,6 +175,7 @@ class StructTests extends BaseViewTests {
     ctx.testWrapper("t6", t6)
     ctx.testWrapper("t7", t7)
     ctx.testWrapper("t8", t8)
+    ctx.emit("t9f", t9f)
     ctx.testWrapper("t9", t9)
     ctx.testWrapper("t10", t10)
     ctx.testWrapper("t11", t11)
@@ -260,7 +262,7 @@ class StructTests extends BaseViewTests {
       val eTo = structElement(Seq("a" -> element[Interval], "b" -> element[Double], "c" -> element[Boolean]))
       val iso = new StructIso[Struct, Struct](
           eFrom, eTo,
-          Seq(getIsoByElem(element[Interval]), identityIso[Double], identityIso[Boolean]))
+          Seq[Iso[_, _]](getIsoByElem(element[Interval]), identityIso[Double], identityIso[Boolean]))
 
       ctx.test("t5_iso.to", iso.toFun)
       ctx.test("t5_iso.from", iso.fromFun)

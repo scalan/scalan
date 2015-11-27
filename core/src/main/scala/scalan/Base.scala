@@ -51,7 +51,7 @@ trait Base extends LazyLogging { self: Scalan =>
     override def equals(other: Any) = other match {
       // check that nodes correspond to same operation, have the same type, and the same arguments
       // alternative would be to include Elem fields into case class
-      case other: Def[_] =>
+      case other: Base#Def[_] =>
         getClass == other.getClass && productArity == other.productArity && {
           val len = productArity
           var i = 0

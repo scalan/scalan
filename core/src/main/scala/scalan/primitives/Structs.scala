@@ -1,6 +1,5 @@
 package scalan.primitives
 
-import scala.reflect.runtime._
 import scala.reflect.runtime.universe._
 import scalan._
 import scalan.common.Lazy
@@ -45,7 +44,6 @@ trait Structs { self: Scalan =>
     protected def getDefaultRep =
       struct(structTag, fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
     def get(fieldName: String): Option[Elem[_]] = fields.find(_._1 == fieldName).map(_._2)
-    override def canEqual(other: Any) = other.isInstanceOf[StructElem[_]]
     def fieldElems: Seq[Elem[_]] = fields.map(_._2)
     def isEqualType(tuple: Seq[Elem[_]]) = {
       fields.length == tuple.length && fields.zip(tuple).forall { case ((fn,fe), e) => fe == e }
@@ -83,12 +81,21 @@ trait Structs { self: Scalan =>
     tupleStructElement(element[A], element[B], element[C])
 
   case class StructToPairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2])
-    extends Iso[Struct, (B1, B2)]()(tupleStructElement(iso1.eFrom, iso2.eFrom)) {
+    extends IsoUR[Struct, (B1, B2)] {
+    override def equals(other: Any) = other match {
+      case iso: Structs#StructToPairIso[_, _, _, _] =>
+        (this eq iso) || (iso1 == iso.iso1 && iso2 == iso.iso2)
+      case _ => false
+    }
+
     implicit def eA1 = iso1.eFrom
     implicit def eA2 = iso2.eFrom
     implicit def eB1 = iso1.eTo
     implicit def eB2 = iso2.eTo
+    lazy val eFrom = tuple2StructElement(iso1.eFrom, iso2.eFrom)
     lazy val eTo = element[(B1, B2)]
+    lazy val selfType = new ConcreteIsoElem[Struct, (B1, B2), StructToPairIso[A1, A2, B1, B2]](eFrom, eTo).
+      asElem[IsoUR[Struct, (B1, B2)]]
 
     override def from(p: Rep[(B1, B2)]) =
       struct(tupleFN(1) -> iso1.from(p._1), tupleFN(2) -> iso2.from(p._2))
@@ -99,34 +106,45 @@ trait Structs { self: Scalan =>
   }
 
   def structToPairIso[A1, A2, B1, B2](iso1: Iso[A1, B1], iso2: Iso[A2, B2]): Iso[Struct, (B1, B2)] =
-    if (cacheIsos)
-      cachedIso[StructToPairIso[A1, A2, B1, B2]](iso1, iso2)
-    else
-      StructToPairIso[A1, A2, B1, B2](iso1, iso2)
+//    if (cacheIsos)
+//      cachedIso[StructToPairIso[A1, A2, B1, B2]](iso1, iso2)
+//    else
+    reifyObject(StructToPairIso[A1, A2, B1, B2](iso1, iso2))
 
   def structToPairIso[A:Elem,B:Elem]: Iso[Struct, (A, B)] = structToPairIso[A,B,A,B](identityIso[A], identityIso[B])
   def structToPairIso[A,B](pe: Elem[(A,B)]): Iso[Struct, (A, B)] = structToPairIso[A,B](pe.eFst, pe.eSnd)
 
-  class StructIso[S <: Struct, T <: Struct](override val eFrom: StructElem[S], val eTo: StructElem[T], itemIsos: Seq[Iso[_,_]])
-      extends Iso[S, T]()(eFrom) {
+  case class StructIso[S <: Struct, T <: Struct](eFrom: StructElem[S], eTo: StructElem[T], itemIsos: Seq[Iso[_,_]])
+    extends IsoUR[S, T] {
     assert(eFrom.isEqualType(itemIsos.map(_.eFrom)))
     assert(eTo.isEqualType(itemIsos.map(_.eTo)))
 
+    override def equals(other: Any) = other match {
+      case iso: Structs#StructIso[_, _] =>
+        (this eq iso) || (eFrom == iso.eFrom && eTo == iso.eTo)
+      case _ => false
+    }
+
     override def from(y: Rep[T]) = {
       val items = eFrom.fields.zip(eTo.fields).zip(itemIsos).map {
-        case (((fnS, feS), (fnT, feT)), iso: Iso[s,t]) =>
+        case (((fnS, feS), (fnT, feT)), iso: Iso[s,t] @unchecked) =>
           fnS -> iso.from(y(fnT).asRep[t])
       }
       struct(items).asRep[S]
     }
     override def to(x: Rep[S]) = {
       val items = eFrom.fields.zip(eTo.fields).zip(itemIsos).map {
-        case (((fnS, feS), (fnT, feT)), iso: Iso[s,t]) =>
+        case (((fnS, feS), (fnT, feT)), iso: Iso[s,t] @unchecked) =>
           fnT -> iso.to(x(fnS).asRep[s])
       }
       struct(items).asRep[T]
     }
+
+    lazy val selfType = new ConcreteIsoElem[S, T, StructIso[S, T]](eFrom, eTo).asElem[IsoUR[S, T]]
   }
+
+  def structIso[S <: Struct, T <: Struct](eFrom: StructElem[S], eTo: StructElem[T], itemIsos: Seq[Iso[_,_]]): Iso[S, T] =
+    reifyObject(StructIso(eFrom, eTo, itemIsos))
 
   implicit class StructOps(s: Rep[Struct]) {
     def apply(iField: Int): Rep[_] = field(s, iField)
@@ -158,8 +176,16 @@ trait Structs { self: Scalan =>
 
   case class Link(field: String, nestedField: String, nestedElem: Elem[_], flatIndex: Int)
 
-  class FlatteningIso[T <: Struct](val eTo: StructElem[T], val flatIsos: Map[String, Iso[_,_]], links: Seq[Link])
-      extends Iso[Struct,T]()(tupleStructElement(links.map(_.nestedElem): _*)) {
+  case class FlatteningIso[T <: Struct](eTo: StructElem[T], flatIsos: Map[String, Iso[_,_]], links: Seq[Link])
+      extends IsoUR[Struct,T] {
+    override def equals(other: Any) = other match {
+      case iso: Structs#FlatteningIso[_] =>
+        (this eq iso) || (eFrom == iso.eFrom && eTo == iso.eTo)
+      case _ => false
+    }
+
+    val eFrom = tupleStructElement(links.map(_.nestedElem): _*)
+    lazy val selfType = new ConcreteIsoElem[Struct, T, FlatteningIso[T]](eFrom, eTo).asElem[IsoUR[Struct, T]]
 
     val groups = links.groupBy(_.field)
 
@@ -167,7 +193,7 @@ trait Structs { self: Scalan =>
       val items = eTo.fields.map { case (fn, fe) =>
         val g = groups(fn)
         flatIsos.get(fn) match {
-          case Some(iso: Iso[a, _]) =>
+          case Some(iso: Iso[a, _] @unchecked) =>
             val projectedStruct = struct(g.map(link => (link.nestedField -> x(link.flatIndex))): _*)
             val s = iso.to(projectedStruct.asRep[a])
             (fn -> s)
@@ -183,7 +209,7 @@ trait Structs { self: Scalan =>
       val items = eTo.fields.flatMap { case (fn, fe) =>
         val g = groups(fn)
         flatIsos.get(fn) match {
-          case Some(iso: Iso[_, a]) =>
+          case Some(iso: Iso[_, a] @unchecked) =>
             val nestedStruct = iso.from(y(fn).asRep[a]).asRep[Struct]
             // nestedStruct is guaranteed to be a Rep[Struct], because iso can be either IdentityIso on a struct or FlatteningIso
             g.map { link =>
@@ -198,25 +224,26 @@ trait Structs { self: Scalan =>
   }
 
   /**
-   * Flattens all subtrees of structs in [[eTo]].
-   * Types other than structs are considered either as internal nodes of as leaves.
-   * @param eTo descriptor of struct type
-   * @return an isomorphism [[i]] in which [[eTo]] is given by param and [[eFrom]] is flattened [[eTo]] preserving
+   * Flattens all subtrees of structs in [[e]].
+   * Types other than structs are considered either as internal nodes or as leaves.
+   * @param e descriptor of struct type
+   * @return an isomorphism in which [[e]] is given by param and `eFrom` is flattened [[e]] preserving
    *         related order of the components
    */
   def getFlatteningIso[T](e: Elem[T]): Iso[_,T] = e match {
     // a == T, but Scala can't infer the type bound if T is used below
     case se: StructElem[a] @unchecked =>
-      flatteningIso(se).asInstanceOf[Iso[_, T]] match {
-        case idIso: IdentityIso[T] @unchecked =>
-          idIso
-        case flatIso: FlatteningIso[T] @unchecked =>
+      val flatIso = flatteningIso(se).asInstanceOf[Iso[_, T]]
+      flatIso match {
+        case Def(_: IdentityIso[T] @unchecked) =>
+          flatIso
+        case Def(_: FlatteningIso[T] @unchecked) =>
           flatIso.eFrom match {
             // TODO Actually, we currently know s == Struct. Is extra complexity needed?
             case eFrom: StructElem[s] =>
               val isos = eFrom.fields.map { case (fn,fe) => (fn, buildIso(fe, flatteningBuilder)) }
               val eFromNew = structElement(isos.map { case (fn, iso) => fn -> iso.eFrom })
-              val sIso = new StructIso(eFromNew, eFrom, isos.map(_._2))
+              val sIso = reifyObject(new StructIso(eFromNew, eFrom, isos.map(_._2)))
               sIso >> flatIso.asInstanceOf[Iso[s,T]]
           }
       }
@@ -252,7 +279,8 @@ trait Structs { self: Scalan =>
       case ((fn, (nestedN, nestedE)), i) => Link(fn, nestedN, nestedE, i + 1)
     }
 
-    new FlatteningIso(eTo, flatIsos, links)
+    val res: Iso[_, T] = reifyObject(FlatteningIso(eTo, flatIsos, links))
+    res
   }
 
   def getStructToPairsIso[T](implicit e: Elem[T]): Iso[_,T] = (e match {
@@ -279,23 +307,21 @@ trait Structs { self: Scalan =>
   }
 
   def structWrapper[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => Any] = {
-    val inIso = getStructWrapperIso[A].asIso[Any,A]
-    val outIso = getStructWrapperIso[B].asIso[Any,B]
-    fun({ (in: Rep[Any]) =>
-      outIso.from(f(inIso.to(in)))
-    })(Lazy(inIso.eFrom), outIso.eFrom)
+    val wrapperFun = (getStructWrapperIso[A], getStructWrapperIso[B]) match {
+      case (inIso: Iso[a, A] @unchecked, outIso: Iso[b, B] @unchecked) =>
+        outIso.fromFun << f << inIso.toFun
+    }
+    wrapperFun.asRep[Any => Any]
   }
   def structWrapperIn[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => B] = {
-    val inIso = getStructWrapperIso[A].asIso[Any,A]
-    fun({ (in: Rep[Any]) =>
-      f(inIso.to(in))
-    })(Lazy(inIso.eFrom), element[B])
+    val inIso = getStructWrapperIso[A]
+    val wrapperFun = f << inIso.toFun
+    wrapperFun.asRep[Any => B]
   }
   def structWrapperOut[A:Elem,B:Elem](f: Rep[A => B]): Rep[A => Any] = {
-    val outIso = getStructWrapperIso[B].asIso[Any,B]
-    fun({ (in: Rep[A]) =>
-      outIso.from(f(in))
-    })(Lazy(element[A]), outIso.eFrom)
+    val outIso = getStructWrapperIso[B]
+    val wrapperFun = outIso.fromFun << f
+    wrapperFun.asRep[A => Any]
   }
 
 }
@@ -316,9 +342,8 @@ trait StructsSeq extends Structs { self: ScalanSeq =>
   }
 }
 
-trait StructsExp extends Expressions with Structs with EffectsExp with ViewsExp
+trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslExp
     with GraphVizExport { self: ScalanExp =>
-
 
   abstract class AbstractStruct[T <: Struct] extends Def[T] {
     def tag: StructTag[T]

@@ -47,7 +47,7 @@ trait Entities extends Elems { self: Scalan =>
     def asEntityElem = e.asInstanceOf[EntityElem[A]]
   }
 
-  private[this] val modules = MutMap.empty[String, SEntityModuleDef]
+  private[this] lazy val modules = MutMap.empty[String, SEntityModuleDef]
 
   def allEntities = modules.values.flatMap(_.allEntities)
 

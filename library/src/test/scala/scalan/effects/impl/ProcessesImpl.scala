@@ -59,8 +59,8 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
     override def toString = "Process"
   }
   def Process: Rep[ProcessCompanionAbs]
-  implicit def proxyProcessCompanion(p: Rep[ProcessCompanion]): ProcessCompanion =
-    proxyOps[ProcessCompanion](p)
+  implicit def proxyProcessCompanionAbs(p: Rep[ProcessCompanionAbs]): ProcessCompanionAbs =
+    proxyOps[ProcessCompanionAbs](p)
 
   abstract class AbsAwait[F[_], A, O]
       (req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
@@ -91,14 +91,27 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
 
   // 3) Iso for concrete class
   class AwaitIso[F[_], A, O](implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
-    extends Iso[AwaitData[F, A, O], Await[F, A, O]]()(pairElement(implicitly[Elem[F[A]]], implicitly[Elem[$bar[Throwable, A] => Process[F, O]]])) {
+    extends IsoUR[AwaitData[F, A, O], Await[F, A, O]] with Def[AwaitIso[F, A, O]] {
     override def from(p: Rep[Await[F, A, O]]) =
       (p.req, p.recv)
     override def to(p: Rep[(F[A], $bar[Throwable, A] => Process[F, O])]) = {
       val Pair(req, recv) = p
       Await(req, recv)
     }
-    lazy val eTo = new AwaitElem[F, A, O](this)
+    lazy val eFrom = pairElement(element[F[A]], element[$bar[Throwable, A] => Process[F, O]])
+    lazy val eTo = new AwaitElem[F, A, O](self)
+    lazy val selfType = new AwaitIsoElem[F, A, O](eA, eO, cF)
+    def productArity = 3
+    def productElement(n: Int) = (eA, eO, cF).productElement(n)
+  }
+  case class AwaitIsoElem[F[_], A, O](eA: Elem[A], eO: Elem[O], cF: Cont[F]) extends Elem[AwaitIso[F, A, O]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new AwaitIso[F, A, O]()(eA, eO, cF))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagO = eO.tag
+      weakTypeTag[AwaitIso[F, A, O]]
+    }
   }
   // 4) constructor and deconstructor
   class AwaitCompanionAbs extends CompanionDef[AwaitCompanionAbs] with AwaitCompanion {
@@ -131,7 +144,7 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
 
   // 5) implicit resolution of Iso
   implicit def isoAwait[F[_], A, O](implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Iso[AwaitData[F, A, O], Await[F, A, O]] =
-    cachedIso[AwaitIso[F, A, O]](eA, eO, cF)
+    reifyObject(new AwaitIso[F, A, O]()(eA, eO, cF))
 
   // 6) smart constructor and deconstructor
   def mkAwait[F[_], A, O](req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]]
@@ -165,14 +178,26 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
 
   // 3) Iso for concrete class
   class EmitIso[F[_], O](implicit eO: Elem[O], cF: Cont[F])
-    extends Iso[EmitData[F, O], Emit[F, O]]()(pairElement(implicitly[Elem[O]], implicitly[Elem[Process[F, O]]])) {
+    extends IsoUR[EmitData[F, O], Emit[F, O]] with Def[EmitIso[F, O]] {
     override def from(p: Rep[Emit[F, O]]) =
       (p.head, p.tail)
     override def to(p: Rep[(O, Process[F, O])]) = {
       val Pair(head, tail) = p
       Emit(head, tail)
     }
-    lazy val eTo = new EmitElem[F, O](this)
+    lazy val eFrom = pairElement(element[O], element[Process[F, O]])
+    lazy val eTo = new EmitElem[F, O](self)
+    lazy val selfType = new EmitIsoElem[F, O](eO, cF)
+    def productArity = 2
+    def productElement(n: Int) = (eO, cF).productElement(n)
+  }
+  case class EmitIsoElem[F[_], O](eO: Elem[O], cF: Cont[F]) extends Elem[EmitIso[F, O]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new EmitIso[F, O]()(eO, cF))
+    lazy val tag = {
+      implicit val tagO = eO.tag
+      weakTypeTag[EmitIso[F, O]]
+    }
   }
   // 4) constructor and deconstructor
   class EmitCompanionAbs extends CompanionDef[EmitCompanionAbs] with EmitCompanion {
@@ -205,7 +230,7 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
 
   // 5) implicit resolution of Iso
   implicit def isoEmit[F[_], O](implicit eO: Elem[O], cF: Cont[F]): Iso[EmitData[F, O], Emit[F, O]] =
-    cachedIso[EmitIso[F, O]](eO, cF)
+    reifyObject(new EmitIso[F, O]()(eO, cF))
 
   // 6) smart constructor and deconstructor
   def mkEmit[F[_], O](head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]]
@@ -239,14 +264,26 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
 
   // 3) Iso for concrete class
   class HaltIso[F[_], O](implicit eO: Elem[O], cF: Cont[F])
-    extends Iso[HaltData[F, O], Halt[F, O]] {
+    extends IsoUR[HaltData[F, O], Halt[F, O]] with Def[HaltIso[F, O]] {
     override def from(p: Rep[Halt[F, O]]) =
       p.err
     override def to(p: Rep[Throwable]) = {
       val err = p
       Halt(err)
     }
-    lazy val eTo = new HaltElem[F, O](this)
+    lazy val eFrom = element[Throwable]
+    lazy val eTo = new HaltElem[F, O](self)
+    lazy val selfType = new HaltIsoElem[F, O](eO, cF)
+    def productArity = 2
+    def productElement(n: Int) = (eO, cF).productElement(n)
+  }
+  case class HaltIsoElem[F[_], O](eO: Elem[O], cF: Cont[F]) extends Elem[HaltIso[F, O]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new HaltIso[F, O]()(eO, cF))
+    lazy val tag = {
+      implicit val tagO = eO.tag
+      weakTypeTag[HaltIso[F, O]]
+    }
   }
   // 4) constructor and deconstructor
   class HaltCompanionAbs extends CompanionDef[HaltCompanionAbs] with HaltCompanion {
@@ -278,7 +315,7 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
 
   // 5) implicit resolution of Iso
   implicit def isoHalt[F[_], O](implicit eO: Elem[O], cF: Cont[F]): Iso[HaltData[F, O], Halt[F, O]] =
-    cachedIso[HaltIso[F, O]](eO, cF)
+    reifyObject(new HaltIso[F, O]()(eO, cF))
 
   // 6) smart constructor and deconstructor
   def mkHalt[F[_], O](err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]]
@@ -483,7 +520,7 @@ trait ProcessesExp extends scalan.ScalanExp with ProcessesDsl {
 }
 
 object Processes_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXzW8bRRR/XttxbKdJ+BDQVG1CZEAgsANC6iFSK5PaUGTiKJsDMoVqvB47W/Yrs+PU5tA/AG6ICwcEPSL1xokL4oKEkOBUAVJPHDiVcqhoewLxZrxf/lgnooUIH0Y7s2/fe/P7/d6b8bVbkHYZPO1qxCBW0aScFFX5XHZ5Qa1YXOf9N+xW16DnaPsJ++vPXvx86UsFFhows0vcc67RgOzgodJzgmeV7tUgSyyNutxmLocnazJCSbMNg2pct62SbppdTpoGLdV0l6/XINW0W/09uAKJGixqtqUxyqm6YRDXpa63PktFRnowz8p5v+6EMayS2EUpsosdRnSO6WOMxYH9NnXUvmVbfZPDvJda3RFpoU1GNx2bcT9EBt3t2i1/mrIILsDDtUtkn5QwRKekcqZbHfwy7xDtXdKhm2gizFOYsEuN9k7fkfNkDXIu3UOAzpuOIVd6DgAgAy/JJIohPsUAn6LAp6BSphNDf4+Il1vM7vVh8EskAXoOunj+ABe+B1qxWoX3L2hv3VPzpiI+7olUMnKHM+hoOUYNkgrE8dvtD93br149rUCuATndLTddzojGo5R7aOWJZdlc5hwASFgH2VqNY0tGKaPNiCSymm06xEJPHpRzyJOhazoXxmJtzmMnBvoMd6hvmug5iWC/KzH7lbrZIIaxdfP4C0/9VnlTAWU4RBZdqih85jvlkEFuEAPX8y7GBQ6JagixmNblVAzZXjhmpiQTwPLMzd9b36zBBSUA04t9OP7QRdr9+cf89WfPKjDbkGqvGqTTQDzdikHNOtuwLd6AWXufssGbzD4xxNNEPjMt2iZdg3soR+FJIjwcVmLr0qECu3VZAwkfgPxAxpu2RQvVrcJd9buPrgmVMpgbvBkU6l/66T9vzLe5FDCHJKN7PrpJLO9R+Efm5TH85aulIBExLHNIMartT/DL4FScaBxa7Vra9fMfP7Jw8uIvUjIzLdskutTtiRqkGTYNCdEJjzT0nSo0CRtOMruzy+zLonyHtRPN3V+8H9WF2ssNAFZtkz60elt/5+oHXKos0RtuePXmJeww6/K7U1ME5zfeO4015Y/jP32qQBZ11dS5SZzC2iHbxb/YAiDAIxyWUUzz5cui8qPBlkMkH4+AvJQYEYxCywGlopqm6C7OQX2ag/rBDrRq4EBU8kRJRNnnkJb7ld8H+j4Zr29E8LHt2qPGrbNfKZB+HdJt7A0uCrtpd62WTw2e4Jz2+Cv+WmKYGqSCMGIGVMjfCoRYj1Tt2xMtLo7CMdmsHLI32WAM1nxiGLf7a+tjshnrM7uUtKb0r3HaxzxwohvxHh5EgxDjGTmW4yrnWMX8x4Xz3+s+JbKNyj5eIAdIUQzNw2nxqKWWpIzF6UQML09xfBD7rxHjf8S+yPYo2Y8Yz3jADqedxLPzgZfxodlc9GJNIDRyzz16AMX4/bAvNMx6+eH9Ao55Zxn+TaHekXMGj7jVmCNO9S4NiP6Ve59sPvfDF7/Ka1xOXD/wWmoF/w3DA6030m/ngvD4by+SMspO3Elkun8D6mAMwX0PAAA="
+  val dump = "H4sIAAAAAAAAANVXTWwbRRSe9U8c22kSKL+p2oTIgEBgF4TUQ6RWJrWhyMRRNgdkqkbj9cTZMruzmR2naw499gA3xIUDEpW4IPWCOHFBXJAQB8ShQpU4ceBUilAP9ATizXh3vf5ZJ6GUiD2MdmbfvHnzfd97M3vjDkq7HD3jGphiu2gRgYu6ei+7oqBXbGGK7pus1aHkPNl+gn39yUufLXyZQHMNNLWD3fMubaBs76XiOeG7TnZrKIttg7iCcVegp2pqhZLBKCWGMJldMi2rI3CTklLNdMVKDaWarNXdRVeRVkPzBrMNTgTRVyl2XeL649NERmSG/azqd+tOfw27JHdRiuxik2NTQPiwxnzPfoM4etdmdtcSaNYPre7IsMAmY1oO4yJYIgPudlgr6KZsDAPo4dplvIdLsES7pAtu2m2YmXew8Q5ukzUwkeYpCNgldHuz66h+soZyLtkFgC5YDlUjnoMQAgZeVkEU+/gUQ3yKEp+CTriJqfkulh/XOfO6qPdoSYQ8B1y8sI+LwAOp2K3CexeNt+/peSshJ3sylIza4RQ4WoxRg6ICcPx24wP37mvXzyRQroFypltuuoJjQ0Qp99HKY9tmQsUcAoh5G9hajmNLrVIGmyFJZA1mOdgGTz6UM8ATNQ1TSGM5NuOzEwN9RjgkMNU8Rwv3uxSzX6WbVUzp+u0nX3z618pbCZQYXCILLnUQPg+cCpQBbgAD1/cu2zmBtGofYtmtq65ssl6/zUwIJoTl2du/tb45jS4mQjD9tQ/GH7hIu7d+zN987lwCTTeU2qsUtxuAp1uhxKrzVWaLBppme4T3vmT2MJVvY/nMtMg27lDhoxyFJwnwCLQUm5cOkditqBzQAgDyPRmvMZsUquuFP/TvPrwhVcrRTO9LL1H/Ms/8+dPstlACFijJyW6AbhLSexj+oX55BH/1aSEMRDaLAqU4MfbG+OXoVJxoHFLt2MbNCx8dnzu59bOSzFSLWdhUuj1RQ2kORUNBdMInDXynCk3MB4PMbu5wdkWm76B2orEHg/ejur72cj2AdWaRh5bvmpeuvy+UyjRvsODVm5ehwqyoeacmCC4ovJ9fu/bo759uHVcFY7ppCgs7hdOHKBdBdj/AcoBCbHp4Pd7vKy2AxmbLV2RBiK67GJkQwX5BG9JRgpRDpmWSTZBjnIP6JAf1/R0Y1dCBTPCxSomKQqC02q+aH8r+ZLzsAczHNmqP0Dvnvkqg9BsovQ0lwwW9N1nHbgUswcEuiCdeDca0QZaAFcyxFbKiniXUx3oomS+NtdgahmO8WbnP3niDEVjz2iBu91ftR2QzUn52CG5NKGujtI94ENik8R7+jboh27OqLR8giY5VrH+cQ/99CqRktNEMiNfKPqqUjXEwWR616pKE8zjJyOaVCY4PIYTXMf0fCUFGe5RCiBhP+RgPhp2Eg/bBJHeEvENyPO9HMIbmyFX56GGV7Q+DvsAw68cHVxR0zD/34E+H+MfTWTgOl2OOQ92/awAnV+99vPb891/8om6COXlrgZutHf5e9g8/b6g2z4TLww9jJGQQo7zKqHD/BkqbovXADwAA"
 }
 }
 

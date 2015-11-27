@@ -59,8 +59,8 @@ trait CoproductsAbs extends scalan.Scalan with Coproducts {
     override def toString = "Coproduct"
   }
   def Coproduct: Rep[CoproductCompanionAbs]
-  implicit def proxyCoproductCompanion(p: Rep[CoproductCompanion]): CoproductCompanion =
-    proxyOps[CoproductCompanion](p)
+  implicit def proxyCoproductCompanionAbs(p: Rep[CoproductCompanionAbs]): CoproductCompanionAbs =
+    proxyOps[CoproductCompanionAbs](p)
 
   abstract class AbsCoproductImpl[F[_], G[_], A]
       (run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
@@ -89,14 +89,26 @@ trait CoproductsAbs extends scalan.Scalan with Coproducts {
 
   // 3) Iso for concrete class
   class CoproductImplIso[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
-    extends Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] {
+    extends IsoUR[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] with Def[CoproductImplIso[F, G, A]] {
     override def from(p: Rep[CoproductImpl[F, G, A]]) =
       p.run
     override def to(p: Rep[Either[F[A], G[A]]]) = {
       val run = p
       CoproductImpl(run)
     }
-    lazy val eTo = new CoproductImplElem[F, G, A](this)
+    lazy val eFrom = element[Either[F[A], G[A]]]
+    lazy val eTo = new CoproductImplElem[F, G, A](self)
+    lazy val selfType = new CoproductImplIsoElem[F, G, A](cF, cG, eA)
+    def productArity = 3
+    def productElement(n: Int) = (cF, cG, eA).productElement(n)
+  }
+  case class CoproductImplIsoElem[F[_], G[_], A](cF: Cont[F], cG: Cont[G], eA: Elem[A]) extends Elem[CoproductImplIso[F, G, A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new CoproductImplIso[F, G, A]()(cF, cG, eA))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[CoproductImplIso[F, G, A]]
+    }
   }
   // 4) constructor and deconstructor
   class CoproductImplCompanionAbs extends CompanionDef[CoproductImplCompanionAbs] with CoproductImplCompanion {
@@ -128,7 +140,7 @@ trait CoproductsAbs extends scalan.Scalan with Coproducts {
 
   // 5) implicit resolution of Iso
   implicit def isoCoproductImpl[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Iso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] =
-    cachedIso[CoproductImplIso[F, G, A]](cF, cG, eA)
+    reifyObject(new CoproductImplIso[F, G, A]()(cF, cG, eA))
 
   // 6) smart constructor and deconstructor
   def mkCoproductImpl[F[_], G[_], A](run: Rep[Either[F[A], G[A]]])(implicit cF: Cont[F], cG: Cont[G], eA: Elem[A]): Rep[CoproductImpl[F, G, A]]
@@ -203,7 +215,7 @@ trait CoproductsExp extends scalan.ScalanExp with CoproductsDsl {
 }
 
 object Coproducts_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWz28bRRR+XsdxbIe2VKgiCEQSGRAI7AASPeRQGdexQG4SZSuBTEU1Xo+dLbszm51xtObQPwBuiCuCHpF648QFcUFCHDghQOLMqZRDRekJxJvx/jS2EyS6h9HO7Nvvvfm+983u7btQED48KyziEFZzqSQ1U983hKyaLSZtOb7C+yOHXqaDx/nXn738+RNfGnC2C8uHRFwWThdKk5tW4MX3Jj3qQIkwiwrJfSFho6Mz1C3uONSSNmd123VHkvQcWu/YQm53YKnH++MjuAm5DpyzOLN8KqnZdIgQVITrK1RVZMfzkp6P97wkB6urXdRTu7jqE1ti+Zjj3CT+gHrmmHE2diWcCUvb81RZGFO0XY/7MkpRRLhD3o+mS4zgApzv3CDHpI4phnVT+jYb4psVj1jvkSHdxRAVvoQFC+oMro49Pc93oCzoERL0hus5eiXwAAAVeEUXUUv4qcX81BQ/VZP6NnHs94l6uO/zYAyTK5cHCDyEePEEiAiBtli/+sE1650HZsU11MuBKqWod7iMQE/P6QYtBfL47cFH4l771kUDyl0o26LRE9InlkxLHrJVIYxxqWuOCST+ENXanKeWztLAmKmWKFnc9QhDpJDKVdTJsS1bqmC1thqqM4f6ovRoFJoLvFy83/U5+9V90ySOs39n7aVnfmu9bYCRTVFCSBMb349AJZSa3PPRMJYM8dV4VkJuJyFZTdvZaUNP1VAKkrG4oLqYp+fu/N7/ZguuGTG7YTGnExQhCuLnHys/PH/JgJWubv8dhwy7SLBoOdTd85ucyS6s8GPqT54Uj4mj7mYKXOzTARk5MqQ9zVce+ZKwPteoHlVkbmtT5CICKpO+3uWMVnf2q3+a3318W7WtD6uTJxPn/m1f/OuXMwOpO1pC3h+xiN08+j2rxnLLlofUn5Zoap4WJRFuQdDsUW2iPCnV5C59dPOe/e6tD6XWKxdkz5K93g0077Z+b32BdNGZdr+7Zfyx9tOnBpRQoZ4tXeJVt07pxIfoLohZSYYNlOVCbA91BDbTSTcSR6ylOH4yF/WCDpJgWDsR+UuqM2f6LCXaDID2IoD2yQC0EQMoh5zYERIeyexb48T2fGqexprRCwedx5y7l74yoPAmFAboOtGBQo+PWD+SCj+Wkgby9Wgtl5UKpSE+cWNp9LUOCedTrX8wM+L6NC2zw9qLgdTw1umQ/k1jCvo1yJKeRy9kV/7Xgzg0chL6aljFnDY/Hyef0eKZr0S6FeZzcYI8/4HVh6mPGq9nsTCwnAiBPoh6nTPSFyGVPmzOsYAZHjKo7s0Hn+y+8P0Xv+qPcFkdV/hBYPFvWtLwwdRZX7qic+FfV6pgdK46wHSx/wAV8vuwBQsAAA=="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+tu/OZ/tIQoCIIBB3JxMEAjuARIorIuP4LJBzd7pNEZkoYbwe+zbszuzNjE9ripQpoEO0SESiQUqDqGgQDRKioEIIiZoqBKEUpALxZry73jX+SSTiYrRv9u03b77vfTO+fReWpYAz0iYuYRWPKlKxzHNNqrLVYMpRw4u8O3DpBdp7mn/72WtfPPN1Fo63YeWAyAvSbUNh9NAI/PjZooctKBBmU6m4kAo2WmaFqs1dl9rK4azqeN5AkY5Lqy1Hqq0WLHV4d3gINyDTghM2Z7agilp1l0hJZTi/SnVFThwXTDzc9cdrsKreRTWxi0uCOArLxzVOjPL3qW8NGWdDT8GxsLRdX5eFOXnH87lQ0RJ5hDvg3ShcYgQn4GTrOjkiVVyiX7WUcFgfvyz5xH6f9OkOpuj0JSxYUrd3aeibONeCoqSHSNDbnu+amcAHAFTgdVNEZcxPJeanovkpW1Q4xHU+IPrlnuDBEEa/TA4g8BHilQUQEQJtsG75wyv2u/etkpfVHwe6lLzZ4QoCPT+jG4wUyOP3+x/Le81b57JQbEPRkbWOVILYKil5yFaJMMaVqTkmkIg+qrU5Sy2zSg1zJlqiYHPPJwyRQirXUCfXsR2lk/XcWqjODOrzyqdRaibwM/F+12fs1/RNnbju3p3Tr77we+NyFrLpJQoIaWHjiwhUQaHOfYGGsVWIr8fjCjLbY5J12EyHNRPqoRCMx/yc6mKeXrzzR/e7s3AlG7MbFvNggiLEsvzl59JPL53PwmrbtP+2S/ptJFg2XOrtijpnqg2r/IiK0Zv8EXH101SB813aIwNXhbQn+cohXwrWZxrVp5rMLWOKTERAadTXO5zR8vZe+S/rh09u67YVsDZ6M3LuP865v3891lOmoxXkxIBF7ObQ72k1VhqOOqBiUqKJOCnKWLg5SdNHvYniqFSLe/TxzXvO1VsfKaNXJkifJbud62jeLfPd+hzpojPty5s3n/rz82tPGC+udhzlEb989iGcGBnnEToNYoZG/X56HOthA9U6FbtGn4z15PobiQ8T1D+biVrEJCnI2tuRJku6YafaL6HlFIDmPIDmYgBaiwG0cRY2ioLHUvs2OLFrn5slvSH31H7rSffu+W+ysPwOLPfQjLIFyx0+YN1INbxDFQ3UW9FcJq0aqkQE8WKVzG8dxpxPOMKamnFtkpbpac35QHq4/GBI/6UxAf0mpEnPoUXSM//r+VxI3JyJrjbxG2FBi5v/ZFzSlMZPXSnJBpnN0ALRHoLrR6maHt9LY2FicSwPuiNyAGekK0NWBWzOMIYVnkKo+Y37n+68/ONXv5kbu6jPM7w9WPyfbmyDYOJiKFw0a+FftETB6Gd9wpli/wWIAnrrMgsAAA=="
 }
 }
 

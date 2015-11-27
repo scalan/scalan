@@ -59,8 +59,8 @@ trait ConvertersAbs extends Converters {
     override def toString = "Converter"
   }
   def Converter: Rep[ConverterCompanionAbs]
-  implicit def proxyConverterCompanion(p: Rep[ConverterCompanion]): ConverterCompanion =
-    proxyOps[ConverterCompanion](p)
+  implicit def proxyConverterCompanionAbs(p: Rep[ConverterCompanionAbs]): ConverterCompanionAbs =
+    proxyOps[ConverterCompanionAbs](p)
 
   abstract class AbsBaseConverter[T, R]
       (convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R])
@@ -90,14 +90,27 @@ trait ConvertersAbs extends Converters {
 
   // 3) Iso for concrete class
   class BaseConverterIso[T, R](implicit eT: Elem[T], eR: Elem[R])
-    extends Iso[BaseConverterData[T, R], BaseConverter[T, R]] {
+    extends IsoUR[BaseConverterData[T, R], BaseConverter[T, R]] with Def[BaseConverterIso[T, R]] {
     override def from(p: Rep[BaseConverter[T, R]]) =
       p.convFun
     override def to(p: Rep[T => R]) = {
       val convFun = p
       BaseConverter(convFun)
     }
-    lazy val eTo = new BaseConverterElem[T, R](this)
+    lazy val eFrom = element[T => R]
+    lazy val eTo = new BaseConverterElem[T, R](self)
+    lazy val selfType = new BaseConverterIsoElem[T, R](eT, eR)
+    def productArity = 2
+    def productElement(n: Int) = (eT, eR).productElement(n)
+  }
+  case class BaseConverterIsoElem[T, R](eT: Elem[T], eR: Elem[R]) extends Elem[BaseConverterIso[T, R]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new BaseConverterIso[T, R]()(eT, eR))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      implicit val tagR = eR.tag
+      weakTypeTag[BaseConverterIso[T, R]]
+    }
   }
   // 4) constructor and deconstructor
   class BaseConverterCompanionAbs extends CompanionDef[BaseConverterCompanionAbs] with BaseConverterCompanion {
@@ -129,7 +142,7 @@ trait ConvertersAbs extends Converters {
 
   // 5) implicit resolution of Iso
   implicit def isoBaseConverter[T, R](implicit eT: Elem[T], eR: Elem[R]): Iso[BaseConverterData[T, R], BaseConverter[T, R]] =
-    cachedIso[BaseConverterIso[T, R]](eT, eR)
+    reifyObject(new BaseConverterIso[T, R]()(eT, eR))
 
   // 6) smart constructor and deconstructor
   def mkBaseConverter[T, R](convFun: Rep[T => R])(implicit eT: Elem[T], eR: Elem[R]): Rep[BaseConverter[T, R]]
@@ -166,14 +179,29 @@ trait ConvertersAbs extends Converters {
 
   // 3) Iso for concrete class
   class PairConverterIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]]()(pairElement(implicitly[Elem[Converter[A1, B1]]], implicitly[Elem[Converter[A2, B2]]])) {
+    extends IsoUR[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] with Def[PairConverterIso[A1, A2, B1, B2]] {
     override def from(p: Rep[PairConverter[A1, A2, B1, B2]]) =
       (p.conv1, p.conv2)
     override def to(p: Rep[(Converter[A1, B1], Converter[A2, B2])]) = {
       val Pair(conv1, conv2) = p
       PairConverter(conv1, conv2)
     }
-    lazy val eTo = new PairConverterElem[A1, A2, B1, B2](this)
+    lazy val eFrom = pairElement(element[Converter[A1, B1]], element[Converter[A2, B2]])
+    lazy val eTo = new PairConverterElem[A1, A2, B1, B2](self)
+    lazy val selfType = new PairConverterIsoElem[A1, A2, B1, B2](eA1, eA2, eB1, eB2)
+    def productArity = 4
+    def productElement(n: Int) = (eA1, eA2, eB1, eB2).productElement(n)
+  }
+  case class PairConverterIsoElem[A1, A2, B1, B2](eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) extends Elem[PairConverterIso[A1, A2, B1, B2]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new PairConverterIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
+    lazy val tag = {
+      implicit val tagA1 = eA1.tag
+      implicit val tagA2 = eA2.tag
+      implicit val tagB1 = eB1.tag
+      implicit val tagB2 = eB2.tag
+      weakTypeTag[PairConverterIso[A1, A2, B1, B2]]
+    }
   }
   // 4) constructor and deconstructor
   class PairConverterCompanionAbs extends CompanionDef[PairConverterCompanionAbs] with PairConverterCompanion {
@@ -206,7 +234,7 @@ trait ConvertersAbs extends Converters {
 
   // 5) implicit resolution of Iso
   implicit def isoPairConverter[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Iso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] =
-    cachedIso[PairConverterIso[A1, A2, B1, B2]](eA1, eA2, eB1, eB2)
+    reifyObject(new PairConverterIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
 
   // 6) smart constructor and deconstructor
   def mkPairConverter[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[PairConverter[A1, A2, B1, B2]]
@@ -243,14 +271,29 @@ trait ConvertersAbs extends Converters {
 
   // 3) Iso for concrete class
   class SumConverterIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]]()(pairElement(implicitly[Elem[Converter[A1, B1]]], implicitly[Elem[Converter[A2, B2]]])) {
+    extends IsoUR[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] with Def[SumConverterIso[A1, A2, B1, B2]] {
     override def from(p: Rep[SumConverter[A1, A2, B1, B2]]) =
       (p.conv1, p.conv2)
     override def to(p: Rep[(Converter[A1, B1], Converter[A2, B2])]) = {
       val Pair(conv1, conv2) = p
       SumConverter(conv1, conv2)
     }
-    lazy val eTo = new SumConverterElem[A1, A2, B1, B2](this)
+    lazy val eFrom = pairElement(element[Converter[A1, B1]], element[Converter[A2, B2]])
+    lazy val eTo = new SumConverterElem[A1, A2, B1, B2](self)
+    lazy val selfType = new SumConverterIsoElem[A1, A2, B1, B2](eA1, eA2, eB1, eB2)
+    def productArity = 4
+    def productElement(n: Int) = (eA1, eA2, eB1, eB2).productElement(n)
+  }
+  case class SumConverterIsoElem[A1, A2, B1, B2](eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]) extends Elem[SumConverterIso[A1, A2, B1, B2]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SumConverterIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
+    lazy val tag = {
+      implicit val tagA1 = eA1.tag
+      implicit val tagA2 = eA2.tag
+      implicit val tagB1 = eB1.tag
+      implicit val tagB2 = eB2.tag
+      weakTypeTag[SumConverterIso[A1, A2, B1, B2]]
+    }
   }
   // 4) constructor and deconstructor
   class SumConverterCompanionAbs extends CompanionDef[SumConverterCompanionAbs] with SumConverterCompanion {
@@ -283,7 +326,7 @@ trait ConvertersAbs extends Converters {
 
   // 5) implicit resolution of Iso
   implicit def isoSumConverter[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Iso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] =
-    cachedIso[SumConverterIso[A1, A2, B1, B2]](eA1, eA2, eB1, eB2)
+    reifyObject(new SumConverterIso[A1, A2, B1, B2]()(eA1, eA2, eB1, eB2))
 
   // 6) smart constructor and deconstructor
   def mkSumConverter[A1, A2, B1, B2](conv1: Conv[A1, B1], conv2: Conv[A2, B2])(implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2]): Rep[SumConverter[A1, A2, B1, B2]]
@@ -300,7 +343,7 @@ trait ConvertersAbs extends Converters {
     with ConcreteElem[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] {
     override lazy val parent: Option[Elem[_]] = Some(converterElement(element[F[A]], element[F[B]]))
     override lazy val tyArgSubst: Map[String, TypeDesc] = {
-      Map("A" -> Left(eA), "B" -> Left(eB), "F" -> Right(F.asInstanceOf[SomeCont]))
+      Map("A" -> Left(eA), "B" -> Left(eB))
     }
 
     override def convertConverter(x: Rep[Converter[F[A], F[B]]]) = // Converter is not generated by meta
@@ -318,14 +361,27 @@ trait ConvertersAbs extends Converters {
 
   // 3) Iso for concrete class
   class FunctorConverterIso[A, B, F[_]](implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
-    extends Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] {
+    extends IsoUR[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] with Def[FunctorConverterIso[A, B, F]] {
     override def from(p: Rep[FunctorConverter[A, B, F]]) =
       p.itemConv
     override def to(p: Rep[Converter[A, B]]) = {
       val itemConv = p
       FunctorConverter(itemConv)
     }
-    lazy val eTo = new FunctorConverterElem[A, B, F](this)
+    lazy val eFrom = element[Converter[A, B]]
+    lazy val eTo = new FunctorConverterElem[A, B, F](self)
+    lazy val selfType = new FunctorConverterIsoElem[A, B, F](eA, eB, F)
+    def productArity = 3
+    def productElement(n: Int) = (eA, eB, F).productElement(n)
+  }
+  case class FunctorConverterIsoElem[A, B, F[_]](eA: Elem[A], eB: Elem[B], F: Functor[F]) extends Elem[FunctorConverterIso[A, B, F]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new FunctorConverterIso[A, B, F]()(eA, eB, F))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      weakTypeTag[FunctorConverterIso[A, B, F]]
+    }
   }
   // 4) constructor and deconstructor
   class FunctorConverterCompanionAbs extends CompanionDef[FunctorConverterCompanionAbs] with FunctorConverterCompanion {
@@ -357,7 +413,7 @@ trait ConvertersAbs extends Converters {
 
   // 5) implicit resolution of Iso
   implicit def isoFunctorConverter[A, B, F[_]](implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Iso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] =
-    cachedIso[FunctorConverterIso[A, B, F]](eA, eB, F)
+    reifyObject(new FunctorConverterIso[A, B, F]()(eA, eB, F))
 
   // 6) smart constructor and deconstructor
   def mkFunctorConverter[A, B, F[_]](itemConv: Conv[A, B])(implicit eA: Elem[A], eB: Elem[B], F: Functor[F]): Rep[FunctorConverter[A, B, F]]
@@ -610,7 +666,7 @@ trait ConvertersExp extends ConvertersDsl {
 }
 
 object Converters_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAO1YTWwbRRSeXcdxbIcmFCikVZsQGRARiRMLqYccKm+aQJFJIm8OyFStxutJumX/sjuObA4VRwQ3xIUDgh6ReuOEkBAXJMSBUwVInDhwKuVQARUHEG9m/+3dtUvEBdWH1c7um2/e+973rWZ86y7KOzZ61lGwho0VnVC8IvP7ukMr8qZBVdp/1ex0NXKR7D9lfvnx2ienPxPRTAtNXsPORUdroaJ7s9mzgnuZHDZQERsKcahpOxQ93eArVBVT04hCVdOoqrrepbitkWpDdeh6A020zU7/EN1AQgPNKqah2IQSeUPDjkMc7/kUYRmpwbjIx/0dK1zDqLIqqpEq9mysUkgf1ph145vEkvuGafR1ik54qe1YLC2IKai6ZdrUX6IAcNfMjj+cMDA8QCcb1/ERrsISB1WZ2qpxADPLFlbewAdkG0JY+AQk7BBtf69v8XGugUoOOQSCLumWxp/0LIQQdKDGk1gJ+VkJ+Flh/FRkYqtYU9/E7OWubfb6yP0JOYR6FkC8MALCRyCbRqfyzmXl9ftyWRfZ5B5LpcArnASg+RQ18FYAj18333PuvXTzvIhKLVRSnXrboTZWaLTlHltlbBgm5TkHBGL7ALq1mNYtvkodYgYkUVRM3cIGIHlUTkOfNFVRKQtmz6a97qRQX6AW8UOFniUE9S6k1Mt1s4E1bffO3PIzv2y+JiIxvkQRIGUQvu2DUlTcMI0jYlNie/jsOkORsBeSzIZNPmSXYi+8FjLSCYh57s6vna9W0WUxoNNbfbwOAkTe+eG78u3nL4hoqsX1vqXhgxYw6mxqRN+xoQbaQlMmFOK+KRxhjd0ldrTQIfu4q1GP5yhBOSCIooVUZ1qEsbfOXSD4BJRdIW+bBqls7Vb+kL95/xbTqY2m3TeuVf9Wz//144l9yiVMUQE+GUdbXcNnOAcmDwg5l9Zii8AU5falDx6bOXv1J97gyY6pY5Wr7EwD5W2wOC/njEfwAzWz5GYsmzp5dPGeeuXmu5S3TejFvyE77etg2nU+71xGB/1v2e+tVfG3ue8/ElERGtVWqY6tyuqYDvwPXYUCJsLLPHTnlIQdElhjI7rofMjlkxHPnBZ8SfAgikSy5xM+wWSa6C+X/TSAZhbAcBMpeiSWNscJNHU2XVNAyKlm43Ht7oUvRJR/BeX3wTsOiKltdo2OzzQIlpIelfxnQpxpYBbbWA+Y5b8FFFIW16GUGNAcZKUsxMse+l5laM8ie11LIy9+/ueVt9962eJCHvoExuHF+lrMKmK9NphRY2CGNDBDis4Y9tiQbtBA2/Psw7AWdJ7VOyJHL4OolhJBa5mgtbHKcAOW+HU51T27WLWP554cqYccDKvf5yDLPwBRy4QYam0ChJSZRQLzCRCZWSTwDD6OERj1cap1YqpIiaiNipBGYkhDpI10qF98pY3t5C5mtCRl4kPTDZnuCbmrP/Tcv/fcdJS//4flhK2BcT3BXkNB0vGsNKVSogdaTxa+l8iIJceS/RzbEMMG8ribtXrWXmuItwQAKQtAGgngtQGCC15Fg71M0OzsYPFj6TbKfnKANCpga+QaV1NUFJm4jOIl5uCgMKawxzrQeCoaW0onszQUOyuPR/MD7XaDq7AUxniBpZAGCivyLa5XkI0WU7a/snfwAVJv3P9we+nbT3/m58USO0LBWdUI/jIKd/GD2+FJFy+SJsibnah4iv8A1c2+RI4TAAA="
+  val dump = "H4sIAAAAAAAAAO1YP2wbVRh/Z8dxbIcmtLTQVm3SyICoiN1YSB0yVL40gSI3iXwZkKkaPZ9f0iv3L3fPkc1QMVUINsTCgEQlFqQuiAkhIRYkxMBUISQmBqZSVHWgYgDxvXd/fHe+OztELKgeTvfuvve97/v9Ob3nuw9QzrbQC7aMVaxXNEJxReL3dZuWpVWdKrR/1eh0VXKZ7DxnfPPJ0menvsygmRaavIHty7baQgXnZrVn+vcS2WugAtZlYlPDsik61+ArVGVDVYlMFUOvKprWpbitkmpDselyA020jU5/D91CQgPNyoYuW4QSaUXFtk1s9/kUYRUp/rjAx/0Nc7CGXmVdVANdbFlYoVA+rDHrxDeJKfV1Q+9rFB1xS9swWVkQk1c007Cot0Qe0t0wOt5wQsfwAB1t3MT7uApL7FYlain6LswsmVh+C++SdQhh4RNQsE3Una2+ycfZBiraZA8AuqKZKn/SMxFCwECNF1EZ4FPx8akwfMoSsRSsKm9j9nLTMnp95PyELEI9E1K8PCKFl4Gs6p3ye9fkNx9LJS3DJvdYKXne4SQkmktQA6cCcPyu+YH96NU7FzOo2EJFxa63bWphmQYpd9EqYV03KK/ZBxBbu8DWQhJbfJU6xEQkUZANzcQ6ZHKhnAaeVEVWKAtmz6ZddhKgz1OTeKFCzxT8fucT+uW6WcGqunn/5OLzv62+kUGZ8BIFSCmB8C0vKUWFFUPfJxYllpufXWcoErYGILNhkw/ZpdAbXPMp5fjAvHj/9863F9C1jA+nu/p4DEKKnP3Tj6V7L13KoKkW1/uaindbgKi9qhJtw4IeaAtNGdCI8ya/j1V2F8tovkN2cFelLs5BgLIAEEXzic40CUNvmbtA8AAoOUJeN3RSXtss/yF9/+FdplMLTTtvHKv+rVz86+cjO5RLmKI8fDL217q6h3AWTO4DcjaJYpPAFPnelY+OzZzZ/oUTPNkxNKxwlZ1uoJwFFuftnHYBPhCZRadiydDI0wuPlOt33qecNqEX/oZstG+CaZf5vLMpDHrfss9v3z7+8NPtY9yDU22FatgsXziAAz3D/IcOQz4qDlLPDsbsMgeknRCxTXzHrATXnwtMDFjplOAphQdRlCFbHg8TTL2xtnNISUrQTEswzC1FT4XK5nl8qZ1Jlhpgc6LZeEZ9cOnrDMq9jnI7YCkbNNY2unrHAx10TEmPit4zIQw6gIwtrPkg8988GkAWludKbEAzikpJCLc99BlLkaRJtrqmSl756s/r777zmsn1PfRlDKfP1JdCDsrUa9GKrkZmiJEZYnDGsPWGdIMitOfY92LJZ571O6JGt4KglmKT1lKT1sZqwwk4z6+L4xhpEyvW4YyUJfUBHMNG8OBIsxKkqKWmGGI5JoWYWkUMCTEpUquIgRwsHQIwaOlEF4UEkhBRGxUhjswhDoE20qxe8+U2tuJZTKEkYeIT/6X577jU1Z7Y79/bbzqI3//DfcJaZFyPcdpQkHg4V00plGi+7OM94BYyYsmDOuAk20jDxvOwu7l6inaGIYxJIKYlEEcmcBmB4LzbUZTWGPnORpsfS8JBIuIDxFEBayPX2E4QVGDiIgq3mIUDxpgaH+sgFFJvREnjC+xomrJCJ+/xwD/QJtm/CpVBjBtYHIBDYUW+M3Z7s9BCwq5Zco9OAPWtxx+vn//hi1/56bPIDmFw8tX9P6AGm//oLnrSyRcoE0TPzmS8xH8AbIcRXNwTAAA="
 }
 }
 

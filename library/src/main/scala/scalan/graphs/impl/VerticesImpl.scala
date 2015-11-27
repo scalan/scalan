@@ -60,8 +60,8 @@ trait VerticesAbs extends scalan.Scalan with Vertices {
     override def toString = "Vertex"
   }
   def Vertex: Rep[VertexCompanionAbs]
-  implicit def proxyVertexCompanion(p: Rep[VertexCompanion]): VertexCompanion =
-    proxyOps[VertexCompanion](p)
+  implicit def proxyVertexCompanionAbs(p: Rep[VertexCompanionAbs]): VertexCompanionAbs =
+    proxyOps[VertexCompanionAbs](p)
 
   abstract class AbsSVertex[V, E]
       (id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E])
@@ -91,14 +91,27 @@ trait VerticesAbs extends scalan.Scalan with Vertices {
 
   // 3) Iso for concrete class
   class SVertexIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[SVertexData[V, E], SVertex[V, E]]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Graph[V, E]]])) {
+    extends IsoUR[SVertexData[V, E], SVertex[V, E]] with Def[SVertexIso[V, E]] {
     override def from(p: Rep[SVertex[V, E]]) =
       (p.id, p.graph)
     override def to(p: Rep[(Int, Graph[V, E])]) = {
       val Pair(id, graph) = p
       SVertex(id, graph)
     }
-    lazy val eTo = new SVertexElem[V, E](this)
+    lazy val eFrom = pairElement(element[Int], element[Graph[V, E]])
+    lazy val eTo = new SVertexElem[V, E](self)
+    lazy val selfType = new SVertexIsoElem[V, E](eV, eE)
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
+  }
+  case class SVertexIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[SVertexIso[V, E]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SVertexIso[V, E]()(eV, eE))
+    lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[SVertexIso[V, E]]
+    }
   }
   // 4) constructor and deconstructor
   class SVertexCompanionAbs extends CompanionDef[SVertexCompanionAbs] with SVertexCompanion {
@@ -131,7 +144,7 @@ trait VerticesAbs extends scalan.Scalan with Vertices {
 
   // 5) implicit resolution of Iso
   implicit def isoSVertex[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[SVertexData[V, E], SVertex[V, E]] =
-    cachedIso[SVertexIso[V, E]](eV, eE)
+    reifyObject(new SVertexIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkSVertex[V, E](id: Rep[Int], graph: PG[V, E])(implicit eV: Elem[V], eE: Elem[E]): Rep[SVertex[V, E]]
@@ -314,7 +327,7 @@ trait VerticesExp extends scalan.ScalanExp with VerticesDsl {
 }
 
 object Vertices_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWzW8bRRR/u47j2A5JqBDQSOAQDAgEdhqBesihCq4TFZnYyrYRMhXSeD12psx+ZHcc2Rz6B8ANcUXQI1JvnBBShYSQEAdOCJA4cypFqIL2VMSb2Q/vJnaIitjDaD7evo/f7/dm9+YdyPoePO+bhBO7YlFBKoaab/qibNRtwcToTac74PQi7T3pfPXpuc+Wv9BhsQ2z+8S/6PM25INJfejGc4MeNCBPbJP6wvF8Ac80VISq6XBOTcEcu8osayBIh9Nqg/liowEzHac7OoDroDVgyXRs06OCGjVOfJ/64f4clRmxeJ1X61HTHcewq7KKaqKKyx5hAtPHGEuB/S51jZHt2CNLwEKYWtOVaaFNjlmu44koRA7d7TvdaDljE9yAM41r5JBUMUS/agiP2X18s+gS813SpztoIs1nMGGf8t7lkavWmQYUfHqAAF2yXK52hi4AIAPrKonKGJ9KjE9F4lM2qMcIZ+8RedjynOEIgkfLAAxddPHyv7iIPNC63S2/f9V8+75RtHT58lCmklMVzqKj0hQ1KCoQx293P/Tvbt84r0OhDQXmb3Z84RFTJCkP0SoS23aEyjkGkHh9ZGt1GlsqyibaHJFE3nQsl9joKYRyHnnizGRCGsu9+ZCdKdDnhEsjU23oanG9K1PqVbqpEc5bt8++8txv9bd00NMh8ujSQOF7kVMBs3vUE3QYOpfjogBtb4ywXNbVUg754XjMnZBLjMoLt3/vfrMGV/UYyzD06ehDF1n/5x+LP7x4QYe5thL7Fif9NsLp1zm1ml7NsUUb5pxD6gUnuUPC5Wwinbku7ZEBFyHISXQyiI6Alalt6VIJ3YZqAS0CoBioeMexaXmrVb5nfPfRTSlSD+aDk6BP/2bnH/yy0BNKvwJ01o3AzWBzx1g8O41al7Y8ZuFVckhf+/rLK3/c2skqds+E5ewRPqBBY4fVjCuTAbU1jHTJFgF7Kt5yXIYcSgKyfY+4+1Feemv7YUVRCCo3HIs+unqXvXPjA6Ho14bpi6jZuYadv6Hee/oEJUQX4l/tNf3Psz99okMeCe8wYRG3vHbKNv4fWxPSQC3Uwo+BUvB6+jBnBA03GbwxHcjZUmhaS2ZbGpPwRMLzsnaETJ3uRSFnZJ9M5DKphuMO6ic5OM5+urZSrOmnpmsaMXx8t/EYv3Phlg7ZNyDbw7b1G5DtOAO7G5GD31Z0Kl6P9rQ0OUgG8YgVk6GeFRiDlZZuc6LB8XIS9b56hOAMajG98x9u0STzyvTcxJhFKb8tYjE+Wp8Y+xSCWpyqJzflppQIMBmuh8BTjlfGNqHhnIzKZPfCI6FOglsohMKD1SnyMcKWRC6u3/9456XvP/9V3YgF2dx4G9vxH1HyJkxDl99WsfAHJ5Eu6l22u0r1H+uRXW1wCgAA"
+  val dump = "H4sIAAAAAAAAALVWS2wbRRj+dx3Hr5CE8o4EDsFQgcBOI1APOVTBdaIik1jZYiFTtRqvx86U2Udmx5HNocce4Ia4IlGJC1IviBNCqpAQEuLACaFKnDmVoqoHegIxM/vwbuJNaRF7GO3M/PM/vu/7Z/f6bch6DF7yTESRXbUwR1VDvW94vGI0bE74+G2nN6T4LO4/7Xz72akvlr7WYaEDs3vIO+vRDhT8l8bIjd4NvN+EArJN7HGHeRyeb6oINdOhFJucOHaNWNaQoy7FtSbx+HoTZrpOb7wPV0BrwqLp2CbDHBt1ijwPe8F6HsuMSDQvqPl4x53EsGuyilqsivMMES7SFzEWfftd7Bpj27HHFof5ILUdV6YlbHLEch3GwxA54W7P6YXTGRuJBTjRvIwOUE2EGNQMzog9ECdLLjLfRwO8LUyk+YxI2MO0f37sqnmmCUUP7wuAzlkuVSsjFwAEA2sqieoEn2qET1XiUzEwI4iSD5DcbDFnNAb/0TIAI1e4ePU+LkIPuGH3Kh9eMN+7Z5QsXR4eyVRyqsJZ4aicogZFhcDxh92Pvbtb107rUOxAkXgbXY8zZPI45QFaJWTbDlc5RwAiNhBsraSxpaJsCJtDkiiYjuUiW3gKoJwTPFFiEi6N5dpcwE4K9Dnu4tBUG7laVO9ySr1KN3VEaevWM6+9+HvjXR30ZIiCcGkI4bPQKYfZNmYcjwLnclzgoLUnCMtpQ03lUBhNxtwxuUSonLz1R+/7VbigR1gGof8dfcJF1rv5S+nnl8/okO8osW9SNOgIOL0GxdYOqzs270DeOcDM38kdICrfptKZ6+E+GlIegBxHJyPQ4bCc2pYultCtqxbQQgBKvoq3HRtXNluVP40fP7kuRcpgzt/x+/RvcvqvX+f7XOmXg056IbgZ0dwRFi+kUeviFiOWuEoO8BvfffPOnRvbWcXuiaCcNqJD7Dd2UM2kMhlQWxWRztncZ0/FW4rKkEOZQ3bAkLsX5qW3th5WFEW/csOx8KMrd8nFax9xRb82Sl5EO93LovPX1bnnjlFCeCF+efXqE3c+v/SYauR8l3ALuZXVB2jjsOv+xzaFJGjz9eDDoNS8ltzMGX7zpQApx6eiPZ8lQeVicKoeT7wcOxILsqQd4ljH7TD6jGyfqRTHRXLUQeM4B0dFkSyzHEn92XSpCzif3G0+Tm+fuaFD9i3I9kU3e03Idp2h3Qt5Ep9c4ZS/Ga5pSZ4EL4ghK+JFPcswASup6NZUg6PlxOp9/RDXGSHR5Mp/uFxTRKDmp6aGL0lRbiKL0PHa1DQeTGYLqSpzEx7LsVjTQXwIlOXYntgEhnkZlchWh0cC9fhXVoAKg5UUURlBzwqGrtz7dPuVn776TV2fRdn94uq2o9+n+LWZRLGwpWKJv6FYuqIL5H2gUv0HHHzmVZ0KAAA="
 }
 }
 

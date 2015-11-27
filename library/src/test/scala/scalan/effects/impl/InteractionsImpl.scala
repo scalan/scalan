@@ -59,8 +59,8 @@ trait InteractionsAbs extends scalan.Scalan with Interactions {
     override def toString = "Interact"
   }
   def Interact: Rep[InteractCompanionAbs]
-  implicit def proxyInteractCompanion(p: Rep[InteractCompanion]): InteractCompanion =
-    proxyOps[InteractCompanion](p)
+  implicit def proxyInteractCompanionAbs(p: Rep[InteractCompanionAbs]): InteractCompanionAbs =
+    proxyOps[InteractCompanionAbs](p)
 
   abstract class AbsAsk
       (prompt: Rep[String])
@@ -89,14 +89,25 @@ trait InteractionsAbs extends scalan.Scalan with Interactions {
 
   // 3) Iso for concrete class
   class AskIso
-    extends Iso[AskData, Ask] {
+    extends IsoUR[AskData, Ask] with Def[AskIso] {
     override def from(p: Rep[Ask]) =
       p.prompt
     override def to(p: Rep[String]) = {
       val prompt = p
       Ask(prompt)
     }
-    lazy val eTo = new AskElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new AskElem(self)
+    lazy val selfType = new AskIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class AskIsoElem() extends Elem[AskIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new AskIso())
+    lazy val tag = {
+      weakTypeTag[AskIso]
+    }
   }
   // 4) constructor and deconstructor
   class AskCompanionAbs extends CompanionDef[AskCompanionAbs] with AskCompanion {
@@ -128,7 +139,7 @@ trait InteractionsAbs extends scalan.Scalan with Interactions {
 
   // 5) implicit resolution of Iso
   implicit def isoAsk: Iso[AskData, Ask] =
-    cachedIso[AskIso]()
+    reifyObject(new AskIso())
 
   // 6) smart constructor and deconstructor
   def mkAsk(prompt: Rep[String]): Rep[Ask]
@@ -161,14 +172,25 @@ trait InteractionsAbs extends scalan.Scalan with Interactions {
 
   // 3) Iso for concrete class
   class TellIso
-    extends Iso[TellData, Tell] {
+    extends IsoUR[TellData, Tell] with Def[TellIso] {
     override def from(p: Rep[Tell]) =
       p.msg
     override def to(p: Rep[String]) = {
       val msg = p
       Tell(msg)
     }
-    lazy val eTo = new TellElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new TellElem(self)
+    lazy val selfType = new TellIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class TellIsoElem() extends Elem[TellIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new TellIso())
+    lazy val tag = {
+      weakTypeTag[TellIso]
+    }
   }
   // 4) constructor and deconstructor
   class TellCompanionAbs extends CompanionDef[TellCompanionAbs] with TellCompanion {
@@ -200,7 +222,7 @@ trait InteractionsAbs extends scalan.Scalan with Interactions {
 
   // 5) implicit resolution of Iso
   implicit def isoTell: Iso[TellData, Tell] =
-    cachedIso[TellIso]()
+    reifyObject(new TellIso())
 
   // 6) smart constructor and deconstructor
   def mkTell(msg: Rep[String]): Rep[Tell]
@@ -331,7 +353,7 @@ trait InteractionsExp extends scalan.ScalanExp with InteractionsDsl {
 }
 
 object Interactions_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWzW8bRRR/Xttx/EHTlgpoJUgwpqEI7ICEesihMqmLikwSZdOqMlWl8Xrsbjs7u9kZR2sO/QPghrgi6BGpN04IqUJCSIgDJwRInDmVIlQBPYF4M/vhdZptcsGH0ezM2/fxe7/fW9+5D0Xhw2lhEUZ406GSNE29bwvZMDtc2nLyjjsYM3qeDp9xv/r0tc9OfWHAQg/mrhNxXrAelMNNJ/CSvUl3ulAm3KJCur6Q8HxXR2hZLmPUkrbLW7bjjCXpM9rq2kKudqHQdweTHbgFuS4ctVxu+VRSc40RIaiIzuepyshOnsv6ebLhTWPwlqqilapi2ye2xPQxxtHQfot65oS7fOJIOBKltuGptNCmZDue68s4RAndXXcH8WOBEzyA490bZJe0MMSoZUrf5iN8s+oR6yYZ0XU0UeYFTFhQNtyeePo534WKoDsI0EXHY/ok8AAAO/C6TqI5xaeZ4NNU+DRM6tuE2e8Rdbnpu8EEwl8uDxB46OKVA1zEHmiHDxrvX7XefWhWHUO9HKhUSrrCOXS0mMEG3QrE8dutD8WDt26fNaDSg4ot2n0hfWLJdMsjtKqEc1fqnBMAiT/CbtWzuqWjtNFmDyXKlut4hKOnCMoa9onZli2VsTqrRd3JgL4kPRqb5gIvl9S7lFGv5s0aYWzz3slXX/ytc8UAYzZEGV2aSHw/diph/iKXVKGRuH8hy71HN33bQTrv0je+/vLSH3fXizrC8QEdkjGTlwkb05BcUbxpbBXKqNclzE0NysF0LT2mrgTh5Xu/D75ZgatG0peojMNRAV0Uxc8/Vn84c86A+Z4WzgVGRj1sjegw6mz4ay6XPZh3d6kf3pR2CVO7falRigqPGpZGOo9IS1jKlLhHVRtWtZxyMQDVUBHrLqeNC5uNv83vPrqjCO9DLbwJNf+vffafX44MpdYCIur5yLSwfwsS8jgsQjzUcmI/oCuhN9N16LH6A/va7Q+khjQXzA6Kjf4NVOaqfu+5x6AbD6y/eivGnyd/+sSAMoLYt6VDvMbKIWX2P0oHdOGzyyIiV2uLm2vpUIvTwfK03iKcaLPnqhpLMUJ8r4TU+iTS/aUzEgqXuC0f7YGOkDI/ldBAx8KwjhgduqNqbeh1OavUJ7YpYwfVWlBG07swRCrLZZgtPI89PxgKPM61Uw4fyf/QRRyLve9TSHqU6dNkJjybPc+QI09tdU+w++fuGlB8G4pDlLroQrHvjvkgJh9+2yUN5JvxWW6WfEg24hMnIZv+LcE0tcz627NYo2EtLkEpQ8JClDoNCAqAiggkH+oZNZmRDrAxtx5+vP7y95//qkd0RSkKxwpP/iakR/NssxbSOeC3P5U6UkQpTaf9H/UOp6eLCQAA"
+  val dump = "H4sIAAAAAAAAALVWS4gcRRj+57XzNJuXr4DuOhldIzoTBclhD2GcbCQy7i7bG5ExKDU9NZNOqqt7u2qWHg855qA38SoY8CLkIp5ECIII4sGTSMCzpxgJOZhTxL+qH9MzbmfXg30ouqr+/h/f/30/ffMuFIQHLwiTMMKbNpWkaej3tpANY41LS07edgZjRs/R4VPOd5+/+uWJb7Kw2IOFy0ScE6wH5eBlzXfjd4PudKFMuEmFdDwh4bmujtAyHcaoKS2HtyzbHkvSZ7TVtYRc7UK+7wwmO3ANMl04bDrc9KikRocRIagIz0tUZWTF+7LeTzbcaQzeUlW0ElVse8SSmD7GOBzYb1HXmHCHT2wJh8LUNlyVFtoULdt1PBmFKKK7y84g2uY5wQM42r1CdkkLQ4xahvQsPsIvqy4xr5IRXUcTZZ7HhAVlw+2Jq/e5LlQE3UGALtgu0ye+CwDYgdd0Es0pPs0Yn6bCp2FQzyLM+pCoy03P8ScQPJkcgO+ii5f3cRF5oGt80PjokvneA6NqZ9XHvkqlqCtcQEdLKWzQrUAcf9z6RNx/88aZLFR6ULFEuy+kR0yZbHmIVpVw7kidcwwg8UbYrXpat3SUNtrMUaJsOrZLOHoKoaxhn5hlWlIZq7Na2J0U6IvSpZFpxnczcb3LKfVq3nQIY5t3nn7l+T/W3s1CdjZEGV0aSHwvciqhdIFLqtCI3Z9Mc+/STc+ykc679PXvv71479Z6QUc4OqBDMmbyHcLGNCBXGG8aW4XK1usSFqYGZX+6Fh9RV4zwyp0/Bz+chkvZuC9hGQejArooiNu/Vn85dTYLpZ4WznlGRj1sjVhj1N7wOg6XPSg5u9QLboq7hKm3PalRDAsPG5ZEOodIS1hOlbhLVRtWtZwyEQDVQBHrDqeN85uNv4yfPr2pCO9BLbgJNP+3debhb4eGUmsBEXU9ZFrQv0UJORwWAR5qOb4X0JXAm+HY9Ej9vvX+jY+lhjTjzw6Kjf4VVOaq/u7ZR6AbDayvrl9//N4XHxzTQiv1LWkTt3H6P8gsUsX/KCPQIEwHyJPTvVqWENBaW1ztJKMuzZsjymgzd1WNFBo2Yl5Zaj2GKnjxlIT8RW7Jf7dGR0iYn4jZoWNhWFuMDtxotTb0unKAqh/bpoztV3ZeGU3vgmiJhFdgFoMcsmJ/VPA40044TAFmroaDl3YkirlHeckRqE/jWfJM+hxEPj2x1T3O7p69lYXCW1AY4ogQXSj0nTEfRETFfwJJfflGdJaZJSoSk3jEjompn2WYppaKSme2A2hYi0pQipKwGKZOfYJioSLEy4N6Sk1GqBls17UHn62/9PPXv+vRXlHqw3HE49+L5EifbeFiMgf8Z0ikjsRRqtRp/wOEQpYSwwkAAA=="
 }
 }
 

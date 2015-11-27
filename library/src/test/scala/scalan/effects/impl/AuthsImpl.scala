@@ -58,8 +58,8 @@ trait AuthenticationsAbs extends scalan.Scalan with Authentications {
     override def toString = "Auth"
   }
   def Auth: Rep[AuthCompanionAbs]
-  implicit def proxyAuthCompanion(p: Rep[AuthCompanion]): AuthCompanion =
-    proxyOps[AuthCompanion](p)
+  implicit def proxyAuthCompanionAbs(p: Rep[AuthCompanionAbs]): AuthCompanionAbs =
+    proxyOps[AuthCompanionAbs](p)
 
   abstract class AbsLogin
       (user: Rep[String], password: Rep[String])
@@ -88,14 +88,25 @@ trait AuthenticationsAbs extends scalan.Scalan with Authentications {
 
   // 3) Iso for concrete class
   class LoginIso
-    extends Iso[LoginData, Login]()(pairElement(implicitly[Elem[String]], implicitly[Elem[String]])) {
+    extends IsoUR[LoginData, Login] with Def[LoginIso] {
     override def from(p: Rep[Login]) =
       (p.user, p.password)
     override def to(p: Rep[(String, String)]) = {
       val Pair(user, password) = p
       Login(user, password)
     }
-    lazy val eTo = new LoginElem(this)
+    lazy val eFrom = pairElement(element[String], element[String])
+    lazy val eTo = new LoginElem(self)
+    lazy val selfType = new LoginIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class LoginIsoElem() extends Elem[LoginIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new LoginIso())
+    lazy val tag = {
+      weakTypeTag[LoginIso]
+    }
   }
   // 4) constructor and deconstructor
   class LoginCompanionAbs extends CompanionDef[LoginCompanionAbs] with LoginCompanion {
@@ -128,7 +139,7 @@ trait AuthenticationsAbs extends scalan.Scalan with Authentications {
 
   // 5) implicit resolution of Iso
   implicit def isoLogin: Iso[LoginData, Login] =
-    cachedIso[LoginIso]()
+    reifyObject(new LoginIso())
 
   // 6) smart constructor and deconstructor
   def mkLogin(user: Rep[String], password: Rep[String]): Rep[Login]
@@ -161,14 +172,25 @@ trait AuthenticationsAbs extends scalan.Scalan with Authentications {
 
   // 3) Iso for concrete class
   class HasPermissionIso
-    extends Iso[HasPermissionData, HasPermission]()(pairElement(implicitly[Elem[String]], implicitly[Elem[String]])) {
+    extends IsoUR[HasPermissionData, HasPermission] with Def[HasPermissionIso] {
     override def from(p: Rep[HasPermission]) =
       (p.user, p.password)
     override def to(p: Rep[(String, String)]) = {
       val Pair(user, password) = p
       HasPermission(user, password)
     }
-    lazy val eTo = new HasPermissionElem(this)
+    lazy val eFrom = pairElement(element[String], element[String])
+    lazy val eTo = new HasPermissionElem(self)
+    lazy val selfType = new HasPermissionIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class HasPermissionIsoElem() extends Elem[HasPermissionIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new HasPermissionIso())
+    lazy val tag = {
+      weakTypeTag[HasPermissionIso]
+    }
   }
   // 4) constructor and deconstructor
   class HasPermissionCompanionAbs extends CompanionDef[HasPermissionCompanionAbs] with HasPermissionCompanion {
@@ -201,7 +223,7 @@ trait AuthenticationsAbs extends scalan.Scalan with Authentications {
 
   // 5) implicit resolution of Iso
   implicit def isoHasPermission: Iso[HasPermissionData, HasPermission] =
-    cachedIso[HasPermissionIso]()
+    reifyObject(new HasPermissionIso())
 
   // 6) smart constructor and deconstructor
   def mkHasPermission(user: Rep[String], password: Rep[String]): Rep[HasPermission]
@@ -344,7 +366,7 @@ trait AuthenticationsExp extends scalan.ScalanExp with AuthenticationsDsl {
 }
 
 object Authentications_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAL1WzW8bRRQfr+M4ttOmRCjQShWpMSBQsQMS6iGHyk1dPmQcK1sQMhXSeD12pszObGbGYc2hfwDcEFcEPSL1xgkhVUgICXHghACJM6dShCqgJxBvZj/8kTjNBfYwmn375n38fu+9nVt3UU5J9KTyMMO86hONq67d15WuuA2uqR69KnpDRi6T/qPiy0+e+/TM5w5a6aDFXawuK9ZBhWjTCIN075K9Jipg7hGlhVQanWtaDzVPMEY8TQWvUd8fatxlpNakSm820UJX9EZ76AbKNNEpT3BPEk3cLYaVIiqWLxETEU3fC/Z9tB2MffCayaI2kcVViamG8MHHqUh/hwTuiAs+8jU6GYe2HZiwQCdP/UBInbjIg7ld0UteFzgGAVptXsf7uAYuBjVXS8oHcLIUYO9tPCAtUDHqCxCwIqx/dRTY92wTFRXZA4Be9gNmJWGAEAIGnrdBVMf4VFN8qgafikskxYy+i83HthThCEVPJotQGICJ8w8wkVggDd6rvHfNe/O+W/Idczg0oeRthotg6LE51WCpABy/2flA3Xvx5gUHFTuoSFW9q7TEnp6kPEarhDkX2sacAojlANgqz2PLeqmDzkxJFDzhB5iDpRjKZeCJUY9qo2xkyzE7c6DP64AkqpkwyKT5rs/J19bNFmasfef0s0/82njDQc60iwKYdKHwZWJUo4X6UO/Gps26olHejWordfj4PIcBaUvqQ4Hvkxe++uK132+3ctbnao/08ZDp1zEbkqjc4gjG0RjnTrms0eJYoRDOrvkj8k2Rf+rOb72vN9A1J+UrTu94JQImcuqnH0rfP33RQUsd21BXGB50gDLVYMTflluC6w5aEvtERl/y+5iZ3aElk4/Tj4mcZCALDGi0Prf1A2Lo2bRtlkkAKEWd0hKcVK60K3+53354yzSCRMvRl4ivf+iFv38+2de2R4DZoSIy4TQLIyRCwyyPRABbwdnUk1mAj6UAMHlHyN6RZ6cpKkZxuMInD5Xv0bduvq8tGZlwevRsd69Dr2/ac+eO4CUZgX92Npw/Tv/4sYMKAH+Xah8HlY1jNu5/2IwoBWy8lAMznMWA8q1JZ+XxsDpjtxrlrNbMx1JmugtnG3MNzvUxU1A++UtCMIL5QSasl4lDB8j9/4rCrOftWpuH1tpLWLWJ9KlSANaDUDsxpT1Wmgh7MfY3jWQWCulobEGUqU8YO5DNsVM6YSwfkkkyaa0kHUtn5w9WKLa1nebD7O7F2w7KvQLcw7RRTZTriiHvJVUM1w5NQn0pkWWmqxiqFkvsp1Vrn3U0Dmtu3q1pfEFxxYRvriNe1GUgiaMnIYZmIirGR0KCh6flxj0FfNy4/1Hrme8++8X+LoqmO2G48fQSM/mbmOZpdSYMuJxMJAAom8a1wf8L+rFFoiwKAAA="
+  val dump = "H4sIAAAAAAAAAL1WT4hbRRifJJvNv223rrpqobiNUVFqUgXpYQ8l3ab+Ie6GfVUkFmXyMslOnTfzdmayvnjosQe9iVfBghehF/EkQhFEEA+eRATPnmql9GBPit/M+5O8dLNdD5rD8GbeN9+f3+/3fXnXb6G8kugp5WKGed0jGtcd+9xUuua0uKZ6/Jrojxg5TwaPim8+ff7z419l0XIXLe5gdV6xLiqFD63AT54dsttGJcxdorSQSqOTbRuh4QrGiKup4A3qeSONe4w02lTp9TZa6In+eBddQZk2OuYK7kqiibPBsFJERedFYjKiyb5k9+MtfxKDN0wVjakqLkpMNaQPMY6F9tvEd8Zc8LGn0dEotS3fpAU2Ber5Quo4RAHc7Yh+vF3gGA7QSvsy3sMNCDFsOFpSPoSbFR+77+Ih2QQTY74ACSvCBhfHvt3n2qisyC4A9IrnM3sS+AghYOAFm0R9gk89wadu8Kk5RFLM6PvYvOxIEYxR+MvkEAp8cHHqPi5iD6TF+7UPLrlv3XUqXtZcDkwqBVvhIjh6fI4aLBWA4/fbH6k7L107k0XlLipT1ewpLbGrpymP0KpgzoW2OScAYjkEtqrz2LJRmmAzI4mSKzwfc/AUQbkEPDHqUm2MzdlSxM4c6AvaJ7FpJvAzSb1rc+q1utnAjHVuPvbck7+33syibDpECVw6IHwZO9VooTnSO5Frsy5rVHBCbSUBn5gX0CcdST0Q+B558duvX799YzNvY670yQCPmH4DsxEJ5RZlMMnGBM9WqxotTgxKwexaOKDeBPmnb/7R/+40upRN+IrKO5xEwEVe/fJz5adnzmZRsWsb6gLDwy5QplqMeFtyQ3DdRUWxR2T4prCHmXnaVzKFqPyIyGkGcsCARmtzW98nhp5122aZGIBK2CmbgpPahU7tT+eHj6+bRpBoKXwT8vU3PfPXr0cH2vYIMDtSRMac5mCEhGiY5ZEQYHtwIolkFuCj6AMm7wnZP/BumqJymIcjPPJA9Q59+9qH2pKRCdKjZ6t3GXp93d47eQAv8Qj84urVh29/9s6DtnWLPao97NdO/4vGjfvsP2xMlIAXjqTjk71F1DczWwwp35iOW529oFHeWs28rGTSzTnbr6twb4CZAlUVzgnBCOb3EmSjTF26h/P/TytmPWXXxiGAW30Zqw6RHlUKcLsfgEdS1hOjqQoWo9BpUHMgtYNhhqNMc8rZHIxnKjp8oUdMvH3qiye0PUnG2Yn5AxmEubrdfojdOnsji/KvgjhgSqk2yvfEiPdjxcPniiaBPhefZdKKB4Vjib1E4fa3hiZpzUWjk0YdDJdN+uYzxg27E06i7EmAofGIiqCSUOD+ZTlR/wFLV+5+svnsj1/+Zv9myqaTYSjy5ONn+u8lzd7KTBrwUTNVAKBsmtwm/w9GT/wJZAoAAA=="
 }
 }
 

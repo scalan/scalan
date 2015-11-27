@@ -38,10 +38,16 @@ trait HashSetsAbs extends scalan.Scalan with HashSets {
     def lift[A](implicit evA: Elem[A]) = element[SHashSet[A]]
   }
 
-  case class SHashSetIso[A, B](iso: Iso[A, B]) extends Iso1[A, B, SHashSet](iso) {
-    def from(x: Rep[SHashSet[B]]) = x.map(iso.fromFun)
-    def to(x: Rep[SHashSet[A]]) = x.map(iso.toFun)
+  case class SHashSetIso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, SHashSet] {
+    lazy val selfType = new ConcreteIsoElem[SHashSet[A], SHashSet[B], SHashSetIso[A, B]](eFrom, eTo).
+      asInstanceOf[Elem[IsoUR[SHashSet[A], SHashSet[B]]]]
+    def cC = container[SHashSet]
+    def from(x: Rep[SHashSet[B]]) = x.map(innerIso.fromFun)
+    def to(x: Rep[SHashSet[A]]) = x.map(innerIso.toFun)
   }
+
+  def sHashSetIso[A, B](innerIso: Iso[A, B]) =
+    reifyObject(SHashSetIso[A, B](innerIso)).asInstanceOf[Iso1[A, B, SHashSet]]
 
   // familyElem
   class SHashSetElem[A, To <: SHashSet[A]](implicit _eA: Elem[A])
@@ -90,8 +96,8 @@ trait HashSetsAbs extends scalan.Scalan with HashSets {
     override def toString = "SHashSet"
   }
   def SHashSet: Rep[SHashSetCompanionAbs]
-  implicit def proxySHashSetCompanion(p: Rep[SHashSetCompanion]): SHashSetCompanion =
-    proxyOps[SHashSetCompanion](p)
+  implicit def proxySHashSetCompanionAbs(p: Rep[SHashSetCompanionAbs]): SHashSetCompanionAbs =
+    proxyOps[SHashSetCompanionAbs](p)
 
   // default wrapper implementation
   abstract class SHashSetImpl[A](val wrappedValue: Rep[HashSet[A]])(implicit val eA: Elem[A]) extends SHashSet[A] with Def[SHashSetImpl[A]] {
@@ -136,14 +142,26 @@ trait HashSetsAbs extends scalan.Scalan with HashSets {
 
   // 3) Iso for concrete class
   class SHashSetImplIso[A](implicit eA: Elem[A])
-    extends Iso[SHashSetImplData[A], SHashSetImpl[A]] {
+    extends IsoUR[SHashSetImplData[A], SHashSetImpl[A]] with Def[SHashSetImplIso[A]] {
     override def from(p: Rep[SHashSetImpl[A]]) =
       p.wrappedValue
     override def to(p: Rep[HashSet[A]]) = {
       val wrappedValue = p
       SHashSetImpl(wrappedValue)
     }
-    lazy val eTo = new SHashSetImplElem[A](this)
+    lazy val eFrom = element[HashSet[A]]
+    lazy val eTo = new SHashSetImplElem[A](self)
+    lazy val selfType = new SHashSetImplIsoElem[A](eA)
+    def productArity = 1
+    def productElement(n: Int) = eA
+  }
+  case class SHashSetImplIsoElem[A](eA: Elem[A]) extends Elem[SHashSetImplIso[A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SHashSetImplIso[A]()(eA))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[SHashSetImplIso[A]]
+    }
   }
   // 4) constructor and deconstructor
   class SHashSetImplCompanionAbs extends CompanionDef[SHashSetImplCompanionAbs] {
@@ -175,7 +193,7 @@ trait HashSetsAbs extends scalan.Scalan with HashSets {
 
   // 5) implicit resolution of Iso
   implicit def isoSHashSetImpl[A](implicit eA: Elem[A]): Iso[SHashSetImplData[A], SHashSetImpl[A]] =
-    cachedIso[SHashSetImplIso[A]](eA)
+    reifyObject(new SHashSetImplIso[A]()(eA))
 
   // 6) smart constructor and deconstructor
   def mkSHashSetImpl[A](wrappedValue: Rep[HashSet[A]])(implicit eA: Elem[A]): Rep[SHashSetImpl[A]]
@@ -228,8 +246,8 @@ trait HashSetsExp extends scalan.ScalanExp with HashSetsDsl {
         List(element[A]))
   }
 
-  case class ViewSHashSet[A, B](source: Rep[SHashSet[A]])(iso: Iso1[A, B, SHashSet])
-    extends View1[A, B, SHashSet](iso) {
+  case class ViewSHashSet[A, B](source: Rep[SHashSet[A]])(iso: Iso[A, B])
+    extends View1[A, B, SHashSet](sHashSetIso(iso)) {
     override def toString = s"ViewSHashSet[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewSHashSet[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -322,7 +340,7 @@ trait HashSetsExp extends scalan.ScalanExp with HashSetsDsl {
     case Def(view: ViewSHashSet[_, _]) =>
       Some((view.source, view.iso))
     case UserTypeSHashSet(iso: Iso[a, b]) =>
-      val newIso = SHashSetIso(iso)
+      val newIso = sHashSetIso(iso)
       val repr = reifyObject(UnpackView(s.asRep[SHashSet[b]])(newIso))
       Some((repr, newIso))
     case _ =>
@@ -335,7 +353,7 @@ trait HashSetsExp extends scalan.ScalanExp with HashSetsDsl {
     case view1@ViewSHashSet(Def(view2@ViewSHashSet(arr))) =>
       val compIso = composeIso(view1.innerIso, view2.innerIso)
       implicit val eAB = compIso.eTo
-      ViewSHashSet(arr)(SHashSetIso(compIso))
+      ViewSHashSet(arr)(compIso)
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSHashSetImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
@@ -351,21 +369,15 @@ trait HashSetsExp extends scalan.ScalanExp with HashSetsDsl {
     case SHashSetMethods.map(xs, f) => (xs, f) match {
       case (xs: RHS[a] @unchecked, LambdaResultHasViews(f, iso: Iso[b, c])) =>
         val f1 = f.asRep[a => c]
-        implicit val eA = xs.elem.eItem
         implicit val eB = iso.eFrom
-        val s = xs.map(fun { x =>
-          val tmp = f1(x)
-          iso.from(tmp)
-        })
-        val res = ViewSHashSet(s)(SHashSetIso(iso))
+        val s = xs.map(f1 >> iso.fromFun)
+        val res = ViewSHashSet(s)(iso)
         res
-      case (HasViews(source, contIso: SHashSetIso[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
+      case (HasViews(source, Def(contIso: SHashSetIso[a, b])), f: Rep[Function1[_, c] @unchecked]) =>
         val f1 = f.asRep[b => c]
-        val iso = contIso.iso
-        implicit val eA = iso.eFrom
-        implicit val eB = iso.eTo
+        val iso = contIso.innerIso
         implicit val eC = f1.elem.eRange
-        source.asRep[SHashSet[a]].map(fun { x => f1(iso.to(x)) })
+        source.asRep[SHashSet[a]].map(iso.toFun >> f1)
       case _ =>
         super.rewriteDef(d)
     }
@@ -375,7 +387,7 @@ trait HashSetsExp extends scalan.ScalanExp with HashSetsDsl {
 }
 
 object HashSets_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWXWwUVRS+O9vtdru1BaxKCdXSrCIK3dKoxPQB+7NgZaGkA6grQe/O3C0D87czd+usiUiM+gBvSkwgMcCDJia8+WD0wRgTEyOJiYaIifLggz4IGENUYhT13DtzZ3eWzraYuA+zc2funJ/v+84599xVlHIddJ+rYB2bIwaheETm9xMuzckFk2q0vtNSazqZJpXV1sdnNr+75gMJ9ZVQ50HsTrt6CWX8m4Jnh/cyqRZRBpsKcanluBStK3IPecXSdaJQzTLzmmHUKC7rJF/UXDpeRB1lS61X0RGUKKIVimUqDqFEntKx6xI3eN5FWERauM7wdX3Wbvgw8yyLfFMWexysUQgffKzw988RW66bllk3KOoNQpu1WViwJ60ZtuVQ4SIN5g5aqlh2mBgeoFXFQ3gB58HFfF6mjmbOw5dZGyuH8TzZBVvY9g4I2CV6ZU/d5utkEXW7pAoAzRi2zp94NkIIGBjjQYw08BkJ8Rlh+ORk4mhY117A7OVux/LqyP8lkgh5NpjYuIQJYYEUTDV3bL/yzHU5a0jsY4+FkuYZdoKhe2LUwKkAHD+be929tv3sFgl1l1C35k6UXepghTZTHqCVxaZpUR5zCCB25oGt4Ti2uJcJ2NMiiYxiGTY2wVIAZQ/wpGuKRtlm9qwnYCcG+jS1idia8OxEmO9QTL5cN1NY13dfHth075XCUxKSoi4yYFIG4TvCKEVd8uPYPSgTGphn1z6KEhMcY3bJeI1ruo37EIj1l39WPx1F+6UQvsDb8hgDEyn3m6+zFzZslVBXiet7m47nS4CgW9CJMetMWSYtoS5rgTj+m/QC1tndogymVVLBNZ0GuDYDkgRAKBqKrUSbMLTGueoTAoCsL9xdlkly23bnfpc/P3GO6dJBPf4bvzT/1rbc+La3QrlkKep53sG2TdR9WK8RAXMSKjsKfPpW6AhIYZdBvvWOps9WJ0TM/D1FEpkQ9joYjku6gKCFOkQDGAw5HIxTIVftnXPFfv3q1o8klHoCpSpAjVtEqbJVM1VRDtAyKfHopHiWiFID8scONoR2/OYxhHgQYaT9N8W8pMZEd/2tNCr9OnDxtIQyIKWyRg1s50aX2RP+xzpHUVqybOeTXDp+RJ3sMixe31r5NsGzqR08UGG8EsPEtdzGR3+cPrGDd5S+BiB8W5BXc6VTdBurUayZxBGpNkXDqqjbrxXZMsjK4WvagbPHKW8YCS86rWbLh2A8jPPv1nL7D7dA1FPwpgQHm6OvQngW72aN6oCIV4q9U82E+lqz2XVluN7csPFIVJBp8CkYgTwCkBszzkdrGvIfjiFADtQBEj1y/a1dD3zx3g8c9W6mM2g5ZjjpG6LyWprIKt8eJGLUTDg/wARvAgDKn0kwjOT+2EiqrOyJAT452y+jfeemx84YnKc+4vky39l03mjq8XFjwt8O2V16ulp9f/TBXj6WW1o7TOmZoIr4YhY6vaOpZNFqzILw5ADe1gJt6ffdbGToFlZnRBuKVF8RdcJyzm/P/lmnwWyI19qYzCZ1Szm8d9NPlWr/Qzf82asB+iIkKBVK0WDcrAkGjSiPOCeAj0vX7Oz/srxj/phfMAr7psDPVHf5ReXU4NhokJFJyyPqXoiBvvPi9sEr508Fs6gzxwLLRaXrt/b94aATRK5rSyTDbsMn6988UPvwePzAby8GsJH87p/zbzhuUkLp5Uz8/zLn2e1AlFMYionKIrPYQXfHT7dtNVO5MHPy9r7BZ7/nLHeqlgGdjtuHIedA1xLOWvpxuJxs157baWzCtvX6K5UNp7869ddLEkszxfAWECQrNR7Hc0Uk0RYWGtd65Em8sxkVKn/9qrf//CVzcVZqbTnsz4wEH38ogKYGBZq9pBHy2B+v+rUB/cMJYk3R1lZ2tOXABPTAfF582h9d5JzCd73WkLWf7FjkFOG/CA5DojVGqAnouFkgS0zfOHr/BS14jca/DgAA"
+  val dump = "H4sIAAAAAAAAALVWXWwUVRS+O9vtdruV0lIUCFVoVitKu0BUYvqA/dliZUubDqBWUnJ35m4ZmL+duVtnNWJClBh4U2IiiRESNTHpi/HB6IMxJiZGEhMNURPlwQd9EDCEB4lR1HPvzJ3dWTotmLgPs3Nn7pxz7vd952fxCkq5DrrPVbCOzUGDUDwo8/thl+bkgkk1Wpu01KpOxkh5nfXp2e3vbfhIQp2zqPUwdsdcfRZl/JuCZ4f3MqkUUQabCnGp5bgUbS5yD3nF0nWiUM0y85phVCku6SRf1Fw6VEQtJUutVdAxlCii1YplKg6hRB7VsesSN3jeRlhEWrjO8HVtyq77MPPsFPmGU+xzsEYhfPCx2t8/Q2y5ZlpmzaBoVRDalM3Cgj1pzbAthwoXaTB32FLFssXE8AB1F4/gBZwHF/N5mTqaOQ9fZm2sHMXzZC9sYdtbIGCX6OV9NZuvk0XU7pIKADRh2Dp/4tkIIWBgBw9isI7PYIjPIMMnJxNHw7r2HGYvpx3LqyH/l0gi5NlgYusKJoQFUjDV3MmDyjPX5awhsY89Fkqan7AVDN0TowZOBeD4xcyr7rXd53ZKqH0WtWvucMmlDlZoI+UBWllsmhblMYcAYmce2OqLY4t7GYY9TZLIKJZhYxMsBVB2AE+6pmiUbWbPOgJ2YqBPU5uIrQnPToTn3RRzXq6bUazr05fWD9x7ufCUhKSoiwyYlEH4jjBKUZv8OHYPy4QG5tm1k6LEMMeYXTJe/Zpexn0IRP+l39TPt6GDUghf4O3WGAMTKff7b7MXtuySUNss1/e4judnAUG3oBNjyhm1TDqL2qwF4vhv0gtYZ3dLMphWSRlXdRrg2ghIEgChaFNsJtqEoTXEVZ8QAGR94e61TJIbn879Ln95epHp0kEd/hs/Nf/Wdt74YVWZcslS1PGsg22bqAewXiUC5iRkdhT49O3QEZDCLr1869qGz9YlRMz8PUUSGRb2WhiOK7qAoIU6RAHoDTnsjVMhV+2dM8Ue/cquTySUegKlykCNW0SpklU1VZEOUDIp8eiIeJaIUgPyxw42hHb84rEJ8SDCSHtuinlFjYnq+v6JE2uvvn1oDa8KbSWNGtjObbuNmiBS+H/MeRSlKMt2Psll5EfXyi594vXtpXIDVAPLQQXZxrMyBEHLbX30l7HTe3h16ayDw7cF52rMeoruYPmKNZM44qjphgjWhg9YcrX7KSRbBunqu6bNnTtFeR1JeNEmNlU6Al1jiB9lI7fzcBNaHQVvVNCxPfoqRCqmyDWFxTUH5+gSn4020uyr0WbXrnC9vW7ukahk0+Be8ARHCqCvd0EfwwJA0RdDixxoBkR87Pqbex/46oOfORftTH1QlMxwFqhLzWsqM92+PTiIUTVhwoAe34AFFAgmzDCS+2MjqbDCQAzwyTVwHB1YHNtx1uCUdRLPF/9kw0TS0AXiGom/HU538elK5cNtD67iKdpU/KGPTwS5xRdT0AscTSVL5msW5CgH8ApoRNo2dYR21lR0C6sTolBFcrKIWmE54xdwfxpqkK/Aa2PMyUZ0Szm6f+DXcqXnoRt+d9YAfRESJBClqDeuGwWtSGRKnBPAx6UbJnu+Lu2ZP+nnjsK+GedT111+fjlVGCwNMjhieUTdDzHQd1/Y3Xv5/JmgW7XmWGC5qHT94j8XtkJB5OZliWTYbfms//W56sen4keC5cUANpI//nP+NcdNSih9KzPBf5kE2O36KKfQNhPlJbq1g+6O73/jVVO5MPHGms7eQz9xlltVy4D6x+1DG3SggAlnTVU6XI4sV7SX09iwbeu1l8pb3vrmzF8vSuyYKYa3gCBZrvI4SkUk0SYW6tfnI0/inU2okPn93e/8eTXz3ZTUXHLYnx0JPn5sgKIGCZq9qBHy2B8v+7kB9cMJYk3R5lJ2vGmkAnqggy89DxxfYpLhu16py9o/7I7InOG/CMYlURoj1AR03CyQFXpyHL3/AuTdq1LhDgAA"
 }
 }
 

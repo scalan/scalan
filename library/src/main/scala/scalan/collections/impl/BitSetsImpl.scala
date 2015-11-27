@@ -55,8 +55,8 @@ trait BitSetsAbs extends scalan.Scalan with BitSets {
     override def toString = "BitSet"
   }
   def BitSet: Rep[BitSetCompanionAbs]
-  implicit def proxyBitSetCompanion(p: Rep[BitSetCompanion]): BitSetCompanion =
-    proxyOps[BitSetCompanion](p)
+  implicit def proxyBitSetCompanionAbs(p: Rep[BitSetCompanionAbs]): BitSetCompanionAbs =
+    proxyOps[BitSetCompanionAbs](p)
 
   abstract class AbsBoolCollBitSet
       (bits: Rep[Collection[Boolean]])
@@ -84,14 +84,25 @@ trait BitSetsAbs extends scalan.Scalan with BitSets {
 
   // 3) Iso for concrete class
   class BoolCollBitSetIso
-    extends Iso[BoolCollBitSetData, BoolCollBitSet] {
+    extends IsoUR[BoolCollBitSetData, BoolCollBitSet] with Def[BoolCollBitSetIso] {
     override def from(p: Rep[BoolCollBitSet]) =
       p.bits
     override def to(p: Rep[Collection[Boolean]]) = {
       val bits = p
       BoolCollBitSet(bits)
     }
-    lazy val eTo = new BoolCollBitSetElem(this)
+    lazy val eFrom = element[Collection[Boolean]]
+    lazy val eTo = new BoolCollBitSetElem(self)
+    lazy val selfType = new BoolCollBitSetIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class BoolCollBitSetIsoElem() extends Elem[BoolCollBitSetIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new BoolCollBitSetIso())
+    lazy val tag = {
+      weakTypeTag[BoolCollBitSetIso]
+    }
   }
   // 4) constructor and deconstructor
   class BoolCollBitSetCompanionAbs extends CompanionDef[BoolCollBitSetCompanionAbs] with BoolCollBitSetCompanion {
@@ -123,7 +134,7 @@ trait BitSetsAbs extends scalan.Scalan with BitSets {
 
   // 5) implicit resolution of Iso
   implicit def isoBoolCollBitSet: Iso[BoolCollBitSetData, BoolCollBitSet] =
-    cachedIso[BoolCollBitSetIso]()
+    reifyObject(new BoolCollBitSetIso())
 
   // 6) smart constructor and deconstructor
   def mkBoolCollBitSet(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet]
@@ -293,7 +304,7 @@ trait BitSetsExp extends scalan.ScalanExp with BitSetsDsl {
 }
 
 object BitSets_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVzW8bRRR/XidxbEdN8YUmF0owRUVgB6SqhxxQ6rqokkmibkHIrZAm67E7ZXZmszOObA79A+CGuCLoEam3nqpKVSWEhDj0VAESZ04FhCqgJ1DfzI53vVUXemEPq9nZt++938ebvfErLKoYTqiAcCJaIdWk5dv1ttJNvys009N35GDM6Vk6PCbvfvnGV+u3PFjtw9IVos4q3odqsuhOonTt04MeVIkIqNIyVhpe7NkK7UByTgPNpGizMBxrss9pu8eU3urBwr4cTA/gGpR6cDSQIoippn6HE6WocvvL1HTE0ueqfZ7uRlkN0TYo2nMoLsaEaWwfaxxN4i/QyJ8KKaahhiOutd3ItIUxFRZGMtazEhVMd0UOZo8LguAGNHpXySFpY4lR29cxEyP8sh6R4EMyojsYYsIXsGFF+fDiNLLP5R7UFD1Ags6HEbc7kwgAUIE3bROtjJ9Wyk/L8NP0acwIZx8R83IvlpMpJFepDDCJMMVr/5FiloF2xaD58eXg0iO/Hnrm44lppWIRLmGiFwrcYKVAHr+98Kl6+Pb10x7U+lBjantf6ZgEel5yx1adCCG17TklkMQjVGujSC1bZRtjnrBENZBhRARmclSuoE6cBUybYLO34tQpoL6iIzoLLU2iUor3eAFe65sO4XzvwdrrL//Sfd8DL1+iiil9NH48S6ph6QxDprVl1NyqjtziMingVx78NvhmEy57KU0u67MpgykW1Y/f1++ffMuD5b718TlORn1kSnU5DXfjjhS6D8vykMbJm8oh4Wb1VKUqAzokY64df/PAywhcw/HCiYuoYWXLurs0I6CeGHRHCto8t9f8y//usxvGfzGsJG+SEfyHnf77pyNDba2p0QNMK9vSqoYyTq5jw+3UOqnfU5peKhI0onsxC/EAOaSnvr797u93dhatpg2H9D3CxzQZZwc0A216WRwSrhB45YyUnBKRCTx/N1hrCSJfhvS5jYfsg+ufaCtraZI/O3b3r2LzW/a7tX9ReHaG/dnf9P5Y++ELD6ooJFITkqi5+YyT9z9OE6SGz27ryNjzhikjUTIWnfmq69mx07BLPIzz4VlUwu6c9Cch74MykpPfefokOomy0idcugIAq4WN54d9/Yk67fxmxZjGBuPZ13AiZ0e1cq3EsFFgAN/RjzCvPfp859V7N3+21q0ZIXGihM79oZxl84w0knyIJRwL/A3ij2iuaxw1o7Ht+zGmoVbGGAgAAA=="
+  val dump = "H4sIAAAAAAAAALVVTWwTRxR+tpM4tiMCRqiQCzQYqiBqh0oVhxxQMAYhuUnEAqpc1GqyHpuB2ZnNzjiyOeSYA9wQVySQuCBxQZwQUlWpqoQ4cEIIiXNPtBXKoZxa9c3sem1HWWgP3cNqZ/bte+/7ebOPfodxFcBR5RJORNmjmpQd+7yodMmpCc107xvZ7HB6hrb2y5/unXg48zQN0w2YuErUGcUbkAsfal0/fnboWh1yRLhUaRkoDZ/XbYWKKzmnrmZSVJjndTRZ5bRSZ0ov1GFsVTZ7a7ABqTrsdqVwA6qpU+VEKaqi/UlqOmLxOmfXvWV/UENUDIrKEIqLAWEa28cau8P4C9R3ekKKnqdhV9Tasm/awpgs83wZ6H6JLKa7Kpv95ZgguAHF+jWyTipYol1xdMBEG78s+MS9Ttp0CUNM+Bg2rChvXez5dp2pQ17RNSTovOdzu9P1AQAV+Mo2UR7wU475KRt+Sg4NGOHsBjEvVwLZ7UF4pTIAXR9THP9Ein4GWhPN0s0r7ncfnIKXNh93TStZi3ACEx1McIOVAnl8fuG22jp3/2Qa8g3IM7W4qnRAXD0secRWgQghte05JpAEbVRrNkktW2URY7ZZIudKzycCM0VUTqFOnLlMm2CzNxWpk0B9Vvu0H5rq+qkY76EEvNY3VcL5yrsDXx75rfZtGtKjJXKY0kHjB/2kGiZOM2RaW0bNLReRm1wmBvzFuz+av8zDlXRMU5T13ymDKcbVm9eFV3On0jDZsD4+y0m7gUypGqfeclCVQjdgUq7TIHyTXSfcPO2oVLZJW6TDdcTfMPAMAtdwKHHifGpYWbDuTvUJKIQGXZKCls6ulP50Xtx5ZPwXwFT4JhzBv9nJv97uamlrTY0eYFrZlqY1ZHByIzainXw19ntM0+EkQX26EjAPD5B1+vXPzy69/3Fp3GpajJBeJrxDw3GOgA5Am17GW4QrBJ49LSWnRAwEHr4brPkQkSM9umd2i31//5a2sqa6o2fH8uo1bH7BfnfgIwr3z7DHm5v73j/4Ya+dvUmkxiN+af4/TF5/UP7HyYLY/OGZUhyszW0GifzMEGiUC6elOtzAzPYv8YweDR9EhaQPOWIORu2RQc5Gd3Ye0Fx3x37t+miU+dOwphPhjJ4MM9uqz49uZo3DbDAelMXIEYNzXUVdBTCb4BYn0gfBb3y4u3Ts5ZNfrc/zRmkcPxH/3Yb9PcpTMcyHWLyOwH8m/rWGusa5NCawff8Dbom90UUIAAA="
 }
 }
 
