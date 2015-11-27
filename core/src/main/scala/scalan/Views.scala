@@ -60,24 +60,35 @@ trait Views extends Elems { self: ViewsDsl with Scalan =>
     lazy val eFrom: Elem[(A1, A2)] = element[(A1, A2)]
     lazy val eTo: Elem[(B1, B2)] = element[(B1, B2)]
 
-    var fromCacheKey:Option[Rep[(B1,B2)]] = None
-    var fromCacheValue:Option[Rep[(A1,A2)]] = None
-    var toCacheKey:Option[Rep[(A1,A2)]] = None
-    var toCacheValue:Option[Rep[(B1,B2)]] = None
+    // null is used since the only reason this exists is performance
+    // TODO consider removing completely
+    var fromCacheKey: Rep[(B1,B2)] = null.asInstanceOf[Rep[(B1,B2)]]
+    var fromCacheValue: Rep[(A1,A2)] = null.asInstanceOf[Rep[(A1,A2)]]
+    var toCacheKey: Rep[(A1,A2)] = null.asInstanceOf[Rep[(A1,A2)]]
+    var toCacheValue: Rep[(B1,B2)] = null.asInstanceOf[Rep[(B1,B2)]]
 
     def from(b: Rep[(B1, B2)]) = {
-      if (fromCacheKey.isEmpty || b != fromCacheKey.get) {
-        fromCacheKey = Some(b)
-        fromCacheValue = Some((iso1.from(b._1), iso2.from(b._2)))
-      }
-      fromCacheValue.get
+      if (cachePairs) {
+        // b is not null, so the condition includes fromCacheKey == null
+        if (b != fromCacheKey) {
+          fromCacheKey = b
+          fromCacheValue = Pair(iso1.from(b._1), iso2.from(b._2))
+        }
+        fromCacheValue
+      } else
+        Pair(iso1.from(b._1), iso2.from(b._2))
     }
+
     def to(a: Rep[(A1, A2)]) = {
-      if (toCacheKey.isEmpty || a != toCacheKey.get) {
-        toCacheKey = Some(a)
-        toCacheValue = Some((iso1.to(a._1), iso2.to(a._2)))
-      }
-      toCacheValue.get
+      if (cachePairs) {
+        // a is not null, so the condition includes toCacheKey == null
+        if (a != toCacheKey) {
+          toCacheKey = a
+          toCacheValue = Pair(iso1.to(a._1), iso2.to(a._2))
+        }
+        toCacheValue
+      } else
+        Pair(iso1.to(a._1), iso2.to(a._2))
     }
     override def isIdentity = iso1.isIdentity && iso2.isIdentity
     override def equals(other: Any) = other match {
