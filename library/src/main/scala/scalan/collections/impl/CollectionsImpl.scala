@@ -165,7 +165,7 @@ trait CollectionsAbs extends scalan.Scalan with Collections {
 
   // 3) Iso for concrete class
   class UnitCollectionIso
-    extends IsoUR[UnitCollectionData, UnitCollection] with Def[UnitCollectionIso] {
+    extends EntityIso[UnitCollectionData, UnitCollection] with Def[UnitCollectionIso] {
     override def from(p: Rep[UnitCollection]) =
       p.length
     override def to(p: Rep[Int]) = {
@@ -248,7 +248,7 @@ trait CollectionsAbs extends scalan.Scalan with Collections {
 
   // 3) Iso for concrete class
   class CollectionOverArrayIso[Item](implicit eItem: Elem[Item])
-    extends IsoUR[CollectionOverArrayData[Item], CollectionOverArray[Item]] with Def[CollectionOverArrayIso[Item]] {
+    extends EntityIso[CollectionOverArrayData[Item], CollectionOverArray[Item]] with Def[CollectionOverArrayIso[Item]] {
     override def from(p: Rep[CollectionOverArray[Item]]) =
       p.arr
     override def to(p: Rep[Array[Item]]) = {
@@ -332,7 +332,7 @@ trait CollectionsAbs extends scalan.Scalan with Collections {
 
   // 3) Iso for concrete class
   class CollectionOverListIso[Item](implicit eItem: Elem[Item])
-    extends IsoUR[CollectionOverListData[Item], CollectionOverList[Item]] with Def[CollectionOverListIso[Item]] {
+    extends EntityIso[CollectionOverListData[Item], CollectionOverList[Item]] with Def[CollectionOverListIso[Item]] {
     override def from(p: Rep[CollectionOverList[Item]]) =
       p.lst
     override def to(p: Rep[List[Item]]) = {
@@ -416,7 +416,7 @@ trait CollectionsAbs extends scalan.Scalan with Collections {
 
   // 3) Iso for concrete class
   class CollectionOverSeqIso[Item](implicit eItem: Elem[Item])
-    extends IsoUR[CollectionOverSeqData[Item], CollectionOverSeq[Item]] with Def[CollectionOverSeqIso[Item]] {
+    extends EntityIso[CollectionOverSeqData[Item], CollectionOverSeq[Item]] with Def[CollectionOverSeqIso[Item]] {
     override def from(p: Rep[CollectionOverSeq[Item]]) =
       p.seq
     override def to(p: Rep[SSeq[Item]]) = {
@@ -501,7 +501,7 @@ trait CollectionsAbs extends scalan.Scalan with Collections {
 
   // 3) Iso for concrete class
   class PairCollectionSOAIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends IsoUR[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] with Def[PairCollectionSOAIso[A, B]] {
+    extends EntityIso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] with Def[PairCollectionSOAIso[A, B]] {
     override def from(p: Rep[PairCollectionSOA[A, B]]) =
       (p.as, p.bs)
     override def to(p: Rep[(Collection[A], Collection[B])]) = {
@@ -588,7 +588,7 @@ trait CollectionsAbs extends scalan.Scalan with Collections {
 
   // 3) Iso for concrete class
   class PairCollectionAOSIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends IsoUR[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] with Def[PairCollectionAOSIso[A, B]] {
+    extends EntityIso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] with Def[PairCollectionAOSIso[A, B]] {
     override def from(p: Rep[PairCollectionAOS[A, B]]) =
       p.coll
     override def to(p: Rep[Collection[(A, B)]]) = {
@@ -673,7 +673,7 @@ trait CollectionsAbs extends scalan.Scalan with Collections {
 
   // 3) Iso for concrete class
   class NestedCollectionFlatIso[A](implicit eA: Elem[A])
-    extends IsoUR[NestedCollectionFlatData[A], NestedCollectionFlat[A]] with Def[NestedCollectionFlatIso[A]] {
+    extends EntityIso[NestedCollectionFlatData[A], NestedCollectionFlat[A]] with Def[NestedCollectionFlatIso[A]] {
     override def from(p: Rep[NestedCollectionFlat[A]]) =
       (p.values, p.segments)
     override def to(p: Rep[(Collection[A], PairCollection[Int, Int])]) = {

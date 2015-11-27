@@ -84,7 +84,7 @@ trait SegmentsAbs extends scalan.Scalan with Segments {
 
   // 3) Iso for concrete class
   class IntervalIso
-    extends IsoUR[IntervalData, Interval] with Def[IntervalIso] {
+    extends EntityIso[IntervalData, Interval] with Def[IntervalIso] {
     override def from(p: Rep[Interval]) =
       (p.start, p.end)
     override def to(p: Rep[(Int, Int)]) = {
@@ -167,7 +167,7 @@ trait SegmentsAbs extends scalan.Scalan with Segments {
 
   // 3) Iso for concrete class
   class SliceIso
-    extends IsoUR[SliceData, Slice] with Def[SliceIso] {
+    extends EntityIso[SliceData, Slice] with Def[SliceIso] {
     override def from(p: Rep[Slice]) =
       (p.start, p.length)
     override def to(p: Rep[(Int, Int)]) = {
@@ -251,7 +251,7 @@ trait SegmentsAbs extends scalan.Scalan with Segments {
 
   // 3) Iso for concrete class
   class CenteredIso
-    extends IsoUR[CenteredData, Centered] with Def[CenteredIso] {
+    extends EntityIso[CenteredData, Centered] with Def[CenteredIso] {
     override def from(p: Rep[Centered]) =
       (p.center, p.radius)
     override def to(p: Rep[(Int, Int)]) = {

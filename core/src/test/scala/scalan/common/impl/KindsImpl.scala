@@ -88,7 +88,7 @@ trait KindsAbs extends scalan.Scalan with Kinds {
 
   // 3) Iso for concrete class
   class ReturnIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends IsoUR[ReturnData[F, A], Return[F, A]] with Def[ReturnIso[F, A]] {
+    extends EntityIso[ReturnData[F, A], Return[F, A]] with Def[ReturnIso[F, A]] {
     override def from(p: Rep[Return[F, A]]) =
       p.a
     override def to(p: Rep[A]) = {
@@ -174,7 +174,7 @@ trait KindsAbs extends scalan.Scalan with Kinds {
 
   // 3) Iso for concrete class
   class BindIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends IsoUR[BindData[F, S, B], Bind[F, S, B]] with Def[BindIso[F, S, B]] {
+    extends EntityIso[BindData[F, S, B], Bind[F, S, B]] with Def[BindIso[F, S, B]] {
     override def from(p: Rep[Bind[F, S, B]]) =
       (p.a, p.f)
     override def to(p: Rep[(Kind[F, S], S => Kind[F, B])]) = {

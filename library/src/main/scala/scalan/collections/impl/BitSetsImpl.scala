@@ -84,7 +84,7 @@ trait BitSetsAbs extends scalan.Scalan with BitSets {
 
   // 3) Iso for concrete class
   class BoolCollBitSetIso
-    extends IsoUR[BoolCollBitSetData, BoolCollBitSet] with Def[BoolCollBitSetIso] {
+    extends EntityIso[BoolCollBitSetData, BoolCollBitSet] with Def[BoolCollBitSetIso] {
     override def from(p: Rep[BoolCollBitSet]) =
       p.bits
     override def to(p: Rep[Collection[Boolean]]) = {

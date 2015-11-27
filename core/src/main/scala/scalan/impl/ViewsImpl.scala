@@ -133,7 +133,7 @@ trait ViewsAbs extends Views {
 
   // 3) Iso for concrete class
   class IdentityIsoIso[A](implicit eA: Elem[A])
-    extends IsoUR[IdentityIsoData[A], IdentityIso[A]] with Def[IdentityIsoIso[A]] {
+    extends EntityIso[IdentityIsoData[A], IdentityIso[A]] with Def[IdentityIsoIso[A]] {
     override def from(p: Rep[IdentityIso[A]]) =
       ()
     override def to(p: Rep[Unit]) = {
@@ -222,7 +222,7 @@ trait ViewsAbs extends Views {
 
   // 3) Iso for concrete class
   class PairIsoIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends IsoUR[PairIsoData[A1, A2, B1, B2], PairIso[A1, A2, B1, B2]] with Def[PairIsoIso[A1, A2, B1, B2]] {
+    extends EntityIso[PairIsoData[A1, A2, B1, B2], PairIso[A1, A2, B1, B2]] with Def[PairIsoIso[A1, A2, B1, B2]] {
     override def from(p: Rep[PairIso[A1, A2, B1, B2]]) =
       (p.iso1, p.iso2)
     override def to(p: Rep[(IsoUR[A1, B1], IsoUR[A2, B2])]) = {
@@ -314,7 +314,7 @@ trait ViewsAbs extends Views {
 
   // 3) Iso for concrete class
   class SumIsoIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends IsoUR[SumIsoData[A1, A2, B1, B2], SumIso[A1, A2, B1, B2]] with Def[SumIsoIso[A1, A2, B1, B2]] {
+    extends EntityIso[SumIsoData[A1, A2, B1, B2], SumIso[A1, A2, B1, B2]] with Def[SumIsoIso[A1, A2, B1, B2]] {
     override def from(p: Rep[SumIso[A1, A2, B1, B2]]) =
       (p.iso1, p.iso2)
     override def to(p: Rep[(IsoUR[A1, B1], IsoUR[A2, B2])]) = {
@@ -405,7 +405,7 @@ trait ViewsAbs extends Views {
 
   // 3) Iso for concrete class
   class ComposeIsoIso[A, B, C](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C])
-    extends IsoUR[ComposeIsoData[A, B, C], ComposeIso[A, B, C]] with Def[ComposeIsoIso[A, B, C]] {
+    extends EntityIso[ComposeIsoData[A, B, C], ComposeIso[A, B, C]] with Def[ComposeIsoIso[A, B, C]] {
     override def from(p: Rep[ComposeIso[A, B, C]]) =
       (p.iso2, p.iso1)
     override def to(p: Rep[(IsoUR[B, C], IsoUR[A, B])]) = {
@@ -496,7 +496,7 @@ trait ViewsAbs extends Views {
 
   // 3) Iso for concrete class
   class FuncIsoIso[A, B, C, D](implicit eA: Elem[A], eB: Elem[B], eC: Elem[C], eD: Elem[D])
-    extends IsoUR[FuncIsoData[A, B, C, D], FuncIso[A, B, C, D]] with Def[FuncIsoIso[A, B, C, D]] {
+    extends EntityIso[FuncIsoData[A, B, C, D], FuncIso[A, B, C, D]] with Def[FuncIsoIso[A, B, C, D]] {
     override def from(p: Rep[FuncIso[A, B, C, D]]) =
       (p.iso1, p.iso2)
     override def to(p: Rep[(IsoUR[A, B], IsoUR[C, D])]) = {
@@ -586,7 +586,7 @@ trait ViewsAbs extends Views {
 
   // 3) Iso for concrete class
   class ConverterIsoIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends IsoUR[ConverterIsoData[A, B], ConverterIso[A, B]] with Def[ConverterIsoIso[A, B]] {
+    extends EntityIso[ConverterIsoData[A, B], ConverterIso[A, B]] with Def[ConverterIsoIso[A, B]] {
     override def from(p: Rep[ConverterIso[A, B]]) =
       (p.convTo, p.convFrom)
     override def to(p: Rep[(Converter[A, B], Converter[B, A])]) = {
@@ -673,7 +673,7 @@ trait ViewsAbs extends Views {
 
   // 3) Iso for concrete class
   class ArrayIsoIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends IsoUR[ArrayIsoData[A, B], ArrayIso[A, B]] with Def[ArrayIsoIso[A, B]] {
+    extends EntityIso[ArrayIsoData[A, B], ArrayIso[A, B]] with Def[ArrayIsoIso[A, B]] {
     override def from(p: Rep[ArrayIso[A, B]]) =
       p.innerIso
     override def to(p: Rep[IsoUR[A, B]]) = {
@@ -759,7 +759,7 @@ trait ViewsAbs extends Views {
 
   // 3) Iso for concrete class
   class ListIsoIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends IsoUR[ListIsoData[A, B], ListIso[A, B]] with Def[ListIsoIso[A, B]] {
+    extends EntityIso[ListIsoData[A, B], ListIso[A, B]] with Def[ListIsoIso[A, B]] {
     override def from(p: Rep[ListIso[A, B]]) =
       p.innerIso
     override def to(p: Rep[IsoUR[A, B]]) = {
@@ -845,7 +845,7 @@ trait ViewsAbs extends Views {
 
   // 3) Iso for concrete class
   class ArrayBufferIsoIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends IsoUR[ArrayBufferIsoData[A, B], ArrayBufferIso[A, B]] with Def[ArrayBufferIsoIso[A, B]] {
+    extends EntityIso[ArrayBufferIsoData[A, B], ArrayBufferIso[A, B]] with Def[ArrayBufferIsoIso[A, B]] {
     override def from(p: Rep[ArrayBufferIso[A, B]]) =
       p.innerIso
     override def to(p: Rep[IsoUR[A, B]]) = {
@@ -931,7 +931,7 @@ trait ViewsAbs extends Views {
 
   // 3) Iso for concrete class
   class ThunkIsoIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends IsoUR[ThunkIsoData[A, B], ThunkIso[A, B]] with Def[ThunkIsoIso[A, B]] {
+    extends EntityIso[ThunkIsoData[A, B], ThunkIso[A, B]] with Def[ThunkIsoIso[A, B]] {
     override def from(p: Rep[ThunkIso[A, B]]) =
       p.innerIso
     override def to(p: Rep[IsoUR[A, B]]) = {
@@ -1708,18 +1708,6 @@ trait ViewsExp extends ViewsDsl {
     // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
 
     // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
-
-    object canEqual {
-      def unapply(d: Def[_]): Option[(Rep[IsoUR[From, To]], Any) forSome {type From; type To}] = d match {
-        case MethodCall(receiver, method, Seq(other, _*), _) if receiver.elem.isInstanceOf[IsoURElem[_, _, _]] && method.getName == "canEqual" =>
-          Some((receiver, other)).asInstanceOf[Option[(Rep[IsoUR[From, To]], Any) forSome {type From; type To}]]
-        case _ => None
-      }
-      def unapply(exp: Exp[_]): Option[(Rep[IsoUR[From, To]], Any) forSome {type From; type To}] = exp match {
-        case Def(d) => unapply(d)
-        case _ => None
-      }
-    }
 
     // WARNING: Cannot generate matcher for method `isIdentity`: Method's return type Boolean is not a Rep
   }

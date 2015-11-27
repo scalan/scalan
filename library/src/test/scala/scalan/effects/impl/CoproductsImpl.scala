@@ -89,7 +89,7 @@ trait CoproductsAbs extends scalan.Scalan with Coproducts {
 
   // 3) Iso for concrete class
   class CoproductImplIso[F[_], G[_], A](implicit cF: Cont[F], cG: Cont[G], eA: Elem[A])
-    extends IsoUR[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] with Def[CoproductImplIso[F, G, A]] {
+    extends EntityIso[CoproductImplData[F, G, A], CoproductImpl[F, G, A]] with Def[CoproductImplIso[F, G, A]] {
     override def from(p: Rep[CoproductImpl[F, G, A]]) =
       p.run
     override def to(p: Rep[Either[F[A], G[A]]]) = {

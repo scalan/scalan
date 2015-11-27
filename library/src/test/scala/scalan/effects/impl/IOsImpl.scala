@@ -88,7 +88,7 @@ trait IOsAbs extends scalan.Scalan with IOs {
 
   // 3) Iso for concrete class
   class ReadFileIso
-    extends IsoUR[ReadFileData, ReadFile] with Def[ReadFileIso] {
+    extends EntityIso[ReadFileData, ReadFile] with Def[ReadFileIso] {
     override def from(p: Rep[ReadFile]) =
       p.fileName
     override def to(p: Rep[String]) = {
@@ -171,7 +171,7 @@ trait IOsAbs extends scalan.Scalan with IOs {
 
   // 3) Iso for concrete class
   class WriteFileIso
-    extends IsoUR[WriteFileData, WriteFile] with Def[WriteFileIso] {
+    extends EntityIso[WriteFileData, WriteFile] with Def[WriteFileIso] {
     override def from(p: Rep[WriteFile]) =
       (p.fileName, p.lines)
     override def to(p: Rep[(String, List[String])]) = {

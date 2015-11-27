@@ -618,7 +618,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
           case 1 => c.implicitArgs(0).name
           case _ => s"${implicitArgsUse}.productElement(n)"
         }
-        val parentIsoType = s"IsoUR[$dataTpe, ${c.typeUse}]"
+        val parentIsoType = s"EntityIso[$dataTpe, ${c.typeUse}]"
         s"""
         |$defaultImpl
         |  // elem for concrete class
@@ -963,15 +963,17 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
             case Seq() => None
             case nonEmpty => Some(s"Method has function arguments ${nonEmpty.rep(_.name)}")
           }).orElse {
+            m.name match {
+              case "toString" | "hashCode" if m.allArgs.isEmpty =>
+                Some("Overrides Object method")
+              case "equals" | "canEqual" if m.allArgs.length == 1 =>
+                Some("Overrides Object method")
+              case _ => None
+            }
+          }.orElse {
             m.tpeRes.filter(!_.isRep(module, config)).map {
               returnTpe => s"Method's return type $returnTpe is not a Rep"
             }
-          }.orElse {
-            if (
-              ((m.name == "toString" || m.name == "hashCode") && m.allArgs.isEmpty) ||
-              (m.name == "equals" && m.allArgs.length == 1))
-              Some("Overrides Object method")
-            else None
           }
         }
 

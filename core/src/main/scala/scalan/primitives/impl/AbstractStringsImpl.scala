@@ -84,7 +84,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
 
   // 3) Iso for concrete class
   class SStringIso
-    extends IsoUR[SStringData, SString] with Def[SStringIso] {
+    extends EntityIso[SStringData, SString] with Def[SStringIso] {
     override def from(p: Rep[SString]) =
       p.wrappedValue
     override def to(p: Rep[String]) = {
@@ -166,7 +166,7 @@ trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
 
   // 3) Iso for concrete class
   class CStringIso
-    extends IsoUR[CStringData, CString] with Def[CStringIso] {
+    extends EntityIso[CStringData, CString] with Def[CStringIso] {
     override def from(p: Rep[CString]) =
       p.wrappedValue
     override def to(p: Rep[String]) = {

@@ -90,7 +90,7 @@ trait StatesAbs extends scalan.Scalan with States {
 
   // 3) Iso for concrete class
   class StateBaseIso[S, A](implicit eS: Elem[S], eA: Elem[A])
-    extends IsoUR[StateBaseData[S, A], StateBase[S, A]] with Def[StateBaseIso[S, A]] {
+    extends EntityIso[StateBaseData[S, A], StateBase[S, A]] with Def[StateBaseIso[S, A]] {
     override def from(p: Rep[StateBase[S, A]]) =
       p.run
     override def to(p: Rep[S => (A, S)]) = {

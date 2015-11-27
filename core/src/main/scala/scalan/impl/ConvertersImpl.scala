@@ -90,7 +90,7 @@ trait ConvertersAbs extends Converters {
 
   // 3) Iso for concrete class
   class BaseConverterIso[T, R](implicit eT: Elem[T], eR: Elem[R])
-    extends IsoUR[BaseConverterData[T, R], BaseConverter[T, R]] with Def[BaseConverterIso[T, R]] {
+    extends EntityIso[BaseConverterData[T, R], BaseConverter[T, R]] with Def[BaseConverterIso[T, R]] {
     override def from(p: Rep[BaseConverter[T, R]]) =
       p.convFun
     override def to(p: Rep[T => R]) = {
@@ -179,7 +179,7 @@ trait ConvertersAbs extends Converters {
 
   // 3) Iso for concrete class
   class PairConverterIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends IsoUR[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] with Def[PairConverterIso[A1, A2, B1, B2]] {
+    extends EntityIso[PairConverterData[A1, A2, B1, B2], PairConverter[A1, A2, B1, B2]] with Def[PairConverterIso[A1, A2, B1, B2]] {
     override def from(p: Rep[PairConverter[A1, A2, B1, B2]]) =
       (p.conv1, p.conv2)
     override def to(p: Rep[(Converter[A1, B1], Converter[A2, B2])]) = {
@@ -271,7 +271,7 @@ trait ConvertersAbs extends Converters {
 
   // 3) Iso for concrete class
   class SumConverterIso[A1, A2, B1, B2](implicit eA1: Elem[A1], eA2: Elem[A2], eB1: Elem[B1], eB2: Elem[B2])
-    extends IsoUR[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] with Def[SumConverterIso[A1, A2, B1, B2]] {
+    extends EntityIso[SumConverterData[A1, A2, B1, B2], SumConverter[A1, A2, B1, B2]] with Def[SumConverterIso[A1, A2, B1, B2]] {
     override def from(p: Rep[SumConverter[A1, A2, B1, B2]]) =
       (p.conv1, p.conv2)
     override def to(p: Rep[(Converter[A1, B1], Converter[A2, B2])]) = {
@@ -361,7 +361,7 @@ trait ConvertersAbs extends Converters {
 
   // 3) Iso for concrete class
   class FunctorConverterIso[A, B, F[_]](implicit eA: Elem[A], eB: Elem[B], F: Functor[F])
-    extends IsoUR[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] with Def[FunctorConverterIso[A, B, F]] {
+    extends EntityIso[FunctorConverterData[A, B, F], FunctorConverter[A, B, F]] with Def[FunctorConverterIso[A, B, F]] {
     override def from(p: Rep[FunctorConverter[A, B, F]]) =
       p.itemConv
     override def to(p: Rep[Converter[A, B]]) = {
@@ -508,9 +508,9 @@ trait ConvertersExp extends ConvertersDsl {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `toString`: Method's return type String is not a Rep
+    // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
 
-    // WARNING: Cannot generate matcher for method `equals`: Method's return type Boolean is not a Rep
+    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
   }
 
   object BaseConverterCompanionMethods {
@@ -617,9 +617,9 @@ trait ConvertersExp extends ConvertersDsl {
       }
     }
 
-    // WARNING: Cannot generate matcher for method `toString`: Method's return type String is not a Rep
+    // WARNING: Cannot generate matcher for method `toString`: Overrides Object method
 
-    // WARNING: Cannot generate matcher for method `equals`: Method's return type Boolean is not a Rep
+    // WARNING: Cannot generate matcher for method `equals`: Overrides Object method
   }
 
   object FunctorConverterCompanionMethods {

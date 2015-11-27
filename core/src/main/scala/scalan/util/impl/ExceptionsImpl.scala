@@ -109,7 +109,7 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
 
   // 3) Iso for concrete class
   class SThrowableImplIso
-    extends IsoUR[SThrowableImplData, SThrowableImpl] with Def[SThrowableImplIso] {
+    extends EntityIso[SThrowableImplData, SThrowableImpl] with Def[SThrowableImplIso] {
     override def from(p: Rep[SThrowableImpl]) =
       p.wrappedValue
     override def to(p: Rep[Throwable]) = {

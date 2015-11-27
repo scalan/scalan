@@ -18,11 +18,8 @@ trait Views extends Elems { self: ViewsDsl with Scalan =>
     def from(p: Rep[To]): Rep[From]
     def to(p: Rep[From]): Rep[To]
     override def toString = s"${eFrom.name} <-> ${eTo.name}"
-    override def equals(other: Any) = other match {
-      case i: Views#IsoUR[_, _] => (this eq i) || (eFrom == i.eFrom && getClass == i.getClass /*eTo == i.eTo*/)
-      case _ => false
-    }
-    override def canEqual(other: Any) = other.isInstanceOf[IsoUR[_, _]]
+    override def equals(other: Any): Boolean =
+      !!!(s"Iso.equals must be overridden in $getClass. Make sure the outer reference is ignored when overriding.")
     override lazy val hashCode = 41 * eFrom.hashCode // + eTo.hashCode
     def isIdentity: Boolean = false
     lazy val fromFun = fun { x: Rep[To] => from(x) }(Lazy(eTo), eFrom)
@@ -206,6 +203,20 @@ trait Views extends Elems { self: ViewsDsl with Scalan =>
 }
 
 trait ViewsDsl extends impl.ViewsAbs { self: Scalan =>
+  /**
+    * The base type of all isos for user-defined types
+    */
+  trait EntityIso[From, To] extends IsoUR[From, To] {
+    override def canEqual(other: Any) = getClass == other.getClass
+    override def equals(other: Any) = other match {
+      case i: ViewsDsl#EntityIso[_, _] =>
+        // For EntityIso the target entity (without parameters) is determined by `getClass`, and the type
+        // parameters are determined by `eFrom`. `eTo` can't be used because its calculation depends on `self` and
+        // we get a stack overflow
+        (this eq i) || (eFrom == i.eFrom && getClass == i.getClass /*eTo == i.eTo*/)
+      case _ => false
+    }
+  }
 
   implicit def viewElement[From, To](implicit iso: Iso[From, To]): Elem[To] = iso.eTo // always ask elem from IsoUR
 

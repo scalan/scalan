@@ -90,7 +90,7 @@ trait ReadersAbs extends scalan.Scalan with Readers {
 
   // 3) Iso for concrete class
   class ReaderBaseIso[Env, A](implicit eEnv: Elem[Env], eA: Elem[A])
-    extends IsoUR[ReaderBaseData[Env, A], ReaderBase[Env, A]] with Def[ReaderBaseIso[Env, A]] {
+    extends EntityIso[ReaderBaseData[Env, A], ReaderBase[Env, A]] with Def[ReaderBaseIso[Env, A]] {
     override def from(p: Rep[ReaderBase[Env, A]]) =
       p.run
     override def to(p: Rep[Env => A]) = {

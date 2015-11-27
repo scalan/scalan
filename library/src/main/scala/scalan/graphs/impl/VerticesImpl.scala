@@ -91,7 +91,7 @@ trait VerticesAbs extends scalan.Scalan with Vertices {
 
   // 3) Iso for concrete class
   class SVertexIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends IsoUR[SVertexData[V, E], SVertex[V, E]] with Def[SVertexIso[V, E]] {
+    extends EntityIso[SVertexData[V, E], SVertex[V, E]] with Def[SVertexIso[V, E]] {
     override def from(p: Rep[SVertex[V, E]]) =
       (p.id, p.graph)
     override def to(p: Rep[(Int, Graph[V, E])]) = {

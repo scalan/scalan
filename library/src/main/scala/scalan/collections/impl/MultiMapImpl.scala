@@ -89,7 +89,7 @@ trait MultiMapsAbs extends scalan.Scalan with MultiMaps {
 
   // 3) Iso for concrete class
   class HashMMultiMapIso[K, V](implicit elemKey: Elem[K], elemValue: Elem[V])
-    extends IsoUR[HashMMultiMapData[K, V], HashMMultiMap[K, V]] with Def[HashMMultiMapIso[K, V]] {
+    extends EntityIso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] with Def[HashMMultiMapIso[K, V]] {
     override def from(p: Rep[HashMMultiMap[K, V]]) =
       p.map
     override def to(p: Rep[MMap[K, ArrayBuffer[V]]]) = {

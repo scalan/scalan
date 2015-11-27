@@ -85,7 +85,7 @@ trait FrontsAbs extends scalan.Scalan with Fronts {
 
   // 3) Iso for concrete class
   class BaseFrontIso
-    extends IsoUR[BaseFrontData, BaseFront] with Def[BaseFrontIso] {
+    extends EntityIso[BaseFrontData, BaseFront] with Def[BaseFrontIso] {
     override def from(p: Rep[BaseFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(CollectionOverArray[Int], BitSet)]) = {
@@ -169,7 +169,7 @@ trait FrontsAbs extends scalan.Scalan with Fronts {
 
   // 3) Iso for concrete class
   class ListFrontIso
-    extends IsoUR[ListFrontData, ListFront] with Def[ListFrontIso] {
+    extends EntityIso[ListFrontData, ListFront] with Def[ListFrontIso] {
     override def from(p: Rep[ListFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(CollectionOverList[Int], BitSet)]) = {
@@ -253,7 +253,7 @@ trait FrontsAbs extends scalan.Scalan with Fronts {
 
   // 3) Iso for concrete class
   class CollectionFrontIso
-    extends IsoUR[CollectionFrontData, CollectionFront] with Def[CollectionFrontIso] {
+    extends EntityIso[CollectionFrontData, CollectionFront] with Def[CollectionFrontIso] {
     override def from(p: Rep[CollectionFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(Collection[Int], BitSet)]) = {
@@ -337,7 +337,7 @@ trait FrontsAbs extends scalan.Scalan with Fronts {
 
   // 3) Iso for concrete class
   class MapBasedFrontIso
-    extends IsoUR[MapBasedFrontData, MapBasedFront] with Def[MapBasedFrontIso] {
+    extends EntityIso[MapBasedFrontData, MapBasedFront] with Def[MapBasedFrontIso] {
     override def from(p: Rep[MapBasedFront]) =
       p.mmap
     override def to(p: Rep[MMap[Int, Unit]]) = {

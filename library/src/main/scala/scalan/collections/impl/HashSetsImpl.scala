@@ -142,7 +142,7 @@ trait HashSetsAbs extends scalan.Scalan with HashSets {
 
   // 3) Iso for concrete class
   class SHashSetImplIso[A](implicit eA: Elem[A])
-    extends IsoUR[SHashSetImplData[A], SHashSetImpl[A]] with Def[SHashSetImplIso[A]] {
+    extends EntityIso[SHashSetImplData[A], SHashSetImpl[A]] with Def[SHashSetImplIso[A]] {
     override def from(p: Rep[SHashSetImpl[A]]) =
       p.wrappedValue
     override def to(p: Rep[HashSet[A]]) = {

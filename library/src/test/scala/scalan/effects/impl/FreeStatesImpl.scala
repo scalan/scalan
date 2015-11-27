@@ -92,7 +92,7 @@ trait FreeStatesAbs extends scalan.Scalan with FreeStates {
 
   // 3) Iso for concrete class
   class StateGetIso[S, A](implicit eS: Elem[S], eA: Elem[A])
-    extends IsoUR[StateGetData[S, A], StateGet[S, A]] with Def[StateGetIso[S, A]] {
+    extends EntityIso[StateGetData[S, A], StateGet[S, A]] with Def[StateGetIso[S, A]] {
     override def from(p: Rep[StateGet[S, A]]) =
       p.f
     override def to(p: Rep[S => A]) = {
@@ -179,7 +179,7 @@ trait FreeStatesAbs extends scalan.Scalan with FreeStates {
 
   // 3) Iso for concrete class
   class StatePutIso[S, A](implicit eS: Elem[S], eA: Elem[A])
-    extends IsoUR[StatePutData[S, A], StatePut[S, A]] with Def[StatePutIso[S, A]] {
+    extends EntityIso[StatePutData[S, A], StatePut[S, A]] with Def[StatePutIso[S, A]] {
     override def from(p: Rep[StatePut[S, A]]) =
       (p.s, p.a)
     override def to(p: Rep[(S, A)]) = {

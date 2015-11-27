@@ -88,7 +88,7 @@ trait VectorsAbs extends scalan.Scalan with Vectors {
 
   // 3) Iso for concrete class
   class DenseVectorIso[T](implicit eT: Elem[T])
-    extends IsoUR[DenseVectorData[T], DenseVector[T]] with Def[DenseVectorIso[T]] {
+    extends EntityIso[DenseVectorData[T], DenseVector[T]] with Def[DenseVectorIso[T]] {
     override def from(p: Rep[DenseVector[T]]) =
       p.items
     override def to(p: Rep[Collection[T]]) = {
@@ -173,7 +173,7 @@ trait VectorsAbs extends scalan.Scalan with Vectors {
 
   // 3) Iso for concrete class
   class ConstVectorIso[T](implicit eT: Elem[T])
-    extends IsoUR[ConstVectorData[T], ConstVector[T]] with Def[ConstVectorIso[T]] {
+    extends EntityIso[ConstVectorData[T], ConstVector[T]] with Def[ConstVectorIso[T]] {
     override def from(p: Rep[ConstVector[T]]) =
       (p.item, p.length)
     override def to(p: Rep[(T, Int)]) = {
@@ -258,7 +258,7 @@ trait VectorsAbs extends scalan.Scalan with Vectors {
 
   // 3) Iso for concrete class
   class SparseVectorIso[T](implicit eT: Elem[T])
-    extends IsoUR[SparseVectorData[T], SparseVector[T]] with Def[SparseVectorIso[T]] {
+    extends EntityIso[SparseVectorData[T], SparseVector[T]] with Def[SparseVectorIso[T]] {
     override def from(p: Rep[SparseVector[T]]) =
       (p.nonZeroIndices, p.nonZeroValues, p.length)
     override def to(p: Rep[(Collection[Int], (Collection[T], Int))]) = {
@@ -343,7 +343,7 @@ trait VectorsAbs extends scalan.Scalan with Vectors {
 
   // 3) Iso for concrete class
   class SparseVector1Iso[T](implicit eT: Elem[T])
-    extends IsoUR[SparseVector1Data[T], SparseVector1[T]] with Def[SparseVector1Iso[T]] {
+    extends EntityIso[SparseVector1Data[T], SparseVector1[T]] with Def[SparseVector1Iso[T]] {
     override def from(p: Rep[SparseVector1[T]]) =
       (p.nonZeroItems, p.length)
     override def to(p: Rep[(Collection[(Int, T)], Int)]) = {

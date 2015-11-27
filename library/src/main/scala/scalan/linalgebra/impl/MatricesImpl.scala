@@ -88,7 +88,7 @@ trait MatricesAbs extends scalan.Scalan with Matrices {
 
   // 3) Iso for concrete class
   class DenseFlatMatrixIso[T](implicit eT: Elem[T])
-    extends IsoUR[DenseFlatMatrixData[T], DenseFlatMatrix[T]] with Def[DenseFlatMatrixIso[T]] {
+    extends EntityIso[DenseFlatMatrixData[T], DenseFlatMatrix[T]] with Def[DenseFlatMatrixIso[T]] {
     override def from(p: Rep[DenseFlatMatrix[T]]) =
       (p.rmValues, p.numColumns)
     override def to(p: Rep[(Collection[T], Int)]) = {
@@ -173,7 +173,7 @@ trait MatricesAbs extends scalan.Scalan with Matrices {
 
   // 3) Iso for concrete class
   class CompoundMatrixIso[T](implicit eT: Elem[T])
-    extends IsoUR[CompoundMatrixData[T], CompoundMatrix[T]] with Def[CompoundMatrixIso[T]] {
+    extends EntityIso[CompoundMatrixData[T], CompoundMatrix[T]] with Def[CompoundMatrixIso[T]] {
     override def from(p: Rep[CompoundMatrix[T]]) =
       (p.rows, p.numColumns)
     override def to(p: Rep[(Collection[AbstractVector[T]], Int)]) = {
@@ -259,7 +259,7 @@ trait MatricesAbs extends scalan.Scalan with Matrices {
 
   // 3) Iso for concrete class
   class ConstMatrixIso[T](implicit eT: Elem[T])
-    extends IsoUR[ConstMatrixData[T], ConstMatrix[T]] with Def[ConstMatrixIso[T]] {
+    extends EntityIso[ConstMatrixData[T], ConstMatrix[T]] with Def[ConstMatrixIso[T]] {
     override def from(p: Rep[ConstMatrix[T]]) =
       (p.item, p.numColumns, p.numRows)
     override def to(p: Rep[(T, (Int, Int))]) = {
@@ -345,7 +345,7 @@ trait MatricesAbs extends scalan.Scalan with Matrices {
 
   // 3) Iso for concrete class
   class DiagonalMatrixIso[T](implicit eT: Elem[T])
-    extends IsoUR[DiagonalMatrixData[T], DiagonalMatrix[T]] with Def[DiagonalMatrixIso[T]] {
+    extends EntityIso[DiagonalMatrixData[T], DiagonalMatrix[T]] with Def[DiagonalMatrixIso[T]] {
     override def from(p: Rep[DiagonalMatrix[T]]) =
       p.diagonalValues
     override def to(p: Rep[Collection[T]]) = {

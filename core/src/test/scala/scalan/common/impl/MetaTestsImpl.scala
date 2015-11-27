@@ -84,7 +84,7 @@ trait MetaTestsAbs extends scalan.Scalan with MetaTests {
 
   // 3) Iso for concrete class
   class MT0Iso
-    extends IsoUR[MT0Data, MT0] with Def[MT0Iso] {
+    extends EntityIso[MT0Data, MT0] with Def[MT0Iso] {
     override def from(p: Rep[MT0]) =
       p.size
     override def to(p: Rep[Int]) = {
@@ -168,7 +168,7 @@ trait MetaTestsAbs extends scalan.Scalan with MetaTests {
 
   // 3) Iso for concrete class
   class MT1Iso[T](implicit elem: Elem[T])
-    extends IsoUR[MT1Data[T], MT1[T]] with Def[MT1Iso[T]] {
+    extends EntityIso[MT1Data[T], MT1[T]] with Def[MT1Iso[T]] {
     override def from(p: Rep[MT1[T]]) =
       (p.data, p.size)
     override def to(p: Rep[(T, Int)]) = {
@@ -255,7 +255,7 @@ trait MetaTestsAbs extends scalan.Scalan with MetaTests {
 
   // 3) Iso for concrete class
   class MT2Iso[T, R](implicit eT: Elem[T], eR: Elem[R])
-    extends IsoUR[MT2Data[T, R], MT2[T, R]] with Def[MT2Iso[T, R]] {
+    extends EntityIso[MT2Data[T, R], MT2[T, R]] with Def[MT2Iso[T, R]] {
     override def from(p: Rep[MT2[T, R]]) =
       (p.indices, p.values, p.size)
     override def to(p: Rep[(T, (R, Int))]) = {

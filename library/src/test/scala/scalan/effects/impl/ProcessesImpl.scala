@@ -91,7 +91,7 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
 
   // 3) Iso for concrete class
   class AwaitIso[F[_], A, O](implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
-    extends IsoUR[AwaitData[F, A, O], Await[F, A, O]] with Def[AwaitIso[F, A, O]] {
+    extends EntityIso[AwaitData[F, A, O], Await[F, A, O]] with Def[AwaitIso[F, A, O]] {
     override def from(p: Rep[Await[F, A, O]]) =
       (p.req, p.recv)
     override def to(p: Rep[(F[A], $bar[Throwable, A] => Process[F, O])]) = {
@@ -178,7 +178,7 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
 
   // 3) Iso for concrete class
   class EmitIso[F[_], O](implicit eO: Elem[O], cF: Cont[F])
-    extends IsoUR[EmitData[F, O], Emit[F, O]] with Def[EmitIso[F, O]] {
+    extends EntityIso[EmitData[F, O], Emit[F, O]] with Def[EmitIso[F, O]] {
     override def from(p: Rep[Emit[F, O]]) =
       (p.head, p.tail)
     override def to(p: Rep[(O, Process[F, O])]) = {
@@ -264,7 +264,7 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
 
   // 3) Iso for concrete class
   class HaltIso[F[_], O](implicit eO: Elem[O], cF: Cont[F])
-    extends IsoUR[HaltData[F, O], Halt[F, O]] with Def[HaltIso[F, O]] {
+    extends EntityIso[HaltData[F, O], Halt[F, O]] with Def[HaltIso[F, O]] {
     override def from(p: Rep[Halt[F, O]]) =
       p.err
     override def to(p: Rep[Throwable]) = {

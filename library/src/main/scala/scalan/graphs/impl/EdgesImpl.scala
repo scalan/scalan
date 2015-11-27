@@ -91,7 +91,7 @@ trait EdgesAbs extends scalan.Scalan with Edges {
 
   // 3) Iso for concrete class
   class AdjEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends IsoUR[AdjEdgeData[V, E], AdjEdge[V, E]] with Def[AdjEdgeIso[V, E]] {
+    extends EntityIso[AdjEdgeData[V, E], AdjEdge[V, E]] with Def[AdjEdgeIso[V, E]] {
     override def from(p: Rep[AdjEdge[V, E]]) =
       (p.fromId, p.outIndex, p.graph)
     override def to(p: Rep[(Int, (Int, Graph[V, E]))]) = {
@@ -178,7 +178,7 @@ trait EdgesAbs extends scalan.Scalan with Edges {
 
   // 3) Iso for concrete class
   class IncEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends IsoUR[IncEdgeData[V, E], IncEdge[V, E]] with Def[IncEdgeIso[V, E]] {
+    extends EntityIso[IncEdgeData[V, E], IncEdge[V, E]] with Def[IncEdgeIso[V, E]] {
     override def from(p: Rep[IncEdge[V, E]]) =
       (p.fromId, p.toId, p.graph)
     override def to(p: Rep[(Int, (Int, Graph[V, E]))]) = {

@@ -88,7 +88,7 @@ trait AuthenticationsAbs extends scalan.Scalan with Authentications {
 
   // 3) Iso for concrete class
   class LoginIso
-    extends IsoUR[LoginData, Login] with Def[LoginIso] {
+    extends EntityIso[LoginData, Login] with Def[LoginIso] {
     override def from(p: Rep[Login]) =
       (p.user, p.password)
     override def to(p: Rep[(String, String)]) = {
@@ -172,7 +172,7 @@ trait AuthenticationsAbs extends scalan.Scalan with Authentications {
 
   // 3) Iso for concrete class
   class HasPermissionIso
-    extends IsoUR[HasPermissionData, HasPermission] with Def[HasPermissionIso] {
+    extends EntityIso[HasPermissionData, HasPermission] with Def[HasPermissionIso] {
     override def from(p: Rep[HasPermission]) =
       (p.user, p.password)
     override def to(p: Rep[(String, String)]) = {

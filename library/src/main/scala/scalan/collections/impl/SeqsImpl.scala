@@ -184,7 +184,7 @@ trait SeqsAbs extends scalan.Scalan with Seqs {
 
   // 3) Iso for concrete class
   class SSeqImplIso[A](implicit eA: Elem[A])
-    extends IsoUR[SSeqImplData[A], SSeqImpl[A]] with Def[SSeqImplIso[A]] {
+    extends EntityIso[SSeqImplData[A], SSeqImpl[A]] with Def[SSeqImplIso[A]] {
     override def from(p: Rep[SSeqImpl[A]]) =
       p.wrappedValue
     override def to(p: Rep[Seq[A]]) = {

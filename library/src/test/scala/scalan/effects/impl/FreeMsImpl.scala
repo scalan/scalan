@@ -90,7 +90,7 @@ trait FreeMsAbs extends scalan.Scalan with FreeMs {
 
   // 3) Iso for concrete class
   class DoneIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends IsoUR[DoneData[F, A], Done[F, A]] with Def[DoneIso[F, A]] {
+    extends EntityIso[DoneData[F, A], Done[F, A]] with Def[DoneIso[F, A]] {
     override def from(p: Rep[Done[F, A]]) =
       p.a
     override def to(p: Rep[A]) = {
@@ -175,7 +175,7 @@ trait FreeMsAbs extends scalan.Scalan with FreeMs {
 
   // 3) Iso for concrete class
   class MoreIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends IsoUR[MoreData[F, A], More[F, A]] with Def[MoreIso[F, A]] {
+    extends EntityIso[MoreData[F, A], More[F, A]] with Def[MoreIso[F, A]] {
     override def from(p: Rep[More[F, A]]) =
       p.k
     override def to(p: Rep[F[FreeM[F, A]]]) = {
@@ -261,7 +261,7 @@ trait FreeMsAbs extends scalan.Scalan with FreeMs {
 
   // 3) Iso for concrete class
   class FlatMapIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends IsoUR[FlatMapData[F, S, B], FlatMap[F, S, B]] with Def[FlatMapIso[F, S, B]] {
+    extends EntityIso[FlatMapData[F, S, B], FlatMap[F, S, B]] with Def[FlatMapIso[F, S, B]] {
     override def from(p: Rep[FlatMap[F, S, B]]) =
       (p.a, p.f)
     override def to(p: Rep[(FreeM[F, S], S => FreeM[F, B])]) = {

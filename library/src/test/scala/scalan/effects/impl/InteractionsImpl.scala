@@ -89,7 +89,7 @@ trait InteractionsAbs extends scalan.Scalan with Interactions {
 
   // 3) Iso for concrete class
   class AskIso
-    extends IsoUR[AskData, Ask] with Def[AskIso] {
+    extends EntityIso[AskData, Ask] with Def[AskIso] {
     override def from(p: Rep[Ask]) =
       p.prompt
     override def to(p: Rep[String]) = {
@@ -172,7 +172,7 @@ trait InteractionsAbs extends scalan.Scalan with Interactions {
 
   // 3) Iso for concrete class
   class TellIso
-    extends IsoUR[TellData, Tell] with Def[TellIso] {
+    extends EntityIso[TellData, Tell] with Def[TellIso] {
     override def from(p: Rep[Tell]) =
       p.msg
     override def to(p: Rep[String]) = {
