@@ -82,6 +82,7 @@ class StructTests extends BaseViewTests {
 
   class Ctx extends TestCompilerContext {
     class ScalanCake extends ScalanCtxExp with MyProg with SegmentsDslExp {
+      // FIXME structWrapper test fails without this!
       override val cacheElems = false
 //      override val cachePairs = false
 
@@ -101,6 +102,19 @@ class StructTests extends BaseViewTests {
         assertResult(expected)(eFrom)
         iso
       }
+
+      // several elems which should have the flat result
+      val es1 = tupleStructElement(element[Int],
+        tupleStructElement(element[Char], tupleStructElement(element[Double], element[Boolean])))
+
+      val es1again = tupleStructElement(element[Int],
+        tupleStructElement(element[Char], tupleStructElement(element[Double], element[Boolean])))
+
+      val es2 = tupleStructElement(tupleStructElement(element[Int], element[Char]),
+        tupleStructElement(element[Double], element[Boolean]))
+
+      val es3 = tupleStructElement(tupleStructElement(element[Int], element[Char], element[Double]),
+        element[Boolean])
     }
     override val compiler = new DummyCompiler(new ScalanCake)
                            with StructsCompiler[ScalanCtxExp with MyProg]
@@ -121,6 +135,11 @@ class StructTests extends BaseViewTests {
     // TODO this inconsistensy can potentially lead to some problems
     // and should be fixed with better implementation of StructElem.tag
     assert(t1 == t3, "should be equal as well even though e1 != e3 !!!")
+
+    assert(es1 == es1again)
+    assert(es1 != es2)
+    assert(es1 != es3)
+    assert(es2 != es3)
   }
 
   test("StructElem as result type") {
@@ -281,5 +300,22 @@ class StructTests extends BaseViewTests {
     }
   }
 
-}
+  // TODO switch to nested tests
+  test("More flattening") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
 
+    val fis = Seq(es1, es1again, es2, es3).map(flatteningIso)
+    val Seq(fi1, fi1again, fi2, fi3) = fis
+
+    assert(fi1 == fi1again)
+    assert(fi1 != fi2)
+    assert(fi1 != fi3)
+
+    val expectedFlat = tupleStructElement(element[Int], element[Char], element[Double], element[Boolean])
+
+    val flatElems = fis.map(_.eFrom)
+
+    all(flatElems) should equal(expectedFlat)
+  }
+}
