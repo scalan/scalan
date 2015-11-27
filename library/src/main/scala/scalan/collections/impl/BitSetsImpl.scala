@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait BitSetsAbs extends BitSets with scalan.Scalan {
+trait BitSetsAbs extends scalan.Scalan with BitSets {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -133,7 +133,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait BitSetsSeq extends BitSetsDsl with scalan.ScalanSeq {
+trait BitSetsSeq extends scalan.ScalanSeq with BitSetsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs {
   }
@@ -154,7 +154,7 @@ trait BitSetsSeq extends BitSetsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
+trait BitSetsExp extends scalan.ScalanExp with BitSetsDsl {
   self: ScalanCommunityDslExp =>
   lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs {
   }

@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait CoproductsAbs extends Coproducts with scalan.Scalan {
+trait CoproductsAbs extends scalan.Scalan with Coproducts {
   self: MonadsDsl =>
 
   // single proxy for each type family
@@ -138,7 +138,7 @@ trait CoproductsAbs extends Coproducts with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait CoproductsSeq extends CoproductsDsl with scalan.ScalanSeq {
+trait CoproductsSeq extends scalan.ScalanSeq with CoproductsDsl {
   self: MonadsDslSeq =>
   lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs {
   }
@@ -159,7 +159,7 @@ trait CoproductsSeq extends CoproductsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait CoproductsExp extends CoproductsDsl with scalan.ScalanExp {
+trait CoproductsExp extends scalan.ScalanExp with CoproductsDsl {
   self: MonadsDslExp =>
   lazy val Coproduct: Rep[CoproductCompanionAbs] = new CoproductCompanionAbs {
   }

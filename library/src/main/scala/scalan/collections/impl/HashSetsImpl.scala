@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait HashSetsAbs extends HashSets with scalan.Scalan {
+trait HashSetsAbs extends scalan.Scalan with HashSets {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -185,7 +185,7 @@ trait HashSetsAbs extends HashSets with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait HashSetsSeq extends HashSetsDsl with scalan.ScalanSeq {
+trait HashSetsSeq extends scalan.ScalanSeq with HashSetsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs {
     override def empty[A:Elem]: Rep[SHashSet[A]] =
@@ -219,7 +219,7 @@ trait HashSetsSeq extends HashSetsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait HashSetsExp extends HashSetsDsl with scalan.ScalanExp {
+trait HashSetsExp extends scalan.ScalanExp with HashSetsDsl {
   self: ScalanCommunityDslExp =>
   lazy val SHashSet: Rep[SHashSetCompanionAbs] = new SHashSetCompanionAbs {
     def empty[A:Elem]: Rep[SHashSet[A]] =

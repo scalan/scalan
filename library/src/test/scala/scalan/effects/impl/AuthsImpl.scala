@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait AuthenticationsAbs extends Authentications with scalan.Scalan {
+trait AuthenticationsAbs extends scalan.Scalan with Authentications {
   self: AuthenticationsDsl =>
 
   // single proxy for each type family
@@ -211,7 +211,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
+trait AuthenticationsSeq extends scalan.ScalanSeq with AuthenticationsDsl {
   self: AuthenticationsDslSeq =>
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }
@@ -246,7 +246,7 @@ trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
+trait AuthenticationsExp extends scalan.ScalanExp with AuthenticationsDsl {
   self: AuthenticationsDslExp =>
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }

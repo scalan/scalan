@@ -665,7 +665,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
       s"""
        |// Abs -----------------------------------
-       |trait ${module.name}Abs extends ${module.name} ${config.baseContextTrait.opt(t => "with " + t)} {
+       |trait ${module.name}Abs extends ${config.baseContextTrait.opt(t => s"$t with ")}${module.name} {
        |  ${selfTypeString("")}
        |
        |${entityProxy(e)}
@@ -769,7 +769,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
       s"""
        |// Seq -----------------------------------
-       |trait ${module.name}Seq extends ${module.name}Dsl ${config.seqContextTrait.opt(t => "with " + t)} {
+       |trait ${module.name}Seq extends ${config.seqContextTrait.opt(t => s"$t with ")}${module.name}Dsl {
        |  ${selfTypeString("Seq")}
        |  lazy val ${e.name}: Rep[$companionAbsName] = new $companionAbsName {
        |    $companionMethods
@@ -891,7 +891,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
 
       s"""
        |// Exp -----------------------------------
-       |trait ${module.name}Exp extends ${module.name}Dsl ${config.stagedContextTrait.opt(t => "with " + t)} {
+       |trait ${module.name}Exp extends ${config.stagedContextTrait.opt(t => s"$t with ")}${module.name}Dsl {
        |  ${selfTypeString("Exp")}
        |  lazy val ${e.name}: Rep[$companionAbsName] = new $companionAbsName {
        |    $companionMethods

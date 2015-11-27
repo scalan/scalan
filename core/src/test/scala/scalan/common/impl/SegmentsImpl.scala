@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait SegmentsAbs extends Segments with scalan.Scalan {
+trait SegmentsAbs extends scalan.Scalan with Segments {
   self: SegmentsDsl =>
 
   // single proxy for each type family
@@ -279,7 +279,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
+trait SegmentsSeq extends scalan.ScalanSeq with SegmentsDsl {
   self: SegmentsDslSeq =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }
@@ -328,7 +328,7 @@ trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
+trait SegmentsExp extends scalan.ScalanExp with SegmentsDsl {
   self: SegmentsDslExp =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }

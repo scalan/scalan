@@ -8,7 +8,7 @@ import scalan.seq.BaseSeq
 import scalan.staged.{Transforming, BaseExp, Expressions, TransformingExp}
 import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl/*, Exceptions*/}
 
-trait Scalan
+abstract class Scalan
   extends Base
   with Debugging
   with Elems
@@ -52,7 +52,7 @@ extends Scalan
   with ExceptionsDsl
   with AbstractStringsDsl
 
-trait ScalanSeq
+abstract class ScalanSeq
   extends Scalan
   with BaseSeq
   with ElemsSeq
@@ -85,13 +85,13 @@ trait ScalanSeq
   with EffectfulSeq
   with StructsSeq
 
-trait ScalanCtxSeq
-extends ScalanDsl
-  with ScalanSeq
+class ScalanCtxSeq
+extends ScalanSeq
+  with ScalanDsl
   with ExceptionsDslSeq
   with AbstractStringsDslSeq
 
-trait ScalanExp
+abstract class ScalanExp
   extends Scalan
   with BaseExp
   with ElemsExp
@@ -128,9 +128,9 @@ trait ScalanExp
   with RewriteRulesExp
   with GraphVizExport
 
-trait ScalanCtxExp
-extends ScalanDsl
-  with ScalanExp
+class ScalanCtxExp
+extends ScalanExp
+  with ScalanDsl
   with Expressions
   with ExceptionsDslExp
   with AbstractStringsDslExp

@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ProcessesAbs extends Processes with scalan.Scalan {
+trait ProcessesAbs extends scalan.Scalan with Processes {
   self: ProcessesDsl =>
 
   // single proxy for each type family
@@ -288,7 +288,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
+trait ProcessesSeq extends scalan.ScalanSeq with ProcessesDsl {
   self: ProcessesDslSeq =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs {
   }
@@ -337,7 +337,7 @@ trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
+trait ProcessesExp extends scalan.ScalanExp with ProcessesDsl {
   self: ProcessesDslExp =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs {
   }

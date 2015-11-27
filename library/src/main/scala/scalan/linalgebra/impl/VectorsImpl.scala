@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait VectorsAbs extends Vectors with scalan.Scalan {
+trait VectorsAbs extends scalan.Scalan with Vectors {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -357,7 +357,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait VectorsSeq extends VectorsDsl with scalan.ScalanSeq {
+trait VectorsSeq extends scalan.ScalanSeq with VectorsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs {
   }
@@ -420,7 +420,7 @@ trait VectorsSeq extends VectorsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
+trait VectorsExp extends scalan.ScalanExp with VectorsDsl {
   self: ScalanCommunityDslExp =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs {
   }

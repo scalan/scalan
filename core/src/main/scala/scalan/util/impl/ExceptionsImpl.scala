@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ExceptionsAbs extends Exceptions with scalan.Scalan {
+trait ExceptionsAbs extends scalan.Scalan with Exceptions {
   self: ExceptionsDsl =>
 
   // single proxy for each type family
@@ -158,7 +158,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait ExceptionsSeq extends ExceptionsDsl with scalan.ScalanSeq {
+trait ExceptionsSeq extends scalan.ScalanSeq with ExceptionsDsl {
   self: ExceptionsDslSeq =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs {
     override def apply(msg: Rep[String]): Rep[SThrowable] =
@@ -192,7 +192,7 @@ trait ExceptionsSeq extends ExceptionsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ExceptionsExp extends ExceptionsDsl with scalan.ScalanExp {
+trait ExceptionsExp extends scalan.ScalanExp with ExceptionsDsl {
   self: ExceptionsDslExp =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs {
     def apply(msg: Rep[String]): Rep[SThrowable] =

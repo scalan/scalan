@@ -11,9 +11,9 @@ trait ArrayOpsProg extends ScalanDsl {
   }
 }
 
-class ArrayOpsItTests extends BaseItTests[ArrayOpsProg](new ArrayOpsProg with ScalanCtxSeq) {
+class ArrayOpsItTests extends BaseItTests[ArrayOpsProg](new ScalanCtxSeq with ArrayOpsProg) {
 
-  class ProgExp extends ArrayOpsProg with ScalanCommunityDslExp with JNIExtractorOpsExp
+  class ProgExp extends ScalanCommunityDslExp with ArrayOpsProg with JNIExtractorOpsExp
 
   val comp1 = new CommunityLmsCompilerScala(new ProgExp)
   val comp2 = new LmsCompilerUni(new ProgExp)

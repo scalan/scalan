@@ -9,7 +9,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait GraphsAbs extends Graphs with scalan.Scalan {
+trait GraphsAbs extends scalan.Scalan with Graphs {
   self: GraphsDsl =>
 
   // single proxy for each type family
@@ -216,7 +216,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
+trait GraphsSeq extends scalan.ScalanSeq with GraphsDsl {
   self: GraphsDslSeq =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }
@@ -251,7 +251,7 @@ trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
+trait GraphsExp extends scalan.ScalanExp with GraphsDsl {
   self: GraphsDslExp =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }

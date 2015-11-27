@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait MatricesAbs extends Matrices with scalan.Scalan {
+trait MatricesAbs extends scalan.Scalan with Matrices {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -358,7 +358,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
+trait MatricesSeq extends scalan.ScalanSeq with MatricesDsl {
   self: ScalanCommunityDslSeq =>
   lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs {
   }
@@ -421,7 +421,7 @@ trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
+trait MatricesExp extends scalan.ScalanExp with MatricesDsl {
   self: ScalanCommunityDslExp =>
   lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs {
   }

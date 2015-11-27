@@ -9,7 +9,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait InteractionsAbs extends Interactions with scalan.Scalan {
+trait InteractionsAbs extends scalan.Scalan with Interactions {
   self: InteractionsDsl =>
 
   // single proxy for each type family
@@ -210,7 +210,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
+trait InteractionsSeq extends scalan.ScalanSeq with InteractionsDsl {
   self: InteractionsDslSeq =>
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs {
   }
@@ -245,7 +245,7 @@ trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
+trait InteractionsExp extends scalan.ScalanExp with InteractionsDsl {
   self: InteractionsDslExp =>
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs {
   }

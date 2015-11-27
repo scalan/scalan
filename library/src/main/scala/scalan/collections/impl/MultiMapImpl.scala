@@ -6,7 +6,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
+trait MultiMapsAbs extends scalan.Scalan with MultiMaps {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -138,7 +138,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
+trait MultiMapsSeq extends scalan.ScalanSeq with MultiMapsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }
@@ -159,7 +159,7 @@ trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
+trait MultiMapsExp extends scalan.ScalanExp with MultiMapsDsl {
   self: ScalanCommunityDslExp =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }

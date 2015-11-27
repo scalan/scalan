@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ReadersAbs extends Readers with scalan.Scalan {
+trait ReadersAbs extends scalan.Scalan with Readers {
   self: MonadsDsl =>
 
   // single proxy for each type family
@@ -139,7 +139,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
+trait ReadersSeq extends scalan.ScalanSeq with ReadersDsl {
   self: MonadsDslSeq =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
@@ -160,7 +160,7 @@ trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
+trait ReadersExp extends scalan.ScalanExp with ReadersDsl {
   self: MonadsDslExp =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }

@@ -60,12 +60,12 @@ trait InteractionsDsl extends ScalanDsl with impl.InteractionsAbs with Interacti
   def readLine: Rep[Oper[String]]
 }
 
-trait InteractionsDslSeq extends InteractionsDsl with impl.InteractionsSeq with ScalanCtxSeq with MonadsDslSeq {
+trait InteractionsDslSeq extends ScalanCtxSeq with impl.InteractionsSeq with MonadsDslSeq {
   def println(s: Rep[String]): Rep[Oper[Unit]] = i => (i + 1, Predef.println(s))
   def readLine: Rep[Oper[String]] = i => (i + 1, StdIn.readLine())
 }
 
-trait InteractionsDslExp extends InteractionsDsl with impl.InteractionsExp with ScalanExp with MonadsDslExp {
+trait InteractionsDslExp extends ScalanCtxExp with impl.InteractionsExp with MonadsDslExp {
   def println(s: Rep[String]): Rep[Oper[Unit]] = fun { i => Println(i, s) }
   def readLine: Rep[Oper[String]] = fun { (i: Rep[Int]) => ReadLine(i) }
 

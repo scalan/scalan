@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait IOsAbs extends IOs with scalan.Scalan {
+trait IOsAbs extends scalan.Scalan with IOs {
   self: IOsDsl =>
 
   // single proxy for each type family
@@ -210,7 +210,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
+trait IOsSeq extends scalan.ScalanSeq with IOsDsl {
   self: IOsDslSeq =>
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs {
   }
@@ -245,7 +245,7 @@ trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait IOsExp extends IOsDsl with scalan.ScalanExp {
+trait IOsExp extends scalan.ScalanExp with IOsDsl {
   self: IOsDslExp =>
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs {
   }

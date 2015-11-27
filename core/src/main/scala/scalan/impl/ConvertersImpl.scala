@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ConvertersAbs extends Converters  {
+trait ConvertersAbs extends Converters {
   self: Scalan =>
 
   // single proxy for each type family
@@ -367,7 +367,7 @@ trait ConvertersAbs extends Converters  {
 }
 
 // Seq -----------------------------------
-trait ConvertersSeq extends ConvertersDsl  {
+trait ConvertersSeq extends ConvertersDsl {
   self: ScalanSeq =>
   lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs {
   }
@@ -430,7 +430,7 @@ trait ConvertersSeq extends ConvertersDsl  {
 }
 
 // Exp -----------------------------------
-trait ConvertersExp extends ConvertersDsl  {
+trait ConvertersExp extends ConvertersDsl {
   self: ScalanExp =>
   lazy val Converter: Rep[ConverterCompanionAbs] = new ConverterCompanionAbs {
   }

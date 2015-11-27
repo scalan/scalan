@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait VerticesAbs extends Vertices with scalan.Scalan {
+trait VerticesAbs extends scalan.Scalan with Vertices {
   self: GraphsDsl =>
 
   // single proxy for each type family
@@ -141,7 +141,7 @@ trait VerticesAbs extends Vertices with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait VerticesSeq extends VerticesDsl with scalan.ScalanSeq {
+trait VerticesSeq extends scalan.ScalanSeq with VerticesDsl {
   self: GraphsDslSeq =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs {
   }
@@ -162,7 +162,7 @@ trait VerticesSeq extends VerticesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait VerticesExp extends VerticesDsl with scalan.ScalanExp {
+trait VerticesExp extends scalan.ScalanExp with VerticesDsl {
   self: GraphsDslExp =>
   lazy val Vertex: Rep[VertexCompanionAbs] = new VertexCompanionAbs {
   }

@@ -9,7 +9,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait SeqsAbs extends Seqs with scalan.Scalan {
+trait SeqsAbs extends scalan.Scalan with Seqs {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -227,7 +227,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
+trait SeqsSeq extends scalan.ScalanSeq with SeqsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs {
     override def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
@@ -291,7 +291,7 @@ trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
+trait SeqsExp extends scalan.ScalanExp with SeqsDsl {
   self: ScalanCommunityDslExp =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs {
     def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =

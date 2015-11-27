@@ -12,7 +12,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait CollectionsAbs extends Collections with scalan.Scalan {
+trait CollectionsAbs extends scalan.Scalan with Collections {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -650,7 +650,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
+trait CollectionsSeq extends scalan.ScalanSeq with CollectionsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs {
   }
@@ -755,7 +755,7 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
+trait CollectionsExp extends scalan.ScalanExp with CollectionsDsl {
   self: ScalanCommunityDslExp =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs {
   }

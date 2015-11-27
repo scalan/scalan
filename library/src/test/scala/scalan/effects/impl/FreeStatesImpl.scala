@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait FreeStatesAbs extends FreeStates with scalan.Scalan {
+trait FreeStatesAbs extends scalan.Scalan with FreeStates {
   self: MonadsDsl =>
 
   // single proxy for each type family
@@ -216,7 +216,7 @@ trait FreeStatesAbs extends FreeStates with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait FreeStatesSeq extends FreeStatesDsl with scalan.ScalanSeq {
+trait FreeStatesSeq extends scalan.ScalanSeq with FreeStatesDsl {
   self: MonadsDslSeq =>
   lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs {
   }
@@ -251,7 +251,7 @@ trait FreeStatesSeq extends FreeStatesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FreeStatesExp extends FreeStatesDsl with scalan.ScalanExp {
+trait FreeStatesExp extends scalan.ScalanExp with FreeStatesDsl {
   self: MonadsDslExp =>
   lazy val StateF: Rep[StateFCompanionAbs] = new StateFCompanionAbs {
   }

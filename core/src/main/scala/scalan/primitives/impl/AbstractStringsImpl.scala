@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
+trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
   self: AbstractStringsDsl =>
 
   // single proxy for each type family
@@ -204,7 +204,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
+trait AbstractStringsSeq extends scalan.ScalanSeq with AbstractStringsDsl {
   self: AbstractStringsDslSeq =>
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs {
   }
@@ -239,7 +239,7 @@ trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
+trait AbstractStringsExp extends scalan.ScalanExp with AbstractStringsDsl {
   self: AbstractStringsDslExp =>
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs {
   }

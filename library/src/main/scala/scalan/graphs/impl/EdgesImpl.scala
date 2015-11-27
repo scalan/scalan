@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait EdgesAbs extends Edges with scalan.Scalan {
+trait EdgesAbs extends scalan.Scalan with Edges {
   self: GraphsDsl =>
 
   // single proxy for each type family
@@ -215,7 +215,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
+trait EdgesSeq extends scalan.ScalanSeq with EdgesDsl {
   self: GraphsDslSeq =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs {
   }
@@ -250,7 +250,7 @@ trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
+trait EdgesExp extends scalan.ScalanExp with EdgesDsl {
   self: GraphsDslExp =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs {
   }

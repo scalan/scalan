@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait FrontsAbs extends Fronts with scalan.Scalan {
+trait FrontsAbs extends scalan.Scalan with Fronts {
   self: FrontsDsl =>
 
   // single proxy for each type family
@@ -353,7 +353,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
+trait FrontsSeq extends scalan.ScalanSeq with FrontsDsl {
   self: FrontsDslSeq =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs {
   }
@@ -416,7 +416,7 @@ trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
+trait FrontsExp extends scalan.ScalanExp with FrontsDsl {
   self: FrontsDslExp =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs {
   }
