@@ -44,7 +44,7 @@ trait ViewsAbs extends Views {
     def convertIsoUR(x: Rep[IsoUR[From, To]]): Rep[To0] = {
       x.selfType1 match {
         case _: IsoURElem[_, _, _] => x.asRep[To0]
-        case e => !!!(s"Expected $x to have IsoURElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have IsoURElem[_, _, _], but got $e", x)
       }
     }
 
@@ -96,7 +96,7 @@ trait ViewsAbs extends Views {
     def convertIso1UR(x: Rep[Iso1UR[A, B, C]]): Rep[To] = {
       x.selfType1.asInstanceOf[Elem[_]] match {
         case _: Iso1URElem[_, _, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have Iso1URElem[_, _, _, _], but got $e")
+        case e => !!!(s"Expected $x to have Iso1URElem[_, _, _, _], but got $e", x)
       }
     }
 

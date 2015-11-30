@@ -40,7 +40,7 @@ trait FreeStatesAbs extends scalan.Scalan with FreeStates {
     def convertStateF(x: Rep[StateF[S, A]]): Rep[To] = {
       x.selfType1 match {
         case _: StateFElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have StateFElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have StateFElem[_, _, _], but got $e", x)
       }
     }
 

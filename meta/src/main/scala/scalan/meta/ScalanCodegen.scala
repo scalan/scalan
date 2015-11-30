@@ -473,7 +473,7 @@ object ScalanCodegen extends SqlCompiler with ScalanAstExtensions {
         |    def convert${e.name}(x: Rep[${e.typeUse}]): Rep[$toArgName] = {
         |      x.selfType1${e.t.isHighKind.opt(".asInstanceOf[Elem[_]]")} match {
         |        case _: $wildcardElem => x.asRep[$toArgName]
-        |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e")
+        |        case e => !!!(s"Expected $$x to have $wildcardElem, but got $$e", x)
         |      }
         |    }
         |${e.isWrapper.opt(baseTypeElem)}

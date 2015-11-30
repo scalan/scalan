@@ -35,7 +35,7 @@ trait BitSetsAbs extends scalan.Scalan with BitSets {
     def convertBitSet(x: Rep[BitSet]): Rep[To] = {
       x.selfType1 match {
         case _: BitSetElem[_] => x.asRep[To]
-        case e => !!!(s"Expected $x to have BitSetElem[_], but got $e")
+        case e => !!!(s"Expected $x to have BitSetElem[_], but got $e", x)
       }
     }
 

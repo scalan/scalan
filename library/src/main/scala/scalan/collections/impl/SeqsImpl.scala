@@ -73,7 +73,7 @@ trait SeqsAbs extends scalan.Scalan with Seqs {
     def convertSSeq(x: Rep[SSeq[A]]): Rep[To] = {
       x.selfType1 match {
         case _: SSeqElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have SSeqElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have SSeqElem[_, _], but got $e", x)
       }
     }
     lazy val baseElem =

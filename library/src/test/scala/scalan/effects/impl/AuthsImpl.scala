@@ -38,7 +38,7 @@ trait AuthenticationsAbs extends scalan.Scalan with Authentications {
     def convertAuth(x: Rep[Auth[A]]): Rep[To] = {
       x.selfType1 match {
         case _: AuthElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have AuthElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have AuthElem[_, _], but got $e", x)
       }
     }
 

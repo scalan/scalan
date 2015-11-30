@@ -354,12 +354,6 @@ trait AstGraphs extends TransformingExp { self: ScalanExp =>
     */
   case class LambdaBranches(ifBranches: Map[Exp[_], IfBranches], assignments: Map[Exp[_], BranchPath])
 
-  implicit class AstGraphOps(graph: AstGraph) {
-    def startsWith(other: AstGraph): Boolean = {
-      ???
-    }
-  }
-
   def buildScheduleForResult(st: Seq[Exp[_]], neighbours: Exp[_] => Seq[Exp[_]]): Schedule = {
     val startNodes = st.flatMap(e => findDefinition(e).toList)
     val lambdas = startNodes.flatMap(_.lambda).toSet

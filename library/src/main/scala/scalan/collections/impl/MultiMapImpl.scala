@@ -38,7 +38,7 @@ trait MultiMapsAbs extends scalan.Scalan with MultiMaps {
     def convertMMultiMap(x: Rep[MMultiMap[K, V]]): Rep[To] = {
       x.selfType1 match {
         case _: MMultiMapElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have MMultiMapElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have MMultiMapElem[_, _, _], but got $e", x)
       }
     }
 

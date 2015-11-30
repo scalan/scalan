@@ -39,7 +39,7 @@ trait StatesAbs extends scalan.Scalan with States {
     def convertState0(x: Rep[State0[S, A]]): Rep[To] = {
       x.selfType1 match {
         case _: State0Elem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have State0Elem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have State0Elem[_, _, _], but got $e", x)
       }
     }
 

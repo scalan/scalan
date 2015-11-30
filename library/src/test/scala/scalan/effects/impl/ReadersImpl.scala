@@ -39,7 +39,7 @@ trait ReadersAbs extends scalan.Scalan with Readers {
     def convertReader(x: Rep[Reader[Env, A]]): Rep[To] = {
       x.selfType1 match {
         case _: ReaderElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have ReaderElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have ReaderElem[_, _, _], but got $e", x)
       }
     }
 

@@ -92,7 +92,7 @@ trait TransformingExp extends Transforming { self: ScalanExp =>
             if (e.isInstanceOf[DelayInvokeException])
               x
             else
-              !!!(s"Failed to invoke $call", e)
+              !!!(s"Failed to invoke $call", e, x)
           case _ => x
         }
       case _ => x

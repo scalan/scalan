@@ -71,6 +71,26 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     def merge(other: Ctx): Ctx = ops.merge(self, other)
   }
 
+  override protected def stagingExceptionMessage(message: String, syms: Seq[Exp[_]]) = {
+    // Skip syms already in the message, assume that's the only source for s<N>
+    val symsNotInMessage = syms.map(_.toString).filterNot(message.contains)
+
+    if (symsNotInMessage.isEmpty) {
+      message
+    } else {
+      val between = if (message.isEmpty)
+        ""
+      else
+        message.last match {
+          // determine whether the message lacks ending punctuation
+          case '.' | ';' | '!' | '?' => " "
+          case _ => ". "
+        }
+
+      message + between + s"Sym${if (symsNotInMessage.length > 1) "s" else ""}: ${symsNotInMessage.mkString(", ")}"
+    }
+  }
+
   private[this] case class ReflectedProductClass(constructor: Constructor[_], paramFieldMirrors: List[FieldMirror], hasScalanParameter: Boolean)
 
   private[this] val selfTypeSym =

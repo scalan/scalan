@@ -152,7 +152,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   def mkMethodCall(receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean): Exp[_] = {
-    val resultElem = getResultElem(receiver, method, args)
+    val resultElem = try {
+      getResultElem(receiver, method, args)
+    } catch {
+      case e: Exception =>
+        throwInvocationException("getResultElem for", e, receiver, method, args)
+    }
     mkMethodCall(receiver, method, args, neverInvoke, resultElem)
   }
 
@@ -745,7 +750,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                 res.setMetadata(externalMethodNameMetaKey)(e.methodName)
                 res
               case e: Exception =>
-                !!!("Method invocation failed", baseCause(e))
+                throwInvocationException("Method invocation", baseCause(e), receiver, m, args)
             }
           } else {
             // try to call method m via inherited class or interfaces
@@ -763,5 +768,10 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     def invokeMethodOfVar(m: Method, args: Array[AnyRef]) = {
       mkMethodCall(receiver, m, args.toList, false)
     }
+  }
+
+  def throwInvocationException(whatFailed: String, cause: Throwable, receiver: Exp[_], m: Method, args: Seq[Any]) = {
+    val deps = receiver +: args.flatMap(syms)
+    !!!(s"$whatFailed $receiver.${m.getName}(${args.mkString(", ")}) failed", baseCause(cause), deps: _*)
   }
 }

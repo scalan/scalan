@@ -39,7 +39,7 @@ trait InteractionsAbs extends scalan.Scalan with Interactions {
     def convertInteract(x: Rep[Interact[A]]): Rep[To] = {
       x.selfType1 match {
         case _: InteractElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have InteractElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have InteractElem[_, _], but got $e", x)
       }
     }
 

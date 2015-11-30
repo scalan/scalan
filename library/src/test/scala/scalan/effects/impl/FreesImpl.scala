@@ -38,7 +38,7 @@ trait FreesAbs extends scalan.Scalan with Frees {
     def convertFree(x: Rep[Free[F, A]]): Rep[To] = {
       x.selfType1.asInstanceOf[Elem[_]] match {
         case _: FreeElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have FreeElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have FreeElem[_, _, _], but got $e", x)
       }
     }
 

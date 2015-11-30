@@ -40,7 +40,7 @@ trait EdgesAbs extends scalan.Scalan with Edges {
     def convertEdge(x: Rep[Edge[V, E]]): Rep[To] = {
       x.selfType1 match {
         case _: EdgeElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have EdgeElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have EdgeElem[_, _, _], but got $e", x)
       }
     }
 

@@ -331,7 +331,7 @@ trait StructsSeq extends Structs { self: ScalanSeq =>
   def field(struct: Rep[Struct], field: String): Rep[_] =
     struct.asInstanceOf[StructSeq[_]].fields.find(_._1 == field) match {
       case Some((_, value)) => value
-      case None => !!!(s"Field $field not found in structure $struct")
+      case None => !!!(s"Field $field not found in structure $struct", struct)
     }
   def fields(struct: Rep[Struct], fields: Seq[String]): Rep[Struct] = {
     val StructSeq(tag, fieldsInStruct) = struct

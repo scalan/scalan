@@ -37,7 +37,7 @@ trait KindsAbs extends scalan.Scalan with Kinds {
     def convertKind(x: Rep[Kind[F, A]]): Rep[To] = {
       x.selfType1.asInstanceOf[Elem[_]] match {
         case _: KindElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have KindElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have KindElem[_, _, _], but got $e", x)
       }
     }
 
