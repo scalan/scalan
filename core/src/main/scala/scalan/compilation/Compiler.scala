@@ -26,10 +26,23 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
   def buildInitialGraph[A, B](func: Exp[A => B])(compilerConfig: CompilerConfig): PGraph =
     new PGraph(func)
 
+  private def emittingGraph(file: File, graphVizConfig: GraphVizConfig)(mkGraph: => PGraph): PGraph = {
+    try {
+      val g = mkGraph
+      emitDepGraph(g, file)(graphVizConfig)
+      g
+    } catch {
+      case e: Exception =>
+        emitExceptionGraph(e, file)(graphVizConfig)
+        throw new CompilationException(e)
+    }
+  }
+
   def buildGraph[A, B](sourcesDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): PGraph = {
-    val g0 = buildInitialGraph(func)(compilerConfig)
-    val dotFile = new File(sourcesDir, s"$functionName.dot")
-    emitDepGraph(g0, dotFile)(graphVizConfig)
+    val dotFile0 = new File(sourcesDir, s"$functionName.dot")
+    val g0 = emittingGraph(dotFile0, graphVizConfig) {
+      buildInitialGraph(func)(compilerConfig)
+    }
 
     val passes = graphPasses(compilerConfig)
 
@@ -38,15 +51,17 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
     passes.zipWithIndex.foldLeft(g0) { case (graph, (passFunc, index)) =>
       val pass = passFunc(graph)
 
-      scalan.beginPass(pass)
-      val graph1 = pass(graph).withoutContext
-      scalan.endPass(pass)
-
       val indexStr = (index + 1).toString
       val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"
-      emitDepGraph(graph1, new File(sourcesDir, dotFileName))(graphVizConfig)
+      val dotFile = new File(sourcesDir, dotFileName)
 
-      graph1
+      emittingGraph(dotFile, graphVizConfig) {
+        scalan.beginPass(pass)
+        val graph1 = pass(graph).withoutContext
+        scalan.endPass(pass)
+
+        graph1
+      }
     }
   }
 
@@ -77,3 +92,5 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
 
   protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B
 }
+
+class CompilationException(cause: Exception) extends RuntimeException(cause)
