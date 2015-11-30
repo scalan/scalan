@@ -182,7 +182,7 @@ class StructTests extends BaseViewTests {
     val ctx = new Ctx {
       import compiler.scalan._
       def testWrapper[A,B](functionName: String,
-                             f: Exp[A => B], expectTuples: Boolean = false): compiler.CompilerOutput[A, B] = {
+                             f: => Exp[A => B], expectTuples: Boolean = false): compiler.CompilerOutput[A, B] = {
         val out = super.test(functionName, f)
         val hasTuples = !noTuples(out.common.graph.roots(0).asRep[A => B])
         assert(expectTuples && hasTuples || (!expectTuples && !hasTuples))

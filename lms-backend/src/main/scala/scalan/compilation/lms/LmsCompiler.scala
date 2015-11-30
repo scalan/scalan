@@ -42,36 +42,31 @@ abstract class LmsCompiler[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) ext
     }
   }
 
-  override def buildGraph[A, B](sourcesDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): PGraph = {
+  override def buildGraph[A, B](sourcesDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): CommonCompilerOutput[A, B] = {
     // pass scalan phases
-    val graph = super.buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
+    val output = super.buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
 
-    func.elem match {
-      case f: FuncElem[a, b] =>
-        (elemToManifest(f.eDom), elemToManifest(f.eRange)) match {
-          case (mA: Manifest[a], mB: Manifest[b]) =>
-            val codegen = lms.graphCodegen
-            val lmsFunc = apply[a, b](graph)
+    (elemToManifest(output.eInput), elemToManifest(output.eOutput)) match {
+      case (mA: Manifest[a], mB: Manifest[b]) =>
+        val codegen = lms.graphCodegen
+        val lmsFunc = apply[a, b](output.graph)
 
-            val log = new File(sourcesDir, s"${functionName}_lms.log")
-            FileUtil.withFile(log) { writer =>
-              try {
-                codegen.emitSource[a, b](lmsFunc, functionName, writer)(mA, mB)
-              } catch {
-                case e: Exception =>
-                  println("Exception in codegen.emitSource:")
-                  e.printStackTrace()
-              }
-            }
-
-            val dotFile = new File(sourcesDir, s"${functionName}_lms.dot")
-
-            codegen.graphStream.exportToGraphVis(dotFile, graphVizConfig)
+        val log = new File(sourcesDir, s"${functionName}_lms.log")
+        FileUtil.withFile(log) { writer =>
+          try {
+            codegen.emitSource[a, b](lmsFunc, functionName, writer)(mA, mB)
+          } catch {
+            case e: Exception =>
+              println("Exception in codegen.emitSource:")
+              e.printStackTrace()
+          }
         }
-      case _ =>
-        throw new Exception(s"LmsCompiler.buildGraph expects a function, but got ${func.toStringWithType}")
+
+        val dotFile = new File(sourcesDir, s"${functionName}_lms.dot")
+
+        codegen.graphStream.exportToGraphVis(dotFile, graphVizConfig)
     }
 
-    graph
+    output
   }
 }

@@ -26,10 +26,10 @@ trait TestContexts extends TestsUtil {
     val compiler: Compiler[_ <: ScalanExp]
     import compiler._
 
-    def test[A,B](functionName: String, f: Exp[A => B]): CompilerOutput[A, B] = {
+    def test[A,B](functionName: String, f: => Exp[A => B]): CompilerOutput[A, B] = {
       buildExecutable(FileUtil.file(prefix, functionName), functionName, f, GraphVizConfig.default)(defaultCompilerConfig)
     }
-    def test[A,B](f: Exp[A => B]): CompilerOutput[A, B] = test(testName, f)
+    def test[A,B](f: => Exp[A => B]): CompilerOutput[A, B] = test(testName, f)
 
     def emit(name: String, ss: scalan.Exp[_]*): Unit =
       scalan.emitDepGraph(ss, FileUtil.file(prefix, testName, s"$name.dot"))(scalan.defaultGraphVizConfig)

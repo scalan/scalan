@@ -27,7 +27,8 @@ class LmsCompilerUni[+ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsEx
 
   lazy val marker = new SymbolsMarkerForSelectCodegen[scalan.type](scalan)
 
-  override def buildInitialGraph[A, B](func: Exp[A => B])(compilerConfig: CompilerConfig): PGraph = {
+  // TODO can this be changed into an initial pass?
+  protected override def buildInitialGraph[A, B](func: Exp[A => B])(compilerConfig: CompilerConfig): PGraph = {
 
     val conf = compilerConfig.nativeMethods
     val needForAdapt = marker.mark(func, marker.defaultCompilationPipelineContext, conf)
@@ -49,14 +50,12 @@ class LmsCompilerUni[+ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsEx
       }
     }
 
-    needForAdapt.length match {
-      case 0 =>
-        new PGraph(func)
-      case _ => {
-        val rootList = (needForAdapt flatMap ( f => adapt(f)))
-        new PGraph(rootList)
-      }
-    }
+    val roots = if (needForAdapt.isEmpty)
+      List(func)
+    else
+      needForAdapt.flatMap(adapt)
+
+    new PGraph(roots)
   }
 
   val runtimeTargetDir = Base.config.getProperty("runtime.target")

@@ -13,7 +13,7 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
 
   type CustomCompilerOutput
 
-  case class CommonCompilerOutput[A, B](graph: PGraph, executableDir: File, name: String, eInput: Elem[A], eOutput: Elem[B])
+  case class CommonCompilerOutput[A, B](graph: PGraph, name: String, eInput: Elem[A], eOutput: Elem[B])
 
   case class CompilerOutput[A, B](common: CommonCompilerOutput[A, B], custom: CustomCompilerOutput, config: CompilerConfig)
 
@@ -23,39 +23,41 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
 
   // Can it return ProgramGraph[Ctx] for some other Ctx?
   // If so, may want to add Ctx as type argument or type member
-  def buildInitialGraph[A, B](func: Exp[A => B])(compilerConfig: CompilerConfig): PGraph =
+  protected def buildInitialGraph[A, B](func: Exp[A => B])(compilerConfig: CompilerConfig): PGraph = {
     new PGraph(func)
-
-  private def emittingGraph(file: File, graphVizConfig: GraphVizConfig)(mkGraph: => PGraph): PGraph = {
-    try {
-      val g = mkGraph
-      emitDepGraph(g, file)(graphVizConfig)
-      g
-    } catch {
-      case e: Exception =>
-        emitExceptionGraph(e, file)(graphVizConfig)
-        throw new CompilationException(e)
-    }
   }
 
-  def buildGraph[A, B](sourcesDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): PGraph = {
-    val dotFile0 = new File(sourcesDir, s"$functionName.dot")
-    val g0 = emittingGraph(dotFile0, graphVizConfig) {
-      buildInitialGraph(func)(compilerConfig)
+  def buildGraph[A, B](sourcesDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): CommonCompilerOutput[A, B] = {
+    // G is PGraph with some extra information
+    def emittingGraph[G](fileName: String, toGraph: G => PGraph)(mkGraph: => G): G = {
+      val file = new File(sourcesDir, fileName)
+      try {
+        val g = mkGraph
+        emitDepGraph(toGraph(g), file)(graphVizConfig)
+        g
+      } catch {
+        case e: Exception =>
+          emitExceptionGraph(e, file)(graphVizConfig)
+          throw new CompilationException(e)
+      }
+    }
+
+    val (initialGraph, eInput, eOutput) = emittingGraph[(PGraph, Elem[A], Elem[B])](s"$functionName.dot", _._1) {
+      val func0 = func
+      (buildInitialGraph(func0)(compilerConfig), func0.elem.eDom, func0.elem.eRange)
     }
 
     val passes = graphPasses(compilerConfig)
 
     val numPassesLength = passes.length.toString.length
 
-    passes.zipWithIndex.foldLeft(g0) { case (graph, (passFunc, index)) =>
+    val finalGraph = passes.zipWithIndex.foldLeft(initialGraph) { case (graph, (passFunc, index)) =>
       val pass = passFunc(graph)
 
       val indexStr = (index + 1).toString
       val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"
-      val dotFile = new File(sourcesDir, dotFileName)
 
-      emittingGraph(dotFile, graphVizConfig) {
+      emittingGraph[PGraph](dotFileName, g => g) {
         scalan.beginPass(pass)
         val graph1 = pass(graph).withoutContext
         scalan.endPass(pass)
@@ -63,22 +65,20 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
         graph1
       }
     }
+
+    CommonCompilerOutput(finalGraph, functionName, eInput, eOutput)
   }
 
-  def buildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)
+  def buildExecutable[A, B](sourcesDir: File, executableDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)
                            (implicit compilerConfig: CompilerConfig): CompilerOutput[A, B] = {
     sourcesDir.mkdirs()
     executableDir.mkdirs()
-    val graph = buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
-    val eFunc = func.elem
-    val eInput = eFunc.eDom
-    val eOutput = eFunc.eRange
-    val customOutput = doBuildExecutable(sourcesDir, executableDir, functionName, graph, graphVizConfig)(compilerConfig, eInput, eOutput)
-    val commonOutput = CommonCompilerOutput(graph, executableDir, functionName, eInput, eOutput)
+    val commonOutput = buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
+    val customOutput = doBuildExecutable(sourcesDir, executableDir, functionName, commonOutput.graph, graphVizConfig)(compilerConfig, commonOutput.eInput, commonOutput.eOutput)
     CompilerOutput(commonOutput, customOutput, compilerConfig)
   }
 
-  def buildExecutable[A, B](sourcesAndExecutableDir: File, functionName: String, func: Exp[A => B], graphVizConfig: GraphVizConfig)
+  def buildExecutable[A, B](sourcesAndExecutableDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)
                            (implicit compilerConfig: CompilerConfig): CompilerOutput[A, B] = {
     buildExecutable(sourcesAndExecutableDir, sourcesAndExecutableDir, functionName, func, graphVizConfig)(compilerConfig)
   }
