@@ -4,7 +4,9 @@ import scalan.BaseTests
 
 import scalan.{Scalan, ScalanCtxExp, ScalanCtxSeq}
 
-trait IfThenElseTests extends BaseTests with Scalan {
+abstract class IfThenElseTests(scalan: Scalan) extends BaseTests {
+  import scalan._
+
   test("simpleIf") {
     val res = IF (true) THEN 1 ELSE 0
     res shouldEqual toRep(1)
@@ -24,7 +26,7 @@ trait IfThenElseTests extends BaseTests with Scalan {
 }
 
 
-class IfThenElseTestsSeq extends IfThenElseTests with ScalanCtxSeq
+class IfThenElseTestsSeq extends IfThenElseTests(new ScalanCtxSeq)
 
-// Note: these tests pass thanks to rewriting of
-class IfThenElseTestsExp extends IfThenElseTests with ScalanCtxExp /*with StagedTesting*/
+// Note: these tests pass thanks to rewriting of IF with constants
+class IfThenElseTestsExp extends IfThenElseTests(new ScalanCtxExp)

@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait EdgesAbs extends Edges with scalan.Scalan {
+trait EdgesAbs extends scalan.Scalan with Edges {
   self: GraphsDsl =>
 
   // single proxy for each type family
@@ -60,8 +60,8 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     override def toString = "Edge"
   }
   def Edge: Rep[EdgeCompanionAbs]
-  implicit def proxyEdgeCompanion(p: Rep[EdgeCompanion]): EdgeCompanion =
-    proxyOps[EdgeCompanion](p)
+  implicit def proxyEdgeCompanionAbs(p: Rep[EdgeCompanionAbs]): EdgeCompanionAbs =
+    proxyOps[EdgeCompanionAbs](p)
 
   abstract class AbsAdjEdge[V, E]
       (fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
@@ -91,14 +91,27 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 3) Iso for concrete class
   class AdjEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[AdjEdgeData[V, E], AdjEdge[V, E]]()(pairElement(implicitly[Elem[Int]], pairElement(implicitly[Elem[Int]], implicitly[Elem[Graph[V, E]]]))) {
+    extends EntityIso[AdjEdgeData[V, E], AdjEdge[V, E]] with Def[AdjEdgeIso[V, E]] {
     override def from(p: Rep[AdjEdge[V, E]]) =
       (p.fromId, p.outIndex, p.graph)
     override def to(p: Rep[(Int, (Int, Graph[V, E]))]) = {
       val Pair(fromId, Pair(outIndex, graph)) = p
       AdjEdge(fromId, outIndex, graph)
     }
-    lazy val eTo = new AdjEdgeElem[V, E](this)
+    lazy val eFrom = pairElement(element[Int], pairElement(element[Int], element[Graph[V, E]]))
+    lazy val eTo = new AdjEdgeElem[V, E](self)
+    lazy val selfType = new AdjEdgeIsoElem[V, E](eV, eE)
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
+  }
+  case class AdjEdgeIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[AdjEdgeIso[V, E]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new AdjEdgeIso[V, E]()(eV, eE))
+    lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[AdjEdgeIso[V, E]]
+    }
   }
   // 4) constructor and deconstructor
   class AdjEdgeCompanionAbs extends CompanionDef[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
@@ -131,7 +144,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAdjEdge[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[AdjEdgeData[V, E], AdjEdge[V, E]] =
-    cachedIso[AdjEdgeIso[V, E]](eV, eE)
+    reifyObject(new AdjEdgeIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkAdjEdge[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]]
@@ -165,14 +178,27 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 3) Iso for concrete class
   class IncEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[IncEdgeData[V, E], IncEdge[V, E]]()(pairElement(implicitly[Elem[Int]], pairElement(implicitly[Elem[Int]], implicitly[Elem[Graph[V, E]]]))) {
+    extends EntityIso[IncEdgeData[V, E], IncEdge[V, E]] with Def[IncEdgeIso[V, E]] {
     override def from(p: Rep[IncEdge[V, E]]) =
       (p.fromId, p.toId, p.graph)
     override def to(p: Rep[(Int, (Int, Graph[V, E]))]) = {
       val Pair(fromId, Pair(toId, graph)) = p
       IncEdge(fromId, toId, graph)
     }
-    lazy val eTo = new IncEdgeElem[V, E](this)
+    lazy val eFrom = pairElement(element[Int], pairElement(element[Int], element[Graph[V, E]]))
+    lazy val eTo = new IncEdgeElem[V, E](self)
+    lazy val selfType = new IncEdgeIsoElem[V, E](eV, eE)
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
+  }
+  case class IncEdgeIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[IncEdgeIso[V, E]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new IncEdgeIso[V, E]()(eV, eE))
+    lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[IncEdgeIso[V, E]]
+    }
   }
   // 4) constructor and deconstructor
   class IncEdgeCompanionAbs extends CompanionDef[IncEdgeCompanionAbs] with IncEdgeCompanion {
@@ -205,7 +231,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoIncEdge[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[IncEdgeData[V, E], IncEdge[V, E]] =
-    cachedIso[IncEdgeIso[V, E]](eV, eE)
+    reifyObject(new IncEdgeIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkIncEdge[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]]
@@ -215,7 +241,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
+trait EdgesSeq extends scalan.ScalanSeq with EdgesDsl {
   self: GraphsDslSeq =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs {
   }
@@ -250,7 +276,7 @@ trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
+trait EdgesExp extends scalan.ScalanExp with EdgesDsl {
   self: GraphsDslExp =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs {
   }
@@ -515,7 +541,7 @@ trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
 }
 
 object Edges_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXz28bRRSeXdtxbIc0VAhoJEgILggEdqiEKhSkKrhOZWSSKFsCMhXSeHfsbJid3eyOozWH/gFwQ1wr6BGpN04IqUJCSIgDJwRInHsqRahq6QnEm9mfTrxuG5EDPox2Zt+89+b7vvdmfe0WKngues7TMcWsZhGOa5p8XvV4VWsybvLhW7YxoOQ86T1pf/P5K1/Mf6WiEx00tYO98x7toFLw0PSd+Fkje21UwkwnHrddj6Nn2jJCXbcpJTo3bVY3LWvAcZeSetv0+Eob5bu2MdxDl5HSRnO6zXSXcKI1KPY84oXr00RkZMbzkpwPN5wkBquLU9RTp7joYpND+hBjLrDfIo42ZDYbWhzNhqltOCItsCmalmO7PApRBHc7thFN8wzDAjrZ3sX7uA4h+nWNuybrw86Kg/UPcJ+sg4kwz0PCHqG9i0NHznNtVPbIHgDUshwqV3wHIQQMnJFJ1BJ8ajE+NYFPVSOuian5IRYvN13bH6Lgp+QQ8h1w8dJ9XEQeSJMZ1Y8u6e/d0yqWKjb7IpWiPOEUOFrIUIOkAnD8fusT7/aFq2dVVO6gsumtdj3uYp2nKQ/RqmDGbC5zjgHEbh/YWspiS0ZZBZsDkijptuVgBp5CKGeAJ2rqJhfGYm0mZCcD+iJ3SGSq+I4Sn3cx47xSNw1M6ebNUy+f/r35rorU0RAlcKmB8N3IKUf5ptEnoWsxnuBI2U7wFdOmnIqh5CdjcUImMSbP3/zD+G4ZXVJjJMPAD0YeuCh4v/5c+emFcyqa7kipr1Hc7wCYXpMSa8Nt2Ix30LS9T9zgTXEfU/E0lsyiQXp4QHkIcRqbHGDD0WJmUTpEALciC0CJAKgEGl63GamubVb/0n749JqQqItmgjdBlf5jnv37t9kel+rlaKrn2lbLiADOQXnHeDybRa5DNl3TgmayT1799uu3/7y+XpD8ngyPtI3pgASlHZ4oOZ0IqixDpBbjAYMy3nx8FDEscIBxwFvMIP7h1MRwetLeQt/Fzs6YM4UrhQvx+4dUWqK3cgCqZlvk0aXb5vtXP+ZSWYo/2uE2urvQUlbkvqcniCzqtHc7y+qdU798pqISaKlrcgs71eUH7A/HWPNoFK7ZRnjLyOI4M/pSFvL4Sk1oAh3MrRq7wrSRTnUh4eGJlNt55QDJKtlO4kH9jaUzrZLDDpqTHBwWAEfFMGHpIa6Tp7LrBAB8fKv9GL117rqKCm+iQg/agddGha49YEbEDNzYnPj8jWhNGWUGmMAutmIm5G8RJWCNqvedsQbNg3hUlDGkHa37HuLqYEFmdpn7lnKe20fad/wtQIyvyfH1Y6mNFtP/X7URJpyujWw5PpReU5lOjUU8B43zP1JzmosJHFdEp1zDlkmHRyT4kQx2nZSLY8FRjFcSm9CwIAGDtMJmFtRPiICLljJ6nBZeGkDA5XtX1l/88csb8lOgLK4f+BRh8Z+B9CfAKGKloBbh2z6VK6AgLiSZ578r2zzTaw0AAA=="
+  val dump = "H4sIAAAAAAAAANVXS2wbRRie9SOO7ZCG8o4ECcEFgcAOlVCFglQF16mMTBJlS1SZCjTeHTsbZmc2u+NozaHHHuCGuCKoxAWpF8QJIVVICAlx4IQQEmdOpajqgZ5A/DP78DrxuqSQAz6Mdl7/4/v+79/1tZso77noac/AFLOqTQSu6up51RMVvcGEJQavc7NPyTnSfZR//cmLn81/mUEn2mhqB3vnPNpGxeCh4Tvxs072WqiImUE8wV1PoCdbykPN4JQSQ1ic1Szb7gvcoaTWsjyx0kK5DjcHe+gy0lpozuDMcIkgep1izyNeuD5NZERWPC+q+WDDGfpgNZlFLZHFBRdbAsIHH3PB+S3i6APG2cAWaDYMbcORYcGZgmU73BWRiwKY2+FmNM0xDAvoZGsX7+MauOjVdOFarAc3yw423sE9sg5H5PEcBOwR2r0wcNQ820Ilj+wBQE3boWrFdxBCwMBpFUR1iE81xqcq8anoxLUwtd7FcnPT5f4ABT8ti5DvgInn72IiskAazKy8d8l4845etjPysi9DKagMp8DQQko1KCoAx++2PvBun796JoNKbVSyvNWOJ1xsiCTlIVplzBgXKuYYQOz2gK2lNLaUl1U4c6Akiga3HczAUgjlDPBELcMS8rBcmwnZSYG+IBwSHdV8R4vzXUzJV9VNHVO6eeOxF0791riYQZlRF0UwqUPhu5FRgXINs0dC03I8IZC2PcRXThtqKoeiPxwLEyKJMXnmxu/mt8voUiZGMnT8z8gDE3nv55/KPz57NoOm26rU1yjutQFMr0GJveHWORNtNM33iRvsFPYxlU9jySyYpIv7VIQQJ7HJAjYCLaaK0iESuBUlAC0CoBzU8DpnpLK2WflD//7Da7JEXTQT7AQq/cs68+cvs12hqlegqa7L7aYZAZwFecd4PJVGrkM2XcuGZrJPXvrmqzduXV/PK35PhiltY9ongbTDjIbZSafaMnhqMhEwqPzNx6nIYUEAjH3RZCbxD4cmh1OT7uZ7LnZ2xuQUruTPx/tHrLRhvZUCUHVuk/uXbltvXX1fqMrS/NEOt9HZhZayou49MaHIok77+ZUrD9369O0HVIeY7ljCxk5l+Qj9IZLzMeofjUI3Ww/fOEoop0c3lahTVCvHR+K9gD0oj7lVc1feqiejXkhcSXiY1w5wnyHbQ9cgy7EsJ4vnsIHGJAOH60KgQhiwshDL5/F0+QCWD2+1HqQ3z17PoPxrKN+FLuG1UL7D+8yMSIIXuSC+eDVa00ZJAlKwi+2YFPVbREOwRov64tgDjYN4lLUx/N1bUz7E1UGdpjafuyo8J/g93Tv+ziDHl9X4ynHLpMmM/5dMwoCTMkmvzCOVbiLSqbHgZ6G1/keFnULLBObLspWuYduig39P+30pnDsJa8eCrhw/Hp4JD+YVjBBW2O0CgYVguGgppQnq4QsGaLl856P153744lf1CVGSryr4hGHxn4jkp8MoeMVArPCfIBEroCBfXirOvwFrys6Sow0AAA=="
 }
 }
 

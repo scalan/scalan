@@ -6,7 +6,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
+trait MultiMapsAbs extends scalan.Scalan with MultiMaps {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -58,8 +58,8 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     override def toString = "MMultiMap"
   }
   def MMultiMap: Rep[MMultiMapCompanionAbs]
-  implicit def proxyMMultiMapCompanion(p: Rep[MMultiMapCompanion]): MMultiMapCompanion =
-    proxyOps[MMultiMapCompanion](p)
+  implicit def proxyMMultiMapCompanionAbs(p: Rep[MMultiMapCompanionAbs]): MMultiMapCompanionAbs =
+    proxyOps[MMultiMapCompanionAbs](p)
 
   abstract class AbsHashMMultiMap[K, V]
       (map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V])
@@ -89,14 +89,27 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 
   // 3) Iso for concrete class
   class HashMMultiMapIso[K, V](implicit elemKey: Elem[K], elemValue: Elem[V])
-    extends Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
+    extends EntityIso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] with Def[HashMMultiMapIso[K, V]] {
     override def from(p: Rep[HashMMultiMap[K, V]]) =
       p.map
     override def to(p: Rep[MMap[K, ArrayBuffer[V]]]) = {
       val map = p
       HashMMultiMap(map)
     }
-    lazy val eTo = new HashMMultiMapElem[K, V](this)
+    lazy val eFrom = element[MMap[K, ArrayBuffer[V]]]
+    lazy val eTo = new HashMMultiMapElem[K, V](self)
+    lazy val selfType = new HashMMultiMapIsoElem[K, V](elemKey, elemValue)
+    def productArity = 2
+    def productElement(n: Int) = (elemKey, elemValue).productElement(n)
+  }
+  case class HashMMultiMapIsoElem[K, V](elemKey: Elem[K], elemValue: Elem[V]) extends Elem[HashMMultiMapIso[K, V]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new HashMMultiMapIso[K, V]()(elemKey, elemValue))
+    lazy val tag = {
+      implicit val tagK = elemKey.tag
+      implicit val tagV = elemValue.tag
+      weakTypeTag[HashMMultiMapIso[K, V]]
+    }
   }
   // 4) constructor and deconstructor
   class HashMMultiMapCompanionAbs extends CompanionDef[HashMMultiMapCompanionAbs] with HashMMultiMapCompanion {
@@ -128,7 +141,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoHashMMultiMap[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]): Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] =
-    cachedIso[HashMMultiMapIso[K, V]](elemKey, elemValue)
+    reifyObject(new HashMMultiMapIso[K, V]()(elemKey, elemValue))
 
   // 6) smart constructor and deconstructor
   def mkHashMMultiMap[K, V](map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]]
@@ -138,7 +151,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
+trait MultiMapsSeq extends scalan.ScalanSeq with MultiMapsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }
@@ -159,7 +172,7 @@ trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
+trait MultiMapsExp extends scalan.ScalanExp with MultiMapsDsl {
   self: ScalanCommunityDslExp =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }
@@ -584,7 +597,7 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
 }
 
 object MultiMaps_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWy28bRRj/vI7rrB3SEqFCK4FDZIpAYKe59JBDlboOjzoPZaMKuRXSeD12tsw+sjOOdjn0D4Ab4oqgR6TeOHFBXJAQB04IkDhzKuVQFXoC8c3sw7uOnVYg9jDamfnme/x+v292796HEvfhAjcJI07DpoI0DPW+wUXdaDvCEuGW2x8xepUOnnO//uzi5+e/1OB0F04dEH6Vsy7o0Us78NJ3gx52QCeOSblwfS7gxY6K0DRdxqgpLNdpWrY9EqTHaLNjcbHegbme2w8P4TYUOnDGdB3Tp4IaLUY4pzxen6cyIyud62oe7njjGE5TVtHMVLHvE0tg+hjjTGS/Rz0jdFwntAUsxqnteDIttClbtuf6IglRRncHbj+ZzjkEF2Cpc4sckSaGGDYN4VvOEE9WPWK+R4Z0G02k+RwmzCkb7Ieemhc7UOH0EAF6y/aYWgk8AEAG1lQSjTE+jRSfhsSnblDfIsx6n8jNXd8NQoieQhEg8NDFa49xkXigbadf/+CmeeORUbU1eTiQqZRVhafQUW2GGhQViOO3ex/xB2/cuaRBpQsVi2/0uPCJKbKUx2hVieO4QuWcAkj8IbK1MostFWUDbSYkoZuu7REHPcVQLiBPzDItIY3l2kLMzgzoy8KjiWkh8Appvcsz6lW6aRHGdu+de/2l39rvaKDlQ+jo0kDh+4lTAfrW1ogJa4t4sX85nhZQuDYGWU6vq6kc9GA8lk9IJwXm5Xu/979ZhZtaCmcc/ckYRBcl/vOP1R9euazBfFfpfZORYRcR5W1G7R2/5TqiC/PuEfWjnfIRYfJtKqPlPh0QLDrGOQtQEQESsDyzMz0q0VtXXVBIAKhGQt52HVrf3K3/aXz38V2pUx8Wop2oVf+2Lv31y+JAKAkLKNox5IhuERs8D//c1uMYqW74PgmvjAYD6k8YTudqkrdKlJzh2vTplQfWu3c+FIqhQpC/LnZ6t7A/19W5F04gK7m2/uiuag/P/fSpBjpy0rMEFlpffcJm+x8bCPIoLbbiK1uJbC2/+dSbhB+knZGBMzFYSjdb2SwzoJfToYZsn805zJ2pjWl9NpPF+UIiMWUkoExR69domEpEan+qRDKpHvOiSy/XCRvRk/wcV9A0TGppAz8/SxOKgbN7nWfY/ctfaVB6G0oD7EvegVLPHTn9hFr8fgoaiCvJWiFPLVJJfGKnVKpnGcbw5dtje6rB8aIyVV+ckEcRlZxf+W83ZVYUyrQxNWxV6neT2BYL12aFn34T5+Q2Q54RFN6ks1om0nTo/gW2ctwf28SGeoohJhmLZvwHwGNkfFiZISgjbnFk5/ajT7Zf/f6LX9VXriIvC7yAnfQ/aCyfYIKwpcgfImOPHPy7wv+bTPbYEPIeUZn/A39oqSxvCgAA"
+  val dump = "H4sIAAAAAAAAALVWO4wbRRge2+f4bB+XcECASODjZEAgsJNrUlwRXRwfj9jn022IkIlA4/XYt2F2dm9mfNqlSJkCOkSLRCQapDSIigbRICEKKoSQqKmSIJSCVET5Z/bhXZ/3wkNsMdqZ+ed/fN/3z+7NO6goOHpBmJhi1rCJxA1Dv28KWTfaTFrS7zrDCSUXyOgp59vPznxx6us8Ot5Hx/awuCBoH5WDl7bnxu8G2e+gMmYmEdLhQqLnOjpC03QoJaa0HNa0bHsi8YCSZscScqODFgbO0N9H11Cug06YDjM5kcRoUSwEEeH6IlEZWfG8rOd+z53GYE1VRTNRxSWOLQnpQ4wTgf0ucQ2fOcy3JVoOU+u5Ki2wKVm263AZhSiBuz1nGE0XGIYFtNK5ig9wE0KMm4bkFhvDyaqLzffxmGyDiTJfgIQFoaNLvqvnhQ6qCLIPAL1hu1SveC5CCBhY10k0pvg0YnwaCp+6QbiFqfUBVps73PF8FDy5AkKeCy5eeYiLyANps2H9wyvmO/eMqp1Xhz2VSklXeAwc1TLUoKkAHL/f/Vjcfe3G2Tyq9FHFEpsDITk2ZZLyEK0qZsyROucYQMzHwNZaFls6yibYzEiibDq2ixl4CqFcAp6oZVpSGau1pZCdDOhL0iWRac5zc3G9qxn1at20MKU7t55+9fnb7bfzKJ8OUQaXBgifR04lKne7EyqtLnZD/2o8LlHu4hRkNb2sp2ooe9OxdEQ6MTAv3vp9+N1pdCUfwxlG/3sMgoui+OXn6k8vncujxb7W+xbF4z4gKtqU2D3ecpjso0XngPBgp3SAqXqby2hpSEYYig5xTgJUAIAkWs3sTJco9DZ0F+QiAKqBkLcdRupbO/U/jR8+ual0ytFSsBO06n3r7F+/Lo+klrBEBTuEHNAtQIOn4V/oPoyR6ibn2D8/GY0InzGcz9Usb5UgOcOxyaNrd613b3wkNUM5L31d9AZXoT839LlnjyArura+vH79iT8+f+8x3W6LA0tCofXT/6DZot74H5sJpRFbboXXtxbcenrzkdex2Iu7JAFtZLASb7aSWZaScKvxyXhVDzUQwcmU79TxWuJgIqFTuUh52kiiEoEWuEj8WDmqJeYqJ5H1IS9l5eUyphNylJ/DwpoHTy3u62eypKLJOLnbeZzeOfdNHhXfRMURtKvooOLAmbBhxDJ8ViXx5PloLZdmGVjFHNsxq/pZRVP40l3Tm2twuKhE1WdmlFIAgadX/tsFmqEPPW/MzaCqVL2FbYv661mZZNzVGSLM0G8AkDvrt5YIOh/Qf4G4Gt+a2oSG5RhZSDKU0vR3QYQgcbSWITMjvAOAs2v3Pt1++cevftOfxIq6TeC2ZvFP01RU3gyNK4E/QMaeMPgVg5+hRPbQJuqi0Zk/AGSD8HqcCgAA"
 }
 }
 

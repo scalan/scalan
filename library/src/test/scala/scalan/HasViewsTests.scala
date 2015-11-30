@@ -7,42 +7,55 @@ import scalan.primitives.StructsCompiler
 
 class HasViewsTests extends BaseViewTests {
 
-  test("HasViews") {
+  test("Base types") {
     val ctx = new ViewTestsCtx with SegmentsDslExp with ScalanCommunityDslExp
     import ctx._
 
     testNoViews(10)
-    testNoViews(Pair(10,10))
+    testNoViews(Pair(10, 10))
     testNoViews(toRep(10).asLeft[Boolean])
     testNoViews(toRep(10).asRight[Boolean])
     testNoViews(SArray.empty[Int])
-    testNoViews(SArray.empty[(Int,Boolean)])
-    testNoViews(SArray.empty[(Int|Boolean)])
+    testNoViews(SArray.empty[(Int, Boolean)])
+    testNoViews(SArray.empty[(Int | Boolean)])
+  }
+
+  test("Simple classes and traits") {
+    val ctx = new ViewTestsCtx with SegmentsDslExp with ScalanCommunityDslExp
+    import ctx._
 
     testHasViews(toRep(10).asLeft[Interval], element[Int | (Int, Int)])
     testHasViews(toRep(10).asRight[Interval], element[(Int, Int) | Int])
     testNoViews(toRep(10).asRight[Segment])
-    testHasViews(Interval(10,10).asRight[Segment], element[Segment | (Int, Int)])
+    testHasViews(Interval(10, 10).asRight[Segment], element[Segment | (Int, Int)])
 
-    testHasViews(Interval(10,10), element[(Int, Int)])
-    testHasViews(Pair(Interval(10,10), 1), element[((Int, Int),Int)])
+    testHasViews(Interval(10, 10), element[(Int, Int)])
+    testHasViews(Pair(Interval(10, 10), 1), element[((Int, Int), Int)])
     testHasViews(SArray.empty[Interval], element[Array[(Int, Int)]])
     testHasViews(SArray.empty[Array[Interval]], element[Array[Array[(Int, Int)]]])
+  }
 
-    // Lambda argument tests
+  test("Lambda arguments") {
+    val ctx = new ViewTestsCtx with SegmentsDslExp with ScalanCommunityDslExp
+    import ctx._
+
     fun { x: Rep[Segment] =>
       testNoViews(x)
-      testHasViews(Pair(Interval(10,10), x), element[((Int, Int),Segment)])
+      testHasViews(Pair(Interval(10, 10), x), element[((Int, Int), Segment)])
       x
     }
-    fun { in: Rep[(Interval,Segment)] =>
-      val Pair(x,y) = in
+    fun { in: Rep[(Interval, Segment)] =>
+      val Pair(x, y) = in
       testHasViews(x, element[(Int, Int)])
       testHasViews(in, element[((Int, Int), Segment)])
       x
     }
+  }
 
-    // TypeWrappers
+  test("Type wrappers") {
+    val ctx = new ViewTestsCtx with SegmentsDslExp with ScalanCommunityDslExp
+    import ctx._
+
     val f1 =  fun { x: Rep[Seq[Int]] =>
       val res = SSeqImpl(x)
       testHasViews(res, element[Seq[Int]])

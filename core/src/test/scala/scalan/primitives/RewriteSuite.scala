@@ -2,7 +2,9 @@ package scalan.primitives
 
 import scalan.{ScalanCtxExp, BaseTests}
 
-class RewriteSuite extends BaseTests with ScalanCtxExp {
+class RewriteSuite extends BaseTests {
+  val scalan = new ScalanCtxExp
+  import scalan._
   // TODO will be a describe block
   {
     val rand1 = random(5)

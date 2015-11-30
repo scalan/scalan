@@ -73,7 +73,7 @@ class mvm extends BaseBenchmark {
     val inFD = Gen.single("fmdv")((fmat,dvec))
     val inFS = Gen.single("fmsv")((fmat,svec))
 
-    val ctx = new  LinearAlgebraExamples with ScalanCommunityDslSeq
+    val ctx = new ScalanCommunityDslSeq with LinearAlgebraExamples
 
     performance of "mvm" config (
       exec.minWarmupRuns -> 5,

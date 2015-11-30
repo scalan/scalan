@@ -53,12 +53,12 @@ trait IOsDsl extends ScalanDsl with impl.IOsAbs with IOs
   def writeFileIO(s: Rep[String], lines: Rep[List[String]]): Rep[Oper[Unit]]
 }
 
-trait IOsDslSeq extends IOsDsl with impl.IOsSeq with ScalanCtxSeq with MonadsDslSeq {
+trait IOsDslSeq extends ScalanCtxSeq with impl.IOsSeq with MonadsDslSeq {
   def readFileIO(s: Rep[String]): Rep[Oper[List[String]]] = ???
   def writeFileIO(s: Rep[String], lines: Rep[List[String]]): Rep[Oper[Unit]] = ???
 }
 
-trait IOsDslExp extends IOsDsl with impl.IOsExp with ScalanExp with MonadsDslExp {
+trait IOsDslExp extends ScalanCtxExp with impl.IOsExp with MonadsDslExp {
   def readFileIO(s: Rep[String]): Rep[Oper[List[String]]] =
     fun { i => ReadF(i, s) }
   def writeFileIO(s: Rep[String], lines: Rep[List[String]]): Rep[Oper[Unit]] =

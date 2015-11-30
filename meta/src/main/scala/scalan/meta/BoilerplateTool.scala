@@ -10,7 +10,8 @@ class BoilerplateTool extends StrictLogging {
     name = "scalan",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
-      "scalan/Converters.scala"
+      "scalan/Converters.scala",
+      "scalan/Views.scala"
     ),
     scalanTypeSynonyms,
     baseContextTrait = "", // not defined means not declare

@@ -3,7 +3,7 @@ package scalan
 import scalan.staged.Expressions
 import scalan.common.Lazy
 
-trait Converters extends Views { self: Scalan =>
+trait Converters extends ViewsDsl { self: Scalan =>
 
   type Conv[T,R] = Rep[Converter[T,R]]
   trait Converter[T,R] extends Def[Converter[T,R]] {

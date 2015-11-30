@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait IOsAbs extends IOs with scalan.Scalan {
+trait IOsAbs extends scalan.Scalan with IOs {
   self: IOsDsl =>
 
   // single proxy for each type family
@@ -58,8 +58,8 @@ trait IOsAbs extends IOs with scalan.Scalan {
     override def toString = "IO"
   }
   def IO: Rep[IOCompanionAbs]
-  implicit def proxyIOCompanion(p: Rep[IOCompanion]): IOCompanion =
-    proxyOps[IOCompanion](p)
+  implicit def proxyIOCompanionAbs(p: Rep[IOCompanionAbs]): IOCompanionAbs =
+    proxyOps[IOCompanionAbs](p)
 
   abstract class AbsReadFile
       (fileName: Rep[String])
@@ -88,14 +88,25 @@ trait IOsAbs extends IOs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ReadFileIso
-    extends Iso[ReadFileData, ReadFile] {
+    extends EntityIso[ReadFileData, ReadFile] with Def[ReadFileIso] {
     override def from(p: Rep[ReadFile]) =
       p.fileName
     override def to(p: Rep[String]) = {
       val fileName = p
       ReadFile(fileName)
     }
-    lazy val eTo = new ReadFileElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new ReadFileElem(self)
+    lazy val selfType = new ReadFileIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class ReadFileIsoElem() extends Elem[ReadFileIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new ReadFileIso())
+    lazy val tag = {
+      weakTypeTag[ReadFileIso]
+    }
   }
   // 4) constructor and deconstructor
   class ReadFileCompanionAbs extends CompanionDef[ReadFileCompanionAbs] with ReadFileCompanion {
@@ -127,7 +138,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReadFile: Iso[ReadFileData, ReadFile] =
-    cachedIso[ReadFileIso]()
+    reifyObject(new ReadFileIso())
 
   // 6) smart constructor and deconstructor
   def mkReadFile(fileName: Rep[String]): Rep[ReadFile]
@@ -160,14 +171,25 @@ trait IOsAbs extends IOs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class WriteFileIso
-    extends Iso[WriteFileData, WriteFile]()(pairElement(implicitly[Elem[String]], implicitly[Elem[List[String]]])) {
+    extends EntityIso[WriteFileData, WriteFile] with Def[WriteFileIso] {
     override def from(p: Rep[WriteFile]) =
       (p.fileName, p.lines)
     override def to(p: Rep[(String, List[String])]) = {
       val Pair(fileName, lines) = p
       WriteFile(fileName, lines)
     }
-    lazy val eTo = new WriteFileElem(this)
+    lazy val eFrom = pairElement(element[String], element[List[String]])
+    lazy val eTo = new WriteFileElem(self)
+    lazy val selfType = new WriteFileIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class WriteFileIsoElem() extends Elem[WriteFileIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new WriteFileIso())
+    lazy val tag = {
+      weakTypeTag[WriteFileIso]
+    }
   }
   // 4) constructor and deconstructor
   class WriteFileCompanionAbs extends CompanionDef[WriteFileCompanionAbs] with WriteFileCompanion {
@@ -200,7 +222,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoWriteFile: Iso[WriteFileData, WriteFile] =
-    cachedIso[WriteFileIso]()
+    reifyObject(new WriteFileIso())
 
   // 6) smart constructor and deconstructor
   def mkWriteFile(fileName: Rep[String], lines: Rep[List[String]]): Rep[WriteFile]
@@ -210,7 +232,7 @@ trait IOsAbs extends IOs with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
+trait IOsSeq extends scalan.ScalanSeq with IOsDsl {
   self: IOsDslSeq =>
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs {
   }
@@ -245,7 +267,7 @@ trait IOsSeq extends IOsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait IOsExp extends IOsDsl with scalan.ScalanExp {
+trait IOsExp extends scalan.ScalanExp with IOsDsl {
   self: IOsDslExp =>
   lazy val IO: Rep[IOCompanionAbs] = new IOCompanionAbs {
   }
@@ -331,7 +353,7 @@ trait IOsExp extends IOsDsl with scalan.ScalanExp {
 }
 
 object IOs_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWz28bRRR+Xsd2bEdNG6FCK1WkxhBagR2QUA85VCFNUNASR9kWKrdCGq/H7pTZ2c3OOFpz6B8AN8QVQY9IvXFCSBUSQkIcOCFA4sypFKEK6AnE29kfXid28IU9jHZm37wf3/u+p733EArSh+ekTTgRDYcq0rD0+7pUdWtTKKaGb7jdAadXaO8p98tPXvr07OcGLLaheIvIK5K3oRy9bAZe+m7RfRPKRNhUKteXCs6bOkLTdjmntmKuaDLHGSjS4bRpMqnWTJjruN3hPtyBnAknbVfYPlXU2uBESirj83kaZsTSfVnvhy1vFEM0wyqamSqu+oQpTB9jnIzs96hnDYUrho6CE3FqLS9MC21KzPFcXyUhSujulttNtnOC4AEsmbfJAWliiH7TUj4TfbxZ9Yj9DunTHTQJzecwYUl57+rQ0/u8CRVJ9xGgbcfj+iTwAAA78LJOojHCp5Hi0wjxqVvUZ4Szd0n4cdd3gyFETy4PEHjo4oX/cJF4oJuiW3/vpn3jsVV1jPByEKZS0hUW0dHTU9igW4E4frP3gXz02t1LBlTaUGFyvSOVT2yVbXmMVpUI4Sqdcwog8fvYrdq0buko62hziBJl23U8ItBTDOUC9okzm6nQODxbiLszBfqS8mhimgu8XFrv8pR6NW82COe7D868+Oyvm9cNMMZDlNGlhcT3E6cKjO1W7DhcFxWaIfZprGemxfLors8c5PYBfeWrL679fn+noMMtdWmPDLh6k/ABjZgWBx8louPWagqKI4NycHgtHVNqCvrKg9+6X6/CTSNtVVzZbOxAFwX50w/V7y9cNmC+rbW0xUm/jd2Sm5w6LX/DFaoN8+4B9aMvpQPCw7eJbCnF5cc9zIKfR/AVLE9VvUfDzqxpheUSAKqRSHZcQetbu/W/rG8/vBdqwIeF6Es0Bv5hl/7++URPaXkomO8xrlWdNDWPEyRCJFyenAR1JfJnuQ49VXvE3r77vtKg5oLx6dHq3Ea5rul754/BN5lif7ZXjT/O/PixAWWEscOUQ7z66oza+x/1BLrw8aWG2J3ao6S7hfhtZOPVRiPnrH5FkBPDQ9+ruXFBjSvsNB48fwFldk0wdbQPOkDG/FxKBh1l1tZOvlvgTFB59OIE6U+kSTbJFb1enIbi0ls+U3QWGMup5cggU0QxjjOeaR6JdRzKeJBbz7g6UsPMhVS3WxMqiAan3qeD5tz0UYm0O71nPsEfXr5vQOF1KPRwfkgTCh13ILoJn/EfQtFAvZqc5cb5jPwlPnFS/upnGUZJTa3ZHEcWDfOIloLFOGMaEJRSzIwVLKU2pRQrVhSif+fxRzsXv/vsFz30K6E2cUSJ9C8kO+zH+1LE0PhHkUkUiRdKVSf5LzMoaznhCQAA"
+  val dump = "H4sIAAAAAAAAALVWTYgcRRSu7tn5X7LJqlEDwc04cU3QmShIDnsI62ZWVtqZZTuJMgalpqdmUrG6urerZunxkGMOehOvggEvQi7iSYQgiCAePIkInj3FSMjBnBRfV/9Mz2R6HQ/OoeiqfvV+vvd9b/r2PZQXHnpOWJhh3rCJxA1TPW8KWTdbXFI5fsPpjxi5SAZPOd98+tLnJ77S0UoXFa5hcVGwLiqHDy3fTZ5Nsm+gMuYWEdLxhESnDBWhaTmMEUtShzepbY8k7jHSNKiQGwZa6jn98T66gTQDHbUcbnlEEnOLYSGIiM5LJMiIJvuy2o877iQGbwZVNFNVXPIwlZA+xDga2u8R1xxzh49tiY5EqXXcIC2wKVLbdTwZhyiCu2tOP94ucQwHaNW4jg9wE0IMm6b0KB/CzaqLrffwkLTBJDBfgoQFYYNLY1ftcwaqCLIPAO3YLlMnvosQgg68rJJoTPBpJPg0AnzqJvEoZvR9HLzc9Rx/jMKflkPId8HFC//iIvZAWrxf/+Cq9fZDs2rrwWU/SKWoKiyAo2cy2KBaATh+v/eRePDarfM6qnRRhYrNnpAetmS65RFaVcy5I1XOCYDYG0K3alndUlE2wWaGEmXLsV3MwVME5TL0iVGLysA4OFuOupMBfVG6JDbVfFdL6l3LqFfxZgsztnv36RdP/956S0f6dIgyuDSB+F7sVCJ9pxM5DtYVCWaAfRLr2axYLtn1qA3cPiCvfPv15ft32nkVbrVPBnjE5BXMRiRkWhR8koiKW6tJVJgYlP3ZtXhIqQno63f/6H93Dl3Vk1ZFlS3GDnCRF7/8XP3pzAUdlbpKS9sMD7vQLdFixO54Ww6XXVRyDogXvikeYBY8zWVLMSo/6mEa/ByAL9FapupdEnRmQylMiwGohiJpO5zUt3frf5o/fHw70ICHlsM34Rj4m57/69cjA6nkIVFpQJlSddzUHEyQEJFgeXIe1JXQn+nY5FjtAX3n1odSgar509Oj07sOct1Q904dgm88xb64efOJ+5+9+5hSX6lHpY3d+rn/oL1YKv+jtpACYTJVTkz2wVIDSI/tEdzfBli30qFrs3cA+9hw5n1Vm9bZtPCOw8HzZ0B9lzmVj7ZHBUiZn0w4oqIs2vH5d/OMciIevThnIsxlTzrJdbWeXQDQ1Tc9KskiiJYTy4lBqp5CFHI66RxQ7zDA4UDbTLnKwHymjsXLq+505tQVDly1TwbUyewRCxQ9vmc8zu5duKOj/OsoP4C5IwyU7zkj3o+5D98ekvjy1fhMm+Y+cB172E64rn5raJJUJhLtabzBMAcYSrQSZUx8DLKLqLMOpdQySjEj9UFPbjz8pH32xy9/U38WlUDHMNp48vWS/pOY7lYBQsOXSCpRYGYga5XkP5B3tpYZCgAA"
 }
 }
 

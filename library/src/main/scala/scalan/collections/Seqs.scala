@@ -96,7 +96,7 @@ trait SeqsDslExp extends impl.SeqsExp { self: ScalanCommunityDslExp =>
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
       val filtered = view.source.filter(fun{ x => ff(iso.to(x))})
-      ViewSSeq(filtered)(SSeqIso(iso))
+      ViewSSeq(filtered, iso)
     }
 
     case _ => super.rewriteDef(d)

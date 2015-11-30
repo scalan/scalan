@@ -5,7 +5,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait MetaTestsAbs extends MetaTests with scalan.Scalan {
+trait MetaTestsAbs extends scalan.Scalan with MetaTests {
   self: MetaTestsDsl =>
 
   // single proxy for each type family
@@ -55,8 +55,8 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
     override def toString = "MetaTest"
   }
   def MetaTest: Rep[MetaTestCompanionAbs]
-  implicit def proxyMetaTestCompanion(p: Rep[MetaTestCompanion]): MetaTestCompanion =
-    proxyOps[MetaTestCompanion](p)
+  implicit def proxyMetaTestCompanionAbs(p: Rep[MetaTestCompanionAbs]): MetaTestCompanionAbs =
+    proxyOps[MetaTestCompanionAbs](p)
 
   abstract class AbsMT0
       (size: Rep[Int])
@@ -84,14 +84,25 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 3) Iso for concrete class
   class MT0Iso
-    extends Iso[MT0Data, MT0] {
+    extends EntityIso[MT0Data, MT0] with Def[MT0Iso] {
     override def from(p: Rep[MT0]) =
       p.size
     override def to(p: Rep[Int]) = {
       val size = p
       MT0(size)
     }
-    lazy val eTo = new MT0Elem(this)
+    lazy val eFrom = element[Int]
+    lazy val eTo = new MT0Elem(self)
+    lazy val selfType = new MT0IsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class MT0IsoElem() extends Elem[MT0Iso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new MT0Iso())
+    lazy val tag = {
+      weakTypeTag[MT0Iso]
+    }
   }
   // 4) constructor and deconstructor
   class MT0CompanionAbs extends CompanionDef[MT0CompanionAbs] with MT0Companion {
@@ -123,7 +134,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMT0: Iso[MT0Data, MT0] =
-    cachedIso[MT0Iso]()
+    reifyObject(new MT0Iso())
 
   // 6) smart constructor and deconstructor
   def mkMT0(size: Rep[Int]): Rep[MT0]
@@ -157,14 +168,26 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 3) Iso for concrete class
   class MT1Iso[T](implicit elem: Elem[T])
-    extends Iso[MT1Data[T], MT1[T]]()(pairElement(implicitly[Elem[T]], implicitly[Elem[Int]])) {
+    extends EntityIso[MT1Data[T], MT1[T]] with Def[MT1Iso[T]] {
     override def from(p: Rep[MT1[T]]) =
       (p.data, p.size)
     override def to(p: Rep[(T, Int)]) = {
       val Pair(data, size) = p
       MT1(data, size)
     }
-    lazy val eTo = new MT1Elem[T](this)
+    lazy val eFrom = pairElement(element[T], element[Int])
+    lazy val eTo = new MT1Elem[T](self)
+    lazy val selfType = new MT1IsoElem[T](elem)
+    def productArity = 1
+    def productElement(n: Int) = elem
+  }
+  case class MT1IsoElem[T](elem: Elem[T]) extends Elem[MT1Iso[T]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new MT1Iso[T]()(elem))
+    lazy val tag = {
+      implicit val tagT = elem.tag
+      weakTypeTag[MT1Iso[T]]
+    }
   }
   // 4) constructor and deconstructor
   class MT1CompanionAbs extends CompanionDef[MT1CompanionAbs] {
@@ -197,7 +220,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMT1[T](implicit elem: Elem[T]): Iso[MT1Data[T], MT1[T]] =
-    cachedIso[MT1Iso[T]](elem)
+    reifyObject(new MT1Iso[T]()(elem))
 
   // 6) smart constructor and deconstructor
   def mkMT1[T](data: Rep[T], size: Rep[Int])(implicit elem: Elem[T]): Rep[MT1[T]]
@@ -232,14 +255,27 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 3) Iso for concrete class
   class MT2Iso[T, R](implicit eT: Elem[T], eR: Elem[R])
-    extends Iso[MT2Data[T, R], MT2[T, R]]()(pairElement(implicitly[Elem[T]], pairElement(implicitly[Elem[R]], implicitly[Elem[Int]]))) {
+    extends EntityIso[MT2Data[T, R], MT2[T, R]] with Def[MT2Iso[T, R]] {
     override def from(p: Rep[MT2[T, R]]) =
       (p.indices, p.values, p.size)
     override def to(p: Rep[(T, (R, Int))]) = {
       val Pair(indices, Pair(values, size)) = p
       MT2(indices, values, size)
     }
-    lazy val eTo = new MT2Elem[T, R](this)
+    lazy val eFrom = pairElement(element[T], pairElement(element[R], element[Int]))
+    lazy val eTo = new MT2Elem[T, R](self)
+    lazy val selfType = new MT2IsoElem[T, R](eT, eR)
+    def productArity = 2
+    def productElement(n: Int) = (eT, eR).productElement(n)
+  }
+  case class MT2IsoElem[T, R](eT: Elem[T], eR: Elem[R]) extends Elem[MT2Iso[T, R]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new MT2Iso[T, R]()(eT, eR))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      implicit val tagR = eR.tag
+      weakTypeTag[MT2Iso[T, R]]
+    }
   }
   // 4) constructor and deconstructor
   class MT2CompanionAbs extends CompanionDef[MT2CompanionAbs] {
@@ -272,7 +308,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMT2[T, R](implicit eT: Elem[T], eR: Elem[R]): Iso[MT2Data[T, R], MT2[T, R]] =
-    cachedIso[MT2Iso[T, R]](eT, eR)
+    reifyObject(new MT2Iso[T, R]()(eT, eR))
 
   // 6) smart constructor and deconstructor
   def mkMT2[T, R](indices: Rep[T], values: Rep[R], size: Rep[Int])(implicit eT: Elem[T], eR: Elem[R]): Rep[MT2[T, R]]
@@ -282,7 +318,7 @@ trait MetaTestsAbs extends MetaTests with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait MetaTestsSeq extends MetaTestsDsl with scalan.ScalanSeq {
+trait MetaTestsSeq extends scalan.ScalanSeq with MetaTestsDsl {
   self: MetaTestsDslSeq =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }
@@ -331,7 +367,7 @@ trait MetaTestsSeq extends MetaTestsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
+trait MetaTestsExp extends scalan.ScalanExp with MetaTestsDsl {
   self: MetaTestsDslExp =>
   lazy val MetaTest: Rep[MetaTestCompanionAbs] = new MetaTestCompanionAbs {
   }
@@ -514,7 +550,7 @@ trait MetaTestsExp extends MetaTestsDsl with scalan.ScalanExp {
 }
 
 object MetaTests_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTYzbRBQeO8lmkyzdtiCglWCXJbC0giStQD3soVq2KRRlN6s4RShUlSbOJHWxx17PJEo4VBxRuSGuCHpE6o0TqlQhISTEgRMCJM6cShGqgIoDiDfj3/w4u6iqDyPP+Pl7733ve8++eRdlmIueZzo2MS1ZhOOSJu83GS9qVcoNPtq2O32TnCPdJ+0vPz312fEvVLTcQgtXMDvHzBbKeTfVoRPea2SvhnKY6oRx22UcPVOTHsq6bZpE54ZNy4Zl9Tlum6RcMxjfqKF02+6M9tA1pNTQYd2muks40bZMzBhh/vkiEREZ4T4n96O6E/mgZZFFOZZF08UGh/DBx2HPvkEcbURtOrI4OuSHVndEWGCTNSzHdnngIgtwV+xOsE1TDAfoaO0qHuAyuOiVNe4atAdvFhysv4N7ZAdMhHkaAmbE7DZHjtynaijPyB4QdMFyTHkydBBCUIHTMohSxE8p5Kck+ClqxDWwabyLxcNd1x6OkHcpKYSGDkC8uA9EgECqtFO8fkl/+75WsFTx8lCEkpUZLgDQSoIaZCmAx28aH7J7r904o6J8C+UNttlm3MU6j5fcZ6uAKbW5jDkkELs9qNZaUrWkl02wmZBETrctB1NA8qlcgjqZhm5wYSzOlvzqJFCf5Q4JTJWho4T5ribkK3WzhU1z986xl577tfqWitRxFzmA1ED4bgDK0eI2oDSBhBD+2SR4h+y6hgVyHpBXvrp18ffbOxnp4WiHdHHf5G9is088cfn+It/ClfrCCY7SF6nBxVFuGK3ZOVmF/K7f+a3zdQVdUsOq+EkcTAgAkWE//VD4/sRZFS22ZNucN3GvBYVhVZNYdXfLpryFFu0Bcb0n2QE2xd1MYWT9tP1yxXlOAc8crSY2uENEETZkMykBAQWvH3ZsSornd4t/ad9+dFPI3UVL3hOv4/81zvzz86Eul50AfDLoEBnSMkcpGBQ+G2J9lCOlAqcX6EzG8x6sZlvkyNo94/KND7jkVhmOz4t6+yo06IZ87+k5NAdz689WRf3j2I+fqCgHbLYNbmGnWDlgtz3EDkIy8fFlBShc2m5WtuKuVqL58oS8BQ7BZuJRQYlRvTzdSf6x0gydjRdAwsdsj4dikI6gtB3McUJpJ4ETEGaLQyzFqYDkO9NRKZOYBHolwExXg828fCV9pyJ80atPJU8ZKNnjjdpj5t2zt1WUeQNlutCCrIYybbtPO4EW4IvLyZC/Gpwp41qA2mMXW2Ht5bWKohrOInC/ks7RvkOafcckL9/6+/L7773uyEaaGrczmQq3jZlCObBcsgbtGNBgD6SYhYEY4vMwGvtiPAzVqaR5UM0lATTmAUxzL0V7Oi5asdbnCGmOwTR8DPMkGg8mBTP0QUZLjFkvpnXfTXQcMQPz70iAPmMIxv8Q/g8Xk9Fcj2x8w1yYE0eP+F0FA9/yvwXr0GxrCc2m+WMeeLp2/+Odk999/ov8EcmLDwZ8Pmn4Mxz/ARnnbil0D7+3sZCFfAFehvsfSIZuGm4MAAA="
+  val dump = "H4sIAAAAAAAAALVWS4gcRRiu7pnZeZrNw2dAd11H1wSd2QQlhz2EdTPRyOzuMD0RGUOkpqdm0rG6ure7ZpjxEDwFMTfxKhjwIuQiniQQBBHEgycRwbOnGAk5GDwo/lX9mJ5Hz24I6UPTVf339//1/d9X1TfuoJTroJdcHVPMSibhuKTJ5w2XF7UK4wYfblntHiVnSOdp67svTnx19FsVLTbRwiXsnnFpE2W9h8rADp81sltFWcx04nLLcTl6viozlHWLUqJzw2JlwzR7HLcoKVcNl69XUbJltYe76ApSquigbjHdIZxomxS7LnH9+QwRFRnhOCvHwx17lIOVxSrKkVU0HGxwKB9yHPTi68TWhsxiQ5OjA35pO7YoC2LShmlbDg9SpAHuktUOhkmGYQIdrl7GfVyGFN2yxh2DdeHLvI31D3CXbEOICE9CwS6hncbQluNEFeVcsgsEnTNtKmcGNkIIOnBSFlEa8VMK+SkJfooacQxMjQ+xeFlzrMEQeZeSQGhgA8Qre0AECKTC2sVPLujv3dfypio+HohS0nKFCwC0FKMG2Qrg8cf6p+69N6+fUlGuiXKGu9FyuYN1Hm25z1YeM2ZxWXNIIHa60K2VuG7JLBsQMyGJrG6ZNmaA5FNZgD5RQze4CBZzBb87MdSnuU2CUGVgK+F6l2PWK3WziSmt3X7m1Rf/rLyrInU8RRYgNRC+E4BylNkClAaQEMK/EAdvk5pjmCDnPnn9+5vn797aTskMh9ukg3uUv4Npj3ji8vONcotU6svHOEqeZwYXU9nB6J6es6qQ39Xbf7V/WEMX1LAr/iL2JwSASLm//Zr/5dhpFWWa0jZnKe42oTFuhRJzx9m0GG+ijNUnjvcm3cdUPM0URtpftt+uKM8J4Jmj5ViD20Q0YV2aSQkIyHt+2LYYKZ6tFf/WfvrshpC7gwreG8/x/xmn/v39QIdLJwCfLjhElrTIUQI2Cp8NcT/CkbIGs+fYTMZzHqxmmeTQyj3j4vVrXHKrDMb3i53WZTDouvzuuTk0B/vW11evPnH3y/ePSL9lWgY3sV1cewC3BeZ4hG5CkoTRPvLUaCxuS8BsYauxthnNujQZDtRCzMSrvBLpwOK0wfxppREmG++LhI/EHg01IhNBx9uY45iOTwLHIMzWjLgVpwqS30xXpUxiErBQgJmsBIN565X0nRjhCws/G7/5QPeerFcfp3dO31JR6m2U6oAz3SpKtaweaweygIOYkwF/I5hTxmUBMsAONkMZyGsZjXo4i8C9WjrHEjZp9GxKXrv5z8WPP3rLlv6a2oVnMhUO6zOFsm+5pA3WNsB3D6WYhb7Y2+dh1PfEeBSqU0ljv5qLA6jPA5jmXor2ZFS04l6bI6Q5AdPwEczjaLyYBGytD7O1jCkmjPDGq37GiekZu+KhIOeMrTH6O/EgDE3WeG0U4wdmw5Vy9JjvNTgRTP/gWAULrsRYUPPPAWDvyv3Pt4///M0f8q8lJ04UOGtZ+Occ/VsZZ7QQpod/4UjJQtQAL8v9H2D08DSbDAAA"
 }
 }
 

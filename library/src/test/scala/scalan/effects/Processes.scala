@@ -145,7 +145,7 @@ trait ProcessesDsl extends ScalanDsl with impl.ProcessesAbs with Processes with 
 }
 
 
-trait ProcessesDslSeq extends ProcessesDsl with impl.ProcessesSeq with ScalanCtxSeq  {
+trait ProcessesDslSeq extends ScalanCtxSeq with impl.ProcessesSeq {
 
   //def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = i => (i + 1, v)
   def tryCatch[A:Elem](t: Th[A], c: (Rep[Throwable]) => Rep[A]) =
@@ -157,7 +157,7 @@ trait ProcessesDslSeq extends ProcessesDsl with impl.ProcessesSeq with ScalanCtx
     }
 }
 
-trait ProcessesDslExp extends ProcessesDsl with impl.ProcessesExp with ScalanExp {
+trait ProcessesDslExp extends ScalanCtxExp with impl.ProcessesExp {
 
 //  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun { i => Eval(i, v) }
 

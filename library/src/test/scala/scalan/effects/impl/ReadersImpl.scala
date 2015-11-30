@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ReadersAbs extends Readers with scalan.Scalan {
+trait ReadersAbs extends scalan.Scalan with Readers {
   self: MonadsDsl =>
 
   // single proxy for each type family
@@ -59,8 +59,8 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     override def toString = "Reader"
   }
   def Reader: Rep[ReaderCompanionAbs]
-  implicit def proxyReaderCompanion(p: Rep[ReaderCompanion]): ReaderCompanion =
-    proxyOps[ReaderCompanion](p)
+  implicit def proxyReaderCompanionAbs(p: Rep[ReaderCompanionAbs]): ReaderCompanionAbs =
+    proxyOps[ReaderCompanionAbs](p)
 
   abstract class AbsReaderBase[Env, A]
       (run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A])
@@ -90,14 +90,27 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ReaderBaseIso[Env, A](implicit eEnv: Elem[Env], eA: Elem[A])
-    extends Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
+    extends EntityIso[ReaderBaseData[Env, A], ReaderBase[Env, A]] with Def[ReaderBaseIso[Env, A]] {
     override def from(p: Rep[ReaderBase[Env, A]]) =
       p.run
     override def to(p: Rep[Env => A]) = {
       val run = p
       ReaderBase(run)
     }
-    lazy val eTo = new ReaderBaseElem[Env, A](this)
+    lazy val eFrom = element[Env => A]
+    lazy val eTo = new ReaderBaseElem[Env, A](self)
+    lazy val selfType = new ReaderBaseIsoElem[Env, A](eEnv, eA)
+    def productArity = 2
+    def productElement(n: Int) = (eEnv, eA).productElement(n)
+  }
+  case class ReaderBaseIsoElem[Env, A](eEnv: Elem[Env], eA: Elem[A]) extends Elem[ReaderBaseIso[Env, A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new ReaderBaseIso[Env, A]()(eEnv, eA))
+    lazy val tag = {
+      implicit val tagEnv = eEnv.tag
+      implicit val tagA = eA.tag
+      weakTypeTag[ReaderBaseIso[Env, A]]
+    }
   }
   // 4) constructor and deconstructor
   class ReaderBaseCompanionAbs extends CompanionDef[ReaderBaseCompanionAbs] with ReaderBaseCompanion {
@@ -129,7 +142,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReaderBase[Env, A](implicit eEnv: Elem[Env], eA: Elem[A]): Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]] =
-    cachedIso[ReaderBaseIso[Env, A]](eEnv, eA)
+    reifyObject(new ReaderBaseIso[Env, A]()(eEnv, eA))
 
   // 6) smart constructor and deconstructor
   def mkReaderBase[Env, A](run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]]
@@ -139,7 +152,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
+trait ReadersSeq extends scalan.ScalanSeq with ReadersDsl {
   self: MonadsDslSeq =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
@@ -160,7 +173,7 @@ trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
+trait ReadersExp extends scalan.ScalanExp with ReadersDsl {
   self: MonadsDslExp =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
@@ -215,7 +228,7 @@ trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
 }
 
 object Readers_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWv48bRRR+3rPPZ/vIBYKAJEruOBkQEbEPmhRXRL6LD4Kcu9NtCmQi0Hh37GzYndmbGVs2Rf4A6BANBYKUSOmoaBANEqKgigCJioIqhCICUoF4M/vLd/IeAYSL0czs2/fj+773vLfvQUkKeFY6xCesEVBFGrbZt6Sq222mPDW5wt2hTy/R/lP8i49f/OTUZxYsdWH+OpGXpN+FSrRpj8N0b9P9DlQIc6hUXEgFT3dMhKbDfZ86yuOs6QXBUJGeT5sdT6r1DhR73J3sw00odOC4w5kjqKL2pk+kpDK+X6A6Iy89V8x5shNmMVhTV9GcquKqIJ7C9DHG8ch+j4b2hHE2CRQci1PbCXVaaFP2gpALlYQoo7vr3E2ORUbwAh7r3CAj0sQQg6athMcG+GYtJM5bZEC30USbFzFhSf3+1UloznMdqEq6jwBdDkLf3IxDAEAGXjJJNDJ8Gik+DY1P3abCI773NtEPdwUfTyD6FeYAxiG6eOFvXCQeaJu59XeuOa8/sGuBpV8e61TKpsJ5dLScowZDBeL41d578v7Lty5YUO1C1ZOtnlSCOGqa8hitGmGMK5NzCiARA2RrNY8tE6WFNockUXF4EBKGnmIoF5En33M8pY313WLMTg70ZRXSxLQwDgtpvSs59RrdbBLf37178vwzP7dfs8A6GKKCLm0UvkicKpjfo8SlInau1yUFc202yjDGi0LLHPVSGWdr+YhsUlyeu/uL++UaXLNSNOPgD0cguijJ77+t3Xn+ogULXSP3LZ8MugiobPs02BGbnKkuLPARFdGT8oj4ejeT0LJL+2ToqxjmaXzmEB8FK7mNGVIN3rppgkICQC3S8TZntL61W//d/vr921qmAhajJ1Gn/uld+OOHY31lFIwQiyFL4cb+TsE4m8duSLeGzLlz+YMTS2fe/NFwO+/ygHhGYKc7UBLY3aaU0zG4/5DKapSvzQP66Op9741b7ypDWmF8cIDs9G5gx66b984ewV8yyH7rrlm/nvzuIwsqSFPPUwEJ62sP2X7/Y0tBikS2LCM3J6Ke2CCSbk5HXM6AfHKqYU4VEjUYIwVFHFmjBO+i1mhOe0Xwz3Zi0dYRLmawqKCa5W2cpJo6k68phOOJvc7j/r2Ln1tQehVKfewbiWLq8SFzE5zx703RsdpI7goHcUZciSBBiqv5rUCG2WEdbswymVHTVNHn4RCIKKyDN/9plMVdkJmei6PmaGQpCjZDH9lQnSYht+p/B4xeX8lsYsNyjICCRxLGOSOujAsSsJojBDvuE8T05oMPt8998+lPZsBUdcfhYGPp50VGezrAY2ArV0ws/FqYyhbFq3vQZPoXfV+7wL0JAAA="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+67PPZ/vIBY7fRMkdJwMiInagSXFF5Dg+dMi5O92mQCYiGu+OnQ27M3s7Y8umSJkCOkRDgUQkGqQ0iIoG0SAhCqoIIVFRUIUglIJURHkz+3sn74WA2GI0M/vm/Xzf92b31l0oiQBeFhZxCWt4VJKGqectIetmh0lHTi9ye+TSC3TwPP/2s9e/OPZ1AZZ6MH+ViAvC7UElnHQmfjI36V4XKoRZVEgeCAkvdnWEpsVdl1rS4azpeN5Ikr5Lm11HyPUuFPvcnu7BdTC6cNTizAqopGbbJUJQEe0vUJWRk6wrej3d9tMYrKmqaGaquBQQR2L6GONoaL9LfXPKOJt6Eo5EqW37Ki20KTuezwMZhyiju6vcjpdFRnADnupeI2PSxBDDpikDhw3xZM0n1ntkSLfQRJkXMWFB3cGlqa/Xc12oCrqHAG16vqt3Jj4AIANv6CQaKT6NBJ+Gwqdu0sAhrvM+US93Aj6ZQvgYcwATH1289ggXsQfaYXb9g8vWO/fNmldQhycqlbKucB4dreSoQVOBOH6/+5G49+bNswWo9qDqiFZfyIBYMkt5hFaNMMalzjkBkARDZGstjy0dpYU2ByRRsbjnE4aeIigXkSfXsRypjNXeYsRODvRl6dPY1Jj4RlLvak69Wjdt4ro7d144/dLvnbcLUNgfooIuTRR+EDuVML9LiU2DyLkalyTMddg4xRg3jJZeqqEyScfyIdkkuLxy5w/7uzNwuZCgGQX/ZwSii5L4+afa7VfPFWChp+W+4ZJhDwEVHZd620GbM9mDBT6mQfimPCaums0ktGzTARm5MoI5i88c4iNhNbcxfarAW9dNYMQA1EIdb3FG6xs79b/MHz6+pWQawGL4JuzUB87Zv385MpBawQhxMGIJ3NjfCRgn89j16caIWbc3P1leOnHlV83tvM094miBHe9CKcDu1qUcj8B9TCqrYb4m9+iTa/ecd29+KDVpxmT/BbLdv4Ydu67PnTyEv/gi+/LGjWf+/PzKsm7Ahb4jPeLXzzxG+8Xd8j+2FySohEg9l67VsIKULYetcp4I2s4GX8mcyvTRMSMWiTaSUMSbbBzTUFTSzem6kJXZTgq0dYiLGeRKqKZ5ayeJ1E7kSw2ReXa3+7R799w3BSi9BaUBtpNAjfX5iNkx5PjVk3Qiz8d7xn7IEWISEC+BWD+rkGJ2UJ7tWSYzasoUfRoOgIh627/zn264SuZbk5GEXp+KEni0cpbCFGaoJr2Bs9TkYvHv4FLjZmoTGZYjXCQ8EeuAM2KLqLYA1nLkYUaNhEhfv//p1qkfv/pN30ZV1ZJ4C7LkXyQVQ3LbR3BXLupY+GuRyRYlrZpUZ/oQWB0WUOoJAAA="
 }
 }
 

@@ -87,11 +87,11 @@ trait FreeMsDsl extends ScalanDsl with impl.FreeMsAbs with FreeMs with Monads { 
 }
 
 
-trait FreeMsDslSeq extends FreeMsDsl with impl.FreeMsSeq with ScalanCtxSeq  { self: MonadsDslSeq =>
+trait FreeMsDslSeq extends ScalanCtxSeq with impl.FreeMsSeq { self: MonadsDslSeq =>
 
 }
 
-trait FreeMsDslExp extends FreeMsDsl with impl.FreeMsExp with ScalanExp { self: MonadsDslExp =>
+trait FreeMsDslExp extends ScalanCtxExp with impl.FreeMsExp { self: MonadsDslExp =>
 
 
 }

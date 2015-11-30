@@ -118,11 +118,11 @@ trait FreesDsl extends ScalanDsl with impl.FreesAbs with Frees with Monads { sel
 }
 
 
-trait FreesDslSeq extends FreesDsl with impl.FreesSeq with ScalanCtxSeq  { self: MonadsDslSeq =>
+trait FreesDslSeq extends ScalanCtxSeq with impl.FreesSeq { self: MonadsDslSeq =>
 
 }
 
-trait FreesDslExp extends FreesDsl with impl.FreesExp with ScalanExp { self: MonadsDslExp =>
+trait FreesDslExp extends ScalanCtxExp with impl.FreesExp { self: MonadsDslExp =>
 
 
 }

@@ -76,7 +76,8 @@ object ScalanAst {
     }
 
     def unRep(module: SEntityModuleDef , config: CodegenConfig): Option[STpeExpr] = self match {
-      case t if (!config.isAlreadyRep) => Some(t)
+      case t if !config.isAlreadyRep => Some(t)
+      case STraitCall("Elem" | "Element", Seq(t)) => Some(self)
       case STraitCall("Rep", Seq(t)) => Some(t)
       case STraitCall(name, args) =>
         val typeSynonyms = config.entityTypeSynonyms ++
@@ -263,6 +264,7 @@ object ScalanAst {
     def companion: Option[STraitOrClassDef]
     def isTrait: Boolean
     def annotations: List[STraitOrClassAnnotation]
+    def args: SClassArgs
     def implicitArgs: SClassArgs
     def isHighKind = tpeArgs.exists(_.isHighKind)
 
@@ -299,6 +301,7 @@ object ScalanAst {
     def getAnnotation(annotName: String) = annotations.find(a => a.annotationClass == annotName)
 
     def hasAnnotation(annotName: String) = getAnnotation(annotName).isDefined
+
     def clean: STraitOrClassDef
   }
 
@@ -312,9 +315,10 @@ object ScalanAst {
                         annotations: List[STraitOrClassAnnotation] = Nil) extends STraitOrClassDef {
 
     def isTrait = true
+    val args = SClassArgs(Nil)
     lazy val implicitArgs: SClassArgs = {
       val implicitElems = body.collect {
-        case SMethodDef(name, _, _, Some(elemOrCont), true, _, _, _, _, true) =>
+        case SMethodDef(name, _, _, Some(elemOrCont), _, _, _, _, _, true) =>
           (name, elemOrCont)
       }
       val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map { a =>
@@ -381,6 +385,7 @@ object ScalanAst {
                          ancestors: List[STraitCall],
                          body: List[SBodyItem]) extends STraitOrClassDef {
 
+    val args = SClassArgs(Nil)
     def tpeArgs = Nil
     def selfType = None
     def companion = None

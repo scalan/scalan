@@ -43,9 +43,9 @@ trait Containers { self: Scalan =>
   }
 }
 
-trait ContainersSeq extends Containers with Scalan { self: ScalanSeq =>
+trait ContainersSeq extends Containers { self: ScalanSeq =>
 
 }
-trait ContainersExp extends Containers with Scalan { self: ScalanExp =>
+trait ContainersExp extends Containers { self: ScalanExp =>
 
 }

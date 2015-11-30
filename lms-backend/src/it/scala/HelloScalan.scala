@@ -24,7 +24,7 @@ trait HelloScalan extends ScalanCommunityDsl {
 }
 
 // to run: scalan-lms-backend/test:runMain HelloScalanSeq
-object HelloScalanSeq extends HelloScalan with ScalanCommunityDslSeq {
+object HelloScalanSeq extends ScalanCommunityDslSeq with HelloScalan {
   def result = run(input)
 
   def main(args: Array[String]) = {
@@ -37,7 +37,7 @@ object HelloScalanExp {
   // allows use of standard Scala library, commented out to make tests faster
   // override val defaultCompilerConfig = CompilerConfig(Some("2.11.7"), Seq.empty)
 
-  val program = new HelloScalan with ScalanCommunityDslExp
+  val program = new ScalanCommunityDslExp with HelloScalan
 
   val compiler = new CommunityLmsCompilerScala(program)
   import compiler._

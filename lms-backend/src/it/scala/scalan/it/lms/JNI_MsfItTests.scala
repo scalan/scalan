@@ -12,7 +12,7 @@ import scalan.graphs.{GraphsDslSeq, GraphsDsl, GraphsDslExp}
 import scalan.it.BaseCtxItTests
 import scalan.linalgebra.{MatricesDslExp, VectorsDslExp}
 
-trait JNIMsfProg extends JNIExtractorOps with MsfFuncs {
+trait JNIMsfProg extends MsfFuncs with JNIExtractorOps {
   lazy val MSF_JNI_adjlist = JNI_Wrap(msfFunAdjBase)
 
   lazy val MSF_JNI_adjmatrix = JNI_Wrap(msfFunIncBase)

@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ExceptionsAbs extends Exceptions with scalan.Scalan {
+trait ExceptionsAbs extends scalan.Scalan with Exceptions {
   self: ExceptionsDsl =>
 
   // single proxy for each type family
@@ -69,8 +69,8 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
     override def toString = "SThrowable"
   }
   def SThrowable: Rep[SThrowableCompanionAbs]
-  implicit def proxySThrowableCompanion(p: Rep[SThrowableCompanion]): SThrowableCompanion =
-    proxyOps[SThrowableCompanion](p)
+  implicit def proxySThrowableCompanionAbs(p: Rep[SThrowableCompanionAbs]): SThrowableCompanionAbs =
+    proxyOps[SThrowableCompanionAbs](p)
 
   // default wrapper implementation
   abstract class SThrowableImpl(val wrappedValue: Rep[Throwable]) extends SThrowable with Def[SThrowableImpl] {
@@ -109,14 +109,25 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SThrowableImplIso
-    extends Iso[SThrowableImplData, SThrowableImpl] {
+    extends EntityIso[SThrowableImplData, SThrowableImpl] with Def[SThrowableImplIso] {
     override def from(p: Rep[SThrowableImpl]) =
       p.wrappedValue
     override def to(p: Rep[Throwable]) = {
       val wrappedValue = p
       SThrowableImpl(wrappedValue)
     }
-    lazy val eTo = new SThrowableImplElem(this)
+    lazy val eFrom = element[Throwable]
+    lazy val eTo = new SThrowableImplElem(self)
+    lazy val selfType = new SThrowableImplIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class SThrowableImplIsoElem() extends Elem[SThrowableImplIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SThrowableImplIso())
+    lazy val tag = {
+      weakTypeTag[SThrowableImplIso]
+    }
   }
   // 4) constructor and deconstructor
   class SThrowableImplCompanionAbs extends CompanionDef[SThrowableImplCompanionAbs] {
@@ -148,7 +159,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSThrowableImpl: Iso[SThrowableImplData, SThrowableImpl] =
-    cachedIso[SThrowableImplIso]()
+    reifyObject(new SThrowableImplIso())
 
   // 6) smart constructor and deconstructor
   def mkSThrowableImpl(wrappedValue: Rep[Throwable]): Rep[SThrowableImpl]
@@ -158,7 +169,7 @@ trait ExceptionsAbs extends Exceptions with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait ExceptionsSeq extends ExceptionsDsl with scalan.ScalanSeq {
+trait ExceptionsSeq extends scalan.ScalanSeq with ExceptionsDsl {
   self: ExceptionsDslSeq =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs {
     override def apply(msg: Rep[String]): Rep[SThrowable] =
@@ -192,7 +203,7 @@ trait ExceptionsSeq extends ExceptionsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ExceptionsExp extends ExceptionsDsl with scalan.ScalanExp {
+trait ExceptionsExp extends scalan.ScalanExp with ExceptionsDsl {
   self: ExceptionsDslExp =>
   lazy val SThrowable: Rep[SThrowableCompanionAbs] = new SThrowableCompanionAbs {
     def apply(msg: Rep[String]): Rep[SThrowable] =
@@ -258,7 +269,7 @@ trait ExceptionsExp extends ExceptionsDsl with scalan.ScalanExp {
 }
 
 object Exceptions_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVPWwcRRR+t3Z8vh/iJDTYTYx14U/hzqRJ4SKyzheEdLGtrBXQJUKa2xufJ8zOjHfmnL0UKVJCh2gRSYnkjoqOBglRUCFAoqYKUERAKiLezO7e7VksScMWo52Zt+997/u+mT3+DU7pCF7RAeFENENqSNN375vaNPyOMMyMr8nBiNMtuv+S/OrBW5+vfOnBUg8WDoje0rwHleSlE6vJu08Pu1AhIqDayEgbeLnrKrQCyTkNDJOixcJwZEif01aXabPRhfm+HIwP4R6UunAmkCKIqKF+mxOtqU7XF6lFxCbzipuPd9S0hmjZLlq5LvYiwgzCxxpnkvjrVPljIcU4NHA6hbajLCyMKbNQychkJcqY7kAOsum8ILgA57q3yRFpYYlhyzcRE0P8sqZI8AEZ0m0MseHzCFhTvr83Vm4+14WqpodI0Duh4m4lVgCAClxyIJpTfpoTfpqWn4ZPI0Y4u0vs5m4k4zEkT2kOIFaY4uIzUmQZaEcMGh/eCm4+8WuhZz+OLZSy63ABE50vcIOTAnn85vrH+vHbDy97UO1BlenNvjYRCUxe8pStGhFCGod5QiCJhqjWWpFarsomxpywRCWQoSICM6VU1lEnzgJmbLBdq6fqFFBfNopmoaVYlSb9rhb063zTJpzvPlp+88Kvnfc88GZLVDClj8aPsqQGqv7eQSTvWNYdq3aopAQXl5o0/eqj3wdfr8Mtb0JVmvn51MEUp/RPP9S+f/2KB4s95+WrnAx7yJbucBruRG0pTA8W5RGNkp3yEeH27V/VKg/oPhlxk3KYb34OmzewWnjqFLXMbDiHlzICaolJt6Wgjau7jb/8bz85th6MoJ7sJMfwKbv898+n942zp4H6nYgoRQc3CB8lZ3/JwBye4pSVdKVSRH0qgB1WXPA5N8fDP1UrO5IruW+fSXp2tfzZW/f+WP7xMw8qyG2fmZCoxvpzHoj/0eQwS1DNRr7ruEwQLdjhfLZd7N0cgVbFaqKVL0N6du0xe//hR8YZthTP3ow7/dt4FW24j5ddlcYJRPVO3M5aXs9v2WH1P1A4qdAaL04xt/PcJTIqO549KasdL8wuoheqnTigzn14PdVSwUeGcQfoIra9VuACP9UAjXDvyafbb3z3xS/uqqhaNdHpwsz8PZx08QnvvjCtjv+HHFgD81bjCYjXCkEcWgvTEMs5f92HG8dblx6ETpklGic+upb7m8WOnvI/y5J9+gUIAAA="
+  val dump = "H4sIAAAAAAAAALVVO2wcRRj+7+z4fA/ixFEk4ibGuvASuXPSpHCBrPMFIV1sK2sFdESgub3xecLszHhnztlLkSJFCugQLVIi0SC5QVR0NEiIggohJGqqAEIpSBXEP7OPW1usEgq2GM3jn//xfd8/e/g7nNAhvKx9woloBdSQlufm69o0va4wzEyuyeGY0w26+6L85sGlL5a+LsNCH+b2iN7QvA/VeNKNVDb36H4PqkT4VBsZagMv9VyEti85p75hUrRZEIwNGXDa7jFt1nowO5DDyT7chVIPTvlS+CE11OtwojXVyf48tRmxbF1168mWmsYQbVtFO1fFTkiYwfQxxqnY/jpV3kRIMQkMnExS21I2LbSpsEDJ0KQhKuhuTw7T5awguAGLvVvkgLQxxKjtmZCJEd6sK+J/SEZ0E02s+SwmrCnf3Zkot57pQU3TfQTo7UBxtxMpAEAGLrskWlN8Whk+LYtP06MhI5zdIfZwO5TRBOKvNAMQKXTxxjNcpB5oVwybH93033vi1YOyvRzZVCquwjl0dL5ADY4KxPG765/ox289vFKGWh9qTK8PtAmJb/KUJ2jViRDSuJwzAEk4QrZWithyUdbR5pgkqr4MFBHoKYGygTxx5jNjje1eI2GnAPqKUTQ1LUWqlNW7XFCv002HcL796NzFC7913y1D+WiIKrr0UPhh6tRAzdvZC+Vti7pD1Q7VBODiUFnRrzz6Y/jtKtwsZ1Alnp+PHXRxQv/8U/3H194sw3zfafkqJ6M+oqW7nAZbYUcK04d5eUDD+KRyQLid/StblSHdJWNuEgzzxc9g8QaWC7tOUYvMmlN4KQWgHot0UwravLrd/Mv7/tNDq8EQGvFJ3IZ/sytPfzm5a5w8DTRuh0QpOrxB+Dju/QUDM9jFCSrJTrUI+oQAOyw540W3xuafspW25FLu7jNBT5+WL+/fP/vn5x+ccS0xP2AmIKq5+h8aItXv/yh4OApW3Vq+43CNs5uzw/n0uFjH1dxzsZidWXJrMYWeDOjplcfs/YcfG6fjUnT0wdwa3MIXas35Oef8NI8l1+hGnbT61fyRHZafLyFHJornzLSSTh7RmGhlx9PHibfjhaObqJZaN/Kp0yc+YPVEEmPDuAt9ERFYKdCJlzCDUrn75LPN13/46lf3mNQsx9gLIvvdTAmNjqn7hWl0/IPkkjUwa5nPkni1MIl9K3IaYDinwHtw43Dj8oPAkbRAo1hd13L/u8jBU/kHnJbXHycIAAA="
 }
 }
 

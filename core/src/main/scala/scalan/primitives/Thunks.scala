@@ -3,7 +3,7 @@ package scalan.primitives
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scalan.compilation.{GraphVizConfig, GraphVizExport}
-import scalan.{ViewsExp, ScalanExp, ScalanSeq, Scalan}
+import scalan.{ViewsDslExp, ScalanExp, ScalanSeq, Scalan}
 import scala.reflect.runtime.universe._
 
 trait Thunks { self: Scalan =>
@@ -23,14 +23,6 @@ trait Thunks { self: Scalan =>
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Thunk[T]]
     def lift[T](implicit eT: Elem[T]) = element[Thunk[T]]
   }
-
-  case class ThunkIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Thunk](iso) {
-    def from(x: Th[B]) = x.map(iso.fromFun)
-    def to(x: Th[A]) = x.map(iso.toFun)
-    lazy val defaultRepTo = Thunk(eB.defaultRepValue)(eB)
-  }
-
-  def thunkIso[A,B](iso: Iso[A, B]) = cachedIso[ThunkIso[A, B]](iso)
 
   case class ThunkElem[A](override val eItem: Elem[A])
     extends EntityElem1[A, Thunk[A], Thunk](eItem, container[Thunk]) {
@@ -59,7 +51,7 @@ trait ThunksSeq extends Thunks { self: ScalanSeq =>
   def thunk_force[A](t: Th[A]): Rep[A] = t.value
 }
 
-trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
+trait ThunksExp extends FunctionsExp with ViewsDslExp with Thunks with GraphVizExport with EffectsExp { self: ScalanExp =>
 
   case class ThunkDef[A](val root: Exp[A], override val schedule: Schedule)
                         (implicit val eA: Elem[A] = root.elem)
@@ -106,9 +98,8 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
     case _ => super.transformDef(d, t)
   }
 
-  case class ThunkView[A, B](source: Rep[Thunk[A]])(iso: Iso1[A, B, Thunk])
-    extends View1[A, B, Thunk](iso) {
-    //lazy val iso = thunkIso(i)
+  case class ThunkView[A, B](source: Rep[Thunk[A]])(innerIso: Iso[A, B])
+    extends View1[A, B, Thunk](thunkIso(innerIso)) {
   }
 
   override def unapplyViews[T](s: Exp[T]): Option[Unpacked[T]] = (s match {
@@ -212,11 +203,12 @@ trait ThunksExp extends FunctionsExp with ViewsExp with Thunks with GraphVizExpo
       implicit val eA = iso.eFrom
       implicit val eB = iso.eTo
       val newTh = Thunk { iso.from(forceThunkDefByMirror(th)) }   // execute original th as part of new thunk
-      ThunkView(newTh)(thunkIso(iso))
+      ThunkView(newTh)(iso)
     }
-    case ThunkForce(HasViews(srcTh, iso: ThunkIso[a,b])) => {
-      implicit val eA = iso.iso.eFrom
-      iso.iso.to(srcTh.asRep[Thunk[a]].force)
+    case ThunkForce(HasViews(srcTh, Def(iso: ThunkIso[a, b]))) => {
+      val innerIso = iso.innerIso
+      implicit val eA = innerIso.eFrom
+      innerIso.to(srcTh.asRep[Thunk[a]].force)
     }
     case _ => super.rewriteDef(d)
   }

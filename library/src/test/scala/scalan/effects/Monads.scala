@@ -194,8 +194,8 @@ trait MonadsDsl extends ScalanDsl with Monads
   def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun {i => console_eval(i,v)}
 }
 
-trait MonadsDslSeq extends MonadsDsl
-  with ScalanCtxSeq
+trait MonadsDslSeq extends ScalanCtxSeq
+  with MonadsDsl
   with FreesDslSeq
   with CoproductsDslSeq
   with ScalanCommunityDslSeq
@@ -206,8 +206,8 @@ trait MonadsDslSeq extends MonadsDsl
 {
 }
 
-trait MonadsDslExp extends MonadsDsl
-  with ScalanCommunityDsl
+trait MonadsDslExp extends ScalanCtxExp
+  with MonadsDsl
   with FreesDslExp
   with CoproductsDslExp
   with ScalanCommunityDslExp

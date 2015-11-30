@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait VectorsAbs extends Vectors with scalan.Scalan {
+trait VectorsAbs extends scalan.Scalan with Vectors {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -58,8 +58,8 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
     override def toString = "AbstractVector"
   }
   def AbstractVector: Rep[AbstractVectorCompanionAbs]
-  implicit def proxyAbstractVectorCompanion(p: Rep[AbstractVectorCompanion]): AbstractVectorCompanion =
-    proxyOps[AbstractVectorCompanion](p)
+  implicit def proxyAbstractVectorCompanionAbs(p: Rep[AbstractVectorCompanionAbs]): AbstractVectorCompanionAbs =
+    proxyOps[AbstractVectorCompanionAbs](p)
 
   abstract class AbsDenseVector[T]
       (items: Rep[Collection[T]])(implicit eT: Elem[T])
@@ -88,14 +88,26 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 3) Iso for concrete class
   class DenseVectorIso[T](implicit eT: Elem[T])
-    extends Iso[DenseVectorData[T], DenseVector[T]] {
+    extends EntityIso[DenseVectorData[T], DenseVector[T]] with Def[DenseVectorIso[T]] {
     override def from(p: Rep[DenseVector[T]]) =
       p.items
     override def to(p: Rep[Collection[T]]) = {
       val items = p
       DenseVector(items)
     }
-    lazy val eTo = new DenseVectorElem[T](this)
+    lazy val eFrom = element[Collection[T]]
+    lazy val eTo = new DenseVectorElem[T](self)
+    lazy val selfType = new DenseVectorIsoElem[T](eT)
+    def productArity = 1
+    def productElement(n: Int) = eT
+  }
+  case class DenseVectorIsoElem[T](eT: Elem[T]) extends Elem[DenseVectorIso[T]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new DenseVectorIso[T]()(eT))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      weakTypeTag[DenseVectorIso[T]]
+    }
   }
   // 4) constructor and deconstructor
   class DenseVectorCompanionAbs extends CompanionDef[DenseVectorCompanionAbs] with DenseVectorCompanion {
@@ -127,7 +139,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDenseVector[T](implicit eT: Elem[T]): Iso[DenseVectorData[T], DenseVector[T]] =
-    cachedIso[DenseVectorIso[T]](eT)
+    reifyObject(new DenseVectorIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkDenseVector[T](items: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DenseVector[T]]
@@ -161,14 +173,26 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ConstVectorIso[T](implicit eT: Elem[T])
-    extends Iso[ConstVectorData[T], ConstVector[T]]()(pairElement(implicitly[Elem[T]], implicitly[Elem[Int]])) {
+    extends EntityIso[ConstVectorData[T], ConstVector[T]] with Def[ConstVectorIso[T]] {
     override def from(p: Rep[ConstVector[T]]) =
       (p.item, p.length)
     override def to(p: Rep[(T, Int)]) = {
       val Pair(item, length) = p
       ConstVector(item, length)
     }
-    lazy val eTo = new ConstVectorElem[T](this)
+    lazy val eFrom = pairElement(element[T], element[Int])
+    lazy val eTo = new ConstVectorElem[T](self)
+    lazy val selfType = new ConstVectorIsoElem[T](eT)
+    def productArity = 1
+    def productElement(n: Int) = eT
+  }
+  case class ConstVectorIsoElem[T](eT: Elem[T]) extends Elem[ConstVectorIso[T]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new ConstVectorIso[T]()(eT))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      weakTypeTag[ConstVectorIso[T]]
+    }
   }
   // 4) constructor and deconstructor
   class ConstVectorCompanionAbs extends CompanionDef[ConstVectorCompanionAbs] with ConstVectorCompanion {
@@ -201,7 +225,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoConstVector[T](implicit eT: Elem[T]): Iso[ConstVectorData[T], ConstVector[T]] =
-    cachedIso[ConstVectorIso[T]](eT)
+    reifyObject(new ConstVectorIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkConstVector[T](item: Rep[T], length: Rep[Int])(implicit eT: Elem[T]): Rep[ConstVector[T]]
@@ -234,14 +258,26 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SparseVectorIso[T](implicit eT: Elem[T])
-    extends Iso[SparseVectorData[T], SparseVector[T]]()(pairElement(implicitly[Elem[Collection[Int]]], pairElement(implicitly[Elem[Collection[T]]], implicitly[Elem[Int]]))) {
+    extends EntityIso[SparseVectorData[T], SparseVector[T]] with Def[SparseVectorIso[T]] {
     override def from(p: Rep[SparseVector[T]]) =
       (p.nonZeroIndices, p.nonZeroValues, p.length)
     override def to(p: Rep[(Collection[Int], (Collection[T], Int))]) = {
       val Pair(nonZeroIndices, Pair(nonZeroValues, length)) = p
       SparseVector(nonZeroIndices, nonZeroValues, length)
     }
-    lazy val eTo = new SparseVectorElem[T](this)
+    lazy val eFrom = pairElement(element[Collection[Int]], pairElement(element[Collection[T]], element[Int]))
+    lazy val eTo = new SparseVectorElem[T](self)
+    lazy val selfType = new SparseVectorIsoElem[T](eT)
+    def productArity = 1
+    def productElement(n: Int) = eT
+  }
+  case class SparseVectorIsoElem[T](eT: Elem[T]) extends Elem[SparseVectorIso[T]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SparseVectorIso[T]()(eT))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      weakTypeTag[SparseVectorIso[T]]
+    }
   }
   // 4) constructor and deconstructor
   class SparseVectorCompanionAbs extends CompanionDef[SparseVectorCompanionAbs] with SparseVectorCompanion {
@@ -274,7 +310,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSparseVector[T](implicit eT: Elem[T]): Iso[SparseVectorData[T], SparseVector[T]] =
-    cachedIso[SparseVectorIso[T]](eT)
+    reifyObject(new SparseVectorIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkSparseVector[T](nonZeroIndices: Rep[Collection[Int]], nonZeroValues: Rep[Collection[T]], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector[T]]
@@ -307,14 +343,26 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SparseVector1Iso[T](implicit eT: Elem[T])
-    extends Iso[SparseVector1Data[T], SparseVector1[T]]()(pairElement(implicitly[Elem[Collection[(Int, T)]]], implicitly[Elem[Int]])) {
+    extends EntityIso[SparseVector1Data[T], SparseVector1[T]] with Def[SparseVector1Iso[T]] {
     override def from(p: Rep[SparseVector1[T]]) =
       (p.nonZeroItems, p.length)
     override def to(p: Rep[(Collection[(Int, T)], Int)]) = {
       val Pair(nonZeroItems, length) = p
       SparseVector1(nonZeroItems, length)
     }
-    lazy val eTo = new SparseVector1Elem[T](this)
+    lazy val eFrom = pairElement(element[Collection[(Int, T)]], element[Int])
+    lazy val eTo = new SparseVector1Elem[T](self)
+    lazy val selfType = new SparseVector1IsoElem[T](eT)
+    def productArity = 1
+    def productElement(n: Int) = eT
+  }
+  case class SparseVector1IsoElem[T](eT: Elem[T]) extends Elem[SparseVector1Iso[T]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SparseVector1Iso[T]()(eT))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      weakTypeTag[SparseVector1Iso[T]]
+    }
   }
   // 4) constructor and deconstructor
   class SparseVector1CompanionAbs extends CompanionDef[SparseVector1CompanionAbs] with SparseVector1Companion {
@@ -347,7 +395,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSparseVector1[T](implicit eT: Elem[T]): Iso[SparseVector1Data[T], SparseVector1[T]] =
-    cachedIso[SparseVector1Iso[T]](eT)
+    reifyObject(new SparseVector1Iso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkSparseVector1[T](nonZeroItems: Coll[(Int, T)], length: Rep[Int])(implicit eT: Elem[T]): Rep[SparseVector1[T]]
@@ -357,7 +405,7 @@ trait VectorsAbs extends Vectors with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait VectorsSeq extends VectorsDsl with scalan.ScalanSeq {
+trait VectorsSeq extends scalan.ScalanSeq with VectorsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs {
   }
@@ -420,7 +468,7 @@ trait VectorsSeq extends VectorsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
+trait VectorsExp extends scalan.ScalanExp with VectorsDsl {
   self: ScalanCommunityDslExp =>
   lazy val AbstractVector: Rep[AbstractVectorCompanionAbs] = new AbstractVectorCompanionAbs {
   }
@@ -1871,7 +1919,7 @@ trait VectorsExp extends VectorsDsl with scalan.ScalanExp {
 }
 
 object Vectors_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAOVXTWwbRRSe3dhxbKdpG7WlRUSEYKioIE4QqIccSnASCDJJlDUVmKrSeD1xpszObnbGkc2h4ojghrgi6BGpN06oUoWEkBAHTqgg9cypFKEKqDiAeDP743VsJynQKhJ7GO3P2/fefN/33r69ehulhY+eFDZmmE87ROJpS5/PC1mwFrmksv2qW28yskA2TrpffDL76cOfm+hwFQ1vYrEgWBVlg5PFlhefW2SrjLKY20RI1xcSPVbWEYq2yxixJXV5kTpOU+IaI8UyFXKujFI1t97eQpeRUUZHbJfbPpHEKjEsBBHh/RGiMqLxdVZft1e9TgxeVLsoJnZR8TGVkD7EOBLYrxPPanOXtx2JxsLUVj2VFthkqOO5voxCZMDdpluPLlMcww00Xr6Et3ERQjSKlvQpb8CbeQ/bb+EGWQETZZ6ChAVhG5W2p6+HyignyBYAtOx4TN9peQghYOBZncR0B5/pGJ9phU/BIj7FjL6N1cM13221UXAYQwi1PHDx9B4uIg9kkdcL712w37xr5R1TvdxSqWT0DofB0aMD1KCpABy/Xv9A3HnpylkT5aooR8V8TUgf2zJJeYhWHnPuSp1zDCD2G8DW1CC2dJR5sNkhiaztOh7m4CmEchR4YtSmUhmre6MhOwOgz0iPRKZGyzPi/U4O2K/WTQkztnbr1DNP/LT4uonM7hBZcGmB8P3IKcgpQuM8kBACMazXwxIZFY20WrKtzprZJYkYjtO3fq5/NYMumDGIYcz98QYu0uKHG/nvnjpnopGqVvkSw40q4CgWGXFW/ZLLZRWNuNvED55ktjFTZ315zNTJBm4yGaKbhGUIYJFocmA9ekRhNqe1b0QA5AP5rricFJbWCr9b33x4VanTR6PBk6BA/6Jn/7w5tiG1cCVKU0kcEeE7BIXdjXiuFJfDvqjoEJILolquQ45O3aEXr7wvNfRGq7v6V2uXwP+cfu+RXViIutBv1Rnz11Pff2yiLIBdo9LBXmFmn7VzH+sBdeMzVgo7sFbP7I6H3SJPIBlZPNRtUUrmmgA9Ey8TQOaxBcIF6fPGRKdBHU9kctKI9KONJDJJJUogpTS9J+US5RMxtZe4nCYGEalhO7FePsZun7tuovQrKL0BVSLKKF1zm7we8QHfMEla8sXontHNB+CPfezE+OtjEnX2uyNjbZg3dmVin+2mB0i0A8iULquBVdWbV4+HYUZ4Q2728eGjxwcju+ZTBz7w2+T5L6+99sv1lbTuueNhrzmPWZMEn9sQxA6gqhsYMxBpmcv+Oz6t1zMHQegQU/R7434KPREzKXS1vnCgxDcGk1mV+O4yr1NoiffQ3NXyRjJi/wCHwgBaTv/Rx6NfJLVUet33ZHkQJXrcgu70oJvxaDLowRbpaCTS5PyRUoLZcx6DNldpeow8d+2Pi+++87Knx4qeUTKhlf+R7E4kFTD7oHR3qCvqvQsvsfHhvlAOweD372WZBGwX3vJqyFvCDmXtfZM2iI/dSAyg6P3n+af4qfVmxyY0zIQASXQ0rCdGOWYNUvNxCIKPpgaUmhWOvAD/5bsfrZz59rMf9UCRU8Mz/Gnw+Dc/OUh0gzYe+IOtO01OZRt+3xOpg8jUXK3T/htWFheKThEAAA=="
+  val dump = "H4sIAAAAAAAAAOVYTWwbRRSedew4ttO0DU0piIgQDBUVxAkC9ZBDFZwEgkwSZd0KmapovJ44U2ZnNzvjyOZQcaoQ3BBXJCpxQeoFcUKVKiSEhDhwQgiJAydOpajqgYoDiDezP17HduIArSLhw2h39s17b77ve7Nvff02SgkPPS0szDCfsYnEM6a+XhAyby5xSWXrNafWYGSRbJ5yvvx47tNHv0igoxU0vIXFomAVlPEvlppudG2S7RLKYG4RIR1PSPRESUcoWA5jxJLU4QVq2w2Jq4wUSlTI+RJKVp1aaxtdQUYJHbMcbnlEErPIsBBEBPMjRGVEo/uMvm+tue0YvKB2UYjtouxhKiF9iHHMt98grtniDm/ZEo0Fqa25Ki2wSVPbdTwZhkiDuy2nFt4mOYYJNF66jHdwAULUC6b0KK/DypyLrbdwnayCiTJPQsKCsM1yy9X3QyWUFWQbAFqxXaZnmi5CCBh4Xicx08ZnJsJnRuGTN4lHMaNvY/Vw3XOaLeT/jCGEmi64eHYfF6EHssRr+fcuWm/cM3N2Qi1uqlTSeofD4OjxPmrQVACO32x8IO6+fO1sAmUrKEvFQlVID1syTnmAVg5z7kidcwQg9urA1nQ/tnSUBbDZJYmM5dgu5uApgHIUeGLUolIZq7nRgJ0+0KelS0JTo+ka0X6n+uxX66aIGVu/9chzT/269HoCJTpDZMClCcL3QqcgpxCNC0BCAMSwHo9KZJQ10mrINNtjeo8kIjhO3/qt9vUsupiIQAxiDsYbuEiJH3/Iff/MuQQaqWiVLzNcrwCOYokRe80rOlxW0IizQzz/SXoHM3XVk8d0jWziBpMBunFYhgAWiab61qNLFGbzWvtGCEDOl++qw0l+eT3/u/nth9eVOj006j/xC/QvevbPn8Y2pRauRCkqiS1CfIegsDsRzxajchiIijYhWT+q6djk+PRdeuna+1JDbzQ7q3+tehn8z+t1j+3BQngKfXb16sSdT958SFfPSJVKG7v52QPUTij1+1gbqBOrsWJwGmslze162Cn4GKqhxcOdFsV4ruk46GqciGb1MAkcn1gkXJAeiydjy2JJnTJCWWkjiRKkHOaSVFLfVwkS5WIxtZeoyib78asRPLlROsFun7uZQKlXUWoTikeUUKrqNHgtpAZebZI05UvhnNFJDVCBPWxHVOjfFGrvd1fG2jBn7EnKgKdQF5BoF5BJXW19i607ry4Pw4zwutzq4cNDT/ZHdt2jNrz3d8iLX904f+fmakofxePBEXQBswbx38IBiG1A1SFhzEKkFS577/i0Hs8cMs1DeNFr8f3UfCxmXPNqXDhUOhyD3q1CPGeF1ygcmgc4/tVQiUfsHeBIEEAr6z96vfSKpIbz3e67sjzkap0w4cx60Ef0aDzo4dbraKjXeLOSVNrZt3mDw6/ccBl54cYfl9595xVX9yBdfWdMNv9PBZ6Mi2HuQUnwSEfUg2swhsFwT1SHoGH89wrtg90ebOZUb7iMbcpaA1M5AEt7sewD1P0F9U9RVePPbZvAMB3AJtHxoOAY5ZjVSdXDAR4emu5Ti2bQNAMpV+59tHrmu89/0X1IVrXf8N3Coz8N4v1HJ37jvj/Yut3gVLYWBYulDtJTnblO+28ZKE72nBEAAA=="
 }
 }
 

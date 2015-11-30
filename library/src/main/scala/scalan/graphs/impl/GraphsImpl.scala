@@ -9,7 +9,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait GraphsAbs extends Graphs with scalan.Scalan {
+trait GraphsAbs extends scalan.Scalan with Graphs {
   self: GraphsDsl =>
 
   // single proxy for each type family
@@ -61,8 +61,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     override def toString = "Graph"
   }
   def Graph: Rep[GraphCompanionAbs]
-  implicit def proxyGraphCompanion(p: Rep[GraphCompanion]): GraphCompanion =
-    proxyOps[GraphCompanion](p)
+  implicit def proxyGraphCompanionAbs(p: Rep[GraphCompanionAbs]): GraphCompanionAbs =
+    proxyOps[GraphCompanionAbs](p)
 
   abstract class AbsAdjacencyGraph[V, E]
       (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E])
@@ -92,14 +92,27 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class AdjacencyGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]]()(pairElement(implicitly[Elem[Collection[V]]], pairElement(implicitly[Elem[NestedCollection[E]]], implicitly[Elem[NestedCollection[Int]]]))) {
+    extends EntityIso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] with Def[AdjacencyGraphIso[V, E]] {
     override def from(p: Rep[AdjacencyGraph[V, E]]) =
       (p.vertexValues, p.edgeValues, p.links)
     override def to(p: Rep[(Collection[V], (NestedCollection[E], NestedCollection[Int]))]) = {
       val Pair(vertexValues, Pair(edgeValues, links)) = p
       AdjacencyGraph(vertexValues, edgeValues, links)
     }
-    lazy val eTo = new AdjacencyGraphElem[V, E](this)
+    lazy val eFrom = pairElement(element[Collection[V]], pairElement(element[NestedCollection[E]], element[NestedCollection[Int]]))
+    lazy val eTo = new AdjacencyGraphElem[V, E](self)
+    lazy val selfType = new AdjacencyGraphIsoElem[V, E](eV, eE)
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
+  }
+  case class AdjacencyGraphIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[AdjacencyGraphIso[V, E]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new AdjacencyGraphIso[V, E]()(eV, eE))
+    lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[AdjacencyGraphIso[V, E]]
+    }
   }
   // 4) constructor and deconstructor
   class AdjacencyGraphCompanionAbs extends CompanionDef[AdjacencyGraphCompanionAbs] with AdjacencyGraphCompanion {
@@ -132,7 +145,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAdjacencyGraph[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] =
-    cachedIso[AdjacencyGraphIso[V, E]](eV, eE)
+    reifyObject(new AdjacencyGraphIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkAdjacencyGraph[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]]
@@ -166,14 +179,27 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class IncidenceGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]]()(pairElement(implicitly[Elem[Collection[V]]], pairElement(implicitly[Elem[Collection[E]]], implicitly[Elem[Int]]))) {
+    extends EntityIso[IncidenceGraphData[V, E], IncidenceGraph[V, E]] with Def[IncidenceGraphIso[V, E]] {
     override def from(p: Rep[IncidenceGraph[V, E]]) =
       (p.vertexValues, p.incMatrixWithVals, p.vertexNum)
     override def to(p: Rep[(Collection[V], (Collection[E], Int))]) = {
       val Pair(vertexValues, Pair(incMatrixWithVals, vertexNum)) = p
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }
-    lazy val eTo = new IncidenceGraphElem[V, E](this)
+    lazy val eFrom = pairElement(element[Collection[V]], pairElement(element[Collection[E]], element[Int]))
+    lazy val eTo = new IncidenceGraphElem[V, E](self)
+    lazy val selfType = new IncidenceGraphIsoElem[V, E](eV, eE)
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
+  }
+  case class IncidenceGraphIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[IncidenceGraphIso[V, E]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new IncidenceGraphIso[V, E]()(eV, eE))
+    lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[IncidenceGraphIso[V, E]]
+    }
   }
   // 4) constructor and deconstructor
   class IncidenceGraphCompanionAbs extends CompanionDef[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {
@@ -206,7 +232,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoIncidenceGraph[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]] =
-    cachedIso[IncidenceGraphIso[V, E]](eV, eE)
+    reifyObject(new IncidenceGraphIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkIncidenceGraph[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]]
@@ -216,7 +242,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
+trait GraphsSeq extends scalan.ScalanSeq with GraphsDsl {
   self: GraphsDslSeq =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }
@@ -251,7 +277,7 @@ trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
+trait GraphsExp extends scalan.ScalanExp with GraphsDsl {
   self: GraphsDslExp =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }
@@ -1163,7 +1189,7 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
 }
 
 object Graphs_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXz28bRRR+u47j2A7pDyFKI0FCMCAQxCEIKpRDFVynCnKdKBsCMhXSeD12Jt2d3eyOI5tD/wC4ISROCHpE6o0TQqqQEBLiwAlBJc6cShGqgJ5AvJn94XWyTlLRHvBhtDP75r033/e9N+vrtyHre/C0bxKL8HmbCjJvqOdlX5SMKhdM9C85ra5FL9D2o85Xn7742fQXOpxowPg28S/4VgPywUO158bPBt2tQZ5wk/rC8XwBT9RUhLLpWBY1BXN4mdl2V5CmRcs15oulGow1nVZ/F66CVoOTpsNNjwpqVCzi+9QP1yeozIjF87ya99fcQQxelqcoJ06x6REmMH2McTKw36Cu0ecO79sCpsLU1lyZFtrkmO06nohC5NDdttOKpmOc4AKcru2QPVLGEJ2yITzGO7iz6BLzCunQOppI8zFM2KdWe7PvqnmmBgWf7iJAq7ZrqZWeCwDIwKJKYn6Az3yMz7zEp2RQjxGLvUvky3XP6fUh+GkZgJ6LLp4/wkXkgVZ5q/TeZfPtu0bR1uXmnkwlp044jo5mRqhBUYE4frvxgX/n4rVzOhQaUGD+ctMXHjFFkvIQrSLh3BEq5xhA4nWQrblRbKkoy2izTxJ507FdwtFTCOUk8mQxkwlpLNcmQ3ZGQJ8TLo1MtZ6rxeedHXFepZsKsaz1W2dfeOrX6ls66MMh8ujSQOF7kVMB2YsecbdD33I8IUDbGgAsp1U1lUO+Nxhzh6QSg/LMrd9a3yzAZT2GMox8PPbQRda/+WPxh2fP6zDRUFpfsUingWj6VYvaa17F4aIBE84e9YI3uT1iyadUNnMt2iZdS4QYJ8HJIDgCZkdWpUslckuqArQIgGIg4rrDaWllvfSX8d2H16VGPZgM3gRl+g879/fPU22h5CtgEpMVtLdFrC71I5jHKlgJqUQEmKvF6Ti4HGYEFGirQ4cdZespnqpHespajF9Jd+LBk6M059J1j9nY4/boy19/+cbvN+pZJbvTIdAqtaDjhDgPMJdQaAsCMqtcpKmrEEBoODY9NXeHvXPtfaF0pPWGG9pacwc7yJLa9/ghkooa65+NBf2Psz99okMeldNkwiZuaeGY7eABljgMczZVCS8VVQqL+14ut3aISbnZVwWcXqEDehHpM8M7KsncZwYFfyYRZ1rbpxGdbsVyleV3pFwPOqge5uBgp0k96Uysy8dG6xKBfWSj9rB1+/wNHbKvQ7aNTcGvQbbpdHkrYgwvbqxE8Vq0pg0zhgwRj9gxQ+o3CwPMhrvlZqrBgdorasPn/i9N+ABn++v6PjabU4yblwgWc+9NJrbR46H+jm45+SC1eteONmXwUydwI4eX0o/7ihpfvadyWeUma6GI6LHLZXjH/6dcDp50JrEtXaH3JOFEwuOpTGSwx94vgSepOYT8ouyqK8RmVn8xLfQxCJ8axbObdPJAsJTjRwOb0HA8AE3AQ2GT66h5iIIHcyN6nxFeMsjC1bsf15/7/vNf1JVckNcVfqjw+L9C8ioeRi0fxMZP/0SyKEJ5galE/wVTftWVig0AAA=="
+  val dump = "H4sIAAAAAAAAANVXS2wbRRieteM4tkP64FGIBAnBBYHADkFQoRyq4DpVkOtE2TZFpgKN12Nn0tnZze44sjn02APcEBcOSFTigtQL4oSQKiSEhHrghBASZ06lqOqBnkD8M/vwOt51CLQHfBjtzM78j+/7/n/W12+jjOugZ10DM8xLJhG4pKvnFVcU9SoXVPTPWa0uI2dI+3Hrm09f/nz2qxQ60kCT29g947IGynkP1Z4dPutkt4ZymBvEFZbjCvR0TXkoGxZjxBDU4mVqml2Bm4yUa9QVyzU00bRa/V10BWk1dNSwuOEQQfQKw65LXH99isiIaDjPqXl/3R744GWZRTmSxXkHUwHhg4+j3v5NYut9bvG+KdCMH9q6LcOCPVlq2pYjAhdZMLdttYLpBMewgI7XdvAeLoOLTlkXDuUdOFmwsXEZd0gdtsjtExCwS1j7fN9W83QN5V2yCwCtmTZTKz0bIQQMLKkgSgN8SiE+JYlPUScOxYy+h+XLDcfq9ZH309II9Www8eIBJgILpMpbxfcvGW/f0wtmSh7uyVCyKsNJMDSXoAZFBeD4/eaH7t2z106lUL6B8tRdabrCwYaIUu6jVcCcW0LFHAKInQ6wtZDElvKyAnv2SSJnWKaNOVjyoZwGnhg1qJCb5dq0z04C9Flhk2Cr1rO1MN/5hHyVbiqYsY1bT7x08rfqWymUGnaRA5M6CN8JjAqUOetge9u3LccjAmlbA4DltKqmcsj1BmN2TCghKM/d+r313SK6lAqh9D3/M/bARMb9+afCj8+fTqGphtL6KsOdBqDpVhkx152KxUUDTVl7xPHeZPcwk0+xbGZbpI27TPgYR8FJAzgCzSdWpU0kcsuqArQAgIIn4rrFSXF1o/iHfvOj61KjDpr23nhl+hc99ecvM22h5CvQNAQrSG8Lsy5xA5gnKlAJsUR4mKvF2dC5HOYEypNWhwwbytRjLFUPtJRhlF+ON+KgZ5I0Z5MNh5rQ4/bIq99+feHOjXpGye64D7QKzes4Ps4DzCUU2qJA6TUu4tSV9yDULZMcW7hL37n2gVA60nrDDW29uQMdZFmde2qMpILG+sXVq4/e+ezdh1VDmGpSYWK7uHiIdhBU7wMsdzTM30zFv2BUWSzte7nS2sEG4UZfFXNCtcrxRPjOYx0IODF8uBJNYy5yMuJyVtsnnRTZClUsq/JAFY8aqI4zMNqAYpOeC+X6ZLJcAePHNmuPsNunb6RQ5k2UaUOvcGso07S6vBWQB/c5FKh4I1jThskDsrCDzZAs9ZtHA8yGm+iF2A0jJVnQhvP+L715hLP95X4fe9Axyo1zGGq8d5GKbbA41t7BnSjnhVbvmsGhNHwBeWbk8Ep8uq+p8fVDVc4aN2gLRET+TeUMH/7/VM5o0nORY/FiPZSaIwFPxpKShi58v7SewNIYSRRk213FJmX9pbgoDieDmST27ai9B4KwHD8e7PE3TnpQCvSQ3wU7au4D4qCFhOao+xcScHPl3if1F3748ld1lefl1QYfODz8jxG9wocBzHm+4S9DJFiQprzsVKB/A44V2GHCDQAA"
 }
 }
 

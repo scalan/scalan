@@ -195,25 +195,23 @@ trait Graphs extends ScalanCommunityDsl with CollectionsDsl { self: GraphsDsl =>
   }
 }
 
-trait GraphsDsl extends impl.GraphsAbs
+trait GraphsDsl extends ScalanCommunityDsl
+  with impl.GraphsAbs
   with EdgesDsl
   with VerticesDsl
   with FrontsDsl
   with CollectionsDsl
-  with ScalanCommunityDsl {
 
-}
-
-trait GraphsDslSeq extends impl.GraphsSeq
+trait GraphsDslSeq extends ScalanCommunityDslSeq
+  with impl.GraphsSeq
   with EdgesDslSeq
   with VerticesDslSeq
   with FrontsDslSeq
   with CollectionsDslSeq
-  with ScalanCommunityDslSeq
 
-trait GraphsDslExp extends impl.GraphsExp
+trait GraphsDslExp extends ScalanCommunityDslExp
+  with impl.GraphsExp
   with EdgesDslExp
   with VerticesDslExp
   with FrontsDslExp
   with CollectionsDslExp
-  with ScalanCommunityDslExp

@@ -71,16 +71,14 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     def merge(other: Ctx): Ctx = ops.merge(self, other)
   }
 
-  private[this] case class ReflectedProductClass(constructor: Constructor[_], paramFieldMirrors: List[FieldMirror])
+  private[this] case class ReflectedProductClass(constructor: Constructor[_], paramFieldMirrors: List[FieldMirror], hasScalanParameter: Boolean)
 
   private[this] val selfTypeSym =
     ReflectionUtil.classToSymbol(classOf[BaseDef[_]]).toType.decl(TermName("selfType")).asTerm
+  private[this] val baseType = typeOf[Base]
 
   private[this] def reflectProductClass(clazz: Class[_], d: Product) = {
     val javaMirror = runtimeMirror(clazz.getClassLoader)
-
-    val classSymbol = ReflectionUtil.classToSymbol(clazz)
-    val tpe = classSymbol.toType
 
     val constructors = clazz.getDeclaredConstructors
     assert(constructors.length == 1, s"Every class extending Def must have one constructor, $clazz has ${constructors.length}")
@@ -89,7 +87,16 @@ trait BaseExp extends Base { scalan: ScalanExp =>
     val instanceMirror = javaMirror.reflect(d)
     val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, selfTypeSym)
 
-    ReflectedProductClass(constructor, fieldMirrors)
+    val hasScalanParam = constructor.getParameterTypes.headOption match {
+      case None => false
+      case Some(firstParamClazz) =>
+        // note: classOf[Base].isAssignableFrom(firstParamClazz) can give wrong result due to the way
+        // Scala compiles traits inheriting from classes
+        val firstParamTpe = ReflectionUtil.classToSymbol(firstParamClazz).toType
+        firstParamTpe <:< baseType
+    }
+
+    ReflectedProductClass(constructor, fieldMirrors, hasScalanParam)
   }
 
   private[this] val defClasses = collection.mutable.Map.empty[Class[_], ReflectedProductClass]
@@ -111,19 +118,15 @@ trait BaseExp extends Base { scalan: ScalanExp =>
       case p: Product => transformProduct(p, t)
       case x => x
     }
-    def hasScalanParameter[T](c: Constructor[T]) = {
-      val params = c.getParameterTypes
-      params.length > 0 && classOf[Base].isAssignableFrom(params(0))
-    }
 
     val clazz = p.getClass
-    val ReflectedProductClass(constructor, fieldMirrors) =
+    val ReflectedProductClass(constructor, fieldMirrors, hasScalanParameter) =
       defClasses.getOrElseUpdate(clazz, reflectProductClass(clazz, p))
 
     val pParams = fieldMirrors.map(_.bind(p).get)
     val transformedParams = pParams.map(transformParam)
     val finalParams =
-      (if (hasScalanParameter(constructor))
+      (if (hasScalanParameter)
         scalan :: transformedParams
       else
         transformedParams).asInstanceOf[List[AnyRef]]
@@ -132,14 +135,14 @@ trait BaseExp extends Base { scalan: ScalanExp =>
       val transformedP = constructor.newInstance(finalParams: _*).asInstanceOf[Product]
       transformedP
     } catch {
-      case e: Throwable =>
-        println(
+      case e: Exception =>
+        !!!(
           s"""
-             | Graph nodes have scalan cake as the first paramenter ($$owner).
-             | Check that the trait where class $clazz is defined extends Base.
-             | Constructor parameter types: $clazz${constructor.getParameterTypes.map(_.getSimpleName).mkString("(", ",", ")")}
-             | """.stripMargin)
-        throw e
+             |Failed to invoke constructor $clazz(${constructor.getParameterTypes.map(_.getSimpleName).mkString(", ")}) with parameters ${finalParams.mkString(", ")}
+             |
+             |Graph nodes have scalan cake as the first parameter ($$owner).
+             |Check that the trait where class $clazz is defined extends Base.
+             |""".stripMargin, e)
     }
   }
 

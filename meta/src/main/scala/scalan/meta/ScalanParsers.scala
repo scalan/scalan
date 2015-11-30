@@ -287,6 +287,11 @@ trait ScalanParsers {
         None
     case EmptyTree =>
       None
+    // calls in constructor
+    case Select(_, _) =>
+      None
+    case Apply(_, _) =>
+      None
     case tree => ???(tree)
   }
 

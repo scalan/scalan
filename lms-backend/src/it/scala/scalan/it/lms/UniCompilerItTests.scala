@@ -82,11 +82,11 @@ trait UniCompilerTestProg extends MsfFuncs with LinearAlgebraExamples {
 
 }
 
-class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new UniCompilerTestProg with GraphsDslSeq with ScalanCommunityDslSeq) with GraphTestInputs {
+class UniCompilerItTests extends BaseItTests[UniCompilerTestProg](new ScalanCommunityDslSeq with UniCompilerTestProg with GraphsDslSeq) with GraphTestInputs {
 
   val in3Arrays = (Array(2, 3), (Array(1, 4), Array(1, -1)))
 
-  class ProgExp extends UniCompilerTestProg with GraphsDslExp with ScalanCommunityDslExp with JNIExtractorOpsExp
+  class ProgExp extends ScalanCommunityDslExp with UniCompilerTestProg with GraphsDslExp with JNIExtractorOpsExp
 
   val progStaged = new LmsCompilerUni(new ProgExp) with CommunityBridge
 
