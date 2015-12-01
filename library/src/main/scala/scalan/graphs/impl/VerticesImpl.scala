@@ -40,7 +40,7 @@ trait VerticesAbs extends scalan.Scalan with Vertices {
     def convertVertex(x: Rep[Vertex[V, E]]): Rep[To] = {
       x.selfType1 match {
         case _: VertexElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have VertexElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have VertexElem[_, _, _], but got $e", x)
       }
     }
 

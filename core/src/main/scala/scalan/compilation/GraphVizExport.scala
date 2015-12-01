@@ -3,7 +3,7 @@ package scalan.compilation
 import java.io.{File, PrintWriter}
 
 import _root_.scalan.ScalanExp
-import scalan.util.{StringUtil, FileUtil}
+import scalan.util.{ScalaNameUtil, StringUtil, FileUtil}
 
 trait GraphVizExport { self: ScalanExp =>
 
@@ -68,17 +68,20 @@ trait GraphVizExport { self: ScalanExp =>
     case _ => d.toString
   }
 
-  private def emitEdges(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
-    def emitEdgesTo(list: List[Exp[_]], params: String) =
-      list.foreach { dep => stream.println(s"${StringUtil.quote(dep)} -> ${StringUtil.quote(sym)} $params") }
-
+  private def emitDepEdges(sym: Exp[_], rhs: Def[_])(implicit stream: PrintWriter, config: GraphVizConfig) = {
     val (deps, lambdaVars) = rhs match {
       case l: Lambda[_, _] => lambdaDeps(l)
       case _ => (dep(rhs), Nil)
     }
-    emitEdgesTo(lambdaVars, "[style=dashed, color=lightgray, weight=0]")
-    emitEdgesTo(deps, "[style=solid]")
+    emitEdges(lambdaVars, sym, "[style=dashed, color=lightgray, weight=0]")
+    emitEdges(deps, sym, "[style=solid]")
   }
+
+  private def emitEdges(list: Seq[Any], target: Any, params: String)(implicit stream: PrintWriter) =
+    list.foreach(emitEdge(_, target, params))
+
+  private def emitEdge(source: Any, target: Any, params: String)(implicit stream: PrintWriter): Unit =
+    stream.println(s"${StringUtil.quote(source)} -> ${StringUtil.quote(target)} $params")
 
   // can be overridden if desired
   def defaultGraphVizConfig: GraphVizConfig =
@@ -90,12 +93,14 @@ trait GraphVizExport { self: ScalanExp =>
     emitDepGraph(List(start), file)(config)
   def emitDepGraph(ss: Seq[Exp[_]], file: File)(implicit config: GraphVizConfig): Unit =
     emitDepGraph(new PGraph(ss.toList), file)(config)
-  def emitGraphOnException(contextName: String, ss: Exp[_]*) =
-    emitDepGraph(ss, FileUtil.file("test-out", "exceptions", s"${contextName}_context.dot"))(defaultGraphVizConfig)
+  def emitExceptionGraph(e: Throwable, file: File)(implicit config: GraphVizConfig): Unit =
+    emitDepGraph(Left(e), file)
   def emitDepGraph(graph: AstGraph, file: File)(implicit config: GraphVizConfig): Unit =
+    emitDepGraph(Right(graph), file)
+  def emitDepGraph(exceptionOrGraph: Either[Throwable, AstGraph], file: File)(implicit config: GraphVizConfig): Unit =
     if (config.emitGraphs) {
       FileUtil.withFile(file) {
-        emitDepGraph(graph, file.getName)(_, config)
+        emitDepGraph(exceptionOrGraph, file.getName)(_, config)
       }
     }
   def emitDot(dotText: String, file: File)(implicit config: GraphVizConfig): Unit =
@@ -163,16 +168,60 @@ trait GraphVizExport { self: ScalanExp =>
     }
   }
 
-  private def emitDepGraph(graph: AstGraph, name: String)(implicit stream: PrintWriter, config: GraphVizConfig): Unit = {
+  private def emitExceptionCluster(e: Throwable, depth: Int, acc: Map[Exp[_], Def[_]])(implicit stream: PrintWriter, config: GraphVizConfig): Map[Exp[_], Def[_]] = {
+    // edges appear before their end nodes but it shouldn't be a problem
+    val nodeName = exceptionNodeName(depth)
+
+    val acc1 = e.getCause match {
+      case null => acc
+      case cause =>
+        val causeDepth = depth + 1
+        emitEdge(exceptionNodeName(causeDepth), nodeName, "[style=dashed, color=red]")
+        emitExceptionCluster(cause, causeDepth, acc)
+    }
+
+    val acc2 = e match {
+      case e: StagingException if e.syms.nonEmpty =>
+        val syms1 = e.syms
+        val depGraph = new PGraph(syms1.toList)
+        emitEdges(syms1, nodeName, "[color=red]")
+        emitCluster(depGraph, acc1)
+      case _ =>
+        acc1
+    }
+    emitExceptionNode(e, depth)
+    acc2
+  }
+
+  private def exceptionNodeName(depth: Int) = "e" + depth
+
+  private def emitExceptionNode(e: Throwable, depth: Int)(implicit stream: PrintWriter, config: GraphVizConfig) = {
+    stream.println(StringUtil.quote(exceptionNodeName(depth)) + " [")
+    // complete stacks are huge; we'd like to put them into tooltip, but \l doesn't work there and xdot doesn't show
+    // the tooltip anyway
+    val firstUsefulStackTraceLine = e.getStackTrace.find { ste =>
+      val methodName = ScalaNameUtil.cleanScalaName(ste.getMethodName)
+      // skip ???, !!!, throwInvocationException and other methods which just build and throw exceptions
+      !(methodName.endsWith("???") || methodName.endsWith("!!!") || methodName.startsWith("throw"))
+    }.map(ste => ScalaNameUtil.cleanScalaName(ste.toString)).toList
+    stream.println(config.nodeLabel(e.toString :: firstUsefulStackTraceLine))
+    stream.println(s"shape=note,color=red")
+    stream.println("]")
+  }
+
+  private def emitDepGraph(exceptionOrGraph: Either[Throwable, AstGraph], name: String)(implicit stream: PrintWriter, config: GraphVizConfig): Unit = {
     stream.println(s"""digraph "${name}" {""")
 
     stream.println("concentrate=true")
     stream.println(config.orientationString)
 
-    val nodes = emitCluster(graph, Map.empty)
+    val nodes = exceptionOrGraph match {
+      case Left(e) => emitExceptionCluster(e, 0, Map.empty)
+      case Right(graph) => emitCluster(graph, Map.empty)
+    }
 
     nodes.foreach { case (sym, rhs) =>
-      emitEdges(sym, rhs)
+      emitDepEdges(sym, rhs)
     }
     stream.println("}")
     stream.close()

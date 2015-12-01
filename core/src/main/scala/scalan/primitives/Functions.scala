@@ -261,7 +261,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
               if (f.isRecursive)
                 Apply(f, x)
               else
-                !!!(s"Stack overflow in applying non-recursive $f($x)", e)
+                !!!(s"Stack overflow in applying non-recursive $f($x)", e, f, x)
           }
         case Def(Apply(_, _)) => // function that is a result of Apply (curried application)
           Apply(f, x)

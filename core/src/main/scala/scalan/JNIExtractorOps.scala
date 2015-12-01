@@ -166,7 +166,7 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
                 res.asRep[I]
             }
           case elem =>
-            ???(s"Don't know how to extract: elem = ${elem}")
+            ???(s"Don't know how to extract: elem = ${elem}", x)
 //        }
     }
   }
@@ -228,10 +228,10 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
           case e if e.tag.tpe <:< TypeTag.AnyVal.tpe =>
             JNI_NewPrimitive(x)(el)
           case _ =>
-            ???(s"Don't know haw to pack: elem = ${el}")
+            ???(s"Don't know how to pack: elem = ${el}", x)
         }
       case elem =>
-        ???(s"Don't know haw to pack: elem = ${elem}")
+        ???(s"Don't know how to pack: elem = ${elem}", x)
     }
   }
 

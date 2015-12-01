@@ -21,7 +21,7 @@ class LmsCompilerCxx[ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends Lm
                                       (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     /* LMS stuff */
 
-    emitSource(sourcesDir, functionName, graph, eInput, eOutput)
+    emitSource(sourcesDir, functionName, graph, eInput, eOutput, graphVizConfig)
 //    val command = Seq("scalac", "-d", jarPath(functionName, executableDir)) ++ config.extraCompilerOptions :+
 //      sourceFile.getAbsolutePath
 //

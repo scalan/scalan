@@ -42,7 +42,7 @@ trait CollectionsAbs extends scalan.Scalan with Collections {
     def convertCollection(x: Rep[Collection[Item]]): Rep[To] = {
       x.selfType1 match {
         case _: CollectionElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have CollectionElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have CollectionElem[_, _], but got $e", x)
       }
     }
 
@@ -93,7 +93,7 @@ trait CollectionsAbs extends scalan.Scalan with Collections {
     def convertPairCollection(x: Rep[PairCollection[A, B]]): Rep[To] = {
       x.selfType1 match {
         case _: PairCollectionElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have PairCollectionElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have PairCollectionElem[_, _, _], but got $e", x)
       }
     }
 
@@ -129,7 +129,7 @@ trait CollectionsAbs extends scalan.Scalan with Collections {
     def convertNestedCollection(x: Rep[NestedCollection[A]]): Rep[To] = {
       x.selfType1 match {
         case _: NestedCollectionElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have NestedCollectionElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have NestedCollectionElem[_, _], but got $e", x)
       }
     }
 

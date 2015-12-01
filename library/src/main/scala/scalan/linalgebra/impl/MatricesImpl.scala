@@ -38,7 +38,7 @@ trait MatricesAbs extends scalan.Scalan with Matrices {
     def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]): Rep[To] = {
       x.selfType1 match {
         case _: AbstractMatrixElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have AbstractMatrixElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have AbstractMatrixElem[_, _], but got $e", x)
       }
     }
 

@@ -39,7 +39,7 @@ trait FreeMsAbs extends scalan.Scalan with FreeMs {
     def convertFreeM(x: Rep[FreeM[F, A]]): Rep[To] = {
       x.selfType1.asInstanceOf[Elem[_]] match {
         case _: FreeMElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have FreeMElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have FreeMElem[_, _, _], but got $e", x)
       }
     }
 

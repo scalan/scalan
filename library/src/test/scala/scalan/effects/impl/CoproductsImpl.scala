@@ -39,7 +39,7 @@ trait CoproductsAbs extends scalan.Scalan with Coproducts {
     def convertCoproduct(x: Rep[Coproduct[F, G, A]]): Rep[To] = {
       x.selfType1.asInstanceOf[Elem[_]] match {
         case _: CoproductElem[_, _, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have CoproductElem[_, _, _, _], but got $e")
+        case e => !!!(s"Expected $x to have CoproductElem[_, _, _, _], but got $e", x)
       }
     }
 

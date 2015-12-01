@@ -44,7 +44,7 @@ trait ExceptionsAbs extends scalan.Scalan with Exceptions {
     def convertSThrowable(x: Rep[SThrowable]): Rep[To] = {
       x.selfType1 match {
         case _: SThrowableElem[_] => x.asRep[To]
-        case e => !!!(s"Expected $x to have SThrowableElem[_], but got $e")
+        case e => !!!(s"Expected $x to have SThrowableElem[_], but got $e", x)
       }
     }
     lazy val baseElem = {

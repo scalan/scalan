@@ -39,7 +39,7 @@ trait ProcessesAbs extends scalan.Scalan with Processes {
     def convertProcess(x: Rep[Process[F, O]]): Rep[To] = {
       x.selfType1.asInstanceOf[Elem[_]] match {
         case _: ProcessElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have ProcessElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have ProcessElem[_, _, _], but got $e", x)
       }
     }
 

@@ -80,7 +80,7 @@ trait Entities extends Elems { self: Scalan =>
     case _: ViewElem[_,_] => true
     case _: EntityElem[_] => false
     case _: BaseElem[_] => true
-    case _ => !!!(s"isConcrete is not defined for Elem $e")
+    case _ => ???(s"isConcreteElem is not implemented for $e")
   }
 
   implicit class ElemOps[T](e: Elem[T]) {
@@ -116,7 +116,7 @@ trait Entities extends Elems { self: Scalan =>
     def convertTo[R <: Def[_]](implicit eR: Elem[R]): Rep[R] =
       eR match {
         case entE: EntityElem[R] @unchecked => entE.convert(x)
-        case _ => !!!(s"Cannot convert $x to a value of type ${eR.name}: EntityElem expected but ${eR.getClass.getSimpleName} found")
+        case _ => !!!(s"Cannot convert $x to a value of type ${eR.name}: EntityElem expected but ${eR.getClass.getSimpleName} found", x)
       }
   }
 }

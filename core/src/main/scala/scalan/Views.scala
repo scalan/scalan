@@ -639,15 +639,15 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
       val loopRes = LoopUntil(start1, step1, isMatch1)
       iso.to(loopRes)
 
-    case call @ MethodCall(Def(obj), m, args, neverInvoke) =>
+    case call @ MethodCall(receiver, m, args, neverInvoke) =>
       call.tryInvoke match {
-        // Rule: obj.m(args) ==> body(m).subst{xs -> args}
+        // Rule: receiver.m(args) ==> body(m).subst{xs -> args}
         case InvokeSuccess(res) => res
         case InvokeFailure(e) =>
           if (e.isInstanceOf[DelayInvokeException])
             super.rewriteDef(d)
           else
-            !!!(s"Failed to invoke $call", e)
+            throwInvocationException("Method invocation in rewriteDef", e, receiver, m, args)
         case InvokeImpossible =>
           implicit val resultElem: Elem[T] = d.selfType
           // asRep[T] cast below should be safe
@@ -655,9 +655,9 @@ trait ViewsDslExp extends impl.ViewsExp with BaseExp with ProxyExp { self: Scala
           def copyMethodCall(newReceiver: Exp[_]) =
             mkMethodCall(newReceiver, m, args, neverInvoke, resultElem).asRep[T]
 
-          obj match {
+          receiver match {
             // Rule: (if(c) t else e).m(args) ==> if (c) t.m(args) else e.m(args)
-            case IfThenElse(cond, t, e) =>
+            case Def(IfThenElse(cond, t, e)) =>
               IF (cond) {
                 copyMethodCall(t)
               } ELSE {

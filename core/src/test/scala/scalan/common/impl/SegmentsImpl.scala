@@ -35,7 +35,7 @@ trait SegmentsAbs extends scalan.Scalan with Segments {
     def convertSegment(x: Rep[Segment]): Rep[To] = {
       x.selfType1 match {
         case _: SegmentElem[_] => x.asRep[To]
-        case e => !!!(s"Expected $x to have SegmentElem[_], but got $e")
+        case e => !!!(s"Expected $x to have SegmentElem[_], but got $e", x)
       }
     }
 

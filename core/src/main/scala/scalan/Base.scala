@@ -22,20 +22,22 @@ trait Base extends LazyLogging { self: Scalan =>
   type DoubleRep = Rep[Double]
   type :=>[-A, +B] = PartialFunction[A, B]
 
-  class StagingException(message: String, cause: Throwable) extends RuntimeException(message, cause) {
-    def this(message: String) = this(message, null)
+  protected def stagingExceptionMessage(message: String, syms: Seq[Rep[_]]): String
+
+  // Consider if extra data should be Seq[Any] instead (change name in this case)
+  class StagingException(message: String, cause: Throwable, val syms: Seq[Rep[_]]) extends
+  RuntimeException(stagingExceptionMessage(message, syms), cause) {
+    def this(message: String, syms: Seq[Rep[_]]) = this(message, null, syms)
   }
 
-  class ElemException[A](message: String)(implicit val element: Elem[A]) extends StagingException(message)
+  class NotImplementedStagingException(message: String, syms: Seq[Rep[_]]) extends StagingException(message, null, syms)
 
-  def ??? : Nothing = ???("not implemented")
-  def ???(value: Any): Nothing = throw new NotImplementedError(value.toString)
-  def ???(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString)
+  def ??? : Nothing = ???("Missing or incomplete implementation")
+  def ???(value: Any, syms: Rep[_]*): Nothing = throw new NotImplementedStagingException(value.toString, syms)
 
   def !!! : Nothing = !!!("should not be called")
-  def !!!(msg: String): Nothing = throw new StagingException(msg)
-  def !!!(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg + " " + syms.mkString)
-  def !!!(msg: String, e: Throwable): Nothing = throw new StagingException(msg, e)
+  def !!!(msg: String, syms: Rep[_]*): Nothing = throw new StagingException(msg, syms)
+  def !!!(msg: String, e: Throwable, syms: Rep[_]*): Nothing = throw new StagingException(msg, e, syms)
 
   implicit class RepForSomeExtension(x: Rep[_]) {
     def asRep[T]: Rep[T] = x.asInstanceOf[Rep[T]]
@@ -133,7 +135,7 @@ trait Base extends LazyLogging { self: Scalan =>
 
   abstract class CompanionDef[T] extends Def[T] {
     override def productArity = 0
-    override def productElement(n: Int) = ???
+    override def productElement(n: Int) = !!!(s"productElement($n) called, but productArity = 0", self)
     override def canEqual(other: Any) = other.isInstanceOf[CompanionDef[_]]
   }
 

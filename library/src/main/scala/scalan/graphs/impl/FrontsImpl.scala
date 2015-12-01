@@ -35,7 +35,7 @@ trait FrontsAbs extends scalan.Scalan with Fronts {
     def convertFront(x: Rep[Front]): Rep[To] = {
       x.selfType1 match {
         case _: FrontElem[_] => x.asRep[To]
-        case e => !!!(s"Expected $x to have FrontElem[_], but got $e")
+        case e => !!!(s"Expected $x to have FrontElem[_], but got $e", x)
       }
     }
 

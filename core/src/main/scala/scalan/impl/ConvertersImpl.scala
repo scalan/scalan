@@ -39,7 +39,7 @@ trait ConvertersAbs extends Converters {
     def convertConverter(x: Rep[Converter[T, R]]): Rep[To] = {
       x.selfType1 match {
         case _: ConverterElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have ConverterElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have ConverterElem[_, _, _], but got $e", x)
       }
     }
 

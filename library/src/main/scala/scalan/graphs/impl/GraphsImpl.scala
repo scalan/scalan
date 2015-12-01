@@ -41,7 +41,7 @@ trait GraphsAbs extends scalan.Scalan with Graphs {
     def convertGraph(x: Rep[Graph[V, E]]): Rep[To] = {
       x.selfType1 match {
         case _: GraphElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have GraphElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have GraphElem[_, _, _], but got $e", x)
       }
     }
 

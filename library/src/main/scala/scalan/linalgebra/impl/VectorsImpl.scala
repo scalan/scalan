@@ -38,7 +38,7 @@ trait VectorsAbs extends scalan.Scalan with Vectors {
     def convertAbstractVector(x: Rep[AbstractVector[T]]): Rep[To] = {
       x.selfType1 match {
         case _: AbstractVectorElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have AbstractVectorElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have AbstractVectorElem[_, _], but got $e", x)
       }
     }
 

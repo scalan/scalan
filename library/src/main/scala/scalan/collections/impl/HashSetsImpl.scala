@@ -71,7 +71,7 @@ trait HashSetsAbs extends scalan.Scalan with HashSets {
     def convertSHashSet(x: Rep[SHashSet[A]]): Rep[To] = {
       x.selfType1 match {
         case _: SHashSetElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have SHashSetElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have SHashSetElem[_, _], but got $e", x)
       }
     }
     lazy val baseElem =

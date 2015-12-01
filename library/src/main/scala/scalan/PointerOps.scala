@@ -55,7 +55,7 @@ trait PointerOpsExp extends PointerOps { self: ScalanExp =>
   def scalarPtr[A: Elem](source: Exp[A]): Exp[Pointer[A]] = {
     source.elem match {
       case be: BaseElem[_] => ScalarPtr(CreateScalar(source))
-      case _ => !!!(s"not allowed to make scalar pointer for non-BaseElem: ${source.elem}")
+      case _ => !!!(s"not allowed to make scalar pointer for non-BaseElem: ${source.elem}", source)
     }
   }
 
