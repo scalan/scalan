@@ -25,10 +25,13 @@ trait Structs { self: Scalan =>
   // It's only useful if we'll have some static typing on structs later (Shapeless' records?)
   abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T])
   case class SimpleTag[T <: Struct : TypeTag](name: String) extends StructTag[T]
+  object SimpleTag {
+    def apply[T <: Struct](implicit tag: TypeTag[T]): SimpleTag[T] = SimpleTag[T](tag.tpe.typeSymbol.name.toString)
+  }
   //  case class NestClassTag[C[_],T](elem: StructTag[T]) extends StructTag[C[T]]
   //  case class AnonTag[T](fields: RefinedManifest[T]) extends StructTag[T]
   //  case class MapTag[T]() extends StructTag[T]
-  val defaultStructTag = SimpleTag[Struct]("Struct")
+  val defaultStructTag = SimpleTag[Struct]
 
   protected def baseStructName(tag: StructTag[_]) = tag match {
     case `defaultStructTag` => ""
@@ -63,6 +66,8 @@ trait Structs { self: Scalan =>
   def structElement(fields: Seq[(String, Elem[_])]): StructElem[Struct] =
     structElement(defaultStructTag, fields)
 
+  def structElementFor[T <: Struct : TypeTag](fields: Seq[(String, Elem[_])]): StructElem[T] =
+    structElement(SimpleTag[T], fields)
   /**
     * Get tuple field name by index
     */
