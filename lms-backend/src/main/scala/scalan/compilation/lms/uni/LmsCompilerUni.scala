@@ -3,6 +3,7 @@ package scalan.compilation.lms.uni
 import java.io.File
 import java.net.URL
 
+import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms._
 import scalan.compilation.lms.common.JNILmsOpsExp
 import scalan.compilation.lms.cxx.sharedptr.CxxCodegen
@@ -63,7 +64,7 @@ class LmsCompilerUni[+ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsEx
   override def getClassLoader(jarUrls: Array[URL]): ClassLoader =
     new NativeCopyLoader(Seq.empty, Seq(new File(runtimeTargetDir)), jarUrls, getClass.getClassLoader)
 
-  override def emitSource[A, B](sourcesDir: File, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B]) = {
+  override def emitSource[A, B](sourcesDir: File, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B], graphVizConfig: GraphVizConfig) = {
     (elemToManifest(eInput), elemToManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
         graph.roots.size match {
@@ -71,6 +72,7 @@ class LmsCompilerUni[+ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsEx
           case 1 => // just generate one scala file
             // call LmsMirror
             val lmsFunc = apply[a, b](graph)
+            emitLmsGraph(sourcesDir, functionName, graphVizConfig, lmsFunc, mA, mB)
             lms.codegen.createFile(lmsFunc, functionName, sourcesDir)(mA, mB)
 
           case _ => //generate some c++ files, and then generate scala file with native calls
@@ -79,6 +81,7 @@ class LmsCompilerUni[+ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsEx
 
             val cxxFunctions = findRootsForCodegen(graph, KnownCodegens.Cxx)
             for (f <- cxxFunctions) {
+              // TODO emit LMS graphs for them
               emitCSource(sourcesDir, functionName, finalMirror, f)
             }
 
@@ -86,6 +89,7 @@ class LmsCompilerUni[+ScalanCake <: ScalanCommunityDslExp with JNIExtractorOpsEx
             scalaFunctions match {
               case Seq(scalaFunction) =>
                 val lmsFunc = finalMirror.funcMirror[a, b](scalaFunction)
+                emitLmsGraph(sourcesDir, functionName, graphVizConfig, lmsFunc, mA, mB)
                 lms.jniCallCodegen.createFile(lmsFunc, functionName, sourcesDir)(mA, mB)
               case Seq() => !!!("There are no function marked for JVM code generation")
               case _ => !!!("There must be exactly one function marked for JVM code generation")

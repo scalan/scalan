@@ -12,61 +12,35 @@ abstract class LmsCompiler[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) ext
 
   override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
-  def emitSource[A, B](sourcesDir: File, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B]): File = {
+  def emitSource[A, B](sourcesDir: File, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B], graphVizConfig: GraphVizConfig): File = {
     (elemToManifest(eInput), elemToManifest(eOutput)) match {
       case (mA: Manifest[a], mB: Manifest[b]) =>
 
-        // ***$$$*** transform graph in lms start
-        /*
-        val graphEmitter = new GraphLmsBackend
-        val codegen = graphEmitter.codegen
         val lmsFunc = apply[a, b](graph)
-        try {
-          codegen.emitSource[a, b](lmsFunc, functionName, writer)(mA, mB)
-        } catch {
-          case e: Throwable => {
-            println("ERROR in codegen.emitSource: " + e)
-          }
-        }
-        println("=== codegen.graphStream.roots.head.toString ===" )
-        println(codegen.graphStream.roots.head.toString)
-        println("===============================================" )
-        */
-        // ***$$$*** transform graph in lms stop
-
         val codegen = lms.codegen
-        val lmsFunc = apply[a, b](graph)
+        emitLmsGraph(sourcesDir, functionName, graphVizConfig, lmsFunc, mA, mB)
 
         codegen.createFile(lmsFunc, functionName, sourcesDir)(mA, mB)
 
     }
   }
 
-  override def buildGraph[A, B](sourcesDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): CommonCompilerOutput[A, B] = {
-    // pass scalan phases
-    val output = super.buildGraph(sourcesDir, functionName, func, graphVizConfig)(compilerConfig)
+  def emitLmsGraph[A, B](sourcesDir: File, functionName: String, graphVizConfig: GraphVizConfig, lmsFunc: lms.Exp[A] => lms.Exp[B], mA: Manifest[A], mB: Manifest[B]): Unit = {
+    val graphCodegen = lms.graphCodegen
 
-    (elemToManifest(output.eInput), elemToManifest(output.eOutput)) match {
-      case (mA: Manifest[a], mB: Manifest[b]) =>
-        val codegen = lms.graphCodegen
-        val lmsFunc = apply[a, b](output.graph)
-
-        val log = new File(sourcesDir, s"${functionName}_lms.log")
-        FileUtil.withFile(log) { writer =>
-          try {
-            codegen.emitSource[a, b](lmsFunc, functionName, writer)(mA, mB)
-          } catch {
-            case e: Exception =>
-              println("Exception in codegen.emitSource:")
-              e.printStackTrace()
-          }
-        }
-
-        val dotFile = new File(sourcesDir, s"${functionName}_lms.dot")
-
-        codegen.graphStream.exportToGraphVis(dotFile, graphVizConfig)
+    val log = new File(sourcesDir, s"${functionName}_lms.log")
+    FileUtil.withFile(log) { writer =>
+      try {
+        graphCodegen.emitSource[A, B](lmsFunc, functionName, writer)(mA, mB)
+      } catch {
+        case e: Exception =>
+          println("Exception in graphCodegen.emitSource:")
+          e.printStackTrace()
+      }
     }
 
-    output
+    val dotFile = new File(sourcesDir, s"${functionName}_lms.dot")
+
+    graphCodegen.graphStream.exportToGraphVis(dotFile, graphVizConfig)
   }
 }
