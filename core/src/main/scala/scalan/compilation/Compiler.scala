@@ -29,7 +29,7 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
 
   def buildGraph[A, B](sourcesDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): CommonCompilerOutput[A, B] = {
     // G is PGraph with some extra information
-    def emittingGraph[G](fileName: String, toGraph: G => PGraph)(mkGraph: => G): G = {
+    def emittingGraph[G](fileName: String, passName: String, toGraph: G => PGraph)(mkGraph: => G): G = {
       val file = new File(sourcesDir, fileName)
       try {
         val g = mkGraph
@@ -38,13 +38,14 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
       } catch {
         case e: Exception =>
           emitExceptionGraph(e, file)(graphVizConfig)
-          throw new CompilationException(e)
+          throw new CompilationException(s"$passName failed. See ${file.getAbsolutePath} for exception graph.", e)
       }
     }
 
-    val (initialGraph, eInput, eOutput) = emittingGraph[(PGraph, Elem[A], Elem[B])](s"$functionName.dot", _._1) {
+    val (initialGraph, eInput, eOutput) = emittingGraph[(PGraph, Elem[A], Elem[B])](s"$functionName.dot", "Initial graph generation", _._1) {
       val func0 = func
-      (buildInitialGraph(func0)(compilerConfig), func0.elem.eDom, func0.elem.eRange)
+      val eFunc = func0.elem
+      (buildInitialGraph(func0)(compilerConfig), eFunc.eDom, eFunc.eRange)
     }
 
     val passes = graphPasses(compilerConfig)
@@ -57,7 +58,7 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
       val indexStr = (index + 1).toString
       val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"
 
-      emittingGraph[PGraph](dotFileName, g => g) {
+      emittingGraph[PGraph](dotFileName, pass.name, g => g) {
         scalan.beginPass(pass)
         val graph1 = pass(graph).withoutContext
         scalan.endPass(pass)
@@ -93,4 +94,4 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
   protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B
 }
 
-class CompilationException(cause: Exception) extends RuntimeException(cause)
+class CompilationException(message: String, cause: Exception) extends RuntimeException(message, cause)
