@@ -2,21 +2,37 @@ package scalan
 
 import java.lang.reflect.Method
 
-import org.scalatest.Suite
-
 import scalan.compilation.{GraphVizConfig, Compiler}
 import scalan.util.FileUtil
 
 trait TestContexts extends TestsUtil {
+  private[this] def stage(scalan: ScalanExp)(testName: String, name: String, sfs: Seq[() => scalan.Exp[_]]): Unit = {
+    val dotFile = FileUtil.file(prefix, testName, s"$name.dot")
+    implicit val graphVizConfig = scalan.defaultGraphVizConfig
+    try {
+      val ss = sfs.map(_.apply())
+      scalan.emitDepGraph(ss, dotFile)
+    } catch {
+      case e: Exception =>
+        scalan.emitExceptionGraph(e, dotFile)
+        fail(s"Staging $name failed. See ${dotFile.getAbsolutePath} for exception graph.", e)
+    }
+  }
 
   abstract class TestContext(testName: String) extends ScalanCtxExp {
     def this() = this(currentTestNameAsFileName)
 
     override def isInvokeEnabled(d: Def[_], m: Method) = true
     override def shouldUnpack(e: Elem[_]) = true
-    def emit(name: String, ss: Exp[_]*): Unit =
-      emitDepGraph(ss, FileUtil.file(prefix, testName, s"$name.dot"))(defaultGraphVizConfig)
-    def emit(ss: Exp[_]*): Unit = emit(testName, ss: _*)
+
+    // workaround for non-existence of by-name repeated parameters
+    def emitF(name: String, sfs: (() => Exp[_])*): Unit = stage(this)(testName, name, sfs)
+    def emit(name: String, s1: => Exp[_]): Unit = emitF(name, () => s1)
+    def emit(name: String, s1: => Exp[_], s2: => Exp[_]): Unit = emitF(name, () => s1, () => s2)
+    def emit(name: String, s1: => Exp[_], s2: => Exp[_], s3: => Exp[_]): Unit = emitF(name, () => s1, () => s2, () => s3)
+    def emit(s1: => Exp[_]): Unit = emitF(testName, () => s1)
+    def emit(s1: => Exp[_], s2: => Exp[_]): Unit = emitF(testName, () => s1, () => s2)
+    def emit(s1: => Exp[_], s2: => Exp[_], s3: => Exp[_]): Unit = emitF(testName, () => s1, () => s2, () => s3)
   }
 
   // TODO change API to use defaultCompilers here! See JNI_MsfItTests and others
@@ -26,14 +42,23 @@ trait TestContexts extends TestsUtil {
     val compiler: Compiler[_ <: ScalanExp]
     import compiler._
 
-    def test[A,B](functionName: String, f: => Exp[A => B]): CompilerOutput[A, B] = {
+    def test[A,B](functionName: String, f: => scalan.Exp[A => B]): CompilerOutput[A, B] = {
       buildExecutable(FileUtil.file(prefix, functionName), functionName, f, GraphVizConfig.default)(defaultCompilerConfig)
     }
-    def test[A,B](f: => Exp[A => B]): CompilerOutput[A, B] = test(testName, f)
+    def test[A,B](f: => scalan.Exp[A => B]): CompilerOutput[A, B] = test(testName, f)
 
-    def emit(name: String, ss: scalan.Exp[_]*): Unit =
-      scalan.emitDepGraph(ss, FileUtil.file(prefix, testName, s"$name.dot"))(scalan.defaultGraphVizConfig)
-    def emit(ss: scalan.Exp[_]*): Unit = emit(testName, ss: _*)
+    // workaround for non-existence of by-name repeated parameters
+    def emitF(name: String, sfs: (() => scalan.Exp[_])*): Unit = stage(scalan)(testName, name, sfs)
+    def emit(name: String, s1: => scalan.Exp[_]): Unit = emitF(name, () => s1)
+    def emit(name: String, s1: => scalan.Exp[_], s2: => scalan.Exp[_]): Unit =
+      emitF(name, () => s1, () => s2)
+    def emit(name: String, s1: => scalan.Exp[_], s2: => scalan.Exp[_], s3: => scalan.Exp[_]): Unit =
+      emitF(name, () => s1, () => s2, () => s3)
+    def emit(s1: => scalan.Exp[_]): Unit = emitF(testName, () => s1)
+    def emit(s1: => scalan.Exp[_], s2: => scalan.Exp[_]): Unit =
+      emitF(testName, () => s1, () => s2)
+    def emit(s1: => scalan.Exp[_], s2: => scalan.Exp[_], s3: => scalan.Exp[_]): Unit =
+      emitF(testName, () => s1, () => s2, () => s3)
   }
 }
 
