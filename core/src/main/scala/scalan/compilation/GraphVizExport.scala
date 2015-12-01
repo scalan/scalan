@@ -204,7 +204,7 @@ trait GraphVizExport { self: ScalanExp =>
       // skip ???, !!!, throwInvocationException and other methods which just build and throw exceptions
       !(methodName.endsWith("???") || methodName.endsWith("!!!") || methodName.startsWith("throw"))
     }.map(ste => ScalaNameUtil.cleanScalaName(ste.toString)).toList
-    stream.println(config.nodeLabel(e.toString :: firstUsefulStackTraceLine))
+    stream.println(config.nodeLabel(e.toString.lines.toList ++ firstUsefulStackTraceLine))
     stream.println(s"shape=note,color=red")
     stream.println("]")
   }
