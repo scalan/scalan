@@ -14,13 +14,15 @@ lazy val buildSettings = Seq(
     "-language:implicitConversions",
     "-language:existentials",
     "-language:experimental.macros"),
-    publishTo := {
-      val nexus = "http://10.122.85.37:9081/nexus/"
-      if (version.value.trim.endsWith("SNAPSHOT"))
-        Some("snapshots" at (nexus + "content/repositories/snapshots"))
-      else
-        Some("releases" at (nexus + "content/repositories/releases"))
-    })
+  publishTo := {
+    val nexus = "http://10.122.85.37:9081/nexus/"
+    if (version.value.trim.endsWith("SNAPSHOT"))
+      Some("snapshots" at (nexus + "content/repositories/snapshots"))
+    else
+      Some("releases" at (nexus + "content/repositories/releases"))
+  },
+  // do not publish docs for snapshot versions
+  publishArtifact in (Compile, packageDoc) := !version.value.trim.endsWith("SNAPSHOT"))
 
 lazy val testSettings = Seq(
   libraryDependencies ++= Seq(
