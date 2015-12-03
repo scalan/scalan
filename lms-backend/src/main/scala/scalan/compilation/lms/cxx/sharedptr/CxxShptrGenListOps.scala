@@ -1,6 +1,6 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.virtualization.lms.common.{BaseGenListOps, CLikeGenEffect, ListOpsExp}
+import scala.lms.common.{BaseGenListOps, CLikeGenEffect, ListOpsExp}
 import scalan.compilation.lms.common.LstOpsExp
 
 trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeGenEffect {
@@ -12,7 +12,7 @@ trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeG
   override def remap[A](m: Manifest[A]) : String = {
     m match {
       case _ if m.runtimeClass == classOf[List[_]] =>
-        s"scalan::immutable_list<${remap(m.typeArguments(0))}>"
+        src"scalan::immutable_list<${m.typeArguments(0)}>"
       case _ =>
         super.remap(m)
     }
@@ -22,9 +22,9 @@ trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeG
     case c@Const(l: List[_]) =>
       l match {
         case Nil =>
-          s"std::make_shared<${remap(c.tp)}>()"
+          src"std::make_shared<${c.tp}>()"
         case _ =>
-          s"std::make_shared<${remap(c.tp)}>(std::initializer_list<${remap(toShptrManifest(c.tp.typeArguments(0)))}>${l.mkString("{",",","}")})"
+          src"std::make_shared<${c.tp}>(std::initializer_list<${toShptrManifest(c.tp.typeArguments(0))}>{$l})"
       }
     case _ =>
       super.quote(x)
@@ -32,7 +32,7 @@ trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeG
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ListNew(xs) =>
-      emitConstruct(sym, src"std::initializer_list<${remap(sym.tp.typeArguments(0))}>{${(xs map {quote}).mkString(",")}}")
+      emitConstruct(sym, src"std::initializer_list<${sym.tp.typeArguments(0)}>{$xs}")
     case ListConcat(xs,ys) =>
       emitConstruct(sym, src"*$xs", src"*$ys")
     case ListCons(x, xs) =>
@@ -51,7 +51,7 @@ trait CxxShptrGenListOps extends CxxShptrCodegen with BaseGenListOps with CLikeG
 //    case ListMkString2(xs,s) => emitValDef(sym, src"$xs.mkString($s)")
     case ListMap(l,x,blk) =>
       val symM = toShptrManifest(sym.tp)
-      val blkres = getBlockResult(blk);
+      val blkres = getBlockResult(blk)
       val blkresM = toShptrManifest(blkres.tp)
       gen"/*start: ${rhs.toString} */"
       emitConstruct(sym)

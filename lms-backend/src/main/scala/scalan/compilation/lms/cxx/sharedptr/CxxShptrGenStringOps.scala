@@ -1,6 +1,6 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.virtualization.lms.common.StringOpsExp
+import scala.lms.common.StringOpsExp
 
 trait CxxShptrGenStringOps extends CxxShptrCodegen {
   val IR: StringOpsExp

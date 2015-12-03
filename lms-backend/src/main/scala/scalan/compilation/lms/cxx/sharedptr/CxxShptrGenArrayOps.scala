@@ -4,10 +4,9 @@ package lms
 package cxx
 package sharedptr
 
-import scala.virtualization.lms.common.{BaseGenArrayOps, ArrayOpsExp}
-import scala.virtualization.lms.epfl.test7.ArrayLoopsExp
-import scala.virtualization.lms.epfl.test8.ArrayMutationExp
-import scala.virtualization.lms.internal.Expressions
+import scala.lms.common.{BaseGenArrayOps, ArrayOpsExp}
+import scala.lms.internal.Expressions
+import scalan.compilation.lms.arrays.{ArrayMutationExp, ArrayLoopsExp}
 
 trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
   val IR: Expressions with ArrayOpsExp with ArrayLoopsExp with ArrayMutationExp
@@ -38,12 +37,14 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
     //    case ArraySlice(x,s,e) =>
     //      val tp=remap(x.tp.typeArguments(0))
     //      emitValDef(sym, src"({ size_t sz=sizeof("+tp+")*($e-$s); "+tp+"* r = ("+tp+"*)malloc(sz); memcpy(r,(("+tp+"*)$x)+$s,sz); r; })")
-    case a@ArrayNew(Const(0)) =>
+    case ArrayNew(Const(0)) =>
       emitConstruct(sym)
-    case a@ArrayNew(n) =>
+    case ArrayNew(n) =>
       emitConstruct(sym, src"$n")
     case ArrayMutable(a) =>
       emitConstruct(sym, src"$a->begin()", src"$a->end()")
+    case e @ ArrayFromSeq(Seq()) =>
+      emitNode(sym, ArrayNew(Const(0))(e.m))
     //    case e@ArrayFromSeq(xs) => {
     //      emitData(sym, xs)
     //      emitValDef(sym,
@@ -67,13 +68,13 @@ trait CxxShptrGenArrayOps extends CxxShptrCodegen with BaseGenArrayOps {
       //      stream.println(s"")
       val len = s"${quote(sym)}_len"
       val i = s"${quote(sym)}_i"
-      gen"""{/*start: ${sym} = ${rhs.toString}*/
+      gen"""{/*start: $sym = ${rhs.toString}*/
            |size_t $len = $a->size();
            |for(size_t $i = 0; $i < $len; ++$i) {"""
       emitValDef( x, src"(*$a)[$i]" )
       emitBlock(block)
       gen"""}
-           |}/*end: ${sym} = ${rhs.toString}*/"""
+           |}/*end: $sym = ${rhs.toString}*/"""
       emitValDef(sym, "scalan::unit_value")
     case ArrayCopy(src,srcPos,dest,destPos,len) =>
       stream.println(s"{/*start: ${rhs.toString}*/")
@@ -125,7 +126,7 @@ trait CxxShptrGenArrayOpsBoost extends CxxShptrGenArrayOps {
   }
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
-    case a@ArrayNew(n) =>
+    case ArrayNew(n) =>
       emitConstruct(sym, src"$n", "boost::container::default_init")
     case _ =>
       super.emitNode(sym, rhs)

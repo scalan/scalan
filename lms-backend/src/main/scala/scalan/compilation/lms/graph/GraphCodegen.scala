@@ -1,6 +1,6 @@
 package scalan.compilation.lms.graph
 
-import scala.virtualization.lms.common._
+import scala.lms.common._
 import scalan.compilation.GraphVizConfig
 import scalan.compilation.lms.{LmsBackendFacade, BaseCodegen}
 import java.io.{File, PrintWriter}
@@ -136,10 +136,10 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
           stream.println("style=dashed; color=\"#FFCCFF\"")  //as lambda
 
           for (arg <- block.args)
-            exportNode(s"${block.name}", arg, "ellipse")
+            exportNode(block.name, arg, "ellipse")
 
           val statements = block.statements.reverse
-          val last = statements.foldLeft(prevNodeName:String)((prevName, node) => exportNode(s"${block.name}", node, "box", prevName))
+          val last = statements.foldLeft(prevNodeName:String)((prevName, node) => exportNode(block.name, node, "box", prevName))
 
           block.name // or last
 
@@ -237,8 +237,8 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
             printDependenceEdge(mapSym2Name.getOrElse(sym.id, s"x${sym.id}"), name)
           name
         case x =>
-          stream.println(StringUtil.quote(s"exp = ${x.toString}"))
-          s"${blockName}__exp = ${x.toString}"
+          stream.println(StringUtil.quote(s"exp = $x"))
+          s"${blockName}__exp = $x"
         //stream.println(StringUtil.quote(x.toString))
       }
     }
@@ -333,12 +333,12 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
       case SimpleFatLoop(size, v, body) =>
         for ((l,r) <- symList zip body) {
           r match {
-            case ArrayElem(y) =>
-              emitNode(l, ArrayNew(size))
+            case a @ ArrayElem(y) =>
+              emitNode(l, ArrayNew(size)(a.m))
             case ReduceElem(y) =>
               emitNode(l, NewVar(Const(0.0)))
-            case ArrayIfElem(c,y) =>
-              emitNode(l, ArrayNew(Const(0)))
+            case a @ ArrayIfElem(c,y) =>
+              emitNode(l, ArrayNew(Const(0))(a.m))
             case ReduceIfElem(c,y) =>
               emitNode(l, NewVar(Const(0.0)))
             case ReduceIfIntElem(c,y) =>
@@ -396,7 +396,7 @@ class GraphCodegen[BackendCake <: LmsBackendFacade](backend: BackendCake) extend
   }
 
 
-  //copy-pasted from scala.virtualization.lms.epfl.test7.ScalaGenFatArrayLoopsFusionOpt - important for fuse can worked
+  //copy-pasted from scala.lms.epfl.test7.ScalaGenFatArrayLoopsFusionOpt - important for fuse can worked
   override def unapplySimpleIndex(e: Def[Any]) = e match {
     case ArrayIndex(a, i) => Some((a,i))
     case _ => super.unapplySimpleIndex(e)

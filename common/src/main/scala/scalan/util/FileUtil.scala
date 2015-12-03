@@ -160,6 +160,15 @@ object FileUtil {
     import collection.JavaConverters._
     cl.getResources(file).asScala.map(_.openStream()).toSeq.reverse
   }
+
+  def readInputStream(stream: InputStream) = {
+    val source = Source.fromInputStream(stream)
+    try {
+      source.mkString
+    } finally {
+      source.close()
+    }
+  }
 }
 
 case class ExtensionFilter(extension: String) extends FilenameFilter {

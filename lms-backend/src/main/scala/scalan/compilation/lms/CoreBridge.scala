@@ -297,11 +297,11 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       case NumericToInt(n) => mA match {
         case Manifest.Float => lms.float_to_int(_arg)
         case Manifest.Double => lms.double_to_int(_arg)
-        case Manifest.Long => lms.long_toint(_arg)
+        case Manifest.Long => lms.long_to_int(_arg)
         case Manifest.Int => _arg
       }
       case NumericToLong(n) => mA match {
-        case Manifest.Int => lms.int_tolong(_arg)
+        case Manifest.Int => lms.int_to_long(_arg)
         case Manifest.Long => _arg
       }
       case NumericToString() => lms.String.valueOf(_arg)

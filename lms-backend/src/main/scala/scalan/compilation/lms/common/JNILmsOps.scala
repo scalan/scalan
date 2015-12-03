@@ -1,10 +1,10 @@
 package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.epfl.test7.ArrayLoopsExp
-import scala.virtualization.lms.internal.{GenerationFailedException, GenericCodegen}
+import scala.lms.common._
+import scala.lms.internal.{GenerationFailedException, GenericCodegen}
 import scalan.compilation.lms.ManifestUtil
+import scalan.compilation.lms.arrays.ArrayLoopsExp
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait JNILmsOps extends Base {
@@ -242,8 +242,8 @@ trait JNIExtractorOpsCxxGenBase extends GenericCodegen with ManifestUtil {
   override def remap[A](m: Manifest[A]): String = {
     m.runtimeClass match {
       case c if c == classOf[JNIArray[_]] =>
-        val ts = remap(m.typeArguments(0))
-        s"jni_array<${ts}>"
+        val t = m.typeArguments(0)
+        src"jni_array<$t>"
       case c if c == classOf[JNIClass] => "jclass"
       case c if c == classOf[JNIFieldID] => "jfieldID"
       case c if c == classOf[JNIMethodID] => "jmethodID"
@@ -317,44 +317,45 @@ trait CxxShptrGenJNIExtractor extends CxxShptrCodegen with JNIExtractorOpsCxxGen
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case res@NewPrimitive(x) =>
-      emitValDef(sym, s"static_cast<${remap(x.tp)}>(${quote(x)})")
+      emitValDef(sym, src"static_cast<${x.tp}>($x)")
     case res@NewObject(clazz, mid, args@_*) =>
       val sargs = if(args.isEmpty) "" else ", " + args.map(quote).mkString(", ")
-      emitValDef(quote(sym), jobjectManifest(sym.tp), s"env->NewObject(${quote(clazz)},${quote(mid)}${sargs})")
+      emitValDef(quote(sym), jobjectManifest(sym.tp), src"env->NewObject($clazz,$mid$sargs)")
     case res@CallObjectMethod(x, mid, args@_*) =>
       val sargs = if(args.isEmpty) "" else ", " + args.map(quote).mkString(", ")
-      emitValDef(quote(sym),jobjectManifest(sym.tp), s"static_cast<${remap(jobjectManifest(sym.tp))}>(env->CallObjectMethod(${quote(x)},${quote(mid)}${sargs}))")
+      emitValDef(quote(sym),jobjectManifest(sym.tp), src"static_cast<${jobjectManifest(sym.tp)}>(env->CallObjectMethod($x,$mid$sargs))")
     case res@ReturnFirstArg(jArray, _) =>
-      emitValDef(sym, s"${quote(jArray)}")
+      emitValDef(sym, src"$jArray")
     case res@NewPrimitiveArray(len) =>
-      emitValDef(sym, s"env->New${res.mA.toString}Array(${quote(len)})")
+      // toString avoids remapping the JVM type name to C++
+      emitValDef(sym, src"env->New${res.mA.toString}Array($len)")
     case res@NewObjectArray(len, clazz) =>
-      emitValDef(sym, s"env->NewObjectArray(${quote(len)}, ${quote(clazz)}, nullptr)")
+      emitValDef(sym, src"env->NewObjectArray($len, $clazz, nullptr)")
     case FindClass(className) =>
-      emitValDef(sym, s"env->FindClass(${quote(className)})")
+      emitValDef(sym, src"env->FindClass($className)")
     case ExtractPrimitive(x) =>
-      emitValDef(sym, s"static_cast<${remap(sym.tp)}>(${quote(x)})")
+      emitValDef(sym, src"static_cast<${sym.tp}>($x)")
     case ExtractPrimitiveArray(x) =>
-      emitConstruct(sym, s"env", s"${quote(x)}")
+      emitConstruct(sym, "env", src"$x")
     case Reflect(ExtractPrimitiveArray(x),_,_) =>
-      emitConstruct(sym, "env", s"${quote(x)}")
+      emitConstruct(sym, "env", src"$x")
     case GetArrayLength(x) =>
-      emitValDef(sym, s"env->GetArrayLength(${quote(x)})")
+      emitValDef(sym, src"env->GetArrayLength($x)")
     case ExtractObjectArray(x) =>
-      emitValDef(sym, s"${quote(x)}")
+      emitValDef(sym, src"$x")
     case GetObjectArrayItem(x, i) =>
-      emitValDef(sym, s"static_cast<${remapObject(sym.tp)}>(env->GetObjectArrayElement(${quote(x)}, ${quote(i)}))")
+      emitValDef(sym, src"static_cast<${sym.tp}>(env->GetObjectArrayElement($x, $i))")
     case GetObjectClass(x) =>
-      emitValDef(sym, s"env->GetObjectClass(${quote(x)})")
+      emitValDef(sym, src"env->GetObjectClass($x)")
     case GetFieldID(clazz, fn, sig) =>
-      emitValDef(sym, s"env->GetFieldID(${quote(clazz)}, ${quote(fn)}, ${quote(sig)})")
+      emitValDef(sym, src"env->GetFieldID($clazz, $fn, $sig)")
     case GetMethodID(clazz, mn, sig) =>
-      emitValDef(sym, s"env->GetMethodID(${quote(clazz)}, ${quote(mn)}, ${quote(sig)})")
+      emitValDef(sym, src"env->GetMethodID($clazz, $mn, $sig)")
     case GetObjectFieldValue(fid, x) =>
-      emitValDef(quote(sym), jobjectManifest(sym.tp), s"static_cast<${remap(jobjectManifest(sym.tp))}>(env->GetObjectField(${quote(x)}, ${quote(fid)}))")
+      emitValDef(quote(sym), jobjectManifest(sym.tp), src"static_cast<${jobjectManifest(sym.tp)}>(env->GetObjectField($x, $fid))")
     case res@GetPrimitiveFieldValue(fid, x) =>
-      val funName = s"Get${res.tp.toString}Field"
-      emitValDef(sym, s"static_cast<${remap(sym.tp)}>(env->${funName}(${quote(x)}, ${quote(fid)}))")
+      // toString avoids remapping the JVM type name to C++
+      emitValDef(sym, src"static_cast<${sym.tp}>(env->Get${res.tp.toString}Field($x, $fid))")
     case _ =>
       super.emitNode(sym, rhs)
   }

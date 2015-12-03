@@ -4,7 +4,7 @@ package lms
 package cxx
 package sharedptr
 
-import scala.virtualization.lms.common._
+import scala.lms.common._
 import scalan.compilation.lms.common._
 
 class CxxCodegen [BackendCake <: LmsBackendFacade with JNILmsOpsExp ](backend: BackendCake) extends BaseCodegen[BackendCake]

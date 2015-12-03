@@ -1,7 +1,7 @@
 package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
+import scala.lms.common._
 
 
 trait SystemOps extends Base {
@@ -51,19 +51,17 @@ trait ScalaGenSystemOps extends ScalaGenBase {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case pe@ParallelExecute(nJobs, f) =>
-      val m = remap(pe.m)
-      val n = quote(nJobs)
       stream.println("// generating parallel execute")
-      stream.println("val " + quote(sym) + " ={")
+      stream.println(src"val $sym ={")
       //stream.println("\tval tasks: Seq[scala.concurrent.Future[" + m + "]] = for (i <- 0 until " + n + ") yield future {" ote(f) + "(i) }")
       stream.println("\timport scala.concurrent.ExecutionContext.Implicits.global")
-      stream.println("\tval tasks = for (i <- 0 until " + n + ") yield scala.concurrent.future {" + quote(f) + "(i) }")
+      stream.println(src"\tval tasks = for (i <- 0 until $nJobs) yield scala.concurrent.future {$f(i) }")
       stream.println("\tscala.concurrent.Await.result(scala.concurrent.Future.sequence(tasks), scala.concurrent.duration.Duration.Inf).toArray")
       stream.println("}")
     case StringMatches(str, pattern) =>
-      stream.println("val " + quote(sym) + " = " + quote(str) + ".matches(" + quote(pattern) + ")")
+      stream.println(src"val $sym = $str.matches($pattern)")
     case HashCode(obj) =>
-      stream.println("val " + quote(sym) + " = " + quote(obj) + ".hashCode")
+      stream.println(src"val $sym = $obj.hashCode")
     case _ => super.emitNode(sym, rhs)
   }
 

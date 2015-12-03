@@ -1,8 +1,8 @@
 package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common._
-import scala.virtualization.lms.internal.ScalaNestedCodegen
+import scala.lms.common._
+import scala.lms.internal.ScalaNestedCodegen
 import scalan.compilation.lms.cxx.sharedptr.CxxShptrCodegen
 
 trait ExtNumOps extends Base {
@@ -54,8 +54,7 @@ trait ScalaGenExtNumOps extends ScalaGenBase {
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case ds @ NumericRand(n) =>
-      // TODO use proper source quasiquoter
-      stream.println("val " + quote(sym) + " = " + "util.Random.nextDouble() * " + quote(n) + ".asInstanceOf[Double]")
+      stream.println(src"val $sym = util.Random.nextDouble() * $n.asInstanceOf[Double]")
     case _ => super.emitNode(sym, rhs)
   }
 

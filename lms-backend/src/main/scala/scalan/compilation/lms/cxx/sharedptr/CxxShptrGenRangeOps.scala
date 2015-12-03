@@ -1,6 +1,6 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.virtualization.lms.common.{BaseGenRangeOps, CLikeGenEffect}
+import scala.lms.common.{BaseGenRangeOps, CLikeGenEffect}
 
 trait CxxShptrGenRangeOps extends CxxShptrCodegen with CLikeGenEffect with BaseGenRangeOps {
   import IR._
@@ -15,7 +15,7 @@ trait CxxShptrGenRangeOps extends CxxShptrCodegen with CLikeGenEffect with BaseG
 //          |$i = $i + 1
 //          |}"""
 
-      emitConstruct(i, s"${quote(start)}")
+      emitConstruct(i, src"$start")
       gen"""while($i < $end) {
            |${nestedBlock(body)}
            |$i += 1;

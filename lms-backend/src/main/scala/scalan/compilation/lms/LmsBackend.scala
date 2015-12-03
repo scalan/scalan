@@ -3,22 +3,27 @@ package scalan.compilation.lms
 import java.io.File
 
 import scala.collection.mutable
-import scala.virtualization.lms.epfl.test8.ArrayMutationExp
-import scala.virtualization.lms.internal.{Effects, NestedBlockTraversal, GenericCodegen}
+import scala.lms.common._
+import scala.lms.internal.{Expressions, GenericNestedCodegen, Effects}
+import scalan.compilation.lms.arrays.{ArrayMutationExp, ArrayLoopsFatExp}
 import scalan.compilation.lms.common._
 import scalan.compilation.lms.graph.GraphCodegen
 import scalan.compilation.lms.scalac.ScalaCommunityCodegen
 import scalan.util.FileUtil
-import virtualization.lms.common._
-import virtualization.lms.epfl.test7._
 import java.util.HashMap
 
 
-trait BaseCodegen[BackendType <: LmsBackendFacade] extends GenericCodegen with NestedBlockTraversal{
+trait BaseCodegen[BackendType <: Expressions with Effects] extends GenericNestedCodegen {
   val IR: BackendType
   import IR._
 
-  override def traverseStm(stm: IR.type#Stm) = super.traverseStm(stm)
+  override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
+    case Reify(s, u, effects) =>
+      emitValDef(sym, quote(s))
+    // FIXME: In LMS it has a comment "just ignore -- effects are accounted for in emitBlock", but
+    // this leads to incorrect code generated in Scalan
+    case _ => super.emitNode(sym, rhs)
+  }
 
   def codePackage: Option[String] = None
 
@@ -57,9 +62,11 @@ trait LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with LiftPrimi
   with EqualExp with BooleanOpsExp with TupleOpsExp with ArrayLoopsFatExp with ArrayMutationExp with OrderingOpsExp
   with IfThenElseFatExp with VariablesExpOpt
   with ArrayOpsExp with IterableOpsExp with WhileExp with ArrayBuilderOpsExp with VectorOpsExp with ExtNumOpsExp
+// FIXME using CastingOpsExpOpt instead of CastingOpsExp generates wrong code, perhaps due to LMS bug
+// Without it we get useless casts and more code than should be present
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt with PointerLmsOpsExp
-  with Effects with MiscOpsExp {
+  with MiscOpsExtExp with Effects {
   def toStringWithDefinition(x: Exp[_]) = s"$x: ${x.tp}" + (x match {
     case sym: Sym[_] =>
       findDefinition(sym) match {

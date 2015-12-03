@@ -1,7 +1,7 @@
 package scalan.compilation.lms.common
 
 import scala.reflect.SourceContext
-import scala.virtualization.lms.common.ListOpsExp
+import scala.lms.common.ListOpsExp
 import scalan.compilation.lms.LmsBackendFacade
 
 trait ListOpsExpExt extends ListOpsExp { self: LmsBackendFacade =>

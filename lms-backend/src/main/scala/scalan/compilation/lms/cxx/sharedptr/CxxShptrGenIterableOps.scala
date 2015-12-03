@@ -1,6 +1,6 @@
 package scalan.compilation.lms.cxx.sharedptr
 
-import scala.virtualization.lms.common.{BaseGenIterableOps, IterableOpsExp}
+import scala.lms.common.{BaseGenIterableOps, IterableOpsExp}
 
 trait CxxShptrGenIterableOps extends BaseGenIterableOps with CxxShptrCodegen {
   val IR: IterableOpsExp
