@@ -62,7 +62,9 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
 // Without it we get useless casts and more code than should be present
   with CastingOpsExp with EitherOpsExp with MethodCallOpsExp with MathOpsExp with ExceptionOpsExp with SystemOpsExp
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt with PointerLmsOpsExp
-  with MiscOpsExtExp with Effects {
+// FIXME using StructFatExpOptCommon instead of StructExpOptCommon leads to bad code generated in LmsMstPrimeItTests
+// Not clear whether this is due to our or LMS error
+  with MiscOpsExtExp with StructExpOptCommon with Effects {
   def toStringWithDefinition(x: Exp[_]) = s"$x: ${x.tp}" + (x match {
     case sym: Sym[_] =>
       findDefinition(sym) match {
