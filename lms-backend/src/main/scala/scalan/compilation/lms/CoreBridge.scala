@@ -8,7 +8,7 @@ import scala.reflect.runtime.universe._
 import scalan.compilation.language.{CoreMethodMappingDSL, Interpreter}
 import scalan.util.StringUtil
 
-trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
+trait CoreBridge extends StructBridge with Interpreter with CoreMethodMappingDSL {
   import scalan._
 
   val lms: CoreLmsBackend
