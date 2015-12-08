@@ -75,6 +75,8 @@ trait CoreBridge extends LmsBridge with Interpreter with CoreMethodMappingDSL {
       List(xs, n, xs.elem.eItem)
     case ArrayFold(xs, init, f) =>
       List(xs, init, f, xs.elem.eItem, init.elem)
+    case as@ArraySumBy(xs, f, n) =>
+      List(xs, f, f.elem.eDom, f.elem.eRange, n)
     case ListLength(xs) =>
       List(xs, xs.elem.eItem)
     case ListMap(xs, f) =>
