@@ -3,6 +3,7 @@ package scalan.compilation.lms.cxx.sharedptr
 import java.io.PrintWriter
 
 import scala.lms.internal.{CLikeCodegen, Expressions, GenerationFailedException}
+import scala.reflect.RefinedManifest
 import scalan.compilation.lms.ManifestUtil
 import scalan.compilation.lms.common.{JNILmsOps, PointerLmsOps}
 
@@ -66,7 +67,7 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
         val mA = m.typeArguments(0)
         val mB = m.typeArguments(1)
         src"std::pair<${remap(mA)},${remap(mB)}>"
-      case _ if m.runtimeClass == classOf[Unit] ⇒
+      case _ if m.runtimeClass == classOf[Unit] =>
         "boost::blank"
       case _ if m.isPrimitive =>
         super[CLikeCodegen].remap(m)
