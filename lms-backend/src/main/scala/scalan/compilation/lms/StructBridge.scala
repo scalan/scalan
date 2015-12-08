@@ -1,6 +1,7 @@
 package scalan.compilation.lms
 
 import scala.reflect.RefinedManifest
+import scala.reflect.runtime.universe._
 
 trait StructBridge extends LmsBridge {
   import scalan._
@@ -8,6 +9,13 @@ trait StructBridge extends LmsBridge {
   override protected def lmsMethodName(d: Def[_], primitiveName: String): String = d match {
     case _: FieldApply[_] => "field"
     case _ => super.lmsMethodName(d, primitiveName)
+  }
+
+  override protected def extractParams(d: Def[_], fieldMirrors: List[FieldMirror]) = d match {
+    case fa: FieldApply[_] =>
+      List(fa.struct, fa.field, fa.selfType)
+    case _ =>
+      super.extractParams(d, fieldMirrors)
   }
 
   private def refinedManifestForStruct[A <: Struct](se: StructElem[A]) = {
@@ -20,6 +28,11 @@ trait StructBridge extends LmsBridge {
       override def toString = runtimeClass + fields.map { case(n, t) => s"val $n: $t" }.mkString("{", "; ", "}")
       // should we override equals? It only compares runtimeClass, not fields
     }
+  }
+
+  def structName(se: StructElem[_ <: Struct]) = {
+    val m = refinedManifestForStruct(se)
+    lms.structName(m)
   }
 
   override protected def transformDef[T](m: LmsMirror, g: AstGraph, sym: Exp[T], d: Def[T]) = d match {
