@@ -43,7 +43,7 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                         compilers: Seq[CompilerWithConfig] = defaultCompilers,
                         graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
                         functionName: String = currentTestNameAsFileName) =
-    defaultCompilers.foreach { cwc =>
+    compilers.foreach { cwc =>
       cwc.compiler.buildGraph(sourceDir(functionName), functionName,
         f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]], graphVizConfig)(cwc.config)
     }
@@ -52,7 +52,7 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                           compilers: Seq[CompilerWithConfig] = defaultCompilers,
                           graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
                           functionName: String = currentTestNameAsFileName) =
-    defaultCompilers.map { cwc =>
+    compilers.map { cwc =>
       cwc.compiler.buildExecutable(sourceDir(functionName), functionName,
         f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]], graphVizConfig)(cwc.config)
     }
