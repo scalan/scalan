@@ -2,6 +2,8 @@ package scalan.compilation.lms
 
 import scala.reflect.RefinedManifest
 import scala.reflect.runtime.universe._
+import scalan.ScalanCtxExp
+import scalan.primitives.WrappingStructsCompiler
 
 trait StructBridge extends LmsBridge {
   import scalan._
@@ -49,5 +51,14 @@ trait StructBridge extends LmsBridge {
   override def elemToManifest[T](elem: Elem[T]): Manifest[_] = elem match {
     case se: StructElem[_] => refinedManifestForStruct(se.asInstanceOf[StructElem[_ <: Struct]])
     case _ => super.elemToManifest(elem)
+  }
+}
+
+// TODO make part of LmsCompilerScala once we are convinced everything works well
+trait LmsStructsCompiler[+ScalanCake <: ScalanCtxExp] extends LmsCompiler[ScalanCake] with WrappingStructsCompiler[ScalanCake] {
+  override def graphPasses(compilerConfig: CompilerConfig) = {
+    // doesn't compile due to an implementation restriction:
+    // super[LmsCompiler].graphPasses(compilerConfig) :+ structsPass
+    Seq(AllUnpackEnabler, AllInvokeEnabler, structsPass)
   }
 }

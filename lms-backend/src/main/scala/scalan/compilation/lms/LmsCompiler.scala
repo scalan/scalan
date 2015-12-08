@@ -10,6 +10,7 @@ import scalan.util.FileUtil
 abstract class LmsCompiler[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake) extends Compiler(_scalan) with LmsBridge with CoreMethodMappingDSL {
   import scalan._
 
+  // Note: if changed, change in LmsStructsCompiler as well, see comment there
   override def graphPasses(compilerConfig: CompilerConfig) = Seq(AllUnpackEnabler, AllInvokeEnabler)
 
   def emitSource[A, B](sourcesDir: File, functionName: String, graph: PGraph, eInput: Elem[A], eOutput: Elem[B], graphVizConfig: GraphVizConfig): File = {

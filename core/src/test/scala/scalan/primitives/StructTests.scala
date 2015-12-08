@@ -78,10 +78,11 @@ trait StructExamples extends Scalan with SegmentsDsl {
   lazy val t14 = fun { (in: Rep[Int]) =>
     Pair(in, in)
   }
-  lazy val t15 = structWrapper(fun { (in: Rep[(Int,Int)]) =>
+  lazy val t15f = fun { (in: Rep[(Int,Int)]) =>
     val Pair(x, y) = in
     IF (x > y) { Pair(x,y) } ELSE { Pair(y,x) }
-  })
+  }
+  lazy val t15 = structWrapper(t15f)
   lazy val t16 = structWrapper(fun { (in: Rep[((Array[(Int,Int)],Array[((Int,Int), Boolean)]),Int)]) =>
     val Pair(Pair(segs1, segs2), z) = in
     val intervals1 = segs1.map(Interval(_))
@@ -194,8 +195,8 @@ class StructTests extends BaseViewTests {
     val ctx = new Ctx {
       import compiler.scalan._
       def testWrapper[A,B](functionName: String,
-                             f: => Exp[A => B], expectTuples: Boolean = false): compiler.CompilerOutput[A, B] = {
-        val out = super.test(functionName, f)
+                             f: => StructWrapper[_, A, _, B], expectTuples: Boolean = false): compiler.CompilerOutput[A, B] = {
+        val out = super.test(functionName, f.wrapperFun)
         val hasTuples = !noTuples(out.common.graph.roots(0).asRep[A => B])
         assert(expectTuples && hasTuples || (!expectTuples && !hasTuples))
         out
@@ -211,7 +212,6 @@ class StructTests extends BaseViewTests {
     ctx.testWrapper("t11", t11)
     ctx.testWrapper("t12", t12)
     ctx.testWrapper("t13", t13)
-    ctx.testWrapper("t14", t14, true)
     ctx.testWrapper("t14_in", structWrapperIn(t14), true)
     ctx.testWrapper("t14_inout", structWrapper(t14), false)
     ctx.testWrapper("t15", t15)
@@ -222,8 +222,7 @@ class StructTests extends BaseViewTests {
     val ctx = new CtxForStructs with StructExamples {
     }
     import ctx._
-    emit("t14", t14)
-    emit("t15", t15)
+    emit("t15", t15.wrapperFun)
   }
 
   test("flatteningIso") {
@@ -259,6 +258,7 @@ class StructTests extends BaseViewTests {
     }
     // arrays
     {
+      // FIXME fails when WrappingStructsCompiler is used
       val iso = testFlattening(arrayElement(tupleStructElement(element[Int], tuple2StructElement[Double,Boolean])),
         arrayElement(tupleStructElement(element[Int], element[Double], element[Boolean])))
       ctx.test("a1_iso.to", iso.toFun)
@@ -340,10 +340,22 @@ abstract class StructItTests extends BaseItTests[StructExamples](new ScalanCtxSe
   }
 
   test("struct in") {
-    compareOutputWithSequential(s => s.structIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in" -> 100))
+    compareOutputWithSequential(s => s.structIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in" -> 200))
   }
 
   test("struct in and out") {
-    compareOutputWithSequential(s => s.structInOut.asInstanceOf[s.Rep[Struct => Struct]])(struct("in" -> 100))
+    compareOutputWithSequential(s => s.structInOut.asInstanceOf[s.Rep[Struct => Struct]])(struct("in" -> 300))
+  }
+
+  test("t7") {
+    compareOutputWithSequential(_.t2x2_7)(Pair(9, 11))
+  }
+
+  test("t9") {
+    compareOutputWithSequential(_.t9f)(Pair(Pair(9, 11), 13))
+  }
+
+  test("t15") {
+    compareOutputWithSequential(_.t15f)(Pair(9, 11))
   }
 }

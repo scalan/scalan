@@ -1,5 +1,7 @@
 package scalan.primitives
 
+import java.io.File
+
 import scala.reflect.runtime.universe._
 import scalan._
 import scalan.common.Lazy
@@ -320,22 +322,22 @@ trait Structs { self: Scalan =>
     }
   }
 
-  def structWrapper[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => Any] = {
-    val wrapperFun = (getStructWrapperIso[A], getStructWrapperIso[B]) match {
+  class StructWrapper[A, A1, B, B1](val inIso: Iso[A1, A], f: Rep[A => B], val outIso: Iso[B1, B]) {
+    lazy val wrapperFun: Rep[A1 => B1] = outIso.fromFun << f << inIso.toFun
+    def restore(wf: Rep[A1 => B1]) = outIso.toFun << wf << inIso.fromFun
+  }
+
+  def structWrapper[A:Elem,B:Elem](f: Rep[A => B]): StructWrapper[A, _, B, _] =
+    (getStructWrapperIso[A], getStructWrapperIso[B]) match {
       case (inIso: Iso[a, A] @unchecked, outIso: Iso[b, B] @unchecked) =>
-        outIso.fromFun << f << inIso.toFun
+        new StructWrapper(inIso, f, outIso)
     }
-    wrapperFun.asRep[Any => Any]
+
+  def structWrapperIn[A:Elem,B:Elem](f: Rep[A => B]): StructWrapper[A, _, B, B] = {
+    new StructWrapper(getStructWrapperIso[A], f, identityIso[B])
   }
-  def structWrapperIn[A:Elem,B:Elem](f: Rep[A => B]): Rep[Any => B] = {
-    val inIso = getStructWrapperIso[A]
-    val wrapperFun = f << inIso.toFun
-    wrapperFun.asRep[Any => B]
-  }
-  def structWrapperOut[A:Elem,B:Elem](f: Rep[A => B]): Rep[A => Any] = {
-    val outIso = getStructWrapperIso[B]
-    val wrapperFun = outIso.fromFun << f
-    wrapperFun.asRep[A => Any]
+  def structWrapperOut[A:Elem,B:Elem](f: Rep[A => B]): StructWrapper[A, A, B, _] = {
+    new StructWrapper(identityIso[A], f, getStructWrapperIso[B])
   }
 
 }
@@ -501,7 +503,7 @@ trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslE
   }
 }
 
-trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compiler[ScalanCake] {
+trait StructsCompiler[+ScalanCake <: ScalanCtxExp] extends Compiler[ScalanCake] {
   import scalan._
 
   object StructsRewriter extends Rewriter {
@@ -511,10 +513,11 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
     }).asRep[T]
   }
 
-  override def graphPasses(compilerConfig: CompilerConfig) =
-    super.graphPasses(compilerConfig) ++
-      Seq(AllInvokeEnabler,
-          constantPass(StructsPass(DefaultMirror, StructsRewriter)))
+  val structsPass = constantPass(StructsPass(DefaultMirror, StructsRewriter))
+
+  override def graphPasses(compilerConfig: CompilerConfig) = {
+    super.graphPasses(compilerConfig) ++ Seq(AllInvokeEnabler, structsPass)
+  }
 
   case class StructsPass(mirror: Mirror[MapTransformer], rewriter: Rewriter) extends GraphPass {
     def name = "structs"
@@ -523,7 +526,27 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
       graph.transform(mirror, rewriter, MapTransformer.Empty)
     }
   }
-
 }
 
+trait WrappingStructsCompiler[+ScalanCake <: ScalanCtxExp] extends StructsCompiler[ScalanCake] {
+  import scalan._
 
+  // ideally this would be just two extra passes in the beginning and in the end, but we need to somehow
+  // pass extra information (the wrapper) through the pipeline
+  override def buildGraph[A, B](sourcesDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): CommonCompilerOutput[A, B] = {
+    val (initialGraph, eInput, eOutput) = buildAndEmitInitialGraph(sourcesDir, functionName, func, graphVizConfig, compilerConfig)
+
+    val func0 = initialGraph.roots.head.asRep[A => B]
+
+    val finalGraph = structWrapper(func0)(eInput, eOutput) match {
+      case wrapper: StructWrapper[A, a1, B, b1] =>
+        val wrapperGraph = super.buildGraph(sourcesDir, s"${functionName}_wrapper", wrapper.wrapperFun, graphVizConfig)(compilerConfig).graph
+        val finalWrapperFun = wrapperGraph.roots.head.asRep[a1 => b1]
+        emittingGraph[PGraph](sourcesDir, s"${functionName}_final.dot", "Restoring original input/output types", graphVizConfig, g => g) {
+          new PGraph(wrapper.restore(finalWrapperFun))
+        }
+    }
+
+    CommonCompilerOutput(finalGraph, functionName, eInput, eOutput)
+  }
+}

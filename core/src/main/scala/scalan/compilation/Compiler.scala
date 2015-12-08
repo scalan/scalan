@@ -27,26 +27,31 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
     new PGraph(func)
   }
 
-  def buildGraph[A, B](sourcesDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): CommonCompilerOutput[A, B] = {
-    // G is PGraph with some extra information
-    def emittingGraph[G](fileName: String, passName: String, toGraph: G => PGraph)(mkGraph: => G): G = {
-      val file = new File(sourcesDir, fileName)
-      try {
-        val g = mkGraph
-        emitDepGraph(toGraph(g), file)(graphVizConfig)
-        g
-      } catch {
-        case e: Exception =>
-          emitExceptionGraph(e, file)(graphVizConfig)
-          throw new CompilationException(s"$passName failed. See ${file.getAbsolutePath} for exception graph.", e)
-      }
+  // G is PGraph with some extra information
+  protected def emittingGraph[G](sourcesDir: File, fileName: String, passName: String, graphVizConfig: GraphVizConfig, toGraph: G => PGraph)(mkGraph: => G): G = {
+    val file = new File(sourcesDir, fileName)
+    try {
+      val g = mkGraph
+      emitDepGraph(toGraph(g), file)(graphVizConfig)
+      g
+    } catch {
+      case e: Exception =>
+        emitExceptionGraph(e, file)(graphVizConfig)
+        throw new CompilationException(s"$passName failed. See ${file.getAbsolutePath} for exception graph.", e)
     }
+  }
 
-    val (initialGraph, eInput, eOutput) = emittingGraph[(PGraph, Elem[A], Elem[B])](s"$functionName.dot", "Initial graph generation", _._1) {
+  protected def buildAndEmitInitialGraph[A, B](sourcesDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig, compilerConfig: CompilerConfig): (PGraph, Elem[A], Elem[B]) = {
+    emittingGraph[(PGraph, Elem[A], Elem[B])](sourcesDir, s"$functionName.dot", "Initial graph generation", graphVizConfig, _._1) {
       val func0 = func
       val eFunc = func0.elem
       (buildInitialGraph(func0)(compilerConfig), eFunc.eDom, eFunc.eRange)
     }
+  }
+
+  def buildGraph[A, B](sourcesDir: File, functionName: String, func: => Exp[A => B], graphVizConfig: GraphVizConfig)(compilerConfig: CompilerConfig): CommonCompilerOutput[A, B] = {
+
+    val (initialGraph, eInput, eOutput) = buildAndEmitInitialGraph(sourcesDir, functionName, func, graphVizConfig, compilerConfig)
 
     val passes = graphPasses(compilerConfig)
 
@@ -58,7 +63,7 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
       val indexStr = (index + 1).toString
       val dotFileName = s"${functionName}_${"0" * (numPassesLength - indexStr.length) + indexStr}_${pass.name}.dot"
 
-      emittingGraph[PGraph](dotFileName, pass.name, g => g) {
+      emittingGraph[PGraph](sourcesDir, dotFileName, pass.name, graphVizConfig, g => g) {
         scalan.beginPass(pass)
         val graph1 = pass(graph).withoutContext
         scalan.endPass(pass)
