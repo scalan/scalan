@@ -27,7 +27,7 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
   def cwc(compiler: ProgCompiler)(compilerConfig: compiler.CompilerConfig) =
     CompilerWithConfig(compiler)(compilerConfig)
 
-  val defaultCompilers: Seq[CompilerWithConfig]
+  def defaultCompilers: Seq[CompilerWithConfig]
   val progSeq: Prog with ScalanSeq
 
   /** Utility method to be used when defining [[defaultCompilers]]. */
