@@ -9,7 +9,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait GraphsAbs extends Graphs with scalan.Scalan {
+trait GraphsAbs extends scalan.Scalan with Graphs {
   self: GraphsDsl =>
 
   // single proxy for each type family
@@ -41,7 +41,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     def convertGraph(x: Rep[Graph[V, E]]): Rep[To] = {
       x.selfType1 match {
         case _: GraphElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have GraphElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have GraphElem[_, _, _], but got $e", x)
       }
     }
 
@@ -61,8 +61,8 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
     override def toString = "Graph"
   }
   def Graph: Rep[GraphCompanionAbs]
-  implicit def proxyGraphCompanion(p: Rep[GraphCompanion]): GraphCompanion =
-    proxyOps[GraphCompanion](p)
+  implicit def proxyGraphCompanionAbs(p: Rep[GraphCompanionAbs]): GraphCompanionAbs =
+    proxyOps[GraphCompanionAbs](p)
 
   abstract class AbsAdjacencyGraph[V, E]
       (vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E])
@@ -92,14 +92,27 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class AdjacencyGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]]()(pairElement(implicitly[Elem[Collection[V]]], pairElement(implicitly[Elem[NestedCollection[E]]], implicitly[Elem[NestedCollection[Int]]]))) {
+    extends EntityIso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] with Def[AdjacencyGraphIso[V, E]] {
     override def from(p: Rep[AdjacencyGraph[V, E]]) =
       (p.vertexValues, p.edgeValues, p.links)
     override def to(p: Rep[(Collection[V], (NestedCollection[E], NestedCollection[Int]))]) = {
       val Pair(vertexValues, Pair(edgeValues, links)) = p
       AdjacencyGraph(vertexValues, edgeValues, links)
     }
-    lazy val eTo = new AdjacencyGraphElem[V, E](this)
+    lazy val eFrom = pairElement(element[Collection[V]], pairElement(element[NestedCollection[E]], element[NestedCollection[Int]]))
+    lazy val eTo = new AdjacencyGraphElem[V, E](self)
+    lazy val selfType = new AdjacencyGraphIsoElem[V, E](eV, eE)
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
+  }
+  case class AdjacencyGraphIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[AdjacencyGraphIso[V, E]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new AdjacencyGraphIso[V, E]()(eV, eE))
+    lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[AdjacencyGraphIso[V, E]]
+    }
   }
   // 4) constructor and deconstructor
   class AdjacencyGraphCompanionAbs extends CompanionDef[AdjacencyGraphCompanionAbs] with AdjacencyGraphCompanion {
@@ -132,7 +145,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAdjacencyGraph[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[AdjacencyGraphData[V, E], AdjacencyGraph[V, E]] =
-    cachedIso[AdjacencyGraphIso[V, E]](eV, eE)
+    reifyObject(new AdjacencyGraphIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkAdjacencyGraph[V, E](vertexValues: Coll[V], edgeValues: NColl[E], links: NColl[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjacencyGraph[V, E]]
@@ -166,14 +179,27 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class IncidenceGraphIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]]()(pairElement(implicitly[Elem[Collection[V]]], pairElement(implicitly[Elem[Collection[E]]], implicitly[Elem[Int]]))) {
+    extends EntityIso[IncidenceGraphData[V, E], IncidenceGraph[V, E]] with Def[IncidenceGraphIso[V, E]] {
     override def from(p: Rep[IncidenceGraph[V, E]]) =
       (p.vertexValues, p.incMatrixWithVals, p.vertexNum)
     override def to(p: Rep[(Collection[V], (Collection[E], Int))]) = {
       val Pair(vertexValues, Pair(incMatrixWithVals, vertexNum)) = p
       IncidenceGraph(vertexValues, incMatrixWithVals, vertexNum)
     }
-    lazy val eTo = new IncidenceGraphElem[V, E](this)
+    lazy val eFrom = pairElement(element[Collection[V]], pairElement(element[Collection[E]], element[Int]))
+    lazy val eTo = new IncidenceGraphElem[V, E](self)
+    lazy val selfType = new IncidenceGraphIsoElem[V, E](eV, eE)
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
+  }
+  case class IncidenceGraphIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[IncidenceGraphIso[V, E]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new IncidenceGraphIso[V, E]()(eV, eE))
+    lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[IncidenceGraphIso[V, E]]
+    }
   }
   // 4) constructor and deconstructor
   class IncidenceGraphCompanionAbs extends CompanionDef[IncidenceGraphCompanionAbs] with IncidenceGraphCompanion {
@@ -206,7 +232,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoIncidenceGraph[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[IncidenceGraphData[V, E], IncidenceGraph[V, E]] =
-    cachedIso[IncidenceGraphIso[V, E]](eV, eE)
+    reifyObject(new IncidenceGraphIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkIncidenceGraph[V, E](vertexValues: Coll[V], incMatrixWithVals: Coll[E], vertexNum: Rep[Int])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncidenceGraph[V, E]]
@@ -216,7 +242,7 @@ trait GraphsAbs extends Graphs with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
+trait GraphsSeq extends scalan.ScalanSeq with GraphsDsl {
   self: GraphsDslSeq =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }
@@ -251,7 +277,7 @@ trait GraphsSeq extends GraphsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
+trait GraphsExp extends scalan.ScalanExp with GraphsDsl {
   self: GraphsDslExp =>
   lazy val Graph: Rep[GraphCompanionAbs] = new GraphCompanionAbs {
   }
@@ -1163,7 +1189,7 @@ trait GraphsExp extends GraphsDsl with scalan.ScalanExp {
 }
 
 object Graphs_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXTWwbRRSeXcdxbIf0R6hVK4FDcEEgiKMgqFAOVeo6VZDjRNkQkKmQxuuJM+ns7GZnHNkceuAIN4TECaHee+OChNQLQkIcOCFA4sypLUIVtCcQb2Z/vE7WSSraAz6MdmbfvPfm+773Zn3rHsoKH70gbMwwn3WIxLOWfl4UsmzVuKSyv+K2u4xcIVsfnvnKXuGXhYlONNH4NhZXBGuifPBQ63nxs0V26yiPuU2EdH0h0XN1HaFiu4wRW1KXV6jjdCVuMVKpUyEX6mis5bb7u+gGMuropO1y2yeSWFWGhSAiXJ8gKiMaz/N63l/1BjF4RZ2ikjjFho+phPQhxsnAfp14Vp+7vO9INBWmtuqptMAmRx3P9WUUIgfutt12NB3jGBbQ6foO3sMVCNGpWNKnvAM7ix62r+MOaYCJMh+DhAVhWxt9T88zdVQQZBcAWnY8pld6HkIIGJjXScwO8JmN8ZlV+JQt4lPM6AdYvVzz3V4fBT8jg1DPAxevHOEi8kBqvF3+6Jr93kOr6Jhqc0+lktMnHAdHpRFq0FQAjt+tfyLuX7150USFJipQsdgS0se2TFIeolXEnLtS5xwDiP0OsDUzii0dZRFs9kkib7uOhzl4CqGcBJ4YtalUxmptMmRnBPQ56ZHI1Oh5Rnze6RHn1bqpYsbW7px79cLd2rsmModD5MGlBcL3I6cSZa/62NsOfavxhETG5gBgNa3pqRryvcGYOySVGJQX7/ze/nYOXTNjKMPIx2MPXGTFLz8Vf3zpkokmmlrrSwx3moCmqDHirPpVl8smmnD3iB+8ye1hpp5S2cy1yRbuMhlinAQnA+BIND2yKj2ikFvQFWBEABQDETdcTspLa+UH1vef3lIa9dFk8CYo03/oxb9/ndqSWr4STUKykvQ2MesSEcE8VoVKSCUiwFwvno+Dq6EkUYG0O2TYUbaR4ql2pKcso/x6uhMfPT9Kcx5Z86kDPW6PvP7N12//cbuR1bI7HQKtUws6TojzAHMFhTEnUWaZyzR1FQIILdchp2bu0/dvfiy1jozecENbbe1AB1nQ+549RFJRY/2rOWf+ee7nL0yUB+W0qHSwV547Zjt4giWOhjmbqoaXii6F+X0vF9s72Cbc7usCTq/QAb2A9NnhHdVk7qVBwZ9NxDlv7NOISTZjuaryO1KuBx3UDnNwsNOknrQU6/KZ0boEYM+s159m9y7dNlH2LZTdgqYg6ijbcru8HTEGFzdUorwcrRnDjAFD2MdOzJD+TaMBZsPdciPV4EDtFY3hc/+XJnyAs/11/RibzSnK7RUMxdx7h8pt8Hiov6NbTj5IrdF1ok0Z+NQJ3KjhtfTjvqHHNx+pXJa5TdsgInLschne8f8pl4MnLSW2pSv0kSScSHg8lYkM9NjHJfAkNYeQX1RddQk7lPXn00Ifg/CpUTx7SSdPBEs1fjawCQ3HA9Akeipsch09D1Hw0cyI3meFlwywcOPh542Xf/jyN30lF9R1BR8qPP6vkLyKh1HLB7Hh0z+RLIhQXWA60X8BHFvJdIoNAAA="
+  val dump = "H4sIAAAAAAAAANVXS2wbRRieteM4tkP64FGIBAnBBYHADkFQoRyq4DpVkOtE2TZFpgKN12Nn0tnZze44sjn02APcEBcOSFTigtQL4oSQKiSEhHrghBASZ06lqOqBnkD8M/vwOt51CLQHfBjtzM78j+/7/n/W12+jjOugZ10DM8xLJhG4pKvnFVcU9SoXVPTPWa0uI2dI+3Hrm09f/nz2qxQ60kCT29g947IGynkP1Z4dPutkt4ZymBvEFZbjCvR0TXkoGxZjxBDU4mVqml2Bm4yUa9QVyzU00bRa/V10BWk1dNSwuOEQQfQKw65LXH99isiIaDjPqXl/3R744GWZRTmSxXkHUwHhg4+j3v5NYut9bvG+KdCMH9q6LcOCPVlq2pYjAhdZMLdttYLpBMewgI7XdvAeLoOLTlkXDuUdOFmwsXEZd0gdtsjtExCwS1j7fN9W83QN5V2yCwCtmTZTKz0bIQQMLKkgSgN8SiE+JYlPUScOxYy+h+XLDcfq9ZH309II9Www8eIBJgILpMpbxfcvGW/f0wtmSh7uyVCyKsNJMDSXoAZFBeD4/eaH7t2z106lUL6B8tRdabrCwYaIUu6jVcCcW0LFHAKInQ6wtZDElvKyAnv2SSJnWKaNOVjyoZwGnhg1qJCb5dq0z04C9Flhk2Cr1rO1MN/5hHyVbiqYsY1bT7x08rfqWymUGnaRA5M6CN8JjAqUOetge9u3LccjAmlbA4DltKqmcsj1BmN2TCghKM/d+r313SK6lAqh9D3/M/bARMb9+afCj8+fTqGphtL6KsOdBqDpVhkx152KxUUDTVl7xPHeZPcwk0+xbGZbpI27TPgYR8FJAzgCzSdWpU0kcsuqArQAgIIn4rrFSXF1o/iHfvOj61KjDpr23nhl+hc99ecvM22h5CvQNAQrSG8Lsy5xA5gnKlAJsUR4mKvF2dC5HOYEypNWhwwbytRjLFUPtJRhlF+ON+KgZ5I0Z5MNh5rQ4/bIq99+feHOjXpGye64D7QKzes4Ps4DzCUU2qJA6TUu4tSV9yDULZMcW7hL37n2gVA60nrDDW29uQMdZFmde2qMpILG+sXVq4/e+ezdh1VDmGpSYWK7uHiIdhBU7wMsdzTM30zFv2BUWSzte7nS2sEG4UZfFXNCtcrxRPjOYx0IODF8uBJNYy5yMuJyVtsnnRTZClUsq/JAFY8aqI4zMNqAYpOeC+X6ZLJcAePHNmuPsNunb6RQ5k2UaUOvcGso07S6vBWQB/c5FKh4I1jThskDsrCDzZAs9ZtHA8yGm+iF2A0jJVnQhvP+L715hLP95X4fe9Axyo1zGGq8d5GKbbA41t7BnSjnhVbvmsGhNHwBeWbk8Ep8uq+p8fVDVc4aN2gLRET+TeUMH/7/VM5o0nORY/FiPZSaIwFPxpKShi58v7SewNIYSRRk213FJmX9pbgoDieDmST27ai9B4KwHD8e7PE3TnpQCvSQ3wU7au4D4qCFhOao+xcScHPl3if1F3748ld1lefl1QYfODz8jxG9wocBzHm+4S9DJFiQprzsVKB/A44V2GHCDQAA"
 }
 }
 

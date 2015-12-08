@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait BitSetsAbs extends BitSets with scalan.Scalan {
+trait BitSetsAbs extends scalan.Scalan with BitSets {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -35,7 +35,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
     def convertBitSet(x: Rep[BitSet]): Rep[To] = {
       x.selfType1 match {
         case _: BitSetElem[_] => x.asRep[To]
-        case e => !!!(s"Expected $x to have BitSetElem[_], but got $e")
+        case e => !!!(s"Expected $x to have BitSetElem[_], but got $e", x)
       }
     }
 
@@ -55,8 +55,8 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
     override def toString = "BitSet"
   }
   def BitSet: Rep[BitSetCompanionAbs]
-  implicit def proxyBitSetCompanion(p: Rep[BitSetCompanion]): BitSetCompanion =
-    proxyOps[BitSetCompanion](p)
+  implicit def proxyBitSetCompanionAbs(p: Rep[BitSetCompanionAbs]): BitSetCompanionAbs =
+    proxyOps[BitSetCompanionAbs](p)
 
   abstract class AbsBoolCollBitSet
       (bits: Rep[Collection[Boolean]])
@@ -84,14 +84,25 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
 
   // 3) Iso for concrete class
   class BoolCollBitSetIso
-    extends Iso[BoolCollBitSetData, BoolCollBitSet] {
+    extends EntityIso[BoolCollBitSetData, BoolCollBitSet] with Def[BoolCollBitSetIso] {
     override def from(p: Rep[BoolCollBitSet]) =
       p.bits
     override def to(p: Rep[Collection[Boolean]]) = {
       val bits = p
       BoolCollBitSet(bits)
     }
-    lazy val eTo = new BoolCollBitSetElem(this)
+    lazy val eFrom = element[Collection[Boolean]]
+    lazy val eTo = new BoolCollBitSetElem(self)
+    lazy val selfType = new BoolCollBitSetIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class BoolCollBitSetIsoElem() extends Elem[BoolCollBitSetIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new BoolCollBitSetIso())
+    lazy val tag = {
+      weakTypeTag[BoolCollBitSetIso]
+    }
   }
   // 4) constructor and deconstructor
   class BoolCollBitSetCompanionAbs extends CompanionDef[BoolCollBitSetCompanionAbs] with BoolCollBitSetCompanion {
@@ -123,7 +134,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBoolCollBitSet: Iso[BoolCollBitSetData, BoolCollBitSet] =
-    cachedIso[BoolCollBitSetIso]()
+    reifyObject(new BoolCollBitSetIso())
 
   // 6) smart constructor and deconstructor
   def mkBoolCollBitSet(bits: Rep[Collection[Boolean]]): Rep[BoolCollBitSet]
@@ -133,7 +144,7 @@ trait BitSetsAbs extends BitSets with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait BitSetsSeq extends BitSetsDsl with scalan.ScalanSeq {
+trait BitSetsSeq extends scalan.ScalanSeq with BitSetsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs {
   }
@@ -154,7 +165,7 @@ trait BitSetsSeq extends BitSetsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
+trait BitSetsExp extends scalan.ScalanExp with BitSetsDsl {
   self: ScalanCommunityDslExp =>
   lazy val BitSet: Rep[BitSetCompanionAbs] = new BitSetCompanionAbs {
   }
@@ -293,7 +304,7 @@ trait BitSetsExp extends BitSetsDsl with scalan.ScalanExp {
 }
 
 object BitSets_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVPYwbRRR+Xt+dz/YpF1yA7hrCYYISgX1CQimuQHeOE0Vy7k7ZgJCJIs2tx86E2Zm9nfHJpkhBCV2UFqH06dJEQqJBSIiCCgESNVUgiiIgFYg3s+Ndb5QlabLFanb27Xvv+3mzd/6ARRXDSRUQTkQrpJq0fLveVrrpd4VmenpRDsacnqXDT1++F1wUO8qD1T4sXSPqrOJ9qCaL7iRK1z497EGViIAqLWOl4bWerdAOJOc00EyKNgvDsSYHnLZ7TOmtHiwcyMH0EG5AqQfHAymCmGrqdzhRiiq3v0xNRyx9rtrn6V6U1RBtg6I9h+JyTJjG9rHG8ST+Eo38qZBiGmo45lrbi0xbGFNhYSRjPStRwXTX5GD2uCAIbkCjd50ckTaWGLV9HTMxwi/rEQk+JiO6iyEmfAEbVpQPL08j+1zuQU3RQyToQhhxuzOJAAAVeMc20cr4aaX8tAw/TZ/GjHD2CTEv92M5mUJylcoAkwhTvPWMFLMMtCsGzc+uBB899uuhZz6emFYqFuESJnq1wA1WCuTxu0s31aPzt894UOtDjantA6VjEuh5yR1bdSKE1LbnlEASj1CtjSK1bJVtjHnCEtVAhhERmMlRuYI6cRYwbYLN3opTp4D6io7oLLQ0iUop3hMFeK1vOoTz/ftrb7/xe/dDD7x8iSqm9NH48SyphqUdhkxry6i5VR25xWVSwG/efzD4dhOueClNLuvzKYMpFtUvP9V/PPWeB8t96+NznIz6yJTqchruxR0pdB+W5RGNkzeVI8LN6qlKVQZ0SMZcO/7mgZcRuIYThRMXUcPKlnV3aUZAPTHorhS0eW6/+bf//a07xn8xrCRvkhH8l53559djQ22tqdEDTCvb0qqGMk6uY8Pt1Dqp31OaXi8SNKL7MQvxADmi737z1fsPv95dtJo2HNIPCB/TZJwd0Ay06WVxSLhC4JUdKTklIhN4/m6w1hJEvgzpSxuP2NXbn2sra2mSPzv2Dq5j81v2u7X/UXh2hv3V3/T+XPv5Sw+qKCRSE5Koufmck/cCpwlSw2e3dWTsFcOUkSgZi8581fXs2GnYJR7G+fAsKmF3TvpTkPdBGcnJ7zx9Ep1EWemTLl0BgNXCxvPDvv5EnXZ+s2JMY4Px7Gs4kbOjWrlWYtgoMIDv6EeYNx5/sXv6h7u/WevWjJA4UULn/lDOsnlGGkk+xBKOBf4G8Uc01zWOmtHY9v0fyE6spRgIAAA="
+  val dump = "H4sIAAAAAAAAALVVTWwTRxR+tpM4tiMCRqiQCzQYqiBqh0oVhxxQMAYhuUnEAqpc1GqyHpuB2ZnNzjiyOeSYA9wQVySQuCBxQZwQUlWpqoQ4cEIIiXNPtBXKoZxa9c3sem1HWWgP3cNqZ/bte+/7ebOPfodxFcBR5RJORNmjmpQd+7yodMmpCc107xvZ7HB6hrb2y5/unXg48zQN0w2YuErUGcUbkAsfal0/fnboWh1yRLhUaRkoDZ/XbYWKKzmnrmZSVJjndTRZ5bRSZ0ov1GFsVTZ7a7ABqTrsdqVwA6qpU+VEKaqi/UlqOmLxOmfXvWV/UENUDIrKEIqLAWEa28cau8P4C9R3ekKKnqdhV9Tasm/awpgs83wZ6H6JLKa7Kpv95ZgguAHF+jWyTipYol1xdMBEG78s+MS9Ttp0CUNM+Bg2rChvXez5dp2pQ17RNSTovOdzu9P1AQAV+Mo2UR7wU475KRt+Sg4NGOHsBjEvVwLZ7UF4pTIAXR9THP9Ein4GWhPN0s0r7ncfnIKXNh93TStZi3ACEx1McIOVAnl8fuG22jp3/2Qa8g3IM7W4qnRAXD0secRWgQghte05JpAEbVRrNkktW2URY7ZZIudKzycCM0VUTqFOnLlMm2CzNxWpk0B9Vvu0H5rq+qkY76EEvNY3VcL5yrsDXx75rfZtGtKjJXKY0kHjB/2kGiZOM2RaW0bNLReRm1wmBvzFuz+av8zDlXRMU5T13ymDKcbVm9eFV3On0jDZsD4+y0m7gUypGqfeclCVQjdgUq7TIHyTXSfcPO2oVLZJW6TDdcTfMPAMAtdwKHHifGpYWbDuTvUJKIQGXZKCls6ulP50Xtx5ZPwXwFT4JhzBv9nJv97uamlrTY0eYFrZlqY1ZHByIzainXw19ntM0+EkQX26EjAPD5B1+vXPzy69/3Fp3GpajJBeJrxDw3GOgA5Am17GW4QrBJ49LSWnRAwEHr4brPkQkSM9umd2i31//5a2sqa6o2fH8uo1bH7BfnfgIwr3z7DHm5v73j/4Ya+dvUmkxiN+af4/TF5/UP7HyYLY/OGZUhyszW0GifzMEGiUC6elOtzAzPYv8YweDR9EhaQPOWIORu2RQc5Gd3Ye0Fx3x37t+miU+dOwphPhjJ4MM9uqz49uZo3DbDAelMXIEYNzXUVdBTCb4BYn0gfBb3y4u3Ts5ZNfrc/zRmkcPxH/3Yb9PcpTMcyHWLyOwH8m/rWGusa5NCawff8Dbom90UUIAAA="
 }
 }
 

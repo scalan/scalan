@@ -6,6 +6,8 @@ import scalan.{Base, ScalanSeq}
 trait BaseSeq extends Base { self: ScalanSeq =>
   type Rep[+A] = A
 
+  override protected def stagingExceptionMessage(message: String, syms: Seq[Rep[_]]) = message
+
   override def toRep[A](x: A)(implicit eA: Elem[A]) = x
 
   override def def_unapply[A](e: Rep[A]): Option[Def[A]] = e match {

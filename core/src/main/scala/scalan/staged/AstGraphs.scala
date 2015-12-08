@@ -4,7 +4,7 @@ import scala.collection._
 import scalan.ScalanExp
 import scalan.common.GraphUtil
 
-trait AstGraphs extends Transforming { self: ScalanExp =>
+trait AstGraphs extends TransformingExp { self: ScalanExp =>
 
   /**
    * AstNode is created for each symbol of the AstGraph and represents graph linking structure
@@ -353,12 +353,6 @@ trait AstGraphs extends Transforming { self: ScalanExp =>
   /** Keeps a branching structure of the Lambda
     */
   case class LambdaBranches(ifBranches: Map[Exp[_], IfBranches], assignments: Map[Exp[_], BranchPath])
-
-  implicit class AstGraphOps(graph: AstGraph) {
-    def startsWith(other: AstGraph): Boolean = {
-      ???
-    }
-  }
 
   def buildScheduleForResult(st: Seq[Exp[_]], neighbours: Exp[_] => Seq[Exp[_]]): Schedule = {
     val startNodes = st.flatMap(e => findDefinition(e).toList)

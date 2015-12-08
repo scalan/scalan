@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ProcessesAbs extends Processes with scalan.Scalan {
+trait ProcessesAbs extends scalan.Scalan with Processes {
   self: ProcessesDsl =>
 
   // single proxy for each type family
@@ -37,9 +37,9 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     }
 
     def convertProcess(x: Rep[Process[F, O]]): Rep[To] = {
-      x.selfType1.asInstanceOf[Element[_]] match {
+      x.selfType1.asInstanceOf[Elem[_]] match {
         case _: ProcessElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have ProcessElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have ProcessElem[_, _, _], but got $e", x)
       }
     }
 
@@ -59,8 +59,8 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
     override def toString = "Process"
   }
   def Process: Rep[ProcessCompanionAbs]
-  implicit def proxyProcessCompanion(p: Rep[ProcessCompanion]): ProcessCompanion =
-    proxyOps[ProcessCompanion](p)
+  implicit def proxyProcessCompanionAbs(p: Rep[ProcessCompanionAbs]): ProcessCompanionAbs =
+    proxyOps[ProcessCompanionAbs](p)
 
   abstract class AbsAwait[F[_], A, O]
       (req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
@@ -91,14 +91,27 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 3) Iso for concrete class
   class AwaitIso[F[_], A, O](implicit eA: Elem[A], eO: Elem[O], cF: Cont[F])
-    extends Iso[AwaitData[F, A, O], Await[F, A, O]]()(pairElement(implicitly[Elem[F[A]]], implicitly[Elem[$bar[Throwable, A] => Process[F, O]]])) {
+    extends EntityIso[AwaitData[F, A, O], Await[F, A, O]] with Def[AwaitIso[F, A, O]] {
     override def from(p: Rep[Await[F, A, O]]) =
       (p.req, p.recv)
     override def to(p: Rep[(F[A], $bar[Throwable, A] => Process[F, O])]) = {
       val Pair(req, recv) = p
       Await(req, recv)
     }
-    lazy val eTo = new AwaitElem[F, A, O](this)
+    lazy val eFrom = pairElement(element[F[A]], element[$bar[Throwable, A] => Process[F, O]])
+    lazy val eTo = new AwaitElem[F, A, O](self)
+    lazy val selfType = new AwaitIsoElem[F, A, O](eA, eO, cF)
+    def productArity = 3
+    def productElement(n: Int) = (eA, eO, cF).productElement(n)
+  }
+  case class AwaitIsoElem[F[_], A, O](eA: Elem[A], eO: Elem[O], cF: Cont[F]) extends Elem[AwaitIso[F, A, O]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new AwaitIso[F, A, O]()(eA, eO, cF))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagO = eO.tag
+      weakTypeTag[AwaitIso[F, A, O]]
+    }
   }
   // 4) constructor and deconstructor
   class AwaitCompanionAbs extends CompanionDef[AwaitCompanionAbs] with AwaitCompanion {
@@ -131,7 +144,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAwait[F[_], A, O](implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Iso[AwaitData[F, A, O], Await[F, A, O]] =
-    cachedIso[AwaitIso[F, A, O]](eA, eO, cF)
+    reifyObject(new AwaitIso[F, A, O]()(eA, eO, cF))
 
   // 6) smart constructor and deconstructor
   def mkAwait[F[_], A, O](req: Rep[F[A]], recv: Rep[$bar[Throwable, A] => Process[F, O]])(implicit eA: Elem[A], eO: Elem[O], cF: Cont[F]): Rep[Await[F, A, O]]
@@ -165,14 +178,26 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 3) Iso for concrete class
   class EmitIso[F[_], O](implicit eO: Elem[O], cF: Cont[F])
-    extends Iso[EmitData[F, O], Emit[F, O]]()(pairElement(implicitly[Elem[O]], implicitly[Elem[Process[F, O]]])) {
+    extends EntityIso[EmitData[F, O], Emit[F, O]] with Def[EmitIso[F, O]] {
     override def from(p: Rep[Emit[F, O]]) =
       (p.head, p.tail)
     override def to(p: Rep[(O, Process[F, O])]) = {
       val Pair(head, tail) = p
       Emit(head, tail)
     }
-    lazy val eTo = new EmitElem[F, O](this)
+    lazy val eFrom = pairElement(element[O], element[Process[F, O]])
+    lazy val eTo = new EmitElem[F, O](self)
+    lazy val selfType = new EmitIsoElem[F, O](eO, cF)
+    def productArity = 2
+    def productElement(n: Int) = (eO, cF).productElement(n)
+  }
+  case class EmitIsoElem[F[_], O](eO: Elem[O], cF: Cont[F]) extends Elem[EmitIso[F, O]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new EmitIso[F, O]()(eO, cF))
+    lazy val tag = {
+      implicit val tagO = eO.tag
+      weakTypeTag[EmitIso[F, O]]
+    }
   }
   // 4) constructor and deconstructor
   class EmitCompanionAbs extends CompanionDef[EmitCompanionAbs] with EmitCompanion {
@@ -205,7 +230,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoEmit[F[_], O](implicit eO: Elem[O], cF: Cont[F]): Iso[EmitData[F, O], Emit[F, O]] =
-    cachedIso[EmitIso[F, O]](eO, cF)
+    reifyObject(new EmitIso[F, O]()(eO, cF))
 
   // 6) smart constructor and deconstructor
   def mkEmit[F[_], O](head: Rep[O], tail: Rep[Process[F, O]])(implicit eO: Elem[O], cF: Cont[F]): Rep[Emit[F, O]]
@@ -239,14 +264,26 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 3) Iso for concrete class
   class HaltIso[F[_], O](implicit eO: Elem[O], cF: Cont[F])
-    extends Iso[HaltData[F, O], Halt[F, O]] {
+    extends EntityIso[HaltData[F, O], Halt[F, O]] with Def[HaltIso[F, O]] {
     override def from(p: Rep[Halt[F, O]]) =
       p.err
     override def to(p: Rep[Throwable]) = {
       val err = p
       Halt(err)
     }
-    lazy val eTo = new HaltElem[F, O](this)
+    lazy val eFrom = element[Throwable]
+    lazy val eTo = new HaltElem[F, O](self)
+    lazy val selfType = new HaltIsoElem[F, O](eO, cF)
+    def productArity = 2
+    def productElement(n: Int) = (eO, cF).productElement(n)
+  }
+  case class HaltIsoElem[F[_], O](eO: Elem[O], cF: Cont[F]) extends Elem[HaltIso[F, O]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new HaltIso[F, O]()(eO, cF))
+    lazy val tag = {
+      implicit val tagO = eO.tag
+      weakTypeTag[HaltIso[F, O]]
+    }
   }
   // 4) constructor and deconstructor
   class HaltCompanionAbs extends CompanionDef[HaltCompanionAbs] with HaltCompanion {
@@ -278,7 +315,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoHalt[F[_], O](implicit eO: Elem[O], cF: Cont[F]): Iso[HaltData[F, O], Halt[F, O]] =
-    cachedIso[HaltIso[F, O]](eO, cF)
+    reifyObject(new HaltIso[F, O]()(eO, cF))
 
   // 6) smart constructor and deconstructor
   def mkHalt[F[_], O](err: Rep[Throwable])(implicit eO: Elem[O], cF: Cont[F]): Rep[Halt[F, O]]
@@ -288,7 +325,7 @@ trait ProcessesAbs extends Processes with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
+trait ProcessesSeq extends scalan.ScalanSeq with ProcessesDsl {
   self: ProcessesDslSeq =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs {
   }
@@ -337,7 +374,7 @@ trait ProcessesSeq extends ProcessesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
+trait ProcessesExp extends scalan.ScalanExp with ProcessesDsl {
   self: ProcessesDslExp =>
   lazy val Process: Rep[ProcessCompanionAbs] = new ProcessCompanionAbs {
   }
@@ -418,7 +455,7 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
 
     object ++ {
       def unapply(d: Def[_]): Option[(Rep[Process[F, O]], Th[Process[F, O]]) forSome {type F[_]; type O}] = d match {
-        case MethodCall(receiver, method, Seq(p, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: ProcessElem[_, _, _] => true; case _ => false }) && method.getName == "$plus$plus" =>
+        case MethodCall(receiver, method, Seq(p, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: ProcessElem[_, _, _] => true; case _ => false }) && method.getName == "$plus$plus" =>
           Some((receiver, p)).asInstanceOf[Option[(Rep[Process[F, O]], Th[Process[F, O]]) forSome {type F[_]; type O}]]
         case _ => None
       }
@@ -483,7 +520,7 @@ trait ProcessesExp extends ProcessesDsl with scalan.ScalanExp {
 }
 
 object Processes_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXTWwbRRR+XttxbKdJ+FFRW7UJkQsCgR0hpB4itXJTG4rcOMrmgEyhGq8nzpb9y8w4tTn0wBFuiAsHhHrvjQsnbkgICU4VIHHiwKmUQwX0BOqb8e56/bNORAsRPox2Zt++9+b7vvdmfPsepDmD57hBLOIUbSpIUVfPZS4KesURpuhdcVsdi16iO+8f/8K44lzkGiw0YGaX8EvcakC2/1DpeuGzTvdqkCWOQblwGRfwbE1FKBmuZVFDmK5TMm27I0jToqWaycVaDVJNt9Xbg5uQqMGi4ToGo4Lq6xbhnHJ/fZbKjMxwnlXzXt0bxHBKchelyC62GTEFpo8xFvv2W9TTe47r9GwB835qdU+mhTYZ0/ZcJoIQGXS367aCacohuABP1q6TfVLCEO2SLpjptPHLvEeMd0mbbqCJNE9hwpxaO9s9T82TNchxuocAXbY9S610PQBABl5RSRQH+BRDfIoSn4JOmUks8z0iX24yt9uD/i+RBOh66OKlA1wEHmjFaRU+uGq89UDP25r8uCtTyagdzqCjpRg1KCoQx6+3PuL3X7t1ToNcA3ImLze5YMQQUcp9tPLEcVyhcg4BJKyNbK3EsaWilNFmRBJZw7U94qAnH8o55MkyDVNIY7k257MTA31GeDQwTXS9RLjf5Zj9Kt2sE8vavHvi5bO/Vt7UQBsOkUWXOgqfBU4FZJAbxID73uW4ICBRHUAsp3U1lUO2OxgzU5IJYXn+7m+tr1bhqhaC6cc+HH/oIs1//D5/54ULGsw2lNqrFmk3EE9esahdZ+uuIxow6+5T1n+T2SeWfJrIZ6ZFd0jHEj7KUXiSCI+A5di69KjEbk3VQCIAIN+X8Ybr0EJ1s/Cn/s3Ht6VKGcz13/QL9W/z3F8/ze8IJWABSUb3AnSTWN6j8I/My2P4q1cnw0TksCQgxaixP8EvgzNxovFoteMYdy5/8tTC6Ws/K8nMtFybmEq3p2qQZtg0FESnfNLQd6rQJGw4yez2LnNvyPId1k4092DxUVQ30F6uD7Du2vSJlfvmO7c+FEplie5ww6s3r2OHWVPfnZkiuKDx/tFY1X4/8cNnGmRRV01T2MQrrB6yXfyLLQBCPAbDEoppvnxDVn402NIAyWciIJ9MjAhGo+WQUllNU3QX56A+zUH9YAdGNXQgK3miJKLsC0ir/arvQ32fjtc3Inh8q/a0de/Clxqk34D0DvYGjsJuuh2nFVCDJ7igXXExWEsMU4NUEEbskAr1W4YB1iNV+/ZEi2ujcEw2Kw/Ym2wwBms+MYzbo7X1MdmM9ZldSlpT+tc47WMeBDGteA+Po0HI8bway3GVc6xi/+PC+e91n5LZRmUfL5ADpCiH5uG0eNRSS1LG4nQih1enOD6I/deJ9T9iX2Z7lOxHjGd8YIfTTuLZ+djL+NBsLvqxJhAauecePYBy/HbYFxpm/fzwfgHH/LMM/6ZQ/8g5j0fcSswRp/uXBkT/5oNPN1787vNf1DUuJ68feC11wv+GgwOtO9Jv58Lw+G8vkjLKTt5JVLoPAVB50Th9DwAA"
+  val dump = "H4sIAAAAAAAAANVXTWwbRRSe9U8c22kSKL+p2oTIgEBgF4TUQ6RWJrWhyMRRNgdkqkbj9cTZMruzmR2naw499gA3xIUDEpW4IPWCOHFBXJAQB8ShQpU4ceBUilAP9ATizXh3vf5ZJ6GUiD2MdmbfvHnzfd97M3vjDkq7HD3jGphiu2gRgYu6ei+7oqBXbGGK7pus1aHkPNl+gn39yUufLXyZQHMNNLWD3fMubaBs76XiOeG7TnZrKIttg7iCcVegp2pqhZLBKCWGMJldMi2rI3CTklLNdMVKDaWarNXdRVeRVkPzBrMNTgTRVyl2XeL649NERmSG/azqd+tOfw27JHdRiuxik2NTQPiwxnzPfoM4etdmdtcSaNYPre7IsMAmY1oO4yJYIgPudlgr6KZsDAPo4dplvIdLsES7pAtu2m2YmXew8Q5ukzUwkeYpCNgldHuz66h+soZyLtkFgC5YDlUjnoMQAgZeVkEU+/gUQ3yKEp+CTriJqfkulh/XOfO6qPdoSYQ8B1y8sI+LwAOp2K3CexeNt+/peSshJ3sylIza4RQ4WoxRg6ICcPx24wP37mvXzyRQroFypltuuoJjQ0Qp99HKY9tmQsUcAoh5G9hajmNLrVIGmyFJZA1mOdgGTz6UM8ATNQ1TSGM5NuOzEwN9RjgkMNU8Rwv3uxSzX6WbVUzp+u0nX3z618pbCZQYXCILLnUQPg+cCpQBbgAD1/cu2zmBtGofYtmtq65ssl6/zUwIJoTl2du/tb45jS4mQjD9tQ/GH7hIu7d+zN987lwCTTeU2qsUtxuAp1uhxKrzVWaLBppme4T3vmT2MJVvY/nMtMg27lDhoxyFJwnwCLQUm5cOkditqBzQAgDyPRmvMZsUquuFP/TvPrwhVcrRTO9LL1H/Ms/8+dPstlACFijJyW6AbhLSexj+oX55BH/1aSEMRDaLAqU4MfbG+OXoVJxoHFLt2MbNCx8dnzu59bOSzFSLWdhUuj1RQ2kORUNBdMInDXynCk3MB4PMbu5wdkWm76B2orEHg/ejur72cj2AdWaRh5bvmpeuvy+UyjRvsODVm5ehwqyoeacmCC4ovJ9fu/bo759uHVcFY7ppCgs7hdOHKBdBdj/AcoBCbHp4Pd7vKy2AxmbLV2RBiK67GJkQwX5BG9JRgpRDpmWSTZBjnIP6JAf1/R0Y1dCBTPCxSomKQqC02q+aH8r+ZLzsAczHNmqP0Dvnvkqg9BsovQ0lwwW9N1nHbgUswcEuiCdeDca0QZaAFcyxFbKiniXUx3oomS+NtdgahmO8WbnP3niDEVjz2iBu91ftR2QzUn52CG5NKGujtI94ENik8R7+jboh27OqLR8giY5VrH+cQ/99CqRktNEMiNfKPqqUjXEwWR616pKE8zjJyOaVCY4PIYTXMf0fCUFGe5RCiBhP+RgPhp2Eg/bBJHeEvENyPO9HMIbmyFX56GGV7Q+DvsAw68cHVxR0zD/34E+H+MfTWTgOl2OOQ92/awAnV+99vPb891/8om6COXlrgZutHf5e9g8/b6g2z4TLww9jJGQQo7zKqHD/BkqbovXADwAA"
 }
 }
 

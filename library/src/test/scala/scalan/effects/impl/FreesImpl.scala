@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait FreesAbs extends Frees with scalan.Scalan {
+trait FreesAbs extends scalan.Scalan with Frees {
   self: MonadsDsl =>
 
   // single proxy for each type family
@@ -36,9 +36,9 @@ trait FreesAbs extends Frees with scalan.Scalan {
     }
 
     def convertFree(x: Rep[Free[F, A]]): Rep[To] = {
-      x.selfType1.asInstanceOf[Element[_]] match {
+      x.selfType1.asInstanceOf[Elem[_]] match {
         case _: FreeElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have FreeElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have FreeElem[_, _, _], but got $e", x)
       }
     }
 
@@ -58,8 +58,8 @@ trait FreesAbs extends Frees with scalan.Scalan {
     override def toString = "Free"
   }
   def Free: Rep[FreeCompanionAbs]
-  implicit def proxyFreeCompanion(p: Rep[FreeCompanion]): FreeCompanion =
-    proxyOps[FreeCompanion](p)
+  implicit def proxyFreeCompanionAbs(p: Rep[FreeCompanionAbs]): FreeCompanionAbs =
+    proxyOps[FreeCompanionAbs](p)
 
   abstract class AbsReturn[F[_], A]
       (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
@@ -89,14 +89,26 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ReturnIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends Iso[ReturnData[F, A], Return[F, A]] {
+    extends EntityIso[ReturnData[F, A], Return[F, A]] with Def[ReturnIso[F, A]] {
     override def from(p: Rep[Return[F, A]]) =
       p.a
     override def to(p: Rep[A]) = {
       val a = p
       Return(a)
     }
-    lazy val eTo = new ReturnElem[F, A](this)
+    lazy val eFrom = element[A]
+    lazy val eTo = new ReturnElem[F, A](self)
+    lazy val selfType = new ReturnIsoElem[F, A](eA, cF)
+    def productArity = 2
+    def productElement(n: Int) = (eA, cF).productElement(n)
+  }
+  case class ReturnIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[ReturnIso[F, A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new ReturnIso[F, A]()(eA, cF))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[ReturnIso[F, A]]
+    }
   }
   // 4) constructor and deconstructor
   class ReturnCompanionAbs extends CompanionDef[ReturnCompanionAbs] with ReturnCompanion {
@@ -128,7 +140,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReturn[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[ReturnData[F, A], Return[F, A]] =
-    cachedIso[ReturnIso[F, A]](eA, cF)
+    reifyObject(new ReturnIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
@@ -162,14 +174,26 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SuspendIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends Iso[SuspendData[F, A], Suspend[F, A]] {
+    extends EntityIso[SuspendData[F, A], Suspend[F, A]] with Def[SuspendIso[F, A]] {
     override def from(p: Rep[Suspend[F, A]]) =
       p.a
     override def to(p: Rep[F[A]]) = {
       val a = p
       Suspend(a)
     }
-    lazy val eTo = new SuspendElem[F, A](this)
+    lazy val eFrom = element[F[A]]
+    lazy val eTo = new SuspendElem[F, A](self)
+    lazy val selfType = new SuspendIsoElem[F, A](eA, cF)
+    def productArity = 2
+    def productElement(n: Int) = (eA, cF).productElement(n)
+  }
+  case class SuspendIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[SuspendIso[F, A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SuspendIso[F, A]()(eA, cF))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[SuspendIso[F, A]]
+    }
   }
   // 4) constructor and deconstructor
   class SuspendCompanionAbs extends CompanionDef[SuspendCompanionAbs] with SuspendCompanion {
@@ -201,7 +225,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSuspend[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[SuspendData[F, A], Suspend[F, A]] =
-    cachedIso[SuspendIso[F, A]](eA, cF)
+    reifyObject(new SuspendIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkSuspend[F[_], A](a: Rep[F[A]])(implicit eA: Elem[A], cF: Cont[F]): Rep[Suspend[F, A]]
@@ -236,14 +260,27 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 3) Iso for concrete class
   class BindIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Iso[BindData[F, S, B], Bind[F, S, B]]()(pairElement(implicitly[Elem[Free[F, S]]], implicitly[Elem[S => Free[F, B]]])) {
+    extends EntityIso[BindData[F, S, B], Bind[F, S, B]] with Def[BindIso[F, S, B]] {
     override def from(p: Rep[Bind[F, S, B]]) =
       (p.a, p.f)
     override def to(p: Rep[(Free[F, S], S => Free[F, B])]) = {
       val Pair(a, f) = p
       Bind(a, f)
     }
-    lazy val eTo = new BindElem[F, S, B](this)
+    lazy val eFrom = pairElement(element[Free[F, S]], element[S => Free[F, B]])
+    lazy val eTo = new BindElem[F, S, B](self)
+    lazy val selfType = new BindIsoElem[F, S, B](eS, eA, cF)
+    def productArity = 3
+    def productElement(n: Int) = (eS, eA, cF).productElement(n)
+  }
+  case class BindIsoElem[F[_], S, B](eS: Elem[S], eA: Elem[B], cF: Cont[F]) extends Elem[BindIso[F, S, B]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
+    lazy val tag = {
+      implicit val tagS = eS.tag
+      implicit val tagB = eA.tag
+      weakTypeTag[BindIso[F, S, B]]
+    }
   }
   // 4) constructor and deconstructor
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
@@ -276,7 +313,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBind[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[BindData[F, S, B], Bind[F, S, B]] =
-    cachedIso[BindIso[F, S, B]](eS, eA, cF)
+    reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkBind[F[_], S, B](a: Rep[Free[F, S]], f: Rep[S => Free[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]
@@ -286,7 +323,7 @@ trait FreesAbs extends Frees with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait FreesSeq extends FreesDsl with scalan.ScalanSeq {
+trait FreesSeq extends scalan.ScalanSeq with FreesDsl {
   self: MonadsDslSeq =>
   lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs {
   }
@@ -335,7 +372,7 @@ trait FreesSeq extends FreesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FreesExp extends FreesDsl with scalan.ScalanExp {
+trait FreesExp extends scalan.ScalanExp with FreesDsl {
   self: MonadsDslExp =>
   lazy val Free: Rep[FreeCompanionAbs] = new FreeCompanionAbs {
   }
@@ -349,7 +386,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object flatMapBy {
       def unapply(d: Def[_]): Option[(Rep[Return[F, A]], Rep[A => Free[F, B]]) forSome {type F[_]; type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Return[F, A]], Rep[A => Free[F, B]]) forSome {type F[_]; type A; type B}]]
         case _ => None
       }
@@ -361,7 +398,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object foldMap {
       def unapply(d: Def[_]): Option[(Rep[Return[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "foldMap" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "foldMap" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Return[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}]]
         case _ => None
       }
@@ -373,7 +410,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object resume {
       def unapply(d: Def[_]): Option[(Rep[Return[F, A]], Functor[F]) forSome {type F[_]; type A}] = d match {
-        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "resume" =>
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: ReturnElem[_, _] => true; case _ => false }) && method.getName == "resume" =>
           Some((receiver, fF)).asInstanceOf[Option[(Rep[Return[F, A]], Functor[F]) forSome {type F[_]; type A}]]
         case _ => None
       }
@@ -404,7 +441,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
   object SuspendMethods {
     object foldMap {
       def unapply(d: Def[_]): Option[(Rep[Suspend[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}] = d match {
-        case MethodCall(receiver, method, Seq(trans, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: SuspendElem[_, _] => true; case _ => false }) && method.getName == "foldMap" =>
+        case MethodCall(receiver, method, Seq(trans, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: SuspendElem[_, _] => true; case _ => false }) && method.getName == "foldMap" =>
           Some((receiver, trans)).asInstanceOf[Option[(Rep[Suspend[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}]]
         case _ => None
       }
@@ -416,7 +453,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object resume {
       def unapply(d: Def[_]): Option[(Rep[Suspend[F, A]], Functor[F]) forSome {type F[_]; type A}] = d match {
-        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: SuspendElem[_, _] => true; case _ => false }) && method.getName == "resume" =>
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: SuspendElem[_, _] => true; case _ => false }) && method.getName == "resume" =>
           Some((receiver, fF)).asInstanceOf[Option[(Rep[Suspend[F, A]], Functor[F]) forSome {type F[_]; type A}]]
         case _ => None
       }
@@ -449,7 +486,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object flatMapBy {
       def unapply(d: Def[_]): Option[(Rep[Bind[F, S, B]], Rep[B => Free[F, R]]) forSome {type F[_]; type S; type B; type R}] = d match {
-        case MethodCall(receiver, method, Seq(f1, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
+        case MethodCall(receiver, method, Seq(f1, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
           Some((receiver, f1)).asInstanceOf[Option[(Rep[Bind[F, S, B]], Rep[B => Free[F, R]]) forSome {type F[_]; type S; type B; type R}]]
         case _ => None
       }
@@ -461,7 +498,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object foldMap {
       def unapply(d: Def[_]): Option[(Rep[Bind[F, S, B]], $tilde$greater[F, G]) forSome {type F[_]; type S; type B; type G[_]}] = d match {
-        case MethodCall(receiver, method, Seq(trans, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "foldMap" =>
+        case MethodCall(receiver, method, Seq(trans, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "foldMap" =>
           Some((receiver, trans)).asInstanceOf[Option[(Rep[Bind[F, S, B]], $tilde$greater[F, G]) forSome {type F[_]; type S; type B; type G[_]}]]
         case _ => None
       }
@@ -473,7 +510,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object resume {
       def unapply(d: Def[_]): Option[(Rep[Bind[F, S, B]], Functor[F]) forSome {type F[_]; type S; type B}] = d match {
-        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "resume" =>
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: BindElem[_, _, _] => true; case _ => false }) && method.getName == "resume" =>
           Some((receiver, fF)).asInstanceOf[Option[(Rep[Bind[F, S, B]], Functor[F]) forSome {type F[_]; type S; type B}]]
         case _ => None
       }
@@ -502,7 +539,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object flatMapBy {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], Rep[A => Free[F, B]]) forSome {type F[_]; type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "flatMapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Free[F, A]], Rep[A => Free[F, B]]) forSome {type F[_]; type A; type B}]]
         case _ => None
       }
@@ -514,7 +551,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "mapBy" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "mapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Free[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}]]
         case _ => None
       }
@@ -528,7 +565,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object foldMap {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "foldMap" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "foldMap" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Free[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}]]
         case _ => None
       }
@@ -540,7 +577,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object run {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "run" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "run" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Free[F, A]], $tilde$greater[F, G]) forSome {type F[_]; type A; type G[_]}]]
         case _ => None
       }
@@ -552,7 +589,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object step {
       def unapply(d: Def[_]): Option[Rep[Free[F, A]] forSome {type F[_]; type A}] = d match {
-        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "step" =>
+        case MethodCall(receiver, method, _, _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "step" =>
           Some(receiver).asInstanceOf[Option[Rep[Free[F, A]] forSome {type F[_]; type A}]]
         case _ => None
       }
@@ -564,7 +601,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 
     object resume {
       def unapply(d: Def[_]): Option[(Rep[Free[F, A]], Functor[F]) forSome {type F[_]; type A}] = d match {
-        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "resume" =>
+        case MethodCall(receiver, method, Seq(fF, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: FreeElem[_, _, _] => true; case _ => false }) && method.getName == "resume" =>
           Some((receiver, fF)).asInstanceOf[Option[(Rep[Free[F, A]], Functor[F]) forSome {type F[_]; type A}]]
         case _ => None
       }
@@ -580,7 +617,7 @@ trait FreesExp extends FreesDsl with scalan.ScalanExp {
 }
 
 object Frees_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANWXPYwbRRTHn9f2+WwfueNDQSEKd5ycoENgn2hSnERkOzYK8n3oNgVyIqLxeuxs2J3d2xmfbIoUlNAhGgqE0qejoaJAQkIUVBEgUVFQhVBEgVQg3ox312uf13dJyEm4GO3svn3vze/938z69j1Icw/OcYNYhBVtKkhRV9dlLgp6jQlTDDadds+iF2nnw5NfGZuswjVYbMLcdcIvcqsJ2eFFre+G1zrda0CWMINy4XhcwCsNFaFkOJZFDWE6rGTadk+QlkVLDZOLjQakWk57sAc3IdGAJcNhhkcF1asW4Zxy//48lRmZ4Tyr5oNtdxSDleQqSpFVXPaIKTB9jLE0tN+lrj5gDhvYAk74qW27Mi20yZi263giCJFBd9eddjBNMYI34LnGDbJPShiiW9KFZ7Iuvpl3ifE+6dItNJHmKUyYU6tzeeCqebIBOU73ENAl27XUnb4LAFiBN1USxRGfYsinKPkUdOqZxDI/IPLhjuf0BzD8JZIAfRddvH6Ii8ADrbF24aOrxpWHet7W5Mt9mUpGrXAOHS3HqEGVAjl+t/sJv//2rfMa5JqQM3m5xYVHDBEtuU8rTxhzhMo5BEi8LlZrNa5aKkoZbSYkkTUc2yUMPfkoF7BOlmmYQhrLewt+dWLQZ4RLA9NE302E612JWa/STZVY1s7dU2+c/b32rgbaeIgsutRR+F7gVECq7lHqu5bjooBEfcRXTstqKodsfzRmZmQSMnn17h/tb9fhqhaS9AMfrXjoIs1//jF/Z+2CBvNNJfW6RbpNhMlrFrW3varDRBPmnX3qDZ9k9oklr6YWM9OmHdKzhI84yiaJbASsxDalSyW4DdUAiQBAfqjhLYfRQn2n8Jf+/ae3pUQ9WBg+GXbpP+b5v3850RFKvUiUBGyT2NkT8ONp54Yudcemz67eN9+79bFQXBP98f7ebt3AhtpQ7708A3Gwz/zZXNcenPrpCw2ySLJlCpu4hfUjdsdTVDyEJEbDMuJb3KWi57FqNNrySLIvRoC+lAiKpYwEaLQckE5JAc2AH+PAqIcOpPamtk60egLmhvkqB6Huz8QVRSE4udt4wbp34WsN0u9AuoNy5g1It5weawds8cQRtC8qwb3EOFtkSTxihyzVbwVGrGSykeTfmmpxbZLHdLMD2PKJcS5PsMscKClMVGRmN9VnFHh6rHNqXIsT35Le4y5l7f+N+jJ+wlH5xVfyEEnIoXp8mqg8DU0cIa5+IG5MmM6UMB5uurG9Xe8x486lz55fPHPtV3U8z7Udm5hKRaexxT3cwFULn/bPyFE6T8ztEVT+TMV8bInrsyQeJftYPVI53MGj90hKLve4GyRS1ekGB6sYib0G4+tK4kH+H+25vk6OLhYZaIpYgq/L4wY7fVXfjPtCw7QChPkH7eow0ub+ij1Yjeli3f9oQeA3H36+9doPX/6mOjknP3/wQ5CFf8VG53F/Yg/KbqpY+M8qkivikh9EKs9/AehEmQPpDgAA"
+  val dump = "H4sIAAAAAAAAANVXS2wbRRj+/YpjOzSB8mxVEiJTFAR24dJDDpGT2KjITaJsD8hUROPdsbtld3YzM47WHHrsAW6ICwckKnFB6gVx4oK4VEIcOFUIiRMHTqUI9UBPIGZmH147XudRGgkfRju7//7/P99jZn37PuQYhfNMRxYiFRtzVNHUdY3xslYn3OT9y47Rs/A67jzvfPf5G1+e+SYNsy2YuobYOrNaUPAv6p4bXWt4twkFRHTMuEMZh5eaqkJVdywL69x0SNW07R5HbQtXmybjy03Ith2jvws3INWEOd0hOsUca2sWYgyz4P40lh2Z0byg5v1Nd1CDVOUqqrFVXKHI5KJ9UWPOj9/GrtYnDunbHE4FrW26si0Rkzdt16E8LJEX6a45RjjNEiRuwFPN62gPVUWJblXj1CRd8WbJRfr7qIs3RIgMz4qGGbY6V/qummeaUGR4VwB0yXYtdcdzAUAw8KZqojLApxLhU5H4lDVMTWSZHyD5cIs6Xh/8XyoD4LkixWsHpAgz4Doxyh9e1d99qJXstHzZk63k1QqnRKL5BDUoKgSO329/zB68detiGootKJqs1macIp3HKQ/QKiFCHK56jgBEtCvYWkxiS1WpiZgRSRR0x3YREZkCKGcET5apm1wGy3szATsJ0Oe5i8PQlOemovUuJKxX6WYNWdbWvRdef/n3+jtpSA+XKIiUmhA+DZNyyDYoxkFqOc5ySDUG+MppTU3lUPAGY35CJxEmr9z7w7hzAa6mIySDwocjT6TIsZ9/Kt1dWknDdEtJvWGhbkuAyeoWtjfpmkN4C6adPUz9J/k9ZMmrsWTmDdxBPYsHEMexyQhsOCwkmtLFErhlZYBUCEDJ1/CGQ3C5sVX+S/vhk9tSohRm/Ce+S/8xL/79y6kOV+oViKIQ24xw9gj4yWgX/ZSaY+MnFx+Y7936iCtcU96wvzfb14WhltV7L06AONxnvrp585k/v9g5rfwx3Ta5jdzyhSO4IxTzY1Q/RKj4unxuMJfDvEB1dhvzHiVr8cLzsTdiOJ9JhRyqIA5pXAsJyEpdTeAkIYHeiBJISY51VJxUDlN+vypBZIdzSVwpNJ7dbj5t3V/5Ng25tyHXESpnTci1nR4xQpjFQcSxx1fDe6lhmAWsiCI7glX9FmCAlWw21vzK2IidUTzGh+2DrZQaxuURNp99lMIIIxNN1phA8Pha59W4dAgdzmk95mJi/G+EmA8ajisxmdQD1CGH9ZOTx+rjkMch6mr76iaU6YwpQ8W2nGjzRo/ody99enr23M6v6gCfMhwbmUpFZ4XbqdjilZvPBqfooJ1Hxu14gn9i1Ty22rVJao+DfCy7rB6c4Oh2ycrlnrRXYgSPD9hPaKz2EgyvKyNO/f9oJx4y3IhWjiAhWX6MhMIP1JOGe/xa7wznEoE5BZvoP/SzQ5DBgsVTWEywuRZ86wgabjz8bOPVH7/+TVm9KL+axLckif7NDc5ub2STKlxWtcSfs1ivAi75HaX6/BeWGjW3LA8AAA=="
 }
 }
 

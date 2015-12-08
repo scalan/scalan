@@ -22,7 +22,7 @@ class MetadataTests extends BaseNestedTests {
       import compiler._
       import compiler.scalan._
 
-      val graph = buildGraph(FileUtil.currentWorkingDir, mainStr, main, GraphVizConfig.none)(defaultCompilerConfig)
+      val graph = buildGraph(FileUtil.currentWorkingDir, mainStr, main, GraphVizConfig.none)(defaultCompilerConfig).graph
 
       val finalMain = graph.roots.head
 
@@ -47,7 +47,7 @@ class MetadataTests extends BaseNestedTests {
       import compiler._
       import compiler.scalan._
 
-      val graph = buildGraph(FileUtil.currentWorkingDir, mainStr, main, GraphVizConfig.none)(defaultCompilerConfig)
+      val graph = buildGraph(FileUtil.currentWorkingDir, mainStr, main, GraphVizConfig.none)(defaultCompilerConfig).graph
 
       val finalMain = graph.roots.head
 

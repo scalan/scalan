@@ -46,7 +46,7 @@ trait CommunityBridgeScala extends CommunityBridge with SeqsScalaMethodMapping w
           case (mA: Manifest[a]) => lms.scalaMethod[a](obj, PURE, method.getName,
             args.collect {
               case el: WrapperElem1[_, _, _, _] => el.baseElem.tag
-              case elem: Element[_] => elem.tag
+              case elem: Elem[_] => elem.tag
             },
             /* filter out implicit ClassTag params */
             args.collect { case v: Exp[_] => m.symMirrorUntyped(v) }: _*)(mA.asInstanceOf[Manifest[a]])

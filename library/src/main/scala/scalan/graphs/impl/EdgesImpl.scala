@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait EdgesAbs extends Edges with scalan.Scalan {
+trait EdgesAbs extends scalan.Scalan with Edges {
   self: GraphsDsl =>
 
   // single proxy for each type family
@@ -40,7 +40,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     def convertEdge(x: Rep[Edge[V, E]]): Rep[To] = {
       x.selfType1 match {
         case _: EdgeElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have EdgeElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have EdgeElem[_, _, _], but got $e", x)
       }
     }
 
@@ -60,8 +60,8 @@ trait EdgesAbs extends Edges with scalan.Scalan {
     override def toString = "Edge"
   }
   def Edge: Rep[EdgeCompanionAbs]
-  implicit def proxyEdgeCompanion(p: Rep[EdgeCompanion]): EdgeCompanion =
-    proxyOps[EdgeCompanion](p)
+  implicit def proxyEdgeCompanionAbs(p: Rep[EdgeCompanionAbs]): EdgeCompanionAbs =
+    proxyOps[EdgeCompanionAbs](p)
 
   abstract class AbsAdjEdge[V, E]
       (fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E])
@@ -91,14 +91,27 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 3) Iso for concrete class
   class AdjEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[AdjEdgeData[V, E], AdjEdge[V, E]]()(pairElement(implicitly[Elem[Int]], pairElement(implicitly[Elem[Int]], implicitly[Elem[Graph[V, E]]]))) {
+    extends EntityIso[AdjEdgeData[V, E], AdjEdge[V, E]] with Def[AdjEdgeIso[V, E]] {
     override def from(p: Rep[AdjEdge[V, E]]) =
       (p.fromId, p.outIndex, p.graph)
     override def to(p: Rep[(Int, (Int, Graph[V, E]))]) = {
       val Pair(fromId, Pair(outIndex, graph)) = p
       AdjEdge(fromId, outIndex, graph)
     }
-    lazy val eTo = new AdjEdgeElem[V, E](this)
+    lazy val eFrom = pairElement(element[Int], pairElement(element[Int], element[Graph[V, E]]))
+    lazy val eTo = new AdjEdgeElem[V, E](self)
+    lazy val selfType = new AdjEdgeIsoElem[V, E](eV, eE)
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
+  }
+  case class AdjEdgeIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[AdjEdgeIso[V, E]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new AdjEdgeIso[V, E]()(eV, eE))
+    lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[AdjEdgeIso[V, E]]
+    }
   }
   // 4) constructor and deconstructor
   class AdjEdgeCompanionAbs extends CompanionDef[AdjEdgeCompanionAbs] with AdjEdgeCompanion {
@@ -131,7 +144,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAdjEdge[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[AdjEdgeData[V, E], AdjEdge[V, E]] =
-    cachedIso[AdjEdgeIso[V, E]](eV, eE)
+    reifyObject(new AdjEdgeIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkAdjEdge[V, E](fromId: Rep[Int], outIndex: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[AdjEdge[V, E]]
@@ -165,14 +178,27 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 3) Iso for concrete class
   class IncEdgeIso[V, E](implicit eV: Elem[V], eE: Elem[E])
-    extends Iso[IncEdgeData[V, E], IncEdge[V, E]]()(pairElement(implicitly[Elem[Int]], pairElement(implicitly[Elem[Int]], implicitly[Elem[Graph[V, E]]]))) {
+    extends EntityIso[IncEdgeData[V, E], IncEdge[V, E]] with Def[IncEdgeIso[V, E]] {
     override def from(p: Rep[IncEdge[V, E]]) =
       (p.fromId, p.toId, p.graph)
     override def to(p: Rep[(Int, (Int, Graph[V, E]))]) = {
       val Pair(fromId, Pair(toId, graph)) = p
       IncEdge(fromId, toId, graph)
     }
-    lazy val eTo = new IncEdgeElem[V, E](this)
+    lazy val eFrom = pairElement(element[Int], pairElement(element[Int], element[Graph[V, E]]))
+    lazy val eTo = new IncEdgeElem[V, E](self)
+    lazy val selfType = new IncEdgeIsoElem[V, E](eV, eE)
+    def productArity = 2
+    def productElement(n: Int) = (eV, eE).productElement(n)
+  }
+  case class IncEdgeIsoElem[V, E](eV: Elem[V], eE: Elem[E]) extends Elem[IncEdgeIso[V, E]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new IncEdgeIso[V, E]()(eV, eE))
+    lazy val tag = {
+      implicit val tagV = eV.tag
+      implicit val tagE = eE.tag
+      weakTypeTag[IncEdgeIso[V, E]]
+    }
   }
   // 4) constructor and deconstructor
   class IncEdgeCompanionAbs extends CompanionDef[IncEdgeCompanionAbs] with IncEdgeCompanion {
@@ -205,7 +231,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoIncEdge[V, E](implicit eV: Elem[V], eE: Elem[E]): Iso[IncEdgeData[V, E], IncEdge[V, E]] =
-    cachedIso[IncEdgeIso[V, E]](eV, eE)
+    reifyObject(new IncEdgeIso[V, E]()(eV, eE))
 
   // 6) smart constructor and deconstructor
   def mkIncEdge[V, E](fromId: Rep[Int], toId: Rep[Int], graph: Rep[Graph[V, E]])(implicit eV: Elem[V], eE: Elem[E]): Rep[IncEdge[V, E]]
@@ -215,7 +241,7 @@ trait EdgesAbs extends Edges with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
+trait EdgesSeq extends scalan.ScalanSeq with EdgesDsl {
   self: GraphsDslSeq =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs {
   }
@@ -250,7 +276,7 @@ trait EdgesSeq extends EdgesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
+trait EdgesExp extends scalan.ScalanExp with EdgesDsl {
   self: GraphsDslExp =>
   lazy val Edge: Rep[EdgeCompanionAbs] = new EdgeCompanionAbs {
   }
@@ -515,7 +541,7 @@ trait EdgesExp extends EdgesDsl with scalan.ScalanExp {
 }
 
 object Edges_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVXQWwbRRSdXdtxbIc0VKiolSAhuCAQ2FElVKEgVanrVEZuEmXbgEyFNN4dOxtmZzc742jNoQeOcENcK9R7b1yQkHpBSIgDJwRInDmVIlQBPVHxZ3a9u068aRuRAz6Mdmb//P/nvff/rG/fQwXuo5e4iSlmNYcIXDPU8woXVaPJhC2GV1xrQMkl0vvo1JfmFXaR6+hEB01tY36J0w4qhQ/NwIufDbLbRiXMTMKF63OBXmirCHXTpZSYwnZZ3XacgcBdSuptm4vlNsp3XWu4i24grY3mTJeZPhHEaFDMOeHR+jSRGdnxvKTmw3UvicHq8hT11Cmu+tgWkD7EmAvtN4lnDJnLho5As1Fq655MC2yKtuO5vhiFKIK7bdcaTfMMwwI62d7Be7gOIfp1Q/g268POiofND3CfrIGJNM9DwpzQ3tWhp+a5NipzsgsAtRyPqpXAQwgBA+dUErUEn1qMT03iUzWIb2Nqf4jlyw3fDYYo/Gk5hAIPXLz2CBcjD6TJrOrH1833HhgVR5ebA5lKUZ1wChzNZ6hBUQE4frv5Kb9/+dZ5HZU7qGzzlS4XPjZFmvIIrQpmzBUq5xhA7PeBrcUstlSUFbDZJ4mS6ToeZuApgnIGeKK2aQtpLNdmInYyoC8Kj4xMtcDT4vMuZJxX6aaBKd24e/r1s78139WRPh6iBC4NEL4/cipQvmn1SeRajicE0rYSfOW0qaZyKAXJWDwkkxiTl+/+bn2zhK7rMZJR4McjD1wU+M8/Vn545YKOpjtK6qsU9zsAJm9S4qz7DZeJDpp294gfvinuYSqfJpJZtEgPD6iIIE5jkwNsBFrILEqPSOCWVQFoIwAqoYbXXEaqqxvVv43vPrstJeqjmfBNWKUP7fP//DLbE0q9Ak31fNdpWSOAc1DeMR4vZpHrkQ3fdqCZ7JE3vv7q2h931gqK35PRkbYwHZCwtKMTJaeTQbUliNRiImRQxTsTH0UO8wJgHIgWs0hwMDU5nD1sb6HvY297wpmilcLl+P0TKi3RWzkE1XAd8vTiffv9W58IpSwtGO9w690daCnLat/zh4hs1Gn/6izpf57+6XMdlUBLXVs42KsuPWZ/OMaaR+NwzTaiW0YVx7nxl6qQJ1dqQhPoYG7F2pGmjXSq8wkPz6bcntH2kayTrSQe1N9EOtMqOeigeZiDgwIQqBglrDzEdfJcdp0AgKc228/Qexfu6KjwNir0oB3wNip03QGzRszAjS1IIC6O1rRxZoAJ7GMnZkL9FlAC1rh635lo0NyPR0WbQNrRuu8BrvYXZGaXeWQp54V7pH3H3wLk+KYa3zqW2mgx8/9VG1HC6drIluMT6TWV6dRExHPQOP8jNae5OITjiuyUq9ix6fCIBD+Vwa6XcnEsOMrxZmITGRYUYJBW1MzC+okQ8NFiRo8zoksDCLjx4Obaq99/8av6FCjL6wc+RVj8ZyD9CTCOWCmsRfi2T+UKKMgLSeX5LxrjsBprDQAA"
+  val dump = "H4sIAAAAAAAAANVXS2wbRRie9SOO7ZCG8o4ECcEFgcAOlVCFglQF16mMTBJlS1SZCjTeHTsbZmc2u+NozaHHHuCGuCKoxAWpF8QJIVVICAlx4IQQEmdOpajqgZ5A/DP78DrxuqSQAz6Mdl7/4/v+79/1tZso77noac/AFLOqTQSu6up51RMVvcGEJQavc7NPyTnSfZR//cmLn81/mUEn2mhqB3vnPNpGxeCh4Tvxs072WqiImUE8wV1PoCdbykPN4JQSQ1ic1Szb7gvcoaTWsjyx0kK5DjcHe+gy0lpozuDMcIkgep1izyNeuD5NZERWPC+q+WDDGfpgNZlFLZHFBRdbAsIHH3PB+S3i6APG2cAWaDYMbcORYcGZgmU73BWRiwKY2+FmNM0xDAvoZGsX7+MauOjVdOFarAc3yw423sE9sg5H5PEcBOwR2r0wcNQ820Ilj+wBQE3boWrFdxBCwMBpFUR1iE81xqcq8anoxLUwtd7FcnPT5f4ABT8ti5DvgInn72IiskAazKy8d8l4845etjPysi9DKagMp8DQQko1KCoAx++2PvBun796JoNKbVSyvNWOJ1xsiCTlIVplzBgXKuYYQOz2gK2lNLaUl1U4c6Akiga3HczAUgjlDPBELcMS8rBcmwnZSYG+IBwSHdV8R4vzXUzJV9VNHVO6eeOxF0791riYQZlRF0UwqUPhu5FRgXINs0dC03I8IZC2PcRXThtqKoeiPxwLEyKJMXnmxu/mt8voUiZGMnT8z8gDE3nv55/KPz57NoOm26rU1yjutQFMr0GJveHWORNtNM33iRvsFPYxlU9jySyYpIv7VIQQJ7HJAjYCLaaK0iESuBUlAC0CoBzU8DpnpLK2WflD//7Da7JEXTQT7AQq/cs68+cvs12hqlegqa7L7aYZAZwFecd4PJVGrkM2XcuGZrJPXvrmqzduXV/PK35PhiltY9ongbTDjIbZSafaMnhqMhEwqPzNx6nIYUEAjH3RZCbxD4cmh1OT7uZ7LnZ2xuQUruTPx/tHrLRhvZUCUHVuk/uXbltvXX1fqMrS/NEOt9HZhZayou49MaHIok77+ZUrD9369O0HVIeY7ljCxk5l+Qj9IZLzMeofjUI3Ww/fOEoop0c3lahTVCvHR+K9gD0oj7lVc1feqiejXkhcSXiY1w5wnyHbQ9cgy7EsJ4vnsIHGJAOH60KgQhiwshDL5/F0+QCWD2+1HqQ3z17PoPxrKN+FLuG1UL7D+8yMSIIXuSC+eDVa00ZJAlKwi+2YFPVbREOwRov64tgDjYN4lLUx/N1bUz7E1UGdpjafuyo8J/g93Tv+ziDHl9X4ynHLpMmM/5dMwoCTMkmvzCOVbiLSqbHgZ6G1/keFnULLBObLspWuYduig39P+30pnDsJa8eCrhw/Hp4JD+YVjBBW2O0CgYVguGgppQnq4QsGaLl856P153744lf1CVGSryr4hGHxn4jkp8MoeMVArPCfIBEroCBfXirOvwFrys6Sow0AAA=="
 }
 }
 

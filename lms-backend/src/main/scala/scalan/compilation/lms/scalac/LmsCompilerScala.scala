@@ -33,7 +33,7 @@ abstract class LmsCompilerScala[+ScalanCake <: ScalanCtxExp](_scalan: ScalanCake
                                        (compilerConfig: CompilerConfig, eInput: Elem[A], eOutput: Elem[B]) = {
     Sbt.prepareDir(executableDir) //todo - check: is it sbt-specific function?
     /* LMS stuff */
-    val sourceFile = emitSource(sourcesDir, functionName, graph, eInput, eOutput)
+    val sourceFile = emitSource(sourcesDir, functionName, graph, eInput, eOutput, graphVizConfig)
     val jarFile = file(executableDir.getAbsoluteFile, s"$functionName.jar")
     FileUtil.deleteIfExist(jarFile)
     val jarPath = jarFile.getAbsolutePath

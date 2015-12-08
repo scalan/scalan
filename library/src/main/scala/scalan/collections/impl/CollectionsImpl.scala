@@ -12,7 +12,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait CollectionsAbs extends Collections with scalan.Scalan {
+trait CollectionsAbs extends scalan.Scalan with Collections {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -42,7 +42,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     def convertCollection(x: Rep[Collection[Item]]): Rep[To] = {
       x.selfType1 match {
         case _: CollectionElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have CollectionElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have CollectionElem[_, _], but got $e", x)
       }
     }
 
@@ -62,8 +62,8 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     override def toString = "Collection"
   }
   def Collection: Rep[CollectionCompanionAbs]
-  implicit def proxyCollectionCompanion(p: Rep[CollectionCompanion]): CollectionCompanion =
-    proxyOps[CollectionCompanion](p)
+  implicit def proxyCollectionCompanionAbs(p: Rep[CollectionCompanionAbs]): CollectionCompanionAbs =
+    proxyOps[CollectionCompanionAbs](p)
 
   // single proxy for each type family
   implicit def proxyPairCollection[A, B](p: Rep[PairCollection[A, B]]): PairCollection[A, B] = {
@@ -93,7 +93,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     def convertPairCollection(x: Rep[PairCollection[A, B]]): Rep[To] = {
       x.selfType1 match {
         case _: PairCollectionElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have PairCollectionElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have PairCollectionElem[_, _, _], but got $e", x)
       }
     }
 
@@ -129,7 +129,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
     def convertNestedCollection(x: Rep[NestedCollection[A]]): Rep[To] = {
       x.selfType1 match {
         case _: NestedCollectionElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have NestedCollectionElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have NestedCollectionElem[_, _], but got $e", x)
       }
     }
 
@@ -165,14 +165,25 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class UnitCollectionIso
-    extends Iso[UnitCollectionData, UnitCollection] {
+    extends EntityIso[UnitCollectionData, UnitCollection] with Def[UnitCollectionIso] {
     override def from(p: Rep[UnitCollection]) =
       p.length
     override def to(p: Rep[Int]) = {
       val length = p
       UnitCollection(length)
     }
-    lazy val eTo = new UnitCollectionElem(this)
+    lazy val eFrom = element[Int]
+    lazy val eTo = new UnitCollectionElem(self)
+    lazy val selfType = new UnitCollectionIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class UnitCollectionIsoElem() extends Elem[UnitCollectionIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new UnitCollectionIso())
+    lazy val tag = {
+      weakTypeTag[UnitCollectionIso]
+    }
   }
   // 4) constructor and deconstructor
   class UnitCollectionCompanionAbs extends CompanionDef[UnitCollectionCompanionAbs] with UnitCollectionCompanion {
@@ -204,7 +215,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoUnitCollection: Iso[UnitCollectionData, UnitCollection] =
-    cachedIso[UnitCollectionIso]()
+    reifyObject(new UnitCollectionIso())
 
   // 6) smart constructor and deconstructor
   def mkUnitCollection(length: Rep[Int]): Rep[UnitCollection]
@@ -237,14 +248,26 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CollectionOverArrayIso[Item](implicit eItem: Elem[Item])
-    extends Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]] {
+    extends EntityIso[CollectionOverArrayData[Item], CollectionOverArray[Item]] with Def[CollectionOverArrayIso[Item]] {
     override def from(p: Rep[CollectionOverArray[Item]]) =
       p.arr
     override def to(p: Rep[Array[Item]]) = {
       val arr = p
       CollectionOverArray(arr)
     }
-    lazy val eTo = new CollectionOverArrayElem[Item](this)
+    lazy val eFrom = element[Array[Item]]
+    lazy val eTo = new CollectionOverArrayElem[Item](self)
+    lazy val selfType = new CollectionOverArrayIsoElem[Item](eItem)
+    def productArity = 1
+    def productElement(n: Int) = eItem
+  }
+  case class CollectionOverArrayIsoElem[Item](eItem: Elem[Item]) extends Elem[CollectionOverArrayIso[Item]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new CollectionOverArrayIso[Item]()(eItem))
+    lazy val tag = {
+      implicit val tagItem = eItem.tag
+      weakTypeTag[CollectionOverArrayIso[Item]]
+    }
   }
   // 4) constructor and deconstructor
   class CollectionOverArrayCompanionAbs extends CompanionDef[CollectionOverArrayCompanionAbs] with CollectionOverArrayCompanion {
@@ -276,7 +299,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionOverArray[Item](implicit eItem: Elem[Item]): Iso[CollectionOverArrayData[Item], CollectionOverArray[Item]] =
-    cachedIso[CollectionOverArrayIso[Item]](eItem)
+    reifyObject(new CollectionOverArrayIso[Item]()(eItem))
 
   // 6) smart constructor and deconstructor
   def mkCollectionOverArray[Item](arr: Rep[Array[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverArray[Item]]
@@ -309,14 +332,26 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CollectionOverListIso[Item](implicit eItem: Elem[Item])
-    extends Iso[CollectionOverListData[Item], CollectionOverList[Item]] {
+    extends EntityIso[CollectionOverListData[Item], CollectionOverList[Item]] with Def[CollectionOverListIso[Item]] {
     override def from(p: Rep[CollectionOverList[Item]]) =
       p.lst
     override def to(p: Rep[List[Item]]) = {
       val lst = p
       CollectionOverList(lst)
     }
-    lazy val eTo = new CollectionOverListElem[Item](this)
+    lazy val eFrom = element[List[Item]]
+    lazy val eTo = new CollectionOverListElem[Item](self)
+    lazy val selfType = new CollectionOverListIsoElem[Item](eItem)
+    def productArity = 1
+    def productElement(n: Int) = eItem
+  }
+  case class CollectionOverListIsoElem[Item](eItem: Elem[Item]) extends Elem[CollectionOverListIso[Item]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new CollectionOverListIso[Item]()(eItem))
+    lazy val tag = {
+      implicit val tagItem = eItem.tag
+      weakTypeTag[CollectionOverListIso[Item]]
+    }
   }
   // 4) constructor and deconstructor
   class CollectionOverListCompanionAbs extends CompanionDef[CollectionOverListCompanionAbs] with CollectionOverListCompanion {
@@ -348,7 +383,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionOverList[Item](implicit eItem: Elem[Item]): Iso[CollectionOverListData[Item], CollectionOverList[Item]] =
-    cachedIso[CollectionOverListIso[Item]](eItem)
+    reifyObject(new CollectionOverListIso[Item]()(eItem))
 
   // 6) smart constructor and deconstructor
   def mkCollectionOverList[Item](lst: Rep[List[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverList[Item]]
@@ -381,14 +416,26 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CollectionOverSeqIso[Item](implicit eItem: Elem[Item])
-    extends Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]] {
+    extends EntityIso[CollectionOverSeqData[Item], CollectionOverSeq[Item]] with Def[CollectionOverSeqIso[Item]] {
     override def from(p: Rep[CollectionOverSeq[Item]]) =
       p.seq
     override def to(p: Rep[SSeq[Item]]) = {
       val seq = p
       CollectionOverSeq(seq)
     }
-    lazy val eTo = new CollectionOverSeqElem[Item](this)
+    lazy val eFrom = element[SSeq[Item]]
+    lazy val eTo = new CollectionOverSeqElem[Item](self)
+    lazy val selfType = new CollectionOverSeqIsoElem[Item](eItem)
+    def productArity = 1
+    def productElement(n: Int) = eItem
+  }
+  case class CollectionOverSeqIsoElem[Item](eItem: Elem[Item]) extends Elem[CollectionOverSeqIso[Item]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new CollectionOverSeqIso[Item]()(eItem))
+    lazy val tag = {
+      implicit val tagItem = eItem.tag
+      weakTypeTag[CollectionOverSeqIso[Item]]
+    }
   }
   // 4) constructor and deconstructor
   class CollectionOverSeqCompanionAbs extends CompanionDef[CollectionOverSeqCompanionAbs] with CollectionOverSeqCompanion {
@@ -420,7 +467,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionOverSeq[Item](implicit eItem: Elem[Item]): Iso[CollectionOverSeqData[Item], CollectionOverSeq[Item]] =
-    cachedIso[CollectionOverSeqIso[Item]](eItem)
+    reifyObject(new CollectionOverSeqIso[Item]()(eItem))
 
   // 6) smart constructor and deconstructor
   def mkCollectionOverSeq[Item](seq: Rep[SSeq[Item]])(implicit eItem: Elem[Item]): Rep[CollectionOverSeq[Item]]
@@ -454,14 +501,27 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class PairCollectionSOAIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]]()(pairElement(implicitly[Elem[Collection[A]]], implicitly[Elem[Collection[B]]])) {
+    extends EntityIso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] with Def[PairCollectionSOAIso[A, B]] {
     override def from(p: Rep[PairCollectionSOA[A, B]]) =
       (p.as, p.bs)
     override def to(p: Rep[(Collection[A], Collection[B])]) = {
       val Pair(as, bs) = p
       PairCollectionSOA(as, bs)
     }
-    lazy val eTo = new PairCollectionSOAElem[A, B](this)
+    lazy val eFrom = pairElement(element[Collection[A]], element[Collection[B]])
+    lazy val eTo = new PairCollectionSOAElem[A, B](self)
+    lazy val selfType = new PairCollectionSOAIsoElem[A, B](eA, eB)
+    def productArity = 2
+    def productElement(n: Int) = (eA, eB).productElement(n)
+  }
+  case class PairCollectionSOAIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[PairCollectionSOAIso[A, B]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new PairCollectionSOAIso[A, B]()(eA, eB))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      weakTypeTag[PairCollectionSOAIso[A, B]]
+    }
   }
   // 4) constructor and deconstructor
   class PairCollectionSOACompanionAbs extends CompanionDef[PairCollectionSOACompanionAbs] with PairCollectionSOACompanion {
@@ -494,7 +554,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoPairCollectionSOA[A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[PairCollectionSOAData[A, B], PairCollectionSOA[A, B]] =
-    cachedIso[PairCollectionSOAIso[A, B]](eA, eB)
+    reifyObject(new PairCollectionSOAIso[A, B]()(eA, eB))
 
   // 6) smart constructor and deconstructor
   def mkPairCollectionSOA[A, B](as: Rep[Collection[A]], bs: Rep[Collection[B]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionSOA[A, B]]
@@ -528,14 +588,27 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class PairCollectionAOSIso[A, B](implicit eA: Elem[A], eB: Elem[B])
-    extends Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] {
+    extends EntityIso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] with Def[PairCollectionAOSIso[A, B]] {
     override def from(p: Rep[PairCollectionAOS[A, B]]) =
       p.coll
     override def to(p: Rep[Collection[(A, B)]]) = {
       val coll = p
       PairCollectionAOS(coll)
     }
-    lazy val eTo = new PairCollectionAOSElem[A, B](this)
+    lazy val eFrom = element[Collection[(A, B)]]
+    lazy val eTo = new PairCollectionAOSElem[A, B](self)
+    lazy val selfType = new PairCollectionAOSIsoElem[A, B](eA, eB)
+    def productArity = 2
+    def productElement(n: Int) = (eA, eB).productElement(n)
+  }
+  case class PairCollectionAOSIsoElem[A, B](eA: Elem[A], eB: Elem[B]) extends Elem[PairCollectionAOSIso[A, B]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new PairCollectionAOSIso[A, B]()(eA, eB))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      implicit val tagB = eB.tag
+      weakTypeTag[PairCollectionAOSIso[A, B]]
+    }
   }
   // 4) constructor and deconstructor
   class PairCollectionAOSCompanionAbs extends CompanionDef[PairCollectionAOSCompanionAbs] with PairCollectionAOSCompanion {
@@ -567,7 +640,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoPairCollectionAOS[A, B](implicit eA: Elem[A], eB: Elem[B]): Iso[PairCollectionAOSData[A, B], PairCollectionAOS[A, B]] =
-    cachedIso[PairCollectionAOSIso[A, B]](eA, eB)
+    reifyObject(new PairCollectionAOSIso[A, B]()(eA, eB))
 
   // 6) smart constructor and deconstructor
   def mkPairCollectionAOS[A, B](coll: Rep[Collection[(A, B)]])(implicit eA: Elem[A], eB: Elem[B]): Rep[PairCollectionAOS[A, B]]
@@ -600,14 +673,26 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 3) Iso for concrete class
   class NestedCollectionFlatIso[A](implicit eA: Elem[A])
-    extends Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]]()(pairElement(implicitly[Elem[Collection[A]]], implicitly[Elem[PairCollection[Int, Int]]])) {
+    extends EntityIso[NestedCollectionFlatData[A], NestedCollectionFlat[A]] with Def[NestedCollectionFlatIso[A]] {
     override def from(p: Rep[NestedCollectionFlat[A]]) =
       (p.values, p.segments)
     override def to(p: Rep[(Collection[A], PairCollection[Int, Int])]) = {
       val Pair(values, segments) = p
       NestedCollectionFlat(values, segments)
     }
-    lazy val eTo = new NestedCollectionFlatElem[A](this)
+    lazy val eFrom = pairElement(element[Collection[A]], element[PairCollection[Int, Int]])
+    lazy val eTo = new NestedCollectionFlatElem[A](self)
+    lazy val selfType = new NestedCollectionFlatIsoElem[A](eA)
+    def productArity = 1
+    def productElement(n: Int) = eA
+  }
+  case class NestedCollectionFlatIsoElem[A](eA: Elem[A]) extends Elem[NestedCollectionFlatIso[A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new NestedCollectionFlatIso[A]()(eA))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[NestedCollectionFlatIso[A]]
+    }
   }
   // 4) constructor and deconstructor
   class NestedCollectionFlatCompanionAbs extends CompanionDef[NestedCollectionFlatCompanionAbs] with NestedCollectionFlatCompanion {
@@ -640,7 +725,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoNestedCollectionFlat[A](implicit eA: Elem[A]): Iso[NestedCollectionFlatData[A], NestedCollectionFlat[A]] =
-    cachedIso[NestedCollectionFlatIso[A]](eA)
+    reifyObject(new NestedCollectionFlatIso[A]()(eA))
 
   // 6) smart constructor and deconstructor
   def mkNestedCollectionFlat[A](values: Coll[A], segments: PairColl[Int, Int])(implicit eA: Elem[A]): Rep[NestedCollectionFlat[A]]
@@ -650,7 +735,7 @@ trait CollectionsAbs extends Collections with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
+trait CollectionsSeq extends scalan.ScalanSeq with CollectionsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs {
   }
@@ -755,7 +840,7 @@ trait CollectionsSeq extends CollectionsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
+trait CollectionsExp extends scalan.ScalanExp with CollectionsDsl {
   self: ScalanCommunityDslExp =>
   lazy val Collection: Rep[CollectionCompanionAbs] = new CollectionCompanionAbs {
   }
@@ -2555,7 +2640,7 @@ trait CollectionsExp extends CollectionsDsl with scalan.ScalanExp {
 }
 
 object Collections_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAANVYTWwbRRSe3dhxbFdpm1at2lISUkNpVeK0AvVQocpxEyhy4qibVshUlcbribPt7uxmdxzZHCrghEBcEFeEeu+tF6RKvSAkxIETAiTOnEoRqoCKA4g3sz/e9XodJ2oC+LDanZn3973vPc/M3Uco7djoBUfFOqYzBmF4RhHvJYcVlHnKNNZZNBstnVwiq+8d+lxdpHOOjPbW0Ogadi45eg1l3Zf5thW8K2S9grKYqsRhpu0w9FxFWCiqpq4TlWkmLWqG0WK4rpNiRXPYhQpK1c1GZx3dRlIF7VNNqtqEEaWsY8chjjc+RrhHWvCdFd+dqtW1QYs8imIoihUbawzcBxv73PVXiKV0qEk7BkPjnmtVi7sFazKaYZk2801kQN2a2fA/UxTDAJqo3MQbuAgmmkWF2RptgmTewuot3CRLsIQvT4HDDtFXVzqW+B6poJxD1gGgy4ali5G2hRCCDJwTTsx08ZkJ8Jnh+BQUYmtY197GfHLZNtsd5P6kEYTaFqg4s4kKXwOZp43CB9fVt54oeUPmwm3uSkZEOAqKJhPYIFIBOH515WPn8Wt3zssoV0M5zSnVHWZjlYVT7qGVx5SaTPgcAIjtJmRrOilbwkoJ1vRQIquahoUpaPKg3AN50jVVY3wxH9vjZScB+gyziL9UaltSEO9UQryCN2Ws68sPj7z0/M/zb8pIjprIgkoFiG/7ShnKlQP8AwMnkgxYZNnWDCD0Bnnli/tXf32wlBY2JhpkFbd0dg3rLeLSy7PYtc6NyS+eYih1lWqMD2Xb3WdmQFwBwicf/tL4chZdl4O8eGEMRwVQkXZ++C7/7amLMhqricJZ0HGzBqlx5nViVO2ySVkNjZkbxHZnMhtY5299qZHxwvYSFkZ6BJBmaCqxxC3C03BBlJPkA5B3K2LJpKSwsFz4Q/n6k7uc8Dba4864Nf+3dv6vH8dXmagFhkZ1QptsTTi1l6ERaBYeHvx5gCFpFkYv076Y51zFimmQ/dOPtRt3PmQCXakd7RnV+k0gyQUh9+wAoP3e9XttVv7tyPefySgLeNY1ZmCrMDtkxe1gFaEQNADWeNnr24Igsz2TnKjd8hCQxTAMHpOQisNRiXLY98lu0zosXvsaCK3KS1F34pXqTaQuM2L09841F1p+NOCbsAbEwLadQB0YSZdsG3eGNRc2elI8Tw/E+2x08kA3wCoUoDA9BOjP9BFLRD4MhdQDRZrwyIIweUcYJvJkxyeDvnQ8uaMCOQ9dqRzUH118IKP0Gyi9Cu3GqaB03WzRhs962F8w0mZz/pgUZT2wHNvYCFguflOoG33c+d3kmO6wZI6l+J/9LlFsIpopbnkIhh2LS+0uwRLcngxJX/+v5Rw2jgNyrije9M7nfH8UPDA8RMqPxoR2N+P9nX46CR9fxpqdlHSp1A2Nf85tlwAyZCIx/4mc88yH7SWor29Lff9wtsqwcz0MiwKqVONB9GFYTGhbDJNJaQC9InAmKZgbpCAOWFK8m5IzTK3+C+Z6vf13qJviZ9KtsGvAftgiKy1LJy/f//PG+++8bonNdewYtp04doK5paqydeaC0P+VuV68u8HcfUtw7CGNLfS9Ick6usEP3UEzTJV97g6CslcJnJqaBqEsUDPmA+Wq4o9C8Hgqf8sHewGBY/Ywm7Hj/eR2moA+fxKdHpZCYXUhkV7kRuAIvXnTGXBPU3JP1aRx4t67j16tn/lI3NOkxWGbi7tXFOL1GL9E2N+i6hpRb5HGNWxr4pDuQ7PZvmwzFuT5aXwBG5reOZsYUy9Do/u2RUxxk9g9XkR5ETqE9WGDFbMWz5g0xF6qN7i+Ow1J3n5DjwbV83+3U81qqKi2um9LiinWCbdbPxzple4ab2E+5CKcnLwS6d4yOx5VbTSdUD6Kd4MENXj7yadLp7+595Oonhy/izIpb5NchRS93YziMeHqAyYaLaqxziVHD/kP5OLXVML3fwBU7ike0xgAAA=="
+  val dump = "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"
 }
 }
 

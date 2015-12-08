@@ -81,4 +81,13 @@ class LmsSmokeItTests extends SmokeItTests {
     compareOutputWithSequential(_.listRangeFrom0, progStagedOnly)(3)
   }
 
+  test("stringCompare") {
+    val in = ("abc", "abc")
+    compareOutputWithSequential(_.stringCompare, progStagedOnly)(in)
+  }
+
+  test("stringMax") {
+    val in = ("abc", "abc")
+    compareOutputWithSequential(_.stringMax, progStagedOnly)(in)
+  }
 }

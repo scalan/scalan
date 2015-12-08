@@ -1,7 +1,5 @@
 package scalan
 
-import java.lang.reflect.Method
-
 import scalan.common.Default
 import Default._
 import scalan.common.Lazy
@@ -12,12 +10,14 @@ import scala.reflect.ClassTag
 
 trait Elems extends Base { self: Scalan =>
 
-
-  type Elem[A] = Element[A] // typeclass witnessing that type A can be an element of other data type (i.e. belongs to Family)
   type LElem[A] = Lazy[Elem[A]] // lazy element
 
-  @implicitNotFound(msg = "No Element available for ${A}.")
-  abstract class Element[A] extends Serializable { _: scala.Equals =>
+  /**
+    * Reified type representation in Scalan.
+    * @tparam A The represented type
+    */
+  @implicitNotFound(msg = "No Elem available for ${A}.")
+  abstract class Elem[A] extends Serializable { _: scala.Equals =>
     def isEntityType: Boolean
     def isBaseType: Boolean = this.isInstanceOf[BaseElem[_]]
     def tag: WeakTypeTag[A]
@@ -31,8 +31,8 @@ trait Elems extends Base { self: Scalan =>
 
     override def toString = s"${getClass.getSimpleName}{$name}"
 
-    def <:<(e: Element[_]) = tag.tpe <:< e.tag.tpe
-    def >:>(e: Element[_]) = e <:< this
+    def <:<(e: Elem[_]) = tag.tpe <:< e.tag.tpe
+    def >:>(e: Elem[_]) = e <:< this
 
     def asElem[B]: Elem[B] = this.asInstanceOf[Elem[B]]
 
@@ -70,7 +70,7 @@ trait Elems extends Base { self: Scalan =>
 
   def element[A](implicit ea: Elem[A]): Elem[A] = ea
 
-  class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Element[A] with Serializable with scala.Equals {
+  class BaseElem[A](implicit val tag: WeakTypeTag[A], z: Default[A]) extends Elem[A] with Serializable with scala.Equals {
     protected def getDefaultRep = toRep(z.value)(this)
     override def isEntityType = false
     override def canEqual(other: Any) = other.isInstanceOf[BaseElem[_]]
@@ -81,7 +81,7 @@ trait Elems extends Base { self: Scalan =>
     override def hashCode = tag.tpe.hashCode
   }
 
-  case class PairElem[A, B](eFst: Elem[A], eSnd: Elem[B]) extends Element[(A, B)] {
+  case class PairElem[A, B](eFst: Elem[A], eSnd: Elem[B]) extends Elem[(A, B)] {
     assert(eFst != null && eSnd != null)
     override def isEntityType = eFst.isEntityType || eSnd.isEntityType
     lazy val tag = {
@@ -92,7 +92,7 @@ trait Elems extends Base { self: Scalan =>
     protected def getDefaultRep = Pair(eFst.defaultRepValue, eSnd.defaultRepValue)
   }
 
-  case class SumElem[A, B](eLeft: Elem[A], eRight: Elem[B]) extends Element[A | B] {
+  case class SumElem[A, B](eLeft: Elem[A], eRight: Elem[B]) extends Elem[A | B] {
     override def isEntityType = eLeft.isEntityType || eRight.isEntityType
     lazy val tag = {
       implicit val tA = eLeft.tag
@@ -102,7 +102,7 @@ trait Elems extends Base { self: Scalan =>
     protected def getDefaultRep = mkLeft[A, B](eLeft.defaultRepValue)(eRight)
   }
 
-  case class FuncElem[A, B](eDom: Elem[A], eRange: Elem[B]) extends Element[A => B] {
+  case class FuncElem[A, B](eDom: Elem[A], eRange: Elem[B]) extends Elem[A => B] {
     override def isEntityType = eDom.isEntityType || eRange.isEntityType
     lazy val tag = {
       implicit val tA = eDom.tag
@@ -146,7 +146,7 @@ trait Elems extends Base { self: Scalan =>
   implicit def toLazyElem[A](implicit eA: Elem[A]): LElem[A] = Lazy(eA)
 
   object TagImplicits {
-    implicit def elemToClassTag[A](implicit elem: Element[A]): ClassTag[A] = elem.classTag
+    implicit def elemToClassTag[A](implicit elem: Elem[A]): ClassTag[A] = elem.classTag
     implicit def typeTagToClassTag[A](implicit tag: WeakTypeTag[A]): ClassTag[A] =
       ClassTag(tag.mirror.runtimeClass(tag.tpe))
   }
@@ -169,13 +169,11 @@ trait Elems extends Base { self: Scalan =>
   import ScalanAst._
 }
 
-trait ElemsSeq extends Elems with Scalan { self: ScalanSeq =>
+trait ElemsSeq extends Elems { self: ScalanSeq =>
 
 }
 
-trait ElemsExp extends Elems
-  with BaseExp
-  with Scalan { self: ScalanExp =>
+trait ElemsExp extends Elems with BaseExp { self: ScalanExp =>
 
   def withElemOf[A, R](x: Rep[A])(block: Elem[A] => R) = block(x.elem)
   def withResultElem[A, B, R](f: Rep[A => B])(block: Elem[B] => R) = block(withElemOf(f) { e => e.eRange })

@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait SegmentsAbs extends Segments with scalan.Scalan {
+trait SegmentsAbs extends scalan.Scalan with Segments {
   self: SegmentsDsl =>
 
   // single proxy for each type family
@@ -35,7 +35,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     def convertSegment(x: Rep[Segment]): Rep[To] = {
       x.selfType1 match {
         case _: SegmentElem[_] => x.asRep[To]
-        case e => !!!(s"Expected $x to have SegmentElem[_], but got $e")
+        case e => !!!(s"Expected $x to have SegmentElem[_], but got $e", x)
       }
     }
 
@@ -55,8 +55,8 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
     override def toString = "Segment"
   }
   def Segment: Rep[SegmentCompanionAbs]
-  implicit def proxySegmentCompanion(p: Rep[SegmentCompanion]): SegmentCompanion =
-    proxyOps[SegmentCompanion](p)
+  implicit def proxySegmentCompanionAbs(p: Rep[SegmentCompanionAbs]): SegmentCompanionAbs =
+    proxyOps[SegmentCompanionAbs](p)
 
   abstract class AbsInterval
       (start: Rep[Int], end: Rep[Int])
@@ -84,14 +84,25 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 3) Iso for concrete class
   class IntervalIso
-    extends Iso[IntervalData, Interval]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]])) {
+    extends EntityIso[IntervalData, Interval] with Def[IntervalIso] {
     override def from(p: Rep[Interval]) =
       (p.start, p.end)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(start, end) = p
       Interval(start, end)
     }
-    lazy val eTo = new IntervalElem(this)
+    lazy val eFrom = pairElement(element[Int], element[Int])
+    lazy val eTo = new IntervalElem(self)
+    lazy val selfType = new IntervalIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class IntervalIsoElem() extends Elem[IntervalIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new IntervalIso())
+    lazy val tag = {
+      weakTypeTag[IntervalIso]
+    }
   }
   // 4) constructor and deconstructor
   class IntervalCompanionAbs extends CompanionDef[IntervalCompanionAbs] with IntervalCompanion {
@@ -124,7 +135,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoInterval: Iso[IntervalData, Interval] =
-    cachedIso[IntervalIso]()
+    reifyObject(new IntervalIso())
 
   // 6) smart constructor and deconstructor
   def mkInterval(start: Rep[Int], end: Rep[Int]): Rep[Interval]
@@ -156,14 +167,25 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SliceIso
-    extends Iso[SliceData, Slice]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]])) {
+    extends EntityIso[SliceData, Slice] with Def[SliceIso] {
     override def from(p: Rep[Slice]) =
       (p.start, p.length)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(start, length) = p
       Slice(start, length)
     }
-    lazy val eTo = new SliceElem(this)
+    lazy val eFrom = pairElement(element[Int], element[Int])
+    lazy val eTo = new SliceElem(self)
+    lazy val selfType = new SliceIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class SliceIsoElem() extends Elem[SliceIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SliceIso())
+    lazy val tag = {
+      weakTypeTag[SliceIso]
+    }
   }
   // 4) constructor and deconstructor
   class SliceCompanionAbs extends CompanionDef[SliceCompanionAbs] with SliceCompanion {
@@ -196,7 +218,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSlice: Iso[SliceData, Slice] =
-    cachedIso[SliceIso]()
+    reifyObject(new SliceIso())
 
   // 6) smart constructor and deconstructor
   def mkSlice(start: Rep[Int], length: Rep[Int]): Rep[Slice]
@@ -229,14 +251,25 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CenteredIso
-    extends Iso[CenteredData, Centered]()(pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]])) {
+    extends EntityIso[CenteredData, Centered] with Def[CenteredIso] {
     override def from(p: Rep[Centered]) =
       (p.center, p.radius)
     override def to(p: Rep[(Int, Int)]) = {
       val Pair(center, radius) = p
       Centered(center, radius)
     }
-    lazy val eTo = new CenteredElem(this)
+    lazy val eFrom = pairElement(element[Int], element[Int])
+    lazy val eTo = new CenteredElem(self)
+    lazy val selfType = new CenteredIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class CenteredIsoElem() extends Elem[CenteredIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new CenteredIso())
+    lazy val tag = {
+      weakTypeTag[CenteredIso]
+    }
   }
   // 4) constructor and deconstructor
   class CenteredCompanionAbs extends CompanionDef[CenteredCompanionAbs] with CenteredCompanion {
@@ -269,7 +302,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCentered: Iso[CenteredData, Centered] =
-    cachedIso[CenteredIso]()
+    reifyObject(new CenteredIso())
 
   // 6) smart constructor and deconstructor
   def mkCentered(center: Rep[Int], radius: Rep[Int]): Rep[Centered]
@@ -279,7 +312,7 @@ trait SegmentsAbs extends Segments with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
+trait SegmentsSeq extends scalan.ScalanSeq with SegmentsDsl {
   self: SegmentsDslSeq =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }
@@ -328,7 +361,7 @@ trait SegmentsSeq extends SegmentsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
+trait SegmentsExp extends scalan.ScalanExp with SegmentsDsl {
   self: SegmentsDslExp =>
   lazy val Segment: Rep[SegmentCompanionAbs] = new SegmentCompanionAbs {
   }
@@ -589,7 +622,7 @@ trait SegmentsExp extends SegmentsDsl with scalan.ScalanExp {
 }
 
 object Segments_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRQerxM7tkOaRAIpuRCCoYW2doSEesgBBddFldwk6haE3AppvDtxpszObmbGkc2hB45wQ1wR6r03LkhIXBAS4sAJARJnTgWEKmhPoL6ZnV2v0yyxqtaH0ezM2/fzfe976zt/oFkp0MvSwwzzRkAUbrhmvyVV3W1zRdXoSugPGLlI9j587kvvCn9TOuhUF5X2sbwoWRdV4k17GKV7lxx0UAVzj0gVCqnQCx0ToemFjBFP0ZA3aRAMFO4x0uxQqTY7aKYX+qMDdAsVOmjRC7kniCJui2EpibTnc0RnRNPninke7UTjGLypq2hmqrgmMFWQPsRYjO2vksgd8ZCPAoUWbGo7kU4LbMo0iEKhkhBlcLcf+snjDMdwgJY7N/EhbkKIftNVgvI+vFmLsPc+7pNtMNHmM5CwJGzv2igyz8UOqkpyAABdDiJmToYRQggYeM0k0Rjj00jxaWh86i4RFDP6AdaXuyIcjlD8KxQRGkbg4twJLhIPpM39+kc3vOsP3Frg6JeHOpWyqbAEjp7P6QZDBeD43dVP5L23bl9wULWLqlRu9aQS2FNZyi1aNcx5qEzOKYBY9IGt9Ty2TJQtsDnSEhUvDCLMwZOFch54YtSjShvrs3nLTg70ZRWRxLQwjAppvWs59Zq+aWHGdu+unH/p9/a7DnImQ1TApQuNLxKnCpVd0g+gywykeqlYdPPjpBWfvvun/+0GuuGkOFm301EDLmblLz/VfnzlDQfNdU0jX2K43wWoZJuRYEe0Qq66aC48JCK+KR9ipnfHUlX2yR4eMGUBzFZehMoVWsuVXEQ0LJumvQsJALW4Q7dDTuqXduv33e8/vaMbUKD5+CbW4H/0wr+/Luwp05sKBpTCVo6nFCqCdlM4XsxjLiK7ggYwKQ7J69989fZfX2/PGvKWbUXvYDYgsW5tQePidMzCBkS6HLNYGZp4z6aV6GUV7gn3H81KL2tj3sfsV+MS3TAgS+v36Hu3P1aG58Jwcprs9G6CfDfNeyv/Q3ky1f7pbjh/r/z8uYMqwGyPqgBH9Y0ptfgU9YVSrMbLKkC7BLASAW3XysZbHY+gZbNVaC4xPHJfS5Rrsc9VnHGWsX2EwbzOynB4/IslRnhf7U/Nvl7PmPVsHiwLLmBNTsJk1lg9NUBKHtGYPw4iAvt0IJ8kIkstkwzxT2yUxHB8n0m1ZKNMYlQE5UyFmk146qwXrZtjkj7ydVg9Eun65KEuzFrD5/IZOwVApIHV7xkYDus5w8G10oQqbz34bPvVH774zcy/qhY5jF+e/r3Jzr1JQGpJdPi/kklVoRktfJPsQ7OM1Ys/CgAA"
+  val dump = "H4sIAAAAAAAAALVWTWwbRRQe24l/Q5oEVaK5EIKh5c8OSKiHHFDkuqiSSaJuQcitisa7E2fK7MxmZxzZHHrsAW6IKxKVuCD1gjghJISEkBAHTgghceZUqKoe6AnEm9nZ9drNEoMUH0Y7O2/ee9/3vffWd/5A8zJEz0oXM8wbPlG44ZjnLanqTpsrqkZvCG/AyAWy94T45pOXP1v9Mo9OdVFxH8sLknVRJXpoD4Pk2SEHHVTB3CVSiVAq9FTHRGi6gjHiKip4k/r+QOEeI80OlWqzg+Z6whsdoJso10FLruBuSBRxWgxLSaR9XyY6I5rsK2Y/2gnGMXhTo2imUFwJMVWQPsRYiuwvk8AZccFHvkKLNrWdQKcFNiXqByJUcYgSuNsXXryd4xheoJXODXyImxCi33RUSHkfbtYC7L6L+2QbTLT5HCQsCdu7MgrMvtBBVUkOgKBLfsDMm2GAEAIFXjFJNMb8NBJ+GpqfukNCihl9D+vD3VAMRyj65QoIDQNw8eIxLmIPpM29+vvX3KsPnZqf15eHOpWSQVgER09mVIORAnj8/vKH8sHrt8/nUbWLqlRu9aQKsavSklu2aphzoUzOCYE47INa61lqmShbYDNVEhVX+AHm4MlSuQA6MepSpY31uwWrTgb1JRWQ2DQ3DHIJ3rUMvKZuWpix3btnXnrm9/bbeZSfDFEBlw4Ufhg7VajkkL4PVWYo1UvFspsdJ0F89u4977sNdC2f8GTdziYNuJiXv/xc++m51/Ko3DWFfJHhfheokm1G/J2wJbjqorI4JGF0UjrETD8dKVXJI3t4wJQlMI28AMgVWstsuYBoWjZNeediAmpRhW4LTuoXd+t/Oj98dEcXYIgWopOoB/+m5//6dXFPmdpUMKAUtu14SqEC9G5Cx9NZygVkN6Q+TIpD8uq3X715/+vteSPeikX0FmYDEvWtBTQGp2PmNiDSpUjFytDEO50g0csqnBPuPZqVXtbGuo/Vr0YQHeGT5fUH9PrtD5TROTecnCY7vRvQvpvm3pl/kTyeap/funX6/qfvPG66sdyjysdBfeM/9GLcOifYayjhLZoyK+O9IRMYXwa2SQjV2EqHXp2+o1A5Npw6r8UNbSXJbETjLGX7iLBZBZeS9uiLRUZ4X+3PXBR6PWfWF2ZgaNEBBchx9MwbqxPjpugSTf//ISfEHh3IEyJnuWXyIt6x5RMbjs9TWRdtwEm6CtBmMxE4QeNU0rNjWbLOj4Ay9YFZnYp/ffKlhmut4Yv7mB0k0Nu+HQHnYL6sZ8wXx3Y0YL/58OPt53/84jczQqt6NsAE58k/pPTonKSpFkeHvzypVBWa0/PCJPsPSoQ8SYIKAAA="
 }
 }
 

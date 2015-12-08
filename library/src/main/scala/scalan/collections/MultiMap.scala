@@ -85,7 +85,7 @@ trait MultiMapsDsl extends ScalanDsl with impl.MultiMapsAbs with MultiMaps { sel
   }
 }
 
-trait MultiMapsDslSeq extends MultiMapsDsl with impl.MultiMapsSeq with ScalanSeq { self: ScalanCommunityDslSeq =>
+trait MultiMapsDslSeq extends ScalanSeq with MultiMapsDsl with impl.MultiMapsSeq { self: ScalanCommunityDslSeq =>
   def appendMultiMap[K: Elem, V: Elem](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[MMap[K, ArrayBuffer[V]]] = {
     if (map.contains(key)) {
       map(key) += value
@@ -97,7 +97,7 @@ trait MultiMapsDslSeq extends MultiMapsDsl with impl.MultiMapsSeq with ScalanSeq
   }
 }
 
-trait MultiMapsDslExp extends MultiMapsDsl with impl.MultiMapsExp with ScalanExp { self: ScalanCommunityDslExp =>
+trait MultiMapsDslExp extends ScalanExp with MultiMapsDsl with impl.MultiMapsExp { self: ScalanCommunityDslExp =>
   def appendMultiMap[K: Elem, V: Elem](map: Rep[MMap[K, ArrayBuffer[V]]], key: Rep[K], value: Rep[V]): Rep[MMap[K, ArrayBuffer[V]]] =
     AppendMultiMap(map, key, value)
 

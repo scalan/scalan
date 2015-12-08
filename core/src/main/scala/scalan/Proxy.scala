@@ -33,6 +33,17 @@ trait Proxy { self: Scalan =>
 
   def methodCallEx[A](receiver: Rep[_], m: Method, args: List[AnyRef])(implicit eA: Elem[A]): Rep[A]
   def newObjEx[A](c: Class[A], args: List[Rep[Any]])(implicit eA: Elem[A]): Rep[A]
+
+  /**
+   * Can be thrown to prevent invoke
+   */
+  class DelayInvokeException extends Exception
+
+  case class ExternalMethodException(className: String, methodName: String) extends DelayInvokeException
+
+  def externalMethod(className: String, methodName: String) = {
+    throw new ExternalMethodException(className, methodName)
+  }
 }
 
 trait ProxySeq extends Proxy { self: ScalanSeq =>
@@ -141,7 +152,12 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
   }
 
   def mkMethodCall(receiver: Exp[_], method: Method, args: List[AnyRef], neverInvoke: Boolean): Exp[_] = {
-    val resultElem = getResultElem(receiver, method, args)
+    val resultElem = try {
+      getResultElem(receiver, method, args)
+    } catch {
+      case e: Exception =>
+        throwInvocationException("getResultElem for", e, receiver, method, args)
+    }
     mkMethodCall(receiver, method, args, neverInvoke, resultElem)
   }
 
@@ -362,7 +378,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
                 // fake to make the compiler happy
                 type F[A] = A
 
-                new Container[F] {
+                new Cont[F] {
                   private val elemMap1 = elemMap + (formalParam -> Right(this.asInstanceOf[SomeCont]))
 
                   def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[F[T]] = ???
@@ -697,7 +713,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
     val TypeWrapperSym = typeOf[TypeWrapper[_, _]].typeSymbol
 
-    val ElementSym = typeOf[Element[_]].typeSymbol
+    val ElementSym = typeOf[Elem[_]].typeSymbol
     val ContSym = typeOf[SomeCont].typeSymbol
 
     val SuperTypesOfDef = typeOf[Def[_]].baseClasses.toSet
@@ -705,6 +721,9 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   private def isSupertypeOfDef(clazz: Symbol) =
     Symbols.SuperTypesOfDef.contains(clazz)
+
+  val externalClassNameMetaKey = MetaKey[String]("externalClassName")
+  val externalMethodNameMetaKey = MetaKey[String]("externalMethodName")
 
   sealed trait InvokeResult
 
@@ -725,7 +744,13 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
               val res = m.invoke(d, args: _*)
               res
             } catch {
-              case e: Exception => !!!("Method invocation failed", baseCause(e))
+              case e: ExternalMethodException =>
+                val res = mkMethodCall(receiver, m, args.toList, neverInvoke = true)
+                res.setMetadata(externalClassNameMetaKey)(e.className)
+                res.setMetadata(externalMethodNameMetaKey)(e.methodName)
+                res
+              case e: Exception =>
+                throwInvocationException("Method invocation", baseCause(e), receiver, m, args)
             }
           } else {
             // try to call method m via inherited class or interfaces
@@ -745,8 +770,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     }
   }
 
-  /**
-   * Can be thrown to prevent invoke
-   */
-  class DelayInvokeException extends Exception
+  def throwInvocationException(whatFailed: String, cause: Throwable, receiver: Exp[_], m: Method, args: Seq[Any]) = {
+    val deps = receiver +: args.flatMap(syms)
+    !!!(s"$whatFailed $receiver.${m.getName}(${args.mkString(", ")}) failed", baseCause(cause), deps: _*)
+  }
 }

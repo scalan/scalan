@@ -153,7 +153,7 @@ class EffectsJniItTests extends BaseItTests[State0Prog](???) {
   val defaultCompilers = compilers(progcxx)
 
   // FIXME temporary workaround for compileSource below not compiling
-  def generate[A, B](back: Compiler[_ <: ScalanCtxExp])(f: back.Exp[A => B], functionName: String)
+  def generate[A, B](back: Compiler[_ <: ScalanCtxExp])(f: => back.Exp[A => B], functionName: String)
                     (implicit config: back.CompilerConfig): Unit = {
     val dir = new File(prefix, functionName)
     back.buildExecutable(dir, dir, functionName, f, GraphVizConfig.default)

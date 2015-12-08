@@ -94,7 +94,9 @@ trait ScalanParsers {
 
     val entityRepSynonym = defs.collectFirst { case t: STpeDef => t }
 
-    val traits = defs.collect { case t: STraitDef if !t.name.endsWith("Companion") => t }
+    val traits = defs.collect {
+      case t: STraitDef if !(t.name.endsWith("Companion") || t.hasAnnotation("InternalType")) => t
+    }
     val entity = traits.headOption.getOrElse {
       throw new IllegalStateException(s"Invalid syntax of entity module trait $moduleName. First member trait must define the entity, but no member traits found.")
     }
@@ -254,7 +256,7 @@ trait ScalanParsers {
     case md: DefDef =>
       if (!nme.isConstructorName(md.name))
         md.tpt match {
-          case AppliedTypeTree(tpt, _) if tpt.toString == "Elem" || tpt.toString == "Element" =>
+          case AppliedTypeTree(tpt, _) if tpt.toString == "Elem" =>
             Some(methodDef(md, true))
           case _ =>
             Some(methodDef(md))
@@ -284,6 +286,11 @@ trait ScalanParsers {
       } else
         None
     case EmptyTree =>
+      None
+    // calls in constructor
+    case Select(_, _) =>
+      None
+    case Apply(_, _) =>
       None
     case tree => ???(tree)
   }
@@ -342,7 +349,7 @@ trait ScalanParsers {
       case _ => optExpr(md.rhs)
     }
     val isElemOrCont = md.tpt match {
-      case AppliedTypeTree(tpt, _) if Set("Elem", "Element", "Cont", "Container").contains(tpt.toString) =>
+      case AppliedTypeTree(tpt, _) if Set("Elem", "Cont").contains(tpt.toString) =>
         true
       case _ =>
         false

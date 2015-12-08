@@ -9,7 +9,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait InteractionsAbs extends Interactions with scalan.Scalan {
+trait InteractionsAbs extends scalan.Scalan with Interactions {
   self: InteractionsDsl =>
 
   // single proxy for each type family
@@ -39,7 +39,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
     def convertInteract(x: Rep[Interact[A]]): Rep[To] = {
       x.selfType1 match {
         case _: InteractElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have InteractElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have InteractElem[_, _], but got $e", x)
       }
     }
 
@@ -59,8 +59,8 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
     override def toString = "Interact"
   }
   def Interact: Rep[InteractCompanionAbs]
-  implicit def proxyInteractCompanion(p: Rep[InteractCompanion]): InteractCompanion =
-    proxyOps[InteractCompanion](p)
+  implicit def proxyInteractCompanionAbs(p: Rep[InteractCompanionAbs]): InteractCompanionAbs =
+    proxyOps[InteractCompanionAbs](p)
 
   abstract class AbsAsk
       (prompt: Rep[String])
@@ -89,14 +89,25 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 
   // 3) Iso for concrete class
   class AskIso
-    extends Iso[AskData, Ask] {
+    extends EntityIso[AskData, Ask] with Def[AskIso] {
     override def from(p: Rep[Ask]) =
       p.prompt
     override def to(p: Rep[String]) = {
       val prompt = p
       Ask(prompt)
     }
-    lazy val eTo = new AskElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new AskElem(self)
+    lazy val selfType = new AskIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class AskIsoElem() extends Elem[AskIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new AskIso())
+    lazy val tag = {
+      weakTypeTag[AskIso]
+    }
   }
   // 4) constructor and deconstructor
   class AskCompanionAbs extends CompanionDef[AskCompanionAbs] with AskCompanion {
@@ -128,7 +139,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoAsk: Iso[AskData, Ask] =
-    cachedIso[AskIso]()
+    reifyObject(new AskIso())
 
   // 6) smart constructor and deconstructor
   def mkAsk(prompt: Rep[String]): Rep[Ask]
@@ -161,14 +172,25 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 
   // 3) Iso for concrete class
   class TellIso
-    extends Iso[TellData, Tell] {
+    extends EntityIso[TellData, Tell] with Def[TellIso] {
     override def from(p: Rep[Tell]) =
       p.msg
     override def to(p: Rep[String]) = {
       val msg = p
       Tell(msg)
     }
-    lazy val eTo = new TellElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new TellElem(self)
+    lazy val selfType = new TellIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class TellIsoElem() extends Elem[TellIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new TellIso())
+    lazy val tag = {
+      weakTypeTag[TellIso]
+    }
   }
   // 4) constructor and deconstructor
   class TellCompanionAbs extends CompanionDef[TellCompanionAbs] with TellCompanion {
@@ -200,7 +222,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoTell: Iso[TellData, Tell] =
-    cachedIso[TellIso]()
+    reifyObject(new TellIso())
 
   // 6) smart constructor and deconstructor
   def mkTell(msg: Rep[String]): Rep[Tell]
@@ -210,7 +232,7 @@ trait InteractionsAbs extends Interactions with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
+trait InteractionsSeq extends scalan.ScalanSeq with InteractionsDsl {
   self: InteractionsDslSeq =>
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs {
   }
@@ -245,7 +267,7 @@ trait InteractionsSeq extends InteractionsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
+trait InteractionsExp extends scalan.ScalanExp with InteractionsDsl {
   self: InteractionsDslExp =>
   lazy val Interact: Rep[InteractCompanionAbs] = new InteractCompanionAbs {
   }
@@ -331,7 +353,7 @@ trait InteractionsExp extends InteractionsDsl with scalan.ScalanExp {
 }
 
 object Interactions_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRR+Xttx/EPTPxUVCRKMIS2idoSEesihclMXFblJlE0rZKpK4/XY3XZ2drMzjtYceuAIN8QVod5744KE1AtCQhw4IUDizKkUoQroiYo3sz9ep9kmF3wYzc68fT/f+763vv8IisKHN4RFGOFNh0rSNPW+LWTD7HBpy8lVdzBm9BIdfnTqK+sqvygMWOjB3C0iLgnWg3K46QResjfpThfKhFtUSNcXEl7t6ggty2WMWtJ2ect2nLEkfUZbXVvI1S4U+u5gsgN3IdeFo5bLLZ9Kaq4xIgQV0fk8VRnZyXNZP082vGkM3lJVtFJVbPvElpg+xjga2m9Rz5xwl08cCUei1DY8lRbalGzHc30Zhyihu1vuIH4scIIHcLx7m+ySFoYYtUzp23yEb1Y9Yt0hI7qOJsq8gAkLyobbE08/57tQEXQHAbrieEyfBB4AYAfe1kk0p/g0E3yaCp+GSX2bMPtDoi43fTeYQPjL5QECD128dYCL2APt8EHj4xvWB0/MqmOolwOVSklXOIeOFjPYoFuBOH639al4/O698wZUelCxRbsvpE8smW55hFaVcO5KnXMCIPFH2K16Vrd0lDba7KFE2XIdj3D0FEFZwz4x27KlMlZntag7GdCXpEdj01zg5ZJ6lzLq1bxZI4xtPjx97vXfO+8bYMyGKKNLE4nvx04lzF/hkio0EvevZbn36KZvO0jnXfrON19f+/PBelFHOD6gQzJm8jphYxqSK4o3ja1CGfW6hLmpQTmYrqXn1JUgvPzwj8G3K3DDSPoSlXE4KqCLovjlp+qPZy8YMN/TwrnMyKiHrREdRp0Nf83lsgfz7i71w5vSLmFqty81SlHhUcPSSOcRaQlLmRL3qGrDqpZTLgagGipi3eW0cXmz8Y/5/Wf3FeF9qIU3oeaf2uf//fXIUGotIKKej0wL+7cgIY/DIsRDLSf3A7oSejNdhx6rP7Zv3vtEakhzweyg2OjfRmWu6vdeeQ668cD6u7di/HX65y8MKCOIfVs6xGusHFJm/6N0QBc+uywicrW2uLOWDrU4HSwv6i3CiTZ7rqqxFCPE90pIrSeQ7mfOSihc47Z8tgc6Qsr8pYQGOhaGdcTo0B1Va0Ovy1mlvrBNGTuo1oIymt6FIVJZLsNs4Xns+cFQ4HGunXL4TP6HLuJY7H2fQtKjTJ8mM+Hl7HmGHDm11T3JHl14YEDxPSgOUeqiC8W+O+aDmHz4bZc0kBfjs9ws+ZBsxCdOQjb9W4Jpapn1t2exRsNaXIJShoSFKHUaEBQAFRFIPtQzajIjHWBj7j75fP3NH778TY/oilIUjhWe/E1Ij+bZZi2kc8Bvfyp1pIhSmk77P7eWrq2LCQAA"
+  val dump = "H4sIAAAAAAAAALVWS4gcRRj+57XzNJuXr4DuOhldIzoTBclhD2GcbCQy7i7bG5ExKDU9NZNOqqt7u2qWHg855qA38SoY8CLkIp5ECIII4sGTSMCzpxgJOZhTxL+qH9MzbmfXg30ouqr+/h/f/30/ffMuFIQHLwiTMMKbNpWkaej3tpANY41LS07edgZjRs/R4VPOd5+/+uWJb7Kw2IOFy0ScE6wH5eBlzXfjd4PudKFMuEmFdDwh4bmujtAyHcaoKS2HtyzbHkvSZ7TVtYRc7UK+7wwmO3ANMl04bDrc9KikRocRIagIz0tUZWTF+7LeTzbcaQzeUlW0ElVse8SSmD7GOBzYb1HXmHCHT2wJh8LUNlyVFtoULdt1PBmFKKK7y84g2uY5wQM42r1CdkkLQ4xahvQsPsIvqy4xr5IRXUcTZZ7HhAVlw+2Jq/e5LlQE3UGALtgu0ye+CwDYgdd0Es0pPs0Yn6bCp2FQzyLM+pCoy03P8ScQPJkcgO+ii5f3cRF5oGt80PjokvneA6NqZ9XHvkqlqCtcQEdLKWzQrUAcf9z6RNx/88aZLFR6ULFEuy+kR0yZbHmIVpVw7kidcwwg8UbYrXpat3SUNtrMUaJsOrZLOHoKoaxhn5hlWlIZq7Na2J0U6IvSpZFpxnczcb3LKfVq3nQIY5t3nn7l+T/W3s1CdjZEGV0aSHwvciqhdIFLqtCI3Z9Mc+/STc+ykc679PXvv71479Z6QUc4OqBDMmbyHcLGNCBXGG8aW4XK1usSFqYGZX+6Fh9RV4zwyp0/Bz+chkvZuC9hGQejArooiNu/Vn85dTYLpZ4WznlGRj1sjVhj1N7wOg6XPSg5u9QLboq7hKm3PalRDAsPG5ZEOodIS1hOlbhLVRtWtZwyEQDVQBHrDqeN85uNv4yfPr2pCO9BLbgJNP+3debhb4eGUmsBEXU9ZFrQv0UJORwWAR5qOb4X0JXAm+HY9Ej9vvX+jY+lhjTjzw6Kjf4VVOaq/u7ZR6AbDayvrl9//N4XHxzTQiv1LWkTt3H6P8gsUsX/KCPQIEwHyJPTvVqWENBaW1ztJKMuzZsjymgzd1WNFBo2Yl5Zaj2GKnjxlIT8RW7Jf7dGR0iYn4jZoWNhWFuMDtxotTb0unKAqh/bpoztV3ZeGU3vgmiJhFdgFoMcsmJ/VPA40044TAFmroaDl3YkirlHeckRqE/jWfJM+hxEPj2x1T3O7p69lYXCW1AY4ogQXSj0nTEfRETFfwJJfflGdJaZJSoSk3jEjompn2WYppaKSme2A2hYi0pQipKwGKZOfYJioSLEy4N6Sk1GqBls17UHn62/9PPXv+vRXlHqw3HE49+L5EifbeFiMgf8Z0ikjsRRqtRp/wOEQpYSwwkAAA=="
 }
 }
 

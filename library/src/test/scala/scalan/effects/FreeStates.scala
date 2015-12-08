@@ -53,7 +53,7 @@ trait FreeStates extends Base { self: MonadsDsl =>
 
   }
 
-  implicit class StateFCompanionExtensions(c: Rep[StateFCompanion]) {
+  implicit class StateFCompanionExtensions(c: Rep[StateFCompanionAbs]) {
     def eval[S: Elem, A: Elem](t: Rep[FreeState[S, A]], s: Rep[S]): Rep[A] =
       c.run(t,s)._1
   }

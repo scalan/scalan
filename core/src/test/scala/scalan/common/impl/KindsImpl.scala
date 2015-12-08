@@ -6,7 +6,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait KindsAbs extends Kinds with scalan.Scalan {
+trait KindsAbs extends scalan.Scalan with Kinds {
   self: KindsDsl =>
 
   // single proxy for each type family
@@ -35,9 +35,9 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     }
 
     def convertKind(x: Rep[Kind[F, A]]): Rep[To] = {
-      x.selfType1.asInstanceOf[Element[_]] match {
+      x.selfType1.asInstanceOf[Elem[_]] match {
         case _: KindElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have KindElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have KindElem[_, _, _], but got $e", x)
       }
     }
 
@@ -57,8 +57,8 @@ trait KindsAbs extends Kinds with scalan.Scalan {
     override def toString = "Kind"
   }
   def Kind: Rep[KindCompanionAbs]
-  implicit def proxyKindCompanion(p: Rep[KindCompanion]): KindCompanion =
-    proxyOps[KindCompanion](p)
+  implicit def proxyKindCompanionAbs(p: Rep[KindCompanionAbs]): KindCompanionAbs =
+    proxyOps[KindCompanionAbs](p)
 
   abstract class AbsReturn[F[_], A]
       (a: Rep[A])(implicit eA: Elem[A], cF: Cont[F])
@@ -88,14 +88,26 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ReturnIso[F[_], A](implicit eA: Elem[A], cF: Cont[F])
-    extends Iso[ReturnData[F, A], Return[F, A]] {
+    extends EntityIso[ReturnData[F, A], Return[F, A]] with Def[ReturnIso[F, A]] {
     override def from(p: Rep[Return[F, A]]) =
       p.a
     override def to(p: Rep[A]) = {
       val a = p
       Return(a)
     }
-    lazy val eTo = new ReturnElem[F, A](this)
+    lazy val eFrom = element[A]
+    lazy val eTo = new ReturnElem[F, A](self)
+    lazy val selfType = new ReturnIsoElem[F, A](eA, cF)
+    def productArity = 2
+    def productElement(n: Int) = (eA, cF).productElement(n)
+  }
+  case class ReturnIsoElem[F[_], A](eA: Elem[A], cF: Cont[F]) extends Elem[ReturnIso[F, A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new ReturnIso[F, A]()(eA, cF))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[ReturnIso[F, A]]
+    }
   }
   // 4) constructor and deconstructor
   class ReturnCompanionAbs extends CompanionDef[ReturnCompanionAbs] with ReturnCompanion {
@@ -127,7 +139,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReturn[F[_], A](implicit eA: Elem[A], cF: Cont[F]): Iso[ReturnData[F, A], Return[F, A]] =
-    cachedIso[ReturnIso[F, A]](eA, cF)
+    reifyObject(new ReturnIso[F, A]()(eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkReturn[F[_], A](a: Rep[A])(implicit eA: Elem[A], cF: Cont[F]): Rep[Return[F, A]]
@@ -162,14 +174,27 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 
   // 3) Iso for concrete class
   class BindIso[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F])
-    extends Iso[BindData[F, S, B], Bind[F, S, B]]()(pairElement(implicitly[Elem[Kind[F, S]]], implicitly[Elem[S => Kind[F, B]]])) {
+    extends EntityIso[BindData[F, S, B], Bind[F, S, B]] with Def[BindIso[F, S, B]] {
     override def from(p: Rep[Bind[F, S, B]]) =
       (p.a, p.f)
     override def to(p: Rep[(Kind[F, S], S => Kind[F, B])]) = {
       val Pair(a, f) = p
       Bind(a, f)
     }
-    lazy val eTo = new BindElem[F, S, B](this)
+    lazy val eFrom = pairElement(element[Kind[F, S]], element[S => Kind[F, B]])
+    lazy val eTo = new BindElem[F, S, B](self)
+    lazy val selfType = new BindIsoElem[F, S, B](eS, eA, cF)
+    def productArity = 3
+    def productElement(n: Int) = (eS, eA, cF).productElement(n)
+  }
+  case class BindIsoElem[F[_], S, B](eS: Elem[S], eA: Elem[B], cF: Cont[F]) extends Elem[BindIso[F, S, B]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
+    lazy val tag = {
+      implicit val tagS = eS.tag
+      implicit val tagB = eA.tag
+      weakTypeTag[BindIso[F, S, B]]
+    }
   }
   // 4) constructor and deconstructor
   class BindCompanionAbs extends CompanionDef[BindCompanionAbs] with BindCompanion {
@@ -202,7 +227,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBind[F[_], S, B](implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Iso[BindData[F, S, B], Bind[F, S, B]] =
-    cachedIso[BindIso[F, S, B]](eS, eA, cF)
+    reifyObject(new BindIso[F, S, B]()(eS, eA, cF))
 
   // 6) smart constructor and deconstructor
   def mkBind[F[_], S, B](a: Rep[Kind[F, S]], f: Rep[S => Kind[F, B]])(implicit eS: Elem[S], eA: Elem[B], cF: Cont[F]): Rep[Bind[F, S, B]]
@@ -212,7 +237,7 @@ trait KindsAbs extends Kinds with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait KindsSeq extends KindsDsl with scalan.ScalanSeq {
+trait KindsSeq extends scalan.ScalanSeq with KindsDsl {
   self: KindsDslSeq =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }
@@ -247,7 +272,7 @@ trait KindsSeq extends KindsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait KindsExp extends KindsDsl with scalan.ScalanExp {
+trait KindsExp extends scalan.ScalanExp with KindsDsl {
   self: KindsDslExp =>
   lazy val Kind: Rep[KindCompanionAbs] = new KindCompanionAbs {
   }
@@ -299,7 +324,7 @@ trait KindsExp extends KindsDsl with scalan.ScalanExp {
 
     object mapBy {
       def unapply(d: Def[_]): Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}] = d match {
-        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Element[_]] match { case _: KindElem[_, _, _] => true; case _ => false }) && method.getName == "mapBy" =>
+        case MethodCall(receiver, method, Seq(f, _*), _) if (receiver.elem.asInstanceOf[Elem[_]] match { case _: KindElem[_, _, _] => true; case _ => false }) && method.getName == "mapBy" =>
           Some((receiver, f)).asInstanceOf[Option[(Rep[Kind[F, A]], Rep[A => B]) forSome {type F[_]; type A; type B}]]
         case _ => None
       }
@@ -315,7 +340,7 @@ trait KindsExp extends KindsDsl with scalan.ScalanExp {
 }
 
 object Kinds_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAL2WPYwbRRTH367t89k+cuFDQSEKd5zMoUNgn2hSnERkOzYKce5OtykiJyIar8fOht3ZvZ3xyaZIQQldREOBUPp0NFR0SIiCKgIkKgqqEIoISAXizXh3vb7z+pwg2GK0s/v2vTe/9/4ze+8hZLgP69wkNmElhwpSMtR9hYuiUWfCEsPLbqdv0wu0++GpL83LrMp1WG7Bwk3CL3C7BbnRTX3gRfcG3W9CjjCTcuH6XMArTRWhbLq2TU1huaxsOU5fkLZNy02Li60mpNtuZ7gPt0FrwknTZaZPBTVqNuGc8uD5IpUZWdE8p+bDHW8cg5XlKsqxVVzxiSUwfYxxcmS/Rz1jyFw2dAScCFLb8WRaaJO1HM/1RRgii+5uup1wmmYEH8BzzVvkgJQxRK9sCN9iPfyy4BHzfdKj22gizdOYMKd298rQU/NUE/Kc7iOgi45nqycDDwCwAm+pJEpjPqWIT0nyKRrUt4htfUDky13fHQxhdGkpgIGHLt44xkXogdZZp/jRdfPaY6Pg6PLjgUwlq1a4gI5WErpBlQI5frN3hz965+45HfItyFu80ubCJ6aIlzygVSCMuULlHAEkfg+rtZZULRWlgjaHWiJnuo5HGHoKUC5hnWzLtIQ0ls+WguokoM8Kj4am2sDTovWuJqxX9U2N2Pbug9Nvvvpr/aoO+mSIHLo0sPH90KmA9CWLdQLXclwWoDXGfOW0oqZyyA3GY3ZGJhGT1x781vl6E67rEckg8HzFQxcZ/uP3hfsb53VYbKlWb9ik10KYvG5TZ8evuUy0YNE9oP7oTfaA2PJuajGzHdolfVsEiONsUshGwGqiKD0qwW0pAWghgMKoh7ddRouN3eKfxref3JMt6sPS6M1IpX9b5/766URXqO5FoiRkm0JlH4KfTDs/cmm4Dn127ZH13t2PheKqDSb1vdO+hYLaUt+9PANxuM/80drUfz/9w+c65JBk2xIO8Yqbc6rjP+x4iEiMhxXEt7xHRd9ntXi0lXHLvhgD+pIWFksZCdBpJSSdlg00A36CA7MROZC9N1U68eoJWBjlqxxEfX82qSgKwam95gv2w/Nf6ZB5FzJdbGfehEzb7bNOyBZPHEEHoho+0ybZIkviEydiqa5VGLOSycaSf3uqxY3DPKabHcFW0Ca5zLHLVBP6/khJ4VBFZqlpjrjGkbgJYbpTwvgosMQ6NvrMvH/x0+eXz974WW3FCx3XIZZqhDNYTh/Fqsp1JtgPx+n8a25xeutq3EiS0zNVjPGUYjJmiSlO9qnUWD3ewZOrMS2XG9diclsfow851OYTSKyq0w2OVjEWewMm15XCTfuJ+3z6uRL0yfzNcml6s4R/Ev832OmrujPpCw0zChDmH8gVjyonOMXWUcVrCSo2ggMKgd9+/Nn269998YtScl4edXjos+i3e7z3Dg7tQYsqNP5Ex1JFWvLsU2n+Awjq5/zUDAAA"
+  val dump = "H4sIAAAAAAAAAL1WPWwcRRR+ez++PxMHwm+iYGMdRkZwF2hSuLDO9h0KOWzLmwIdEdbc3txlw+7senfO2qNImQI6lIYCiUg0SGkQFQ2iQUIUVBFCoqKgCkEoBalAvJn9ub3z7fkcBFuMdnbfvvfm+5nZO/ch6zqw4mrEIKxiUk4qqryvubys1hnX+eAtq9M36BbtPmt98+lrn5/9KgULLZi7Rtwt12hBwb+pe3Z0r9KDJhQI06jLLcfl8EJTVqhqlmFQjesWq+qm2eekbdBqU3f5WhMybaszOIAboDThtGYxzaGcqpsGcV3qBs/zVHSkR/OCnA927GENVhWrqMZWccUhOsf2scZpP36P2uqAWWxgcjgVtLZji7YwJqebtuXwsEQO012zOuE0wwg+gCea18khqWKJXlXljs56+GXJJtp7pEe3MUSEZ7BhlxrdKwNbztNNKLr0AAG6ZNqGfOLZAIAMvC6bqAzxqUT4VAQ+ZZU6OjH094l4uetY3gD8S0kDeDameOWYFGEGWmed8gdXtXceqiUzJT72RCs5ucI5TLSYoAZJBeL43d5H7oM3bl9MQbEFRd2ttV3uEI3HKQ/QKhHGLC57jgAkTg/ZWk5iS1apYcyYJAqaZdqEYaYAynnkydA1nYtg8Ww+YCcB+hy3aRiqeLYSrXcpYb1SN5vEMHbvPffqi7/V305BarREAVOqKHwnTMohc1lnnSC1GBc4KI0hvmJak1MxFLzhmJvSSYTJS/d+73x7Aa6mIiSDwrORhymy7k8/lu6urqcg35JSbxik10Iw3bpBzR1n02K8BXnrkDr+m9whMcTdRDJzHdolfYMHEMexSSM2HJYSTWlTAdyaNIASAlDyNbxtMVpu7Jb/VL+/dUdI1IF5/43v0r/1i3/9fKrLpXoRURJim0Znj4GfjHbRT6laJn18+YH+7u0PucRV8Ub9vdO+joZak989PwXicJ/54ubNp/74bP+M9Ee+rXOT2OULJ3BHKOb/UP0QoeLr8pnhXAyLiOrCHuV9h23GCy/GvojhfFYJOZRBHFK0FhKQEbqawklCAq0RJRCSnOioOKkc5vx+ZYLIDueTuJJoPL3XfNK4v/51CrJvQraLKnebkG1bfdYJYcaDiFOPb4TPlFGYEVbiEDOCVV5LMMRKNBtrfn1ixP44HpPDjsBWUkZxmWHz2UiwwxFKYYyRaSaboa56pG5Cme6EMg76LpHHRp9pdy99fGbh/P4vcoee61gm0aUQziGdDnpY0nUu2CaH7fxr3OLorchxdQZnPbaB5R7RV+o0X8VBfiRjbhyf4OTGzIjlxm2ZrPBjrCKGrdm8EiN4csBRQmO1V2F0XWnc1k8s+cknz4jhxrRyAgldniyh8A/k/4Z78lpvjebCwKyEDfsP/IzHmhmcfito8+UEm6vBYYY03Hj4yfbLP3z5q7R6URyL+LPAot/14ebsjW1SeVkaf75jrSJa4pyUbf4DRfOBQgwNAAA="
 }
 }
 

@@ -14,6 +14,7 @@ trait OrderingOps { self: Scalan =>
     def >=(rhs: Rep[T]) = OrderingGTEQ(n).apply(lhs,rhs)
     def max(rhs: Rep[T]): Rep[T] = OrderingMax(n).apply(lhs,rhs)
     def min(rhs: Rep[T]): Rep[T] = OrderingMin(n).apply(lhs,rhs)
+    def compare(rhs: Rep[T]): Rep[Int] = OrderingCompare(n).apply(lhs,rhs)
   }
 
   case class OrderingLT[T](ord: Ordering[T]) extends BinOp[T, Boolean]("<", ord.lt)
@@ -27,4 +28,6 @@ trait OrderingOps { self: Scalan =>
   case class OrderingMax[T: Elem](ord: Ordering[T]) extends BinOp[T, T]("max", ord.max)
 
   case class OrderingMin[T: Elem](ord: Ordering[T]) extends BinOp[T, T]("min", ord.min)
+
+  case class OrderingCompare[T: Elem](ord: Ordering[T])(implicit val eT: Elem[T]) extends BinOp[T, Int]("compare", ord.compare)
 }

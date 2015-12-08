@@ -37,7 +37,7 @@ trait Maps extends  Base  { self: Scalan =>
     def fromArray[K: Elem, V: Elem](arr: Arr[(K, V)]) = mapFromArray(arr)
   }
 
-  case class MMapElem[K, V](eKey: Elem[K], eValue: Elem[V]) extends Element[MMap[K, V]] {
+  case class MMapElem[K, V](eKey: Elem[K], eValue: Elem[V]) extends Elem[MMap[K, V]] {
     override def isEntityType = eKey.isEntityType || eValue.isEntityType
 
     lazy val tag = {
@@ -208,7 +208,7 @@ trait MapsExp extends Maps { self: ScalanExp =>
       val pmElem = s.elem.asInstanceOf[MMapElem[K, V]]
       VarMM(sym)(pmElem.eKey, pmElem.eValue)
     }
-    case _ => ???("cannot resolve DefObject for symbol:", sym)
+    case _ => ???("cannot resolve MMap", sym)
   }
 }
 /*

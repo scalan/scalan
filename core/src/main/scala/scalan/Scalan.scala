@@ -5,16 +5,16 @@ import scalan.primitives._
 import scalan.collections._
 import scalan.arrays._
 import scalan.seq.BaseSeq
-import scalan.staged.{BaseExp, Expressions, Transforming}
+import scalan.staged.{Transforming, BaseExp, Expressions, TransformingExp}
 import scalan.util.{ExceptionsDslExp, ExceptionsDslSeq, ExceptionsDsl/*, Exceptions*/}
 
-trait Scalan
+abstract class Scalan
   extends Base
   with Debugging
   with Elems
   with Containers
   with TypeWrappers
-  with Views
+  with ViewsDsl
   with Entities
   with Proxy
   with Tuples
@@ -33,6 +33,7 @@ trait Scalan
   with Monoids
   with PatternMatching
   with Maps
+  with Transforming
   with ArrayOps
   with ArrayBuffers
   with Exceptions
@@ -51,13 +52,13 @@ extends Scalan
   with ExceptionsDsl
   with AbstractStringsDsl
 
-trait ScalanSeq
+abstract class ScalanSeq
   extends Scalan
   with BaseSeq
   with ElemsSeq
   with ContainersSeq
   with TypeWrappersSeq
-  with ViewsSeq
+  with ViewsDslSeq
   with ProxySeq
   with TuplesSeq
   with LoopsSeq
@@ -84,19 +85,19 @@ trait ScalanSeq
   with EffectfulSeq
   with StructsSeq
 
-trait ScalanCtxSeq
-extends ScalanDsl
-  with ScalanSeq
+class ScalanCtxSeq
+extends ScalanSeq
+  with ScalanDsl
   with ExceptionsDslSeq
   with AbstractStringsDslSeq
 
-trait ScalanExp
+abstract class ScalanExp
   extends Scalan
   with BaseExp
   with ElemsExp
   with ContainersExp
   with TypeWrappersExp
-  with ViewsExp
+  with ViewsDslExp
   with ProxyExp
   with TuplesExp
   with LoopsExp
@@ -110,7 +111,7 @@ trait ScalanExp
   with BlocksExp
   with PatternMatchingExp
   with MapsExp
-  with Transforming
+  with TransformingExp
   with ArrayOpsExp
   with ArrayBuffersExp
   with ExceptionsExp
@@ -127,9 +128,9 @@ trait ScalanExp
   with RewriteRulesExp
   with GraphVizExport
 
-trait ScalanCtxExp
-extends ScalanDsl
-  with ScalanExp
+class ScalanCtxExp
+extends ScalanExp
+  with ScalanDsl
   with Expressions
   with ExceptionsDslExp
   with AbstractStringsDslExp

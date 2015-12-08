@@ -27,7 +27,7 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
 
   // TODO implement better way to create new Cont for existing UDTs (without code duplication)
   implicit def coproductCont[F[_]:Cont, H[_]:Cont]: Cont[({type f[x] = Coproduct[F,H,x]})#f]
-    = new Container[({type f[x] = Coproduct[F,H,x]})#f] {
+    = new Cont[({type f[x] = Coproduct[F,H,x]})#f] {
         def tag[T](implicit tT: WeakTypeTag[T]): WeakTypeTag[Coproduct[F,H,T]]  = {
           //implicit val tagT = tT
           implicit val tagF = container[F].tag(tT)
@@ -95,7 +95,7 @@ trait CoproductsDsl extends ScalanDsl with impl.CoproductsAbs with Coproducts { 
                            (ret: Rep[CoproductImpl[F,G,T]] => Rep[R]): Rep[R]
 }
 
-trait CoproductsDslSeq extends CoproductsDsl with impl.CoproductsSeq with ScalanCtxSeq { self: MonadsDslSeq =>
+trait CoproductsDslSeq extends ScalanCtxSeq with impl.CoproductsSeq { self: MonadsDslSeq =>
   def matchCoproduct[F[_], G[_], T, R](ft: RCoproduct[F,G,T])
                                       (ret: Rep[CoproductImpl[F,G,T]] => Rep[R]): Rep[R] =
     ft match {
@@ -103,7 +103,7 @@ trait CoproductsDslSeq extends CoproductsDsl with impl.CoproductsSeq with Scalan
     }
 }
 
-trait CoproductsDslExp extends CoproductsDsl with impl.CoproductsExp with ScalanExp { self: MonadsDslExp =>
+trait CoproductsDslExp extends ScalanCtxExp with impl.CoproductsExp { self: MonadsDslExp =>
 
   def matchCoproduct[F[_], G[_], T, R](ft: RCoproduct[F,G,T])
                                       (ret: Rep[CoproductImpl[F,G,T]] => Rep[R]): Rep[R] =

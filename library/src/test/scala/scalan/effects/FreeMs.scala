@@ -69,14 +69,14 @@ trait FreeMs extends Base { self: MonadsDsl =>
 
 trait FreeMsDsl extends ScalanDsl with impl.FreeMsAbs with FreeMs with Monads { self: MonadsDsl =>
 
-  trait FreeMContainer[F[_]] extends Container[({type f[x] = FreeM[F,x]})#f] {
+  trait FreeMCont[F[_]] extends Cont[({type f[x] = FreeM[F,x]})#f] {
     implicit def cF: Cont[F]
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[FreeM[F,T]]
     def lift[T](implicit eT: Elem[T]) = element[FreeM[F,T]]
   }
 
-  implicit def freeMMonad[F[_]:Cont]: FreeMContainer[F] with Monad[({type f[a] = FreeM[F,a]})#f] =
-    new FreeMContainer[F] with Monad[({type f[a] = FreeM[F,a]})#f] {
+  implicit def freeMMonad[F[_]:Cont]: FreeMCont[F] with Monad[({type f[a] = FreeM[F,a]})#f] =
+    new FreeMCont[F] with Monad[({type f[a] = FreeM[F,a]})#f] {
       def cF = container[F]
       // suppress implicit resolution of this method (as it leads to stackoverflow)
       override def toMonadic[A: Elem](a: Rep[FreeM[F, A]]) = super.toMonadic(a)
@@ -87,11 +87,11 @@ trait FreeMsDsl extends ScalanDsl with impl.FreeMsAbs with FreeMs with Monads { 
 }
 
 
-trait FreeMsDslSeq extends FreeMsDsl with impl.FreeMsSeq with ScalanCtxSeq  { self: MonadsDslSeq =>
+trait FreeMsDslSeq extends ScalanCtxSeq with impl.FreeMsSeq { self: MonadsDslSeq =>
 
 }
 
-trait FreeMsDslExp extends FreeMsDsl with impl.FreeMsExp with ScalanExp { self: MonadsDslExp =>
+trait FreeMsDslExp extends ScalanCtxExp with impl.FreeMsExp { self: MonadsDslExp =>
 
 
 }

@@ -2,7 +2,7 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import java.io.PrintWriter
 
-import scala.virtualization.lms.common.{BaseGenStruct, Record, StructExp}
+import scala.lms.common.{BaseGenStruct, Record, StructExp}
 
 trait CxxShptrGenStruct  extends CxxShptrCodegen with BaseGenStruct {
   val IR: StructExp
@@ -21,12 +21,12 @@ trait CxxShptrGenStruct  extends CxxShptrCodegen with BaseGenStruct {
       struct.tp match {
         case m if m.runtimeClass == classOf[scala.Tuple2[_,_]] =>
           val fn = index match { case "_1" => "first"; case "_2" => "second" }
-          emitValDef(sym, s"${quote(struct)}.${fn}")
+          emitValDef(sym, src"$struct.$fn")
         case _ =>
-          emitValDef(sym, quote(struct) + "." + index)
+          emitValDef(sym, src"$struct.$index")
       }
     case FieldUpdate(struct, index, rhs) =>
-      emitValDef(sym, quote(struct) + "." + index + " = " + quote(rhs))
+      emitValDef(sym, src"$struct.$index = $rhs")
     case _ => super.emitNode(sym, rhs)
   }
 

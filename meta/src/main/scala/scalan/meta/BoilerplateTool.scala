@@ -10,7 +10,8 @@ class BoilerplateTool extends StrictLogging {
     name = "scalan",
     srcPath = "../core/src/main/scala",
     entityFiles = List(
-      "scalan/Converters.scala"
+      "scalan/Converters.scala",
+      "scalan/Views.scala"
     ),
     scalanTypeSynonyms,
     baseContextTrait = "", // not defined means not declare
@@ -206,7 +207,7 @@ class BoilerplateTool extends StrictLogging {
     "effects" -> List(effectsConfig),
     "effects2" -> List(effects2Config),
     "lib-all" -> List(scalanConfig, coreConfig, coreTestsConfig, libConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config),
-    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, libConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config, eeConfig)
+    "all" -> List(scalanConfig, coreConfig, coreTestsConfig, libConfig, collectionsConfig, laConfig, graphConfig, metaTestConfig, effects2Config)
   )
 
   def main(args: Array[String]) {

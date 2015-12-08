@@ -179,7 +179,7 @@ trait LmsBridge extends Passes {
 
   protected def mapParam(m: LmsMirror, x: Any, isFunction: Boolean): Any = x match {
     case e: Exp[_] => if (isFunction) m.funcMirrorUntyped(e) else m.symMirrorUntyped(e)
-    case elem: Element[_] => elemToManifest(elem)
+    case elem: Elem[_] => elemToManifest(elem)
     case seq: Seq[_] => seq.map(mapParam(m, _, isFunction))
     case arr: Array[_] => arr.map(mapParam(m, _, isFunction))
     case x => x
@@ -188,7 +188,7 @@ trait LmsBridge extends Passes {
   /**
    * Extracts the arguments from d. Default implementation returns the list of constructor parameters,
    * including implicit ones. Can be overridden if the LMS method expects the arguments in a different
-   * amount or order (Scalan [[Exp]] will be translated to LMS and [[Element]] will be translated to
+   * amount or order (Scalan [[Exp]] will be translated to LMS and [[Elem]] will be translated to
    * [[Manifest]] automatically).
    */
   protected def extractParams(d: Def[_], fieldMirrors: List[FieldMirror]): List[Any] =
@@ -241,7 +241,7 @@ trait LmsBridge extends Passes {
   private[this] lazy val eItemSym =
     ReflectionUtil.classToSymbol(classOf[EntityElem1[_, _, C] forSome { type C[_] }]).toType.decl(TermName("eItem")).asTerm
 
-  private[this] def reflectElement(clazz: Class[_], elem: Element[_]) = {
+  private[this] def reflectElement(clazz: Class[_], elem: Elem[_]) = {
     val instanceMirror = runtimeMirror(clazz.getClassLoader).reflect(elem)
 
     val fieldMirrors = ReflectionUtil.paramFieldMirrors(clazz, instanceMirror, eItemSym)

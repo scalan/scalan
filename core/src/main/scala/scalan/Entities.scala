@@ -22,6 +22,9 @@ trait Entities extends Elems { self: Scalan =>
   }
   abstract class EntityElem1[A, To, C[_]](val eItem: Elem[A], val cont: Cont[C])
     extends EntityElem[To] {
+    override def getName = {
+      s"${cont.name}[${eItem.name}]"
+    }
   }
   trait ConcreteElem[TData, TClass] extends EntityElem[TClass] with ViewElem[TData, TClass] { eClass =>
     def getConverterFrom[E](eEntity: EntityElem[E]): Option[Conv[E, TClass]] = {
@@ -44,7 +47,7 @@ trait Entities extends Elems { self: Scalan =>
     def asEntityElem = e.asInstanceOf[EntityElem[A]]
   }
 
-  private[this] val modules = MutMap.empty[String, SEntityModuleDef]
+  private[this] lazy val modules = MutMap.empty[String, SEntityModuleDef]
 
   def allEntities = modules.values.flatMap(_.allEntities)
 
@@ -77,12 +80,23 @@ trait Entities extends Elems { self: Scalan =>
     case _: ViewElem[_,_] => true
     case _: EntityElem[_] => false
     case _: BaseElem[_] => true
-    case _ => !!!(s"isConcrete is not defined for Elem $e")
+    case _ => ???(s"isConcreteElem is not implemented for $e")
   }
 
   implicit class ElemOps[T](e: Elem[T]) {
     def isConcrete = isConcreteElem(e)
     def getDataIso = getIsoByElem(e)
+
+    /**
+     * Replaces a root tree of [[PairElem]]s in the given element [[e]] with [[StructElem]]s.
+     * All other types are considered as leaves.
+     * @return new StructElem if [[e]] is [[PairElem]] otherwise returns [[e]].
+     */
+    def toStructElemShallow: Elem[_] = e match {
+      case pe: PairElem[a,b] =>
+        tupleStructElement(pe.eFst.toStructElemShallow, pe.eSnd.toStructElemShallow)
+      case _ => e
+    }
   }
   trait CompanionElem[T] extends Elem[T] { _: scala.Equals =>
     override def isEntityType = false
@@ -102,7 +116,7 @@ trait Entities extends Elems { self: Scalan =>
     def convertTo[R <: Def[_]](implicit eR: Elem[R]): Rep[R] =
       eR match {
         case entE: EntityElem[R] @unchecked => entE.convert(x)
-        case _ => !!!(s"Cannot convert $x to a value of type ${eR.name}: EntityElem expected but ${eR.getClass.getSimpleName} found")
+        case _ => !!!(s"Cannot convert $x to a value of type ${eR.name}: EntityElem expected but ${eR.getClass.getSimpleName} found", x)
       }
   }
 }

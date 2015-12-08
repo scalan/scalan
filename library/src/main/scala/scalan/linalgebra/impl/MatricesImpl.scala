@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait MatricesAbs extends Matrices with scalan.Scalan {
+trait MatricesAbs extends scalan.Scalan with Matrices {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -38,7 +38,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     def convertAbstractMatrix(x: Rep[AbstractMatrix[T]]): Rep[To] = {
       x.selfType1 match {
         case _: AbstractMatrixElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have AbstractMatrixElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have AbstractMatrixElem[_, _], but got $e", x)
       }
     }
 
@@ -58,8 +58,8 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
     override def toString = "AbstractMatrix"
   }
   def AbstractMatrix: Rep[AbstractMatrixCompanionAbs]
-  implicit def proxyAbstractMatrixCompanion(p: Rep[AbstractMatrixCompanion]): AbstractMatrixCompanion =
-    proxyOps[AbstractMatrixCompanion](p)
+  implicit def proxyAbstractMatrixCompanionAbs(p: Rep[AbstractMatrixCompanionAbs]): AbstractMatrixCompanionAbs =
+    proxyOps[AbstractMatrixCompanionAbs](p)
 
   abstract class AbsDenseFlatMatrix[T]
       (rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T])
@@ -88,14 +88,26 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 3) Iso for concrete class
   class DenseFlatMatrixIso[T](implicit eT: Elem[T])
-    extends Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]]()(pairElement(implicitly[Elem[Collection[T]]], implicitly[Elem[Int]])) {
+    extends EntityIso[DenseFlatMatrixData[T], DenseFlatMatrix[T]] with Def[DenseFlatMatrixIso[T]] {
     override def from(p: Rep[DenseFlatMatrix[T]]) =
       (p.rmValues, p.numColumns)
     override def to(p: Rep[(Collection[T], Int)]) = {
       val Pair(rmValues, numColumns) = p
       DenseFlatMatrix(rmValues, numColumns)
     }
-    lazy val eTo = new DenseFlatMatrixElem[T](this)
+    lazy val eFrom = pairElement(element[Collection[T]], element[Int])
+    lazy val eTo = new DenseFlatMatrixElem[T](self)
+    lazy val selfType = new DenseFlatMatrixIsoElem[T](eT)
+    def productArity = 1
+    def productElement(n: Int) = eT
+  }
+  case class DenseFlatMatrixIsoElem[T](eT: Elem[T]) extends Elem[DenseFlatMatrixIso[T]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new DenseFlatMatrixIso[T]()(eT))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      weakTypeTag[DenseFlatMatrixIso[T]]
+    }
   }
   // 4) constructor and deconstructor
   class DenseFlatMatrixCompanionAbs extends CompanionDef[DenseFlatMatrixCompanionAbs] with DenseFlatMatrixCompanion {
@@ -128,7 +140,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDenseFlatMatrix[T](implicit eT: Elem[T]): Iso[DenseFlatMatrixData[T], DenseFlatMatrix[T]] =
-    cachedIso[DenseFlatMatrixIso[T]](eT)
+    reifyObject(new DenseFlatMatrixIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkDenseFlatMatrix[T](rmValues: Rep[Collection[T]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[DenseFlatMatrix[T]]
@@ -161,14 +173,26 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CompoundMatrixIso[T](implicit eT: Elem[T])
-    extends Iso[CompoundMatrixData[T], CompoundMatrix[T]]()(pairElement(implicitly[Elem[Collection[AbstractVector[T]]]], implicitly[Elem[Int]])) {
+    extends EntityIso[CompoundMatrixData[T], CompoundMatrix[T]] with Def[CompoundMatrixIso[T]] {
     override def from(p: Rep[CompoundMatrix[T]]) =
       (p.rows, p.numColumns)
     override def to(p: Rep[(Collection[AbstractVector[T]], Int)]) = {
       val Pair(rows, numColumns) = p
       CompoundMatrix(rows, numColumns)
     }
-    lazy val eTo = new CompoundMatrixElem[T](this)
+    lazy val eFrom = pairElement(element[Collection[AbstractVector[T]]], element[Int])
+    lazy val eTo = new CompoundMatrixElem[T](self)
+    lazy val selfType = new CompoundMatrixIsoElem[T](eT)
+    def productArity = 1
+    def productElement(n: Int) = eT
+  }
+  case class CompoundMatrixIsoElem[T](eT: Elem[T]) extends Elem[CompoundMatrixIso[T]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new CompoundMatrixIso[T]()(eT))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      weakTypeTag[CompoundMatrixIso[T]]
+    }
   }
   // 4) constructor and deconstructor
   class CompoundMatrixCompanionAbs extends CompanionDef[CompoundMatrixCompanionAbs] with CompoundMatrixCompanion {
@@ -201,7 +225,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCompoundMatrix[T](implicit eT: Elem[T]): Iso[CompoundMatrixData[T], CompoundMatrix[T]] =
-    cachedIso[CompoundMatrixIso[T]](eT)
+    reifyObject(new CompoundMatrixIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkCompoundMatrix[T](rows: Rep[Collection[AbstractVector[T]]], numColumns: Rep[Int])(implicit eT: Elem[T]): Rep[CompoundMatrix[T]]
@@ -235,14 +259,26 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ConstMatrixIso[T](implicit eT: Elem[T])
-    extends Iso[ConstMatrixData[T], ConstMatrix[T]]()(pairElement(implicitly[Elem[T]], pairElement(implicitly[Elem[Int]], implicitly[Elem[Int]]))) {
+    extends EntityIso[ConstMatrixData[T], ConstMatrix[T]] with Def[ConstMatrixIso[T]] {
     override def from(p: Rep[ConstMatrix[T]]) =
       (p.item, p.numColumns, p.numRows)
     override def to(p: Rep[(T, (Int, Int))]) = {
       val Pair(item, Pair(numColumns, numRows)) = p
       ConstMatrix(item, numColumns, numRows)
     }
-    lazy val eTo = new ConstMatrixElem[T](this)
+    lazy val eFrom = pairElement(element[T], pairElement(element[Int], element[Int]))
+    lazy val eTo = new ConstMatrixElem[T](self)
+    lazy val selfType = new ConstMatrixIsoElem[T](eT)
+    def productArity = 1
+    def productElement(n: Int) = eT
+  }
+  case class ConstMatrixIsoElem[T](eT: Elem[T]) extends Elem[ConstMatrixIso[T]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new ConstMatrixIso[T]()(eT))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      weakTypeTag[ConstMatrixIso[T]]
+    }
   }
   // 4) constructor and deconstructor
   class ConstMatrixCompanionAbs extends CompanionDef[ConstMatrixCompanionAbs] with ConstMatrixCompanion {
@@ -275,7 +311,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoConstMatrix[T](implicit eT: Elem[T]): Iso[ConstMatrixData[T], ConstMatrix[T]] =
-    cachedIso[ConstMatrixIso[T]](eT)
+    reifyObject(new ConstMatrixIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkConstMatrix[T](item: Rep[T], numColumns: Rep[Int], numRows: Rep[Int])(implicit eT: Elem[T]): Rep[ConstMatrix[T]]
@@ -309,14 +345,26 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 3) Iso for concrete class
   class DiagonalMatrixIso[T](implicit eT: Elem[T])
-    extends Iso[DiagonalMatrixData[T], DiagonalMatrix[T]] {
+    extends EntityIso[DiagonalMatrixData[T], DiagonalMatrix[T]] with Def[DiagonalMatrixIso[T]] {
     override def from(p: Rep[DiagonalMatrix[T]]) =
       p.diagonalValues
     override def to(p: Rep[Collection[T]]) = {
       val diagonalValues = p
       DiagonalMatrix(diagonalValues)
     }
-    lazy val eTo = new DiagonalMatrixElem[T](this)
+    lazy val eFrom = element[Collection[T]]
+    lazy val eTo = new DiagonalMatrixElem[T](self)
+    lazy val selfType = new DiagonalMatrixIsoElem[T](eT)
+    def productArity = 1
+    def productElement(n: Int) = eT
+  }
+  case class DiagonalMatrixIsoElem[T](eT: Elem[T]) extends Elem[DiagonalMatrixIso[T]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new DiagonalMatrixIso[T]()(eT))
+    lazy val tag = {
+      implicit val tagT = eT.tag
+      weakTypeTag[DiagonalMatrixIso[T]]
+    }
   }
   // 4) constructor and deconstructor
   class DiagonalMatrixCompanionAbs extends CompanionDef[DiagonalMatrixCompanionAbs] with DiagonalMatrixCompanion {
@@ -348,7 +396,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoDiagonalMatrix[T](implicit eT: Elem[T]): Iso[DiagonalMatrixData[T], DiagonalMatrix[T]] =
-    cachedIso[DiagonalMatrixIso[T]](eT)
+    reifyObject(new DiagonalMatrixIso[T]()(eT))
 
   // 6) smart constructor and deconstructor
   def mkDiagonalMatrix[T](diagonalValues: Rep[Collection[T]])(implicit eT: Elem[T]): Rep[DiagonalMatrix[T]]
@@ -358,7 +406,7 @@ trait MatricesAbs extends Matrices with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
+trait MatricesSeq extends scalan.ScalanSeq with MatricesDsl {
   self: ScalanCommunityDslSeq =>
   lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs {
   }
@@ -421,7 +469,7 @@ trait MatricesSeq extends MatricesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
+trait MatricesExp extends scalan.ScalanExp with MatricesDsl {
   self: ScalanCommunityDslExp =>
   lazy val AbstractMatrix: Rep[AbstractMatrixCompanionAbs] = new AbstractMatrixCompanionAbs {
   }
@@ -1896,7 +1944,7 @@ trait MatricesExp extends MatricesDsl with scalan.ScalanExp {
 }
 
 object Matrices_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAM1XS2wbRRieXcdxbEdJG5U2lYgIwYBANA4g1EMOVeokKMh5KBsqZCqk8XriTpmd3eyMg82hB45wQ1wR6r03LkhIvSAkxIETAiTEkVNphSqgJxD/zD6869hJG0xUH0a78/gf3/f9439v3UVZ4aPnhI0Z5vMOkXje0s9LQpasFS6p7Ky7jRYjy2T3g7Nf2Ov8sjDRZA2NXsNiWbAaygcPK20vfrbIXhXlMbeJkK4vJHq6qj2UbZcxYkvq8jJ1nJbEdUbKVSrkYhWN1N1GZw/dQEYVnbJdbvtEEqvCsBBEhPNjREVE4/e8fu9sel0fvKyyKCey2PExlRA++DgV7N8mntXhLu84Ek2EoW16KizYk6OO5/oycpEDc9fcRvQ6wjFMoKnqdbyPy+CiWbakT3kTThY9bL+Lm2QDtqjtIxCwIGx3p+Pp90wVFQTZA4DWHI/pmbaHEAIGXtFBzHfxmY/xmVf4lCziU8zo+1gtbvluu4OCn5FBqO2BiZeOMBFZICu8Ufrwqv32A6vomOpwW4WS0xmOgqGnBqhBUwE4frP9sbj/+s2LJirUUIGKpbqQPrZlkvIQrSLm3JU65hhA7DeBrblBbGkvS7CnRxJ523U8zMFSCOU48MSoTaXarObGQ3YGQJ+THom2Gm3PiPOdHZCv1k0FM7Z15/yFZ39bectEZtpFHkxaIHw/MgpyitBYxyCLduhEjZMSGTsaaTXk290xd0gQMRzP37nX+HoBXTVjEEOfD8cbmMiKn34ofv/CJRON1bTKVxlu1gBHscKIs+lXXC5raMzdJ36wktvHTD315THXILu4xWSIbhKWDMAi0ezAevSIwmxRa9+IACgG8t1wOSmtbpX+sr795JZSp4/Gg5WgQP+hF//+eWJXauFKNOY7VzBrERFBnIHaToNeqMQVcSQbemk6DksNM2CBtxww0nJ4Pzc+emaQgDyy5VMHLqx98tpXX775++2NrNbQVIidDj24PkLoujCq7IwF8LTGZT/BFAJULNchp+fu03dufiS1NIx2+nbarF+H5Bf1uScPUUl0S/5ZWzD/OP/jZybKgxjqVDrYKy08ZG3/j/WK0uRNVMJ/CK3ul9OLk8uECwLSDaswwXO05Vy6TivJYBOSyHV1AHxM99hNnZrp3qJPJMKZNnrUZJKdKIgRVXhHirJ/PjOx/GYGyw/wO7tdPcPuXrptouwbKLsL5SyqKFt3W7wREQN/tpK05eVozkgTA0RgHzsxEfo3i7o590StNxaNHr6OdS8eALO3NEd8973j1H4czhVYDTV9VDjHuh7UcKF/Ygt6fPVRhD2hFKdoGq6uz6XNnpSs+2Qzkzi29ngpjcowqb5KOxjXsXXS/3QOTm/3FftwJVaERTHke/NMwuZJias3j8dXWRMNipsux2yYncwwLpvlMK4hXzZpsyd22RzM5tEkkUh9tC+YGeie/rtgkpAdwlxRdUqr2KGs00tb2ml/VaYZOYTGAIqDHzbHxU+Nv3T3hBvHtFHVX6LTYTfDKHDVJHUfhyj4aG5Ao2OFjSPgf+PBpxsvfvf5r7rNLqgWFL4nePwxn2yv06hNBfYgd6fFqezAR3oidpCZ6k513P8CAWcH/zQRAAA="
+  val dump = "H4sIAAAAAAAAAM1YS2wbRRiedeL4FTltaGlARIRgQCAapyDUQw5VcBLUyk2ibFohU4HG64k7ZXZ2szMONocee4Ab4opEJS5IvSBOCKlCQkiIAyeEKnHiwKkUVT20JxD/zD6869gJCUlUH0a78/gf3/f949++dQ+lhYdeFBZmmM/YROIZUz/PC1kyF7mksnPRabQYWSAbE853n5/58ulvUmishkauYrEgWA3l/IfFths9m2SzinKYW0RIxxMSPVfVHsqWwxixJHV4mdp2S+I6I+UqFXKuiobrTqOzia4jo4qOWQ63PCKJWWFYCCKC+SxREdHoPaffOytu1wcvqyzKsSzWPUwlhA8+jvn714hrdrjDO7ZExSC0FVeFBXsy1HYdT4YuMmDuqtMIX4c5hgk0Xr2Gt3AZXDTLpvQob8LJgout93GTLMMWtX0YAhaEbax3XP0+VEV5QTYBoPO2y/RM20UIAQOv6SBmuvjMRPjMKHxKJvEoZvRDrBZXPafdQf7HGEKo7YKJV3cxEVogi7xR+uiK9c4js2Cn1OG2CiWjMxwBQ88OUIOmAnD8ce0T8eCtm2dTKF9DeSrm60J62JJxygO0CphzR+qYIwCx1wS2pgexpb3Mw54eSeQsx3YxB0sBlKPAE6MWlWqzmhsN2BkAfUa6JNxqtF0jyndqQL5aNxXM2Ordp06/8Ofi2ymUSrrIgUkThO+FRkFOIRoXMciiHThR45hExrpGWg25dnfM7BBEBMdLd/9q/DCLrqQiEAOf/403MJEWd34t/PLyuRTK1rTKlxhu1gBHsciIveJVHC5rKOtsEc9fyWxhpp768phpkA3cYjJANw7LEMAi0dTAenSJwmxOa98IASj48l12OCktrZYemj99ekup00Oj/opfoP/Qs3//VtyQWrgSZT37MmYtIkKIh6C2k6DnK1FF7MqGXpqIwlLDJFjgLRuMtGzez42Hnh8kIJesetSGC2uLvPH9t5fu315Oaw2NB9jp0P3rI4CuC6PKzpgFT+e57CeYvI+K6djk+PQD+u7Nj6WWhtFO3k4r9WuQ/Jw+98wOKglvya9u3Dh5/4v3ntDVna1TaWO3NLuH2g5L8RBrFyWJLFaCbwut9DPJxbEFwgUBGQcVGeM83HIqWbOVeLCZOOpqPBnN+vIAmiZ6XCQMTMaOxiKbMHpEliLrYTzDqh531Wr/1CYjVU4OViVA+eRa9QS7d+52CqUvoPQGVLmoonTdafFGyBF8B0vSlm+Gc0aSI+AEe9iOONGfKdTNuSdqvbFg9FC3r+tyG5i9FTvsOR/s50qIwrkMq4HUdwtnX7eGGk73T2xWj6/vReNFpThF06FJ/FTSw1EpvE9ik7FjFx4v0VEZJNVXdNvj2rdk+p/OwOm1vro/WLUVYFEc3m16Imb+qHTWm9LjK7Jig+KmwzE7yLbnAERRXAjiOrwrKOnhyK6g7YntTR0xFEb64joEXdf/184A9Hbgs6AarCVsU9bpJTPpfyet9uFpB559gLb/TNovqmr8vbsn2JjVRlW3io4HTRCjwGCT1D0cAOKh6QH9kRm0nsDK9UefLb/y89d/6KY9r5pY+HXCo78G4s16EsBx3x7kbrc4lR34yR+LHcSn+lsd97/K9lkfghEAAA=="
 }
 }
 

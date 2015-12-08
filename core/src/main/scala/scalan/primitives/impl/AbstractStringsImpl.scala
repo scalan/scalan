@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
+trait AbstractStringsAbs extends scalan.Scalan with AbstractStrings {
   self: AbstractStringsDsl =>
 
   // single proxy for each type family
@@ -35,7 +35,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     def convertAString(x: Rep[AString]): Rep[To] = {
       x.selfType1 match {
         case _: AStringElem[_] => x.asRep[To]
-        case e => !!!(s"Expected $x to have AStringElem[_], but got $e")
+        case e => !!!(s"Expected $x to have AStringElem[_], but got $e", x)
       }
     }
 
@@ -55,8 +55,8 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
     override def toString = "AString"
   }
   def AString: Rep[AStringCompanionAbs]
-  implicit def proxyAStringCompanion(p: Rep[AStringCompanion]): AStringCompanion =
-    proxyOps[AStringCompanion](p)
+  implicit def proxyAStringCompanionAbs(p: Rep[AStringCompanionAbs]): AStringCompanionAbs =
+    proxyOps[AStringCompanionAbs](p)
 
   abstract class AbsSString
       (wrappedValue: Rep[String])
@@ -84,14 +84,25 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SStringIso
-    extends Iso[SStringData, SString] {
+    extends EntityIso[SStringData, SString] with Def[SStringIso] {
     override def from(p: Rep[SString]) =
       p.wrappedValue
     override def to(p: Rep[String]) = {
       val wrappedValue = p
       SString(wrappedValue)
     }
-    lazy val eTo = new SStringElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new SStringElem(self)
+    lazy val selfType = new SStringIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class SStringIsoElem() extends Elem[SStringIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SStringIso())
+    lazy val tag = {
+      weakTypeTag[SStringIso]
+    }
   }
   // 4) constructor and deconstructor
   class SStringCompanionAbs extends CompanionDef[SStringCompanionAbs] with SStringCompanion {
@@ -123,7 +134,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSString: Iso[SStringData, SString] =
-    cachedIso[SStringIso]()
+    reifyObject(new SStringIso())
 
   // 6) smart constructor and deconstructor
   def mkSString(wrappedValue: Rep[String]): Rep[SString]
@@ -155,14 +166,25 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CStringIso
-    extends Iso[CStringData, CString] {
+    extends EntityIso[CStringData, CString] with Def[CStringIso] {
     override def from(p: Rep[CString]) =
       p.wrappedValue
     override def to(p: Rep[String]) = {
       val wrappedValue = p
       CString(wrappedValue)
     }
-    lazy val eTo = new CStringElem(this)
+    lazy val eFrom = element[String]
+    lazy val eTo = new CStringElem(self)
+    lazy val selfType = new CStringIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class CStringIsoElem() extends Elem[CStringIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new CStringIso())
+    lazy val tag = {
+      weakTypeTag[CStringIso]
+    }
   }
   // 4) constructor and deconstructor
   class CStringCompanionAbs extends CompanionDef[CStringCompanionAbs] with CStringCompanion {
@@ -194,7 +216,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCString: Iso[CStringData, CString] =
-    cachedIso[CStringIso]()
+    reifyObject(new CStringIso())
 
   // 6) smart constructor and deconstructor
   def mkCString(wrappedValue: Rep[String]): Rep[CString]
@@ -204,7 +226,7 @@ trait AbstractStringsAbs extends AbstractStrings with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
+trait AbstractStringsSeq extends scalan.ScalanSeq with AbstractStringsDsl {
   self: AbstractStringsDslSeq =>
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs {
   }
@@ -239,7 +261,7 @@ trait AbstractStringsSeq extends AbstractStringsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
+trait AbstractStringsExp extends scalan.ScalanExp with AbstractStringsDsl {
   self: AbstractStringsDslExp =>
   lazy val AString: Rep[AStringCompanionAbs] = new AStringCompanionAbs {
   }
@@ -314,7 +336,7 @@ trait AbstractStringsExp extends AbstractStringsDsl with scalan.ScalanExp {
 }
 
 object AbstractStrings_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVVTWwbRRR+Xjtx/KMmjQRSciG4JggEdoSEeggSMq6LkNwk6haETIU0Xk/cKbOzk51JsDn0wBFuiCtCvffGBQmJC0JCHDghQOLMqYBQBfRUxJvZH6/dbptL9zCanzfvve/73pu99QcsqRC2lUc4ES2fatJy7byjdNPtCc309FIwOub0Aj388MkvvUviNeXA6gCWrxF1QfEBVKJJbyLTuUuP+lAhwqNKB6HS8HTfRmh7AefU0ywQbeb7x5oMOW33mdK7fSgNg9H0CG5AoQ9rXiC8kGrqdjlRiqp4f4WajFi6rtj1dF/OYoi2QdHOoLgSEqYxfYyxFtlfptKdikBMfQ1n4tT2pUkLbcrMl0GokxBldHctGCXLkiC4Aev96+SEtDHEuO3qkIkx3qxJ4r1HxnQPTYx5CRNWlB9emUq7LvahqugREvSGL7ndmUgAQAVeskm0Zvy0Un5ahp+mS0NGOPuAmMODMJhMIfoKRYCJRBcvPMJF4oH2xKj50VXvnbtuzXfM5YlJpWwRLqOjp3KqwUqBPH53+RN15/Wb5x2oDqDKVGeodEg8nZU8ZqtGhAi0zTklkIRjVKuRp5aN0kGbhZKoeIEviUBPMZV11Ikzj2ljbPbqsTo51Je1pIlpYSILKd6tHLy2brqE84PbGy8+83vvbQec+RAVdOli4YeJUw3lTlQOllIzVGJ28+OkiJ+9/efo2x246qQ8xW5PJw26WFK//FT78blXHVgZ2EK+yMl4gFSpHqf+ftgNhB7ASnBCw+ikfEK4mT1QqvKIHpJjrmMCs8iLiFzDVm7LSWpo2bXlXUgIqEUVuhcI2rx40PzX/f7TW6YAQ6hHJ1EP/sfO3/v1zKG2tamh/n5IpKSjtwg/jhp/VUMRWzhl5VyegJIehMzHB+OEvvzNV2/+9fXektVwPQZmXc70KmUxmtBOo6FheWYQaTlTtBql7QY+Pdu4w969+bG22hUm8y/E/vA6tuSuvbfxEBmTl+qfwY7z98bPnztQQbWGTPtENndO2V+PsWcgrerZsIk8rbkRR91suM3Zq7Jup9gc7ozLzHEt6cVY3Nwesr4ytk+k1WU9PrJWzLB1v5BmPGfH7VyE3VMi7C4ijAJlkt6GebRFFPxU+ON07895/na9N0mz3HkY7nmAnVyAC6/a5kJar8xvIgmryR8huoSv/dm44GXSjioGEEIjpxfcuBKRnRt3P9t7/ocvfrO9WzU1jS+ISP/Q2Z6dp2J9IRH882aS11Ay5W7T/x9Ylgs0CQkAAA=="
+  val dump = "H4sIAAAAAAAAALVVTWhcRRz/70ey2Q+aNFKwuRg3a0TR3ShIDwFl2W5FWJPQV0XW0jL7drKdOm9mMjOJux567EFv4lWw4EXoRTyJIIII4sGTiODZU1VKD/akODPvY9+ueSYefIfhzcx//h+/3/83c/c3WFASNpWPKGLNAGvU9Nx/W+mG12Wa6MmrfHhI8UW8/yj/6qPnPln7PA/LfVi8gdRFRftQDn+6Y5H8e/igB2XEfKw0l0rD4z0XoeVzSrGvCWctEgSHGg0obvWI0ts9KA74cHIAtyDXgxWfM19ijb0ORUphFa0vYZsRSeZlN5/simkM1rJVtFJVXJGIaJO+ibES2l/GwpswziaBhjNRarvCpmVsSiQQXOo4RMm4u8GH8bTIkFmA1d5NdIRaJsSo5WlJ2MicrArkv4VGeMeYWPOiSVhhun9lIty80IOKwgcGoFcCQd3KWACAYeB5l0Rzik8zwadp8Wl4WBJEyTvIbu5JPp5A+OUKAGNhXDxzgovYA+6yYePdq/6bD71qkLeHxzaVkqtw0Th6LKMbHBUGx28vv68evHznQh4qfagQ1R4oLZGv05RHaFURY1y7nBMAkRwZtupZbLkobWMz1xJlnwcCMeMpgrJmeKLEJ9oa27VaxE4G9CUtcGyaG4tcUu96Rr2ubzqI0r1755994tfuG3nIz4YoG5eeaXwZO9VQaoft4CC1QzlCNztOUvGT934ffrMFV/MJTpHb01FjXCyon36s/vDUS3lY6rtGvkTRqG+gUl2Kg13Z4Uz3YYkfYRnulI4QtX/HUlUa4n10SHUEYLrygqlcw3qm5AS2sGy79s7FAFTDDt3hDDcu7TX+8L774K5tQAm1cCfU4F/kwp8/n9nXrjc11N6WSAg8fB3Rw1D4yxoKRsIJKhtZBAq8J0lgLowj/MLXX7x2/8udBcfhalSYcznlq5iu0YbO1+saFqcGIZdTRith2h4P8Nn6A3LtznvacZcbz94Qu4ObRpLb7tz5f6Exvqk+vX373P2Prz/iFLY0IDpAorH1H/QVy+F/1A8kHR7eHKvTuR3WDHwrXghdJx15bf6I0Yw3hTi1XY0lGnGeKS3nK2V7Lmk65/HEFrLD+j/5teOGGzdPU2znlMV25osNY6by34TZwgumJU4FxQwgcylvHOu61h0nCW+diMZxZbczy567Ddfmkn1xdtFAsxy/JOEh80qcjYQiYhmrqBYJ9QwNeVHXGsxuPfxw5+nvP/vFab5i+9/cPCx52dNan0VldS4R82KnktdQtNJw6f8NR9KtDkEJAAA="
 }
 }
 

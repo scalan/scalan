@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait StatesAbs extends States with scalan.Scalan {
+trait StatesAbs extends scalan.Scalan with States {
   self: MonadsDsl =>
 
   // single proxy for each type family
@@ -39,7 +39,7 @@ trait StatesAbs extends States with scalan.Scalan {
     def convertState0(x: Rep[State0[S, A]]): Rep[To] = {
       x.selfType1 match {
         case _: State0Elem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have State0Elem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have State0Elem[_, _, _], but got $e", x)
       }
     }
 
@@ -59,8 +59,8 @@ trait StatesAbs extends States with scalan.Scalan {
     override def toString = "State0"
   }
   def State0: Rep[State0CompanionAbs]
-  implicit def proxyState0Companion(p: Rep[State0Companion]): State0Companion =
-    proxyOps[State0Companion](p)
+  implicit def proxyState0CompanionAbs(p: Rep[State0CompanionAbs]): State0CompanionAbs =
+    proxyOps[State0CompanionAbs](p)
 
   abstract class AbsStateBase[S, A]
       (run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A])
@@ -90,14 +90,27 @@ trait StatesAbs extends States with scalan.Scalan {
 
   // 3) Iso for concrete class
   class StateBaseIso[S, A](implicit eS: Elem[S], eA: Elem[A])
-    extends Iso[StateBaseData[S, A], StateBase[S, A]] {
+    extends EntityIso[StateBaseData[S, A], StateBase[S, A]] with Def[StateBaseIso[S, A]] {
     override def from(p: Rep[StateBase[S, A]]) =
       p.run
     override def to(p: Rep[S => (A, S)]) = {
       val run = p
       StateBase(run)
     }
-    lazy val eTo = new StateBaseElem[S, A](this)
+    lazy val eFrom = element[S => (A, S)]
+    lazy val eTo = new StateBaseElem[S, A](self)
+    lazy val selfType = new StateBaseIsoElem[S, A](eS, eA)
+    def productArity = 2
+    def productElement(n: Int) = (eS, eA).productElement(n)
+  }
+  case class StateBaseIsoElem[S, A](eS: Elem[S], eA: Elem[A]) extends Elem[StateBaseIso[S, A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new StateBaseIso[S, A]()(eS, eA))
+    lazy val tag = {
+      implicit val tagS = eS.tag
+      implicit val tagA = eA.tag
+      weakTypeTag[StateBaseIso[S, A]]
+    }
   }
   // 4) constructor and deconstructor
   class StateBaseCompanionAbs extends CompanionDef[StateBaseCompanionAbs] with StateBaseCompanion {
@@ -129,7 +142,7 @@ trait StatesAbs extends States with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoStateBase[S, A](implicit eS: Elem[S], eA: Elem[A]): Iso[StateBaseData[S, A], StateBase[S, A]] =
-    cachedIso[StateBaseIso[S, A]](eS, eA)
+    reifyObject(new StateBaseIso[S, A]()(eS, eA))
 
   // 6) smart constructor and deconstructor
   def mkStateBase[S, A](run: Rep[S => (A, S)])(implicit eS: Elem[S], eA: Elem[A]): Rep[StateBase[S, A]]
@@ -139,7 +152,7 @@ trait StatesAbs extends States with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait StatesSeq extends StatesDsl with scalan.ScalanSeq {
+trait StatesSeq extends scalan.ScalanSeq with StatesDsl {
   self: MonadsDslSeq =>
   lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs {
   }
@@ -160,7 +173,7 @@ trait StatesSeq extends StatesDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait StatesExp extends StatesDsl with scalan.ScalanExp {
+trait StatesExp extends scalan.ScalanExp with StatesDsl {
   self: MonadsDslExp =>
   lazy val State0: Rep[State0CompanionAbs] = new State0CompanionAbs {
   }
@@ -263,7 +276,7 @@ trait StatesExp extends StatesDsl with scalan.ScalanExp {
 }
 
 object States_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRR+XsdxbIemFFRUqjYhMiAqsKMKqYccKid1oJXzo2wOlamKxuuxu2V2drMzjmwOFeKE4Ia4cECo9964ICFxQ0IcOFWAxIkDp9IeKmjVAxVvZn+deENVxB5GO7Nv38/3fe/t3roLBeHDK8IijPCaQyWpmfq+IWTVbHJpy9G62x0weoH2Pjz+tbXOV4QBc22YvkbEBcHaUApumkMvvjfpbgtKhFtUSNcXEl5q6Qh1y2WMWtJ2ed12nIEkHUbrLVvI5RZMddzuaBduQK4FRy2XWz6V1FxlRAgqwvMZqjKy431J70ebXhKD11UV9VQVOz6xJaaPMY4G9tvUM0fc5SNHwpEwtU1PpYU2RdvxXF9GIYro7prbjbZTnOABHGtdJ3ukjiH6dVP6Nu/jmxWPWO+RPt1AE2U+hQkLyno7I0/v8y0oC7qLAF10PKZPhh4AIANndRK1BJ9ajE9N4VM1qW8TZr9P1MMt3x2OILhyeYChhy5e/xcXkQfa5N3qx1esdx6aFcdQLw9VKkVd4TQ6ms9Qg6YCcfx++1Nx/62b5wwot6Fsi0ZHSJ9YMk15iFaFcO5KnXMMIPH7yNZiFls6SgNt9kmiZLmORzh6CqGcRZ6YbdlSGauz2ZCdDOiL0qORaW7o5eJ6FzLq1bpZJYxt3Tnxxst/NC8bYIyHKKFLE4XvR04lTJtYLl0Knat1TkLOTBBW24beqqU0TNbiIbnEqLx65173uyW4YsRYhqGfjD50URC//FS5/dp5A2baWuxrjPTbCKdoMups+qsul22YcfeoHzwp7hGm7ibSWezSHhkwGYKcRieP6EhYyGxLjyrolnUL5CIAKoGKN1xOq2tb1QfmD5/dUiL1YTZ4EvTpY/vc378e6UmtXwl5f8AjdPPY3TEYp7O49ejagFu3L37+3Nypd3/TzE53XYfYWl4nW1Dwsbd1KSdDcFNEZqOMjncGHqNvfvPo6kcfvO1png7oZJ88GuPyMCfKIxFJOUDCdB367OJ9++rNT6QOkxuOD6bNznWcBMv6vdOH5RwOyL/aS8afJ37+0oASCqBjS4d41aUnbOv/sVVhHK65oMVW00FSaBXjZR6VcUwbrxBBx+znE8RfSHl/MRdJURtJMKgZhZ1S7TGxr4PYWQ4ahzk4OAkklOKUtY9Yy6eyJYdgHd9uPc/unv/WgMIlKPSwXwWKuOMOeDdiAT+qkg7lSnSWG2cBUSc+cWLU9bUACVzjg+zSRIODBaUqPruPyTyKbvzkP4zPNPvatB7GHBdFrIxJMgrKSMZ4moDsmp8CFLVuJTahYRAVv47PRFS7nHRFWI0PixkKMMP2QThvPPxi48yPX/2uJ1pZNSJOUh7/zSR87x9CpXUdC39OUsmiaFVr6kT/AfsglOMsCgAA"
+  val dump = "H4sIAAAAAAAAALVWTWwbRRR+tuM4dkJTWn5btQmRAYHADhVSDzlUbupAwU3SbA7IVK3G67G7ZXZmszOObA4VpwrBDXHhgEQlLki9IE4ICXFBQhw4VRUSJw6cSivUAxUHEG9mf7x2vOFP+DDamX3zfr7ve2994w7kpQ9PSZswwisuVaRimeeaVGWrzpWjBudEu8foGdp5THz10QufHPk8C/NNmL5M5BnJmlAMHup9L3626E4DioTbVCrhSwVPNEyEqi0Yo7ZyBK86rttTpMVoteFItdKAqZZoD3bgKmQacNAW3PapotYqI1JSGZ7PUJ2RE++LZj/Y8IYxeFVXUU1Use0TR2H6GONgYL9FPWvABR+4Cg6EqW14Oi20KTiuJ3wVhSigu8uiHW2nOMEDONS4QnZJFUN0q5byHd7Fm7Mesd8gXbqOJtp8ChOWlHW2B57Z5xpQknQHATrresyc9D0AQAZOmCQqQ3wqMT4VjU/Zor5DmPMm0S83fdEfQPDL5AD6Hrp47i9cRB5onbfL71ywX79vzbpZfbmvUymYCqfR0UKKGgwViOM3W+/Jey9dP5mFUhNKjqy1pPKJrZKUh2jNEs6FMjnHABK/i2wtpbFlotTQZkwSRVu4HuHoKYRyDnliju0obazP5kJ2UqAvKI9Gppm+l4nrXUyp1+hmlTC2efvx55/8uf5aFrKjIYro0kLh+5FTBdMWlkuXQ+d6nVeQsYYI623NbPVS7A/Xwj65xKg8fftu++tluJCNsQxD/z360EVefn9r9uYzp7Iw0zRiX2Ok20Q4ZZ1Rd8NfFVw1YUbsUj94U9glTD9NpLPQph3SYyoEOYlODtFRsJjalh7V0K2YFshEAMwGKl4XnJbXNsu/Wt++f0OL1Ie54E3Qp384J3//4UBHGf0qyPk9HqGbw+6OwTiexq1H13rcvnn2g8Pzxy79aJidbguXOEZeRxuQ97G3TSlHQ3ATRKajjI63ex6jL37x28W333rZMzzt0cmYPGqj8rAmymMoklKAhCVc+uDSPefi9XeVCZPpjw6mjdYVnAQr5t7x/XIOB+Sn1649/MvHlw6bxp5pOcolXnn5H7R11IX/Y9vCKHTzQbutJoMUkmjp9dH41CwLKJhD5t5pIunI1YXEpUSgI5lIocZIQZZaUQZTumsmtnuQRpqD2n4O9g4IBcU4ZeMjlvixdCUibo9sNR5id059mYX8K5DvYBtL1HZL9Hg7IgS/tYr21enoLDNKCBJAfOLGBJjfIgzhGp1vr0402FtQouITY6TmUIujJ/9hqqYIweyrYfix4wl6maSzoLjhzE/Sko7Ev4BKr+eHNqFhEBU/pQ9EAhCctGVYmA9LKbqwwv5CkK/e/3D92e8++8mMv5LuVBy7PP7rM1TB+MQqnjOx8J9MIlmUsu5dk+if6SYzcVkKAAA="
 }
 }
 

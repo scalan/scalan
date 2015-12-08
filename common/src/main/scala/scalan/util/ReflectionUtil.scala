@@ -52,8 +52,12 @@ object ReflectionUtil {
       // workaround for http://stackoverflow.com/questions/32118877/compiler-doesnt-generate-a-field-for-implicit-val-when-an-implicit-val-with-the
       // this would be handled by below try-catch as well, but is common
       // enough to handle specially
-      val fieldSym1 = knownSupertypeFieldsWithTypes.collectFirst {
-        case (f, t) if t == fieldType => f
+      val fieldSym1 = fieldSym.overrides.reverse.collectFirst {
+        case f: TermSymbol if f.isGetter => f.accessed.asTerm
+      }.orElse {
+        knownSupertypeFieldsWithTypes.collectFirst {
+          case (f, t) if t == fieldType => f
+        }
       }.getOrElse(fieldSym)
 
       try {

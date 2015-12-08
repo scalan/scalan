@@ -115,7 +115,7 @@ trait Processes extends Base with Containers { self: ProcessesDsl =>
 
 trait ProcessesDsl extends ScalanDsl with impl.ProcessesAbs with Processes with MonadsDsl {
 
-  implicit def processCont[F[_]:Cont]: Cont[({type f[x] = Process[F,x]})#f] = new Container[({type f[x] = Process[F,x]})#f] {
+  implicit def processCont[F[_]:Cont]: Cont[({type f[x] = Process[F,x]})#f] = new Cont[({type f[x] = Process[F,x]})#f] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Process[F,T]]
     def lift[T](implicit eT: Elem[T]) = element[Emit[F,T]].asElem[Process[F,T]]
   }
@@ -145,7 +145,7 @@ trait ProcessesDsl extends ScalanDsl with impl.ProcessesAbs with Processes with 
 }
 
 
-trait ProcessesDslSeq extends ProcessesDsl with impl.ProcessesSeq with ScalanCtxSeq  {
+trait ProcessesDslSeq extends ScalanCtxSeq with impl.ProcessesSeq {
 
   //def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = i => (i + 1, v)
   def tryCatch[A:Elem](t: Th[A], c: (Rep[Throwable]) => Rep[A]) =
@@ -157,7 +157,7 @@ trait ProcessesDslSeq extends ProcessesDsl with impl.ProcessesSeq with ScalanCtx
     }
 }
 
-trait ProcessesDslExp extends ProcessesDsl with impl.ProcessesExp with ScalanExp {
+trait ProcessesDslExp extends ScalanCtxExp with impl.ProcessesExp {
 
 //  def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun { i => Eval(i, v) }
 

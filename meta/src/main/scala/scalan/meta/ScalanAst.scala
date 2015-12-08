@@ -2,6 +2,7 @@ package scalan.meta
 
 import scala.reflect.internal.ModifierFlags
 import PrintExtensions._
+import scalan._
 
 object ScalanAst {
   // STpe universe --------------------------------------------------------------------------
@@ -75,7 +76,8 @@ object ScalanAst {
     }
 
     def unRep(module: SEntityModuleDef , config: CodegenConfig): Option[STpeExpr] = self match {
-      case t if (!config.isAlreadyRep) => Some(t)
+      case t if !config.isAlreadyRep => Some(t)
+      case STraitCall("Elem" | "Element", Seq(t)) => Some(self)
       case STraitCall("Rep", Seq(t)) => Some(t)
       case STraitCall(name, args) =>
         val typeSynonyms = config.entityTypeSynonyms ++
@@ -125,14 +127,11 @@ object ScalanAst {
   case class SMethodAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
   case class SArgAnnotation(annotationClass: String, args: List[SExpr]) extends SAnnotation
 
-  def annotationNameOf(a: java.lang.annotation.Annotation): String = a.getClass.getSimpleName
-
-  //TODO extract this names from the corresponding classed of annotation somehow
-  final val ConstuctorAnnotation = "Constructor"
-  final val ExternalAnnotation = "External"
-  final val ArgListAnnotation = "ArgList"
-  final val ContainerTypeAnnotation = "ContainerType"
-  final val FunctorTypeAnnotation = "FunctorType"
+  final val ConstructorAnnotation = classOf[Constructor].getSimpleName
+  final val ExternalAnnotation = classOf[External].getSimpleName
+  final val ArgListAnnotation = classOf[ArgList].getSimpleName
+  final val ContainerTypeAnnotation = classOf[ContainerType].getSimpleName
+  final val FunctorTypeAnnotation = classOf[FunctorType].getSimpleName
 
   // SExpr universe --------------------------------------------------------------------------
   trait SExpr
@@ -265,6 +264,7 @@ object ScalanAst {
     def companion: Option[STraitOrClassDef]
     def isTrait: Boolean
     def annotations: List[STraitOrClassAnnotation]
+    def args: SClassArgs
     def implicitArgs: SClassArgs
     def isHighKind = tpeArgs.exists(_.isHighKind)
 
@@ -284,11 +284,24 @@ object ScalanAst {
       getFieldDefs.map(_.name).toSet ++ getAncestorTraits(module).flatMap(_.getAvailableFields(module))
     }
 
-    def getConcreteClasses = body.collect { case c: SClassDef => c }
+    def getConcreteClasses = body.collect { case c: SClassDef if !c.hasAnnotation("InternalType") => c }
+
+    def getDeclaredElems(module: SEntityModuleDef):  List[(String, STpeExpr)] = {
+      val res = (this :: getAncestorTraits(module))
+        .flatMap(e => {
+          val elems = e.body.collect {
+            case SMethodDef(name, _, _, Some(elemOrCont), true, _, _, _, _, true) =>
+              (name, elemOrCont)
+          }
+          elems
+        })
+      res
+    }
 
     def getAnnotation(annotName: String) = annotations.find(a => a.annotationClass == annotName)
 
     def hasAnnotation(annotName: String) = getAnnotation(annotName).isDefined
+
     def clean: STraitOrClassDef
   }
 
@@ -302,9 +315,10 @@ object ScalanAst {
                         annotations: List[STraitOrClassAnnotation] = Nil) extends STraitOrClassDef {
 
     def isTrait = true
+    val args = SClassArgs(Nil)
     lazy val implicitArgs: SClassArgs = {
       val implicitElems = body.collect {
-        case SMethodDef(name, _, _, Some(elemOrCont), true, _, _, _, _, true) =>
+        case SMethodDef(name, _, _, Some(elemOrCont), _, _, _, _, _, true) =>
           (name, elemOrCont)
       }
       val args: List[Either[STpeArg, SClassArg]] = tpeArgs.map { a =>
@@ -371,6 +385,7 @@ object ScalanAst {
                          ancestors: List[STraitCall],
                          body: List[SBodyItem]) extends STraitOrClassDef {
 
+    val args = SClassArgs(Nil)
     def tpeArgs = Nil
     def selfType = None
     def companion = None
@@ -423,6 +438,7 @@ object ScalanAst {
     }
 
     def isEntity(name: String) = entities.exists(e => e.name == name)
+    def isClass(name: String) = concreteSClasses.exists(c => c.name == name)
 
     def allEntities = entities ++ concreteSClasses
 

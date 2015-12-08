@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait FrontsAbs extends Fronts with scalan.Scalan {
+trait FrontsAbs extends scalan.Scalan with Fronts {
   self: FrontsDsl =>
 
   // single proxy for each type family
@@ -35,7 +35,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     def convertFront(x: Rep[Front]): Rep[To] = {
       x.selfType1 match {
         case _: FrontElem[_] => x.asRep[To]
-        case e => !!!(s"Expected $x to have FrontElem[_], but got $e")
+        case e => !!!(s"Expected $x to have FrontElem[_], but got $e", x)
       }
     }
 
@@ -55,8 +55,8 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
     override def toString = "Front"
   }
   def Front: Rep[FrontCompanionAbs]
-  implicit def proxyFrontCompanion(p: Rep[FrontCompanion]): FrontCompanion =
-    proxyOps[FrontCompanion](p)
+  implicit def proxyFrontCompanionAbs(p: Rep[FrontCompanionAbs]): FrontCompanionAbs =
+    proxyOps[FrontCompanionAbs](p)
 
   abstract class AbsBaseFront
       (set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet])
@@ -85,14 +85,25 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 3) Iso for concrete class
   class BaseFrontIso
-    extends Iso[BaseFrontData, BaseFront]()(pairElement(implicitly[Elem[CollectionOverArray[Int]]], implicitly[Elem[BitSet]])) {
+    extends EntityIso[BaseFrontData, BaseFront] with Def[BaseFrontIso] {
     override def from(p: Rep[BaseFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(CollectionOverArray[Int], BitSet)]) = {
       val Pair(set, bits) = p
       BaseFront(set, bits)
     }
-    lazy val eTo = new BaseFrontElem(this)
+    lazy val eFrom = pairElement(element[CollectionOverArray[Int]], element[BitSet])
+    lazy val eTo = new BaseFrontElem(self)
+    lazy val selfType = new BaseFrontIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class BaseFrontIsoElem() extends Elem[BaseFrontIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new BaseFrontIso())
+    lazy val tag = {
+      weakTypeTag[BaseFrontIso]
+    }
   }
   // 4) constructor and deconstructor
   class BaseFrontCompanionAbs extends CompanionDef[BaseFrontCompanionAbs] with BaseFrontCompanion {
@@ -125,7 +136,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoBaseFront: Iso[BaseFrontData, BaseFront] =
-    cachedIso[BaseFrontIso]()
+    reifyObject(new BaseFrontIso())
 
   // 6) smart constructor and deconstructor
   def mkBaseFront(set: Rep[CollectionOverArray[Int]], bits: Rep[BitSet]): Rep[BaseFront]
@@ -158,14 +169,25 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ListFrontIso
-    extends Iso[ListFrontData, ListFront]()(pairElement(implicitly[Elem[CollectionOverList[Int]]], implicitly[Elem[BitSet]])) {
+    extends EntityIso[ListFrontData, ListFront] with Def[ListFrontIso] {
     override def from(p: Rep[ListFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(CollectionOverList[Int], BitSet)]) = {
       val Pair(set, bits) = p
       ListFront(set, bits)
     }
-    lazy val eTo = new ListFrontElem(this)
+    lazy val eFrom = pairElement(element[CollectionOverList[Int]], element[BitSet])
+    lazy val eTo = new ListFrontElem(self)
+    lazy val selfType = new ListFrontIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class ListFrontIsoElem() extends Elem[ListFrontIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new ListFrontIso())
+    lazy val tag = {
+      weakTypeTag[ListFrontIso]
+    }
   }
   // 4) constructor and deconstructor
   class ListFrontCompanionAbs extends CompanionDef[ListFrontCompanionAbs] with ListFrontCompanion {
@@ -198,7 +220,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoListFront: Iso[ListFrontData, ListFront] =
-    cachedIso[ListFrontIso]()
+    reifyObject(new ListFrontIso())
 
   // 6) smart constructor and deconstructor
   def mkListFront(set: Rep[CollectionOverList[Int]], bits: Rep[BitSet]): Rep[ListFront]
@@ -231,14 +253,25 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 3) Iso for concrete class
   class CollectionFrontIso
-    extends Iso[CollectionFrontData, CollectionFront]()(pairElement(implicitly[Elem[Collection[Int]]], implicitly[Elem[BitSet]])) {
+    extends EntityIso[CollectionFrontData, CollectionFront] with Def[CollectionFrontIso] {
     override def from(p: Rep[CollectionFront]) =
       (p.set, p.bits)
     override def to(p: Rep[(Collection[Int], BitSet)]) = {
       val Pair(set, bits) = p
       CollectionFront(set, bits)
     }
-    lazy val eTo = new CollectionFrontElem(this)
+    lazy val eFrom = pairElement(element[Collection[Int]], element[BitSet])
+    lazy val eTo = new CollectionFrontElem(self)
+    lazy val selfType = new CollectionFrontIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class CollectionFrontIsoElem() extends Elem[CollectionFrontIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new CollectionFrontIso())
+    lazy val tag = {
+      weakTypeTag[CollectionFrontIso]
+    }
   }
   // 4) constructor and deconstructor
   class CollectionFrontCompanionAbs extends CompanionDef[CollectionFrontCompanionAbs] with CollectionFrontCompanion {
@@ -271,7 +304,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoCollectionFront: Iso[CollectionFrontData, CollectionFront] =
-    cachedIso[CollectionFrontIso]()
+    reifyObject(new CollectionFrontIso())
 
   // 6) smart constructor and deconstructor
   def mkCollectionFront(set: Rep[Collection[Int]], bits: Rep[BitSet]): Rep[CollectionFront]
@@ -304,14 +337,25 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 3) Iso for concrete class
   class MapBasedFrontIso
-    extends Iso[MapBasedFrontData, MapBasedFront] {
+    extends EntityIso[MapBasedFrontData, MapBasedFront] with Def[MapBasedFrontIso] {
     override def from(p: Rep[MapBasedFront]) =
       p.mmap
     override def to(p: Rep[MMap[Int, Unit]]) = {
       val mmap = p
       MapBasedFront(mmap)
     }
-    lazy val eTo = new MapBasedFrontElem(this)
+    lazy val eFrom = element[MMap[Int, Unit]]
+    lazy val eTo = new MapBasedFrontElem(self)
+    lazy val selfType = new MapBasedFrontIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class MapBasedFrontIsoElem() extends Elem[MapBasedFrontIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new MapBasedFrontIso())
+    lazy val tag = {
+      weakTypeTag[MapBasedFrontIso]
+    }
   }
   // 4) constructor and deconstructor
   class MapBasedFrontCompanionAbs extends CompanionDef[MapBasedFrontCompanionAbs] with MapBasedFrontCompanion {
@@ -343,7 +387,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoMapBasedFront: Iso[MapBasedFrontData, MapBasedFront] =
-    cachedIso[MapBasedFrontIso]()
+    reifyObject(new MapBasedFrontIso())
 
   // 6) smart constructor and deconstructor
   def mkMapBasedFront(mmap: Rep[MMap[Int, Unit]]): Rep[MapBasedFront]
@@ -353,7 +397,7 @@ trait FrontsAbs extends Fronts with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
+trait FrontsSeq extends scalan.ScalanSeq with FrontsDsl {
   self: FrontsDslSeq =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs {
   }
@@ -416,7 +460,7 @@ trait FrontsSeq extends FrontsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
+trait FrontsExp extends scalan.ScalanExp with FrontsDsl {
   self: FrontsDslExp =>
   lazy val Front: Rep[FrontCompanionAbs] = new FrontCompanionAbs {
   }
@@ -719,7 +763,7 @@ trait FrontsExp extends FrontsDsl with scalan.ScalanExp {
 }
 
 object Fronts_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAN1WTWwbRRQerx07a6dJMaIiuVBS81NEbQsJ9ZADSlwHVXLiqNuiylRIk/XEmbI7u5mZRDaHHjjCDXHgglDvvXFBQuKCkBAHTgiQOHMqIFQVegL1zex412uyxRwCEj6sZmee3/ve930zs3d+RnOCo2eFiz3M6j6RuO7o8bqQNafNJJWjraB/6JFLZO/tM5+4W2xDWGiph4r7WFwSXg/Z0aA9DOOxQw46yMbMJUIGXEj0dEdXaLiB5xFX0oA1qO8fSrzrkUaHCrnWQYXdoD86QLdQroNOuwFzOZHEaXlYCCLM/DxRiGj8buv3UTdMarCG6qIx0cVVjqkE+FDjdBR/hYTOiAVs5Eu0aKB1QwULYkrUDwMuxyVKkG4/6I9fCwzDBKp2buIj3IASg4YjOWUD+GclxO6beEC2IUSFFwCwIN7e1VGo3/MdVBbkAAi67IeenhmGCCFQ4CUNop7wU4/5qSt+ag7hFHv0LawWd3gwHKHol8sjNAwhxYt/k2KcgbRZv/bODff1B07Ft9SfhwpKSXdYhERPZbhBSwE8fnnlPXHv1dsXLVTuoTIV67tCcuzKSckNWxXMWCA15phAzAeg1mqWWrrKOsRMWcJ2Az/EDDIZKhdAJ4+6VKpgNbdg1MmgviRDMg7NDcNc3O/ZjH61b1rY83buLl945qf2dQtZ6RI2pHTA+HycVKK5TR4wqQlVD9twm10l7ve5u7/0v2iiG1bMkkk6mzCQYk58/23lm/OvWGi+p2286eFBD4gSbY/4Xd4CZD00HxwRHq2UjrCnRscKVeqTPXzoSUPfZN956Fuis5kbLiSKlDVt7tyYgErkz+2AkdrmTu1356v37yj7cbQQrUQ78E968Y8fFvekdqZEeUGirbgEY9i3hgwz83grdnsXulrnHI9ius5l6RqSHU59OEeOyMuff3rt18+257S0VdPxa9g7JNGuNg0nzStMuSZguRypHAlsD3XVJ+J+1WNFgoGpFNnwixsUtuW0WxLPlCNinMAnj63eo2/cfldqd+SG6ROou3sTSFjT/1t+hFHGJ+FvvaZ1f/m7jyxkgx8Ao4/DWnPG/XuCexKl6VlsmVtAG7yZXjx2oxnqEglAreoGFkQHtybRriSHXlUPJbLjyKmASm6G2ibXRORf7PBoM1fTZlZndhSgHudO2GzqeUE/myejgmpnNhXiyP9EhXKiwv+H/SeTpmbSYGkq/oSUKPhw8GRzVtjaMsuRCHq4KpH1/HlYvMaonO763+LzDABTh0V/JjZPpaKToAk7FY8Fm4ez+h8iTLWeBh6jX8xCnfp+WZmq8kF6Evoq6lj4mDtl7psBx+G+MBA4Ws24hhxzCUB3tx58uP3C1x//qO/fsrpO4POAxR/fk/dumgg7qg3f0hMwwRXqgtFAHwKhZ94j2wwAAA=="
+  val dump = "H4sIAAAAAAAAAN1WTYgcRRSu+dmZ7ZnNbpwQSfZi3Ew0ETMzCpLDHmQzmZXA7M6STkTGEKntqZ2tWF3dW1W7zHjIMQe9iUcFA16EXMSTCCKIIB48iQiePSVKyCE5GfKquqene9yOo7AE7ENTXfXq/Xzf96r69h9oRgr0gnQww7zmEoVrthmvSFW1W1xRNVzzeruMXCBbx7xvP33l88WvsmihiwrbWF6QrIusYNAa+NHYJjttZGHuEKk8IRV6vm0i1B2PMeIo6vE6dd1dhTcZqbepVMttlN/0esMddANl2uiw43FHEEXsJsNSEhnOzxKdEY2+LfM97PjjGLyuq6jHqrgsMFWQPsQ4HNhfIr495B4fugrNh6l1fJ0W2BSp63tCjUIUwd221xt95jmGCVRpX8d7uA4h+nVbCcr7sLPsY+dd3CfrYKLN85CwJGzr8tA337k2KkmyAwBddH1mZgY+QggYeNUkURvjU4vwqWl8qjYRFDP6HtaLG8IbDFHwZHIIDXxw8fI/uBh5IC3eq75/1Xn7oV12s3rzQKdSNBUWwNFzKWowVACOP1z6UN5/49a5LCp1UYnKlU2pBHZUnPIQrTLm3FMm5whALPrA1lIaWybKCthMSMJyPNfHHDyFUM4BT4w6VGljPTcXspMCfVH5ZGSaGfiZqN4TKfUa3TQxYxt3jp89dbf1VhZlkyEscGmD8MXIqUIzq8LjygCqX1aIbXqUqN4X7/zZ+76BrmYjlEKn0xEDLmbkr7+Ufz7zehbNdo2MVxnudwEo2WLE7YgmZNZFs94eEcFKcQ8zPdqXqGKPbOFdpkL44nXnoG6FTqQ2nE80KMtG3JkRAOVAn+seJ9XVjeoD+8ePbmv5CTQXrAQd+Iie++u3+S1llKlQTpKgFRdgDH0bghHOHGlGau9AVStC4GEE18k0Xn2yIagL58geee27r6/c+2Z9xlBbCSt+E7NdEnR1WPC4eJ1TpgG5XAxYDgi2Bibq0ahe/VpUIGCqZHr6hfMU2nJSLWPNlAJgbM8lzyzdp9dufaCMOjKD5AnU2bwOICybfcefIJTRSfjFzZtH7332zhHTwbOQo4v9auNf9O+o3Q6wP1ESqvlmeCMYsTeSi/s2nRU71irRWsAMkFg5jyUx+5rxxBcnNylkRZYTBuXMFGmEvmKWf1PJkzVeSWpcH+WBgX6dPGAN6vdZ824cOCG6sukIiSyfCiGlMSH/SyKOjeubio6FCfsDIiXvwimVDl9+bS1cDvgwwyWFsqfPwOIVTtUkAE8B2mchR32a9KYC9lDCemwUE1lh37xzcMb/92QTgExM71PTfFotib+hxYnYHycnodqCsYVfw0Ph7dUX2N+WYTYCLaVcanZ4jUDNNx5+sv7ST1/+bm7zkr6Q4GeDR7/y8Vs8CY8VxIY/81iaIBt9RZlEHwMKfI/8KQ0AAA=="
 }
 }
 

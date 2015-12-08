@@ -139,24 +139,24 @@ trait Monads extends Base  with ListOps { self: MonadsDsl =>
 
   type Id[A] = A
 
-  trait IdContainer extends Container[Id] {
+  trait IdCont extends Cont[Id] {
     def tag[T](implicit tT: WeakTypeTag[T]) = tT
     def lift[T](implicit eT: Elem[T]) = eT
   }
 
-  implicit val identityMonad: Monad[Id] = new Monad[Id] with IdContainer {
+  implicit val identityMonad: Monad[Id] = new Monad[Id] with IdCont {
     def unit[A:Elem](a: Rep[A]) = a
     override def flatMap[A:Elem,B:Elem](a: Rep[A])(f: Rep[A] => Rep[B]) = f(a)
   }
 
   type Oper[A] = Int => (Int, A)
 
-  trait OperContainer extends Container[Oper] {
+  trait OperCont extends Cont[Oper] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Oper[T]]
     def lift[T](implicit eT: Elem[T]) = funcElement(element[Int], element[(Int,T)])
   }
 
-  implicit val operationMonad: Monad[Oper] = new Monad[Oper] with OperContainer {
+  implicit val operationMonad: Monad[Oper] = new Monad[Oper] with OperCont {
     def unit[A:Elem](a: Rep[A]) = fun {i => (i, a)}
 
     override def flatMap[A:Elem,B:Elem](op: Rep[Oper[A]])(f: Rep[A] => Rep[Oper[B]]) =
@@ -194,8 +194,8 @@ trait MonadsDsl extends ScalanDsl with Monads
   def eval[A:Elem](v: Rep[A]): Rep[Oper[A]] = fun {i => console_eval(i,v)}
 }
 
-trait MonadsDslSeq extends MonadsDsl
-  with ScalanCtxSeq
+trait MonadsDslSeq extends ScalanCtxSeq
+  with MonadsDsl
   with FreesDslSeq
   with CoproductsDslSeq
   with ScalanCommunityDslSeq
@@ -206,8 +206,8 @@ trait MonadsDslSeq extends MonadsDsl
 {
 }
 
-trait MonadsDslExp extends MonadsDsl
-  with ScalanCommunityDsl
+trait MonadsDslExp extends ScalanCtxExp
+  with MonadsDsl
   with FreesDslExp
   with CoproductsDslExp
   with ScalanCommunityDslExp

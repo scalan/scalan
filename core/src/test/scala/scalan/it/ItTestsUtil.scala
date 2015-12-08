@@ -62,8 +62,9 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                             graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
                             functionName: String = currentTestNameAsFileName)(inputs: A*) = {
     val compiled = compilers.map { cwc =>
-      val fExp = f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]]
-      val out = cwc.compiler.buildExecutable(sourceDir(functionName), functionName, fExp, graphVizConfig)(cwc.config)
+      val out = cwc.compiler.buildExecutable(sourceDir(functionName), functionName,
+        f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]],
+        graphVizConfig)(cwc.config)
       (cwc.compiler, out)
     }
 
@@ -88,8 +89,9 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                                       graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
                                       functionName: String = currentTestNameAsFileName)(inputsOutputs: (A, B)*) = {
     val compiled = compilers.map { cwc =>
-      val fExp = f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]]
-      val out = cwc.compiler.buildExecutable(sourceDir(functionName), functionName, fExp, graphVizConfig)(cwc.config)
+      val out = cwc.compiler.buildExecutable(sourceDir(functionName), functionName,
+        f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]],
+        graphVizConfig)(cwc.config)
       (cwc.compiler, out)
     }
 

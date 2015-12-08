@@ -9,7 +9,7 @@ import java.io.File
 import scalan.it.BaseItTests
 import scalan.linalgebra.{LinearAlgebraExamples, MatricesDslExp, VectorsDslExp}
 
-abstract class JNILinAlgProg extends LinearAlgebraExamples with ScalanCommunityDsl with JNIExtractorOps {
+trait JNILinAlgProg extends ScalanCommunityDsl with LinearAlgebraExamples with JNIExtractorOps {
   lazy val ddmvm_jni = JNI_Wrap(ddmvm)
 
   lazy val dsmvm_jni = JNI_Wrap(dsmvm)
@@ -25,7 +25,7 @@ abstract class JNILinAlgProg extends LinearAlgebraExamples with ScalanCommunityD
 
 class JNILinAlgItTests extends BaseItTests[JNILinAlgProg](???) {
 
-  class ProgExp extends JNILinAlgProg with ScalanCommunityDslExp with JNIExtractorOpsExp
+  class ProgExp extends ScalanCommunityDslExp with JNILinAlgProg with JNIExtractorOpsExp
 
   val prog = new LmsCompilerCxx(new ProgExp) with JNIBridge with CommunityBridge with CommunityMethodMappingDSL
   implicit val cfg = prog.defaultCompilerConfig

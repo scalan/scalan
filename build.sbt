@@ -14,13 +14,15 @@ lazy val buildSettings = Seq(
     "-language:implicitConversions",
     "-language:existentials",
     "-language:experimental.macros"),
-    publishTo := {
-      val nexus = "http://10.122.85.37:9081/nexus/"
-      if (version.value.trim.endsWith("SNAPSHOT"))
-        Some("snapshots" at (nexus + "content/repositories/snapshots"))
-      else
-        Some("releases" at (nexus + "content/repositories/releases"))
-    })
+  publishTo := {
+    val nexus = "http://10.122.85.37:9081/nexus/"
+    if (version.value.trim.endsWith("SNAPSHOT"))
+      Some("snapshots" at (nexus + "content/repositories/snapshots"))
+    else
+      Some("releases" at (nexus + "content/repositories/releases"))
+  },
+  // do not publish docs for snapshot versions
+  publishArtifact in (Compile, packageDoc) := !version.value.trim.endsWith("SNAPSHOT"))
 
 lazy val testSettings = Seq(
   libraryDependencies ++= Seq(
@@ -68,13 +70,11 @@ lazy val library = Project("scalan-library", file("library"))
 lazy val backend = Project("scalan-lms-backend", file("lms-backend"))
   .dependsOn(library % "compile->compile;it->test")
   .configs(IntegrationTest)
-  .settings(buildSettings, Defaults.itSettings,
+  .settings(commonSettings, Defaults.itSettings,
     scalaVersion := sys.env.getOrElse("SCALA_VIRTUALIZED_VERSION", "2.11.2"),
     scalaOrganization := "org.scala-lang.virtualized",
     libraryDependencies ++= Seq(
-      "EPFL" %% "lms_local" % "0.3-SNAPSHOT",
-      // old version of ScalaTest used in LMS can lead to ClassCastException
-      "EPFL" %% "lms_local" % "0.3-SNAPSHOT" classifier "tests" exclude("org.scalatest", "scalatest_2.11"),
+      "org.scala-lang.lms" %% "lms-core" % "0.9.1-SNAPSHOT",
       "org.scala-lang.virtualized" % "scala-library" % scalaVersion.value,
       "org.scala-lang.virtualized" % "scala-compiler" % scalaVersion.value,
       "org.scalatest" %% "scalatest" % "2.2.5" % "it"),

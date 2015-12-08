@@ -9,13 +9,6 @@ trait Passes {
   // to avoid need to import compiler.scalan.Exp in many places
   type Exp[+T] = scalan.Exp[T]
 
-  trait Pass {
-    def name: String
-
-    // TODO what arguments?
-    def doFinalization(): Unit = {}
-  }
-
   abstract class GraphPass extends Pass {
     def apply(graph: PGraph): PGraph
   }

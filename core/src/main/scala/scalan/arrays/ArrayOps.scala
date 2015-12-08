@@ -104,13 +104,6 @@ trait ArrayOps { self: Scalan =>
     def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
   }
 
-  case class ArrayIso[A,B](iso: Iso[A,B]) extends Iso1[A, B, Array](iso) {
-    def from(x: Arr[B]) = x.mapBy(iso.fromFun)
-    def to(x: Arr[A]) = x.mapBy(iso.toFun)
-  }
-
-  def arrayIso[A,B](iso: Iso[A, B]) = cachedIso[ArrayIso[A, B]](iso)
-
   abstract class ArrayElem[A](implicit eItem: Elem[A])
     extends EntityElem1[A, Array[A], Array](eItem, container[Array]) {
   }

@@ -8,7 +8,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait AuthenticationsAbs extends Authentications with scalan.Scalan {
+trait AuthenticationsAbs extends scalan.Scalan with Authentications {
   self: AuthenticationsDsl =>
 
   // single proxy for each type family
@@ -38,7 +38,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
     def convertAuth(x: Rep[Auth[A]]): Rep[To] = {
       x.selfType1 match {
         case _: AuthElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have AuthElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have AuthElem[_, _], but got $e", x)
       }
     }
 
@@ -58,8 +58,8 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
     override def toString = "Auth"
   }
   def Auth: Rep[AuthCompanionAbs]
-  implicit def proxyAuthCompanion(p: Rep[AuthCompanion]): AuthCompanion =
-    proxyOps[AuthCompanion](p)
+  implicit def proxyAuthCompanionAbs(p: Rep[AuthCompanionAbs]): AuthCompanionAbs =
+    proxyOps[AuthCompanionAbs](p)
 
   abstract class AbsLogin
       (user: Rep[String], password: Rep[String])
@@ -88,14 +88,25 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 
   // 3) Iso for concrete class
   class LoginIso
-    extends Iso[LoginData, Login]()(pairElement(implicitly[Elem[String]], implicitly[Elem[String]])) {
+    extends EntityIso[LoginData, Login] with Def[LoginIso] {
     override def from(p: Rep[Login]) =
       (p.user, p.password)
     override def to(p: Rep[(String, String)]) = {
       val Pair(user, password) = p
       Login(user, password)
     }
-    lazy val eTo = new LoginElem(this)
+    lazy val eFrom = pairElement(element[String], element[String])
+    lazy val eTo = new LoginElem(self)
+    lazy val selfType = new LoginIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class LoginIsoElem() extends Elem[LoginIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new LoginIso())
+    lazy val tag = {
+      weakTypeTag[LoginIso]
+    }
   }
   // 4) constructor and deconstructor
   class LoginCompanionAbs extends CompanionDef[LoginCompanionAbs] with LoginCompanion {
@@ -128,7 +139,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoLogin: Iso[LoginData, Login] =
-    cachedIso[LoginIso]()
+    reifyObject(new LoginIso())
 
   // 6) smart constructor and deconstructor
   def mkLogin(user: Rep[String], password: Rep[String]): Rep[Login]
@@ -161,14 +172,25 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 
   // 3) Iso for concrete class
   class HasPermissionIso
-    extends Iso[HasPermissionData, HasPermission]()(pairElement(implicitly[Elem[String]], implicitly[Elem[String]])) {
+    extends EntityIso[HasPermissionData, HasPermission] with Def[HasPermissionIso] {
     override def from(p: Rep[HasPermission]) =
       (p.user, p.password)
     override def to(p: Rep[(String, String)]) = {
       val Pair(user, password) = p
       HasPermission(user, password)
     }
-    lazy val eTo = new HasPermissionElem(this)
+    lazy val eFrom = pairElement(element[String], element[String])
+    lazy val eTo = new HasPermissionElem(self)
+    lazy val selfType = new HasPermissionIsoElem
+    def productArity = 0
+    def productElement(n: Int) = ???
+  }
+  case class HasPermissionIsoElem() extends Elem[HasPermissionIso] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new HasPermissionIso())
+    lazy val tag = {
+      weakTypeTag[HasPermissionIso]
+    }
   }
   // 4) constructor and deconstructor
   class HasPermissionCompanionAbs extends CompanionDef[HasPermissionCompanionAbs] with HasPermissionCompanion {
@@ -201,7 +223,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoHasPermission: Iso[HasPermissionData, HasPermission] =
-    cachedIso[HasPermissionIso]()
+    reifyObject(new HasPermissionIso())
 
   // 6) smart constructor and deconstructor
   def mkHasPermission(user: Rep[String], password: Rep[String]): Rep[HasPermission]
@@ -211,7 +233,7 @@ trait AuthenticationsAbs extends Authentications with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
+trait AuthenticationsSeq extends scalan.ScalanSeq with AuthenticationsDsl {
   self: AuthenticationsDslSeq =>
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }
@@ -246,7 +268,7 @@ trait AuthenticationsSeq extends AuthenticationsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
+trait AuthenticationsExp extends scalan.ScalanExp with AuthenticationsDsl {
   self: AuthenticationsDslExp =>
   lazy val Auth: Rep[AuthCompanionAbs] = new AuthCompanionAbs {
   }
@@ -344,7 +366,7 @@ trait AuthenticationsExp extends AuthenticationsDsl with scalan.ScalanExp {
 }
 
 object Authentications_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAAL1WTWwbRRQer+M4ttOmRCioSBWpMSBQsSMk1EMOlZO6/Mh1rGxBlamQxuuxM2V2ZjMzDmsOPXCEG+KKUO+9cUFC6gUhIQ6cECBx5lSKUAX0BOqb2R//JE5zgT2MZt++eT/f997buXMf5ZREzysPM8yrPtG46tp9XemK2+Ca6tFV0Rsycpn0P1z70rvKt5SDVjpocQ+ry4p1UCHaNMIg3btkv4kKmHtEaSGVRueb1kPNE4wRT1PBa9T3hxp3Gak1qdKbTbTQFb3RPrqFMk10xhPck0QTd5thpYiK5UvERETT94J9H+0EYx+8ZrKoTWRxTWKqIXzwcSbS3yWBO+KCj3yNTseh7QQmLNDJUz8QUicu8mBuT/SS1wWOQYBWmzfxAa6Bi0HN1ZLyAZwsBdh7Dw9IC1SM+gIErAjrXxsF9j3bREVF9gGgN/yAWUkYIISAgVdsENUxPtUUn6rBp+ISSTGjH2DzsS1FOELRk8kiFAZg4sJjTCQWSIP3Kh/d8N556JZ8xxwOTSh5m+EiGHpmTjVYKgDHb3c/UQ9eu33RQcUOKlJV7yotsacnKY/RKmHOhbYxpwBiOQC2yvPYsl7qoDNTEgVP+AHmYCmGchl4YtSj2igb2XLMzhzo8zogiWomDDJpvutz8rV1s40Za987+/JzvzWuO8iZdlEAky4UvkyMarRQH+q92LRZVzTKu1FtpQ6fnecwIG1JfSjwA/Lq11+99cfdVs76XO2RPh4y/TZmQxKVWxzBOBrj3CmXNVocKxTC2TV/TL4p8i/c+733zQa64aR8xemdrETARE79/GPphxcvOWipYxvqCsODDlCmGoz4O3JbcN1BS+KAyOhL/gAzszuyZPJx+jGRkwxkgQGN1ue2fkAMPZu2zTIJAKWoU1qCk8qVduVv97tP75hGkGg5+hLx9S+9+M8vp/va9ggwO1REJpxmYYREaJjlqQhgKziXejIL8LEUACbvC9k79uw0RcUoDlf45InyA/ru7Y+1JSMTTo+ene5N6PVNe+78MbwkI/Cvzobz59mfPndQAeDvUu3joLJxwsb9D5sRpYCNl3JghrMYUL496aw8HlZP261GOas187GUme7C2cZcg3N9zBSUT35LCEYwP8yE9TJx6BC5/19RmPWCXWvz0Fp7Has2kT5VCsB6HGqnprTHShNhL8b+ppHMQiEdjy2IMvUJY4eyOXFKp4zlIzJJJq2VpGPp3PzBCsW2ttt8kt2/dNdBuTeBe5g2qolyXTHkvaSK4dqhSai3EllmuoqharHEflq19llH47Dm5t2axhcUV0z45jriRV0Gkjh6EmJoJqJifCQkeHRabtxTwMeth5+1Xvr+i1/t76JouhOGG08vMZO/iWmeVmfCgMvJRAKAsmlcG/wjz6+u9iwKAAA="
+  val dump = "H4sIAAAAAAAAAL1WT4hbRRifJJvNv223rrpqobiNUVFqUgXpYQ8l3ab+Ie6GfVUkFmXyMslOnTfzdmayvnjosQe9iVfBghehF/EkQhFEEA+eRATPnmql9GBPit/M+5O8dLNdD5rD8GbeN9+f3+/3fXnXb6G8kugp5WKGed0jGtcd+9xUuua0uKZ6/Jrojxg5TwaPim8+ff7z419l0XIXLe5gdV6xLiqFD63AT54dsttGJcxdorSQSqOTbRuh4QrGiKup4A3qeSONe4w02lTp9TZa6In+eBddQZk2OuYK7kqiibPBsFJERedFYjKiyb5k9+MtfxKDN0wVjakqLkpMNaQPMY6F9tvEd8Zc8LGn0dEotS3fpAU2Ber5Quo4RAHc7Yh+vF3gGA7QSvsy3sMNCDFsOFpSPoSbFR+77+Ih2QQTY74ACSvCBhfHvt3n2qisyC4A9IrnM3sS+AghYOAFm0R9gk89wadu8Kk5RFLM6PvYvOxIEYxR+MvkEAp8cHHqPi5iD6TF+7UPLrlv3XUqXtZcDkwqBVvhIjh6fI4aLBWA4/fbH6k7L107k0XlLipT1ewpLbGrpymP0KpgzoW2OScAYjkEtqrz2LJRmmAzI4mSKzwfc/AUQbkEPDHqUm2MzdlSxM4c6AvaJ7FpJvAzSb1rc+q1utnAjHVuPvbck7+33syibDpECVw6IHwZO9VooTnSO5Frsy5rVHBCbSUBn5gX0CcdST0Q+B558duvX799YzNvY670yQCPmH4DsxEJ5RZlMMnGBM9WqxotTgxKwexaOKDeBPmnb/7R/+40upRN+IrKO5xEwEVe/fJz5adnzmZRsWsb6gLDwy5QplqMeFtyQ3DdRUWxR2T4prCHmXnaVzKFqPyIyGkGcsCARmtzW98nhp5122aZGIBK2CmbgpPahU7tT+eHj6+bRpBoKXwT8vU3PfPXr0cH2vYIMDtSRMac5mCEhGiY5ZEQYHtwIolkFuCj6AMm7wnZP/BumqJymIcjPPJA9Q59+9qH2pKRCdKjZ6t3GXp93d47eQAv8Qj84urVh29/9s6DtnWLPao97NdO/4vGjfvsP2xMlIAXjqTjk71F1DczWwwp35iOW529oFHeWs28rGTSzTnbr6twb4CZAlUVzgnBCOb3EmSjTF26h/P/TytmPWXXxiGAW30Zqw6RHlUKcLsfgEdS1hOjqQoWo9BpUHMgtYNhhqNMc8rZHIxnKjp8oUdMvH3qiye0PUnG2Yn5AxmEubrdfojdOnsji/KvgjhgSqk2yvfEiPdjxcPniiaBPhefZdKKB4Vjib1E4fa3hiZpzUWjk0YdDJdN+uYzxg27E06i7EmAofGIiqCSUOD+ZTlR/wFLV+5+svnsj1/+Zv9myqaTYSjy5ONn+u8lzd7KTBrwUTNVAKBsmtwm/w9GT/wJZAoAAA=="
 }
 }
 

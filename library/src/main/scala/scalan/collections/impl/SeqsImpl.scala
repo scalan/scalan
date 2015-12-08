@@ -9,7 +9,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait SeqsAbs extends Seqs with scalan.Scalan {
+trait SeqsAbs extends scalan.Scalan with Seqs {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -29,21 +29,27 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
   implicit def castSSeqElement[A](elem: Elem[SSeq[A]]): SSeqElem[A, SSeq[A]] =
     elem.asInstanceOf[SSeqElem[A, SSeq[A]]]
 
-  implicit lazy val containerSeq: Container[Seq] = new Container[Seq] {
+  implicit lazy val containerSeq: Cont[Seq] = new Cont[Seq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[Seq[A]]
     def lift[A](implicit evA: Elem[A]) = element[Seq[A]]
   }
 
-  implicit lazy val containerSSeq: Container[SSeq] with Functor[SSeq] = new Container[SSeq] with Functor[SSeq] {
+  implicit lazy val containerSSeq: Functor[SSeq] = new Functor[SSeq] {
     def tag[A](implicit evA: WeakTypeTag[A]) = weakTypeTag[SSeq[A]]
     def lift[A](implicit evA: Elem[A]) = element[SSeq[A]]
     def map[A:Elem,B:Elem](xs: Rep[SSeq[A]])(f: Rep[A] => Rep[B]) = xs.map(fun(f))
   }
 
-  case class SSeqIso[A, B](iso: Iso[A, B]) extends Iso1[A, B, SSeq](iso) {
-    def from(x: Rep[SSeq[B]]) = x.map(iso.fromFun)
-    def to(x: Rep[SSeq[A]]) = x.map(iso.toFun)
+  case class SSeqIso[A, B](innerIso: Iso[A, B]) extends Iso1UR[A, B, SSeq] {
+    lazy val selfType = new ConcreteIsoElem[SSeq[A], SSeq[B], SSeqIso[A, B]](eFrom, eTo).
+      asInstanceOf[Elem[IsoUR[SSeq[A], SSeq[B]]]]
+    def cC = container[SSeq]
+    def from(x: Rep[SSeq[B]]) = x.map(innerIso.fromFun)
+    def to(x: Rep[SSeq[A]]) = x.map(innerIso.toFun)
   }
+
+  def sSeqIso[A, B](innerIso: Iso[A, B]) =
+    reifyObject(SSeqIso[A, B](innerIso)).asInstanceOf[Iso1[A, B, SSeq]]
 
   // familyElem
   class SSeqElem[A, To <: SSeq[A]](implicit _eA: Elem[A])
@@ -67,11 +73,11 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     def convertSSeq(x: Rep[SSeq[A]]): Rep[To] = {
       x.selfType1 match {
         case _: SSeqElem[_, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have SSeqElem[_, _], but got $e")
+        case e => !!!(s"Expected $x to have SSeqElem[_, _], but got $e", x)
       }
     }
     lazy val baseElem =
-      new BaseTypeElem1[A, Seq, SSeq[A]](this.asInstanceOf[Element[SSeq[A]]])(
+      new BaseTypeElem1[A, Seq, SSeq[A]](this.asInstanceOf[Elem[SSeq[A]]])(
         element[A], container[Seq], DefaultOfSeq[A])
     lazy val eTo: Elem[_] = new SSeqImplElem[A](isoSSeqImpl(eA))(eA)
     override def getDefaultRep: Rep[To] = ???
@@ -92,8 +98,8 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
     override def toString = "SSeq"
   }
   def SSeq: Rep[SSeqCompanionAbs]
-  implicit def proxySSeqCompanion(p: Rep[SSeqCompanion]): SSeqCompanion =
-    proxyOps[SSeqCompanion](p)
+  implicit def proxySSeqCompanionAbs(p: Rep[SSeqCompanionAbs]): SSeqCompanionAbs =
+    proxyOps[SSeqCompanionAbs](p)
 
   // default wrapper implementation
   abstract class SSeqImpl[A](val wrappedValue: Rep[Seq[A]])(implicit val eA: Elem[A]) extends SSeq[A] with Def[SSeqImpl[A]] {
@@ -178,14 +184,26 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
 
   // 3) Iso for concrete class
   class SSeqImplIso[A](implicit eA: Elem[A])
-    extends Iso[SSeqImplData[A], SSeqImpl[A]] {
+    extends EntityIso[SSeqImplData[A], SSeqImpl[A]] with Def[SSeqImplIso[A]] {
     override def from(p: Rep[SSeqImpl[A]]) =
       p.wrappedValue
     override def to(p: Rep[Seq[A]]) = {
       val wrappedValue = p
       SSeqImpl(wrappedValue)
     }
-    lazy val eTo = new SSeqImplElem[A](this)
+    lazy val eFrom = element[Seq[A]]
+    lazy val eTo = new SSeqImplElem[A](self)
+    lazy val selfType = new SSeqImplIsoElem[A](eA)
+    def productArity = 1
+    def productElement(n: Int) = eA
+  }
+  case class SSeqImplIsoElem[A](eA: Elem[A]) extends Elem[SSeqImplIso[A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new SSeqImplIso[A]()(eA))
+    lazy val tag = {
+      implicit val tagA = eA.tag
+      weakTypeTag[SSeqImplIso[A]]
+    }
   }
   // 4) constructor and deconstructor
   class SSeqImplCompanionAbs extends CompanionDef[SSeqImplCompanionAbs] {
@@ -217,7 +235,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoSSeqImpl[A](implicit eA: Elem[A]): Iso[SSeqImplData[A], SSeqImpl[A]] =
-    cachedIso[SSeqImplIso[A]](eA)
+    reifyObject(new SSeqImplIso[A]()(eA))
 
   // 6) smart constructor and deconstructor
   def mkSSeqImpl[A](wrappedValue: Rep[Seq[A]])(implicit eA: Elem[A]): Rep[SSeqImpl[A]]
@@ -227,7 +245,7 @@ trait SeqsAbs extends Seqs with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
+trait SeqsSeq extends scalan.ScalanSeq with SeqsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs {
     override def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
@@ -291,7 +309,7 @@ trait SeqsSeq extends SeqsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
+trait SeqsExp extends scalan.ScalanExp with SeqsDsl {
   self: ScalanCommunityDslExp =>
   lazy val SSeq: Rep[SSeqCompanionAbs] = new SSeqCompanionAbs {
     def apply[A:Elem](arr: Rep[Array[A]]): Rep[SSeq[A]] =
@@ -315,8 +333,8 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
         List(list.asInstanceOf[AnyRef], element[A]))
   }
 
-  case class ViewSSeq[A, B](source: Rep[SSeq[A]])(iso: Iso1[A, B, SSeq])
-    extends View1[A, B, SSeq](iso) {
+  case class ViewSSeq[A, B](source: Rep[SSeq[A]], override val innerIso: Iso[A, B])
+    extends View1[A, B, SSeq](sSeqIso(innerIso)) {
     override def toString = s"ViewSSeq[${innerIso.eTo.name}]($source)"
     override def equals(other: Any) = other match {
       case v: ViewSSeq[_, _] => source == v.source && innerIso.eTo == v.innerIso.eTo
@@ -541,8 +559,8 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
     case Def(view: ViewSSeq[_, _]) =>
       Some((view.source, view.iso))
     case UserTypeSSeq(iso: Iso[a, b]) =>
-      val newIso = SSeqIso(iso)
-      val repr = reifyObject(UnpackView(s.asRep[SSeq[b]])(newIso))
+      val newIso = sSeqIso(iso)
+      val repr = reifyObject(UnpackView(s.asRep[SSeq[b]], newIso))
       Some((repr, newIso))
     case _ =>
       super.unapplyViews(s)
@@ -551,10 +569,10 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
   override def rewriteDef[T](d: Def[T]) = d match {
     case SSeqMethods.map(xs, Def(IdentityLambda())) => xs
 
-    case view1@ViewSSeq(Def(view2@ViewSSeq(arr))) =>
-      val compIso = composeIso(view1.innerIso, view2.innerIso)
+    case view1@ViewSSeq(Def(view2@ViewSSeq(arr, innerIso2)), innerIso1) =>
+      val compIso = composeIso(innerIso1, innerIso2)
       implicit val eAB = compIso.eTo
-      ViewSSeq(arr)(SSeqIso(compIso))
+      ViewSSeq(arr, compIso)
 
     // Rule: W(a).m(args) ==> iso.to(a.m(unwrap(args)))
     case mc @ MethodCall(Def(wrapper: ExpSSeqImpl[_]), m, args, neverInvoke) if !isValueAccessor(m) =>
@@ -570,21 +588,15 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
     case SSeqMethods.map(xs, f) => (xs, f) match {
       case (xs: RSeq[a] @unchecked, LambdaResultHasViews(f, iso: Iso[b, c])) =>
         val f1 = f.asRep[a => c]
-        implicit val eA = xs.elem.eItem
         implicit val eB = iso.eFrom
-        val s = xs.map(fun { x =>
-          val tmp = f1(x)
-          iso.from(tmp)
-        })
-        val res = ViewSSeq(s)(SSeqIso(iso))
+        val s = xs.map(f1 >> iso.fromFun)
+        val res = ViewSSeq(s, iso)
         res
-      case (HasViews(source, contIso: SSeqIso[a, b]), f: Rep[Function1[_, c] @unchecked]) =>
+      case (HasViews(source, Def(contIso: SSeqIso[a, b])), f: Rep[Function1[_, c] @unchecked]) =>
         val f1 = f.asRep[b => c]
-        val iso = contIso.iso
-        implicit val eA = iso.eFrom
-        implicit val eB = iso.eTo
+        val iso = contIso.innerIso
         implicit val eC = f1.elem.eRange
-        source.asRep[SSeq[a]].map(fun { x => f1(iso.to(x)) })
+        source.asRep[SSeq[a]].map(iso.toFun >> f1)
       case _ =>
         super.rewriteDef(d)
     }
@@ -594,7 +606,7 @@ trait SeqsExp extends SeqsDsl with scalan.ScalanExp {
 }
 
 object Seqs_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTYwURRSu6dnZ2dlZWcAVxbAKm1FEYWchKjEccPaPrMyym21AHQmmprtmaOi/7a7BHo2YbDAxcFNiIglBDnji5kHjwYOJiZHEREPERDl40IOAMUQlRlFfVXX3TPduz25MnENNV1f1q/e+73vv1aWbKOM66GFXwTo2hw1C8bDMn0suLcgTJtVoc9pSGzoZJ7WFdR8q0+aoK6H+Cuo+gt1xV6+gnHiY8OzwWSbzZZTDpkJcajkuRZvK/ISiYuk6UahmmUXNMBoUV3VSLGsu3VVGXVVLbc6jEyhVRqsVy1QcQok8pmPXJa7/vocwj7RwnuPz5ozdOsMssiiKbVHsd7BGwX04Y7XYP0dsuWlaZtOgaJXv2ozN3II9Wc2wLYcGR2TB3BFLDaZdJoYXaG35KD6Oi3BEvShTRzPr8GXexsoxXCf7YAvb3gUOu0Sv7W/afJ4uo16XzANAU4at8zeejRACBnZwJ4Zb+AyH+AwzfAoycTSsay9jtjjrWF4TiV8qjZBng4mty5gILJAJUy2cOqS8cFvOGxL72GOuZHmE3WDowQQ1cCoAx8/m3nRv7bmwU0K9FdSruaWqSx2s0HbKfbTy2DQtyn0OAcROHdgaSmKLn1KCPTFJ5BTLsLEJlnwo+4AnXVM0yjazd30+OwnQZ6lNgq0pz06F8W5MiJfrZgzr+uz19dseujHxnISk6BE5MCmD8J3AKEVdMojfN83GfopSJY4vG3Jea8x2ODoEYfP1n9VPR9AhKYTOP2llbIGJjPvN1/krW3ZLqKfCtT2p43oF0HMndGLMOGOWSSuoxzpOHLGSPY519rQke1mV1HBDpz6m7WCkAQyKNiZmoU0YUru44lMBAHkh2n2WSQqTs4Xf5c/PXGKadFCfWBFp+be28863q2qUy5WivpccbNtEPYj1BglgTkNWR4FPr5QKnxA2DPKt97R9dl8q8JevUySRUmCvi2G47BEU9TBVBEk/GHI3mKQ8rtR1c+UB/ebujyWUeQZlakCJW0aZqtUw1SAFoExS4tHR4F0qSglIHjvYCDQjCsZGxJ0IvRxY5O+y2goq6m+VEenX9VfPSygHEqpq1MB2YWSFdeB/zG0UpSTPdj7LJSM86mbDUEjiilO2DZptnaCBrOLZFwatFbY+9eP4mb28gvS3wODb/Jjas5uiu1heYs0kThCmKNAlCGeyYSoAbrgQrSm9InFkyyBrhm5phy+cprx6pLxo25qpHoU+sYt/t4HbfiKGW9+ENxYQsz26xDFbuqy1UoWFwfaNtbMrhGezcU043976/smoOrPsLKAHfPcRbzU4Ad0kxDyUwIbsywS0euL2uX2PfvH+D5yCXiY4qDlm2OZb6vJiVWStsAdBGA0TLg/QvtsCB/eYFkNPHkn0hOc/MeBMTv0COnhpfMe7Buemn3hC79Ntl422Ip/UJ8R2iO7a8/PzH4w8tor35FhthxY95acTn8xAqXc0lSyZlnlQoezDG8/UWMHvZT1Dt7A6FdSjSBqWUTdM50R9FhedFqshXhsSIhvVLeXYgW0/1eYHHr8jGq8G6AcuQd5QigaTmo3faYKUSDoE8HHp/dMDX1b31k+JJFHYN3v4hepekUhOA+6MBhketTyiHgAf6Huv7hm8cfms34y6C8yxQlS2osYfDjtdQOSmjkQy7LZ8svntw42PTid3/M5iABvp7/65/JbjpiWUXUnL/y+Nnj2uj3IKnTFVW6IZO+iB5DbHStmVqXfu7h988XvOcrdqGVD2uH3odg5UquCwWHEOp6OdanUnjZVsW2+erG05/9XZv16TWJgZhncAQbrW4H5Uy0iiMRZa4yuRN8mHTamQ+ZvXXvzzl9zVGSlectifHXE++XYARQ0SNH9NI+TpP14XuQH1w/F9zdB4KVuI3ZiAHmjUS7f9hdhlhe94oyVpEeiOyFVCLPi3oaAsRmjxqVgsjg4teDGt0ZxqryOLiWDjySAiuLFBWAprtvtxfZHJkwkoZalVchzcXOZucDGW+mLlX4t4OpZbDwAA"
+  val dump = "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"
 }
 }
 

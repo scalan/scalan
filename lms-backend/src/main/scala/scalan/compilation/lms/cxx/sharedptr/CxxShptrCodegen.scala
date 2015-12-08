@@ -2,7 +2,7 @@ package scalan.compilation.lms.cxx.sharedptr
 
 import java.io.PrintWriter
 
-import scala.virtualization.lms.internal.{CLikeCodegen, Expressions, GenerationFailedException}
+import scala.lms.internal.{CLikeCodegen, Expressions, GenerationFailedException}
 import scalan.compilation.lms.ManifestUtil
 import scalan.compilation.lms.common.{JNILmsOps, PointerLmsOps}
 
@@ -57,7 +57,7 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
   override def remap[A](m: Manifest[A]) : String = {
     m match {
       case _ if m.runtimeClass == classOf[SharedPtr[_]] =>
-        s"std::shared_ptr<${remap(m.typeArguments(0))}>"
+        src"std::shared_ptr<${m.typeArguments(0)}>"
       case _ if m.runtimeClass == classOf[auto_t] =>
         "auto"
       case _ if m.runtimeClass == classOf[size_t] =>
@@ -86,15 +86,15 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
     val newTp = toShptrManifest(sym.tp)
     newTp.runtimeClass match {
       case c if c == classOf[SharedPtr[_]] =>
-        stream.println(s"${remap(newTp)} ${quote(sym)} = std::make_shared<${remap(newTp.typeArguments(0))}>(${args.mkString(",")});")
+        stream.println(src"$newTp $sym = std::make_shared<${newTp.typeArguments(0)}>($args);")
       case c if c == classOf[PointerLmsOps#Pointer[_]] =>
         args.length match {
-          case 0 => stream.println(s"${remap(newTp)} ${quote(sym)} = nullptr;")
-          case 1 => stream.println(s"${remap(newTp)} ${quote(sym)} = ${args(0)};")
+          case 0 => stream.println(src"$newTp $sym = nullptr;")
+          case 1 => stream.println(src"$newTp $sym = ${args(0)};")
           case _ => throw new GenerationFailedException(s"CxxShptrCodegen.emitConstruct(): cannot initialize pointer from several arguments")
         }
       case _ =>
-        stream.println(s"${remap(newTp)} ${quote(sym)} = ${remap(newTp)}(${args.mkString(",")});")
+        stream.println(src"$newTp $sym = $newTp($args);")
     }
   }
   override def quote(x: Exp[Any]) = x match {
@@ -122,17 +122,16 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
           "*******************************************/")
       //emitFileHeader()
 
-      val indargs = scala.Range(0, args.length).zip(args);
-      val has = indargs.map(p => p._2.tp.runtimeClass).contains(classOf[JNILmsOps#JNIType[_]]) || resultM.runtimeClass == classOf[JNILmsOps#JNIType[_]]
+      val has = args.map(_.tp.runtimeClass).contains(classOf[JNILmsOps#JNIType[_]]) || resultM.runtimeClass == classOf[JNILmsOps#JNIType[_]]
       val jniEnv = if (has) "JNIEnv* env, jobject, " else ""
       val braceName = if (has) "extern \"C\" " else "namespace scalan"
       val retType = if (has) s"JNIEXPORT $sA JNICALL" else sA
 
       stream.println(s"${braceName} {")
-      stream.println(s"${retType} $className(${jniEnv}${indargs.map( p => s"${remap(toShptrManifest(p._2.tp))} ${quote(p._2)}").mkString(", ")} ) {")
+      stream.println(s"${retType} $className(${jniEnv}${args.map(arg => src"${toShptrManifest(arg.tp)} $arg").mkString(", ")} ) {")
 
       emitBlock(body)
-      stream.println(s"return ${quote(getBlockResult(body))};")
+      stream.println(src"return ${getBlockResult(body)};")
 
       stream.println("}")
 

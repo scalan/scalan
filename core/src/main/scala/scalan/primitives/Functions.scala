@@ -261,7 +261,7 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
               if (f.isRecursive)
                 Apply(f, x)
               else
-                !!!(s"Stack overflow in applying non-recursive $f($x)", e)
+                !!!(s"Stack overflow in applying non-recursive $f($x)", e, f, x)
           }
         case Def(Apply(_, _)) => // function that is a result of Apply (curried application)
           Apply(f, x)
@@ -380,9 +380,9 @@ trait FunctionsExp extends Functions with BaseExp with ProgramGraphs { self: Sca
     fun { (x: Rep[A]) => Pair(f(x), g(x)) }
   }
 
-  def identityFun[A](implicit e: Element[A]) = fun[A, A](x => x)
+  def identityFun[A](implicit e: Elem[A]) = fun[A, A](x => x)
 
-  def constFun[A, B](x: Rep[B])(implicit e: Element[A]) = {
+  def constFun[A, B](x: Rep[B])(implicit e: Elem[A]) = {
     implicit val eB = x.elem
     fun[A, B](_ => x)
   }

@@ -7,7 +7,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait ReadersAbs extends Readers with scalan.Scalan {
+trait ReadersAbs extends scalan.Scalan with Readers {
   self: MonadsDsl =>
 
   // single proxy for each type family
@@ -39,7 +39,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     def convertReader(x: Rep[Reader[Env, A]]): Rep[To] = {
       x.selfType1 match {
         case _: ReaderElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have ReaderElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have ReaderElem[_, _, _], but got $e", x)
       }
     }
 
@@ -59,8 +59,8 @@ trait ReadersAbs extends Readers with scalan.Scalan {
     override def toString = "Reader"
   }
   def Reader: Rep[ReaderCompanionAbs]
-  implicit def proxyReaderCompanion(p: Rep[ReaderCompanion]): ReaderCompanion =
-    proxyOps[ReaderCompanion](p)
+  implicit def proxyReaderCompanionAbs(p: Rep[ReaderCompanionAbs]): ReaderCompanionAbs =
+    proxyOps[ReaderCompanionAbs](p)
 
   abstract class AbsReaderBase[Env, A]
       (run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A])
@@ -90,14 +90,27 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 
   // 3) Iso for concrete class
   class ReaderBaseIso[Env, A](implicit eEnv: Elem[Env], eA: Elem[A])
-    extends Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]] {
+    extends EntityIso[ReaderBaseData[Env, A], ReaderBase[Env, A]] with Def[ReaderBaseIso[Env, A]] {
     override def from(p: Rep[ReaderBase[Env, A]]) =
       p.run
     override def to(p: Rep[Env => A]) = {
       val run = p
       ReaderBase(run)
     }
-    lazy val eTo = new ReaderBaseElem[Env, A](this)
+    lazy val eFrom = element[Env => A]
+    lazy val eTo = new ReaderBaseElem[Env, A](self)
+    lazy val selfType = new ReaderBaseIsoElem[Env, A](eEnv, eA)
+    def productArity = 2
+    def productElement(n: Int) = (eEnv, eA).productElement(n)
+  }
+  case class ReaderBaseIsoElem[Env, A](eEnv: Elem[Env], eA: Elem[A]) extends Elem[ReaderBaseIso[Env, A]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new ReaderBaseIso[Env, A]()(eEnv, eA))
+    lazy val tag = {
+      implicit val tagEnv = eEnv.tag
+      implicit val tagA = eA.tag
+      weakTypeTag[ReaderBaseIso[Env, A]]
+    }
   }
   // 4) constructor and deconstructor
   class ReaderBaseCompanionAbs extends CompanionDef[ReaderBaseCompanionAbs] with ReaderBaseCompanion {
@@ -129,7 +142,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoReaderBase[Env, A](implicit eEnv: Elem[Env], eA: Elem[A]): Iso[ReaderBaseData[Env, A], ReaderBase[Env, A]] =
-    cachedIso[ReaderBaseIso[Env, A]](eEnv, eA)
+    reifyObject(new ReaderBaseIso[Env, A]()(eEnv, eA))
 
   // 6) smart constructor and deconstructor
   def mkReaderBase[Env, A](run: Rep[Env => A])(implicit eEnv: Elem[Env], eA: Elem[A]): Rep[ReaderBase[Env, A]]
@@ -139,7 +152,7 @@ trait ReadersAbs extends Readers with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
+trait ReadersSeq extends scalan.ScalanSeq with ReadersDsl {
   self: MonadsDslSeq =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
@@ -160,7 +173,7 @@ trait ReadersSeq extends ReadersDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
+trait ReadersExp extends scalan.ScalanExp with ReadersDsl {
   self: MonadsDslExp =>
   lazy val Reader: Rep[ReaderCompanionAbs] = new ReaderCompanionAbs {
   }
@@ -215,7 +228,7 @@ trait ReadersExp extends ReadersDsl with scalan.ScalanExp {
 }
 
 object Readers_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWPYwbRRR+3rPPZ/vIBYKCQpTccXJARMQ+0aS4IvJdfBDk+9FtCuREoPHu2NmwO7M3M7ZsihSU0CEaCoTSp6OhokNCFFQRIFFRUIVQREAqEG9m/3wn7xFAuBjNzL59P9/3vee99xBKUsCL0iE+YY2AKtKwzb4lVd1uM+WpyTZ3hz69Svvvnf7c2WYb0oKlLszfIvKq9LtQiTbtcZjubXrQgQphDpWKC6nghY6J0HS471NHeZw1vSAYKtLzabPjSbXegWKPu5MDuAOFDpx0OHMEVdTe9ImUVMb3C1Rn5KXnijlPdsMsBmvqKppTVVwXxFOYPsY4Gdnv09CeMM4mgYITcWq7oU4LbcpeEHKhkhBldHeLu8mxyAhewDOd22REmhhi0LSV8NgA36yFxHmHDOgOmmjzIiYsqd+/PgnNea4DVUkPEKBrQeibm3EIAMjAqyaJRoZPI8WnofGp21R4xPfeJfrhnuDjCUS/whzAOEQXr/yNi8QDbTO3/v5N58ZjuxZY+uWxTqVsKpxHR8s5ajBUII5f7X8oH71297IF1S5UPdnqSSWIo6Ypj9GqEca4MjmnABIxQLZW89gyUVpoc0QSFYcHIWHoKYZyEXnyPcdT2ljfLcbs5EBfViFNTAvjsJDWu5JTr9HNJvH9vQdnLl34uf2mBdbhEBV0aaPwReJUwfw+JS4VsXO9LimYa7NRhjFeFFrmqJfKOFvLx2ST4vLSg1/cL9fgppWiGQd/MgLRRUl+/23t/stXLFjoGrlv+WTQRUBl26fBrtjkTHVhgY+oiJ6UR8TXu5mEll3aJ0NfxTBP4zOH+ChYyW3MkGrw1k0TFBIAapGOdzij9a29+u/21x/d0zIVsBg9iTr1T+/yHz+c6CujYIRYDFkKN/Z3Csb5PHZDujVkzv1rH59aOvf2j4bbeZcHxDMCO9uBksDuNqWcjcH9h1RWo3xtHtCnVx95b939QBnSCuPDA2S3dxs7dt28d/4Y/pJB9lt3zfr1zHefWlBBmnqeCkhYX3vC9vsfWwpSJLJlGbk5FfXEBpF0czricgbkc1MN83whUYMxUlDEkTVK8C5qjea0VwT/bCcWbR3jYgaLCqpZ3sZJqqlz+ZpCOE7vd571H175woLSG1DqY99IFFOPD5mb4Ix/b4qO1UZyVziMM+JKBAlSXM1vBTLMjupwY5bJjJqmir4ER0BEYR2++U+jLO6CzPRiHDVHI0tRsBn6yIbqNAm5Vf87YPT6emYTG5ZjBBQ8lTDOGXFlXJCA1Rwh2HGfIKZ3Hn+yc/Gbz34yA6aqOw4HG0s/LzLa0wEeA1vZNrHwa2EqWxSv7kGT6V+6KQ2ovQkAAA=="
+  val dump = "H4sIAAAAAAAAALVWPYwbRRR+67PPZ/vIBY7fRMkdJwMiInagSXFF5Dg+dMi5O92mQCYiGu+OnQ27M3s7Y8umSJkCOkRDgUQkGqQ0iIoG0SAhCqoIIVFRUIUglIJURHkz+3sn74WA2GI0M/vm/Xzf92b31l0oiQBeFhZxCWt4VJKGqectIetmh0lHTi9ye+TSC3TwPP/2s9e/OPZ1AZZ6MH+ViAvC7UElnHQmfjI36V4XKoRZVEgeCAkvdnWEpsVdl1rS4azpeN5Ikr5Lm11HyPUuFPvcnu7BdTC6cNTizAqopGbbJUJQEe0vUJWRk6wrej3d9tMYrKmqaGaquBQQR2L6GONoaL9LfXPKOJt6Eo5EqW37Ki20KTuezwMZhyiju6vcjpdFRnADnupeI2PSxBDDpikDhw3xZM0n1ntkSLfQRJkXMWFB3cGlqa/Xc12oCrqHAG16vqt3Jj4AIANv6CQaKT6NBJ+Gwqdu0sAhrvM+US93Aj6ZQvgYcwATH1289ggXsQfaYXb9g8vWO/fNmldQhycqlbKucB4dreSoQVOBOH6/+5G49+bNswWo9qDqiFZfyIBYMkt5hFaNMMalzjkBkARDZGstjy0dpYU2ByRRsbjnE4aeIigXkSfXsRypjNXeYsRODvRl6dPY1Jj4RlLvak69Wjdt4ro7d144/dLvnbcLUNgfooIuTRR+EDuVML9LiU2DyLkalyTMddg4xRg3jJZeqqEyScfyIdkkuLxy5w/7uzNwuZCgGQX/ZwSii5L4+afa7VfPFWChp+W+4ZJhDwEVHZd620GbM9mDBT6mQfimPCaums0ktGzTARm5MoI5i88c4iNhNbcxfarAW9dNYMQA1EIdb3FG6xs79b/MHz6+pWQawGL4JuzUB87Zv385MpBawQhxMGIJ3NjfCRgn89j16caIWbc3P1leOnHlV83tvM094miBHe9CKcDu1qUcj8B9TCqrYb4m9+iTa/ecd29+KDVpxmT/BbLdv4Ydu67PnTyEv/gi+/LGjWf+/PzKsm7Ahb4jPeLXzzxG+8Xd8j+2FySohEg9l67VsIKULYetcp4I2s4GX8mcyvTRMSMWiTaSUMSbbBzTUFTSzem6kJXZTgq0dYiLGeRKqKZ5ayeJ1E7kSw2ReXa3+7R799w3BSi9BaUBtpNAjfX5iNkx5PjVk3Qiz8d7xn7IEWISEC+BWD+rkGJ2UJ7tWSYzasoUfRoOgIh627/zn264SuZbk5GEXp+KEni0cpbCFGaoJr2Bs9TkYvHv4FLjZmoTGZYjXCQ8EeuAM2KLqLYA1nLkYUaNhEhfv//p1qkfv/pN30ZV1ZJ4C7LkXyQVQ3LbR3BXLupY+GuRyRYlrZpUZ/oQWB0WUOoJAAA="
 }
 }
 

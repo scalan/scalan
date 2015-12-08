@@ -6,7 +6,7 @@ import scalan.meta.ScalanAst._
 
 package impl {
 // Abs -----------------------------------
-trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
+trait MultiMapsAbs extends scalan.Scalan with MultiMaps {
   self: ScalanCommunityDsl =>
 
   // single proxy for each type family
@@ -38,7 +38,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     def convertMMultiMap(x: Rep[MMultiMap[K, V]]): Rep[To] = {
       x.selfType1 match {
         case _: MMultiMapElem[_, _, _] => x.asRep[To]
-        case e => !!!(s"Expected $x to have MMultiMapElem[_, _, _], but got $e")
+        case e => !!!(s"Expected $x to have MMultiMapElem[_, _, _], but got $e", x)
       }
     }
 
@@ -58,8 +58,8 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
     override def toString = "MMultiMap"
   }
   def MMultiMap: Rep[MMultiMapCompanionAbs]
-  implicit def proxyMMultiMapCompanion(p: Rep[MMultiMapCompanion]): MMultiMapCompanion =
-    proxyOps[MMultiMapCompanion](p)
+  implicit def proxyMMultiMapCompanionAbs(p: Rep[MMultiMapCompanionAbs]): MMultiMapCompanionAbs =
+    proxyOps[MMultiMapCompanionAbs](p)
 
   abstract class AbsHashMMultiMap[K, V]
       (map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V])
@@ -89,14 +89,27 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 
   // 3) Iso for concrete class
   class HashMMultiMapIso[K, V](implicit elemKey: Elem[K], elemValue: Elem[V])
-    extends Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] {
+    extends EntityIso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] with Def[HashMMultiMapIso[K, V]] {
     override def from(p: Rep[HashMMultiMap[K, V]]) =
       p.map
     override def to(p: Rep[MMap[K, ArrayBuffer[V]]]) = {
       val map = p
       HashMMultiMap(map)
     }
-    lazy val eTo = new HashMMultiMapElem[K, V](this)
+    lazy val eFrom = element[MMap[K, ArrayBuffer[V]]]
+    lazy val eTo = new HashMMultiMapElem[K, V](self)
+    lazy val selfType = new HashMMultiMapIsoElem[K, V](elemKey, elemValue)
+    def productArity = 2
+    def productElement(n: Int) = (elemKey, elemValue).productElement(n)
+  }
+  case class HashMMultiMapIsoElem[K, V](elemKey: Elem[K], elemValue: Elem[V]) extends Elem[HashMMultiMapIso[K, V]] {
+    def isEntityType = true
+    def getDefaultRep = reifyObject(new HashMMultiMapIso[K, V]()(elemKey, elemValue))
+    lazy val tag = {
+      implicit val tagK = elemKey.tag
+      implicit val tagV = elemValue.tag
+      weakTypeTag[HashMMultiMapIso[K, V]]
+    }
   }
   // 4) constructor and deconstructor
   class HashMMultiMapCompanionAbs extends CompanionDef[HashMMultiMapCompanionAbs] with HashMMultiMapCompanion {
@@ -128,7 +141,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 
   // 5) implicit resolution of Iso
   implicit def isoHashMMultiMap[K, V](implicit elemKey: Elem[K], elemValue: Elem[V]): Iso[HashMMultiMapData[K, V], HashMMultiMap[K, V]] =
-    cachedIso[HashMMultiMapIso[K, V]](elemKey, elemValue)
+    reifyObject(new HashMMultiMapIso[K, V]()(elemKey, elemValue))
 
   // 6) smart constructor and deconstructor
   def mkHashMMultiMap[K, V](map: Rep[MMap[K, ArrayBuffer[V]]])(implicit elemKey: Elem[K], elemValue: Elem[V]): Rep[HashMMultiMap[K, V]]
@@ -138,7 +151,7 @@ trait MultiMapsAbs extends MultiMaps with scalan.Scalan {
 }
 
 // Seq -----------------------------------
-trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
+trait MultiMapsSeq extends scalan.ScalanSeq with MultiMapsDsl {
   self: ScalanCommunityDslSeq =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }
@@ -159,7 +172,7 @@ trait MultiMapsSeq extends MultiMapsDsl with scalan.ScalanSeq {
 }
 
 // Exp -----------------------------------
-trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
+trait MultiMapsExp extends scalan.ScalanExp with MultiMapsDsl {
   self: ScalanCommunityDslExp =>
   lazy val MMultiMap: Rep[MMultiMapCompanionAbs] = new MMultiMapCompanionAbs {
   }
@@ -584,7 +597,7 @@ trait MultiMapsExp extends MultiMapsDsl with scalan.ScalanExp {
 }
 
 object MultiMaps_Module extends scalan.ModuleInfo {
-  val dump = "H4sIAAAAAAAAALVWTWwbRRQer+M6a4e0RCioSOAQGRAI7JBLDzlUievwUzuJslGFTIU0Xo+dLbOzm5lxtMuhB45wQ1wR6r03Lpy4ISEOnBAgceZUyqECegLxZvbHu46dViD2MNqZefN+vu97s3v3PioJjl4UNqaYNVwiccPS79tC1q02k44Mu95gTMk1Mvxw9Uu7y3aEgS720IVjLK4J2kNm9NIO/PTdIicdZGJmEyE9LiR6vqMjNG2PUmJLx2NNx3XHEvcpaXYcIbc6aKHvDcITdBsVOuiS7TGbE0msFsVCEBGvLxKVkZPOTT0P9/1JDNZUVTQzVRxx7EhIH2JciuwPiW+FzGOhK9FynNq+r9ICm7Lj+h6XSYgyuDv2Bsl0gWFYQCudW/gUNyHEqGlJ7rARnKz62H4fj8gemCjzBUhYEDo8Cn09L3ZQRZATAOgt16d6JfARQsDApk6iMcGnkeLTUPjULcIdTJ0PsNo84F4QougpFBEKfHDx6iNcJB5Imw3qH920331oVV1DHQ5UKmVd4QVwVJujBk0F4PjN4SfiwRt3rhio0kMVR2z3heTYllnKY7SqmDFP6pxTADEfAVvr89jSUbbBZkoSpu25PmbgKYZyCXiiju1IZazWlmJ25kBflj5JTAuBX0jrXZtTr9ZNC1N6cO/yay/82n7HQEY+hAkuLRA+T5xKZHa7YyqdLvZj/2q8KFHh+gRkNb2hp2owg8lYPiedFJiX7v02+HoD3TRSOOPoj8cguCiJn36ofv/yVQMt9rTedyke9QBR0abE3ectj8keWvROCY92yqeYqreZjJYHZIih6BjnLEBFAEiitbmd6ROF3pbugkICQDUS8p7HSH33oP6n9e2nd5VOOVqKdqJW/du58tfPy0OpJSxR0Y0hB3SL0OB5+Be6j2Kkus05DnfGwyHhU4azuZrmrRIlZ3kueXL9gfPenY+lZqgQ5K+L/f4t6M8tfe65c8hKrq0/ehvG75d//NxAJnDSdyQUWt94zGb7HxsI5VFabsVXthbZZn7ziTexOE47IwNnYrCSbrayWWZAL6dDDdhezTnMnalNaH06k8UzhURi2kiiMgGtXydhKhGl/ZkSyaR6xoupvNzAdEzO83NWQbMwqaUN/Ow8TWgGVg87T9H7V78yUOltVBpCX4oOKvW9MRsk1ML3U5JA7iRrhTy1QCXm2E2p1M8amsCXb4+9mQZni8pU/fqUPIqg5PzKf7sps6LQpo2ZYatKv7vYdWi4OS/87Js4J7c58oyg8Ked1TKRZkP3L7BV49HEJjY0UwwhyVg0kz8AESPD0focQVlxiwM7tx9+tvfKd1/8or9yFXVZwAXM0v+giXyCKcJWIn+AjDtm8HcF/zeZ7KEh1D2iM/8HeR4yhG8KAAA="
+  val dump = "H4sIAAAAAAAAALVWO4wbRRge2+f4bB+XcECASODjZEAgsJNrUlwRXRwfj9jn022IkIlA4/XYt2F2dm9mfNqlSJkCOkSLRCQapDSIigbRICEKKoSQqKmSIJSCVET5Z/bhXZ/3wkNsMdqZ+ed/fN/3z+7NO6goOHpBmJhi1rCJxA1Dv28KWTfaTFrS7zrDCSUXyOgp59vPznxx6us8Ot5Hx/awuCBoH5WDl7bnxu8G2e+gMmYmEdLhQqLnOjpC03QoJaa0HNa0bHsi8YCSZscScqODFgbO0N9H11Cug06YDjM5kcRoUSwEEeH6IlEZWfG8rOd+z53GYE1VRTNRxSWOLQnpQ4wTgf0ucQ2fOcy3JVoOU+u5Ki2wKVm263AZhSiBuz1nGE0XGIYFtNK5ig9wE0KMm4bkFhvDyaqLzffxmGyDiTJfgIQFoaNLvqvnhQ6qCLIPAL1hu1SveC5CCBhY10k0pvg0YnwaCp+6QbiFqfUBVps73PF8FDy5AkKeCy5eeYiLyANps2H9wyvmO/eMqp1Xhz2VSklXeAwc1TLUoKkAHL/f/Vjcfe3G2Tyq9FHFEpsDITk2ZZLyEK0qZsyROucYQMzHwNZaFls6yibYzEiibDq2ixl4CqFcAp6oZVpSGau1pZCdDOhL0iWRac5zc3G9qxn1at20MKU7t55+9fnb7bfzKJ8OUQaXBgifR04lKne7EyqtLnZD/2o8LlHu4hRkNb2sp2ooe9OxdEQ6MTAv3vp9+N1pdCUfwxlG/3sMgoui+OXn6k8vncujxb7W+xbF4z4gKtqU2D3ecpjso0XngPBgp3SAqXqby2hpSEYYig5xTgJUAIAkWs3sTJco9DZ0F+QiAKqBkLcdRupbO/U/jR8+ual0ytFSsBO06n3r7F+/Lo+klrBEBTuEHNAtQIOn4V/oPoyR6ibn2D8/GY0InzGcz9Usb5UgOcOxyaNrd613b3wkNUM5L31d9AZXoT839LlnjyArura+vH79iT8+f+8x3W6LA0tCofXT/6DZot74H5sJpRFbboXXtxbcenrzkdex2Iu7JAFtZLASb7aSWZaScKvxyXhVDzUQwcmU79TxWuJgIqFTuUh52kiiEoEWuEj8WDmqJeYqJ5H1IS9l5eUyphNylJ/DwpoHTy3u62eypKLJOLnbeZzeOfdNHhXfRMURtKvooOLAmbBhxDJ8ViXx5PloLZdmGVjFHNsxq/pZRVP40l3Tm2twuKhE1WdmlFIAgadX/tsFmqEPPW/MzaCqVL2FbYv661mZZNzVGSLM0G8AkDvrt5YIOh/Qf4G4Gt+a2oSG5RhZSDKU0vR3QYQgcbSWITMjvAOAs2v3Pt1++cevftOfxIq6TeC2ZvFP01RU3gyNK4E/QMaeMPgVg5+hRPbQJuqi0Zk/AGSD8HqcCgAA"
 }
 }
 
