@@ -230,8 +230,8 @@ trait ArrayOpsExtExp extends Transforming { self: LmsBackendFacade =>
         ArrayIndex(f(arr), f(i))
       case a @ ArrayAppend(arr, v) =>
         ArrayAppend(f(arr), f(v))(a.m)
-      case a @ ArraySortBy(arr, by) => arraySortBy1(f(arr), f(by))(a.mA, a.mB)
-      case Reflect(a @ ArraySortBy(arr, by), u, es) => reflectMirrored(Reflect(ArraySortBy(f(arr), f(by))(a.mA, a.mB), mapOver(f, u), f(es)))(mtype(manifest[A]), pos)
+      case a @ ArraySortBy(arr, by) =>
+        ArraySortBy(f(arr), f(by))(a.mA, a.mB)
       case _ =>
         super.mirrorDef(e,f)
     }).asInstanceOf[Def[A]]
