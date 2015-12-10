@@ -1,8 +1,10 @@
 package scalan
 
+import org.objectweb.asm.{Type => TypeDescriptors}
+
 import scala.reflect.runtime.universe._
 import scalan.common.Default
-import scalan.primitives.{AbstractStringsDslExp, AbstractStringsDslSeq, AbstractStringsDsl}
+import scalan.primitives.{AbstractStringsDsl, AbstractStringsDslExp, AbstractStringsDslSeq}
 
 /**
  * Created by zotov on 12/9/14.
@@ -83,95 +85,80 @@ trait JNIExtractorOpsSeq extends JNIExtractorOps { self: ScalanSeq with Abstract
 
 trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with AbstractStringsDslExp =>
 
+  private def elemToDescriptor(e: Elem[_]) = TypeDescriptors.getDescriptor(e.runtimeClass)
+
   private def find_class[T](clazz: Class[T]): Rep[JNIClass] = {
     val className = clazz.getCanonicalName.replaceAllLiterally(".","/")
     JNI_FindClass(CString(className))
   }
 
-  private def find_class_of_obj[T: Elem](x: Rep[JNIType[T]]): Rep[JNIClass] = x.elem match {
-      case jnie: JNITypeElem[_] =>
-        val clazz = jnie.eT match {
-          case el if isPrimitive(el) =>
-            anyval_boxed_class(el)
-          case el =>
-            el.runtimeClass
-        }
-        find_class(clazz)
-    }
+  private def find_boxed_class[T: Elem]: Rep[JNIClass] = find_class(boxed_class(element[T]))
 
   private def unbox[A: Elem](x: Rep[JNIType[A]]): Rep[A] = {
-    val clazz = find_class_of_obj(x)
+    val clazz = find_boxed_class[A]
 
-    val fn = "value"
-    val sig = x.elem match {
-      case (jnie: JNITypeElem[_]) =>
-        org.objectweb.asm.Type.getDescriptor(jnie.eT.runtimeClass)
-    }
-    val fid = JNI_GetFieldID(clazz, CString(fn), CString(sig))
+    val sig = elemToDescriptor(element[A])
+    val fid = JNI_GetFieldID(clazz, CString("value"), CString(sig))
 
     JNI_GetPrimitiveFieldValue[A,A](fid, x)
   }
 
-  private def get_method_id[T: Elem](x: Rep[JNIType[T]], mn: String, args: Rep[Any]*): Rep[JNIMethodID] = {
-    val clazz = find_class_of_obj(x)
-    val sig = x.elem match {
-      case (jnie: JNITypeElem[_]) =>
-        val argclass = args.map({arg => arg.elem.runtimeClass})
-        org.objectweb.asm.Type.getMethodDescriptor(jnie.eT.runtimeClass.getMethod(mn, argclass:_*))
-    }
+  private def get_method_id[A, T: Elem](methodName: String, returnClass: Class[_], argClasses: Class[_]*): Rep[JNIMethodID] = {
+    val clazz = find_boxed_class[T]
+    val sig = argClasses.map(TypeDescriptors.getDescriptor).mkString("(", "", ")") + TypeDescriptors.getDescriptor(returnClass)
 
-    JNI_GetMethodID(clazz, CString(mn), CString(sig))
+    JNI_GetMethodID(clazz, CString(methodName), CString(sig))
   }
 
-  private def call_primitive_method[A: Elem, T: Elem](x: Rep[JNIType[T]], mn: String, args: Rep[Any]*): Rep[A] = {
-    val mid = get_method_id(x, mn, args:_*)
-    JNI_Extract( JNI_CallPrimitiveMethod[A,T](mid, x, args:_*) )
-  }
+  private def call_object_method[A: Elem, T: Elem](x: Rep[JNIType[T]], methodName: String, args: (Class[_], Rep[Any])*): Rep[JNIType[A]] =
+    call_object_method[A, T](x, methodName, element[A].runtimeClass, args: _*)
 
-  private def call_object_method[A: Elem, T: Elem](x: Rep[JNIType[T]], mn: String, args: Rep[Any]*): Rep[JNIType[A]] = {
-    val mid = get_method_id(x, mn, args:_*)
-    JNI_CallObjectMethod[A,T](x, mid, args:_*)
+  private def call_object_method[A: Elem, T: Elem](x: Rep[JNIType[T]], methodName: String, returnClass: Class[_], args: (Class[_], Rep[Any])*): Rep[JNIType[A]] = {
+    val methodId = get_method_id[A, T](methodName, returnClass, args.map(_._1): _*)
+    JNI_CallObjectMethod[A, T](x, methodId, args.map(_._2): _*)
   }
 
   def JNI_Extract[I](x: Rep[JNIType[I]]): Rep[I] = {
     implicit val eI = x.elem.asInstanceOf[JNITypeElem[I]].eT
+
     eI match {
-          case elem if isPrimitive(elem) =>
-            JNI_ExtractPrimitive[I](x)
+      case elem if isPrimitive(elem) =>
+        JNI_ExtractPrimitive[I](x)
 
-          case (pe: PairElem[a,b]) =>
-            implicit val ae = pe.eFst
-            implicit val be = pe.eSnd
+      case pe: PairElem[a, b] =>
+        implicit val ae = pe.eFst
+        implicit val be = pe.eSnd
 
-            val a1 = if( isPrimitive(ae) )
-              unbox( call_object_method(x, "_1")(ae,pe) )(ae)
-            else
-              JNI_Extract( call_object_method(x, "_1")(ae,pe) )
+        def extract_pair_field[A](name: String)(implicit e: Elem[A]) = {
+          // _1 and _2 JVM method return type is Object
+          val jniMethodCallResult = call_object_method(x, name, classOf[Object])(e, eI)
+          if (isPrimitive(e))
+            unbox(jniMethodCallResult)(e)
+          else
+            JNI_Extract(jniMethodCallResult)
+        }
 
-            val b1 = if( isPrimitive(be) )
-              unbox( call_object_method(x, "_2")(be,pe) )(be)
-            else
-              JNI_Extract( call_object_method(x, "_2")(be,pe) )
+        val a1 = extract_pair_field("_1")(ae)
+        val b1 = extract_pair_field("_2")(be)
 
-            Pair(a1, b1)
-          case (earr: ArrayElem[a]) =>
-            implicit val ea = earr.eItem
-            ea match {
-              case elem if isPrimitive(elem) =>
-                JNI_ExtractPrimitiveArray(x)
-              case _ =>
-                val arr = JNI_ExtractObjectArray(x)
-                val len = JNI_GetArrayLength(x)
-                val res = SArray.rangeFrom0(len).map( { i => JNI_Extract( JNI_GetObjectArrayItem(arr, i) ) } )
-                res.asRep[I]
-            }
-          case elem =>
-            ???(s"Don't know how to extract: elem = ${elem}", x)
-//        }
+        Pair(a1, b1)
+      case earr: ArrayElem[a] =>
+        implicit val ea = earr.eItem
+        ea match {
+          case _ if isPrimitive(ea) =>
+            JNI_ExtractPrimitiveArray(x)
+          case _ =>
+            val arr = JNI_ExtractObjectArray(x)
+            val len = JNI_GetArrayLength(x)
+            val res = SArray.tabulate(len) { i => JNI_Extract(JNI_GetObjectArrayItem(arr, i)) }
+            res.asRep[I]
+        }
+      case elem =>
+        ???(s"Don't know how to extract: elem = ${elem}", x)
     }
   }
 
-  private def anyval_boxed_class(e: Elem[_]): Class[_] = e match {
+  private def boxed_class(e: Elem[_]): Class[_] = e match {
     case BooleanElement => classOf[java.lang.Boolean]
     case ByteElement => classOf[java.lang.Byte]
     case ShortElement => classOf[java.lang.Short]
@@ -180,48 +167,44 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     case FloatElement => classOf[java.lang.Float]
     case DoubleElement => classOf[java.lang.Double]
     case CharElement => classOf[java.lang.Character]
+    case _ => e.runtimeClass
   }
 
-  private def box[T: Elem](x: Rep[JNIType[T]]): Rep[JNIType[T]] = {
-    element[T] match {
-      case el if isPrimitive(el) =>
-        val jniclazz = find_class(anyval_boxed_class(el))
-        val mn = "<init>"
-        val argdescr = org.objectweb.asm.Type.getDescriptor(el.runtimeClass)
-        val sig = s"(${argdescr})V"
+  private def construct[A: Elem](clazz: Class[_], args: (Class[_], Rep[JNIType[_]])*): Rep[JNIType[A]] = {
+    val jniClazz = find_class(clazz)
+    val (argClasses, argValues) = args.unzip
+    val signature = argClasses.map(TypeDescriptors.getDescriptor).mkString("(", "", ")V")
+    val constructorId = JNI_GetMethodID(jniClazz, CString("<init>"), CString(signature))
 
-        val mid = JNI_GetMethodID(jniclazz, CString(mn), CString(sig))
+    JNI_NewObject[A](jniClazz, constructorId, argValues: _*)
+  }
 
-        JNI_NewObject[T](jniclazz, mid, x)
-      case el =>
-        x
-    }
+  private def box[T](x: Rep[JNIType[T]])(implicit eT: Elem[T]): Rep[JNIType[T]] = eT match {
+    case _ if isPrimitive(eT) =>
+      construct[T](boxed_class(eT), (eT.runtimeClass, x))
+    case _ =>
+      x
   }
 
   private def make_pair[A: Elem, B: Elem](a: Rep[JNIType[A]], b: Rep[JNIType[B]]): Rep[JNIType[(A,B)]] = {
-    val clazz = find_class(classOf[(A,B)])
-    val mn = "<init>"
-    val sig = s"(Ljava/lang/Object;Ljava/lang/Object;)V"
-
-    val mid = JNI_GetMethodID(clazz, CString(mn), CString(sig))
-    JNI_NewObject[(A,B)](clazz, mid, a, b)
+    construct(classOf[(_, _)], (classOf[Object], box(a)), (classOf[Object], box(b)))
   }
 
 
   def JNI_Pack[T](x: Rep[T]): Rep[JNIType[T]] = {
     x.elem match {
-      case el: PairElem[a,b] =>
-        val p = x.asInstanceOf[Rep[(a,b)]]
+      case el: PairElem[a, b] =>
+        val p = x.asInstanceOf[Rep[(a, b)]]
         implicit val eA = el.eFst
         implicit val eB = el.eSnd
-        make_pair[a,b]( box( JNI_Pack[a](p._1) ), box( JNI_Pack[b](p._2) ) )
+        make_pair[a, b](JNI_Pack[a](p._1), JNI_Pack[b](p._2))
       case el: ArrayElem[a] =>
         implicit val eA = el.eItem
         eA match {
           case _ if isPrimitive(eA) =>
-            JNI_MapPrimitiveArray[a,a](x, identityFun[a])
+            JNI_MapPrimitiveArray[a, a](x, identityFun[a])
           case _ =>
-            JNI_MapObjectArray[a,a](x, JNI_Pack(_: Rep[a]))
+            JNI_MapObjectArray[a, a](x, JNI_Pack(_: Rep[a]))
         }
       case el: BaseElem[_] if isPrimitive(el) =>
         JNI_NewPrimitive(x)(el)
@@ -282,10 +265,6 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   }
 
   case class JNI_CallObjectMethod[A, T](x: Rep[JNIType[T]], mid: Rep[JNIMethodID], args: Rep[Any]*)(implicit val eA: Elem[A], val eT: Elem[T]) extends BaseDef[JNIType[A]]
-
-  case class JNI_CallPrimitiveMethod[A, T](mid: Rep[JNIMethodID], x: Rep[JNIType[T]], args: Rep[Any]*)(implicit val eA: Elem[A], val eT: Elem[T]) extends BaseDef[JNIType[A]] {
-    require(isPrimitive(eA))
-  }
 
   case class JNI_ExtractPrimitive[A](x: Rep[JNIType[A]])(implicit val eA: Elem[A]) extends BaseDef[A] {
     require(isPrimitive(eA))
