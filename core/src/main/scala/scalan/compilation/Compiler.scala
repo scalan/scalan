@@ -3,6 +3,7 @@ package scalan.compilation
 import java.io.File
 
 import scalan.ScalanCtxExp
+import scalan.util.ReflectionUtil
 
 abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) extends Passes {
   import scalan._
@@ -92,6 +93,8 @@ abstract class Compiler[+ScalanCake <: ScalanCtxExp](val scalan: ScalanCake) ext
   }
 
   protected def doExecute[A, B](compilerOutput: CompilerOutput[A, B], input: A): B
+
+  lazy val name = ReflectionUtil.namedSuperclass(getClass).getSimpleName
 }
 
 class CompilationException(message: String, cause: Exception) extends RuntimeException(message, cause)
