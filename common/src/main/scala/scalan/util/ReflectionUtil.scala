@@ -91,4 +91,17 @@ object ReflectionUtil {
       }
     }
   }
+
+  /** Returns the superclass for an anonymous class produced by mixing in traits; the argument otherwise. */
+  def namedSuperclass(clazz: Class[_]) = {
+    if (clazz.getSimpleName.contains("$anon$")) {
+      val superclass = clazz.getSuperclass
+      if (superclass == classOf[Object]) {
+        // clazz is composed of traits only, return the first one
+        clazz.getInterfaces.head
+      } else
+        superclass
+    } else
+      clazz
+  }
 }

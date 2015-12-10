@@ -33,8 +33,23 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
   /** Utility method to be used when defining [[defaultCompilers]]. */
   def compilers(cs: CompilerWithConfig*) = cs
 
-  def sourceDir(functionName: String) =
+  private def sourceDir(functionName: String) =
     file(prefix, functionName)
+
+  // gives each compiler a subfolder of sourceDir(functionName) to make them unique
+  private def compilersWithSourceDirs(compilers: Seq[CompilerWithConfig], functionName: String, deleteBaseDir: Boolean = true) = {
+    val baseDir = sourceDir(functionName)
+    if (deleteBaseDir) {
+      FileUtil.deleteIfExist(baseDir)
+    }
+    compilers match {
+      case Seq(onlyCompiler) =>
+        Seq(onlyCompiler -> baseDir)
+      case _ => compilers.zipWithIndex.map {
+        case (cwc, index) => (cwc, file(baseDir, s"${index + 1}_${cwc.compiler.name}"))
+      }
+    }
+  }
 
   def assertFileContentCheck(name: String): Unit =
     FileUtil.read(file(prefix, name)) should be(FileUtil.read(file(prefix, name + ".check")))
@@ -43,8 +58,8 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                         compilers: Seq[CompilerWithConfig] = defaultCompilers,
                         graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
                         functionName: String = currentTestNameAsFileName) =
-    compilers.foreach { cwc =>
-      cwc.compiler.buildGraph(sourceDir(functionName), functionName,
+    compilersWithSourceDirs(compilers, functionName).foreach { case (cwc, dir) =>
+      cwc.compiler.buildGraph(dir, functionName,
         f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]], graphVizConfig)(cwc.config)
     }
 
@@ -52,8 +67,8 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                           compilers: Seq[CompilerWithConfig] = defaultCompilers,
                           graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
                           functionName: String = currentTestNameAsFileName) =
-    compilers.map { cwc =>
-      cwc.compiler.buildExecutable(sourceDir(functionName), functionName,
+    compilersWithSourceDirs(compilers, functionName).map { case (cwc, dir) =>
+      cwc.compiler.buildExecutable(dir, functionName,
         f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]], graphVizConfig)(cwc.config)
     }
 
@@ -61,8 +76,8 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                             compilers: Seq[CompilerWithConfig] = defaultCompilers,
                             graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
                             functionName: String = currentTestNameAsFileName)(inputs: A*) = {
-    val compiled = compilers.map { cwc =>
-      val out = cwc.compiler.buildExecutable(sourceDir(functionName), functionName,
+    val compiled = compilersWithSourceDirs(compilers, functionName).map { case (cwc, dir) =>
+      val out = cwc.compiler.buildExecutable(dir, functionName,
         f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]],
         graphVizConfig)(cwc.config)
       (cwc.compiler, out)
@@ -88,8 +103,8 @@ trait ItTestsUtil[Prog <: Scalan] extends TestsUtil {
                                       compilers: Seq[CompilerWithConfig] = defaultCompilers,
                                       graphVizConfig: GraphVizConfig = defaultGraphVizConfig,
                                       functionName: String = currentTestNameAsFileName)(inputsOutputs: (A, B)*) = {
-    val compiled = compilers.map { cwc =>
-      val out = cwc.compiler.buildExecutable(sourceDir(functionName), functionName,
+    val compiled = compilersWithSourceDirs(compilers, functionName).map { case (cwc, dir) =>
+      val out = cwc.compiler.buildExecutable(dir, functionName,
         f(cwc.compiler.scalan).asInstanceOf[cwc.compiler.Exp[A => B]],
         graphVizConfig)(cwc.config)
       (cwc.compiler, out)
