@@ -1,6 +1,8 @@
 package scalan.compilation.lms.common
 
-import scala.reflect.SourceContext
+import org.objectweb.asm.Type
+
+import scala.reflect.{RefinedManifest, SourceContext}
 import scala.lms.common._
 import scala.lms.internal.{GenerationFailedException, GenericCodegen}
 import scalan.compilation.lms.ManifestUtil
@@ -15,7 +17,7 @@ trait JNILmsOps extends Base {
   trait JNIArray[T]
 }
 
-trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with BaseExp with ManifestUtil {
+trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with StructExp with ManifestUtil {
   case class JNIStringConst(x: String) extends Exp[String]
 
   case class JNIArrayElem[T](x: Rep[JNIArray[T]], y: Block[T]) extends Def[JNIArray[T]]
@@ -98,14 +100,14 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
     ReturnFirstArg(jArray, jnia)
   }
 
-  def jni_map_object_array[A: Manifest, B: Manifest](a: Exp[Array[A]], f: Rep[A] => Rep[JNIType[B]]): Exp[JNIType[Array[B]]] = {
-    val clazz = manifest[A].runtimeClass match {
-      case c if c == classOf[JNIArray[_]] =>
-        classOf[Array[_]]
-      case c =>
-        c
-    }
-    val clazzName = org.objectweb.asm.Type.getType(clazz).getDescriptor
+  private def manifestToTypeDescriptor(m: Manifest[_]) = Type.getDescriptor(m.runtimeClass)
+
+  def jni_map_object_array[A, B](a: Exp[Array[A]], f: Rep[A] => Rep[JNIType[B]])(implicit mA: Manifest[A], mB: Manifest[B]): Exp[JNIType[Array[B]]] = {
+    val mA1 = if (mA.runtimeClass == classOf[JNIArray[_]])
+      mA.typeArguments.head.arrayManifest
+    else
+      mA
+    val clazzName = manifestToTypeDescriptor(mA1)
     val jniclazz = jni_find_class(JNIStringConst(clazzName))
     val jArray = jni_new_object_array_var[B](a.length, jniclazz)
     val f1 = {i:Rep[Int] => f(a.at(i))}
@@ -119,8 +121,33 @@ trait JNILmsOpsExp extends JNILmsOps with LoopsFatExp with ArrayLoopsExp with Ba
     NewObject[T](clazz, mid, args:_*)
   }
 
-  override
-  def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
+  private def jniClassForStruct(m: Manifest[_]) = {
+    val className = structName(m)
+    jni_find_class(JNIStringConst(className))
+  }
+
+  def jni_new_struct[A](m: RefinedManifest[A], args: Rep[Any]*): Rep[JNIType[A]] = {
+    val jniClass = jniClassForStruct(m)
+    val argClassDescriptors = args.map { arg =>
+      val unJniType = arg.tp.typeArguments.head
+      manifestToTypeDescriptor(unJniType)
+    }
+    val methodDescriptor = argClassDescriptors.mkString("(", "", ")V")
+    val jniMethodID = jni_get_method_id(jniClass, JNIStringConst("<init>"), JNIStringConst(methodDescriptor))
+    jni_new_object(jniClass, jniMethodID, args: _*)(m)
+  }
+
+  def jni_get_struct_field_value[A, S](struct: Rep[JNIType[S]], fieldName: String)(implicit mA: Manifest[A]) = {
+    implicit val mS = struct.tp.typeArguments.head.asInstanceOf[Manifest[S]]
+    val jniClass = jniClassForStruct(mS)
+    val fieldID = jni_get_field_id(jniClass, JNIStringConst(fieldName), JNIStringConst(manifestToTypeDescriptor(mA)))
+    if (mA.isPrimitive)
+      jni_get_primitive_field_value[A, S](fieldID, struct)
+    else
+      jni_get_object_field_value[A, S](fieldID, struct)
+  }
+
+  override def mirror[A:Manifest](e: Def[A], f: Transformer)(implicit pos: SourceContext): Exp[A] = (e match {
     case Reflect(SimpleLoop(s,v,body: JNIArrayElem[A]), u, es) =>
       reflectMirrored(Reflect(SimpleLoop(f(s),f(v).asInstanceOf[Sym[Int]],mirrorFatDef(body,f)), mapOver(f,u), f(es)))(mtype(manifest[A]), pos)
     case Reflect(SimpleLoop(s,v,body: JArrayElem[A]), u, es) =>
@@ -264,13 +291,17 @@ trait JNIExtractorOpsCxxGenBase extends GenericCodegen with ManifestUtil {
   }
 
   private def remapSimpleType[A](m: Manifest[A]): String = m match {
-    case Manifest.Byte => "jbyte"
-    case Manifest.Int => "jint"
-    case Manifest.Double => "jdouble"
     case Manifest.Boolean => "jboolean"
-    case _ if m.isClass => "jobject"
-    case _ =>
-      throw new GenerationFailedException(s"JNIExtractorOpsCxxGenBase.remapSimpleType(m) : Type ${m} cannot be remapped.")
+    case Manifest.Byte => "jbyte"
+    case Manifest.Char => "jchar"
+    case Manifest.Double => "jdouble"
+    case Manifest.Float => "jfloat"
+    case Manifest.Int => "jint"
+    case Manifest.Long => "jlong"
+    case Manifest.Short => "jshort"
+    // case Manifest.Unit => "void" // TODO is this needed?
+    case _ if m == manifest[String] => "jstring"
+    case _ => "jobject"
   }
 
   protected def remapObject[A](m: Manifest[A]): String = m match {
@@ -304,26 +335,20 @@ trait CxxShptrGenJNIExtractor extends CxxShptrCodegen with JNIExtractorOpsCxxGen
         super.toShptrManifest(m)
     }
   }
-  override def wrapSharedPtr:PartialFunction[Manifest[_],Manifest[_]] = {
-    case m if m.runtimeClass == classOf[JNIType[_]] => m
-    case m if m.runtimeClass == classOf[JObject[_]] => m
-    case m if m.runtimeClass == classOf[JNIClass] => m
-    case m if m.runtimeClass == classOf[JNIFieldID] => m
-    case m if m.runtimeClass == classOf[JNIMethodID] => m
-    case m if m.runtimeClass == classOf[JNIArray[_]] => Manifest.classType(classOf[SharedPtr[_]], m)
-    case m =>
-      super.wrapSharedPtr(m)
-  }
+
+  override protected def doNotWrap(m: Manifest[_]) =
+    // JNIArray[_] intentionally not included
+    m.isOneOf(classOf[JNIType[_]], classOf[JObject[_]], classOf[JNIClass], classOf[JNIFieldID], classOf[JNIMethodID]) ||
+      super.doNotWrap(m)
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case res@NewPrimitive(x) =>
       emitValDef(sym, src"static_cast<${x.tp}>($x)")
     case res@NewObject(clazz, mid, args@_*) =>
-      val sargs = if(args.isEmpty) "" else ", " + args.map(quote).mkString(", ")
-      emitValDef(quote(sym), jobjectManifest(sym.tp), src"env->NewObject($clazz,$mid$sargs)")
+      emitValDef(quote(sym), jobjectManifest(sym.tp), src"env->NewObject($clazz, ${mid +: args})")
     case res@CallObjectMethod(x, mid, args@_*) =>
-      val sargs = if(args.isEmpty) "" else ", " + args.map(quote).mkString(", ")
-      emitValDef(quote(sym),jobjectManifest(sym.tp), src"static_cast<${jobjectManifest(sym.tp)}>(env->CallObjectMethod($x,$mid$sargs))")
+      // TODO is static_cast useful here and in GetObjectFieldValue?
+      emitValDef(quote(sym),jobjectManifest(sym.tp), src"static_cast<${jobjectManifest(sym.tp)}>(env->CallObjectMethod($x, ${mid +: args}))")
     case res@ReturnFirstArg(jArray, _) =>
       emitValDef(sym, src"$jArray")
     case res@NewPrimitiveArray(len) =>

@@ -44,11 +44,8 @@ trait CxxShptrGenPointer extends CxxShptrCodegen {
     }
   }
 
-  override def wrapSharedPtr: PartialFunction[Manifest[_],Manifest[_]] = {
-    case m if m.runtimeClass == classOf[Scalar[_]] => m
-    case m if m.runtimeClass == classOf[Pointer[_]] => m
-    case m => super.wrapSharedPtr(m)
-  }
+  override protected def doNotWrap(m: Manifest[_]) = m.isOneOf(classOf[Scalar[_]], classOf[Pointer[_]]) ||
+    super.doNotWrap(m)
 
   override def emitNode(sym: Sym[Any], rhs: Def[Any]) = rhs match {
     case CreateScalar(x, _) =>

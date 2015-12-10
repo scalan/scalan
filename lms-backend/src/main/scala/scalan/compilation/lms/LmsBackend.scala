@@ -64,6 +64,8 @@ abstract class LmsBackendFacade extends ObjectOpsExtExp with LiftVariables with 
   with WhileExpExt with ListOpsExpExt with FunctionsExpExt with PointerLmsOpsExp
 // FIXME using StructFatExpOptCommon instead of StructExpOptCommon leads to bad code generated in LmsMstPrimeItTests
 // Not clear whether this is due to our or LMS error
+// Replace StructExpOptCommon with StructExp if needed to verify codegen works correctly;
+// otherwise they can get optimized out
   with MiscOpsExtExp with StructExpOptCommon with Effects {
   def toStringWithDefinition(x: Exp[_]) = s"$x: ${x.tp}" + (x match {
     case sym: Sym[_] =>

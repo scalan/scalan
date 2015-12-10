@@ -57,6 +57,9 @@ trait CxxShptrGenStruct  extends CxxShptrCodegen with BaseGenStruct {
     case _ => super.remap(m)
   }
 
+  override protected def doNotWrap(m: Manifest[_]) = m.isInstanceOf[RefinedManifest[_]] ||
+    super.doNotWrap(m)
+
   // TODO generate structs? For now we use std::tuple
 //  override def emitDataStructures(stream: PrintWriter) {
 //    for ((name, elems) <- encounteredStructs) {

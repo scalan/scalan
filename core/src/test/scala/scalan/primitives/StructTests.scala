@@ -13,14 +13,33 @@ trait StructExamples extends Scalan with SegmentsDsl {
     struct("in" -> in)
   })(Lazy(element[Int]), structElement(Seq("in" -> eInt)))
 
-  lazy val structIn = fun({ (in: Rep[Struct]) =>
+  lazy val singleFieldStructIn = fun({ (in: Rep[Struct]) =>
     field(in, "in").asRep[Int]
   })(Lazy(structElement(Seq("in" -> eInt))), eInt)
+
+  lazy val manyFieldsStructIn = fun({ (in: Rep[Struct]) =>
+    field(in, "in1").asRep[Int] - field(in, "in2").asRep[Int]
+  })(Lazy(structElement(Seq("in1" -> eInt, "in2" -> eInt))), eInt)
 
   lazy val structInOut = fun({ (in: Rep[Struct]) =>
     val outVal = field(in, "in").asRep[Int] - 1
     struct("out" -> outVal)
   })(Lazy(structElement(Seq("in" -> eInt))), structElement(Seq("out" -> eInt)))
+
+  lazy val crossFields = fun({ (in: Rep[Struct]) =>
+    val in1 = field(in, "in1").asRep[Int]
+    val in2 = field(in, "in2").asRep[Int]
+    struct("out1" -> in2, "out2" -> in1)
+  })(Lazy(structElement(Seq("in1" -> eInt, "in2" -> eInt))), structElement(Seq("out1" -> eInt, "out2" -> eInt)))
+
+  lazy val structInside = fun { (n: Rep[Int]) =>
+    // This should ensure we get structs left inside
+    // If rewritings are added which optimize this to `if (n > 0) then n else n + 1`, change this!
+    val s1 = struct("a" -> n, "b" -> n)
+    val s2 = struct("a" -> (n + 1), "b" -> (n + 2))
+    val s3 = IF (n > 0) THEN s1 ELSE s2
+    field(s3, "a").asRep[Int] + field(s3, "b").asRep[Int]
+  }
 
   lazy val t2 = fun({ (in: Rep[Int]) =>
     field(struct("in" -> in), "in").asRep[Int]
@@ -351,11 +370,24 @@ abstract class StructItTests extends BaseItTests[StructExamples](new ScalanCtxSe
     compareOutputWithSequential(s => s.t1.asInstanceOf[s.Rep[Int => Struct]])(100)
   }
 
-  test("struct in") {
-    compareOutputWithSequential(s => s.structIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in" -> 100))
+  test("struct with one field in") {
+    compareOutputWithSequential(s => s.singleFieldStructIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in" -> 100))
+  }
+
+  test("struct with many fields in") {
+    compareOutputWithSequential(s => s.manyFieldsStructIn.asInstanceOf[s.Rep[Struct => Int]])(struct("in1" -> 200, "in2" -> 50))
   }
 
   test("struct in and out") {
     compareOutputWithSequential(s => s.structInOut.asInstanceOf[s.Rep[Struct => Struct]])(struct("in" -> 100))
+  }
+
+  test("struct with many fields in and out") {
+    compareOutputWithSequential(s => s.crossFields.asInstanceOf[s.Rep[Struct => Struct]])(struct("in1" -> 200, "in2" -> 50))
+  }
+
+
+  test("struct used inside") {
+    compareOutputWithSequential(_.structInside)(100)
   }
 }

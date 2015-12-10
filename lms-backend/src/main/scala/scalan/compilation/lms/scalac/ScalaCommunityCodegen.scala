@@ -14,7 +14,7 @@ class ScalaCommunityCodegen[BackendCake <: LmsBackendFacade](backend: BackendCak
   with ScalaGenListOps // todo may be owr ScalaGenLstOps should extend lms's ScalaGenListOps?
   with ScalaGenLstOps                   //from scalan.compilation.lms.common
   with ScalaGenNumericOps with ScalaGenPrimitiveOps with ScalaGenEqual  with ScalaGenOrderingOps
-  with ScalaGenBooleanOps with ScalaGenStruct with ScalaGenStringOps
+  with ScalaGenBooleanOps with ScalaGenStructExt with ScalaGenStringOps
   with ScalaGenEitherOps               //from scalan.compilation.lms.common
   with ScalaGenTupleOps
   with ScalaGenFatArrayLoopsFusionOpt

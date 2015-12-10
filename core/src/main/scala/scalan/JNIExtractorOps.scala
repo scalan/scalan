@@ -142,6 +142,17 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
         val b1 = extract_pair_field("_2")(be)
 
         Pair(a1, b1)
+
+      case se: StructElem[a] =>
+        // a == I
+        type S = a with Struct
+        val s = x.asRep[JNIType[S]]
+
+        val fields = se.fields.map { case (name, fieldElem: Elem[f]) =>
+          (name, JNI_Extract(JNI_GetStructFieldValue[f, S](s, name)(fieldElem)))
+        }
+        struct(se.structTag.asInstanceOf[StructTag[S]], fields).asRep[I]
+
       case earr: ArrayElem[a] =>
         implicit val ea = earr.eItem
         ea match {
@@ -190,7 +201,6 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
     construct(classOf[(_, _)], (classOf[Object], box(a)), (classOf[Object], box(b)))
   }
 
-
   def JNI_Pack[T](x: Rep[T]): Rep[JNIType[T]] = {
     x.elem match {
       case el: PairElem[a, b] =>
@@ -198,6 +208,12 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
         implicit val eA = el.eFst
         implicit val eB = el.eSnd
         make_pair[a, b](JNI_Pack[a](p._1), JNI_Pack[b](p._2))
+      case se: StructElem[a] =>
+        val s = x.asRep[a with Struct]
+        val fields = se.fields.map {
+          case (name, _) => JNI_Pack(field(s, name))
+        }
+        reifyObject(JNI_NewStruct(se.asInstanceOf[StructElem[a with Struct]], fields: _*)).asRep[JNIType[T]]
       case el: ArrayElem[a] =>
         implicit val eA = el.eItem
         eA match {
@@ -241,6 +257,11 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   case class JNI_NewPrimitive[T](x: Rep[T])(implicit val eT: Elem[T]) extends BaseDef[JNIType[T]] {
     require(isPrimitive(eT))
   }
+  // Separate from JNI_NewObject because we don't know the name of the class which implements the structure here.
+  // This has to be handled in lms-backend, see JNILmsOps.jni_new_struct.
+  // Note LMS plans to move structName from StructsExp to codegen, in which case we could override it and remove
+  // this class
+  case class JNI_NewStruct[T <: Struct](se: StructElem[T], args: Rep[JNIType[_]]*) extends BaseDef[JNIType[T]]()(JNITypeElement(se))
 
   case class JNI_MapPrimitiveArray[A, B](x: Rep[Array[A]], f: Rep[A => B])(implicit val eA: Elem[A], val eB: Elem[B]) extends BaseDef[JNIType[Array[B]]] {
     require(isPrimitive(eA))
@@ -263,6 +284,9 @@ trait JNIExtractorOpsExp extends JNIExtractorOps { self: ScalanExp with Abstract
   case class JNI_GetPrimitiveFieldValue[A, T](fid: Rep[JNIFieldID], tup: Rep[JNIType[T]])(implicit val eA: Elem[A], val eT: Elem[T]) extends BaseDef[A] {
     require(isPrimitive(eA))
   }
+
+  // exists for the same reason as JNI_NewStruct
+  case class JNI_GetStructFieldValue[A, T <: Struct](struct: Rep[JNIType[T]], fieldName: String)(implicit val eA: Elem[A]) extends BaseDef[JNIType[A]]
 
   case class JNI_CallObjectMethod[A, T](x: Rep[JNIType[T]], mid: Rep[JNIMethodID], args: Rep[Any]*)(implicit val eA: Elem[A], val eT: Elem[T]) extends BaseDef[JNIType[A]]
 

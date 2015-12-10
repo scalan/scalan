@@ -35,15 +35,10 @@ trait CxxShptrCodegen extends CLikeCodegen with ManifestUtil {
     }
   }
 
-  def wrapSharedPtr:PartialFunction[Manifest[_],Manifest[_]] = {
-    case m if m.isPrimitive => m
-    case m if m.runtimeClass == classOf[SharedPtr[_]] => m
-    case m if m.runtimeClass == classOf[scala.Tuple2[_, _]] => m
-    case m if m.runtimeClass == classOf[Variable[_]] => m
-    case m if m.runtimeClass == classOf[_=>_] => m
-    case m =>
-      Manifest.classType(classOf[SharedPtr[_]], m)
-  }
+  protected def doNotWrap(m: Manifest[_]) =
+    m.isPrimitive || m.isOneOf(classOf[SharedPtr[_]], classOf[scala.Tuple2[_, _]], classOf[Variable[_]], classOf[_ => _])
+
+  def wrapSharedPtr(m: Manifest[_]) = if (doNotWrap(m)) m else Manifest.classType(classOf[SharedPtr[_]], m)
 
   final override def emitValDef(sym: Sym[Any], rhs: String ): Unit = {
     val newTp = toShptrManifest(sym.tp)

@@ -14,6 +14,8 @@ trait ManifestUtil {
     def isPrimitive = manifest.isInstanceOf[AnyValManifest[_]]
 
     def isClass = <::<(Manifest.AnyRef)
+
+    def isOneOf(classes: Class[_]*) = classes.contains(manifest.runtimeClass)
   }
 }
 
