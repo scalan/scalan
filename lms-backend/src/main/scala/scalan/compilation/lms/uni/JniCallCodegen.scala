@@ -27,12 +27,18 @@ class JniCallCodegen [BackendCake <: LmsBackendFacade](backend: BackendCake, nat
 
 
   def cppLibraryName(className:String) = "scalan_"+className.toLowerCase
+
+  // See https://docs.oracle.com/javase/8/docs/technotes/guides/jni/spec/design.html#resolving_native_method_names
+  // (Java Native Interface Specification Contents, Resolving Native Method Names in case URL changes)
+  // Add other characters as needed
+  // Native method overloading currently not supported, see above link if necessary
+  def escapeJavaName(identifier: String) =
+    identifier.replace("_", "_1").replace("$", "_00024").replace(".", "_")
+
   def cppFunctionName(className:String) = {
-    val pp = packageName match {
-      case p:String if p.length > 0 => p.replace("_", "_1").replace('.', '_')+"_"
-      case _ => ""
-    }
-    "Java_" + pp + className.replace("_", "_1") + "_00024_apply"
+    // "$" because the native method is placed in an object
+    val fullObjectName = (if (packageName.nonEmpty) s"$packageName." else "") + className + "$"
+    Seq("Java", escapeJavaName(fullObjectName), "apply").mkString("_")
   }
 
   override def emitSource[A : Manifest](args: List[Sym[_]], body: Block[A], className: String, out: PrintWriter) = {
@@ -46,9 +52,8 @@ class JniCallCodegen [BackendCake <: LmsBackendFacade](backend: BackendCake, nat
       stream.println("/*****************************************\n"+
         "  Emitting Scala Code                  \n"+
         "*******************************************/")
-      packageName match {
-        case p: String if p.length > 0 => stream.println("package " + p)
-        case _ =>
+      if (packageName.length > 0) {
+        stream.println("package " + packageName)
       }
       /*
       override def emitFileHeader(): Unit = {
@@ -57,33 +62,29 @@ class JniCallCodegen [BackendCake <: LmsBackendFacade](backend: BackendCake, nat
       */
       emitFileHeader()
 
-      stream.println("class "+className+(if (staticData.isEmpty) "" else "("+staticData.map(p=>"p"+quote(p._1)+":"+p._1.tp).mkString(",")+")")+" extends (("+args.map(a => remap(a.tp)).mkString(", ")+")=>("+sA+")) {")
-      stream.println("  def apply("+args.map(a => quote(a) + ":" + remap(a.tp)).mkString(", ")+"): "+sA +" = {")
-      stream.println("    "+className+".apply("+args.map(a => quote(a)).mkString(", ")+") }")
-      stream.println("}")
-      stream.println("object "+className +" {")
-      stream.println("  @native def apply("+args.map(a => quote(a) + ":" + remap(a.tp)).mkString(", ")+"): "+sA)
-      stream.println("  System.loadLibrary(\"" + cppLibraryName(className) + "\")")
-      stream.println("}")
+      val staticDataArgs = staticData.map(p => src"val p${p._1}: ${p._1.tp}")
+
+      val argsDecl = args.map(a => src"$a: ${a.tp}")
+      val code =
+        src"""
+             |class $className($staticDataArgs) extends ((${args.map(_.tp)}) => $sA) {
+             |  def apply($argsDecl): $sA = {
+             |    $className.apply($args)
+             |  }
+             |}
+             |
+             |object $className {
+             |  @native def apply($argsDecl): $sA
+             |
+             |  System.loadLibrary("${cppLibraryName(className)}")
+             |}
+           """.stripMargin
+
+      stream.println(code)
 
       stream.println("/*****************************************\n"+
         "  End of Generated Code                  \n"+
         "*******************************************/")
-
-      val test01Call: String = className match {
-        case "test01_oneOp" =>
-        """object ForTest01 {
-         |  def main(arg:Array[String]) {
-         |    	val x = new test01_oneOp
-         |  	  println("test: 3+2 = " + x(3));
-         |
-         |  }
-         |}
-         |""".stripMargin
-        case _ => ""
-      }
-      stream.println(test01Call)
-
     }
 
     staticData
