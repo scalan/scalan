@@ -506,15 +506,12 @@ trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslE
   }
 
   def shouldUnpackTuples = currentPass.config.shouldUnpackTuples
+  def shouldExtractFields = currentPass.config.shouldExtractFields
 
   override def rewriteDef[T](d: Def[T]): Exp[_] = d match {
-    case FieldGet(v) if shouldUnpackTuples => v
+    case FieldGet(v) if shouldExtractFields => v
     case _ => super.rewriteDef(d)
   }
-}
-
-trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compiler[ScalanCake] {
-  import scalan._
 
   object StructsRewriter extends Rewriter {
     def apply[T](x: Exp[T]): Exp[T] = (x match {
@@ -522,6 +519,10 @@ trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compil
       case _ => x
     }).asRep[T]
   }
+}
+
+trait StructsCompiler[ScalanCake <: ScalanCtxExp with StructsExp] extends Compiler[ScalanCake] {
+  import scalan._
 
   override def graphPasses(compilerConfig: CompilerConfig) =
     super.graphPasses(compilerConfig) ++
