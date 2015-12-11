@@ -14,23 +14,73 @@ class LASuite extends BaseShouldTests {
 
   lazy val vector1 = Array((0, 1.0), (1, 2.0), (2, 3.0), (3, 4.0), (4, 5.0))
   lazy val vector2 = Array((0, 1.0), (2, 3.0), (3, 4.0))
-  lazy val len = 5
 
+  class Seq extends LADslStd with LinearAlgebraExamples {}
+  val seq = new Seq
+  import seq._
+  lazy val v = toRep(3.0)
+  lazy val len = toRep(3)
+  lazy val res = f1(cv, cv)
+  def cv = ConstVector(v, len)
+  def f1(v1: Vec[Double], v2: Vec[Double]): DoubleRep = ((v1 +^ v2) -^ (v1 *^ v2) +^ (v1 /^ v2)) dot (v2 /^ v1)
+  def vvm_converters(v1: Vec[Double], v2: Vec[Double], res: DoubleRep, f: (Vec[Double], Vec[Double]) => DoubleRep) = {
+    f(v1.convertTo[DenseVector[Double]], v2.convertTo[DenseVector[Double]]) should be(res)
+    f(v1.convertTo[DenseVector[Double]], v2.convertTo[ConstVector[Double]]) should be(res)
+    f(v1.convertTo[DenseVector[Double]], v2.convertTo[SparseVector[Double]]) should be(res)
+    f(v1.convertTo[DenseVector[Double]], v2.convertTo[SparseVectorBoxed[Double]]) should be(res)
+    f(v1.convertTo[DenseVector[Double]], v2.convertTo[ShiftVector[Double]]) should be(res)
+    f(v1.convertTo[DenseVector[Double]], v2.convertTo[ShiftVectorBoxed[Double]]) should be(res)
+
+    f(v1.convertTo[ConstVector[Double]], v2.convertTo[DenseVector[Double]]) should be(res)
+    f(v1.convertTo[ConstVector[Double]], v2.convertTo[ConstVector[Double]]) should be(res)
+    f(v1.convertTo[ConstVector[Double]], v2.convertTo[SparseVector[Double]]) should be(res)
+    f(v1.convertTo[ConstVector[Double]], v2.convertTo[SparseVectorBoxed[Double]]) should be(res)
+    f(v1.convertTo[ConstVector[Double]], v2.convertTo[ShiftVector[Double]]) should be(res)
+    f(v1.convertTo[ConstVector[Double]], v2.convertTo[ShiftVectorBoxed[Double]]) should be(res)
+
+    f(v1.convertTo[SparseVector[Double]], v2.convertTo[DenseVector[Double]]) should be(res)
+    f(v1.convertTo[SparseVector[Double]], v2.convertTo[ConstVector[Double]]) should be(res)
+    f(v1.convertTo[SparseVector[Double]], v2.convertTo[SparseVector[Double]]) should be(res)
+    f(v1.convertTo[SparseVector[Double]], v2.convertTo[SparseVectorBoxed[Double]]) should be(res)
+    f(v1.convertTo[SparseVector[Double]], v2.convertTo[ShiftVector[Double]]) should be(res)
+    f(v1.convertTo[SparseVector[Double]], v2.convertTo[ShiftVectorBoxed[Double]]) should be(res)
+
+    f(v1.convertTo[SparseVectorBoxed[Double]], v2.convertTo[DenseVector[Double]]) should be(res)
+    f(v1.convertTo[SparseVectorBoxed[Double]], v2.convertTo[ConstVector[Double]]) should be(res)
+    f(v1.convertTo[SparseVectorBoxed[Double]], v2.convertTo[SparseVector[Double]]) should be(res)
+    f(v1.convertTo[SparseVectorBoxed[Double]], v2.convertTo[SparseVectorBoxed[Double]]) should be(res)
+    f(v1.convertTo[SparseVectorBoxed[Double]], v2.convertTo[ShiftVector[Double]]) should be(res)
+    f(v1.convertTo[SparseVectorBoxed[Double]], v2.convertTo[ShiftVectorBoxed[Double]]) should be(res)
+
+    f(v1.convertTo[ShiftVector[Double]], v2.convertTo[DenseVector[Double]]) should be(res)
+    f(v1.convertTo[ShiftVector[Double]], v2.convertTo[ConstVector[Double]]) should be(res)
+    f(v1.convertTo[ShiftVector[Double]], v2.convertTo[SparseVector[Double]]) should be(res)
+    f(v1.convertTo[ShiftVector[Double]], v2.convertTo[SparseVectorBoxed[Double]]) should be(res)
+    f(v1.convertTo[ShiftVector[Double]], v2.convertTo[ShiftVector[Double]]) should be(res)
+    f(v1.convertTo[ShiftVector[Double]], v2.convertTo[ShiftVectorBoxed[Double]]) should be(res)
+
+    f(v1.convertTo[ShiftVectorBoxed[Double]], v2.convertTo[DenseVector[Double]]) should be(res)
+    f(v1.convertTo[ShiftVectorBoxed[Double]], v2.convertTo[ConstVector[Double]]) should be(res)
+    f(v1.convertTo[ShiftVectorBoxed[Double]], v2.convertTo[SparseVector[Double]]) should be(res)
+    f(v1.convertTo[ShiftVectorBoxed[Double]], v2.convertTo[SparseVectorBoxed[Double]]) should be(res)
+    f(v1.convertTo[ShiftVectorBoxed[Double]], v2.convertTo[ShiftVector[Double]]) should be(res)
+    f(v1.convertTo[ShiftVectorBoxed[Double]], v2.convertTo[ShiftVectorBoxed[Double]]) should be(res)
+  }
+  
   "in seq context1" should "execute functions" in {
-    val ctx = new MatricesDslStd with LinearAlgebraExamples {}
+    val ctx = new Seq
     val i = 3
     val in = (vector1, (len, i))
     val res = ctx.applySparseVector(in)
-    println("res: " + res)
     res should be(4)
   }
 
   "ConstVector" should "return same results as DenseVector" in {
-    val ctx = new MatricesDslStd with LinearAlgebraExamples {}
+    val ctx = new Seq
     val cv = ctx.constVector((2.0, 3))
     val dv = ctx.denseVector(Array(2.0, 2.0, 2.0))
     val sv = ctx.sparseVector((Array(0, 1, 2), (Array(2.0, 2.0, 2.0), 3)))
-    val sv1 = ctx.sparseVector1((Array((0, 2.0), (1, 2.0), (2, 2.0)), 3))
+    val sv1 = ctx.sparseVectorBoxed((Array((0, 2.0), (1, 2.0), (2, 2.0)), 3))
 
     cv.length should be(dv.length)
     cv.items should be(dv.items)
@@ -55,7 +105,7 @@ class LASuite extends BaseShouldTests {
   }
 
   "ConstMatrix" should "return same results as DenseFlatMatrix" in {
-    val ctx = new MatricesDslStd with LinearAlgebraExamples {}
+    val ctx = new Seq
     val cm = ctx.constMatrix((2.0, (3, 2)))
     val fm = ctx.flatMatrix((Array(2.0, 2.0, 2.0, 2.0, 2.0, 2.0), 3))
     val dv = ctx.denseVector(Array(2.0, 2.0, 2.0))
@@ -74,7 +124,7 @@ class LASuite extends BaseShouldTests {
   }
 
   "DiagonalMatrix" should "return same results as DenseFlatMatrix" in {
-    val ctx = new MatricesDslStd with LinearAlgebraExamples {}
+    val ctx = new Seq
     val dm = ctx.diagonalMatrix(Array(1.0, 2.0, 3.0, 4.0))
     val fm = ctx.flatMatrix((Array(1.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 3.0, 0.0, 0.0, 0.0, 0.0, 4.0), 4))
     val dv = ctx.denseVector(Array(2.0, 3.0, 4.0, 5.0))
@@ -96,4 +146,5 @@ class LASuite extends BaseShouldTests {
 
   }
 
+  "vvm converters" should "be equivalent for all Vector types" in vvm_converters(cv, cv, res, f1)
 }

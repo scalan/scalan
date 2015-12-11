@@ -1,6 +1,6 @@
 package scalan.linalgebra
 
-trait LinearAlgebraExamples extends MatricesDsl {
+trait LinearAlgebraExamples extends LADsl {
   def mvm[T](matrix: Matr[T], vector: Vec[T])(implicit eT: Elem[T], n: Numeric[T]): Vec[T] =
     DenseVector(matrix.rows.mapBy( fun{ r => r dot vector }))
 
@@ -8,7 +8,7 @@ trait LinearAlgebraExamples extends MatricesDsl {
     val Pair(items1, items2) = p
     val v1 = DenseVector(items1)
     val v2 = DenseVector(items2)
-    v1.dot(v2)
+    v1 dot v2
   }
 
   lazy val aamvm = fun { p: Rep[(Matrix[Double], Vector[Double])] =>
@@ -19,158 +19,158 @@ trait LinearAlgebraExamples extends MatricesDsl {
   lazy val ddmvm = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0).length
-    val matrix: Matr[Double] = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
-    val vector: Vec[Double] = DenseVector(Collection(v))
+    val matrix = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
+    val vector = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
 
   lazy val ddmvmList = fun { p: Rep[(List[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0).length
-    val matrix: Matr[Double] = CompoundMatrix(CollectionOverList(m.mapBy( fun { r: Arr[Double] => DenseVector(Collection(r)) })), width)
-    val vector: Vec[Double] = DenseVector(Collection(v))
+    val matrix = CompoundMatrix(CollectionOverList(m.mapBy( fun { r: Arr[Double] => DenseVector(Collection(r)) })), width)
+    val vector = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
 
   lazy val dsmvm = fun { p: Rep[(Array[Array[Double]], (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
     val width = m(0).length
-    val matrix: Matr[Double] = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
-    val vector: Vec[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
+    val matrix = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
+    val vector = SparseVector(Collection(vIs), Collection(vVs), vL)
     (matrix * vector).items.arr
   }
 
   lazy val sdmvm = fun { p: Rep[(Array[(Array[Int], (Array[Double], Int))], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0)._3
-    val matrix: Matr[Double] = CompoundMatrix(Collection(m.map {
+    val matrix = CompoundMatrix(Collection(m.map {
       r: Rep[(Array[Int], (Array[Double], Int))] =>
       SparseVector(Collection(r._1), Collection(r._2), r._3)}), width)
-    val vector: Vec[Double] = DenseVector(Collection(v))
+    val vector = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
 
   lazy val ssmvm = fun { p: Rep[(Array[(Array[Int], (Array[Double], Int))], (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
     val width = m(0)._3
-    val matrix: Matr[Double] = CompoundMatrix(Collection(m.map {
+    val matrix = CompoundMatrix(Collection(m.map {
       r: Rep[(Array[Int], (Array[Double], Int))] =>
         SparseVector(Collection(r._1), Collection(r._2), r._3) }), width)
-    val vector: Vec[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
+    val vector = SparseVector(Collection(vIs), Collection(vVs), vL)
     (matrix * vector).items.arr
   }
 
   lazy val fdmvm = fun { p: Rep[((Array[Double], Int), Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matr[Double] = DenseFlatMatrix(Collection(m._1), m._2)
-    val vector: Vec[Double] = DenseVector(Collection(v))
+    val matrix = DenseFlatMatrix(Collection(m._1), m._2)
+    val vector = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
 
   lazy val fsmvm = fun { p: Rep[((Array[Double], Int), (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
-    val matrix: Matr[Double] = DenseFlatMatrix(Collection(m._1), m._2)
-    val vector: Vec[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
+    val matrix = DenseFlatMatrix(Collection(m._1), m._2)
+    val vector = SparseVector(Collection(vIs), Collection(vVs), vL)
     (matrix * vector).items.arr
   }
 
   lazy val cdmvm = fun { p: Rep[((Double, (Int, Int)), Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matr[Double] = ConstMatrix(m._1, m._2, m._3)
-    val vector: Vec[Double] = DenseVector(Collection(v))
+    val matrix = ConstMatrix(m._1, m._2, m._3)
+    val vector = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
 
   lazy val csmvm = fun { p: Rep[((Double, (Int, Int)), (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
-    val matrix: Matr[Double] = ConstMatrix(m._1, m._2, m._3)
-    val vector: Vec[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
+    val matrix = ConstMatrix(m._1, m._2, m._3)
+    val vector = SparseVector(Collection(vIs), Collection(vVs), vL)
     (matrix * vector).items.arr
   }
 
   lazy val dcmvm = fun { p: Rep[(Array[Array[Double]], (Double, Int))] =>
     val Pair(m, v) = p
     val width = m(0).length
-    val matrix: Matr[Double] = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
-    val vector: Vec[Double] = ConstVector(v._1, v._2)
+    val matrix = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
+    val vector = ConstVector(v._1, v._2)
     (matrix * vector).items.arr
   }
 
   lazy val ccmvm = fun { p: Rep[((Double, (Int, Int)), (Double, Int))] =>
     val Pair(m, v) = p
-    val matrix: Matr[Double] = ConstMatrix(m._1, m._2, m._3)
-    val vector: Vec[Double] = ConstVector(v._1, v._2)
+    val matrix = ConstMatrix(m._1, m._2, m._3)
+    val vector = ConstVector(v._1, v._2)
     (matrix * vector).items.arr
   }
 
   lazy val dgdmvm = fun { p: Rep[(Array[Double], Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matr[Double] = DiagonalMatrix(Collection(m))
-    val vector: Vec[Double] = DenseVector(Collection(v))
+    val matrix = DiagonalMatrix(Collection(m))
+    val vector = DenseVector(Collection(v))
     (matrix * vector).items.arr
   }
 
   lazy val dgsmvm = fun { p: Rep[(Array[Double], (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
-    val matrix: Matr[Double] = DiagonalMatrix(Collection(m))
-    val vector: Vec[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
+    val matrix = DiagonalMatrix(Collection(m))
+    val vector = SparseVector(Collection(vIs), Collection(vVs), vL)
     (matrix * vector).items.arr
   }
 
   lazy val dgcmvm = fun { p: Rep[(Array[Double], (Double, Int))] =>
     val Pair(m, v) = p
-    val matrix: Matr[Double] = DiagonalMatrix(Collection(m))
-    val vector: Vec[Double] = ConstVector(v._1, v._2)
+    val matrix = DiagonalMatrix(Collection(m))
+    val vector = ConstVector(v._1, v._2)
     (matrix * vector).items.arr
   }
 
   lazy val ddmvm0 = fun { p: Rep[(Array[Array[Double]], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0).length
-    val matrix: Matr[Double] = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
-    val vector: Vec[Double] = DenseVector(Collection(v))
+    val matrix = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
+    val vector = DenseVector(Collection(v))
     mvm(matrix, vector).items.arr
   }
 
   lazy val dsmvm0 = fun { p: Rep[(Array[Array[Double]], (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
     val width = m(0).length
-    val matrix: Matr[Double] = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
-    val vector: Vec[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
+    val matrix = CompoundMatrix(Collection(m.map { r: Arr[Double] => DenseVector(Collection(r)) }), width)
+    val vector = SparseVector(Collection(vIs), Collection(vVs), vL)
     mvm(matrix, vector).items.arr
   }
 
   lazy val sdmvm0 = fun { p: Rep[(Array[(Array[Int], (Array[Double], Int))], Array[Double])] =>
     val Pair(m, v) = p
     val width = m(0)._3
-    val matrix: Matr[Double] = CompoundMatrix(Collection(m.map {
+    val matrix = CompoundMatrix(Collection(m.map {
       r: Rep[(Array[Int], (Array[Double], Int))] =>
         SparseVector(Collection(r._1), Collection(r._2), r._3) }), width)
-    val vector: Vec[Double] = DenseVector(Collection(v))
+    val vector = DenseVector(Collection(v))
     mvm(matrix, vector).items.arr
   }
 
   lazy val ssmvm0 = fun { p: Rep[(Array[(Array[Int], (Array[Double], Int))], (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
     val width = m(0)._3
-    val matrix: Matr[Double] = CompoundMatrix(Collection(m.map {
+    val matrix = CompoundMatrix(Collection(m.map {
       r: Rep[(Array[Int], (Array[Double], Int))] =>
         SparseVector(Collection(r._1), Collection(r._2), r._3) }), width)
-    val vector: Vec[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
+    val vector = SparseVector(Collection(vIs), Collection(vVs), vL)
     mvm(matrix, vector).items.arr
   }
 
   lazy val fdmvm0 = fun { p: Rep[((Array[Double], Int), Array[Double])] =>
     val Pair(m, v) = p
-    val matrix: Matr[Double] = DenseFlatMatrix(Collection(m._1), m._2)
-    val vector: Vec[Double] = DenseVector(Collection(v))
+    val matrix = DenseFlatMatrix(Collection(m._1), m._2)
+    val vector = DenseVector(Collection(v))
     mvm(matrix, vector).items.arr
   }
 
   lazy val fsmvm0 = fun { p: Rep[((Array[Double], Int), (Array[Int], (Array[Double], Int)))] =>
     val Tuple(m, vIs, vVs, vL) = p
-    val matrix: Matr[Double] = DenseFlatMatrix(Collection(m._1), m._2)
-    val vector: Vec[Double] = SparseVector(Collection(vIs), Collection(vVs), vL)
+    val matrix = DenseFlatMatrix(Collection(m._1), m._2)
+    val vector = SparseVector(Collection(vIs), Collection(vVs), vL)
     mvm(matrix, vector).items.arr
   }
 
@@ -228,7 +228,7 @@ trait LinearAlgebraExamples extends MatricesDsl {
   }
 
   lazy val dotWithAbstractElem = fun { in: Rep[(Int, Array[(Int, Double)])] =>
-    def RandomMatrix(numRows: IntRep, numColumns: IntRep): Matr[Double] = {
+    def RandomMatrix(numRows: IntRep, numColumns: IntRep) = {
       val n = numRows * numColumns
       val coll = Collection.replicate(n, 0.0)
       DenseFlatMatrix(coll, numColumns)
@@ -278,7 +278,7 @@ trait LinearAlgebraExamples extends MatricesDsl {
   lazy val transpose = fun { in: Rep[(Array[(Int, Double)], (Array[(Int, Int)], Int))] =>
     val Tuple(arrFlat, segsArr, nItems) = in
     val nColl: NColl[(Int, Double)] = NestedCollectionFlat(Collection(arrFlat), PairCollectionAOS.fromArray(segsArr))
-    val mR: Matr[Double] = CompoundMatrix.fromNColl(nColl, nItems)
+    val mR = CompoundMatrix.fromNColl(nColl, nItems)
     mR.transpose.rows.map({v => v.nonZeroItems.arr}).arr
   }
 
@@ -361,9 +361,9 @@ trait LinearAlgebraExamples extends MatricesDsl {
     val Tuple(is, vs, n) = p
     SparseVector(Collection(is), Collection(vs), n)
   }
-  lazy val sparseVector1 = fun { p: Rep[(Array[(Int, Double)], Int)] =>
+  lazy val sparseVectorBoxed = fun { p: Rep[(Array[(Int, Double)], Int)] =>
     val Tuple(arr, n) = p
-    SparseVector1(Collection(arr), n)
+    SparseVectorBoxed(Collection(arr), n)
   }
 
   lazy val flatMatrix = fun { p: Rep[(Array[Double], Int)] =>
