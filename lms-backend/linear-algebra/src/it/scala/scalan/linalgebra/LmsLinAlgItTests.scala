@@ -7,8 +7,8 @@ import scalan.compilation.lms.source2bin.SbtConfig
 import scalan.compilation.lms.uni._
 import scalan.it.BaseItTests
 
-abstract class LmsLinAlgItTests extends BaseItTests[LinearAlgebraExamples](new MatricesDslStd with LinearAlgebraExamples) {
-  class ProgExp extends MatricesDslExp with JNIExtractorOpsExp with LinearAlgebraExamples
+abstract class LmsLinAlgItTests extends BaseItTests[LinearAlgebraExamples](new LADslStd with LinearAlgebraExamples) {
+  class ProgExp extends LADslExp with JNIExtractorOpsExp with LinearAlgebraExamples
 
   val progStaged = new LinAlgLmsCompilerScala(new ProgExp)
 
