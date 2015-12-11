@@ -5,13 +5,14 @@
 package scalan.meta
 
 import scala.language.implicitConversions
+import scala.tools.nsc.Global
 import scala.reflect.internal.util.RangePosition
 import scala.reflect.internal.util.OffsetPosition
 import scalan.meta.ScalanAst._
 
 trait ScalanParsers {
 
-  type Compiler <: scala.tools.nsc.Global
+  type Compiler = Global
   val compiler: Compiler
   import compiler._
 
