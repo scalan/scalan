@@ -318,4 +318,16 @@ class StructTests extends BaseViewTests {
 
     all(flatElems) should equal(expectedFlat)
   }
+
+  test("mergeIso") {
+    val ctx = new Ctx
+    import ctx.compiler.scalan._
+
+    val nested1 = structElement(Seq("a" -> element[Int], "b" -> element[Int]))
+    val nested2 = structElement(Seq("c" -> element[Int], "d" -> element[Int]))
+    val se = structElement(Seq("_1" -> nested1, "_2" -> nested2))
+    val iso = getStructMergeIso(se)
+    ctx.test("iso.to", iso.toFun)
+    ctx.test("iso.from", iso.fromFun)
+  }
 }
