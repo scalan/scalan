@@ -273,7 +273,8 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
     isFieldGetterCache.getOrElseUpdate((tpe, m),
       findScalaMethod(tpe, m).isParamAccessor)
   }
-  private var invokeTesters: Set[InvokeTester] = Set(isCompanionApply, isFieldGetter)
+  protected val initialInvokeTesters = Set(isCompanionApply, isFieldGetter)
+  private var invokeTesters: Set[InvokeTester] = initialInvokeTesters
 
   def isInvokeEnabled(d: Def[_], m: Method) = invokeTesters.exists(_(d, m))
 
@@ -294,6 +295,11 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   def removeInvokeTester(pred: InvokeTester): Unit = {
     invokeTesters -= pred
+  }
+
+  def resetTesters() = {
+    invokeTesters = initialInvokeTesters
+    unpackTesters = initialUnpackTesters
   }
 
   protected def hasFuncArg(args: Array[AnyRef]): Boolean =
