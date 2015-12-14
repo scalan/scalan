@@ -23,12 +23,23 @@ import scalan.staged.Expressions
 trait Structs { self: Scalan =>
   // TODO consider if T type parameter is needed here and for AbstractStruct
   // It's only useful if we'll have some static typing on structs later (Shapeless' records?)
-  abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T])
-  case class SimpleTag[T <: Struct : TypeTag](name: String) extends StructTag[T]
+  abstract class StructTag[T <: Struct](implicit val typeTag: TypeTag[T]) {
+    override def equals(other: Any): Boolean =
+      !!!("StructTag.equals must be overridden so that the outer instances aren't compared")
+  }
+  case class SimpleTag[T <: Struct : TypeTag](name: String) extends StructTag[T] {
+    override def equals(other: Any) = other match {
+      case tag: Structs#SimpleTag[_] => name == tag.name && typeTag == tag.typeTag
+      case _ => false
+    }
+  }
+  object SimpleTag {
+    def apply[T <: Struct](implicit tag: TypeTag[T]): SimpleTag[T] = SimpleTag[T](tag.tpe.typeSymbol.name.toString)
+  }
   //  case class NestClassTag[C[_],T](elem: StructTag[T]) extends StructTag[C[T]]
   //  case class AnonTag[T](fields: RefinedManifest[T]) extends StructTag[T]
   //  case class MapTag[T]() extends StructTag[T]
-  val defaultStructTag = SimpleTag[Struct]("Struct")
+  val defaultStructTag = SimpleTag[Struct]
 
   protected def baseStructName(tag: StructTag[_]) = tag match {
     case `defaultStructTag` => ""
@@ -36,7 +47,10 @@ trait Structs { self: Scalan =>
     // Intentionally no case _, add something here or override when extending StructTag!
   }
 
-  trait Struct // TODO add tag/fields members from AbstractStruct here?
+  trait Struct {
+    def tag: StructTag[_] // TODO add type argument?
+    def fields: Seq[(String, Rep[Any])]
+  }
 
   case class StructElem[T <: Struct](structTag: StructTag[T], fields: Seq[(String, Elem[_])]) extends Elem[T] {
     override def isEntityType = fields.exists(_._2.isEntityType)
@@ -44,6 +58,7 @@ trait Structs { self: Scalan =>
     protected def getDefaultRep =
       struct(structTag, fields.map { case (fn,fe) => (fn, fe.defaultRepValue) }: _*)
     def get(fieldName: String): Option[Elem[_]] = fields.find(_._1 == fieldName).map(_._2)
+    def fieldNames = fields.map(_._1)
     def fieldElems: Seq[Elem[_]] = fields.map(_._2)
     def isEqualType(tuple: Seq[Elem[_]]) = {
       fields.length == tuple.length && fields.zip(tuple).forall { case ((fn,fe), e) => fe == e }
@@ -63,6 +78,8 @@ trait Structs { self: Scalan =>
   def structElement(fields: Seq[(String, Elem[_])]): StructElem[Struct] =
     structElement(defaultStructTag, fields)
 
+  def structElementFor[T <: Struct : TypeTag](fields: Seq[(String, Elem[_])]): StructElem[T] =
+    structElement(SimpleTag[T], fields)
   /**
     * Get tuple field name by index
     */
@@ -360,7 +377,13 @@ trait Structs { self: Scalan =>
 }
 
 trait StructsSeq extends Structs { self: ScalanSeq =>
-  case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends Struct
+  case class StructSeq[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]) extends Struct {
+    override def equals(other: Any) = other match {
+      case ss: StructsSeq#StructSeq[_] =>
+        tag == ss.tag && fields.sameElements(ss.fields)
+      case _ => false
+    }
+  }
 
   def struct[T <: Struct](tag: StructTag[T], fields: Seq[(String, Rep[Any])]): Rep[T] =
     StructSeq(tag, fields).asRep[T]
@@ -384,6 +407,7 @@ trait StructsExp extends Expressions with Structs with EffectsExp with ViewsDslE
     lazy val selfType = structElement(tag, fields.map { case (name, value) => (name, value.elem) })
   }
 
+  // should this just extend BaseDef? Having field[T] would simplify usage in some cases
   abstract class AbstractField[T] extends Def[T] {
     def struct: Rep[Struct]
     def field: String

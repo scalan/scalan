@@ -18,3 +18,4 @@ tmp/
 benchmark/mvm-staged
 /bin
 /lms-backend/data/
+*.log

@@ -99,15 +99,13 @@ trait ScalaGenEitherOps extends ScalaGenBase {
 trait CxxShptrGenEitherOps extends CxxShptrCodegen {
   val IR: EitherOpsExp
   import IR._
-  override def wrapSharedPtr:PartialFunction[Manifest[_],Manifest[_]] = {
-    case m if m.runtimeClass == classOf[scala.util.Either[_,_]] => m
-    case m =>
-      super.wrapSharedPtr(m)
-  }
+
+  override protected def doNotWrap(m: Manifest[_]) = m.runtimeClass == classOf[Either[_,_]] ||
+    super.doNotWrap(m)
 
   override def remap[A](m: Manifest[A]): String = {
     m.runtimeClass match {
-      case c if c == classOf[scala.util.Either[_,_]] =>
+      case c if c == classOf[Either[_,_]] =>
         val mA = m.typeArguments(0)
         val mB = m.typeArguments(1)
         src"boost::variant<$mA,$mB>"
