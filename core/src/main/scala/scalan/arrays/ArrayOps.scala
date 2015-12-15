@@ -98,11 +98,12 @@ trait ArrayOps { self: Scalan =>
     def empty[T: Elem] = array_empty[T]
   }
 
-  implicit val arrayFunctor: Functor[Array] = new Functor[Array] {
+  trait ArrayFunctor extends Functor[Array] {
     def tag[T](implicit tT: WeakTypeTag[T]) = weakTypeTag[Array[T]]
     def lift[T](implicit eT: Elem[T]) = element[Array[T]]
     def map[A:Elem,B:Elem](xs: Rep[Array[A]])(f: Rep[A] => Rep[B]) = xs.mapBy(fun(f))
   }
+  implicit val containerArray: Functor[Array] = new ArrayFunctor {}
 
   abstract class ArrayElem[A](implicit eItem: Elem[A])
     extends EntityElem1[A, Array[A], Array](eItem, container[Array]) {
