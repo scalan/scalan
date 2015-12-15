@@ -278,7 +278,7 @@ trait ProxyExp extends Proxy with BaseExp with GraphVizExport { self: ScalanExp 
 
   def isInvokeEnabled(d: Def[_], m: Method) = invokeTesters.exists(_(d, m))
 
-  private def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) = {
+  protected def shouldInvoke(d: Def[_], m: Method, args: Array[AnyRef]) = {
     if (m.getDeclaringClass.isAssignableFrom(d.getClass)) {
       isInvokeEnabled(d, m) || hasFuncArg(args) ||
         // e.g. for methods returning Elem
