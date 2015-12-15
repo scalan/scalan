@@ -96,6 +96,8 @@ trait Collections { self: CollectionsDsl =>
         }
         case viewElem: ViewElem[a, b] =>
           CollectionOverArray(SArray.replicate(len, v))
+        case entityElem: EntityElem[_] =>
+          replicateEntity(len, v)
         case e => ???(s"Element is $e")
       }
     }
@@ -223,15 +225,6 @@ trait Collections { self: CollectionsDsl =>
     def coll: Coll[(A, B)]
     def innerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R])(implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]): PairColl[A, R]
     def outerJoin[C, R](other: PairColl[A, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])(implicit ordK: Ordering[A], eR: Elem[R], eB: Elem[B], eC: Elem[C]): PairColl[A, R]
-    def innerMult(other: PairColl[A, B])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
-      innerJoin[B, B](other, (b1: Rep[(B, B)]) => b1._1 * b1._2)
-    }
-    def outerSum(other: PairColl[A, B])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
-      outerJoin[B, B](other, (b1: Rep[(B, B)]) => b1._1 + b1._2, (b: Rep[B]) => b, (b: Rep[B]) => b)
-    }
-    def outerSubtr(other: PairColl[A, B])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
-      outerJoin[B, B](other, (b1: Rep[(B, B)]) => b1._1 - b1._2, (b: Rep[B]) => b, (b: Rep[B]) => b)
-    }
   }
   type PairColl[A, B] = Rep[PairCollection[A, B]]
 
@@ -562,6 +555,24 @@ trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
     def sort[O: Elem](c: Rep[A] => Rep[O])(implicit o: Ordering[O]) = coll.sortBy(fun(c))
   }
 
+  implicit class CollectionOfPairExtensions[A, B](coll: Coll[(A, B)])(implicit o: Overloaded1) {
+    implicit lazy val (eItemA, eItemB): (Elem[A], Elem[B]) = coll.selfType1.eItem match {
+      case PairElem(eFst, eSnd) => (eFst, eSnd)
+    }
+    private def pc(coll: Coll[(A, B)]) = PairCollectionAOS(coll)
+    private def self: PairColl[A, B] = PairCollectionAOS(coll)
+
+    def innerMult(other: Coll[(A, B)])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
+      self.innerJoin[B, B](pc(other), (b1: Rep[(B, B)]) => b1._1 * b1._2)
+    }
+    def outerSum(other: Coll[(A, B)])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
+      self.outerJoin[B, B](pc(other), (b1: Rep[(B, B)]) => b1._1 + b1._2, (b: Rep[B]) => b, (b: Rep[B]) => b)
+    }
+    def outerSubtr(other: Coll[(A, B)])(implicit ordK: Ordering[A], nA: Numeric[A], nB: Numeric[B]) = {
+      self.outerJoin[B, B](pc(other), (b1: Rep[(B, B)]) => b1._1 - b1._2, (b: Rep[B]) => b, (b: Rep[B]) => b)
+    }
+  }
+
   trait CollectionManager {
     def apply[T: Elem](arr: Rep[Array[T]]): Coll[T]
     def fromArray[T: Elem](arr: Rep[Array[T]]): Coll[T]
@@ -579,6 +590,7 @@ trait CollectionsDsl extends impl.CollectionsAbs with SeqsDsl {
   def pairColl_outerJoin[K, B, C, R](xs: PairColl[K, B], ys: PairColl[K, C], f: Rep[((B, C)) => R], f1: Rep[B => R], f2: Rep[C => R])
                                     (implicit ordK: Ordering[K], selfType: Elem[Array[(K, R)]],
                                      eK: Elem[K], eR: Elem[R], eB: Elem[B], eC: Elem[C]): Rep[Array[(K, R)]]
+  def replicateEntity[T: Elem](len: Rep[Int], v: Rep[T]): Coll[T]
 }
 
 trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
@@ -699,6 +711,7 @@ trait CollectionsDslStd extends impl.CollectionsStd with SeqsDslStd {
     }
     buffer.toArray
   }
+  def replicateEntity[T: Elem](len: Rep[Int], v: Rep[T]): Coll[T] = CollectionOverArray(SArray.replicate(len, v))
 }
 
 trait CollectionsDslExp extends impl.CollectionsExp with SeqsDslExp {
@@ -760,4 +773,6 @@ trait CollectionsDslExp extends impl.CollectionsExp with SeqsDslExp {
                                         val eK: Elem[K], val eR: Elem[R], val eB: Elem[B], val eC: Elem[C])
     extends Def[Array[(K, R)]] {
   }
+  // TODO: need to invoke methodCall to stall replication until proper concrete elem arrives
+  def replicateEntity[T: Elem](len: Exp[Int], v: Exp[T]): Exp[Collection[T]] = ??? //MethodCall()
 }
